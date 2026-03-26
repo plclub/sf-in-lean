@@ -1,0 +1,2 @@
+- [user_role.md](user_role.md) - User is a CS instructor translating SF from Rocq to Lean
+- [project_sf_lean_decisions.md](project_sf_lean_decisions.md) - Key design decisions for the SF-Lean translation
