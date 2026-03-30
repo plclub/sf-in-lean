@@ -413,15 +413,14 @@ theorem weak_pumping_app : ∀ {α : Type}
     s3 ≠ [ ] /\
     (∀ m : Nat, s0 ++ napp m s3 ++ s4 =~ .App re1 re2) := by
   intro α s1 s2 re1 re2 Hmatch1 Hmatch2 IH1 IH2 Hlen
-  have H : pumpingConstant re1 <= List.length s1 \/ pumpingConstant re2 <= List.length s2 := by
+  obtain H | H :
+    pumpingConstant re1 <= List.length s1 ∨ pumpingConstant re2 <= List.length s2 := by
   -- ADMITTED
     rw [app_length] at Hlen
     apply plus_le_cases
     apply Hlen
   -- /ADMITTED
-  cases H
-  . case inl H =>
-    specialize IH1 H
+  . specialize IH1 H
     let ⟨s12, s13, s14, H1, H2, H3⟩ := IH1
     rw [H1]
     exists s12; exists s13; exists (s14 ++ s2)
@@ -434,8 +433,7 @@ theorem weak_pumping_app : ∀ {α : Type}
       apply ExpMatch.MApp
       assumption
       assumption
-  . case inr H =>
-    specialize IH2 H
+  . specialize IH2 H
     let ⟨s21, s22, s23, H1, H2, H3⟩ := IH2
     rw [H1]
     exists (s1 ++ s21); exists s22; exists s23
@@ -523,7 +521,6 @@ theorem weak_pumping_star_zero : ∀ {α : Type} (re : RegExp α),
     (∀ m : Nat, s1 ++ napp m s2 ++ s3 =~ .Star re) := by
   -- ADMITTED
   intro α re Hp
-  simp only [List.length] at Hp
   have Hz := Nat.le_zero.mp Hp
   have h1 := pumping_constant_ge_1 re
   simp only [pumpingConstant] at Hz
@@ -551,9 +548,10 @@ theorem weak_pumping_star_app : ∀ {α : Type}  (s1 s2 : List α) (re : RegExp 
     (∀ m : Nat, s0 ++ napp m s3 ++ s4 =~ .Star re)  := by
   intro T s1 s2 re Hmatch1 Hmatch2 IH1 IH2 Hlen
   rw [app_length] at *
-  have Hs1re1 : (List.length s1 = 0
-                ∨ (List.length s1 ≠ 0 /\ List.length s1 < pumpingConstant re)
-                ∨ pumpingConstant re <= List.length s1) := by
+  obtain Hs1len0 | ⟨s1len, Hs1re1⟩ | Hs1re1 :
+    (List.length s1 = 0
+      ∨ (List.length s1 ≠ 0 /\ List.length s1 < pumpingConstant re)
+      ∨ pumpingConstant re <= List.length s1) := by
     cases s1
     -- ADMITTED
     . left; rfl
@@ -572,7 +570,6 @@ theorem weak_pumping_star_app : ∀ {α : Type}  (s1 s2 : List α) (re : RegExp 
       . right; assumption
     -- /ADMITTED
   -- ADMITTED
-  rcases Hs1re1 with Hs1len0 | ⟨s1len, Hs1re1⟩ | Hs1re1
   . have Hs1nil : s1 = [] := by
       cases s1; rfl; contradiction
     subst Hs1nil
