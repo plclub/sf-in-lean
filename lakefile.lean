@@ -3,15 +3,10 @@ open Lake DSL
 
 package sf where
   leanOptions := #[
-    ⟨`autoImplicit, false⟩
+    ⟨`autoImplicit, false⟩,
+    ⟨`pp.fieldNotation, false⟩
   ]
 
 @[default_target]
-lean_lib Basics where
-  srcDir := "lf"
-
-lean_lib Induction where
-  srcDir := "lf"
-
-lean_lib Lists where
-  srcDir := "lf"
+lean_lib LF where
+  globs := #[`lf.+]

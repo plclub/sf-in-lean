@@ -16,7 +16,7 @@
 -- /FULL
 -- /HIDEFROMHTML
 
-import Induction
+import lf.Induction
 
 -- ######################################################################
 -- * Pairs of Numbers

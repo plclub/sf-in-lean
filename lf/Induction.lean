@@ -24,7 +24,7 @@
 -- FULL: Before getting started on this chapter, we need to import
 --    all of our definitions from the previous chapter:
 
-import Basics
+import lf.Basics
 
 -- FULL: For this `import` to work, Lean needs to be able to find a
 --    compiled version of the previous chapter (`Basics.lean`).  This
