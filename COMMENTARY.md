@@ -54,3 +54,10 @@ These might require a little more textual explanation.
 * `have` vs. `rcases` vs. `obtain`
 
 From FPiL: "The grind tactic is very powerful, customizable, and extensible; due to this power and flexibility, its output when it fails to prove a theorem contains a lot of information that can help trained Lean users diagnose the reason for the failure. This can be overwhelming in the beginning, so this chapter uses only decide and simp."
+
+Roger: It seems that the `rw`` tactic might be a bit to strong for what we want to teach.
+`rewrite [h]` rewrites with a hypothesis, whereas `rw [h]` does something like `rewrite [h]; rfl`.
+This leads to many proofs, in which the students' only tools are `rfl` and rewriting, not using `rfl` in the induction case at all.
+Furthermore, the way stepping through the proof goes is a bit confusing: the goal disappears when you step over the final`]`.
+Essentially, `rw` is kind of like `now rewrite` in Rocq. Good for people who know what they're doing, hard to read for those who don't.
+I'll give a soft proposal that we use `rewrite` rather than `rw`.
