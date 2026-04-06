@@ -1042,8 +1042,8 @@ theorem plus_1_neq_0 : ∀ n : Nat,
 -- TERSE: ***
 -- TERSE: Another example, using booleans:
 
-theorem negb_involutive : ∀ b : Bool,
-  !!b = b := by
+theorem notb_involutive : ∀ b : Bool,
+  (!!b) = b := by
   intro b
   cases b
   case true => rfl
