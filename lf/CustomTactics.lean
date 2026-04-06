@@ -97,6 +97,11 @@ elab "inversion " targetName:term : tactic => withMainContext do
       throwTacticEx `inversion mvarId
         m!"target is not an inductive type{indentExpr targetType}"
 
+-- [https://github.com/leanprover-community/mathlib4/blob/master/Mathlib/Tactic/Lemma.lean]
+-- [https://github.com/leanprover-community/batteries/blob/main/Batteries/Tactic/Lemma.lean]
+/-- Synonym for `theorem`. -/
+macro "lemma " thm:declId sig:declSig val:declVal : command => `(theorem $thm $sig $val)
+
 end Lean.Elab.Tactic
 
 example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : f n = 0 := by
@@ -105,3 +110,6 @@ example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : f n = 0 := by
 
 example (H : Bool → Nat → False) (n : Nat) : False := by
   apply H at n; apply n; exact true
+
+lemma doubleNegation : ∀ P, P → ¬ ¬ P := by
+  intro P p np; exact (np p)
