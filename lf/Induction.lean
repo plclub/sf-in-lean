@@ -666,10 +666,10 @@ theorem add_assoc'' : ∀ n m p : Nat,
 -- `add_shuffle3`.  You don't need to use induction yet.
 
 theorem add_shuffle3 : ∀ n m p : Nat,
-    add (add n m) p = add (add p n) m := by
+    add (add n m) p = add (add n p) m := by
   -- ADMITTED
   intro n m p
-  rw [← add_assoc, add_comm m p, add_assoc, add_comm p n]
+  rw [← add_assoc, add_comm m p, add_assoc]
 -- /ADMITTED
 -- GRADE_THEOREM 1: add_shuffle3
 
@@ -687,7 +687,8 @@ theorem succ_mul : ∀ m n : Nat,
     _ = add (n + 1) (add (mul n m) m) := by rw [ih]
     _ = add (add (mul n m) m) (n + 1) := by rw [add_comm]
     _ = add (add (mul n m) m) n + 1   := by dsimp [add]
-    _ = add (add n (mul n m)) m + 1   := by rw [add_shuffle3]
+    _ = add n (add (mul n m) m) + 1   := by rw [add_comm]
+    _ = add (add n (mul n m)) m + 1   := by rw [← add_assoc]
     _ = add (mul n (m + 1)) (m + 1)   := by dsimp [mul, add]
 -- /QUIETSOLUTION
 
@@ -774,11 +775,8 @@ theorem mult_plus_distr_r : ∀ n m p : Nat,
     generalize (mul m p') = j
     calc add (add n m) (add i j)
     _ = add (add (add n m) i) j := by rw [add_assoc (add n m)]
-    _ = add (add n (add m i)) j := by rw [← add_assoc n m]
-    _ = add (add n (add i m)) j := by rw [add_comm m]
-    _ = add n (add (add i m) j) := by rw [← add_assoc n]
-    _ = add n (add i (add m j)) := by rw [← add_assoc i m]
-    _ = add (add n i) (add m j) := by rw [add_assoc n i]
+    _ = add (add (add n i) m) j := by rw [add_shuffle3 n m i]
+    _ = add (add n i) (add m j) := by rw [add_assoc (add n i)]
 -- /ADMITTED
 
 theorem mult_plus_distr_l : ∀ n m p : Nat,
