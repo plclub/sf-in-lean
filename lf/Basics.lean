@@ -1327,6 +1327,7 @@ inductive Comparison : Type where
   | lt   -- "less than"
   | gt   -- "greater than"
 
+-- TODO: Explain what this is doing
 open Letter Modifier Comparison
 
 -- Using pattern matching, it is not difficult to define the
