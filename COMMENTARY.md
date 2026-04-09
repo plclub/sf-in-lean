@@ -32,9 +32,8 @@ whereas `induction h` and `cases h` would let you teach
 since the whole thing gets processed all at once instead of incrementally,
 but that won't be a problem in this book.)
 
-JC: We should also prefer e.g. `case zero => ...`, `case succ n => ...`
-over the dot list syntax for clarity,
-and only use the latter where the generated tag names aren't meaningful.
+JC: Should we prefer `case zero => ...`, `case succ n => ...`,
+or `. case zero => ...`, `. case succ n => ...`?
 
 ### Comments
 
@@ -80,6 +79,23 @@ JC: There should be some instruction on interaction with the IDE, namely:
 * hovering over a Unicode character will tell you how to type it
 * Ctrl-clicking on a definition will take you to the definition location
 
+### `Induction.lean`
+
+JC: A lot of the proofs on the naturals rely on how operations on naturals were defined in `Basics.lean`,
+but in the stdlib they're slightly different
+(e.g. `sub` is defined via `pred` rather than directly by recursion),
+and the notations all go through typeclasses,
+which makes the proofs a lot less direct
+(e.g. the existing `0 + n` proof refers to `Nat.add_succ`).
+We should do one of the following:
+1.  Not use `+`, `-`, `*` notation and instead use `add`, `sub`, `mul` directly; or
+2.  Override stdlib notation with ones pointing to the definitions in `Basics.lean`.
+
+HG: 1. is a very reasonable way to go about this if we’re attached to arithmetic being the way we teach induction.
+My primary concern is that operators and type classes are already so confusing
+that adding another meaning of `+` is liable to throw someone way off.
+Is there another context we can teach induction in that also doesn’t require a ton of background?
+
 ### `Lists.lean`
 
 DHS: Weird that this file contains the first `inductive` definition students have seen up to this point, 
@@ -89,7 +105,7 @@ DHS: Unsure if it's a good idea to actually use the built-in `List` definition h
 and we aren't introducing this idea until a later chapter. This also means we don't get the chance 
 to show students how to actually produce an inductive definition if we're relying on the built-in ones. 
 
-DHS: We probably need to actually take time to explain what an `@[simp]` annotation on a lemma
+DHS: We probably need to actually take time to explain what a `@[simp]` annotation on a lemma
 means before we introduce it, and I don't think this chapter is the right place to do it anyway. 
 This is probably a better fit for `Auto.lean`.
 
