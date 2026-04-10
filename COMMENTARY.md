@@ -20,6 +20,17 @@ Concrete example: Inversion on `n ≤ 0` requires `generalizing e : 0 = m`,
 since one of the constructors of `≤` has a `succ` argument on the RHS,
 which Lean can't unify with `0`.
 
+### Notation and simplification
+
+JC: If we use typeclass instances to implement notation for a definition,
+`dsimp` doesn't resolve the instances down to that definition,
+e.g. `dsimp [add]` doesn't work on `n + (m + 1)`,
+`dsimp [app]` doesn't work on `(h :: t) ++ l`.
+While Rocq's `simpl` and Lean's `simp` both do this,
+`simp` is also too powerful at times.
+Instead, we explicitly rewrite by equalities such as
+`n + (m + 1) = n + m + 1` or `(h :: t) ++ l = h :: t ++ l`.
+
 ## Stylistic conventions
 
 ### Induction/inversion
@@ -66,6 +77,10 @@ I'll give a soft proposal that we use `rewrite` rather than `rw`.
 Daniel: I am mostly in agreement with Roger's point above, especially for early chapters where we want to be as explicit 
 as possible about what's happening in proofs. However I think after the first few chapters we can probably relax this restriction?
 
+JC: Because the `rewrite [...]; rfl` occurs so often immediately,
+I've opted to use `rewrite` the first time,
+then introduce `rw` and mostly just use `rw` onwards.
+
 ## Course content
 
 ### `Basics.lean`
@@ -95,6 +110,10 @@ HG: 1. is a very reasonable way to go about this if we’re attached to arithmet
 My primary concern is that operators and type classes are already so confusing
 that adding another meaning of `+` is liable to throw someone way off.
 Is there another context we can teach induction in that also doesn’t require a ton of background?
+
+JC: `Basics.lean` now overrides the typeclasses for `-`, `*`, and `^`,
+but not `+`, since that one is pervasive throughout the stdlib and causes problems;
+I think this works okay and isn't too confusing.
 
 JC: If we continue doing arithmetic proofs,
 this is a good place to introduce equational reasoning via `calc`.

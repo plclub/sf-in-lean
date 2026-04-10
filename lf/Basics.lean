@@ -200,9 +200,14 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
 -- We define our own `MyBool` to teach the concept of building from
 -- scratch; later we'll switch to Lean's built-in `Bool`.
 
+/- JC: Can we just gloss over what `section` is doing here,
+  or do we need to explain it? -/
+section
+
 inductive MyBool : Type where
   | true
   | false
+open MyBool
 
 -- TERSE: Booleans are also available in Lean's standard library, but
 --     in this course we'll define everything from scratch, just to see
@@ -214,19 +219,19 @@ inductive MyBool : Type where
 
 def notb (b : MyBool) : MyBool :=
   match b with
-  | .true => .false
-  | .false => .true
+  | .true => false
+  | .false => true
 
 -- TERSE: ***
 
 def andb (b1 : MyBool) (b2 : MyBool) : MyBool :=
   match b1 with
   | .true => b2
-  | .false => .false
+  | .false => false
 
 def orb (b1 : MyBool) (b2 : MyBool) : MyBool :=
   match b1 with
-  | .true => .true
+  | .true => true
   | .false => b2
 
 -- FULL
@@ -273,39 +278,6 @@ example : (! .false) = .true := by rfl
 end
 
 -- TERSE: ***
--- FULL
--- These examples are also an opportunity to introduce one more
--- feature of Lean's programming language: conditional expressions...
--- /FULL
-
--- TERSE: We can also write these functions using pattern matching
--- (Lean's `if` requires a `Decidable` instance, which we'll discuss later).
-
--- TODO: Is something else supposed to be here? These are the same as above.
-
-def negb' (b : MyBool) : MyBool :=
-  match b with
-  | .true => .false
-  | .false => .true
-
-def andb' (b1 : MyBool) (b2 : MyBool) : MyBool :=
-  match b1 with
-  | .true => b2
-  | .false => .false
-
-def orb' (b1 : MyBool) (b2 : MyBool) : MyBool :=
-  match b1 with
-  | .true => .true
-  | .false => b2
-
--- FULL
--- Lean's conditional `if` expressions work with any type that has a
--- `Decidable` instance.  For Lean's built-in `Bool`, you can write
--- `if b then ... else ...`.  We'll see this in detail later.  For
--- now, pattern matching is the clearest approach.
--- /FULL
-
--- TERSE: ***
 -- EX1 (nandb)
 -- FULL
 -- The `sorry` keyword can be used as a placeholder for an
@@ -323,7 +295,7 @@ def nandb (b1 : MyBool) (b2 : MyBool) : MyBool
   -- ADMITDEF
   := match b1 with
   | .true => notb b2
-  | .false => .true
+  | .false => true
   -- /ADMITDEF
 
 -- test_nandb1
@@ -359,6 +331,20 @@ example : andb3 .true .true .false = .false := by rfl  -- ADMITTED
 -- GRADE_THEOREM 1: andb3_test4
 -- []
 -- /FULL
+
+/- JC: Now would be a good time to explicitly say we're switching
+  back to Lean's Bool, which conveniently has `bif ... then ... else`
+  syntax that we can then use. -/
+
+def myBoolToBool (b : MyBool) : Bool :=
+  match b with
+  | .true => true
+  | .false => false
+
+def boolToMyBool (b : Bool) : MyBool :=
+  bif b then true else false
+
+end
 
 -- ######################################################################
 -- ## Types
@@ -455,7 +441,7 @@ def monochrome (c : Color) : Bool :=
 -- did (note that we can choose its name freely), or a constant of
 -- appropriate type (as below).
 
-def isred (c : Color) : Bool :=
+def isRed (c : Color) : Bool :=
   match c with
   | .black => false
   | .white => false
@@ -467,6 +453,9 @@ def isred (c : Color) : Bool :=
 
 -- ######################################################################
 -- ## Namespaces and Sections
+
+/- JC: I edited a lot of the contents and comments in just this section,
+  I hope it makes sense. -/
 
 -- FULL
 -- Lean provides a _namespace system_ to aid in organizing large
@@ -490,13 +479,19 @@ def myFoo : Bool := true
 -- FULL
 -- Inside of a namespace, all previous definitions from that namespace are
 -- available, and can be referred to without prefixing.
+-- Definitions can also be prefixed by a namespace to put it in the namespace
+-- without having to open and close the namespace.
 -- /FULL
 
 namespace RGB
 def myBlue : RGB := blue
 end RGB
 
-#check RGB.myBlue -- RGB
+def RGB.myOtherBlue : RGB := myBlue
+
+-- #check myBlue -- unknown identifier
+#check RGB.myBlue      -- RGB
+#check RGB.myOtherBlue -- RGB
 
 -- FULL
 -- We can also use `open` to bring the definitions of a namespace into scope.
@@ -719,10 +714,15 @@ def add (n : Nat) (m : Nat) : Nat :=
 
 -- TERSE: ***
 
+/- JC: Add some text here about how we're using Lean's `add`,
+  not our own `add`, because it provides the `+` notation for `Nat`
+  that would be problematic (vague?) to override.
+  But overriding the rest of the notation is fine though. -/
+
 def mul (n m : Nat) : Nat :=
   match m with
   | 0 => 0
-  | .succ m' => add n (mul n m')
+  | .succ m' => n + (mul n m')
 
 -- test_mult1
 example : mul 3 3 = 9 := by rfl
@@ -746,7 +746,7 @@ def sub (n m : Nat) : Nat :=
 def pow (base power : Nat) : Nat :=
   match power with
   | 0 => 1
-  | p + 1 => base * (pow base p)
+  | p + 1 => mul base (pow base p)
 
 -- EX1 (factorial)
 -- Recall the standard mathematical factorial function:
@@ -773,16 +773,24 @@ example : factorial 5 = 10 * 12   := by rfl  -- ADMITTED
 -- Lean already provides `+`, `-`, `*` for `Nat`, so we don't need to
 -- define our own notation.
 
-namespace Notation
+/- JC: Overriding the `+` is an immense headache for technical reasons,
+  so we leave that alone, since our definition is the same anyway.
+  In contrast, our `sub` and `mul` definitions _are_ slightly different,
+  so we _do_ want to override the notation instances for them. -/
 
-scoped infixl:65 (priority := high) " + " => add
-scoped infixl:65 (priority := high) " - " => sub
-scoped infixl:70 (priority := high) " * " => mul
-scoped infixr:80 (priority := high) " ^ " => pow
+instance instSub : Sub Nat where sub := sub
+instance instMul : Mul Nat where mul := mul
+instance instPow : Pow Nat Nat where pow := pow
 
-end Notation
+/- JC: In the infoview, hover over the operators
+  to check out their associativity --
+  `+`, `-`, and `*` all left-associative,
+  but `^` is right-associative. -/
 
-#check ((0 + 1) + 1 : Nat)
+#check (0 + 1 + 1 : Nat)
+#check (4 - 3 - 2 : Nat)
+#check (2 * 3 * 4 : Nat)
+#check (1 ^ 2 ^ 2 : Nat)
 
 -- TERSE: ***
 -- When we say that Lean comes with almost nothing built-in, we really
@@ -823,7 +831,12 @@ example : leb 4 2 = false := by rfl
 -- We'll be using these (especially `beq`) a lot, so let's give
 -- them infix notations.
 
-infix:65 "=?"  => beq
+/- JC: Lean's stdlib has `==` notation for `beq`,
+  but not for `Nat.ble`... -/
+
+instance : BEq Nat where
+  beq := beq
+
 infix:65 "<=?" => leb
 
 -- test_leb3'
@@ -877,6 +890,10 @@ example : 4 <? 2 = false := by rfl  -- ADMITTED
 -- plus_1_1
 example : 1 + 1 = 2 := by rfl
 
+-- TERSE: Another specific fact about natural numbers:
+-- JC: Keep the name for this one, it gets used later.
+theorem add_zero_one : 1 = 0 + 1 := by rfl
+
 -- FULL
 -- The same sort of "proof by simplification" can also be used to
 -- establish more interesting properties.  For example, the
@@ -892,7 +909,7 @@ example : 1 + 1 = 2 := by rfl
 -- that reduces by definition, because Rocq's addition recurses on
 -- the first argument.)
 
-theorem plus_n_O : ∀ n : Nat, n + 0 = n := by
+theorem add_zero : ∀ n : Nat, n + 0 = n := by
   intro n; rfl
 
 -- FULL
@@ -907,11 +924,34 @@ theorem plus_n_O : ∀ n : Nat, n + 0 = n := by
 
 -- TERSE: ***
 
-theorem plus_n_1 : ∀ n : Nat, n + 1 = Nat.succ n := by
+theorem add_succ : ∀ n m : Nat, n + (m + 1) = (n + m) + 1 := by
+  intro n m; rfl
+
+theorem mul_zero : ∀ n : Nat, n * 0 = 0 := by
   intro n; rfl
 
-theorem mult_n_0 : ∀ n : Nat, n * 0 = 0 := by
-  intro n; rfl
+theorem mul_succ : ∀ n m : Nat, n * (m + 1) = n + n * m := by
+  intro n m; rfl
+
+/- JC: Dumping the rest of the properties here.
+  They're needed because the notations prevent reducing from left to right
+  by just `dsimp [sub]` or `dsimp [pow]`.
+  I don't think these properties are actually used by us,
+  so maybe they can just be exercises. -/
+
+#check Nat.sub_zero
+
+theorem sub_zero n : 0 - n = 0 := by rfl
+theorem succ_sub_zero n : (n + 1) - 0 = n + 1 := by rfl
+theorem succ_sub_succ n m : (n + 1) - (m + 1) = n - m := by rfl
+
+theorem pow_zero n : n ^ 0 = 1 := by rfl
+theorem pow_succ (n m : Nat) : n ^ (m + 1) = n * (n ^ m) := by rfl
+
+/- JC: And another one, which we _do_ use later. -/
+
+theorem beq_succ : ∀ n m : Nat, (n + 1 == m + 1) = (n == m) := by
+  intro n m; rfl
 
 -- ######################################################################
 -- # Proof by Rewriting
@@ -971,29 +1011,34 @@ theorem plus_id_exercise : ∀ n m o : Nat,
 -- The `#check` command can also be used to examine the statements of
 -- previously declared lemmas and theorems.
 
-#check Nat.mul_zero   -- ∀ (n : Nat), n * 0 = 0
-#check Nat.mul_succ   -- ∀ (n m : Nat), n * Nat.succ m = n * m + n
+#check mul_zero  -- ∀ (n : Nat), n * 0 = 0
+#check mul_succ  -- ∀ (n m : Nat), n * Nat.succ m = n + n * m
 
 -- TERSE: ***
 -- We can use the `rw` tactic with a previously proved theorem
 -- instead of a hypothesis from the context.
 
-theorem mult_n_0_m_0 : ∀ p q : Nat,
+theorem add_mul_zero : ∀ p q : Nat,
     (p * 0) + (q * 0) = 0 := by
   intro p q
-  rw [Nat.mul_zero, Nat.mul_zero]
+  rw [mul_zero, mul_zero, add_zero]
 
 -- FULL
 -- EX1 (mult_n_1)
-theorem mult_n_1 : ∀ p : Nat,
+theorem mul_one : ∀ p : Nat,
     p * 1 = p := by
   -- ADMITTED
   intro p
-  rw [Nat.mul_succ, Nat.mul_zero, Nat.zero_add]
+  rw [add_zero_one, mul_succ, mul_zero, add_zero]
   -- /ADMITTED
 -- GRADE_THEOREM 1: mult_n_1
 -- []
 -- /FULL
+
+theorem mul_two : ∀ p : Nat,
+    p * 2 = p + p := by
+  intro p
+  rw [mul_succ, mul_succ, mul_zero, add_zero]
 
 -- ######################################################################
 -- # Proof by Case Analysis
@@ -1007,7 +1052,7 @@ theorem mult_n_1 : ∀ p : Nat,
 
 -- TERSE: Sometimes simple calculation and rewriting are not enough...
 example : ∀ n : Nat,
-    (n + 1) =? 0 = false := by
+    (n + 1 == 0) = false := by
   intro n
   -- `rfl` doesn't work here because `n` is unknown
   sorry
@@ -1019,8 +1064,8 @@ example : ∀ n : Nat,
 
 -- TERSE: We can use `cases` to perform case analysis:
 
-theorem plus_1_neq_0 : ∀ n : Nat,
-    (n + 1) =? 0 = false := by
+theorem add_one_neb_zero : ∀ n : Nat,
+    (n + 1 == 0) = false := by
   intro n
   cases n
   case zero => rfl
@@ -1087,7 +1132,6 @@ theorem andb3_exchange : ∀ b c d : Bool,
 --
 -- Some more tactics will be useful for the exercises ahead.
 --
--- TODO: Update below explanation
 -- The `dsimp` tactic ("definitionally simplify") applies known facts
 -- and definitions to simplify the goal.  You can give it hints in
 -- square brackets: `dsimp [f]` tells it to unfold the definition
@@ -1100,10 +1144,11 @@ theorem andb3_exchange : ∀ b c d : Bool,
 -- is `P`, then `exact h` closes the goal.  You can also
 -- transform `h` slightly — for instance, `exact h.symm` uses
 -- the symmetry of equality.
---
--- TODO: I think this example should be rewritten to avoid `contradiction`,
---   which gets discussed in detail in the Tactics chapter.
---   I've added `orb_false_true` as a suggestion.
+
+/- JC: I think this example should be rewritten to avoid `contradiction`,
+  which gets discussed in detail in the Tactics chapter.
+  I've added `orb_false_true` as a suggestion. -/
+
 -- The `contradiction` closes a goal by looking for contradictory
 -- assumptions in the context. For instance, if `h : 0 = 1` is in the
 -- context, then `contradiction` closes the current goal, since such
@@ -1148,8 +1193,8 @@ theorem orb_false_true : ∀ b : Bool,
 
 -- TERSE: ***
 -- Again, we use <;> to apply `rfl` to the subgoals generated by `cases n`:
-theorem plus_1_neq_0' : ∀ n : Nat,
-    (n + 1) =? 0 = false := by
+theorem add_one_neb_zero' : ∀ n : Nat,
+    (n + 1 == 0) = false := by
   intro n; cases n <;> rfl
 
 theorem andb_commutative'' : ∀ b c : Bool,
@@ -1158,8 +1203,8 @@ theorem andb_commutative'' : ∀ b c : Bool,
 
 -- FULL
 -- EX1 (zero_nbeq_plus_1)
-theorem zero_nbeq_plus_1 : ∀ n : Nat,
-  0 =? (n + 1) = false := by
+theorem zero_neb_add_one : ∀ n : Nat,
+  (0 == n + 1) = false := by
   -- ADMITTED
   intro n; cases n <;> rfl
   -- /ADMITTED
@@ -1309,7 +1354,7 @@ inductive Modifier : Type where
   | plus | natural | minus
 
 -- A full `Grade`, then, is just a `letter` and a `modifier`.
--- TODO: Explain what a `structure` is.
+-- JC: Explain what a `structure` is.
 structure Grade where
   letter : Letter
   modifier : Modifier
@@ -1378,7 +1423,7 @@ def modifierComparison (m1 m2 : Modifier) : Comparison :=
   | minus, _ => lt
 
 -- EX2 (grade_comparison)
--- TODO: Explain structure projections at this point.
+-- JC: Explain structure projections at this point.
 def gradeComparison (g1 g2 : Grade) : Comparison
   -- ADMITDEF
   := match letterComparison g1.letter g2.letter with
@@ -1432,7 +1477,7 @@ theorem lowerLetter_lowers : ∀ l : Letter,
 -- []
 
 -- EX2 (lower_grade)
--- TODO: Explain constructor brackets `⟨` `⟩` at this point.
+-- JC: Explain constructor brackets `⟨` `⟩` at this point.
 def lowerGrade (g : Grade) : Grade
   -- ADMITDEF
   := match g with
@@ -1465,9 +1510,9 @@ theorem lowerGrade_F_Minus : lowerGrade ⟨F, minus⟩ = ⟨F, minus⟩ := by rf
 -- []
 
 -- EX3 (lower_grade_lowers)
--- TODO: Some things to introduce before we get here:
--- * Working on multiple match cases with `| _ ... | _ => ...`;
--- * Working on all remaining goals with `all_goals`.
+/- JC: Some things to introduce before we get here:
+  * Working on multiple match cases with `| _ ... | _ => ...`;
+  * Working on all remaining goals with `all_goals`. -/
 theorem lowerGrade_lowers : ∀ g : Grade,
     gradeComparison ⟨F, minus⟩ g = lt →
     gradeComparison (lowerGrade g) g = lt := by
@@ -1573,8 +1618,8 @@ def binToNat (m : Bin) : Nat
   -- ADMITDEF
   := match m with
   | .z => 0
-  | .b0 m' => 2 * binToNat m'
-  | .b1 m' => 1 + 2 * binToNat m'
+  | .b0 m' => binToNat m' * 2
+  | .b1 m' => binToNat m' * 2 + 1
   -- /ADMITDEF
 
 -- test_bin_incr1

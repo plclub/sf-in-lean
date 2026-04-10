@@ -586,7 +586,7 @@ example : included [1, 2, 2] [2, 1, 4, 1] = false := by rfl  -- ADMITTED
 theorem add_inc_count : ∀ (s : Bag) (v : Nat),
     count v (add v s) = (count v s) + 1 := by
   intro s v
-  simp [add, count]
+  simp [add, count, eqb_refl]
 -- /QUIETSOLUTION
 -- GRADE_MANUAL 2: add_inc_count
 -- []
@@ -737,13 +737,12 @@ example : ∀ c n : Nat,
 -- TERSE: A generalization that gives a stronger inductive hypothesis:
 
 theorem myRepeat_plus : ∀ c1 c2 n : Nat,
-    myRepeat n c1 ++ myRepeat n c2 = myRepeat n (add c1 c2) := by
+    myRepeat n c1 ++ myRepeat n c2 = myRepeat n (c1 + c2) := by
   intro c1 c2 n
   induction c1
   . case zero =>
     dsimp [myRepeat]
-    rw [add_0_l]
-    rfl
+    rw [zero_add]; rfl
   . case succ c1' ih =>
     dsimp [myRepeat]
     rw [succ_add, cons_append, ih]
@@ -835,11 +834,11 @@ theorem rev_length : ∀ l : NatList,
 
 -- app_length
 theorem app_length : ∀ l1 l2 : List Nat,
-  (l1 ++ l2).length = add l1.length l2.length := by
+  (l1 ++ l2).length = l1.length + l2.length := by
   -- WORKINCLASS
   intro l1 l2
   induction l1
-  . case nil => dsimp; rw [add_0_l]
+  . case nil => dsimp; rw [zero_add]
   . case cons n l1' ih => dsimp; rw [ih, succ_add]
 -- /WORKINCLASS
 
@@ -1071,7 +1070,7 @@ def eqblist (l1 l2 : NatList) : Bool :=
   -- ADMITDEF
   match l1, l2 with
   | [], [] => true
-  | h1 :: t1, h2 :: t2 => (beq h1 h2) && eqblist t1 t2
+  | h1 :: t1, h2 :: t2 => (h1 == h2) && eqblist t1 t2
   | _, _ => false
   -- /ADMITDEF
 
@@ -1171,13 +1170,13 @@ theorem remove_does_not_increase_count : ∀ s : Bag,
 -- (You may find that the difficulty of the proof depends on how you defined `count`!
 -- SOLUTION
 theorem bag_count_sum : ∀ (s1 s2 : Bag) (v : Nat),
-    count v (sum s1 s2) = add (count v s1) (count v s2) := by
+    count v (sum s1 s2) = (count v s1) + (count v s2) := by
   intro s1 s2 v
   unfold sum
   induction s1
   . case nil =>
     dsimp [NatList.app, count]
-    rw [add_0_l]
+    rw [zero_add]
   . case cons h s1' ih =>
     dsimp [NatList.app, count]
     cases (h == v)

@@ -420,7 +420,7 @@ theorem app_length {α : Type} : ∀ (l1 l2 : List α),
   (l1 ++ l2).length = l1.length + l2.length := by
   -- ADMITTED
   intro l1 l2; induction l1
-  . case nil => dsimp; rw [add_0_l]
+  . case nil => dsimp; rw [zero_add]
   . case cons h t ih => dsimp; rw [succ_add, ih]
 -- /ADMITTED
 -- GRADE_THEOREM 0.5: app_nil_r
