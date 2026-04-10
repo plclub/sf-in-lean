@@ -12,7 +12,7 @@
 -- /FULL
 -- /HIDEFROMHTML
 -- TERSE: HIDEFROMHTML
-import Lists
+import Induction
 -- TERSE: /HIDEFROMHTML
 
 -- HIDEFROMADVANCED
