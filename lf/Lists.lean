@@ -723,7 +723,7 @@ theorem app_assoc : ∀ l1 l2 l3 : NatList,
 
 -- myRepeat_double_firsttry
 example : ∀ c n : Nat,
-    myRepeat n c ++ myRepeat n c = myRepeat n (add c c) := by
+    myRepeat n c ++ myRepeat n c = myRepeat n (c + c) := by
   intro c
   induction c
   . case zero => intro n; rfl
@@ -1146,6 +1146,47 @@ theorem leb_n_Sn : ∀ n : Nat,
 
 -- Before doing the next exercise, make sure you've filled in the
 -- definition of `remove_one` above.
+
+-- HIDE
+  /- LATER: CH: The following exercise is not so simple.  Also the
+       shape of the theorem (with a magic constant [0]), and the fact that
+       n needs to be destructed seem like big and ugly hacks. The
+       hack-free theorem looks like this: -/
+  /- LATER: BCP 20: We'd need to find a way to get through the first
+       lemma's proof without using features they don't know... -/
+    theorem count_remove_one : forall v s,
+      count v (remove_one v s) = (count v s).pred := by
+      intro v s
+      induction s
+      . case nil => rfl
+      . case cons n l ih =>
+        dsimp [count, remove_one] at *
+      -- XXX they don't know about generalizing or casing on expressions yet !!!
+        generalize h : (n == v) = x
+        cases x
+        . dsimp [count]; rw [h]; dsimp; exact ih
+        . dsimp
+
+    theorem leb_pred_n_n : forall n,
+      Nat.ble n.pred n = true := by
+
+      intro n
+      induction n
+      . case zero => dsimp [Nat.ble]
+      . case succ n ih =>
+          dsimp
+          apply leb_n_Sn
+
+    theorem remove_does_not_increase_count': forall (s : Bag) (n : Nat),
+      Nat.ble (count n (remove_one n s)) (count n s) = true := by
+
+      intro s n
+      induction s
+      . case nil => rfl
+      . case cons n' l ih =>
+        rw [count_remove_one, leb_pred_n_n]
+-- /HIDE
+
 -- EX3A (remove_does_not_increase_count)
 
 theorem remove_does_not_increase_count : ∀ s : Bag,
@@ -1387,7 +1428,7 @@ structure MyId where
 -- We'll also need an equality test for `MyId`s:
 
 def eqb_id (x1 x2 : MyId) : Bool :=
-  beq x1.val x2.val
+  x1.val == x2.val
 
 -- EX1 (eqb_id_refl)
 -- GRADE_THEOREM 1: eqb_id_refl
@@ -1507,3 +1548,69 @@ theorem update_neq : ∀ (d : PartialMap) (x y : MyId) (o : Nat),
 -- /FULL
 
 end PartialMap
+
+-- HIDE
+-- EX2M? (baz_num_elts)
+/- HIDE: I'm not sure the material covered up to here suffices to
+  understand that Inductive types must have finite elements and avoid
+  the trap of coming up with infinite lists.  HIDE: MRC'20: I have to
+  agree with the comments regarding this exercise.  It's unmotivated
+  and feels like a trap.  Is there a concept we're trying to get
+  across here that's necessary?  I'm proposing the exercise be
+  optional.  BCP '20: Looks like someone made it optional. :-) But
+  should we just drop it?  IY '20: I agree with the above comments,
+  but I sort of appreciate this exercise. It gives a good
+  introduction to the concept that some types may not be
+  inhabited. Could we just add a hint that Inductive types must have
+  finite elements?  BCP 20: That would kind of give away the answer,
+  no?  I think leaving it in but leaving it optional is the best
+  compromise. MRC 2/22: I don't think the exercise "introduces" the
+  concept that types may be uninhabited. Instead it *demands* the
+  student invent that notion on their own, which is non-obvious to
+  your average OCaml (say) programmer. Also, at this point in the
+  file it is a complete non-sequitur. And it has nothing to do with
+  lists or other standard data types, as the rest of the file. KK:
+  Also this exercise comes out of the blue without any
+  motivation/introduction.  BCP 23: OK, I am removing it. -/
+
+  -- Consider the following inductive definition:
+
+  inductive Baz where
+    | baz1 (x : Baz)
+    | baz2 (y : Baz) (b : Bool)
+
+  /- How _many_ elements does the type [baz] have? (Explain in words,
+     in a comment.) -/
+
+  -- SOLUTION
+  /- None!  In order to create an element of type [baz], we would need
+        to use one of the two constructors [Baz1] and [Baz2]; but both of
+        these require a [baz] as an argument.  So this definition cannot
+        get off the ground: in order to create a [baz] we would need to
+        already have one. -/
+  -- /SOLUTION
+  -- LATER: Rework this exercise for easier grading?
+
+  /- LATER: KK: I am not sure whether this point should be made through a
+    "manual" exercise like the one below. The students who don't know
+    (or notice) that an Inductive definition needs a base case will
+    just fail this exercise and will only see the reason in the grader
+    comment. It is very easy for a student to falsely think that they
+    have the right answer here and just move on without thinking about
+    it. I think that it would be better to either add a small section
+    that clearly explains this concept, or maybe add a hint similar to
+    the one below: -/
+
+  /- Hint: Try to write a value of type baz for which the following
+       lemma [one_true_baz] holds. -/
+
+    def count_trues (x : Baz) : Nat :=
+      match x with
+      | .baz1 x' => count_trues x'
+      | .baz2 x' true => 1 + count_trues x'
+      | .baz2 x' _ => count_trues x'
+
+    -- theorem one_true_baz : count_trues (your baz here) = 1. --
+
+    -- []
+-- /HIDE
