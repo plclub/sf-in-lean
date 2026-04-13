@@ -1209,6 +1209,23 @@ theorem remove_does_not_increase_count : ∀ s : Bag,
 -- Write down an interesting theorem `bag_count_sum` about bags
 -- involving the functions `count` and `sum`, and prove it.
 -- (You may find that the difficulty of the proof depends on how you defined `count`!
+
+/- LATER: APT: This is the obvious theorem, and everyone came up with
+   it.  But how hard it is to prove (in terms of Rocq mechanics)
+   depends critically on how the student defined [count] -- the
+   solution for which has not been given at this point, and is not so
+   obvious. BCP 9/16: For the moment, I've just added an explicit
+   warning to this effect - not sure whether we can do better. (Is
+   there a hint we could give about how count should have been
+   defined, to make this easier?  There's no problem giving a hint
+   here, since they'll already have solved the count exercise once
+   before getting to this point.) MRC 1/19: The proof uses [destruct]
+   on a term that is not merely an identifier. That usage has not
+   been introduced yet. APT 21: Added a hint about that. MRC 2/22:
+   Even if the exercise is optional, it ought to be solvable with
+   with the material introduced thus far. It is not. I note that BCP
+   has rejected the proof in the exercise above for [count_remove_one]
+   because it [destruct]s on a term rather than identifier. -/
 -- SOLUTION
 theorem bag_count_sum : ∀ (s1 s2 : Bag) (v : Nat),
     count v (sum s1 s2) = (count v s1) + (count v s2) := by
