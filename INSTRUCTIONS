@@ -1,14 +1,19 @@
-I am working to develop a version of the Software Foundations textbook that uses Lean, rather than Rocq. I could use your help making the translation. Let's put the code in this directory, in the sub-directory lf.
+I am working to develop a version of the Software Foundations textbook that uses Lean, rather than Rocq. I could use your help making the translation. The code will go in this directory, in the sub-directory lf.
 
 The first textbook is "logical foundations". The sources for this textbook are in /Users/mwh/Documents/Courses/SoftwareFoundations/sfdev/lf. These source files (all ending in .v, the extension for Rocq) include all materials for each section, both the "terse" and "full" versions (the former are for lectures in class, and the latter is the full textbook for use offline), with solutions to exercises, and with notes to instructors and other todos.
 
-As a first step I'd like to create equivalent versions of these files, but written in Lean. The order that students are expected to go through the files is Basics, Induction, Lists, Poly, Tactics, Logic, IndProp, Maps, ProofObjects, IndPrinciples, Rel, Imp, ImpParser, ImpCEvalFun, Extraction, Auto, and AltAuto. So I would make the changes in this order.
+I want to create equivalent versions of these files, written in Lean. The order that students are expected to go through the files is Basics, Induction, Lists, Poly, Tactics, Logic, IndProp, Maps, ProofObjects, IndPrinciples, Rel, Imp, ImpParser, ImpCEvalFun, Extraction, Auto, and AltAuto. I want to make the changes in this order, so updates to earlier files are accounted for in later ones.
 
-But you might also look at the files to consider questions like:
+The lf/ directory contains the progress so far, with conversions of Basics, Induction, Lists, and Poly. These files were created at first by you, and then manually reworked to fit our pedagogical goals, and to meet Lean conventions.
+
+I would like you to convert the rest of the files in order, using these four as a guide for how to go. You can check your memory for some guidelines to follow. Also take a look at the COMMENTARY.md file for additional notes about changes we made and would like to see in general. (Notes are prefaced by their authors, JC and DHS.) An important aspect of these comments is how the proofs are presented -- it's important to stick to tactics that are appropriate pedagogically, as they are incrementally introduced.
+
+You might want to read the commentary and revisit your project_sf_lean_decisions.md based on what's there. 
+
+As you move forward please consider the following (which we have done in the initial four-file translation and revision):
 
 - Are there things in this textbook that work for Rocq but make no sense in Lean? In that case, what should we replace them with?
 - Are there things in Lean that are not (or were not) available in Rocq but if used would make the material more Lean-idiomatic and also clearer?
 - There is some good Lean documentation already, especially "Functional Programming in Lean" (https://lean-lang.org/functional_programming_in_lean/) and "Theorem Proving in Lean" (https://lean-lang.org/theorem_proving_in_lean4/). It would be good if Software Foundations taught coding and proving in a way that was consistent with these texts, and could point to them for more information.
 
-How about taking a look at the lay of the land, and asking me questions about ways you might make these changes?
-
+If you questions or ideas you are not sure about, please ask me!
