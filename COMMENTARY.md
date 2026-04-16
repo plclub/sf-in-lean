@@ -55,15 +55,21 @@ or `. case zero => ...`, `. case succ n => ...`?
 | Definition doc comment | `/-- -/` |
 | General doc comment    | `/-! -/` |
 
-## Notable tactics
+## Tactics
 
-These might require a little more textual explanation.
+From FPiL: "The grind tactic is very powerful, customizable, and extensible; due to this power and flexibility,
+its output when it fails to prove a theorem contains a lot of information that can help trained Lean users diagnose the reason for the failure.
+This can be overwhelming in the beginning, so this chapter uses only decide and simp."
 
-* `split`
-* `dsimp`, `whnf`
-* `have` vs. `rcases` vs. `obtain`
+Tactics to consider introducing:
+`rcases`, `obtain`, `show`, `assumption`, `rename_i`, `revert`, `constructor`, `split`, `subst`, `suffices`, `specialize`
 
-From FPiL: "The grind tactic is very powerful, customizable, and extensible; due to this power and flexibility, its output when it fails to prove a theorem contains a lot of information that can help trained Lean users diagnose the reason for the failure. This can be overwhelming in the beginning, so this chapter uses only decide and simp."
+### Inventory
+
+* `Basics.lean`: `rfl`, `intro`, `rewrite`, `rw`, `cases`, `dsimp`, `exact`, `contradiction`, `<;>` (to move), `all_goals` (to remove)
+* `Induction.lean`: `induction`, `have`, `calc`, `generalize`
+* `Lists.lean`: `unfold`, `apply`
+* `Poly.lean`: N/A
 
 ### `rewrite` vs `rw`
 
@@ -74,7 +80,7 @@ Furthermore, the way stepping through the proof goes is a bit confusing: the goa
 Essentially, `rw` is kind of like `now rewrite` in Rocq. Good for people who know what they're doing, hard to read for those who don't.
 I'll give a soft proposal that we use `rewrite` rather than `rw`.
 
-Daniel: I am mostly in agreement with Roger's point above, especially for early chapters where we want to be as explicit 
+Daniel: I am mostly in agreement with Roger's point above, especially for early chapters where we want to be as explicit
 as possible about what's happening in proofs. However I think after the first few chapters we can probably relax this restriction?
 
 JC: Because the `rewrite [...]; rfl` occurs so often immediately,
@@ -120,15 +126,14 @@ this is a good place to introduce equational reasoning via `calc`.
 
 ### `Lists.lean`
 
-DHS: Weird that this file contains the first `inductive` definition students have seen up to this point, 
-but that definition is also actually a `structure`. Probably need to restructure this. 
+DHS: Weird that this file contains the first `inductive` definition students have seen up to this point,
+but that definition is also actually a `structure`. Probably need to restructure this.
 
 DHS: Unsure if it's a good idea to actually use the built-in `List` definition here, since it's polymorphic,
-and we aren't introducing this idea until a later chapter. This also means we don't get the chance 
-to show students how to actually produce an inductive definition if we're relying on the built-in ones. 
-
+and we aren't introducing this idea until a later chapter. This also means we don't get the chance
+to show students how to actually produce an inductive definition if we're relying on the built-in ones.
 DHS: We probably need to actually take time to explain what a `@[simp]` annotation on a lemma
-means before we introduce it, and I don't think this chapter is the right place to do it anyway. 
+means before we introduce it, and I don't think this chapter is the right place to do it anyway.
 This is probably a better fit for `Auto.lean`.
 
 DHS: Claude picked a bad definition for `nonzeroes`:
@@ -148,8 +153,8 @@ definition of lists make sense with the change to use `List Nat` in the previous
 
 DHS: Using the built-in definition of `List.reverse` is dramatically more complicated
 than implementing our own reverse function, since it is implemented in terms of an auxiliary
-function. 
+function.
 
-DHS: The associativity of `++` in Lean is different than Rocq. In Rocq the definition 
-of `app_assoc` is `l ++ m ++ n = (l ++ m) ++ n`, but in Lean it's 
+DHS: The associativity of `++` in Lean is different than Rocq. In Rocq the definition
+of `app_assoc` is `l ++ m ++ n = (l ++ m) ++ n`, but in Lean it's
 `l ++ m ++ n = l ++ (m ++ n)`.
