@@ -63,21 +63,23 @@
 
 -- ## Enumerated Types
 
--- TERSE: In Lean, we can build practically everything from first
---     principles...
--- FULL
--- One notable thing about Lean is that its set of built-in
--- features is _extremely_ small.  For example, instead of the usual
--- palette of atomic data types (booleans, integers, strings, etc.),
--- Lean offers a powerful mechanism for defining new data types from
--- scratch, with all these familiar types as instances.
+-- TERSE: In Lean, we can build practically everything from first principles...
+--     FULL One notable thing about Lean is that its set of built-in features is
+--     _extremely_ small.  For example, instead of the usual palette of atomic
+--     data types (booleans, integers, strings, etc.), Lean offers a powerful
+--     mechanism for defining new data types from scratch, with all these
+--     familiar types as instances.
 --
--- Naturally, Lean also comes with an extensive standard library
--- providing definitions of booleans, numbers, and many common data
--- structures like lists and hash tables.  But there is nothing magic
--- or primitive about these library definitions.  To illustrate this,
--- in this course we will explicitly recapitulate almost all the
--- definitions we need, rather than getting them from the standard library.
+-- Naturally, Lean also comes with an extensive standard library providing
+-- definitions of booleans, numbers, and many common data structures like lists
+-- and hash tables.  But there is nothing magic or primitive about these library
+-- definitions.  To illustrate this, in this course we will explicitly
+-- recapitulate almost all the definitions we need, rather than getting them
+-- from the standard library.
+-- RAB ADDITION:
+-- We take great care to match those definitions with the ones in the standard
+-- library, so that by the time you are finished with this course, you will
+-- already have a strong understanding of how the Lean standard library works.
 -- /FULL
 
 -- ######################################################################
@@ -127,7 +129,8 @@ def nextWorkingDay (d : Day) : Day :=
 -- inference_ -- but we'll generally include them to make reading
 -- easier.
 
--- You may also notice the slightly peculiar pattern matching syntax- for
+-- RAB ADDITION
+-- You may also notice the unique pattern matching syntax- for
 -- example, in "`.monday`". The `.` - is syntactic sugar for `Day.monday`, and
 -- exists to save the programmer the time of typing out the full qualified name.
 -- You may wonder why the language doesn't just expose a pattern like `monday`
@@ -159,6 +162,32 @@ def nextWorkingDay (d : Day) : Day :=
 -- the Lean extension and try it for yourself.  Load this file,
 -- `Basics.lean`, from the book's Lean sources, find the above
 -- example, and observe the result in the Lean Infoview panel.)
+
+-- RAB ADDITION
+
+-- Using the Lean Extension
+
+-- In VSCode, development of Lean code is supported by
+-- the Lean Extension, which provides an interactive "infoview" panel that
+-- displays the results of commands like `#eval` and `#check`, as well as the
+-- current goal state when working on proofs. You can hover over expressions in
+-- the source code to see their types, and you can click on the results in the
+-- infoview to navigate to their definitions. This makes it easier to understand
+-- how your code is being interpreted by Lean and to debug any issues that
+-- arise.
+
+-- The infoview always follows your cursor, and Lean typechecks the file as you
+-- edit it, so you can see the results of your changes immediately. You can also
+-- use the infoview to explore the definitions of functions and types that
+-- you're using, which can be very helpful for understanding how they work.
+
+-- If you haven't already, install the Lean Extension in VSCode and open the
+-- `Basics.lean` file to see the infoview in action. Try hovering over the
+-- `nextWorkingDay` function and the `Day` type to see their definitions, and
+-- experiment with adding your own `#eval` commands to test other inputs.
+
+-- NOTE: There's a question of where exactly to put this.
+
 -- /FULL
 
 -- Second, we can record what we _expect_ the result to be in the
@@ -176,6 +205,14 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
 -- The `by rfl` can be read as "The assertion we've just made can be
 -- proved by observing that both sides of the equality evaluate to
 -- the same thing."
+
+-- `rfl` stands for "reflexivity," which is the principle that any value is
+-- equal to itself. After evaluation, both sides of the equality are the same
+-- value, so the assertion is true by reflexivity.  If we had made a different
+-- assertion, such as `example : nextWorkingDay (nextWorkingDay Day.saturday) =
+-- Day.monday`, then Lean would not be able to verify it, and would signal an
+-- error. Try it out!
+
 -- /FULL
 
 -- Third, we can ask Lean to _compile_ our definitions to efficient
@@ -202,6 +239,8 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
 
 /- JC: Can we just gloss over what `section` is doing here,
   or do we need to explain it? -/
+
+-- RAB: No need, I think.
 section
 
 inductive MyBool : Type where
@@ -336,15 +375,32 @@ example : andb3 .true .true .false = .false := by rfl  -- ADMITTED
   back to Lean's Bool, which conveniently has `bif ... then ... else`
   syntax that we can then use. -/
 
+  -- RADDTION
+
+-- TERSE: ***
+-- FULL
+-- Now that we've seen how to define our own booleans, we can switch back to
+-- Lean's built-in `Bool` type, which has the same structure but also includes
+-- a lot of useful functions and lemmas.  We can even define functions to
+-- convert between our `MyBool` and Lean's `Bool`.
+
 def myBoolToBool (b : MyBool) : Bool :=
   match b with
   | .true => true
   | .false => false
 
+-- With the full power of Lean's `Bool` at our disposal, we can also write this
+-- more concisely using the `bif ... then ... else` syntax, which is a
+-- convenient way to write simple conditional expressions.
+
 def boolToMyBool (b : Bool) : MyBool :=
   bif b then true else false
 
 end
+
+-- RAB: From this point, there are about 450 lines of comments before
+-- the next exercise. This is the same as in Rocq, but do we want
+-- to keep this pattern?
 
 -- ######################################################################
 -- ## Types
@@ -377,7 +433,19 @@ end
 -- Similarly, the type of `and`, written `Bool → Bool → Bool`, can
 -- be read, "Given two inputs, each of type `Bool`, this function
 -- produces an output of type `Bool`."
+
+-- RAB ADDITION
+
+-- You may notice that → is a unicode character, not a simple ASCII string. This
+-- is a common convention in Lean, and the Lean Extension provides convenient
+-- shortcuts for entering these characters. Simply typing \ (backslash) followed
+-- by the name of the character, and the extension will automatically replace it
+-- with the correct symbol. For example, typing \-> or \to will produce →, and
+-- \lambda will produce λ. This allows you to write more concise and readable
+-- code without having to remember complex keyboard shortcuts.
+
 -- /FULL
+
 
 -- ######################################################################
 -- ## New Types from Old
@@ -530,6 +598,10 @@ namespace TuplePlayground
 -- constructors `b1` and `b0` for the two possible bit values)
 -- and then define the datatype `Nybble`, which is essentially
 -- a tuple of four bits.
+
+-- RAB: Is this called a Nybble, not a Nibble? Whatever the Penn systems course
+-- calls it, we should follow suite, I guess.
+
 -- /FULL
 
 -- TERSE: A nybble is half a byte -- four bits.
@@ -586,14 +658,35 @@ namespace NatPlayground
 -- `Nybble` built from them -- are finite.  The natural numbers, on
 -- the other hand, are an infinite set, so we'll need to use a
 -- slightly richer form of type declaration to represent them.
---
+
+-- RAB: I moved over the notes from the Rocq book here, as I find they
+-- very nicely motivate unary for someone who has not seen it before.
+
+-- There are many representations of numbers to choose from. You are
+-- certainly familiar with decimal notation (base 10), using the
+-- digits 0 through 9, for example, to form the number 123. You may
+-- very likely also have encountered hexadecimal notation (base 16),
+-- in which the same number is represented as 7B, or octal (base 8),
+-- where it is 173, or binary (base 2), where it is 1111011. Using an
+-- enumerated type to represent digits, we could use any of these as
+-- our representation natural numbers. Indeed, there are
+-- circumstances where each of these choices would be useful.
+
+-- The binary representation is valuable in computer hardware because
+-- the digits can be represented with just two distinct voltage
+-- levels, resulting in simple circuitry. Analogously, we wish here
+-- to choose a representation that makes _proofs_ simpler.
+
 -- In fact, there is a representation of numbers that is even simpler
 -- than binary, namely unary (base 1), in which only a single digit
--- is used.  To represent unary numbers with a Lean datatype, we use
--- two constructors. The `zero` constructor represents zero. The `succ`
--- constructor can be applied to the representation of the natural
--- number `n`, yielding the representation of `n+1`, where `succ` stands
--- for "successor".  Here is the complete datatype definition:
+-- is used -- as our forebears might have done to count days by
+-- making scratches on the walls of their caves. To represent unary
+-- numbers with a Lean datatype, we use two constructors. The
+-- [zero] constructor represents zero. The [succ] constructor can be
+--applied to the representation of the natural number [n], yielding
+-- the representation of [n+1], where [succ] stands for "successor."
+--  Here is the complete datatype definition: *)
+
 -- /FULL
 
 -- TERSE: For simplicity in proofs, we choose unary representation.
@@ -613,7 +706,10 @@ inductive OtherNat : Type where
   | stop
   | tick (foo : OtherNat)
 
--- The _interpretation_ of these marks arises from how we use them to
+-- This is the same _representation_ of numbers as `Nat`, but with different
+-- (sillier!) constructor names.
+
+-- The _interpretation_ of these representations arises from how we use them to
 -- compute.
 
 def pred (n : Nat) : Nat :=
@@ -629,6 +725,14 @@ end NatPlayground
 -- Lean provides built-in support for them: ordinary decimal
 -- numerals can be used as a shorthand, and Lean's `Nat` type uses
 -- the constructors `Nat.zero` and `Nat.succ`.
+
+-- RAB: Hovering over succ points out that "Using Nat.succ n should usually be
+-- avoided in favor of n + 1, which is the simp normal form." How quickly should
+-- we break away from succ style and go straight to n + 1 style? More broadly,
+-- how much do we want to adhere to conventions like simp normal form? In my
+-- view, following standard Lean style wherever possible is a good thing to be
+-- doing, in no small part because proof view displays terms in Lean style, e.g. (n +
+-- 1) instead of .succ n.
 
 example : .succ (.succ (.succ (.succ .zero))) = 4 := by rfl
 
