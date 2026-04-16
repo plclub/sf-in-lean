@@ -586,7 +586,9 @@ example : included [1, 2, 2] [2, 1, 4, 1] = false := by rfl  -- ADMITTED
 theorem add_inc_count : ∀ (s : Bag) (v : Nat),
     count v (add v s) = (count v s) + 1 := by
   intro s v
-  simp [add, count, eqb_refl]
+  dsimp [add, count, eqb_refl]
+  rw [eqb_refl]
+  dsimp
 -- /QUIETSOLUTION
 -- GRADE_MANUAL 2: add_inc_count
 -- []
