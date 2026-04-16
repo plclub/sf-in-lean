@@ -1011,9 +1011,7 @@ theorem add_zero_one : 1 = 0 + 1 := by rfl
 -- TERSE: A general property of natural numbers:
 
 -- Note: Because Lean's addition recurses on the second argument,
--- `n + 0` reduces to `n` by definition.  (In Rocq, it is `0 + n`
--- that reduces by definition, because Rocq's addition recurses on
--- the first argument.)
+-- `n + 0` reduces to `n` by definition.
 
 theorem add_zero : ∀ n : Nat, n + 0 = n := by
   intro n; rfl
@@ -1313,11 +1311,6 @@ theorem zero_neb_add_one : ∀ n : Nat,
 --
 -- You can define custom notation using the `notation`, `infixl`,
 -- `infixr`, `prefix`, and `postfix` commands.
---
--- Unlike Rocq, Lean handles notation scoping through namespaces and
--- type classes rather than notation scopes.  The numeric literal `3`
--- can be interpreted as `Nat`, `Int`, `Float`, etc., depending on the
--- expected type, thanks to Lean's `OfNat` type class.
 -- /FULL
 
 -- FULL
