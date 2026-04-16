@@ -822,6 +822,8 @@ theorem add_shuffle3 : ∀ n m p : Nat,
 GRADE_THEOREM 1: add_shuffle3
 -/
 
+
+/- TODO (DHS): If we want to introduce calc here we need to explain it -/
 /- QUIETSOLUTION -/
 theorem succ_mul : ∀ m n : Nat,
     (n + 1) * m = (n * m) + m := by
@@ -915,6 +917,9 @@ theorem all3_spec : ∀ b c : Bool,
   case false => rfl
 /- /ADMITTED -/
 
+/- TODO: (DHS) At the moment these are our first instances of generalize,
+   so we likely need to explain this tactic here or earlier in the chapter, more likely
+  -/
 theorem right_distrib : ∀ n m p : Nat,
     (n + m) * p = n * p + m * p := by
   /- ADMITTED -/
