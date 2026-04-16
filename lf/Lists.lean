@@ -91,11 +91,11 @@ example : (⟨3, 5⟩ : NatProd).fst = 3 := by rfl
 -- The anonymous constructor can be used in both expressions and in pattern matches.
 def fst' (p : NatProd) : Nat :=
   match p with
-  | ⟨x,_⟩ => x
+  | ⟨x, _⟩ => x
 
 def snd' (p : NatProd) : Nat :=
   match p with
-  | ⟨_,y⟩=> y
+  | ⟨_, y⟩ => y
 
 def NatProd.swap (p : NatProd) : NatProd :=
   ⟨snd p, fst p⟩
@@ -859,7 +859,7 @@ theorem app_length : ∀ l1 l2 : List Nat,
 theorem foo1 : forall n : Nat, forall l : NatList,
     myRepeat n 0 = l -> l.length = 0 := by
   intro n l H
-  rw [←H]
+  rw [← H]
   rfl
 -- /HIDE
 -- /QUIZ
@@ -883,8 +883,8 @@ theorem foo2 :  forall n m : Nat,
   induction m
   . case zero => rfl
   . case succ m' ih =>
-      dsimp [NatList.length, myRepeat] at *
-      rw [ih]
+    dsimp [NatList.length, myRepeat] at *
+    rw [ih]
 -- /HIDE
 -- /QUIZ
 
@@ -1008,12 +1008,12 @@ theorem rev_app_distr : ∀ l1 l2 : NatList,
   intro l1 l2
   induction l1
   . case nil =>
-      dsimp [NatList.rev]
-      rw [app_nil_r, nil_app]
+    dsimp [NatList.rev]
+    rw [app_nil_r, nil_app]
   . case cons x l1' ih =>
-      rw [cons_append]
-      dsimp [NatList.rev]
-      rw [ih, app_assoc]
+    rw [cons_append]
+    dsimp [NatList.rev]
+    rw [ih, app_assoc]
 -- /ADMITTED
 -- GRADE_THEOREM 0.5: NatList.rev_app_distr
 
@@ -1026,9 +1026,9 @@ theorem rev_involutive : ∀ l : NatList,
   induction l
   . case nil => rfl
   . case cons n l' ih =>
-      dsimp [NatList.rev]
-      rw [rev_app_distr, ih]
-      rfl
+    dsimp [NatList.rev]
+    rw [rev_app_distr, ih]
+    rfl
 -- /ADMITTED
 -- GRADE_THEOREM 0.5: NatList.rev_involutive
 
@@ -1150,43 +1150,41 @@ theorem leb_n_Sn : ∀ n : Nat,
 -- definition of `remove_one` above.
 
 -- HIDE
-  /- LATER: CH: The following exercise is not so simple.  Also the
-       shape of the theorem (with a magic constant [0]), and the fact that
-       n needs to be destructed seem like big and ugly hacks. The
-       hack-free theorem looks like this: -/
-  /- LATER: BCP 20: We'd need to find a way to get through the first
-       lemma's proof without using features they don't know... -/
-    theorem count_remove_one : forall v s,
-      count v (remove_one v s) = (count v s).pred := by
-      intro v s
-      induction s
-      . case nil => rfl
-      . case cons n l ih =>
-        dsimp [count, remove_one] at *
-      -- XXX they don't know about generalizing or casing on expressions yet !!!
-        generalize h : (n == v) = x
-        cases x
-        . dsimp [count]; rw [h]; dsimp; exact ih
-        . dsimp
+/- LATER: CH: The following exercise is not so simple.  Also the
+     shape of the theorem (with a magic constant [0]), and the fact that
+     n needs to be destructed seem like big and ugly hacks. The
+     hack-free theorem looks like this: -/
+/- LATER: BCP 20: We'd need to find a way to get through the first
+   lemma's proof without using features they don't know... -/
+theorem count_remove_one : forall v s,
+  count v (remove_one v s) = (count v s).pred := by
+  intro v s
+  induction s
+  . case nil => rfl
+  . case cons n l ih =>
+    dsimp [count, remove_one] at *
+  -- XXX they don't know about generalizing or casing on expressions yet !!!
+    generalize h : (n == v) = x
+    cases x
+    . dsimp [count]; rw [h]; dsimp; exact ih
+    . dsimp
 
-    theorem leb_pred_n_n : forall n,
-      Nat.ble n.pred n = true := by
+theorem leb_pred_n_n : forall n,
+    Nat.ble n.pred n = true := by
+  intro n
+  induction n
+  . case zero => dsimp [Nat.ble]
+  . case succ n ih =>
+    dsimp
+    apply leb_n_Sn
 
-      intro n
-      induction n
-      . case zero => dsimp [Nat.ble]
-      . case succ n ih =>
-          dsimp
-          apply leb_n_Sn
-
-    theorem remove_does_not_increase_count': forall (s : Bag) (n : Nat),
-      Nat.ble (count n (remove_one n s)) (count n s) = true := by
-
-      intro s n
-      induction s
-      . case nil => rfl
-      . case cons n' l ih =>
-        rw [count_remove_one, leb_pred_n_n]
+theorem remove_does_not_increase_count': forall (s : Bag) (n : Nat),
+    Nat.ble (count n (remove_one n s)) (count n s) = true := by
+  intro s n
+  induction s
+  . case nil => rfl
+  . case cons n' l ih =>
+    rw [count_remove_one, leb_pred_n_n]
 -- /HIDE
 
 -- EX3A (remove_does_not_increase_count)
@@ -1592,44 +1590,44 @@ end PartialMap
   Also this exercise comes out of the blue without any
   motivation/introduction.  BCP 23: OK, I am removing it. -/
 
-  -- Consider the following inductive definition:
+-- Consider the following inductive definition:
 
-  inductive Baz where
-    | baz1 (x : Baz)
-    | baz2 (y : Baz) (b : Bool)
+inductive Baz where
+  | baz1 (x : Baz)
+  | baz2 (y : Baz) (b : Bool)
 
-  /- How _many_ elements does the type [baz] have? (Explain in words,
-     in a comment.) -/
+/- How _many_ elements does the type [baz] have? (Explain in words,
+   in a comment.) -/
 
-  -- SOLUTION
-  /- None!  In order to create an element of type [baz], we would need
-        to use one of the two constructors [Baz1] and [Baz2]; but both of
-        these require a [baz] as an argument.  So this definition cannot
-        get off the ground: in order to create a [baz] we would need to
-        already have one. -/
-  -- /SOLUTION
-  -- LATER: Rework this exercise for easier grading?
+-- SOLUTION
+/- None!  In order to create an element of type [baz], we would need
+      to use one of the two constructors [Baz1] and [Baz2]; but both of
+      these require a [baz] as an argument.  So this definition cannot
+      get off the ground: in order to create a [baz] we would need to
+      already have one. -/
+-- /SOLUTION
+-- LATER: Rework this exercise for easier grading?
 
-  /- LATER: KK: I am not sure whether this point should be made through a
-    "manual" exercise like the one below. The students who don't know
-    (or notice) that an Inductive definition needs a base case will
-    just fail this exercise and will only see the reason in the grader
-    comment. It is very easy for a student to falsely think that they
-    have the right answer here and just move on without thinking about
-    it. I think that it would be better to either add a small section
-    that clearly explains this concept, or maybe add a hint similar to
-    the one below: -/
+/- LATER: KK: I am not sure whether this point should be made through a
+  "manual" exercise like the one below. The students who don't know
+  (or notice) that an Inductive definition needs a base case will
+  just fail this exercise and will only see the reason in the grader
+  comment. It is very easy for a student to falsely think that they
+  have the right answer here and just move on without thinking about
+  it. I think that it would be better to either add a small section
+  that clearly explains this concept, or maybe add a hint similar to
+  the one below: -/
 
-  /- Hint: Try to write a value of type baz for which the following
-       lemma [one_true_baz] holds. -/
+/- Hint: Try to write a value of type baz for which the following
+     lemma [one_true_baz] holds. -/
 
-    def count_trues (x : Baz) : Nat :=
-      match x with
-      | .baz1 x' => count_trues x'
-      | .baz2 x' true => 1 + count_trues x'
-      | .baz2 x' _ => count_trues x'
+def count_trues (x : Baz) : Nat :=
+  match x with
+  | .baz1 x' => count_trues x'
+  | .baz2 x' true => 1 + count_trues x'
+  | .baz2 x' _ => count_trues x'
 
-    -- theorem one_true_baz : count_trues (your baz here) = 1. --
+-- theorem one_true_baz : count_trues (your baz here) = 1. --
 
-    -- []
+-- []
 -- /HIDE
