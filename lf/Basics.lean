@@ -826,7 +826,7 @@ def add (n : Nat) (m : Nat) : Nat :=
 def mul (n m : Nat) : Nat :=
   match m with
   | 0 => 0
-  | .succ m' => n + (mul n m')
+  | .succ m' => (mul n m') + n
 
 -- test_mult1
 example : mul 3 3 = 9 := by rfl
@@ -879,8 +879,10 @@ example : factorial 5 = 10 * 12   := by rfl  -- ADMITTED
 
 /- JC: Overriding the `+` is an immense headache for technical reasons,
   so we leave that alone, since our definition is the same anyway.
-  In contrast, our `sub` and `mul` definitions _are_ slightly different,
-  so we _do_ want to override the notation instances for them. -/
+  In contrast, our `sub` definition _is_ slightly different,
+  so we _do_ want to override the notation instance for it.
+  The `mul` and `pow` definitions are the same as the stdlib,
+  but we can also override notation for it. -/
 
 instance instSub : Sub Nat where sub := sub
 instance instMul : Mul Nat where mul := mul
@@ -1034,7 +1036,7 @@ theorem add_succ : ∀ n m : Nat, n + (m + 1) = (n + m) + 1 := by
 theorem mul_zero : ∀ n : Nat, n * 0 = 0 := by
   intro n; rfl
 
-theorem mul_succ : ∀ n m : Nat, n * (m + 1) = n + n * m := by
+theorem mul_succ : ∀ n m : Nat, n * (m + 1) = n * m + n := by
   intro n m; rfl
 
 /- JC: Dumping the rest of the properties here.
@@ -1126,23 +1128,6 @@ theorem add_mul_zero : ∀ p q : Nat,
     (p * 0) + (q * 0) = 0 := by
   intro p q
   rw [mul_zero, mul_zero, add_zero]
-
--- FULL
--- EX1 (mult_n_1)
-theorem mul_one : ∀ p : Nat,
-    p * 1 = p := by
-  -- ADMITTED
-  intro p
-  rw [add_zero_one, mul_succ, mul_zero, add_zero]
-  -- /ADMITTED
--- GRADE_THEOREM 1: mult_n_1
--- []
--- /FULL
-
-theorem mul_two : ∀ p : Nat,
-    p * 2 = p + p := by
-  intro p
-  rw [mul_succ, mul_succ, mul_zero, add_zero]
 
 -- ######################################################################
 -- # Proof by Case Analysis

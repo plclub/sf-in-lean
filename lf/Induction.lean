@@ -656,6 +656,20 @@ theorem add_assoc'' : ∀ n m p : Nat,
 -- ######################################################################
 -- # More Exercises
 
+-- EX1 (mul_one)
+theorem mul_one : ∀ p : Nat,
+    p * 1 = p := by
+  -- ADMITTED
+  intro p
+  rw [add_zero_one, mul_succ, mul_zero, zero_add]
+  -- /ADMITTED
+-- GRADE_THEOREM 1: mul_one
+
+theorem mul_two : ∀ p : Nat,
+    p * 2 = p + p := by
+  intro p
+  rw [mul_succ, mul_succ, mul_zero, zero_add]
+
 -- TERSE: These additional exercises state facts that will be used in
 -- later chapters.  We don't need to work them in class.
 
@@ -679,12 +693,12 @@ theorem succ_mul : ∀ m n : Nat,
   case zero => rw [mul_zero, mul_zero, add_zero]
   case succ m ih =>
     calc (n + 1) * (m + 1)
-    _ = (n + 1) + ((n + 1) * m) := by rw [mul_succ]
-    _ = (n + 1) + ((n * m) + m) := by rw [ih]
-    _ = ((n * m) + m) + (n + 1) := by rw [add_comm]
+    _ = ((n + 1) * m) + (n + 1) := by rw [mul_succ]
+    _ = ((n * m) + m) + (n + 1) := by rw [ih]
     _ = ((n * m) + m) + n + 1   := by rw [add_succ]
     _ = n + ((n * m) + m) + 1   := by rw [add_comm _ n]
     _ = (n + (n * m)) + m + 1   := by rw [← add_assoc n _ m]
+    _ = ((n * m) + n) + m + 1   := by rw [add_comm n]
     _ = (n * (m + 1)) + (m + 1) := by rw [mul_succ, add_succ _ m]
 -- /QUIETSOLUTION
 
@@ -701,7 +715,7 @@ theorem mul_comm : ∀ m n : Nat,
     -- m * 0 = 0 * m.  m * 0 = 0 by def.  0 * m = 0 by mul_0_l.
     rw [mul_zero, zero_mul]
   case succ n' ih =>
-    rw [mul_succ, ih, add_comm, succ_mul]
+    rw [mul_succ, ih, succ_mul]
 -- /ADMITTED
 -- GRADE_THEOREM 2: mul_comm
 -- []
@@ -769,10 +783,10 @@ theorem right_distrib : ∀ n m p : Nat,
     rw [mul_succ, mul_succ, mul_succ, ih]
     generalize n * p' = i
     generalize m * p' = j
-    calc (n + m) + (i + j)
-    _ = ((n + m) + i) + j := by rw [add_assoc (n + m)]
-    _ = ((n + i) + m) + j := by rw [add_shuffle3 n m i]
-    _ = (n + i) + (m + j) := by rw [add_assoc (n + i)]
+    calc (i + j) + (n + m)
+    _ = ((i + j) + n) + m := by rw [add_assoc (i + j)]
+    _ = ((i + n) + j) + m := by rw [add_shuffle3 i j n]
+    _ = (i + n) + (j + m) := by rw [add_assoc (i + n)]
 -- /ADMITTED
 
 theorem left_distrib : ∀ n m p : Nat,
