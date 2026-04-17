@@ -1162,7 +1162,7 @@ theorem leb_pred_n_n : forall n,
   . case zero => dsimp [Nat.ble]
   . case succ n ih =>
     dsimp
-    apply leb_n_Sn
+    rw [leb_n_Sn]
 
 theorem remove_does_not_increase_count': forall (s : Bag) (n : Nat),
     Nat.ble (count n (remove_one n s)) (count n s) = true := by
@@ -1185,7 +1185,7 @@ theorem remove_does_not_increase_count : ∀ s : Bag,
     cases n
     . case zero =>
       dsimp [remove_one, count]
-      apply leb_n_Sn
+      rw [leb_n_Sn]
     . case succ n' =>
       dsimp [remove_one, count, ih]; exact ih
 -- /ADMITTED
@@ -1440,7 +1440,7 @@ theorem eqb_id_refl : ∀ x : MyId, eqb_id x x = true := by
   -- ADMITTED
   intro ⟨n⟩
   dsimp [eqb_id]
-  apply eqb_refl
+  rw [eqb_refl]
 -- /ADMITTED
 -- []
 
