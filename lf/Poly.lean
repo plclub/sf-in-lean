@@ -46,7 +46,7 @@ inductive BoolList : Type where
 /- FULL: ... but this would quickly become tedious: not only would we
    have to make up different constructor names for each datatype, but --
    even worse -- we would also need to define new versions of all
-   the list manipulating functions (`List.length`, `++`, `List.reverse`,
+   the list manipulating functions (`length`, `++`, `reverse`,
    etc.) and all their properties (`rev_length`, `app_assoc`, etc.)
    for each new definition. -/
 
@@ -65,11 +65,11 @@ inductive MyList (α : Type) : Type where
   | nil : MyList α
   | cons (x : α) (l : MyList α) : MyList α
 
-/- FULL: This is exactly like the definition of `List Nat` from the
+/- FULL: This is exactly like the definition of `Natlist` from the
    previous chapter, except that the `Nat` argument to the `cons`
    constructor has been replaced by an arbitrary type `α`, a binding
    for `α` has been added to the header on the first line,
-   and the occurrences of `List Nat` in the types of the constructors
+   and the occurrences of `Natlist` in the types of the constructors
    have been replaced by `MyList α`.  We can now write `MyList Nat`
    instead of a dedicated nat-list type.
 
@@ -109,12 +109,14 @@ inductive MyList (α : Type) : Type where
 
 #check (MyList.cons 3 MyList.nil : MyList Nat)
 
+/- SOONER: Unclear - Reword -/
 /- FULL: What might the type of `MyList.nil` be?  We can read off the
-   type `MyList α` from the definition, but what is `α`?  In Lean,
-   the type parameter is implicit (written in curly braces `{α : Type}`),
-   so `MyList.nil` has type `MyList α` for any `α`.  Lean's notation
-   for this is `{α : Type} → MyList α`, which is displayed as
-   `MyList ?α` with `?α` as a metavariable to be inferred. -/
+   type `MyList α` from the definition, but this omits the binding for `α`
+    which is the parameter to `MyList`. `Type -> MyList α` does not
+    explain the meaning of `α`. `(α : Type) -> List α` comes
+    closer. For constructors, however, the type argument is implicit; we
+    don't need to supply it manually.
+    Lean's notation for this situation is `{α : Type} -> List α` -/
 
 #check @MyList.nil  /- @MyList.nil : {α : Type} → MyList α -/
 
@@ -123,11 +125,25 @@ inductive MyList (α : Type) : Type where
 
 #check @MyList.cons  /- @MyList.cons : {α : Type} → α → MyList α → MyList α -/
 
+-- TODO: (DHS) Does this still apply?
+/- FULL: (A side note on notations: In .v files, the "forall"
+    quantifier is spelled out in letters.  In the corresponding HTML
+    files (and in the way some IDEs show .v files, depending on the
+    settings of their display controls), [forall] is usually typeset
+    as the standard mathematical "upside down A," though you'll still
+    see the spelled-out "forall" in a few places.  This is just a
+    quirk of typesetting -- there is no difference in meaning.) -/
+/- TERSE: Side note: In .v files, the "forall" quantifier is spelled
+    out in letters.  In the corresponding HTML files, it is usually
+    typeset as the standard mathematical "upside down A." -/
+
+/- LATER: Maybe explain better?  (Maybe NOT using the "forall is a
+   funny kind of function type" intuition.) -/
+
 /- HIDEFROMADVANCED
    FULL: Having to supply a type argument for every single use of a
-   list constructor would be rather burdensome.  Lean avoids this by
-   making the type parameter implicit: it is automatically inferred
-   from context. -/
+   list constructor would be rather burdensome; we will soon see ways
+    of reducing this annotation burden. -/
 
 /- FULL: We can now go back and make polymorphic versions of all the
    list-processing functions that we wrote before.  Here is `myRepeat`,
@@ -138,27 +154,24 @@ inductive MyList (α : Type) : Type where
    TERSE: We can now define polymorphic versions of the functions
        we've already seen... -/
 
-def myRepeat {α : Type} (x : α) (count : Nat) : MyList α :=
+def myRepeat (α : Type) (x : α) (count : Nat) : MyList α :=
   match count with
   | 0 => .nil
-  | count' + 1 => .cons x (myRepeat x count')
-
-/- FULL: Unlike Rocq, we don't need to pass the type explicitly to
-   `myRepeat` -- Lean infers it from the type of `x`.  The type parameter
-   `α` is implicit here because Lean uses _auto-bound implicit_
-   variables: any free variable in a definition's type signature is
-   automatically bound as an implicit argument. -/
+  | count' + 1 => .cons x (myRepeat α x count')
 
 /- HIDEFROMADVANCED -/
 
+/- FULL: As with [nil] and [cons], we can use [repeat] by applying it
+    first to a type and then to an element of this type (and a number): -/
+
 /- test_repeat1 -/
-example : myRepeat 4 2 = .cons 4 (.cons 4 .nil) := by rfl
+example : myRepeat Nat 4 2 = .cons 4 (.cons 4 .nil) := by rfl
 
 /- FULL: To use `myRepeat` to build other kinds of lists, we simply
    pass an element of the appropriate type: -/
 
 /- test_repeat2 -/
-example : myRepeat false 1 = .cons false .nil := by rfl
+example : myRepeat Bool false 1 = .cons false .nil := by rfl
 
 /- QUIZ
    What is the type of `MyList.cons true (MyList.cons 3 MyList.nil)`?
@@ -202,29 +215,54 @@ example : myRepeat false 1 = .cons false .nil := by rfl
 
 end Playground
 
-/- FULL
-   ** Implicit Arguments in Lean
+-- ###################################################### --
+-- Type Annotation Inference
 
-   In Lean, there are several ways to declare implicit arguments:
+/- TODO: (DHS) I copied this over mostly verbatim from Poly.v,
+   but I think the point doesn't work in Lean. The definition of `repeat'`
+   below doesn't typecheck, I think Lean does less inference than Rocq here.
+   Should we just delete this? -/
+/-
+(* ###################################################### *)
+(** *** Type Annotation Inference *)
 
-   - **Curly braces `{α : Type}`**: The argument is implicit and Lean
-     will try to infer it from context.  If it can't, you'll get an
-     error.
+(** Let's write the definition of [repeat] again, but this time we
+    won't specify the types of any of the arguments.  Will Rocq still
+    accept it? *)
 
-   - **Auto-bound implicits**: Any free type variable in a signature
-     is automatically treated as implicit.  So writing
-     `def myRepeat (x : α) (count : Nat) : List α` is equivalent to
-     `def myRepeat {α : Type} (x : α) (count : Nat) : List α`.
+Fixpoint repeat' X x count : list X :=
+  match count with
+  | 0        => nil X
+  | S count' => cons X x (repeat' X x count')
+  end.
 
-   - **The `@` prefix**: You can use `@f` to make all implicit
-     arguments of `f` explicit.  For example, `@List.nil Nat` is the
-     empty list of natural numbers.
+(** TERSE: *** *)
+(** Indeed it will.  Let's see what type Rocq has assigned to [repeat']... *)
 
-   This is Lean's analogue of Rocq's `Arguments` directive and `_`
-   holes.  In practice, Lean's implicit arguments are more convenient
-   because they are the default -- you rarely need to supply type
-   arguments explicitly.
-   /FULL -/
+Check repeat'
+  : forall X : Type, X -> nat -> list X.
+Check repeat
+  : forall X : Type, X -> nat -> list X.
+
+(** TERSE: Rocq has used _type inference_ to deduce the proper types
+    for [X], [x], and [count]. *)
+(** FULL: It has exactly the same type as [repeat].  Rocq was able to
+    use _type inference_ to deduce what the types of [X], [x], and
+    [count] must be, based on how they are used.  For example, since
+    [X] is used as an argument to [cons], it must be a [Type], since
+    [cons] expects a [Type] as its first argument; matching [count]
+    with [0] and [S] means it must be a [nat]; and so on.
+
+    This powerful facility means we don't always have to write
+    explicit type annotations everywhere, although explicit type
+    annotations can still be quite useful as documentation and sanity
+    checks, so we will continue to use them much of the time. *)
+(* HIDE: (BCP '19) Deleted, for streamlining: "You should try to find
+    a balance in your own code between too many type
+    annotations (which can clutter and distract) and too few (which
+    can sometimes require readers to perform complex type inference in
+    their heads in order to understand your code)."
+     -/
 
 /- FULL: From now on, we'll use Lean's built-in `List` type and its
    associated notation.  The built-in `List` is defined just like
@@ -235,23 +273,73 @@ end Playground
 /- TERSE: *** From now on we'll use Lean's built-in `List α` type
    with notation `[]`, `::`, `[1, 2, 3]`, and `++`. -/
 
+/- FULL: Using Lean's built-in list notation, we can now write lists
+   in the natural way:
+   TERSE: Using Lean's notation, we can write lists naturally: -/
+
+def list123 : List Nat := [1, 2, 3]
+
+-- ###################################################### --
+-- Type Argument Synthesis --
+
+/- FULL: To use a polymorphic function, we need to pass it one or
+    more types in addition to its other arguments.  For example, the
+    recursive call in the body of the `myRepeat` function above must
+    pass along the type `α`.  But since the second argument to
+    `myRepeat` is an element of `α`, it seems entirely obvious that the
+    first argument can only be `α` -- why should we have to write it
+    explicitly?
+
+    Fortunately, Lean permits us to avoid this kind of redundancy.  In
+    place of any type argument we can write a "hole" `_`, which can be
+    read as "Please try to figure out for yourself what belongs here."
+    More precisely, when Lean encounters a `_`, it will attempt to
+    _unify_ all locally available information -- the type of the
+    function being applied, the types of the other arguments, and the
+    type expected by the context in which the application appears --
+    to determine what concrete type should replace the `_`.
+
+    Using holes, the [repeat] function can be written like this: -/
+/- TERSE: Supplying every type _argument_ is also boring, but Rocq
+    can usually infer them: -/
+
+def myRepeat'' (α : Type) (x : α) (count : Nat) : List α :=
+  match count with
+  | 0        => []
+  | count' + 1 => x :: myRepeat'' _ x count'
+
+/- FULL: Alternatively, we can declare an argument to be implicit
+    when defining the function itself, by surrounding it in curly
+    braces instead of parens.  For example: -/
+/- TERSE: Alternatively, we can declare arguments implicit by
+    surrounding them with curly braces instead of parens: -/
+
+def myRepeat''' {α : Type} (x : α) (count : Nat) : List α :=
+  match count with
+  | 0        => []
+  | count' + 1 => x :: myRepeat''' x count'
+
+-- FULL
+/- (Note that we didn't even have to provide a type argument to the
+    recursive call to myRepeat'''.  Indeed, it would be invalid to
+    provide one, because Lean is not expecting it.) -/
+
 /- FULL
    ** Supplying Type Arguments Explicitly
 
    One small problem with implicit arguments is that, once in a
    while, Lean does not have enough local information to determine
    a type argument; in such cases, we need to tell Lean the type
-   explicitly.  For example:
-   TERSE: In general, it's fine to just let Lean infer all type
+   explicitly. For example: -/
+
+/- TERSE: In general, it's fine to just let Lean infer all type
    arguments.  But occasionally this can lead to problems: -/
 
 /- This fails because Lean can't figure out the type of the empty list:
    `def mynil := []` -- error: type not known
    We can fix this with an explicit type annotation: -/
 
-def mynil : List Nat := []
-
-/- Alternatively, we can use the `@` prefix to supply the type
+/- We can use the `@` prefix to supply the type
    argument explicitly.  The `@` makes all implicit arguments
    of a function explicit: -/
 
@@ -260,12 +348,6 @@ def mynil : List Nat := []
 def mynil' := @List.nil Nat
 
 /- TERSE: *** -/
-
-/- FULL: Using Lean's built-in list notation, we can now write lists
-   in the natural way:
-   TERSE: Using Lean's notation, we can write lists naturally: -/
-
-def list123 : List Nat := [1, 2, 3]
 
 /- HIDEFROMADVANCED
    TERSE: HIDEFROMHTML -/
@@ -384,7 +466,50 @@ def list123 : List Nat := [1, 2, 3]
 
 /- TERSE: /HIDEFROMHTML -/
 
+
+/- EX2M? (mumble_grumble) -/
+/- Consider the following two inductively defined types. -/
+
+namespace MumbleGrumble
+
+inductive Mumble : Type where
+  | a : Mumble
+  | b (x : Mumble) (y : Nat) : Mumble
+  | c : Mumble
+
+inductive Grumble (X: Type) : Type where
+  | d (m : Mumble) : Grumble X
+  | e (x : X) : Grumble X
+
+/- Which of the following are well-typed elements of `Grumble X` for
+    some type `X`?  (Add YES or NO to each line.)
+      - [Grumble.d (Grumble.b Grumble.a 5)]
+      - [@Grumble.d Mumble (Mumble.b Mumble.a 5)]
+      - [@Grumble.d Bool (Mumble.b Mumble.a 5)]
+      - [@Grumble.e Bool true]
+      - [@Grumble.e Mumble (Mumble.b Mumble.c 0)]
+      - [@Grumble.e Bool (Mumble.b Mumble.c 0)]
+      - [Mumble.c]  -/
+-- SOLUTION
+/-    YES - [Grumble.d (Grumble.b Grumble.a 5)]
+      YES - [@Grumble.d Mumble (Mumble.b Mumble.a 5)]
+      YES - [@Grumble.d Bool (Mumble.b Mumble.a 5)]
+      YES - [@Grumble.e Bool true]
+      YES - [@Grumble.e Mumble (Mumble.b Mumble.c 0)]
+      NO - [@Grumble.e Bool (Mumble.b Mumble.c 0)]
+      NO - [Mumble.c] -/
+-- /SOLUTION
+end MumbleGrumble
+/- [] -/
+/- /FULL -/
+
 /- *** Exercises -/
+
+def List.rev {α:Type} (l:List α) : List α :=
+  match l with
+  | .nil => .nil
+  | .cons h t => rev t ++ (.cons h .nil)
+
 
 /- TERSE: HIDEFROMHTML -/
 
@@ -392,10 +517,12 @@ def list123 : List Nat := [1, 2, 3]
    Here are a few simple exercises, just like ones in the `Lists`
    chapter, for practice with polymorphism.  Complete the proofs below. -/
 
-def rev {α:Type} (l:List α) : List α :=
-  match l with
-  | .nil => .nil
-  | .cons h t => rev t ++ (.cons h .nil)
+
+/- INSTRUCTORS: There's a little inconsistency between this definition
+   and the standard library one: in the library, the type argument is
+   implicit. :-( I (BCP) have chosen to leave things inconsistent to
+   avoid having to explain about implicit arguments to theorems, which
+   wouldn't make sense at this point. -/
 
 /- app_nil_r -/
 theorem app_nil_r {α : Type} : ∀ (l : List α),
@@ -433,23 +560,23 @@ theorem app_length {α : Type} : ∀ (l1 l2 : List α),
 
 /- rev_app_distr -/
 theorem rev_app_distr {α : Type} : ∀ (l1 l2 : List α),
-  rev (l1 ++ l2) = rev l2 ++ rev l1 := by
+  (l1 ++ l2).rev = l2.rev ++ l1.rev := by
   /- ADMITTED -/
   intro l1 l2; induction l1
-  . case nil => dsimp [rev]; rw [app_nil_r]
-  . case cons h t ih => dsimp [rev]; rw [ih]; rw [app_assoc]
+  . case nil => dsimp [List.rev]; rw [app_nil_r]
+  . case cons h t ih => dsimp [List.rev]; rw [ih]; rw [app_assoc]
 /- /ADMITTED -/
 
 /- rev_involutive -/
 theorem rev_involutive {α : Type} : ∀ (l : List α),
-  rev (rev l) = l := by
+  l.rev.rev = l := by
   /- ADMITTED -/
   intro l; induction l
   . case nil => rfl
   . case cons h t ih =>
-      dsimp [rev]
+      dsimp [List.rev]
       rw [rev_app_distr, ih]
-      dsimp [rev]
+      dsimp [List.rev]
 /- /ADMITTED
    GRADE_THEOREM 1: rev_app_distr
    GRADE_THEOREM 1: rev_involutive
@@ -462,82 +589,84 @@ theorem rev_involutive {α : Type} : ∀ (l : List α),
 /- ######################################################################
    ** Polymorphic Pairs -/
 
-/- FULL: Following the same pattern, the definition for pairs of
-   numbers that we gave in the last chapter can be generalized to
-   _polymorphic pairs_, often called _products_.  Lean's standard
-   library provides `Prod α β` (written `α × β`) with constructor
-   `Prod.mk` (written `(a, b)`). -/
+/- Like `inductive`s, `structure`s can also be made polymorphic.
+   If we generalize the definition of `NatProd` from last chapter,
+   we get polymorphic pairs_, often called _products_: -/
 
-/- TERSE: Similarly, Lean provides polymorphic pairs `α × β`... -/
+structure MyProd (α β : Type) where
+  fst : α
+  snd : β
 
-/- FULL: Let's briefly look at what the built-in product type provides: -/
+/- Lean's built-in product type `Prod` provides a `Prod.mk` constructor,
+   and `fst` and `snd` functions for accessing the first and second components
+   of the pair. It also has special syntax for creating products: -/
 
 #check (1, true)  /- (1, true) : Nat × Bool -/
+#check (1, true).fst  /- access first component -/
+#check (1, true).snd  /- access second component -/
+
+/- You can also use `.1` instead of `.fst` and `.2` instead of `.snd` -/
+
 #check (1, true).1  /- access first component -/
 #check (1, true).2  /- access second component -/
-
-/- HIDEFROMADVANCED
-   FULL: The notation `α × β` is syntactic sugar for `Prod α β`.
-   Values are constructed with `(a, b)` or `Prod.mk a b`.  The
-   projections are `.1` (or `.fst`) and `.2` (or `.snd`).
-   /HIDEFROMADVANCED -/
-
-/- TERSE: Be careful not to get `(x, y)` and `α × β` confused!
-   TERSE: *** -/
-
-/- FULL: The first and second projection functions look like this in
-   Lean: -/
-
-/- These are already provided as `Prod.fst` and `Prod.snd`, or
-   equivalently `.1` and `.2`.  For illustration: -/
 
 /- fst_example -/
 example : (3, 5).1 = 3 := by rfl
 /- snd_example -/
 example : (3, 5).2 = 5 := by rfl
 
+/- The notation `α × β` is syntactic sugar for `Prod α β`. -/
+
+/- FULL:
+    It is easy at first to get `(x,y)` and `α × β` confused.
+    Remember that `(x,y)` is a _value_ built from two other values,
+    while `α × β` is a _type_ built from two other types.  If `x` has
+    type `α` and `y` has type `β`, then `(x,y)` has type `α × β`.
+-/
+
+/- TERSE: Be careful not to get `(x, y)` and `α × β` confused!
+   TERSE: *** -/
+
 /- FULL: The following function takes two lists and combines them
-   into a list of pairs.  In other functional languages, it is often
-   called `zip`; Lean calls it `List.zip`.
+   into a list of pairs.
    TERSE: ***
    TERSE: What does this function do? -/
 
-def combine {α : Type} {β : Type} (lx : List α) (ly : List β) : List (α × β) :=
+def zip {α : Type} {β : Type} (lx : List α) (ly : List β) : List (α × β) :=
   match lx, ly with
   | [], _ => []
   | _, [] => []
-  | x :: tx, y :: ty => (x, y) :: combine tx ty
+  | x :: tx, y :: ty => (x, y) :: zip tx ty
 
 /- FULL
-   EX1M? (combine_checks)
+   EX1M? (zip_checks)
    Try answering the following questions on paper and
    checking your answers in Lean:
-   - What is the type of `combine` (i.e., what does `#check @combine`
+   - What is the type of `zip` (i.e., what does `#check @zip`
      print?)
    - What does
-         #eval combine [1, 2] [false, false, true, true]
+         #eval zip [1, 2] [false, false, true, true]
      print?
    [] -/
 
 /- EX2! (split)
-   The function `split` is the right inverse of `combine`: it takes a
-   list of pairs and returns a pair of lists.  In many functional
-   languages, it is called `unzip`.
+   The function `unzip` is the right inverse of `zip`: it takes a
+   list of pairs and returns a pair of lists.
 
-   Fill in the definition of `split` below.  Make sure it passes the
+   Fill in the definition of `unzip` below.  Make sure it passes the
    given unit test. -/
 
-def split {α : Type} {β : Type} (l : List (α × β)) : List α × List β :=
+def unzip {α : Type} {β : Type} (l : List (α × β)) : List α × List β :=
   /- ADMITDEF -/
   match l with
   | [] => ([], [])
   | (x, y) :: t =>
-    let (lx, ly) := split t
+    let (lx, ly) := unzip t
     (x :: lx, y :: ly)
   /- /ADMITDEF -/
 
 /- test_split -/
-example : split [(1, false), (2, false)] = ([1, 2], [false, false]) := by rfl  /- ADMITTED -/
+example : unzip [(1, false), (2, false)] = ([1, 2], [false, false]) := by rfl  /- ADMITTED -/
 /- GRADE_THEOREM 1: split
    GRADE_THEOREM 1: test_split
    []
@@ -562,7 +691,7 @@ end OptionPlayground
 
 /- TERSE: ***
    FULL: We can now rewrite the `nth_error` function so that it works
-   with any type of list.  Lean calls this `List.get?`: -/
+   with any type of list. -/
 
 def nthError {α : Type} (l : List α) (n : Nat) : Option α :=
   match l with
@@ -593,10 +722,7 @@ def hdError {α : Type} (l : List α) : Option α :=
   | a :: _ => some a
   /- /ADMITDEF -/
 
-/- Once again, to force the implicit arguments to be explicit,
-   we can use `@` before the name of the function. -/
-
-#check @hdError  /- @hdError : {α : Type} → List α → Option α -/
+#check hdError  /- hdError : {α : Type} → List α → Option α -/
 
 /- test_hd_error1 -/
 example : hdError [1, 2] = some 1 := by rfl  /- ADMITTED -/
@@ -617,6 +743,9 @@ example : hdError [[1], [2]] = some [1] := by rfl  /- ADMITTED -/
    allowing them to be passed as arguments to other functions,
    returned as results, stored in data structures, etc. -/
 
+/- HIDE: Robert Rand: The terse version could really use words
+   here. (Or drop the section break and rename this one to
+   "Higher-Order Functions" -/
 /- /HIDEFROMADVANCED -/
 
 /- ######################################################################
@@ -637,13 +766,18 @@ def doit3times {α : Type} (f : α → α) (n : α) : α :=
 #check @doit3times  /- @doit3times : {α : Type} → (α → α) → α → α -/
 
 /- test_doit3times -/
-example : doit3times (· - 2) 9 = 3 := by rfl
+example : doit3times minustwo 9 = 3 := by rfl
 
 /- test_doit3times' -/
-example : doit3times (!·) true = false := by rfl
+example : doit3times not true = false := by rfl
 
 /- ######################################################################
    ** Filter -/
+
+
+/- INSTRUCTORS: We've tried to be careful with terminology in the rest
+   of the notes: "(boolean) predicate" for boolean functions and
+   "property" for propositions indexed by one parameter. -/
 
 /- /HIDEFROMADVANCED
    FULL: Here is a more useful higher-order function, taking a list
@@ -662,12 +796,8 @@ def filter {α : Type} (test : α → Bool) (l : List α) : List α :=
    and a list of numbers, it returns a list containing just the
    even members. -/
 
-/- HIDEFROMADVANCED
-   (We use `Nat.even` from Lean's standard library, which tests
-   whether a number is even.) -/
-
 /- test_filter1 -/
-example : filter (·% 2 == 0) [1, 2, 3, 4] = [2, 4] := by rfl
+example : filter even [1, 2, 3, 4] = [2, 4] := by rfl
 
 /- TERSE: *** -/
 def lengthIs1 {α : Type} (l : List α) : Bool :=
@@ -678,12 +808,19 @@ example : filter lengthIs1
     [[1, 2], [3], [4], [5, 6, 7], [], [8]]
   = [[3], [4], [8]] := by rfl
 
-/- TERSE: ***
-   FULL: We can use `filter` to give a concise version of the
-   `countoddmembers` function from the Lists chapter. -/
+-- TERSE:
+/- LATER: This material would sink in better if it were made clearer
+   why map and filter and such were useful in the real world.  Talk
+   about map/reduce, collection-oriented programming, etc.  Esp in the
+   terse version. -/
+/- TERSE: The [filter] function (especially when combined with some
+    other functions we'll see later) enables a powerful
+    _wholemeal_ (or _collection-oriented_) programming style. -/
+/- FULL: We can use [filter] to give a concise version of the
+    [countoddmembers] function from the \CHAP{Lists} chapter. -/
 
 def countoddmembers' (l : List Nat) : Nat :=
-  (filter (· % 2 != 0) l).length
+  (filter odd l).length
 
 /- test_countoddmembers'1 -/
 example : countoddmembers' [1, 0, 3, 1, 4, 5] = 4 := by rfl
@@ -696,6 +833,16 @@ example : countoddmembers' [] = 0 := by rfl
 
 /- ######################################################################
    ** Anonymous Functions -/
+
+/- HIDE: Why not show them [fix] here?  It's not that complicated and
+   it fills out the story.  At least as a little optional section.
+   BAY: I'm not convinced it's "not that complicated" for people who
+   have never seen much functional programming before.  I think adding
+   a discussion of fix could easily take 20 minutes of class time.
+   BCP: Yes, this doesn't belong in lecture, probably.  But it might
+   still be useful as an optional section for people to read.
+   (2013: Now that we've created the idea of "advanced" sections, this
+   seems like a nice candidate.) -/
 
 /- FULL: It is arguably a little sad, in the example just above, to
    be forced to define the function `lengthIs1` and give it a name
@@ -736,6 +883,10 @@ example : filter (fun l => l.length == 1)
     [[1, 2], [3], [4], [5, 6, 7], [], [8]]
   = [[3], [4], [8]] := by rfl
 
+example : filter (·.length == 1)
+    [[1, 2], [3], [4], [5, 6, 7], [], [8]]
+  = [[3], [4], [8]] := by rfl
+
 /- FULL
    EX2 (filter_even_gt7)
    Use `filter` (instead of a recursive `def`) to write a Lean function
@@ -744,7 +895,7 @@ example : filter (fun l => l.length == 1)
 
 def filterEvenGt7 (l : List Nat) : List Nat :=
   /- ADMITDEF -/
-  filter (fun n => n % 2 == 0 && n > 7) l
+  filter (fun n => even n && n > 7) l
   /- /ADMITDEF -/
 
 /- test_filter_even_gt7_1 -/
@@ -767,7 +918,7 @@ example : filterEvenGt7 [5, 2, 6, 19, 129] = [] := by rfl  /- ADMITTED -/
 
 def partition {α : Type} (test : α → Bool) (l : List α) : List α × List α :=
   /- ADMITDEF -/
-  (filter test l, filter (fun x => !test x) l)
+  (filter test l, filter (!test ·) l)
   /- /ADMITDEF -/
 
 /- test_partition1 -/
@@ -804,14 +955,14 @@ example : map (· + 3) [2, 0, 2] = [5, 3, 5] := by rfl
    numbers to booleans to yield a list of booleans: -/
 
 /- test_map2 -/
-example : map (· % 2 != 0) [2, 1, 2, 5] = [false, true, false, true] := by rfl
+example : map odd [2, 1, 2, 5] = [false, true, false, true] := by rfl
 
 /- FULL: It can even be applied to a list of numbers and
    a function from numbers to _lists_ of booleans to
    yield a _list of lists_ of booleans: -/
 
 /- test_map3 -/
-example : map (fun n => [n % 2 == 0, n % 2 != 0]) [2, 1, 2, 5]
+example : map (fun n => [even n, odd n]) [2, 1, 2, 5]
   = [[true, false], [false, true], [true, false], [false, true]] := by rfl
 
 /- TERSE
@@ -836,6 +987,28 @@ example : map (fun n => [n % 2 == 0, n % 2 != 0]) [2, 1, 2, 5]
 
 /- /TERSE -/
 
+/- HIDE
+  (* HIDE: This one relies on partial application, which hasn't
+     been explained. *)
+  (* HIDE: Robert Rand: So does "What is the type of [fold plus]?" later on.
+     And that one doesn't lead directly into partial application either. I  bit
+     the bullet here, but if you want to postpone partial application, the
+     later questions should be reordered and followed immediately by an example. *)
+  (* QUIZ *)
+  (** Recall that [even] has type "nat -> bool".
+
+      What is the type of "map even"?
+
+      (A) forall X Y : Type, (X -> Y) -> list X -> list Y
+
+      (B) list nat -> list bool
+
+      (C) list nat -> list Y
+
+      (D) forall Y : Type, list nat -> list Y *)
+  (* /QUIZ *)
+(* /HIDE -/
+
 /- TERSE: ***
    FULL: *** Exercises -/
 
@@ -856,12 +1029,12 @@ theorem map_app {α : Type} {β : Type} : ∀ (f : α → β) (l l' : List α),
 
 /- map_rev -/
 theorem map_rev {α : Type} {β : Type} : ∀ (f : α → β) (l : List α),
-  map f (rev l) = rev (map f l) := by
+  map f l.rev = (map f l).rev := by
   /- ADMITTED -/
   intro f l
   induction l
   . case nil => rfl
-  . case cons h t ih => dsimp [map, rev]; rw [map_app, ih]; dsimp [map]
+  . case cons h t ih => dsimp [map, List.rev]; rw [map_app, ih]; dsimp [map]
 /- /ADMITTED
    GRADE_THEOREM 3: map_rev
    [] -/
@@ -1178,6 +1351,14 @@ example : map (Nat.add 3) [2, 0, 2] = [5, 3, 5] := by rfl
 #check @prodCurry
 #check @prodUncurry
 
+/- HIDE: Maybe this is a good place to introduce the lack of
+   functional extensionality? Here, at the latest, the reader may have
+   started to wonder why the next two theorems, rather than claiming
+   the equality of functions, claim equalities for their values...
+   BCP 9/16: On reflection, I think this is not the place.  It's an
+   advanced exercise, so not everybody will see it, and we do come
+   back to it in detail in a couple chapters. -/
+
 /- uncurry_curry -/
 theorem uncurry_curry {α : Type} {β : Type} {γ : Type} : ∀ (f : α → β → γ) (x : α) (y : β),
   prodCurry (prodUncurry f) x y = f x y := by
@@ -1194,6 +1375,10 @@ theorem curry_uncurry {α : Type} {β : Type} {γ : Type} : ∀ (f : α × β �
    GRADE_THEOREM 1: Exercises.uncurry_curry
    GRADE_THEOREM 1: Exercises.curry_uncurry
    [] -/
+
+/- SOONER: This isn't quite the definition given above.  (And the one
+   above is VASTLY easier to work with for the proof!)  We should
+   really fix this! -/
 
 /- EX2AM? (nth_error_informal)
    Recall the definition of the `nthError` function:
@@ -1367,7 +1552,15 @@ example : plus (plus two two) three = plus one (plus three three) := by rfl  /- 
    numerals.
 
    Hint: the "successor" argument to a Church numeral need not be
-   just `f`. -/
+   just `f`.
+
+   Warning: Lean will not let you pass `CNat` itself as the type `X`
+    argument to a Church numeral; you will get a "sort mismatch"
+    error between `Type 1` and `Type 2`. Don't worry too much
+    about what this means right now, but know that
+    this is Lean's way of preventing a paradox in
+    which a type contains itself. So leave the type argument
+    unchanged. -/
 
 def mult (n m : CNat) : CNat :=
   /- ADMITDEF -/

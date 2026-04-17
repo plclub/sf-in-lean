@@ -122,8 +122,8 @@ theorem silly3 : ∀ (n m : Nat),
 
 -- rev_exercise1
 theorem rev_exercise1 : ∀ (l l' : List Nat),
-  l = l'.reverse →
-  l' = l.reverse := by
+  l = l'.rev →
+  l' = l.rev := by
   -- ADMITTED
   intro l l' eq
   rw [eq]
@@ -501,7 +501,7 @@ theorem specialize_example : ∀ n,
   → n = 0 := by
   intro n H
   specialize H 1
-  simp [Nat.one_mul] at H
+  simp [one_mul] at H
   exact H
 
 -- FULL
