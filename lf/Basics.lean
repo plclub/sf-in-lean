@@ -877,10 +877,10 @@ example : factorial 5 = 10 * 12   := by rfl  -- ADMITTED
 
 /- JC: Overriding the `+` is an immense headache for technical reasons,
   so we leave that alone, since our definition is the same anyway.
-  In contrast, our `sub` and `mul` definitions _are_ slightly different,
-  so we _do_ want to override the notation instances for them. -/
-
--- RAB: why are they slightly different?
+  In contrast, our `sub` definition _is_ slightly different,
+  so we _do_ want to override the notation instance for it.
+  The `mul` and `pow` definitions are the same as the stdlib,
+  but we can also override notation for it. -/
 
 instance instSub : Sub Nat where sub := sub
 instance instMul : Mul Nat where mul := mul
@@ -1135,25 +1135,6 @@ theorem add_mul_zero : ∀ p q : Nat,
     (p * 0) + (q * 0) = 0 := by
   intro p q
   rewrite [mul_zero, mul_zero, add_zero]
-  rfl
-
--- FULL
--- EX1 (mult_n_1)
-theorem mul_one : ∀ p : Nat,
-    p * 1 = p := by
-  -- ADMITTED
-  intro p
-  rewrite [add_zero_one, mul_succ, mul_zero, add_zero]
-  rfl
-  -- /ADMITTED
--- GRADE_THEOREM 1: mult_n_1
--- []
--- /FULL
-
-theorem mul_two : ∀ p : Nat,
-    p * 2 = p + p := by
-  intro p
-  rewrite [mul_succ, mul_succ, mul_zero, add_zero]
   rfl
 
 -- ######################################################################
