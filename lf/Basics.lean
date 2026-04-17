@@ -186,7 +186,7 @@ def nextWorkingDay (d : Day) : Day :=
 -- `nextWorkingDay` function and the `Day` type to see their definitions, and
 -- experiment with adding your own `#eval` commands to test other inputs.
 
--- NOTE: There's a question of where exactly to put this.
+-- RAB: There's a question of where exactly to put this.
 
 -- /FULL
 
@@ -785,10 +785,6 @@ example : odd 4 = false := by rfl
 -- TERSE: ***
 -- TERSE: A multi-argument recursive function.
 
--- Note: Lean's built-in `Nat.add` recurses on the _second_ argument,
--- so we follow the same convention here.  This means `n + 0` reduces
--- by definition, but `0 + n` does not (the reverse of Rocq).
-
 def add (n : Nat) (m : Nat) : Nat :=
   match m with
   | 0 => n
@@ -818,10 +814,11 @@ def add (n : Nat) (m : Nat) : Nat :=
 
 -- TERSE: ***
 
-/- JC: Add some text here about how we're using Lean's `add`,
-  not our own `add`, because it provides the `+` notation for `Nat`
-  that would be problematic (vague?) to override.
-  But overriding the rest of the notation is fine though. -/
+-- FULL
+-- Now that we know how addition is defined, we can use Lean's builtin
+-- definition and notation to write it more concisely.
+-- The `+` operator is already defined for `Nat` in the standard library.
+-- /FULL
 
 def mul (n m : Nat) : Nat :=
   match m with
@@ -841,7 +838,7 @@ def sub (n m : Nat) : Nat :=
   | .succ n', .succ m' => sub n' m'
 
 -- Now that we've seen how natural numbers are built from `Nat.zero`
--- and `Nat.succ`, we can take advantage of Lean's notation: the
+-- and `Nat.succ`, we can take further advantage of Lean's notation: the
 -- pattern `n + 1` is syntactic sugar for `Nat.succ n`, `n + 2` is
 -- syntactic sugar for `Nat.succ (Nat.succ n)`, and so on.
 -- We'll use this more concise style from now on.
@@ -877,10 +874,13 @@ example : factorial 5 = 10 * 12   := by rfl  -- ADMITTED
 -- Lean already provides `+`, `-`, `*` for `Nat`, so we don't need to
 -- define our own notation.
 
+
 /- JC: Overriding the `+` is an immense headache for technical reasons,
   so we leave that alone, since our definition is the same anyway.
   In contrast, our `sub` and `mul` definitions _are_ slightly different,
   so we _do_ want to override the notation instances for them. -/
+
+-- RAB: why are they slightly different?
 
 instance instSub : Sub Nat where sub := sub
 instance instMul : Mul Nat where mul := mul
@@ -1009,9 +1009,7 @@ theorem add_zero_one : 1 = 0 + 1 := by rfl
 -- TERSE: A general property of natural numbers:
 
 -- Note: Because Lean's addition recurses on the second argument,
--- `n + 0` reduces to `n` by definition.  (In Rocq, it is `0 + n`
--- that reduces by definition, because Rocq's addition recurses on
--- the first argument.)
+-- `n + 0` reduces to `n` by definition.
 
 theorem add_zero : ∀ n : Nat, n + 0 = n := by
   intro n; rfl
@@ -1027,6 +1025,12 @@ theorem add_zero : ∀ n : Nat, n + 0 = n := by
 -- /FULL
 
 -- TERSE: ***
+
+-- FULL
+-- Even these trivial examples provide opportunities to _step through_ the proof,
+-- using the cursor. Moving the cursor over the `by` and stepping through the
+-- tactics will show the state of the proof at each step in the right-hand
+-- Lean InfoView Panel.
 
 theorem add_succ : ∀ n m : Nat, n + (m + 1) = (n + m) + 1 := by
   intro n m; rfl
@@ -1079,12 +1083,15 @@ theorem plus_id_example : ∀ n m : Nat,
 
 -- TERSE: The `intro` tactic names the hypotheses as they are moved
 --     to the context.  The `rewrite` tactic rewrites using an equality.
+
+-- TODO: Move this
 -- FULL
 -- By default, `rewrite` rewrites left-to-right. To rewrite from right
 -- to left, use `rewrite [← h]`, where `←` is typed as `\l` or `\<-`.
 -- Because the pattern `rewrite [h]; rfl` is so common, Lean provides
 -- `rw [h]` as shorthand.
 -- /FULL
+
 
 -- FULL
 -- EX1 (plus_id_exercise)
@@ -1094,7 +1101,8 @@ theorem plus_id_exercise : ∀ n m o : Nat,
     n = m → m = o → n + m = m + o := by
   -- ADMITTED
   intro n m o h1 h2
-  rw [h1, h2]
+  rewrite [h1, h2]
+  rfl
   -- /ADMITTED
 -- GRADE_THEOREM 1: plus_id_exercise
 -- []
@@ -1119,13 +1127,14 @@ theorem plus_id_exercise : ∀ n m o : Nat,
 #check mul_succ  -- ∀ (n m : Nat), n * Nat.succ m = n + n * m
 
 -- TERSE: ***
--- We can use the `rw` tactic with a previously proved theorem
+-- We can use the `rewrite` tactic with a previously proved theorem
 -- instead of a hypothesis from the context.
 
 theorem add_mul_zero : ∀ p q : Nat,
     (p * 0) + (q * 0) = 0 := by
   intro p q
-  rw [mul_zero, mul_zero, add_zero]
+  rewrite [mul_zero, mul_zero, add_zero]
+  rfl
 
 -- FULL
 -- EX1 (mult_n_1)
@@ -1133,7 +1142,8 @@ theorem mul_one : ∀ p : Nat,
     p * 1 = p := by
   -- ADMITTED
   intro p
-  rw [add_zero_one, mul_succ, mul_zero, add_zero]
+  rewrite [add_zero_one, mul_succ, mul_zero, add_zero]
+  rfl
   -- /ADMITTED
 -- GRADE_THEOREM 1: mult_n_1
 -- []
@@ -1142,7 +1152,8 @@ theorem mul_one : ∀ p : Nat,
 theorem mul_two : ∀ p : Nat,
     p * 2 = p + p := by
   intro p
-  rw [mul_succ, mul_succ, mul_zero, add_zero]
+  rewrite [mul_succ, mul_succ, mul_zero, add_zero]
+  rfl
 
 -- ######################################################################
 -- # Proof by Case Analysis
@@ -1253,6 +1264,8 @@ theorem andb3_exchange : ∀ b c d : Bool,
   which gets discussed in detail in the Tactics chapter.
   I've added `orb_false_true` as a suggestion. -/
 
+-- RAB: Agreed.
+
 -- The `contradiction` closes a goal by looking for contradictory
 -- assumptions in the context. For instance, if `h : 0 = 1` is in the
 -- context, then `contradiction` closes the current goal, since such
@@ -1329,7 +1342,7 @@ theorem zero_neb_add_one : ∀ n : Nat,
 -- You can define custom notation using the `notation`, `infixl`,
 -- `infixr`, `prefix`, and `postfix` commands.
 --
--- Unlike Rocq, Lean handles notation scoping through namespaces and
+-- Lean handles notation scoping through namespaces and
 -- type classes rather than notation scopes.  The numeric literal `3`
 -- can be interpreted as `Nat`, `Int`, `Float`, etc., depending on the
 -- expected type, thanks to Lean's `OfNat` type class.
@@ -1392,7 +1405,8 @@ theorem identity_fn_applied_twice : ∀ f : Bool → Bool,
     ∀ b : Bool, f (f b) = b := by
   -- ADMITTED
   intro f h b
-  rw [h, h]
+  rewrite [h, h]
+  rfl
   -- /ADMITTED
 -- GRADE_THEOREM 1: identity_fn_applied_twice
 -- []
@@ -1426,11 +1440,13 @@ theorem andb_eq_orb : ∀ b c : Bool,
   case true =>
     -- h : true && c = true || c, i.e., h : c = true
     dsimp [Bool.and, Bool.or] at h
-    rw [h]
+    rewrite [h]
+    rfl
   case false =>
     -- h : false && c = false || c, i.e., h : false = c
     dsimp [Bool.and, Bool.or] at h
-    rw [h]
+    rewrite [h]
+    rfl
   -- /ADMITTED
 -- GRADE_THEOREM 3: andb_eq_orb
 -- []
@@ -1458,7 +1474,9 @@ inductive Modifier : Type where
   | plus | natural | minus
 
 -- A full `Grade`, then, is just a `letter` and a `modifier`.
--- JC: Explain what a `structure` is.
+-- In Lean, a combination of several values is called a _structure_.  The `structure`
+-- keyword is used to define a new structure type.
+
 structure Grade where
   letter : Letter
   modifier : Modifier
@@ -1476,7 +1494,8 @@ inductive Comparison : Type where
   | lt   -- "less than"
   | gt   -- "greater than"
 
--- TODO: Explain what this is doing
+-- Since we're in a namespace, we can open the relevant types to
+-- avoid having to write `Letter.A`, etc.
 open Letter Modifier Comparison
 
 -- Using pattern matching, it is not difficult to define the
@@ -1527,7 +1546,11 @@ def modifierComparison (m1 m2 : Modifier) : Comparison :=
   | minus, _ => lt
 
 -- EX2 (grade_comparison)
--- JC: Explain structure projections at this point.
+
+-- Here, we will need to access the fields of the `Grade` structure.
+-- The field names are `letter` and `modifier`, so for a grade `g`,
+-- we can write `g.letter` and `g.modifier` to access these fields.
+
 def gradeComparison (g1 g2 : Grade) : Comparison
   -- ADMITDEF
   := match letterComparison g1.letter g2.letter with
@@ -1581,7 +1604,12 @@ theorem lowerLetter_lowers : ∀ l : Letter,
 -- []
 
 -- EX2 (lower_grade)
--- JC: Explain constructor brackets `⟨` `⟩` at this point.
+-- In addition to the dot notation for accessing structure fields, we can also
+-- use pattern matching to access these fields.
+-- For example, if `g` is a grade, then we can write
+-- `match g with ⟨l, m⟩ => ...` to access the letter and modifier components
+-- of `g` as `l` and `m`, respectively.
+-- Note: The angle brackets `⟨` and `⟩` are typed as `\<` and `\>`.
 def lowerGrade (g : Grade) : Grade
   -- ADMITDEF
   := match g with
@@ -1614,9 +1642,11 @@ theorem lowerGrade_F_Minus : lowerGrade ⟨F, minus⟩ = ⟨F, minus⟩ := by rf
 -- []
 
 -- EX3 (lower_grade_lowers)
-/- JC: Some things to introduce before we get here:
+/- For our solution we use:
   * Working on multiple match cases with `| _ ... | _ => ...`;
-  * Working on all remaining goals with `all_goals`. -/
+  * Working on all remaining goals with `all_goals`.
+  * These are not expected of students at this point.
+   -/
 theorem lowerGrade_lowers : ∀ g : Grade,
     gradeComparison ⟨F, minus⟩ g = lt →
     gradeComparison (lowerGrade g) g = lt := by
