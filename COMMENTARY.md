@@ -68,8 +68,9 @@ Tactics to consider introducing:
 
 * `Basics.lean`: `rfl`, `intro`, `rewrite`, `rw`, `cases`, `dsimp`, `exact`, `contradiction`, `<;>` (to move), `all_goals` (to remove)
 * `Induction.lean`: `induction`, `have`, `calc`, `generalize`
-* `Lists.lean`: `unfold`, `apply`
+* `Lists.lean`: `unfold`
 * `Poly.lean`: N/A
+* `Tactics.lean`: `apply`, `symm`, `injection`, `injections`
 
 ### `rewrite` vs `rw`
 
