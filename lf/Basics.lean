@@ -1,4 +1,6 @@
--- Basics: Functional Programming in Lean
+/-
+  Basics: Functional Programming in Lean
+-/
 
 -- INSTRUCTORS: This file and Induction.lean each take about an hour to
 --    get through in a not-too-rushed fashion (with questions, etc.).
@@ -15,13 +17,15 @@
 
 -- HIDEFROMHTML
 -- FULL
--- REMINDER:
---
---          #####################################################
---          ###  PLEASE DO NOT DISTRIBUTE SOLUTIONS PUBLICLY  ###
---          #####################################################
---
---   (See the [Preface] for why.)
+/-
+  REMINDER:
+
+           #####################################################
+           ###  PLEASE DO NOT DISTRIBUTE SOLUTIONS PUBLICLY  ###
+           #####################################################
+
+    (See the [Preface] for why.)
+-/
 -- /FULL
 -- /HIDEFROMHTML
 
@@ -29,33 +33,35 @@
 -- # Introduction
 
 -- FULL
--- The _functional style_ of programming is founded on simple,
--- everyday mathematical intuitions: If a procedure or method has no
--- side effects, then (ignoring efficiency) all we need to understand
--- about it is how it maps inputs to outputs -- that is, we can think
--- of it as just a concrete method for computing a mathematical
--- function.  This is one sense of the word "functional" in
--- "functional programming."  The direct connection between programs
--- and simple mathematical objects supports both formal correctness
--- proofs and sound informal reasoning about program behavior.
---
--- The other sense in which functional programming is "functional" is
--- that it emphasizes the use of functions as _first-class_ values --
--- i.e., values that can be passed as arguments to other functions,
--- returned as results, included in data structures, etc.  The
--- recognition that functions can be treated as data gives rise to a
--- host of useful and powerful programming idioms.
---
--- Other common features of functional languages include _algebraic
--- data types_ and _pattern matching_, which make it easy to
--- construct and manipulate rich data structures, and _polymorphic
--- type systems_ supporting abstraction and code reuse.  Lean offers
--- all of these features.
---
--- The first half of this chapter introduces some key elements of
--- Lean's functional programming language.  The second half introduces
--- some basic _tactics_ that can be used to prove properties of
--- programs.
+/-
+  The _functional style_ of programming is founded on simple,
+  everyday mathematical intuitions: If a procedure or method has no
+  side effects, then (ignoring efficiency) all we need to understand
+  about it is how it maps inputs to outputs -- that is, we can think
+  of it as just a concrete method for computing a mathematical
+  function.  This is one sense of the word "functional" in
+  "functional programming."  The direct connection between programs
+  and simple mathematical objects supports both formal correctness
+  proofs and sound informal reasoning about program behavior.
+
+  The other sense in which functional programming is "functional" is
+  that it emphasizes the use of functions as _first-class_ values --
+  i.e., values that can be passed as arguments to other functions,
+  returned as results, included in data structures, etc.  The
+  recognition that functions can be treated as data gives rise to a
+  host of useful and powerful programming idioms.
+
+  Other common features of functional languages include _algebraic
+  data types_ and _pattern matching_, which make it easy to
+  construct and manipulate rich data structures, and _polymorphic
+  type systems_ supporting abstraction and code reuse.  Lean offers
+  all of these features.
+
+  The first half of this chapter introduces some key elements of
+  Lean's functional programming language.  The second half introduces
+  some basic _tactics_ that can be used to prove properties of
+  programs.
+-/
 -- /FULL
 
 -- ######################################################################
@@ -63,19 +69,22 @@
 
 -- ## Enumerated Types
 
--- TERSE: In Lean, we can build practically everything from first principles...
---     FULL One notable thing about Lean is that its set of built-in features is
---     _extremely_ small.  For example, instead of the usual palette of atomic
---     data types (booleans, integers, strings, etc.), Lean offers a powerful
---     mechanism for defining new data types from scratch, with all these
---     familiar types as instances.
---
--- Naturally, Lean also comes with an extensive standard library providing
--- definitions of booleans, numbers, and many common data structures like lists
--- and hash tables.  But there is nothing magic or primitive about these library
--- definitions.  To illustrate this, in this course we will explicitly
--- recapitulate almost all the definitions we need, rather than getting them
--- from the standard library.
+-- TERSE: /- In Lean, we can build practically everything from first principles... -/
+-- FULL
+/-
+  One notable thing about Lean is that its set of built-in features is
+      _extremely_ small.  For example, instead of the usual palette of atomic
+      data types (booleans, integers, strings, etc.), Lean offers a powerful
+      mechanism for defining new data types from scratch, with all these
+      familiar types as instances.
+
+  Naturally, Lean also comes with an extensive standard library providing
+  definitions of booleans, numbers, and many common data structures like lists
+  and hash tables.  But there is nothing magic or primitive about these library
+  definitions.  To illustrate this, in this course we will explicitly
+  recapitulate almost all the definitions we need, rather than getting them
+  from the standard library.
+-/
 -- RAB ADDITION:
 -- We take great care to match those definitions with the ones in the standard
 -- library, so that by the time you are finished with this course, you will
@@ -85,12 +94,14 @@
 -- ######################################################################
 -- ## Days of the Week
 
--- TERSE: A datatype definition:
+-- TERSE: /- A datatype definition: -/
 
 -- FULL
--- To see how the datatype definition mechanism works, let's
--- start with a very simple example.  The following declaration tells
--- Lean that we are defining a set of data values -- a _type_.
+/-
+  To see how the datatype definition mechanism works, let's
+  start with a very simple example.  The following declaration tells
+  Lean that we are defining a set of data values -- a _type_.
+-/
 -- /FULL
 
 inductive Day : Type where
@@ -103,13 +114,15 @@ inductive Day : Type where
   | sunday
 
 -- FULL
--- The new type is called `Day`, and its members are `monday`,
--- `tuesday`, etc.
---
--- Having defined `Day`, we can write functions that operate on days.
+/-
+  The new type is called `Day`, and its members are `monday`,
+  `tuesday`, etc.
+
+  Having defined `Day`, we can write functions that operate on days.
+-/
 -- /FULL
--- TERSE: ***
--- TERSE: A function on days:
+-- TERSE: /- *** -/
+-- TERSE: /- A function on days: -/
 
 def nextWorkingDay (d : Day) : Day :=
   match d with
@@ -122,12 +135,14 @@ def nextWorkingDay (d : Day) : Day :=
   | .sunday    => .monday
 
 -- FULL
--- Note that the argument and return types of this function are
--- explicitly declared on the first line.  Like most functional
--- programming languages, Lean can often figure out these types for
--- itself when they are not given explicitly -- i.e., it can do _type
--- inference_ -- but we'll generally include them to make reading
--- easier.
+/-
+  Note that the argument and return types of this function are
+  explicitly declared on the first line.  Like most functional
+  programming languages, Lean can often figure out these types for
+  itself when they are not given explicitly -- i.e., it can do _type
+  inference_ -- but we'll generally include them to make reading
+  easier.
+-/
 
 -- RAB ADDITION
 -- You may also notice the unique pattern matching syntax- for
@@ -141,13 +156,15 @@ def nextWorkingDay (d : Day) : Day :=
 
 -- /FULL
 
--- TERSE: ***
--- TERSE: Evaluation:
+-- TERSE: /- *** -/
+-- TERSE: /- Evaluation: -/
 -- FULL
--- Having defined a function, we can check that it works on
--- some examples.  There are actually three different ways to do
--- examples in Lean.  First, we can use the `#eval` command to
--- evaluate a compound expression involving `nextWorkingDay`.
+/-
+  Having defined a function, we can check that it works on
+  some examples.  There are actually three different ways to do
+  examples in Lean.  First, we can use the `#eval` command to
+  evaluate a compound expression involving `nextWorkingDay`.
+-/
 -- /FULL
 
 #eval nextWorkingDay Day.friday
@@ -157,88 +174,110 @@ def nextWorkingDay (d : Day) : Day :=
 -- ==> Day.tuesday
 
 -- FULL
--- (We show Lean's responses in comments; if you have a computer
--- handy, this would be an excellent moment to fire up VS Code with
--- the Lean extension and try it for yourself.  Load this file,
--- `Basics.lean`, from the book's Lean sources, find the above
--- example, and observe the result in the Lean Infoview panel.)
+/-
+  (We show Lean's responses in comments; if you have a computer
+  handy, this would be an excellent moment to fire up VS Code with
+  the Lean extension and try it for yourself.  Load this file,
+  `Basics.lean`, from the book's Lean sources, find the above
+  example, and observe the result in the Lean Infoview panel.)
+-/
 
 -- RAB ADDITION
 
--- Using the Lean Extension
+/-
+  Using the Lean Extension
+-/
 
--- In VSCode, development of Lean code is supported by
--- the Lean Extension, which provides an interactive "infoview" panel that
--- displays the results of commands like `#eval` and `#check`, as well as the
--- current goal state when working on proofs. You can hover over expressions in
--- the source code to see their types, and you can click on the results in the
--- infoview to navigate to their definitions. This makes it easier to understand
--- how your code is being interpreted by Lean and to debug any issues that
--- arise.
+/-
+  In VSCode, development of Lean code is supported by
+  the Lean Extension, which provides an interactive "infoview" panel that
+  displays the results of commands like `#eval` and `#check`, as well as the
+  current goal state when working on proofs. You can hover over expressions in
+  the source code to see their types, and you can click on the results in the
+  infoview to navigate to their definitions. This makes it easier to understand
+  how your code is being interpreted by Lean and to debug any issues that
+  arise.
+-/
 
--- The infoview always follows your cursor, and Lean typechecks the file as you
--- edit it, so you can see the results of your changes immediately. You can also
--- use the infoview to explore the definitions of functions and types that
--- you're using, which can be very helpful for understanding how they work.
+/-
+  The infoview always follows your cursor, and Lean typechecks the file as you
+  edit it, so you can see the results of your changes immediately. You can also
+  use the infoview to explore the definitions of functions and types that
+  you're using, which can be very helpful for understanding how they work.
+-/
 
--- If you haven't already, install the Lean Extension in VSCode and open the
--- `Basics.lean` file to see the infoview in action. Try hovering over the
--- `nextWorkingDay` function and the `Day` type to see their definitions, and
--- experiment with adding your own `#eval` commands to test other inputs.
+/-
+  If you haven't already, install the Lean Extension in VSCode and open the
+  `Basics.lean` file to see the infoview in action. Try hovering over the
+  `nextWorkingDay` function and the `Day` type to see their definitions, and
+  experiment with adding your own `#eval` commands to test other inputs.
+-/
 
 -- RAB: There's a question of where exactly to put this.
 
 -- /FULL
 
--- Second, we can record what we _expect_ the result to be in the
--- form of a Lean "example":
+/-
+  Second, we can record what we _expect_ the result to be in the
+  form of a Lean "example":
+-/
 
 -- test_next_working_day
 example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
   rfl
 
 -- FULL
--- This declaration does two things: it makes an assertion
--- (that the second working day after `saturday` is `tuesday`), and it
--- gives the assertion a name that can be used to refer to it later.
--- Having made the assertion, we can also ask Lean to _verify_ it.
--- The `by rfl` can be read as "The assertion we've just made can be
--- proved by observing that both sides of the equality evaluate to
--- the same thing."
+/-
+  This declaration does two things: it makes an assertion
+  (that the second working day after `saturday` is `tuesday`), and it
+  gives the assertion a name that can be used to refer to it later.
+  Having made the assertion, we can also ask Lean to _verify_ it.
+  The `by rfl` can be read as "The assertion we've just made can be
+  proved by observing that both sides of the equality evaluate to
+  the same thing."
+-/
 
--- `rfl` stands for "reflexivity," which is the principle that any value is
--- equal to itself. After evaluation, both sides of the equality are the same
--- value, so the assertion is true by reflexivity.  If we had made a different
--- assertion, such as `example : nextWorkingDay (nextWorkingDay Day.saturday) =
--- Day.monday`, then Lean would not be able to verify it, and would signal an
--- error. Try it out!
+/-
+  `rfl` stands for "reflexivity," which is the principle that any value is
+  equal to itself. After evaluation, both sides of the equality are the same
+  value, so the assertion is true by reflexivity.  If we had made a different
+  assertion, such as `example : nextWorkingDay (nextWorkingDay Day.saturday) =
+  Day.monday`, then Lean would not be able to verify it, and would signal an
+  error. Try it out!
+-/
 
 -- /FULL
 
--- Third, we can ask Lean to _compile_ our definitions to efficient
--- native code.  Lean compiles to C, which is then compiled to machine
--- code by a standard C compiler.  This facility is very useful, since
--- it gives us a path from proved-correct algorithms written in Lean to
--- efficient executables.
---
--- Indeed, this is one of the main uses for which Lean was developed.
--- We'll come back to this topic in later chapters.
+/-
+  Third, we can ask Lean to _compile_ our definitions to efficient
+  native code.  Lean compiles to C, which is then compiled to machine
+  code by a standard C compiler.  This facility is very useful, since
+  it gives us a path from proved-correct algorithms written in Lean to
+  efficient executables.
+
+  Indeed, this is one of the main uses for which Lean was developed.
+  We'll come back to this topic in later chapters.
+-/
 
 -- ######################################################################
 -- ## Booleans
 
 -- FULL
--- Following the pattern of the days of the week above, we can
--- define the standard type `Bool` of booleans, with members `true`
--- and `false`.
+/-
+  Following the pattern of the days of the week above, we can
+  define the standard type `Bool` of booleans, with members `true`
+  and `false`.
+-/
 -- /FULL
--- TERSE: Another familiar enumerated type:
+-- TERSE: /- Another familiar enumerated type: -/
 
--- We define our own `MyBool` to teach the concept of building from
--- scratch; later we'll switch to Lean's built-in `Bool`.
+/-
+  We define our own `MyBool` to teach the concept of building from
+  scratch; later we'll switch to Lean's built-in `Bool`.
+-/
 
-/- JC: Can we just gloss over what `section` is doing here,
-  or do we need to explain it? -/
+-- JC: Can we just gloss over what `section` is doing here,
+-- or do we need to explain it?
 
 -- RAB: No need, I think.
 section
@@ -248,12 +287,12 @@ inductive MyBool : Type where
   | false
 open MyBool
 
--- TERSE: Booleans are also available in Lean's standard library, but
---     in this course we'll define everything from scratch, just to see
---     how it's done.
--- TERSE: ***
+-- TERSE: /- Booleans are also available in Lean's standard library, but in this course we'll define everything from scratch, just to see how it's done. -/
+-- TERSE: /- *** -/
 -- FULL
--- Functions over booleans can be defined in the same way as above:
+/-
+  Functions over booleans can be defined in the same way as above:
+-/
 -- /FULL
 
 def notb (b : MyBool) : MyBool :=
@@ -261,7 +300,7 @@ def notb (b : MyBool) : MyBool :=
   | .true => false
   | .false => true
 
--- TERSE: ***
+-- TERSE: /- *** -/
 
 def andb (b1 : MyBool) (b2 : MyBool) : MyBool :=
   match b1 with
@@ -274,22 +313,25 @@ def orb (b1 : MyBool) (b2 : MyBool) : MyBool :=
   | .false => b2
 
 -- FULL
--- (Although we are rolling our own booleans here for the sake
--- of building up everything from scratch, Lean does, of course,
--- provide a default implementation of the booleans, together with a
--- multitude of useful functions and lemmas.)
+/-
+  (Although we are rolling our own booleans here for the sake
+  of building up everything from scratch, Lean does, of course,
+  provide a default implementation of the booleans, together with a
+  multitude of useful functions and lemmas.)
+-/
 -- /FULL
 
 -- FULL
--- The last two of these illustrate Lean's syntax for
--- multi-argument function definitions.  The corresponding
--- multi-argument _application_ syntax is illustrated by the
--- following "unit tests," which constitute a complete specification
--- -- a truth table -- for the `orb` function:
+/-
+  The last two of these illustrate Lean's syntax for
+  multi-argument function definitions.  The corresponding
+  multi-argument _application_ syntax is illustrated by the
+  following "unit tests," which constitute a complete specification
+  -- a truth table -- for the `orb` function:
+-/
 -- /FULL
--- TERSE: Note the syntax for defining multi-argument
---     functions (`andb` and `orb`).
--- TERSE: ***
+-- TERSE: /- Note the syntax for defining multi-argument functions (`andb` and `orb`). -/
+-- TERSE: /- *** -/
 
 -- test_orb1
 example : orb .true  .false = .true  := by rfl
@@ -300,9 +342,11 @@ example : orb .false .true  = .true  := by rfl
 -- test_orb4
 example : orb .true  .true  = .true  := by rfl
 
--- We can define new symbolic notations for existing definitions.
--- Because Lean already defines these for the built-in `Bool`,
--- we restrict ours locally to a section.
+/-
+  We can define new symbolic notations for existing definitions.
+  Because Lean already defines these for the built-in `Bool`,
+  we restrict ours locally to a section.
+-/
 
 section
 local prefix:40 (priority := high) "!" => notb
@@ -316,18 +360,20 @@ example : (.false || .false || .true) = .true := by rfl
 example : (! .false) = .true := by rfl
 end
 
--- TERSE: ***
+-- TERSE: /- *** -/
 -- EX1 (nandb)
 -- FULL
--- The `sorry` keyword can be used as a placeholder for an
--- incomplete proof or definition.  We use it in exercises to indicate
--- the parts that we're leaving for you -- i.e., your job is to replace
--- `sorry` with real definitions and proofs.
---
--- Remove `sorry` below and complete the definition of the
--- following function; then make sure that the `example` assertions
--- below can each be verified by Lean.  The function should return
--- `true` if either or both of its inputs are `false`.
+/-
+  The `sorry` keyword can be used as a placeholder for an
+  incomplete proof or definition.  We use it in exercises to indicate
+  the parts that we're leaving for you -- i.e., your job is to replace
+  `sorry` with real definitions and proofs.
+
+  Remove `sorry` below and complete the definition of the
+  following function; then make sure that the `example` assertions
+  below can each be verified by Lean.  The function should return
+  `true` if either or both of its inputs are `false`.
+-/
 -- /FULL
 
 def nandb (b1 : MyBool) (b2 : MyBool) : MyBool
@@ -350,9 +396,11 @@ example : nandb .true .true   = .false := by rfl  -- ADMITTED
 
 -- FULL
 -- EX1 (andb3)
--- Do the same for the `andb3` function below. This function should
--- return `true` when all of its inputs are `true`, and `false`
--- otherwise.
+/-
+  Do the same for the `andb3` function below. This function should
+  return `true` when all of its inputs are `true`, and `false`
+  otherwise.
+-/
 
 def andb3 (b1 : MyBool) (b2 : MyBool) (b3 : MyBool) : MyBool
   -- ADMITDEF
@@ -371,27 +419,33 @@ example : andb3 .true .true .false = .false := by rfl  -- ADMITTED
 -- []
 -- /FULL
 
-/- JC: Now would be a good time to explicitly say we're switching
-  back to Lean's Bool, which conveniently has `bif ... then ... else`
-  syntax that we can then use. -/
+-- JC: Now would be a good time to explicitly say we're switching
+-- back to Lean's Bool, which conveniently has `bif ... then ... else`
+-- syntax that we can then use.
 
-  -- RADDTION
+  /-
+    RADDTION
+  -/
 
--- TERSE: ***
+-- TERSE: /- *** -/
 -- FULL
--- Now that we've seen how to define our own booleans, we can switch back to
--- Lean's built-in `Bool` type, which has the same structure but also includes
--- a lot of useful functions and lemmas.  We can even define functions to
--- convert between our `MyBool` and Lean's `Bool`.
+/-
+  Now that we've seen how to define our own booleans, we can switch back to
+  Lean's built-in `Bool` type, which has the same structure but also includes
+  a lot of useful functions and lemmas.  We can even define functions to
+  convert between our `MyBool` and Lean's `Bool`.
+-/
 
 def myBoolToBool (b : MyBool) : Bool :=
   match b with
   | .true => true
   | .false => false
 
--- With the full power of Lean's `Bool` at our disposal, we can also write this
--- more concisely using the `bif ... then ... else` syntax, which is a
--- convenient way to write simple conditional expressions.
+/-
+  With the full power of Lean's `Bool` at our disposal, we can also write this
+  more concisely using the `bif ... then ... else` syntax, which is a
+  convenient way to write simple conditional expressions.
+-/
 
 def boolToMyBool (b : Bool) : MyBool :=
   bif b then true else false
@@ -405,44 +459,54 @@ end
 -- ######################################################################
 -- ## Types
 
--- Every expression in Lean has a type describing what sort of
--- thing it computes.  The `#check` command asks Lean to print the type
--- of an expression.
+/-
+  Every expression in Lean has a type describing what sort of
+  thing it computes.  The `#check` command asks Lean to print the type
+  of an expression.
+-/
 
 #check true
 -- ===> true : Bool
 
--- If the thing after `#check` is followed by a colon and a type,
--- Lean will verify that the type of the expression
--- matches the given type and signal an error if not.
+/-
+  If the thing after `#check` is followed by a colon and a type,
+  Lean will verify that the type of the expression
+  matches the given type and signal an error if not.
+-/
 
 #check (true : Bool)
 #check (not true : Bool)
 
--- Functions like `not` itself are also data values, just like
--- `true` and `false`.  Their types are called _function types_, and
--- they are written with arrows.
+/-
+  Functions like `not` itself are also data values, just like
+  `true` and `false`.  Their types are called _function types_, and
+  they are written with arrows.
+-/
 
 #check not
 -- ===> not : Bool → Bool
 
 -- FULL
--- The type of `not`, written `Bool → Bool` and pronounced
--- "`Bool` arrow `Bool`," can be read, "Given an input of type
--- `Bool`, this function produces an output of type `Bool`."
--- Similarly, the type of `and`, written `Bool → Bool → Bool`, can
--- be read, "Given two inputs, each of type `Bool`, this function
--- produces an output of type `Bool`."
+/-
+  The type of `not`, written `Bool → Bool` and pronounced
+  "`Bool` arrow `Bool`," can be read, "Given an input of type
+  `Bool`, this function produces an output of type `Bool`."
+  Similarly, the type of `and`, written `Bool → Bool → Bool`, can
+  be read, "Given two inputs, each of type `Bool`, this function
+  produces an output of type `Bool`."
+-/
 
 -- RAB ADDITION
 
--- You may notice that → is a unicode character, not a simple ASCII string. This
--- is a common convention in Lean, and the Lean Extension provides convenient
--- shortcuts for entering these characters. Simply typing \ (backslash) followed
--- by the name of the character, and the extension will automatically replace it
--- with the correct symbol. For example, typing \-> or \to will produce →, and
--- \lambda will produce λ. This allows you to write more concise and readable
--- code without having to remember complex keyboard shortcuts.
+/-
+  You may notice that → is a unicode character, not a simple ASCII string. This
+  is a common convention in Lean, and the Lean Extension provides convenient
+  shortcuts for entering these characters. Simply typing \ (backslash) followed
+  by the name of the character, and the extension will automatically replace it
+  with the correct symbol. For example, typing \-> or \to will produce →, and
+  \lambda will produce λ. This allows you to write more concise and readable
+  code without having to remember complex keyboard shortcuts.
+-/
 
 -- /FULL
 
@@ -451,13 +515,15 @@ end
 -- ## New Types from Old
 
 -- FULL
--- The types we have defined so far are examples of simple
--- "enumerated types": their definitions explicitly enumerate a
--- finite set of elements, called _constructors_.  Here is a more
--- interesting type definition, `Color`, where one of the
--- constructors takes an argument:
+/-
+  The types we have defined so far are examples of simple
+  "enumerated types": their definitions explicitly enumerate a
+  finite set of elements, called _constructors_.  Here is a more
+  interesting type definition, `Color`, where one of the
+  constructors takes an argument:
+-/
 -- /FULL
--- TERSE: A more interesting type definition:
+-- TERSE: /- A more interesting type definition: -/
 
 inductive RGB : Type where
   | red
@@ -469,34 +535,38 @@ inductive Color : Type where
   | white
   | primary (p : RGB)
 
--- Let's look at this in a little more detail.
---
--- An `inductive` definition does two things:
---
--- - It introduces a set of new _constructors_. E.g., `RGB.red`,
---   `Color.primary`, `true`, `false`, `Day.monday`, etc. are constructors.
---
--- - It groups them into a new named type, like `Bool`, `RGB`, or
---   `Color`.
---
--- _Constructor expressions_ are formed by applying a constructor
--- to zero or more other constructors or constructor expressions,
--- obeying the declared number and types of the constructor arguments.
--- E.g., these are valid constructor expressions...
---     - `RGB.red`
---     - `true`
---     - `Color.primary RGB.red`
---     - etc.
--- ...but these are not:
---     - `RGB.red Color.primary`
---     - `true RGB.red`
---     - `Color.primary (Color.primary RGB.red)`
---     - etc.
+/-
+  Let's look at this in a little more detail.
 
--- TERSE: ***
+  An `inductive` definition does two things:
 
--- We can define functions on colors using pattern matching just as
--- we did for `Day` and `Bool`.
+  - It introduces a set of new _constructors_. E.g., `RGB.red`,
+    `Color.primary`, `true`, `false`, `Day.monday`, etc. are constructors.
+
+  - It groups them into a new named type, like `Bool`, `RGB`, or
+    `Color`.
+
+  _Constructor expressions_ are formed by applying a constructor
+  to zero or more other constructors or constructor expressions,
+  obeying the declared number and types of the constructor arguments.
+  E.g., these are valid constructor expressions...
+      - `RGB.red`
+      - `true`
+      - `Color.primary RGB.red`
+      - etc.
+  ...but these are not:
+      - `RGB.red Color.primary`
+      - `true RGB.red`
+      - `Color.primary (Color.primary RGB.red)`
+      - etc.
+-/
+
+-- TERSE: /- *** -/
+
+/-
+  We can define functions on colors using pattern matching just as
+  we did for `Day` and `Bool`.
+-/
 
 def monochrome (c : Color) : Bool :=
   match c with
@@ -504,10 +574,12 @@ def monochrome (c : Color) : Bool :=
   | .white => true
   | .primary _ => false
 
--- Since the `primary` constructor takes an argument, a pattern
--- matching `primary` should include either a variable, as we just
--- did (note that we can choose its name freely), or a constant of
--- appropriate type (as below).
+/-
+  Since the `primary` constructor takes an argument, a pattern
+  matching `primary` should include either a variable, as we just
+  did (note that we can choose its name freely), or a constant of
+  appropriate type (as below).
+-/
 
 def isRed (c : Color) : Bool :=
   match c with
@@ -516,24 +588,28 @@ def isRed (c : Color) : Bool :=
   | .primary .red => true
   | .primary _ => false
 
--- The pattern `Color.primary _` here is shorthand for "the constructor
--- `primary` applied to any `RGB` constructor except `red`."
+/-
+  The pattern `Color.primary _` here is shorthand for "the constructor
+  `primary` applied to any `RGB` constructor except `red`."
+-/
 
 -- ######################################################################
 -- ## Namespaces and Sections
 
-/- JC: I edited a lot of the contents and comments in just this section,
-  I hope it makes sense. -/
+-- JC: I edited a lot of the contents and comments in just this section,
+-- I hope it makes sense.
 
 -- FULL
--- Lean provides a _namespace system_ to aid in organizing large
--- developments.  If we enclose a collection of declarations in
--- `namespace X ... end X`, then, in the remainder of the file
--- after the `end`, these definitions are referred to by names like
--- `X.foo` instead of just `foo`.  We will use this feature to limit
--- the scope of definitions, so that we are free to reuse names.
+/-
+  Lean provides a _namespace system_ to aid in organizing large
+  developments.  If we enclose a collection of declarations in
+  `namespace X ... end X`, then, in the remainder of the file
+  after the `end`, these definitions are referred to by names like
+  `X.foo` instead of just `foo`.  We will use this feature to limit
+  the scope of definitions, so that we are free to reuse names.
+-/
 -- /FULL
--- TERSE: `namespace` declarations create separate namespaces.
+-- TERSE: /- `namespace` declarations create separate namespaces. -/
 
 namespace Playground
 def myFoo : RGB := RGB.blue
@@ -545,10 +621,12 @@ def myFoo : Bool := true
 #check myFoo             -- Bool
 
 -- FULL
--- Inside of a namespace, all previous definitions from that namespace are
--- available, and can be referred to without prefixing.
--- Definitions can also be prefixed by a namespace to put it in the namespace
--- without having to open and close the namespace.
+/-
+  Inside of a namespace, all previous definitions from that namespace are
+  available, and can be referred to without prefixing.
+  Definitions can also be prefixed by a namespace to put it in the namespace
+  without having to open and close the namespace.
+-/
 -- /FULL
 
 namespace RGB
@@ -557,21 +635,25 @@ end RGB
 
 def RGB.myOtherBlue : RGB := myBlue
 
--- #check myBlue -- unknown identifier
+/-
+  #check myBlue -- unknown identifier
+-/
 #check RGB.myBlue      -- RGB
 #check RGB.myOtherBlue -- RGB
 
 -- FULL
--- We can also use `open` to bring the definitions of a namespace into scope.
--- This makes it convenient to refer to all of those definitions without
--- a prefix. Original definitions of the same name can then be referred to
--- by the special prefix `_root_`.
--- Lean also provides _sections_, which delimit the scope of `open`ing
--- namespaces and `local` notations within `section ... end`.
--- We already saw `prefix` and `infix` notations for MyBool;
--- there are also `postfix` notations.
+/-
+  We can also use `open` to bring the definitions of a namespace into scope.
+  This makes it convenient to refer to all of those definitions without
+  a prefix. Original definitions of the same name can then be referred to
+  by the special prefix `_root_`.
+  Lean also provides _sections_, which delimit the scope of `open`ing
+  namespaces and `local` notations within `section ... end`.
+  We already saw `prefix` and `infix` notations for MyBool;
+  there are also `postfix` notations.
+-/
 -- /FULL
--- TERSE: `section` declarations delimit the scope of `open` and `local`.
+-- TERSE: /- `section` declarations delimit the scope of `open` and `local`. -/
 
 section
 open Playground
@@ -583,7 +665,9 @@ local postfix:40 "′" => Color.primary
 end
 
 #check myFoo         -- Bool
--- #check RGB.blue′  -- fails to parse
+/-
+  #check RGB.blue′  -- fails to parse
+-/
 
 -- ######################################################################
 -- ## Tuples
@@ -591,20 +675,22 @@ end
 namespace TuplePlayground
 
 -- FULL
--- A single constructor with multiple parameters can be used
--- to create a tuple type. As an example, consider representing
--- the four bits in a nybble (half a byte). We first define
--- a datatype `Bit` that resembles `Bool` (using the
--- constructors `b1` and `b0` for the two possible bit values)
--- and then define the datatype `Nybble`, which is essentially
--- a tuple of four bits.
+/-
+  A single constructor with multiple parameters can be used
+  to create a tuple type. As an example, consider representing
+  the four bits in a nybble (half a byte). We first define
+  a datatype `Bit` that resembles `Bool` (using the
+  constructors `b1` and `b0` for the two possible bit values)
+  and then define the datatype `Nybble`, which is essentially
+  a tuple of four bits.
+-/
 
 -- RAB: Is this called a Nybble, not a Nibble? Whatever the Penn systems course
 -- calls it, we should follow suite, I guess.
 
 -- /FULL
 
--- TERSE: A nybble is half a byte -- four bits.
+-- TERSE: /- A nybble is half a byte -- four bits. -/
 
 inductive Bit : Type where
   | b1
@@ -616,22 +702,26 @@ inductive Nybble : Type where
 #check (.bits .b1 .b0 .b1 .b0 : Nybble)
 
 -- FULL
--- The `bits` constructor acts as a wrapper for its contents.
--- Unwrapping can be done by pattern-matching, as in the `allZero`
--- function below, which tests a nybble to see if all its bits are
--- `b0`.
+/-
+  The `bits` constructor acts as a wrapper for its contents.
+  Unwrapping can be done by pattern-matching, as in the `allZero`
+  function below, which tests a nybble to see if all its bits are
+  `b0`.
+-/
 -- /FULL
 
--- TERSE: ***
--- TERSE: We can deconstruct a nybble by pattern-matching.
+-- TERSE: /- *** -/
+-- TERSE: /- We can deconstruct a nybble by pattern-matching. -/
 
 def allZero (nb : Nybble) : Bool :=
   match nb with
   | .bits .b0 .b0 .b0 .b0 => true
   | .bits _   _   _   _   => false
 
--- (The underscore `_` here is a _wildcard pattern_, which avoids
--- inventing variable names that will not be used.)
+/-
+  (The underscore `_` here is a _wildcard pattern_, which avoids
+  inventing variable names that will not be used.)
+-/
 
 #eval allZero (.bits .b1 .b0 .b1 .b0)
 -- ===> false
@@ -644,73 +734,91 @@ end TuplePlayground
 -- ## Numbers
 
 -- FULL
--- We put this section in a namespace so that our own definition of
--- natural numbers does not interfere with the one from the
--- standard library.  In the rest of the book, we'll want to use
--- the standard library's.
+/-
+  We put this section in a namespace so that our own definition of
+  natural numbers does not interfere with the one from the
+  standard library.  In the rest of the book, we'll want to use
+  the standard library's.
+-/
 -- /FULL
 
 namespace NatPlayground
 
 -- FULL
--- All the types we have defined so far -- both "enumerated
--- types" such as `Day`, `Bool`, and `Bit` and tuple types such as
--- `Nybble` built from them -- are finite.  The natural numbers, on
--- the other hand, are an infinite set, so we'll need to use a
--- slightly richer form of type declaration to represent them.
+/-
+  All the types we have defined so far -- both "enumerated
+  types" such as `Day`, `Bool`, and `Bit` and tuple types such as
+  `Nybble` built from them -- are finite.  The natural numbers, on
+  the other hand, are an infinite set, so we'll need to use a
+  slightly richer form of type declaration to represent them.
+-/
 
 -- RAB: I moved over the notes from the Rocq book here, as I find they
 -- very nicely motivate unary for someone who has not seen it before.
 
--- There are many representations of numbers to choose from. You are
--- certainly familiar with decimal notation (base 10), using the
--- digits 0 through 9, for example, to form the number 123. You may
--- very likely also have encountered hexadecimal notation (base 16),
--- in which the same number is represented as 7B, or octal (base 8),
--- where it is 173, or binary (base 2), where it is 1111011. Using an
--- enumerated type to represent digits, we could use any of these as
--- our representation natural numbers. Indeed, there are
--- circumstances where each of these choices would be useful.
+/-
+  There are many representations of numbers to choose from. You are
+  certainly familiar with decimal notation (base 10), using the
+  digits 0 through 9, for example, to form the number 123. You may
+  very likely also have encountered hexadecimal notation (base 16),
+  in which the same number is represented as 7B, or octal (base 8),
+  where it is 173, or binary (base 2), where it is 1111011. Using an
+  enumerated type to represent digits, we could use any of these as
+  our representation natural numbers. Indeed, there are
+  circumstances where each of these choices would be useful.
+-/
 
--- The binary representation is valuable in computer hardware because
--- the digits can be represented with just two distinct voltage
--- levels, resulting in simple circuitry. Analogously, we wish here
--- to choose a representation that makes _proofs_ simpler.
+/-
+  The binary representation is valuable in computer hardware because
+  the digits can be represented with just two distinct voltage
+  levels, resulting in simple circuitry. Analogously, we wish here
+  to choose a representation that makes _proofs_ simpler.
+-/
 
--- In fact, there is a representation of numbers that is even simpler
--- than binary, namely unary (base 1), in which only a single digit
--- is used -- as our forebears might have done to count days by
--- making scratches on the walls of their caves. To represent unary
--- numbers with a Lean datatype, we use two constructors. The
--- [zero] constructor represents zero. The [succ] constructor can be
---applied to the representation of the natural number [n], yielding
--- the representation of [n+1], where [succ] stands for "successor."
---  Here is the complete datatype definition: *)
+/-
+  In fact, there is a representation of numbers that is even simpler
+  than binary, namely unary (base 1), in which only a single digit
+  is used -- as our forebears might have done to count days by
+  making scratches on the walls of their caves. To represent unary
+  numbers with a Lean datatype, we use two constructors. The
+  [zero] constructor represents zero. The [succ] constructor can be
+  applied to the representation of the natural number [n], yielding
+  the representation of [n+1], where [succ] stands for "successor."
+   Here is the complete datatype definition: *)
+-/
 
 -- /FULL
 
--- TERSE: For simplicity in proofs, we choose unary representation.
+-- TERSE: /- For simplicity in proofs, we choose unary representation. -/
 
 inductive Nat : Type where
   | zero
   | succ (n : Nat)
 
--- With this definition, 0 is represented by `zero`, 1 by `succ zero`,
--- 2 by `succ (succ zero)`, and so on.
+/-
+  With this definition, 0 is represented by `zero`, 1 by `succ zero`,
+  2 by `succ (succ zero)`, and so on.
+-/
 
--- TERSE: ***
--- Critical point: this just defines a _representation_ of
--- numbers -- a unary notation for writing them down.
+-- TERSE: /- *** -/
+/-
+  Critical point: this just defines a _representation_ of
+  numbers -- a unary notation for writing them down.
+-/
 
 inductive OtherNat : Type where
   | stop
   | tick (foo : OtherNat)
 
--- This is the same _representation_ of numbers as `Nat`, but with different
--- (sillier!) constructor names.
+/-
+  This is the same _representation_ of numbers as `Nat`, but with different
+  (sillier!) constructor names.
+-/
 
--- The _interpretation_ of these representations arises from how we use them to
--- compute.
+/-
+  The _interpretation_ of these representations arises from how we use them to
+  compute.
+-/
 
 def pred (n : Nat) : Nat :=
   match n with
@@ -719,12 +827,14 @@ def pred (n : Nat) : Nat :=
 
 end NatPlayground
 
--- TERSE: ***
+-- TERSE: /- *** -/
 
--- Because natural numbers are such a pervasive kind of data,
--- Lean provides built-in support for them: ordinary decimal
--- numerals can be used as a shorthand, and Lean's `Nat` type uses
--- the constructors `Nat.zero` and `Nat.succ`.
+/-
+  Because natural numbers are such a pervasive kind of data,
+  Lean provides built-in support for them: ordinary decimal
+  numerals can be used as a shorthand, and Lean's `Nat` type uses
+  the constructors `Nat.zero` and `Nat.succ`.
+-/
 
 -- RAB: Hovering over succ points out that "Using Nat.succ n should usually be
 -- avoided in favor of n + 1, which is the simp normal form." How quickly should
@@ -750,19 +860,21 @@ def minustwo (n : Nat) : Nat :=
 #check Nat.pred  -- Nat → Nat
 #check minustwo  -- Nat → Nat
 
--- These are all things that can be applied to a number to yield a
--- number.  However, there is a fundamental difference between `Nat.succ`
--- and the other two: functions like `Nat.pred` and `minustwo` are
--- defined by giving _computation rules_ -- e.g., the definition of
--- `Nat.pred` says that `Nat.pred 2` can be simplified to `1` -- while the
--- definition of `Nat.succ` has no such behavior attached.  Although it is
--- _like_ a function in the sense that it can be applied to an
--- argument, it does not _do_ anything at all!  It is just a way of
--- writing down numbers.
+/-
+  These are all things that can be applied to a number to yield a
+  number.  However, there is a fundamental difference between `Nat.succ`
+  and the other two: functions like `Nat.pred` and `minustwo` are
+  defined by giving _computation rules_ -- e.g., the definition of
+  `Nat.pred` says that `Nat.pred 2` can be simplified to `1` -- while the
+  definition of `Nat.succ` has no such behavior attached.  Although it is
+  _like_ a function in the sense that it can be applied to an
+  argument, it does not _do_ anything at all!  It is just a way of
+  writing down numbers.
+-/
 -- /FULL
 
--- TERSE: ***
--- TERSE: Recursive functions:
+-- TERSE: /- *** -/
+-- TERSE: /- Recursive functions: -/
 
 def even (n : Nat) : Bool :=
   match n with
@@ -770,9 +882,11 @@ def even (n : Nat) : Bool :=
   | 1                => false
   | .succ (.succ n') => even n'
 
--- TERSE: ***
--- We could define `odd` by a similar recursive declaration, but
--- here is a simpler way:
+-- TERSE: /- *** -/
+/-
+  We could define `odd` by a similar recursive declaration, but
+  here is a simpler way:
+-/
 
 def odd (n : Nat) : Bool :=
   not (even n)
@@ -782,8 +896,8 @@ example : odd 1 = true  := by rfl
 -- test_odd2
 example : odd 4 = false := by rfl
 
--- TERSE: ***
--- TERSE: A multi-argument recursive function.
+-- TERSE: /- *** -/
+-- TERSE: /- A multi-argument recursive function. -/
 
 def add (n : Nat) (m : Nat) : Nat :=
   match m with
@@ -791,33 +905,45 @@ def add (n : Nat) (m : Nat) : Nat :=
   | .succ m' => .succ (add n m')
 
 -- FULL
--- Adding three to two gives us five (whew!):
+/-
+  Adding three to two gives us five (whew!):
+-/
 -- /FULL
 
 #eval add 3 2
 -- ===> 5
 
 -- FULL
--- The steps of simplification that Lean performs here can be
--- visualized as follows:
---
---      `add 3 2`
---   i.e. `add (succ (succ (succ 0))) (succ (succ 0))`
+/-
+  The steps of simplification that Lean performs here can be
+  visualized as follows:
+
+       `add 3 2`
+    i.e. `add (succ (succ (succ 0))) (succ (succ 0))`
+-/
 --    ==> `succ (add (succ (succ (succ 0))) (succ 0))`
---          by the second clause of the `match`
+/-
+           by the second clause of the `match`
+-/
 --    ==> `succ (succ (add (succ (succ (succ 0))) 0))`
---          by the second clause of the `match`
+/-
+           by the second clause of the `match`
+-/
 --    ==> `succ (succ (succ (add (succ 0))))`
---          by the first clause of the `match`
---   i.e. `5`
+/-
+           by the first clause of the `match`
+    i.e. `5`
+-/
 -- /FULL
 
--- TERSE: ***
+-- TERSE: /- *** -/
 
 -- FULL
--- Now that we know how addition is defined, we can use Lean's builtin
--- definition and notation to write it more concisely.
--- The `+` operator is already defined for `Nat` in the standard library.
+/-
+  Now that we know how addition is defined, we can use Lean's builtin
+  definition and notation to write it more concisely.
+  The `+` operator is already defined for `Nat` in the standard library.
+-/
 -- /FULL
 
 def mul (n m : Nat) : Nat :=
@@ -828,8 +954,10 @@ def mul (n m : Nat) : Nat :=
 -- test_mult1
 example : mul 3 3 = 9 := by rfl
 
--- TERSE: ***
--- We can pattern-match two values at the same time:
+-- TERSE: /- *** -/
+/-
+  We can pattern-match two values at the same time:
+-/
 
 def sub (n m : Nat) : Nat :=
   match n, m with
@@ -837,11 +965,13 @@ def sub (n m : Nat) : Nat :=
   | .succ _,  0        => n
   | .succ n', .succ m' => sub n' m'
 
--- Now that we've seen how natural numbers are built from `Nat.zero`
--- and `Nat.succ`, we can take further advantage of Lean's notation: the
--- pattern `n + 1` is syntactic sugar for `Nat.succ n`, `n + 2` is
--- syntactic sugar for `Nat.succ (Nat.succ n)`, and so on.
--- We'll use this more concise style from now on.
+/-
+  Now that we've seen how natural numbers are built from `Nat.zero`
+  and `Nat.succ`, we can take further advantage of Lean's notation: the
+  pattern `n + 1` is syntactic sugar for `Nat.succ n`, `n + 2` is
+  syntactic sugar for `Nat.succ (Nat.succ n)`, and so on.
+  We'll use this more concise style from now on.
+-/
 
 -- FULL
 def pow (base power : Nat) : Nat :=
@@ -850,10 +980,12 @@ def pow (base power : Nat) : Nat :=
   | p + 1 => mul base (pow base p)
 
 -- EX1 (factorial)
--- Recall the standard mathematical factorial function:
---        factorial(0)  =  1
---        factorial(n)  =  n * factorial(n-1)     (if n>0)
--- Translate this into Lean.
+/-
+  Recall the standard mathematical factorial function:
+         factorial(0)  =  1
+         factorial(n)  =  n * factorial(n-1)     (if n>0)
+  Translate this into Lean.
+-/
 
 def factorial (n : Nat) : Nat
   -- ADMITDEF
@@ -870,38 +1002,42 @@ example : factorial 5 = 10 * 12   := by rfl  -- ADMITTED
 -- []
 -- /FULL
 
--- TERSE: ***
--- Lean already provides `+`, `-`, `*` for `Nat`, so we don't need to
--- define our own notation.
+-- TERSE: /- *** -/
+/-
+  Lean already provides `+`, `-`, `*` for `Nat`, so we don't need to
+  define our own notation.
+-/
 
 
-/- JC: Overriding the `+` is an immense headache for technical reasons,
-  so we leave that alone, since our definition is the same anyway.
-  In contrast, our `sub` definition _is_ slightly different,
-  so we _do_ want to override the notation instance for it.
-  The `mul` and `pow` definitions are the same as the stdlib,
-  but we can also override notation for it. -/
+-- JC: Overriding the `+` is an immense headache for technical reasons,
+-- so we leave that alone, since our definition is the same anyway.
+-- In contrast, our `sub` definition _is_ slightly different,
+-- so we _do_ want to override the notation instance for it.
+-- The `mul` and `pow` definitions are the same as the stdlib,
+-- but we can also override notation for it.
 
 instance instSub : Sub Nat where sub := sub
 instance instMul : Mul Nat where mul := mul
 instance instPow : Pow Nat Nat where pow := pow
 
-/- JC: In the infoview, hover over the operators
-  to check out their associativity --
-  `+`, `-`, and `*` all left-associative,
-  but `^` is right-associative. -/
+-- JC: In the infoview, hover over the operators
+-- to check out their associativity --
+-- `+`, `-`, and `*` all left-associative,
+-- but `^` is right-associative.
 
 #check (0 + 1 + 1 : Nat)
 #check (4 - 3 - 2 : Nat)
 #check (2 * 3 * 4 : Nat)
 #check (1 ^ 2 ^ 2 : Nat)
 
--- TERSE: ***
--- When we say that Lean comes with almost nothing built-in, we really
--- mean it: even testing equality is a user-defined operation!
---
--- Here is a function `beq` that tests natural numbers for
--- equality, yielding a boolean.
+-- TERSE: /- *** -/
+/-
+  When we say that Lean comes with almost nothing built-in, we really
+  mean it: even testing equality is a user-defined operation!
+
+  Here is a function `beq` that tests natural numbers for
+  equality, yielding a boolean.
+-/
 
 def beq (n m : Nat) : Bool :=
   match n with
@@ -912,9 +1048,11 @@ def beq (n m : Nat) : Bool :=
               | 0 => false
               | m' + 1 => beq n' m'
 
--- TERSE: ***
--- Similarly, the `leb` function tests whether its first argument is
--- less than or equal to its second argument, yielding a boolean.
+-- TERSE: /- *** -/
+/-
+  Similarly, the `leb` function tests whether its first argument is
+  less than or equal to its second argument, yielding a boolean.
+-/
 
 def leb (n m : Nat) : Bool :=
   match n with
@@ -931,33 +1069,41 @@ example : leb 2 4 = true  := by rfl
 -- test_leb3
 example : leb 4 2 = false := by rfl
 
--- TERSE: ***
--- We'll be using these (especially `beq`) a lot, so let's give
--- them infix notations.
+-- TERSE: /- *** -/
+/-
+  We'll be using these (especially `beq`) a lot, so let's give
+  them infix notations.
+-/
 
-/- JC: Lean's stdlib has `==` notation for `beq`,
-  but not for `Nat.ble`... -/
+-- JC: Lean's stdlib has `==` notation for `beq`,
+-- but not for `Nat.ble`...
 
 instance : BEq Nat where
   beq := beq
 
 infix:65 "<=?" => leb
 
--- test_leb3'
+/-
+  test_leb3'
+-/
 example : 4 <=? 2 = false := by rfl
 
 -- FULL
--- We now have two symbols that both look like equality: `=`
--- and `=?`.  We'll have much more to say about their differences and
--- similarities later. For now, the main thing to notice is that
--- `x = y` is a logical _claim_ -- a "proposition" -- that we can try to
--- prove, while `x =? y` is a boolean _expression_ whose value (either
--- `true` or `false`) we can compute.
+/-
+  We now have two symbols that both look like equality: `=`
+  and `=?`.  We'll have much more to say about their differences and
+  similarities later. For now, the main thing to notice is that
+  `x = y` is a logical _claim_ -- a "proposition" -- that we can try to
+  prove, while `x =? y` is a boolean _expression_ whose value (either
+  `true` or `false`) we can compute.
+-/
 -- /FULL
 
 -- FULL
 -- EX1 (ltb)
--- Define a less-than function in terms of `leb`.
+/-
+  Define a less-than function in terms of `leb`.
+-/
 
 def ltb (n m : Nat) : Bool
   -- ADMITDEF
@@ -980,58 +1126,70 @@ example : 4 <? 2 = false := by rfl  -- ADMITTED
 -- # Proof by Simplification
 
 -- FULL
--- Now that we've looked at a few datatypes and functions,
--- let's turn to stating and proving properties of their behavior.
---
--- Actually, we've already started doing this: each `example` in the
--- previous sections made a precise claim about the behavior of some
--- function on some particular inputs.  The proofs of these claims
--- were always the same: use `rfl` to check that both sides of the
--- equation evaluate to identical values.
+/-
+  Now that we've looked at a few datatypes and functions,
+  let's turn to stating and proving properties of their behavior.
+
+  Actually, we've already started doing this: each `example` in the
+  previous sections made a precise claim about the behavior of some
+  function on some particular inputs.  The proofs of these claims
+  were always the same: use `rfl` to check that both sides of the
+  equation evaluate to identical values.
+-/
 -- /FULL
 
--- TERSE: A specific fact about natural numbers:
--- plus_1_1
+-- TERSE: /- A specific fact about natural numbers: -/
+/-
+  plus_1_1
+-/
 example : 1 + 1 = 2 := by rfl
 
--- TERSE: Another specific fact about natural numbers:
+-- TERSE: /- Another specific fact about natural numbers: -/
 -- JC: Keep the name for this one, it gets used later.
 theorem add_zero_one : 1 = 0 + 1 := by rfl
 
 -- FULL
--- The same sort of "proof by simplification" can also be used to
--- establish more interesting properties.  For example, the
--- fact that `0` is a "neutral element" for `+` on the left can be
--- proved just by observing that `0 + n` reduces to `n` no matter
--- what `n` is.
+/-
+  The same sort of "proof by simplification" can also be used to
+  establish more interesting properties.  For example, the
+  fact that `0` is a "neutral element" for `+` on the left can be
+  proved just by observing that `0 + n` reduces to `n` no matter
+  what `n` is.
+-/
 -- /FULL
 
--- TERSE: A general property of natural numbers:
+-- TERSE: /- A general property of natural numbers: -/
 
--- Note: Because Lean's addition recurses on the second argument,
--- `n + 0` reduces to `n` by definition.
--- `n + 0` reduces to `n` by definition.
+/-
+  Note: Because Lean's addition recurses on the second argument,
+  `n + 0` reduces to `n` by definition.
+  `n + 0` reduces to `n` by definition.
+-/
 
 theorem add_zero : ∀ n : Nat, n + 0 = n := by
   intro n; rfl
 
 -- FULL
--- The keywords `intro` and `rfl` are examples of _tactics_.
--- A tactic is a command that is used between `by` and the end of the
--- proof to guide the process of checking some claim we are making.
--- The semicolon `;` separates multiple steps of tactics;
--- they can also be separated by putting them on separate lines.
--- We will see several more tactics in the rest of this chapter and
--- many more in future chapters.
+/-
+  The keywords `intro` and `rfl` are examples of _tactics_.
+  A tactic is a command that is used between `by` and the end of the
+  proof to guide the process of checking some claim we are making.
+  The semicolon `;` separates multiple steps of tactics;
+  they can also be separated by putting them on separate lines.
+  We will see several more tactics in the rest of this chapter and
+  many more in future chapters.
+-/
 -- /FULL
 
--- TERSE: ***
+-- TERSE: /- *** -/
 
 -- FULL
--- Even these trivial examples provide opportunities to _step through_ the proof,
--- using the cursor. Moving the cursor over the `by` and stepping through the
--- tactics will show the state of the proof at each step in the right-hand
--- Lean InfoView Panel.
+/-
+  Even these trivial examples provide opportunities to _step through_ the proof,
+  using the cursor. Moving the cursor over the `by` and stepping through the
+  tactics will show the state of the proof at each step in the right-hand
+  Lean InfoView Panel.
+-/
 
 theorem add_succ : ∀ n m : Nat, n + (m + 1) = (n + m) + 1 := by
   intro n m; rfl
@@ -1042,11 +1200,11 @@ theorem mul_zero : ∀ n : Nat, n * 0 = 0 := by
 theorem mul_succ : ∀ n m : Nat, n * (m + 1) = n * m + n := by
   intro n m; rfl
 
-/- JC: Dumping the rest of the properties here.
-  They're needed because the notations prevent reducing from left to right
-  by just `dsimp [sub]` or `dsimp [pow]`.
-  I don't think these properties are actually used by us,
-  so maybe they can just be exercises. -/
+-- JC: Dumping the rest of the properties here.
+-- They're needed because the notations prevent reducing from left to right
+-- by just `dsimp [sub]` or `dsimp [pow]`.
+-- I don't think these properties are actually used by us,
+-- so maybe they can just be exercises.
 
 #check Nat.sub_zero
 
@@ -1057,7 +1215,7 @@ theorem succ_sub_succ n m : (n + 1) - (m + 1) = n - m := by rfl
 theorem pow_zero n : n ^ 0 = 1 := by rfl
 theorem pow_succ (n m : Nat) : n ^ (m + 1) = n * (n ^ m) := by rfl
 
-/- JC: And another one, which we _do_ use later. -/
+-- JC: And another one, which we _do_ use later.
 
 theorem beq_succ : ∀ n m : Nat, (n + 1 == m + 1) = (n == m) := by
   intro n m; rfl
@@ -1065,38 +1223,45 @@ theorem beq_succ : ∀ n m : Nat, (n + 1 == m + 1) = (n == m) := by
 -- ######################################################################
 -- # Proof by Rewriting
 
--- TERSE: A (slightly) more interesting theorem:
+-- TERSE: /- A (slightly) more interesting theorem: -/
 
 theorem plus_id_example : ∀ n m : Nat,
     n = m →
     n + n = m + m := by
   -- FULL
-  -- Instead of making a universal claim about all numbers `n` and `m`,
-  -- this talks about a more specialized property that only holds when
-  -- `n = m`.  The arrow symbol is pronounced "implies."
-  --
-  -- The tactic that tells Lean to perform replacement is called `rewrite`.
+  /-
+    Instead of making a universal claim about all numbers `n` and `m`,
+    this talks about a more specialized property that only holds when
+    `n = m`.  The arrow symbol is pronounced "implies."
+
+    The tactic that tells Lean to perform replacement is called `rewrite`.
+  -/
   -- /FULL
   intro n m
   intro h
   rewrite [h]
   rfl
 
--- TERSE: The `intro` tactic names the hypotheses as they are moved
---     to the context.  The `rewrite` tactic rewrites using an equality.
+-- TERSE: /- The `intro` tactic names the hypotheses as they are moved to the context.  The `rewrite` tactic rewrites using an equality. -/
 
--- TODO: Move this
+/-
+  TODO: Move this
+-/
 -- FULL
--- By default, `rewrite` rewrites left-to-right. To rewrite from right
--- to left, use `rewrite [← h]`, where `←` is typed as `\l` or `\<-`.
--- Because the pattern `rewrite [h]; rfl` is so common, Lean provides
--- `rw [h]` as shorthand.
+/-
+  By default, `rewrite` rewrites left-to-right. To rewrite from right
+  to left, use `rewrite [← h]`, where `←` is typed as `\l` or `\<-`.
+  Because the pattern `rewrite [h]; rfl` is so common, Lean provides
+  `rw [h]` as shorthand.
+-/
 -- /FULL
 
 
 -- FULL
 -- EX1 (plus_id_exercise)
--- Remove `sorry` and fill in the proof.
+/-
+  Remove `sorry` and fill in the proof.
+-/
 
 theorem plus_id_exercise : ∀ n m o : Nat,
     n = m → m = o → n + m = m + o := by
@@ -1110,26 +1275,32 @@ theorem plus_id_exercise : ∀ n m o : Nat,
 -- /FULL
 
 -- FULL
--- The `sorry` keyword tells Lean that we want to skip trying
--- to prove this theorem and just accept it as a given.  This is
--- often useful for developing longer proofs.
---
--- Be careful, though: every time you say `sorry` you are leaving
--- a door open for total nonsense to enter Lean's safe, formally
--- checked world!
+/-
+  The `sorry` keyword tells Lean that we want to skip trying
+  to prove this theorem and just accept it as a given.  This is
+  often useful for developing longer proofs.
+
+  Be careful, though: every time you say `sorry` you are leaving
+  a door open for total nonsense to enter Lean's safe, formally
+  checked world!
+-/
 -- /FULL
 
--- TERSE: ***
+-- TERSE: /- *** -/
 
--- The `#check` command can also be used to examine the statements of
--- previously declared lemmas and theorems.
+/-
+  The `#check` command can also be used to examine the statements of
+  previously declared lemmas and theorems.
+-/
 
 #check mul_zero  -- ∀ (n : Nat), n * 0 = 0
 #check mul_succ  -- ∀ (n m : Nat), n * Nat.succ m = n + n * m
 
--- TERSE: ***
--- We can use the `rewrite` tactic with a previously proved theorem
--- instead of a hypothesis from the context.
+-- TERSE: /- *** -/
+/-
+  We can use the `rewrite` tactic with a previously proved theorem
+  instead of a hypothesis from the context.
+-/
 
 theorem add_mul_zero : ∀ p q : Nat,
     (p * 0) + (q * 0) = 0 := by
@@ -1141,25 +1312,31 @@ theorem add_mul_zero : ∀ p q : Nat,
 -- # Proof by Case Analysis
 
 -- FULL
--- Of course, not everything can be proved by simple
--- calculation and rewriting: In general, unknown, hypothetical
--- values (arbitrary numbers, booleans, lists, etc.) can block
--- simplification.
+/-
+  Of course, not everything can be proved by simple
+  calculation and rewriting: In general, unknown, hypothetical
+  values (arbitrary numbers, booleans, lists, etc.) can block
+  simplification.
+-/
 -- /FULL
 
--- TERSE: Sometimes simple calculation and rewriting are not enough...
+-- TERSE: /- Sometimes simple calculation and rewriting are not enough... -/
 example : ∀ n : Nat,
     (n + 1 == 0) = false := by
   intro n
-  -- `rfl` doesn't work here because `n` is unknown
+  /-
+    `rfl` doesn't work here because `n` is unknown
+  -/
   sorry
 
 -- FULL
--- The tactic that tells Lean to consider separate cases is called
--- `cases`.
+/-
+  The tactic that tells Lean to consider separate cases is called
+  `cases`.
+-/
 -- /FULL
 
--- TERSE: We can use `cases` to perform case analysis:
+-- TERSE: /- We can use `cases` to perform case analysis: -/
 
 theorem add_one_neb_zero : ∀ n : Nat,
     (n + 1 == 0) = false := by
@@ -1169,20 +1346,22 @@ theorem add_one_neb_zero : ∀ n : Nat,
   case succ n' => rfl
 
 -- FULL
--- The `cases` tactic generates _two_ subgoals, which we must then
--- prove, separately, in order to get Lean to accept the theorem.
---
--- The generated subgoals are tagged by the names of the constructors.
--- `case zero =>` and `case succ n' =>` select which subgoal to work on next
--- and introduce variable names.
---
--- The `cases` tactic can be used with any inductively defined
--- datatype.  For example, we use it next to prove that boolean
--- negation is involutive -- i.e., that negation is its own inverse.
+/-
+  The `cases` tactic generates _two_ subgoals, which we must then
+  prove, separately, in order to get Lean to accept the theorem.
+
+  The generated subgoals are tagged by the names of the constructors.
+  `case zero =>` and `case succ n' =>` select which subgoal to work on next
+  and introduce variable names.
+
+  The `cases` tactic can be used with any inductively defined
+  datatype.  For example, we use it next to prove that boolean
+  negation is involutive -- i.e., that negation is its own inverse.
+-/
 -- /FULL
 
--- TERSE: ***
--- TERSE: Another example, using booleans:
+-- TERSE: /- *** -/
+-- TERSE: /- Another example, using booleans: -/
 
 theorem notb_involutive : ∀ b : Bool,
     (!!b) = b := by
@@ -1191,8 +1370,8 @@ theorem notb_involutive : ∀ b : Bool,
   case true => rfl
   case false => rfl
 
--- TERSE: ***
--- TERSE: We can have nested case analysis:
+-- TERSE: /- *** -/
+-- TERSE: /- We can have nested case analysis: -/
 
 theorem andb_commutative : ∀ b c : Bool,
     (b && c) = (c && b) := by
@@ -1207,10 +1386,6 @@ theorem andb_commutative : ∀ b c : Bool,
     case true => rfl
     case false => rfl
 
--- FULL
-
--- If there are no constructor arguments that need names, we can use
--- `<;>` to apply the same tactic to all generated goals:
 theorem andb3_exchange : ∀ b c d : Bool,
     ((b && c) && d) = ((b && d) && c) := by
   intro b c d
@@ -1235,67 +1410,36 @@ theorem andb3_exchange : ∀ b c d : Bool,
       cases d
       case false => rfl
       case true => rfl
--- /FULL
 
-/- The above is example is very verbose! While it's beneficial to be explicit
-   about case analysis now, when we write more complex proofs we will want to
-   abstract away such details. Below is a teaser of how this proof can be
-   made shorter, and then _much_ shorter, using the `<;>` tactic. This
-   tactic simply applies the same tactic to all generated goals of
-   a case analysis. In our case, we use `rfl` after `cases d`: -/
+/- As you can see, this can become very verbose.
+  We will introduce some tactics for writing shorter proofs
+  by case analysis in `Tactics.lean`. -/
 
-theorem andb3_exchange_shorter : ∀ b c d : Bool,
-    ((b && c) && d) = ((b && d) && c) := by
-  intro b c d
-  cases b
-  case false =>
-    cases c
-    case true =>
-      cases d <;> rfl
-    case false =>
-      cases d <;> rfl
-  case true =>
-    cases c
-    case true =>
-      cases d <;> rfl
-    case false =>
-      cases d <;> rfl
+/-
+  ** New Tactics: `dsimp`, and `exact`.
 
-/- And since this is a repeated pattern in this proof, we can push it all the way.  -/
+  Some more tactics will be useful for the exercises ahead.
 
-theorem andb3_exchange_shortest : ∀ b c d : Bool,
-    ((b && c) && d) = ((b && d) && c) := by
-  intro b c d
-  cases b <;> cases c <;> cases d <;> rfl
+  The `dsimp` tactic ("definitionally simplify") applies known facts
+  and definitions to simplify the goal.  You can give it hints in
+  square brackets: `dsimp [f]` tells it to unfold the definition
+  of `f`.  You can also simplify a hypothesis `h` in the context
+  by writing `dsimp [...] at h`. `dsimp` will also close goals by
+  `rfl` when possible.
 
-/- You don't have to worry about writing "the most consice proof" for this class,
-   but you may want to explore ways to make your proofs shorter:
-   it will save you time!
-
-   We will introduce more tactics for writing shorter proofs in `Tactics.lean`.
+  The `exact` tactic closes a goal by providing an exact proof
+  term.  For example, if `h : P` is in the context and the goal
+  is `P`, then `exact h` closes the goal.  You can also
+  transform `h` slightly — for instance, `exact h.symm` uses
+  the symmetry of equality.
 -/
-
--- ** New Tactics: `dsimp`, `exact`, and `contradiction`
---
--- Some more tactics will be useful for the exercises ahead.
---
--- The `dsimp` tactic ("definitionally simplify") applies known facts
--- and definitions to simplify the goal.  You can give it hints in
--- square brackets: `dsimp [f]` tells it to unfold the definition
--- of `f`.  You can also simplify a hypothesis `h` in the context
--- by writing `dsimp [...] at h`. `dsimp` will also close goals by
--- `rfl` when possible.
---
--- The `exact` tactic closes a goal by providing an exact proof
--- term.  For example, if `h : P` is in the context and the goal
--- is `P`, then `exact h` closes the goal.  You can also
--- transform `h` slightly — for instance, `exact h.symm` uses
--- the symmetry of equality.
 
 
 -- FULL
 -- EX2 (orb_false_true)
--- Prove the following claim.
+/-
+  Prove the following claim.
+-/
 
 theorem orb_false_true : ∀ b : Bool,
     (false || b) = true → b = true := by
@@ -1308,22 +1452,14 @@ theorem orb_false_true : ∀ b : Bool,
 -- []
 -- /FULL
 
--- TERSE: ***
--- Again, we use <;> to apply `rfl` to the subgoals generated by `cases n`:
-theorem add_one_neb_zero' : ∀ n : Nat,
-    (n + 1 == 0) = false := by
-  intro n; cases n <;> rfl
-
-theorem andb_commutative'' : ∀ b c : Bool,
-    (b && c) = (c && b) := by
-  intro b c; cases b <;> cases c <;> rfl
-
 -- FULL
 -- EX1 (zero_nbeq_plus_1)
 theorem zero_neb_add_one : ∀ n : Nat,
   (0 == n + 1) = false := by
   -- ADMITTED
-  intro n; cases n <;> rfl
+  intro n; cases n
+  case zero => rfl
+  case succ n' => rfl
   -- /ADMITTED
 -- GRADE_THEOREM 1: zero_nbeq_plus_1
 -- []
@@ -1333,60 +1469,70 @@ theorem zero_neb_add_one : ∀ n : Nat,
 -- ######################################################################
 -- ## More on Notation (Optional)
 
--- Lean has a very flexible notation system.  Operators like `+` and `*`
--- are defined with specified precedence and associativity.  For example,
--- `+` has precedence 65 and is left-associative, while `*` has
--- precedence 70 and is also left-associative.  This means that `1+2*3*4`
--- is parsed as `1+((2*3)*4)`.
---
--- You can define custom notation using the `notation`, `infixl`,
--- `infixr`, `prefix`, and `postfix` commands.
---
--- Lean handles notation scoping through namespaces and
--- type classes rather than notation scopes.  The numeric literal `3`
--- can be interpreted as `Nat`, `Int`, `Float`, etc., depending on the
--- expected type, thanks to Lean's `OfNat` type class.
+/-
+  Lean has a very flexible notation system.  Operators like `+` and `*`
+  are defined with specified precedence and associativity.  For example,
+  `+` has precedence 65 and is left-associative, while `*` has
+  precedence 70 and is also left-associative.  This means that `1+2*3*4`
+  is parsed as `1+((2*3)*4)`.
+
+  You can define custom notation using the `notation`, `infixl`,
+  `infixr`, `prefix`, and `postfix` commands.
+
+  Lean handles notation scoping through namespaces and
+  type classes rather than notation scopes.  The numeric literal `3`
+  can be interpreted as `Nat`, `Int`, `Float`, etc., depending on the
+  expected type, thanks to Lean's `OfNat` type class.
+-/
 -- /FULL
 
 -- FULL
 -- ######################################################################
 -- ## Structural Recursion (Optional)
 
--- Here is a copy of the definition of addition:
+/-
+  Here is a copy of the definition of addition:
+-/
 
 def plus' (n : Nat) (m : Nat) : Nat :=
   match n with
   | 0 => m
   | n' + 1 => (plus' n' m) + 1
 
--- When Lean checks this definition, it verifies that the recursion
--- terminates.  Specifically, it checks that one of the arguments
--- is _structurally decreasing_.  This implies that all calls to
--- `plus'` will eventually terminate.
---
--- This requirement is a fundamental feature of Lean's design: In
--- particular, it guarantees that every function that can be defined
--- in Lean will terminate on all inputs.  However, because Lean's
--- termination analysis is not always able to figure things out
--- automatically, it is sometimes necessary to provide hints or
--- write functions in slightly different ways.
---
--- Lean also supports more flexible termination proofs using
--- `termination_by` and `decreasing_by` clauses, as well as `partial`
--- functions that are not required to terminate.
+/-
+  When Lean checks this definition, it verifies that the recursion
+  terminates.  Specifically, it checks that one of the arguments
+  is _structurally decreasing_.  This implies that all calls to
+  `plus'` will eventually terminate.
+
+  This requirement is a fundamental feature of Lean's design: In
+  particular, it guarantees that every function that can be defined
+  in Lean will terminate on all inputs.  However, because Lean's
+  termination analysis is not always able to figure things out
+  automatically, it is sometimes necessary to provide hints or
+  write functions in slightly different ways.
+
+  Lean also supports more flexible termination proofs using
+  `termination_by` and `decreasing_by` clauses, as well as `partial`
+  functions that are not required to terminate.
+-/
 
 -- EX2? (decreasing)
--- To get a concrete sense of this, find a way to write a sensible
--- recursive definition (of a simple function on numbers, say) that
--- _does_ terminate on all inputs, but that Lean will reject because
--- it cannot automatically prove termination.
+/-
+  To get a concrete sense of this, find a way to write a sensible
+  recursive definition (of a simple function on numbers, say) that
+  _does_ terminate on all inputs, but that Lean will reject because
+  it cannot automatically prove termination.
+-/
 
--- SOLUTION
--- def factorial_bad (n : Nat) : Nat :=
---   if n == 0 then 1
---   else n * factorial_bad (n - 1)
--- This fails because Lean can't see that `n - 1` is structurally smaller.
--- /SOLUTION
+/-
+  SOLUTION
+  def factorial_bad (n : Nat) : Nat :=
+    if n == 0 then 1
+    else n * factorial_bad (n - 1)
+  This fails because Lean can't see that `n - 1` is structurally smaller.
+  /SOLUTION
+-/
 -- []
 -- /FULL
 
@@ -1397,8 +1543,10 @@ def plus' (n : Nat) (m : Nat) : Nat :=
 -- ## Warmups
 
 -- EX1 (identity_fn_applied_twice)
--- Use the tactics you have learned so far to prove the following
--- theorem about boolean functions.
+/-
+  Use the tactics you have learned so far to prove the following
+  theorem about boolean functions.
+-/
 
 theorem identity_fn_applied_twice : ∀ f : Bool → Bool,
     (∀ x : Bool, f x = x) →
@@ -1412,24 +1560,34 @@ theorem identity_fn_applied_twice : ∀ f : Bool → Bool,
 -- []
 
 -- EX1 (negation_fn_applied_twice)
--- Now state and prove a theorem `negation_fn_applied_twice` similar
--- to the previous one but where the hypothesis says that the
--- function `f` has the property that `f x = !x`.
+/-
+  Now state and prove a theorem `negation_fn_applied_twice` similar
+  to the previous one but where the hypothesis says that the
+  function `f` has the property that `f x = !x`.
+-/
 
--- SOLUTION
+/-
+  SOLUTION
+-/
 theorem negation_fn_applied_twice : ∀ f : Bool → Bool,
     (∀ x : Bool, f x = !x) →
     ∀ b : Bool, f (f b) = b := by
   intro f h b
   rewrite [h, h]
   cases b <;> rfl
--- /SOLUTION
+/-
+  /SOLUTION
+-/
 
--- GRADE_MANUAL 1: negation_fn_applied_twice
+/-
+  GRADE_MANUAL 1: negation_fn_applied_twice
+-/
 -- []
 
 -- EX3? (andb_eq_orb)
--- Prove the following theorem.
+/-
+  Prove the following theorem.
+-/
 
 theorem andb_eq_orb : ∀ b c : Bool,
     (b && c) = (b || c) →
@@ -1438,12 +1596,16 @@ theorem andb_eq_orb : ∀ b c : Bool,
   intro b c h
   cases b
   case true =>
-    -- h : true && c = true || c, i.e., h : c = true
+    /-
+      h : true && c = true || c, i.e., h : c = true
+    -/
     dsimp [Bool.and, Bool.or] at h
     rewrite [h]
     rfl
   case false =>
-    -- h : false && c = false || c, i.e., h : false = c
+    /-
+      h : false && c = false || c, i.e., h : false = c
+    -/
     dsimp [Bool.and, Bool.or] at h
     rewrite [h]
     rfl
@@ -1457,54 +1619,68 @@ theorem andb_eq_orb : ∀ b c : Bool,
 -- ######################################################################
 -- ## Course Late Policies, Formalized
 
--- Suppose that a course has a grading policy based on late days,
--- where a student's final letter grade is lowered if they submit too
--- many homework assignments late.
+/-
+  Suppose that a course has a grading policy based on late days,
+  where a student's final letter grade is lowered if they submit too
+  many homework assignments late.
+-/
 
 namespace LateDays
 
--- First, we inroduce a datatype for modeling the "letter" component
--- of a grade.
+/-
+  First, we inroduce a datatype for modeling the "letter" component
+  of a grade.
+-/
 inductive Letter : Type where
   | A | B | C | D | F
 
--- Then we define the modifiers -- a `natural` `a` is just a "plain"
--- grade of `a`.
+/-
+  Then we define the modifiers -- a `natural` `a` is just a "plain"
+  grade of `a`.
+-/
 inductive Modifier : Type where
   | plus | natural | minus
 
--- A full `Grade`, then, is just a `letter` and a `modifier`.
--- In Lean, a combination of several values is called a _structure_.  The `structure`
--- keyword is used to define a new structure type.
+/-
+  A full `Grade`, then, is just a `letter` and a `modifier`.
+  In Lean, a combination of several values is called a _structure_.  The `structure`
+  keyword is used to define a new structure type.
+-/
 
 structure Grade where
   letter : Letter
   modifier : Modifier
 
--- We will want to be able to say when one grade is "better" than
--- another.  In other words, we need a way to compare two grades.  As
--- with natural numbers, we could define `bool`-valued functions
--- `grade_eqb`, `grade_ltb`, etc., and that would work fine.
--- However, we can also define a slightly more informative type for
--- comparing two values, as shown below.  This datatype has three
--- constructors that can be used to indicate whether two values are
--- "equal", "less than", or "greater than" one another.
+/-
+  We will want to be able to say when one grade is "better" than
+  another.  In other words, we need a way to compare two grades.  As
+  with natural numbers, we could define `bool`-valued functions
+  `grade_eqb`, `grade_ltb`, etc., and that would work fine.
+  However, we can also define a slightly more informative type for
+  comparing two values, as shown below.  This datatype has three
+  constructors that can be used to indicate whether two values are
+  "equal", "less than", or "greater than" one another.
+-/
 inductive Comparison : Type where
   | eq   -- "equal"
   | lt   -- "less than"
   | gt   -- "greater than"
 
--- Since we're in a namespace, we can open the relevant types to
--- avoid having to write `Letter.A`, etc.
+/-
+  Since we're in a namespace, we can open the relevant types to
+  avoid having to write `Letter.A`, etc.
+-/
 open Letter Modifier Comparison
 
--- Using pattern matching, it is not difficult to define the
--- comparison operation for two letters `l1` and `l2` (see below).
--- This definition uses a feature of `match` patterns: we can match
--- against _two_ values simultaneously by separating them and the
--- corresponding patterns with comma `,`.
--- This is simply a convenient abbreviation for nested pattern
--- matching.
+/-
+  Using pattern matching, it is not difficult to define the
+  comparison operation for two letters `l1` and `l2` (see below).
+  This definition uses a feature of `match` patterns: we can match
+  against _two_ values simultaneously by separating them and the
+  corresponding patterns with comma `,`.
+  This is simply a convenient abbreviation for nested pattern
+  matching.
+-/
 def letterComparison (l1 l2 : Letter) : Comparison :=
   match l1, l2 with
   | A, A => eq
@@ -1547,9 +1723,11 @@ def modifierComparison (m1 m2 : Modifier) : Comparison :=
 
 -- EX2 (grade_comparison)
 
--- Here, we will need to access the fields of the `Grade` structure.
--- The field names are `letter` and `modifier`, so for a grade `g`,
--- we can write `g.letter` and `g.modifier` to access these fields.
+/-
+  Here, we will need to access the fields of the `Grade` structure.
+  The field names are `letter` and `modifier`, so for a grade `g`,
+  we can write `g.letter` and `g.modifier` to access these fields.
+-/
 
 def gradeComparison (g1 g2 : Grade) : Comparison
   -- ADMITDEF
@@ -1581,9 +1759,11 @@ def lowerLetter (l : Letter) : Letter :=
   | D => F
   | F => F  -- Can't go lower than F!
 
--- This theorem is not provable because of the edge case of F!
--- theorem lowerLetter_lowers_bad : ∀ (l : Letter),
---   letterComparison (lowerLetter l) l = lt := by ...
+/-
+  This theorem is not provable because of the edge case of F!
+  theorem lowerLetter_lowers_bad : ∀ (l : Letter),
+    letterComparison (lowerLetter l) l = lt := by ...
+-/
 
 theorem lowerLetter_F_is_F : lowerLetter F = F := by rfl
 
@@ -1604,12 +1784,14 @@ theorem lowerLetter_lowers : ∀ l : Letter,
 -- []
 
 -- EX2 (lower_grade)
--- In addition to the dot notation for accessing structure fields, we can also
--- use pattern matching to access these fields.
--- For example, if `g` is a grade, then we can write
--- `match g with ⟨l, m⟩ => ...` to access the letter and modifier components
--- of `g` as `l` and `m`, respectively.
--- Note: The angle brackets `⟨` and `⟩` are typed as `\<` and `\>`.
+/-
+  In addition to the dot notation for accessing structure fields, we can also
+  use pattern matching to access these fields.
+  For example, if `g` is a grade, then we can write
+  `match g with ⟨l, m⟩ => ...` to access the letter and modifier components
+  of `g` as `l` and `m`, respectively.
+  Note: The angle brackets `⟨` and `⟩` are typed as `\<` and `\>`.
+-/
 def lowerGrade (g : Grade) : Grade
   -- ADMITDEF
   := match g with
@@ -1619,25 +1801,41 @@ def lowerGrade (g : Grade) : Grade
   | ⟨l, minus⟩ => ⟨lowerLetter l, plus⟩
   -- /ADMITDEF
 
--- lower_grade_A_Plus
+/-
+  lower_grade_A_Plus
+-/
 example : lowerGrade ⟨A, plus⟩ = ⟨A, natural⟩ := by rfl  -- ADMITTED
--- lower_grade_A_Natural
+/-
+  lower_grade_A_Natural
+-/
 example : lowerGrade ⟨A, natural⟩ = ⟨A, minus⟩ := by rfl  -- ADMITTED
--- lower_grade_A_Minus
+/-
+  lower_grade_A_Minus
+-/
 example : lowerGrade ⟨A, minus⟩ = ⟨B, plus⟩ := by rfl  -- ADMITTED
--- lower_grade_B_Plus
+/-
+  lower_grade_B_Plus
+-/
 example : lowerGrade ⟨B, plus⟩ = ⟨B, natural⟩ := by rfl  -- ADMITTED
--- lower_grade_F_Natural
+/-
+  lower_grade_F_Natural
+-/
 example : lowerGrade ⟨F, natural⟩ = ⟨F, minus⟩ := by rfl  -- ADMITTED
--- lower_grade_twice
+/-
+  lower_grade_twice
+-/
 example : lowerGrade (lowerGrade ⟨B, minus⟩) = ⟨C, natural⟩ := by rfl  -- ADMITTED
--- lower_grade_thrice
+/-
+  lower_grade_thrice
+-/
 example : lowerGrade (lowerGrade (lowerGrade ⟨B, minus⟩)) = ⟨C, minus⟩ := by rfl  -- ADMITTED
 
 theorem lowerGrade_F_Minus : lowerGrade ⟨F, minus⟩ = ⟨F, minus⟩ := by rfl  -- ADMITTED
 
 -- GRADE_THEOREM 0.25: lowerGrade_A_Plus
--- ...
+/-
+  ...
+-/
 -- GRADE_THEOREM 0.25: lowerGrade_F_Minus
 -- []
 
@@ -1712,28 +1910,30 @@ end LateDays
 -- ## Binary Numerals
 
 -- EX3 (binary)
--- We can generalize our unary representation of natural numbers to
--- the more efficient binary representation by treating a binary
--- number as a sequence of constructors `b0` and `b1` (representing 0s
--- and 1s), terminated by a `z`.
---
--- For example:
---     decimal       binary                    unary
---        0              z                        0
---        1           b1 z                        1
---        2       b0 (b1 z)                       2
---        3       b1 (b1 z)                       3
---        4   b0 (b0 (b1 z))                      4
---        5   b1 (b0 (b1 z))                      5
---        6   b0 (b1 (b1 z))                      6
---        7   b1 (b1 (b1 z))                      7
---        8  b0 (b0 (b0 (b1 z)))                  8
---
--- Note that the low-order bit is on the left and the high-order bit
--- is on the right -- the opposite of the way binary numbers are
--- usually written.  This choice makes them easier to manipulate.
---
--- (Comprehension check: What unary numeral does `b0 z` represent?)
+/-
+  We can generalize our unary representation of natural numbers to
+  the more efficient binary representation by treating a binary
+  number as a sequence of constructors `b0` and `b1` (representing 0s
+  and 1s), terminated by a `z`.
+
+  For example:
+      decimal       binary                    unary
+         0              z                        0
+         1           b1 z                        1
+         2       b0 (b1 z)                       2
+         3       b1 (b1 z)                       3
+         4   b0 (b0 (b1 z))                      4
+         5   b1 (b0 (b1 z))                      5
+         6   b0 (b1 (b1 z))                      6
+         7   b1 (b1 (b1 z))                      7
+         8  b0 (b0 (b0 (b1 z)))                  8
+
+  Note that the low-order bit is on the left and the high-order bit
+  is on the right -- the opposite of the way binary numbers are
+  usually written.  This choice makes them easier to manipulate.
+
+  (Comprehension check: What unary numeral does `b0 z` represent?)
+-/
 
 inductive Bin : Type where
   | z
