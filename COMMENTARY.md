@@ -46,6 +46,12 @@ Instead, we explicitly rewrite by equalities such as
   case true  => ...
   case false => ...
   ```
+* Use unnamed examples with `#guard_msgs` where `sorry`s appear:
+  ```lean
+  /-- warning: declaration uses `sorry` -/
+  #guard_msgs in
+  example : ... := sorry
+  ```
 * Indent continued type declarations one further than proofs:
   ```lean
   theorem myTheorem : ∀ {A : Type} (this : Bool) (is : Nat) (a : A),
