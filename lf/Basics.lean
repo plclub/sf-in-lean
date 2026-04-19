@@ -292,6 +292,11 @@ inductive MyBool : Type where
   | true
   | false
 open MyBool
+-- HG: I actually prefer we don't open this here. Lean has kind of confusing behavior around
+-- patterns and name collisions --- that's why below, (e.g., in `notb`) we have to use `.true` in
+-- patterns but we can use `true` in expressions. If we just don't open `MyBool` then we need to use
+-- `.true` everywhere, which is both good practice for working with inductive constructors and more
+-- clearly highlights that we're working with our own booleans.
 
 -- TERSE: /- Booleans are also available in Lean's standard library, but in this course we'll define everything from scratch, just to see how it's done. -/
 -- TERSE: /- *** -/
@@ -338,6 +343,8 @@ def orb (b1 : MyBool) (b2 : MyBool) : MyBool :=
 -- /FULL
 -- TERSE: /- Note the syntax for defining multi-argument functions (`andb` and `orb`). -/
 -- TERSE: /- *** -/
+-- HG: This feels like too little discussion of FP function calling for a non-FP person, and too
+-- much for anyone who knows FP. I propose we skip this.
 
 /- test_orb1 -/
 example : orb .true  .false = .true  := by rfl
@@ -444,6 +451,7 @@ def myBoolToBool (b : MyBool) : Bool :=
   match b with
   | .true => true
   | .false => false
+-- HG: This feels like it might do more harm than good.
 
 /-
   With the full power of Lean's `Bool` at our disposal, we can also write this
@@ -501,6 +509,7 @@ end
   be read, "Given two inputs, each of type `Bool`, this function
   produces an output of type `Bool`."
 -/
+-- HG: Again, maybe too basic for our audience.
 
 -- RADDITION ↓
 
@@ -739,6 +748,8 @@ def allZero (nb : Nybble) : Bool :=
 /- ===> false -/
 #eval allZero (.bits .b0 .b0 .b0 .b0)
 /- ===> true -/
+-- HG: I wonder how we should prioritize `#eval e` vs. `example e = e' := rfl`. They both feel like
+-- they have value.
 
 end TuplePlayground
 
@@ -1339,6 +1350,9 @@ theorem add_mul_zero : ∀ p q : Nat,
 -- /FULL
 
 -- TERSE: /- Sometimes simple calculation and rewriting are not enough... -/
+-- HG: We should be using `guard_msgs` anywhere we leave a sorry
+/-- warning: declaration uses `sorry` -/
+#guard_msgs in
 example : ∀ n : Nat,
     (n + 1 == 0) = false := by
   intro n
