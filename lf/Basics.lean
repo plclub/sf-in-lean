@@ -1600,9 +1600,7 @@ theorem negation_fn_applied_twice : ∀ f : Bool → Bool,
   cases b <;> rfl
 --  /SOLUTION
 
-/-
-  GRADE_MANUAL 1: negation_fn_applied_twice
--/
+--  GRADE_MANUAL 1: negation_fn_applied_twice
 -- []
 
 -- EX3? (andb_eq_orb)

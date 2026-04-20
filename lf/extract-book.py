@@ -96,8 +96,8 @@ DROP_LINE_PATTERNS = [
 
 # Kept-as-is markers (still `--` comments in the output).
 KEEP_COMMENT_PATTERNS = [
-    re.compile(r"^\s*--\s*\[[^\]]*\]\s*$"),
-    re.compile(r"^\s*--\s*GRADE_THEOREM\b"),
+    # re.compile(r"^\s*--\s*\[[^\]]*\]\s*$"),
+    # re.compile(r"^\s*--\s*GRADE_THEOREM\b"),
 ]
 
 LINE_COMMENT_RE = re.compile(r"^\s*--")

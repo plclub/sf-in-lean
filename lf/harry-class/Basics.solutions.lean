@@ -320,8 +320,6 @@ example : nandb .false .false = .true  := by rfl  -- ADMITTED
 example : nandb .false .true  = .true  := by rfl  -- ADMITTED
 /- test_nandb4 -/
 example : nandb .true .true   = .false := by rfl  -- ADMITTED
--- GRADE_THEOREM 1: nandb_test4
--- []
 
 /-
   Do the same for the `andb3` function below. This function should
@@ -340,8 +338,6 @@ example : andb3 .false .true .true = .false := by rfl  -- ADMITTED
 example : andb3 .true .false .true = .false := by rfl  -- ADMITTED
 /- test_andb34 -/
 example : andb3 .true .true .false = .false := by rfl  -- ADMITTED
--- GRADE_THEOREM 1: andb3_test4
--- []
 
 
 /-
@@ -853,8 +849,6 @@ def factorial (n : Nat) : Nat
 example : factorial 3 = 6         := by rfl  -- ADMITTED
 /- test_factorial2 -/
 example : factorial 5 = 10 * 12   := by rfl  -- ADMITTED
--- GRADE_THEOREM 1: factorial_test2
--- []
 
 /-
   Lean already provides `+`, `-`, `*` for `Nat`, so we don't need to
@@ -949,8 +943,6 @@ example : 2 <? 2 = false := by rfl  -- ADMITTED
 example : 2 <? 4 = true  := by rfl  -- ADMITTED
 /- test_ltb3 -/
 example : 4 <? 2 = false := by rfl  -- ADMITTED
--- GRADE_THEOREM 1: ltb_test3
--- []
 
 /-
   ######################################################################
@@ -1072,8 +1064,6 @@ theorem plus_id_exercise : ∀ n m o : Nat,
   intro n m o h1 h2
   rewrite [h1, h2]
   rfl
--- GRADE_THEOREM 1: plus_id_exercise
--- []
 
 /-
   The `sorry` keyword tells Lean that we want to skip trying
@@ -1231,16 +1221,12 @@ theorem orb_false_true : ∀ b : Bool,
   intro b h
   dsimp [Bool.or] at h
   exact h
--- GRADE_THEOREM 2: orb_false_true
--- []
 
 theorem zero_neb_add_one : ∀ n : Nat,
   (0 == n + 1) = false := by
   intro n; cases n
   case zero => rfl
   case succ n' => rfl
--- GRADE_THEOREM 1: zero_nbeq_plus_1
--- []
 
 /-
   ######################################################################
@@ -1309,7 +1295,6 @@ def plus' (n : Nat) (m : Nat) : Nat :=
   This fails because Lean can't see that `n - 1` is structurally smaller.
 
 -/
--- []
 
 /-
   ######################################################################
@@ -1329,8 +1314,6 @@ theorem identity_fn_applied_twice : ∀ f : Bool → Bool,
   intro f h b
   rewrite [h, h]
   rfl
--- GRADE_THEOREM 1: identity_fn_applied_twice
--- []
 
 /-
   Now state and prove a theorem `negation_fn_applied_twice` similar
@@ -1345,10 +1328,6 @@ theorem negation_fn_applied_twice : ∀ f : Bool → Bool,
   rewrite [h, h]
   cases b <;> rfl
 
-/-
-  GRADE_MANUAL 1: negation_fn_applied_twice
--/
--- []
 
 /-
   Prove the following theorem.
@@ -1373,8 +1352,6 @@ theorem andb_eq_orb : ∀ b c : Bool,
     dsimp [Bool.and, Bool.or] at h
     rewrite [h]
     rfl
--- GRADE_THEOREM 3: andb_eq_orb
--- []
 
 
 /-
@@ -1468,8 +1445,6 @@ example : letterComparison B F = gt := by rfl
 theorem letterComparison_Eq : ∀ l : Letter,
     letterComparison l l = eq := by
   intro l; cases l <;> rfl
--- GRADE_THEOREM 1: letterComparison_Eq
--- []
 
 def modifierComparison (m1 m2 : Modifier) : Comparison :=
   match m1, m2 with
@@ -1502,11 +1477,6 @@ example : gradeComparison ⟨A, minus⟩ ⟨A, plus⟩ = lt := by rfl  -- ADMITT
 example : gradeComparison ⟨F, plus⟩ ⟨F, plus⟩ = eq := by rfl  -- ADMITTED
 /- test_grade_comparison4 -/
 example : gradeComparison ⟨B, minus⟩ ⟨C, plus⟩ = gt := by rfl  -- ADMITTED
--- GRADE_THEOREM 0.5: gradeComparison_test1
--- GRADE_THEOREM 0.5: gradeComparison_test2
--- GRADE_THEOREM 0.5: gradeComparison_test3
--- GRADE_THEOREM 0.5: gradeComparison_test4
--- []
 
 def lowerLetter (l : Letter) : Letter :=
   match l with
@@ -1534,8 +1504,6 @@ theorem lowerLetter_lowers : ∀ l : Letter,
   | C => rfl
   | D => rfl
   | F => exact h
--- GRADE_THEOREM 2: lowerLetter_lowers
--- []
 
 /-
   In addition to the dot notation for accessing structure fields, we can also
@@ -1583,12 +1551,9 @@ example : lowerGrade (lowerGrade (lowerGrade ⟨B, minus⟩)) = ⟨C, minus⟩ :
 
 theorem lowerGrade_F_Minus : lowerGrade ⟨F, minus⟩ = ⟨F, minus⟩ := by rfl  -- ADMITTED
 
--- GRADE_THEOREM 0.25: lowerGrade_A_Plus
 /-
   ...
 -/
--- GRADE_THEOREM 0.25: lowerGrade_F_Minus
--- []
 
 /- For our solution we use:
   * Working on multiple match cases with `| _ ... | _ => ...`;
@@ -1609,8 +1574,6 @@ theorem lowerGrade_lowers : ∀ g : Grade,
     cases l
     case F => rewrite [lowerGrade_F_Minus]; exact h
     all_goals rfl
--- GRADE_THEOREM 3: lowerGrade_lowers
--- []
 
 def applyLatePolicy (lateDays : Nat) (g : Grade) : Grade :=
   if lateDays <? 9 then g
@@ -1633,8 +1596,6 @@ theorem no_penalty_for_mostly_on_time : ∀ (lateDays : Nat) (g : Grade),
   intro lateDays g h
   dsimp [applyLatePolicy]
   rewrite [h]; rfl
--- GRADE_THEOREM 2: no_penalty_for_mostly_on_time
--- []
 
 theorem grade_lowered_once : ∀ (lateDays : Nat) (g : Grade),
     (lateDays <? 9 = false) →
@@ -1643,8 +1604,6 @@ theorem grade_lowered_once : ∀ (lateDays : Nat) (g : Grade),
   intro lateDays g h9 h17
   dsimp [applyLatePolicy]
   rewrite [h9, h17]; rfl
--- GRADE_THEOREM 2: grade_lowered_once
--- []
 
 end LateDays
 
@@ -1710,11 +1669,4 @@ example : binToNat (incr (incr (.b1 .z))) = 2 + binToNat (.b1 .z) := by rfl  -- 
 /- test_bin_incr7 -/
 example : binToNat (.b0 (.b0 (.b0 (.b1 .z)))) = 8 := by rfl  -- ADMITTED
 
--- GRADE_THEOREM 0.5: incr_test1
--- GRADE_THEOREM 0.5: incr_test2
--- GRADE_THEOREM 0.5: incr_test3
--- GRADE_THEOREM 0.5: binToNat_test1
--- GRADE_THEOREM 0.5: binToNat_test2
--- GRADE_THEOREM 0.5: binToNat_test3
--- []
 

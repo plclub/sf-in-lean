@@ -263,12 +263,10 @@ theorem sub_self : ∀ n,
 theorem zero_mul : ∀ n : Nat,
     0 * n = 0 := by
   sorry
--- GRADE_THEOREM 0.5: mul_0_l
 
 theorem succ_add : ∀ n m : Nat,
     (n + 1) + m = (n + m) + 1 := by
   sorry
--- GRADE_THEOREM 0.5: succ_add
 /- *** -/
 /-
   Here's another related fact about addition, which we'll
@@ -278,13 +276,10 @@ theorem succ_add : ∀ n m : Nat,
 theorem add_comm : ∀ n m : Nat,
     n + m = m + n := by
   sorry
--- GRADE_THEOREM 0.5: add_comm
 
 theorem add_assoc : ∀ n m p : Nat,
     n + (m + p) = (n + m) + p := by
   sorry
--- GRADE_THEOREM 0.5: add_assoc
--- []
 
 /- Consider the following function, which doubles its argument: -/
 
@@ -297,7 +292,6 @@ def double (n : Nat) : Nat :=
 
 theorem double_add : ∀ n, double n = n + n := by
   sorry
--- []
 
 /- *** -/
 /-
@@ -308,7 +302,6 @@ theorem double_add : ∀ n, double n = n + n := by
 theorem eqb_refl : ∀ n : Nat,
     (n == n) = true := by
   sorry
--- []
 
 
 /-
@@ -327,8 +320,6 @@ theorem eqb_refl : ∀ n : Nat,
 theorem even_S : ∀ n : Nat,
     even (n + 1) = !even n := by
   sorry
--- GRADE_THEOREM 1: even_S
--- []
 
 
 /-
@@ -551,7 +542,6 @@ theorem add_assoc'' : ∀ n m p : Nat,
 
   Proof:
 -/
--- []
 
 /-
   Write an informal proof of the following theorem, using the
@@ -562,7 +552,6 @@ theorem add_assoc'' : ∀ n m p : Nat,
 
   Proof:
 -/
--- []
 
 /-
   ######################################################################
@@ -572,7 +561,6 @@ theorem add_assoc'' : ∀ n m p : Nat,
 theorem mul_one : ∀ p : Nat,
     p * 1 = p := by
   sorry
-  -- GRADE_THEOREM 1: mul_one
 
 theorem mul_two : ∀ p : Nat,
     p * 2 = p + p := by
@@ -592,7 +580,6 @@ theorem mul_two : ∀ p : Nat,
 theorem add_shuffle3 : ∀ n m p : Nat,
     (n + m) + p = (n + p) + m := by
   sorry
--- GRADE_THEOREM 1: add_shuffle3
 
 
 /-
@@ -604,8 +591,6 @@ theorem add_shuffle3 : ∀ n m p : Nat,
 theorem mul_comm : ∀ m n : Nat,
     m * n = n * m := by
   sorry
--- GRADE_THEOREM 2: mul_comm
--- []
 
 /-
   Take a piece of paper.  For each of the following theorems, first
@@ -651,7 +636,6 @@ theorem left_distrib : ∀ n m p : Nat,
 theorem mul_assoc : ∀ n m p : Nat,
     n * (m * p) = (n * m) * p := by
   sorry
--- []
 
 /- ## Nat to Bin and Back to Nat -/
 
@@ -709,9 +693,6 @@ def binToNat (m : Bin) : Nat
 theorem bin_to_nat_pres_incr : ∀ b : Bin,
     binToNat (incr b) = binToNat b + 1 := by
   sorry
--- GRADE_THEOREM 3: bin_to_nat_pres_incr
-
--- []
 
 
 /- Write a function to convert natural numbers to binary numbers. -/
@@ -734,9 +715,7 @@ def natToBin (n : Nat) : Bin :=
 theorem nat_bin_nat : ∀ n : Nat,
     binToNat (natToBin n) = n := by
   sorry
--- GRADE_THEOREM 3: nat_bin_nat
 
--- []
 
 /- ## Bin to Nat and Back to Bin (Advanced) -/
 
@@ -765,7 +744,6 @@ example : ∀ b, natToBin (binToNat b) = b := by sorry
 theorem double_incr : ∀ n : Nat,
     double (n + 1) = (double n) + 2 := by
   sorry
--- GRADE_THEOREM 0.5: double_incr
 
 /- Now define a similar doubling function for `Bin`. -/
 
@@ -776,7 +754,6 @@ def doubleBin (b : Bin) : Bin :=
 
 /- double_bin_zero -/
 example : doubleBin .z = .z := by sorry  -- ADMITTED
--- GRADE_THEOREM 0.5: double_bin_zero
 
 /- Prove this lemma, which corresponds to `double_incr`. -/
 
@@ -784,9 +761,7 @@ example : doubleBin .z = .z := by sorry  -- ADMITTED
 theorem double_incr_bin : ∀ b : Bin,
     doubleBin (incr b) = incr (incr (doubleBin b)) := by
   sorry
--- GRADE_THEOREM 1: double_incr_bin
 
--- []
 
 /- Let's return to our desired theorem: -/
 
@@ -852,8 +827,5 @@ theorem bin_nat_bin : ∀ b : Bin,
   sorry
 
 end NatToBin
-
--- GRADE_THEOREM 6: bin_nat_bin
--- []
 
 
