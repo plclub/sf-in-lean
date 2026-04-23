@@ -159,7 +159,6 @@ theorem sub_self : ∀ n,
 theorem add_comm : ∀ n m : Nat,
     n + m = m + n := by
   sorry
--- GRADE_THEOREM 0.5: add_comm
 
 /- *** -/
 /-
@@ -170,14 +169,11 @@ theorem add_comm : ∀ n m : Nat,
 theorem eqb_refl : ∀ n : Nat,
     (n == n) = true := by
   sorry
--- []
 
 
 theorem even_S : ∀ n : Nat,
     even (n + 1) = !even n := by
   sorry
--- GRADE_THEOREM 1: even_S
--- []
 
 
 /-

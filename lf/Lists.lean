@@ -710,6 +710,8 @@ theorem app_assoc : ∀ l1 l2 l3 : NatList,
  by induction: -/
 
 -- myRepeat_double_firsttry
+/-- warning: declaration uses `sorry` -/
+#guard_msgs in
 example : ∀ c n : Nat,
     myRepeat n c ++ myRepeat n c = myRepeat n (c + c) := by
   intro c
@@ -760,6 +762,8 @@ example : ([] : NatList).rev = [] := by rfl
 -- TERSE: Let's try to prove `length (rev l) = length l`.
 
 -- rev_length_firsttry
+/-- warning: declaration uses `sorry` -/
+#guard_msgs in
 example : ∀ l : NatList,
     l.rev.length = l.length := by
   intro l
@@ -777,6 +781,8 @@ example : ∀ l : NatList,
     the statement that we are missing at this point.  But this attempt
     will fail because the inductive hypothesis is not general enough. -/
 -- app_rev_length_S_firsttry
+/-- warning: declaration uses `sorry` -/
+#guard_msgs in
 example : ∀ (l : NatList) n,
     (l.rev ++ [n]).length = .succ l.rev.length := by
   intro l n

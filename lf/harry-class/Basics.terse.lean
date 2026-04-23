@@ -162,8 +162,6 @@ example : nandb .false .false = .true  := by sorry  -- ADMITTED
 example : nandb .false .true  = .true  := by sorry  -- ADMITTED
 /- test_nandb4 -/
 example : nandb .true .true   = .false := by sorry  -- ADMITTED
--- GRADE_THEOREM 1: nandb_test4
--- []
 
 
 /- *** -/

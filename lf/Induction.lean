@@ -210,6 +210,8 @@ example : ∀ n : Nat, n + 0 = n := by
 
 
 /- zero_add_firsttry -/
+/-- warning: declaration uses `sorry` -/
+#guard_msgs in
 example : ∀ n : Nat, 0 + n = n := by
 -- TERSE
 /- ... gets stuck. -/
@@ -236,6 +238,8 @@ example : ∀ n : Nat, 0 + n = n := by
 -/
 
 /- zero_add_secondtry -/
+/-- warning: declaration uses `sorry` -/
+#guard_msgs in
 example : ∀ n : Nat, 0 + n = n := by
   intro n
   cases n
@@ -591,6 +595,8 @@ theorem mult_0_plus' : ∀ n m : Nat,
 -- /HIDE
 
 /- plus_rearrange_firsttry -/
+/-- warning: declaration uses `sorry` -/
+#guard_msgs in
 example : ∀ n m p q : Nat,
     (n + m) + (p + q) = (m + n) + (p + q) := by
   intro n m p q
@@ -1120,6 +1126,8 @@ theorem nat_bin_nat : ∀ n : Nat,
 -/
 
 /- bin_nat_bin_fails -/
+/-- warning: declaration uses `sorry` -/
+#guard_msgs in
 example : ∀ b, natToBin (binToNat b) = b := by sorry
 
 /-
@@ -1176,6 +1184,8 @@ theorem double_incr_bin : ∀ b : Bin,
 
 /- Let's return to our desired theorem: -/
 
+/-- warning: declaration uses `sorry` -/
+#guard_msgs in
 example : ∀ b, natToBin (binToNat b) = b := by sorry
 
 /-

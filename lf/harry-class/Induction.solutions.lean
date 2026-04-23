@@ -267,7 +267,6 @@ theorem zero_mul : ∀ n : Nat,
   case zero => rfl
   case succ n' ih =>
     rw [mul_succ]; rw [ih]
--- GRADE_THEOREM 0.5: mul_0_l
 
 theorem succ_add : ∀ n m : Nat,
     (n + 1) + m = (n + m) + 1 := by
@@ -276,7 +275,6 @@ theorem succ_add : ∀ n m : Nat,
   case zero => rfl
   case succ m' ih =>
     rw [add_succ (n + 1) m', add_succ n m', ih]
--- GRADE_THEOREM 0.5: succ_add
 /- *** -/
 /-
   Here's another related fact about addition, which we'll
@@ -291,7 +289,6 @@ theorem add_comm : ∀ n m : Nat,
     dsimp [add]; rw [zero_add]
   case succ m' ih =>
     rw [add_succ, ih, succ_add]
--- GRADE_THEOREM 0.5: add_comm
 
 theorem add_assoc : ∀ n m p : Nat,
     n + (m + p) = (n + m) + p := by
@@ -300,8 +297,6 @@ theorem add_assoc : ∀ n m p : Nat,
   case zero => rfl
   case succ p' ih =>
     rw [add_succ m p', add_succ n (m + p'), add_succ (n + m) p', ih]
--- GRADE_THEOREM 0.5: add_assoc
--- []
 
 /- Consider the following function, which doubles its argument: -/
 
@@ -318,7 +313,6 @@ theorem double_add : ∀ n, double n = n + n := by
   case zero => rfl
   case succ n' ih =>
     dsimp [double]; rw [ih, add_succ (n' + 1), succ_add]
--- []
 
 /- *** -/
 /-
@@ -332,7 +326,6 @@ theorem eqb_refl : ∀ n : Nat,
   induction n
   case zero => rfl
   case succ n' ih => rw [beq_succ, ih]
--- []
 
 
 /-
@@ -355,8 +348,6 @@ theorem even_S : ∀ n : Nat,
   case zero => rfl
   case succ n' ih =>
     dsimp [even]; rw [ih, notb_involutive]
--- GRADE_THEOREM 1: even_S
--- []
 
 
 /-
@@ -595,7 +586,6 @@ theorem add_assoc'' : ∀ n m p : Nat,
   hypothesis, `n + m' = m' + n`, so both sides equal
   `(m' + n) + 1`.
 -/
--- []
 
 /-
   Write an informal proof of the following theorem, using the
@@ -617,7 +607,6 @@ theorem add_assoc'' : ∀ n m p : Nat,
   follows directly from the induction hypothesis and the
   definition of `eqb`.
 -/
--- []
 
 /-
   ######################################################################
@@ -628,7 +617,6 @@ theorem mul_one : ∀ p : Nat,
     p * 1 = p := by
   intro p
   rw [add_zero_one, mul_succ, mul_zero, zero_add]
-  -- GRADE_THEOREM 1: mul_one
 
 theorem mul_two : ∀ p : Nat,
     p * 2 = p + p := by
@@ -649,7 +637,6 @@ theorem add_shuffle3 : ∀ n m p : Nat,
     (n + m) + p = (n + p) + m := by
   intro n m p
   rw [← add_assoc, add_comm m p, add_assoc]
--- GRADE_THEOREM 1: add_shuffle3
 
 
 theorem succ_mul : ∀ m n : Nat,
@@ -681,8 +668,6 @@ theorem mul_comm : ∀ m n : Nat,
     rw [mul_zero, zero_mul]
   case succ n' ih =>
     rw [mul_succ, ih, succ_mul]
--- GRADE_THEOREM 2: mul_comm
--- []
 
 /-
   Take a piece of paper.  For each of the following theorems, first
@@ -753,7 +738,6 @@ theorem mul_assoc : ∀ n m p : Nat,
   case zero => rfl
   case succ p' ih =>
     rw [mul_succ, mul_succ, ← ih, left_distrib]
--- []
 
 /- ## Nat to Bin and Back to Nat -/
 
@@ -825,9 +809,6 @@ theorem bin_to_nat_pres_incr : ∀ b : Bin,
     dsimp [incr, binToNat]; rw [ih]
     rw [mul_two, mul_two, add_succ]
     rw [add_shuffle3 _ 1]
--- GRADE_THEOREM 3: bin_to_nat_pres_incr
-
--- []
 
 
 /- Write a function to convert natural numbers to binary numbers. -/
@@ -857,9 +838,7 @@ theorem nat_bin_nat : ∀ n : Nat,
   case succ n' ih =>
     dsimp [natToBin]
     rw [bin_to_nat_pres_incr, ih]
--- GRADE_THEOREM 3: nat_bin_nat
 
--- []
 
 /- ## Bin to Nat and Back to Bin (Advanced) -/
 
@@ -888,7 +867,6 @@ example : ∀ b, natToBin (binToNat b) = b := by sorry
 theorem double_incr : ∀ n : Nat,
     double (n + 1) = (double n) + 2 := by
   intro n; rfl
--- GRADE_THEOREM 0.5: double_incr
 
 /- Now define a similar doubling function for `Bin`. -/
 
@@ -901,7 +879,6 @@ def doubleBin (b : Bin) : Bin :=
 
 /- double_bin_zero -/
 example : doubleBin .z = .z := by rfl  -- ADMITTED
--- GRADE_THEOREM 0.5: double_bin_zero
 
 /- Prove this lemma, which corresponds to `double_incr`. -/
 
@@ -913,9 +890,7 @@ theorem double_incr_bin : ∀ b : Bin,
   . rfl
   . rfl
   . rfl
--- GRADE_THEOREM 1: double_incr_bin
 
--- []
 
 /- Let's return to our desired theorem: -/
 
@@ -1039,8 +1014,5 @@ theorem bin_nat_bin : ∀ b : Bin,
     rw [natToBin_two_mul, ih]
 
 end NatToBin
-
--- GRADE_THEOREM 6: bin_nat_bin
--- []
 
 

@@ -1339,8 +1339,10 @@ theorem add_mul_zero : ∀ p q : Nat,
 -- /FULL
 
 -- TERSE: /- Sometimes simple calculation and rewriting are not enough... -/
+/-- warning: declaration uses `sorry` -/
+#guard_msgs(warning) in
 example : ∀ n : Nat,
-    (n + 1 == 0) = false := by
+    (1 + n == 0) = false := by
   intro n
   /-
     `rfl` doesn't work here because `n` is unknown
@@ -1357,7 +1359,7 @@ example : ∀ n : Nat,
 -- TERSE: /- We can use `cases` to perform case analysis: -/
 
 theorem add_one_neb_zero : ∀ n : Nat,
-    (n + 1 == 0) = false := by
+    (1 + n == 0) = false := by
   intro n
   cases n
   case zero => rfl
@@ -1600,9 +1602,7 @@ theorem negation_fn_applied_twice : ∀ f : Bool → Bool,
   cases b <;> rfl
 --  /SOLUTION
 
-/-
-  GRADE_MANUAL 1: negation_fn_applied_twice
--/
+--  GRADE_MANUAL 1: negation_fn_applied_twice
 -- []
 
 -- EX3? (andb_eq_orb)
@@ -1942,16 +1942,18 @@ end LateDays
   and 1s), terminated by a `z`.
 
   For example:
-      decimal       binary                    unary
-         0              z                        0
-         1           b1 z                        1
-         2       b0 (b1 z)                       2
-         3       b1 (b1 z)                       3
-         4   b0 (b0 (b1 z))                      4
-         5   b1 (b0 (b1 z))                      5
-         6   b0 (b1 (b1 z))                      6
-         7   b1 (b1 (b1 z))                      7
-         8  b0 (b0 (b0 (b1 z)))                  8
+
+  | decimal |            binary     |                                                unary         |
+  |:-------:| ---------------------:| ------------------------------------------------------------:|
+  |    0    | `               z   ` | `                                               zero       ` |
+  |    1    | `            b1 z   ` | `                                          succ zero       ` |
+  |    2    | `        b0 (b1 z)  ` | `                                    succ (succ zero)      ` |
+  |    3    | `        b1 (b1 z)  ` | `                              succ (succ (succ zero))     ` |
+  |    4    | `    b0 (b0 (b1 z)) ` | `                        succ (succ (succ (succ zero)))    ` |
+  |    5    | `    b1 (b0 (b1 z)) ` | `                  succ (succ (succ (succ (succ zero))))   ` |
+  |    6    | `    b0 (b1 (b1 z)) ` | `            succ (succ (succ (succ (succ (succ zero)))))  ` |
+  |    7    | `    b1 (b1 (b1 z)) ` | `      succ (succ (succ (succ (succ (succ (succ zero)))))) ` |
+  |    8    | `b0 (b0 (b0 (b1 z)))` | `succ (succ (succ (succ (succ (succ (succ (succ zero)))))))` |
 
   Note that the low-order bit is on the left and the high-order bit
   is on the right -- the opposite of the way binary numbers are
