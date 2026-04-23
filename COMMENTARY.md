@@ -95,6 +95,9 @@ Tactics to consider introducing:
 * `Poly.lean`: N/A
 * `Tactics.lean`: `apply`, `symm`, `injection`, `injections`, `congr`
 
+We should remove the use of `calc` and `generalize` in `Induction`, and introduce them later. 
+In particular, `generalize` should appear in `IndProp`, maybe?
+
 ### `rewrite` vs `rw`
 
 Roger: It seems that the `rw` tactic might be a bit to strong for what we want to teach.

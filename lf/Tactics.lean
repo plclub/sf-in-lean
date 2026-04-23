@@ -702,6 +702,16 @@ theorem eq_implies_succ_equal' : forall (n m : Nat),
   intro n m eq
   congr
 
+/- TODO: (DHS) We need to explain the numerical argument to `congr`.
+   `congr 1` works in this proof but `congr` does not -/
+theorem eq_implies_proj_equal : forall (a b c d : Nat),
+  a = b -> c = d -> (a, c + 1) = (b, 1 + d) := by
+  intro a b c d eq1 eq2
+  -- congr here would not work! would generate false goals
+  congr 1
+  rw [add_comm]
+  congr
+
 -- ######################################################
 -- * Using Tactics on Hypotheses *
 
