@@ -94,13 +94,13 @@ Tactics to consider introducing:
 ### Inventory
 
 * `Basics.lean`: `rfl`, `intro`, `rewrite`, `rw`, `cases`, `dsimp`, `exact`, `contradiction`, `<;>` (to move), `all_goals` (to remove)
-* `Induction.lean`: `induction`, `have`, `calc`, `generalize`
+* `Induction.lean`: `induction`, `have`
 * `Lists.lean`: `unfold`
 * `Poly.lean`: N/A
 * `Tactics.lean`: `apply`, `symm`, `injection`, `injections`, `congr`
 
 We should remove the use of `calc` and `generalize` in `Induction`, and introduce them later. 
-In particular, `generalize` should appear in `IndProp`, maybe?
+In particular, `generalize` should appear in `IndProp`, maybe? Also, move `unfold` earlier.
 
 ### `rewrite` vs `rw`
 
