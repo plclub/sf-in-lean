@@ -28,6 +28,7 @@
 -- HIDEFROMHTML
 
 import Poly
+import CustomTactics
 
 -- ######################################################
 -- # The `apply` Tactic *
@@ -694,7 +695,7 @@ theorem eq_implies_succ_equal : forall (n m : Nat),
     any of these subgoals that are simple enough (e.g., immediately
     provable by `rfl`) will be automatically discharged. -/
 
--- TERSE: Rocq also provides `congr` as a tactic.
+-- TERSE: Lean also provides `congr` as a tactic.
 
 theorem eq_implies_succ_equal' : forall (n m : Nat),
   n = m -> n + 1 = m + 1 := by
@@ -704,14 +705,15 @@ theorem eq_implies_succ_equal' : forall (n m : Nat),
 
 /- TODO: (DHS) how is this explanation of `congr`.
 
-   The `congr` tactic also accepts a numerical argument,
+   FULL: The `congr` tactic also accepts a numerical argument,
    which tells Lean how deeply to decompose the goal.
    So, given a goal like `((a, b), (c, d)) = ((e, f), (g, h))`,
-   `congr 1` would produce two subgoals: `(a, b) = (e, f)`
-   and `(c, d) = (g, h)`, while `congr 2` would produce
-   four subgoals `a = e`, `b = f`, `c = g` and `d = h`.
-   Using `congr` without an argument always decomposes
-   the goal as deeply as possible.
+   `congr 1` only applies `congr` once to the goal, and would produce
+   two subgoals: `(a, b) = (e, f)` and `(c, d) = (g, h)`.
+   `congr 2`, meanwhile, would apply `congr` again to
+   both these subgoals, and produce four subgoals: `a = e`, `b = f`,
+   `c = g` and `d = h`. Using `congr` without an argument always
+   decomposes the goal as deeply as possible.
 
    Why does Lean provide this level of flexibility? Depending
    on what we are trying to prove, deeper applications
@@ -719,11 +721,13 @@ theorem eq_implies_succ_equal' : forall (n m : Nat),
    this example:
 -/
 
+/- TERSE: We can specify the recursion-depth with `congr n`. -/
+
 example : forall (a b c d : Nat),
   a = b -> c = d -> (a, c + 1) = (b, 1 + d) := by
   intro a b c d eq1 eq2
   congr
-  /- we now have three goals: `c = 1`, `1 = d`, and `1 = d`,
+  /- We now have three goals: `c = 1`, `1 = d`, and `1 = d`,
      but these are not provable from our hypotheses! `congr`
      has gone too deep. -/
   sorry
@@ -731,7 +735,7 @@ example : forall (a b c d : Nat),
 theorem eq_implies_succ_proj_equal : forall (a b c d : Nat),
   a = b -> c = d -> (a, c + 1) = (b, 1 + d) := by
   intro a b c d eq1 eq2
-  /- only shallowly using `congr` here allows us to complete the proof -/
+  /- Only shallowly using `congr` here allows us to complete the proof -/
   congr 1
   rw [add_comm]
   congr
@@ -747,3 +751,60 @@ theorem eq_implies_succ_proj_equal : forall (a b c d : Nat),
     the hypothesis `H` in the context. -/
 /- TERSE: Many tactics come with "`... at ...`" variants that work on
     hypotheses instead of goals. -/
+
+theorem silly4 : ∀ (n m : Nat) ,
+  (n + 0 = m + 0) -> (n = m) := by
+  intro n m h
+  simp at h
+  exact h
+
+/- TODO: (OA) Do we comment on the fact that apply at isn't in Lean by
+    default and note that it's from mathlib?  -/
+
+/-  FULL: Similarly, [apply L at H] matches some conditional statement
+    [L] (of the form [X -> Y], say) against a hypothesis [H] in the
+    context.  However, unlike ordinary [apply] (which rewrites a goal
+    matching [Y] into a subgoal [X]), [apply L at H] matches [H]
+    against [X] and, if successful, replaces it with [Y].
+
+    In other words, [apply L at H] gives us a form of "forward
+    reasoning": given [X -> Y] and a hypothesis matching [X], it
+    produces a hypothesis matching [Y].
+
+    By contrast, [apply L] is "backward reasoning": it says that if we
+    know [X -> Y] and we are trying to prove [Y], it suffices to prove
+    [X].
+
+    Here is a variant of a proof that uses forward reasoning
+    throughout instead of backward reasoning. -/
+
+/- TERSE: *** -/
+/- TERSE: The ordinary [apply] tactic is a form of "backward
+    reasoning."  It says "We're trying to prove [X] and we know
+    [Y -> X], so if we can prove [Y] we'll be done."
+
+    By contrast, the variant [apply... at...] is "forward reasoning":
+    it says "We know [Y] and we know [Y -> X], so we also know [X]." -/
+
+-- /HIDEFROMADVANCED
+
+theorem silly5 : ∀ (n m p q : Nat),
+  (n = m → p = q) →
+  n = m →
+  p = q := by
+  intro n m p q eq1 eq2
+  apply eq1 at eq2
+  exact eq2
+
+-- /HIDEFROMADVANCED
+
+/- FULL: Forward reasoning starts from what is _given_ (premises,
+    previously proven theorems) and iteratively draws conclusions from
+    them until the goal is reached.  Backward reasoning starts from
+    the _goal_ and iteratively reasons about what would imply the
+    goal, until premises or previously proven theorems are reached.
+
+    The informal proofs seen in math or computer science classes tend
+    to use forward reasoning.  By contrast, idiomatic use of Lean
+    generally favors backward reasoning, though in some situations the
+    forward style can be easier to think about. -/
