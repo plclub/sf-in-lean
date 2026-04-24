@@ -1493,7 +1493,9 @@ theorem diagonal_induction: forall (P : Nat -> Nat -> Prop),
     case zero => apply H00
     case succ _ ih => apply H0S; apply ih
   case succ _ ih =>
-    cases n =>
+    cases n
+    . apply HS0; apply ih
+    . apply HSS; apply ih
 
 -- /ADMITTED
 -- []
@@ -2101,42 +2103,44 @@ Proof.
 
 -- FULL
 -- EX3A (filter_exercise)
-Theorem filter_exercise : forall (X : Type) (test : X -> Bool)
-                                 (x : X) (l lf : list X),
-  filter test l = x :: lf ->
-  test x = true.
-Proof.
-  (* ADMITTED *)
-  intros X test x l. induction l as [| v' l' IHl'].
-    - (* l = [] *) intros lf eq. discriminate eq.
-    - (* l = v' :: l' *) intros lf eq.
-      simpl in eq.
-      destruct (test v') eqn: Heq.
-        + (* test v' = true *)
-          injection eq as eqhead eqtail. rewrite <- eqhead.
-          apply Heq.
-        + (* test v' = false *)
-          apply IHl' with lf. apply eq.  Qed.
-(* /ADMITTED *)
-(* GRADE_THEOREM 3: filter_exercise *)
-(** [] *)
+theorem filter_exercise : forall (α : Type) (test : α -> Bool)
+                                 (a : α) (l lf : List α),
+  filter test l = a :: lf ->
+  test a = true := by
+-- ADMITTED
+  intro α test a l lf h
+  induction l generalizing a lf test
+  . contradiction
+  . case cons hd tl ih =>
+    dsimp [filter] at h
+    cases h' : (test hd)
+    . rw [h'] at h; dsimp at h
+      apply ih
+      exact h
+    . rw [h'] at h; dsimp at h
+      injections h1 h2
+      rw [←h1]
+      assumption
+-- /ADMITTED
+-- GRADE_THEOREM 3: filter_exercise
+-- []
 
-(* EX4A! (forall_exists_challenge) *)
-(** Define two recursive `Fixpoints`, `forallb` and `existsb`.  The
+-- EX4A! (forall_exists_challenge)
+/- Define two recursive `Fixpoints`, `forallb` and `existsb`.  The
     first checks whether every element in a list satisfies a given
     predicate:
 [[
-      forallb odd [1;3;5;7;9] = true
-      forallb negb [false;false] = true
-      forallb even [0;2;4;5] = false
+      forallb odd [1,3,5,7,9] = true
+      forallb negb [false,false] = true
+      forallb even [0,2,4,5] = false
       forallb (eqb 5) [] = true
 ]]
     The second checks whether there exists an element in the list that
     satisfies a given predicate:
 [[
-      existsb (eqb 5) [0;2;3;6] = false
-      existsb (andb true) [true;true;false] = true
-      existsb odd [1;0;0;0;0;3] = true
+      existsb (eqb 5) [0,2,3,6] = false
+      existsb (andb true) [true,true,false] = true
+      existsb odd [1,0,0,0,0,3] = true
       existsb even [] = false
 ]]
     Next, define a _nonrecursive_ version of `existsb` -- call it
@@ -2144,113 +2148,85 @@ Proof.
 
     Finally, prove a theorem `existsb_existsb'` stating that
     `existsb'` and `existsb` have the same behavior.
-*)
+-/
 
-Fixpoint forallb {X : Type} (test : X -> Bool) (l : list X) : Bool
-  (* ADMITDEF *) :=
+def forallb {α : Type} (test : α -> Bool) (l : List α) : Bool :=
+-- ADMITDEF
   match l with
     | [] => true
-    | x :: l' => andb (test x) (forallb test l')
-  end.
-(* /ADMITDEF *)
+    | x :: l' => (test x) && (forallb test l')
+-- /ADMITDEF
 
-Example test_forallb_1 : forallb odd [1;3;5;7;9] = true.
-Proof. (* ADMITTED *) reflexivity.  Qed. (* /ADMITTED *)
+example : forallb odd [1,3,5,7,9] = true := by rfl
+example : forallb not [false,false] = true := by rfl
+example : forallb even [0,2,4,5] = false := by rfl
+example : forallb (· == 5) [] = true := by rfl
 
-Example test_forallb_2 : forallb negb [false;false] = true.
-Proof. (* ADMITTED *) reflexivity.  Qed. (* /ADMITTED *)
-
-Example test_forallb_3 : forallb even [0;2;4;5] = false.
-Proof. (* ADMITTED *) reflexivity.  Qed. (* /ADMITTED *)
-
-Example test_forallb_4 : forallb (eqb 5) [] = true.
-Proof. (* ADMITTED *) reflexivity.  Qed. (* /ADMITTED *)
-
-Fixpoint existsb {X : Type} (test : X -> Bool) (l : list X) : Bool
-  (* ADMITDEF *) :=
+def existsb {α : Type} (test : α -> Bool) (l : List α) : Bool :=
+-- ADMITDEF
   match l with
   | [] => false
-  | x :: l' => orb (test x) (existsb test l')
-  end.
-(* /ADMITDEF *)
+  | x :: l' => (test x) || (existsb test l')
+-- /ADMITDEF
 
-Example test_existsb_1 : existsb (eqb 5) [0;2;3;6] = false.
-Proof. (* ADMITTED *) reflexivity.  Qed. (* /ADMITTED *)
+example : existsb (· == 5) [0,2,3,6] = false := by rfl
+example : existsb (· && true) [true,true,false] = true := by rfl
+example : existsb odd [1,0,0,0,0,3] = true := by rfl
+example : existsb even [] = false := by rfl
 
-Example test_existsb_2 : existsb (andb true) [true;true;false] = true.
-Proof. (* ADMITTED *) reflexivity.  Qed. (* /ADMITTED *)
+def existsb' {α : Type} (test : α -> Bool) (l : List α) : Bool :=
+-- ADMITDEF
+  !(forallb (fun x => !(test x)) l)
+-- /ADMITDEF
 
-Example test_existsb_3 : existsb odd [1;0;0;0;0;3] = true.
-Proof. (* ADMITTED *) reflexivity.  Qed. (* /ADMITTED *)
+theorem existsb_existsb' : forall (α : Type) (test : α -> Bool) (l : List α),
+  existsb test l = existsb' test l := by
+-- Admitted
+  intro α test l
+  induction l generalizing test
+  . case nil => rfl
+  . case cons hd tl ih =>
+      dsimp [existsb]
+      rw [ih]
+      dsimp [existsb', forallb]
+      rw [Bool.not_and, Bool.not_not]
+-- /Admitted
 
-Example test_existsb_4 : existsb even [] = false.
-Proof. (* ADMITTED *) reflexivity.  Qed. (* /ADMITTED *)
+-- GRADE_THEOREM 6: existsb_existsb'
+-- []
 
-Definition existsb' {X : Type} (test : X -> Bool) (l : list X) : Bool
-  (* ADMITDEF *) :=
-  negb (forallb (fun x => negb (test x)) l).
-(* /ADMITDEF *)
-
-Theorem existsb_existsb' : forall (X : Type) (test : X -> Bool) (l : list X),
-  existsb test l = existsb' test l.
-Proof. (* ADMITTED *)
-  intros. unfold existsb'. induction l as [| x l' IHl'].
-  - (* l = [] *)
-    reflexivity.
-  - (* l = x :: l' *)
-    simpl.
-    destruct (test x).
-    + (* test x = true *)
-      reflexivity.
-    + (* test x = false *)
-      simpl.
-      rewrite -> IHl'.
-      reflexivity.  Qed.
-(* /ADMITTED *)
-
-(* GRADE_THEOREM 6: existsb_existsb' *)
-(** [] *)
-
-(* LATER: Another nice exercise would be to show how to
+/- LATER: Another nice exercise would be to show how to
    define forallb in terms of fold, as in...
       Complete the following definition of `every` as a recursive function:
          Definition forallb' (X:Type) (p:X -> Bool) (l:list X) : Bool :=
            fold _ _
              (fun x acc => both_yes _________  __________) ________  _________.
-*)
+-/
 
-(* HIDE *)
-(* Solutions to the above. *)
-(* Note that it is important to use `Definition` rather than `Fixpoint`;
-   the latter leads to weird awfulness. *)
+-- HIDE
+-- Solutions to the above.
 
-Definition forallbF {X : Type} (test : X -> Bool) (l : list X) : Bool
-  := fold (fun x b => andb (test x) b) l true.
+def forallbF {X : Type} (test : X -> Bool) (l : List X) : Bool
+  := fold (fun x b => (test x) && b) l true
 
-Definition existsbF {X : Type} (test : X -> Bool) (l : list X) : Bool
-  := fold (fun x b => orb (test x) b) l false.
+def existsbF {X : Type} (test : X -> Bool) (l : List X) : Bool
+  := fold (fun x b => (test x) || b) l false
 
-Theorem existsbF_existsb : forall (X : Type) (test : X -> Bool) (l : list X),
-  existsbF test l = existsb test l.
-Proof.
-  intros. unfold existsbF. induction l as [| x l'].
-  - (* l = [] *)
-    reflexivity.
-  - (* l = x :: l' *)
-    simpl.
-    destruct (test x).
-    + (* test x = true *)
-      reflexivity.
-    + (* test x = false *)
-      simpl.
-      rewrite -> IHl'.
-      reflexivity.  Qed.
+theorem existsbF_existsb : forall (X : Type) (test : X -> Bool) (l : List X),
+  existsbF test l = existsb test l := by
 
-(* /HIDE *)
-(* /FULL *)
-(* HIDE *)
+  intro X test l
+  unfold existsbF
+  induction l
+  . rfl
+  . case cons hd tl ih =>
+    dsimp [existsb, fold]
+    rw [ih]
+-- /HIDE
+-- /FULL
+-- HIDE
 
-(* Local Variables: *)
-(* fill-column: 70  *)
-(* End:             *)
-(* /HIDE *)
+-- Local Variables:
+-- fill-column: 70
+-- End:
+-- /HIDE
