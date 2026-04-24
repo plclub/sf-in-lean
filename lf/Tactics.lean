@@ -702,12 +702,36 @@ theorem eq_implies_succ_equal' : forall (n m : Nat),
   intro n m eq
   congr
 
-/- TODO: (DHS) We need to explain the numerical argument to `congr`.
-   `congr 1` works in this proof but `congr` does not -/
-theorem eq_implies_proj_equal : forall (a b c d : Nat),
+/- TODO: (DHS) how is this explanation of `congr`.
+
+   The `congr` tactic also accepts a numerical argument,
+   which tells Lean how deeply to decompose the goal.
+   So, given a goal like `((a, b), (c, d)) = ((e, f), (g, h))`,
+   `congr 1` would produce two subgoals: `(a, b) = (e, f)`
+   and `(c, d) = (g, h)`, while `congr 2` would produce
+   four subgoals `a = e`, `b = f`, `c = g` and `d = h`.
+   Using `congr` without an argument always decomposes
+   the goal as deeply as possible.
+
+   Why does Lean provide this level of flexibility? Depending
+   on what we are trying to prove, deeper applications
+   of `congr` may make our goal unprovable. Consider
+   this example:
+-/
+
+example : forall (a b c d : Nat),
   a = b -> c = d -> (a, c + 1) = (b, 1 + d) := by
   intro a b c d eq1 eq2
-  -- congr here would not work! would generate false goals
+  congr
+  /- we now have three goals: `c = 1`, `1 = d`, and `1 = d`,
+     but these are not provable from our hypotheses! `congr`
+     has gone too deep. -/
+  sorry
+
+theorem eq_implies_succ_proj_equal : forall (a b c d : Nat),
+  a = b -> c = d -> (a, c + 1) = (b, 1 + d) := by
+  intro a b c d eq1 eq2
+  /- only shallowly using `congr` here allows us to complete the proof -/
   congr 1
   rw [add_comm]
   congr
@@ -719,7 +743,7 @@ theorem eq_implies_proj_equal : forall (a b c d : Nat),
     the context unchanged.  However, most tactics also have a variant
     that performs a similar operation on a statement in the context.
 
-    For example, the tactic "[simpl in H]" performs simplification on
-    the hypothesis [H] in the context. -/
-/- TERSE: Many tactics come with "[... in ...]" variants that work on
+    For example, the tactic "`dsimp at H`" performs simplification on
+    the hypothesis `H` in the context. -/
+/- TERSE: Many tactics come with "`... at ...`" variants that work on
     hypotheses instead of goals. -/
