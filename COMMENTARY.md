@@ -89,7 +89,7 @@ its output when it fails to prove a theorem contains a lot of information that c
 This can be overwhelming in the beginning, so this chapter uses only decide and simp."
 
 Tactics to consider introducing:
-`rcases`, `obtain`, `show`, `assumption`, `rename_i`, `revert`, `constructor`, `split`, `subst`, `suffices`
+`rcases`, `obtain`, `show`, `rename_i`, `revert`, `constructor`, `split`, `subst`, `suffices`
 
 ### Inventory
 
@@ -97,7 +97,7 @@ Tactics to consider introducing:
 * `Induction.lean`: `induction`, `have`
 * `Lists.lean`: `unfold`
 * `Poly.lean`: N/A
-* `Tactics.lean`: `apply`, `symm`, `injection`, `injections`, `congr`, `replace`, `induction generalizing`, 
+* `Tactics.lean`: `apply`, `symm`, `injection`, `injections`, `congr`, `replace`, `induction generalizing`, `assumption`
     `let ⟨... , ...⟩ := ...`
 
 We should remove the use of `calc` and `generalize` in `Induction`, and introduce them later. 
@@ -190,3 +190,9 @@ function.
 DHS: The associativity of `++` in Lean is different than Rocq. In Rocq the definition
 of `app_assoc` is `l ++ m ++ n = (l ++ m) ++ n`, but in Lean it's
 `l ++ m ++ n = l ++ (m ++ n)`.
+
+### `Tactics.lean`
+
+DHS: There is a section here on unfolding definitions that should probably move earlier, 
+to `Basics` or `Induction`, once those chapters are rewritten to not use arithmetic. This will 
+also require changing the examples. 

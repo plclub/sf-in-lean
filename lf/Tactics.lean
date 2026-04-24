@@ -900,7 +900,10 @@ theorem trans_eq_example''''' : forall (a b c d e f : Nat),
   intros a b c d e f eq1 eq2
   have h := trans_eq (y:= [c, d])
   apply h
+  /- This tactic closes a goal if it appears anywhere in the context.
+     In this case we could also write `exact eq1` ... -/
   assumption
+  /- .. and here we could also write `exact eq2` -/
   assumption
 
 -- ######################################################
