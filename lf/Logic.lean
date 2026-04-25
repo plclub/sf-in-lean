@@ -10,8 +10,9 @@
 
 -- HIDEFROMHTML
 import Basics
+import Induction
 import CustomTactics
-open Nat hiding add_succ
+open Nat hiding add_succ mul_succ
 -- /HIDEFROMHTML
 
 /- FULL: We have now seen many examples of factual claims (i.e.,
@@ -373,3 +374,154 @@ theorem and_associate : ∀ P Q R : Prop,
 #check (And : Prop → Prop → Prop)
 
 /- ### Disjunction -/
+
+/- Another important connective is the _disjunction_, or _logical or_,
+    of two propositions: `A ∨ B` is true when either `A` or `B` is.
+    This infix notation stands for `Or A B`, where
+    `Or : Prop -> Prop -> Prop`. -/
+
+/- To use a disjunctive hypothesis in a proof, we proceed by case
+    analysis -- which, as with other data types like `Nat`, is done
+    using `cases`. The two cases are `inl` (for "left injection",
+    or "in the left case") and `inr` (for "right injection",
+    or "in the right case"). -/
+
+theorem factor_is_zero : ∀ n m : Nat,
+    n = 0 ∨ m = 0 → n * m = 0 := by
+  intro n m H
+  cases H
+  /- `n = 0` -/
+  case inl Hn => rw [Hn, zero_mul]
+  /- `m = 0` -/
+  case inr Hm => rw [Hm, mul_zero]
+
+/- FULL: We can see in this example that, when we perform case
+    analysis on a disjunction `A ∨ B`, we must separately discharge
+    two proof obligations, each showing that the conclusion holds
+    under a different assumption -- `A` in the first subgoal and `B`
+    in the second. -/
+
+/- Conversely, to show that a disjunction holds, it suffices to show
+    that one of its sides holds. This can be done via the tactics
+    `left` and `right`.  As their names imply, the first one requires
+    proving the left side of the disjunction, while the second
+    requires proving the right side.  Here is a trivial use... -/
+
+theorem or_intro_l : ∀ A B : Prop, A → A ∨ B := by
+  intro A B HA
+  left; exact HA
+
+/- ... and here is a slightly more interesting example requiring both
+    `left` and `right`: -/
+
+theorem zero_or_succ : ∀ n : Nat,
+    n = 0 ∨ n = pred (succ n) := by
+  -- WORKINCLASS
+  intro n
+  cases n
+  case zero => left; rfl
+  case succ => right; dsimp [pred]
+  -- /WORKINCLASS
+
+-- EX2 (mul_is_succ)
+theorem mul_is_succ : forall n m : Nat,
+    n * m = 0 → n = 0 ∨ m = 0 := by
+  -- ADMITTED
+  intro n m H
+  cases m
+  case zero => right; rfl
+  case succ =>
+    cases n
+    case zero => left; rfl
+    case succ =>
+      rw [mul_succ, add_succ] at H
+      contradiction
+  -- /ADMITTED
+-- []
+
+-- EX1 (or_commute)
+theorem or_commute : ∀ P Q : Prop,
+    P ∨ Q → Q ∨ P := by
+  intro P Q H
+  cases H
+  case inl HP => right; exact HP
+  case inr HQ => left; exact HQ
+
+/- ## Falsehood and Negation -/
+
+/- Up to this point, we have mostly been concerned with proving
+    "positive" statements -- addition is commutative, appending lists
+    is associative, etc.  We are sometimes also interested in negative
+    results, demonstrating that some proposition is _not_ true. Such
+    statements are expressed with the logical negation operator `¬`,
+    which a prefix notation for `Not`.
+
+    To see how negation works, recall the _principle of explosion_
+    from the `Tactics` chapter, which asserts that, if we assume a
+    contradiction, then any other proposition can be derived.
+
+    Following this intuition, we could define `¬ P` ("not `P`") as
+    `∀ Q, P → Q`.
+    Lean makes an equivalent but slightly different choice,
+    defining `~ P` as `P → False`, where `False` is a specific
+    unprovable proposition defined in the standard library. -/
+
+#check (Not : Prop → Prop)
+#print Not
+
+example : ∀ P, Not P = (P → False) := by intro; rfl
+example : ∀ P, (¬ P) = (P → False) := by intro; rfl
+
+/- Since `False` is a contradictory proposition, the principle of
+    explosion also applies to it. If we can get `False` into the context,
+    we can use `cases` on it to complete any goal: -/
+
+theorem ex_falso_quodlibet : ∀ P : Prop, False → P := by
+  intro P contra
+  cases contra
+
+/- FULL: The Latin _ex falso quodlibet_ means, literally, "from falsehood
+    follows whatever you like"; this is another common name for the
+    principle of explosion. -/
+
+-- FULL
+-- EX2? (not_implies_other_not)
+theorem not_implies_other_not : ∀ P : Prop,
+    ¬ P → (∀ Q : Prop, P → Q) := by
+  -- ADMITTED
+  intro P H Q HP
+  unfold Not at H
+  apply ex_falso_quodlibet
+  apply H
+  exact HP
+  -- /ADMITTED
+-- []
+-- /FULL
+
+/- Inequality is a very common form of negated statement, so there is a
+    special notation for it: `≠`, which is infix notation for `Ne`. -/
+
+#print Ne
+
+theorem zero_not_one : 0 ≠ 1 := by
+  /- FULL: The proposition `0 ≠ 1` is exactly the same as `¬ (0 = 1)`
+      -- that is, `Not (0 = 1)` -- which unfolds to `(0 = 1) → False`.
+      (We use `unfold Ne Not` explicitly here to illustrate that point,
+      but generally it can be omitted.) -/
+  unfold Ne Not
+  /- FULL: To prove an inequality, we may assume the opposite equality... -/
+  intro contra
+  /- FULL: ...and deduce a contradiction from it. Here, the equality
+      `0 = 1` corresponds to `zero = succ zero`, which contradicts
+      disjointness of constructors `zero` and `succ`, so `contradiction`
+      takes care of it. -/
+  contradiction
+  -- JC: `cases contra` and `injection contra` both also work,
+  -- but is probably harder to explain.
+
+/- It takes a little practice to get used to working with negation in Rocq.
+    Even though _you_ may see perfectly well why a claim involving
+    negation holds, it can be a little tricky at first to see how to make
+    Rocq understand it!
+
+    Here are proofs of a few familiar facts to help get you warmed up. -/
