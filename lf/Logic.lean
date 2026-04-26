@@ -525,3 +525,333 @@ theorem zero_not_one : 0 ≠ 1 := by
     Rocq understand it!
 
     Here are proofs of a few familiar facts to help get you warmed up. -/
+
+theorem not_False : ¬ False := by
+  unfold Not; intro H; exact H
+
+theorem contradiction_implies_anything : ∀ P Q : Prop,
+    (P ∧ ¬ P) → Q := by
+  -- WORKINCLASS
+  intro P Q ⟨HP, HNP⟩
+  unfold Not at HNP
+  cases (HNP HP)
+  -- /WORKINCLASS
+
+theorem double_neg : ∀ P : Prop, P → ¬ ¬ P := by
+  -- WORKINCLASS
+  intro P H
+  unfold Not
+  intro G
+  apply G
+  exact H
+  -- /WORKINCLASS
+
+-- FULL
+-- EX2AM? (double_neg_informal)
+/- Write an _informal_ proof of `double_neg`:
+    _Theorem_: `P` implies `¬ ¬ P`, for any proposition `P`. -/
+
+-- SOLUTION
+/- _Proof_: Suppose some proposition `P` holds. We must show `¬ ¬ P` --
+    i.e., `¬ P → False`, so suppose `¬ P` as well and try to derive `False`.
+    Then we have both `P` and `¬ P` (i.e., `P → False`) from which
+    we can indeed derive `False`. So `¬ ¬ P` holds. -/
+-- /SOLUTION
+
+-- GRADE_MANUAL 2: double_neg_informal
+-- []
+
+-- EX1! (contrapositive)
+theorem contrapositive : ∀ P Q : Prop,
+    (P → Q) → (¬ Q → ¬ P) := by
+  -- ADMITTED
+  intro P Q H HNotQ HP
+  apply HNotQ
+  apply H
+  exact HP
+  -- /ADMITTED
+-- []
+
+-- EX1AM (not_PNP_informal)
+/- Write an informal proof of the proposition
+    `∀ P : Prop, ¬ (P ∧ ¬ P)`. -/
+
+-- SOLUTION
+/- _Proof_: Suppose, for some `P`, that `P ∧ ¬ P` holds.
+    Recall that `¬ P` is defined as `P → False`.
+    Given `P` and `P → False`, we can prove `False`,
+    so `(P ∧ ¬ P) → False`, i.e. `¬ (P ∧ ¬ P)`. -/
+-- / SOLUTION
+
+-- GRADE_MANUAL 1: not_PNP_informal
+-- []
+
+-- EX2 (de_morgan_not_or)
+/-  _De Morgan's Laws_, named for Augustus De Morgan, describe how
+    negation interacts with conjunction and disjunction.  The
+    following law says that "the negation of a disjunction is the
+    conjunction of the negations." There is a dual law
+    `de_morgan_not_and_not` to which we will return at the end of this
+    chapter. -/
+theorem de_morgan_not_or : ∀ P Q : Prop,
+    ¬ (P ∨ Q) → ¬ P ∧ ¬ Q := by
+  -- ADMITTED
+  unfold Not
+  intro P Q H
+  constructor
+  case left  => intro HP; apply H; left; exact HP
+  case right => intro HQ; apply H; right; exact HQ
+  -- /ADMITTED
+-- []
+
+-- EX1? (not_succ_inverse_pred)
+/- Since we are working with natural numbers, we can disprove that
+    `succ` and `pred` are inverses of each other: -/
+theorem not_succ_pred_n : ¬ (∀ n : Nat, succ (pred n) = n) := by
+  -- ADMITTED
+  intro H
+  replace H := H 0
+  dsimp [pred] at H
+  cases H
+  -- /ADMITTED
+-- []
+-- /FULL
+
+/- TERSE: Since inequality involves a negation, getting comfortable
+    with it also often requires a little practice.
+
+    A useful trick: if you are trying to prove a nonsensical goal,
+    apply `ex_falso_quodlibet` to change the goal to `False`. This
+    makes it easier to use assumptions of the form `¬ P`, and in
+    particular of the form `x ≠ y`. -/
+
+/- FULL: Since inequality involves a negation, it also requires a little
+    practice to be able to work with it fluently. Here is one useful trick.
+
+    If you are trying to prove a goal that is nonsensical (e.g., the
+    goal state is `false = true`), apply `ex_falso_quodlibet` to
+    change the goal to [False].
+
+    This makes it easier to use assumptions of the form `¬ P` that may
+    be available in the context -- in particular, assumptions of the
+    form `x ≠ y`. -/
+
+theorem not_true_is_false : ∀ b : Bool,
+    b ≠ true → b = false := by
+  -- FOLD
+  intro b H
+  cases b
+  case false => rfl
+  case true =>
+    unfold Ne Not at H
+    apply ex_falso_quodlibet
+    apply H; rfl
+  -- /FOLD
+
+-- FULL
+/- Since reasoning with `ex_falso_quodlibet` is quite common,
+    Lean provides a tactic, `exfalso`, for applying it. -/
+theorem not_true_is_false' : ∀ b : Bool,
+    b ≠ true → b = false := by
+  intro b H
+  cases b
+  case false => rfl
+  case true =>
+    unfold Ne Not at H
+    exfalso -- ⟵ here
+    apply H; rfl
+-- /FULL
+
+/- HIDE: CH: I don't think this was the original intention, but some
+    of these quizzes got unnecessarily tricky and pedantic. For
+    instance, the first quiz below makes a big distinction between
+    using the destruct tactic and destructing using an intro pattern,
+    even if conceptually there is no difference. Could it be that these
+    quizzes were devised when intro patterns were not taught in the
+    course and an update would be helpful now? Since I don't see the
+    gain in tricking a majority of students in giving the "wrong"
+    answer, even if it's a perfectly sensible one. -/
+
+/- QUIZ: To prove the following proposition, which tactics will we need
+    besides `intro`, `apply`, and `exact`?
+    ```
+    ∀ X : Prop, ∀ a b : X, a = b ∧ a ≠ b → False
+    ```
+
+    1. `cases`, `unfold`, `left`, and `right`
+    2. `cases` and `unfold`
+    3. only `cases`
+    4. `left` and/or `right`
+    5. only `unfold`
+    6. none of the above -/
+
+-- FOLD
+example : ∀ X : Prop, ∀ a b : X, a = b ∧ a ≠ b → False := by
+  intro X a b ⟨Hab, Hnab⟩; apply Hnab; exact Hab
+-- /FOLD
+
+/- QUIZ: To prove the following proposition, which tactics will we need
+    besides `intro`, `apply`, and `exact`?
+    ```
+    ∀ P Q : Prop, P ∨ Q → ¬ ¬ (P ∨ Q)
+    ```
+
+    1. `cases`, `unfold`, `left`, and `right`
+    2. `cases` and `unfold`
+    3. only `cases`
+    4. `left` and/or `right`
+    5. only `unfold`
+    6. none of the above -/
+
+-- FOLD
+example : ∀ P Q : Prop, P ∨ Q → ¬ ¬ (P ∨ Q) := by
+  intro P Q HPQ HnPQ
+  apply HnPQ at HPQ
+  exact HPQ
+-- /FOLD
+
+/- QUIZ: To prove the following proposition, which tactics will we need
+    besides `intro`, `apply`, and `exact`?
+    ```
+    ∀ P Q : Prop, P → (P ∨ ¬ ¬ Q)
+    ```
+
+    1. `cases`, `unfold`, `left`, and `right`
+    2. `cases` and `unfold`
+    3. only `cases`
+    4. `left` and/or `right`
+    5. only `unfold`
+    6. none of the above -/
+
+-- FOLD
+example : ∀ P Q : Prop, P → (P ∨ ¬ ¬ Q) := by
+  intro P Q HP
+  left; exact HP
+-- /FOLD
+
+/- QUIZ: To prove the following proposition, which tactics will we need
+    besides `intro`, `apply`, and `exact`?
+    ```
+    ∀ P Q : Prop, P ∨ Q → (¬ ¬ P) ∨ (¬ ¬ Q)
+    ```
+
+    1. `cases`, `unfold`, `left`, and `right`
+    2. `cases` and `unfold`
+    3. only `cases`
+    4. `left` and/or `right`
+    5. only `unfold`
+    6. none of the above -/
+
+-- FOLD
+example : ∀ P Q : Prop, P ∨ Q → (¬ ¬ P) ∨ (¬ ¬ Q) := by
+  intro P Q H
+  cases H
+  case inl HP => left; intro HnP; apply HnP; exact HP
+  case inr HQ => right; intro HnQ; apply HnQ; exact HQ
+-- /FOLD
+
+/- QUIZ: To prove the following proposition, which tactics will we need
+    besides `intro`, `apply`, and `exact`?
+    ```
+    ∀ A : Prop, 1 = 0 → (A ∨ ¬ A)
+    ```
+
+    1. `contradiction`, `unfold`, `left`, and `right`
+    2. `contradiction` and `unfold`
+    3. only `contradiction`
+    4. `left` and/or `right`
+    5. only `unfold`
+    6. none of the above -/
+
+-- FOLD
+example : ∀ A : Prop, 1 = 0 → (A ∨ ¬ A) := by
+  intro A H; contradiction
+-- /FOLD
+
+/- ## Truth -/
+
+/- Besides `False`, Lean's standard library also defines `True`,
+    a proposition that is trivially true. To prove it, we use
+    the constructor `True.intro` explicitly, or the anonymous
+    constructor `⟨⟩`, or the `constructor` tactic. -/
+
+example : True := by exact True.intro
+example : True := by exact ⟨⟩
+example : True := by constructor
+
+/- Unlike `False`, which is used extensively, `True` is used
+    relatively rarely: it is trivial (and therefore uninteresting)
+    to prove as a goal, and it provides no useful information
+    when it appears as a hypothesis. -/
+
+-- FULL
+/- However, `True` can be quite useful when defining complex `Prop`s using
+    conditionals or as a parameter to higher-order `Prop`s. We'll come back
+    to this later.
+
+    For now, let's take a look at how we can use `True` and `False` to
+    achieve an effect similar to that of the `contradiction` tactic, without
+    literally using `contradiction`. -/
+
+/- Pattern-matching lets us do different things for different
+    constructors.  If the result of applying two different
+    constructors were hypothetically equal, then we could use [match]
+    to convert an unprovable statement (like `False`) to one that is
+    provable (like `True`). -/
+
+def discr_fun (n : Nat) : Prop :=
+  match n with
+  | zero => True
+  | succ _ => False
+
+theorem discr_example : ∀ n : Nat, ¬ (zero = succ n) := by
+  intro n contra
+  have H : discr_fun zero := by exact True.intro
+  rw [contra] at H
+  dsimp [discr_fun] at H
+
+/- To generalize this to other constructors, we simply have to provide
+    an appropriate variant of `discr_fun`. To generalize it to other
+    conclusions, we can use `exfalso` to replace them with `False`.
+    The `contradiction` tactic takes care of all of this for us. -/
+
+-- EX2AM? (nil_is_not_cons)
+/- Use the same technique as above to show that `[] ≠ x :: xs`.
+    Do not use the `contradiction` tactic. -/
+
+-- QUIETSOLUTION
+def is_nil {X : Type} (xs : List X) : Prop :=
+  match xs with
+  | [] => True
+  | _ :: _ => False
+-- /QUIETSOLUTION
+
+theorem nil_is_not_cons : ∀ {α : Type} (x : α) (xs : List α),
+    ¬ ([] = x :: xs) := by
+  -- ADMITTED
+  intro α x xs Heq
+  have H : @is_nil α [] := by exact True.intro
+  rw [Heq] at H
+  dsimp [is_nil] at H
+  -- /ADMITTED
+-- []
+-- /FULL
+
+/- ## Logical Equivalence -/
+
+/- The handy "if and only if" connective, which asserts that two
+    propositions have the same truth value, is a structure containing
+    the two implication directions. `P ↔ Q` is notation for `Iff P Q`. -/
+
+/-- info:
+structure Iff (a b : Prop) : Prop
+number of parameters: 2
+fields:
+  Iff.mp : a → b
+  Iff.mpr : b → a
+constructor:
+  Iff.intro {a b : Prop} (mp : a → b) (mpr : b → a) : a ↔ b -/
+#guard_msgs in
+#print Iff
+
+#check (fun α β : Prop => α ↔ β : Prop → Prop → Prop)
