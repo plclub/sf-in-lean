@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script>
+      (function(){
+  const {protocol:proto, host:hostName, pathname:path, search:srch, hash:hsh} = window.location;
+  if (!(path.endsWith("/") || path.endsWith(".html"))) {
+    window.location.replace(`${proto}//${hostName}${path}/${srch}${hsh}`);
+  }
+})()</script>
+    <base href="./../../"><meta charset="utf-8">
+    <meta name="viewport" content="height=device-height, width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1">
+    <title>Proofs Within Proofs</title><link rel="stylesheet" href="book.css">
+    <link rel="stylesheet" href="verso-vars.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js" integrity="sha384-zbcZAIxlvJtNE3Dp5nxLXdXtXyxwOdnILY1TDPVmKFhl4r4nSUG1r8bcFXGVa4Te" crossorigin="anonymous"></script>
+    <script src="-verso-search/elasticlunr.min.js"></script>
+    <script src="-verso-search/fuzzysort.min.js"></script>
+    <script src="-verso-search/searchIndex.js"></script>
+    <script type="module" src="-verso-search/search-init.js"></script>
+    <link rel="stylesheet" href="-verso-search/search-box.css">
+    <link rel="stylesheet" href="-verso-search/search-highlight.css">
+    <link rel="stylesheet" href="-verso-search/domain-display.css">
+    <script src="-verso-data/katex/katex.js"></script>
+    <script src="-verso-data/katex/math.js"></script>
+    <script src="-verso-data/popper.min.js"></script>
+    <script src="-verso-data/tippy-bundle.umd.min.js"></script>
+    <link rel="stylesheet" href="-verso-data/tippy-border.css">
+    <link rel="stylesheet" href="-verso-data/katex/katex.css">
+    <style>
+table.tabular {
+  margin: auto;
+  border-spacing: 1rem;
+}
+table.tabular.left-align {
+  margin-right: auto;
+  margin-left: 0;
+}
+table.tabular.center-align {
+  margin: auto;
+}
+table.tabular.right-align {
+  margin-left auto;
+  margin-right: 0;
+}
+table.tabular td, table.tabular th {
+  text-align: left;
+  vertical-align: top;
+}
+table.tabular td > p:first-child, table.tabular th > p:first-child {
+  margin-top: 0;
+}
+table.tabular td > p:last-child, table.tabular th > p:first-child {
+  margin-bottom: 0;
+}
+</style><style>
+
+.hl.lean {
+  white-space: pre;
+  font-weight: normal;
+  font-style: normal;
+  font-size: inherit;
+}
+
+.hl.lean .keyword {
+  color: var(--verso-code-keyword-color,);
+  font-weight: var(--verso-code-keyword-weight, bold);
+  font-style: var(--verso-code-keyword-style, normal);
+  font-family: var(--verso-code-keyword-font-family,);
+}
+
+.hl.lean .const {
+  color: var(--verso-code-const-color,);
+  font-weight: var(--verso-code-const-weight, normal);
+  font-style: var(--verso-code-const-style, normal);
+  font-family: var(--verso-code-const-font-family,);
+}
+
+.hl.lean .var {
+  color: var(--verso-code-var-color,);
+  font-weight: var(--verso-code-var-weight, normal);
+  font-style: var(--verso-code-var-style, italic);
+  font-family: var(--verso-code-var-font-family,);
+
+  position: relative;
+}
+
+.hl.lean .literal, .hl.lean .unknown {
+  color: var(--verso-code-color,);
+  font-weight: normal;
+  font-style: normal;
+  font-family: var(--verso-code-font-family,);
+}
+
+.hover-container {
+  width: 0;
+  height: 0;
+  position: relative;
+  display: inline;
+}
+
+.hl.lean a {
+  color: inherit;
+  text-decoration: currentcolor underline dotted;
+}
+
+.hl.lean a:hover {
+  text-decoration: currentcolor underline solid;
+}
+
+.hl.lean .hover-info {
+  white-space: normal;
+}
+
+.hl.lean .token .hover-info {
+  display: none;
+  position: absolute;
+  background-color: #e5e5e5;
+  border: 1px solid black;
+  padding: 0.5rem;
+  z-index: 300;
+}
+
+.hl.lean .hover-info.messages {
+  max-height: 10rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+  padding: 0 0.5rem 0 0;
+  display: block;
+}
+
+.hl.lean .hover-info code {
+  white-space: pre-wrap;
+  background: none;
+  color: black;
+}
+
+.hl.lean .hover-info.messages > code {
+  padding: 0.5rem;
+  display: block;
+  width: fit-content;
+}
+
+.hl.lean .hover-info.messages > code:only-child {
+  margin: 0;
+}
+
+.hl.lean .hover-info.messages > code {
+  margin: 0.1rem;
+}
+
+.hl.lean .hover-info.messages > code:not(:first-child) {
+  margin-top: 0rem;
+}
+
+.hl.lean {
+}
+
+.hl.lean.block {
+  display: block;
+}
+
+.hl.lean.inline {
+  display: inline;
+  white-space: pre-wrap;
+}
+
+.hl.lean * {
+}
+
+.hl.lean .token {
+  transition: all 0.25s; /* Slight fade for highlights */
+}
+
+@media (hover: hover) {
+  .hl.lean .token.binding-hl, .hl.lean .literal.string:hover, .hl.lean .token.typed:hover {
+    background-color: #eee;
+    border-radius: 2px;
+    transition: none;
+  }
+}
+
+
+.hl.lean .has-info .token:not(.tactic-state):not(.tactic-state *), .hl.lean .has-info .inter-text:not(.tactic-state):not(.tactic-state *) {
+  text-decoration-style: wavy;
+  text-decoration-line: underline;
+  text-decoration-thickness: from-font;
+  text-decoration-skip-ink: none;
+}
+
+.hl.lean .has-info .hover-info {
+  display: none;
+  position: absolute;
+  transform: translate(0.25rem, 0.3rem);
+  border: 1px solid black;
+  padding: 0.5rem;
+  z-index: 400;
+  text-align: left;
+}
+
+.hl.lean .has-info.error :not(.tactic-state):not(.tactic-state *){
+  text-decoration-color: red;
+}
+
+@media (hover: hover) {
+  .hl.lean .has-info.error:hover {
+    background-color: #ffb3b3;
+  }
+}
+
+.hl.lean .hover-info.messages > code.error {
+  background-color: #e5e5e5;
+  border-left: 0.2rem solid #ffb3b3;
+}
+
+.tippy-box[data-theme~='error'] .hl.lean .hover-info.messages > code.error {
+  background: none;
+  border: none;
+}
+
+.error .verso-message, .error .verso-message .token, .error .verso-message label {
+  color: var(--verso-error-color);
+}
+
+.error .verso-message .case-label:has(input[type="checkbox"])::before {
+  background-color: var(--verso-error-color) !important;
+}
+
+.hl.lean .has-info.warning :not(.tactic-state):not(.tactic-state *) {
+  text-decoration-color: var(--verso-warning-indicator-color);
+}
+
+@media (hover: hover) {
+  .hl.lean .has-info.warning:hover {
+    background-color:var(--verso-warning-color);
+  }
+}
+
+.hl.lean .hover-info.messages > code.warning {
+  background-color: var(--verso-warning-color);
+}
+
+.lean-output {
+  border-left: 0.2em solid transparent;
+  padding: 0 0 0 0.5em;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.lean-output.error {
+  border-color: var(--verso-error-indicator-color);
+}
+
+.lean-output.information {
+  border-color: var(--verso-info-indicator-color);
+}
+
+.lean-output.warning {
+  border-color: var(--verso-warning-indicator-color);
+}
+
+.hl.lean .hover-info.messages > code.error {
+  background-color: #e5e5e5;
+  border-left: 0.2rem solid var(--verso-warning-color);
+}
+
+.tippy-box[data-theme~='warning'] .hl.lean .hover-info.messages > code.warning {
+  background: none;
+  border: none;
+}
+
+
+.hl.lean .has-info.information :not(.tactic-state):not(.tactic-state *) {
+  text-decoration-color: var(--verso-info-indicator-color, blue);
+}
+
+@media (hover: hover) {
+  .hl.lean .has-info.information:hover {
+    background-color: #4777ff;
+  }
+}
+
+
+.hl.lean .hover-info.messages > code.information {
+  background-color: #e5e5e5;
+  border-left: 0.2rem solid #4777ff;
+}
+
+.tippy-box[data-theme~='info'] .hl.lean .hover-info.messages > code.information {
+  background: none;
+  border: none;
+}
+
+.hl.lean div.docstring {
+  font-family: var(--verso-text-font-family, sans-serif);
+  white-space: normal;
+  max-width: calc(min(40rem, 90vw));
+  width: max-content;
+}
+
+.hl.lean div.docstring > :last-child {
+  margin-bottom: 0;
+}
+
+.hl.lean div.docstring > :first-child {
+  margin-top: 0;
+}
+
+.hl.lean .hover-info .sep {
+  display: block;
+  width: auto;
+  margin-left: 1rem;
+  margin-right: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0;
+  height: 1px;
+  border-top: 1px solid #ccc;
+}
+
+.hl.lean code {
+  font-family: var(--verso-code-font-family);
+}
+
+.hl.lean .tactic-state {
+  display: none;
+  position: relative;
+  width: fit-content;
+  border: 1px solid #888888;
+  border-radius: 0.1rem;
+  padding: 0.5rem;
+  font-family: sans-serif;
+  background-color: #ffffff;
+}
+
+.hl.lean.popup .tactic-state {
+  position: static;
+  display: block;
+  width: auto;
+  border: none;
+  padding: 0.5rem;
+  font-family: sans-serif;
+  background-color: #ffffff;
+}
+
+
+.hl.lean .tactic {
+  position: relative;
+  display: inline;
+  vertical-align: top;
+  /* Without these, mobile Safari will start making font sizes inconsistent when its text size adjustment feature is triggered.*/
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+.hl.lean .tactic:has(.tactic-toggle:checked) {
+  display: inline-grid;
+  grid-template-columns: 1fr;
+}
+
+.hl.lean .tactic-toggle:checked ~ .tactic-state {
+  display: inline-block;
+  vertical-align: top;
+  grid-row: 2;
+  justify-self: start;
+}
+
+.hl.lean .tactic > label {
+  position: relative;
+  grid-row: 1;
+  display: inline;
+}
+
+@media (hover: hover) {
+  .hl.lean .tactic:has(.tactic-toggle:not(:checked)) > label:hover {
+    background-color: #eeeeee;
+  }
+}
+
+.hl.lean .tactic-toggle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  height: 0;
+  width: 0;
+  z-index: -10;
+}
+
+.hl.lean .tactic > label::after {
+  content: "";
+  border: 1px solid #bbbbbb;
+  /* These need to be em, not rem, to scale with the font */
+  border-radius: 1em;
+  height: 0.25em;
+  vertical-align: middle;
+  width: 0.6em;
+  margin-left: 0.1em;
+  margin-right: 0.1em;
+  display: inline-block;
+  transition: all 0.5s;
+}
+
+/*
+@media (hover: hover) {
+  .hl.lean .tactic > label:hover::after {
+    border: 1px solid #aaaaaa;
+    background-color: #aaaaaa;
+    transition: all 0.5s;
+  }
+}
+*/
+
+.hl.lean .tactic > label:has(+ .tactic-toggle:checked)::after {
+  border: 1px solid #999999;
+  background-color: #999999;
+  transition: all 0.5s;
+}
+
+.hl.lean .tactic-state .goal + .goal {
+  margin-top: 1.5em;
+}
+
+/*
+Some CSS frameworks customize details/summary in ways not compatible with Verso's output.
+*/
+
+.hl.lean details {
+  display: block !important;
+  margin: 0;
+}
+
+.hl.lean details summary {
+  display: list-item !important;
+  margin: 0;
+}
+
+.hl.lean details summary:focus {
+  outline: none;
+  outline-offset: none;
+  color: inherit;
+}
+
+.hl.lean ul > li {
+  margin-bottom: 0;
+}
+
+.hl.lean details summary::marker {
+  display: inline !important;
+}
+
+.hl.lean details > summary:first-of-type {
+  list-style-type: disclosure-closed;
+  list-style-position: inside;
+}
+
+.hl.lean details[open] > summary:first-of-type {
+  list-style-type: disclosure-open;
+}
+
+.hl.lean details summary::before, .hl.lean details summary::after {
+  content: "" !important;
+  background: none;
+  display: none;
+}
+
+.hl.lean .tactic-state summary {
+  /* These need to be em, not rem, to scale with the font */
+  margin-left: -0.5em;
+}
+
+.hl.lean .tactic-state details {
+  /* These need to be em, not rem, to scale with the font */
+  padding-left: 0.5em;
+}
+
+.hl.lean .case-label {
+  display: block;
+  position: relative;
+}
+
+.hl.lean .case-label input[type="checkbox"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  height: 0;
+  width: 0;
+  z-index: -10;
+}
+
+.hl.lean .case-label:has(input[type="checkbox"])::before {
+  display: inline-block;
+  background-color: black;
+  content: ' ';
+  transition: ease 0.2s;
+  margin-right: 0.7em;
+  clip-path: polygon(100% 0, 0 0, 50% 100%);
+  width: 0.6em;
+  height: 0.6em;
+  vertical-align: middle;
+}
+
+.hl.lean .case-label:has(input[type="checkbox"]:not(:checked))::before {
+  transform: rotate(-90deg);
+}
+
+.hl.lean .case-label:has(input[type="checkbox"]) {
+
+}
+
+.hl.lean .case-label:has(input[type="checkbox"]:checked) {
+
+}
+
+
+.hl.lean .labeled-case > :not(:first-child) {
+  max-height: 0px;
+  display: block;
+  overflow: hidden;
+  transition: max-height 0.1s ease-in;
+  /* These need to be em, not rem, to scale with the font */
+  margin-left: 0.5em;
+  margin-top: 0.1em;
+}
+
+.hl.lean .labeled-case:has(.case-label input[type="checkbox"]:checked) > :not(:first-child) {
+  max-height: 100%;
+}
+
+
+.hl.lean .goal-name::before {
+  font-style: normal;
+  content: "case ";
+}
+
+.hl.lean .goal-name {
+  font-style: italic;
+  font-family: var(--verso-code-font-family);
+  color: inherit;
+}
+
+.hl.lean .hypotheses {
+  display: table;
+}
+
+.hl.lean .hypothesis {
+  display: table-row;
+}
+
+.hl.lean .hypothesis > * {
+  display: table-cell;
+}
+
+
+.hl.lean .hypotheses .colon {
+  text-align: center;
+  /* This needs to be em, not rem, to scale with the font */
+  min-width: 1em;
+}
+
+.hl.lean .hypotheses .name {
+  text-align: right;
+}
+
+.hl.lean .hypotheses .name,
+.hl.lean .hypotheses .type,
+.hl.lean .conclusion .type {
+  font-family: var(--verso-code-font-family);
+}
+
+.tippy-box {
+  /* Without these, mobile Safari will start making font sizes inconsistent when its text size adjustment feature is triggered.*/
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+.tippy-box[data-theme~='lean'] {
+  background-color: #e5e5e5;
+  color: black;
+  border: 1px solid black;
+}
+.tippy-box[data-theme~='lean'][data-placement^='top'] > .tippy-arrow::before {
+  border-top-color: #e5e5e5;
+}
+.tippy-box[data-theme~='lean'][data-placement^='bottom'] > .tippy-arrow::before {
+  border-bottom-color: #e5e5e5;
+}
+.tippy-box[data-theme~='lean'][data-placement^='left'] > .tippy-arrow::before {
+  border-left-color: #e5e5e5;
+}
+.tippy-box[data-theme~='lean'][data-placement^='right'] > .tippy-arrow::before {
+  border-right-color: #e5e5e5;
+}
+
+.tippy-box[data-theme~='message'][data-placement^='top'] > .tippy-arrow::before {
+  border-top-color: #e5e5e5;
+  border-width: 11px 11px 0;
+}
+.tippy-box[data-theme~='message'][data-placement^='top'] > .tippy-arrow::after {
+  bottom: -11px;
+  border-width: 11px 11px 0;
+}
+.tippy-box[data-theme~='message'][data-placement^='bottom'] > .tippy-arrow::before {
+  border-width: 0 11px 11px;
+}
+.tippy-box[data-theme~='message'][data-placement^='bottom'] > .tippy-arrow::after {
+  top: -11px;
+  border-width: 0 11px 11px;
+}
+.tippy-box[data-theme~='message'][data-placement^='left'] > .tippy-arrow::before {
+  border-left-color: #e5e5e5;
+  border-width: 11px 0 11px 11px;
+}
+.tippy-box[data-theme~='message'][data-placement^='left'] > .tippy-arrow::after {
+  right: -11px;
+  border-width: 11px 0 11px 11px;
+}
+
+.tippy-box[data-theme~='message'][data-placement^='right'] > .tippy-arrow::before {
+  border-right-color: #e5e5e5;
+  border-width: 11px 11px 11px 0;
+}
+.tippy-box[data-theme~='message'][data-placement^='right'] > .tippy-arrow::after {
+  left: -11px;
+  border-width: 11px 11px 11px 0;
+}
+
+
+
+.tippy-box[data-theme~='warning'] {
+  background-color: #e5e5e5;
+  color: black;
+  border: 3px solid var(--verso-warning-color);
+}
+
+.tippy-box[data-theme~='error'] {
+  background-color: #e5e5e5;
+  color: black;
+  border: 3px solid #f7a7af;
+}
+
+.tippy-box[data-theme~='info'] {
+  background-color: #e5e5e5;
+  color: black;
+  border: 3px solid #99b3c2;
+}
+
+.tippy-box[data-theme~='tactic'] {
+  background-color: white;
+  color: black;
+  border: 1px solid black;
+}
+.tippy-box[data-theme~='tactic'][data-placement^='top'] > .tippy-arrow::before {
+  border-top-color: white;
+}
+.tippy-box[data-theme~='tactic'][data-placement^='bottom'] > .tippy-arrow::before {
+  border-bottom-color: white;
+}
+.tippy-box[data-theme~='tactic'][data-placement^='left'] > .tippy-arrow::before {
+  border-left-color: white;
+}
+.tippy-box[data-theme~='tactic'][data-placement^='right'] > .tippy-arrow::before {
+  border-right-color: white;
+}
+
+.extra-doc-links {
+  list-style-type: none;
+  margin-left: 0;
+  padding: 0;
+}
+
+.extra-doc-links > li {
+  display: inline-block;
+}
+
+.extra-doc-links > li:not(:last-child)::after {
+  content: '|';
+  display: inline-block;
+  margin: 0 0.25em;
+}
+
+.verso-message .trace {
+  display: block;
+}
+
+.verso-message .trace > summary::marker {
+  color: var(--verso-text-color);
+}
+
+.verso-message .trace-children {
+  margin: 0;
+  padding: 0;
+}
+
+.verso-message .trace-children > li {
+  list-style-type: none;
+  margin-left: 1.5em;
+}
+
+.verso-message .trace-children > li:not(:has(.trace)) {
+  margin-left: 0;
+}
+
+.verso-message .trace-class {
+  color: color-mix(in srgb, currentColor 70%, transparent);
+  font-weight: bold;
+  margin: 0;
+  padding: 0;
+}
+
+.verso-message .text {
+  white-space: pre-wrap;
+}
+
+</style><script>
+      
+window.onload = () => {
+
+    // Don't show hovers inside of closed tactic states
+    function blockedByTactic(elem) {
+      let parent = elem.parentNode;
+      while (parent && "classList" in parent) {
+        if (parent.classList.contains("tactic")) {
+          const toggle = parent.querySelector("input.tactic-toggle");
+          if (toggle) {
+            return !toggle.checked;
+          }
+        }
+        parent = parent.parentNode;
+      }
+      return false;
+    }
+
+    // Track whether any tippy is visible (O(1) check instead of DOM scan)
+    let visibleTippyCount = 0;
+    function blockedByTippy(elem) {
+      return visibleTippyCount > 0;
+    }
+
+    // Binding highlights via event delegation with cached lookups
+    const bindingCache = new Map(); // context+binding -> [token elements]
+    let highlightedTokens = [];
+    function getBindingTokens(context, binding) {
+      const key = context + "\0" + binding;
+      let tokens = bindingCache.get(key);
+      if (!tokens) {
+        tokens = [];
+        for (const example of document.querySelectorAll(".hl.lean")) {
+          if (example.dataset.leanContext == context) {
+            for (const tok of example.querySelectorAll(".token[data-binding=\"" + CSS.escape(binding) + "\"]")) {
+              tokens.push(tok);
+            }
+          }
+        }
+        bindingCache.set(key, tokens);
+      }
+      return tokens;
+    }
+    for (const container of document.querySelectorAll(".hl.lean")) {
+      container.addEventListener("mouseover", (event) => {
+        const c = event.target.closest(".token");
+        if (!c || !c.dataset.binding || c.dataset.binding === "" || !container.contains(c)) return;
+        if (blockedByTactic(c)) return;
+        const tokens = getBindingTokens(container.dataset.leanContext, c.dataset.binding);
+        for (const tok of tokens) {
+          tok.classList.add("binding-hl");
+        }
+        highlightedTokens = tokens;
+      });
+      container.addEventListener("mouseout", (event) => {
+        const c = event.target.closest(".token");
+        if (!c || !container.contains(c)) return;
+        for (const tok of highlightedTokens) {
+          tok.classList.remove("binding-hl");
+        }
+        highlightedTokens = [];
+      });
+    }
+    /* Render docstrings */
+    if ('undefined' !== typeof marked) {
+        for (const d of document.querySelectorAll("code.docstring, pre.docstring")) {
+            const str = d.innerText;
+            const html = marked.parse(str);
+            const rendered = document.createElement("div");
+            rendered.classList.add("docstring");
+            rendered.innerHTML = html;
+            d.parentNode.replaceChild(rendered, d);
+        }
+    }
+    // Add hovers
+    let docsJson = "-verso-docs.json";
+    fetch(docsJson).then((resp) => resp.json()).then((versoDocData) => {
+
+      function hideParentTooltips(element) {
+        let parent = element.parentElement;
+        while (parent) {
+          const tippyInstance = parent._tippy;
+          if (tippyInstance) {
+            tippyInstance.hide();
+          }
+          parent = parent.parentElement;
+        }
+      }
+
+
+
+      const defaultTippyProps = {
+        /* DEBUG -- remove the space: * /
+        onHide(any) { return false; },
+        trigger: "click",
+        // */
+        /* theme: "lean", */
+        maxWidth: "none",
+        appendTo: () => document.body,
+        interactive: true,
+        delay: [100, null],
+        /* ignoreAttributes: true, */
+        followCursor: 'initial',
+        onShow(inst) {
+          if (inst.reference.className == 'tactic') {
+            const toggle = inst.reference.querySelector("input.tactic-toggle");
+            if (toggle && toggle.checked) {
+              return false;
+            }
+            hideParentTooltips(inst.reference);
+            if (blockedByTippy(inst.reference)) { return false; }
+
+          } else if (inst.reference.querySelector(".hover-info") || "versoHover" in inst.reference.dataset) {
+            if (blockedByTactic(inst.reference)) { return false };
+            if (blockedByTippy(inst.reference)) { return false; }
+          } else { // Nothing to show here!
+            return false;
+          }
+        },
+        onShown(inst) { visibleTippyCount++; },
+        onHidden(inst) { visibleTippyCount = Math.max(0, visibleTippyCount - 1); },
+        content (tgt) {
+          const content = document.createElement("span");
+          if (tgt.className == 'tactic') {
+            const state = tgt.querySelector(".tactic-state").cloneNode(true);
+            state.style.display = "block";
+            content.appendChild(state);
+            content.style.display = "block";
+            content.className = "hl lean popup";
+          } else {
+            content.className = "hl lean";
+            content.style.display = "block";
+            content.style.maxHeight = "300px";
+            content.style.overflowY = "auto";
+            content.style.overflowX = "hidden";
+            const hoverId = tgt.dataset.versoHover;
+            const hoverInfo = tgt.querySelector(".hover-info");
+            if (hoverId) { // Docstrings from the table
+              // TODO stop doing an implicit conversion from string to number here
+              let data = versoDocData[hoverId];
+              if (data) {
+                const info = document.createElement("span");
+                info.className = "hover-info";
+                info.style.display = "block";
+                info.innerHTML = data;
+                content.appendChild(info);
+                /* Render docstrings - TODO server-side */
+                if ('undefined' !== typeof marked) {
+                    for (const d of content.querySelectorAll("code.docstring, pre.docstring")) {
+                        const str = d.innerText;
+                        const html = marked.parse(str);
+                        const rendered = document.createElement("div");
+                        rendered.classList.add("docstring");
+                        rendered.innerHTML = html;
+                        d.parentNode.replaceChild(rendered, d);
+                    }
+                }
+              } else {
+                content.innerHTML = "Failed to load doc ID: " + hoverId;
+              }
+            } else if (hoverInfo) { // The inline info, still used for compiler messages
+              content.appendChild(hoverInfo.cloneNode(true));
+            }
+            const extraLinks = tgt.parentElement.dataset['versoLinks'];
+            if (extraLinks) {
+              try {
+                const extras = JSON.parse(extraLinks);
+                const links = document.createElement('ul');
+                links.className = 'extra-doc-links';
+                extras.forEach((l) => {
+                  const li = document.createElement('li');
+                  li.innerHTML = "<a href=\"" + l['href'] + "\" title=\"" + l.long + "\">" + l.short + "</a>";
+                  links.appendChild(li);
+                });
+                content.appendChild(links);
+              } catch (error) {
+                console.error(error);
+              }
+            }
+          }
+          return content;
+        }
+      };
+
+
+      document.querySelectorAll('.hl.lean .const.token, .hl.lean .keyword.token, .hl.lean .literal.token, .hl.lean .option.token, .hl.lean .var.token, .hl.lean .typed.token, .hl.lean .level-var, .hl.lean .level-const, .hl.lean .level-op, .hl.lean .sort').forEach(element => {
+        element.setAttribute('data-tippy-theme', 'lean');
+      });
+      document.querySelectorAll('.hl.lean .has-info.warning').forEach(element => {
+        element.setAttribute('data-tippy-theme', 'warning message');
+      });
+      document.querySelectorAll('.hl.lean .has-info.information').forEach(element => {
+        element.setAttribute('data-tippy-theme', 'info message');
+      });
+      document.querySelectorAll('.hl.lean .has-info.error').forEach(element => {
+        element.setAttribute('data-tippy-theme', 'error message');
+      });
+      document.querySelectorAll('.hl.lean .tactic').forEach(element => {
+        element.setAttribute('data-tippy-theme', 'tactic');
+      });
+      // Skip tokens inside closed tactics — they interfere with tactic tippys
+      const closedTactics = new Set();
+      document.querySelectorAll('.hl.lean .tactic').forEach(tactic => {
+        const toggle = tactic.querySelector('input.tactic-toggle');
+        if (toggle && !toggle.checked) closedTactics.add(tactic);
+      });
+      function isInsideClosedTactic(el) {
+        const tactic = el.closest('.tactic');
+        return tactic && tactic !== el && closedTactics.has(tactic);
+      }
+
+      const tokenSelector = '.hl.lean .const.token, .hl.lean .keyword.token, .hl.lean .literal.token, .hl.lean .option.token, .hl.lean .var.token, .hl.lean .typed.token, .hl.lean .has-info, .hl.lean .tactic, .hl.lean .level-var, .hl.lean .level-const, .hl.lean .level-op, .hl.lean .sort';
+      tippy(Array.from(document.querySelectorAll(tokenSelector)).filter(el => !isInsideClosedTactic(el)), defaultTippyProps);
+
+      // Create/destroy token tippys when tactic checkbox toggles
+      const tacticTippySelector = '.const.token, .keyword.token, .literal.token, .option.token, .var.token, .typed.token, .has-info, .level-var, .level-const, .level-op, .sort';
+      document.querySelectorAll('.hl.lean .tactic').forEach(tactic => {
+        const toggle = tactic.querySelector('input.tactic-toggle');
+        if (toggle) toggle.addEventListener('change', () => {
+          if (toggle.checked) {
+            closedTactics.delete(tactic);
+            tactic.querySelectorAll('.token').forEach(tok => {
+              if (!tok._tippy && tok.matches(tacticTippySelector)) {
+                tippy(tok, defaultTippyProps);
+              }
+            });
+          } else {
+            closedTactics.add(tactic);
+            tactic.querySelectorAll('.token').forEach(tok => {
+              if (tok._tippy) tok._tippy.destroy();
+            });
+          }
+        });
+      });
+  });
+}
+</script>
+    <script src="-verso-search/search-highlight.js" defer="defer"></script>
+    </head>
+  <body>
+    <header>
+      <div class="header-logo-wrapper"></div>
+      <div class="header-title-wrapper">
+        <a href="" class="header-title"><h1>
+            Software Foundations in Lean</h1>
+          </a></div>
+      </header>
+    <label for="toggle-toc" id="toggle-toc-click"><span class="line line1"></span><span class="line line2"></span><span class="line line3"></span></label><div class="with-toc">
+      <div class="toc-backdrop" onclick="document.getElementById('toggle-toc-click')?.click()"></div>
+      <nav id="toc">
+        <input type="checkbox" id="toggle-toc"><div class="first">
+          <a href="" class="toc-title"><h1>
+              Software Foundations in Lean</h1>
+            </a><div class="split-tocs">
+            <div class="split-toc book">
+              <div class="title">
+                <label for="--verso-manual-toc-----bookRoot" class="toggle-split-toc"><input type="checkbox" class="toggle-split-toc" id="--verso-manual-toc-----bookRoot"></label><span class="">Table of Contents</span></div>
+              <table><tr class="numbered"><td class="num">1.</td><td><a href="Basics___-Functional-Programming-in-Lean/#ch-basics">Basics: Functional Programming in Lean</a></td></tr><tr class="current numbered"><td class="num">2.</td><td><a href="Induction___-Proof-by-Induction/#ch-induction">Induction: Proof by Induction</a></td></tr></table></div>
+            <div class="split-toc">
+              <div class="title">
+                <label for="--verso-manual-toc-ch-induction" class="toggle-split-toc"><input type="checkbox" class="toggle-split-toc" id="--verso-manual-toc-ch-induction" checked="checked"></label><span class="number">2.</span> <span class=""><a href="Induction___-Proof-by-Induction/#ch-induction">Induction: Proof by Induction</a></span></div>
+              <table><tr class="numbered"><td class="num">2.1.</td><td><a href="Induction___-Proof-by-Induction/Separate-Compilation/#induction-separate-compilation">Separate Compilation</a></td></tr><tr class="numbered"><td class="num">2.2.</td><td><a href="Induction___-Proof-by-Induction/Review/#induction-review">Review</a></td></tr><tr class="current numbered"><td class="num">2.3.</td><td><a href="Induction___-Proof-by-Induction/Proofs-Within-Proofs/#induction-proofs-within-proofs">Proofs Within Proofs</a></td></tr><tr class="numbered"><td class="num">2.4.</td><td><a href="Induction___-Proof-by-Induction/Formal-vs___-Informal-Proof/#induction-formal-vs-informal-proof">Formal vs. Informal Proof</a></td></tr><tr class="numbered"><td class="num">2.5.</td><td><a href="Induction___-Proof-by-Induction/More-Exercises/#induction-more-exercises">More Exercises</a></td></tr></table></div>
+            <div class="split-toc">
+              <div class="title">
+                <span class="no-toggle"></span><span class="number">2.3.</span> <span class="current"><a href="Induction___-Proof-by-Induction/Proofs-Within-Proofs/#induction-proofs-within-proofs">Proofs Within Proofs</a></span></div>
+              </div>
+            </div>
+          </div>
+        <div class="last">
+          <ul id="meta-links">
+            <li>
+              <a href="https://github.com/plclub/sf-in-lean">Source Code</a></li>
+            </ul>
+          </div>
+        </nav>
+      <main><div class="content-wrapper">
+          <nav class="prev-next-buttons">
+            <a class="local-button active" href="Induction___-Proof-by-Induction/Review/#induction-review" rel="prev" title="2.2. Review"><span class="arrow">←</span><span class="where">2.2. Review</span></a><a class="local-button active" href="Induction___-Proof-by-Induction/Formal-vs___-Informal-Proof/#induction-formal-vs-informal-proof" rel="next" title="2.4. Formal vs. Informal Proof"><span class="where">2.4. Formal vs. Informal Proof</span><span class="arrow">→</span></a></nav>
+          <section>
+            <h1>
+              2.3. Proofs Within Proofs<span class="permalink-widget inline"><a href="find/?domain=Verso.Genre.Manual.section&amp;name=induction-proofs-within-proofs" title="Permalink">🔗</a></span></h1>
+            <p>
+              In Lean, as in informal mathematics, large proofs are often
+broken into a sequence of theorems, with later proofs referring to
+earlier theorems.  But sometimes a proof will involve some
+miscellaneous fact that is too trivial and of too little general
+interest to bother giving it its own top-level name.  In such
+cases, it is convenient to be able to simply state and prove the
+required fact "in place".  The <code>have</code> tactic allows us to do this.</p>
+            <p>
+              New tactic: <code>have</code>.</p>
+            <code class="hl lean block" data-lean-context="examples"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.theorem-9343">theorem</span><span class="inter-text"> </span><span class="const token" data-binding="const-mult_0_plus'" data-verso-hover="212" id="mult_0_plus___">mult_0_plus'</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="unknown token" data-binding="">∀</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.3" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.5" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="unknown token" data-binding="">,</span><span class="inter-text">
+    </span><span class="unknown token" data-binding="">(</span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.3" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="unknown token" data-binding="">+</span><span class="inter-text"> </span><span class="typed token" data-binding="" data-verso-hover="76">0</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">+</span><span class="inter-text"> </span><span class="typed token" data-binding="" data-verso-hover="76">0</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">*</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.5" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="unknown token" data-binding="">=</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.3" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="unknown token" data-binding="">*</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.5" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:=</span><span class="inter-text"> </span><span class="tactic"><label for="tactic-state-12543292984503081999-9414-9416-445"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.byTactic-9414" data-verso-hover="14">by</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-12543292984503081999-9414-9416-445"><span class="tactic-state"><span class="goal"><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="unknown token" data-binding="">∀</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.328" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.329" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="unknown token" data-binding="">),</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.328" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="unknown token" data-binding="">0</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="unknown token" data-binding="">0</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span><span class="inter-text"> </span><span class="const token" data-binding="const-HMul.hMul" data-verso-hover="94">*</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.329" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="15">=</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.328" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HMul.hMul" data-verso-hover="94">*</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.329" data-verso-hover="76">m</span></span></span></span></span></span><span class="inter-text">
+  </span><span class="keyword token" data-binding="kw-occ-Lean.Parser.Tactic.intro-9419" data-verso-hover="117">intro</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.175" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="tactic"><label for="tactic-state-348537066274082483-9427-9428-447"><span class="var token" data-binding="var-_uniq.178" data-verso-hover="76">m</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-348537066274082483-9427-9428-447"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.175" data-verso-hover="76">n</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.178" data-verso-hover="76">m</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.175" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="unknown token" data-binding="">0</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="unknown token" data-binding="">0</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span><span class="inter-text"> </span><span class="const token" data-binding="const-HMul.hMul" data-verso-hover="94">*</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.178" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="15">=</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.175" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HMul.hMul" data-verso-hover="94">*</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.178" data-verso-hover="76">m</span></span></span></span></span></span><span class="inter-text">
+  </span><span class="keyword token" data-binding="kw-occ-Lean.Parser.Tactic.tacticHave__-9431" data-verso-hover="213">have</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.303" data-verso-hover="214">h</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.175" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="unknown token" data-binding="">+</span><span class="inter-text"> </span><span class="typed token" data-binding="" data-verso-hover="76">0</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">+</span><span class="inter-text"> </span><span class="typed token" data-binding="" data-verso-hover="76">0</span><span class="inter-text"> </span><span class="unknown token" data-binding="">=</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.175" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:=</span><span class="inter-text"> </span><span class="tactic"><label for="tactic-state-12543292984503081999-9459-9461-449"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.byTactic-9459" data-verso-hover="14">by</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-12543292984503081999-9459-9461-449"><span class="tactic-state"><span class="goal"><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="unknown token" data-binding="">∀</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.328" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.329" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="unknown token" data-binding="">),</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.328" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="unknown token" data-binding="">0</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="unknown token" data-binding="">0</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span><span class="inter-text"> </span><span class="const token" data-binding="const-HMul.hMul" data-verso-hover="94">*</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.329" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="15">=</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.328" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HMul.hMul" data-verso-hover="94">*</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.329" data-verso-hover="76">m</span></span></span></span></span></span><span class="inter-text"> </span><span class="tactic"><label for="tactic-state-7-9462-9465-451"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Tactic.tacticRfl-9462" data-verso-hover="16">rfl</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-7-9462-9465-451"><span class="tactic-state">All goals completed! 🐙</span></span><span class="inter-text">
+  </span><span class="tactic"><label for="tactic-state-7-9468-9474-452"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Tactic.rwSeq-9468" data-verso-hover="199">rw</span><span class="inter-text"> </span><span class="unknown token" data-binding="">[</span><span class="var token" data-binding="var-_uniq.303" data-verso-hover="214">h</span><span class="unknown token" data-binding="">]</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-7-9468-9474-452"><span class="tactic-state">All goals completed! 🐙</span></span><span class="inter-text">
+/- LATER: BCP 21: Changed 0+n to n+0+0 for a more interesting
+   proof (with 0+n was provable just by reflexivity!).  The new one is
+   still straightforward without the replace, but maybe not quite so
+   obviously so! -/
+</span><span class="unknown token" data-binding=""></span></code><p>
+              The <code>have</code> tactic introduces a local lemma into the proof.
+We prove it immediately, and then it's available as a hypothesis
+for the rest of the proof.</p>
+            <p>
+              As another example, suppose we want to prove that <code>(n + m)
++ (p + q) = (m + n) + (p + q)</code>. The only difference between the
+two sides of the <code>=</code> is that the arguments <code>m</code> and <code>n</code> to the
+first inner <code>+</code> are swapped, so it seems we should be able to use
+the commutativity of addition (<code>add_comm</code>) to rewrite one into the
+other.  However, the <code>rw</code> tactic is not very smart about <em>where</em>
+it applies the rewrite.  There are three uses of <code>+</code> here, and
+<code>rw [add_comm]</code> may affect the wrong one...</p>
+            <code class="hl lean block" data-lean-context="examples"><span class="doc-comment token" data-binding="">/-- warning: declaration uses `sorry` -/</span><span class="inter-text">
+</span><span class="keyword token" data-binding="kw-occ-Lean.guardMsgsCmd-10353" data-verso-hover="194">#guard_msgs</span><span class="inter-text"> </span><span class="keyword token" data-binding="kw-occ-Lean.guardMsgsCmd-10353" data-verso-hover="194">in</span><span class="inter-text">
+</span><span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.example-10409">example</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="unknown token" data-binding="">∀</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.3" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.5" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.7" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.9" data-verso-hover="76">q</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="unknown token" data-binding="">,</span><span class="inter-text">
+    </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.3" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="unknown token" data-binding="">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.5" data-verso-hover="76">m</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">+</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.7" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="unknown token" data-binding="">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.9" data-verso-hover="76">q</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">=</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.5" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="unknown token" data-binding="">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.3" data-verso-hover="76">n</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">+</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.7" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="unknown token" data-binding="">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.9" data-verso-hover="76">q</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:=</span><span class="inter-text"> </span><span class="tactic"><label for="tactic-state-2882854538785720151-10483-10485-453"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.byTactic-10483" data-verso-hover="14">by</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-2882854538785720151-10483-10485-453"><span class="tactic-state"><span class="goal"><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="unknown token" data-binding="">∀</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.149" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.151" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.153" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.154" data-verso-hover="76">q</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="unknown token" data-binding="">),</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.149" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.151" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.153" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.154" data-verso-hover="76">q</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="15">=</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.151" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.149" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.153" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.154" data-verso-hover="76">q</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span></span></span></span></span></span><span class="inter-text">
+  </span><span class="keyword token" data-binding="kw-occ-Lean.Parser.Tactic.intro-10488" data-verso-hover="117">intro</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="tactic"><label for="tactic-state-12611120886464655181-10496-10497-455"><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-12611120886464655181-10496-10497-455"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="unknown token" data-binding="">∀</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.149" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.150" data-verso-hover="76">q</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="unknown token" data-binding="">),</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.149" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.150" data-verso-hover="76">q</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="15">=</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.149" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.150" data-verso-hover="76">q</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span></span></span></span></span></span><span class="inter-text"> </span><span class="tactic"><label for="tactic-state-16409386146739750657-10498-10499-457"><span class="var token" data-binding="var-_uniq.121" data-verso-hover="76">p</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-16409386146739750657-10498-10499-457"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.121" data-verso-hover="76">p</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="unknown token" data-binding="">∀</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.148" data-verso-hover="76">q</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="unknown token" data-binding="">),</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.121" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.148" data-verso-hover="76">q</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="15">=</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.121" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.148" data-verso-hover="76">q</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span></span></span></span></span></span><span class="inter-text"> </span><span class="tactic"><label for="tactic-state-7939657952978633192-10500-10501-459"><span class="var token" data-binding="var-_uniq.124" data-verso-hover="76">q</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-7939657952978633192-10500-10501-459"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.121" data-verso-hover="76">p</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.124" data-verso-hover="76">q</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="inter-text"></span><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.121" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.124" data-verso-hover="76">q</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="15">=</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.121" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.124" data-verso-hover="76">q</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span></span></span></span></span></span><span class="inter-text">
+  /-
+    We just need to swap (n + m) for (m + n)... seems
+    like add_comm should do the trick!
+    But `rw [add_comm]` might rewrite the wrong `+`!
+  -/
+  </span><span class="tactic"><label for="tactic-state-1326013194175924628-10660-10673-461"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Tactic.rwSeq-10660" data-verso-hover="199">rw</span><span class="inter-text"> </span><span class="unknown token" data-binding="">[</span><a href="Induction___-Proof-by-Induction/Review/#add_comm" title="Definition of example"><span class="const token" data-binding="const-add_comm" data-verso-hover="206">add_comm</span></a><span class="unknown token" data-binding="">]</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-1326013194175924628-10660-10673-461"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.121" data-verso-hover="76">p</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.124" data-verso-hover="76">q</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="inter-text"></span><span class="var token" data-binding="var-_uniq.121" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.124" data-verso-hover="76">q</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="15">=</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.121" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.124" data-verso-hover="76">q</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span></span></span></span></span></span><span class="inter-text">
+  </span><span class="tactic"><label for="tactic-state-7-10676-10681-463"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Tactic.tacticSorry-10676" data-verso-hover="35">sorry</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-7-10676-10681-463"><span class="tactic-state">All goals completed! 🐙</span></span><span class="inter-text">
+</span><span class="unknown token" data-binding=""></span></code><p>
+              ***
+To use <code>add_comm</code> at the point where we need it, we can supply
+explicit arguments: <code>rw [add_comm n m]</code> tells Lean exactly which
+<code>+</code> to rewrite.  (We can also use <code>have</code> to establish the specific
+equation we want, then rewrite with it.)</p>
+            <code class="hl lean block" data-lean-context="examples"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.theorem-10939">theorem</span><span class="inter-text"> </span><span class="const token" data-binding="const-plus_rearrange" data-verso-hover="215" id="plus_rearrange">plus_rearrange</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="unknown token" data-binding="">∀</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.3" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.5" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.7" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.9" data-verso-hover="76">q</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="unknown token" data-binding="">,</span><span class="inter-text">
+    </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.3" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="unknown token" data-binding="">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.5" data-verso-hover="76">m</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">+</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.7" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="unknown token" data-binding="">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.9" data-verso-hover="76">q</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">=</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.5" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="unknown token" data-binding="">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.3" data-verso-hover="76">n</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">+</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.7" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="unknown token" data-binding="">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.9" data-verso-hover="76">q</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:=</span><span class="inter-text"> </span><span class="tactic"><label for="tactic-state-13141470464912872547-11028-11030-464"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.byTactic-11028" data-verso-hover="14">by</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-13141470464912872547-11028-11030-464"><span class="tactic-state"><span class="goal"><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="unknown token" data-binding="">∀</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.135" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.137" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.139" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.140" data-verso-hover="76">q</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="unknown token" data-binding="">),</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.135" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.137" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.139" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.140" data-verso-hover="76">q</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="15">=</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.137" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.135" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.139" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.140" data-verso-hover="76">q</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span></span></span></span></span></span><span class="inter-text">
+  </span><span class="keyword token" data-binding="kw-occ-Lean.Parser.Tactic.intro-11033" data-verso-hover="117">intro</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="tactic"><label for="tactic-state-13157209093777926273-11041-11042-466"><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-13157209093777926273-11041-11042-466"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="unknown token" data-binding="">∀</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.135" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.136" data-verso-hover="76">q</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="unknown token" data-binding="">),</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.135" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.136" data-verso-hover="76">q</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="15">=</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.135" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.136" data-verso-hover="76">q</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span></span></span></span></span></span><span class="inter-text"> </span><span class="tactic"><label for="tactic-state-7206804248844249842-11043-11044-468"><span class="var token" data-binding="var-_uniq.121" data-verso-hover="76">p</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-7206804248844249842-11043-11044-468"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.121" data-verso-hover="76">p</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="unknown token" data-binding="">∀</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.134" data-verso-hover="76">q</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="unknown token" data-binding="">),</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.121" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.134" data-verso-hover="76">q</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="15">=</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.121" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.134" data-verso-hover="76">q</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span></span></span></span></span></span><span class="inter-text"> </span><span class="tactic"><label for="tactic-state-7939657952978633192-11045-11046-470"><span class="var token" data-binding="var-_uniq.124" data-verso-hover="76">q</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-7939657952978633192-11045-11046-470"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.121" data-verso-hover="76">p</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.124" data-verso-hover="76">q</span></span><span class="colon">:</span><span class="type"><span class="inter-text"></span><span class="const token" data-binding="const-Nat" data-verso-hover="85">Nat</span><span class="inter-text"></span></span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="inter-text"></span><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.121" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.124" data-verso-hover="76">q</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="15">=</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">(</span><span class="var token" data-binding="var-_uniq.121" data-verso-hover="76">p</span><span class="inter-text"> </span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">+</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.124" data-verso-hover="76">q</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="104">)</span></span></span></span></span></span><span class="inter-text">
+  </span><span class="tactic"><label for="tactic-state-7-11049-11066-472"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Tactic.rwSeq-11049" data-verso-hover="199">rw</span><span class="inter-text"> </span><span class="unknown token" data-binding="">[</span><a href="Induction___-Proof-by-Induction/Review/#add_comm" title="Definition of example"><span class="const token" data-binding="const-add_comm" data-verso-hover="206">add_comm</span></a><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.115" data-verso-hover="76">n</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.118" data-verso-hover="76">m</span><span class="unknown token" data-binding="">]</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-7-11049-11066-472"><span class="tactic-state">All goals completed! 🐙</span></span><span class="inter-text">
+</span><span class="unknown token" data-binding=""></span></code></section>
+          <nav class="prev-next-buttons">
+            <a class="local-button active" href="Induction___-Proof-by-Induction/Review/#induction-review" rel="prev" title="2.2. Review"><span class="arrow">←</span><span class="where">2.2. Review</span></a><a class="local-button active" href="Induction___-Proof-by-Induction/Formal-vs___-Informal-Proof/#induction-formal-vs-informal-proof" rel="next" title="2.4. Formal vs. Informal Proof"><span class="where">2.4. Formal vs. Informal Proof</span><span class="arrow">→</span></a></nav>
+          </div>
+        </main></div>
+    </body>
+  </html>
+

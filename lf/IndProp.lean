@@ -1,10 +1,220 @@
 -- IndProp: Inductively Defined Propositions
 
--- INSTRUCTORS: In one 80-minute lecture, I (BCP) was able to get
---    _to_, but not _through_, the proof of in_re_match in the regexp
---    case study.  I covered the rest in an hour, going pretty slowly and
---    working lots of examples in real time.  That left 20 minutes to
---    show them just the first half of the ProofObjects chapter.
+/- INSTRUCTORS: In one 80-minute lecture, I (BCP) was able to get
+   _to_, but not _through_, the proof of in_re_match in the regexp
+   case study.  I covered the rest in an hour, going pretty slowly and
+   working lots of examples in real time.  That left 20 minutes to
+   show them just the first half of the ProofObjects chapter.
+
+   Making time for at least a bit of discussion of ProofObjects is
+   pretty important, even if you don't go into it in detail.  Entirely
+   skipping this material leads to needless confusion and beating
+   around the bush in later discussions. -/
+
+/- HIDE: BCP 25: After teaching the chapter this semester, I feel
+   that (a) the ev example, while arguably suboptimal, actually works
+   acceptably well. (I just wish that the n in `ev_SS n H` was not
+   two smaller than the n that is being shown to be even -- that's
+   always awkward.  Wonder if there is some clever way around that...)
+
+   However, (b) the chapter is very long, and quite a few of the
+   exercises are hard, especially if you do as I did this year and
+   require the advanced exercises for everybody (on the assumption
+   that they could get plenty of help from LLMs, etc.).  I think it
+   really needs to be at least significantly trimmed, if not split up. -/
+
+/- HIDE: MRC 3/22: I offer a few remarks. I'm putting them here, above
+   the BCP'21 comment, not to say that they are in any way more
+   important; rather, just to preserve some chronological legibility.
+
+   - This chapter is an outlier in length. It now has the maximum line
+     length (in the FULL version) of any chapter in LF, at about 2300
+     LoC. That's a z-score of about 1.75 for the "blue arrow" chapters
+     in the dependency diagram.
+
+   - This chapter has 39 exercises, of which 25 (!) are optional.
+
+   - The running example of evenness is known to be uncompelling
+     because it is representable without inductively-defined
+     propositions. There do exist compelling examples:
+
+     + Functions like `factorial` whose "natural" definitions are not
+       structurally recursive. [Coq'Art 8.4]  [BCP 25: FWIW, I don't
+       find the "natural" definition of factorial suitable for present
+       purposes: the reasons it is better and more natural than a
+       simple fixpoint seem rather subtle.]
+
+     + Partial functions.
+
+     + Relations (that are not strictly functions).
+
+   I have a couple of personal opinions based on those observations:
+
+   - I favor BCP'21's "path 1" of de-emphasizing (to the extent
+     perhaps of eliminating) evenness.
+
+   - I favor re-factoring this chapter into two files, with a main
+     (blue) path that covers the essentials without cluttering
+     optional exercises throughout the file. -/
+
+/- HIDE: BCP '21: This chapter has been the subject of a lot of
+   discussion over the past couple of years, with lots of people
+   expressing dissatisfaction with the use of evenness as a main
+   example.  In this revision, I have attempted a compromise: keeping
+   evenness as the running example (because, aside from the
+   artificiality of the example, it is pretty well polished) but
+   preceding it with short discussions of several better-motivated
+   examples.
+
+   I'm not yet convinced that this goes far enough, though (I was not
+   satisfied with my lecture on this part of the chapter, even after
+   adding these examples, though I did do some further streamlining
+   afterward and there are some further opportunities for
+   streamlining -- perhaps enough to make the present treatment
+   palatible).  I see three possible paths forward:
+     - 1) Choose a better example and simply replace all the even
+       stuff.  (But which one is better?  I don't think we've found it
+       yet.)
+     - 2) Mix and match -- use different examples from the top of the
+       chapter to make different points.
+     - 3) Leave the examples as-is but streamline as much as possible
+       so we don't get stuck in them.
+
+   Here, for reference, is the whole discussion from before:
+
+       -----------------
+
+       CH: In my Lyon course it became obvious to pretty much everyone
+       that the inductive definition of evenness that this chapter uses
+       intensiviely is so silly and artificial that it makes
+       understanding very hard for most students. There's zero need to
+       define evenness inductively, when `∃ k, n = 2*k` does the job
+       fine, so inductive propositions seem to students not something
+       useful, but just self-inflicted pain. All the inductive
+       propositions, up to subsequences and the matching on Regular
+       Expressions at the end, have this useless self-inflicted pain
+       flavour. So I returned to this the following morning and showed
+       to the students how to define reflexive-transitive closure as an
+       inductive relation, and afterwards the were able to follow much
+       better.  The code I quickly hacked up for this is at:
+       https://prosecco.gforge.inria.fr/personal/hritcu/teaching/lyon2019/Multi.v
+
+       BCP: Yes, this chapter needs a revamp!  For the moment I am
+       going to just add a couple of sentences to the opening sequence
+       below, to warn students about this potential confusion.  Moving
+       forward, I wonder whether something like ordered binary trees
+       would be a simple enough running example.
+
+       BCP 20: I remain puzzled by what is the really right example for
+       this chapter.  Ordered trees (and sorted lists) don't feel quite
+       right because students might think we should define them with
+       Fixpoint, not Inductive.  APT 21: Ordered trees are also
+       surprisingly complex to describe (see VFA/SearchTree.v). Maybe
+       Permutations would be be a good choice?  The only problem is
+       convincing students that the standard Rocq inductive definition
+       is actually correct (see VFA/Perm.v)!
+
+       We should also think about how to make the material flow better
+       between this chapter and ProofObjects.  When lecturing about
+       this one I ended up introducing a lot of the concepts from that
+       one.
+
+       --------
+
+       LATER: BCP 19: After lecturing on the first part of this
+       chapter, I'm afraid I have to agree that the ev / even / evenb
+       stuff is a total mess.  Besides the "why are there so many
+       definitions of evenness?" problem, evenness is just not a very
+       natural inductively defined proposition as a first example,
+       because we already have so many intuitions about what evenness
+       is, and they clash with the new definition.
+
+       So what to do?
+
+       An early version of this chapter, years ago, used a completely
+       artificial inductively defined property of numbers (0 is
+       beautiful, twice a beautiful number is beautiful, etc.).  We
+       could consider going back to that.  Or perhaps there is a more
+       natural example, either involving numbers or perhaps using some
+       other inductive structure like lists or binary trees.  Not sure
+       what's best.
+
+       A related issue is that later chapters (ProofObjects,
+       IndPrinciples) also rely heavily on this example.  Sigh.
+
+       BCP 20: Tried to sort this out a bit better by renaming the
+       propositional definition from `ev` to `eveni`, for symmetry with
+       `evenb`, and renaming the definition that says "a number is
+       even if it is twice something" to `evend`.  What do people think
+       of this?
+
+       BCP 20 update: In parallel, APT tried to sort it out a different
+       way; his is more consistent with the standard library, so let's
+       try to go with that one consistently... -/
+
+/- SOONER: This chapter needs more (and better!) quizzes -/
+
+/- LATER: BCP 19: The following suggestion seems interesting.
+
+  Robert Rand:
+
+  I had an interesting experience in my most recent class which
+  covered the IndProp (skipping over Regular Expressions and stuff we
+  already know.)
+
+  When we were walking through the attempted first proof of evSS_ev (I
+  use WORKINCLASS quite a bit more than the book does), I had to
+  explain how `destruct` is dumb in that it does case analysis while
+  ignoring details of the hypothesis. To be precise, in the first case
+  it doesn't notice that `ev_0` is not a constructor for any
+  `ev (S (S n))`, and in the second, it throws away `S (S n)`.
+
+  Immediately a student asked: Can we use `eqn` to tell it not to
+  throw away that information?
+
+  So we tried `eqn:E` and saw that it didn't save the information we
+  cared about.
+
+  The student followed up with: Can we use eqn on `S (S n)` itself?
+
+  At that point I caved and introduced `remember` (actually,
+  `destruct (S (S n)) eqn:E'` would have worked, but it's
+  unnecessarily messy) and the class produced the following proof:
+
+    Theorem evSS_ev : forall n,
+      ev (S (S n)) -> ev n.
+    Proof.
+      intros n E.
+      remember (S (S n)) as m.
+      destruct E.
+      - discriminate Heqm.
+      - injection Heqm as E'.
+        rewrite <- E'.
+        apply E.
+    Qed.
+
+  I thought this was really nice as it helps spell out what
+  `inversion` is doing behind the scenes, and I've always found
+  inversion itself kind of hard to understand. It's also convenient in
+  that `remember` is introduced in the same chapter in (from my
+  perspective) a somewhat more awkward position.
+
+  Thoughts on moving `remember` up and using it to introduce
+  inversion?
+
+  __________________
+
+  from wldhx:
+
+  Agree. My class has generally been keen on small essentials of
+  tactics (revert, assert) and finding them on their own, especially
+  after they found eqn sometimes breaks / is unwieldy; they also much
+  like having clear and composable mental models of tactics.
+
+  Most of them were already familiar with set by the time of IndProp,
+  so we talked through inversion in terms of it, and remember was like
+  a nice bonus. Moving it up does sound like a more consistent
+  narrative though. -/
 
 -- HIDEFROMHTML
 import Logic
@@ -13,1144 +223,319 @@ import Logic
 -- ######################################################################
 -- * Inductively Defined Propositions
 
--- In the Logic chapter, we looked at several ways of writing
--- propositions, including conjunction, disjunction, and existential
--- quantification.
---
--- In this chapter, we bring yet another new tool into the mix:
--- _inductively defined propositions_.
---
--- To begin, some examples...
+/- In the Logic chapter, we looked at several ways of writing
+   propositions, including conjunction, disjunction, and existential
+   quantification.
+
+   In this chapter, we bring yet another new tool into the mix:
+   _inductively defined propositions_.
+
+   To begin, some examples... -/
 
 -- ##############################################
 -- ** Example: The Collatz Conjecture
 
--- The _Collatz Conjecture_ is a famous open problem in number theory.
---
--- Its statement is quite simple.  First, we define a function `csf`
--- on numbers, as follows (where `csf` stands for "Collatz step function"):
+/- The _Collatz Conjecture_ is a famous open problem in number theory.
+
+   Its statement is quite simple.  First, we define a function `csf`
+   on numbers, as follows (where `csf` stands for "Collatz step
+   function"): -/
 
 def div2 (n : Nat) : Nat :=
   match n with
-  | 0 => 0
-  | 1 => 0
+  | 0      => 0
+  | 1      => 0
   | n' + 2 => div2 n' + 1
 
 def csf (n : Nat) : Nat :=
   if even n then div2 n
   else (3 * n) + 1
 
--- Next, we look at what happens when we repeatedly apply `csf` to
--- some given starting number.  For example, `csf 12` is `6`, and
--- `csf 6` is `3`, so by repeatedly applying `csf` we get the
--- sequence 12, 6, 3, 10, 5, 16, 8, 4, 2, 1.
---
--- Similarly, if we start with 19, we get the longer sequence 19,
--- 58, 29, 88, 44, 22, 11, 34, 17, 52, 26, 13, 40, 20, 10, 5, 16, 8,
--- 4, 2, 1.
---
--- Both of these sequences eventually reach 1.  The question posed
--- by Collatz was: Is the sequence starting from _any_ positive
--- natural number guaranteed to reach 1 eventually?
+/- HIDE: CH: This is now called `csf` and not just `f` for a good
+   reason. If one adds single letter global identifiers that badly
+   interferes with inadvertently reusing the same names in pattern
+   matching patterns, leading to confusing error messages from Lean. -/
 
--- To formalize this question in Lean, we might try to define a
--- recursive _function_ that calculates the total number of steps
--- that it takes for such a sequence to reach 1.  But such a
--- definition would be rejected by Lean's termination checker, since
--- the argument to the recursive call, `csf n`, is not "obviously
--- smaller" than `n`.
---
--- Indeed, this isn't just a pointless limitation: functions in Lean
--- are required to be total, to ensure logical consistency.
+/- TERSE: *** -/
 
--- Fortunately, there is another way to do it: We can express the
--- concept "reaches 1 eventually in the Collatz sequence" as an
--- _inductively defined property_ of numbers.
+/- Next, we look at what happens when we repeatedly apply `csf` to
+   some given starting number.  For example, `csf 12` is `6`, and
+   `csf 6` is `3`, so by repeatedly applying `csf` we get the
+   sequence `12, 6, 3, 10, 5, 16, 8, 4, 2, 1`.
+
+   Similarly, if we start with `19`, we get the longer sequence `19,
+   58, 29, 88, 44, 22, 11, 34, 17, 52, 26, 13, 40, 20, 10, 5, 16, 8,
+   4, 2, 1`.
+
+   Both of these sequences eventually reach `1`.  The question posed
+   by Collatz was: Is the sequence starting from _any_ positive
+   natural number guaranteed to reach `1` eventually? -/
+
+/- To formalize this question in Lean, we might try to define a
+   recursive _function_ that calculates the total number of steps
+   that it takes for such a sequence to reach `1`.  You can write
+   this definition in a standard programming language, but it is
+   rejected by Lean's termination checker, since the argument to
+   the recursive call, `csf n`, is not "obviously smaller" than `n`. -/
+
+/- TODO: (OA) How do we do failed definitions? -/
+namespace Failed
+
+/--
+error: fail to show termination for
+  Failed.reaches1_in
+with errors
+failed to infer structural recursion:
+Cannot use parameter n:
+  failed to eliminate recursive application
+    reaches1_in (csf n)
+
+
+failed to prove termination, possible solutions:
+  - Use `have`-expressions to prove the remaining goals
+  - Use `termination_by` to specify a different well-founded relation
+  - Use `decreasing_by` to specify your own tactic for discharging this kind of goal
+n : Nat
+h✝ : ¬(n == 1) = true
+⊢ csf n < n
+-/
+#guard_msgs in
+def reaches1_in (n : Nat) : Nat :=
+  if n == 1 then 0
+  else 1 + reaches1_in (csf n)
+
+end Failed
+
+/- Indeed, this isn't just a pointless limitation: functions in Lean
+   are required to be total, to ensure logical consistency.
+
+   Moreover, we can't fix it by devising a more clever termination
+   checker: deciding whether this particular function is total
+   would be equivalent to settling the Collatz conjecture! -/
+
+/- TERSE: *** -/
+
+/- Another idea could be to express the concept "eventually reaches
+   `1` in the Collatz sequence" as a _recursively defined property_
+   of numbers `CollatzHoldsFor : Nat → Prop`.  This is also rejected:
+   while we could in principle convince Lean that `div2 n` is
+   smaller than `n`, we certainly can't convince it that
+   `(3 * n) + 1` is smaller than `n`! -/
+
+namespace Failed
+
+/--
+error: fail to show termination for
+  Failed.CollatzHoldsFor
+with errors
+failed to infer structural recursion:
+Cannot use parameter n:
+  failed to eliminate recursive application
+    CollatzHoldsFor (div2 n)
+
+
+failed to prove termination, possible solutions:
+  - Use `have`-expressions to prove the remaining goals
+  - Use `termination_by` to specify a different well-founded relation
+  - Use `decreasing_by` to specify your own tactic for discharging this kind of goal
+n x✝ : Nat
+h✝ : even n = true
+⊢ div2 n < x✝
+-/
+#guard_msgs in
+def CollatzHoldsFor (n : Nat) : Prop :=
+  match n with
+  | 0 => False
+  | 1 => True
+  | _ => if even n then CollatzHoldsFor (div2 n)
+                   else CollatzHoldsFor ((3 * n) + 1)
+
+end Failed
+
+/- TERSE: *** -/
+
+/- Fortunately, there is another way to do it: We can express the
+   concept "reaches `1` eventually in the Collatz sequence" as an
+   _inductively defined property_ of numbers. Intuitively, this
+   property is defined by a set of rules:
+
+                       ─────────────────── (chf_one)
+                       CollatzHoldsFor 1
+
+         even n = true     CollatzHoldsFor (div2 n)
+         ─────────────────────────────────────────── (chf_even)
+                        CollatzHoldsFor n
+
+         even n = false    CollatzHoldsFor ((3 * n) + 1)
+         ─────────────────────────────────────────────── (chf_odd)
+                        CollatzHoldsFor n
+
+   So there are three ways to prove that a number `n` eventually
+   reaches `1` in the Collatz sequence:
+     - `n` is `1`;
+     - `n` is even and `div2 n` eventually reaches `1`;
+     - `n` is odd and `(3 * n) + 1` eventually reaches `1`. -/
+
+/- TERSE: *** -/
+
+/- We can prove that a number reaches `1` by constructing a (finite)
+   derivation using these rules. For instance, here is the
+   derivation proving that `12` reaches `1` (where we leave out the
+   evenness/oddness premises):
+
+                    ─────────────────────── (chf_one)
+                    CollatzHoldsFor 1
+                    ─────────────────────── (chf_even)
+                    CollatzHoldsFor 2
+                    ─────────────────────── (chf_even)
+                    CollatzHoldsFor 4
+                    ─────────────────────── (chf_even)
+                    CollatzHoldsFor 8
+                    ─────────────────────── (chf_even)
+                    CollatzHoldsFor 16
+                    ─────────────────────── (chf_odd)
+                    CollatzHoldsFor 5
+                    ─────────────────────── (chf_even)
+                    CollatzHoldsFor 10
+                    ─────────────────────── (chf_odd)
+                    CollatzHoldsFor 3
+                    ─────────────────────── (chf_even)
+                    CollatzHoldsFor 6
+                    ─────────────────────── (chf_even)
+                    CollatzHoldsFor 12 -/
+
+/- TERSE: *** -/
+
+/- Formally in Lean, the `CollatzHoldsFor` property is
+   _inductively defined_: -/
 
 inductive CollatzHoldsFor : Nat → Prop where
-  | chf_one : CollatzHoldsFor 1
+  | chf_one  : CollatzHoldsFor 1
   | chf_even (n : Nat) : even n = true →
                          CollatzHoldsFor (div2 n) →
                          CollatzHoldsFor n
-  | chf_odd (n : Nat) :  even n = false →
+  | chf_odd  (n : Nat) : even n = false →
                          CollatzHoldsFor ((3 * n) + 1) →
                          CollatzHoldsFor n
 
--- For particular numbers, we can now prove that the Collatz sequence
--- reaches 1:
+/- FULL: What we've done here is to use Lean's `inductive`
+   definition mechanism to characterize the property "Collatz holds
+   for..." by stating three different ways in which it can hold:
+   (1) Collatz holds for `1`, (2) if Collatz holds for `div2 n` and
+   `n` is even then Collatz holds for `n`, and (3) if Collatz holds
+   for `(3 * n) + 1` and `n` is odd then Collatz holds for `n`.
+   This Lean definition directly corresponds to the three rules we
+   wrote informally above. -/
 
--- Collatz_holds_for_12
+/- TERSE: *** -/
+
+/- LATER: BCP 23: Maybe better to postpone / suppress these
+   examples? Dunno. -/
+
+/- For particular numbers, we can now prove that the Collatz
+   sequence reaches `1` (we'll look more closely at how it works a
+   bit later in the chapter).  Each step applies a rule and
+   discharges the boolean evenness premise by `rfl`; the recursive
+   premise is then reduced by the kernel from
+   `CollatzHoldsFor (div2 12)` to `CollatzHoldsFor 6`, etc. -/
+
 example : CollatzHoldsFor 12 := by
-  apply CollatzHoldsFor.chf_even (n := 12); rfl
-  show CollatzHoldsFor 6
-  apply CollatzHoldsFor.chf_even (n := 6); rfl
-  show CollatzHoldsFor 3
-  apply CollatzHoldsFor.chf_odd (n := 3); rfl
-  show CollatzHoldsFor 10
-  apply CollatzHoldsFor.chf_even (n := 10); rfl
-  show CollatzHoldsFor 5
-  apply CollatzHoldsFor.chf_odd (n := 5); rfl
-  show CollatzHoldsFor 16
-  apply CollatzHoldsFor.chf_even (n := 16); rfl
-  show CollatzHoldsFor 8
-  apply CollatzHoldsFor.chf_even (n := 8); rfl
-  show CollatzHoldsFor 4
-  apply CollatzHoldsFor.chf_even (n := 4); rfl
-  show CollatzHoldsFor 2
-  apply CollatzHoldsFor.chf_even (n := 2); rfl
-  show CollatzHoldsFor 1
+  apply CollatzHoldsFor.chf_even;  rfl
+  apply CollatzHoldsFor.chf_even;  rfl
+  apply CollatzHoldsFor.chf_odd;   rfl
+  apply CollatzHoldsFor.chf_even;  rfl
+  apply CollatzHoldsFor.chf_odd;   rfl
+  apply CollatzHoldsFor.chf_even;  rfl
+  apply CollatzHoldsFor.chf_even;  rfl
+  apply CollatzHoldsFor.chf_even;  rfl
+  apply CollatzHoldsFor.chf_even;  rfl
   exact CollatzHoldsFor.chf_one
 
--- The Collatz conjecture then states that the sequence beginning
--- from _any_ positive number reaches 1:
+-- HIDE
+/- Here is a more compact definition that seems better for proofs,
+   but requires more mental unfolding for getting intuition,
+   illustrates less about inductive definitions, and also informal
+   derivations look less informative.
 
--- We can't prove this -- it's been open since 1937!
--- axiom collatz : ∀ n, n ≠ 0 → CollatzHoldsFor n
+   The way to read this one is: "The number `1` reaches `1`, and
+   any number `n` reaches `1` if `csf n` does." -/
+
+inductive Reaches1 : Nat → Prop where
+  | reach_done : Reaches1 1
+  | reach_more (n : Nat) : Reaches1 (csf n) → Reaches1 n
+
+/- Alternatively, we can define the partial function
+   `Collatz_holds_for_in` as a two-argument inductive relation... -/
+
+inductive ChfIn : Nat → Nat → Prop where
+  | tst_done : ChfIn 1 0
+  | tst_more (n k : Nat) : ChfIn (csf n) k → ChfIn n (k + 1)
+
+/- ... and then say that `n` reaches `1` if there is some `k` such
+   that the sequence beginning at `n` reaches `1` in `k` total
+   steps. -/
+
+def CollatzHoldsFor' (n : Nat) : Prop := ∃ k, ChfIn n k
+-- /HIDE
+
+/- TERSE: *** -/
+
+/- The Collatz conjecture then states that the sequence beginning
+   from _any_ positive number reaches `1`: -/
+
+theorem collatz : ∀ n, n ≠ 0 → CollatzHoldsFor n := by sorry
+
+/- If you succeed in proving this conjecture, you've got a bright
+   future as a number theorist!  But don't spend too long on it --
+   it's been open since 1937. -/
+
+/- HIDE: CH: We may want to add an exercise later proving false if
+   one assumes Collatz' conjecture without the `n ≠ 0` assumption.
+   We had that mistake in the script for years and no one noticed,
+   wow! -/
 
 -- ##############################################
 -- ** Example: Binary relation for comparing numbers
 
--- A binary _relation_ on a set `X` has Lean type `X → X → Prop`.
--- This is a family of propositions parameterized by two elements of
--- `X` -- i.e., a proposition about pairs of elements of `X`.
+/- A binary _relation_ on a set `X` has Lean type `X → X → Prop`.
+   This is a family of propositions parameterized by two elements
+   of `X` -- i.e., a proposition about pairs of elements of `X`. -/
 
--- For example, one familiar binary relation on `Nat` is `le`, the
--- less-than-or-equal-to relation, which can be inductively defined.
+/- For example, one familiar binary relation on `Nat` is `Le : Nat
+   → Nat → Prop`, the less-than-or-equal-to relation, which can be
+   inductively defined by the following two rules:
+
+                            ─────── (le_n)
+                            Le n n
+
+                             Le n m
+                          ───────────── (le_s)
+                          Le n (m + 1) -/
+
+/- FULL: These rules say that there are two ways to show that a
+   number is less than or equal to another: either observe that
+   they are the same number, or, if the second has the form
+   `m + 1`, give evidence that the first is less than or equal to
+   `m`. -/
 
 -- HIDEFROMHTML
 namespace LePlayground
 -- /HIDEFROMHTML
 
 inductive Le : Nat → Nat → Prop where
-  | le_n (n : Nat)   : Le n n
+  | le_n (n : Nat)              : Le n n
   | le_s (n m : Nat) : Le n m → Le n (m + 1)
 
--- FULL
--- le_3_5
-example : Le 3 5 := by
-  apply Le.le_s; apply Le.le_s; apply Le.le_n
--- /FULL
+infix:50 " ⊑ " => Le
+
+/- FULL: This definition is a bit simpler and more elegant than the
+   Boolean function `leb` we defined in `Basics`.  As usual, `Le`
+   and `leb` are equivalent, and there is an exercise about that
+   later. -/
+
+example : 3 ⊑ 5 := by
+  apply Le.le_s; apply Le.le_s; exact Le.le_n 3
 
 -- HIDEFROMHTML
 end LePlayground
 -- /HIDEFROMHTML
-
--- ##############################################
--- ** Example: Transitive Closure
-
--- The _transitive closure_ of a relation `R` is the smallest
--- relation that contains `R` and that is transitive.
-
-inductive ClosTrans {X : Type} (R : X → X → Prop) : X → X → Prop where
-  | t_step (x y : X) :
-      R x y →
-      ClosTrans R x y
-  | t_trans (x y z : X) :
-      ClosTrans R x y →
-      ClosTrans R y z →
-      ClosTrans R x z
-
--- For example, suppose we define a "parent of" relation on a group
--- of people...
-
-inductive Person : Type where | Sage | Cleo | Ridley | Moss
-
-inductive ParentOf : Person → Person → Prop where
-  | po_SC : ParentOf Person.Sage Person.Cleo
-  | po_SR : ParentOf Person.Sage Person.Ridley
-  | po_CM : ParentOf Person.Cleo Person.Moss
-
--- The `ParentOf` relation is not transitive, but we can define
--- an "ancestor of" relation as its transitive closure:
-
-def AncestorOf : Person → Person → Prop :=
-  ClosTrans ParentOf
-
--- ancestor_of_ex
-example : AncestorOf Person.Sage Person.Moss := by
-  unfold AncestorOf
-  apply ClosTrans.t_trans _ Person.Cleo
-  · exact ClosTrans.t_step _ _ ParentOf.po_SC
-  · exact ClosTrans.t_step _ _ ParentOf.po_CM
-
--- ##############################################
--- ** Example: Reflexive and Transitive Closure
-
-inductive ClosReflTrans {X : Type} (R : X → X → Prop) : X → X → Prop where
-  | rt_step (x y : X) :
-      R x y →
-      ClosReflTrans R x y
-  | rt_refl (x : X) :
-      ClosReflTrans R x x
-  | rt_trans (x y z : X) :
-      ClosReflTrans R x y →
-      ClosReflTrans R y z →
-      ClosReflTrans R x z
-
--- We can define a "Collatz step" binary relation:
-
-def Cs (n m : Nat) : Prop := csf n = m
-
--- The Collatz multi-step relation:
-
-def Cms (n m : Nat) : Prop := ClosReflTrans Cs n m
-
--- FULL
--- EX1M? (clos_refl_trans_sym)
--- How would you modify the `ClosReflTrans` definition above so as
--- to define the reflexive, symmetric, and transitive closure?
-
-inductive ClosReflTransSym {X : Type} (R : X → X → Prop) : X → X → Prop where
-  | srt_refl (x : X) :
-      ClosReflTransSym R x x
-  | srt_step (x y : X) :
-      R x y →
-      ClosReflTransSym R x y
-  | srt_sym (x y : X) :
-      ClosReflTransSym R y x →
-      ClosReflTransSym R x y
-  | srt_trans (x y z : X) :
-      ClosReflTransSym R x y →
-      ClosReflTransSym R y z →
-      ClosReflTransSym R x z
--- []
--- /FULL
-
--- ##############################################
--- ** Example: Permutations
-
--- The familiar mathematical concept of _permutation_ also has an
--- elegant formulation as an inductive relation.  For simplicity,
--- let's focus on permutations of lists with exactly three elements.
-
-inductive Perm3 {X : Type} : List X → List X → Prop where
-  | perm3_swap12 (a b c : X) :
-      Perm3 [a, b, c] [b, a, c]
-  | perm3_swap23 (a b c : X) :
-      Perm3 [a, b, c] [a, c, b]
-  | perm3_trans (l1 l2 l3 : List X) :
-      Perm3 l1 l2 → Perm3 l2 l3 → Perm3 l1 l3
-
--- FULL
--- EX1 (Perm3)
--- Perm3_ex1
-theorem Perm3_ex1 : Perm3 [1, 2, 3] [2, 3, 1] := by
-  -- ADMITTED
-  apply Perm3.perm3_trans _ [2, 1, 3]
-  · exact Perm3.perm3_swap12 _ _ _
-  · exact Perm3.perm3_swap23 _ _ _
-  -- /ADMITTED
-
--- Perm3_refl
-theorem Perm3_refl : ∀ (X : Type) (a b c : X),
-  Perm3 [a, b, c] [a, b, c] := by
-  -- ADMITTED
-  intro X a b c
-  apply Perm3.perm3_trans _ [b, a, c]
-  · exact Perm3.perm3_swap12 _ _ _
-  · exact Perm3.perm3_swap12 _ _ _
-  -- /ADMITTED
--- GRADE_THEOREM 0.5: Perm3_ex1
--- GRADE_THEOREM 0.5: Perm3_refl
--- []
--- /FULL
-
--- ##############################################
--- ** Example: Evenness (yet again)
-
--- We've already seen two ways of stating a proposition that a number
--- `n` is even: We can say
---
---   (1) `even n = true` (using the recursive boolean function `even`), or
---
---   (2) `∃ k, n = double k` (using an existential quantifier).
-
--- A third possibility, which we'll use as a simple running example
--- in this chapter, is to say that a number is even if we can
--- _establish_ its evenness from the following two rules:
---
---                           ---- (ev_0)
---                           Ev 0
---
---                           Ev n
---                       ------------ (ev_SS)
---                       Ev (n + 2)
-
--- We can translate the informal definition of evenness into a formal
--- inductive declaration:
-
-inductive Ev : Nat → Prop where
-  | ev_0                     : Ev 0
-  | ev_SS (n : Nat) (H : Ev n) : Ev (n + 2)
-
--- We can think of the inductive definition of `Ev` as defining a
--- Lean property `Ev : Nat → Prop`, together with two "evidence
--- constructors":
-
-#check Ev.ev_0  -- Ev.ev_0 : Ev 0
-#check @Ev.ev_SS -- Ev.ev_SS : (n : Nat) → Ev n → Ev (n + 2)
-
--- These evidence constructors can be used to obtain evidence for
--- `Ev` of particular numbers...
-
--- ev_4
-theorem ev_4 : Ev 4 := by
-  apply Ev.ev_SS; apply Ev.ev_SS; exact Ev.ev_0
-
--- ... or we can use function application syntax to combine several
--- constructors:
-
--- ev_4'
-theorem ev_4' : Ev 4 :=
-  Ev.ev_SS 2 (Ev.ev_SS 0 Ev.ev_0)
-
--- In this way, we can also prove theorems that have hypotheses
--- involving `Ev`.
-
--- ev_plus4
-theorem ev_plus4 : ∀ (n : Nat), Ev n → Ev (4 + n) := by
-  intro n hn
-  have h : 4 + n = (n + 2) + 2 := by omega
-  rw [h]
-  exact Ev.ev_SS _ (Ev.ev_SS _ hn)
-
--- FULL
--- EX1 (ev_double)
--- ev_double
-theorem ev_double : ∀ (n : Nat),
-  Ev (double n) := by
-  -- ADMITTED
-  intro n
-  induction n with
-  | zero => exact Ev.ev_0
-  | succ n' ih =>
-    simp [double]
-    exact Ev.ev_SS _ ih
-  -- /ADMITTED
--- []
--- /FULL
-
--- ** Constructing Evidence for Permutations
-
--- Similarly we can apply the evidence constructors to obtain
--- evidence of `Perm3 [1, 2, 3] [3, 2, 1]`:
-
--- Perm3_rev
-theorem Perm3_rev : Perm3 [1, 2, 3] [3, 2, 1] := by
-  apply Perm3.perm3_trans _ [2, 3, 1]
-  · apply Perm3.perm3_trans _ [2, 1, 3]
-    · exact Perm3.perm3_swap12 _ _ _
-    · exact Perm3.perm3_swap23 _ _ _
-  · exact Perm3.perm3_swap12 _ _ _
-
--- #######################################################
--- * Using Evidence in Proofs
-
--- Besides _constructing_ evidence that numbers are even, we can also
--- _destruct_ such evidence, reasoning about how it could have been
--- built.
---
--- Defining `Ev` with an `inductive` declaration tells Lean not only
--- that the constructors `ev_0` and `ev_SS` are valid ways to build
--- evidence that some number is `Ev`, but also that these two
--- constructors are the _only_ ways to build evidence that numbers
--- are `Ev`.
-
--- In other words, if someone gives us evidence `E` for the proposition
--- `Ev n`, then we know that `E` must be one of two things:
---
---   - `E = Ev.ev_0` and `n = 0`, or
---   - `E = Ev.ev_SS n' E'` and `n = n' + 2`, where `E'` is
---     evidence for `Ev n'`.
-
--- This suggests that it should be possible to do _case analysis_
--- and even _induction_ on evidence of evenness...
-
--- ** Destructing and Inverting Evidence
-
--- We can prove our characterization of evidence for `Ev n`,
--- using `cases`.
-
--- ev_inversion
-theorem ev_inversion : ∀ (n : Nat),
-    Ev n →
-    (n = 0) ∨ (∃ n', n = n' + 2 ∧ Ev n') := by
-  intro n E
-  cases E with
-  | ev_0 =>
-    left; rfl
-  | ev_SS n' E' =>
-    right; exact ⟨n', rfl, E'⟩
-
--- Facts like this are often called "inversion lemmas" because they
--- allow us to "invert" some given information to reason about all
--- the different ways it could have been derived.
-
--- FULL
--- EX1 (le_inversion)
--- Let's prove a similar inversion lemma for `Le`.
-
--- le_inversion
--- (We use the standard library's `Nat.le` for this.)
--- /FULL
-
--- We can use the inversion lemma to help structure proofs:
-
--- evSS_ev
-theorem evSS_ev : ∀ (n : Nat), Ev (n + 2) → Ev n := by
-  intro n E
-  cases E with
-  | ev_SS _ E' => exact E'
-
--- In Lean, `cases` on an indexed inductive family like `Ev`
--- automatically handles the impossible cases and generates the
--- necessary equalities. This is analogous to Rocq's `inversion` tactic.
-
--- evSS_ev'
-theorem evSS_ev' : ∀ (n : Nat),
-  Ev (n + 2) → Ev n := by
-  intro n E
-  cases E with
-  | ev_SS _ E' => exact E'
-
--- FULL
--- The `cases` tactic can also handle "obviously contradictory"
--- hypotheses involving inductively defined properties:
-
--- one_not_even
-theorem one_not_even : ¬ Ev 1 := by
-  intro H
-  cases H
-
--- one_not_even'
-theorem one_not_even' : ¬ Ev 1 := by
-  intro H; nomatch H
--- /FULL
-
--- FULL
--- EX1 (inversion_practice)
--- Prove the following result using `cases`.
-
--- SSSSev__even
-theorem SSSSev__even : ∀ (n : Nat),
-  Ev (n + 4) → Ev n := by
-  -- ADMITTED
-  intro n E
-  cases E with
-  | ev_SS _ E' =>
-    cases E' with
-    | ev_SS _ E'' => exact E''
-  -- /ADMITTED
--- GRADE_THEOREM 1: SSSSev__even
--- []
-
--- EX1 (ev5_nonsense)
--- Prove the following result using `cases`.
-
--- ev5_nonsense
-theorem ev5_nonsense :
-  Ev 5 → 2 + 2 = 9 := by
-  -- ADMITTED
-  intro E
-  cases E with
-  | ev_SS _ E' =>
-    cases E' with
-    | ev_SS _ E'' =>
-      nomatch E''
-  -- /ADMITTED
--- []
--- /FULL
-
--- We can use `cases` to re-prove some theorems from `Tactics.lean`.
--- Note that `cases` also works on equality propositions.
-
--- inversion_ex1
-theorem inversion_ex1 : ∀ (n m o : Nat),
-  [n, m] = [o, o] → [n] = [m] := by
-  intro n m o H
-  injection H with h1 h2
-  injection h2 with h3
-  rw [h1, h3]
-
--- inversion_ex2
-theorem inversion_ex2 : ∀ (n : Nat),
-  n + 1 = 0 → 2 + 2 = 5 := by
-  intro n contra
-  exact absurd contra (Nat.succ_ne_zero n)
-
--- Let's try to show that our new notion of evenness implies
--- our earlier notion (the one based on `double`).
-
--- ev_Even_firsttry
-theorem ev_Even_firsttry : ∀ (n : Nat),
-  Ev n → Even n := by
-  unfold Even
-  intro n E
-  cases E with
-  | ev_0 => exact ⟨0, rfl⟩
-  | ev_SS n' E' =>
-    -- We need to show `∃ k, n' + 2 = double k`, but our only
-    -- assumption is `E' : Ev n'`. We're stuck without an induction
-    -- hypothesis -- case analysis alone is not enough.
-    sorry
-
--- #######################################################
--- ** Induction on Evidence
-
--- If this story feels familiar, it is no coincidence: We
--- encountered similar problems in the Induction chapter, when
--- trying to use case analysis to prove results that required
--- induction.  And once again the solution is... induction!
-
--- The behavior of `induction` on evidence is the same as its
--- behavior on data: It causes Lean to generate one subgoal for each
--- constructor that could have been used to build that evidence, while
--- providing an induction hypothesis for each recursive occurrence of
--- the property in question.
-
--- Let's try proving that lemma again:
-
--- ev_Even
-theorem ev_Even : ∀ (n : Nat),
-  Ev n → Even n := by
-  unfold Even
-  intro n E
-  induction E with
-  | ev_0 => exact ⟨0, rfl⟩
-  | ev_SS n' _ ih =>
-    obtain ⟨k, hk⟩ := ih
-    exact ⟨k + 1, by simp [double]; omega⟩
-
--- FULL
--- The equivalence between the second and third definitions of
--- evenness now follows.
-
--- ev_Even_iff
-theorem ev_Even_iff : ∀ (n : Nat),
-  Ev n ↔ Even n := by
-  intro n
-  constructor
-  · exact ev_Even n
-  · unfold Even
-    intro ⟨k, hk⟩
-    rw [hk]
-    exact ev_double k
-
--- The following exercises provide simpler examples of this
--- technique.
-
--- EX2 (ev_sum)
--- ev_sum
-theorem ev_sum : ∀ (n m : Nat), Ev n → Ev m → Ev (n + m) := by
-  -- ADMITTED
-  intro n m hn hm
-  induction hn with
-  | ev_0 => simp; exact hm
-  | ev_SS n' _ ih =>
-    show Ev (n' + 2 + m)
-    have : n' + 2 + m = (n' + m) + 2 := by omega
-    rw [this]
-    exact Ev.ev_SS _ ih
-  -- /ADMITTED
--- []
-
--- EX3A! (ev_ev__ev)
--- ev_ev__ev
-theorem ev_ev__ev : ∀ (n m : Nat),
-  Ev (n + m) → Ev n → Ev m := by
-  -- Hint: There are two pieces of evidence you could attempt to induct upon
-  --   here. If one doesn't work, try the other.
-  -- ADMITTED
-  intro n m hnm hn
-  induction hn with
-  | ev_0 => simp at hnm; exact hnm
-  | ev_SS n' _ ih =>
-    apply ih
-    have : n' + 2 + m = (n' + m) + 2 := by omega
-    rw [this] at hnm
-    exact evSS_ev _ hnm
-  -- /ADMITTED
--- []
-
--- EX3? (ev_plus_plus)
--- This exercise can be completed without induction or case analysis.
--- But, you will need a clever assertion and some tedious rewriting.
--- Hint: Is `(n+m) + (n+p)` even?
-
--- ev_plus_plus
-theorem ev_plus_plus : ∀ (n m p : Nat),
-  Ev (n + m) → Ev (n + p) → Ev (m + p) := by
-  -- ADMITTED
-  intro n m p hnm hnp
-  have h : Ev ((n + m) + (n + p)) := ev_sum _ _ hnm hnp
-  have heq : (n + m) + (n + p) = (n + n) + (m + p) := by omega
-  rw [heq] at h
-  apply ev_ev__ev (n + n) (m + p) h
-  have : n + n = double n := by rw [double_plus]
-  rw [this]
-  exact ev_double n
-  -- /ADMITTED
--- []
--- /FULL
-
--- #######################################################
--- ** Multiple Induction Hypotheses
-
--- Let's say that a relation on a type `X` is _diagonal_ if it
--- refines the identity relation -- i.e., if `R x y` implies `x = y`.
-
-def IsDiagonal {X : Type} (R : X → X → Prop) :=
-  ∀ (x y : X), R x y → x = y
-
--- Now consider the following lemma about diagonal relations:
-
--- closure_of_diagonal_is_diagonal
-theorem closure_of_diagonal_is_diagonal :
-    ∀ (X : Type) (R : X → X → Prop),
-    IsDiagonal R →
-    IsDiagonal (ClosReflTrans R) := by
-  intro X R isDiag x y h
-  induction h with
-  | rt_step x y hxy =>
-    exact isDiag x y hxy
-  | rt_refl _ =>
-    rfl
-  | rt_trans x y z _ _ ihxy ihyz =>
-    -- Here there are two induction hypotheses, `ihxy` and `ihyz`!
-    rw [ihxy, ← ihyz]
-
--- FULL
--- EX4A? (ev'_ev)
--- In general, there may be multiple ways of defining a
--- property inductively.  For example, here's a (slightly contrived)
--- alternative definition for `Ev`:
-
-inductive Ev' : Nat → Prop where
-  | ev'_0 : Ev' 0
-  | ev'_2 : Ev' 2
-  | ev'_sum (n m : Nat) (hn : Ev' n) (hm : Ev' m) : Ev' (n + m)
-
--- Prove that this definition is logically equivalent to the old one.
-
--- ev'_ev
-theorem ev'_ev : ∀ (n : Nat), Ev' n ↔ Ev n := by
-  -- ADMITTED
-  intro n
-  constructor
-  · intro E
-    induction E with
-    | ev'_0 => exact Ev.ev_0
-    | ev'_2 => exact Ev.ev_SS 0 Ev.ev_0
-    | ev'_sum n m _ _ ihn ihm => exact ev_sum _ _ ihn ihm
-  · intro E
-    induction E with
-    | ev_0 => exact Ev'.ev'_0
-    | ev_SS n _ ih =>
-      have : n + 2 = 2 + n := by omega
-      rw [this]
-      exact Ev'.ev'_sum 2 n Ev'.ev'_2 ih
-  -- /ADMITTED
--- []
--- /FULL
-
--- We can do similar inductive proofs on the `Perm3` relation.
-
--- Perm3_symm
-theorem Perm3_symm : ∀ (X : Type) (l1 l2 : List X),
-  Perm3 l1 l2 → Perm3 l2 l1 := by
-  intro X l1 l2 E
-  induction E with
-  | perm3_swap12 a b c => exact Perm3.perm3_swap12 b a c
-  | perm3_swap23 a b c => exact Perm3.perm3_swap23 a c b
-  | perm3_trans l1 l2 l3 _ _ ih12 ih23 =>
-    exact Perm3.perm3_trans _ l2 _ ih23 ih12
-
--- FULL
--- EX2 (Perm3_In)
--- Perm3_In
-theorem Perm3_In : ∀ (X : Type) (x : X) (l1 l2 : List X),
-    Perm3 l1 l2 → In x l1 → In x l2 := by
-  -- ADMITTED
-  intro X x l1 l2 E h
-  induction E with
-  | perm3_swap12 a b c =>
-    unfold In at *
-    obtain ha | hb | hc | hf := h
-    · right; left; exact ha
-    · left; exact hb
-    · right; right; left; exact hc
-    · exact hf.elim
-  | perm3_swap23 a b c =>
-    unfold In at *
-    obtain ha | hb | hc | hf := h
-    · left; exact ha
-    · right; right; left; exact hb
-    · right; left; exact hc
-    · exact hf.elim
-  | perm3_trans l1 l2 l3 _ _ ih12 ih23 =>
-    exact ih23 (ih12 h)
-  -- /ADMITTED
--- []
-
--- EX1? (Perm3_NotIn)
--- Perm3_NotIn
-theorem Perm3_NotIn : ∀ (X : Type) (x : X) (l1 l2 : List X),
-    Perm3 l1 l2 → ¬ In x l1 → ¬ In x l2 := by
-  -- ADMITTED
-  intro X x l1 l2 E h1 h2
-  exact h1 (Perm3_In X x l2 l1 (Perm3_symm X l1 l2 E) h2)
-  -- /ADMITTED
--- []
-
--- EX2? (NotPerm3)
--- Proving that something is NOT a permutation is quite tricky.
--- Perm3_example2
-example : ¬ Perm3 [1, 2, 3] [1, 2, 4] := by
-  -- ADMITTED
-  intro C
-  have h : In (3 : Nat) [1, 2, 3] := by
-    unfold In; right; right; left; rfl
-  have h2 : In (3 : Nat) [1, 2, 4] := Perm3_In _ _ _ _ C h
-  unfold In at h2
-  obtain h1 | h2 | h3 | h4 := h2
-  · omega
-  · omega
-  · omega
-  · exact h4.elim
-  -- /ADMITTED
--- []
--- /FULL
-
--- FULL
--- #######################################################
--- * Exercising with Inductive Relations
-
--- A proposition parameterized by a number (such as `Ev`)
--- can be thought of as a _property_ -- i.e., it defines
--- a subset of `Nat`, namely those numbers for which the proposition
--- is provable.  In the same way, a two-argument proposition can be
--- thought of as a _relation_ -- i.e., it defines a set of pairs for
--- which the proposition is provable.
-
--- TERSE: HIDEFROMHTML
-namespace Playground
--- TERSE: /HIDEFROMHTML
-
--- Just like properties, relations can be defined inductively.  One
--- useful example is the "less than or equal to" relation on numbers.
-
-inductive Le : Nat → Nat → Prop where
-  | le_n (n : Nat)                  : Le n n
-  | le_s (n m : Nat) (h : Le n m)  : Le n (m + 1)
-
--- Some sanity checks...
-
--- test_le1
-theorem test_le1 : Le 3 3 := by
-  -- WORKINCLASS
-  exact Le.le_n 3
-  -- /WORKINCLASS
-
--- test_le2
-theorem test_le2 : Le 3 6 := by
-  -- WORKINCLASS
-  apply Le.le_s; apply Le.le_s; apply Le.le_s; exact Le.le_n 3
-  -- /WORKINCLASS
-
--- test_le3
-theorem test_le3 : Le 2 1 → 2 + 2 = 5 := by
-  -- WORKINCLASS
-  intro h; nomatch h
-  -- /WORKINCLASS
-
--- The "strictly less than" relation `n < m` can be defined
--- in terms of `Le`.
-
-def Lt (n m : Nat) := Le (n + 1) m
-
--- TERSE: HIDEFROMHTML
-end Playground
--- TERSE: /HIDEFROMHTML
-
--- Here are a number of facts about the `≤` and `<` relations that
--- we are going to need later in the course.  The proofs make good
--- practice exercises.  (We now use Lean's built-in `≤`.)
-
--- EX3! (le_facts)
--- le_trans
-theorem le_trans' : ∀ (m n o : Nat), m ≤ n → n ≤ o → m ≤ o := by
-  -- ADMITTED
-  intro m n o h1 h2; omega
-  -- /ADMITTED
--- GRADE_THEOREM 0.5: le_trans'
-
--- O_le_n
-theorem O_le_n : ∀ (n : Nat), 0 ≤ n := by
-  -- ADMITTED
-  intro n; omega
-  -- /ADMITTED
--- GRADE_THEOREM 0.5: O_le_n
-
--- n_le_m__Sn_le_Sm
-theorem n_le_m__Sn_le_Sm : ∀ (n m : Nat),
-  n ≤ m → n + 1 ≤ m + 1 := by
-  -- ADMITTED
-  intro n m h; omega
-  -- /ADMITTED
--- GRADE_THEOREM 0.5: n_le_m__Sn_le_Sm
-
--- Sn_le_Sm__n_le_m
-theorem Sn_le_Sm__n_le_m : ∀ (n m : Nat),
-  n + 1 ≤ m + 1 → n ≤ m := by
-  -- ADMITTED
-  intro n m h; omega
-  -- /ADMITTED
--- GRADE_THEOREM 1: Sn_le_Sm__n_le_m
-
--- le_plus_l
-theorem le_plus_l : ∀ (a b : Nat), a ≤ a + b := by
-  -- ADMITTED
-  intro a b; omega
-  -- /ADMITTED
--- GRADE_THEOREM 0.5: le_plus_l
--- []
-
--- EX2! (plus_le_facts1)
-
--- plus_le
-theorem plus_le : ∀ (n1 n2 m : Nat),
-  n1 + n2 ≤ m →
-  n1 ≤ m ∧ n2 ≤ m := by
-  -- ADMITTED
-  intro n1 n2 m h; constructor <;> omega
-  -- /ADMITTED
--- GRADE_THEOREM 1: plus_le
-
--- plus_le_cases
-theorem plus_le_cases : ∀ (n m p q : Nat),
-  n + m ≤ p + q → n ≤ p ∨ m ≤ q := by
-  -- ADMITTED
-  intro n m p q h
-  by_cases hnp : n ≤ p
-  · left; exact hnp
-  · right; omega
-  -- /ADMITTED
--- GRADE_THEOREM 1: plus_le_cases
--- []
-
--- EX2! (plus_le_facts2)
-
--- plus_le_compat_l
-theorem plus_le_compat_l : ∀ (n m p : Nat),
-  n ≤ m →
-  p + n ≤ p + m := by
-  -- ADMITTED
-  intro n m p h; omega
-  -- /ADMITTED
--- GRADE_THEOREM 0.5: plus_le_compat_l
-
--- plus_le_compat_r
-theorem plus_le_compat_r : ∀ (n m p : Nat),
-  n ≤ m →
-  n + p ≤ m + p := by
-  -- ADMITTED
-  intro n m p h; omega
-  -- /ADMITTED
--- GRADE_THEOREM 0.5: plus_le_compat_r
-
--- le_plus_trans
-theorem le_plus_trans : ∀ (n m p : Nat),
-  n ≤ m →
-  n ≤ m + p := by
-  -- ADMITTED
-  intro n m p h; omega
-  -- /ADMITTED
--- GRADE_THEOREM 1: le_plus_trans
--- []
-
--- EX3? (lt_facts)
--- lt_ge_cases
-theorem lt_ge_cases : ∀ (n m : Nat),
-  n < m ∨ n ≥ m := by
-  -- ADMITTED
-  intro n m; omega
-  -- /ADMITTED
--- GRADE_THEOREM 1.5: lt_ge_cases
-
--- n_lt_m__n_le_m
-theorem n_lt_m__n_le_m : ∀ (n m : Nat),
-  n < m →
-  n ≤ m := by
-  -- ADMITTED
-  intro n m h; omega
-  -- /ADMITTED
--- GRADE_THEOREM 0.5: n_lt_m__n_le_m
-
--- plus_lt
-theorem plus_lt : ∀ (n1 n2 m : Nat),
-  n1 + n2 < m →
-  n1 < m ∧ n2 < m := by
-  -- ADMITTED
-  intro n1 n2 m h; constructor <;> omega
-  -- /ADMITTED
--- GRADE_THEOREM 1: plus_lt
--- []
-
--- EX4? (leb_le)
--- leb_complete
-theorem leb_complete' : ∀ (n m : Nat),
-  (n <=? m) = true → n ≤ m := by
-  -- ADMITTED
-  intro n
-  induction n with
-  | zero => intro m _; exact Nat.zero_le m
-  | succ n' ih =>
-    intro m h
-    match m with
-    | 0 => simp [leb] at h
-    | m' + 1 =>
-      apply Nat.succ_le_succ
-      exact ih m' h
-  -- /ADMITTED
--- GRADE_THEOREM 2: leb_complete'
-
--- leb_correct
-theorem leb_correct' : ∀ (n m : Nat),
-  n ≤ m →
-  (n <=? m) = true := by
-  -- ADMITTED
-  intro n
-  induction n with
-  | zero => intro _ _; rfl
-  | succ n' ih =>
-    intro m h
-    match m with
-    | 0 => omega
-    | m' + 1 =>
-      exact ih m' (Nat.le_of_succ_le_succ h)
-  -- /ADMITTED
--- GRADE_THEOREM 2: leb_correct'
-
--- leb_iff
-theorem leb_iff' : ∀ (n m : Nat),
-  (n <=? m) = true ↔ n ≤ m := by
-  -- ADMITTED
-  intro n m
-  constructor
-  · exact leb_complete' n m
-  · exact leb_correct' n m
-  -- /ADMITTED
--- GRADE_THEOREM 1: leb_iff'
-
--- leb_true_trans
-theorem leb_true_trans : ∀ (n m o : Nat),
-  (n <=? m) = true → (m <=? o) = true → (n <=? o) = true := by
-  -- ADMITTED
-  intro n m o h1 h2
-  exact leb_correct' n o (Nat.le_trans ((leb_iff' n m).mp h1) ((leb_iff' m o).mp h2))
-  -- /ADMITTED
--- GRADE_THEOREM 1: leb_true_trans
--- []
-
-namespace R
-
--- EX3M! (R_provability)
--- We can define three-place relations, four-place relations,
--- etc., in just the same way as binary relations.  For example,
--- consider the following three-place relation on numbers:
-
-inductive R : Nat → Nat → Nat → Prop where
-  | c1                                     : R 0     0     0
-  | c2 (m n o : Nat) (h : R m     n     o)        : R (m + 1) n     (o + 1)
-  | c3 (m n o : Nat) (h : R m     n     o)        : R m     (n + 1) (o + 1)
-  | c4 (m n o : Nat) (h : R (m + 1) (n + 1) (o + 2)) : R m     n     o
-  | c5 (m n o : Nat) (h : R m     n     o)        : R n     m     o
-
--- - Which of the following propositions are provable?
---   - R 1 1 2
---   - R 2 2 6
---
--- - If we dropped constructor c5 from the definition of R,
---   would the set of provable propositions change?  Briefly (1
---   sentence) explain your answer.
---
--- - If we dropped constructor c4 from the definition of R,
---   would the set of provable propositions change?  Briefly (1
---   sentence) explain your answer.
-
--- R 1 1 2 is provable:
--- example : R 1 1 2 := R.c3 1 0 1 (R.c2 0 0 0 R.c1)
-
--- R 2 2 6 is not provable.
-
--- Dropping c5 would not change the set of provable propositions,
--- because c2 followed by c5 is equivalent to c3, and vice versa.
-
--- Dropping c4 would not change the set of provable propositions,
--- because it just "undoes" one application of c2 and one of c3.
-
--- GRADE_MANUAL 3: R_provability
--- []
-
--- EX3? (R_fact)
--- The relation R above actually encodes a familiar function.
--- Figure out which function; then state and prove this equivalence.
-
--- ADMITDEF
-def fR : Nat → Nat → Nat := Nat.add
--- /ADMITDEF
-
--- A helper to unfold fR to addition
-private theorem fR_eq (m n : Nat) : fR m n = m + n := rfl
-
--- R_equiv_fR
-theorem R_equiv_fR : ∀ (m n o : Nat), R m n o ↔ fR m n = o := by
-  -- ADMITTED
-  intro m n o
-  simp only [fR_eq]
-  constructor
-  · intro h
-    induction h with
-    | c1 => rfl
-    | c2 m n o _ ih => omega
-    | c3 m n o _ ih => omega
-    | c4 m n o _ ih => omega
-    | c5 m n o _ ih => omega
-  · intro h
-    subst h
-    induction m with
-    | zero =>
-      simp
-      induction n with
-      | zero => exact R.c1
-      | succ n' ih => exact R.c3 0 n' n' ih
-    | succ m' ih =>
-      have heq : m' + 1 + n = (m' + n) + 1 := by omega
-      rw [heq]
-      exact R.c2 m' n (m' + n) ih
-  -- /ADMITTED
--- []
-
-end R
-
--- EX4A (subsequence)
--- A list is a _subsequence_ of another list if all of the elements
--- in the first list occur in the same order in the second list,
--- possibly with some extra elements in between.  For example,
---
---   [1, 2, 3]
---
--- is a subsequence of each of the lists
---
---   [1, 2, 3]
---   [1, 1, 1, 2, 2, 3]
---   [1, 2, 7, 3]
---   [5, 6, 1, 9, 9, 2, 7, 3, 8]
---
--- but it is _not_ a subsequence of any of the lists
---
---   [1, 2]
---   [1, 3]
---   [5, 6, 2, 1, 7, 3, 8]
-
-inductive Subseq : List Nat → List Nat → Prop where
-  | sub_nil (l : List Nat) : Subseq [] l
-  | sub_take (x : Nat) (l1 l2 : List Nat) (h : Subseq l1 l2) :
-      Subseq (x :: l1) (x :: l2)
-  | sub_skip (x : Nat) (l1 l2 : List Nat) (h : Subseq l1 l2) :
-      Subseq l1 (x :: l2)
-
--- subseq_refl
-theorem subseq_refl : ∀ (l : List Nat), Subseq l l := by
-  -- ADMITTED
-  intro l
-  induction l with
-  | nil => exact Subseq.sub_nil []
-  | cons x l' ih => exact Subseq.sub_take x l' l' ih
-  -- /ADMITTED
-
--- subseq_app
-theorem subseq_app : ∀ (l1 l2 l3 : List Nat),
-  Subseq l1 l2 →
-  Subseq l1 (l2 ++ l3) := by
-  -- ADMITTED
-  intro l1 l2 l3 h
-  induction h with
-  | sub_nil l => exact Subseq.sub_nil (l ++ l3)
-  | sub_take x l1 l2 _ ih =>
-    exact Subseq.sub_take x l1 (l2 ++ l3) ih
-  | sub_skip x l1 l2 _ ih =>
-    exact Subseq.sub_skip x l1 (l2 ++ l3) ih
-  -- /ADMITTED
-
--- subseq_trans
-theorem subseq_trans : ∀ (l1 l2 l3 : List Nat),
-  Subseq l1 l2 →
-  Subseq l2 l3 →
-  Subseq l1 l3 := by
-  -- Hint: be careful about what you are doing induction on and which
-  --   other things need to be generalized...
-  -- ADMITTED
-  intro l1 l2 l3 s12 s23
-  induction s23 generalizing l1 with
-  | sub_nil _ =>
-    cases s12
-    exact Subseq.sub_nil _
-  | sub_take x _ _ _ ih =>
-    cases s12 with
-    | sub_nil _ => exact Subseq.sub_nil _
-    | sub_take _ _ _ h1 => exact Subseq.sub_take x _ _ (ih _ h1)
-    | sub_skip _ _ _ h1 => exact Subseq.sub_skip x _ _ (ih _ h1)
-  | sub_skip x _ _ _ ih =>
-    exact Subseq.sub_skip x _ _ (ih _ s12)
-  -- /ADMITTED
--- GRADE_THEOREM 1: subseq_refl
--- GRADE_THEOREM 2: subseq_app
--- GRADE_THEOREM 3: subseq_trans
--- []
-
--- EX2M? (R_provability2)
--- Suppose we give Lean the following definition:
---
---   inductive R2 : Nat → List Nat → Prop where
---     | c1                          : R2 0     []
---     | c2 (n : Nat) (l : List Nat) (h : R2 n     l) : R2 (n + 1) (n :: l)
---     | c3 (n : Nat) (l : List Nat) (h : R2 (n + 1) l) : R2 n     l
---
--- Which of the following propositions are provable?
---
---   - R2 2 [1, 0]
---   - R2 1 [1, 2, 1, 0]
---   - R2 6 [3, 2, 1, 0]
---
--- The first two are provable; the third is not.
-
--- EX2? (total_relation)
--- Define an inductive binary relation `TotalRelation` that holds
--- between every pair of natural numbers.
-
-inductive TotalRelation : Nat → Nat → Prop where
-  | tot (n m : Nat) : TotalRelation n m
-
--- total_relation_is_total
-theorem total_relation_is_total : ∀ (n m : Nat), TotalRelation n m := by
-  -- ADMITTED
-  intro n m; exact TotalRelation.tot n m
-  -- /ADMITTED
--- GRADE_THEOREM 2: total_relation_is_total
--- []
-
--- EX2? (empty_relation)
--- Define an inductive binary relation `EmptyRelation` (on numbers)
--- that never holds.
-
-inductive EmptyRelation : Nat → Nat → Prop where
-
--- empty_relation_is_empty
-theorem empty_relation_is_empty : ∀ (n m : Nat), ¬ EmptyRelation n m := by
-  -- ADMITTED
-  intro n m h; nomatch h
-  -- /ADMITTED
--- GRADE_THEOREM 2: empty_relation_is_empty
--- []
--- /FULL

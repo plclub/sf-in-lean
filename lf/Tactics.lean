@@ -135,11 +135,11 @@ theorem rev_exercise1 : forall α (l l' : List α),
 
 -- EX1M? (apply_rewrite)
 /- Briefly explain the difference between the tactics `apply` and
-    `rewrite`.  What are the situations where both can usefully be
+    `rw`.  What are the situations where both can usefully be
     applied? -/
 
 -- SOLUTION
-/- The `rewrite` tactic is used to apply a known equality (a
+/- The `rw` tactic is used to apply a known equality (a
     hypothesis from the context or a previously proved lemma) to
     modify the goal, replacing all occurrences of one side by the
     other.
@@ -186,7 +186,7 @@ theorem trans_eq_example : forall (a b c d e f : Nat),
 
 theorem trans_eq : forall (α : Type) (x y z : α),
     x = y -> y = z -> x = z := by
-  intro X x y z eq1 eq2
+  intro α x y z eq1 eq2
   rw [eq1, eq2]
 
 /- FULL: Now, we should be able to use [trans_eq] to prove the above
@@ -287,7 +287,7 @@ theorem trans_eq_exercise : forall (n m o p : Nat),
 
 
 -- ######################################################
--- # The `injection` and `discriminate` Tactics
+-- # The `injection` and `contradiction` Tactics
 /- HIDE: Should we explain `discriminate` without an argument?  BCP 25: No. -/
 
 /- FULL: Recall the definition of natural numbers:
@@ -341,7 +341,7 @@ theorem succ_injective : forall (n m : Nat),
 /- LATER: FSR'25 - I wrote an explanation for `have` here,
     though I feel its inclusion here breaks the flow. -/
 
-/- FULL: Rocq's `have` tactic, used above, adds the given hypothesis
+/- FULL: Lean's `have` tactic, used above, adds the given hypothesis
     to the context, but it first requires you to prove the hypothesis
     as a new goal.
 
@@ -349,7 +349,7 @@ theorem succ_injective : forall (n m : Nat),
     by writing the equivalent of `pred` -- i.e., writing a function that
     "undoes" one application of the constructor.
 
-    As a convenient alternative, Rocq provides a tactic called
+    As a convenient alternative, Lean provides a tactic called
     `injection` that allows us to exploit the injectivity of any
     constructor.  Here is an alternate proof of the above theorem
     using `injection`: -/
@@ -1390,7 +1390,7 @@ theorem sub_add_leb : forall n m, n ≤? m = true -> (m - n) + n = m := by
     tactic to prove `(m' - n') + n' = m'` from the induction
     hypothesis. However, we can also just use `rw` directly: if
     we rewrite with a conditional statement of the form `P -> a = b`,
-    then Rocq tries to rewrite with `a = b`, and then asks us to prove
+    then Lean tries to rewrite with `a = b`, and then asks us to prove
     `P` in a new subgoal.  If the statement has more than one
     assumption, then we get one subgoal for each assumption. -/
 /- TERSE: We could use the `have` tactic to prove `(m' - n') + n' = m'`
@@ -1680,8 +1680,7 @@ theorem sillyfun_false : forall (n : Nat),
 
 /- FULL: After unfolding `sillyfun` in the above proof, we find that
     we are stuck on `if (n == 3) then ... else ...`.  But either
-    `n` is equal to `3` or it isn't, so we can use [destruct (eqb
-    n 3)] to let us reason about the two cases.
+    `n` is equal to `3` or it isn't, so we can use [cases (n == 3)] to let us reason about the two cases.
 
     In general, the `cases` tactic can be used to perform case
     analysis of the results of arbitrary computations.  If `e` is an
@@ -1754,7 +1753,7 @@ def sillyfun1 (n : Nat) : Bool :=
   else if n == 5 then true
   else false
 
-/- FULL: Now suppose that we want to convince Rocq that `sillyfun1 n`
+/- FULL: Now suppose that we want to convince Lean that `sillyfun1 n`
     yields `true` only when `n` is odd.  If we start the proof like
     this (with no `h:` on the `cases`)... -/
 /-- warning: declaration uses `sorry` -/
@@ -1849,7 +1848,7 @@ theorem bool_fn_applied_thrice :
 
 /- We've now talked about many of Lean's most fundamental tactics.
     We'll introduce a few more in the coming chapters, and later on
-    we'll see some more powerful _automation_ tactics that make Rocq
+    we'll see some more powerful _automation_ tactics that make Lean
     help us with low-level details.  But basically we've got what we
     need to get work done.
 
