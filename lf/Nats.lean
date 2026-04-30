@@ -4,6 +4,17 @@
 -- structural recursion
 -- binary numerals
 
+-- Main thought point: decide how much to get into and use the
+-- specific features of Lean `Nat`.
+-- In my opinion, the answer is "all the way."
+
+-- Specifically:
+-- Start early with the built-in `Nat` type, and use it for all examples and exercises.
+-- Talk about notation, typeclasses, and the (n + 1) notation for succ.
+-- We should use these builtins liberally and teach them as the norm, since they are.
+-- We can start by comparing to Countdown, and then quickly move to the
+-- built-in `Nat` and use it for all examples and exercises.
+-- There should be a section on tactics and how much automation students can use.
 
 /-
   ######################################################################
