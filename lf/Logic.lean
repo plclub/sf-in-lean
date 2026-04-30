@@ -230,19 +230,26 @@ example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
 
 #check (And.intro : ∀ {α β : Prop}, α → β → α ∧ β)
 
-/- TERSE: We can also apply the constructor for the conjunction explicitly. -/
+/- We can also apply the constructor for the conjunction explicitly. -/
 example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
   apply And.intro
   case left  => /- 3 + 4 = 7 -/ rfl
   case right => /- 2 * 2 = 4 -/ rfl
 
-/- Or we can anonymous constructor syntax to construct it. -/
+/- Rather than applying the constructor, we can explicitly provide
+    the arguments to the constructor as an `exact` proof. -/
 example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
-  exact ⟨/- 3 + 4 = 7 -/ rfl, /- 2 * 2 = 4 -/ rfl⟩
+  exact And.intro rfl rfl
+
+/- Lean also has notation for _anonymous constructors_ ⟨arg₁, ..., argₙ⟩,
+    which deduces the correct constructor that is needed,
+    and applies a list of arguments to that constructor. -/
+example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
+  exact ⟨rfl, rfl⟩
 
 -- FULL
--- EX2 (plus_is_zero)
-theorem plus_is_zero : ∀ n m : Nat,
+-- EX2 (add_is_zero)
+theorem add_is_zero : ∀ n m : Nat,
     n + m = 0 → n = 0 ∧ m = 0 := by
   -- FULL: ADMITTED
   -- TERSE: WORKINCLASS
@@ -303,7 +310,7 @@ example : ∀ n m : Nat,
     n + m = 0 → n * m = 0 := by
   -- WORKINCLASS
   intro n m H
-  apply plus_is_zero at H
+  apply add_is_zero at H
   let ⟨Hn, Hm⟩ := H
   rw [Hm]; rfl
   -- /WORKINCLASS
@@ -402,6 +409,16 @@ theorem factor_is_zero : ∀ n m : Nat,
     under a different assumption -- `A` in the first subgoal and `B`
     in the second. -/
 
+/- Rather than performing case analysis via `cases`, we can also use `obtains`
+    to match on the two possible injections, much like with `let`. -/
+
+theorem and_is_false : ∀ b1 b2 : Bool,
+    (b1 = false) ∨ (b2 = false) → (b1 && b2) = false := by
+  intro b1 b2 H
+  obtain Hb1 | Hb2 := H
+  case inl => rw [Hb1, Bool.false_and]
+  case inr => rw [Hb2, Bool.and_false]
+
 /- Conversely, to show that a disjunction holds, it suffices to show
     that one of its sides holds. This can be done via the tactics
     `left` and `right`.  As their names imply, the first one requires
@@ -421,7 +438,7 @@ theorem zero_or_succ : ∀ n : Nat,
   intro n
   cases n
   case zero => left; rfl
-  case succ => right; dsimp [pred]
+  case succ n => right; dsimp [pred]
   -- /WORKINCLASS
 
 -- TERSE: HIDEFROMHTML
@@ -446,9 +463,9 @@ theorem or_commute : ∀ P Q : Prop,
     P ∨ Q → Q ∨ P := by
   -- ADMITTED
   intro P Q H
-  cases H
-  case inl HP => right; exact HP
-  case inr HQ => left; exact HQ
+  obtain HP | HQ := H
+  case inl => right; exact HP
+  case inr => left; exact HQ
   -- /ADMITTED
 -- []
 -- TERSE: /HIDEFROMHTML
@@ -906,20 +923,16 @@ theorem or_associate : ∀ P Q R : Prop,
   intro P Q R; constructor
   case mp =>
     intro H
-    cases H
-    case inl HP => left; left; exact HP
-    case inr HQR =>
-      cases HQR
-      case inl HQ => left; right; exact HQ
-      case inr HR => right; exact HR
+    obtain HP | (HQ | HR) := H
+    case inl     => left; left; exact HP
+    case inr.inl => left; right; exact HQ
+    case inr.inr => right; exact HR
   case mpr =>
     intro H
-    cases H
-    case inl HPQ =>
-      cases HPQ
-      case inl HP => left; exact HP
-      case inr HQ => right; left; exact HQ
-    case inr HR => right; right; exact HR
+    obtain (HP | HQ) | HR := H
+    case inl.inl => left; exact HP
+    case inl.inr => right; left; exact HQ
+    case inr     => right; right; exact HR
 
 -- FULL
 -- EX3 (or_distributes_over_and)
@@ -928,27 +941,23 @@ theorem or_distributes_over_and : ∀ P Q R : Prop,
   -- ADMITTED
   intro P Q R; constructor
   case mp =>
-    intro HPQR; cases HPQR
-    case inl HP =>
+    intro HPQR
+    obtain HP | ⟨HQ, HR⟩ := HPQR
+    case inl =>
       constructor
       case left => left; exact HP
       case right => left; exact HP
-    case inr HQR =>
-      let ⟨HQ, HR⟩ := HQR
+    case inr =>
       constructor
       case left => right; exact HQ
       case right => right; exact HR
   case mpr =>
-    intro ⟨HPQ, HPR⟩
-    cases HPQ
-    case inl HP => left; exact HP
-    case inr HQ =>
-      cases HPR
-      case inl HP => left; exact HP
-      case inr HR =>
-        right; constructor
-        exact HQ
-        exact HR
+    intro HPQPR
+    obtain ⟨HP | HQ, HP | HR⟩ := HPQPR
+    case inl.inl => left; exact HP
+    case inl.inr => left; exact HP
+    case inr.inl => left; exact HP
+    case inr.inr => right; exact ⟨HQ, HR⟩
   -- /ADMITTED
 -- []
 -- /FULL
@@ -1021,19 +1030,15 @@ theorem dist_exists_or : ∀ (X : Type) (P Q : X → Prop),
   -- ADMITTED
   intro X P Q; constructor
   case mp =>
-    intro ⟨x, HPQ⟩
-    cases HPQ
-    case inl HP => left; exists x
-    case inr HQ => right; exists x
+    intro HPQ
+    obtain ⟨x, HP | HQ⟩ := HPQ
+    case inl => left; exists x
+    case inr => right; exists x
   case mpr =>
     intro HPQ
-    cases HPQ
-    case inl HP =>
-      let ⟨x, Hx⟩ := HP
-      exists x; left; exact Hx
-    case inr HQ =>
-      let ⟨x, Hx⟩ := HQ
-      exists x; right; exact Hx
+    obtain ⟨x, Hx⟩ | ⟨x, Hx⟩ := HPQ
+    case inl => exists x; left; exact Hx
+    case inr => exists x; right; exact Hx
   -- /ADMITTED
 -- GRADE_THEOREM 2: dist_exists_or
 -- []
@@ -1160,12 +1165,10 @@ example : ∀ n : Nat, In n [2, 4] → ∃ n' : Nat, n = 2 * n' := by
   -- WORKINCLASS
   dsimp [In]
   intro n H
-  cases H
-  case inl H => exists 1
-  case inr H =>
-    cases H
-    case inl H => exists 2
-    case inr H => cases H
+  obtain H | H | ⟨⟨⟩⟩ := H
+  case inl => exists 1
+  case inr.inl => exists 2
+  /- (Notice the use of the empty pattern to discharge the last case.) -/
   -- /WORKINCLASS
 
 /- We can also reason about more generic statements involving `In`. -/
@@ -1173,13 +1176,264 @@ example : ∀ n : Nat, In n [2, 4] → ∃ n' : Nat, n = 2 * n' := by
 theorem In_map : ∀ (α β : Type) (f : α → β) (xs : List α) (x : α),
     In x xs → In (f x) (List.map f xs) := by
   -- TERSE: FOLD
-  intro A FB f xs x
+  intro α β f xs x
   induction xs
   case nil => intro H; contradiction
   case cons x' xs' IH =>
     dsimp [In]
     intro H
-    cases H
-    case inl H => rw [H]; left; rfl
-    case inr H => right; exact (IH H)
+    obtain H | H := H
+    case inl => rw [H]; left; rfl
+    case inr => right; exact (IH H)
   -- TERSE: /FOLD
+
+-- FULL
+/- This way of defining propositions recursively is very convenient in
+    some cases, less so in others.  In particular, it is subject to the
+    usual restrictions regarding definitions of recursive functions,
+    e.g., the requirement that they be "obviously terminating."
+
+    In the next chapter, we will see how to define propositions
+    _inductively_ -- a different technique with its own strengths and
+    limitations. -/
+
+-- EX2 (In_map_iff)
+theorem In_map_iff : ∀ (α β : Type) (f : α → β) (xs : List α) (y : β),
+    In y (List.map f xs) ↔ ∃ x, f x = y ∧ In x xs := by
+  intro α β f xs y
+  constructor
+  case mp =>
+    induction xs
+    -- ADMITTED
+    case nil => intro H; contradiction
+    case cons x' xs' IH =>
+      dsimp [In]
+      intro H
+      obtain H | H := H
+      case inl =>
+        rw [H]; exists x'; constructor
+        case left => rfl
+        case right => left; rfl
+      case inr =>
+        let ⟨x', H1, H2⟩ := (IH H)
+        exists x'; constructor
+        case left => exact H1
+        case right => right; exact H2
+    -- /ADMITTED
+  case mpr =>
+    -- ADMITTED
+    intro ⟨x, H1, H2⟩
+    rw [← H1]
+    apply In_map
+    exact H2
+    -- /ADMITTED
+-- []
+
+-- JC [TODO]: move this to after propext
+-- EX2 (In_app_iff)
+theorem In_app_iff : ∀ (α : Type) (xs xs' : List α) (x : α),
+    In x (xs ++ xs') ↔ In x xs ∨ In x xs' := by
+  intro α xs; induction xs
+  -- ADMITTED
+  case nil =>
+    intro xs x; constructor
+    case mp => intro H; right; exact H
+    case mpr =>
+      dsimp [In]; intro H; cases H
+      case inl H => contradiction
+      case inr H => exact H
+  case cons y ys IH =>
+    intro xs' x; dsimp [In]
+    rw [or_assoc]
+    sorry
+  -- /ADMITTED
+-- []
+-- /FULL
+
+-- FULL
+-- EX3! (All)
+/- We noted above that functions returning propositions can be seen as
+    _properties_ of their arguments. For instance, if `P` has type
+    `Nat -> Prop`, then `P n` says that property `P` holds of `n`.
+
+    Drawing inspiration from `In`, write a recursive function `All`
+    stating that some property `P` holds of all elements of a list
+    `xs`. To make sure your definition is correct, prove the `All_In`
+    lemma below.  (Of course, your definition should _not_ just
+    restate the left-hand side of `All_In`.) -/
+
+def All {α : Type} (P : α → Prop) (xs : List α) : Prop :=
+  -- ADMITDEF
+  match xs with
+  | [] => True
+  | x :: xs' => P x ∧ All P xs'
+  -- /ADMITDEF
+
+theorem All_In : ∀ α (P : α → Prop) (xs : List α),
+    (∀ x, In x xs → P x) ↔ All P xs := by
+  -- ADMITTED
+  intro α P xs
+  induction xs
+  case nil =>
+    dsimp [In, All]
+    constructor
+    case mp => intros; exact ⟨⟩
+    case mpr => intros; contradiction
+  case cons x' xs' IH =>
+    dsimp [In, All]
+    let ⟨IHl, IHr⟩ := IH
+    constructor
+    case mp =>
+      intro H; constructor
+      case left => apply H; left; rfl
+      case right =>
+        apply IHl
+        intro x' Hx'; apply H
+        right; exact Hx'
+    case mpr =>
+      intro ⟨Hx, H⟩ x' Hxxs
+      obtain Hxx' | Hxs := Hxxs
+      case inl => rw [Hxx']; exact Hx
+      case inr => apply IHr; apply H; apply Hxs
+  -- /ADMITTED
+-- GRADE_THEOREM 3: All_In
+-- []
+
+-- EX2? (combine_odd_even)
+/- Complete the definition of `combine_odd_even` below. It takes as arguments
+    two properties of numbers, `Podd` and `Peven`, and it should return
+    a property `P` such that `P n` is equivalent to `Podd n` when `n` is odd
+    and equivalent to `Peven n` otherwise. -/
+
+def combine_odd_even (Podd Peven : Nat → Prop) : Nat → Prop :=
+  -- ADMITDEF
+  fun n => bif odd n then Podd n else Peven n
+  -- /ADMITDEF
+
+/- To test your definition, prove the following facts: -/
+
+theorem combined_odd_even_intro : ∀ Podd Peven n,
+    (odd n = true → Podd n) →
+    (odd n = false → Peven n) →
+    combine_odd_even Podd Peven n := by
+  -- ADMITTED
+  intro Podd Peven n Hodd Heven
+  unfold combine_odd_even
+  cases h : odd n
+  case false =>
+    dsimp; apply Heven; exact h
+  case true =>
+    dsimp; apply Hodd; exact h
+  -- /ADMITTED
+
+theorem combined_odd_even_elim_odd : ∀ Podd Peven n,
+    combine_odd_even Podd Peven n →
+    (odd n = true) →
+    Podd n := by
+  -- ADMITTED
+  intro Podd Peven n H Hodd
+  unfold combine_odd_even at H
+  rw [Hodd] at H
+  dsimp at H; exact H
+  -- /ADMITTED
+
+theorem combined_odd_even_elim_even: ∀ Podd Peven n,
+    combine_odd_even Podd Peven n →
+    (odd n = false) →
+    Peven n := by
+  -- ADMITTED
+  intro Podd Peven n H Hodd
+  unfold combine_odd_even at H
+  rw [Hodd] at H
+  dsimp at H; exact H
+  -- /ADMITTED
+-- []
+
+-------------------------------------------------------------------------------
+/- ## Applying Theorems to Arguments -/
+
+/- FULL: Lean treats _proofs_ as first-class objects.
+    There is a great deal to be said about this, but it is not necessary
+    to understand it all to use Lean. This section gives just a taste,
+    leaving a deeper exploration for the optional chapters
+    `ProofObjects` and `IndPrinciples`. -/
+/- TERSE: Lean also treats _proofs_ as first-class objects! -/
+
+/- We have seen that we can use `#check` to ask Lean whether an expression
+    has a given type: -/
+
+#check (add: Nat → Nat → Nat)
+
+/- We can also use it to check what theorem a particular identifier refers to: -/
+
+/-- info: add_comm (n m : Nat) : n + m = m + n -/
+#guard_msgs in
+#check add_comm
+
+/-- info: add_assoc (n m p : Nat) : n + (m + p) = n + m + p -/
+#guard_msgs in
+#check add_assoc
+
+/- Lean checks the _statements_ of the `add_comm` and `add_assoc` theorems
+    in the same way that it checks the _type_ of any term (e.g. `add`).
+    Leaving off the colon and the type, Lean prints these types
+    in the infoview for us.
+
+    Why?
+
+    The reason is that the identifier `add_comm` actually refers to a
+    _proof object_ -- a logical derivation establishing the truth of the
+    statement `∀ n m, n + m = m + n`. The type of this object
+    is the proposition that it is a proof of.
+
+    The type of an ordinary function tells us what we can do with it.
+      * If we have a term of type `Nat → Nat → Nat`, we can give it
+        two `Nat`s as arguments and get a `Nat` back.
+    Similarly, the statement of a theorem tells us what we can use
+    that theorem for.
+      * If we have a term of type `∀ n m, n = m → n + n = m + n`,
+        and we provide it two numbers `n` and `m` and a third "arugment"
+        of type `n = m`, we get back a proof object of type `n + n = m + m`. -/
+
+/- FULL: Operationally, this analogy goes even further: by applying a theorem
+    as if it were a function, i.e., applying it to values and hypotheses
+    with matching types, we can specialize its result without having to
+    resort to intermediate assertions. For example, suppose we wanted
+    to prove the follwing result: -/
+
+/- TERSE: Lean actually allows us to _apply_ a theorem as if it were
+    a function. This is often handy in proof scripts -- e.g., suppose
+    we want to prove the following: -/
+
+/-- warning: declaration uses `sorry` -/
+#guard_msgs in
+example : ∀ x y z : Nat, x + (y + z) = (z + y) + x := by
+
+/- It appears at first sight that we ought to be able to prove this
+    be rewriting with `add_comm` twice to make the two sides match.
+    The problem is that the second rewrite will undo the effect
+    of the first. -/
+
+  intro x y z
+  rw [add_comm]
+  rw [add_comm]
+  sorry
+  /- We are back where we started... -/
+
+/- We can fix this by applying `add_comm` to the arguments we want it
+    to be instantiated with, in much the same way as we apply
+    a polymorphic function to a type argument. Then the rewrite is forced
+    to happen exactly where we want it. -/
+
+example : ∀ x y z : Nat, x + (y + z) = (z + y) + x := by
+  intro x y z
+  rw [add_comm]
+  rw [add_comm z y]
+
+-- FULL
+/- If we really wanted, we could in fact do it for both rewrites. -/
+example : ∀ x y z : Nat, x + (y + z) = (z + y) + x := by
+  intro x y z
+  rw [add_comm x (y + z)]
+  rw [add_comm z y]
+-- /FULL
