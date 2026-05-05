@@ -11,6 +11,7 @@
 -- HIDEFROMHTML
 import Basics
 import Induction
+import Poly
 import Tactics
 import CustomTactics
 open Nat hiding add_succ mul_succ beq beq_eq
@@ -2087,18 +2088,30 @@ example : ∀ P Q : Prop, P ∧ Q = Q ∧ P := by
 
 /- Since it would be convenient to be able to rewrite propositions from
     one side of `↔` to the other, Lean provides an axiom to turn `↔` into `=`,
-    which is called _propositional extensionality_ (`propext`).
-    We can use it to show that commuted conjoined propositions are equal. -/
+    which is called _propositional extensionality_ (`propext`). -/
 
 /-- info: axiom propext : ∀ {a b : Prop}, (a ↔ b) → a = b -/
 #guard_msgs in
 #print propext
 
+-- FULL
+/- (Informally, an "extensional" property is one that pertains to observable
+    behavior. Thus, propositional extensionality means that a proposition's
+    identity is completely determined by what we can observe from it -- i.e.,
+    whether the proposition holds. We can state this more explicitly:) -/
+
+theorem prop_true : ∀ P : Prop, P → P = True := by
+  intro P HP; apply propext; constructor
+  . intro; exact ⟨⟩
+  . intro; exact HP
+-- /FULL
+
+/- We can use `propext` to show that commuted conjoined propositions are equal.
+    Similarly, we can use it to show that reassociated conjoined propositions
+    are equal as well. -/
+
 theorem and_comm_eq : ∀ P Q : Prop, (P ∧ Q) = (Q ∧ P) := by
   intro P Q; apply propext; apply and_comm
-
-/- Similarly, we can use it to show that reassociated conjoined propositions
-    are equal as well. -/
 
 theorem and_assoc_eq : ∀ P Q R : Prop, ((P ∧ Q) ∧ R) = (P ∧ (Q ∧ R)) := by
   intro P Q R; apply propext; apply and_assoc
@@ -2179,5 +2192,104 @@ theorem beq_neq_false : ∀ n m : Nat,
 -- []
 
 /- ### Functional Extensionality -/
+
+/- We can also write propositions claiming that two _functions_ are equal
+    to each other. In some cases, we can also prove that two functions are
+    equal by reflexivity when both reduce to the same expression: -/
+
+example : (fun x => x + 2) = (fun x => x + (pred 3)) := by rfl
+
+/- In general, functions can be equal for more interesting reasons.
+    In common mathematical practice, two functions `f` and `g` are considered
+    equal if they produce the same output on every input:
+    ```
+    (∀ x, f x = g x) → f = g
+    ```
+
+    This is known as _functional extensionality_,
+    which Lean provides as funext`. -/
+
+#check (fun f g => funext (f := f) (g := g) :
+    ∀ {α β : Type} (f g : α → β), (∀ x, f x = g x) → f = g)
+
+-- FULL
+/- Here, functional extensionality means that a function's identity is
+    completely determined by what we can observe from it -- i.e., the results
+    we obtain after applying it.
+    (Its full type is actually slightly more general,
+    and is defined in terms of a more fundamental concept called _quotients_
+    rather than added directly as an axiom, but we will only discuss `funext`
+    here. This is also why, when printing axioms for theorems using `funext`,
+    it will instead display a `Quot.sound` axiom.) -/
+
+/-- info: 'funext' depends on axioms: [Quot.sound] -/
+#guard_msgs in
+#print axioms funext
+-- /FULL
+
+/- Now we can prove some intuitively obvious equalities about functions
+    that would otherwise not be provable without `funext`. -/
+
+theorem add_comm_fun : (fun (n m : Nat) => n + m) = (fun (n m : Nat) => m + n) := by
+  apply funext; intro n
+  apply funext; intro m
+  rw [add_comm]
+
+-- HIDE
+/- QUIZ: Is the following statement provable by just `rfl`, without `funext`?
+    ```
+    (fun xs => 1 :: xs) = (fun xs => [1] ++ xs)
+    ```
+
+    1. Yes
+    2. No -/
+-- FOLD
+example : (fun xs => 1 :: xs) = (fun xs => [1] ++ xs) := by rfl
+-- /FOLD
+-- /HIDE
+
+-- FULL
+-- EX4 (tr_rev_correct)
+/- One problem with the definition of the list-reversing function `List.rev`
+    is that it performs a call to `++` on each step.
+    Running `++` takes time asymptotically linear in the size of the list,
+    which means that `List.rev` is asymptotically quadratic.
+
+    We can improve this with the following two-argument definition: -/
+
+def rev_append {α} (xs1 xs2 : List α) : List α :=
+  match xs1 with
+  | [] => xs2
+  | x1 :: xs1' => rev_append xs1' (x1 :: xs2)
+
+def tr_rev {α} (xs : List α) : List α := rev_append xs []
+
+/- This version of `rev` is said to be _tail recursive_, because the recursive
+    call to the function is the last operation that needs to be performed
+    (i.e., we don't have to execute `++` after the recursive call);
+    a decent compiler will generate very efficient code in this case.
+
+    Prove that the two definitions are indeed equivalent. -/
+
+-- QUIETSOLUTION
+theorem rev_append_rev : ∀ α (xs1 xs2 : List α),
+    rev_append xs1 xs2 = xs1.rev ++ xs2 := by
+  intro α xs1; induction xs1
+  case nil => intro; rfl
+  case cons x1 xs1' IHxs1' =>
+    intro xs2
+    dsimp [rev_append, List.rev]
+    rw [← List.append_cons]
+    apply IHxs1'
+-- /QUIETSOLUTION
+
+theorem tr_rev_correct : ∀ α, @tr_rev α = @List.rev α := by
+  -- ADMITTED
+  intro α; apply funext
+  intro xs; unfold tr_rev
+  rw [rev_append_rev, List.append_nil]
+  -- /ADMITTED
+-- []
+-- /FULL
 
 /- ### Classical vs. Constructive Logic -/
