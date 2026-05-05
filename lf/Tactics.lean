@@ -918,7 +918,6 @@ theorem trans_eq_example''''' : forall (a b c d e f : Nat),
   /- .. and here we could also write `exact eq2` -/
   assumption
 
-
 -- ######################################################
 /- Varying the Induction Hypothesis -/
 
@@ -1412,36 +1411,10 @@ theorem sub_add_leb : forall n m, n ≤? m = true -> (m - n) + n = m := by
       rw [ih]
       assumption
 
--- ######################################################
-/- Supplying Proof as Arguments -/
+-- FULL
+-- EX3! (gen_dep_practice)
+-- Prove this by induction on `l`.
 
-/- As we've already seen in some of our previous proofs about `trans_eq`,
-   we can supply hypotheses as arguments to other hypotheses using `apply`
-   and `exact`. Sometimes, however, our hypotheses may require a premise that we
-   know to be true, but is not directly available to use via a named hypothesis in our context.
-   In such cases, we can actually directly supply a proof as an argument:
--/
-theorem silly_by_rfl : forall (a b : Nat),
-     (0 = 0 -> a = b) ->
-    a = b := by
-  intro a b h
-  exact h (by rfl)
-/-
-  In this example, our premise contains the equality between `a` and `b`
-  that we need to prove our goal, but it first requires us to supply
-  a proof that `0 = 0` in order to use that fact. We could simply use
-  `apply h; rfl` to finish the proof here, but a more elegant and idiomatic
-  approach is to supply the proof that `0 = 0` directly to `h` as an argument
-  using the `exact` tactic. The `by` keyword signals to Lean that a proof is beginning,
-  and we can discharge that proof just by using `rfl`. In cases where proof arguments
-  are very simple, we prefer this style for more concise proofs.
--/
-
-/-
-  The above example looks quite silly, and you may wonder when we ever
-  encounter situations like this in a real proof. In practice, using `cases` or `induction`
-  can often generate instances that look like this. As a more practical example:
--/
 theorem nth_error_after_last: forall (n : Nat) (α : Type) (l : List α),
   l.length = n ->
   nthError l n = none := by
@@ -1449,22 +1422,13 @@ theorem nth_error_after_last: forall (n : Nat) (α : Type) (l : List α),
   intros n α l hlen
   induction l generalizing n
   case nil => rfl
-  case cons _ tl ih =>
-    dsimp [List.length] at hlen; rw [←hlen]
-    dsimp [nthError]
-    /-
-      Our goal is now `exact`ly a special case of our inductive hypothesis,
-      with `n` insantiated as `List.length tl`. However,
-      in order to access that fact, we have to prove that `List.length tl = n`,
-      or in this case that `List.length tl = List.length tl`. But this is
-      true by reflexivity, so we can use `(by rfl)` as a proof of this fact.
-      Lean is also able to infer that the argument `n` to the `ih` must be
-      `List.length tl`, since the only thing that is reflexively equal to
-      `List.length tl` is itself.
-    -/
-    exact ih _ (by rfl)
-
-
+  case cons hd tl ih =>
+    dsimp [nthError]; dsimp [List.length] at hlen
+    rw [←hlen]
+    dsimp; apply ih _; rfl
+-- /ADMITTED
+-- GRADE_THEOREM 3: nth_error_after_last
+-- []
 -- HIDE
 
 /- LATER: BCP 9/16: Hiding the following three exercises, which
@@ -1485,7 +1449,7 @@ theorem app_length_cons : forall {α : Type} (l1 l2 : List α)
   case cons hd tl ih =>
     dsimp; dsimp [List.length] at heq
     rw [←heq]
-    have h : .succ (tl ++ l2).length = (tl ++ x :: l2).length := by exact ih _ (by rfl)
+    have h : .succ (tl ++ l2).length = (tl ++ x :: l2).length := by apply ih _; rfl
     dsimp at h; rw [h]
 -- /ADMITTED
 -- []
@@ -1515,7 +1479,7 @@ theorem app_length_twice : forall (α:Type) (n:Nat) (l:List α),
   case cons hd tl ih =>
     dsimp; dsimp at heq
     have h : .succ (tl ++ tl).length = (tl ++ hd :: tl).length := by
-      apply app_length_cons _ _ hd _ (by rfl)
+      apply app_length_cons _ _ hd _; rfl
     dsimp at h
     rw [←heq, ←h, ih tl.length, add_assoc]
     congr 1
