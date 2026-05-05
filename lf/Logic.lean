@@ -104,7 +104,7 @@ def is_three (n : Nat) : Prop := n = 3
 def injective {α β} (f : α → β) : Prop :=
   ∀ x y : α, f x = f y → x = y
 
-theorem succ_inj : injective succ := by
+theorem succ_inj' : injective succ := by
   intro x y H; injection H
 
 /- The familiar equality operator `=` is a (binary) function that returns
@@ -1230,6 +1230,7 @@ theorem In_map_iff : ∀ (α β : Type) (f : α → β) (xs : List α) (y : β),
     exact H2
     -- /ADMITTED
 -- []
+-- /FULl
 
 -- FULL
 -- EX3! (All)
@@ -2048,10 +2049,102 @@ theorem forallb_true_iff : ∀ α (test : α → Bool) (xs : List α),
 
 /- ### Propositional Extensionality -/
 
+/- Lean's logic is quite minimalistic. This means that on occasionally
+    encounters cases where translating standard mathematical reasoning
+    into Lean is cumbersome -- or even impossible -- unless we enrich
+    its core logic with additional axioms. -/
+
+/- FULL: For example, the equality assertions that we have seen so far mostly
+    have concerned elements of inductive types (`Nat`, `Bool`, etc.).
+    But since the equality operator is polymorphic, we can use it at _any_ type
+    -- in particular, we can write propositions claiming that two _propositions_
+    are equal to each other: -/
+
+/- TERSE: A first instance has to do with equality of propositions. -/
+
+#check (∀ P Q : Prop, (P ∧ Q) = (Q ∧ P) : Prop)
+
+/- This is an equality between two conjunctions, which itself is also
+    a proposition. It states that commuted conjunctions are equal propositions.
+    However, we cannot prove this equality by reflexivity, as the two sides
+    don't compute to the same term, and we cannot proceed by cases on
+    `P` or `Q`, as they are not inductive. -/
+
+/-- Tactic `rfl` failed -/
+#guard_msgs (substring := true) in
+example : ∀ P Q : Prop, P ∧ Q = Q ∧ P := by
+  intros P Q; rfl
+
+/-- Tactic `cases` failed -/
+#guard_msgs (substring := true) in
+example : ∀ P Q : Prop, P ∧ Q = Q ∧ P := by
+  intros P Q; cases P
+
+/- However, we _can_ prove that P ∧ Q implies Q ∧ P, and vice versa -- this is
+    the commutativity of conjunction that we have seen earlier. -/
+
+#check (@and_comm : ∀ P Q : Prop, P ∧ Q ↔ Q ∧ P)
+
+/- Since it would be convenient to be able to rewrite propositions from
+    one side of `↔` to the other, Lean provides an axiom to turn `↔` into `=`,
+    which is called _propositional extensionality_ (`propext`).
+    We can use it to show that commuted conjoined propositions are equal. -/
+
+/-- info: axiom propext : ∀ {a b : Prop}, (a ↔ b) → a = b -/
+#guard_msgs in
+#print propext
+
+theorem and_comm_eq : ∀ P Q : Prop, (P ∧ Q) = (Q ∧ P) := by
+  intro P Q; apply propext; apply and_comm
+
+/- Similarly, we can use it to show that reassociated conjoined propositions
+    are equal as well. -/
+
+theorem and_assoc_eq : ∀ P Q R : Prop, ((P ∧ Q) ∧ R) = (P ∧ (Q ∧ R)) := by
+  intro P Q R; apply propext; apply and_assoc
+
+/- Here is an example of where using `=` instead of `↔` is more convenient:
+    we show that it's possible to "flip" three conjoined propositions. -/
+
+theorem and_comm_flip : ∀ P Q R : Prop,
+    (P ∧ Q ∧ R) ↔ (R ∧ Q ∧ P) := by
+
+/- This can be proven by constructing the `↔`, then destructing the `↔`
+    in `add_comm` and `add_assoc`, then applying them a few times.
+    But this is a lot of hassle, when the proof conceptually simple:
+    we flip `Q` and `R`, then we flip that conjunction with `P`, and we
+    finish by associativity. By using `and_comm_eq`, this is easily done
+    by rewriting equal propositions. -/
+
+  intro P Q R; rw [and_comm_eq Q R, and_comm_eq P, and_assoc_eq]
+
+/- The pattern of deriving an equality of propositions out of `↔`
+    then rewriting by that equality is so common that Lean will implicitly
+    cast `↔` to `=`, allowing you to rewrite on `↔` directly. -/
+
+theorem and_comm_flip' : ∀ P Q R : Prop,
+    (P ∧ Q ∧ R) ↔ (R ∧ Q ∧ P) := by
+  intro P Q R; rw [@and_comm Q R, @and_comm P, and_assoc]
+
+/- Under the hood, this proof still uses `propext`, which you can check by
+    asking for all of the axioms used by a declaration. -/
+
+/-- info: 'and_comm_flip' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms and_comm_flip
+
+/-- info: 'and_comm_flip'' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms and_comm_flip'
+
+-- EX1 (mul_eq_0_ternary)
 theorem mul_eq_0_ternary : ∀ n m p : Nat,
     n * m * p = 0 ↔ n = 0 ∨ m = 0 ∨ p = 0 := by
+  -- ADMITTED
   intro n m p
   rw [mul_eq_0, mul_eq_0, or_associate]
+  -- /ADMITTED
+-- []
 
 -- EX2 (In_app_iff)
 theorem In_app_iff : ∀ (α : Type) (xs xs' : List α) (x : α),
@@ -2070,13 +2163,11 @@ theorem In_app_iff : ∀ (α : Type) (xs xs' : List α) (x : α),
     rw [IH, or_assoc]
   -- /ADMITTED
 -- []
--- /FULL
 
 -- EX1 (beq_neq)
 /- The following theorem is an alternative "negative" formulation of `beq_eq`
     that is more convenient in certain situations.
     (We'll see examples in later chapters.) Hint: `not_true_iff_false`. -/
-
 theorem beq_neq : ∀ n m : Nat,
     (n == m) = false ↔ n ≠ m := by
   -- ADMITTED
