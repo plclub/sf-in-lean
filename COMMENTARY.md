@@ -56,13 +56,8 @@ Instead, we explicitly rewrite by equalities such as
   #guard_msgs in
   example : ... := sorry
   ```
-* Indent continued type declarations one further than proofs:
-  ```lean
-  theorem myTheorem : ∀ {A : Type} (this : Bool) (is : Nat) (a : A),
-      really → long → Type :=
-    intro really long
-    exact A
-  ```
+* Follow Mathlib's style guide otherwise:
+  https://leanprover-community.github.io/contribute/style.html
 
 ### Comments
 
@@ -78,6 +73,7 @@ Instead, we explicitly rewrite by equalities such as
 #### Block comments
 
 * Student-facing prose
+  * May be prefixed by directives, e.g. `/- FULL: ... -/` or `/- TERSE: ... -/`
 * Declaration doc comments `/-- -/` attached to top-level declarations as need
   (they will appear on hover in VSCode)
 * General doc comments `/-! -/` currently unused
@@ -89,19 +85,18 @@ its output when it fails to prove a theorem contains a lot of information that c
 This can be overwhelming in the beginning, so this chapter uses only decide and simp."
 
 Tactics to consider introducing:
-`rcases`, `obtain`, `show`, `rename_i`, `revert`, `constructor`, `split`, `subst`, `suffices`
+`rcases`, `show`, `rename_i`, `revert`, `split`, `subst`, `suffices`
 
 ### Inventory
 
 * `Basics.lean`: `rfl`, `intro`, `rewrite`, `rw`, `cases`, `dsimp`, `exact`, `contradiction`
 * `Induction.lean`: `induction`, `have`
+* `Arithmetic.lean`: TBA
 * `Lists.lean`: `unfold`
 * `Poly.lean`: N/A
-* `Tactics.lean`: `apply`, `symm`, `injection`, `injections`, `congr`, `replace`, `induction generalizing`, `assumption`
-    `let ⟨... , ...⟩ := ...`
-
-We should remove the use of `calc` and `generalize` in `Induction`, and introduce them later. 
-In particular, `generalize` should appear in `IndProp`, maybe? Also, move `unfold` earlier.
+* `Tactics.lean`: `apply`, `apply at`, `replace`, `symm`, `calc`, `cases h : ...`,
+  `induction generalizing`, `injection with`, `injections`, `congr`, `assumption`, `let ⟨...⟩ := ...`
+* `Logic.lean`: `constructor`, `⟨...⟩`, `obtain`, `left`, `right`, `.left`, `.right`, `.mp`, `.mpr`, `ext`, `rw` by `↔`
 
 ### `rewrite` vs `rw`
 
@@ -193,6 +188,13 @@ of `app_assoc` is `l ++ m ++ n = (l ++ m) ++ n`, but in Lean it's
 
 ### `Tactics.lean`
 
-DHS: There is a section here on unfolding definitions that should probably move earlier, 
-to `Basics` or `Induction`, once those chapters are rewritten to not use arithmetic. This will 
-also require changing the examples. 
+DHS: There is a section here on unfolding definitions that should probably move earlier,
+to `Basics` or `Induction`, once those chapters are rewritten to not use arithmetic. This will
+also require changing the examples.
+
+### `Logic.lean`
+
+JC: Classical axioms are more pervasive in Lean and the section from Rocq needs to be rewritten
+to acknowledge this and teach idiomatic style.
+
+CH: There's several style things to mention here like `classical` vs. `open Classical`.

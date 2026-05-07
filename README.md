@@ -1,4 +1,4 @@
-# Software Foundations, Lean version
+# Software Foundations in Lean
 
 This repository contains the work-in-progress sources of [Software Foundations](https://softwarefoundations.cis.upenn.edu/), implemented using Lean.
 
@@ -10,11 +10,15 @@ To this end, and to facilitate rapid development, we offer a list of tenets that
 
 We also offer some rules for distributed collaboration. We want to take input from as many people as possible but develop clear guidelines for taking contributions and resolving disagreements.
 
+**To do**: Explain the difference between SF and SFL, proper terminology and
+naming, ... 
+
 ## Tenets
 
-1. Human understanding via clear pedagogy is primary
-2. Prefer to write definitions and proofs in idiomatic Lean, only deviating temporarily for pedagogical reasons
-3. By default, follow the well-tested path of topics taken by SF in Rocq; deviations should have good, specific reasons
+1. SF aims for exceptional pedagogy to advance human understanding
+2. SF is _exercise-based_: Every important concept has hands-on exercises to reinforce it
+3. Definitions and proofs are written in idiomatic Lean, only deviating (temporarily) for pedagogical reasons
+4. SF in Lean follows the path of topics of SF in Rocq unless there are specific reasons not to
 
 **To do**: Complete these.
 
