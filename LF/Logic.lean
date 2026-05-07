@@ -2360,17 +2360,16 @@ theorem excluded_middle_irrefutable (P : Prop) : ¬ ¬ (P ∨ ¬ P) := by
     ```
 
     The `dist_not_exists` theorem proves one side of this equivalence.
-    Interestingly, the other direction cannot be proven in constructive logic.
-    Your job is to show that it is implied by excluded middle.
-    Do not use `by_cases` here. -/
+    Interestingly, the other direction cannot be proven in constructive logic,
+    but we can prove it here using `by_cases`. -/
 
-theorem not_exists_dist (em : excluded_middle) :
-    ∀ (α : Type) (P : α → Prop), (¬ ∃ x, ¬ P x) → (∀ x, P x) := by
+theorem not_exists_dist (α : Type) (P : α → Prop) :
+    (¬ ∃ x, ¬ P x) → (∀ x, P x) := by
   -- ADMITTED
-  intro α P h x
-  obtain hP | hnP := em (P x)
-  case inl => exact hP
-  case inr => exfalso; apply h; exists x
+  intro h x
+  by_cases hx : (P x)
+  case pos => exact hx
+  case neg => exfalso; apply h; exists x
   -- /ADMITTED
 -- []
 
