@@ -2204,3 +2204,199 @@ theorem tr_rev_correct {α} : @tr_rev α = @List.rev α := by
 -- /FULL
 
 /- ### Classical vs. Constructive Logic -/
+
+/- FULL: We have seen that it is not possible to test whether or not a
+    proposition `P` holds while defining a Lean function. You may be
+    surprised to learn that a similar restriction applies in _proofs_!
+    In other words, the following intuitive reasoning principle is not
+    derivable in Lean: -/
+
+/- TERSE: The following reasoning principle is _not_ derivable in Lean: -/
+
+def excluded_middle := ∀ P : Prop, P ∨ ¬ P
+
+/- FULL: To understand operationally why this is the case, recall that,
+    to prove a statement of the form `P ∨ Q`, we use the `left` and `right`
+    tactics, which effectively require knowing which side of the disjunction
+    holds. But the universally quantified `P` in `excluded_middle` is an
+    _arbitrary_ proposition, which we know nothing about. We don't have enough
+    information to choose which of `left` or `right` to apply. -/
+
+-- FULL
+/- However, in the special case where we happen to know that `P` is reflected
+    in some boolean term `b`, knowing whether it holds or not is trivial:
+    we just have to check the value of `b`. -/
+
+theorem restricted_excluded_middle (P : Prop) (b : Bool) (h : P ↔ b = true) :
+    P ∨ ¬ P := by
+  cases b
+  case false => right; rw [h]; intro; contradiction
+  case true => left; rw [h]
+
+/- In partiuclar, the excluded middle is valid for equations `n = m` between
+    natural numbers `n` and `m`. -/
+
+theorem excluded_middle_nat_eq (n m : Nat) : n = m ∨ n ≠ m := by
+  apply restricted_excluded_middle (n = m) (n == m)
+  symm; apply beq_eq_true
+
+/- Sadly, this trick only works for decidable propositions. -/
+-- /FULL
+
+/- Logical systems in which excluded middle does not hold are referred to as
+    _constructive logics_. They are so called because to prove a proposition,
+    we must give a construction for it; for instance, a proof of `∃ x, P x`
+    is proven by providing a particular value of `x`.
+
+    Logical systems in which excluded middle does hold,
+    such as ZFC set theory, are referred to as _classical_.
+    Lean provides classical reasoning principles in the `Classical` library,
+    including excluded middle. -/
+
+#check (Classical.em : ∀ P, P ∨ ¬ P)
+
+-- FULL
+/- All classical reasoning principles in `Classical` are derived from
+    one axiom, the axiom of choice. This is the C in ZFC. -/
+
+#print Classical.choice
+
+/-- Classical.choice -/
+#guard_msgs (substring := true) in
+#print axioms Classical.em
+
+/- Lean also provides a `by_cases` tactic that applies `Classical.em` on a
+    given proposition. Theorems proven using this tactic implicitly use
+    classical axioms. -/
+
+theorem em : ∀ P, P ∨ ¬ P := by
+  intro P; by_cases h : P
+  /- h : P -/
+  case pos => left; exact h
+  /- h : ¬ P -/
+  case neg => right; exact h
+
+/-- Classical.choice -/
+#guard_msgs (substring := true) in
+#print axioms em
+-- /FULL
+
+/- FULL: The following example illustrates why assuming the excluded middle may
+    lead to nonconstructive proofs:
+
+    _Claim_: There exist irrational numbers `a` and `b` such that `a ^ b`
+      (`a` to the power `b`) is rational.
+
+    _Proof_: It is not difficult to show that `sqrt 2` is irrational.
+      So if `sqrt 2 ^ sqrt 2` is rational, it suffices to take `a = b = sqrt 2`
+      and we are done. Otherwise, `sqrt 2 ^ sqrt 2` is irrational.
+      In this case, we can take `a = sqrt 2 ^ sqrt 2` and `b = sqrt 2`,
+      since `a ^ b = sqrt 2 ^ (sqrt 2 * sqrt 2) = sqrt 2 ^ 2 = 2`. QED.
+
+    Do you see what happened here?  We used the excluded middle to
+    consider separately the cases where `sqrt 2 ^ sqrt 2` is rational and
+    where it is not, without knowing which one actually holds!
+    Because of this, we finish the proof knowing that such `a` and `b` exist,
+    but not being sure of their actual values.
+
+    As useful as constructive logic is, it does have its limitations:
+    There are many statements that can easily be proven in classical logic
+    but that have only much more complicated constructive proofs,
+    and there are some that are known to have no constructive proof at all!
+    Fortunately, like functional extensionality, the excluded middle is known
+    to be compatible with Lean's logic, allowing it to be added safely as an axiom.
+    However, the results that we cover in Logical Foundations can be developed
+    entirely within constructive logic.
+
+    It takes some practice to understand which proof techniques must be
+    avoided in constructive reasoning, but arguments by contradiction,
+    in particular, are infamous for leading to nonconstructive proofs.
+    Here's a typical example: suppose that we want to show that there exists
+    `x` with some property `P`, i.e., such that `P x`. We start by assuming
+    that our conclusion is false; that is, `¬ ∃ x, P x`. From this premise,
+    it is not hard to derive `∀ x, ¬ P x`. If we manage to show that this
+    results in a contradiction, we arrive at an existence proof without ever
+    exhibiting a value of `x` for which `P x` holds!
+
+    The technical flaw here, from a constructive standpoint, is that we
+    claimed to prove `∃ x, P x` using a proof of `¬ ¬ ∃ x, P x`.
+    Allowing ourselves to remove double negations from arbitrary statements
+    is equivalent to assuming the excluded middle law, as shown in one of the
+    exercises below. -/
+
+-- FULL
+/- Once again, Lean's `Classical` library provides double negation elimination,
+    which relies on the `Classical.choice` axiom. -/
+
+#check Classical.not_not
+
+/-- Classical.choice -/
+#guard_msgs (substring := true) in
+#print axioms Classical.not_not
+
+-- EX3 (excluded_middle_irrefutable)
+/- The following theorem implies that it is always save to assume
+    a decidability axiom (i.e., an instance of excluded middle) for any
+    _particular_ proposition `P`. Why? Because the negation of such an axiom
+    leands to a contradiction. If `¬ (P ∨ ¬ P)` were provable, then by
+    `de_morgan_not_or` as proven above, `P ∧ ¬ P` would be provable,
+    which would be a contradiction. So, it is safe to add `P ∨ ¬ P` as an axiom
+    for any particular `P`. -/
+
+theorem excluded_middle_irrefutable (P : Prop) : ¬ ¬ (P ∨ ¬ P) := by
+  -- ADMITTED
+  intro h; let ⟨hnp, hnnp⟩ := de_morgan_not_or _ _ h
+  unfold Not at *; cases (hnnp hnp)
+  -- /ADMITTED
+-- []
+
+-- EX3A (not_exists_dist)
+/- It is a theorem of classical logic that the following two assertions
+    are equivalent:
+
+    ```
+    ¬ ∃ x, ¬ P x
+    ∀ x, P x
+    ```
+
+    The `dist_not_exists` theorem proves one side of this equivalence.
+    Interestingly, the other direction cannot be proven in constructive logic.
+    Your job is to show that it is implied by excluded middle.
+    Do not use `by_cases` here. -/
+
+theorem not_exists_dist (em : excluded_middle) :
+    ∀ (α : Type) (P : α → Prop), (¬ ∃ x, ¬ P x) → (∀ x, P x) := by
+  -- ADMITTED
+  intro α P h x
+  obtain hP | hnP := em (P x)
+  case inl => exact hP
+  case inr => exfalso; apply h; exists x
+  -- /ADMITTED
+-- []
+
+-- EX5? (classical_axioms)
+/- For those who like a challenge, here is an exercise adapted from the Coq'Art
+    book by Bertot and Casteran (p. 123). Each of the following five statements,
+    together with `excluded_middle`, can be considered as characterizing
+    classical logic. We can't prove any one of them in Lean without `Classical`,
+    but adding any _one_ of them as an axiom allows us to work classically.
+
+    To see this, prove that all six propositions (these five plus
+    `excluded_middle`) are equivalent.
+
+    Hint: Rather than considering all pairs of statements pairwise,
+    prove a single circular chain of implications that connects them all. -/
+
+def peirce := ∀ P Q : Prop, ((P → Q) → P) → P
+
+def de_morgan_not_and_not := ∀ P Q : Prop, ¬ (¬ P ∧ ¬ Q) → P ∨ Q
+
+def imp_or := ∀ P Q : Prop, (P → Q) → (¬ P ∨ Q)
+
+def consequential_mirabilis := ∀ P : Prop, (¬ P → P) → P
+
+-- SOLUTION
+
+-- /SOLUTION
+-- []
+-- /FULL
