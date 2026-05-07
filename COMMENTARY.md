@@ -96,7 +96,7 @@ Tactics to consider introducing:
 * `Poly.lean`: N/A
 * `Tactics.lean`: `apply`, `apply at`, `replace`, `symm`, `calc`, `cases h : ...`,
   `induction generalizing`, `injection with`, `injections`, `congr`, `assumption`, `let ⟨...⟩ := ...`
-* `Logic.lean`: `constructor`, `⟨...⟩`, `obtain`, `left`, `right`, `.left`, `.right`, `.mp`, `.mpr`, `ext`, `rw` by `↔`
+* `Logic.lean`: `constructor`, `⟨...⟩`, `obtain`, `left`, `right`, `.left`, `.right`, `.mp`, `.mpr`, `ext`, `rw` by `↔`, `by_cases`
 
 ### `rewrite` vs `rw`
 
