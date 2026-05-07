@@ -11,7 +11,7 @@
 -- just after the IndProp chapter.
 
 -- TERSE: HIDEFROMHTML
-import IndProp
+import LF.IndProp
 -- TERSE: /HIDEFROMHTML
 
 -- #####################################################################

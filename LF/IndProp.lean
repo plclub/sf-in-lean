@@ -217,7 +217,7 @@
   narrative though. -/
 
 -- HIDEFROMHTML
-import Logic
+import LF.Logic
 -- /HIDEFROMHTML
 
 -- ######################################################################

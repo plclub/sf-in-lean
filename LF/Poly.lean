@@ -12,7 +12,7 @@
 /- /FULL
    /HIDEFROMHTML
    TERSE: HIDEFROMHTML -/
-import Induction
+import LF.Induction
 /- TERSE: /HIDEFROMHTML -/
 
 /- HIDEFROMADVANCED

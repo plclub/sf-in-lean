@@ -9,7 +9,7 @@
 -- TERSE: Let's take a deeper look at induction.
 
 -- HIDEFROMHTML
-import ProofObjects
+import LF.ProofObjects
 -- /HIDEFROMHTML
 
 -- ######################################################################

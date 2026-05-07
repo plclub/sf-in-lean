@@ -9,7 +9,7 @@
 /- Lean will first need to compile `Basics.lean` so it can be imported here -- detailed instructions are in the full version of this chapter... -/
 
 
-import Basics
+import LF.Basics
 
 
 /-

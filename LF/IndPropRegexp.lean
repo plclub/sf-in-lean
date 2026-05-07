@@ -1,7 +1,7 @@
 -- IndPropRegexp: Regular Expressions (Case Study from IndProp)
 
 -- HIDEFROMHTML
-import IndProp
+import LF.IndProp
 -- /HIDEFROMHTML
 
 set_option linter.unusedSimpArgs false

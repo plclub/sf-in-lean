@@ -9,11 +9,11 @@
  quizzes would be great! -/
 
 -- HIDEFROMHTML
-import Basics
-import Induction
-import Poly
-import Tactics
-import CustomTactics
+import LF.Basics
+import LF.Induction
+import LF.Poly
+import LF.Tactics
+import LF.CustomTactics
 open Nat hiding add_succ mul_succ beq beq_eq
 -- /HIDEFROMHTML
 

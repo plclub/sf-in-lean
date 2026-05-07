@@ -15,7 +15,7 @@
 
 -- /HIDEFROMADVANCED
 -- TERSE: HIDEFROMHTML
-import Maps
+import LF.Maps
 -- TERSE: /HIDEFROMHTML
 
 -- #######################################################

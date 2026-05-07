@@ -12,7 +12,7 @@
   all of our definitions from the previous chapter:
 -/
 
-import Basics
+import LF.Basics
 
 /-
   For this `import` to work, Lean needs to be able to find a
@@ -680,7 +680,7 @@ theorem mul_comm : ∀ m n : Nat,
 -/
 
 theorem leb_refl : ∀ n : Nat,
-    n <=? n = true := by
+    n ≤? n = true := by
   intro n
   induction n
   case zero => rfl

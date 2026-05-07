@@ -9,8 +9,8 @@
 -- ####################################
 -- * A Broken Evaluator
 -- TERSE: HIDEFROMHTML
-import Imp
-import Maps
+import LF.Imp
+import LF.Maps
 -- TERSE: /HIDEFROMHTML
 
 open AExp BExp Com

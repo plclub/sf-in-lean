@@ -1,6 +1,6 @@
 -- Auto: Proof Automation in Lean
 
-import IndProp
+import LF.IndProp
 
 -- ######################################################################
 -- * Introduction

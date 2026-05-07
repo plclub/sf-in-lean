@@ -1,7 +1,7 @@
 -- ProofObjects: The Curry-Howard Correspondence
 
 -- TERSE: HIDEFROMHTML
-import IndProp
+import LF.IndProp
 -- /HIDEFROMHTML
 
 -- "Algorithms are the computational content of proofs."

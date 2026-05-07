@@ -18,7 +18,7 @@
 -- to the Examples section at the very end to get the punchline.
 
 -- TERSE: HIDEFROMHTML
-import Imp
+import LF.Imp
 open AExp BExp Com
 
 -- Repr instances so we can use #eval to display parsed results.

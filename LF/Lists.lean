@@ -33,7 +33,7 @@
    /HIDEFROMHTML
 -/
 
-import Induction
+import LF.Induction
 namespace NatList
 
 #check ([] ++ [])

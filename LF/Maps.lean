@@ -31,7 +31,7 @@
 
 -- TERSE: We'll import things from the standard library from now on...
 
-import Logic
+import LF.Logic
 
 -- FULL: Documentation for the Lean standard library can be found at
 -- https://leanprover-community.github.io/mathlib4_docs/

@@ -27,8 +27,8 @@
 
 -- HIDEFROMHTML
 
-import Poly
-import CustomTactics
+import LF.Poly
+import LF.CustomTactics
 
 -- ######################################################
 -- # The `apply` Tactic *

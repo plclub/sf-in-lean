@@ -15,8 +15,8 @@
 -- This chapter explains how that works.
 
 -- TERSE: HIDEFROMHTML
-import ImpCEvalFun
-import ImpParser
+import LF.ImpCEvalFun
+import LF.ImpParser
 -- TERSE: /HIDEFROMHTML
 
 open AExp BExp Com
