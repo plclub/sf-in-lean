@@ -1353,6 +1353,11 @@ example (x y z : Nat) : x + (y + z) = (z + y) + x := by
   rw [add_comm z y]
 -- /FULL
 
+/- The fact that implications are functions means we can prove them by
+    explicitly providing a function. -/
+
+theorem identity {P : Prop} : P → P := fun h => h
+
 -- JC: Omitting this example below because `apply` in Lean works like `eapply` in Rocq,
 --     and I don't think this is the right moment to introduce the concept of
 --     metavariables and the fact that goals are just term holes.
