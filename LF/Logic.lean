@@ -2388,6 +2388,8 @@ theorem not_exists_dist (α : Type) (P : α → Prop) :
 
 def peirce := ∀ P Q : Prop, ((P → Q) → P) → P
 
+def double_negation_elimination := ∀ P : Prop, ¬¬P → P
+
 def de_morgan_not_and_not := ∀ P Q : Prop, ¬ (¬ P ∧ ¬ Q) → P ∨ Q
 
 def imp_or := ∀ P Q : Prop, (P → Q) → (¬ P ∨ Q)
