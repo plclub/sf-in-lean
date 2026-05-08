@@ -2384,7 +2384,9 @@ theorem not_exists_dist (α : Type) (P : α → Prop) :
     `excluded_middle`) are equivalent.
 
     Hint: Rather than considering all pairs of statements pairwise,
-    prove a single circular chain of implications that connects them all. -/
+    prove a single circular chain of implications that connects them all.
+    You should not use `by_cases`, as this implicitly introduces
+    a dependency on `excluded_middle`.  -/
 
 def peirce := ∀ P Q : Prop, ((P → Q) → P) → P
 
@@ -2438,7 +2440,7 @@ theorem em_cm : excluded_middle → consequentia_mirabilis := by
   intro h P hPnP
   obtain hP | hnP := h P
   case inl => exact hP
-  case inr => apply hPnP; intro hP; contradiction
+  case inr => exact (hPnP hnP)
 
 theorem cm_em : consequentia_mirabilis → excluded_middle := by
   intro h P; apply h
