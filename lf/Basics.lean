@@ -897,6 +897,11 @@ def combine (c1 : Countdown) (c2 : Countdown) : Countdown :=
 
 -- BEGIN WIP
 
+-- For Thia: Here is where we should decide how much of the below to convert
+-- to Countdowns, and how much to cover in Nats.
+-- If we cut the below, the file is much shorter, and we can give Basics.lean
+-- and another as an assignment.
+
 
 -- FULL
 /-
