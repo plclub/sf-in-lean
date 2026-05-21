@@ -21,9 +21,9 @@ naming, ...
 2. SFL is _exercise-based_: Every important concept has hands-on exercises to reinforce it
 3. SFL strives to teach _proof engineering_, which involves constructing readable and maintainable formalizations and proofs
     - Corollary: Students should understand particular tactics and what they do, starting small and growing in sophistication
-    - Corollary: Definitions and proofs are written in idiomatic Lean (mostly the way it is for engineering/maintainability reasons), only deviating (temporarily) for pedagogical reasons -- more below
-5. SFL follows the path of topics of SF in Rocq unless there are specific reasons not to
-6. SFL developments should connect to those in [CSLib](https://github.com/leanprover/cslib/tree/main), as much as possible; e.g., some/all of SFL's fully developed languages, semantics, etc. could have a direct place in CSLib. This implies we should be paying attention to (at the least) and coordinating with (at best) that effort.
+    - Corollary: Definitions and proofs are written in idiomatic Lean (mostly the way it is for engineering/maintainability reasons), only deviating (temporarily) for pedagogical reasons
+4. SFL developments should connect to those in [CSLib](https://github.com/leanprover/cslib/tree/main), as much as possible; e.g., some/all of SFL's fully developed languages, semantics, etc. could have a direct place in CSLib. This implies we should be paying attention to (at the least) and coordinating with (at best) that effort.
+5. SFL follows the path of topics of SF in Rocq unless there are specific reasons not to (that align with the above tenets)
 
 ### Proof engineering in Lean callouts
 
