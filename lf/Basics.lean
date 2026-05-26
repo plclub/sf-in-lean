@@ -1,4 +1,11 @@
+-- RAB & CGH:
+-- Basics will start in the new style. that is, each function is irreducible,
+-- and we rewrite using lemmas. this is a sort of implementation-interface
+-- approach that is quite idiomatic in lean.
+
+
 /-
+
   Basics: Functional Programming in Lean
 -/
 
@@ -743,165 +750,280 @@ def allZero (nb : Nybble) : Bool :=
 end TuplePlayground
 
 
+-- RAB: chapter covers:
+-- inductive nats
+-- nat notation
+-- structural recursion
+-- binary numerals
+
+-- Main thought point: decide how much to get into and use the
+-- specific features of Lean `Nat`.
+-- In my opinion, the answer is "all the way."
+
+-- Specifically:
+-- Start early with the built-in `Nat` type, and use it for all examples and exercises.
+-- Talk about notation, typeclasses, and the (n + 1) notation for succ.
+-- We should use these builtins liberally and teach them as the norm, since they are.
+-- We can start by comparing to Countdown, and then quickly move to the
+-- built-in `Nat` and use it for all examples and exercises.
+-- There should be a section on tactics and how much automation students can use.
+
 /-
   ######################################################################
-  ## Inductive Types and Recursive Functions
+  ## Numbers
 -/
 
-namespace CountdownPlayground
+-- FULL
+/-
+  We put this section in a namespace so that our own definition of
+  natural numbers does not interfere with the one from the
+  standard library.  In the rest of the book, we'll want to use
+  the standard library's.
+-/
+-- /FULL
+
+
+
+namespace NatPlayground
 
 -- FULL
 /-
   All the types we have defined so far -- both "enumerated
   types" such as `Day`, `Bool`, and `Bit` and tuple types such as
-  `Nybble` built from them -- are finite.  But we can also define
-  infinite types. We don't need infinite constructors for this:
-  the trick is to define a type that is _self-referential._
+  `Nybble` built from them -- are finite.  The natural numbers, on
+  the other hand, are an infinite set, so we'll need to use a
+  slightly richer form of type declaration to represent them.
+-/
+
+-- RAB: I moved over the notes from the Rocq book here, as I find they
+-- very nicely motivate unary for someone who has not seen it before.
+
+/-
+  There are many representations of numbers to choose from. You are
+  certainly familiar with decimal notation (base 10), using the
+  digits 0 through 9, for example, to form the number 123. You may
+  very likely also have encountered hexadecimal notation (base 16),
+  in which the same number is represented as 7B, or octal (base 8),
+  where it is 173, or binary (base 2), where it is 1111011. Using an
+  enumerated type to represent digits, we could use any of these as
+  our representation natural numbers. Indeed, there are
+  circumstances where each of these choices would be useful.
 -/
 
 /-
-  Let us define the type of Countdowns to an explosion.
-
-  A Countdown is either a `boom` (the explosion), or a
-  `tick` followed by another Countdown.  This is an infinite type,
-  because there is no upper limit on the number of `tick`s that can
-  be chained together.
+  The binary representation is valuable in computer hardware because
+  the digits can be represented with just two distinct voltage
+  levels, resulting in simple circuitry. Analogously, we wish here
+  to choose a representation that makes _proofs_ simpler.
 -/
 
-inductive Countdown : Type where
-  | boom
-  | tick (c : Countdown)
+/-
+  In fact, there is a representation of numbers that is even simpler
+  than binary, namely unary (base 1), in which only a single digit
+  is used -- as our forebears might have done to count days by
+  making scratches on the walls of their caves. To represent unary
+  numbers with a Lean datatype, we use two constructors. The
+  [zero] constructor represents zero. The [succ] constructor can be
+  applied to the representation of the natural number [n], yielding
+  the representation of [n+1], where [succ] stands for "successor."
+   Here is the complete datatype definition: *)
+-/
+
+-- /FULL
+
+-- TERSE: /- For simplicity in proofs, we choose unary representation. -/
 
 
-/- Let us build some `Countdown`s! -/
+inductive Nat : Type where
+  | zero
+  | succ (n : Nat)
 
-def kabam : Countdown := .boom
-def one_second_left : Countdown := .tick kabam
-def two_seconds_left : Countdown := .tick one_second_left
-def also_two_seconds_left : Countdown := .tick (.tick .boom)
+-- TODO hide this. this just lets you see (succ (succ zero)) instead of
+-- NatPlayground.Nat.succ (NatPlayground.Nat.succ NatPlayground.Nat.zero) in the infoview.
+attribute [pp_nodot] Nat
 
-/- Now that we've defined the `Countdown` object, we can define a function to
-represent one tick of the clock. -/
+namespace Nat
 
-def tick_once (c : Countdown) : Countdown :=
-  match c with
-  | .boom => .boom
-  | .tick c' => c'
+-- TODO Rewrite
 
-/- We can run our function on some examples: -/
+/-
+  With this definition, 0 is represented by `zero`, 1 by `succ zero`,
+  2 by `succ (succ zero)`, and so on.
+-/
 
-  #eval tick_once one_second_left
-  /- ===> boom -/
-  #eval tick_once two_seconds_left
-  /- ===> tick boom -/
+-- TERSE: /- *** -/
+/-
+  Critical point: this just defines a _representation_ of
+  numbers -- a unary notation for writing them down.
+-/
 
-/- We can define a function that references a prior function, as well...
- -/
+inductive OtherNat : Type where
+  | stop
+  | tick (foo : OtherNat)
 
-def tick_twice (c : Countdown) : Countdown :=
-  match c with
-  | .boom => .boom
-  | .tick c' => tick_once (tick_once c')
+/-
+  This is the same _representation_ of numbers as `Nat`, but with different
+  (sillier!) constructor names.
+-/
 
-/- ... and run it on some examples. -/
-/- Write some examples below that run `tick_twice` on some inputs. -/
+/-
+  The _interpretation_ of these representations arises from how we use them to
+  compute.
+-/
+
+def pred (n : Nat) : Nat :=
+  match n with
+  | zero => zero
+  | succ n' => n'
+
+
+-- TERSE: /- *** -/
+
+/-
+  Because natural numbers are such a pervasive kind of data,
+  Lean provides built-in support for them: ordinary decimal
+  numerals can be used as a shorthand, and Lean's `Nat` type uses
+  the constructors `Nat.zero` and `Nat.succ`.
+-/
+
+-- TODO: change this to not talk about numerals yet, instead define our own.
+-- TODO: document this
+
+-- TODO explain abbrev
+abbrev one : Nat := succ zero
+abbrev two : Nat := succ one
+abbrev three : Nat := succ two
+abbrev four : Nat := succ three
+abbrev five : Nat := succ four
+abbrev six : Nat := succ five
+abbrev seven : Nat := succ six
+abbrev eight : Nat := succ seven
+abbrev nine : Nat := succ eight
+abbrev ten : Nat := succ nine
+
+-- ... and so on.
+
+
+-- RAB: Hovering over succ points out that "Using Nat.succ n should usually be
+-- avoided in favor of n + 1, which is the simp normal form." How quickly should
+-- we break away from succ style and go straight to n + 1 style? More broadly,
+-- how much do we want to adhere to conventions like simp normal form? In my
+-- view, following standard Lean style wherever possible is a good thing to be
+-- doing, in no small part because proof view displays terms in Lean style, e.g. (n +
+-- 1) instead of `succ n`.
+
+example : succ (succ (succ (succ zero))) = four := by rfl
+
+def minustwo (n : Nat) : Nat :=
+  match n with
+  | zero => zero
+  | succ (zero) => zero
+  | succ (succ n') => n'
+
+#eval minustwo four
+/- ===> 2 -/
 
 -- FULL
-#check Countdown.tick  -- Nat → Nat
-#check tick_once  -- Nat → Nat
-#check tick_twice  -- Nat → Nat
+#check Nat.succ  -- Nat → Nat
+#check Nat.pred  -- Nat → Nat
+#check minustwo  -- Nat → Nat
 
 /-
-  These are all things that can be applied to a Countdown to yield a
-  Countdown.  However, there is a fundamental difference between `Countdown.tick`
-  and the other two: functions like `Countdown.tick` and `tick_twice` are
+  These are all things that can be applied to a number to yield a
+  number.  However, there is a fundamental difference between `Nat.succ`
+  and the other two: functions like `Nat.pred` and `minustwo` are
   defined by giving _computation rules_ -- e.g., the definition of
-  `Countdown.tick` says that `Countdown.tick kabam` can be simplified to `kabam` -- while the
-  definition of `Countdown.tick` has no such behavior attached.  Although it is
+  `Nat.pred` says that `Nat.pred 2` can be simplified to `1` -- while the
+  definition of `Nat.succ` has no such behavior attached.  Although it is
   _like_ a function in the sense that it can be applied to an
   argument, it does not _do_ anything at all!  It is just a way of
-  writing down the `Countdown` type.
+  writing down numbers.
 -/
 -- /FULL
 
 -- TERSE: /- *** -/
 -- TERSE: /- Recursive functions: -/
 
-/- Say we want to define a function that checks if
-   a Countdown has an even number of ticks. -/
+def even (n : Nat) : Bool :=
+  match n with
+  | zero => true
+  | succ (zero) => false
+  | succ (succ n') => even n'
 
-def even_count (c : Countdown) : Bool :=
-  match c with
-  | .boom => true
-  | .tick c' => not (even_count c')
 -- TERSE: /- *** -/
 /-
-  We could define `odd_count` by a similar recursive declaration, but
+  We could define `odd` by a similar recursive declaration, but
   here is a simpler way:
 -/
 
-def odd_count (c : Countdown) : Bool :=
-  not (even_count c)
+def odd (n : Nat) : Bool :=
+  not (even n)
 
 /- test_odd1 -/
-example : odd_count (.tick .boom) = true  := by rfl
+example : odd one = true  := by rfl
 /- test_odd2 -/
-example : odd_count (.tick (.tick .boom)) = false := by rfl
-
-/-
-  You may notice at this point that a `Countdown` is suspiciously similar to a
-  (Natural) number. This is an intentional choice: Lean is a powerful programming
-  language and theorem prover for mathematics, and comes with extensive baked-in machinery for
-  working with natural numbers. We use this example to gradually introduce the concept
-  of recursive types without the full complexity (and power) of Lean's `Nat`.
--/
-
+example : odd four = false := by rfl
 
 -- TERSE: /- *** -/
 -- TERSE: /- A multi-argument recursive function. -/
 
-/- Let's define a function that combines two Countdowns to make a bigger one. -/
+-- TODO talk about rewrites
 
-def combine (c1 : Countdown) (c2 : Countdown) : Countdown :=
-  match c1 with
-  | .boom => c2
-  | .tick c1' => .tick (combine c1' c2)
+@[irreducible]
+def add (n : Nat) (m : Nat) : Nat :=
+  match m with
+  | zero => n
+  | succ m' => succ (add n m')
+
+unseal add in
+theorem add_zero : ∀ n, add n zero = n := by
+  intro n
+  rfl
+
+unseal add in
+theorem add_succ : ∀ n m, add n (succ m) = succ (add n m) := by
+  intro n m
+  dsimp [add]
 
 -- FULL
 /-
-  Combining countdowns with tick counts two and one gives us three (whew!):
+  Adding three to two gives us five (whew!):
 -/
 -- /FULL
 
-#eval combine (.tick (.tick .boom)) (.tick .boom)
-/- tick (tick (tick boom)) -/
+-- TODO: make sure this is a sane example that shows off the rewriting
+-- system in a way that's been explaned.
+example : add three two = five := by
+  rewrite [add_succ, add_succ, add_zero]
+  rfl
+
+
+-- TODO rewrite this explanation fully
 
 -- FULL
 /-
   The steps of simplification that Lean performs here can be
   visualized as follows:
 
-       `combine (.tick (.tick .boom)) (.tick .boom)`
-    i.e. `combine (tick (tick boom)) (tick boom)`
+       `add 3 2`
+    i.e. `add (succ (succ (succ 0))) (succ (succ 0))`
 -/
-
+/-    ==> `succ (add (succ (succ (succ 0))) (succ 0))` -/
 /-
-  ==> `tick (combine (tick boom) (tick boom))`   -- by the second clause of the `match`
-  ==> `tick (tick (combine boom (tick boom)))`   -- by the second clause of the `match`
-  ==> `tick (tick (tick boom))`                 -- by the first clause of the `match`
-  i.e. `tick (tick (tick boom))`
+           by the second clause of the `match`
+-/
+/-    ==> `succ (succ (add (succ (succ (succ 0))) 0))` -/
+/-
+           by the second clause of the `match`
+-/
+/-    ==> `succ (succ (succ (add (succ 0))))` -/
+/-
+           by the first clause of the `match`
+    i.e. `5`
 -/
 -- /FULL
 
 -- TERSE: /- *** -/
-
--- BEGIN WIP
-
--- For Thia: Here is where we should decide how much of the below to convert
--- to Countdowns, and how much to cover in Nats.
--- If we cut the below, the file is much shorter, and we can give Basics.lean
--- and another as an assignment.
-
 
 -- FULL
 /-
@@ -910,25 +1032,55 @@ def combine (c1 : Countdown) (c2 : Countdown) : Countdown :=
   The `+` operator is already defined for `Nat` in the standard library.
 -/
 -- /FULL
-
+@[irreducible]
 def mul (n m : Nat) : Nat :=
   match m with
-  | 0 => 0
-  | .succ m' => (mul n m') + n
+  | zero => zero
+  | succ m' => add (mul n m') n
+
+unseal mul in
+theorem mul_zero : ∀ n, mul n zero = zero := by
+  intro n
+  rfl
+
+unseal mul in
+theorem mul_succ : ∀ n m, mul n (succ m) = add (mul n m) n := by
+  intro n m
+  rfl
+
+-- TODO: add example with rewrites, add one with rfl
 
 /- test_mult1 -/
-example : mul 3 3 = 9 := by rfl
+unseal mul add in
+example : mul three three = nine := by
+  rfl
 
 -- TERSE: /- *** -/
 /-
   We can pattern-match two values at the same time:
 -/
 
+@[irreducible]
 def sub (n m : Nat) : Nat :=
   match n, m with
-  | 0,        _        => 0
-  | .succ _,  0        => n
-  | .succ n', .succ m' => sub n' m'
+  | zero, _ => zero
+  | succ _, zero => n
+  | succ n', succ m' => sub n' m'
+
+unseal sub in
+theorem sub_zero_n : ∀ n, sub zero n = zero := by
+  intro n
+  rfl
+
+unseal sub in
+theorem sub_succ_zero : ∀ n, sub (succ n) zero = succ n := by
+  intro n
+  rfl
+
+unseal sub in
+theorem sub_succ_succ : ∀ n m, sub (succ n) (succ m) = sub n m := by
+  intro n m
+  rfl
 
 /-
   Now that we've seen how natural numbers are built from `Nat.zero`
@@ -938,10 +1090,11 @@ def sub (n m : Nat) : Nat :=
   We'll use this more concise style from now on.
 -/
 
+@[irreducible]
 def pow (base power : Nat) : Nat :=
   match power with
-  | 0 => 1
-  | p + 1 => mul base (pow base p)
+  | zero => one
+  | succ p => mul base (pow base p)
 
 -- FULL
 -- EX1 (factorial)
@@ -952,17 +1105,20 @@ def pow (base power : Nat) : Nat :=
   Translate this into Lean.
 -/
 
+@[irreducible]
 def factorial (n : Nat) : Nat
   -- ADMITDEF
   := match n with
-  | 0 => 1
-  | n' + 1 => n * factorial n'
+  | zero => one
+  | succ n' => mul (succ n') (factorial n')
   -- /ADMITDEF
 
 /- test_factorial1 -/
-example : factorial 3 = 6         := by rfl  -- ADMITTED
+unseal factorial mul add in
+example : factorial three = six         := by rfl  -- ADMITTED
 /- test_factorial2 -/
-example : factorial 5 = 10 * 12   := by rfl  -- ADMITTED
+unseal factorial mul add in
+example : factorial five = mul ten (add ten two)   := by rfl  -- ADMITTED
 -- GRADE_THEOREM 1: factorial_test2
 -- []
 -- /FULL
@@ -1311,6 +1467,161 @@ theorem add_one_neb_zero : ∀ n : Nat,
   case zero => rfl
   case succ n' => rfl
 
+
+-- FULL
+/-
+  ######################################################################
+  ## More on Notation (Optional)
+-/
+
+/-
+  Lean has a very flexible notation system.  Operators like `+` and `*`
+  are defined with specified precedence and associativity.  For example,
+  `+` has precedence 65 and is left-associative, while `*` has
+  precedence 70 and is also left-associative.  This means that `1+2*3*4`
+  is parsed as `1+((2*3)*4)`.
+
+  You can define custom notation using the `notation`, `infixl`,
+  `infixr`, `prefix`, and `postfix` commands.
+
+  Lean handles notation scoping through namespaces and
+  type classes rather than notation scopes.  The numeric literal `3`
+  can be interpreted as `Nat`, `Int`, `Float`, etc., depending on the
+  expected type, thanks to Lean's `OfNat` type class.
+-/
+-- /FULL
+
+-- FULL
+/-
+  ######################################################################
+  ## Structural Recursion (Optional)
+-/
+
+/-
+  Here is a copy of the definition of addition:
+-/
+
+def plus' (n : Nat) (m : Nat) : Nat :=
+  match n with
+  | 0 => m
+  | n' + 1 => (plus' n' m) + 1
+
+/-
+  When Lean checks this definition, it verifies that the recursion
+  terminates.  Specifically, it checks that one of the arguments
+  is _structurally decreasing_.  This implies that all calls to
+  `plus'` will eventually terminate.
+
+  This requirement is a fundamental feature of Lean's design: In
+  particular, it guarantees that every function that can be defined
+  in Lean will terminate on all inputs.  However, because Lean's
+  termination analysis is not always able to figure things out
+  automatically, it is sometimes necessary to provide hints or
+  write functions in slightly different ways.
+
+  Lean also supports more flexible termination proofs using
+  `termination_by` and `decreasing_by` clauses, as well as `partial`
+  functions that are not required to terminate.
+-/
+
+-- EX2? (decreasing)
+/-
+  To get a concrete sense of this, find a way to write a sensible
+  recursive definition (of a simple function on numbers, say) that
+  _does_ terminate on all inputs, but that Lean will reject because
+  it cannot automatically prove termination.
+-/
+
+--  SOLUTION
+/-
+  def factorial_bad (n : Nat) : Nat :=
+    if n == 0 then 1
+    else n * factorial_bad (n - 1)
+  This fails because Lean can't see that `n - 1` is structurally smaller.
+
+-/
+-- /SOLUTION
+-- []
+-- /FULL
+
+end Nat
+
+/-
+  ######################################################################
+  ## Binary Numerals
+-/
+
+-- EX3 (binary)
+/-
+  We can generalize our unary representation of natural numbers to
+  the more efficient binary representation by treating a binary
+  number as a sequence of constructors `b0` and `b1` (representing 0s
+  and 1s), terminated by a `z`.
+
+  For example:
+
+  | decimal |            binary     |                                                unary         |
+  |:-------:| ---------------------:| ------------------------------------------------------------:|
+  |    0    | `               z   ` | `                                               zero       ` |
+  |    1    | `            b1 z   ` | `                                          succ zero       ` |
+  |    2    | `        b0 (b1 z)  ` | `                                    succ (succ zero)      ` |
+  |    3    | `        b1 (b1 z)  ` | `                              succ (succ (succ zero))     ` |
+  |    4    | `    b0 (b0 (b1 z)) ` | `                        succ (succ (succ (succ zero)))    ` |
+  |    5    | `    b1 (b0 (b1 z)) ` | `                  succ (succ (succ (succ (succ zero))))   ` |
+  |    6    | `    b0 (b1 (b1 z)) ` | `            succ (succ (succ (succ (succ (succ zero)))))  ` |
+  |    7    | `    b1 (b1 (b1 z)) ` | `      succ (succ (succ (succ (succ (succ (succ zero)))))) ` |
+  |    8    | `b0 (b0 (b0 (b1 z)))` | `succ (succ (succ (succ (succ (succ (succ (succ zero)))))))` |
+
+  Note that the low-order bit is on the left and the high-order bit
+  is on the right -- the opposite of the way binary numbers are
+  usually written.  This choice makes them easier to manipulate.
+
+  (Comprehension check: What unary numeral does `b0 z` represent?)
+-/
+
+inductive Bin : Type where
+  | z
+  | b0 (n : Bin)
+  | b1 (n : Bin)
+
+def incr (m : Bin) : Bin
+  -- ADMITDEF
+  := match m with
+  | .z => .b1 .z
+  | .b0 m' => .b1 m'
+  | .b1 m' => .b0 (incr m')
+  -- /ADMITDEF
+
+def binToNat (m : Bin) : Nat
+  -- ADMITDEF
+  := match m with
+  | .z => 0
+  | .b0 m' => binToNat m' * 2
+  | .b1 m' => binToNat m' * 2 + 1
+  -- /ADMITDEF
+
+/- test_bin_incr1 -/
+example : incr (.b1 .z) = .b0 (.b1 .z) := by rfl  -- ADMITTED
+/- test_bin_incr2 -/
+example : incr (.b0 (.b1 .z)) = .b1 (.b1 .z) := by rfl  -- ADMITTED
+/- test_bin_incr3 -/
+example : incr (.b1 (.b1 .z)) = .b0 (.b0 (.b1 .z)) := by rfl  -- ADMITTED
+/- test_bin_incr4 -/
+example : binToNat (.b0 (.b1 .z)) = 2 := by rfl  -- ADMITTED
+/- test_bin_incr5 -/
+example : binToNat (incr (.b1 .z)) = 1 + binToNat (.b1 .z) := by rfl  -- ADMITTED
+/- test_bin_incr6 -/
+example : binToNat (incr (incr (.b1 .z))) = 2 + binToNat (.b1 .z) := by rfl  -- ADMITTED
+/- test_bin_incr7 -/
+example : binToNat (.b0 (.b0 (.b0 (.b1 .z)))) = 8 := by rfl  -- ADMITTED
+
+-- GRADE_THEOREM 0.5: incr_test1
+-- GRADE_THEOREM 0.5: incr_test2
+-- GRADE_THEOREM 0.5: incr_test3
+-- GRADE_THEOREM 0.5: binToNat_test1
+-- GRADE_THEOREM 0.5: binToNat_test2
+-- GRADE_THEOREM 0.5: binToNat_test3
+-- []
 
 /- TODO: Give more intro to these two theorems on booleans. -/
 

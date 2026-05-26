@@ -81,9 +81,12 @@ namespace NatPlayground
 
 -- TERSE: /- For simplicity in proofs, we choose unary representation. -/
 
+@
 inductive Nat : Type where
   | zero
   | succ (n : Nat)
+
+namespace Nat
 
 /-
   With this definition, 0 is represented by `zero`, 1 by `succ zero`,
@@ -112,10 +115,9 @@ inductive OtherNat : Type where
 
 def pred (n : Nat) : Nat :=
   match n with
-  | .zero => .zero
-  | .succ n' => n'
+  | zero => zero
+  | succ n' => n'
 
-end NatPlayground
 
 -- TERSE: /- *** -/
 
@@ -126,23 +128,32 @@ end NatPlayground
   the constructors `Nat.zero` and `Nat.succ`.
 -/
 
+-- TODO: change this to not talk about numerals yet, instead define our own.
+-- TODO: document this
+
+def one : Nat := succ zero
+def two : Nat := succ one
+def three : Nat := succ two
+def four : Nat := succ three
+def five : Nat := succ four
+
 -- RAB: Hovering over succ points out that "Using Nat.succ n should usually be
 -- avoided in favor of n + 1, which is the simp normal form." How quickly should
 -- we break away from succ style and go straight to n + 1 style? More broadly,
 -- how much do we want to adhere to conventions like simp normal form? In my
 -- view, following standard Lean style wherever possible is a good thing to be
 -- doing, in no small part because proof view displays terms in Lean style, e.g. (n +
--- 1) instead of .succ n.
+-- 1) instead of `succ n`.
 
-example : .succ (.succ (.succ (.succ .zero))) = 4 := by rfl
+example : succ (succ (succ (succ .zero))) = four := by rfl
 
 def minustwo (n : Nat) : Nat :=
   match n with
-  | 0                => 0
-  | 1                => 0
-  | .succ (.succ n') => n'
+  | zero => zero
+  | succ (zero) => zero
+  | succ (succ n') => n'
 
-#eval minustwo 4
+#eval minustwo four
 /- ===> 2 -/
 
 -- FULL
@@ -168,9 +179,9 @@ def minustwo (n : Nat) : Nat :=
 
 def even (n : Nat) : Bool :=
   match n with
-  | 0                => true
-  | 1                => false
-  | .succ (.succ n') => even n'
+  | zero => true
+  | succ (zero) => false
+  | succ (succ n') => even n'
 
 -- TERSE: /- *** -/
 /-
@@ -189,10 +200,21 @@ example : odd 4 = false := by rfl
 -- TERSE: /- *** -/
 -- TERSE: /- A multi-argument recursive function. -/
 
+@[irreducible]
 def add (n : Nat) (m : Nat) : Nat :=
   match m with
   | 0 => n
   | .succ m' => .succ (add n m')
+
+unseal add in
+theorem add_zero : ∀ n, add n 0 = n := by
+  intro n
+  rfl
+
+unseal add in
+theorem add_succ : ∀ n m, add n (.succ m) = .succ (add n m) := by
+  intro n
+
 
 -- FULL
 /-
@@ -713,6 +735,7 @@ def plus' (n : Nat) (m : Nat) : Nat :=
 -- []
 -- /FULL
 
+end Nat
 
 /-
   ######################################################################
