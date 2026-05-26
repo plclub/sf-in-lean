@@ -961,7 +961,7 @@ theorem mul_eq_0 (n m : Nat) :
 
 #check (Exists : ∀ {T : Type}, (T → Prop) → Prop)
 
-def Even x := ∃ n : Nat, x = double n
+abbrev Even x := ∃ n : Nat, x = double n
 
 #check (Even : Nat → Prop)
 
@@ -1253,15 +1253,13 @@ theorem All_In α (P : α → Prop) (xs : List α) :
     a property `P` such that `P n` is equivalent to `Podd n` when `n` is odd
     and equivalent to `Peven n` otherwise. -/
 
-@[irreducible]
-def combine_odd_even (Podd Peven : Nat → Prop) : Nat → Prop :=
+abbrev combine_odd_even (Podd Peven : Nat → Prop) : Nat → Prop :=
   -- ADMITDEF
   fun n => bif odd n then Podd n else Peven n
   -- /ADMITDEF
 
 /- To test your definition, prove the following facts: -/
 
-unseal combine_odd_even in
 theorem combined_odd_even_intro Podd Peven n
     (hodd : odd n = true → Podd n)
     (heven : odd n = false → Peven n) :
@@ -1276,7 +1274,6 @@ theorem combined_odd_even_intro Podd Peven n
     apply hodd; exact h
   -- /ADMITTED
 
-unseal combine_odd_even in
 theorem combined_odd_even_elim_odd Podd Peven n
     (h : combine_odd_even Podd Peven n)
     (hodd : odd n = true) : Podd n := by
@@ -1286,7 +1283,6 @@ theorem combined_odd_even_elim_odd Podd Peven n
   dsimp at h; exact h
   -- /ADMITTED
 
-unseal combine_odd_even in
 theorem combined_odd_even_elim_even Podd Peven n
     (h : combine_odd_even Podd Peven n)
     (hodd : odd n = false) : Peven n := by
@@ -1650,7 +1646,7 @@ example : even 42 = true := rfl
 
 /- ... or that there exists some `k` such that `n = double k`. -/
 unseal double in
-example : Even 42 := by exists 21
+example : Even 42 := by dsimp [Even]; exists 21
 
 /- Of course, it would be deeply strange if these two characterizations
     of evenness did not describe the same set of natural numbers!
@@ -1699,7 +1695,7 @@ theorem even_bool_prop (n : Nat) : even n = true ↔ Even n := by
   case mp =>
     intro h
     let ⟨k, hk⟩ := even_double_conv n
-    rw [h] at hk; dsimp at hk; exists k
+    rw [h] at hk; dsimp at hk; dsimp [Even]; exists k
   case mpr =>
     intro ⟨k, hk⟩; rw [hk]; apply even_double
   -- /FOLD
@@ -1711,20 +1707,19 @@ theorem even_bool_prop (n : Nat) : even n = true ↔ Even n := by
 /- Similarly, we can state what it means for a number to be nonzero
     in two different ways: -/
 
-def Nonzero (n : Nat) : Prop := ∃ m, n = succ m
+abbrev Nonzero (n : Nat) : Prop := ∃ m, n = succ m
 
-def nonzero (n : Nat) := not (n == 0)
+abbrev nonzero (n : Nat) := not (n == 0)
 
 theorem nonzero_bool_prop (n : Nat) :
     nonzero n = true ↔ Nonzero n := by
   -- WORKINCLASS
-  unfold Nonzero nonzero; constructor
+  constructor
   case mp =>
     intro h; cases n
-    case zero => rw [eqb_refl, not] at h; contradiction
-    case succ n' => exists n'
-  case mpr =>
-    intro ⟨m, hm⟩; rw [hm]; rfl
+    case zero => dsimp [nonzero] at h; rw [not] at h; contradiction
+    case succ n' => dsimp [Nonzero]; exists n'
+  case mpr => intro ⟨m, hm⟩; rw [hm]; rfl
   -- /WORKINCLASS
 -- /HIDE
 
@@ -1754,7 +1749,7 @@ theorem beq_eq_true (n1 n2 : Nat) :
     for defining functions, since we can test whether they are true using
     conditional expressions. -/
 
-def is_even_prime (n : Nat) : Bool :=
+abbrev is_even_prime (n : Nat) : Bool :=
   bif n == 2 then true else false
 
 /- FULL:  FULL: Beyond the fact that non-computable properties are possible
@@ -2242,8 +2237,7 @@ unseal rev_append in
 theorem rev_append_cons {α} (x : α) xs1 xs2 :
     rev_append (x :: xs1) xs2 = rev_append xs1 (x :: xs2) := rfl
 
-@[irreducible]
-def tr_rev {α} (xs : List α) : List α := rev_append xs []
+abbrev tr_rev {α} (xs : List α) : List α := rev_append xs []
 
 /- This version of `rev` is said to be _tail recursive_, because the recursive
     call to the function is the last operation that needs to be performed
@@ -2263,7 +2257,6 @@ theorem rev_append_rev {α} : ∀ xs1 xs2 : List α,
     apply ih
 -- /QUIETSOLUTION
 
-unseal tr_rev in
 theorem tr_rev_correct {α} : @tr_rev α = @List.rev α := by
   -- ADMITTED
   ext1 xs; dsimp [tr_rev]
@@ -2282,7 +2275,7 @@ theorem tr_rev_correct {α} : @tr_rev α = @List.rev α := by
 
 /- TERSE: The following reasoning principle is _not_ derivable in Lean: -/
 
-def excluded_middle := ∀ P : Prop, P ∨ ¬ P
+abbrev excluded_middle := ∀ P : Prop, P ∨ ¬ P
 
 /- FULL: To understand operationally why this is the case, recall that,
     to prove a statement of the form `P ∨ Q`, we use the `left` and `right`
@@ -2457,15 +2450,15 @@ theorem not_exists_dist (α : Type) (P : α → Prop) :
     You should not use `by_cases`, as this implicitly introduces
     a dependency on `excluded_middle`.  -/
 
-def peirce := ∀ P Q : Prop, ((P → Q) → P) → P
+abbrev peirce := ∀ P Q : Prop, ((P → Q) → P) → P
 
-def not_not := ∀ P : Prop, ¬ ¬ P → P
+abbrev not_not := ∀ P : Prop, ¬ ¬ P → P
 
-def de_morgan_not_and_not := ∀ P Q : Prop, ¬ (¬ P ∧ ¬ Q) → P ∨ Q
+abbrev de_morgan_not_and_not := ∀ P Q : Prop, ¬ (¬ P ∧ ¬ Q) → P ∨ Q
 
-def imp_or := ∀ P Q : Prop, (P → Q) → (¬ P ∨ Q)
+abbrev imp_or := ∀ P Q : Prop, (P → Q) → (¬ P ∨ Q)
 
-def consequentia_mirabilis := ∀ P : Prop, (¬ P → P) → P
+abbrev consequentia_mirabilis := ∀ P : Prop, (¬ P → P) → P
 
 -- SOLUTION
 -- JC: If the hint suggests proving the implications in a loop,
