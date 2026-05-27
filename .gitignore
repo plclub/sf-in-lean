@@ -1,3 +1,4 @@
 .lake
 .DS_Store
 _out/
+__pycache__/
