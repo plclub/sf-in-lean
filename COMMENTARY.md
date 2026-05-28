@@ -212,3 +212,11 @@ and something about types and functional PL. The contents will also be somewhat 
 * Volume 2 will be the Type Systems and Lambda Calculus book
 * Volume 3 will be the Imperative Languages and Hoare Logic book
   * Moving this to after the Type Systems book should make a smoother transition to later material about specification and imperative proofs, rather than having it come before the Type Systems work. 
+
+## Grading
+
+* An existing autograder is https://github.com/robertylewis/lean4-autograder-main
+* Used in actual courses:
+  * Rob Lewis's [_Formal Proof and Verification_](https://github.com/BrownCS1951x) at Brown
+  * Heather Macbeth's [_The Mechanics of Proof_](https://github.com/hrmacbeth/math2001) at Fordham
+* I suspect there will be some nontrivial tinkering to get this working with Verso exactly as desired
