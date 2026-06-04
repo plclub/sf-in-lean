@@ -111,7 +111,7 @@
        Fixpoint, not Inductive.  APT 21: Ordered trees are also
        surprisingly complex to describe (see VFA/SearchTree.v). Maybe
        Permutations would be be a good choice?  The only problem is
-       convincing students that the standard Rocq inductive definition
+       convincing students that the standard Lean inductive definition
        is actually correct (see VFA/Perm.v)!
 
        We should also think about how to make the material flow better
@@ -278,12 +278,9 @@ def csf (n : Nat) : Nat :=
    rejected by Lean's termination checker, since the argument to
    the recursive call, `csf n`, is not "obviously smaller" than `n`. -/
 
-/- TODO: (OA) How do we do failed definitions? -/
-namespace Failed
-
 /--
 error: fail to show termination for
-  Failed.reaches1_in
+  reaches1_in
 with errors
 failed to infer structural recursion:
 Cannot use parameter n:
@@ -304,9 +301,12 @@ def reaches1_in (n : Nat) : Nat :=
   if n == 1 then 0
   else 1 + reaches1_in (csf n)
 
-end Failed
-
-/- Indeed, this isn't just a pointless limitation: functions in Lean
+/-
+   You can write this definition in a standard programming language.
+   This definition is, however, rejected by Lean's termination
+   checker, since the argument to the recursive call, `csf n`, is not
+   "obviously smaller" than `n`.
+   Indeed, this isn't just a pointless limitation: functions in Lean
    are required to be total, to ensure logical consistency.
 
    Moreover, we can't fix it by devising a more clever termination
@@ -322,16 +322,14 @@ end Failed
    smaller than `n`, we certainly can't convince it that
    `(3 * n) + 1` is smaller than `n`! -/
 
-namespace Failed
-
 /--
 error: fail to show termination for
-  Failed.CollatzHoldsFor
+  collatz_holds_for
 with errors
 failed to infer structural recursion:
 Cannot use parameter n:
   failed to eliminate recursive application
-    CollatzHoldsFor (div2 n)
+    collatz_holds_for (div2 n)
 
 
 failed to prove termination, possible solutions:
@@ -343,14 +341,17 @@ h✝ : even n = true
 ⊢ div2 n < x✝
 -/
 #guard_msgs in
-def CollatzHoldsFor (n : Nat) : Prop :=
+def collatz_holds_for (n : Nat) : Prop :=
   match n with
   | 0 => False
   | 1 => True
-  | _ => if even n then CollatzHoldsFor (div2 n)
-                   else CollatzHoldsFor ((3 * n) + 1)
+  | _ => if even n then collatz_holds_for (div2 n)
+                   else collatz_holds_for ((3 * n) + 1)
 
-end Failed
+/-- This recursive function is also rejected by the termination
+    checker, since, while we could in principle convince Lean that
+    `div2 n` is smaller than `n`, we certainly can't convince it that
+    `(3 * n) + 1` is smaller than `n`! -/
 
 /- TERSE: *** -/
 
@@ -483,7 +484,7 @@ def CollatzHoldsFor' (n : Nat) : Prop := ∃ k, ChfIn n k
 /- The Collatz conjecture then states that the sequence beginning
    from _any_ positive number reaches `1`: -/
 
-theorem collatz : ∀ n, n ≠ 0 → CollatzHoldsFor n := by sorry
+def collatz := ∀ n, n ≠ 0 → CollatzHoldsFor n
 
 /- If you succeed in proving this conjecture, you've got a bright
    future as a number theorist!  But don't spend too long on it --
@@ -497,9 +498,9 @@ theorem collatz : ∀ n, n ≠ 0 → CollatzHoldsFor n := by sorry
 -- ##############################################
 -- ** Example: Binary relation for comparing numbers
 
-/- A binary _relation_ on a set `X` has Lean type `X → X → Prop`.
+/- A binary _relation_ on a set `α` has Lean type `α → α → Prop`.
    This is a family of propositions parameterized by two elements
-   of `X` -- i.e., a proposition about pairs of elements of `X`. -/
+   of `α` -- i.e., a proposition about pairs of elements of `α`. -/
 
 /- For example, one familiar binary relation on `Nat` is `Le : Nat
    → Nat → Prop`, the less-than-or-equal-to relation, which can be
@@ -539,3 +540,567 @@ example : 3 ⊑ 5 := by
 -- HIDEFROMHTML
 end LePlayground
 -- /HIDEFROMHTML
+
+-- ##############################################
+/- ** Example: Transitive Closure -/
+
+/- Another example: The _reflexive and transitive closure_ of a
+    relation [R] is the smallest relation that contains [R] and that
+    is reflexive and transitive. This can be defined by the following
+    three rules (where we added a reflexivity rule to [ClosTrans]):
+[[[
+                     R x y
+                ---------------- (t_step)
+                ClosTrans R x y
+
+       ClosTrans R x y    ClosTrans R y z
+       ------------------------------------ (t_trans)
+                ClosTrans R x z
+]]]
+
+    In Lean this looks as follows:
+-/
+
+inductive ClosTrans {α: Type} (R: α->α->Prop) : α → α → Prop where
+  | t_step (x y : α) :
+      R x y ->
+      ClosTrans R x y
+  | t_trans (x y z : α) :
+      ClosTrans R x y ->
+      ClosTrans R y z ->
+      ClosTrans R x z
+
+-- TERSE:
+
+/- For example, suppose we define a "parent of" relation on a group
+    of people... -/
+
+inductive Person : Type where
+  | sage
+  | cleo
+  | ridley
+  | moss
+
+inductive ParentOf : Person -> Person -> Prop where
+  | po_SC : ParentOf .sage .cleo
+  | po_SR : ParentOf .sage .ridley
+  | po_CM : ParentOf .cleo .moss
+
+/- FULL: In this example, `sage` is a parent of both `cleo` and
+    `ridley`; and `cleo` is a parent of `moss`. -/
+
+/- The [parent_of] relation is not transitive, but we can define
+   an "ancestor of" relation as its transitive closure: -/
+
+def AncestorOf : Person -> Person -> Prop := ClosTrans ParentOf
+
+
+/- Here is a derivation showing that Sage is an ancestor of Moss:
+[[
+
+ ———————————————————(po_SC)     ———————————————————(po_CM)
+ ParentOf .sage .cleo            ParentOf .cleo .moss
+—————————————————————(t_step)  —————————————————————(t_step)
+AncestorOf .sage .cleo          AncestorOf .cleo .moss
+————————————————————————————————————————————————————(t_trans)
+                AncestorOf .sage .moss
+]]
+-/
+
+-- TERSE: HIDEFROMHTML
+example : AncestorOf .sage .moss := by
+  apply ClosTrans.t_trans
+  . apply ClosTrans.t_step; apply ParentOf.po_SC
+  . apply ClosTrans.t_step; apply ParentOf.po_CM
+-- TERSE: /HIDEFROMHTML
+
+/- HIDE: CH: A simple exercise could be nice here? -/
+
+/- FULL: Computing the transitive closure can be undecidable even for
+    a relation R that is decidable (e.g., the `cms` relation below), so in
+    general we can't expect to define transitive closure as a boolean
+    function. Fortunately, Lean allows us to define transitive closure
+    as an inductive relation.
+
+    The transitive closure of a binary relation cannot, in general, be
+    expressed in first-order logic. The logic of Lean is, however, much
+    more powerful, and can easily define such inductive relations. -/
+
+-- ##############################################
+-- ** Example: Reflexive and Transitive Closure
+
+/- As another example, the _reflexive and transitive closure_
+    of a relation `R` is the
+    smallest relation that contains `R` and that is reflexive and
+    transitive. This can be defined by the following three rules
+    (where we added a reflexivity rule to `ClosTrans`):
+[[[
+                        R x y
+                --------------------- (rt_step)
+                ClosReflTrans R x y
+
+                --------------------- (rt_refl)
+                ClosReflTrans R x x
+
+        ClosReflTrans R x y    ClosReflTrans R y z
+     ---------------------------------------------- (rt_trans)
+                ClosReflTrans R x z
+]]]
+-/
+
+-- TERSE: HIDEFROMHTML
+inductive ClosReflTrans {α: Type} (R: α -> α -> Prop) : α -> α -> Prop where
+  | rt_step (x y : α) :
+      R x y ->
+      ClosReflTrans R x y
+  | rt_refl (x : α) :
+      ClosReflTrans R x x
+  | rt_trans (x y z : α) :
+      ClosReflTrans R x y ->
+      ClosReflTrans R y z ->
+      ClosReflTrans R x z
+-- TERSE: /HIDEFROMHTML
+
+
+-- TERSE: ***
+
+/- For instance, this enables an equivalent definition of the Collatz
+    conjecture.  First we define a binary relation corresponding to
+    the "Collatz step function" `csf`: -/
+
+def cs (n m : Nat) : Prop := csf n = m
+
+/- This Collatz step relation can be used in conjunction with the
+    reflexive and transitive closure operation to define a _Collatz
+    multi-step_ (`cms`) relation, expressing that a number `n`
+    reaches another number `m` in zero or more Collatz steps: -/
+
+def cms (n m : Nat) : Prop := ClosReflTrans cs n m
+def collatz' : Prop := forall (n : Nat), n ≠ 0 -> cms n 1
+
+
+/- FULL: This `cms` relation defined in terms of
+    `ClosReflTrans` allows for more interesting derivations than the
+    linear ones of the directly-defined `CollatzHoldsFor` relation:
+[[
+
+csf 16 = 8         csf 8 = 4         csf 4 = 2         csf 2 = 1
+————————(rt_step)  ———————(rt_step)  ———————(rt_step)  ———————(rt_step)
+cms 16 8           cms 8 4           cms 4 2           cms 2 1
+—————————————————————————(rt_trans)  ————————————————————————(rt_trans)
+        cms 16 4                              cms 4 1
+        —————————————————————————————————————————————(rt_trans)
+                           cms 16 1
+]]
+-/
+
+/- HIDE: CH: Would it be helpful to add an exercise later proving cms
+   equivalent to CollatzHoldsFor -/
+
+/- FULL -/
+/- EX1M? (clos_refl_trans_sym) -/
+/- How would you modify the [ClosReflTrans] definition above so as
+    to define the reflexive, symmetric, and transitive closure? -/
+
+-- SOLUTION
+inductive ClosReflTransSym {α: Type} (R: α->α->Prop) : α->α->Prop where
+  | srt_refl (x : α) :
+      ClosReflTransSym R x x
+  | srt_step (x y : α) :
+      R x y ->
+      ClosReflTransSym R x y
+  | srt_sym (x y : α) :
+      ClosReflTransSym R y x ->
+      ClosReflTransSym R x y
+  | srt_trans (x y z : α) :
+      ClosReflTransSym R x y ->
+      ClosReflTransSym R y z ->
+      ClosReflTransSym R x z
+-- /SOLUTION
+-- []
+-- /FULL
+
+
+-- ##############################################
+/- Example: Permutations -/
+
+/- The familiar mathematical concept of _permutation_ also has an
+    elegant formulation as an inductive relation.  For simplicity,
+    let's focus on permutations of lists with exactly three
+    elements.
+
+    We can define such permulations by the following rules:
+[[[
+               --------------------- (perm3_swap12)
+               Perm3 [a;b;c] [b;a;c]
+
+               --------------------- (perm3_swap23)
+               Perm3 [a;b;c] [a;c;b]
+
+            Perm3 l1 l2       Perm3 l2 l3
+            ----------------------------- (perm3_trans)
+                     Perm3 l1 l3
+]]]
+    For instance we can derive [Perm3 [1;2;3] [3;2;1]] as follows:
+[[
+    ————————(perm_swap12)  —————————————————————(perm_swap23)
+    Perm3 [1;2;3] [2;1;3]  Perm3 [2;1;3] [2;3;1]
+    ——————————————————————————————(perm_trans)  ————————————(perm_swap12)
+        Perm3 [1;2;3] [2;3;1]                   Perm [2;3;1] [3;2;1]
+        —————————————————————————————————————————————————————(perm_trans)
+                          Perm3 [1;2;3] [3;2;1]
+]]
+-/
+
+/- FULL: This definition says:
+      - If `l2` can be obtained from `l1` by swapping the first and
+        second elements, then `l2` is a permutation of `l1`.
+      - If `l2` can be obtained from `l1` by swapping the second and
+        third elements, then `l2` is a permutation of `l1`.
+      - If `l2` is a permutation of `l1` and `l3` is a permutation of
+        `l2`, then `l3` is a permutation of `l1`. -/
+
+-- TERSE: ***
+
+/- In Lean, we can define `Perm3` as follows: -/
+
+inductive Perm3 {α : Type} : List α -> List α -> Prop where
+  | perm3_swap12 (a b c : α) :
+      Perm3 [a, b, c] [b, a, c]
+  | perm3_swap23 (a b c : α) :
+      Perm3 [a, b, c] [a, c, b]
+  | perm3_trans (l1 l2 l3 : List α) :
+      Perm3 l1 l2 -> Perm3 l2 l3 -> Perm3 l1 l3
+
+
+-- FULL
+-- EX1M? (perm)
+/- According to this definition, is [[1;2;3]] a permutation of
+    itself? -/
+
+-- SOLUTION
+/- Yes! Just apply `perm3_swap12` twice (or `perm3_swap23` twice). -/
+-- /SOLUTION
+-- []
+-- /FULL
+
+-- ##############################################
+/- ** Example: Evenness (yet again) -/
+
+/- We've already seen two ways of stating a proposition that a number
+    `n` is even: We can say
+
+      (1) `even n = true` (using the recursive boolean function `even`), or
+
+      (2) `exists k, n = double k` (using an existential quantifier). -/
+
+-- TERSE: ***
+
+/- A third possibility, which we'll use as a simple running example
+    in this chapter, is to say that a number is even if we can
+    _establish_ its evenness from the following two rules:
+[[[
+                          ---- (ev_0)
+                          ev 0
+
+                          ev n
+                      ------------ (ev_succ_succ)
+                      ev ((n + 1) + 1)
+]]]
+-/
+
+/- FULL: Intuitively these rules say that:
+       - The number `0` is even.
+       - If `n` is even, then `(n + 1) + 1` is even. -/
+
+/- FULL: (Defining evenness in this way may seem a bit confusing,
+    since we have already seen two perfectly good ways of doing
+    it. It makes a convenient running example because it is
+    simple and compact, but we will soon return to the more compelling
+    examples above.) -/
+
+/- To illustrate how this new definition of evenness works, let's
+    imagine using it to show that [4] is even:
+[[
+                           ———— (ev_0)
+                           ev 0
+                       ———————————— (ev_SS)
+                       ev (S (S 0))
+                   ———————————————————— (ev_SS)
+                   ev (S (S (S (S 0))))
+]]
+-/
+
+/- FULL: In words, to show that `4` is even, by rule `ev_succ_succ`, it
+   suffices to show that `2` is even. This, in turn, is again
+   guaranteed by rule `ev_succ_succ`, as long as we can show that `0` is
+   even. But this last fact follows directly from the `ev_0` rule. -/
+
+-- TERSE: ***
+
+/- We can translate the informal definition of evenness from above
+    into a formal `inductive` declaration, where each "way that a
+    number can be even" corresponds to a separate constructor: -/
+
+inductive Ev : Nat -> Prop where
+  | ev_0                       : Ev 0
+  | ev_succ_succ (n : Nat) (H : Ev n) : Ev ((n + 1) + 1)
+
+
+/- TERSE: There are both similarities and a few differences between
+    inductive _properties_ like `Ev` and the inductive _types_ like
+    `Nat` or `List` that we have been using throughout the course:
+[[
+    inductive list (α:Type) : Type where
+      | nil                       : list α
+      | cons (x : α) (l : list α) : list α.
+]]]
+    The most important difference is that the constructors of `Ev`,
+    `ev_0` and `ev_succ_succ`, yield different types (`Ev 0` and `Ev ((n + 1) + 1)`),
+    whereas the `List` constructors both build `List α` values. -/
+
+-- FULL
+/- Such definitions are interestingly different from previous uses of
+    `inductive` for defining inductive datatypes like `Nat` or `List`.
+    For one thing, we are defining not a [Type] (like `Nat`) or a
+    function yielding a `Type` (like `List`), but rather a function
+    from `Nat` to `Prop` -- that is, a property of numbers. But what
+    is really new is that, because the `Nat` argument of `Ev` appears
+    to the _right_ of the colon on the first line, it is allowed to
+    take _different_ values in the types of different constructors:
+    `0` in the type of `ev_0` and `((n + 1) + 1)` in the type of `ev_succ_succ`.
+    Accordingly, the type of each constructor must be specified
+    explicitly (after a colon), and each constructor's type must have
+    the form `Ev n` for some natural number `n`.
+
+    In contrast, recall the definition of `List`:
+[[
+    inductive List (α:Type) : Type where
+      | nil
+      | cons (x : α) (l : List α)
+]]
+    or (equivalently but more explicitly):
+[[
+    inductive List (α:Type) : Type where
+      | nil                       : List α
+      | cons (x : α) (l : List α) : List α
+]]
+   This definition introduces the `α` parameter _globally_, to the
+   _left_ of the colon, forcing the result of `nil` and `cons` to be
+   the same type (i.e., `List α`).  But if we had tried to bring `Nat`
+   to the left of the colon in defining `Ev`, we would have seen an
+   error: -/
+
+/--
+error: Mismatched inductive type parameter in
+  WrongEv 0
+The provided argument
+  0
+is not definitionally equal to the expected parameter
+  n
+
+Note: The value of parameter `n` must be fixed throughout the inductive declaration. Consider making this parameter an index if it must vary.
+-/
+#guard_msgs in
+inductive WrongEv (n : Nat) : Prop where
+  | wrong_ev_0 : WrongEv 0
+  | wrong_ev_SS (H: WrongEv n) : WrongEv ((n + 1) + 1)
+
+
+/- In an `inductive` definition, an argument to the type constructor
+    on the left of the colon is called a "parameter", whereas an
+    argument on the right is called an "index" or "annotation."
+
+    For example, in `inductive List (α : Type) := ...`, the `α` is a
+    parameter, while in `inductive Ev : nat -> Prop := ...`, the
+    unnamed `Nat` argument is an index. -/
+-- /FULL
+
+-- TERSE: ***
+
+/- We can think of the inductive definition of `Ev` as defining a
+    Lean property `Ev : nat -> Prop`, together with two "evidence
+    constructors": -/
+
+#check (Ev.ev_0) -- Ev 0
+#check Ev.ev_succ_succ -- forall (n : Nat) (H : Ev n) : Ev ((n + 1) + 1)
+
+-- FULL
+/- Indeed, Lean also accepts the following equivalent definition of `Ev` -/
+
+namespace EvPlayground
+
+inductive Ev : Nat -> Prop where
+  | ev_0  : Ev 0
+  | ev_SS : forall (n : Nat), Ev n -> Ev ((n + 1) + 1)
+
+end EvPlayground
+-- /FULL
+
+-- TERSE: ***
+/- These evidence constructors can be thought of as "primitive
+    evidence of evenness", and they can be used later on just like proven
+    theorems.  In particular, we can use Lean's `apply` and `exact` tactics with the
+    constructor names to obtain evidence for `Ev` of particular
+    numbers... -/
+
+theorem ev_4 : Ev 4 := by
+  apply Ev.ev_succ_succ; apply Ev.ev_succ_succ; exact Ev.ev_0
+
+/- ... or we can use function application syntax to combine several
+    constructors: -/
+
+theorem ev_4' : Ev 4 := by
+  exact Ev.ev_succ_succ 2 (Ev.ev_succ_succ 0 Ev.ev_0)
+
+/- In this way, we can also prove theorems that have hypotheses
+    involving `Ev`. -/
+
+theorem ev_plus4 : forall n, Ev n -> Ev (4 + n) := by
+  intro n Hn
+  rw [Nat.add_comm]
+  exact (Ev.ev_succ_succ _ (Ev.ev_succ_succ _ Hn))
+
+-- FULL
+-- EX1 (ev_double)
+theorem ev_double : forall n, Ev (double n) := by
+  -- ADMITTED
+  intros n; induction n
+  case zero =>
+    rw [double_zero]; exact Ev.ev_0
+  case succ n IH =>
+    rw [double_succ]; exact Ev.ev_succ_succ _ IH
+  -- /ADMITTED
+-- []
+-- /FULL
+
+-- ** Constructing Evidence for Permutations
+
+/- Similarly we can apply the evidence constructors to obtain
+    evidence of `Perm3 [1, 2, 3] [3, 2, 1]`: -/
+
+theorem Perm3_rev : Perm3 [1, 2, 3] [3, 2, 1] := by
+  apply Perm3.perm3_trans (l2:= [2, 3, 1])
+  . apply Perm3.perm3_trans (l2:=[2, 1, 3])
+    . apply Perm3.perm3_swap12
+    . apply Perm3.perm3_swap23
+  . apply Perm3.perm3_swap12
+
+-- TERSE: ***
+/- And again we can equivalently use function application syntax to
+    combine several constructors. (Note that the Lean type checker can
+    infer not only types, but also Nats and List, when they are clear
+    from the context.) -/
+
+theorem Perm3_rev' : Perm3 [1, 2, 3] [3, 2, 1] := by
+  exact (Perm3.perm3_trans _ [2, 3, 1] _
+          (Perm3.perm3_trans _ [2, 1, 3] _
+            (Perm3.perm3_swap12 _ _ _)
+            (Perm3.perm3_swap23 _ _ _))
+          (Perm3.perm3_swap12 _ _ _))
+
+/--/ So the informal derivation trees we drew above are not too far
+    from what's happening formally.  Formally we're using the evidence
+    constructors to build _evidence trees_, similar to the finite trees we
+    built using the constructors of data types such as nat, list,
+    binary trees, etc. -/
+
+-- FULL
+-- EX1 (Perm3)
+theorem Perm3_ex1 : Perm3 [1, 2, 3] [2, 3, 1] := by
+  -- ADMITTED
+  apply Perm3.perm3_trans (l2 := [2, 1, 3])
+  . apply Perm3.perm3_swap12
+  . apply Perm3.perm3_swap23
+  -- /ADMITTED
+
+theorem Perm3_refl : forall (α : Type) (a b c : α ), Perm3 [a, b, c] [a, b, c] := by
+  -- ADMITTED
+  intro α a b c
+  apply Perm3.perm3_trans (l2:=[b, a, c])
+  . apply Perm3.perm3_swap12
+  . apply Perm3.perm3_swap12
+-- /ADMITTED
+-- GRADE_THEOREM 0.5: Perm3_ex1
+-- GRADE_THEOREM 0.5: Perm3_refl
+-- []
+-- /FULL
+
+
+-- #######################################################
+-- * Using Evidence in Proofs
+
+/- Besides _constructing_ evidence that numbers are even, we can also
+    _destruct_ such evidence, reasoning about how it could have been
+    built.
+
+    Defining `Ev` with an `inductive` declaration tells Rocq not
+    only that the constructors `ev_0` and `ev_succ_succ` are valid ways to
+    build evidence that some number is `Ev`, but also that these two
+    constructors are the _only_ ways to build evidence that numbers
+    are `Ev`. -/
+
+/- TERSE: *** -/
+/- In other words, if someone gives us evidence `E` for the proposition
+    `ev n`, then we know that `E` must be one of two things:
+
+      - `E = ev_0` and `n = O`, or
+      - `E = ev_succ_succ n' E'` and `n = n' + 2)`, where `E'` is
+        evidence for `ev n'`. -/
+
+/- FULL: This suggests that it should be possible to analyze a
+    hypothesis of the form `ev n` much as we do inductively defined
+    data structures; in particular, it should be possible to argue either by
+    _case analysis_ or by _induction_ on such evidence.  Let's look at a
+    few examples to see what this means in practice. -/
+/- TERSE: This suggests that it should be possible to do _case
+    analysis_ and even _induction_ on evidence of evenness... -/
+
+/- ** Destructing and Inverting Evidence -/
+
+/- FULL: Suppose we are proving some fact involving a number `n`, and
+    we are given `ev n` as a hypothesis.  We already know how to
+    perform case analysis on `n` using `cases` or `induction`,
+    generating separate subgoals for the case where `n = O` and the
+    case where `n = S n'` for some `n'`.  But for some proofs we may
+    instead want to analyze the evidence for `ev n` _directly_.
+
+    As a tool for such proofs, we can formalize the intuitive
+    characterization that we gave above for evidence of `ev n`, using
+    `cases`. -/
+
+/- TERSE: We can prove our characterization of evidence for `ev n`,
+    using `cases`. -/
+
+theorem ev_inversion : forall (n : Nat),
+    Ev n ->
+    (n = 0) ∨ exists n', n = n' + 2 ∧ Ev n' := by
+    intro n H
+    cases H
+    case ev_0 =>
+      left; rfl
+    case ev_succ_succ n H =>
+      right; exists n
+
+/- Facts like this are often called "inversion lemmas" because they
+    allow us to "invert" some given information to reason about all
+    the different ways it could have been derived. -/
+/- FULL: Here there are two ways to prove `Ev n`, and the inversion
+    lemma makes this explicit. -/
+
+-- FULL
+-- EX1 (le_inversion)
+-- Let's prove a similar inversion lemma for [le].
+namespace LePlayground
+theorem le_inversion : forall (n m : Nat),
+  Le n m ->
+  (n = m) ∨ (exists m', m = m' + 1 ∧ Le n m') := by
+  /- ADMITTED -/
+  intros n m E
+  cases E
+  case le_n => left; rfl
+  case le_s m H => right; exists m
+/- /ADMITTED -/
+/-* [] -/
+end LePlayground
+/- /FULL -/
