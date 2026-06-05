@@ -1,9 +1,3 @@
--- RAB & CGH:
--- Basics will start in the new style. that is, each function is irreducible,
--- and we rewrite using lemmas. this is a sort of implementation-interface
--- approach that is quite idiomatic in lean.
-
-
 /-
 
   Basics: Functional Programming in Lean
@@ -101,8 +95,6 @@
   already have a strong understanding of how the Lean standard library works.
 -/
 
--- RAB ADDITION ^ (last p above)
-
 -- /FULL
 
 /-
@@ -160,7 +152,6 @@ def nextWorkingDay (d : Day) : Day :=
   easier.
 -/
 
--- RAB ADDITION ↓
 /- You may also notice the unique pattern matching syntax- for
   example, in "`.monday`". The `.` - is syntactic sugar for `Day.monday`, and
   exists to save the programmer the time of typing out the full qualified name.
@@ -185,7 +176,6 @@ def nextWorkingDay (d : Day) : Day :=
 -- /FULL
 
 
-
 #eval nextWorkingDay Day.friday
 /- ==> Day.monday -/
 
@@ -201,40 +191,36 @@ def nextWorkingDay (d : Day) : Day :=
   example, and observe the result in the Lean Infoview panel.)
 -/
 
--- RAB ADDITION ↓
-
 /-
-  Aside: Using the Lean Extension
+  ### Aside: Using the Lean Extension
 -/
 
 /-
-  In VSCode, development of Lean code is supported by
-  the Lean Extension, which provides an interactive "infoview" panel that
-  displays the results of commands like `#eval` and `#check`, as well as the
-  current goal state when working on proofs. You can hover over expressions in
-  the source code to see their types, and you can click on the results in the
-  infoview to navigate to their definitions. This makes it easier to understand
-  how your code is being interpreted by Lean and to debug any issues that
-  arise.
+  In VSCode, development of Lean code is supported by the Lean Extension, which
+  provides an interactive "InfoView" panel that displays the results of commands
+  like `#eval` and `#check`, as well as the current goal state when working on
+  proofs. You can hover over expressions in the source code to see their types,
+  and you can click on the results in the InfoView to navigate to their
+  definitions. This makes it easier to understand how your code is being
+  interpreted by Lean and to debug any issues that arise.
 
-  The infoview always follows your cursor, and Lean typechecks the file as you
+  The InfoView always follows your cursor, and Lean typechecks the file as you
   edit it, so you can see the results of your changes immediately. You can also
-  use the infoview to explore the definitions of functions and types that
-  you're using, which can be very helpful for understanding how they work.
+  use the InfoView to explore the definitions of functions and types that you're
+  using, which can be very helpful for understanding how they work.
 
   If you haven't already, install the Lean Extension in VSCode and open the
-  `Basics.lean` file to see the infoview in action. Try hovering over the
+  `Basics.lean` file to see the InfoView in action. Try hovering over the
   `nextWorkingDay` function and the `Day` type to see their definitions, and
   experiment with adding your own `#eval` commands to test other inputs.
 -/
 
--- RAB: There's a question of where exactly to put this.
 
 -- /FULL
 
 /-
-  Second, we can record what we _expect_ the result to be in the
-  form of a Lean "example":
+  Continuing with our simple type and function, we can record what we _expect_
+  the result of calling a function to be in the form of a Lean "example":
 -/
 
 /- test_next_working_day -/
@@ -291,10 +277,6 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
   scratch; later we'll switch to Lean's built-in `Bool`.
 -/
 
--- JC: Can we just gloss over what `section` is doing here,
--- or do we need to explain it?
-
--- RAB: No need, I think.
 section
 
 inductive MyBool : Type where
@@ -302,7 +284,9 @@ inductive MyBool : Type where
   | false
 open MyBool
 
--- TERSE: /- Booleans are also available in Lean's standard library, but in this course we'll define everything from scratch, just to see how it's done. -/
+-- TERSE:
+/- Booleans are also available in Lean's standard library, but in this
+   course we'll define everything from scratch, just to see how it's done. -/
 -- TERSE: /- *** -/
 -- FULL
 /-
@@ -326,15 +310,6 @@ def orb (b1 : MyBool) (b2 : MyBool) : MyBool :=
   match b1 with
   | .true => true
   | .false => b2
-
--- FULL
-/-
-  (Although we are rolling our own booleans here for the sake
-  of building up everything from scratch, Lean does, of course,
-  provide a default implementation of the booleans, together with a
-  multitude of useful functions and lemmas.)
--/
--- /FULL
 
 -- FULL
 /-
@@ -434,19 +409,14 @@ example : andb3 .true .true .false = .false := by rfl  -- ADMITTED
 -- []
 -- /FULL
 
--- JC: Now would be a good time to explicitly say we're switching
--- back to Lean's Bool, which conveniently has `bif ... then ... else`
--- syntax that we can then use.
-
--- RADDITION ↓
 
 -- TERSE: /- *** -/
 -- FULL
 /-
-  Now that we've seen how to define our own booleans, we can switch back to
-  Lean's built-in `Bool` type, which has the same structure but also includes
-  a lot of useful functions and lemmas.  We can even define functions to
-  convert between our `MyBool` and Lean's `Bool`.
+  Now that we've seen how to define our own booleans, we can switch to Lean's
+  built-in `Bool` type, which has the same structure but also includes a lot of
+  useful functions and lemmas.  We can even define functions to convert between
+  our `MyBool` and Lean's `Bool`.
 -/
 
 def myBoolToBool (b : MyBool) : Bool :=
@@ -466,10 +436,6 @@ def boolToMyBool (b : Bool) : MyBool :=
 
 end
 
-
--- RAB: From this point, there are about 450 lines of comments before
--- the next exercise. This is the same as in Rocq, but do we want
--- to keep this pattern?
 
 /- ###################################################################### -/
 /- ## Types -/
@@ -511,9 +477,8 @@ end
   produces an output of type `Bool`."
 -/
 
--- RADDITION ↓
-
 /-
+  ### Aside: Unicode in Lean
   You may notice that → is a unicode character, not a simple ASCII string. This
   is a common convention in Lean, and the Lean Extension provides convenient
   shortcuts for entering these characters. Simply typing \ (backslash) followed
@@ -615,16 +580,13 @@ def isRed (c : Color) : Bool :=
   ## Namespaces and Sections
 -/
 
--- JC: I edited a lot of the contents and comments in just this section,
--- I hope it makes sense.
-
 -- FULL
 /-
   Lean provides a _namespace system_ to aid in organizing large
-  developments.  If we enclose a collection of declarations in
+  developments. If we enclose a collection of declarations in
   `namespace X ... end X`, then, in the remainder of the file
   after the `end`, these definitions are referred to by names like
-  `X.foo` instead of just `foo`.  We will use this feature to limit
+  `X.foo` instead of just `foo`. We will use this feature to limit
   the scope of definitions, so that we are free to reuse names.
 -/
 -- /FULL
@@ -751,25 +713,6 @@ def allZero (nb : Nybble) : Bool :=
 
 end TuplePlayground
 
-
--- RAB: chapter covers:
--- inductive nats
--- nat notation
--- structural recursion
--- binary numerals
-
--- Main thought point: decide how much to get into and use the
--- specific features of Lean `Nat`.
--- In my opinion, the answer is "all the way."
-
--- Specifically:
--- Start early with the built-in `Nat` type, and use it for all examples and exercises.
--- Talk about notation, typeclasses, and the (n + 1) notation for succ.
--- We should use these builtins liberally and teach them as the norm, since they are.
--- We can start by comparing to Countdown, and then quickly move to the
--- built-in `Nat` and use it for all examples and exercises.
--- There should be a section on tactics and how much automation students can use.
-
 /-
   ######################################################################
   ## Numbers
@@ -777,14 +720,11 @@ end TuplePlayground
 
 -- FULL
 /-
-  We put this section in a namespace so that our own definition of
-  natural numbers does not interfere with the one from the
-  standard library.  In the rest of the book, we'll want to use
-  the standard library's.
+  We put this section in a namespace so that our own definition of natural
+  numbers does not interfere with the one from the standard library.
+  In the rest of the book, we'll use the standard library's.
 -/
 -- /FULL
-
-
 
 namespace NatPlayground
 
@@ -796,9 +736,6 @@ namespace NatPlayground
   the other hand, are an infinite set, so we'll need to use a
   slightly richer form of type declaration to represent them.
 -/
-
--- RAB: I moved over the notes from the Rocq book here, as I find they
--- very nicely motivate unary for someone who has not seen it before.
 
 /-
   There are many representations of numbers to choose from. You are
@@ -844,7 +781,6 @@ inductive Nat : Type where
   2 by `succ (succ zero)`, and so on.
 -/
 
-
 /-
   Naturally, Lean has its own definition of natural numbers.
 
@@ -858,10 +794,10 @@ inductive Nat : Type where
   simple definition, and introduce the Lean one shortly after.
 -/
 
-
 -- Maybe TODO: hide the next 3 lines ↓ this just lets you see (succ (succ zero))
 -- instead of NatPlayground.Nat.succ (NatPlayground.Nat.succ
 -- NatPlayground.Nat.zero) in the infoview.
+-- At least, that's what it's supposed to do... see TODO below.
 attribute [pp_nodot] Nat
 namespace Nat
 open Nat
@@ -884,14 +820,13 @@ inductive OtherNat : Type where
 
 /-
   The _interpretation_ of these representations arises from how we use them to
-  compute.
+  compute. A simple computation involving `Nat` is `pred` below.
 -/
 
 def pred (n : Nat) : Nat :=
   match n with
   | zero => zero
   | succ n' => n'
-
 
 -- TERSE: /- *** -/
 
@@ -914,11 +849,9 @@ abbrev ten : Nat := succ nine
 /- ... and so on. -/
 
 /-
- The `abbrev` keyword defines an abbreviation -
- useful for writing concrete terms.
--/
+ The `abbrev` keyword defines an abbreviation, and is useful for writing
+ concrete terms.
 
-/-
   Of course, we can verify our abbreviation does what we expect using `rfl`.
 -/
 
@@ -1021,14 +954,14 @@ theorem add_succ : ∀ n m, add n (succ m) = succ (add n m) := by
   rfl
 
 /-
-   These rules let us "evaluate" the function at arguments during a proof.
-   They give us the ability to use a fundamental proof, tool, a _tactic_,
-   to change the goal state of a proof to match one step of evaluating
-   a function.
+   These rules let us "evaluate" the function at arguments during a proof. They
+   give us the ability to use a fundamental proof, tool, a _tactic_, to change
+   the goal state of a proof to match one step of evaluating a function.
+
    Indeed we define these two rules using _tactics_: `intro` and `rfl`.
-   `intro` names a variable in a proof quantified under a "forall" (∀),
-    and `rfl`, as in the above examples, closes a proof of equality
-    whose left- and right-hand sides are definitionally equal.
+   `intro` names a variable in a proof quantified under a "forall" (∀), and
+   `rfl`, as in the above examples, closes a proof of equality whose left- and
+   right-hand sides are definitionally equal.
 -/
 
 -- FULL
