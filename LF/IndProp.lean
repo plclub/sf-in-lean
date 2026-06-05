@@ -108,7 +108,7 @@
        BCP 20: I remain puzzled by what is the really right example for
        this chapter.  Ordered trees (and sorted lists) don't feel quite
        right because students might think we should define them with
-       Fixpoint, not Inductive.  APT 21: Ordered trees are also
+       Fixpoint, not inductive.  APT 21: Ordered trees are also
        surprisingly complex to describe (see VFA/SearchTree.v). Maybe
        Permutations would be be a good choice?  The only problem is
        convincing students that the standard Lean inductive definition
@@ -738,9 +738,9 @@ inductive ClosReflTransSym {α: Type} (R: α→α→Prop) : α→α→Prop where
                --------------------- (perm3_swap23)
                Perm3 [a;b;c] [a;c;b]
 
-            Perm3 l1 l2       Perm3 l2 l3
+            Perm3 l₁ l₂       Perm3 l₂ l₃
             ----------------------------- (perm3_trans)
-                     Perm3 l1 l3
+                     Perm3 l₁ l₃
 ]]]
     For instance we can derive [Perm3 [1;2;3] [3;2;1]] as follows:
 [[
@@ -754,12 +754,12 @@ inductive ClosReflTransSym {α: Type} (R: α→α→Prop) : α→α→Prop where
 -/
 
 /- FULL: This definition says:
-      - If `l2` can be obtained from `l1` by swapping the first and
-        second elements, then `l2` is a permutation of `l1`.
-      - If `l2` can be obtained from `l1` by swapping the second and
-        third elements, then `l2` is a permutation of `l1`.
-      - If `l2` is a permutation of `l1` and `l3` is a permutation of
-        `l2`, then `l3` is a permutation of `l1`. -/
+      - If `l₂` can be obtained from `l₁` by swapping the first and
+        second elements, then `l₂` is a permutation of `l₁`.
+      - If `l₂` can be obtained from `l₁` by swapping the second and
+        third elements, then `l₂` is a permutation of `l₁`.
+      - If `l₂` is a permutation of `l₁` and `l₃` is a permutation of
+        `l₂`, then `l₃` is a permutation of `l₁`. -/
 
 -- TERSE: ***
 
@@ -770,8 +770,8 @@ inductive Perm3 {α : Type} : List α → List α → Prop where
       Perm3 [a, b, c] [b, a, c]
   | perm3_swap23 (a b c : α) :
       Perm3 [a, b, c] [a, c, b]
-  | perm3_trans (l1 l2 l3 : List α) :
-      Perm3 l1 l2 → Perm3 l2 l3 → Perm3 l1 l3
+  | perm3_trans (l₁ l₂ l₃ : List α) :
+      Perm3 l₁ l₂ → Perm3 l₂ l₃ → Perm3 l₁ l₃
 
 
 -- FULL
@@ -852,9 +852,9 @@ inductive Ev : Nat → Prop where
     inductive _properties_ like `Ev` and the inductive _types_ like
     `Nat` or `List` that we have been using throughout the course:
 [[
-    inductive list (α:Type) : Type where
-      | nil                       : list α
-      | cons (x : α) (l : list α) : list α.
+    inductive List (α:Type) : Type where
+      | nil                       : List α
+      | cons (x : α) (l : List α) : List α.
 ]]]
     The most important difference is that the constructors of `Ev`,
     `ev_0` and `ev_succ_succ`, yield different types (`Ev 0` and `Ev (n + 2)`),
@@ -913,14 +913,14 @@ inductive WrongEv (n : Nat) : Prop where
     argument on the right is called an "index" or "annotation."
 
     For example, in `inductive List (α : Type) := ...`, the `α` is a
-    parameter, while in `inductive Ev : nat → Prop := ...`, the
+    parameter, while in `inductive Ev : Nat → Prop := ...`, the
     unnamed `Nat` argument is an index. -/
 -- /FULL
 
 -- TERSE: ***
 
 /- We can think of the inductive definition of `Ev` as defining a
-    Lean property `Ev : nat → Prop`, together with two "evidence
+    Lean property `Ev : Nat → Prop`, together with two "evidence
     constructors": -/
 
 #check (Ev.ev_0) -- Ev 0
@@ -987,8 +987,8 @@ theorem ev_double : forall n, Ev (double n) := by
     evidence of `Perm3 [1, 2, 3] [3, 2, 1]`: -/
 
 theorem Perm3_rev : Perm3 [1, 2, 3] [3, 2, 1] := by
-  apply Perm3.perm3_trans (l2:= [2, 3, 1])
-  . apply Perm3.perm3_trans (l2:=[2, 1, 3])
+  apply Perm3.perm3_trans (l₂:= [2, 3, 1])
+  . apply Perm3.perm3_trans (l₂:=[2, 1, 3])
     . apply Perm3.perm3_swap12
     . apply Perm3.perm3_swap23
   . apply Perm3.perm3_swap12
@@ -1009,14 +1009,14 @@ theorem Perm3_rev' : Perm3 [1, 2, 3] [3, 2, 1] := by
 /--/ So the informal derivation trees we drew above are not too far
     from what's happening formally.  Formally we're using the evidence
     constructors to build _evidence trees_, similar to the finite trees we
-    built using the constructors of data types such as nat, list,
+    built using the constructors of data types such as Nat, List,
     binary trees, etc. -/
 
 -- FULL
 -- EX1 (Perm3)
 theorem Perm3_ex1 : Perm3 [1, 2, 3] [2, 3, 1] := by
   -- ADMITTED
-  apply Perm3.perm3_trans (l2 := [2, 1, 3])
+  apply Perm3.perm3_trans (l₂ := [2, 1, 3])
   . apply Perm3.perm3_swap12
   . apply Perm3.perm3_swap23
   -- /ADMITTED
@@ -1024,7 +1024,7 @@ theorem Perm3_ex1 : Perm3 [1, 2, 3] [2, 3, 1] := by
 theorem Perm3_refl : forall (α : Type) (a b c : α ), Perm3 [a, b, c] [a, b, c] := by
   -- ADMITTED
   intro α a b c
-  apply Perm3.perm3_trans (l2:=[b, a, c])
+  apply Perm3.perm3_trans (l₂:=[b, a, c])
   . apply Perm3.perm3_swap12
   . apply Perm3.perm3_swap12
 -- /ADMITTED
@@ -1041,7 +1041,7 @@ theorem Perm3_refl : forall (α : Type) (a b c : α ), Perm3 [a, b, c] [a, b, c]
     _destruct_ such evidence, reasoning about how it could have been
     built.
 
-    Defining `Ev` with an `inductive` declaration tells Rocq not
+    Defining `Ev` with an `inductive` declaration tells Lean not
     only that the constructors `ev_0` and `ev_succ_succ` are valid ways to
     build evidence that some number is `Ev`, but also that these two
     constructors are the _only_ ways to build evidence that numbers
@@ -1116,7 +1116,7 @@ end LePlayground
     /- QUIZ -/
     /- Which tactics are needed to prove this goal?
     [[
-      n : nat
+      n : Nat
       E : Ev n
       F : n = 1
       ======================
@@ -1416,7 +1416,7 @@ theorem inversion_ex2 : forall (n : Nat),
     /- Which tactics are needed to prove this goal, in addition to
         [simpl] and [apply]?
     [[
-      n : nat
+      n : Nat
       E : Ev (n + 2)
       =====================
       Ev n
@@ -1499,7 +1499,7 @@ example : forall n, Ev n → Even n := by
         of the same theorem we set out to prove -- only here we are
         talking about `n'` instead of `n`. -/
     sorry
-/- LATER: APT: Added the explicit assert to "convince Rocq" but the
+/- LATER: APT: Added the explicit assert to "convince Lean" but the
    flow of the preceding discussion seems confusing to me. -/
 /- SOONER: BCP 21: I agree that it's all pretty chewy. Wonder if we
    really need any of it or if the point could be made just as well
@@ -1551,7 +1551,7 @@ theorem ev_Even : forall n, Ev n → Even n := by
     exists k + 1; rw [double_succ, hk]
 
 
-/- FULL: Here, we can see that Rocq produced an `ih` that corresponds
+/- FULL: Here, we can see that Lean produced an `ih` that corresponds
     to `h`, the single recursive occurrence of `Ev` in its own
     definition.  Since `h'` mentions `n'`, the induction hypothesis
     talks about `n'`, as opposed to `n` or some other number. -/
@@ -1674,7 +1674,7 @@ theorem closure_of_diagonal_is_diagonal : forall α (R: α → α → Prop),
        two recursive components, `hxy`, relating `x` to `y` and `hyz`,
        relating `y` to `z`. Hence we may want (and will actually need)
        an induction hypothesis for `hxy` and one for `hyz` -- they are
-       called `ihxy` and `ihyz` here. In general, Rocq will always
+       called `ihxy` and `ihyz` here. In general, Lean will always
        generate one induction hypothesis per recursive constructor of
        the type being inducted over. -/
   case rt_trans x' y' z' hxy hyz ihxy ihyz =>
@@ -1743,15 +1743,15 @@ inductive Perm3 {α : Type} : List α → List α → Prop where
       Perm3 [a, b, c] [b, a, c]
   | perm3_swap23 (a b c : α) :
       Perm3 [a, b, c] [a, c, b]
-  | perm3_trans (l1 l2 l3 : List α) :
-      Perm3 l1 l2 → Perm3 l2 l3 → Perm3 l1 l3
+  | perm3_trans (l₁ l₂ l₃ : List α) :
+      Perm3 l₁ l₂ → Perm3 l₂ l₃ → Perm3 l₁ l₃
 
 end Perm3Reminder
 
-theorem Perm3_symm : forall (α : Type) (l1 l2 : List α),
-  Perm3 l1 l2 → Perm3 l2 l1 := by
+theorem Perm3_symm : forall (α : Type) (l₁ l₂ : List α),
+  Perm3 l₁ l₂ → Perm3 l₂ l₁ := by
 
-  intro α l1 l2 h; induction h
+  intro α l₁ l₂ h; induction h
   case perm3_swap12 => constructor
   case perm3_swap23 => constructor
   case perm3_trans _ _ _ _ _ ih12 ih23 =>
@@ -1760,10 +1760,10 @@ theorem Perm3_symm : forall (α : Type) (l1 l2 : List α),
 /- EX2 (Perm3_In) -/
 /- If you find yourself dealing with deeply nested `cases` in this proof,
    think back to `Logic` where you learned about the `obtain` tactic -/
-theorem Perm3_In : forall (α : Type) (x : α) (l1 l2 : List α),
-    Perm3 l1 l2 → In x l1 → In x l2 := by
+theorem Perm3_In : forall (α : Type) (x : α) (l₁ l₂ : List α),
+    Perm3 l₁ l₂ → In x l₁ → In x l₂ := by
   /- ADMITTED -/
-  intros α x l1 l2 hPerm hIn
+  intros α x l₁ l₂ hPerm hIn
   induction hPerm
   case perm3_swap12 a b c =>
     rw [In_cons, In_cons, In_cons, In_nil] at *
@@ -1786,10 +1786,10 @@ theorem Perm3_In : forall (α : Type) (x : α) (l1 l2 : List α),
 /- [] -/
 
 /- EX1? (Perm3_NotIn) -/
-theorem Perm3_NotIn : forall (α : Type) (x : α) (l1 l2 : List α),
-    Perm3 l1 l2 → ¬In x l1 → ¬In x l2 := by
+theorem Perm3_NotIn : forall (α : Type) (x : α) (l₁ l₂ : List α),
+    Perm3 l₁ l₂ → ¬In x l₁ → ¬In x l₂ := by
   /- ADMITTED -/
-  intros α x l1 l2 hPerm hIn hContra
+  intros α x l₁ l₂ hPerm hIn hContra
   apply hIn; apply Perm3_In
   . apply Perm3_symm; exact hPerm
   . exact hContra
@@ -1818,7 +1818,7 @@ example : ¬ Perm3 [1, 2, 3] [1, 2, 4] := by
    this definition to permutations on arbitrary-length lists.  Make
    sure that you can prove the following...
      - length-invariant
-     - if we filter a nat list and its permutation by equality to some
+     - if we filter a Nat list and its permutation by equality to some
        number, we get the same length (indeed, this could be an
        alternate characterization, I guess)
 -/
@@ -1826,7 +1826,7 @@ example : ¬ Perm3 [1, 2, 3] [1, 2, 4] := by
 
 /- FULL -/
 /- ####################################################### -/
-/- * Exercising with Inductive Relations -/
+/- * Exercising with inductive Relations -/
 
 /- SOONER: CH: Bad flow + duplication needs fixing.
    Could move some of this to the top.
@@ -2190,3 +2190,556 @@ theorem leb_true_trans : forall n m o,
 /- /HIDE -/
 /- GRADE_THEOREM 1: leb_true_trans -/
 /- [] -/
+
+
+/- LATER: Another potential exercise:  m <= n -→ n = m+(n-m).
+   See p. 188 in CoqArt. -/
+
+namespace R
+
+/- EX3M! (R_provability) -/
+/- We can define three-place relations, four-place relations,
+    etc., in just the same way as binary relations.  For example,
+    consider the following three-place relation on numbers: -/
+
+inductive R : Nat → Nat → Nat → Prop where
+  | c1                                       : R 0     0     0
+  | c2 m n o (h : R m     n     o        )   : R (m + 1) n     (o + 1)
+  | c3 m n o (h : R m     n     o        )   : R m     (n + 1) (o + 1)
+  | c4 m n o (h : R (m + 1) (n + 1) (o + 2)) : R m     n     o
+  | c5 m n o (h : R m     n     o        )   : R n     m     o
+
+/- HIDE: APT 21: Reformatted the above after a student with dyslexia
+   complained. But the effect is still lost in the HTML.  He also
+   noted that the kind of question that follows doesn't really require
+   a high-arity relation.
+
+   MRC 3/22: I believe that violates the OCaml Community Guidelines on
+   indentation.
+
+   https://ocaml.org/learn/tutorials/guidelines.html#Bad-indentation-of-pattern-matching-constructs
+
+   Whether those are applicable here is a matter of debate. But
+   torquing the entire textbook into this mode of alignment does not
+   seem any more desirable to me than torquing an OCaml codebase.
+
+   BCP 25: No, but for this specific problem it seems OK. Let's leave
+   it like this. -/
+
+/- - Which of the following propositions are provable?
+      - `R 1 1 2`
+      - `R 2 2 6`
+
+    - If we dropped constructor `c5` from the definition of `R`,
+      would the set of provable propositions change?  Briefly (1
+      sentence) explain your answer.
+
+    - If we dropped constructor `c4` from the definition of `R`,
+      would the set of provable propositions change?  Briefly (1
+      sentence) explain your answer. -/
+
+/- SOLUTION -/
+/-
+   - The first proposition is provable and the second is not.
+     The proof term for the first is:
+[[
+       (c3 _ _ _ (c2 _ _ _ c1)).
+]]
+   - Dropping [c5] would not change the set of provable
+     propositions.  [c4] and [c1] don't interact with [c5], since
+     they're already symmetric in [m] and [n]; [c2] followed by
+     [c5] is equivalent to [c3], and vice versa.
+
+   - Dropping [c4] would not change the set of provable
+     propositions. This constructor just "undoes" one application
+     of [c2] and one application of [c3]. More precisely, the
+     only way we can construct evidence for [R (S m) (S n) (S (S o))]
+     is by applying [c2] and [c3] (in either order) to evidence for
+     [R m n o], so the latter must already hold. (This can be proved
+     by induction, although the proof is surprisingly tedious.) -/
+/- /SOLUTION -/
+
+/- HIDE -/
+    /- Here is such a proof for posterity. -/
+
+    /- inductive R' : Nat → Nat → Nat → Prop where
+      | c1' : R' 0 0 0
+      | c2' m n o (h : R' m n o) : R' (m + 1) n (o + 1)
+      | c3' m n o (h : R' m n o) : R' m (n + 1) (o + 1)
+
+    Ltac inv H := inversion H; subst; clear H.
+
+    Lemma c5_redundant: forall m n o, R' m n o → R' n m o.
+    Proof.
+      intros m n o H.
+      induction H.
+      - apply c1'.
+      - apply c3'; auto.
+      - apply c2'; auto.
+    Qed.
+
+    Lemma c4_redundant: forall m n o, R' (S m) (S n) (S(S o)) → R' m n o.
+    Proof.
+      /- This one is nastier than one might expect. -/
+      assert (Q1: forall m n o, R' (S m) n (S o) → R' m n o).
+      { induction n; intros.
+        - inv H.  apply H3.
+        - inv H.
+          + apply H3.
+          + destruct o.
+            * inv H3.
+            * apply c3'. apply IHn. apply H3.
+      }
+      assert (Q2: forall m n o, R' m (S n) (S o) → R' m n o).
+      { induction m; intros.
+        - inv H. apply H3.
+        - inv H.
+          + destruct o.
+            * inv H3.
+            * apply c2'.  apply IHm. apply H3.
+          + apply H3.
+      }
+      intros.
+      inv H.
+      - apply Q2; apply H3.
+      - apply Q1; apply H3.
+    Qed.
+
+    Lemma R_R': forall m n o, R m n o↔  R' m n o.
+    Proof.
+      split; intros.
+      -  induction H.
+        + apply c1'.
+        + apply c2'; auto.
+        + apply c3'; auto.
+        + apply c4_redundant; auto.
+        + apply c5_redundant; auto.
+      - induction H.
+        + apply c1.
+        + apply c2; auto.
+        + apply c3; auto.
+    Qed. -/
+/- /HIDE -/
+
+/- GRADE_MANUAL 3: R_provability -/
+/- [] -/
+
+/- EX3? (R_fact) -/
+/- The relation `R` above actually encodes a familiar function.
+    Figure out which function; then state and prove this equivalence
+    in Lean. -/
+/- TODO (DHS): They really need to use (+) here, not Nat.add,
+   or there's some typeclass nonsense in the proofs -/
+def fR : Nat → Nat → Nat
+  /- ADMITDEF -/ :=
+  fun x y => x + y
+/- /ADMITDEF -/
+
+def R_equiv_fR : forall m n o, R m n o ↔ fR m n = o := by
+/- ADMITTED -/
+  unfold fR
+  intro m n o; apply Iff.intro
+  . intro h; induction h
+    case c1 => rfl
+    case c2 m' n' o' h ihr =>
+      rw [Nat.succ_add, ihr]
+    case c3 m' n' o' h ihr =>
+      rw [←Nat.add_assoc, ihr]
+    case c4 m' n' o' h ihr =>
+      rw [Nat.succ_add] at ihr
+      injections ihr
+    case c5 m' n' o' h ihr =>
+      rw [Nat.add_comm]; assumption
+  . intro h; induction o generalizing m n
+    case zero =>
+      cases m
+      case zero =>
+        rw [Nat.zero_add] at h
+        subst h
+        constructor
+      case succ => rw [Nat.succ_add] at h; contradiction
+    case succ o' ih =>
+      cases m
+      case zero =>
+        rw [Nat.zero_add] at h
+        subst h; constructor
+        apply ih; rw [Nat.zero_add]
+      case succ m' =>
+        constructor; apply ih
+        rw [Nat.succ_add] at h
+        inversion h; rfl
+
+/- HIDE: And here's a somewhat nicer version using some automation,
+   but we haven't covered that yet...
+
+From Stdlib Require Import Lia.
+
+Theorem R_plus: forall m n o, R m n o↔  m + n = o.
+Proof.
+  intros m n o; split; intros.
+  - induction H; try reflexivity; try lia.
+  - generalize dependent n. generalize dependent m.
+    induction o as [|o']; intros m n H.
+    + destruct m; try inversion H.
+      destruct n; try inversion H0.
+      apply c1.
+    + destruct m as [|m'].
+      * destruct n; try inversion H. apply c3.
+        apply IHo'. reflexivity.
+      * apply c2. apply IHo'. lia.
+Qed.
+-/
+/- /ADMITTED -/
+/- [] -/
+
+end R
+
+/- EX4A (subsequence) -/
+/- A list is a _subsequence_ of another list if all of the elements
+    in the first list occur in the same order in the second list,
+    possibly with some extra elements in between. For example,
+[[
+      [1,2,3]
+]]
+    is a subsequence of each of the lists
+[[
+      [1,2,3]
+      [1,1,1,2,2,3]
+      [1,2,7,3]
+      [5,6,1,9,9,2,7,3,8]
+]]
+    but it is _not_ a subsequence of any of the lists
+[[
+      [1,2]
+      [1,3]
+      [5,6,2,1,7,3,8].
+]]
+
+    - Define an inductive proposition [subseq] on [list Nat] that
+      captures what it means to be a subsequence.  There are a number
+      of correct ways to do this. You should make sure that your
+      definition behaves correctly on all the positive and negative
+      examples above, but you do not need to prove this formally.
+
+    - Prove `subseq_refl` that subsequence is reflexive, that is,
+      any list is a subsequence of itself.
+
+    - Prove `subseq_app` that for any lists `l₁`, `l₂`, and `l₃`,
+      if `l₁` is a subsequence of `l₂`, then `l₁` is also a subsequence
+      of [l₂ ++ l₃].
+
+    - (Harder) Prove [subseq_trans] that subsequence is transitive --
+      that is, if `l₁` is a subsequence of `l₂` and `l₂` is a
+      subsequence of `l₃`, then `l₁` is a subsequence of `l₃`. -/
+/- HIDE -/
+/- SOONER: (BCP'20) One of my students this semester pointed out
+   that there is another definition that is intuitively perhaps just
+   as reasonable and that makes these properties either easy or
+   trivial: -/
+inductive subseq' : List Nat → List Nat → Prop where
+  | subseq'_0 (l: List Nat):
+      subseq' l l
+  | subseq'_inductive1 l (l₁ l₂ lx ly lz: List Nat)
+      (h: subseq' l (l₁ ++ l₂)):
+      subseq' l (lx ++ l₁ ++ ly ++ l₂ ++ lz)
+  | subseq'_inductive2 (l₁ l₂ l₃: List Nat)
+      (h1: subseq' l₁ l₂)
+      (h2: subseq' l₂ l₃):
+      subseq' l₁ l₃
+
+/- SOONER: MRC 3/22: It's MUCH worse than that! a total relation
+   suffices! (BCP 25: Really? It gets all the positive examples above,
+   obviously, but not the negative ones... right?) Also this is
+   another case where a [Fixpoint] would suffice instead of an
+   inductively-defined proposition: [subseq] is definable as a
+   structurally recursive function. -/
+/- SOONER: FSR'25 - This definition of subseq also works, though it requires a
+   lemma mirroring subseq_app that allows prepending an excess List.
+   Notably, this only has two cases, in spite of the hint above.
+   (BCP 25: Removed the hint.) -/
+inductive subseq'' : List Nat → List Nat → Prop where
+  | sub_nil'' (l: List Nat):
+      subseq'' [] l
+  | sub_cons'' (l l' l₀: List Nat) (x : Nat)
+      (H: subseq'' l l'):
+      subseq'' (x :: l) (l₀ ++ (x :: l'))
+/- /HIDE -/
+/- SOONER: AC'21: I think that it is more atomic to consider
+   [sub_nil : subseq [] []]. The benefits is that it makes calls to
+   [inversion] produce fewer goals. The downside is that one has to
+   state as a lemma [sub_nil_l : forall l, subseq [] l], however it
+   would be nice to have this as an exercise anyway, because otherwise
+   students who go for the definition of [sub_seq [] []] are required
+   to guess the need for [sub_nil_l].
+   BCP: I agree this version could be nicer to suggest, and I agree that
+   adding this lemma as a warm-up exercise is nice. -/
+/- SOONER: Sainati 25: I am generally not against proofs that can be
+   made much easier with smart inductive definitions (this is sort of the
+   whole ball game in a way, isn't it?) but one way to make sure students
+   can't trivialize the exercise is to just give them the definition we
+   want them to use? We could also add a (maybe optional) question
+   afterwards to provide a different definition that makes the proofs
+   easier (and maybe prove them equivalent). -/
+
+inductive subseq : List Nat → List Nat → Prop where
+/- SOLUTION -/
+  | sub_nil l : subseq [] l
+  | sub_take x l₁ l₂ (h : subseq l₁ l₂) : subseq (x :: l₁) (x :: l₂)
+  | sub_skip x l₁ l₂ (h : subseq l₁ l₂) : subseq l₁ (x :: l₂)
+/- /SOLUTION -/
+
+
+theorem subseq_refl : forall (l : List Nat), subseq l l := by
+  /- ADMITTED -/
+  intro l
+  induction l
+  case nil => constructor
+  case cons hd tl ih =>
+    constructor; assumption
+/- /ADMITTED -/
+
+theorem subseq_app : forall (l₁ l₂ l₃ : List Nat),
+  subseq l₁ l₂ →
+  subseq l₁ (l₂ ++ l₃) := by
+  /- ADMITTED -/
+  intro l₁ l₂ l₃ h
+  induction h
+  case sub_nil => constructor
+  case sub_take => constructor; assumption
+  case sub_skip => constructor; assumption
+/- /ADMITTED -/
+
+/- HIDE: AC'21: this exercise should probably be marked as more
+   challenging.  In particular, it's not necessarily obvious at first
+   sight that the induction should go on the second hypothesis, and
+   with `l₁` generalized.  BCP 21: Made it 3 points instead of 2, and
+   included a hint. CH'23: Made it 4 points, since there are 5 different
+   choices here and the hint doesn't help with that. -/
+theorem subseq_trans : forall (l₁ l₂ l₃ : List Nat),
+  subseq l₁ l₂ →
+  subseq l₂ l₃ →
+  subseq l₁ l₃ := by
+  /- Hint: be careful about what you are doing induction on and which
+     other things need to be generalized... -/
+  /- ADMITTED -/
+  intro l₁ l₂ l₃ h12 h23
+  induction h23 generalizing l₁
+  case sub_nil => inversion h12; constructor
+  case sub_take _ _ _ _ ih =>
+    inversion h12; constructor
+    . constructor; apply ih; assumption
+    . constructor; apply ih; assumption
+  case sub_skip _ _ _ _ ih =>
+    constructor; apply ih; assumption;
+/- /ADMITTED -/
+/- GRADE_THEOREM 1: subseq_refl -/
+/- GRADE_THEOREM 2: subseq_app -/
+/- GRADE_THEOREM 3: subseq_trans -/
+/- [] -/
+
+/- EX2M? (R_provability2) -/
+/- Suppose we give Lean the following definition:
+[[
+    inductive R : Nat → List Nat → Prop where
+      | c1                    : R 0     []
+      | c2 n l (H: R n     l) : R (n + 1) (n :: l)
+      | c3 n l (H: R (n + 1) l) : R n     l
+]]
+    Which of the following propositions are provable?
+
+    - `R 2 [1,0]`
+    - `R 1 [1,2,1,0]`
+    - `R 6 [3,2,1,0]`  -/
+
+/- LATER: APT: As in R_provability, above, would be good
+   to get this formatting into the HTML version. -/
+
+/- SOLUTION -/
+/- The first two are provable, the third is not.
+
+    In case this question puzzled you, one good way to understand
+    definitions like this is to explore their implications with
+    concrete examples, e.g.
+[[
+      R 0 []        by c1
+      R 1 [0]       by c2 using R 0 []
+      R 2 [1,0]     by c2 using R 1 [0]
+      R 3 [2,1,0]   by c2 using R 2 [1,0]
+      R 2 [2,1,0]   by c3 using R 3 [2,1,0]
+      R 1 [2,1,0]   by c3 using R 2 [2,1,0]
+      R 2 [1,2,1,0] by c2 using R 1 [2,1,0]
+      R 1 [1,2,1,0] by c3 using R 2 [1,2,1,0]
+      etc.
+]]
+    If you do a few more of these yourself, you should see the pattern
+    emerging. -/
+/- /SOLUTION -/
+/- [] -/
+
+/- HIDE -/
+    /- Under construction... -/
+    /- Definition partition {X : Type} (test : X → bool) (l : List X) :=
+      (filter test l, filter (fun x => negb (test x)) l) .
+
+    /- LATER: Adjust inductive syntax -/
+    inductive shuffle (X:Type) : List X → List X → List X → Prop :=
+      | shuffle_nil_l : forall (l₂:List X), shuffle _ [] l₂ l₂
+      | shuffle_nil_r : forall (l₁:List X), shuffle _ l₁ [] l₁
+      | shuffle_cons_l : forall (x:X) (l₁ l₂ l12 : List X),
+                          shuffle _ l₁ l₂ l12 →
+                          shuffle _ (x::l₁) l₂ (x::l12)
+      | shuffle_cons_r : forall (x:X) (l₁ l₂ l12: List X),
+                          shuffle _ l₁ l₂ l12 →
+                          shuffle _ l₁ (x::l₂) (x::l12).
+
+    Arguments shuffle [X] _ _ _.
+
+    /- HIDE: If they do this proof, they'll see some uses of [fix]... -/
+    /- HIDE: M: I don't understand the above remark. This proof, though
+      somewhat messy, can be done with everything they've seen so far.
+      In any case, I attempt a proof, which is arguably the same as the
+      old one. -/
+
+    Theorem partition_correct_1 : forall (X:Type) (l l₁ l₂: List X) (test:X → bool),
+      partition test l = (l₁,l₂) →
+      shuffle l₁ l₂ l.
+    Proof.
+      intros X l l₁ l₂ test H. generalize dependent l₂. generalize dependent l₁.
+      induction l as [| x l' ].
+      - /- l = [] -/
+        intros. inversion H. apply shuffle_nil_l.
+      - /- l = x :: l' -/
+        intros. destruct (test x) eqn:Heqb.
+          + /- true = test x -/
+            inversion H.
+            rewrite Heqb in H1. rewrite Heqb in H2. rewrite  Heqb.
+            simpl in H2. simpl.
+            apply shuffle_cons_l. apply IHl'. reflexivity.
+          + /- false = test x -/
+            inversion H.
+            rewrite Heqb in H1. rewrite Heqb in H2. rewrite Heqb.
+            simpl in H2. simpl.
+            apply shuffle_cons_r. apply IHl'. reflexivity.
+    Qed.
+
+    /- The old proof is longer (in number of lines), but I cheat.
+      And the old proof uses more [destruct]s.
+      Thus, the new proof above is better in at least two quantifiable
+      ways, but I'm afraid its not entirely clean yet. -/
+
+    /-  intros X l l₁ l₂ test H. generalize dependent l₂.
+      generalize dependent l₁.
+      induction l as [|x l'].
+      - /- l = [] -/
+        intros.
+        unfold partition in H.
+        unfold filter in H.
+        inversion H.
+        apply shuffle_nil_l.
+      - /- l = x::l' -/
+        intros.
+        unfold partition in H. unfold filter in H.
+        remember (test x) as H1.
+        destruct H1.
+          + /- true -/
+            simpl in H.
+            destruct l₁.
+            * /- nil -/
+              inversion H.
+            * /- cons -/
+              inversion H. subst.
+              apply shuffle_cons_l.
+              apply IHl'.
+              unfold partition.
+              unfold filter.
+              reflexivity.
+          + /- false -/
+            simpl in H.
+            destruct l₂.
+            * /- nil -/
+              inversion H.
+            * /- cons -/
+              inversion H. subst.
+              apply shuffle_cons_r.
+              apply IHl'.
+              unfold partition.
+              unfold filter.
+              reflexivity.
+    Qed. -/
+
+    /- LATER: The proof needs to be polished. -/
+    /- LATER: Also needs to talk about the two lists respecting the
+      partitioning condition.  We'd really like to say all three
+      parts of the spec together, but we don't have /\ yet! -/ -/
+/- /HIDE -/
+
+/- EX2? (total_relation) -/
+/- Define an inductive binary relation [total_relation] that holds
+    between every pair of natural numbers. -/
+
+inductive TotalRelation : Nat → Nat → Prop where
+  /- SOLUTION -/
+  | tot n m : TotalRelation n m
+/- /SOLUTION -/
+
+
+theorem total_relation_is_total : forall n m, TotalRelation n m := by
+  /- ADMITTED -/
+  intro _ _; constructor
+/- /ADMITTED -/
+/- GRADE_THEOREM 2: total_relation_is_total -/
+/- [] -/
+
+/- EX2? (empty_relation) -/
+/- Define an inductive binary relation `empty_relation` (on numbers)
+    that never holds. -/
+
+/- LATER: MRC'20: this exercise feels unsolvable given what students
+   already know.  I don't believe we've ever shown them that an
+   inductive type can have zero constructors, or what the syntax for
+   that would be.  (That will come when we show them how to define
+   False in ProofObjects.) Should a hint be added?
+
+   BCP 20: Maybe not needed since it's optional anyway? But also,
+   can't it be done with a inductive definition with nonzero cases but
+   no base case?
+
+   APT 21: Yes, although arguably that is even less obvious.
+   MRC 3/22: And also something I can't recall we've shown them.
+
+   MRC 3/22: [unsolvable /\ optional → unsolvable]
+
+   MTF 6/22: A solution that more than one of my students have submitted
+   is using a "base" case with a built-in contradiction:
+   [emp n m : 0 = 1 → empty_relation n m] or
+   [emp n m : False → empty_relation n m].
+   So, I do think that it is solvable given what students know.
+ -/
+
+inductive EmptyRelation : Nat → Nat → Prop where
+  /- SOLUTION -/
+/- /SOLUTION -/
+
+theorem empty_relation_is_empty : forall n m, ¬ EmptyRelation n m := by
+  /- ADMITTED -/
+  intros n m contra; inversion contra
+/- /ADMITTED -/
+/- GRADE_THEOREM 2: empty_relation_is_empty -/
+/- [] -/
+
+/- LATER:
+     A nice exercise...
+       - give them a datatype of binary trees
+       - ask them to write a "size" function
+       - make them write an inductively defined "balanced" property
+       - maybe prove something about this property (this might be hard)?
+
+    At some point, perhaps we can show them how propositions and data
+    can get mixed together.  E.g., we can define a type of lists of
+    numbers less than 10 (where each element carries a proof that it
+    is less than 10).  Then we can go a step further and parameterize
+    this definition over 10.  Similarly, we can define balanced binary
+    trees of height exactly n. (See CoqArt p. 181.)  Show and discuss
+    the induction principles for all of these.
+-/
+/- /FULL -/
