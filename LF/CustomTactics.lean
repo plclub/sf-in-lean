@@ -85,21 +85,22 @@ elab "apply " t:term " at " i:ident : tactic => withSynthesize <| withMainContex
   let mainGoal ← mainGoal.tryClear ldecl.fvarId
   replaceMainGoal <| [mainGoal] ++ mvs.pop.toList.map (·.mvarId!)
 
-private def mkGeneralizeArgs (hypType : Expr) : MetaM (Array GeneralizeArg) := do
+private def mkGeneralizeArgs (hypType : Expr) (hypName : Name) : TacticM (Array GeneralizeArg) := do
   let hypType ← whnf hypType
-  hypType.withApp fun fn args =>
-    matchConstInduct fn (fun _ => pure #[]) fun val _ => do
-      let indices := args.extract val.numParams args.size
-      let mut seen : Array Expr := #[]
-      let mut genArgs : Array GeneralizeArg := #[]
-      for idx in indices do
-        if idx.isFVar || seen.any (· == idx) then continue
-        seen := seen.push idx
+  let (ind, args) := hypType.getAppFnArgs
+  match ← isInductive? ind with
+  | some val =>
+    let indices := args.drop val.numParams
+    let mut genArgs : Array GeneralizeArg := #[]
+    for idx in indices do
+      unless idx.isFVar || genArgs.any (·.expr == idx) do
         genArgs := genArgs.push
           { expr := idx
-            xName? := some (← mkFreshUserName `x)
-            hName? := some (← mkFreshUserName `heq) }
-      pure genArgs
+            hName? := some (← mkFreshUserName $ hypName.append `eq) }
+    return genArgs
+  | none =>
+    throwTacticEx `inversion (← getMainGoal)
+      m!"target is not an inductive type{indentExpr hypType}"
 
 private partial def substGenEqs (mvarId : MVarId) (eqs : List FVarId) :
     MetaM (Option MVarId) := do
@@ -134,36 +135,33 @@ declare_config_elab elabInversionConfig InversionConfig
 def inversionCore (h : FVarId) (config : InversionConfig) : TacticM Unit := withMainContext do
   let goal ← getMainGoal
   let hypType ← h.getType
+  let hypName ← h.getUserName
   let (target, goal) ←
     if config.clear then pure (h, goal)
-    else do
-      let goal ← goal.assert (← mkFreshUserName `hInv) hypType (mkFVar h)
-      goal.intro1P
-  let genArgs ← mkGeneralizeArgs hypType
+    else (← goal.assert hypName hypType (.fvar h)).intro1P
+  let genArgs ← goal.withContext do
+    mkGeneralizeArgs hypType hypName
   let (subst, newVars, goal) ← goal.withContext do
-    if genArgs.isEmpty then pure (({} : FVarSubst), (#[] : Array FVarId), goal)
-    else goal.generalizeHyp genArgs #[target]
+    goal.generalizeHyp genArgs #[target]
   let targetExpr := subst.apply (mkFVar target)
   let target ← match targetExpr with
     | .fvar f => pure f
-    | _ => goal.withContext do
-        throwTacticEx `inversion goal
-          m!"error: generalization mapped the inverted hypothesis to a non-variable term{indentExpr targetExpr}"
-  let genEqs := (newVars.extract genArgs.size newVars.size).toList
+    | _ =>
+      throwTacticEx `inversion goal
+        m!"generalization mapped the inverted hypothesis to a non-variable term{indentExpr targetExpr}"
+  let genEqs := newVars.toList.drop genArgs.size
   let subgoals ← goal.cases target
   let newGoals ← subgoals.toList.filterMapM fun s => do
     let eqs := genEqs.filterMap fun f => (s.subst.apply (mkFVar f)).fvarId?
     substGenEqs s.mvarId eqs
   replaceMainGoal newGoals
 
-@[tactic Lean.Parser.inversion]
-public def evalInversion : Tactic
+elab_rules : tactic
   | `(tactic| inversion $(config?)? $h $[with $hs?*]?) => do
     let config ← elabInversionConfig $ config?.getD default
     inversionCore (← getFVarId h) config
     if let some hs := hs? then
       evalTactic (← `(tactic| rename_i $hs*))
-  | _ => throwError m!"could not parse inversion tactic"
 
 end Lean.Elab.Tactic
 
