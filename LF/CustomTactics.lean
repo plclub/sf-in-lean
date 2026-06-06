@@ -19,7 +19,7 @@ open Term in
   * If `inversion t with h₁ ... hₙ` are provided, the last n hypotheses generated are given these names.
 -/
 syntax (name := inversion)
-  "inversion " (configItem)? ident (" with " (ppSpace colGt binderIdent)+)? : tactic
+  "inversion " optConfig ident (" with " (ppSpace colGt binderIdent)+)? : tactic
 end Lean.Parser
 
 namespace Lean.Meta
@@ -157,8 +157,8 @@ def inversionCore (h : FVarId) (config : InversionConfig) : TacticM Unit := with
   replaceMainGoal newGoals
 
 elab_rules : tactic
-  | `(tactic| inversion $(config?)? $h $[with $hs?*]?) => do
-    let config ← elabInversionConfig $ config?.getD default
+  | `(tactic| inversion $config $h:ident $[with $hs?*]?) => do
+    let config ← elabInversionConfig config
     inversionCore (← getFVarId h) config
     if let some hs := hs? then
       evalTactic (← `(tactic| rename_i $hs*))
@@ -174,7 +174,12 @@ macro "lemma " thm:declId sig:declSig val:declVal : command => `(theorem $thm $s
 
 example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : f n = 0 := by
   -- cases le /- Dependent elimination failed: Failed to solve equation 0 = f n -/
-  inversion +clear le with e; rfl
+  inversion le with e
+  rfl
+
+example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : f n = 0 := by
+  inversion +clear le with e
+  rfl
 
 example (H : Bool → Nat → False) (n : Nat) : False := by
   apply H at n; apply n; exact true
