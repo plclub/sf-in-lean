@@ -188,7 +188,7 @@ example, and observe the result in the Lean Infoview panel.)
 
 Aside: Using the Lean Extension
 
-In VSCode, development of Lean code is supported by
+In VS Code, development of Lean code is supported by
 the Lean Extension, which provides an interactive "infoview" panel that
 displays the results of commands like `#eval` and `#check`, as well as the
 current goal state when working on proofs. You can hover over expressions in
@@ -202,7 +202,7 @@ edit it, so you can see the results of your changes immediately. You can also
 use the infoview to explore the definitions of functions and types that
 you're using, which can be very helpful for understanding how they work.
 
-If you haven't already, install the Lean Extension in VSCode and open the
+If you haven't already, install the Lean Extension in VS Code and open the
 `Basics.lean` file to see the infoview in action. Try hovering over the
 `nextWorkingDay` function and the `Day` type to see their definitions, and
 experiment with adding your own `#eval` commands to test other inputs.
@@ -781,7 +781,7 @@ example : gradeComparison ⟨B, minus⟩ ⟨C, plus⟩ = gt := solution!(by rfl)
 
 Now that we have a definition of grades and how they compare to one another, let us implement a late-penalty fuction.
 
-First, we define what it means to lower the letter component of a grade. Since F is already the lowest grade possible, we just leave it alone. 
+First, we define what it means to lower the letter component of a grade. Since F is already the lowest grade possible, we just leave it alone.
 
 ```lean
 def lowerLetter (l : Letter) : Letter :=
@@ -795,7 +795,7 @@ def lowerLetter (l : Letter) : Letter :=
 
 Our formalization can already help us understand some corner cases of the grading policy.
 For example, we might expect that if we use the `lowerLetter` function its result will actually be lower,
-as claimed in the following theorem. But this theorem is not provable! (Do you see why?) 
+as claimed in the following theorem. But this theorem is not provable! (Do you see why?)
 
 ```lean
   theorem lowerLetter_lowers_bad : ∀ (l : Letter),
@@ -924,4 +924,3 @@ example : binToNat (.b0 (.b0 (.b0 (.b1 .z)))) = 8 := solution!(by rfl)
 
 ```
 :::
-

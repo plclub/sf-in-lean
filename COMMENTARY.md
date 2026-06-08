@@ -37,7 +37,7 @@ Instead, we explicitly rewrite by equalities such as
 
 ## Style guide
 
-* In comments, use Markdown as needed (they will render in VSCode)
+* In comments, use Markdown as needed (they will render in VS Code)
   * Section, subsection, etc. headers begin with `#`, `##`, etc.
   * Unnumbered lists use `*`, not `-`
 * Prefer `cases h; case ...` and `induction h; case ...`
@@ -75,7 +75,7 @@ Instead, we explicitly rewrite by equalities such as
 * Student-facing prose
   * May be prefixed by directives, e.g. `/- FULL: ... -/` or `/- TERSE: ... -/`
 * Declaration doc comments `/-- -/` attached to top-level declarations as need
-  (they will appear on hover in VSCode)
+  (they will appear on hover in VS Code)
 * General doc comments `/-! -/` currently unused
 
 ## Tactics

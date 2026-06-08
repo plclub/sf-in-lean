@@ -23,15 +23,14 @@
 
 -- FULL
 /-
-  The _functional style_ of programming is founded on simple,
-  everyday mathematical intuitions: If a program has no
-  side effects, then (ignoring efficiency) all we need to understand
-  about it is how it maps inputs to outputs -- that is, we can think
-  of it as just a concrete method for computing a mathematical
-  function.  The direct connection between programs
-  and simple mathematical objects supports both formal correctness
-  proofs and sound informal reasoning about program behavior.
-  This is one sense of the word "functional" in
+  The _functional style_ of programming is founded on simple, everyday
+  mathematical intuitions: If a program has no side effects, then --
+  ignoring efficiency -- all we need to understand about it is how it
+  maps inputs to outputs. That is, we can think of it as just a
+  concrete method for computing a mathematical function. This direct
+  connection between programs and simple mathematical objects supports
+  both formal correctness proofs and sound informal reasoning about
+  program behavior. This is one sense of the word "functional" in
   "functional programming."
 
   The other sense in which functional programming is "functional" is
@@ -44,7 +43,7 @@
   Other common features of functional languages include _algebraic
   data types_ and _pattern matching_, which make it easy to
   construct and manipulate rich data structures, and _polymorphic
-  type systems_ supporting abstraction and code reuse.  Lean offers
+  types_ supporting abstraction and code reuse.  Lean offers
   all of these features.
 
   The first half of this chapter introduces some key elements of
@@ -70,19 +69,17 @@
   mechanism for defining new data types from scratch, with all these
   familiar types as instances.
 
-  Naturally, Lean also comes with an extensive standard library providing
-  definitions of booleans, numbers, and many common data structures like lists
-  and hash tables.  But there is nothing magic or primitive about these library
-  definitions.  To illustrate this, in this course we will explicitly
-  recapitulate almost all the definitions we need, rather than getting them
-  from the standard library.
-
-  We take great care to match those definitions with the ones in the standard
-  library, so that by the time you are finished with this course, you will
-  already have a strong understanding of how the Lean standard library works.
+  Naturally, Lean also comes with an extensive standard library
+  providing definitions of booleans, numbers, and many common data
+  structures like lists and hash tables.  But there is nothing magic
+  or primitive about these library definitions.  To illustrate this
+  fact, we will explicitly recapitulate most of the definitions we
+  need in this course, rather than just referring to the standard
+  library. However, we will take care to harmonize those definitions
+  with the ones in the standard library, so that, by the time you are
+  finished the course, you will have a good grasp of how the standard
+  library is organized.
 -/
-
--- RAB ADDITION ^ (last p above)
 
 -- /FULL
 
@@ -115,7 +112,8 @@ inductive Day : Type where
   The new type is called `Day`, and its members are `monday`,
   `tuesday`, etc.
 
-  Having defined `Day`, we can write functions that operate on days.
+  Having defined `Day`, we can write Lean functions that operate on
+  days.
 -/
 -- /FULL
 -- TERSE: /- *** -/
@@ -139,17 +137,20 @@ def nextWorkingDay (d : Day) : Day :=
   itself when they are not given explicitly -- i.e., it can do _type
   inference_ -- but we'll generally include them to make reading
   easier.
--/
 
--- RAB ADDITION ↓
-/- You may also notice the unique pattern matching syntax- for
-  example, in "`.monday`". The `.` - is syntactic sugar for `Day.monday`, and
-  exists to save the programmer the time of typing out the full qualified name.
-  You may wonder why the language doesn't just expose a pattern like `monday`
-  without the dot, like OCaml does. This is to avoid name shadowing, because
-  being explicit about names is _especially_ important to avoid confusion and
-  headaches when writing proofs. The `.` syntax is a compromise that lets us
-  know we're qualifying a name without having to type too much.
+  The `.` in `.monday` is an abbreviation for `Day.`, to avoid typing
+  out the full qualified name `Day.monday`. You may wonder why Lean
+  doesn't allow patterns like `monday` without the dot, as other
+  functional languages like OCaml and Haskell do. This is to avoid
+  name shadowing, because being explicit about names is _especially_
+  important to avoid confusion and headaches when writing proofs. The
+  `.` syntax is a compromise that lets us know we're qualifying a name
+  without having to type too much.
+
+  BCP: This doesn't really explain it!  Why do we need to / is it
+  better / helpful to know when we are qualifying names?  Also,
+  wouldn't it be pedagogically better to write it out first without
+  the abbreviation and then introduce the shorter form?
 -/
 
 -- /FULL
@@ -158,58 +159,23 @@ def nextWorkingDay (d : Day) : Day :=
 -- TERSE: /- Evaluation: -/
 -- FULL
 /-
-  Having defined a function, we can check that it works on
-  some examples.  There are actually three different ways to do
-  examples in Lean.  First, we can use the `#eval` command to
-  evaluate a compound expression involving `nextWorkingDay`.
+  Having defined a function, we should check that it works on some
+  examples.  There are actually three different ways to do this in
+  Lean.  First, we can use the `#eval` command to evaluate a compound
+  expression involving `nextWorkingDay`.  (Lean's responses are shown
+  in comments.)
 -/
+-- BCP: Are these comments auto-verified?
 -- /FULL
 
 #eval nextWorkingDay Day.friday
 /- ==> Day.monday -/
 
+-- BCP: Can we write `nextWorkingDay .friday`?  If so, why didn't we?
+-- If not, why not?
+
 #eval nextWorkingDay (nextWorkingDay Day.saturday)
 /- ==> Day.tuesday -/
-
--- FULL
-/-
-  (We show Lean's responses in comments; if you have a computer
-  handy, this would be an excellent moment to fire up VS Code with
-  the Lean extension and try it for yourself.  Load this file,
-  `Basics.lean`, from the book's Lean sources, find the above
-  example, and observe the result in the Lean Infoview panel.)
--/
-
--- RAB ADDITION ↓
-
-/-
-  Aside: Using the Lean Extension
--/
-
-/-
-  In VSCode, development of Lean code is supported by
-  the Lean Extension, which provides an interactive "infoview" panel that
-  displays the results of commands like `#eval` and `#check`, as well as the
-  current goal state when working on proofs. You can hover over expressions in
-  the source code to see their types, and you can click on the results in the
-  infoview to navigate to their definitions. This makes it easier to understand
-  how your code is being interpreted by Lean and to debug any issues that
-  arise.
-
-  The infoview always follows your cursor, and Lean typechecks the file as you
-  edit it, so you can see the results of your changes immediately. You can also
-  use the infoview to explore the definitions of functions and types that
-  you're using, which can be very helpful for understanding how they work.
-
-  If you haven't already, install the Lean Extension in VSCode and open the
-  `Basics.lean` file to see the infoview in action. Try hovering over the
-  `nextWorkingDay` function and the `Day` type to see their definitions, and
-  experiment with adding your own `#eval` commands to test other inputs.
--/
-
--- RAB: There's a question of where exactly to put this.
-
--- /FULL
 
 /-
   Second, we can record what we _expect_ the result to be in the
@@ -219,39 +185,69 @@ def nextWorkingDay (d : Day) : Day :=
 /- test_next_working_day -/
 example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
   rfl
+-- BCP: Can we add some line breaks to that?  What is idiomatic?
 
 -- FULL
 /-
-  This declaration does two things: it makes an assertion
-  (that the second working day after `saturday` is `tuesday`), and it
-  gives the assertion a name that can be used to refer to it later.
-  Having made the assertion, we can also ask Lean to _verify_ it.
-  The `by rfl` can be read as "The assertion we've just made can be
-  proved by observing that both sides of the equality evaluate to
-  the same thing."
--/
+  This declaration does two things: it makes an assertion (that the
+  second working day after `saturday` is `tuesday`), and it gives the
+  assertion a name that can be used to refer to it later.
 
-/-
-  `rfl` stands for "reflexivity," which is the principle that any value is
-  equal to itself. After evaluation, both sides of the equality are the same
-  value, so the assertion is true by reflexivity.  If we had made a different
-  assertion, such as `example : nextWorkingDay (nextWorkingDay Day.saturday) =
-  Day.monday`, then Lean would not be able to verify it, and would signal an
-  error. Try it out!
+  Having made the assertion, we can also ask Lean to _verify_ it. The
+  `by rfl` can be read as "The assertion we've just made can be proved
+  by observing that both sides of the equality evaluate to the same
+  thing." Here, `rfl` stands for "reflexivity," which is the principle
+  that any value is equal to itself. After evaluation, both sides of
+  the equality are the same value, so the assertion is true by
+  reflexivity.  If we had made a different assertion, such as `example
+  : nextWorkingDay (nextWorkingDay Day.saturday) = Day.monday`, then
+  Lean would not be able to verify it and would signal an error.
 -/
-
 -- /FULL
 
 /-
   Third, we can ask Lean to _compile_ our definitions to efficient
-  native code.  Lean compiles to C, which is then compiled to machine
-  code by a standard C compiler.  This facility is very useful, since
-  it gives us a path from proved-correct algorithms written in Lean to
-  efficient executables.
+  native code.
 
-  Indeed, this is one of the main uses for which Lean was developed.
-  We'll come back to this topic in later chapters.
+  Lean compiles to C, which is then compiled to machine code by a
+  standard C compiler.  This facility is very useful, since it gives
+  us a path from proved-correct algorithms written in Lean to
+  efficient executables. We'll come back to this topic in later
+  chapters.
 -/
+
+-- FULL
+/- ###################################################################### -/
+/- ## Running Lean -/
+
+/- You may already be reading this chapter inside VS Code, but if not
+   -- and if you have a computer handy -- this would be an excellent
+   moment to fire up VS Code with the Lean extension and try it for
+   yourself.  Load this file, `Basics.lean`, from the book's Lean
+   sources, find the above examples, and observe the results in the
+   Lean Infoview panel.
+
+  In VS Code, development of Lean code is supported by the Lean
+  Extension, which provides an interactive "infoview" panel that
+  displays the results of commands like `#eval` and `#check`, as well
+  as the current goal state when working on proofs. You can hover over
+  expressions in ·lean` files to see their types, and you can click on
+  items in the infoview to navigate to their definitions. This makes
+  it easier to understand how your code is being interpreted by Lean
+  and fix any issues that arise.
+
+  The infoview always follows your cursor, and Lean typechecks the
+  file as you edit it, so you can see the results of your changes
+  immediately. You can also use the infoview to explore the
+  definitions of functions and types that you're using, which can be
+  very helpful for understanding how they work.
+
+  If you haven't already, install the Lean Extension in VS Code and open the
+  `Basics.lean` file to see the infoview in action. Try hovering over the
+  `nextWorkingDay` function and the `Day` type to see their definitions, and
+  experiment with adding your own `#eval` commands to test other inputs.
+-/
+-- /FULL
 
 /- ###################################################################### -/
 /- ## Booleans -/
@@ -276,6 +272,8 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
 -- RAB: No need, I think.
 section
 
+-- BCP: Why call it MyBool instead of just Bool?  (Or, conversely, why call the constructors
+-- true and false instead of mytrue, myfalse, mynotb, etc.?)
 inductive MyBool : Type where
   | true
   | false
