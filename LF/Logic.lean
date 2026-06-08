@@ -1226,7 +1226,6 @@ theorem All_In α (P : α → Prop) (xs : List α) :
     case mp => intros; rw [All_nil]; exact ⟨⟩
     case mpr => intro _ _ h; rw [In_nil] at h; contradiction
   case cons x' xs' ih =>
-    dsimp [In, All]
     let ⟨ih1, ih2⟩ := ih
     constructor
     case mp =>
