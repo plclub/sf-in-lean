@@ -150,7 +150,7 @@ def nextWorkingDay (d : Day) : Day :=
 -/
 
 /-
-  In VSCode, development of Lean code is supported by
+  In VS Code, development of Lean code is supported by
   the Lean Extension, which provides an interactive "infoview" panel that
   displays the results of commands like `#eval` and `#check`, as well as the
   current goal state when working on proofs. You can hover over expressions in
@@ -164,7 +164,7 @@ def nextWorkingDay (d : Day) : Day :=
   use the infoview to explore the definitions of functions and types that
   you're using, which can be very helpful for understanding how they work.
 
-  If you haven't already, install the Lean Extension in VSCode and open the
+  If you haven't already, install the Lean Extension in VS Code and open the
   `Basics.lean` file to see the infoview in action. Try hovering over the
   `nextWorkingDay` function and the `Day` type to see their definitions, and
   experiment with adding your own `#eval` commands to test other inputs.
@@ -1594,5 +1594,3 @@ example : binToNat (incr (.b1 .z)) = 1 + binToNat (.b1 .z) := by sorry  -- ADMIT
 example : binToNat (incr (incr (.b1 .z))) = 2 + binToNat (.b1 .z) := by sorry  -- ADMITTED
 /- test_bin_incr7 -/
 example : binToNat (.b0 (.b0 (.b0 (.b1 .z)))) = 8 := by sorry  -- ADMITTED
-
-
