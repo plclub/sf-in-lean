@@ -272,6 +272,8 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
 -- RAB: No need, I think.
 section
 
+-- BCP: Why call it MyBool instead of just Bool?  (Or, conversely, why call the constructors
+-- true and false instead of mytrue, myfalse, mynotb, etc.?)
 inductive MyBool : Type where
   | true
   | false
