@@ -266,10 +266,11 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
   scratch; later we'll switch to Lean's built-in `Bool`.
 -/
 
--- JC: Can we just gloss over what `section` is doing here,
--- or do we need to explain it?
-
--- RAB: No need, I think.
+/-
+  The next command opens a new namespace so that our definitions don't
+  clash with ones from the standard library. We'll discuss it in more
+  detail below.
+-/
 section
 
 -- BCP: Why call it MyBool instead of just Bool?  (Or, conversely, why call the constructors
@@ -291,8 +292,10 @@ def notb (b : MyBool) : MyBool :=
   match b with
   | .true => false
   | .false => true
+-- BCP: Why no .s on the right-hand sides?
 
 -- TERSE: /- *** -/
+-- BCP: These *** comments should be replaced with whatever Verso uses for slide breaks.
 
 def andb (b1 : MyBool) (b2 : MyBool) : MyBool :=
   match b1 with
@@ -306,20 +309,11 @@ def orb (b1 : MyBool) (b2 : MyBool) : MyBool :=
 
 -- FULL
 /-
-  (Although we are rolling our own booleans here for the sake
-  of building up everything from scratch, Lean does, of course,
-  provide a default implementation of the booleans, together with a
-  multitude of useful functions and lemmas.)
--/
--- /FULL
-
--- FULL
-/-
-  The last two of these illustrate Lean's syntax for
-  multi-argument function definitions.  The corresponding
-  multi-argument _application_ syntax is illustrated by the
-  following "unit tests," which constitute a complete specification
-  /- a truth table -- for the `orb` function: -/
+  The last two definitions illustrate Lean's syntax for multi-argument
+  function definitions.  The corresponding multi-argument
+  _application_ syntax is illustrated by the following tests, which
+  effectively constitute a complete specification -- a truth table --
+  for the `orb` function:
 -/
 -- /FULL
 -- TERSE: /- Note the syntax for defining multi-argument functions (`andb` and `orb`). -/
@@ -339,11 +333,13 @@ example : orb .true  .true  = .true  := by rfl
   Because Lean already defines these for the built-in `Bool`,
   we restrict ours locally to a section.
 -/
+-- BCP: We are already inside a section, no?
 
 section
 local prefix:40 (priority := high) "!" => notb
 local infixl:35 (priority := high) " && " => andb
 local infixl:30 (priority := high) " || " => orb
+-- BCP: Why spaces some places but not others?
 
 /- test_orb5 -/
 example : (.false || .false || .true) = .true := by rfl
@@ -356,15 +352,15 @@ end
 -- EX1 (nandb)
 -- FULL
 /-
-  The `sorry` keyword can be used as a placeholder for an
-  incomplete proof or definition.  We use it in exercises to indicate
-  the parts that we're leaving for you -- i.e., your job is to replace
-  `sorry` with real definitions and proofs.
+  The `sorry` keyword is a placeholder for an incomplete proof or
+  definition.  We use it in exercises to indicate the parts that we're
+  leaving for you -- i.e., your job is to replace `sorry` with real
+  definitions and proofs.
 
-  Remove `sorry` below and complete the definition of the
-  following function; then make sure that the `example` assertions
-  below can each be verified by Lean.  The function should return
-  `true` if either or both of its inputs are `false`.
+  Remove `sorry` below and complete the definition of the following
+  function.  The function should return `true` if either or both of
+  its inputs are `false`. Make sure that the `example` assertions
+  below can be verified by Lean.
 -/
 -- /FULL
 
@@ -420,11 +416,12 @@ example : andb3 .true .true .false = .false := by rfl  -- ADMITTED
 -- TERSE: /- *** -/
 -- FULL
 /-
-  Now that we've seen how to define our own booleans, we can switch back to
-  Lean's built-in `Bool` type, which has the same structure but also includes
+  Now that we've seen how to define our own booleans, let's switch back to
+  Lean's built-in `Bool` type, which has the same structure but comes with
   a lot of useful functions and lemmas.  We can even define functions to
   convert between our `MyBool` and Lean's `Bool`.
 -/
+-- BCP: Do we really want to do this, rather than just leaving MyBool completely behind?
 
 def myBoolToBool (b : MyBool) : Bool :=
   match b with
@@ -441,12 +438,14 @@ def boolToMyBool (b : Bool) : MyBool :=
   bif b then true else false
 -- /FULL
 
-end
-
+end    -- (close the `section` where we defined `MyBool`)
 
 -- RAB: From this point, there are about 450 lines of comments before
 -- the next exercise. This is the same as in Rocq, but do we want
 -- to keep this pattern?
+-- BCP: Ideally no!
+
+-- BCP STOPPED HERE
 
 /- ###################################################################### -/
 /- ## Types -/
