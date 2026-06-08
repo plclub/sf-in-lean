@@ -2809,10 +2809,10 @@ example : ¬ (NoStutter [3, 1, 1, 4]) := by
 /- ADMITTED -/
 /- /ADMITTED -/
 /- OPEN COMMENT WHEN HIDING SOLUTIONS -/
-  intro contra; inversion contra
-  case _ _ contra =>
-    inversion contra
-    case _ h _ =>
+  intro contra; inversion contra with
+  | nostutter2 _ contra =>
+    inversion contra with
+    | nostutter2 _ h _ =>
       apply h
       rfl
 /- CLOSE COMMENT WHEN HIDING SOLUTIONS -/
