@@ -16,10 +16,6 @@
 --    is recommended for the first few lectures, so students see exactly
 --    what's in the source file.
 
-/-
-  ######################################################################
-  # Introduction
--/
 
 -- FULL
 /-

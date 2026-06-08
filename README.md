@@ -38,5 +38,6 @@ We should be following the [style guide](https://leanprover-community.github.io/
 ## Building the Verso Documentation
 
 1. Build the volume modules: `lake build LF`
-1. Build the verso docs: `lake exe lf_verso`
-1. Run a local server: `python3 -m http.server 8000 -d _out/`
+2. Build the verso docs: `lake exe lf_verso`
+3. Run a local server: `python3 -m http.server 8000 -d _out/`
+4. Visit http://localhost:8000
