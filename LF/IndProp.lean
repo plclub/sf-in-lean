@@ -1132,10 +1132,10 @@ end LePlayground
        (D) These tactics are not sufficient to solve the goal. -/
     /- FOLD -/
     theorem quiz_1_not_ev : forall n, Ev n → n = 1 → true = false := by
-    intro n E F
-    cases E
-    . contradiction
-    . injection F; contradiction
+      intro n E F
+      cases E
+      . contradiction
+      . injection F; contradiction
     /- /FOLD -/
     /- /QUIZ -/
 /- /HIDE -/
@@ -1244,7 +1244,7 @@ theorem ev_succ_succ_ev : forall n, Ev (n + 2) → Ev n := by
 /- HIDE: CH: Tried, but there is no similarly simple lemma for le? -/
 /-theorem leS_le : forall n m, le n (S m) → le n m.
 Proof.
-  intros n m H. apply le_inversion in H. destruct H as [H0|H1].
+  intros n m H. apply le_inversion in H. destruct H as [H0|h₁].
   - rewrite H0. Abort. /- This one is false! -/
 
 theorem leS_le : forall n m, le (S n) (S m) → le n m.
@@ -1754,8 +1754,8 @@ theorem Perm3_symm : forall (α : Type) (l₁ l₂ : List α),
   intro α l₁ l₂ h; induction h
   case perm3_swap12 => constructor
   case perm3_swap23 => constructor
-  case perm3_trans _ _ _ _ _ ih12 ih23 =>
-    exact Perm3.perm3_trans _ _ _ ih23 ih12
+  case perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
+    exact Perm3.perm3_trans _ _ _ ih₂3 ih₁2
 
 /- EX2 (Perm3_In) -/
 /- If you find yourself dealing with deeply nested `cases` in this proof,
@@ -1779,8 +1779,8 @@ theorem Perm3_In : forall (α : Type) (x : α) (l₁ l₂ : List α),
     . right; right; left; assumption
     . right; left; assumption
     . contradiction
-  case perm3_trans _ _ _ _ _ ih12 ih23 =>
-    apply ih23; apply ih12; apply hIn
+  case perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
+    apply ih₂3; apply ih₁2; apply hIn
 /- HIDE: CH: The base cases are a bit stupid without [tauto] -/
 /- /ADMITTED -/
 /- [] -/
@@ -2283,26 +2283,26 @@ inductive R : Nat → Nat → Nat → Prop where
       /- This one is nastier than one might expect. -/
       assert (Q1: forall m n o, R' (S m) n (S o) → R' m n o).
       { induction n; intros.
-        - inv H.  apply H3.
+        - inv H.  apply h₃.
         - inv H.
-          + apply H3.
+          + apply h₃.
           + destruct o.
-            * inv H3.
-            * apply c3'. apply IHn. apply H3.
+            * inv h₃.
+            * apply c3'. apply IHn. apply h₃.
       }
       assert (Q2: forall m n o, R' m (S n) (S o) → R' m n o).
       { induction m; intros.
-        - inv H. apply H3.
+        - inv H. apply h₃.
         - inv H.
           + destruct o.
-            * inv H3.
-            * apply c2'.  apply IHm. apply H3.
-          + apply H3.
+            * inv h₃.
+            * apply c2'.  apply IHm. apply h₃.
+          + apply h₃.
       }
       intros.
       inv H.
-      - apply Q2; apply H3.
-      - apply Q1; apply H3.
+      - apply Q2; apply h₃.
+      - apply Q1; apply h₃.
     Qed.
 
     theorem R_R': forall m n o, R m n o↔  R' m n o.
@@ -2522,11 +2522,11 @@ theorem subseq_trans : forall (l₁ l₂ l₃ : List Nat),
   /- Hint: be careful about what you are doing induction on and which
      other things need to be generalized... -/
   /- ADMITTED -/
-  intro l₁ l₂ l₃ h12 h23
-  induction h23 generalizing l₁
-  case sub_nil => inversion h12; constructor
+  intro l₁ l₂ l₃ h₁2 h₂3
+  induction h₂3 generalizing l₁
+  case sub_nil => inversion h₁2; constructor
   case sub_take _ _ _ _ ih =>
-    inversion h12; constructor
+    inversion h₁2; constructor
     . constructor; apply ih; assumption
     . constructor; apply ih; assumption
   case sub_skip _ _ _ _ ih =>
@@ -2612,13 +2612,13 @@ theorem subseq_trans : forall (l₁ l₂ l₃ : List Nat),
         intros. destruct (test x) eqn:Heqb.
           + /- true = test x -/
             inversion H.
-            rewrite Heqb in H1. rewrite Heqb in H2. rewrite  Heqb.
-            simpl in H2. simpl.
+            rewrite Heqb in h₁. rewrite Heqb in h₂. rewrite  Heqb.
+            simpl in h₂. simpl.
             apply shuffle_cons_l. apply IHl'. reflexivity.
           + /- false = test x -/
             inversion H.
-            rewrite Heqb in H1. rewrite Heqb in H2. rewrite Heqb.
-            simpl in H2. simpl.
+            rewrite Heqb in h₁. rewrite Heqb in h₂. rewrite Heqb.
+            simpl in h₂. simpl.
             apply shuffle_cons_r. apply IHl'. reflexivity.
     Qed.
 
@@ -2639,8 +2639,8 @@ theorem subseq_trans : forall (l₁ l₂ l₃ : List Nat),
       - /- l = x::l' -/
         intros.
         unfold partition in H. unfold filter in H.
-        remember (test x) as H1.
-        destruct H1.
+        remember (test x) as h₁.
+        destruct h₁.
           + /- true -/
             simpl in H.
             destruct l₁.
@@ -2809,10 +2809,12 @@ example : ¬ (NoStutter [3, 1, 1, 4]) := by
 /- ADMITTED -/
 /- /ADMITTED -/
 /- OPEN COMMENT WHEN HIDING SOLUTIONS -/
-  intro contra; inversion contra with h contra;
-  inversion contra with h contra;
-  apply h
-  rfl
+  intro contra; inversion contra
+  case _ _ contra =>
+    inversion contra
+    case _ h _ =>
+      apply h
+      rfl
 /- CLOSE COMMENT WHEN HIDING SOLUTIONS -/
 
 /- GRADE_MANUAL 3: nostutter -/
@@ -3316,7 +3318,7 @@ Proof.
        constructor.
        apply (IHl' _ (z :: t)).
        { /- l' = rev p'' ++ z :: t -/
-         rewrite H2. rewrite M. rewrite <- app_assoc. reflexivity. }
+         rewrite h₂. rewrite M. rewrite <- app_assoc. reflexivity. }
        { /- rev p'' = rev (rev p'') -/
          rewrite H4 in Heqrevp'. rewrite rev_app_distr in Heqrevp'.
          inversion Heqrevp'.
@@ -3349,12 +3351,12 @@ theorem palindrome_converse_lemma_2:
 Proof. {
   intros α. induction n as [| n'].
   { /- n = 0 -/
-    intros [| x l'] H1 H2.
+    intros [| x l'] h₁ h₂.
     { /- l = [] -/ apply pal_nil. }
-    { /- l = x :: l' -/ inversion H1. }
+    { /- l = x :: l' -/ inversion h₁. }
   }
   { /- n = S n'-/
-    intros [| x l'] H3 H4.
+    intros [| x l'] h₃ H4.
     { /- l = [] -/ apply pal_nil. }
     { /- l = x :: l' -/
       simpl in H4.
@@ -3365,11 +3367,11 @@ Proof. {
       { /- rev l = x' :: l'' -/
         inversion H4 as [[H6 H7]]. apply pal_consnoc. apply (IHn' l'').
         { /- proving: length l'' ≤ n' -/
-          rewrite → H7 in H3. simpl in H3.
-          rewrite → app_length in H3. simpl in H3.
-          rewrite → add_comm in H3. simpl in H3.
+          rewrite → H7 in h₃. simpl in h₃.
+          rewrite → app_length in h₃. simpl in h₃.
+          rewrite → add_comm in h₃. simpl in h₃.
           apply Sn_le_Sm__n_le_m, Sn_le_Sm__n_le_m.
-          apply le_S. apply H3.
+          apply le_S. apply h₃.
         }
         { /- proving l'' = rev l'' -/
           rewrite → H7 in H5. rewrite → rev_app_distr in H5. simpl in H5.
@@ -3449,79 +3451,78 @@ theorem NoDup_append : forall (α:Type) (l₁ l₂: List α),
   NoDup l₁ → NoDup l₂ → disjoint l₁ l₂ →
   NoDup (l₁ ++ l₂) := by
 
-  intros α l₁ l₂ h1 h2 hdis
+  intros α l₁ l₂ h₁ h₂ hdis
   induction l₁ generalizing l₂
   case nil => rw [List.nil_append]; assumption
   case cons hd tl ih =>
     constructor
     . intro contra; rw [List.append_eq, In_app_iff] at contra
       rcases contra with contra | contra
-      . inversion h1
+      . inversion h₁
         case _ hdup hin =>
         apply hin; assumption
       . apply hdis hd _ contra
         rw [In_cons]; left; rfl
-    . apply ih _ _ h2 _
-      . inversion h1; assumption
+    . apply ih _ _ h₂ _
+      . inversion h₁; assumption
       . intros x hin
         apply hdis; rw [In_cons]
         right; assumption
 
 theorem NoDup_disjoint : forall (α:Type) (l₁ l₂: List α),
-  NoDup (l₁++l₂) → disjoint l₁ l₂.
-Proof.
-  unfold disjoint.
-  induction l₁ as [|x l1'].
-  - intros l₂ NR x AI. inversion AI.
-  - intros l₂ NR x0 AI. simpl in NR. inversion NR. inversion AI.
-    + intros contra. apply H1.
-      apply In_app_iff. right. rewrite H3. apply contra.
-    + apply IHl1'.
-      * apply H2.
-      * apply H3.
-Qed.
+  NoDup (l₁++l₂) → disjoint l₁ l₂ := by
+
+  intro α l₁ l₂ hdis x hin contra
+  induction l₁ generalizing l₂ x
+  case nil => rw [In_nil] at hin; contradiction
+  case cons hd tl ih =>
+    rw [In_cons] at hin
+    inversion hdis
+    case NoDup_cons hdup hnotin =>
+      rcases hin with hin | hin
+      . subst hin; apply hnotin
+        rw [List.append_eq, In_app_iff]; right; assumption
+      . exact ih _ hdup _ hin contra
 
 /- We can also show the following results about [NoDup] and [++]
    by themselves -/
 theorem NoDup_left : forall (α:Type) (l₁ l₂: List α),
-  NoDup (l₁++l₂) → NoDup l₁.
-Proof.
-  induction l₁ as [|x l1'].
-  - intros l₂ NR. apply NoDup_nil.
-  - intros l₂ NR. inversion NR. apply NoDup_cons.
-    + intro contra. apply H1. apply In_app_iff. left. apply contra.
-    + apply (IHl1' l₂). apply H2.
-Qed.
+  NoDup (l₁++l₂) → NoDup l₁ := by
+
+  intro α l₁ l₂ hdup
+  induction l₁ generalizing l₂
+  case nil => constructor
+  case cons hd tl ih =>
+    inversion hdup
+    case _ hdup' hin =>
+      constructor
+      . intro contra; apply hin
+        rw [List.append_eq, In_app_iff]; left; assumption
+      . exact ih _ hdup'
 
 theorem NoDup_right: forall (α:Type) (l₁ l₂: List α),
-  NoDup (l₁++l₂) → NoDup l₂.
-Proof.
-  induction l₁ as [|x l1'].
-  - intros l₂ NR. simpl in NR. apply NR.
-  - intros l₂ NR. inversion NR. apply IHl1'. apply H2.
-Qed.
+  NoDup (l₁++l₂) → NoDup l₂ := by
+
+  intro α l₁ l₂ hdup
+  induction l₁ generalizing l₂
+  case nil => rw [List.nil_append] at hdup; assumption
+  case cons hd tl ih =>
+    inversion hdup
+    apply ih; assumption
 
 /- This theorem combines the various lemmas to give a complete
    characterization -/
 theorem NoDup_disjoint_app : forall {α:Type} (l₁ l₂: List α),
   NoDup (l₁++l₂) ↔
-  (NoDup l₁∧ NoDup l₂∧ disjoint l₁ l₂).
-Proof.
-  intros α l₁ l₂.
-  split.
-  - /- → -/
-    intro NR. split.
-    + apply (NoDup_left _ _ l₂). apply NR.
-    + split.
-      * apply (NoDup_right _ l₁). apply NR.
-      * apply NoDup_disjoint. apply NR.
-  - /- <- -/
-    intros [NR1 [NR2 DISJ]].
-    apply NoDup_append.
-    + apply NR1.
-    + apply NR2.
-    + apply DISJ.
-Qed.
+  (NoDup l₁ ∧ NoDup l₂ ∧ disjoint l₁ l₂) := by
+
+  intro α l₁ l₂; apply Iff.intro
+  . intro hdup
+    constructor; exact NoDup_left _ _ _ hdup
+    constructor; exact NoDup_right _ _ _ hdup
+    exact NoDup_disjoint _ _ _ hdup
+  . intro ⟨h₁, ⟨h₂, h₃⟩⟩
+    exact NoDup_append _ _ _ h₁ h₂ h₃
 /- /SOLUTION -/
 
 /- GRADE_MANUAL 6: NoDup_disjoint_etc -/
@@ -3531,7 +3532,7 @@ Qed.
 /- GRADE_THEOREM 2: in_split -/
 /- GRADE_THEOREM 6: pigeonhole_principle -/
 /- The _pigeonhole principle_ states a basic fact about counting: if
-    we distribute more than [n] items into [n] pigeonholes, some
+    we distribute more than `n` items into `n` pigeonholes, some
     pigeonhole must contain at least two items.  As often happens, this
     apparently trivial fact about numbers requires non-trivial
     machinery to prove, but we now have enough... -/
@@ -3540,31 +3541,28 @@ Qed.
 
 theorem in_split : forall (α:Type) (x:α) (l:List α),
   In x l →
-  exists l₁ l₂, l = l₁ ++ x :: l₂.
-Proof.
+  exists l₁ l₂, l = l₁ ++ x :: l₂ := by
   /- ADMITTED -/
-  induction l as [|x' l' IHl'].
-  - /- l = nil -/
-    intros [].
-  - /- l = x' :: l' -/
-    simpl. intros [AI | AI].
-    + /- x' = x -/
-      exists []. exists l'. rewrite AI. reflexivity.
-    + /- In x l' -/
-      destruct (IHl' AI) as [l1' [l2' EQ]].
-      exists (x'::l1'). exists l2'. rewrite → EQ. reflexivity.
-Qed.
+  intro α x l hin
+  induction l generalizing x
+  case nil => rw [In_nil] at hin; contradiction
+  case cons hd tl ih =>
+    rw [In_cons] at hin; rcases hin with hin | hin
+    . subst hin; exists []; exists tl
+    . have ⟨l₁', ⟨l₂', ih⟩⟩ := ih x hin
+      subst ih
+      exists hd :: l₁'; exists l₂'
 /- /ADMITTED -/
 
 /- Now define a property [repeats] such that [repeats α l] asserts
     that `l` contains at least one repeated element (of type `α`).  -/
 
-inductive repeats {α:Type} : List α → Prop :=
+inductive Repeats {α:Type} : List α → Prop where
   /- SOLUTION -/
-  | rep_here : forall a l, In a l → repeats (a::l)
-  | rep_later : forall a l, repeats l → repeats (a::l)
+  | rep_here : forall a l, In a l → Repeats (a::l)
+  | rep_later : forall a l, Repeats l → Repeats (a::l)
 /- /SOLUTION -/
-.
+
 
 /- GRADE_MANUAL 2: check_repeats -/
 
@@ -3574,24 +3572,52 @@ inductive repeats {α:Type} : List α → Prop :=
     more items than labels, at least two items must have the same
     label -- i.e., list `l₁` must contain repeats.
 
-    This proof is much easier if you use the [excluded_middle]
-    hypothesis to show that [In] is decidable, i.e., [forall x l, (In x
-    l) \/ ~ (In x l)].  However, it is also possible to make the proof
-    go through _without_ assuming that [In] is decidable; if you
-    manage to do this, you will not need the [excluded_middle]
-    hypothesis. -/
+    This proof is much easier if you use the excluded middle
+    to show that `In` is decidable, i.e., `forall x l, (In x l) \/ ~ (In x l)`.
+    Remember the `by_cases` tactic from Logic! -/
 /- HIDE: APT21: Apparently, this is really quite hard; even the strongest
    students couldn't do it this year. -/
-theorem pigeonhole_principle: excluded_middle →
+theorem pigeonhole_principle:
   forall (α:Type) (l₁  l₂:List α),
   (forall x, In x l₁ → In x l₂) →
-  length l₂ < length l₁ →
-  repeats l₁.
-Proof.
-  intros EM α l₁. induction l₁ as [|x l1' IHl1'].
+  l₂.length < l₁.length →
+  Repeats l₁ := by
   /- ADMITTED -/
-    - intros l₂ INC NR.  simpl in NR. inversion NR.
-    - intros l₂ INC NR.
+  intros α l₁ l₂ hin hlen
+  induction l₁ generalizing l₂
+  case nil =>
+    rw [List.length_nil] at hlen
+    apply Nat.not_lt_zero at hlen
+    contradiction
+  case cons x l₁' ih =>
+    by_cases h : In x l₁'
+    . constructor; assumption
+    . apply Repeats.rep_later
+      have h₂ : In x l₂ := by
+        apply hin; rw [In_cons]; left; rfl
+      have ⟨l₂a, ⟨l₂b, heq⟩⟩ := in_split _ _ _ h₂
+      have hin₂ : forall x' : α, In x' l₁' -> In x' (l₂a ++ l₂b) := by
+        intro x₀ hin₀
+        have hneq : x ≠ x₀ := by
+          intro heq; subst heq; apply h; assumption
+        have h₁ : In x₀ l₂ := by
+          apply hin; rw [In_cons]; right; assumption
+        rw [heq, In_app_iff] at h₁; rcases h₁ with h₁ | h₁
+        . rw [In_app_iff]; left; assumption
+        . rw [In_app_iff]; right;
+          rw [In_cons] at h₁; rcases h₁ with h₁ | h₁
+          . subst h₁; contradiction
+          . assumption
+      have hlen₂ : (l₂a ++ l₂b).length < l₁'.length := by
+        have hlen' : l₂.length = (l₂a ++ l₂b).length + 1 := by
+          rw [heq, List.length_append, List.length_append, List.length_cons, Nat.add_assoc]
+        rw [hlen', List.length_append, List.length_cons] at hlen
+        rw [List.length_append]
+        apply succ_n_le_succ_m__n_le_m
+        exact hlen
+      apply ih (l₂a ++ l₂b) hin₂ hlen₂
+
+  /-.
       destruct (EM (In x l1')) as [H | H].
       + /- In x l1' -/
         apply rep_here. apply H.
@@ -3605,14 +3631,14 @@ Proof.
         { intros x0 AI.
           assert (H0: x <> x0).
           { intros Heq. apply H. rewrite  Heq. apply AI. }
-          assert (H1: In x0 l₂).
+          assert (h₁: In x0 l₂).
           { apply INC. simpl. right. apply AI. }
-          rewrite EQ in H1. apply In_app_iff in H1.
+          rewrite EQ in h₁. apply In_app_iff in h₁.
           rewrite Heql2'. apply In_app_iff.
-          simpl in H1. destruct H1 as [H1 | [H1 | H1]].
-          - left. apply H1.
-          - exfalso. apply H0. apply H1.
-          - right. apply H1.  }
+          simpl in h₁. destruct h₁ as [h₁ | [h₁ | h₁]].
+          - left. apply h₁.
+          - exfalso. apply H0. apply h₁.
+          - right. apply h₁.  }
         assert (LEN2: length l2' < length l1').
         { assert (LS: length l₂ = S(length (l2a ++ l2b))).
           { rewrite EQ.
@@ -3622,7 +3648,7 @@ Proof.
           apply Sn_le_Sm__n_le_m.  apply NR.
         }
         apply (IHl1' l2' IN2 LEN2).
-Qed.
+Qed. -/
 /- /ADMITTED -/
 /- LATER: A student came up with
 
@@ -3633,6 +3659,7 @@ Should check to see how much harder this makes things.
 /- [] -/
 
 /- QUIETSOLUTION -/
+/-
     /- Here's a clever alternative proof, based heavily on one by Daniel
         Schepler (<dschepler@gmail.com> Coq club mailing list on Wed, 02 Oct
         2013 02:02:12 -0700), that doesn't use decidability of [In], and hence
@@ -3663,12 +3690,12 @@ Should check to see how much harder this makes things.
       - /- l₁ = y::l1' -/
         intros l₂ x H. simpl. simpl in H. inversion H.
         + /- rep_here -/
-          apply rep_here. apply In_app_iff. apply In_app_iff in H1.
-          destruct H1 as [H1 | H1].
-          * left. apply H1.
-          * right. right. apply H1.
+          apply rep_here. apply In_app_iff. apply In_app_iff in h₁.
+          destruct h₁ as [h₁ | h₁].
+          * left. apply h₁.
+          * right. right. apply h₁.
         + /- rep_later -/
-          apply rep_later. apply IHl1'. apply H1.
+          apply rep_later. apply IHl1'. apply h₁.
     Qed.
 
     theorem repeats_app_comm : forall {α:Type} (l₁ l₂:List α),
@@ -3681,12 +3708,12 @@ Should check to see how much harder this makes things.
         intros l₂ H. simpl in H. inversion H.
         + /- rep_here -/
           apply in_repeats. apply In_app_iff.
-          apply In_app_iff in H1.
-          destruct H1 as [H1 | H1].
-          * right. apply H1.
-          * left. apply H1.
+          apply In_app_iff in h₁.
+          destruct h₁ as [h₁ | h₁].
+          * right. apply h₁.
+          * left. apply h₁.
         + /- rep_later -/
-          apply IHl1' in H1. apply rep_insert. apply H1.
+          apply IHl1' in h₁. apply rep_insert. apply h₁.
     Qed.
 
     /- Now the main lemma: -/
@@ -3722,23 +3749,23 @@ Should check to see how much harder this makes things.
               { /- Proof of assertion -/
                 apply AI. right. apply AI'. }
               apply In_app_iff in H0. inversion H0.
-                apply In_app_iff.  left. right. apply H1.
-                apply In_app_iff in H1. inversion H1.
+                apply In_app_iff.  left. right. apply h₁.
+                apply In_app_iff in h₁. inversion h₁.
                   apply In_app_iff. right.
-                    apply In_app_iff. left. apply H2.
-                  inversion H2.
-                    simpl. left. apply H3.
+                    apply In_app_iff. left. apply h₂.
+                  inversion h₂.
+                    simpl. left. apply h₃.
                     apply In_app_iff. right.
-                      apply In_app_iff. right. apply H3. }
+                      apply In_app_iff. right. apply h₃. }
             rewrite app_length in LT.  rewrite app_length.
             simpl in LT. rewrite <- plus_n_Sm in LT.
             unfold lt. unfold lt in LT. apply le_S_n. apply LT.
           * simpl in H0. apply repeats_app_comm. simpl. inversion H0.
             { apply rep_here. apply In_app_iff.
-              apply In_app_iff in H2. inversion H2.
+              apply In_app_iff in h₂. inversion h₂.
               - right. apply H4.
               - left. apply H4. }
-            apply rep_later. apply repeats_app_comm. apply H2.
+            apply rep_later. apply repeats_app_comm. apply h₂.
     Qed.
 
     theorem stronger_pigeonhole_principle: forall {α:Type} (l₁ l₂ : List α),
@@ -3865,32 +3892,32 @@ Should check to see how much harder this makes things.
       induction l₁ as [ | h₁ t1 IH].
       {
         - /- l₁ = nil -/
-        intros l₂ H1 H2.
-        inversion H1.
+        intros l₂ h₁ h₂.
+        inversion h₁.
       }
       {
         - /- l₁ = h₁ :: t1 -/
-        intros l₂ H1 H2. simpl in H1.
-        destruct H1 as [H3 | H3].
+        intros l₂ h₁ h₂. simpl in h₁.
+        destruct h₁ as [h₃ | h₃].
         {
           +
           simpl.
           apply repeats_1.
           apply In_app_iff.
           right.
-          rewrite H3.
-          apply H2.
+          rewrite h₃.
+          apply h₂.
         }
         {
-          + /- H1 = ai_later z u H3 -/
+          + /- h₁ = ai_later z u h₃ -/
           simpl.
           apply repeats_2.
           apply IH.
           {
-            apply H3.
+            apply h₃.
           }
           {
-            apply H2.
+            apply h₂.
           }
         }
       }
@@ -3903,17 +3930,17 @@ Should check to see how much harder this makes things.
     Proof.
       intros α x l₁ l₂ l₃ l4 H.
       apply In_app_iff in H.
-      destruct H as [H1 | H1r].
+      destruct H as [h₁ | h₁r].
       {
         - /- In x l₁ -/
         apply In_app_iff.
         left.
-        apply H1.
+        apply h₁.
       }
       {
         - /- In x (l₂ ++ l₃ ++ l4) -/
-        apply In_app_iff in H1r.
-        destruct H1r as [H2 | H2r].
+        apply In_app_iff in h₁r.
+        destruct h₁r as [h₂ | h₂r].
         {
           + /- In x l₁ -/
           apply In_app_iff.
@@ -3922,19 +3949,19 @@ Should check to see how much harder this makes things.
           right.
           apply In_app_iff.
           left.
-          apply H2.
+          apply h₂.
         }
         {
           + /- In x (l₃ ++ l4) -/
-          apply In_app_iff in H2r.
-          destruct H2r as [H3 | H3r].
+          apply In_app_iff in h₂r.
+          destruct h₂r as [h₃ | h₃r].
           {
             * /- In x l₃ -/
             apply In_app_iff.
             right.
             apply In_app_iff.
             left.
-            apply H3.
+            apply h₃.
           }
           {
             * /- In x l4 -/
@@ -3944,7 +3971,7 @@ Should check to see how much harder this makes things.
             right.
             apply In_app_iff.
             right.
-            apply H3r.
+            apply h₃r.
           }
         }
       }
@@ -3960,25 +3987,25 @@ Should check to see how much harder this makes things.
       induction l₁ as [ | h₁ t1 IH].
       {
         - /- l₁ = nil -/
-        intros l₂ u H1 H2.
-        inversion H2.
+        intros l₂ u h₁ h₂.
+        inversion h₂.
       }
       {
         - /- l₁ = h₁ :: t1 -/
-        intros l₂ u H1 H2.
-        assert (H3 : In h₁ (u ++ l₂)).
+        intros l₂ u h₁ h₂.
+        assert (h₃ : In h₁ (u ++ l₂)).
         {
-          + /- Proof of H3 -/
-          apply H1.
+          + /- Proof of h₃ -/
+          apply h₁.
           left. reflexivity.
         }
-        apply In_app_iff in H3.
-        destruct H3 as [H3l | H3r].
+        apply In_app_iff in h₃.
+        destruct h₃ as [h₃l | h₃r].
         {
           + /- In h₁ u -/
           apply (In_both_impl_repeats_app _ h₁).
           {
-            apply H3l.
+            apply h₃l.
           }
           {
             left. reflexivity.
@@ -3986,8 +4013,8 @@ Should check to see how much harder this makes things.
         }
         {
           + /- In h₁ l₂ -/
-          apply in_split in H3r.
-          destruct H3r as [v2 H4].
+          apply in_split in h₃r.
+          destruct h₃r as [v2 H4].
           destruct H4 as [w2 H5].
           assert (H6 : u ++ h₁ :: t1 = (u ++ [h₁]) ++ t1).
           {
@@ -4004,7 +4031,7 @@ Should check to see how much harder this makes things.
             apply In_app_iff_midswap.
             simpl.
             rewrite <- H5.
-            apply H1.
+            apply h₁.
             right.
             apply H7.
           }
@@ -4022,9 +4049,9 @@ Should check to see how much harder this makes things.
             }
             rewrite <- H8.
             apply Sn_le_Sm__n_le_m.
-            unfold lt in H2.
-            simpl in H2.
-            apply H2.
+            unfold lt in h₂.
+            simpl in h₂.
+            apply h₂.
           }
         }
       }
@@ -4037,21 +4064,21 @@ Should check to see how much harder this makes things.
     Proof.
       intros α.
       unfold pigeonhole_principle_prop.
-      intros l₁ l₂ H1 H2.
+      intros l₁ l₂ h₁ h₂.
       assert (H: l₁ = nil ++ l₁). { reflexivity. }
       rewrite H.
       apply (pigeonhole_principle_aux _ _ l₂).
       {
-        intros x H3.
+        intros x h₃.
         simpl.
-        apply H1.
-        apply H3.
+        apply h₁.
+        apply h₃.
       }
       {
-        apply H2.
+        apply h₂.
       }
     Qed.
 
     End Pigeon.
-
+-/
 /- /QUIETSOLUTION -/
