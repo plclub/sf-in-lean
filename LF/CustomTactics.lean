@@ -1,24 +1,41 @@
 module
 
-public meta import Lean.Parser.Basic
-public meta import Lean.Parser.Term
+public meta import Lean.Elab.ConfigEval
 public meta import Lean.Elab.Tactic.ElabTerm
 public meta import Lean.Meta.Tactic.Generalize
 public meta import Lean.Meta.Tactic.Cases
 public meta import Lean.Meta.Tactic.Injection
 public meta import Lean.Meta.Tactic.Contradiction
+public meta import Lean.Elab.Tactic.RenameInaccessibles
+
+meta section
+
+/--
+`p|+` is shorthand for `sepBy1(p, "|")`. It parses 1 or more occurrences of
+`p` separated by `|`.
+
+It produces a `nullNode` containing a `SepArray` with the interleaved parser
+results. It has arity 1, and auto-groups its component parser if needed.
+-/
+macro:arg x:stx:max "|+" : stx => `(stx| sepBy1($x, " | "))
 
 namespace Lean.Parser
-open Term
+
+declare_syntax_cat vars
+
+syntax ((colGt binderIdent)*)|+ : vars
+syntax "(" ((colGt binderIdent)*)|+ ")" : vars
 
 /--
   `inversion t` generalizes nonvariable indices of the type of `t` before invoking `cases t`,
   then solves away contradictory generated goals.
-  * If `inversion (clear := true) t` is set, `t` is `clear`ed from the context.
-  * If `inversion t with h₁ ... hₙ` are provided, the last n hypotheses generated are given these names.
+  * If `inversion +clear t` is set, `t` is `clear`ed from the context.
+  * If `inversion t with (x ... | ... | z ...)` are provided,
+    for each new subgoal, the generated hypotheses are given the provided names.
 -/
 syntax (name := inversion)
-  "inversion " ("(" "clear " ":=" (trueVal <|> falseVal) ")")? ident (" with " binderIdent+)? : tactic
+  "inversion " optConfig ident : tactic
+
 end Lean.Parser
 
 namespace Lean.Meta
@@ -37,7 +54,7 @@ namespace Lean.Meta
 
   Lifted from [https://github.com/leanprover-community/mathlib4/blob/master/Mathlib/Lean/Meta/Basic.lean#L41].
 -/
-meta def forallMetaTelescopeReducingUntilDefEq
+def forallMetaTelescopeReducingUntilDefEq
     (e t : Expr) (kind : MetavarKind := MetavarKind.natural) :
     MetaM (Array Expr × Array BinderInfo × Expr) := do
   let (ms, bs, tp) ← forallMetaTelescopeReducing e (some 1) kind
@@ -84,23 +101,24 @@ elab "apply " t:term " at " i:ident : tactic => withSynthesize <| withMainContex
   let mainGoal ← mainGoal.tryClear ldecl.fvarId
   replaceMainGoal <| [mainGoal] ++ mvs.pop.toList.map (·.mvarId!)
 
-private meta def mkGeneralizeArgs (hypType : Expr) : MetaM (Array GeneralizeArg) := do
+private def mkGeneralizeArgs (hypType : Expr) (hypName : Name) : TacticM (Array GeneralizeArg) := do
   let hypType ← whnf hypType
-  hypType.withApp fun fn args =>
-    matchConstInduct fn (fun _ => pure #[]) fun val _ => do
-      let indices := args.extract val.numParams args.size
-      let mut seen : Array Expr := #[]
-      let mut genArgs : Array GeneralizeArg := #[]
-      for idx in indices do
-        if idx.isFVar || seen.any (· == idx) then continue
-        seen := seen.push idx
+  let (ind, args) := hypType.getAppFnArgs
+  match ← isInductive? ind with
+  | some val =>
+    let indices := args.drop val.numParams
+    let mut genArgs : Array GeneralizeArg := #[]
+    for idx in indices do
+      unless idx.isFVar || genArgs.any (·.expr == idx) do
         genArgs := genArgs.push
           { expr := idx
-            xName? := some (← mkFreshUserName `x)
-            hName? := some (← mkFreshUserName `heq) }
-      pure genArgs
+            hName? := some (← mkFreshUserName $ hypName.append `eq) }
+    return genArgs
+  | none =>
+    throwTacticEx `inversion (← getMainGoal)
+      m!"target is not an inductive type{indentExpr hypType}"
 
-private meta partial def substGenEqs (mvarId : MVarId) (eqs : List FVarId) :
+private partial def substGenEqs (mvarId : MVarId) (eqs : List FVarId) :
     MetaM (Option MVarId) := do
   match eqs with
   | [] => return some mvarId
@@ -125,43 +143,55 @@ private meta partial def substGenEqs (mvarId : MVarId) (eqs : List FVarId) :
                 m!"error: `cases` on the equation{indentExpr ty}produced \
                    {sgs.size} subgoals, but an equality admits at most one"
 
-meta def inversionCore (h : FVarId) (clear? : Bool := false) : TacticM Unit := withMainContext do
+structure InversionConfig where
+  clear : Bool := false
+
+declare_config_elab elabInversionConfig InversionConfig
+
+private def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (List MVarId) := withMainContext do
   let goal ← getMainGoal
   let hypType ← h.getType
+  let hypName ← h.getUserName
   let (target, goal) ←
-    if clear? then pure (h, goal)
-    else do
-      let goal ← goal.assert (← mkFreshUserName `hInv) hypType (mkFVar h)
-      goal.intro1P
-  let genArgs ← mkGeneralizeArgs hypType
+    if config.clear then pure (h, goal)
+    else (← goal.assert hypName hypType (.fvar h)).intro1P
+  let genArgs ← goal.withContext do
+    mkGeneralizeArgs hypType hypName
   let (subst, newVars, goal) ← goal.withContext do
-    if genArgs.isEmpty then pure (({} : FVarSubst), (#[] : Array FVarId), goal)
-    else goal.generalizeHyp genArgs #[target]
+    goal.generalizeHyp genArgs #[target]
   let targetExpr := subst.apply (mkFVar target)
   let target ← match targetExpr with
     | .fvar f => pure f
-    | _ => goal.withContext do
-        throwTacticEx `inversion goal
-          m!"error: generalization mapped the inverted hypothesis to a non-variable term{indentExpr targetExpr}"
-  let genEqs := (newVars.extract genArgs.size newVars.size).toList
+    | _ =>
+      throwTacticEx `inversion goal
+        m!"generalization mapped the inverted hypothesis to a non-variable term{indentExpr targetExpr}"
+  let genEqs := newVars.toList.drop genArgs.size
   let subgoals ← goal.cases target
   let newGoals ← subgoals.toList.filterMapM fun s => do
     let eqs := genEqs.filterMap fun f => (s.subst.apply (mkFVar f)).fvarId?
     substGenEqs s.mvarId eqs
-  replaceMainGoal newGoals
+  return newGoals
 
 @[tactic Lean.Parser.inversion]
 public meta def evalInversion : Tactic
-  | `(tactic| inversion $[(clear := true)]? $h $[with $hso*]?) => do
-    inversionCore (← getFVarId h) (clear? := true)
-    if let some hs := hso then nameHyps hs
-  | `(tactic| inversion $[(clear := false)]? $h $[with $hso*]?) => do
-    inversionCore (← getFVarId h) (clear? := false)
-    if let some hs := hso then nameHyps hs
-  | _ => throwError m!"could not parse inversion tactic"
-  where nameHyps hs := do evalTactic (← `(tactic| rename_i $hs*))
+  | `(tactic| inversion $config $h:ident) => do
+    let config ← elabInversionConfig config
+    let _goal ← getMainGoal
+    let newGoals ← inversionCore (← getFVarId h) config
+    /- if let some hss := hss? then
+      unless newGoals.length == hss.size do
+        throwTacticEx `inversion goal
+          m!"incorrect number of inversion cases: \
+            {hss.size} provided while expecting {newGoals.length}"
+      for goal in newGoals.reverse, hs in hss.reverse do
+        pushGoal (← renameInaccessibles goal hs)
+    else -/
+    replaceMainGoal newGoals
+  | stx => throwErrorAt stx "could not parse inversion tactic"
 
 end Lean.Elab.Tactic
+
+end -- meta section
 
 -- [https://github.com/leanprover-community/mathlib4/blob/master/Mathlib/Tactic/Lemma.lean]
 -- [https://github.com/leanprover-community/batteries/blob/main/Batteries/Tactic/Lemma.lean]
@@ -170,7 +200,17 @@ macro "lemma " thm:declId sig:declSig val:declVal : command => `(theorem $thm $s
 
 example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : f n = 0 := by
   -- cases le /- Dependent elimination failed: Failed to solve equation 0 = f n -/
-  inversion le with e; rfl
+  inversion le
+  rfl
+
+example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : f n = 0 := by
+  inversion +clear le
+  rfl
+
+/-- warning: declaration uses `sorry` -/
+#guard_msgs(warning)  in
+example (f : Nat → Nat) (n m : Nat) (le : f n ≤ f m) : f n = 0 := by
+  inversion +clear le <;> sorry
 
 example (H : Bool → Nat → False) (n : Nat) : False := by
   apply H at n; apply n; exact true

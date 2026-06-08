@@ -5,6 +5,7 @@
 -- INSTRUCTORS: This file and Induction.lean each take about an hour to
 --    get through in a not-too-rushed fashion (with questions, etc.).
 --    (BCP: Actually, in 2025 this file alone took me two full hours.)
+--    (BCP: This estimate may need to be revised now that we are in Lean!)
 --
 --    You may want to assign both files together as the homework for the
 --    first week, depending on the level of the class.  Just Basics is
@@ -15,20 +16,6 @@
 --    is recommended for the first few lectures, so students see exactly
 --    what's in the source file.
 
--- HIDEFROMHTML
--- FULL
-/-
-  REMINDER:
-
-           #####################################################
-           ###  PLEASE DO NOT DISTRIBUTE SOLUTIONS PUBLICLY  ###
-           #####################################################
-
-    (See the [Preface] for why.)
--/
--- /FULL
--- /HIDEFROMHTML
-
 /-
   ######################################################################
   # Introduction
@@ -37,14 +24,15 @@
 -- FULL
 /-
   The _functional style_ of programming is founded on simple,
-  everyday mathematical intuitions: If a procedure or method has no
+  everyday mathematical intuitions: If a program has no
   side effects, then (ignoring efficiency) all we need to understand
   about it is how it maps inputs to outputs -- that is, we can think
   of it as just a concrete method for computing a mathematical
-  function.  This is one sense of the word "functional" in
-  "functional programming."  The direct connection between programs
+  function.  The direct connection between programs
   and simple mathematical objects supports both formal correctness
   proofs and sound informal reasoning about program behavior.
+  This is one sense of the word "functional" in
+  "functional programming."
 
   The other sense in which functional programming is "functional" is
   that it emphasizes the use of functions as _first-class_ values --
