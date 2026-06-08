@@ -34,7 +34,7 @@ syntax "(" ((colGt binderIdent)*)|+ ")" : vars
     for each new subgoal, the generated hypotheses are given the provided names.
 -/
 syntax (name := inversion)
-  "inversion " optConfig ident (" with " vars)? : tactic
+  "inversion " optConfig ident : tactic
 
 end Lean.Parser
 
@@ -174,19 +174,19 @@ private def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (Lis
 
 @[tactic Lean.Parser.inversion]
 public meta def evalInversion : Tactic
-  | `(tactic| inversion $config $h:ident $[with $[$hss?*]|*]?)
-  | `(tactic| inversion $config $h:ident $[with ($[$hss?*]|*)]?) => do
+  | `(tactic| inversion $config $h:ident) => do
     let config ← elabInversionConfig config
-    let goal ← getMainGoal
+    let _goal ← getMainGoal
     let newGoals ← inversionCore (← getFVarId h) config
-    if let some hss := hss? then
+    /- if let some hss := hss? then
       unless newGoals.length == hss.size do
         throwTacticEx `inversion goal
           m!"incorrect number of inversion cases: \
             {hss.size} provided while expecting {newGoals.length}"
       for goal in newGoals.reverse, hs in hss.reverse do
         pushGoal (← renameInaccessibles goal hs)
-    else replaceMainGoal newGoals
+    else -/
+    replaceMainGoal newGoals
   | stx => throwErrorAt stx "could not parse inversion tactic"
 
 end Lean.Elab.Tactic
@@ -200,17 +200,17 @@ macro "lemma " thm:declId sig:declSig val:declVal : command => `(theorem $thm $s
 
 example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : f n = 0 := by
   -- cases le /- Dependent elimination failed: Failed to solve equation 0 = f n -/
-  inversion le with e
+  inversion le
   rfl
 
 example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : f n = 0 := by
-  inversion le with e
+  inversion +clear le
   rfl
 
 /-- warning: declaration uses `sorry` -/
 #guard_msgs(warning)  in
 example (f : Nat → Nat) (n m : Nat) (le : f n ≤ f m) : f n = 0 := by
-  inversion +clear le with (| le _) <;> sorry
+  inversion +clear le <;> sorry
 
 example (H : Bool → Nat → False) (n : Nat) : False := by
   apply H at n; apply n; exact true
