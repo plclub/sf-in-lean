@@ -4,7 +4,8 @@ public meta import Lean.Elab.ConfigEval
 public meta import Lean.Elab.Tactic.ElabTerm
 public meta import Lean.Elab.Tactic.RenameInaccessibles
 public meta import Lean.Elab.Tactic.Induction
-meta import all Lean.Elab.Tactic.Induction
+public meta import Lean.Elab.Tactic.BuiltinTactic
+meta import all Lean.Elab.Tactic.BuiltinTactic
 
 public meta import Lean.Meta.Tactic.Generalize
 public meta import Lean.Meta.Tactic.Cases
@@ -67,21 +68,10 @@ def forallMetaTelescopeReducingUntilDefEq
     out := tp
   return (mvs, bis, out)
 
-/--
-Find a metavariable whose name is (a suffix or prefix of) `tag`,
-and throw an error if none exists.
-This is adapted from `Lean.Elab.Tactic.findTag?`.
--/
-def findTag (mvarIds : List MVarId) (tag : Name) : MetaM MVarId := do
-  match (← mvarIds.findM? fun mvarId => return tag == (← mvarId.getDecl).userName) with
-  | some mvarId => return mvarId
-  | none =>
-  match (← mvarIds.findM? fun mvarId => return tag.isSuffixOf (← mvarId.getDecl).userName) with
-  | some mvarId => return mvarId
-  | none =>
-  match (← mvarIds.findM? fun mvarId => return tag.isPrefixOf (← mvarId.getDecl).userName) with
-  | some mvarId => return mvarId
-  | none => throwError m!"goal '{tag}' not found"
+/-- Get the user-facing name for the given metavariable. -/
+def _root_.Lean.MVarId.getUserName (mvarId : MVarId) : MetaM Name := do
+  let decl ← mvarId.getDecl
+  return decl.userName
 
 def mkGeneralizeArgs (mvarId : MVarId) (hypType : Expr) (hypName : Name) : MetaM (Array GeneralizeArg) := do
   let hypType ← whnf hypType
@@ -181,13 +171,23 @@ private def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (Lis
     substGenEqs s.mvarId eqs
   return newGoals
 
-private def evalInvAlt (goals : List MVarId) : Tactic
+private def evalInvAlt (goals : List MVarId) (alt : TSyntax `invAlt) : TacticM MVarId :=
+  match alt with
   | `(invAlt| | $tag:ident $vars:binderIdent* => $tactics:tacticSeq) => do
-    let goals ← findTag goals tag.getId
-      >>= (renameInaccessibles · vars)
-      >>= (evalTacticAt tactics ·)
-    pushGoals goals
-  | stx@`(invAlt| | _ $_* => $_) =>
+    match ← findTag? goals tag.getId with
+    | some goal =>
+      let goals ← renameInaccessibles goal vars >>= evalTacticAt tactics
+      unless goals.isEmpty do
+        reportUnsolvedGoals goals
+      return goal
+    | none =>
+      let goalMsgs ← goals.mapM (.ofName <$> ·.getUserName)
+      let msg ← if goals.isEmpty
+        then pure m!"There are no unhandled alternatives"
+        else pure m!"Expected {.orList goalMsgs}"
+      throwError m!"Invalid alternative name `{tag.getId}`: {msg}"
+  | stx@`(invAlt| | _ $_vars:binderIdent* => $_tactics:tacticSeq) =>
+    -- TODO: allow the last alternative to be a wildcard
     throwErrorAt stx "inversion alternatives must be explicitly named"
   | stx => throwErrorAt stx "could not parse inversion alternative"
 
@@ -195,9 +195,13 @@ private def evalInvAlt (goals : List MVarId) : Tactic
 public meta def evalInversion : Tactic
   | `(tactic| inversion $config $h:ident $[with $[$alts?:invAlt]*]?) => do
     let config ← elabInversionConfig config
-    let goals ← inversionCore (← getFVarId h) config
+    let mut goals ← inversionCore (← getFVarId h) config
     if let some alts := alts? then
-      alts.forM (evalInvAlt goals)
+      for alt in alts do
+        let goal ← evalInvAlt goals alt
+        goals := goals.erase goal
+      unless goals.isEmpty do
+        reportUnsolvedGoals goals
     replaceMainGoal goals
   | stx => throwErrorAt stx "could not parse inversion tactic"
 
@@ -220,12 +224,13 @@ example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : f n = 0 := by
   inversion +clear le; rfl
 
 /-- warning: declaration uses `sorry` -/
+#guard_msgs(warning) in
 example (f : Nat → Nat) (n m : Nat) (le : f n ≤ f m) : f n = 0 := by
   inversion +clear le with
   | refl e =>
     rw [← e]
     sorry
-  case step k _ e =>
+  | step k _ e =>
     sorry
 
 example (H : Bool → Nat → False) (n : Nat) : False := by
