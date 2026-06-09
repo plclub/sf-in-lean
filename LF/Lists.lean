@@ -1,3 +1,5 @@
+-- Note that rewrite laws should sometimes differ from pattern matching now 
+
 /- Lists: Working with Structured Data -/
 
 /- INSTRUCTORS: This file takes about 60 minutes to get through.

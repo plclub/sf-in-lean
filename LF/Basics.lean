@@ -1,4 +1,5 @@
 /-
+
   Basics: Functional Programming in Lean
 -/
 
@@ -126,6 +127,12 @@ def nextWorkingDay (d : Day) : Day :=
   | .sunday    => .monday
 
 -- FULL
+/- MWH: The text that follows seems to assume the reader knows what pattern matching
+  is, calling attention only to the syntax. It also seems to assume the reader
+  knows what OCaml is. But the premise of this section seems to be that readers
+  do not know what functional programming is -- we are explaining it to them.
+  Seems like a gap. Was it in the original?
+-/
 /-
   Note that the argument and return types of this function are
   explicitly declared on the first line.  Like most functional
@@ -164,6 +171,7 @@ def nextWorkingDay (d : Day) : Day :=
 -- BCP: Are these comments auto-verified?
 -- /FULL
 
+
 #eval nextWorkingDay Day.friday
 /- ==> Day.monday -/
 
@@ -173,9 +181,55 @@ def nextWorkingDay (d : Day) : Day :=
 #eval nextWorkingDay (nextWorkingDay Day.saturday)
 /- ==> Day.tuesday -/
 
+-- FULL
 /-
-  Second, we can record what we _expect_ the result to be in the
-  form of a Lean "example":
+  (We show Lean's responses in comments; if you have a computer
+  handy, this would be an excellent moment to fire up VS Code with
+  the Lean extension and try it for yourself.  Load this file,
+  `Basics.lean`, from the book's Lean sources, find the above
+  example, and observe the result in the Lean InfoView panel.)
+-/
+
+-- RAB ADDITION ↓
+
+/-
+  Aside: Using the Lean Extension
+-/
+
+/-
+  In VSCode, development of Lean code is supported by
+  the Lean Extension, which provides an interactive "InfoView" panel that
+  displays the results of commands like `#eval` and `#check`, as well as the
+  current goal state when working on proofs. You can hover over expressions in
+  the source code to see their types, and you can click on the results in the
+  InfoView to navigate to their definitions. This makes it easier to understand
+  how your code is being interpreted by Lean and to debug any issues that
+  arise.
+
+  The InfoView always follows your cursor, and Lean typechecks the file as you
+  edit it, so you can see the results of your changes immediately. You can also
+  use the InfoView to explore the definitions of functions and types that
+  you're using, which can be very helpful for understanding how they work.
+
+  If you haven't already, install the Lean Extension in VSCode and open the
+  `Basics.lean` file to see the InfoView in action. Try hovering over the
+  `nextWorkingDay` function and the `Day` type to see their definitions, and
+  experiment with adding your own `#eval` commands to test other inputs.
+
+  For `#eval` and other commands, we show Lean's responses in comments; if you
+  hover over the `#eval` commands above, you will see the popup that contains
+  the output should match what's in the comment below. Experiment with adding
+  your own `#eval` commands to test other inputs.
+
+-/
+
+-- RAB: There's a question of where exactly to put this.
+
+-- /FULL
+
+/-
+  Continuing with our simple type and function, we can record what we _expect_
+  the result of calling a function to be in the form of a Lean `example`:
 -/
 
 /- test_next_working_day -/
@@ -185,19 +239,27 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
 
 -- FULL
 /-
-  This declaration does two things: it makes an assertion (that the
-  second working day after `saturday` is `tuesday`), and it gives the
-  assertion a name that can be used to refer to it later.
+  This declaration does two things: it makes an assertion
+  (that the second working day after `saturday` is `tuesday`), and it
+  gives the assertion a name that we can use to refer to it later.
 
-  Having made the assertion, we can also ask Lean to _verify_ it. The
-  `by rfl` can be read as "The assertion we've just made can be proved
-  by observing that both sides of the equality evaluate to the same
-  thing." Here, `rfl` stands for "reflexivity," which is the principle
-  that any value is equal to itself. After evaluation, both sides of
-  the equality are the same value, so the assertion is true by
-  reflexivity.  If we had made a different assertion, such as `example
-  : nextWorkingDay (nextWorkingDay Day.saturday) = Day.monday`, then
-  Lean would not be able to verify it and would signal an error.
+  Having made the assertion, we can also ask Lean to _verify_ it.
+  The `by rfl` can be read as "The assertion we've just made can be
+  proved by observing that both sides of the equality evaluate to
+  the same thing."
+-/
+
+/- MWH: Here we use the term "evaluate" without defining it. Should we do
+  that here? -/
+-- BCP: Yes!
+
+/-
+  `rfl` stands for "reflexivity," which is the principle that any value is
+  equal to itself. After evaluation, both sides of the equality are the same
+  value, so the assertion is true by reflexivity.  If we had made a different
+  assertion, such as `example : nextWorkingDay (nextWorkingDay Day.saturday) =
+  Day.monday`, then Lean would not be able to verify it, and would signal an
+  error. Try it out!
 -/
 -- /FULL
 
@@ -276,11 +338,9 @@ inductive MyBool : Type where
   | false
 open MyBool
 
--- TERSE: /- Booleans are also available in Lean's standard library, but in this course we'll define everything from scratch, just to see how it's done. -/
--- TERSE: /- *** -/
 -- FULL
 /-
-  Functions over booleans can be defined in the same way as above:
+  Functions over booleans can be defined in the same way as above
 -/
 -- /FULL
 
@@ -306,14 +366,13 @@ def orb (b1 : MyBool) (b2 : MyBool) : MyBool :=
 -- FULL
 /-
   The last two definitions illustrate Lean's syntax for multi-argument
-  function definitions.  The corresponding multi-argument
-  _application_ syntax is illustrated by the following tests, which
-  effectively constitute a complete specification -- a truth table --
-  for the `orb` function:
+  functions.  The corresponding multi-argument _application_ syntax is
+  illustrated by the following tests, which effectively constitute a
+  complete specification -- a truth table -- for the `orb` function:
 -/
 -- /FULL
--- TERSE: /- Note the syntax for defining multi-argument functions (`andb` and `orb`). -/
--- TERSE: /- *** -/
+
+-- TERSE: Note the syntax for defining multi-argument functions (`andb` and `orb`).
 
 /- test_orb1 -/
 example : orb .true  .false = .true  := by rfl
@@ -326,8 +385,8 @@ example : orb .true  .true  = .true  := by rfl
 
 /-
   We can define new symbolic notations for existing definitions.
-  Because Lean already defines these for the built-in `Bool`,
-  we restrict ours locally to a section.
+  Because Lean already defines the same notations for the built-in `Bool`,
+  we restrict ours locally to a _section_.
 -/
 -- BCP: We are already inside a section, no?
 
@@ -403,11 +462,6 @@ example : andb3 .true .true .false = .false := by rfl  -- ADMITTED
 -- []
 -- /FULL
 
--- JC: Now would be a good time to explicitly say we're switching
--- back to Lean's Bool, which conveniently has `bif ... then ... else`
--- syntax that we can then use.
-
--- RADDITION ↓
 
 -- TERSE: /- *** -/
 -- FULL
@@ -426,7 +480,7 @@ def myBoolToBool (b : MyBool) : Bool :=
 
 /-
   With the full power of Lean's `Bool` at our disposal, we can also write this
-  more concisely using the `bif ... then ... else` syntax, which is a
+  function more concisely using the `bif ... then ... else` syntax, which is a
   convenient way to write simple conditional expressions.
 -/
 
@@ -446,7 +500,7 @@ end    -- (close the `section` where we defined `MyBool`)
 
 /-
   Every expression in Lean has a type describing what sort of
-  thing it computes.  The `#check` command asks Lean to print the type
+  thing it computes. The `#check` command asks Lean to print the type
   of an expression.
 -/
 
@@ -478,7 +532,9 @@ end    -- (close the `section` where we defined `MyBool`)
   function produces an output of type `Bool`." Similarly, the type of
   `and`, written `Bool → Bool → Bool`, can be read, "Given two inputs,
   each of type `Bool`, this function produces an output of type
-  `Bool`."
+  `Bool`." -/
+
+/- ### Aside: Unicode in Lean
 
   Note that → is a unicode symbol, not a simple ASCII character. The
   Lean Extension for VS Code provides convenient shortcuts for
@@ -517,9 +573,17 @@ inductive Color : Type where
   | white
   | primary (p : RGB)
 
-/-
-  Let's look at this in detail.
+/- MWH: In the following you use Bool syntax and not MyBool.
+  This is maybe a little confusing because we are not writing
+  `Bool.true` or `.true`, but simply `true`. I don't believe
+  that we have explained why built-in syntax is special, or
+  even acknowledged that it is. We could do that here, or
+  perhaps should do it earlier when introducing `Bool`. Also:
+  In the examples below you might want to include a few from
+  `MyBool`.
+-/
 
+/-
   An `inductive` definition does two things:
 
   - It introduces a set of new _constructors_. E.g., `RGB.red`,
@@ -557,14 +621,12 @@ def monochrome (c : Color) : Bool :=
   | .primary _ => false
 
 /-
-  Since the `primary` constructor takes an argument, a pattern that
-  matches `primary` should include either a variable, as we just did
-  (note that we can choose its name freely), or a constant of
-  appropriate type (as below).
+  Since the `primary` constructor takes an argument, a pattern
+  that matches `primary` should include either a variable, a constant
+  of appropriate type, or `_`. The last, as used in the above
+  example, means that the constructor argument is being ignored.
+  Examples below illustrate the other two cases.
 -/
--- BCP: We didn't use a variable -- we used an underscore!  We should
--- explain this in two steps: first with an explicit name, then with
--- an underscore.
 
 def isRed (c : Color) : Bool :=
   match c with
@@ -574,8 +636,26 @@ def isRed (c : Color) : Bool :=
   | .primary _ => false
 
 /-
-  The pattern `Color.primary _` here is shorthand for "the constructor
+  The pattern `.primary red` will match only when `c` is `Color.primary`
+  with the argument `RGB.red`. Patterns are checked in order, so
+  the subsequent pattern `.primary _` here means "the constructor
   `primary` applied to any `RGB` constructor except `red`."
+-/
+
+def isRed' (c : Color) : Bool :=
+  match c with
+  | .black => false
+  | .white => false
+  | .primary r =>
+    match r with
+    | .red => true
+    | _ => false
+
+/-
+  The `isRed'` function produces the same result as `isRed` but illustrates
+  the use of a pattern matching variable: the `.primary r` pattern
+  stores the `RGB` argument into variable `r`, and then pattern matches on
+  that argument to produce the final result.
 -/
 
 /-
@@ -591,10 +671,10 @@ def isRed (c : Color) : Bool :=
 -- FULL
 /-
   Lean provides a _namespace system_ to aid in organizing large
-  developments.  If we enclose a collection of declarations in
+  developments. If we enclose a collection of declarations in
   `namespace X ... end X`, then, in the remainder of the file
   after the `end`, these definitions are referred to by names like
-  `X.foo` instead of just `foo`.  We will use this feature to limit
+  `X.foo` instead of just `foo`. We will use this feature to limit
   the scope of definitions, so that we are free to reuse names.
 -/
 -- /FULL
@@ -612,8 +692,8 @@ def myFoo : Bool := true
 -- FULL
 /-
   Inside of a namespace, all previous definitions from that namespace are
-  available, and can be referred to without prefixing.
-  Definitions can also be prefixed by a namespace to put it in the namespace
+  available, and can be referenced without prefixes.
+  Definitions can also be prefixed by a namespace to put them in the namespace
   without having to open and close the namespace.
 -/
 -- /FULL
@@ -633,9 +713,9 @@ def RGB.myOtherBlue : RGB := myBlue
 -- FULL
 /-
   We can also use `open` to bring the definitions of a namespace into scope.
-  This makes it convenient to refer to all of those definitions without
-  a prefix. Original definitions of the same name can then be referred to
-  by the special prefix `_root_`.
+  This means that we can refer to all of the namespace's definitions without
+  a prefix. Definitions of the same name declared prior to the `open`
+  can be referred to by the special prefix `_root_`.
   Lean also provides _sections_, which delimit the scope of `open`ing
   namespaces and `local` notations within `section ... end`.
   We already saw `prefix` and `infix` notations for MyBool;
@@ -694,6 +774,15 @@ inductive Nybble : Type where
 
 -- FULL
 /-
+  Note: The `bits` constructor illustrates a feature of multi-argument
+  declarations, both for constructors and for functions: Instead
+  of writing `(x0 : Bit) (x1 : Bit) ...` we write `(x0 x1 ... : Bit)`
+  since all of the variables have the same type. We could have done
+  the same with the function definition `orb` above, writing
+  `orb (b1 b2 : MyBool)` rather than `orb (b1 : MyBool) (b2 : MyBool)`
+-/
+
+/-
   The `bits` constructor acts as a wrapper for its contents.
   Unwrapping can be done by pattern-matching, as in the `allZero`
   function below, which tests a nybble to see if all its bits are
@@ -708,11 +797,6 @@ def allZero (nb : Nybble) : Bool :=
   match nb with
   | .bits .b0 .b0 .b0 .b0 => true
   | .bits _   _   _   _   => false
-
-/-
-  (The underscore `_` here is a _wildcard pattern_, which avoids
-  inventing variable names that will not be used.)
--/
 
 #eval allZero (.bits .b1 .b0 .b1 .b0)
 /- ===> false -/
@@ -729,9 +813,8 @@ end TuplePlayground
 -- FULL
 /-
   We put this section in a namespace so that our own definition of
-  natural numbers does not interfere with the one from the
-  standard library.  In the rest of the book, we'll want to use
-  the standard library's.
+  numbers does not interfere with the one from the standard library.
+  In the rest of the book, we'll use the standard library's.
 -/
 -- /FULL
 
@@ -741,43 +824,34 @@ namespace NatPlayground
 /-
   All the types we have defined so far -- both "enumerated
   types" such as `Day`, `Bool`, and `Bit` and tuple types such as
-  `Nybble` built from them -- are finite.  The natural numbers, on
+  `Nybble` built from them -- are finite. The natural numbers, on
   the other hand, are an infinite set, so we'll need to use a
   slightly richer form of type declaration to represent them.
 -/
-
--- RAB: I moved over the notes from the Rocq book here, as I find they
--- very nicely motivate unary for someone who has not seen it before.
 
 /-
   There are many representations of numbers to choose from. You are
   certainly familiar with decimal notation (base 10), using the
   digits 0 through 9, for example, to form the number 123. You may
-  very likely also have encountered hexadecimal notation (base 16),
+  also have encountered hexadecimal notation (base 16),
   in which the same number is represented as 7B, or octal (base 8),
   where it is 173, or binary (base 2), where it is 1111011. Using an
   enumerated type to represent digits, we could use any of these as
-  our representation natural numbers. Indeed, there are
-  circumstances where each of these choices would be useful.
+  our representation natural numbers.
 -/
 
 /-
-  The binary representation is valuable in computer hardware because
-  the digits can be represented with just two distinct voltage
-  levels, resulting in simple circuitry. Analogously, we wish here
-  to choose a representation that makes _proofs_ simpler.
--/
-
-/-
-  In fact, there is a representation of numbers that is even simpler
-  than binary, namely unary (base 1), in which only a single digit
-  is used -- as our forebears might have done to count days by
-  making scratches on the walls of their caves. To represent unary
-  numbers with a Lean datatype, we use two constructors. The
+  There are circumstances where each of these choices would
+  be useful. The binary representation is valuable in computer hardware
+  because the digits can be represented with just two distinct voltage
+  levels, resulting in simple circuitry. Here we choose a _unary_
+  (base 1) representation that is even simpler than binary, makes proofs
+  simpler. In this representation, only a single digit
+  is used. As a Lean datatype, we use two constructors. The
   [zero] constructor represents zero. The [succ] constructor can be
   applied to the representation of the natural number [n], yielding
   the representation of [n+1], where [succ] stands for "successor."
-   Here is the complete datatype definition: *)
+  Here is the complete datatype definition:
 -/
 
 -- /FULL
@@ -793,60 +867,77 @@ inductive Nat : Type where
   2 by `succ (succ zero)`, and so on.
 -/
 
--- TERSE: /- *** -/
 /-
-  Critical point: this just defines a _representation_ of
-  numbers -- a unary notation for writing them down.
+  Naturally, Lean has its own definition of natural numbers.
+
+-/
+  #check Nat
+  /- ==> NatPlayground.Nat : Type -/ /- ← this is our `Nat`... -/
+  #check _root_.Nat
+  /- ==> _root_.Nat : Type -/ /- ← ...this is Lean's `Nat`. -/
+
+/-
+  Lean's [Nat] comes with powerful built-in reasoning and notation.
+  As we are just beginning to reason about natural numbers, we use our own
+  simple definition, and introduce the Lean one shortly after.
 -/
 
-inductive OtherNat : Type where
-  | stop
-  | tick (foo : OtherNat)
+-- Maybe TODO: hide the next 3 lines ↓ this just lets you see (succ (succ zero))
+-- instead of NatPlayground.Nat.succ (NatPlayground.Nat.succ
+-- NatPlayground.Nat.zero) in the InfoView.
+-- At least, that's what it's supposed to do... see TODO below.
+attribute [pp_nodot] Nat
+namespace Nat
+open Nat
 
 /-
-  This is the same _representation_ of numbers as `Nat`, but with different
-  (sillier!) constructor names.
+  We can define our own `Nat` literals:
 -/
 
+abbrev one : Nat := succ zero
+abbrev two : Nat := succ one
+abbrev three : Nat := succ two
+abbrev four : Nat := succ three
+abbrev five : Nat := succ four
+abbrev six : Nat := succ five
+abbrev seven : Nat := succ six
+abbrev eight : Nat := succ seven
+abbrev nine : Nat := succ eight
+abbrev ten : Nat := succ nine
+
+/- ... and so on. -/
+
 /-
-  The _interpretation_ of these representations arises from how we use them to
-  compute.
+ The `abbrev` keyword defines an abbreviation, and is useful for writing
+ concrete terms.
+
+Of course, we can verify our abbreviation does what we expect using `rfl`.
+-/
+
+example : succ (succ (succ (succ zero))) = four := by rfl
+
+
+/-
+  We can also write computations functions on `Nat`.
 -/
 
 def pred (n : Nat) : Nat :=
   match n with
-  | .zero => .zero
-  | .succ n' => n'
-
-end NatPlayground
-
--- TERSE: /- *** -/
-
-/-
-  Because natural numbers are such a pervasive kind of data,
-  Lean provides built-in support for them: ordinary decimal
-  numerals can be used as a shorthand, and Lean's `Nat` type uses
-  the constructors `Nat.zero` and `Nat.succ`.
--/
-
--- RAB: Hovering over succ points out that "Using Nat.succ n should usually be
--- avoided in favor of n + 1, which is the simp normal form." How quickly should
--- we break away from succ style and go straight to n + 1 style? More broadly,
--- how much do we want to adhere to conventions like simp normal form? In my
--- view, following standard Lean style wherever possible is a good thing to be
--- doing, in no small part because proof view displays terms in Lean style, e.g. (n +
--- 1) instead of .succ n.
-
-example : .succ (.succ (.succ (.succ .zero))) = 4 := by rfl
+  | zero => zero
+  | succ n' => n'
 
 def minustwo (n : Nat) : Nat :=
   match n with
-  | 0                => 0
-  | 1                => 0
-  | .succ (.succ n') => n'
+  | zero => zero
+  | succ (zero) => zero
+  | succ (succ n') => n'
 
-#eval minustwo 4
-/- ===> 2 -/
+#eval minustwo four
+/- ===> succ (succ zero) -/
+
+-- TODO:
+-- Lean user question: how to get (succ (succ zero)) rather than
+-- NatPlayground.Nat.succ (NatPlayground.Nat.succ (NatPlayground.Nat.zero))
 
 -- FULL
 #check Nat.succ  -- Nat → Nat
@@ -855,12 +946,12 @@ def minustwo (n : Nat) : Nat :=
 
 /-
   These are all things that can be applied to a number to yield a
-  number.  However, there is a fundamental difference between `Nat.succ`
-  and the other two: functions like `Nat.pred` and `minustwo` are
+  number. However, there is a fundamental difference between `Nat.succ`
+  and the other two: functions like `Nat.pred` and `Nat.minustwo` are
   defined by giving _computation rules_ -- e.g., the definition of
-  `Nat.pred` says that `Nat.pred 2` can be simplified to `1` -- while the
-  definition of `Nat.succ` has no such behavior attached.  Although it is
-  _like_ a function in the sense that it can be applied to an
+  `Nat.pred` says that `Nat.pred (succ (succ zero))` can be simplified to
+  `succ zero` -- while the definition of `Nat.succ` has no such behavior attached.
+  Although it is _like_ a function in the sense that it can be applied to an
   argument, it does not _do_ anything at all!  It is just a way of
   writing down numbers.
 -/
@@ -871,13 +962,11 @@ def minustwo (n : Nat) : Nat :=
 
 def even (n : Nat) : Bool :=
   match n with
-  | 0                => true
-  | 1                => false
-  | .succ (.succ n') => even n'
+  | zero => true
+  | succ (zero) => false
+  | succ (succ n') => even n'
 
-theorem even_zero : even 0 = true := rfl
-theorem even_one : even 1 = false := rfl
-theorem even_succ_succ n : even (.succ (.succ n)) = even n := rfl
+-- BCP: even_zero, even_one, and even_succ_succ seem to have been deleted here.  Is that right? 
 
 -- TERSE: /- *** -/
 /-
@@ -889,91 +978,230 @@ def odd (n : Nat) : Bool :=
   not (even n)
 
 /- test_odd1 -/
-example : odd 1 = true  := by rfl
+example : odd one = true  := by rfl
 /- test_odd2 -/
-example : odd 4 = false := by rfl
+example : odd four = false := by rfl
 
 -- TERSE: /- *** -/
 -- TERSE: /- A multi-argument recursive function. -/
 
+/- MWH: Point out the irreducible annotation and foreshadow what's it for and
+  where you will explain it?
+-/
+
+@[irreducible]
 def add (n : Nat) (m : Nat) : Nat :=
   match m with
-  | 0 => n
-  | .succ m' => .succ (add n m')
+  | zero => n
+  | succ m' => succ (add n m')
 
 -- FULL
+
 /-
-  Adding three to two gives us five (whew!):
+  ######################################################################
+  # Proof by Simplification
+
+  ### Proving properties about functions in Lean
+
+  Being recursive, `add` is our first of a more sophisticated class of
+  functions. In this chapter and onwards, we will _prove_ properties about
+  recursive functions, including `add`, which means we will need
+  _simplification rules_ about its behavior.
+
+  We provide these _rules_ for add, `add_zero` and `add_succ`, below.
 -/
 -- /FULL
 
-#eval add 3 2
-/- ===> 5 -/
+/- MWH: unseal not mentioned, explain what it's for and why you are doing it?
+  Also, why are you calling these "rules" when they are labeled as "theorem"?
+-/
+
+unseal add in
+theorem add_zero : ∀ n, add n zero = n := by
+  intro n
+  rfl
+
+unseal add in
+theorem add_succ : ∀ n m, add n (succ m) = succ (add n m) := by
+  intro n m
+  rfl
+
+/- MWH: Using the word "evaluate" in the below text is weird to me, esp since the actual
+  "evaluate" might already be iffy for some readers. This is not evaluation, it is
+  equational reasoning, right (since we can rewrite in both directions)?
+
+  I also don't like using the term "rule" without further explanation. What makes
+  a rule different from some other sort of theorem?
+
+  You also use the term "goal state" below, and then later "proof state".
+  It seems to me that you might want to introduce something about what a proof
+  is, and how proofs are structured. What is a goal, or goal state, and how do
+  tactics move you from the start to the goal? What are the hypotheses, that you
+  are starting from?
+-/
+
+/-
+   These rules let us "evaluate" the function at arguments during a proof. They
+   give us the ability to use a fundamental proof tool, a _tactic_, to change
+   the goal state of a proof to match one step of evaluating a function.
+
+   Indeed we define these two rules using _tactics_: `intro` and `rfl`.
+   `intro` names a variable in a proof quantified under a "forall" (∀), and
+   `rfl`, as in the above examples, closes a proof of equality whose left- and
+   right-hand sides are definitionally equal.
+-/
+
+/-
+  MWH: It seems weird to me to say, above, we "define" rules using tactics.
+  We are proving two lemmas using tactics, where the lemmas have a particular
+  form useful for equational proofs later on. Right?
+-/
+
+-- FULL
+
+/-
+  ## The `rewrite` tactic
+   A tactic that tells Lean to rewrite (part of) a goal or hypothesis
+   based on a rule is called `rewrite`. Here is a simple example of
+   using `rewrite` with laws to evaluate `add`:
+-/
+-- /FULL
+
+example : add one one = two := by  /- Move your cursor (click) here to see the initial proof state in the InfoView -/
+  rewrite [add_succ] /- Now click here to see the new proof state, after the tactic -/
+  rewrite [add_zero]
+  rfl
+
+
+example : add three two = five := by
+  rewrite [add_succ]; rewrite [add_succ]; rewrite [add_zero] /- a semi ; is like a newline -/
+  -- rewrite [add_succ, add_succ, add_zero] /- `rewrite` can take many arguments applied left to right -/
+  rfl
+
+/- MWH: This text is a little jarring to me. Per my above comments, I think you
+  need to introduce what a proof is, what a goal is, what a proof state is, etc.
+  in order to explain what tactics are. Once you have the concepts down, the
+  tactic explanations follow easily.
+-/
 
 -- FULL
 /-
-  The steps of simplification that Lean performs here can be
-  visualized as follows:
+  As mentioned, the keywords `rewrite` and `rfl` are tactics, which are
+  commands (used between `by` and the end of the proof) to guide the
+  process of checking some claim we are making. We will see several more tactics
+  in the rest of this chapter and many more in future chapters.
 
-       `add 3 2`
-    i.e. `add (succ (succ (succ 0))) (succ (succ 0))`
+  Even these trivial examples provide opportunities to _step through_ the proof,
+  using the cursor. Moving the cursor over the `by` and stepping through the
+  tactics will show the state of the proof at each step in the right-hand Lean
+  InfoView Panel.
 -/
-/-    ==> `succ (add (succ (succ (succ 0))) (succ 0))` -/
+
+-- /FULL
+
+-- FULL
 /-
-           by the second clause of the `match`
+  By default, `rewrite` rewrites left-to-right. To rewrite from right
+  to left, use `rewrite [← h]`, where `←` is typed as `\l` or `\<-`.
 -/
-/-    ==> `succ (succ (add (succ (succ (succ 0))) 0))` -/
+-- /FULL
+
+-- FULL
 /-
-           by the second clause of the `match`
--/
-/-    ==> `succ (succ (succ (add (succ 0))))` -/
-/-
-           by the first clause of the `match`
-    i.e. `5`
+  Now that we know how addition is defined, we can use
+  it to define multiplication:
 -/
 -- /FULL
 
 -- TERSE: /- *** -/
-
--- FULL
-/-
-  Now that we know how addition is defined, we can use Lean's builtin
-  definition and notation to write it more concisely.
-  The `+` operator is already defined for `Nat` in the standard library.
--/
--- /FULL
-
+@[irreducible]
 def mul (n m : Nat) : Nat :=
   match m with
-  | 0 => 0
-  | .succ m' => (mul n m') + n
+  | zero => zero
+  | succ m' => add (mul n m') n
+
+/-
+  MWH: These simplification rules, and the ones for `add` above, are just restatements
+  of the code. So, it seems a little odd to be making them because doing so offers no
+  abstraction benefit. Should we acknowledge this, saying that this is the convention?
+  I see that this comes up below. Maybe we need to reorder if my take is not unusual.
+-/
+
+/- Along with its simplification rules: -/
+
+unseal mul in
+theorem mul_zero : ∀ n, mul n zero = zero := by
+  intro n
+  rfl
+
+unseal mul in
+theorem mul_succ : ∀ n m, mul n (succ m) = add (mul n m) n := by
+  intro n m
+  rfl
 
 /- test_mult1 -/
-example : mul 3 3 = 9 := by rfl
+example : mul three three = nine := by
+  rewrite [mul_succ, mul_succ, mul_succ, mul_zero]
+  rewrite [add_succ, add_succ, add_succ, add_zero]
+  rewrite [add_succ, add_succ, add_succ, add_zero]
+  rewrite [add_succ, add_succ, add_succ, add_zero]
+  rfl
+
+/-
+  We can also `unseal` functions to run some basic computation with them. -/
+
+unseal mul add in
+example : mul three three = nine := by
+  rfl
+
+/- This calls Lean's _evaluator_, which simplifies the function as much
+  as it can.
+
+  You may ask: why use `rewrite` and laws, when unsealing functions and
+  evaluating with thim is so much more consise?
+-/
+
+/-
+  ######################################################################
+  # Rewriting vs. Evaluation
+-/
+
+-- The bus stops here
+
+/- MWH: This is as far as the rewrite has gone, per the above? ^^^ -/
 
 -- TERSE: /- *** -/
 /-
   We can pattern-match two values at the same time:
 -/
 
+@[irreducible]
 def sub (n m : Nat) : Nat :=
   match n, m with
-  | 0,        _        => 0
-  | .succ _,  0        => n
-  | .succ n', .succ m' => sub n' m'
+  | zero, _ => zero
+  | succ _, zero => n
+  | succ n', succ m' => sub n' m'
 
-/-
-  Now that we've seen how natural numbers are built from `Nat.zero`
-  and `Nat.succ`, we can take further advantage of Lean's notation: the
-  pattern `n + 1` is syntactic sugar for `Nat.succ n`, `n + 2` is
-  syntactic sugar for `Nat.succ (Nat.succ n)`, and so on.
-  We'll use this more concise style from now on.
--/
+unseal sub in
+theorem sub_zero_n : ∀ n, sub zero n = zero := by
+  intro n
+  rfl
 
+unseal sub in
+theorem sub_succ_zero : ∀ n, sub (succ n) zero = succ n := by
+  intro n
+  rfl
+
+unseal sub in
+theorem sub_succ_succ : ∀ n m, sub (succ n) (succ m) = sub n m := by
+  intro n m
+  rfl
+
+@[irreducible]
 def pow (base power : Nat) : Nat :=
   match power with
-  | 0 => 1
-  | p + 1 => mul base (pow base p)
+  | zero => one
+  | succ p => mul base (pow base p)
 
 -- FULL
 -- EX1 (factorial)
@@ -984,27 +1212,25 @@ def pow (base power : Nat) : Nat :=
   Translate this into Lean.
 -/
 
+@[irreducible]
 def factorial (n : Nat) : Nat
   -- ADMITDEF
   := match n with
-  | 0 => 1
-  | n' + 1 => n * factorial n'
+  | zero => one
+  | succ n' => mul (succ n') (factorial n')
   -- /ADMITDEF
 
 /- test_factorial1 -/
-example : factorial 3 = 6         := by rfl  -- ADMITTED
+unseal factorial mul add in
+example : factorial three = six := by rfl  -- ADMITTED
 /- test_factorial2 -/
-example : factorial 5 = 10 * 12   := by rfl  -- ADMITTED
+unseal factorial mul add in
+example : factorial five = mul ten (add ten two) := by rfl  -- ADMITTED
 -- GRADE_THEOREM 1: factorial_test2
 -- []
 -- /FULL
 
 -- TERSE: /- *** -/
-/-
-  Lean already provides `+`, `-`, `*` for `Nat`, so we don't need to
-  define our own notation.
--/
-
 
 -- JC: Overriding the `+` is an immense headache for technical reasons,
 -- so we leave that alone, since our definition is the same anyway.
@@ -1017,7 +1243,7 @@ instance instSub : Sub Nat where sub := sub
 instance instMul : Mul Nat where mul := mul
 instance instPow : Pow Nat Nat where pow := pow
 
--- JC: In the infoview, hover over the operators
+-- JC: In the InfoView, hover over the operators
 -- to check out their associativity --
 -- `+`, `-`, and `*` all left-associative,
 -- but `^` is right-associative.
@@ -1169,31 +1395,13 @@ theorem add_zero_one : 1 = 0 + 1 := by rfl
   `n + 0` reduces to `n` by definition.
 -/
 
+/- The semicolon `;` separates
+  multiple steps of tactics; they can also be separated by putting them on
+  separate lines. -/
+
 theorem add_zero : ∀ n : Nat, n + 0 = n := by
   intro n; rfl
 
--- FULL
-/-
-  The keywords `intro` and `rfl` are examples of _tactics_.
-  A tactic is a command that is used between `by` and the end of the
-  proof to guide the process of checking some claim we are making.
-  The semicolon `;` separates multiple steps of tactics;
-  they can also be separated by putting them on separate lines.
-  We will see several more tactics in the rest of this chapter and
-  many more in future chapters.
--/
--- /FULL
-
--- TERSE: /- *** -/
-
--- FULL
-/-
-  Even these trivial examples provide opportunities to _step through_ the proof,
-  using the cursor. Moving the cursor over the `by` and stepping through the
-  tactics will show the state of the proof at each step in the right-hand
-  Lean InfoView Panel.
--/
--- /FULL
 
 theorem add_succ : ∀ n m : Nat, n + (m + 1) = (n + m) + 1 := by
   intro n m; rfl
@@ -1249,13 +1457,10 @@ theorem plus_id_example : ∀ n m : Nat,
 
 -- TERSE: /- The `intro` tactic names the hypotheses as they are moved to the context.  The `rewrite` tactic rewrites using an equality. -/
 
---  TODO: Move this
 -- FULL
 /-
   By default, `rewrite` rewrites left-to-right. To rewrite from right
   to left, use `rewrite [← h]`, where `←` is typed as `\l` or `\<-`.
-  Because the pattern `rewrite [h]; rfl` is so common, Lean provides
-  `rw [h]` as shorthand.
 -/
 -- /FULL
 
@@ -1351,6 +1556,164 @@ theorem add_one_neb_zero : ∀ n : Nat,
   cases n
   case zero => rfl
   case succ n' => rfl
+
+
+-- FULL
+/-
+  ######################################################################
+  ## More on Notation (Optional)
+-/
+
+/-
+  Lean has a very flexible notation system.  Operators like `+` and `*`
+  are defined with specified precedence and associativity.  For example,
+  `+` has precedence 65 and is left-associative, while `*` has
+  precedence 70 and is also left-associative.  This means that `1+2*3*4`
+  is parsed as `1+((2*3)*4)`.
+
+  You can define custom notation using the `notation`, `infixl`,
+  `infixr`, `prefix`, and `postfix` commands.
+
+  Lean handles notation scoping through namespaces and
+  type classes rather than notation scopes.  The numeric literal `3`
+  can be interpreted as `Nat`, `Int`, `Float`, etc., depending on the
+  expected type, thanks to Lean's `OfNat` type class.
+-/
+-- /FULL
+
+-- FULL
+/-
+  ######################################################################
+  ## Structural Recursion (Optional)
+-/
+
+/-
+  Here is a copy of the definition of addition:
+-/
+
+def plus' (n : Nat) (m : Nat) : Nat :=
+  match n with
+  | 0 => m
+  | n' + 1 => (plus' n' m) + 1
+
+/-
+  When Lean checks this definition, it verifies that the recursion
+  terminates.  Specifically, it checks that one of the arguments
+  is _structurally decreasing_.  This implies that all calls to
+  `plus'` will eventually terminate.
+
+  This requirement is a fundamental feature of Lean's design: In
+  particular, it guarantees that every function that can be defined
+  in Lean will terminate on all inputs.  However, because Lean's
+  termination analysis is not always able to figure things out
+  automatically, it is sometimes necessary to provide hints or
+  write functions in slightly different ways.
+
+  Lean also supports more flexible termination proofs using
+  `termination_by` and `decreasing_by` clauses, as well as `partial`
+  functions that are not required to terminate.
+-/
+
+-- EX2? (decreasing)
+/-
+  To get a concrete sense of this, find a way to write a sensible
+  recursive definition (of a simple function on numbers, say) that
+  _does_ terminate on all inputs, but that Lean will reject because
+  it cannot automatically prove termination.
+-/
+
+--  SOLUTION
+/-
+  def factorial_bad (n : Nat) : Nat :=
+    if n == 0 then 1
+    else n * factorial_bad (n - 1)
+  This fails because Lean can't see that `n - 1` is structurally smaller.
+
+-/
+-- /SOLUTION
+-- []
+-- /FULL
+
+end Nat
+
+/-
+  ######################################################################
+  ## Binary Numerals
+-/
+
+-- EX3 (binary)
+/-
+  We can generalize our unary representation of natural numbers to
+  the more efficient binary representation by treating a binary
+  number as a sequence of constructors `b0` and `b1` (representing 0s
+  and 1s), terminated by a `z`.
+
+  For example:
+
+  | decimal |            binary     |                                                unary         |
+  |:-------:| ---------------------:| ------------------------------------------------------------:|
+  |    0    | `               z   ` | `                                               zero       ` |
+  |    1    | `            b1 z   ` | `                                          succ zero       ` |
+  |    2    | `        b0 (b1 z)  ` | `                                    succ (succ zero)      ` |
+  |    3    | `        b1 (b1 z)  ` | `                              succ (succ (succ zero))     ` |
+  |    4    | `    b0 (b0 (b1 z)) ` | `                        succ (succ (succ (succ zero)))    ` |
+  |    5    | `    b1 (b0 (b1 z)) ` | `                  succ (succ (succ (succ (succ zero))))   ` |
+  |    6    | `    b0 (b1 (b1 z)) ` | `            succ (succ (succ (succ (succ (succ zero)))))  ` |
+  |    7    | `    b1 (b1 (b1 z)) ` | `      succ (succ (succ (succ (succ (succ (succ zero)))))) ` |
+  |    8    | `b0 (b0 (b0 (b1 z)))` | `succ (succ (succ (succ (succ (succ (succ (succ zero)))))))` |
+
+  Note that the low-order bit is on the left and the high-order bit
+  is on the right -- the opposite of the way binary numbers are
+  usually written.  This choice makes them easier to manipulate.
+
+  (Comprehension check: What unary numeral does `b0 z` represent?)
+-/
+
+inductive Bin : Type where
+  | z
+  | b0 (n : Bin)
+  | b1 (n : Bin)
+
+def incr (m : Bin) : Bin
+  -- ADMITDEF
+  := match m with
+  | .z => .b1 .z
+  | .b0 m' => .b1 m'
+  | .b1 m' => .b0 (incr m')
+  -- /ADMITDEF
+
+def binToNat (m : Bin) : Nat
+  -- ADMITDEF
+  := match m with
+  | .z => 0
+  | .b0 m' => binToNat m' * 2
+  | .b1 m' => binToNat m' * 2 + 1
+  -- /ADMITDEF
+
+/- test_bin_incr1 -/
+example : incr (.b1 .z) = .b0 (.b1 .z) := by rfl  -- ADMITTED
+/- test_bin_incr2 -/
+example : incr (.b0 (.b1 .z)) = .b1 (.b1 .z) := by rfl  -- ADMITTED
+/- test_bin_incr3 -/
+example : incr (.b1 (.b1 .z)) = .b0 (.b0 (.b1 .z)) := by rfl  -- ADMITTED
+/- test_bin_incr4 -/
+example : binToNat (.b0 (.b1 .z)) = 2 := by rfl  -- ADMITTED
+/- test_bin_incr5 -/
+example : binToNat (incr (.b1 .z)) = 1 + binToNat (.b1 .z) := by rfl  -- ADMITTED
+/- test_bin_incr6 -/
+example : binToNat (incr (incr (.b1 .z))) = 2 + binToNat (.b1 .z) := by rfl  -- ADMITTED
+/- test_bin_incr7 -/
+example : binToNat (.b0 (.b0 (.b0 (.b1 .z)))) = 8 := by rfl  -- ADMITTED
+
+-- GRADE_THEOREM 0.5: incr_test1
+-- GRADE_THEOREM 0.5: incr_test2
+-- GRADE_THEOREM 0.5: incr_test3
+-- GRADE_THEOREM 0.5: binToNat_test1
+-- GRADE_THEOREM 0.5: binToNat_test2
+-- GRADE_THEOREM 0.5: binToNat_test3
+-- []
+
+/- TODO: Give more intro to these two theorems on booleans. -/
 
 -- FULL
 /-
@@ -1472,81 +1835,8 @@ theorem zero_neb_add_one : ∀ n : Nat,
 -- []
 -- /FULL
 
--- FULL
-/-
-  ######################################################################
-  ## More on Notation (Optional)
--/
+end CountdownPlayground
 
-/-
-  Lean has a very flexible notation system.  Operators like `+` and `*`
-  are defined with specified precedence and associativity.  For example,
-  `+` has precedence 65 and is left-associative, while `*` has
-  precedence 70 and is also left-associative.  This means that `1+2*3*4`
-  is parsed as `1+((2*3)*4)`.
-
-  You can define custom notation using the `notation`, `infixl`,
-  `infixr`, `prefix`, and `postfix` commands.
-
-  Lean handles notation scoping through namespaces and
-  type classes rather than notation scopes.  The numeric literal `3`
-  can be interpreted as `Nat`, `Int`, `Float`, etc., depending on the
-  expected type, thanks to Lean's `OfNat` type class.
--/
--- /FULL
-
--- FULL
-/-
-  ######################################################################
-  ## Structural Recursion (Optional)
--/
-
-/-
-  Here is a copy of the definition of addition:
--/
-
-def plus' (n : Nat) (m : Nat) : Nat :=
-  match n with
-  | 0 => m
-  | n' + 1 => (plus' n' m) + 1
-
-/-
-  When Lean checks this definition, it verifies that the recursion
-  terminates.  Specifically, it checks that one of the arguments
-  is _structurally decreasing_.  This implies that all calls to
-  `plus'` will eventually terminate.
-
-  This requirement is a fundamental feature of Lean's design: In
-  particular, it guarantees that every function that can be defined
-  in Lean will terminate on all inputs.  However, because Lean's
-  termination analysis is not always able to figure things out
-  automatically, it is sometimes necessary to provide hints or
-  write functions in slightly different ways.
-
-  Lean also supports more flexible termination proofs using
-  `termination_by` and `decreasing_by` clauses, as well as `partial`
-  functions that are not required to terminate.
--/
-
--- EX2? (decreasing)
-/-
-  To get a concrete sense of this, find a way to write a sensible
-  recursive definition (of a simple function on numbers, say) that
-  _does_ terminate on all inputs, but that Lean will reject because
-  it cannot automatically prove termination.
--/
-
---  SOLUTION
-/-
-  def factorial_bad (n : Nat) : Nat :=
-    if n == 0 then 1
-    else n * factorial_bad (n - 1)
-  This fails because Lean can't see that `n - 1` is structurally smaller.
-
--/
--- /SOLUTION
--- []
--- /FULL
 
 -- FULL
 /-
@@ -1874,6 +2164,7 @@ theorem lowerGrade_lowers : ∀ g : Grade,
 -- GRADE_THEOREM 3: lowerGrade_lowers
 -- []
 
+
 def applyLatePolicy (lateDays : Nat) (g : Grade) : Grade :=
   if lateDays <? 9 then g
   else if lateDays <? 17 then lowerGrade g
@@ -1915,82 +2206,50 @@ theorem grade_lowered_once : ∀ (lateDays : Nat) (g : Grade),
 -- []
 
 end LateDays
-
-/-
-  ######################################################################
-  ## Binary Numerals
--/
-
--- EX3 (binary)
-/-
-  We can generalize our unary representation of natural numbers to
-  the more efficient binary representation by treating a binary
-  number as a sequence of constructors `b0` and `b1` (representing 0s
-  and 1s), terminated by a `z`.
-
-  For example:
-
-  | decimal |            binary     |                                                unary         |
-  |:-------:| ---------------------:| ------------------------------------------------------------:|
-  |    0    | `               z   ` | `                                               zero       ` |
-  |    1    | `            b1 z   ` | `                                          succ zero       ` |
-  |    2    | `        b0 (b1 z)  ` | `                                    succ (succ zero)      ` |
-  |    3    | `        b1 (b1 z)  ` | `                              succ (succ (succ zero))     ` |
-  |    4    | `    b0 (b0 (b1 z)) ` | `                        succ (succ (succ (succ zero)))    ` |
-  |    5    | `    b1 (b0 (b1 z)) ` | `                  succ (succ (succ (succ (succ zero))))   ` |
-  |    6    | `    b0 (b1 (b1 z)) ` | `            succ (succ (succ (succ (succ (succ zero)))))  ` |
-  |    7    | `    b1 (b1 (b1 z)) ` | `      succ (succ (succ (succ (succ (succ (succ zero)))))) ` |
-  |    8    | `b0 (b0 (b0 (b1 z)))` | `succ (succ (succ (succ (succ (succ (succ (succ zero)))))))` |
-
-  Note that the low-order bit is on the left and the high-order bit
-  is on the right -- the opposite of the way binary numbers are
-  usually written.  This choice makes them easier to manipulate.
-
-  (Comprehension check: What unary numeral does `b0 z` represent?)
--/
-
-inductive Bin : Type where
-  | z
-  | b0 (n : Bin)
-  | b1 (n : Bin)
-
-def incr (m : Bin) : Bin
-  -- ADMITDEF
-  := match m with
-  | .z => .b1 .z
-  | .b0 m' => .b1 m'
-  | .b1 m' => .b0 (incr m')
-  -- /ADMITDEF
-
-def binToNat (m : Bin) : Nat
-  -- ADMITDEF
-  := match m with
-  | .z => 0
-  | .b0 m' => binToNat m' * 2
-  | .b1 m' => binToNat m' * 2 + 1
-  -- /ADMITDEF
-
-/- test_bin_incr1 -/
-example : incr (.b1 .z) = .b0 (.b1 .z) := by rfl  -- ADMITTED
-/- test_bin_incr2 -/
-example : incr (.b0 (.b1 .z)) = .b1 (.b1 .z) := by rfl  -- ADMITTED
-/- test_bin_incr3 -/
-example : incr (.b1 (.b1 .z)) = .b0 (.b0 (.b1 .z)) := by rfl  -- ADMITTED
-/- test_bin_incr4 -/
-example : binToNat (.b0 (.b1 .z)) = 2 := by rfl  -- ADMITTED
-/- test_bin_incr5 -/
-example : binToNat (incr (.b1 .z)) = 1 + binToNat (.b1 .z) := by rfl  -- ADMITTED
-/- test_bin_incr6 -/
-example : binToNat (incr (incr (.b1 .z))) = 2 + binToNat (.b1 .z) := by rfl  -- ADMITTED
-/- test_bin_incr7 -/
-example : binToNat (.b0 (.b0 (.b0 (.b1 .z)))) = 8 := by rfl  -- ADMITTED
-
--- GRADE_THEOREM 0.5: incr_test1
--- GRADE_THEOREM 0.5: incr_test2
--- GRADE_THEOREM 0.5: incr_test3
--- GRADE_THEOREM 0.5: binToNat_test1
--- GRADE_THEOREM 0.5: binToNat_test2
--- GRADE_THEOREM 0.5: binToNat_test3
--- []
-
 -- /FULL
+
+-- TODO put this somewhere
+
+/-
+   Lean does have an automatic evaluator, which we will introduce in
+   just a few chapters. But Lean professionals prefer to use a mix of
+   the evaluator and the rules, since not all functions in Lean can be
+   evaluated (!). In future chapters, we will show how to derive
+   simplification rules for functions automatically.
+-/
+
+-- needed or not?
+
+-- FULL
+/-
+  The steps of simplification that Lean performs here can be
+  visualized as follows:
+
+       `add 3 2`
+    i.e. `add (succ (succ (succ 0))) (succ (succ 0))`
+-/
+/-    ==> `succ (add (succ (succ (succ 0))) (succ 0))` -/
+/-
+           by the second clause of the `match`
+-/
+/-    ==> `succ (succ (add (succ (succ (succ 0))) 0))` -/
+/-
+           by the second clause of the `match`
+-/
+/-    ==> `succ (succ (succ (add (succ 0))))` -/
+/-
+           by the first clause of the `match`
+    i.e. `5`
+-/
+-- /FULL
+/-
+  Now that we've seen how natural numbers are built from `Nat.zero`
+  and `Nat.succ`, we can take further advantage of Lean's notation: the
+  pattern `n + 1` is syntactic sugar for `Nat.succ n`, `n + 2` is
+  syntactic sugar for `Nat.succ (Nat.succ n)`, and so on.
+  We'll use this more concise style from now on.
+-/
+
+/- Lean's builtin
+  definition and notation to write it more concisely.
+  The `+` operator is already defined for `Nat` in the standard library. -/
