@@ -954,7 +954,10 @@ theorem add_succ : ∀ n m, add n (succ m) = succ (add n m) := by
 
 /- MWH: Using the word "evaluate" in the below text is weird to me, esp since the actual
   "evaluate" might already be iffy for some readers. This is not evaluation, it is
-  equational reasoning, right?
+  equational reasoning, right (since we can rewrite in both directions)?
+
+  I also don't like using the term "rule" without further explanation. What makes
+  a rule different from some other sort of theorem?
 
   You also use the term "goal state" below, and then later "proof state".
   It seems to me that you might want to introduce something about what a proof
@@ -974,6 +977,12 @@ theorem add_succ : ∀ n m, add n (succ m) = succ (add n m) := by
    right-hand sides are definitionally equal.
 -/
 
+/-
+  MWH: It seems weird to me to say, above, we "define" rules using tactics.
+  We are proving two lemmas using tactics, where the lemmas have a particular
+  form useful for equational proofs later on. Right?
+-/
+
 -- FULL
 
 /-
@@ -991,7 +1000,8 @@ example : add one one = two := by  /- Move your cursor (click) here to see the i
 
 
 example : add three two = five := by
-  rewrite [add_succ, add_succ, add_zero] /- `rewrite` can take many arguments -/
+  rewrite [add_succ]; rewrite [add_succ]; rewrite [add_zero] /- a semi ; is like a newline -/
+  -- rewrite [add_succ, add_succ, add_zero] /- `rewrite` can take many arguments applied left to right -/
   rfl
 
 /- MWH: This text is a little jarring to me. Per my above comments, I think you
@@ -1036,6 +1046,13 @@ def mul (n m : Nat) : Nat :=
   | zero => zero
   | succ m' => add (mul n m') n
 
+/-
+  MWH: These simplification rules, and the ones for `add` above, are just restatements
+  of the code. So, it seems a little odd to be making them because doing so offers no
+  abstraction benefit. Should we acknowledge this, saying that this is the convention?
+  I see that this comes up below. Maybe we need to reorder if my take is not unusual.
+-/
+
 /- Along with its simplification rules: -/
 
 unseal mul in
@@ -1057,8 +1074,7 @@ example : mul three three = nine := by
   rfl
 
 /-
-  For examples with concrete values, we can `unseal` functions to run some basic
-  computation with them. -/
+  We can also `unseal` functions to run some basic computation with them. -/
 
 unseal mul add in
 example : mul three three = nine := by
@@ -1078,6 +1094,7 @@ example : mul three three = nine := by
 
 -- The bus stops here
 
+/- MWH: This is as far as the rewrite has gone, per the above? ^^^ -/
 
 -- TERSE: /- *** -/
 /-
@@ -1105,8 +1122,6 @@ unseal sub in
 theorem sub_succ_succ : ∀ n m, sub (succ n) (succ m) = sub n m := by
   intro n m
   rfl
-
-
 
 @[irreducible]
 def pow (base power : Nat) : Nat :=
