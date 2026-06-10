@@ -2,6 +2,9 @@ name = "SFL"
 version = "0.1.0"
 defaultTargets = ["LF"]
 
+[leanOptions]
+verso.code.warnLineLength = 0 # 0 disables warnings; consider setting to 70
+
 # [[require]]
 # name = "mathlib"
 # scope = "leanprover-community"
