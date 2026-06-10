@@ -1248,10 +1248,10 @@ instance instPow : Pow Nat Nat where pow := pow
 -- `+`, `-`, and `*` all left-associative,
 -- but `^` is right-associative.
 
-#check (0 + 1 + 1 : Nat)
-#check (4 - 3 - 2 : Nat)
-#check (2 * 3 * 4 : Nat)
-#check (1 ^ 2 ^ 2 : Nat)
+#check (0 + 1 + 1 : _root_.Nat)
+#check (4 - 3 - 2 : _root_.Nat)
+#check (2 * 3 * 4 : _root_.Nat)
+#check (1 ^ 2 ^ 2 : _root_.Nat)
 
 -- TERSE: /- *** -/
 /-
@@ -1264,12 +1264,12 @@ instance instPow : Pow Nat Nat where pow := pow
 
 def beq (n m : Nat) : Bool :=
   match n with
-  | 0 => match m with
-         | 0 => true
-         | _ + 1 => false
-  | n' + 1 => match m with
-              | 0 => false
-              | m' + 1 => beq n' m'
+  | zero => match m with
+            | zero => true
+            | succ _ => false
+  | succ n' => match m with
+               | zero => false
+               | succ m' => beq n' m'
 
 -- TERSE: /- *** -/
 /-
@@ -1279,22 +1279,22 @@ def beq (n m : Nat) : Bool :=
 
 def leb (n m : Nat) : Bool :=
   match n with
-  | 0 => true
-  | n' + 1 =>
+  | zero => true
+  | succ n' =>
       match m with
-      | 0 => false
-      | m' + 1 => leb n' m'
+      | zero => false
+      | succ m' => leb n' m'
 
-theorem zero_leb (n : Nat) : leb 0 n = true := by rfl
-theorem succ_leb_zero (n : Nat) : leb (n + 1) 0 = false := by rfl
-theorem succ_leb_succ (n m : Nat) : leb (n + 1) (m + 1) = leb n m := by rfl
+theorem zero_leb (n : Nat) : leb zero n = true := by rfl
+theorem succ_leb_zero (n : Nat) : leb (succ n) zero = false := by rfl
+theorem succ_leb_succ (n m : Nat) : leb (succ n) (succ m) = leb n m := by rfl
 
 /- test_leb1 -/
-example : leb 2 2 = true  := by rfl
+example : leb two two   = true  := by rfl
 /- test_leb2 -/
-example : leb 2 4 = true  := by rfl
+example : leb two four  = true  := by rfl
 /- test_leb3 -/
-example : leb 4 2 = false := by rfl
+example : leb four two  = false := by rfl
 
 -- TERSE: /- *** -/
 /-
@@ -1313,7 +1313,7 @@ infix:65 "≤?" => leb
 /-
   test_leb3'
 -/
-example : 4 ≤? 2 = false := by rfl
+example : four ≤? two = false := by rfl
 
 -- FULL
 /-
@@ -1334,20 +1334,23 @@ example : 4 ≤? 2 = false := by rfl
 
 def ltb (n m : Nat) : Bool
   -- ADMITDEF
-  := leb (n + 1) m
+  := leb (succ n) m
   -- /ADMITDEF
 
 infix:65 "<?" => ltb
 
 /- test_ltb1 -/
-example : 2 <? 2 = false := by rfl  -- ADMITTED
+example : two <? two  = false := by rfl  -- ADMITTED
 /- test_ltb2 -/
-example : 2 <? 4 = true  := by rfl  -- ADMITTED
+example : two <? four = true  := by rfl  -- ADMITTED
 /- test_ltb3 -/
-example : 4 <? 2 = false := by rfl  -- ADMITTED
+example : four <? two = false := by rfl  -- ADMITTED
 -- GRADE_THEOREM 1: ltb_test3
 -- []
 -- /FULL
+
+end Nat
+end NatPlayground
 
 /-
   ######################################################################
@@ -1420,17 +1423,18 @@ theorem mul_succ : ∀ n m : Nat, n * (m + 1) = n * m + n := by
 
 #check Nat.sub_zero
 
-theorem sub_zero n : 0 - n = 0 := by rfl
+theorem sub_zero n : 0 - n = 0 := by omega
 theorem succ_sub_zero n : (n + 1) - 0 = n + 1 := by rfl
-theorem succ_sub_succ n m : (n + 1) - (m + 1) = n - m := by rfl
+theorem succ_sub_succ n m : (n + 1) - (m + 1) = n - m := by omega
 
 theorem pow_zero n : n ^ 0 = 1 := by rfl
-theorem pow_succ (n m : Nat) : n ^ (m + 1) = n * (n ^ m) := by rfl
+theorem pow_succ (n m : Nat) : n ^ (m + 1) = n * (n ^ m) := by
+  rw [Nat.pow_succ, Nat.mul_comm]
 
 -- JC: And another one, which we _do_ use later.
 
 theorem beq_succ : ∀ n m : Nat, (n + 1 == m + 1) = (n == m) := by
-  intro n m; rfl
+  intro n m; simp
 /-
   ######################################################################
   # Proof by Rewriting
@@ -1634,8 +1638,6 @@ def plus' (n : Nat) (m : Nat) : Nat :=
 -- []
 -- /FULL
 
-end Nat
-
 /-
   ######################################################################
   ## Binary Numerals
@@ -1835,8 +1837,6 @@ theorem zero_neb_add_one : ∀ n : Nat,
 -- []
 -- /FULL
 
-end CountdownPlayground
-
 
 -- FULL
 /-
@@ -1926,6 +1926,9 @@ theorem andb_eq_orb : ∀ b c : Bool,
 -/
 
 namespace LateDays
+
+-- <? in this section operates on standard Nat (not NatPlayground.Nat)
+local notation:65 a:66 " <? " b:66 => Nat.blt a b
 
 /-
   First, we inroduce a datatype for modeling the "letter" component
