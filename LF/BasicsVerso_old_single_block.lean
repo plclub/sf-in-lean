@@ -1,4 +1,32 @@
+import VersoManual
+import VersoManual.InlineLean
+import Illuminate
+import SFLMeta.Bnf
+import SFLMeta.Ignore
+import SFLMeta.Save
+import SFLMeta.Comment
+import SFLMeta.Exercise
+import SFLMeta.SlideBreak
+import SFLMeta.Terse
+
+open Verso.Genre Manual
+open SFLMeta
+
+open InlineLean hiding lean
+
+set_option maxRecDepth 100000
+
+noncomputable section
+
+#doc (Manual) "Basics: Functional Programming in Lean" =>
+%%%
+htmlSplit := .never
+file := "Basics"
+%%%
+
+```lean
 /-
+
   Basics: Functional Programming in Lean
 -/
 
@@ -288,7 +316,7 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
   Extension, which provides an interactive "infoview" panel that
   displays the results of commands like `#eval` and `#check`, as well
   as the current goal state when working on proofs. You can hover over
-  expressions in `lean` files to see their types, and you can click on
+  expressions in ·lean` files to see their types, and you can click on
   items in the infoview to navigate to their definitions. This makes
   it easier to understand how your code is being interpreted by Lean
   and fix any issues that arise.
@@ -847,9 +875,9 @@ namespace NatPlayground
   (base 1) representation that is even simpler than binary, makes proofs
   simpler. In this representation, only a single digit
   is used. As a Lean datatype, we use two constructors. The
-  `zero` constructor represents zero. The `succ` constructor can be
-  applied to the representation of the natural number `n`, yielding
-  the representation of `n+1`, where `succ` stands for "successor."
+  [zero] constructor represents zero. The [succ] constructor can be
+  applied to the representation of the natural number [n], yielding
+  the representation of [n+1], where [succ] stands for "successor."
   Here is the complete datatype definition:
 -/
 
@@ -876,7 +904,7 @@ inductive Nat : Type where
   /- ==> _root_.Nat : Type -/ /- ← ...this is Lean's `Nat`. -/
 
 /-
-  Lean's `Nat` comes with powerful built-in reasoning and notation.
+  Lean's [Nat] comes with powerful built-in reasoning and notation.
   As we are just beginning to reason about natural numbers, we use our own
   simple definition, and introduce the Lean one shortly after.
 -/
@@ -1206,10 +1234,8 @@ def pow (base power : Nat) : Nat :=
 -- EX1 (factorial)
 /-
   Recall the standard mathematical factorial function:
-  ```
-  factorial(0) = 1
-  factorial(n) = n * factorial(n-1)  (if n>0)
-  ```
+         factorial(0)  =  1
+         factorial(n)  =  n * factorial(n-1)     (if n>0)
   Translate this into Lean.
 -/
 
@@ -1443,18 +1469,18 @@ theorem beq_succ : ∀ n m : Nat, (n + 1 == m + 1) = (n == m) := by
 
 -- TERSE: /- A (slightly) more interesting theorem: -/
 
--- FULL
-/-
-  Instead of making a universal claim about all numbers `n` and `m`,
-  this talks about a more specialized property that only holds when
-  `n = m`.  The arrow symbol is pronounced "implies."
-
-  The tactic that tells Lean to perform replacement is called `rewrite`.
--/
--- /FULL
 theorem plus_id_example : ∀ n m : Nat,
     n = m →
     n + n = m + m := by
+  -- FULL
+  /-
+    Instead of making a universal claim about all numbers `n` and `m`,
+    this talks about a more specialized property that only holds when
+    `n = m`.  The arrow symbol is pronounced "implies."
+
+    The tactic that tells Lean to perform replacement is called `rewrite`.
+  -/
+  -- /FULL
   intro n m
   intro h
   rewrite [h]
@@ -1789,9 +1815,9 @@ theorem andb3_exchange : ∀ b c d : Bool,
   by case analysis in `Tactics.lean`. -/
 
 -- FULL
-/- ## New Tactics: `dsimp`, and `exact`. -/
-
 /-
+  ** New Tactics: `dsimp`, and `exact`.
+
   Some more tactics will be useful for the exercises ahead.
 
   The `dsimp` tactic ("definitionally simplify") applies known facts
@@ -2257,3 +2283,5 @@ end LateDays
 /- Lean's builtin
   definition and notation to write it more concisely.
   The `+` operator is already defined for `Nat` in the standard library. -/
+```
+end
