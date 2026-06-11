@@ -16,6 +16,111 @@
 -- built-in `Nat` and use it for all examples and exercises.
 -- There should be a section on tactics and how much automation students can use.
 
+
+
+-- Things ported:
+
+
+
+@[irreducible]
+def sub (n m : Nat) : Nat :=
+  match n, m with
+  | zero, _ => zero
+  | succ _, zero => n
+  | succ n', succ m' => sub n' m'
+
+instance instSub : Sub Nat where sub := sub
+
+-- RULES
+unseal sub in
+theorem sub_zero : ∀ n : Nat, 0 - n = 0 := by
+  intro n
+  rfl
+
+-- RULES
+unseal sub in
+theorem succ_sub_zero : ∀ n : Nat, succ n - 0 = succ n := by
+  intro n
+  rfl
+
+-- RULES
+unseal sub in
+theorem succ_sub_succ : ∀ n m : Nat, succ n - succ m = n - m := by
+  intro n m
+  rfl
+
+@[irreducible]
+def pow (base power : Nat) : Nat :=
+  match power with
+  | zero => 1
+  | succ p => mul base (pow base p)
+
+instance instPow : Pow Nat Nat where pow := pow
+
+macro_rules | `($x ^ $y) => `(HPow.hPow ($x : Nat) ($y : Nat))
+
+-- RULES
+unseal pow in
+theorem pow_zero : ∀ n : Nat, n ^ 0 = 1 := by
+  intro n
+  rfl
+
+-- RULES
+unseal pow in
+theorem pow_succ : ∀ n m : Nat, n ^ succ m = n * n ^ m := by
+  intro n m
+  rfl
+
+-- FULL
+-- EX1 (factorial)
+/-
+  Recall the standard mathematical factorial function:
+         factorial(0)  =  1
+         factorial(n)  =  n * factorial(n-1)     (if n>0)
+  Translate this into Lean.
+-/
+
+@[irreducible]
+def factorial (n : Nat) : Nat
+  -- ADMITDEF
+  := match n with
+  | zero => 1
+  | succ n' => mul (succ n') (factorial n')
+  -- /ADMITDEF
+
+/- test_factorial1 -/
+unseal factorial mul add in
+example : factorial 3 = 6 := by rfl  -- ADMITTED
+/- test_factorial2 -/
+unseal factorial mul add in
+example : factorial 5 = mul 10 (add 10 2) := by rfl  -- ADMITTED
+-- GRADE_THEOREM 1: factorial_test2
+-- []
+-- /FULL
+
+-- TERSE: /- *** -/
+
+-- JC: Overriding the `+` is an immense headache for technical reasons,
+-- so we leave that alone, since our definition is the same anyway.
+-- In contrast, our `sub` definition _is_ slightly different,
+-- so we _do_ want to override the notation instance for it.
+-- The `mul` and `pow` definitions are the same as the stdlib,
+-- but we can also override notation for it.
+
+-- JC: In the infoview, hover over the operators
+-- to check out their associativity --
+-- `+`, `-`, and `*` all left-associative,
+-- but `^` is right-associative.
+
+#check (0 + 1 + 1 : Nat)
+#check (4 - 3 - 2 : Nat)
+#check (2 * 3 * 4 : Nat)
+#check (1 ^ 2 ^ 2 : Nat)
+
+
+-- End ported
+
+
 /-
   ######################################################################
   ## Numbers

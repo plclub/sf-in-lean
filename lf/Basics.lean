@@ -785,31 +785,9 @@ inductive Nat : Type where
   | zero
   | succ (n : Nat)
 
-/-
-  With this definition, 0 is represented by `zero`, 1 by `succ zero`,
-  2 by `succ (succ zero)`, and so on.
--/
-
-/-
-  Naturally, Lean has its own definition of natural numbers.
-
--/
-  #check Nat
-  /- ==> NatPlayground.Nat : Type -/ /- ← this is our `Nat`... -/
-  #check _root_.Nat
-  /- ==> _root_.Nat : Type -/ /- ← ...this is Lean's `Nat`. -/
-
-/-
-  Lean's [Nat] comes with powerful built-in reasoning and notation.
-  As we are just beginning to reason about natural numbers, we use our own
-  simple definition, and introduce the Lean one shortly after.
--/
-
--- Maybe TODO: hide the next 3 lines ↓ this just lets you see (succ (succ zero))
--- instead of NatPlayground.Nat.succ (NatPlayground.Nat.succ
--- NatPlayground.Nat.zero) in the infoview.
--- At least, that's what it's supposed to do... see TODO below.
+-- ASSUME THIS IS HIDDEN
 attribute [pp_nodot] Nat.succ
+
 namespace Nat
 open Nat
 
@@ -823,10 +801,15 @@ instance instOfNat {n : _root_.Nat} : OfNat Nat n where
   ofNat := ofNat n
 
 theorem zero_eq_0 : zero = 0 := rfl
+-- END ASSUME
 
 /-
-  We can now use Lean's numerals -- `0`, `1`, `2`, and so on -- to write
-  our `Nat`s, along with rules relating each numeral to its successor form:
+  With this definition, 0 is represented by `zero`, 1 by `succ zero`, 2 by `succ
+  (succ zero)`, and so on.
+
+  We use some machinery in the background to allow us to write `0`, `1`, `2`,
+  etc. instead of `zero`, `succ zero`, etc., for our custom definition of `Nat`.
+  This is just syntactic sugar, and the two forms are interchangeable.
 -/
 
 -- RULES
@@ -839,6 +822,21 @@ theorem three_eq_succ_two : 3 = succ 2 := rfl
 theorem four_eq_succ_three : 4 = succ 3 := rfl
 
 example : succ (succ (succ (succ zero))) = 4 := by rfl
+
+/-
+  Naturally, Lean has its own definition of natural numbers.
+-/
+
+  #check Nat
+  /- ==> NatPlayground.Nat : Type -/ /- ← this is our `Nat`... -/
+  #check _root_.Nat
+  /- ==> _root_.Nat : Type -/ /- ← ...this is Lean's `Nat`. -/
+
+/-
+  Lean's [Nat] comes with powerful built-in reasoning and notation.
+  As we are just beginning to reason about natural numbers, we use our own
+  simple definition, and introduce the Lean one shortly after.
+-/
 
 
 /-
@@ -907,9 +905,6 @@ example : odd 4 = false := by rfl
 -- TERSE: /- *** -/
 -- TERSE: /- A multi-argument recursive function. -/
 
-/- MWH: Point out the irreducible annotation and foreshadow what's it for and
-  where you will explain it?
--/
 
 @[irreducible]
 def add (n : Nat) (m : Nat) : Nat :=
@@ -923,116 +918,176 @@ instance instAdd : Add Nat where add := add
 
 /-
   ######################################################################
-  # Proof by Simplification
+  # Proof by Rewriting
 
   ### Proving properties about functions in Lean
 
   Being recursive, `add` is our first of a more sophisticated class of
   functions. In this chapter and onwards, we will _prove_ properties about
-  recursive functions, including `add`, which means we will need
-  _simplification rules_ about its behavior.
+  recursive functions and inductive data, like `add` and `Nat`, using
+  _simplification rules_ about their behavior.
 
-  We provide these _rules_ for add, `add_zero` and `add_succ`, below.
+  Here is a simple rule about `add`, called `add_zero`:
+
+  `add_zero (n : Nat) : n + 0 = n`
+
+  We can see it is a real rule in lean:
 -/
--- /FULL
-
-/- MWH: unseal not mentioned, explain what it's for and why you are doing it?
-  Also, why are you calling these "rules" when they are labeled as "theorem"?
--/
-
--- Definitive decision. We don't do these simp lemmas now.
--- We do them in Nats.lean.
--- WORKING TODO: "Since the 'theorems' here exactly match our code, they're
--- very easy to prove!"
-
---
-
--- RULES
+-- ASSUME THIS IS HIDDEN
 unseal add in
 theorem add_zero : ∀ n : Nat, n + 0 = n := by
   intro n
   rfl
-
--- RULES
 unseal add in
 theorem add_succ : ∀ n m : Nat, n + succ m = succ (n + m) := by
   intro n m
   rfl
+-- END ASSUME
 
-/- MWH: Using the word "evaluate" in the below text is weird to me, esp since the actual
-  "evaluate" might already be iffy for some readers. This is not evaluation, it is
-  equational reasoning, right (since we can rewrite in both directions)?
+#check add_zero
+/- ==> NatPlayground.Nat.add_zero (n : Nat) : n + 0 = n -/
 
-  I also don't like using the term "rule" without further explanation. What makes
-  a rule different from some other sort of theorem?
+/- And we can use it for a simple proof about natural numbers! -/
 
-  You also use the term "goal state" below, and then later "proof state".
-  It seems to me that you might want to introduce something about what a proof
-  is, and how proofs are structured. What is a goal, or goal state, and how do
-  tactics move you from the start to the goal? What are the hypotheses, that you
-  are starting from?
--/
-
-/-
-   These rules let us "evaluate" the function at arguments during a proof. They
-   give us the ability to use a fundamental proof tool, a _tactic_, to change
-   the goal state of a proof to match one step of evaluating a function.
-
-   Indeed we define these two rules using _tactics_: `intro` and `rfl`.
-   `intro` names a variable in a proof quantified under a "forall" (∀), and
-   `rfl`, as in the above examples, closes a proof of equality whose left- and
-   right-hand sides are definitionally equal.
--/
-
-/-
-  MWH: It seems weird to me to say, above, we "define" rules using tactics.
-  We are proving two lemmas using tactics, where the lemmas have a particular
-  form useful for equational proofs later on. Right?
--/
-
--- FULL
-
-/-
-  ## The `rewrite` tactic
-   A tactic that tells Lean to rewrite (part of) a goal or hypothesis
-   based on a rule is called `rewrite`. Here is a simple example of
-   using `rewrite` with laws to evaluate `add`:
--/
--- /FULL
-
-example : (1 + 1 : Nat) = 2 := by  /- Move your cursor (click) here to see the initial proof state in the InfoView -/
-  rewrite [one_eq_succ_zero] /- Now click here to see the new proof state, after the tactic -/
-  rewrite [add_succ]
+theorem add_zero_zero (n : Nat) : n + 0 + 0 = n := by
+  rewrite [add_zero]
   rewrite [add_zero]
   rfl
 
-
-example : (3 + 2 : Nat) = 5 := by
-  rewrite [two_eq_succ_one]; rewrite [one_eq_succ_zero] /- a semi ; is like a newline -/
-  rewrite [add_succ]; rewrite [add_succ]; rewrite [add_zero]
-  -- rewrite [add_succ, add_succ, add_zero] /- `rewrite` can take many arguments applied left to right -/
-  rfl
-
-/- MWH: This text is a little jarring to me. Per my above comments, I think you
-  need to introduce what a proof is, what a goal is, what a proof state is, etc.
-  in order to explain what tactics are. Once you have the concepts down, the
-  tactic explanations follow easily.
--/
-
--- FULL
 /-
-  As mentioned, the keywords `rewrite` and `rfl` are tactics, which are
-  commands (used between `by` and the end of the proof) to guide the
-  process of checking some claim we are making. We will see several more tactics
-  in the rest of this chapter and many more in future chapters.
+  # Proof state and tactics
+  There are several parts to a proof in Lean.
+   Each "command" of the proof- `rewrite`, `rfl` is called a **tactic**.
+   (The `add_zero` in brackets is an _argument_ to a tactic.)
 
-  Even these trivial examples provide opportunities to _step through_ the proof,
-  using the cursor. Moving the cursor over the `by` and stepping through the
-  tactics will show the state of the proof at each step in the right-hand Lean
-  InfoView Panel.
+
+    Hovering with the cursor over each line of the proof,
+    we see the **proof state** in the Lean InfoView panel.
+
+    The **proof state** is divided into the **context**, before the ⊢,
+    and the **goal**, after the ⊢. The **context** is what we know, and
+    the **goal** is what we are trying to prove.
+
+    A **tactic** manipulates the **proof state** (or **context**) to
+    get the goal into a closer shape to the one we want. Once we have
+    a proof state that a tactic can _close_ (solve), we invoke that
+    tactic, which finishes the proof.
+
+    Let's walk through the example above with our terminology.
 -/
+
+  theorem add_zero_zero_explained (n : Nat) : n + 0 + 0 = n := by
+  /- Move your cursor (click) here to see the initial proof state in the InfoView.
+    Our context is `n : Nat`.
+    Our goal is `n + 0 + 0 = n`. -/
+    rewrite [add_zero]
+    /- Now click here to see the new proof state, after the tactic.
+      This tactic above is the `rewrite` tactic, with an argument `add_zero`.
+      Notice how it changed the goal by changing `n + 0` to `n`. -/
+    rewrite [add_zero]
+     /-  Again, we change the goal state by changing `n + 0` to `n`.
+      Now the proof state is an equality with both sides equal,
+      so it can be closed by the tactic `rfl`. -/
+    rfl
+    /- The proof is now done! The Lean InfoView tells us there are "No Goals". -/
+
+  /- We'll give you a simple proof to try.
+    Try completing this proof of `add_zero_zero_zero`, following the model above.
+   -/
+
+theorem add_zero_zero_zero (n : Nat) : n + 0 + 0 + 0 = n := by
+  -- ADMITTED
+  rewrite [add_zero]
+  rewrite [add_zero]
+  rewrite [add_zero]
+  rfl
+  -- /ADMITTED
+
+/-
+
+ ## The `rewrite` tactic
+
+   As we saw above, the tactic that tells Lean to rewrite (part of) a goal or
+   hypothesis based on a rule is called `rewrite`. Given our rule `add_zero`,
+   which states that `n + 0` is equal to `n` for any `n`, we can replace any `n
+   + 0` in our proof with `n` via `rewrite [add_zero]`.
+
+  `rewrite` always takes its argument(s) in square brackets: `[]`.
+
+  ## The `rfl` tactic
+
+  `rfl` closes a goal of the shape `a = a`, for any `a`.
+  `rfl` checks that both sides of the equality are _definitionally equal_- that
+  is, they reduce to the same thing.
+  A term is always _definitionally equal_ to itself.
+-/
+
+  /- ## A New `add` Rule
+
+    We introduce the other fundamental rule about `add`:
+
+    `add_succ (n m : Nat) : n + (succ m) = succ (n + m)`.
+
+    This is the rule we use to push `succ` around.
+  -/
+
+
+ /- Again, we see that it is a usable rule in Lean: -/
+
+  #check add_succ
+  /- ==> add_succ (n m : Nat) : n + succ m = succ (n + m) -/
+
+  /- And we can write a proof with it: -/
+
+  theorem add_succ_zero (n : Nat) : n + succ 0 = succ (n + 0 + 0) := by
+    rewrite [add_succ]
+    rewrite [add_zero]  /- notice how this handles an `n + 0` on both sides -/
+    rewrite [add_zero]
+    rfl
+
+  /- Make sure you're "stepping through" the proofs- that is, moving past each
+     tactic with your cursor to see how each tactic is manipulating the proof
+     state. You will write more and more of the proofs by yourself as we go
+     along, so learning how the tactics work now is worthwhile!
+  -/
+
+  /- ## Working with Numerals
+
+    We know from above that `1` is just `succ 0`, `2` is `succ 1`, and so on.
+    We have rules for these equalities, as well:
+  -/
+
+  #check one_eq_succ_zero /- ==> one_eq_succ_zero : 1 = succ 0 -/
+  #check two_eq_succ_one /- ==> two_eq_succ_one : 2 = succ 1 -/
+  #check three_eq_succ_two /- ==> three_eq_succ_two : 3 = succ 2 -/
+
+  /- We can rewrite with these rules to expand numerals into their definitions,
+     which allows us to use our `add` rules. -/
 
 -- /FULL
+
+/- We give an example of how to start a proof this way.
+  Finish the proof using the `add` rules.
+ -/
+theorem one_plus_one_eq_two : (1 + 1 : Nat) = 2 := by
+  rewrite [one_eq_succ_zero]
+  -- ADMITTED
+  rewrite [add_succ]
+  rewrite [add_zero]
+  rfl
+  -- /ADMITTED
+
+-- /FULL
+
+  /- Try the same for `2 + 2 = 4`. -/
+
+theorem two_plus_two_eq_four : (2 + 2 : Nat) = 4 := by
+  -- ADMITTED
+  rewrite [four_eq_succ_three, three_eq_succ_two,
+           two_eq_succ_one, one_eq_succ_zero]
+  rewrite [add_succ, add_succ, add_zero]
+  rfl
+  -- /ADMITTED
 
 -- FULL
 /-
@@ -1057,159 +1112,48 @@ def mul (n m : Nat) : Nat :=
 
 instance instMul : Mul Nat where mul := mul
 
-/-
-  MWH: These simplification rules, and the ones for `add` above, are just restatements
-  of the code. So, it seems a little odd to be making them because doing so offers no
-  abstraction benefit. Should we acknowledge this, saying that this is the convention?
-  I see that this comes up below. Maybe we need to reorder if my take is not unusual.
--/
+/- Multiplication, like almost any function we will prove properties about,
+   also has simplification rules. -/
 
-/- Along with its simplification rules: -/
-
--- RULES
+-- ASSUME THIS IS HIDDEN
 unseal mul in
 theorem mul_zero : ∀ n : Nat, n * 0 = 0 := by
   intro n
   rfl
 
--- RULES
 unseal mul add in
 theorem mul_succ : ∀ n m : Nat, n * succ m = n * m + n := by
   intro n m
   rfl
+-- END ASSUME
 
+/- Prove this property. We have given you the first line. Notice how `rewrite`
+   can take any number of arguments. You can use this rewrite with all of the
+   numeral rules at once, for example.
+
+   After each rewrite, check the proof state by placing the cursor immediately
+   after a rule to see how the goal is changing. This happens naturally
+   as you write the proof, which makes it convenient to use `rewrite` blocks
+   with multiple rules.
+ -/
 /- test_mult1 -/
-example : (3 * 3 : Nat) = 9 := by
+theorem test_mult1 : (3 * 3 : Nat) = 9 := by
   rewrite [three_eq_succ_two, two_eq_succ_one, one_eq_succ_zero]
+  -- ADMITTED
   rewrite [mul_succ, mul_succ, mul_succ, mul_zero]
   rewrite [add_succ, add_succ, add_succ, add_zero]
   rewrite [add_succ, add_succ, add_succ, add_zero]
   rewrite [add_succ, add_succ, add_succ, add_zero]
   rfl
 
-
-/-
-  We can also `unseal` functions to run some basic computation with them. -/
-
-unseal mul add in
-example : (3 * 3 : Nat) = 9 := by
-  rfl
-
-/- This calls Lean's _evaluator_, which simplifies the function as much
-  as it can.
-
-  You may ask: why use `rewrite` and laws, when unsealing functions and
-  evaluating with thim is so much more consise?
--/
-
-/-
-  ######################################################################
-  # Rewriting vs. Evaluation
--/
-
--- The bus stops here
-
-/- MWH: This is as far as the rewrite has gone, per the above? ^^^ -/
+-- /ADMITTED
 
 -- TERSE: /- *** -/
+
+
 /-
   We can pattern-match two values at the same time:
 -/
-
-@[irreducible]
-def sub (n m : Nat) : Nat :=
-  match n, m with
-  | zero, _ => zero
-  | succ _, zero => n
-  | succ n', succ m' => sub n' m'
-
-instance instSub : Sub Nat where sub := sub
-
--- RULES
-unseal sub in
-theorem sub_zero : ∀ n : Nat, 0 - n = 0 := by
-  intro n
-  rfl
-
--- RULES
-unseal sub in
-theorem succ_sub_zero : ∀ n : Nat, succ n - 0 = succ n := by
-  intro n
-  rfl
-
--- RULES
-unseal sub in
-theorem succ_sub_succ : ∀ n m : Nat, succ n - succ m = n - m := by
-  intro n m
-  rfl
-
-@[irreducible]
-def pow (base power : Nat) : Nat :=
-  match power with
-  | zero => 1
-  | succ p => mul base (pow base p)
-
-instance instPow : Pow Nat Nat where pow := pow
-
-macro_rules | `($x ^ $y) => `(HPow.hPow ($x : Nat) ($y : Nat))
-
--- RULES
-unseal pow in
-theorem pow_zero : ∀ n : Nat, n ^ 0 = 1 := by
-  intro n
-  rfl
-
--- RULES
-unseal pow in
-theorem pow_succ : ∀ n m : Nat, n ^ succ m = n * n ^ m := by
-  intro n m
-  rfl
-
--- FULL
--- EX1 (factorial)
-/-
-  Recall the standard mathematical factorial function:
-         factorial(0)  =  1
-         factorial(n)  =  n * factorial(n-1)     (if n>0)
-  Translate this into Lean.
--/
-
-@[irreducible]
-def factorial (n : Nat) : Nat
-  -- ADMITDEF
-  := match n with
-  | zero => 1
-  | succ n' => mul (succ n') (factorial n')
-  -- /ADMITDEF
-
-/- test_factorial1 -/
-unseal factorial mul add in
-example : factorial 3 = 6 := by rfl  -- ADMITTED
-/- test_factorial2 -/
-unseal factorial mul add in
-example : factorial 5 = mul 10 (add 10 2) := by rfl  -- ADMITTED
--- GRADE_THEOREM 1: factorial_test2
--- []
--- /FULL
-
--- TERSE: /- *** -/
-
--- JC: Overriding the `+` is an immense headache for technical reasons,
--- so we leave that alone, since our definition is the same anyway.
--- In contrast, our `sub` definition _is_ slightly different,
--- so we _do_ want to override the notation instance for it.
--- The `mul` and `pow` definitions are the same as the stdlib,
--- but we can also override notation for it.
-
--- JC: In the infoview, hover over the operators
--- to check out their associativity --
--- `+`, `-`, and `*` all left-associative,
--- but `^` is right-associative.
-
-#check (0 + 1 + 1 : Nat)
-#check (4 - 3 - 2 : Nat)
-#check (2 * 3 * 4 : Nat)
-#check (1 ^ 2 ^ 2 : Nat)
 
 -- TERSE: /- *** -/
 /-
@@ -1230,6 +1174,10 @@ def beq (n m : Nat) : Bool :=
                | succ m' => beq n' m'
 
 -- TERSE: /- *** -/
+
+-- We need to make a decision about `==`.
+-- Either we give decidable equality early, or we use this `==` thing.
+
 /-
   Similarly, the `leb` function tests whether its first argument is
   less than or equal to its second argument, yielding a boolean.
@@ -1302,6 +1250,8 @@ example : 4 <? 2 = false := by rfl  -- ADMITTED
 -- GRADE_THEOREM 1: ltb_test3
 -- []
 -- /FULL
+
+-- ^ this may be cut.
 
 /-
   ######################################################################
