@@ -1392,3 +1392,22 @@ end LateDays
 /- Lean's builtin
   definition and notation to write it more concisely.
   The `+` operator is already defined for `Nat` in the standard library. -/
+
+/-
+  ** New Tactics: `dsimp`, and `exact`.
+
+  Some more tactics will be useful for the exercises ahead.
+
+  The `dsimp` tactic ("definitionally simplify") applies known facts
+  and definitions to simplify the goal.  You can give it hints in
+  square brackets: `dsimp [f]` tells it to unfold the definition
+  of `f`.  You can also simplify a hypothesis `h` in the context
+  by writing `dsimp [...] at h`. `dsimp` will also close goals by
+  `rfl` when possible.
+
+  The `exact` tactic closes a goal by providing an exact proof
+  term.  For example, if `h : P` is in the context and the goal
+  is `P`, then `exact h` closes the goal.  You can also
+  transform `h` slightly — for instance, `exact h.symm` uses
+  the symmetry of equality.
+-/

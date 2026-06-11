@@ -1460,35 +1460,33 @@ theorem andb3_exchange : ∀ b c d : Bool,
   by case analysis in `Tactics.lean`. -/
 
 /-
-  ** New Tactics: `dsimp`, and `exact`.
+  ** New Tactics: `rewrite ... at` and `exact`.
 
-  Some more tactics will be useful for the exercises ahead.
+  Some new tactics will be useful for the exercises ahead.
 
-  The `dsimp` tactic ("definitionally simplify") applies known facts
-  and definitions to simplify the goal.  You can give it hints in
-  square brackets: `dsimp [f]` tells it to unfold the definition
-  of `f`.  You can also simplify a hypothesis `h` in the context
-  by writing `dsimp [...] at h`. `dsimp` will also close goals by
-  `rfl` when possible.
+  The `rewrite` tactic can be used to rewrite in a hypothesis instead of the
+  goal. For example, if `h : P` is in the context and we have a rule `P = Q`,
+  then `rewrite [P = Q] at h` changes the hypothesis to `h : Q`.
 
-  The `exact` tactic closes a goal by providing an exact proof
-  term.  For example, if `h : P` is in the context and the goal
-  is `P`, then `exact h` closes the goal.  You can also
-  transform `h` slightly — for instance, `exact h.symm` uses
-  the symmetry of equality.
+  The `exact` tactic closes a goal by providing an exact proof term.  For
+  example, if `h : P` is in the context and the goal is `P`, then `exact h`
+  closes the goal.  You can also transform `h` slightly — for instance, `exact
+  h.symm` uses the symmetry of equality.
 -/
 
 
 -- EX2 (orb_false_true)
 /-
   Prove the following claim.
+  /- Tip: the rewrite rule to simplifiy (b || false)
+     is `Bool.or_false` -/
 -/
 
 theorem orb_false_true : ∀ b : Bool,
-    (false || b) = true → b = true := by
+    (b || false) = true → b = true := by
   -- ADMITTED
   intro b h
-  dsimp [Bool.or] at h
+  rewrite [Bool.or_false] at h
   exact h
   -- /ADMITTED
 -- GRADE_THEOREM 2: orb_false_true
@@ -1731,19 +1729,19 @@ theorem andb_eq_orb : ∀ b c : Bool,
   b = c := by
   -- ADMITTED
   intro b c h
-  cases b
+  cases c
   case true =>
     /-
       h : true && c = true || c, i.e., h : c = true
     -/
-    dsimp [Bool.and, Bool.or] at h
+    rewrite [Bool.and_true, Bool.or_true] at h
     rewrite [h]
     rfl
   case false =>
     /-
       h : false && c = false || c, i.e., h : false = c
     -/
-    dsimp [Bool.and, Bool.or] at h
+    rewrite [Bool.and_false, Bool.or_false] at h
     rewrite [h]
     rfl
   -- /ADMITTED
