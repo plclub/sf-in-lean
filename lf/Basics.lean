@@ -1269,7 +1269,6 @@ theorem beq_succ : ∀ n m : Nat, (succ n == succ m) = (n == m) := by
 -- TERSE: /- A (slightly) more interesting theorem: -/
 
 theorem add_id_example : ∀ n m : Nat,
-theorem add_id_example : ∀ n m : Nat,
     n = m →
     n + n = m + m := by
   -- FULL
@@ -1332,7 +1331,6 @@ theorem add_id_example : ∀ n m : Nat,
   Remove `sorry` and fill in the proof.
 -/
 
-theorem add_id_exercise : ∀ n m o : Nat,
 theorem add_id_exercise : ∀ n m o : Nat,
     n = m → m = o → n + m = m + o := by
   -- ADMITTED
@@ -1578,10 +1576,8 @@ theorem zero_neb_add_one : ∀ n : Nat,
 -/
 
 def add' (n : Nat) (m : Nat) : Nat :=
-def add' (n : Nat) (m : Nat) : Nat :=
   match n with
   | zero => m
-  | succ n' => succ (add' n' m)
   | succ n' => succ (add' n' m)
 
 /-
