@@ -243,3 +243,5 @@ def eqb (n m : Nat) :=
   | 0, 0 => true
   | .succ _, 0 | 0, .succ _ => false
   | .succ n, .succ m => eqb n m
+
+  -- TODO: talk about using Nat.add_zero and friends from now on.

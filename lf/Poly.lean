@@ -13,6 +13,7 @@
    /HIDEFROMHTML
    TERSE: HIDEFROMHTML -/
 import Induction
+import UsingLean
 /- TERSE: /HIDEFROMHTML -/
 
 /- HIDEFROMADVANCED
@@ -547,8 +548,8 @@ theorem app_length {α : Type} : ∀ (l1 l2 : List α),
     (l1 ++ l2).length = l1.length + l2.length := by
   /- ADMITTED -/
   intro l1 l2; induction l1
-  case nil => dsimp; rw [zero_add]
-  case cons h t ih => dsimp; rw [succ_add, ih]
+  case nil => dsimp; rw [Nat.zero_add]
+  case cons h t ih => dsimp; rw [Nat.succ_add, ih]
 /- /ADMITTED
    GRADE_THEOREM 0.5: app_nil_r
    GRADE_THEOREM 1: app_assoc
@@ -766,7 +767,7 @@ def doit3times {α : Type} (f : α → α) (n : α) : α :=
 #check @doit3times  /- @doit3times : {α : Type} → (α → α) → α → α -/
 
 /- test_doit3times -/
-example : doit3times minustwo 9 = 3 := by rfl
+example : doit3times NatPlayground.Nat.minustwo 9 = 3 := by rfl
 
 /- test_doit3times' -/
 example : doit3times not true = false := by rfl
@@ -797,6 +798,7 @@ def filter {α : Type} (test : α → Bool) (l : List α) : List α :=
    even members. -/
 
 /- test_filter1 -/
+
 example : filter even [1, 2, 3, 4] = [2, 4] := by rfl
 
 /- TERSE: *** -/
