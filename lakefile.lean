@@ -14,6 +14,9 @@ lean_lib Basics where
 lean_lib Induction where
   srcDir := "lf"
 
+lean_lib UsingLean where
+  srcDir := "lf"
+
 lean_lib Lists where
   srcDir := "lf"
 

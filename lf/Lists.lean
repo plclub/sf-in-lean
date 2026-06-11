@@ -36,6 +36,7 @@
 -/
 
 import Induction
+import UsingLean
 namespace NatList
 
 #check ([] ++ [])
@@ -575,7 +576,7 @@ example : included [1, 2, 2] [2, 1, 4, 1] = false := by rfl  -- ADMITTED
 theorem add_inc_count : ∀ (s : Bag) (v : Nat),
     count v (add v s) = (count v s) + 1 := by
   intro s v
-  dsimp [add, count, eqb_refl]
+  dsimp [add, count, eqb_refl] -- TODO: Lean eqb needs to be used
   rw [eqb_refl]
   dsimp
 -- /QUIETSOLUTION

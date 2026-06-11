@@ -224,3 +224,22 @@ example (n : Nat) : square n + 0 = n * n := by
   ######################################################################
   # Basic Typeclasses (?)
 -/
+
+/-
+  ######################################################################
+  # Redefining Functions and Lemmas over Nats
+-/
+
+def even (n : Nat) :=
+  match n with
+  | .zero => true
+  | .succ .zero => false
+  | .succ (.succ n) => even n
+
+def odd n := (not (even n))
+
+def eqb (n m : Nat) :=
+  match n, m with
+  | 0, 0 => true
+  | .succ _, 0 | 0, .succ _ => false
+  | .succ n, .succ m => eqb n m
