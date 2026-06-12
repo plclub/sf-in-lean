@@ -98,29 +98,31 @@ def mkGeneralizeArgs (mvarId : MVarId) (indType : Expr) (name : Name := .anonymo
     throwTacticEx `inversion mvarId
       m!"Target is not an inductive type{indentExpr indType}"
 
-partial def substGenEqs (mvarId : MVarId) (eqs : List FVarId) : MetaM (Option MVarId) := do
-  match eqs with
-  | [] => return some mvarId
-  | e :: rest =>
-    mvarId.withContext do
-      match (← getLCtx).find? e with
-      | none => substGenEqs mvarId rest
-      | some decl =>
-        let ty ← instantiateMVars decl.type
-        if !ty.isEq && !ty.isHEq then
-          substGenEqs mvarId rest
-        else
-          match ← observing? (mvarId.cases e) with
-          | none => substGenEqs mvarId rest
-          | some #[] => return none
-          | some #[s] =>
-              let rest := rest.filterMap fun f => (s.subst.apply (mkFVar f)).fvarId?
-              let newEqs := s.fields.toList.filterMap (·.fvarId?)
-              substGenEqs s.mvarId (newEqs ++ rest)
-          | some sgs =>
-              throwTacticEx `inversion mvarId
-                m!"error: `cases` on the equation{indentExpr ty}produced \
-                   {sgs.size} subgoals, but an equality admits at most one"
+/-- Given equations `eqs` in the local context of `mvarId`,
+  unify them using [Lean.Meta.unifyEq?],
+  but if unification fails, leave the equation in the context.
+  This means we should never get a "Dependent elimination failed" error.
+
+  Lifted from [Lean.Meta.Cases.unifyEqs]. -/
+partial def unifyEqs (eqs : Array FVarId) (mvarId : MVarId) (subst : FVarSubst) (caseName? : Option Name) : MetaM (MVarId × FVarSubst) := withIncRecDepth do
+  if _ : eqs.size = 0 then
+    return (mvarId, subst)
+  else
+    let some { mvarId, subst, numNewEqs } ← Option.join <$> (observing? $ unifyEq? mvarId eqs[0] subst MVarId.acyclic caseName?)
+      | return (mvarId, subst)
+    let (newEqs, mvarId) ← mvarId.introNP numNewEqs
+    unifyEqs (newEqs ++ eqs) mvarId subst caseName?
+
+/-- Lifted from [Lean.Meta.Cases.unifyCasesEqs]. -/
+def unifyCasesEqs (eqs : Array FVarId) (subgoals : Array CasesSubgoal) : MetaM (Array CasesSubgoal) :=
+  subgoals.mapM fun s => do
+    let eqs := eqs.filterMap (mkFVar · |> s.subst.apply |> Expr.fvarId?)
+    let (mvarId, subst) ← unifyEqs eqs s.mvarId s.subst s.ctorName
+    return { s with
+      mvarId := mvarId,
+      subst  := subst,
+      fields := s.fields.map (subst.apply ·)
+    }
 
 end Lean.Meta
 
@@ -169,20 +171,14 @@ def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (List MVarId
     else (← goal.assert hypName hypType (.fvar h)).intro1P
   let genArgs ← goal.withContext do
     mkGeneralizeArgs goal hypType hypName
-  let (subst, newVars, goal) ← goal.withContext do
+  let (subst, genFVars, goal) ← goal.withContext do
     goal.generalizeHyp genArgs #[target]
-  let targetExpr := subst.apply (mkFVar target)
-  let target ← match targetExpr with
-    | .fvar f => pure f
-    | _ =>
-      throwTacticEx `inversion goal
-        m!"Generalization mapped the inverted hypothesis to a non-variable term{indentExpr targetExpr}"
-  let genEqs := newVars.toList.drop genArgs.size
-  let subgoals ← goal.cases target
-  let newGoals ← subgoals.toList.filterMapM fun s => do
-    let eqs := genEqs.filterMap fun f => (s.subst.apply (mkFVar f)).fvarId?
-    substGenEqs s.mvarId eqs
-  return newGoals
+  -- [Lean.Meta.generalizeCore] returns all equations at the end
+  let genEqs := genFVars.drop genArgs.size
+  -- [Lean.MVarId.generalizeHyp] maps hyps to fvars
+  let subgoals ← goal.cases (subst.get target).fvarId!
+  let subgoals ← unifyCasesEqs genEqs subgoals
+  return subgoals.toList.map (·.mvarId)
 
 /-- Given an inversion alternative and a list of goals,
   solve the tagged goal with the provided tactics,
@@ -235,7 +231,7 @@ end -- meta section
 
 example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : f n = 0 := by
   -- cases le /- Dependent elimination failed: Failed to solve equation 0 = f n -/
-  inversion le with | refl e => rw [← e]
+  inversion le; rfl
 
 example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : f n = 0 := by
   inversion +clear le; rfl
