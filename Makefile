@@ -48,7 +48,6 @@ clean:
 
 # Temporary
 verso: LF/BasicsVerso.lean
-	$(MAKE) all
 
-LF/BasicsVerso.lean: LF/Basics.lean
+LF/BasicsVerso.lean: LF/Basics.lean scripts/to_verso.py
 	 python3 scripts/to_verso.py $< $@

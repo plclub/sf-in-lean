@@ -94,6 +94,31 @@ partial def inlineToText : Verso.Doc.Inline Manual → String
 def inlinesToText (inls : Array (Verso.Doc.Inline Manual)) : String :=
   String.join (inls.toList.map inlineToText)
 
+/--
+Render a Verso block to a Markdown-like string for inclusion in a `/-! … -/`
+comment.  List items are prefixed with `- ` / `N. `; continuation lines are
+indented to align under the item text. -/
+private partial def blockToText : Verso.Doc.Block Manual → String
+  | .para inlines => inlinesToText inlines
+  | .code s => "`" ++ s.trimAscii.toString ++ "`"
+  | .concat bs | .blockquote bs =>
+    String.intercalate "\n\n" (bs.toList.map blockToText)
+  | .ul lis =>
+    String.intercalate "\n\n" (lis.toList.map fun li =>
+      let body := String.intercalate "\n\n" (li.contents.toList.map blockToText)
+      "- " ++ body.replace "\n" "\n  ")
+  | .ol start lis =>
+    String.intercalate "\n\n" (lis.toList.mapIdx fun i li =>
+      let pfx := s!"{start + i}. "
+      let indent := String.ofList (List.replicate pfx.length ' ')
+      let body := String.intercalate "\n\n" (li.contents.toList.map blockToText)
+      pfx ++ body.replace "\n" s!"\n{indent}")
+  | .dl dis =>
+    String.intercalate "\n" (dis.toList.map fun di =>
+      inlinesToText di.term ++ "\n:   " ++
+      String.intercalate "\n    " (di.desc.toList.map blockToText))
+  | .other _ bs => String.intercalate "\n\n" (bs.toList.map blockToText)
+
 /-! ## Lake project scaffold templates -/
 
 /-- Contents of the generated project's `lakefile.toml`. -/
@@ -119,8 +144,14 @@ private def appendTeacherStudent
   buf.insert file (t ++ teacher, st ++ student)
 
 /-- Wrap a string in `/-! … -/` module-doc comment form, normalising trailing whitespace. -/
+-- To extend the inline treatment to multi-line blocks, replace the branch with
+-- just `"/-! " ++ t ++ " -/\n\n"` (the else branch below) for all cases.
+-- That puts the first content line on the `/-!` line and the last on the `-/` line.
 private def asModuleDoc (s : String) : String :=
-  "/-!\n" ++ s.trimAscii.toString ++ "\n-/\n\n"
+  let t := s.trimAscii.toString
+  -- if t.contains '\n' then "/-!\n" ++ t ++ "\n-/\n\n"
+  -- else
+  "/-! " ++ t ++ " -/\n\n"
 
 /-- Merge adjacent `/-! … -/` blocks into one, separating their contents with a blank line. -/
 private def mergeAdjacentModuleDocs (s : String) : String :=
@@ -461,11 +492,18 @@ partial def walkBlock (file : String) (b : Verso.Doc.Block Manual)
   | .para inls => return appendBoth buf file (asModuleDoc (inlinesToText inls))
   | .code s => return appendBoth buf file (asModuleDoc s.trimAscii.toString)
   | .concat bs | .blockquote bs => walkBlocks file bs buf
-  | .ul lis | .ol _ lis =>
-    let mut buf := buf
-    for li in lis do
-      buf := walkBlocks file li.contents buf
-    return buf
+  | .ul lis =>
+    let items := lis.toList.map fun li =>
+      let body := String.intercalate "\n\n" (li.contents.toList.map blockToText)
+      "- " ++ body.replace "\n" "\n  "
+    return appendBoth buf file (asModuleDoc (String.intercalate "\n" items))
+  | .ol start lis =>
+    let items := lis.toList.mapIdx fun i li =>
+      let pfx := s!"{start + i}. "
+      let indent := String.ofList (List.replicate pfx.length ' ')
+      let body := String.intercalate "\n\n" (li.contents.toList.map blockToText)
+      pfx ++ body.replace "\n" s!"\n{indent}"
+    return appendBoth buf file (asModuleDoc (String.intercalate "\n" items))
   | .dl dis =>
     let mut buf := buf
     for di in dis do
@@ -523,7 +561,8 @@ def walkOuter (rootFile : String) (text : Part Manual) (buf : SaveBuffers) :
     buf := appendBoth buf rootFile s!"import {chapterModule p}\n"
   for p in subParts do
     let chapterFile := chapterPath p
-    buf := appendBoth buf chapterFile "import Lean\n\nopen Lean\n\n"
+    -- BCP: Maybe this is not needed?
+    -- buf := appendBoth buf chapterFile "import Lean\n\nopen Lean\n\n"
     buf := walkSection 1 chapterFile p buf
   return buf
 
@@ -568,41 +607,36 @@ private def buildProject (dest : System.FilePath) (kind : String) :
     IO.println s!"Generated {kind} project built successfully."
 
 /--
-Shared implementation for `emitSaved` and `emitSavedTerse`. Walks the document
-tree, accumulates per-file content, writes teacher and student Lake projects
-under `dest/generated/{teacherName,studentName}/`, and verifies they compile. -/
-private def emitSavedImpl (teacherName studentName : String) :
+Shared implementation. `root` is the parent directory; each entry in `variants`
+is `(dirName, useTeacherContent)`.  All three generation targets write under
+`_out/generated/` regardless of `cfg.destination`. -/
+private def emitSavedImpl
+    (root : System.FilePath)
+    (variants : List (String × Bool)) :
     Mode → Config → TraverseState → Part Manual → BuildLogT IO Unit :=
-  fun _mode cfg _state text => do
+  fun _mode _cfg _state text => do
     let buf : SaveBuffers := walkOuter "LF.lean" text ({} : SaveBuffers)
     let toolchain ← (IO.FS.readFile "lean-toolchain").toBaseIO >>= fun
       | .ok s => pure s
       | .error _ => pure "leanprover/lean4:v4.30.0-rc2\n"
-    let teacherFiles : Array (String × String) :=
-      buf.fold (init := #[]) fun acc file (teacher, _student) =>
-        acc.push (file, mergeAdjacentModuleDocs teacher)
-    let studentFiles : Array (String × String) :=
-      buf.fold (init := #[]) fun acc file (_teacher, student) =>
-        acc.push (file, mergeAdjacentModuleDocs student)
-    let teacherDest := cfg.destination / "generated" / teacherName
-    let studentDest := cfg.destination / "generated" / studentName
-    writeProject teacherDest toolchain teacherName teacherFiles
-    writeProject studentDest toolchain studentName studentFiles
-    buildProject teacherDest teacherName
-    buildProject studentDest studentName
+    for (name, isTeacher) in variants do
+      let files : Array (String × String) :=
+        buf.fold (init := #[]) fun acc file (teacher, student) =>
+          acc.push (file, mergeAdjacentModuleDocs (if isTeacher then teacher else student))
+      let dest := root / name
+      writeProject dest toolchain name files
+      buildProject dest name
 
 /--
-The Verso `ExtraStep` for full builds. Walks the document tree (which has full
-content; terse blocks are absent after traversal) and writes teacher and student
-Lake projects under `<destination>/generated/{teacher,student}/`. -/
+The Verso `ExtraStep` for full builds. Produces `_out/generated/solutions/`
+(with solutions) and `_out/generated/student/` (without). -/
 def emitSaved : Mode → Config → TraverseState → Part Manual → BuildLogT IO Unit :=
-  emitSavedImpl "teacher" "student"
+  emitSavedImpl "_out/generated" [("solutions", true), ("student", false)]
 
 /--
-The Verso `ExtraStep` for terse builds. Walks the document tree (which has
-terse content; full blocks are absent after traversal) and writes teacher and
-student Lake projects under `<destination>/generated/{terse-teacher,terse-student}/`. -/
+The Verso `ExtraStep` for terse builds. Produces `_out/generated/terse/`
+(terse, no solutions). -/
 def emitSavedTerse : Mode → Config → TraverseState → Part Manual → BuildLogT IO Unit :=
-  emitSavedImpl "terse-teacher" "terse-student"
+  emitSavedImpl "_out/generated" [("terse", false)]
 
 end SFLMeta

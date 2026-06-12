@@ -523,6 +523,19 @@ class Renderer:
         return ''.join(self.parts)
 
 # ---------------------------------------------------------------------------
+# Post-processing
+# ---------------------------------------------------------------------------
+
+def _strip_directive_blanks(text: str) -> str:
+    """Remove blank lines immediately after :::foo opening lines and
+    immediately before standalone ::: closing lines."""
+    # Blank line(s) after an opening :::name line
+    text = re.sub(r'(:::[^\n]+)\n\n+', r'\1\n', text)
+    # Blank line(s) before a standalone ::: closing line
+    text = re.sub(r'\n\n+(:::[ \t]*\n)', r'\n\1', text)
+    return text
+
+# ---------------------------------------------------------------------------
 # Top-level converter
 # ---------------------------------------------------------------------------
 
@@ -535,7 +548,7 @@ def convert(src_text: str, title: str, file_key: str) -> str:
     tokens = tokenize(body_src)
     renderer = Renderer()
     renderer.process(tokens)
-    body = renderer.result()
+    body = _strip_directive_blanks(renderer.result())
     return header + body + FOOTER
 
 # ---------------------------------------------------------------------------

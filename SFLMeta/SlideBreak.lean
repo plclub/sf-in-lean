@@ -8,7 +8,7 @@ namespace SFLMeta
 
 /-!
 `Block.slidebreak` marks a slide-break point. In terse HTML output it renders
-as `<div class="slide-break">***</div>` (recognisable by future slide tooling);
+as an empty `<div class="slide-break">` (a hook for slide tooling via CSS);
 in full HTML output and in all generated `.lean` files it emits nothing. -/
 block_extension Block.slidebreak where
   data := Json.null
@@ -19,7 +19,7 @@ block_extension Block.slidebreak where
       return some (.concat #[])  -- full build: replace with empty
   toHtml :=
     some fun _ _ _ _ _ =>
-      pure (.tag "div" #[("class", "slide-break")] (.text true "***"))
+      pure (.tag "div" #[("class", "slide-break")] .empty)
   toTeX := none
 
 @[directive]

@@ -148,12 +148,11 @@ def nextWorkingDay (d : Day) : Day :=
   important to avoid confusion and headaches when writing proofs. The
   `.` syntax is a compromise that lets us know we're qualifying a name
   without having to type too much.
-
-  BCP: This doesn't really explain it!  Why do we need to / is it
-  better / helpful to know when we are qualifying names?  Also,
-  wouldn't it be pedagogically better to write it out first without
-  the abbreviation and then introduce the shorter form?
 -/
+-- BCP: That last paragraph doesn't really explain it!  Why do we need
+-- to / is it better / helpful to know when we are qualifying names?
+-- Also, wouldn't it be pedagogically better to write it out first
+-- without the abbreviation and then introduce the shorter form?
 
 -- /FULL
 
@@ -277,32 +276,34 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
 /- ###################################################################### -/
 /- ## Running Lean -/
 
-/- You may already be reading this chapter inside VS Code, but if not
+/-
+   You may already be reading this chapter inside VS Code, but if not
    -- and if you have a computer handy -- this would be an excellent
    moment to fire up VS Code with the Lean extension and try it for
    yourself.  Load this file, `Basics.lean`, from the book's Lean
    sources, find the above examples, and observe the results in the
    Lean Infoview panel.
 
-  In VS Code, development of Lean code is supported by the Lean
-  Extension, which provides an interactive "infoview" panel that
-  displays the results of commands like `#eval` and `#check`, as well
-  as the current goal state when working on proofs. You can hover over
-  expressions in `lean` files to see their types, and you can click on
-  items in the infoview to navigate to their definitions. This makes
-  it easier to understand how your code is being interpreted by Lean
-  and fix any issues that arise.
+   In VS Code, development of Lean code is supported by the Lean
+   Extension, which provides an interactive "infoview" panel that
+   displays the results of commands like `#eval` and `#check`, as well
+   as the current goal state when working on proofs. You can hover
+   over expressions in `lean` files to see their types, and you can
+   click on items in the infoview to navigate to their definitions.
+   This makes it easier to understand how your code is being
+   interpreted by Lean and fix any issues that arise.
 
-  The infoview always follows your cursor, and Lean typechecks the
-  file as you edit it, so you can see the results of your changes
-  immediately. You can also use the infoview to explore the
-  definitions of functions and types that you're using, which can be
-  very helpful for understanding how they work.
+   The infoview always follows your cursor, and Lean typechecks the
+   file as you edit it, so you can see the results of your changes
+   immediately. You can also use the infoview to explore the
+   definitions of functions and types that you're using, which can be
+   very helpful for understanding how they work.
 
-  If you haven't already, install the Lean Extension in VS Code and open the
-  `Basics.lean` file to see the infoview in action. Try hovering over the
-  `nextWorkingDay` function and the `Day` type to see their definitions, and
-  experiment with adding your own `#eval` commands to test other inputs.
+   If you haven't already, install the Lean Extension in VS Code and
+   open the `Basics.lean` file to see the infoview in action. Try
+   hovering over the `nextWorkingDay` function and the `Day` type to
+   see their definitions, and experiment with adding your own `#eval`
+   commands to test other inputs.
 -/
 -- /FULL
 
@@ -465,12 +466,13 @@ example : andb3 .true .true .false = .false := by rfl  -- ADMITTED
 -- TERSE: /- *** -/
 -- FULL
 /-
-  Now that we've seen how to define our own booleans, let's switch back to
-  Lean's built-in `Bool` type, which has the same structure but comes with
-  a lot of useful functions and lemmas.  We can even define functions to
-  convert between our `MyBool` and Lean's `Bool`.
+  Now that we've seen how to define our own booleans, let's switch
+  back to Lean's built-in `Bool` type, which has the same structure
+  but comes with a lot of useful functions and lemmas.  We can even
+  define functions to convert between our `MyBool` and Lean's `Bool`.
 -/
--- BCP: Do we really want to do this, rather than just leaving MyBool completely behind?
+-- BCP: Do we really want to do this, rather than just leaving MyBool
+-- completely behind?
 
 def myBoolToBool (b : MyBool) : Bool :=
   match b with
@@ -478,9 +480,10 @@ def myBoolToBool (b : MyBool) : Bool :=
   | .false => false
 
 /-
-  With the full power of Lean's `Bool` at our disposal, we can also write this
-  function more concisely using the `bif ... then ... else` syntax, which is a
-  convenient way to write simple conditional expressions.
+  With the full power of Lean's `Bool` at our disposal, we can also
+  write this function more concisely using the `bif ... then ... else`
+  syntax, which is a convenient way to write simple conditional
+  expressions.
 -/
 
 def boolToMyBool (b : Bool) : MyBool :=
@@ -588,7 +591,6 @@ inductive Color : Type where
 
   - It introduces a set of new _constructors_. E.g., `RGB.red`,
     `Color.primary`, `true`, `false`, `Day.monday`, etc. are constructors.
-    -- BCP: Why do all of these have namespaces except true and false?
 
   - It groups them into a new named type, like `Bool`, `RGB`, or
     `Color`.
@@ -606,6 +608,7 @@ inductive Color : Type where
       - `true RGB.red`
       - `Color.primary (Color.primary RGB.red)`
 -/
+-- BCP: Why do all of the constructors have namespaces except true and false?
 
 -- TERSE: /- *** -/
 
