@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(perl -0pi -e 's/^\\\\@\\\\[irreducible\\\\]\\\\n\\(def \\(add|mul|sub|pow|factorial\\) \\)/$1/gm; s/^unseal \\(add|mul|sub|pow|mul add|factorial mul add|Nat\\\\.mul Nat\\\\.add\\) in\\\\n//gm' lf/Basics.lean)",
+      "Bash(lake env *)",
+      "Bash(echo \"exit: $?\")"
+    ]
+  }
+}

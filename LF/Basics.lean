@@ -126,12 +126,7 @@ def nextWorkingDay (d : Day) : Day :=
   | .sunday    => .monday
 
 -- FULL
-/- MWH: The text that follows seems to assume the reader knows what pattern matching
-  is, calling attention only to the syntax. It also seems to assume the reader
-  knows what OCaml is. But the premise of this section seems to be that readers
-  do not know what functional programming is -- we are explaining it to them.
-  Seems like a gap. Was it in the original?
--/
+
 /-
   Note that the argument and return types of this function are
   explicitly declared on the first line.  Like most functional
@@ -139,7 +134,16 @@ def nextWorkingDay (d : Day) : Day :=
   itself when they are not given explicitly -- i.e., it can do _type
   inference_ -- but we'll generally include them to make reading
   easier.
+-/
 
+/-
+  The `match` keyword is Lean's keyword for _pattern matching_: the functional
+  programming way of examining and making decisions on data. We assume some
+  familiarity with basic pattern matching in this book.
+-/
+
+
+/-
   The `.` in `.monday` is an abbreviation for `Day.`, to avoid typing
   out the full qualified name `Day.monday`. You may wonder why Lean
   doesn't allow patterns like `monday` without the dot, as other
@@ -159,6 +163,12 @@ def nextWorkingDay (d : Day) : Day :=
 -- TERSE: /- *** -/
 -- TERSE: /- Evaluation: -/
 -- FULL
+/- MWH: The text that follows seems to assume the reader knows what pattern matching
+  is, calling attention only to the syntax. It also seems to assume the reader
+  knows what OCaml is. But the premise of this section seems to be that readers
+  do not know what functional programming is -- we are explaining it to them.
+  Seems like a gap. Was it in the original?
+-/
 /-
   Having defined a function, we should check that it works on some
   examples.  There are actually three different ways to do this in
@@ -247,10 +257,6 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
   the same thing."
 -/
 
-/- MWH: Here we use the term "evaluate" without defining it. Should we do
-  that here? -/
--- BCP: Yes!
-
 /-
   `rfl` stands for "reflexivity," which is the principle that any value is
   equal to itself. After evaluation, both sides of the equality are the same
@@ -329,7 +335,7 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
   clash with ones from the standard library. We'll discuss it in more
   detail below.
 -/
-section
+section MyBool
 
 -- BCP: Why call it MyBool instead of just Bool?  (Or, conversely, why call the constructors
 -- true and false instead of mytrue, myfalse, mynotb, etc.?)
@@ -346,9 +352,8 @@ open MyBool
 
 def notb (b : MyBool) : MyBool :=
   match b with
-  | .true => false
-  | .false => true
--- BCP: Why no .s on the right-hand sides?
+  | .true =>  .false
+  | .false => .true
 
 -- TERSE: /- *** -/
 -- BCP: These *** comments should be replaced with whatever Verso uses for slide breaks.
@@ -356,11 +361,11 @@ def notb (b : MyBool) : MyBool :=
 def andb (b1 : MyBool) (b2 : MyBool) : MyBool :=
   match b1 with
   | .true => b2
-  | .false => false
+  | .false => .false
 
 def orb (b1 : MyBool) (b2 : MyBool) : MyBool :=
   match b1 with
-  | .true => true
+  | .true => .true
   | .false => b2
 
 -- FULL
@@ -480,17 +485,23 @@ def myBoolToBool (b : MyBool) : Bool :=
   | .false => false
 
 /-
-  With the full power of Lean's `Bool` at our disposal, we can also
-  write this function more concisely using the `bif ... then ... else`
-  syntax, which is a convenient way to write simple conditional
-  expressions.
+  Note how we don't have to use the `.`, because we have specified the type
+  of `true` by declaring the return type of `myBoolToBool` to be `Bool`.
+  Lean's type inference algorithm fills in the gap.
+-/
+-- BCP: Why can't type inference fill in the .??
+
+/-
+  With the full power of Lean's `Bool` at our disposal, we can also write this
+  function more concisely using the `bif ... then ... else` syntax, which is a
+  convenient way to write simple conditional expressions.
 -/
 
 def boolToMyBool (b : Bool) : MyBool :=
   bif b then true else false
 -- /FULL
 
-end    -- (close the `section` where we defined `MyBool`)
+end MyBool
 
 -- RAB: From this point, there are about 450 lines of comments before
 -- the next exercise. This is the same as in Rocq, but do we want
@@ -576,16 +587,6 @@ inductive Color : Type where
   | white
   | primary (p : RGB)
 
-/- MWH: In the following you use Bool syntax and not MyBool.
-  This is maybe a little confusing because we are not writing
-  `Bool.true` or `.true`, but simply `true`. I don't believe
-  that we have explained why built-in syntax is special, or
-  even acknowledged that it is. We could do that here, or
-  perhaps should do it earlier when introducing `Bool`. Also:
-  In the examples below you might want to include a few from
-  `MyBool`.
--/
-
 /-
   An `inductive` definition does two things:
 
@@ -598,10 +599,10 @@ inductive Color : Type where
   _Constructor expressions_ are formed by applying a constructor
   to zero or more other constructors or constructor expressions,
   obeying the declared number and types of the constructor arguments.
-
   E.g., these are valid constructor expressions...
       - `RGB.red`
-      - `true`
+      - `MyBool.true`
+      - `true` -- Lean's builtin Boolean type- no `.` needed
       - `Color.primary RGB.red`
   ...but these are not:
       - `RGB.red Color.primary`
@@ -865,15 +866,48 @@ inductive Nat : Type where
   | zero
   | succ (n : Nat)
 
+-- ASSUME THIS IS HIDDEN
+attribute [pp_nodot] Nat.succ
+
+namespace Nat
+open Nat
+
+@[reducible]
+def ofNat (x : _root_.Nat) : Nat :=
+  match x with
+  | .zero => zero
+  | .succ b => succ (ofNat b)
+
+instance instOfNat {n : _root_.Nat} : OfNat Nat n where
+  ofNat := ofNat n
+
+theorem zero_eq_0 : zero = 0 := rfl
+-- END ASSUME
+
 /-
-  With this definition, 0 is represented by `zero`, 1 by `succ zero`,
-  2 by `succ (succ zero)`, and so on.
+  With this definition, 0 is represented by `zero`, 1 by `succ zero`, 2 by `succ
+  (succ zero)`, and so on.
+
+  We use some machinery in the background to allow us to write `0`, `1`, `2`,
+  etc. instead of `zero`, `succ zero`, etc., for our custom definition of `Nat`.
+  This is just syntactic sugar, and the two forms are interchangeable.
 -/
+
+-- RULES
+theorem one_eq_succ_zero : 1 = succ 0 := rfl
+-- RULES
+theorem two_eq_succ_one : 2 = succ 1 := rfl
+-- RULES
+theorem three_eq_succ_two : 3 = succ 2 := rfl
+-- RULES
+theorem four_eq_succ_three : 4 = succ 3 := rfl
+
+example : succ (succ (succ (succ zero))) = 4 := by rfl
 
 /-
   Naturally, Lean has its own definition of natural numbers.
-
 -/
+
   #check Nat
   /- ==> NatPlayground.Nat : Type -/ /- ← this is our `Nat`... -/
   #check _root_.Nat
@@ -884,40 +918,6 @@ inductive Nat : Type where
   As we are just beginning to reason about natural numbers, we use our own
   simple definition, and introduce the Lean one shortly after.
 -/
-
--- Maybe TODO: hide the next 3 lines ↓ this just lets you see (succ (succ zero))
--- instead of NatPlayground.Nat.succ (NatPlayground.Nat.succ
--- NatPlayground.Nat.zero) in the InfoView.
--- At least, that's what it's supposed to do... see TODO below.
-attribute [pp_nodot] Nat
-namespace Nat
-open Nat
-
-/-
-  We can define our own `Nat` literals:
--/
-
-abbrev one : Nat := succ zero
-abbrev two : Nat := succ one
-abbrev three : Nat := succ two
-abbrev four : Nat := succ three
-abbrev five : Nat := succ four
-abbrev six : Nat := succ five
-abbrev seven : Nat := succ six
-abbrev eight : Nat := succ seven
-abbrev nine : Nat := succ eight
-abbrev ten : Nat := succ nine
-
-/- ... and so on. -/
-
-/-
- The `abbrev` keyword defines an abbreviation, and is useful for writing
- concrete terms.
-
-Of course, we can verify our abbreviation does what we expect using `rfl`.
--/
-
-example : succ (succ (succ (succ zero))) = four := by rfl
 
 
 /-
@@ -935,7 +935,7 @@ def minustwo (n : Nat) : Nat :=
   | succ (zero) => zero
   | succ (succ n') => n'
 
-#eval minustwo four
+#eval minustwo 4
 /- ===> succ (succ zero) -/
 
 -- TODO:
@@ -981,16 +981,13 @@ def odd (n : Nat) : Bool :=
   not (even n)
 
 /- test_odd1 -/
-example : odd one = true  := by rfl
+example : odd 1 = true  := by rfl
 /- test_odd2 -/
-example : odd four = false := by rfl
+example : odd 4 = false := by rfl
 
 -- TERSE: /- *** -/
 -- TERSE: /- A multi-argument recursive function. -/
 
-/- MWH: Point out the irreducible annotation and foreshadow what's it for and
-  where you will explain it?
--/
 
 @[irreducible]
 def add (n : Nat) (m : Nat) : Nat :=
@@ -998,11 +995,13 @@ def add (n : Nat) (m : Nat) : Nat :=
   | zero => n
   | succ m' => succ (add n m')
 
+instance instAdd : Add Nat where add := add
+
 -- FULL
 
 /-
   ######################################################################
-  # Simplifying addition
+  # Proof by Rewriting
 
   -- BCP: Why do we jump from # to ### here?
 
@@ -1010,100 +1009,170 @@ def add (n : Nat) (m : Nat) : Nat :=
 
   Being recursive, `add` is our first of a more sophisticated class of
   functions. In this chapter and onwards, we will _prove_ properties about
-  recursive functions, including `add`, which means we will need
-  _simplification rules_ about its behavior.
+  recursive functions and inductive data, like `add` and `Nat`, using
+  _simplification rules_ about their behavior.
 
-  We provide these _rules_ for add, `add_zero` and `add_succ`, below.
+  Here is a simple rule about `add`, called `add_zero`:
+
+  `add_zero (n : Nat) : n + 0 = n`
+
+  We can see it is a real rule in lean:
 -/
--- /FULL
-
-/- MWH: unseal not mentioned, explain what it's for and why you are doing it?
-  Also, why are you calling these "rules" when they are labeled as "theorem"?
--/
-
+-- ASSUME THIS IS HIDDEN
 unseal add in
-theorem add_zero : ∀ n, add n zero = n := by
+theorem add_zero : ∀ n : Nat, n + 0 = n := by
   intro n
   rfl
-
 unseal add in
-theorem add_succ : ∀ n m, add n (succ m) = succ (add n m) := by
+theorem add_succ : ∀ n m : Nat, n + succ m = succ (n + m) := by
   intro n m
   rfl
+-- END ASSUME
 
-/- MWH: Using the word "evaluate" in the below text is weird to me, esp since the actual
-  "evaluate" might already be iffy for some readers. This is not evaluation, it is
-  equational reasoning, right (since we can rewrite in both directions)?
+#check add_zero
+/- ==> NatPlayground.Nat.add_zero (n : Nat) : n + 0 = n -/
 
-  I also don't like using the term "rule" without further explanation. What makes
-  a rule different from some other sort of theorem?
+/- And we can use it for a simple proof about natural numbers! -/
 
-  You also use the term "goal state" below, and then later "proof state".
-  It seems to me that you might want to introduce something about what a proof
-  is, and how proofs are structured. What is a goal, or goal state, and how do
-  tactics move you from the start to the goal? What are the hypotheses, that you
-  are starting from?
--/
-
-/-
-   These rules let us "evaluate" the function at arguments during a proof. They
-   give us the ability to use a fundamental proof tool, a _tactic_, to change
-   the goal state of a proof to match one step of evaluating a function.
-
-   Indeed we define these two rules using _tactics_: `intro` and `rfl`.
-   `intro` names a variable in a proof quantified under a "forall" (∀), and
-   `rfl`, as in the above examples, closes a proof of equality whose left- and
-   right-hand sides are definitionally equal.
--/
-
-/-
-  MWH: It seems weird to me to say, above, we "define" rules using tactics.
-  We are proving two lemmas using tactics, where the lemmas have a particular
-  form useful for equational proofs later on. Right?
--/
-
--- FULL
-
-/- ## The `rewrite` tactic -/
-
-/-
-  A tactic that tells Lean to rewrite (part of) a goal or hypothesis
-  based on a rule is called `rewrite`. Here is a simple example of
-  using `rewrite` with laws to evaluate `add`:
--/
--- /FULL
-
-example : add one one = two := by  /- Move your cursor (click) here to see the initial proof state in the InfoView -/
-  rewrite [add_succ] /- Now click here to see the new proof state, after the tactic -/
+theorem add_zero_zero (n : Nat) : n + 0 + 0 = n := by
+  rewrite [add_zero]
   rewrite [add_zero]
   rfl
 
-
-example : add three two = five := by
-  rewrite [add_succ]; rewrite [add_succ]; rewrite [add_zero] /- a semi ; is like a newline -/
-  -- rewrite [add_succ, add_succ, add_zero] /- `rewrite` can take many arguments applied left to right -/
-  rfl
-
-/- MWH: This text is a little jarring to me. Per my above comments, I think you
-  need to introduce what a proof is, what a goal is, what a proof state is, etc.
-  in order to explain what tactics are. Once you have the concepts down, the
-  tactic explanations follow easily.
--/
-
--- FULL
 /-
-  As mentioned, the keywords `rewrite` and `rfl` are tactics, which are
-  commands (used between `by` and the end of the proof) to guide the
-  process of checking some claim we are making. We will see several more tactics
-  in the rest of this chapter and many more in future chapters.
+  # Proof state and tactics
+  There are several parts to a proof in Lean.
+   Each "command" of the proof- `rewrite`, `rfl` is called a **tactic**.
+   (The `add_zero` in brackets is an _argument_ to a tactic.)
 
-  Even these trivial examples provide opportunities to _step through_ the proof,
-  using the cursor. Moving the cursor over the `by` and stepping through the
-  tactics will show the state of the proof at each step in the right-hand Lean
-  InfoView Panel.
+
+    Hovering with the cursor over each line of the proof,
+    we see the **proof state** in the Lean InfoView panel.
+
+    The **proof state** is divided into the **context**, before the ⊢,
+    and the **goal**, after the ⊢. The **context** is what we know, and
+    the **goal** is what we are trying to prove.
+
+    A **tactic** manipulates the **proof state** (or **context**) to
+    get the goal into a closer shape to the one we want. Once we have
+    a proof state that a tactic can _close_ (solve), we invoke that
+    tactic, which finishes the proof.
+
+    Let's walk through the example above with our terminology.
 -/
+
+  theorem add_zero_zero_explained (n : Nat) : n + 0 + 0 = n := by
+  /- Move your cursor (click) here to see the initial proof state in the InfoView.
+    Our context is `n : Nat`.
+    Our goal is `n + 0 + 0 = n`. -/
+    rewrite [add_zero]
+    /- Now click here to see the new proof state, after the tactic.
+      This tactic above is the `rewrite` tactic, with an argument `add_zero`.
+      Notice how it changed the goal by changing `n + 0` to `n`. -/
+    rewrite [add_zero]
+     /-  Again, we change the goal state by changing `n + 0` to `n`.
+      Now the proof state is an equality with both sides equal,
+      so it can be closed by the tactic `rfl`. -/
+    rfl
+    /- The proof is now done! The Lean InfoView tells us there are "No Goals". -/
+
+  /- We'll give you a simple proof to try.
+    Try completing this proof of `add_zero_zero_zero`, following the model above.
+   -/
+
+theorem add_zero_zero_zero (n : Nat) : n + 0 + 0 + 0 = n := by
+  -- ADMITTED
+  rewrite [add_zero]
+  rewrite [add_zero]
+  rewrite [add_zero]
+  rfl
+  -- /ADMITTED
+
+/-
+
+ ## The `rewrite` tactic
+
+   As we saw above, the tactic that tells Lean to rewrite (part of) a goal or
+   hypothesis based on a rule is called `rewrite`. Given our rule `add_zero`,
+   which states that `n + 0` is equal to `n` for any `n`, we can replace any `n
+   + 0` in our proof with `n` via `rewrite [add_zero]`.
+
+  `rewrite` always takes its argument(s) in square brackets: `[]`.
+
+  ## The `rfl` tactic
+
+  `rfl` closes a goal of the shape `a = a`, for any `a`.
+  `rfl` checks that both sides of the equality are _definitionally equal_- that
+  is, they reduce to the same thing.
+  A term is always _definitionally equal_ to itself.
+-/
+
+  /- ## A New `add` Rule
+
+    We introduce the other fundamental rule about `add`:
+
+    `add_succ (n m : Nat) : n + (succ m) = succ (n + m)`.
+
+    This is the rule we use to push `succ` around.
+  -/
+
+
+ /- Again, we see that it is a usable rule in Lean: -/
+
+  #check add_succ
+  /- ==> add_succ (n m : Nat) : n + succ m = succ (n + m) -/
+
+  /- And we can write a proof with it: -/
+
+  theorem add_succ_zero (n : Nat) : n + succ 0 = succ (n + 0 + 0) := by
+    rewrite [add_succ]
+    rewrite [add_zero]  /- notice how this handles an `n + 0` on both sides -/
+    rewrite [add_zero]
+    rfl
+
+  /- Make sure you're "stepping through" the proofs- that is, moving past each
+     tactic with your cursor to see how each tactic is manipulating the proof
+     state. You will write more and more of the proofs by yourself as we go
+     along, so learning how the tactics work now is worthwhile!
+  -/
+
+  /- ## Working with Numerals
+
+    We know from above that `1` is just `succ 0`, `2` is `succ 1`, and so on.
+    We have rules for these equalities, as well:
+  -/
+
+  #check one_eq_succ_zero /- ==> one_eq_succ_zero : 1 = succ 0 -/
+  #check two_eq_succ_one /- ==> two_eq_succ_one : 2 = succ 1 -/
+  #check three_eq_succ_two /- ==> three_eq_succ_two : 3 = succ 2 -/
+
+  /- We can rewrite with these rules to expand numerals into their definitions,
+     which allows us to use our `add` rules. -/
 
 -- /FULL
+
+/- We give an example of how to start a proof this way.
+  Finish the proof using the `add` rules.
+ -/
+theorem one_plus_one_eq_two : (1 + 1 : Nat) = 2 := by
+  rewrite [one_eq_succ_zero]
+  -- ADMITTED
+  rewrite [add_succ]
+  rewrite [add_zero]
+  rfl
+  -- /ADMITTED
+
+-- /FULL
+
+  /- Try the same for `2 + 2 = 4`. -/
+
+theorem two_plus_two_eq_four : (2 + 2 : Nat) = 4 := by
+  -- ADMITTED
+  rewrite [four_eq_succ_three, three_eq_succ_two,
+           two_eq_succ_one, one_eq_succ_zero]
+  rewrite [add_succ, add_succ, add_zero]
+  rfl
+  -- /ADMITTED
 
 -- FULL
 /-
@@ -1126,140 +1195,50 @@ def mul (n m : Nat) : Nat :=
   | zero => zero
   | succ m' => add (mul n m') n
 
-/-
-  MWH: These simplification rules, and the ones for `add` above, are just restatements
-  of the code. So, it seems a little odd to be making them because doing so offers no
-  abstraction benefit. Should we acknowledge this, saying that this is the convention?
-  I see that this comes up below. Maybe we need to reorder if my take is not unusual.
--/
+instance instMul : Mul Nat where mul := mul
 
-/- Along with its simplification rules: -/
+/- Multiplication, like almost any function we will prove properties about,
+   also has simplification rules. -/
 
+-- ASSUME THIS IS HIDDEN
 unseal mul in
-theorem mul_zero : ∀ n, mul n zero = zero := by
+theorem mul_zero : ∀ n : Nat, n * 0 = 0 := by
   intro n
   rfl
 
-unseal mul in
-theorem mul_succ : ∀ n m, mul n (succ m) = add (mul n m) n := by
+unseal mul add in
+theorem mul_succ : ∀ n m : Nat, n * succ m = n * m + n := by
   intro n m
   rfl
+-- END ASSUME
 
+/- Prove this property. We have given you the first line. Notice how `rewrite`
+   can take any number of arguments. You can use this rewrite with all of the
+   numeral rules at once, for example.
+
+   After each rewrite, check the proof state by placing the cursor immediately
+   after a rule to see how the goal is changing. This happens naturally
+   as you write the proof, which makes it convenient to use `rewrite` blocks
+   with multiple rules.
+ -/
 /- test_mult1 -/
-example : mul three three = nine := by
+theorem test_mult1 : (3 * 3 : Nat) = 9 := by
+  rewrite [three_eq_succ_two, two_eq_succ_one, one_eq_succ_zero]
+  -- ADMITTED
   rewrite [mul_succ, mul_succ, mul_succ, mul_zero]
   rewrite [add_succ, add_succ, add_succ, add_zero]
   rewrite [add_succ, add_succ, add_succ, add_zero]
   rewrite [add_succ, add_succ, add_succ, add_zero]
   rfl
 
-/-
-  We can also `unseal` functions to run some basic computation with them. -/
-
-unseal mul add in
-example : mul three three = nine := by
-  rfl
-
-/- This calls Lean's _evaluator_, which simplifies the function as much
-  as it can.
-
-  You may ask: why use `rewrite` and laws, when unsealing functions and
-  evaluating with thim is so much more consise?
--/
-
-/-
-  ######################################################################
-  # Rewriting vs. Evaluation
--/
-
--- The bus stops here
-
-/- MWH: This is as far as the rewrite has gone, per the above? ^^^ -/
+-- /ADMITTED
 
 -- TERSE: /- *** -/
+
+
 /-
   We can pattern-match two values at the same time:
 -/
-
-@[irreducible]
-def sub (n m : Nat) : Nat :=
-  match n, m with
-  | zero, _ => zero
-  | succ _, zero => n
-  | succ n', succ m' => sub n' m'
-
-unseal sub in
-theorem sub_zero_n : ∀ n, sub zero n = zero := by
-  intro n
-  rfl
-
-unseal sub in
-theorem sub_succ_zero : ∀ n, sub (succ n) zero = succ n := by
-  intro n
-  rfl
-
-unseal sub in
-theorem sub_succ_succ : ∀ n m, sub (succ n) (succ m) = sub n m := by
-  intro n m
-  rfl
-
-@[irreducible]
-def pow (base power : Nat) : Nat :=
-  match power with
-  | zero => one
-  | succ p => mul base (pow base p)
-
--- FULL
--- EX1 (factorial)
-/-
-  Recall the standard mathematical factorial function:
-  ```
-  factorial(0) = 1
-  factorial(n) = n * factorial(n-1)  (if n>0)
-  ```
-  Translate this into Lean.
--/
-
-@[irreducible]
-def factorial (n : Nat) : Nat
-  -- ADMITDEF
-  := match n with
-  | zero => one
-  | succ n' => mul (succ n') (factorial n')
-  -- /ADMITDEF
-
-/- test_factorial1 -/
-unseal factorial mul add in
-example : factorial three = six := by rfl  -- ADMITTED
-/- test_factorial2 -/
-unseal factorial mul add in
-example : factorial five = mul ten (add ten two) := by rfl  -- ADMITTED
--- GRADE_THEOREM 1: factorial_test2
--- []
--- /FULL
-
--- TERSE: /- *** -/
-
--- JC: Overriding the `+` is an immense headache for technical reasons,
--- so we leave that alone, since our definition is the same anyway.
--- In contrast, our `sub` definition _is_ slightly different,
--- so we _do_ want to override the notation instance for it.
--- The `mul` and `pow` definitions are the same as the stdlib,
--- but we can also override notation for it.
-
-instance instSub : Sub Nat where sub := sub
-instance instMul : Mul Nat where mul := mul
-instance instPow : Pow Nat Nat where pow := pow
-
--- JC: In the InfoView, hover over the operators
--- to check out their associativity --
--- `+`, `-`, and `*` all left-associative,
--- but `^` is right-associative.
-
-#check (0 + 1 + 1 : _root_.Nat)
-#check (4 - 3 - 2 : _root_.Nat)
-#check (2 * 3 * 4 : _root_.Nat)
-#check (1 ^ 2 ^ 2 : _root_.Nat)
 
 -- TERSE: /- *** -/
 /-
@@ -1280,6 +1259,10 @@ def beq (n m : Nat) : Bool :=
                | succ m' => beq n' m'
 
 -- TERSE: /- *** -/
+
+-- We need to make a decision about `==`.
+-- Either we give decidable equality early, or we use this `==` thing.
+
 /-
   Similarly, the `leb` function tests whether its first argument is
   less than or equal to its second argument, yielding a boolean.
@@ -1298,11 +1281,11 @@ theorem succ_leb_zero (n : Nat) : leb (succ n) zero = false := by rfl
 theorem succ_leb_succ (n m : Nat) : leb (succ n) (succ m) = leb n m := by rfl
 
 /- test_leb1 -/
-example : leb two two   = true  := by rfl
+example : leb 2 2 = true  := by rfl
 /- test_leb2 -/
-example : leb two four  = true  := by rfl
+example : leb 2 4 = true  := by rfl
 /- test_leb3 -/
-example : leb four two  = false := by rfl
+example : leb 4 2 = false := by rfl
 
 -- TERSE: /- *** -/
 /-
@@ -1321,7 +1304,7 @@ infix:65 "≤?" => leb
 /-
   test_leb3'
 -/
-example : four ≤? two = false := by rfl
+example : 4 ≤? 2 = false := by rfl
 
 -- FULL
 /-
@@ -1348,149 +1331,78 @@ def ltb (n m : Nat) : Bool
 infix:65 "<?" => ltb
 
 /- test_ltb1 -/
-example : two <? two  = false := by rfl  -- ADMITTED
+example : 2 <? 2 = false := by rfl  -- ADMITTED
 /- test_ltb2 -/
-example : two <? four = true  := by rfl  -- ADMITTED
+example : 2 <? 4 = true  := by rfl  -- ADMITTED
 /- test_ltb3 -/
-example : four <? two = false := by rfl  -- ADMITTED
+example : 4 <? 2 = false := by rfl  -- ADMITTED
 -- GRADE_THEOREM 1: ltb_test3
 -- []
 -- /FULL
 
-end Nat
-end NatPlayground
+/- We can use our new functions to show an important property of
+   natural numbers: -/
+
+theorem beq_succ : ∀ n m : Nat, (succ n == succ m) = (n == m) := by
+  intro n m; rfl
+
 
 /-
   ######################################################################
-  # Proof by Simplification
--/
-
--- FULL
-/-
-  Now that we've looked at a few datatypes and functions,
-  let's turn to stating and proving properties of their behavior.
-
-  Actually, we've already started doing this: each `example` in the
-  previous sections made a precise claim about the behavior of some
-  function on some particular inputs.  The proofs of these claims
-  were always the same: use `rfl` to check that both sides of the
-  equation evaluate to identical values.
--/
--- /FULL
-
--- TERSE: /- A specific fact about natural numbers: -/
-/-
-  plus_1_1
--/
-example : 1 + 1 = 2 := by rfl
-
--- TERSE: /- Another specific fact about natural numbers: -/
--- JC: Keep the name for this one, it gets used later.
-theorem add_zero_one : 1 = 0 + 1 := by rfl
-
--- FULL
-/-
-  The same sort of "proof by simplification" can also be used to
-  establish more interesting properties.  For example, the
-  fact that `0` is a "neutral element" for `+` on the left can be
-  proved just by observing that `0 + n` reduces to `n` no matter
-  what `n` is.
--/
--- /FULL
-
--- TERSE: /- A general property of natural numbers: -/
-
-/-
-  Note: Because Lean's addition recurses on the second argument,
-  `n + 0` reduces to `n` by definition.
-  `n + 0` reduces to `n` by definition.
--/
-
-/- The semicolon `;` separates
-  multiple steps of tactics; they can also be separated by putting them on
-  separate lines. -/
-
-theorem add_zero : ∀ n : Nat, n + 0 = n := by
-  intro n; rfl
-
-
-theorem add_succ : ∀ n m : Nat, n + (m + 1) = (n + m) + 1 := by
-  intro n m; rfl
-
-theorem mul_zero : ∀ n : Nat, n * 0 = 0 := by
-  intro n; rfl
-
-theorem mul_succ : ∀ n m : Nat, n * (m + 1) = n * m + n := by
-  intro n m; rfl
-
--- JC: Dumping the rest of the properties here.
--- They're needed because the notations prevent reducing from left to right
--- by just `dsimp [sub]` or `dsimp [pow]`.
--- I don't think these properties are actually used by us,
--- so maybe they can just be exercises.
-
-#check Nat.sub_zero
-
-theorem sub_zero n : 0 - n = 0 := by omega
-theorem succ_sub_zero n : (n + 1) - 0 = n + 1 := by rfl
-theorem succ_sub_succ n m : (n + 1) - (m + 1) = n - m := by omega
-
-theorem pow_zero n : n ^ 0 = 1 := by rfl
-theorem pow_succ (n m : Nat) : n ^ (m + 1) = n * (n ^ m) := by
-  rw [Nat.pow_succ, Nat.mul_comm]
-
--- JC: And another one, which we _do_ use later.
-
-theorem beq_succ : ∀ n m : Nat, (n + 1 == m + 1) = (n == m) := by
-  intro n m; simp
-/-
-  ######################################################################
-  # Proof by Rewriting
+  # General Proofs about Natural Numbers
 -/
 
 -- TERSE: /- A (slightly) more interesting theorem: -/
 
--- FULL
-/-
-  Instead of making a universal claim about all numbers `n` and `m`,
-  this talks about a more specialized property that only holds when
-  `n = m`.  The arrow symbol is pronounced "implies."
-
-  The tactic that tells Lean to perform replacement is called `rewrite`.
--/
--- /FULL
-theorem plus_id_example : ∀ n m : Nat,
+theorem add_id_example : ∀ n m : Nat,
     n = m →
     n + n = m + m := by
+  -- FULL
+  /-
+
+    We now begin to make claims about _general_ natural numbers.
+
+    We begin by making a universal claim about all numbers `n` and `m` that are
+    equal to each other (`n = m`). The arrow symbol is pronounced "implies."
+    Type it with "\to" or "\->" or "\r".
+
+     The `intro` tactic moves the universally quantified variables and the
+     hypothesis into the context, giving them names.  The goal is now to prove
+     `n + n = m + m` under the assumption `h : n = m`.
+
+    The tactic that tells Lean to perform replacement is one we have seen
+    before: `rewrite`. It can take a hypothesis from the context as an argument,
+    just like it can take a previously proved theorem.  In this case, we want to
+    rewrite with the hypothesis `h`, which says that `n` and `m` are equal, so
+    that we can replace `n` with `m` in the goal.
+
+     After the rewrite, the goal is `m + m = m + m`, which can be closed by
+     `rfl`.
+  -/
+  -- /FULL
   intro n m
   intro h
   rewrite [h]
   rfl
 
--- TERSE: /- The `intro` tactic names the hypotheses as they are moved to the context.  The `rewrite` tactic rewrites using an equality. -/
+-- TERSE:
+      /- We make a general claim about natural numbers, and prove
+        it by rewriting with the hypothesis. -/
 
 -- FULL
-/-
-  By default, `rewrite` rewrites left-to-right. To rewrite from right
-  to left, use `rewrite [← h]`, where `←` is typed as `\l` or `\<-`.
--/
--- /FULL
-
-
--- FULL
--- EX1 (plus_id_exercise)
+-- EX1 (add_id_exercise)
 /-
   Remove `sorry` and fill in the proof.
 -/
 
-theorem plus_id_exercise : ∀ n m o : Nat,
+theorem add_id_exercise : ∀ n m o : Nat,
     n = m → m = o → n + m = m + o := by
   -- ADMITTED
   intro n m o h1 h2
   rewrite [h1, h2]
   rfl
   -- /ADMITTED
--- GRADE_THEOREM 1: plus_id_exercise
+-- GRADE_THEOREM 1: add_id_exercise
 -- []
 -- /FULL
 
@@ -1513,6 +1425,7 @@ theorem plus_id_exercise : ∀ n m o : Nat,
   previously declared lemmas and theorems.
 -/
 
+/- TODO: how to get these to show `∀ (n : Nat)` instead of `mul_zero (n : Nat)` -/
 #check mul_zero  -- ∀ (n : Nat), n * 0 = 0
 #check mul_succ  -- ∀ (n m : Nat), n * Nat.succ m = n + n * m
 
@@ -1546,7 +1459,7 @@ theorem add_mul_zero : ∀ p q : Nat,
 /-- warning: declaration uses `sorry` -/
 #guard_msgs(warning) in
 example : ∀ n : Nat,
-    (1 + n == 0) = false := by
+    (succ n == 0) = false := by
   intro n
   /-
     `rfl` doesn't work here because `n` is unknown
@@ -1563,169 +1476,13 @@ example : ∀ n : Nat,
 -- TERSE: /- We can use `cases` to perform case analysis: -/
 
 theorem add_one_neb_zero : ∀ n : Nat,
-    (1 + n == 0) = false := by
+    (succ n == 0) = false := by
   intro n
   cases n
   case zero => rfl
   case succ n' => rfl
 
-
--- FULL
-/-
-  ######################################################################
-  ## More on Notation (Optional)
--/
-
-/-
-  Lean has a very flexible notation system.  Operators like `+` and `*`
-  are defined with specified precedence and associativity.  For example,
-  `+` has precedence 65 and is left-associative, while `*` has
-  precedence 70 and is also left-associative.  This means that `1+2*3*4`
-  is parsed as `1+((2*3)*4)`.
-
-  You can define custom notation using the `notation`, `infixl`,
-  `infixr`, `prefix`, and `postfix` commands.
-
-  Lean handles notation scoping through namespaces and
-  type classes rather than notation scopes.  The numeric literal `3`
-  can be interpreted as `Nat`, `Int`, `Float`, etc., depending on the
-  expected type, thanks to Lean's `OfNat` type class.
--/
--- /FULL
-
--- FULL
-/-
-  ######################################################################
-  ## Structural Recursion (Optional)
--/
-
-/-
-  Here is a copy of the definition of addition:
--/
-
-def plus' (n : Nat) (m : Nat) : Nat :=
-  match n with
-  | 0 => m
-  | n' + 1 => (plus' n' m) + 1
-
-/-
-  When Lean checks this definition, it verifies that the recursion
-  terminates.  Specifically, it checks that one of the arguments
-  is _structurally decreasing_.  This implies that all calls to
-  `plus'` will eventually terminate.
-
-  This requirement is a fundamental feature of Lean's design: In
-  particular, it guarantees that every function that can be defined
-  in Lean will terminate on all inputs.  However, because Lean's
-  termination analysis is not always able to figure things out
-  automatically, it is sometimes necessary to provide hints or
-  write functions in slightly different ways.
-
-  Lean also supports more flexible termination proofs using
-  `termination_by` and `decreasing_by` clauses, as well as `partial`
-  functions that are not required to terminate.
--/
-
--- EX2? (decreasing)
-/-
-  To get a concrete sense of this, find a way to write a sensible
-  recursive definition (of a simple function on numbers, say) that
-  _does_ terminate on all inputs, but that Lean will reject because
-  it cannot automatically prove termination.
--/
-
---  SOLUTION
-/-
-  def factorial_bad (n : Nat) : Nat :=
-    if n == 0 then 1
-    else n * factorial_bad (n - 1)
-  This fails because Lean can't see that `n - 1` is structurally smaller.
-
--/
--- /SOLUTION
--- []
--- /FULL
-
-/-
-  ######################################################################
-  ## Binary Numerals
--/
-
--- EX3 (binary)
-/-
-  We can generalize our unary representation of natural numbers to
-  the more efficient binary representation by treating a binary
-  number as a sequence of constructors `b0` and `b1` (representing 0s
-  and 1s), terminated by a `z`.
-
-  For example:
-
-  | decimal |            binary     |                                                unary         |
-  |:-------:| ---------------------:| ------------------------------------------------------------:|
-  |    0    | `               z   ` | `                                               zero       ` |
-  |    1    | `            b1 z   ` | `                                          succ zero       ` |
-  |    2    | `        b0 (b1 z)  ` | `                                    succ (succ zero)      ` |
-  |    3    | `        b1 (b1 z)  ` | `                              succ (succ (succ zero))     ` |
-  |    4    | `    b0 (b0 (b1 z)) ` | `                        succ (succ (succ (succ zero)))    ` |
-  |    5    | `    b1 (b0 (b1 z)) ` | `                  succ (succ (succ (succ (succ zero))))   ` |
-  |    6    | `    b0 (b1 (b1 z)) ` | `            succ (succ (succ (succ (succ (succ zero)))))  ` |
-  |    7    | `    b1 (b1 (b1 z)) ` | `      succ (succ (succ (succ (succ (succ (succ zero)))))) ` |
-  |    8    | `b0 (b0 (b0 (b1 z)))` | `succ (succ (succ (succ (succ (succ (succ (succ zero)))))))` |
-
-  Note that the low-order bit is on the left and the high-order bit
-  is on the right -- the opposite of the way binary numbers are
-  usually written.  This choice makes them easier to manipulate.
-
-  (Comprehension check: What unary numeral does `b0 z` represent?)
--/
-
-inductive Bin : Type where
-  | z
-  | b0 (n : Bin)
-  | b1 (n : Bin)
-
-def incr (m : Bin) : Bin
-  -- ADMITDEF
-  := match m with
-  | .z => .b1 .z
-  | .b0 m' => .b1 m'
-  | .b1 m' => .b0 (incr m')
-  -- /ADMITDEF
-
-def binToNat (m : Bin) : Nat
-  -- ADMITDEF
-  := match m with
-  | .z => 0
-  | .b0 m' => binToNat m' * 2
-  | .b1 m' => binToNat m' * 2 + 1
-  -- /ADMITDEF
-
-/- test_bin_incr1 -/
-example : incr (.b1 .z) = .b0 (.b1 .z) := by rfl  -- ADMITTED
-/- test_bin_incr2 -/
-example : incr (.b0 (.b1 .z)) = .b1 (.b1 .z) := by rfl  -- ADMITTED
-/- test_bin_incr3 -/
-example : incr (.b1 (.b1 .z)) = .b0 (.b0 (.b1 .z)) := by rfl  -- ADMITTED
-/- test_bin_incr4 -/
-example : binToNat (.b0 (.b1 .z)) = 2 := by rfl  -- ADMITTED
-/- test_bin_incr5 -/
-example : binToNat (incr (.b1 .z)) = 1 + binToNat (.b1 .z) := by rfl  -- ADMITTED
-/- test_bin_incr6 -/
-example : binToNat (incr (incr (.b1 .z))) = 2 + binToNat (.b1 .z) := by rfl  -- ADMITTED
-/- test_bin_incr7 -/
-example : binToNat (.b0 (.b0 (.b0 (.b1 .z)))) = 8 := by rfl  -- ADMITTED
-
--- GRADE_THEOREM 0.5: incr_test1
--- GRADE_THEOREM 0.5: incr_test2
--- GRADE_THEOREM 0.5: incr_test3
--- GRADE_THEOREM 0.5: binToNat_test1
--- GRADE_THEOREM 0.5: binToNat_test2
--- GRADE_THEOREM 0.5: binToNat_test3
--- []
-
-/- TODO: Give more intro to these two theorems on booleans. -/
-
--- FULL
+  -- FULL
 /-
   The `cases` tactic generates _two_ subgoals, which we must then
   prove, separately, in order to get Lean to accept the theorem.
@@ -1795,37 +1552,34 @@ theorem andb3_exchange : ∀ b c d : Bool,
   We will introduce some tactics for writing shorter proofs
   by case analysis in `Tactics.lean`. -/
 
--- FULL
-/- ## New Tactics: `dsimp`, and `exact`. -/
-
 /-
-  Some more tactics will be useful for the exercises ahead.
+  ** New Tactics: `rewrite ... at` and `exact`.
 
-  The `dsimp` tactic ("definitionally simplify") applies known facts
-  and definitions to simplify the goal.  You can give it hints in
-  square brackets: `dsimp [f]` tells it to unfold the definition
-  of `f`.  You can also simplify a hypothesis `h` in the context
-  by writing `dsimp [...] at h`. `dsimp` will also close goals by
-  `rfl` when possible.
+  Some new tactics will be useful for the exercises ahead.
 
-  The `exact` tactic closes a goal by providing an exact proof
-  term.  For example, if `h : P` is in the context and the goal
-  is `P`, then `exact h` closes the goal.  You can also
-  transform `h` slightly — for instance, `exact h.symm` uses
-  the symmetry of equality.
+  The `rewrite` tactic can be used to rewrite in a hypothesis instead of the
+  goal. For example, if `h : P` is in the context and we have a rule `P = Q`,
+  then `rewrite [P = Q] at h` changes the hypothesis to `h : Q`.
+
+  The `exact` tactic closes a goal by providing an exact proof term.  For
+  example, if `h : P` is in the context and the goal is `P`, then `exact h`
+  closes the goal.  You can also transform `h` slightly — for instance, `exact
+  h.symm` uses the symmetry of equality.
 -/
 
 
 -- EX2 (orb_false_true)
 /-
   Prove the following claim.
+  /- Tip: the rewrite rule to simplifiy (b || false)
+     is `Bool.or_false` -/
 -/
 
 theorem orb_false_true : ∀ b : Bool,
-    (false || b) = true → b = true := by
+    (b || false) = true → b = true := by
   -- ADMITTED
   intro b h
-  dsimp [Bool.or] at h
+  rewrite [Bool.or_false] at h
   exact h
   -- /ADMITTED
 -- GRADE_THEOREM 2: orb_false_true
@@ -1833,17 +1587,185 @@ theorem orb_false_true : ∀ b : Bool,
 -- /FULL
 
 -- FULL
--- EX1 (zero_nbeq_plus_1)
+-- EX1 (zero_nbeq_add_1)
 theorem zero_neb_add_one : ∀ n : Nat,
-  (0 == n + 1) = false := by
+  (0 == Nat.succ n) = false := by
   -- ADMITTED
   intro n; cases n
   case zero => rfl
   case succ n' => rfl
   -- /ADMITTED
--- GRADE_THEOREM 1: zero_nbeq_plus_1
+-- GRADE_THEOREM 1: zero_nbeq_add_1
 -- []
 -- /FULL
+
+
+-- FULL
+/-
+  ######################################################################
+  ## More on Notation (Optional)
+-/
+
+/-
+  Lean has a very flexible notation system.  Operators like `+` and `*`
+  are defined with specified precedence and associativity.  For example,
+  `+` has precedence 65 and is left-associative, while `*` has
+  precedence 70 and is also left-associative.  This means that `1+2*3*4`
+  is parsed as `1+((2*3)*4)`.
+
+  You can define custom notation using the `notation`, `infixl`,
+  `infixr`, `prefix`, and `postfix` commands.
+
+  Lean handles notation scoping through namespaces and
+ _type classes_ rather than notation scopes.  The numeric literal `3`
+  can be interpreted as `Nat`, `Int`, `Float`, etc., depending on the
+  expected type, thanks to Lean's `OfNat` type class. We explain type classes
+  in full in a later chapter.
+  /- TODO: which chapter? -/
+-/
+-- /FULL
+
+-- FULL
+/-
+  ######################################################################
+  ## Structural Recursion (Optional)
+-/
+
+/-
+  Here is a copy of the definition of addition:
+-/
+
+def add' (n : Nat) (m : Nat) : Nat :=
+  match n with
+  | zero => m
+  | succ n' => succ (add' n' m)
+
+/-
+  When Lean checks this definition, it verifies that the recursion
+  terminates.  Specifically, it checks that one of the arguments
+  is _structurally decreasing_.  This implies that all calls to
+  `add'` will eventually terminate.
+
+  This requirement is a fundamental feature of Lean's design: In
+  particular, it guarantees that every function that can be defined
+  in Lean will terminate on all inputs.  However, because Lean's
+  termination analysis is not always able to figure things out
+  automatically, it is sometimes necessary to provide hints or
+  write functions in slightly different ways.
+
+  Lean also supports more flexible termination proofs using
+  `termination_by` and `decreasing_by` clauses, as well as `partial`
+  functions that are not required to terminate.
+-/
+
+-- EX2? (decreasing)
+/-
+  To get a concrete sense of this, find a way to write a sensible
+  recursive definition (of a simple function on numbers, say) that
+  _does_ terminate on all inputs, but that Lean will reject because
+  it cannot automatically prove termination.
+-/
+
+--  SOLUTION
+/-
+  def factorial_bad (n : Nat) : Nat :=
+    if n == 0 then 1
+    else n * factorial_bad (n - 1)
+  This fails because Lean can't see that `n - 1` is structurally smaller.
+
+-/
+-- /SOLUTION
+-- []
+-- /FULL
+
+end Nat
+
+/-
+  ######################################################################
+  ## Binary Numerals
+-/
+
+-- EX3 (binary)
+/-
+  We can generalize our unary representation of natural numbers to
+  the more efficient binary representation by treating a binary
+  number as a sequence of constructors `b0` and `b1` (representing 0s
+  and 1s), terminated by a `z`.
+
+  For example:
+
+  | decimal |            binary     |                                                unary         |
+  |:-------:| ---------------------:| ------------------------------------------------------------:|
+  |    0    | `               z   ` | `                                               zero       ` |
+  |    1    | `            b1 z   ` | `                                          succ zero       ` |
+  |    2    | `        b0 (b1 z)  ` | `                                    succ (succ zero)      ` |
+  |    3    | `        b1 (b1 z)  ` | `                              succ (succ (succ zero))     ` |
+  |    4    | `    b0 (b0 (b1 z)) ` | `                        succ (succ (succ (succ zero)))    ` |
+  |    5    | `    b1 (b0 (b1 z)) ` | `                  succ (succ (succ (succ (succ zero))))   ` |
+  |    6    | `    b0 (b1 (b1 z)) ` | `            succ (succ (succ (succ (succ (succ zero)))))  ` |
+  |    7    | `    b1 (b1 (b1 z)) ` | `      succ (succ (succ (succ (succ (succ (succ zero)))))) ` |
+  |    8    | `b0 (b0 (b0 (b1 z)))` | `succ (succ (succ (succ (succ (succ (succ (succ zero)))))))` |
+
+  Note that the low-order bit is on the left and the high-order bit
+  is on the right -- the opposite of the way binary numbers are
+  usually written.  This choice makes them easier to manipulate.
+
+  (Comprehension check: What unary numeral does `b0 z` represent?)
+-/
+
+inductive Bin : Type where
+  | z
+  | b0 (n : Bin)
+  | b1 (n : Bin)
+
+def incr (m : Bin) : Bin
+  -- ADMITDEF
+  := match m with
+  | .z => .b1 .z
+  | .b0 m' => .b1 m'
+  | .b1 m' => .b0 (incr m')
+  -- /ADMITDEF
+
+def binToNat (m : Bin) : Nat
+  -- ADMITDEF
+  := match m with
+  | .z => 0
+  | .b0 m' => binToNat m' * 2
+  | .b1 m' => binToNat m' * 2 + 1
+  -- /ADMITDEF
+
+/- test_bin_incr1 -/
+example : incr (.b1 .z) = .b0 (.b1 .z) := by rfl  -- ADMITTED
+/- test_bin_incr2 -/
+example : incr (.b0 (.b1 .z)) = .b1 (.b1 .z) := by rfl  -- ADMITTED
+/- test_bin_incr3 -/
+example : incr (.b1 (.b1 .z)) = .b0 (.b0 (.b1 .z)) := by rfl  -- ADMITTED
+/- test_bin_incr4 -/
+unseal Nat.mul Nat.add in
+example : binToNat (.b0 (.b1 .z)) = 2 := by rfl  -- ADMITTED
+/- test_bin_incr5 -/
+unseal Nat.mul Nat.add in
+example : binToNat (incr (.b1 .z)) = 1 + binToNat (.b1 .z) := by rfl  -- ADMITTED
+/- test_bin_incr6 -/
+unseal Nat.mul Nat.add in
+example : binToNat (incr (incr (.b1 .z))) = 2 + binToNat (.b1 .z) := by rfl  -- ADMITTED
+/- test_bin_incr7 -/
+unseal Nat.mul Nat.add in
+example : binToNat (.b0 (.b0 (.b0 (.b1 .z)))) = 8 := by rfl  -- ADMITTED
+
+-- GRADE_THEOREM 0.5: incr_test1
+-- GRADE_THEOREM 0.5: incr_test2
+-- GRADE_THEOREM 0.5: incr_test3
+-- GRADE_THEOREM 0.5: binToNat_test1
+-- GRADE_THEOREM 0.5: binToNat_test2
+-- GRADE_THEOREM 0.5: binToNat_test3
+-- []
+
+/- TODO: Give more intro to these two theorems on booleans. -/
+
+-- FULL
+
+end NatPlayground
 
 
 -- FULL
@@ -1900,19 +1822,19 @@ theorem andb_eq_orb : ∀ b c : Bool,
   b = c := by
   -- ADMITTED
   intro b c h
-  cases b
+  cases c
   case true =>
     /-
       h : true && c = true || c, i.e., h : c = true
     -/
-    dsimp [Bool.and, Bool.or] at h
+    rewrite [Bool.and_true, Bool.or_true] at h
     rewrite [h]
     rfl
   case false =>
     /-
       h : false && c = false || c, i.e., h : false = c
     -/
-    dsimp [Bool.and, Bool.or] at h
+    rewrite [Bool.and_false, Bool.or_false] at h
     rewrite [h]
     rfl
   -- /ADMITTED
@@ -1920,359 +1842,3 @@ theorem andb_eq_orb : ∀ b c : Bool,
 -- []
 
 -- /FULL
-
--- FULL
-/-
-  ######################################################################
-  ## Course Late Policies, Formalized
--/
-
-/-
-  Suppose that a course has a grading policy based on late days,
-  where a student's final letter grade is lowered if they submit too
-  many homework assignments late.
--/
--- /FULL
-
-namespace LateDays
-
--- <? in this section operates on standard Nat (not NatPlayground.Nat)
-local notation:65 a:66 " <? " b:66 => Nat.blt a b
-
--- FULL
-/-
-  First, we inroduce a datatype for modeling the "letter" component
-  of a grade.
--/
--- /FULL
-inductive Letter : Type where
-  | A | B | C | D | F
-
--- FULL
-/-
-  Then we define the modifiers -- a `natural` `a` is just a "plain"
-  grade of `a`.
--/
--- /FULL
-inductive Modifier : Type where
-  | plus | natural | minus
-
--- FULL
-/-
-  A full `Grade`, then, is just a `letter` and a `modifier`.
-  In Lean, a combination of several values is called a _structure_.  The `structure`
-  keyword is used to define a new structure type.
--/
--- /FULL
-
-structure Grade where
-  letter : Letter
-  modifier : Modifier
-
--- FULL
-/-
-  We will want to be able to say when one grade is "better" than
-  another.  In other words, we need a way to compare two grades.  As
-  with natural numbers, we could define `bool`-valued functions
-  `grade_eqb`, `grade_ltb`, etc., and that would work fine.
-  However, we can also define a slightly more informative type for
-  comparing two values, as shown below.  This datatype has three
-  constructors that can be used to indicate whether two values are
-  "equal", "less than", or "greater than" one another.
--/
--- /FULL
-inductive Comparison : Type where
-  | eq   -- "equal"
-  | lt   -- "less than"
-  | gt   -- "greater than"
-
--- FULL
-/-
-  Since we're in a namespace, we can open the relevant types to
-  avoid having to write `Letter.A`, etc.
--/
--- /FULL
-open Letter Modifier Comparison
-
--- FULL
-/-
-  Using pattern matching, it is not difficult to define the
-  comparison operation for two letters `l1` and `l2` (see below).
-  This definition uses a feature of `match` patterns: we can match
-  against _two_ values simultaneously by separating them and the
-  corresponding patterns with comma `,`.
-  This is simply a convenient abbreviation for nested pattern
-  matching.
--/
--- /FULL
-def letterComparison (l1 l2 : Letter) : Comparison :=
-  match l1, l2 with
-  | A, A => eq
-  | A, _ => gt
-  | B, A => lt
-  | B, B => eq
-  | B, _ => gt
-  | C, A => lt
-  | C, B => lt
-  | C, C => eq
-  | C, _ => gt
-  | D, F => gt
-  | D, D => eq
-  | D, _ => lt
-  | F, F => eq
-  | F, _ => lt
-
-example : letterComparison B A = lt := by rfl
-example : letterComparison D D = eq := by rfl
-example : letterComparison B F = gt := by rfl
-
--- EX1 (letter_comparison)
-theorem letterComparison_Eq : ∀ l : Letter,
-    letterComparison l l = eq := by
-  -- ADMITTED
-  intro l; cases l <;> rfl
-  -- /ADMITTED
--- GRADE_THEOREM 1: letterComparison_Eq
--- []
-
-def modifierComparison (m1 m2 : Modifier) : Comparison :=
-  match m1, m2 with
-  | plus, plus => eq
-  | plus, _ => gt
-  | natural, plus => lt
-  | natural, natural => eq
-  | natural, _ => gt
-  | minus, minus => eq
-  | minus, _ => lt
-
--- EX2 (grade_comparison)
-
-/-
-  Here, we will need to access the fields of the `Grade` structure.
-  The field names are `letter` and `modifier`, so for a grade `g`,
-  we can write `g.letter` and `g.modifier` to access these fields.
--/
-
-def gradeComparison (g1 g2 : Grade) : Comparison
-  -- ADMITDEF
-  := match letterComparison g1.letter g2.letter with
-  | lt => lt
-  | eq => modifierComparison g1.modifier g2.modifier
-  | gt => gt
-  -- /ADMITDEF
-
-/- test_grade_comparison1 -/
-example : gradeComparison ⟨A, minus⟩ ⟨B, plus⟩ = gt := by rfl  -- ADMITTED
-/- test_grade_comparison2 -/
-example : gradeComparison ⟨A, minus⟩ ⟨A, plus⟩ = lt := by rfl  -- ADMITTED
-/- test_grade_comparison3 -/
-example : gradeComparison ⟨F, plus⟩ ⟨F, plus⟩ = eq := by rfl  -- ADMITTED
-/- test_grade_comparison4 -/
-example : gradeComparison ⟨B, minus⟩ ⟨C, plus⟩ = gt := by rfl  -- ADMITTED
--- GRADE_THEOREM 0.5: gradeComparison_test1
--- GRADE_THEOREM 0.5: gradeComparison_test2
--- GRADE_THEOREM 0.5: gradeComparison_test3
--- GRADE_THEOREM 0.5: gradeComparison_test4
--- []
-
-def lowerLetter (l : Letter) : Letter :=
-  match l with
-  | A => B
-  | B => C
-  | C => D
-  | D => F
-  | F => F  -- Can't go lower than F!
-
-/-
-  This theorem is not provable because of the edge case of F!
-  theorem lowerLetter_lowers_bad : ∀ (l : Letter),
-    letterComparison (lowerLetter l) l = lt := by ...
--/
-
-theorem lowerLetter_F_is_F : lowerLetter F = F := by rfl
-
--- EX2 (lower_letter_lowers)
-theorem lowerLetter_lowers : ∀ l : Letter,
-    letterComparison F l = lt →
-    letterComparison (lowerLetter l) l = lt := by
-  -- ADMITTED
-  intro l h
-  cases l with
-  | A => rfl
-  | B => rfl
-  | C => rfl
-  | D => rfl
-  | F => exact h
-  -- /ADMITTED
--- GRADE_THEOREM 2: lowerLetter_lowers
--- []
-
--- EX2 (lower_grade)
-/-
-  In addition to the dot notation for accessing structure fields, we can also
-  use pattern matching to access these fields.
-  For example, if `g` is a grade, then we can write
-  `match g with ⟨l, m⟩ => ...` to access the letter and modifier components
-  of `g` as `l` and `m`, respectively.
-  Note: The angle brackets `⟨` and `⟩` are typed as `\<` and `\>`.
--/
-def lowerGrade (g : Grade) : Grade
-  -- ADMITDEF
-  := match g with
-  | ⟨l, plus⟩ => ⟨l, natural⟩
-  | ⟨l, natural⟩ => ⟨l, minus⟩
-  | ⟨F, minus⟩ => ⟨F, minus⟩
-  | ⟨l, minus⟩ => ⟨lowerLetter l, plus⟩
-  -- /ADMITDEF
-
-/-
-  lower_grade_A_Plus
--/
-example : lowerGrade ⟨A, plus⟩ = ⟨A, natural⟩ := by rfl  -- ADMITTED
-/-
-  lower_grade_A_Natural
--/
-example : lowerGrade ⟨A, natural⟩ = ⟨A, minus⟩ := by rfl  -- ADMITTED
-/-
-  lower_grade_A_Minus
--/
-example : lowerGrade ⟨A, minus⟩ = ⟨B, plus⟩ := by rfl  -- ADMITTED
-/-
-  lower_grade_B_Plus
--/
-example : lowerGrade ⟨B, plus⟩ = ⟨B, natural⟩ := by rfl  -- ADMITTED
-/-
-  lower_grade_F_Natural
--/
-example : lowerGrade ⟨F, natural⟩ = ⟨F, minus⟩ := by rfl  -- ADMITTED
-/-
-  lower_grade_twice
--/
-example : lowerGrade (lowerGrade ⟨B, minus⟩) = ⟨C, natural⟩ := by rfl  -- ADMITTED
-/-
-  lower_grade_thrice
--/
-example : lowerGrade (lowerGrade (lowerGrade ⟨B, minus⟩)) = ⟨C, minus⟩ := by rfl  -- ADMITTED
-
-theorem lowerGrade_F_Minus : lowerGrade ⟨F, minus⟩ = ⟨F, minus⟩ := by rfl  -- ADMITTED
-
--- GRADE_THEOREM 0.25: lowerGrade_A_Plus
-/-
-  ...
--/
--- GRADE_THEOREM 0.25: lowerGrade_F_Minus
--- []
-
--- EX3 (lower_grade_lowers)
-/- For our solution we use:
-  * Working on multiple match cases with `| _ ... | _ => ...`;
-  * Working on all remaining goals with `all_goals`.
-  * These are not expected of students at this point.
-   -/
-theorem lowerGrade_lowers : ∀ g : Grade,
-    gradeComparison ⟨F, minus⟩ g = lt →
-    gradeComparison (lowerGrade g) g = lt := by
-  -- ADMITTED
-  intro g h
-  match g with
-  | ⟨l, plus⟩
-  | ⟨l, natural⟩ =>
-    dsimp [lowerGrade, gradeComparison]
-    rewrite [letterComparison_Eq]
-    dsimp [modifierComparison]
-  | ⟨l, minus⟩ =>
-    cases l
-    case F => rewrite [lowerGrade_F_Minus]; exact h
-    all_goals rfl
-  -- /ADMITTED
--- GRADE_THEOREM 3: lowerGrade_lowers
--- []
-
-
-def applyLatePolicy (lateDays : Nat) (g : Grade) : Grade :=
-  if lateDays <? 9 then g
-  else if lateDays <? 17 then lowerGrade g
-  else if lateDays <? 21 then lowerGrade (lowerGrade g)
-  else lowerGrade (lowerGrade (lowerGrade g))
-
-theorem applyLatePolicy_unfold : ∀ (lateDays : Nat) (g : Grade),
-    applyLatePolicy lateDays g
-    =
-    (if lateDays <? 9 then g
-     else if lateDays <? 17 then lowerGrade g
-     else if lateDays <? 21 then lowerGrade (lowerGrade g)
-     else lowerGrade (lowerGrade (lowerGrade g))) := by
-  intro _ _; rfl
-
--- EX2 (no_penalty_for_mostly_on_time)
-theorem no_penalty_for_mostly_on_time : ∀ (lateDays : Nat) (g : Grade),
-    (lateDays <? 9 = true) →
-    applyLatePolicy lateDays g = g := by
-  -- ADMITTED
-  intro lateDays g h
-  dsimp [applyLatePolicy]
-  rewrite [h]; rfl
-  -- /ADMITTED
--- GRADE_THEOREM 2: no_penalty_for_mostly_on_time
--- []
-
--- EX2 (grade_lowered_once)
-theorem grade_lowered_once : ∀ (lateDays : Nat) (g : Grade),
-    (lateDays <? 9 = false) →
-    (lateDays <? 17 = true) →
-    applyLatePolicy lateDays g = lowerGrade g := by
-  -- ADMITTED
-  intro lateDays g h9 h17
-  dsimp [applyLatePolicy]
-  rewrite [h9, h17]; rfl
-  -- /ADMITTED
--- GRADE_THEOREM 2: grade_lowered_once
--- []
-
-end LateDays
-
--- TODO put this somewhere
-
-/-
-   Lean does have an automatic evaluator, which we will introduce in
-   just a few chapters. But Lean professionals prefer to use a mix of
-   the evaluator and the rules, since not all functions in Lean can be
-   evaluated (!). In future chapters, we will show how to derive
-   simplification rules for functions automatically.
--/
-
--- needed or not?
-
--- FULL
-/-
-  The steps of simplification that Lean performs here can be
-  visualized as follows:
-
-       `add 3 2`
-    i.e. `add (succ (succ (succ 0))) (succ (succ 0))`
--/
-/-    ==> `succ (add (succ (succ (succ 0))) (succ 0))` -/
-/-
-           by the second clause of the `match`
--/
-/-    ==> `succ (succ (add (succ (succ (succ 0))) 0))` -/
-/-
-           by the second clause of the `match`
--/
-/-    ==> `succ (succ (succ (add (succ 0))))` -/
-/-
-           by the first clause of the `match`
-    i.e. `5`
--/
--- /FULL
-/-
-  Now that we've seen how natural numbers are built from `Nat.zero`
-  and `Nat.succ`, we can take further advantage of Lean's notation: the
-  pattern `n + 1` is syntactic sugar for `Nat.succ n`, `n + 2` is
-  syntactic sugar for `Nat.succ (Nat.succ n)`, and so on.
-  We'll use this more concise style from now on.
--/
-
-/- Lean's builtin
-  definition and notation to write it more concisely.
-  The `+` operator is already defined for `Nat` in the standard library. -/

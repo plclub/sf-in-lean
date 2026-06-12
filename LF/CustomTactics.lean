@@ -17,19 +17,25 @@ meta section
 namespace Lean.Parser
 open Tactic
 
+/-- Internal syntactic representation of a single inversion alternative. -/
 declare_syntax_cat invAlt
 syntax " | " caseArg " => " tacticSeq : invAlt
+
+/-- An inversion alternative matching one or more goal tags,
+  expanding to multiple single [invAlt]s. -/
+declare_syntax_cat invAlts
+syntax (" | " caseArg)+ " => " tacticSeq : invAlts
 
 /--
   `inversion t` generalizes nonvariable indices of the type of `t` before invoking `cases t`,
   then solves away contradictory generated goals.
   * If `inversion +clear t` is set, `t` is `clear`ed from the context.
+    By default, `t` will remain in the context.
   * The form `inversion t with | tag₁ x ... => tac ... | ... | tagₙ z ... => tac ...` is supported,
     similar to that of `cases` and `inversion`.
-    However, `tag`s must be explicitly given.
 -/
 syntax (name := inversion)
-  "inversion " optConfig ident (" with " (colGe invAlt)+)? : tactic
+  "inversion " optConfig ident (" with " (colGe invAlts)+)? : tactic
 
 end Lean.Parser
 
@@ -73,9 +79,11 @@ def _root_.Lean.MVarId.getUserName (mvarId : MVarId) : MetaM Name := do
   let decl ← mvarId.getDecl
   return decl.userName
 
-def mkGeneralizeArgs (mvarId : MVarId) (hypType : Expr) (hypName : Name) : MetaM (Array GeneralizeArg) := do
-  let hypType ← whnf hypType
-  let (ind, args) := hypType.getAppFnArgs
+/-- Given a fully applied inductive type,
+  return a deduplicated array of its nonvariable indices to generalize. -/
+def mkGeneralizeArgs (mvarId : MVarId) (indType : Expr) (name : Name := .anonymous) : MetaM (Array GeneralizeArg) := do
+  let indType ← whnf indType
+  let (ind, args) := indType.getAppFnArgs
   match ← isInductive? ind with
   | some val =>
     let indices := args.drop val.numParams
@@ -84,11 +92,11 @@ def mkGeneralizeArgs (mvarId : MVarId) (hypType : Expr) (hypName : Name) : MetaM
       unless idx.isFVar || genArgs.any (·.expr == idx) do
         genArgs := genArgs.push
           { expr := idx
-            hName? := some (← mkFreshUserName $ hypName.append `eq) }
+            hName? := some (← mkFreshUserName $ name.append `eq) }
     return genArgs
   | none =>
     throwTacticEx `inversion mvarId
-      m!"target is not an inductive type{indentExpr hypType}"
+      m!"Target is not an inductive type{indentExpr indType}"
 
 partial def substGenEqs (mvarId : MVarId) (eqs : List FVarId) : MetaM (Option MVarId) := do
   match eqs with
@@ -119,6 +127,11 @@ end Lean.Meta
 namespace Lean.Elab.Tactic
 open Meta Term
 
+-- [https://github.com/leanprover-community/mathlib4/blob/master/Mathlib/Tactic/Lemma.lean]
+-- [https://github.com/leanprover-community/batteries/blob/main/Batteries/Tactic/Lemma.lean]
+/-- Synonym for `theorem`. -/
+macro "lemma " thm:declId sig:declSig val:declVal : command => `(theorem $thm $sig $val)
+
 /--
   `apply t at i` uses forward reasoning with `t` at the hypothesis `i`.
   Explicitly, if `t : α₁ → ⋯ → αᵢ → ⋯ → αₙ` and `i` has type `αᵢ`, then this tactic adds
@@ -147,7 +160,7 @@ structure InversionConfig where
 
 declare_config_elab elabInversionConfig InversionConfig
 
-private def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (List MVarId) := withMainContext do
+def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (List MVarId) := withMainContext do
   let goal ← getMainGoal
   let hypType ← h.getType
   let hypName ← h.getUserName
@@ -163,7 +176,7 @@ private def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (Lis
     | .fvar f => pure f
     | _ =>
       throwTacticEx `inversion goal
-        m!"generalization mapped the inverted hypothesis to a non-variable term{indentExpr targetExpr}"
+        m!"Generalization mapped the inverted hypothesis to a non-variable term{indentExpr targetExpr}"
   let genEqs := newVars.toList.drop genArgs.size
   let subgoals ← goal.cases target
   let newGoals ← subgoals.toList.filterMapM fun s => do
@@ -171,50 +184,54 @@ private def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (Lis
     substGenEqs s.mvarId eqs
   return newGoals
 
-private def evalInvAlt (goals : List MVarId) (alt : TSyntax `invAlt) : TacticM MVarId :=
+/-- Given an inversion alternative and a list of goals,
+  solve the tagged goal with the provided tactics,
+  throwing an error if the goal cannot be found or solved. -/
+def evalInvAlt (goals : List MVarId) (alt : TSyntax `invAlt) : TacticM (List MVarId) :=
   match alt with
   | `(invAlt| | $tag:ident $vars:binderIdent* => $tactics:tacticSeq) => do
-    match ← findTag? goals tag.getId with
-    | some goal =>
-      let goals ← renameInaccessibles goal vars >>= evalTacticAt tactics
-      unless goals.isEmpty do
-        reportUnsolvedGoals goals
-      return goal
-    | none =>
-      let goalMsgs ← goals.mapM (.ofName <$> ·.getUserName)
-      let msg ← if goals.isEmpty
-        then pure m!"There are no unhandled alternatives"
-        else pure m!"Expected {.orList goalMsgs}"
-      throwError m!"Invalid alternative name `{tag.getId}`: {msg}"
-  | stx@`(invAlt| | _ $_vars:binderIdent* => $_tactics:tacticSeq) =>
-    -- TODO: allow the last alternative to be a wildcard
-    throwErrorAt stx "inversion alternatives must be explicitly named"
-  | stx => throwErrorAt stx "could not parse inversion alternative"
+    if let some goal ← findTag? goals tag.getId then
+      return [← trySolveGoal vars tactics goal]
+    else throwError m!"Invalid alternative name `{tag.getId}`: {← errorMsg}"
+  | `(invAlt| | _ $vars:binderIdent* => $tactics:tacticSeq) => do
+    if !goals.isEmpty then
+      goals.mapM $ trySolveGoal vars tactics
+    else throwErrorAt alt m!"Invalid wildcard alternative: {← errorMsg}"
+  | _ => throwErrorAt alt "Could not parse inversion alternative"
+where
+  trySolveGoal vars tactics goal : TacticM MVarId := do
+    let goals ← renameInaccessibles goal vars >>= evalTacticAt tactics
+    unless goals.isEmpty do
+      reportUnsolvedGoals goals
+    return goal
+  errorMsg : TacticM MessageData := do
+    let goalMsgs ← goals.mapM (.ofName <$> ·.getUserName)
+    return if goals.isEmpty
+      then m!"There are no unhandled alternatives"
+      else m!"Expected {.orList goalMsgs}"
 
-@[tactic Lean.Parser.inversion]
+@[tactic Lean.Parser.inversion, inherit_doc Lean.Parser.inversion]
 public meta def evalInversion : Tactic
-  | `(tactic| inversion $config $h:ident $[with $[$alts?:invAlt]*]?) => do
+  | `(tactic| inversion $config $h:ident $[with $[$alts?:invAlts]*]?) => do
     let config ← elabInversionConfig config
     let mut goals ← inversionCore (← getFVarId h) config
     if let some alts := alts? then
-      for alt in alts do
-        let goal ← evalInvAlt goals alt
-        goals := goals.erase goal
+      let expandedAlts ← Array.flatten <$> alts.mapM expandInvAlts
+      for alt in expandedAlts do
+        let solvedGoals ← evalInvAlt goals alt
+        goals := goals.removeAll solvedGoals
       unless goals.isEmpty do
         reportUnsolvedGoals goals
     replaceMainGoal goals
-  | stx => throwErrorAt stx "could not parse inversion tactic"
+  | stx => throwErrorAt stx "Could not parse inversion tactic"
+where expandInvAlts
+  | `(invAlts| $[| $args:caseArg]* => $tactics:tacticSeq) =>
+    args.mapM (`(invAlt| | $(·) => $tactics))
+  | stx => throwErrorAt stx "Could not parse inversion alternatives"
 
 end Lean.Elab.Tactic
 
 end -- meta section
-
--- [https://github.com/leanprover-community/mathlib4/blob/master/Mathlib/Tactic/Lemma.lean]
--- [https://github.com/leanprover-community/batteries/blob/main/Batteries/Tactic/Lemma.lean]
-/-- Synonym for `theorem`. -/
-macro "lemma " thm:declId sig:declSig val:declVal : command => `(theorem $thm $sig $val)
-
-set_option trace.debug true
 
 example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : f n = 0 := by
   -- cases le /- Dependent elimination failed: Failed to solve equation 0 = f n -/
@@ -227,10 +244,25 @@ example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : f n = 0 := by
 #guard_msgs(warning) in
 example (f : Nat → Nat) (n m : Nat) (le : f n ≤ f m) : f n = 0 := by
   inversion +clear le with
-  | refl e =>
-    rw [← e]
+  | refl e | step k _ e =>
+    try rw [← e]
     sorry
-  | step k _ e =>
+
+/-- error: Invalid wildcard alternative: There are no unhandled alternatives -/
+#guard_msgs(error) in
+example (f : Nat → Nat) (n m : Nat) (le : f n ≤ f m) : f n = 0 := by
+  inversion +clear le with
+  | refl e | step k _ e =>
+    try rw [← e]
+    sorry
+  | _ => sorry
+
+/-- error: Invalid alternative name `step`: There are no unhandled alternatives -/
+#guard_msgs(error) in
+example (f : Nat → Nat) (n m : Nat) (le : f n ≤ f m) : f n = 0 := by
+  inversion +clear le with
+  | _ e | step k _ e =>
+    try rw [← e]
     sorry
 
 example (H : Bool → Nat → False) (n : Nat) : False := by

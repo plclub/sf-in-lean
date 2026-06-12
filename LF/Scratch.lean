@@ -16,6 +16,302 @@
 -- built-in `Nat` and use it for all examples and exercises.
 -- There should be a section on tactics and how much automation students can use.
 
+
+
+-- Things ported:
+
+-- TOFIX: prose. The same numeral and the same `+` work at two
+-- different types. Typeclasses are the dispatch mechanism.
+#check (3 : Nat)
+#check (3 : NatPlayground.Nat)
+
+#print Add
+
+#check (inferInstance : Add Nat)
+#check (inferInstance : Add NatPlayground.Nat)
+
+-- TOFIX: prose. Two proofs of "the same" fact, one per instance.
+section
+open NatPlayground.Nat
+example : (2 + 2 : NatPlayground.Nat) = 4 := by
+  rw [two_eq_succ_one, one_eq_succ_zero, add_succ, add_succ, add_zero]
+  rfl
+end
+
+example : (2 + 2 : Nat) = 4 := by rfl
+
+-- TOFIX: prose. Why rules instead of brute simplification: code written
+-- against an interface cannot unfold any implementation. Only the laws
+-- are available.
+example (α : Type) [Add α] (x y : α)
+    (comm : ∀ a b : α, a + b = b + a) :
+    x + y = y + x := by
+  fail_if_success rfl
+  rw [comm]
+
+-- TOFIX: closing prose. The general flow of Lean is to state rewrite rules
+-- for a type, prove lemmas from the rules, rewrite with the lemmas, and
+-- let dsimp/simp/calc carry out the routine steps.
+
+
+/-
+  ######################################################################
+  # Automated rewriting: `simp` and simp annotations
+-/
+
+-- TOFIX: prose. simp = rewrite with a whole set of rules, repeatedly.
+example (n : Nat) : ((n + 0) + 0) + 0 = n := by
+  simp
+
+-- TOFIX: prose. simp also works with our own rules, given explicitly...
+section
+open NatPlayground.Nat
+example (n : NatPlayground.Nat) : (n + 0) + 0 = n := by
+  simp [add_zero]
+end
+
+-- TOFIX: prose. ...or registered once with the @[simp] annotation.
+def double' (n : Nat) : Nat := n + n
+
+@[simp] theorem double'_def (n : Nat) : double' n = n + n := rfl
+
+example (n : Nat) : double' (n + 0) = n + n := by
+  simp
+
+
+
+@[irreducible]
+def sub (n m : Nat) : Nat :=
+  match n, m with
+  | zero, _ => zero
+  | succ _, zero => n
+  | succ n', succ m' => sub n' m'
+
+instance instSub : Sub Nat where sub := sub
+
+-- RULES
+unseal sub in
+theorem sub_zero : ∀ n : Nat, 0 - n = 0 := by
+  intro n
+  rfl
+
+-- RULES
+unseal sub in
+theorem succ_sub_zero : ∀ n : Nat, succ n - 0 = succ n := by
+  intro n
+  rfl
+
+-- RULES
+unseal sub in
+theorem succ_sub_succ : ∀ n m : Nat, succ n - succ m = n - m := by
+  intro n m
+  rfl
+
+@[irreducible]
+def pow (base power : Nat) : Nat :=
+  match power with
+  | zero => 1
+  | succ p => mul base (pow base p)
+
+instance instPow : Pow Nat Nat where pow := pow
+
+macro_rules | `($x ^ $y) => `(HPow.hPow ($x : Nat) ($y : Nat))
+
+-- RULES
+unseal pow in
+theorem pow_zero : ∀ n : Nat, n ^ 0 = 1 := by
+  intro n
+  rfl
+
+-- RULES
+unseal pow in
+theorem pow_succ : ∀ n m : Nat, n ^ succ m = n * n ^ m := by
+  intro n m
+  rfl
+
+-- FULL
+-- EX1 (factorial)
+/-
+  Recall the standard mathematical factorial function:
+         factorial(0)  =  1
+         factorial(n)  =  n * factorial(n-1)     (if n>0)
+  Translate this into Lean.
+-/
+
+@[irreducible]
+def factorial (n : Nat) : Nat
+  -- ADMITDEF
+  := match n with
+  | zero => 1
+  | succ n' => mul (succ n') (factorial n')
+  -- /ADMITDEF
+
+/- test_factorial1 -/
+unseal factorial mul add in
+example : factorial 3 = 6 := by rfl  -- ADMITTED
+/- test_factorial2 -/
+unseal factorial mul add in
+example : factorial 5 = mul 10 (add 10 2) := by rfl  -- ADMITTED
+-- GRADE_THEOREM 1: factorial_test2
+-- []
+-- /FULL
+
+-- TERSE: /- *** -/
+
+-- JC: Overriding the `+` is an immense headache for technical reasons,
+-- so we leave that alone, since our definition is the same anyway.
+-- In contrast, our `sub` definition _is_ slightly different,
+-- so we _do_ want to override the notation instance for it.
+-- The `mul` and `pow` definitions are the same as the stdlib,
+-- but we can also override notation for it.
+
+-- JC: In the infoview, hover over the operators
+-- to check out their associativity --
+-- `+`, `-`, and `*` all left-associative,
+-- but `^` is right-associative.
+
+#check (0 + 1 + 1 : Nat)
+#check (4 - 3 - 2 : Nat)
+#check (2 * 3 * 4 : Nat)
+#check (1 ^ 2 ^ 2 : Nat)
+
+
+-- End ported
+-- Scratch
+
+@[irreducible]
+def leb (n m : Nat) : Bool :=
+  match n with
+  | zero => true
+  | succ n' =>
+      match m with
+      | zero => false
+      | succ m' => leb n' m'
+
+unseal leb in theorem leb_zero : ∀ n : Nat, leb 0 n = true := by
+  intro n
+  rfl
+
+unseal leb in
+theorem leb_succ_zero : ∀ n : Nat, leb (succ n) 0 = false := by
+  intro n
+  rfl
+
+unseal leb in
+theorem leb_succ_succ : ∀ n m : Nat, leb (succ n) (succ m) = leb n m := by
+  intro n m
+  rfl
+
+
+/- test_leb1 -/
+
+example : leb 2 2 = true  := by
+  rewrite [two_eq_succ_one, one_eq_succ_zero]
+  rewrite [leb_succ_succ, leb_succ_succ, leb_zero]
+  rfl
+/- test_leb2 -/
+example : leb 2 4 = true  := by
+  rewrite [four_eq_succ_three, three_eq_succ_two, two_eq_succ_one, one_eq_succ_zero]
+  rewrite [leb_succ_succ, leb_succ_succ, leb_zero]
+  rfl
+/- test_leb3 -/
+example : leb 4 2 = false := by
+  rewrite [four_eq_succ_three, three_eq_succ_two, two_eq_succ_one, one_eq_succ_zero]
+  rewrite [leb_succ_succ, leb_succ_succ, leb_succ_zero]
+  rfl
+
+
+-- TERSE: /- *** -/
+/-
+  We'll be using these (especially `beq`) a lot, so let's give
+  them infix notations.
+-/
+
+-- JC: Lean's stdlib has `==` notation for `beq`,
+-- but not for `Nat.ble`...
+
+instance : BEq Nat where
+  beq := beq
+
+infix:65 "<=?" => leb
+
+/-
+  test_leb3'
+-/
+example : 4 <=? 2 = false := by
+  rewrite [four_eq_succ_three, three_eq_succ_two, two_eq_succ_one, one_eq_succ_zero]
+  rewrite [leb_succ_succ, leb_succ_succ, leb_succ_zero]
+  rfl
+
+-- HERE we should introduce decidability.
+
+-- FULL
+/-
+  We now have two symbols that both look like equality: `=`
+  and `=?`.  We'll have much more to say about their differences and
+  similarities later. For now, the main thing to notice is that
+  `x = y` is a logical _claim_ -- a "proposition" -- that we can try to
+  prove, while `x =? y` is a boolean _expression_ whose value (either
+  `true` or `false`) we can compute.
+-/
+-- /FULL
+
+-- FULL
+-- EX1 (ltb)
+/-
+  Define a less-than function in terms of `leb`.
+-/
+@[irreducible]
+def ltb (n m : Nat) : Bool
+  -- ADMITDEF
+  := leb (succ n) m
+  -- /ADMITDEF
+
+infix:65 "<?" => ltb
+
+-- Walk them through rules or
+/-
+  ######################################################################
+  # Proof by Simplification
+-/
+
+-- FULL
+/-
+   Now that we've looked at a few datatypes and functions, let's turn to stating
+  and proving properties of their behavior.
+-/
+-- /FULL
+
+-- TERSE: /- A specific fact about natural numbers: -/
+/-
+  plus_1_1
+-/
+example : (1 + 1 : Nat) = 2 := by
+  rewrite [two_eq_succ_one, one_eq_succ_zero, add_succ, add_zero]
+  rfl
+-- TERSE: /- Another specific fact about natural numbers: -/
+theorem add_zero_one : (1 : Nat) = 0 + 1 := by
+   rewrite [one_eq_succ_zero, add_succ, add_zero]
+   rfl -- FULL
+/-
+  We can begin to establish more interesting properties.  For example, the
+  fact that `0` is a "neutral element" for `+` on the left can be
+  proved just by observing that `0 + n` reduces to `n` no matter
+  what `n` is.
+-/
+-- /FULL
+
+-- TERSE: /- A general property of natural numbers: -/
+
+
+theorem beq_succ : ∀ n m : Nat, (succ n == succ m) = (n == m) := by
+  intro n m; rfl
+
+/- Note: The semicolon `;` separates
+  multiple steps of tactics; they can also be separated by putting them on
+  separate lines. -/
+
+
 /-
   ######################################################################
   ## Numbers
@@ -813,3 +1109,363 @@ example : binToNat (.b0 (.b0 (.b0 (.b1 .z)))) = 8 := by rfl  -- ADMITTED
 -- GRADE_THEOREM 0.5: binToNat_test2
 -- GRADE_THEOREM 0.5: binToNat_test3
 -- []
+
+-- FULL
+/-
+  ######################################################################
+  ## Course Late Policies, Formalized
+-/
+
+/-
+  Suppose that a course has a grading policy based on late days,
+  where a student's final letter grade is lowered if they submit too
+  many homework assignments late.
+-/
+
+namespace LateDays
+
+/-
+  First, we inroduce a datatype for modeling the "letter" component
+  of a grade.
+-/
+inductive Letter : Type where
+  | A | B | C | D | F
+
+/-
+  Then we define the modifiers -- a `natural` `a` is just a "plain"
+  grade of `a`.
+-/
+inductive Modifier : Type where
+  | plus | natural | minus
+
+/-
+  A full `Grade`, then, is just a `letter` and a `modifier`.
+  In Lean, a combination of several values is called a _structure_.  The `structure`
+  keyword is used to define a new structure type.
+-/
+
+structure Grade where
+  letter : Letter
+  modifier : Modifier
+
+/-
+  We will want to be able to say when one grade is "better" than
+  another.  In other words, we need a way to compare two grades.  As
+  with natural numbers, we could define `bool`-valued functions
+  `grade_eqb`, `grade_ltb`, etc., and that would work fine.
+  However, we can also define a slightly more informative type for
+  comparing two values, as shown below.  This datatype has three
+  constructors that can be used to indicate whether two values are
+  "equal", "less than", or "greater than" one another.
+-/
+inductive Comparison : Type where
+  | eq   -- "equal"
+  | lt   -- "less than"
+  | gt   -- "greater than"
+
+/-
+  Since we're in a namespace, we can open the relevant types to
+  avoid having to write `Letter.A`, etc.
+-/
+open Letter Modifier Comparison
+
+/-
+  Using pattern matching, it is not difficult to define the
+  comparison operation for two letters `l1` and `l2` (see below).
+  This definition uses a feature of `match` patterns: we can match
+  against _two_ values simultaneously by separating them and the
+  corresponding patterns with comma `,`.
+  This is simply a convenient abbreviation for nested pattern
+  matching.
+-/
+def letterComparison (l1 l2 : Letter) : Comparison :=
+  match l1, l2 with
+  | A, A => eq
+  | A, _ => gt
+  | B, A => lt
+  | B, B => eq
+  | B, _ => gt
+  | C, A => lt
+  | C, B => lt
+  | C, C => eq
+  | C, _ => gt
+  | D, F => gt
+  | D, D => eq
+  | D, _ => lt
+  | F, F => eq
+  | F, _ => lt
+
+example : letterComparison B A = lt := by rfl
+example : letterComparison D D = eq := by rfl
+example : letterComparison B F = gt := by rfl
+
+-- EX1 (letter_comparison)
+theorem letterComparison_Eq : ∀ l : Letter,
+    letterComparison l l = eq := by
+  -- ADMITTED
+  intro l; cases l <;> rfl
+  -- /ADMITTED
+-- GRADE_THEOREM 1: letterComparison_Eq
+-- []
+
+def modifierComparison (m1 m2 : Modifier) : Comparison :=
+  match m1, m2 with
+  | plus, plus => eq
+  | plus, _ => gt
+  | natural, plus => lt
+  | natural, natural => eq
+  | natural, _ => gt
+  | minus, minus => eq
+  | minus, _ => lt
+
+-- EX2 (grade_comparison)
+
+/-
+  Here, we will need to access the fields of the `Grade` structure.
+  The field names are `letter` and `modifier`, so for a grade `g`,
+  we can write `g.letter` and `g.modifier` to access these fields.
+-/
+
+def gradeComparison (g1 g2 : Grade) : Comparison
+  -- ADMITDEF
+  := match letterComparison g1.letter g2.letter with
+  | lt => lt
+  | eq => modifierComparison g1.modifier g2.modifier
+  | gt => gt
+  -- /ADMITDEF
+
+/- test_grade_comparison1 -/
+example : gradeComparison ⟨A, minus⟩ ⟨B, plus⟩ = gt := by rfl  -- ADMITTED
+/- test_grade_comparison2 -/
+example : gradeComparison ⟨A, minus⟩ ⟨A, plus⟩ = lt := by rfl  -- ADMITTED
+/- test_grade_comparison3 -/
+example : gradeComparison ⟨F, plus⟩ ⟨F, plus⟩ = eq := by rfl  -- ADMITTED
+/- test_grade_comparison4 -/
+example : gradeComparison ⟨B, minus⟩ ⟨C, plus⟩ = gt := by rfl  -- ADMITTED
+-- GRADE_THEOREM 0.5: gradeComparison_test1
+-- GRADE_THEOREM 0.5: gradeComparison_test2
+-- GRADE_THEOREM 0.5: gradeComparison_test3
+-- GRADE_THEOREM 0.5: gradeComparison_test4
+-- []
+
+def lowerLetter (l : Letter) : Letter :=
+  match l with
+  | A => B
+  | B => C
+  | C => D
+  | D => F
+  | F => F  -- Can't go lower than F!
+
+/-
+  This theorem is not provable because of the edge case of F!
+  theorem lowerLetter_lowers_bad : ∀ (l : Letter),
+    letterComparison (lowerLetter l) l = lt := by ...
+-/
+
+theorem lowerLetter_F_is_F : lowerLetter F = F := by rfl
+
+-- EX2 (lower_letter_lowers)
+theorem lowerLetter_lowers : ∀ l : Letter,
+    letterComparison F l = lt →
+    letterComparison (lowerLetter l) l = lt := by
+  -- ADMITTED
+  intro l h
+  cases l with
+  | A => rfl
+  | B => rfl
+  | C => rfl
+  | D => rfl
+  | F => exact h
+  -- /ADMITTED
+-- GRADE_THEOREM 2: lowerLetter_lowers
+-- []
+
+-- EX2 (lower_grade)
+/-
+  In addition to the dot notation for accessing structure fields, we can also
+  use pattern matching to access these fields.
+  For example, if `g` is a grade, then we can write
+  `match g with ⟨l, m⟩ => ...` to access the letter and modifier components
+  of `g` as `l` and `m`, respectively.
+  Note: The angle brackets `⟨` and `⟩` are typed as `\<` and `\>`.
+-/
+def lowerGrade (g : Grade) : Grade
+  -- ADMITDEF
+  := match g with
+  | ⟨l, plus⟩ => ⟨l, natural⟩
+  | ⟨l, natural⟩ => ⟨l, minus⟩
+  | ⟨F, minus⟩ => ⟨F, minus⟩
+  | ⟨l, minus⟩ => ⟨lowerLetter l, plus⟩
+  -- /ADMITDEF
+
+/-
+  lower_grade_A_Plus
+-/
+example : lowerGrade ⟨A, plus⟩ = ⟨A, natural⟩ := by rfl  -- ADMITTED
+/-
+  lower_grade_A_Natural
+-/
+example : lowerGrade ⟨A, natural⟩ = ⟨A, minus⟩ := by rfl  -- ADMITTED
+/-
+  lower_grade_A_Minus
+-/
+example : lowerGrade ⟨A, minus⟩ = ⟨B, plus⟩ := by rfl  -- ADMITTED
+/-
+  lower_grade_B_Plus
+-/
+example : lowerGrade ⟨B, plus⟩ = ⟨B, natural⟩ := by rfl  -- ADMITTED
+/-
+  lower_grade_F_Natural
+-/
+example : lowerGrade ⟨F, natural⟩ = ⟨F, minus⟩ := by rfl  -- ADMITTED
+/-
+  lower_grade_twice
+-/
+example : lowerGrade (lowerGrade ⟨B, minus⟩) = ⟨C, natural⟩ := by rfl  -- ADMITTED
+/-
+  lower_grade_thrice
+-/
+example : lowerGrade (lowerGrade (lowerGrade ⟨B, minus⟩)) = ⟨C, minus⟩ := by rfl  -- ADMITTED
+
+theorem lowerGrade_F_Minus : lowerGrade ⟨F, minus⟩ = ⟨F, minus⟩ := by rfl  -- ADMITTED
+
+-- GRADE_THEOREM 0.25: lowerGrade_A_Plus
+/-
+  ...
+-/
+-- GRADE_THEOREM 0.25: lowerGrade_F_Minus
+-- []
+
+-- EX3 (lower_grade_lowers)
+/- For our solution we use:
+  * Working on multiple match cases with `| _ ... | _ => ...`;
+  * Working on all remaining goals with `all_goals`.
+  * These are not expected of students at this point.
+   -/
+theorem lowerGrade_lowers : ∀ g : Grade,
+    gradeComparison ⟨F, minus⟩ g = lt →
+    gradeComparison (lowerGrade g) g = lt := by
+  -- ADMITTED
+  intro g h
+  match g with
+  | ⟨l, plus⟩
+  | ⟨l, natural⟩ =>
+    dsimp [lowerGrade, gradeComparison]
+    rewrite [letterComparison_Eq]
+    dsimp [modifierComparison]
+  | ⟨l, minus⟩ =>
+    cases l
+    case F => rewrite [lowerGrade_F_Minus]; exact h
+    all_goals rfl
+  -- /ADMITTED
+-- GRADE_THEOREM 3: lowerGrade_lowers
+-- []
+
+
+def applyLatePolicy (lateDays : NatPlayground.Nat) (g : Grade) : Grade :=
+  if lateDays <? 9 then g
+  else if lateDays <? 17 then lowerGrade g
+  else if lateDays <? 21 then lowerGrade (lowerGrade g)
+  else lowerGrade (lowerGrade (lowerGrade g))
+
+theorem applyLatePolicy_unfold : ∀ (lateDays : NatPlayground.Nat) (g : Grade),
+    applyLatePolicy lateDays g
+    =
+    (if lateDays <? 9 then g
+     else if lateDays <? 17 then lowerGrade g
+     else if lateDays <? 21 then lowerGrade (lowerGrade g)
+     else lowerGrade (lowerGrade (lowerGrade g))) := by
+  intro _ _; rfl
+
+-- EX2 (no_penalty_for_mostly_on_time)
+theorem no_penalty_for_mostly_on_time : ∀ (lateDays : NatPlayground.Nat) (g : Grade),
+    (lateDays <? 9 = true) →
+    applyLatePolicy lateDays g = g := by
+  -- ADMITTED
+  intro lateDays g h
+  dsimp [applyLatePolicy]
+  rewrite [h]; rfl
+  -- /ADMITTED
+-- GRADE_THEOREM 2: no_penalty_for_mostly_on_time
+-- []
+
+-- EX2 (grade_lowered_once)
+theorem grade_lowered_once : ∀ (lateDays : NatPlayground.Nat) (g : Grade),
+    (lateDays <? 9 = false) →
+    (lateDays <? 17 = true) →
+    applyLatePolicy lateDays g = lowerGrade g := by
+  -- ADMITTED
+  intro lateDays g h9 h17
+  dsimp [applyLatePolicy]
+  rewrite [h9, h17]; rfl
+  -- /ADMITTED
+-- GRADE_THEOREM 2: grade_lowered_once
+-- []
+
+end LateDays
+-- /FULL
+
+-- TODO put this somewhere
+
+/-
+   Lean does have an automatic evaluator, which we will introduce in
+   just a few chapters. But Lean professionals prefer to use a mix of
+   the evaluator and the rules, since not all functions in Lean can be
+   evaluated (!). In future chapters, we will show how to derive
+   simplification rules for functions automatically.
+-/
+
+-- needed or not?
+
+-- FULL
+/-
+  The steps of simplification that Lean performs here can be
+  visualized as follows:
+
+       `add 3 2`
+    i.e. `add (succ (succ (succ 0))) (succ (succ 0))`
+-/
+/-    ==> `succ (add (succ (succ (succ 0))) (succ 0))` -/
+/-
+           by the second clause of the `match`
+-/
+/-    ==> `succ (succ (add (succ (succ (succ 0))) 0))` -/
+/-
+           by the second clause of the `match`
+-/
+/-    ==> `succ (succ (succ (add (succ 0))))` -/
+/-
+           by the first clause of the `match`
+    i.e. `5`
+-/
+-- /FULL
+/-
+  Now that we've seen how natural numbers are built from `Nat.zero`
+  and `Nat.succ`, we can take further advantage of Lean's notation: the
+  pattern `n + 1` is syntactic sugar for `Nat.succ n`, `n + 2` is
+  syntactic sugar for `Nat.succ (Nat.succ n)`, and so on.
+  We'll use this more concise style from now on.
+-/
+
+/- Lean's builtin
+  definition and notation to write it more concisely.
+  The `+` operator is already defined for `Nat` in the standard library. -
+
+/-
+  ** New Tactics: `dsimp`, and `exact`.
+
+  Some more tactics will be useful for the exercises ahead.
+
+  The `dsimp` tactic ("definitionally simplify") applies known facts
+  and definitions to simplify the goal.  You can give it hints in
+  square brackets: `dsimp [f]` tells it to unfold the definition
+  of `f`.  You can also simplify a hypothesis `h` in the context
+  by writing `dsimp [...] at h`. `dsimp` will also close goals by
+  `rfl` when possible.
+
+  The `exact` tactic closes a goal by providing an exact proof
+  term.  For example, if `h : P` is in the context and the goal
+  is `P`, then `exact h` closes the goal.  You can also
+  transform `h` slightly — for instance, `exact h.symm` uses
+  the symmetry of equality.
+-/

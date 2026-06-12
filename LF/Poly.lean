@@ -13,6 +13,7 @@
    /HIDEFROMHTML
    TERSE: HIDEFROMHTML -/
 import LF.Induction
+import LF.UsingLean
 /- TERSE: /HIDEFROMHTML -/
 
 /- HIDEFROMADVANCED
@@ -606,10 +607,10 @@ theorem app_length {α : Type} : ∀ (l1 l2 : List α),
     (l1 ++ l2).length = l1.length + l2.length := by
   /- ADMITTED -/
   intro l1 l2; induction l1
-  case nil => dsimp [List.nil_append, app_nil_r]; rw [zero_add]
+  case nil => dsimp [List.nil_append, app_nil_r]; rw [Nat.zero_add]
   case cons h t ih =>
    dsimp [List.cons_append, List.length_cons]
-   rw [succ_add, ih]
+   rw [Nat.succ_add, ih]
 /- /ADMITTED
    GRADE_THEOREM 0.5: app_nil_r
    GRADE_THEOREM 1: app_assoc

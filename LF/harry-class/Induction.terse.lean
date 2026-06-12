@@ -171,7 +171,7 @@ theorem eqb_refl : ∀ n : Nat,
   sorry
 
 
-theorem even_S : ∀ n : Nat,
+theorem even_succ : ∀ n : Nat,
     even (n + 1) = !even n := by
   sorry
 
@@ -221,5 +221,3 @@ theorem plus_rearrange : ∀ n m p q : Nat,
     (n + m) + (p + q) = (m + n) + (p + q) := by
   intro n m p q
   rw [add_comm n m]
-
-

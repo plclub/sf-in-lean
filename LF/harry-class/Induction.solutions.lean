@@ -341,7 +341,7 @@ theorem eqb_refl : ∀ n : Nat,
   with induction:
 -/
 
-theorem even_S : ∀ n : Nat,
+theorem even_succ : ∀ n : Nat,
     even (n + 1) = !even n := by
   intro n
   induction n
@@ -1014,5 +1014,3 @@ theorem bin_nat_bin : ∀ b : Bin,
     rw [natToBin_two_mul, ih]
 
 end NatToBin
-
-

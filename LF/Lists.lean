@@ -1,4 +1,4 @@
--- Note that rewrite laws should sometimes differ from pattern matching now 
+-- Note that rewrite laws should sometimes differ from pattern matching now
 
 /- Lists: Working with Structured Data -/
 
@@ -36,6 +36,7 @@
 -/
 
 import LF.Induction
+import LF.UsingLean
 namespace NatList
 
 #check ([] ++ [])
@@ -611,7 +612,7 @@ unseal member in
 theorem member_add_same v t : member v (add v t) = true := by
   -- ADMITTED
   dsimp [add, member]
-  rw [eqb_refl]
+  rw [Nat.beq_refl]
   dsimp
   -- /ADMITTED
 
@@ -710,7 +711,7 @@ unseal remove_all in
 theorem remove_all_add_same v t : remove_all v (add v t) = remove_all v t := by
   -- ADMITTED
   dsimp [add, remove_all]
-  rw [eqb_refl]
+  rw [Nat.beq_refl]
   dsimp
   -- /ADMITTED
 
@@ -774,7 +775,7 @@ theorem add_inc_count (s : Bag) (v : Nat) :
     count v (add v s) = (count v s) + 1 := by
   dsimp [add]
   rw [count_cons_same]
-  exact (eqb_refl v)
+  exact (Nat.beq_refl v)
 -- /QUIETSOLUTION
 -- GRADE_MANUAL 2: add_inc_count
 -- []
@@ -925,9 +926,9 @@ theorem myRepeat_plus (c1 c2 n : Nat) :
     myRepeat n c1 ++ myRepeat n c2 = myRepeat n (c1 + c2) := by
   induction c1
   case zero =>
-    rw [repeat_zero, zero_add, nil_append]
+    rw [repeat_zero, Nat.zero_add, nil_append]
   case succ c1' ih =>
-    rw [succ_add, repeat_succ, repeat_succ, cons_append, ih]
+    rw [Nat.succ_add, repeat_succ, repeat_succ, cons_append, ih]
 
 -- *** Reversing a List
 
@@ -1024,9 +1025,9 @@ theorem app_length (l1 l2 : NatList) :
     (l1 ++ l2).length = l1.length + l2.length := by
   -- WORKINCLASS
   induction l1
-  case nil => rw [nil_append, nil_length, zero_add]
+  case nil => rw [nil_append, nil_length, Nat.zero_add]
   case cons n l1' ih =>
-    rw [cons_append, cons_length, ih, cons_length, ←add_assoc, ←add_assoc, add_comm 1]
+    rw [cons_append, cons_length, ih, cons_length, ←Nat.add_assoc, ←Nat.add_assoc, Nat.add_comm 1]
   -- /WORKINCLASS
 
 -- HIDEFROMADVANCED
@@ -1257,7 +1258,7 @@ theorem eqblist_nil : eqblist [] [] = true := by rfl
 unseal eqblist in
 theorem eqblist_cons_same h t1 t2 : eqblist (h :: t1) (h :: t2) = eqblist t1 t2 := by
   dsimp [eqblist]
-  rw [eqb_refl, Bool.true_and]
+  rw [Nat.beq_refl, Bool.true_and]
 
 unseal eqblist in
 theorem eqblist_cons_diff h1 h2 t1 t2 : (h1 == h2) = false -> eqblist (h1 :: t1) (h2 :: t2) = false := by
@@ -1398,7 +1399,7 @@ theorem bag_count_sum (s1 s2 : Bag) (v : Nat) :
     count v (sum s1 s2) = (count v s1) + (count v s2) := by
   induction s1
   case nil =>
-    rw [nil_sum, count_nil, zero_add]
+    rw [nil_sum, count_nil, Nat.zero_add]
   case cons h s1' ih =>
     rw [cons_sum,]
     cases hv : (h == v)
@@ -1406,7 +1407,7 @@ theorem bag_count_sum (s1 s2 : Bag) (v : Nat) :
       rw [count_cons_diff, count_cons_diff]
       exact ih; exact hv; exact hv
     case true =>
-      rw [count_cons_same, count_cons_same, succ_add, ←ih]
+      rw [count_cons_same, count_cons_same, Nat.succ_add, ←ih]
       exact hv; exact hv
 -- /SOLUTION
 -- []
@@ -1638,7 +1639,7 @@ def eqb_id (x1 x2 : MyId) : Bool :=
 theorem eqb_id_refl (x : MyId) : eqb_id x x = true := by
   -- ADMITTED
   dsimp [eqb_id]
-  rw [eqb_refl]
+  rw [Nat.beq_refl]
 -- /ADMITTED
 -- []
 
