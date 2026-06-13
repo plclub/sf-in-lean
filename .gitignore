@@ -3,3 +3,4 @@
 _out/
 __pycache__/
 LF/BasicsVerso.lean
+.claude/settings.json
