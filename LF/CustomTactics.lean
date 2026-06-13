@@ -118,10 +118,11 @@ partial def unifyEqs (eqs : List FVarId) (mvarId : MVarId) (subst : FVarSubst) (
 
 /-- Lifted from [Lean.Meta.Cases.unifyCasesEqs]. -/
 def unifyCasesEqs (eqs : List FVarId) (subgoals : Array CasesSubgoal) : MetaM (Array CasesSubgoal) :=
-  subgoals.mapM fun s => do
+  subgoals.filterMapM fun s => do
     let eqs := eqs.filterMap (Expr.fvarId? ∘ s.subst.get)
     let (mvarId, subst) ← unifyEqs eqs s.mvarId s.subst s.ctorName
-    return { s with
+    if (← mvarId.isAssignedOrDelayedAssigned) then return none
+    else return some { s with
       mvarId := mvarId,
       subst  := subst,
       fields := s.fields.map (subst.apply ·)
@@ -267,6 +268,18 @@ example (f : Nat → Nat) (n m : Nat) (le : f n ≤ f m) : f n = 0 := by
 example (n m o : Nat) : [n, m] = [o, o] → [n] = [m] := by
   intro h
   inversion h; rfl
+
+inductive NoStutter {α:Type} : List α → Prop where
+  | nostutter0: NoStutter []
+  | nostutter1 n : NoStutter (n::[])
+  | nostutter2 a b r (hneq : a ≠ b) (h : NoStutter (b::r)) : NoStutter (a::b::r)
+
+example : ¬ (NoStutter [3, 1, 1, 4]) := by
+  intro contra
+  inversion contra with | _ contra =>
+  inversion contra with | _ h _ =>
+  apply h
+  rfl
 
 example (H : Bool → Nat → False) (n : Nat) : False := by
   apply H at n; apply n; exact true
