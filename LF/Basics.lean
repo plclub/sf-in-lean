@@ -689,6 +689,9 @@ def monochrome (c : Color) : Bool :=
   example, means that the constructor argument is being ignored.
   Examples below illustrate the other two cases.
 -/
+-- BCP: We didn't use a variable -- we used an underscore!  We should
+-- explain this in two steps: first with an explicit name, then with
+-- an underscore.
 
 def isRed (c : Color) : Bool :=
   match c with
@@ -1061,7 +1064,13 @@ def even (n : Nat) : Bool :=
   | succ (zero) => false
   | succ (succ n') => even n'
 
--- BCP: even_zero, even_one, and even_succ_succ seem to have been deleted here.  Is that right?
+-- BCP asked whether even_zero / even_one / even_succ_succ had been deleted
+-- here.  They had -- lost in the 7b10256 path-split merge (the same merge
+-- that dropped the VS Code fix), not an intentional nats-port change.
+-- Restored, re-expressed in the current constructor style:
+theorem even_zero : even zero = true := rfl
+theorem even_one : even (succ zero) = false := rfl
+theorem even_succ_succ n : even (succ (succ n)) = even n := rfl
 
 -- TERSE: /- *** -/
 /-
