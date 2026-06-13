@@ -102,21 +102,24 @@ def mkGeneralizeArgs (mvarId : MVarId) (indType : Expr) (name : Name := .anonymo
   unify them using [Lean.Meta.unifyEq?],
   but if unification fails, leave the equation in the context.
   This means we should never get a "Dependent elimination failed" error.
+  While marked partial, this _should_ always terminate,
+  decreasing on the sum of the sizes of the terms of each equation.
 
   Lifted from [Lean.Meta.Cases.unifyEqs]. -/
-partial def unifyEqs (eqs : Array FVarId) (mvarId : MVarId) (subst : FVarSubst) (caseName? : Option Name) : MetaM (MVarId × FVarSubst) := withIncRecDepth do
-  if _ : eqs.size = 0 then
-    return (mvarId, subst)
-  else
-    let some { mvarId, subst, numNewEqs } ← Option.join <$> (observing? $ unifyEq? mvarId eqs[0] subst MVarId.acyclic caseName?)
+partial def unifyEqs (eqs : List FVarId) (mvarId : MVarId) (subst : FVarSubst) (caseName? : Option Name) : MetaM (MVarId × FVarSubst) := withIncRecDepth do
+  match eqs with
+  | [] => return (mvarId, subst)
+  | eq :: eqs =>
+    let some { mvarId, subst, numNewEqs } ← Option.join <$> (observing? $ unifyEq? mvarId eq subst MVarId.acyclic caseName?)
       | return (mvarId, subst)
     let (newEqs, mvarId) ← mvarId.introNP numNewEqs
-    unifyEqs (newEqs ++ eqs) mvarId subst caseName?
+    let eqs := eqs.map (Expr.fvarId! ∘ subst.get)
+    unifyEqs (newEqs.toList ++ eqs) mvarId subst caseName?
 
 /-- Lifted from [Lean.Meta.Cases.unifyCasesEqs]. -/
-def unifyCasesEqs (eqs : Array FVarId) (subgoals : Array CasesSubgoal) : MetaM (Array CasesSubgoal) :=
+def unifyCasesEqs (eqs : List FVarId) (subgoals : Array CasesSubgoal) : MetaM (Array CasesSubgoal) :=
   subgoals.mapM fun s => do
-    let eqs := eqs.filterMap (mkFVar · |> s.subst.apply |> Expr.fvarId?)
+    let eqs := eqs.filterMap (Expr.fvarId? ∘ s.subst.get)
     let (mvarId, subst) ← unifyEqs eqs s.mvarId s.subst s.ctorName
     return { s with
       mvarId := mvarId,
@@ -174,7 +177,7 @@ def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (List MVarId
   let (subst, genFVars, goal) ← goal.withContext do
     goal.generalizeHyp genArgs #[target]
   -- [Lean.Meta.generalizeCore] returns all equations at the end
-  let genEqs := genFVars.drop genArgs.size
+  let genEqs := genFVars.toList.drop genArgs.size
   -- [Lean.MVarId.generalizeHyp] maps hyps to fvars
   let subgoals ← goal.cases (subst.get target).fvarId!
   let subgoals ← unifyCasesEqs genEqs subgoals
@@ -260,6 +263,10 @@ example (f : Nat → Nat) (n m : Nat) (le : f n ≤ f m) : f n = 0 := by
   | _ e | step k _ e =>
     try rw [← e]
     sorry
+
+example (n m o : Nat) : [n, m] = [o, o] → [n] = [m] := by
+  intro h
+  inversion h; rfl
 
 example (H : Bool → Nat → False) (n : Nat) : False := by
   apply H at n; apply n; exact true
