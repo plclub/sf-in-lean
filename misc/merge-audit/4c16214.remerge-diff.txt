@@ -1,0 +1,33 @@
+4c16214f1da1b21903243ca803c454ad9d0e4e9b 2026-06-11 21:52:19 -0400 Merge branch 'main' of github.com:plclub/sf-in-lean
+
+
+
+diff --git a/LF/Basics.lean b/LF/Basics.lean
+remerge CONFLICT (content): Merge conflict in LF/Basics.lean
+index 2bb6516..6eea67d 100644
+--- a/LF/Basics.lean
++++ b/LF/Basics.lean
+@@ -485,22 +485,16 @@ def myBoolToBool (b : MyBool) : Bool :=
+   | .false => false
+ 
+ /-
+-<<<<<<< 4c174df (More progress on versification)
+-  With the full power of Lean's `Bool` at our disposal, we can also
+-  write this function more concisely using the `bif ... then ... else`
+-  syntax, which is a convenient way to write simple conditional
+-  expressions.
+-=======
+   Note how we don't have to use the `.`, because we have specified the type
+   of `true` by declaring the return type of `myBoolToBool` to be `Bool`.
+   Lean's type inference algorithm fills in the gap.
+ -/
++-- BCP: Why can't type inference fill in the .??
+ 
+ /-
+   With the full power of Lean's `Bool` at our disposal, we can also write this
+   function more concisely using the `bif ... then ... else` syntax, which is a
+   convenient way to write simple conditional expressions.
+->>>>>>> b944e01 (Merge branch 'nats': custom-Nat port of Basics/Induction with versification edits)
+ -/
+ 
+ def boolToMyBool (b : Bool) : MyBool :=

@@ -1,0 +1,17 @@
+### Lists.lean (10 lines added by 3b16603 missing from merge b944e01)
+case cons n l1' ih => dsimp; rw [ih, Nat.succ_add]
+case nil => dsimp; rw [Nat.zero_add]
+dsimp [Nat.succ_add]; exact ih
+dsimp [add, count, eqb_refl] -- TODO: Lean eqb needs to be used
+import UsingLean
+rw [Nat.beq_refl, ih]
+rw [Nat.succ_add, cons_append, ih]
+rw [Nat.succ_add, ←ih]
+rw [Nat.zero_add]
+rw [Nat.zero_add]; rfl
+### Poly.lean (3 lines added by 3b16603 missing from merge b944e01)
+case cons h t ih => dsimp; rw [Nat.succ_add, ih]
+case nil => dsimp; rw [Nat.zero_add]
+import UsingLean
+### UsingLean.lean (1 lines added by 3b16603 missing from merge b944e01)
+import Induction

@@ -1,0 +1,12 @@
+### BasicsVerso.lean (11 lines added by 4e22b7d missing from merge babbfb5)
+# Simplifying addition
+A tactic that tells Lean to rewrite (part of) a goal or hypothesis
+Lean Extension for VS Code provides convenient shortcuts for
+Note that → is a unicode symbol, not a simple ASCII character. The
+based on a rule is called `rewrite`. Here is a simple example of
+entering such symbols. Simply type \ (backslash) followed by the
+name of the symbol, and the extension will automatically replace it
+produces a unicode symbol that you can see on the screen, just hover
+using `rewrite` with laws to evaluate `add`:
+with the actual symbol. For example, typing \-> or \to will produce
+→, and \lambda will produce λ. To find out what backslash sequence

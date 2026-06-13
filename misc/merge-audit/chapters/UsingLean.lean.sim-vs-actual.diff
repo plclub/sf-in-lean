@@ -1,0 +1,6 @@
+30,31c30,31
+< import Basics
+< import Induction
+---
+> import LF.Basics
+> import LF.Induction

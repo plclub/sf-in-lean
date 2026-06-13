@@ -1,0 +1,27 @@
+### Basics.lean (26 lines added by cb708a2 missing from merge 7b10256)
+(note that we can choose its name freely), or a constant of
+-- BCP: We didn't use a variable -- we used an underscore! We should
+-- an underscore.
+-- explain this in two steps: first with an explicit name, then with
+: nextWorkingDay (nextWorkingDay Day.saturday) = Day.monday`, then
+Having made the assertion, we can also ask Lean to _verify_ it. The
+Lean would not be able to verify it and would signal an error.
+Let's look at this in detail.
+Since the `primary` constructor takes an argument, a pattern that
+This declaration does two things: it makes an assertion (that the
+_application_ syntax is illustrated by the following tests, which
+`by rfl` can be read as "The assertion we've just made can be proved
+assertion a name that can be used to refer to it later.
+by observing that both sides of the equality evaluate to the same
+effectively constitute a complete specification -- a truth table --
+for the `orb` function:
+function definitions. The corresponding multi-argument
+matches `primary` should include either a variable, as we just did
+reflexivity. If we had made a different assertion, such as `example
+second working day after `saturday` is `tuesday`), and it gives the
+that any value is equal to itself. After evaluation, both sides of
+the equality are the same value, so the assertion is true by
+theorem even_one : even 1 = false := rfl
+theorem even_succ_succ n : even (.succ (.succ n)) = even n := rfl
+theorem even_zero : even 0 = true := rfl
+thing." Here, `rfl` stands for "reflexivity," which is the principle

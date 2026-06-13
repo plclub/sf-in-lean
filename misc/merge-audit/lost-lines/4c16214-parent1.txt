@@ -1,0 +1,4 @@
+### Basics.lean (3 lines added by 4c174df missing from merge 4c16214)
+With the full power of Lean's `Bool` at our disposal, we can also
+syntax, which is a convenient way to write simple conditional
+write this function more concisely using the `bif ... then ... else`

@@ -1,0 +1,433 @@
+7b1025698697453859a7418a8495e0324d6a81c0 2026-06-09 13:06:52 -0400 Merge remote-tracking branch 'origin/nats'
+
+
+
+diff --git a/LF/Basics.lean b/LF/Basics.lean
+remerge CONFLICT (content): Merge conflict in LF/Basics.lean
+index 3a0aa2d..ab49eea 100644
+--- a/LF/Basics.lean
++++ b/LF/Basics.lean
+@@ -127,6 +127,12 @@ def nextWorkingDay (d : Day) : Day :=
+   | .sunday    => .monday
+ 
+ -- FULL
++/- MWH: The text that follows seems to assume the reader knows what pattern matching
++  is, calling attention only to the syntax. It also seems to assume the reader
++  knows what OCaml is. But the premise of this section seems to be that readers
++  do not know what functional programming is -- we are explaining it to them.
++  Seems like a gap. Was it in the original?
++-/
+ /-
+   Note that the argument and return types of this function are
+   explicitly declared on the first line.  Like most functional
+@@ -135,7 +141,6 @@ def nextWorkingDay (d : Day) : Day :=
+   inference_ -- but we'll generally include them to make reading
+   easier.
+ 
+-<<<<<<< cb708a2 (Experimentally preserve linebreaks from source files in Verso-generated .lean files):LF/Basics.lean
+   The `.` in `.monday` is an abbreviation for `Day.`, to avoid typing
+   out the full qualified name `Day.monday`. You may wonder why Lean
+   doesn't allow patterns like `monday` without the dot, as other
+@@ -149,23 +154,6 @@ def nextWorkingDay (d : Day) : Day :=
+   better / helpful to know when we are qualifying names?  Also,
+   wouldn't it be pedagogically better to write it out first without
+   the abbreviation and then introduce the shorter form?
+-=======
+-/- MWH: The text that follows seems to assume the reader knows what pattern matching
+-  is, calling attention only to the syntax. It also seems to assume the reader
+-  knows what OCaml is. But the premise of this section seems to be that readers
+-  do not know what functional programming is -- we are explaining it to them.
+-  Seems like a gap. Was it in the original?
+--/
+-
+-/- You may also notice the unique pattern matching syntax- for
+-  example, in "`.monday`". The `.` - is syntactic sugar for `Day.monday`, and
+-  exists to save the programmer the time of typing out the full qualified name.
+-  You may wonder why the language doesn't just expose a pattern like `monday`
+-  without the dot, like OCaml does. This is to avoid name shadowing, because
+-  being explicit about names is especially important to avoid confusion and
+-  headaches when writing proofs. The `.` syntax is a compromise that lets us
+-  know we're qualifying a name without having to type too much.
+->>>>>>> 78827b7 (A few more comments):lf/Basics.lean
+ -/
+ 
+ -- /FULL
+@@ -174,18 +162,11 @@ def nextWorkingDay (d : Day) : Day :=
+ -- TERSE: /- Evaluation: -/
+ -- FULL
+ /-
+-<<<<<<< cb708a2 (Experimentally preserve linebreaks from source files in Verso-generated .lean files):LF/Basics.lean
+   Having defined a function, we should check that it works on some
+   examples.  There are actually three different ways to do this in
+   Lean.  First, we can use the `#eval` command to evaluate a compound
+   expression involving `nextWorkingDay`.  (Lean's responses are shown
+   in comments.)
+-=======
+-  Having defined a function, we can check that it works on
+-  some examples. There are actually three different ways to do
+-  examples in Lean. First, we can use the `#eval` command to
+-  evaluate a compound expression involving `nextWorkingDay`.
+->>>>>>> 78827b7 (A few more comments):lf/Basics.lean
+ -/
+ -- BCP: Are these comments auto-verified?
+ -- /FULL
+@@ -200,31 +181,41 @@ def nextWorkingDay (d : Day) : Day :=
+ #eval nextWorkingDay (nextWorkingDay Day.saturday)
+ /- ==> Day.tuesday -/
+ 
+-<<<<<<< cb708a2 (Experimentally preserve linebreaks from source files in Verso-generated .lean files):LF/Basics.lean
+-=======
+ -- FULL
++/-
++  (We show Lean's responses in comments; if you have a computer
++  handy, this would be an excellent moment to fire up VS Code with
++  the Lean extension and try it for yourself.  Load this file,
++  `Basics.lean`, from the book's Lean sources, find the above
++  example, and observe the result in the Lean InfoView panel.)
++-/
++
++-- RAB ADDITION ↓
+ 
+ /-
+-  ### Aside: Using the Lean Extension
++  Aside: Using the Lean Extension
+ -/
+ 
+ /-
+-  In VSCode, development of Lean code is supported by the Lean Extension, which
+-  provides an interactive "InfoView" panel that displays the results of commands
+-  like `#eval` and `#check`, as well as the current goal state when working on
+-  proofs. You can hover over expressions in the source code to see their types,
+-  and you can click on the results in the InfoView to navigate to their
+-  definitions. This makes it easier to understand how your code is being
+-  interpreted by Lean and to debug any issues that arise.
++  In VSCode, development of Lean code is supported by
++  the Lean Extension, which provides an interactive "InfoView" panel that
++  displays the results of commands like `#eval` and `#check`, as well as the
++  current goal state when working on proofs. You can hover over expressions in
++  the source code to see their types, and you can click on the results in the
++  InfoView to navigate to their definitions. This makes it easier to understand
++  how your code is being interpreted by Lean and to debug any issues that
++  arise.
+ 
+   The InfoView always follows your cursor, and Lean typechecks the file as you
+   edit it, so you can see the results of your changes immediately. You can also
+-  use the InfoView to explore the definitions of functions and types that you're
+-  using, which can be very helpful for understanding how they work.
++  use the InfoView to explore the definitions of functions and types that
++  you're using, which can be very helpful for understanding how they work.
+ 
+   If you haven't already, install the Lean Extension in VSCode and open the
+   `Basics.lean` file to see the InfoView in action. Try hovering over the
+-  `nextWorkingDay` function and the `Day` type to see their definitions.
++  `nextWorkingDay` function and the `Day` type to see their definitions, and
++  experiment with adding your own `#eval` commands to test other inputs.
++
+   For `#eval` and other commands, we show Lean's responses in comments; if you
+   hover over the `#eval` commands above, you will see the popup that contains
+   the output should match what's in the comment below. Experiment with adding
+@@ -232,10 +223,10 @@ def nextWorkingDay (d : Day) : Day :=
+ 
+ -/
+ 
++-- RAB: There's a question of where exactly to put this.
+ 
+ -- /FULL
+ 
+->>>>>>> 78827b7 (A few more comments):lf/Basics.lean
+ /-
+   Continuing with our simple type and function, we can record what we _expect_
+   the result of calling a function to be in the form of a Lean `example`:
+@@ -248,24 +239,10 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
+ 
+ -- FULL
+ /-
+-<<<<<<< cb708a2 (Experimentally preserve linebreaks from source files in Verso-generated .lean files):LF/Basics.lean
+-  This declaration does two things: it makes an assertion (that the
+-  second working day after `saturday` is `tuesday`), and it gives the
+-  assertion a name that can be used to refer to it later.
+-
+-  Having made the assertion, we can also ask Lean to _verify_ it. The
+-  `by rfl` can be read as "The assertion we've just made can be proved
+-  by observing that both sides of the equality evaluate to the same
+-  thing." Here, `rfl` stands for "reflexivity," which is the principle
+-  that any value is equal to itself. After evaluation, both sides of
+-  the equality are the same value, so the assertion is true by
+-  reflexivity.  If we had made a different assertion, such as `example
+-  : nextWorkingDay (nextWorkingDay Day.saturday) = Day.monday`, then
+-  Lean would not be able to verify it and would signal an error.
+-=======
+   This declaration does two things: it makes an assertion
+   (that the second working day after `saturday` is `tuesday`), and it
+-  gives the assertion a name for later reference.
++  gives the assertion a name that we can use to refer to it later.
++
+   Having made the assertion, we can also ask Lean to _verify_ it.
+   The `by rfl` can be read as "The assertion we've just made can be
+   proved by observing that both sides of the equality evaluate to
+@@ -274,6 +251,7 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
+ 
+ /- MWH: Here we use the term "evaluate" without defining it. Should we do
+   that here? -/
++-- BCP: Yes!
+ 
+ /-
+   `rfl` stands for "reflexivity," which is the principle that any value is
+@@ -282,11 +260,9 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
+   assertion, such as `example : nextWorkingDay (nextWorkingDay Day.saturday) =
+   Day.monday`, then Lean would not be able to verify it, and would signal an
+   error. Try it out!
+->>>>>>> 78827b7 (A few more comments):lf/Basics.lean
+ -/
+ -- /FULL
+ 
+-<<<<<<< cb708a2 (Experimentally preserve linebreaks from source files in Verso-generated .lean files):LF/Basics.lean
+ /-
+   Third, we can ask Lean to _compile_ our definitions to efficient
+   native code.
+@@ -331,8 +307,6 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
+ -/
+ -- /FULL
+ 
+-=======
+->>>>>>> 78827b7 (A few more comments):lf/Basics.lean
+ /- ###################################################################### -/
+ /- ## Booleans -/
+ 
+@@ -350,14 +324,11 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
+   scratch; later we'll switch to Lean's built-in `Bool`.
+ -/
+ 
+-<<<<<<< cb708a2 (Experimentally preserve linebreaks from source files in Verso-generated .lean files):LF/Basics.lean
+ /-
+   The next command opens a new namespace so that our definitions don't
+   clash with ones from the standard library. We'll discuss it in more
+   detail below.
+ -/
+-=======
+->>>>>>> 78827b7 (A few more comments):lf/Basics.lean
+ section
+ 
+ -- BCP: Why call it MyBool instead of just Bool?  (Or, conversely, why call the constructors
+@@ -379,12 +350,9 @@ def notb (b : MyBool) : MyBool :=
+   | .false => true
+ -- BCP: Why no .s on the right-hand sides?
+ 
+-<<<<<<< cb708a2 (Experimentally preserve linebreaks from source files in Verso-generated .lean files):LF/Basics.lean
+ -- TERSE: /- *** -/
+ -- BCP: These *** comments should be replaced with whatever Verso uses for slide breaks.
+ 
+-=======
+->>>>>>> 78827b7 (A few more comments):lf/Basics.lean
+ def andb (b1 : MyBool) (b2 : MyBool) : MyBool :=
+   match b1 with
+   | .true => b2
+@@ -397,27 +365,14 @@ def orb (b1 : MyBool) (b2 : MyBool) : MyBool :=
+ 
+ -- FULL
+ /-
+-<<<<<<< cb708a2 (Experimentally preserve linebreaks from source files in Verso-generated .lean files):LF/Basics.lean
+   The last two definitions illustrate Lean's syntax for multi-argument
+-  function definitions.  The corresponding multi-argument
+-  _application_ syntax is illustrated by the following tests, which
+-  effectively constitute a complete specification -- a truth table --
+-  for the `orb` function:
+--/
+--- /FULL
+--- TERSE: /- Note the syntax for defining multi-argument functions (`andb` and `orb`). -/
+--- TERSE: /- *** -/
+-=======
+-  The last two of these illustrate Lean's syntax for
+-  multi-argument function definitions. The corresponding
+-  multi-argument _application_ syntax is illustrated by the
+-  following "unit tests," which constitute a complete specification
+-  -- a truth table -- for the `orb` function:
++  functions.  The corresponding multi-argument _application_ syntax is
++  illustrated by the following tests, which effectively constitute a
++  complete specification -- a truth table -- for the `orb` function:
+ -/
+ -- /FULL
+ 
+ -- TERSE: Note the syntax for defining multi-argument functions (`andb` and `orb`).
+->>>>>>> 78827b7 (A few more comments):lf/Basics.lean
+ 
+ /- test_orb1 -/
+ example : orb .true  .false = .true  := by rfl
+@@ -452,7 +407,6 @@ end
+ -- EX1 (nandb)
+ -- FULL
+ /-
+-<<<<<<< cb708a2 (Experimentally preserve linebreaks from source files in Verso-generated .lean files):LF/Basics.lean
+   The `sorry` keyword is a placeholder for an incomplete proof or
+   definition.  We use it in exercises to indicate the parts that we're
+   leaving for you -- i.e., your job is to replace `sorry` with real
+@@ -462,17 +416,6 @@ end
+   function.  The function should return `true` if either or both of
+   its inputs are `false`. Make sure that the `example` assertions
+   below can be verified by Lean.
+-=======
+-  The `sorry` keyword can be used as a placeholder for an
+-  incomplete proof or definition. We use it in exercises to indicate
+-  the parts that we're leaving for you -- i.e., your job is to replace
+-  `sorry` with real definitions and proofs.
+-
+-  Remove `sorry` below and complete the definition of the
+-  following function; then make sure that the `example` assertions
+-  below can each be verified by Lean. The function should return
+-  `true` if either or both of its inputs are `false`.
+->>>>>>> 78827b7 (A few more comments):lf/Basics.lean
+ -/
+ -- /FULL
+ 
+@@ -523,16 +466,10 @@ example : andb3 .true .true .false = .false := by rfl  -- ADMITTED
+ -- TERSE: /- *** -/
+ -- FULL
+ /-
+-<<<<<<< cb708a2 (Experimentally preserve linebreaks from source files in Verso-generated .lean files):LF/Basics.lean
+   Now that we've seen how to define our own booleans, let's switch back to
+   Lean's built-in `Bool` type, which has the same structure but comes with
+   a lot of useful functions and lemmas.  We can even define functions to
+   convert between our `MyBool` and Lean's `Bool`.
+-=======
+-  Lean's built-in `Bool` type has the same structure as our `MyBool` but also
+-  includes a lot of useful functions and lemmas. We can even define a function
+-  to convert between our `MyBool` and Lean's `Bool`.
+->>>>>>> 78827b7 (A few more comments):lf/Basics.lean
+ -/
+ -- BCP: Do we really want to do this, rather than just leaving MyBool completely behind?
+ 
+@@ -553,14 +490,11 @@ def boolToMyBool (b : Bool) : MyBool :=
+ 
+ end    -- (close the `section` where we defined `MyBool`)
+ 
+-<<<<<<< cb708a2 (Experimentally preserve linebreaks from source files in Verso-generated .lean files):LF/Basics.lean
+ -- RAB: From this point, there are about 450 lines of comments before
+ -- the next exercise. This is the same as in Rocq, but do we want
+ -- to keep this pattern?
+ -- BCP: Ideally no!
+ 
+-=======
+->>>>>>> 78827b7 (A few more comments):lf/Basics.lean
+ /- ###################################################################### -/
+ /- ## Types -/
+ 
+@@ -598,7 +532,9 @@ end    -- (close the `section` where we defined `MyBool`)
+   function produces an output of type `Bool`." Similarly, the type of
+   `and`, written `Bool → Bool → Bool`, can be read, "Given two inputs,
+   each of type `Bool`, this function produces an output of type
+-  `Bool`."
++  `Bool`." -/
++
++/- ### Aside: Unicode in Lean
+ 
+   Note that → is a unicode symbol, not a simple ASCII character. The
+   Lean Extension for VS Code provides convenient shortcuts for
+@@ -609,21 +545,6 @@ end    -- (close the `section` where we defined `MyBool`)
+   produces a unicode symbol that you can see on the screen, just hover
+   over it.
+ -/
+-<<<<<<< cb708a2 (Experimentally preserve linebreaks from source files in Verso-generated .lean files):LF/Basics.lean
+-=======
+-
+-/-
+-  ### Aside: Unicode in Lean
+-  You may notice that → is a unicode character, not a simple ASCII string. This
+-  is a common convention in Lean, and the Lean Extension provides convenient
+-  shortcuts for entering these characters. Simply typing \ (backslash) followed
+-  by the name of the character, and the extension will automatically replace it
+-  with the correct symbol. For example, typing \-> or \to will produce →, and
+-  \lambda will produce λ. This allows you to write more concise and readable
+-  code without having to remember complex keyboard shortcuts.
+--/
+-
+->>>>>>> 78827b7 (A few more comments):lf/Basics.lean
+ -- /FULL
+ 
+ /-
+@@ -652,10 +573,6 @@ inductive Color : Type where
+   | white
+   | primary (p : RGB)
+ 
+-<<<<<<< cb708a2 (Experimentally preserve linebreaks from source files in Verso-generated .lean files):LF/Basics.lean
+-/-
+-  Let's look at this in detail.
+-=======
+ /- MWH: In the following you use Bool syntax and not MyBool.
+   This is maybe a little confusing because we are not writing
+   `Bool.true` or `.true`, but simply `true`. I don't believe
+@@ -665,7 +582,6 @@ inductive Color : Type where
+   In the examples below you might want to include a few from
+   `MyBool`.
+ -/
+->>>>>>> 78827b7 (A few more comments):lf/Basics.lean
+ 
+ /-
+   An `inductive` definition does two things:
+@@ -705,22 +621,12 @@ def monochrome (c : Color) : Bool :=
+   | .primary _ => false
+ 
+ /-
+-<<<<<<< cb708a2 (Experimentally preserve linebreaks from source files in Verso-generated .lean files):LF/Basics.lean
+-  Since the `primary` constructor takes an argument, a pattern that
+-  matches `primary` should include either a variable, as we just did
+-  (note that we can choose its name freely), or a constant of
+-  appropriate type (as below).
+-=======
+   Since the `primary` constructor takes an argument, a pattern
+-  matching `primary` should include either a variable, a constant
++  that matches `primary` should include either a variable, a constant
+   of appropriate type, or `_`. The last, as used in the above
+   example, means that the constructor argument is being ignored.
+   Examples below illustrate the other two cases.
+->>>>>>> 78827b7 (A few more comments):lf/Basics.lean
+ -/
+--- BCP: We didn't use a variable -- we used an underscore!  We should
+--- explain this in two steps: first with an explicit name, then with
+--- an underscore.
+ 
+ def isRed (c : Color) : Bool :=
+   match c with
+@@ -757,14 +663,11 @@ def isRed' (c : Color) : Bool :=
+   ## Namespaces and Sections
+ -/
+ 
+-<<<<<<< cb708a2 (Experimentally preserve linebreaks from source files in Verso-generated .lean files):LF/Basics.lean
+ -- BCP STOPPED HERE
+ 
+ -- JC: I edited a lot of the contents and comments in just this section,
+ -- I hope it makes sense.
+ 
+-=======
+->>>>>>> 78827b7 (A few more comments):lf/Basics.lean
+ -- FULL
+ /-
+   Lean provides a _namespace system_ to aid in organizing large
+@@ -981,7 +884,7 @@ inductive Nat : Type where
+ 
+ -- Maybe TODO: hide the next 3 lines ↓ this just lets you see (succ (succ zero))
+ -- instead of NatPlayground.Nat.succ (NatPlayground.Nat.succ
+--- NatPlayground.Nat.zero) in the infoview.
++-- NatPlayground.Nat.zero) in the InfoView.
+ -- At least, that's what it's supposed to do... see TODO below.
+ attribute [pp_nodot] Nat
+ namespace Nat
+@@ -1063,9 +966,7 @@ def even (n : Nat) : Bool :=
+   | succ (zero) => false
+   | succ (succ n') => even n'
+ 
+-theorem even_zero : even 0 = true := rfl
+-theorem even_one : even 1 = false := rfl
+-theorem even_succ_succ n : even (.succ (.succ n)) = even n := rfl
++-- BCP: even_zero, even_one, and even_succ_succ seem to have been deleted here.  Is that right? 
+ 
+ -- TERSE: /- *** -/
+ /-
+@@ -1342,7 +1243,7 @@ instance instSub : Sub Nat where sub := sub
+ instance instMul : Mul Nat where mul := mul
+ instance instPow : Pow Nat Nat where pow := pow
+ 
+--- JC: In the infoview, hover over the operators
++-- JC: In the InfoView, hover over the operators
+ -- to check out their associativity --
+ -- `+`, `-`, and `*` all left-associative,
+ -- but `^` is right-associative.

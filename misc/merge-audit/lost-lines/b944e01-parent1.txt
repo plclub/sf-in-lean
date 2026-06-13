@@ -1,0 +1,43 @@
+### Basics.lean (25 lines added by 5c23197 missing from merge b944e01)
+# Simplifying addition
+#check (0 + 1 + 1 : _root_.Nat)
+#check (1 ^ 2 ^ 2 : _root_.Nat)
+#check (2 * 3 * 4 : _root_.Nat)
+#check (4 - 3 - 2 : _root_.Nat)
+(1 + n == 0) = false := by
+-- <? in this section operates on standard Nat (not NatPlayground.Nat)
+-- BCP: Why no .s on the right-hand sides?
+-- JC: In the InfoView, hover over the operators
+-- NatPlayground.Nat.zero) in the InfoView.
+/- ## New Tactics: `dsimp`, and `exact`. -/
+/- ## The `rewrite` tactic -/
+end -- (close the `section` where we defined `MyBool`)
+example : four <? two = false := by rfl -- ADMITTED
+example : four ≤? two = false := by rfl
+example : leb four two = false := by rfl
+example : leb two four = true := by rfl
+example : leb two two = true := by rfl
+example : two <? four = true := by rfl -- ADMITTED
+example : two <? two = false := by rfl -- ADMITTED
+local notation:65 a:66 " <? " b:66 => Nat.blt a b
+rw [Nat.pow_succ, Nat.mul_comm]
+theorem pow_succ (n m : Nat) : n ^ (m + 1) = n * (n ^ m) := by
+theorem sub_zero n : 0 - n = 0 := by omega
+theorem succ_sub_succ n m : (n + 1) - (m + 1) = n - m := by omega
+### Induction.lean (4 lines added by 5c23197 missing from merge b944e01)
+case zero => rw [double_zero]
+intro n; rw [double_succ]
+rw [double_succ, ih, add_succ (n' + 1), succ_add]
+theorem double_succ n : double (n + 1) = double n + 2 := by rfl
+### Lists.lean (8 lines added by 5c23197 missing from merge b944e01)
+case nil => rw [nil_append, nil_length, zero_add]
+exact (eqb_refl v)
+rw [cons_append, cons_length, ih, cons_length, ←add_assoc, ←add_assoc, add_comm 1]
+rw [count_cons_same, count_cons_same, succ_add, ←ih]
+rw [eqb_refl, Bool.true_and]
+rw [nil_sum, count_nil, zero_add]
+rw [repeat_zero, zero_add, nil_append]
+rw [succ_add, repeat_succ, repeat_succ, cons_append, ih]
+### Poly.lean (2 lines added by 5c23197 missing from merge b944e01)
+case nil => dsimp [List.nil_append, app_nil_r]; rw [zero_add]
+rw [succ_add, ih]

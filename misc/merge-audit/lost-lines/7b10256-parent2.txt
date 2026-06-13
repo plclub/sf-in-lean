@@ -1,0 +1,21 @@
+### Basics.lean (20 lines added by 78827b7 missing from merge 7b10256)
+### Aside: Unicode in Lean
+### Aside: Using the Lean Extension
+-- NatPlayground.Nat.zero) in the infoview.
+-- a truth table -- for the `orb` function:
+In VSCode, development of Lean code is supported by the Lean Extension, which
+Lean's built-in `Bool` type has the same structure as our `MyBool` but also
+`nextWorkingDay` function and the `Day` type to see their definitions.
+and you can click on the results in the InfoView to navigate to their
+being explicit about names is especially important to avoid confusion and
+definitions. This makes it easier to understand how your code is being
+gives the assertion a name for later reference.
+includes a lot of useful functions and lemmas. We can even define a function
+interpreted by Lean and to debug any issues that arise.
+like `#eval` and `#check`, as well as the current goal state when working on
+matching `primary` should include either a variable, a constant
+proofs. You can hover over expressions in the source code to see their types,
+provides an interactive "InfoView" panel that displays the results of commands
+to convert between our `MyBool` and Lean's `Bool`.
+use the InfoView to explore the definitions of functions and types that you're
+using, which can be very helpful for understanding how they work.
