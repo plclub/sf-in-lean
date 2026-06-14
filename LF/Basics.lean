@@ -1110,21 +1110,18 @@ instance instAdd : Add Nat where add := add
   datatypes like `Nat` using _simplification rules_ about their
   behavior.
 
-  Here are two simple rules about `add`:
+  Here is a simple rule about `add`:
 
   - `n + 0 = n`
-  - `n + succ m = succ (n + m)`
 
-  In Lean, these rules look like this:
+  In Lean, this rule looks like this:
 -/
 -- /FULL
 unseal add in
+-- BCP: Why does the Info View say "Goals accomplished!" right at the
+-- beginning of the proof?  Can we comment on this?
 theorem add_zero : ∀ n : Nat, n + 0 = n := by
   intro n
-  rfl
-unseal add in
-theorem add_succ : ∀ n m : Nat, n + succ m = succ (n + m) := by
-  intro n m
   rfl
 -- FULL
 
@@ -1143,46 +1140,46 @@ theorem add_zero_zero (n : Nat) : n + 0 + 0 = n := by
   rewrite [add_zero]
   rfl
 
+-- Let's walk through this proof.
+
 -- BCP: We need a consistent convention about **boldface** vs _italic_
 -- for emphasis.
 /-
   ## Proof state and tactics
 
-  There are several parts to a proof in Lean.
-  Each "command" of the proof- `rewrite`, `rfl` is called a **tactic**.
-  (The `add_zero` in brackets is an _argument_ to a tactic.)
+  The "proof commands" -- `rewrite`, `rfl`, etc. -- are called
+  **tactics**. The `add_zero` in brackets is an _argument_ to the
+  `rewrite` tactic.
 
-  Hovering with the cursor over each line of the proof,
-  we see the **proof state** in the Lean InfoView panel.
+  Hovering with the cursor over each line of the proof, we can see the
+  **proof state** in the Lean InfoView panel.
 
-  The **proof state** is divided into the **context**, before the ⊢,
-  and the **goal**, after the ⊢. The **context** is what we know, and
-  the **goal** is what we are trying to prove.
+  The proof state is divided into the **context**, before the ⊢,
+  and the **goal**, after the ⊢. The context is what we know at each point, while
+  the goal is what we are trying to prove.
 
-  A **tactic** manipulates the **proof state** (or **context**) to
-  get the goal into a closer shape to the one we want. Once we have
-  a proof state that a tactic can _close_ (solve), we invoke that
-  tactic, which finishes the proof.
+  A tactic manipulates both the goal and the context to get the goal
+  into a shape that is closer to the one we want. A tactic can also
+  _close_ (solve) the current goal which finishes its proof.
 
-  Let's walk through the example above with our terminology.
+  Let's walk through the example above with this terminology in mind.
 -/
 
 theorem add_zero_zero_explained (n : Nat) : n + 0 + 0 = n := by
-  /- Move your cursor (click) here to see the initial proof state in the InfoView.
-     Our context is `n : Nat`.
-     Our goal is `n + 0 + 0 = n`. -/
+  /- Move your cursor (click) here to see the initial proof state in
+     the InfoView. The context is `n : Nat`. The goal is `n + 0 + 0 =
+     n`. -/
   rewrite [add_zero]
-  /- Now click here to see the new proof state, after the tactic.
-     This tactic above is the `rewrite` tactic, with an argument `add_zero`.
-     Notice how it changed the goal by changing `n + 0` to `n`. -/
+  /- Now click here to see the new proof state that results from the tactic.
+     Notice how `n + 0 + 0` changes to `n + 0` in the goal. -/
   rewrite [add_zero]
-  /- Again, we change the goal state by changing `n + 0` to `n`.
-     Now the proof state is an equality with both sides equal,
-     so it can be closed by the tactic `rfl`. -/
+  /- Again the goal changes, from `n + 0` to `n`. Now the proof state
+     is an equality with both sides equal, so it can be closed by the
+     tactic `rfl`. -/
   rfl
   /- The proof is now done! The Lean InfoView tells us there are "No Goals". -/
 
-/-! Here's a simple proof for you to try. Follow the model above. -/
+/-! Here's a simple proof for you to try. -/
 
 theorem add_zero_zero_zero (n : Nat) : n + 0 + 0 + 0 = n := by
   -- ADMITTED
@@ -1196,46 +1193,50 @@ theorem add_zero_zero_zero (n : Nat) : n + 0 + 0 + 0 = n := by
  ## The `rewrite` tactic
 
    As we saw above, the tactic that tells Lean to rewrite (part of) a goal or
-   hypothesis based on a rule is called `rewrite`. Given our rule `add_zero`,
+   hypothesis based on a rule is called `rewrite`. Given the rule `add_zero`,
    which states that `n + 0` is equal to `n` for any `n`, we can replace any `n
    + 0` in our proof with `n` via `rewrite [add_zero]`.
 
-  `rewrite` always takes its argument(s) in square brackets: `[]`.
+   The `rewrite` tactic takes its argument(s) in square brackets.
 
   ## The `rfl` tactic
 
-  `rfl` closes a goal of the shape `a = a`, for any `a`.
-  `rfl` checks that both sides of the equality are _definitionally equal_- that
-  is, they reduce to the same thing.
-  A term is always _definitionally equal_ to itself.
+  The `rfl` tactic closes a goal of the shape `a = a`, for any `a`. It
+  checks that both sides of the equality are _definitionally equal_ --
+  that is, that they reduce to the same thing. (So, in particular, a
+  term is always definitionally equal to itself.)
 -/
 
 /- ## A New `add` Rule
 
-   We introduce the other fundamental rule about `add`:
+   Here is another fundamental rule about addition:
 
-   `add_succ (n m : Nat) : n + (succ m) = succ (n + m)`.
+   `n + (succ m) = succ (n + m)`.
 
-   This is the rule we use to push `succ` around.
+   This is the rule we need to push `succ` around.
 -/
 
-/- Again, we see that it is a usable rule in Lean: -/
+/- Here it is in Lean: -/
+unseal add in
+theorem add_succ : ∀ n m : Nat, n + succ m = succ (n + m) := by
+  intro n m
+  rfl
 
+-- BCP: Maybe we don't need this?
 #check add_succ
 /- ==> add_succ (n m : Nat) : n + succ m = succ (n + m) -/
 
-/- And we can write a proof with it: -/
+/- And here it is in a proof: -/
 
 theorem add_succ_zero (n : Nat) : n + succ 0 = succ (n + 0 + 0) := by
   rewrite [add_succ]
-  rewrite [add_zero]  /- notice how this handles an `n + 0` on both sides -/
+  rewrite [add_zero]  /- notice how this handles an addition on both sides -/
   rewrite [add_zero]
   rfl
 
-/- Make sure you're "stepping through" the proofs- that is, moving past each
-   tactic with your cursor to see how each tactic is manipulating the proof
-   state. You will write more and more of the proofs by yourself as we go
-   along, so learning how the tactics work now is worthwhile!
+/- Again, we recommend stepping through these proofs in VS Code --
+   that is, moving past each tactic with your cursor to see how it
+   changes the proof state.
 -/
 
 /- ## Working with Numerals
@@ -1244,6 +1245,9 @@ theorem add_succ_zero (n : Nat) : n + succ 0 = succ (n + 0 + 0) := by
    We have rules for these equalities, as well:
 -/
 
+-- BCP: We have them because we stated them above, but maybe the
+-- reader wasn't sure why we did that.  I'm a little confused what
+-- point we're making just here.
 #check one_eq_succ_zero /- ==> one_eq_succ_zero : 1 = succ 0 -/
 #check two_eq_succ_one /- ==> two_eq_succ_one : 2 = succ 1 -/
 #check three_eq_succ_two /- ==> three_eq_succ_two : 3 = succ 2 -/
@@ -1253,9 +1257,10 @@ theorem add_succ_zero (n : Nat) : n + succ 0 = succ (n + 0 + 0) := by
 
 -- /FULL
 
-/- We give an example of how to start a proof this way.
-  Finish the proof using the `add` rules.
+/- Here's an example of how to start a proof this way.
+   Finish the proof using the `add` rules.
  -/
+ -- BCP: Should this be marked / formatted as an exercise?
 theorem one_plus_one_eq_two : (1 + 1 : Nat) = 2 := by
   rewrite [one_eq_succ_zero]
   -- ADMITTED
@@ -1279,12 +1284,14 @@ theorem two_plus_two_eq_four : (2 + 2 : Nat) = 4 := by
   By default, `rewrite` rewrites left-to-right. To rewrite from right
   to left, use `rewrite [← h]`, where `←` is typed as `\l` or `\<-`.
 -/
+-- BCP: We should make this point wherever we rewrite to the left for
+-- the first time. It's out of place here.
 -- /FULL
 
 -- FULL
 /-
-  Now that we know how addition is defined, we can use
-  it to define multiplication:
+  Now that we know how addition is defined, we can use it to define
+  multiplication:
 -/
 -- /FULL
 
@@ -1299,6 +1306,7 @@ instance instMul : Mul Nat where mul := mul
 
 /- Multiplication, like almost any function we will prove properties about,
    also has simplification rules. -/
+-- BCP: Why almost?
 
 unseal mul in
 theorem mul_zero : ∀ n : Nat, n * 0 = 0 := by
@@ -1357,7 +1365,7 @@ def beq (n m : Nat) : Bool :=
 
 -- TERSE: /- *** -/
 
--- We need to make a decision about `==`.
+-- TODO: We need to make a decision about `==`.
 -- Either we give decidable equality early, or we use this `==` thing.
 
 /-
@@ -1393,6 +1401,7 @@ example : leb 4 2 = false := by rfl
 -- JC: Lean's stdlib has `==` notation for `beq`,
 -- but not for `Nat.ble`...
 
+-- BCP: Readers may wonder what "instance" is...
 instance : BEq Nat where
   beq := beq
 
@@ -1444,13 +1453,12 @@ example : 4 <? 2 = false := by rfl  -- ADMITTED
 /- We can use our new functions to show an important property of
    natural numbers: -/
 
--- TODO (Claude): Two issues here: (1) `intro n m; rfl` is the first use
--- of `;` sequencing, which is never introduced; (2) the theorem is
--- billed as "an important property" but is never motivated or used in
--- this chapter -- it reads as an orphan.
+-- TODO (Claude): The theorem is billed as "an important property" but
+-- is never motivated or used in this chapter -- it reads as an
+-- orphan.
 theorem beq_succ : ∀ n m : Nat, (succ n == succ m) = (n == m) := by
-  intro n m; rfl
-
+  intro n m
+  rfl
 
 /-
   ######################################################################
@@ -1488,6 +1496,8 @@ theorem beq_succ : ∀ n m : Nat, (succ n == succ m) = (n == m) := by
 -/
 -- /FULL
 
+-- BCP: I find the indentation / linebreaking choices here kind of
+-- ugly. Are they standard, or can we make a better convention?
 theorem add_id_example : ∀ n m : Nat,
     n = m →
     n + n = m + m := by
@@ -1496,7 +1506,8 @@ theorem add_id_example : ∀ n m : Nat,
   rewrite [h]
   rfl
 
--- TERSE: /- We make a general claim about natural numbers, and prove it by rewriting with the hypothesis. -/
+-- TERSE: We make a general claim about natural numbers and prove it
+-- by rewriting with the hypothesis.
 
 -- FULL
 -- EX1 (add_id_exercise)
@@ -1540,6 +1551,9 @@ theorem add_id_exercise : ∀ n m o : Nat,
 -/
 
 /- TODO: how to get these to show `∀ (n : Nat)` instead of `mul_zero (n : Nat)` -/
+-- BCP: Or maybe we need to explain that they mean the same thing?  I
+-- think we are a bit inconsistent, ourselves, in the way we write
+-- things.
 #check mul_zero  -- ∀ (n : Nat), n * 0 = 0
 #check mul_succ  -- ∀ (n m : Nat), n * Nat.succ m = n + n * m
 
@@ -1562,15 +1576,16 @@ theorem add_mul_zero : ∀ p q : Nat,
 
 -- FULL
 /-
-  Of course, not everything can be proved by simple
-  calculation and rewriting: In general, unknown, hypothetical
-  values (arbitrary numbers, booleans, lists, etc.) can block
-  simplification.
+  Of course, not everything can be proved by simple calculation and
+  rewriting: In general, the presence of unknown, hypothetical values
+  (arbitrary numbers, booleans, etc.) can block simplification.
 -/
 -- /FULL
 
--- TERSE: /- Sometimes simple calculation and rewriting are not enough... -/
+-- TERSE: Sometimes simple calculation and rewriting are not enough...
 /-- warning: declaration uses `sorry` -/
+-- BCP: ??
+-- BCP: Also, do we need to explain the #guard_msgs stuff?
 #guard_msgs(warning) in
 example : ∀ n : Nat,
     (succ n == 0) = false := by
@@ -1596,9 +1611,9 @@ theorem add_one_neb_zero : ∀ n : Nat,
   case zero => rfl
   case succ n' => rfl
 
-  -- FULL
+-- FULL
 /-
-  The `cases` tactic generates _two_ subgoals, which we must then
+  The `cases` tactic generates _two_ subgoals, which we must
   prove, separately, in order to get Lean to accept the theorem.
 
   The generated subgoals are tagged by the names of the constructors.
@@ -1607,7 +1622,7 @@ theorem add_one_neb_zero : ∀ n : Nat,
 
   The `cases` tactic can be used with any inductively defined
   datatype.  For example, we use it next to prove that boolean
-  negation is involutive -- i.e., that negation is its own inverse.
+  negation is involutive (that is, that negation is its own inverse).
 -/
 -- /FULL
 
@@ -1680,18 +1695,15 @@ theorem andb3_exchange : ∀ b c d : Bool,
   closes the goal.  You can also transform `h` slightly — for instance, `exact
   h.symm` uses the symmetry of equality.
 -/
-
+-- BCP: What is "proof term"?
+-- BCP: What is "h.symm"??  The explanation there is way too fast.
 
 -- FULL
 -- EX2 (orb_false_true)
--- TODO (Claude): This exercise requires the stdlib lemma `Bool.or_false`,
--- but nothing has taught how a student would ever *find* such a lemma
--- (hover, `exact?`, naming conventions).  Either add a sentence on lemma
--- discovery or provide the needed fact directly.
 /-
   Prove the following claim.
 
-  Tip: the rewrite rule to simplify `(b || false)` is `Bool.or_false`.
+  Tip: the rewrite rule to simplify `(b || false)` is called `Bool.or_false`.
 -/
 
 theorem orb_false_true : ∀ b : Bool,
@@ -1718,7 +1730,6 @@ theorem zero_neb_add_one : ∀ n : Nat,
 -- []
 -- /FULL
 
-
 -- FULL
 /-
   ######################################################################
@@ -1735,13 +1746,14 @@ theorem zero_neb_add_one : ∀ n : Nat,
   You can define custom notation using the `notation`, `infixl`,
   `infixr`, `prefix`, and `postfix` commands.
 
-  Lean handles notation scoping through namespaces and
- _type classes_ rather than notation scopes.  The numeric literal `3`
-  can be interpreted as `Nat`, `Int`, `Float`, etc., depending on the
-  expected type, thanks to Lean's `OfNat` type class. We explain type classes
-  in full in a later chapter.
-  /- TODO: which chapter? -/
+  Lean handles notation scoping through namespaces and _type classes_
+  rather than notation scopes.  The numeric literal `3` can be
+  interpreted as `Nat`, `Int`, `Float`, etc., depending on the
+  expected type, thanks to Lean's `OfNat` type class. We explain type
+  classes in full in a later chapter.
 -/
+/- TODO: which chapter? -/
+-- BCP: What is "notation scopes"?  Can this explanation be streamlined?
 -- /FULL
 
 -- FULL
@@ -1776,13 +1788,14 @@ def add' (n : Nat) (m : Nat) : Nat :=
   `termination_by` and `decreasing_by` clauses, as well as `partial`
   functions that are not required to terminate.
 -/
+-- BCP: That last paragraph will be opaque to many readers.
 
 -- EX2? (decreasing)
 /-
   To get a concrete sense of this, find a way to write a sensible
   recursive definition (of a simple function on numbers, say) that
-  _does_ terminate on all inputs, but that Lean will reject because
-  it cannot automatically prove termination.
+  does actually terminate on all inputs, but that Lean will reject
+  because it cannot automatically prove termination.
 -/
 
 --  SOLUTION
@@ -1888,7 +1901,6 @@ example : binToNat (.b0 (.b0 (.b0 (.b1 .z)))) = 8 := by rfl  -- ADMITTED
 
 end NatPlayground
 
-
 -- FULL
 /-
   ######################################################################
@@ -1924,16 +1936,15 @@ theorem identity_fn_applied_twice : ∀ f : Bool → Bool,
   function `f` has the property that `f x = !x`.
 -/
 
--- TODO (Claude): The solution below uses `<;>`, although the text
--- explicitly defers such combinators to Tactics.lean; students reading
--- solutions will be confused.  Consider writing out both cases.
 -- SOLUTION
 theorem negation_fn_applied_twice : ∀ f : Bool → Bool,
     (∀ x : Bool, f x = !x) →
     ∀ b : Bool, f (f b) = b := by
   intro f h b
   rewrite [h, h]
-  cases b <;> rfl
+  cases b
+  case true => rfl
+  case false => rfl
 --  /SOLUTION
 
 --  GRADE_MANUAL 1: negation_fn_applied_twice
@@ -1944,6 +1955,8 @@ theorem negation_fn_applied_twice : ∀ f : Bool → Bool,
   Prove the following theorem.
 -/
 
+-- BCP: The indentation here is even more problematic... Is this a
+-- systematic problem with the way the file was translated?
 theorem andb_eq_orb : ∀ b c : Bool,
     (b && c) = (b || c) →
   b = c := by
