@@ -44,6 +44,7 @@ import SFLMeta.Exercise
 import SFLMeta.Hide
 import SFLMeta.Instructors
 import SFLMeta.SlideBreak
+import SFLMeta.Solution
 import SFLMeta.Terse
 
 open Verso.Genre Manual
@@ -233,10 +234,10 @@ _TERSE_PLAIN_RE = re.compile(r'^-- TERSE:\s+(.+)$')
 _EX_RE = re.compile(r'^-- EX(\d+)\??\s+\((\w+)\)$')
 _EX_CLOSE_RE = re.compile(r'^-- \[\]$')
 _GRADE_RE = re.compile(r'^--\s+GRADE_')
-_SOLUTION_OPEN_RE = re.compile(r'^--\s+SOLUTION$')
-_SOLUTION_CLOSE_RE = re.compile(r'^--\s+/SOLUTION$')
 _HIDE_OPEN_RE = re.compile(r'^-- HIDE$')
 _HIDE_CLOSE_RE = re.compile(r'^-- /HIDE$')
+_SOL_OPEN_RE = re.compile(r'^--\s+SOLUTION$')
+_SOL_CLOSE_RE = re.compile(r'^--\s+/SOLUTION$')
 # Author-only / developer comment markers.  These are swept into :::dev blocks
 # (discarded from generated outputs, preserved verbatim in the Verso source).
 # Add new author initials or task keywords here.  NB: INSTRUCTORS is handled
@@ -257,7 +258,7 @@ def tokenize(text: str):
       full_open / full_close
       terse_inline(text) / slidebreak
       exercise_open(rating, name) / exercise_close
-      grade_theorem / instructor / solution_open / solution_close
+      grade_theorem / instructor
       author_comment(author, text)
     """
     lines = text.splitlines()
@@ -358,16 +359,6 @@ def tokenize(text: str):
             i += 1
             continue
 
-        if _SOLUTION_OPEN_RE.match(stripped):
-            tokens.append(('solution_open', None))
-            i += 1
-            continue
-
-        if _SOLUTION_CLOSE_RE.match(stripped):
-            tokens.append(('solution_close', None))
-            i += 1
-            continue
-
         if _HIDE_OPEN_RE.match(stripped):
             # Capture the whole -- HIDE ... -- /HIDE region verbatim.  Hidden
             # content is often deliberately broken/admitted, so it must never be
@@ -387,6 +378,37 @@ def tokenize(text: str):
             tokens.append(('hide', '\n'.join(raw)))
             continue
 
+        if _SOL_OPEN_RE.match(stripped):
+            # -- SOLUTION ... -- /SOLUTION.  Two flavours:
+            #  * compilable code  -> keep as a code block wrapped in the textual
+            #    `-- SOLUTION`/`-- END SOLUTION` markers SFLMeta understands
+            #    (student -> `-- FILL IN HERE`, teacher -> body kept & typechecked).
+            #  * prose / non-compiling illustration -> a :::solution block (shown
+            #    only in the solutions build; can't be a code block since a
+            #    comment-only `lean` block fails to elaborate).
+            i += 1
+            body = []
+            while i < n and not _SOL_CLOSE_RE.match(lines[i].strip()):
+                body.append(lines[i]); i += 1
+            if i < n:
+                i += 1   # skip the closing -- /SOLUTION
+            if _strip_lean_comments('\n'.join(body)).strip():
+                tokens.append(('code_line', '-- SOLUTION'))
+                for bl in body:
+                    tokens.append(('code_line', bl))
+                tokens.append(('code_line', '-- END SOLUTION'))
+            else:
+                while body and not body[0].strip():
+                    body.pop(0)
+                while body and not body[-1].strip():
+                    body.pop()
+                if body and body[0].lstrip().startswith('/-'):
+                    prose = _extract_comment_text(body)
+                else:
+                    prose = '\n'.join(body)
+                tokens.append(('solution_prose', prose))
+            continue
+
         m = _AUTHOR_RE.match(stripped)
         if m:
             # Preserve the original marker + text verbatim (e.g. 'BCP: ...',
@@ -401,8 +423,7 @@ def tokenize(text: str):
                             _FULL_OPEN_RE, _FULL_CLOSE_RE, _SLIDEBREAK_RE,
                             _TERSE_DELIM_RE, _TERSE_PLAIN_RE,
                             _INSTRUCTOR_RE, _EX_RE, _EX_CLOSE_RE,
-                            _GRADE_RE, _SOLUTION_OPEN_RE, _SOLUTION_CLOSE_RE,
-                            _AUTHOR_RE]) and
+                            _GRADE_RE, _AUTHOR_RE]) and
                         cont != '--'):
                     body_lines.append(cont[2:].lstrip())
                     i += 1
@@ -470,7 +491,6 @@ class Renderer:
         self.pending_full = False   # :::full requested but not yet emitted
         self.full_open = False      # an emitted :::full is currently unclosed
         self.in_exercise = False
-        self.in_solution = False    # inside -- SOLUTION / -- /SOLUTION (suppress output)
 
     # --- Output helpers ---
 
@@ -617,6 +637,15 @@ class Renderer:
         self._append(_CONTAINER_FENCE + 'hide\n' + _verbatim_block(text)
                      + '\n' + _CONTAINER_FENCE + '\n\n')
 
+    def _on_solution_prose(self, text):
+        # Prose / non-compiling solution -> :::solution block, shown only in the
+        # solutions build (SFLMeta.Block.solution).  Body is verbatim-fenced so
+        # arbitrary illustrative code can't perturb the parser.
+        self._flush_code()
+        if not text.strip():
+            return
+        self._append(':::solution\n' + _verbatim_block(text) + '\n:::\n\n')
+
     def _emit_noop_directive(self, directive, text):
         # Author notes become noop annotation directives (:::dev / :::instructors).
         # The text is preserved in the Verso source, but the directive discards
@@ -632,26 +661,10 @@ class Renderer:
         self._flush_code()  # still acts as a code-block separator
         self._append(f':::{directive}\n' + text + '\n:::\n\n')
 
-    def _on_solution_open(self):
-        self._flush_code()
-        self.in_solution = True
-
-    def _on_solution_close(self):
-        self._flush_code()
-        self.in_solution = False
-
     # --- Main dispatch ---
 
     def process(self, tokens):
         for kind, content in tokens:
-            if kind == 'solution_open':
-                self._on_solution_open()
-                continue
-            elif kind == 'solution_close':
-                self._on_solution_close()
-                continue
-            if self.in_solution:
-                continue  # suppress everything between SOLUTION markers
             if kind == 'blank':
                 self._on_blank()
             elif kind == 'block_comment_label':
@@ -681,6 +694,8 @@ class Renderer:
                 self._emit_noop_directive('instructors', content)
             elif kind == 'hide':
                 self._on_hide(content)
+            elif kind == 'solution_prose':
+                self._on_solution_prose(content)
             elif kind == 'grade_theorem':
                 pass  # strip
             # else: unknown token — ignore
@@ -715,6 +730,84 @@ def _strip_directive_blanks(text: str) -> str:
     return text
 
 # ---------------------------------------------------------------------------
+# Solution-marker conversion (code-forward source -> Verso code-block forms)
+# ---------------------------------------------------------------------------
+
+def _indent_of(line: str) -> str:
+    return line[:len(line) - len(line.lstrip())]
+
+
+def _convert_solution_markers(src: str) -> str:
+    """Translate the code-forward solution markers into the in-code-block forms
+    that SFLMeta understands, so the student and solutions builds diverge.  In
+    every case the teacher build keeps the author's solution (and typechecks it
+    during the book build); the student build replaces it with `sorry` /
+    `-- FILL IN HERE`.
+
+      def f … : T            ->   def f … : T
+        -- ADMITDEF                 := solution!(<body>)
+        := <body>
+        -- /ADMITDEF
+
+      <inside `by`>           ->   solution!
+        -- ADMITTED                   <tactics, reindented one level deeper>
+        <tactics>
+        -- /ADMITTED
+
+      expr := <proof>  -- ADMITTED   ->   expr := solution!(<proof>)
+
+    (`-- SOLUTION … -- /SOLUTION` blocks are handled in the tokenizer, which
+    splits compilable answers from prose ones.)
+    """
+    lines = src.split('\n')
+    out = []
+    i, n = 0, len(lines)
+    while i < n:
+        line = lines[i]
+        s = line.strip()
+
+        # --- ADMITDEF: wrap the definition body (`:= …`) in solution!(…) ---
+        if s == '-- ADMITDEF':
+            j = i + 1
+            body = []
+            while j < n and lines[j].strip() != '-- /ADMITDEF':
+                body.append(lines[j]); j += 1
+            if body:
+                m = re.match(r'^(\s*:=\s*)(.*)$', body[0])
+                if m:
+                    body[0] = m.group(1) + 'solution!(' + m.group(2)
+                    body[-1] = body[-1] + ')'
+                out.extend(body)
+            i = j + 1
+            continue
+
+        # --- ADMITTED block: a tactic sequence inside a `by` ---
+        if s == '-- ADMITTED':
+            indent = _indent_of(line)
+            j = i + 1
+            body = []
+            while j < n and lines[j].strip() != '-- /ADMITTED':
+                body.append(lines[j]); j += 1
+            out.append(indent + 'solution!')
+            for bl in body:
+                # tacticSeqIndentGt: body must sit deeper than `solution!`.
+                out.append(('  ' + bl) if bl.strip() else bl)
+            i = j + 1
+            continue
+
+        # --- trailing ADMITTED: a one-line proof term ---
+        if s.endswith('-- ADMITTED') and s != '-- ADMITTED':
+            out.append(re.sub(r':=\s*(.*?)\s*--\s*ADMITTED\s*$',
+                              lambda m: ':= solution!(' + m.group(1) + ')', line))
+            i += 1
+            continue
+
+        out.append(line)
+        i += 1
+    return '\n'.join(out)
+
+
+# ---------------------------------------------------------------------------
 # Top-level converter
 # ---------------------------------------------------------------------------
 
@@ -724,6 +817,9 @@ def convert(src_text: str, title: str, file_key: str) -> str:
     # The opening /- title -/ comment is already used for the #doc declaration;
     # strip it so it doesn't appear again as prose.
     body_src = _strip_title_comment(src_text)
+    # Rewrite solution markers (ADMITDEF/ADMITTED/SOLUTION) into the in-code
+    # forms SFLMeta understands before tokenizing.
+    body_src = _convert_solution_markers(body_src)
     tokens = tokenize(body_src)
     renderer = Renderer()
     renderer.process(tokens)

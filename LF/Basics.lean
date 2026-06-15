@@ -1117,9 +1117,9 @@ instance instAdd : Add Nat where add := add
   In Lean, this rule looks like this:
 -/
 -- /FULL
-unseal add in
 -- BCP: Why does the Info View say "Goals accomplished!" right at the
 -- beginning of the proof?  Can we comment on this?
+unseal add in
 theorem add_zero : ∀ n : Nat, n + 0 = n := by
   intro n
   rfl
@@ -1584,8 +1584,6 @@ theorem add_mul_zero : ∀ p q : Nat,
 
 -- TERSE: Sometimes simple calculation and rewriting are not enough...
 /-- warning: declaration uses `sorry` -/
--- BCP: ??
--- BCP: Also, do we need to explain the #guard_msgs stuff?
 #guard_msgs(warning) in
 example : ∀ n : Nat,
     (succ n == 0) = false := by

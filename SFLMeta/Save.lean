@@ -237,8 +237,13 @@ private def applyEdits (src : String) (edits : Array Replacement) : String := Id
   let mut src := src
   for ⟨{ start, stop }, replacement⟩ in sorted do
     if h : start.IsValid src ∧ stop.IsValid src then
-      let slice := src.slice! ⟨start, h.1⟩ ⟨stop, h.2⟩
-      src := src.replace slice replacement
+      -- Splice positionally: replace the byte range [start, stop) in place.
+      -- (`String.replace` would substitute the first *matching substring*, which
+      -- corrupts a block holding several identical edits, e.g. repeated
+      -- `solution!(by rfl)`.)  Right-to-left order keeps earlier positions valid.
+      let pre := src.slice! ⟨0, String.Pos.Raw.isValid_zero⟩ ⟨start, h.1⟩
+      let post := src.slice! ⟨stop, h.2⟩ ⟨src.rawEndPos, String.Pos.Raw.isValid_rawEndPos⟩
+      src := pre.toString ++ replacement ++ post.toString
   return src
 
 /-! ## Textual `-- SOLUTION … -- END SOLUTION` rewriting

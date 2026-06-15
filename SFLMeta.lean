@@ -8,5 +8,6 @@ import SFLMeta.Ignore
 import SFLMeta.Instructors
 import SFLMeta.Save
 import SFLMeta.SlideBreak
+import SFLMeta.Solution
 import SFLMeta.Terse
 import SFLMeta.Theme
