@@ -947,7 +947,7 @@ inductive Nat : Type where
 -- TODO (Claude): The instructor advice at the top says to work
 -- directly in this .lean file, but the "hidden" scaffolding (this
 -- attribute, the OfNat instance, `unseal`, `@[irreducible]`,
--- `#guard_msgs`, the BEq instance) is fully visible to anyone reading
+-- the BEq instance) is fully visible to anyone reading
 -- the source, and far beyond a beginner's reach. BCP: Same question
 -- as Claude here: Do we really need this?  If so, how / where do we
 -- explain it?
@@ -1581,8 +1581,14 @@ theorem add_mul_zero : ∀ p q : Nat,
   (arbitrary numbers, booleans, etc.) can block simplification.
 -/
 -- /FULL
-
 -- TERSE: Sometimes simple calculation and rewriting are not enough...
+
+-- INSTRUCTORS: We use `#guard_msgs` in a number of places in the SFL
+-- source files to help deter bitrot, and you are encouraged to add
+-- your own instances.  It doesn't need to be explained to students
+-- because it gets stripped out when verso files are translated to
+-- .lean and .html.
+
 /-- warning: declaration uses `sorry` -/
 #guard_msgs(warning) in
 example : ∀ n : Nat,

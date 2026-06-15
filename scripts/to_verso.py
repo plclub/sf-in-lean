@@ -41,6 +41,7 @@ import SFLMeta.Ignore
 import SFLMeta.Save
 import SFLMeta.Comment
 import SFLMeta.Exercise
+import SFLMeta.Grade
 import SFLMeta.Hide
 import SFLMeta.Instructors
 import SFLMeta.SlideBreak
@@ -86,6 +87,18 @@ def _strip_title_comment(src: str) -> str:
     """Remove the opening /- title -/ block comment (already used for #doc title)."""
     return re.sub(r'^\s*/\-.*?-/\s*', '', src, count=1, flags=re.DOTALL)
 
+# Author/dev markers (matches the line-comment set in `_AUTHOR_RE`).  A block
+# comment whose body opens with one of these is an author note routed to :::dev.
+_BLOCK_DEV_RE = re.compile(
+    r'^(BCP|JC|MWH|CGH|RAB|CH|NB|TODO|TOFIX|LATER|SOONER)\b')
+
+
+def _is_block_dev_comment(text: str) -> bool:
+    """True when a `/- … -/` block comment is an author/dev note (e.g. `MWH: …`).
+    These are routed to :::dev blocks (preserving every word), not dropped."""
+    return bool(_BLOCK_DEV_RE.match(text.strip()))
+
+
 def _is_label_comment(text: str) -> bool:
     """True when text (stripped comment body) should be stripped in Verso output.
 
@@ -93,14 +106,13 @@ def _is_label_comment(text: str) -> bool:
       - Single identifiers like "test_nandb1" or "test_leb3'" (test-case labels)
       - Pure separator lines like "############################" (visual dividers)
       - Lean output annotations like "==> true : Bool" or "===> ..." (#check/#eval)
-      - Author/editor notes that appear as block comments (BCP: ..., MWH: ..., etc.)
     These act as code-block separators but produce no visible Verso output.
+    (Author/dev block notes are *not* labels — see `_is_block_dev_comment`.)
     """
     t = text.strip()
     return (bool(re.match(r"^[\w.']+$", t)) or
             bool(re.match(r'^#{3,}\s*$', t)) or
-            bool(re.match(r'^=+>', t)) or
-            bool(re.match(r'^(BCP|JC|MWH|CGH|RAB|TODO)[: ]', t)))
+            bool(re.match(r'^=+>', t)))
 
 _SEPARATOR_LINE_RE = re.compile(r'^\s*#{4,}\s*$')   # ######... divider lines
 _HEADING_LINE_RE = re.compile(r'^\s{0,3}(#{1,6})\s+(.+)$')
@@ -294,7 +306,10 @@ def tokenize(text: str):
                     tokens.append(('code_line', l))
                 continue
             body = _extract_comment_text(raw)
-            if _is_label_comment(body):
+            if _is_block_dev_comment(body):
+                # /- MWH: … -/ author note -> :::dev (keeps every word).
+                tokens.append(('author_comment', body))
+            elif _is_label_comment(body):
                 tokens.append(('block_comment_label', body))
             elif not body.strip():
                 tokens.append(('blank', None))
@@ -355,7 +370,8 @@ def tokenize(text: str):
             continue
 
         if _GRADE_RE.match(stripped):
-            tokens.append(('grade_theorem', None))
+            # Preserve the grading spec (e.g. 'GRADE_THEOREM 1: nandb_test4').
+            tokens.append(('grade_theorem', stripped[2:].strip()))
             i += 1
             continue
 
@@ -637,6 +653,15 @@ class Renderer:
         self._append(_CONTAINER_FENCE + 'hide\n' + _verbatim_block(text)
                      + '\n' + _CONTAINER_FENCE + '\n\n')
 
+    def _on_grade(self, text):
+        # -- GRADE_THEOREM / GRADE_MANUAL -> :::grade.  A noop for now, but the
+        # grading spec is preserved (verbatim-fenced, since names contain `_`)
+        # for the future grading infrastructure to consume.
+        self._flush_code()
+        if not text.strip():
+            return
+        self._append(':::grade\n' + _verbatim_block(text) + '\n:::\n\n')
+
     def _on_solution_prose(self, text):
         # Prose / non-compiling solution -> :::solution block, shown only in the
         # solutions build (SFLMeta.Block.solution).  Body is verbatim-fenced so
@@ -697,7 +722,7 @@ class Renderer:
             elif kind == 'solution_prose':
                 self._on_solution_prose(content)
             elif kind == 'grade_theorem':
-                pass  # strip
+                self._on_grade(content)
             # else: unknown token — ignore
 
         # Flush any trailing code

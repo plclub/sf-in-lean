@@ -3,6 +3,7 @@ import SFLMeta.Bnf
 import SFLMeta.Comment
 import SFLMeta.Details
 import SFLMeta.Exercise
+import SFLMeta.Grade
 import SFLMeta.Hide
 import SFLMeta.Ignore
 import SFLMeta.Instructors
