@@ -60,13 +60,13 @@ plus a small continuous-integration (CI) check. **Do not commit directly to
    git push -u origin my-change
    ```
 4. Open a Pull Request against `main` on GitHub.
-5. CI automatically builds the book on your PR. Once it is green (and the PR
-   has been reviewed), merge it.
+5. CI automatically builds the book on your PR. Once it is green
+   (and the PR has been reviewed if appropriate), merge it.
 
 Before opening a PR, run the same checks CI runs, to catch problems early:
 
 ```
-make verso     # regenerate generated Verso sources (LF/BasicsVerso.lean, ...)
+make verso     # regenerate generated Verso sources (LF/BasicsVerso.lean, ...) -- temporary!
 lake build     # build the book; fails if anything does not compile
 ```
 
@@ -79,13 +79,29 @@ commented; to add a check, add a step.
 
 ### Branch protection (one-time GitHub setting)
 
-So that a failing CI actually *blocks* merging, branch protection must be
-enabled once on `main`, under **GitHub → Settings → Branches → Add rule**:
+CI runs on every pull request regardless, so you always see a ✅/❌ **build**
+check. Whether a ❌ actually *blocks* merging depends on the plan:
 
-- ☑ Require a pull request before merging
-- ☑ Require status checks to pass before merging → select the **build** check
+- **Public repo, or private repo on GitHub Team/Enterprise:** branch rulesets
+  are enforced — set one up (below) and a red check blocks the merge.
+- **Private repo on the Free plan (where we are now):** rulesets can be created
+  but are **not enforced**. Treat CI as advisory: **don't merge a red PR.** To
+  get real enforcement for free while staying private, link the `plclub` org to
+  [GitHub Education](https://education.github.com/), which grants GitHub Team to
+  academic organizations at no cost.
 
-(Optionally also ☑ "Require approvals" if you want a review before every merge.)
+To enable enforcement once on a paid/public plan, create a ruleset in
+**GitHub → Settings → Rules → Rulesets → New ruleset → New branch ruleset**:
+
+1. **Ruleset name:** e.g. `main must build`; set **Enforcement status** to **Active**.
+2. **Target branches → Add a target → Include default branch** (`main`).
+3. Enable these rules:
+   - ☑ **Require a pull request before merging** (Required approvals: 0, or 1 for a reviewer)
+   - ☑ **Require status checks to pass** → add the **build** check
+4. Leave the **Bypass list empty** so the rules apply to everyone, admins included.
+5. **Create.**
+
+(The `build` check only appears once CI has run on `main` at least once.)
 
 ## Building the Verso Documentation
 
