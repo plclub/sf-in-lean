@@ -426,6 +426,15 @@ inductive MyBool : Type where
 open MyBool
 ```
 
+:::dev
+HG: I actually prefer we don't open this here. Lean has kind of confusing
+behavior around patterns and name collisions — that's why below, (e.g., in
+`notb`) we have to use `.true` in patterns but we can use `true` in expressions.
+If we just don't open `MyBool` then we need to use `.true` everywhere, which is
+both good practice for working with inductive constructors and more clearly
+highlights that we're working with our own booleans.
+:::
+
 ::::full
 Functions over booleans can be defined in the same way as above
 ::::
@@ -461,6 +470,11 @@ complete specification -- a truth table -- for the `orb` function:
 
 :::terse
 Note the syntax for defining multi-argument functions (`andb` and `orb`).
+:::
+
+:::dev
+HG: This feels like too little discussion of FP function calling for a non-FP
+person, and too much for anyone who knows FP. I propose we skip this.
 :::
 
 ```lean
@@ -579,6 +593,11 @@ def myBoolToBool (b : MyBool) : Bool :=
   | .false => false
 ```
 
+:::dev
+HG: This feels like it might do more harm than good.
+BCP: Agreed
+:::
+
 Note how we don't have to use the `.`, because we have specified the type
 of `true` by declaring the return type of `myBoolToBool` to be `Bool`.
 Lean's type inference algorithm fills in the gap.
@@ -661,6 +680,11 @@ function produces an output of type `Bool`." Similarly, the type of
 each of type `Bool`, this function produces an output of type
 `Bool`."
 ::::
+
+:::dev
+HG: Again, maybe too basic for our audience.
+BCP: I think here I might diusagree...?
+:::
 
 ### Aside: Unicode in Lean
 
@@ -982,6 +1006,11 @@ def allZero (nb : Nibble) : Bool :=
 
 end Playground
 ```
+
+:::dev
+HG: I wonder how we should prioritize `#eval e` vs. `example e = e' := rfl`.
+They both feel like they have value.
+:::
 
 ## Natural Numbers
 
@@ -1782,6 +1811,10 @@ Sometimes simple calculation and rewriting are not enough...
 :::instructors
 We use `#guard_msgs` in a number of places in the SFL
 :::
+:::dev
+HG: We should be using `guard_msgs` anywhere we leave a sorry.
+BCP: Yes, and there's already a part of a note about this someplace.  Merge with this.
+:::
 
 ```lean
 -- source files to help deter bitrot, and you are encouraged to add
@@ -2244,4 +2277,3 @@ GRADE_THEOREM 3: andb_eq_orb
 ```
 :::
 ::::
-

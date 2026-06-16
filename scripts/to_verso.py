@@ -90,7 +90,7 @@ def _strip_title_comment(src: str) -> str:
 # Author/dev markers (matches the line-comment set in `_AUTHOR_RE`).  A block
 # comment whose body opens with one of these is an author note routed to :::dev.
 _BLOCK_DEV_RE = re.compile(
-    r'^(BCP|JC|MWH|CGH|RAB|CH|NB|TODO|TOFIX|LATER|SOONER)\b')
+    r'^(BCP|JC|MWH|CGH|RAB|CH|HG|NB|TODO|TOFIX|LATER|SOONER)\b')
 
 
 def _is_block_dev_comment(text: str) -> bool:
@@ -255,7 +255,7 @@ _SOL_CLOSE_RE = re.compile(r'^--\s+/SOLUTION$')
 # Add new author initials or task keywords here.  NB: INSTRUCTORS is handled
 # separately (-> :::instructor); TERSE/FULL have their own dedicated markers.
 _AUTHOR_RE = re.compile(
-    r'^-- (BCP|JC|MWH|CGH|RAB|CH|NB|TODO|TOFIX|LATER|SOONER)[: (](.*)$')
+    r'^-- (BCP|JC|MWH|CGH|RAB|CH|HG|NB|TODO|TOFIX|LATER|SOONER)[: (](.*)$')
 
 
 def tokenize(text: str):
