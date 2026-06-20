@@ -47,7 +47,7 @@ import SFLMeta.Instructors
 import SFLMeta.SlideBreak
 import SFLMeta.Solution
 import SFLMeta.Terse
-
+{extra_imports}
 open Verso.Genre Manual
 open SFLMeta
 
@@ -86,6 +86,37 @@ def extract_title(src: str) -> str:
 def _strip_title_comment(src: str) -> str:
     """Remove the opening /- title -/ block comment (already used for #doc title)."""
     return re.sub(r'^\s*/\-.*?-/\s*', '', src, count=1, flags=re.DOTALL)
+
+
+# LF modules that are authored directly in Verso (Basics) or are plain Lean
+# support modules (CustomTactics): an `import LF.X` of one of these passes
+# through unchanged.  Every *other* `import LF.X` refers to a generated chapter,
+# so it is rewritten to `import LF.XVerso`.
+DIRECT_LF_MODULES = {"Basics", "CustomTactics"}
+
+_IMPORT_RE = re.compile(r'^import\s+(\S+)\s*$')
+
+
+def _extract_imports(body: str):
+    """Pull top-level `import …` lines out of *body* and return
+    (import_lines, body_without_imports).
+
+    These imports belong in the Verso header (real Lean imports), not in a
+    ```lean``` code block (InlineLean can't elaborate an `import`).  Because a
+    chapter's InlineLean definitions are exported, importing a dependency makes
+    its definitions visible to this chapter's code blocks."""
+    kept, imports = [], []
+    for line in body.splitlines():
+        m = _IMPORT_RE.match(line)
+        if m:
+            mod = m.group(1)
+            lf = re.match(r'LF\.(\w+)$', mod)
+            if lf and lf.group(1) not in DIRECT_LF_MODULES:
+                mod = f'LF.{lf.group(1)}Verso'
+            imports.append(f'import {mod}')
+        else:
+            kept.append(line)
+    return imports, '\n'.join(kept)
 
 # Author/dev markers (matches the line-comment set in `_AUTHOR_RE`).  A block
 # comment whose body opens with one of these is an author note routed to :::dev.
@@ -143,6 +174,28 @@ def _md_bold_to_verso(text: str) -> str:
     return re.sub(r'\*\*([^*\n]+)\*\*', r'*\1*', text)
 
 
+# SF/Coq prose marks inline code with square brackets (`[add_comm]`); Verso reads
+# `[…]` as a link reference, so convert it to a backtick code span.  A real
+# Markdown link/reference (`[text](url)` or `[text][ref]`) is left alone.
+_SF_INLINE_CODE_RE = re.compile(r'\[([^\]\n]+)\](?![(\[])')
+
+
+def _sf_inline_code(text: str) -> str:
+    # Convert `[…]` only *outside* existing backtick code spans, so brackets
+    # already inside a span (e.g. `rw [add_succ]`) aren't turned into nested
+    # backticks.
+    parts = re.split(r'(`[^`\n]*`)', text)
+    return ''.join(
+        p if (len(p) >= 2 and p.startswith('`') and p.endswith('`'))
+        else _SF_INLINE_CODE_RE.sub(lambda m: '`' + m.group(1) + '`', p)
+        for p in parts)
+
+
+def _prose_markup(text: str) -> str:
+    """Apply the prose-level rewrites Verso needs (bold, SF inline code)."""
+    return _sf_inline_code(_md_bold_to_verso(text))
+
+
 def _comment_tokens(body: str):
     """Split a block-comment body into header and prose tokens.
 
@@ -165,12 +218,17 @@ def _comment_tokens(body: str):
             seg.pop()
         if seg:
             tokens.append(('block_comment_prose',
-                           _md_bold_to_verso('\n'.join(seg))))
+                           _prose_markup('\n'.join(seg))))
         prose.clear()
 
     for l in lines:
         m = _HEADING_LINE_RE.match(l)
-        if m:
+        if l.strip() == '***':
+            # A `***` line inside prose is a slide break (the embedded form of
+            # the /- *** -/ marker).
+            flush_prose()
+            tokens.append(('slidebreak', None))
+        elif m:
             flush_prose()
             tokens.append(('block_comment_header',
                            (len(m.group(1)), m.group(2).strip())))
@@ -240,10 +298,17 @@ _INSTRUCTOR_RE = re.compile(r'^-- INSTRUCTORS:')
 _INSTRUCTOR_CONT_RE = re.compile(r'^--(\s{3,}|\t|\s*$)')  # continuation
 _FULL_OPEN_RE = re.compile(r'^-- FULL$')
 _FULL_CLOSE_RE = re.compile(r'^-- /FULL$')
+# Paired `-- TERSE` … `-- /TERSE` region (the complement of FULL: content shown
+# only in the terse/lecture build).  Distinct from the inline `-- TERSE:` forms.
+_TERSE_OPEN_RE = re.compile(r'^-- TERSE$')
+_TERSE_CLOSE_RE = re.compile(r'^-- /TERSE$')
 _SLIDEBREAK_RE = re.compile(r'^-- TERSE:\s*/- \*\*\* -/$')
 _TERSE_DELIM_RE = re.compile(r'^-- TERSE:\s*/-(.*?)-/$')
 _TERSE_PLAIN_RE = re.compile(r'^-- TERSE:\s+(.+)$')
-_EX_RE = re.compile(r'^-- EX(\d+)\??\s+\((\w+)\)$')
+# `-- EX<rating><flags> (name)` — the rating is the leading digit(s); the flags
+# are SF difficulty/grading marks: `!` (recommended), `?` (optional), `A`
+# (advanced), `M` (manual), and combinations like `2AM?`.
+_EX_RE = re.compile(r'^-- EX(\d+)[A-Za-z!?]*\s+\((\w+)\)$')
 _EX_CLOSE_RE = re.compile(r'^-- \[\]$')
 _GRADE_RE = re.compile(r'^--\s+GRADE_')
 _HIDE_OPEN_RE = re.compile(r'^-- HIDE$')
@@ -306,7 +371,11 @@ def tokenize(text: str):
                     tokens.append(('code_line', l))
                 continue
             body = _extract_comment_text(raw)
-            if _is_block_dev_comment(body):
+            if re.fullmatch(r'(TERSE:\s*)?\*\*\*', body.strip()):
+                # /- *** -/ or /- TERSE: *** -/ : a slide break (block-comment
+                # form of the -- TERSE: /- *** -/ line marker).
+                tokens.append(('slidebreak', None))
+            elif _is_block_dev_comment(body):
                 # /- MWH: … -/ author note -> :::dev (keeps every word).
                 tokens.append(('author_comment', body))
             elif _is_label_comment(body):
@@ -338,6 +407,16 @@ def tokenize(text: str):
 
         if _FULL_CLOSE_RE.match(stripped):
             tokens.append(('full_close', None))
+            i += 1
+            continue
+
+        if _TERSE_OPEN_RE.match(stripped):
+            tokens.append(('terse_open', None))
+            i += 1
+            continue
+
+        if _TERSE_CLOSE_RE.match(stripped):
+            tokens.append(('terse_close', None))
             i += 1
             continue
 
@@ -506,6 +585,7 @@ class Renderer:
         self.full_depth = 0         # source-level FULL marker nesting
         self.pending_full = False   # :::full requested but not yet emitted
         self.full_open = False      # an emitted :::full is currently unclosed
+        self.terse_open = False     # an emitted :::terse is currently unclosed
         self.in_exercise = False
 
     # --- Output helpers ---
@@ -577,6 +657,11 @@ class Renderer:
         # headings nested inside block directives like :::full.  If a
         # :::full is currently open, close it and re-arm pending_full so
         # subsequent content opens a fresh one.
+        # A section heading ends any open exercise (the source closes exercises
+        # implicitly at the next section rather than always with `-- []`).
+        if self.in_exercise:
+            self._append(_CONTAINER_FENCE + '\n\n')
+            self.in_exercise = False
         if self.full_open and not self.in_exercise:
             self._close_full_if_open()
             self.pending_full = True
@@ -608,6 +693,21 @@ class Renderer:
             if not self.in_exercise:
                 self._close_full_if_open()
 
+    def _on_terse_open(self):
+        self._flush_code()
+        # Mirror :::full: only emit the region at top level.  Inside an exercise
+        # or a :::full (both 4-colon containers) the content just renders inline,
+        # which also keeps a same-width directive from nesting illegally.
+        if not self.in_exercise and not self.full_open and not self.pending_full:
+            self._append(_CONTAINER_FENCE + 'terse\n\n')
+            self.terse_open = True
+
+    def _on_terse_close(self):
+        self._flush_code()
+        if self.terse_open:
+            self._append(_CONTAINER_FENCE + '\n\n')
+            self.terse_open = False
+
     def _on_exercise_open(self, rating, name):
         self._flush_code()
         # Exercises cannot be nested inside :::full.  If a :::full is
@@ -619,14 +719,21 @@ class Renderer:
         if self.full_open and not self.in_exercise:
             self._close_full_if_open()
             self.pending_full = True
+        # A new exercise ends the previous one (the source sometimes omits the
+        # `-- []` close before the next `-- EX`).
+        if self.in_exercise:
+            self._append(_CONTAINER_FENCE + '\n\n')
         self.in_exercise = True
         self._append(
             f'{_CONTAINER_FENCE}exercise (rating := {rating}) (name := "{name}")\n\n')
 
     def _on_exercise_close(self):
         self._flush_code()
-        self.in_exercise = False
-        self._append(_CONTAINER_FENCE + '\n\n')
+        # Only emit a close for an exercise we actually opened; a stray `-- []`
+        # would otherwise produce an orphan `::::` that unbalances the document.
+        if self.in_exercise:
+            self.in_exercise = False
+            self._append(_CONTAINER_FENCE + '\n\n')
 
     def _on_slidebreak(self):
         self._flush_code()
@@ -684,7 +791,7 @@ class Renderer:
         # build at parse time.  (:::hide keeps a verbatim fence -- see _on_hide --
         # because it wraps raw code, not prose.)
         self._flush_code()  # still acts as a code-block separator
-        self._append(f':::{directive}\n' + text + '\n:::\n\n')
+        self._append(f':::{directive}\n' + _prose_markup(text) + '\n:::\n\n')
 
     # --- Main dispatch ---
 
@@ -704,6 +811,10 @@ class Renderer:
                 self._on_full_open()
             elif kind == 'full_close':
                 self._on_full_close()
+            elif kind == 'terse_open':
+                self._on_terse_open()
+            elif kind == 'terse_close':
+                self._on_terse_close()
             elif kind == 'exercise_open':
                 rating, name = content
                 self._on_exercise_open(rating, name)
@@ -732,6 +843,9 @@ class Renderer:
         if self.in_exercise:
             self._append(_CONTAINER_FENCE + '\n\n')  # close unclosed exercise
             self.in_exercise = False
+        if self.terse_open:
+            self._append(_CONTAINER_FENCE + '\n\n')  # close unclosed terse
+            self.terse_open = False
         self._close_full_if_open()
 
     def result(self) -> str:
@@ -838,10 +952,14 @@ def _convert_solution_markers(src: str) -> str:
 
 def convert(src_text: str, title: str, file_key: str) -> str:
     """Return a Verso document converted from the code-forward *src_text*."""
-    header = HEADER_TEMPLATE.format(title=title, file=file_key)
     # The opening /- title -/ comment is already used for the #doc declaration;
     # strip it so it doesn't appear again as prose.
     body_src = _strip_title_comment(src_text)
+    # Lift top-level `import …` lines into the Verso header (they can't live in
+    # a ```lean``` block).
+    extra_imports, body_src = _extract_imports(body_src)
+    header = HEADER_TEMPLATE.format(
+        title=title, file=file_key, extra_imports='\n'.join(extra_imports))
     # Rewrite solution markers (ADMITDEF/ADMITTED/SOLUTION) into the in-code
     # forms SFLMeta understands before tokenizing.
     body_src = _convert_solution_markers(body_src)
