@@ -1,3 +1,24 @@
+/- TODO: Claude: Verso build issue (the generated MapsVerso.lean, not this source).
+
+   Symptom: the generated MapsVerso.lean fails to elaborate with a type
+   mismatch on the `#doc` metadata line `file := "Maps"`:
+       "Maps" has type String but is expected to have type Option String
+   This line is emitted by scripts/to_verso.py's header template; there is
+   nothing wrong with the content of THIS file.
+
+   Fix that works: write the field as an explicit Option, i.e.
+       file := some "Maps"
+   (Verified: with that change MapsVerso.lean compiles.)
+
+   Deeper issue worth investigating: the *identical* `file := "<name>"` line
+   compiles fine in every other generated chapter (Induction, Poly, Lists, …)
+   and in hand-authored Basics, AND a minimal doc with the same header plus
+   `import LF.CustomTactics` also compiles.  So the normal String -> Option
+   String coercion is being suppressed by something in Maps' generated BODY,
+   not by the header or the CustomTactics import.  Figure out what in the body
+   disables that coercion (it may indicate another latent problem) rather than
+   just papering over it with `some` in the template. -/
+
 import LF.CustomTactics
 
 /- CH: This is just the code with the prose left out, but I've left comments mentioning

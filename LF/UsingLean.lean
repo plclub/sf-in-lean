@@ -7,21 +7,12 @@
 
 /- Lean: Using the full power of a proof assistant -/
 
--- INSTRUCTORS: This file is the bridge to Lean's natural numbers,
+-- INSTRUCTORS: This chapter is the bridge to Lean's natural numbers,
 -- `dsimp`, `calc`, maybe, `simp` annotations, and maybe typeclasses.
--- It is relatively short, and should take about 30 minutes to cover.
+-- It is relatively short -- should take about 30 minutes to cover.
 
 -- HIDEFROMHTML
 -- FULL
-/-
-  REMINDER:
-
-           #####################################################
-           ###  PLEASE DO NOT DISTRIBUTE SOLUTIONS PUBLICLY  ###
-           #####################################################
-
-    (See the [Preface] for why.)
--/
 
 /-
   ######################################################################
@@ -265,7 +256,7 @@ theorem even_S : ∀ n : Nat,
   case succ n' ih =>
     rewrite [even, ih, NatPlayground.Nat.notb_involutive]; rfl
 
-  -- TODO: talk about using Nat.add_zero and friends from now on.
+  -- TODO: talk about using `Nat.add_zero` and friends from now on.
 
   -- (OA) : added lemmas proved for our Nat for Lean's Nat to prevent
   --        later files from breaking.

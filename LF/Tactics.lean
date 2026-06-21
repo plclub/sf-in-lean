@@ -1,5 +1,32 @@
 -- Tactics: More Basic Tactics
 
+/- TODO: Claude: Versification of this chapter is NOT finished.  The generated
+   TacticsVerso.lean does not compile yet.  Remaining work:
+
+   1. DONE: the two raw-Coq sections (the "Unfolding Definitions" block kept
+      "for posterity", and the `split_combine''_equiv` block) are wrapped in
+      `-- HIDE` / `-- /HIDE`, so they become discarded ::::hide blocks instead
+      of breaking the Verso markup.
+
+   2. TODO (source restructuring, ~10 proofs): several proofs interleave
+      explanatory prose INSIDE the `by` block — a column-0 `/- ... -/` comment
+      sits between `... := by` and the indented tactics, which splits the proof
+      into two code blocks (leaving `:= by` with no body -> "unsolved goals",
+      and an orphan tactic run -> "unexpected identifier").  These must be
+      restructured the way Induction.lean was: move the prose to BEFORE the
+      theorem (or after the complete proof) so the proof stays contiguous.
+      (The converter deliberately does NOT auto-keep column-0 comments inside
+      proofs, because that would wrongly swallow real between-definition prose.)
+
+   3. TODO (converter, ~7 spots): directive fence-width conflicts in the
+      generated output -- e.g. a `::::hide` nested in a `::::terse`, or nested
+      `::::full` (both 4-colon, which Verso forbids).  These come from FULL/
+      TERSE/HIDE regions nesting; to_verso needs smarter fence-width handling
+      (an inner directive's fence must be strictly shorter than its container's).
+
+   Until 2 and 3 are done, this chapter is not included in the book, and it
+   blocks Logic / IndProp / IndPropRegexp (which import it) downstream. -/
+
 /- INSTRUCTORS: This material is a bit too much to cover in detail in
    one 80-minute lecture.  90-100 minutes is more reasonable, but that
    may still involve going a bit fast at the end. -/
@@ -1514,6 +1541,7 @@ theorem diagonal_induction : ∀ (P : Nat → Nat → Prop),
 -- /HIDE
 -- /FULL
 
+-- HIDE
 /- TODO: (DHS) This should all move to Induction.lean, probably, but that
    means we will need to redo the examples here. Keeping the original
    Rocq here for posterity
@@ -1651,6 +1679,7 @@ Proof.
   - reflexivity.
   - reflexivity.
 Qed. -/
+-- /HIDE
 
 -- ######################################################
 -- Using `cases` on Compound Expressions
@@ -2079,6 +2108,7 @@ theorem split_combine' (α β :Type) l (l1 : List α) (l2 : List β) :
     rw [ih]
     rfl
 
+-- HIDE
 /- Theorem split_combine''_equiv :
     ∀ (X Y:Type) l (l1 : list X) (l2 : list Y),
     (split l = (l1, l2) → split (combine l1 l2) = (l1, l2))
@@ -2107,6 +2137,7 @@ Proof.
     injection Heq as l2in l1in.
     rewrite <- l2in. rewrite <- l1in. simpl. rewrite IHl'.
     reflexivity. reflexivity.  Qed. -/
+-- /HIDE
 -- /QUIETSOLUTION
 -- GRADE_MANUAL 3: split_combine
 -- []

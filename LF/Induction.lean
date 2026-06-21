@@ -216,24 +216,18 @@ theorem review4 : ∀ n : Nat, n + 0 = n := by
 example : ∀ n : Nat, n + 0 = n := by
   intro n; rewrite [add_zero]; rfl
 
-
+/- FULL: But the proof that it is also a neutral element on the _left_
+   can't be done in the same simple way.  Just applying `rfl` doesn't
+   work, since the `n` in `0 + n` is an arbitrary unknown number, so
+   the `match` in the definition of `+` can't be simplified. -/
+/- TERSE: But the proof that it is also a neutral element on the
+   _left_ gets stuck... -/
 /- zero_add_firsttry -/
 /-- warning: declaration uses `sorry` -/
 #guard_msgs in
 example : ∀ n : Nat, 0 + n = n := by
--- TERSE
-/- ... gets stuck. -/
--- /TERSE
--- FULL
-/-
-  ... can't be done in the same simple way.  Just applying
-  `rfl` doesn't work, since the `n` in `0 + n` is an arbitrary
-  unknown number, so the `match` in the definition of `+` can't be
-  simplified.
--/
--- /FULL
   intro n
-  /- `rfl` doesn't work here! -/
+  -- `rfl` doesn't work here!
   sorry
 
 /- TERSE: *** -/
@@ -253,9 +247,12 @@ example : ∀ n : Nat, 0 + n = n := by
   cases n
   case zero => /- n = 0 -/
     rewrite [zero_eq_0, add_zero]
-    rfl /- so far so good... -/
-  case succ n' => /- n = n' + 1 -/
-    /- 0 + (n' + 1) reduces to (0 + n') + 1 ...but we're stuck on 0 + n' -/
+    rfl
+    -- so far so good...
+  case succ n' =>   /- n = n' + 1 -/
+    -- 0 + (n' + 1) reduces to (0 + n') + 1
+    -- BCP: (Check that!)
+    -- ...but we're stuck on 0 + n'
     sorry
 
 -- FULL

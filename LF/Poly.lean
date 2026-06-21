@@ -151,10 +151,11 @@ inductive MyList (α : Type) : Type where
    list-processing functions that we wrote before. Here is `myRepeat`,
    for example: -/
 
-/- /HIDEFROMADVANCED
-   TERSE: ***
-   TERSE: We can now define polymorphic versions of the functions
-       we've already seen... -/
+/- /HIDEFROMADVANCED -/
+
+-- TERSE: ***
+-- TERSE: We can now define polymorphic versions of the functions
+-- we've already seen...
 
 @[irreducible]
 def myRepeat (α : Type) (x : α) (count : Nat) : MyList α :=
@@ -275,6 +276,7 @@ def repeat' α (x : α) (count : Nat) : List α :=
     everywhere, although explicit type annotations can still be quite useful
     as documentation, so we will continue to use them much of the time. -/
 
+-- HIDE
 /-
 (* ###################################################### *)
 (** *** Type Annotation Inference *)
@@ -316,6 +318,8 @@ Check repeat
     can sometimes require readers to perform complex type inference in
     their heads in order to understand your code)."
      -/
+
+-- /HIDE
 
 /- ######################################################
    ### Type Argument Synthesis -/

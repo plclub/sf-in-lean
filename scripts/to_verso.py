@@ -96,6 +96,32 @@ DIRECT_LF_MODULES = {"Basics", "CustomTactics"}
 
 _IMPORT_RE = re.compile(r'^import\s+(\S+)\s*$')
 
+# Some chapters write structural markers in block-comment form (`/- EX2 (foo) -/`,
+# `/- /TERSE -/`, `/- [] -/`) rather than line form (`-- EX2 (foo)`).  Only the
+# line form is recognized downstream, so normalize a single-line `/- MARKER -/`
+# to `-- MARKER`.  Plain `/- label -/` / `/- prose -/` comments are left alone.
+_BLOCK_MARKER_RE = re.compile(
+    r'/-[ \t]*('
+    r'EX\d+[A-Za-z!?]*[ \t]+\(\w+\)'          # exercise open: EX2M? (name)
+    r'|\[\]'                                   # exercise close
+    r'|GRADE_\S[^\n]*?'                        # grading spec
+    r'|/?(?:HIDEFROMADVANCED|HIDEFROMHTML|FULL|TERSE|HIDE|QUIZ|SOLUTION|INSTRUCTORS)'
+    r')[ \t]*-/')
+
+
+def _normalize_block_markers(src: str) -> str:
+    return _BLOCK_MARKER_RE.sub(lambda m: '-- ' + m.group(1).rstrip(), src)
+
+
+# Marker lines that can appear *inside* a multi-line comment body and should be
+# dropped (their underscores/brackets/stars would otherwise break Verso markup).
+# Region semantics (HIDEFROM*) are not honored yet — dropping the marker just
+# lets the surrounding prose render.  FULL/TERSE are handled separately as modes.
+_DROP_MARKER_RE = re.compile(
+    r'/?(?:HIDEFROMADVANCED|HIDEFROMHTML|HIDE|QUIZ|ADMITTED|ADMITDEF)'
+    r'|\[\]'
+    r'|GRADE_\S.*')
+
 
 def _extract_imports(body: str):
     """Pull top-level `import …` lines out of *body* and return
@@ -184,11 +210,18 @@ def _sf_inline_code(text: str) -> str:
     # Convert `[…]` only *outside* existing backtick code spans, so brackets
     # already inside a span (e.g. `rw [add_succ]`) aren't turned into nested
     # backticks.
-    parts = re.split(r'(`[^`\n]*`)', text)
-    return ''.join(
-        p if (len(p) >= 2 and p.startswith('`') and p.endswith('`'))
-        else _SF_INLINE_CODE_RE.sub(lambda m: '`' + m.group(1) + '`', p)
-        for p in parts)
+    out = []
+    for p in re.split(r'(`[^`\n]*`)', text):
+        if len(p) >= 2 and p.startswith('`') and p.endswith('`'):
+            out.append(p)
+            continue
+        p = _SF_INLINE_CODE_RE.sub(lambda m: '`' + m.group(1) + '`', p)
+        # Escape any brackets that survive conversion — empty `[]`, stray `[`/`]`
+        # — which Verso would otherwise read as link syntax.  (This corpus has
+        # no real `[text](url)` markdown links.)
+        p = p.replace('[', '\\[').replace(']', '\\]')
+        out.append(p)
+    return ''.join(out)
 
 
 def _prose_markup(text: str) -> str:
@@ -204,11 +237,18 @@ def _comment_tokens(body: str):
     becomes a block_comment_prose token (the old code kept only the first
     heading and silently dropped everything after it).  `####...` divider
     lines and embedded dev notes are stripped.
+
+    A line beginning `FULL:` or `TERSE:` switches the build mode for the lines
+    that follow it (within the comment), wrapping that run in a ::::full /
+    ::::terse region; the mode persists until the next prefix or the end of the
+    comment.  This handles both whole-comment forms (`/- FULL: … -/`) and mixed
+    comments that alternate full and terse prose line by line.
     """
     body = _strip_dev_note_lines(body)
     lines = [l for l in body.splitlines() if not _SEPARATOR_LINE_RE.match(l)]
     tokens = []
     prose = []
+    mode = [None]   # None | 'FULL' | 'TERSE'
 
     def flush_prose():
         seg = list(prose)
@@ -221,20 +261,49 @@ def _comment_tokens(body: str):
                            _prose_markup('\n'.join(seg))))
         prose.clear()
 
-    for l in lines:
+    def set_mode(new):
+        if new == mode[0]:
+            return
+        flush_prose()
+        if mode[0] == 'FULL':
+            tokens.append(('full_close', None))
+        elif mode[0] == 'TERSE':
+            tokens.append(('terse_close', None))
+        mode[0] = new
+        if new == 'FULL':
+            tokens.append(('full_open', None))
+        elif new == 'TERSE':
+            tokens.append(('terse_open', None))
+
+    def add_content(l):
         m = _HEADING_LINE_RE.match(l)
         if l.strip() == '***':
-            # A `***` line inside prose is a slide break (the embedded form of
-            # the /- *** -/ marker).
+            # A `***` line is a slide break (embedded form of the /- *** -/ marker).
             flush_prose()
             tokens.append(('slidebreak', None))
+        elif l.lstrip().startswith('*** '):
+            # `*** text` : a slide break immediately followed by prose.
+            flush_prose()
+            tokens.append(('slidebreak', None))
+            prose.append(l.lstrip()[4:])
         elif m:
             flush_prose()
             tokens.append(('block_comment_header',
                            (len(m.group(1)), m.group(2).strip())))
         else:
             prose.append(l)
-    flush_prose()
+
+    for l in lines:
+        m_mode = re.match(r'^\s*(FULL|TERSE):\s?(.*)$', l)
+        if m_mode:
+            set_mode(m_mode.group(1))
+            if m_mode.group(2).strip():
+                add_content(m_mode.group(2))
+        elif _DROP_MARKER_RE.fullmatch(l.strip()):
+            continue                  # stray region/grade/admitted marker — skip
+        else:
+            add_content(l)
+    set_mode(None)   # closes any open FULL/TERSE region and flushes prose
     return tokens if tokens else [('blank', None)]
 
 def _scan_block_comment(lines, i):
@@ -371,9 +440,9 @@ def tokenize(text: str):
                     tokens.append(('code_line', l))
                 continue
             body = _extract_comment_text(raw)
-            if re.fullmatch(r'(TERSE:\s*)?\*\*\*', body.strip()):
-                # /- *** -/ or /- TERSE: *** -/ : a slide break (block-comment
-                # form of the -- TERSE: /- *** -/ line marker).
+            if re.fullmatch(r'(FULL:\s*|TERSE:\s*)?\*\*\*', body.strip()):
+                # /- *** -/, /- TERSE: *** -/, /- FULL: *** -/ : a slide break
+                # (block-comment form of the -- TERSE: /- *** -/ line marker).
                 tokens.append(('slidebreak', None))
             elif _is_block_dev_comment(body):
                 # /- MWH: … -/ author note -> :::dev (keeps every word).
@@ -384,6 +453,17 @@ def tokenize(text: str):
                 tokens.append(('blank', None))
             else:
                 tokens.extend(_comment_tokens(body))
+            continue
+
+        # An indented `-- …` line comment that directly follows a code line is
+        # commentary between tactics inside a proof; keep it as code so the proof
+        # stays intact, rather than letting a marker (e.g. `-- BCP:`) pull it out
+        # into a directive and split the proof.  (Source markers like -- FULL,
+        # -- EX, -- [] sit at column 0, so this never swallows them.)
+        if (line[:1].isspace() and stripped.startswith('--')
+                and tokens and tokens[-1][0] == 'code_line'):
+            tokens.append(('code_line', line))
+            i += 1
             continue
 
         # --- Structural markers (check stripped) ---
@@ -653,15 +733,17 @@ class Renderer:
     def _on_block_comment_header(self, hdr):
         level, title = hdr
         self._flush_code()
-        # Headers always go at document level — Verso doesn't support
-        # headings nested inside block directives like :::full.  If a
-        # :::full is currently open, close it and re-arm pending_full so
-        # subsequent content opens a fresh one.
-        # A section heading ends any open exercise (the source closes exercises
-        # implicitly at the next section rather than always with `-- []`).
+        # Headers always go at document level — Verso doesn't support headings
+        # nested inside block directives like :::full / ::::terse / ::::exercise.
+        # A section heading ends any open exercise or terse region (the source
+        # closes exercises implicitly at the next section rather than always with
+        # `-- []`), and closes/re-arms :::full so later content reopens a fresh one.
         if self.in_exercise:
             self._append(_CONTAINER_FENCE + '\n\n')
             self.in_exercise = False
+        if self.terse_open:
+            self._append(_CONTAINER_FENCE + '\n\n')
+            self.terse_open = False
         if self.full_open and not self.in_exercise:
             self._close_full_if_open()
             self.pending_full = True
@@ -741,7 +823,11 @@ class Renderer:
 
     def _on_terse_inline(self, text):
         self._flush_code()
-        self._append(f':::terse\n{text}\n:::\n\n')
+        if text.strip() == '***':
+            # `-- TERSE: ***` is a slide break, not terse prose.
+            self._append(':::slidebreak\n:::\n\n')
+            return
+        self._append(':::terse\n' + _prose_markup(text) + '\n:::\n\n')
 
     def _on_hide(self, text):
         # -- HIDE / -- /HIDE regions become :::hide blocks, processed identically
@@ -785,13 +871,11 @@ class Renderer:
         # :::instructors are processed identically (see SFLMeta); they differ only
         # in name so instructor notes can be treated differently later.
         #
-        # NB: the body is emitted *unfenced*, so it is parsed as Verso markup.
-        # Author comments must therefore avoid raw Verso specials (unbalanced
-        # `*`, `[...]`, stray backticks, a leading `#`); offending text breaks the
-        # build at parse time.  (:::hide keeps a verbatim fence -- see _on_hide --
-        # because it wraps raw code, not prose.)
+        # The body is verbatim-fenced (like :::hide): since it is discarded, its
+        # exact rendering doesn't matter, and fencing keeps arbitrary author text
+        # (underscores, `*`, `[...]`, a leading `#`, ...) from breaking the parser.
         self._flush_code()  # still acts as a code-block separator
-        self._append(f':::{directive}\n' + _prose_markup(text) + '\n:::\n\n')
+        self._append(f':::{directive}\n' + _verbatim_block(text) + '\n:::\n\n')
 
     # --- Main dispatch ---
 
@@ -922,11 +1006,16 @@ def _convert_solution_markers(src: str) -> str:
 
         # --- ADMITTED block: a tactic sequence inside a `by` ---
         if s == '-- ADMITTED':
-            indent = _indent_of(line)
             j = i + 1
             body = []
             while j < n and lines[j].strip() != '-- /ADMITTED':
                 body.append(lines[j]); j += 1
+            # `solution!` must align with the proof body (which sits inside the
+            # `by`), not with the `-- ADMITTED` marker — the marker is often at
+            # column 0 while the tactics are indented, and a column-0 `solution!`
+            # would be read as a new command after an empty `by` block.
+            first_body = next((b for b in body if b.strip()), '')
+            indent = _indent_of(first_body) if first_body else _indent_of(line)
             out.append(indent + 'solution!')
             for bl in body:
                 # tacticSeqIndentGt: body must sit deeper than `solution!`.
@@ -960,6 +1049,8 @@ def convert(src_text: str, title: str, file_key: str) -> str:
     extra_imports, body_src = _extract_imports(body_src)
     header = HEADER_TEMPLATE.format(
         title=title, file=file_key, extra_imports='\n'.join(extra_imports))
+    # Normalize block-comment markers (/- EX … -/, /- /TERSE -/, …) to line form.
+    body_src = _normalize_block_markers(body_src)
     # Rewrite solution markers (ADMITDEF/ADMITTED/SOLUTION) into the in-code
     # forms SFLMeta understands before tokenizing.
     body_src = _convert_solution_markers(body_src)
