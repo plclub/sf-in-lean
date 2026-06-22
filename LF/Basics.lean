@@ -339,7 +339,7 @@ type as Lean's built-in, but their definitions are equivalent.
 
 :::dev
 BCP: Why call it MyBool instead of just Bool?  (Or, conversely, why call the constructors
-true and false instead of mytrue, myfalse, mynotb, etc.?  
+true and false instead of mytrue, myfalse, mynotb, etc.?
 Maybe this is a place to talk about how inductive types create namespaces?)
 :::
 
@@ -808,7 +808,8 @@ a tuple of four bits.
 
 :::dev
 DHS: Some discussion remains around Nibble vs. Nybble.
-From the GitHub thread, we had MWH linking https://en.wikipedia.org/wiki/Nibble_(magazine),
+From the GitHub thread, we had MWH linking
+`https://en.wikipedia.org/wiki/Nibble_(magazine)`,
 but BCP indicated that he saw the Nibble spelling more commonly.
 :::
 
