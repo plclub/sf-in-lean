@@ -56,10 +56,22 @@ clean:
 # ── Generating Verso chapters from bare Lean ──────────────────────────────────
 # Chapters that are not yet authored directly in Verso are generated from their
 # code-forward `.lean` source by scripts/to_verso.py:
-#     LF/Foo.lean  (bare Lean)  -->  LF/FooVerso.lean  (Verso)
-# List each generated chapter as a prerequisite of `verso` below. Remove it once
-# the chapter is authored directly in Verso (as LF/Basics.lean now is).
-verso:        # (no chapters are generated right now — Basics is authored in Verso)
+#     LF/Foo.lean  (bare Lean)  -->  LF/FooVerso.lean  (Verso, .gitignored)
+# Basics is authored directly in Verso, so it is not listed here.
+#
+# `make verso` (re)generates a LF/XXXVerso.lean for every chapter below.  To put
+# a chapter in the book, add its `import`/`{include}` lines to LF.lean by hand
+# once it compiles (a freshly generated chapter usually won't build yet:
+# cross-chapter `import`s become code blocks, titles need fixing, etc.).
+LF_CHAPTERS := Induction UsingLean Lists Poly Tactics Logic IndProp IndPropRegexp Maps
+
+LF_VERSO_FILES := $(addprefix LF/,$(addsuffix Verso.lean,$(LF_CHAPTERS)))
+
+.PHONY: verso
+verso: $(LF_VERSO_FILES)
+
+# Regenerate the Verso sources before building the book.
+lf-build: verso
 
 LF/%Verso.lean: LF/%.lean scripts/to_verso.py
 	python3 scripts/to_verso.py $< $@

@@ -651,9 +651,7 @@ content that could become an exercise-light aside.
 
 ## Types
 
-Every expression in Lean has a type describing what sort of
-thing it computes. The `#check` command asks Lean to print the type
-of an expression.
+Every expression in Lean has a type describing what sort of thing it computes. The `#check` command asks Lean to print the type of an expression.
 
 ```lean
 #check true
