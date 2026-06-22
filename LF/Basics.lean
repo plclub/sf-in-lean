@@ -679,23 +679,18 @@ result.
 
 ## Namespaces and Sections
 
-:::dev
-JC: I edited a lot of the contents and comments in just this section,
-I hope it makes sense.
-:::
 
 ::::full
 Lean provides a _namespace system_ to aid in organizing large
 developments. If we enclose a collection of declarations in
 `namespace X ... end X`, then, in the rest of the file after the
 `end`, these definitions will be referred to by names like `X.foo`
-instead of just `foo`. We will use this feature to limit the scope
-of definitions so that we are free to reuse names (in particular,
-names from the standard library).
-
-:::dev
-BCP: This doesn't explain why we *want* to reuse names freely?
-:::
+instead of just `foo`. In this book, we will use this feature to
+limit the scope of definitions so that we are free to reuse names
+from the standard library so we can redefine them and learn about
+how they work. In large Lean developments, namespaces are
+used to organize definitions and theorems the same way
+modules are used in other programming languages.
 ::::
 
 :::terse
@@ -714,98 +709,50 @@ end Playground
 
 ::::full
 When inside a `namespace` region, definitions from the same
-namespace can be referenced without prefixes.
+namespace can be referenced without prefixes. When a `namespace`
+shares the same name as a type, definitions on that type are
+available inside the `namespace` without a prefix. In the example
+below, we can use the `blue` constructor without a `.` because
+we are inside the `RGB` `namespace`, which is the same as `blue`'s type.
+::::
 
+```lean
+namespace RGB
+def myBlue : RGB := blue
+end RGB
+```
+
+::::full
 Top-level definitions can also be prefixed by a namespace to put
 them in the namespace "from the outside," without having to open and
 close it.
 ::::
 
 ```lean
-namespace RGB
-```
-
-:::dev
-BCP: RGB was declared as an inductive type, and it's used here in
-both senses. Is this intentional?
-:::
-
-```lean
-def myBlue : RGB := blue
-end RGB
-
+--- this works, because the definnition is qualified by `RGB.`
 def RGB.myOtherBlue : RGB := myBlue
-```
 
-#check myBlue -- unknown identifier
-
-:::dev
-BCP: Huh? We just used `myBlue` as a top-level id, didn't we?  So
-why is it unknown?
-DHS: This is super confusing! It seems like defining
-`def RGB.myOtherBlue` implicitly opens the namespace for the
-duration of the new definition? This is super confusing imo, we should not
-teach this.
-:::
-
-```lean
 #check RGB.myBlue      -- RGB
 #check RGB.myOtherBlue -- RGB
 ```
+
+#check myBlue -- unknown identifier
 
 ::::full
 We can also use `open` to bring the definitions of a namespace into
 the current scope; after that, we can refer to any of the namespace's
 definitions without a prefix.
-
-Definitions of the same name declared prior to the `open` can be
-referred to by the special prefix `_root_`. Lean also provides
-_sections_, which delimit the scope of `open`ing namespaces and
-`local` notations within `section ... end`. We already saw `prefix`
-and `infix` notations for MyBool; there are also `postfix`
-notations.
-
-:::dev
-BCP: That goes by *waaay* too fast!
-DHS: IMO we should cut this whole section down to the same
-length as the `modules` section from the Rocq book. All students
-*really* need to know here is that if you use a name defined
-in a namespace outside of it, you have to qualify it,
-but you can open the namespace to "import" the names defined inside it.
-BCP: Yes.
-:::
-
-:::dev
-BCP: Is the `_root_` thing something that readers actually need to know?
-:::
 ::::
 
-:::terse
-`section` declarations delimit the scope of `open` and `local`.
-:::
-
 ```lean
-section
-open Playground
-local postfix:40 "′" => Color.primary
+namespace MyNamespace
+def myDef : Bool := true
+end MyNamespace
+
+open MyNamespace
+
+#check myDef -- Bool
 ```
-
-:::dev
-BCP: Not convinced we need to teach people about `postfix` and
-suchlike in this chapter (or anyplace, really, but I will object
-less to it if we do it later).
-:::
-
-```lean
-#check myFoo        -- RGB
-#check _root_.myFoo -- Bool
-#check RGB.blue′    -- Color
-end
-
-#check myFoo         -- Bool
-```
-
-#check RGB.blue′  -- fails to parse
 
 ## Constructors with Multiple Arguments
 
@@ -816,17 +763,14 @@ namespace Playground
 ::::full
 A single constructor with multiple parameters can be used to create
 a tuple type. As an example, consider representing the four bits in
-a nybble (half a byte). We first define a datatype `Bit` that
+a nibble (half a byte). We first define a datatype `Bit` that
 resembles `Bool` (using the constructors `b1` and `b0` for the two
-possible bit values) and then define the datatype `Nybble`, which is
+possible bit values) and then define the datatype `Nibble`, which is
 essentially a tuple of four bits.
-BCP: Nibble seems to be the preferred spelling.  (I also liike nybble, but
-a bit of looking around convinced me that it will seem wrong to enough
-people that it isn't worth it.) But I don't feel very strongly about it.
 ::::
 
 :::terse
-A Nybble is half a byte -- four bits.
+A Nibble is half a byte -- four bits.
 :::
 
 ```lean
@@ -834,10 +778,10 @@ inductive Bit : Type where
   | b1
   | b0
 
-inductive Nybble : Type where
+inductive Nibble : Type where
   | bits (x0 x1 x2 x3 : Bit)
 
-#check (.bits .b1 .b0 .b1 .b0 : Nybble)
+#check (.bits .b1 .b0 .b1 .b0 : Nibble)
 ```
 
 ::::full
@@ -850,18 +794,18 @@ the same with the function definition `orb` above, writing
 
 The `bits` constructor acts as a wrapper for its contents.
 Unwrapping is done by pattern matching, as in the `allZero` function
-below, which tests a Nybble to see if all its bits are `b0`.
+below, which tests a Nibble to see if all its bits are `b0`.
 ::::
 
 :::slidebreak
 :::
 
 :::terse
-We can deconstruct a Nybble by pattern-matching.
+We can deconstruct a Nibble by pattern-matching.
 :::
 
 ```lean
-def allZero (nb : Nybble) : Bool :=
+def allZero (nb : Nibble) : Bool :=
   match nb with
   | .bits .b0 .b0 .b0 .b0 => true
   | .bits _   _   _   _   => false
@@ -902,7 +846,7 @@ namespace NatPlayground
 ::::full
 All the types we have defined so far -- both "enumerated
 types" such as `Day`, `Bool`, and `Bit` and tuple types such as
-`Nybble` built from them -- are finite. The natural numbers, on
+`Nibble` built from them -- are finite. The natural numbers, on
 the other hand, are an infinite set, so we'll need to use a
 slightly richer form of type declaration to represent them.
 
