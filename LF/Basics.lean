@@ -1498,6 +1498,11 @@ We can also now define the simplification lemmas for `beq` with this new notatio
 one for each of the four cases of control flow through the function.
 ::::
 
+:::dev
+BCP: The following lemmas are also needed by the TERSE version, so I guess someone has broken out of the `full` block to make them.
+visible.  But the whole discussion here needs a TERSE version too, not just these lemmas!
+:::
+
 ```lean
 unseal beq
 theorem zero_zero_beq_true : (0 == 0) = true := by rfl
