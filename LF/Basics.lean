@@ -200,6 +200,19 @@ with too much detail is actually leading to more confusion.  Maybe we should
 just explain what's going on.
 DHS: How's this?
 :::
+
+:::dev
+From GitHub discussion, this is unresolved:
+MWH - it seems that the full explanation comes later? I'm still not sure I get
+what's being said here. I think it's maybe worth being systematic, right here,
+if it seems to slow you down.
+DHS - I worry that explaining namespaces right here is too soon. This is essentially
+the very first thing we explain in the whole textbook, and going directly in to the
+details of how namespaces work immediately seems like a lot. Does it seem appropriate
+to say "names have to be qualified" here and then explain namespaces later?
+MWH - This is a key concept as the current comment explains. I'm a little inclined to
+put it all here. But I'm good with whatever for now. We can always change it later.
+:::
 ::::
 
 :::slidebreak
@@ -233,7 +246,8 @@ the Lean extension and try it for yourself.  Load this file,
 example, and observe the result in the Lean InfoView panel.)
 
 :::dev
-DHS: Where are we showing responses in comments? I don't see thems
+DHS: Where are we showing responses in comments? I don't see them.
+Per GitHub discussion, MWH agrees - this is unresolved.
 :::
 ::::
 
@@ -791,6 +805,12 @@ possible bit values) and then define the datatype `Nibble`, which is
 essentially a tuple of four bits.
 ::::
 
+:::dev
+DHS: Some discussion remains around Nibble vs. Nybble.
+From the GitHub thread, we had MWH linking https://en.wikipedia.org/wiki/Nibble_(magazine),
+but BCP indicated that he saw the Nibble spelling more commonly.
+:::
+
 :::terse
 A Nibble is half a byte -- four bits.
 :::
@@ -1033,13 +1053,6 @@ def add (n : Nat) (m : Nat) : Nat :=
   | zero => n
   | succ m' => succ (add n m')
 ```
-:::dev
-Can we be a little more explicit / less mysterious in the comment
-:::
-
-:::dev
-BCP STOPPED HERE
-:::
 
 # Proof by Rewriting
 
@@ -1294,7 +1307,7 @@ seal even
 In the remainder of this textbook, we will pair definitions
 with their simplification lemmas. After proving these lemmas, instead of using `rfl`
 to peek through the definitions, we will prefer rewriting
-by tho lemmas, using `@[irreducible]` to enforce this policy,
+by the lemmas, using `@[irreducible]` to enforce this policy,
 and only `unseal`ing the definition in the proofs of those lemmas themselves.
 ::::
 
