@@ -1,12 +1,14 @@
 # Continuous integration for Software Foundations in Lean.
 #
 # WHAT THIS DOES
-#   On every pull request, and on every push to `main`, it builds the book.
-#   If anything fails to compile the check turns red; with branch protection
-#   enabled (see README.md) a red check blocks merging, so `main` always builds.
+#   On every pull request, and on every push to `main`, it builds the book and
+#   then runs `make`, which regenerates the extracted `_out/<variant>/lean`
+#   projects and compiles each one. If anything fails to compile the check turns
+#   red; with branch protection enabled (see README.md) a red check blocks
+#   merging, so `main` always builds.
 #
 # RUN THE SAME CHECK LOCALLY
-#   lake build        # build the book
+#   make              # build the book, regenerate _out, and compile it
 #
 # MAINTAINING THIS FILE
 #   It is deliberately tiny. To add a check, add another step below.
@@ -28,3 +30,9 @@ jobs:
       # Install the Lean toolchain pinned in `lean-toolchain` (with build
       # caching) and run `lake build`, which builds the book.
       - uses: leanprover/lean-action@v1
+
+      # Regenerate the extracted `_out/<variant>/lean` projects and compile each
+      # one. The `make` targets run the `lf_*` executables, which write the
+      # extracted Lean sources and then `lake build` them; a compile failure in
+      # any variant turns the executable's exit code (and so this step) red.
+      - run: make
