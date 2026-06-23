@@ -210,12 +210,12 @@ private def appendTeacherStudent
   buf.insert file (t ++ teacher, st ++ student)
 
 /-- Render a string as a block of `--` line comments, one per line (blank lines
-become a bare `--`), normalising trailing whitespace. -/
+stay completely blank), normalising trailing whitespace. -/
 private def asModuleDoc (s : String) : String :=
   let t := s.trimAscii.toString
   let commented := String.intercalate "\n"
     ((t.splitOn "\n").map fun line =>
-      if line.all (·.isWhitespace) then "--" else "-- " ++ line)
+      if line.all (·.isWhitespace) then "" else "-- " ++ line)
   commented ++ "\n\n"
 
 /-- Merge adjacent `/-! … -/` blocks into one, separating their contents with a blank line. -/
