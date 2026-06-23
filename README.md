@@ -139,3 +139,11 @@ then visit http://localhost:8000 (`make serve` builds, then serves `_out/` on
 port 8000).
 
 To build a single variant without serving, run e.g. `make lf-student`.
+
+## License
+
+This project is licensed under the Apache License, Version 2.0. See the
+[LICENSE](LICENSE) and [NOTICE](NOTICE) files for details. Unless you state
+otherwise, any contribution you intentionally submit for inclusion in this
+work shall be licensed under the same terms, with no additional terms or
+conditions.
