@@ -35,9 +35,23 @@ We should be following the [style guide](https://leanprover-community.github.io/
 
 **To do**: take inspiration from Jimmy Wales' [Seven Rules of Trust](https://en.wikipedia.org/wiki/The_Seven_Rules_of_Trust), which underpin Wikipedia's distributed development.
 
-## Project board (for claiming files)
+## Tracking work (who's working on what)
 
-https://github.com/orgs/plclub/projects/2
+We currently track in-progress work with **GitHub Issues**, not a separate board.
+
+- **One issue per chapter/file.** To claim a piece of work, open (or find) its
+  issue and **assign yourself** — the assignee is the single source of truth for
+  who is working on what. Use the *"Chapter / file work"* issue template when
+  claiming something new.
+- **Link your PR.** Put `Closes #<issue>` in the PR description so the issue
+  closes automatically when the PR merges.
+- **Signal active code** by opening a **draft PR** early; it shows your
+  work-in-progress before it's ready for review.
+- **At-a-glance status:** the pinned **"Chapter status"** tracking issue lists
+  every chapter and its current owner. Keep it up to date as you claim/finish.
+
+(GitHub Projects boards are just a view over these issues; add one later if you
+want kanban columns, but the issues above are the actual workflow.)
 
 ## Development workflow
 
