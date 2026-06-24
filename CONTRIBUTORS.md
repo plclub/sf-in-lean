@@ -8,27 +8,25 @@ markup, comment conventions, the order in which tactics are introduced, etc.
 
 1. SFL aims for exceptional pedagogy and presentational polish.
 2. SFL is _exercise-based_: Every important concept comes with hands-on exercises to reinforce it, with solutions.
-3. SFL strives to teach _proof engineering_, 
-   which involves constructing readable and maintainable 
-   formalizations and proofs.
+3. SFL strives to teach _proof engineering_, which involves
+   constructing readable and maintainable formalizations and proofs.
     - Corollary: Students should understand particular tactics and what 
       they do, starting small and growing in sophistication.
     - Corollary: Definitions and proofs are written in idiomatic Lean 
       (mostly the way it is for engineering/maintainability reasons), 
       only deviating (temporarily) for strong pedagogical reasons.
-4. SFL developments connect with those in 
-   [CSLib](https://github.com/leanprover/cslib/tree/main) where possible.
-   Some of SFL's languages, semantics, etc. might eventually 
+4. SFL developments connect with those in
+   [CSLib](https://github.com/leanprover/cslib/tree/main) where
+   possible. Some of SFL's languages, semantics, etc. might eventually
    find a place in CSLib. 
 
 ## Collaboration Conventions
 
-We are still figuring out good conventions for communicating about
-who is doing what. For the moment, use the Zulip *Lock Thread* channel 
-to announce where you are working and coordinate with others that
-may be touching the same files. Make PRs frequently so that your
-local changes get folded back into the main branch as quickly as
-possible.
+We are still figuring out good conventions for communicating about who
+is doing what. For the moment, use the Zulip *Lock Thread* channel to
+announce where you are working and coordinate with others that may be
+touching the same files. Make PRs frequently so that your local
+changes get folded back into the main branch as quickly as possible.
 
 We are exploring how to use GitHub issues for SFL.
 
@@ -37,9 +35,9 @@ We are exploring how to use GitHub issues for SFL.
 We use git and github, with some simple conventions:
 
 * The `main` branch must always build. 
-* Never commit directly to `main`. 
-  Instead, branch, edit, make a PR, wait for CI to go green (and for
-  others to review, if appropriate), then merge.  
+* Never commit directly to `main`. Instead, branch, edit, make a PR,
+  wait for CI to go green (and for others to review, if appropriate),
+  then merge.  
 * After your PR is merged, delete the branch to keep the repo tidy.
 * Don't merge a red PR.
 
@@ -69,8 +67,8 @@ then visit http://localhost:8000
 
 **BCP: This section needs reviewed.**
 
-We generally follow the 
-[Mathlib style guide](https://leanprover-community.github.io/contribute/style.html)
+We generally follow the [Mathlib style
+guide](https://leanprover-community.github.io/contribute/style.html)
 and use the Lean linter by default. 
 
 SFL-specific conventions:
@@ -85,9 +83,12 @@ SFL-specific conventions:
   `cases h; case …` / `induction h; case …`. Select cases with named `case`s,
   un-indented and without a leading `.`, and **align the `=>`** as above.
   Use the `·` selector only when the goal names are not meaningful.
+  
 * **`rewrite` before `rw`** (see next section).
+
 * **Explicit rewrites over `dsimp`/`simp` through notation** (see "Notation and
   simplification").
+
 * **`sorry` placeholders are checked, not silent.** Where a `sorry` appears
   (incomplete proof, exercise scaffold), wrap it so the warning is asserted:
   ```lean
@@ -95,19 +96,22 @@ SFL-specific conventions:
   #guard_msgs in
   example : … := sorry
   ```
+
 * **Aborted/abandoned lemmas** become unnamed `example`s closed with `sorry`
   (the SFL analogue of Rocq's `Abort`).
+
 * **Library vs. client code.** Inside a definition's own library it is fine to
   unfold and simplify through definitions; *using* that code, do not "peek
   through the interface."
 
 ### `rewrite` vs `rw`
 
-`rw [h]` is roughly `rewrite [h]; rfl`, which is too strong for the first
-chapters: it hides the closing `rfl` and makes proofs step confusingly (the goal
-vanishes when you step past the final `]`). Decision (JC): **use `rewrite` the
-first time, keep using it explicitly in the early arithmetic proofs, then
-introduce `rw` in `Induction` and use `rw` predominantly from there on.**
+`rw [h]` is roughly `rewrite [h]; rfl`, which is too strong for the
+first chapters: it hides the closing `rfl` and makes proofs step
+confusingly (the goal vanishes when you step past the final `]`).
+Decision (JC): **use `rewrite` the first time, keep using it
+explicitly in the early arithmetic proofs, then introduce `rw` in
+`Induction` and use `rw` predominantly from there on.**
 
 ### Notation and simplification
 
@@ -119,11 +123,12 @@ equational lemmas** instead — e.g. `n + (m + 1) = n + m + 1` or
 
 ### Arithmetic / the custom `Nat`
 
-`Basics` defines its own `Nat` with `zero`/`succ` constructors and overrides the
-stdlib typeclasses for `-`, `*`, and `^` (but **not** `+`, which is too
-pervasive in the stdlib to shadow safely). Write arithmetic proofs against these
-definitions (`add_succ`, `add_zero`, `mul_succ`, …). `calc`-style equational
-reasoning is introduced in `Induction`.
+`Basics` defines its own `Nat` with `zero`/`succ` constructors and
+overrides the stdlib typeclasses for `-`, `*`, and `^` (but **not**
+`+`, which is too pervasive in the stdlib to shadow safely). Write
+arithmetic proofs against these definitions (`add_succ`, `add_zero`,
+`mul_succ`, …). `calc`-style equational reasoning is introduced in
+`Induction`.
 
 
 ## Verso markup conventions
