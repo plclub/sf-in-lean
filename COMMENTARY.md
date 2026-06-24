@@ -1,12 +1,11 @@
-This file is for temporary / ongoing discussions among translators.
+This file has been used for temporary / ongoing discussions among translators. 
+It should probably be deleted.
 
-Normative conventions — Lean style, comment conventions, the Verso/`to_verso` directive mapping, and the tactic-introduction order — live in
-[STYLEGUIDE.md](STYLEGUIDE.md). This file keeps the *rationale*, the open
-questions, and the per-chapter notes behind those decisions.
+Normative conventions — live in [STYLEGUIDE.md](STYLEGUIDE.md) now. 
 
-# Progress tracker
+# Potential rules for collaboration
 
-https://github.com/orgs/plclub/projects/2/views/1
+**To do**: take inspiration from Jimmy Wales' [Seven Rules of Trust](https://en.wikipedia.org/wiki/The_Seven_Rules_of_Trust), which underpin Wikipedia's distributed development.
 
 # Commentary
 
@@ -164,6 +163,11 @@ to acknowledge this and teach idiomatic style.
 CH: There's several style things to mention here like `classical` vs. `open Classical`.
 
 
+### (Another note about simplification)
+
+1. While writing library code, it's fine and necessary to unfold and simplify through definitions. When using that code, the idiomatic way is not to "peek through the interface".
+
+
 ## Book Structure
 
 The Structure of SFL will differ from Rocq SF in that the LF/PLF books will be
@@ -176,11 +180,3 @@ and something about types and functional PL. The contents will also be somewhat 
 * Volume 2 will be the Type Systems and Lambda Calculus book
 * Volume 3 will be the Imperative Languages and Hoare Logic book
   * Moving this to after the Type Systems book should make a smoother transition to later material about specification and imperative proofs, rather than having it come before the Type Systems work. 
-
-## Grading
-
-* An existing autograder is https://github.com/robertylewis/lean4-autograder-main
-* Used in actual courses:
-  * Rob Lewis's [_Formal Proof and Verification_](https://github.com/BrownCS1951x) at Brown
-  * Heather Macbeth's [_The Mechanics of Proof_](https://github.com/hrmacbeth/math2001) at Fordham
-* I suspect there will be some nontrivial tinkering to get this working with Verso exactly as desired

@@ -188,12 +188,12 @@ private partial def blockToText (width : Nat) : Verso.Doc.Block Manual → Strin
 /-! ## Lake project scaffold templates -/
 
 /-- Contents of the generated project's `lakefile.toml`. -/
-private def lakefileTemplate : String :=
-  "name = \"plf-extracted\"\n" ++
+private def lakefileTemplate (vol : String) : String :=
+  "name = \"" ++ vol.toLower ++ "-extracted\"\n" ++
   "version = \"0.1.0\"\n" ++
-  "defaultTargets = [\"LF\"]\n\n" ++
+  "defaultTargets = [\"" ++ vol ++ "\"]\n\n" ++
   "[[lean_lib]]\n" ++
-  "name = \"LF\"\n"
+  "name = \"" ++ vol ++ "\"\n"
 
 /-! ## ExtraStep walker -/
 
@@ -646,16 +646,16 @@ private def chapterFileBase (p : Part Manual) : String :=
   (meta?.bind (·.file)).getD titleStr.sluggify.toString
 
 /-- Generated Lean file path for a chapter Part. -/
-private def chapterPath (p : Part Manual) : String :=
-  "LF/" ++ chapterFileBase p ++ ".lean"
+private def chapterPath (vol : String) (p : Part Manual) : String :=
+  vol ++ "/" ++ chapterFileBase p ++ ".lean"
 
 /-- Generated Lean module name for a chapter Part. Uses the raw `file :=`
 identifier when it is a plain alphanumeric/underscore name; falls back to
 French-quote brackets for slugs that contain hyphens or other punctuation. -/
-private def chapterModule (p : Part Manual) : String :=
+private def chapterModule (vol : String) (p : Part Manual) : String :=
   let base := chapterFileBase p
-  if base.all (fun c => c.isAlphanum || c == '_') then "LF." ++ base
-  else "LF.«" ++ base ++ "»"
+  if base.all (fun c => c.isAlphanum || c == '_') then vol ++ "." ++ base
+  else vol ++ ".«" ++ base ++ "»"
 
 /--
 Walk a section (a Part at depth ≥ 1, inside a chapter). The section's title is
@@ -676,16 +676,17 @@ partial def walkSection (width : Nat) (depth : Nat) (file : String) (part : Part
 /--
 The root of the walker. Each top-level sub-Part of the root document is
 treated as a chapter and written to its own file (using the `file :=` metadata
-key each chapter sets in its `%%%` block). The root file (`LF.lean`) gets one
+key each chapter sets in its `%%%` block). The root file (`{vol}.lean`) gets one
 `import` line per chapter. -/
-def walkOuter (width : Nat) (rootFile : String) (text : Part Manual) (buf : SaveBuffers) :
+def walkOuter (width : Nat) (vol : String) (text : Part Manual) (buf : SaveBuffers) :
     SaveBuffers := Id.run do
+  let rootFile := vol ++ ".lean"
   let .mk _ _ _ _ subParts := text
   let mut buf := buf
   for p in subParts do
-    buf := appendBoth buf rootFile s!"import {chapterModule p}\n"
+    buf := appendBoth buf rootFile s!"import {chapterModule vol p}\n"
   for p in subParts do
-    let chapterFile := chapterPath p
+    let chapterFile := chapterPath vol p
     -- BCP: Maybe this is not needed?
     -- buf := appendBoth buf chapterFile "import Lean\n\nopen Lean\n\n"
     buf := walkSection width 1 chapterFile p buf
@@ -696,18 +697,18 @@ Write a complete generated Lake project at `dest`: the per-file buffer
 contents under `dest/`, plus `lakefile.toml`, `lean-toolchain`, and a `LF.lean`
 that imports `LF.STLC`. -/
 private def writeProject (dest : System.FilePath) (toolchain : String)
-    (kind : String) (files : Array (String × String)) : IO Unit := do
+    (vol kind : String) (files : Array (String × String)) : IO Unit := do
   IO.FS.createDirAll dest
-  -- Clear the LF/ source tree so chapter files that have since been renamed
+  -- Clear the volume source tree so chapter files that have since been renamed
   -- or removed don't linger as stale orphans. Other artifacts (`.lake`,
   -- `lakefile.toml`, `lean-toolchain`, `README.md`) are left alone.
-  let chapterRoot := dest / "LF"
+  let chapterRoot := dest / vol
   if ← chapterRoot.pathExists then
     IO.FS.removeDirAll chapterRoot
-  IO.FS.writeFile (dest / "lakefile.toml") lakefileTemplate
+  IO.FS.writeFile (dest / "lakefile.toml") (lakefileTemplate vol)
   IO.FS.writeFile (dest / "lean-toolchain") toolchain
   IO.FS.writeFile (dest / "README.md")
-    s!"# LF — {kind} version\n\nGenerated from the Verso source.\n"
+    s!"# {vol} — {kind} version\n\nGenerated from the Verso source.\n"
   for (relPath, body) in files do
     let target := dest / relPath
     target.parent.forM IO.FS.createDirAll
@@ -733,30 +734,31 @@ private def buildProject (dest : System.FilePath) (kind : String) :
 
 /--
 Shared implementation. Writes the extracted Lean project for one variant of
-the book to `_out/<variant>/lean/`, next to that variant's `html-multi/`
-(which `manualMain` writes via `cfg.destination := "_out/<variant>"`).
+one volume to `_out/<vol>/<variant>/lean/`, next to that variant's `html-multi/`
+(which `manualMain` writes via `cfg.destination := "_out/<vol>/<variant>"`).
+`vol` is the uppercase module prefix (e.g. `"LF"`, `"HL"`, `"TS"`).
 `isTeacher` selects the solution-filled or student form of the code. -/
-private def emitSavedImpl (variant : String) (isTeacher : Bool) :
+private def emitSavedImpl (vol variant : String) (isTeacher : Bool) :
     Mode → Config → TraverseState → Part Manual → BuildLogT IO Unit :=
   fun _mode _cfg _state text => do
-    let buf : SaveBuffers := walkOuter (fillWidthFor variant) "LF.lean" text ({} : SaveBuffers)
+    let buf : SaveBuffers := walkOuter (fillWidthFor variant) vol text ({} : SaveBuffers)
     let toolchain ← (IO.FS.readFile "lean-toolchain").toBaseIO >>= fun
       | .ok s => pure s
       | .error _ => pure "leanprover/lean4:v4.30.0-rc2\n"
     let files : Array (String × String) :=
       buf.fold (init := #[]) fun acc file (teacher, student) =>
         acc.push (file, mergeAdjacentModuleDocs (if isTeacher then teacher else student))
-    let dest := System.FilePath.mk "_out" / variant / "lean"
-    writeProject dest toolchain variant files
+    let dest := System.FilePath.mk "_out" / vol.toLower / variant / "lean"
+    writeProject dest toolchain vol variant files
     buildProject dest variant
 
-/-- `ExtraStep` for the student build: `_out/student/lean/`, solutions elided. -/
-def emitSavedStudent := emitSavedImpl "student" false
+/-- `ExtraStep` for the student build: solutions elided. -/
+def emitSavedStudent (vol : String) := emitSavedImpl vol "student" false
 
-/-- `ExtraStep` for the solutions build: `_out/solutions/lean/`, solutions shown. -/
-def emitSavedSolutions := emitSavedImpl "solutions" true
+/-- `ExtraStep` for the solutions build: solutions shown. -/
+def emitSavedSolutions (vol : String) := emitSavedImpl vol "solutions" true
 
-/-- `ExtraStep` for the terse build: `_out/terse/lean/`, solutions elided. -/
-def emitSavedTerse := emitSavedImpl "terse" false
+/-- `ExtraStep` for the terse build: solutions elided. -/
+def emitSavedTerse (vol : String) := emitSavedImpl vol "terse" false
 
 end SFLMeta
