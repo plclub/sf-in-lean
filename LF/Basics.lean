@@ -1779,9 +1779,11 @@ Another example, using booleans:
 theorem notb_involutive : ∀ b : Bool, (!!b) = b := by
   intro b
   cases b
-  · rewrite [Bool.not_false, Bool.not_true]
+  case false =>
+    rewrite [Bool.not_false, Bool.not_true]
     rfl
-  · rewrite [Bool.not_true, Bool.not_false]
+  case true =>
+    rewrite [Bool.not_true, Bool.not_false]
     rfl
 ```
 
