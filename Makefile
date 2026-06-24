@@ -1,39 +1,37 @@
 # Makefile for sf-in-lean
 #
 # Each volume is built in three symmetric variants:
-#   student    full prose, solutions elided   → _out/student/{html-multi,lean}
-#   solutions  full prose, solutions shown    → _out/solutions/{html-multi,lean}
-#   terse      lecture prose, solutions elided → _out/terse/{html-multi,lean}
+#   student    full prose, solutions elided   → _out/<vol>/student/{html-multi,lean}
+#   solutions  full prose, solutions shown    → _out/<vol>/solutions/{html-multi,lean}
+#   terse      lecture prose, solutions elided → _out/<vol>/terse/{html-multi,lean}
 #
-# To add a new volume (e.g., PLF), define its targets with:
+# To add a new volume (e.g., plf), define its targets with:
 #   $(eval $(call VOLUME_template,plf))
 # and add it to the `all` target below.
 
 default: all
 
 # ── Volume target template ────────────────────────────────────────────────────
-# Usage: $(eval $(call VOLUME_template, slug))
-#   slug   short name used in make targets and exe names, e.g. lf
-#          (executables must be named <slug>_student, <slug>_solutions,
-#          <slug>_terse in lakefile.toml)
+# Usage: $(eval $(call VOLUME_template,slug))
+#   slug   lowercase short name used in make targets and CLI args, e.g. lf
+#          The single `sfl` executable is called as: lake exe sfl <slug> <mode>
 define VOLUME_template
 
 .PHONY: $(1) $(1)-build $(1)-student $(1)-solutions $(1)-terse
 
-# Compile all three executables in one Lake invocation so Lake can
-# parallelise the builds.  Running each variant then just executes a
-# pre-built binary.
+# Build the sfl executable (shared across all volumes) before running any
+# variant.  Lake detects nothing changed on subsequent calls and skips quickly.
 $(1)-build:
-	lake build $(1)_student $(1)_solutions $(1)_terse
+	lake build sfl
 
 $(1)-student: $(1)-build
-	lake exe $(1)_student
+	lake exe sfl $(1) student
 
 $(1)-solutions: $(1)-build
-	lake exe $(1)_solutions
+	lake exe sfl $(1) solutions
 
 $(1)-terse: $(1)-build
-	lake exe $(1)_terse
+	lake exe sfl $(1) terse
 
 $(1): $(1)-student $(1)-solutions $(1)-terse
 
@@ -42,12 +40,14 @@ endef
 # ── Volume definitions ────────────────────────────────────────────────────────
 
 $(eval $(call VOLUME_template,lf))
+$(eval $(call VOLUME_template,hl))
+$(eval $(call VOLUME_template,ts))
 
 # ── Top-level targets ─────────────────────────────────────────────────────────
 
 .PHONY: all serve clean
 
-all: verso lf
+all: verso lf hl ts
 
 serve: all
 	python3 -m http.server 8000 -d _out/

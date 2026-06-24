@@ -1,7 +1,7 @@
 name = "SFL"
 version = "0.1.0"
 license = "Apache-2.0"
-defaultTargets = ["LF"]
+defaultTargets = ["sfl"]
 
 [leanOptions]
 weak.verso.code.warnLineLength = 0 # 0 disables warnings; consider setting to 70
@@ -25,14 +25,12 @@ name = "LF"
 # which is not the case for current `main`
 # globs = ["LF.+"]
 
-[[lean_exe]]
-name = "lf_student"
-root = "MainStudent"
+[[lean_lib]]
+name = "HL"
+
+[[lean_lib]]
+name = "TS"
 
 [[lean_exe]]
-name = "lf_solutions"
-root = "MainSolutions"
-
-[[lean_exe]]
-name = "lf_terse"
-root = "MainTerse"
+name = "sfl"
+root = "Targets"
