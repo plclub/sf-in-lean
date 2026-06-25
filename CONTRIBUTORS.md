@@ -1,49 +1,52 @@
-# SF-in-Lean Style Guide
+# SF-in-Lean Guide for Contributors
 
-This file records the conventions and the most important decisions we have made
-about writing *Software Foundations in Lean* (SFL): Lean coding style, Verso
-markup, comment conventions, the order in which tactics are introduced, etc.
+This file records the conventions and important decisions we have made
+about writing *Software Foundations in Lean* (SFL): workflow, Lean
+coding style, Verso markup, comment conventions, the order in which
+tactics are introduced, etc.
 
-We don't have many contributors yet outside the core group that's been working together on the translation for a couple of months, so there are certain to be things that are not clear.  Please help us figure out what those are and document the clarifications in this file.
+We don't have many contributors yet outside the core group that's been
+working together on the translation for a couple of months, so there
+are certain to be things that are not clear.  Please help us figure
+out what those are and document the clarifications in this file.
 
-## Guiding Philosophy
+## Philosophy
 
 1. SFL aims for exceptional pedagogy and presentational polish.
-2. SFL is _exercise-based_: Every important concept comes with hands-on exercises to reinforce it, with solutions.
+2. SFL is _exercise-based_: Every important concept comes with
+   hands-on exercises to reinforce it, with solutions.
 3. SFL strives to teach _proof engineering_, which involves
    constructing readable and maintainable formalizations and proofs.
-    - Corollary: Students should understand particular tactics and what 
-      they do, starting small and growing in sophistication.
+    - Corollary: Students should understand particular tactics and
+      what they do, starting small and growing in sophistication.
     - Corollary: Definitions and proofs are written in idiomatic Lean 
       (mostly the way it is for engineering/maintainability reasons), 
       only deviating (temporarily) for strong pedagogical reasons.
 4. SFL developments connect with those in
    [CSLib](https://github.com/leanprover/cslib/tree/main) where
    possible. Some of SFL's languages, semantics, etc. might eventually
-   find a place in CSLib. 
+   be contributed to CSLib. 
 
-## Collaboration Conventions
+## Communicating among ourselves
 
-We are still figuring out good mechanisms for coordinating who is
-working on what and avoiding stepping on each other's work. For the
-moment, use the Zulip *Lock Thread* channel to announce where you are
-working and coordinate with others that may be touching the same
-files. Make PRs frequently so that your local changes get folded back
-into the main branch as quickly as possible.
-
-For discussions, we've been using a combination of tools:
+For discussions, we use a combination of tools.  
 
 - If you want to start a discussion about an issue of general
   interest, post on the [SFL contributors Zulip
   channel](https://leanprover.zulipchat.com/#narrow/channel/607217-lean-software-foundations-contributors).  
 
-- If you want someone to think about your comment at some point when
-  they have some particular part of the material paged in, put it
-  directly in the .lean file, either in a comment (if it's a plain
-  .lean file) or in a `:::dev` block (if it's been versified), marked
-  with your initials.
+- If you are working with others to tackle a specific GitHub issue,
+  you can use that issue for discussion and coordination.
 
-- We are still exploring how best to use GitHub issues for SFL.
+- If you have a local comment that you want someone to think about at
+  some point when they have that section of the material paged in, put
+  it directly in the appropriate .lean file, either in a comment (if
+  it's a plain .lean file) or in a `:::dev` block (if it's been
+  versified), marked with your initials.  These comments are not
+  included in the final build products.
+
+  In-text comments can also be used for coordinating work on specific
+  issues.
 
 We prefer _not_ holding discussions in annotations on PRs, because
 they tend to either get lost when the PR is merged or delay merging.
@@ -51,30 +54,68 @@ Putting very local or short-term comments in this medium is fine -- or
 you can just make the change by directly editing the PR, if you think
 it's clear.
 
-## Git-fu
+These conventions are still developing, so feel free to suggest better
+ways of working if you see them! 
+
+## Tools for coordinating work
+
+We use a standard branch-and-PR workflow.  See below for details.
+
+Make PRs frequently so that your local changes get folded back into
+the `main` branch as quickly as possible.  There is no need to
+completely finish all the work on an issue before merging what you've
+done back into main. If yoour branch compiles and won't interfere with
+what someone else is doing, please make a checkpoint PR every day or
+so.
+
+We use the github issue tracker for recording large tasks that need to
+be done (small or local tasks can just be recorded in comments in the
+affected .lean file) and for keeping track of work in progress that
+other people should be careful not to step on.
+  - Feel free to assign yourself or others to an issue if it is
+    something you will or might work on or you want to be updated on
+    discussions associated with the issue.  Being assigned to an issue
+    does _not_) mean that you have it "locked" and other people should
+    not work on it or touch associated files.
+  - When you start working on an issue, assign it to yourself so that
+    other people know you are thinking about it.
+  - When you start *actually making changes* on a branch, edit the
+    pinned [Work In
+    Progress](https://github.com/plclub/sf-in-lean/issues/25) issue so
+    that people know to be careful not to step on your work.  
+  - Remember to edit it again when you stop working. 
+  - Include the name of the branch or a pointer to the PR where you
+    are working.
+
+### Git-fu 
 
 We use git and github, with some simple conventions:
 
 * The `main` branch must always build. 
-* Never commit directly to `main`. Instead, branch, edit, make a PR,
-  wait for CI to go green (and for others to review, if appropriate),
-  then merge.  
-* After your PR is merged, delete the branch to keep the repo tidy.
+* Never commit directly to `main`. Instead, branch (not fork!), edit,
+  make a PR, wait for CI to go green (and for others to review, if
+  appropriate), then merge.  
 * Don't merge a red PR.
+* After your PR is merged, delete the branch to keep the repo tidy.
+
+We prefer that people create branches in the sf-in-lean repo rather
+than creating forks in their own github accounts for working on stuff.
+This makes it easier for everybody to maintain a global view of what's
+going on.
 
 Our CI uses a small GitHub Actions workflow:
 [.github/workflows/ci.yml](.github/workflows/ci.yml). 
 It runs `make` on every pull request and on every push to `main`. 
 
-## Organization and Make-fu
+### Repo organization and make-fu
 
 Each volume gets its own top-level directory (LF, HL, etc.).  
 
 Within that directory, each chapter gets a .lean file, in Verso format.
 
-Running `make` at the top level produces, for each volume, 
-three different ready-for-distribution outputs 
-in a temporary top-level `_out` directory, each with both .lean and .html variants.
+Running `make` at the top level produces, for each volume, three
+different ready-for-distribution outputs in a temporary top-level
+`_out` directory, each with both .lean and .html variants.
   - **student**   (full prose, solutions elided)
   - **solutions** (full prose, solutions shown)
   - **terse**     (little prose, no solutions, workinclass elided;
@@ -84,7 +125,7 @@ To build everything and preview it locally, do `make serve`,
 then visit http://localhost:8000 
 (`make serve` builds stuff then serves `_out/` on port 8000).
 
-## Status; plain lean vs. verso files (temporary)
+### Status; plain lean vs. verso files (temporary)
 
 At the moment, most of the files in Logical Foundations have been
 converted to regular lean files.  (Programming Language Foundations
@@ -115,29 +156,31 @@ SFL-specific conventions:
   case false => …
   ```
   over `cases b with | …` *and* over the bare `·` goal selector — i.e. prefer
-  `cases h; case …` / `induction h; case …`. Select cases with named `case`s,
-  un-indented and without a leading `.`, and **align the `=>`** as above.
-  Use the `·` selector only when the goal names are not meaningful.
+  `cases h; case …` / `induction h; case …`. Select cases with named
+  `case`s, un-indented and without a leading `.`, and **align the
+  `=>`** as above. Use the `·` selector only when the goal names are
+  not meaningful.
   
 * **`rewrite` before `rw`** (see next section).
 
-* **Explicit rewrites over `dsimp`/`simp` through notation** (see "Notation and
-  simplification").
+* **Explicit rewrites over `dsimp`/`simp` through notation** (see
+  "Notation and simplification").
 
-* **`sorry` placeholders are checked, not silent.** Where a `sorry` appears
-  (incomplete proof, exercise scaffold), wrap it so the warning is asserted:
+* **`sorry` placeholders are checked, not silent.** Where a `sorry`
+  appears (incomplete proof, exercise scaffold), wrap it so the
+  warning is asserted:
   ```lean
   /-- warning: declaration uses `sorry` -/
   #guard_msgs in
   example : … := sorry
   ```
 
-* **Aborted/abandoned lemmas** become unnamed `example`s closed with `sorry`
-  (the SFL analogue of Rocq's `Abort`).
+* **Aborted/abandoned lemmas** become unnamed `example`s closed with
+  `sorry` (the SFL analogue of Rocq's `Abort`).
 
-* **Library vs. client code.** Inside a definition's own library it is fine to
-  unfold and simplify through definitions; *using* that code, do not "peek
-  through the interface."
+* **Library vs. client code.** Inside a definition's own library it is
+  fine to unfold and simplify through definitions; *using* that code,
+  do not "peek through the interface."
 
 ### `rewrite` vs `rw`
 
@@ -151,10 +194,11 @@ explicitly in the early arithmetic proofs, then introduce `rw` in
 ### Notation and simplification
 
 When notation is implemented via typeclass instances, `dsimp [add]` /
-`dsimp [app]` do *not* resolve the instance down to the underlying definition,
-and `simp` is often too powerful for teaching. So **rewrite explicitly by
-equational lemmas** instead — e.g. `n + (m + 1) = n + m + 1` or
-`(h :: t) ++ l = h :: t ++ l` — rather than reaching for `dsimp`/`simp`.
+`dsimp [app]` do *not* resolve the instance down to the underlying
+definition, and `simp` is often too powerful for teaching. So
+**rewrite explicitly by equational lemmas** instead — e.g. `n + (m +
+1) = n + m + 1` or `(h :: t) ++ l = h :: t ++ l` — rather than
+reaching for `dsimp`/`simp`.
 
 ### Arithmetic / the custom `Nat`
 
@@ -228,10 +272,10 @@ A datatype definition:
 ```
 
 **`:::solution … :::`** — Prose shown only in the **solutions** build.
-Use this for worked prose answers to open-ended exercises: discussions,
-design rationale, or illustrative code that is not intended to compile.
-(For _compilable_ answers inside `lean` blocks, use `solution!` or
-`-- SOLUTION`, described below.)
+Use this for worked prose answers to open-ended exercises:
+discussions, design rationale, or illustrative code that is not
+intended to compile. (For _compilable_ answers inside `lean` blocks,
+use `solution!` or `-- SOLUTION`, described below.)
 
 The standard pattern at each presentation point is a `:::terse` cue
 followed by a `::::full` narrative block followed by a shared `lean`
@@ -243,9 +287,9 @@ builds see each prose variant.
 **`::::exercise (rating := N) (name := "foo") … ::::`** — Marks an
 exercise block.  `rating` is a difficulty from 1 (easy) to 5 (hard);
 `name` is a short identifier used in headings and cross-references.
-Renders as a styled box with stars in HTML; produces a
-`### Exercise (N stars): foo` module-doc heading in the extracted `.lean`
-files.  Should always contain a nested `:::grade` block.
+Renders as a styled box with stars in HTML; produces a `### Exercise
+(N stars): foo` module-doc heading in the extracted `.lean` files.
+Should always contain a nested `:::grade` block.
 
 Typical structure:
 
@@ -263,18 +307,19 @@ GRADE_THEOREM 1: nandb_test4
 ::::
 ```
 
-**`:::grade … :::`** — Grading spec, always nested inside `::::exercise`.
-Contains one or more `GRADE_THEOREM <pts>: <name>` or
-`GRADE_MANUAL <pts>: <name>` lines for autograding scripts.
-Currently a noop in all rendered outputs (body discarded at elaboration);
-the spec survives verbatim in the Verso source for tooling.
+**`:::grade … :::`** — Grading spec, always nested inside
+`::::exercise`. Contains one or more `GRADE_THEOREM <pts>: <name>` or
+`GRADE_MANUAL <pts>: <name>` lines for autograding scripts. Currently
+a noop in all rendered outputs (body discarded at elaboration); the
+spec survives verbatim in the Verso source for tooling.
 
 ### Solution mechanisms inside `lean` blocks
 
 Both mechanisms are elaborated by Lean at compile time (errors in the
 model solution are caught during the build) and produce two source
-variants — teacher (solutions visible) and student (solutions hidden) —
-written to `_out/<vol>/solutions/lean/` and `_out/<vol>/student/lean/`.
+variants — teacher (solutions visible) and student (solutions hidden)
+— written to `_out/<vol>/solutions/lean/` and
+`_out/<vol>/student/lean/`.
 
 **`solution!(expr)`** — Wraps a single term or tactic sequence.
 In the teacher variant the `solution!` keyword is stripped, leaving
@@ -338,9 +383,9 @@ feels rushed.  See GitHub discussion #42.
 
 **`:::hide … :::`** — Marks a region hidden from all rendered outputs.
 In native Verso chapters, prefer `:::dev` or `:::instructors` for
-author notes.  The `:::hide` directive exists primarily for code-forward
-source files where `-- HIDE … -- /HIDE` comments are translated to
-`:::hide` blocks by the conversion script.
+author notes.  The `:::hide` directive exists primarily for
+code-forward source files where `-- HIDE … -- /HIDE` comments are
+translated to `:::hide` blocks by the conversion script.
 
 ### Structural and presentation blocks
 
@@ -359,10 +404,10 @@ would be confusing or redundant in the standalone extracted source.
 Unlike the author-annotation directives, `:::ignore` content _is_
 visible to students reading the HTML book.
 
-**`:::slidebreak … :::`** — A slide-break marker with no body.
-In the terse build it renders as `<div class="slide-break">` (a hook
-for CSS-based slide tooling).  In full builds and in all generated
-`.lean` files it emits nothing.  Written as a self-closing empty block:
+**`:::slidebreak … :::`** — A slide-break marker with no body. In the
+terse build it renders as `<div class="slide-break">` (a hook for
+CSS-based slide tooling).  In full builds and in all generated `.lean`
+files it emits nothing.  Written as a self-closing empty block:
 
 ```
 :::slidebreak
@@ -400,11 +445,12 @@ fallback wrapped in a `/-! … -/` module-doc comment.
 
 ## Tactics: order of introduction
 
-A core pedagogical decision is that tactics are introduced gradually. The table
-below lists the tactics **first introduced** in each chapter, in chapter order.
-It is derived from the current sources (tactic-position occurrences in real
-code, comments excluded) and should be kept in sync as chapters are rewritten;
-chapters past `Logic` are still in flux.
+A core pedagogical decision is that tactics are introduced gradually.
+The table below lists the tactics **first introduced** in each
+chapter, in chapter order. It is derived from the current sources
+(tactic-position occurrences in real code, comments excluded) and
+should be kept in sync as chapters are rewritten; chapters past
+`Logic` are still in flux.
 
 | Chapter           | Tactics first introduced |
 |-------------------|--------------------------|
@@ -419,18 +465,18 @@ chapters past `Logic` are still in flux.
 | `IndPropRegexp`   | `specialize`, `trivial` |
 | `UsingLean`       | *(none new)* |
 
-Related notation introduced alongside tactics: anonymous constructor `⟨…⟩`
-(`Lists`); destructuring `let ⟨…⟩ := …` and `cases h : …`,
-`induction … generalizing …` (`Tactics`); projection/`Iff` syntax `.left`,
-`.right`, `.mp`, `.mpr`, and rewriting by an `↔` (`Logic`).
+Related notation introduced alongside tactics: anonymous constructor
+`⟨…⟩` (`Lists`); destructuring `let ⟨…⟩ := …` and `cases h : …`,
+`induction … generalizing …` (`Tactics`); projection/`Iff` syntax
+`.left`, `.right`, `.mp`, `.mpr`, and rewriting by an `↔` (`Logic`).
 
-**Tactics deliberately deferred / under discussion** (per FPiL's caution that
-`grind` is overwhelming for beginners): candidates still to be placed include
-`show`, `rename_i`, `revert`, `subst`, `suffices`. Powerful automation
-(`simp` heavy use, `tauto`, `omega`, `decide`) is concentrated in a future
-**Automation** chapter; `grind`, `aesop`, and `try` are deferred to a later
-volume. The `RegExp` development moves out of `IndProp` into that Automation
-chapter.
+**Tactics deliberately deferred / under discussion** (per FPiL's
+caution that `grind` is overwhelming for beginners): candidates still
+to be placed include `show`, `rename_i`, `revert`, `subst`,
+`suffices`. Powerful automation (`simp` heavy use, `tauto`, `omega`,
+`decide`) is concentrated in a future **Automation** chapter; `grind`,
+`aesop`, and `try` are deferred to a later volume. The `RegExp`
+development moves out of `IndProp` into that Automation chapter.
 
 ## AI policy
 

@@ -74,10 +74,13 @@ import LF.Basics
 
 namespace NatPlayground.Nat
 
-theorem succ_eq_add_one : ∀ n : Nat, succ n = n + 1 := by
+theorem succ_eq_add_one : ∀ n : Nat, succ n = add n one := by
   intro n
   rewrite [one_eq_succ_zero, add_succ, add_zero]
   rfl
+
+unseal beq in
+theorem beq_succ (n m : Nat) : (succ n == succ m) = (n == m) := by rfl
 
 
 -- TERSE
@@ -150,7 +153,7 @@ theorem review3 : ∀ b : Bool, (b || true) = true := by
 -/
 -- HIDE
 /- review4 -/
-theorem review4 : ∀ n : Nat, n + 0 = n := by
+theorem review4 : ∀ n : Nat, add n zero = n := by
   intro n; rewrite [add_zero]; rfl
 -- /HIDE
 -- /QUIZ
@@ -196,7 +199,7 @@ theorem review4 : ∀ n : Nat, n + 0 = n := by
 -- /FULL
 
 /- add_0_r_easy -/
-example : ∀ n : Nat, n + 0 = n := by
+example : ∀ n : Nat, add n zero = n := by
   intro n; rewrite [add_zero]; rfl
 
 /- FULL: But the proof that it is also a neutral element on the _left_
@@ -208,7 +211,7 @@ example : ∀ n : Nat, n + 0 = n := by
 /- zero_add_firsttry -/
 /-- warning: declaration uses `sorry` -/
 #guard_msgs in
-example : ∀ n : Nat, 0 + n = n := by
+example : ∀ n : Nat, add zero n = n := by
   intro n
   -- `rfl` doesn't work here!
   sorry
@@ -225,11 +228,11 @@ example : ∀ n : Nat, 0 + n = n := by
 /- zero_add_secondtry -/
 /-- warning: declaration uses `sorry` -/
 #guard_msgs in
-example : ∀ n : Nat, 0 + n = n := by
+example : ∀ n : Nat, add zero n = n := by
   intro n
   cases n
   case zero => /- n = 0 -/
-    rewrite [zero_eq_0, add_zero]
+    rewrite [add_zero]
     rfl
     -- so far so good...
   case succ n' =>   /- n = n' + 1 -/
@@ -290,11 +293,11 @@ example : ∀ n : Nat, 0 + n = n := by
 
 /- TERSE: *** -/
 
-theorem zero_add : ∀ n : Nat, 0 + n = n := by
+theorem zero_add : ∀ n : Nat, add zero n = n := by
   intro n
   induction n
   case zero => /- n = 0 -/
-    rewrite [zero_eq_0, add_zero]
+    rewrite [add_zero]
     rfl
   case succ n' ih => /- n = n' + 1 -/
     /-
@@ -332,6 +335,7 @@ theorem zero_add : ∀ n : Nat, 0 + n = n := by
 /- Let's try this one together: -/
 -- /TERSE
 
+unseal beq in
 theorem eqb_self : ∀ n : Nat,
     (n == n) = true := by
   -- WORKINCLASS
@@ -360,11 +364,11 @@ theorem eqb_self : ∀ n : Nat,
 -/
 
 theorem zero_mul : ∀ n : Nat,
-    0 * n = 0 := by
+    mul zero n = zero := by
   -- ADMITTED
   intro n
   induction n
-  case zero => rewrite [zero_eq_0, mul_zero]; rfl
+  case zero => rewrite [mul_zero]; rfl
   case succ n' ih =>
     rewrite [mul_succ]; rewrite [ih]; rewrite [add_zero]
     rfl
@@ -372,11 +376,11 @@ theorem zero_mul : ∀ n : Nat,
 -- GRADE_THEOREM 0.5: mul_0_l
 
 theorem succ_add : ∀ n m : Nat,
-    succ n + m = succ (n + m) := by
+    add (succ n) m = succ (add n m) := by
   -- ADMITTED
   intro n m
   induction m
-  case zero => rewrite [zero_eq_0, add_zero, add_zero]
+  case zero => rewrite [add_zero, add_zero]
                rfl
   case succ m' ih =>
     rewrite [add_succ (succ n) m', add_succ n m', ih]
@@ -395,12 +399,12 @@ theorem succ_add : ∀ n m : Nat,
 -- /TERSE
 
 theorem add_comm : ∀ n m : Nat,
-    n + m = m + n := by
+    add n m = add m n := by
   -- ADMITTED
   intro n m
   induction m
   case zero =>
-    rewrite [zero_eq_0, add_zero, zero_add]
+    rewrite [add_zero, zero_add]
     rfl
   case succ m' ih =>
     rewrite [add_succ, ih, succ_add]
@@ -409,14 +413,14 @@ theorem add_comm : ∀ n m : Nat,
 -- GRADE_THEOREM 0.5: add_comm
 
 theorem add_assoc : ∀ n m p : Nat,
-    n + (m + p) = (n + m) + p := by
+    add n (add m p) = add (add n m) p := by
   -- ADMITTED
   intro n m p
   induction p
-  case zero => rewrite [zero_eq_0, add_zero, add_zero]
+  case zero => rewrite [add_zero, add_zero]
                rfl
   case succ p' ih =>
-    rewrite [add_succ m p', add_succ n (m + p'), add_succ (n + m) p', ih]
+    rewrite [add_succ m p', add_succ n (add m p'), add_succ (add n m) p', ih]
     rfl
 -- /ADMITTED
 -- GRADE_THEOREM 0.5: add_assoc
@@ -430,11 +434,11 @@ theorem add_assoc : ∀ n m p : Nat,
 @[irreducible]
 def double (n : Nat) : Nat :=
   match n with
-  | zero => 0
+  | zero => zero
   | succ n' => succ (succ (double n'))
 
 unseal double in
-theorem double_zero : double 0 = 0 := by rfl
+theorem double_zero : double zero = zero := by rfl
 
 unseal double in
 theorem double_succ : ∀ n, double (succ n) = succ (succ (double n)) := by
@@ -461,11 +465,11 @@ theorem double_succ : ∀ n, double (succ n) = succ (succ (double n)) := by
 /- Use induction to prove this simple fact about `double`.
    Experiment with using `rw` instead of `rewrite`as well. -/
 
-theorem double_add : ∀ n, double n = n + n := by
+theorem double_add : ∀ n, double n = add n n := by
   -- ADMITTED
   intro n
   induction n
-  case zero => rewrite [zero_eq_0, add_zero, double_zero]; rfl
+  case zero => rewrite [add_zero, double_zero]; rfl
   case succ n' ih =>
     rewrite [double_succ, ih, add_succ, succ_add]; rfl
 -- /ADMITTED
@@ -477,6 +481,7 @@ theorem double_add : ∀ n, double n = n + n := by
   `Nat` with the definitional equality `=` on `Bool`.
 -/
 
+unseal beq in
 theorem eqb_refl : ∀ n : Nat,
     (n == n) = true := by
   -- ADMITTED
@@ -521,6 +526,7 @@ theorem eqb_refl : ∀ n : Nat,
 -/
 -- /FULL
 
+unseal even in
 theorem even_succ : ∀ n : Nat,
     even (succ n) = !even n := by
   -- ADMITTED
@@ -569,9 +575,9 @@ theorem even_succ : ∀ n : Nat,
 -- /TERSE
 
 theorem mult_0_plus' : ∀ n m : Nat,
-    ((0 + n) + 0) * m = n * m := by
+    mul (add (add zero n) zero) m = mul n m := by
   intro n m
-  have h : (0 + n) + 0 = n := by rw [zero_add, add_zero]
+  have h : add (add zero n) zero = n := by rw [zero_add, add_zero]
   rw [h]
 
 -- FULL
@@ -601,7 +607,7 @@ theorem mult_0_plus' : ∀ n m : Nat,
 /-- warning: declaration uses `sorry` -/
 #guard_msgs in
 example : ∀ n m p q : Nat,
-    (n + m) + (p + q) = (m + n) + (p + q) := by
+    add (add n m) (add p q) = add (add m n) (add p q) := by
   intro n m p q
   /-
     We just need to swap (n + m) for (m + n)... seems
@@ -622,7 +628,7 @@ example : ∀ n m p q : Nat,
 -- /TERSE
 
 theorem plus_rearrange : ∀ n m p q : Nat,
-    (n + m) + (p + q) = (m + n) + (p + q) := by
+    add (add n m) (add p q) = add (add m n) (add p q) := by
   intro n m p q
   rw [add_comm n m]
 
@@ -687,12 +693,12 @@ theorem plus_rearrange : ∀ n m p q : Nat,
 
 /- add_assoc' -/
 theorem add_assoc' : ∀ n m p : Nat,
-    n + (m + p) = (n + m) + p := by
+    add n (add m p) = add (add n m) p := by
   intro n m p
   induction p
-  case zero => rw [zero_eq_0, add_zero, add_zero]
+  case zero => rw [add_zero, add_zero]
   case succ p' ih =>
-    rw [add_succ m p', add_succ n (m + p'), add_succ (n + m) p', ih]
+    rw [add_succ m p', add_succ n (add m p'), add_succ (add n m) p', ih]
 
 /-
   Lean is perfectly happy with this.  For a human, however, it
@@ -703,13 +709,13 @@ theorem add_assoc' : ∀ n m p : Nat,
 
 /- add_assoc'' -/
 theorem add_assoc'' : ∀ n m p : Nat,
-    n + (m + p) = (n + m) + p := by
+    add n (add m p) = add (add n m) p := by
   intro n m p
   induction p
   case zero => /- p = 0 -/
-    rw [zero_eq_0, add_zero, add_zero]
+    rw [add_zero, add_zero]
   case succ p' ih => /- p = p' + 1 -/
-    rw [add_succ m p', add_succ n (m + p'), add_succ (n + m) p', ih]
+    rw [add_succ m p', add_succ n (add m p'), add_succ (add n m) p', ih]
 
 /-
   ... and if you're used to Lean you might be able to step
@@ -838,7 +844,7 @@ theorem add_assoc'' : ∀ n m p : Nat,
 
 -- EX1 (mul_one)
 theorem mul_one : ∀ p : Nat,
-    p * 1 = p := by
+    mul p one = p := by
   -- ADMITTED
   intro p
   rw [one_eq_succ_zero, mul_succ, mul_zero, zero_add]
@@ -846,7 +852,7 @@ theorem mul_one : ∀ p : Nat,
   -- GRADE_THEOREM 1: mul_one
 
 theorem mul_two : ∀ p : Nat,
-    p * 2 = p + p := by
+    mul p two = add p p := by
   intro p
   rw [two_eq_succ_one, one_eq_succ_zero, mul_succ, mul_succ, mul_zero, zero_add]
 
@@ -864,7 +870,7 @@ theorem mul_two : ∀ p : Nat,
 -/
 
 theorem add_shuffle3 : ∀ n m p : Nat,
-    (n + m) + p = (n + p) + m := by
+    add (add n m) p = add (add n p) m := by
   -- ADMITTED
   intro n m p
   rw [← add_assoc, add_comm m p, add_assoc]
@@ -875,19 +881,19 @@ theorem add_shuffle3 : ∀ n m p : Nat,
 -- TODO (DHS): If we want to introduce calc here we need to explain it
 -- QUIETSOLUTION
 theorem succ_mul : ∀ m n : Nat,
-    succ n * m = (n * m) + m := by
+    mul (succ n) m = add (mul n m) m := by
   intro m n
   induction m
-  case zero => rw [zero_eq_0, mul_zero, mul_zero, add_zero]
+  case zero => rw [mul_zero, mul_zero, add_zero]
   case succ m ih =>
-    calc succ n * succ m
-    _ = (succ n * m) + succ n       := by rw [mul_succ]
-    _ = ((n * m) + m) + succ n      := by rw [ih]
-    _ = succ (((n * m) + m) + n)    := by rw [add_succ]
-    _ = succ (n + ((n * m) + m))    := by rw [add_comm _ n]
-    _ = succ ((n + (n * m)) + m)    := by rw [add_assoc n _ m]
-    _ = succ (((n * m) + n) + m)    := by rw [add_comm n]
-    _ = (n * succ m) + succ m       := by rw [mul_succ, add_succ]
+    calc mul (succ n) (succ m)
+    _ = add (mul (succ n) m) (succ n)       := by rw [mul_succ]
+    _ = add (add (mul n m) m) (succ n)      := by rw [ih]
+    _ = succ (add (add (mul n m) m) n)      := by rw [add_succ]
+    _ = succ (add n (add (mul n m) m))      := by rw [add_comm _ n]
+    _ = succ (add (add n (mul n m)) m)      := by rw [add_assoc n _ m]
+    _ = succ (add (add (mul n m) n) m)      := by rw [add_comm n]
+    _ = add (mul n (succ m)) (succ m)       := by rw [mul_succ, add_succ]
 -- /QUIETSOLUTION
 
 /-
@@ -897,12 +903,12 @@ theorem succ_mul : ∀ m n : Nat,
 -/
 
 theorem mul_comm : ∀ m n : Nat,
-    m * n = n * m := by
+    mul m n = mul n m := by
   -- ADMITTED
   intro m n
   induction n
   case zero =>
-    rw [zero_eq_0, mul_zero, zero_mul]
+    rw [mul_zero, zero_mul]
   case succ n' ih =>
     rw [mul_succ, ih, succ_mul]
 -- /ADMITTED
@@ -923,8 +929,9 @@ theorem mul_comm : ∀ m n : Nat,
 /- Recall that to rewrite by the definition of a function that can simplify,
    like the `leb`, you can write `rw [function_name]`. -/
 
+unseal leb in
 theorem leb_refl : ∀ n : Nat,
-    n ≤? n = true := by
+    leb n n = true := by
   -- ADMITTED
   intro n
   induction n
@@ -932,8 +939,9 @@ theorem leb_refl : ∀ n : Nat,
   case succ n' ih => rw [leb]; exact ih
 -- /ADMITTED
 
+unseal beq in
 theorem zero_ne_add_one : ∀ n : Nat,
-    (0 == succ n) = false := by
+    (zero == succ n) = false := by
   -- ADMITTED
   intro n; rfl
 -- /ADMITTED
@@ -944,17 +952,18 @@ theorem andb_false : ∀ b : Bool,
   intro b; cases b <;> rfl
 -- /ADMITTED
 
+unseal beq in
 theorem add_one_ne_zero : ∀ n : Nat,
-    (succ n == 0) = false := by
+    (succ n == zero) = false := by
   -- ADMITTED
   intro n; rfl
 -- /ADMITTED
 
-theorem one_mul : ∀ n : Nat, 1 * n = n := by
+theorem one_mul : ∀ n : Nat, mul one n = n := by
   -- ADMITTED
   intro n
   induction n
-  case zero => rw [zero_eq_0, mul_zero]
+  case zero => rw [mul_zero]
   case succ n' ih =>
     rw [mul_succ, ih, ← succ_eq_add_one]
 -- /ADMITTED
@@ -970,23 +979,23 @@ theorem all3_spec : ∀ b c : Bool,
 -- TODO: (DHS) At the moment these are our first instances of generalize,
 --   so we likely need to explain this tactic here or earlier in the chapter, more likely
 theorem right_distrib : ∀ n m p : Nat,
-    (n + m) * p = n * p + m * p := by
+    mul (add n m) p = add (mul n p) (mul m p) := by
   -- ADMITTED
   intro n m p
   induction p
-  case zero => rw [zero_eq_0, mul_zero, mul_zero, mul_zero, add_zero]
+  case zero => rw [mul_zero, mul_zero, mul_zero, add_zero]
   case succ p' ih =>
     rw [mul_succ, mul_succ, mul_succ, ih]
-    generalize n * p' = i
-    generalize m * p' = j
-    calc (i + j) + (n + m)
-    _ = ((i + j) + n) + m := by rw [add_assoc (i + j)]
-    _ = ((i + n) + j) + m := by rw [add_shuffle3 i j n]
-    _ = (i + n) + (j + m) := by rw [add_assoc (i + n)]
+    generalize mul n p' = i
+    generalize mul m p' = j
+    calc add (add i j) (add n m)
+    _ = add (add (add i j) n) m := by rw [add_assoc (add i j)]
+    _ = add (add (add i n) j) m := by rw [add_shuffle3 i j n]
+    _ = add (add i n) (add j m) := by rw [add_assoc (add i n)]
 -- /ADMITTED
 
 theorem left_distrib : ∀ n m p : Nat,
-    p * (n + m) = p * n + p * m := by
+    mul p (add n m) = add (mul p n) (mul p m) := by
   -- ADMITTED
   intro n m p
   rw [mul_comm p, mul_comm p, mul_comm p]
@@ -994,11 +1003,11 @@ theorem left_distrib : ∀ n m p : Nat,
 -- /ADMITTED
 
 theorem mul_assoc : ∀ n m p : Nat,
-    n * (m * p) = (n * m) * p := by
+    mul n (mul m p) = mul (mul n m) p := by
   -- ADMITTED
   intro n m p
   induction p
-  case zero => rw [zero_eq_0, mul_zero, mul_zero, mul_zero]
+  case zero => rw [mul_zero, mul_zero, mul_zero]
   case succ p' ih =>
     rw [mul_succ, mul_succ, ← ih, left_distrib]
 -- /ADMITTED
@@ -1034,9 +1043,9 @@ def incr (m : Bin) : Bin
 def binToNat (m : Bin) : Nat
   -- ADMITDEF
   := match m with
-  | .z => 0
-  | .b0 m' => binToNat m' * 2
-  | .b1 m' => binToNat m' * 2 + 1
+  | .z => zero
+  | .b0 m' => mul (binToNat m') two
+  | .b1 m' => add (mul (binToNat m') two) one
   -- /ADMITDEF
 
 /-
@@ -1070,7 +1079,7 @@ def binToNat (m : Bin) : Nat
    an audience who is presumably unfamiliar with commutative diagrams? -/
 
 theorem bin_to_nat_pres_incr : ∀ b : Bin,
-    binToNat (incr b) = binToNat b + 1 := by
+    binToNat (incr b) = add (binToNat b) one := by
   -- ADMITTED
   intro b
   induction b
@@ -1080,7 +1089,7 @@ theorem bin_to_nat_pres_incr : ∀ b : Bin,
   case b1 b' ih =>
     rw [incr, binToNat, binToNat]; rw [ih]
     rw [mul_two, mul_two, add_assoc]
-    rw [add_shuffle3 _ 1]
+    rw [add_shuffle3 _ one]
 -- /ADMITTED
 -- GRADE_THEOREM 3: bin_to_nat_pres_incr
 
@@ -1151,7 +1160,7 @@ example : ∀ b, natToBin (binToNat b) = b := by sorry
 
 /- double_incr -/
 theorem double_incr : ∀ n : Nat,
-    double (succ n) = (double n) + 2 := by
+    double (succ n) = add (double n) two := by
   -- ADMITTED
   intro n
   rw [double_succ]
@@ -1289,10 +1298,10 @@ theorem incr_doubleBin : ∀ b : Bin,
   . rfl
 
 theorem natToBin_two_mul : ∀ n,
-    natToBin (n * 2) = doubleBin (natToBin n) := by
+    natToBin (mul n two) = doubleBin (natToBin n) := by
   intro n
   induction n
-  case zero => rw [zero_eq_0, zero_mul]; rfl
+  case zero => rw [zero_mul]; rfl
   case succ n' ih =>
     /-
       2 * (n' + 1) = 2 * n' + 2 by Nat.mul_succ.
