@@ -378,6 +378,7 @@ theorem succ_injective (n m : Nat) :
   have h2 : n = Nat.pred (n + 1) := by rfl
   rewrite [h2, h1]
   rfl
+-- /TERSE
 
 /- LATER: FSR'25 - I wrote an explanation for `have` here,
     though I feel its inclusion here breaks the flow. -/

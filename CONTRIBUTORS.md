@@ -4,6 +4,8 @@ This file records the conventions and the most important decisions we have made
 about writing *Software Foundations in Lean* (SFL): Lean coding style, Verso
 markup, comment conventions, the order in which tactics are introduced, etc.
 
+We don't have many contributors yet outside the core group that's been working together on the translation for a couple of months, so there are certain to be things that are not clear.  Please help us figure out what those are and document the clarifications in this file.
+
 ## Guiding Philosophy
 
 1. SFL aims for exceptional pedagogy and presentational polish.

@@ -56,7 +56,7 @@ open InlineLean hiding lean
 #doc (Manual) "{title}" =>
 %%%
 htmlSplit := .never
-file := "{file}"
+file := some "{file}"
 %%%
 
 """
@@ -303,7 +303,10 @@ def _comment_tokens(body: str):
             continue                  # stray region/grade/admitted marker — skip
         else:
             add_content(l)
-    set_mode(None)   # closes any open FULL/TERSE region and flushes prose
+    set_mode(None)   # closes any open FULL/TERSE region (flushes prose if one was open)
+    flush_prose()    # flush any remaining prose: set_mode(None) early-returns when the
+                     # mode is already None (the common no-FULL:/TERSE: case), so the
+                     # trailing prose run would otherwise be silently dropped.
     return tokens if tokens else [('blank', None)]
 
 def _scan_block_comment(lines, i):
@@ -380,6 +383,14 @@ _TERSE_PLAIN_RE = re.compile(r'^-- TERSE:\s+(.+)$')
 _EX_RE = re.compile(r'^-- EX(\d+)[A-Za-z!?]*\s+\((\w+)\)$')
 _EX_CLOSE_RE = re.compile(r'^-- \[\]$')
 _GRADE_RE = re.compile(r'^--\s+GRADE_')
+# Coq-SF-style section headers written as line comments: `-- # Title` …
+# `-- ###### Title`, and `-- * Title` / `-- ** Title` / `-- *** Title`.  These
+# are section headings (not code commentary), so they convert to Verso headings.
+# A `#`-run longer than 6 (a `-- #####…` divider line) can't match `#{1,6}\s`
+# because the char after the 6th `#` is another `#`, not whitespace — so divider
+# lines still fall through and are dropped, as before.
+_LINE_HEADER_HASH_RE = re.compile(r'^--\s+(#{1,6})\s+(\S.*)$')
+_LINE_HEADER_STAR_RE = re.compile(r'^--\s+(\*{1,3})\s+(\S.*)$')
 _HIDE_OPEN_RE = re.compile(r'^-- HIDE$')
 _HIDE_CLOSE_RE = re.compile(r'^-- /HIDE$')
 _SOL_OPEN_RE = re.compile(r'^--\s+SOLUTION$')
@@ -390,6 +401,27 @@ _SOL_CLOSE_RE = re.compile(r'^--\s+/SOLUTION$')
 # separately (-> :::instructor); TERSE/FULL have their own dedicated markers.
 _AUTHOR_RE = re.compile(
     r'^-- (BCP|JC|MWH|CGH|RAB|CH|HG|NB|TODO|TOFIX|LATER|SOONER)[: (](.*)$')
+
+# `-- ==> …` / `-- ===> …` hand-written eval-output annotations: intentionally
+# dropped (Verso renders the real output live), so they must not be swept into
+# a prose run.
+_EVAL_ANNOT_RE = re.compile(r'^--\s*=+>')
+
+# Markers that need handling by their own branch in `tokenize` (region capture,
+# mode switches, exercise/heading/author tokens).  A run of narrative `--` line
+# comments stops at any of these so the dedicated branch processes them; bare
+# region markers not listed here (HIDEFROMHTML, QUIZ, ADMITTED, GRADE_…) are
+# cleaned up by `_comment_tokens`' own `_DROP_MARKER_RE` instead.
+_DEDICATED_LINE_MARKERS = [
+    _INSTRUCTOR_RE, _FULL_OPEN_RE, _FULL_CLOSE_RE, _TERSE_OPEN_RE,
+    _TERSE_CLOSE_RE, _SLIDEBREAK_RE, _TERSE_DELIM_RE, _TERSE_PLAIN_RE,
+    _EX_RE, _EX_CLOSE_RE, _GRADE_RE, _HIDE_OPEN_RE, _HIDE_CLOSE_RE,
+    _SOL_OPEN_RE, _SOL_CLOSE_RE, _LINE_HEADER_HASH_RE, _LINE_HEADER_STAR_RE,
+    _AUTHOR_RE,
+]
+
+def _is_dedicated_line_marker(stripped: str) -> bool:
+    return any(p.match(stripped) for p in _DEDICATED_LINE_MARKERS)
 
 
 def tokenize(text: str):
@@ -584,6 +616,16 @@ def tokenize(text: str):
                 tokens.append(('solution_prose', prose))
             continue
 
+        # Coq-SF section headers in line-comment form -> Verso headings.  The
+        # `#`/`*` count maps directly to the heading level (`-- * Foo` and
+        # `-- # Foo` -> `# Foo`; `-- ** Foo` / `-- ## Foo` -> `## Foo`).
+        m = _LINE_HEADER_HASH_RE.match(stripped) or _LINE_HEADER_STAR_RE.match(stripped)
+        if m:
+            tokens.append(('block_comment_header',
+                           (len(m.group(1)), m.group(2).strip())))
+            i += 1
+            continue
+
         m = _AUTHOR_RE.match(stripped)
         if m:
             # Preserve the original marker + text verbatim (e.g. 'BCP: ...',
@@ -598,13 +640,42 @@ def tokenize(text: str):
                             _FULL_OPEN_RE, _FULL_CLOSE_RE, _SLIDEBREAK_RE,
                             _TERSE_DELIM_RE, _TERSE_PLAIN_RE,
                             _INSTRUCTOR_RE, _EX_RE, _EX_CLOSE_RE,
-                            _GRADE_RE, _AUTHOR_RE]) and
+                            _GRADE_RE, _AUTHOR_RE,
+                            _LINE_HEADER_HASH_RE, _LINE_HEADER_STAR_RE]) and
                         cont != '--'):
                     body_lines.append(cont[2:].lstrip())
                     i += 1
                 else:
                     break
             tokens.append(('author_comment', '\n'.join(body_lines)))
+            continue
+
+        # --- Narrative prose written as a run of `--` line comments ---
+        # The code-forward sources sometimes write prose (and `-- FULL: …`
+        # inline-mode paragraphs) as line comments rather than `/- … -/` blocks.
+        # Such a run reaches this point only after every dedicated-marker check
+        # above has failed and after the indented-comment-inside-a-proof case, so
+        # collect the maximal run of plain comment lines and feed it through the
+        # same processor used for block-comment bodies (`_comment_tokens`, which
+        # also handles FULL:/TERSE: prefixes, `##` headings, dividers, dev notes,
+        # and drops bare region markers).  Without this the run would fall through
+        # to `code_line` and be silently dropped as a comment-only code block.
+        # The extra `_is_dedicated_line_marker` guard ensures the triggering line
+        # is itself collectable, so the loop below always advances `i` by at least
+        # one (a stray dedicated marker like an unmatched `-- /HIDE` that reaches
+        # here would otherwise break immediately, leaving `i` unmoved → infinite
+        # loop); such a line instead falls through to the `code_line` default.
+        if (stripped.startswith('--') and not _EVAL_ANNOT_RE.match(stripped)
+                and not _is_dedicated_line_marker(stripped)):
+            run = []
+            while i < n:
+                s2 = lines[i].strip()
+                if (not s2.startswith('--') or _EVAL_ANNOT_RE.match(s2)
+                        or _is_dedicated_line_marker(s2)):
+                    break
+                run.append(re.sub(r'^--\s?', '', lines[i].strip()))
+                i += 1
+            tokens.extend(_comment_tokens('\n'.join(run)))
             continue
 
         # --- Default: code line ---
@@ -779,8 +850,13 @@ class Renderer:
         self._flush_code()
         # Mirror :::full: only emit the region at top level.  Inside an exercise
         # or a :::full (both 4-colon containers) the content just renders inline,
-        # which also keeps a same-width directive from nesting illegally.
-        if not self.in_exercise and not self.full_open and not self.pending_full:
+        # which also keeps a same-width directive from nesting illegally.  Also
+        # guard against re-opening an already-open :::terse (a source with two
+        # `-- TERSE` and no intervening `-- /TERSE`), which would otherwise emit a
+        # second `::::terse` with no matching close and unbalance the document
+        # (matching `_on_full_open`'s `not self.full_open` guard).
+        if (not self.in_exercise and not self.full_open and not self.pending_full
+                and not self.terse_open):
             self._append(_CONTAINER_FENCE + 'terse\n\n')
             self.terse_open = True
 

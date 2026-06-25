@@ -1,22 +1,5 @@
 /- Induction: Proof by Induction -/
 
--- INSTRUCTORS: This file and Basics.lean each take about an hour to
---    get through in a not-too-rushed fashion (with questions, etc.).
-
--- HIDEFROMHTML
--- FULL
-/-
-  REMINDER:
-
-           #####################################################
-           ###  PLEASE DO NOT DISTRIBUTE SOLUTIONS PUBLICLY  ###
-           #####################################################
-
-    (See the [Preface] for why.)
--/
--- /FULL
--- /HIDEFROMHTML
-
 -- SOONER: Readers might expect us to add eqn:H annotations to uses of
 --   induction, but this changes the shape of the IH in a nasty way! :-(
 --   We should at least comment.
