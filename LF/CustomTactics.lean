@@ -8,9 +8,10 @@ public meta import Lean.Elab.Tactic.BuiltinTactic
 meta import all Lean.Elab.Tactic.BuiltinTactic
 
 public meta import Lean.Meta.Tactic.Generalize
-public meta import Lean.Meta.Tactic.Cases
 public meta import Lean.Meta.Tactic.Injection
 public meta import Lean.Meta.Tactic.Contradiction
+public meta import Lean.Meta.Tactic.Cases
+meta import all Lean.Meta.Tactic.Cases
 
 meta section
 
@@ -78,25 +79,6 @@ def forallMetaTelescopeReducingUntilDefEq
 def _root_.Lean.MVarId.getUserName (mvarId : MVarId) : MetaM Name := do
   let decl ← mvarId.getDecl
   return decl.userName
-
-/-- Given a fully applied inductive type,
-  return a deduplicated array of its nonvariable indices to generalize. -/
-def mkGeneralizeArgs (mvarId : MVarId) (indType : Expr) (name : Name := .anonymous) : MetaM (Array GeneralizeArg) := do
-  let indType ← whnf indType
-  let (ind, args) := indType.getAppFnArgs
-  match ← isInductive? ind with
-  | some val =>
-    let indices := args.drop val.numParams
-    let mut genArgs : Array GeneralizeArg := #[]
-    for idx in indices do
-      unless idx.isFVar || genArgs.any (·.expr == idx) do
-        genArgs := genArgs.push
-          { expr := idx
-            hName? := some (← mkFreshUserName $ name.append `eq) }
-    return genArgs
-  | none =>
-    throwTacticEx `inversion mvarId
-      m!"Target is not an inductive type{indentExpr indType}"
 
 /-- Given equations `eqs` in the local context of `mvarId`,
   unify them using [Lean.Meta.unifyEq?],
@@ -166,23 +148,23 @@ structure InversionConfig where
 
 declare_config_elab elabInversionConfig InversionConfig
 
+open Cases in
 def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (List MVarId) := withMainContext do
   let goal ← getMainGoal
   let hypType ← h.getType
   let hypName ← h.getUserName
-  let (target, goal) ←
+  let (_, goal) ←
     if config.clear then pure (h, goal)
     else (← goal.assert hypName hypType (.fvar h)).intro1P
-  let genArgs ← goal.withContext do
-    mkGeneralizeArgs goal hypType hypName
-  let (subst, genFVars, goal) ← goal.withContext do
-    goal.generalizeHyp genArgs #[target]
-  -- [Lean.Meta.generalizeCore] returns all equations at the end
-  let genEqs := genFVars.toList.drop genArgs.size
-  -- [Lean.MVarId.generalizeHyp] maps hyps to fvars
-  let subgoals ← goal.cases (subst.get target).fvarId!
-  let subgoals ← unifyCasesEqs genEqs subgoals
-  return subgoals.toList.map (·.mvarId)
+  goal.withContext do
+    let some ctx ← mkCasesContext? h
+    | throwTacticEx `cases goal "not applicable to the given hypothesis"
+    let gis@⟨newGoal, _, newTarget, numEqs⟩ ← generalizeIndices goal h
+    let (newEqs, newGoal) ← newGoal.introNP numEqs
+    let subgoals ← inductionCasesOn newGoal newTarget default ctx
+    let subgoals ← elimAuxIndices gis subgoals
+    let subgoals ← unifyCasesEqs newEqs.toList subgoals
+    return subgoals.toList.map (·.mvarId)
 
 /-- Given an inversion alternative and a list of goals,
   solve the tagged goal with the provided tactics,
@@ -233,12 +215,14 @@ end Lean.Elab.Tactic
 
 end -- meta section
 
-example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : f n = 0 := by
-  -- cases le /- Dependent elimination failed: Failed to solve equation 0 = f n -/
-  inversion le; rfl
+namespace Tests
 
-example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : f n = 0 := by
-  inversion +clear le; rfl
+example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : 0 = f n := by
+  -- cases le /- Dependent elimination failed: Failed to solve equation 0 = f n -/
+  inversion le; exact h
+
+example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : 0 = f n := by
+  inversion +clear le; exact h
 
 /-- warning: declaration uses `sorry` -/
 #guard_msgs(warning) in
@@ -281,8 +265,29 @@ example : ¬ (NoStutter [3, 1, 1, 4]) := by
   apply h
   rfl
 
+inductive Vec α : Nat → Type where
+  | nil : Vec α 0
+  | cons {n} : α → Vec α n → Vec α (n + 1)
+
+example {α} (n : Nat) (v : Vec α (n + 1)) : ∃ hd tl, v = Vec.cons hd tl := by
+  inversion v with
+  | cons hd tl => exists hd, tl
+
+inductive Wec α : Nat → Type where
+  | nil : Wec α 0
+  | cons {n} (f : Nat → Nat) : α → Wec α n → Wec α (f n)
+
+/-- warning: declaration uses `sorry` -/
+#guard_msgs(warning) in
+example {α} (n : Nat) (v : Wec α (Nat.succ n)) :
+    ∃ hd tl, v = Wec.cons Nat.succ hd tl := by
+  inversion +clear v with
+  | cons hd tl e => sorry -- don't actually know that f = succ
+
 example (H : Bool → Nat → False) (n : Nat) : False := by
   apply H at n; apply n; exact true
 
 lemma doubleNegation : ∀ P, P → ¬ ¬ P := by
   intro P p np; exact (np p)
+
+end Tests
