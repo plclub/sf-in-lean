@@ -24,13 +24,32 @@ We don't have many contributors yet outside the core group that's been working t
 
 ## Collaboration Conventions
 
-We are still figuring out good conventions for communicating about who
-is doing what. For the moment, use the Zulip *Lock Thread* channel to
-announce where you are working and coordinate with others that may be
-touching the same files. Make PRs frequently so that your local
-changes get folded back into the main branch as quickly as possible.
+We are still figuring out good mechanisms for coordinating who is
+working on what and avoiding stepping on each other's work. For the
+moment, use the Zulip *Lock Thread* channel to announce where you are
+working and coordinate with others that may be touching the same
+files. Make PRs frequently so that your local changes get folded back
+into the main branch as quickly as possible.
 
-We are exploring how to use GitHub issues for SFL.
+For discussions, we've been using a combination of tools:
+
+- If you want to start a discussion about an issue of general
+  interest, post on the [SFL contributors Zulip
+  channel](https://leanprover.zulipchat.com/#narrow/channel/607217-lean-software-foundations-contributors).  
+
+- If you want someone to think about your comment at some point when
+  they have some particular part of the material paged in, put it
+  directly in the .lean file, either in a comment (if it's a plain
+  .lean file) or in a `:::dev` block (if it's been versified), marked
+  with your initials.
+
+- We are still exploring how best to use GitHub issues for SFL.
+
+We prefer _not_ holding discussions in annotations on PRs, because
+they tend to either get lost when the PR is merged or delay merging.
+Putting very local or short-term comments in this medium is fine -- or
+you can just make the change by directly editing the PR, if you think
+it's clear.
 
 ## Git-fu
 
@@ -64,6 +83,20 @@ in a temporary top-level `_out` directory, each with both .lean and .html varian
 To build everything and preview it locally, do `make serve`, 
 then visit http://localhost:8000 
 (`make serve` builds stuff then serves `_out/` on port 8000).
+
+## Status; plain lean vs. verso files (temporary)
+
+At the moment, most of the files in Logical Foundations have been
+converted to regular lean files.  (Programming Language Foundations
+remains to be translated.)  The .lean files are currently in regular
+Lean syntax, but we want them to be formatted as Verso files
+("documentation first") and are working on translating them one by
+one.  
+
+Benjamin is the only person that needs to worry about the details
+here: Everyone else can just work on a given .lean file in whatever
+format it exists in at the moment.  In particular, no one except
+Benjamin should ever need to run the `to_verso.py` script.
 
 ## Lean Style
 
@@ -401,10 +434,10 @@ chapter.
 
 ## AI policy
 
-SFL contributors may use AI tools to help create, validate,
-and maintain content in this repo.  AI-generated content, 
-especially public-facing content such as words and proofs 
-in book chapters, should be carefully vetted.
+SFL contributors may use AI tools to help create, validate, and
+maintain content in this repo.  AI-generated content, especially
+public-facing content such as words and proofs in book chapters,
+should be carefully vetted.
 
-Instructions for Claude live in a separate file `CLAUDE.md` (which
-also asks Claude to pay attention to the conventions in this file).
+Instructions for Claude live in `CLAUDE.md` (which also asks Claude to
+pay attention to the conventions in this file).
