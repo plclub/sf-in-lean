@@ -1,7 +1,7 @@
-# SF-in-Lean Style Guide
+# SF-in-Lean Guide for Contributors
 
-This file records the conventions and the most important decisions we
-have made about writing *Software Foundations in Lean* (SFL): Lean
+This file records the conventions and important decisions we have made
+about writing *Software Foundations in Lean* (SFL): workflow, Lean
 coding style, Verso markup, comment conventions, the order in which
 tactics are introduced, etc.
 
@@ -10,7 +10,7 @@ working together on the translation for a couple of months, so there
 are certain to be things that are not clear.  Please help us figure
 out what those are and document the clarifications in this file.
 
-## Guiding Philosophy
+## Philosophy
 
 1. SFL aims for exceptional pedagogy and presentational polish.
 2. SFL is _exercise-based_: Every important concept comes with
@@ -27,28 +27,26 @@ out what those are and document the clarifications in this file.
    possible. Some of SFL's languages, semantics, etc. might eventually
    be contributed to CSLib. 
 
-## Collaboration Conventions
+## Communicating among ourselves
 
-We are still figuring out good mechanisms for coordinating who is
-working on what and avoiding stepping on each other's work. For the
-moment, use the Zulip *Lock Thread* channel to announce where you are
-working and coordinate with others that may be touching the same
-files. Make PRs frequently so that your local changes get folded back
-into the main branch as quickly as possible.
-
-For discussions, we've been using a combination of tools:
+For discussions, we use a combination of tools.  
 
 - If you want to start a discussion about an issue of general
   interest, post on the [SFL contributors Zulip
   channel](https://leanprover.zulipchat.com/#narrow/channel/607217-lean-software-foundations-contributors).  
 
-- If you want someone to think about your comment at some point when
-  they have some particular part of the material paged in, put it
-  directly in the .lean file, either in a comment (if it's a plain
-  .lean file) or in a `:::dev` block (if it's been versified), marked
-  with your initials.
+- If you are working with others to tackle a specific GitHub issue,
+  you can use that issue for discussion and coordination.
 
-- We are still exploring how best to use GitHub issues for SFL.
+- If you have a local comment that you want someone to think about at
+  some point when they have that section of the material paged in, put
+  it directly in the appropriate .lean file, either in a comment (if
+  it's a plain .lean file) or in a `:::dev` block (if it's been
+  versified), marked with your initials.  These comments are not
+  included in the final build products.
+
+  In-text comments can also be used for coordinating work on specific
+  issues.
 
 We prefer _not_ holding discussions in annotations on PRs, because
 they tend to either get lost when the PR is merged or delay merging.
@@ -56,22 +54,60 @@ Putting very local or short-term comments in this medium is fine -- or
 you can just make the change by directly editing the PR, if you think
 it's clear.
 
-## Git-fu
+These conventions are still developing, so feel free to suggest better
+ways of working if you see them! 
+
+## Tools for coordinating work
+
+We use a standard branch-and-PR workflow.  See below for details.
+
+Make PRs frequently so that your local changes get folded back into
+the `main` branch as quickly as possible.  There is no need to
+completely finish all the work on an issue before merging what you've
+done back into main. If yoour branch compiles and won't interfere with
+what someone else is doing, please make a checkpoint PR every day or
+so.
+
+We use the github issue tracker for recording large tasks that need to
+be done (small or local tasks can just be recorded in comments in the
+affected .lean file) and for keeping track of work in progress that
+other people should be careful not to step on.
+  - Feel free to assign yourself or others to an issue if it is
+    something you will or might work on or you want to be updated on
+    discussions associated with the issue.  Being assigned to an issue
+    does _not_) mean that you have it "locked" and other people should
+    not work on it or touch associated files.
+  - When you start working on an issue, assign it to yourself so that
+    other people know you are thinking about it.
+  - When you start *actually making changes* on a branch, edit the
+    pinned [Work In
+    Progress](https://github.com/plclub/sf-in-lean/issues/25) issue so
+    that people know to be careful not to step on your work.  
+  - Remember to edit it again when you stop working. 
+  - Include the name of the branch or a pointer to the PR where you
+    are working.
+
+### Git-fu 
 
 We use git and github, with some simple conventions:
 
 * The `main` branch must always build. 
-* Never commit directly to `main`. Instead, branch, edit, make a PR,
-  wait for CI to go green (and for others to review, if appropriate),
-  then merge.  
-* After your PR is merged, delete the branch to keep the repo tidy.
+* Never commit directly to `main`. Instead, branch (not fork!), edit,
+  make a PR, wait for CI to go green (and for others to review, if
+  appropriate), then merge.  
 * Don't merge a red PR.
+* After your PR is merged, delete the branch to keep the repo tidy.
+
+We prefer that people create branches in the sf-in-lean repo rather
+than creating forks in their own github accounts for working on stuff.
+This makes it easier for everybody to maintain a global view of what's
+going on.
 
 Our CI uses a small GitHub Actions workflow:
 [.github/workflows/ci.yml](.github/workflows/ci.yml). 
 It runs `make` on every pull request and on every push to `main`. 
 
-## Organization and Make-fu
+### Repo organization and make-fu
 
 Each volume gets its own top-level directory (LF, HL, etc.).  
 
@@ -89,7 +125,7 @@ To build everything and preview it locally, do `make serve`,
 then visit http://localhost:8000 
 (`make serve` builds stuff then serves `_out/` on port 8000).
 
-## Status; plain lean vs. verso files (temporary)
+### Status; plain lean vs. verso files (temporary)
 
 At the moment, most of the files in Logical Foundations have been
 converted to regular lean files.  (Programming Language Foundations
