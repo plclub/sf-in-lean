@@ -74,15 +74,6 @@ import LF.Basics
 
 namespace NatPlayground.Nat
 
-theorem succ_eq_add_one : ∀ n : Nat, succ n = add n one := by
-  intro n
-  rewrite [one_eq_succ_zero, add_succ, add_zero]
-  rfl
-
-unseal beq in
-theorem beq_succ (n m : Nat) : (succ n == succ m) = (n == m) := by rfl
-
-
 -- TERSE
 /-
   ######################################################################
@@ -175,6 +166,17 @@ theorem review4 : ∀ n : Nat, add n zero = n := by
 -/
 -- /HIDE
 -- /QUIZ
+
+/- TODO (DHS): We use this theorem later,
+   so let's make it into a review exercise here -/
+/- review5 -/
+/- Prove the following theorem, using theorems from Basics: -/
+theorem succ_eq_add_one : ∀ n : Nat, succ n = add n one := by
+-- ADMITTED
+  intro n
+  rewrite [one_eq_succ_zero, add_succ, add_zero]
+  rfl
+-- /ADMITTED
 
 /-
   ######################################################################
@@ -344,7 +346,7 @@ theorem eqb_self : ∀ n : Nat,
   case zero =>
     rfl
   case succ n' ih =>
-    rewrite [beq_succ]; exact ih
+    rewrite [succ_succ_beq]; exact ih
 -- /WORKINCLASS
 
 -- FULL
@@ -488,7 +490,7 @@ theorem eqb_refl : ∀ n : Nat,
   intro n
   induction n
   case zero => rfl
-  case succ n' ih => rewrite [beq_succ, ih]; rfl
+  case succ n' ih => rewrite [succ_succ_beq, ih]; rfl
 -- /ADMITTED
 -- []
 
