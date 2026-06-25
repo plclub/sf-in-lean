@@ -1,6 +1,7 @@
 # Software Foundations in Lean
 
-This repository contains the work-in-progress sources for [Software Foundations](https://softwarefoundations.cis.upenn.edu/) in Lean.
+This repository contains the work-in-progress sources for [Software
+Foundations](https://softwarefoundations.cis.upenn.edu/) in Lean.
 
 ## Status
 
