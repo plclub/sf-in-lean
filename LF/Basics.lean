@@ -1385,17 +1385,6 @@ theorem two_plus_two_eq_four : two + two = four := by
 ```
 
 ::::full
-By default, `rewrite` rewrites left-to-right. To rewrite from right
-to left, use `rewrite [← h]`, where `←` is typed as `\l` or `\<-`.
-:::dev
-BCP: We should make this point wherever we rewrite to the left for
-the first time. It's out of place here.
-DHS: Agree. Idr where this happens, though. Probably somewhere around when we
-teach assoc/comm for addition?
-:::
-::::
-
-::::full
 Now that we know how addition is defined, we can use it to define multiplication:
 ::::
 
@@ -1524,7 +1513,7 @@ one for each of the four cases of control flow through the function.
 
 ```lean
 unseal beq
-theorem zero_zero_beq_true : (0 == 0) = true := by rfl
+theorem zero_zero_beq_true : (zero == zero) = true := by rfl
 theorem zero_succ_beq_false (n : Nat) : (zero == (succ n)) = false := by rfl
 theorem succ_zero_beq_false (n : Nat) : ((succ n) == zero) = false := by rfl
 theorem succ_succ_beq (n m : Nat) : ((succ n) == (succ m)) = (n == m) := by rfl
@@ -1892,7 +1881,7 @@ GRADE_THEOREM 2: orb_false_true
 ::::exercise (rating := 1) (name := "zero_nbeq_add_1")
 ```lean
 theorem zero_neb_add_one : ∀ n : Nat,
-  (zero == Nat.succ n) = false := by
+  (zero == succ n) = false := by
   solution!
     intro n; cases n
     case zero => rewrite [zero_succ_beq_false]; rfl
