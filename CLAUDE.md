@@ -3,7 +3,7 @@
 This file contains instructions to help Claude assist in creating and 
 maintaining SF-in-Lean materials.
 
-The file `CONTRIBUTORS.md` details the rules and conventions to be 
+The file `CONTRIBUTING.md` details the rules and conventions to be 
 followed by (human and AI) contributions to this project. 
 
 ## Checking to_verso outputs
