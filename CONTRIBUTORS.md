@@ -4,42 +4,61 @@ This file records the conventions and the most important decisions we have made
 about writing *Software Foundations in Lean* (SFL): Lean coding style, Verso
 markup, comment conventions, the order in which tactics are introduced, etc.
 
+We don't have many contributors yet outside the core group that's been working together on the translation for a couple of months, so there are certain to be things that are not clear.  Please help us figure out what those are and document the clarifications in this file.
+
 ## Guiding Philosophy
 
 1. SFL aims for exceptional pedagogy and presentational polish.
 2. SFL is _exercise-based_: Every important concept comes with hands-on exercises to reinforce it, with solutions.
-3. SFL strives to teach _proof engineering_, 
-   which involves constructing readable and maintainable 
-   formalizations and proofs.
+3. SFL strives to teach _proof engineering_, which involves
+   constructing readable and maintainable formalizations and proofs.
     - Corollary: Students should understand particular tactics and what 
       they do, starting small and growing in sophistication.
     - Corollary: Definitions and proofs are written in idiomatic Lean 
       (mostly the way it is for engineering/maintainability reasons), 
       only deviating (temporarily) for strong pedagogical reasons.
-4. SFL developments connect with those in 
-   [CSLib](https://github.com/leanprover/cslib/tree/main) where possible.
-   Some of SFL's languages, semantics, etc. might eventually 
+4. SFL developments connect with those in
+   [CSLib](https://github.com/leanprover/cslib/tree/main) where
+   possible. Some of SFL's languages, semantics, etc. might eventually
    find a place in CSLib. 
 
 ## Collaboration Conventions
 
-We are still figuring out good conventions for communicating about
-who is doing what. For the moment, use the Zulip *Lock Thread* channel 
-to announce where you are working and coordinate with others that
-may be touching the same files. Make PRs frequently so that your
-local changes get folded back into the main branch as quickly as
-possible.
+We are still figuring out good mechanisms for coordinating who is
+working on what and avoiding stepping on each other's work. For the
+moment, use the Zulip *Lock Thread* channel to announce where you are
+working and coordinate with others that may be touching the same
+files. Make PRs frequently so that your local changes get folded back
+into the main branch as quickly as possible.
 
-We are exploring how to use GitHub issues for SFL.
+For discussions, we've been using a combination of tools:
+
+- If you want to start a discussion about an issue of general
+  interest, post on the [SFL contributors Zulip
+  channel](https://leanprover.zulipchat.com/#narrow/channel/607217-lean-software-foundations-contributors).  
+
+- If you want someone to think about your comment at some point when
+  they have some particular part of the material paged in, put it
+  directly in the .lean file, either in a comment (if it's a plain
+  .lean file) or in a `:::dev` block (if it's been versified), marked
+  with your initials.
+
+- We are still exploring how best to use GitHub issues for SFL.
+
+We prefer _not_ holding discussions in annotations on PRs, because
+they tend to either get lost when the PR is merged or delay merging.
+Putting very local or short-term comments in this medium is fine -- or
+you can just make the change by directly editing the PR, if you think
+it's clear.
 
 ## Git-fu
 
 We use git and github, with some simple conventions:
 
 * The `main` branch must always build. 
-* Never commit directly to `main`. 
-  Instead, branch, edit, make a PR, wait for CI to go green (and for
-  others to review, if appropriate), then merge.  
+* Never commit directly to `main`. Instead, branch, edit, make a PR,
+  wait for CI to go green (and for others to review, if appropriate),
+  then merge.  
 * After your PR is merged, delete the branch to keep the repo tidy.
 * Don't merge a red PR.
 
@@ -65,12 +84,26 @@ To build everything and preview it locally, do `make serve`,
 then visit http://localhost:8000 
 (`make serve` builds stuff then serves `_out/` on port 8000).
 
+## Status; plain lean vs. verso files (temporary)
+
+At the moment, most of the files in Logical Foundations have been
+converted to regular lean files.  (Programming Language Foundations
+remains to be translated.)  The .lean files are currently in regular
+Lean syntax, but we want them to be formatted as Verso files
+("documentation first") and are working on translating them one by
+one.  
+
+Benjamin is the only person that needs to worry about the details
+here: Everyone else can just work on a given .lean file in whatever
+format it exists in at the moment.  In particular, no one except
+Benjamin should ever need to run the `to_verso.py` script.
+
 ## Lean Style
 
 **BCP: This section needs reviewed.**
 
-We generally follow the 
-[Mathlib style guide](https://leanprover-community.github.io/contribute/style.html)
+We generally follow the [Mathlib style
+guide](https://leanprover-community.github.io/contribute/style.html)
 and use the Lean linter by default. 
 
 SFL-specific conventions:
@@ -85,9 +118,12 @@ SFL-specific conventions:
   `cases h; case …` / `induction h; case …`. Select cases with named `case`s,
   un-indented and without a leading `.`, and **align the `=>`** as above.
   Use the `·` selector only when the goal names are not meaningful.
+  
 * **`rewrite` before `rw`** (see next section).
+
 * **Explicit rewrites over `dsimp`/`simp` through notation** (see "Notation and
   simplification").
+
 * **`sorry` placeholders are checked, not silent.** Where a `sorry` appears
   (incomplete proof, exercise scaffold), wrap it so the warning is asserted:
   ```lean
@@ -95,19 +131,22 @@ SFL-specific conventions:
   #guard_msgs in
   example : … := sorry
   ```
+
 * **Aborted/abandoned lemmas** become unnamed `example`s closed with `sorry`
   (the SFL analogue of Rocq's `Abort`).
+
 * **Library vs. client code.** Inside a definition's own library it is fine to
   unfold and simplify through definitions; *using* that code, do not "peek
   through the interface."
 
 ### `rewrite` vs `rw`
 
-`rw [h]` is roughly `rewrite [h]; rfl`, which is too strong for the first
-chapters: it hides the closing `rfl` and makes proofs step confusingly (the goal
-vanishes when you step past the final `]`). Decision (JC): **use `rewrite` the
-first time, keep using it explicitly in the early arithmetic proofs, then
-introduce `rw` in `Induction` and use `rw` predominantly from there on.**
+`rw [h]` is roughly `rewrite [h]; rfl`, which is too strong for the
+first chapters: it hides the closing `rfl` and makes proofs step
+confusingly (the goal vanishes when you step past the final `]`).
+Decision (JC): **use `rewrite` the first time, keep using it
+explicitly in the early arithmetic proofs, then introduce `rw` in
+`Induction` and use `rw` predominantly from there on.**
 
 ### Notation and simplification
 
@@ -119,11 +158,12 @@ equational lemmas** instead — e.g. `n + (m + 1) = n + m + 1` or
 
 ### Arithmetic / the custom `Nat`
 
-`Basics` defines its own `Nat` with `zero`/`succ` constructors and overrides the
-stdlib typeclasses for `-`, `*`, and `^` (but **not** `+`, which is too
-pervasive in the stdlib to shadow safely). Write arithmetic proofs against these
-definitions (`add_succ`, `add_zero`, `mul_succ`, …). `calc`-style equational
-reasoning is introduced in `Induction`.
+`Basics` defines its own `Nat` with `zero`/`succ` constructors and
+overrides the stdlib typeclasses for `-`, `*`, and `^` (but **not**
+`+`, which is too pervasive in the stdlib to shadow safely). Write
+arithmetic proofs against these definitions (`add_succ`, `add_zero`,
+`mul_succ`, …). `calc`-style equational reasoning is introduced in
+`Induction`.
 
 
 ## Verso markup conventions
@@ -391,3 +431,13 @@ Related notation introduced alongside tactics: anonymous constructor `⟨…⟩`
 **Automation** chapter; `grind`, `aesop`, and `try` are deferred to a later
 volume. The `RegExp` development moves out of `IndProp` into that Automation
 chapter.
+
+## AI policy
+
+SFL contributors may use AI tools to help create, validate, and
+maintain content in this repo.  AI-generated content, especially
+public-facing content such as words and proofs in book chapters,
+should be carefully vetted.
+
+Instructions for Claude live in `CLAUDE.md` (which also asks Claude to
+pay attention to the conventions in this file).
