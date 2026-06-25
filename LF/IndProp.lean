@@ -732,24 +732,24 @@ inductive ClosReflTransSym {α: Type} (R: α→α→Prop) : α→α→Prop where
 
     We can define such permutations by the following rules:
 [[[
-               --------------------- (perm3_swap12)
-               Perm3 [a;b;c] [b;a;c]
+               ------------------------- (perm3_swap12)
+               Perm3 [a, b, c] [b, a, c]
 
-               --------------------- (perm3_swap23)
-               Perm3 [a;b;c] [a;c;b]
+               ------------------------- (perm3_swap23)
+               Perm3 [a, b, c] [a, c, b]
 
             Perm3 l₁ l₂       Perm3 l₂ l₃
             ----------------------------- (perm3_trans)
                      Perm3 l₁ l₃
 ]]]
-    For instance we can derive [Perm3 [1;2;3] [3;2;1]] as follows:
+    For instance we can derive `Perm3 [1, 2, 3] [3, 2, 1]` as follows:
 [[
-    ————————(perm_swap12)  —————————————————————(perm_swap23)
-    Perm3 [1;2;3] [2;1;3]  Perm3 [2;1;3] [2;3;1]
-    ——————————————————————————————(perm_trans)  ————————————(perm_swap12)
-        Perm3 [1;2;3] [2;3;1]                   Perm [2;3;1] [3;2;1]
-        —————————————————————————————————————————————————————(perm_trans)
-                          Perm3 [1;2;3] [3;2;1]
+    ─────────────────────────(perm3_swap12)   ─────────────────────────(perm3_swap23)
+    Perm3 [1, 2, 3] [2, 1, 3]                 Perm3 [2, 1, 3] [2, 3, 1]
+    ──────────────────────────────────────────────────(perm3_trans)   ─────────────────────────(perm3_swap12)
+    Perm3 [1, 2, 3] [2, 3, 1]                                          Perm3 [2, 3, 1] [3, 2, 1]
+    ──────────────────────────────────────────────────────────────────────────(perm3_trans)
+    Perm3 [1, 2, 3] [3, 2, 1]
 ]]
 -/
 
@@ -1051,8 +1051,8 @@ theorem Perm3_refl : ∀ (α : Type) (a b c : α ), Perm3 [a, b, c] [a, b, c] :=
 /- In other words, if someone gives us evidence `E` for the proposition
     `Ev n`, then we know that `E` must be one of two things:
 
-      - `E = ev_0` and `n = O`, or
-      - `E = ev_succ_succ n' E'` and `n = n' + 2)`, where `E'` is
+      - `E = ev_0` and `n = 0`, or
+      - `E = ev_succ_succ n' E'` and `n = n' + 2`, where `E'` is
         evidence for `Ev n'`. -/
 
 /- FULL: This suggests that it should be possible to analyze a
@@ -1068,8 +1068,8 @@ theorem Perm3_refl : ∀ (α : Type) (a b c : α ), Perm3 [a, b, c] [a, b, c] :=
 /- FULL: Suppose we are proving some fact involving a number `n`, and
     we are given `Ev n` as a hypothesis.  We already know how to
     perform case analysis on `n` using `cases` or `induction`,
-    generating separate subgoals for the case where `n = O` and the
-    case where `n = S n'` for some `n'`.  But for some proofs we may
+    generating separate subgoals for the case where `n = 0` and the
+    case where `n = n' + 1` for some `n'`.  But for some proofs we may
     instead want to analyze the evidence for `Ev n` _directly_.
 
     As a tool for such proofs, we can formalize the intuitive
@@ -2114,7 +2114,7 @@ theorem n_lt_m__n_le_m : ∀ (n m : Nat),
 
 theorem plus_lt : ∀ (n₁ n₂ m : Nat),
   n₁ + n₂ < m →
-  n₁ < m∧ n₂ < m := by
+  n₁ < m ∧ n₂ < m := by
 /- ADMITTED -/
   intro n₁ n₂ m h
   constructor
@@ -2939,7 +2939,7 @@ def maximal {α:Type} (lmax : List α) (P : List α → Prop) :=
     the `test`. -/
 
 def good_subseq {α:Type} (test : α → Bool) (l lsub : List α) :=
-  Subseq lsub l∧ List.all lsub test
+  Subseq lsub l ∧ List.all lsub test
 
 /- Good subsequences can be extended with good elements. -/
 
