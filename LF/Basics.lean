@@ -1,3 +1,4 @@
+prelude
 import VersoManual
 import VersoManual.InlineLean
 import Illuminate
@@ -1058,6 +1059,15 @@ def add (n : Nat) (m : Nat) : Nat :=
   | succ m' => succ (add n m')
 ```
 
+::::full
+We can also define infix notation for our `add` functions.
+Don't worry too much about how this is defined, we will return to it
+in more detail later.
+::::
+```lean
+scoped infixl:65 " + " => add
+```
+
 # Proof by Rewriting
 
 ## Proving properties about functions in Lean
@@ -1071,7 +1081,7 @@ behavior.
 
 Here is a simple rule about `add`:
 
-- `add n zero = n`
+- `n + zero = n`
 
 In Lean, this rule looks like this:
 ::::
@@ -1083,7 +1093,7 @@ beginning of the proof?  Can we comment on this?
 
 ```lean
 unseal add in
-theorem add_zero : ∀ n : Nat, add n zero = n := by
+theorem add_zero : ∀ n : Nat, n + zero = n := by
   intro n
   rfl
 ```
@@ -1113,7 +1123,7 @@ We can then use the `add_zero` rule to carry out a simple proof
 about natural numbers!
 
 ```lean
-theorem add_zero_zero (n : Nat) : add (add n zero) zero = n := by
+theorem add_zero_zero (n : Nat) : n + zero + zero = n := by
   rewrite [add_zero]
   rewrite [add_zero]
   rfl
@@ -1200,7 +1210,7 @@ Here it is in Lean:
 
 ```lean
 unseal add in
-theorem add_succ : ∀ n m : Nat, add n (succ m) = succ (add n m) := by
+theorem add_succ : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
   intro n m
   rfl
 ```
@@ -1208,7 +1218,7 @@ theorem add_succ : ∀ n m : Nat, add n (succ m) = succ (add n m) := by
 And here it is in a proof:
 
 ```lean
-theorem add_one (n : Nat) : add n (succ zero) = succ (add (add n zero) zero) := by
+theorem add_one (n : Nat) : n + (succ zero) = succ (n + zero) + zero := by
   rewrite [add_succ]
   rewrite [add_zero]  /- notice how this handles an addition on both sides -/
   rewrite [add_zero]
@@ -1274,12 +1284,12 @@ def add (n : Nat) (m : Nat) : Nat :=
   | succ m' => succ (add n m') -/
 
 unseal add in
-theorem add_zero : forall (n : Nat), add n zero = n := by
+theorem add_zero : forall (n : Nat), n + zero = n := by
   intro n
   rfl
 
 unseal add in
-theorem add_succ : forall (n m : Nat), add n (succ m) = succ (add n m) := by
+theorem add_succ : forall (n m : Nat), n + (succ m) = succ (n + m) := by
   intro n m
   rfl
 
@@ -1355,7 +1365,7 @@ BCP: Should this be marked / formatted as an exercise or at least a WORKINCLASS?
 :::
 
 ```lean
-theorem one_plus_one_eq_two : (add one one : Nat) = two := by
+theorem one_plus_one_eq_two : (one + one : Nat) = two := by
   rewrite [one_eq_succ_zero]
   solution!
     rewrite [add_succ]
@@ -1363,10 +1373,10 @@ theorem one_plus_one_eq_two : (add one one : Nat) = two := by
     rfl
 ```
 
-Try the same for `add two two = four`.
+Try the same for `two + two = four`.
 
 ```lean
-theorem two_plus_two_eq_four : (add two two : Nat) = four := by
+theorem two_plus_two_eq_four : two + two = four := by
   solution!
     rewrite [four_eq_succ_three, three_eq_succ_two,
              two_eq_succ_one, one_eq_succ_zero]
@@ -1397,7 +1407,9 @@ Now that we know how addition is defined, we can use it to define multiplication
 def mul (n m : Nat) : Nat :=
   match m with
   | zero => zero
-  | succ m' => add (mul n m') n
+  | succ m' => (mul n m') + n
+
+scoped infixl:70 " * " => mul
 ```
 
 Multiplication, like any function we will prove properties about,
@@ -1405,12 +1417,12 @@ Multiplication, like any function we will prove properties about,
 
 ```lean
 unseal mul in
-theorem mul_zero : ∀ n : Nat, mul n zero = zero := by
+theorem mul_zero : ∀ n : Nat, n * zero = zero := by
   intro n
   rfl
 
 unseal mul add in
-theorem mul_succ : ∀ n m : Nat, mul n (succ m) = add (mul n m) n := by
+theorem mul_succ : ∀ n m : Nat, n * (succ m) = add (n * m) n := by
   intro n m
   rfl
 ```
@@ -1429,7 +1441,7 @@ Prove this property. (We have given you the first line.) Notice how `rewrite`
    with multiple rules.
 
 ```lean
-theorem test_mult1 : (mul two two : Nat) = four := by
+theorem test_mult1 : (two * two : Nat) = four := by
   rewrite [two_eq_succ_one, one_eq_succ_zero]
   solution!
     rewrite [mul_succ, mul_succ, mul_zero]
@@ -1500,28 +1512,9 @@ seal leb
 :::
 
 We'll be using `beq` a lot, so let's give it an infix notation.
-Don't worry too much about how this is defined, we will return to it
-in more detail later.
-
-:::dev
-JC: Lean's stdlib has `==` notation for `beq`,
-but not for `Nat.ble`...
-:::
-
-:::dev
-BCP: Readers may wonder what "instance" is...
-:::
-
-:::dev
-DHS: I removed the other notation in this chapter, but IMO the
-lemmas and proofs below become hideously ugly to the point of unreadability
-without the `==` shorthand. I think in this instance introducing the notation
-is worth it.
-:::
 
 ```lean
-instance : BEq Nat where
-  beq := beq
+scoped infixl:30 " == " => beq
 ```
 
 ::::full
@@ -1613,7 +1606,7 @@ ugly. Are they standard, or can we make a better convention?
 ```lean
 theorem add_id_example : ∀ n m : Nat,
     n = m →
-    add n n = add m m := by
+    n + n = m + m := by
   intro n m
   intro h
   rewrite [h]
@@ -1629,7 +1622,7 @@ Remove `sorry` and fill in the proof.
 
 ```lean
 theorem add_id_exercise : ∀ n m o : Nat,
-    n = m → m = o → add n m = add m o := by
+    n = m → m = o → n + m = m + o := by
   solution!
     intro n m o h1 h2
     rewrite [h1, h2]
