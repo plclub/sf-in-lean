@@ -145,7 +145,7 @@ theorem review3 : ∀ b : Bool, (b || true) = true := by
 -/
 -- HIDE
 /- review4 -/
-theorem review4 : ∀ n : Nat, add n zero = n := by
+theorem review4 : ∀ n : Nat, n + zero = n := by
   intro n; rewrite [add_zero]; rfl
 -- /HIDE
 -- /QUIZ
