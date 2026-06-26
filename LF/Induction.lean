@@ -849,7 +849,7 @@ theorem mul_one : ∀ p : Nat,
   intro p
   rw [one_eq_succ_zero, mul_succ, mul_zero, zero_add]
   -- /ADMITTED
-  -- GRADE_THEOREM 1: mul_one
+-- GRADE_THEOREM 1: mul_one
 
 theorem mul_two : ∀ p : Nat,
     mul p two = add p p := by
