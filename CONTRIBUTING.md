@@ -457,7 +457,7 @@ should be kept in sync as chapters are rewritten; chapters past
 | `Basics`          | `rfl`, `intro`, `rewrite`, `cases`, `exact` |
 | `Induction`       | `induction`, `have`, `rw` |
 | `UsingLean`       | `dsimp`, `calc`, `exact?`, `rw?` |
-| `Poly`            | *(none new)* |
+| `Lists`            | *(none new)* |
 | `Poly`            | *(none new)* |
 | `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `unfold`, `split` |
 | `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
