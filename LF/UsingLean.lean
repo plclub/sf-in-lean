@@ -310,6 +310,11 @@ example (n : Nat) (h : square n = 16) : n * n = 16 := by
   dsimp [square] at h
   exact h
 
+/- Aside: `rw [...] at h` also works on hypotheses too, as does `rw? at h` -/
+example (n m : Nat) (h : 2 * n = m * 2) : n + n = m + m := by
+  rw [Nat.mul_comm, Nat.mul_two, Nat.mul_two] at h
+  exact h
+
 /- `dsimp` also takes definitional steps such as `+ 0`,
   so it can finish goals that rfl would close. -/
 example (n : Nat) : square n + 0 = n * n := by
