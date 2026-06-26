@@ -1061,7 +1061,7 @@ def add (n : Nat) (m : Nat) : Nat :=
 
 ::::full
 We can also define infix notation for our `add` functions.
-Don't worry too much about how this is defined, we will return to it
+Don't worry too much about how this is defined; we will return to it
 in more detail later.
 ::::
 ```lean
@@ -1153,14 +1153,14 @@ _close_ (solve) the current goal which finishes its proof.
 Let's walk through the example above with this terminology in mind.
 
 ```lean
-theorem add_zero_zero_explained (n : Nat) : add (add n zero) zero = n := by
+theorem add_zero_zero_explained (n : Nat) : n + zero + zero = n := by
   /- Move your cursor (click) here to see the initial proof state in
-     the InfoView. The context is `n : Nat`. The goal is `add (add n zero) zero = n`. -/
+     the InfoView. The context is `n : Nat`. The goal is `n + zero + zero = n`. -/
   rewrite [add_zero]
   /- Now click here to see the new proof state that results from the tactic.
-     Notice how `add (add n zero) zero` changes to `add n zero` in the goal. -/
+     Notice how `n + zero + zero` changes to `n + zero` in the goal. -/
   rewrite [add_zero]
-  /- Again the goal changes, from `add n zero` to `n`. Now the proof state
+  /- Again the goal changes, from `n + zero` to `n`. Now the proof state
      is an equality with both sides equal, so it can be closed by the
      tactic `rfl`. -/
   rfl
@@ -1168,7 +1168,7 @@ theorem add_zero_zero_explained (n : Nat) : add (add n zero) zero = n := by
 
 /-! Here's a simple proof for you to try. -/
 
-theorem add_zero_zero_zero (n : Nat) : add (add (add n zero) zero) zero = n := by
+theorem add_zero_zero_zero (n : Nat) : n + zero + zero + zero = n := by
   solution!
     rewrite [add_zero]
     rewrite [add_zero]
@@ -1385,17 +1385,6 @@ theorem two_plus_two_eq_four : two + two = four := by
 ```
 
 ::::full
-By default, `rewrite` rewrites left-to-right. To rewrite from right
-to left, use `rewrite [← h]`, where `←` is typed as `\l` or `\<-`.
-:::dev
-BCP: We should make this point wherever we rewrite to the left for
-the first time. It's out of place here.
-DHS: Agree. Idr where this happens, though. Probably somewhere around when we
-teach assoc/comm for addition?
-:::
-::::
-
-::::full
 Now that we know how addition is defined, we can use it to define multiplication:
 ::::
 
@@ -1422,7 +1411,7 @@ theorem mul_zero : ∀ n : Nat, n * zero = zero := by
   rfl
 
 unseal mul add in
-theorem mul_succ : ∀ n m : Nat, n * (succ m) = add (n * m) n := by
+theorem mul_succ : ∀ n m : Nat, n * (succ m) = (n * m) + n := by
   intro n m
   rfl
 ```
@@ -1524,7 +1513,7 @@ one for each of the four cases of control flow through the function.
 
 ```lean
 unseal beq
-theorem zero_zero_beq_true : (0 == 0) = true := by rfl
+theorem zero_zero_beq_true : (zero == zero) = true := by rfl
 theorem zero_succ_beq_false (n : Nat) : (zero == (succ n)) = false := by rfl
 theorem succ_zero_beq_false (n : Nat) : ((succ n) == zero) = false := by rfl
 theorem succ_succ_beq (n m : Nat) : ((succ n) == (succ m)) = (n == m) := by rfl
@@ -1594,7 +1583,7 @@ just like it can take a previously proved theorem.  In this case, we want to
 rewrite with the hypothesis `h`, which says that `n` and `m` are equal, so
 that we can replace `n` with `m` in the goal.
 
-After the rewrite, the goal is `add m m = add m m`, which can be closed by
+After the rewrite, the goal is `m + m = m + m`, which can be closed by
 `rfl`.
 ::::
 
@@ -1683,7 +1672,7 @@ instead of a hypothesis from the context.
 
 ```lean
 theorem add_mul_zero : ∀ p q : Nat,
-   add (mul p zero) (mul q zero) = zero := by
+    (p * zero) + (q * zero) = zero := by
   intro p q
   rewrite [mul_zero, mul_zero, add_zero]
   rfl
@@ -1892,7 +1881,7 @@ GRADE_THEOREM 2: orb_false_true
 ::::exercise (rating := 1) (name := "zero_nbeq_add_1")
 ```lean
 theorem zero_neb_add_one : ∀ n : Nat,
-  (zero == Nat.succ n) = false := by
+  (zero == succ n) = false := by
   solution!
     intro n; cases n
     case zero => rewrite [zero_succ_beq_false]; rfl
@@ -2019,8 +2008,8 @@ def incr (m : Bin) : Bin
 def binToNat (m : Bin) : Nat
   := solution!(match m with
   | .z => zero
-  | .b0 m' => mul (binToNat m') two
-  | .b1 m' => add (mul (binToNat m') two) one)
+  | .b0 m' => binToNat m' * two
+  | .b1 m' => binToNat m' * two + one)
 
 unseal incr
 example : incr (.b1 .z) = .b0 (.b1 .z) := solution!(by rfl)
@@ -2034,8 +2023,8 @@ seal incr
 
 unseal binToNat
 theorem binToNat_z : binToNat .z = zero := solution!(by rfl)
-theorem binToNat_b0 m : binToNat (.b0 m) = mul (binToNat m) two := solution!(by rfl)
-theorem binToNat_b1 m : binToNat (.b1 m) = add (mul (binToNat m) two) one := solution!(by rfl)
+theorem binToNat_b0 m : binToNat (.b0 m) = binToNat m * two := solution!(by rfl)
+theorem binToNat_b1 m : binToNat (.b1 m) = binToNat m * two + one := solution!(by rfl)
 seal binToNat
 ```
 
