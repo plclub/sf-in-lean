@@ -3,7 +3,11 @@
 import LF.CustomTactics
 
 /- CH: This is just the code with the prose left out, but I've left comments mentioning
-  various issues and my thought processes -/
+  various issues and my thought processes
+
+  BCP: My understanding from the meeting on 6/25 is that this chapter will be folded into
+  Typeclasses as an example.
+-/
 
 /-
   CH: First a general comment that I found even this simple file very annoying to write
