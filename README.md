@@ -1,6 +1,7 @@
 # Software Foundations in Lean
 
-This repository contains the work-in-progress sources for [Software Foundations](https://softwarefoundations.cis.upenn.edu/) in Lean.
+This repository contains the work-in-progress sources for [Software
+Foundations](https://softwarefoundations.cis.upenn.edu/) in Lean.
 
 ## Status
 
@@ -10,8 +11,9 @@ consumption. We aim to have a complete and polished draft of most
 chapters of _Logical Foundations_ and _Programming Language
 Foundations_ in time for Fall 2026 courses. 
 
-If you would like to be notified when chapters are ready for 
-alpha-testing, please email [Benjamin Pierce](bcpierce@cis.upenn.edu).
+If you would like to be notified when chapters are ready for
+alpha-testing, please email [Benjamin
+Pierce](mailto:bcpierce@cis.upenn.edu).
 
 We are also not set up yet to consider PRs from outside the
 translation team.  If you are interested in joining the team, please

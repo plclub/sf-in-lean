@@ -862,7 +862,7 @@ theorem mul_one (p : Nat) :
   case succ p' ih =>
     rw [mul_succ, ih, succ_eq_add_one]
   -- /ADMITTED
-  -- GRADE_THEOREM 1: mul_one
+-- GRADE_THEOREM 1: mul_one
 
 -- EX2 (mul_one)
 theorem mul_two (p : Nat) :

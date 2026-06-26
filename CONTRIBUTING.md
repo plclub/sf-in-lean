@@ -487,3 +487,12 @@ should be carefully vetted.
 
 Instructions for Claude live in `CLAUDE.md` (which also asks Claude to
 pay attention to the conventions in this file).
+
+Raw AI output should not be posted to github or zulip without an
+indication that that's what it is.  
+
+Scripts that are mostly or wholly AI generated should be marked as
+such, because these will typically be lower quality than human-created
+or heavily vetted code, and people looking at them should understand
+that. 
+
