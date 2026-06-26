@@ -1102,6 +1102,15 @@ def natToBin (n : Nat) : Bin :=
   -- /ADMITDEF
 
 -- TODO (DHS): How to hide these theorem statements so that students can get practice writing them?
+/- From GitHub:
+CH:
+  David set it up so that if you put:
+-- SOLUTION
+-- END SOLUTION
+
+in an exercise that it will turn into -- FILL IN HERE in both student version of the Lean files and the generated HTML.
+BCP: Could they be moved later so that at least the reader has the chance to do the exercise before encountering them?
+-/
 unseal natToBin
 theorem natToBin_zero : natToBin zero = .z := by rfl
 theorem natToBin_succ m : natToBin (succ m) = incr (natToBin m) := by rfl
