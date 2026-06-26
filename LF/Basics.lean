@@ -1061,7 +1061,7 @@ def add (n : Nat) (m : Nat) : Nat :=
 
 ::::full
 We can also define infix notation for our `add` functions.
-Don't worry too much about how this is defined, we will return to it
+Don't worry too much about how this is defined; we will return to it
 in more detail later.
 ::::
 ```lean

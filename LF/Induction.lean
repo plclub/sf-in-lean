@@ -24,7 +24,9 @@
   # Separate Compilation
 -/
 
--- TERSE: /- Lean will first need to compile `Basics.lean` so it can be imported here -- detailed instructions are in the full version of this chapter... -/
+-- TERSE: /- Lean will first need to compile `Basics.lean` so it can
+-- be imported here -- detailed instructions are in the full version
+-- of this chapter... -/
 
 -- FULL
 /-
@@ -187,22 +189,23 @@ theorem succ_eq_add_one : ∀ n : Nat, succ n = n + one := by
 -- FULL
 /-
   We defined `add` to recurse on its _second_ argument:
-
+```
   def add (n : Nat) (m : Nat) : Nat :=
     match m with
     | zero => n
     | succ m' => succ (add n m')
-
+```
   This means `n + zero` reduces to `n` by definition, but `zero + n` does
   _not_.
 
   In `add_zero`, we were able to prove that `zero` is a neutral element
   for `+` on the _right_ using just `rfl`:
-
+```
   unseal add in
   theorem add_zero : forall (n : Nat), n + zero = n := by
     intro n
     rfl
+```
 -/
 -- /FULL
 
@@ -354,14 +357,14 @@ theorem beq_self : ∀ n : Nat,
 /-
   Up until this point, we have been explicitly writing out all the parameters
   to theorems with ∀s, which makes us introduce them explicitly with `intro` before we
-  can use them. However, more idiomatic is to write them on the left side of the `:`
+  can use them. A more Lean-idiomatic way is to write them on the left side of the `:`
   in the theorem statement, which introduces them automatically. So, the statement
   of `beq_self` that we just wrote could also be:
 
   `theorem beq_self (n : Nat) : (n == n) = true := by ...`
 
-  When written this way, we don't need to `intro n` at the start of the proof.
-  It will already be in the context when we begin. We will prefer this style going forward.
+  When written this way, we don't need to `intro n` at the start of the proof, as
+  `n` will already be in the context when we begin. We will prefer this style going forward.
 -/
 -- /FULL
 
@@ -842,14 +845,14 @@ theorem add_assoc'' (n m p : Nat) :
 -- /TERSE
 -- HIDEFROMADVANCED
 /-
+
   ######################################################################
   # More Exercises
 
-
-  Tip: By default, `rewrite` and `rw` rewrites left-to-right, i.e.,
-  transforms the hypothesis or goal being rewritten from the form on
+  Tip: By default, `rewrite` and `rw` rewrite left to right, i.e.,
+  they transform the hypothesis or goal being rewritten from the form on
   the left side of the equality to the right side. To rewrite from
-  right to left, use `rewrite [← h]` or `rw [← h]`, where `←` is typed
+  right to left, use `rewrite [← h]` or `rw [← h]`, where `←` is entered
   as `\l` or `\<-`.
 -/
 
