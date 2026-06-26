@@ -94,7 +94,7 @@ partial def unifyEqs (eqs : List FVarId) (mvarId : MVarId) (subst : FVarSubst) (
   | eq :: eqs =>
     let some { mvarId, subst, numNewEqs } ← Option.join <$> (observing? $ unifyEq? mvarId eq subst MVarId.acyclic caseName?)
       | return (mvarId, subst)
-    let (newEqs, mvarId) ← mvarId.introNP numNewEqs
+    let (newEqs, mvarId) ← mvarId.introN numNewEqs
     let eqs := eqs.map (Expr.fvarId! ∘ subst.get)
     unifyEqs (newEqs.toList ++ eqs) mvarId subst caseName?
 
@@ -160,7 +160,7 @@ def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (List MVarId
     let some ctx ← mkCasesContext? h
     | throwTacticEx `cases goal "not applicable to the given hypothesis"
     let gis@⟨newGoal, _, newTarget, numEqs⟩ ← generalizeIndices goal h
-    let (newEqs, newGoal) ← newGoal.introNP numEqs
+    let (newEqs, newGoal) ← newGoal.introN numEqs
     let subgoals ← inductionCasesOn newGoal newTarget default ctx
     let subgoals ← elimAuxIndices gis subgoals
     let subgoals ← unifyCasesEqs newEqs.toList subgoals
@@ -217,12 +217,14 @@ end -- meta section
 
 namespace Tests
 
-example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : 0 = f n := by
-  -- cases le /- Dependent elimination failed: Failed to solve equation 0 = f n -/
-  inversion le; exact h
+set_option pp.proofs true
 
 example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : 0 = f n := by
-  inversion +clear le; exact h
+  -- cases le /- Dependent elimination failed: Failed to solve equation 0 = f n -/
+  inversion le; assumption
+
+example (f : Nat → Nat) (n : Nat) (le : f n ≤ 0) : 0 = f n := by
+  inversion +clear le; assumption
 
 /-- warning: declaration uses `sorry` -/
 #guard_msgs(warning) in
