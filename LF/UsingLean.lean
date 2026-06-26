@@ -109,7 +109,7 @@ theorem complicated_computation : (2 * 3 + 4 * 5 : Nat) * 6 = 156 := by
   As part of using Lean's standard `Nat` type, we will also begin
   using theorems about `Nat`s from the standard library. Because we
   did not write or prove these theorems ourselves, however, we may not
-  know with all the available theorems off the top of our heads.
+  know all the available theorems off the top of our heads.
 
   Lean provides a few ways to search through the standard library to find theorems
   that may be useful during a particular proof. The first such way is the `exact?`
