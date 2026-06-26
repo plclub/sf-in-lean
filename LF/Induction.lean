@@ -957,7 +957,7 @@ theorem andb_false (b : Bool) :
 theorem all3_spec (b c : Bool) :
     (b && c) || ((!b) || (!c)) = true := by
   -- ADMITTED
-  intro b c; cases b
+  cases b
   case true => cases c <;> rfl
   case false => rfl
 -- /ADMITTED
@@ -977,7 +977,6 @@ theorem right_distrib (n m p : Nat) :
 theorem left_distrib (n m p : Nat) :
     p * (n + m) = (p * n) + (p * m) := by
   -- ADMITTED
-  intro n m p
   rw [mul_comm p, mul_comm p, mul_comm p]
   rw [right_distrib]
 -- /ADMITTED
