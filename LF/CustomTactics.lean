@@ -246,6 +246,12 @@ example (f : Nat → Nat) (n : Nat) (leq : f n ≤ 0) : 0 = f n := by
 example (f : Nat → Nat) (n : Nat) (leq : f n ≤ 0) : 0 = f n := by
   inversion +clear leq; assumption
 
+/-- error: Unknown identifier `leq` -/
+#guard_msgs(error) in
+example (f : Nat → Nat) (n : Nat) (leq : f n ≤ 0) : 0 = f n := by
+  inversion +clear leq
+  guard_hyp leq
+
 example (f : Nat → Nat) (n : Nat) (leq : f n ≤ 0) : 0 = f n := by
   inversion leq with
   | refl heq eq =>
