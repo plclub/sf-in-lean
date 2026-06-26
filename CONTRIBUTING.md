@@ -455,15 +455,15 @@ should be kept in sync as chapters are rewritten; chapters past
 | Chapter           | Tactics first introduced |
 |-------------------|--------------------------|
 | `Basics`          | `rfl`, `intro`, `rewrite`, `cases`, `exact` |
-| `Induction`       | `induction`, `have`, `rw`, `calc`, `generalize` |
-| `Lists`           | `dsimp` |
+| `Induction`       | `induction`, `have`, `rw` |
+| `UsingLean`       | `dsimp`, `calc`, `exact?`, `rw?` |
+| `Poly`            | *(none new)* |
 | `Poly`            | *(none new)* |
 | `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `unfold`, `split` |
 | `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
 | `IndProp`         | `simp`, `rcases`, `subst`, `omega` |
 | `Maps`            | *(none new)* |
 | `IndPropRegexp`   | `specialize`, `trivial` |
-| `UsingLean`       | *(none new)* |
 
 Related notation introduced alongside tactics: anonymous constructor
 `⟨…⟩` (`Lists`); destructuring `let ⟨…⟩ := …` and `cases h : …`,

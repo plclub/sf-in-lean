@@ -41,13 +41,11 @@ import LF.Induction
 section long_example
 open NatPlayground.Nat
 /- Previously, we did computation like this... -/
-theorem test_mult1' : (3 * 3 : NatPlayground.Nat) = 9 := by
-  rewrite [three_eq_succ_two, two_eq_succ_one, one_eq_succ_zero]
-  rewrite [mul_succ, mul_succ, mul_succ, mul_zero]
-  rewrite [add_succ, add_succ, add_succ, add_zero]
-  rewrite [add_succ, add_succ, add_succ, add_zero]
-  rewrite [add_succ, add_succ, add_succ, add_zero]
-  rfl
+theorem test_mult1' : (two * two : NatPlayground.Nat) = four := by
+  rw [two_eq_succ_one, one_eq_succ_zero]
+  rw [mul_succ, mul_succ, mul_zero]
+  rw [add_succ, add_succ, add_zero]
+  rw [add_succ, add_succ, add_zero]
 end long_example
 
 /- This approach is useful in a textbook for understanding the structure of
@@ -73,8 +71,6 @@ theorem test_mult1_nat : (3 * 3 : Nat) = 9 := by
   In fact, from now on, we will use the built-in `Nat` type and its powerful
   features.
 -/
-
-
 
 /-
   ## `rfl` and computation with `Nat`
@@ -103,6 +99,114 @@ theorem complicated_computation : (2 * 3 + 4 * 5 : Nat) * 6 = 156 := by
    solved with `rfl`.
 -/
 
+/-
+  ######################################################################
+  # Using the Standard Library
+-/
+
+-- FULL
+/-
+  As part of using Lean's standard `Nat` type, we will also begin
+  using theorems about `Nat`s from the standard library. Because we
+  did not write or prove these theorems ourselves, however, we may not
+  know with all the available theorems off the top of our heads.
+
+  Lean provides a few ways to search through the standard library to find theorems
+  that may be useful during a particular proof. The first such way is the `exact?`
+  tactic. This tactic searches the standard library for a theorem that can be applied,
+  along with the hypotheses in the context, to exactly close the current goal.
+-/
+-- /FULL
+
+-- TERSE
+/- We can use the `exact?` tactic to search for relevant theorems in the standard library -/
+-- /TERSE
+
+/-- info: Try this:
+  [apply] exact Nat.add_comm a b -/
+#guard_msgs(info) in
+example (a b : Nat) : a + b = b + a := by
+  /- this will suggest that we use `exact Nat.add_comm a b` to close this goal -/
+  exact?
+
+-- FULL
+/-
+  If you are using the Lean 4 extension in VSCode, the InfoView will
+  have a blue `[apply]` button that shows the suggested theorem to
+  close the goal. You can click on this button to replace the
+  occurence of `exact?` with this tactic; idiomatic Lean does not
+  leave `exact?` tactics (or any other `?` tactics, as we will see
+  shortly) in the finished versions of proofs and to instead replaces
+  them with the suggested tactics.
+-/
+-- /FULL
+
+-- FULL
+/-
+  The `exact?` tactic is useful when we just need a single library theorem to get us over
+  the finish line of a proof, but it is not so helpful when we are deep in the middle of a proof
+  or are wondering how to get started on one. Luckily, there are other tactics that will help us
+  with this.
+
+  The `rw?` tactic works like `exact?`, except that it searches for any theorems that you
+  could use to rewrite the current goal.
+-/
+-- /FULL
+
+-- TERSE
+/- You can also use `rw?` to look for theorems to rewrite by -/
+-- /TERSE
+
+
+/-- info: Try this:
+  [apply] rw [Nat.add_comm]
+  -- no goals -/
+#guard_msgs(info) in
+example (a b : Nat) : a + b = b + a := by
+  /- this will suggest that we use `rw [Nat.add_comm]` to close this goal -/
+  rw?
+
+-- FULL
+/-
+  However, unlike `exact?`, just because `rw?` suggests a theorem to
+  you does not automatically imply that it will be useful. In the
+  example below, many of the theorems `rw?` suggests will not progress
+  towards completing the proof; you will need to carefully look
+  through its suggestions to see which ones seem useful. We strongly
+  recommend against blindly using `rw?` and accepting its suggestions
+  without due consideration! You will find this a very slow and
+  frustrating way to write proofs. Instead, we suggest figuring out
+  what you would like your next step to be, conceptually, and then
+  using `rw?` to search for a theorem that implements it. If no such
+  theorem exists, that may be a sign that you need to prove it
+  yourself.
+-/
+-- /FULL
+
+#guard_msgs(drop all) in
+example (n m q : Nat) :
+   (n + m) + q = m + (n + q) := by
+  -- lots of suggestions to look through here!
+  rw?
+  sorry
+
+/- Prove the following theorems about `Nat`s. You should not need induction for any of these;
+   you can find the theorems you need using `rw?` and `exact?`.  -/
+
+theorem mul_three (p : Nat) :
+    3 * p = p + p + p := by
+  -- ADMITTED
+  rw [Nat.add_one_mul, Nat.two_mul]
+  -- /ADMITTED
+  -- GRADE_THEOREM 1: mul_three
+
+theorem mul_three_beq (p : Nat) :
+    (3 * p == p + p + p) = true := by
+  -- ADMITTED
+  rw [Nat.beq_eq_true_eq]
+  exact mul_three p
+  -- /ADMITTED
+  -- GRADE_THEOREM 1: mul_three_beq
 
 /-
   ######################################################################
@@ -141,7 +245,8 @@ theorem succ_mul_succ (n m : Nat) :
     (n + 1) * (m + 1) = n * m + n + m + 1 := by
   rw [Nat.add_mul, Nat.one_mul, Nat.mul_add, Nat.mul_one, ← Nat.add_assoc]
 
-/- Given this proof with `rw`, rewrite it with `calc`. -/
+/- Given this proof with `rw`, rewrite it with `calc`. Reminder that you can use `rw?` to find
+   appropriate rules to rewrite by. -/
 
 theorem succ_mul_succ' (n m : Nat) :
     (n + 1) * (m + 1) = n * m + n + m + 1 := by
@@ -205,21 +310,27 @@ example (n : Nat) (h : square n = 16) : n * n = 16 := by
   dsimp [square] at h
   exact h
 
-/- dsimp also takes definitional steps such as `+ 0`,
+/- `dsimp` also takes definitional steps such as `+ 0`,
   so it can finish goals that rfl would close. -/
 example (n : Nat) : square n + 0 = n * n := by
   dsimp [square]
 
-
-/-
-  ######################################################################
-  # Basic Typeclasses (?)
--/
+/- Like `rw` and `exact`, `dsimp` also has a `?` mark version that searches for
+   functions to simplify by. Many Lean tactics have `?` versions; try it out if you are unsure. -/
 
 /-
   ######################################################################
   # Redefining Functions and Lemmas over Nats
 -/
+
+-- FULL
+/-
+  Now that we've switched over to using Lean's standard library, we can
+  redefine some of the functions from the last few chapters on `Nat`s.
+
+  Prove some of these theorems using the techniques we've discussed this chapter.
+-/
+-- /FULL
 
 def even (n : Nat) :=
   match n with
@@ -241,20 +352,21 @@ def minustwo (n : Nat) : Nat :=
   | .succ (.zero) => .zero
   | .succ (.succ n') => n'
 
-@[irreducible]
 def double (n : Nat) : Nat :=
   match n with
   | .zero => 0
   | .succ n' => .succ (.succ (double n'))
 
-theorem even_S : ∀ n : Nat,
+theorem even_succ (n : Nat) :
     even (.succ n) = !even n := by
   -- ADMITTED
-  intro n
   induction n
-  case zero => rfl
+  case zero =>
+    rfl
   case succ n' ih =>
-    rewrite [even, ih, NatPlayground.Nat.notb_involutive]; rfl
+    rw [even, ih, Bool.not_not]
+  -- /ADMITTED
+-- GRADE_THEOREM 1: even_succ
 
   -- TODO: talk about using `Nat.add_zero` and friends from now on.
 
@@ -263,36 +375,22 @@ theorem even_S : ∀ n : Nat,
 
 theorem even_zero : even 0 = true := by rfl
 
-theorem even_succ : ∀ n : Nat, even (n + 1) = !even n :=
-  even_S
-
-unseal double in
 theorem double_zero : double 0 = 0 := by rfl
 
-unseal double in
 theorem double_succ (n : Nat) : double (n + 1) = double n + 2 := by rfl
 
 theorem double_add (n : Nat) : double n = n + n := by
-  induction n with
-  | zero => rw [double_zero]
-  | succ n' ih => rw [double_succ, ih, Nat.succ_add n' (n' + 1), Nat.add_succ n' n']
+  -- ADMITTED
+  induction n
+  case zero =>
+    rw [double_zero]
+  case succ n' ih =>
+    rw [double_succ, ih, Nat.succ_add n' (n' + 1), Nat.add_succ n' n']
+  -- /ADMITTED
+-- GRADE_THEOREM 1: double_add
 
-theorem beq_succ (n m : Nat) : (n + 1 == m + 1) = (n == m) := by simp
-theorem eqb_refl (n : Nat) : (n == n) = true := by simp
-
-def leb (n m : Nat) : Bool :=
-  match n, m with
-  | 0, _ => true
-  | _ + 1, 0 => false
-  | n' + 1, m' + 1 => leb n' m'
-
-infix:65 (priority := high) " ≤? " => leb
-
-theorem zero_leb (n : Nat) : leb 0 n = true := by rfl
-theorem succ_leb_zero (n : Nat) : leb (n + 1) 0 = false := by rfl
-theorem succ_leb_succ (n m : Nat) : leb (n + 1) (m + 1) = leb n m := by rfl
-
-def ltb (n m : Nat) : Bool :=
-  leb (n + 1) m
-
-infix:65 (priority := high) " <? " => ltb
+theorem double_mul (n : Nat) : double n = 2 * n := by
+  -- ADMITTED
+  rw [double_add, Nat.two_mul]
+  -- /ADMITTED
+-- GRADE_THEOREM 1: double_mul
