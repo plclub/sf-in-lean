@@ -136,7 +136,7 @@ example (a b : Nat) : a + b = b + a := by
   close the goal. You can click on this button to replace the
   occurence of `exact?` with this tactic; idiomatic Lean does not
   leave `exact?` tactics (or any other `?` tactics, as we will see
-  shortly) in the finished versions of proofs and to instead replaces
+  shortly) in the finished versions of proofs and instead replaces
   them with the suggested tactics.
 -/
 -- /FULL
@@ -320,7 +320,7 @@ example (n m : Nat) (h : 2 * n = m * 2) : n + n = m + m := by
 example (n : Nat) : square n + 0 = n * n := by
   dsimp [square]
 
-/- Like `rw` and `exact`, `dsimp` also has a `?` mark version that searches for
+/- Like `rw` and `exact`, `dsimp` also has a `?` version that searches for
    functions to simplify by. Many Lean tactics have `?` versions; try it out if you are unsure. -/
 
 /-
