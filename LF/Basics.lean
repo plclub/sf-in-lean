@@ -13,6 +13,7 @@ import SFLMeta.Instructors
 import SFLMeta.SlideBreak
 import SFLMeta.Solution
 import SFLMeta.Terse
+import Autograder.Attributes
 
 open Verso.Genre Manual
 open SFLMeta
@@ -447,20 +448,26 @@ its inputs are `.false`. Make sure that the `example` assertions
 below can be verified by Lean.
 
 ```lean
+@[graded ignore]
 def nandb (b1 : MyBool) (b2 : MyBool) : MyBool
   := solution!(match b1 with
   | .true => notb b2
   | .false => .true)
 
-example : nandb .true  .false  = .true  := solution!(by rfl)
-example : nandb .false .false =  .true  := solution!(by rfl)
-example : nandb .false .true  =  .true  := solution!(by rfl)
-example : nandb .true  .true   = .false := solution!(by rfl)
+@[graded 1.0]
+theorem nandb_test1 : nandb .true  .false  = .true  := solution!(by rfl)
+theorem nandb_test2 : nandb .false .false =  .true  := solution!(by rfl)
+theorem nandb_test3 : nandb .false .true  =  .true  := solution!(by rfl)
+theorem nandb_test4 : nandb .true  .true   = .false := solution!(by rfl)
 ```
+
+:::dev
+NH: Why are tests 2-4 not graded?
+:::
 
 :::grade
 ```
-GRADE_THEOREM 1: nandb_test4
+GRADE_THEOREM 1: nandb_test1
 ```
 :::
 ::::
@@ -471,13 +478,15 @@ return `true` when all of its inputs are `true`, and `false`
 otherwise.
 
 ```lean
+@[graded ignore]
 def andb3 (b1 : MyBool) (b2 : MyBool) (b3 : MyBool) : MyBool
   := solution!(andb b1 (andb b2 b3))
 
-example : andb3 .true .true .true  = .true  := solution!(by rfl)
-example : andb3 .false .true .true = .false := solution!(by rfl)
-example : andb3 .true .false .true = .false := solution!(by rfl)
-example : andb3 .true .true .false = .false := solution!(by rfl)
+@[graded 1.0]
+theorem andb3_test1 : andb3 .true .true .true  = .true  := solution!(by rfl)
+theorem andb3_test2 : andb3 .false .true .true = .false := solution!(by rfl)
+theorem andb3_test3 : andb3 .true .false .true = .false := solution!(by rfl)
+theorem andb3_test4 : andb3 .true .true .false = .false := solution!(by rfl)
 ```
 
 :::grade
@@ -1533,16 +1542,21 @@ prove, while `x == y` is a boolean _expression_ whose value (either
 Define a less-than function in terms of `leb`.
 
 ```lean
-@[irreducible]
+@[irreducible, graded ignore]
 def ltb (n m : Nat) : Bool
   := solution!(leb (succ n) m)
 
 unseal ltb leb
-example : ltb two two = false := solution!(by rfl)
-example : ltb two four = true  := solution!(by rfl)
-example : ltb four two = false := solution!(by rfl)
+theorem ltb_test1 : ltb two two = false := solution!(by rfl)
+theorem ltb_test2 : ltb two four = true  := solution!(by rfl)
+@[graded 1.0]
+theorem ltb_test3 : ltb four two = false := solution!(by rfl)
 seal ltb leb
 ```
+
+:::dev
+NH: tests 1-2 not graded?
+:::
 
 :::grade
 ```
@@ -1590,12 +1604,14 @@ After the rewrite, the goal is `m + m = m + m`, which can be closed by
 :::dev
 BCP: I find the indentation / linebreaking choices here kind of
 ugly. Are they standard, or can we make a better convention?
+NH: I agree, I like how `:= by` on its own line looks.
 :::
 
 ```lean
 theorem add_id_example : ∀ n m : Nat,
-    n = m →
-    n + n = m + m := by
+  n = m →
+  n + n = m + m
+:= by
   intro n m
   intro h
   rewrite [h]
@@ -1610,8 +1626,10 @@ We make a general claim about natural numbers and prove it
 Remove `sorry` and fill in the proof.
 
 ```lean
+@[graded 1.0]
 theorem add_id_exercise : ∀ n m o : Nat,
-    n = m → m = o → n + m = m + o := by
+  n = m → m = o → n + m = m + o
+:= by
   solution!
     intro n m o h1 h2
     rewrite [h1, h2]
@@ -1863,6 +1881,7 @@ Prove the following claim.
 Tip: the rewrite rule to simplify `(b || false)` is called `Bool.or_false`.
 
 ```lean
+@[graded 2.0]
 theorem orb_false_true : ∀ b : Bool,
     (b || false) = true → b = true := by
   solution!
@@ -1880,6 +1899,7 @@ GRADE_THEOREM 2: orb_false_true
 
 ::::exercise (rating := 1) (name := "zero_nbeq_add_1")
 ```lean
+@[graded 1.0]
 theorem zero_neb_add_one : ∀ n : Nat,
   (zero == succ n) = false := by
   solution!
@@ -1953,6 +1973,10 @@ recursive definition (of a simple function on numbers, say) that
 does actually terminate on all inputs, but that Lean will reject
 because it cannot automatically prove termination.
 
+:::dev
+NH: How to grade this exercise using `@[graded]`?
+:::
+
 :::solution
 ```
 def factorial_bad (n : Nat) : Nat :=
@@ -1997,14 +2021,14 @@ inductive Bin : Type where
   | b0 (n : Bin)
   | b1 (n : Bin)
 
-@[irreducible]
+@[irreducible, graded ignore]
 def incr (m : Bin) : Bin
   := solution!(match m with
   | .z => .b1 .z
   | .b0 m' => .b1 m'
   | .b1 m' => .b0 (incr m'))
 
-@[irreducible]
+@[irreducible, graded ignore]
 def binToNat (m : Bin) : Nat
   := solution!(match m with
   | .z => zero
@@ -2012,9 +2036,12 @@ def binToNat (m : Bin) : Nat
   | .b1 m' => binToNat m' * two + one)
 
 unseal incr
-example : incr (.b1 .z) = .b0 (.b1 .z) := solution!(by rfl)
-example : incr (.b0 (.b1 .z)) = .b1 (.b1 .z) := solution!(by rfl)
-example : incr (.b1 (.b1 .z)) = .b0 (.b0 (.b1 .z)) := solution!(by rfl)
+@[graded 0.5]
+theorem incr_test1 : incr (.b1 .z) = .b0 (.b1 .z) := solution!(by rfl)
+@[graded 0.5]
+theorem incr_test2 : incr (.b0 (.b1 .z)) = .b1 (.b1 .z) := solution!(by rfl)
+@[graded 0.5]
+theorem incr_test3 : incr (.b1 (.b1 .z)) = .b0 (.b0 (.b1 .z)) := solution!(by rfl)
 
 theorem incr_z : incr .z = .b1 .z := solution!(by rfl)
 theorem incr_b0 m : incr (.b0 m) = .b1 m := solution!(by rfl)
@@ -2030,10 +2057,13 @@ seal binToNat
 
 ```lean
 unseal Nat.mul Nat.add incr binToNat
-example : binToNat (.b0 (.b1 .z)) = two := solution!(by rfl)
-example : binToNat (incr (.b1 .z)) = add one (binToNat (.b1 .z)) := solution!(by rfl)
-example : binToNat (incr (incr (.b1 .z))) = add two (binToNat (.b1 .z)) := solution!(by rfl)
-example : binToNat (.b0 (.b0 (.b1 .z))) = four := solution!(by rfl)
+@[graded 0.5]
+theorem binToNat_test1 : binToNat (.b0 (.b1 .z)) = two := solution!(by rfl)
+@[graded 0.5]
+theorem binToNat_test2 : binToNat (incr (.b1 .z)) = add one (binToNat (.b1 .z)) := solution!(by rfl)
+@[graded 0.5]
+theorem binToNat_test3 : binToNat (incr (incr (.b1 .z))) = add two (binToNat (.b1 .z)) := solution!(by rfl)
+theorem binToNat_test4 : binToNat (.b0 (.b0 (.b1 .z))) = four := solution!(by rfl)
 seal Nat.mul Nat.add incr binToNat
 ```
 
@@ -2075,6 +2105,10 @@ GRADE_THEOREM 0.5: binToNat_test3
 ::::
 
 :::dev
+NH: why is binToNat test4 not graded?
+:::
+
+:::dev
 TODO: Give more intro to these two theorems on booleans.
 :::
 
@@ -2097,6 +2131,7 @@ rewriting with `h : n = m` that deserves a sentence of preparation.
 :::
 
 ```lean
+@[graded 1.0]
 theorem identity_fn_applied_twice : ∀ f : Bool → Bool,
     (∀ x : Bool, f x = x) →
     ∀ b : Bool, f (f b) = b := by
@@ -2147,6 +2182,7 @@ systematic problem with the way the file was translated?
 :::
 
 ```lean
+@[graded 3.0]
 theorem andb_eq_orb : ∀ b c : Bool,
     (b && c) = (b || c) →
   b = c := by
