@@ -7,6 +7,7 @@ import SFLMeta.SlideBreak
 import SFLMeta.Details
 import Std.Data.HashMap
 import SubVerso.Highlighting
+import Autograder.Attributes -- This import is a workaround for a limitation with `include_str`: https://github.com/leanprover-community/mathlib4/pull/221#issuecomment-1063468937
 
 open Lean Elab
 open Verso.Genre Manual
@@ -193,7 +194,11 @@ private def lakefileTemplate (vol : String) : String :=
   "version = \"0.1.0\"\n" ++
   "defaultTargets = [\"" ++ vol ++ "\"]\n\n" ++
   "[[lean_lib]]\n" ++
-  "name = \"" ++ vol ++ "\"\n"
+  "name = \"" ++ vol ++ "\"\n" ++
+  r#"
+[[lean_lib]]
+name = "Autograder"
+globs = ["Autograder.+"]"# -- Includes contents of Autograder/ without having an explicit Autograder.lean at root
 
 /-! ## ExtraStep walker -/
 
@@ -689,7 +694,12 @@ def walkOuter (width : Nat) (vol : String) (text : Part Manual) (buf : SaveBuffe
     let chapterFile := chapterPath vol p
     -- BCP: Maybe this is not needed?
     -- buf := appendBoth buf chapterFile "import Lean\n\nopen Lean\n\n"
+    -- NH: This is probably not the most elegant place to inject the Autograder import
+    buf := appendBoth buf chapterFile "import Autograder.Attributes\n\n"
     buf := walkSection width 1 chapterFile p buf
+  -- Include Autograder in the buf
+  -- Lake doesn't detect changes to Attributes.lean through the include_str. A workaround import is in place at the top of the file.
+  buf := appendBoth buf "Autograder/Attributes.lean" (include_str "../Autograder/Attributes.lean")
   return buf
 
 /--
