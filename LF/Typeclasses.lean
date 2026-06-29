@@ -36,7 +36,7 @@ variable (α : Type)
 without any further information about the details of the type `α`. Here we are able to work
 with a type like {InlineLean.lean}`List α`, and can write functions like {name}`List.reverse` or
 {name}`List.length` that only operate on the structure of a list independently of its contents.
-Along with these he have corresponding proofs like {name}`List.length_reverse` that are similarly
+Along with these we have corresponding proofs like {name}`List.length_reverse` that are similarly
 structural in nature.
 
 This is somewhat limiting, as we cannot inspect or non-trivially use any particular `a : α`. What we
@@ -64,7 +64,7 @@ instance instHasOneNat : HasOne Nat where
   one := 1
 ```
 
-which is evidence that {name}`Nat` has some inhabitant. I could do the same thing with integers
+which is evidence that {name}`Nat` has some inhabitant. We could do the same thing with integers
 
 ```lean
 instance instHasOneInt : HasOne Int where
@@ -106,9 +106,9 @@ I say data to mean "not in `Prop`", is that a Lean-ism that's been explained? --
 
 Notably the above examples enforce no conditions on the data that they carry, and we could provide
 any value that we would like for {name}`HasOne.one`. In most languages that support typeclasses it
-is not possible to enforce the notion of "lawfulness" as part of the typeclass, and it falls to
+is not possible to enforce a notion of "lawfulness" as part of the typeclass, and it falls to
 the author to ensure that any desired invariants are satisfied. As an example, suppose that we
-wanted to express the idea that a type has at least two elements. A first attempt might be
+wanted to express the idea that a type has at least two distinct elements. A first attempt might be
 
 ```lean -keep
 class HasTwo (α : Type) where
@@ -339,7 +339,7 @@ We've seen two different ways of expressing logical claims in Lean: with boolean
 
 Here are the key differences between `Bool` and `Prop`:
 
-:::table +header (align := right)
+:::table +header (align := center)
 *
   * ⠀
   * `Bool`
@@ -396,9 +396,7 @@ example : Even 42 := by exists 21
 Of course, it would be deeply strange if these two characterizations of evenness did not describe
 the same set of natural numbers!
 
-Fortunately, they do!
-
-To prove this, we first need two helper lemmas.
+Fortunately, they do! To prove this, we first need two helper lemmas.
 
 ```lean
 theorem even_double (k : Nat) : isEven (double k) = true := by
@@ -415,7 +413,7 @@ theorem even_double (k : Nat) : isEven (double k) = true := by
 
 ```lean
 theorem  isEven_double_exists (n : Nat) :
-    ∃ k, n = bif isEven n then double k else double k + 1 := by
+    ∃ k, n = bif isEven n then double k else double k + 1 := by solution!(
   induction n with
   | zero =>
     exists 0
@@ -436,7 +434,7 @@ theorem  isEven_double_exists (n : Nat) :
       rewrite [h] at ih ⊢
       subst ih
       rewrite [cond_false, Bool.not_false, cond_true, double_succ]
-      rfl
+      rfl)
 ```
 ::::
 
@@ -476,8 +474,8 @@ So what should we do in situations where some claim could be formalized as eithe
 
 In general, both can be useful. Which we choose has to do with the _computational_ nature of Lean's
 core language, which is designed so that every function it expresses is total, and by default
-computable unless we explicit indicate otherwise using the `noncomputable`. As an example, consider
-trying to write a function `α → α → Bool` checking for equality:
+computable unless we explicit indicate otherwise. As an example, consider
+trying to write a function `α → α → Bool` checking for equality on an arbitrary type:
 
 ```lean -keep +error
 def eq {α : Type} (a₁ a₂ : α) : Bool := if a₁ = a₂ then true else false
@@ -485,7 +483,7 @@ def eq {α : Type} (a₁ a₂ : α) : Bool := if a₁ = a₂ then true else fals
 
 Lean will complain here that it cannot find an instance of {name}`Decidable`. This typeclass
 
-```
+```lean -keep
 class inductive Decidable (p : Prop) where
   /-- Proves that `p` is decidable by supplying a proof of `¬p` -/
   | isFalse (h : Not p) : Decidable p
@@ -551,23 +549,21 @@ set_option pp.all true in
 #print eq
 ```
 
-but we have need to indicate to lean using the `noncomputable` keyword and `Classical` namespace
+but we have indicated to Lean using the `noncomputable` keyword and `Classical` namespace
 that we are not interested in computation. What is happening in the background is that this allows
 typeclass synthesis to find the scoped instance {name}`Classical.propDecidable`, which makes use of
 the axiom of choice to provide a proof that all propositions are _classically_ decidable. This
 sort of definition is suitable for use with proofs, but is not allowed to be used in conjunction
 with computational features of Lean such as the {tactic}`decide` tactic or the `#eval` command.
 
-:::dev
-This is essentially the "Case Study: Improving Reflection" section in the Rocq `IndProp`
-chapter. Not sure exactly how we want this ported -- CGH
-:::
+
+# TODO
 
 :::dev
-`Decidable` only carries the proposition and not the boolean, so one direction of
-`reflect_iff` is easily translated, but the other is a bit different. I list some theorems
-below but you should Loogle and see if that's what you want. Some the the proofs can be a bit
-advanced if you follow core, or otherwise a bit circular. -- CGH
+Below are some stray examples from IndProp. `Decidable` only carries the proposition and not the
+boolean, so one direction of `reflect_iff` is easily translated, but the other is a bit different.
+I list some theorems below but you should Loogle and see if that's what you want. Some the the
+proofs can be a bit advanced if you follow core, or otherwise a bit circular. -- CGH
 :::
 
 ```lean
