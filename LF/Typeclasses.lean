@@ -289,6 +289,51 @@ exists (with limited prose) in `Maps.lean` already. --CGH
 
 # Reflection
 
+:::dev
+I think this will still exist in previous chapters, just not have the reflection explanations until
+here? Since I can't import these yet, just placing here at the top of this section -- CGH
+:::
+
+```lean
+namespace Nat
+
+@[irreducible]
+def isEven : Nat → Bool
+| 0 => true
+| 1 => false
+| n + 2 => isEven n
+
+@[irreducible]
+def double : Nat → Nat
+| 0 => 0
+| n + 1 => double n + 2
+
+section
+
+unseal isEven
+unseal double
+
+theorem isEven_zero : isEven 0 = true := rfl
+theorem isEven_one : isEven 1 = false := rfl
+theorem isEven_succ_succ (n : Nat) : isEven (n + 2) = isEven n := rfl
+
+theorem double_zero : double 0 = 0 := by rfl
+theorem double_succ (n : Nat) : double (n + 1) = double n + 2 := rfl
+
+end
+
+def Even (n : Nat) := ∃ m, n = double m
+
+theorem isEven_succ (n : Nat) : isEven (n + 1) = ! isEven n := by
+  induction n with
+  | zero =>
+    rewrite [Nat.zero_add, isEven_zero, isEven_one]
+    rfl
+  | succ n ih =>
+    rewrite [isEven_succ_succ, ih, Bool.not_not]
+    rfl
+```
+
 We've seen two different ways of expressing logical claims in Lean: with booleans (of type
 {name}`Bool`), and with propositions (of type {InlineLean.lean}`Prop`).
 
@@ -334,45 +379,6 @@ propositional equality is required for this. Since `Prop` includes both decidabl
 properties, we have two options when we want to formalize a property that happens to be decidable:
 we can express it either as a boolean computation or as a function into Prop
 
-:::dev
-I assume here that we still defined existential quantification and these definitions, we just
-skipped the reflection part. Redefining because I don't really understand the state the previous
-files are in to import things.
-
--- CGH
-:::
-
-```lean
-namespace Nat
-
-@[irreducible]
-def isEven : Nat → Bool
-| 0 => true
-| 1 => false
-| n + 2 => isEven n
-
-@[irreducible]
-def double : Nat → Nat
-| 0 => 0
-| n + 1 => double n + 2
-
-section
-
-unseal isEven
-unseal double
-
-theorem isEven_zero : isEven 0 = true := rfl
-theorem isEven_one : isEven 1 = false := rfl
-theorem isEven_succ_succ (n : Nat) : isEven (n + 2) = isEven n := rfl
-
-theorem double_zero : double 0 = 0 := by rfl
-theorem double_succ (n : Nat) : double (n + 1) = double n + 2 := rfl
-
-end
-
-def Even (n : Nat) := ∃ m, n = double m
-```
-
 As an example, we can write
 
 ```lean
@@ -395,17 +401,6 @@ Fortunately, they do!
 To prove this, we first need two helper lemmas.
 
 ```lean
-theorem isEven_succ (n : Nat) : isEven (n + 1) = ! isEven n := by
-  induction n with
-  | zero =>
-    rewrite [Nat.zero_add, isEven_zero, isEven_one]
-    rfl
-  | succ n ih =>
-    rewrite [isEven_succ_succ, ih, Bool.not_not]
-    rfl
-```
-
-```lean
 theorem even_double (k : Nat) : isEven (double k) = true := by
   induction k with
   | zero =>
@@ -415,6 +410,8 @@ theorem even_double (k : Nat) : isEven (double k) = true := by
     rewrite [double_succ, isEven_succ_succ]
     exact ih
 ```
+
+::::exercise (rating := 3) (name := "isEven_double_exists")
 
 ```lean
 theorem  isEven_double_exists (n : Nat) :
@@ -428,24 +425,22 @@ theorem  isEven_double_exists (n : Nat) :
     exact double_zero
   | succ n ih =>
     obtain ⟨k, ih⟩ := ih
+    rewrite [isEven_succ]
     by_cases h : isEven n
-    · rewrite [isEven_succ]
-      exists k
+    · exists k
       rewrite [h] at ih ⊢
       subst ih
       rfl
-    · rewrite [isEven_succ]
-      exists k + 1
+    · exists k + 1
       rewrite [Bool.not_eq_true] at h
       rewrite [h] at ih ⊢
       subst ih
       rewrite [cond_false, Bool.not_false, cond_true, double_succ]
       rfl
 ```
+::::
 
-In Lean, the way that we express a proposition is decidable is via the {name}`Decidable` typeclass.
-In particular, one way that we can use this typeclass is by proving that the proposition is
-equivalent to some boolean valued function:
+Now the main theorem:
 
 ```lean
 theorem isEven_iff_Even {n : Nat} : isEven n = true ↔ Even n where
@@ -460,7 +455,48 @@ theorem isEven_iff_Even {n : Nat} : isEven n = true ↔ Even n where
     exact even_double k
 ```
 
-and then declare an instance that makes use of this:
+In view of this theorem, we can say that the boolean computation even n is reflected in the truth of
+the proposition `∃ k, n = double k`.
+
+ Similarly, to state that two numbers n and m are equal, we can say either
+ * that `n == m` returns `true`
+ * that `n = m`
+
+ Again, these two notions are equivalent:
+
+:::dev
+This proof is from the typeclass version, which makes more sense if maps are included --CGH
+:::
+
+ ```lean
+ example (n₁ n₂ : Nat) : n₁ == n₂ ↔ n₁ = n₂ := beq_iff_eq
+ ```
+
+So what should we do in situations where some claim could be formalized as either a proposition or a boolean computation? Which should we choose?
+
+In general, both can be useful. Which we choose has to do with the _computational_ nature of Lean's
+core language, which is designed so that every function it expresses is total, and by default
+computable unless we explicit indicate otherwise using the `noncomputable`. As an example, consider
+trying to write a function `α → α → Bool` checking for equality:
+
+```lean -keep +error
+def eq {α : Type} (a₁ a₂ : α) : Bool := if a₁ = a₂ then true else false
+```
+
+Lean will complain here that it cannot find an instance of {name}`Decidable`. This typeclass
+
+```
+class inductive Decidable (p : Prop) where
+  /-- Proves that `p` is decidable by supplying a proof of `¬p` -/
+  | isFalse (h : Not p) : Decidable p
+  /-- Proves that `p` is decidable by supplying a proof of `p` -/
+  | isTrue (h : p) : Decidable p
+```
+
+is the way that we express in Lean that a given proposition is decidable. This is the generalization
+of our observation that {name}`isEven_iff_Even` was reflecting a proof between boolean and
+propositional equality. In fact, we can use this theorem to directly construct a {name}`Decidable`
+instance
 
 ```lean
 instance (n : Nat) : Decidable (Even n) := decidable_of_decidable_of_iff isEven_iff_Even
@@ -482,6 +518,45 @@ example : ∀ n < 10, Even (2 * n) := by decide
 example : ∀ n < 10, Even (2 * n) ∧ ¬ Even (2 * n + 1) := by decide
 end
 ```
+
+In general, Lean will try to use typeclass synthesis with {name}`Decidable` in order to determine
+when it is appropriate to use `Prop` and `Bool` interchangeably. For instance, while our example
+`eq` failed above while trying to use propositional equality `=` in the condition of an `if`
+statement, we are allowed to write
+
+```lean
+def nat_eq (m n : Nat) : Bool := if m = n then true else false
+```
+
+Why is this allowed? It is precisely because equality of natural numbers is decidable, and Lean
+makes use of this fact. If we print this definition with notation unset, we would find that it
+is using {name}`instDecidableEqNat`
+
+```lean
+set_option pp.all true in
+#print nat_eq
+```
+
+which proves that this equality is decidable.
+
+This is only half the story however, as while Lean's core theory enables this computation, Lean is
+also often used in applications where we don't care about computability. In particular, it is
+possible to write a function a function for arbitrary equality
+
+```lean -keep
+open scoped Classical in
+noncomputable def eq {α : Type} (a₁ a₂ : α) := if a₁ = a₂ then true else false
+
+set_option pp.all true in
+#print eq
+```
+
+but we have need to indicate to lean using the `noncomputable` keyword and `Classical` namespace
+that we are not interested in computation. What is happening in the background is that this allows
+typeclass synthesis to find the scoped instance {name}`Classical.propDecidable`, which makes use of
+the axiom of choice to provide a proof that all propositions are _classically_ decidable. This
+sort of definition is suitable for use with proofs, but is not allowed to be used in conjunction
+with computational features of Lean such as the {tactic}`decide` tactic or the `#eval` command.
 
 :::dev
 This is essentially the "Case Study: Improving Reflection" section in the Rocq `IndProp`
