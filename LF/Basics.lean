@@ -1085,7 +1085,7 @@ def add (n : Nat) (m : Nat) : Nat :=
 
 ::::full
 We can also define infix notation for our `add` functions.
-Don't worry too much about how this is defined, we will return to it
+Don't worry too much about how this is defined; we will return to it
 in more detail later.
 ::::
 ```lean
@@ -1571,7 +1571,7 @@ one for each of the four cases of control flow through the function.
 
 ```lean
 unseal beq
-theorem zero_zero_beq_true : (0 == 0) = true := by rfl
+theorem zero_zero_beq_true : (zero == zero) = true := by rfl
 theorem zero_succ_beq_false (n : Nat) : (zero == (succ n)) = false := by rfl
 theorem succ_zero_beq_false (n : Nat) : ((succ n) == zero) = false := by rfl
 theorem succ_succ_beq (n m : Nat) : ((succ n) == (succ m)) = (n == m) := by rfl
@@ -1720,7 +1720,7 @@ instead of a hypothesis from the context.
 
 ```lean
 theorem add_mul_zero : ∀ p q : Nat,
-   (mul p zero) + (mul q zero) = zero := by
+    (p * zero) + (q * zero) = zero := by
   intro p q
   rewrite [mul_zero, mul_zero, add_zero]
   rfl
@@ -1924,7 +1924,7 @@ GRADE_THEOREM 2: orb_false_true
 ::::exercise (rating := 1) (name := "zero_nbeq_add_1")
 ```lean
 theorem zero_neb_add_one : ∀ n : Nat,
-  (zero == Nat.succ n) = false := by
+  (zero == succ n) = false := by
   solution!
     intro n; cases n
     case zero => rewrite [zero_succ_beq_false]; rfl
