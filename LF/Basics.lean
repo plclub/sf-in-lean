@@ -28,8 +28,8 @@ file := "Basics"
 :::instructors
 This file and Induction.lean each take about an hour to
 get through in a not-too-rushed fashion (with questions, etc.).
-(BCP: Actually, in 2025 this file alone took me two full hours.)
 (BCP: This estimate may need to be revised now that we are in Lean!)
+(RAB: Issue opened to measure this.)
 
 You may want to assign both files together as the homework for the
 first week, depending on the level of the class.  Just Basics is
@@ -93,11 +93,13 @@ providing definitions of booleans, numbers, and many common data
 structures like lists and hash tables.  But there is nothing magic
 or primitive about these library definitions.  To illustrate this
 fact, we will explicitly recapitulate most of the definitions we
-need in this course, rather than just referring to the standard
-library. However, we will take care to harmonize those definitions
-with the ones in the standard library, so that, by the time you are
-finished the course, you will have a good grasp of how the standard
-library is organized.
+need in this course to introduce them rather than just referring
+to the standard library. However, we take care to harmonize
+those definitions with the ones in the standard library, as well
+as to gradually introduce the actual library definitions once appropriate.
+By the time you are finished with the course, you will have a good grasp
+of how the Lean standard library is organized and how to efficiently
+find resources within it.
 ::::
 
 ## Days of the Week
@@ -195,26 +197,17 @@ def nextWorkingDay' (d : Day) : Day :=
 When full qualification is not necessary to disambiguate, we will
 prefer the shorter syntax with just the `.`.
 
-:::dev
-BCP: I'm persistently confused by this explanation.  We start out saying that
-being explicit is very important, but then we say that the shorter syntax
-is fine.  I feel like this is an instance where trying not to overwhelm readers
-with too much detail is actually leading to more confusion.  Maybe we should
-just explain what's going on.
-DHS: How's this?
-:::
+If you ever need to know the type of *any* pattern, object, or function,
+you can hover over it with your mouse in any editor that supports Lean,
+like VS Code or the web version we provide.
 
 :::dev
-From GitHub discussion, this is unresolved:
-MWH - it seems that the full explanation comes later? I'm still not sure I get
-what's being said here. I think it's maybe worth being systematic, right here,
-if it seems to slow you down.
-DHS - I worry that explaining namespaces right here is too soon. This is essentially
-the very first thing we explain in the whole textbook, and going directly in to the
-details of how namespaces work immediately seems like a lot. Does it seem appropriate
-to say "names have to be qualified" here and then explain namespaces later?
-MWH - This is a key concept as the current comment explains. I'm a little inclined to
-put it all here. But I'm good with whatever for now. We can always change it later.
+RAB: I'm resolving the discussion for now. The `.pattern` syntax shows
+up in the Lean suggestions, in the documentation, and (less importantly)
+in our examples pervasively after this point, and we need to introduce it early.
+I think we should ask for feedback from people who aren't writing the book on
+this part and on others; I feel our curse of knowledge is leading to a lot of
+focus on something that may not be that important.
 :::
 ::::
 
@@ -242,14 +235,15 @@ in comments.)
 ```
 
 ::::full
-(We show Lean's responses in comments; if you have a computer
-handy, this would be an excellent moment to fire up VS Code with
-the Lean extension and try it for yourself.  Load this file,
-`Basics.lean`, from the book's Lean sources, find the above
-example, and observe the result in the Lean InfoView panel.)
+If you have a computer handy, this would be an excellent moment
+to fire up VS Code with the Lean extension or the Lean web interface
+and try it for yourself.  Load this file, `Basics.lean`,
+from the book's Lean sources, find the above example, and observe
+the result in the Lean InfoView panel.
 
 :::dev
 DHS: Where are we showing responses in comments? I don't see them.
+RAB: Why did we remove the comments?
 Per GitHub discussion, MWH agrees - this is unresolved.
 :::
 ::::
@@ -257,12 +251,12 @@ Per GitHub discussion, MWH agrees - this is unresolved.
 ## Aside: Using the VS Code Lean Extension
 
 ::::full
-In VS Code, development of Lean code is supported by
-the Lean Extension, which provides an interactive "InfoView" panel that
-displays the results of commands like `#eval` and `#check`, as well as the
-current goal state when working on proofs. You can hover over expressions in
-the source code to see their types, and you can click on the results in the
-InfoView to navigate to their definitions. This makes it easier to understand
+In VS Code, development of Lean code is supported by the Lean Extension,
+which provides an interactive "InfoView" panel that displays the results
+of commands like `#eval` and `#check`, as well as the current goal state
+when working on proofs. You can hover over expressions in the source code
+to see their types, and you can click on the results in the InfoView
+to navigate to their definitions. This makes it easier to understand
 how your code is being interpreted by Lean and to debug any issues that
 arise.
 
@@ -271,19 +265,17 @@ edit it, so you can see the results of your changes immediately. You can also
 use the InfoView to explore the definitions of functions and types that
 you're using, which can be very helpful for understanding how they work.
 
-If you haven't already, install the Lean Extension in VS Code and open the
-`Basics.lean` file to see the InfoView in action. Try hovering over the
-`nextWorkingDay` function and the `Day` type to see their definitions, and
-experiment with adding your own `#eval` commands to test other inputs.
+If you haven't already, either install the Lean Extension in VS Code and open the
+`Basics.lean` file or open `Basics.lean` on the interactive Lean web client
+to see the InfoView in action. Try hovering over the `nextWorkingDay` function
+and the `Day` type to see their definitions, and experiment with adding your own
+`#eval` commands to test other inputs.
 
 For `#eval` and other commands, we show Lean's responses in comments; if you
 hover over the `#eval` commands above, you will see the popup that contains
 the output should match what's in the comment below. Experiment with adding
 your own `#eval` commands to test other inputs.
 
-:::dev
-RAB: There's a question of where exactly to put this.
-:::
 ::::
 
 Continuing with our simple type and function, we can record what we _expect_
@@ -294,13 +286,8 @@ example : nextWorkingDay (nextWorkingDay .saturday) = .tuesday := by
   rfl
 ```
 
-:::dev
-BCP: Can we add some line breaks to that?  What is idiomatic?
-:::
-
 ::::full
-This declaration asserts
-that the second working day after `saturday` is `tuesday`.
+This declaration asserts that the second working day after `saturday` is `tuesday`.
 Having made the assertion, we can also ask Lean to _verify_ it.
 The `by rfl` can be read as "The assertion we've just made can be
 proved by observing that both sides of the equality evaluate to
@@ -323,6 +310,12 @@ efficient executables. We'll come back to this topic in later
 chapters.
 ::::
 
+:::dev
+RAB: Is Lean compiling to C its "killer app," or is it the fact that it is an
+executable programming language (unlike Gallina)? We should get a Lean pro's
+take on what to say here.
+:::
+
 ## Booleans
 
 ::::full
@@ -339,12 +332,6 @@ We define our own `MyBool` to teach the concept of building from
 scratch; later we'll switch to Lean's built-in `Bool`.
 We use a different name to make explicit that this is not the same
 type as Lean's built-in, but their definitions are equivalent.
-
-:::dev
-BCP: Why call it MyBool instead of just Bool?  (Or, conversely, why call the constructors
-true and false instead of mytrue, myfalse, mynotb, etc.?
-Maybe this is a place to talk about how inductive types create namespaces?)
-:::
 
 ```lean
 inductive MyBool : Type where
@@ -397,10 +384,6 @@ complete specification -- a truth table -- for the `orb` function:
 Note the syntax for defining multi-argument functions (`andb` and `orb`).
 :::
 
-:::dev
-HG: This feels like too little discussion of FP function calling for a non-FP
-person, and too much for anyone who knows FP. I propose we skip this.
-:::
 
 ```lean
 example : orb .true  .false = .true  := by rfl
@@ -411,25 +394,21 @@ example : orb .true  .true  = .true  := by rfl
 
 We can define new symbolic notations for existing definitions.
 Because Lean already defines the same notations for the built-in `Bool`,
-we restrict ours locally to a _section_. Don't worry for now about
+we restrict ours locally to a namespace. Don't worry for now about
 how the notation is defined.
 
 ```lean
-section
+namespace MyBool_notations
 local prefix:40 (priority := high) "!" => notb
 local infixl:35 (priority := high) " && " => andb
 local infixl:30 (priority := high) " || " => orb
 ```
 
-:::dev
-BCP: Why spaces some places but not others?
-:::
-
 ```lean
 example : (.false || .false || .true) = .true := by rfl
 
 example : (!.false) = .true := by rfl
-end
+end MyBool_notations
 ```
 
 :::slidebreak
@@ -500,24 +479,6 @@ but comes with a lot of useful functions and lemmas.
 end MyBool
 ```
 
-:::dev
-RAB: From this point, there are about 450 lines of comments before
-the next exercise. This is the same as in Rocq, but do we want
-to keep this pattern?
-:::
-
-:::dev
-BCP: Ideally no!
-:::
-
-:::dev
-TODO (Claude): Concretely: even trivial drop-in exercises would keep
-hands on keyboards through this stretch -- e.g., "define `isWeekend`",
-"write a `Color` inverter", "add your own `#check` and predict the
-output".  The namespaces/sections material in particular is reference
-content that could become an exercise-light aside.
-:::
-
 ## Types
 
 Every expression in Lean has a type describing what sort of thing it computes.
@@ -552,13 +513,6 @@ function produces an output of type `Bool`." Similarly, the type of
 each of type `Bool`, this function produces an output of type
 `Bool`."
 ::::
-
-:::dev
-HG: Again, maybe too basic for our audience.
-BCP: I think here I might diusagree...?
-DHS: This is almost exactly the text from the Rocq book. Are we aiming
-these at different audiences?
-:::
 
 ### Aside: Unicode in Lean
 
@@ -623,16 +577,9 @@ E.g., these are valid constructor expressions...
 - {name}`true` {name}`RGB.red`
 - {name}`Color.primary` `(.primary .red)`
 
-:::dev
-BCP: Why do all of the constructors have namespaces except true and false?
-:::
-
-:::dev
-TODO (Claude): The bullet above draws attention to this inconsistency
-without resolving it, which is risky for beginners.  Either explain
-(`Bool`'s constructors are exported to the root namespace) or drop
-the remark.
-:::
+  Note that we don't need to qualify `true` as `Bool.true`.
+  Lean recognizes `Bool` as one of the types whose constructors
+  are usable without qualification by default.
 
 :::slidebreak
 :::
@@ -700,7 +647,83 @@ This function produces the same result as the old
 and then pattern matches on that argument to produce the final
 result.
 
-## Namespaces and Sections
+::::exercise (rating := 1) (name := "is_weekend")
+Define a function that takes a day and returns true if the day is
+a weekend, and false otherwise.
+
+Hint: You could do this by pattern matching on each possible day of the week,
+or you could try to come up with a shorter solution...
+
+```lean
+@[irreducible]
+def is_weekend (d : Day) : Bool
+  := solution!
+    (match d with
+    | .saturday => true
+    | .sunday => true
+    | _ => false
+    )
+
+unseal is_weekend
+example : is_weekend .sunday = true := solution!(by rfl)
+example : is_weekend .friday = false := solution!(by rfl)
+seal is_weekend
+```
+:::dev
+RAB, to NH: 1/2 new exercises to grade. Thanks!
+:::
+
+:::grade
+```
+GRADE_THEOREM 1: is_inversion
+```
+:::
+::::
+
+
+
+::::exercise (rating := 1) (name := "is_inversion")
+Define a function that takes two colors and returns `true` if
+the second color is an _inversion_ of the first, and false otherwise.
+
+Inversion is defined by cases:
+Black is an inversion of white, and vice versa.
+Red is an inversion of blue, and vice versa
+Green is not an inversion of anything.
+
+```lean
+@[irreducible]
+def is_inversion (c1 c2 : Color) : Bool
+  := solution!
+    (match c1, c2 with
+    | .black, .white => true
+    | .white, .black => true
+    | .primary .red, .primary .blue => true
+    | .primary .blue, .primary .red => true
+    | _, _ => false
+    )
+
+unseal is_inversion
+example : is_inversion .black .white = true := solution!(by rfl)
+example : is_inversion .white .black = true := solution!(by rfl)
+example : is_inversion (.primary .red) (.primary .blue) = true := solution!(by rfl)
+example : is_inversion (.primary .green) (.primary .red) = false := solution!(by rfl)
+seal is_inversion
+```
+:::dev
+RAB, to NH: 2/2 new exercise to grade
+:::
+
+:::grade
+```
+GRADE_THEOREM 1: is_inversion
+```
+:::
+::::
+
+
+
+## Namespaces
 
 ::::full
 Lean provides a _namespace system_ to aid in organizing large
@@ -727,7 +750,26 @@ end Playground
 
 #check myFoo             -- Bool
 #check Playground.myFoo  -- RGB
+
 ```
+
+::::exercise(rating:=0) (name := "custom_namespace_checks")
+As an exercise, predict the output of each of these statements below.
+Do you think their results will change depending on which `namespace`
+they are in? How?
+
+#check .black -- Write your prediction here.
+#check Color.black -- Write your prediction here.
+#check RGB -- Write your prediction here.
+#check NatPlayground.myFoo -- Write your prediction here.
+
+Once you have written your predictions, copy the lines into
+the active sections of the book to run them.
+::::
+
+:::dev
+RAB: This seems like a reasonable exercise; I'm not quite sure if/how we should grade it?
+:::
 
 ::::full
 When inside a `namespace` region, definitions from the same
@@ -751,7 +793,7 @@ close it.
 ::::
 
 ```lean
---- this works, because the definnition is qualified by `RGB.`
+--- this works, because the definition is qualified by `RGB.`
 def RGB.myOtherBlue : RGB := myBlue
 
 #check RGB.myBlue      -- RGB
@@ -809,13 +851,6 @@ possible bit values) and then define the datatype `Nibble`, which is
 a tuple of four bits.
 ::::
 
-:::dev
-DHS: Some discussion remains around Nibble vs. Nybble.
-From the GitHub thread, we had MWH linking
-`https://en.wikipedia.org/wiki/Nibble_(magazine)`,
-but BCP indicated that he saw the Nibble spelling more commonly.
-:::
-
 :::terse
 A Nibble is half a byte -- four bits.
 :::
@@ -863,36 +898,22 @@ example : allZero (.bits .b0 .b0 .b0 .b0) = true  := by rfl
 end Playground
 ```
 
-:::dev
-HG: I wonder how we should prioritize `#eval e` vs. `example e = e' := rfl`.
-They both feel like they have value.
-DHS: I prefer `example` for when the result actually matters (as in the above case),
-since this means we don't have to worry about keeping comments in sync.
-BCP: Not sure I understood Chris's comment above, but I thought he might
-be saying that these comment will be auto-generated by the `example` statements...?
-:::
-
 ## Natural Numbers
 
 ::::full
-We put this section in a namespace so that our own definition of
+We put this portion of the chapter in a namespace so that our own definition of
 numbers does not interfere with the one from the standard library.
 In the remainder of the book, we'll use the standard library's.
 ::::
 
-:::dev
-BCP: Is "section" used in a technical sense in that paragraph? Why
-do we need both namespaces and sections (particularly in this first
-chapter)?
-:::
 
 ```lean
 namespace NatPlayground
 ```
 
 ::::full
-All the types we have defined so far -- both "enumerated
-types" such as `Day`, `Bool`, and `Bit` and tuple types such as
+All the types we have defined so far -- both "enumerated types"
+such as `Day`, `Bool`, and `Bit` and tuple types such as
 `Nibble` built from them -- are finite. The natural numbers, on
 the other hand, are an infinite set, so we'll need to use a
 slightly richer form of type declaration to represent them.
@@ -953,7 +974,7 @@ We can also write functions on `Nat`.
 
 ```lean
 @[irreducible]
-def Nat.pred (n : Nat) : Nat :=
+def pred (n : Nat) : Nat :=
   match n with
   | zero => zero
   | succ n' => n'
@@ -974,21 +995,10 @@ or the `seal` and `unseal` that we use in the examples below.
 Hold onto this question; we will explain shortly.
 ::::
 
-:::dev
-TODO:
-Lean user question: how to get (succ (succ zero)) rather than
-NatPlayground.Nat.succ (NatPlayground.Nat.succ (NatPlayground.Nat.zero))
-:::
-
-:::dev
-BCP: Yes!
-:::
-
-:::dev
-BCP: Missing transition
-:::
-
 ::::full
+
+Look the types of `succ`, `pred`, and `minustwo`:
+
 ```lean
 #check succ  -- Nat → Nat
 #check Nat.pred  -- Nat → Nat
@@ -1008,6 +1018,16 @@ not _do_ anything at all! It is just the way we write down numbers.
 
 :::slidebreak
 :::
+
+::::full
+We can also define _recursive functions_: functions that call themselves
+repeatedly down to a base case. Recursion is the essence of repeated
+computation in functional programming; in this course, we will make
+extensive use of recursive functions.
+
+We first define a simple recursive function, `even`, then a slightly
+more sophisticated recursive function `add`.
+::::
 
 :::terse
 Recursive functions:
@@ -1059,6 +1079,10 @@ def add (n : Nat) (m : Nat) : Nat :=
   | succ m' => succ (add n m')
 ```
 
+```lean
+#eval add one two -- succ (succ (succ zero)) -- aka, three!
+```
+
 ::::full
 We can also define infix notation for our `add` functions.
 Don't worry too much about how this is defined, we will return to it
@@ -1066,6 +1090,9 @@ in more detail later.
 ::::
 ```lean
 scoped infixl:65 " + " => add
+```
+```lean
+#eval one + two -- succ (succ (succ zero)) -- aka, three again.
 ```
 
 # Proof by Rewriting
@@ -1086,11 +1113,6 @@ Here is a simple rule about `add`:
 In Lean, this rule looks like this:
 ::::
 
-:::dev
-BCP: Why does the Info View say "Goals accomplished!" right at the
-beginning of the proof?  Can we comment on this?
-:::
-
 ```lean
 unseal add in
 theorem add_zero : ∀ n : Nat, n + zero = n := by
@@ -1107,6 +1129,10 @@ BCP: The flow here is rough
   - We should also comment, as soon as it's relevant, on the binder
     form vs. the ∀ form for introducing variables.  Why do we use
     the ∀ form here?  Could we switch to the binder form?
+RAB: We desperately need a way for this not to be the introduction to proof.
+Explaining it away with "don't worry" feels painful. Can we hide the definition,
+or do _something_ to make sure we're not having to explain ∀ , intro, by, etc.
+here?
 :::
 
 ::::full
@@ -1117,13 +1143,15 @@ BCP: The flow here is rough
 :::dev
 BCP: We will probably want to remove the "NatPlayground" stuff from
 all these comments when we fix the printing.
+RAB: Yes! Someone please let us know how!
 :::
 
 We can then use the `add_zero` rule to carry out a simple proof
 about natural numbers!
 
 ```lean
-theorem add_zero_zero (n : Nat) : n + zero + zero = n := by
+theorem add_zero_zero : ∀ n : Nat, n + zero + zero = n := by
+  intro n
   rewrite [add_zero]
   rewrite [add_zero]
   rfl
@@ -1135,7 +1163,7 @@ theorem add_zero_zero (n : Nat) : n + zero + zero = n := by
 ## Proof state and tactics
 
 ::::full
-The "proof commands" -- `rewrite`, `rfl`, etc. -- are called
+The "proof commands" -- `intro n`, `rewrite`, `rfl`, etc. -- are called
 _tactics_. The `add_zero` in brackets is an _argument_ to the
 `rewrite` tactic.
 
@@ -1153,23 +1181,38 @@ _close_ (solve) the current goal which finishes its proof.
 Let's walk through the example above with this terminology in mind.
 
 ```lean
-theorem add_zero_zero_explained (n : Nat) : add (add n zero) zero = n := by
-  /- Move your cursor (click) here to see the initial proof state in
-     the InfoView. The context is `n : Nat`. The goal is `add (add n zero) zero = n`. -/
+theorem add_zero_zero_explained : ∀  n : Nat, (n + zero) + zero = n := by
+    /- Move your cursor (click) here to see the initial proof state in
+     the InfoView. The context (before the ⊢) is empty.
+     The goal is `∀ (n : Nat), (n + zero) + zero = n`. -/
+  intro n
+  /- Now click here to see the new proof state that results from the
+     tactic. Notice how `intro n` has changed the _context_: it now
+     contains `n : Nat`.
+
+    The `intro` tactic is used to name variables _quantified_ by a
+    ∀ (pronounced "forall", typed \all or \forall.) Since we are
+    trying to prove a property of all natural numbers, we introduce
+    a generic natural number `n` and prove the property holds for it.
+    The argument to `intro` is the name of the variable introduced.
+
+    In a proof involving ∀, `intro` is often necessary.
+  -/
   rewrite [add_zero]
   /- Now click here to see the new proof state that results from the tactic.
-     Notice how `add (add n zero) zero` changes to `add n zero` in the goal. -/
+     Notice how `(n + zero) + zero` changes to `n + zero` in the goal. -/
   rewrite [add_zero]
-  /- Again the goal changes, from `add n zero` to `n`. Now the proof state
+  /- Again the goal changes, from `n + zero` to `n`. Now the proof state
      is an equality with both sides equal, so it can be closed by the
      tactic `rfl`. -/
   rfl
-  /- The proof is now done! The Lean InfoView tells us there are "No Goals". -/
+  /- The proof is now done! The Lean InfoView tells us there are "No goals". -/
 
 /-! Here's a simple proof for you to try. -/
 
-theorem add_zero_zero_zero (n : Nat) : add (add (add n zero) zero) zero = n := by
+theorem add_zero_zero_zero : ∀ n : Nat, n + zero + zero + zero = n := by
   solution!
+    intro n
     rewrite [add_zero]
     rewrite [add_zero]
     rewrite [add_zero]
@@ -1182,8 +1225,8 @@ theorem add_zero_zero_zero (n : Nat) : add (add (add n zero) zero) zero = n := b
 ::::full
   As we saw above, the tactic that tells Lean to rewrite (part of) a goal or
   hypothesis based on a rule is called `rewrite`. Given the rule `add_zero`,
-  which states that `add n zero` is equal to `n` for any `n`, we can replace
-  any `add n zero` in our proof with `n` via `rewrite [add_zero]`.
+  which states that `n + zero` is equal to `n` for any `n`, we can replace
+  any `n + zero` in our proof with `n` via `rewrite [add_zero]`.
 
   The `rewrite` tactic takes its argument(s) in square brackets.
 ::::
@@ -1270,6 +1313,9 @@ and performance; unfolding definitions can have negative effects as libraries sc
 BCP: We start by saying that what we're going to here is not what real lean developments do, but then
 explain why what we're doing in a way that makes it sound like it is (or should be) standard. And we
 never say what is the style that we *don't* do (but that standard Lean practice does).
+RAB: This will (hopefully) be addressed by our decision on hiding these
+definitions. Even if not, it seems odd to discuss how to write this section
+before we make that choice.
 :::
 
 These two theorems also follow a particular pattern. Let's look again at the
@@ -1298,7 +1344,7 @@ end AddPlayground
 
 Each of `add_zero` and `add_succ` correspond to one branch of the `match`
 statement defining `add` and describe how the evaluation of `add` proceeds
-in that case. The `add_zero` theorem describes how `add n zero` evaluates,
+in that case. The `add_zero` theorem describes how `n + zero` evaluates,
 while `add_succ` describes (symbolically) how `n + succ m` evaluates.
 Because these theorems describe how to simplify more complex expressions
 involving `add`, we call them _simplification lemmas_ for `add`.
@@ -1343,6 +1389,7 @@ BCP: The following lemmas are also needed by the TERSE version,
 so I am un-fulling them for now.
 But indeed the whole discussion here needs both TERSE and FULL versions.
 Or probably some of it should turn into an exercise?
+RAB: This will be part of our discussion on presenting laws.
 :::
 
 We know from our definitions above that `one` is just `succ zero`,
@@ -1362,6 +1409,8 @@ Finish the proof using the `add` rules:
 
 :::dev
 BCP: Should this be marked / formatted as an exercise or at least a WORKINCLASS?
+RAB: Let's decide once we choose how to present the laws.
+     My intuition is yes.
 :::
 
 ```lean
@@ -1383,17 +1432,6 @@ theorem two_plus_two_eq_four : two + two = four := by
     rewrite [add_succ, add_succ, add_zero]
     rfl
 ```
-
-::::full
-By default, `rewrite` rewrites left-to-right. To rewrite from right
-to left, use `rewrite [← h]`, where `←` is typed as `\l` or `\<-`.
-:::dev
-BCP: We should make this point wherever we rewrite to the left for
-the first time. It's out of place here.
-DHS: Agree. Idr where this happens, though. Probably somewhere around when we
-teach assoc/comm for addition?
-:::
-::::
 
 ::::full
 Now that we know how addition is defined, we can use it to define multiplication:
@@ -1422,13 +1460,15 @@ theorem mul_zero : ∀ n : Nat, n * zero = zero := by
   rfl
 
 unseal mul add in
-theorem mul_succ : ∀ n m : Nat, n * (succ m) = add (n * m) n := by
+theorem mul_succ : ∀ n m : Nat, n * (succ m) = (n * m) + n := by
   intro n m
   rfl
 ```
 
 :::dev
 BCP: Again, this should be an exercise.
+RAB: Agreed if we're keeping these visible; putting off
+     small decision until large decision is made.
 :::
 
 Prove this property. (We have given you the first line.) Notice how `rewrite`
@@ -1482,6 +1522,7 @@ def beq (n m : Nat) : Bool :=
 :::dev
 TODO: We need to make a decision about `==`.
 Either we give decidable equality early, or we use this `==` thing.
+RAB: This is the other thing we need to decide on together.
 :::
 
 Similarly, the `leb` function tests whether its first argument is
@@ -1568,14 +1609,6 @@ GRADE_THEOREM 1: ltb_test3
 A (slightly) more interesting theorem:
 :::
 
-:::dev
-TODO (Claude): The file mixes two binder styles without comment:
-`theorem foo (n : Nat) : ...` (no `intro` needed, e.g. `add_zero_zero`)
-vs. `theorem foo : ∀ n : Nat, ...` plus `intro` (here).  "When do I
-need `intro`?" is one of a beginner's first hard questions; one
-explicit paragraph reconciling the two styles would prevent
-cargo-culting.
-:::
 
 ::::full
 We now begin to make claims about _general_ natural numbers.
@@ -1586,7 +1619,7 @@ Enter it with `\to` or `\->` or `\r`.
 
 The `intro` tactic moves the universally quantified variables and the
 hypothesis into the context, giving them names.  The goal is now to prove
-`add n n = add m m` under the assumption `h : n = m`.
+`n + n = m + m` under the assumption `h : n = m`.
 
 The tactic that tells Lean to perform replacement is one we have seen
 before: `rewrite`. It can take a hypothesis from the context as an argument,
@@ -1594,19 +1627,13 @@ just like it can take a previously proved theorem.  In this case, we want to
 rewrite with the hypothesis `h`, which says that `n` and `m` are equal, so
 that we can replace `n` with `m` in the goal.
 
-After the rewrite, the goal is `add m m = add m m`, which can be closed by
+After the rewrite, the goal is `m + m = m + m`, which can be closed by
 `rfl`.
 ::::
 
-:::dev
-BCP: I find the indentation / linebreaking choices here kind of
-ugly. Are they standard, or can we make a better convention?
-:::
-
 ```lean
 theorem add_id_example : ∀ n m : Nat,
-    n = m →
-    n + n = m + m := by
+    n = m → n + n = m + m := by
   intro n m
   intro h
   rewrite [h]
@@ -1637,22 +1664,18 @@ GRADE_THEOREM 1: add_id_exercise
 ::::
 
 ::::full
-The `sorry` keyword tells Lean that we want to skip trying
+Here, the `sorry` keyword tells Lean that we want to skip trying
 to prove this theorem and just accept it as a given.  This is
 often useful for developing longer proofs.
 
 Be careful, though: every time you say `sorry` you are leaving
 a door open for total nonsense to enter Lean's safe, formally
 checked world!
-
-:::dev
-TODO (Claude): `sorry` was already explained before the nandb
-exercise, and this second explanation arrives *after* add_id_exercise
-told the student to remove a `sorry`.  Keep one explanation, placed
-before its first use, and cover both roles there (exercise placeholder
-/ temporarily accepting a claim).
-:::
 ::::
+
+```lean -keep
+theorem really_bad : one = two := by sorry
+```
 
 :::slidebreak
 :::
@@ -1660,20 +1683,28 @@ before its first use, and cover both roles there (exercise placeholder
 The `#check` command can also be used to examine the statements of
 previously declared lemmas and theorems.
 
-:::dev
-TODO: how to get these to show `∀ (n : Nat)` instead of `mul_zero (n : Nat)`
-:::
-
-:::dev
-BCP: Or maybe we need to explain that they mean the same thing?  I
-think we are a bit inconsistent, ourselves, in the way we write
-things.
-:::
-
 ```lean
 #check mul_zero  -- ∀ (n : Nat), n * 0 = 0
 #check mul_succ  -- ∀ (n m : Nat), n * Nat.succ m = n + n * m
 ```
+
+## Type Annotations (Optional)
+
+::::full
+Note that you may see a slight discrepancy in the output:
+#check might show
+`NatPlayground.Nat.mul_zero (n : Nat) : n * zero = zero`.
+Qualification, like `mul_zero` to `NatPlayground.Nat.mul_zero`, can happen
+automatically when printing a type in Lean.
+
+Another simple but important-to-note automatic display feature is _indexing_:
+`mul_zero : ∀ (n : Nat), n * zero = zero` may display as
+`mul_zero  (n : Nat) : n * zero = zero`.
+
+Note how the (n : Nat) has moved _before_ the colon and has lost the ∀.
+The two definitions are equivalent for our purposes right now, and you will
+find both in the Lean ecosystem.
+::::
 
 :::slidebreak
 :::
@@ -1683,7 +1714,7 @@ instead of a hypothesis from the context.
 
 ```lean
 theorem add_mul_zero : ∀ p q : Nat,
-   add (mul p zero) (mul q zero) = zero := by
+   (mul p zero) + (mul q zero) = zero := by
   intro p q
   rewrite [mul_zero, mul_zero, add_zero]
   rfl
@@ -1707,11 +1738,6 @@ source files to help deter bit-rot, and you are encouraged to add
 your own instances.  It doesn't need to be explained to students
 because it gets stripped out when verso files are translated to
 .lean and .html.
-
-:::
-:::dev
-HG: We should be using `guard_msgs` anywhere we leave a sorry.
-BCP: Yes, and there's already a part of a note about this someplace.  Merge with this.
 :::
 
 ```lean
@@ -1918,19 +1944,12 @@ is parsed as `1+((2*3)*4)`.
 You can define custom notation using the `notation`, `infixl`,
 `infixr`, `prefix`, and `postfix` commands.
 
-Lean handles notation scoping through namespaces and _type classes_
-rather than notation scopes.  The numeric literal `3` can be
-interpreted as `Nat`, `Int`, `Float`, etc., depending on the
-expected type, thanks to Lean's `OfNat` type class. We explain type
-classes in full in a later chapter.
+Lean handles notation scoping through namespaces and _type classes_.
+The numeric literal `3` can be interpreted as `Nat`, `Int`, `Float`, etc.,
+depending on the expected type, thanks to Lean's `OfNat` type class.
+We explain type classes in full in Typeclasses chapter,
+found in `Typeclasses.lean`.
 
-:::dev
-TODO: which chapter?
-:::
-
-:::dev
-BCP: What is "notation scopes"?  Can this explanation be streamlined?
-:::
 ::::
 
 ## Structural Recursion (Optional)
@@ -2019,8 +2038,8 @@ def incr (m : Bin) : Bin
 def binToNat (m : Bin) : Nat
   := solution!(match m with
   | .z => zero
-  | .b0 m' => mul (binToNat m') two
-  | .b1 m' => add (mul (binToNat m') two) one)
+  | .b0 m' => binToNat m' * two
+  | .b1 m' => binToNat m' * two + one)
 
 unseal incr
 example : incr (.b1 .z) = .b0 (.b1 .z) := solution!(by rfl)
@@ -2034,8 +2053,8 @@ seal incr
 
 unseal binToNat
 theorem binToNat_z : binToNat .z = zero := solution!(by rfl)
-theorem binToNat_b0 m : binToNat (.b0 m) = mul (binToNat m) two := solution!(by rfl)
-theorem binToNat_b1 m : binToNat (.b1 m) = add (mul (binToNat m) two) one := solution!(by rfl)
+theorem binToNat_b0 m : binToNat (.b0 m) = binToNat m * two := solution!(by rfl)
+theorem binToNat_b1 m : binToNat (.b1 m) = binToNat m * two + one := solution!(by rfl)
 seal binToNat
 ```
 
@@ -2085,10 +2104,6 @@ GRADE_THEOREM 0.5: binToNat_test3
 :::
 ::::
 
-:::dev
-TODO: Give more intro to these two theorems on booleans.
-:::
-
 ```lean
 end Nat
 ```
@@ -2098,19 +2113,16 @@ end Nat
 ## Warmups
 
 ::::exercise (rating := 1) (name := "identity_fn_applied_twice")
-Use the tactics you have learned so far to prove the following
-theorem about boolean functions.
+You now have a small, but powerful, suite of tactics at your disposal.
+As a warmup for the last section of the chapter, use the tactics you have
+learned so far to prove the following theorem about boolean functions.
 
-:::dev
-TODO (Claude): This exercise quietly requires rewriting with a
-*universally quantified* hypothesis -- a real conceptual jump from
-rewriting with `h : n = m` that deserves a sentence of preparation.
-:::
+Hint: You can use `rewrite` with _any_ hypothesis that has an `=` in it
+as long as the types line up.
 
 ```lean
 theorem identity_fn_applied_twice : ∀ f : Bool → Bool,
-    (∀ x : Bool, f x = x) →
-    ∀ b : Bool, f (f b) = b := by
+    (∀ x : Bool, f x = x) → ∀ b : Bool, f (f b) = b := by
   solution!
     intro f h b
     rewrite [h, h]
@@ -2132,8 +2144,7 @@ function `f` has the property that `f x = !x`.
 ```lean
 -- SOLUTION
 theorem negation_fn_applied_twice : ∀ f : Bool → Bool,
-    (∀ x : Bool, f x = !x) →
-    ∀ b : Bool, f (f b) = b := by
+    (∀ x : Bool, f x = !x) → ∀ b : Bool, f (f b) = b := by
   intro f h b
   rewrite [h, h]
   cases b
@@ -2152,15 +2163,8 @@ GRADE_MANUAL 1: negation_fn_applied_twice
 ::::exercise (rating := 3) (name := "andb_eq_orb")
 Prove the following theorem.
 
-:::dev
-BCP: The indentation here is even more problematic... Is this a
-systematic problem with the way the file was translated?
-:::
-
 ```lean
-theorem andb_eq_orb : ∀ b c : Bool,
-    (b && c) = (b || c) →
-  b = c := by
+theorem andb_eq_orb : ∀ b c : Bool, (b && c) = (b || c) → b = c := by
   solution!
     intro b c h
     cases c
@@ -2186,3 +2190,4 @@ GRADE_THEOREM 3: andb_eq_orb
 ```
 :::
 ::::
+

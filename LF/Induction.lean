@@ -869,6 +869,13 @@ theorem mul_two : ∀ p : Nat,
   `add_shuffle3`.  You don't need to use induction yet.
 -/
 
+
+/- ::::full
+Note: By default, `rewrite` and `rw` rewrites left-to-right. To rewrite from right
+to left, use `rw [← h]`, where `←` is typed as `\l` or `\<-`.
+::::
+ -/
+
 theorem add_shuffle3 : ∀ n m p : Nat,
     add (add n m) p = add (add n p) m := by
   -- ADMITTED
