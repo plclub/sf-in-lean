@@ -10,7 +10,8 @@ working together on the translation for a couple of months, so there
 are certain to be things that are not clear.  Please help us figure
 out what those are and document the clarifications in this file.
 
-## Philosophy
+## Top-level orientation
+###    Guiding Philosophy
 
 1. SFL aims for exceptional pedagogy and presentational polish.
 2. SFL is _exercise-based_: Every important concept comes with
@@ -27,6 +28,13 @@ out what those are and document the clarifications in this file.
    possible. Some of SFL's languages, semantics, etc. might eventually
    be contributed to CSLib. 
 
+##    Zulip
+
+The [SFL contributors
+  channel](https://leanprover.zulipchat.com/#narrow/channel/607217-lean-software-foundations-contributors)
+  channel on the Lean Zulip is the main forum for discussing the translation
+  effort. 
+
 ## Communicating among ourselves
 
 For discussions, we use a combination of tools.  
@@ -34,6 +42,15 @@ For discussions, we use a combination of tools.
 - If you want to start a discussion about an issue of general
   interest, post on the [SFL contributors Zulip
   channel](https://leanprover.zulipchat.com/#narrow/channel/607217-lean-software-foundations-contributors).  
+
+  This channel is private and is expected to remain private. If, at some point,
+  we find ourselves with a lot more people actively involved and/or no need to
+  keep anything private, we may sunset it.  
+  
+  (There is also a `lean-software-foundations` channel, which is currently not
+  used for much (most people working on SFL are not even subscribed, to avoid
+  confusion about where things should go) -- its main role for the moment is
+  that some of the lead maintainers of Verso are members.)
 
 - If you are working with others to tackle a specific GitHub issue,
   you can use that issue for discussion and coordination.
@@ -61,12 +78,12 @@ ways of working if you see them!
 
 We use a standard branch-and-PR workflow.  See below for details.
 
-Make PRs frequently so that your local changes get folded back into
-the `main` branch as quickly as possible.  There is no need to
-completely finish all the work on an issue before merging what you've
-done back into main. If yoour branch compiles and won't interfere with
-what someone else is doing, please make a checkpoint PR every day or
-so.
+Where it makes sense, try to create PRs sooner, in smaller chunks, rather than
+bigger PRs later. PRs should build and be up to date with the main branch, and
+they should represent coherent pieces of work that are easy to review, but a
+day's worth of changes to a specific part of some chapter might well constitute
+a coherent set of changes that can be PR'd and merged by itself, even if you
+plan to continue editing the same chapter tomorrow.
 
 We use the github issue tracker for recording large tasks that need to
 be done (small or local tasks can just be recorded in comments in the
