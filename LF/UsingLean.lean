@@ -88,7 +88,7 @@ theorem complicated_computation : (2 * 3 + 4 * 5 : Nat) * 6 = 156 := by
    of the terms are unknown. -/
 
   theorem rfl_not_enough (n m : Nat) (h : n = m) : n = m := by
-    fail_if_success rfl /- the `fail_if_success` tactic tells us `rfl` has failed. -/
+    -- rfl will not work here!
     /- We need to use `h` to rewrite the goal, and then `rfl` will work. -/
     rewrite [h]
     rfl
@@ -133,11 +133,13 @@ example (a b : Nat) : a + b = b + a := by
 /-
   If you are using the Lean 4 extension in VSCode, the InfoView will
   have a blue `[apply]` button that shows the suggested theorem to
-  close the goal. You can click on this button to replace the
-  occurence of `exact?` with this tactic; idiomatic Lean does not
-  leave `exact?` tactics (or any other `?` tactics, as we will see
-  shortly) in the finished versions of proofs and instead replaces
-  them with the suggested tactics.
+  close the goal. Alternatively, VSCode may show an inline suggestion
+  (light bulb) button above the `exact?`. You can click either of
+  these buttons to replace the occurence of `exact?` with the tactic
+  it found to complete the proof; idiomatic Lean does not leave
+  `exact?` tactics (or any other `?` tactics, as we will see shortly)
+  in the finished versions of proofs and instead replaces them with
+  the tactics they found during search.
 -/
 -- /FULL
 
@@ -220,9 +222,21 @@ theorem mul_three_beq (p : Nat) :
   to have the tactics like `add_comm` and `add_assoc` "guess" which subterms to
   rewrite.
 
-  The `calc` writes down the intermediate goals of a proof, and allows us to
+  The `calc` tactic writes down the intermediate goals of a proof, and allows us to
   specify exactly which rewrite rules to apply at each step. It is a powerful
   tool for structuring proofs, and is often more readable than long `rw` chains.
+
+  `calc` is designed to mimic the style of proofs in mathematics textbooks, which will
+  often look something like this:
+
+  a + (b + c)
+  = (a + b) + c        ...   [by associativity of addition]
+  = (b + a) + c        ...   [by commutativity of addition]
+  = b + (a + c)        ...   [by associativity of addition]
+
+  Note how we can see each intermediate step of this proof when we
+  look at it this way. Let's look at how we might prove this theorem
+  (i.e., that `a + (b + c) = b + (a + c)`) in Lean.
  -/
 
 /- First, a proof in the style we already know. -/
@@ -234,11 +248,22 @@ theorem add_swap (a b c : Nat) : a + (b + c) = b + (a + c) := by
 theorem add_swap' (a b c : Nat) : a + (b + c) = b + (a + c) := by
   calc a + (b + c) /- one side of the goal is the argument to `calc`... -/
     /- ... and each subsequent line is a transformation, with a tactic. -/
-    _ = (a + b) + c := by rw [Nat.add_assoc]
-    _ = (b + a) + c := by rw [Nat.add_comm a b]
+    a + (b + c) = (a + b) + c := by rw [Nat.add_assoc]
+    (a + b) + c = (b + a) + c := by rw [Nat.add_comm a b]
     /- once a line matches the other side of the equality in the main goal
        (in this case `(b + (a + c)`), the calc tactic succeeds. -/
+    (b + a) + c = b + (a + c) := by rw [Nat.add_assoc]
+
+/- We can also write the proof like this to be a bit more concise:  -/
+theorem add_swap'' (a b c : Nat) : a + (b + c) = b + (a + c) := by
+  calc a + (b + c)
+    _ = (a + b) + c := by rw [Nat.add_assoc]
+    _ = (b + a) + c := by rw [Nat.add_comm a b]
     _ = b + (a + c) := by rw [Nat.add_assoc]
+/- Whereas before, the left-hand side of each equality in the `calc`
+   tactic was repeated from the right-hand side of the previous one,
+   we can replace the left-hand side entirely with an `_`. Now our
+   Lean proof looks quite a bit like the textbook one we saw earlier! -/
 
 -- EX1 (succ_mul_succ)
 theorem succ_mul_succ (n m : Nat) :
@@ -292,7 +317,7 @@ def triple (n : Nat) : Nat := n + n + n
   Here, `dsimp` makes progress, exposing a goal the fact can close.
 -/
  example (n m : Nat) (h : n + n = m) : triple n = m + n := by
-  fail_if_success rfl
+  -- rfl will not work here!
   dsimp [triple]
   /- the goal can now be rewritten by `h`. -/
   rw [h]
