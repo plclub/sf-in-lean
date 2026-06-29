@@ -181,10 +181,18 @@ Another use for typeclasses that may be familiar from other languages is to over
 of syntax. To start, consider the (non-polymorphic) definition
 
 ```lean
+@[irreducible]
 def List.elem_nat (a : Nat) (xs : List Nat) : Bool :=
   match xs with
   | [] => false
   | b :: tl => bif a == b then true else elem_nat a tl
+
+unseal List.elem_nat in
+theorem List.elem_nat_nil (a : Nat) : [].elem_nat a = false := rfl
+
+unseal List.elem_nat in
+theorem List.elem_nat_cons (a b : Nat) (xs : List Nat) :
+    (b :: xs).elem_nat a = bif a == b then true else elem_nat a xs := rfl
 ```
 
 This function takes a natural number `a` and a list of natural numbers `xs`, then returns a
@@ -204,18 +212,11 @@ up later - CGH
 If we wanted to construct a polymorphic version of this, how would we proceed? If we try to simply
 replace {name}`Nat` with a type variable `α`, we get a somewhat mysterious error
 
-```lean
-/--
-error: failed to synthesize instance of type class
-  BEq α
-
-Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
--/
-#guard_msgs in
-def List.elem_poly' {α : Type} (a : α) (xs : List α) : Bool :=
+```lean -keep +error
+def List.elem_poly {α : Type} (a : α) (xs : List α) : Bool :=
   match xs with
   | [] => false
-  | b :: tl => bif a == b then true else elem_poly' a tl
+  | b :: tl => bif a == b then true else elem_poly a tl
 ```
 
 that mentions a typeclass {name}`BEq`. Perhaps a better question is what exactly the `==` notation
@@ -255,13 +256,38 @@ This is done using *instance implicits*, where we place a desired typeclass in s
 corrected definition is then
 
 ```lean
+@[irreducible]
 def List.elem_poly {α : Type} [BEq α] (a : α) (xs : List α) : Bool :=
   match xs with
   | [] => false
   | b :: tl => bif a == b then true else elem_poly a tl
+
+unseal List.elem_poly in
+theorem List.elem_poly_nil [BEq α] (a : α) : [].elem_poly a = false := rfl
+
+unseal List.elem_poly in
+theorem List.elem_poly_cons [BEq α] (a b : α) (xs : List α) :
+    (b :: xs).elem_poly a = bif a == b then true else elem_poly a xs := rfl
 ```
 
 where Lean can now infer the usage of `==` is the one that we have provided.
+
+::::exercise (rating := 1) (name := "List.elem_poly_eq_elem_nat")
+Prove that {name}`List.elem_poly` agrees with {name}`List.elem_nat` when specialized to
+natural numbers.
+
+```lean
+theorem List.elem_poly_eq_elem_nat (xs : List Nat) (n : Nat) : xs.elem_poly n = xs.elem_nat n := by
+  solution!(
+  induction xs with
+  | nil =>
+    rewrite [List.elem_poly_nil, List.elem_nat_nil]
+    rfl
+  | cons hd tl ih =>
+    rewrite [List.elem_poly_cons, List.elem_nat_cons, ih]
+    rfl)
+```
+::::
 
 # Maps
 
@@ -355,17 +381,6 @@ end
 def Even (n : Nat) := ∃ m, n = double m
 ```
 
-```lean
-theorem isEven_succ (n : Nat) : isEven (n + 1) = ! isEven n := by
-  induction n with
-  | zero =>
-    rewrite [Nat.zero_add, isEven_zero, isEven_one]
-    rfl
-  | succ n ih =>
-    rewrite [isEven_succ_succ, ih, Bool.not_not]
-    rfl
-```
-
 As an example, we can write
 
 ```lean
@@ -386,6 +401,17 @@ the same set of natural numbers!
 Fortunately, they do!
 
 To prove this, we first need two helper lemmas.
+
+```lean
+theorem isEven_succ (n : Nat) : isEven (n + 1) = ! isEven n := by
+  induction n with
+  | zero =>
+    rewrite [Nat.zero_add, isEven_zero, isEven_one]
+    rfl
+  | succ n ih =>
+    rewrite [isEven_succ_succ, ih, Bool.not_not]
+    rfl
+```
 
 ```lean
 theorem even_double (k : Nat) : isEven (double k) = true := by
