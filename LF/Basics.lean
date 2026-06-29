@@ -1549,6 +1549,12 @@ example : leb four two = false := by rfl
 seal leb
 ```
 
+We'll be using `leb` a lot, so let's give it an infix notation too.
+
+```lean
+scoped infixl:55 " <? " => leb
+```
+
 :::slidebreak
 :::
 
@@ -2191,3 +2197,381 @@ GRADE_THEOREM 3: andb_eq_orb
 :::
 ::::
 
+## Course Late Policies, Formalized
+
+::::full
+Suppose that a course has a grading policy based on late days,
+where a student's final letter grade is lowered if they submit too
+many homework assignments late.
+::::
+
+```lean
+namespace LateDays
+open scoped NatPlayground.Nat
+
+-- Numeric literals (`9`, `17`, `21`) for our unary `Nat`.
+@[reducible] def ofNat : _root_.Nat → Nat
+  | .zero => .zero
+  | .succ n => .succ (ofNat n)
+
+instance (n : _root_.Nat) : OfNat Nat n := ⟨ofNat n⟩
+```
+
+::::full
+First, we introduce a datatype for modeling the "letter" component
+of a grade.
+::::
+
+```lean
+inductive Letter : Type where
+  | A | B | C | D | F
+```
+
+::::full
+Then we define the modifiers -- a `natural` `a` is just a "plain"
+grade of `a`.
+::::
+
+```lean
+inductive Modifier : Type where
+  | plus | natural | minus
+```
+
+::::full
+A full `Grade`, then, is just a `letter` and a `modifier`.
+In Lean, a combination of several values is called a _structure_.  The `structure`
+keyword is used to define a new structure type.
+::::
+
+```lean
+structure Grade where
+  letter : Letter
+  modifier : Modifier
+```
+
+::::full
+We will want to be able to say when one grade is "better" than
+another.  In other words, we need a way to compare two grades.  As
+with natural numbers, we could define `bool`-valued functions
+`grade_eqb`, `grade_ltb`, etc., and that would work fine.
+However, we can also define a slightly more informative type for
+comparing two values, as shown below.  This datatype has three
+constructors that can be used to indicate whether two values are
+"equal", "less than", or "greater than" one another.
+::::
+
+```lean
+inductive Comparison : Type where
+  | eq   -- "equal"
+  | lt   -- "less than"
+  | gt   -- "greater than"
+```
+
+::::full
+Since we're in a namespace, we can open the relevant types to
+avoid having to write `Letter.A`, etc.
+::::
+
+```lean
+open Letter Modifier Comparison
+```
+
+::::full
+Using pattern matching, it is not difficult to define the
+comparison operation for two letters `l1` and `l2` (see below).
+This definition uses a feature of `match` patterns: we can match
+against _two_ values simultaneously by separating them and the
+corresponding patterns with comma `,`.
+This is simply a convenient abbreviation for nested pattern
+matching.
+::::
+
+```lean
+def letterComparison (l1 l2 : Letter) : Comparison :=
+  match l1, l2 with
+  | A, A => eq
+  | A, _ => gt
+  | B, A => lt
+  | B, B => eq
+  | B, _ => gt
+  | C, A => lt
+  | C, B => lt
+  | C, C => eq
+  | C, _ => gt
+  | D, F => gt
+  | D, D => eq
+  | D, _ => lt
+  | F, F => eq
+  | F, _ => lt
+
+example : letterComparison B A = lt := by rfl
+example : letterComparison D D = eq := by rfl
+example : letterComparison B F = gt := by rfl
+```
+
+::::exercise (rating := 1) (name := "letter_comparison")
+```lean
+theorem letterComparison_Eq : ∀ l : Letter,
+    letterComparison l l = eq := by
+  solution!
+    intro l; cases l <;> rfl
+```
+
+:::grade
+```
+GRADE_THEOREM 1: letterComparison_Eq
+```
+:::
+::::
+
+```lean
+def modifierComparison (m1 m2 : Modifier) : Comparison :=
+  match m1, m2 with
+  | plus, plus => eq
+  | plus, _ => gt
+  | natural, plus => lt
+  | natural, natural => eq
+  | natural, _ => gt
+  | minus, minus => eq
+  | minus, _ => lt
+```
+
+::::exercise (rating := 2) (name := "grade_comparison")
+Here, we will need to access the fields of the `Grade` structure.
+The field names are `letter` and `modifier`, so for a grade `g`,
+we can write `g.letter` and `g.modifier` to access these fields.
+
+```lean
+def gradeComparison (g1 g2 : Grade) : Comparison
+  := solution!(match letterComparison g1.letter g2.letter with
+  | lt => lt
+  | eq => modifierComparison g1.modifier g2.modifier
+  | gt => gt)
+
+example : gradeComparison ⟨A, minus⟩ ⟨B, plus⟩ = gt := solution!(by rfl)
+example : gradeComparison ⟨A, minus⟩ ⟨A, plus⟩ = lt := solution!(by rfl)
+example : gradeComparison ⟨F, plus⟩ ⟨F, plus⟩ = eq := solution!(by rfl)
+example : gradeComparison ⟨B, minus⟩ ⟨C, plus⟩ = gt := solution!(by rfl)
+```
+
+:::grade
+```
+GRADE_THEOREM 0.5: gradeComparison_test1
+```
+:::
+
+:::grade
+```
+GRADE_THEOREM 0.5: gradeComparison_test2
+```
+:::
+
+:::grade
+```
+GRADE_THEOREM 0.5: gradeComparison_test3
+```
+:::
+
+:::grade
+```
+GRADE_THEOREM 0.5: gradeComparison_test4
+```
+:::
+::::
+
+```lean
+def lowerLetter (l : Letter) : Letter :=
+  match l with
+  | A => B
+  | B => C
+  | C => D
+  | D => F
+  | F => F  -- Can't go lower than F!
+```
+
+::::full
+This theorem is not provable because of the edge case of `F`!
+
+```
+theorem lowerLetter_lowers_bad : ∀ (l : Letter),
+  letterComparison (lowerLetter l) l = lt := by ...
+```
+::::
+
+```lean
+theorem lowerLetter_F_is_F : lowerLetter F = F := by rfl
+```
+
+::::exercise (rating := 2) (name := "lower_letter_lowers")
+```lean
+theorem lowerLetter_lowers : ∀ l : Letter,
+    letterComparison F l = lt →
+    letterComparison (lowerLetter l) l = lt := by
+  solution!
+    intro l h
+    cases l with
+    | A => rfl
+    | B => rfl
+    | C => rfl
+    | D => rfl
+    | F => exact h
+```
+
+:::grade
+```
+GRADE_THEOREM 2: lowerLetter_lowers
+```
+:::
+::::
+
+::::exercise (rating := 2) (name := "lower_grade")
+In addition to the dot notation for accessing structure fields, we can also
+use pattern matching to access these fields.
+For example, if `g` is a grade, then we can write
+`match g with ⟨l, m⟩ => ...` to access the letter and modifier components
+of `g` as `l` and `m`, respectively.
+Note: The angle brackets `⟨` and `⟩` are typed as `\<` and `\>`.
+
+```lean
+def lowerGrade (g : Grade) : Grade
+  := solution!(match g with
+  | ⟨l, plus⟩ => ⟨l, natural⟩
+  | ⟨l, natural⟩ => ⟨l, minus⟩
+  | ⟨F, minus⟩ => ⟨F, minus⟩
+  | ⟨l, minus⟩ => ⟨lowerLetter l, plus⟩)
+
+example : lowerGrade ⟨A, plus⟩ = ⟨A, natural⟩ := solution!(by rfl)
+example : lowerGrade ⟨A, natural⟩ = ⟨A, minus⟩ := solution!(by rfl)
+example : lowerGrade ⟨A, minus⟩ = ⟨B, plus⟩ := solution!(by rfl)
+example : lowerGrade ⟨B, plus⟩ = ⟨B, natural⟩ := solution!(by rfl)
+example : lowerGrade ⟨F, natural⟩ = ⟨F, minus⟩ := solution!(by rfl)
+example : lowerGrade (lowerGrade ⟨B, minus⟩) = ⟨C, natural⟩ := solution!(by rfl)
+example : lowerGrade (lowerGrade (lowerGrade ⟨B, minus⟩)) = ⟨C, minus⟩ := solution!(by rfl)
+
+theorem lowerGrade_F_Minus : lowerGrade ⟨F, minus⟩ = ⟨F, minus⟩ := solution!(by rfl)
+```
+
+:::grade
+```
+GRADE_THEOREM 0.25: lowerGrade_A_Plus
+```
+:::
+
+:::grade
+```
+GRADE_THEOREM 0.25: lowerGrade_F_Minus
+```
+:::
+::::
+
+::::exercise (rating := 3) (name := "lower_grade_lowers")
+:::dev
+For our solution we use:
+
+- Working on multiple match cases with `| _ ... | _ => ...`;
+- Working on all remaining goals with `all_goals`.
+- These are not expected of students at this point.
+:::
+
+```lean
+theorem lowerGrade_lowers : ∀ g : Grade,
+    gradeComparison ⟨F, minus⟩ g = lt →
+    gradeComparison (lowerGrade g) g = lt := by
+  solution!
+    intro g h
+    match g with
+    | ⟨l, plus⟩ =>
+      rw [lowerGrade, gradeComparison]
+      rewrite [letterComparison_Eq]
+      rw [modifierComparison]
+    | ⟨l, natural⟩ =>
+      rw [lowerGrade, gradeComparison]
+      rewrite [letterComparison_Eq]
+      rw [modifierComparison]
+      intro x
+      contradiction
+    | ⟨l, minus⟩ =>
+      cases l
+      case F => rewrite [lowerGrade_F_Minus]; exact h
+      all_goals rfl
+```
+
+:::dev
+RAB: in removing `dsimp` from these proofs, I found
+that you might need the `contradiction` tactic here instead,
+or some other reasoning that's not accomplishable
+with the tactics we've introduced so far. Can you make this
+proof work with only `rw`, `rfl`, `exact`, etc?
+:::
+
+:::grade
+```
+GRADE_THEOREM 3: lowerGrade_lowers
+```
+:::
+::::
+
+```lean
+def applyLatePolicy (lateDays : NatPlayground.Nat) (g : Grade) : Grade :=
+  if lateDays <? 9 then g
+  else if lateDays <? 17 then lowerGrade g
+  else if lateDays <? 21 then lowerGrade (lowerGrade g)
+  else lowerGrade (lowerGrade (lowerGrade g))
+
+theorem applyLatePolicy_unfold : ∀ (lateDays : NatPlayground.Nat) (g : Grade),
+    applyLatePolicy lateDays g
+    =
+    (if lateDays <? 9 then g
+     else if lateDays <? 17 then lowerGrade g
+     else if lateDays <? 21 then lowerGrade (lowerGrade g)
+     else lowerGrade (lowerGrade (lowerGrade g))) := by
+  intro _ _; rfl
+```
+
+::::exercise (rating := 2) (name := "no_penalty_for_mostly_on_time")
+```lean
+theorem no_penalty_for_mostly_on_time : ∀ (lateDays : NatPlayground.Nat) (g : Grade),
+    (lateDays <? 9 = true) →
+    applyLatePolicy lateDays g = g := by
+  solution!
+    intro lateDays g h
+    rw [applyLatePolicy]
+    rewrite [h]; rfl
+```
+
+:::grade
+```
+GRADE_THEOREM 2: no_penalty_for_mostly_on_time
+```
+:::
+::::
+
+::::exercise (rating := 2) (name := "grade_lowered_once")
+```lean
+theorem grade_lowered_once : ∀ (lateDays : NatPlayground.Nat) (g : Grade),
+    (lateDays <? 9 = false) →
+    (lateDays <? 17 = true) →
+    applyLatePolicy lateDays g = lowerGrade g := by
+  solution!
+    intro lateDays g h9 h17
+    rw [applyLatePolicy]
+    rewrite [h9, h17]; rfl
+```
+
+:::grade
+```
+GRADE_THEOREM 2: grade_lowered_once
+```
+:::
+::::
+
+```lean
+end LateDays
+```
+:::dev
+RAB: If we are to have this exercise, we must either
+make the functions irreducible or teach about
+`rw` of a reducible definition.
+We also have to figure out how to make lowerGrade\_lowers
+go through without `dsimp` or `contradiction`. To discuss.
+:::
