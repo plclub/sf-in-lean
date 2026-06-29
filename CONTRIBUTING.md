@@ -150,16 +150,37 @@ and use the Lean linter by default.
 SFL-specific conventions:
 
 * **Structured `cases`/`induction`.** Prefer
+
   ```lean
-  cases b
-  case true  => …
-  case false => …
+  cases b with
+  | true  => …
+  | false => …
   ```
-  over `cases b with | …` *and* over the bare `·` goal selector — i.e. prefer
-  `cases h; case …` / `induction h; case …`. Select cases with named
-  `case`s, un-indented and without a leading `.`, and **align the
-  `=>`** as above. Use the `·` selector only when the goal names are
-  not meaningful.
+
+  over the separate `case` syntax *and* over the bare `·` goal selector — i.e. prefer
+  `cases h with | …` / `induction h with …`.
+  Put each alternative on its own unindented line beginning with `|`.
+
+  Keep short branch bodies inline, and **align** `=>` accros the alternatives: 
+  
+  ```lean
+  cases b with
+  | true  => rfl
+  | false => simp
+  ```
+
+  For multiline branch bodies, put `=>` after the alternative *without* padding
+  and indent the body by two spaces, **aligned** with the alternative name:
+
+  ```lean
+  cases b with
+  | true =>
+    simp
+    exact h
+  | false =>
+    rw [h]
+    exact hf
+  ```
   
 * **`rewrite` before `rw`** (see next section).
 
