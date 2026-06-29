@@ -79,10 +79,6 @@ example : HasOne.one = (1 : Nat) := rfl
 example : HasOne.one = (-1 : Int) := rfl
 ```
 
-:::dev
-I say recall below, but I have no idea where/if we teach this.. - CGH
-:::
-
 and based on the type annotations Lean will infer which of these instances you intended to use.
 When in doubt, you can also use the option `pp.all`
 
@@ -204,11 +200,6 @@ This function takes a natural number `a` and a list of natural numbers `xs`, the
 #eval [0, 1].elem_nat 2
 ```
 
-:::dev
-I'm leaving some error messages in comments for prose currently, this probably should be cleaned
-up later - CGH
-:::
-
 If we wanted to construct a polymorphic version of this, how would we proceed? If we try to simply
 replace {name}`Nat` with a type variable `α`, we get a somewhat mysterious error
 
@@ -252,8 +243,8 @@ instance (priority := low) : BEq Nat where
 where we are specifying that the usage of `==` for natural numbers should correspond to the
 expected `Nat.beq`. So in order to write a function that uses the notation for boolean equality over
 a generic type, we need a way to express that there is some instance for {InlineLean.lean}`BEq α`.
-This is done using *instance implicits*, where we place a desired typeclass in square brackets. Our
-corrected definition is then
+This is done using *instance implicits*, where we place a desired typeclass assumption in square
+brackets. Our corrected definition is then
 
 ```lean
 @[irreducible]
@@ -292,7 +283,8 @@ theorem List.elem_poly_eq_elem_nat (xs : List Nat) (n : Nat) : xs.elem_poly n = 
 # Maps
 
 :::dev
-Maps could go here as an example to reinforce this? --CGH
+Maps could go here as an example to reinforce this? Or maybe that's too long of an aside? The code
+exists (with limited prose) in `Maps.lean` already. --CGH
 :::
 
 # Reflection
