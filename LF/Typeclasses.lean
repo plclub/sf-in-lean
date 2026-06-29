@@ -41,13 +41,13 @@ structural in nature.
 
 This is somewhat limiting, as we cannot inspect or non-trivially use any particular `a : α`. What we
 might want in some situations rather than `α` being completely generic is to partially specify its
-behavior. In Lean, this happens through a form of ad hoc polymorphism" called *typeclasses*. This
+behavior. In Lean, this happens through a form of "ad hoc polymorphism" called *typeclasses*. This
 concept originated in the Haskell programming language, and is analogous to features you may be
 familiar with in other languages such as traits in Rust or interfaces in Java.
 
 # First Example: Inhabited Types
 
-Suppose that I wanted to specify that a type has at least one inhabitant, in other words a non-empty
+Suppose we wanted to specify that a type has at least one inhabitant, in other words a non-empty
 type. In Lean, we could express this as the typeclass
 
 ```lean
@@ -114,8 +114,8 @@ is not possible to enforce the notion of "lawfulness" as part of the typeclass, 
 the author to ensure that any desired invariants are satisfied. As an example, suppose that we
 wanted to express the idea that a type has at least two elements. A first attempt might be
 
-```lean
-class HasTwoAttempt (α : Type) where
+```lean -keep
+class HasTwo (α : Type) where
   one : α
   two : α
 ```
@@ -301,7 +301,7 @@ is a terminating mechanical procedure for deciding whether or not it is true.
 
 This means that, for example, the type `Nat → Bool` is inhabited only by functions that, given a
 `Nat`, always yield either `true` or `false` in finite time; and this, in turn, means (by a standard
-computability argument) that there is no function in `Nat → Nool` that checks whether a given number
+computability argument) that there is no function in `Nat → Bool` that checks whether a given number
 is the code of a terminating Turing machine.
 
 By contrast, the type `Prop` includes both decidable and undecidable mathematical propositions; in
