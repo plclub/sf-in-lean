@@ -945,13 +945,12 @@ theorem mul_comm (m n : Nat) :
 -/
 
 
-unseal leb in
-theorem leb_refl (n : Nat) :
-    leb n n = true := by
+theorem ble_refl (n : Nat) :
+    ble n n = true := by
   -- ADMITTED
   induction n
-  case zero => rw [zero_leb]
-  case succ n' ih => rw [succ_leb_succ]; exact ih
+  case zero => rw [zero_ble]
+  case succ n' ih => rw [succ_ble_succ]; exact ih
 -- /ADMITTED
 
 theorem andb_false (b : Bool) :
