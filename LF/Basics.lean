@@ -565,12 +565,14 @@ theorem true_andb_explained : ∀ b : MyBool, (.true && b) = b := by
     an `intro`.
 
     Like the `example`s we saw above, we can use the `rfl` tactic,
-    which closes goals about equality where both sides are reflexively equal to one another.
-    Now, inspecting our goal will show that it is `(true && b) = b`, which
-    may not appear to be reflexively equal at first glance. However, if we look
-    at the definition of `andb`, we can see that when its first argument is `true`,
-    the result is its second argument. So these the two terms `true && b`
-    and `b` are in fact equal.
+    which closes goals about equality where both sides are equal to
+    one another according to the principle of reflexivity. Now,
+    inspecting our goal will show that it is `(true && b) = b`, which
+    may not appear to be equal to itself. However, the tactic
+    evaluates both sides of the equality and then compares them. In
+    this case, if we look at the definition of `andb`, we can see that
+    when its first argument is `true`, the result is its second
+    argument. So the two terms `true && b` and `b` are in fact equal.
   -/
   rfl
   /- The proof is now done! The Lean InfoView tells us there are "No goals". -/
