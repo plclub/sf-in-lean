@@ -1473,28 +1473,28 @@ TODO: We need to make a decision about `==`.
 Either we give decidable equality early, or we use this `==` thing.
 :::
 
-Similarly, the `leb` function tests whether its first argument is
+Similarly, the `ble` function tests whether its first argument is
 less than or equal to its second argument, yielding a boolean.
 
 ```lean
 @[irreducible]
-def leb (n m : Nat) : Bool :=
+def ble (n m : Nat) : Bool :=
   match n with
   | zero => true
   | succ n' =>
       match m with
       | zero => false
-      | succ m' => leb n' m'
+      | succ m' => ble n' m'
 
-unseal leb
-theorem zero_leb (n : Nat) : leb zero n = true := by rfl
-theorem succ_leb_zero (n : Nat) : leb (succ n) zero = false := by rfl
-theorem succ_leb_succ (n m : Nat) : leb (succ n) (succ m) = leb n m := by rfl
+unseal ble
+theorem zero_ble (n : Nat) : ble zero n = true := by rfl
+theorem succ_ble_zero (n : Nat) : ble (succ n) zero = false := by rfl
+theorem succ_ble_succ (n m : Nat) : ble (succ n) (succ m) = ble n m := by rfl
 
-example : leb two two = true  := by rfl
-example : leb two four = true  := by rfl
-example : leb four two = false := by rfl
-seal leb
+example : ble two two = true  := by rfl
+example : ble two four = true  := by rfl
+example : ble four two = false := by rfl
+seal ble
 ```
 
 :::slidebreak
@@ -1529,24 +1529,24 @@ prove, while `x == y` is a boolean _expression_ whose value (either
 `true` or `false`) we can compute.
 ::::
 
-::::exercise (rating := 1) (name := "ltb")
-Define a less-than function in terms of `leb`.
+::::exercise (rating := 1) (name := "blt")
+Define a less-than function in terms of `ble`.
 
 ```lean
 @[irreducible]
-def ltb (n m : Nat) : Bool
-  := solution!(leb (succ n) m)
+def blt (n m : Nat) : Bool
+  := solution!(ble (succ n) m)
 
-unseal ltb leb
-example : ltb two two = false := solution!(by rfl)
-example : ltb two four = true  := solution!(by rfl)
-example : ltb four two = false := solution!(by rfl)
-seal ltb leb
+unseal blt ble
+example : blt two two = false := solution!(by rfl)
+example : blt two four = true  := solution!(by rfl)
+example : blt four two = false := solution!(by rfl)
+seal blt ble
 ```
 
 :::grade
 ```
-GRADE_THEOREM 1: ltb_test3
+GRADE_THEOREM 1: blt_test3
 ```
 :::
 ::::
