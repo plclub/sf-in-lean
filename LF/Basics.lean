@@ -99,7 +99,7 @@ those definitions with the ones in the standard library, as well
 as to gradually introduce the actual library definitions where appropriate.
 By the time you are finished with the course, you will have a good grasp
 of how the Lean standard library is organized and how to efficiently
-find resources within it.
+navigate it.
 ::::
 
 ## Days of the Week
