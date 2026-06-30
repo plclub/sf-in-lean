@@ -12,6 +12,13 @@ out what those are and document the clarifications in this file.
 
 ## Philosophy
 
+These are the tenets of the SFL effort, in order. Consult these tenets
+when making a change: If your change is supported by them, then
+make it; no need for excessive coordination. If it is not supported by
+at least one tenet, then either your change is out of scope or a tenet
+is missing. If you are not sure then have a discussion (see below), and
+refer to the tenets to drive a decision (potentially updating the tenets).
+
 1. SFL aims for exceptional pedagogy and presentational polish.
 2. SFL is _exercise-based_: Every important concept comes with
    hands-on exercises to reinforce it, with solutions.
@@ -19,13 +26,15 @@ out what those are and document the clarifications in this file.
    constructing readable and maintainable formalizations and proofs.
     - Corollary: Students should understand particular tactics and
       what they do, starting small and growing in sophistication.
-    - Corollary: Definitions and proofs are written in idiomatic Lean 
-      (mostly the way it is for engineering/maintainability reasons), 
+    - Corollary: Definitions and proofs are written in idiomatic Lean
+      (mostly the way it is for engineering/maintainability reasons),
       only deviating (temporarily) for strong pedagogical reasons.
+      (Specific patterns and rules are given at the end of this file,
+       starting with **Lean Style**.)
 4. SFL developments connect with those in
    [CSLib](https://github.com/leanprover/cslib/tree/main) where
    possible. Some of SFL's languages, semantics, etc. might eventually
-   be contributed to CSLib. 
+   be contributed to CSLib.
 
 ## Communicating among ourselves
 
@@ -61,35 +70,39 @@ ways of working if you see them!
 
 We use a standard branch-and-PR workflow.  See below for details.
 
-Make PRs frequently so that your local changes get folded back into
-the `main` branch as quickly as possible.  There is no need to
-completely finish all the work on an issue before merging what you've
-done back into main. If yoour branch compiles and won't interfere with
-what someone else is doing, please make a checkpoint PR every day or
-so.
+PRs should represent coherent pieces of work so that they are easy to review.
+As a general guideline: create PRs sooner, in smaller chunks, rather than 
+later in bigger chunks. A day's worth of changes to a specific part of some
+chapter might constitute a coherent set of changes that can be PR'd and 
+merged by itself, even if you plan to continue editing the same chapter 
+tomorrow.
 
-We use the github issue tracker for recording large tasks that need to
+We use the [GitHub issue tracker](https://github.com/plclub/sf-in-lean/issues)
+for recording large tasks that need to
 be done (small or local tasks can just be recorded in comments in the
 affected .lean file) and for keeping track of work in progress that
 other people should be careful not to step on.
-  - Feel free to assign yourself or others to an issue if it is
-    something you will or might work on or you want to be updated on
+1. Assign yourself or others to an issue if it is
+    something you _may_ work on or you want to be updated on
     discussions associated with the issue.  Being assigned to an issue
-    does _not_) mean that you have it "locked" and other people should
+    does _not_ mean that you have it "locked" and other people should
     not work on it or touch associated files.
-  - When you start working on an issue, assign it to yourself so that
-    other people know you are thinking about it.
-  - When you start *actually making changes* on a branch, edit the
+2. When you start working on an issue, assign it to yourself so that
+    other people know you are thinking about it (if not already assigned).
+3. When you start *actually making changes* on a branch, edit the
     pinned [Work In
     Progress](https://github.com/plclub/sf-in-lean/issues/25) issue so
-    that people know to be careful not to step on your work.  
-  - Remember to edit it again when you stop working. 
-  - Include the name of the branch or a pointer to the PR where you
-    are working.
+    that people know to be careful not to step on your work. If/when
+    you have a branch for your work, link it from the work-in-progress
+    issue.
+ 4. When you submit a PR on your work, refer to the relevant issue in the
+    PR message. Edit the work-in-progress issue with a pointer to the PR.
+ 5. Resolve the issue when the PR is resolved. Edit the work-in-progress
+    to remove the activity.
 
 ### Git-fu 
 
-We use git and github, with some simple conventions:
+We use Git and GitHub, with some simple conventions:
 
 * The `main` branch must always build. 
 * Never commit directly to `main`. Instead, branch (not fork!), edit,
@@ -99,7 +112,7 @@ We use git and github, with some simple conventions:
 * After your PR is merged, delete the branch to keep the repo tidy.
 
 We prefer that people create branches in the sf-in-lean repo rather
-than creating forks in their own github accounts for working on stuff.
+than creating forks in their own GitHub accounts for working on stuff.
 This makes it easier for everybody to maintain a global view of what's
 going on.
 
@@ -128,24 +141,27 @@ then visit http://localhost:8000
 ### Status; plain lean vs. verso files (temporary)
 
 At the moment, most of the files in Logical Foundations have been
-converted to regular lean files.  (Programming Language Foundations
-remains to be translated.)  The .lean files are currently in regular
+converted to regular Lean files.  (Programming Language Foundations
+remains to be translated.)  The `.lean` files are currently in regular
 Lean syntax, but we want them to be formatted as Verso files
 ("documentation first") and are working on translating them one by
 one.  
 
 Benjamin is the only person that needs to worry about the details
-here: Everyone else can just work on a given .lean file in whatever
+here: Everyone else can just work on a given `.lean` file in whatever
 format it exists in at the moment.  In particular, no one except
 Benjamin should ever need to run the `to_verso.py` script.
 
 ## Lean Style
 
 **BCP: This section needs reviewed.**
+**MWH: Especially, consider it against the philosophy at the top. Make sure
+all of the specific advice here agrees with the tenets.**
 
 We generally follow the [Mathlib style
-guide](https://leanprover-community.github.io/contribute/style.html)
-and use the Lean linter by default. 
+guide](https://leanprover-community.github.io/contribute/style.html),
+with the caveat around pedagogy in our SFL **Philosophy** (given above).
+We use the Lean linter by default
 
 SFL-specific conventions:
 
@@ -509,7 +525,7 @@ should be carefully vetted.
 Instructions for Claude live in `CLAUDE.md` (which also asks Claude to
 pay attention to the conventions in this file).
 
-Raw AI output should not be posted to github or zulip without an
+Raw AI output should not be posted to GitHub or zulip without an
 indication that that's what it is.  
 
 Scripts that are mostly or wholly AI generated should be marked as
