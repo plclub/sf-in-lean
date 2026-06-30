@@ -70,17 +70,12 @@ ways of working if you see them!
 
 We use a standard branch-and-PR workflow.  See below for details.
 
-Make PRs frequently so that your local changes get folded back into
-the `main` branch as quickly as possible.  There is no need to
-completely finish all the work on an issue before merging what you've
-done back into main. If your branch compiles and won't interfere with
-what someone else is doing, please make a checkpoint PR every day or
-so.
-MWH: I don't agree with this last sentence. The point of a PR, and
-squash commits, is that it's clear how the code is evolving, and you
-can look at all of the code for a coherent change. This would break
-that. Advice I would agree with is: Rebase your branch against
-main regularly, maybe every day, so that you are sure it merges later.
+PRs should represent coherent pieces of work so that they are easy to review.
+As a general guideline: create PRs sooner, in smaller chunks, rather than 
+later in bigger chunks. A day's worth of changes to a specific part of some
+chapter might constitute a coherent set of changes that can be PR'd and 
+merged by itself, even if you plan to continue editing the same chapter 
+tomorrow.
 
 We use the [GitHub issue tracker](https://github.com/plclub/sf-in-lean/issues)
 for recording large tasks that need to
