@@ -1983,9 +1983,13 @@ You can define custom notation using the `notation`, `infixl`,
 Lean handles notation scoping through namespaces and _type classes_.
 The numeric literal `3` can be interpreted as `Nat`, `Int`, `Float`, etc.,
 depending on the expected type, thanks to Lean's `OfNat` type class.
-We explain type classes in full in Typeclasses chapter,
+We will explain type classes in more detail in the `Typeclasses` chapter,
 found in `Typeclasses.lean`.
 
+:::dev
+BCP: In SF-classic, there was some special typesetting magic for chapter
+titles that turned them into HTML links...
+:::
 ::::
 
 ## Structural Recursion (Optional)
@@ -2149,13 +2153,24 @@ end Nat
 ## Warmups
 
 ::::exercise (rating := 1) (name := "identity_fn_applied_twice")
-You now have a small, but powerful, suite of tactics at your disposal.
+You now have a small but rather powerful suite of tactics at your disposal.
 As a warmup for the last section of the chapter, use the tactics you have
 learned so far to prove the following theorem about boolean functions.
 
 Hint: You can use `rewrite` with _any_ hypothesis that has an `=` in it
 as long as the types line up.
-
+:::dev
+BCP: Roger, you changed the statement of the theorem From
+    (∀ x : Bool, f x = x)
+     → ∀ b : Bool, f (f b) = b
+     := by
+to:
+    (∀ x : Bool, f x = x) → ∀ b : Bool, f (f b) = b := by
+I predict students will find this significantly harder to read.
+(I've complained before about the `:= by` living on the same line as
+the theorem statement.)  There are many related instances elsewhere.
+We should discuss.
+:::
 ```lean
 theorem identity_fn_applied_twice : ∀ f : Bool → Bool,
     (∀ x : Bool, f x = x) → ∀ b : Bool, f (f b) = b := by
