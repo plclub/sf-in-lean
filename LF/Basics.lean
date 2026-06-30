@@ -1,3 +1,4 @@
+prelude
 import VersoManual
 import VersoManual.InlineLean
 import Illuminate
@@ -1058,6 +1059,15 @@ def add (n : Nat) (m : Nat) : Nat :=
   | succ m' => succ (add n m')
 ```
 
+::::full
+We can also define infix notation for our `add` functions.
+Don't worry too much about how this is defined; we will return to it
+in more detail later.
+::::
+```lean
+scoped infixl:65 " + " => add
+```
+
 # Proof by Rewriting
 
 ## Proving properties about functions in Lean
@@ -1071,7 +1081,7 @@ behavior.
 
 Here is a simple rule about `add`:
 
-- `add n zero = n`
+- `n + zero = n`
 
 In Lean, this rule looks like this:
 ::::
@@ -1083,7 +1093,7 @@ beginning of the proof?  Can we comment on this?
 
 ```lean
 unseal add in
-theorem add_zero : ∀ n : Nat, add n zero = n := by
+theorem add_zero : ∀ n : Nat, n + zero = n := by
   intro n
   rfl
 ```
@@ -1113,7 +1123,7 @@ We can then use the `add_zero` rule to carry out a simple proof
 about natural numbers!
 
 ```lean
-theorem add_zero_zero (n : Nat) : add (add n zero) zero = n := by
+theorem add_zero_zero (n : Nat) : n + zero + zero = n := by
   rewrite [add_zero]
   rewrite [add_zero]
   rfl
@@ -1143,14 +1153,14 @@ _close_ (solve) the current goal which finishes its proof.
 Let's walk through the example above with this terminology in mind.
 
 ```lean
-theorem add_zero_zero_explained (n : Nat) : add (add n zero) zero = n := by
+theorem add_zero_zero_explained (n : Nat) : n + zero + zero = n := by
   /- Move your cursor (click) here to see the initial proof state in
-     the InfoView. The context is `n : Nat`. The goal is `add (add n zero) zero = n`. -/
+     the InfoView. The context is `n : Nat`. The goal is `n + zero + zero = n`. -/
   rewrite [add_zero]
   /- Now click here to see the new proof state that results from the tactic.
-     Notice how `add (add n zero) zero` changes to `add n zero` in the goal. -/
+     Notice how `n + zero + zero` changes to `n + zero` in the goal. -/
   rewrite [add_zero]
-  /- Again the goal changes, from `add n zero` to `n`. Now the proof state
+  /- Again the goal changes, from `n + zero` to `n`. Now the proof state
      is an equality with both sides equal, so it can be closed by the
      tactic `rfl`. -/
   rfl
@@ -1158,7 +1168,7 @@ theorem add_zero_zero_explained (n : Nat) : add (add n zero) zero = n := by
 
 /-! Here's a simple proof for you to try. -/
 
-theorem add_zero_zero_zero (n : Nat) : add (add (add n zero) zero) zero = n := by
+theorem add_zero_zero_zero (n : Nat) : n + zero + zero + zero = n := by
   solution!
     rewrite [add_zero]
     rewrite [add_zero]
@@ -1200,7 +1210,7 @@ Here it is in Lean:
 
 ```lean
 unseal add in
-theorem add_succ : ∀ n m : Nat, add n (succ m) = succ (add n m) := by
+theorem add_succ : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
   intro n m
   rfl
 ```
@@ -1208,7 +1218,7 @@ theorem add_succ : ∀ n m : Nat, add n (succ m) = succ (add n m) := by
 And here it is in a proof:
 
 ```lean
-theorem add_one (n : Nat) : add n (succ zero) = succ (add (add n zero) zero) := by
+theorem add_one (n : Nat) : n + (succ zero) = succ (n + zero) + zero := by
   rewrite [add_succ]
   rewrite [add_zero]  /- notice how this handles an addition on both sides -/
   rewrite [add_zero]
@@ -1274,12 +1284,12 @@ def add (n : Nat) (m : Nat) : Nat :=
   | succ m' => succ (add n m') -/
 
 unseal add in
-theorem add_zero : forall (n : Nat), add n zero = n := by
+theorem add_zero : forall (n : Nat), n + zero = n := by
   intro n
   rfl
 
 unseal add in
-theorem add_succ : forall (n m : Nat), add n (succ m) = succ (add n m) := by
+theorem add_succ : forall (n m : Nat), n + (succ m) = succ (n + m) := by
   intro n m
   rfl
 
@@ -1355,7 +1365,7 @@ BCP: Should this be marked / formatted as an exercise or at least a WORKINCLASS?
 :::
 
 ```lean
-theorem one_plus_one_eq_two : (add one one : Nat) = two := by
+theorem one_plus_one_eq_two : (one + one : Nat) = two := by
   rewrite [one_eq_succ_zero]
   solution!
     rewrite [add_succ]
@@ -1363,27 +1373,16 @@ theorem one_plus_one_eq_two : (add one one : Nat) = two := by
     rfl
 ```
 
-Try the same for `add two two = four`.
+Try the same for `two + two = four`.
 
 ```lean
-theorem two_plus_two_eq_four : (add two two : Nat) = four := by
+theorem two_plus_two_eq_four : two + two = four := by
   solution!
     rewrite [four_eq_succ_three, three_eq_succ_two,
              two_eq_succ_one, one_eq_succ_zero]
     rewrite [add_succ, add_succ, add_zero]
     rfl
 ```
-
-::::full
-By default, `rewrite` rewrites left-to-right. To rewrite from right
-to left, use `rewrite [← h]`, where `←` is typed as `\l` or `\<-`.
-:::dev
-BCP: We should make this point wherever we rewrite to the left for
-the first time. It's out of place here.
-DHS: Agree. Idr where this happens, though. Probably somewhere around when we
-teach assoc/comm for addition?
-:::
-::::
 
 ::::full
 Now that we know how addition is defined, we can use it to define multiplication:
@@ -1397,7 +1396,9 @@ Now that we know how addition is defined, we can use it to define multiplication
 def mul (n m : Nat) : Nat :=
   match m with
   | zero => zero
-  | succ m' => add (mul n m') n
+  | succ m' => (mul n m') + n
+
+scoped infixl:70 " * " => mul
 ```
 
 Multiplication, like any function we will prove properties about,
@@ -1405,12 +1406,12 @@ Multiplication, like any function we will prove properties about,
 
 ```lean
 unseal mul in
-theorem mul_zero : ∀ n : Nat, mul n zero = zero := by
+theorem mul_zero : ∀ n : Nat, n * zero = zero := by
   intro n
   rfl
 
 unseal mul add in
-theorem mul_succ : ∀ n m : Nat, mul n (succ m) = add (mul n m) n := by
+theorem mul_succ : ∀ n m : Nat, n * (succ m) = (n * m) + n := by
   intro n m
   rfl
 ```
@@ -1429,7 +1430,7 @@ Prove this property. (We have given you the first line.) Notice how `rewrite`
    with multiple rules.
 
 ```lean
-theorem test_mult1 : (mul two two : Nat) = four := by
+theorem test_mult1 : (two * two : Nat) = four := by
   rewrite [two_eq_succ_one, one_eq_succ_zero]
   solution!
     rewrite [mul_succ, mul_succ, mul_zero]
@@ -1472,56 +1473,37 @@ TODO: We need to make a decision about `==`.
 Either we give decidable equality early, or we use this `==` thing.
 :::
 
-Similarly, the `leb` function tests whether its first argument is
+Similarly, the `ble` function tests whether its first argument is
 less than or equal to its second argument, yielding a boolean.
 
 ```lean
 @[irreducible]
-def leb (n m : Nat) : Bool :=
+def ble (n m : Nat) : Bool :=
   match n with
   | zero => true
   | succ n' =>
       match m with
       | zero => false
-      | succ m' => leb n' m'
+      | succ m' => ble n' m'
 
-unseal leb
-theorem zero_leb (n : Nat) : leb zero n = true := by rfl
-theorem succ_leb_zero (n : Nat) : leb (succ n) zero = false := by rfl
-theorem succ_leb_succ (n m : Nat) : leb (succ n) (succ m) = leb n m := by rfl
+unseal ble
+theorem zero_ble (n : Nat) : ble zero n = true := by rfl
+theorem succ_ble_zero (n : Nat) : ble (succ n) zero = false := by rfl
+theorem succ_ble_succ (n m : Nat) : ble (succ n) (succ m) = ble n m := by rfl
 
-example : leb two two = true  := by rfl
-example : leb two four = true  := by rfl
-example : leb four two = false := by rfl
-seal leb
+example : ble two two = true  := by rfl
+example : ble two four = true  := by rfl
+example : ble four two = false := by rfl
+seal ble
 ```
 
 :::slidebreak
 :::
 
 We'll be using `beq` a lot, so let's give it an infix notation.
-Don't worry too much about how this is defined, we will return to it
-in more detail later.
-
-:::dev
-JC: Lean's stdlib has `==` notation for `beq`,
-but not for `Nat.ble`...
-:::
-
-:::dev
-BCP: Readers may wonder what "instance" is...
-:::
-
-:::dev
-DHS: I removed the other notation in this chapter, but IMO the
-lemmas and proofs below become hideously ugly to the point of unreadability
-without the `==` shorthand. I think in this instance introducing the notation
-is worth it.
-:::
 
 ```lean
-instance : BEq Nat where
-  beq := beq
+scoped infixl:30 " == " => beq
 ```
 
 ::::full
@@ -1531,7 +1513,7 @@ one for each of the four cases of control flow through the function.
 
 ```lean
 unseal beq
-theorem zero_zero_beq_true : (0 == 0) = true := by rfl
+theorem zero_zero_beq_true : (zero == zero) = true := by rfl
 theorem zero_succ_beq_false (n : Nat) : (zero == (succ n)) = false := by rfl
 theorem succ_zero_beq_false (n : Nat) : ((succ n) == zero) = false := by rfl
 theorem succ_succ_beq (n m : Nat) : ((succ n) == (succ m)) = (n == m) := by rfl
@@ -1547,24 +1529,24 @@ prove, while `x == y` is a boolean _expression_ whose value (either
 `true` or `false`) we can compute.
 ::::
 
-::::exercise (rating := 1) (name := "ltb")
-Define a less-than function in terms of `leb`.
+::::exercise (rating := 1) (name := "blt")
+Define a less-than function in terms of `ble`.
 
 ```lean
 @[irreducible]
-def ltb (n m : Nat) : Bool
-  := solution!(leb (succ n) m)
+def blt (n m : Nat) : Bool
+  := solution!(ble (succ n) m)
 
-unseal ltb leb
-example : ltb two two = false := solution!(by rfl)
-example : ltb two four = true  := solution!(by rfl)
-example : ltb four two = false := solution!(by rfl)
-seal ltb leb
+unseal blt ble
+example : blt two two = false := solution!(by rfl)
+example : blt two four = true  := solution!(by rfl)
+example : blt four two = false := solution!(by rfl)
+seal blt ble
 ```
 
 :::grade
 ```
-GRADE_THEOREM 1: ltb_test3
+GRADE_THEOREM 1: blt_test3
 ```
 :::
 ::::
@@ -1601,7 +1583,7 @@ just like it can take a previously proved theorem.  In this case, we want to
 rewrite with the hypothesis `h`, which says that `n` and `m` are equal, so
 that we can replace `n` with `m` in the goal.
 
-After the rewrite, the goal is `add m m = add m m`, which can be closed by
+After the rewrite, the goal is `m + m = m + m`, which can be closed by
 `rfl`.
 ::::
 
@@ -1613,7 +1595,7 @@ ugly. Are they standard, or can we make a better convention?
 ```lean
 theorem add_id_example : ∀ n m : Nat,
     n = m →
-    add n n = add m m := by
+    n + n = m + m := by
   intro n m
   intro h
   rewrite [h]
@@ -1629,7 +1611,7 @@ Remove `sorry` and fill in the proof.
 
 ```lean
 theorem add_id_exercise : ∀ n m o : Nat,
-    n = m → m = o → add n m = add m o := by
+    n = m → m = o → n + m = m + o := by
   solution!
     intro n m o h1 h2
     rewrite [h1, h2]
@@ -1690,7 +1672,7 @@ instead of a hypothesis from the context.
 
 ```lean
 theorem add_mul_zero : ∀ p q : Nat,
-   add (mul p zero) (mul q zero) = zero := by
+    (p * zero) + (q * zero) = zero := by
   intro p q
   rewrite [mul_zero, mul_zero, add_zero]
   rfl
@@ -1899,7 +1881,7 @@ GRADE_THEOREM 2: orb_false_true
 ::::exercise (rating := 1) (name := "zero_nbeq_add_1")
 ```lean
 theorem zero_neb_add_one : ∀ n : Nat,
-  (zero == Nat.succ n) = false := by
+  (zero == succ n) = false := by
   solution!
     intro n; cases n
     case zero => rewrite [zero_succ_beq_false]; rfl
@@ -2026,8 +2008,8 @@ def incr (m : Bin) : Bin
 def binToNat (m : Bin) : Nat
   := solution!(match m with
   | .z => zero
-  | .b0 m' => mul (binToNat m') two
-  | .b1 m' => add (mul (binToNat m') two) one)
+  | .b0 m' => binToNat m' * two
+  | .b1 m' => binToNat m' * two + one)
 
 unseal incr
 example : incr (.b1 .z) = .b0 (.b1 .z) := solution!(by rfl)
@@ -2041,8 +2023,8 @@ seal incr
 
 unseal binToNat
 theorem binToNat_z : binToNat .z = zero := solution!(by rfl)
-theorem binToNat_b0 m : binToNat (.b0 m) = mul (binToNat m) two := solution!(by rfl)
-theorem binToNat_b1 m : binToNat (.b1 m) = add (mul (binToNat m) two) one := solution!(by rfl)
+theorem binToNat_b0 m : binToNat (.b0 m) = binToNat m * two := solution!(by rfl)
+theorem binToNat_b1 m : binToNat (.b1 m) = binToNat m * two + one := solution!(by rfl)
 seal binToNat
 ```
 

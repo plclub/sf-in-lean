@@ -124,15 +124,20 @@ _DROP_MARKER_RE = re.compile(
 
 
 def _extract_imports(body: str):
-    """Pull top-level `import …` lines out of *body* and return
-    (import_lines, body_without_imports).
+    """Pull top-level `import …` lines and `prelude` out of *body* and return
+    (has_prelude, import_lines, body_without_imports).
 
-    These imports belong in the Verso header (real Lean imports), not in a
-    ```lean``` code block (InlineLean can't elaborate an `import`).  Because a
-    chapter's InlineLean definitions are exported, importing a dependency makes
-    its definitions visible to this chapter's code blocks."""
+    These belong in the Verso header (real Lean file-level directives), not in
+    a ```lean``` code block.  `prelude` must go *before* all imports in the
+    generated file, just as in the source.  Because a chapter's InlineLean
+    definitions are exported, importing a dependency makes its definitions
+    visible to this chapter's code blocks."""
+    has_prelude = False
     kept, imports = [], []
     for line in body.splitlines():
+        if line.strip() == 'prelude':
+            has_prelude = True
+            continue  # lifted to the file header; not a body code line
         m = _IMPORT_RE.match(line)
         if m:
             mod = m.group(1)
@@ -142,7 +147,7 @@ def _extract_imports(body: str):
             imports.append(f'import {mod}')
         else:
             kept.append(line)
-    return imports, '\n'.join(kept)
+    return has_prelude, imports, '\n'.join(kept)
 
 # Author/dev markers (matches the line-comment set in `_AUTHOR_RE`).  A block
 # comment whose body opens with one of these is an author note routed to :::dev.
@@ -1120,11 +1125,13 @@ def convert(src_text: str, title: str, file_key: str) -> str:
     # The opening /- title -/ comment is already used for the #doc declaration;
     # strip it so it doesn't appear again as prose.
     body_src = _strip_title_comment(src_text)
-    # Lift top-level `import …` lines into the Verso header (they can't live in
-    # a ```lean``` block).
-    extra_imports, body_src = _extract_imports(body_src)
+    # Lift top-level `import …` lines (and `prelude`) into the Verso header;
+    # they can't live in a ```lean``` code block.
+    has_prelude, extra_imports, body_src = _extract_imports(body_src)
     header = HEADER_TEMPLATE.format(
         title=title, file=file_key, extra_imports='\n'.join(extra_imports))
+    if has_prelude:
+        header = 'prelude\n' + header
     # Normalize block-comment markers (/- EX … -/, /- /TERSE -/, …) to line form.
     body_src = _normalize_block_markers(body_src)
     # Rewrite solution markers (ADMITDEF/ADMITTED/SOLUTION) into the in-code
