@@ -377,7 +377,7 @@ The third row highlights an important practical difference: equality functions l
 that return a boolean cannot be used directly to justify rewriting with the rewrite tactic;
 propositional equality is required for this. Since `Prop` includes both decidable and undecidable
 properties, we have two options when we want to formalize a property that happens to be decidable:
-we can express it either as a boolean computation or as a function into Prop
+we can express it either as a boolean computation or as a function into Prop.
 
 As an example, we can write
 
