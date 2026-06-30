@@ -96,7 +96,7 @@ fact, we will explicitly recapitulate most of the definitions we
 need in this course to introduce them rather than just referring
 to the standard library. However, we take care to harmonize
 those definitions with the ones in the standard library, as well
-as to gradually introduce the actual library definitions once appropriate.
+as to gradually introduce the actual library definitions where appropriate.
 By the time you are finished with the course, you will have a good grasp
 of how the Lean standard library is organized and how to efficiently
 find resources within it.
