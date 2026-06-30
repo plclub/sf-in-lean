@@ -2247,8 +2247,8 @@ inductive Letter : Type where
 ```
 
 ::::full
-Then we define the modifiers -- a `natural` `a` is just a "plain"
-grade of `a`.
+Then we define the modifiers -- a `natural` `A` is just a "plain"
+grade of `A`.
 ::::
 
 ```lean
@@ -2257,7 +2257,7 @@ inductive Modifier : Type where
 ```
 
 ::::full
-A full `Grade`, then, is just a `letter` and a `modifier`.
+A full `Grade`, then, is just a `Letter` and a `Modifier`.
 In Lean, a combination of several values is called a _structure_.  The `structure`
 keyword is used to define a new structure type.
 ::::
