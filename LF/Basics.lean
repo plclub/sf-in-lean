@@ -2228,8 +2228,8 @@ inductive Letter : Type where
 ```
 
 ::::full
-Then we define the modifiers -- a `natural` `a` is just a "plain"
-grade of `a`.
+Then we define the modifiers -- a `natural` `A` is just a "plain"
+grade of `A`.
 ::::
 
 ```lean
