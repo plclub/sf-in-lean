@@ -28,8 +28,8 @@ file := "Basics"
 :::instructors
 This file and Induction.lean each take about an hour to
 get through in a not-too-rushed fashion (with questions, etc.).
-(BCP: This estimate may need to be revised now that we are in Lean!)
-(RAB: Issue opened to measure this.)
+
+(N.b. This estimate may need to be revised now that the chapter has been converted to Lean! Please edit this note to reflect your own experience teaching it.)
 
 You may want to assign both files together as the homework for the
 first week, depending on the level of the class.  Just Basics is
@@ -93,13 +93,13 @@ providing definitions of booleans, numbers, and many common data
 structures like lists and hash tables.  But there is nothing magic
 or primitive about these library definitions.  To illustrate this
 fact, we will explicitly recapitulate most of the definitions we
-need in this course to introduce them rather than just referring
+need in this course, rather than just referring
 to the standard library. However, we take care to harmonize
 those definitions with the ones in the standard library, as well
-as to gradually introduce the actual library definitions once appropriate.
-By the time you are finished with the course, you will have a good grasp
+as to gradually introduce the actual library definitions a little later in the course.
+By the time you are finished, you will have a good grasp
 of how the Lean standard library is organized and how to efficiently
-find resources within it.
+navigate it.
 ::::
 
 ## Days of the Week
@@ -177,10 +177,14 @@ wonder if this is necessary.
 Lean places all constructors into a "namespace" associated with their type,
 and requires uses of those constructors to be prefixed with their namespace.
 We will see in a little bit how to enter a namespace and avoid this requirement,
-but for now, if we wish to be a bit more concise, we can use a syntax with just a `.`,
-like `.monday`, that lets us know we're qualifying a name
+but for now, if we wish to be a bit more concise, we can use just a `.`,
+like `.monday`, that signals that we're qualifying a name
 without having to type too much. A more concise (but equivalent) definition
 of `nextWorkingDay` is given below.
+
+:::dev
+BCP: I *still* find this quite tangled.  We say Lean requires all uses of constructors to be prefixed with their namespace, but then, right after, we suggest exactly not doing this!  (And I am still confused, myself, about identifiers like `true` and `false`, which seem not to need to be prefixed, even though they come from their own namespace.)
+:::
 
 ```lean
 def nextWorkingDay' (d : Day) : Day :=
@@ -208,6 +212,20 @@ in our examples pervasively after this point, and we need to introduce it early.
 I think we should ask for feedback from people who aren't writing the book on
 this part and on others; I feel our curse of knowledge is leading to a lot of
 focus on something that may not be that important.
+
+BCP: I respectfully disagree that it's not important -- that is, the concept
+doesn't seem all that important, but not confusing readers is important, and right now I think we are doing that.  We need *some* consistent story.
+
+Old conversation, for reference:
+MWH - it seems that the full explanation comes later? I'm still not sure I get
+what's being said here. I think it's maybe worth being systematic, right here,
+if it seems to slow you down.
+DHS - I worry that explaining namespaces right here is too soon. This is essentially
+the very first thing we explain in the whole textbook, and going directly in to the
+details of how namespaces work immediately seems like a lot. Does it seem appropriate
+to say "names have to be qualified" here and then explain namespaces later?
+MWH - This is a key concept as the current comment explains. I'm a little inclined to
+put it all here. But I'm good with whatever for now. We can always change it later.
 :::
 ::::
 
@@ -245,6 +263,7 @@ the result in the Lean InfoView panel.
 DHS: Where are we showing responses in comments? I don't see them.
 RAB: Why did we remove the comments?
 Per GitHub discussion, MWH agrees - this is unresolved.
+BCP: Don't understand the state of play here...
 :::
 ::::
 
@@ -581,6 +600,10 @@ E.g., these are valid constructor expressions...
   Lean recognizes `Bool` as one of the types whose constructors
   are usable without qualification by default.
 
+:::dev
+BCP: "One of the types..." is mysterious.  What are these types?  Have we been told about them already?
+:::
+
 :::slidebreak
 :::
 
@@ -680,15 +703,13 @@ GRADE_THEOREM 1: is_inversion
 :::
 ::::
 
-
-
 ::::exercise (rating := 1) (name := "is_inversion")
 Define a function that takes two colors and returns `true` if
 the second color is an _inversion_ of the first, and false otherwise.
 
 Inversion is defined by cases:
 Black is an inversion of white, and vice versa.
-Red is an inversion of blue, and vice versa
+Red is an inversion of blue, and vice versa.
 Green is not an inversion of anything.
 
 ```lean
@@ -721,8 +742,6 @@ GRADE_THEOREM 1: is_inversion
 :::
 ::::
 
-
-
 ## Namespaces
 
 ::::full
@@ -750,11 +769,10 @@ end Playground
 
 #check myFoo             -- Bool
 #check Playground.myFoo  -- RGB
-
 ```
 
 ::::exercise(rating:=0) (name := "custom_namespace_checks")
-As an exercise, predict the output of each of these statements below.
+Predict the output of each of these statements below.
 Do you think their results will change depending on which `namespace`
 they are in? How?
 
@@ -763,12 +781,13 @@ they are in? How?
 #check RGB -- Write your prediction here.
 #check NatPlayground.myFoo -- Write your prediction here.
 
-Once you have written your predictions, copy the lines into
-the active sections of the book to run them.
+Once you have written your predictions, copy the lines from the comment into
+an active section of the book to evaluate them.
 ::::
 
 :::dev
 RAB: This seems like a reasonable exercise; I'm not quite sure if/how we should grade it?
+BCP: Not all exercises need to be graded.  (In Rocq we had a notation for manually graded exercises. An optional and manually graded exercise would serve for this.)
 :::
 
 ::::full
