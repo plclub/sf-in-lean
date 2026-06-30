@@ -333,6 +333,8 @@ chapters.
 RAB: Is Lean compiling to C its "killer app," or is it the fact that it is an
 executable programming language (unlike Gallina)? We should get a Lean pro's
 take on what to say here.
+DHS: Per GitHub discussion, we should either include a diagram in a later chapter,
+or potentially link to https://lean-lang.org/doc/reference/latest/Elaboration-and-Compilation/
 :::
 
 ## Booleans
@@ -1152,6 +1154,7 @@ RAB: We desperately need a way for this not to be the introduction to proof.
 Explaining it away with "don't worry" feels painful. Can we hide the definition,
 or do _something_ to make sure we're not having to explain ∀ , intro, by, etc.
 here?
+DHS: I have some plans to try something to fix this. Will put up a PR shortly.
 :::
 
 ::::full
@@ -1355,12 +1358,12 @@ def add (n : Nat) (m : Nat) : Nat :=
   | succ m' => succ (add n m') -/
 
 unseal add in
-theorem add_zero : forall (n : Nat), n + zero = n := by
+theorem add_zero : ∀ (n : Nat), n + zero = n := by
   intro n
   rfl
 
 unseal add in
-theorem add_succ : forall (n m : Nat), n + (succ m) = succ (n + m) := by
+theorem add_succ : ∀ (n m : Nat), n + (succ m) = succ (n + m) := by
   intro n m
   rfl
 
@@ -1544,12 +1547,6 @@ def beq (n m : Nat) : Bool :=
 :::slidebreak
 :::
 
-:::dev
-TODO: We need to make a decision about `==`.
-Either we give decidable equality early, or we use this `==` thing.
-RAB: This is the other thing we need to decide on together.
-:::
-
 Similarly, the `ble` function tests whether its first argument is
 less than or equal to its second argument, yielding a boolean.
 
@@ -1572,12 +1569,6 @@ example : ble two two = true  := by rfl
 example : ble two four = true  := by rfl
 example : ble four two = false := by rfl
 seal ble
-```
-
-We'll be using `leb` a lot, so let's give it an infix notation too.
-
-```lean
-scoped infixl:55 " <? " => leb
 ```
 
 :::slidebreak
@@ -1719,12 +1710,7 @@ previously declared lemmas and theorems.
 #check mul_succ  -- ∀ (n m : Nat), n * Nat.succ m = n + n * m
 ```
 
-## Type Annotations (Optional)
-
-:::dev
-BCP: I don't think we should mark sections "Optional" in the middle of chapters.  People will
-read them anyway, so it's just confusing -- and a temptation to write less clearly.
-:::
+## Type Annotations
 
 ::::full
 Note that you may see a slight discrepancy in the output:
@@ -1738,9 +1724,17 @@ Another simple but important-to-note automatic display feature is _indexing_:
 `mul_zero  (n : Nat) : n * zero = zero`.
 
 Note how the (n : Nat) has moved _before_ the colon and has lost the ∀.
-The two definitions are equivalent for our purposes right now, and you will
-find both in the Lean ecosystem.
+The two definitions are equivalent for our purposes right now, but the
+second is preferred in idiomatic Lean developments.
 ::::
+
+:::dev
+Per Github discussion: Lean's convention is to prefer the declaration header style
+(`mul_zero  (n : Nat) : n * zero = zero`) over universal quantification style
+(`mul_zero : ∀ (n : Nat), n * zero = zero`). We probably still want to teach the univeral
+quantification style at first, but should switch over to declaration header style
+quickly since that is the idiomatic Lean way to do things.
+:::
 
 :::slidebreak
 :::
@@ -2244,6 +2238,17 @@ GRADE_THEOREM 3: andb_eq_orb
 
 ## Course Late Policies, Formalized
 
+:::dev
+This exercise needs to be changed. Per GitHub discussion:
+the way this exercise is currently structured is at odds with our definition
+of Nats (use of large digits that would be tedious to work with by rewriting).
+The definitions of grades and letters also do not lend themselves well to
+our discipline of defining and using rewrite rules for all our functions,
+as they would require a frustrating number of such rules. We should come up with
+a new exercise here of similar size and difficulty, but that works better with
+the new presentation style of this material.
+:::
+
 ::::full
 Suppose that a course has a grading policy based on late days,
 where a student's final letter grade is lowered if they submit too
@@ -2526,13 +2531,15 @@ theorem lowerGrade_lowers : ∀ g : Grade,
     intro g h
     match g with
     | ⟨l, plus⟩ =>
-      rw [lowerGrade, gradeComparison]
+      rewrite [lowerGrade, gradeComparison]
       rewrite [letterComparison_Eq]
-      rw [modifierComparison]
+      rewrite [modifierComparison]
+      rfl
     | ⟨l, natural⟩ =>
-      rw [lowerGrade, gradeComparison]
+      rewrite [lowerGrade, gradeComparison]
       rewrite [letterComparison_Eq]
-      rw [modifierComparison]
+      rewrite [modifierComparison]
+      rfl
       intro x
       contradiction
     | ⟨l, minus⟩ =>
@@ -2558,17 +2565,17 @@ GRADE_THEOREM 3: lowerGrade_lowers
 
 ```lean
 def applyLatePolicy (lateDays : NatPlayground.Nat) (g : Grade) : Grade :=
-  if lateDays <? 9 then g
-  else if lateDays <? 17 then lowerGrade g
-  else if lateDays <? 21 then lowerGrade (lowerGrade g)
+  if Nat.ble lateDays  9 then g
+  else if Nat.ble lateDays 17 then lowerGrade g
+  else if Nat.ble lateDays 21 then lowerGrade (lowerGrade g)
   else lowerGrade (lowerGrade (lowerGrade g))
 
 theorem applyLatePolicy_unfold : ∀ (lateDays : NatPlayground.Nat) (g : Grade),
     applyLatePolicy lateDays g
     =
-    (if lateDays <? 9 then g
-     else if lateDays <? 17 then lowerGrade g
-     else if lateDays <? 21 then lowerGrade (lowerGrade g)
+    (if Nat.ble lateDays 9 then g
+     else if Nat.ble lateDays 17 then lowerGrade g
+     else if Nat.ble lateDays 21 then lowerGrade (lowerGrade g)
      else lowerGrade (lowerGrade (lowerGrade g))) := by
   intro _ _; rfl
 ```
@@ -2576,11 +2583,11 @@ theorem applyLatePolicy_unfold : ∀ (lateDays : NatPlayground.Nat) (g : Grade),
 ::::exercise (rating := 2) (name := "no_penalty_for_mostly_on_time")
 ```lean
 theorem no_penalty_for_mostly_on_time : ∀ (lateDays : NatPlayground.Nat) (g : Grade),
-    (lateDays <? 9 = true) →
+    (Nat.ble lateDays 9 = true) →
     applyLatePolicy lateDays g = g := by
   solution!
     intro lateDays g h
-    rw [applyLatePolicy]
+    rewrite [applyLatePolicy]
     rewrite [h]; rfl
 ```
 
@@ -2594,12 +2601,12 @@ GRADE_THEOREM 2: no_penalty_for_mostly_on_time
 ::::exercise (rating := 2) (name := "grade_lowered_once")
 ```lean
 theorem grade_lowered_once : ∀ (lateDays : NatPlayground.Nat) (g : Grade),
-    (lateDays <? 9 = false) →
-    (lateDays <? 17 = true) →
+    (Nat.ble lateDays 9 = false) →
+    (Nat.ble lateDays 17 = true) →
     applyLatePolicy lateDays g = lowerGrade g := by
   solution!
     intro lateDays g h9 h17
-    rw [applyLatePolicy]
+    rewrite [applyLatePolicy]
     rewrite [h9, h17]; rfl
 ```
 
