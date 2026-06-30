@@ -893,8 +893,15 @@ theorem mul_two (p : Nat) :
   `add_shuffle3`.  You don't need to use induction yet.
 -/
 
-theorem add_shuffle3 (n m p : Nat) :
-    (n + m) + p = (n + p) + m := by
+
+/- ::::full
+Note: By default, `rewrite` and `rw` rewrites left-to-right. To rewrite from right
+to left, use `rw [← h]`, where `←` is typed as `\l` or `\<-`.
+::::
+ -/
+
+theorem add_shuffle3 : ∀ n m p : Nat,
+    add (add n m) p = add (add n p) m := by
   -- ADMITTED
   rw [← add_assoc, add_comm m p, add_assoc]
 -- /ADMITTED
@@ -938,13 +945,12 @@ theorem mul_comm (m n : Nat) :
 -/
 
 
-unseal leb in
-theorem leb_refl (n : Nat) :
-    leb n n = true := by
+theorem ble_refl (n : Nat) :
+    ble n n = true := by
   -- ADMITTED
   induction n
-  case zero => rw [zero_leb]
-  case succ n' ih => rw [succ_leb_succ]; exact ih
+  case zero => rw [zero_ble]
+  case succ n' ih => rw [succ_ble_succ]; exact ih
 -- /ADMITTED
 
 theorem andb_false (b : Bool) :
