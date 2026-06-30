@@ -1182,7 +1182,7 @@ theorem add_zero_zero : ∀ n : Nat, n + zero + zero = n := by
 ## Proof state and tactics
 
 ::::full
-The "proof commands" -- `intro n`, `rewrite`, `rfl`, etc. -- are called
+Commands like `intro n`, `rewrite`, `rfl`, etc. are called
 _tactics_. The `add_zero` in brackets is an _argument_ to the
 `rewrite` tactic.
 
@@ -1190,8 +1190,9 @@ Hovering with the cursor over each line of the proof, we can see the
 _proof state_ in the Lean InfoView panel.
 
 The proof state is divided into the _context_, before the ⊢,
-and the _goal_, after the ⊢. The context is what we know at each point, while
-the goal is what we are trying to prove.
+and the _goal_, after the ⊢. The context records what we know
+at each point in the proof;the goal is what we are trying to prove
+at each point.
 
 A tactic manipulates both the goal and the context to get the goal
 into a shape that is closer to the one we want. A tactic can also
@@ -1201,7 +1202,7 @@ Let's walk through the example above with this terminology in mind.
 
 ```lean
 theorem add_zero_zero_explained : ∀  n : Nat, (n + zero) + zero = n := by
-    /- Move your cursor (click) here to see the initial proof state in
+  /- Move your cursor (click) here to see the initial proof state in
      the InfoView. The context (before the ⊢) is empty.
      The goal is `∀ (n : Nat), (n + zero) + zero = n`. -/
   intro n
@@ -1211,11 +1212,16 @@ theorem add_zero_zero_explained : ∀  n : Nat, (n + zero) + zero = n := by
 
     The `intro` tactic is used to name variables _quantified_ by a
     ∀ (pronounced "forall", typed \all or \forall.) Since we are
-    trying to prove a property of all natural numbers, we introduce
-    a generic natural number `n` and prove the property holds for it.
-    The argument to `intro` is the name of the variable introduced.
+    trying to prove a property of all natural numbers, we
+    proceed by introducing an unknown natural number `n` and prove
+    the property holds for `n`.  Informally, this move can be read,
+    "We want to prove <some property> for all numbers `n`. So suppose
+    `n` is some arbitrary number... <and then go on to prove the
+    property for this particular `n`>..." Since `n` was chosen
+    arbitrarily, we've now proved the property for all `n`.
 
-    In a proof involving ∀, `intro` is often necessary.
+    A proof of a theorem beginning with a ∀ will typically start with
+    an `intro`.
   -/
   rewrite [add_zero]
   /- Now click here to see the new proof state that results from the tactic.
@@ -1689,7 +1695,7 @@ GRADE_THEOREM 1: add_id_exercise
 ::::
 
 ::::full
-Here, the `sorry` keyword tells Lean that we want to skip trying
+The `sorry` here tells Lean that we want to skip trying
 to prove this theorem and just accept it as a given.  This is
 often useful for developing longer proofs.
 
@@ -1714,6 +1720,11 @@ previously declared lemmas and theorems.
 ```
 
 ## Type Annotations (Optional)
+
+:::dev
+BCP: I don't think we should mark sections "Optional" in the middle of chapters.  People will
+read them anyway, so it's just confusing -- and a temptation to write less clearly.
+:::
 
 ::::full
 Note that you may see a slight discrepancy in the output:
