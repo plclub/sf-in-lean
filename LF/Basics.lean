@@ -1781,7 +1781,7 @@ previously declared lemmas and theorems.
 
 ::::full
 Note that you may see a slight discrepancy in the output:
-#check might show
+`#check` might show
 `NatPlayground.Nat.mul_zero (n : Nat) : n * zero = zero`.
 Qualification, like `mul_zero` to `NatPlayground.Nat.mul_zero`, can happen
 automatically when printing a type in Lean.
@@ -1801,9 +1801,16 @@ Per Github discussion: Lean's convention is to prefer the declaration header sty
 (`mul_zero : ∀ (n : Nat), n * zero = zero`). We probably still want to teach the univeral
 quantification style at first, but should switch over to declaration header style
 quickly since that is the idiomatic Lean way to do things.
+
+BCP: Needs to be explained better.  And the "indexing" part doesn't really fit the
+section title.
 :::
 
 :::slidebreak
+:::
+
+:::dev
+BCP: Is there a missing section header here?
 :::
 
 We can use the `rewrite` tactic with a previously proved theorem
