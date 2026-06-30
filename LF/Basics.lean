@@ -500,10 +500,10 @@ This proposition says that for every `MyBool` `b`, `.true && b` is equal to `b`.
 
 How might we write this proposition in Lean?
 
-- `theorem true_and : ∀ b : MyBool, (.true && b) = b`
+- `theorem true_and : ∀ (b : MyBool), (.true && b) = b`
 
-The keyword `theorem` indicates that we stating (and eventually proving)
-a proposition; the text after the `:` is the proposition we want to prove.
+The keyword `theorem` indicates that we are stating (and eventually proving)
+a proposition; the text after the first `:` is the proposition we want to prove.
 You'll notice that this proposition looks a lot like the one we wrote above,
 but with some additional symbols in front.
 The `∀` symbol, pronounced "forall" and written `\all` or `\forall`, is
@@ -516,7 +516,7 @@ Now that we've stated the theorem we'd like to prove, let's set about proving it
 ::::
 
 ```lean
-theorem true_andb : ∀ b : MyBool, (.true && b) = b := by
+theorem true_andb : ∀ (b : MyBool), (.true && b) = b := by
   intro b
   rfl
 ```
@@ -525,7 +525,8 @@ theorem true_andb : ∀ b : MyBool, (.true && b) = b := by
 What does this mean?
 
 The first new piece of syntax is the `by` keyword, which signals
-to Lean that we are beginning a sequence of _tactics_. Tactics are Lean's other programming language, alongside the functional language you've been working with so far, and
+to Lean that we are beginning a sequence of _tactics_. Tactics are Lean's other programming
+language, alongside the functional language you've been working with so far, and
 are typically used to write proofs. The `intro b` and `rfl` that you see inside the theorem's body
 are examples of these tactics. Tactics manipulate the _proof state_, which you can
 can see the in the Lean InfoView panel.
@@ -543,7 +544,7 @@ Let's walk through the example above with this terminology in mind.
 ::::
 
 ```lean
-theorem true_andb_explained : ∀ b : MyBool, (.true && b) = b := by
+theorem true_andb_explained : ∀ (b : MyBool), (.true && b) = b := by
   /- Move your cursor (click) here to see the initial proof state in
       the InfoView. The context (before the ⊢) is empty.
       The goal is `∀ (b : MyBool), (true && b) = b`. -/
@@ -584,7 +585,7 @@ Remove `sorry` and fill in the proof.
 
 
 ```lean
-theorem false_orb : ∀ b : MyBool, (.false || b) = b := by
+theorem false_orb : ∀ (b : MyBool), (.false || b) = b := by
   solution!
     intro b
     rfl
