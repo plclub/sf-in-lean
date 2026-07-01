@@ -43,10 +43,11 @@ section long_example
 open NatPlayground.Nat
 /- Previously, we did computation like this... -/
 theorem test_mult1' : (two * two : NatPlayground.Nat) = four := by
-  rw [two_eq_succ_one, one_eq_succ_zero]
-  rw [mul_succ, mul_succ, mul_zero]
-  rw [add_succ, add_succ, add_zero]
-  rw [add_succ, add_succ, add_zero]
+  rewrite [two_eq_succ_one, one_eq_succ_zero]
+  rewrite [mul_succ, mul_succ, mul_zero]
+  rewrite [add_succ, add_succ, add_zero]
+  rewrite [add_succ, add_succ, add_zero]
+  rfl
 end long_example
 -- BCP: The info viewed in the InfoView during this proof is kind of
 -- mysterious (to me) here.  Have we already given people enough help
