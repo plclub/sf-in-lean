@@ -260,6 +260,14 @@ from the book's Lean sources, find the above example, and observe
 the result in the Lean InfoView panel.
 
 :::dev
+BCP: Should also mention how to find that panel if it disappears:
+In VS Code with the Lean 4 extension, you can open the Lean Info View with:
+  - Keyboard shortcut: Ctrl+Shift+Enter (Mac: Cmd+Shift+Enter)
+  - Command Palette: Ctrl+Shift+P → "Lean 4: Open Infoview"
+  - Click the blue ∀ icon in the editor toolbar
+:::
+
+:::dev
 DHS: Where are we showing responses in comments? I don't see them.
 RAB: Why did we remove the comments?
 Per GitHub discussion, MWH agrees - this is unresolved.
@@ -506,7 +514,7 @@ The keyword `theorem` indicates that we are stating (and eventually proving)
 a proposition; the text after the first `:` is the proposition we want to prove.
 You'll notice that this proposition looks a lot like the one we wrote above,
 but with some additional symbols in front.
-The `∀` symbol, pronounced "forall" and written `\all` or `\forall`, is
+The `∀` symbol, pronounced "forall" and entered with `\all` or `\forall`, is
 called a _universal quantifier_ because it _quantifies_ the variable `b` that appears
 in the proposition. Quantifying a variable with a `∀` means that the proposition
 applies to all possible values of its type; here, we annotate `b`
@@ -532,7 +540,7 @@ are examples of tactics.
 Tactics manipulate the _proof state_, as you can can see the in the Lean InfoView panel.
 The proof state is divided into the _context_, before the ⊢,
 and the _goal_, after the ⊢. The context records what we know
-at each point in the proof;the goal is what we are trying to prove
+at each point in the proof; the goal is what we are trying to prove
 at each point.
 
 A tactic manipulates both the goal and the context to get the goal
