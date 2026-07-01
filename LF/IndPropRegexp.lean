@@ -6,6 +6,8 @@ import LF.IndProp
 
 set_option linter.unusedSimpArgs false
 
+-- BCP: Recheck title -- should just be called Regexp.lean
+
 -- ########################################################
 -- * Case Study: Regular Expressions
 
