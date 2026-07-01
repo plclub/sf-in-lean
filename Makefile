@@ -55,7 +55,7 @@ all: verso lf hl ts check-bare-lean-chapters
 # when it has been incorporated into the book via a *Verso.lean include.
 .PHONY: check-lean
 check-bare-lean-chapters:
-	lake build LF.Induction LF.Maps
+	lake build LF.Induction
 
 serve: all
 	python3 -m http.server 8000 -d _out/
