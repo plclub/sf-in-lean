@@ -9,8 +9,6 @@
  quizzes would be great! -/
 
 -- HIDEFROMHTML
-import LF.Basics
-import LF.Induction
 import LF.Poly
 import LF.Tactics
 import LF.CustomTactics
@@ -967,7 +965,6 @@ abbrev Even x := ∃ n : Nat, x = double n
 
 #check (Even : Nat → Prop)
 
-unseal double in
 example : Even 4 := by exists 2
   -- `4 = double 2` holds by `rfl`,
   -- but is proven automatically by `exists`
@@ -1015,8 +1012,8 @@ theorem dist_exists_or (X : Type) (P Q : X → Prop) :
 -- GRADE_THEOREM 2: dist_exists_or
 -- []
 
--- EX3? (leb_plus_exists)
-theorem leb_plus_exists : ∀ n m : Nat, (n ≤? m = true) → ∃ x, m = x + n := by
+-- EX3? (ble_plus_exists)
+theorem ble_plus_exists : ∀ n m : Nat, (Nat.ble n m = true) → ∃ x, m = x + n := by
   -- ADMITTED
   intro n
   induction n
@@ -1026,7 +1023,7 @@ theorem leb_plus_exists : ∀ n m : Nat, (n ≤? m = true) → ∃ x, m = x + n 
     case zero => intro h; contradiction
     case succ m' =>
       intro h
-      rw [succ_leb_succ] at h
+      dsimp [Nat.ble] at h
       apply ih at h
       let ⟨x, hx⟩ := h
       exists x
@@ -1034,27 +1031,27 @@ theorem leb_plus_exists : ∀ n m : Nat, (n ≤? m = true) → ∃ x, m = x + n 
   -- /ADMITTED
 
 -- QUIETSOLUTION
-theorem leb_plus (n m : Nat) : (n ≤? (m + n)) = true := by
+theorem ble_plus (n m : Nat) : (Nat.ble n (m + n)) = true := by
   induction n
   case zero => rfl
-  case succ n' ih => rw [Nat.add_succ m, succ_leb_succ]; exact ih
+  case succ n' ih => rw [Nat.add_succ m]; dsimp [Nat.ble]; exact ih
 -- /QUIETSOLUTION
 
-theorem add_exists_leb (n m : Nat) (h : ∃ x, m = x + n) : n ≤? m = true := by
+theorem add_exists_ble (n m : Nat) (h : ∃ x, m = x + n) : Nat.ble n m = true := by
   -- ADMITTED
   let ⟨x, hx⟩ := h
   rw [hx]
-  apply leb_plus
+  apply ble_plus
   -- /ADMITTED
 
 -- HIDE
 /- A direct proof without a lemma. -/
-theorem add_exists_leb' : ∀ n m, (∃ x, m = x + n) → n ≤? m = true := by
+theorem add_exists_ble' : ∀ n m, (∃ x, m = x + n) → Nat.ble n m = true := by
   intro n; induction n
   case zero => intro m H; rfl
   case succ n' ih =>
     intro m ⟨x, hx⟩
-    rw [hx, Nat.add_succ x, succ_leb_succ]
+    rw [hx, Nat.add_succ x]; dsimp [Nat.ble]
     apply ih; exists x
 -- /HIDE
 -- []
@@ -1646,7 +1643,6 @@ end FunctionTheoremQuiz
 example : even 42 = true := rfl
 
 /- ... or that there exists some `k` such that `n = double k`. -/
-unseal double in
 example : Even 42 := by dsimp [Even]; exists 21
 
 /- Of course, it would be deeply strange if these two characterizations
@@ -1673,7 +1669,7 @@ theorem even_double_conv (n : Nat) : ∃ k : Nat,
   induction n
   case zero =>
     rw [even_zero]; dsimp
-    exists 0; rw [double_zero]
+    exists 0
   case succ n' ihn =>
     let ⟨k', ihk⟩ := ihn
     rw [even_succ]
@@ -1737,7 +1733,7 @@ theorem beq_eq_true (n1 n2 : Nat) :
   -- FOLD
   constructor
   case mp => apply beq_eq
-  case mpr => intro H; rw [H, eqb_refl]
+  case mpr => intro H; rw [H, BEq.refl]
   -- /FOLD
 
 -- HIDEFROMADVANCED
@@ -1772,7 +1768,6 @@ abbrev is_even_prime (n : Nat) : Bool :=
 
 -- JC: This was originally 1000 but Lean's default recursion depth
 --     is not large enough to reduce `double 50` lol
-unseal double in
 example : Even 100 := by
 /- The most direct way to prove this is to give the value of `k` explicitly. -/
   exists 50
@@ -1832,7 +1827,7 @@ theorem add_beq_true (n m p : Nat) (h : (n == m) = true) :
     (n + p == m + p) = true := by
   -- WORKINCLASS
   apply (beq_eq_true n m).mp at h
-  rw [h, eqb_refl]
+  rw [h, BEq.refl]
   -- /WORKINCLASS
 
 /- FULL: We won't discuss reflection any further for the moment,

@@ -531,8 +531,8 @@ inductive Le : Nat → Nat → Prop where
 scoped infix:50 (priority := high) " ≤ " => Le
 
 /- FULL: This definition is a bit simpler and more elegant than the
-   Boolean function `leb` we defined in `Basics`.  As usual, `Le`
-   and `leb` are equivalent, and there is an exercise about that
+   Boolean function `ble` we defined in `Basics`.  As usual, `Le`
+   and `ble` are equivalent, and there is an exercise about that
    later. -/
 
 example : 3 ≤ 5 := by
@@ -1471,7 +1471,7 @@ example : ∀ n, Ev n → Even n := by
   intro n h
   inversion h
   /- h = ev_0 -/
-  case ev_0 => exists 0; rw [double_zero]
+  case ev_0 => exists 0
   /- h = ev_succ_succ n' h' -/
   case ev_succ_succ n' h' =>
   /- Unfortunately, the second case is harder.  We need to show
@@ -1544,7 +1544,7 @@ theorem ev_Even : ∀ n, Ev n → Even n := by
   intro n h
   induction h
   /- h = ev_0 -/
-  case ev_0 => exists 0; rw [double_zero]
+  case ev_0 => exists 0
   /- h = ev_succ_succ n' h',  with ih : Even n' -/
   case ev_succ_succ n' h' ih =>
     let ⟨k, hk⟩ := ih
@@ -2130,9 +2130,9 @@ theorem plus_lt : ∀ (n₁ n₂ m : Nat),
 /- GRADE_THEOREM 1: plus_lt -/
 /- [] -/
 
-/- EX4? (leb_le) -/
-theorem leb_complete : ∀ (n m : Nat),
-  n ≤? m = true → n ≤ m := by
+/- EX4? (ble_le) -/
+theorem ble_complete : ∀ (n m : Nat),
+  Nat.ble n m = true → n ≤ m := by
   /- ADMITTED -/
   intro n m h; induction n generalizing m
   case zero => apply zero_le_n
@@ -2141,54 +2141,54 @@ theorem leb_complete : ∀ (n m : Nat),
     case zero =>
       contradiction
     case succ m' =>
-      rw [succ_leb_succ] at h
+      dsimp [Nat.ble] at h
       apply n_le_m__succ_n_le_succ_m
       apply ih; apply h
 /- /ADMITTED -/
-/- GRADE_THEOREM 2: leb_complete -/
+/- GRADE_THEOREM 2: ble_complete -/
 
-theorem leb_correct : ∀ n m,
+theorem ble_correct : ∀ n m,
   n ≤ m →
-  n ≤? m = true := by
+  Nat.ble n m = true := by
   /- ADMITTED -/
   intro n m h
   induction n generalizing m
-  case zero => rw [zero_leb]
+  case zero => dsimp [Nat.ble]
   case succ n' ih =>
     cases m
     case zero => contradiction
     case succ m' =>
-      rw [succ_leb_succ]
+      dsimp [Nat.ble] at h
       apply succ_n_le_succ_m__n_le_m at h
       apply ih at h
       assumption
 /- /ADMITTED -/
-/- GRADE_THEOREM 2: leb_correct -/
+/- GRADE_THEOREM 2: ble_correct -/
 
 /- Hint: The next two can easily be proved without using `induction`. -/
 
-/- LATER: AC'21: To me what would be interesting for this last lemma `leb_iff`
+/- LATER: AC'21: To me what would be interesting for this last lemma `ble_iff`
    would be to show that the proofs of completeness and correctness can
    be carried out in a single induction. -/
 
-theorem leb_iff : ∀ n m,
-  n ≤? m = true ↔ n ≤ m := by
+theorem ble_iff : ∀ n m,
+  Nat.ble n m = true ↔ n ≤ m := by
   /- ADMITTED -/
   intro n m; apply Iff.intro
-  . apply leb_complete
-  . apply leb_correct
+  . apply ble_complete
+  . apply ble_correct
 /- /ADMITTED -/
-/- GRADE_THEOREM 1: leb_iff -/
+/- GRADE_THEOREM 1: ble_iff -/
 
-theorem leb_true_trans : ∀ n m o,
-  n ≤? m = true → m ≤? o = true → n ≤? o = true := by
+theorem ble_true_trans : ∀ n m o,
+  Nat.ble n m = true → Nat.ble m o = true → Nat.ble n o = true := by
   /- ADMITTED -/
   intros n m o
-  rw [leb_iff, leb_iff, leb_iff]
+  rw [ble_iff, ble_iff, ble_iff]
   apply le_trans
 /- /ADMITTED -/
 /- /HIDE -/
-/- GRADE_THEOREM 1: leb_true_trans -/
+/- GRADE_THEOREM 1: ble_true_trans -/
 /- [] -/
 
 
@@ -2709,7 +2709,8 @@ inductive EmptyRelation : Nat → Nat → Prop where
 
 theorem empty_relation_is_empty : ∀ n m, ¬ EmptyRelation n m := by
   /- ADMITTED -/
-  intros n m contra; inversion contra
+  intros n m contra
+  cases contra
 /- /ADMITTED -/
 /- GRADE_THEOREM 2: empty_relation_is_empty -/
 /- [] -/
