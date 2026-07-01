@@ -29,9 +29,10 @@ name = "SFLMeta"
 
 [[lean_lib]]
 name = "LF"
-# CGH: I'm disabling globs because we need a successful build for Verso,
-# which is not the case for current `main`
-# globs = ["LF.+"]
+# List only the chapters that currently build cleanly. To add a chapter
+# once it passes, append its module name to this list.
+globs = ["LF", "LF.Basics", "LF.Induction", "LF.UsingLean", "LF.Lists", "LF.Poly",
+        "LF.Tactics", "LF.Logic", "LF.IndProp"]
 
 [[lean_lib]]
 name = "HL"

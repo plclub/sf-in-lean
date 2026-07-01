@@ -9,6 +9,10 @@
 #   $(eval $(call VOLUME_template,plf))
 # and add it to the `all` target below.
 
+# For now, CI does not require that all chapters compile, since some
+# are still being translated. To add a chapter to the ones that are
+# believed to compile (and should be checked), edit lakefile.toml.
+
 default: all
 
 # ── Volume target template ────────────────────────────────────────────────────
