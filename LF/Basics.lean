@@ -490,13 +490,13 @@ GRADE_THEOREM 1: andb3_test4
 
 ::::full
 Now that we've defined some basic functions on booleans, let's see how to
-_prove_ some basic properties about those functions. Here is a simple rule
+_prove_ some simple properties of those functions. Here is a simple rule
 about `&&`:
 
 - `.true && b = b`
 
-This is an example of a _proposition_, a logical _claim_ which we can try to prove.
-This proposition says that for every `MyBool` `b`, `.true && b` is equal to `b`.
+This is an example of a _proposition_, a logical _claim_ that we can try to prove.
+It says that `.true && b` is equal to `b` for every `MyBool` `b`.
 
 How might we write this proposition in Lean?
 
@@ -509,8 +509,8 @@ but with some additional symbols in front.
 The `∀` symbol, pronounced "forall" and written `\all` or `\forall`, is
 called a _universal quantifier_ because it _quantifies_ the variable `b` that appears
 in the proposition. Quantifying a variable with a `∀` means that the proposition
-applies to all possible variables of its type; here, we annotate the `b` variable
-with a `MyBool` type to declare that the proposition is about all `b`s of type `MyBool`.
+applies to all possible values of its type; here, we annotate `b`
+with the type `MyBool` to signify that the proposition holds for   all `b`s of type `MyBool`.
 
 Now that we've stated the theorem we'd like to prove, let's set about proving it.
 ::::
@@ -524,13 +524,12 @@ theorem true_andb : ∀ (b : MyBool), (.true && b) = b := by
 ::::full
 What does this mean?
 
-The first new piece of syntax is the `by` keyword, which signals
-to Lean that we are beginning a sequence of _tactics_. Tactics are Lean's other programming
-language, alongside the functional language you've been working with so far, and
-are typically used to write proofs. The `intro b` and `rfl` that you see inside the theorem's body
-are examples of these tactics. Tactics manipulate the _proof state_, which you can
-can see the in the Lean InfoView panel.
+First we have the `by` keyword, which signals
+to Lean that we are beginning a sequence of _tactics_.
+The `intro b` and `rfl` that you see after the `by`
+are examples of tactics.
 
+Tactics manipulate the _proof state_, as you can can see the in the Lean InfoView panel.
 The proof state is divided into the _context_, before the ⊢,
 and the _goal_, after the ⊢. The context records what we know
 at each point in the proof;the goal is what we are trying to prove
@@ -538,7 +537,7 @@ at each point.
 
 A tactic manipulates both the goal and the context to get the goal
 into a shape that is closer to the one we want. A tactic can also
-_close_ (solve) the current goal which finishes its proof.
+_close_ (solve) the current goal, finishing its proof.
 
 Let's walk through the example above with this terminology in mind.
 ::::
@@ -565,15 +564,15 @@ theorem true_andb_explained : ∀ (b : MyBool), (.true && b) = b := by
     A proof of a theorem beginning with a ∀ will typically start with
     an `intro`.
 
-    Like the `example`s we saw above, we can use the `rfl` tactic,
+    As in the `example`s above, we can use the `rfl` tactic,
     which closes goals about equality where both sides are equal to
     one another according to the principle of reflexivity. Now,
     inspecting our goal will show that it is `(true && b) = b`, which
     may not appear to be equal to itself. However, the tactic
-    evaluates both sides of the equality and then compares them. In
-    this case, if we look at the definition of `andb`, we can see that
+    _evaluates_ both sides of the equality before comparing them. In
+    this case, if we look at the definition of `andb`, we can see that,
     when its first argument is `true`, the result is its second
-    argument. So the two terms `true && b` and `b` are in fact equal.
+    argument. So the two terms `true && b` and `b` are in fact equal because one evaluates to the other.
   -/
   rfl
   /- The proof is now done! The Lean InfoView tells us there are "No goals". -/
@@ -582,7 +581,6 @@ theorem true_andb_explained : ∀ (b : MyBool), (.true && b) = b := by
 ::::exercise (rating := 1) (name := "false_orb_exercise")
 Here's a simple proof for you to try.
 Remove `sorry` and fill in the proof.
-
 
 ```lean
 theorem false_orb : ∀ (b : MyBool), (.false || b) = b := by
@@ -601,14 +599,19 @@ GRADE_THEOREM 1: false_orb_exercise
 ::::full
 Obviously these facts about booleans are quite simple, so the tactics we need to
 prove them are also quite simple. Over the course of this book we are going to
-introduce new tactics and proof techniques gradually, expanding the set of propositions
-we can prove along the way.
+introduce new tactics and proof techniques gradually, enriching the propositions we can prove along the way.
 
 Now that we've seen how to define our own booleans and prove some basic
 properties about them, let's switch to Lean's built-in `Bool` type, which has the same structure
-but comes with a lot of useful functions and lemmas. One thing to note:
+but comes with a lot of useful functions and lemmas.
+
+One thing to note:
 because `Bool` is such an important type in Lean, its `true` and `false` constructors can be written
 without a `.` to qualify them.
+:::dev
+BCP: Do we need to be so vague?  It sounds like it's saying that `true` and `false` are built in / treated specially by the language,
+which is not what we mean.
+:::
 ::::
 
 ```lean
