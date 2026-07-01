@@ -48,21 +48,22 @@ The [SFL contributors
 
 For discussions, we use a combination of tools.  
 
-- If you want to start a discussion about an issue of general
-  interest, post on the [SFL contributors Zulip
+- If you have a high-level comment or want to start a discussion about
+  an issue of general interest, post on the [SFL contributors Zulip
   channel](https://leanprover.zulipchat.com/#narrow/channel/607217-lean-software-foundations-contributors).  
 
-  This channel is private and is expected to remain private. If, at some point,
-  we find ourselves with a lot more people actively involved and/or no need to
-  keep anything private, we may sunset it.  
-  
-  (There is also a `lean-software-foundations` channel, which is currently not
-  used for much (most people working on SFL are not even subscribed, to avoid
-  confusion about where things should go) -- its main role for the moment is
-  that some of the lead maintainers of Verso are members.)
+  This channel is private and is expected to remain private. If, at
+  some point, we find ourselves with a lot more people actively
+  involved and/or no need to keep anything private, we may sunset it. 
+
+  There is also a `lean-software-foundations` channel, which is
+  currently not used for much (most people working on SFL are not even
+  subscribed, to avoid confusion about where things should go) -- its
+  main role for the moment is that some of the lead maintainers of
+  Verso are members.
 
 - If you are working with others to tackle a specific GitHub issue,
-  you can use that issue for discussion and coordination.
+  you can use comments on that issue for discussion and coordination.
 
 - If you have a local comment that you want someone to think about at
   some point when they have that section of the material paged in, put
