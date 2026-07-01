@@ -422,12 +422,9 @@ example : orb .true  .true  = .true  := by rfl
 ```
 
 We can define new symbolic notations for existing definitions.
-Because Lean already defines the same notations for the built-in `Bool`,
-we restrict ours locally to a namespace. Don't worry for now about
-how the notation is defined.
+Don't worry for now about how the notation is defined.
 
 ```lean
-namespace MyBool_notations
 local prefix:40 (priority := high) "!" => notb
 local infixl:35 (priority := high) " && " => andb
 local infixl:30 (priority := high) " || " => orb
@@ -437,7 +434,6 @@ local infixl:30 (priority := high) " || " => orb
 example : (.false || .false || .true) = .true := by rfl
 
 example : (!.false) = .true := by rfl
-end MyBool_notations
 ```
 
 :::slidebreak
@@ -497,6 +493,8 @@ GRADE_THEOREM 1: andb3_test4
 
 :::slidebreak
 :::
+
+## Basic Proofs
 
 ::::full
 Now that we've defined some basic functions on booleans, let's see how to
@@ -614,6 +612,14 @@ introduce new tactics and proof techniques gradually, enriching the propositions
 Now that we've seen how to define our own booleans and prove some basic
 properties about them, let's switch to Lean's built-in `Bool` type, which has the same structure
 but comes with a lot of useful functions and lemmas.
+
+One thing to note:
+because `Bool` is such an important type in Lean, its `true` and `false` constructors can be written
+without a `.` to qualify them.
+:::dev
+BCP: Do we need to be so vague?  It sounds like it's saying that `true` and `false` are built in / treated specially by the language,
+which is not what we mean.
+:::
 ::::
 
 ```lean
@@ -795,6 +801,9 @@ result.
 ::::exercise (rating := 1) (name := "is_weekend")
 Define a function that takes a day and returns true if the day is
 a weekend, and false otherwise.
+You may wonder what the `@[irreducible]`, `seal` and `unseal`,
+that we use in the examples below mean.
+Hold onto this question; we will explain shortly.
 
 Hint: You could do this by pattern matching on each possible day of the week,
 or you could try to come up with a shorter solution...
@@ -1131,12 +1140,6 @@ def minustwo (n : Nat) : Nat :=
 ```
 
 ::::full
-You may wonder what the `@[irreducible]` means in the definitions above,
-or the `seal` and `unseal` that we use in the examples below.
-Hold onto this question; we will explain shortly.
-::::
-
-::::full
 
 Look the types of `succ`, `pred`, and `minustwo`:
 
@@ -1241,7 +1244,7 @@ scoped infixl:65 " + " => add
 ## Proving properties about functions in Lean
 
 ::::full
-Being recursive, `add` is our first example of a more sophisticated
+Being recursive, `add` is an example of a more sophisticated
 class of functions. In this chapter and beyond, we will _prove_
 properties about recursive functions like `add` over inductive
 datatypes like `Nat` using _simplification rules_ about their
@@ -1260,22 +1263,6 @@ theorem add_zero : ∀ n : Nat, n + zero = n := by
   intro n
   rfl
 ```
-
-:::dev
-BCP: The flow here is rough
-  - need to explain ∀ in the statement (and `theorem` and `add_zero`)
-  - need to explain "by", "intro n", and "rfl" in the proof
-  - what about `unseal`? if we really need it, it has to be explained!
-  - the comment below will need to change a bit
-  - We should also comment, as soon as it's relevant, on the binder
-    form vs. the ∀ form for introducing variables.  Why do we use
-    the ∀ form here?  Could we switch to the binder form?
-RAB: We desperately need a way for this not to be the introduction to proof.
-Explaining it away with "don't worry" feels painful. Can we hide the definition,
-or do _something_ to make sure we're not having to explain ∀ , intro, by, etc.
-here?
-DHS: I have some plans to try something to fix this. Will put up a PR shortly.
-:::
 
 ::::full
 ```lean
@@ -1305,50 +1292,22 @@ theorem add_zero_zero : ∀ n : Nat, n + zero + zero = n := by
 ## Proof state and tactics
 
 ::::full
-Commands like `intro n`, `rewrite`, `rfl`, etc. are called
-_tactics_. The `add_zero` in brackets is an _argument_ to the
-`rewrite` tactic.
+The `rewrite` tactic in the proof of `add_zero_zero` is used
+to transform the goal of the proof according to an equality.
+The `add_zero` in brackets is an _argument_ to the `rewrite` tactic.
 
-Hovering with the cursor over each line of the proof, we can see the
-_proof state_ in the Lean InfoView panel.
-
-The proof state is divided into the _context_, before the ⊢,
-and the _goal_, after the ⊢. The context records what we know
-at each point in the proof;the goal is what we are trying to prove
-at each point.
-
-A tactic manipulates both the goal and the context to get the goal
-into a shape that is closer to the one we want. A tactic can also
-_close_ (solve) the current goal which finishes its proof.
-
-Let's walk through the example above with this terminology in mind.
+Let's walk through the theorem again in detail.
 
 ```lean
-theorem add_zero_zero_explained : ∀  n : Nat, (n + zero) + zero = n := by
-  /- Move your cursor (click) here to see the initial proof state in
-     the InfoView. The context (before the ⊢) is empty.
-     The goal is `∀ (n : Nat), (n + zero) + zero = n`. -/
+theorem add_zero_zero_explained : ∀  n : Nat, n + zero + zero = n := by
   intro n
-  /- Now click here to see the new proof state that results from the
-     tactic. Notice how `intro n` has changed the _context_: it now
-     contains `n : Nat`.
-
-    The `intro` tactic is used to name variables _quantified_ by a
-    ∀ (pronounced "forall", typed \all or \forall.) Since we are
-    trying to prove a property of all natural numbers, we
-    proceed by introducing an unknown natural number `n` and prove
-    the property holds for `n`.  Informally, this move can be read,
-    "We want to prove <some property> for all numbers `n`. So suppose
-    `n` is some arbitrary number... <and then go on to prove the
-    property for this particular `n`>..." Since `n` was chosen
-    arbitrarily, we've now proved the property for all `n`.
-
-    A proof of a theorem beginning with a ∀ will typically start with
-    an `intro`.
-  -/
+  /- After introducing `n`, our goal is `n + zero + zero = n`.
+     What can we do to simplify this expression? If you hover your cursor over the
+     `add_zero` in the rewrite below, you can see its type: `n + zero = n`. So,
+     we can use that rewrite rule to transform an appearnce of `n + zero` in the goal to `n`. -/
   rewrite [add_zero]
   /- Now click here to see the new proof state that results from the tactic.
-     Notice how `(n + zero) + zero` changes to `n + zero` in the goal. -/
+     Notice how `n + zero + zero` changes to `n + zero` in the goal. -/
   rewrite [add_zero]
   /- Again the goal changes, from `n + zero` to `n`. Now the proof state
      is an equality with both sides equal, so it can be closed by the
@@ -1418,7 +1377,7 @@ theorem add_one (n : Nat) : n + (succ zero) = succ (n + zero) + zero := by
 
 Again, we recommend stepping through these proofs in VS Code --
    that is, moving past each tactic with your cursor to see how it
-   changes the proof state.
+   changes the proof state and hovering over each argument to `rewrite` to see its type.
 ::::
 
 ## Irreducibility, Rewriting, and Proof Engineering
