@@ -47,7 +47,15 @@ $(eval $(call VOLUME_template,ts))
 
 .PHONY: all serve clean
 
-all: verso lf hl ts
+all: verso lf hl ts check-bare-lean-chapters
+
+# Temporary:
+# Build bare .lean chapters that compile but are not yet fully versified.
+# Remove a module from this list only when it is broken (then fix it), or
+# when it has been incorporated into the book via a *Verso.lean include.
+.PHONY: check-lean
+check-bare-lean-chapters:
+	lake build LF.Induction
 
 serve: all
 	python3 -m http.server 8000 -d _out/
