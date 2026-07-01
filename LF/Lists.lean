@@ -612,7 +612,9 @@ unseal member in
 theorem member_add_same v t : member v (add v t) = true := by
   -- ADMITTED
   dsimp [add, member]
-  rw [eqb_refl]
+  -- TODO (DHS): rw? doesn't suggest this one for some reason. Why?
+  -- We may need to teach students about this theorem explicitly, perhaps in UsingLean
+  rw [BEq.refl]
   dsimp
   -- /ADMITTED
 
@@ -711,7 +713,7 @@ unseal remove_all in
 theorem remove_all_add_same v t : remove_all v (add v t) = remove_all v t := by
   -- ADMITTED
   dsimp [add, remove_all]
-  rw [eqb_refl]
+  rw [BEq.refl]
   dsimp
   -- /ADMITTED
 
@@ -775,7 +777,7 @@ theorem add_inc_count (s : Bag) (v : Nat) :
     count v (add v s) = (count v s) + 1 := by
   dsimp [add]
   rw [count_cons_same]
-  exact (eqb_refl v)
+  exact (BEq.refl v)
 -- /QUIETSOLUTION
 -- GRADE_MANUAL 2: add_inc_count
 -- []
@@ -1258,7 +1260,7 @@ theorem eqblist_nil : eqblist [] [] = true := by rfl
 unseal eqblist in
 theorem eqblist_cons_same h t1 t2 : eqblist (h :: t1) (h :: t2) = eqblist t1 t2 := by
   dsimp [eqblist]
-  rw [eqb_refl, Bool.true_and]
+  rw [BEq.refl, Bool.true_and]
 
 unseal eqblist in
 theorem eqblist_cons_diff h1 h2 t1 t2 : (h1 == h2) = false -> eqblist (h1 :: t1) (h2 :: t2) = false := by
@@ -1639,7 +1641,7 @@ def eqb_id (x1 x2 : MyId) : Bool :=
 theorem eqb_id_refl (x : MyId) : eqb_id x x = true := by
   -- ADMITTED
   dsimp [eqb_id]
-  rw [eqb_refl]
+  rw [BEq.refl]
 -- /ADMITTED
 -- []
 
