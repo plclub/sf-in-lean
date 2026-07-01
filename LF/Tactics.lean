@@ -792,8 +792,9 @@ theorem eq_implies_succ_proj_equal (a b c d : Nat) :
 theorem succ_inj (n m : Nat) :
     n + 1 == m + 1 → n == m := by
   intro h
-  rw [beq_succ] at h
-  exact h
+  rw [Nat.beq_eq_true_eq] at h
+  injections h; rw [h]
+  rw [BEq.refl]
 
 /-  FULL: Similarly, `apply L at H` matches some conditional statement
     `L` (of the form `X → Y`, say) against a hypothesis `H` in the
@@ -1166,7 +1167,7 @@ theorem beq_eq : ∀ (n m : Nat),
     case succ m' =>
       congr
       apply ih
-      rw [beq_succ] at eq
+      apply succ_inj at eq
       assumption
 -- TERSE
   -- /WORKINCLASS
@@ -1403,13 +1404,13 @@ theorem double_injective_take2 : ∀ n m,
     `sub`.  Since we are working with natural numbers, we need an
     assumption to prevent `sub` from truncating its result. With
     this assumption, the induction hypothesis becomes
-    `forall m, n' <== m = true → (m - n') + n' = m`.  The beginning of the proof
+    `forall m, n' <= m = true → (m - n') + n' = m`.  The beginning of the proof
     uses techniques we have already seen -- in particular, notice how
     we induct on `n` before introducing `m`, so that the induction
     hypothesis becomes sufficiently general. -/
 
-theorem sub_add_leb : ∀ (n m : Nat),
-    n ≤? m = true → (m - n) + n = m := by
+theorem sub_add_ble : ∀ (n m : Nat),
+    Nat.ble n m = true → (m - n) + n = m := by
   intro n
   induction n
   case zero =>
@@ -1420,7 +1421,7 @@ theorem sub_add_leb : ∀ (n m : Nat),
     intro m h; cases m
     case zero => contradiction
     case succ m' =>
-      rw [succ_leb_succ] at h
+      dsimp [Nat.ble] at h
       rw [succ_sub_succ, add_succ]
 /- FULL: At this point, we need to show `(m' - n') + n' + 1 = m' + 1` from
     the assumption `(n' <= m') = true`.  We could use the `assert`
@@ -1962,6 +1963,8 @@ theorem bool_fn_applied_thrice (f : Bool → Bool) (b : Bool) :
 /- ###################################################### -/
 /- Additional Exercises -/
 
+-- TODO (DHS): This exercise should be replaced with something else if we are
+-- having students use the builtin BEq
 -- EX3 (beq_symm)
 theorem beq_symm (n m : Nat) :
     (n == m) = (m == n) := by
@@ -1974,8 +1977,7 @@ theorem beq_symm (n m : Nat) :
     cases m
     case zero => rfl
     case succ =>
-      rw [beq_succ, beq_succ]
-      exact ih _
+      rw [BEq.comm]
 -- ADMITTED
 -- /ADMITTED
 -- GRADE_THEOREM 3: beq_symm
