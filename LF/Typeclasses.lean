@@ -43,12 +43,12 @@ This is somewhat limiting, as we cannot inspect or non-trivially use any particu
 might want in some situations rather than `α` being completely generic is to partially specify its
 behavior. In Lean, this happens through a form of "ad hoc polymorphism" called *typeclasses*. This
 concept originated in the Haskell programming language, and is analogous to features you may be
-familiar with in other languages such as traits in Rust or interfaces in Java.
+familiar with in other languages such as traits in Rust.
 
 # First Example: Inhabited Types
 
-Suppose we wanted to specify that a type has at least one inhabitant, in other words a non-empty
-type. In Lean, we could express this as the typeclass
+Suppose we wanted to specify that a type has at least one inhabitant -- i.e.,
+that it is not empty. In Lean, we could express this with the typeclass
 
 ```lean
 class HasOne (α : Type) where
@@ -56,7 +56,7 @@ class HasOne (α : Type) where
 ```
 
 which explicitly carries an element `one : α` as a witness of non-emptiness. After defining this
-typeclass, we can now provide *instances* that show it is satisfied for a particular type. As an
+typeclass, we can provide *instances* that show it is satisfied for a particular type. As an
 example, we could declare an instance
 
 ```lean
@@ -71,6 +71,10 @@ instance instHasOneInt : HasOne Int where
   one := -1
 ```
 
+:::dev
+BCP: Is this the first time they've seen integers?
+:::
+
 Now when you refer to {name}`HasOne.one` in a proof, Lean will use *typeclass inference* to
 determine the intended meaning. As an example, you can write
 
@@ -79,9 +83,15 @@ example : HasOne.one = (1 : Nat) := rfl
 example : HasOne.one = (-1 : Int) := rfl
 ```
 
-and based on the type annotations Lean will infer which of these instances you intended to use.
-When in doubt, you can also use the option `pp.all`
+and, based on the type annotations Lean will infer which of these instances you intended to use.
+:::dev
+BCP: ... Use for what?
+:::
 
+When in doubt, you can also use the option `pp.all`
+:::dev
+BCP: ... to do what?
+:::
 
 ```lean
 set_option pp.all true in
@@ -91,23 +101,37 @@ set_option pp.all true in
 example : HasOne.one = (-1 : Int) := rfl
 ```
 
-which allows you to see the name of the instance that is being used with {name}`HasOne.one`. We can
-also check for the existence of a typeclass instance using the `#synth` command
+which allows you to see the name of the instance that is being used with {name}`HasOne.one`.
+:::dev
+BCP: Not sure what I am supposed to be looking at here.
+:::
+We can
+also check for the existence of a typeclass instance using the `#synth` command:
 
 ```lean
 #synth HasOne Nat
 ```
+:::dev
+BCP: What does that do?
+:::
 
-# Proof Carrying Typeclasses
+# Proof-Carrying Typeclasses
 
 :::dev
 I say data to mean "not in `Prop`", is that a Lean-ism that's been explained? --CGH
+BCP: Probably not.  But should be repeated even if it has.
 :::
 
-Notably the above examples enforce no conditions on the data that they carry, and we could provide
-any value that we would like for {name}`HasOne.one`. In most languages that support typeclasses it
+Notably, the above examples enforce no conditions on the data that they carry, and we could provide
+any value that we would like for {name}`HasOne.one`.
+:::dev
+BCP: The reader might wonder "Why would this be bad [in the case of hasOne]?"
+:::
+In most languages that support typeclasses it
 is not possible to enforce a notion of "lawfulness" as part of the typeclass, and it falls to
-the author to ensure that any desired invariants are satisfied. As an example, suppose that we
+the author to ensure that any desired invariants are satisfied.
+
+As an example, suppose that we
 wanted to express the idea that a type has at least two distinct elements. A first attempt might be
 
 ```lean -keep
@@ -117,7 +141,7 @@ class HasTwo (α : Type) where
 ```
 
 but this does not disallow the case where `one` and `two` are equal. In a proof
-assistant however, typeclasses can also carry proofs along with data, so that we can write
+assistant, however, typeclasses can also carry proofs along with data, so we can write
 
 ```lean
 class HasTwo (α : Type) where
@@ -126,23 +150,19 @@ class HasTwo (α : Type) where
   one_neq_two : one ≠ two
 ```
 
-which enforces that these are two distinct entries. Declaring instances works in much the same
-way, except that now {name}`HasTwo.one_neq_two` requires a proof:
-
-:::dev
-I'm not actually sure of the preferred way to prove `1 ≠ 2` at this point in the book -- CGH
-:::
+to enforce that these are two distinct entries. Declaring instances works in much the same
+way as before, except that now {name}`HasTwo.one_neq_two` requires a proof:
 
 ```lean
 instance : HasTwo Nat where
   one := 1
   two := 2
-  one_neq_two := by simp
+  one_neq_two := by intro contra; contradiction
 ```
 
 ::::exercise (rating := 1) (name := "HasThree")
 Following the pattern of {name}`HasOne` and {name}`HasTwo`, define a class `HasThree` that
-specifies a type with (at least) three distinct elements.
+specifies a type with at least three distinct elements.
 
 ```lean
 class HasThree (α : Type) where
@@ -165,16 +185,20 @@ instance : HasThree Nat where
   one := 1
   two := 2
   three := 3
-  one_neq_two := solution!(by simp)
-  one_neq_three := solution!(by simp)
-  two_neq_three := solution!(by simp)
+  one_neq_two := solution!(by intro contra; contradiction)
+  one_neq_three := solution!(by intro contra; contradiction)
+  two_neq_three := solution!(by intro contra; contradiction)
 ```
 ::::
 
 # Notation Typeclasses
 
-Another use for typeclasses that may be familiar from other languages is to overload a given piece
+Another use for typeclasses, which may be familiar from other languages, is to overload a given piece
 of syntax. To start, consider the (non-polymorphic) definition
+
+:::dev
+BCP: STOPPED READING HERE
+:::
 
 ```lean
 @[irreducible]
@@ -283,8 +307,9 @@ theorem List.elem_poly_eq_elem_nat (xs : List Nat) (n : Nat) : xs.elem_poly n = 
 # Maps
 
 :::dev
-Maps could go here as an example to reinforce this? Or maybe that's too long of an aside? The code
-exists (with limited prose) in `Maps.lean` already. --CGH
+CGH: Maps could go here as an example to reinforce this? Or maybe that's too long of an aside? The code
+exists (with limited prose) in `Maps.lean` already.
+BCP: Yes -- we should fold Maps into this chapter.
 :::
 
 # Reflection
@@ -292,6 +317,7 @@ exists (with limited prose) in `Maps.lean` already. --CGH
 :::dev
 I think this will still exist in previous chapters, just not have the reflection explanations until
 here? Since I can't import these yet, just placing here at the top of this section -- CGH
+Burtonpatel: These definitions of even as boolean computation and Prop should go below, after the table where we explain the difference.
 :::
 
 ```lean
@@ -476,6 +502,23 @@ In general, both can be useful. Which we choose has to do with the _computationa
 core language, which is designed so that every function it expresses is total, and by default
 computable unless we explicit indicate otherwise. As an example, consider
 trying to write a function `α → α → Bool` checking for equality on an arbitrary type:
+:::dev
+dsainati12 days ago
+We use regular if for the first time here. It is probably necessary to explain at this point what if is and how it differs from bif.
+
+👍
+1
+berberman1 day ago
+Should we clarify the difference between = and ==? Observably if and bif can possibly accept both as the condition because of Coe or DecidableEq instances, which IMO could be confusing.
+
+Probably we can talk a bit about the coercion system in this file as well, since Coe could be an example of typeclasses, so long as if we ignore the outParam thing...
+
+chenson20181 day ago
+I definitely intended for this to cover = versus ==. Maps uses LawfulBEq (which says = and == coincide). If that will now appear here it's a good place to give some more detail?
+
+rogerburtonpatel1 day ago
+I think right after this part on decidability is good. It's a hefty chunk of information already, so keeping distinct ideas distinct is more likely than not a good call.
+:::
 
 ```lean -keep +error
 def eq {α : Type} (a₁ a₂ : α) : Bool := if a₁ = a₂ then true else false
@@ -510,7 +553,6 @@ example : Even 2 := by decide
 example : Even 4 := by decide
 example : Even 6 := by decide
 example : Even 100 := by decide
-example : Even 1000 := by decide +kernel
 example : ¬ Even 101 := by decide
 example : ∀ n < 10, Even (2 * n) := by decide
 example : ∀ n < 10, Even (2 * n) ∧ ¬ Even (2 * n + 1) := by decide
@@ -537,9 +579,9 @@ set_option pp.all true in
 
 which proves that this equality is decidable.
 
-This is only half the story however, as while Lean's core theory enables this computation, Lean is
-also often used in applications where we don't care about computability. In particular, it is
-possible to write a function a function for arbitrary equality
+This is only half the story however: while Lean's core theory enables this computation, Lean is
+also often used in applications where we don't care about computability, such as pure mathematics.
+In particular, it is possible to write a function for arbitrary equality:
 
 ```lean -keep
 open scoped Classical in
@@ -549,13 +591,13 @@ set_option pp.all true in
 #print eq
 ```
 
-but we have indicated to Lean using the `noncomputable` keyword and `Classical` namespace
-that we are not interested in computation. What is happening in the background is that this allows
+But we have indicated to Lean, using the `noncomputable` keyword and `Classical` namespace
+that we are _not_ interested in computation.
+What is happening in the background is that this allows
 typeclass synthesis to find the scoped instance {name}`Classical.propDecidable`, which makes use of
 the axiom of choice to provide a proof that all propositions are _classically_ decidable. This
 sort of definition is suitable for use with proofs, but is not allowed to be used in conjunction
 with computational features of Lean such as the {tactic}`decide` tactic or the `#eval` command.
-
 
 # TODO
 
@@ -591,3 +633,7 @@ I'm not sure what part of the signature here is important to translate. Is the p
 example (a : α) [BEq α] [LawfulBEq α] (xs : List α) (neq : xs.filter (a == ·) ≠ []) : a ∈ xs := by
   sorry
 ```
+
+:::dev
+Burtonpatel: Some more examples would be good. It might be good to start with Nat and then move to the Indprop ones. This is a short chapter, so 5-6 well-chosen, informative exercises could easily fit.
+:::
