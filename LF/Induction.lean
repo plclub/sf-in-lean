@@ -903,6 +903,7 @@ to left, use `rw [← h]`, where `←` is typed as `\l` or `\<-`.
 theorem add_shuffle3 : ∀ n m p : Nat,
     add (add n m) p = add (add n p) m := by
   -- ADMITTED
+  intro n m p
   rw [← add_assoc, add_comm m p, add_assoc]
 -- /ADMITTED
 -- GRADE_THEOREM 1: add_shuffle3
