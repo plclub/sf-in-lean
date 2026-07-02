@@ -42,3 +42,11 @@ name = "TS"
 [[lean_exe]]
 name = "sfl"
 root = "Targets"
+
+[[lean_lib]]
+name = "Autograder"
+globs = ["Autograder.+"]
+
+[[lean_exe]]
+name = "autograder"
+root = "Autograder.Main"

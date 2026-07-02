@@ -64,6 +64,9 @@ clean:
 	lake clean
 	rm -rf _out/
 
+autograder:
+	lake build autograder
+
 # ── Generating Verso chapters from bare Lean (temporary!) ─────────
 # Chapters that are not yet authored directly in Verso are generated from their
 # code-forward `.lean` source by scripts/to_verso.py:
