@@ -22,7 +22,13 @@ weak.verso.code.warnLineLength = 0 # 0 disables warnings; consider setting to 70
 [[require]]
 name = "verso"
 git = "https://github.com/leanprover/verso"
-rev = "nightly-testing"
+rev = "nightly-2026-06-25"
+
+# To be switched back to main. See the note above verso.
+[[require]]
+name = "batteries"
+git = "https://github.com/leanprover-community/batteries"
+rev = "nightly-testing-2026-06-25"
 
 [[lean_lib]]
 name = "SFLMeta"
