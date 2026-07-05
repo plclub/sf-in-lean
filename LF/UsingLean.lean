@@ -94,9 +94,10 @@ theorem complicated_computation : (2 * 3 + 4 * 5 : Nat) * 6 = 156 := by
 
   theorem rfl_not_enough (n m : Nat) (h : n = m) : n = m := by
     -- rfl will not work here!
-    /- We need to use `h` to rewrite the goal, and then `rfl` will work. -/
-    rewrite [h]
-    rfl
+    /- We need to use `h` to rewrite the goal, and then `rfl` will work.
+       Equivalently, we can use `rw`:
+    -/
+    rw [h]
 
 /-
    We will continue to show more powerful tools for manipulating
@@ -321,6 +322,7 @@ def triple (n : Nat) : Nat := n + n + n
   When the goal depends on a fact about an unknown value, `rfl` fails.
   Here, `dsimp` makes progress, exposing a goal the fact can close.
 -/
+-- YL: Should we point out that `rw [triple, h]` would also work?
  example (n m : Nat) (h : n + n = m) : triple n = m + n := by
   -- rfl will not work here!
   dsimp [triple]
@@ -369,36 +371,37 @@ example (n : Nat) : square n + 0 = n * n := by
 
 def even (n : Nat) :=
   match n with
-  | .zero => true
-  | .succ .zero => false
+  | .zero           => true
+  | .succ .zero     => false
   | .succ (.succ n) => even n
 
 def odd n := (not (even n))
 
 def eqb (n m : Nat) :=
   match n, m with
-  | 0, 0 => true
-  | .succ _, 0 | 0, .succ _ => false
+  | 0, 0             => true
+  | .succ _, 0
+  | 0, .succ _       => false
   | .succ n, .succ m => eqb n m
 
 def minustwo (n : Nat) : Nat :=
   match n with
-  | .zero => .zero
-  | .succ (.zero) => .zero
+  | .zero            => .zero
+  | .succ (.zero)    => .zero
   | .succ (.succ n') => n'
 
 def double (n : Nat) : Nat :=
   match n with
-  | .zero => 0
+  | .zero    => 0
   | .succ n' => .succ (.succ (double n'))
 
 theorem even_succ (n : Nat) :
     even (.succ n) = !even n := by
   -- ADMITTED
-  induction n
-  case zero =>
+  induction n with
+  | zero =>
     rfl
-  case succ n' ih =>
+  | succ n' ih =>
     rw [even, ih, Bool.not_not]
   -- /ADMITTED
 -- GRADE_THEOREM 1: even_succ
@@ -416,10 +419,10 @@ theorem double_succ (n : Nat) : double (n + 1) = double n + 2 := by rfl
 
 theorem double_add (n : Nat) : double n = n + n := by
   -- ADMITTED
-  induction n
-  case zero =>
+  induction n with
+  | zero =>
     rw [double_zero]
-  case succ n' ih =>
+  | succ n' ih =>
     rw [double_succ, ih, Nat.succ_add n' (n' + 1), Nat.add_succ n' n']
   -- /ADMITTED
 -- GRADE_THEOREM 1: double_add
