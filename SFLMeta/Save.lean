@@ -237,29 +237,37 @@ private def decodeExercise? (data : Json) : Option (Nat × String) :=
 /-! ## Block extension that carries pre-computed teacher and student source -/
 
 /-!
-`Block.leanSaved` wraps an elaborated `lean` block and records both the teacher
-and student source variants computed at elaboration time. Its two children are
-the teacher-rendered and student-rendered forms of the block; traversal keeps
-the one selected by the `showSolutions` flag, so the same compiled document
-serves both the student and solutions builds. HTML/TeX rendering passes
-through to the surviving child; the saver consumes the recorded strings
-directly without re-parsing anything. -/
+`Block.leanSaved` wraps an elaborated `lean` block and records the teacher and
+student source variants computed at elaboration time, together with whether the
+original block was marked as an expected error (` ```lean +error `). Its two
+children are the teacher-rendered and student-rendered forms of the block;
+traversal keeps the one selected by the `showSolutions` flag, so the same
+compiled document serves both the student and solutions builds. HTML/TeX
+rendering passes through to the surviving child; the saver checks the stored
+metadata to decide whether to emit the saved source into extracted `.lean`
+files. -/
 
-/-- Decode a `Block.leanSaved` payload `(teacher, student)`. -/
-private def decodeLeanSaved? (data : Json) : Option (String × String) :=
-  match data with
-  | .arr #[.str t, .str s] => some (t, s)
-  | _ => none
+structure LeanSavedData where
+  teacher : String
+  student : String
+  expectedError : Bool
+  deriving ToJson, FromJson, Quote
 
-block_extension Block.leanSaved (teacher : String) (student : String) where
-  data := Json.arr #[.str teacher, .str student]
+/-- Decode a `Block.leanSaved` payload. -/
+private def decodeLeanSaved? (data : Json) : Option LeanSavedData :=
+  match fromJson? data with
+  | .ok saved => some saved
+  | .error _ => none
+
+block_extension Block.leanSaved (saved : LeanSavedData) where
+  data := toJson saved
   traverse _ data contents := do
     -- Two children = still unselected: keep the teacher or student variant.
     -- One child (or anything else) = already selected; nothing to do.
     if h : contents.size = 2 then
-      let some (t, s) := decodeLeanSaved? data | return none
+      let some saved := decodeLeanSaved? data | return none
       let chosen := if ← showSolutions.get then contents[0] else contents[1]
-      return some (.other (Block.leanSaved t s) #[chosen])
+      return some (.other (Block.leanSaved saved) #[chosen])
     else
       return none
   toHtml := some fun _ goB _ _ contents => contents.mapM goB
@@ -273,9 +281,10 @@ run. The project-local `lean` code-block expander (below) snapshots that ref
 around its call to the upstream Lean elaborator, then uses the freshly added
 ranges to compute two variants of the block's source: a teacher form (just the
 `solution!` keyword removed, parenthesised body kept) and a student form (the
-whole `solution!(…)` invocation replaced by `sorry`). Both variants are stored
-in a `Block.leanSaved` wrapper that the saver consumes verbatim — no parsing
-happens at extraction time. -/
+whole `solution!(…)` invocation replaced by `sorry`). Both variants, together
+with the block's expected-error flag, are stored in a `Block.leanSaved`
+wrapper. Extraction does not re-parse Lean source; it reads this saved payload
+and omits blocks that are intentionally non-compiling examples. -/
 
 /-- Apply a set of byte-range replacements right-to-left so earlier edits
 don't shift later positions. Works at the byte level via `ByteArray`. -/
@@ -463,7 +472,10 @@ Wraps each ` ```lean … ``` ` code block. The pipeline is:
    this block's teacher-side defs are not).
 5. Emit a `Block.leanSaved` with two children: the upstream (teacher-rendered)
    block and a `Block.lean` wrapping the student `Highlighted`. Traversal
-   later drops one of the two according to the `showSolutions` flag. -/
+   later drops one of the two according to the `showSolutions` flag, while the
+   saver uses the recorded `expectedError` bit to suppress extracted output for
+   intentionally failing examples.
+-/
 
 @[code_block]
 def lean : CodeBlockExpanderOf Verso.Genre.Manual.InlineLean.LeanBlockConfig
@@ -500,6 +512,9 @@ def lean : CodeBlockExpanderOf Verso.Genre.Manual.InlineLean.LeanBlockConfig
     let studentHls ← elabAndHighlightStudent preEnv preScopes student
     let range := Syntax.getRange? str
     let lspRange := range.map (← getFileMap).utf8RangeToLspRange
+    let saved := {
+      teacher, student, expectedError := config.error : LeanSavedData
+    }
     -- The upstream `underlying` block highlights the original source, which
     -- still shows the `#guard_msgs` wrapper.  When stripping changed the teacher
     -- form, re-highlight the stripped form for the teacher-side HTML instead.
@@ -515,7 +530,7 @@ def lean : CodeBlockExpanderOf Verso.Genre.Manual.InlineLean.LeanBlockConfig
       else
         pure underlying
     ``(Verso.Doc.Block.other
-        (SFLMeta.Block.leanSaved $(quote teacher) $(quote student))
+        (SFLMeta.Block.leanSaved $(quote saved))
         #[$teacherChild,
           Verso.Doc.Block.other
             (Verso.Genre.Manual.InlineLean.Block.lean
@@ -574,11 +589,15 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     if name == ``Verso.Genre.Manual.Block.diagram then
       return buf
     if name == ``Block.leanSaved then
-      -- The wrapper carries pre-computed teacher and student variants.
-      if let some (teacher, student) := decodeLeanSaved? which.data then
-        return appendTeacherStudent buf file
-          (teacher.trimAscii.toString ++ "\n\n")
-          (student.trimAscii.toString ++ "\n\n")
+      -- The wrapper carries pre-computed teacher/student source plus whether
+      -- the original block was marked `+error`. Expected-error examples are
+      -- checked and rendered during the Verso build, but omitted from the
+      -- extracted Lean project so `lake build` won't fail.
+      if let some saved := decodeLeanSaved? which.data then
+        unless saved.expectedError do
+          return appendTeacherStudent buf file
+            (saved.teacher.trimAscii.toString ++ "\n\n")
+            (saved.student.trimAscii.toString ++ "\n\n")
       return buf
     if name == ``Block.exercise then
       -- Emit a `### Exercise (N⭐): name` heading; the contained `lean`
@@ -717,7 +736,8 @@ private def writeProject (dest : System.FilePath) (toolchain : String)
 /--
 Run `lake build` inside `dest` and report any failure via `logError`. Used to
 verify each generated project compiles. Student builds are expected to succeed
-with `sorry` warnings only. -/
+with `sorry` warnings only; expected-error doc examples have already been
+filtered out during extraction. -/
 private def buildProject (dest : System.FilePath) (kind : String) :
     BuildLogT IO Unit := do
   IO.println s!"Building generated {kind} project at {dest}…"
