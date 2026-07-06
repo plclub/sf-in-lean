@@ -25,4 +25,13 @@ block_extension Block.instructors where
 def instructors : DirectiveExpanderOf Unit
   | args, contents => noopDirectiveFor ``Block.instructors args contents
 
+/-- A ` ```instructors ` code block: the raw-body form of `:::instructors`.
+Registered under the `instructors` name (shared with the directive, which lives
+in a separate expander table) so the fence reads ` ```instructors `.  Like
+` ```dev `, it takes its body as a raw string, so `to_verso` needn't wrap the
+body in an inner code fence. -/
+@[code_block instructors]
+def instructorsBlock : CodeBlockExpanderOf Unit
+  | args, str => noopCodeBlockFor ``Block.instructors args str
+
 end SFLMeta

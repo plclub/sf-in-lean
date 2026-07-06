@@ -19,6 +19,29 @@ Claude-generated.
 
 In general, there should be at most one blank line at a time in .lean files.  
 
+## Avoid inner ``` fences inside noop author blocks
+
+Author/developer notes are emitted by `to_verso` as **code blocks**
+(` ```dev ` and ` ```instructors `), NOT as `:::dev` / `:::instructors`
+directives. Reason: a Verso *directive* always parses its body as markdown, so
+arbitrary author prose (`:::`, `*`, `#`, `[…]`, backticks) could derail the
+parser and used to require an ugly inner verbatim ` ``` ` fence. A Verso **code
+block** (`@[code_block]`, `CodeBlockExpanderOf`) instead receives its body as a
+raw string that is never parsed — so a single tagged fence suffices and no inner
+fence is needed. See `SFLMeta/Comment.lean` (` ```dev `), `SFLMeta/Instructors.lean`
+(` ```instructors `), and the models `SFLMeta/Bnf.lean` / `SFLMeta/Save.lean`.
+The code block is registered under the directive's name via `@[code_block dev]`
+(explicit ident) so the fence reads ` ```dev ` even though a same-named
+`@[directive] def dev` still exists (directives and code blocks live in separate
+expander tables). In `to_verso`, `_emit_noop_directive` uses `_code_block(tag,
+text)`. Do NOT reintroduce the inner-fence pattern for these.
+
+Still verbatim-fenced (`_verbatim_block`), intentionally: `:::hide`,
+`:::solution`, `:::grade`. Unlike dev/instructors, `solution` and `grade` bodies
+are meant to be *consumed* later (solutions build / grading), so converting them
+to raw-body code blocks needs separate design. If you do convert one, follow the
+` ```dev ` pattern above.
+
 ## Checking to_verso outputs
 
 To check a chapter survived translation by the to_verso script: 

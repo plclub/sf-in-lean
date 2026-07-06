@@ -732,6 +732,17 @@ def _verbatim_block(text: str) -> str:
     return fence + '\n' + text + '\n' + fence
 
 
+def _code_block(tag: str, text: str) -> str:
+    """Wrap *text* in a fenced code block tagged *tag* (e.g. ` ```dev `).  A
+    Verso code block delivers its body to the expander as a raw string that is
+    never parsed as markdown, so arbitrary author prose can't derail the parser
+    — no inner verbatim fence is needed.  The fence is grown to outrun any
+    backtick run inside *text*."""
+    longest = max((len(m) for m in re.findall(r'`+', text)), default=0)
+    fence = '`' * max(3, longest + 1)
+    return fence + tag + '\n' + text + '\n' + fence
+
+
 class Renderer:
     """Convert a token stream to a Verso document body."""
 
@@ -946,17 +957,19 @@ class Renderer:
         self._append(':::solution\n' + _verbatim_block(text) + '\n:::\n\n')
 
     def _emit_noop_directive(self, directive, text):
-        # Author notes become noop annotation directives (:::dev / :::instructors).
-        # The text is preserved in the Verso source, but the directive discards
-        # its body so it never reaches the generated outputs.  :::dev and
-        # :::instructors are processed identically (see SFLMeta); they differ only
+        # Author notes become noop annotation *code blocks* (```dev / ```instructors).
+        # The text is preserved in the Verso source, but the block discards its
+        # body so it never reaches the generated outputs.  ```dev and
+        # ```instructors are processed identically (see SFLMeta); they differ only
         # in name so instructor notes can be treated differently later.
         #
-        # The body is verbatim-fenced (like :::hide): since it is discarded, its
-        # exact rendering doesn't matter, and fencing keeps arbitrary author text
-        # (underscores, `*`, `[...]`, a leading `#`, ...) from breaking the parser.
+        # A code block delivers its body to the expander as a raw string that
+        # Verso never parses as markdown, so arbitrary author text (underscores,
+        # `*`, `[...]`, a leading `#`, `:::`, ...) can't break the parser — unlike
+        # a `:::` directive, whose body IS parsed and so used to need an inner
+        # verbatim fence.  The single tagged fence replaces that nesting.
         self._flush_code()  # still acts as a code-block separator
-        self._append(f':::{directive}\n' + _verbatim_block(text) + '\n:::\n\n')
+        self._append(_code_block(directive, text) + '\n\n')
 
     # --- Main dispatch ---
 
