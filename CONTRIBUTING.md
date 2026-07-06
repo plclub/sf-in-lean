@@ -127,68 +127,69 @@ We also have branch protection enabled, which requires the following before merg
 
 ## Cadence of code changes
 
-A general guideline is: Prefer making changes as a PR to talking about them first.
-To make sure your PR is likely to be accepted, used your best judgment based on
-the tenets (above) and design rules (below) in this file.
+General guideline: Prefer just making changes as a PR rather than
+talking about them first. To make sure your PR is likely to be
+accepted, use your best judgment based on the tenets (above) and
+design rules (below) in this file.
 
-PRs should represent coherent pieces of work so that they are easy to review.
-As a general guideline: create PRs sooner, in smaller chunks, rather than 
-later in bigger chunks. A day's worth of changes to a specific part of some
-chapter might constitute a coherent set of changes that can be PR'd and 
-merged by itself, even if you plan to continue editing the same chapter 
-tomorrow.
+PRs should represent coherent pieces of work so that they are easy to
+review. As a general guideline: create PRs sooner, in smaller chunks,
+rather than later in bigger chunks. A day's worth of changes to a
+specific part of some chapter might constitute a coherent set of
+changes that can be PR'd and merged by itself, even if you plan to
+continue editing the same chapter tomorrow.
 
 ### The path to merging a PR
 
-Once you have your PR, submit it in _Draft_ mode. This signals that
-you are ready for comments. Other SFL collaborators will take a look. Once 
-discussing has settled, switch the PR to normal mode. Then either MWH or BCP will
-review and merge it.
+Once you have your PR, submit it in _Draft_ mode to signal that you
+are ready for comments. Other SFL collaborators will take a look. Once
+discussing has settled, switch the PR to normal mode. Then either Mike
+or Benjamin will review and merge it.
 
 How should the discussion go?
 
-1. While in draft mode you are free to comment using the GH commenting feature on the
-PR, such as via the web interface. Before changing the PR out of draft mode,
-make sure all discussions on GH are resolved. Ones that are unresolved can be
-made into comments in the PR itself, prefixed with your GitHub ID and a colon.
-2. If a review surfaces an issue whose resolution may have broader implications,
-please surface on Zulip for more discussion. Record the resolution in the 
-CONTRIBUTING.md (this) file as appropriate.
-3. Once your PR moves out of Draft mode, Pierce and/or Hicks will review. They will
-make changes directly to fix small issues in the file, such as wording, spacing,
-and perhaps other things. They will also leave comments directly in the file,
-prefixed by their GitHub IDs. Please address these comments in a subsequent
-commit, leaving their comment in place and perhaps responding in the file with
-your own.
-4. In-file comments will be deleted when resolved, or else left in a durable form
-in the file for future work. Then the PR will get merged.
+1. While in draft mode you are free to comment using the GitHub
+commenting feature on the PR, e.g., via the web interface. Before
+changing the PR out of draft mode, make sure all discussions on GH are
+resolved. Ones that are unresolved can be made into comments in the PR
+itself, prefixed with your GitHub ID and a colon.
+
+2. If a review surfaces an issue whose resolution may have broader
+implications, please start a thread on on Zulip for more discussion.
+Record the resolution here in CONTRIBUTING.md if appropriate.
+
+3. In-file comments should be deleted if they get resolved.
+
+4. Once a PR moves out of Draft mode, Benjamin and/or Mike will
+review it. Please address these comments in a subsequent commit, either 
+making appropriate changes or else responding in the file with your
+own comments.
 
 ## Tools for coordinating work
 
-We prefer to move fast rather than over-coordinate synchronously. Nevertheless, we
-would like to avoid conflicts when possible.
-We use the [GitHub issue tracker](https://github.com/plclub/sf-in-lean/issues)
-for recording large tasks that need to
-be done (small or local tasks can just be recorded in comments in the
-affected .lean file) and for keeping track of work in progress that
-other people should be careful not to step on.
-1. Assign yourself or others to an issue if it is
-    something you _may_ work on or you want to be updated on
-    discussions associated with the issue.  Being assigned to an issue
-    does _not_ mean that you have it "locked" and other people should
-    not work on it or touch associated files.
+We prefer to move fast rather than over-coordinate synchronously, but
+we also want to avoid conflicts when possible. We use the [GitHub
+issue tracker](https://github.com/plclub/sf-in-lean/issues) for
+recording large tasks that need to be done (small or local tasks can
+just be recorded in comments in the affected .lean file) and for
+keeping track of work in progress that other people should be careful
+not to step on.
+1. Assign yourself or others to an issue if it is something you _may_
+   work on or you want to be updated on discussions associated with
+   the issue.  Being assigned to an issue does _not_ mean that you
+   have it "locked" and other people should not work on it or touch
+   associated files.
 2. When you start working on an issue, assign it to yourself so that
-    other people know you are thinking about it (if not already assigned).
+   other people know you are thinking about it (if not already assigned).
 3. When you start *actually making changes* on a branch, edit the
-    pinned [Work In
-    Progress](https://github.com/plclub/sf-in-lean/issues/25) issue so
-    that people know to be careful not to step on your work. If/when
-    you have a branch for your work, link it from the work-in-progress
-    issue.
- 4. When you submit a PR on your work, refer to the relevant issue in the
-    PR message. Edit the work-in-progress issue with a pointer to the PR.
- 5. Resolve the issue when the PR is resolved. Edit the work-in-progress
-    to remove the activity.
+   [Work In Progress](https://github.com/plclub/sf-in-lean/issues/25)
+   issue (it is pinned at the top of the issues page on GH) so that
+   people know to be careful not to step on your work. If/when you have
+   a branch for your work, link it from the work-in-progress issue.
+4. When you submit a PR on your work, refer to the relevant issue in the
+   PR message. Edit the work-in-progress issue with a pointer to the PR.
+5. Resolve the issue when the PR is resolved. Edit the work-in-progress
+   to remove the activity.
 
 ### Status; plain lean vs. verso files (temporary)
 
