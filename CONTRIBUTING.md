@@ -84,65 +84,11 @@ it's clear.
 These conventions are still developing, so feel free to suggest better
 ways of working if you see them! 
 
-## Tools for coordinating work
-
-We use a standard branch-and-PR workflow.  See below for details.
-
-PRs should represent coherent pieces of work so that they are easy to review.
-As a general guideline: create PRs sooner, in smaller chunks, rather than 
-later in bigger chunks. A day's worth of changes to a specific part of some
-chapter might constitute a coherent set of changes that can be PR'd and 
-merged by itself, even if you plan to continue editing the same chapter 
-tomorrow.
-
-We use the [GitHub issue tracker](https://github.com/plclub/sf-in-lean/issues)
-for recording large tasks that need to
-be done (small or local tasks can just be recorded in comments in the
-affected .lean file) and for keeping track of work in progress that
-other people should be careful not to step on.
-1. Assign yourself or others to an issue if it is
-    something you _may_ work on or you want to be updated on
-    discussions associated with the issue.  Being assigned to an issue
-    does _not_ mean that you have it "locked" and other people should
-    not work on it or touch associated files.
-2. When you start working on an issue, assign it to yourself so that
-    other people know you are thinking about it (if not already assigned).
-3. When you start *actually making changes* on a branch, edit the
-    pinned [Work In
-    Progress](https://github.com/plclub/sf-in-lean/issues/25) issue so
-    that people know to be careful not to step on your work. If/when
-    you have a branch for your work, link it from the work-in-progress
-    issue.
- 4. When you submit a PR on your work, refer to the relevant issue in the
-    PR message. Edit the work-in-progress issue with a pointer to the PR.
- 5. Resolve the issue when the PR is resolved. Edit the work-in-progress
-    to remove the activity.
-
-### Git-fu 
-
-We use Git and GitHub, with some simple conventions:
-
-* The `main` branch must always build. 
-* Never commit directly to `main`. Instead, branch (not fork!), edit,
-  make a PR, wait for CI to go green (and for others to review, if
-  appropriate), then merge.  
-* Don't merge a red PR.
-* After your PR is merged, delete the branch to keep the repo tidy.
-
-We prefer that people create branches in the sf-in-lean repo rather
-than creating forks in their own GitHub accounts for working on stuff.
-This makes it easier for everybody to maintain a global view of what's
-going on.
-
-Our CI uses a small GitHub Actions workflow:
-[.github/workflows/ci.yml](.github/workflows/ci.yml). 
-It runs `make` on every pull request and on every push to `main`. 
-
 ### Repo organization and make-fu
 
-Each volume gets its own top-level directory (LF, HL, etc.).  
+Each volume gets its own top-level directory (LF, HL, etc.).
 
-Within that directory, each chapter gets a .lean file, in Verso format.
+Within that directory, each chapter gets a `.lean` file, in Verso format.
 
 Running `make` at the top level produces, for each volume, three
 different ready-for-distribution outputs in a temporary top-level
@@ -152,9 +98,98 @@ different ready-for-distribution outputs in a temporary top-level
   - **terse**     (little prose, no solutions, workinclass elided;
                    for lecturing)
 
-To build everything and preview it locally, do `make serve`, 
-then visit http://localhost:8000 
+To build everything and preview it locally, do `make serve`,
+then visit http://localhost:8000
 (`make serve` builds stuff then serves `_out/` on port 8000).
+
+### Git-fu
+
+We use Git and GitHub, with some simple conventions:
+
+* The `main` branch must always build.
+* Never commit directly to `main`. Instead, create a branch and
+submit your changes as a pull request (PR). More on PR cadence below.
+* After your PR is merged, delete the branch to keep the repo tidy.
+
+We prefer that people create branches in the sf-in-lean repo rather
+than creating forks in their own GitHub accounts for working on stuff.
+This makes it easier for everybody to maintain a global view of what's
+going on.
+
+Our CI uses a small GitHub Actions workflow:
+[.github/workflows/ci.yml](.github/workflows/ci.yml).
+It runs `make` on every pull request and on every push to `main`.
+
+We also have branch protection enabled, which requires the following before merging:
+* At least one approval before merge is allowed
+* Linear history (use rebase and squash merge)
+* CI build succeeds
+
+## Cadence of code changes
+
+General guideline: Prefer just making changes as a PR rather than
+talking about them first. To make sure your PR is likely to be
+accepted, use your best judgment based on the tenets (above) and
+design rules (below) in this file.
+
+PRs should represent coherent pieces of work so that they are easy to
+review. As a general guideline: create PRs sooner, in smaller chunks,
+rather than later in bigger chunks. A day's worth of changes to a
+specific part of some chapter might constitute a coherent set of
+changes that can be PR'd and merged by itself, even if you plan to
+continue editing the same chapter tomorrow.
+
+### The path to merging a PR
+
+Once you have your PR, submit it in _Draft_ mode to signal that you
+are ready for comments. Other SFL collaborators will take a look. Once
+discussing has settled, switch the PR to normal mode. Then either Mike
+or Benjamin will review and merge it.
+
+How should the discussion go?
+
+1. While in draft mode you are free to comment using the GitHub
+commenting feature on the PR, e.g., via the web interface. Before
+changing the PR out of draft mode, make sure all discussions on GH are
+resolved. Ones that are unresolved can be made into comments in the PR
+itself, prefixed with your GitHub ID and a colon.
+
+2. If a review surfaces an issue whose resolution may have broader
+implications, please start a thread on on Zulip for more discussion.
+Record the resolution here in CONTRIBUTING.md if appropriate.
+
+3. In-file comments should be deleted if they get resolved.
+
+4. Once a PR moves out of Draft mode, Benjamin and/or Mike will
+review it. Please address these comments in a subsequent commit, either 
+making appropriate changes or else responding in the file with your
+own comments.
+
+## Tools for coordinating work
+
+We prefer to move fast rather than over-coordinate synchronously, but
+we also want to avoid conflicts when possible. We use the [GitHub
+issue tracker](https://github.com/plclub/sf-in-lean/issues) for
+recording large tasks that need to be done (small or local tasks can
+just be recorded in comments in the affected .lean file) and for
+keeping track of work in progress that other people should be careful
+not to step on.
+1. Assign yourself or others to an issue if it is something you _may_
+   work on or you want to be updated on discussions associated with
+   the issue.  Being assigned to an issue does _not_ mean that you
+   have it "locked" and other people should not work on it or touch
+   associated files.
+2. When you start working on an issue, assign it to yourself so that
+   other people know you are thinking about it (if not already assigned).
+3. When you start *actually making changes* on a branch, edit the
+   [Work In Progress](https://github.com/plclub/sf-in-lean/issues/25)
+   issue (it is pinned at the top of the issues page on GH) so that
+   people know to be careful not to step on your work. If/when you have
+   a branch for your work, link it from the work-in-progress issue.
+4. When you submit a PR on your work, refer to the relevant issue in the
+   PR message. Edit the work-in-progress issue with a pointer to the PR.
+5. Resolve the issue when the PR is resolved. Edit the work-in-progress
+   to remove the activity.
 
 ### Status; plain lean vs. verso files (temporary)
 
@@ -172,16 +207,47 @@ Benjamin should ever need to run the `to_verso.py` script.
 
 ## Lean Style
 
-**BCP: This section needs reviewed.**
-**MWH: Especially, consider it against the philosophy at the top. Make sure
-all of the specific advice here agrees with the tenets.**
-
 We generally follow the [Mathlib style
 guide](https://leanprover-community.github.io/contribute/style.html),
-with the caveat around pedagogy in our SFL **Philosophy** (given above).
-We use the Lean linter by default
+with the caveat around pedagogy in our SFL **Philosophy** (given above),
+which requires (among other things) adhering to the order of tactics, given next.
+We use the Lean linter by default.
 
-SFL-specific conventions:
+### Tactics: order of introduction
+
+A core pedagogical decision is that tactics are introduced gradually.
+The table below lists the tactics **first introduced** in each
+chapter, in chapter order. It is derived from the current sources
+(tactic-position occurrences in real code, comments excluded) and
+should be kept in sync as chapters are rewritten.
+
+| Chapter           | Tactics first introduced |
+|-------------------|--------------------------|
+| `Basics`          | `rfl`, `intro`, `rewrite`, `cases`, `exact` |
+| `Induction`       | `induction`, `have`, `rw` |
+| `UsingLean`       | `dsimp`, `calc`, `exact?`, `rw?` |
+| `Lists`           | *(none new)* |
+| `Poly`            | *(none new)* |
+| `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `unfold`, `split` |
+| `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
+| `IndProp`         | `simp`, `rcases`, `subst`, `omega` |
+| `Maps`            | *(none new)* |
+| `IndPropRegexp`   | `specialize`, `trivial` |
+
+Related notation introduced alongside tactics: anonymous constructor
+`⟨…⟩` (`Lists`); destructuring `let ⟨…⟩ := …` and `cases h : …`,
+`induction … generalizing …` (`Tactics`); projection/`Iff` syntax
+`.left`, `.right`, `.mp`, `.mpr`, and rewriting by an `↔` (`Logic`).
+
+**Tactics deliberately deferred / under discussion** (per FPiL's
+caution that `grind` is overwhelming for beginners): candidates still
+to be placed include `show`, `rename_i`, `revert`, `subst`,
+`suffices`. Powerful automation (`simp` heavy use, `tauto`, `omega`,
+`decide`) is concentrated in an **Automation** chapter; `grind`,
+`aesop`, and `try` are deferred to a later volume. The `RegExp`
+development moves out of `IndProp` into that Automation chapter.
+
+### SFL-specific conventions
 
 * **Structured `cases`/`induction`.** Prefer
 
@@ -216,7 +282,12 @@ SFL-specific conventions:
     exact hf
   ```
   
-* **`rewrite` before `rw`** (see next section).
+* **`rewrite` before `rw`** (see tactic chart above) --
+  `rw [h]` is roughly `rewrite [h]; rfl`, which is too strong at
+  first: it hides the closing `rfl` and makes proofs step
+  confusingly (the goal vanishes when you step past the final `]`).
+  We introduce `rw` specifically in `Induction.lean` and use from
+  then on.
 
 * **Explicit rewrites over `dsimp`/`simp` through notation** (see
   "Notation and simplification").
@@ -236,15 +307,6 @@ SFL-specific conventions:
 * **Library vs. client code.** Inside a definition's own library it is
   fine to unfold and simplify through definitions; *using* that code,
   do not "peek through the interface."
-
-### `rewrite` vs `rw`
-
-`rw [h]` is roughly `rewrite [h]; rfl`, which is too strong for the
-first chapters: it hides the closing `rfl` and makes proofs step
-confusingly (the goal vanishes when you step past the final `]`).
-Decision (JC): **use `rewrite` the first time, keep using it
-explicitly in the early arithmetic proofs, then introduce `rw` in
-`Induction` and use `rw` predominantly from there on.**
 
 ### Notation and simplification
 
@@ -497,41 +559,6 @@ diagram (e.g., SVG), and a plain code block containing the ASCII art.
 HTML renders only the diagram child; the saver emits only the ASCII
 fallback wrapped in a `/-! … -/` module-doc comment.
 
-
-## Tactics: order of introduction
-
-A core pedagogical decision is that tactics are introduced gradually.
-The table below lists the tactics **first introduced** in each
-chapter, in chapter order. It is derived from the current sources
-(tactic-position occurrences in real code, comments excluded) and
-should be kept in sync as chapters are rewritten; chapters past
-`Logic` are still in flux.
-
-| Chapter           | Tactics first introduced |
-|-------------------|--------------------------|
-| `Basics`          | `rfl`, `intro`, `rewrite`, `cases`, `exact` |
-| `Induction`       | `induction`, `have`, `rw` |
-| `UsingLean`       | `dsimp`, `calc`, `exact?`, `rw?` |
-| `Lists`            | *(none new)* |
-| `Poly`            | *(none new)* |
-| `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `unfold`, `split` |
-| `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
-| `IndProp`         | `simp`, `rcases`, `subst`, `omega` |
-| `Maps`            | *(none new)* |
-| `IndPropRegexp`   | `specialize`, `trivial` |
-
-Related notation introduced alongside tactics: anonymous constructor
-`⟨…⟩` (`Lists`); destructuring `let ⟨…⟩ := …` and `cases h : …`,
-`induction … generalizing …` (`Tactics`); projection/`Iff` syntax
-`.left`, `.right`, `.mp`, `.mpr`, and rewriting by an `↔` (`Logic`).
-
-**Tactics deliberately deferred / under discussion** (per FPiL's
-caution that `grind` is overwhelming for beginners): candidates still
-to be placed include `show`, `rename_i`, `revert`, `subst`,
-`suffices`. Powerful automation (`simp` heavy use, `tauto`, `omega`,
-`decide`) is concentrated in a future **Automation** chapter; `grind`,
-`aesop`, and `try` are deferred to a later volume. The `RegExp`
-development moves out of `IndProp` into that Automation chapter.
 
 ## AI policy
 
