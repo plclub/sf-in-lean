@@ -204,8 +204,8 @@ should be kept in sync as chapters are rewritten.
 | Chapter           | Tactics first introduced |
 |-------------------|--------------------------|
 | `Basics`          | `rfl`, `intro`, `rewrite`, `cases`, `exact` |
-| `UsingLean`       | `dsimp`, `calc`, `exact?`, `rw?` |
 | `Induction`       | `induction`, `have`, `rw` |
+| `UsingLean`       | `dsimp`, `calc`, `exact?`, `rw?` |
 | `Lists`           | *(none new)* |
 | `Poly`            | *(none new)* |
 | `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `unfold`, `split` |
