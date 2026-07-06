@@ -41,6 +41,17 @@ is recommended for the first few lectures, so students see exactly
 what's in the source file.
 :::
 
+:::dev
+MRC: The first issue I had was that I don't have Lean installed. Since LF:Preface hasn't
+been ported, I had to figure out how to install it. New instructors will face the same issue.
+Here is what I did:
+* Install Lean 4 through the VS Code extension.
+* Start a new terminal session to pick up environment changes.
+* Run `make`. I got many warnings about "expose"; are those expected?
+* Run `make serve`. Navigate to "http://localhost:8000/lf/student/html-multi/" to start reading.
+* Make a copy of "\_out/lf/student/lean" to start solving as if I were a student.
+:::
+
 ::::full
 The _functional style_ of programming is founded on simple, everyday
 mathematical intuitions: If a program has no side effects, then --
@@ -82,8 +93,8 @@ everything from first principles...
 :::
 
 ::::full
-One notable thing about Lean is that its set of built-in features is
-_extremely_ small.  For example, instead of the usual palette of atomic
+Lean's set of built-in features is _extremely_ small.
+For example, instead of the usual palette of atomic
 data types (booleans, integers, strings, etc.), Lean offers a powerful
 mechanism for defining new data types from scratch, with all these
 familiar types as instances.
@@ -184,6 +195,11 @@ of `nextWorkingDay` is given below.
 
 :::dev
 BCP: I *still* find this quite tangled.  We say Lean requires all uses of constructors to be prefixed with their namespace, but then, right after, we suggest exactly not doing this!  (And I am still confused, myself, about identifiers like `true` and `false`, which seem not to need to be prefixed, even though they come from their own namespace.)
+DHS: I spent some time thinking about how to clean up this explanation, and what I realized
+is that I'm having trouble justifying Lean's convention here because I don't actually understand it
+either! To me, the difference betweeen `.CName` and `CName` seems minimal, so I don't really
+understand why Lean requires the former. I would be curious to know if there is a canonical
+explanation of why Lean works this way that we can lean on.
 :::
 
 ```lean
@@ -272,7 +288,7 @@ BCP: Don't understand the state of play here...
 ::::full
 In VS Code, development of Lean code is supported by the Lean Extension,
 which provides an interactive "InfoView" panel that displays the results
-of commands like `#eval` and `#check`, as well as the current goal state
+of commands like `#eval`, as well as the current goal state
 when working on proofs. You can hover over expressions in the source code
 to see their types, and you can click on the results in the InfoView
 to navigate to their definitions. This makes it easier to understand
@@ -310,7 +326,7 @@ This declaration asserts that the second working day after `saturday` is `tuesda
 Having made the assertion, we can also ask Lean to _verify_ it.
 The `by rfl` can be read as "The assertion we've just made can be
 proved by observing that both sides of the equality evaluate to
-the same thing."
+the same term."
 
 `rfl` stands for "reflexivity," which is the principle that any value is
 equal to itself. After evaluation, both sides of the equality are the same
@@ -375,7 +391,7 @@ Functions over booleans can be defined in the same way as above
 ```lean
 def notb (b : MyBool) : MyBool :=
   match b with
-  | .true =>  .false
+  | .true => .false
   | .false => .true
 ```
 
@@ -578,6 +594,32 @@ theorem true_andb_explained : ∀ (b : MyBool), (.true && b) = b := by
   /- The proof is now done! The Lean InfoView tells us there are "No goals". -/
 ```
 
+::::full
+It's also important to point out that, like languages like Python and Haskell,
+Lean is _whitespace-sensitive_. That is, the indentation in proofs is important, and changing
+it can change the meaning of the proof, usually causing the proof to break. If we had
+instead written the following:
+
+:::dev
+DHS: Ideally would change this to a #guardmsgs(error) if we can
+:::
+
+/- theorem trueandb : ∀ (b : MyBool), (.true && b) = b := by
+  intro b
+    rfl
+-/
+
+Lean would complain, since the `rfl` is not at the same level of indentation as the `intro b`,
+so it does not recognize these two tactics as being sequential in the way they should be.
+In general, sequential tactics applied to the same goal must be on subsequent lines at the same
+level of indentation or separated on the same line by a `;` like so:
+
+```lean
+theorem true_andb' : ∀ (b : MyBool), (.true && b) = b := by
+  intro b; rfl
+```
+::::
+
 ::::exercise (rating := 1) (name := "false_orb_exercise")
 Here's a simple proof for you to try.
 Remove `sorry` and fill in the proof.
@@ -597,7 +639,21 @@ GRADE_THEOREM 1: false_orb_exercise
 ::::
 
 ::::full
-Obviously these facts about booleans are quite simple, so the tactics we need to
+While in this book we often use `sorry` as a placeholder for you to
+replace with an actual proof, in general, `sorry` tells Lean that we want to skip trying
+to prove a theorem and just accept it as a given.  This can be useful for developing longer proofs.
+
+Be careful, though: every time you say `sorry` you are leaving
+a door open for total nonsense to enter Lean's safe, formally
+checked world!
+::::
+
+```lean -keep
+theorem really_bad : MyBool.true = .false := by sorry
+```
+
+::::full
+The facts we've seen so far about booleans are quite simple, so the tactics we need to
 prove them are also quite simple. Over the course of this book we are going to
 introduce new tactics and proof techniques gradually, enriching the propositions we can prove along the way.
 
@@ -605,8 +661,7 @@ Now that we've seen how to define our own booleans and prove some basic
 properties about them, let's switch to Lean's built-in `Bool` type, which has the same structure
 but comes with a lot of useful functions and lemmas.
 
-One thing to note:
-because `Bool` is such an important type in Lean, its `true` and `false` constructors can be written
+Because `Bool` is such an important type in Lean, its `true` and `false` constructors can be written
 without a `.` to qualify them.
 :::dev
 BCP: Do we need to be so vague?  It sounds like it's saying that `true` and `false` are built in / treated specially by the language,
@@ -620,14 +675,14 @@ end MyBool
 
 ## Types
 
-Every expression in Lean has a type describing what sort of thing it computes.
+Every expression in Lean has a type describing what sort of value it computes.
 The `#check` command asks Lean to print the type of an expression.
 
 ```lean
 #check true
 ```
 
-If the thing after `#check` is followed by a colon and a type,
+If the expression after `#check` is followed by a colon and a type,
 Lean will verify that the type of the expression
 matches the given type and signal an error if not.
 
@@ -712,13 +767,13 @@ E.g., these are valid constructor expressions...
 
 ...but these are not:
 
-- {name}`RGB.red` `Color.primary`
-- {name}`true` {name}`RGB.red`
-- {name}`Color.primary` `(.primary .red)`
+- `RGB.red Color.primary`
+- `true RGB.red`
+- `Color.primary (.primary .red)`
 
-  Note that we don't need to qualify `true` as `Bool.true`.
-  Lean recognizes `Bool` as one of the types whose constructors
-  are usable without qualification by default.
+Note that we don't need to qualify `true` as `Bool.true`.
+Lean recognizes `Bool` as a type whose constructors
+are usable without qualification by default.
 
 :::dev
 BCP: "One of the types..." is mysterious.  What are these types?  Have we been told about them already?
@@ -765,10 +820,9 @@ def isRed (c : Color) : Bool :=
 ```
 
 The pattern `.primary .red` will match only when `c` is
-`.primary` with the argument `.red`. Patterns are checked in
-order, so the subsequent pattern `.primary _` here means "the
-constructor `primary` applied to any `RGB` constructor except
-`red`."
+`.primary` with the argument `.red`. The pattern `.primary _` matches
+every `.primary` color, but because patterns are checked in
+order, the `.primary _` case will never be reached if the color is `.red`.
 
 An alternative way to write the same function would be to explicitly
 nest match statements:
@@ -914,9 +968,21 @@ BCP: Not all exercises need to be graded.  (In Rocq we had a notation for manual
 :::
 
 ::::full
-When inside a `namespace` region, definitions from the same
-namespace can be referenced without prefixes. When a `namespace`
-shares the same name as a type, definitions on that type are
+Namespaces can be opened and closed as often as you like to add new definitions and access old ones.
+When inside a `namespace`, definitions from the same namespace can be referenced without prefixes.
+::::
+
+```lean
+namespace Playground
+-- this refers to the `myFoo` we defined in the `Playground` namespace previously
+def myBar : RGB := myFoo
+end Playground
+
+#check Playground.myBar -- RGB
+```
+
+::::full
+When a `namespace` shares the same name as a type, definitions on that type are
 available inside the `namespace` without a prefix. In the example
 below, we can use the `blue` constructor without a `.` because
 we are inside the `RGB` `namespace`, which is the same as `blue`'s type.
@@ -942,7 +1008,16 @@ def RGB.myOtherBlue : RGB := myBlue
 #check RGB.myOtherBlue -- RGB
 ```
 
+:::dev
+DHS: see my comment later in the file about guard msgs
+
+```lean
+--- this doesn't work; the identifier is unknown
+/-- error: Unknown identifier `myBlue` -/
+#guard_msgs(error) in
 #check myBlue -- unknown identifier
+```
+:::
 
 ::::full
 When we do this, definitions inside that namespace are available without
@@ -1100,7 +1175,7 @@ with some slightly fancy features for reasoning and
 notation. As we are just beginning to reason about natural numbers,
 we use our own definition here and introduce the Lean one in a later chapter.
 
-We'll define some shorthands for numbers, `open`ing the `Nat` namespace
+We'll define some shorthands for numbers, putting them in the `Nat` namespace
 so we don't need to use `.` notation everywhere.
 
 ```lean
@@ -1137,7 +1212,7 @@ Look the types of `succ`, `pred`, and `minustwo`:
 
 ```lean
 #check succ  -- Nat → Nat
-#check Nat.pred  -- Nat → Nat
+#check pred  -- Nat → Nat
 #check minustwo  -- Nat → Nat
 ```
 
@@ -1335,7 +1410,7 @@ theorem add_zero_zero_zero : ∀ n : Nat, n + zero + zero + zero = n := by
 ::::full
  The `rfl` tactic closes a goal of the shape `a = a`, for any `a`. It
  checks that both sides of the equality are _definitionally equal_ --
- that is, that they reduce to the same thing. (So, in particular, a
+ that is, that they reduce to the same term. (So, in particular, a
  term is always definitionally equal to itself.)
 ::::
 
@@ -1357,7 +1432,29 @@ theorem add_succ : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
   rfl
 ```
 
-And here it is in a proof:
+You may notice stepping through the above proof that Lean's InfoView
+displays `n + (succ m)` instead as `n + m.succ` and `succ (n + m)` as
+`(n + m).succ`. These expressions are equivalent, but when printing constructors,
+Lean defaults to printing using _field notation_; that is, it prints the
+argument to the constructor first, followed by a dot, followed by the constructor name --
+as if the constructor were a field of its argument. In some cases this is convenient, but for
+natural numbers it is confusing, so we will disable this printing behavior for the `succ`
+constructor with this command:
+
+```lean
+attribute [pp_nodot] succ
+```
+
+Step through the proof below again and see how Lean's printing has changed.
+
+```lean
+unseal add in
+theorem add_succ' : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
+  intro n m
+  rfl
+```
+
+Now, let's use `add_succ` in a proof:
 
 ```lean
 theorem add_one (n : Nat) : n + (succ zero) = succ (n + zero) + zero := by
@@ -1379,7 +1476,7 @@ The definitions and proofs above use a few somewhat mysterious conventions:
 we write `@[irreducible]` above some of our definitions, and we
 write `unseal` before some of our proofs and `seal` after them.
 These are not things you will usually see in real Lean developments;
-however, we use them i this book to enforce a particular convention
+however, we use them in this book to enforce a particular convention
 to help you build good Lean habits.
 
 Lean, like any other programming language, has conventions and best practices
@@ -1389,7 +1486,7 @@ fields of an object directly, but instead to use getter and setter methods.
 This helps to encapsulate the object's definition, so that, if its fields or implementation
 change, the interface it exposes to the outside world remains the same.
 
-The same principle applies to definitions proofs in Lean.
+The same principle applies to definitions and proofs in Lean.
 In idiomatic Lean, it is considered poor style to "peek" through
 definitions by using `rfl` to implicitly simplify expressions
 that aren't syntactically identical. If you take a look at the proofs of
@@ -1570,15 +1667,17 @@ RAB: Agreed if we're keeping these visible; putting off
      small decision until large decision is made.
 :::
 
-Prove this property. (We have given you the first line.) Notice how `rewrite`
+Prove this property using rewriting with the simplification rules for addition and multiplication.
+  (We have given you the first line.) Notice how `rewrite`
    can take any number of arguments. You can use this rewrite with all of the
-   numeral rules at once, for example.
+   simplification rules at once, for example.
 
    After each rewrite, check the proof state by placing the cursor immediately
    after a rule to see how the goal is changing. This happens naturally
    as you write the proof, which makes it convenient to use `rewrite` blocks
    with multiple rules.
 
+::::exercise (rating := 2) (name := "test_mult1")
 ```lean
 theorem test_mult1 : (two * two : Nat) = four := by
   rewrite [two_eq_succ_one, one_eq_succ_zero]
@@ -1589,10 +1688,15 @@ theorem test_mult1 : (two * two : Nat) = four := by
     rfl
 ```
 
+:::grade
+```
+GRADE_THEOREM 2: test_mult1
+```
+:::
+::::
+
 :::slidebreak
 :::
-
-We can pattern-match two values at the same time:
 
 :::slidebreak
 :::
@@ -1614,6 +1718,20 @@ def beq (n m : Nat) : Bool :=
                | zero => false
                | succ m' => beq n' m'
 ```
+
+We could also write this by pattern matching on both `n` and `m` at the same time:
+
+```lean
+@[irreducible]
+def beq' (n m : Nat) : Bool :=
+  match n, m with
+  | zero, zero => true
+  | zero, succ _ => false
+  | succ _, zero => false
+  | succ n', succ m' => beq n' m'
+```
+
+The definitions of `beq` and `beq'` are equivalent.
 
 :::slidebreak
 :::
@@ -1652,7 +1770,16 @@ scoped infixl:30 " == " => beq
 ```
 
 ::::full
-We can also now define the simplification lemmas for `beq` with this new notation,
+We now have two symbols that both look like equality: `=`
+and `==`.  We'll have much more to say about their differences and
+similarities later. For now, notice that
+`x = y` is a logical _claim_ -- a "proposition" -- that we can try to
+prove, while `x == y` is a boolean _expression_ whose value (either
+`true` or `false`) Lean can compute.
+::::
+
+::::full
+We can also now define the simplification lemmas for `beq` with our new notation,
 one for each of the four cases of control flow through the function.
 ::::
 
@@ -1664,15 +1791,6 @@ theorem succ_zero_beq_false (n : Nat) : ((succ n) == zero) = false := by rfl
 theorem succ_succ_beq (n m : Nat) : ((succ n) == (succ m)) = (n == m) := by rfl
 seal beq
 ```
-
-::::full
-We now have two symbols that both look like equality: `=`
-and `==`.  We'll have much more to say about their differences and
-similarities later. For now, the main thing to notice is that
-`x = y` is a logical _claim_ -- a "proposition" -- that we can try to
-prove, while `x == y` is a boolean _expression_ whose value (either
-`true` or `false`) we can compute.
-::::
 
 ::::exercise (rating := 1) (name := "blt")
 Define a less-than function in terms of `ble`.
@@ -1756,20 +1874,6 @@ GRADE_THEOREM 1: add_id_exercise
 :::
 ::::
 
-::::full
-The `sorry` here tells Lean that we want to skip trying
-to prove this theorem and just accept it as a given.  This is
-often useful for developing longer proofs.
-
-Be careful, though: every time you say `sorry` you are leaving
-a door open for total nonsense to enter Lean's safe, formally
-checked world!
-::::
-
-```lean -keep
-theorem really_bad : one = two := by sorry
-```
-
 :::slidebreak
 :::
 
@@ -1848,6 +1952,35 @@ because it gets stripped out when verso files are translated to
 .lean and .html.
 :::
 
+:::dev
+DHS: At the moment our convention for unfinished proofs is to end with sorry and
+guard the "proof uses sorry" warning. However after going through MRC's comments here
+I realized we don't need to do this: we can leave the proof unfinished and guard the error
+about goals being unsolved. IMO this is preferable because it illustrates more directly
+what is going on.
+
+However, before we can do this, I think we may require a minor change to how Verso files get
+compiled to Lean. If we just naïvely strip out #guard msgs, the generated .lean files will now have
+errors since those commands were guarding actual errors rather than just warnings. So we would need
+a way to have .lean files with errors in them permitted by the make command, or we would need to
+leave in #guard msgs that are guarding actual errors.
+
+```lean
+/--
+error: unsolved goals
+n : Nat
+⊢ (succ n == zero) = false
+-/
+#guard_msgs(error) in
+example : ∀ n : Nat,
+    (succ n == zero) = false := by
+  intro n
+  /-
+    We can't rewrite by any lemmas here because `n` is unknown!
+  -/
+```
+:::
+
 ```lean
 /-- warning: declaration uses `sorry` -/
 #guard_msgs(warning) in
@@ -1890,6 +2023,8 @@ The generated subgoals are tagged by the names of the constructors.
 `case zero =>` and `case succ n' =>` select which subgoal to work on next
 and introduce variable names.
 
+Note also that when we enter a `case`, we increase the level of indentation at which we are working.
+
 The `cases` tactic can be used with any inductively defined
 datatype.  For example, we use it next to prove that boolean
 negation is involutive (that is, that negation is its own inverse).
@@ -1913,6 +2048,18 @@ theorem notb_involutive : ∀ b : Bool, (!!b) = b := by
     rewrite [Bool.not_true, Bool.not_false]
     rfl
 ```
+
+::::full
+You may also notice that in the above proof we have used some rewrite rules that we didn't
+previously prove in this file! These proofs come from Lean's standard library: in particular,
+from the section about booleans. Having access to these already-proved theorems about booleans
+instead of needing them to prove them ourselves is a big advantage of using Lean's built-in
+`Bool` type instead of defining our own.
+
+In a few chapters we will discuss in further detail how to search through the standard library
+for theorems like these. For now, though, note that if you hover over the name of these theorem
+in VSCode, the Lean 4 extension will show you their type.
+::::
 
 :::slidebreak
 :::
@@ -1986,8 +2133,8 @@ theorem andb3_exchange : ∀ b c d : Bool,
 ```
 
 As you can see, proofs by cases can become very verbose.
-  We will introduce some tactics for writing shorter proofs
-  by case analysis in `Tactics.lean`.
+We will introduce some tactics for writing shorter proofs
+by case analysis in `Tactics.lean`.
 
 ## New Tactics: `rewrite ... at` and `exact`
 
@@ -2040,6 +2187,11 @@ GRADE_THEOREM 1: zero_nbeq_add_1
 :::
 ::::
 
+:::dev
+DHS: I move that we just cut this section entirely and come back to it when
+we've presented enough of the requisite material that we can actually explain
+:::
+
 ## More on Notation (Optional)
 
 ::::full
@@ -2067,19 +2219,24 @@ titles that turned them into HTML links...
 ## Structural Recursion (Optional)
 
 ::::full
-Here is a copy of the definition of addition:
+Here is a copy of the definition of `even`:
 
 ```lean
-def add' (n : Nat) (m : Nat) : Nat :=
+def even' (n : Nat) : Bool :=
   match n with
-  | zero => m
-  | succ n' => succ (add' n' m)
+  | zero => true
+  | succ (zero) => false
+  | succ (succ n') => even n'
 ```
 
 When Lean checks this definition, it verifies that the recursion
 terminates.  Specifically, it checks that one of the parameters
-is _structurally decreasing_.  This implies that all calls to
-`add'` will eventually terminate.
+is _structurally decreasing_ -- that each recursive call made in the body of the
+definition is made on an argument that is "smaller" than the original input.
+In `even` example above, the argument to the recursive call to `even` is the variable `n'`.
+Because of our pattern match, we know that `n` is equal to `succ (succ n')`, and therefore
+that `n'` is smaller than `n`. This makes `n'` an acceptable argument to `even` for Lean's
+termination checker, and so this recursive definition is accepted.
 
 This requirement is a fundamental feature of Lean's design: In
 particular, it guarantees that every function that can be defined
