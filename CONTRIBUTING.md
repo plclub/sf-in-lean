@@ -172,16 +172,47 @@ Benjamin should ever need to run the `to_verso.py` script.
 
 ## Lean Style
 
-**BCP: This section needs reviewed.**
-**MWH: Especially, consider it against the philosophy at the top. Make sure
-all of the specific advice here agrees with the tenets.**
-
 We generally follow the [Mathlib style
 guide](https://leanprover-community.github.io/contribute/style.html),
-with the caveat around pedagogy in our SFL **Philosophy** (given above).
-We use the Lean linter by default
+with the caveat around pedagogy in our SFL **Philosophy** (given above),
+which requires (among other things) adhering to the order of tactics, given next.
+We use the Lean linter by default.
 
-SFL-specific conventions:
+### Tactics: order of introduction
+
+A core pedagogical decision is that tactics are introduced gradually.
+The table below lists the tactics **first introduced** in each
+chapter, in chapter order. It is derived from the current sources
+(tactic-position occurrences in real code, comments excluded) and
+should be kept in sync as chapters are rewritten.
+
+| Chapter           | Tactics first introduced |
+|-------------------|--------------------------|
+| `Basics`          | `rfl`, `intro`, `rewrite`, `cases`, `exact` |
+| `UsingLean`       | `dsimp`, `calc`, `exact?`, `rw?` |
+| `Induction`       | `induction`, `have`, `rw` |
+| `Lists`           | *(none new)* |
+| `Poly`            | *(none new)* |
+| `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `unfold`, `split` |
+| `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
+| `IndProp`         | `simp`, `rcases`, `subst`, `omega` |
+| `Maps`            | *(none new)* |
+| `IndPropRegexp`   | `specialize`, `trivial` |
+
+Related notation introduced alongside tactics: anonymous constructor
+`⟨…⟩` (`Lists`); destructuring `let ⟨…⟩ := …` and `cases h : …`,
+`induction … generalizing …` (`Tactics`); projection/`Iff` syntax
+`.left`, `.right`, `.mp`, `.mpr`, and rewriting by an `↔` (`Logic`).
+
+**Tactics deliberately deferred / under discussion** (per FPiL's
+caution that `grind` is overwhelming for beginners): candidates still
+to be placed include `show`, `rename_i`, `revert`, `subst`,
+`suffices`. Powerful automation (`simp` heavy use, `tauto`, `omega`,
+`decide`) is concentrated in an **Automation** chapter; `grind`,
+`aesop`, and `try` are deferred to a later volume. The `RegExp`
+development moves out of `IndProp` into that Automation chapter.
+
+### SFL-specific conventions
 
 * **Structured `cases`/`induction`.** Prefer
 
@@ -216,7 +247,12 @@ SFL-specific conventions:
     exact hf
   ```
   
-* **`rewrite` before `rw`** (see next section).
+* **`rewrite` before `rw`** (see tactic chart above) --
+  `rw [h]` is roughly `rewrite [h]; rfl`, which is too strong at
+  first: it hides the closing `rfl` and makes proofs step
+  confusingly (the goal vanishes when you step past the final `]`).
+  We introduce `rw` specifically in `Induction.lean` and use from
+  then on.
 
 * **Explicit rewrites over `dsimp`/`simp` through notation** (see
   "Notation and simplification").
@@ -236,15 +272,6 @@ SFL-specific conventions:
 * **Library vs. client code.** Inside a definition's own library it is
   fine to unfold and simplify through definitions; *using* that code,
   do not "peek through the interface."
-
-### `rewrite` vs `rw`
-
-`rw [h]` is roughly `rewrite [h]; rfl`, which is too strong for the
-first chapters: it hides the closing `rfl` and makes proofs step
-confusingly (the goal vanishes when you step past the final `]`).
-Decision (JC): **use `rewrite` the first time, keep using it
-explicitly in the early arithmetic proofs, then introduce `rw` in
-`Induction` and use `rw` predominantly from there on.**
 
 ### Notation and simplification
 
@@ -497,41 +524,6 @@ diagram (e.g., SVG), and a plain code block containing the ASCII art.
 HTML renders only the diagram child; the saver emits only the ASCII
 fallback wrapped in a `/-! … -/` module-doc comment.
 
-
-## Tactics: order of introduction
-
-A core pedagogical decision is that tactics are introduced gradually.
-The table below lists the tactics **first introduced** in each
-chapter, in chapter order. It is derived from the current sources
-(tactic-position occurrences in real code, comments excluded) and
-should be kept in sync as chapters are rewritten; chapters past
-`Logic` are still in flux.
-
-| Chapter           | Tactics first introduced |
-|-------------------|--------------------------|
-| `Basics`          | `rfl`, `intro`, `rewrite`, `cases`, `exact` |
-| `Induction`       | `induction`, `have`, `rw` |
-| `UsingLean`       | `dsimp`, `calc`, `exact?`, `rw?` |
-| `Lists`            | *(none new)* |
-| `Poly`            | *(none new)* |
-| `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `unfold`, `split` |
-| `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
-| `IndProp`         | `simp`, `rcases`, `subst`, `omega` |
-| `Maps`            | *(none new)* |
-| `IndPropRegexp`   | `specialize`, `trivial` |
-
-Related notation introduced alongside tactics: anonymous constructor
-`⟨…⟩` (`Lists`); destructuring `let ⟨…⟩ := …` and `cases h : …`,
-`induction … generalizing …` (`Tactics`); projection/`Iff` syntax
-`.left`, `.right`, `.mp`, `.mpr`, and rewriting by an `↔` (`Logic`).
-
-**Tactics deliberately deferred / under discussion** (per FPiL's
-caution that `grind` is overwhelming for beginners): candidates still
-to be placed include `show`, `rename_i`, `revert`, `subst`,
-`suffices`. Powerful automation (`simp` heavy use, `tauto`, `omega`,
-`decide`) is concentrated in a future **Automation** chapter; `grind`,
-`aesop`, and `try` are deferred to a later volume. The `RegExp`
-development moves out of `IndProp` into that Automation chapter.
 
 ## AI policy
 
