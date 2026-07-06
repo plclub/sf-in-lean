@@ -84,9 +84,52 @@ it's clear.
 These conventions are still developing, so feel free to suggest better
 ways of working if you see them! 
 
-## Tools for coordinating work
+### Repo organization and make-fu
 
-We use a standard branch-and-PR workflow.  See below for details.
+Each volume gets its own top-level directory (LF, HL, etc.).
+
+Within that directory, each chapter gets a `.lean` file, in Verso format.
+
+Running `make` at the top level produces, for each volume, three
+different ready-for-distribution outputs in a temporary top-level
+`_out` directory, each with both .lean and .html variants.
+  - **student**   (full prose, solutions elided)
+  - **solutions** (full prose, solutions shown)
+  - **terse**     (little prose, no solutions, workinclass elided;
+                   for lecturing)
+
+To build everything and preview it locally, do `make serve`,
+then visit http://localhost:8000
+(`make serve` builds stuff then serves `_out/` on port 8000).
+
+### Git-fu
+
+We use Git and GitHub, with some simple conventions:
+
+* The `main` branch must always build.
+* Never commit directly to `main`. Instead, create a branch and
+submit your changes as a pull request (PR). More on PR cadence below.
+* After your PR is merged, delete the branch to keep the repo tidy.
+
+We prefer that people create branches in the sf-in-lean repo rather
+than creating forks in their own GitHub accounts for working on stuff.
+This makes it easier for everybody to maintain a global view of what's
+going on.
+
+Our CI uses a small GitHub Actions workflow:
+[.github/workflows/ci.yml](.github/workflows/ci.yml).
+It runs `make` on every pull request and on every push to `main`.
+
+We also have branch protection enabled, which requires the following before merging:
+* At least one approval before merge is allowed
+* Linear history (use rebase and squash merge)
+* CI build succeeds
+
+## Cadence of code changes
+
+A general guideline is: Prefer making changes as a PR to talking about them first.
+To make sure your PR is likely to be accepted, used your best judgment based on
+the tenets (above) and design rules (below) in this file.
 
 PRs should represent coherent pieces of work so that they are easy to review.
 As a general guideline: create PRs sooner, in smaller chunks, rather than 
@@ -95,6 +138,16 @@ chapter might constitute a coherent set of changes that can be PR'd and
 merged by itself, even if you plan to continue editing the same chapter 
 tomorrow.
 
+Once you have your PR, submit it in _Draft_ mode. This signals that
+you are ready for comments. Other SFL collaborators will take a look. Comments
+can go on the PR or in Zulip (see communications guidelines above). Once they
+have settled, switch the PR to normal mode. Then either MWH or BCP will
+review and merge it.
+
+## Tools for coordinating work
+
+We prefer to move fast rather than over-coordinate synchronously. Nevertheless, we
+would like to avoid conflicts when possible.
 We use the [GitHub issue tracker](https://github.com/plclub/sf-in-lean/issues)
 for recording large tasks that need to
 be done (small or local tasks can just be recorded in comments in the
@@ -117,44 +170,6 @@ other people should be careful not to step on.
     PR message. Edit the work-in-progress issue with a pointer to the PR.
  5. Resolve the issue when the PR is resolved. Edit the work-in-progress
     to remove the activity.
-
-### Git-fu 
-
-We use Git and GitHub, with some simple conventions:
-
-* The `main` branch must always build. 
-* Never commit directly to `main`. Instead, branch (not fork!), edit,
-  make a PR, wait for CI to go green (and for others to review, if
-  appropriate), then merge.  
-* Don't merge a red PR.
-* After your PR is merged, delete the branch to keep the repo tidy.
-
-We prefer that people create branches in the sf-in-lean repo rather
-than creating forks in their own GitHub accounts for working on stuff.
-This makes it easier for everybody to maintain a global view of what's
-going on.
-
-Our CI uses a small GitHub Actions workflow:
-[.github/workflows/ci.yml](.github/workflows/ci.yml). 
-It runs `make` on every pull request and on every push to `main`. 
-
-### Repo organization and make-fu
-
-Each volume gets its own top-level directory (LF, HL, etc.).  
-
-Within that directory, each chapter gets a .lean file, in Verso format.
-
-Running `make` at the top level produces, for each volume, three
-different ready-for-distribution outputs in a temporary top-level
-`_out` directory, each with both .lean and .html variants.
-  - **student**   (full prose, solutions elided)
-  - **solutions** (full prose, solutions shown)
-  - **terse**     (little prose, no solutions, workinclass elided;
-                   for lecturing)
-
-To build everything and preview it locally, do `make serve`, 
-then visit http://localhost:8000 
-(`make serve` builds stuff then serves `_out/` on port 8000).
 
 ### Status; plain lean vs. verso files (temporary)
 
