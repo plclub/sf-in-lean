@@ -596,7 +596,7 @@ theorem true_andb_explained : ∀ (b : MyBool), (.true && b) = b := by
 
 ::::full
 It's also important to point out that, like languages like Python and Haskell,
-Lean is _whitespace-sensitive_. That is, the indentation in proofs is important, and changing
+Lean is _whitespace-sensitive_. That is, the indentation in proofs is important and changing
 it can change the meaning of the proof, usually causing the proof to break. If we had
 instead written the following:
 
