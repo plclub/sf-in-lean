@@ -89,10 +89,11 @@ def _strip_title_comment(src: str) -> str:
 
 
 # LF modules that are authored directly in Verso (Basics) or are plain Lean
-# support modules (CustomTactics): an `import LF.X` of one of these passes
+# support modules (CustomTactics, Maps): an `import LF.X` of one of these passes
 # through unchanged.  Every *other* `import LF.X` refers to a generated chapter,
 # so it is rewritten to `import LF.XVerso`.
-DIRECT_LF_MODULES = {"Basics", "CustomTactics"}
+# (Maps added by Claude: HL/TS chapters import LF.Maps for its definitions.)
+DIRECT_LF_MODULES = {"Basics", "CustomTactics", "Maps"}
 
 _IMPORT_RE = re.compile(r'^import\s+(\S+)\s*$')
 
@@ -152,7 +153,7 @@ def _extract_imports(body: str):
 # Author/dev markers (matches the line-comment set in `_AUTHOR_RE`).  A block
 # comment whose body opens with one of these is an author note routed to :::dev.
 _BLOCK_DEV_RE = re.compile(
-    r'^(BCP|JC|MWH|CGH|RAB|CH|HG|NB|TODO|TOFIX|LATER|SOONER)\b')
+    r'^(BCP|JC|MWH|CGH|RAB|CH|HG|NB|Claude|TODO|TOFIX|LATER|SOONER)\b')
 
 
 def _is_block_dev_comment(text: str) -> bool:
@@ -298,16 +299,39 @@ def _comment_tokens(body: str):
         else:
             prose.append(l)
 
-    for l in lines:
+    # (Claude) A fenced code block written directly in prose (``` … ``` or
+    # ~~~ … ~~~) is passed through verbatim.  This lets an author include
+    # literal display material -- pseudocode, BNF grammars, inference rules --
+    # whose characters (`*`, `|`, `_`, `<>`, …) would otherwise be mangled by
+    # Verso's inline markup or would break the enclosing `::::` directive.
+    idx = 0
+    while idx < len(lines):
+        l = lines[idx]
+        fm = re.match(r'^\s*([`~]{3,})(.*)$', l)
+        if fm:
+            flush_prose()
+            info = fm.group(2).strip()
+            block = ['```' + info]
+            idx += 1
+            while idx < len(lines):
+                if re.match(r'^\s*[`~]{3,}\s*$', lines[idx]):
+                    idx += 1
+                    break
+                block.append(lines[idx])
+                idx += 1
+            block.append('```')
+            tokens.append(('block_comment_prose', '\n'.join(block)))
+            continue
         m_mode = re.match(r'^\s*(FULL|TERSE):\s?(.*)$', l)
         if m_mode:
             set_mode(m_mode.group(1))
             if m_mode.group(2).strip():
                 add_content(m_mode.group(2))
         elif _DROP_MARKER_RE.fullmatch(l.strip()):
-            continue                  # stray region/grade/admitted marker — skip
+            pass                      # stray region/grade/admitted marker — skip
         else:
             add_content(l)
+        idx += 1
     set_mode(None)   # closes any open FULL/TERSE region (flushes prose if one was open)
     flush_prose()    # flush any remaining prose: set_mode(None) early-returns when the
                      # mode is already None (the common no-FULL:/TERSE: case), so the
@@ -405,7 +429,7 @@ _SOL_CLOSE_RE = re.compile(r'^--\s+/SOLUTION$')
 # Add new author initials or task keywords here.  NB: INSTRUCTORS is handled
 # separately (-> :::instructor); TERSE/FULL have their own dedicated markers.
 _AUTHOR_RE = re.compile(
-    r'^-- (BCP|JC|MWH|CGH|RAB|CH|HG|NB|TODO|TOFIX|LATER|SOONER)[: (](.*)$')
+    r'^-- (BCP|JC|MWH|CGH|RAB|CH|HG|NB|Claude|TODO|TOFIX|LATER|SOONER)[: (](.*)$')
 
 # `-- ==> …` / `-- ===> …` hand-written eval-output annotations: intentionally
 # dropped (Verso renders the real output live), so they must not be swept into
