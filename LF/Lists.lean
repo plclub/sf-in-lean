@@ -85,8 +85,9 @@ example : (NatProd.pair 3 5).fst = 3 := by rfl
 
 -- FULL: Since pairs will be used heavily in what follows, it will be
 -- convenient to write them with angle bracket notation `⟨x, y⟩`
--- instead of `NatProd.pair x y`. Lean's anonymous constructor
--- syntax works when the expected type is known.
+-- instead of `NatProd.pair x y`.  This notation is built into Lean, and is called
+-- "anonymous constructor syntax".  It is available for any inductive type with a single constructor
+-- when the expected type is known.
 -- TERSE: A nicer notation for pairs:
 
 example : (⟨3, 5⟩ : NatProd).fst = 3 := by rfl
@@ -255,17 +256,17 @@ def mylist3 : NatList := [1, 2, 3]
    (We use `myRepeat` because `repeat` is a reserved keyword in Lean.) -/
 
 @[irreducible]
-def myRepeat (n count : Nat) : NatList :=
+def NatList.myRepeat (n count : Nat) : NatList :=
   match count with
   | 0 => []
   | count' + 1 => n :: myRepeat n count'
 
--- Some simple facts about list lengths
-unseal myRepeat in
-theorem repeat_zero v : myRepeat v 0 = [] := rfl
+-- Some simple facts about repetition
+unseal NatList.myRepeat in
+theorem repeat_zero v : NatList.myRepeat v 0 = [] := rfl
 
-unseal myRepeat in
-theorem repeat_succ v count : myRepeat v (count + 1) = v :: myRepeat v count := rfl
+unseal NatList.myRepeat in
+theorem repeat_succ v count : NatList.myRepeat v (count + 1) = v :: NatList.myRepeat v count := rfl
 
 -- Length
 
@@ -489,7 +490,8 @@ namespace Bag
 
 /- A `bag` (or `multiset`) is like a set, except that each element
    can appear multiple times rather than just once.  One way of
-   representing a bag of numbers is as a list. -/
+   representing a bag of numbers is as a list.  The following definition introduces a new name,
+   `Bag`, as an abbreviation for `NatList`. -/
 
 abbrev Bag := NatList
 
@@ -793,6 +795,10 @@ end Bag
    For example, just `rfl` is enough for this theorem... -/
 /- TERSE: As with numbers, some proofs about list functions need only
    simplification... -/
+/- TODO (KH): The above comment is wrong, since we use `rw` here.
+   Should we put unseal + rfl? Or change the comments? I am a bit confused because this file
+   uses `unseal` and `dsimp` extensively.
+   -/
 
 theorem nil_app (l : NatList) : ([] : NatList) ++ l = l := by rw [NatList.nil_append]
 
@@ -912,7 +918,7 @@ theorem app_assoc (l1 l2 l3 : NatList) :
 /-- warning: declaration uses `sorry` -/
 #guard_msgs in
 example (c n : Nat) :
-    myRepeat n c ++ myRepeat n c = myRepeat n (c + c) := by
+    NatList.myRepeat n c ++ NatList.myRepeat n c = NatList.myRepeat n (c + c) := by
   induction c
   case zero => rw [repeat_zero, nil_append]
   case succ c' ih =>
@@ -925,7 +931,7 @@ example (c n : Nat) :
 -- TERSE: A generalization that gives a stronger inductive hypothesis:
 
 theorem myRepeat_plus (c1 c2 n : Nat) :
-    myRepeat n c1 ++ myRepeat n c2 = myRepeat n (c1 + c2) := by
+    NatList.myRepeat n c1 ++ NatList.myRepeat n c2 = NatList.myRepeat n (c1 + c2) := by
   induction c1
   case zero =>
     rw [repeat_zero, Nat.zero_add, nil_append]
@@ -1045,7 +1051,7 @@ theorem app_length (l1 l2 : NatList) :
 
 -- HIDE
 theorem foo1 (n : Nat) (l : NatList) :
-    myRepeat n 0 = l -> l.length = 0 := by
+    NatList.myRepeat n 0 = l -> l.length = 0 := by
   intro h
   rewrite [←h, repeat_zero, nil_length]
   rfl
@@ -1056,7 +1062,7 @@ theorem foo1 (n : Nat) (l : NatList) :
 /- What about the next one?
 
       theorem foo2 :  forall n m : Nat,
-        (myRepeat n m).length = m
+        (NatList.myRepeat n m).length = m
 
     Which tactics do we need besides [intro], [dsimp], [rewrite], and
     [rfl]?  (A) none, (B) [cases], (C) [induction on n],
@@ -1066,7 +1072,7 @@ theorem foo1 (n : Nat) (l : NatList) :
 
 -- HIDE
 theorem foo2 (n m : Nat) :
-    (myRepeat n m).length = m := by
+    (NatList.myRepeat n m).length = m := by
   induction m
   case zero => rewrite [repeat_zero, nil_length]; rfl
   case succ m' ih =>
