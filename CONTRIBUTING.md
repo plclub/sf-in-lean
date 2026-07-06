@@ -138,11 +138,30 @@ chapter might constitute a coherent set of changes that can be PR'd and
 merged by itself, even if you plan to continue editing the same chapter 
 tomorrow.
 
+### The path to merging a PR
+
 Once you have your PR, submit it in _Draft_ mode. This signals that
-you are ready for comments. Other SFL collaborators will take a look. Comments
-can go on the PR or in Zulip (see communications guidelines above). Once they
-have settled, switch the PR to normal mode. Then either MWH or BCP will
+you are ready for comments. Other SFL collaborators will take a look. Once 
+discussing has settled, switch the PR to normal mode. Then either MWH or BCP will
 review and merge it.
+
+How should the discussion go?
+
+1. While in draft mode you are free to comment using the GH commenting feature on the
+PR, such as via the web interface. Before changing the PR out of draft mode,
+make sure all discussions on GH are resolved. Ones that are unresolved can be
+made into comments in the PR itself, prefixed with your GitHub ID and a colon.
+2. If a review surfaces an issue whose resolution may have broader implications,
+please surface on Zulip for more discussion. Record the resolution in the 
+CONTRIBUTING.md (this) file as appropriate.
+3. Once your PR moves out of Draft mode, Pierce and/or Hicks will review. They will
+make changes directly to fix small issues in the file, such as wording, spacing,
+and perhaps other things. They will also leave comments directly in the file,
+prefixed by their GitHub IDs. Please address these comments in a subsequent
+commit, leaving their comment in place and perhaps responding in the file with
+your own.
+4. In-file comments will be deleted when resolved, or else left in a durable form
+in the file for future work. Then the PR will get merged.
 
 ## Tools for coordinating work
 
