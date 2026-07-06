@@ -37,16 +37,21 @@ import LF.Induction
   for basic properties of natural numbers by hand.
 -/
 
-
+-- BCP: Just making a note that we need to explain the
+-- `zero.succ.succ` notation someplace well before this file!
 section long_example
 open NatPlayground.Nat
 /- Previously, we did computation like this... -/
 theorem test_mult1' : (two * two : NatPlayground.Nat) = four := by
-  rw [two_eq_succ_one, one_eq_succ_zero]
-  rw [mul_succ, mul_succ, mul_zero]
-  rw [add_succ, add_succ, add_zero]
-  rw [add_succ, add_succ, add_zero]
+  rewrite [two_eq_succ_one, one_eq_succ_zero]
+  rewrite [mul_succ, mul_succ, mul_zero]
+  rewrite [add_succ, add_succ, add_zero]
+  rewrite [add_succ, add_succ, add_zero]
+  rfl
 end long_example
+-- BCP: The info viewed in the InfoView during this proof is kind of
+-- mysterious (to me) here.  Have we already given people enough help
+-- to understand it here?
 
 /- This approach is useful in a textbook for understanding the structure of
   natural numbers and for providing early practice with writing proofs. But it
