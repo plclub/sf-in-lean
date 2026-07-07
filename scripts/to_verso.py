@@ -27,6 +27,7 @@ import argparse
 import pathlib
 import re
 import sys
+import textwrap
 
 # ---------------------------------------------------------------------------
 # Verso header / footer
@@ -56,6 +57,7 @@ open InlineLean hiding lean
 
 #doc (Manual) "{title}" =>
 %%%
+tag := "{file}"
 htmlSplit := .never
 file := some "{file}"
 %%%
@@ -69,8 +71,11 @@ FOOTER = ""
 # ---------------------------------------------------------------------------
 
 def extract_title(src: str) -> str:
-    """Pull the chapter title from the opening /- ... -/ block comment."""
-    m = re.match(r"\s*/\-(.*?)-/", src, re.DOTALL)
+    """Pull the chapter title from the opening /- ... -/ block comment.  Use the
+    *first* block comment anywhere near the top rather than one anchored at the
+    very start, since a chapter may open with a stray `-- …` line comment before
+    its title (e.g. Lists begins with `-- Note that …`)."""
+    m = re.search(r"/\-(.*?)-/", src, re.DOTALL)
     if m:
         body = m.group(1)
         lines = [l.strip() for l in body.splitlines() if l.strip()]
@@ -85,8 +90,10 @@ def extract_title(src: str) -> str:
 # ---------------------------------------------------------------------------
 
 def _strip_title_comment(src: str) -> str:
-    """Remove the opening /- title -/ block comment (already used for #doc title)."""
-    return re.sub(r'^\s*/\-.*?-/\s*', '', src, count=1, flags=re.DOTALL)
+    """Remove the first /- title -/ block comment (already used for the #doc
+    title) so it doesn't render again as prose — matching `extract_title`, which
+    also takes the first block comment even when a stray `-- …` line precedes it."""
+    return re.sub(r'/\-.*?-/', '', src, count=1, flags=re.DOTALL)
 
 
 # LF modules that are authored directly in Verso (Basics) or are plain Lean
@@ -230,9 +237,24 @@ def _sf_inline_code(text: str) -> str:
     return ''.join(out)
 
 
+def _latex_macros_to_verso(text: str) -> str:
+    """Translate LaTeX macros to Verso markup.  `\\CHAP{Basics}` becomes a
+    cross-chapter reference `{ref "Basics"}[Basics]` — the `ref` role resolves,
+    at book-traverse time, to a link to the part tagged `"Basics"` (every chapter
+    header now emits `tag := "<name>"`).  Any other `\\macro{arg}` is reduced to
+    its argument text (Verso has no `\\macro` syntax).
+
+    This runs *after* `_sf_inline_code` so the `[Basics]` link text it emits is
+    not seen (and escaped/converted) by the `[…]`-inline-code pass."""
+    text = re.sub(r'\\CHAP\{([^}]*)\}', r'{ref "\1"}[\1]', text)
+    text = re.sub(r'\\[A-Za-z]+\{([^}]*)\}', r'\1', text)
+    return text
+
+
 def _prose_markup(text: str) -> str:
-    """Apply the prose-level rewrites Verso needs (bold, SF inline code)."""
-    return _sf_inline_code(_md_bold_to_verso(text))
+    """Apply the prose-level rewrites Verso needs (bold, SF inline code, and
+    LaTeX-macro / cross-reference translation)."""
+    return _latex_macros_to_verso(_sf_inline_code(_md_bold_to_verso(text)))
 
 
 def _comment_tokens(body: str):
@@ -299,16 +321,79 @@ def _comment_tokens(body: str):
         else:
             prose.append(l)
 
-    for l in lines:
+    idx = 0
+    while idx < len(lines):
+        l = lines[idx]
+        s = l.strip()
+        # coqdoc display-code: a lone `[[` (or `[[[`) opens a verbatim code
+        # display inside comment prose, closed by a matching `]]` / `]]]`.  The
+        # enclosed lines are Lean code (sometimes deliberately ill-formed, e.g.
+        # "the following definitions are ill-formed"), so they become a plain,
+        # NON-elaborated code block — never a ```lean block Verso would run.
+        if s in ('[[', '[[['):
+            closer = ']]' if s == '[[' else ']]]'
+            flush_prose()
+            body = []
+            idx += 1
+            while idx < len(lines) and lines[idx].strip() != closer:
+                body.append(lines[idx]); idx += 1
+            idx += 1                       # skip the closing ]] / ]]]
+            code = textwrap.dedent('\n'.join(body)).strip('\n')
+            if code.strip():
+                tokens.append(('code_display', code))
+            continue
+        # Block-embedded structural markers: some chapters (notably Poly) write
+        # EX / [] / GRADE / QUIZ / INSTRUCTORS *inside* /- … -/ comments rather
+        # than as `-- ` line markers, so recognize the same set the main
+        # tokenizer does — otherwise they flatten to prose (or are dropped) and
+        # the quiz/exercise/grade structure is lost.
+        m_ex = re.match(r'^EX(\d+)[A-Za-z!?]*\s+\((\w+)\)$', s)
+        if s == '/QUIZ':
+            flush_prose()
+            tokens.append(('quiz_close', None))
+            idx += 1; continue
+        if s == 'QUIZ':
+            flush_prose()
+            set_mode(None)            # a ::::quiz can't nest in a same-width
+                                      # ::::full/::::terse — close the mode first
+                                      # (quiz shown-but-preserved beats quiz lost)
+            tokens.append(('quiz_open', None))
+            idx += 1; continue
+        if m_ex:
+            flush_prose()
+            tokens.append(('exercise_open', (int(m_ex.group(1)), m_ex.group(2))))
+            idx += 1; continue
+        if s == '[]':
+            flush_prose()
+            tokens.append(('exercise_close', None))
+            idx += 1; continue
+        if re.match(r'^GRADE_\S', s):
+            flush_prose()
+            tokens.append(('grade_theorem', s))
+            idx += 1; continue
+        if s.startswith('INSTRUCTORS:'):
+            flush_prose()
+            tokens.append(('instructor', re.sub(r'^INSTRUCTORS:\s*', '', s)))
+            idx += 1; continue
+        # Whole-comment FULL/TERSE wrappers: a bare `FULL` / `TERSE` line opens a
+        # mode and `/FULL` / `/TERSE` closes it (the `/- FULL … /FULL -/` comment
+        # form, distinct from the inline `FULL:` prefix handled just below).
+        m_close = re.match(r'^/(FULL|TERSE)$', s)
+        m_open_bare = re.match(r'^(FULL|TERSE)$', s)
         m_mode = re.match(r'^\s*(FULL|TERSE):\s?(.*)$', l)
-        if m_mode:
+        if m_close:
+            set_mode(None)
+        elif m_open_bare:
+            set_mode(m_open_bare.group(1))
+        elif m_mode:
             set_mode(m_mode.group(1))
             if m_mode.group(2).strip():
                 add_content(m_mode.group(2))
-        elif _DROP_MARKER_RE.fullmatch(l.strip()):
-            continue                  # stray region/grade/admitted marker — skip
+        elif _DROP_MARKER_RE.fullmatch(s):
+            pass                      # stray region/grade/admitted marker — skip
         else:
             add_content(l)
+        idx += 1
     set_mode(None)   # closes any open FULL/TERSE region (flushes prose if one was open)
     flush_prose()    # flush any remaining prose: set_mode(None) early-returns when the
                      # mode is already None (the common no-FULL:/TERSE: case), so the
@@ -403,8 +488,11 @@ _HIDE_CLOSE_RE = re.compile(r'^-- /HIDE$')
 # shown (-> ::::quiz); a `-- HIDE` nested inside becomes the quiz's :::answer.
 _QUIZ_OPEN_RE = re.compile(r'^-- QUIZ$')
 _QUIZ_CLOSE_RE = re.compile(r'^-- /QUIZ$')
-_SOL_OPEN_RE = re.compile(r'^--\s+SOLUTION$')
-_SOL_CLOSE_RE = re.compile(r'^--\s+/SOLUTION$')
+# `-- QUIETSOLUTION` is a solution shown without the solutions-build banner; for
+# translation it is handled identically to `-- SOLUTION` (the answer typechecks
+# in the teacher build, becomes `sorry` in the student build).
+_SOL_OPEN_RE = re.compile(r'^--\s+(?:QUIET)?SOLUTION$')
+_SOL_CLOSE_RE = re.compile(r'^--\s+/(?:QUIET)?SOLUTION$')
 # Author-only / developer comment markers.  These are swept into :::dev blocks
 # (discarded from generated outputs, preserved verbatim in the Verso source).
 # Add new author initials or task keywords here.  NB: INSTRUCTORS is handled
@@ -488,6 +576,11 @@ def tokenize(text: str):
                 # /- *** -/, /- TERSE: *** -/, /- FULL: *** -/ : a slide break
                 # (block-comment form of the -- TERSE: /- *** -/ line marker).
                 tokens.append(('slidebreak', None))
+            elif body.strip().startswith('INSTRUCTORS:'):
+                # /- INSTRUCTORS: … -/ block-form instructor note -> ```instructors
+                # (the block-comment analogue of the line-form -- INSTRUCTORS:).
+                tokens.append(('instructor',
+                               re.sub(r'^INSTRUCTORS:\s*', '', body.strip())))
             elif _is_block_dev_comment(body):
                 # /- MWH: … -/ author note -> :::dev (keeps every word).
                 tokens.append(('author_comment', body))
@@ -557,8 +650,21 @@ def tokenize(text: str):
 
         m = _TERSE_PLAIN_RE.match(stripped)
         if m:
-            tokens.append(('terse_inline', m.group(1).strip()))
+            # A `-- TERSE:` paragraph often spans several line comments; collect
+            # the continuation `-- …` lines so the whole paragraph lands inside
+            # one :::terse block (stopping at a blank line, a non-comment line, or
+            # any dedicated marker — including another -- TERSE:/-- FULL:).
+            body_lines = [m.group(1).strip()]
             i += 1
+            while i < n:
+                cont = lines[i].strip()
+                if (not cont.startswith('--') or cont == '--'
+                        or _is_dedicated_line_marker(cont)
+                        or _EVAL_ANNOT_RE.match(cont)):
+                    break
+                body_lines.append(re.sub(r'^--\s?', '', cont))
+                i += 1
+            tokens.append(('terse_inline', '\n'.join(body_lines)))
             continue
 
         m = _EX_RE.match(stripped)
@@ -701,6 +807,12 @@ def tokenize(text: str):
                     break
                 run.append(re.sub(r'^--\s?', '', lines[i].strip()))
                 i += 1
+            # A run that is a single identifier is a name/test label (`-- foo_bar`
+            # before a definition), the line-comment twin of the `/- foo -/` label
+            # dropped via `_is_label_comment`; drop it so it doesn't render as
+            # prose (its underscores would also break Verso markup).
+            if len(run) == 1 and _is_label_comment(run[0]):
+                continue
             tokens.extend(_comment_tokens('\n'.join(run)))
             continue
 
@@ -737,11 +849,18 @@ def _strip_lean_comments(text: str) -> str:
 # Renderer
 # ---------------------------------------------------------------------------
 
-# Container directives (:::exercise, :::full) may hold leaf directives such as
-# :::dev / :::instructor / :::terse.  Verso requires an outer directive's fence
-# to be strictly longer than any directive nested inside it, so containers use a
-# 4-colon fence while leaves use the usual 3.
+# Container directives (:::full, :::quiz, :::hide, :::terse) may hold leaf
+# directives such as :::dev / :::instructor / :::answer / :::grade.  Verso
+# requires an outer directive's fence to be strictly longer than any directive
+# nested inside it, so these containers use a 4-colon fence while leaves use the
+# usual 3.
 _CONTAINER_FENCE = '::::'
+# Exercises are the outermost container: an exercise can hold a :::full, :::quiz,
+# :::hide (all 4-colon) or a :::grade (3-colon), so its fence must be strictly
+# wider still — 5 colons.  Exercises never nest inside another container (a
+# :::full is closed before one opens, and headings close exercises), so nothing
+# needs to be wider than this.
+_EXERCISE_FENCE = ':::::'
 
 
 def _verbatim_block(text: str) -> str:
@@ -839,6 +958,16 @@ class Renderer:
         self._open_full_if_pending()
         self._append(text + '\n\n')
 
+    def _on_code_display(self, text):
+        # coqdoc `[[ … ]]` display code (see _comment_tokens): a NON-elaborated
+        # verbatim code block.  The snippet is often deliberately ill-formed
+        # ("the following definitions are ill-formed"), so it must never become a
+        # ```lean block that Verso would try to compile.  The fence is grown to
+        # outrun any backticks inside the snippet, like other verbatim blocks.
+        self._flush_code()
+        self._open_full_if_pending()
+        self._append(_verbatim_block(text) + '\n\n')
+
     def _on_block_comment_header(self, hdr):
         level, title = hdr
         self._flush_code()
@@ -848,7 +977,7 @@ class Renderer:
         # closes exercises implicitly at the next section rather than always with
         # `-- []`), and closes/re-arms :::full so later content reopens a fresh one.
         if self.in_exercise:
-            self._append(_CONTAINER_FENCE + '\n\n')
+            self._append(_EXERCISE_FENCE + '\n\n')
             self.in_exercise = False
         if self.terse_open:
             self._append(_CONTAINER_FENCE + '\n\n')
@@ -918,10 +1047,10 @@ class Renderer:
         # A new exercise ends the previous one (the source sometimes omits the
         # `-- []` close before the next `-- EX`).
         if self.in_exercise:
-            self._append(_CONTAINER_FENCE + '\n\n')
+            self._append(_EXERCISE_FENCE + '\n\n')
         self.in_exercise = True
         self._append(
-            f'{_CONTAINER_FENCE}exercise (rating := {rating}) (name := "{name}")\n\n')
+            f'{_EXERCISE_FENCE}exercise (rating := {rating}) (name := "{name}")\n\n')
 
     def _on_exercise_close(self):
         self._flush_code()
@@ -929,7 +1058,7 @@ class Renderer:
         # would otherwise produce an orphan `::::` that unbalances the document.
         if self.in_exercise:
             self.in_exercise = False
-            self._append(_CONTAINER_FENCE + '\n\n')
+            self._append(_EXERCISE_FENCE + '\n\n')
 
     def _on_slidebreak(self):
         self._flush_code()
@@ -963,8 +1092,8 @@ class Renderer:
     def _on_quiz_open(self):
         # -- QUIZ ... -- /QUIZ becomes a shown ::::quiz container: its question
         # prose and any illustrative code render normally, and a nested -- HIDE
-        # renders as :::answer.  Uses a 4-colon fence (like :::full / ::::exercise)
-        # so the 3-colon :::answer nests legally; a quiz can't nest inside a
+        # renders as :::answer.  Uses a 4-colon fence (like :::full) so the
+        # 3-colon :::answer nests legally; a quiz can't nest inside a
         # same-width :::full, so close a :::full first and re-arm it (mirrors
         # _on_exercise_open) so content after the quiz reopens one.
         self._flush_code()
@@ -1065,6 +1194,8 @@ class Renderer:
                 self._on_quiz_close()
             elif kind == 'answer':
                 self._on_answer(content)
+            elif kind == 'code_display':
+                self._on_code_display(content)
             elif kind == 'solution_prose':
                 self._on_solution_prose(content)
             elif kind == 'grade_theorem':
@@ -1076,7 +1207,7 @@ class Renderer:
 
         # Close any unclosed blocks (shouldn't happen in well-formed source)
         if self.in_exercise:
-            self._append(_CONTAINER_FENCE + '\n\n')  # close unclosed exercise
+            self._append(_EXERCISE_FENCE + '\n\n')  # close unclosed exercise
             self.in_exercise = False
         if self.terse_open:
             self._append(_CONTAINER_FENCE + '\n\n')  # close unclosed terse
@@ -1105,6 +1236,140 @@ def _strip_directive_blanks(text: str) -> str:
     # Blank line(s) before a standalone ::: closing line (3 or more colons)
     text = re.sub(r'\n\n+(:::+[ \t]*\n)', r'\n\1', text)
     return text
+
+
+def _drop_empty_directives(text: str) -> str:
+    """Remove directives with an empty body, e.g. an `::::terse` immediately
+    followed by its `::::` close.  These arise when a region's only content is
+    pulled out to document level — a `-- TERSE` whose body is just a `#` heading
+    (headings can't nest in a directive, so the heading forces the terse closed
+    and leaves an empty shell).  Iterated so a nested empty directive that leaves
+    its parent empty is removed too."""
+    def once(t):
+        lines = t.split('\n')
+        out, i, n = [], 0, len(lines)
+        while i < n:
+            # An opening directive with a name — but NOT `:::slidebreak`, which is
+            # an intentionally empty self-closing marker (`:::slidebreak` / `:::`),
+            # not an empty container to drop.
+            m = re.match(r'^(:::+)(?!slidebreak\b)\w', lines[i])
+            if m:
+                fence = m.group(1)
+                j = i + 1
+                while j < n and lines[j].strip() == '':
+                    j += 1
+                if j < n and lines[j].rstrip() == fence:   # immediate matching close
+                    i = j + 1                              # drop both open and close
+                    continue
+            out.append(lines[i]); i += 1
+        return '\n'.join(out)
+    prev = None
+    while prev != text:
+        prev, text = text, once(text)
+    return text
+
+
+def _normalize_heading_levels(text: str) -> str:
+    """Remap heading levels so they never skip a level.  Verso rejects a jump
+    from `#` straight to `###` (every heading must be at most one level deeper
+    than its parent), but the sources mix `#`/`##` markers with coqdoc
+    `*`/`**`/`***` section markers, which can leave gaps.  Walk the document-level
+    headings in order and compress each source level to the shallowest legal
+    output level via a stack.  Lines inside fenced code blocks (```lean, ```dev,
+    verbatim, display) are skipped so a `#` inside a note or snippet is left
+    alone."""
+    out = []
+    stack = []          # (source_level, output_level), outermost first
+    fence = None        # opening backtick/tilde run while inside a code block
+    for line in text.split('\n'):
+        if fence is not None:
+            if line.rstrip() == fence:
+                fence = None
+            out.append(line)
+            continue
+        mf = re.match(r'^(`{3,}|~{3,})', line)
+        if mf:
+            fence = mf.group(1)
+            out.append(line)
+            continue
+        m = re.match(r'^(#{1,6})\s+(.*)$', line)
+        if m:
+            src = len(m.group(1))
+            while stack and stack[-1][0] >= src:
+                stack.pop()
+            lvl = (stack[-1][1] + 1) if stack else 1
+            stack.append((src, lvl))
+            out.append('#' * lvl + ' ' + m.group(2))
+            continue
+        out.append(line)
+    return '\n'.join(out)
+
+
+def _fuse_noop_blocks(text: str) -> str:
+    """Fuse runs of consecutive ```dev / ```instructors code blocks (separated
+    only by blank lines) into a single same-tag block, so a run of adjacent
+    author notes renders as one box rather than a stack of tiny ones.  The fused
+    body is re-fenced via `_code_block`, so a fence that had to grow to outrun
+    backticks in one note still outruns backticks in the combined body.  Only
+    same-tag blocks fuse (a `dev` never merges into an `instructors`)."""
+    lines = text.split('\n')
+    out, i, n = [], 0, len(lines)
+    while i < n:
+        m = re.match(r'^(`{3,})(dev|instructors)$', lines[i])
+        if not m:
+            out.append(lines[i]); i += 1; continue
+        tag = m.group(2)
+        bodies = []
+        while i < n:
+            mm = re.match(r'^(`{3,})' + re.escape(tag) + r'$', lines[i])
+            if not mm:
+                break
+            fence = mm.group(1)
+            j = i + 1
+            body = []
+            while j < n and lines[j] != fence:
+                body.append(lines[j]); j += 1
+            bodies.append('\n'.join(body))
+            k = j + 1
+            while k < n and lines[k].strip() == '':  # skip blanks between blocks
+                k += 1
+            i = k
+        out.append(_code_block(tag, '\n\n'.join(bodies)))
+        out.append('')
+    return '\n'.join(out)
+
+
+def _fuse_full_blocks(text: str) -> str:
+    """Fuse adjacent ::::full … :::: blocks (separated only by blank lines) into
+    a single block, so consecutive -- FULL / -- /FULL / -- FULL runs in the
+    source don't render as a stack of separate full boxes.  Safe because a full
+    body never contains a bare 4-colon `::::` line except its own closer: a
+    nested hide/quiz/exercise closes the open full before opening (so they land
+    after the full), and grade/solution/dev use narrower (3-colon / backtick)
+    fences."""
+    lines = text.split('\n')
+    out, i, n = [], 0, len(lines)
+    while i < n:
+        if lines[i] != '::::full':
+            out.append(lines[i]); i += 1; continue
+        bodies = []
+        while i < n and lines[i] == '::::full':
+            j = i + 1
+            body = []
+            while j < n and lines[j] != '::::':
+                body.append(lines[j]); j += 1
+            bodies.append('\n'.join(body).strip('\n'))
+            k = j + 1
+            while k < n and lines[k].strip() == '':  # skip blanks between blocks
+                k += 1
+            i = k
+        out.append('::::full')
+        out.append('')
+        out.append('\n\n'.join(bodies))
+        out.append('')
+        out.append('::::')
+        out.append('')
+    return '\n'.join(out)
 
 # ---------------------------------------------------------------------------
 # Solution-marker conversion (code-forward source -> Verso code-block forms)
@@ -1213,7 +1478,13 @@ def convert(src_text: str, title: str, file_key: str) -> str:
     tokens = tokenize(body_src)
     renderer = Renderer()
     renderer.process(tokens)
-    body = _strip_directive_blanks(renderer.result())
+    body = renderer.result()
+    # Fuse adjacent same-type author-note / full blocks before normalizing blanks.
+    body = _fuse_noop_blocks(body)
+    body = _fuse_full_blocks(body)
+    body = _normalize_heading_levels(body)
+    body = _drop_empty_directives(body)
+    body = _strip_directive_blanks(body)
     return header + body + FOOTER
 
 # ---------------------------------------------------------------------------

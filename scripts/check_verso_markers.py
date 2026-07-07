@@ -66,8 +66,12 @@ _POLICY = [
     ("EX\\d+[A-Za-z!?]*",    r"::+exercise\b"),
     ("GRADE_\\w+",           r":::grade\b"),
     ("INSTRUCTORS",          r"```instructors\b"),
-    ("SOLUTION",             r":::solution\b"),
-    ("QUIETSOLUTION",        r":::solution\b"),
+    # A SOLUTION is one of two things: a *compilable* answer becomes the in-code
+    # `solution!` / `-- SOLUTION` form SFLMeta rewrites; a *prose* answer becomes
+    # a :::solution directive.  Either counts as translated.  QUIETSOLUTION (a
+    # solution shown without the solutions-build banner) is handled identically.
+    ("SOLUTION",             r":::solution\b|solution!|-- SOLUTION\b"),
+    ("QUIETSOLUTION",        r":::solution\b|solution!|-- SOLUTION\b"),
     # HIDE normally -> ::::hide, but a HIDE *inside* a QUIZ is the quiz's answer
     # -> :::answer, so both count as a translated HIDE.
     ("HIDE",                 r"::+hide\b|:::answer\b"),
