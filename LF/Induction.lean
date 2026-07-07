@@ -111,7 +111,8 @@ theorem review1 : (true || false) = true := by rfl
 -- HIDE
 /- review2 -/
 theorem review2 : ∀ b : Bool, (true || b) = true := by
-  intro b; rfl
+  intro b
+  rfl
 -- /HIDE
 -- /QUIZ
 
@@ -128,9 +129,10 @@ theorem review2 : ∀ b : Bool, (true || b) = true := by
 -- HIDE
 /- review3 -/
 theorem review3 : ∀ b : Bool, (b || true) = true := by
-  intro b; cases b
-  . rfl
-  . rfl
+  intro b
+  cases b with
+  | false => rfl
+  | true  => rfl
 -- /HIDE
 -- /QUIZ
 
@@ -148,7 +150,9 @@ theorem review3 : ∀ b : Bool, (b || true) = true := by
 -- HIDE
 /- review4 -/
 theorem review4 : ∀ n : Nat, n + zero = n := by
-  intro n; rewrite [add_zero]; rfl
+  intro n
+  rewrite [add_zero]
+  rfl
 -- /HIDE
 -- /QUIZ
 
@@ -238,12 +242,12 @@ example : ∀ n : Nat, zero + n = n := by
 #guard_msgs in
 example : ∀ n : Nat, zero + n = n := by
   intro n
-  cases n
-  case zero => /- n = zero -/
+  cases n with
+  | zero => /- n = zero -/
     rewrite [add_zero]
     rfl
     -- so far so good...
-  case succ n' =>   /- n = succ n' -/
+  | succ n' =>   /- n = succ n' -/
     -- ...but we're stuck on zero + n'
     sorry
 
@@ -301,11 +305,11 @@ example : ∀ n : Nat, zero + n = n := by
 
 theorem zero_add : ∀ n : Nat, zero + n = n := by
   intro n
-  induction n
-  case zero => /- n = zero -/
+  induction n with
+  | zero => /- n = zero -/
     rewrite [add_zero]
     rfl
-  case succ n' ih => /- n = succ n' -/
+  | succ n' ih => /- n = succ n' -/
     /-
       Goal: zero + (succ n') = succ n'
       We can rewrite `zero + (succ n')` to `succ (zero + n')`.
@@ -321,14 +325,14 @@ theorem zero_add : ∀ n : Nat, zero + n = n := by
   subgoals.  Since there are two subgoals (for `zero` and `succ`),
   the `with` clause has two branches.
 
-  In the first subgoal, `n` is replaced by `zero`.  The goal becomes
+  In the first subgoal, `n` is replaced by `zero`. The goal becomes
   `zero + zero = zero`, which follows by `rfl`.
 
   In the second subgoal, `n` is replaced by `succ n'`, and the
   induction hypothesis `ih : zero + n' = n'` is added to the context.
-  The goal becomes `zero + (succ n') = succ n'`.  `add_succ` tells
-  us that `a + (succ b) = succ (a + b)`, so `rw [add_succ]`
-  transforms the goal to `succ (zero + n') = succ n'`.  Then `rw [ih]`
+  The goal becomes `zero + (succ n') = succ n'`. `add_succ` tells
+  us that `a + (succ b) = succ (a + b)`, so `rewrite [add_succ]`
+  transforms the goal to `succ (zero + n') = succ n'`. Then `rewrite [ih]`
   rewrites `zero + n'` to `n'`, and the goal becomes `succ n' = succ n'`,
   which closes with reflexivity.
 -/
@@ -346,11 +350,13 @@ theorem beq_self : ∀ n : Nat,
     (n == n) = true := by
   -- WORKINCLASS
   intro n
-  induction n
-  case zero =>
-    rewrite [zero_zero_beq_true]; rfl
-  case succ n' ih =>
-    rewrite [succ_succ_beq]; exact ih
+  induction n with
+  | zero =>
+    rewrite [zero_zero_beq_true]
+    rfl
+  | succ n' ih =>
+    rewrite [succ_succ_beq]
+    exact ih
 -- /WORKINCLASS
 
 -- FULL
@@ -378,9 +384,11 @@ theorem beq_self : ∀ n : Nat,
 theorem zero_mul (n : Nat) :
     zero * n = zero := by
   -- ADMITTED
-  induction n
-  case zero => rewrite [mul_zero]; rfl
-  case succ n' ih =>
+  induction n with
+  | zero =>
+    rewrite [mul_zero]
+    rfl
+  | succ n' ih =>
     rewrite [mul_succ, ih, add_zero]
     rfl
 -- /ADMITTED
@@ -412,11 +420,11 @@ theorem succ_add (n m : Nat) :
 theorem add_comm (n m : Nat) :
     n + m = m + n := by
   -- ADMITTED
-  induction m
-  case zero =>
+  induction m with
+  | zero =>
     rewrite [add_zero, zero_add]
     rfl
-  case succ m' ih =>
+  | succ m' ih =>
     rewrite [add_succ, ih, succ_add]
     rfl
 -- /ADMITTED
@@ -425,11 +433,11 @@ theorem add_comm (n m : Nat) :
 theorem add_assoc (n m p : Nat) :
     n + (m + p) = (n + m) + p := by
   -- ADMITTED
-  induction p
-  case zero =>
+  induction p with
+  | zero =>
     rewrite [add_zero, add_zero]
     rfl
-  case succ p' ih =>
+  | succ p' ih =>
     rewrite [add_succ, add_succ, add_succ, ih]
     rfl
 -- /ADMITTED
@@ -444,7 +452,7 @@ theorem add_assoc (n m p : Nat) :
 @[irreducible]
 def double (n : Nat) : Nat :=
   match n with
-  | zero => zero
+  | zero    => zero
   | succ n' => succ (succ (double n'))
 
 unseal double in
@@ -463,25 +471,46 @@ theorem double_succ : ∀ n, double (succ n) = succ (succ (double n)) := by
   will automatically close the goal if the rewrite makes the goal true by
   definition. For example, instead of writing
 
-     rewrite [double_zero]; rfl
+     `rewrite [double_zero]; rfl`
 
      We could write :
 
-    rw [double_zero]
+    `rw [double_zero]`
 
     Using `rw` in your proofs is optional, but it will save you time
-    (and is better style!).  -/
+    (and is better style!). -/
+
+-- FULL
+/-
+  Keep in mind there is one small caveat: `rw [...]` only performs a quick reflexivity check
+  after rewriting. It does not unfold every definition. So, in rare
+  cases, `rw` may leave a goal that is still solved immediately by `rfl`.
+-/
+
+def aliasOfTwo := two
+
+example (n : Nat) (h : n = aliasOfTwo) : n = two := by
+  rw [h]
+  /- The remaining goal is `aliasOfTwo = two`. -/
+  rfl
+
+-- /FULL
+
+-- TERSE
+/-
+  If `rw` leaves a goal that looks definitionally true, try adding `rfl`
+  after it.
+-/
+-- /TERSE
 
 /- Use induction to prove this simple fact about `double`.
-   Experiment with using `rw` instead of `rewrite`as well. -/
+   Experiment with using `rw` instead of `rewrite` as well. -/
 
 theorem double_add (n : Nat) : double n = n + n := by
   -- ADMITTED
-  induction n
-  case zero =>
-    rw [add_zero, double_zero]
-  case succ n' ih =>
-    rw [double_succ, ih, add_succ, succ_add]
+  induction n with
+  | zero       => rw [add_zero, double_zero]
+  | succ n' ih => rw [double_succ, ih, add_succ, succ_add]
 -- /ADMITTED
 -- []
 
@@ -495,9 +524,9 @@ unseal beq in
 theorem beq_refl (n : Nat) :
     (n == n) = true := by
   -- ADMITTED
-  induction n
-  case zero => rw [zero_zero_beq_true]
-  case succ n' ih => rw [succ_succ_beq, ih]
+  induction n with
+  | zero       => rw [zero_zero_beq_true]
+  | succ n' ih => rw [succ_succ_beq, ih]
 -- /ADMITTED
 -- []
 
@@ -539,10 +568,11 @@ unseal even in
 theorem even_succ (n : Nat) :
     even (succ n) = !even n := by
   -- ADMITTED
-  induction n
-  case zero =>
-    rw [even_zero, even_one]; rfl
-  case succ n' ih =>
+  induction n with
+  | zero =>
+    rw [even_zero, even_one]
+    rfl
+  | succ n' ih =>
     rw [even, ih, notb_involutive]
 -- /ADMITTED
 -- GRADE_THEOREM 1: even_succ
@@ -551,10 +581,10 @@ theorem even_succ (n : Nat) :
 
 -- HIDE
 -- QUIZ
-/- We've seen that there are goals that [destruct] can't solve but
-    [induction] can. What about the other way around? Are there steps
-    in a proof that can be solved by pure case analysis ([destruct])
-    but not using [induction]?
+/- We've seen that there are goals that `cases` can't solve but
+    `induction` can. What about the other way around? Are there steps
+    in a proof that can be solved by pure case analysis `cases`
+    but not using `induction`?
 
     (A) No
 
@@ -703,10 +733,9 @@ theorem plus_rearrange (n m p q : Nat) :
 /- add_assoc' -/
 theorem add_assoc' (n m p : Nat) :
     n + (m + p) = (n + m) + p := by
-  induction p
-  case zero => rw [add_zero, add_zero]
-  case succ p' ih =>
-    rw [add_succ, add_succ, add_succ, ih]
+  induction p with
+  | zero       => rw [add_zero, add_zero]
+  | succ p' ih => rw [add_succ, add_succ, add_succ, ih]
 
 /-
   Lean is perfectly happy with this.  For a human, however, it
@@ -718,10 +747,10 @@ theorem add_assoc' (n m p : Nat) :
 /- add_assoc'' -/
 theorem add_assoc'' (n m p : Nat) :
     add n (add m p) = add (add n m) p := by
-  induction p
-  case zero => /- p = zero -/
+  induction p with
+  | zero => /- p = zero -/
     rw [add_zero, add_zero]
-  case succ p' ih => /- p = p' + 1 -/
+  | succ p' ih => /- p = p' + 1 -/
     rw [add_succ m p', add_succ n (m + p'), add_succ (n + m) p', ih]
 
 /-
@@ -860,10 +889,9 @@ theorem add_assoc'' (n m p : Nat) :
 theorem mul_one (p : Nat) :
     one * p = p := by
   -- ADMITTED
-  induction p
-  case zero => rw [mul_zero]
-  case succ p' ih =>
-    rw [mul_succ, ih, succ_eq_add_one]
+  induction p with
+  | zero       => rw [mul_zero]
+  | succ p' ih => rw [mul_succ, ih, succ_eq_add_one]
   -- /ADMITTED
 -- GRADE_THEOREM 1: mul_one
 
@@ -871,9 +899,9 @@ theorem mul_one (p : Nat) :
 theorem mul_two (p : Nat) :
     two * p = p + p := by
   -- ADMITTED
-  induction p
-  case zero => rw [mul_zero, add_zero]
-  case succ p' ih =>
+  induction p with
+  | zero => rw [mul_zero, add_zero]
+  | succ p' ih =>
     rw [mul_succ, ih, two_eq_succ_one, succ_eq_add_one, succ_eq_add_one]
     rw [add_assoc, add_assoc, ←add_assoc p' p' one]
     rw [add_comm p' one, add_comm p']
@@ -893,12 +921,10 @@ theorem mul_two (p : Nat) :
   `add_shuffle3`.  You don't need to use induction yet.
 -/
 
-
-/- ::::full
-Note: By default, `rewrite` and `rw` rewrites left-to-right. To rewrite from right
-to left, use `rw [← h]`, where `←` is typed as `\l` or `\<-`.
-::::
- -/
+/-
+  Note: By default, `rewrite` and `rw` rewrite left-to-right. To rewrite from
+  right to left, use `rw [← h]`, where `←` is typed as `\l` or `\<-`.
+-/
 
 theorem add_shuffle3 : ∀ n m p : Nat,
     add (add n m) p = add (add n p) m := by
@@ -911,9 +937,9 @@ theorem add_shuffle3 : ∀ n m p : Nat,
 -- QUIETSOLUTION
 theorem succ_mul (m n : Nat) :
     (succ n) * m = (n * m) + m := by
-  induction m
-  case zero => rw [mul_zero, mul_zero, add_zero]
-  case succ m ih =>
+  induction m with
+  | zero => rw [mul_zero, mul_zero, add_zero]
+  | succ m ih =>
     rw [mul_succ, ih, add_succ, add_comm _ n,
         add_assoc n _ m, add_comm n, mul_succ, add_succ]
 -- /QUIETSOLUTION
@@ -925,14 +951,64 @@ theorem succ_mul (m n : Nat) :
 theorem mul_comm (m n : Nat) :
     m * n = n * m := by
   -- ADMITTED
-  induction n
-  case zero =>
+  induction n with
+  | zero =>
     rw [mul_zero, zero_mul]
-  case succ n' ih =>
+  | succ n' ih =>
     rw [mul_succ, ih, succ_mul]
 -- /ADMITTED
 -- GRADE_THEOREM 2: mul_comm
 -- []
+
+-- TERSE
+/-
+  New tactic combinator: `t₁ <;> t₂` runs `t₁`, then runs `t₂` on every
+  subgoal produced by `t₁`.
+-/
+-- /TERSE
+
+-- FULL
+/-
+  Before moving on to the next batch of exercises, let's introduce one
+  small _tactic combinator_. A tactic combinator combines tactics to form
+  a larger tactic.
+
+  If `t₁` and `t₂` are tactics, then `t₁ <;> t₂` means: run `t₁`, then
+  run `t₂` on every subgoal produced by `t₁`.
+
+  This is useful when one tactic splits the goal into several subgoals
+  and all of them can be finished in the same way.
+-/
+-- /FULL
+
+example (b : Bool) : (b || true) = true := by
+  cases b <;> rfl
+
+-- FULL
+/-
+  This is short for:
+-/
+
+example (b : Bool) : (b || true) = true := by
+  cases b with
+  | false => rfl
+  | true  => rfl
+
+/-
+  We can also chain `<;>`s.  In the next example, `cases b` creates two
+  goals; in each of them, `cases c` splits the goal again; then `rfl`
+  solves all four remaining goals.
+-/
+
+example (b c : Bool) : (b && c) = (c && b) := by
+  cases b <;> cases c <;> rfl
+
+/-
+  Use `<;>` when the generated subgoals really do have the same proof.
+  If different branches need different arguments, it is usually clearer
+  to write the cases explicitly.
+-/
+-- /FULL
 
 -- EX3? (more_exercises)
 /-
@@ -943,44 +1019,44 @@ theorem mul_comm (m n : Nat) :
   down your prediction.  Then fill in the proof.  (There is no need
   to turn in your piece of paper; this is just to encourage you to
   reflect before you hack!)
+  Some of these proofs can be shortened
+  with `<;>` when several generated subgoals have the same proof.
 -/
 
 
 theorem ble_refl (n : Nat) :
     ble n n = true := by
   -- ADMITTED
-  induction n
-  case zero => rw [zero_ble]
-  case succ n' ih => rw [succ_ble_succ]; exact ih
+  induction n with
+  | zero       => rw [zero_ble]
+  | succ n' ih => rw [succ_ble_succ]; exact ih
 -- /ADMITTED
 
 theorem andb_false (b : Bool) :
     (b && false) = false := by
   -- ADMITTED
-  cases b
-  case false =>
-    rw [Bool.false_and]
-  case true =>
-    rw [Bool.true_and]
+  cases b with
+  | false => rw [Bool.false_and]
+  | true  => rw [Bool.true_and]
 -- /ADMITTED
 
 theorem all3_spec (b c : Bool) :
     (b && c) || ((!b) || (!c)) = true := by
   -- ADMITTED
-  cases b
-  case true => cases c <;> rfl
-  case false => rfl
+  cases b with
+  | true  => cases c <;> rfl
+  | false => rfl
 -- /ADMITTED
 
 theorem right_distrib (n m p : Nat) :
     (n + m) * p = (n * p) + (m * p) := by
   -- ADMITTED
-  induction p
-  case zero => rw [mul_zero, mul_zero, mul_zero, add_zero]
-  case succ p' ih =>
+  induction p with
+  | zero => rw [mul_zero, mul_zero, mul_zero, add_zero]
+  | succ p' ih =>
     rw [mul_succ, mul_succ, mul_succ, ih]
     rw [add_assoc ((n * p') + (m * p')),
-        add_shuffle3 (n * p') (m * p') _,
+        add_shuffle3 (n * p') (m * p'),
         add_assoc ((n * p') + n)]
 -- /ADMITTED
 
@@ -994,10 +1070,9 @@ theorem left_distrib (n m p : Nat) :
 theorem mul_assoc (n m p : Nat) :
     n * (m * p) = (n * m) * p := by
   -- ADMITTED
-  induction p
-  case zero => rw [mul_zero, mul_zero, mul_zero]
-  case succ p' ih =>
-    rw [mul_succ, mul_succ, ← ih, left_distrib]
+  induction p with
+  | zero       => rw [mul_zero, mul_zero, mul_zero]
+  | succ p' ih => rw [mul_succ, mul_succ, ← ih, left_distrib]
 -- /ADMITTED
 -- []
 
@@ -1024,7 +1099,7 @@ inductive Bin : Type where
 def incr (m : Bin) : Bin
   -- ADMITDEF
   := match m with
-  | .z => .b1 .z
+  | .z     => .b1 .z
   | .b0 m' => .b1 m'
   | .b1 m' => .b0 (incr m')
   -- /ADMITDEF
@@ -1039,7 +1114,7 @@ seal incr
 def binToNat (m : Bin) : Nat
   -- ADMITDEF
   := match m with
-  | .z => zero
+  | .z     => zero
   | .b0 m' => (binToNat m') * two
   | .b1 m' => ((binToNat m') * two) + one
   -- /ADMITDEF
@@ -1085,11 +1160,13 @@ binToNat   |                             |  binToNat
 theorem bin_to_nat_pres_incr (b : Bin) :
     binToNat (incr b) = (binToNat b) + one := by
   -- ADMITTED
-  induction b
-  case z => rw [incr_z, binToNat_b1, binToNat_z]; rw [zero_mul]
-  case b0 b' ih =>
+  induction b with
+  | z =>
+    rw [incr_z, binToNat_b1, binToNat_z]
+    rw [zero_mul]
+  | b0 b' ih =>
     rw [incr_b0, binToNat_b0, binToNat_b1]
-  case b1 b' ih =>
+  | b1 b' ih =>
     rw [incr_b1, binToNat_b1, binToNat_b0, ih]
     rw [mul_comm, mul_two, mul_comm, mul_two, add_assoc]
     rw [add_shuffle3 _ one]
@@ -1107,7 +1184,7 @@ theorem bin_to_nat_pres_incr (b : Bin) :
 def natToBin (n : Nat) : Bin :=
   -- ADMITDEF
   match n with
-  | zero => .z
+  | zero    => .z
   | succ n' => incr (natToBin n')
   -- /ADMITDEF
 
@@ -1141,10 +1218,10 @@ seal natToBin
 theorem nat_bin_nat (n : Nat) :
     binToNat (natToBin n) = n := by
   -- ADMITTED
-  induction n
-  case zero =>
+  induction n with
+  | zero =>
     rw [natToBin_zero, binToNat_z]
-  case succ n' ih =>
+  | succ n' ih =>
     rw [natToBin_succ, bin_to_nat_pres_incr, ih, ← succ_eq_add_one]
 -- /ADMITTED
 -- GRADE_THEOREM 3: nat_bin_nat
@@ -1193,7 +1270,7 @@ def doubleBin (b : Bin) : Bin :=
   -- ADMITDEF
   match b with
   | .z => .z
-  | _ => .b0 b
+  | _  => .b0 b
   -- /ADMITDEF
 
 -- TODO (DHS): How to hide these theorem statements so that students can get practice writing them?
@@ -1216,10 +1293,10 @@ example : doubleBin .z = .z := by rfl  -- ADMITTED
 theorem double_incr_bin (b : Bin) :
     doubleBin (incr b) = incr (incr (doubleBin b)) := by
   -- ADMITTED
-  cases b
-  . rw [incr_z, doubleBin_b1, doubleBin_z, incr_z, incr_b1, incr_z]
-  . rw [incr_b0, doubleBin_b1, doubleBin_b0, incr_b0, incr_b1, incr_b0]
-  . rw [incr_b1, doubleBin_b0, doubleBin_b1, incr_b0, incr_b1, incr_b1]
+  cases b with
+  | z =>    rw [incr_z, doubleBin_b1, doubleBin_z, incr_z, incr_b1, incr_z]
+  | b0 n => rw [incr_b0, doubleBin_b1, doubleBin_b0, incr_b0, incr_b1, incr_b0]
+  | b1 n => rw [incr_b1, doubleBin_b0, doubleBin_b1, incr_b0, incr_b1, incr_b1]
 -- /ADMITTED
 -- GRADE_THEOREM 1: double_incr_bin
 
@@ -1280,7 +1357,7 @@ example b : natToBin (binToNat b) = b := by sorry
 def normalize (b : Bin) : Bin :=
   -- ADMITDEF
   match b with
-  | .z => .z
+  | .z     => .z
   | .b0 b' => doubleBin (normalize b')
   | .b1 b' => incr (doubleBin (normalize b'))
   -- /ADMITDEF
@@ -1327,16 +1404,16 @@ seal normalize doubleBin incr
 -- SOLUTION
 theorem incr_doubleBin (b : Bin) :
     incr (doubleBin b) = .b1 b := by
-  cases b
-  . rw [doubleBin_z, incr_z]
-  . rw [doubleBin_b0, incr_b0]
-  . rw [doubleBin_b1, incr_b0]
+  cases b with
+  | z    => rw [doubleBin_z, incr_z]
+  | b0 n => rw [doubleBin_b0, incr_b0]
+  | b1 n => rw [doubleBin_b1, incr_b0]
 
 theorem natToBin_two_mul n :
     natToBin (mul n two) = doubleBin (natToBin n) := by
-  induction n
-  case zero => rw [zero_mul, natToBin_zero, doubleBin_z]
-  case succ n' ih =>
+  induction n with
+  | zero => rw [zero_mul, natToBin_zero, doubleBin_z]
+  | succ n' ih =>
     /-
       2 * (n' + 1) = 2 * n' + 2 by Nat.mul_succ.
       natToBin (2 * n' + 2): since +2 is +(1+1), this unfolds to
@@ -1354,13 +1431,13 @@ theorem natToBin_two_mul n :
 theorem bin_nat_bin (b : Bin) :
     natToBin (binToNat b) = normalize b := by
   -- ADMITTED
-  induction b
-  case z =>
+  induction b with
+  | z =>
     rw [binToNat_z, normalize_z, natToBin_zero]
-  case b0 b' ih =>
+  | b0 b' ih =>
     rw [binToNat_b0, normalize_b0]
     rw [natToBin_two_mul, ih]
-  case b1 b' ih =>
+  | b1 b' ih =>
     rw [binToNat_b1, normalize_b1]
     /- Goal: natToBin (binToNat b' * 2 + 1) = incr (doubleBin (normalize b')) -/
     rw [← succ_eq_add_one]
