@@ -44,6 +44,7 @@ import SFLMeta.Exercise
 import SFLMeta.Grade
 import SFLMeta.Hide
 import SFLMeta.Instructors
+import SFLMeta.Quiz
 import SFLMeta.SlideBreak
 import SFLMeta.Solution
 import SFLMeta.Terse
@@ -118,7 +119,7 @@ def _normalize_block_markers(src: str) -> str:
 # Region semantics (HIDEFROM*) are not honored yet — dropping the marker just
 # lets the surrounding prose render.  FULL/TERSE are handled separately as modes.
 _DROP_MARKER_RE = re.compile(
-    r'/?(?:HIDEFROMADVANCED|HIDEFROMHTML|HIDE|QUIZ|ADMITTED|ADMITDEF)'
+    r'/?(?:HIDEFROMADVANCED|HIDEFROMHTML|HIDE|ADMITTED|ADMITDEF)'
     r'|\[\]'
     r'|GRADE_\S.*')
 
@@ -398,6 +399,10 @@ _LINE_HEADER_HASH_RE = re.compile(r'^--\s+(#{1,6})\s+(\S.*)$')
 _LINE_HEADER_STAR_RE = re.compile(r'^--\s+(\*{1,3})\s+(\S.*)$')
 _HIDE_OPEN_RE = re.compile(r'^-- HIDE$')
 _HIDE_CLOSE_RE = re.compile(r'^-- /HIDE$')
+# Paired `-- QUIZ` … `-- /QUIZ` review question.  Unlike HIDE, the region is
+# shown (-> ::::quiz); a `-- HIDE` nested inside becomes the quiz's :::answer.
+_QUIZ_OPEN_RE = re.compile(r'^-- QUIZ$')
+_QUIZ_CLOSE_RE = re.compile(r'^-- /QUIZ$')
 _SOL_OPEN_RE = re.compile(r'^--\s+SOLUTION$')
 _SOL_CLOSE_RE = re.compile(r'^--\s+/SOLUTION$')
 # Author-only / developer comment markers.  These are swept into :::dev blocks
@@ -421,6 +426,7 @@ _DEDICATED_LINE_MARKERS = [
     _INSTRUCTOR_RE, _FULL_OPEN_RE, _FULL_CLOSE_RE, _TERSE_OPEN_RE,
     _TERSE_CLOSE_RE, _SLIDEBREAK_RE, _TERSE_DELIM_RE, _TERSE_PLAIN_RE,
     _EX_RE, _EX_CLOSE_RE, _GRADE_RE, _HIDE_OPEN_RE, _HIDE_CLOSE_RE,
+    _QUIZ_OPEN_RE, _QUIZ_CLOSE_RE,
     _SOL_OPEN_RE, _SOL_CLOSE_RE, _LINE_HEADER_HASH_RE, _LINE_HEADER_STAR_RE,
     _AUTHOR_RE,
 ]
@@ -448,6 +454,7 @@ def tokenize(text: str):
     tokens = []
     i = 0
     n = len(lines)
+    quiz_depth = 0   # >0 while inside a -- QUIZ region (so nested HIDE -> answer)
 
     while i < n:
         line = lines[i]
@@ -571,11 +578,25 @@ def tokenize(text: str):
             i += 1
             continue
 
+        if _QUIZ_OPEN_RE.match(stripped):
+            tokens.append(('quiz_open', None))
+            quiz_depth += 1
+            i += 1
+            continue
+
+        if _QUIZ_CLOSE_RE.match(stripped):
+            tokens.append(('quiz_close', None))
+            quiz_depth = max(0, quiz_depth - 1)
+            i += 1
+            continue
+
         if _HIDE_OPEN_RE.match(stripped):
             # Capture the whole -- HIDE ... -- /HIDE region verbatim.  Hidden
             # content is often deliberately broken/admitted, so it must never be
             # elaborated; it is emitted as an opaque :::hide block (discarded at
-            # elaboration, preserved textually in the source).
+            # elaboration, preserved textually in the source).  Inside a -- QUIZ,
+            # the same region is the quiz's answer -> emit an 'answer' token (same
+            # verbatim capture, rendered as :::answer).
             i += 1
             raw = []
             while i < n and not _HIDE_CLOSE_RE.match(lines[i].strip()):
@@ -587,7 +608,7 @@ def tokenize(text: str):
                 raw.pop(0)
             while raw and not raw[-1].strip():
                 raw.pop()
-            tokens.append(('hide', '\n'.join(raw)))
+            tokens.append(('answer' if quiz_depth > 0 else 'hide', '\n'.join(raw)))
             continue
 
         if _SOL_OPEN_RE.match(stripped):
@@ -754,6 +775,7 @@ class Renderer:
         self.full_open = False      # an emitted :::full is currently unclosed
         self.terse_open = False     # an emitted :::terse is currently unclosed
         self.in_exercise = False
+        self.quiz_depth = 0         # emitted-but-unclosed ::::quiz nesting
 
     # --- Output helpers ---
 
@@ -938,6 +960,35 @@ class Renderer:
         self._append(_CONTAINER_FENCE + 'hide\n' + _verbatim_block(text)
                      + '\n' + _CONTAINER_FENCE + '\n\n')
 
+    def _on_quiz_open(self):
+        # -- QUIZ ... -- /QUIZ becomes a shown ::::quiz container: its question
+        # prose and any illustrative code render normally, and a nested -- HIDE
+        # renders as :::answer.  Uses a 4-colon fence (like :::full / ::::exercise)
+        # so the 3-colon :::answer nests legally; a quiz can't nest inside a
+        # same-width :::full, so close a :::full first and re-arm it (mirrors
+        # _on_exercise_open) so content after the quiz reopens one.
+        self._flush_code()
+        if self.full_open and not self.in_exercise:
+            self._close_full_if_open()
+            self.pending_full = True
+        self._append(_CONTAINER_FENCE + 'quiz\n\n')
+        self.quiz_depth += 1
+
+    def _on_quiz_close(self):
+        self._flush_code()
+        if self.quiz_depth > 0:
+            self._append(_CONTAINER_FENCE + '\n\n')
+            self.quiz_depth = max(0, self.quiz_depth - 1)
+
+    def _on_answer(self, text):
+        # The -- HIDE region inside a -- QUIZ.  Like :::hide it is preserved
+        # verbatim and dropped at elaboration for now (rendering it sensibly is a
+        # later step); a 3-colon :::answer nests inside the 4-colon ::::quiz.
+        self._flush_code()
+        if not text.strip():
+            return
+        self._append(':::answer\n' + _verbatim_block(text) + '\n:::\n\n')
+
     def _on_grade(self, text):
         # -- GRADE_THEOREM / GRADE_MANUAL -> :::grade.  A noop for now, but the
         # grading spec is preserved (verbatim-fenced, since names contain `_`)
@@ -1008,6 +1059,12 @@ class Renderer:
                 self._emit_noop_directive('instructors', content)
             elif kind == 'hide':
                 self._on_hide(content)
+            elif kind == 'quiz_open':
+                self._on_quiz_open()
+            elif kind == 'quiz_close':
+                self._on_quiz_close()
+            elif kind == 'answer':
+                self._on_answer(content)
             elif kind == 'solution_prose':
                 self._on_solution_prose(content)
             elif kind == 'grade_theorem':
@@ -1024,6 +1081,9 @@ class Renderer:
         if self.terse_open:
             self._append(_CONTAINER_FENCE + '\n\n')  # close unclosed terse
             self.terse_open = False
+        while self.quiz_depth > 0:
+            self._append(_CONTAINER_FENCE + '\n\n')  # close unclosed quiz
+            self.quiz_depth -= 1
         self._close_full_if_open()
 
     def result(self) -> str:

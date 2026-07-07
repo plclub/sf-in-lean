@@ -68,7 +68,9 @@ _POLICY = [
     ("INSTRUCTORS",          r"```instructors\b"),
     ("SOLUTION",             r":::solution\b"),
     ("QUIETSOLUTION",        r":::solution\b"),
-    ("HIDE",                 r"::+hide\b"),
+    # HIDE normally -> ::::hide, but a HIDE *inside* a QUIZ is the quiz's answer
+    # -> :::answer, so both count as a translated HIDE.
+    ("HIDE",                 r"::+hide\b|:::answer\b"),
     ("QUIZ",                 r"::+quiz\b"),
     # Intentionally dropped: region semantics not honored, prose kept as-is.
     ("HIDEFROMHTML",         None),
