@@ -898,12 +898,10 @@ theorem mul_two (p : Nat) :
   `add_shuffle3`.  You don't need to use induction yet.
 -/
 
-
-/- ::::full
-Note: By default, `rewrite` and `rw` rewrites left-to-right. To rewrite from right
-to left, use `rw [← h]`, where `←` is typed as `\l` or `\<-`.
-::::
- -/
+/-
+  Note: By default, `rewrite` and `rw` rewrite left-to-right. To rewrite from
+  right to left, use `rw [← h]`, where `←` is typed as `\l` or `\<-`.
+-/
 
 theorem add_shuffle3 : ∀ n m p : Nat,
     add (add n m) p = add (add n p) m := by
@@ -939,6 +937,54 @@ theorem mul_comm (m n : Nat) :
 -- GRADE_THEOREM 2: mul_comm
 -- []
 
+-- TERSE
+/-
+  New tactic combinator: `t₁ <;> t₂` runs `t₁`, then runs `t₂` on every
+  subgoal produced by `t₁`.
+-/
+-- /TERSE
+
+-- FULL
+/-
+  Before moving on to the next batch of exercises, let's introduce one small _tactic combinator_: a way of combining tactics to form a larger tactic.
+
+  If `t₁` and `t₂` are tactics, then `t₁ <;> t₂` means: run `t₁`, then
+  run `t₂` on every subgoal produced by `t₁`.
+
+  This is useful when one tactic splits the goal into several subgoals
+  and all of them can be finished in the same way.
+-/
+-- /FULL
+
+example (b : Bool) : (b || true) = true := by
+  cases b <;> rfl
+
+-- FULL
+/-
+  This is short for:
+-/
+
+example (b : Bool) : (b || true) = true := by
+  cases b with
+  | false => rfl
+  | true  => rfl
+
+/-
+  We can also chain `<;>`s.  In the next example, `cases b` creates two
+  goals; in each of them, `cases c` splits the goal again; then `rfl`
+  solves all four remaining goals.
+-/
+
+example (b c : Bool) : (b && c) = (c && b) := by
+  cases b <;> cases c <;> rfl
+
+/-
+  Use `<;>` when the generated subgoals really do have the same proof.
+  If different branches need different arguments, it is usually clearer
+  to write the cases explicitly.
+-/
+-- /FULL
+
 -- EX3? (more_exercises)
 /-
   Take a piece of paper.  For each of the following theorems, first
@@ -948,6 +994,8 @@ theorem mul_comm (m n : Nat) :
   down your prediction.  Then fill in the proof.  (There is no need
   to turn in your piece of paper; this is just to encourage you to
   reflect before you hack!)
+  Some of these proofs can be shortened
+  with `<;>` when several generated subgoals have the same proof.
 -/
 
 
@@ -971,10 +1019,7 @@ theorem all3_spec (b c : Bool) :
     (b && c) || ((!b) || (!c)) = true := by
   -- ADMITTED
   cases b with
-  | true =>
-    cases c with
-    | true  => rfl
-    | false => rfl
+  | true  => cases c <;> rfl
   | false => rfl
 -- /ADMITTED
 

@@ -224,7 +224,7 @@ should be kept in sync as chapters are rewritten.
 | Chapter           | Tactics first introduced |
 |-------------------|--------------------------|
 | `Basics`          | `rfl`, `intro`, `rewrite`, `cases`, `exact` |
-| `Induction`       | `induction`, `have`, `rw` |
+| `Induction`       | `induction`, `have`, `rw`, `<;>` |
 | `UsingLean`       | `dsimp`, `calc`, `exact?`, `rw?` |
 | `Lists`           | *(none new)* |
 | `Poly`            | *(none new)* |
