@@ -320,6 +320,12 @@ development moves out of `IndProp` into that Automation chapter.
 * **Aborted/abandoned lemmas** become unnamed `example`s closed with
   `sorry` (the SFL analogue of Rocq's `Abort`).
 
+* **`example` for one-off demos.** Prefer `example …` over a named
+  `theorem foo …` for throwaway illustrations (tactic demos, "silly" lemmas,
+  etc.) that are never referenced later — Lean's `example` doesn't force us to
+  invent a name (unlike Rocq).  Reserve names for results used elsewhere or
+  graded. (berberman, review of PR #61.)
+
 * **Library vs. client code.** Inside a definition's own library it is
   fine to unfold and simplify through definitions; *using* that code,
   do not "peek through the interface."
