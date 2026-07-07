@@ -471,11 +471,11 @@ theorem double_succ : ∀ n, double (succ n) = succ (succ (double n)) := by
   will automatically close the goal if the rewrite makes the goal true by
   definition. For example, instead of writing
 
-     rewrite [double_zero]; rfl
+     `rewrite [double_zero]; rfl`
 
      We could write :
 
-    rw [double_zero]
+    `rw [double_zero]`
 
     Using `rw` in your proofs is optional, but it will save you time
     (and is better style!).  -/
@@ -558,10 +558,10 @@ theorem even_succ (n : Nat) :
 
 -- HIDE
 -- QUIZ
-/- We've seen that there are goals that [destruct] can't solve but
-    [induction] can. What about the other way around? Are there steps
-    in a proof that can be solved by pure case analysis ([destruct])
-    but not using [induction]?
+/- We've seen that there are goals that `cases` can't solve but
+    `induction` can. What about the other way around? Are there steps
+    in a proof that can be solved by pure case analysis `cases`
+    but not using `induction`?
 
     (A) No
 
