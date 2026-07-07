@@ -217,6 +217,24 @@ inductive Bexp where
 
 /- _Evaluating_ an arithmetic expression produces a number. -/
 
+/- Claude (review, chenson2018 — DEFERRED): the reviewer suggests sealing the
+   evaluators with `@[irreducible]` and proving *characterizing lemmas* (one
+   `rfl` equation per constructor) that proofs rewrite with, instead of
+   unfolding the definition -- the pattern used in `LF/Lists.lean`
+   (`@[irreducible] def … ; unseal … in theorem …_eq : … := rfl`), optionally
+   tagging the lemmas `@[simp]`.
+
+   This is a sound proof-engineering improvement (it enforces the SFL
+   "don't peek through the interface" tenet), but a broad one: it would touch
+   every recursive function here (`Aexp.eval`, `Bexp.eval`, `optimize_0plus`,
+   `optimize_0plus_b`, `ceval_fun_no_while`, `no_whiles`, in both the warm-up
+   and real copies), add ~50 characterizing lemmas, convert the ~12 proofs
+   that currently `simp [Aexp.eval]`/unfold, and rewrite every `by rfl`
+   computational example (which relies on the definitions being reducible).
+   It also intersects the CONTRIBUTING tenet "explicit rewrites over `simp`"
+   (whether the lemmas should be `@[simp]` or used via explicit `rw`).
+   Deferred to its own focused pass. -/
+
 def Aexp.eval (a : Aexp) : Nat :=
   match a with
   | num n => n
