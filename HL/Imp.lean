@@ -59,9 +59,11 @@
 -- chenson2018 PR review.)
 -- MWH (port note): The Rocq chapter's "Rocq Automation" tour has been
 -- retooled here for Lean.  The tactic *combinators* (`try`, `<;>`,
--- `repeat`) are introduced in this chapter; the heavier decision
--- procedures (`simp`, `omega`) have already been introduced in Logical
--- Foundations, so we use them freely.
+-- `repeat`) are introduced in this chapter; `simp` was already introduced in
+-- Logical Foundations, so we use it freely.  For linear arithmetic we use
+-- `lia` (the newer `grind`-based tactic, per the chenson2018 review);
+-- NOTE that LF currently introduces `omega`, not `lia`, so this needs to be
+-- reconciled volume-wide (either introduce `lia` in LF, or keep `omega`).
 
 import LF.Maps
 
@@ -231,8 +233,8 @@ def Bexp.eval (b : Bexp) : Bool :=
   | bool b     => b
   | eq a1 a2  => a1.eval == a2.eval
   | neq a1 a2 => a1.eval != a2.eval
-  | le a1 a2  => decide (a1.eval ≤ a2.eval)
-  | gt a1 a2  => decide (a1.eval > a2.eval)
+  | le a1 a2  => a1.eval ≤ a2.eval
+  | gt a1 a2  => a1.eval > a2.eval
   | not b1    => !eval b1
   | and b1 b2 => eval b1 && eval b2
 
@@ -393,12 +395,12 @@ theorem silly2 (ae : Aexp) : Aexp.eval ae = Aexp.eval ae := by
 
 theorem foo (n : Nat) : n = 0 ∨ n ≥ 1 := by
   cases n with
-  | zero   => omega
-  | succ k => omega
+  | zero   => lia
+  | succ k => lia
 
 -- TERSE: /- We can collapse the two identical branches with `<;>`: -/
 theorem foo' (n : Nat) : n = 0 ∨ n ≥ 1 := by
-  cases n <;> omega -- run `cases n`, then `omega` on each subgoal
+  cases n <;> lia -- run `cases n`, then `lia` on each subgoal
 
 -- FULL
 /-
@@ -648,33 +650,31 @@ theorem crush_example (P Q : Prop) (hp : P) (hq : Q) : (P ∧ Q) ∧ (Q ∧ P) :
 
 /-
   ######################################################################
-  ## The `omega` tactic
+  ## The `lia` tactic
 -/
 
 -- FULL
 /-
-  `omega` is a decision procedure for linear arithmetic over the integers
-  and naturals.  If the goal is built from
+  `lia` is a decision procedure for linear arithmetic over the integers and
+  naturals.  If the goal is built from
 
     - numeric constants, addition, subtraction, and multiplication by
       constants,
     - equality (`=`, `≠`) and ordering (`≤`, `<`, `≥`, `>`), and
     - the logical connectives `∧`, `∨`, `¬`, and `→`,
 
-  then `omega` will either solve it or report that it is false.
+  then `lia` will either solve it or report that it is false.  (Rocq users
+  will recognize the name; `lia` is also the name of the corresponding Rocq
+  tactic.  Lean's older `omega` does the same job.)
 -/
 -- /FULL
 
-/- Claude: `omega` is Lean's analogue of Rocq's `lia`; unlike `lia` (which in
-   Rocq needs an explicit `From Stdlib Require Import Lia.`), `omega` needs no
-   import. -/
-
 example (m n o p : Nat) (h : m + n ≤ n + o ∧ o + 3 = p + 3) : m ≤ p := by
-  omega
+  lia
 
-example (m n : Nat) : m + n = n + m := by omega
+example (m n : Nat) : m + n = n + m := by lia
 
-example (m n p : Nat) : m + (n + p) = m + n + p := by omega
+example (m n p : Nat) : m + (n + p) = m + n + p := by lia
 
 /-
   ######################################################################
@@ -959,8 +959,8 @@ scoped notation:55 e:56 " ==> " n:56 => AevalR e n
     | bool b     => b
     | eq a1 a2  => a1.eval == a2.eval
     | neq a1 a2 => a1.eval != a2.eval
-    | le a1 a2  => decide (a1.eval ≤ a2.eval)
-    | gt a1 a2  => decide (a1.eval > a2.eval)
+    | le a1 a2  => a1.eval ≤ a2.eval
+    | gt a1 a2  => a1.eval > a2.eval
     | not b1    => !eval b1
     | and b1 b2 => eval b1 && eval b2
   ```
@@ -1073,9 +1073,9 @@ inductive BevalR : Bexp → Bool → Prop where
   | E_BNeq (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ==> n1) (h2 : a2 ==> n2) :
       BevalR (.neq a1 a2) (n1 != n2)
   | E_BLe (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ==> n1) (h2 : a2 ==> n2) :
-      BevalR (.le a1 a2) (decide (n1 ≤ n2))
+      BevalR (.le a1 a2) (n1 ≤ n2)
   | E_BGt (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ==> n1) (h2 : a2 ==> n2) :
-      BevalR (.gt a1 a2) (decide (n1 > n2))
+      BevalR (.gt a1 a2) (n1 > n2)
   | E_BNot (b : Bexp) (bv : Bool) (h : BevalR b bv) :
       BevalR (.not b) (!bv)
   | E_BAnd (b1 b2 : Bexp) (tv1 tv2 : Bool) (h1 : BevalR b1 tv1) (h2 : BevalR b2 tv2) :
@@ -1371,18 +1371,20 @@ def Z : String := "Z"
 -- Claude (port note): The Rocq chapter builds a custom `<{ ... }>` grammar
 -- so that Imp programs can be written with concrete `+`, `:=`, `;`,
 -- `if`/`while` syntax.  We take the lighter route used elsewhere in this
--- translation: two coercions let us drop the `id`/`num` wrappers, and we
--- otherwise write programs with the ordinary constructors.
+-- translation: three coercions let us drop the `id`/`num`/`bool` wrappers,
+-- and we otherwise write programs with the ordinary constructors.
 
 -- FULL
 /-
-  To make Imp programs easier to read and write, we introduce two
-  implicit coercions.  In Lean, a `Coe` instance tells the elaborator how
-  to turn a value of one type into another automatically:
+  To make Imp programs easier to read and write, we introduce a few implicit
+  coercions.  In Lean, a `Coe` instance tells the elaborator how to turn a
+  value of one type into another automatically:
    - `Coe String Aexp` lets us write a bare variable (a `String`) where an
      `Aexp` is expected; the string is implicitly wrapped with `id`.
    - `OfNat Aexp n` lets us write a numeric literal where an `Aexp` is
      expected; it is implicitly wrapped with `num`.
+   - `Coe Bool Bexp` lets us write a boolean literal (`true`/`false`) where a
+     `Bexp` is expected; it is implicitly wrapped with `bool`.
 -/
 -- /FULL
 
@@ -1392,11 +1394,15 @@ instance : Coe String Aexp where
 instance (n : Nat) : OfNat Aexp n where
   ofNat := .num n
 
+instance : Coe Bool Bexp where
+  coe := .bool
+
 /- With these, we can write `.plus 3 (.mult X 2)` instead of
-   `.plus (.num 3) (.mult (.id "X") (.num 2))`. -/
+   `.plus (.num 3) (.mult (.id "X") (.num 2))`, and `.and true (.not …)`
+   instead of `.and (.bool true) (.not …)`. -/
 
 def example_aexp : Aexp := .plus 3 (.mult X 2)
-def example_bexp : Bexp := .and (.bool true) (.not (.le X 4))
+def example_bexp : Bexp := .and true (.not (.le X 4))
 
 /- Claude: This chapter uses the two coercions above rather than an embedded
    Imp grammar.  For a future pass, here is the fuller notation machinery a
@@ -1514,8 +1520,8 @@ def Bexp.eval (st : State) (b : Bexp) : Bool :=
   | bool b     => b
   | eq a1 a2  => Aexp.eval st a1 == Aexp.eval st a2
   | neq a1 a2 => Aexp.eval st a1 != Aexp.eval st a2
-  | le a1 a2  => decide (Aexp.eval st a1 ≤ Aexp.eval st a2)
-  | gt a1 a2  => decide (Aexp.eval st a1 > Aexp.eval st a2)
+  | le a1 a2  => Aexp.eval st a1 ≤ Aexp.eval st a2
+  | gt a1 a2  => Aexp.eval st a1 > Aexp.eval st a2
   | not b1    => !eval st b1
   | and b1 b2 => eval st b1 && eval st b2
 
@@ -1533,7 +1539,7 @@ example : Aexp.eval (X →ₜ 5 ; empty_st) (.plus 3 (.mult X 2)) = 13 := by rfl
 example : Aexp.eval (X →ₜ 5 ; Y →ₜ 4 ; empty_st) (.plus Z (.mult X Y)) = 20 := by rfl
 
 /- test_bexp1 -/
-example : Bexp.eval (X →ₜ 5 ; empty_st) (.and (.bool true) (.not (.le X 4))) = true := by rfl
+example : Bexp.eval (X →ₜ 5 ; empty_st) (.and true (.not (.le X 4))) = true := by rfl
 
 /-
   ######################################################################
@@ -1749,7 +1755,7 @@ def subtract_3_from_5_slowly : Com :=
     subtract_slowly)
 
 /- *** An infinite loop: -/
-def loop : Com := .whileDo (.bool true) .skip
+def loop : Com := .whileDo true .skip
 
 -- HIDE
 /- Exponentiation: -/
@@ -2273,7 +2279,7 @@ theorem plus2_spec (st : State) (n : Nat) (st' : State)
   | E_Asgn _ _ m _ h =>
       simp only [Aexp.eval] at h
       rw [TotalMap.update_eq]
-      omega
+      lia
 
 /- LATER: This used to be recommended.  Should it be reinstated? -/
 -- EX3 (XtimesYinZ_spec)
@@ -2455,7 +2461,7 @@ theorem no_whiles_terminating' (c : Com) (st1 : State)
 
   DONE (compiling; survives to_verso → HL.ImpVerso builds):
     - AExp module: Aexp/Bexp syntax, Aexp.eval/Bexp.eval, Aexp.optimize_0plus + soundness
-    - Tactic combinators (try, <;>, repeat, macro), omega, handy-tactics recap
+    - Tactic combinators (try, <;>, repeat, macro), lia, handy-tactics recap
     - Bexp.optimize_0plus_b (EX3)
     - Evaluation as a Relation: AevalR + `==>`, inference rules,
       aevalR_iff_aeval (x2), BevalR (EX3) + bevalR_iff_beval,

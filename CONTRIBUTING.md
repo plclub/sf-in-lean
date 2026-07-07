@@ -239,6 +239,16 @@ should be kept in sync as chapters are rewritten.
 | `IndProp`         | `simp`, `rcases`, `subst`, `omega` |
 | `Maps`            | *(none new)* |
 | `IndPropRegexp`   | `specialize`, `trivial` |
+| `HL/Imp`          | `lia` |
+
+**`lia` (introduced in `HL/Imp`).**  `lia` — the newer `grind`-based
+linear-arithmetic tactic — is first used in `HL/Imp` (per the chenson2018 PR
+review; it replaces the older `omega` there).  Because it is in the `grind`
+family, it is in some tension with deferring `grind` to a later volume (see
+below).  **TODO / decision needed:** decide whether `lia` should be
+introduced *earlier* — e.g. in the LF **Automation** chapter, in place of (or
+alongside) `omega` — so that a student on the LF → HL path meets it before it
+is used here.
 
 Related notation introduced alongside tactics: anonymous constructor
 `⟨…⟩` (`Lists`); destructuring `let ⟨…⟩ := …` and `cases h : …`,
