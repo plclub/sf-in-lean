@@ -478,10 +478,33 @@ theorem double_succ : ∀ n, double (succ n) = succ (succ (double n)) := by
     `rw [double_zero]`
 
     Using `rw` in your proofs is optional, but it will save you time
-    (and is better style!).  -/
+    (and is better style!). -/
+
+-- FULL
+/-
+  Keep in mind there is one small caveat: `rw [...]` only performs a quick reflexivity check
+  after rewriting. It does not unfold every definition. So, in rare
+  cases, `rw` may leave a goal that is still solved immediately by `rfl`.
+-/
+
+def aliasOfTwo := two
+
+example (n : Nat) (h : n = aliasOfTwo) : n = two := by
+  rw [h]
+  /- The remaining goal is `aliasOfTwo = two`. -/
+  rfl
+
+-- /FULL
+
+-- TERSE
+/-
+  If `rw` leaves a goal that looks definitionally true, try adding `rfl`
+  after it.
+-/
+-- /TERSE
 
 /- Use induction to prove this simple fact about `double`.
-   Experiment with using `rw` instead of `rewrite`as well. -/
+   Experiment with using `rw` instead of `rewrite` as well. -/
 
 theorem double_add (n : Nat) : double n = n + n := by
   -- ADMITTED
@@ -946,7 +969,9 @@ theorem mul_comm (m n : Nat) :
 
 -- FULL
 /-
-  Before moving on to the next batch of exercises, let's introduce one small _tactic combinator_: a way of combining tactics to form a larger tactic.
+  Before moving on to the next batch of exercises, let's introduce one
+  small _tactic combinator_. A tactic combinator combines tactics to form
+  a larger tactic.
 
   If `t₁` and `t₂` are tactics, then `t₁ <;> t₂` means: run `t₁`, then
   run `t₂` on every subgoal produced by `t₁`.
