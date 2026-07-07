@@ -49,6 +49,22 @@ Regenerate `<Ch>Verso.lean`, then confirm every identifier/number
 token and comment word in `<Ch>.lean` appears in the Verso output,
 excluding the intentionally-dropped tokens described below.
 
+Two complementary automated checks help here (both take
+`<Ch>.lean <Ch>Verso.lean`):
+
+* `scripts/check_verso_prose.py` — catches lost/garbled **prose** by comparing
+  contiguous word runs. It is blind to lost *markup*: a marker flattened to plain
+  prose loses no words and passes.
+* `scripts/check_verso_markers.py` — catches silently-flattened **structural
+  markers**. It inventories markers in the source and, for each one that should
+  become a Verso directive (`FULL`→`::::full`, `HIDE`→`::::hide`, `EX`→
+  `::::exercise`, `QUIZ`→`::+quiz`, author notes→` ```dev `, …), verifies the
+  directive is present in the output. A `FLATTENED` line means a marker was
+  dropped with no Verso analog (this is how the `-- QUIZ` drop went unnoticed —
+  the word-diff saw no loss). `WARN` count-mismatches are soft (verify by hand);
+  a marker keyword absent from its `_POLICY` table is `UNKNOWN` and must be
+  classified. Add new markers to `_POLICY` when `to_verso` learns to emit them.
+
 **Intentionally dropped by `to_verso` — do not treat as content loss:**
 
 * `/- test_* -/` single-identifier test-case labels (decided 2026-06-15).
