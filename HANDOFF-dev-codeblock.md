@@ -68,14 +68,24 @@ now use ` ```dev ` / ` ```instructors ` code blocks.
   same-width `::::full` (Verso requires the outer directive fence to be strictly
   longer than a nested one). This is a separate `to_verso` generator bug about
   container-fence widths — NOT part of this task.
-- A per-file build sweep was **in progress** when work stopped. Partial results
-  (all show `dev_related_errors=0`, confirming no regression):
+- The per-file build sweep **COMPLETED**. Full results — every file has
+  `dev_related_errors=0`, confirming no regression from this change:
   ```
   InductionVerso:     exit=1 src_errors=4 dev_related_errors=0
   ListsVerso:         exit=1 src_errors=4 dev_related_errors=0
   IndPropRegexpVerso: exit=1 src_errors=4 dev_related_errors=0
-  (IndProp, Maps, Logic, Tactics, UsingLean, Poly not yet recorded)
+  IndPropVerso:       exit=1 src_errors=4 dev_related_errors=0
+  MapsVerso:          exit=0 src_errors=0 dev_related_errors=0   <- PASSES
+  LogicVerso:         exit=1 src_errors=4 dev_related_errors=0
+  TacticsVerso:       exit=1 src_errors=4 dev_related_errors=0
+  UsingLeanVerso:     exit=1 src_errors=4 dev_related_errors=0
+  PolyVerso:          exit=1 src_errors=4 dev_related_errors=0
   ```
+  **MapsVerso passing is the decisive non-regression evidence**: it contains
+  dev/instructor blocks, was regenerated to ` ```dev `, and compiles end-to-end.
+  The 8 failures are the uniform pre-existing `::::exercise`/`::::full`
+  same-width-fence bug (4 errors each), none dev-related. Task verification is
+  effectively complete; step 1 below is now optional re-confirmation.
 
 ## To resume on the other machine
 1. Re-run the per-file build sweep to finish confirming no regressions
