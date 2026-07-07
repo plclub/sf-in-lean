@@ -771,18 +771,18 @@ theorem optimize_0plus_b_sound (b : Bexp) :
 -/
 -- /FULL
 
-inductive AevalR : Aexp → Nat → Prop where
+inductive Aexp.evalR : Aexp → Nat → Prop where
   | E_ANum (n : Nat) :
-      AevalR (.num n) n
+      Aexp.evalR (.num n) n
   | E_APlus (a1 a2 : Aexp) (n1 n2 : Nat)
-      (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) :
-      AevalR (.plus a1 a2) (n1 + n2)
+      (h1 : Aexp.evalR a1 n1) (h2 : Aexp.evalR a2 n2) :
+      Aexp.evalR (.plus a1 a2) (n1 + n2)
   | E_AMinus (a1 a2 : Aexp) (n1 n2 : Nat)
-      (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) :
-      AevalR (.minus a1 a2) (n1 - n2)
+      (h1 : Aexp.evalR a1 n1) (h2 : Aexp.evalR a2 n2) :
+      Aexp.evalR (.minus a1 a2) (n1 - n2)
   | E_AMult (a1 a2 : Aexp) (n1 n2 : Nat)
-      (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) :
-      AevalR (.mult a1 a2) (n1 * n2)
+      (h1 : Aexp.evalR a1 n1) (h2 : Aexp.evalR a2 n2) :
+      Aexp.evalR (.mult a1 a2) (n1 * n2)
 
 -- FULL
 /-
@@ -790,21 +790,21 @@ inductive AevalR : Aexp → Nat → Prop where
   with *positional* hypotheses -- no names for the premises:
 
   ```
-  inductive AevalR : Aexp → Nat → Prop where
+  inductive Aexp.evalR : Aexp → Nat → Prop where
     | E_ANum (n : Nat) :
-        AevalR (.num n) n
+        Aexp.evalR (.num n) n
     | E_APlus (e1 e2 : Aexp) (n1 n2 : Nat) :
-        AevalR e1 n1 →
-        AevalR e2 n2 →
-        AevalR (.plus e1 e2) (n1 + n2)
+        Aexp.evalR e1 n1 →
+        Aexp.evalR e2 n2 →
+        Aexp.evalR (.plus e1 e2) (n1 + n2)
     | E_AMinus (e1 e2 : Aexp) (n1 n2 : Nat) :
-        AevalR e1 n1 →
-        AevalR e2 n2 →
-        AevalR (.minus e1 e2) (n1 - n2)
+        Aexp.evalR e1 n1 →
+        Aexp.evalR e2 n2 →
+        Aexp.evalR (.minus e1 e2) (n1 - n2)
     | E_AMult (e1 e2 : Aexp) (n1 n2 : Nat) :
-        AevalR e1 n1 →
-        AevalR e2 n2 →
-        AevalR (.mult e1 e2) (n1 * n2)
+        Aexp.evalR e1 n1 →
+        Aexp.evalR e2 n2 →
+        Aexp.evalR (.mult e1 e2) (n1 * n2)
   ```
 
   The version above instead gives explicit names to the hypotheses in each
@@ -815,7 +815,7 @@ inductive AevalR : Aexp → Nat → Prop where
 -- /FULL
 
 /-
-  It will be convenient to have an infix notation for `AevalR`.  We'll
+  It will be convenient to have an infix notation for `Aexp.evalR`.  We'll
   write `e ==> n` to mean that arithmetic expression `e` evaluates to
   value `n`.  (We scope the notation to this namespace so it doesn't
   collide with other evaluation relations later.)  In Lean the notation is
@@ -827,7 +827,7 @@ inductive AevalR : Aexp → Nat → Prop where
    in the HTML version of the notes and use a double slash as the closest
    approximation in [.v] files.) -/
 
-scoped notation:55 e:56 " ==> " n:56 => AevalR e n
+scoped notation:55 e:56 " ==> " n:56 => Aexp.evalR e n
 /- LATER: Comment from reader: How do I keep the ==> notation for aevalR
    from conflicting with the ==> notation for bevalR ?
    BCP/AAA 1/16: We should explain about notation scopes somewhere.
@@ -842,15 +842,15 @@ scoped notation:55 e:56 " ==> " n:56 => AevalR e n
 -- FULL
 /-
   In informal discussions, it is convenient to write the rules for
-  `AevalR` and similar relations in the more readable graphical form of
+  `Aexp.evalR` and similar relations in the more readable graphical form of
   _inference rules_, where the premises above the line justify the
   conclusion below the line.  For example, the constructor `E_APlus`
 
   ```
       | E_APlus (a1 a2 : Aexp) (n1 n2 : Nat) :
-          AevalR a1 n1 →
-          AevalR a2 n2 →
-          AevalR (.plus a1 a2) (n1 + n2)
+          Aexp.evalR a1 n1 →
+          Aexp.evalR a2 n2 →
+          Aexp.evalR (.plus a1 a2) (n1 + n2)
   ```
 
   can be written like this as an inference rule:
@@ -1061,28 +1061,28 @@ theorem aevalR_iff_aeval' (a : Aexp) (n : Nat) :
 
 -- EX3 (bevalR)
 /-
-  Write a relation `BevalR` in the same style as `AevalR`, and prove that
+  Write a relation `Bexp.evalR` in the same style as `Aexp.evalR`, and prove that
   it is equivalent to `Bexp.eval`.
 -/
 
-inductive BevalR : Bexp → Bool → Prop where
+inductive Bexp.evalR : Bexp → Bool → Prop where
   -- SOLUTION
-  | E_bool (b : Bool) : BevalR (.bool b) b
+  | E_bool (b : Bool) : Bexp.evalR (.bool b) b
   | E_BEq (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ==> n1) (h2 : a2 ==> n2) :
-      BevalR (.eq a1 a2) (n1 == n2)
+      Bexp.evalR (.eq a1 a2) (n1 == n2)
   | E_BNeq (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ==> n1) (h2 : a2 ==> n2) :
-      BevalR (.neq a1 a2) (n1 != n2)
+      Bexp.evalR (.neq a1 a2) (n1 != n2)
   | E_BLe (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ==> n1) (h2 : a2 ==> n2) :
-      BevalR (.le a1 a2) (n1 ≤ n2)
+      Bexp.evalR (.le a1 a2) (n1 ≤ n2)
   | E_BGt (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ==> n1) (h2 : a2 ==> n2) :
-      BevalR (.gt a1 a2) (n1 > n2)
-  | E_BNot (b : Bexp) (bv : Bool) (h : BevalR b bv) :
-      BevalR (.not b) (!bv)
-  | E_BAnd (b1 b2 : Bexp) (tv1 tv2 : Bool) (h1 : BevalR b1 tv1) (h2 : BevalR b2 tv2) :
-      BevalR (.and b1 b2) (tv1 && tv2)
+      Bexp.evalR (.gt a1 a2) (n1 > n2)
+  | E_BNot (b : Bexp) (bv : Bool) (h : Bexp.evalR b bv) :
+      Bexp.evalR (.not b) (!bv)
+  | E_BAnd (b1 b2 : Bexp) (tv1 tv2 : Bool) (h1 : Bexp.evalR b1 tv1) (h2 : Bexp.evalR b2 tv2) :
+      Bexp.evalR (.and b1 b2) (tv1 && tv2)
   -- /SOLUTION
 
-scoped notation:55 e:56 " ==>b " b:56 => BevalR e b
+scoped notation:55 e:56 " ==>b " b:56 => Bexp.evalR e b
 
 theorem bevalR_iff_beval (b : Bexp) (bv : Bool) :
     b ==>b bv ↔ Bexp.eval b = bv := by
@@ -1166,17 +1166,17 @@ inductive Aexp where
 -/
 -- TERSE: /- What should `Aexp.eval` return for `.div (.num 1) (.num 0)`?? -/
 
-inductive AevalR : Aexp → Nat → Prop where
-  | E_ANum (n : Nat) : AevalR (.num n) n
-  | E_APlus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) :
-      AevalR (.plus a1 a2) (n1 + n2)
-  | E_AMinus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) :
-      AevalR (.minus a1 a2) (n1 - n2)
-  | E_AMult (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) :
-      AevalR (.mult a1 a2) (n1 * n2)
+inductive Aexp.evalR : Aexp → Nat → Prop where
+  | E_ANum (n : Nat) : Aexp.evalR (.num n) n
+  | E_APlus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : Aexp.evalR a1 n1) (h2 : Aexp.evalR a2 n2) :
+      Aexp.evalR (.plus a1 a2) (n1 + n2)
+  | E_AMinus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : Aexp.evalR a1 n1) (h2 : Aexp.evalR a2 n2) :
+      Aexp.evalR (.minus a1 a2) (n1 - n2)
+  | E_AMult (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : Aexp.evalR a1 n1) (h2 : Aexp.evalR a2 n2) :
+      Aexp.evalR (.mult a1 a2) (n1 * n2)
   | E_ADiv (a1 a2 : Aexp) (n1 n2 n3 : Nat)             -- NEW
-      (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) (hpos : n2 > 0) (hdiv : n2 * n3 = n1) :
-      AevalR (.div a1 a2) n3
+      (h1 : Aexp.evalR a1 n1) (h2 : Aexp.evalR a2 n2) (hpos : n2 > 0) (hdiv : n2 * n3 = n1) :
+      Aexp.evalR (.div a1 a2) n3
 
 /-
   Notice that this evaluation relation corresponds to a _partial_
@@ -1209,15 +1209,15 @@ inductive Aexp where
 -/
 -- TERSE: /- What should `Aexp.eval` do with nondeterminism?? -/
 
-inductive AevalR : Aexp → Nat → Prop where
-  | E_Any (n : Nat) : AevalR .any n                   -- NEW
-  | E_ANum (n : Nat) : AevalR (.num n) n
-  | E_APlus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) :
-      AevalR (.plus a1 a2) (n1 + n2)
-  | E_AMinus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) :
-      AevalR (.minus a1 a2) (n1 - n2)
-  | E_AMult (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) :
-      AevalR (.mult a1 a2) (n1 * n2)
+inductive Aexp.evalR : Aexp → Nat → Prop where
+  | E_Any (n : Nat) : Aexp.evalR .any n                   -- NEW
+  | E_ANum (n : Nat) : Aexp.evalR (.num n) n
+  | E_APlus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : Aexp.evalR a1 n1) (h2 : Aexp.evalR a2 n2) :
+      Aexp.evalR (.plus a1 a2) (n1 + n2)
+  | E_AMinus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : Aexp.evalR a1 n1) (h2 : Aexp.evalR a2 n2) :
+      Aexp.evalR (.minus a1 a2) (n1 - n2)
+  | E_AMult (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : Aexp.evalR a1 n1) (h2 : Aexp.evalR a2 n2) :
+      Aexp.evalR (.mult a1 a2) (n1 * n2)
 
 end AevalRExtended
 
@@ -1317,6 +1317,28 @@ inductive Aexp where
   | plus (a1 a2 : Aexp)
   | minus (a1 a2 : Aexp)
   | mult (a1 a2 : Aexp)
+
+/- Claude (review, chenson2018): variable names are hardcoded as `String`
+   here.  For consistency with the `Maps` chapter (and idiomatic Lean), we
+   could instead make the identifier type a *type variable* with
+   `DecidableEq`, threaded through `Aexp`/`Bexp`/`Com`/`State`.  Stashed for a
+   future decision; the parameterized version would look like:
+
+   ```
+   inductive Aexp (Id : Type) where
+     | num (n : Nat)
+     | id (x : Id)
+     | plus (a1 a2 : Aexp Id)
+     | minus (a1 a2 : Aexp Id)
+     | mult (a1 a2 : Aexp Id)
+   -- … then `Bexp Id`, `Com Id`, `abbrev State (Id) [DecidableEq Id] :=
+   -- TotalMap Id Nat`, and `[DecidableEq Id]` wherever a lookup/update is
+   -- performed.
+   ```
+
+   We keep `String` for now: it reads more simply in a teaching chapter, and
+   the SF source deliberately fixes variables to strings (see the note above
+   about global string-valued variables). -/
 
 /- The `Bexp` definition is unchanged, except that it now refers to the
    new `Aexp`. -/
@@ -1530,7 +1552,7 @@ def Bexp.eval (st : State) (b : Bexp) : Bool :=
 -- Claude: we write single-variable states inline as `X →ₜ 5 ; empty_st`
 -- rather than introducing a dedicated "singleton state" shorthand.
 
-def empty_st : State := ∅
+abbrev empty_st : State := ∅
 
 /- test_aexp1 -/
 example : Aexp.eval (X →ₜ 5 ; empty_st) (.plus 3 (.mult X 2)) = 13 := by rfl
@@ -1852,7 +1874,7 @@ def Com.ceval_fun_no_while (st : State) (c : Com) : State :=
 /-
   Here's a better way: define `ceval` as a _relation_ rather than a
   _function_ -- i.e., make its result a `Prop` rather than a `State`,
-  similar to what we did for `AevalR` above.
+  similar to what we did for `Aexp.evalR` above.
 -/
 
 -- FULL
@@ -2463,8 +2485,8 @@ theorem no_whiles_terminating' (c : Com) (st1 : State)
     - AExp module: Aexp/Bexp syntax, Aexp.eval/Bexp.eval, Aexp.optimize_0plus + soundness
     - Tactic combinators (try, <;>, repeat, macro), lia, handy-tactics recap
     - Bexp.optimize_0plus_b (EX3)
-    - Evaluation as a Relation: AevalR + `==>`, inference rules,
-      aevalR_iff_aeval (x2), BevalR (EX3) + bevalR_iff_beval,
+    - Evaluation as a Relation: Aexp.evalR + `==>`, inference rules,
+      aevalR_iff_aeval (x2), Bexp.evalR (EX3) + bevalR_iff_beval,
       AevalRDivision / AevalRExtended, tradeoffs
     - Expressions With Variables: State, coercions, Aexp.eval/Bexp.eval, Com + examples
     - Evaluating Commands: Com.ceval_fun_no_while, Ceval + `=[ c ]=>`, examples,
