@@ -17,6 +17,7 @@ name: CI
 
 on:
   pull_request:
+  merge_group: 
   push:
     branches: [main]
 
@@ -25,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Get the source code.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Install the Lean toolchain pinned in `lean-toolchain` (with build
       # caching) and run `lake build`, which builds the book.
