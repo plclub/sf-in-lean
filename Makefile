@@ -55,7 +55,6 @@ all: verso lf hl ts check-bare-lean-chapters check-verso-chapters
 # when it has been incorporated into the book via a *Verso.lean include.
 .PHONY: check-lean
 check-bare-lean-chapters:
-	lake build LF.Induction
 	lake build HL.Imp
 
 # Temporary:

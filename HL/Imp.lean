@@ -47,10 +47,16 @@
    in the changelogs, and this hack (from 2022!) also seems to contradict
    this statement: https://github.com/rocq-prover/rocq/issues/15643 -/
 
--- MWH (port note): Constructors of `Aexp`/`Bexp` are always written with
--- Lean's dot notation (`.ANum`, `.BEq`, …), resolved by the expected type.
--- This is idiomatic Lean and it sidesteps the clash between the `BEq`
--- constructor and Lean's `BEq` typeclass.
+-- MWH (port note): Datatype constructors follow Lean naming conventions --
+-- lowerCamelCase with no redundant type-name prefix.  `Aexp` is `num`/`id`/
+-- `plus`/`minus`/`mult`; `Bexp` folds the two booleans into a single
+-- `bool (b : Bool)` constructor (like `num (n : Nat)`) plus `eq`/`neq`/`le`/
+-- `gt`/`not`/`and`; `Com` is `skip`/`asgn`/`seq`/`cond`/`whileDo`.
+-- Inference-rule constructors keep their SF names (`E_*`, `ST_*`, `nw_*`).
+-- Functions on a type live in that type's namespace (`Aexp.eval`,
+-- `Bexp.eval`, `Aexp.optimize_0plus`, `Com.no_whiles`, …), so their match
+-- bodies use the bare constructor names.  (Convention applied per the
+-- chenson2018 PR review.)
 -- MWH (port note): The Rocq chapter's "Rocq Automation" tour has been
 -- retooled here for Lean.  The tactic *combinators* (`try`, `<;>`,
 -- `repeat`) are introduced in this chapter; the heavier decision
@@ -122,20 +128,19 @@ namespace AExp
 -- TERSE: /- Abstract syntax trees for arithmetic and boolean expressions: -/
 
 inductive Aexp where
-  | ANum (n : Nat)
-  | APlus (a1 a2 : Aexp)
-  | AMinus (a1 a2 : Aexp)
-  | AMult (a1 a2 : Aexp)
+  | num (n : Nat)
+  | plus (a1 a2 : Aexp)
+  | minus (a1 a2 : Aexp)
+  | mult (a1 a2 : Aexp)
 
 inductive Bexp where
-  | BTrue
-  | BFalse
-  | BEq (a1 a2 : Aexp)
-  | BNeq (a1 a2 : Aexp)
-  | BLe (a1 a2 : Aexp)
-  | BGt (a1 a2 : Aexp)
-  | BNot (b : Bexp)
-  | BAnd (b1 b2 : Bexp)
+  | bool (b : Bool)
+  | eq (a1 a2 : Aexp)
+  | neq (a1 a2 : Aexp)
+  | le (a1 a2 : Aexp)
+  | gt (a1 a2 : Aexp)
+  | not (b : Bexp)
+  | and (b1 b2 : Bexp)
 
 -- FULL
 /-
@@ -145,7 +150,7 @@ inductive Bexp where
   `"1 + 2 * 3"` to the AST
 
   ```
-  .APlus (.ANum 1) (.AMult (.ANum 2) (.ANum 3))
+  .plus (.num 1) (.mult (.num 2) (.num 3))
   ```
 
   The optional chapter `ImpParser` develops a simple lexical analyzer and
@@ -210,35 +215,33 @@ inductive Bexp where
 
 /- _Evaluating_ an arithmetic expression produces a number. -/
 
-def aeval (a : Aexp) : Nat :=
+def Aexp.eval (a : Aexp) : Nat :=
   match a with
-  | .ANum n => n
-  | .APlus  a1 a2 => aeval a1 + aeval a2
-  | .AMinus a1 a2 => aeval a1 - aeval a2
-  | .AMult  a1 a2 => aeval a1 * aeval a2
+  | num n => n
+  | plus  a1 a2 => eval a1 + eval a2
+  | minus a1 a2 => eval a1 - eval a2
+  | mult  a1 a2 => eval a1 * eval a2
 
-/- test_aeval1 -/
-example : aeval (.APlus (.ANum 2) (.ANum 2)) = 4 := by rfl
+example : Aexp.eval (.plus (.num 2) (.num 2)) = 4 := by rfl
 
 /- Similarly, evaluating a boolean expression yields a boolean. -/
 
-def beval (b : Bexp) : Bool :=
+def Bexp.eval (b : Bexp) : Bool :=
   match b with
-  | .BTrue      => true
-  | .BFalse     => false
-  | .BEq a1 a2  => aeval a1 == aeval a2
-  | .BNeq a1 a2 => aeval a1 != aeval a2
-  | .BLe a1 a2  => decide (aeval a1 ≤ aeval a2)
-  | .BGt a1 a2  => decide (aeval a1 > aeval a2)
-  | .BNot b1    => !beval b1
-  | .BAnd b1 b2 => beval b1 && beval b2
+  | bool b     => b
+  | eq a1 a2  => a1.eval == a2.eval
+  | neq a1 a2 => a1.eval != a2.eval
+  | le a1 a2  => decide (a1.eval ≤ a2.eval)
+  | gt a1 a2  => decide (a1.eval > a2.eval)
+  | not b1    => !eval b1
+  | and b1 b2 => eval b1 && eval b2
 
 -- QUIZ
 /-
   What does the following expression evaluate to?
 
   ```
-  aeval (.APlus (.ANum 3) (.AMinus (.ANum 4) (.ANum 1)))
+  Aexp.eval (.plus (.num 3) (.minus (.num 4) (.num 1)))
   ```
 
   (A) true    (B) false    (C) 0    (D) 3    (E) 6
@@ -255,17 +258,17 @@ def beval (b : Bexp) : Bool :=
   We haven't defined very much yet, but we can already get some mileage
   out of the definitions.  Suppose we define a function that takes an
   arithmetic expression and slightly simplifies it, changing every
-  occurrence of `0 + e` (i.e., `.APlus (.ANum 0) e`) into just `e`.
+  occurrence of `0 + e` (i.e., `.plus (.num 0) e`) into just `e`.
 -/
 -- /FULL
 
-def optimize_0plus (a : Aexp) : Aexp :=
+def Aexp.optimize_0plus (a : Aexp) : Aexp :=
   match a with
-  | .ANum n => .ANum n
-  | .APlus (.ANum 0) e2 => optimize_0plus e2
-  | .APlus  e1 e2 => .APlus  (optimize_0plus e1) (optimize_0plus e2)
-  | .AMinus e1 e2 => .AMinus (optimize_0plus e1) (optimize_0plus e2)
-  | .AMult  e1 e2 => .AMult  (optimize_0plus e1) (optimize_0plus e2)
+  | num n => num n
+  | plus (num 0) e2 => optimize_0plus e2
+  | plus  e1 e2 => plus  (optimize_0plus e1) (optimize_0plus e2)
+  | minus e1 e2 => minus (optimize_0plus e1) (optimize_0plus e2)
+  | mult  e1 e2 => mult  (optimize_0plus e1) (optimize_0plus e2)
 
 -- FULL
 /-
@@ -276,10 +279,10 @@ def optimize_0plus (a : Aexp) : Aexp :=
 
 /- test_optimize_0plus -/
 example :
-    optimize_0plus (.APlus (.ANum 2)
-                     (.APlus (.ANum 0)
-                       (.APlus (.ANum 0) (.ANum 1))))
-      = .APlus (.ANum 2) (.ANum 1) := by rfl
+    Aexp.optimize_0plus (.plus (.num 2)
+                     (.plus (.num 0)
+                       (.plus (.num 0) (.num 1))))
+      = .plus (.num 2) (.num 1) := by rfl
 
 -- FULL
 /-
@@ -294,33 +297,33 @@ example :
 -- /FULL
 
 theorem optimize_0plus_sound (a : Aexp) :
-    aeval (optimize_0plus a) = aeval a := by
+    Aexp.eval (Aexp.optimize_0plus a) = Aexp.eval a := by
   induction a with
-  | ANum n => rfl
-  | APlus a1 a2 ih1 ih2 =>
+  | num n => rfl
+  | plus a1 a2 ih1 ih2 =>
     cases a1 with
-    | ANum n =>
+    | num n =>
       cases n with
       | zero =>
-        simp only [optimize_0plus, aeval, Nat.zero_add]
+        simp only [Aexp.optimize_0plus, Aexp.eval, Nat.zero_add]
         exact ih2
       | succ n =>
-        simp only [optimize_0plus, aeval]
+        simp only [Aexp.optimize_0plus, Aexp.eval]
         rw [ih2]
-    | APlus b1 b2 =>
-      simp only [optimize_0plus, aeval] at ih1 ⊢
+    | plus b1 b2 =>
+      simp only [Aexp.optimize_0plus, Aexp.eval] at ih1 ⊢
       rw [ih1, ih2]
-    | AMinus b1 b2 =>
-      simp only [optimize_0plus, aeval] at ih1 ⊢
+    | minus b1 b2 =>
+      simp only [Aexp.optimize_0plus, Aexp.eval] at ih1 ⊢
       rw [ih1, ih2]
-    | AMult b1 b2 =>
-      simp only [optimize_0plus, aeval] at ih1 ⊢
+    | mult b1 b2 =>
+      simp only [Aexp.optimize_0plus, Aexp.eval] at ih1 ⊢
       rw [ih1, ih2]
-  | AMinus a1 a2 ih1 ih2 =>
-    simp only [optimize_0plus, aeval]
+  | minus a1 a2 ih1 ih2 =>
+    simp only [Aexp.optimize_0plus, Aexp.eval]
     rw [ih1, ih2]
-  | AMult a1 a2 ih1 ih2 =>
-    simp only [optimize_0plus, aeval]
+  | mult a1 a2 ih1 ih2 =>
+    simp only [Aexp.optimize_0plus, Aexp.eval]
     rw [ih1, ih2]
 
 /-
@@ -366,7 +369,7 @@ theorem silly1 (P : Prop) (hp : P) : P := by
   try rfl -- `rfl` would fail here, but `try` swallows the failure...
   exact hp -- ...so we can still finish some other way.
 
-theorem silly2 (ae : Aexp) : aeval ae = aeval ae := by
+theorem silly2 (ae : Aexp) : Aexp.eval ae = Aexp.eval ae := by
   try rfl -- here `try rfl` just does `rfl`
 
 /-
@@ -407,19 +410,19 @@ theorem foo' (n : Nat) : n = 0 ∨ n ≥ 1 := by
 -- /FULL
 
 theorem optimize_0plus_sound' (a : Aexp) :
-    aeval (optimize_0plus a) = aeval a := by
+    Aexp.eval (Aexp.optimize_0plus a) = Aexp.eval a := by
   induction a with
-  | ANum n => rfl
-  | APlus a1 a2 ih1 ih2 =>
+  | num n => rfl
+  | plus a1 a2 ih1 ih2 =>
     -- The interesting case: split on the shape of `a1`; when it is a
     -- literal we must additionally check whether it is `0`.
     cases a1 with
-    | ANum n => cases n <;> simp_all [optimize_0plus, aeval]
-    | APlus b1 b2  => simp_all [optimize_0plus, aeval]
-    | AMinus b1 b2 => simp_all [optimize_0plus, aeval]
-    | AMult b1 b2  => simp_all [optimize_0plus, aeval]
-  | AMinus a1 a2 ih1 ih2 => simp_all [optimize_0plus, aeval]
-  | AMult a1 a2 ih1 ih2 => simp_all [optimize_0plus, aeval]
+    | num n => cases n <;> simp_all [Aexp.optimize_0plus, Aexp.eval]
+    | plus b1 b2  => simp_all [Aexp.optimize_0plus, Aexp.eval]
+    | minus b1 b2 => simp_all [Aexp.optimize_0plus, Aexp.eval]
+    | mult b1 b2  => simp_all [Aexp.optimize_0plus, Aexp.eval]
+  | minus a1 a2 ih1 ih2 => simp_all [Aexp.optimize_0plus, Aexp.eval]
+  | mult a1 a2 ih1 ih2 => simp_all [Aexp.optimize_0plus, Aexp.eval]
 
 -- HIDEFROMADVANCED
 -- FULL
@@ -433,40 +436,40 @@ theorem optimize_0plus_sound' (a : Aexp) :
   _Theorem_: For all arithmetic expressions `a`,
 
   ```
-  aeval (optimize_0plus a) = aeval a.
+  Aexp.eval (Aexp.optimize_0plus a) = Aexp.eval a.
   ```
 
   _Proof_: By induction on `a`.  Most cases follow directly from the IH.
   The remaining cases are as follows:
 
-    - Suppose `a = .ANum n` for some `n`.  We must show
+    - Suppose `a = .num n` for some `n`.  We must show
 
       ```
-      aeval (optimize_0plus (.ANum n)) = aeval (.ANum n).
+      Aexp.eval (Aexp.optimize_0plus (.num n)) = Aexp.eval (.num n).
       ```
 
-      This is immediate from the definition of `optimize_0plus`.
+      This is immediate from the definition of `Aexp.optimize_0plus`.
 
-    - Suppose `a = .APlus a1 a2` for some `a1` and `a2`.  We must show
+    - Suppose `a = .plus a1 a2` for some `a1` and `a2`.  We must show
 
       ```
-      aeval (optimize_0plus (.APlus a1 a2)) = aeval (.APlus a1 a2).
+      Aexp.eval (Aexp.optimize_0plus (.plus a1 a2)) = Aexp.eval (.plus a1 a2).
       ```
 
       Consider the possible forms of `a1`.  For most of them,
-      `optimize_0plus` simply calls itself recursively for the
+      `Aexp.optimize_0plus` simply calls itself recursively for the
       subexpressions and rebuilds a new expression of the same form as
       `a1`; in these cases, the result follows directly from the IH.
 
-      The interesting case is when `a1 = .ANum n` for some `n`.  If `n = 0`,
+      The interesting case is when `a1 = .num n` for some `n`.  If `n = 0`,
       then
 
       ```
-      optimize_0plus (.APlus a1 a2) = optimize_0plus a2
+      Aexp.optimize_0plus (.plus a1 a2) = Aexp.optimize_0plus a2
       ```
 
       and the IH for `a2` is exactly what we need.  On the other hand, if
-      `n = n' + 1` for some `n'`, then again `optimize_0plus` simply calls
+      `n = n' + 1` for some `n'`, then again `Aexp.optimize_0plus` simply calls
       itself recursively, and the result follows from the IH.  ∎
 -/
 -- /FULL
@@ -475,11 +478,11 @@ theorem optimize_0plus_sound' (a : Aexp) :
 -- FULL
 /-
   However, this proof can still be improved: the first case (for
-  `a = .ANum n`) is very trivial -- even more trivial than the cases that
+  `a = .num n`) is very trivial -- even more trivial than the cases that
   we said simply followed from the IH -- yet in a fully explicit proof we
   would write it out in full.  It would be better and clearer to drop it and
   just say, at the top, "Most cases are either immediate or direct from the
-  IH.  The only interesting case is the one for `.APlus`..."  Our `<;>`
+  IH.  The only interesting case is the one for `.plus`..."  Our `<;>`
   version above already does exactly this.
 -/
 -- /FULL
@@ -492,7 +495,7 @@ theorem optimize_0plus_sound' (a : Aexp) :
 
    ```
    Theorem optimize_0plus_sound'': forall a,
-     aeval (optimize_0plus a) = aeval a.
+     eval (optimize_0plus a) = eval a.
    Proof.
      intros a.
      induction a;
@@ -709,7 +712,7 @@ example (m n p : Nat) : m + (n + p) = m + n + p := by omega
 
 -- EX3 (optimize_0plus_b_sound)
 /-
-  Since the `optimize_0plus` transformation doesn't change the value of an
+  Since the `Aexp.optimize_0plus` transformation doesn't change the value of an
   `Aexp`, we should be able to apply it to all the `Aexp`s that appear in a
   `Bexp` without changing the `Bexp`'s value.  Write a function that
   performs this transformation on `Bexp`s and prove it sound.  Use the
@@ -717,38 +720,37 @@ example (m n p : Nat) : m + (n + p) = m + n + p := by omega
   possible.
 -/
 
-def optimize_0plus_b (b : Bexp) : Bexp :=
+def Bexp.optimize_0plus_b (b : Bexp) : Bexp :=
   -- ADMITDEF
   match b with
-  | .BTrue      => .BTrue
-  | .BFalse     => .BFalse
-  | .BEq a1 a2  => .BEq (optimize_0plus a1) (optimize_0plus a2)
-  | .BNeq a1 a2 => .BNeq (optimize_0plus a1) (optimize_0plus a2)
-  | .BLe a1 a2  => .BLe (optimize_0plus a1) (optimize_0plus a2)
-  | .BGt a1 a2  => .BGt (optimize_0plus a1) (optimize_0plus a2)
-  | .BNot b1    => .BNot (optimize_0plus_b b1)
-  | .BAnd b1 b2 => .BAnd (optimize_0plus_b b1) (optimize_0plus_b b2)
+  | bool b     => bool b
+  | eq a1 a2  => eq a1.optimize_0plus a2.optimize_0plus
+  | neq a1 a2 => neq a1.optimize_0plus a2.optimize_0plus
+  | le a1 a2  => le a1.optimize_0plus a2.optimize_0plus
+  | gt a1 a2  => gt a1.optimize_0plus a2.optimize_0plus
+  | not b1    => not (optimize_0plus_b b1)
+  | and b1 b2 => and (optimize_0plus_b b1) (optimize_0plus_b b2)
   -- /ADMITDEF
 
 /- optimize_0plus_b_test1 -/
 example :
-    optimize_0plus_b (.BNot (.BGt (.APlus (.ANum 0) (.ANum 4)) (.ANum 8)))
-      = .BNot (.BGt (.ANum 4) (.ANum 8)) := by rfl -- ADMITTED
+    Bexp.optimize_0plus_b (.not (.gt (.plus (.num 0) (.num 4)) (.num 8)))
+      = .not (.gt (.num 4) (.num 8)) := by rfl -- ADMITTED
 -- GRADE_THEOREM 0.5: optimize_0plus_b_test1
 
 /- optimize_0plus_b_test2 -/
 example :
-    optimize_0plus_b (.BAnd (.BLe (.APlus (.ANum 0) (.ANum 4)) (.ANum 5)) .BTrue)
-      = .BAnd (.BLe (.ANum 4) (.ANum 5)) .BTrue := by rfl -- ADMITTED
+    Bexp.optimize_0plus_b (.and (.le (.plus (.num 0) (.num 4)) (.num 5)) (.bool true))
+      = .and (.le (.num 4) (.num 5)) (.bool true) := by rfl -- ADMITTED
 -- GRADE_THEOREM 0.5: optimize_0plus_b_test2
 
 theorem optimize_0plus_b_sound (b : Bexp) :
-    beval (optimize_0plus_b b) = beval b := by
+    Bexp.eval (Bexp.optimize_0plus_b b) = Bexp.eval b := by
   -- ADMITTED
   induction b with
-  | BNot b1 ih => simp only [optimize_0plus_b, beval]; rw [ih]
-  | BAnd b1 b2 ih1 ih2 => simp only [optimize_0plus_b, beval]; rw [ih1, ih2]
-  | _ => simp only [optimize_0plus_b, beval, optimize_0plus_sound]
+  | not b1 ih => simp only [Bexp.optimize_0plus_b, Bexp.eval]; rw [ih]
+  | and b1 b2 ih1 ih2 => simp only [Bexp.optimize_0plus_b, Bexp.eval]; rw [ih1, ih2]
+  | _ => simp only [Bexp.optimize_0plus_b, Bexp.eval, optimize_0plus_sound]
   -- /ADMITTED
 -- GRADE_THEOREM 2: optimize_0plus_b_sound
 -- []
@@ -760,7 +762,7 @@ theorem optimize_0plus_b_sound (b : Bexp) :
 
 -- FULL
 /-
-  We have presented `aeval` and `beval` as functions defined by
+  We have presented `Aexp.eval` and `Bexp.eval` as functions defined by
   recursion.  Another way to think about evaluation -- one that is often
   more flexible -- is as a _relation_ between expressions and their
   values.  This perspective leads to inductive definitions like the
@@ -771,16 +773,16 @@ theorem optimize_0plus_b_sound (b : Bexp) :
 
 inductive AevalR : Aexp → Nat → Prop where
   | E_ANum (n : Nat) :
-      AevalR (.ANum n) n
+      AevalR (.num n) n
   | E_APlus (a1 a2 : Aexp) (n1 n2 : Nat)
       (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) :
-      AevalR (.APlus a1 a2) (n1 + n2)
+      AevalR (.plus a1 a2) (n1 + n2)
   | E_AMinus (a1 a2 : Aexp) (n1 n2 : Nat)
       (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) :
-      AevalR (.AMinus a1 a2) (n1 - n2)
+      AevalR (.minus a1 a2) (n1 - n2)
   | E_AMult (a1 a2 : Aexp) (n1 n2 : Nat)
       (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) :
-      AevalR (.AMult a1 a2) (n1 * n2)
+      AevalR (.mult a1 a2) (n1 * n2)
 
 -- FULL
 /-
@@ -790,19 +792,19 @@ inductive AevalR : Aexp → Nat → Prop where
   ```
   inductive AevalR : Aexp → Nat → Prop where
     | E_ANum (n : Nat) :
-        AevalR (.ANum n) n
+        AevalR (.num n) n
     | E_APlus (e1 e2 : Aexp) (n1 n2 : Nat) :
         AevalR e1 n1 →
         AevalR e2 n2 →
-        AevalR (.APlus e1 e2) (n1 + n2)
+        AevalR (.plus e1 e2) (n1 + n2)
     | E_AMinus (e1 e2 : Aexp) (n1 n2 : Nat) :
         AevalR e1 n1 →
         AevalR e2 n2 →
-        AevalR (.AMinus e1 e2) (n1 - n2)
+        AevalR (.minus e1 e2) (n1 - n2)
     | E_AMult (e1 e2 : Aexp) (n1 n2 : Nat) :
         AevalR e1 n1 →
         AevalR e2 n2 →
-        AevalR (.AMult e1 e2) (n1 * n2)
+        AevalR (.mult e1 e2) (n1 * n2)
   ```
 
   The version above instead gives explicit names to the hypotheses in each
@@ -848,7 +850,7 @@ scoped notation:55 e:56 " ==> " n:56 => AevalR e n
       | E_APlus (a1 a2 : Aexp) (n1 n2 : Nat) :
           AevalR a1 n1 →
           AevalR a2 n2 →
-          AevalR (.APlus a1 a2) (n1 + n2)
+          AevalR (.plus a1 a2) (n1 + n2)
   ```
 
   can be written like this as an inference rule:
@@ -857,7 +859,7 @@ scoped notation:55 e:56 " ==> " n:56 => AevalR e n
                             e1 ==> n1
                             e2 ==> n2
                       --------------------          (E_APlus)
-                      APlus e1 e2 ==> n1+n2
+                      plus e1 e2 ==> n1+n2
   ```
 
   Formally, there is nothing deep about inference rules: they are just
@@ -882,22 +884,22 @@ scoped notation:55 e:56 " ==> " n:56 => AevalR e n
 
   ```
                           -----------                (E_ANum)
-                          ANum n ==> n
+                          num n ==> n
 
                             e1 ==> n1
                             e2 ==> n2
                       --------------------           (E_APlus)
-                      APlus e1 e2 ==> n1+n2
+                      plus e1 e2 ==> n1+n2
 
                             e1 ==> n1
                             e2 ==> n2
                      ---------------------           (E_AMinus)
-                     AMinus e1 e2 ==> n1-n2
+                     minus e1 e2 ==> n1-n2
 
                             e1 ==> n1
                             e2 ==> n2
                       --------------------           (E_AMult)
-                      AMult e1 e2 ==> n1*n2
+                      mult e1 e2 ==> n1*n2
   ```
 -/
 -- /FULL
@@ -917,7 +919,7 @@ scoped notation:55 e:56 " ==> " n:56 => AevalR e n
   Which rules are needed to prove the following?
 
   ```
-  .AMult (.APlus (.ANum 3) (.ANum 1)) (.ANum 0) ==> 0
+  .mult (.plus (.num 3) (.num 1)) (.num 0) ==> 0
   ```
 
   (A) `E_ANum` and `E_APlus`
@@ -934,7 +936,7 @@ scoped notation:55 e:56 " ==> " n:56 => AevalR e n
   Which rules are needed to prove the following?
 
   ```
-  .AMinus (.ANum 3) (.AMinus (.ANum 2) (.ANum 1)) ==> 2
+  .minus (.num 3) (.minus (.num 2) (.num 1)) ==> 2
   ```
 
   (A) `E_ANum` and `E_APlus`
@@ -949,19 +951,18 @@ scoped notation:55 e:56 " ==> " n:56 => AevalR e n
 -- FULL
 -- EX1? (beval_rules)
 /-
-  Here, again, is the definition of the `beval` function:
+  Here, again, is the definition of the `Bexp.eval` function:
 
   ```
-  def beval (b : Bexp) : Bool :=
+  def Bexp.eval (b : Bexp) : Bool :=
     match b with
-    | .BTrue      => true
-    | .BFalse     => false
-    | .BEq a1 a2  => aeval a1 == aeval a2
-    | .BNeq a1 a2 => aeval a1 != aeval a2
-    | .BLe a1 a2  => decide (aeval a1 ≤ aeval a2)
-    | .BGt a1 a2  => decide (aeval a1 > aeval a2)
-    | .BNot b1    => !beval b1
-    | .BAnd b1 b2 => beval b1 && beval b2
+    | bool b     => b
+    | eq a1 a2  => a1.eval == a2.eval
+    | neq a1 a2 => a1.eval != a2.eval
+    | le a1 a2  => decide (a1.eval ≤ a2.eval)
+    | gt a1 a2  => decide (a1.eval > a2.eval)
+    | not b1    => !eval b1
+    | and b1 b2 => eval b1 && eval b2
   ```
 
   Write out a corresponding definition of boolean evaluation as a relation
@@ -972,40 +973,37 @@ scoped notation:55 e:56 " ==> " n:56 => AevalR e n
   Answer (`==>b` is defined below):
 
   ```
-                          ---------------            (E_BTrue)
-                          BTrue ==>b true
-
-                         -----------------           (E_BFalse)
-                         BFalse ==>b false
+                          -------------              (E_bool)
+                          bool b ==>b b
 
                             e1 ==> n1
                             e2 ==> n2
                      -------------------------        (E_BEq)
-                     BEq e1 e2 ==>b (n1 =? n2)
+                     eq e1 e2 ==>b (n1 =? n2)
 
                             e1 ==> n1
                             e2 ==> n2
                    -------------------------------    (E_BNeq)
-                   BNeq e1 e2 ==>b negb (n1 =? n2)
+                   neq e1 e2 ==>b negb (n1 =? n2)
 
                             e1 ==> n1
                             e2 ==> n2
                      --------------------------       (E_BLe)
-                     BLe e1 e2 ==>b (n1 <=? n2)
+                     le e1 e2 ==>b (n1 <=? n2)
 
                             e1 ==> n1
                             e2 ==> n2
                   -------------------------------     (E_BGt)
-                  BGt e1 e2 ==>b negb (n1 <=? n2)
+                  gt e1 e2 ==>b negb (n1 <=? n2)
 
                              e ==>b b
                         ------------------            (E_BNot)
-                        BNot e ==>b negb b
+                        not e ==>b negb b
 
                             e1 ==>b b1
                             e2 ==>b b2
                     --------------------------        (E_BAnd)
-                    BAnd e1 e2 ==>b andb b1 b2
+                    and e1 e2 ==>b andb b1 b2
   ```
 -/
 -- /SOLUTION
@@ -1028,21 +1026,21 @@ scoped notation:55 e:56 " ==> " n:56 => AevalR e n
 /- SOONER: BCP 23: Why can't we do induction on H in the ← direction?? -/
 
 theorem aevalR_iff_aeval (a : Aexp) (n : Nat) :
-    a ==> n ↔ aeval a = n := by
+    a ==> n ↔ Aexp.eval a = n := by
   constructor
   · intro h
     induction h with
     | E_ANum n => rfl
-    | E_APlus a1 a2 n1 n2 h1 h2 ih1 ih2 => simp only [aeval]; rw [ih1, ih2]
-    | E_AMinus a1 a2 n1 n2 h1 h2 ih1 ih2 => simp only [aeval]; rw [ih1, ih2]
-    | E_AMult a1 a2 n1 n2 h1 h2 ih1 ih2 => simp only [aeval]; rw [ih1, ih2]
+    | E_APlus a1 a2 n1 n2 h1 h2 ih1 ih2 => simp only [Aexp.eval]; rw [ih1, ih2]
+    | E_AMinus a1 a2 n1 n2 h1 h2 ih1 ih2 => simp only [Aexp.eval]; rw [ih1, ih2]
+    | E_AMult a1 a2 n1 n2 h1 h2 ih1 ih2 => simp only [Aexp.eval]; rw [ih1, ih2]
   · intro h
     subst h
     induction a with
-    | ANum n => exact .E_ANum n
-    | APlus a1 a2 ih1 ih2 => exact .E_APlus a1 a2 _ _ ih1 ih2
-    | AMinus a1 a2 ih1 ih2 => exact .E_AMinus a1 a2 _ _ ih1 ih2
-    | AMult a1 a2 ih1 ih2 => exact .E_AMult a1 a2 _ _ ih1 ih2
+    | num n => exact .E_ANum n
+    | plus a1 a2 ih1 ih2 => exact .E_APlus a1 a2 _ _ ih1 ih2
+    | minus a1 a2 ih1 ih2 => exact .E_AMinus a1 a2 _ _ ih1 ih2
+    | mult a1 a2 ih1 ih2 => exact .E_AMult a1 a2 _ _ ih1 ih2
 
 -- HIDEFROMADVANCED
 /-
@@ -1053,10 +1051,10 @@ theorem aevalR_iff_aeval (a : Aexp) (n : Nat) :
 -- in-class exercise.
 
 theorem aevalR_iff_aeval' (a : Aexp) (n : Nat) :
-    a ==> n ↔ aeval a = n := by
+    a ==> n ↔ Aexp.eval a = n := by
   -- WORKINCLASS
   constructor
-  · intro h; induction h <;> simp_all [aeval]
+  · intro h; induction h <;> simp_all [Aexp.eval]
   · intro h; subst h; induction a <;> constructor <;> assumption
   -- /WORKINCLASS
 -- /HIDEFROMADVANCED
@@ -1064,58 +1062,55 @@ theorem aevalR_iff_aeval' (a : Aexp) (n : Nat) :
 -- EX3 (bevalR)
 /-
   Write a relation `BevalR` in the same style as `AevalR`, and prove that
-  it is equivalent to `beval`.
+  it is equivalent to `Bexp.eval`.
 -/
 
 inductive BevalR : Bexp → Bool → Prop where
   -- SOLUTION
-  | E_BTrue  : BevalR .BTrue true
-  | E_BFalse : BevalR .BFalse false
+  | E_bool (b : Bool) : BevalR (.bool b) b
   | E_BEq (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ==> n1) (h2 : a2 ==> n2) :
-      BevalR (.BEq a1 a2) (n1 == n2)
+      BevalR (.eq a1 a2) (n1 == n2)
   | E_BNeq (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ==> n1) (h2 : a2 ==> n2) :
-      BevalR (.BNeq a1 a2) (n1 != n2)
+      BevalR (.neq a1 a2) (n1 != n2)
   | E_BLe (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ==> n1) (h2 : a2 ==> n2) :
-      BevalR (.BLe a1 a2) (decide (n1 ≤ n2))
+      BevalR (.le a1 a2) (decide (n1 ≤ n2))
   | E_BGt (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ==> n1) (h2 : a2 ==> n2) :
-      BevalR (.BGt a1 a2) (decide (n1 > n2))
+      BevalR (.gt a1 a2) (decide (n1 > n2))
   | E_BNot (b : Bexp) (bv : Bool) (h : BevalR b bv) :
-      BevalR (.BNot b) (!bv)
+      BevalR (.not b) (!bv)
   | E_BAnd (b1 b2 : Bexp) (tv1 tv2 : Bool) (h1 : BevalR b1 tv1) (h2 : BevalR b2 tv2) :
-      BevalR (.BAnd b1 b2) (tv1 && tv2)
+      BevalR (.and b1 b2) (tv1 && tv2)
   -- /SOLUTION
 
 scoped notation:55 e:56 " ==>b " b:56 => BevalR e b
 
 theorem bevalR_iff_beval (b : Bexp) (bv : Bool) :
-    b ==>b bv ↔ beval b = bv := by
+    b ==>b bv ↔ Bexp.eval b = bv := by
   -- ADMITTED
   constructor
   · intro h
     induction h with
-    | E_BTrue => rfl
-    | E_BFalse => rfl
+    | E_bool b => rfl
     | E_BEq a1 a2 n1 n2 h1 h2 =>
-        simp only [beval]; rw [(aevalR_iff_aeval a1 n1).mp h1, (aevalR_iff_aeval a2 n2).mp h2]
+        simp only [Bexp.eval]; rw [(aevalR_iff_aeval a1 n1).mp h1, (aevalR_iff_aeval a2 n2).mp h2]
     | E_BNeq a1 a2 n1 n2 h1 h2 =>
-        simp only [beval]; rw [(aevalR_iff_aeval a1 n1).mp h1, (aevalR_iff_aeval a2 n2).mp h2]
+        simp only [Bexp.eval]; rw [(aevalR_iff_aeval a1 n1).mp h1, (aevalR_iff_aeval a2 n2).mp h2]
     | E_BLe a1 a2 n1 n2 h1 h2 =>
-        simp only [beval]; rw [(aevalR_iff_aeval a1 n1).mp h1, (aevalR_iff_aeval a2 n2).mp h2]
+        simp only [Bexp.eval]; rw [(aevalR_iff_aeval a1 n1).mp h1, (aevalR_iff_aeval a2 n2).mp h2]
     | E_BGt a1 a2 n1 n2 h1 h2 =>
-        simp only [beval]; rw [(aevalR_iff_aeval a1 n1).mp h1, (aevalR_iff_aeval a2 n2).mp h2]
-    | E_BNot b bv h ih => simp only [beval]; rw [ih]
-    | E_BAnd b1 b2 tv1 tv2 h1 h2 ih1 ih2 => simp only [beval]; rw [ih1, ih2]
+        simp only [Bexp.eval]; rw [(aevalR_iff_aeval a1 n1).mp h1, (aevalR_iff_aeval a2 n2).mp h2]
+    | E_BNot b bv h ih => simp only [Bexp.eval]; rw [ih]
+    | E_BAnd b1 b2 tv1 tv2 h1 h2 ih1 ih2 => simp only [Bexp.eval]; rw [ih1, ih2]
   · intro h
     subst h
     induction b with
-    | BTrue  => exact .E_BTrue
-    | BFalse => exact .E_BFalse
-    | BEq a1 a2  => exact .E_BEq a1 a2 _ _ ((aevalR_iff_aeval a1 _).mpr rfl) ((aevalR_iff_aeval a2 _).mpr rfl)
-    | BNeq a1 a2 => exact .E_BNeq a1 a2 _ _ ((aevalR_iff_aeval a1 _).mpr rfl) ((aevalR_iff_aeval a2 _).mpr rfl)
-    | BLe a1 a2  => exact .E_BLe a1 a2 _ _ ((aevalR_iff_aeval a1 _).mpr rfl) ((aevalR_iff_aeval a2 _).mpr rfl)
-    | BGt a1 a2  => exact .E_BGt a1 a2 _ _ ((aevalR_iff_aeval a1 _).mpr rfl) ((aevalR_iff_aeval a2 _).mpr rfl)
-    | BNot b ih => exact .E_BNot b _ ih
-    | BAnd b1 b2 ih1 ih2 => exact .E_BAnd b1 b2 _ _ ih1 ih2
+    | bool b => exact .E_bool b
+    | eq a1 a2  => exact .E_BEq a1 a2 _ _ ((aevalR_iff_aeval a1 _).mpr rfl) ((aevalR_iff_aeval a2 _).mpr rfl)
+    | neq a1 a2 => exact .E_BNeq a1 a2 _ _ ((aevalR_iff_aeval a1 _).mpr rfl) ((aevalR_iff_aeval a2 _).mpr rfl)
+    | le a1 a2  => exact .E_BLe a1 a2 _ _ ((aevalR_iff_aeval a1 _).mpr rfl) ((aevalR_iff_aeval a2 _).mpr rfl)
+    | gt a1 a2  => exact .E_BGt a1 a2 _ _ ((aevalR_iff_aeval a1 _).mpr rfl) ((aevalR_iff_aeval a2 _).mpr rfl)
+    | not b ih => exact .E_BNot b _ ih
+    | and b1 b2 ih1 ih2 => exact .E_BAnd b1 b2 _ _ ih1 ih2
   -- /ADMITTED
 -- GRADE_THEOREM 3: bevalR_iff_beval
 -- []
@@ -1158,30 +1153,30 @@ namespace AevalRDivision
 -/
 
 inductive Aexp where
-  | ANum (n : Nat)
-  | APlus (a1 a2 : Aexp)
-  | AMinus (a1 a2 : Aexp)
-  | AMult (a1 a2 : Aexp)
-  | ADiv (a1 a2 : Aexp)             -- NEW
+  | num (n : Nat)
+  | plus (a1 a2 : Aexp)
+  | minus (a1 a2 : Aexp)
+  | mult (a1 a2 : Aexp)
+  | div (a1 a2 : Aexp)             -- NEW
 
 /-
-  Extending the definition of `aeval` to handle this new operation would
+  Extending the definition of `Aexp.eval` to handle this new operation would
   not be straightforward (what should we return as the result of
-  `.ADiv (.ANum 5) (.ANum 0)`?).  But extending the relation is easy.
+  `.div (.num 5) (.num 0)`?).  But extending the relation is easy.
 -/
--- TERSE: /- What should `aeval` return for `.ADiv (.ANum 1) (.ANum 0)`?? -/
+-- TERSE: /- What should `Aexp.eval` return for `.div (.num 1) (.num 0)`?? -/
 
 inductive AevalR : Aexp → Nat → Prop where
-  | E_ANum (n : Nat) : AevalR (.ANum n) n
+  | E_ANum (n : Nat) : AevalR (.num n) n
   | E_APlus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) :
-      AevalR (.APlus a1 a2) (n1 + n2)
+      AevalR (.plus a1 a2) (n1 + n2)
   | E_AMinus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) :
-      AevalR (.AMinus a1 a2) (n1 - n2)
+      AevalR (.minus a1 a2) (n1 - n2)
   | E_AMult (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) :
-      AevalR (.AMult a1 a2) (n1 * n2)
+      AevalR (.mult a1 a2) (n1 * n2)
   | E_ADiv (a1 a2 : Aexp) (n1 n2 n3 : Nat)             -- NEW
       (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) (hpos : n2 > 0) (hdiv : n2 * n3 = n1) :
-      AevalR (.ADiv a1 a2) n3
+      AevalR (.div a1 a2) n3
 
 /-
   Notice that this evaluation relation corresponds to a _partial_
@@ -1195,34 +1190,34 @@ namespace AevalRExtended
 -- TERSE: /- Another example: a _nondeterministic_ number generator: -/
 /-
   Or suppose that we want to extend the arithmetic operations by a
-  nondeterministic number generator `AAny` that, when evaluated, may
+  nondeterministic number generator `any` that, when evaluated, may
   yield any number.  (This is not the same as making a _probabilistic_
   choice among all numbers -- we only say which results are _possible_.)
 -/
 
 inductive Aexp where
-  | AAny                            -- NEW
-  | ANum (n : Nat)
-  | APlus (a1 a2 : Aexp)
-  | AMinus (a1 a2 : Aexp)
-  | AMult (a1 a2 : Aexp)
+  | any                            -- NEW
+  | num (n : Nat)
+  | plus (a1 a2 : Aexp)
+  | minus (a1 a2 : Aexp)
+  | mult (a1 a2 : Aexp)
 
 /-
-  Again, extending `aeval` would be tricky, since evaluation is now _not_
+  Again, extending `Aexp.eval` would be tricky, since evaluation is now _not_
   a deterministic function from expressions to numbers; but extending the
   relation is no problem.
 -/
--- TERSE: /- What should `aeval` do with nondeterminism?? -/
+-- TERSE: /- What should `Aexp.eval` do with nondeterminism?? -/
 
 inductive AevalR : Aexp → Nat → Prop where
-  | E_Any (n : Nat) : AevalR .AAny n                   -- NEW
-  | E_ANum (n : Nat) : AevalR (.ANum n) n
+  | E_Any (n : Nat) : AevalR .any n                   -- NEW
+  | E_ANum (n : Nat) : AevalR (.num n) n
   | E_APlus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) :
-      AevalR (.APlus a1 a2) (n1 + n2)
+      AevalR (.plus a1 a2) (n1 + n2)
   | E_AMinus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) :
-      AevalR (.AMinus a1 a2) (n1 - n2)
+      AevalR (.minus a1 a2) (n1 - n2)
   | E_AMult (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : AevalR a1 n1) (h2 : AevalR a2 n2) :
-      AevalR (.AMult a1 a2) (n1 * n2)
+      AevalR (.mult a1 a2) (n1 * n2)
 
 end AevalRExtended
 
@@ -1317,32 +1312,31 @@ abbrev State := TotalMap String Nat
 -/
 
 inductive Aexp where
-  | ANum (n : Nat)
-  | AId (x : String)                -- NEW
-  | APlus (a1 a2 : Aexp)
-  | AMinus (a1 a2 : Aexp)
-  | AMult (a1 a2 : Aexp)
+  | num (n : Nat)
+  | id (x : String)                -- NEW
+  | plus (a1 a2 : Aexp)
+  | minus (a1 a2 : Aexp)
+  | mult (a1 a2 : Aexp)
 
 /- The `Bexp` definition is unchanged, except that it now refers to the
    new `Aexp`. -/
 
 inductive Bexp where
-  | BTrue
-  | BFalse
-  | BEq (a1 a2 : Aexp)
-  | BNeq (a1 a2 : Aexp)
-  | BLe (a1 a2 : Aexp)
-  | BGt (a1 a2 : Aexp)
-  | BNot (b : Bexp)
-  | BAnd (b1 b2 : Bexp)
+  | bool (b : Bool)
+  | eq (a1 a2 : Aexp)
+  | neq (a1 a2 : Aexp)
+  | le (a1 a2 : Aexp)
+  | gt (a1 a2 : Aexp)
+  | not (b : Bexp)
+  | and (b1 b2 : Bexp)
 
 /- Defining a few variable names as shorthands will make examples easier
    to read. -/
 /- INSTRUCTORS: We usually don't use x as a "bare identifier" in examples
-   -- it is normally wrapped in an AId constructor.  If this were _always_
+   -- it is normally wrapped in an id constructor.  If this were _always_
    the case, then it would make more sense to define the notation [x] to
-   mean [AId (Id 0)].  But there quite a few counterexamples.  Maybe we
-   could define [xx] to mean [AId (Id 0)], or some such?  But it's still
+   mean [id (Id 0)].  But there quite a few counterexamples.  Maybe we
+   could define [xx] to mean [id (Id 0)], or some such?  But it's still
    awkward.
    BCP/AAA 2/16: Should we use a coercion for this?  It means introducing a
    new concept -- a somewhat magical one -- but it will make examples look
@@ -1377,7 +1371,7 @@ def Z : String := "Z"
 -- Claude (port note): The Rocq chapter builds a custom `<{ ... }>` grammar
 -- so that Imp programs can be written with concrete `+`, `:=`, `;`,
 -- `if`/`while` syntax.  We take the lighter route used elsewhere in this
--- translation: two coercions let us drop the `AId`/`ANum` wrappers, and we
+-- translation: two coercions let us drop the `id`/`num` wrappers, and we
 -- otherwise write programs with the ordinary constructors.
 
 -- FULL
@@ -1386,23 +1380,23 @@ def Z : String := "Z"
   implicit coercions.  In Lean, a `Coe` instance tells the elaborator how
   to turn a value of one type into another automatically:
    - `Coe String Aexp` lets us write a bare variable (a `String`) where an
-     `Aexp` is expected; the string is implicitly wrapped with `AId`.
+     `Aexp` is expected; the string is implicitly wrapped with `id`.
    - `OfNat Aexp n` lets us write a numeric literal where an `Aexp` is
-     expected; it is implicitly wrapped with `ANum`.
+     expected; it is implicitly wrapped with `num`.
 -/
 -- /FULL
 
 instance : Coe String Aexp where
-  coe := .AId
+  coe := .id
 
 instance (n : Nat) : OfNat Aexp n where
-  ofNat := .ANum n
+  ofNat := .num n
 
-/- With these, we can write `.APlus 3 (.AMult X 2)` instead of
-   `.APlus (.ANum 3) (.AMult (.AId "X") (.ANum 2))`. -/
+/- With these, we can write `.plus 3 (.mult X 2)` instead of
+   `.plus (.num 3) (.mult (.id "X") (.num 2))`. -/
 
-def example_aexp : Aexp := .APlus 3 (.AMult X 2)
-def example_bexp : Bexp := .BAnd .BTrue (.BNot (.BLe X 4))
+def example_aexp : Aexp := .plus 3 (.mult X 2)
+def example_bexp : Bexp := .and (.bool true) (.not (.le X 4))
 
 /- Claude: This chapter uses the two coercions above rather than an embedded
    Imp grammar.  For a future pass, here is the fuller notation machinery a
@@ -1415,7 +1409,7 @@ def example_bexp : Bexp := .BAnd .BTrue (.BNot (.BLe X 4))
    to understand.)  Briefly:
     - A `Coercion` declaration lets a function/constructor be used implicitly
       to coerce a value of the input type to the output type; e.g. a coercion
-      for `AId` lets plain strings stand where an `aexp` is expected.
+      for `id` lets plain strings stand where an `aexp` is expected.
     - `Declare Custom Entry com` creates a custom grammar for parsing Imp;
       anything between `<{` and `}>` is parsed with it, giving _new_
       interpretations to familiar operators (`+`, `-`, `*`, `=`, `<=`, …).
@@ -1507,24 +1501,23 @@ def example_bexp : Bexp := .BAnd .BTrue (.BNot (.BLe X 4))
 -- /FULL
 -- TERSE: /- Now we need to add an `st` parameter to both evaluation functions: -/
 
-def aeval (st : State) (a : Aexp) : Nat :=
+def Aexp.eval (st : State) (a : Aexp) : Nat :=
   match a with
-  | .ANum n => n
-  | .AId x => st[x]                  -- NEW
-  | .APlus  a1 a2 => aeval st a1 + aeval st a2
-  | .AMinus a1 a2 => aeval st a1 - aeval st a2
-  | .AMult  a1 a2 => aeval st a1 * aeval st a2
+  | num n => n
+  | id x => st[x]                  -- NEW
+  | plus  a1 a2 => eval st a1 + eval st a2
+  | minus a1 a2 => eval st a1 - eval st a2
+  | mult  a1 a2 => eval st a1 * eval st a2
 
-def beval (st : State) (b : Bexp) : Bool :=
+def Bexp.eval (st : State) (b : Bexp) : Bool :=
   match b with
-  | .BTrue      => true
-  | .BFalse     => false
-  | .BEq a1 a2  => aeval st a1 == aeval st a2
-  | .BNeq a1 a2 => aeval st a1 != aeval st a2
-  | .BLe a1 a2  => decide (aeval st a1 ≤ aeval st a2)
-  | .BGt a1 a2  => decide (aeval st a1 > aeval st a2)
-  | .BNot b1    => !beval st b1
-  | .BAnd b1 b2 => beval st b1 && beval st b2
+  | bool b     => b
+  | eq a1 a2  => Aexp.eval st a1 == Aexp.eval st a2
+  | neq a1 a2 => Aexp.eval st a1 != Aexp.eval st a2
+  | le a1 a2  => decide (Aexp.eval st a1 ≤ Aexp.eval st a2)
+  | gt a1 a2  => decide (Aexp.eval st a1 > Aexp.eval st a2)
+  | not b1    => !eval st b1
+  | and b1 b2 => eval st b1 && eval st b2
 
 /- We write the empty state (every variable `0`) as `∅`, and reuse the
    total-map update notation `x →ₜ v ; st` for states. -/
@@ -1534,13 +1527,13 @@ def beval (st : State) (b : Bexp) : Bool :=
 def empty_st : State := ∅
 
 /- test_aexp1 -/
-example : aeval (X →ₜ 5 ; empty_st) (.APlus 3 (.AMult X 2)) = 13 := by rfl
+example : Aexp.eval (X →ₜ 5 ; empty_st) (.plus 3 (.mult X 2)) = 13 := by rfl
 
 /- test_aexp2 -/
-example : aeval (X →ₜ 5 ; Y →ₜ 4 ; empty_st) (.APlus Z (.AMult X Y)) = 20 := by rfl
+example : Aexp.eval (X →ₜ 5 ; Y →ₜ 4 ; empty_st) (.plus Z (.mult X Y)) = 20 := by rfl
 
 /- test_bexp1 -/
-example : beval (X →ₜ 5 ; empty_st) (.BAnd .BTrue (.BNot (.BLe X 4))) = true := by rfl
+example : Bexp.eval (X →ₜ 5 ; empty_st) (.and (.bool true) (.not (.le X 4))) = true := by rfl
 
 /-
   ######################################################################
@@ -1566,11 +1559,11 @@ example : beval (X →ₜ 5 ; empty_st) (.BAnd .BTrue (.BNot (.BLe X 4))) = true
 -- /FULL
 
 inductive Com where
-  | CSkip
-  | CAsgn (x : String) (a : Aexp)
-  | CSeq (c1 c2 : Com)
-  | CIf (b : Bexp) (c1 c2 : Com)
-  | CWhile (b : Bexp) (c : Com)
+  | skip
+  | asgn (x : String) (a : Aexp)
+  | seq (c1 c2 : Com)
+  | cond (b : Bexp) (c1 c2 : Com)
+  | whileDo (b : Bexp) (c : Com)
 
 /- Claude: This chapter writes commands with the ordinary constructors (see
    the port note above) rather than an embedded grammar.  For a future pass,
@@ -1641,11 +1634,11 @@ inductive Com where
 -- /FULL
 
 def fact_in_lean : Com :=
-  .CSeq (.CAsgn Z X)
-  (.CSeq (.CAsgn Y 1)
-  (.CWhile (.BNeq Z 0)
-    (.CSeq (.CAsgn Y (.AMult Y Z))
-           (.CAsgn Z (.AMinus Z 1)))))
+  .seq (.asgn Z X)
+  (.seq (.asgn Y 1)
+  (.whileDo (.neq Z 0)
+    (.seq (.asgn Y (.mult Y Z))
+           (.asgn Z (.minus Z 1)))))
 
 /- Claude: The following two topics are entirely about Rocq's `<{ }>` grammar
    and `Set Printing …`/`Locate` commands, which this port does not use.  A
@@ -1720,17 +1713,17 @@ def fact_in_lean : Com :=
   ```
   Locate "&&".
   (* ===>
-      "x && y" := BAnd x y (default interpretation)
+      "x && y" := and x y (default interpretation)
       "x && y" := andb x y : bool_scope (default interpretation) *)
   Locate ";".
   (* ===>
       "x '|->' v ';' m" := (update m x v) (default interpretation)
-      "x ; y" := (CSeq x y) (default interpretation)
+      "x ; y" := (seq x y) (default interpretation)
       "x '!->' v ';' m" := (t_update m x v) (default interpretation)
       "[ x ; y ; .. ; z ]" := cons x (cons y .. (cons z nil) ..) : list_scope *)
   Locate "while".
   (* ===>
-      "'while' x 'do' y 'end'" := (CWhile x y) (default interpretation) *)
+      "'while' x 'do' y 'end'" := (whileDo x y) (default interpretation) *)
   ``` -/
 
 /- HIDE: the factorial command was printed here with `Print fact_in_coq.` -/
@@ -1739,31 +1732,31 @@ def fact_in_lean : Com :=
 /- A few more examples. -/
 
 /- *** Assignment: -/
-def plus2 : Com := .CAsgn X (.APlus X 2)
-def XtimesYinZ : Com := .CAsgn Z (.AMult X Y)
+def plus2 : Com := .asgn X (.plus X 2)
+def XtimesYinZ : Com := .asgn Z (.mult X Y)
 
 /- *** Loops: -/
 def subtract_slowly_body : Com :=
-  .CSeq (.CAsgn Z (.AMinus Z 1))
-        (.CAsgn X (.AMinus X 1))
+  .seq (.asgn Z (.minus Z 1))
+        (.asgn X (.minus X 1))
 
 def subtract_slowly : Com :=
-  .CWhile (.BNeq X 0) subtract_slowly_body
+  .whileDo (.neq X 0) subtract_slowly_body
 
 def subtract_3_from_5_slowly : Com :=
-  .CSeq (.CAsgn X 3)
-  (.CSeq (.CAsgn Z 5)
+  .seq (.asgn X 3)
+  (.seq (.asgn Z 5)
     subtract_slowly)
 
 /- *** An infinite loop: -/
-def loop : Com := .CWhile .BTrue .CSkip
+def loop : Com := .whileDo (.bool true) .skip
 
 -- HIDE
 /- Exponentiation: -/
 def exp_body : Com :=
-  .CSeq (.CAsgn Z (.AMult Z X))
-        (.CAsgn Y (.AMinus Y 1))
-def pexp : Com := .CWhile (.BNeq Y 0) exp_body
+  .seq (.asgn Z (.mult Z X))
+        (.asgn Y (.minus Y 1))
+def pexp : Com := .whileDo (.neq Y 0) exp_body
 /- (Note that `pexp` should be run in a state where `Z` is `1`.) -/
 -- /HIDE
 -- /HIDEFROMADVANCED
@@ -1797,17 +1790,17 @@ def pexp : Com := .CWhile (.BNeq Y 0) exp_body
    declarations, but we'll need to add a comment why we wrote them this
    way.) -/
 
-def ceval_fun_no_while (st : State) (c : Com) : State :=
+def Com.ceval_fun_no_while (st : State) (c : Com) : State :=
   match c with
-  | .CSkip => st
-  | .CAsgn x a => (x →ₜ aeval st a ; st)
-  | .CSeq c1 c2 =>
+  | skip => st
+  | asgn x a => (x →ₜ Aexp.eval st a ; st)
+  | seq c1 c2 =>
       let st' := ceval_fun_no_while st c1
       ceval_fun_no_while st' c2
-  | .CIf b c1 c2 =>
-      if beval st b then ceval_fun_no_while st c1
+  | cond b c1 c2 =>
+      if Bexp.eval st b then ceval_fun_no_while st c1
       else ceval_fun_no_while st c2
-  | .CWhile _ _ => st               -- bogus
+  | whileDo _ _ => st               -- bogus
 
 -- FULL
 /-
@@ -1815,8 +1808,8 @@ def ceval_fun_no_while (st : State) (c : Com) : State :=
   could add the `while` case as follows:
 
   ```
-  | .CWhile b c =>
-      if beval st b then ceval_fun st (.CSeq c (.CWhile b c))
+  | .whileDo b c =>
+      if Bexp.eval st b then ceval_fun st (.seq c (.whileDo b c))
       else st
   ```
 
@@ -1888,7 +1881,7 @@ def ceval_fun_no_while (st : State) (c : Com) : State :=
                         -----------------                  (E_Skip)
                         st =[ skip ]=> st
 
-                        aeval st a = n
+                        Aexp.eval st a = n
                 --------------------------------           (E_Asgn)
                 st =[ x := a ]=> (x →ₜ n ; st)
 
@@ -1897,21 +1890,21 @@ def ceval_fun_no_while (st : State) (c : Com) : State :=
                       ---------------------                (E_Seq)
                       st =[ c1;c2 ]=> st''
 
-                       beval st b = true
+                       Bexp.eval st b = true
                         st =[ c1 ]=> st'
              --------------------------------------        (E_IfTrue)
              st =[ if b then c1 else c2 end ]=> st'
 
-                      beval st b = false
+                      Bexp.eval st b = false
                         st =[ c2 ]=> st'
              --------------------------------------        (E_IfFalse)
              st =[ if b then c1 else c2 end ]=> st'
 
-                      beval st b = false
+                      Bexp.eval st b = false
                  -----------------------------             (E_WhileFalse)
                  st =[ while b do c end ]=> st
 
-                       beval st b = true
+                       Bexp.eval st b = true
                         st =[ c ]=> st'
                st' =[ while b do c end ]=> st''
                --------------------------------            (E_WhileTrue)
@@ -1939,26 +1932,26 @@ def ceval_fun_no_while (st : State) (c : Com) : State :=
 
 inductive Ceval : Com → State → State → Prop where
   | E_Skip (st : State) :
-      Ceval .CSkip st st
+      Ceval .skip st st
   | E_Asgn (st : State) (a : Aexp) (n : Nat) (x : String)
-      (h : aeval st a = n) :
-      Ceval (.CAsgn x a) st (x →ₜ n ; st)
+      (h : Aexp.eval st a = n) :
+      Ceval (.asgn x a) st (x →ₜ n ; st)
   | E_Seq (c1 c2 : Com) (st st' st'' : State)
       (h1 : Ceval c1 st st') (h2 : Ceval c2 st' st'') :
-      Ceval (.CSeq c1 c2) st st''
+      Ceval (.seq c1 c2) st st''
   | E_IfTrue (st st' : State) (b : Bexp) (c1 c2 : Com)
-      (hb : beval st b = true) (hc : Ceval c1 st st') :
-      Ceval (.CIf b c1 c2) st st'
+      (hb : Bexp.eval st b = true) (hc : Ceval c1 st st') :
+      Ceval (.cond b c1 c2) st st'
   | E_IfFalse (st st' : State) (b : Bexp) (c1 c2 : Com)
-      (hb : beval st b = false) (hc : Ceval c2 st st') :
-      Ceval (.CIf b c1 c2) st st'
+      (hb : Bexp.eval st b = false) (hc : Ceval c2 st st') :
+      Ceval (.cond b c1 c2) st st'
   | E_WhileFalse (b : Bexp) (st : State) (c : Com)
-      (hb : beval st b = false) :
-      Ceval (.CWhile b c) st st
+      (hb : Bexp.eval st b = false) :
+      Ceval (.whileDo b c) st st
   | E_WhileTrue (st st' st'' : State) (b : Bexp) (c : Com)
-      (hb : beval st b = true) (hc : Ceval c st st')
-      (hloop : Ceval (.CWhile b c) st' st'') :
-      Ceval (.CWhile b c) st st''
+      (hb : Bexp.eval st b = true) (hc : Ceval c st st')
+      (hloop : Ceval (.whileDo b c) st' st'') :
+      Ceval (.whileDo b c) st st''
 
 /- NOTATION: LATER: Consider `st '={' c '}=>' st'` or `st '=<{' c '}>=>' st'`. -/
 /- NOTATION: NDS'25 should we change the level to force parentheses around
@@ -1973,8 +1966,8 @@ notation:40 st0 " =[ " c " ]=> " st1 => Ceval c st0 st1
 -/
 
 example :
-    empty_st =[ .CSeq (.CAsgn X 2)
-                  (.CIf (.BLe X 1) (.CAsgn Y 3) (.CAsgn Z 4)) ]=>
+    empty_st =[ .seq (.asgn X 2)
+                  (.cond (.le X 1) (.asgn Y 3) (.asgn Z 4)) ]=>
       (Z →ₜ 4 ; X →ₜ 2 ; empty_st) := by
   -- We must supply the intermediate state.
   apply Ceval.E_Seq (st' := (X →ₜ 2 ; empty_st))
@@ -1985,7 +1978,7 @@ example :
 
 -- EX2 (ceval_example2)
 example :
-    empty_st =[ .CSeq (.CAsgn X 0) (.CSeq (.CAsgn Y 1) (.CAsgn Z 2)) ]=>
+    empty_st =[ .seq (.asgn X 0) (.seq (.asgn Y 1) (.asgn Z 2)) ]=>
       (Z →ₜ 2 ; Y →ₜ 1 ; X →ₜ 0 ; empty_st) := by
   -- ADMITTED
   apply Ceval.E_Seq (st' := (X →ₜ 0 ; empty_st))
@@ -2013,7 +2006,7 @@ example :
 
   ```
   ∀ (c : Com) (st st' : State),
-    st =[ .CSeq .CSkip c ]=> st' →
+    st =[ .seq .skip c ]=> st' →
     st =[ c ]=> st'
   ```
 
@@ -2021,7 +2014,7 @@ example :
 -/
 -- HIDE
 theorem quiz1_answer (c : Com) (st st' : State)
-    (h : st =[ .CSeq .CSkip c ]=> st') : st =[ c ]=> st' := by
+    (h : st =[ .seq .skip c ]=> st') : st =[ c ]=> st' := by
   cases h with
   | E_Seq _ _ _ smid _ h1 h2 =>
       cases h1 with
@@ -2035,7 +2028,7 @@ theorem quiz1_answer (c : Com) (st st' : State)
 
   ```
   ∀ (c1 c2 : Com) (st st' : State),
-    st =[ .CSeq c1 c2 ]=> st' →
+    st =[ .seq c1 c2 ]=> st' →
     st =[ c1 ]=> st →
     st =[ c2 ]=> st'
   ```
@@ -2052,7 +2045,7 @@ theorem quiz1_answer (c : Com) (st st' : State)
 
   ```
   ∀ (b : Bexp) (c : Com) (st st' : State),
-    st =[ .CIf b c c ]=> st' →
+    st =[ .cond b c c ]=> st' →
     st =[ c ]=> st'
   ```
 
@@ -2060,7 +2053,7 @@ theorem quiz1_answer (c : Com) (st st' : State)
 -/
 -- INSTRUCTORS
 theorem quiz3_answer (b : Bexp) (c : Com) (st st' : State)
-    (h : st =[ .CIf b c c ]=> st') : st =[ c ]=> st' := by
+    (h : st =[ .cond b c c ]=> st') : st =[ c ]=> st' := by
   cases h with
   | E_IfTrue _ _ _ _ _ hb hc => exact hc
   | E_IfFalse _ _ _ _ _ hb hc => exact hc
@@ -2073,20 +2066,20 @@ theorem quiz3_answer (b : Bexp) (c : Com) (st st' : State)
 
   ```
   ∀ (b : Bexp),
-    (∀ st, beval st b = true) →
+    (∀ st, Bexp.eval st b = true) →
     ∀ (c : Com) (st : State),
-      ¬ ∃ st', st =[ .CWhile b c ]=> st'
+      ¬ ∃ st', st =[ .whileDo b c ]=> st'
   ```
 
   (A) Yes    (B) No    (C) Not sure
 -/
 -- HIDE
 -- This one is tricky!
-theorem quiz4_answer (b : Bexp) (hbtrue : ∀ st, beval st b = true)
-    (c : Com) (st : State) : ¬ ∃ st', st =[ .CWhile b c ]=> st' := by
+theorem quiz4_answer (b : Bexp) (hbtrue : ∀ st, Bexp.eval st b = true)
+    (c : Com) (st : State) : ¬ ∃ st', st =[ .whileDo b c ]=> st' := by
   rintro ⟨st', hev⟩
   have key : ∀ (cmd : Com) (s s' : State),
-      (s =[ cmd ]=> s') → cmd = .CWhile b c → False := by
+      (s =[ cmd ]=> s') → cmd = .whileDo b c → False := by
     intro cmd s s' hce
     induction hce with
     | E_WhileFalse b0 s0 c0 hbf =>
@@ -2109,8 +2102,8 @@ theorem quiz4_answer (b : Bexp) (hbtrue : ∀ st, beval st b = true)
 
   ```
   ∀ (b : Bexp) (c : Com) (st : State),
-    (¬ ∃ st', st =[ .CWhile b c ]=> st') →
-    ∀ st'', beval st'' b = true
+    (¬ ∃ st', st =[ .whileDo b c ]=> st') →
+    ∀ st'', Bexp.eval st'' b = true
   ```
 
   (A) Yes    (B) No    (C) Not sure
@@ -2190,7 +2183,7 @@ theorem ceval_deterministic (c : Com) (st st1 st2 : State)
 /- Answer to the second quiz above (deferred because it depends on
    `ceval_deterministic`). -/
 theorem quiz2_answer (c1 c2 : Com) (st st' : State)
-    (h1 : st =[ .CSeq c1 c2 ]=> st') (h2 : st =[ c1 ]=> st) : st =[ c2 ]=> st' := by
+    (h1 : st =[ .seq c1 c2 ]=> st') (h2 : st =[ c1 ]=> st) : st =[ c2 ]=> st' := by
   cases h1 with
   | E_Seq _ _ _ smid _ hc1 hc2 =>
       have hmid : smid = st := ceval_deterministic c1 st smid st hc1 h2
@@ -2211,10 +2204,10 @@ theorem quiz2_answer (c1 c2 : Com) (st st' : State)
 
 def pup_to_n : Com :=
   -- ADMITDEF
-  .CSeq (.CAsgn Y 0)
-    (.CWhile (.BLe 1 X)
-      (.CSeq (.CAsgn Y (.APlus Y X))
-             (.CAsgn X (.AMinus X 1))))
+  .seq (.asgn Y 0)
+    (.whileDo (.le 1 X)
+      (.seq (.asgn Y (.plus Y X))
+             (.asgn X (.minus X 1))))
   -- /ADMITDEF
 
 /- HIDE: Result is the same as `(X →ₜ 0 ; Y →ₜ 3 ; ∅)` if one admits
@@ -2278,7 +2271,7 @@ theorem plus2_spec (st : State) (n : Nat) (st' : State)
   unfold plus2 at heval
   cases heval with
   | E_Asgn _ _ m _ h =>
-      simp only [aeval] at h
+      simp only [Aexp.eval] at h
       rw [TotalMap.update_eq]
       omega
 
@@ -2295,7 +2288,7 @@ theorem XtimesYinZ_spec1 (st : State) (nx ny : Nat) (st' : State)
   unfold XtimesYinZ at heval
   cases heval with
   | E_Asgn _ _ n _ h =>
-      simp only [aeval] at h
+      simp only [Aexp.eval] at h
       subst hx hy
       rw [TotalMap.update_eq]
       exact h.symm
@@ -2330,7 +2323,7 @@ theorem loop_never_stops (st st' : State) : ¬ (st =[ loop ]=> st') := by
     induction hce with
     | E_WhileFalse b s0 c0 hb =>
         intro heq; unfold loop at heq; injection heq with e1 _
-        subst e1; simp [beval] at hb
+        subst e1; simp [Bexp.eval] at hb
     | E_WhileTrue s0 s0' s0'' b c0 hb hc hloop ih1 ih2 =>
         intro heq; exact ih2 heq
     | E_Skip s0 => intro heq; simp [loop] at heq
@@ -2363,46 +2356,46 @@ theorem loop_never_stops (st st' : State) : ¬ (st =[ loop ]=> st') := by
 /-
   The following function yields `true` just on programs with no while
   loops.  Using `inductive`, write a property `NoWhilesR` that holds
-  exactly when `c` is while-free, then prove it equivalent to `no_whiles`.
+  exactly when `c` is while-free, then prove it equivalent to `Com.no_whiles`.
 -/
 
-def no_whiles (c : Com) : Bool :=
+def Com.no_whiles (c : Com) : Bool :=
   match c with
-  | .CSkip      => true
-  | .CAsgn _ _  => true
-  | .CSeq c1 c2 => no_whiles c1 && no_whiles c2
-  | .CIf _ ct cf => no_whiles ct && no_whiles cf
-  | .CWhile _ _ => false
+  | skip      => true
+  | asgn _ _  => true
+  | seq c1 c2 => no_whiles c1 && no_whiles c2
+  | cond _ ct cf => no_whiles ct && no_whiles cf
+  | whileDo _ _ => false
 
 inductive NoWhilesR : Com → Prop where
   -- SOLUTION
-  | nw_Skip : NoWhilesR .CSkip
-  | nw_Asgn (x : String) (a : Aexp) : NoWhilesR (.CAsgn x a)
+  | nw_Skip : NoWhilesR .skip
+  | nw_Asgn (x : String) (a : Aexp) : NoWhilesR (.asgn x a)
   | nw_Seq (c1 c2 : Com) (h1 : NoWhilesR c1) (h2 : NoWhilesR c2) :
-      NoWhilesR (.CSeq c1 c2)
+      NoWhilesR (.seq c1 c2)
   | nw_If (b : Bexp) (c1 c2 : Com) (h1 : NoWhilesR c1) (h2 : NoWhilesR c2) :
-      NoWhilesR (.CIf b c1 c2)
+      NoWhilesR (.cond b c1 c2)
   -- /SOLUTION
 
-theorem no_whiles_eqv (c : Com) : no_whiles c = true ↔ NoWhilesR c := by
+theorem no_whiles_eqv (c : Com) : Com.no_whiles c = true ↔ NoWhilesR c := by
   -- ADMITTED
   constructor
   · induction c with
-    | CSkip => intro _; exact .nw_Skip
-    | CAsgn x a => intro _; exact .nw_Asgn x a
-    | CSeq c1 c2 ih1 ih2 =>
-        intro h; simp only [no_whiles, Bool.and_eq_true] at h
+    | skip => intro _; exact .nw_Skip
+    | asgn x a => intro _; exact .nw_Asgn x a
+    | seq c1 c2 ih1 ih2 =>
+        intro h; simp only [Com.no_whiles, Bool.and_eq_true] at h
         exact .nw_Seq _ _ (ih1 h.1) (ih2 h.2)
-    | CIf b c1 c2 ih1 ih2 =>
-        intro h; simp only [no_whiles, Bool.and_eq_true] at h
+    | cond b c1 c2 ih1 ih2 =>
+        intro h; simp only [Com.no_whiles, Bool.and_eq_true] at h
         exact .nw_If _ _ _ (ih1 h.1) (ih2 h.2)
-    | CWhile b c ih => intro h; simp [no_whiles] at h
+    | whileDo b c ih => intro h; simp [Com.no_whiles] at h
   · intro h
     induction h with
     | nw_Skip => rfl
     | nw_Asgn x a => rfl
-    | nw_Seq c1 c2 h1 h2 ih1 ih2 => simp [no_whiles, ih1, ih2]
-    | nw_If b c1 c2 h1 h2 ih1 ih2 => simp [no_whiles, ih1, ih2]
+    | nw_Seq c1 c2 h1 h2 ih1 ih2 => simp [Com.no_whiles, ih1, ih2]
+    | nw_If b c1 c2 h1 h2 ih1 ih2 => simp [Com.no_whiles, ih1, ih2]
   -- /ADMITTED
 -- []
 
@@ -2410,7 +2403,7 @@ theorem no_whiles_eqv (c : Com) : no_whiles c = true ↔ NoWhilesR c := by
 /-
   Imp programs that don't involve while loops always terminate.  State and
   prove a theorem `no_whiles_terminating` that says this.  Use either
-  `no_whiles` or `NoWhilesR`, as you prefer.
+  `Com.no_whiles` or `NoWhilesR`, as you prefer.
 -/
 
 theorem no_whiles_terminating (c : Com) (st : State) (h : NoWhilesR c) :
@@ -2418,13 +2411,13 @@ theorem no_whiles_terminating (c : Com) (st : State) (h : NoWhilesR c) :
   -- SOLUTION
   induction h generalizing st with
   | nw_Skip => exact ⟨st, .E_Skip st⟩
-  | nw_Asgn x a => exact ⟨(x →ₜ aeval st a ; st), .E_Asgn st a (aeval st a) x rfl⟩
+  | nw_Asgn x a => exact ⟨(x →ₜ Aexp.eval st a ; st), .E_Asgn st a (Aexp.eval st a) x rfl⟩
   | nw_Seq c1 c2 h1 h2 ih1 ih2 =>
       obtain ⟨st', hc1⟩ := ih1 st
       obtain ⟨st'', hc2⟩ := ih2 st'
       exact ⟨st'', .E_Seq c1 c2 st st' st'' hc1 hc2⟩
   | nw_If b c1 c2 h1 h2 ih1 ih2 =>
-      cases hb : beval st b with
+      cases hb : Bexp.eval st b with
       | true =>
           obtain ⟨st', hc1⟩ := ih1 st
           exact ⟨st', .E_IfTrue st st' b c1 c2 hb hc1⟩
@@ -2433,27 +2426,27 @@ theorem no_whiles_terminating (c : Com) (st : State) (h : NoWhilesR c) :
           exact ⟨st', .E_IfFalse st st' b c1 c2 hb hc2⟩
 
 /- And here is an alternative solution by induction on `c` (using
-   `no_whiles` instead of `NoWhilesR`): -/
+   `Com.no_whiles` instead of `NoWhilesR`): -/
 theorem no_whiles_terminating' (c : Com) (st1 : State)
-    (hb : no_whiles c = true) : ∃ st2, st1 =[ c ]=> st2 := by
+    (hb : Com.no_whiles c = true) : ∃ st2, st1 =[ c ]=> st2 := by
   induction c generalizing st1 with
-  | CSkip => exact ⟨st1, .E_Skip st1⟩
-  | CAsgn x a => exact ⟨(x →ₜ aeval st1 a ; st1), .E_Asgn st1 a (aeval st1 a) x rfl⟩
-  | CSeq c1 c2 ih1 ih2 =>
-      simp only [no_whiles, Bool.and_eq_true] at hb
+  | skip => exact ⟨st1, .E_Skip st1⟩
+  | asgn x a => exact ⟨(x →ₜ Aexp.eval st1 a ; st1), .E_Asgn st1 a (Aexp.eval st1 a) x rfl⟩
+  | seq c1 c2 ih1 ih2 =>
+      simp only [Com.no_whiles, Bool.and_eq_true] at hb
       obtain ⟨st1', hc1⟩ := ih1 st1 hb.1
       obtain ⟨st1'', hc2⟩ := ih2 st1' hb.2
       exact ⟨st1'', .E_Seq c1 c2 st1 st1' st1'' hc1 hc2⟩
-  | CIf b ct cf ih1 ih2 =>
-      simp only [no_whiles, Bool.and_eq_true] at hb
-      cases hbev : beval st1 b with
+  | cond b ct cf ih1 ih2 =>
+      simp only [Com.no_whiles, Bool.and_eq_true] at hb
+      cases hbev : Bexp.eval st1 b with
       | true =>
           obtain ⟨st2, h⟩ := ih1 st1 hb.1
           exact ⟨st2, .E_IfTrue st1 st2 b ct cf hbev h⟩
       | false =>
           obtain ⟨st2, h⟩ := ih2 st1 hb.2
           exact ⟨st2, .E_IfFalse st1 st2 b ct cf hbev h⟩
-  | CWhile b c ih => simp [no_whiles] at hb
+  | whileDo b c ih => simp [Com.no_whiles] at hb
   -- /SOLUTION
 -- []
 
@@ -2461,17 +2454,17 @@ theorem no_whiles_terminating' (c : Com) (st1 : State)
   Claude: PORT STATUS — this chapter is a work in progress.
 
   DONE (compiling; survives to_verso → HL.ImpVerso builds):
-    - AExp module: Aexp/Bexp syntax, aeval/beval, optimize_0plus + soundness
+    - AExp module: Aexp/Bexp syntax, Aexp.eval/Bexp.eval, Aexp.optimize_0plus + soundness
     - Tactic combinators (try, <;>, repeat, macro), omega, handy-tactics recap
-    - optimize_0plus_b (EX3)
+    - Bexp.optimize_0plus_b (EX3)
     - Evaluation as a Relation: AevalR + `==>`, inference rules,
       aevalR_iff_aeval (x2), BevalR (EX3) + bevalR_iff_beval,
       AevalRDivision / AevalRExtended, tradeoffs
-    - Expressions With Variables: State, coercions, aeval/beval, Com + examples
-    - Evaluating Commands: ceval_fun_no_while, Ceval + `=[ c ]=>`, examples,
+    - Expressions With Variables: State, coercions, Aexp.eval/Bexp.eval, Com + examples
+    - Evaluating Commands: Com.ceval_fun_no_while, Ceval + `=[ c ]=>`, examples,
       ceval_deterministic
     - Reasoning About Imp Programs: pup_to_n/pup_to_2_ceval, plus2_spec,
-      XtimesYinZ_spec (EX3), loop_never_stops (EX3!), no_whiles/NoWhilesR +
+      XtimesYinZ_spec (EX3), loop_never_stops (EX3!), Com.no_whiles/NoWhilesR +
       no_whiles_eqv (EX3), no_whiles_terminating (EX4)
 
   NOT DONE YET — remaining sections of sfdev/lf/Imp.v to port:
@@ -2486,7 +2479,7 @@ theorem no_whiles_terminating' (c : Com) (st1 : State)
         * stack_compiler_correct (EX3, Imp.v:3134): the correctness theorem;
           the standard proof needs a strengthened lemma over an arbitrary
           initial stack (generalize the stack before inducting).
-        * short_circuit (EX3?, Imp.v:3184): short-circuiting `beval`.
+        * short_circuit (EX3?, Imp.v:3184): short-circuiting `Bexp.eval`.
         * break_imp (EX4?, Imp.v:3227): extends Com with `CBreak`; new
           relational semantics `ceval` carrying a `result` (SContinue/SBreak).
           Large. See verso-book branch (lf/Imp.lean ~line 1141, CEvalBreak) for
