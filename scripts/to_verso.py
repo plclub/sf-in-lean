@@ -150,10 +150,23 @@ def _extract_imports(body: str):
             kept.append(line)
     return has_prelude, imports, '\n'.join(kept)
 
-# Author/dev markers (matches the line-comment set in `_AUTHOR_RE`).  A block
-# comment whose body opens with one of these is an author note routed to :::dev.
-_BLOCK_DEV_RE = re.compile(
-    r'^(BCP|JC|MWH|CGH|RAB|CH|HG|NB|Claude|TODO|TOFIX|LATER|SOONER)\b')
+# Author initials / task keywords that mark an author-or-dev note.  Both block
+# `/- … -/` comments and `-- ` line comments (see `_AUTHOR_RE`) that open with
+# one of these route to :::dev — preserved in the Verso source, dropped from the
+# generated outputs.  Add new tags here so they route cleanly instead of leaking
+# into the rendered chapter as prose.  INSTRUCTORS is deliberately NOT in this
+# set: it routes to :::instructor (handled separately, both line and block).
+_DEV_TAGS = (r'BCP|JC|MWH|CGH|RAB|CH|HG|NB|Claude|TODO|TOFIX|LATER|SOONER'
+             r'|NDS|NOTATION|APT|BAY|SAZ|ET|AAA|MRC|PR|ORI|Ori')
+# The block set additionally recognizes `HIDE:` (a `/- HIDE: … -/` dev note).
+# The colon is required so a bare `/- HIDE -/` region/label marker keeps its old
+# behavior (dropped as a label) rather than becoming a noise :::dev block; and
+# as a `-- HIDE` / `-- /HIDE` line marker `HIDE` is handled elsewhere, so it must
+# stay out of the line-comment `_AUTHOR_RE`.
+_BLOCK_DEV_RE = re.compile(r'^(HIDE(?=:)|(?:' + _DEV_TAGS + r')\b)')
+# `/- INSTRUCTORS: … -/` -> :::instructor (colon required, mirroring the line
+# form `_INSTRUCTOR_RE`).
+_BLOCK_INSTRUCTOR_RE = re.compile(r'^INSTRUCTORS:')
 
 
 def _is_block_dev_comment(text: str) -> bool:
@@ -426,10 +439,10 @@ _SOL_OPEN_RE = re.compile(r'^--\s+SOLUTION$')
 _SOL_CLOSE_RE = re.compile(r'^--\s+/SOLUTION$')
 # Author-only / developer comment markers.  These are swept into :::dev blocks
 # (discarded from generated outputs, preserved verbatim in the Verso source).
-# Add new author initials or task keywords here.  NB: INSTRUCTORS is handled
-# separately (-> :::instructor); TERSE/FULL have their own dedicated markers.
-_AUTHOR_RE = re.compile(
-    r'^-- (BCP|JC|MWH|CGH|RAB|CH|HG|NB|Claude|TODO|TOFIX|LATER|SOONER)[: (](.*)$')
+# The recognized tag set is `_DEV_TAGS` (defined above — add new tags there).
+# NB: INSTRUCTORS is handled separately (-> :::instructor); TERSE/FULL have their
+# own dedicated markers.
+_AUTHOR_RE = re.compile(r'^-- (' + _DEV_TAGS + r')[: (](.*)$')
 
 # `-- ==> …` / `-- ===> …` hand-written eval-output annotations: intentionally
 # dropped (Verso renders the real output live), so they must not be swept into
@@ -505,6 +518,10 @@ def tokenize(text: str):
                 # /- *** -/, /- TERSE: *** -/, /- FULL: *** -/ : a slide break
                 # (block-comment form of the -- TERSE: /- *** -/ line marker).
                 tokens.append(('slidebreak', None))
+            elif _BLOCK_INSTRUCTOR_RE.match(body.strip()):
+                # /- INSTRUCTORS: … -/ -> :::instructor (mirrors the line form).
+                tokens.append(('instructor',
+                               re.sub(r'^INSTRUCTORS:\s*', '', body.strip())))
             elif _is_block_dev_comment(body):
                 # /- MWH: … -/ author note -> :::dev (keeps every word).
                 tokens.append(('author_comment', body))

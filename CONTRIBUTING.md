@@ -200,10 +200,16 @@ Lean syntax, but we want them to be formatted as Verso files
 ("documentation first") and are working on translating them one by
 one.  
 
-Benjamin is the only person that needs to worry about the details
-here: Everyone else can just work on a given `.lean` file in whatever
-format it exists in at the moment.  In particular, no one except
-Benjamin should ever need to run the `to_verso.py` script.
+Benjamin owns the conversion tooling (`scripts/to_verso.py`) and the
+eventual native-Verso format decisions, so you can work on a given
+`.lean` file in whatever format it exists in at the moment.  But note
+that `make` now regenerates and builds each `<Ch>Verso.lean` (via the
+`check-verso-chapters` target, which CI runs), so if you edit a
+code-forward `.lean` chapter, keep that round-trip green: after a
+change, regenerate (`python3 scripts/to_verso.py <Vol>/<Ch>.lean`) and
+build the generated Verso (`make check-verso-chapters`).  CLAUDE.md
+("Writing comments that survive to_verso") lists the authoring rules
+that keep the conversion happy.
 
 ## Lean Style
 
@@ -504,6 +510,30 @@ author notes.  The `:::hide` directive exists primarily for
 code-forward source files where `-- HIDE … -- /HIDE` comments are
 translated to `:::hide` blocks by the conversion script.
 
+### Code-forward comments → Verso directives (`to_verso`)
+
+(Claude-drafted; human review welcome.)  Chapters still authored as
+code-forward `.lean` are converted by `scripts/to_verso.py`, which
+routes their comments to the directives above:
+
+* `-- FULL … -- /FULL` → `::::full`; `-- TERSE: /- … -/` → `:::terse`.
+* Author/dev notes (`/- BCP: … -/`, `-- MWH: …`, `/- NDS'25: … -/`,
+  `/- NOTATION: … -/`, …) → `:::dev`; `/- INSTRUCTORS: … -/` and
+  `-- INSTRUCTORS:` → `:::instructors`; `-- HIDE … -- /HIDE` and
+  `/- HIDE: … -/` → `:::hide` / `:::dev`.  The recognized tag set is
+  `_DEV_TAGS` in the script — add a new author initial or keyword there
+  (one place) so it routes cleanly instead of leaking into the chapter
+  as prose.
+* Author/dev bodies are emitted verbatim-fenced, so arbitrary markup
+  inside a note is always safe.  Prose *outside* notes is real markdown:
+  a fenced block must use a plain `` ``` `` fence (never a language tag
+  such as `` ```coq ``), and raw object-language operator notation
+  (`=[ … ]=>`, quoted notation strings) must be fenced or backticked or
+  it breaks the parser.
+
+Full authoring rules are in CLAUDE.md ("Checking to_verso outputs" /
+"Writing comments that survive to_verso").
+
 ### Structural and presentation blocks
 
 **`:::details (summary := "…") … :::`** — A collapsible disclosure
@@ -559,6 +589,28 @@ diagram (e.g., SVG), and a plain code block containing the ASCII art.
 HTML renders only the diagram child; the saver emits only the ASCII
 fallback wrapped in a `/-! … -/` module-doc comment.
 
+
+## Porting from Rocq: comment fidelity and framing
+
+(Claude-drafted; human review welcome.)  When porting a Rocq
+`sfdev/<vol>/<Ch>.v` to `<Ch>.lean`:
+
+* **Preserve the whole comment layer.**  Carry over every internal
+  dev/instructor note (keep the original prefix/attribution), translate
+  `(* HIDE *)` content (re-marked `-- HIDE`/`/- HIDE: … -/`), and expand
+  condensed prose back to the source's full wording.  Nothing is
+  silently dropped.
+* **Make the chapter stand on its own.**  Don't reference the porting
+  process, and don't narrate "the Rocq original did X" in the
+  reader-facing (`::::full`) text.  Park Rocq-specific material that has
+  no Lean analogue (custom grammars, `Set Printing`, `Locate`, `Ltac`,
+  dropped proof variants) in `/- Claude: … -/` dev notes as reminders
+  for a future pass.  Rewrite genuine pedagogy that the source happened
+  to narrate via Rocq into Lean-native `::::full` prose.
+
+Full details (and the marker/HIDE mechanics) are in CLAUDE.md, "Porting
+a chapter from Rocq: comment fidelity" and "Framing translated
+comments".
 
 ## AI policy
 
