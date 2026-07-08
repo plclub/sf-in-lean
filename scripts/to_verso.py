@@ -135,10 +135,11 @@ _IMPORT_RE = re.compile(r'^import\s+(\S+)\s*$')
 # to `-- MARKER`.  Plain `/- label -/` / `/- prose -/` comments are left alone.
 _BLOCK_MARKER_RE = re.compile(
     r'/-[ \t]*('
-    r'EX\d+[A-Za-z!?]*[ \t]+\(\w+\)'          # exercise open: EX2M? (name)
+    r'EX\d+[A-Za-z!?]*[ \t]+\(\w[\w \-]*\)'   # exercise open: EX2M? (name)
     r'|\[\]'                                   # exercise close
     r'|GRADE_\S[^\n]*?'                        # grading spec
-    r'|/?(?:HIDEFROMADVANCED|HIDEFROMHTML|FULL|TERSE|HIDE|QUIZ|SOLUTION|INSTRUCTORS)'
+    r'|/?(?:HIDEFROMADVANCED|HIDEFROMHTML|FULL|TERSE|HIDE|QUIZ|SOLUTION'
+    r'|INSTRUCTORS|WORKINCLASS)'
     r')[ \t]*-/')
 
 
@@ -532,8 +533,10 @@ _TERSE_DELIM_RE = re.compile(r'^-- TERSE:\s*/-(.*?)-/$')
 _TERSE_PLAIN_RE = re.compile(r'^-- TERSE:\s+(.+)$')
 # `-- EX<rating><flags> (name)` — the rating is the leading digit(s); the flags
 # are SF difficulty/grading marks: `!` (recommended), `?` (optional), `A`
-# (advanced), `M` (manual), and combinations like `2AM?`.
-_EX_RE = re.compile(r'^-- EX(\d+)[A-Za-z!?]*\s+\((\w+)\)$')
+# (advanced), `M` (manual), and combinations like `2AM?`.  A name is usually an
+# identifier but occasionally a phrase (`EX2 (logical connectives)`), so allow
+# internal spaces/hyphens.
+_EX_RE = re.compile(r'^-- EX(\d+)[A-Za-z!?]*\s+\((\w[\w \-]*)\)$')
 _EX_CLOSE_RE = re.compile(r'^-- \[\]$')
 _GRADE_RE = re.compile(r'^--\s+GRADE_')
 # Coq-SF-style section headers written as line comments: `-- # Title` …
@@ -1550,6 +1553,150 @@ def _indent_of(line: str) -> str:
     return line[:len(line) - len(line.lstrip())]
 
 
+_WIC_MARKER_RE = re.compile(r'^--\s*(/?)WORKINCLASS\s*$')
+_ADM_MARKER_RE = re.compile(r'^--\s*/?ADMITTED\s*$')
+_FT_PREFIXED_RE = re.compile(r'^(\s*)--\s*(?:FULL|TERSE):\s*(/?)(ADMITTED|WORKINCLASS)\s*$')
+_DECL_START_RE = re.compile(r'^(theorem|lemma|example|def|instance|abbrev)\b')
+
+
+def _normalize_workinclass_markers(src: str) -> str:
+    """Reduce the marker combinations around WORKINCLASS/ADMITTED to plain
+    `-- WORKINCLASS` / `-- ADMITTED` regions.
+
+    The sources spell "exercise in the reading build, worked live in lecture"
+    in two ways:
+
+      -- FULL: ADMITTED          -- FULL          -- TERSE
+      -- TERSE: WORKINCLASS      -- ADMITTED      -- WORKINCLASS
+      …                          -- /FULL         -- /TERSE
+
+    Under SFLMeta's build model `solution!` alone already produces exactly
+    that matrix (student: sorry, solutions: shown, terse: sorry), so both
+    spellings normalize to a bare ADMITTED region:
+
+    1. `-- FULL: ADMITTED` -> `-- ADMITTED` (and the closing form likewise);
+       `-- TERSE: WORKINCLASS` -> `-- WORKINCLASS` (ditto).
+    2. A `-- FULL … -- /FULL` (or TERSE) pair enclosing *only* an
+       ADMITTED/WORKINCLASS marker line is unwrapped, keeping just the marker.
+    3. A WORKINCLASS marker line immediately adjacent to an ADMITTED marker
+       line is dropped (`solution!` subsumes it).
+    """
+    lines = src.split('\n')
+    # 1. Unprefix `-- FULL:`/`-- TERSE:` marker forms.
+    out = []
+    for line in lines:
+        m = _FT_PREFIXED_RE.match(line)
+        out.append(f'{m.group(1)}-- {m.group(2)}{m.group(3)}' if m else line)
+    lines = out
+
+    _wic_or_adm = re.compile(r'^--\s*/?(?:WORKINCLASS|ADMITTED)\s*$')
+    # 2. Unwrap a FULL/TERSE pair that encloses *only* a marker line
+    #    (`-- FULL` / `-- ADMITTED` / `-- /FULL`), keeping just the marker.
+    #    Matching the exact triple (not mere adjacency) is essential: a real
+    #    `-- FULL` region can legitimately begin right after `-- /WORKINCLASS`
+    #    (e.g. Induction.lean) and must not be touched.
+    out = []
+    i, n = 0, len(lines)
+    while i < n:
+        mo = re.match(r'^--\s*(FULL|TERSE)\s*$', lines[i].strip())
+        if mo:
+            j = i + 1
+            while j < n and not lines[j].strip():
+                j += 1
+            if j < n and _wic_or_adm.match(lines[j].strip()):
+                k = j + 1
+                while k < n and not lines[k].strip():
+                    k += 1
+                if k < n and lines[k].strip() == f'-- /{mo.group(1)}':
+                    out.append(lines[j])
+                    i = k + 1
+                    continue
+        out.append(lines[i])
+        i += 1
+    lines = out
+
+    def _adjacent(idx, pattern):
+        """The nearest non-blank line before or after lines[idx] matches."""
+        prev = next((l for l in reversed(lines[:idx]) if l.strip()), '')
+        nxt = next((l for l in lines[idx + 1:] if l.strip()), '')
+        return bool(pattern.match(prev.strip()) or pattern.match(nxt.strip()))
+
+    # 3. Drop WORKINCLASS markers subsumed by an adjacent ADMITTED region.
+    lines = [l for i, l in enumerate(lines)
+             if not (_WIC_MARKER_RE.match(l.strip()) and _adjacent(i, _ADM_MARKER_RE))]
+    return '\n'.join(lines)
+
+
+def _convert_workinclass_markers(src: str) -> str:
+    """Translate `-- WORKINCLASS … -- /WORKINCLASS` proof regions into the
+    `workinclass!` tactic form SFLMeta understands (shown in the student and
+    solutions builds, replaced by `sorry` in the terse build):
+
+      <inside `by`>              ->   workinclass!
+        -- WORKINCLASS                  <tactics, reindented one level deeper>
+        <tactics>
+      -- /WORKINCLASS
+
+      -- WORKINCLASS             ->   theorem foo … := by
+      theorem foo … := by               workinclass!
+        <tactics>                         <tactics, reindented>
+      -- /WORKINCLASS
+
+    A *narrative* region — one whose body contains column-0 `/- … -/` prose
+    that the tokenizer renders as book text — cannot become a single code
+    block; its markers are simply dropped and the body is left for normal
+    tokenization (so the terse build shows the discussion; the only such
+    region, IndProp's "stuck proof" demo, ends in `sorry` anyway).
+    """
+    lines = src.split('\n')
+    out = []
+    i, n = 0, len(lines)
+    while i < n:
+        line = lines[i]
+        m = _WIC_MARKER_RE.match(line.strip())
+        if not m or m.group(1) == '/':
+            # An orphaned `-- /WORKINCLASS` (its opener was dropped by
+            # normalization) is dropped here too.
+            if m:
+                i += 1
+                continue
+            out.append(line)
+            i += 1
+            continue
+        j = i + 1
+        body = []
+        while j < n and not _WIC_MARKER_RE.match(lines[j].strip()):
+            body.append(lines[j]); j += 1
+        if j < n:
+            j += 1   # skip the closing -- /WORKINCLASS
+        if any(b.startswith('/-') for b in body):
+            # Narrative region: keep the body, drop the markers.
+            out.extend(body)
+            i = j
+            continue
+        # Whole-declaration region: keep the signature (through the line
+        # ending in `by`) outside the wrap.
+        first_body = next((b for b in body if b.strip()), '')
+        wrap_from = 0
+        if _DECL_START_RE.match(first_body.strip()):
+            for k, b in enumerate(body):
+                if re.search(r'\bby\s*$', b):
+                    wrap_from = k + 1
+                    break
+        out.extend(body[:wrap_from])
+        wrapped = body[wrap_from:]
+        while wrapped and not wrapped[-1].strip():
+            wrapped.pop()
+        first_wrapped = next((b for b in wrapped if b.strip()), '')
+        indent = _indent_of(first_wrapped) if first_wrapped else _indent_of(line)
+        out.append(indent + 'workinclass!')
+        for bl in wrapped:
+            # tacticSeqIndentGt: body must sit deeper than `workinclass!`.
+            out.append(('  ' + bl) if bl.strip() else bl)
+        i = j
+    return '\n'.join(out)
+
+
 def _convert_solution_markers(src: str) -> str:
     """Translate the code-forward solution markers into the in-code-block forms
     that SFLMeta understands, so the student and solutions builds diverge.  In
@@ -1600,6 +1747,14 @@ def _convert_solution_markers(src: str) -> str:
             body = []
             while j < n and lines[j].strip() != '-- /ADMITTED':
                 body.append(lines[j]); j += 1
+            # An interleaved bare `-- FULL`/`-- TERSE` marker (the source's
+            # "back to full mode for the GRADE/[] lines" idiom, cf. beq_eq in
+            # Tactics) must stay a structural marker, not become a comment
+            # inside the code block: hoist it out and re-emit it after.
+            trailing = [b for b in body
+                        if re.fullmatch(r'--\s*/?(?:FULL|TERSE)', b.strip())]
+            body = [b for b in body
+                    if not re.fullmatch(r'--\s*/?(?:FULL|TERSE)', b.strip())]
             # `solution!` must align with the proof body (which sits inside the
             # `by`), not with the `-- ADMITTED` marker — the marker is often at
             # column 0 while the tactics are indented, and a column-0 `solution!`
@@ -1610,6 +1765,7 @@ def _convert_solution_markers(src: str) -> str:
             for bl in body:
                 # tacticSeqIndentGt: body must sit deeper than `solution!`.
                 out.append(('  ' + bl) if bl.strip() else bl)
+            out.extend(trailing)
             i = j + 1
             continue
 
@@ -1643,8 +1799,12 @@ def convert(src_text: str, title: str, file_key: str) -> str:
         header = 'prelude\n' + header
     # Normalize block-comment markers (/- EX … -/, /- /TERSE -/, …) to line form.
     body_src = _normalize_block_markers(body_src)
-    # Rewrite solution markers (ADMITDEF/ADMITTED/SOLUTION) into the in-code
-    # forms SFLMeta understands before tokenizing.
+    # Reduce FULL/TERSE-wrapped and FULL:/TERSE:-prefixed ADMITTED/WORKINCLASS
+    # combinations to bare regions, then rewrite WORKINCLASS regions into
+    # `workinclass!` and solution markers (ADMITDEF/ADMITTED/SOLUTION) into the
+    # in-code forms SFLMeta understands before tokenizing.
+    body_src = _normalize_workinclass_markers(body_src)
+    body_src = _convert_workinclass_markers(body_src)
     body_src = _convert_solution_markers(body_src)
     tokens = tokenize(body_src)
     renderer = Renderer()

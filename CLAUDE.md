@@ -81,8 +81,9 @@ Two complementary automated checks help here (both take
   check scripts already ignore these (`_POLICY` entry `None` in
   `check_verso_markers.py`; `_MARKER_LINE_RE` in `check_verso_prose.py`), which
   also means neither verifies the marker is actually *gone* from the output.
-  NB: `WORKINCLASS` is *not* in this category — it needs real handling (the
-  terse build must stub the marked proof with `sorry`); see `workinclass.md`.
+  NB: `WORKINCLASS` is *not* in this category — it is translated to the
+  `workinclass!` tactic (proof shown in student/solutions builds, `sorry` in
+  the terse build); see `workinclass.md` for the design and edge cases.
 
 **Must be preserved** (these were bugs, now fixed): block-style author notes
 (`/- MWH: … -/`, `/- BCP: … -/`) → `:::dev`; `-- GRADE_THEOREM …` → `:::grade`.

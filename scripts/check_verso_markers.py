@@ -82,7 +82,13 @@ _POLICY = [
     # yet — markers dropped, content kept (same policy as HIDEFROM*).
     ("FOLD",                 None),
     ("HIDEFROMADVANCED",     None),
-    ("WORKINCLASS",          None),
+    # WORKINCLASS regions become `workinclass!` tactic blocks (proof shown in
+    # student/solutions, `sorry` in terse).  A WORKINCLASS paired with an
+    # ADMITTED region collapses into that region's `solution!` (which already
+    # stubs the terse build), and the markers of a *narrative* region (body
+    # containing rendered prose) are dropped — so counts may legitimately fall
+    # short of the source tally (soft WARN, verify by hand).
+    ("WORKINCLASS",          r"workinclass!|solution!"),
     # Left as Lean comments inside the code block; the code itself is preserved.
     ("ADMITTED",             None),
     ("ADMITDEF",             None),
