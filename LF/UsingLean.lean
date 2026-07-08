@@ -33,20 +33,25 @@ import LF.Induction
   same as the `Nat` we defined in `Basics.lean`.
 
   In Lean, programmers and mathematicians don't re-prove the basic properties of
-  natural numbers from scratch, nor to they tend to write out `rewrite` steps
+  natural numbers from scratch, nor do they tend to write out `rewrite` steps
   for basic properties of natural numbers by hand.
 -/
 
-
+-- BCP: Just making a note that we need to explain the
+-- `zero.succ.succ` notation someplace well before this file!
 section long_example
 open NatPlayground.Nat
 /- Previously, we did computation like this... -/
 theorem test_mult1' : (two * two : NatPlayground.Nat) = four := by
-  rw [two_eq_succ_one, one_eq_succ_zero]
-  rw [mul_succ, mul_succ, mul_zero]
-  rw [add_succ, add_succ, add_zero]
-  rw [add_succ, add_succ, add_zero]
+  rewrite [two_eq_succ_one, one_eq_succ_zero]
+  rewrite [mul_succ, mul_succ, mul_zero]
+  rewrite [add_succ, add_succ, add_zero]
+  rewrite [add_succ, add_succ, add_zero]
+  rfl
 end long_example
+-- BCP: The info viewed in the InfoView during this proof is kind of
+-- mysterious (to me) here.  Have we already given people enough help
+-- to understand it here?
 
 /- This approach is useful in a textbook for understanding the structure of
   natural numbers and for providing early practice with writing proofs. But it
@@ -65,8 +70,8 @@ theorem test_mult1_nat : (3 * 3 : Nat) = 9 := by
 /-
   In this chapter we will learn how to use the built-in `Nat` and some powerful
   features for computing with and proving properties about natural numbers.
-  Specifically, we will learn about as `dsimp`, `calc`, and `simp` annotations,
-  which enable more powerful and consise proofs.
+  Specifically, we will learn about `dsimp`, `calc`, and `simp` annotations,
+  which enable more powerful and concise proofs.
 
   In fact, from now on, we will use the built-in `Nat` type and its powerful
   features.
@@ -87,11 +92,19 @@ theorem complicated_computation : (2 * 3 + 4 * 5 : Nat) * 6 = 156 := by
 /- Of course, `rfl` can't close more complicated goals where the values
    of the terms are unknown. -/
 
-  theorem rfl_not_enough (n m : Nat) (h : n = m) : n = m := by
-    -- rfl will not work here!
-    /- We need to use `h` to rewrite the goal, and then `rfl` will work. -/
-    rewrite [h]
-    rfl
+theorem rfl_not_enough (n m : Nat) (h : n = m) : n = m := by
+  -- rfl will not work here!
+  /- First rewrite the goal with `h`; then the two sides are identical. -/
+  rewrite [h]
+  rfl
+
+/-
+  The same proof can be written more compactly with `rw`. In this example,
+  `rw [h]` rewrites with `h` and then closes the resulting reflexive goal.
+-/
+
+theorem rfl_not_enough' (n m : Nat) (h : n = m) : n = m := by
+  rw [h]
 
 /-
    We will continue to show more powerful tools for manipulating
@@ -135,7 +148,7 @@ example (a b : Nat) : a + b = b + a := by
   have a blue `[apply]` button that shows the suggested theorem to
   close the goal. Alternatively, VSCode may show an inline suggestion
   (light bulb) button above the `exact?`. You can click either of
-  these buttons to replace the occurence of `exact?` with the tactic
+  these buttons to replace the occurrence of `exact?` with the tactic
   it found to complete the proof; idiomatic Lean does not leave
   `exact?` tactics (or any other `?` tactics, as we will see shortly)
   in the finished versions of proofs and instead replaces them with
@@ -300,12 +313,11 @@ theorem succ_mul_succ' (n m : Nat) :
 
   we just want to simplify the function (here `add`) automatically when we can.
 
-  The `dsimp` tactic ("definitionally simplify") applies known facts
-  and definitions to simplify the goal.  You can give it hints in
-  square brackets: `dsimp [f]` tells it to unfold the definition
-  of `f`.  You can also simplify a hypothesis `h` in the context
-  by writing `dsimp [...] at h`. `dsimp` will also close goals by
-  `rfl` when possible.
+  The `dsimp` tactic ("definitionally simplify") unfolds definitions
+  and performs definitional simplifications. You can give it hints in
+  square brackets: `dsimp [f]` tells it to unfold the definition of `f`.
+  You can also simplify a hypothesis `h` in the context by writing
+  `dsimp [...] at h`. `dsimp` will also close goals by `rfl` when possible.
 -/
 
 def square (n : Nat) : Nat := n * n
@@ -316,13 +328,23 @@ def triple (n : Nat) : Nat := n + n + n
   When the goal depends on a fact about an unknown value, `rfl` fails.
   Here, `dsimp` makes progress, exposing a goal the fact can close.
 -/
- example (n m : Nat) (h : n + n = m) : triple n = m + n := by
+example (n m : Nat) (h : n + n = m) : triple n = m + n := by
   -- rfl will not work here!
   dsimp [triple]
-  /- the goal can now be rewritten by `h`. -/
+  /- The goal can now be rewritten by `h`. -/
   rw [h]
 
--- EX 2: Complete this proof, using `dsimp` as necessary.
+/-
+  As we have seen, `rw` can also unfold definitions. In this example,
+  either style is fine: use `dsimp [triple]` when you want to emphasize
+  definitional simplification, or `rw [triple, h]` when the proof is just
+  a sequence of rewrites.
+-/
+example (n m : Nat) (h : n + n = m) : triple n = m + n := by
+  /- `rw [triple]` unfolds `triple n`. -/
+  rw [triple, h]
+
+-- EX 2: Complete this proof, using `dsimp` or `rw` as appropriate.
 example (n m : Nat) (h : m = n) : triple m = n + (n + n) := by
   -- ADMITTED
   rw [h]
@@ -364,36 +386,37 @@ example (n : Nat) : square n + 0 = n * n := by
 
 def even (n : Nat) :=
   match n with
-  | .zero => true
-  | .succ .zero => false
+  | .zero           => true
+  | .succ .zero     => false
   | .succ (.succ n) => even n
 
 def odd n := (not (even n))
 
 def eqb (n m : Nat) :=
   match n, m with
-  | 0, 0 => true
-  | .succ _, 0 | 0, .succ _ => false
+  | 0, 0             => true
+  | .succ _, 0
+  | 0, .succ _       => false
   | .succ n, .succ m => eqb n m
 
 def minustwo (n : Nat) : Nat :=
   match n with
-  | .zero => .zero
-  | .succ (.zero) => .zero
+  | .zero            => .zero
+  | .succ (.zero)    => .zero
   | .succ (.succ n') => n'
 
 def double (n : Nat) : Nat :=
   match n with
-  | .zero => 0
+  | .zero    => 0
   | .succ n' => .succ (.succ (double n'))
 
 theorem even_succ (n : Nat) :
     even (.succ n) = !even n := by
   -- ADMITTED
-  induction n
-  case zero =>
+  induction n with
+  | zero =>
     rfl
-  case succ n' ih =>
+  | succ n' ih =>
     rw [even, ih, Bool.not_not]
   -- /ADMITTED
 -- GRADE_THEOREM 1: even_succ
@@ -411,10 +434,10 @@ theorem double_succ (n : Nat) : double (n + 1) = double n + 2 := by rfl
 
 theorem double_add (n : Nat) : double n = n + n := by
   -- ADMITTED
-  induction n
-  case zero =>
+  induction n with
+  | zero =>
     rw [double_zero]
-  case succ n' ih =>
+  | succ n' ih =>
     rw [double_succ, ih, Nat.succ_add n' (n' + 1), Nat.add_succ n' n']
   -- /ADMITTED
 -- GRADE_THEOREM 1: double_add
