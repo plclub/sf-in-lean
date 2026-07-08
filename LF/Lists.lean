@@ -86,8 +86,8 @@ example : (NatProd.pair 3 5).fst = 3 := by rfl
 -- FULL: Since pairs will be used heavily in what follows, it will be
 -- convenient to write them with angle bracket notation `⟨x, y⟩`
 -- instead of `NatProd.pair x y`.  This notation is built into Lean, and is called
--- "anonymous constructor syntax".  It is available for any inductive type with a single constructor
--- when the expected type is known.
+-- "anonymous constructor syntax".  It is available for any inductive type with a single constructor,
+-- as long the expected type is declared or can be inferred from the context.
 -- TERSE: A nicer notation for pairs:
 
 example : (⟨3, 5⟩ : NatProd).fst = 3 := by rfl
