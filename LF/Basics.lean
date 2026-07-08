@@ -1011,7 +1011,8 @@ and inferring which namespace it must be from based on that type. If there is on
 namespace (i.e., if it is unambiguous which constructor we're referring to), then it will
 automatically resolve to the expected value.
 
-So, for example, we could also write `nextWorkingDay` like so:
+So, for example, we could also write `nextWorkingDay` like so, using the shorter
+style for both the value being matched upon and the value being returned:
 ::::
 
 ::::terse
