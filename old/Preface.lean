@@ -44,7 +44,7 @@ Preface
  ######################################################################
  Welcome
 
- This is the entry point to a series of electronic textbooks on
+    This is Lean-based entry point to a series of electronic textbooks on
     various aspects of _Software Foundations_, the mathematical
     underpinnings of reliable software.  Topics in the series include
     basic concepts of logic, computer-assisted theorem proving, the
@@ -55,6 +55,13 @@ Preface
     from advanced undergraduates to PhD students and researchers.  No
     specific background in logic or programming languages is assumed,
     though a degree of mathematical maturity will be helpful.
+
+    It is important to note that the _Software Foundations_
+    series is originally written using the _Rocq_ proof assistant--
+    another theorem prover which is similar to but distinct from Lean.
+    This book marks the first effort in translating the Rocq-based series
+    to Lean-- an effort that will (hopefully!) continue with the
+    generous support of the Lean and Rocq communities.
 
     The principal novelty of the series is that it is one hundred
     percent formalized and machine-checked: each text is literally a
@@ -273,7 +280,12 @@ companies should be updated!
  System Requirements
 
  Lean runs on Windows, Linux, and macOS.  The files in this book
-    have been tested with Lean (TODO PUT VERSION)
+    have been tested with Lean (TODO LEAN VERSION METAVARIABLE)
+:::dev
+TODO: RAB : We had a $COQVERSION metavariable that updated nicely with
+builds. We should do the same here; with Verso this should be
+easy.
+:::
 
  Recommended Installation Method: Web Version (TODO WRITE)
 
