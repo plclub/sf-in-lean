@@ -236,6 +236,10 @@ theorem update_subset (m₁ m₂ : PartialMap α β) (a : α) (b : β) (h : m₁
 
 end PartialMap
 
+-- BCP: The following was added by Claude to repair a build error in
+-- the next chapter, but I'm not sure it's the best fix.  An expert
+-- should take a look.
+
 -- Restore the `Option` coercion removed above (see the `attribute [-instance]`
 -- note), so it is in effect at end-of-document for Verso's metadata coercion.
 attribute [instance] optionCoe
