@@ -48,50 +48,68 @@ familiar with in other languages such as traits in Rust.
 # First Example: Inhabited Types
 
 Suppose we wanted to specify that a type has at least one inhabitant -- i.e.,
-that it is not empty. In Lean, we could express this with the typeclass
+that it is not empty. We have previously seen `structure`, which would allow us to express
+this as
+
+```lean
+structure HasOneStruct (α : Type) where
+  one : α
+```
+
+As discussed previously, a structure is just an inductive type that comes with a single constructor, in this case {name}`HasOneStruct.mk`, along with a few different syntaxes for convenience:
+
+```lean
+def nat_hasOneStruct_mk : HasOneStruct Nat := HasOneStruct.mk 1
+
+def nat_hasOneStruct_brace : HasOneStruct Nat := {one := 1}
+
+def nat_hasOneStruct_where : HasOneStruct Nat where
+  one := 1
+```
+
+All of these are the same value, a structure of type {InlineLean.lean}`HasOneStruct Nat` that we
+can thing of as carrying a piece of data (a term that is not a proposition), the number `1`, as evidence that this type is not empty. We can use this in proofs such as
+
+```lean
+theorem nat_hasOneStruct_eq_one : nat_hasOneStruct_mk.one = 1 := rfl
+```
+
+to see how this structure provably contains the value that we have placed within it. In Lean, typeclasses work very similarly, and in fact are implemented as structures. The only difference in defining a typeclass is that we instead use the `class` keyword:
 
 ```lean
 class HasOne (α : Type) where
   one : α
 ```
 
-which explicitly carries an element `one : α` as a witness of non-emptiness. After defining this
-typeclass, we can provide *instances* that show it is satisfied for a particular type. As an
-example, we could declare an instance
+While the definition is essentially the same, including the constructor {name}`HasOne.mk`, the usage of typeclasses is different, and what allows us to use them to express ad hoc polymorphism. Instead of using `def` to define inhabitants of this type, we will instead use the `instance` keyword:
 
 ```lean
 instance instHasOneNat : HasOne Nat where
   one := 1
 ```
 
-which is evidence that {name}`Nat` has some inhabitant. We could do the same thing with integers
+The definition is exactly the same as above (and any of the alternative syntaxes work as well), but instead of being used as a definition that we pass around, Lean will try to infer its usage through a process called *typeclass synthesis* or *typeclass inference*. To help see this, let's define another instance of `HasOne` for {name}`Int`, the type of integers ... -2, -1, 0, 1, 2, ...
 
 ```lean
 instance instHasOneInt : HasOne Int where
   one := -1
 ```
 
-:::dev
-BCP: Is this the first time they've seen integers?
-:::
-
-Now when you refer to {name}`HasOne.one` in a proof, Lean will use *typeclass inference* to
-determine the intended meaning. As an example, you can write
+Instead of explicitly referring to a structure like we did in the proof {name}`nat_hasOneStruct_eq_one`, we can instead use {name}`HasOne.one`, and Lean will use typeclass inference to determine the intended meaning. As an example, you can write
 
 ```lean
 example : HasOne.one = (1 : Nat) := rfl
 example : HasOne.one = (-1 : Int) := rfl
 ```
 
-and, based on the type annotations Lean will infer which of these instances you intended to use.
-:::dev
-BCP: ... Use for what?
-:::
+and based on the type annotations Lean will infer which of these instances you intended to use. So these proofs are equivalent to
 
-When in doubt, you can also use the option `pp.all`
-:::dev
-BCP: ... to do what?
-:::
+```lean
+example : instHasOneNat.one = (1 : Nat) := rfl
+example : instHasOneInt.one = (-1 : Int) := rfl
+```
+
+but without needing to explicitly refer to the instances {name}`instHasOneNat` and {name}`instHasOneInt`. Another way that we can inspect what instance is being using with the constructor of a typeclass is the option `pp.all`. For example looking at
 
 ```lean
 set_option pp.all true in
@@ -101,33 +119,32 @@ set_option pp.all true in
 example : HasOne.one = (-1 : Int) := rfl
 ```
 
-which allows you to see the name of the instance that is being used with {name}`HasOne.one`.
-:::dev
-BCP: Not sure what I am supposed to be looking at here.
-:::
-We can
-also check for the existence of a typeclass instance using the `#synth` command:
+we can see that {InlineLean.lean}`@HasOne.one Nat instHasOneNat` and {InlineLean.lean}`@HasOne.one Int instHasOneInt` are the respective terms that appear on the right hand side of each equality.
+
+Lean also has a command `#synth` that allows you to search for an instance of a given type. So
+the command
 
 ```lean
 #synth HasOne Nat
 ```
+
+for instance prints {name}`instHasOneNat`, informing us that this is the instance found that has type {InlineLean.lean}`HasOne Nat`. In general, the assumption is that for typeclasses like {name}`HasOne` that include data, as opposed to solely proofs, that these these instances should be unique to avoid ambiguity.
+
 :::dev
-BCP: What does that do?
+@chenson2018: I don't really want to explain diamonds here, is the above white lie hand-waving okay??
 :::
 
 # Proof-Carrying Typeclasses
 
-:::dev
-I say data to mean "not in `Prop`", is that a Lean-ism that's been explained? --CGH
-BCP: Probably not.  But should be repeated even if it has.
-:::
-
 Notably, the above examples enforce no conditions on the data that they carry, and we could provide
-any value that we would like for {name}`HasOne.one`.
-:::dev
-BCP: The reader might wonder "Why would this be bad [in the case of hasOne]?"
-:::
-In most languages that support typeclasses it
+any value that we would like for {name}`HasOne.one`. This could be misleading, for instance if we had instead defined an instance
+
+```lean -keep
+instance : HasOne Nat where
+  one := 2
+```
+
+we might have some counterintuitive proofs based on the name leading us to believe the class contained the element `1`. In most languages that support typeclasses it
 is not possible to enforce a notion of "lawfulness" as part of the typeclass, and it falls to
 the author to ensure that any desired invariants are satisfied.
 
