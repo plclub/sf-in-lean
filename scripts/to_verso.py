@@ -650,6 +650,15 @@ def tokenize(text: str):
 
         m = _TERSE_PLAIN_RE.match(stripped)
         if m:
+            # A bare `-- TERSE: ***` is a slide break, not the first line of a
+            # terse paragraph (cf. the `-- TERSE: /- *** -/` form handled by
+            # _SLIDEBREAK_RE above).  Emit the break and let any following comment
+            # lines be tokenized on their own, rather than swallowing them into a
+            # :::terse block whose stray `***` would then derail Verso.
+            if m.group(1).strip() == '***':
+                tokens.append(('slidebreak', None))
+                i += 1
+                continue
             # A `-- TERSE:` paragraph often spans several line comments; collect
             # the continuation `-- …` lines so the whole paragraph lands inside
             # one :::terse block (stopping at a blank line, a non-comment line, or
