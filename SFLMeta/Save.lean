@@ -243,22 +243,39 @@ private def decodeExercise? (data : Json) : Option (Nat × String) :=
 /-! ## Block extension that carries pre-computed teacher and student source -/
 
 namespace LeanSaved
+/--
+  `ExtractionMode` defines three ways that a Lean code block can be emitted.
+-/
+private inductive ExtractionMode where
+  | code
+  | doc
+  | omit
+  deriving ToJson, FromJson, Quote
 
-/-!
-`Block.leanSaved` wraps an elaborated `lean` block and records the teacher and
-student source variants computed at elaboration time, together with whether the
-original block was marked as an expected error (` ```lean +error `). Its two
-children are the teacher-rendered and student-rendered forms of the block;
-traversal keeps the one selected by the `Save.showSolutions` flag, so the same
-compiled document serves both the student and solutions builds. HTML/TeX
-rendering passes through to the surviving child; the saver checks the stored
-metadata to decide whether to emit the saved source into extracted `.lean`
-files. -/
+/--
+  A subset of `InlineLean.LeanBlockConfig` flags:
+  - `show` -> `visible`
+  - `keep` -> `persistent`
+  - `error` -> `expectedError`
 
+  They are used to derive the extraction policy (`Data.extractionMode`).
+-/
+structure Config where
+  visible : Bool
+  persistent : Bool
+  expectedError : Bool
+  deriving ToJson, FromJson, Quote
+
+def Config.fromInlineLean (config : InlineLean.LeanBlockConfig) :=
+  Config.mk config.show config.keep config.error
+
+/--
+  The saved-paylaod format for `Block.leanSaved`.
+-/
 structure Data where
   teacher : String
   student : String
-  expectedError : Bool
+  config : Config
   deriving ToJson, FromJson, Quote
 
 /-- Decode a `Block.leanSaved` payload. -/
@@ -267,18 +284,51 @@ def decode? (data : Json) : Option Data :=
   | .ok saved => some saved
   | .error _ => none
 
+/--
+  * persistent, non-error blocks become executable Lean;
+  * visible, non-persistent blocks (`-keep`) become comments;
+  * hidden non-persistent blocks (`-show -keep`) are omitted (rare);
+  * visible expected-error blocks (`+error`) become comments;
+  * hidden expected-error blocks (`+error -show`) are omitted (rare).
+-/
+private def Data.extractionMode (saved : Data) : ExtractionMode :=
+  let {visible, persistent, expectedError} := saved.config
+  if expectedError then if visible then .doc else .omit
+  else if persistent then .code
+  else if visible then .doc
+  else .omit
+
+private def Config.docReason (config : Config) : String :=
+  if config.expectedError then
+    "(commented out as it does not compile)"
+  else
+    "(commented out as it is for discussion)"
+
+private def Data.asDocString (saved : Data) (src : String) : String :=
+  saved.config.docReason ++ "\n\n" ++ src.trimAscii.toString
+
 end LeanSaved
 
 end Save
 
+/-!
+`Block.leanSaved` wraps an elaborated `lean` block and records the teacher and
+student source variants computed at elaboration time, together with original block's flags.
+Its two children are the teacher-rendered and student-rendered forms of the block;
+traversal keeps the one selected by the `Save.showSolutions` flag, so the same
+compiled document serves both the student and solutions builds. HTML/TeX
+rendering passes through to the surviving child; the saver checks the stored
+metadata to decide whether to emit the saved source into extracted `.lean`
+files. -/
+open Save in
 block_extension Block.leanSaved (saved : Save.LeanSaved.Data) where
   data := toJson saved
   traverse _ data contents := do
     -- Two children = still unselected: keep the teacher or student variant.
     -- One child (or anything else) = already selected; nothing to do.
     if h : contents.size = 2 then
-      let some saved := Save.LeanSaved.decode? data | return none
-      let chosen := if ← Save.showSolutions.get then contents[0] else contents[1]
+      let some saved := LeanSaved.decode? data | return none
+      let chosen := if ←showSolutions.get then contents[0] else contents[1]
       return some (.other (Block.leanSaved saved) #[chosen])
     else
       return none
@@ -496,12 +546,12 @@ Wraps each ` ```lean … ``` ` code block. The pipeline is:
    this block's teacher-side defs are not).
 5. Emit a `Block.leanSaved` with two children: the upstream (teacher-rendered)
    block and a `Block.lean` wrapping the student `Highlighted`. Traversal
-   later drops one of the two according to the `Save.showSolutions` flag, while the
-   saver uses the recorded `expectedError` bit to suppress extracted output for
-   intentionally failing examples.
+   later drops one of the two according to the `Save.showSolutions` flag, while
+   the saver uses the recorded block config to decide whether extracted output
+   is executable code, a comment, or omitted.
 -/
 
-open Save SourceRewrite LeanElab in
+open Save SourceRewrite LeanElab LeanSaved in
 @[code_block]
 def lean : CodeBlockExpanderOf Verso.Genre.Manual.InlineLean.LeanBlockConfig
   | config, str => do
@@ -538,7 +588,7 @@ def lean : CodeBlockExpanderOf Verso.Genre.Manual.InlineLean.LeanBlockConfig
     let range := Syntax.getRange? str
     let lspRange := range.map (← getFileMap).utf8RangeToLspRange
     let saved := {
-      teacher, student, expectedError := config.error : Save.LeanSaved.Data
+      teacher, student, config := Config.fromInlineLean config : Data
     }
     -- The upstream `underlying` block highlights the original source, which
     -- still shows the `#guard_msgs` wrapper.  When stripping changed the teacher
@@ -609,15 +659,22 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     if name == ``Verso.Genre.Manual.Block.diagram then
       return buf
     if name == ``SFLMeta.Block.leanSaved then
-      -- The wrapper carries pre-computed teacher/student source plus whether
-      -- the original block was marked `+error`. Expected-error examples are
-      -- checked and rendered during the Verso build, but omitted from the
-      -- extracted Lean project so `lake build` won't fail.
+      -- The wrapper carries pre-computed teacher/student source plus the
+      -- extraction-relevant `lean` block flags. Verso still checks and renders
+      -- the block normally; the generated project gets code, comments, or
+      -- nothing according to `LeanSaved.Data.extractionMode`.
       if let some saved := LeanSaved.decode? which.data then
-        unless saved.expectedError do
+        match saved.extractionMode with
+        | .code =>
           return appendTeacherStudent buf file
             (saved.teacher.trimAscii.toString ++ "\n\n")
             (saved.student.trimAscii.toString ++ "\n\n")
+        | .doc =>
+          return appendTeacherStudent buf file
+            (asModuleDoc <| saved.asDocString saved.teacher)
+            (asModuleDoc <| saved.asDocString saved.student)
+        | .omit =>
+          return buf
       return buf
     if name == ``Block.exercise then
       -- Emit a `### Exercise (N⭐): name` heading; the contained `lean`
