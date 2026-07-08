@@ -167,7 +167,11 @@ end TotalMap
 
 abbrev PartialMap (α : Type u) (β : Type v) := TotalMap α (Option β)
 
--- CH: This instance might be confusing at this point
+-- CH: This instance might be confusing at this point.  Removed for the
+-- PartialMap development and restored at `end PartialMap` below: a module-scope
+-- removal that leaks to end-of-file breaks the Verso build's `tag`/`file`
+-- (Tag → Option Tag) metadata coercion, which is forced at end-of-document.
+-- (The erase form `[-instance]` can't be scoped `local`, hence the manual pair.)
 attribute [-instance] optionCoe
 
 namespace PartialMap
@@ -231,3 +235,7 @@ theorem update_subset (m₁ m₂ : PartialMap α β) (a : α) (b : β) (h : m₁
     assumption
 
 end PartialMap
+
+-- Restore the `Option` coercion removed above (see the `attribute [-instance]`
+-- note), so it is in effect at end-of-document for Verso's metadata coercion.
+attribute [instance] optionCoe
