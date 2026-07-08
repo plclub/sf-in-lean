@@ -1,34 +1,6 @@
-prelude
-import VersoManual
-import VersoManual.InlineLean
-import Illuminate
-import SFLMeta.Bnf
-import SFLMeta.Ignore
-import SFLMeta.Save
-import SFLMeta.Comment
-import SFLMeta.Exercise
-import SFLMeta.Grade
-import SFLMeta.Hide
-import SFLMeta.Instructors
-import SFLMeta.SlideBreak
-import SFLMeta.Solution
-import SFLMeta.Terse
+/- Preface -/
 
-open Verso.Genre Manual
-open SFLMeta
-
-open InlineLean hiding lean
-
-#doc (Manual) "Preface: Software Foundations in Lean" =>
-%%%
-htmlSplit := .never
-file := "Preface"
-%%%
-
-
-Preface
-
- SOONER: BCP 25: The SF course at Penn (CIS 5000) sometimes attracts
+/- SOONER: BCP 25: The SF course at Penn (CIS 5000) sometimes attracts
    students who don't have enough math background and begin really
    flailing around the middle of the semester. I wonder if we could
    help these people weed themselves out by offering some kind of more
@@ -39,12 +11,12 @@ Preface
      - recursive, polymorphic functional programming over lists
      - abstract definitions involving relations (e.g., reflexive,
        symmetric, transitive closure of a relation)
+ -/
 
+/- ###################################################################### -/
+/- Welcome -/
 
- ######################################################################
- Welcome
-
- This is the entry point to a series of electronic textbooks on
+/- This is the entry point to a series of electronic textbooks on
     various aspects of _Software Foundations_, the mathematical
     underpinnings of reliable software.  Topics in the series include
     basic concepts of logic, computer-assisted theorem proving, the
@@ -72,12 +44,12 @@ Preface
 
     This book, _Logical Foundations_, lays groundwork for the others,
     introducing the reader to the basic ideas of functional
-    programming, constructive logic, and the Rocq prover.
+    programming, constructive logic, and the Rocq prover. -/
 
- ######################################################################
- Overview
+/- ###################################################################### -/
+/- Overview -/
 
- Building reliable software is hard -- really hard.  The scale and
+/- Building reliable software is hard -- really hard.  The scale and
     complexity of modern systems, the number of people involved, and
     the range of demands placed on them make it challenging to build
     software that is even more-or-less correct, much less 100%%
@@ -107,11 +79,11 @@ Preface
 
     (C) _functional programming_, both as a method of programming that
         simplifies reasoning about programs and as a bridge between
-        programming and logic.
+        programming and logic. -/
 
- Logic
+/- Logic -/
 
- Logic is the field of study whose subject matter is _proofs_ --
+/- Logic is the field of study whose subject matter is _proofs_ --
     unassailable arguments for the truth of particular propositions.
     Volumes have been written about the central role of logic in
     computer science.  Manna and Waldinger called it "the calculus of
@@ -128,13 +100,13 @@ Preface
     ubiquitous in all of computer science.  You have surely seen them
     before, perhaps in a course on discrete math or analysis of
     algorithms, but in this course we will examine them more deeply
-    than you have probably done so far.
- HIDE: That last claim is now only true if people read some
-   optional chapters.  Oh well...
+    than you have probably done so far. -/
+/- HIDE: That last claim is now only true if people read some
+   optional chapters.  Oh well... -/
 
- Proof Assistants
+/- Proof Assistants -/
 
- The flow of ideas between logic and computer science has not been
+/- The flow of ideas between logic and computer science has not been
     unidirectional: CS has also made important contributions to logic.
     One of these has been the development of software tools for
     helping construct proofs of logical propositions.  These tools
@@ -151,7 +123,7 @@ Preface
        - _Proof assistants_ are hybrid tools that automate the more
          routine aspects of building proofs while depending on human
          guidance for more difficult aspects.  Widely used proof
-         assistants include Isabelle, Agda, Twelf, ACL2, PVS, F⋆,
+         assistants include Isabelle, Agda, Twelf, ACL2, PVS, F*,
          HOL4, Lean, and Rocq, among many others.
 
     This course is based around Rocq, a proof assistant that has been
@@ -205,17 +177,17 @@ Preface
       of the computational part.  More recently, an even more massive
       effort led to a Rocq formalization of the Feit-Thompson Theorem,
       the first major step in the classification of finite simple
-      groups.
- HIDE: CH: How about also mentioning more recent Rocq successes, like Iris
-      (https://iris-project.org/) or VST (http://vst.cs.princeton.edu/)?
+      groups. -/
+/- HIDE: CH: How about also mentioning more recent Rocq successes, like Iris
+      (https://iris-project.org/) or VST (http://vst.cs.princeton.edu/)? -/
 
- Functional Programming
+/- Functional Programming -/
 
- The term _functional programming_ refers both to a collection of
+/- The term _functional programming_ refers both to a collection of
     programming idioms that can be used in almost any programming
     language and to a family of programming languages designed to
     emphasize these idioms, including Haskell, OCaml, Standard ML,
-    F##, Scala, Scheme, Racket, Common Lisp, Clojure, Erlang, F⋆,
+    F##, Scala, Scheme, Racket, Common Lisp, Clojure, Erlang, F*,
     and Rocq.
 
     Functional programming has been developed over many decades --
@@ -225,7 +197,7 @@ Preface
     interest among industrial engineers and language designers,
     playing a key role in high-value systems at companies like Jane
     Street Capital, Microsoft, Facebook, Twitter, and Ericsson.
-/- LATER: should the companies be updated?
+/- LATER: should the companies be updated? -/
 
     The most basic tenet of functional programming is that, as much as
     possible, computation should be _pure_, in the sense that the only
@@ -271,9 +243,9 @@ Preface
     we find that these two sides of Rocq are actually aspects of the
     very same underlying machinery -- i.e., _proofs are programs_. -/
 
- Rocq vs. Coq
+/- Rocq vs. Coq -/
 
- Until 2025, the Rocq prover was known as Coq. According to the
+/- Until 2025, the Rocq prover was known as Coq. According to the
     official webpage, "The name 'Coq' referenced the Calculus of
     Constructions (CoC), the foundational system it is based on, as
     well as one of its creators, Thierry Coquand. Additionally, it
@@ -287,59 +259,61 @@ Preface
 
     The current release of Software Foundations is still in a
     transitional state, and you will see references to both Coq and
-    Rocq.
+    Rocq. -/
 
- SOONER: BCP 25: Update this when the rename is finished!
- LATER: Citations or at least web links would be good here!
+/- SOONER: BCP 25: Update this when the rename is finished! -/
+/- LATER: Citations or at least web links would be good here! -/
 
- ######################################################################
- Further Reading
+/- ###################################################################### -/
+/- Further Reading -/
 
- This text is intended to be self contained, but readers looking
+/- This text is intended to be self contained, but readers looking
     for a deeper treatment of particular topics will find some
-    suggestions for further reading in the Postscript chapter.
+    suggestions for further reading in the \CHAP{Postscript} chapter.
     Bibliographic information for all cited works can be found in the
-    file Bib.lean.
+    file \CHAP{Bib}. -/
 
- ######################################################################
- Practicalities
+/- ###################################################################### -/
+/- Practicalities -/
 
- System Requirements
+/- System Requirements -/
+/- SOONER: I ported some of the instructions from
+   [https://www.seas.upenn.edu/~cis5000/current/coq.html] but there might be
+   more goodness to extract from there -/
 
- Rocq runs on Windows, Linux, and macOS.  The files in this book
-    have been tested with Rocq $COQVERSION.
+/- Rocq runs on Windows, Linux, and macOS.  The files in this book
+    have been tested with Rocq $COQVERSION. -/
 
- Recommended Installation Method: VSCode + Docker
+/- Recommended Installation Method: VSCode + Docker -/
 
- The Visual Studio Code IDE can cooperate with the Docker
+/- The Visual Studio Code IDE can cooperate with the Docker
     virtualization platform to compile Rocq scripts without the need
     for any separate Rocq installation.  This method is recommended for
     most Software Foundations readers.
 
-    \- Install Docker from `The Docker website`(https://www.docker.com/get-started/) or
+    - Install Docker from {https://www.docker.com/get-started/} or
       make sure your existing installation is up to date.
 
-    \- Make sure Docker is running.
+    - Make sure Docker is running.
 
-    \- Install VSCode from `The VSCode website`(https://code.visualstudio.com) and start it
+    - Install VSCode from {https://code.visualstudio.com} and start it
       running.
 
-    \- Install VSCode's Dev Containers Extension from
-      `The Remote Containers webpage`(https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+    - Install VSCode's Dev Containers Extension from
+      {https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers}
 
       (Note that this extension only works with the official version
       of VSCode, not with some VSCode forks like VsCodium.)
 
-    \- Set up a directory for this SF volume by downloading the
-      provided `.tgz` file.  Besides the `.lean` file for each chapter,
-      this directory will contain a `.devcontainer` subdirectory with
+    - Set up a directory for this SF volume by downloading the
+      provided [.tgz] file.  Besides the [.v] file for each chapter,
+      this directory will contain a [.devcontainer] subdirectory with
       instructions for VSCode about where to find an appropriate
-      Docker image and a `_CoqProject` file, whose presence triggers
+      Docker image and a [_CoqProject] file, whose presence triggers
       the VSRocq extension.
-      -- TODO LEANIFY
-/- SOONER: RocqProject, at some point?
+/- SOONER: RocqProject, at some point? -/
 
-    \- In VSCode, use `File > Open Folder` to open the new directory.
+    - In VSCode, use [File > Open Folder] to open the new directory.
       VSCode should ask you whether you want to run the project in the
       associated Docker container.  (If it does not ask you, you can
       open the command palette by pressing F1 and run the command “Dev
@@ -347,29 +321,29 @@ Preface
 
       This step may take some time.
 
-    \- Check that VSRocq is working by double-clicking the file
-      `Basics.v` from the list on the left (you should see a blinking
+    - Check that VSRocq is working by double-clicking the file
+      [Basics.v] from the list on the left (you should see a blinking
       cursor in the window that opens; if not you can click in that
-      window to select it), and pressing `alt+downarrow` (on MacOS,
-      `control+option+downarrow`) a few times.  You should see the
+      window to select it), and pressing [alt+downarrow] (on MacOS,
+      [control+option+downarrow]) a few times.  You should see the
       cursor move through the file and the region above the cursor get
       highlighted.
 
-      \- If VSRocq does not work and you receive an error indicating that
-        `vsrocqtop` was not found, open a new terminal in the container
+      - If VSRocq does not work and you receive an error indicating that
+        [vsrocqtop] was not found, open a new terminal in the container
         (you can do this by opening the command palette and running the
         command “Terminal: Create New Terminal”) and run the command
-        `which vsrocqtop`. This should print the path to the VSRocq
+        [which vsrocqtop]. This should print the path to the VSRocq
         installation inside the container. Copy this path
         and paste it into the “VSRocq: Path” textbox in the
         VSRocq extension settings (accessible via the gear icon on
         the VSRocq extension page in VSCode), then reload your window.
 
-    \- To see what other key bindings are available, press F1 and then
-      type `Coq:`, or visit the VSRocq web pages:
-      https://github.com/rocq-prover/vsrocq. -/
+    - To see what other key bindings are available, press F1 and then
+      type [Coq:], or visit the VSRocq web pages:
+      {https://github.com/rocq-prover/vsrocq}. -/
 
- SOONER: We might want to include some of this...
+/- SOONER: We might want to include some of this...
 
        When I try to run the line importing all the definitions from Basics.v, I get this error:
 
@@ -411,7 +385,13 @@ Preface
      when importing file
 
         Make sure that the Rocq files have been compiled. Run make to
-        compile the project files.
+        compile the project files.  If the _CoqProject files is not
+        located in the project root folder you need to either Move the
+        files to the root project folder Or add the line
+        "coq.coqProjectRoot": "PATH_TO_COQPROJECT" (in
+        .devcontainer/devcontainer.json to point to the directory where
+        _CoqProject is located. Restarting the docker container is
+        required after this step.
 
      Docker pull rate limit hit
 
@@ -423,21 +403,21 @@ Preface
 
        You have reached your
        pull rate limit. You may increase the limit by authenticating and
-       upgrading: https://www.docker.com/increase-rate-limits
+       upgrading: https://www.docker.com/increase-rate-limits -/
 
- Alternative Installation Methods
+/- Alternative Installation Methods -/
 
- If you prefer, there are several other ways to use Rocq. You will need:
+/- If you prefer, there are several other ways to use Rocq. You will need:
 
     - A current installation of Rocq, available from the Rocq home
-      page (https://rocq-prover.org/install).  The "Rocq Platform"
+      page ({https://rocq-prover.org/install}).  The "Rocq Platform"
       offers the easiest installation experience for most people,
       especially on Windows.
 
     - An IDE for interacting with Rocq.  There are several choices:
 
 /- LATER: the repository has been renamed, to VsRocq, but the docs still call it
-   VsCoq
+   VsCoq -/
         - _VsCoq_ is an extension for Visual Studio Code that offers a
           simple interface via a familiar IDE.  This option is the
           recommended default.
@@ -449,25 +429,25 @@ Preface
         - _Proof General_ is an Emacs-based IDE.  It tends to be
           preferred by users who are already comfortable with Emacs.
           It requires a separate installation (google "Proof General",
-          but generally all you need to do is `M-x package-list-packages`,
-          then select the `proof-general` package from the list and
-          hit the `i] key for install, then hit the [x` key for execute).
+          but generally all you need to do is [M-x package-list-packages],
+          then select the [proof-general] package from the list and
+          hit the [i] key for install, then hit the [x] key for execute).
 
           There are only a few commands you need to know to use ProofGeneral
           effectively. They are:
 
-          - `C-c C-n`: send the next command to Rocq.
-          - `C-c C-u`: undo (retract) the most recently executed command.
-          - `C-c C-RET`: submit everything up to the current cursor location to
+          - [C-c C-n]: send the next command to Rocq.
+          - [C-c C-u]: undo (retract) the most recently executed command.
+          - [C-c C-RET]: submit everything up to the current cursor location to
             Rocq for processing.
-          - `C-c C-.`: move the cursor to the end of the last command which has
+          - [C-c C-.]: move the cursor to the end of the last command which has
             been processed by Rocq.
-          - `C-c .`: toggle "electric terminator mode". When this mode is
+          - [C-c .]: toggle "electric terminator mode". When this mode is
             turned on, simply typing a period will send the current command to
-            Rocq (normally you have to type a period and then type `C-c C-n`).
+            Rocq (normally you have to type a period and then type [C-c C-n]).
 
           Adventurous users of Rocq within Emacs may want to check out
-          extensions such as `company-coq] and [control-lock`.
+          extensions such as [company-coq] and [control-lock].
 
         - _RocqIDE_ is a simpler stand-alone IDE.  It is distributed with
           the Rocq Platform, so it should be available once you have Rocq
@@ -475,18 +455,18 @@ Preface
           platforms this may involve installing additional packages for GUI
           libraries and such.
 
- SOONER: is this recommendation still up-to-date?
+/- SOONER: is this recommendation still up-to-date? -/
           Users who like RocqIDE should consider running it with the
           "asynchronous" and "error resilience" modes disabled:
-```
+[[
           coqide -async-proofs off \
                  -async-proofs-command-error-resilience off Foo.v &
-```
+]]
  -/
 
- Exercises
+/- Exercises -/
 
- Each chapter includes numerous exercises.  Each is marked with a
+/- Each chapter includes numerous exercises.  Each is marked with a
     "star rating," which can be interpreted as follows:
 
        - One star: easy exercises that underscore points in the text
@@ -503,13 +483,13 @@ Preface
 
     Those using SF in a classroom setting should note that the autograder
     assigns extra points to harder exercises:
-```
+[[
       1 star  = 1 point
       2 stars = 2 points
       3 stars = 3 points
       4 stars = 6 points
       5 stars = 10 points
-```
+]]
 
     Some exercises are marked "advanced," and some are marked
     "optional."  Doing just the non-optional, non-advanced exercises
@@ -525,30 +505,30 @@ Preface
     much less useful for courses, which typically have graded homework
     assignments.  We especially request that readers not post
     solutions to the exercises anyplace where they can be found by
-    search engines.
+    search engines. -/
 
- Downloading the Rocq Files
+/- Downloading the Rocq Files -/
 
- A tar file containing the full sources for the "release version"
+/- A tar file containing the full sources for the "release version"
     of this book (as a collection of Rocq scripts and HTML files) is
-    available at https://softwarefoundations.cis.upenn.edu.
+    available at {https://softwarefoundations.cis.upenn.edu}.
 
     If you are using the book as part of a class, your professor may
     give you access to a locally modified version of the files; you
     should use that one instead of the public release version, so that
-    you get any local updates during the semester.
+    you get any local updates during the semester. -/
 
- Chapter Dependencies
+/- Chapter Dependencies -/
 
- A diagram of the dependencies between chapters and some suggested
-    paths through the material can be found in the file #<a href="deps.html"><span class="inlineref">#`deps.html`#</span></a>#.
+/- A diagram of the dependencies between chapters and some suggested
+    paths through the material can be found in the file #<a href="deps.html"><span class="inlineref">#[deps.html]#</span></a>#. -/
 
- ######################################################################
- Recommended Citation Format
+/- ###################################################################### -/
+/- Recommended Citation Format -/
 
- If you want to refer to this volume in your own writing, please
+/- If you want to refer to this volume in your own writing, please
     do so as follows:
-```
+[[
     @book            {$FIRSTAUTHOR:SF$VOLUMENUMBER,
     author       =   {$AUTHORS},
     editor       =   {Benjamin C. Pierce},
@@ -559,34 +539,34 @@ Preface
     publisher    =   "Electronic textbook",
     note         =   {Version $VERSION, \URL{http://softwarefoundations.cis.upenn.edu}}
     }
-```
+]]
+ -/
 
+/- ###################################################################### -/
+/- Resources -/
 
-  ######################################################################
- Resources
+/- Sample Exams -/
 
- Sample Exams
-
- A large compendium of exams from many offerings of
+/- A large compendium of exams from many offerings of
     CIS5000 ("Software Foundations") at the University of Pennsylvania
     can be found at
-    https://www.seas.upenn.edu/~cis5000/current/exams/index.html.
+    {https://www.seas.upenn.edu/~cis5000/current/exams/index.html}.
     There has been some drift of notations over the years, but most of
-    the problems are still relevant to the current text.
+    the problems are still relevant to the current text. -/
 
- Lecture Videos
+/- Lecture Videos -/
 
- Lectures for two intensive summer courses based on _Logical
+/- Lectures for two intensive summer courses based on _Logical
     Foundations_ (part of the DeepSpec summer school series) can be
-    found at https://deepspec.org/event/dsss17 and
-    https://deepspec.org/event/dsss18/.  The video quality in the
+    found at {https://deepspec.org/event/dsss17} and
+    {https://deepspec.org/event/dsss18/}.  The video quality in the
     2017 lectures is poor at the beginning but gets better in the
-    later lectures.
+    later lectures. -/
 
- ######################################################################
- Note for Instructors and Contributors
+/- ###################################################################### -/
+/- Note for Instructors and Contributors -/
 
- If you plan to use these materials in your own teaching, or if you
+/- If you plan to use these materials in your own teaching, or if you
     are using software foundations for self study and are finding
     things you'd like to help add or improve, your contributions are
     welcome!  You are warmly invited to join the private SF git repo.
@@ -622,20 +602,20 @@ Preface
 
     We'll set you up with access to the git repository and developers'
     mailing lists.  In the repository you'll find the files
-    `INSTRUCTORS` and `CONTRIBUTING` with further instructions.
+    [INSTRUCTORS] and [CONTRIBUTING] with further instructions. -/
 
- ######################################################################
- Translations
+/- ###################################################################### -/
+/- Translations -/
 
- Thanks to the efforts of a team of volunteer translators,
+/- Thanks to the efforts of a team of volunteer translators,
     _Software Foundations_ can be enjoyed in Japanese at
-    http://proofcafe.org/sf.  A Chinese translation is also underway;
-     you can preview it at https://rocq-zh.github.io/SF-zh/.
+    {http://proofcafe.org/sf}.  A Chinese translation is also underway;
+     you can preview it at {https://rocq-zh.github.io/SF-zh/}. -/
 
- ######################################################################
- Thanks
+/- ###################################################################### -/
+/- Thanks -/
 
- Development of the _Software Foundations_ series has been
+/- Development of the _Software Foundations_ series has been
     supported, in part, by the National Science Foundation under the
     NSF Expeditions grant 1521523, _The Science of Deep
-    Specification_.
+    Specification_. -/
