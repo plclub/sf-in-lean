@@ -1,19 +1,5 @@
 /- Imp: Simple Imperative Programs -/
 
--- Claude: This chapter is being ported from the Rocq `Imp.v` to Lean by
--- Claude.  Human review is needed, especially of the prose and of the
--- pedagogical choices flagged in `MWH`/`dev` notes below.
--- Claude: Some author notes below concern material that is specific to Rocq
--- and has no Lean analogue as yet (the `<{ }>` custom grammar, `Set Printing
--- …`, `Locate`); they are left as notes for a future translation pass to
--- decide what, if anything, the Lean chapter should do instead.  The
--- `HIDEFROMADVANCED` track marker is kept where it wraps a distinct block;
--- `HIDEFROMHTML` (which only ever wraps `Module`/`Require`/`Reserved
--- Notation` lines) has no content or Lean meaning and is not used here.
-
--- The `INSTRUCTORS`/`BCP`/`SOONER`/`LATER`/`NDS'25`/… blocks throughout this
--- file are internal author notes about further work, not part of the chapter
--- text.
 /- INSTRUCTORS: This chapter plus `Maps` takes a little more than one
    80-minute lecture.  It could be streamlined a bit further without
    losing much, by removing (for example) the inference rules and BNF
@@ -23,8 +9,6 @@
    TERSE version; eventually decided that it makes some of the
    definitions harder to talk about.) -/
 /- SOONER: Needs some WORKINCLASSes and some quizzes -/
-/- SOONER: We still need to adjust the explanations of notations in Imp,
-   Hoare, and Stlc from some earlier changes... -/
 /- LATER: Another nice challenge exercise at some point would be to add
    C-style arrays (i.e., indirect read/write).  This sets up some
    really nice challenge problems in Hoare (reasoning about arrays /
@@ -32,38 +16,19 @@
 /- SOONER: BCP 25: Maybe we should write /\ instead of && in assertions,
    to save a mismatch in the dec_minimum exercise in Hoare2? -/
 /- HIDE: At some point we could consider moving material from the old
-   HoareLists.v to this chapter (and into later files, as
+   HoareLists to this chapter (and into later files, as
    appropriate).  We haven't done it yet because it's a shame to
    complicate the nice simple presentation here when it's used as the
    basis for applications like Xavier's static analysis lectures.
    Also, we now have a whole volume on real separation logic... -/
-/- HIDE: Check out 8.14 / 8/15 Notation changes -- in particular, note that
-   identifiers can now elaborate to strings in a custom grammar -- this may
-   help a lot in PLF!
-   The release notes now include a section on Notation changes. See
-   https://coq.github.io/doc/v8.15/refman/changes.html#id15 for 8.15 and
-   https://coq.github.io/doc/v8.14/refman/changes.html#id19 for 8.14
-   NDS'25: That does not seem right. I could not find anything to that effect
-   in the changelogs, and this hack (from 2022!) also seems to contradict
-   this statement: https://github.com/rocq-prover/rocq/issues/15643 -/
 
--- MWH (port note): Datatype constructors follow Lean naming conventions --
--- lowerCamelCase with no redundant type-name prefix.  `Aexp` is `num`/`id`/
--- `plus`/`minus`/`mult`; `Bexp` folds the two booleans into a single
--- `bool (b : Bool)` constructor (like `num (n : Nat)`) plus `eq`/`neq`/`le`/
--- `gt`/`not`/`and`; `Com` is `skip`/`asgn`/`seq`/`cond`/`whileDo`.
--- Inference-rule constructors keep their SF names (`E_*`, `ST_*`, `nw_*`).
--- Functions on a type live in that type's namespace (`Aexp.eval`,
--- `Bexp.eval`, `Aexp.optimize_0plus`, `Com.no_whiles`, …), so their match
--- bodies use the bare constructor names.  (Convention applied per the
--- chenson2018 PR review.)
 -- MWH (port note): The Rocq chapter's "Rocq Automation" tour has been
 -- retooled here for Lean.  The tactic combinators `try` and `repeat` (and the
 -- custom-tactic `macro`) are introduced in this chapter; `<;>` and `simp` were
--- already introduced in Logical Foundations (`<;>` in `Induction`, per
--- berberman's review of PR #61), so we use them freely and the `<;>` section
--- below is a recap.  For linear arithmetic we use `lia` (the newer
--- `grind`-based tactic, per the chenson2018 review); NOTE that LF currently
+-- already introduced in Logical Foundations (`<;>` in `Induction`)
+-- so we use them freely and the `<;>` section
+-- below is a recap.  For linear arithmetic we use `lia`;
+-- NOTE that LF currently
 -- introduces `omega`, not `lia`, so this needs to be reconciled volume-wide
 -- (either introduce `lia` in LF, or keep `omega`).
 
@@ -91,8 +56,7 @@ import LF.Maps
 -- HIDEFROMADVANCED
 /-
   We concentrate here on defining the _syntax_ and _semantics_ of Imp;
-  later, in _Programming Language Foundations_ (_Software Foundations_,
-  volume 2), we develop a theory of _program equivalence_ and introduce
+  later in this volume we develop a theory of _program equivalence_ and introduce
   _Hoare Logic_, a popular logic for reasoning about imperative programs.
 -/
 -- /HIDEFROMADVANCED
@@ -146,6 +110,7 @@ inductive Bexp where
   | not (b : Bexp)
   | and (b1 b2 : Bexp)
 
+-- MWH: Will we develop `ImpParser`? Mentioned below as an optional chapter
 -- FULL
 /-
   In this chapter, we'll mostly elide the translation from the concrete
@@ -172,8 +137,7 @@ inductive Bexp where
       | a - a
       | a * a
 
-  b := true
-      | false
+  b := bool
       | a = a
       | a <> a
       | a <= a
@@ -219,30 +183,18 @@ inductive Bexp where
 
 /- _Evaluating_ an arithmetic expression produces a number. -/
 
-/- Claude (review, chenson2018 — DEFERRED): the reviewer suggests sealing the
-   evaluators with `@[irreducible]` and proving *characterizing lemmas* (one
-   `rfl` equation per constructor) that proofs rewrite with, instead of
-   unfolding the definition -- the pattern used in `LF/Lists.lean`
-   (`@[irreducible] def … ; unseal … in theorem …_eq : … := rfl`), optionally
-   tagging the lemmas `@[simp]`.
-
-   This is a sound proof-engineering improvement (it enforces the SFL
-   "don't peek through the interface" tenet), but a broad one: it would touch
-   every recursive function here (`Aexp.eval`, `Bexp.eval`, `optimize_0plus`,
-   `optimize_0plus_b`, `ceval_fun_no_while`, `no_whiles`, in both the warm-up
-   and real copies), add ~50 characterizing lemmas, convert the ~12 proofs
-   that currently `simp [Aexp.eval]`/unfold, and rewrite every `by rfl`
-   computational example (which relies on the definitions being reducible).
-   It also intersects the CONTRIBUTING tenet "explicit rewrites over `simp`"
-   (whether the lemmas should be `@[simp]` or used via explicit `rw`).
-   Deferred to its own focused pass. -/
+/- chenson2018: TODO: seal evaluators with `@[irreducible]` and prove
+   *characterizing lemmas* (one
+   `rfl` equation per constructor) that proofs rewrite with instead of
+   unfolding the definition; tag lemmas `@[simp]`.
+ -/
 
 def Aexp.eval (a : Aexp) : Nat :=
   match a with
-  | num n => n
-  | plus  a1 a2 => eval a1 + eval a2
-  | minus a1 a2 => eval a1 - eval a2
-  | mult  a1 a2 => eval a1 * eval a2
+  | num   n     =>  n
+  | plus  a1 a2 =>  eval a1 + eval a2
+  | minus a1 a2 =>  eval a1 - eval a2
+  | mult  a1 a2 =>  eval a1 * eval a2
 
 example : Aexp.eval (.plus (.num 2) (.num 2)) = 4 := by rfl
 
@@ -250,13 +202,13 @@ example : Aexp.eval (.plus (.num 2) (.num 2)) = 4 := by rfl
 
 def Bexp.eval (b : Bexp) : Bool :=
   match b with
-  | bool b     => b
-  | eq a1 a2  => a1.eval == a2.eval
-  | neq a1 a2 => a1.eval != a2.eval
-  | le a1 a2  => a1.eval ≤ a2.eval
-  | gt a1 a2  => a1.eval > a2.eval
-  | not b1    => !eval b1
-  | and b1 b2 => eval b1 && eval b2
+  | bool b     =>  b
+  | eq   a1 a2 =>  a1.eval == a2.eval
+  | neq  a1 a2 =>  a1.eval != a2.eval
+  | le   a1 a2 =>  a1.eval ≤ a2.eval
+  | gt   a1 a2 =>  a1.eval > a2.eval
+  | not  b1    =>  !eval b1
+  | and  b1 b2 =>  eval b1 && eval b2
 
 -- QUIZ
 /-
@@ -278,7 +230,7 @@ def Bexp.eval (b : Bexp) : Bool :=
 -- FULL
 /-
   We haven't defined very much yet, but we can already get some mileage
-  out of the definitions.  Suppose we define a function that takes an
+  out of the definitions. Suppose we define a function that takes an
   arithmetic expression and slightly simplifies it, changing every
   occurrence of `0 + e` (i.e., `.plus (.num 0) e`) into just `e`.
 -/
@@ -286,11 +238,11 @@ def Bexp.eval (b : Bexp) : Bool :=
 
 def Aexp.optimize_0plus (a : Aexp) : Aexp :=
   match a with
-  | num n => num n
-  | plus (num 0) e2 => optimize_0plus e2
-  | plus  e1 e2 => plus  (optimize_0plus e1) (optimize_0plus e2)
-  | minus e1 e2 => minus (optimize_0plus e1) (optimize_0plus e2)
-  | mult  e1 e2 => mult  (optimize_0plus e1) (optimize_0plus e2)
+  | num   n          => num n
+  | plus  (num 0) e2 => optimize_0plus e2
+  | plus  e1      e2 => plus  (optimize_0plus e1) (optimize_0plus e2)
+  | minus e1      e2 => minus (optimize_0plus e1) (optimize_0plus e2)
+  | mult  e1      e2 => mult  (optimize_0plus e1) (optimize_0plus e2)
 
 -- FULL
 /-
@@ -302,8 +254,8 @@ def Aexp.optimize_0plus (a : Aexp) : Aexp :=
 /- test_optimize_0plus -/
 example :
     Aexp.optimize_0plus (.plus (.num 2)
-                     (.plus (.num 0)
-                       (.plus (.num 0) (.num 1))))
+                               (.plus (.num 0)
+                                      (.plus (.num 0) (.num 1))))
       = .plus (.num 2) (.num 1) := by rfl
 
 -- FULL
@@ -312,7 +264,7 @@ example :
   evaluating an optimized expression _always_ gives the same result as
   the original -- we should prove it!
 
-  Here is a first, deliberately explicit proof.  It works, but notice how
+  Here is a first, deliberately explicit proof. It works, but notice how
   much of it is repetitive: several cases are discharged by exactly the
   same three-step incantation.
 -/
@@ -353,6 +305,10 @@ theorem optimize_0plus_sound (a : Aexp) :
   # Tactic Combinators
 -/
 
+/- mwhicks1: We need to redo this section based on the assumption that
+   a bunch of this stuff will be covered in the IndPropRegexp chapter.
+-/
+
 -- FULL
 /-
   The amount of repetition in that last proof is a little annoying.  And
@@ -360,22 +316,20 @@ theorem optimize_0plus_sound (a : Aexp) :
   being proved sound were significantly more complex, it would start to be
   a real problem.
 
-  So far, we've been driving each subgoal by hand.  Lean also provides
+  So far, we've been driving each subgoal by hand. Lean also provides
   _combinators_ that build bigger tactics out of smaller ones, letting us
-  discharge many similar subgoals at once.  Getting used to them takes a
+  discharge many similar subgoals at once. Getting used to them takes a
   little energy, but it lets us scale up to more complex definitions and
   more interesting properties without drowning in boring, repetitive
   detail.
 -/
 -- /FULL
--- TERSE: /- That last proof was repetitive.  Time for a few combinators. -/
+-- TERSE: /- That last proof was repetitive. Time for a few combinators. -/
 
 /-
   ######################################################################
   ## The `try` combinator
 -/
-
-/- LATER: put `<;>`/`;` before `try`? -/
 
 /-
   If `t` is a tactic, then `try t` is a tactic that is just like `t`
@@ -396,19 +350,11 @@ example (ae : Aexp) : Aexp.eval ae = Aexp.eval ae := by
 
 /-
   There is not much reason to use `try` in completely manual proofs like
-  these, but it is very useful together with the `<;>` combinator, which
-  we show next.
+  these, but it is very useful together with the `<;>` combinator,
+  which we introduced in _Logical Foundations_' `Induction` chapter.
 -/
 
 /-
-  ######################################################################
-  ## The `<;>` combinator
--/
-
-/-
-  (Recall from `Induction` that the compound tactic `t <;> t'` first performs
-  `t` and then performs `t'` on _each subgoal_ generated by `t`.)
-
   For example, consider the following trivial lemma.  Splitting on `n`
   leaves two subgoals that are discharged identically:
 -/
@@ -430,6 +376,10 @@ example (n : Nat) : n = 0 ∨ n ≥ 1 := by
   on the interesting one.
 -/
 -- /FULL
+
+/- mwhicks1: The following proof is badly formed. It doesn't follow
+   from the tacticals we just introduced, i.e., `try` and `<;>`.
+-/
 
 theorem optimize_0plus_sound' (a : Aexp) :
     Aexp.eval (Aexp.optimize_0plus a) = Aexp.eval a := by
@@ -490,7 +440,7 @@ theorem optimize_0plus_sound' (a : Aexp) :
       Aexp.optimize_0plus (.plus a1 a2) = Aexp.optimize_0plus a2
       ```
 
-      and the IH for `a2` is exactly what we need.  On the other hand, if
+      and the IH for `a2` is exactly what we need. On the other hand, if
       `n = n' + 1` for some `n'`, then again `Aexp.optimize_0plus` simply calls
       itself recursively, and the result follows from the IH.  ∎
 -/
@@ -502,18 +452,16 @@ theorem optimize_0plus_sound' (a : Aexp) :
   However, this proof can still be improved: the first case (for
   `a = .num n`) is very trivial -- even more trivial than the cases that
   we said simply followed from the IH -- yet in a fully explicit proof we
-  would write it out in full.  It would be better and clearer to drop it and
+  would write it out in full. It would be better and clearer to drop it and
   just say, at the top, "Most cases are either immediate or direct from the
-  IH.  The only interesting case is the one for `.plus`..."  Our `<;>`
+  IH. The only interesting case is the one for `.plus`..."  Our `<;>`
   version above already does exactly this.
 -/
 -- /FULL
 
-/- Claude: A further refinement of the explicit proof appears in `Imp.v` as a
-   second theorem, `optimize_0plus_sound''`.  Our `<;>` version above already
-   captures the same improvement, so there is nothing more to do here; the
-   Rocq proof is kept only as a reference for a future pass to weigh whether a
-   distinct Lean variant adds anything:
+/- mwhicks1: The following is the Rocq version of this proof, which
+   hasn't yet been translated. It might be we won't need it, depending
+   on the best way to do it in Lean.
 
    ```
    Theorem optimize_0plus_sound'': forall a,
@@ -533,56 +481,28 @@ theorem optimize_0plus_sound' (a : Aexp) :
          simpl; rewrite IHa2; reflexivity. Qed.
    ``` -/
 
-/- Claude: The `;` tactical has a more general form worth noting.  Its uniform
-   case corresponds to Lean's `<;>` (covered in this chapter); running
-   *different* tactics on different subgoals corresponds in Lean to focusing
-   with `case`/`·`, which was introduced in an earlier lesson, so this chapter
-   does not re-teach it.  For reference: in Rocq, if `T`, `T1`, ..., `Tn` are
-   tactics, then
-
-   ```
-   T; [T1 | T2 | ... | Tn]
-   ```
-
-   first performs `T` and then performs `T1` on the first subgoal generated by
-   `T`, `T2` on the second subgoal, etc.  So `T;T'` is just the special case
-   where every `Ti` is the same tactic (`T; [T' | T' | ... | T']`).  The
-   bracketed-list form has no direct Lean surface syntax. -/
-
 /-
-  ######################################################################
-  ## The `repeat` combinator
+  mwhicks1: The `;` tactical has a more general form in Rocq; we might
+  want to introduce the equivalent (or a different!) pattern in Lean.
+  In Rocq: if `T`, `T1`, ..., `Tn` are tactics, then
+
+  ```
+  T; [T1 | T2 | ... | Tn]
+  ```
+
+  first performs `T` and then performs `T1` on the first subgoal generated by
+  `T`, `T2` on the second subgoal, etc.  So `T;T'` is just the special case
+  where every `Ti` is the same tactic (`T; [T' | T' | ... | T']`). This
+  bracketed-list form has no direct Lean surface syntax.
 -/
 
-/- LATER: The `do` tactic could also be introduced before the `repeat`
-   tactic. -/
-
 /-
-  The `repeat` combinator takes another tactic and keeps applying it until
-  it fails or until it succeeds but makes no further progress.
+  mwhicks1: The original Rocq has a long discussion of the `repeat`
+  combinator, using the example of list membership. None of it is
+  specific to Imp, so I have removed it, assuming it gets handled
+  in LF, or gets dropped.
 
-  For example, the following proof keeps trying to close the goal with an
-  assumption and, failing that, to split it with a constructor, until
-  nothing is left to do:
--/
-
-example (P Q : Prop) (hp : P) (hq : Q) : P ∧ Q ∧ P ∧ Q := by
-  repeat first | exact hp | exact hq | constructor
-
-/-
-  The tactic `repeat t` never fails: if `t` doesn't apply to the goal,
-  then `repeat` _succeeds_ without changing anything (i.e., it repeats
-  zero times).  It also has no upper bound on the number of iterations, so
-  a tactic that always makes progress will make `repeat` loop forever.
-  Unlike evaluation of Lean _terms_, which is guaranteed to terminate,
-  _tactic_ evaluation is not -- but this never threatens soundness: a
-  diverging tactic just fails to build a proof.
--/
-
-/- Claude: `repeat` can be illustrated with a few more examples that lean on
-   Rocq-specific tactics/lemmas; a future pass could decide whether Lean
-   analogues are worth adding.  In Rocq, `10 ∈ [1..10]` was proved first with
-   `repeat`:
+  In Rocq, `10 ∈ [1..10]` was proved first with `repeat`:
 
    ```
    Theorem In10 : In 10 [1;2;3;4;5;6;7;8;9;10].
@@ -616,12 +536,15 @@ example (P Q : Prop) (hp : P) (hq : Q) : P ∧ Q ∧ P ∧ Q := by
      (* SOONER: BCP 23: What about in VSCoq? *)
      (* repeat rewrite Nat.add_comm. *)
    Admitted.
-   ``` -/
+   ```
+-/
 
 /-
   ######################################################################
   ## Defining new tactics
 -/
+
+-- mwhicks1: Much of this will need to change. Leaving it here for reference.
 
 -- FULL
 /-
@@ -673,6 +596,8 @@ example (P Q : Prop) (hp : P) (hq : Q) : (P ∧ Q) ∧ (Q ∧ P) := by
   ## The `lia` tactic
 -/
 
+-- mwhicks1: Probably this will get introduced in an earlier LF chapter.
+
 -- FULL
 /-
   `lia` is a decision procedure for linear arithmetic over the integers and
@@ -700,6 +625,8 @@ example (m n p : Nat) : m + (n + p) = m + n + p := by lia
   ######################################################################
   ## A few more handy tactics
 -/
+
+/- mwhicks1: Probably this section gets dropped; will be in LF. -/
 
 /- SOONER: Have we really not introduced any of these? (e.g. subst?) -/
 
@@ -743,25 +670,27 @@ example (m n p : Nat) : m + (n + p) = m + n + p := by lia
 def Bexp.optimize_0plus_b (b : Bexp) : Bexp :=
   -- ADMITDEF
   match b with
-  | bool b     => bool b
-  | eq a1 a2  => eq a1.optimize_0plus a2.optimize_0plus
-  | neq a1 a2 => neq a1.optimize_0plus a2.optimize_0plus
-  | le a1 a2  => le a1.optimize_0plus a2.optimize_0plus
-  | gt a1 a2  => gt a1.optimize_0plus a2.optimize_0plus
-  | not b1    => not (optimize_0plus_b b1)
-  | and b1 b2 => and (optimize_0plus_b b1) (optimize_0plus_b b2)
+  | bool b    =>  bool b
+  | eq a1 a2  =>  eq a1.optimize_0plus a2.optimize_0plus
+  | neq a1 a2 =>  neq a1.optimize_0plus a2.optimize_0plus
+  | le a1 a2  =>  le a1.optimize_0plus a2.optimize_0plus
+  | gt a1 a2  =>  gt a1.optimize_0plus a2.optimize_0plus
+  | not b1    =>  not (optimize_0plus_b b1)
+  | and b1 b2 =>  and (optimize_0plus_b b1) (optimize_0plus_b b2)
   -- /ADMITDEF
 
 /- optimize_0plus_b_test1 -/
 example :
-    Bexp.optimize_0plus_b (.not (.gt (.plus (.num 0) (.num 4)) (.num 8)))
-      = .not (.gt (.num 4) (.num 8)) := by rfl -- ADMITTED
+    Bexp.optimize_0plus_b
+        (.not (.gt (.plus (.num 0) (.num 4)) (.num 8)))
+      = (.not (.gt (.num 4) (.num 8))) := by rfl -- ADMITTED
 -- GRADE_THEOREM 0.5: optimize_0plus_b_test1
 
 /- optimize_0plus_b_test2 -/
 example :
-    Bexp.optimize_0plus_b (.and (.le (.plus (.num 0) (.num 4)) (.num 5)) (.bool true))
-      = .and (.le (.num 4) (.num 5)) (.bool true) := by rfl -- ADMITTED
+    Bexp.optimize_0plus_b
+        (.and (.le (.plus (.num 0) (.num 4)) (.num 5)) (.bool true))
+      = (.and (.le (.num 4) (.num 5)) (.bool true)) := by rfl -- ADMITTED
 -- GRADE_THEOREM 0.5: optimize_0plus_b_test2
 
 theorem optimize_0plus_b_sound (b : Bexp) :
@@ -783,10 +712,10 @@ theorem optimize_0plus_b_sound (b : Bexp) :
 -- FULL
 /-
   We have presented `Aexp.eval` and `Bexp.eval` as functions defined by
-  recursion.  Another way to think about evaluation -- one that is often
+  recursion. Another way to think about evaluation -- one that is often
   more flexible -- is as a _relation_ between expressions and their
-  values.  This perspective leads to inductive definitions like the
-  following.  We name the hypotheses in each case (`h1`, `h2`); this
+  values. This perspective leads to inductive definitions like the
+  following. We name the hypotheses in each case (`h1`, `h2`); this
   gives us readable names to refer to during proofs.
 -/
 -- /FULL
@@ -806,7 +735,7 @@ inductive Aexp.evalR : Aexp → Nat → Prop where
 
 -- FULL
 /-
-  A small notational aside.  We could instead have presented this relation
+  A small notational aside. We could instead have presented this relation
   with *positional* hypotheses -- no names for the premises:
 
   ```
@@ -828,31 +757,26 @@ inductive Aexp.evalR : Aexp → Nat → Prop where
   ```
 
   The version above instead gives explicit names to the hypotheses in each
-  case (the `h1`/`h2`).  Naming the hypotheses gives us more control over the
+  case (the `h1`/`h2`). Naming the hypotheses gives us more control over the
   names chosen during proofs involving the relation, at the cost of making
-  the definition a little more verbose.  We adopt the named style.
+  the definition a little more verbose. We adopt the named style.
 -/
 -- /FULL
 
 /-
+  mwhicks1: We will very likely want to use different notation, both
+  here and for defining AExp and BExp terms themselves.
+-/
+
+/-
   It will be convenient to have an infix notation for `Aexp.evalR`.  We'll
-  write `e ==> n` to mean that arithmetic expression `e` evaluates to
+  write `e ⇓ n` to mean that arithmetic expression `e` evaluates to
   value `n`.  (We scope the notation to this namespace so it doesn't
   collide with other evaluation relations later.)  In Lean the notation is
   declared right after the inductive.
 -/
-/- HIDE: OLD: (This notation is one place where the limitation to ASCII
-   symbols becomes a little bothersome.  The standard notation for the
-   evaluation relation is a double down-arrow.  We'll typeset it like this
-   in the HTML version of the notes and use a double slash as the closest
-   approximation in [.v] files.) -/
 
-scoped notation:55 e:56 " ==> " n:56 => Aexp.evalR e n
-/- LATER: Comment from reader: How do I keep the ==> notation for aevalR
-   from conflicting with the ==> notation for bevalR ?
-   BCP/AAA 1/16: We should explain about notation scopes somewhere.
-   NDS: notation scopes were already briefly touched upon in previous
-   chapters. -/
+scoped notation:55 e:56 " ⇓ " n:56 => Aexp.evalR e n
 
 /-
   ######################################################################
@@ -876,50 +800,50 @@ scoped notation:55 e:56 " ==> " n:56 => Aexp.evalR e n
   can be written like this as an inference rule:
 
   ```
-                            e1 ==> n1
-                            e2 ==> n2
+                            e1 ⇓ n1
+                            e2 ⇓ n2
                       --------------------          (E_APlus)
-                      plus e1 e2 ==> n1+n2
+                      plus e1 e2 ⇓ n1+n2
   ```
 
   Formally, there is nothing deep about inference rules: they are just
-  implications.  You can read the rule name on the right as the name of the
+  implications. You can read the rule name on the right as the name of the
   constructor and read each of the linebreaks between the premises above the
   line (as well as the line itself) as `→`.  All the variables mentioned in
   the rule (`e1`, `n1`, etc.) are implicitly bound by universal quantifiers
-  at the beginning.  (Such variables are often called _metavariables_ to
-  distinguish them from the variables of the language we are defining.  At
+  at the beginning. (Such variables are often called _metavariables_ to
+  distinguish them from the variables of the language we are defining. At
   the moment, our arithmetic expressions don't include variables, but we'll
-  soon be adding them.)  The whole collection of rules is understood as being
-  wrapped in an inductive declaration.  In informal prose, this is sometimes
+  soon be adding them.) The whole collection of rules is understood as being
+  wrapped in an inductive declaration. In informal prose, this is sometimes
   indicated by saying something like "Let `aevalR` be the smallest relation
   closed under the following rules...".
 
   To summarize: a group of inference rules corresponds to a single inductive
   definition; each rule's name corresponds to a constructor name; above the
   line are the premises, below the line the conclusion; and metavariables
-  like `e1` and `n1` are implicitly universally quantified.  The whole
-  collection of rules defines `==>` as the smallest relation closed under
+  like `e1` and `n1` are implicitly universally quantified. The whole
+  collection of rules defines `⇓` as the smallest relation closed under
   them:
 
   ```
                           -----------                (E_ANum)
-                          num n ==> n
+                          num n ⇓ n
 
-                            e1 ==> n1
-                            e2 ==> n2
+                            e1 ⇓ n1
+                            e2 ⇓ n2
                       --------------------           (E_APlus)
-                      plus e1 e2 ==> n1+n2
+                      plus e1 e2 ⇓ n1+n2
 
-                            e1 ==> n1
-                            e2 ==> n2
+                            e1 ⇓ n1
+                            e2 ⇓ n2
                      ---------------------           (E_AMinus)
-                     minus e1 e2 ==> n1-n2
+                     minus e1 e2 ⇓ n1-n2
 
-                            e1 ==> n1
-                            e2 ==> n2
+                            e1 ⇓ n1
+                            e2 ⇓ n2
                       --------------------           (E_AMult)
-                      mult e1 e2 ==> n1*n2
+                      mult e1 e2 ⇓ n1*n2
   ```
 -/
 -- /FULL
@@ -932,14 +856,16 @@ scoped notation:55 e:56 " ==> " n:56 => Aexp.evalR e n
 /- LATER: The first two quizzes here seem kind of boring. -/
 -- /HIDE
 
--- Claude: two comprehension quizzes follow; the first is shown, the second
--- is kept under `HIDE` (both were hidden in the source material).
+/-
+  mwhicks1: both of the next two quizzes were hidden in the source
+  material; the first quiz here is shown, the second is kept under `HIDE`.
+-/
 -- QUIZ
 /-
   Which rules are needed to prove the following?
 
   ```
-  .mult (.plus (.num 3) (.num 1)) (.num 0) ==> 0
+  .mult (.plus (.num 3) (.num 1)) (.num 0) ⇓ 0
   ```
 
   (A) `E_ANum` and `E_APlus`
@@ -956,7 +882,7 @@ scoped notation:55 e:56 " ==> " n:56 => Aexp.evalR e n
   Which rules are needed to prove the following?
 
   ```
-  .minus (.num 3) (.minus (.num 2) (.num 1)) ==> 2
+  .minus (.num 3) (.minus (.num 2) (.num 1)) ⇓ 2
   ```
 
   (A) `E_ANum` and `E_APlus`
@@ -968,6 +894,11 @@ scoped notation:55 e:56 " ==> " n:56 => Aexp.evalR e n
 -- /QUIZ
 -- /HIDE
 
+/-
+  mwhicks1: Not sure if we need ⇓b is needed, or whether we can define
+  ⇓ overloaded. Don't understand Lean notation yet!
+-/
+
 -- FULL
 -- EX1? (beval_rules)
 /-
@@ -977,12 +908,12 @@ scoped notation:55 e:56 " ==> " n:56 => Aexp.evalR e n
   def Bexp.eval (b : Bexp) : Bool :=
     match b with
     | bool b     => b
-    | eq a1 a2  => a1.eval == a2.eval
-    | neq a1 a2 => a1.eval != a2.eval
-    | le a1 a2  => a1.eval ≤ a2.eval
-    | gt a1 a2  => a1.eval > a2.eval
-    | not b1    => !eval b1
-    | and b1 b2 => eval b1 && eval b2
+    | eq   a1 a2 => a1.eval == a2.eval
+    | neq  a1 a2 => a1.eval != a2.eval
+    | le   a1 a2 => a1.eval ≤ a2.eval
+    | gt   a1 a2 => a1.eval > a2.eval
+    | not  b1    => !eval b1
+    | and  b1 b2 => eval b1 && eval b2
   ```
 
   Write out a corresponding definition of boolean evaluation as a relation
@@ -990,40 +921,40 @@ scoped notation:55 e:56 " ==> " n:56 => Aexp.evalR e n
 -/
 -- SOLUTION
 /-
-  Answer (`==>b` is defined below):
+  Answer (`⇓b` is defined below):
 
   ```
                           -------------              (E_bool)
-                          bool b ==>b b
+                          bool b ⇓b b
 
-                            e1 ==> n1
-                            e2 ==> n2
+                            e1 ⇓ n1
+                            e2 ⇓ n2
                      -------------------------        (E_BEq)
-                     eq e1 e2 ==>b (n1 =? n2)
+                     eq e1 e2 ⇓b (n1 =? n2)
 
-                            e1 ==> n1
-                            e2 ==> n2
+                            e1 ⇓ n1
+                            e2 ⇓ n2
                    -------------------------------    (E_BNeq)
-                   neq e1 e2 ==>b negb (n1 =? n2)
+                   neq e1 e2 ⇓b negb (n1 =? n2)
 
-                            e1 ==> n1
-                            e2 ==> n2
+                            e1 ⇓ n1
+                            e2 ⇓ n2
                      --------------------------       (E_BLe)
-                     le e1 e2 ==>b (n1 <=? n2)
+                     le e1 e2 ⇓b (n1 <=? n2)
 
-                            e1 ==> n1
-                            e2 ==> n2
+                            e1 ⇓ n1
+                            e2 ⇓ n2
                   -------------------------------     (E_BGt)
-                  gt e1 e2 ==>b negb (n1 <=? n2)
+                  gt e1 e2 ⇓b negb (n1 <=? n2)
 
-                             e ==>b b
+                             e ⇓b b
                         ------------------            (E_BNot)
-                        not e ==>b negb b
+                        not e ⇓b negb b
 
-                            e1 ==>b b1
-                            e2 ==>b b2
+                            e1 ⇓b b1
+                            e2 ⇓b b2
                     --------------------------        (E_BAnd)
-                    and e1 e2 ==>b andb b1 b2
+                    and e1 e2 ⇓b andb b1 b2
   ```
 -/
 -- /SOLUTION
@@ -1046,7 +977,7 @@ scoped notation:55 e:56 " ==> " n:56 => Aexp.evalR e n
 /- SOONER: BCP 23: Why can't we do induction on H in the ← direction?? -/
 
 theorem aevalR_iff_aeval (a : Aexp) (n : Nat) :
-    a ==> n ↔ Aexp.eval a = n := by
+    a ⇓ n ↔ Aexp.eval a = n := by
   constructor
   · intro h
     induction h with
@@ -1071,7 +1002,7 @@ theorem aevalR_iff_aeval (a : Aexp) (n : Nat) :
 -- in-class exercise.
 
 theorem aevalR_iff_aeval' (a : Aexp) (n : Nat) :
-    a ==> n ↔ Aexp.eval a = n := by
+    a ⇓ n ↔ Aexp.eval a = n := by
   -- WORKINCLASS
   constructor
   · intro h; induction h <;> simp_all [Aexp.eval]
@@ -1088,13 +1019,13 @@ theorem aevalR_iff_aeval' (a : Aexp) (n : Nat) :
 inductive Bexp.evalR : Bexp → Bool → Prop where
   -- SOLUTION
   | E_bool (b : Bool) : Bexp.evalR (.bool b) b
-  | E_BEq (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ==> n1) (h2 : a2 ==> n2) :
+  | E_BEq (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ⇓ n1) (h2 : a2 ⇓ n2) :
       Bexp.evalR (.eq a1 a2) (n1 == n2)
-  | E_BNeq (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ==> n1) (h2 : a2 ==> n2) :
+  | E_BNeq (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ⇓ n1) (h2 : a2 ⇓ n2) :
       Bexp.evalR (.neq a1 a2) (n1 != n2)
-  | E_BLe (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ==> n1) (h2 : a2 ==> n2) :
+  | E_BLe (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ⇓ n1) (h2 : a2 ⇓ n2) :
       Bexp.evalR (.le a1 a2) (n1 ≤ n2)
-  | E_BGt (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ==> n1) (h2 : a2 ==> n2) :
+  | E_BGt (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ⇓ n1) (h2 : a2 ⇓ n2) :
       Bexp.evalR (.gt a1 a2) (n1 > n2)
   | E_BNot (b : Bexp) (bv : Bool) (h : Bexp.evalR b bv) :
       Bexp.evalR (.not b) (!bv)
@@ -1102,10 +1033,10 @@ inductive Bexp.evalR : Bexp → Bool → Prop where
       Bexp.evalR (.and b1 b2) (tv1 && tv2)
   -- /SOLUTION
 
-scoped notation:55 e:56 " ==>b " b:56 => Bexp.evalR e b
+scoped notation:55 e:56 " ⇓b " b:56 => Bexp.evalR e b
 
 theorem bevalR_iff_beval (b : Bexp) (bv : Bool) :
-    b ==>b bv ↔ Bexp.eval b = bv := by
+    b ⇓b bv ↔ Bexp.eval b = bv := by
   -- ADMITTED
   constructor
   · intro h
@@ -1135,18 +1066,6 @@ theorem bevalR_iff_beval (b : Bexp) (bv : Bool) :
 -- GRADE_THEOREM 3: bevalR_iff_beval
 -- []
 
-/- LATER: Comment from reader: I am mainly following my nose and doing
-   trial & error when I write these long `<;>`/`;`-chains. Are there some
-   general patterns to follow? For example, what kinds of situations call
-   for `try (a_1; a_2; ...; a_k)` and what kinds call for
-   `try a_1; try a_2; ...; try a_l`? I know the difference between their
-   effects but it is not immediately clear to me what this means for the
-   practical uses. Also, are there recommended orders in which to chain
-   `intro`s, `rewrite`s, `apply`s, `reflexivity`s and `simpl`s? Should
-   `simpl`s be avoided for their slowness? When exactly is `simpl`
-   necessary? Most importantly, why was my proof for `bevalR_iff_beval'` so
-   much longer than yours for `aevalR_iff_aeval'`? -/
-
 end AExp
 
 /-
@@ -1158,7 +1077,7 @@ end AExp
 /-
   For the definitions of evaluation for arithmetic and boolean
   expressions, the choice of whether to use functional or relational
-  definitions is mainly a matter of taste.  However, there are many
+  definitions is mainly a matter of taste. However, there are many
   situations where relational definitions work much better than
   functional ones.
 -/
@@ -1182,7 +1101,7 @@ inductive Aexp where
 /-
   Extending the definition of `Aexp.eval` to handle this new operation would
   not be straightforward (what should we return as the result of
-  `.div (.num 5) (.num 0)`?).  But extending the relation is easy.
+  `.div (.num 5) (.num 0)`?). But extending the relation is easy.
 -/
 -- TERSE: /- What should `Aexp.eval` return for `.div (.num 1) (.num 0)`?? -/
 
@@ -1241,16 +1160,26 @@ inductive Aexp.evalR : Aexp → Nat → Prop where
 
 end AevalRExtended
 
+/-
+  mwhicks1: The following text seems not quite right to me. First, you can
+  use options for partial functions, and that's very natural to do in Lean
+  as a monad. Second, and related, monadic functions need not even be
+  terminating if the implement the `CCPO` typeclass and are labeled as
+  a `partial_fixpoint`. Maybe we don't want to get into the second thing here,
+  but failing to mention options (which I think were introduced in LF) seems
+  a bit surprising.
+-/
+
 -- FULL
 /-
   At this point you may be wondering: which of these styles should I use
   by default?
 
   Where the thing being defined is not easy to express as a function --
-  or is genuinely _not_ a function -- there is no real choice.  When both
+  or is genuinely _not_ a function -- there is no real choice. When both
   styles are workable, relational definitions can be more elegant and
   easier to understand, and Lean generates useful inversion and induction
-  principles from them.  On the other hand, functional definitions are
+  principles from them. On the other hand, functional definitions are
   automatically deterministic and total (for a relation we must _prove_
   these if we need them), and we can use Lean's computation mechanism to
   simplify them during proofs.
@@ -1260,7 +1189,7 @@ end AevalRExtended
   switch between points of view at will -- exactly what we did above.
 -/
 -- /FULL
--- TERSE: /- Functional: computation.  Relational: expressive.  Best: both, proved equivalent. -/
+-- TERSE: /- Functional: computation. Relational: expressive. Best: both, proved equivalent. -/
 
 /-
   ######################################################################
@@ -1269,8 +1198,8 @@ end AevalRExtended
 
 -- FULL
 /-
-  Let's return to defining Imp.  The next thing we need to do is to
-  enrich our arithmetic and boolean expressions with variables.  To keep
+  Let's return to defining Imp. The next thing we need to do is to
+  enrich our arithmetic and boolean expressions with variables. To keep
   things simple, we'll assume that all variables are global and that they
   only hold numbers.
 -/
@@ -1283,14 +1212,14 @@ end AevalRExtended
 
 /- LATER: Maybe this section needs a little preface talking about "what is
    the meaning of an expression with variables?"... -/
-/- LATER: (Note copied from Equiv.v right before the assign_aequiv
+/- LATER: (Note copied from Equiv right before the assign_aequiv
    exercise): Some or all of this discussion should really happen when
    states are introduced in Imp.v, and the whole idea of treating states as
    an ADT should be raised there. -/
 
 /-
   Since we'll want to look variables up to find out their current values,
-  we'll use total maps from the `Maps` chapter.  A _machine state_ (or
+  we'll use total maps from the `Maps` chapter. A _machine state_ (or
   just _state_) represents the current values of all variables at some
   point in the execution of a program.
 -/
@@ -1298,33 +1227,17 @@ end AevalRExtended
 /-
   For simplicity, we assume that the state is defined for _all_ variables,
   even though any given program is only able to mention a finite number of
-  them.  Because each variable stores a natural number, we represent the
+  them. Because each variable stores a natural number, we represent the
   state as a total map from strings (variable names) to `Nat`, and will use
   `0` as the default value in the store.
 -/
 -- /FULL
 
-/- We give the type of variable identifiers a name.  For now it is just
-   `String`; naming it makes the intent clearer and sets up a possible future
-   generalization to an arbitrary identifier type (see the note at the
-   `Aexp.id` constructor below). -/
+/- We give the type of variable identifiers a name, `Ident`. For now it is just
+   `String`; naming it makes the intent clearer.
+-/
 abbrev Ident := String
-
 abbrev State := TotalMap Ident Nat
-
-/- INSTRUCTORS: BAY, 23 Feb 2011: We tried making state more general,
-
-      state X := id -> option X
-
-   so it could be reused generically later.  However, this ends up
-   complicating some of the proofs quite a bit, and not in an interesting
-   way.  For example, the factorial invariant would need to be something
-   like exists m n, st X = m /\ st Y = n /\ ... which is a pain to deal
-   with. The present chapter jumps up the complexity coefficient quite a
-   bit already, so we decided it's better to leave the simple version here,
-   and go for more generality later on in the course.  BCP/AAA 12/2015:
-   This comment led us to implement both total and partial maps in earlier
-   chapters, so that we could re-use the total ones here. -/
 
 /-
   ######################################################################
@@ -1344,30 +1257,26 @@ inductive Aexp where
   | minus (a1 a2 : Aexp)
   | mult (a1 a2 : Aexp)
 
-/- Claude (review): the identifier type is named `Ident` (an `abbrev` for
-   `String`; berberman's suggestion, review of PR #61).  chenson2018 further
-   suggested going all the way to a *type variable* with `DecidableEq` (as the
-   `Maps` chapter does), threaded through `Aexp`/`Bexp`/`Com`/`State`.  Stashed
-   for a future decision; the parameterized version would look like:
+/-
+  chenson2018: Rather than define identifiers as Ident, a more general approach is
+  to use a *type variable* with `DecidableEq` (as the
+  `Maps` chapter does), threaded through `Aexp`/`Bexp`/`Com`/`State`.  Stashed
+  for a future decision; the parameterized version would look like:
 
-   ```
-   inductive Aexp (V : Type) where
-     | num (n : Nat)
-     | id (x : V)
-     | plus (a1 a2 : Aexp V)
-     | minus (a1 a2 : Aexp V)
-     | mult (a1 a2 : Aexp V)
-   -- … then `Bexp V`, `Com V`, `abbrev State (V) [DecidableEq V] :=
-   -- TotalMap V Nat`, and `[DecidableEq V]` wherever a lookup/update is
-   -- performed.
-   ```
+  ```
+  inductive Aexp (V : Type) where
+    | num (n : Nat)
+    | id (x : V)
+    | plus (a1 a2 : Aexp V)
+    | minus (a1 a2 : Aexp V)
+    | mult (a1 a2 : Aexp V)
+  -- … then `Bexp V`, `Com V`, `abbrev State (V) [DecidableEq V] :=
+  -- TotalMap V Nat`, and `[DecidableEq V]` wherever a lookup/update is
+  -- performed.
+  ```
+-/
 
-   We keep the concrete `Ident := String` for now: it reads more simply in a
-   teaching chapter, and the SF source deliberately fixes variables to strings
-   (see the note above about global string-valued variables). -/
-
-/- The `Bexp` definition is unchanged, except that it now refers to the
-   new `Aexp`. -/
+/- The `Bexp` definition is unchanged, except that it now refers to the new `Aexp`. -/
 
 inductive Bexp where
   | bool (b : Bool)
@@ -1378,13 +1287,19 @@ inductive Bexp where
   | not (b : Bexp)
   | and (b1 b2 : Bexp)
 
+/-
+  mwhicks1: SHould we be defining variables as lowercase letters, rather
+  than uppercase ones? Maybe notational conventions in Lean should be
+  different.
+-/
+
 /- Defining a few variable names as shorthands will make examples easier
    to read. -/
 /- INSTRUCTORS: We usually don't use x as a "bare identifier" in examples
    -- it is normally wrapped in an id constructor.  If this were _always_
    the case, then it would make more sense to define the notation [x] to
-   mean [id (Id 0)].  But there quite a few counterexamples.  Maybe we
-   could define [xx] to mean [id (Id 0)], or some such?  But it's still
+   mean [id (Id 0)].  But there quite a few counterexamples. Maybe we
+   could define [xx] to mean [id (Id 0)], or some such? But it's still
    awkward.
    BCP/AAA 2/16: Should we use a coercion for this?  It means introducing a
    new concept -- a somewhat magical one -- but it will make examples look
@@ -1405,7 +1320,7 @@ def Z : Ident := "Z"
 -- FULL
 /-
   (This convention for naming program variables (`X`, `Y`, `Z`) clashes a
-  bit with our earlier use of uppercase letters for types.  Since we're not
+  bit with our earlier use of uppercase letters for types. Since we're not
   using polymorphism heavily in the chapters developed to Imp, this
   overloading should not cause confusion.)
 -/
@@ -1416,16 +1331,18 @@ def Z : Ident := "Z"
   ## Notations
 -/
 
--- Claude (port note): The Rocq chapter builds a custom `<{ ... }>` grammar
--- so that Imp programs can be written with concrete `+`, `:=`, `;`,
--- `if`/`while` syntax.  We take the lighter route used elsewhere in this
--- translation: three coercions let us drop the `id`/`num`/`bool` wrappers,
--- and we otherwise write programs with the ordinary constructors.
+/-
+  mwhicks1: The Rocq chapter builds a custom `<{ ... }>` grammar
+  so that Imp programs can be written with concrete `+`, `:=`, `;`,
+  `if`/`while` syntax. We take a lighter route for now:
+  three coercions let us drop the `id`/`num`/`bool` wrappers,
+  and we otherwise write programs with the ordinary constructors.
+-/
 
 -- FULL
 /-
   To make Imp programs easier to read and write, we introduce a few implicit
-  coercions.  In Lean, a `Coe` instance tells the elaborator how to turn a
+  coercions. In Lean, a `Coe` instance tells the elaborator how to turn a
   value of one type into another automatically:
    - `Coe Ident Aexp` lets us write a bare variable (an `Ident`) where an
      `Aexp` is expected; the identifier is implicitly wrapped with `id`.
@@ -1452,96 +1369,6 @@ instance : Coe Bool Bexp where
 def example_aexp : Aexp := .plus 3 (.mult X 2)
 def example_bexp : Bexp := .and true (.not (.le X 4))
 
-/- Claude: This chapter uses the coercions above rather than an embedded Imp
-   grammar.  For a future pass, here is the fuller notation machinery a
-   `<{ … }>`-style concrete syntax would involve, with the dev notes that
-   went with it.  (LATER: Maybe these notations/coercions should be introduced
-   earlier in the chapter?  And berberman (review of PR #61) suggested a
-   quasi-quotation-style syntax instead, e.g. `⟦aexp| … ⟧`; the notation
-   design is explicitly left for a later discussion.)
-
-   To make Imp programs easier to read and write one can introduce notations
-   and implicit coercions.  (The details are a bit hideous, but not important
-   to understand.)  Briefly:
-    - A `Coercion` declaration lets a function/constructor be used implicitly
-      to coerce a value of the input type to the output type; e.g. a coercion
-      for `id` lets plain strings stand where an `aexp` is expected.
-    - `Declare Custom Entry com` creates a custom grammar for parsing Imp;
-      anything between `<{` and `}>` is parsed with it, giving _new_
-      interpretations to familiar operators (`+`, `-`, `*`, `=`, `<=`, …).
-
-   ```
-   Coercion AId : string >-> aexp.
-   Coercion ANum : nat >-> aexp.
-
-   Declare Custom Entry com.
-   Declare Scope com_scope.
-
-   Notation "<{ e }>" := e
-     (e custom com, format "'[hv' <{ '/  ' '[v' e ']' '/' }> ']'") : com_scope.
-   Notation "( x )" := x (in custom com, x at level 99).
-   Notation "x" := x (in custom com at level 0, x constr at level 0).
-   Notation "f x .. y" := (.. (f x) .. y)
-                     (in custom com at level 0, only parsing,
-                     f constr at level 0, x constr at level 1,
-                         y constr at level 1).
-   Notation "x + y"   := (APlus x y) (in custom com at level 50, left associativity).
-   Notation "x - y"   := (AMinus x y) (in custom com at level 50, left associativity).
-   Notation "x * y"   := (AMult x y) (in custom com at level 40, left associativity).
-   Notation "'true'"  := true (at level 1).
-   Notation "'true'"  := BTrue (in custom com at level 0).
-   Notation "'false'" := false (at level 1).
-   Notation "'false'" := BFalse (in custom com at level 0).
-   Notation "x <= y"  := (BLe x y) (in custom com at level 70, no associativity).
-   Notation "x > y"   := (BGt x y) (in custom com at level 70, no associativity).
-   Notation "x = y"   := (BEq x y) (in custom com at level 70, no associativity).
-   Notation "x <> y"  := (BNeq x y) (in custom com at level 70, no associativity).
-   Notation "x && y"  := (BAnd x y) (in custom com at level 80, left associativity).
-   Notation "'~' b"   := (BNot b) (in custom com at level 75, right associativity).
-
-   Open Scope com_scope.
-   ```
-
-   NOTATION dev notes:
-    - LATER: We could perhaps avoid this (somewhat confusing) coercion by
-      just defining all the single uppercase letters to be identifiers,
-      rather than using strings. But we can't make a similar change in the
-      lambda-expression syntax, where many more variable names are needed, so
-      not clear it's a good idea here.
-      NDS'25: the string/int literal mechanism is not really meant for custom
-      scopes (rocq-prover/rocq#9516, #9518).  We attempted to hack around
-      this but you'd end up with `<{ 5%com + "X"%com }>`, which is not a clear
-      win.  We also briefly attempted the hack in rocq-prover/rocq#15643;
-      this worked for the syntax but caused issues with pattern-matching.
-    - INSTRUCTORS: Some notations are declared under a scope despite being
-      also in a custom entry, to allow us to change some of them later, e.g.
-      in Hoare2.v.  NDS'25: Maybe migrate to a model without scopes (other
-      than for entrypoints) but with multiple custom entries?
-    - INSTRUCTORS: If anything changes here, make the same adjustment in all
-      the other grammars for Imp-like languages.  (There are notes at the
-      bottom of the source file about the technical choices; search for
-      REASONS.)
-    - SAZ 2024: rationale for putting embedded-function arguments at level 9
-      of the constr grammar: in the general `term` grammar, applications are
-      parsed at level 10 as `SELF ; list1 arg` where `arg` invokes `term` at
-      level 9; but we want special precedence for some arguments in Hoare.v,
-      so we ask these to parse at level 1 of `constr`, enabling looser
-      precedence for the assertions in Hoare.v.
-    - NDS'25: I'd recommend making `Open Scope com_scope` `Local` and opening
-      the scope in every file which wants the notation, as that seems better
-      practice.
-
-   And a grammar sanity-check (this was hidden):
-
-   ```
-   Locate "=".
-   Check <{ X + Y }>.
-   Check <{ X + Y = 0 }>.
-   Check <{ ~ (Y = X) }>.
-   Check <{ X + Y }>.
-   Check <{ ~ (X + Y = Y) && Z = W }>.
-   ``` -/
-
 /-
   ######################################################################
   ## Evaluation
@@ -1559,26 +1386,24 @@ def example_bexp : Bexp := .and true (.not (.le X 4))
 
 def Aexp.eval (st : State) (a : Aexp) : Nat :=
   match a with
-  | num n => n
-  | id x => st[x]                  -- NEW
-  | plus  a1 a2 => eval st a1 + eval st a2
-  | minus a1 a2 => eval st a1 - eval st a2
-  | mult  a1 a2 => eval st a1 * eval st a2
+  | num   n     =>  n
+  | id    x     =>  st[x]                    -- NEW
+  | plus  a1 a2 =>  eval st a1 + eval st a2
+  | minus a1 a2 =>  eval st a1 - eval st a2
+  | mult  a1 a2 =>  eval st a1 * eval st a2
 
 def Bexp.eval (st : State) (b : Bexp) : Bool :=
   match b with
-  | bool b     => b
-  | eq a1 a2  => Aexp.eval st a1 == Aexp.eval st a2
-  | neq a1 a2 => Aexp.eval st a1 != Aexp.eval st a2
-  | le a1 a2  => Aexp.eval st a1 ≤ Aexp.eval st a2
-  | gt a1 a2  => Aexp.eval st a1 > Aexp.eval st a2
-  | not b1    => !eval st b1
-  | and b1 b2 => eval st b1 && eval st b2
+  | bool b      =>  b
+  | eq   a1 a2  =>  Aexp.eval st a1 == Aexp.eval st a2
+  | neq  a1 a2  =>  Aexp.eval st a1 != Aexp.eval st a2
+  | le   a1 a2  =>  Aexp.eval st a1 ≤ Aexp.eval st a2
+  | gt   a1 a2  =>  Aexp.eval st a1 > Aexp.eval st a2
+  | not  b1     =>  !eval st b1
+  | and  b1 b2  =>  eval st b1 && eval st b2
 
-/- We write the empty state (every variable `0`) as `∅`, and reuse the
-   total-map update notation `x →ₜ v ; st` for states. -/
--- Claude: we write single-variable states inline as `X →ₜ 5 ; empty_st`
--- rather than introducing a dedicated "singleton state" shorthand.
+/- We abbreviate the empty state `∅` (every variable `0`) as `empty_st`,
+   and reuse the total-map update notation `x →ₜ v ; st` for states. -/
 
 abbrev empty_st : State := ∅
 
@@ -1599,7 +1424,7 @@ example : Bexp.eval (X →ₜ 5 ; empty_st) (.and true (.not (.le X 4))) = true 
 -- FULL
 /-
   Now we are ready to define the syntax and behavior of Imp _commands_
-  (or _statements_).  Informally, commands `c` are described by the
+  (or _statements_). Informally, commands `c` are described by the
   following BNF grammar:
 
   ```
@@ -1621,69 +1446,10 @@ inductive Com where
   | cond (b : Bexp) (c1 c2 : Com)
   | whileDo (b : Bexp) (c : Com)
 
-/- Claude: This chapter writes commands with the ordinary constructors (see
-   the port note above) rather than an embedded grammar.  For a future pass,
-   here are the concrete-syntax `Notation` declarations and their dev notes:
-
-  ```
-  Notation "'skip'"  := CSkip
-    (in custom com at level 0) : com_scope.
-  Notation "x := y"  := (CAsgn x y)
-    (in custom com at level 0, x constr at level 0, y at level 85,
-      no associativity, format "x  :=  y") : com_scope.
-  Notation "x ; y" := (CSeq x y)
-    (in custom com at level 90, right associativity,
-      format "'[v' x ; '/' y ']'") : com_scope.
-  Notation "'if' x 'then' y 'else' z 'end'" := (CIf x y z)
-    (in custom com at level 89, x at level 99, y at level 99, z at level 99,
-      format "'[v' 'if'  x  'then' '/  ' y '/' 'else' '/  ' z '/' 'end' ']'") : com_scope.
-  Notation "'while' x 'do' y 'end'" := (CWhile x y)
-    (in custom com at level 89, x at level 99, y at level 99,
-      format "'[v' 'while'  x  'do' '/  ' y '/' 'end' ']'") : com_scope.
-  ```
-
-  NOTATION dev notes carried over:
-   - NDS'25 changed the syntax to include new lines.  Whether the boxes
-     (`'[..`) should be regular, vertical (`v`) or horizontal-or-else-vertical
-     (`hv`) is up for debate.  I went with "force newlines" (vertical boxes)
-     because this should lead to fewer (bad) surprises.  The crux of my pain
-     is that Rocq has a very local definition of "fits on one line": if a
-     subbox spans multiple lines but the current notation does not require
-     line breaks other than the ones in the sub-notation, then it "fits on
-     one line".
-   - SOONER (NOTATION NDS'25): I considered changing maps to also span
-     multiple lines, but have not attempted this yet, as it would require
-     changes in earlier chapters.
-   - NDS'25: We may want to experiment with forcing a newline after
-     `<{ ... }>`.  We currently get a "snake-like" display in some cases
-     (see Smallstep:mult_while_h), e.g. a long disjunction of `while`/`if`
-     programs that wraps awkwardly.  As much as this is an improvement over
-     no line-breaks, it is far from optimal...
-
-  Grammar sanity-check (this was hidden):
-
-  ```
-  Check <{ skip }>.
-  Check <{ skip; skip; skip; skip; skip; skip; skip }>.
-  Check <{ (skip ; skip) ; skip }>.
-  Check <{ 1 + 2 }>.
-  Check <{ 2 = 1 }>.
-  Check <{ Z := X }>.
-  Check <{ Z := X + 3 }>.
-  Definition func (c : com) : com := <{ c ; skip }>.
-  Check <{ skip; func <{ skip }> }>.
-  Definition func2 (c1 c2 : com) : com := <{ c1 ; c2 }>.
-  Check <{ skip ; func2 <{skip}> <{skip}> }>.
-  Check <{ true && ~(false && true) }>.
-  Check <{ if true then skip else skip end }>.
-  Check <{ if true && true then skip; skip else skip; X:=X+1 end }>.
-  Check <{ while Z <> 0 do Y := Y * Z; Z := Z - 1 end }>.
-  ``` -/
-
 -- FULL
 /-
-  For example, here is the factorial function again, written as a formal
-  definition.  When this command terminates, the variable `Y` will
+  As an example, here is the factorial function again, written as a formal
+  definition. When this command terminates, the variable `Y` will
   contain the factorial of the initial value of `X`.  (Compare this to
   the concrete Imp program at the very start of the chapter.)
 -/
@@ -1691,98 +1457,15 @@ inductive Com where
 
 def fact_in_lean : Com :=
   .seq (.asgn Z X)
-  (.seq (.asgn Y 1)
-  (.whileDo (.neq Z 0)
-    (.seq (.asgn Y (.mult Y Z))
-           (.asgn Z (.minus Z 1)))))
+       (.seq (.asgn Y 1)
+             (.whileDo (.neq Z 0)
+                       (.seq (.asgn Y (.mult Y Z))
+                             (.asgn Z (.minus Z 1)))))
 
-/- Claude: The following two topics are entirely about Rocq's `<{ }>` grammar
-   and `Set Printing …`/`Locate` commands, which this port does not use.  A
-   future pass could decide whether a Lean analogue (e.g. `set_option pp.*`)
-   is worth adding.
-
-  Desugaring notations. (LATER: MRC'20: somewhat redundant with the `Set
-  Printing Coercions` discussion above.)  Rocq offers coercions and notations
-  to manage complexity; heavy usage can obscure what the expressions we enter
-  actually mean, so it is often instructive to "turn off" those features
-  (also usable mid-proof):
-
-    - `Unset Printing Notations` (undo with `Set Printing Notations`)
-    - `Set Printing Coercions` (undo with `Unset Printing Coercions`)
-    - `Set Printing All` (undo with `Unset Printing All`)
-
-  ```
-  Unset Printing Notations.
-  Print fact_in_coq.
-  (* ===>
-     fact_in_coq =
-     CSeq (CAsgn Z X)
-          (CSeq (CAsgn Y (S O))
-                (CWhile (BNot (BEq Z O))
-                        (CSeq (CAsgn Y (AMult Y Z))
-                              (CAsgn Z (AMinus Z (S O))))))
-          : com *)
-  Set Printing Notations.
-
-  Print example_bexp.
-  (* ===> example_bexp = <{(true && ~ (X <= 4))}> *)
-
-  Set Printing Coercions.
-  (* LATER: Ori: CoqIde error msg: "Set this option from the IDE menu
-     instead". I guess this is a recent change? *)
-  Print example_bexp.
-  (* ===> example_bexp = <{(true && ~ (AId X <= ANum 4))}> *)
-
-  Print fact_in_coq.
-  (* ===>
-    fact_in_coq =
-    <{ Z := (AId X);
-       Y := (ANum 1);
-       while ~ (AId Z) = (ANum 0) do
-         Y := (AId Y) * (AId Z);
-         Z := (AId Z) - (ANum 1)
-       end }>
-         : com *)
-  Unset Printing Coercions.
-  ```
-
-  Locate again. (HIDE: MRC'20: somewhat redundant with a similar discussion
-  in Maps.  BCP 21: left both, with pointers in each so it doesn't look like a
-  mistake.)
-
-  Finding identifiers.  When used with an identifier, `Locate` prints the
-  full path to every value in scope with the same name -- useful to
-  troubleshoot variable shadowing.
-
-  ```
-  Locate aexp.
-  (* ===>
-       Inductive LF.Imp.aexp
-       Inductive LF.Imp.AExp.aexp  (shorter: AExp.aexp)
-       Inductive LF.Imp.aevalR_division.aexp  (shorter: aevalR_division.aexp)
-       Inductive LF.Imp.aevalR_extended.aexp  (shorter: aevalR_extended.aexp) *)
-  ```
-
-  Finding notations.  When faced with an unknown notation, use `Locate`
-  with a string containing one of its symbols to see its interpretations.
-
-  ```
-  Locate "&&".
-  (* ===>
-      "x && y" := and x y (default interpretation)
-      "x && y" := andb x y : bool_scope (default interpretation) *)
-  Locate ";".
-  (* ===>
-      "x '|->' v ';' m" := (update m x v) (default interpretation)
-      "x ; y" := (seq x y) (default interpretation)
-      "x '!->' v ';' m" := (t_update m x v) (default interpretation)
-      "[ x ; y ; .. ; z ]" := cons x (cons y .. (cons z nil) ..) : list_scope *)
-  Locate "while".
-  (* ===>
-      "'while' x 'do' y 'end'" := (whileDo x y) (default interpretation) *)
-  ``` -/
-
-/- HIDE: the factorial command was printed here with `Print fact_in_coq.` -/
+/- mwhicks1: At this point in the Rocq chapter there was discussion about
+   desugaring notation to help with proofs and debugging. Refer back there
+   for pedagogy once we work out the Lean notation story.
+-/
 
 -- HIDEFROMADVANCED
 /- A few more examples. -/
@@ -1794,15 +1477,15 @@ def XtimesYinZ : Com := .asgn Z (.mult X Y)
 /- *** Loops: -/
 def subtract_slowly_body : Com :=
   .seq (.asgn Z (.minus Z 1))
-        (.asgn X (.minus X 1))
+       (.asgn X (.minus X 1))
 
 def subtract_slowly : Com :=
   .whileDo (.neq X 0) subtract_slowly_body
 
 def subtract_3_from_5_slowly : Com :=
   .seq (.asgn X 3)
-  (.seq (.asgn Z 5)
-    subtract_slowly)
+       (.seq (.asgn Z 5)
+             subtract_slowly)
 
 /- *** An infinite loop: -/
 def loop : Com := .whileDo true .skip
@@ -1811,7 +1494,7 @@ def loop : Com := .whileDo true .skip
 /- Exponentiation: -/
 def exp_body : Com :=
   .seq (.asgn Z (.mult Z X))
-        (.asgn Y (.minus Y 1))
+       (.asgn Y (.minus Y 1))
 def pexp : Com := .whileDo (.neq Y 0) exp_body
 /- (Note that `pexp` should be run in a state where `Z` is `1`.) -/
 -- /HIDE
@@ -1841,8 +1524,8 @@ def pexp : Com := .whileDo (.neq Y 0) exp_body
 -/
 
 /- LATER: In SmallStep we need to package the state and command into a pair,
-   so that we can talk about normal forms and such.  Probably we should do it
-   here too, for consistency.  (Won't change much except the type
+   so that we can talk about normal forms and such. Probably we should do it
+   here too, for consistency. (Won't change much except the type
    declarations, but we'll need to add a comment why we wrote them this
    way.) -/
 
@@ -1872,9 +1555,9 @@ def Com.ceval_fun_no_while (st : State) (c : Com) : State :=
   Lean doesn't accept such a definition ("fail to show termination")
   because the function we want to define is not guaranteed to terminate.
   Indeed, it _doesn't_ always terminate: the full `ceval_fun` applied to
-  the `loop` program above would run forever.  Since Lean aims to be not
+  the `loop` program above would run forever. Since Lean aims to be not
   just a programming language but also a consistent logic, any
-  potentially non-terminating function must be rejected.  Here is what
+  potentially non-terminating function must be rejected. Here is what
   would go wrong if Lean allowed non-terminating recursive functions:
 
   ```
@@ -1908,14 +1591,19 @@ def Com.ceval_fun_no_while (st : State) (c : Com) : State :=
 -- FULL
 -- HIDEFROMADVANCED
 /-
-  This is an important change.  Besides freeing us from awkward workarounds,
-  it gives us a ton more flexibility in the definition.  For example, if we
+  This is an important change. Besides freeing us from awkward workarounds,
+  it gives us more flexibility in the definition. For example, if we
   add nondeterministic features like `any` to the language, we want the
   definition of evaluation to be nondeterministic -- i.e., not only will it
   not be total, it will not even be a function!
 -/
 -- /HIDEFROMADVANCED
 -- /FULL
+
+/-
+  mwhicks1: I kind of hate this notation. Is there something more standard
+  in Lean? CSLib precedent maybe?
+-/
 
 /-
   We'll use the notation `st =[ c ]=> st'` for the `ceval` relation:
@@ -1972,20 +1660,6 @@ def Com.ceval_fun_no_while (st : State) (c : Com) : State :=
 -/
 -- /FULL
 
-/- HIDE: APT: Investigate rewriting these to use equality hypotheses rather
-   than repeated variables in the conclusion.  For example:
-
-   ```
-   E_Skip : forall st st', st = st' -> st =[ skip ]=> st'.
-   ```
-
-   This makes the constructors easier to apply, and allows us to "swap in" an
-   equivalence in place of equality.
-   BAY: It sounds nice, but I tried this (23 Feb 2011) and didn't really find
-   any benefit. The only difference seemed to be that it made quite a few
-   proofs a tiny bit more annoying, due to the need for an extra
-   'reflexivity' or 'subst' or what have you. -/
-
 inductive Ceval : Com → State → State → Prop where
   | E_Skip (st : State) :
       Ceval .skip st st
@@ -2009,9 +1683,6 @@ inductive Ceval : Com → State → State → Prop where
       (hloop : Ceval (.whileDo b c) st' st'') :
       Ceval (.whileDo b c) st st''
 
-/- NOTATION: LATER: Consider `st '={' c '}=>' st'` or `st '=<{' c '}>=>' st'`. -/
-/- NOTATION: NDS'25 should we change the level to force parentheses around
-   `when` on the left-hand side of an arrow? -/
 notation:40 st0 " =[ " c " ]=> " st1 => Ceval c st0 st1
 
 /-
@@ -2023,7 +1694,7 @@ notation:40 st0 " =[ " c " ]=> " st1 => Ceval c st0 st1
 
 example :
     empty_st =[ .seq (.asgn X 2)
-                  (.cond (.le X 1) (.asgn Y 3) (.asgn Z 4)) ]=>
+                     (.cond (.le X 1) (.asgn Y 3) (.asgn Z 4)) ]=>
       (Z →ₜ 4 ; X →ₜ 2 ; empty_st) := by
   -- We must supply the intermediate state.
   apply Ceval.E_Seq (st' := (X →ₜ 2 ; empty_st))
@@ -2044,9 +1715,6 @@ example :
     · apply Ceval.E_Asgn; rfl
   -- /ADMITTED
 -- []
-
-/- HIDE: the implicit arguments of the previous example were inspected here
-   with `Set Printing Implicit. Check @ceval_example2.` (Rocq-specific). -/
 
 -- TERSE: /- What sorts of things might we want to prove using these definitions?  Here are some simple examples... -/
 
@@ -2124,7 +1792,7 @@ theorem quiz3_answer (b : Bexp) (c : Com) (st st' : State)
   ∀ (b : Bexp),
     (∀ st, Bexp.eval st b = true) →
     ∀ (c : Com) (st : State),
-      ¬ ∃ st', st =[ .whileDo b c ]=> st'
+    ¬ ∃ st', st =[ .whileDo b c ]=> st'
   ```
 
   (A) Yes    (B) No    (C) Not sure
@@ -2183,21 +1851,21 @@ theorem quiz4_answer (b : Bexp) (hbtrue : ∀ st, Bexp.eval st b = true)
 -/
 
 /- LATER: Maybe this should go at the end of the file in a section marked
-   optional?  Not everybody will want to spend time on it. -/
+   optional? Not everybody will want to spend time on it. -/
 
 -- FULL
 /-
   Changing from a computational to a relational definition of evaluation
   is a good move because it frees us from the artificial requirement that
-  evaluation be a total function.  But it raises a question: is the
-  relational definition really a partial _function_?  Could the same
+  evaluation be a total function. But it raises a question: is the
+  relational definition really a partial _function_? Could the same
   command, from the same state, evaluate to two different final states?
   In fact this cannot happen: `ceval` _is_ a partial function.
 -/
 -- /FULL
 -- TERSE: /- Finally, we should pause to check that our evaluation relation really is a (partial) function... -/
 
-/- LATER: Informal proof needed!  (And one can surely be found in some past
+/- LATER: Informal proof needed! (And one can surely be found in some past
    CIS500 exam solutions!) -/
 
 theorem ceval_deterministic (c : Com) (st st1 st2 : State)
@@ -2247,23 +1915,20 @@ theorem quiz2_answer (c1 c2 : Com) (st st' : State)
       exact hc2
 -- /HIDE
 
--- EX3 (pup_to_n)
--- (Rocq marked this exercise optional -- `EX3?`.)
+-- EX3? (pup_to_n)
 /-
   Write an Imp program that sums the numbers from `1` to `X` (inclusive)
   in the variable `Y`.  Your program should update the state as shown in
   `pup_to_2_ceval`, which you can reverse-engineer to discover the program
   you should write.  The proof of that theorem will be somewhat lengthy.
 -/
-/- HIDE: CH: This is hard to solve without eapply.  Decreased number of
-   iterations to 2.  Made the whole thing optional. -/
 
 def pup_to_n : Com :=
   -- ADMITDEF
   .seq (.asgn Y 0)
-    (.whileDo (.le 1 X)
-      (.seq (.asgn Y (.plus Y X))
-             (.asgn X (.minus X 1))))
+       (.whileDo (.le 1 X)
+                 (.seq (.asgn Y (.plus Y X))
+                       (.asgn X (.minus X 1))))
   -- /ADMITDEF
 
 /- HIDE: Result is the same as `(X →ₜ 0 ; Y →ₜ 3 ; ∅)` if one admits
@@ -2299,23 +1964,23 @@ theorem pup_to_2_ceval :
   # Reasoning About Imp Programs
 -/
 
-/- LATER: This section doesn't seem very useful -- to anybody!  It takes too
+/- LATER: This section doesn't seem very useful -- to anybody! It takes too
    much time to go through it in class, and even for advanced students it's
    too low-level and grubby to be a very convincing motivation for what
    follows -- i.e., to feel motivated by its grubbiness, you have to
-   understand it, but this takes more time than it's worth.  Better to cut
+   understand it, but this takes more time than it's worth. Better to cut
    the whole rest of the file (except the further exercises at the very end),
    or at least make it optional.
    (BCP 10/18: However, this removes quite a few exercises. Is the homework
-   assignment still meaty enough?  I'm going to leave it as-is for now, but
+   assignment still meaty enough? I'm going to leave it as-is for now, but
    we should reconsider this later.) -/
 
 -- FULL
 /-
   We'll get into more systematic and powerful techniques for reasoning
-  about Imp programs in _Programming Language Foundations_, but we can
+  about Imp programs in the next chapter, but we can
   already do a few things (albeit in a somewhat low-level way) just by
-  working with the bare definitions.  This section explores some examples.
+  working with the bare definitions. This section explores some examples.
 -/
 -- /FULL
 
@@ -2332,8 +1997,7 @@ theorem plus2_spec (st : State) (n : Nat) (st' : State)
       lia
 
 /- LATER: This used to be recommended.  Should it be reinstated? -/
--- EX3 (XtimesYinZ_spec)
--- (Rocq marked this exercise optional -- `EX3?`.)
+-- EX3? (XtimesYinZ_spec)
 /- State and prove a specification of `XtimesYinZ`. -/
 
 -- SOLUTION
@@ -2392,10 +2056,10 @@ theorem loop_never_stops (st st' : State) : ¬ (st =[ loop ]=> st') := by
 -- []
 
 /- LATER: Marc Bezem 2022:
-   There are trade-offs between using tactics and additional lemmas.  Here is
-   a case where a lemma would make things clearer.  For `loop_never_stops`,
+   There are trade-offs between using tactics and additional lemmas. Here is
+   a case where a lemma would make things clearer. For `loop_never_stops`,
    the surprise is that it is proved by induction, and the Rocq tactic
-   `remember` is hard to understand.  The following formulation explains the
+   `remember` is hard to understand. The following formulation explains the
    induction better:
 
      Theorem loop_never_stops' : forall st st' c,
@@ -2411,7 +2075,7 @@ theorem loop_never_stops (st st' : State) : ¬ (st =[ loop ]=> st') := by
 -- EX3 (no_whiles_eqv)
 /-
   The following function yields `true` just on programs with no while
-  loops.  Using `inductive`, write a property `NoWhilesR` that holds
+  loops. Using `inductive`, write a property `NoWhilesR` that holds
   exactly when `c` is while-free, then prove it equivalent to `Com.no_whiles`.
 -/
 
@@ -2507,23 +2171,7 @@ theorem no_whiles_terminating' (c : Com) (st1 : State)
 -- []
 
 /-
-  Claude: PORT STATUS — this chapter is a work in progress.
-
-  DONE (compiling; survives to_verso → HL.ImpVerso builds):
-    - AExp module: Aexp/Bexp syntax, Aexp.eval/Bexp.eval, Aexp.optimize_0plus + soundness
-    - Tactic combinators (try, <;>, repeat, macro), lia, handy-tactics recap
-    - Bexp.optimize_0plus_b (EX3)
-    - Evaluation as a Relation: Aexp.evalR + `==>`, inference rules,
-      aevalR_iff_aeval (x2), Bexp.evalR (EX3) + bevalR_iff_beval,
-      AevalRDivision / AevalRExtended, tradeoffs
-    - Expressions With Variables: State, coercions, Aexp.eval/Bexp.eval, Com + examples
-    - Evaluating Commands: Com.ceval_fun_no_while, Ceval + `=[ c ]=>`, examples,
-      ceval_deterministic
-    - Reasoning About Imp Programs: pup_to_n/pup_to_2_ceval, plus2_spec,
-      XtimesYinZ_spec (EX3), loop_never_stops (EX3!), Com.no_whiles/NoWhilesR +
-      no_whiles_eqv (EX3), no_whiles_terminating (EX4)
-
-  NOT DONE YET — remaining sections of sfdev/lf/Imp.v to port:
+  mwhicks1: NOT PORTED YET — remaining sections of sfdev/lf/Imp.v to port:
     - Case Study (Optional), Imp.v:2774
         * subtract_slowly_spec (EX4?, Imp.v:2919): loop-invariant style proof
           about `subtract_slowly`.
@@ -2545,9 +2193,4 @@ theorem no_whiles_terminating' (c : Com) (st1 : State)
         * exn_imp (EX4A?, Imp.v:3524): exceptions variant. Large.
         * add_for_loop (EX4?, Imp.v:3728): add a C-style `for` loop to Com,
           its notation, and extend ceval.
-
-  When resuming: keep the established conventions (dot-notation constructors,
-  `→ₜ`/`st[x]` state ops, no `<{ }>` grammar, `-- EXn`/`-- SOLUTION`/`-- ADMITTED`
-  /`-- GRADE_*` markers, ``` fences for display blocks), and after each chunk
-  run `make check-verso-chapters` so the to_verso round-trip stays green.
 -/

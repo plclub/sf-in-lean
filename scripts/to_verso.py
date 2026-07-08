@@ -157,7 +157,7 @@ def _extract_imports(body: str):
 # into the rendered chapter as prose.  INSTRUCTORS is deliberately NOT in this
 # set: it routes to :::instructor (handled separately, both line and block).
 _DEV_TAGS = (r'BCP|JC|MWH|CGH|RAB|CH|HG|NB|Claude|TODO|TOFIX|LATER|SOONER'
-             r'|NDS|NOTATION|APT|BAY|SAZ|ET|AAA|MRC|PR|ORI|Ori')
+             r'|NDS|NOTATION|APT|BAY|SAZ|ET|AAA|MRC|PR|ORI|Ori|mwhicks1')
 # The block set additionally recognizes `HIDE:` (a `/- HIDE: … -/` dev note).
 # The colon is required so a bare `/- HIDE -/` region/label marker keeps its old
 # behavior (dropped as a label) rather than becoming a noise :::dev block; and
