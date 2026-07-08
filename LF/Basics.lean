@@ -325,6 +325,14 @@ inductive MyBool : Type where
   | false
 ```
 
+The next command opens a new namespace so that our definitions don't
+clash with ones from the standard library. We'll discuss it in more
+detail below.
+
+```lean
+namespace MyBool
+```
+
 ::::full
 Functions over booleans can be defined in the same way as above
 ::::
@@ -592,6 +600,10 @@ checked world!
 
 ```lean -keep
 theorem really_bad : MyBool.true = MyBool.false := by sorry
+```
+
+```lean
+end MyBool
 ```
 
 ::::full
