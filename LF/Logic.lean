@@ -581,7 +581,7 @@ theorem contrapositive (P Q : Prop) (h : P → Q) : (¬ Q → ¬ P) := by
     Recall that `¬ P` is defined as `P → False`.
     Given `P` and `P → False`, we can prove `False`,
     so `(P ∧ ¬ P) → False`, i.e. `¬ (P ∧ ¬ P)`. -/
--- / SOLUTION
+-- /SOLUTION
 
 -- GRADE_MANUAL 1: not_PNP_informal
 -- []
@@ -967,7 +967,6 @@ abbrev Even x := ∃ n : Nat, x = double n
 
 #check (Even : Nat → Prop)
 
-unseal double in
 example : Even 4 := by exists 2
   -- `4 = double 2` holds by `rfl`,
   -- but is proven automatically by `exists`
@@ -1646,7 +1645,6 @@ end FunctionTheoremQuiz
 example : even 42 = true := rfl
 
 /- ... or that there exists some `k` such that `n = double k`. -/
-unseal double in
 example : Even 42 := by dsimp [Even]; exists 21
 
 /- Of course, it would be deeply strange if these two characterizations
@@ -1673,7 +1671,7 @@ theorem even_double_conv (n : Nat) : ∃ k : Nat,
   induction n
   case zero =>
     rw [even_zero]; dsimp
-    exists 0; rw [double_zero]
+    exists 0  -- (`0 = double 0` is closed by `exists`'s final `rfl`)
   case succ n' ihn =>
     let ⟨k', ihk⟩ := ihn
     rw [even_succ]
@@ -1732,12 +1730,16 @@ theorem nonzero_bool_prop (n : Nat) :
 
     Again, these two notions are equivalent: -/
 
+/- (For the reverse direction we need the simple fact that `==` is
+    reflexive.) -/
+theorem beq_refl (n : Nat) : (n == n) = true := decide_eq_true rfl
+
 theorem beq_eq_true (n1 n2 : Nat) :
     (n1 == n2) = true ↔ n1 = n2 := by
   -- FOLD
   constructor
   case mp => apply beq_eq
-  case mpr => intro H; rw [H, eqb_refl]
+  case mpr => intro H; rw [H, beq_refl]
   -- /FOLD
 
 -- HIDEFROMADVANCED
@@ -1772,7 +1774,6 @@ abbrev is_even_prime (n : Nat) : Bool :=
 
 -- JC: This was originally 1000 but Lean's default recursion depth
 --     is not large enough to reduce `double 50` lol
-unseal double in
 example : Even 100 := by
 /- The most direct way to prove this is to give the value of `k` explicitly. -/
   exists 50
@@ -1832,7 +1833,7 @@ theorem add_beq_true (n m p : Nat) (h : (n == m) = true) :
     (n + p == m + p) = true := by
   -- WORKINCLASS
   apply (beq_eq_true n m).mp at h
-  rw [h, eqb_refl]
+  rw [h, beq_refl]
   -- /WORKINCLASS
 
 /- FULL: We won't discuss reflection any further for the moment,

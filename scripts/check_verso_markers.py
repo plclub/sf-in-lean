@@ -78,6 +78,9 @@ _POLICY = [
     ("QUIZ",                 r"::+quiz\b"),
     # Intentionally dropped: region semantics not honored, prose kept as-is.
     ("HIDEFROMHTML",         None),
+    # FOLD marks a proof region to render collapsed; folding is not honored
+    # yet — markers dropped, content kept (same policy as HIDEFROM*).
+    ("FOLD",                 None),
     ("HIDEFROMADVANCED",     None),
     ("WORKINCLASS",          None),
     # Left as Lean comments inside the code block; the code itself is preserved.

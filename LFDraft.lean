@@ -20,7 +20,9 @@ import LF.UsingLeanVerso
 import LF.ListsVerso
 import LF.PolyVerso
 import LF.TacticsVerso
-import LF.MapsVerso
+-- NB LF.MapsVerso builds standalone but cannot join the draft yet: it
+-- redefines `PartialMap.update` (etc.) already defined by ListsVerso's
+-- partial-maps preview section, and Verso imports share one environment.
 
 import VersoManual
 
@@ -32,4 +34,3 @@ open Verso Genre Manual
 {include LF.ListsVerso}
 {include LF.PolyVerso}
 {include LF.TacticsVerso}
-{include LF.MapsVerso}

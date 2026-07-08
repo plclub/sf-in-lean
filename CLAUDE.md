@@ -75,6 +75,14 @@ Two complementary automated checks help here (both take
 * The marker keywords themselves once consumed: `ADMITDEF`, `ADMITTED`,
   `SOLUTION`, `FULL`, `TERSE`, `HIDE`, `EX`/`EX1`/…, `GRADE_THEOREM`,
   `GRADE_MANUAL`, `INSTRUCTORS`.
+* `HIDEFROMHTML`/`/HIDEFROMHTML` (likewise `HIDEFROMADVANCED`): dropping the
+  marker and keeping the enclosed content is the intended behavior (confirmed
+  2026-07-08) — the region semantics are not honored in the Verso build. Both
+  check scripts already ignore these (`_POLICY` entry `None` in
+  `check_verso_markers.py`; `_MARKER_LINE_RE` in `check_verso_prose.py`), which
+  also means neither verifies the marker is actually *gone* from the output.
+  NB: `WORKINCLASS` is *not* in this category — it needs real handling (the
+  terse build must stub the marked proof with `sorry`); see `workinclass.md`.
 
 **Must be preserved** (these were bugs, now fixed): block-style author notes
 (`/- MWH: … -/`, `/- BCP: … -/`) → `:::dev`; `-- GRADE_THEOREM …` → `:::grade`.

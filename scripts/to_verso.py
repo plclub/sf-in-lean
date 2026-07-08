@@ -150,10 +150,19 @@ def _normalize_block_markers(src: str) -> str:
 # dropped (their underscores/brackets/stars would otherwise break Verso markup).
 # Region semantics (HIDEFROM*) are not honored yet — dropping the marker just
 # lets the surrounding prose render.  FULL/TERSE are handled separately as modes.
+# FOLD/-- /FOLD marks a proof region to render collapsed; folding is not
+# honored yet, so like HIDEFROM* the markers are dropped and the content
+# renders normally.
 _DROP_MARKER_RE = re.compile(
-    r'/?(?:HIDEFROMADVANCED|HIDEFROMHTML|HIDE|ADMITTED|ADMITDEF)'
+    r'/?(?:HIDEFROMADVANCED|HIDEFROMHTML|HIDE|FOLD|ADMITTED|ADMITDEF)'
     r'|\[\]'
     r'|GRADE_\S.*')
+
+# A `--` line comment whose whole content is a HIDEFROM* region marker.  Used
+# to drop such markers on paths that bypass `_comment_tokens` (indented
+# comments kept as code lines).  Deliberately narrower than _DROP_MARKER_RE:
+# HIDE/FOLD/ADMITTED/ADMITDEF in code position carry meaning for other branches.
+_HIDEFROM_COMMENT_RE = re.compile(r'--\s*/?(?:HIDEFROMHTML|HIDEFROMADVANCED)')
 
 
 def _extract_imports(body: str):
@@ -437,7 +446,10 @@ def _comment_tokens(body: str):
             set_mode(m_open_bare.group(1))
         elif m_mode:
             set_mode(m_mode.group(1))
-            if m_mode.group(2).strip():
+            # A payload that is itself a dropped region marker (`TERSE:
+            # HIDEFROMHTML`, `TERSE: /HIDEFROMHTML`, …) must not become prose.
+            rest = m_mode.group(2).strip()
+            if rest and not _DROP_MARKER_RE.fullmatch(rest):
                 add_content(m_mode.group(2))
         elif _DROP_MARKER_RE.fullmatch(s):
             pass                      # stray region/grade/admitted marker — skip
@@ -542,7 +554,10 @@ _QUIZ_CLOSE_RE = re.compile(r'^-- /QUIZ$')
 # translation it is handled identically to `-- SOLUTION` (the answer typechecks
 # in the teacher build, becomes `sorry` in the student build).
 _SOL_OPEN_RE = re.compile(r'^--\s+(?:QUIET)?SOLUTION$')
-_SOL_CLOSE_RE = re.compile(r'^--\s+/(?:QUIET)?SOLUTION$')
+# Tolerate a stray space after the slash (`-- / SOLUTION`): that typo would
+# otherwise leave the capture unclosed, silently swallowing everything up to
+# the next close marker (or EOF) into the solution block.
+_SOL_CLOSE_RE = re.compile(r'^--\s+/\s?(?:QUIET)?SOLUTION$')
 # Author-only / developer comment markers.  These are swept into :::dev blocks
 # (discarded from generated outputs, preserved verbatim in the Verso source).
 # Add new author initials or task keywords here.  NB: INSTRUCTORS is handled
@@ -631,6 +646,15 @@ def tokenize(text: str):
                 # (the block-comment analogue of the line-form -- INSTRUCTORS:).
                 tokens.append(('instructor',
                                re.sub(r'^INSTRUCTORS:\s*', '', body.strip())))
+            elif body.strip().startswith('QUIZ:'):
+                # /- QUIZ: question … -/ colon-form whole-comment quiz (Logic):
+                # the entire comment is one quiz, closed at the comment's end
+                # (distinct from Poly's bare-`QUIZ`-line form handled inside
+                # `_comment_tokens`).  Body tokens render inside ::::quiz.
+                tokens.append(('quiz_open', None))
+                tokens.extend(_comment_tokens(
+                    re.sub(r'^\s*QUIZ:\s*', '', body, count=1)))
+                tokens.append(('quiz_close', None))
             elif _is_block_dev_comment(body):
                 # /- MWH: … -/ author note -> :::dev (keeps every word).
                 tokens.append(('author_comment', body))
@@ -646,9 +670,15 @@ def tokenize(text: str):
         # commentary between tactics inside a proof; keep it as code so the proof
         # stays intact, rather than letting a marker (e.g. `-- BCP:`) pull it out
         # into a directive and split the proof.  (Source markers like -- FULL,
-        # -- EX, -- [] sit at column 0, so this never swallows them.)
+        # -- EX, -- [] sit at column 0, so this never swallows them.)  An
+        # indented HIDEFROM* region marker is the exception: it is intentionally
+        # dropped everywhere (region semantics not honored), so drop it here too
+        # rather than leaking it into the ```lean block.
         if (line[:1].isspace() and stripped.startswith('--')
                 and tokens and tokens[-1][0] == 'code_line'):
+            if _HIDEFROM_COMMENT_RE.fullmatch(stripped):
+                i += 1
+                continue
             tokens.append(('code_line', line))
             i += 1
             continue
@@ -694,7 +724,11 @@ def tokenize(text: str):
 
         m = _TERSE_DELIM_RE.match(stripped)
         if m:
-            tokens.append(('terse_inline', m.group(1).strip()))
+            # `-- TERSE: /- HIDEFROMHTML -/` etc.: the payload is itself a
+            # dropped region marker — emit nothing rather than a :::terse block
+            # containing the literal marker word.
+            if not _DROP_MARKER_RE.fullmatch(m.group(1).strip()):
+                tokens.append(('terse_inline', m.group(1).strip()))
             i += 1
             continue
 
@@ -723,7 +757,13 @@ def tokenize(text: str):
                     break
                 body_lines.append(re.sub(r'^--\s?', '', cont))
                 i += 1
-            tokens.append(('terse_inline', '\n'.join(body_lines)))
+            # Drop lines that are bare region markers (`-- TERSE: HIDEFROMHTML`
+            # etc.); if nothing else remains, the whole paragraph was a marker —
+            # emit no :::terse block at all.
+            body_lines = [bl for bl in body_lines
+                          if not _DROP_MARKER_RE.fullmatch(bl.strip())]
+            if body_lines:
+                tokens.append(('terse_inline', '\n'.join(body_lines)))
             continue
 
         m = _EX_RE.match(stripped)
