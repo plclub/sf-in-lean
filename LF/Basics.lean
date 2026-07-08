@@ -990,8 +990,8 @@ Names in the `Bool` `namespace` are available without qualification.
 
 ::::full
 Finally, Lean can often automatically figure out which namespace a qualified name lives in,
-saving us the need to explicitly specify it every time we use the name. In addition the
-to fully qualified style (e.g., `Day.monday`), we can opt for a partially qualified style,
+saving us the need to explicitly specify it every time we use the name. Instead of
+the fully qualified style (e.g., `Day.monday`), we can opt for a partially qualified style,
 writing just `.monday`.
 
 When we do this, Lean tries to resolve the `.monday` name by seeing what its expected type is,
