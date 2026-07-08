@@ -733,32 +733,50 @@ private def buildProject (dest : System.FilePath) (kind : String) :
     IO.println s!"Generated {kind} project built successfully."
 
 /--
-Shared implementation. Writes the extracted Lean project for one variant of
-one volume to `_out/<vol>/<variant>/lean/`, next to that variant's `html-multi/`
-(which `manualMain` writes via `cfg.destination := "_out/<vol>/<variant>"`).
-`vol` is the uppercase module prefix (e.g. `"LF"`, `"HL"`, `"TS"`).
-`isTeacher` selects the solution-filled or student form of the code. -/
-private def emitSavedImpl (vol variant : String) (isTeacher : Bool) :
+Shared implementation. Writes the extracted Lean project to
+`_out/<destSlug>/<variant>/lean/`, next to that variant's `html-multi/`
+(which `manualMain` writes via `cfg.destination := "_out/<destSlug>/<variant>"`).
+`modPrefix` is the uppercase module prefix used for the generated chapters'
+module names and paths (e.g. `"LF"`, `"HL"`, `"TS"`); it is normally the same
+as `destSlug` uppercased, but the draft executable passes `modPrefix := "LF"`
+with `destSlug := "lf-draft"` so its output lands under `LF/…` in a separate
+tree that never clobbers the real `lf` build.
+`isTeacher` selects the solution-filled or student form of the code.
+`verify` runs `lake build` on the extracted project to confirm it compiles;
+the draft emitter passes `verify := false`, since its not-yet-graduated
+chapters are not expected to build standalone. -/
+private def emitSavedImpl (destSlug modPrefix variant : String)
+    (isTeacher : Bool) (verify : Bool := true) :
     Mode → Config → TraverseState → Part Manual → BuildLogT IO Unit :=
   fun _mode _cfg _state text => do
-    let buf : SaveBuffers := walkOuter (fillWidthFor variant) vol text ({} : SaveBuffers)
+    let buf : SaveBuffers := walkOuter (fillWidthFor variant) modPrefix text ({} : SaveBuffers)
     let toolchain ← (IO.FS.readFile "lean-toolchain").toBaseIO >>= fun
       | .ok s => pure s
       | .error _ => pure "leanprover/lean4:v4.30.0-rc2\n"
     let files : Array (String × String) :=
       buf.fold (init := #[]) fun acc file (teacher, student) =>
         acc.push (file, mergeAdjacentModuleDocs (if isTeacher then teacher else student))
-    let dest := System.FilePath.mk "_out" / vol.toLower / variant / "lean"
-    writeProject dest toolchain vol variant files
-    buildProject dest variant
+    let dest := System.FilePath.mk "_out" / destSlug / variant / "lean"
+    writeProject dest toolchain modPrefix variant files
+    if verify then buildProject dest variant
 
 /-- `ExtraStep` for the student build: solutions elided. -/
-def emitSavedStudent (vol : String) := emitSavedImpl vol "student" false
+def emitSavedStudent (vol : String) := emitSavedImpl vol.toLower vol "student" false
 
 /-- `ExtraStep` for the solutions build: solutions shown. -/
-def emitSavedSolutions (vol : String) := emitSavedImpl vol "solutions" true
+def emitSavedSolutions (vol : String) := emitSavedImpl vol.toLower vol "solutions" true
 
 /-- `ExtraStep` for the terse build: solutions elided. -/
-def emitSavedTerse (vol : String) := emitSavedImpl vol "terse" false
+def emitSavedTerse (vol : String) := emitSavedImpl vol.toLower vol "terse" false
+
+/-- Like `emitSavedSolutions`/`emitSavedStudent` but writes to
+`_out/<destSlug>/…` while using `modPrefix` as the chapter module/path prefix.
+Used by the draft executable to emit output for generated chapters that are not
+yet in the real book, without clobbering the real volume's output. -/
+def emitSavedSolutionsTo (destSlug modPrefix : String) :=
+  emitSavedImpl destSlug modPrefix "solutions" true (verify := false)
+
+def emitSavedStudentTo (destSlug modPrefix : String) :=
+  emitSavedImpl destSlug modPrefix "student" false (verify := false)
 
 end SFLMeta

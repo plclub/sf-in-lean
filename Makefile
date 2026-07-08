@@ -88,3 +88,13 @@ lf-build: verso
 
 LF/%Verso.lean: LF/%.lean scripts/to_verso.py
 	python3 scripts/to_verso.py $< $@
+
+# ── Draft solutions for not-yet-versified chapters (temporary!) ───────────────
+# Emits solutions .lean for the generated LF/<Ch>Verso.lean chapters listed in
+# LFDraft.lean (currently the ones that compile), into
+#   _out/lf-draft/solutions/lean/LF/<Ch>.lean
+# for diffing against the bare LF/<Ch>.lean sources for completeness.  Add a
+# chapter to LFDraft.lean once its Verso source builds.
+.PHONY: lf-draft-solutions
+lf-draft-solutions: verso
+	lake exe sfl-draft solutions
