@@ -1037,7 +1037,7 @@ theorem app_length (l1 l2 : NatList) :
 theorem foo1 (n : Nat) (l : NatList) :
     myRepeat n 0 = l -> l.length = 0 := by
   intro h
-  rw [←h, repeat_zero, nil_length]
+  rw [← h, repeat_zero, nil_length]
 -- /HIDE
 -- /QUIZ
 
