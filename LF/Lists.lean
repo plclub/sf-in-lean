@@ -37,7 +37,7 @@
 
 import LF.Induction
 import LF.UsingLean
-namespace NatList
+
 
 #check ([] ++ [])
 
@@ -227,6 +227,7 @@ inductive NatList : Type where
   | nil
   | cons (n : Nat) (l : NatList)
 
+namespace NatList
 -- TERSE: ***
 /-  FULL: As with pairs, it is convenient to write lists in familiar
     notation.  The following declarations allow us to use [::] as an
@@ -235,9 +236,9 @@ inductive NatList : Type where
 -- TERSE: Some notation for lists to make our lives easier:
 
 -- Don't worry too much about what this is doing
-scoped infixr:65 " :: " => NatList.cons
+scoped infixr:65 " :: " => cons
 macro (priority := high) "[ " elems:term,* "]" : term => do
-  elems.getElems.foldrM (``(NatList.cons $(⟨·⟩) $(⟨·⟩))) (← ``(NatList.nil))
+  elems.getElems.foldrM (``(cons $(⟨·⟩) $(⟨·⟩))) (← ``(nil))
 
 -- Now these all mean exactly the same thing:
 def mylist1 : NatList := 1 :: (2 :: (3 :: []))
@@ -256,40 +257,40 @@ def mylist3 : NatList := [1, 2, 3]
    (We use `myRepeat` because `repeat` is a reserved keyword in Lean.) -/
 
 @[irreducible]
-def NatList.myRepeat (n count : Nat) : NatList :=
+def myRepeat (n count : Nat) : NatList :=
   match count with
   | 0 => []
   | count' + 1 => n :: myRepeat n count'
 
 -- Some simple facts about repetition
-unseal NatList.myRepeat in
-theorem repeat_zero v : NatList.myRepeat v 0 = [] := rfl
+unseal myRepeat in
+theorem repeat_zero v : myRepeat v 0 = [] := rfl
 
-unseal NatList.myRepeat in
-theorem repeat_succ v count : NatList.myRepeat v (count + 1) = v :: NatList.myRepeat v count := rfl
+unseal myRepeat in
+theorem repeat_succ v count : myRepeat v (count + 1) = v :: myRepeat v count := rfl
 
 -- Length
 
 -- FULL: The `length` function calculates the length of a list.
 
 @[irreducible]
-def NatList.length (l : NatList) : Nat :=
+def length (l : NatList) : Nat :=
   match l with
   | [] => 0
   | _ :: t => (length t) + 1
 
 -- Some simple facts about list lengths
-unseal NatList.length in
+unseal length in
 theorem nil_length : [].length = 0 := rfl
 
-unseal NatList.length in
+unseal length in
 theorem cons_length (n : Nat) (l : NatList) : (n::l).length = l.length + 1 := rfl
 
 -- *** Append
 
 -- FULL: The `app` function appends (concatenates) two lists.
 @[irreducible]
-def NatList.app (l1 l2 : NatList) : NatList :=
+def app (l1 l2 : NatList) : NatList :=
   match l1 with
   | [] => l2
   | h :: t => h :: app t l2
@@ -309,25 +310,25 @@ def NatList.app (l1 l2 : NatList) : NatList :=
    we can register it as the `++` operator within our namespace: -/
 
 instance : HAppend NatList NatList NatList where
-  hAppend := NatList.app
+  hAppend := app
 
 -- Now `l1 ++ l2` means `app l1 l2` within `NatList`.
 
 -- Some simple facts about appending lists
-unseal NatList.app in
+unseal app in
 theorem nil_append (l : NatList) : [] ++ l = l := rfl
 
-unseal NatList.app in
+unseal app in
 theorem cons_append (n : Nat) (l1 l2 : NatList) : (n::l1) ++ l2 = n :: (l1 ++ l2) := rfl
 
 -- test_app1
-unseal NatList.app
+unseal app
 example : [1, 2, 3] ++ [4, 5] = [1, 2, 3, 4, 5] := by rfl
 -- test_app2
 example : ([] : NatList) ++ [4, 5] = [4, 5] := by rfl
 -- test_app3
 example : [1, 2, 3] ++ ([] : NatList) = [1, 2, 3] := by rfl
-seal NatList.app
+seal app
 /- FULL: We'll learn more about type classes as we go.  For now, the
    key idea is: a type class is an interface, and an instance is an
    implementation of that interface for a particular type.
@@ -344,33 +345,33 @@ seal NatList.app
    "tail").  Since the empty list has no first element, we pass
    a default value to be returned in that case. -/
 @[irreducible]
-def NatList.hd (default : Nat) (l : NatList) : Nat :=
+def hd (default : Nat) (l : NatList) : Nat :=
   match l with
   | [] => default
   | h :: _ => h
 
 -- Basic theorems about how `hd` behaves:
-unseal NatList.hd in
+unseal hd in
 theorem hd_cons h x (t : NatList) : (h :: t).hd x = h := by rfl
-unseal NatList.hd in
+unseal hd in
 theorem hd_nil x : [].hd x = x := by rfl
 
 @[irreducible]
-def NatList.tl (l : NatList) : NatList :=
+def tl (l : NatList) : NatList :=
   match l with
   | [] => []
   | _ :: t => t
 
 -- Basic theorems about how `tl` behaves:
-unseal NatList.tl in
+unseal tl in
 theorem tl_cons h (t : NatList) : (h :: t).tl = t := by rfl
-unseal NatList.tl in
+unseal tl in
 theorem tl_nil : [].tl = [] := by rfl
 
 -- test_hd1
-example : NatList.hd 0 [1, 2, 3] = 1 := by rw [hd_cons]
+example : hd 0 [1, 2, 3] = 1 := by rw [hd_cons]
 -- test_hd2
-example : NatList.hd 0 [] = 0 := by rw [hd_nil]
+example : hd 0 [] = 0 := by rw [hd_nil]
 -- test_tl
 example : [1, 2, 3].tl = [2, 3] := by rw [tl_cons]
 
@@ -438,13 +439,13 @@ abbrev countoddmembers (l : NatList) : Nat :=
   -- /ADMITDEF
 
 -- test_countoddmembers1
-unseal oddmembers NatList.length
+unseal oddmembers length
 example : countoddmembers [1, 0, 3, 1, 4, 5] = 4 := by rfl  -- ADMITTED
 -- test_countoddmembers2
 example : countoddmembers [0, 2, 4] = 0 := by rfl  -- ADMITTED
 -- test_countoddmembers3
 example : countoddmembers [] = 0 := by rfl  -- ADMITTED
-seal oddmembers NatList.length
+seal oddmembers length
 -- GRADE_THEOREM 0.5: NatList.test_countoddmembers2
 -- GRADE_THEOREM 0.5: NatList.test_countoddmembers3
 -- []
@@ -551,19 +552,19 @@ seal count
 
 abbrev sum : Bag → Bag → Bag :=
   -- ADMITDEF
-  NatList.app
+  app
   -- /ADMITDEF
 
 -- test_sum1
 unseal count in
-unseal NatList.app in
+unseal app in
 example : count 1 (sum [1, 2, 3] [1, 4, 1]) = 3 := by rfl -- ADMITTED
 -- GRADE_THEOREM 0.5: NatList.test_sum1
 
-unseal NatList.app in
+unseal app in
 theorem nil_sum (l : NatList) : sum [] l = l := rfl
 
-unseal NatList.app in
+unseal app in
 theorem cons_sum (n : Nat) (l1 l2 : Bag) : sum (n::l1) l2 = n :: (sum l1 l2) := rfl
 
 abbrev add (v : Nat) (s : Bag) : Bag :=
@@ -800,7 +801,7 @@ end Bag
    uses `unseal` and `dsimp` extensively.
    -/
 
-theorem nil_app (l : NatList) : ([] : NatList) ++ l = l := by rw [NatList.nil_append]
+theorem nil_app (l : NatList) : ([] : NatList) ++ l = l := by rw [nil_append]
 
 /- FULL: ...because the `[]` is substituted into the "scrutinee" (the
    expression whose value is being "scrutinized" by the match) in the
@@ -918,7 +919,7 @@ theorem app_assoc (l1 l2 l3 : NatList) :
 /-- warning: declaration uses `sorry` -/
 #guard_msgs in
 example (c n : Nat) :
-    NatList.myRepeat n c ++ NatList.myRepeat n c = NatList.myRepeat n (c + c) := by
+    myRepeat n c ++ myRepeat n c = myRepeat n (c + c) := by
   induction c
   case zero => rw [repeat_zero, nil_append]
   case succ c' ih =>
@@ -931,7 +932,7 @@ example (c n : Nat) :
 -- TERSE: A generalization that gives a stronger inductive hypothesis:
 
 theorem myRepeat_plus (c1 c2 n : Nat) :
-    NatList.myRepeat n c1 ++ NatList.myRepeat n c2 = NatList.myRepeat n (c1 + c2) := by
+    myRepeat n c1 ++ myRepeat n c2 = myRepeat n (c1 + c2) := by
   induction c1
   case zero =>
     rw [repeat_zero, Nat.zero_add, nil_append]
@@ -946,23 +947,23 @@ theorem myRepeat_plus (c1 c2 n : Nat) :
 -- TERSE: A more interesting example of induction over lists:
 
 @[irreducible]
-def NatList.rev (l : NatList) : NatList :=
+def rev (l : NatList) : NatList :=
   match l with
   | [] => []
   | h :: t => t.rev ++ [h]
 
-unseal NatList.rev in
+unseal rev in
 theorem rev_nil : [].rev = [] := by rfl
 
-unseal NatList.rev in
+unseal rev in
 theorem rev_cons h (t : NatList) : (h :: t).rev = t.rev ++ [h] := by rfl
 
 -- test_rev1
-unseal NatList.rev in
-unseal NatList.app in
+unseal rev in
+unseal app in
 example : [1, 2, 3].rev = [3, 2, 1] := by rfl
 -- test_rev2
-unseal NatList.rev in
+unseal rev in
 example : ([] : NatList).rev = [] := by rfl
 
 
@@ -1051,7 +1052,7 @@ theorem app_length (l1 l2 : NatList) :
 
 -- HIDE
 theorem foo1 (n : Nat) (l : NatList) :
-    NatList.myRepeat n 0 = l -> l.length = 0 := by
+    myRepeat n 0 = l -> l.length = 0 := by
   intro h
   rewrite [←h, repeat_zero, nil_length]
   rfl
@@ -1062,7 +1063,7 @@ theorem foo1 (n : Nat) (l : NatList) :
 /- What about the next one?
 
       theorem foo2 :  forall n m : Nat,
-        (NatList.myRepeat n m).length = m
+        (myRepeat n m).length = m
 
     Which tactics do we need besides [intro], [dsimp], [rewrite], and
     [rfl]?  (A) none, (B) [cases], (C) [induction on n],
@@ -1072,7 +1073,7 @@ theorem foo1 (n : Nat) (l : NatList) :
 
 -- HIDE
 theorem foo2 (n m : Nat) :
-    (NatList.myRepeat n m).length = m := by
+    (myRepeat n m).length = m := by
   induction m
   case zero => rewrite [repeat_zero, nil_length]; rfl
   case succ m' ih =>
@@ -1560,7 +1561,7 @@ theorem hd_error_cons h t : hd_error (h :: t) = .some h := by rfl -- ADMITTED
 
 -- option_elim_hd
 theorem option_elim_hd (l : NatList) (default : Nat) :
-    NatList.hd default l = option_elim default (hd_error l) := by
+    hd default l = option_elim default (hd_error l) := by
   -- ADMITTED
   cases l
   case nil => rw [hd_error_nil, option_elim_none, hd_nil]
