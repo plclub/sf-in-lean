@@ -70,30 +70,55 @@ FOOTER = ""
 # Title extraction
 # ---------------------------------------------------------------------------
 
-def extract_title(src: str) -> str:
-    """Pull the chapter title from the opening /- ... -/ block comment.  Use the
-    *first* block comment anywhere near the top rather than one anchored at the
-    very start, since a chapter may open with a stray `-- …` line comment before
-    its title (e.g. Lists begins with `-- Note that …`)."""
+def _find_title_comment(src: str, stem: str = None):
+    """Locate the chapter-title comment and return (title, match) or None.
+
+    Chapter titles follow the convention `<Stem>: <description>` (e.g.
+    `Tactics: More Basic Tactics`) and are written either as a line comment
+    (`-- Tactics: …`, Tactics) or a block comment (`/- Lists: … -/`, most
+    chapters).  When *stem* is known, prefer the first comment of either form
+    whose text starts with `<stem>:` — this skips leading non-title comments
+    (Lists opens with a stray `-- Note that …`; Tactics opens with a multi-line
+    `/- TODO: … -/` note that used to be mistaken for the title).  Without a
+    stem (or when nothing matches), fall back to the first block comment."""
+    if stem:
+        m_line = re.search(rf'(?m)^--[ \t]*({re.escape(stem)}:[^\n]*)$', src)
+        m_block = re.search(rf'/\-\s*({re.escape(stem)}:.*?)-/', src, re.DOTALL)
+        # Prefer whichever title-form appears first in the file.
+        cands = [m for m in (m_line, m_block) if m]
+        if cands:
+            m = min(cands, key=lambda m: m.start())
+            title = ' '.join(m.group(1).split())
+            return title, m
     m = re.search(r"/\-(.*?)-/", src, re.DOTALL)
     if m:
-        body = m.group(1)
-        lines = [l.strip() for l in body.splitlines() if l.strip()]
+        lines = [l.strip() for l in m.group(1).splitlines() if l.strip()]
         if lines:
             title = lines[0].lstrip("#").strip()
             if title:
-                return title
-    return "Chapter"
+                return title, m
+    return None
+
+
+def extract_title(src: str, stem: str = None) -> str:
+    """Pull the chapter title from its title comment (see _find_title_comment)."""
+    found = _find_title_comment(src, stem)
+    return found[0] if found else "Chapter"
 
 # ---------------------------------------------------------------------------
 # Tokenizer helpers
 # ---------------------------------------------------------------------------
 
-def _strip_title_comment(src: str) -> str:
-    """Remove the first /- title -/ block comment (already used for the #doc
-    title) so it doesn't render again as prose — matching `extract_title`, which
-    also takes the first block comment even when a stray `-- …` line precedes it."""
-    return re.sub(r'/\-.*?-/', '', src, count=1, flags=re.DOTALL)
+def _strip_title_comment(src: str, stem: str = None) -> str:
+    """Remove the title comment (already used for the #doc title) so it doesn't
+    render again as prose.  Uses the same lookup as `extract_title`, so exactly
+    the comment that supplied the title is removed — whether the `-- <Stem>: …`
+    line form or the `/- <Stem>: … -/` block form."""
+    found = _find_title_comment(src, stem)
+    if not found:
+        return src
+    m = found[1]
+    return src[:m.start()] + src[m.end():]
 
 
 # LF modules that are authored directly in Verso (Basics) or are plain Lean
@@ -159,8 +184,11 @@ def _extract_imports(body: str):
 
 # Author/dev markers (matches the line-comment set in `_AUTHOR_RE`).  A block
 # comment whose body opens with one of these is an author note routed to :::dev.
+# `HIDE:` (colon required, to stay clear of the bare `-- HIDE` region marker)
+# prefixes reviewer remarks like `/- HIDE: Robert Rand: … -/`; they are author-
+# only content, kept in ```dev like the initialed notes.
 _BLOCK_DEV_RE = re.compile(
-    r'^(BCP|JC|MWH|CGH|RAB|CH|HG|NB|TODO|TOFIX|LATER|SOONER)\b')
+    r'^(BCP|JC|MWH|CGH|RAB|CH|HG|NB|TODO|TOFIX|LATER|SOONER|HIDE(?=:))\b')
 
 
 def _is_block_dev_comment(text: str) -> bool:
@@ -181,10 +209,11 @@ def _is_label_comment(text: str) -> bool:
     """
     t = text.strip()
     return (bool(re.match(r"^[\w.']+$", t)) or
-            bool(re.match(r'^#{3,}\s*$', t)) or
+            bool(re.match(r'^#{3,}[ \t#-]*$', t)) or
             bool(re.match(r'^=+>', t)))
 
-_SEPARATOR_LINE_RE = re.compile(r'^\s*#{4,}\s*$')   # ######... divider lines
+# ######... divider lines; tolerate trailing decoration (`###### --`, spaces)
+_SEPARATOR_LINE_RE = re.compile(r'^\s*#{4,}[ \t#-]*$')
 _HEADING_LINE_RE = re.compile(r'^\s{0,3}(#{1,6})\s+(.+)$')
 _DEV_NOTE_RE = re.compile(r'^\s*-- (BCP|JC|MWH|CGH|RAB|TODO)\b')
 _DEV_NOTE_CONT_RE = re.compile(r'^\s*--')
@@ -1083,6 +1112,10 @@ class Renderer:
         if self.full_open and not self.in_exercise:
             self._close_full_if_open()
             self.pending_full = True
+        # Drop trailing coqdoc decoration from the title (`# The apply Tactic *`
+        # — the `*` is a leftover coqdoc section marker; a bare line-initial `*`
+        # would also trip Verso's bold parser in the rendered heading).
+        title = re.sub(r'[ \t*]+$', '', title)
         self._append('#' * level + ' ' + title + '\n\n')
 
     def _on_code_line(self, line):
@@ -1558,9 +1591,9 @@ def _convert_solution_markers(src: str) -> str:
 
 def convert(src_text: str, title: str, file_key: str) -> str:
     """Return a Verso document converted from the code-forward *src_text*."""
-    # The opening /- title -/ comment is already used for the #doc declaration;
+    # The opening title comment is already used for the #doc declaration;
     # strip it so it doesn't appear again as prose.
-    body_src = _strip_title_comment(src_text)
+    body_src = _strip_title_comment(src_text, file_key)
     # Lift top-level `import …` lines (and `prelude`) into the Verso header;
     # they can't live in a ```lean``` code block.
     has_prelude, extra_imports, body_src = _extract_imports(body_src)
@@ -1612,8 +1645,8 @@ def main() -> None:
                 else src_path.with_stem(src_path.stem + 'Verso'))
 
     src_text = src_path.read_text()
-    title = args.title or extract_title(src_text)
     file_key = src_path.stem   # e.g. "Basics"
+    title = args.title or extract_title(src_text, file_key)
 
     result = convert(src_text, title, file_key)
     dst_path.write_text(result)
