@@ -93,7 +93,7 @@ everything from first principles...
 :::
 
 ::::full
-Lean's set of built-in features is _extremely_ small.
+Lean's set of built-in features is extremely small.
 For example, instead of the usual palette of atomic
 data types (booleans, integers, strings, etc.), Lean offers a powerful
 mechanism for defining new data types from scratch, with all these
@@ -200,6 +200,8 @@ is that I'm having trouble justifying Lean's convention here because I don't act
 either! To me, the difference betweeen `.CName` and `CName` seems minimal, so I don't really
 understand why Lean requires the former. I would be curious to know if there is a canonical
 explanation of why Lean works this way that we can lean on.
+DHS: Maybe the thing to do then is to defer the explanation of the .monday style until later, when there is actually a motivating example for why it's nice. So we only use the fully qualified Day.monday style until the section about namespaces, then we can explain opening namespaces to get just monday, and then even later when we have long names we can explain .monday.
+What to say: Lean usually resolves names by looking at the current namespace, and this is the single explanation for why whether I'm in namespace Day or the body of a function Day.nextWorkingDay, I don't need to write the full Day.monday. When you use the leading dot notation you are asking Lean to instead use the expected type's namespace, so that .monday used in a place expecting something of type Day will resolve to Day.monday.
 :::
 
 ```lean
@@ -548,7 +550,7 @@ are examples of tactics.
 Tactics manipulate the _proof state_, as you can can see the in the Lean InfoView panel.
 The proof state is divided into the _context_, before the ⊢,
 and the _goal_, after the ⊢. The context records what we know
-at each point in the proof;the goal is what we are trying to prove
+at each point in the proof; the goal is what we are trying to prove
 at each point.
 
 A tactic manipulates both the goal and the context to get the goal
@@ -595,7 +597,7 @@ theorem true_andb_explained : ∀ (b : MyBool), (.true && b) = b := by
 ```
 
 ::::full
-It's also important to point out that, like languages like Python and Haskell,
+It's also important to point out that, as with languages like Python and Haskell,
 Lean is _whitespace-sensitive_. That is, the indentation in proofs is important and changing
 it can change the meaning of the proof, usually causing the proof to break. If we had
 instead written the following:
@@ -2027,7 +2029,7 @@ Note also that when we enter a `case`, we increase the level of indentation at w
 by two spaces.
 
 The `cases` tactic can be used with any inductively defined
-datatype.  For example, we use it next to prove that boolean
+datatype. For example, we use it next to prove that boolean
 negation is involutive (that is, that negation is its own inverse).
 ::::
 
@@ -2052,14 +2054,14 @@ theorem notb_involutive : ∀ b : Bool, (!!b) = b := by
 
 ::::full
 You may also notice that in the above proof we have used some rewrite rules that we didn't
-previously prove in this file! These proofs come from Lean's standard library: in particular,
+previously prove in this file! These proofs come from Lean's standard library, in particular
 from the section about booleans. Having access to these already-proved theorems about booleans
 instead of needing them to prove them ourselves is a big advantage of using Lean's built-in
 `Bool` type instead of defining our own.
 
-In a few chapters we will discuss in further detail how to search through the standard library
-for theorems like these. For now, though, note that if you hover over the name of these theorem
-in VSCode, the Lean 4 extension will show you their type.
+In a few chapters we will discuss how to search through the standard library
+for theorems like these. For now, note that if you hover over the name of these theorems
+in VSCode, the Lean 4 extension will show you their type, i.e., what the theorem proves.
 ::::
 
 :::slidebreak
@@ -2191,6 +2193,9 @@ GRADE_THEOREM 1: zero_nbeq_add_1
 :::dev
 DHS: I move that we just cut this section entirely and come back to it when
 we've presented enough of the requisite material that we can actually explain
+mwhicks1: I'm going to leave this here for now, but perhaps make a note to
+fix later on---when you've fixed it, come back and delete this, rather than
+delete it now.
 :::
 
 ## More on Notation (Optional)
@@ -2233,7 +2238,7 @@ def even' (n : Nat) : Bool :=
 When Lean checks this definition, it verifies that the recursion
 terminates.  Specifically, it checks that one of the parameters
 is _structurally decreasing_ -- that each recursive call made in the body of the
-definition is made on an argument that is "smaller" than the original input.
+definition is made on an argument that is smaller than the original input.
 In `even` example above, the argument to the recursive call to `even` is the variable `n'`.
 Because of our pattern match, we know that `n` is equal to `succ (succ n')`, and therefore
 that `n'` is smaller than `n`. This makes `n'` an acceptable argument to `even` for Lean's
