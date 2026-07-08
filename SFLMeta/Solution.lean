@@ -10,7 +10,7 @@ namespace SFLMeta
 /-!
 `Block.solution` wraps a worked solution (prose or non-compiling illustrative
 code) that should appear only in the *solutions* build.  It mirrors
-`Block.terse` / `Block.full`, but keys on `showSolutions` (set by the
+`Block.terse` / `Block.full`, but keys on `Save.showSolutions` (set by the
 `lf_solutions` executable) instead of `isDraft`: in the solutions build the
 content is kept and rendered; in the student and terse builds traversal replaces
 it with an empty block, so it reaches neither the HTML nor the extracted `.lean`.
@@ -22,7 +22,7 @@ discussion). -/
 block_extension Block.solution where
   data := Json.null
   traverse _ _ _ := do
-    if ← showSolutions.get then
+    if ← Save.showSolutions.get then
       return none                 -- solutions build: keep, recurse into children
     else
       return some (.concat #[])   -- student/terse build: hide
