@@ -19,14 +19,16 @@ open SFLMeta
 
 open InlineLean hiding lean
 
-#doc (Manual) "Preface: Software Foundations in Lean" =>
+#doc (Manual) "Postscript: Software Foundations in Lean" =>
 %%%
 htmlSplit := .never
-file := "Preface"
+file := "Postscript"
 %%%
 
  Postscript
+:::dev
  SOONER: The FULL version could use some real text
+:::
 
  Congratulations: We've made it to the end of _Logical
     Foundations_!
@@ -73,10 +75,10 @@ file := "Preface"
     Foundations_; others require a few chapters from Volume 2,
     _Programming Language Foundations_.  The Preface chapter in each
     volume gives details about prerequisites.
-
+:::instructors
  SOONER: Might be worth explicitly advertising each volume, like
    this?  Some danger of redunancy tho...
-
+:::
            \- _Programming Language Foundations_ (volume 2, by a set of
              authors similar to this book's) covers material that
              might be found in a graduate course on the theory of

@@ -27,7 +27,7 @@ file := "Preface"
 
 
 Preface
-
+:::dev
  SOONER: BCP 25: The SF course at Penn (CIS 5000) sometimes attracts
    students who don't have enough math background and begin really
    flailing around the middle of the semester. I wonder if we could
@@ -39,7 +39,7 @@ Preface
      - recursive, polymorphic functional programming over lists
      - abstract definitions involving relations (e.g., reflexive,
        symmetric, transitive closure of a relation)
-
+:::
 
  ######################################################################
  Welcome
@@ -129,8 +129,10 @@ Preface
     before, perhaps in a course on discrete math or analysis of
     algorithms, but in this course we will examine them more deeply
     than you have probably done so far.
+:::dev
  HIDE: That last claim is now only true if people read some
    optional chapters.  Oh well...
+:::
 
  Proof Assistants
 
@@ -206,10 +208,9 @@ Preface
       effort led to a Rocq formalization of the Feit-Thompson Theorem,
       the first major step in the classification of finite simple
       groups.
- HIDE: CH: How about also mentioning more recent Rocq successes, like Iris
-      (https://iris-project.org/) or VST (http://vst.cs.princeton.edu/)?
-
- Functional Programming
+:::dev
+change this to lean and mention recent lean successes
+:::
 
  The term _functional programming_ refers both to a collection of
     programming idioms that can be used in almost any programming
@@ -225,8 +226,9 @@ Preface
     interest among industrial engineers and language designers,
     playing a key role in high-value systems at companies like Jane
     Street Capital, Microsoft, Facebook, Twitter, and Ericsson.
-/- LATER: should the companies be updated?
-
+:::dev
+companies should be updated!
+:::
     The most basic tenet of functional programming is that, as much as
     possible, computation should be _pure_, in the sense that the only
     effect of execution should be to produce a result: it should be
@@ -269,28 +271,7 @@ Preface
     programming language plus a set of tools for stating and proving
     logical assertions.  Moreover, when we come to look more closely,
     we find that these two sides of Rocq are actually aspects of the
-    very same underlying machinery -- i.e., _proofs are programs_. -/
-
- Rocq vs. Coq
-
- Until 2025, the Rocq prover was known as Coq. According to the
-    official webpage, "The name 'Coq' referenced the Calculus of
-    Constructions (CoC), the foundational system it is based on, as
-    well as one of its creators, Thierry Coquand. Additionally, it
-    paid homage to the French national symbol, the rooster.  The new
-    name, 'the Rocq Prover', honors Inria Rocquencourt, the original
-    site where the prover was developed. It also alludes to the
-    mythological bird Roc (or Rokh), symbolizing strength and not so
-    disconnected to a rooster. Furthermore, the name conveys a sense
-    of solidity, and its unintended connection to music adds a
-    pleasant resonance."
-
-    The current release of Software Foundations is still in a
-    transitional state, and you will see references to both Coq and
-    Rocq.
-
- SOONER: BCP 25: Update this when the rename is finished!
- LATER: Citations or at least web links would be good here!
+    very same underlying machinery -- i.e., _proofs are programs_.
 
  ######################################################################
  Further Reading
@@ -337,7 +318,6 @@ Preface
       Docker image and a `_CoqProject` file, whose presence triggers
       the VSRocq extension.
       -- TODO LEANIFY
-/- SOONER: RocqProject, at some point?
 
     \- In VSCode, use `File > Open Folder` to open the new directory.
       VSCode should ask you whether you want to run the project in the
@@ -367,9 +347,8 @@ Preface
 
     \- To see what other key bindings are available, press F1 and then
       type `Coq:`, or visit the VSRocq web pages:
-      https://github.com/rocq-prover/vsrocq. -/
+      https://github.com/rocq-prover/vsrocq.
 
- SOONER: We might want to include some of this...
 
        When I try to run the line importing all the definitions from Basics.v, I get this error:
 
@@ -436,7 +415,7 @@ Preface
 
     - An IDE for interacting with Rocq.  There are several choices:
 
-/- LATER: the repository has been renamed, to VsRocq, but the docs still call it
+LATER: the repository has been renamed, to VsRocq, but the docs still call it
    VsCoq
         - _VsCoq_ is an extension for Visual Studio Code that offers a
           simple interface via a familiar IDE.  This option is the
@@ -467,22 +446,9 @@ Preface
             Rocq (normally you have to type a period and then type `C-c C-n`).
 
           Adventurous users of Rocq within Emacs may want to check out
-          extensions such as `company-coq] and [control-lock`.
+          extensions such as `company-coq` and `control-lock`.
 
-        - _RocqIDE_ is a simpler stand-alone IDE.  It is distributed with
-          the Rocq Platform, so it should be available once you have Rocq
-          installed.  It can also be compiled from scratch, but on some
-          platforms this may involve installing additional packages for GUI
-          libraries and such.
 
- SOONER: is this recommendation still up-to-date?
-          Users who like RocqIDE should consider running it with the
-          "asynchronous" and "error resilience" modes disabled:
-```
-          coqide -async-proofs off \
-                 -async-proofs-command-error-resilience off Foo.v &
-```
- -/
 
  Exercises
 
