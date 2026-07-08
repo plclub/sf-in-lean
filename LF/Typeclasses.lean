@@ -323,10 +323,133 @@ theorem List.elem_poly_eq_elem_nat (xs : List Nat) (n : Nat) : xs.elem_poly n = 
 
 # Maps
 
+Maps (or dictionaries) are ubiquitous data structures both in ordinary programming and in the theory of programming languages; we're going to need them in many places in the coming chapters.
+
+We'll define two flavors of maps: total maps, which include a "default" element to be returned when a key being looked up doesn't exist, and partial maps, which instead return an option to indicate success or failure. Partial maps are defined in terms of total maps, using None as the default element.
+
+## Identifiers
+
+To define maps, we first need a type for the keys that we will use to index into our maps. Instead of using concrete types, we will use a type variables
+
+```lean
+universe u v
+variable {α : Type u} {β : Type v} [BEq α] [ReflBEq α] [LawfulBEq α]
+```
+
+where `α` is the type of our map keys and `β` the corresponding values. Looking at {name}`ReflBEq` and {name}`LawfulBEq`, we see that these typeclasses:
+
+```
+/-- `ReflBEq α` says that the `BEq` implementation is reflexive. -/
+class ReflBEq (α) [BEq α] : Prop where
+  /-- `==` is reflexive, that is, `(a == a) = true`. -/
+  protected rfl {a : α} : a == a
+
+/--
+A Boolean equality test coincides with propositional equality.
+
+In other words:
+ * `a == b` implies `a = b`.
+ * `a == a` is true.
+-/
+class LawfulBEq (α : Type u) [BEq α] : Prop extends ReflBEq α where
+  /-- If `a == b` evaluates to `true`, then `a` and `b` are equal in the logic. -/
+  eq_of_beq : {a b : α} → a == b → a = b
+```
+
+provide the assumption that we have an boolean equality (`==`) on our keys that is reflexive and coincides with proposition equality `=`.
+
+## Total Maps
+
+Our main job in this chapter will be to build a definition of partial maps that is similar in behavior to the one we saw in the Lists chapter, plus accompanying lemmas about its behavior.
+
+This time around, though, we're going to use functions, rather than lists of key-value pairs, to build maps. The advantage of this representation is that it offers a more "extensional" view of maps: two maps that respond to queries in the same way will be represented as exactly the same function, rather than just as "equivalent" list structures. This simplifies proofs that use maps.
+
+We build up to partial maps in two steps. First, we define a type of total maps that return a default value when we look up a key that is not present in the map.
+
+```lean
+def TotalMap (α : Type u) (β : Type v) := α → β
+
+namespace TotalMap
+```
+
+Intuitively, a total map over an element type `β` is just a function that can be looked up using a corresponding `a : α`.
+
+In order to declare a default value of `β` we will use the {name}`Inhabited` typeclass, which is the standard library's implementation of our {name}`HasOne` example from above:
+
+```lean
+variable [Inhabited β]
+```
+
+The function `TotalMap.empty` yields an empty total map, given a default element; this map always returns the default element when applied to any string.
+
+```lean
+def empty : TotalMap α β := fun _ ↦ default
+```
+
+and we'll also declare an instance
+
+```lean
+instance : EmptyCollection (TotalMap α β) where
+  emptyCollection := TotalMap.empty
+```
+
+so that we can use the `∅` notation for this empty map. We'sl also declare the instance
+
+```lean
+instance : GetElem (TotalMap α β) α β (fun _ _ => True) where
+  getElem m a _ := m a
+
+theorem getElem_def (m : TotalMap α β) (a : α) : m[a] = m a :=
+  rfl
+```
+
+which allows us to use the notation `m[a]` to access elements of a map `m`.
+
+More interesting is the map-updating function, which (as always) takes a map `m`, a key `a`, and a value `b` and returns a new map that takes `a` to `b` and takes every other key to whatever `m` does. The novelty here is that we achieve this effect by wrapping a new function around the old one.
+
+```lean
+def update (m : TotalMap α β) (a : α) (b : β) : TotalMap α β :=
+  fun a' => bif a == a' then b else m[a']
+```
+
+This definition is a nice example of higher-order programming: {name}`update` takes a function `m` and yields a new function `fun x' ↦ ...` that behaves like the desired map.
+
+For example, we can build a map taking {name}`String` to {name}`Bool`, where `"foo"` and `"bar"` are mapped to {name}`true` and every other key is mapped to {name}`false`, like this:
+
+```lean
+def example_map :=
+  (∅ : TotalMap String Bool)
+    |>.update "foo" true
+    |>.update "bar" true
+```
+
+We'll also introduce a notation for updating maps
+
+```lean
+notation a " →ₜ " b " ; " m => TotalMap.update m a b
+```
+
+The `examplemap` above can now be defined as follows:
+
+```lean
+def examplemap' : TotalMap String Bool := "bar" →ₜ true; "foo" →ₜ true ; ∅
+```
+
+When we use maps in later chapters, we'll need several fundamental facts about how they behave.
+
+Even if you don't work the following exercises, make sure you thoroughly understand the statements of the lemmas!
+
+(Some of the proofs require the functional extensionality axiom, which was discussed in the Logic chapter.)
+
 :::dev
-CGH: Maps could go here as an example to reinforce this? Or maybe that's too long of an aside? The code
-exists (with limited prose) in `Maps.lean` already.
-BCP: Yes -- we should fold Maps into this chapter.
+exercises here...
+:::
+
+
+## Partial Map
+
+:::dev
+rest of section here...
 :::
 
 # Reflection
