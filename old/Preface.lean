@@ -48,7 +48,7 @@ Preface
     various aspects of _Software Foundations_, the mathematical
     underpinnings of reliable software.  Topics in the series include
     basic concepts of logic, computer-assisted theorem proving, the
-    Rocq prover, functional programming, operational semantics, logics
+    Lean prover, functional programming, operational semantics, logics
     and techniques for reasoning about programs, static type systems,
     property-based random testing, and verification of practical C
     code.  The exposition is intended for a broad range of readers,
@@ -58,10 +58,10 @@ Preface
 
     The principal novelty of the series is that it is one hundred
     percent formalized and machine-checked: each text is literally a
-    script for Rocq.  The books are intended to be read alongside (or
-    inside) an interactive session with Rocq.  All the details in the
-    text are fully formalized in Rocq, and most of the exercises are
-    designed to be worked using Rocq.
+    script for Lean.  The books are intended to be read alongside (or
+    inside) an interactive session with Lean.  All the details in the
+    text are fully formalized in Lean, and most of the exercises are
+    designed to be worked using Lean.
 
     The files in each book are organized into a sequence of core
     chapters, covering about one semester's worth of material and
@@ -72,7 +72,7 @@ Preface
 
     This book, _Logical Foundations_, lays groundwork for the others,
     introducing the reader to the basic ideas of functional
-    programming, constructive logic, and the Rocq prover.
+    programming, constructive logic, and the Lean prover.
 
  ######################################################################
  Overview
@@ -154,24 +154,25 @@ Preface
          routine aspects of building proofs while depending on human
          guidance for more difficult aspects.  Widely used proof
          assistants include Isabelle, Agda, Twelf, ACL2, PVS, F⋆,
-         HOL4, Lean, and Rocq, among many others.
+         HOL4, Rocq, and Lean, among many others.
 
-    This course is based around Rocq, a proof assistant that has been
-    under development since 1983 and has attracted a large community
-    of users in both research and industry.  Rocq provides a rich
+    This course is based around Lean, a proof assistant that has been
+    under development since 2013 and has attracted a large community
+    of users in both research and industry. Lean provides a rich
     environment for interactive development of machine-checked formal
-    reasoning.  The kernel of the Rocq system is a simple
+    reasoning.  The kernel of the Lean system is a simple
     proof-checker, which guarantees that only correct deduction steps
-    are ever performed.  On top of this kernel, the Rocq environment
+    are ever performed.  On top of this kernel, the Lean environment
     provides high-level facilities for proof development, including a
     large library of common definitions and lemmas, powerful tactics
     for constructing complex proofs semi-automatically, and a
     special-purpose programming language for defining new
     proof-automation tactics for specific situations.
 
-    Rocq has been a critical enabler for a huge variety of work across
+    Lean has been a critical enabler for a huge variety of work across
     computer science and mathematics:
 
+-- TODO REWRITE
     - As a _platform for modeling programming languages_, it has
       become a standard tool for researchers who need to describe and
       reason about complex language definitions.  It has been used,
@@ -181,43 +182,27 @@ Preface
       sets and programming languages such as C.
 
     - As an _environment for developing formally certified software
-      and hardware_, Rocq has been used, for example, to build
-      CompCert, a fully-verified optimizing compiler for C, and
-      CertiKOS, a fully verified hypervisor, for proving the
-      correctness of subtle algorithms involving floating point
-      numbers, and as the basis for CertiCrypt, FCF, and SSProve,
-      which are frameworks for proving cryptographic algorithms secure.
-      It is also being used to build verified implementations of the
-      open-source RISC-V processor architecture.
+      and hardware_, Lean has been used, for example, to build TODO
+
 
     - As a _realistic environment for functional programming with
-      dependent types_, it has inspired numerous innovations.  For
-      example, Hoare Type Theory embeds reasoning about
-      "pre-conditions" and "post-conditions" (an extension of the
-      _Hoare Logic_ we will see later in this course) in Rocq.
+      dependent types_, it has inspired numerous innovations. For
+      example, TODO
 
     - As a _proof assistant for higher-order logic_, it has been used
       to validate a number of important results in mathematics.  For
-      example, its ability to include complex computations inside
-      proofs made it possible to develop the first formally verified
-      proof of the 4-color theorem.  This proof had previously been
-      controversial among mathematicians because it required checking
-      a large number of configurations using a program. In the Rocq
-      formalization, everything is checked, including the correctness
-      of the computational part.  More recently, an even more massive
-      effort led to a Rocq formalization of the Feit-Thompson Theorem,
-      the first major step in the classification of finite simple
-      groups.
+      example, TODO
 :::dev
 change this to lean and mention recent lean successes
 :::
+-- END TODO
 
  The term _functional programming_ refers both to a collection of
     programming idioms that can be used in almost any programming
     language and to a family of programming languages designed to
     emphasize these idioms, including Haskell, OCaml, Standard ML,
     F##, Scala, Scheme, Racket, Common Lisp, Clojure, Erlang, F⋆,
-    and Rocq.
+    and Lean.
 
     Functional programming has been developed over many decades --
     indeed, its roots go back to Church's lambda-calculus, which was
@@ -266,11 +251,11 @@ companies should be updated!
 
     For purposes of this course, functional programming has yet
     another significant attraction: it serves as a bridge between
-    logic and computer science.  Indeed, Rocq itself can be viewed as a
-    combination of a small but extremely expressive functional
+    logic and computer science.  Indeed, Lean itself can be viewed as a
+    combination an extremely expressive functional
     programming language plus a set of tools for stating and proving
     logical assertions.  Moreover, when we come to look more closely,
-    we find that these two sides of Rocq are actually aspects of the
+    we find that these two sides of Lean are actually aspects of the
     very same underlying machinery -- i.e., _proofs are programs_.
 
  ######################################################################
@@ -287,168 +272,36 @@ companies should be updated!
 
  System Requirements
 
- Rocq runs on Windows, Linux, and macOS.  The files in this book
-    have been tested with Rocq $COQVERSION.
+ Lean runs on Windows, Linux, and macOS.  The files in this book
+    have been tested with Lean (TODO PUT VERSION)
 
- Recommended Installation Method: VSCode + Docker
+ Recommended Installation Method: Web Version (TODO WRITE)
 
- The Visual Studio Code IDE can cooperate with the Docker
-    virtualization platform to compile Rocq scripts without the need
-    for any separate Rocq installation.  This method is recommended for
+ The Visual Studio Code (VS Code) IDE can cooperate with the Docker
+    virtualization platform to compile Lean scripts without the need
+    for any separate Lean installation.  This method is recommended for
     most Software Foundations readers.
-
-    \- Install Docker from `The Docker website`(https://www.docker.com/get-started/) or
-      make sure your existing installation is up to date.
-
-    \- Make sure Docker is running.
-
-    \- Install VSCode from `The VSCode website`(https://code.visualstudio.com) and start it
-      running.
-
-    \- Install VSCode's Dev Containers Extension from
-      `The Remote Containers webpage`(https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
-
-      (Note that this extension only works with the official version
-      of VSCode, not with some VSCode forks like VsCodium.)
-
-    \- Set up a directory for this SF volume by downloading the
-      provided `.tgz` file.  Besides the `.lean` file for each chapter,
-      this directory will contain a `.devcontainer` subdirectory with
-      instructions for VSCode about where to find an appropriate
-      Docker image and a `_CoqProject` file, whose presence triggers
-      the VSRocq extension.
-      -- TODO LEANIFY
-
-    \- In VSCode, use `File > Open Folder` to open the new directory.
-      VSCode should ask you whether you want to run the project in the
-      associated Docker container.  (If it does not ask you, you can
-      open the command palette by pressing F1 and run the command “Dev
-      Containers: Reopen in Container”.)
-
-      This step may take some time.
-
-    \- Check that VSRocq is working by double-clicking the file
-      `Basics.v` from the list on the left (you should see a blinking
-      cursor in the window that opens; if not you can click in that
-      window to select it), and pressing `alt+downarrow` (on MacOS,
-      `control+option+downarrow`) a few times.  You should see the
-      cursor move through the file and the region above the cursor get
-      highlighted.
-
-      \- If VSRocq does not work and you receive an error indicating that
-        `vsrocqtop` was not found, open a new terminal in the container
-        (you can do this by opening the command palette and running the
-        command “Terminal: Create New Terminal”) and run the command
-        `which vsrocqtop`. This should print the path to the VSRocq
-        installation inside the container. Copy this path
-        and paste it into the “VSRocq: Path” textbox in the
-        VSRocq extension settings (accessible via the gear icon on
-        the VSRocq extension page in VSCode), then reload your window.
-
-    \- To see what other key bindings are available, press F1 and then
-      type `Coq:`, or visit the VSRocq web pages:
-      https://github.com/rocq-prover/vsrocq.
-
-
-       When I try to run the line importing all the definitions from Basics.v, I get this error:
-
-      Error when parsing .vo (from file /workspaces/lf/Basics.vo) for library LF.Basics: The file /workspaces/lf/Basics.vo was compiled with OCaml 5.2.1 while this instance of Rocq was compiled with OCaml 5.3.0.
-      Rocq object files need to be compiled with the same OCaml toolchain to be compatible.
-
-
-      Try this:
-
-      Open the terminal pane inside VSCode
-      type make clean and check that there are no .vo files
-      type make to rebuild Basics.vo
-      You may also need to tell VSCode to Reopen in Container so that it notices that things have been rebuilt.
-
-   And some of this (from
-   https://github.com/bcpierce00/au-fsv23)...
 
      KNOWN PROBLEMS
 
-     VSCode shows Docker returned an error
-
-        Make sure that Docker is installed and running.
-
-     The Remote-Containers: Reopen in Container command is not
-     recoqnized by VSCode
-
-        You need to have the Remote - Containers extension VSCode
-        extension installed and enabled. See here for instructions on how
-
-     to install it.
-
-     Running Remote-Containers: Reopen in Container cannot find
-     container
-
-        Make sure you copied the .devcontainer folder to your projects
-        root folder and that it includes the devcontainer.json file.
-
-     Cannot find a physical path bound to logical path X with prefix Y
-     when importing file
-
-        Make sure that the Rocq files have been compiled. Run make to
-        compile the project files.
-
-     Docker pull rate limit hit
-
-       Docker Hub rate limits pulls of images for free accounts to 200
-       per six hours. If this limit is hit you might get one of the
-       following errors and have to wait until the rate limit resets.
-
-     ERROR: toomanyrequests: Too Many Requests
-
-       You have reached your
-       pull rate limit. You may increase the limit by authenticating and
-       upgrading: https://www.docker.com/increase-rate-limits
-
  Alternative Installation Methods
 
- If you prefer, there are several other ways to use Rocq. You will need:
+ If you prefer, there are several other ways to use Lean. You will need:
 
-    - A current installation of Rocq, available from the Rocq home
-      page (https://rocq-prover.org/install).  The "Rocq Platform"
+    - A current installation of Lean, available from the Lean home
+      page (https://Lean-prover.org/install).  The "Lean Platform"
       offers the easiest installation experience for most people,
       especially on Windows.
 
-    - An IDE for interacting with Rocq.  There are several choices:
+    - An IDE for interacting with Lean.  There are several choices:
 
-LATER: the repository has been renamed, to VsRocq, but the docs still call it
-   VsCoq
-        - _VsCoq_ is an extension for Visual Studio Code that offers a
+        - `Lean 4` is an extension for Visual Studio Code that offers a
           simple interface via a familiar IDE.  This option is the
           recommended default.
 
-          VsCoq can be used as an ordinary IDE or it can be combined
+          `Lean 4` can be used as an ordinary IDE or it can be combined
           with Docker (see below) for a lightweight installation
           experience.
-
-        - _Proof General_ is an Emacs-based IDE.  It tends to be
-          preferred by users who are already comfortable with Emacs.
-          It requires a separate installation (google "Proof General",
-          but generally all you need to do is `M-x package-list-packages`,
-          then select the `proof-general` package from the list and
-          hit the `i] key for install, then hit the [x` key for execute).
-
-          There are only a few commands you need to know to use ProofGeneral
-          effectively. They are:
-
-          - `C-c C-n`: send the next command to Rocq.
-          - `C-c C-u`: undo (retract) the most recently executed command.
-          - `C-c C-RET`: submit everything up to the current cursor location to
-            Rocq for processing.
-          - `C-c C-.`: move the cursor to the end of the last command which has
-            been processed by Rocq.
-          - `C-c .`: toggle "electric terminator mode". When this mode is
-            turned on, simply typing a period will send the current command to
-            Rocq (normally you have to type a period and then type `C-c C-n`).
-
-          Adventurous users of Rocq within Emacs may want to check out
-          extensions such as `company-coq` and `control-lock`.
-
-
 
  Exercises
 
@@ -493,10 +346,10 @@ LATER: the repository has been renamed, to VsRocq, but the docs still call it
     solutions to the exercises anyplace where they can be found by
     search engines.
 
- Downloading the Rocq Files
+ Downloading the Lean Files
 
  A tar file containing the full sources for the "release version"
-    of this book (as a collection of Rocq scripts and HTML files) is
+    of this book (as a collection of Lean scripts and HTML files) is
     available at https://softwarefoundations.cis.upenn.edu.
 
     If you are using the book as part of a class, your professor may
@@ -532,6 +385,7 @@ LATER: the repository has been renamed, to VsRocq, but the docs still call it
  Resources
 
  Sample Exams
+TODO Update with Lean -> Rocq
 
  A large compendium of exams from many offerings of
     CIS5000 ("Software Foundations") at the University of Pennsylvania
@@ -549,6 +403,7 @@ LATER: the repository has been renamed, to VsRocq, but the docs still call it
     2017 lectures is poor at the beginning but gets better in the
     later lectures.
 
+-- TODO ASK BENJAMIN
  ######################################################################
  Note for Instructors and Contributors
 
@@ -590,13 +445,7 @@ LATER: the repository has been renamed, to VsRocq, but the docs still call it
     mailing lists.  In the repository you'll find the files
     `INSTRUCTORS` and `CONTRIBUTING` with further instructions.
 
- ######################################################################
- Translations
-
- Thanks to the efforts of a team of volunteer translators,
-    _Software Foundations_ can be enjoyed in Japanese at
-    http://proofcafe.org/sf.  A Chinese translation is also underway;
-     you can preview it at https://rocq-zh.github.io/SF-zh/.
+TODO NOTE ROCQ VERSION!
 
  ######################################################################
  Thanks

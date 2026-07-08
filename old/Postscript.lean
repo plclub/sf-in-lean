@@ -59,7 +59,7 @@ file := "Postscript"
 
  TERSE:
 
-     \- _Rocq_, an industrial-strength proof assistant
+     \- _Lean_, an industrial-strength proof assistant
           \- functional core language
           \- core tactics
           \- automation
@@ -75,7 +75,7 @@ file := "Postscript"
     Foundations_; others require a few chapters from Volume 2,
     _Programming Language Foundations_.  The Preface chapter in each
     volume gives details about prerequisites.
-:::instructors
+:::dev
  SOONER: Might be worth explicitly advertising each volume, like
    this?  Some danger of redunancy tho...
 :::
@@ -85,12 +85,7 @@ file := "Postscript"
              programming languages, including Hoare logic, operational
              semantics, and type systems.
 
-           \- _Verified Functional Algorithms_ (volume 3, by Andrew
-             Appel) builds on the themes of functional programming and
-             program verification in Rocq, addressing a range of topics
-             that might be found in a standard data structures course,
-             with an eye to formal verification.
-
+            TODO LEAN RESOURCES
 
  ######################################################################
  Resources
@@ -114,18 +109,12 @@ file := "Postscript"
             \- ...and many other excellent books on Haskell, OCaml,
               Scheme, Racket, Scala, F sharp, etc., etc.
 
-       \- And some further resources for Rocq:
-           \- Certified Programming with Dependent Types, by Adam
-             Chlipala \CITE Chlipala 2013.
-           \- Interactive Theorem Proving and Program Development:
-             Coq'Art: The Calculus of Inductive Constructions, by Yves
-             Bertot and Pierre Casteran \CITE Bertot 2004.
+       \- And some further resources for Lean:
+           TODO LEAN RESOURCES
 
        \- If you're interested in real-world applications of formal
          verification to critical software, see the Postscript chapter
          of _Programming Language Foundations_.
 
-       \- For applications of Rocq in building verified systems, the
-         lectures and course materials for the 2017 DeepSpec Summer
-         School are a great resource.
-         https://deepspec.org/event/dsss17/index.html
+       \- For applications of Lean in building verified systems,
+       TODO LEAN MATERIALS
