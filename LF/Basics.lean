@@ -634,19 +634,19 @@ matches the given type and signal an error if not.
 #check (Bool.not Bool.true : Bool)
 ```
 
-Functions like `Bool.not` are themselves data values, just like `Bool.true`
+Functions like {name}`Bool.not` are themselves ordinary values, just like {name}`Bool.true`
 and `Bool.false`.  Their types are called _function types_, and they are
 written with arrows.
 
 ```lean
-#check not
+#check Bool.not
 ```
 
 ::::full
 The type of `Bool.not`, written `Bool → Bool` and pronounced "`Bool`
 arrow `Bool`," can be read, "Given an input of type `Bool`, this
 function produces an output of type `Bool`." Similarly, the type of
-`and`, written `Bool → Bool → Bool`, can be read, "Given two inputs,
+{name}`Bool.and`, written `Bool → Bool → Bool`, can be read, "Given two inputs,
 each of type `Bool`, this function produces an output of type
 `Bool`."
 ::::
