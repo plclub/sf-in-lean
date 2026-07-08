@@ -17,6 +17,10 @@ import SFLMeta.Save
 
 import LF.InductionVerso
 import LF.UsingLeanVerso
+import LF.ListsVerso
+import LF.PolyVerso
+import LF.TacticsVerso
+import LF.MapsVerso
 
 import VersoManual
 
@@ -25,3 +29,7 @@ open Verso Genre Manual
 #doc (Manual) "Logical Foundations (draft)" =>
 {include LF.InductionVerso}
 {include LF.UsingLeanVerso}
+{include LF.ListsVerso}
+{include LF.PolyVerso}
+{include LF.TacticsVerso}
+{include LF.MapsVerso}
