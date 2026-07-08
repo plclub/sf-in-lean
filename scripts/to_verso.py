@@ -207,6 +207,25 @@ def _strip_dev_note_lines(text: str) -> str:
     return '\n'.join(out)
 
 
+def _strip_coq_comment_markers(text: str) -> str:
+    """Remove leftover Coq/coqdoc comment delimiters (`(**`, `(*`, `*)`) embedded
+    in migrated prose.  Some chapters keep informal-proof prose in a Lean `/- … -/`
+    block whose body still carries the original coqdoc `(** … *)` markers; the
+    `/- -/` already delimits the comment, so the inner Coq markers are stray text
+    that would otherwise leak (and the `*)` trips Verso's `*` bold parser)."""
+    text = re.sub(r'\(\*+', '', text)   # (*  /  (**  comment openers
+    text = re.sub(r'\*+\)', '', text)   # *)  /  **) comment closers
+    return text
+
+
+def _bullets_to_verso(text: str) -> str:
+    """Convert `* item` bullet-list markers to `- item`.  Verso reads a
+    line-initial `*` as the start of bold text (single-`*` bold), so a `*`
+    bullet errors with "unexpected '*'"; `-` is an unambiguous list bullet.  A
+    `***` slide break or `**bold**` (star not followed by a space) is untouched."""
+    return re.sub(r'(?m)^([ \t]*)\*([ \t])', r'\1-\2', text)
+
+
 def _md_bold_to_verso(text: str) -> str:
     """Translate Markdown `**bold**` to Verso `*bold*` (Verso uses a single
     `*` for bold and `_` for emphasis; doubled stars trip its markup linter)."""
@@ -254,7 +273,9 @@ def _latex_macros_to_verso(text: str) -> str:
 def _prose_markup(text: str) -> str:
     """Apply the prose-level rewrites Verso needs (bold, SF inline code, and
     LaTeX-macro / cross-reference translation)."""
-    return _latex_macros_to_verso(_sf_inline_code(_md_bold_to_verso(text)))
+    return _latex_macros_to_verso(
+        _sf_inline_code(_md_bold_to_verso(
+            _bullets_to_verso(_strip_coq_comment_markers(text)))))
 
 
 def _comment_tokens(body: str):
