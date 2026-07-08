@@ -225,7 +225,7 @@ from the book's Lean sources, find the above example, and observe
 the result in the Lean InfoView panel.
 
 :::dev
-DHS: Where are we showing responses in comments? I don't see them.
+@dsainati1: Where are we showing responses in comments? I don't see them.
 RAB: Why did we remove the comments?
 Per GitHub discussion, MWH agrees - this is unresolved.
 BCP: Don't understand the state of play here...
@@ -298,7 +298,7 @@ chapters.
 RAB: Is Lean compiling to C its "killer app," or is it the fact that it is an
 executable programming language (unlike Gallina)? We should get a Lean pro's
 take on what to say here.
-DHS: Per GitHub discussion, we should either include a diagram in a later chapter,
+@dsainati1: Per GitHub discussion, we should either include a diagram in a later chapter,
 or potentially link to https://lean-lang.org/doc/reference/latest/Elaboration-and-Compilation/
 :::
 
@@ -543,7 +543,7 @@ it can change the meaning of the proof, usually causing the proof to break. If w
 instead written the following:
 
 :::dev
-DHS: Ideally would change this to a #guardmsgs(error) if we can
+@dsainati1: Ideally would change this to a #guardmsgs(error) if we can
 :::
 
 /- theorem trueandb : ∀ (b : MyBool), (MyBool.true && b) = b := by
@@ -916,7 +916,7 @@ def RGB.myOtherBlue : RGB := myBlue
 ```
 
 :::dev
-DHS: see my comment later in the file about guard msgs
+@dsainati1: see my comment later in the file about guard msgs
 
 ```lean
 --- this doesn't work; the identifier is unknown
@@ -1026,7 +1026,7 @@ which version of `.true` we mean, since it could either be `Bool.true` or `MyBoo
 In this case, it will raise an error:
 
 :::dev
-DHS: see my comment later in the file about guard msgs
+@dsainati1: see my comment later in the file about guard msgs
 
 ```lean
 --- this doesn't work, Lean doesn't know which `true` we mean
@@ -1964,7 +1964,7 @@ because it gets stripped out when verso files are translated to
 :::
 
 :::dev
-DHS: At the moment our convention for unfinished proofs is to end with sorry and
+@dsainati1: At the moment our convention for unfinished proofs is to end with sorry and
 guard the "proof uses sorry" warning. However after going through MRC's comments here
 I realized we don't need to do this: we can leave the proof unfinished and guard the error
 about goals being unsolved. IMO this is preferable because it illustrates more directly
@@ -2200,7 +2200,7 @@ GRADE_THEOREM 1: zero_nbeq_add_1
 ::::
 
 :::dev
-DHS: I move that we just cut this section entirely and come back to it when
+@dsainati1: I move that we just cut this section entirely and come back to it when
 we've presented enough of the requisite material that we can actually explain
 mwhicks1: I'm going to leave this here for now, but perhaps make a note to
 fix later on---when you've fixed it, come back and delete this, rather than
