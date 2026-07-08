@@ -1053,7 +1053,7 @@ Here, though, because `not` is a function that takes a `Bool` argument, Lean kno
 `.true` must here be a `Bool`:
 
 ```lean
-#check (not .true)
+#check (Bool.not .true)
 ```
 ::::
 
