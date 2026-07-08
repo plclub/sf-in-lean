@@ -1774,6 +1774,12 @@ a door open for total nonsense to enter Lean's safe, formally
 checked world!
 ::::
 
+:::dev
+BCP: Not sure we want this -keep here -- does it show up in all the student-facing generated files
+(both .lean and .html)?
+If it does show up, we need to explain it.
+:::
+
 ```lean -keep
 theorem really_bad : one = two := by sorry
 ```

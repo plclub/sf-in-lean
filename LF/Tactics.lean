@@ -226,50 +226,57 @@ theorem trans_eq {α : Type} (x y z : α) :
    unnamed "with", and (if you desire), explicitly providing the
    arguments to trans_eq. -/
 
+/- FULL: But it doesn't _quite_ work.  If we simply tell Lean `apply
+   trans_eq` after the `intro`, it can tell (by matching the goal
+   against the conclusion of the lemma) that it should instantiate `α`
+   with `List Nat`, `x` with `[a, b]`, and `z` with `[e,f]`. However,
+   the matching process doesn't determine an instantiation for `y`,
+   nor does it know which hypothese to use for the premises to
+   `trans_eq`. -/
+-- TERSE: But doing [apply trans_eq] doesn't finish the proof!
+
+/-- warning: declaration uses `sorry` -/
+#guard_msgs in
 theorem trans_eq_example' (a b c d e f : Nat) :
     [a, b] = [c, d] →
     [c, d] = [e, f] →
     [a, b] = [e, f] := by
   intro eq1 eq2
--- FULL
-/- If we simply tell Lean `apply trans_eq` at this point, it can
-    tell (by matching the goal against the conclusion of the lemma)
-    that it should instantiate `α` with `List Nat`, `x` with `[a, b]`, and
-    `z` with `[e,f]`. However, the matching process doesn't determine
-    an instantiation for `y`, nor does it know which hypothese to use
-    for the premises to `trans_eq`. As we saw earlier, `apply` would generate
-    new goals for these premises, and we could finish the proof
-    by explicitly applying these hypotheses to those new goals. But,
-    we can also be more direct by supplying those hypotheses directly to
-    `apply`. -/
--- /FULL
--- TERSE
+  apply trans_eq
+  sorry
+  sorry
+  sorry
 
-/- Doing [apply trans_eq] doesn't finish the proof!  But... -/
--- /TERSE
+/- FULL: As we saw earlier, `apply` would generate new goals for these
+   premises, and we could finish the proof by explicitly applying
+   these hypotheses to those new goals. But we can also be more direct
+   by supplying those hypotheses directly to `apply`. -/
+-- TERSE: This does:
+
+theorem trans_eq_example'' (a b c d e f : Nat) :
+    [a, b] = [c, d] →
+    [c, d] = [e, f] →
+    [a, b] = [e, f] := by
+  intro eq1 eq2
   apply trans_eq [a, b] [c, d] [e, f] eq1 eq2
--- TERSE
--- ...does.
-
--- /TERSE
 
 /- TODO: (DHS) This and below are new (my addition), thoughts? -/
 /- In the previous example, we had to specify the `x` and `z` arguments
    to `trans_eq` before we could supply `[c, d]` for `y` or `eq1` and `eq2` for
    the premises. However, we just said that Lean was able to infer these arguments, so it's
-   a bit redundant (and wordy) for us to do that. Thankfully,
-   Lean allows us to use `_`s for positional arguments that it is able to infer. -/
-theorem trans_eq_example'' (a b c d e f : Nat) :
+   a bit redundant (and wordy) for us to do it. Thankfully,
+   Lean allows us to use `_`s for positional arguments that it can infer. -/
+theorem trans_eq_example''' (a b c d e f : Nat) :
     [a, b] = [c, d] →
     [c, d] = [e, f] →
     [a, b] = [e, f] := by
   intro eq1 eq2
   apply trans_eq _ _ _ eq1 eq2
 
-/- As an aside: if we know the name of
+/- Aside: if we know the name of
    the argument we are supplying (in this case `y`), we can
-   just name it directly, and avoid typing any `_`s. -/
-theorem trans_eq_example''' (a b c d e f : Nat) :
+   just name it directly and avoid typing any `_`s. -/
+theorem trans_eq_example'''' (a b c d e f : Nat) :
     [a, b] = [c, d] →
     [c, d] = [e, f] →
     [a, b] = [e, f] := by
@@ -305,7 +312,7 @@ theorem trans_eq_example_exact (a b c d e f : Nat) :
     the proofs you might see in a mathematics textbook.
     -/
 /- TERSE: `calc` is also available as a tactic. -/
-theorem trans_eq_example'''' (a b c d e f : Nat) :
+theorem trans_eq_example''''' (a b c d e f : Nat) :
     [a, b] = [c, d] →
     [c, d] = [e, f] →
     [a, b] = [e, f] := by
@@ -403,16 +410,14 @@ theorem succ_injective' (n m : Nat) :
     n + 1 = m + 1 →
     n = m := by
   intro h
--- FULL
-/- By writing `injection h with hmn` at this point, we are asking Lean
+  injection h with hmn
+/- FULL: By writing `injection h with hmn` at this point, we are asking Lean
    to generate all equations that it can infer from `h` using the
    injectivity of constructors (in the present example, the equation
    `n = m`). This equation is added as a hypothesis (called
    `hmn` in this case) into the context. Because this equation is exactly our goal,
    in this case the `injection` tactic is able to automatically close the goal. -/
 
--- /FULL
-  injection h with hmn
 
 -- TERSE: ***
 /- Here's a more interesting example that shows how `injection` can
@@ -789,6 +794,15 @@ theorem eq_implies_succ_proj_equal (a b c d : Nat) :
 /- TERSE: Many tactics come with "`... at ...`" variants that work on
     hypotheses instead of goals. -/
 
+-- BCP: This is surely NOT the right way to prove this fact, and I'm not sure that
+-- proving it here is what we want to do anyway.  Inserting it for now for expediency,
+-- to get this file closer to compiling...
+-- Claude: NB `rfl` does not prove this: in this chapter `==` on `Nat` elaborates via
+-- the generic decidable-equality instance (`n == m` is `decide (n = m)`), and
+-- `decide` is stuck on variables.  So we reduce to propositional injectivity.
+theorem beq_succ (n m : Nat) : (n + 1 == m + 1) = (n == m) :=
+  decide_eq_decide.mpr Nat.succ_inj
+
 theorem succ_inj (n m : Nat) :
     n + 1 == m + 1 → n == m := by
   intro h
@@ -926,7 +940,7 @@ theorem nth_error_always_none (l : List Nat) :
    theorems we've already proven, not just things in our context.
    Using these tactis before `apply` gives us yet another way to
    control where `apply` does its work. -/
-theorem trans_eq_example''''' (a b c d e f : Nat) :
+theorem trans_eq_example'''''' (a b c d e f : Nat) :
     [a, b] = [c, d] →
     [c, d] = [e, f] →
     [a, b] = [e, f] := by
@@ -1399,11 +1413,20 @@ theorem double_injective_take2 : ∀ n m,
 -- ######################################################
 -- Rewriting with conditional statements
 
+/- We'll use a boolean "less or equal" test on numbers, written `n ≤? m`
+    (the library function `Nat.ble`), together with the fact that it
+    commutes with successor on both sides. -/
+
+-- BCP: Added, to make the file compile, on Claude's suggestion. But is this the right way?
+infix:52 " ≤? " => Nat.ble
+
+theorem succ_leb_succ (n m : Nat) : ((n + 1) ≤? (m + 1)) = (n ≤? m) := rfl
+
 /- Suppose that we want to show that `add` is the inverse of
     `sub`.  Since we are working with natural numbers, we need an
     assumption to prevent `sub` from truncating its result. With
     this assumption, the induction hypothesis becomes
-    `forall m, n' <== m = true → (m - n') + n' = m`.  The beginning of the proof
+    `forall m, n' ≤? m = true → (m - n') + n' = m`.  The beginning of the proof
     uses techniques we have already seen -- in particular, notice how
     we induct on `n` before introducing `m`, so that the induction
     hypothesis becomes sufficiently general. -/
