@@ -849,18 +849,86 @@ def _strip_lean_comments(text: str) -> str:
 # Renderer
 # ---------------------------------------------------------------------------
 
-# Container directives (:::full, :::quiz, :::hide, :::terse) may hold leaf
-# directives such as :::dev / :::instructor / :::answer / :::grade.  Verso
-# requires an outer directive's fence to be strictly longer than any directive
-# nested inside it, so these containers use a 4-colon fence while leaves use the
-# usual 3.
-_CONTAINER_FENCE = '::::'
-# Exercises are the outermost container: an exercise can hold a :::full, :::quiz,
-# :::hide (all 4-colon) or a :::grade (3-colon), so its fence must be strictly
-# wider still — 5 colons.  Exercises never nest inside another container (a
-# :::full is closed before one opens, and headings close exercises), so nothing
-# needs to be wider than this.
-_EXERCISE_FENCE = ':::::'
+# Verso requires an outer directive's fence to be strictly longer than any
+# directive nested directly inside it.  The correct width of a *container* fence
+# therefore depends on how deeply it ends up nested — which is not known when the
+# container opens (its inner content is emitted later, streaming).  So container
+# open/close fences are emitted as *sentinels* (`_c_open` / `_c_close`) and their
+# real colon widths are computed in a single post-pass over the nesting tree by
+# `_resolve_fences`, which grows each container just enough to outrun whatever it
+# contains.  This is what lets a `::::full` legally nest inside a `:::::quiz`
+# (and an exercise around either), rather than colliding at a shared width.
+#
+# Leaf directives (`:::answer`, `:::grade`, `:::solution`, `:::slidebreak`, the
+# inline `:::terse`) are NOT sentinels: their bodies never hold a colon directive,
+# so a plain 3-colon fence is always strictly shorter than any (≥4-colon)
+# container around them.
+#
+# Per-type minimum widths preserve the historical output in the common,
+# non-nested cases: full/terse/quiz/hide default to 4 colons and exercise to 5;
+# `_resolve_fences` only grows a fence beyond its minimum when nesting demands it.
+_CONTAINER_MIN = 4
+_EXERCISE_MIN = 5
+
+# Sentinel bytes that cannot occur in source text; replaced by `_resolve_fences`.
+_FENCE_OPEN = '\x00['     # followed by the directive header, then '\x00'
+_FENCE_CLOSE = '\x00]'
+
+
+def _c_open(header: str) -> str:
+    """Container-open fence sentinel carrying its directive *header* (the text
+    after the colons, e.g. `full` or `exercise (rating := 3) (name := "x")`)."""
+    return _FENCE_OPEN + header + '\x00'
+
+
+def _c_close() -> str:
+    """Container-close fence sentinel (paired with the matching open by nesting
+    order in `_resolve_fences`)."""
+    return _FENCE_CLOSE
+
+
+def _fence_min(header: str) -> int:
+    """Minimum colon width for a container by directive type."""
+    if header.startswith('exercise'):
+        return _EXERCISE_MIN
+    return _CONTAINER_MIN
+
+
+def _resolve_fences(text: str) -> str:
+    """Replace container-fence sentinels with colon fences of correct width.
+
+    Walks the sentinels as a tree: each container's width is the larger of its
+    per-type minimum and one more than the widest container nested directly
+    inside it, so every fence is strictly longer than its children (Verso's
+    rule) and no wider than necessary.  Leaf directives already use a literal
+    3-colon fence, which is always shorter than the ≥4-colon container around
+    them, so they need not participate here."""
+    tok = re.compile(r'\x00\[([^\x00]*)\x00|\x00\]')
+    stack = []
+    events = []  # (is_open, node) in document order; nodes gain 'width' below
+    for m in tok.finditer(text):
+        if m.group(0) == _FENCE_CLOSE:
+            if not stack:  # unbalanced close (shouldn't happen); render minimally
+                events.append((False, {'header': '', 'width': 3}))
+                continue
+            node = stack.pop()
+            node['width'] = max(node['min'], node['childmax'] + 1)
+            if stack:
+                stack[-1]['childmax'] = max(stack[-1]['childmax'], node['width'])
+            events.append((False, node))
+        else:
+            header = m.group(1)
+            node = {'header': header, 'min': _fence_min(header), 'childmax': 0}
+            stack.append(node)
+            events.append((True, node))
+    it = iter(events)
+
+    def repl(_m):
+        is_open, node = next(it)
+        colons = ':' * node['width']
+        return colons + node['header'] if is_open else colons
+
+    return tok.sub(repl, text)
 
 
 def _verbatim_block(text: str) -> str:
@@ -919,7 +987,7 @@ class Renderer:
     def _open_full_if_pending(self):
         """Emit :::full if pending and we are not inside an exercise."""
         if self.pending_full and not self.in_exercise:
-            self._append(_CONTAINER_FENCE + 'full\n\n')
+            self._append(_c_open('full') + '\n\n')
             self.pending_full = False
             self.full_open = True
 
@@ -930,7 +998,7 @@ class Renderer:
         deriving it from marker depth) keeps the output's :::full / :::
         balanced even when the source's -- FULL / -- /FULL markers are not."""
         if self.full_open:
-            self._append(_CONTAINER_FENCE + '\n\n')
+            self._append(_c_close() + '\n\n')
             self.full_open = False
 
     # --- Token handlers ---
@@ -977,10 +1045,10 @@ class Renderer:
         # closes exercises implicitly at the next section rather than always with
         # `-- []`), and closes/re-arms :::full so later content reopens a fresh one.
         if self.in_exercise:
-            self._append(_EXERCISE_FENCE + '\n\n')
+            self._append(_c_close() + '\n\n')
             self.in_exercise = False
         if self.terse_open:
-            self._append(_CONTAINER_FENCE + '\n\n')
+            self._append(_c_close() + '\n\n')
             self.terse_open = False
         if self.full_open and not self.in_exercise:
             self._close_full_if_open()
@@ -1024,13 +1092,13 @@ class Renderer:
         # (matching `_on_full_open`'s `not self.full_open` guard).
         if (not self.in_exercise and not self.full_open and not self.pending_full
                 and not self.terse_open):
-            self._append(_CONTAINER_FENCE + 'terse\n\n')
+            self._append(_c_open('terse') + '\n\n')
             self.terse_open = True
 
     def _on_terse_close(self):
         self._flush_code()
         if self.terse_open:
-            self._append(_CONTAINER_FENCE + '\n\n')
+            self._append(_c_close() + '\n\n')
             self.terse_open = False
 
     def _on_exercise_open(self, rating, name):
@@ -1047,10 +1115,10 @@ class Renderer:
         # A new exercise ends the previous one (the source sometimes omits the
         # `-- []` close before the next `-- EX`).
         if self.in_exercise:
-            self._append(_EXERCISE_FENCE + '\n\n')
+            self._append(_c_close() + '\n\n')
         self.in_exercise = True
         self._append(
-            f'{_EXERCISE_FENCE}exercise (rating := {rating}) (name := "{name}")\n\n')
+            _c_open(f'exercise (rating := {rating}) (name := "{name}")') + '\n\n')
 
     def _on_exercise_close(self):
         self._flush_code()
@@ -1058,7 +1126,7 @@ class Renderer:
         # would otherwise produce an orphan `::::` that unbalances the document.
         if self.in_exercise:
             self.in_exercise = False
-            self._append(_EXERCISE_FENCE + '\n\n')
+            self._append(_c_close() + '\n\n')
 
     def _on_slidebreak(self):
         self._flush_code()
@@ -1086,8 +1154,8 @@ class Renderer:
         if self.full_open and not self.in_exercise:
             self._close_full_if_open()
             self.pending_full = True
-        self._append(_CONTAINER_FENCE + 'hide\n' + _verbatim_block(text)
-                     + '\n' + _CONTAINER_FENCE + '\n\n')
+        self._append(_c_open('hide') + '\n' + _verbatim_block(text)
+                     + '\n' + _c_close() + '\n\n')
 
     def _on_quiz_open(self):
         # -- QUIZ ... -- /QUIZ becomes a shown ::::quiz container: its question
@@ -1100,13 +1168,13 @@ class Renderer:
         if self.full_open and not self.in_exercise:
             self._close_full_if_open()
             self.pending_full = True
-        self._append(_CONTAINER_FENCE + 'quiz\n\n')
+        self._append(_c_open('quiz') + '\n\n')
         self.quiz_depth += 1
 
     def _on_quiz_close(self):
         self._flush_code()
         if self.quiz_depth > 0:
-            self._append(_CONTAINER_FENCE + '\n\n')
+            self._append(_c_close() + '\n\n')
             self.quiz_depth = max(0, self.quiz_depth - 1)
 
     def _on_answer(self, text):
@@ -1207,13 +1275,13 @@ class Renderer:
 
         # Close any unclosed blocks (shouldn't happen in well-formed source)
         if self.in_exercise:
-            self._append(_EXERCISE_FENCE + '\n\n')  # close unclosed exercise
+            self._append(_c_close() + '\n\n')  # close unclosed exercise
             self.in_exercise = False
         if self.terse_open:
-            self._append(_CONTAINER_FENCE + '\n\n')  # close unclosed terse
+            self._append(_c_close() + '\n\n')  # close unclosed terse
             self.terse_open = False
         while self.quiz_depth > 0:
-            self._append(_CONTAINER_FENCE + '\n\n')  # close unclosed quiz
+            self._append(_c_close() + '\n\n')  # close unclosed quiz
             self.quiz_depth -= 1
         self._close_full_if_open()
 
@@ -1479,6 +1547,9 @@ def convert(src_text: str, title: str, file_key: str) -> str:
     renderer = Renderer()
     renderer.process(tokens)
     body = renderer.result()
+    # Resolve container-fence sentinels to correctly-widened colon fences before
+    # any pass that inspects `:::` fences (fusing, blank-stripping, empty-drop).
+    body = _resolve_fences(body)
     # Fuse adjacent same-type author-note / full blocks before normalizing blanks.
     body = _fuse_noop_blocks(body)
     body = _fuse_full_blocks(body)
