@@ -1759,8 +1759,7 @@ theorem quiz1_answer (c : Com) (st st' : State)
 
   (A) Yes    (B) No    (C) Not sure
 -/
--- INSTRUCTORS: Answer is given later (`quiz2_answer`) as it depends on
--- `ceval_deterministic`.
+-- INSTRUCTORS: Answer is given later (`quiz2_answer`) as it depends on `ceval_deterministic`.
 -- /QUIZ
 
 -- QUIZ
