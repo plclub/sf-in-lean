@@ -1402,19 +1402,16 @@ def Bexp.eval (st : State) (b : Bexp) : Bool :=
   | not  b1     =>  !eval st b1
   | and  b1 b2  =>  eval st b1 && eval st b2
 
-/- We abbreviate the empty state `∅` (every variable `0`) as `empty_st`,
-   and reuse the total-map update notation `x →ₜ v ; st` for states. -/
-
-abbrev empty_st : State := ∅
+/- We reuse the total-map notation (`x →ₜ v ; ∅` etc.) for states. -/
 
 /- test_aexp1 -/
-example : Aexp.eval (X →ₜ 5 ; empty_st) (.plus 3 (.mult X 2)) = 13 := by rfl
+example : Aexp.eval (X →ₜ 5 ; ∅) (.plus 3 (.mult X 2)) = 13 := by rfl
 
 /- test_aexp2 -/
-example : Aexp.eval (X →ₜ 5 ; Y →ₜ 4 ; empty_st) (.plus Z (.mult X Y)) = 20 := by rfl
+example : Aexp.eval (X →ₜ 5 ; Y →ₜ 4 ; ∅) (.plus Z (.mult X Y)) = 20 := by rfl
 
 /- test_bexp1 -/
-example : Bexp.eval (X →ₜ 5 ; empty_st) (.and true (.not (.le X 4))) = true := by rfl
+example : Bexp.eval (X →ₜ 5 ; ∅) (.and true (.not (.le X 4))) = true := by rfl
 
 /-
   ######################################################################
@@ -1693,11 +1690,11 @@ notation:40 st0 " =[ " c " ]=> " st1 => Ceval c st0 st1
 -/
 
 example :
-    empty_st =[ .seq (.asgn X 2)
+    ∅ =[ .seq (.asgn X 2)
                      (.cond (.le X 1) (.asgn Y 3) (.asgn Z 4)) ]=>
-      (Z →ₜ 4 ; X →ₜ 2 ; empty_st) := by
+      (Z →ₜ 4 ; X →ₜ 2 ; ∅) := by
   -- We must supply the intermediate state.
-  apply Ceval.E_Seq (st' := (X →ₜ 2 ; empty_st))
+  apply Ceval.E_Seq (st' := (X →ₜ 2 ; ∅))
   · apply Ceval.E_Asgn; rfl
   · apply Ceval.E_IfFalse
     · rfl
@@ -1705,12 +1702,12 @@ example :
 
 -- EX2 (ceval_example2)
 example :
-    empty_st =[ .seq (.asgn X 0) (.seq (.asgn Y 1) (.asgn Z 2)) ]=>
-      (Z →ₜ 2 ; Y →ₜ 1 ; X →ₜ 0 ; empty_st) := by
+    ∅ =[ .seq (.asgn X 0) (.seq (.asgn Y 1) (.asgn Z 2)) ]=>
+      (Z →ₜ 2 ; Y →ₜ 1 ; X →ₜ 0 ; ∅) := by
   -- ADMITTED
-  apply Ceval.E_Seq (st' := (X →ₜ 0 ; empty_st))
+  apply Ceval.E_Seq (st' := (X →ₜ 0 ; ∅))
   · apply Ceval.E_Asgn; rfl
-  · apply Ceval.E_Seq (st' := (Y →ₜ 1 ; X →ₜ 0 ; empty_st))
+  · apply Ceval.E_Seq (st' := (Y →ₜ 1 ; X →ₜ 0 ; ∅))
     · apply Ceval.E_Asgn; rfl
     · apply Ceval.E_Asgn; rfl
   -- /ADMITTED
@@ -1933,20 +1930,20 @@ def pup_to_n : Com :=
 /- HIDE: Result is the same as `(X →ₜ 0 ; Y →ₜ 3 ; ∅)` if one admits
    functional extensionality. -/
 theorem pup_to_2_ceval :
-    (X →ₜ 2 ; empty_st) =[ pup_to_n ]=>
-      (X →ₜ 0 ; Y →ₜ 3 ; X →ₜ 1 ; Y →ₜ 2 ; Y →ₜ 0 ; X →ₜ 2 ; empty_st) := by
+    (X →ₜ 2 ; ∅) =[ pup_to_n ]=>
+      (X →ₜ 0 ; Y →ₜ 3 ; X →ₜ 1 ; Y →ₜ 2 ; Y →ₜ 0 ; X →ₜ 2 ; ∅) := by
   -- ADMITTED
   unfold pup_to_n
-  apply Ceval.E_Seq (st' := (Y →ₜ 0 ; X →ₜ 2 ; empty_st))
+  apply Ceval.E_Seq (st' := (Y →ₜ 0 ; X →ₜ 2 ; ∅))
   · apply Ceval.E_Asgn; rfl
-  · apply Ceval.E_WhileTrue (st' := (X →ₜ 1 ; Y →ₜ 2 ; Y →ₜ 0 ; X →ₜ 2 ; empty_st))
+  · apply Ceval.E_WhileTrue (st' := (X →ₜ 1 ; Y →ₜ 2 ; Y →ₜ 0 ; X →ₜ 2 ; ∅))
     · rfl
-    · apply Ceval.E_Seq (st' := (Y →ₜ 2 ; Y →ₜ 0 ; X →ₜ 2 ; empty_st)) <;>
+    · apply Ceval.E_Seq (st' := (Y →ₜ 2 ; Y →ₜ 0 ; X →ₜ 2 ; ∅)) <;>
         (apply Ceval.E_Asgn; rfl)
     · apply Ceval.E_WhileTrue
-        (st' := (X →ₜ 0 ; Y →ₜ 3 ; X →ₜ 1 ; Y →ₜ 2 ; Y →ₜ 0 ; X →ₜ 2 ; empty_st))
+        (st' := (X →ₜ 0 ; Y →ₜ 3 ; X →ₜ 1 ; Y →ₜ 2 ; Y →ₜ 0 ; X →ₜ 2 ; ∅))
       · rfl
-      · apply Ceval.E_Seq (st' := (Y →ₜ 3 ; X →ₜ 1 ; Y →ₜ 2 ; Y →ₜ 0 ; X →ₜ 2 ; empty_st)) <;>
+      · apply Ceval.E_Seq (st' := (Y →ₜ 3 ; X →ₜ 1 ; Y →ₜ 2 ; Y →ₜ 0 ; X →ₜ 2 ; ∅)) <;>
           (apply Ceval.E_Asgn; rfl)
       · apply Ceval.E_WhileFalse; rfl
   -- /ADMITTED
