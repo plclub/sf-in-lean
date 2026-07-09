@@ -15,6 +15,51 @@ If a user asks Claude to insert commentary, bug reports, or
 suggestions in any file, these insertions should be clearly marked as
 Claude-generated.
 
+## Porting a chapter from Rocq: comment fidelity
+
+When porting `sfdev/<vol>/<Ch>.v` to `<Ch>.lean`, translate the *whole* comment
+layer, not just the prose that has an obvious Lean home. Nothing in the `.v`
+should be silently dropped:
+
+* **Internal dev notes** (`INSTRUCTORS`, `BCP`, `NDS'25`, `SOONER`, `LATER`,
+  `NOTATION`, `APT`, `BAY`, `SAZ`, …) are carried over verbatim — they are
+  notes to the authors about further work and are still wanted in Lean. Keep
+  the original prefix/attribution.
+* **`(* HIDE *)…(* /HIDE *)` content** is translated and re-marked
+  `-- HIDE`/`-- /HIDE` (regions) or `/- HIDE: … -/` (notes). Translate HIDE
+  *proof lemmas* to live Lean where they are provable and verify with `lake
+  build`; keep a deliberately false / `Abort`ed lemma as a commented reference
+  (do not `sorry` it).
+* **Condensed prose** is expanded back to the source's full wording — don't
+  leave a one-sentence summary where the `.v` had three paragraphs.
+* **`HIDEFROMADVANCED`** is re-marked where it wraps a distinct block.
+  **`HIDEFROMHTML`** (which only wraps `Module`/`Require`/`Reserved Notation`
+  lines) has no content and is not reintroduced.
+* Only the tokens listed under "Intentionally dropped by `to_verso`" below may
+  be omitted. When in doubt, keep it.
+
+## Framing translated comments
+
+The chapter must **stand on its own** for a reader who has never seen the Rocq
+source:
+
+* Do **not** reference the porting process — no "restored", "restoration
+  pass", "first port", "for the record", etc.
+* Do **not** narrate "the Rocq original did X" in normal expository (`-- FULL`)
+  text.
+* **Rocq-specific material with no Lean analogue** (the `<{ }>` grammar,
+  `Set Printing …`, `Locate`, `Ltac`, the `;`-general-form, a dropped proof
+  variant, …) goes in a `/- Claude: … -/` note (routes to `:::dev`), worded as
+  a note for a *future translation pass* to consider — never as revealed
+  `-- FULL` chapter text.
+* A genuine **translation decision** a reader/instructor should know about gets
+  a short `Claude:` note (e.g. "we write single-variable states inline rather
+  than adding a singleton shorthand"; "`omega` is Lean's `lia`, no import
+  needed").
+* Genuine SF **pedagogy** that the source happened to narrate via Rocq (e.g.
+  the named-vs-positional-hypothesis aside) is **rewritten Lean-native** and
+  kept as `-- FULL`, not hidden in a note.
+
 ## Formatting
 
 In general, there should be at most one blank line at a time in .lean files.  
@@ -85,5 +130,32 @@ Two complementary automated checks help here (both take
   `workinclass!` tactic (proof shown in student/solutions builds, `sorry` in
   the terse build); see `workinclass.md` for the design and edge cases.
 
-**Must be preserved** (these were bugs, now fixed): block-style author notes
-(`/- MWH: … -/`, `/- BCP: … -/`) → `:::dev`; `-- GRADE_THEOREM …` → `:::grade`.
+**Must be preserved** (these were bugs, now fixed): block-style author/dev
+notes (`/- MWH: … -/`, `/- BCP: … -/`, `/- NDS'25: … -/`, `/- NOTATION: … -/`,
+…) → `:::dev`; `/- INSTRUCTORS: … -/` and `-- INSTRUCTORS:` → `:::instructor`;
+`/- HIDE: … -/` and `-- HIDE … -- /HIDE` → `:::dev`/`:::hide` (body kept);
+`-- GRADE_THEOREM …` → `:::grade`. Only the *marker keyword* is consumed; the
+note **body** is always kept.
+
+### Writing comments that survive `to_verso`
+
+The generated `<Ch>Verso.lean` must build (`make check-verso-chapters`). Two
+things that break it, and how to avoid them:
+
+* **Fenced code in prose**: use a plain ```` ``` ```` fence, never a language
+  tag. ```` ```coq ```` fails with "No registered code block `coq`".
+* **Raw Rocq operator notation in prose** breaks Verso's markdown: `=[ … ]=>`
+  mangles into unbalanced backticks, and quoted notation strings like
+  `"st '={' c '}=>' st'"` fail to parse. Put such notation in a fence or
+  backticks — or, better, inside a dev note, whose body is auto-fenced and
+  therefore always safe.
+
+Author/dev notes route to `:::dev` (`:::instructor` for `INSTRUCTORS:`) and are
+auto-fenced, so arbitrary markup in them can't break Verso. Routing is keyed on
+the tag set `_DEV_TAGS` in `scripts/to_verso.py` (block form needs a colon:
+`HIDE:`, `INSTRUCTORS:`). **To make a new author/keyword prefix route cleanly,
+add it to `_DEV_TAGS` (one place) and re-run `make check-verso-chapters`.**
+
+**Workflow per chunk:** `lake build <Vol>.<Ch>` (bare chapter compiles) →
+regenerate with `python3 scripts/to_verso.py <Vol>/<Ch>.lean` → `make
+check-verso-chapters` (generated Verso builds).

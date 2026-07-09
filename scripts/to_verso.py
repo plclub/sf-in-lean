@@ -122,10 +122,11 @@ def _strip_title_comment(src: str, stem: str = None) -> str:
 
 
 # LF modules that are authored directly in Verso (Basics) or are plain Lean
-# support modules (CustomTactics): an `import LF.X` of one of these passes
+# support modules (CustomTactics, Maps): an `import LF.X` of one of these passes
 # through unchanged.  Every *other* `import LF.X` refers to a generated chapter,
 # so it is rewritten to `import LF.XVerso`.
-DIRECT_LF_MODULES = {"Basics", "CustomTactics"}
+# (Maps added by Claude: HL/TS chapters import LF.Maps for its definitions.)
+DIRECT_LF_MODULES = {"Basics", "CustomTactics", "Maps"}
 
 _IMPORT_RE = re.compile(r'^import\s+(\S+)\s*$')
 
@@ -192,13 +193,23 @@ def _extract_imports(body: str):
             kept.append(line)
     return has_prelude, imports, '\n'.join(kept)
 
-# Author/dev markers (matches the line-comment set in `_AUTHOR_RE`).  A block
-# comment whose body opens with one of these is an author note routed to :::dev.
-# `HIDE:` (colon required, to stay clear of the bare `-- HIDE` region marker)
-# prefixes reviewer remarks like `/- HIDE: Robert Rand: … -/`; they are author-
-# only content, kept in ```dev like the initialed notes.
-_BLOCK_DEV_RE = re.compile(
-    r'^(BCP|JC|MWH|CGH|RAB|CH|HG|NB|TODO|TOFIX|LATER|SOONER|HIDE(?=:))\b')
+# Author initials / task keywords that mark an author-or-dev note.  Both block
+# `/- … -/` comments and `-- ` line comments (see `_AUTHOR_RE`) that open with
+# one of these route to :::dev — preserved in the Verso source, dropped from the
+# generated outputs.  Add new tags here so they route cleanly instead of leaking
+# into the rendered chapter as prose.  INSTRUCTORS is deliberately NOT in this
+# set: it routes to :::instructor (handled separately, both line and block).
+_DEV_TAGS = (r'BCP|JC|MWH|CGH|RAB|CH|HG|NB|Claude|TODO|TOFIX|LATER|SOONER'
+             r'|NDS|NOTATION|APT|BAY|SAZ|ET|AAA|MRC|PR|ORI|Ori|mwhicks1|chenson2018')
+# The block set additionally recognizes `HIDE:` (a `/- HIDE: … -/` dev note).
+# The colon is required so a bare `/- HIDE -/` region/label marker keeps its old
+# behavior (dropped as a label) rather than becoming a noise :::dev block; and
+# as a `-- HIDE` / `-- /HIDE` line marker `HIDE` is handled elsewhere, so it must
+# stay out of the line-comment `_AUTHOR_RE`.
+_BLOCK_DEV_RE = re.compile(r'^(HIDE(?=:)|(?:' + _DEV_TAGS + r')\b)')
+# `/- INSTRUCTORS: … -/` -> :::instructor (colon required, mirroring the line
+# form `_INSTRUCTOR_RE`).
+_BLOCK_INSTRUCTOR_RE = re.compile(r'^INSTRUCTORS:')
 
 
 def _is_block_dev_comment(text: str) -> bool:
@@ -402,6 +413,26 @@ def _comment_tokens(body: str):
             if code.strip():
                 tokens.append(('code_display', code))
             continue
+        # (Claude) A fenced code block written directly in prose (``` … ``` or
+        # ~~~ … ~~~) is passed through verbatim.  This lets an author include
+        # literal display material -- pseudocode, BNF grammars, inference rules --
+        # whose characters (`*`, `|`, `_`, `<>`, …) would otherwise be mangled by
+        # Verso's inline markup or would break the enclosing `::::` directive.
+        fm = re.match(r'^\s*([`~]{3,})(.*)$', l)
+        if fm:
+            flush_prose()
+            info = fm.group(2).strip()
+            block = ['```' + info]
+            idx += 1
+            while idx < len(lines):
+                if re.match(r'^\s*[`~]{3,}\s*$', lines[idx]):
+                    idx += 1
+                    break
+                block.append(lines[idx])
+                idx += 1
+            block.append('```')
+            tokens.append(('block_comment_prose', '\n'.join(block)))
+            continue
         # Block-embedded structural markers: some chapters (notably Poly) write
         # EX / [] / GRADE / QUIZ / INSTRUCTORS *inside* /- … -/ comments rather
         # than as `-- ` line markers, so recognize the same set the main
@@ -563,10 +594,10 @@ _SOL_OPEN_RE = re.compile(r'^--\s+(?:QUIET)?SOLUTION$')
 _SOL_CLOSE_RE = re.compile(r'^--\s+/\s?(?:QUIET)?SOLUTION$')
 # Author-only / developer comment markers.  These are swept into :::dev blocks
 # (discarded from generated outputs, preserved verbatim in the Verso source).
-# Add new author initials or task keywords here.  NB: INSTRUCTORS is handled
-# separately (-> :::instructor); TERSE/FULL have their own dedicated markers.
-_AUTHOR_RE = re.compile(
-    r'^-- (BCP|JC|MWH|CGH|RAB|CH|HG|NB|TODO|TOFIX|LATER|SOONER)[: (](.*)$')
+# The recognized tag set is `_DEV_TAGS` (defined above — add new tags there).
+# NB: INSTRUCTORS is handled separately (-> :::instructor); TERSE/FULL have their
+# own dedicated markers.
+_AUTHOR_RE = re.compile(r'^-- (' + _DEV_TAGS + r')[: (](.*)$')
 
 # `-- ==> …` / `-- ===> …` hand-written eval-output annotations: intentionally
 # dropped (Verso renders the real output live), so they must not be swept into
@@ -644,7 +675,7 @@ def tokenize(text: str):
                 # /- *** -/, /- TERSE: *** -/, /- FULL: *** -/ : a slide break
                 # (block-comment form of the -- TERSE: /- *** -/ line marker).
                 tokens.append(('slidebreak', None))
-            elif body.strip().startswith('INSTRUCTORS:'):
+            elif _BLOCK_INSTRUCTOR_RE.match(body.strip()):
                 # /- INSTRUCTORS: … -/ block-form instructor note -> ```instructors
                 # (the block-comment analogue of the line-form -- INSTRUCTORS:).
                 tokens.append(('instructor',
