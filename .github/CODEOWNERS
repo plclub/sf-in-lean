@@ -1,0 +1,13 @@
+# Code owners for sf-in-lean.
+#
+# Every PR that touches files matching a pattern below must be approved by
+# one of the listed owners before it can be merged (enforced by the branch
+# protection rule on main: "Require review from Code Owners").
+#
+# The last matching pattern wins. `*` matches everything.
+#
+# Add or remove approvers here; a GitHub team (e.g. @plclub/sf-in-lean-maintainers)
+# also works and is easier to manage than individual usernames.
+
+* @bcpierce00 @dsainati1 @mwhicks1 @hgoldstein95
+
