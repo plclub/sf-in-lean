@@ -1501,6 +1501,7 @@ end FunctionTheoremQuiz
 
 /- ## Working with Decidable Properties -/
 
+-- BCP: This will need better typesetting...
 /- We've seen two different ways of expressing logical claims in Lean:
     with _booleans_ (of type `Bool`), and with _propositions_ (of type `Prop`).
     Here are the key differences between `Bool` and `Prop`:
@@ -1635,6 +1636,7 @@ theorem nonzero_bool_prop (n : Nat) :
 
 /- (For the reverse direction we need the simple fact that `==` is
     reflexive.) -/
+-- BCP: @dsainati1 wonders whether this tactic has been explained.
 theorem beq_refl (n : Nat) : (n == n) = true := decide_eq_true rfl
 
 theorem beq_eq_true (n1 n2 : Nat) :

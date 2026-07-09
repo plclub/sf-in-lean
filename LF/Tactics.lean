@@ -1406,6 +1406,7 @@ theorem double_injective_take2 : ∀ n m,
     commutes with successor on both sides. -/
 
 -- BCP: Added, to make the file compile, on Claude's suggestion. But is this the right way?
+-- Answer: No, just replaces uses of it by Nat.ble!
 infix:52 " ≤? " => Nat.ble
 
 theorem succ_leb_succ (n m : Nat) : ((n + 1) ≤? (m + 1)) = (n ≤? m) := rfl
