@@ -969,6 +969,11 @@ open MyNamespace
 #check myDef -- Bool
 ```
 
+:::dev
+@dsainati1: We should come to a concrete decision about whether or not we are
+putting types in comments for #check and #eval commands.
+:::
+
 If we only want to bring _some_, rather than all, of the definitions
 of a namespace into the current scope, we can use the `export` command:
 
