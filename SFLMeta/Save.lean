@@ -201,6 +201,18 @@ private def lakefileTemplate (vol : String) : String :=
   "[[lean_lib]]\n" ++
   "name = \"" ++ vol ++ "\"\n"
 
+/-! ## Support module template
+  Create `SFLCompat.lean` with custom commands used in generated projects.
+-/
+
+private def supportModuleName (vol : String) : String :=
+  vol ++ ".SFLCompat"
+
+private def supportModulePath (vol : String) : String :=
+  vol ++ "/SFLCompat.lean"
+
+private def readSFLCompat : IO String := IO.FS.readFile "SFLMeta/SFLCompat.lean"
+
 /-! ## ExtraStep walker -/
 
 /-- Per-file buffers accumulated by the saver: `(teacher source, student source)`. -/
@@ -240,6 +252,10 @@ private def decodeExercise? (data : Json) : Option (Nat × String) :=
   | .arr #[.num r, .str n] => some (r.toFloat.toUInt32.toNat, n)
   | _ => none
 
+private def wrap (startText endText body : String) : String :=
+  let body := body.trimAscii.toString.splitOn "\n" |>.map ("  " ++ ·) |> String.intercalate "\n"
+  startText ++ "\n\n" ++ body ++ "\n\n" ++ endText ++ "\n\n"
+
 /-! ## Block extension that carries pre-computed teacher and student source -/
 
 namespace LeanSaved
@@ -248,29 +264,30 @@ namespace LeanSaved
 -/
 private inductive ExtractionMode where
   | code
-  | doc
-  | omit
+  | experiment
+  | expectFailure
   deriving ToJson, FromJson, Quote
 
 /--
   A subset of `InlineLean.LeanBlockConfig` flags:
-  - `show` -> `visible`
   - `keep` -> `persistent`
   - `error` -> `expectedError`
+
+  Note: `show` is dropped, because it's for rendered book visibility
+  and shouldn't affect generated projects.
 
   They are used to derive the extraction policy (`Data.extractionMode`).
 -/
 structure Config where
-  visible : Bool
   persistent : Bool
   expectedError : Bool
   deriving ToJson, FromJson, Quote
 
 def Config.fromInlineLean (config : InlineLean.LeanBlockConfig) :=
-  Config.mk config.show config.keep config.error
+  Config.mk config.keep config.error
 
 /--
-  The saved-paylaod format for `Block.leanSaved`.
+  The saved-payload format for `Block.leanSaved`.
 -/
 structure Data where
   teacher : String
@@ -286,26 +303,17 @@ def decode? (data : Json) : Option Data :=
 
 /--
   * persistent, non-error blocks become executable Lean;
-  * visible, non-persistent blocks (`-keep`) become comments;
-  * hidden non-persistent blocks (`-show -keep`) are omitted (rare);
-  * visible expected-error blocks (`+error`) become comments;
-  * hidden expected-error blocks (`+error -show`) are omitted (rare).
+  * non-persistent blocks (`-keep`) become `experiment ... end_experiment`;
+  * expected-error blocks (`+error`) become `expect_failure end_expect_failure`
 -/
 private def Data.extractionMode (saved : Data) : ExtractionMode :=
-  let {visible, persistent, expectedError} := saved.config
-  if expectedError then if visible then .doc else .omit
-  else if persistent then .code
-  else if visible then .doc
-  else .omit
-
-private def Config.docReason (config : Config) : String :=
-  if config.expectedError then
-    "(commented out as it does not compile)"
+  let {persistent, expectedError} := saved.config
+  if expectedError then
+    .expectFailure
+  else if persistent then
+    .code
   else
-    "(commented out as it is for discussion)"
-
-private def Data.asDocString (saved : Data) (src : String) : String :=
-  saved.config.docReason ++ "\n\n" ++ src.trimAscii.toString
+    .experiment
 
 end LeanSaved
 
@@ -547,8 +555,8 @@ Wraps each ` ```lean … ``` ` code block. The pipeline is:
 5. Emit a `Block.leanSaved` with two children: the upstream (teacher-rendered)
    block and a `Block.lean` wrapping the student `Highlighted`. Traversal
    later drops one of the two according to the `Save.showSolutions` flag, while
-   the saver uses the recorded block config to decide whether extracted output
-   is executable code, a comment, or omitted.
+   the saver uses the recorded block config to decide whether to wrap
+   extracted output Lean code in `expect_failure` or `experiment`.
 -/
 
 open Save SourceRewrite LeanElab LeanSaved in
@@ -669,12 +677,14 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
           return appendTeacherStudent buf file
             (saved.teacher.trimAscii.toString ++ "\n\n")
             (saved.student.trimAscii.toString ++ "\n\n")
-        | .doc =>
+        | .experiment =>
           return appendTeacherStudent buf file
-            (asModuleDoc <| saved.asDocString saved.teacher)
-            (asModuleDoc <| saved.asDocString saved.student)
-        | .omit =>
-          return buf
+            (wrap "experiment" "end_experiment" saved.teacher)
+            (wrap "experiment" "end_experiment" saved.student)
+        | .expectFailure =>
+          return appendTeacherStudent buf file
+            (wrap "expect_failure" "end_expect_failure" saved.teacher)
+            (wrap "expect_failure" "end_expect_failure" saved.student)
       return buf
     if name == ``Block.exercise then
       -- Emit a `### Exercise (N⭐): name` heading; the contained `lean`
@@ -783,8 +793,7 @@ def walkOuter (width : Nat) (vol : String) (text : Part Manual) (buf : SaveBuffe
     buf := appendBoth buf rootFile s!"import {chapterModule vol p}\n"
   for p in subParts do
     let chapterFile := chapterPath vol p
-    -- BCP: Maybe this is not needed?
-    -- buf := appendBoth buf chapterFile "import Lean\n\nopen Lean\n\n"
+    buf := appendBoth buf chapterFile s!"import {supportModuleName vol}\n\n"
     buf := walkSection width 1 chapterFile p buf
   return buf
 
@@ -814,7 +823,7 @@ private def writeProject (dest : System.FilePath) (toolchain : String)
 Run `lake build` inside `dest` and report any failure via `logError`. Used to
 verify each generated project compiles. Student builds are expected to succeed
 with `sorry` warnings only; expected-error doc examples have already been
-filtered out during extraction. -/
+wrapped in `expect_failure` during extraction. -/
 private def buildProject (dest : System.FilePath) (kind : String) :
     BuildLogT IO Unit := do
   IO.println s!"Building generated {kind} project at {dest}…"
@@ -842,8 +851,9 @@ private def emitSavedImpl (vol variant : String) (isTeacher : Bool) :
     let toolchain ← (IO.FS.readFile "lean-toolchain").toBaseIO >>= fun
       | .ok s => pure s
       | .error _ => pure "leanprover/lean4:v4.30.0-rc2\n"
+    let supportModuleTemplate ← readSFLCompat
     let files : Array (String × String) :=
-      buf.fold (init := #[]) fun acc file (teacher, student) =>
+      buf.fold (init := #[(supportModulePath vol, supportModuleTemplate)]) fun acc file (teacher, student) =>
         acc.push (file, mergeAdjacentModuleDocs (if isTeacher then teacher else student))
     let dest := System.FilePath.mk "_out" / vol.toLower / variant / "lean"
     writeProject dest toolchain vol variant files

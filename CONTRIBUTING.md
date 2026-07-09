@@ -440,45 +440,21 @@ Use ordinary fenced `lean` blocks for examples that should elaborate in
 the chapter, appear in the rendered book, affect later Lean blocks,
 and be emitted as normal Lean code in generated projects for teachers and students.
 
-Some examples are meant to be shown or checked without becoming executable code in
+Some examples are meant to be shown or checked without becoming persistent code in
 generated projects:
 
 |block|rendered book|generated project|
 |---|---|---|
-|`` ```lean ``|shown| normal (executable) code|
-|`` ```lean -keep``|shown|commented source|
-|`` ```lean +error``|shown as expected failure|commented source|
-|`` ```lean +error -show``|hidden|omitted|
-|`` ```lean -keep -show``|hidden|omitted|
+|`` ```lean ``|shown|normal (executable) code|
+|`` ```lean -show``|hidden|normal code|
+|`` ```lean +error``|shown as expected failure|wrapped in `expect_failure ... end_expect_failure`|
+|`` ```lean +error -show``(rare)|hidden|wrapped in `expect_failure ... end_expect_failure`|
+|`` ```lean -keep``|shown|wrapped in `experiment ... end_experiment`|
+|`` ```lean -keep -show`` (rare)|hidden|wrapped in `experiment ... end_experiment`|
 
 Do not put definitions needed later in `-keep` or `+error` blocks as they will not become
 executable declarations in the generated projects, though they still get rendered in the book. 
 
-Here are some examples:
-
-- ````lean
-  ```lean -keep
-  def A := 1
-  ```
-  ````
-  becomes commented source in student project:
-  ```lean
-  -- (commented out as it is for discussion)
-
-  -- def A := 1
-  ```
-- Similarly,
-  ````lean
-  ```lean +error
-  example : 1 = 233 := rfl
-  ```
-  ````
-  becomes
-  ```lean
-  -- (commented out as it does not compile)
-
-  -- example : 1 = 233 := rfl
-  ```
 ### Solution mechanisms inside `lean` blocks
 
 Both mechanisms are elaborated by Lean at compile time (errors in the
