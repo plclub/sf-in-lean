@@ -236,32 +236,22 @@ should be kept in sync as chapters are rewritten.
 | `Poly`            | *(none new)* |
 | `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `unfold`, `split` |
 | `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
-| `IndProp`         | `simp`, `rcases`, `subst`, `omega` |
-| `Maps`            | *(none new)* |
-| `IndPropRegexp`   | `specialize`, `trivial` |
-| `HL/Imp`          | `lia` |
+| `IndProp`         | `rcases`, `subst` |
+| `Typeclasses`     | `decide` |
+| `Automation`      | `lia`, `try`, `repeat`, `specialize`, `trivial`, `simp` |
+| `HL/Imp`          | *(none new)* |
 
-**`lia` (introduced in `HL/Imp`).**  `lia` — the newer `grind`-based
-linear-arithmetic tactic — is first used in `HL/Imp` (per the chenson2018 PR
-review; it replaces the older `omega` there).  Because it is in the `grind`
-family, it is in some tension with deferring `grind` to a later volume (see
-below).  **TODO / decision needed:** decide whether `lia` should be
-introduced *earlier* — e.g. in the LF **Automation** chapter, in place of (or
-alongside) `omega` — so that a student on the LF → HL path meets it before it
-is used here.
+**Notes**
+- **`lia` rather than `omega`** The latter is being phased out.
+- `IndPropRegexp` has been folded into `Automation`
+- `Maps` will be folded into `Typeclasses`
+- Candidate tactics still to be placed include `show`, `rename_i`, `revert`, `suffices`, `tauto`. 
+- Tactics `grind`, `aesop`, are deferred to a later volume. 
 
 Related notation introduced alongside tactics: anonymous constructor
 `⟨…⟩` (`Lists`); destructuring `let ⟨…⟩ := …` and `cases h : …`,
 `induction … generalizing …` (`Tactics`); projection/`Iff` syntax
 `.left`, `.right`, `.mp`, `.mpr`, and rewriting by an `↔` (`Logic`).
-
-**Tactics deliberately deferred / under discussion** (per FPiL's
-caution that `grind` is overwhelming for beginners): candidates still
-to be placed include `show`, `rename_i`, `revert`, `subst`,
-`suffices`. Powerful automation (`simp` heavy use, `tauto`, `omega`,
-`decide`) is concentrated in an **Automation** chapter; `grind`,
-`aesop`, and `try` are deferred to a later volume. The `RegExp`
-development moves out of `IndProp` into that Automation chapter.
 
 ### SFL-specific conventions
 
@@ -276,13 +266,61 @@ development moves out of `IndProp` into that Automation chapter.
   over the separate `case` syntax *and* over the bare `·` goal selector — i.e. prefer
   `cases h with | …` / `induction h with …`.
   Put each alternative on its own unindented line beginning with `|`.
+  
+* **`rewrite` before `rw`** (see tactic chart above) --
+  `rw [h]` is roughly `rewrite [h]; rfl`, which is too strong at
+  first: it hides the closing `rfl` and makes proofs step
+  confusingly (the goal vanishes when you step past the final `]`).
+  We introduce `rw` specifically in `Induction.lean` and use from
+  then on.
 
-  Keep short branch bodies inline, and **align** `=>` accros the alternatives: 
+* **`example` for one-off demos.** Prefer `example …` over a named
+  `theorem foo …` for throwaway illustrations (tactic demos, "silly" lemmas,
+  etc.) that are never referenced later — Lean's `example` doesn't force us to
+  invent a name (unlike Rocq).
+
+* **Explicit rewrites over `dsimp`/`simp` through notation** (see
+  "Notation and simplification").
+
+* **`sorry` placeholders are checked, not silent.** Where a `sorry`
+  appears , wrap it so the warning is asserted:
+  ```lean
+  /-- warning: declaration uses `sorry` -/
+  #guard_msgs in
+  example : … := sorry
+  ```
+
+* **Aborted/abandoned lemmas** failing proofs and examples with type errors
+  should have a `#guard_msgs` above them with the expected error, rather than
+  ending with `sorry`.
+
+* **Library vs. client code.** Inside a definition's own library it is
+  fine to unfold and simplify through definitions; *using* that code,
+  do not "peek through the interface."
+
+### Unicode Text and Formatting
+
+Go Unicode-native! Use subscripts on variables, like x₁ x₂  etc. Use α Γ etc. 
+for type variables and other standard notation. Use arrows like → ⇓ for reduction
+and evaluation. TODO: Elaborate on guidelines here.
+
+We will use the standard Lean auto-formatter. Until then, here are some formatting
+guidelines.
+
+* Keep short branch bodies inline: 
   
   ```lean
-  cases b with
-  | true  => rfl
-  | false => simp
+  cases b, c with
+  | true, false => rfl
+  | false, _ => simp
+  ```
+
+  *Optionally*, align patterns across alternatives:
+
+  ```lean
+  cases b, c with
+  | true,  _ => rfl
+  | false, _ => simp
   ```
 
   For multiline branch bodies, put `=>` after the alternative *without* padding
