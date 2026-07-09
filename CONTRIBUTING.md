@@ -231,14 +231,14 @@ should be kept in sync as chapters are rewritten.
 | `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `unfold`, `split` |
 | `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
 | `IndProp`         | `rcases`, `subst` |
-| `Maps`            | `decide` |
-| `Typeclasses`     | ? |
+| `Typeclasses`     | `decide` |
 | `Automation`      | `lia`, `try`, `repeat`, `specialize`, `trivial`, `simp` |
 | `HL/Imp`          | *(none new)* |
 
 **Notes**
 - **`lia` rather than `omega`** The latter is being phased out.
 - `IndPropRegexp` has been folded into `Automation`
+- `Maps` will be folded into `Typeclasses`
 - Candidate tactics still to be placed include `show`, `rename_i`, `revert`, `suffices`, `tauto`. 
 - Tactics `grind`, `aesop`, are deferred to a later volume. 
 
