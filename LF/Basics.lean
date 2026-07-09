@@ -899,14 +899,14 @@ end Playground
 ```
 
 ::::full
-When creating a type, a `namespace` with the same name as that type is implicitly created as well;
+When a type is created, a `namespace` with the same name as that type is implicitly created as well;
 definitions on that type are available inside that `namespace` without a prefix. In the example
 below, we can use the `blue` constructor without qualification because
 we are inside the `RGB` `namespace`, which is the same as `blue`'s type.
 ::::
 
 ::::terse
-Types implicitly create namespaces.
+Type definitions implicitly create namespaces.
 ::::
 
 
@@ -939,8 +939,8 @@ def RGB.myOtherBlue : RGB := myBlue
 :::
 
 ::::full
-Similarly, we could write the definition of `nextWorkingDay`
-earlier inside the `Day` namespace like so:
+Similarly, we could rewrite the definition of `nextWorkingDay`
+from above inside the `Day` namespace like so:
 ::::
 
 ```lean
@@ -980,19 +980,20 @@ end MyOtherNamespace
 
 export MyOtherNamespace (myVisibleDef)
 
--- this is usable without qualification, but `myHiddenDef` would not be
+-- This makes `myvisibleDef` usable without qualification, but not `myHiddenDef`:
 #check myVisibleDef -- Bool
 ```
 
 ::::full
-In fact, this is what Lean does with the `Bool` type. Since it is such an important
+In fact, this is what exactly what Lean does with the standard `Bool` type by default.
+Since it is such an important
 part of many proofs and programs, Lean implicitly `export`s many of `Bool`s functions and
 constructors. Accordingly, we can use constructors like `true` and `false` and functions like `not`
 without qualifying them with `Bool.`.
 ::::
 
 ::::terse
-Names in the `Bool` `namespace` are available without qualification.
+Names from the `Bool` `namespace` are `export`ed and thus available without qualification.
 ::::
 
 ```lean
@@ -1003,15 +1004,15 @@ Names in the `Bool` `namespace` are available without qualification.
 ::::full
 Finally, Lean can often automatically figure out which namespace a qualified name lives in,
 saving us the need to explicitly specify it every time we use the name. Instead of
-the fully qualified style (e.g., `Day.monday`), we can opt for a partially qualified style,
+the fully qualified style (e.g., `Day.monday`), we can opt for an implicitly qualified style,
 writing just `.monday`.
 
-When we do this, Lean tries to resolve the `.monday` name by seeing what its expected type is,
+When we do this, Lean tries to resolve the `.monday` name by seeing what its expected type is
 and inferring which namespace it must be from based on that type. If there is only one such
 namespace (i.e., if it is unambiguous which constructor we're referring to), then it will
 automatically resolve to the expected value.
 
-So, for example, we could also write `nextWorkingDay` like so, using the shorter
+So, for example, we can also write `nextWorkingDay` as follows, using the shorter
 style for both the value being matched upon and the value being returned:
 ::::
 
@@ -1042,7 +1043,9 @@ In this case, it will raise an error:
 @dsainati1: see my comment later in the file about guard msgs
 
 ```lean
---- this doesn't work, Lean doesn't know which `true` we mean
+-- This doesn't work: Lean doesn't know which `true` we mean
+-- BCP: Why is this an inline comment?
+-- BCP: Is the `drop all` syntax explained?
 #guard_msgs(drop all) in
 #check .true --
 ```
@@ -1058,10 +1061,11 @@ Here, though, because `not` is a function that takes a `Bool` argument, Lean kno
 ```
 ::::
 
+-- BCP: This is not going to typeset well!
 ::::exercise(rating:=0) (name := "custom_namespace_checks")
-Predict the output of each of these statements below.
-Do you think their results will change depending on which `namespace`
-they are in? How?
+Predict the output of each of the statements below.
+Do you think their results would change depending on which namespace
+the statements appear in? How?
 
 #check .black -- Write your prediction here.
 #check Color.black -- Write your prediction here.
@@ -1988,6 +1992,8 @@ compiled to Lean. If we just naïvely strip out #guard msgs, the generated .lean
 errors since those commands were guarding actual errors rather than just warnings. So we would need
 a way to have .lean files with errors in them permitted by the make command, or we would need to
 leave in #guard msgs that are guarding actual errors.
+
+BCP: This is a tricky balancing act!!  Let's talk about it.
 
 ```lean
 /--
