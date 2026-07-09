@@ -414,11 +414,6 @@ inductive Aexp.evalR : Aexp → Nat → Prop where
 -- /FULL
 
 /-
-  mwhicks1: We will very likely want to use different notation, both
-  here and for defining AExp and BExp terms themselves.
--/
-
-/-
   It will be convenient to have an infix notation for `Aexp.evalR`.  We'll
   write `e ⇓ n` to mean that arithmetic expression `e` evaluates to
   value `n`.  (We scope the notation to this namespace so it doesn't
@@ -545,7 +540,7 @@ scoped notation:55 e:56 " ⇓ " n:56 => Aexp.evalR e n
 -- /HIDE
 
 /-
-  mwhicks1: Not sure if we need ⇓b is needed, or whether we can define
+  mwhicks1: Not sure if we need ⇓b, or whether we can define
   ⇓ overloaded. Don't understand Lean notation yet!
 -/
 
@@ -937,12 +932,6 @@ inductive Bexp where
   | not (b : Bexp)
   | and (b1 b2 : Bexp)
 
-/-
-  mwhicks1: SHould we be defining variables as lowercase letters, rather
-  than uppercase ones? Maybe notational conventions in Lean should be
-  different.
--/
-
 /- Defining a few variable names as shorthands will make examples easier
    to read. -/
 /- INSTRUCTORS: We usually don't use x as a "bare identifier" in examples
@@ -981,23 +970,25 @@ def Z : Ident := "Z"
   ## Notations
 -/
 
+-- FULL
 /-
-  mwhicks1: The Rocq chapter builds a custom `<{ ... }>` grammar
-  so that Imp programs can be written with concrete `+`, `:=`, `;`,
-  `if`/`while` syntax. We take a lighter route for now:
-  three coercions let us drop the `id`/`num`/`bool` wrappers,
-  and we otherwise write programs with the ordinary constructors.
+  To make Imp programs easier to read and write, we introduce some notations and implicit
+  coercions.
+
+  You do not need to understand exactly what these declarations do. Briefly, though:
+
+  - The `declare_syntax_cat` directive adds a new non-terminal to Lean's grammar, called
+    `imp_aexp`. We'll add additional non-terminals further below.
+  - Each `syntax` directive defines a grammar production, of which there are eight in
+    total. The first two define literals, `num` and `ident`, as `imp_aexp`s. The next
+    deveral directives define productions for building larger expressions, with
+    some annotations to define precedence, etc.
+  - Finally, `macro_rules` is used to translate each production of the `imp_aexp` nonterminal
+    into a Lean expression.
+  - The same basic pattern is followed for `bexp`s too.
 -/
+-- /FULL
 
-/- Following the same recipe as the `ssft24` Imp development, we give each
-   expression type its own syntactic category and an embedding hook into Lean
-   terms. `aexp { … }` elaborates to an `Aexp`, `bexp { … }` to a `Bexp`, and
-   (further down, next to `Com`) `imp { … }` to a `Com`. Inside any of these,
-   `~e` escapes back to an ordinary Lean term. -/
-
-/- Note the category is named `imp_aexp` while the embedding keyword is `aexp`:
-   as in `ssft24`, the syntactic category and the hook keyword must be distinct
-   words, or the keyword shadows the category name in later `syntax` rules. -/
 /-- Arithmetic expressions of Imp -/
 declare_syntax_cat imp_aexp
 /-- Numeric literal -/
@@ -1018,12 +1009,14 @@ syntax:max "~" term:max : imp_aexp
 /-- Embed an Imp arithmetic expression into a Lean term -/
 syntax:min "aexp " "{" imp_aexp "}" : term
 
-/- A variable reference elaborates to `Aexp.id $x` with the identifier spliced
+-- HIDE
+/- INSTRUCTORS: A variable reference elaborates to `Aexp.id $x` with the identifier spliced
    as a *term*, not as a string literal. So `aexp { X }` is `Aexp.id X`, using
    the declared constant `X : Ident`, exactly matching hand-written terms like
    `.asgn X …` and the shape the state/`ceval` proofs expect. (Rocq's `<{ }>`
    does the same via its `constr` fallback, yielding `AId X`.) A consequence is
    that a variable name must be a declared `Ident` constant — as W/X/Y/Z are. -/
+-- /HIDE
 open Lean in
 macro_rules
   | `(aexp { $n:num }) => `(Aexp.num $(quote n.getNat))
@@ -1034,12 +1027,15 @@ macro_rules
   | `(aexp { $a * $b }) => `(Aexp.mult (aexp {$a}) (aexp {$b}))
   | `(aexp { ($a) }) => `(aexp {$a})
 
-/- The literals `true`/`false` are accepted through the bare-identifier form
+-- HIDE
+/- INSTRUCTORS: The literals `true`/`false` are accepted through the bare-identifier form
    (`syntax:max ident : imp_bexp`) and turned into `Bexp.bool` by the macro
    below, which rejects any other identifier. We take this route rather than
    declaring `true`/`false` as symbols: as reserved keywords they would break
    ordinary Lean uses of `true`/`false`, and as non-reserved symbols they would
    clash with the bare-identifier form of `imp_aexp`. -/
+-- /HIDE
+
 /-- Boolean expressions of Imp -/
 declare_syntax_cat imp_bexp
 /-- Boolean literal (`true` or `false`) -/
@@ -1064,10 +1060,12 @@ syntax:max "~" term:max : imp_bexp
 /-- Embed an Imp boolean expression into a Lean term -/
 syntax:min "bexp " "{" imp_bexp "}" : term
 
-/- The antiquotations are annotated with their category (`$a:imp_aexp`,
+-- HIDE
+/- INSTRUCTORS: The antiquotations are annotated with their category (`$a:imp_aexp`,
    `$b:imp_bexp`) because an `imp_bexp` can begin with an `imp_aexp` (a
    comparison); without the annotation the parser would descend into `imp_aexp`
    and then insist on a comparison operator. -/
+-- /HIDE
 open Lean in
 macro_rules
   | `(bexp { $x:ident }) =>
@@ -1087,8 +1085,9 @@ macro_rules
 
 -- FULL
 /-
-  To make Imp programs easier to read and write, we introduce a few implicit
-  coercions. In Lean, a `Coe` instance tells the elaborator how to turn a
+  We make it a little easier to write Imp programs using normal constructors (i.e.,
+  without notation), by using _implicit coercions_.
+  In Lean, a `Coe` instance tells the elaborator how to turn a
   value of one type into another automatically:
    - `Coe Ident Aexp` lets us write a bare variable (an `Ident`) where an
      `Aexp` is expected; the identifier is implicitly wrapped with `id`.
@@ -1108,10 +1107,12 @@ instance (n : Nat) : OfNat Aexp n where
 instance : Coe Bool Bexp where
   coe := .bool
 
+-- FULL
 /- With these coercions we can write `.plus 3 (.mult X 2)` instead of the fully
    explicit `.plus (.num 3) (.mult (.id "X") (.num 2))`, and `.and true (.not …)`
    instead of `.and (.bool true) (.not …)`. More readably still, the concrete
    syntax from the Notations section lets us write these examples directly: -/
+-- /FULL
 
 def example_aexp : Aexp := aexp { 3 + (X * 2) }
 def example_bexp : Bexp := bexp { true && !(X <= 4) }
@@ -2004,4 +2005,3 @@ theorem no_whiles_terminating' (c : Com) (st1 : State)
         * add_for_loop (EX4?, Imp.v:3728): add a C-style `for` loop to Com,
           its notation, and extend ceval.
 -/
-
