@@ -1500,8 +1500,8 @@ theorem add_one (n : Nat) : n + (succ zero) = succ (n + zero) + zero := by
 ```
 
 Again, we recommend stepping through these proofs in VS Code --
-   that is, moving past each tactic with your cursor to see how it
-   changes the proof state and hovering over each argument to `rewrite` to see its type.
+that is, moving past each tactic with your cursor to see how it
+changes the proof state and hovering over each argument to `rewrite` to see its type.
 ::::
 
 ## Irreducibility, Rewriting, and Proof Engineering
@@ -1703,14 +1703,14 @@ RAB: Agreed if we're keeping these visible; putting off
 :::
 
 Prove this property using rewriting with the simplification rules for addition and multiplication.
-  (We have given you the first line.) Notice how `rewrite`
-   can take any number of arguments. You can use this rewrite with all of the
-   simplification rules at once, for example.
+(We have given you the first line.) Notice how `rewrite`
+can take any number of arguments. You can use this rewrite with all of the
+simplification rules at once, for example.
 
-   After each rewrite, check the proof state by placing the cursor immediately
-   after a rule to see how the goal is changing. This happens naturally
-   as you write the proof, which makes it convenient to use `rewrite` blocks
-   with multiple rules.
+After each rewrite, check the proof state by placing the cursor immediately
+after a rule to see how the goal is changing. This happens naturally
+as you write the proof, which makes it convenient to use `rewrite` blocks
+with multiple rules.
 
 ::::exercise (rating := 2) (name := "test_mult1")
 ```lean
