@@ -33,6 +33,8 @@
 -- (either introduce `lia` in LF, or keep `omega`).
 
 import LF.Maps
+import Lean.PrettyPrinter.Delaborator
+import Lean.PrettyPrinter.Parenthesizer
 
 -- FULL
 /-
@@ -176,6 +178,8 @@ inductive Bexp where
 -/
 -- /FULL
 
+
+
 /-
   ######################################################################
   ## Evaluation
@@ -271,7 +275,7 @@ example :
 -- /FULL
 
 theorem optimize_0plus_sound (a : Aexp) :
-    Aexp.eval (Aexp.optimize_0plus a) = Aexp.eval a := by
+    a.optimize_0plus.eval = a.eval := by
   induction a with
   | num n => rfl
   | plus a1 a2 ih1 ih2 =>
@@ -342,7 +346,7 @@ example :
 -- GRADE_THEOREM 0.5: optimize_0plus_b_test2
 
 theorem optimize_0plus_b_sound (b : Bexp) :
-    Bexp.eval (Bexp.optimize_0plus_b b) = Bexp.eval b := by
+    b.optimize_0plus_b.eval = b.eval := by
   -- ADMITTED
   induction b with
   | not b1 ih => simp only [Bexp.optimize_0plus_b, Bexp.eval]; rw [ih]
@@ -381,6 +385,9 @@ inductive Aexp.evalR : Aexp → Nat → Prop where
       (h1 : Aexp.evalR a1 n1) (h2 : Aexp.evalR a2 n2) :
       Aexp.evalR (.mult a1 a2) (n1 * n2)
 
+-- chenson2018: There is still some naming weirdness in the relation forms of evaluation that should be addressed later.
+-- mwhicks1: I think this comment is about wanting to call `evalR` something like `Rel`, but it's not clear to me that I want to do that, e.g., since there are multiple evaluation relations (such as big-step and small-step) there won't be just one name
+
 -- FULL
 /-
   A small notational aside. We could instead have presented this relation
@@ -410,11 +417,6 @@ inductive Aexp.evalR : Aexp → Nat → Prop where
   the definition a little more verbose. We adopt the named style.
 -/
 -- /FULL
-
-/-
-  mwhicks1: We will very likely want to use different notation, both
-  here and for defining AExp and BExp terms themselves.
--/
 
 /-
   It will be convenient to have an infix notation for `Aexp.evalR`.  We'll
@@ -543,7 +545,7 @@ scoped notation:55 e:56 " ⇓ " n:56 => Aexp.evalR e n
 -- /HIDE
 
 /-
-  mwhicks1: Not sure if we need ⇓b is needed, or whether we can define
+  mwhicks1: Not sure if we need ⇓b, or whether we can define
   ⇓ overloaded. Don't understand Lean notation yet!
 -/
 
@@ -625,7 +627,7 @@ scoped notation:55 e:56 " ⇓ " n:56 => Aexp.evalR e n
 /- SOONER: BCP 23: Why can't we do induction on H in the ← direction?? -/
 
 theorem aevalR_iff_aeval (a : Aexp) (n : Nat) :
-    a ⇓ n ↔ Aexp.eval a = n := by
+    a ⇓ n ↔ a.eval = n := by
   constructor
   · intro h
     induction h with
@@ -646,8 +648,7 @@ theorem aevalR_iff_aeval (a : Aexp) (n : Nat) :
   Again, we can make the proof quite a bit shorter using the combinators
   from the previous section.
 -/
--- Claude: the `-- WORKINCLASS` marker leaves this shorter proof as a live
--- in-class exercise.
+-- mwhicks1: the `-- WORKINCLASS` marker leaves this shorter proof as a live in-class exercise.
 
 theorem aevalR_iff_aeval' (a : Aexp) (n : Nat) :
     a ⇓ n ↔ Aexp.eval a = n := by
@@ -682,6 +683,8 @@ inductive Bexp.evalR : Bexp → Bool → Prop where
   -- /SOLUTION
 
 scoped notation:55 e:56 " ⇓b " b:56 => Bexp.evalR e b
+
+-- mwhicks1: There is no keyboard shortcut for a subscript b, nor is there one for c (to use used with cevalR below). There are numbers, x, y, z, l, m, n, etc.
 
 theorem bevalR_iff_beval (b : Bexp) (bv : Bool) :
     b ⇓b bv ↔ Bexp.eval b = bv := by
@@ -935,12 +938,6 @@ inductive Bexp where
   | not (b : Bexp)
   | and (b1 b2 : Bexp)
 
-/-
-  mwhicks1: SHould we be defining variables as lowercase letters, rather
-  than uppercase ones? Maybe notational conventions in Lean should be
-  different.
--/
-
 /- Defining a few variable names as shorthands will make examples easier
    to read. -/
 /- INSTRUCTORS: We usually don't use x as a "bare identifier" in examples
@@ -979,18 +976,124 @@ def Z : Ident := "Z"
   ## Notations
 -/
 
+-- FULL
 /-
-  mwhicks1: The Rocq chapter builds a custom `<{ ... }>` grammar
-  so that Imp programs can be written with concrete `+`, `:=`, `;`,
-  `if`/`while` syntax. We take a lighter route for now:
-  three coercions let us drop the `id`/`num`/`bool` wrappers,
-  and we otherwise write programs with the ordinary constructors.
+  To make Imp programs easier to read and write, we introduce some notations and implicit
+  coercions.
+
+  You do not need to understand exactly what these declarations do. Briefly, though:
+
+  - The `declare_syntax_cat` directive adds a new non-terminal to Lean's grammar, called
+    `imp_aexp`. We'll add additional non-terminals further below.
+  - Each `syntax` directive defines a grammar production, of which there are eight in
+    total. The first two define literals, `num` and `ident`, as `imp_aexp`s. The next
+    deveral directives define productions for building larger expressions, with
+    some annotations to define precedence, etc.
+  - Finally, `macro_rules` is used to translate each production of the `imp_aexp` nonterminal
+    into a Lean expression.
+  - The same basic pattern is followed for `bexp`s too.
 -/
+-- /FULL
+
+/-- Arithmetic expressions of Imp -/
+declare_syntax_cat imp_aexp
+/-- Numeric literal -/
+syntax:max num : imp_aexp
+/-- Variable reference -/
+syntax:max ident : imp_aexp
+/-- Addition -/
+syntax:65 imp_aexp:65 " + " imp_aexp:66 : imp_aexp
+/-- Subtraction -/
+syntax:65 imp_aexp:65 " - " imp_aexp:66 : imp_aexp
+/-- Multiplication -/
+syntax:70 imp_aexp:70 " * " imp_aexp:71 : imp_aexp
+/-- Parentheses for grouping -/
+syntax "(" imp_aexp ")" : imp_aexp
+/-- Escape to Lean -/
+syntax:max "~" term:max : imp_aexp
+
+/-- Embed an Imp arithmetic expression into a Lean term -/
+syntax:min "aexp " "{" imp_aexp "}" : term
+
+-- HIDE
+/- INSTRUCTORS: A variable reference elaborates to `Aexp.id $x` with the identifier spliced
+   as a *term*, not as a string literal. So `aexp { X }` is `Aexp.id X`, using
+   the declared constant `X : Ident`, exactly matching hand-written terms like
+   `.asgn X …` and the shape the state/`ceval` proofs expect. (Rocq's `<{ }>`
+   does the same via its `constr` fallback, yielding `AId X`.) A consequence is
+   that a variable name must be a declared `Ident` constant — as W/X/Y/Z are. -/
+-- /HIDE
+open Lean in
+macro_rules
+  | `(aexp { $n:num }) => `(Aexp.num $(quote n.getNat))
+  | `(aexp { $x:ident }) => `(Aexp.id $x)
+  | `(aexp { ~$e }) => pure e
+  | `(aexp { $a + $b }) => `(Aexp.plus (aexp {$a}) (aexp {$b}))
+  | `(aexp { $a - $b }) => `(Aexp.minus (aexp {$a}) (aexp {$b}))
+  | `(aexp { $a * $b }) => `(Aexp.mult (aexp {$a}) (aexp {$b}))
+  | `(aexp { ($a) }) => `(aexp {$a})
+
+-- HIDE
+/- INSTRUCTORS: The literals `true`/`false` are accepted through the bare-identifier form
+   (`syntax:max ident : imp_bexp`) and turned into `Bexp.bool` by the macro
+   below, which rejects any other identifier. We take this route rather than
+   declaring `true`/`false` as symbols: as reserved keywords they would break
+   ordinary Lean uses of `true`/`false`, and as non-reserved symbols they would
+   clash with the bare-identifier form of `imp_aexp`. -/
+-- /HIDE
+
+/-- Boolean expressions of Imp -/
+declare_syntax_cat imp_bexp
+/-- Boolean literal (`true` or `false`) -/
+syntax:max ident : imp_bexp
+/-- Equality of arithmetic expressions -/
+syntax:50 imp_aexp:51 " = " imp_aexp:51 : imp_bexp
+/-- Disequality of arithmetic expressions -/
+syntax:50 imp_aexp:51 " <> " imp_aexp:51 : imp_bexp
+/-- Less than or equal -/
+syntax:50 imp_aexp:51 " <= " imp_aexp:51 : imp_bexp
+/-- Greater than -/
+syntax:50 imp_aexp:51 " > " imp_aexp:51 : imp_bexp
+/-- Boolean negation -/
+syntax:70 "! " imp_bexp:70 : imp_bexp
+/-- Boolean conjunction -/
+syntax:35 imp_bexp:36 " && " imp_bexp:35 : imp_bexp
+/-- Parentheses for grouping -/
+syntax "(" imp_bexp ")" : imp_bexp
+/-- Escape to Lean -/
+syntax:max "~" term:max : imp_bexp
+
+/-- Embed an Imp boolean expression into a Lean term -/
+syntax:min "bexp " "{" imp_bexp "}" : term
+
+-- HIDE
+/- INSTRUCTORS: The antiquotations are annotated with their category (`$a:imp_aexp`,
+   `$b:imp_bexp`) because an `imp_bexp` can begin with an `imp_aexp` (a
+   comparison); without the annotation the parser would descend into `imp_aexp`
+   and then insist on a comparison operator. -/
+-- /HIDE
+open Lean in
+macro_rules
+  | `(bexp { $x:ident }) =>
+    match x.getId with
+    | `true  => `(Bexp.bool true)
+    | `false => `(Bexp.bool false)
+    | _      => Macro.throwErrorAt x s!"expected 'true' or 'false', got '{x.getId}'"
+  | `(bexp { ~$e }) => pure e
+  | `(bexp { $a:imp_aexp = $b:imp_aexp }) => `(Bexp.eq (aexp {$a}) (aexp {$b}))
+  | `(bexp { $a:imp_aexp <> $b:imp_aexp }) => `(Bexp.neq (aexp {$a}) (aexp {$b}))
+  | `(bexp { $a:imp_aexp <= $b:imp_aexp }) => `(Bexp.le (aexp {$a}) (aexp {$b}))
+  | `(bexp { $a:imp_aexp > $b:imp_aexp }) => `(Bexp.gt (aexp {$a}) (aexp {$b}))
+  | `(bexp { ! $b:imp_bexp }) => `(Bexp.not (bexp {$b}))
+  | `(bexp { $b1:imp_bexp && $b2:imp_bexp }) => `(Bexp.and (bexp {$b1}) (bexp {$b2}))
+  | `(bexp { ($b:imp_bexp) }) => `(bexp {$b})
+
 
 -- FULL
 /-
-  To make Imp programs easier to read and write, we introduce a few implicit
-  coercions. In Lean, a `Coe` instance tells the elaborator how to turn a
+  We make it a little easier to write Imp programs using normal constructors (i.e.,
+  without notation), by using _implicit coercions_.
+  In Lean, a `Coe` instance tells the elaborator how to turn a
   value of one type into another automatically:
    - `Coe Ident Aexp` lets us write a bare variable (an `Ident`) where an
      `Aexp` is expected; the identifier is implicitly wrapped with `id`.
@@ -1010,12 +1113,191 @@ instance (n : Nat) : OfNat Aexp n where
 instance : Coe Bool Bexp where
   coe := .bool
 
-/- With these, we can write `.plus 3 (.mult X 2)` instead of
-   `.plus (.num 3) (.mult (.id "X") (.num 2))`, and `.and true (.not …)`
-   instead of `.and (.bool true) (.not …)`. -/
+-- FULL
+/- With these coercions we can write `.plus 3 (.mult X 2)` instead of the fully
+   explicit `.plus (.num 3) (.mult (.id "X") (.num 2))`, and `.and true (.not …)`
+   instead of `.and (.bool true) (.not …)`. More readably still, the concrete
+   syntax from the Notations section lets us write these examples directly: -/
+-- /FULL
 
-def example_aexp : Aexp := .plus 3 (.mult X 2)
-def example_bexp : Bexp := .and true (.not (.le X 4))
+def example_aexp : Aexp := aexp { 3 + (X * 2) }
+def example_bexp : Bexp := bexp { true && !(X <= 4) }
+
+/-
+  ######################################################################
+  ## Delaborators
+-/
+
+-- FULL
+/-
+  The notations above are _input_ only: they teach Lean how to *read* `aexp
+  { … }` and `bexp { … }`, but Lean still *prints* an expression using its raw
+  constructors -- `example_aexp` shows up as `Aexp.plus (Aexp.num 3) …` rather
+  than `aexp { 3 + X * 2 }`. A _delaborator_ closes the loop. Where a `macro`
+  turns surface syntax into a term (_elaboration_), a delaborator does the
+  reverse: it turns an elaborated term back into surface syntax so that Lean's
+  own output uses our concrete Imp notation.
+
+  Each delaborator below walks a term of the given type and rebuilds the
+  matching piece of `imp_aexp`/`imp_bexp` syntax; a subterm Lean doesn't
+  recognize is printed with the `~` escape. The `@[delab …]` attribute
+  registers the top-level function to fire whenever Lean is about to display a
+  term headed by one of those constructors -- unless notation printing has been
+  switched off with `set_option pp.notation false`, which lets us fall back to
+  the raw constructors when debugging (see _Desugaring Notations_ below). The
+  companion _category parenthesizer_ re-inserts the parentheses the grammar's
+  precedences demand, so that, e.g., `(1 + 2) * 3` prints with its parentheses
+  intact.
+
+  You do not need to understand the details. The result is that a `#check`, an
+  `#eval`, or a proof goal mentioning an Imp expression is displayed in
+  readable Imp syntax rather than as a pile of constructors.
+-/
+-- /FULL
+
+namespace Imp.Delab
+open Lean PrettyPrinter Delaborator SubExpr Parenthesizer
+
+/-- Re-inserts parentheses in `imp_aexp` output according to the grammar's precedences. -/
+@[category_parenthesizer imp_aexp]
+def imp_aexp.parenthesizer : CategoryParenthesizer | prec => do
+  maybeParenthesize `imp_aexp true wrapParens prec <|
+    parenthesizeCategoryCore `imp_aexp prec
+where
+  wrapParens (stx : Syntax) : Syntax := Unhygienic.run do
+    let pstx ← `(($(⟨stx⟩)))
+    return pstx.raw.setInfo (SourceInfo.fromRef stx)
+
+/-- Re-inserts parentheses in `imp_bexp` output according to the grammar's precedences. -/
+@[category_parenthesizer imp_bexp]
+def imp_bexp.parenthesizer : CategoryParenthesizer | prec => do
+  maybeParenthesize `imp_bexp true wrapParens prec <|
+    parenthesizeCategoryCore `imp_bexp prec
+where
+  wrapParens (stx : Syntax) : Syntax := Unhygienic.run do
+    let pstx ← `(($(⟨stx⟩)))
+    return pstx.raw.setInfo (SourceInfo.fromRef stx)
+
+/-- Tag freshly built syntax with the term info that Lean's pretty printer expects. -/
+def annAsTerm {any} (stx : TSyntax any) : DelabM (TSyntax any) :=
+  (⟨·⟩) <$> annotateTermInfo ⟨stx.raw⟩
+
+/-- Rebuild `imp_aexp` concrete syntax from an `Aexp` term. -/
+partial def delabAexpInner : DelabM (TSyntax `imp_aexp) := do
+  let e ← getExpr
+  let stx ←
+    match_expr e with
+    | Aexp.num _ =>
+      match (← withAppArg getExpr).nat? with
+      | some v => pure ⟨Syntax.mkNumLit (toString v) |>.raw⟩
+      | none   => `(imp_aexp| ~$(← withAppArg delab))
+    | Aexp.id _ =>
+      -- INSTRUCTORS: a variable reference like aexp { X } elaborates to Aexp.id X where X is the declared Ident constant, so the delaborators print the constant's name as a bare identifier (and also handle the .id "X" string-literal form).
+      match ← withAppArg getExpr with
+      | .const nm _      => `(imp_aexp| $(mkIdent nm):ident)
+      | .lit (.strVal s) => `(imp_aexp| $(mkIdent (.mkSimple s)):ident)
+      | _                => `(imp_aexp| ~$(← withAppArg delab))
+    | Aexp.plus _ _ =>
+      let s1 ← withAppFn <| withAppArg delabAexpInner
+      let s2 ← withAppArg delabAexpInner
+      `(imp_aexp| $s1 + $s2)
+    | Aexp.minus _ _ =>
+      let s1 ← withAppFn <| withAppArg delabAexpInner
+      let s2 ← withAppArg delabAexpInner
+      `(imp_aexp| $s1 - $s2)
+    | Aexp.mult _ _ =>
+      let s1 ← withAppFn <| withAppArg delabAexpInner
+      let s2 ← withAppArg delabAexpInner
+      `(imp_aexp| $s1 * $s2)
+    | _ => `(imp_aexp| ~$(← delab))
+  annAsTerm stx
+
+/-- Rebuild `imp_bexp` concrete syntax from a `Bexp` term. -/
+partial def delabBexpInner : DelabM (TSyntax `imp_bexp) := do
+  let e ← getExpr
+  let stx ←
+    match_expr e with
+    | Bexp.bool _ =>
+      match ← withAppArg getExpr with
+      | .const ``Bool.true _  => `(imp_bexp| $(mkIdent `true):ident)
+      | .const ``Bool.false _ => `(imp_bexp| $(mkIdent `false):ident)
+      | _                     => `(imp_bexp| ~$(← withAppArg delab))
+    | Bexp.eq _ _ =>
+      let s1 ← withAppFn <| withAppArg delabAexpInner
+      let s2 ← withAppArg delabAexpInner
+      `(imp_bexp| $s1:imp_aexp = $s2:imp_aexp)
+    | Bexp.neq _ _ =>
+      let s1 ← withAppFn <| withAppArg delabAexpInner
+      let s2 ← withAppArg delabAexpInner
+      `(imp_bexp| $s1:imp_aexp <> $s2:imp_aexp)
+    | Bexp.le _ _ =>
+      let s1 ← withAppFn <| withAppArg delabAexpInner
+      let s2 ← withAppArg delabAexpInner
+      `(imp_bexp| $s1:imp_aexp <= $s2:imp_aexp)
+    | Bexp.gt _ _ =>
+      let s1 ← withAppFn <| withAppArg delabAexpInner
+      let s2 ← withAppArg delabAexpInner
+      `(imp_bexp| $s1:imp_aexp > $s2:imp_aexp)
+    | Bexp.not _ =>
+      let s ← withAppArg delabBexpInner
+      `(imp_bexp| ! $s)
+    | Bexp.and _ _ =>
+      let s1 ← withAppFn <| withAppArg delabBexpInner
+      let s2 ← withAppArg delabBexpInner
+      `(imp_bexp| $s1 && $s2)
+    | _ => `(imp_bexp| ~$(← delab))
+  annAsTerm stx
+
+-- The `whenPPOption getPPNotation` wrapper lets `set_option pp.notation false`
+-- switch this delaborator off, revealing the raw constructors (see the
+-- "Desugaring Notations" discussion, after the commands are introduced).
+@[delab app.Aexp.num, delab app.Aexp.id, delab app.Aexp.plus,
+  delab app.Aexp.minus, delab app.Aexp.mult]
+partial def delabAexp : Delab := whenPPOption getPPNotation do
+  -- This delaborator only understands `Aexp`'s constructors -- bail otherwise.
+  guard <| match_expr ← getExpr with
+    | Aexp.num _ => true
+    | Aexp.id _ => true
+    | Aexp.plus _ _ => true
+    | Aexp.minus _ _ => true
+    | Aexp.mult _ _ => true
+    | _ => false
+  match ← delabAexpInner with
+  | `(imp_aexp| ~$e) => pure e
+  | e => `(term| aexp { $e })
+
+@[delab app.Bexp.bool, delab app.Bexp.eq, delab app.Bexp.neq, delab app.Bexp.le,
+  delab app.Bexp.gt, delab app.Bexp.not, delab app.Bexp.and]
+partial def delabBexp : Delab := whenPPOption getPPNotation do
+  guard <| match_expr ← getExpr with
+    | Bexp.bool _ => true
+    | Bexp.eq _ _ => true
+    | Bexp.neq _ _ => true
+    | Bexp.le _ _ => true
+    | Bexp.gt _ _ => true
+    | Bexp.not _ => true
+    | Bexp.and _ _ => true
+    | _ => false
+  match ← delabBexpInner with
+  | `(imp_bexp| ~$e) => pure e
+  | e => `(term| bexp { $e })
+
+end Imp.Delab
+
+-- FULL
+/-
+  With the delaborators in place, Lean now prints Imp expressions using the
+  concrete syntax rather than their raw constructors.
+-/
+-- /FULL
+
+/-- info: aexp {3 + X * 2} : Aexp -/
+#guard_msgs in
+#check aexp { 3 + (X * 2) }
+
+/-- info: bexp {true && ! (X <= 4)} : Bexp -/
+#guard_msgs in
+#check bexp { true && !(X <= 4) }
 
 /-
   ######################################################################
@@ -1043,23 +1325,25 @@ def Aexp.eval (st : State) (a : Aexp) : Nat :=
 def Bexp.eval (st : State) (b : Bexp) : Bool :=
   match b with
   | bool b      =>  b
-  | eq   a1 a2  =>  Aexp.eval st a1 == Aexp.eval st a2
-  | neq  a1 a2  =>  Aexp.eval st a1 != Aexp.eval st a2
-  | le   a1 a2  =>  Aexp.eval st a1 ≤ Aexp.eval st a2
-  | gt   a1 a2  =>  Aexp.eval st a1 > Aexp.eval st a2
-  | not  b1     =>  !eval st b1
-  | and  b1 b2  =>  eval st b1 && eval st b2
+  | eq   a1 a2  =>  a1.eval st == a2.eval st
+  | neq  a1 a2  =>  a1.eval st != a2.eval st
+  | le   a1 a2  =>  a1.eval st ≤  a2.eval st
+  | gt   a1 a2  =>  a1.eval st >  a2.eval st
+  | not  b1     =>  !b1.eval st
+  | and  b1 b2  =>  b1.eval st && b2.eval st
 
 /- We reuse the total-map notation (`x →ₜ v ; ∅` etc.) for states. -/
 
 /- test_aexp1 -/
-example : Aexp.eval (X →ₜ 5 ; ∅) (.plus 3 (.mult X 2)) = 13 := by rfl
+example : aexp { 3 + (X * 2) }.eval (X →ₜ 5 ; ∅) = 13 := by rfl
 
 /- test_aexp2 -/
-example : Aexp.eval (X →ₜ 5 ; Y →ₜ 4 ; ∅) (.plus Z (.mult X Y)) = 20 := by rfl
+example : aexp { Z + (X * Y) }.eval (X →ₜ 5 ; Y →ₜ 4 ; ∅) = 20 := by rfl
 
 /- test_bexp1 -/
-example : Bexp.eval (X →ₜ 5 ; ∅) (.and true (.not (.le X 4))) = true := by rfl
+example : bexp { true && !(X <= 4) }.eval (X →ₜ 5 ; ∅) = true := by rfl
+
+-- dsainati: Bikeshedding: I'm not sure how I feel about this arrow subscript for maps. Easy to change later but just flagging to discuss. mwhicks1: This comes from the Maps chapter, which chenson2018 is working on. There is a keyboard shortcut for ↦ we could use (\mapsto).
 
 /-
   ######################################################################
@@ -1091,6 +1375,110 @@ inductive Com where
   | cond (b : Bexp) (c1 c2 : Com)
   | whileDo (b : Bexp) (c : Com)
 
+/- Concrete syntax for commands, in the style of the `ssft24` Imp `Stmt`
+   grammar: an `imp_com` category with an `imp { … }` hook. Assignments and
+   `skip` end in `;`, and sequencing is written by juxtaposition. Conditions use
+   the `imp_bexp` grammar; the branch/loop bodies use the `imp_com` grammar. As
+   with expressions, `~c` escapes back to an ordinary Lean term of type `Com`. -/
+/-- Imp commands -/
+declare_syntax_cat imp_com
+/- `skip` is *not* a reserved keyword: it is accepted through a bare
+   identifier-terminated command (`syntax ident ";" : imp_com`) and recognised
+   in the macro below, which rejects any other identifier. This keeps `skip`
+   usable as the bare constructor name `Com.skip` in `match`/`induction`
+   elsewhere in the file, and avoids reserving `skip` globally. -/
+/-- The command that does nothing (`skip;`) -/
+syntax ident ";" : imp_com
+/-- Sequencing: one command after another -/
+syntax imp_com ppDedent(ppLine imp_com) : imp_com
+/-- Assignment -/
+syntax ident " := " imp_aexp ";" : imp_com
+/-- Conditional -/
+syntax "if " "(" imp_bexp ")" ppHardSpace "{" ppLine imp_com ppDedent(ppLine "}" ppHardSpace "else" ppHardSpace "{") ppLine imp_com ppDedent(ppLine "}") : imp_com
+/-- Loop -/
+syntax "while " "(" imp_bexp ")" ppHardSpace "{" ppLine imp_com ppDedent(ppLine "}") : imp_com
+/-- Escape to Lean -/
+syntax:max "~" term:max : imp_com
+
+/-- Include an Imp command in Lean code -/
+syntax:min "imp" ppHardSpace "{" ppLine imp_com ppDedent(ppLine "}") : term
+
+open Lean in
+macro_rules
+  | `(imp { $x:ident ; }) =>
+    if x.getId == `skip then `(Com.skip)
+    else Macro.throwErrorAt x s!"expected 'skip', got '{x.getId}'"
+  | `(imp { $c1 $c2 }) =>
+    `(Com.seq (imp {$c1}) (imp {$c2}))
+  | `(imp { $x:ident := $a; }) =>
+    `(Com.asgn $x (aexp {$a}))
+  | `(imp { if ($b) {$c1} else {$c2} }) =>
+    `(Com.cond (bexp {$b}) (imp {$c1}) (imp {$c2}))
+  | `(imp { while ($b) {$c} }) =>
+    `(Com.whileDo (bexp {$b}) (imp {$c}))
+  | `(imp { ~$c }) =>
+    pure c
+
+-- FULL
+/-
+  Just as we did for expressions, we add a delaborator so that Lean prints
+  commands back in the `imp { … }` concrete syntax (see the Delaborators
+  section above). It reuses the expression delaborators for the condition of an
+  `if`/`while` and for the right-hand side of an assignment, and prints an
+  unrecognized subcommand with the `~` escape.
+-/
+-- /FULL
+
+namespace Imp.Delab
+open Lean PrettyPrinter Delaborator SubExpr
+
+/-- Rebuild `imp_com` concrete syntax from a `Com` term. -/
+partial def delabComInner : DelabM (TSyntax `imp_com) := do
+  let e ← getExpr
+  let stx ←
+    match_expr e with
+    | Com.skip => `(imp_com| skip;)
+    | Com.asgn _ _ =>
+      match ← withAppFn <| withAppArg getExpr with
+      | .const nm _ =>
+        let a ← withAppArg delabAexpInner
+        `(imp_com| $(mkIdent nm):ident := $a;)
+      | .lit (.strVal s) =>
+        let a ← withAppArg delabAexpInner
+        `(imp_com| $(mkIdent (.mkSimple s)):ident := $a;)
+      | _ => `(imp_com| ~$(← delab))
+    | Com.seq _ _ =>
+      let s1 ← withAppFn <| withAppArg delabComInner
+      let s2 ← withAppArg delabComInner
+      `(imp_com| $s1 $s2)
+    | Com.cond _ _ _ =>
+      let b  ← withAppFn <| withAppFn <| withAppArg delabBexpInner
+      let c1 ← withAppFn <| withAppArg delabComInner
+      let c2 ← withAppArg delabComInner
+      `(imp_com| if ($b) {$c1} else {$c2})
+    | Com.whileDo _ _ =>
+      let b ← withAppFn <| withAppArg delabBexpInner
+      let c ← withAppArg delabComInner
+      `(imp_com| while ($b) {$c})
+    | _ => `(imp_com| ~$(← delab))
+  annAsTerm stx
+
+@[delab app.Com.skip, delab app.Com.asgn, delab app.Com.seq,
+  delab app.Com.cond, delab app.Com.whileDo]
+partial def delabCom : Delab := whenPPOption getPPNotation do
+  guard <| match_expr ← getExpr with
+    | Com.skip => true
+    | Com.asgn _ _ => true
+    | Com.seq _ _ => true
+    | Com.cond _ _ _ => true
+    | Com.whileDo _ _ => true
+    | _ => false
+  match ← delabComInner with
+  | `(imp_com| ~$e) => pure e
+  | e => `(term| imp { $e })
+
+end Imp.Delab
+
 -- FULL
 /-
   As an example, here is the factorial function again, written as a formal
@@ -1100,47 +1488,117 @@ inductive Com where
 -/
 -- /FULL
 
-def fact_in_lean : Com :=
-  .seq (.asgn Z X)
-       (.seq (.asgn Y 1)
-             (.whileDo (.neq Z 0)
-                       (.seq (.asgn Y (.mult Y Z))
-                             (.asgn Z (.minus Z 1)))))
+def fact_in_lean : Com := imp {
+  Z := X;
+  Y := 1;
+  while (Z <> 0) {
+    Y := Y * Z;
+    Z := Z - 1;
+  }
+}
 
-/- mwhicks1: At this point in the Rocq chapter there was discussion about
-   desugaring notation to help with proofs and debugging. Refer back there
-   for pedagogy once we work out the Lean notation story.
+-- FULL
+/-
+  Because we registered a delaborator, we can inspect a defined program with
+  `#print`, which shows the stored definition using the same concrete syntax:
+-/
+-- /FULL
+
+/--
+info: def fact_in_lean : Com :=
+imp {
+  Z := X;
+  Y := 1;
+  while (Z <> 0) {
+    Y := Y * Z;
+    Z := Z - 1;
+  }
+}
+-/
+#guard_msgs in
+#print fact_in_lean
+
+/-
+  ######################################################################
+  ## Desugaring Notations
 -/
 
+-- FULL
+/-
+  The `imp { … }` notation, together with the delaborators, is purely a
+  convenience for reading and writing programs. Occasionally, such as when debugging
+  a definition or a stuck proof, the concrete syntax hides the underlying structure
+  we want to see. For those moments we can switch the Imp notation off in Lean's
+  output with `set_option pp.notation false`, which our delaborators honor.
+
+  Note that unlike a `def`, `imp { … }` is a `macro` which is expanded during elaboration,
+  *before* the resulting term is type-checked. So `fact_in_lean` is not a
+  program hidden behind a layer of notation that a proof must first peel back;
+  it simply *is* the underlying tree of `Com`, `Aexp`, and `Bexp` constructors.
+  Consequently, when a proof goal mentions an Imp program, tactics such as
+  `cases`, `injection`, and `simp` already act on those constructors directly
+  -- there is nothing to "unfold". The delaborators affect only how that tree
+  is *displayed*. Nevertheless, seeing the raw constructors is sometimes very helpful!
+
+-/
+-- /FULL
+
+/-- info: imp {
+  X := X + 1;
+} : Com -/
+#guard_msgs in
+#check imp { X := X + 1; }
+
+/-- info: Com.asgn X ((Aexp.id X).plus (Aexp.num 1)) : Com -/
+#guard_msgs in
+set_option pp.notation false in
+#check imp { X := X + 1; }
+
 -- HIDEFROMADVANCED
+
+/-
+  ######################################################################
+  ## More Examples
+-/
+
 /- A few more examples. -/
 
 /- *** Assignment: -/
-def plus2 : Com := .asgn X (.plus X 2)
-def XtimesYinZ : Com := .asgn Z (.mult X Y)
+def plus2 : Com := imp { X := X + 2; }
+def XtimesYinZ : Com := imp { Z := X * Y; }
 
 /- *** Loops: -/
-def subtract_slowly_body : Com :=
-  .seq (.asgn Z (.minus Z 1))
-       (.asgn X (.minus X 1))
+def subtract_slowly_body : Com := imp {
+  Z := Z - 1;
+  X := X - 1;
+}
 
-def subtract_slowly : Com :=
-  .whileDo (.neq X 0) subtract_slowly_body
+def subtract_slowly : Com := imp {
+  while (X <> 0) {
+    ~subtract_slowly_body
+  }
+}
 
-def subtract_3_from_5_slowly : Com :=
-  .seq (.asgn X 3)
-       (.seq (.asgn Z 5)
-             subtract_slowly)
+def subtract_3_from_5_slowly : Com := imp {
+  X := 3;
+  Z := 5;
+  ~subtract_slowly
+}
 
 /- *** An infinite loop: -/
-def loop : Com := .whileDo true .skip
+def loop : Com := imp { while (true) { skip; } }
 
 -- HIDE
 /- Exponentiation: -/
-def exp_body : Com :=
-  .seq (.asgn Z (.mult Z X))
-       (.asgn Y (.minus Y 1))
-def pexp : Com := .whileDo (.neq Y 0) exp_body
+def exp_body : Com := imp {
+  Z := Z * X;
+  Y := Y - 1;
+}
+def pexp : Com := imp {
+  while (Y <> 0) {
+    ~exp_body
+  }
+}
 /- (Note that `pexp` should be run in a state where `Z` is `1`.) -/
 -- /HIDE
 -- /HIDEFROMADVANCED
@@ -1176,15 +1634,15 @@ def pexp : Com := .whileDo (.neq Y 0) exp_body
 
 def Com.ceval_fun_no_while (st : State) (c : Com) : State :=
   match c with
-  | skip => st
-  | asgn x a => (x →ₜ Aexp.eval st a ; st)
-  | seq c1 c2 =>
+  | imp {skip;} => st
+  | imp {x := ~a;} => (x →ₜ Aexp.eval st a ; st)
+  | imp {~c1 ~c2} =>
       let st' := ceval_fun_no_while st c1
       ceval_fun_no_while st' c2
-  | cond b c1 c2 =>
+  | imp {if (~b) {~c1} else {~c2}} =>
       if Bexp.eval st b then ceval_fun_no_while st c1
       else ceval_fun_no_while st c2
-  | whileDo _ _ => st               -- bogus
+  | imp {while (~_) {~_}} => st     -- bogus
 
 -- FULL
 /-
@@ -1307,26 +1765,26 @@ def Com.ceval_fun_no_while (st : State) (c : Com) : State :=
 
 inductive Ceval : Com → State → State → Prop where
   | E_Skip (st : State) :
-      Ceval .skip st st
+      Ceval (imp {skip;}) st st
   | E_Asgn (st : State) (a : Aexp) (n : Nat) (x : Ident)
       (h : Aexp.eval st a = n) :
-      Ceval (.asgn x a) st (x →ₜ n ; st)
+      Ceval (imp {x := ~a;}) st (x →ₜ n ; st)
   | E_Seq (c1 c2 : Com) (st st' st'' : State)
       (h1 : Ceval c1 st st') (h2 : Ceval c2 st' st'') :
-      Ceval (.seq c1 c2) st st''
+      Ceval (imp {~c1 ~c2}) st st''
   | E_IfTrue (st st' : State) (b : Bexp) (c1 c2 : Com)
       (hb : Bexp.eval st b = true) (hc : Ceval c1 st st') :
-      Ceval (.cond b c1 c2) st st'
+      Ceval (imp {if (~b) {~c1} else {~c2}}) st st'
   | E_IfFalse (st st' : State) (b : Bexp) (c1 c2 : Com)
       (hb : Bexp.eval st b = false) (hc : Ceval c2 st st') :
-      Ceval (.cond b c1 c2) st st'
+      Ceval (imp {if (~b) {~c1} else {~c2}}) st st'
   | E_WhileFalse (b : Bexp) (st : State) (c : Com)
       (hb : Bexp.eval st b = false) :
-      Ceval (.whileDo b c) st st
+      Ceval (imp {while (~b) {~c}}) st st
   | E_WhileTrue (st st' st'' : State) (b : Bexp) (c : Com)
       (hb : Bexp.eval st b = true) (hc : Ceval c st st')
-      (hloop : Ceval (.whileDo b c) st' st'') :
-      Ceval (.whileDo b c) st st''
+      (hloop : Ceval (imp {while (~b) {~c}}) st' st'') :
+      Ceval (imp {while (~b) {~c}}) st st''
 
 notation:40 st0 " =[ " c " ]=> " st1 => Ceval c st0 st1
 
@@ -1338,9 +1796,14 @@ notation:40 st0 " =[ " c " ]=> " st1 => Ceval c st0 st1
 -/
 
 example :
-    ∅ =[ .seq (.asgn X 2)
-                     (.cond (.le X 1) (.asgn Y 3) (.asgn Z 4)) ]=>
-      (Z →ₜ 4 ; X →ₜ 2 ; ∅) := by
+    ∅ =[ imp {
+           X := 2;
+           if (X <= 1) {
+             Y := 3;
+           } else {
+             Z := 4;
+           }
+         } ]=> (Z →ₜ 4 ; X →ₜ 2 ; ∅) := by
   -- We must supply the intermediate state.
   apply Ceval.E_Seq (st' := (X →ₜ 2 ; ∅))
   · apply Ceval.E_Asgn; rfl
@@ -1350,8 +1813,11 @@ example :
 
 -- EX2 (ceval_example2)
 example :
-    ∅ =[ .seq (.asgn X 0) (.seq (.asgn Y 1) (.asgn Z 2)) ]=>
-      (Z →ₜ 2 ; Y →ₜ 1 ; X →ₜ 0 ; ∅) := by
+    ∅ =[ imp {
+           X := 0;
+           Y := 1;
+           Z := 2;
+         } ]=> (Z →ₜ 2 ; Y →ₜ 1 ; X →ₜ 0 ; ∅) := by
   -- ADMITTED
   apply Ceval.E_Seq (st' := (X →ₜ 0 ; ∅))
   · apply Ceval.E_Asgn; rfl
@@ -1375,7 +1841,7 @@ example :
 
   ```
   ∀ (c : Com) (st st' : State),
-    st =[ .seq .skip c ]=> st' →
+    st =[ imp { skip; ~c } ]=> st' →
     st =[ c ]=> st'
   ```
 
@@ -1383,7 +1849,7 @@ example :
 -/
 -- HIDE
 theorem quiz1_answer (c : Com) (st st' : State)
-    (h : st =[ .seq .skip c ]=> st') : st =[ c ]=> st' := by
+    (h : st =[ imp { skip; ~c } ]=> st') : st =[ c ]=> st' := by
   cases h with
   | E_Seq _ _ _ smid _ h1 h2 =>
       cases h1 with
@@ -1397,7 +1863,7 @@ theorem quiz1_answer (c : Com) (st st' : State)
 
   ```
   ∀ (c1 c2 : Com) (st st' : State),
-    st =[ .seq c1 c2 ]=> st' →
+    st =[ imp { ~c1 ~c2 } ]=> st' →
     st =[ c1 ]=> st →
     st =[ c2 ]=> st'
   ```
@@ -1413,7 +1879,7 @@ theorem quiz1_answer (c : Com) (st st' : State)
 
   ```
   ∀ (b : Bexp) (c : Com) (st st' : State),
-    st =[ .cond b c c ]=> st' →
+    st =[ imp { if (~b) { ~c } else { ~c } } ]=> st' →
     st =[ c ]=> st'
   ```
 
@@ -1421,7 +1887,7 @@ theorem quiz1_answer (c : Com) (st st' : State)
 -/
 -- INSTRUCTORS
 theorem quiz3_answer (b : Bexp) (c : Com) (st st' : State)
-    (h : st =[ .cond b c c ]=> st') : st =[ c ]=> st' := by
+    (h : st =[ imp { if (~b) { ~c } else { ~c } } ]=> st') : st =[ c ]=> st' := by
   cases h with
   | E_IfTrue _ _ _ _ _ hb hc => exact hc
   | E_IfFalse _ _ _ _ _ hb hc => exact hc
@@ -1436,7 +1902,7 @@ theorem quiz3_answer (b : Bexp) (c : Com) (st st' : State)
   ∀ (b : Bexp),
     (∀ st, Bexp.eval st b = true) →
     ∀ (c : Com) (st : State),
-    ¬ ∃ st', st =[ .whileDo b c ]=> st'
+    ¬ ∃ st', st =[ imp { while (~b) { ~c } } ]=> st'
   ```
 
   (A) Yes    (B) No    (C) Not sure
@@ -1444,10 +1910,10 @@ theorem quiz3_answer (b : Bexp) (c : Com) (st st' : State)
 -- HIDE
 -- This one is tricky!
 theorem quiz4_answer (b : Bexp) (hbtrue : ∀ st, Bexp.eval st b = true)
-    (c : Com) (st : State) : ¬ ∃ st', st =[ .whileDo b c ]=> st' := by
+    (c : Com) (st : State) : ¬ ∃ st', st =[ imp { while (~b) { ~c } } ]=> st' := by
   rintro ⟨st', hev⟩
   have key : ∀ (cmd : Com) (s s' : State),
-      (s =[ cmd ]=> s') → cmd = .whileDo b c → False := by
+      (s =[ cmd ]=> s') → cmd = (imp { while (~b) { ~c } }) → False := by
     intro cmd s s' hce
     induction hce with
     | E_WhileFalse b0 s0 c0 hbf =>
@@ -1470,7 +1936,7 @@ theorem quiz4_answer (b : Bexp) (hbtrue : ∀ st, Bexp.eval st b = true)
 
   ```
   ∀ (b : Bexp) (c : Com) (st : State),
-    (¬ ∃ st', st =[ .whileDo b c ]=> st') →
+    (¬ ∃ st', st =[ imp { while (~b) { ~c } } ]=> st') →
     ∀ st'', Bexp.eval st'' b = true
   ```
 
@@ -1569,10 +2035,13 @@ theorem quiz2_answer (c1 c2 : Com) (st st' : State)
 
 def pup_to_n : Com :=
   -- ADMITDEF
-  .seq (.asgn Y 0)
-       (.whileDo (.le 1 X)
-                 (.seq (.asgn Y (.plus Y X))
-                       (.asgn X (.minus X 1))))
+  imp {
+    Y := 0;
+    while (1 <= X) {
+      Y := Y + X;
+      X := X - 1;
+    }
+  }
   -- /ADMITDEF
 
 /- HIDE: Result is the same as `(X →ₜ 0 ; Y →ₜ 3 ; ∅)` if one admits
@@ -1725,20 +2194,20 @@ theorem loop_never_stops (st st' : State) : ¬ (st =[ loop ]=> st') := by
 
 def Com.no_whiles (c : Com) : Bool :=
   match c with
-  | skip      => true
-  | asgn _ _  => true
-  | seq c1 c2 => no_whiles c1 && no_whiles c2
-  | cond _ ct cf => no_whiles ct && no_whiles cf
-  | whileDo _ _ => false
+  | imp {skip;} => true
+  | imp {_x := ~_a;} => true
+  | imp {~c1 ~c2} => no_whiles c1 && no_whiles c2
+  | imp {if (~_) {~ct} else {~cf}} => no_whiles ct && no_whiles cf
+  | imp {while (~_) {~_}} => false
 
 inductive NoWhilesR : Com → Prop where
   -- SOLUTION
-  | nw_Skip : NoWhilesR .skip
-  | nw_Asgn (x : Ident) (a : Aexp) : NoWhilesR (.asgn x a)
+  | nw_Skip : NoWhilesR (imp { skip; })
+  | nw_Asgn (x : Ident) (a : Aexp) : NoWhilesR (imp { x := ~a; })
   | nw_Seq (c1 c2 : Com) (h1 : NoWhilesR c1) (h2 : NoWhilesR c2) :
-      NoWhilesR (.seq c1 c2)
+      NoWhilesR (imp { ~c1 ~c2 })
   | nw_If (b : Bexp) (c1 c2 : Com) (h1 : NoWhilesR c1) (h2 : NoWhilesR c2) :
-      NoWhilesR (.cond b c1 c2)
+      NoWhilesR (imp { if (~b) { ~c1 } else { ~c2 } })
   -- /SOLUTION
 
 theorem no_whiles_eqv (c : Com) : Com.no_whiles c = true ↔ NoWhilesR c := by
