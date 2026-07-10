@@ -1471,7 +1471,7 @@ example : ∀ n, Ev n → Even n := by
   intro n h
   inversion h
   /- h = ev_0 -/
-  case ev_0 => exists 0; rw [double_zero]
+  case ev_0 => exists 0
   /- h = ev_succ_succ n' h' -/
   case ev_succ_succ n' h' =>
   /- Unfortunately, the second case is harder.  We need to show
@@ -1544,7 +1544,7 @@ theorem ev_Even : ∀ n, Ev n → Even n := by
   intro n h
   induction h
   /- h = ev_0 -/
-  case ev_0 => exists 0; rw [double_zero]
+  case ev_0 => exists 0
   /- h = ev_succ_succ n' h',  with ih : Even n' -/
   case ev_succ_succ n' h' ih =>
     let ⟨k, hk⟩ := ih
@@ -2153,7 +2153,7 @@ theorem leb_correct : ∀ n m,
   /- ADMITTED -/
   intro n m h
   induction n generalizing m
-  case zero => rw [zero_leb]
+  case zero => dsimp [Nat.ble]
   case succ n' ih =>
     cases m
     case zero => contradiction
@@ -2707,9 +2707,10 @@ inductive EmptyRelation : Nat → Nat → Prop where
   /- SOLUTION -/
 /- /SOLUTION -/
 
+-- TODO: @dsainati1 replace with inversion once https://github.com/plclub/sf-in-lean/issues/52 is fixed
 theorem empty_relation_is_empty : ∀ n m, ¬ EmptyRelation n m := by
   /- ADMITTED -/
-  intros n m contra; inversion contra
+  intros n m contra; cases contra
 /- /ADMITTED -/
 /- GRADE_THEOREM 2: empty_relation_is_empty -/
 /- [] -/
