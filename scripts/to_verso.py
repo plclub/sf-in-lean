@@ -16,8 +16,9 @@ Each /- ... -/ block comment becomes Verso prose.  Code is wrapped in
   -- BCP:/JC:/etc.    → :::dev blocks
   code                → ```lean blocks
 
-Note: -- ADMITDEF / -- /ADMITDEF and -- ADMITTED markers are left as Lean
-comments inside code blocks.  A future pass will convert them to solution!().
+Note: -- ADMITDEF / -- /ADMITDEF and -- ADMITTED markers are converted to
+solution!() wrappers (see `_convert_solution_markers`), so the student build
+stubs the elided definition/proof to `sorry` and the teacher build keeps it.
 
 A Rocq source (SOURCE.v) is also accepted: its comment/marker layer is first
 converted to the code-forward Lean-comment dialect above (the code lines stay
@@ -590,8 +591,13 @@ _GRADE_RE = re.compile(r'^--\s+GRADE_')
 # lines still fall through and are dropped, as before.
 _LINE_HEADER_HASH_RE = re.compile(r'^--\s+(#{1,6})\s+(\S.*)$')
 _LINE_HEADER_STAR_RE = re.compile(r'^--\s+(\*{1,3})\s+(\S.*)$')
-_HIDE_OPEN_RE = re.compile(r'^-- HIDE$')
-_HIDE_CLOSE_RE = re.compile(r'^-- /HIDE$')
+# Hidden regions: `-- HIDE … -- /HIDE` and the region form
+# `-- INSTRUCTORS … -- /INSTRUCTORS` (bare, no colon — distinct from the
+# `-- INSTRUCTORS:` author note handled by `_INSTRUCTOR_RE`).  Both are captured
+# verbatim and emitted as :::hide (or :::answer when nested inside a quiz); the
+# content is often deliberately admitted, so it must never be elaborated.
+_HIDE_OPEN_RE = re.compile(r'^-- (?:HIDE|INSTRUCTORS)$')
+_HIDE_CLOSE_RE = re.compile(r'^-- /(?:HIDE|INSTRUCTORS)$')
 # Paired `-- QUIZ` … `-- /QUIZ` review question.  Unlike HIDE, the region is
 # shown (-> ::::quiz); a `-- HIDE` nested inside becomes the quiz's :::answer.
 _QUIZ_OPEN_RE = re.compile(r'^-- QUIZ$')
@@ -607,8 +613,9 @@ _SOL_CLOSE_RE = re.compile(r'^--\s+/\s?(?:QUIET)?SOLUTION$')
 # Author-only / developer comment markers.  These are swept into :::dev blocks
 # (discarded from generated outputs, preserved verbatim in the Verso source).
 # The recognized tag set is `_DEV_TAGS` (defined above — add new tags there).
-# NB: INSTRUCTORS is handled separately (-> :::instructor); TERSE/FULL have their
-# own dedicated markers.
+# NB: the `-- INSTRUCTORS:` author note is handled separately (-> :::instructor),
+# and the bare `-- INSTRUCTORS` region form is a hidden region (see
+# `_HIDE_OPEN_RE`); TERSE/FULL have their own dedicated markers.
 _AUTHOR_RE = re.compile(r'^-- (' + _DEV_TAGS + r')[: (](.*)$')
 
 # `-- ==> …` / `-- ===> …` hand-written eval-output annotations: intentionally
@@ -1752,6 +1759,11 @@ def _convert_solution_markers(src: str) -> str:
         := <body>
         -- /ADMITDEF
 
+      def f … : T :=         ->   def f … : T := solution!(
+        -- ADMITDEF                 <body>)
+        <body>
+        -- /ADMITDEF
+
       <inside `by`>           ->   solution!
         -- ADMITTED                   <tactics, reindented one level deeper>
         <tactics>
@@ -1769,18 +1781,37 @@ def _convert_solution_markers(src: str) -> str:
         line = lines[i]
         s = line.strip()
 
-        # --- ADMITDEF: wrap the definition body (`:= …`) in solution!(…) ---
-        if s == '-- ADMITDEF':
+        # --- ADMITDEF: wrap the definition body in solution!(…) so the student
+        # build stubs the definition to `:= sorry` (keeping the name defined, so
+        # later references still elaborate) while the teacher build keeps the
+        # body.  The `:=` may sit either on the first body line (after the
+        # marker) or already on the definition's signature line above it. ---
+        if s in ('-- ADMITDEF', '/- ADMITDEF -/'):
             j = i + 1
             body = []
-            while j < n and lines[j].strip() != '-- /ADMITDEF':
+            while j < n and lines[j].strip() not in ('-- /ADMITDEF', '/- /ADMITDEF -/'):
                 body.append(lines[j]); j += 1
+            # index of the last non-blank body line (where the closing `)` goes)
+            last = len(body) - 1
+            while last > 0 and not body[last].strip():
+                last -= 1
             if body:
                 m = re.match(r'^(\s*:=)\s*(.*)$', body[0])
                 if m:
+                    # `:=` leads the body: `:= <expr>` -> `:= solution!(<expr>)`.
                     body[0] = m.group(1) + ' solution!(' + m.group(2)
-                    body[-1] = body[-1] + ')'
-                out.extend(body)
+                    body[last] = body[last] + ')'
+                    out.extend(body)
+                else:
+                    # `:=` is on the signature line already emitted above; find it
+                    # (skipping blank lines) and open `solution!(` there.
+                    p = len(out) - 1
+                    while p >= 0 and not out[p].strip():
+                        p -= 1
+                    if p >= 0 and out[p].rstrip().endswith(':='):
+                        out[p] = out[p].rstrip() + ' solution!('
+                        body[last] = body[last] + ')'
+                    out.extend(body)
             i = j + 1
             continue
 
