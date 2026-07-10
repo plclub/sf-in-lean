@@ -64,12 +64,51 @@ source:
 
 In general, there should be at most one blank line at a time in .lean files.  
 
+## Avoid inner ``` fences inside noop author blocks
+
+Author/developer notes are emitted by `to_verso` as **code blocks**
+(` ```dev ` and ` ```instructors `), NOT as `:::dev` / `:::instructors`
+directives. Reason: a Verso *directive* always parses its body as markdown, so
+arbitrary author prose (`:::`, `*`, `#`, `[…]`, backticks) could derail the
+parser and used to require an ugly inner verbatim ` ``` ` fence. A Verso **code
+block** (`@[code_block]`, `CodeBlockExpanderOf`) instead receives its body as a
+raw string that is never parsed — so a single tagged fence suffices and no inner
+fence is needed. See `SFLMeta/Comment.lean` (` ```dev `), `SFLMeta/Instructors.lean`
+(` ```instructors `), and the models `SFLMeta/Bnf.lean` / `SFLMeta/Save.lean`.
+The code block is registered under the directive's name via `@[code_block dev]`
+(explicit ident) so the fence reads ` ```dev ` even though a same-named
+`@[directive] def dev` still exists (directives and code blocks live in separate
+expander tables). In `to_verso`, `_emit_noop_directive` uses `_code_block(tag,
+text)`. Do NOT reintroduce the inner-fence pattern for these.
+
+Still verbatim-fenced (`_verbatim_block`), intentionally: `:::hide`,
+`:::solution`, `:::grade`. Unlike dev/instructors, `solution` and `grade` bodies
+are meant to be *consumed* later (solutions build / grading), so converting them
+to raw-body code blocks needs separate design. If you do convert one, follow the
+` ```dev ` pattern above.
+
 ## Checking to_verso outputs
 
 To check a chapter survived translation by the to_verso script: 
 Regenerate `<Ch>Verso.lean`, then confirm every identifier/number
 token and comment word in `<Ch>.lean` appears in the Verso output,
 excluding the intentionally-dropped tokens described below.
+
+Two complementary automated checks help here (both take
+`<Ch>.lean <Ch>Verso.lean`):
+
+* `scripts/check_verso_prose.py` — catches lost/garbled **prose** by comparing
+  contiguous word runs. It is blind to lost *markup*: a marker flattened to plain
+  prose loses no words and passes.
+* `scripts/check_verso_markers.py` — catches silently-flattened **structural
+  markers**. It inventories markers in the source and, for each one that should
+  become a Verso directive (`FULL`→`::::full`, `HIDE`→`::::hide`, `EX`→
+  `::::exercise`, `QUIZ`→`::+quiz`, author notes→` ```dev `, …), verifies the
+  directive is present in the output. A `FLATTENED` line means a marker was
+  dropped with no Verso analog (this is how the `-- QUIZ` drop went unnoticed —
+  the word-diff saw no loss). `WARN` count-mismatches are soft (verify by hand);
+  a marker keyword absent from its `_POLICY` table is `UNKNOWN` and must be
+  classified. Add new markers to `_POLICY` when `to_verso` learns to emit them.
 
 **Intentionally dropped by `to_verso` — do not treat as content loss:**
 
@@ -81,6 +120,15 @@ excluding the intentionally-dropped tokens described below.
 * The marker keywords themselves once consumed: `ADMITDEF`, `ADMITTED`,
   `SOLUTION`, `FULL`, `TERSE`, `HIDE`, `EX`/`EX1`/…, `GRADE_THEOREM`,
   `GRADE_MANUAL`, `INSTRUCTORS`.
+* `HIDEFROMHTML`/`/HIDEFROMHTML` (likewise `HIDEFROMADVANCED`): dropping the
+  marker and keeping the enclosed content is the intended behavior (confirmed
+  2026-07-08) — the region semantics are not honored in the Verso build. Both
+  check scripts already ignore these (`_POLICY` entry `None` in
+  `check_verso_markers.py`; `_MARKER_LINE_RE` in `check_verso_prose.py`), which
+  also means neither verifies the marker is actually *gone* from the output.
+  NB: `WORKINCLASS` is *not* in this category — it is translated to the
+  `workinclass!` tactic (proof shown in student/solutions builds, `sorry` in
+  the terse build); see `workinclass.md` for the design and edge cases.
 
 **Must be preserved** (these were bugs, now fixed): block-style author/dev
 notes (`/- MWH: … -/`, `/- BCP: … -/`, `/- NDS'25: … -/`, `/- NOTATION: … -/`,
