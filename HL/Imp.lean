@@ -275,7 +275,7 @@ example :
 -- /FULL
 
 theorem optimize_0plus_sound (a : Aexp) :
-    Aexp.eval (Aexp.optimize_0plus a) = Aexp.eval a := by
+    a.optimize_0plus.eval = a.eval := by
   induction a with
   | num n => rfl
   | plus a1 a2 ih1 ih2 =>
@@ -346,7 +346,7 @@ example :
 -- GRADE_THEOREM 0.5: optimize_0plus_b_test2
 
 theorem optimize_0plus_b_sound (b : Bexp) :
-    Bexp.eval (Bexp.optimize_0plus_b b) = Bexp.eval b := by
+    b.optimize_0plus_b.eval = b.eval := by
   -- ADMITTED
   induction b with
   | not b1 ih => simp only [Bexp.optimize_0plus_b, Bexp.eval]; rw [ih]
@@ -624,7 +624,7 @@ scoped notation:55 e:56 " ⇓ " n:56 => Aexp.evalR e n
 /- SOONER: BCP 23: Why can't we do induction on H in the ← direction?? -/
 
 theorem aevalR_iff_aeval (a : Aexp) (n : Nat) :
-    a ⇓ n ↔ Aexp.eval a = n := by
+    a ⇓ n ↔ a.eval = n := by
   constructor
   · intro h
     induction h with
@@ -1322,23 +1322,23 @@ def Aexp.eval (st : State) (a : Aexp) : Nat :=
 def Bexp.eval (st : State) (b : Bexp) : Bool :=
   match b with
   | bool b      =>  b
-  | eq   a1 a2  =>  Aexp.eval st a1 == Aexp.eval st a2
-  | neq  a1 a2  =>  Aexp.eval st a1 != Aexp.eval st a2
-  | le   a1 a2  =>  Aexp.eval st a1 ≤ Aexp.eval st a2
-  | gt   a1 a2  =>  Aexp.eval st a1 > Aexp.eval st a2
-  | not  b1     =>  !eval st b1
-  | and  b1 b2  =>  eval st b1 && eval st b2
+  | eq   a1 a2  =>  a1.eval st == a2.eval st
+  | neq  a1 a2  =>  a1.eval st != a2.eval st
+  | le   a1 a2  =>  a1.eval st ≤  a2.eval st
+  | gt   a1 a2  =>  a1.eval st >  a2.eval st
+  | not  b1     =>  !b1.eval st
+  | and  b1 b2  =>  b1.eval st && b2.eval st
 
 /- We reuse the total-map notation (`x →ₜ v ; ∅` etc.) for states. -/
 
 /- test_aexp1 -/
-example : Aexp.eval (X →ₜ 5 ; ∅) (aexp { 3 + (X * 2) }) = 13 := by rfl
+example : aexp { 3 + (X * 2) }.eval (X →ₜ 5 ; ∅) = 13 := by rfl
 
 /- test_aexp2 -/
-example : Aexp.eval (X →ₜ 5 ; Y →ₜ 4 ; ∅) (aexp { Z + (X * Y) }) = 20 := by rfl
+example : aexp { Z + (X * Y) }.eval (X →ₜ 5 ; Y →ₜ 4 ; ∅) = 20 := by rfl
 
 /- test_bexp1 -/
-example : Bexp.eval (X →ₜ 5 ; ∅) (bexp { true && !(X <= 4) }) = true := by rfl
+example : bexp { true && !(X <= 4) }.eval (X →ₜ 5 ; ∅) = true := by rfl
 
 -- dsainati: Bikeshedding: I'm not sure how I feel about this arrow subscript for maps. Easy to change later but just flagging to discuss. mwhicks1: This comes from the Maps chapter, which chenson2018 is working on. There is a keyboard shortcut for ↦ we could use (\mapsto).
 
