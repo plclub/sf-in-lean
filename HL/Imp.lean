@@ -643,8 +643,7 @@ theorem aevalR_iff_aeval (a : Aexp) (n : Nat) :
   Again, we can make the proof quite a bit shorter using the combinators
   from the previous section.
 -/
--- Claude: the `-- WORKINCLASS` marker leaves this shorter proof as a live
--- in-class exercise.
+-- mwhicks1: the `-- WORKINCLASS` marker leaves this shorter proof as a live in-class exercise.
 
 theorem aevalR_iff_aeval' (a : Aexp) (n : Nat) :
     a ⇓ n ↔ Aexp.eval a = n := by
@@ -679,6 +678,8 @@ inductive Bexp.evalR : Bexp → Bool → Prop where
   -- /SOLUTION
 
 scoped notation:55 e:56 " ⇓b " b:56 => Bexp.evalR e b
+
+-- mwhicks1: There is no keyboard shortcut for a subscript b, nor is there one for c (to use used with cevalR below). There are numbers, x, y, z, l, m, n, etc.
 
 theorem bevalR_iff_beval (b : Bexp) (bv : Bool) :
     b ⇓b bv ↔ Bexp.eval b = bv := by
@@ -1116,6 +1117,8 @@ instance : Coe Bool Bexp where
 
 def example_aexp : Aexp := aexp { 3 + (X * 2) }
 def example_bexp : Bexp := bexp { true && !(X <= 4) }
+
+-- dsainati: Bikeshedding: I'm not sure how I feel about this arrow subscript for maps. Easy to change later but just flagging to discuss. mwhicks1: This comes from the Maps chapter, which chenson2018 is working on. There is a keyboard shortcut for ↦ we could use (\mapsto).
 
 /-
   ######################################################################
