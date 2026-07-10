@@ -238,7 +238,7 @@ should be kept in sync as chapters are rewritten.
 | `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
 | `IndProp`         | `rcases`, `subst` |
 | `Typeclasses`     | `decide` |
-| `Automation`      | `lia`, `try`, `repeat`, `specialize`, `trivial`, `simp` |
+| `Automation`      | `lia`, `try`, `repeat`, `specialize`, `trivial`, `simp`, `generalize` |
 | `HL/Imp`          | *(none new)* |
 
 **Notes**
