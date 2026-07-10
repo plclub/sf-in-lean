@@ -385,6 +385,9 @@ inductive Aexp.evalR : Aexp → Nat → Prop where
       (h1 : Aexp.evalR a1 n1) (h2 : Aexp.evalR a2 n2) :
       Aexp.evalR (.mult a1 a2) (n1 * n2)
 
+-- chenson2018: There is still some naming weirdness in the relation forms of evaluation that should be addressed later.
+-- mwhicks1: I think this comment is about wanting to call `evalR` something like `Rel`, but it's not clear to me that I want to do that, e.g., since there are multiple evaluation relations (such as big-step and small-step) there won't be just one name
+
 -- FULL
 /-
   A small notational aside. We could instead have presented this relation
