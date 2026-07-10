@@ -33,6 +33,8 @@
 -- (either introduce `lia` in LF, or keep `omega`).
 
 import LF.Maps
+import Lean.PrettyPrinter.Delaborator
+import Lean.PrettyPrinter.Parenthesizer
 
 -- FULL
 /-
@@ -1118,7 +1120,181 @@ instance : Coe Bool Bexp where
 def example_aexp : Aexp := aexp { 3 + (X * 2) }
 def example_bexp : Bexp := bexp { true && !(X <= 4) }
 
--- dsainati: Bikeshedding: I'm not sure how I feel about this arrow subscript for maps. Easy to change later but just flagging to discuss. mwhicks1: This comes from the Maps chapter, which chenson2018 is working on. There is a keyboard shortcut for ↦ we could use (\mapsto).
+/-
+  ######################################################################
+  ## Delaborators
+-/
+
+-- FULL
+/-
+  The notations above are _input_ only: they teach Lean how to *read* `aexp
+  { … }` and `bexp { … }`, but Lean still *prints* an expression using its raw
+  constructors -- `example_aexp` shows up as `Aexp.plus (Aexp.num 3) …` rather
+  than `aexp { 3 + X * 2 }`. A _delaborator_ closes the loop. Where a `macro`
+  turns surface syntax into a term (_elaboration_), a delaborator does the
+  reverse: it turns an elaborated term back into surface syntax so that Lean's
+  own output uses our concrete Imp notation.
+
+  Each delaborator below walks a term of the given type and rebuilds the
+  matching piece of `imp_aexp`/`imp_bexp` syntax; a subterm Lean doesn't
+  recognize is printed with the `~` escape. The `@[delab …]` attribute
+  registers the top-level function to fire whenever Lean is about to display a
+  term headed by one of those constructors -- unless notation printing has been
+  switched off with `set_option pp.notation false`, which lets us fall back to
+  the raw constructors when debugging (see _Desugaring Notations_ below). The
+  companion _category parenthesizer_ re-inserts the parentheses the grammar's
+  precedences demand, so that, e.g., `(1 + 2) * 3` prints with its parentheses
+  intact.
+
+  You do not need to understand the details. The result is that a `#check`, an
+  `#eval`, or a proof goal mentioning an Imp expression is displayed in
+  readable Imp syntax rather than as a pile of constructors.
+-/
+-- /FULL
+
+namespace Imp.Delab
+open Lean PrettyPrinter Delaborator SubExpr Parenthesizer
+
+/-- Re-inserts parentheses in `imp_aexp` output according to the grammar's precedences. -/
+@[category_parenthesizer imp_aexp]
+def imp_aexp.parenthesizer : CategoryParenthesizer | prec => do
+  maybeParenthesize `imp_aexp true wrapParens prec <|
+    parenthesizeCategoryCore `imp_aexp prec
+where
+  wrapParens (stx : Syntax) : Syntax := Unhygienic.run do
+    let pstx ← `(($(⟨stx⟩)))
+    return pstx.raw.setInfo (SourceInfo.fromRef stx)
+
+/-- Re-inserts parentheses in `imp_bexp` output according to the grammar's precedences. -/
+@[category_parenthesizer imp_bexp]
+def imp_bexp.parenthesizer : CategoryParenthesizer | prec => do
+  maybeParenthesize `imp_bexp true wrapParens prec <|
+    parenthesizeCategoryCore `imp_bexp prec
+where
+  wrapParens (stx : Syntax) : Syntax := Unhygienic.run do
+    let pstx ← `(($(⟨stx⟩)))
+    return pstx.raw.setInfo (SourceInfo.fromRef stx)
+
+/-- Tag freshly built syntax with the term info that Lean's pretty printer expects. -/
+def annAsTerm {any} (stx : TSyntax any) : DelabM (TSyntax any) :=
+  (⟨·⟩) <$> annotateTermInfo ⟨stx.raw⟩
+
+/-- Rebuild `imp_aexp` concrete syntax from an `Aexp` term. -/
+partial def delabAexpInner : DelabM (TSyntax `imp_aexp) := do
+  let e ← getExpr
+  let stx ←
+    match_expr e with
+    | Aexp.num _ =>
+      match (← withAppArg getExpr).nat? with
+      | some v => pure ⟨Syntax.mkNumLit (toString v) |>.raw⟩
+      | none   => `(imp_aexp| ~$(← withAppArg delab))
+    | Aexp.id _ =>
+      -- INSTRUCTORS: a variable reference like aexp { X } elaborates to Aexp.id X where X is the declared Ident constant, so the delaborators print the constant's name as a bare identifier (and also handle the .id "X" string-literal form).
+      match ← withAppArg getExpr with
+      | .const nm _      => `(imp_aexp| $(mkIdent nm):ident)
+      | .lit (.strVal s) => `(imp_aexp| $(mkIdent (.mkSimple s)):ident)
+      | _                => `(imp_aexp| ~$(← withAppArg delab))
+    | Aexp.plus _ _ =>
+      let s1 ← withAppFn <| withAppArg delabAexpInner
+      let s2 ← withAppArg delabAexpInner
+      `(imp_aexp| $s1 + $s2)
+    | Aexp.minus _ _ =>
+      let s1 ← withAppFn <| withAppArg delabAexpInner
+      let s2 ← withAppArg delabAexpInner
+      `(imp_aexp| $s1 - $s2)
+    | Aexp.mult _ _ =>
+      let s1 ← withAppFn <| withAppArg delabAexpInner
+      let s2 ← withAppArg delabAexpInner
+      `(imp_aexp| $s1 * $s2)
+    | _ => `(imp_aexp| ~$(← delab))
+  annAsTerm stx
+
+/-- Rebuild `imp_bexp` concrete syntax from a `Bexp` term. -/
+partial def delabBexpInner : DelabM (TSyntax `imp_bexp) := do
+  let e ← getExpr
+  let stx ←
+    match_expr e with
+    | Bexp.bool _ =>
+      match ← withAppArg getExpr with
+      | .const ``Bool.true _  => `(imp_bexp| $(mkIdent `true):ident)
+      | .const ``Bool.false _ => `(imp_bexp| $(mkIdent `false):ident)
+      | _                     => `(imp_bexp| ~$(← withAppArg delab))
+    | Bexp.eq _ _ =>
+      let s1 ← withAppFn <| withAppArg delabAexpInner
+      let s2 ← withAppArg delabAexpInner
+      `(imp_bexp| $s1:imp_aexp = $s2:imp_aexp)
+    | Bexp.neq _ _ =>
+      let s1 ← withAppFn <| withAppArg delabAexpInner
+      let s2 ← withAppArg delabAexpInner
+      `(imp_bexp| $s1:imp_aexp <> $s2:imp_aexp)
+    | Bexp.le _ _ =>
+      let s1 ← withAppFn <| withAppArg delabAexpInner
+      let s2 ← withAppArg delabAexpInner
+      `(imp_bexp| $s1:imp_aexp <= $s2:imp_aexp)
+    | Bexp.gt _ _ =>
+      let s1 ← withAppFn <| withAppArg delabAexpInner
+      let s2 ← withAppArg delabAexpInner
+      `(imp_bexp| $s1:imp_aexp > $s2:imp_aexp)
+    | Bexp.not _ =>
+      let s ← withAppArg delabBexpInner
+      `(imp_bexp| ! $s)
+    | Bexp.and _ _ =>
+      let s1 ← withAppFn <| withAppArg delabBexpInner
+      let s2 ← withAppArg delabBexpInner
+      `(imp_bexp| $s1 && $s2)
+    | _ => `(imp_bexp| ~$(← delab))
+  annAsTerm stx
+
+-- The `whenPPOption getPPNotation` wrapper lets `set_option pp.notation false`
+-- switch this delaborator off, revealing the raw constructors (see the
+-- "Desugaring Notations" discussion, after the commands are introduced).
+@[delab app.Aexp.num, delab app.Aexp.id, delab app.Aexp.plus,
+  delab app.Aexp.minus, delab app.Aexp.mult]
+partial def delabAexp : Delab := whenPPOption getPPNotation do
+  -- This delaborator only understands `Aexp`'s constructors -- bail otherwise.
+  guard <| match_expr ← getExpr with
+    | Aexp.num _ => true
+    | Aexp.id _ => true
+    | Aexp.plus _ _ => true
+    | Aexp.minus _ _ => true
+    | Aexp.mult _ _ => true
+    | _ => false
+  match ← delabAexpInner with
+  | `(imp_aexp| ~$e) => pure e
+  | e => `(term| aexp { $e })
+
+@[delab app.Bexp.bool, delab app.Bexp.eq, delab app.Bexp.neq, delab app.Bexp.le,
+  delab app.Bexp.gt, delab app.Bexp.not, delab app.Bexp.and]
+partial def delabBexp : Delab := whenPPOption getPPNotation do
+  guard <| match_expr ← getExpr with
+    | Bexp.bool _ => true
+    | Bexp.eq _ _ => true
+    | Bexp.neq _ _ => true
+    | Bexp.le _ _ => true
+    | Bexp.gt _ _ => true
+    | Bexp.not _ => true
+    | Bexp.and _ _ => true
+    | _ => false
+  match ← delabBexpInner with
+  | `(imp_bexp| ~$e) => pure e
+  | e => `(term| bexp { $e })
+
+end Imp.Delab
+
+-- FULL
+/-
+  With the delaborators in place, Lean now prints Imp expressions using the
+  concrete syntax rather than their raw constructors.
+-/
+-- /FULL
+
+/-- info: aexp {3 + X * 2} : Aexp -/
+#guard_msgs in
+#check aexp { 3 + (X * 2) }
+
+/-- info: bexp {true && ! (X <= 4)} : Bexp -/
+#guard_msgs in
+#check bexp { true && !(X <= 4) }
 
 /-
   ######################################################################
@@ -1163,6 +1339,8 @@ example : Aexp.eval (X →ₜ 5 ; Y →ₜ 4 ; ∅) (aexp { Z + (X * Y) }) = 20 
 
 /- test_bexp1 -/
 example : Bexp.eval (X →ₜ 5 ; ∅) (bexp { true && !(X <= 4) }) = true := by rfl
+
+-- dsainati: Bikeshedding: I'm not sure how I feel about this arrow subscript for maps. Easy to change later but just flagging to discuss. mwhicks1: This comes from the Maps chapter, which chenson2018 is working on. There is a keyboard shortcut for ↦ we could use (\mapsto).
 
 /-
   ######################################################################
@@ -1240,6 +1418,66 @@ macro_rules
 
 -- FULL
 /-
+  Just as we did for expressions, we add a delaborator so that Lean prints
+  commands back in the `imp { … }` concrete syntax (see the Delaborators
+  section above). It reuses the expression delaborators for the condition of an
+  `if`/`while` and for the right-hand side of an assignment, and prints an
+  unrecognized subcommand with the `~` escape.
+-/
+-- /FULL
+
+namespace Imp.Delab
+open Lean PrettyPrinter Delaborator SubExpr
+
+/-- Rebuild `imp_com` concrete syntax from a `Com` term. -/
+partial def delabComInner : DelabM (TSyntax `imp_com) := do
+  let e ← getExpr
+  let stx ←
+    match_expr e with
+    | Com.skip => `(imp_com| skip;)
+    | Com.asgn _ _ =>
+      match ← withAppFn <| withAppArg getExpr with
+      | .const nm _ =>
+        let a ← withAppArg delabAexpInner
+        `(imp_com| $(mkIdent nm):ident := $a;)
+      | .lit (.strVal s) =>
+        let a ← withAppArg delabAexpInner
+        `(imp_com| $(mkIdent (.mkSimple s)):ident := $a;)
+      | _ => `(imp_com| ~$(← delab))
+    | Com.seq _ _ =>
+      let s1 ← withAppFn <| withAppArg delabComInner
+      let s2 ← withAppArg delabComInner
+      `(imp_com| $s1 $s2)
+    | Com.cond _ _ _ =>
+      let b  ← withAppFn <| withAppFn <| withAppArg delabBexpInner
+      let c1 ← withAppFn <| withAppArg delabComInner
+      let c2 ← withAppArg delabComInner
+      `(imp_com| if ($b) {$c1} else {$c2})
+    | Com.whileDo _ _ =>
+      let b ← withAppFn <| withAppArg delabBexpInner
+      let c ← withAppArg delabComInner
+      `(imp_com| while ($b) {$c})
+    | _ => `(imp_com| ~$(← delab))
+  annAsTerm stx
+
+@[delab app.Com.skip, delab app.Com.asgn, delab app.Com.seq,
+  delab app.Com.cond, delab app.Com.whileDo]
+partial def delabCom : Delab := whenPPOption getPPNotation do
+  guard <| match_expr ← getExpr with
+    | Com.skip => true
+    | Com.asgn _ _ => true
+    | Com.seq _ _ => true
+    | Com.cond _ _ _ => true
+    | Com.whileDo _ _ => true
+    | _ => false
+  match ← delabComInner with
+  | `(imp_com| ~$e) => pure e
+  | e => `(term| imp { $e })
+
+end Imp.Delab
+
+-- FULL
+/-
   As an example, here is the factorial function again, written as a formal
   definition. When this command terminates, the variable `Y` will
   contain the factorial of the initial value of `X`.  (Compare this to
@@ -1256,12 +1494,70 @@ def fact_in_lean : Com := imp {
   }
 }
 
-/- mwhicks1: At this point in the Rocq chapter there was discussion about
-   desugaring notation to help with proofs and debugging. Refer back there
-   for pedagogy once we work out the Lean notation story.
+-- FULL
+/-
+  Because we registered a delaborator, we can inspect a defined program with
+  `#print`, which shows the stored definition using the same concrete syntax:
+-/
+-- /FULL
+
+/--
+info: def fact_in_lean : Com :=
+imp {
+  Z := X;
+  Y := 1;
+  while (Z <> 0) {
+    Y := Y * Z;
+    Z := Z - 1;
+  }
+}
+-/
+#guard_msgs in
+#print fact_in_lean
+
+/-
+  ######################################################################
+  ## Desugaring Notations
 -/
 
+-- FULL
+/-
+  The `imp { … }` notation, together with the delaborators, is purely a
+  convenience for reading and writing programs. Occasionally, such as when debugging
+  a definition or a stuck proof, the concrete syntax hides the underlying structure
+  we want to see. For those moments we can switch the Imp notation off in Lean's
+  output with `set_option pp.notation false`, which our delaborators honor.
+
+  Note that unlike a `def`, `imp { … }` is a `macro` which is expanded during elaboration,
+  *before* the resulting term is type-checked. So `fact_in_lean` is not a
+  program hidden behind a layer of notation that a proof must first peel back;
+  it simply *is* the underlying tree of `Com`, `Aexp`, and `Bexp` constructors.
+  Consequently, when a proof goal mentions an Imp program, tactics such as
+  `cases`, `injection`, and `simp` already act on those constructors directly
+  -- there is nothing to "unfold". The delaborators affect only how that tree
+  is *displayed*. Nevertheless, seeing the raw constructors is sometimes very helpful!
+
+-/
+-- /FULL
+
+/-- info: imp {
+  X := X + 1;
+} : Com -/
+#guard_msgs in
+#check imp { X := X + 1; }
+
+/-- info: Com.asgn X ((Aexp.id X).plus (Aexp.num 1)) : Com -/
+#guard_msgs in
+set_option pp.notation false in
+#check imp { X := X + 1; }
+
 -- HIDEFROMADVANCED
+
+/-
+  ######################################################################
+  ## More Examples
+-/
+
 /- A few more examples. -/
 
 /- *** Assignment: -/
