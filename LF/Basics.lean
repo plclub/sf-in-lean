@@ -340,7 +340,7 @@ Functions over booleans can be defined in the same way as above
 ::::
 
 ```lean
-def notb (b : MyBool) : MyBool :=
+def not (b : MyBool) : MyBool :=
   match b with
   | MyBool.true => MyBool.false
   | MyBool.false => MyBool.true
@@ -350,12 +350,12 @@ def notb (b : MyBool) : MyBool :=
 :::
 
 ```lean
-def andb (b1 : MyBool) (b2 : MyBool) : MyBool :=
+def and (b1 : MyBool) (b2 : MyBool) : MyBool :=
   match b1 with
   | MyBool.true => b2
   | MyBool.false => MyBool.false
 
-def orb (b1 : MyBool) (b2 : MyBool) : MyBool :=
+def or (b1 : MyBool) (b2 : MyBool) : MyBool :=
   match b1 with
   | MyBool.true => MyBool.true
   | MyBool.false => b2
@@ -365,28 +365,28 @@ def orb (b1 : MyBool) (b2 : MyBool) : MyBool :=
 The last two definitions illustrate Lean's syntax for multi-argument
 functions.  The corresponding multi-argument _application_ syntax is
 illustrated by the following tests, which effectively constitute a
-complete specification -- a truth table -- for the `orb` function:
+complete specification -- a truth table -- for the `or` function:
 ::::
 
 :::terse
-Note the syntax for defining multi-argument functions (`andb` and `orb`).
+Note the syntax for defining multi-argument functions (`and` and `or`).
 :::
 
 
 ```lean
-example : orb MyBool.true  MyBool.false = MyBool.true  := by rfl
-example : orb MyBool.false MyBool.false = MyBool.false := by rfl
-example : orb MyBool.false MyBool.true  = MyBool.true  := by rfl
-example : orb MyBool.true  MyBool.true  = MyBool.true  := by rfl
+example : or MyBool.true  MyBool.false = MyBool.true  := by rfl
+example : or MyBool.false MyBool.false = MyBool.false := by rfl
+example : or MyBool.false MyBool.true  = MyBool.true  := by rfl
+example : or MyBool.true  MyBool.true  = MyBool.true  := by rfl
 ```
 
 We can define new symbolic notations for existing definitions.
 Don't worry for now about how the notation is defined.
 
 ```lean
-local prefix:40 (priority := high) "!" => notb
-local infixl:35 (priority := high) " && " => andb
-local infixl:30 (priority := high) " || " => orb
+local prefix:40 (priority := high) "!" => not
+local infixl:35 (priority := high) " && " => and
+local infixl:30 (priority := high) " || " => or
 ```
 
 ```lean
@@ -398,7 +398,7 @@ example : (!MyBool.false) = MyBool.true := by rfl
 :::slidebreak
 :::
 
-::::exercise (rating := 1) (name := "nandb")
+::::exercise (rating := 1) (name := "nand")
 The `sorry` keyword is a placeholder for an incomplete proof or
 definition.  We use it in exercises to indicate the parts that we're
 leaving for you -- i.e., your job is to replace `sorry` with real
@@ -410,42 +410,42 @@ its inputs are `MyBool.false`. Make sure that the `example` assertions
 below can be verified by Lean.
 
 ```lean
-def nandb (b1 : MyBool) (b2 : MyBool) : MyBool
+def nand (b1 : MyBool) (b2 : MyBool) : MyBool
   := solution!(match b1 with
-  | MyBool.true => notb b2
+  | MyBool.true => not b2
   | MyBool.false => MyBool.true)
 
-example : nandb MyBool.true  MyBool.false  = MyBool.true  := solution!(by rfl)
-example : nandb MyBool.false MyBool.false =  MyBool.true  := solution!(by rfl)
-example : nandb MyBool.false MyBool.true  =  MyBool.true  := solution!(by rfl)
-example : nandb MyBool.true  MyBool.true   = MyBool.false := solution!(by rfl)
+example : nand MyBool.true  MyBool.false  = MyBool.true  := solution!(by rfl)
+example : nand MyBool.false MyBool.false =  MyBool.true  := solution!(by rfl)
+example : nand MyBool.false MyBool.true  =  MyBool.true  := solution!(by rfl)
+example : nand MyBool.true  MyBool.true   = MyBool.false := solution!(by rfl)
 ```
 
 :::grade
 ```
-GRADE_THEOREM 1: nandb_test4
+GRADE_THEOREM 1: nand_test4
 ```
 :::
 ::::
 
-::::exercise (rating := 1) (name := "andb3")
-Do the same for the `andb3` function below. This function should
+::::exercise (rating := 1) (name := "and3")
+Do the same for the `and3` function below. This function should
 return `true` when all of its inputs are `true`, and `false`
 otherwise.
 
 ```lean
-def andb3 (b1 : MyBool) (b2 : MyBool) (b3 : MyBool) : MyBool
-  := solution!(andb b1 (andb b2 b3))
+def and3 (b1 : MyBool) (b2 : MyBool) (b3 : MyBool) : MyBool
+  := solution!(and b1 (and b2 b3))
 
-example : andb3 MyBool.true  MyBool.true  MyBool.true  = MyBool.true  := solution!(by rfl)
-example : andb3 MyBool.false MyBool.true  MyBool.true  = MyBool.false := solution!(by rfl)
-example : andb3 MyBool.true  MyBool.false MyBool.true  = MyBool.false := solution!(by rfl)
-example : andb3 MyBool.true  MyBool.true  MyBool.false = MyBool.false := solution!(by rfl)
+example : and3 MyBool.true  MyBool.true  MyBool.true  = MyBool.true  := solution!(by rfl)
+example : and3 MyBool.false MyBool.true  MyBool.true  = MyBool.false := solution!(by rfl)
+example : and3 MyBool.true  MyBool.false MyBool.true  = MyBool.false := solution!(by rfl)
+example : and3 MyBool.true  MyBool.true  MyBool.false = MyBool.false := solution!(by rfl)
 ```
 
 :::grade
 ```
-GRADE_THEOREM 1: andb3_test4
+GRADE_THEOREM 1: and3_test4
 ```
 :::
 ::::
@@ -483,7 +483,7 @@ Now that we've stated the theorem we'd like to prove, let's set about proving it
 ::::
 
 ```lean
-theorem true_andb : ∀ (b : MyBool), (MyBool.true && b) = b := by
+theorem true_and : ∀ (b : MyBool), (MyBool.true && b) = b := by
   intro b
   rfl
 ```
@@ -510,7 +510,7 @@ Let's walk through the example above with this terminology in mind.
 ::::
 
 ```lean
-theorem true_andb_explained : ∀ (b : MyBool), (MyBool.true && b) = b := by
+theorem true_and_explained : ∀ (b : MyBool), (MyBool.true && b) = b := by
   /- Move your cursor (click) here to see the initial proof state in
       the InfoView. The context (before the ⊢) is empty.
       The goal is `∀ (b : MyBool), (MyBool.true && b) = b`. -/
@@ -537,7 +537,7 @@ theorem true_andb_explained : ∀ (b : MyBool), (MyBool.true && b) = b := by
     inspecting our goal will show that it is `(MyBool.true && b) = b`, which
     may not appear to be equal to itself. However, the tactic
     _evaluates_ both sides of the equality before comparing them. In
-    this case, if we look at the definition of `andb`, we can see that,
+    this case, if we look at the definition of `and`, we can see that,
     when its first argument is `MyBool.true`, the result is its second
     argument. So the two terms `MyBool.true && b` and `b` are in fact equal because one
     evaluates to the other.
@@ -556,7 +556,7 @@ instead written the following:
 @dsainati1: Ideally would change this to a #guardmsgs(error) if we can
 :::
 
-/- theorem trueandb : ∀ (b : MyBool), (MyBool.true && b) = b := by
+/- theorem true_and_wrong : ∀ (b : MyBool), (MyBool.true && b) = b := by
   intro b
     rfl
 -/
@@ -567,17 +567,17 @@ In general, sequential tactics applied to the same goal must be on subsequent li
 level of indentation or separated on the same line by a `;` like so:
 
 ```lean
-theorem true_andb' : ∀ (b : MyBool), (MyBool.true && b) = b := by
+theorem true_and' : ∀ (b : MyBool), (MyBool.true && b) = b := by
   intro b; rfl
 ```
 ::::
 
-::::exercise (rating := 1) (name := "false_orb_exercise")
+::::exercise (rating := 1) (name := "false_or_exercise")
 Here's a simple proof for you to try.
 Remove `sorry` and fill in the proof.
 
 ```lean
-theorem false_orb : ∀ (b : MyBool), (MyBool.false || b) = b := by
+theorem false_or : ∀ (b : MyBool), (MyBool.false || b) = b := by
   solution!
     intro b
     rfl
@@ -585,7 +585,7 @@ theorem false_orb : ∀ (b : MyBool), (MyBool.false || b) = b := by
 
 :::grade
 ```
-GRADE_THEOREM 1: false_orb_exercise
+GRADE_THEOREM 1: false_or_exercise
 ```
 :::
 ::::
@@ -1123,8 +1123,8 @@ Note: The `bits` constructor illustrates a feature of multi-parameter
 declarations, both for constructors and for functions: Instead
 of writing `(x0 : Bit) (x1 : Bit) ...` we write `(x0 x1 ... : Bit)`
 since all of the variables have the same type. We could have done
-the same with the function definition `orb` above, writing
-`orb (b1 b2 : MyBool)` rather than `orb (b1 : MyBool) (b2 : MyBool)`.
+the same with the function definition `or` above, writing
+`or (b1 b2 : MyBool)` rather than `or (b1 : MyBool) (b2 : MyBool)`.
 
 The `bits` constructor acts as a wrapper for its contents.
 Unwrapping is done by pattern matching, as in the `allZero` function
@@ -2076,7 +2076,7 @@ Another example, using booleans:
 :::
 
 ```lean
-theorem notb_involutive : ∀ b : Bool, (!!b) = b := by
+theorem not_involutive : ∀ b : Bool, (!!b) = b := by
   intro b
   cases b
   case false =>
@@ -2107,7 +2107,7 @@ We can have nested case analysis:
 :::
 
 ```lean
-theorem andb_commutative : ∀ b c : Bool,
+theorem and_commutative : ∀ b c : Bool,
     (b && c) = (c && b) := by
   intro b c
   cases b
@@ -2128,7 +2128,7 @@ theorem andb_commutative : ∀ b c : Bool,
       rewrite [Bool.and_self]
       rfl
 
-theorem andb3_exchange : ∀ b c d : Bool,
+theorem and3_exchange : ∀ b c d : Bool,
     ((b && c) && d) = ((b && d) && c) := by
   intro b c d
   cases b
@@ -2187,13 +2187,13 @@ example, if `h : P` is in the context and the goal is `P`, then `exact h`
 closes the goal.  You can also transform `h` slightly, but we will
 explain how when we get to an example where we need to.
 
-::::exercise (rating := 2) (name := "orb_false_true")
+::::exercise (rating := 2) (name := "or_false_true")
 Prove the following claim.
 
 Tip: the rewrite rule to simplify `(b || false)` is called `Bool.or_false`.
 
 ```lean
-theorem orb_false_true : ∀ b : Bool,
+theorem or_false_true : ∀ b : Bool,
     (b || false) = true → b = true := by
   solution!
     intro b h
@@ -2203,7 +2203,7 @@ theorem orb_false_true : ∀ b : Bool,
 
 :::grade
 ```
-GRADE_THEOREM 2: orb_false_true
+GRADE_THEOREM 2: or_false_true
 ```
 :::
 ::::
@@ -2481,11 +2481,11 @@ GRADE_MANUAL 1: negation_fn_applied_twice
 :::
 ::::
 
-::::exercise (rating := 3) (name := "andb_eq_orb")
+::::exercise (rating := 3) (name := "and_eq_or")
 Prove the following theorem.
 
 ```lean
-theorem andb_eq_orb : ∀ b c : Bool, (b && c) = (b || c) → b = c := by
+theorem and_eq_or : ∀ b c : Bool, (b && c) = (b || c) → b = c := by
   solution!
     intro b c h
     cases c
@@ -2507,7 +2507,7 @@ theorem andb_eq_orb : ∀ b c : Bool, (b && c) = (b || c) → b = c := by
 
 :::grade
 ```
-GRADE_THEOREM 3: andb_eq_orb
+GRADE_THEOREM 3: and_eq_or
 ```
 :::
 ::::
