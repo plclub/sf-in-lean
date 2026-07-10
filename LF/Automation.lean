@@ -88,14 +88,13 @@ example : forall (m n p : Nat),
 # Tactic Combinators
 
 :::dev
-@dsainati1 - this example comes directly from the Rocq textbook, but it's a bit weird
-(there and here!) becuase we could also just solve this with `lia` directly
+@dsainati1 - this example is a bit weird because we could also just solve this with `lia` directly
 :::
 
 ::::full
 In `Induction`, we saw how to use the `<;>` combinator in order to apply the same
 tactic to every subgoal in a proof. As a reminder, consider this example,
-where splitting on `n` leaves two subgoals that are discharged identically:
+where `cases` on `b` and `c` each leaves two subgoals that are discharged identically:
 ::::
 
 ::::terse
@@ -103,13 +102,8 @@ Recall the `<;>` combinator...
 ::::
 
 ```lean
-example (n : Nat) : n = 0 ∨ n ≥ 1 := by
-  cases n with
-  | zero   => lia
-  | succ k => lia
-
-example (n : Nat) : n = 0 ∨ n ≥ 1 := by
-  cases n <;> lia -- run `cases n`, then `lia` on each subgoal
+example (b c : Bool) : (b && c) = (c && b) := by
+  cases b <;> cases c <;> rfl
 ```
 
 ::::full
@@ -145,10 +139,28 @@ example : 1 = 1 := by
 ::::full
 There is not much reason to use `try` in completely manual proofs like
 these, but it is very useful together with the `<;>` combinator.
+::::
 
-... FILL IN ....
+```lean
+inductive silly : Nat → Prop where
+| silly1 n (h : n > 1) : silly n
+| silly2 n (h : 1 ∈ []) : silly n
+| silly3 n (h : exists m, n = m + 2) : silly n
 
-Here, we can use the ... tactic to close some of these goals, but not all of them. So,
+example : forall n, silly n → n ≠ 1 := by
+  intro n h
+  cases h
+  . lia
+  . contradiction
+  . lia
+```
+
+:::dev
+TODO (@dsainati1): replace `cases` with `inversion` when its issue is fixed
+:::
+
+::::full
+Here, we can use the `lia` tactic to close some of these goals, but not all of them. So,
 a more compact way to write this proof would be:
 ::::
 
@@ -157,20 +169,13 @@ The `try` and `<;>` combinators used together allow you to use a tactic to some,
 but not all, goals...
 ::::
 
-::::dev
-@dsainati1: Come up with sample proof using `<;>` and try together
-::::
-
-::::full
-However, be careful when using `try` with tactics that cannot fail; in some circumstances,
-this can leave you with unprovable goals! Recall the proof of `Perm3_symm` from `IndProp`
-
-:::dev
-TODO (@dsainati1) - example of using `try` and `<;>` to make your proof state unrecoverable
-:::
-
-... FILL IN ....
-::::
+```lean
+example : forall n, silly n → n ≠ 1 := by
+  intro n h
+  cases h <;> try lia
+  -- `lia` doesn't know that `1 ∈ []` is impossible, but we can use `contradiction`
+  contradiction
+```
 
 ## The `repeat` combinator
 
@@ -181,10 +186,11 @@ Here is an example proving that `10` is in a long list using `repeat`:
 
 ```lean
 example : 10 ∈ [1,2,3,4,5,6,7,8,9,10] := by
-  repeat rw [List.mem_cons]
-  -- repeats `right` until `left; rfl` succeeds
-  repeat (try left; rfl); right
-  left; rfl
+  repeat
+    rw [List.mem_cons]
+    try left; rfl
+    -- try makes this optional, which is necessary for the last repetition where left; rfl succeeds
+    try right
 ```
 
 ::::full
@@ -194,11 +200,12 @@ goal at all (i.e., it repeats zero times).
 
 ```lean
 example : 10 ∈ [1,2,3,4,5,6,7,8,9,10] := by
-  repeat rw [List.mem_cons]
   -- This is a no-op
-  repeat (left; rfl)
-  repeat (try left; rfl); right
-  left; rfl
+  repeat lia
+  repeat
+    rw [List.mem_cons]
+    try left; rfl
+    try right
 ```
 ::::
 
@@ -237,6 +244,57 @@ tactics is to guide Lean in constructing proofs; if the
 construction process diverges (i.e., it does not terminate), this
 simply means that we have failed to construct a proof at all, not
 that we have constructed a bad proof.
+::::
+
+## The `first` combinator
+
+::::full
+The `first` combinator takes a sequence of tactics and tries them in order,
+stopping after the first success. As a silly example:
+::::
+
+::::terse
+The `first` combinator applies the first successful tactic in a list:
+::::
+
+```lean
+example : forall n m, n * (m + 1) = n * m + n := by
+  first | rfl | left | lia | induction n
+```
+
+::::full
+Neither `rfl` nor `left` succeed on this goal, but `lia` does, so `first` stops after `lia`
+and never tries `induction`. As with `try`, `first` is most useful in combination with
+other combinators. For example, we can rewrite our previous examples that used `repeat` and `try`
+like so:
+::::
+
+```lean
+example : 10 ∈ [1,2,3,4,5,6,7,8,9,10] := by
+  repeat first
+    | exact List.mem_cons_self
+    | apply List.mem_cons_of_mem
+```
+
+::::full
+The `first` tactic here will attempt to close the goal with an application of `List.mem_cons_self`,
+if it can, and otherwise `apply List.mem_cons_of_mem` to proceed to checking the next element in the
+list. Note that the order here is important! If we had instead written:
+
+```lean
+/-- warning: declaration uses `sorry` -/
+#guard_msgs in
+example : 10 ∈ [1,2,3,4,5,6,7,8,9,10] := by
+  repeat first
+    | apply List.mem_cons_of_mem
+    | exact List.mem_cons_self
+  -- unprovable state!
+  sorry
+```
+
+Here, when we reach the goal `10 ∈ [10]`, instead of closing the goal with `List.mem_cons_self`
+like before, we would instead first try `apply List.mem_cons_of_mem`, which would also succeed.
+This leaves us with the goal `10 ∈ []`, which is of course false.
 ::::
 
 # The `simp` Tactic
