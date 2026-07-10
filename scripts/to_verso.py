@@ -1855,8 +1855,10 @@ def _convert_solution_markers(src: str) -> str:
 #   * the bare `(* INSTRUCTORS *)` … `(* /INSTRUCTORS *)` *region* (quiz
 #     answers in Imp; no line-form analogue) is mapped to `-- HIDE` … `-- /HIDE`
 #     (same verbatim-capture treatment; renders as the quiz's :::answer).
-#   * `(* ADVANCED: HIDEFROMHTML *)` -> `-- TERSE: HIDEFROMHTML` (both are
-#     dropped-marker forms downstream).
+#   * HIDEFROMHTML / HIDEFROMADVANCED markers (bare or `TERSE:`/`ADVANCED:`
+#     prefixed) are dropped outright at conversion — the region semantics are
+#     not honored anywhere downstream, and dropping here also keeps the marker
+#     word out of verbatim-captured bodies.  The enclosed content is kept.
 #   * `-/` / `/-` occurring inside comment text would break the emitted Lean
 #     comment; a space is inserted (`- /`, `/ -`) — visible, harmless.
 
@@ -1970,14 +1972,21 @@ def _rq_block_lines(text, indent=''):
 
 
 def _rq_marker_line(m):
-    """Render a _RQ_MARKER_BODY_RE match as its `-- MARKER` line form."""
+    """Render a _RQ_MARKER_BODY_RE match as its `-- MARKER` line form, or
+    None for a marker that is dropped outright at conversion."""
     prefix, marker = m.group(1), m.group(2)
+    if marker.lstrip('/') in ('HIDEFROMHTML', 'HIDEFROMADVANCED'):
+        # Region semantics are not honored anywhere downstream: dropping the
+        # marker and keeping the enclosed content is the intended behavior
+        # (see CLAUDE.md).  Dropping *here*, rather than relying on the
+        # downstream prose-level drops, also keeps the marker word out of
+        # verbatim-captured bodies (hide / answer / solution regions) and
+        # covers the `ADVANCED:`/`TERSE:`-prefixed spellings uniformly.
+        return None
     if marker.lstrip('/') == 'INSTRUCTORS':
         # Bare region form (quiz answers): no line-form analogue; HIDE gives
         # the same verbatim-capture treatment (-> :::answer inside a quiz).
         marker = marker.replace('INSTRUCTORS', 'HIDE')
-    if prefix == 'ADVANCED':
-        prefix = 'TERSE'   # only ADVANCED: HIDEFROMHTML occurs; dropped downstream
     marker = ' '.join(marker.split())
     return f'-- {prefix}: {marker}' if prefix else f'-- {marker}'
 
@@ -1991,8 +2000,9 @@ def _rq_flat(body):
 
 def _rq_track_hide(marker_line, state):
     """Maintain state['hide_depth'] across emitted -- HIDE / -- /HIDE markers
-    (used to suppress the untagged-comment triage banner inside hide regions)."""
-    s = marker_line.strip()
+    (used to suppress the untagged-comment triage banner inside hide regions).
+    Tolerates a dropped (None) marker."""
+    s = marker_line.strip() if marker_line else ''
     if s == '-- HIDE':
         state['hide_depth'] = state.get('hide_depth', 0) + 1
     elif s == '-- /HIDE':
@@ -2012,7 +2022,9 @@ def _rq_hoist_inline_markers(line):
         if before.strip():
             out.append(before.rstrip())
         mb = _RQ_MARKER_BODY_RE.match(' '.join(m.group(1).split()))
-        out.append(_rq_marker_line(mb))
+        ml = _rq_marker_line(mb)
+        if ml is not None:
+            out.append(ml)
         pos = m.end()
     rest = line[pos:]
     if rest.strip():
@@ -2108,7 +2120,9 @@ def _rq_emit_coqdoc(text, stem, state):
             flush()
             mm2 = _RQ_MARKER_BODY_RE.match(_rq_flat(body2)) if body2.strip() else None
             if mm2:
-                out.append(_rq_marker_line(mm2))
+                ml2 = _rq_marker_line(mm2)
+                if ml2 is not None:
+                    out.append(ml2)
             else:
                 out.extend(_rq_classify_standalone(body2, stem, state))
             if trailing2.strip():
@@ -2147,7 +2161,9 @@ def rocq_to_lean_dialect(src, stem=None):
                 if mm:
                     # `(* ADMITTED *) Proof. …`: marker on its own line, then
                     # reprocess the remainder (it may hold more comments).
-                    out.append(_rq_track_hide(_rq_marker_line(mm), state))
+                    ml = _rq_track_hide(_rq_marker_line(mm), state)
+                    if ml is not None:
+                        out.append(ml)
                     lines[li] = indent + trailing.lstrip()
                     i = li
                 else:
@@ -2158,7 +2174,9 @@ def rocq_to_lean_dialect(src, stem=None):
                     i = li + 1
                 continue
             if mm:
-                out.append(_rq_track_hide(_rq_marker_line(mm), state))
+                ml = _rq_track_hide(_rq_marker_line(mm), state)
+                if ml is not None:
+                    out.append(ml)
             elif indent and prev_code:
                 # Indented commentary directly continuing a code run (between
                 # tactics): keep it in code position, as the tokenizer expects.

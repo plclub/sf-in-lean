@@ -103,10 +103,12 @@ does. Points to know:
 
 * **Losslessness is the contract**: every `.v` comment routes somewhere. The
   only token-level exceptions, all deliberate: `####…` separator lines are
-  dropped; the bare `(* INSTRUCTORS *)…(* /INSTRUCTORS *)` *region* form maps
-  to `-- HIDE`…`-- /HIDE` (same verbatim-capture treatment; renders as a quiz
-  `:::answer`); `(* ADVANCED: HIDEFROMHTML *)` maps to the equivalent
-  `-- TERSE: HIDEFROMHTML` dropped-marker form.
+  dropped; HIDEFROMHTML/HIDEFROMADVANCED markers (bare or `TERSE:`/`ADVANCED:`
+  prefixed) are dropped outright at conversion (content kept — and unlike the
+  .lean path, the marker word never survives into verbatim-captured
+  hide/answer/solution bodies); the bare `(* INSTRUCTORS *)…(* /INSTRUCTORS *)`
+  *region* form maps to `-- HIDE`…`-- /HIDE` (same verbatim-capture treatment;
+  renders as a quiz `:::answer`).
 * Untagged single-star `(* … *)` comments at prose position are probable
   errors in the source; they route to `:::dev` with a `COMMENT: [untagged …]`
   banner naming their origin. Each is a triage point for the manual pass
