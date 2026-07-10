@@ -1098,9 +1098,9 @@ theorem foo2 (n m : Nat) :
        ((n::l1') ++ l2).length = (n::l1').length + l2.length.
 ]]
       This follows directly from the definitions of [length] and [++]
-      together with the induction hypothesis. [] *)
+      together with the induction hypothesis. []
 
-(** _Theorem_: For all lists [l],  l.rev.length = l.length
+    _Theorem_: For all lists [l],  l.rev.length = l.length
 
     _Proof_: By induction on [l].
 
