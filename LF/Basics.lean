@@ -82,6 +82,15 @@ some basic _tactics_ that can be used to prove properties of
 programs.
 ::::
 
+:::dev
+HG: The above makes some assumptions about jargon and terminology that I'm not sure we'll have
+covered at this point. For example, I've found "side effects" is often not intuitive. Also, I think
+"a concrete method for computing a mathematical function" is setting an OOP-trained student up for
+confusion around the word "method." I don't want to just go editing long-standing text if it's been
+working, but my two cents is that there are some opportunities to remove friction in this opening
+bit, and I'd be happy to propose a rewrite.
+:::
+
 # Data and Functions
 
 ## Enumerated Types
@@ -258,8 +267,7 @@ and the `Day` type to see their definitions, and experiment with adding your own
 For `#eval` and other commands, we show Lean's responses in comments; if you
 hover over the `#eval` commands above, you will see the popup that contains
 the output should match what's in the comment below. Experiment with adding
-your own `#eval` commands to test other inputs.
-
+your own `#eval` commands explore how other functions work.
 ::::
 
 Continuing with our simple type and function, we can record what we _expect_
@@ -300,6 +308,9 @@ executable programming language (unlike Gallina)? We should get a Lean pro's
 take on what to say here.
 @dsainati1: Per GitHub discussion, we should either include a diagram in a later chapter,
 or potentially link to https://lean-lang.org/doc/reference/latest/Elaboration-and-Compilation/
+HG: IMO it's not really useful to go to this level of detail here. I would cut the preceeding text
+off at "Try it out!" and drop the rest. (I suspect this framing came from Rocq, where extracting
+code is a whole process; Lean just compiles like any other programming language.)
 :::
 
 ## Booleans
@@ -371,7 +382,6 @@ complete specification -- a truth table -- for the `or` function:
 :::terse
 Note the syntax for defining multi-argument functions (`and` and `or`).
 :::
-
 
 ```lean
 example : or MyBool.true  MyBool.false = MyBool.true  := by rfl
@@ -554,6 +564,7 @@ instead written the following:
 
 :::dev
 @dsainati1: Ideally would change this to a #guardmsgs(error) if we can
+HG: +1
 :::
 
 /- theorem true_and_wrong : ∀ (b : MyBool), (MyBool.true && b) = b := by
@@ -599,6 +610,10 @@ Be careful, though: every time you say `sorry` you are leaving
 a door open for total nonsense to enter Lean's safe, formally
 checked world!
 ::::
+
+:::dev
+HG: In the terse .lean output this ends up looking like an exercise.
+:::
 
 ```lean -keep
 theorem really_bad : MyBool.true = MyBool.false := by sorry
@@ -1664,6 +1679,13 @@ theorem two_plus_two_eq_four : two + two = four := by
     rfl
 ```
 
+:::dev
+HG: I don't want to introduce new things here, but it occurs to me that it would actually be kind of
+nice to use `calc` or `conv` to scaffold these very intentional symbol pushing proofs. Maybe a good
+compromise would be be able to put comments that clarify that the first line "rewrites the righthand
+side to `succ (succ (succ (succ zero)))`"?
+:::
+
 ::::full
 Now that we know how addition is defined, we can use it to define multiplication:
 ::::
@@ -1738,6 +1760,12 @@ GRADE_THEOREM 2: test_mult1
 
 When we say that Lean comes with almost nothing built-in, we really
 mean it: even testing equality is a user-defined operation!
+
+:::dev
+HG: I don't like this framing. It sounds like we're telling students they'll have to build
+everything themselves. I think what we really mean is "Lean is extremely flexible; even equality
+testing can be defined by the user." or something like that.
+:::
 
 Here is a function `beq` that tests natural numbers for
 equality, yielding a boolean.
