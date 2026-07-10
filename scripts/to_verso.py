@@ -19,8 +19,19 @@ Each /- ... -/ block comment becomes Verso prose.  Code is wrapped in
 Note: -- ADMITDEF / -- /ADMITDEF and -- ADMITTED markers are left as Lean
 comments inside code blocks.  A future pass will convert them to solution!().
 
+A Rocq source (SOURCE.v) is also accepted: its comment/marker layer is first
+converted to the code-forward Lean-comment dialect above (the code lines stay
+Coq) and then run through the same pipeline.  The result is a ROUGH DRAFT Verso
+file — full structure, prose, and (untranslated) code, with nothing dropped —
+meant to be translated to Lean by hand from then on; it will not build until
+that is done.  --emit-lean writes the intermediate Lean-dialect skeleton too,
+which is only needed as the reference input for scripts/check_verso_prose.py
+and scripts/check_verso_markers.py (both compare a skeleton against the Verso
+output); it is not meant to be edited.
+
 Usage (from the repo root):
     python3 scripts/to_verso.py LF/Basics.lean LF/BasicsVerso.lean
+    python3 scripts/to_verso.py old/orig-lf-files/Poly.v /tmp/PolyVerso.lean
 """
 
 import argparse
@@ -200,7 +211,8 @@ def _extract_imports(body: str):
 # into the rendered chapter as prose.  INSTRUCTORS is deliberately NOT in this
 # set: it routes to :::instructor (handled separately, both line and block).
 _DEV_TAGS = (r'BCP|JC|MWH|CGH|RAB|CH|HG|NB|Claude|TODO|TOFIX|LATER|SOONER'
-             r'|NDS|NOTATION|APT|BAY|SAZ|ET|AAA|MRC|PR|ORI|Ori|mwhicks1|chenson2018')
+             r'|NDS|NOTATION|APT|BAY|SAZ|ET|AAA|MRC|PR|ORI|Ori|mwhicks1|chenson2018'
+             r'|COMMENT')  # COMMENT: untagged (* .. *) comments from a .v source
 # The block set additionally recognizes `HIDE:` (a `/- HIDE: … -/` dev note).
 # The colon is required so a bare `/- HIDE -/` region/label marker keeps its old
 # behavior (dropped as a label) rather than becoming a noise :::dev block; and
@@ -1764,9 +1776,9 @@ def _convert_solution_markers(src: str) -> str:
             while j < n and lines[j].strip() != '-- /ADMITDEF':
                 body.append(lines[j]); j += 1
             if body:
-                m = re.match(r'^(\s*:=\s*)(.*)$', body[0])
+                m = re.match(r'^(\s*:=)\s*(.*)$', body[0])
                 if m:
-                    body[0] = m.group(1) + 'solution!(' + m.group(2)
+                    body[0] = m.group(1) + ' solution!(' + m.group(2)
                     body[-1] = body[-1] + ')'
                 out.extend(body)
             i = j + 1
@@ -1810,6 +1822,373 @@ def _convert_solution_markers(src: str) -> str:
         out.append(line)
         i += 1
     return '\n'.join(out)
+
+
+# ---------------------------------------------------------------------------
+# Rocq front-end (.v source -> code-forward Lean-comment dialect)
+# ---------------------------------------------------------------------------
+# Converts ONLY the comment/marker layer of an SF Rocq chapter into the Lean
+# dialect that `tokenize` (and the marker pre-passes) already consume; the code
+# lines pass through as Coq, to be translated by hand in the generated Verso
+# file.  The contract is LOSSLESSNESS: every comment routes somewhere (prose,
+# dev note, marker, or code position) — the only silent drops are `####…`
+# separator lines, which are pure decoration (see "Intentionally dropped" in
+# CLAUDE.md).  The .v marker vocabulary is the same as the Lean dialect's
+# (FULL/TERSE/EX/HIDE/QUIZ/SOLUTION/ADMITTED/…), so most markers just change
+# delimiters.  Departures, all deliberate:
+#
+#   * `(** … *)` coqdoc prose -> `/- … -/`; `(** * Title *)` star headings ->
+#     `/- # Title -/` (hash count = star count); the first heading, when it
+#     matches `<Stem>: …`, becomes the chapter-title comment.
+#   * `<< … >>` coqdoc verbatim -> `[[ … ]]` (the display-code form the
+#     tokenizer already knows).  Content inside `[[ ]]`/`<< >>` is never
+#     rescanned, so Coq comments in display snippets survive untouched.
+#   * a `(* … *)` comment nested inside coqdoc prose is hoisted out of the
+#     prose into its own block (the .lean pipeline would otherwise *strip*
+#     embedded dev-note lines — see _strip_dev_note_lines).
+#   * single-star `(* … *)` comments are author-internal by coqdoc convention:
+#     tagged ones (`BCP:`, `LATER:`, `HIDE:`, `INSTRUCTORS:`, …) route as-is
+#     (-> :::dev / :::instructor); untagged ones at prose position are
+#     *probable errors* and get a `COMMENT:` banner naming their origin so the
+#     manual pass can triage them; untagged ones inside a code run stay in
+#     code position (ordinary code commentary).
+#   * the bare `(* INSTRUCTORS *)` … `(* /INSTRUCTORS *)` *region* (quiz
+#     answers in Imp; no line-form analogue) is mapped to `-- HIDE` … `-- /HIDE`
+#     (same verbatim-capture treatment; renders as the quiz's :::answer).
+#   * `(* ADVANCED: HIDEFROMHTML *)` -> `-- TERSE: HIDEFROMHTML` (both are
+#     dropped-marker forms downstream).
+#   * `-/` / `/-` occurring inside comment text would break the emitted Lean
+#     comment; a space is inserted (`- /`, `/ -`) — visible, harmless.
+
+_RQ_STRUCT_MARKERS = (
+    r'EX\d+[A-Za-z!?]*[ \t]+\(\w[\w \-]*\)'    # exercise open: EX2M? (name)
+    r'|\[\]'                                    # exercise close
+    r'|GRADE_\S.*'                              # grading spec (rest of comment)
+    r'|\*\*\*'                                  # slide break
+    r'|/?(?:HIDEFROMADVANCED|HIDEFROMHTML|FULL|TERSE|HIDE|QUIZ|FOLD'
+    r'|QUIETSOLUTION|SOLUTION|WORKINCLASS|ADMITTED|ADMITDEF|INSTRUCTORS)')
+
+# A whole-comment structural marker, optionally mode-prefixed (`TERSE:
+# HIDEFROMHTML`, `FULL: ADMITTED`, `ADVANCED: HIDEFROMHTML`, `TERSE: ***`).
+# Matched against the comment body flattened to single-space (so `(* FULL *)`
+# spacing/newlines don't matter).  NB `HIDE`/`FULL`/… alternatives are bare
+# (end-anchored): `HIDE: prose` and `FULL: prose` do NOT match — those are
+# dev-note / mode-prefixed-prose forms handled elsewhere.
+_RQ_MARKER_BODY_RE = re.compile(
+    r'^(?:(FULL|TERSE|ADVANCED):[ \t]*)?(' + _RQ_STRUCT_MARKERS + r')$')
+
+# Marker comment embedded in a code line (`Proof. (* ADMITTED *) auto. Qed.`,
+# `  (* ADMITDEF *) :=`): hoisted onto its own `-- MARKER` line so the region
+# machinery sees it.  EX opens and INSTRUCTORS regions never occur inline.
+_RQ_INLINE_MARKER_RE = re.compile(
+    r'\(\*[ \t]*((?:(?:FULL|TERSE|ADVANCED):[ \t]*)?'
+    r'(?:GRADE_[^*]*|\[\]'
+    r'|/?(?:HIDEFROMADVANCED|HIDEFROMHTML|FULL|TERSE|HIDE|QUIZ|FOLD'
+    r'|QUIETSOLUTION|SOLUTION|WORKINCLASS|ADMITTED|ADMITDEF)))[ \t]*\*\)')
+
+_RQ_UNTAGGED_BANNER = (
+    'COMMENT: [untagged (* .. *) comment at prose position in the Rocq '
+    'source -- probably an error there; decide whether it is book prose '
+    'or an author note]')
+
+
+def _rq_read_comment(lines, i, j):
+    """Read the (possibly nested, multi-line) Rocq comment whose `(*` opens at
+    lines[i][j:].  Returns (body, end_line, end_col): *body* is the text between
+    the outer delimiters (inner `(* … *)` delimiters kept verbatim), end_col is
+    the index just past the closing `*)` on lines[end_line]."""
+    depth = 0
+    buf = []
+    li, ci = i, j
+    n = len(lines)
+    while li < n:
+        line = lines[li]
+        while ci < len(line):
+            if line.startswith('(*', ci):
+                depth += 1
+                if depth > 1:
+                    buf.append('(*')
+                ci += 2
+            elif line.startswith('*)', ci) and depth > 0:
+                depth -= 1
+                if depth == 0:
+                    return ''.join(buf), li, ci + 2
+                buf.append('*)')
+                ci += 2
+            else:
+                buf.append(line[ci])
+                ci += 1
+        buf.append('\n')
+        li += 1
+        ci = 0
+    # Unterminated comment (malformed source): treat rest of file as the body.
+    return ''.join(buf), n - 1, len(lines[-1]) if lines else 0
+
+
+def _rq_balance(line):
+    """Net `(*`-minus-`*)` count of *line* (for detecting a comment opened
+    mid-line that spills onto later lines)."""
+    depth, j = 0, 0
+    while j < len(line) - 1:
+        if line.startswith('(*', j):
+            depth += 1
+            j += 2
+        elif line.startswith('*)', j):
+            depth -= 1
+            j += 2
+        else:
+            j += 1
+    return depth
+
+
+def _rq_body_text(body):
+    """Normalize a comment body: strip the delimiter-adjacent padding and
+    dedent continuation lines (coqdoc bodies are aligned under the `(** `)."""
+    first, _, rest = body.partition('\n')
+    first = first.strip()
+    rest = textwrap.dedent(rest).rstrip() if rest.strip() else ''
+    if first and rest:
+        return first + '\n' + rest
+    return first or rest
+
+
+def _rq_escape_lean_delims(text):
+    """Break `-/` / `/-` sequences that would derail the emitted `/- … -/`."""
+    return text.replace('-/', '- /').replace('/-', '/ -')
+
+
+def _rq_block_lines(text, indent=''):
+    """Emit *text* as a Lean `/- … -/` block comment (list of lines)."""
+    text = _rq_escape_lean_delims(text)
+    ls = text.split('\n')
+    if len(ls) == 1:
+        return [f'{indent}/- {ls[0]} -/']
+    out = [f'{indent}/- {ls[0]}']
+    out.extend(indent + l if l.strip() else '' for l in ls[1:])
+    out[-1] = (out[-1] + ' -/') if out[-1].strip() else (indent + '-/')
+    return out
+
+
+def _rq_marker_line(m):
+    """Render a _RQ_MARKER_BODY_RE match as its `-- MARKER` line form."""
+    prefix, marker = m.group(1), m.group(2)
+    if marker.lstrip('/') == 'INSTRUCTORS':
+        # Bare region form (quiz answers): no line-form analogue; HIDE gives
+        # the same verbatim-capture treatment (-> :::answer inside a quiz).
+        marker = marker.replace('INSTRUCTORS', 'HIDE')
+    if prefix == 'ADVANCED':
+        prefix = 'TERSE'   # only ADVANCED: HIDEFROMHTML occurs; dropped downstream
+    marker = ' '.join(marker.split())
+    return f'-- {prefix}: {marker}' if prefix else f'-- {marker}'
+
+
+def _rq_flat(body):
+    """Comment body flattened for marker matching (coqdoc star stripped,
+    whitespace collapsed)."""
+    core = body[1:] if body.startswith('*') else body
+    return ' '.join(core.split())
+
+
+def _rq_track_hide(marker_line, state):
+    """Maintain state['hide_depth'] across emitted -- HIDE / -- /HIDE markers
+    (used to suppress the untagged-comment triage banner inside hide regions)."""
+    s = marker_line.strip()
+    if s == '-- HIDE':
+        state['hide_depth'] = state.get('hide_depth', 0) + 1
+    elif s == '-- /HIDE':
+        state['hide_depth'] = max(0, state.get('hide_depth', 0) - 1)
+    return marker_line
+
+
+def _rq_hoist_inline_markers(line):
+    """Split marker comments embedded in a code line onto their own lines."""
+    ms = list(_RQ_INLINE_MARKER_RE.finditer(line))
+    if not ms:
+        return [line]
+    indent = _indent_of(line)
+    out, pos = [], 0
+    for m in ms:
+        before = line[pos:m.start()]
+        if before.strip():
+            out.append(before.rstrip())
+        mb = _RQ_MARKER_BODY_RE.match(' '.join(m.group(1).split()))
+        out.append(_rq_marker_line(mb))
+        pos = m.end()
+    rest = line[pos:]
+    if rest.strip():
+        out.append(indent + rest.strip())
+    return out
+
+
+def _rq_classify_standalone(body, stem, state):
+    """Emit a standalone (own-line) Rocq comment in the Lean dialect.
+
+    Markers are handled by the caller; this routes prose / notes:
+    coqdoc `(** … *)` -> book prose (headings, displays, nested-note hoisting);
+    single-star `(* … *)` -> author-internal (dev-tagged as-is, mode-prefixed
+    prose as-is, untagged banner-flagged)."""
+    is_coqdoc = body.startswith('*')
+    text = _rq_body_text(body[1:] if is_coqdoc else body)
+    if not text.strip():
+        return []
+    if _SEPARATOR_LINE_RE.match(text.strip()):
+        return []                      # ####… divider: pure decoration
+    if is_coqdoc:
+        return _rq_emit_coqdoc(text, stem, state)
+    if re.match(r'^=+>', text):
+        # `(* ==> monday : day *)` output annotation after a Compute/Check.
+        # Emit as `--` comment lines so it stays inside the adjacent code
+        # block: the expected output matters to whoever rewrites the code
+        # (once the block elaborates live, the annotation can be deleted).
+        return ['-- ' + l if l.strip() else '--' for l in text.split('\n')]
+    if re.match(r'^(FULL|TERSE):\s', text):
+        # Mode-prefixed prose in single-star form: shown in that build mode.
+        return _rq_block_lines(text)
+    if _BLOCK_DEV_RE.match(text) or _BLOCK_INSTRUCTOR_RE.match(text):
+        return _rq_block_lines(text)
+    if state.get('hide_depth', 0) > 0:
+        # Inside a -- HIDE region everything is captured verbatim downstream;
+        # an untagged comment there is unremarkable, so no triage banner.
+        return _rq_block_lines(text)
+    return _rq_block_lines(_RQ_UNTAGGED_BANNER + '\n' + text)
+
+
+def _rq_emit_coqdoc(text, stem, state):
+    """Emit a coqdoc `(** … *)` body as Lean-dialect prose lines."""
+    lines = text.split('\n')
+    out = []
+    start = 0
+    hm = re.match(r'^(\*{1,6})[ \t]+(\S.*)$', lines[0])
+    if hm:
+        title = hm.group(2).strip()
+        if state.get('title_pending') and stem and title.startswith(stem + ':'):
+            out.extend(_rq_block_lines(title))   # chapter-title comment form
+        else:
+            out.extend(_rq_block_lines('#' * len(hm.group(1)) + ' ' + title))
+        state['title_pending'] = False
+        start = 1
+    prose = []
+
+    def flush():
+        seg = list(prose)
+        prose.clear()
+        while seg and not seg[0].strip():
+            seg.pop(0)
+        while seg and not seg[-1].strip():
+            seg.pop()
+        if seg:
+            out.extend(_rq_block_lines('\n'.join(seg)))
+
+    close_map = {'[[': ']]', '[[[': ']]]', '<<': '>>'}
+    i = start
+    n = len(lines)
+    while i < n:
+        l = lines[i]
+        s = l.strip()
+        if s in close_map:
+            # Display code (`[[ … ]]` or coqdoc `<< … >>` -> `[[ … ]]`): the
+            # content is Coq text, passed through with no comment rescanning.
+            closer = close_map[s]
+            prose.append('[[' if s == '<<' else s)
+            i += 1
+            while i < n and lines[i].strip() != closer:
+                prose.append(lines[i])
+                i += 1
+            if i < n:
+                prose.append(']]' if closer == '>>' else lines[i].strip())
+                i += 1
+            continue
+        nm = re.match(r'^(\s*)\(\*', l)
+        if nm:
+            # A note nested inside book prose: hoist it out to its own block
+            # (the .lean pipeline strips embedded dev-note lines, so leaving
+            # it inline would LOSE it downstream).
+            body2, li2, ci2 = _rq_read_comment(lines, i, len(nm.group(1)))
+            trailing2 = lines[li2][ci2:]
+            flush()
+            mm2 = _RQ_MARKER_BODY_RE.match(_rq_flat(body2)) if body2.strip() else None
+            if mm2:
+                out.append(_rq_marker_line(mm2))
+            else:
+                out.extend(_rq_classify_standalone(body2, stem, state))
+            if trailing2.strip():
+                prose.append(trailing2)
+            i = li2 + 1
+            continue
+        prose.append(l)
+        i += 1
+    flush()
+    return out
+
+
+def rocq_to_lean_dialect(src, stem=None):
+    """Convert the comment/marker layer of Rocq chapter source *src* to the
+    code-forward Lean-comment dialect; code lines pass through unchanged."""
+    lines = src.split('\n')
+    out = []
+    state = {'title_pending': bool(stem), 'hide_depth': 0}
+    prev_code = False   # last emitted line was code (for in-proof commentary)
+    i, n = 0, len(lines)
+    while i < n:
+        line = lines[i]
+        if not line.strip():
+            out.append('')
+            prev_code = False
+            i += 1
+            continue
+        m = re.match(r'^(\s*)\(\*', line)
+        if m:
+            indent = m.group(1)
+            body, li, ci = _rq_read_comment(lines, i, len(indent))
+            trailing = lines[li][ci:]
+            mm = _RQ_MARKER_BODY_RE.match(_rq_flat(body)) if body.strip() else None
+            if trailing.strip():
+                # Comment glued to code on its closing line.
+                if mm:
+                    # `(* ADMITTED *) Proof. …`: marker on its own line, then
+                    # reprocess the remainder (it may hold more comments).
+                    out.append(_rq_track_hide(_rq_marker_line(mm), state))
+                    lines[li] = indent + trailing.lstrip()
+                    i = li
+                else:
+                    # Non-marker comment leading a code line: code territory.
+                    out.extend(lines[i:li])
+                    out.extend(_rq_hoist_inline_markers(lines[li]))
+                    prev_code = True
+                    i = li + 1
+                continue
+            if mm:
+                out.append(_rq_track_hide(_rq_marker_line(mm), state))
+            elif indent and prev_code:
+                # Indented commentary directly continuing a code run (between
+                # tactics): keep it in code position, as the tokenizer expects.
+                out.extend(_rq_block_lines(
+                    _rq_body_text(body[1:] if body.startswith('*') else body),
+                    indent))
+                prev_code = True
+            else:
+                out.extend(_rq_classify_standalone(body, stem, state))
+                prev_code = False
+            i = li + 1
+            continue
+        # Code line.  A comment opened mid-line that spills onto later lines is
+        # consumed verbatim with them (it is Coq-code commentary).
+        bal = _rq_balance(line)
+        if bal > 0:
+            j = i
+            while j + 1 < n and bal > 0:
+                j += 1
+                bal += _rq_balance(lines[j])
+            out.extend(lines[i:j + 1])
+            prev_code = True
+            i = j + 1
+            continue
+        out.extend(_rq_hoist_inline_markers(line))
+        prev_code = True
+        i += 1
+    text = '\n'.join(out)
+    text = re.sub(r'\n{3,}', '\n\n', text)          # at most one blank line
+    return text.strip('\n') + '\n'
 
 
 # ---------------------------------------------------------------------------
@@ -1860,12 +2239,17 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('src', metavar='SOURCE.lean',
-                        help='code-forward chapter source (e.g. LF/Basics.lean)')
+    parser.add_argument('src', metavar='SOURCE.{lean,v}',
+                        help='code-forward chapter source (e.g. LF/Basics.lean),'
+                             ' or a Rocq chapter (.v) for a rough-draft conversion')
     parser.add_argument('dst', metavar='DEST.lean', nargs='?',
                         help="output Verso file (default: same dir, stem + 'Verso')")
     parser.add_argument('--title', default=None,
                         help='override the #doc title (auto-detected by default)')
+    parser.add_argument('--emit-lean', metavar='PATH', default=None,
+                        help='(.v input only) also write the intermediate'
+                             ' Lean-dialect skeleton, for use with the'
+                             ' check_verso_*.py scripts')
     args = parser.parse_args()
 
     src_path = pathlib.Path(args.src)
@@ -1873,10 +2257,17 @@ def main() -> None:
         sys.exit(f'Error: source file not found: {src_path}')
 
     dst_path = (pathlib.Path(args.dst) if args.dst
-                else src_path.with_stem(src_path.stem + 'Verso'))
+                else src_path.with_stem(src_path.stem + 'Verso').with_suffix('.lean'))
 
     src_text = src_path.read_text()
     file_key = src_path.stem   # e.g. "Basics"
+    if src_path.suffix == '.v':
+        src_text = rocq_to_lean_dialect(src_text, file_key)
+        if args.emit_lean:
+            pathlib.Path(args.emit_lean).write_text(src_text)
+            print(f'Written {args.emit_lean}  (Lean-dialect skeleton)')
+    elif args.emit_lean:
+        sys.exit('Error: --emit-lean only applies to a .v source')
     title = args.title or extract_title(src_text, file_key)
 
     result = convert(src_text, title, file_key)

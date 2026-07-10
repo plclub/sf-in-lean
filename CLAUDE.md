@@ -87,6 +87,38 @@ are meant to be *consumed* later (solutions build / grading), so converting them
 to raw-body code blocks needs separate design. If you do convert one, follow the
 ` ```dev ` pattern above.
 
+## Rough-draft conversion straight from a .v chapter
+
+`to_verso.py` also accepts a Rocq source directly:
+
+    python3 scripts/to_verso.py old/orig-lf-files/<Ch>.v <Vol>/<Ch>Verso.lean
+
+A "Rocq front-end" in the script converts the `.v`'s comment/marker layer to
+the code-forward Lean dialect and then runs the normal pipeline. The output is
+a **rough draft**: structure, prose, and markers fully converted; code blocks
+still contain Coq. It will not build until the code is translated by hand in
+the Verso file (the intended workflow — run `to_verso` once, then only edit the
+Verso file), so don't register the chapter in `LF.lean`/the Makefile until it
+does. Points to know:
+
+* **Losslessness is the contract**: every `.v` comment routes somewhere. The
+  only token-level exceptions, all deliberate: `####…` separator lines are
+  dropped; the bare `(* INSTRUCTORS *)…(* /INSTRUCTORS *)` *region* form maps
+  to `-- HIDE`…`-- /HIDE` (same verbatim-capture treatment; renders as a quiz
+  `:::answer`); `(* ADVANCED: HIDEFROMHTML *)` maps to the equivalent
+  `-- TERSE: HIDEFROMHTML` dropped-marker form.
+* Untagged single-star `(* … *)` comments at prose position are probable
+  errors in the source; they route to `:::dev` with a `COMMENT: [untagged …]`
+  banner naming their origin. Each is a triage point for the manual pass
+  (promote to book prose, retag, or leave as a dev note).
+* `(* ==> … *)` eval-output annotations stay as `--` comments inside the
+  ```` ```lean ```` block — the expected output matters while rewriting the
+  code; delete them once the block elaborates live.
+* `--emit-lean PATH` additionally writes the intermediate Lean-dialect
+  skeleton. It exists only as the reference input for the two check scripts
+  below (which compare a skeleton against Verso output); it is not meant to
+  be edited.
+
 ## Checking to_verso outputs
 
 To check a chapter survived translation by the to_verso script: 

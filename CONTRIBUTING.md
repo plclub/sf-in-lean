@@ -643,10 +643,21 @@ diagram (e.g., SVG), and a plain code block containing the ASCII art.
 HTML renders only the diagram child; the saver emits only the ASCII
 fallback wrapped in a `/-! … -/` module-doc comment.
 
+## Porting chapters from Rocq
 
-## Porting from Rocq: comment fidelity and framing
+The `to_verso` script automates the mechanical parts of translating from Rocq to 
+Verso-formatted Lean.  It leaves all the interesting bits to be translated manually.
 
-(Claude-drafted; human review welcome.)  When porting a Rocq
+Example usage: 
+```
+python3 scripts/to_verso.py old/orig-plf-files/Hoare.v HL/Hoare.lean
+```
+
+## (Temp) Porting from Rocq: comment fidelity and framing
+
+(Claude-drafted; human review welcome.)  
+
+When porting a Rocq
 `sfdev/<vol>/<Ch>.v` to `<Ch>.lean`:
 
 * **Preserve the whole comment layer.**  Carry over every internal
