@@ -570,6 +570,10 @@ mwhicks1: Not sure if we need ⇓b, or whether we can define
 ⇓ overloaded. Don't understand Lean notation yet!
 :::
 
+:::dev
+chenson2018: About `Bexp.eval` below: We should discuss a way to recall definitions without having to write them out manually like this. I think a simple `#print` may work as an alternative, assuming there are no namespace issues..
+:::
+
 :::::exercise (rating := 1) (name := "beval_rules")
 Here, again, is the definition of the {name}`Bexp.eval` function:
 
