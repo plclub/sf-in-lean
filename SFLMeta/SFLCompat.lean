@@ -58,7 +58,7 @@ but discards their effects afterwards.
 
 Example:
 ```lean
-experiment
+sf_experiment
 
   def hidden : Nat := 1
   #check hidden
@@ -71,7 +71,7 @@ public def experimentTk := leading_parser
   "sf_experiment"
 
 /--
-  Closes `experiment`.
+  Closes `sf_experiment`.
 -/
 public def experimentEndTk := leading_parser
   "end"
@@ -86,7 +86,7 @@ Diagnostics from the expected failure are suppressed.
 
 Example:
 ```lean
-expect_failure
+sf_expect_failure
   example : 1 = 2 := rfl
 end
 ```
@@ -95,13 +95,13 @@ public def expectFailureTk := leading_parser
   "sf_expect_failure"
 
 /-
-  Like `expect_failure` but reports the diagnostics.
+  Like `sf_expect_failure` but reports the diagnostics.
 -/
 public def expectFailureInfoTk := leading_parser
   "sf_expect_failure?"
 
 /--
-  Closes `expect_failure`.
+  Closes `sf_expect_failure`.
 -/
 public def expectFailureEndTk := leading_parser
   "end"
