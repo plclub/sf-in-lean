@@ -660,8 +660,8 @@ theorem rev_involutive {α : Type} : ∀ (l : List α),
    ## Polymorphic Pairs -/
 
 /- Like `inductive`s, `structure`s can also be made polymorphic.
-   If we generalize the definition of `NatProd` from last chapter,
-   we get polymorphic pairs_, often called _products_: -/
+   If we generalize the definition `NatProd` of pairs of natural numbers from last chapter,
+   we get polymorphic pairs, often called _products_: -/
 
 structure MyProd (α β : Type) where
   fst : α
@@ -1136,28 +1136,6 @@ example : map (fun n => [even n, odd n]) [2, 1, 2, 5]
 
 /- /TERSE -/
 
-/- HIDE
-  (* HIDE: This one relies on partial application, which hasn't
-     been explained. *)
-  (* HIDE: Robert Rand: So does "What is the type of [fold plus]?" later on.
-     And that one doesn't lead directly into partial application either. I  bit
-     the bullet here, but if you want to postpone partial application, the
-     later questions should be reordered and followed immediately by an example. *)
-  (* QUIZ *)
-  (** Recall that [even] has type "nat -> bool".
-
-      What is the type of "map even"?
-
-      (A) forall X Y : Type, (X -> Y) -> list X -> list Y
-
-      (B) list nat -> list bool
-
-      (C) list nat -> list Y
-
-      (D) forall Y : Type, list nat -> list Y *)
-  (* /QUIZ *)
-(* /HIDE -/
-
 /- TERSE: ***
    FULL: *** Exercises -/
 
@@ -1608,7 +1586,7 @@ theorem curry_uncurry {α β γ : Type} (f : α × β → γ) (p : α × β) :
 /- GRADE_MANUAL 2: informal_proof
    [] -/
 
-/- ** Church Numerals (Advanced) -/
+/- ## Church Numerals (Advanced) -/
 
 /- The following exercises explore an alternative way of defining
    natural numbers using the _Church numerals_, which are named after

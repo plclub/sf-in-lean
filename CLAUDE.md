@@ -15,9 +15,109 @@ If a user asks Claude to insert commentary, bug reports, or
 suggestions in any file, these insertions should be clearly marked as
 Claude-generated.
 
+## Porting a chapter from Rocq: comment fidelity
+
+When porting `sfdev/<vol>/<Ch>.v` to `<Ch>.lean`, translate the *whole* comment
+layer, not just the prose that has an obvious Lean home. Nothing in the `.v`
+should be silently dropped:
+
+* **Internal dev notes** (`INSTRUCTORS`, `BCP`, `NDS'25`, `SOONER`, `LATER`,
+  `NOTATION`, `APT`, `BAY`, `SAZ`, …) are carried over verbatim — they are
+  notes to the authors about further work and are still wanted in Lean. Keep
+  the original prefix/attribution.
+* **`(* HIDE *)…(* /HIDE *)` content** is translated and re-marked
+  `-- HIDE`/`-- /HIDE` (regions) or `/- HIDE: … -/` (notes). Translate HIDE
+  *proof lemmas* to live Lean where they are provable and verify with `lake
+  build`; keep a deliberately false / `Abort`ed lemma as a commented reference
+  (do not `sorry` it).
+* **Condensed prose** is expanded back to the source's full wording — don't
+  leave a one-sentence summary where the `.v` had three paragraphs.
+* **`HIDEFROMADVANCED`** is re-marked where it wraps a distinct block.
+  **`HIDEFROMHTML`** (which only wraps `Module`/`Require`/`Reserved Notation`
+  lines) has no content and is not reintroduced.
+* Only the tokens listed under "Intentionally dropped by `to_verso`" below may
+  be omitted. When in doubt, keep it.
+
+## Framing translated comments
+
+The chapter must **stand on its own** for a reader who has never seen the Rocq
+source:
+
+* Do **not** reference the porting process — no "restored", "restoration
+  pass", "first port", "for the record", etc.
+* Do **not** narrate "the Rocq original did X" in normal expository (`-- FULL`)
+  text.
+* **Rocq-specific material with no Lean analogue** (the `<{ }>` grammar,
+  `Set Printing …`, `Locate`, `Ltac`, the `;`-general-form, a dropped proof
+  variant, …) goes in a `/- Claude: … -/` note (routes to `:::dev`), worded as
+  a note for a *future translation pass* to consider — never as revealed
+  `-- FULL` chapter text.
+* A genuine **translation decision** a reader/instructor should know about gets
+  a short `Claude:` note (e.g. "we write single-variable states inline rather
+  than adding a singleton shorthand"; "`omega` is Lean's `lia`, no import
+  needed").
+* Genuine SF **pedagogy** that the source happened to narrate via Rocq (e.g.
+  the named-vs-positional-hypothesis aside) is **rewritten Lean-native** and
+  kept as `-- FULL`, not hidden in a note.
+
 ## Formatting
 
 In general, there should be at most one blank line at a time in .lean files.  
+
+## Avoid inner ``` fences inside noop author blocks
+
+Author/developer notes are emitted by `to_verso` as **code blocks**
+(` ```dev ` and ` ```instructors `), NOT as `:::dev` / `:::instructors`
+directives. Reason: a Verso *directive* always parses its body as markdown, so
+arbitrary author prose (`:::`, `*`, `#`, `[…]`, backticks) could derail the
+parser and used to require an ugly inner verbatim ` ``` ` fence. A Verso **code
+block** (`@[code_block]`, `CodeBlockExpanderOf`) instead receives its body as a
+raw string that is never parsed — so a single tagged fence suffices and no inner
+fence is needed. See `SFLMeta/Comment.lean` (` ```dev `), `SFLMeta/Instructors.lean`
+(` ```instructors `), and the models `SFLMeta/Bnf.lean` / `SFLMeta/Save.lean`.
+The code block is registered under the directive's name via `@[code_block dev]`
+(explicit ident) so the fence reads ` ```dev ` even though a same-named
+`@[directive] def dev` still exists (directives and code blocks live in separate
+expander tables). In `to_verso`, `_emit_noop_directive` uses `_code_block(tag,
+text)`. Do NOT reintroduce the inner-fence pattern for these.
+
+Still verbatim-fenced (`_verbatim_block`), intentionally: `:::hide`,
+`:::solution`, `:::grade`. Unlike dev/instructors, `solution` and `grade` bodies
+are meant to be *consumed* later (solutions build / grading), so converting them
+to raw-body code blocks needs separate design. If you do convert one, follow the
+` ```dev ` pattern above.
+
+## Rough-draft conversion straight from a .v chapter
+
+`to_verso.py` also accepts a Rocq source directly:
+
+    python3 scripts/to_verso.py old/orig-lf-files/<Ch>.v <Vol>/<Ch>Verso.lean
+
+A "Rocq front-end" in the script converts the `.v`'s comment/marker layer to
+the code-forward Lean dialect and then runs the normal pipeline. The output is
+a **rough draft**: structure, prose, and markers fully converted; code blocks
+still contain Coq. It will not build until the code is translated by hand in
+the Verso file (the intended workflow — run `to_verso` once, then only edit the
+Verso file), so don't register the chapter in `LF.lean`/the Makefile until it
+does. Points to know:
+
+* **Losslessness is the contract**: every `.v` comment routes somewhere. The
+  only token-level exceptions, all deliberate: `####…` separator lines are
+  dropped; the bare `(* INSTRUCTORS *)…(* /INSTRUCTORS *)` *region* form maps
+  to `-- HIDE`…`-- /HIDE` (same verbatim-capture treatment; renders as a quiz
+  `:::answer`); `(* ADVANCED: HIDEFROMHTML *)` maps to the equivalent
+  `-- TERSE: HIDEFROMHTML` dropped-marker form.
+* Untagged single-star `(* … *)` comments at prose position are probable
+  errors in the source; they route to `:::dev` with a `COMMENT: [untagged …]`
+  banner naming their origin. Each is a triage point for the manual pass
+  (promote to book prose, retag, or leave as a dev note).
+* `(* ==> … *)` eval-output annotations stay as `--` comments inside the
+  ```` ```lean ```` block — the expected output matters while rewriting the
+  code; delete them once the block elaborates live.
+* `--emit-lean PATH` additionally writes the intermediate Lean-dialect
+  skeleton. It exists only as the reference input for the two check scripts
+  below (which compare a skeleton against Verso output); it is not meant to
+  be edited.
 
 ## Checking to_verso outputs
 
@@ -25,6 +125,22 @@ To check a chapter survived translation by the to_verso script:
 Regenerate `<Ch>Verso.lean`, then confirm every identifier/number
 token and comment word in `<Ch>.lean` appears in the Verso output,
 excluding the intentionally-dropped tokens described below.
+
+Two complementary automated checks help here (both take
+`<Ch>.lean <Ch>Verso.lean`):
+
+* `scripts/check_verso_prose.py` — catches lost/garbled **prose** by comparing
+  contiguous word runs. It is blind to lost *markup*: a marker flattened to plain
+  prose loses no words and passes.
+* `scripts/check_verso_markers.py` — catches silently-flattened **structural
+  markers**. It inventories markers in the source and, for each one that should
+  become a Verso directive (`FULL`→`::::full`, `HIDE`→`::::hide`, `EX`→
+  `::::exercise`, `QUIZ`→`::+quiz`, author notes→` ```dev `, …), verifies the
+  directive is present in the output. A `FLATTENED` line means a marker was
+  dropped with no Verso analog (this is how the `-- QUIZ` drop went unnoticed —
+  the word-diff saw no loss). `WARN` count-mismatches are soft (verify by hand);
+  a marker keyword absent from its `_POLICY` table is `UNKNOWN` and must be
+  classified. Add new markers to `_POLICY` when `to_verso` learns to emit them.
 
 **Intentionally dropped by `to_verso` — do not treat as content loss:**
 
@@ -36,6 +152,42 @@ excluding the intentionally-dropped tokens described below.
 * The marker keywords themselves once consumed: `ADMITDEF`, `ADMITTED`,
   `SOLUTION`, `FULL`, `TERSE`, `HIDE`, `EX`/`EX1`/…, `GRADE_THEOREM`,
   `GRADE_MANUAL`, `INSTRUCTORS`.
+* `HIDEFROMHTML`/`/HIDEFROMHTML` (likewise `HIDEFROMADVANCED`): dropping the
+  marker and keeping the enclosed content is the intended behavior (confirmed
+  2026-07-08) — the region semantics are not honored in the Verso build. Both
+  check scripts already ignore these (`_POLICY` entry `None` in
+  `check_verso_markers.py`; `_MARKER_LINE_RE` in `check_verso_prose.py`), which
+  also means neither verifies the marker is actually *gone* from the output.
+  NB: `WORKINCLASS` is *not* in this category — it is translated to the
+  `workinclass!` tactic (proof shown in student/solutions builds, `sorry` in
+  the terse build); see `workinclass.md` for the design and edge cases.
 
-**Must be preserved** (these were bugs, now fixed): block-style author notes
-(`/- MWH: … -/`, `/- BCP: … -/`) → `:::dev`; `-- GRADE_THEOREM …` → `:::grade`.
+**Must be preserved** (these were bugs, now fixed): block-style author/dev
+notes (`/- MWH: … -/`, `/- BCP: … -/`, `/- NDS'25: … -/`, `/- NOTATION: … -/`,
+…) → `:::dev`; `/- INSTRUCTORS: … -/` and `-- INSTRUCTORS:` → `:::instructor`;
+`/- HIDE: … -/` and `-- HIDE … -- /HIDE` → `:::dev`/`:::hide` (body kept);
+`-- GRADE_THEOREM …` → `:::grade`. Only the *marker keyword* is consumed; the
+note **body** is always kept.
+
+### Writing comments that survive `to_verso`
+
+The generated `<Ch>Verso.lean` must build (`make check-verso-chapters`). Two
+things that break it, and how to avoid them:
+
+* **Fenced code in prose**: use a plain ```` ``` ```` fence, never a language
+  tag. ```` ```coq ```` fails with "No registered code block `coq`".
+* **Raw Rocq operator notation in prose** breaks Verso's markdown: `=[ … ]=>`
+  mangles into unbalanced backticks, and quoted notation strings like
+  `"st '={' c '}=>' st'"` fail to parse. Put such notation in a fence or
+  backticks — or, better, inside a dev note, whose body is auto-fenced and
+  therefore always safe.
+
+Author/dev notes route to `:::dev` (`:::instructor` for `INSTRUCTORS:`) and are
+auto-fenced, so arbitrary markup in them can't break Verso. Routing is keyed on
+the tag set `_DEV_TAGS` in `scripts/to_verso.py` (block form needs a colon:
+`HIDE:`, `INSTRUCTORS:`). **To make a new author/keyword prefix route cleanly,
+add it to `_DEV_TAGS` (one place) and re-run `make check-verso-chapters`.**
+
+**Workflow per chunk:** `lake build <Vol>.<Ch>` (bare chapter compiles) →
+regenerate with `python3 scripts/to_verso.py <Vol>/<Ch>.lean` → `make
+check-verso-chapters` (generated Verso builds).

@@ -215,17 +215,18 @@ private def readSFLCompat : IO String := IO.FS.readFile "SFLMeta/SFLCompat.lean"
 
 /-! ## ExtraStep walker -/
 
-/-- Per-file buffers accumulated by the saver: `(teacher source, student source)`. -/
-private abbrev SaveBuffers := HashMap String (String × String)
+/-- Per-file buffers accumulated by the saver:
+`(teacher source, student source, terse source)`. -/
+private abbrev SaveBuffers := HashMap String (String × String × String)
 
 private def appendBoth (buf : SaveBuffers) (file : String) (s : String) : SaveBuffers :=
-  let (t, st) := buf.getD file ("", "")
-  buf.insert file (t ++ s, st ++ s)
+  let (t, st, tr) := buf.getD file ("", "", "")
+  buf.insert file (t ++ s, st ++ s, tr ++ s)
 
-private def appendTeacherStudent
-    (buf : SaveBuffers) (file : String) (teacher student : String) : SaveBuffers :=
-  let (t, st) := buf.getD file ("", "")
-  buf.insert file (t ++ teacher, st ++ student)
+private def appendVariants
+    (buf : SaveBuffers) (file : String) (teacher student terse : String) : SaveBuffers :=
+  let (t, st, tr) := buf.getD file ("", "", "")
+  buf.insert file (t ++ teacher, st ++ student, tr ++ terse)
 
 /-- Render a string as a block of `--` line comments, one per line (blank lines
 stay completely blank), normalising trailing whitespace. -/
@@ -292,6 +293,7 @@ def Config.fromInlineLean (config : InlineLean.LeanBlockConfig) :=
 structure Data where
   teacher : String
   student : String
+  terse : String
   config : Config
   deriving ToJson, FromJson, Quote
 
@@ -320,23 +322,29 @@ end LeanSaved
 end Save
 
 /-!
-`Block.leanSaved` wraps an elaborated `lean` block and records the teacher and
-student source variants computed at elaboration time, together with original block's flags.
-Its two children are the teacher-rendered and student-rendered forms of the block;
-traversal keeps the one selected by the `Save.showSolutions` flag, so the same
-compiled document serves both the student and solutions builds. HTML/TeX
-rendering passes through to the surviving child; the saver checks the stored
-metadata to decide whether to emit the saved source into extracted `.lean`
-files. -/
+`Block.leanSaved` wraps an elaborated `lean` block and records the teacher,
+student, and terse source variants computed at elaboration time, together with
+the original block's extraction-relevant flags. Its three children are the
+teacher-, student-, and terse-rendered forms of the block; traversal keeps the
+one selected by the `Save.showSolutions` flag / draft (terse) mode, so the same
+compiled document serves all three builds. HTML/TeX rendering passes through to
+the surviving child; the saver checks the stored metadata to decide whether to
+emit the saved source into extracted `.lean` files as raw code, `sf_experiment`,
+or `sf_expect_failure`.
+-/
 open Save in
 block_extension Block.leanSaved (saved : Save.LeanSaved.Data) where
   data := toJson saved
   traverse _ data contents := do
-    -- Two children = still unselected: keep the teacher or student variant.
+    -- Three children = still unselected: keep the teacher, student, or terse
+    -- variant (the terse build is the draft build, cf. `Block.terse`).
     -- One child (or anything else) = already selected; nothing to do.
-    if h : contents.size = 2 then
+    if h : contents.size = 3 then
       let some saved := LeanSaved.decode? data | return none
-      let chosen := if ←showSolutions.get then contents[0] else contents[1]
+      let chosen ←
+        if ← showSolutions.get then pure contents[0]
+        else if ← isDraft then pure contents[2]
+        else pure contents[1]
       return some (.other (Block.leanSaved saved) #[chosen])
     else
       return none
@@ -351,12 +359,14 @@ The `solution!` term and tactic elaborators (declared in `SFLMeta.Exercise`)
 register the source range of each invocation into `solutionEditsRef` as they
 run. The project-local `lean` code-block expander (below) snapshots that ref
 around its call to the upstream Lean elaborator, then uses the freshly added
-ranges to compute two variants of the block's source: a teacher form (just the
-`solution!` keyword removed, parenthesised body kept) and a student form (the
-whole `solution!(…)` invocation replaced by `sorry`). Both variants, together
-with the block's expected-error flag, are stored in a `Block.leanSaved`
-wrapper. Extraction does not re-parse Lean source; it reads this saved payload
-and omits blocks that are intentionally non-compiling examples. -/
+ranges to compute three variants of the block's source: a teacher form (just
+the `solution!` keyword removed, parenthesised body kept), a student form (the
+whole `solution!(…)` invocation replaced by `sorry`), and a terse form (also
+stubbing `workinclass!`). The variants, together with the block's
+extraction-relevant flags, are stored in a `Block.leanSaved` wrapper.
+Extraction does not re-parse Lean source; it reads this saved payload and emits
+raw code, `sf_experiment`, or `sf_expect_failure` according to the saved flags.
+-/
 
 namespace SourceRewrite
 
@@ -548,15 +558,17 @@ Wraps each ` ```lean … ``` ` code block. The pipeline is:
    error feedback during the book build) and populates `studentEditRef` /
    `teacherEditRef` with the source ranges of every `solution!(…)` invocation.
 3. Convert those absolute source ranges to offsets relative to the block's
-   own source string and compute the teacher and student variants.
+   own source string and compute the teacher, student, and terse variants.
 4. Run `elabAndHighlightStudent` on the student source (starting from the
    pre-teacher environment, so prior chapter definitions are available but
-   this block's teacher-side defs are not).
-5. Emit a `Block.leanSaved` with two children: the upstream (teacher-rendered)
-   block and a `Block.lean` wrapping the student `Highlighted`. Traversal
-   later drops one of the two according to the `Save.showSolutions` flag, while
-   the saver uses the recorded block config to decide whether to wrap
-   extracted output Lean code in `expect_failure` or `experiment`.
+   this block's teacher-side defs are not), and likewise on the terse source
+   when it differs (i.e. when the block contains `workinclass!`).
+5. Emit a `Block.leanSaved` with three children: the upstream
+   (teacher-rendered) block and `Block.lean`s wrapping the student and terse
+   `Highlighted`s. Traversal later keeps one of the three according to the
+   `showSolutions` flag and draft (terse) mode, while the saver uses the
+   recorded block config to decide whether to wrap extracted output Lean code
+   in `sf_expect_failure` or `sf_experiment`.
 -/
 
 open Save SourceRewrite LeanElab LeanSaved in
@@ -565,38 +577,40 @@ def lean : CodeBlockExpanderOf Verso.Genre.Manual.InlineLean.LeanBlockConfig
   | config, str => do
     SFLMeta.studentEditRef.set #[]
     SFLMeta.teacherEditRef.set #[]
+    SFLMeta.terseEditRef.set #[]
     let preEnv ← getEnv
     let preScopes ← getScopes
     let underlying ← Verso.Genre.Manual.InlineLean.lean config str
     let student ← studentEditRef.get
     let teacher ← teacherEditRef.get
+    let terse ← terseEditRef.get
     let src := str.getString
 
     -- `strLitInputContext` parses starting at `str.getPos?`, so the byte
     -- indices recorded by the elaborator are absolute file offsets. The
     -- string-literal contents begin one byte past the opening quote.
-    let teacherRanges :=
-      teacher.flatMap (·.edits) |>.map fun r =>
+    let relativize (edits : Array SolutionEditRaw) : Array Replacement :=
+      edits.flatMap (·.edits) |>.map fun r =>
         { r with
           range.start.byteIdx := r.range.start.byteIdx - str.raw.getPos!.byteIdx
           range.stop.byteIdx := r.range.stop.byteIdx - str.raw.getPos!.byteIdx
           }
-    let studentRanges := student.flatMap (·.edits) |>.map fun r =>
-        { r with
-          range.start.byteIdx := r.range.start.byteIdx - str.raw.getPos!.byteIdx
-          range.stop.byteIdx := r.range.stop.byteIdx - str.raw.getPos!.byteIdx
-          }
+    let teacherRanges := relativize teacher
+    let studentRanges := relativize student
+    let terseRanges := relativize terse
     let teacherRaw := stripFillInMarkers (applyEdits src teacherRanges)
     let studentRaw := applyFillInForStudent (applyEdits src studentRanges)
+    let terseRaw := applyFillInForStudent (applyEdits src terseRanges)
     -- Strip `#guard_msgs` wrappers from the rendered/extracted forms.  They
     -- still ran during the upstream elaboration above (verification intact).
     let teacher := stripGuardMsgs teacherRaw
     let student := stripGuardMsgs studentRaw
+    let terse := stripGuardMsgs terseRaw
     let studentHls ← elabAndHighlightStudent preEnv preScopes student
     let range := Syntax.getRange? str
     let lspRange := range.map (← getFileMap).utf8RangeToLspRange
     let saved := {
-      teacher, student, config := Config.fromInlineLean config : Data
+      teacher, student, terse, config := Config.fromInlineLean config : Data
     }
     -- The upstream `underlying` block highlights the original source, which
     -- still shows the `#guard_msgs` wrapper.  When stripping changed the teacher
@@ -612,6 +626,11 @@ def lean : CodeBlockExpanderOf Verso.Genre.Manual.InlineLean.LeanBlockConfig
             #[Verso.Doc.Block.code $(quote teacher)])
       else
         pure underlying
+    -- The terse variant usually coincides with the student one (no
+    -- `workinclass!` in the block); reuse the student highlighting then.
+    let terseHls ←
+      if terse == student then pure studentHls
+      else elabAndHighlightStudent preEnv preScopes terse
     ``(Verso.Doc.Block.other
         (SFLMeta.Block.leanSaved $(quote saved))
         #[$teacherChild,
@@ -620,7 +639,13 @@ def lean : CodeBlockExpanderOf Verso.Genre.Manual.InlineLean.LeanBlockConfig
               $(quote studentHls)
               (some $(quote (← getFileName)))
               $(quote lspRange))
-            #[Verso.Doc.Block.code $(quote student)]])
+            #[Verso.Doc.Block.code $(quote student)],
+          Verso.Doc.Block.other
+            (Verso.Genre.Manual.InlineLean.Block.lean
+              $(quote terseHls)
+              (some $(quote (← getFileName)))
+              $(quote lspRange))
+            #[Verso.Doc.Block.code $(quote terse)]])
 
 namespace Save
 
@@ -667,24 +692,27 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     if name == ``Verso.Genre.Manual.Block.diagram then
       return buf
     if name == ``SFLMeta.Block.leanSaved then
-      -- The wrapper carries pre-computed teacher/student source plus the
+      -- The wrapper carries pre-computed teacher/student/terse source plus the
       -- extraction-relevant `lean` block flags. Verso still checks and renders
-      -- the block normally; the generated project gets code, comments, or
-      -- nothing according to `LeanSaved.Data.extractionMode`.
+      -- the block normally; the generated project gets code, `sf_experiment`,
+      -- or `sf_expect_failure` according to `LeanSaved.Data.extractionMode`.
       if let some saved := LeanSaved.decode? which.data then
         match saved.extractionMode with
         | .code =>
-          return appendTeacherStudent buf file
+          return appendVariants buf file
             (saved.teacher.trimAscii.toString ++ "\n\n")
             (saved.student.trimAscii.toString ++ "\n\n")
+            (saved.terse.trimAscii.toString ++ "\n\n")
         | .experiment =>
-          return appendTeacherStudent buf file
+          return appendVariants buf file
             (wrap "sf_experiment" "end" saved.teacher)
             (wrap "sf_experiment" "end" saved.student)
+            (wrap "sf_experiment" "end" saved.terse)
         | .expectFailure =>
-          return appendTeacherStudent buf file
+          return appendVariants buf file
             (wrap "sf_expect_failure" "end" saved.teacher)
             (wrap "sf_expect_failure" "end" saved.student)
+            (wrap "sf_expect_failure" "end" saved.terse)
       return buf
     if name == ``Block.exercise then
       -- Emit a `### Exercise (N⭐): name` heading; the contained `lean`
@@ -839,34 +867,62 @@ private def buildProject (dest : System.FilePath) (kind : String) :
     IO.println s!"Generated {kind} project built successfully."
 
 /--
-Shared implementation. Writes the extracted Lean project for one variant of
-one volume to `_out/<vol>/<variant>/lean/`, next to that variant's `html-multi/`
-(which `manualMain` writes via `cfg.destination := "_out/<vol>/<variant>"`).
-`vol` is the uppercase module prefix (e.g. `"LF"`, `"HL"`, `"TS"`).
-`isTeacher` selects the solution-filled or student form of the code. -/
-private def emitSavedImpl (vol variant : String) (isTeacher : Bool) :
+Shared implementation. Writes the extracted Lean project to
+`_out/<destSlug>/<variant>/lean/`, next to that variant's `html-multi/`
+(which `manualMain` writes via `cfg.destination := "_out/<destSlug>/<variant>"`).
+`modPrefix` is the uppercase module prefix used for the generated chapters'
+module names and paths (e.g. `"LF"`, `"HL"`, `"TS"`); it is normally the same
+as `destSlug` uppercased, but the draft executable passes `modPrefix := "LF"`
+with `destSlug := "lf-draft"` so its output lands under `LF/…` in a separate
+tree that never clobbers the real `lf` build.
+`variant` selects which form of the code is written: `"solutions"` the
+solution-filled form, `"terse"` the lecture form (`workinclass!` proofs and
+solutions stubbed), anything else the student form.
+`verify` runs `lake build` on the extracted project to confirm it compiles;
+the draft emitter passes `verify := false`, since its not-yet-graduated
+chapters are not expected to build standalone. -/
+private def emitSavedImpl (destSlug modPrefix variant : String)
+    (verify : Bool := true) :
     Mode → Config → TraverseState → Part Manual → BuildLogT IO Unit :=
   fun _mode _cfg _state text => do
-    let buf : SaveBuffers := walkOuter (Text.fillWidthFor variant) vol text ({} : SaveBuffers)
+    let buf : SaveBuffers := walkOuter (Text.fillWidthFor variant) modPrefix text ({} : SaveBuffers)
     let toolchain ← (IO.FS.readFile "lean-toolchain").toBaseIO >>= fun
       | .ok s => pure s
       | .error _ => pure "leanprover/lean4:v4.30.0-rc2\n"
     let supportModuleTemplate ← readSFLCompat
     let files : Array (String × String) :=
-      buf.fold (init := #[(supportModulePath vol, supportModuleTemplate)]) fun acc file (teacher, student) =>
-        acc.push (file, mergeAdjacentModuleDocs (if isTeacher then teacher else student))
-    let dest := System.FilePath.mk "_out" / vol.toLower / variant / "lean"
-    writeProject dest toolchain vol variant files
-    buildProject dest variant
+      buf.fold (init := #[(supportModulePath modPrefix, supportModuleTemplate)]) fun acc file (teacher, student, terse) =>
+        let chosen :=
+          if variant == "solutions" then teacher
+          else if variant == "terse" then terse
+          else student
+        acc.push (file, mergeAdjacentModuleDocs chosen)
+    let dest := System.FilePath.mk "_out" / destSlug / variant / "lean"
+    writeProject dest toolchain modPrefix variant files
+    if verify then buildProject dest variant
 
 /-- `ExtraStep` for the student build: solutions elided. -/
-def emitSavedStudent (vol : String) := emitSavedImpl vol "student" false
+def emitSavedStudent (vol : String) := emitSavedImpl vol.toLower vol "student"
 
 /-- `ExtraStep` for the solutions build: solutions shown. -/
-def emitSavedSolutions (vol : String) := emitSavedImpl vol "solutions" true
+def emitSavedSolutions (vol : String) := emitSavedImpl vol.toLower vol "solutions"
 
-/-- `ExtraStep` for the terse build: solutions elided. -/
-def emitSavedTerse (vol : String) := emitSavedImpl vol "terse" false
+/-- `ExtraStep` for the terse build: solutions elided and `workinclass!`
+proofs stubbed to `sorry`. -/
+def emitSavedTerse (vol : String) := emitSavedImpl vol.toLower vol "terse"
+
+/-- Like `emitSavedSolutions`/`emitSavedStudent` but writes to
+`_out/<destSlug>/…` while using `modPrefix` as the chapter module/path prefix.
+Used by the draft executable to emit output for generated chapters that are not
+yet in the real book, without clobbering the real volume's output. -/
+def emitSavedSolutionsTo (destSlug modPrefix : String) :=
+  emitSavedImpl destSlug modPrefix "solutions" (verify := false)
+
+def emitSavedStudentTo (destSlug modPrefix : String) :=
+  emitSavedImpl destSlug modPrefix "student" (verify := false)
+
+def emitSavedTerseTo (destSlug modPrefix : String) :=
+  emitSavedImpl destSlug modPrefix "terse" (verify := false)
 
 end Save
 

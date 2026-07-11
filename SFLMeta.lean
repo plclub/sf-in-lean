@@ -7,6 +7,7 @@ import SFLMeta.Grade
 import SFLMeta.Hide
 import SFLMeta.Ignore
 import SFLMeta.Instructors
+import SFLMeta.Quiz
 import SFLMeta.Save
 import SFLMeta.SlideBreak
 import SFLMeta.Solution
