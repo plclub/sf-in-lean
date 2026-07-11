@@ -28,7 +28,7 @@ htmlSplit := .never
 file := some "Imp"
 %%%
 
-```instructors
+:::instructors
 This chapter plus `Maps` takes a little more than one
    80-minute lecture.  It could be streamlined a bit further without
    losing much, by removing (for example) the inference rules and BNF
@@ -37,9 +37,9 @@ This chapter plus `Maps` takes a little more than one
    (BCP 21: ... Actually, I tried removing inference rules from the
    TERSE version; eventually decided that it makes some of the
    definitions harder to talk about.)
-```
+:::
 
-```dev
+:::dev
 SOONER: Needs some WORKINCLASSes and some quizzes
 
 LATER: Another nice challenge exercise at some point would be to add
@@ -48,9 +48,9 @@ LATER: Another nice challenge exercise at some point would be to add
    aliasing / etc.).
 
 SOONER: BCP 25: Maybe we should write /\ instead of && in assertions,
-   to save a mismatch in the dec_minimum exercise in Hoare2?
+   to save a mismatch in the `dec_minimum` exercise in Hoare2?
 
-HIDE: At some point we could consider moving material from the old
+   At some point we could consider moving material from the old
    HoareLists to this chapter (and into later files, as
    appropriate).  We haven't done it yet because it's a shame to
    complicate the nice simple presentation here when it's used as the
@@ -66,7 +66,7 @@ below is a recap.  For linear arithmetic we use `lia`;
 NOTE that LF currently
 introduces `omega`, not `lia`, so this needs to be reconciled volume-wide
 (either introduce `lia` in LF, or keep `omega`).
-```
+:::
 
 ::::full
 In this chapter, we take a more serious look at how to use Lean as a
@@ -92,12 +92,12 @@ _Hoare Logic_, a popular logic for reasoning about imperative programs.
 
 # Arithmetic and Boolean Expressions
 
-```dev
+:::dev
 SOONER: At this point, I usually take some of the lecture time to
    give a high-level picture of the structure of an interpreter, the
    processes of lexing and parsing, the notion of ASTs, etc.  Might be
    nice to work some of those ideas into the notes. - BCP
-```
+:::
 
 ::::full
 We'll present Imp in three parts: first a core language of _arithmetic
@@ -109,7 +109,7 @@ sequencing, and loops.
 ## Syntax
 
 ```lean
-namespace AExp
+namespace Warmup
 ```
 
 ::::full
@@ -138,19 +138,15 @@ inductive Bexp where
   | and (b1 b2 : Bexp)
 ```
 
-```dev
-MWH: Will we develop `ImpParser`? Mentioned below as an optional chapter
-```
+:::dev
+  SOONER: mwhicks1: Will we develop `ImpParser`? Mentioned below as an optional chapter
+:::
 
 ::::full
 In this chapter, we'll mostly elide the translation from the concrete
 syntax that a programmer would actually write to these abstract syntax
 trees -- the process that, for example, would translate the string
-`"1 + 2 * 3"` to the AST
-
-```
-.plus (.num 1) (.mult (.num 2) (.num 3))
-```
+`"1 + 2 * 3"` to the AST `.plus (.num 1) (.mult (.num 2) (.num 3))`.
 
 The optional chapter `ImpParser` develops a simple lexical analyzer and
 parser that can perform this translation.  You do not need to understand
@@ -209,12 +205,12 @@ implementations and proofs.
 
 _Evaluating_ an arithmetic expression produces a number.
 
-```dev
+:::dev
 chenson2018: TODO: seal evaluators with `@[irreducible]` and prove
    *characterizing lemmas* (one
    `rfl` equation per constructor) that proofs rewrite with instead of
    unfolding the definition; tag lemmas `@[simp]`.
-```
+:::
 
 ```lean
 def Aexp.eval (a : Aexp) : Nat :=
@@ -414,11 +410,9 @@ inductive Aexp.evalR : Aexp → Nat → Prop where
       Aexp.evalR (.mult a1 a2) (n1 * n2)
 ```
 
-```dev
-chenson2018: There is still some naming weirdness in the relation forms of evaluation that should be addressed later.
-
-mwhicks1: I think this comment is about wanting to call `evalR` something like `Rel`, but it's not clear to me that I want to do that, e.g., since there are multiple evaluation relations (such as big-step and small-step) there won't be just one name
-```
+:::dev
+chenson2018: There is still some naming weirdness in the relation forms of evaluation that should be addressed later. The inductive should be in upper camel case (you can disambiguate which evaluation with its name) and the constructors should not have these `E_A` prefixes.
+:::
 
 ::::full
 A small notational aside. We could instead have presented this relation
@@ -523,20 +517,19 @@ them:
 ```
 ::::
 
-::::hide
-```
-/- INSTRUCTORS: It might be useful to write the inference rules on the
-   chalkboard, walking through the translation from the inductive
-   definition, and then use these quizzes to check comprehension.
-   BCP 21: Too heavy. -/
-/- LATER: The first two quizzes here seem kind of boring. -/
-```
-::::
+:::instructors
+It might be useful to write the inference rules on the
+chalkboard, walking through the translation from the inductive
+definition, and then use these quizzes to check comprehension.
+BCP 21: Too heavy.
 
-```dev
+LATER: The first two quizzes here seem kind of boring.
+:::
+
+:::dev
 mwhicks1: both of the next two quizzes were hidden in the source
 material; the first quiz here is shown, the second is kept under `HIDE`.
-```
+:::
 
 ::::quiz
 Which rules are needed to prove the following?
@@ -572,10 +565,10 @@ Which rules are needed to prove the following?
 ````
 ::::
 
-```dev
+:::dev
 mwhicks1: Not sure if we need ⇓b, or whether we can define
 ⇓ overloaded. Don't understand Lean notation yet!
-```
+:::
 
 :::::exercise (rating := 1) (name := "beval_rules")
 Here, again, is the definition of the `Bexp.eval` function:
@@ -647,9 +640,9 @@ GRADE_MANUAL 1: beval_rules
 It is straightforward to prove that the relational and functional
 definitions of evaluation agree.
 
-```dev
+:::dev
 SOONER: BCP 23: Why can't we do induction on H in the ← direction??
-```
+:::
 
 ```lean
 theorem aevalR_iff_aeval (a : Aexp) (n : Nat) :
@@ -673,9 +666,9 @@ theorem aevalR_iff_aeval (a : Aexp) (n : Nat) :
 Again, we can make the proof quite a bit shorter using the combinators
 from the previous section.
 
-```dev
+:::dev
 mwhicks1: the `-- WORKINCLASS` marker leaves this shorter proof as a live in-class exercise.
-```
+:::
 
 ```lean
 theorem aevalR_iff_aeval' (a : Aexp) (n : Nat) :
@@ -711,9 +704,9 @@ inductive Bexp.evalR : Bexp → Bool → Prop where
 scoped notation:55 e:56 " ⇓b " b:56 => Bexp.evalR e b
 ```
 
-```dev
+:::dev
 mwhicks1: There is no keyboard shortcut for a subscript b, nor is there one for c (to use used with cevalR below). There are numbers, x, y, z, l, m, n, etc.
-```
+:::
 
 ```lean
 theorem bevalR_iff_beval (b : Bexp) (bv : Bool) :
@@ -753,7 +746,7 @@ GRADE_THEOREM 3: bevalR_iff_beval
 :::::
 
 ```lean
-end AExp
+end Warmup
 ```
 
 ## Computational vs. Relational Definitions
@@ -857,7 +850,7 @@ inductive Aexp.evalR : Aexp → Nat → Prop where
 end AevalRExtended
 ```
 
-```dev
+:::dev
 mwhicks1: The following text seems not quite right to me. First, you can
 use options for partial functions, and that's very natural to do in Lean
 as a monad. Second, and related, monadic functions need not even be
@@ -865,7 +858,7 @@ terminating if the implement the `CCPO` typeclass and are labeled as
 a `partial_fixpoint`. Maybe we don't want to get into the second thing here,
 but failing to mention options (which I think were introduced in LF) seems
 a bit surprising.
-```
+:::
 
 ::::full
 At this point you may be wondering: which of these styles should I use
@@ -900,15 +893,15 @@ only hold numbers.
 
 ## States
 
-```dev
+:::dev
 LATER: Maybe this section needs a little preface talking about "what is
    the meaning of an expression with variables?"...
 
-LATER: (Note copied from Equiv right before the assign_aequiv
+LATER: (Note copied from Equiv right before the `assign_aequiv`
    exercise): Some or all of this discussion should really happen when
    states are introduced in Imp.v, and the whole idea of treating states as
    an ADT should be raised there.
-```
+:::
 
 Since we'll want to look variables up to find out their current values,
 we'll use total maps from the `Maps` chapter. A _machine state_ (or
@@ -935,7 +928,7 @@ abbrev State := TotalMap Ident Nat
 
 We can add variables to the arithmetic expressions we had before simply
 by including one more constructor.  (This is a fresh `Aexp`, replacing
-the variable-free one from the `AExp` namespace above.)
+the variable-free one from the `Warmup` namespace above.)
 
 ```lean
 inductive Aexp where
@@ -946,7 +939,7 @@ inductive Aexp where
   | mult (a1 a2 : Aexp)
 ```
 
-````dev
+:::dev
 chenson2018: Rather than define identifiers as Ident, a more general approach is
 to use a *type variable* with `DecidableEq` (as the
 `Maps` chapter does), threaded through `Aexp`/`Bexp`/`Com`/`State`.  Stashed
@@ -963,7 +956,7 @@ inductive Aexp (V : Type) where
 -- TotalMap V Nat`, and `[DecidableEq V]` wherever a lookup/update is
 -- performed.
 ```
-````
+:::
 
 The `Bexp` definition is unchanged, except that it now refers to the new `Aexp`.
 
@@ -981,12 +974,12 @@ inductive Bexp where
 Defining a few variable names as shorthands will make examples easier
    to read.
 
-```instructors
+:::instructors
 We usually don't use x as a "bare identifier" in examples
    -- it is normally wrapped in an id constructor.  If this were _always_
-   the case, then it would make more sense to define the notation [x] to
-   mean [id (Id 0)].  But there quite a few counterexamples. Maybe we
-   could define [xx] to mean [id (Id 0)], or some such? But it's still
+   the case, then it would make more sense to define the notation `[x]` to
+   mean `[id (Id 0)]`.  But there quite a few counterexamples. Maybe we
+   could define `[xx]` to mean `[id (Id 0)]`, or some such? But it's still
    awkward.
    BCP/AAA 2/16: Should we use a coercion for this?  It means introducing a
    new concept -- a somewhat magical one -- but it will make examples look
@@ -998,7 +991,7 @@ We usually don't use x as a "bare identifier" in examples
    the global variables W, X, Y, Z for readability)
    BCP 7/20: This still needs another look to see if there's a way to make
    it globally better.
-```
+:::
 
 ```lean
 def W : Ident := "W"
@@ -1055,16 +1048,14 @@ syntax:max "~" term:max : imp_aexp
 syntax:min "aexp " "{" imp_aexp "}" : term
 ```
 
-::::hide
-```
-/- INSTRUCTORS: A variable reference elaborates to `Aexp.id $x` with the identifier spliced
-   as a *term*, not as a string literal. So `aexp { X }` is `Aexp.id X`, using
-   the declared constant `X : Ident`, exactly matching hand-written terms like
-   `.asgn X …` and the shape the state/`ceval` proofs expect. (Rocq's `<{ }>`
-   does the same via its `constr` fallback, yielding `AId X`.) A consequence is
-   that a variable name must be a declared `Ident` constant — as W/X/Y/Z are. -/
-```
-::::
+:::instructors
+A variable reference elaborates to `Aexp.id $x` with the identifier spliced
+as a *term*, not as a string literal. So `aexp { X }` is `Aexp.id X`, using
+the declared constant `X : Ident`, exactly matching hand-written terms like
+`.asgn X …` and the shape the state/`ceval` proofs expect. (Rocq's `<{ }>`
+does the same via its `constr` fallback, yielding `AId X`.) A consequence is
+that a variable name must be a declared `Ident` constant — as W/X/Y/Z are.
+:::
 
 ```lean
 open Lean in
@@ -1078,16 +1069,14 @@ macro_rules
   | `(aexp { ($a) }) => `(aexp {$a})
 ```
 
-::::hide
-```
-/- INSTRUCTORS: The literals `true`/`false` are accepted through the bare-identifier form
-   (`syntax:max ident : imp_bexp`) and turned into `Bexp.bool` by the macro
-   below, which rejects any other identifier. We take this route rather than
-   declaring `true`/`false` as symbols: as reserved keywords they would break
-   ordinary Lean uses of `true`/`false`, and as non-reserved symbols they would
-   clash with the bare-identifier form of `imp_aexp`. -/
-```
-::::
+:::instructors
+The literals `true`/`false` are accepted through the bare-identifier form
+(`syntax:max ident : imp_bexp`) and turned into `Bexp.bool` by the macro
+below, which rejects any other identifier. We take this route rather than
+declaring `true`/`false` as symbols: as reserved keywords they would break
+ordinary Lean uses of `true`/`false`, and as non-reserved symbols they would
+clash with the bare-identifier form of `imp_aexp`.
+:::
 
 ```lean
 /-- Boolean expressions of Imp -/
@@ -1115,14 +1104,12 @@ syntax:max "~" term:max : imp_bexp
 syntax:min "bexp " "{" imp_bexp "}" : term
 ```
 
-::::hide
-```
-/- INSTRUCTORS: The antiquotations are annotated with their category (`$a:imp_aexp`,
-   `$b:imp_bexp`) because an `imp_bexp` can begin with an `imp_aexp` (a
-   comparison); without the annotation the parser would descend into `imp_aexp`
-   and then insist on a comparison operator. -/
-```
-::::
+:::instructors
+The antiquotations are annotated with their category (`$a:imp_aexp`,
+`$b:imp_bexp`) because an `imp_bexp` can begin with an `imp_aexp` (a
+comparison); without the annotation the parser would descend into `imp_aexp`
+and then insist on a comparison operator.
+:::
 
 ```lean
 open Lean in
@@ -1243,7 +1230,7 @@ partial def delabAexpInner : DelabM (TSyntax `imp_aexp) := do
       | some v => pure ⟨Syntax.mkNumLit (toString v) |>.raw⟩
       | none   => `(imp_aexp| ~$(← withAppArg delab))
     | Aexp.id _ =>
-      -- INSTRUCTORS: a variable reference like aexp { X } elaborates to Aexp.id X where X is the declared Ident constant, so the delaborators print the constant's name as a bare identifier (and also handle the .id "X" string-literal form).
+      -- A variable reference like aexp { X } elaborates to Aexp.id X where X is the declared Ident constant, so the delaborators print the constant's name as a bare identifier (and also handle the .id "X" string-literal form).
       match ← withAppArg getExpr with
       | .const nm _      => `(imp_aexp| $(mkIdent nm):ident)
       | .lit (.strVal s) => `(imp_aexp| $(mkIdent (.mkSimple s)):ident)
@@ -1397,7 +1384,9 @@ example : aexp { Z + (X * Y) }.eval (X →ₜ 5 ; Y →ₜ 4 ; ∅) = 20 := by r
 example : bexp { true && !(X <= 4) }.eval (X →ₜ 5 ; ∅) = true := by rfl
 ```
 
+:::dev
 dsainati: Bikeshedding: I'm not sure how I feel about this arrow subscript for maps. Easy to change later but just flagging to discuss. mwhicks1: This comes from the Maps chapter, which chenson2018 is working on. There is a keyboard shortcut for ↦ we could use (\mapsto).
+:::
 
 # Commands
 
@@ -1581,7 +1570,7 @@ imp {
 ::::full
 The `imp { … }` notation, together with the delaborators, is purely a
 convenience for reading and writing programs. Occasionally, such as when debugging
-a definition or a stuck proof, the concrete syntax hides the underlying structure
+a definition or a stuck proof, the concrete syntax `hide`s the underlying structure
 we want to see. For those moments we can switch the Imp notation off in Lean's
 output with `set_option pp.notation false`, which our delaborators honor.
 
@@ -1684,13 +1673,13 @@ evaluation function tricky.
 Here's an attempt at defining an evaluation function for commands (with
 a bogus `while` case).
 
-```dev
+:::dev
 LATER: In SmallStep we need to package the state and command into a pair,
    so that we can talk about normal forms and such. Probably we should do it
    here too, for consistency. (Won't change much except the type
    declarations, but we'll need to add a comment why we wrote them this
    way.)
-```
+:::
 
 ```lean
 def Com.ceval_fun_no_while (st : State) (c : Com) : State :=
@@ -1736,11 +1725,11 @@ cannot be written in Lean -- at least not without additional tricks and
 workarounds.
 ::::
 
-```dev
-HIDE: Perhaps that discussion should be moved to -- or previewed in --
+:::dev
+   Perhaps that discussion should be moved to -- or previewed in --
    Logic.v?  MRC'20: It's already in ProofObjects (which not everyone
    sees).
-```
+:::
 
 :::terse
 A nonterminating `def loop_false (n) : False := loop_false n` would make `False` provable, so Lean rejects it.
@@ -1760,10 +1749,10 @@ definition of evaluation to be nondeterministic -- i.e., not only will it
 not be total, it will not even be a function!
 ::::
 
-```dev
+:::dev
 mwhicks1: I kind of hate this notation. Is there something more standard
 in Lean? CSLib precedent maybe?
-```
+:::
 
 We'll use the notation `st =[ c ]=> st'` for the `ceval` relation:
 `st =[ c ]=> st'` means that executing program `c` in a starting state
@@ -1775,10 +1764,10 @@ state `st` to `st'`".
 
 Operational Semantics
 
-```dev
-SOONER: BCP 21: I wonder if E_Seq would be easier to work with if st' and
+:::dev
+SOONER: BCP 21: I wonder if `E_Seq` would be easier to work with if st' and
    st'' were swapped...
-```
+:::
 
 Here is an informal definition of evaluation, presented as inference rules
 for readability:
@@ -1891,13 +1880,13 @@ example :
 What sorts of things might we want to prove using these definitions?  Here are some simple examples...
 :::
 
-```dev
-HIDE: PR: I phrased these quizzes with the following alternatives:
+:::dev
+  PR: I phrased these quizzes with the following alternatives:
    (A) Not true
    (B) True and easily provable
    (C) True and takes more work to prove
    (D) True and cannot be proved without additional axioms
-```
+:::
 
 ::::quiz
 Is the following proposition provable?
@@ -1934,9 +1923,9 @@ Is the following proposition provable?
 
 (A) Yes    (B) No    (C) Not sure
 
-```instructors
+:::instructors
 Answer is given later (`quiz2_answer`) as it depends on `ceval_deterministic`.
-```
+:::
 ::::
 
 ::::quiz
@@ -2009,27 +1998,26 @@ Is the following proposition provable?
 
 (A) Yes    (B) No    (C) Not sure
 
-````dev
-HIDE: This claim is *false*, so it cannot be proved -- the proof gets
-   stuck immediately:
+:::answer
+This claim is *false*, so it cannot be proved -- the proof gets
+stuck immediately:
 
-   ```
-   Lemma quiz5_answer: forall (b : bexp) (c : com) (st : state),
-     ~(exists st', st =[ while b do c end ]=> st') ->
-     forall st'', beval st'' b = true.
-   Proof.
-     intros b c st H st''.
-   Abort. (* Can't make any progress - claim is false! *)
-   ```
-````
+```
+theorem quiz5_answer (b : Bexp) (c : Com) (st : State)
+    (H : ¬ ∃ st', st =[ imp { while (~b) { ~c } } ]=> st') :
+    ∀ st'', Bexp.eval st'' b = true := by
+  intro st''
+  -- Can't make any progress -- the claim is false!
+```
+:::
 ::::
 
 ## Determinism of Evaluation
 
-```dev
+:::dev
 LATER: Maybe this should go at the end of the file in a section marked
    optional? Not everybody will want to spend time on it.
-```
+:::
 
 ::::full
 Changing from a computational to a relational definition of evaluation
@@ -2044,10 +2032,10 @@ In fact this cannot happen: `ceval` _is_ a partial function.
 Finally, we should pause to check that our evaluation relation really is a (partial) function...
 :::
 
-```dev
+:::dev
 LATER: Informal proof needed! (And one can surely be found in some past
    CIS500 exam solutions!)
-```
+:::
 
 ```lean
 theorem ceval_deterministic (c : Com) (st st1 st2 : State)
@@ -2117,10 +2105,10 @@ def pup_to_n : Com := solution!(
   })
 ```
 
-```dev
-HIDE: Result is the same as `(X →ₜ 0 ; Y →ₜ 3 ; ∅)` if one admits
+:::hide
+   Result is the same as `(X →ₜ 0 ; Y →ₜ 3 ; ∅)` if one admits
    functional extensionality.
-```
+:::
 
 ```lean
 theorem pup_to_2_ceval :
@@ -2143,17 +2131,17 @@ theorem pup_to_2_ceval :
 ```
 :::::
 
-```dev
+:::dev
 LATER: Comment from reader: Another good place to mention lack of
    functional extensionality.  The 6 `→ₜ`/`t_update`s in the above theorem
    are not redundant, nor would `pup_to_2_ceval` be provable if the
    algorithm were defined differently (e.g., if it used `Z` as a "buffer"
    variable instead of decrementing `X`).
-```
+:::
 
 # Reasoning About Imp Programs
 
-```dev
+:::dev
 LATER: This section doesn't seem very useful -- to anybody! It takes too
    much time to go through it in class, and even for advanced students it's
    too low-level and grubby to be a very convincing motivation for what
@@ -2164,7 +2152,7 @@ LATER: This section doesn't seem very useful -- to anybody! It takes too
    (BCP 10/18: However, this removes quite a few exercises. Is the homework
    assignment still meaty enough? I'm going to leave it as-is for now, but
    we should reconsider this later.)
-```
+:::
 
 ::::full
 We'll get into more systematic and powerful techniques for reasoning
@@ -2187,9 +2175,9 @@ theorem plus2_spec (st : State) (n : Nat) (st' : State)
       lia
 ```
 
-```dev
+:::dev
 LATER: This used to be recommended.  Should it be reinstated?
-```
+:::
 
 :::::exercise (rating := 3) (name := "XtimesYinZ_spec")
 State and prove a specification of `XtimesYinZ`.
@@ -2256,7 +2244,7 @@ theorem loop_never_stops (st st' : State) : ¬ (st =[ loop ]=> st') := by
 ```
 :::::
 
-```dev
+:::dev
 LATER: Marc Bezem 2022:
    There are trade-offs between using tactics and additional lemmas. Here is
    a case where a lemma would make things clearer. For `loop_never_stops`,
@@ -2264,8 +2252,10 @@ LATER: Marc Bezem 2022:
    `remember` is hard to understand. The following formulation explains the
    induction better:
 
+```
      Theorem loop_never_stops' : forall st st' c,
        st =[ c ]=> st' -> c = loop -> False.
+```
 
    The equivalence of the two formulations is an easy lemma.  (Note: the Lean
    proof above already takes exactly this generalized-`key` shape.)
@@ -2273,7 +2263,7 @@ LATER: Marc Bezem 2022:
    statements are negations, and the `remember` in the proof is avoided in
    the new one by introducing an equality in the theorem statement that IMO
    is not very pretty...
-```
+:::
 
 :::::exercise (rating := 3) (name := "no_whiles_eqv")
 The following function yields `true` just on programs with no while
@@ -2376,7 +2366,8 @@ theorem no_whiles_terminating' (c : Com) (st1 : State)
 ```
 :::::
 
-```dev
+:::dev
+```
 mwhicks1: NOT PORTED YET — remaining sections of sfdev/lf/Imp.v to port:
   - Case Study (Optional), Imp.v:2774
       * subtract_slowly_spec (EX4?, Imp.v:2919): loop-invariant style proof
@@ -2400,3 +2391,4 @@ mwhicks1: NOT PORTED YET — remaining sections of sfdev/lf/Imp.v to port:
       * add_for_loop (EX4?, Imp.v:3728): add a C-style `for` loop to Com,
         its notation, and extend ceval.
 ```
+:::
