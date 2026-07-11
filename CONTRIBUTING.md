@@ -447,10 +447,10 @@ generated projects:
 |---|---|---|
 |`` ```lean ``|shown|normal (executable) code|
 |`` ```lean -show``|hidden|normal code|
-|`` ```lean +error``|shown as expected failure|wrapped in `expect_failure ... end_expect_failure`|
-|`` ```lean +error -show``(rare)|hidden|wrapped in `expect_failure ... end_expect_failure`|
-|`` ```lean -keep``|shown|wrapped in `experiment ... end_experiment`|
-|`` ```lean -keep -show`` (rare)|hidden|wrapped in `experiment ... end_experiment`|
+|`` ```lean +error``|shown as expected failure|wrapped in `sf_expect_failure ... end`|
+|`` ```lean +error -show``(rare)|hidden|wrapped in `sf_expect_failure ... end`|
+|`` ```lean -keep``|shown|wrapped in `sf_experiment ... end`|
+|`` ```lean -keep -show`` (rare)|hidden|wrapped in `sf_experiment ... end`|
 
 Do not put definitions needed later in `-keep` or `+error` blocks as they will not become
 executable declarations in the generated projects, though they still get rendered in the book. 
@@ -601,5 +601,4 @@ indication that that's what it is.
 Scripts that are mostly or wholly AI generated should be marked as
 such, because these will typically be lower quality than human-created
 or heavily vetted code, and people looking at them should understand
-that. 
-
+that.

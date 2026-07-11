@@ -303,8 +303,8 @@ def decode? (data : Json) : Option Data :=
 
 /--
   * persistent, non-error blocks become executable Lean;
-  * non-persistent blocks (`-keep`) become `experiment ... end_experiment`;
-  * expected-error blocks (`+error`) become `expect_failure end_expect_failure`
+  * non-persistent blocks (`-keep`) become `sf_experiment ... end`;
+  * expected-error blocks (`+error`) become `sf_expect_failure ... end`
 -/
 private def Data.extractionMode (saved : Data) : ExtractionMode :=
   let {persistent, expectedError} := saved.config
@@ -679,12 +679,12 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
             (saved.student.trimAscii.toString ++ "\n\n")
         | .experiment =>
           return appendTeacherStudent buf file
-            (wrap "experiment" "end_experiment" saved.teacher)
-            (wrap "experiment" "end_experiment" saved.student)
+            (wrap "sf_experiment" "end" saved.teacher)
+            (wrap "sf_experiment" "end" saved.student)
         | .expectFailure =>
           return appendTeacherStudent buf file
-            (wrap "expect_failure" "end_expect_failure" saved.teacher)
-            (wrap "expect_failure" "end_expect_failure" saved.student)
+            (wrap "sf_expect_failure" "end" saved.teacher)
+            (wrap "sf_expect_failure" "end" saved.student)
       return buf
     if name == ``Block.exercise then
       -- Emit a `### Exercise (N⭐): name` heading; the contained `lean`
