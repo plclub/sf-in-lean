@@ -16,8 +16,9 @@ Each /- ... -/ block comment becomes Verso prose.  Code is wrapped in
   -- BCP:/JC:/etc.    → :::dev blocks
   code                → ```lean blocks
 
-Note: -- ADMITDEF / -- /ADMITDEF and -- ADMITTED markers are left as Lean
-comments inside code blocks.  A future pass will convert them to solution!().
+Note: -- ADMITDEF / -- /ADMITDEF and -- ADMITTED markers are converted to
+solution!() wrappers (see `_convert_solution_markers`), so the student build
+stubs the elided definition/proof to `sorry` and the teacher build keeps it.
 
 A Rocq source (SOURCE.v) is also accepted: its comment/marker layer is first
 converted to the code-forward Lean-comment dialect above (the code lines stay
@@ -590,8 +591,13 @@ _GRADE_RE = re.compile(r'^--\s+GRADE_')
 # lines still fall through and are dropped, as before.
 _LINE_HEADER_HASH_RE = re.compile(r'^--\s+(#{1,6})\s+(\S.*)$')
 _LINE_HEADER_STAR_RE = re.compile(r'^--\s+(\*{1,3})\s+(\S.*)$')
-_HIDE_OPEN_RE = re.compile(r'^-- HIDE$')
-_HIDE_CLOSE_RE = re.compile(r'^-- /HIDE$')
+# Hidden regions: `-- HIDE … -- /HIDE` and the region form
+# `-- INSTRUCTORS … -- /INSTRUCTORS` (bare, no colon — distinct from the
+# `-- INSTRUCTORS:` author note handled by `_INSTRUCTOR_RE`).  Both are captured
+# verbatim and emitted as :::hide (or :::answer when nested inside a quiz); the
+# content is often deliberately admitted, so it must never be elaborated.
+_HIDE_OPEN_RE = re.compile(r'^-- (?:HIDE|INSTRUCTORS)$')
+_HIDE_CLOSE_RE = re.compile(r'^-- /(?:HIDE|INSTRUCTORS)$')
 # Paired `-- QUIZ` … `-- /QUIZ` review question.  Unlike HIDE, the region is
 # shown (-> ::::quiz); a `-- HIDE` nested inside becomes the quiz's :::answer.
 _QUIZ_OPEN_RE = re.compile(r'^-- QUIZ$')
@@ -607,8 +613,9 @@ _SOL_CLOSE_RE = re.compile(r'^--\s+/\s?(?:QUIET)?SOLUTION$')
 # Author-only / developer comment markers.  These are swept into :::dev blocks
 # (discarded from generated outputs, preserved verbatim in the Verso source).
 # The recognized tag set is `_DEV_TAGS` (defined above — add new tags there).
-# NB: INSTRUCTORS is handled separately (-> :::instructor); TERSE/FULL have their
-# own dedicated markers.
+# NB: the `-- INSTRUCTORS:` author note is handled separately (-> :::instructor),
+# and the bare `-- INSTRUCTORS` region form is a hidden region (see
+# `_HIDE_OPEN_RE`); TERSE/FULL have their own dedicated markers.
 _AUTHOR_RE = re.compile(r'^-- (' + _DEV_TAGS + r')[: (](.*)$')
 
 # `-- ==> …` / `-- ===> …` hand-written eval-output annotations: intentionally
@@ -1354,19 +1361,17 @@ class Renderer:
         self._append(':::solution\n' + _verbatim_block(text) + '\n:::\n\n')
 
     def _emit_noop_directive(self, directive, text):
-        # Author notes become noop annotation *code blocks* (```dev / ```instructors).
-        # The text is preserved in the Verso source, but the block discards its
-        # body so it never reaches the generated outputs.  ```dev and
-        # ```instructors are processed identically (see SFLMeta); they differ only
-        # in name so instructor notes can be treated differently later.
-        #
-        # A code block delivers its body to the expander as a raw string that
-        # Verso never parses as markdown, so arbitrary author text (underscores,
-        # `*`, `[...]`, a leading `#`, `:::`, ...) can't break the parser — unlike
-        # a `:::` directive, whose body IS parsed and so used to need an inner
-        # verbatim fence.  The single tagged fence replaces that nesting.
-        self._flush_code()  # still acts as a code-block separator
-        self._append(_code_block(directive, text) + '\n\n')
+        # Author notes become noop annotation *directives* (:::dev / :::instructors),
+        # consistent with :::hide / :::answer / :::grade / :::solution.  The body is
+        # wrapped in a verbatim fence so arbitrary author prose (underscores, `*`,
+        # `[...]`, a leading `#`, `:::`, ...) can never derail Verso's directive
+        # parser; the directive discards its body at elaboration, so nothing reaches
+        # the generated outputs.  :::dev and :::instructors are processed identically
+        # (see SFLMeta); they differ only in name so instructor notes can be treated
+        # differently later.  (Hand-authored chapters may instead inline the body as
+        # markdown, backticking/escaping as needed — see CONTRIBUTING.md.)
+        self._flush_code()  # still acts as a block separator
+        self._append(':::' + directive + '\n' + _verbatim_block(text) + '\n:::\n\n')
 
     # --- Main dispatch ---
 
@@ -1523,35 +1528,42 @@ def _normalize_heading_levels(text: str) -> str:
 
 
 def _fuse_noop_blocks(text: str) -> str:
-    """Fuse runs of consecutive ```dev / ```instructors code blocks (separated
-    only by blank lines) into a single same-tag block, so a run of adjacent
-    author notes renders as one box rather than a stack of tiny ones.  The fused
-    body is re-fenced via `_code_block`, so a fence that had to grow to outrun
-    backticks in one note still outruns backticks in the combined body.  Only
-    same-tag blocks fuse (a `dev` never merges into an `instructors`)."""
+    """Fuse runs of consecutive :::dev / :::instructors directives (separated
+    only by blank lines) into a single same-tag directive, so a run of adjacent
+    author notes renders as one box rather than a stack of tiny ones.  Each note
+    is a `:::<tag>` directive wrapping a verbatim fence (see `_emit_noop_directive`);
+    the fused body is re-wrapped via `_verbatim_block`, so a fence that had to grow
+    to outrun backticks in one note still outruns backticks in the combined body.
+    Only same-tag directives fuse (a `dev` never merges into an `instructors`)."""
     lines = text.split('\n')
     out, i, n = [], 0, len(lines)
     while i < n:
-        m = re.match(r'^(`{3,})(dev|instructors)$', lines[i])
-        if not m:
+        m = re.match(r'^:::(dev|instructors)$', lines[i])
+        # Only fuse a directive immediately wrapping a verbatim fence.
+        if not (m and i + 1 < n and re.match(r'^`{3,}$', lines[i + 1])):
             out.append(lines[i]); i += 1; continue
-        tag = m.group(2)
+        tag = m.group(1)
         bodies = []
         while i < n:
-            mm = re.match(r'^(`{3,})' + re.escape(tag) + r'$', lines[i])
-            if not mm:
+            mm = re.match(r'^:::' + tag + r'$', lines[i])
+            fm = re.match(r'^(`{3,})$', lines[i + 1]) if mm and i + 1 < n else None
+            if not fm:
                 break
-            fence = mm.group(1)
-            j = i + 1
+            fence = fm.group(1)
+            j = i + 2
             body = []
             while j < n and lines[j] != fence:
                 body.append(lines[j]); j += 1
+            j += 1                                  # skip the closing fence
+            if j < n and lines[j].strip() == ':::':  # skip the directive close
+                j += 1
             bodies.append('\n'.join(body))
-            k = j + 1
-            while k < n and lines[k].strip() == '':  # skip blanks between blocks
-                k += 1
-            i = k
-        out.append(_code_block(tag, '\n\n'.join(bodies)))
+            while j < n and lines[j].strip() == '':  # skip blanks between blocks
+                j += 1
+            i = j
+        out.append(':::' + tag)
+        out.append(_verbatim_block('\n\n'.join(bodies)))
+        out.append(':::')
         out.append('')
     return '\n'.join(out)
 
@@ -1752,6 +1764,11 @@ def _convert_solution_markers(src: str) -> str:
         := <body>
         -- /ADMITDEF
 
+      def f … : T :=         ->   def f … : T := solution!(
+        -- ADMITDEF                 <body>)
+        <body>
+        -- /ADMITDEF
+
       <inside `by`>           ->   solution!
         -- ADMITTED                   <tactics, reindented one level deeper>
         <tactics>
@@ -1769,18 +1786,37 @@ def _convert_solution_markers(src: str) -> str:
         line = lines[i]
         s = line.strip()
 
-        # --- ADMITDEF: wrap the definition body (`:= …`) in solution!(…) ---
-        if s == '-- ADMITDEF':
+        # --- ADMITDEF: wrap the definition body in solution!(…) so the student
+        # build stubs the definition to `:= sorry` (keeping the name defined, so
+        # later references still elaborate) while the teacher build keeps the
+        # body.  The `:=` may sit either on the first body line (after the
+        # marker) or already on the definition's signature line above it. ---
+        if s in ('-- ADMITDEF', '/- ADMITDEF -/'):
             j = i + 1
             body = []
-            while j < n and lines[j].strip() != '-- /ADMITDEF':
+            while j < n and lines[j].strip() not in ('-- /ADMITDEF', '/- /ADMITDEF -/'):
                 body.append(lines[j]); j += 1
+            # index of the last non-blank body line (where the closing `)` goes)
+            last = len(body) - 1
+            while last > 0 and not body[last].strip():
+                last -= 1
             if body:
                 m = re.match(r'^(\s*:=)\s*(.*)$', body[0])
                 if m:
+                    # `:=` leads the body: `:= <expr>` -> `:= solution!(<expr>)`.
                     body[0] = m.group(1) + ' solution!(' + m.group(2)
-                    body[-1] = body[-1] + ')'
-                out.extend(body)
+                    body[last] = body[last] + ')'
+                    out.extend(body)
+                else:
+                    # `:=` is on the signature line already emitted above; find it
+                    # (skipping blank lines) and open `solution!(` there.
+                    p = len(out) - 1
+                    while p >= 0 and not out[p].strip():
+                        p -= 1
+                    if p >= 0 and out[p].rstrip().endswith(':='):
+                        out[p] = out[p].rstrip() + ' solution!('
+                        body[last] = body[last] + ')'
+                    out.extend(body)
             i = j + 1
             continue
 
