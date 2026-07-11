@@ -693,6 +693,37 @@ diagram (e.g., SVG), and a plain code block containing the ASCII art.
 HTML renders only the diagram child; the saver emits only the ASCII
 fallback wrapped in a `/-! … -/` module-doc comment.
 
+### Verso markup for nicer HTML
+
+Beyond the structural directives above, the Manual genre offers **inline roles**
+that enrich expository prose in the HTML.  Use them where they add value (and
+don't over-link — link the first substantive mention in a passage, not every
+occurrence):
+
+* `` {name}`Foo.bar` `` — a clickable identifier that hovers to show its
+  type/signature and links to its definition.  Use for references to real
+  declarations (defs, theorems, constructors, types) in prose.  **Caveat:** the
+  name must resolve *in scope at that point in the document* — defined earlier
+  and reachable (mind namespaces and forward references), or the build fails.  So
+  this is a targeted, build-verified pass, not a global `` `x` ``→`` {name}`x` ``
+  replace; and it applies only in visible prose (not inside `lean` blocks, quiz
+  options, or dropped author notes).
+* `` {lean}`expr` `` — an inline *elaborated expression* (any term or type, with
+  hover types).  Use when a whole expression — not just a single name — belongs
+  in prose, e.g. `` {lean}`Aexp → Nat` `` or `` {lean}`Coe Ident Aexp` ``.
+* `{ref "tag"}[link text]` — a cross-reference link to a section.  Tag the target
+  by putting a `%%% tag := "the-tag" %%%` block right under its heading, then
+  reference it with `{ref "the-tag"}[…]`.  Use for "see the X section
+  above/below" phrasings.
+* `` {tactic}`simp` `` — links a tactic name to its documentation; good for prose
+  that mentions tactics.
+* `` {deftech}`term` `` / `` {tech}`term` `` — define a technical term (glossary
+  entry + anchor) and link its later uses.  Good for a chapter's recurring
+  defined terms.
+* Also available: `{option}` (Lean options), `` {module}`Foo` `` (module links),
+  `{margin}[…]` (sidebar notes), `{index}` / `{see}` / `{seeAlso}` (book index),
+  `{citep}` / `{citet}` (bibliography).
+
 ## Porting chapters from Rocq
 
 The `to_verso` script automates the mechanical parts of translating from Rocq to 

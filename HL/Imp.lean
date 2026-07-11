@@ -324,7 +324,7 @@ theorem optimize_0plus_sound (a : Aexp) :
 # Optimizing Booleans
 
 :::::exercise (rating := 3) (name := "optimize_0plus_b_sound")
-Since the `Aexp.optimize_0plus` transformation doesn't change the value of an
+Since the {name}`Aexp.optimize_0plus` transformation doesn't change the value of an
 `Aexp`, we should be able to apply it to all the `Aexp`s that appear in a
 `Bexp` without changing the `Bexp`'s value.  Write a function that
 performs this transformation on `Bexp`s and prove it sound.  Use the
@@ -387,7 +387,7 @@ GRADE_THEOREM 2: optimize_0plus_b_sound
 # Evaluation as a Relation
 
 ::::full
-We have presented `Aexp.eval` and `Bexp.eval` as functions defined by
+We have presented {name}`Aexp.eval` and {name}`Bexp.eval` as functions defined by
 recursion. Another way to think about evaluation -- one that is often
 more flexible -- is as a _relation_ between expressions and their
 values. This perspective leads to inductive definitions like the
@@ -442,7 +442,7 @@ names chosen during proofs involving the relation, at the cost of making
 the definition a little more verbose. We adopt the named style.
 ::::
 
-It will be convenient to have an infix notation for `Aexp.evalR`.  We'll
+It will be convenient to have an infix notation for {name}`Aexp.evalR`.  We'll
 write `e ⇓ n` to mean that arithmetic expression `e` evaluates to
 value `n`.  (We scope the notation to this namespace so it doesn't
 collide with other evaluation relations later.)  In Lean the notation is
@@ -456,7 +456,7 @@ scoped notation:55 e:56 " ⇓ " n:56 => Aexp.evalR e n
 
 ::::full
 In informal discussions, it is convenient to write the rules for
-`Aexp.evalR` and similar relations in the more readable graphical form of
+{name}`Aexp.evalR` and similar relations in the more readable graphical form of
 _inference rules_, where the premises above the line justify the
 conclusion below the line.  For example, the constructor `E_APlus`
 
@@ -571,7 +571,7 @@ mwhicks1: Not sure if we need ⇓b, or whether we can define
 :::
 
 :::::exercise (rating := 1) (name := "beval_rules")
-Here, again, is the definition of the `Bexp.eval` function:
+Here, again, is the definition of the {name}`Bexp.eval` function:
 
 ```
 def Bexp.eval (b : Bexp) : Bool :=
@@ -680,8 +680,8 @@ theorem aevalR_iff_aeval' (a : Aexp) (n : Nat) :
 ```
 
 :::::exercise (rating := 3) (name := "bevalR")
-Write a relation `Bexp.evalR` in the same style as `Aexp.evalR`, and prove that
-it is equivalent to `Bexp.eval`.
+Write a relation `Bexp.evalR` in the same style as {name}`Aexp.evalR`, and prove that
+it is equivalent to {name}`Bexp.eval`.
 
 ```lean
 inductive Bexp.evalR : Bexp → Bool → Prop where
@@ -1008,6 +1008,9 @@ overloading should not cause confusion.)
 ::::
 
 ## Notations
+%%%
+tag := "imp-notations"
+%%%
 
 ::::full
 To make Imp programs easier to read and write, we introduce some notations and implicit
@@ -1071,7 +1074,7 @@ macro_rules
 
 :::instructors
 The literals `true`/`false` are accepted through the bare-identifier form
-(`syntax:max ident : imp_bexp`) and turned into `Bexp.bool` by the macro
+(`syntax:max ident : imp_bexp`) and turned into {name}`Bexp.bool` by the macro
 below, which rejects any other identifier. We take this route rather than
 declaring `true`/`false` as symbols: as reserved keywords they would break
 ordinary Lean uses of `true`/`false`, and as non-reserved symbols they would
@@ -1157,7 +1160,7 @@ instance : Coe Bool Bexp where
 With these coercions we can write `.plus 3 (.mult X 2)` instead of the fully
    explicit `.plus (.num 3) (.mult (.id "X") (.num 2))`, and `.and true (.not …)`
    instead of `.and (.bool true) (.not …)`. More readably still, the concrete
-   syntax from the Notations section lets us write these examples directly:
+   syntax from the {ref "imp-notations"}[Notations section] lets us write these examples directly:
 ::::
 
 ```lean
@@ -1166,6 +1169,9 @@ def example_bexp : Bexp := bexp { true && !(X <= 4) }
 ```
 
 ## Delaborators
+%%%
+tag := "imp-delaborators"
+%%%
 
 ::::full
 The notations above are _input_ only: they teach Lean how to *read* `aexp
@@ -1429,7 +1435,7 @@ declare_syntax_cat imp_com
 `skip` is *not* a reserved keyword: it is accepted through a bare
    identifier-terminated command (`syntax ident ";" : imp_com`) and recognised
    in the macro below, which rejects any other identifier. This keeps `skip`
-   usable as the bare constructor name `Com.skip` in `match`/`induction`
+   usable as the bare constructor name {name}`Com.skip` in `match`/`induction`
    elsewhere in the file, and avoids reserving `skip` globally.
 
 ```lean
@@ -1468,8 +1474,9 @@ macro_rules
 
 ::::full
 Just as we did for expressions, we add a delaborator so that Lean prints
-commands back in the `imp { … }` concrete syntax (see the Delaborators
-section above). It reuses the expression delaborators for the condition of an
+commands back in the `imp { … }` concrete syntax (see the
+{ref "imp-delaborators"}[Delaborators section] above). It reuses the expression
+delaborators for the condition of an
 `if`/`while` and for the right-hand side of an assignment, and prints an
 unrecognized subcommand with the `~` escape.
 ::::
@@ -1577,7 +1584,7 @@ output with `set_option pp.notation false`, which our delaborators honor.
 Note that unlike a `def`, `imp { … }` is a `macro` which is expanded during elaboration,
 *before* the resulting term is type-checked. So `fact_in_lean` is not a
 program hidden behind a layer of notation that a proof must first peel back;
-it simply *is* the underlying tree of `Com`, `Aexp`, and `Bexp` constructors.
+it simply *is* the underlying tree of {name}`Com`, {name}`Aexp`, and {name}`Bexp` constructors.
 Consequently, when a proof goal mentions an Imp program, tactics such as
 `cases`, `injection`, and `simp` already act on those constructors directly
 -- there is nothing to "unfold". The delaborators affect only how that tree
@@ -2314,7 +2321,7 @@ theorem no_whiles_eqv (c : Com) : Com.no_whiles c = true ↔ NoWhilesR c := by
 :::::exercise (rating := 4) (name := "no_whiles_terminating")
 Imp programs that don't involve while loops always terminate.  State and
 prove a theorem `no_whiles_terminating` that says this.  Use either
-`Com.no_whiles` or `NoWhilesR`, as you prefer.
+{name}`Com.no_whiles` or {name}`NoWhilesR`, as you prefer.
 
 ```lean
 theorem no_whiles_terminating (c : Com) (st : State) (h : NoWhilesR c) :
@@ -2338,7 +2345,7 @@ theorem no_whiles_terminating (c : Com) (st : State) (h : NoWhilesR c) :
 ```
 
 And here is an alternative solution by induction on `c` (using
-   `Com.no_whiles` instead of `NoWhilesR`):
+   {name}`Com.no_whiles` instead of {name}`NoWhilesR`):
 
 ```lean
 -- SOLUTION
@@ -2390,5 +2397,29 @@ mwhicks1: NOT PORTED YET — remaining sections of sfdev/lf/Imp.v to port:
       * exn_imp (EX4A?, Imp.v:3524): exceptions variant. Large.
       * add_for_loop (EX4?, Imp.v:3728): add a C-style `for` loop to Com,
         its notation, and extend ceval.
+```
+:::
+
+:::dev
+```
+HTML polish — deferred Verso-markup opportunities for a later pass (see
+CONTRIBUTING.md, "Verso markup for nicer HTML"):
+* {name} was applied to resolvable declaration references in visible prose.
+  More could be added, but bare type names were linked only selectively (avoid
+  over-linking; mind forward references and the `Warmup` namespace — a name must
+  already be defined and in scope at that point in the document, or {name} fails
+  to build).
+* {ref "tag"} cross-references link "see the X section" phrasings; add a
+  `%%% tag := "…" %%%` block under a heading to make it a target. Done for the
+  Notations and Delaborators sections; more internal "above/below" phrasings
+  could get the same treatment.
+* {tactic}`simp` — link tactic names in the automation/tactics prose (`try`,
+  `repeat`, `<;>`, `simp`, `lia`, `cases`, `induction`).
+* {deftech}/{tech} — a small glossary: define Imp's core terms once with
+  {deftech} (abstract syntax, state, big-step, relation, partial function, …)
+  and link later uses with {tech}.
+* {lean}`expr` — inline elaborated expressions/types where a whole expression,
+  not just a single name, reads better with hover types (e.g. the
+  `Coe Ident Aexp` / `OfNat Aexp n` bullets in the Notations section).
 ```
 :::
