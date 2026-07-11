@@ -187,13 +187,18 @@ private partial def blockToText (width : Nat) : Verso.Doc.Block Manual → Strin
 
 /-! ## Lake project scaffold templates -/
 
-/-- Contents of the generated project's `lakefile.toml`. -/
-private def lakefileTemplate (vol : String) : String :=
+/-- Contents of the generated project's `lakefile.toml`. `extraLibs` names the
+additional `lean_lib`s holding bundled prerequisite sources (e.g. `LF` for the
+bare `LF/Maps.lean` that Imp depends on). -/
+private def lakefileTemplate (vol : String) (extraLibs : Array String) : String :=
+  let extra := extraLibs.foldl (init := "") fun acc l =>
+    acc ++ "\n[[lean_lib]]\nname = \"" ++ l ++ "\"\n"
   "name = \"" ++ vol.toLower ++ "-extracted\"\n" ++
   "version = \"0.1.0\"\n" ++
   "defaultTargets = [\"" ++ vol ++ "\"]\n\n" ++
   "[[lean_lib]]\n" ++
-  "name = \"" ++ vol ++ "\"\n"
+  "name = \"" ++ vol ++ "\"\n" ++
+  extra
 
 /-! ## ExtraStep walker -/
 
@@ -718,15 +723,18 @@ Write a complete generated Lake project at `dest`: the per-file buffer
 contents under `dest/`, plus `lakefile.toml`, `lean-toolchain`, and a `LF.lean`
 that imports `LF.STLC`. -/
 private def writeProject (dest : System.FilePath) (toolchain : String)
-    (vol kind : String) (files : Array (String × String)) : IO Unit := do
+    (vol kind : String) (files : Array (String × String))
+    (extraLibs : Array String) : IO Unit := do
   IO.FS.createDirAll dest
-  -- Clear the volume source tree so chapter files that have since been renamed
-  -- or removed don't linger as stale orphans. Other artifacts (`.lake`,
-  -- `lakefile.toml`, `lean-toolchain`, `README.md`) are left alone.
-  let chapterRoot := dest / vol
-  if ← chapterRoot.pathExists then
-    IO.FS.removeDirAll chapterRoot
-  IO.FS.writeFile (dest / "lakefile.toml") (lakefileTemplate vol)
+  -- Clear the volume source tree (and any bundled-prerequisite lib trees) so
+  -- files that have since been renamed or removed don't linger as stale
+  -- orphans. Other artifacts (`.lake`, `lakefile.toml`, `lean-toolchain`,
+  -- `README.md`) are left alone.
+  for lib in vol :: extraLibs.toList do
+    let libRoot := dest / lib
+    if ← libRoot.pathExists then
+      IO.FS.removeDirAll libRoot
+  IO.FS.writeFile (dest / "lakefile.toml") (lakefileTemplate vol extraLibs)
   IO.FS.writeFile (dest / "lean-toolchain") toolchain
   IO.FS.writeFile (dest / "README.md")
     s!"# {vol} — {kind} version\n\nGenerated from the Verso source.\n"
@@ -753,6 +761,72 @@ private def buildProject (dest : System.FilePath) (kind : String) :
   else
     IO.println s!"Generated {kind} project built successfully."
 
+/-! ## Extracted-project imports & bundled prerequisites
+
+Extracted `.lean` projects are standalone Lake packages, so each chapter's
+outside dependencies must be reconstructed from its own header `import`s: drop
+the framework imports (they build the book, not student code), re-emit the rest,
+and bundle the source of any that is a content prerequisite (not toolchain, not
+an emitted book chapter — e.g. the bare `LF.Maps`) under its own `lean_lib`. A
+bundled module is copied verbatim, so it must be plain (non-Verso) Lean. -/
+
+/-- Module top-namespaces belonging to the authoring framework: their imports
+build the book but must never appear in an extracted `.lean` file. -/
+private def frameworkPrefixes : List String :=
+  ["VersoManual", "Verso", "Illuminate", "SFLMeta", "SubVerso"]
+
+/-- Toolchain-provided top-namespaces: always available in any Lake project, so
+they stay as `import` lines but are never bundled as source. -/
+private def corePrefixes : List String :=
+  ["Lean", "Std", "Init", "Batteries"]
+
+/-- Top namespace of a module name (`LF.Maps` ⇒ `LF`). -/
+private def modTop (m : String) : String := (m.splitOn ".").headD m
+
+/-- Should module `m` appear as an `import` in an extracted file? (Framework
+imports are dropped; everything else — toolchain and content — is kept.) -/
+private def keepImport (m : String) : Bool := ! frameworkPrefixes.contains (modTop m)
+
+/-- The relative source path of a module (`LF.Maps` ⇒ `LF/Maps.lean`). -/
+private def modToPath (m : String) : String := m.replace "." "/" ++ ".lean"
+
+/-- Header `import` module names in Lean source text, scanning only the file
+header (up to the first `#doc`). -/
+private def headerImports (src : String) : Array String := Id.run do
+  let mut out : Array String := #[]
+  for raw in src.splitOn "\n" do
+    let line := raw.trimAscii.toString
+    if line.startsWith "#doc" then break
+    if line.startsWith "import " then
+      out := out.push ((line.drop 7).trimAscii.toString)
+  return out
+
+/-- Transitively gather the bundled prerequisite files (path, verbatim source)
+and the extra `lean_lib` names they need. `needsBundle` decides which modules
+are content prerequisites (not framework, not toolchain, not an emitted
+chapter). -/
+private partial def bundleLoop (needsBundle : String → Bool)
+    (queue seen : List String)
+    (files : Array (String × String)) (libs : Array String) :
+    IO (Array (String × String) × Array String) := do
+  match queue with
+  | [] => return (files, libs)
+  | m :: rest =>
+    if seen.contains m then
+      bundleLoop needsBundle rest seen files libs
+    else
+      let path := modToPath m
+      if ! (← (System.FilePath.mk path).pathExists) then
+        -- Not a bundleable source file (e.g. a spurious match); skip it.
+        bundleLoop needsBundle rest (m :: seen) files libs
+      else
+        let content ← IO.FS.readFile path
+        let top := modTop m
+        let libs := if libs.contains top then libs else libs.push top
+        let deps := (headerImports content).toList.filter needsBundle
+        bundleLoop needsBundle (rest ++ deps) (m :: seen)
+          (files.push (path, content)) libs
+
 /--
 Shared implementation. Writes the extracted Lean project to
 `_out/<destSlug>/<variant>/lean/`, next to that variant's `html-multi/`
@@ -776,15 +850,42 @@ private def emitSavedImpl (destSlug modPrefix variant : String)
     let toolchain ← (IO.FS.readFile "lean-toolchain").toBaseIO >>= fun
       | .ok s => pure s
       | .error _ => pure "leanprover/lean4:v4.30.0-rc2\n"
-    let files : Array (String × String) :=
-      buf.fold (init := #[]) fun acc file (teacher, student, terse) =>
-        let chosen :=
-          if variant == "solutions" then teacher
-          else if variant == "terse" then terse
-          else student
-        acc.push (file, mergeAdjacentModuleDocs chosen)
+    let rootFile := modPrefix ++ ".lean"
+    -- Snapshot the buffer as a list so we can read source files (IO) per entry.
+    let entries := buf.fold (init := ([] : List (String × (String × String × String))))
+      fun acc k v => (k, v) :: acc
+    -- Emitted book chapters: buffer keys with a path separator (the root
+    -- `<Vol>.lean` has none). `HL/Imp.lean` ⇒ module `HL.Imp`.
+    let chapterModules := entries.map (·.1) |>.filter (·.any (· == '/'))
+      |>.map fun k => ((k.dropEnd 5).toString).replace "/" "."
+    let needsBundle (m : String) : Bool :=
+      keepImport m && ! corePrefixes.contains (modTop m) && ! chapterModules.contains m
+    -- Pick the variant per file; prepend each chapter's (framework-stripped)
+    -- import preamble; collect bundle seeds from the chapters' source imports.
+    let mut files : Array (String × String) := #[]
+    let mut seeds : List String := []
+    for (file, teacher, student, terse) in entries do
+      let chosen := mergeAdjacentModuleDocs <|
+        if variant == "solutions" then teacher
+        else if variant == "terse" then terse
+        else student
+      if file == rootFile then
+        files := files.push (file, chosen)
+      else
+        -- The buffer key is the chapter's repo-relative source path, so read its
+        -- real header imports and re-emit the non-framework ones.
+        let src ← (IO.FS.readFile file).toBaseIO >>= fun
+          | .ok s => pure s
+          | .error _ => pure ""
+        let imps := (headerImports src).toList.filter keepImport
+        seeds := seeds ++ imps.filter needsBundle
+        let preamble := imps.foldl (init := "") fun acc i => acc ++ "import " ++ i ++ "\n"
+        let preamble := if preamble.isEmpty then "" else preamble ++ "\n"
+        files := files.push (file, preamble ++ chosen)
+    let (bundleFiles, extraLibs) ← bundleLoop needsBundle seeds [] #[] #[]
+    let allFiles := files ++ bundleFiles
     let dest := System.FilePath.mk "_out" / destSlug / variant / "lean"
-    writeProject dest toolchain modPrefix variant files
+    writeProject dest toolchain modPrefix variant allFiles extraLibs
     if verify then buildProject dest variant
 
 /-- `ExtraStep` for the student build: solutions elided. -/

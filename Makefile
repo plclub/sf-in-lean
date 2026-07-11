@@ -55,7 +55,7 @@ all: verso lf hl ts check-bare-lean-chapters check-verso-chapters
 # when it has been incorporated into the book via a *Verso.lean include.
 .PHONY: check-lean
 check-bare-lean-chapters:
-	lake build HL.Imp
+	@echo "no bare (un-versified) chapters to build"
 
 # Temporary:
 # Build the generated HL/TS Verso chapters that aren't in a book yet, so the
@@ -63,7 +63,7 @@ check-bare-lean-chapters:
 # the sources first.  Drop a module here once it's `{include}`d in its book.
 .PHONY: check-verso-chapters
 check-verso-chapters: verso
-	lake build $(HL_VERSO_MODULES)
+	@if [ -n "$(HL_VERSO_MODULES)" ]; then lake build $(HL_VERSO_MODULES); else echo "no generated Verso chapters to build"; fi
 
 serve: all
 	python3 -m http.server 8000 -d _out/
@@ -88,7 +88,9 @@ LF_CHAPTERS := Induction UsingLean Lists Poly Tactics Logic IndProp IndPropRegex
 
 LF_VERSO_FILES := $(addprefix LF/,$(addsuffix Verso.lean,$(LF_CHAPTERS)))
 
-HL_CHAPTERS := Imp
+# Imp is now versified directly in HL/Imp.lean and {include}d in HL.lean, so it
+# is no longer generated here.  Add future not-yet-versified HL chapters below.
+HL_CHAPTERS :=
 
 HL_VERSO_FILES := $(addprefix HL/,$(addsuffix Verso.lean,$(HL_CHAPTERS)))
 
