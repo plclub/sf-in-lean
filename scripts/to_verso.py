@@ -1361,19 +1361,17 @@ class Renderer:
         self._append(':::solution\n' + _verbatim_block(text) + '\n:::\n\n')
 
     def _emit_noop_directive(self, directive, text):
-        # Author notes become noop annotation *code blocks* (```dev / ```instructors).
-        # The text is preserved in the Verso source, but the block discards its
-        # body so it never reaches the generated outputs.  ```dev and
-        # ```instructors are processed identically (see SFLMeta); they differ only
-        # in name so instructor notes can be treated differently later.
-        #
-        # A code block delivers its body to the expander as a raw string that
-        # Verso never parses as markdown, so arbitrary author text (underscores,
-        # `*`, `[...]`, a leading `#`, `:::`, ...) can't break the parser — unlike
-        # a `:::` directive, whose body IS parsed and so used to need an inner
-        # verbatim fence.  The single tagged fence replaces that nesting.
-        self._flush_code()  # still acts as a code-block separator
-        self._append(_code_block(directive, text) + '\n\n')
+        # Author notes become noop annotation *directives* (:::dev / :::instructors),
+        # consistent with :::hide / :::answer / :::grade / :::solution.  The body is
+        # wrapped in a verbatim fence so arbitrary author prose (underscores, `*`,
+        # `[...]`, a leading `#`, `:::`, ...) can never derail Verso's directive
+        # parser; the directive discards its body at elaboration, so nothing reaches
+        # the generated outputs.  :::dev and :::instructors are processed identically
+        # (see SFLMeta); they differ only in name so instructor notes can be treated
+        # differently later.  (Hand-authored chapters may instead inline the body as
+        # markdown, backticking/escaping as needed — see CONTRIBUTING.md.)
+        self._flush_code()  # still acts as a block separator
+        self._append(':::' + directive + '\n' + _verbatim_block(text) + '\n:::\n\n')
 
     # --- Main dispatch ---
 
@@ -1530,35 +1528,42 @@ def _normalize_heading_levels(text: str) -> str:
 
 
 def _fuse_noop_blocks(text: str) -> str:
-    """Fuse runs of consecutive ```dev / ```instructors code blocks (separated
-    only by blank lines) into a single same-tag block, so a run of adjacent
-    author notes renders as one box rather than a stack of tiny ones.  The fused
-    body is re-fenced via `_code_block`, so a fence that had to grow to outrun
-    backticks in one note still outruns backticks in the combined body.  Only
-    same-tag blocks fuse (a `dev` never merges into an `instructors`)."""
+    """Fuse runs of consecutive :::dev / :::instructors directives (separated
+    only by blank lines) into a single same-tag directive, so a run of adjacent
+    author notes renders as one box rather than a stack of tiny ones.  Each note
+    is a `:::<tag>` directive wrapping a verbatim fence (see `_emit_noop_directive`);
+    the fused body is re-wrapped via `_verbatim_block`, so a fence that had to grow
+    to outrun backticks in one note still outruns backticks in the combined body.
+    Only same-tag directives fuse (a `dev` never merges into an `instructors`)."""
     lines = text.split('\n')
     out, i, n = [], 0, len(lines)
     while i < n:
-        m = re.match(r'^(`{3,})(dev|instructors)$', lines[i])
-        if not m:
+        m = re.match(r'^:::(dev|instructors)$', lines[i])
+        # Only fuse a directive immediately wrapping a verbatim fence.
+        if not (m and i + 1 < n and re.match(r'^`{3,}$', lines[i + 1])):
             out.append(lines[i]); i += 1; continue
-        tag = m.group(2)
+        tag = m.group(1)
         bodies = []
         while i < n:
-            mm = re.match(r'^(`{3,})' + re.escape(tag) + r'$', lines[i])
-            if not mm:
+            mm = re.match(r'^:::' + tag + r'$', lines[i])
+            fm = re.match(r'^(`{3,})$', lines[i + 1]) if mm and i + 1 < n else None
+            if not fm:
                 break
-            fence = mm.group(1)
-            j = i + 1
+            fence = fm.group(1)
+            j = i + 2
             body = []
             while j < n and lines[j] != fence:
                 body.append(lines[j]); j += 1
+            j += 1                                  # skip the closing fence
+            if j < n and lines[j].strip() == ':::':  # skip the directive close
+                j += 1
             bodies.append('\n'.join(body))
-            k = j + 1
-            while k < n and lines[k].strip() == '':  # skip blanks between blocks
-                k += 1
-            i = k
-        out.append(_code_block(tag, '\n\n'.join(bodies)))
+            while j < n and lines[j].strip() == '':  # skip blanks between blocks
+                j += 1
+            i = j
+        out.append(':::' + tag)
+        out.append(_verbatim_block('\n\n'.join(bodies)))
+        out.append(':::')
         out.append('')
     return '\n'.join(out)
 
