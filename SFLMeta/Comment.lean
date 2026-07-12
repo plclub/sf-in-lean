@@ -34,3 +34,19 @@ def noopDirectiveFor (blockName : Name) : DirectiveExpanderOf Unit
 @[directive]
 def dev : DirectiveExpanderOf Unit
   | args, contents => noopDirectiveFor ``Block.devcomment args contents
+
+/-- Shared expander for noop annotation *code blocks*.  Unlike the `:::`
+directives above, a code block receives its body as a raw string that Verso
+never parses as markdown, so arbitrary author prose (`:::`, `*`, `#`, `[…]`,
+backticks) can't derail the parser and no inner verbatim fence is needed.  The
+body is discarded at elaboration, so nothing reaches the generated outputs. -/
+def noopCodeBlockFor (blockName : Name) : CodeBlockExpanderOf Unit
+  | (), _ => ``(Verso.Doc.Block.other $(mkIdent blockName) #[])
+
+/-- A ` ```dev ` code block: the raw-body form of `:::dev` for author/developer
+comments.  Registered under the `dev` name (shared with the directive, which
+lives in a separate expander table) so the fence reads ` ```dev `.  Prefer this
+over the directive so `to_verso` needn't wrap the body in an inner code fence. -/
+@[code_block dev]
+def devBlock : CodeBlockExpanderOf Unit
+  | args, str => noopCodeBlockFor ``Block.devcomment args str

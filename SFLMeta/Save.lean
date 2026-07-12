@@ -187,27 +187,33 @@ private partial def blockToText (width : Nat) : Verso.Doc.Block Manual → Strin
 
 /-! ## Lake project scaffold templates -/
 
-/-- Contents of the generated project's `lakefile.toml`. -/
-private def lakefileTemplate (vol : String) : String :=
+/-- Contents of the generated project's `lakefile.toml`. `extraLibs` names the
+additional `lean_lib`s holding bundled prerequisite sources (e.g. `LF` for the
+bare `LF/Maps.lean` that Imp depends on). -/
+private def lakefileTemplate (vol : String) (extraLibs : Array String) : String :=
+  let extra := extraLibs.foldl (init := "") fun acc l =>
+    acc ++ "\n[[lean_lib]]\nname = \"" ++ l ++ "\"\n"
   "name = \"" ++ vol.toLower ++ "-extracted\"\n" ++
   "version = \"0.1.0\"\n" ++
   "defaultTargets = [\"" ++ vol ++ "\"]\n\n" ++
   "[[lean_lib]]\n" ++
-  "name = \"" ++ vol ++ "\"\n"
+  "name = \"" ++ vol ++ "\"\n" ++
+  extra
 
 /-! ## ExtraStep walker -/
 
-/-- Per-file buffers accumulated by the saver: `(teacher source, student source)`. -/
-private abbrev SaveBuffers := HashMap String (String × String)
+/-- Per-file buffers accumulated by the saver:
+`(teacher source, student source, terse source)`. -/
+private abbrev SaveBuffers := HashMap String (String × String × String)
 
 private def appendBoth (buf : SaveBuffers) (file : String) (s : String) : SaveBuffers :=
-  let (t, st) := buf.getD file ("", "")
-  buf.insert file (t ++ s, st ++ s)
+  let (t, st, tr) := buf.getD file ("", "", "")
+  buf.insert file (t ++ s, st ++ s, tr ++ s)
 
-private def appendTeacherStudent
-    (buf : SaveBuffers) (file : String) (teacher student : String) : SaveBuffers :=
-  let (t, st) := buf.getD file ("", "")
-  buf.insert file (t ++ teacher, st ++ student)
+private def appendVariants
+    (buf : SaveBuffers) (file : String) (teacher student terse : String) : SaveBuffers :=
+  let (t, st, tr) := buf.getD file ("", "", "")
+  buf.insert file (t ++ teacher, st ++ student, tr ++ terse)
 
 /-- Render a string as a block of `--` line comments, one per line (blank lines
 stay completely blank), normalising trailing whitespace. -/
@@ -237,29 +243,33 @@ private def decodeExercise? (data : Json) : Option (Nat × String) :=
 /-! ## Block extension that carries pre-computed teacher and student source -/
 
 /-!
-`Block.leanSaved` wraps an elaborated `lean` block and records both the teacher
-and student source variants computed at elaboration time. Its two children are
-the teacher-rendered and student-rendered forms of the block; traversal keeps
-the one selected by the `showSolutions` flag, so the same compiled document
-serves both the student and solutions builds. HTML/TeX rendering passes
-through to the surviving child; the saver consumes the recorded strings
-directly without re-parsing anything. -/
+`Block.leanSaved` wraps an elaborated `lean` block and records the teacher,
+student, and terse source variants computed at elaboration time. Its three
+children are the teacher-, student-, and terse-rendered forms of the block;
+traversal keeps the one selected by the `showSolutions` flag / draft (terse)
+mode, so the same compiled document serves all three builds. HTML/TeX
+rendering passes through to the surviving child; the saver consumes the
+recorded strings directly without re-parsing anything. -/
 
-/-- Decode a `Block.leanSaved` payload `(teacher, student)`. -/
-private def decodeLeanSaved? (data : Json) : Option (String × String) :=
+/-- Decode a `Block.leanSaved` payload `(teacher, student, terse)`. -/
+private def decodeLeanSaved? (data : Json) : Option (String × String × String) :=
   match data with
-  | .arr #[.str t, .str s] => some (t, s)
+  | .arr #[.str t, .str s, .str tr] => some (t, s, tr)
   | _ => none
 
-block_extension Block.leanSaved (teacher : String) (student : String) where
-  data := Json.arr #[.str teacher, .str student]
+block_extension Block.leanSaved (teacher : String) (student : String) (terse : String) where
+  data := Json.arr #[.str teacher, .str student, .str terse]
   traverse _ data contents := do
-    -- Two children = still unselected: keep the teacher or student variant.
+    -- Three children = still unselected: keep the teacher, student, or terse
+    -- variant (the terse build is the draft build, cf. `Block.terse`).
     -- One child (or anything else) = already selected; nothing to do.
-    if h : contents.size = 2 then
-      let some (t, s) := decodeLeanSaved? data | return none
-      let chosen := if ← showSolutions.get then contents[0] else contents[1]
-      return some (.other (Block.leanSaved t s) #[chosen])
+    if h : contents.size = 3 then
+      let some (t, s, tr) := decodeLeanSaved? data | return none
+      let chosen ←
+        if ← showSolutions.get then pure contents[0]
+        else if ← isDraft then pure contents[2]
+        else pure contents[1]
+      return some (.other (Block.leanSaved t s tr) #[chosen])
     else
       return none
   toHtml := some fun _ goB _ _ contents => contents.mapM goB
@@ -457,46 +467,50 @@ Wraps each ` ```lean … ``` ` code block. The pipeline is:
    error feedback during the book build) and populates `studentEditRef` /
    `teacherEditRef` with the source ranges of every `solution!(…)` invocation.
 3. Convert those absolute source ranges to offsets relative to the block's
-   own source string and compute the teacher and student variants.
+   own source string and compute the teacher, student, and terse variants.
 4. Run `elabAndHighlightStudent` on the student source (starting from the
    pre-teacher environment, so prior chapter definitions are available but
-   this block's teacher-side defs are not).
-5. Emit a `Block.leanSaved` with two children: the upstream (teacher-rendered)
-   block and a `Block.lean` wrapping the student `Highlighted`. Traversal
-   later drops one of the two according to the `showSolutions` flag. -/
+   this block's teacher-side defs are not), and likewise on the terse source
+   when it differs (i.e. when the block contains `workinclass!`).
+5. Emit a `Block.leanSaved` with three children: the upstream
+   (teacher-rendered) block and `Block.lean`s wrapping the student and terse
+   `Highlighted`s. Traversal later keeps one of the three according to the
+   `showSolutions` flag and draft (terse) mode. -/
 
 @[code_block]
 def lean : CodeBlockExpanderOf Verso.Genre.Manual.InlineLean.LeanBlockConfig
   | config, str => do
     SFLMeta.studentEditRef.set #[]
     SFLMeta.teacherEditRef.set #[]
+    SFLMeta.terseEditRef.set #[]
     let preEnv ← getEnv
     let preScopes ← getScopes
     let underlying ← Verso.Genre.Manual.InlineLean.lean config str
     let student ← studentEditRef.get
     let teacher ← teacherEditRef.get
+    let terse ← terseEditRef.get
     let src := str.getString
 
     -- `strLitInputContext` parses starting at `str.getPos?`, so the byte
     -- indices recorded by the elaborator are absolute file offsets. The
     -- string-literal contents begin one byte past the opening quote.
-    let teacherRanges :=
-      teacher.flatMap (·.edits) |>.map fun r =>
+    let relativize (edits : Array SolutionEditRaw) : Array Replacement :=
+      edits.flatMap (·.edits) |>.map fun r =>
         { r with
           range.start.byteIdx := r.range.start.byteIdx - str.raw.getPos!.byteIdx
           range.stop.byteIdx := r.range.stop.byteIdx - str.raw.getPos!.byteIdx
           }
-    let studentRanges := student.flatMap (·.edits) |>.map fun r =>
-        { r with
-          range.start.byteIdx := r.range.start.byteIdx - str.raw.getPos!.byteIdx
-          range.stop.byteIdx := r.range.stop.byteIdx - str.raw.getPos!.byteIdx
-          }
+    let teacherRanges := relativize teacher
+    let studentRanges := relativize student
+    let terseRanges := relativize terse
     let teacherRaw := stripFillInMarkers (applyEdits src teacherRanges)
     let studentRaw := applyFillInForStudent (applyEdits src studentRanges)
+    let terseRaw := applyFillInForStudent (applyEdits src terseRanges)
     -- Strip `#guard_msgs` wrappers from the rendered/extracted forms.  They
     -- still ran during the upstream elaboration above (verification intact).
     let teacher := stripGuardMsgs teacherRaw
     let student := stripGuardMsgs studentRaw
+    let terse := stripGuardMsgs terseRaw
     let studentHls ← elabAndHighlightStudent preEnv preScopes student
     let range := Syntax.getRange? str
     let lspRange := range.map (← getFileMap).utf8RangeToLspRange
@@ -514,15 +528,26 @@ def lean : CodeBlockExpanderOf Verso.Genre.Manual.InlineLean.LeanBlockConfig
             #[Verso.Doc.Block.code $(quote teacher)])
       else
         pure underlying
+    -- The terse variant usually coincides with the student one (no
+    -- `workinclass!` in the block); reuse the student highlighting then.
+    let terseHls ←
+      if terse == student then pure studentHls
+      else elabAndHighlightStudent preEnv preScopes terse
     ``(Verso.Doc.Block.other
-        (SFLMeta.Block.leanSaved $(quote teacher) $(quote student))
+        (SFLMeta.Block.leanSaved $(quote teacher) $(quote student) $(quote terse))
         #[$teacherChild,
           Verso.Doc.Block.other
             (Verso.Genre.Manual.InlineLean.Block.lean
               $(quote studentHls)
               (some $(quote (← getFileName)))
               $(quote lspRange))
-            #[Verso.Doc.Block.code $(quote student)]])
+            #[Verso.Doc.Block.code $(quote student)],
+          Verso.Doc.Block.other
+            (Verso.Genre.Manual.InlineLean.Block.lean
+              $(quote terseHls)
+              (some $(quote (← getFileName)))
+              $(quote lspRange))
+            #[Verso.Doc.Block.code $(quote terse)]])
 
 /-- Find the first `Block.code` source string in `contents`. -/
 private def findCodeSource? (contents : Array (Block Manual)) : Option String :=
@@ -574,11 +599,12 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     if name == ``Verso.Genre.Manual.Block.diagram then
       return buf
     if name == ``Block.leanSaved then
-      -- The wrapper carries pre-computed teacher and student variants.
-      if let some (teacher, student) := decodeLeanSaved? which.data then
-        return appendTeacherStudent buf file
+      -- The wrapper carries pre-computed teacher, student, and terse variants.
+      if let some (teacher, student, terse) := decodeLeanSaved? which.data then
+        return appendVariants buf file
           (teacher.trimAscii.toString ++ "\n\n")
           (student.trimAscii.toString ++ "\n\n")
+          (terse.trimAscii.toString ++ "\n\n")
       return buf
     if name == ``Block.exercise then
       -- Emit a `### Exercise (N⭐): name` heading; the contained `lean`
@@ -697,15 +723,18 @@ Write a complete generated Lake project at `dest`: the per-file buffer
 contents under `dest/`, plus `lakefile.toml`, `lean-toolchain`, and a `LF.lean`
 that imports `LF.STLC`. -/
 private def writeProject (dest : System.FilePath) (toolchain : String)
-    (vol kind : String) (files : Array (String × String)) : IO Unit := do
+    (vol kind : String) (files : Array (String × String))
+    (extraLibs : Array String) : IO Unit := do
   IO.FS.createDirAll dest
-  -- Clear the volume source tree so chapter files that have since been renamed
-  -- or removed don't linger as stale orphans. Other artifacts (`.lake`,
-  -- `lakefile.toml`, `lean-toolchain`, `README.md`) are left alone.
-  let chapterRoot := dest / vol
-  if ← chapterRoot.pathExists then
-    IO.FS.removeDirAll chapterRoot
-  IO.FS.writeFile (dest / "lakefile.toml") (lakefileTemplate vol)
+  -- Clear the volume source tree (and any bundled-prerequisite lib trees) so
+  -- files that have since been renamed or removed don't linger as stale
+  -- orphans. Other artifacts (`.lake`, `lakefile.toml`, `lean-toolchain`,
+  -- `README.md`) are left alone.
+  for lib in vol :: extraLibs.toList do
+    let libRoot := dest / lib
+    if ← libRoot.pathExists then
+      IO.FS.removeDirAll libRoot
+  IO.FS.writeFile (dest / "lakefile.toml") (lakefileTemplate vol extraLibs)
   IO.FS.writeFile (dest / "lean-toolchain") toolchain
   IO.FS.writeFile (dest / "README.md")
     s!"# {vol} — {kind} version\n\nGenerated from the Verso source.\n"
@@ -732,33 +761,154 @@ private def buildProject (dest : System.FilePath) (kind : String) :
   else
     IO.println s!"Generated {kind} project built successfully."
 
+/-! ## Extracted-project imports & bundled prerequisites
+
+Extracted `.lean` projects are standalone Lake packages, so each chapter's
+outside dependencies must be reconstructed from its own header `import`s: drop
+the framework imports (they build the book, not student code), re-emit the rest,
+and bundle the source of any that is a content prerequisite (not toolchain, not
+an emitted book chapter — e.g. the bare `LF.Maps`) under its own `lean_lib`. A
+bundled module is copied verbatim, so it must be plain (non-Verso) Lean. -/
+
+/-- Module top-namespaces belonging to the authoring framework: their imports
+build the book but must never appear in an extracted `.lean` file. -/
+private def frameworkPrefixes : List String :=
+  ["VersoManual", "Verso", "Illuminate", "SFLMeta", "SubVerso"]
+
+/-- Toolchain-provided top-namespaces: always available in any Lake project, so
+they stay as `import` lines but are never bundled as source. -/
+private def corePrefixes : List String :=
+  ["Lean", "Std", "Init", "Batteries"]
+
+/-- Top namespace of a module name (`LF.Maps` ⇒ `LF`). -/
+private def modTop (m : String) : String := (m.splitOn ".").headD m
+
+/-- Should module `m` appear as an `import` in an extracted file? (Framework
+imports are dropped; everything else — toolchain and content — is kept.) -/
+private def keepImport (m : String) : Bool := ! frameworkPrefixes.contains (modTop m)
+
+/-- The relative source path of a module (`LF.Maps` ⇒ `LF/Maps.lean`). -/
+private def modToPath (m : String) : String := m.replace "." "/" ++ ".lean"
+
+/-- Header `import` module names in Lean source text, scanning only the file
+header (up to the first `#doc`). -/
+private def headerImports (src : String) : Array String := Id.run do
+  let mut out : Array String := #[]
+  for raw in src.splitOn "\n" do
+    let line := raw.trimAscii.toString
+    if line.startsWith "#doc" then break
+    if line.startsWith "import " then
+      out := out.push ((line.drop 7).trimAscii.toString)
+  return out
+
+/-- Transitively gather the bundled prerequisite files (path, verbatim source)
+and the extra `lean_lib` names they need. `needsBundle` decides which modules
+are content prerequisites (not framework, not toolchain, not an emitted
+chapter). -/
+private partial def bundleLoop (needsBundle : String → Bool)
+    (queue seen : List String)
+    (files : Array (String × String)) (libs : Array String) :
+    IO (Array (String × String) × Array String) := do
+  match queue with
+  | [] => return (files, libs)
+  | m :: rest =>
+    if seen.contains m then
+      bundleLoop needsBundle rest seen files libs
+    else
+      let path := modToPath m
+      if ! (← (System.FilePath.mk path).pathExists) then
+        -- Not a bundleable source file (e.g. a spurious match); skip it.
+        bundleLoop needsBundle rest (m :: seen) files libs
+      else
+        let content ← IO.FS.readFile path
+        let top := modTop m
+        let libs := if libs.contains top then libs else libs.push top
+        let deps := (headerImports content).toList.filter needsBundle
+        bundleLoop needsBundle (rest ++ deps) (m :: seen)
+          (files.push (path, content)) libs
+
 /--
-Shared implementation. Writes the extracted Lean project for one variant of
-one volume to `_out/<vol>/<variant>/lean/`, next to that variant's `html-multi/`
-(which `manualMain` writes via `cfg.destination := "_out/<vol>/<variant>"`).
-`vol` is the uppercase module prefix (e.g. `"LF"`, `"HL"`, `"TS"`).
-`isTeacher` selects the solution-filled or student form of the code. -/
-private def emitSavedImpl (vol variant : String) (isTeacher : Bool) :
+Shared implementation. Writes the extracted Lean project to
+`_out/<destSlug>/<variant>/lean/`, next to that variant's `html-multi/`
+(which `manualMain` writes via `cfg.destination := "_out/<destSlug>/<variant>"`).
+`modPrefix` is the uppercase module prefix used for the generated chapters'
+module names and paths (e.g. `"LF"`, `"HL"`, `"TS"`); it is normally the same
+as `destSlug` uppercased, but the draft executable passes `modPrefix := "LF"`
+with `destSlug := "lf-draft"` so its output lands under `LF/…` in a separate
+tree that never clobbers the real `lf` build.
+`variant` selects which form of the code is written: `"solutions"` the
+solution-filled form, `"terse"` the lecture form (`workinclass!` proofs and
+solutions stubbed), anything else the student form.
+`verify` runs `lake build` on the extracted project to confirm it compiles;
+the draft emitter passes `verify := false`, since its not-yet-graduated
+chapters are not expected to build standalone. -/
+private def emitSavedImpl (destSlug modPrefix variant : String)
+    (verify : Bool := true) :
     Mode → Config → TraverseState → Part Manual → BuildLogT IO Unit :=
   fun _mode _cfg _state text => do
-    let buf : SaveBuffers := walkOuter (fillWidthFor variant) vol text ({} : SaveBuffers)
+    let buf : SaveBuffers := walkOuter (fillWidthFor variant) modPrefix text ({} : SaveBuffers)
     let toolchain ← (IO.FS.readFile "lean-toolchain").toBaseIO >>= fun
       | .ok s => pure s
       | .error _ => pure "leanprover/lean4:v4.30.0-rc2\n"
-    let files : Array (String × String) :=
-      buf.fold (init := #[]) fun acc file (teacher, student) =>
-        acc.push (file, mergeAdjacentModuleDocs (if isTeacher then teacher else student))
-    let dest := System.FilePath.mk "_out" / vol.toLower / variant / "lean"
-    writeProject dest toolchain vol variant files
-    buildProject dest variant
+    let rootFile := modPrefix ++ ".lean"
+    -- Snapshot the buffer as a list so we can read source files (IO) per entry.
+    let entries := buf.fold (init := ([] : List (String × (String × String × String))))
+      fun acc k v => (k, v) :: acc
+    -- Emitted book chapters: buffer keys with a path separator (the root
+    -- `<Vol>.lean` has none). `HL/Imp.lean` ⇒ module `HL.Imp`.
+    let chapterModules := entries.map (·.1) |>.filter (·.any (· == '/'))
+      |>.map fun k => ((k.dropEnd 5).toString).replace "/" "."
+    let needsBundle (m : String) : Bool :=
+      keepImport m && ! corePrefixes.contains (modTop m) && ! chapterModules.contains m
+    -- Pick the variant per file; prepend each chapter's (framework-stripped)
+    -- import preamble; collect bundle seeds from the chapters' source imports.
+    let mut files : Array (String × String) := #[]
+    let mut seeds : List String := []
+    for (file, teacher, student, terse) in entries do
+      let chosen := mergeAdjacentModuleDocs <|
+        if variant == "solutions" then teacher
+        else if variant == "terse" then terse
+        else student
+      if file == rootFile then
+        files := files.push (file, chosen)
+      else
+        -- The buffer key is the chapter's repo-relative source path, so read its
+        -- real header imports and re-emit the non-framework ones.
+        let src ← (IO.FS.readFile file).toBaseIO >>= fun
+          | .ok s => pure s
+          | .error _ => pure ""
+        let imps := (headerImports src).toList.filter keepImport
+        seeds := seeds ++ imps.filter needsBundle
+        let preamble := imps.foldl (init := "") fun acc i => acc ++ "import " ++ i ++ "\n"
+        let preamble := if preamble.isEmpty then "" else preamble ++ "\n"
+        files := files.push (file, preamble ++ chosen)
+    let (bundleFiles, extraLibs) ← bundleLoop needsBundle seeds [] #[] #[]
+    let allFiles := files ++ bundleFiles
+    let dest := System.FilePath.mk "_out" / destSlug / variant / "lean"
+    writeProject dest toolchain modPrefix variant allFiles extraLibs
+    if verify then buildProject dest variant
 
 /-- `ExtraStep` for the student build: solutions elided. -/
-def emitSavedStudent (vol : String) := emitSavedImpl vol "student" false
+def emitSavedStudent (vol : String) := emitSavedImpl vol.toLower vol "student"
 
 /-- `ExtraStep` for the solutions build: solutions shown. -/
-def emitSavedSolutions (vol : String) := emitSavedImpl vol "solutions" true
+def emitSavedSolutions (vol : String) := emitSavedImpl vol.toLower vol "solutions"
 
-/-- `ExtraStep` for the terse build: solutions elided. -/
-def emitSavedTerse (vol : String) := emitSavedImpl vol "terse" false
+/-- `ExtraStep` for the terse build: solutions elided and `workinclass!`
+proofs stubbed to `sorry`. -/
+def emitSavedTerse (vol : String) := emitSavedImpl vol.toLower vol "terse"
+
+/-- Like `emitSavedSolutions`/`emitSavedStudent` but writes to
+`_out/<destSlug>/…` while using `modPrefix` as the chapter module/path prefix.
+Used by the draft executable to emit output for generated chapters that are not
+yet in the real book, without clobbering the real volume's output. -/
+def emitSavedSolutionsTo (destSlug modPrefix : String) :=
+  emitSavedImpl destSlug modPrefix "solutions" (verify := false)
+
+def emitSavedStudentTo (destSlug modPrefix : String) :=
+  emitSavedImpl destSlug modPrefix "student" (verify := false)
+
+def emitSavedTerseTo (destSlug modPrefix : String) :=
+  emitSavedImpl destSlug modPrefix "terse" (verify := false)
 
 end SFLMeta

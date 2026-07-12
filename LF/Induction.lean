@@ -2,7 +2,7 @@
 
 -- SOONER: Readers might expect us to add eqn:H annotations to uses of
 --   induction, but this changes the shape of the IH in a nasty way! :-(
---   We should at least comment.
+--   We should at least comment.  (BCP: Is this still relevant in Lean?)
 -- SOONER: We should also consider adding more examples to clarify
 --   the concepts introduced in this chapter. This could help in
 --   reinforcing the understanding of induction principles.
@@ -24,9 +24,11 @@
   # Separate Compilation
 -/
 
--- TERSE: /- Lean will first need to compile `Basics.lean` so it can
+-- BCP: This section will need some tidying and rewriting...
+
+-- TERSE: Lean will first need to compile `Basics.lean` so it can
 -- be imported here -- detailed instructions are in the full version
--- of this chapter... -/
+-- of this chapter...
 
 -- FULL
 /-

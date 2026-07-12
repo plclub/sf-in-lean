@@ -200,10 +200,16 @@ Lean syntax, but we want them to be formatted as Verso files
 ("documentation first") and are working on translating them one by
 one.  
 
-Benjamin is the only person that needs to worry about the details
-here: Everyone else can just work on a given `.lean` file in whatever
-format it exists in at the moment.  In particular, no one except
-Benjamin should ever need to run the `to_verso.py` script.
+Benjamin owns the conversion tooling (`scripts/to_verso.py`) and the
+eventual native-Verso format decisions, so you can work on a given
+`.lean` file in whatever format it exists in at the moment.  But note
+that `make` now regenerates and builds each `<Ch>Verso.lean` (via the
+`check-verso-chapters` target, which CI runs), so if you edit a
+code-forward `.lean` chapter, keep that round-trip green: after a
+change, regenerate (`python3 scripts/to_verso.py <Vol>/<Ch>.lean`) and
+build the generated Verso (`make check-verso-chapters`).  CLAUDE.md
+("Writing comments that survive to_verso") lists the authoring rules
+that keep the conversion happy.
 
 ## Lean Style
 
@@ -230,22 +236,22 @@ should be kept in sync as chapters are rewritten.
 | `Poly`            | *(none new)* |
 | `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `unfold`, `split` |
 | `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
-| `IndProp`         | `simp`, `rcases`, `subst`, `omega` |
-| `Maps`            | *(none new)* |
-| `IndPropRegexp`   | `specialize`, `trivial` |
+| `IndProp`         | `rcases`, `subst` |
+| `Typeclasses`     | `decide` |
+| `Automation`      | `lia`, `try`, `repeat`, `specialize`, `trivial`, `simp` |
+| `HL/Imp`          | *(none new)* |
+
+**Notes**
+- **`lia` rather than `omega`** The latter is being phased out.
+- `IndPropRegexp` has been folded into `Automation`
+- `Maps` will be folded into `Typeclasses`
+- Candidate tactics still to be placed include `show`, `rename_i`, `revert`, `suffices`, `tauto`. 
+- Tactics `grind`, `aesop`, are deferred to a later volume. 
 
 Related notation introduced alongside tactics: anonymous constructor
 `⟨…⟩` (`Lists`); destructuring `let ⟨…⟩ := …` and `cases h : …`,
 `induction … generalizing …` (`Tactics`); projection/`Iff` syntax
 `.left`, `.right`, `.mp`, `.mpr`, and rewriting by an `↔` (`Logic`).
-
-**Tactics deliberately deferred / under discussion** (per FPiL's
-caution that `grind` is overwhelming for beginners): candidates still
-to be placed include `show`, `rename_i`, `revert`, `subst`,
-`suffices`. Powerful automation (`simp` heavy use, `tauto`, `omega`,
-`decide`) is concentrated in an **Automation** chapter; `grind`,
-`aesop`, and `try` are deferred to a later volume. The `RegExp`
-development moves out of `IndProp` into that Automation chapter.
 
 ### SFL-specific conventions
 
@@ -260,13 +266,61 @@ development moves out of `IndProp` into that Automation chapter.
   over the separate `case` syntax *and* over the bare `·` goal selector — i.e. prefer
   `cases h with | …` / `induction h with …`.
   Put each alternative on its own unindented line beginning with `|`.
+  
+* **`rewrite` before `rw`** (see tactic chart above) --
+  `rw [h]` is roughly `rewrite [h]; rfl`, which is too strong at
+  first: it hides the closing `rfl` and makes proofs step
+  confusingly (the goal vanishes when you step past the final `]`).
+  We introduce `rw` specifically in `Induction.lean` and use from
+  then on.
 
-  Keep short branch bodies inline, and **align** `=>` accros the alternatives: 
+* **`example` for one-off demos.** Prefer `example …` over a named
+  `theorem foo …` for throwaway illustrations (tactic demos, "silly" lemmas,
+  etc.) that are never referenced later — Lean's `example` doesn't force us to
+  invent a name (unlike Rocq).
+
+* **Explicit rewrites over `dsimp`/`simp` through notation** (see
+  "Notation and simplification").
+
+* **`sorry` placeholders are checked, not silent.** Where a `sorry`
+  appears , wrap it so the warning is asserted:
+  ```lean
+  /-- warning: declaration uses `sorry` -/
+  #guard_msgs in
+  example : … := sorry
+  ```
+
+* **Aborted/abandoned lemmas** failing proofs and examples with type errors
+  should have a `#guard_msgs` above them with the expected error, rather than
+  ending with `sorry`.
+
+* **Library vs. client code.** Inside a definition's own library it is
+  fine to unfold and simplify through definitions; *using* that code,
+  do not "peek through the interface."
+
+### Unicode Text and Formatting
+
+Go Unicode-native! Use subscripts on variables, like x₁ x₂  etc. Use α Γ etc. 
+for type variables and other standard notation. Use arrows like → ⇓ for reduction
+and evaluation. TODO: Elaborate on guidelines here.
+
+We will use the standard Lean auto-formatter. Until then, here are some formatting
+guidelines.
+
+* Keep short branch bodies inline: 
   
   ```lean
-  cases b with
-  | true  => rfl
-  | false => simp
+  cases b, c with
+  | true, false => rfl
+  | false, _ => simp
+  ```
+
+  *Optionally*, align patterns across alternatives:
+
+  ```lean
+  cases b, c with
+  | true,  _ => rfl
+  | false, _ => simp
   ```
 
   For multiline branch bodies, put `=>` after the alternative *without* padding
@@ -304,9 +358,21 @@ development moves out of `IndProp` into that Automation chapter.
 * **Aborted/abandoned lemmas** become unnamed `example`s closed with
   `sorry` (the SFL analogue of Rocq's `Abort`).
 
+* **`example` for one-off demos.** Prefer `example …` over a named
+  `theorem foo …` for throwaway illustrations (tactic demos, "silly" lemmas,
+  etc.) that are never referenced later — Lean's `example` doesn't force us to
+  invent a name (unlike Rocq).  Reserve names for results used elsewhere or
+  graded. (berberman, review of PR #61.)
+
 * **Library vs. client code.** Inside a definition's own library it is
   fine to unfold and simplify through definitions; *using* that code,
   do not "peek through the interface."
+
+* **Name namespaces for what they are, not after a type they contain.**
+  A warm-up / redefinition section that shadows later top-level names goes in a
+  clearly-named namespace — e.g. `namespace Warmup`, not `namespace AExp` (too
+  easily misread as the `Aexp` type, so `AExp.Bexp` reads like a field of
+  `Aexp`).  (Rocq's `Module AExp` warm-up in `Imp` became `namespace Warmup`.)
 
 ### Notation and simplification
 
@@ -350,11 +416,13 @@ for nesting.  Use **three colons** (`:::`) for a directive whose body
 contains only prose and code blocks.  Use **four colons** (`::::`)
 whenever the body itself contains three-colon directives.
 
-In practice: `::::full`, `::::terse`, `::::exercise`, and `::::solution`
-almost always use four colons because they commonly nest `:::grade`,
-`:::instructors`, or similar leaf blocks inside them.  Author-annotation
-directives (`:::dev`, `:::instructors`, `:::hide`, `:::grade`) are always
-leaves and always use three colons.
+In practice the widths follow the nesting: leaf directives (`:::dev`,
+`:::instructors`, `:::hide`, `:::answer`, `:::grade`, `:::solution`, `:::terse`,
+`:::slidebreak`) are always three colons; a `::::full` / `::::hide` / `::::quiz`
+that nests a leaf uses four; an `:::::exercise` that nests those uses five.
+`to_verso` computes the minimal correct width automatically; when hand-authoring,
+just make each container strictly wider than everything directly nested inside
+it.
 
 ### Build variants and prose directives
 
@@ -430,6 +498,23 @@ GRADE_THEOREM 1: nandb_test4
 a noop in all rendered outputs (body discarded at elaboration); the
 spec survives verbatim in the Verso source for tooling.
 
+### Quizzes
+
+**`::::quiz … ::::`** — A multiple-choice review question: the body holds the
+question prose and the options, and the answer goes in a nested **`:::answer`**.
+
+* A *provable* answer is a plain (verbatim) ` ``` ` fence holding the Lean
+  theorem — shown for reference, not re-elaborated (so it is not type-checked;
+  keep it in sync with live definitions by hand).
+* A deliberately *false* / unprovable claim is kept as an illustration: state it
+  and leave the proof stuck with an explanatory comment (the SFL analogue of
+  Rocq's `Abort`) — do **not** `sorry` it, and do **not** make it a live
+  ` ```lean ` block.
+
+`:::answer` — like the other author-only tags — is a noop today (dropped from
+every build), reserved for a future answer-revealing build.  Use `:::answer`
+(not `:::hide`) for a quiz's answer, so that future build can find it.
+
 ### Solution mechanisms inside `lean` blocks
 
 Both mechanisms are elaborated by Lean at compile time (errors in the
@@ -470,13 +555,38 @@ inductive Bin : Type where
 -- END SOLUTION
 ```
 
-**Convention:** prefer `solution!(…)` for single-term / single-tactic
-answers; use `-- SOLUTION` blocks for multi-line answers.
+**Convention:** prefer `solution!(…)` for a single term or tactic sequence.
+Use `-- SOLUTION … -- END SOLUTION` only where the elided region stays *valid as
+a comment* — the constructors of an `inductive`, or a whole top-level
+declaration (the student sees `-- FILL IN HERE` in its place).
+
+**Do not use `-- SOLUTION` for a `def` body or a proof body.**  Eliding those to
+`-- FILL IN HERE` leaves an incomplete `def … :=` or an empty `by` block, which
+fails to compile — and a stubbed `def` must keep its *name* defined so later code
+still elaborates.  Wrap those in `solution!(…)` instead, so the student variant
+becomes `:= sorry` / `by sorry`.  (Use `-- END SOLUTION` as the closer, not
+`-- /SOLUTION`; `to_verso` rewrites the code-forward `-- /SOLUTION` to it, but
+hand-authored Verso must use `-- END SOLUTION`.)
 
 ### Author-only annotations
 
 These directives are invisible in all rendered outputs (HTML, TeX, and
 generated `.lean` files).  They exist only in the Verso source.
+
+Write author-facing notes as `:::` **directives** — not ` ```dev ` /
+` ```instructors ` code blocks.  A directive's body is parsed as markdown, so
+backtick code identifiers (`foo_bar`, `[x]`) and escape markdown-special text
+just as you would in `::::full` prose; reach for an inner ` ``` ` fence only when
+the body is code-dense or embeds a ` ```lean ` snippet that must not elaborate.
+(`to_verso` generates these directives with the body verbatim-fenced, which is
+always safe; a hand pass can un-fence and inline the markdown.)
+
+Pick the tag by intent — `:::instructors` (instructor notes), `:::dev` (author
+TODOs / review threads), `:::answer` (a quiz's answer — see **Quizzes**),
+`:::hide` (genuinely hidden content).  All are noops today (dropped from every
+build), so the choice is *semantic*: the name reserves each for a future build
+that could treat it differently (reveal `:::answer`, show `:::instructors` to
+instructors).
 
 **`:::instructors … :::`** — Notes for instructors: pacing advice,
 classroom caveats, which sections to skip for a short course, etc.
@@ -503,6 +613,30 @@ In native Verso chapters, prefer `:::dev` or `:::instructors` for
 author notes.  The `:::hide` directive exists primarily for
 code-forward source files where `-- HIDE … -- /HIDE` comments are
 translated to `:::hide` blocks by the conversion script.
+
+### Code-forward comments → Verso directives (`to_verso`)
+
+(Claude-drafted; human review welcome.)  Chapters still authored as
+code-forward `.lean` are converted by `scripts/to_verso.py`, which
+routes their comments to the directives above:
+
+* `-- FULL … -- /FULL` → `::::full`; `-- TERSE: /- … -/` → `:::terse`.
+* Author/dev notes (`/- BCP: … -/`, `-- MWH: …`, `/- NDS'25: … -/`,
+  `/- NOTATION: … -/`, …) → `:::dev`; `/- INSTRUCTORS: … -/` and
+  `-- INSTRUCTORS:` → `:::instructors`; `-- HIDE … -- /HIDE` and
+  `/- HIDE: … -/` → `:::hide` / `:::dev`.  The recognized tag set is
+  `_DEV_TAGS` in the script — add a new author initial or keyword there
+  (one place) so it routes cleanly instead of leaking into the chapter
+  as prose.
+* Author/dev bodies are emitted verbatim-fenced, so arbitrary markup
+  inside a note is always safe.  Prose *outside* notes is real markdown:
+  a fenced block must use a plain `` ``` `` fence (never a language tag
+  such as `` ```coq ``), and raw object-language operator notation
+  (`=[ … ]=>`, quoted notation strings) must be fenced or backticked or
+  it breaks the parser.
+
+Full authoring rules are in CLAUDE.md ("Checking to_verso outputs" /
+"Writing comments that survive to_verso").
 
 ### Structural and presentation blocks
 
@@ -559,6 +693,70 @@ diagram (e.g., SVG), and a plain code block containing the ASCII art.
 HTML renders only the diagram child; the saver emits only the ASCII
 fallback wrapped in a `/-! … -/` module-doc comment.
 
+### Verso markup for nicer HTML
+
+Beyond the structural directives above, the Manual genre offers **inline roles**
+that enrich expository prose in the HTML.  Use them where they add value (and
+don't over-link — link the first substantive mention in a passage, not every
+occurrence):
+
+* `` {name}`Foo.bar` `` — a clickable identifier that hovers to show its
+  type/signature and links to its definition.  Use for references to real
+  declarations (defs, theorems, constructors, types) in prose.  **Caveat:** the
+  name must resolve *in scope at that point in the document* — defined earlier
+  and reachable (mind namespaces and forward references), or the build fails.  So
+  this is a targeted, build-verified pass, not a global `` `x` ``→`` {name}`x` ``
+  replace; and it applies only in visible prose (not inside `lean` blocks, quiz
+  options, or dropped author notes).
+* `` {lean}`expr` `` — an inline *elaborated expression* (any term or type, with
+  hover types).  Use when a whole expression — not just a single name — belongs
+  in prose, e.g. `` {lean}`Aexp → Nat` `` or `` {lean}`Coe Ident Aexp` ``.
+* `{ref "tag"}[link text]` — a cross-reference link to a section.  Tag the target
+  by putting a `%%% tag := "the-tag" %%%` block right under its heading, then
+  reference it with `{ref "the-tag"}[…]`.  Use for "see the X section
+  above/below" phrasings.
+* `` {tactic}`simp` `` — links a tactic name to its documentation; good for prose
+  that mentions tactics.
+* `` {deftech}`term` `` / `` {tech}`term` `` — define a technical term (glossary
+  entry + anchor) and link its later uses.  Good for a chapter's recurring
+  defined terms.
+* Also available: `{option}` (Lean options), `` {module}`Foo` `` (module links),
+  `{margin}[…]` (sidebar notes), `{index}` / `{see}` / `{seeAlso}` (book index),
+  `{citep}` / `{citet}` (bibliography).
+
+## Porting chapters from Rocq
+
+The `to_verso` script automates the mechanical parts of translating from Rocq to 
+Verso-formatted Lean.  It leaves all the interesting bits to be translated manually.
+
+Example usage: 
+```
+python3 scripts/to_verso.py old/orig-plf-files/Hoare.v HL/Hoare.lean
+```
+
+## (Temp) Porting from Rocq: comment fidelity and framing
+
+(Claude-drafted; human review welcome.)  
+
+When porting a Rocq
+`sfdev/<vol>/<Ch>.v` to `<Ch>.lean`:
+
+* **Preserve the whole comment layer.**  Carry over every internal
+  dev/instructor note (keep the original prefix/attribution), translate
+  `(* HIDE *)` content (re-marked `-- HIDE`/`/- HIDE: … -/`), and expand
+  condensed prose back to the source's full wording.  Nothing is
+  silently dropped.
+* **Make the chapter stand on its own.**  Don't reference the porting
+  process, and don't narrate "the Rocq original did X" in the
+  reader-facing (`::::full`) text.  Park Rocq-specific material that has
+  no Lean analogue (custom grammars, `Set Printing`, `Locate`, `Ltac`,
+  dropped proof variants) in `/- Claude: … -/` dev notes as reminders
+  for a future pass.  Rewrite genuine pedagogy that the source happened
+  to narrate via Rocq into Lean-native `::::full` prose.
+
+Full details (and the marker/HIDE mechanics) are in CLAUDE.md, "Porting
+a chapter from Rocq: comment fidelity" and "Framing translated
+comments".
 
 ## AI policy
 

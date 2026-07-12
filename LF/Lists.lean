@@ -306,8 +306,9 @@ seal NatList.app
 /- TODO (OA): Experiment: introduce `BEq.refl` here, at the point where the `BEq` class is named. -/
 
 -- TERSE: ***
+/- chenson2018: The way that this is written might mislead the student to think it is inherent to BEq, which is not true: this additionally requires the ReflBEq typeclass. How crucial is it to have this early mention of typeclasses? bcpierce00: Hopefully we can postpone it. -/
 /- FULL: The equality test `==` on `Nat`s is another example: it comes
-   from the `BEq` ("boolean equality") type class.  One small but handy
+   from the `BEq` ("boolean equality") type class. One small but handy
    fact about it, which several proofs below will need, is that `==` is
    reflexive:
 
@@ -871,6 +872,8 @@ theorem app_assoc (l1 l2 l3 : NatList) :
 -- TERSE: ***
 -- TERSE: For comparison, here is an informal proof of the same theorem.
 
+-- bcpierce00: What's the best Lean markup for a displayed equation? The markup below is going to get squished into a paragraph with all the rest by default, but IMO it would look better as a separate display. Also: Are we going to consistently write Qed at the end of proofs? We should agree on a convention.
+
 /-
  _Theorem_: For all lists `l1`, `l2`, and `l3`,
      `(l1 ++ l2) ++ l3 = l1 ++ (l2 ++ l3)`.
@@ -1078,11 +1081,21 @@ theorem foo2 (n m : Nat) :
     - Next, suppose `l1 = n::l1'`, with
           `(l1' ++ l2).length = l1'.length + l2.length`
       We must show
+<<<<<<< HEAD
           `((n::l1') ++ l2).length = (n::l1').length + l2.length`.
       This follows directly from the definitions of `length` and `++`
       together with the induction hypothesis.  _Qed_. -/
 
 /- _Theorem_: For all lists `l`,  `l.rev.length = l.length`.
+=======
+[[
+       ((n::l1') ++ l2).length = (n::l1').length + l2.length.
+]]
+      This follows directly from the definitions of [length] and [++]
+      together with the induction hypothesis. []
+
+    _Theorem_: For all lists [l],  l.rev.length = l.length
+>>>>>>> main
 
     _Proof_: By induction on `l`.
 
@@ -1651,15 +1664,11 @@ def update (d : PartialMap) (x : MyId) (value : Nat) : PartialMap :=
 -- TERSE: ***
 -- TERSE: We can define functions on `PartialMap`s by pattern matching.
 
-/- TODO (OA): Everywhere else in this chapter we use `bif`,
-   but here it's `if`which on a `Bool` is really `ite` via a coercion
-   we haven't taught (the trailing `dsimp`s in the proofs below step
-   through `ite`, not `cond`). Should this be switched?  -/
 def find (x : MyId) (d : PartialMap) : Option Nat :=
   match d with
   | empty => none
   | record y v d' =>
-    if eqb_id x y then some v
+    bif eqb_id x y then some v
     else find x d'
 
 -- QUIZ
