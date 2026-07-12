@@ -21,6 +21,8 @@
 import LF.Basics
 import LF.Induction
 
+import Batteries.CodeAction
+
 /-
   Until now, we have been working with our own custom natural numbers, using the
   `Nat` type that we defined in `Basics.lean`.
@@ -483,3 +485,114 @@ theorem double_mul (n : Nat) : double n = 2 * n := by
   rw [double_add, Nat.two_mul]
   -- /ADMITTED
 -- GRADE_THEOREM 1: double_mul
+
+/-
+  # Using the Code Action to Generate Match Skeletons
+-/
+
+/-
+  Lean's language server provides code actions that can generate the
+  missing branches for pattern matching.
+
+  This is very useful when using `match`,
+  or tactics such as `cases` and `induction`, which we've seen in the previous chapters.
+-/
+
+-- FULL
+/-
+  For example, suppose we start with the following proof:
+-/
+/--
+error: unsolved goals
+case zero
+⊢ eqb 0 0 = true
+
+case succ
+n✝ : Nat
+a✝ : eqb n✝ n✝ = true
+⊢ eqb (n✝ + 1) (n✝ + 1) = true
+-/
+#guard_msgs(error) in
+theorem foo (n : Nat) : eqb n n := by
+  induction n
+
+/-
+  If you put your cursor after after `induction n`, Lean will offer a code action
+  "Generate an explicit pattern match for 'induction'."
+  In VSCode, you can usually open the code action menu with `Ctrl + .`
+  on Windows/Linux and `Command + .` on macOS.
+
+  After running the code action, Lean fills in the cases for us:
+-/
+/-- warning: declaration uses `sorry` -/
+#guard_msgs in
+example (n : Nat) : eqb n n := by
+  induction n with
+  | zero => sorry
+  | succ n _ => sorry
+
+/-
+  Without writing out all the brances by hand, we get the basic shape of the proof tree —
+  now we can focus on filling in what should happen in each case.
+
+  One possible proof of this example is:
+-/
+example (n : Nat) : eqb n n := by
+  induction n with
+  | zero      => rfl
+  | succ n ih => rw [eqb, ih]
+
+/-
+  The code action didn't give a name to the induction hypothesis in `.succ` branch.
+  Since we need to use it in `rw`, we manually named to `ih`.
+
+  We'll see the some tactics that can bring back those inaccessible names in later chapters.
+-/
+
+/-
+  The same trick also works work for `match` expressions. For example, if we start with
+
+  ```lean
+  def isZero (n : Nat) : Bool :=
+    match n
+  ```
+-/
+
+/- HIDE:
+  @berberman: Incomplete `match` term would cause parse errors which `#guard_msgs` can't suppress.
+  Use code block in docstring for now.
+-/
+
+/-
+  Lean can generate the missing branches:
+-/
+
+/--
+error: don't know how to synthesize placeholder
+context:
+n✝ n : Nat
+⊢ Bool
+---
+error: don't know how to synthesize placeholder
+context:
+n : Nat
+⊢ Bool
+-/
+#guard_msgs in
+def isZero (n : Nat) : Bool :=
+  match n with
+  | 0 => _
+  | n + 1 => _
+
+/-
+  You might notice that Lean generated `0` and `n + 1`, not `zero` and `succ n`.
+  That is because Lean has a feature called _custom pattern functions_.
+  Usually, patterns are written using constructors,
+  but Lean also lets certain specially marked functions appear in patterns.
+  These functions are unfolded until Lean sees the constructor pattern they stand for.
+
+  We will keep writing the constructors as `zero` and `succ` anyway, because it makes the structure
+  of `Nat` easier to see.
+-/
+
+-- /FULL
