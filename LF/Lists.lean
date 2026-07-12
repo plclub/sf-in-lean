@@ -479,14 +479,13 @@ seal alternate
 -- ######################################################################
 -- ## Bags via Lists
 
-namespace Bag
-
 /- A `bag` (or `multiset`) is like a set, except that each element
    can appear multiple times rather than just once.  One way of
    representing a bag of numbers is as a list.  The following definition
    introduces a new name, `Bag`, as an abbreviation for `NatList`. -/
 
 abbrev Bag := NatList
+namespace Bag
 
 -- EX3! (bag_functions)
 /- Complete the following definitions for the functions `count`,
@@ -1088,21 +1087,11 @@ theorem foo2 (n m : Nat) :
     - Next, suppose `l1 = n::l1'`, with
           `(l1' ++ l2).length = l1'.length + l2.length`
       We must show
-<<<<<<< HEAD
           `((n::l1') ++ l2).length = (n::l1').length + l2.length`.
       This follows directly from the definitions of `length` and `++`
       together with the induction hypothesis.  _Qed_. -/
 
 /- _Theorem_: For all lists `l`,  `l.rev.length = l.length`.
-=======
-[[
-       ((n::l1') ++ l2).length = (n::l1').length + l2.length.
-]]
-      This follows directly from the definitions of [length] and [++]
-      together with the induction hypothesis. []
-
-    _Theorem_: For all lists [l],  l.rev.length = l.length
->>>>>>> main
 
     _Proof_: By induction on `l`.
 
@@ -1636,15 +1625,9 @@ theorem eqb_id_refl (x : MyId) : eqb_id x x = true := by
 -- TERSE: ***
 -- Now we define the type of partial maps:
 
-namespace PartialMap
-
-open NatList
-
 inductive PartialMap : Type where
   | empty : PartialMap
   | record (i : MyId) (v : Nat) (m : PartialMap) : PartialMap
-
-open PartialMap
 
 -- FULL
 -- This declaration can be read: "There are two ways to construct a
@@ -1653,6 +1636,8 @@ open PartialMap
 -- a key, a value, and an existing `PartialMap` to construct a
 -- `PartialMap` with an additional key-to-value mapping."
 -- /FULL
+
+namespace PartialMap
 
 -- TERSE: ***
 -- The `update` function overrides the entry for a given key in a
