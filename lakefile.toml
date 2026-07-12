@@ -42,3 +42,13 @@ name = "TS"
 [[lean_exe]]
 name = "sfl"
 root = "Targets"
+
+# Temporary scaffolding: draft book + executable that emits solutions .lean for
+# generated LF/<Ch>Verso.lean chapters not yet in the real book, so they can be
+# diffed against the bare LF/<Ch>.lean sources.  See LFDraft.lean.
+[[lean_lib]]
+name = "LFDraft"
+
+[[lean_exe]]
+name = "sfl-draft"
+root = "TargetsDraft"

@@ -226,50 +226,57 @@ theorem trans_eq {α : Type} (x y z : α) :
    unnamed "with", and (if you desire), explicitly providing the
    arguments to trans_eq. -/
 
+/- FULL: But it doesn't _quite_ work.  If we simply tell Lean `apply
+   trans_eq` after the `intro`, it can tell (by matching the goal
+   against the conclusion of the lemma) that it should instantiate `α`
+   with `List Nat`, `x` with `[a, b]`, and `z` with `[e,f]`. However,
+   the matching process doesn't determine an instantiation for `y`,
+   nor does it know which hypothese to use for the premises to
+   `trans_eq`. -/
+-- TERSE: But doing [apply trans_eq] doesn't finish the proof!
+
+/-- warning: declaration uses `sorry` -/
+#guard_msgs in
 theorem trans_eq_example' (a b c d e f : Nat) :
     [a, b] = [c, d] →
     [c, d] = [e, f] →
     [a, b] = [e, f] := by
   intro eq1 eq2
--- FULL
-/- If we simply tell Lean `apply trans_eq` at this point, it can
-    tell (by matching the goal against the conclusion of the lemma)
-    that it should instantiate `α` with `List Nat`, `x` with `[a, b]`, and
-    `z` with `[e,f]`. However, the matching process doesn't determine
-    an instantiation for `y`, nor does it know which hypothese to use
-    for the premises to `trans_eq`. As we saw earlier, `apply` would generate
-    new goals for these premises, and we could finish the proof
-    by explicitly applying these hypotheses to those new goals. But,
-    we can also be more direct by supplying those hypotheses directly to
-    `apply`. -/
--- /FULL
--- TERSE
+  apply trans_eq
+  sorry
+  sorry
+  sorry
 
-/- Doing [apply trans_eq] doesn't finish the proof!  But... -/
--- /TERSE
+/- FULL: As we saw earlier, `apply` would generate new goals for these
+   premises, and we could finish the proof by explicitly applying
+   these hypotheses to those new goals. But we can also be more direct
+   by supplying those hypotheses directly to `apply`. -/
+-- TERSE: This does:
+
+theorem trans_eq_example'' (a b c d e f : Nat) :
+    [a, b] = [c, d] →
+    [c, d] = [e, f] →
+    [a, b] = [e, f] := by
+  intro eq1 eq2
   apply trans_eq [a, b] [c, d] [e, f] eq1 eq2
--- TERSE
--- ...does.
-
--- /TERSE
 
 /- TODO: (DHS) This and below are new (my addition), thoughts? -/
 /- In the previous example, we had to specify the `x` and `z` arguments
    to `trans_eq` before we could supply `[c, d]` for `y` or `eq1` and `eq2` for
    the premises. However, we just said that Lean was able to infer these arguments, so it's
-   a bit redundant (and wordy) for us to do that. Thankfully,
-   Lean allows us to use `_`s for positional arguments that it is able to infer. -/
-theorem trans_eq_example'' (a b c d e f : Nat) :
+   a bit redundant (and wordy) for us to do it. Thankfully,
+   Lean allows us to use `_`s for positional arguments that it can infer. -/
+theorem trans_eq_example''' (a b c d e f : Nat) :
     [a, b] = [c, d] →
     [c, d] = [e, f] →
     [a, b] = [e, f] := by
   intro eq1 eq2
   apply trans_eq _ _ _ eq1 eq2
 
-/- As an aside: if we know the name of
+/- Aside: if we know the name of
    the argument we are supplying (in this case `y`), we can
-   just name it directly, and avoid typing any `_`s. -/
-theorem trans_eq_example''' (a b c d e f : Nat) :
+   just name it directly and avoid typing any `_`s. -/
+theorem trans_eq_example'''' (a b c d e f : Nat) :
     [a, b] = [c, d] →
     [c, d] = [e, f] →
     [a, b] = [e, f] := by
@@ -305,7 +312,7 @@ theorem trans_eq_example_exact (a b c d e f : Nat) :
     the proofs you might see in a mathematics textbook.
     -/
 /- TERSE: `calc` is also available as a tactic. -/
-theorem trans_eq_example'''' (a b c d e f : Nat) :
+theorem trans_eq_example''''' (a b c d e f : Nat) :
     [a, b] = [c, d] →
     [c, d] = [e, f] →
     [a, b] = [e, f] := by
@@ -403,16 +410,14 @@ theorem succ_injective' (n m : Nat) :
     n + 1 = m + 1 →
     n = m := by
   intro h
--- FULL
-/- By writing `injection h with hmn` at this point, we are asking Lean
+  injection h with hmn
+/- FULL: By writing `injection h with hmn` at this point, we are asking Lean
    to generate all equations that it can infer from `h` using the
    injectivity of constructors (in the present example, the equation
    `n = m`). This equation is added as a hypothesis (called
    `hmn` in this case) into the context. Because this equation is exactly our goal,
    in this case the `injection` tactic is able to automatically close the goal. -/
 
--- /FULL
-  injection h with hmn
 
 -- TERSE: ***
 /- Here's a more interesting example that shows how `injection` can
@@ -540,17 +545,16 @@ theorem beq_0_l (n : Nat) :
     (0 == n) = true →
     n = 0 := by
   intro h
-/- FULL: We can proceed by case analysis on `n`. The first case is
-    trivial. -/
+  -- We can proceed by case analysis on `n`. The first case is trivial.
   cases n
   case zero => rfl
-/- FULL: However, the second one doesn't look so simple: assuming
-    `(0 == n' + 1) = true`, we must show `n' + 1 = 0`!  The way forward
-    is to observe that the assumption itself is nonsensical: -/
+    -- However, the second one doesn't look so simple: assuming
+    -- `(0 == n' + 1) = true`, we must show `n' + 1 = 0`!  The way forward
+    -- is to observe that the assumption itself is nonsensical:
   case succ n' =>
-/- FULL: If we use `contradiction` here, Lean confirms
-    that the subgoal we are working on is impossible and removes it
-    from further consideration. -/
+    -- If we use `contradiction` here, Lean confirms that the subgoal
+    -- we are working on is impossible and removes it from further
+    -- consideration.
     contradiction
 
 /- HIDE: APT: Could add an advanced exercise asking them to show
@@ -789,6 +793,15 @@ theorem eq_implies_succ_proj_equal (a b c d : Nat) :
 /- TERSE: Many tactics come with "`... at ...`" variants that work on
     hypotheses instead of goals. -/
 
+-- BCP: This is surely NOT the right way to prove this fact, and I'm not sure that
+-- proving it here is what we want to do anyway.  Inserting it for now for expediency,
+-- to get this file closer to compiling...
+-- Claude: NB `rfl` does not prove this: in this chapter `==` on `Nat` elaborates via
+-- the generic decidable-equality instance (`n == m` is `decide (n = m)`), and
+-- `decide` is stuck on variables.  So we reduce to propositional injectivity.
+theorem beq_succ (n m : Nat) : (n + 1 == m + 1) = (n == m) :=
+  decide_eq_decide.mpr Nat.succ_inj
+
 theorem succ_inj (n m : Nat) :
     n + 1 == m + 1 → n == m := by
   intro h
@@ -877,11 +890,13 @@ theorem silly4 (n m p q : Nat) :
 
    For example: -/
 
-theorem have_example m :
-    (∀ n, m * n = 0) → m = 0 := by
 /- HIDE: Robert Rand: I found this very useful because not all
    students realize I can get a specific case from the forall in the
-   hypotheses. I've shortened the proof a bit. -/
+   hypotheses. I've shortened the proof a bit.
+   BCP: Maybe this comment is dead?
+   -/
+theorem have_example m :
+    (∀ n, m * n = 0) → m = 0 := by
   intro h
   have h := h (n := 1)
   rw [mul_one] at h
@@ -903,10 +918,10 @@ theorem replace_example m :
 -- FULL
 -- EX3 (nth_error_always_none)
 
--- TODO:CGH  temporary unseal so we can test the Verso build!
-unseal nthError in
 /- Use `have` or `replace` to prove the the following lemma, following the
     model of the examples above. Do not use `induction`. -/
+-- TODO:CGH  temporary unseal so we can test the Verso build!
+unseal nthError in
 theorem nth_error_always_none (l : List Nat) :
     (∀ i, nthError l i = none) →
     l = [] := by
@@ -926,7 +941,7 @@ theorem nth_error_always_none (l : List Nat) :
    theorems we've already proven, not just things in our context.
    Using these tactis before `apply` gives us yet another way to
    control where `apply` does its work. -/
-theorem trans_eq_example''''' (a b c d e f : Nat) :
+theorem trans_eq_example'''''' (a b c d e f : Nat) :
     [a, b] = [c, d] →
     [c, d] = [e, f] →
     [a, b] = [e, f] := by
@@ -1070,6 +1085,8 @@ example : ∀ n m,
     quantified in the goal statement at the point where the
     `induction` tactic is invoked on `n`.  -/
 
+-- BCP: The comments in this proof might need trimming -- probably not appropriate in the terse
+-- version, and probably not nicely typeset in the full version
 theorem double_injective : ∀ n m,
     double n = double m →
     n = m := by
@@ -1083,46 +1100,31 @@ theorem double_injective : ∀ n m,
     case succ _ =>
       rw [double_succ] at eq
       contradiction
--- FULL
   case succ n' ih =>
-/- Notice that both the goal and the induction hypothesis are
-    different this time: the goal asks us to prove something more
-    general (i.e., we must prove the statement for _every_ `m`), but
-    the induction hypothesis `ih` is correspondingly more flexible,
-    allowing us to choose any `m` we like when we apply it. -/
-
--- /FULL
+  -- Notice that both the goal and the induction hypothesis are
+  -- different this time: the goal asks us to prove something more
+  -- general (i.e., we must prove the statement for _every_ `m`), but
+  -- the induction hypothesis `ih` is correspondingly more flexible,
+  -- allowing us to choose any `m` we like when we apply it.
   intro m eq
--- FULL
-
-/- Now we've introduced the assumption that `double n = double m`.
-   Since we are doing a case analysis on `n`,
-   we also need a case analysis on `m` to keep the two in sync. -/
-
--- /FULL
+  -- Now we've introduced the assumption that `double n = double m`.
+  -- Since we are doing a case analysis on `n`, we also need a case
+  -- analysis on `m` to keep the two in sync.
   cases m
   case zero =>
--- FULL
-
--- The 0 case is trivial:
-
--- /FULL
+    -- The 0 case is trivial:
     rw [double_zero, double_succ] at eq
     contradiction
   case succ m' =>
     congr
--- FULL
-
-/- Since we are now in the second branch of the `cases m`, the
-    `m'` mentioned in the context is the predecessor of the `m` we
-    started out talking about.  Since we are also in the `succ` branch of
-    the induction, this is perfect: if we instantiate the generic `m`
-    in the IH with the current `m'` (this instantiation is performed
-    automatically by the `apply` in the next step), then `ih` gives
-    us exactly what we need to finish the proof. -/
-
+    -- Since we are now in the second branch of the `cases m`, the
+    -- `m'` mentioned in the context is the predecessor of the `m` we
+    -- started out talking about.  Since we are also in the `succ` branch of
+    -- the induction, this is perfect: if we instantiate the generic `m`
+    -- in the IH with the current `m'` (this instantiation is performed
+    -- automatically by the `apply` in the next step), then `ih` gives
+    -- us exactly what we need to finish the proof.
     apply ih; rw [double_succ, double_succ] at eq; injections
--- /FULL *)
 
 /- HIDE: Robert Rand: I found jumping straight to "what if we want to
    do induction on the second argument" via double_injective_take2_FAILED
@@ -1399,11 +1401,21 @@ theorem double_injective_take2 : ∀ n m,
 -- ######################################################
 -- Rewriting with conditional statements
 
+/- We'll use a boolean "less or equal" test on numbers, written `n ≤? m`
+    (the library function `Nat.ble`), together with the fact that it
+    commutes with successor on both sides. -/
+
+-- BCP: Added, to make the file compile, on Claude's suggestion. But is this the right way?
+-- Answer: No, just replaces uses of it by Nat.ble!
+infix:52 " ≤? " => Nat.ble
+
+theorem succ_leb_succ (n m : Nat) : ((n + 1) ≤? (m + 1)) = (n ≤? m) := rfl
+
 /- Suppose that we want to show that `add` is the inverse of
     `sub`.  Since we are working with natural numbers, we need an
     assumption to prevent `sub` from truncating its result. With
     this assumption, the induction hypothesis becomes
-    `forall m, n' <== m = true → (m - n') + n' = m`.  The beginning of the proof
+    `forall m, n' ≤? m = true → (m - n') + n' = m`.  The beginning of the proof
     uses techniques we have already seen -- in particular, notice how
     we induct on `n` before introducing `m`, so that the induction
     hypothesis becomes sufficiently general. -/
@@ -1422,18 +1434,17 @@ theorem sub_add_leb : ∀ (n m : Nat),
     case succ m' =>
       rw [succ_leb_succ] at h
       rw [succ_sub_succ, add_succ]
-/- FULL: At this point, we need to show `(m' - n') + n' + 1 = m' + 1` from
-    the assumption `(n' <= m') = true`.  We could use the `assert`
-    tactic to prove `(m' - n') + n' = m'` from the induction
-    hypothesis. However, we can also just use `rw` directly: if
-    we rewrite with a conditional statement of the form `P → a = b`,
-    then Lean tries to rewrite with `a = b`, and then asks us to prove
-    `P` in a new subgoal.  If the statement has more than one
-    assumption, then we get one subgoal for each assumption. -/
-/- TERSE: We could use the `have` tactic to prove `(m' - n') + n' = m'`
-    from the IH. However, we can also just use `rw` directly... -/
+    -- At this point, we need to show `(m' - n') + n' + 1 = m' + 1`
+    -- from the assumption `(n' <= m') = true`.  We could use the
+    -- `have` tactic to prove `(m' - n') + n' = m'` from the IH.
+    -- However, we can also just use `rw` directly...
       rw [ih]
       assumption
+
+/- FULL: if we rewrite with a conditional statement of the form
+    `P → a = b`, then Lean tries to rewrite with `a = b`, and then
+    asks us to prove `P` in a new subgoal.  If the statement has more
+    than one assumption, then we get one subgoal for each assumption. -/
 
 -- FULL
 -- EX3! (gen_dep_practice)
@@ -1742,7 +1753,7 @@ theorem sillyfun_false (n : Nat) :
 -/
 
 -- FULL
--- EX3 (combine_split) *)
+-- EX3 (combine_split)
 /- Here is an implementation of the `unzip` function mentioned in
    chapter \CHAP{Poly}. We'll call it `split` so as not to
    confuse Lean. -/
@@ -1754,9 +1765,9 @@ def split {α β : Type} (l : List (α × β)) : (List α) × (List β) :=
     match split t with
     | (lx, ly) => (x :: lx, y :: ly)
 
+/- Prove that `split` and `zip` are inverses in the following sense: -/
 -- TODO:CGH  temporary unseal so we can test the Verso build!
 unseal zip in
-/- Prove that `split` and `zip` are inverses in the following sense: -/
 theorem split_zip {α β : Type} (l : List (α × β)) l1 l2 :
     split l = (l1, l2) →
     zip l1 l2 = l := by
@@ -1779,14 +1790,12 @@ theorem split_zip {α β : Type} (l : List (α × β)) l1 l2 :
 -- []
 -- /FULL
 
--- TERSE:
-/- When using `cases`, we can specify to Lean that it should
-   remember an equality between a compound expression and what
-   we are decomposing it into, using `cases h: ...` syntax.
-   This information can actually be critical,
-   and, if we leave it out, we might lack information we need to complete a proof. *)
--- FULL: For example, suppose we define a function `sillyfun1` like
-    this: -/
+/- TERSE: When using `cases`, we can specify to Lean that it should
+   remember an equality between a compound expression and what we are
+   decomposing it into, using `cases h: ...` syntax. This information
+   can actually be critical, and, if we leave it out, we might lack
+   information we need to complete a proof. -/
+-- FULL: For example, suppose we define a function `sillyfun1` like this:
 
 def sillyfun1 (n : Nat) : Bool :=
   if n == 3 then true
@@ -1825,11 +1834,9 @@ theorem sillyfun1_odd (n : Nat) :
   unfold sillyfun1 at eq
   cases h : (n == 3)
   case false =>
--- FULL
-  /- Now we have the same state as at the point where we got
-      stuck above, except that the context contains an extra
-      equality assumption, which is exactly what we need to
-      make progress. -/
+    -- Now we have the same state as at the point where we got stuck
+    -- above, except that the context contains an extra equality
+    -- assumption, which is exactly what we need to make progress.
     rw [h] at eq; dsimp at eq
     cases h': (n == 5)
     case false =>
@@ -1838,13 +1845,10 @@ theorem sillyfun1_odd (n : Nat) :
     case true =>
       apply beq_eq at h'
       rw [h']; rfl
--- /FULL
--- FULL
-   /- When we come to the second equality test in the body
-      of the function we are reasoning about, we can use
-      `h:` again in the same way, allowing us to finish the
-      proof. -/
--- /FULL
+      -- When we come to the second equality test in the body
+      -- of the function we are reasoning about, we can use
+      -- `h:` again in the same way, allowing us to finish the
+      -- proof.
   case true =>
     apply beq_eq at h
     rw [h]; rfl
@@ -1962,6 +1966,7 @@ theorem bool_fn_applied_thrice (f : Bool → Bool) (b : Bool) :
 /- ###################################################### -/
 /- Additional Exercises -/
 
+-- BCP: There seems to be nothing left for the student to fill in!
 -- EX3 (beq_symm)
 theorem beq_symm (n m : Nat) :
     (n == m) = (m == n) := by
@@ -1976,8 +1981,6 @@ theorem beq_symm (n m : Nat) :
     case succ =>
       rw [beq_succ, beq_succ]
       exact ih _
--- ADMITTED
--- /ADMITTED
 -- GRADE_THEOREM 3: beq_symm
 -- []
 
