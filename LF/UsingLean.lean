@@ -532,7 +532,7 @@ example (n : Nat) : eqb n n := by
   | succ n _ => sorry
 
 /-
-  Without writing out all the brances by hand, we get the basic shape of the proof tree —
+  Without writing out all the branches by hand, we get the basic shape of the proof tree —
   now we can focus on filling in what should happen in each case.
 
   One possible proof of this example is:
