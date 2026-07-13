@@ -1870,13 +1870,13 @@ inductive Com.EvalR : Com → State → State → Prop where
       (hloop : Com.EvalR (imp {while (~b) {~c}}) st' st'') :
       Com.EvalR (imp {while (~b) {~c}}) st st''
 
-notation:40 st0:41 " =[ " c " ]=> " st1:41 => Com.EvalR c st0 st1
+notation:40 st0 " =[ " c " ]=> " st1 => Com.EvalR c st0 st1
 -- Also accept a bare Imp command between the brackets, so concrete programs can
 -- be written without the `imp { … }` wrapper. Bare `Com` terms still work via the
 -- notation above; splice a Lean term into the command with `~`.
 syntax:40 term:41 " =[ " imp_com " ]=> " term:41 : term
 macro_rules
-  | `($st0 =[ $c:imp_com ]=> $st1) => `($st0 =[ imp { $c } ]=> $st1)
+  | `($st0 =[ $c:imp_com ]=> $st1) => `(Com.EvalR (imp { $c }) $st0 $st1)
 ```
 
 The cost of defining evaluation as a relation instead of a function is
