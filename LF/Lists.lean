@@ -202,6 +202,9 @@ inductive NatList : Type where
   | nil
   | cons (n : Nat) (l : NatList)
 
+/- We put our function definitions in the namespace implicitly created by the inductive definition,
+   so we can define our own versions of standard list functions for practice. -/
+
 namespace NatList
 -- TERSE: ***
 /-  FULL: As with pairs, it is convenient to write lists in familiar
@@ -219,9 +222,6 @@ macro (priority := high) "[ " elems:term,* "]" : term => do
 def mylist1 : NatList := 1 :: (2 :: (3 :: []))
 def mylist2 : NatList := 1 :: 2 :: 3 :: []
 def mylist3 : NatList := [1, 2, 3]
-
-/- We put our function definitions in a namespace, so we can
-   define our own versions of standard list functions for practice. -/
 
 -- TERSE: Some useful list-manipulation functions...
 
@@ -482,7 +482,7 @@ seal alternate
 /- A `bag` (or `multiset`) is like a set, except that each element
    can appear multiple times rather than just once.  One way of
    representing a bag of numbers is as a list.  The following definition
-   introduces a new name, `Bag`, as an abbreviation for `NatList`. -/
+   introduces a new type, `Bag`, as an abbreviation for `NatList`. -/
 
 abbrev Bag := NatList
 namespace Bag
@@ -1638,7 +1638,6 @@ inductive PartialMap : Type where
 -- /FULL
 
 namespace PartialMap
-
 -- TERSE: ***
 -- The `update` function overrides the entry for a given key in a
 -- partial map by shadowing it with a new one (or simply adds a new
