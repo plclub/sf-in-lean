@@ -69,58 +69,8 @@ theorem Perm3_In_old (α : Type) (x : α) (l₁ l₂ : List α) :
     apply ih₂3; apply ih₁2; apply hIn
 ```
 
-```lean
-theorem Perm3_In_better_with_lia : ∀ (α : Type) (x : α) (l₁ l₂ : List α),
-    Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
-  intros α x l₁ l₂ hPerm hIn
-  induction hPerm
-  case perm3_swap12 a b c =>
-    rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
-    obtain h | h | h | h := hIn
-    . lia
-    . lia
-    . lia
-    . lia
-  case perm3_swap23 a b c =>
-  -- Here, we solve _all_ goals- and eschew the `obtain` - with
-  -- the <;> tactic combinator.
-    rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
-  case perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
-    lia
-```
-
-```lean
-theorem Perm3_In_better_with_try (α : Type) (x : α) (l₁ l₂ : List α) :
-    Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
-  intros hPerm hIn
-  -- TODO: autoformatter needs to make this look decent
-  induction hPerm <;>
-  try rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
-  <;> lia
-  case perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
-    lia
-```
-
-```lean
-theorem Perm3_In_better_with_first (α : Type) (x : α) (l₁ l₂ : List α) :
-    Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
-  intros hPerm hIn
-  induction hPerm <;>
-  -- TODO autoformat
-  first
-  | rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
-  | lia
-```
-```lean
-theorem Perm3_In_best (α : Type) (x : α) (l₁ l₂ : List α) :
-    Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
-  intros hPerm hIn
-  induction hPerm <;>
-  -- TODO autoformat
-  first
-  | simp at * <;> lia
-  | lia
-```
+In this file, we will introduce tactics that will shrink this proof from
+around eighteen lines to five.
 
 :::dev
 @dsainati1: come up with new motivating example
@@ -130,7 +80,11 @@ theorem Perm3_In_best (α : Type) (x : α) (l₁ l₂ : List α) :
 
 ::::full
 The `lia` tactic implements a decision procedure for integer linear
-arithmetic, a subset of propositional logic and arithmetic.
+arithmetic, a subset of propositional logic and arithmetic. `lia`
+is also a decision procedure for first-order logic.
+:::dev
+RAB: should we explain first-order logic? do they know what this is?
+:::
 
 If the goal is a universally quantified formula made out of
 
@@ -159,13 +113,36 @@ example : ∀ (m n : Nat),
 example : ∀ (m n p : Nat),
     m + (n + p) = m + n + p := by
   lia
+
+example : ∀ (A B C D : Prop),
+  (A → B) → (B → C) → (C → D) → (A → D)
+     := by
+  lia
+
+```
+
+`lia` can many of the cases of our old `Perm3_In` example.
+```lean
+theorem Perm3_In_better_with_lia : ∀ (α : Type) (x : α) (l₁ l₂ : List α),
+    Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
+  intros α x l₁ l₂ hPerm hIn
+  induction hPerm
+  case perm3_swap12 a b c =>
+    rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
+    obtain h | h | h | h := hIn
+    . lia /- was right; left; assumption -/
+    . lia
+    . lia
+    . lia
+  case perm3_swap23 a b c =>
+  -- Here, we solve _all_ goals- and eschew the `obtain` - with
+  -- the <;> tactic combinator, which we saw in the `Induction` chapter.
+    rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
+  case perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
+    lia /- was apply ih₂3; apply ih₁2; apply hIn -/
 ```
 
 # Tactic Combinators
-
-:::dev
-@dsainati1 - this example is a bit weird because we could also just solve this with `lia` directly
-:::
 
 ::::full
 In `Induction`, we saw how to use the `<;>` combinator in order to apply the same
@@ -184,7 +161,7 @@ example (b c : Bool) : (b && c) = (c && b) := by
 
 ::::full
 This `<;>` is not the only such combinator that Lean has to offer, however.
-In general, _combinators_ allow us to build tactics out of smaller ones, letting us
+In general, combinators allow us to build tactics out of smaller ones, letting us
 discharge many similar subgoals at once. Getting used to them takes a
 little energy, but it lets us scale up to more complex definitions and
 more interesting properties without drowning in boring, repetitive detail.
@@ -252,6 +229,54 @@ example : ∀ n, silly n → n ≠ 1 := by
   -- `lia` doesn't know that `1 ∈ []` is impossible, but we can use `contradiction`
   contradiction
 ```
+
+We can further simplify our `Perm3_In` example with `try`.
+
+```lean
+theorem Perm3_In_better_with_try (α : Type) (x : α) (l₁ l₂ : List α) :
+    Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
+  intros hPerm hIn
+  -- TODO: autoformatter needs to make this look decent
+  induction hPerm <;>
+  try rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
+  case perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
+    lia
+```
+
+Note that `try lia <;> try rw [...] <;> lia` _doesn't_ work, because
+the first time that `try` catches a failure in a `<;>` sequence, the whole
+sequence will stop executing.
+
+:::dev
+RAB: Use @berberman's infrastructure for expected failure here.
+:::
+```lean
+/--
+error: unsolved goals
+case perm3_swap12
+α : Type
+x : α
+l₁ l₂ : List α
+a✝ b✝ c✝ : α
+hIn : x ∈ [a✝, b✝, c✝]
+⊢ x ∈ [b✝, a✝, c✝]
+
+case perm3_swap23
+α : Type
+x : α
+l₁ l₂ : List α
+a✝ b✝ c✝ : α
+hIn : x ∈ [a✝, b✝, c✝]
+⊢ x ∈ [a✝, c✝, b✝]
+-/
+#guard_msgs(error) in
+example (α : Type) (x : α) (l₁ l₂ : List α) :
+    Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
+  intros hPerm hIn
+  induction hPerm <;> try lia <;>
+  try rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
+```
+
 
 ## The `repeat` combinator
 
@@ -377,11 +402,21 @@ like before, we would instead first try `apply List.mem_cons_of_mem`, which woul
 This leaves us with the goal `10 ∈ []`, which is of course false.
 ::::
 
-# The `trivial` tactic
+With `first`, we can solve the earlier issue with `try` where it would stop executing
+the sequence on the first failure.
 
-:::dev
-TODO
-:::
+```lean
+theorem Perm3_In_better_with_first (α : Type) (x : α) (l₁ l₂ : List α) :
+    Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
+  intros hPerm hIn
+  induction hPerm <;>
+  -- TODO autoformat
+  first
+  | rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
+  | lia
+```
+
+Our `Perm3_In` example is getting quite short! But can we do better?
 
 # The `simp` Tactic
 
@@ -389,6 +424,22 @@ TODO
 TODO
 :::
 
+```lean
+theorem Perm3_In_best (α : Type) (x : α) (l₁ l₂ : List α) :
+    Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
+  intros hPerm hIn
+  induction hPerm <;>
+  -- TODO autoformat
+  first
+  | simp at * <;> lia
+  | lia
+```
+
+# The `trivial` tactic
+
+:::dev
+TODO
+:::
 
 # Case Study: Regular Expressions
 
