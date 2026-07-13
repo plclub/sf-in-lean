@@ -65,7 +65,9 @@ _POLICY = [
     ("TERSE",                r"::+(?:terse|slidebreak)\b"),
     ("EX\\d+[A-Za-z!?]*",    r"::+exercise\b"),
     ("GRADE_\\w+",           r":::grade\b"),
-    ("INSTRUCTORS",          r"```instructors\b"),
+    # `-- INSTRUCTORS:` notes -> :::instructors; a bare `-- INSTRUCTORS` region
+    # is a hidden region (-> ::::hide, or :::answer inside a quiz).
+    ("INSTRUCTORS",          r":::instructors\b|::+hide\b|:::answer\b"),
     # A SOLUTION is one of two things: a *compilable* answer becomes the in-code
     # `solution!` / `-- SOLUTION` form SFLMeta rewrites; a *prose* answer becomes
     # a :::solution directive.  Either counts as translated.  QUIETSOLUTION (a
@@ -94,11 +96,11 @@ _POLICY = [
     ("ADMITDEF",             None),
 ]
 
-# Author / developer notes -> ```dev code blocks.  Matched separately because
+# Author / developer notes -> :::dev directives.  Matched separately because
 # the keyword is an author initial or task word, not a region name.
 _AUTHOR_KEYWORDS = ("BCP", "JC", "MWH", "CGH", "RAB", "CH", "HG", "NB", "MMG",
                     "APT", "DHS", "TODO", "TOFIX", "LATER", "SOONER")
-_AUTHOR_EXPECT = r"```dev\b"
+_AUTHOR_EXPECT = r":::dev\b"
 
 # A line reduces to a "marker keyword" candidate if, after stripping a leading
 # `--` line-comment prefix or a `/-`/`-/` block-comment fence and an optional
