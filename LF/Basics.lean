@@ -326,8 +326,10 @@ inductive MyBool : Type where
 ```
 
 The next command opens the namespace associated with the `MyBool` type,
-so that our definitions don't clash with ones from the standard library. We'll discuss it in more
-detail below.
+so subsequent definitions will be part of the `MyBool` namespace.
+In Lean, functions on a type are typically defined in that type's namespace,
+which avoids name clashes with functions of the same name elsewhere (here,
+functions on the built-in `Bool` type). We give a full treatment of namespaces below.
 
 ```lean
 namespace MyBool
