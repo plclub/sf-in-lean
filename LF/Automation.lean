@@ -269,6 +269,10 @@ other combinators. For example, we can rewrite our previous examples that used `
 like so:
 ::::
 
+::::terse
+We can combine `first` with `repeat`:
+::::
+
 ```lean
 example : 10 ∈ [1,2,3,4,5,6,7,8,9,10] := by
   repeat first
