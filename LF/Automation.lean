@@ -72,10 +72,6 @@ theorem Perm3_In_old (α : Type) (x : α) (l₁ l₂ : List α) :
 In this file, we will introduce tactics that will shrink this proof from
 around eighteen lines to five.
 
-:::dev
-@dsainati1: come up with new motivating example
-:::
-
 # The `lia` Tactic
 
 ::::full
