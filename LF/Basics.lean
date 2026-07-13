@@ -1758,14 +1758,9 @@ GRADE_THEOREM 2: test_mult1
 :::slidebreak
 :::
 
-When we say that Lean comes with almost nothing built-in, we really
-mean it: even testing equality is a user-defined operation!
-
-:::dev
-HG: I don't like this framing. It sounds like we're telling students they'll have to build
-everything themselves. I think what we really mean is "Lean is extremely flexible; even equality
-testing can be defined by the user." or something like that.
-:::
+When we say that Lean relies on almost nothing that's truly built-in, we really mean it: even
+testing equality is not a primitive operation, but an ordinary function that we could re-implement
+ourselves as users.
 
 Here is a function `beq` that tests natural numbers for
 equality, yielding a boolean.
