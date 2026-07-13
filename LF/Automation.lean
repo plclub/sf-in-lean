@@ -46,6 +46,82 @@ simplify this proof in several stages.
 Consider the proof below. Notice all the repetition and near-repetition...
 ::::
 
+```lean
+theorem Perm3_In_old (α : Type) (x : α) (l₁ l₂ : List α) :
+    Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
+  intros hPerm hIn
+  induction hPerm
+  case perm3_swap12 a b c =>
+    rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
+    obtain h | h | h | h := hIn
+    . right; left; assumption
+    . left; assumption
+    . right; right; left; assumption
+    . contradiction
+  case perm3_swap23 a b c =>
+    rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
+    obtain h | h | h | h := hIn
+    . left; assumption
+    . right; right; left; assumption
+    . right; left; assumption
+    . contradiction
+  case perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
+    apply ih₂3; apply ih₁2; apply hIn
+```
+
+```lean
+theorem Perm3_In_better_with_lia : ∀ (α : Type) (x : α) (l₁ l₂ : List α),
+    Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
+  intros α x l₁ l₂ hPerm hIn
+  induction hPerm
+  case perm3_swap12 a b c =>
+    rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
+    obtain h | h | h | h := hIn
+    . lia
+    . lia
+    . lia
+    . lia
+  case perm3_swap23 a b c =>
+  -- Here, we solve _all_ goals- and eschew the `obtain` - with
+  -- the <;> tactic combinator.
+    rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
+  case perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
+    lia
+```
+
+```lean
+theorem Perm3_In_better_with_try (α : Type) (x : α) (l₁ l₂ : List α) :
+    Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
+  intros hPerm hIn
+  -- TODO: autoformatter needs to make this look decent
+  induction hPerm <;>
+  try rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
+  <;> lia
+  case perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
+    lia
+```
+
+```lean
+theorem Perm3_In_better_with_first (α : Type) (x : α) (l₁ l₂ : List α) :
+    Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
+  intros hPerm hIn
+  induction hPerm <;>
+  -- TODO autoformat
+  first
+  | rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
+  | lia
+```
+```lean
+theorem Perm3_In_best (α : Type) (x : α) (l₁ l₂ : List α) :
+    Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
+  intros hPerm hIn
+  induction hPerm <;>
+  -- TODO autoformat
+  first
+  | simp at * <;> lia
+  | lia
+```
+
 :::dev
 @dsainati1: come up with new motivating example
 :::
