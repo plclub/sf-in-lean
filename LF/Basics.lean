@@ -1565,7 +1565,7 @@ The purpose of this style is twofold:
   In real-world Lean developments, this is the standard.
 
 Lean, like any other programming language, has conventions and best practices
-for writing good software. You are probably familiar with Object-Oriented programming,
+for writing good software. You are probably familiar with object-oriented programming,
 for example, in which it is considered good practice not to access the
 fields of an object directly, but instead to use getter and setter methods.
 This helps to encapsulate the object's definition, so that, if its fields or implementation
