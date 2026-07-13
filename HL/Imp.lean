@@ -397,13 +397,17 @@ gives us readable names to refer to during proofs.
 
 ```lean
 inductive Aexp.EvalR : Aexp → Nat → Prop where
-  | num (n : Nat) : EvalR (.num n) n
-  | plus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : EvalR a1 n1) (h2 : EvalR a2 n2) :
-      EvalR (.plus a1 a2) (n1 + n2)
-  | minus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : EvalR a1 n1) (h2 : EvalR a2 n2) :
-      EvalR (.minus a1 a2) (n1 - n2)
-  | mult (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : EvalR a1 n1) (h2 : EvalR a2 n2) :
-      EvalR (.mult a1 a2) (n1 * n2)
+  | num (n : Nat) :
+      Aexp.EvalR (.num n) n
+  | plus (a1 a2 : Aexp) (n1 n2 : Nat)
+      (h1 : Aexp.EvalR a1 n1) (h2 : Aexp.EvalR a2 n2) :
+      Aexp.EvalR (.plus a1 a2) (n1 + n2)
+  | minus (a1 a2 : Aexp) (n1 n2 : Nat)
+      (h1 : Aexp.EvalR a1 n1) (h2 : Aexp.EvalR a2 n2) :
+      Aexp.EvalR (.minus a1 a2) (n1 - n2)
+  | mult (a1 a2 : Aexp) (n1 n2 : Nat)
+      (h1 : Aexp.EvalR a1 n1) (h2 : Aexp.EvalR a2 n2) :
+      Aexp.EvalR (.mult a1 a2) (n1 * n2)
 ```
 
 ::::full
@@ -412,10 +416,20 @@ with *positional* hypotheses -- no names for the premises:
 
 ```
 inductive Aexp.EvalR : Aexp → Nat → Prop where
-  | num (n : Nat) : EvalR (.num n) n
-  | plus (e1 e2 : Aexp) (n1 n2 : Nat) : EvalR e1 n1 → EvalR e2 n2 → EvalR (.plus e1 e2) (n1 + n2)
-  | minus (e1 e2 : Aexp) (n1 n2 : Nat) : EvalR e1 n1 → EvalR e2 n2 → EvalR (.minus e1 e2) (n1 - n2)
-  | mult (e1 e2 : Aexp) (n1 n2 : Nat) : EvalR e1 n1 → EvalR e2 n2 → EvalR (.mult e1 e2) (n1 * n2)
+  | num (n : Nat) :
+      Aexp.EvalR (.num n) n
+  | plus (e1 e2 : Aexp) (n1 n2 : Nat) :
+      Aexp.EvalR e1 n1 →
+      Aexp.EvalR e2 n2 →
+      Aexp.EvalR (.plus e1 e2) (n1 + n2)
+  | minus (e1 e2 : Aexp) (n1 n2 : Nat) :
+      Aexp.EvalR e1 n1 →
+      Aexp.EvalR e2 n2 →
+      Aexp.EvalR (.minus e1 e2) (n1 - n2)
+  | mult (e1 e2 : Aexp) (n1 n2 : Nat) :
+      Aexp.EvalR e1 n1 →
+      Aexp.EvalR e2 n2 →
+      Aexp.EvalR (.mult e1 e2) (n1 * n2)
 ```
 
 The version above instead gives explicit names to the hypotheses in each
@@ -441,6 +455,14 @@ In informal discussions, it is convenient to write the rules for
 {name}`Aexp.EvalR` and similar relations in the more readable graphical form of
 _inference rules_, where the premises above the line justify the
 conclusion below the line.  For example, the constructor `plus`
+
+```
+    | plus (a1 a2 : Aexp) (n1 n2 : Nat) :
+        Aexp.EvalR a1 n1 →
+        Aexp.EvalR a2 n2 →
+        Aexp.EvalR (.plus a1 a2) (n1 + n2)
+```
+
 can be written like this as an inference rule:
 
 ```
@@ -674,14 +696,19 @@ it is equivalent to {name}`Bexp.eval`.
 ```lean
 inductive Bexp.EvalR : Bexp → Bool → Prop where
   -- SOLUTION
-  | bool (b : Bool) : EvalR (.bool b) b
-  | eq (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ⇓ n1) (h2 : a2 ⇓ n2) : EvalR (.eq a1 a2) (n1 == n2)
-  | neq (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ⇓ n1) (h2 : a2 ⇓ n2) : EvalR (.neq a1 a2) (n1 != n2)
-  | le (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ⇓ n1) (h2 : a2 ⇓ n2) : EvalR (.le a1 a2) (n1 ≤ n2)
-  | gt (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ⇓ n1) (h2 : a2 ⇓ n2) : EvalR (.gt a1 a2) (n1 > n2)
-  | not (b : Bexp) (bv : Bool) (h : EvalR b bv) : EvalR (.not b) (!bv)
-  | and (b1 b2 : Bexp) (tv1 tv2 : Bool) (h1 : EvalR b1 tv1) (h2 : EvalR b2 tv2) :
-      EvalR (.and b1 b2) (tv1 && tv2)
+  | bool (b : Bool) : Bexp.EvalR (.bool b) b
+  | eq (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ⇓ n1) (h2 : a2 ⇓ n2) :
+      Bexp.EvalR (.eq a1 a2) (n1 == n2)
+  | neq (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ⇓ n1) (h2 : a2 ⇓ n2) :
+      Bexp.EvalR (.neq a1 a2) (n1 != n2)
+  | le (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ⇓ n1) (h2 : a2 ⇓ n2) :
+      Bexp.EvalR (.le a1 a2) (n1 ≤ n2)
+  | gt (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : a1 ⇓ n1) (h2 : a2 ⇓ n2) :
+      Bexp.EvalR (.gt a1 a2) (n1 > n2)
+  | not (b : Bexp) (bv : Bool) (h : Bexp.EvalR b bv) :
+      Bexp.EvalR (.not b) (!bv)
+  | and (b1 b2 : Bexp) (tv1 tv2 : Bool) (h1 : Bexp.EvalR b1 tv1) (h2 : Bexp.EvalR b2 tv2) :
+      Bexp.EvalR (.and b1 b2) (tv1 && tv2)
   -- END SOLUTION
 
 scoped notation:55 e:56 " ⇓b " b:56 => Bexp.EvalR e b
@@ -785,16 +812,16 @@ What should `Aexp.eval` return for `.div (.num 1) (.num 0)`??
 
 ```lean
 inductive Aexp.EvalR : Aexp → Nat → Prop where
-  | num (n : Nat) : EvalR (.num n) n
-  | plus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : EvalR a1 n1) (h2 : EvalR a2 n2) :
-      EvalR (.plus a1 a2) (n1 + n2)
-  | minus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : EvalR a1 n1) (h2 : EvalR a2 n2) :
-      EvalR (.minus a1 a2) (n1 - n2)
-  | mult (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : EvalR a1 n1) (h2 : EvalR a2 n2) :
-      EvalR (.mult a1 a2) (n1 * n2)
+  | num (n : Nat) : Aexp.EvalR (.num n) n
+  | plus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : Aexp.EvalR a1 n1) (h2 : Aexp.EvalR a2 n2) :
+      Aexp.EvalR (.plus a1 a2) (n1 + n2)
+  | minus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : Aexp.EvalR a1 n1) (h2 : Aexp.EvalR a2 n2) :
+      Aexp.EvalR (.minus a1 a2) (n1 - n2)
+  | mult (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : Aexp.EvalR a1 n1) (h2 : Aexp.EvalR a2 n2) :
+      Aexp.EvalR (.mult a1 a2) (n1 * n2)
   | div (a1 a2 : Aexp) (n1 n2 n3 : Nat)             -- NEW
-      (h1 : EvalR a1 n1) (h2 : EvalR a2 n2) (hpos : n2 > 0) (hdiv : n2 * n3 = n1) :
-      EvalR (.div a1 a2) n3
+      (h1 : Aexp.EvalR a1 n1) (h2 : Aexp.EvalR a2 n2) (hpos : n2 > 0) (hdiv : n2 * n3 = n1) :
+      Aexp.EvalR (.div a1 a2) n3
 ```
 
 Notice that this evaluation relation corresponds to a _partial_
@@ -834,14 +861,14 @@ What should `Aexp.eval` do with nondeterminism??
 
 ```lean
 inductive Aexp.EvalR : Aexp → Nat → Prop where
-  | any (n : Nat) : EvalR .any n                   -- NEW
-  | num (n : Nat) : EvalR (.num n) n
-  | plus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : EvalR a1 n1) (h2 : EvalR a2 n2) :
-      EvalR (.plus a1 a2) (n1 + n2)
-  | minus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : EvalR a1 n1) (h2 : EvalR a2 n2) :
-      EvalR (.minus a1 a2) (n1 - n2)
-  | mult (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : EvalR a1 n1) (h2 : EvalR a2 n2) :
-      EvalR (.mult a1 a2) (n1 * n2)
+  | any (n : Nat) : Aexp.EvalR .any n                   -- NEW
+  | num (n : Nat) : Aexp.EvalR (.num n) n
+  | plus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : Aexp.EvalR a1 n1) (h2 : Aexp.EvalR a2 n2) :
+      Aexp.EvalR (.plus a1 a2) (n1 + n2)
+  | minus (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : Aexp.EvalR a1 n1) (h2 : Aexp.EvalR a2 n2) :
+      Aexp.EvalR (.minus a1 a2) (n1 - n2)
+  | mult (a1 a2 : Aexp) (n1 n2 : Nat) (h1 : Aexp.EvalR a1 n1) (h2 : Aexp.EvalR a2 n2) :
+      Aexp.EvalR (.mult a1 a2) (n1 * n2)
 
 end AevalRExtended
 ```
@@ -1821,22 +1848,27 @@ chenson2018: TODO Propose you use inline notation such as `Com.EvalR (imp {skip;
 
 ```lean
 inductive Com.EvalR : Com → State → State → Prop where
-  | skip (st : State) : EvalR (imp {skip;}) st st
-  | asgn (st : State) (a : Aexp) (n : Nat) (x : Ident) (h : a.eval st = n) :
-      EvalR (imp {x := ~a;}) st (x →ₜ n ; st)
-  | seq (c1 c2 : Com) (st st' st'' : State) (h1 : EvalR c1 st st') (h2 : EvalR c2 st' st'') :
-      EvalR (imp {~c1 ~c2}) st st''
-  | ifTrue (st st' : State) (b : Bexp) (c1 c2 : Com) (hb : b.eval st = true)
-      (hc : EvalR c1 st st') :
-      EvalR (imp {if (~b) {~c1} else {~c2}}) st st'
-  | ifFalse (st st' : State) (b : Bexp) (c1 c2 : Com) (hb : b.eval st = false)
-      (hc : EvalR c2 st st') :
-      EvalR (imp {if (~b) {~c1} else {~c2}}) st st'
-  | whileFalse (b : Bexp) (st : State) (c : Com) (hb : b.eval st = false) :
-      EvalR (imp {while (~b) {~c}}) st st
-  | whileTrue (st st' st'' : State) (b : Bexp) (c : Com) (hb : b.eval st = true)
-      (hc : EvalR c st st') (hloop : Com.EvalR (imp {while (~b) {~c}}) st' st'') :
-      EvalR (imp {while (~b) {~c}}) st st''
+  | skip (st : State) :
+      Com.EvalR (imp {skip;}) st st
+  | asgn (st : State) (a : Aexp) (n : Nat) (x : Ident)
+      (h : a.eval st = n) :
+      Com.EvalR (imp {x := ~a;}) st (x →ₜ n ; st)
+  | seq (c1 c2 : Com) (st st' st'' : State)
+      (h1 : Com.EvalR c1 st st') (h2 : Com.EvalR c2 st' st'') :
+      Com.EvalR (imp {~c1 ~c2}) st st''
+  | ifTrue (st st' : State) (b : Bexp) (c1 c2 : Com)
+      (hb : b.eval st = true) (hc : Com.EvalR c1 st st') :
+      Com.EvalR (imp {if (~b) {~c1} else {~c2}}) st st'
+  | ifFalse (st st' : State) (b : Bexp) (c1 c2 : Com)
+      (hb : b.eval st = false) (hc : Com.EvalR c2 st st') :
+      Com.EvalR (imp {if (~b) {~c1} else {~c2}}) st st'
+  | whileFalse (b : Bexp) (st : State) (c : Com)
+      (hb : b.eval st = false) :
+      Com.EvalR (imp {while (~b) {~c}}) st st
+  | whileTrue (st st' st'' : State) (b : Bexp) (c : Com)
+      (hb : b.eval st = true) (hc : Com.EvalR c st st')
+      (hloop : Com.EvalR (imp {while (~b) {~c}}) st' st'') :
+      Com.EvalR (imp {while (~b) {~c}}) st st''
 
 notation:40 st0:41 " =[ " c " ]=> " st1:41 => Com.EvalR c st0 st1
 -- Also accept a bare Imp command between the brackets, so concrete programs can
