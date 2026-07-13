@@ -1856,6 +1856,12 @@ inductive Com.EvalR : Com → State → State → Prop where
       Com.EvalR (imp {while (~b) {~c}}) st st''
 
 notation:40 st0 " =[ " c " ]=> " st1 => Com.EvalR c st0 st1
+-- Also accept a bare Imp command between the brackets, so concrete programs can
+-- be written without the `imp { … }` wrapper. Bare `Com` terms still work via the
+-- notation above; splice a Lean term into the command with `~`.
+syntax:40 term:41 " =[ " imp_com " ]=> " term:41 : term
+macro_rules
+  | `($st0 =[ $c:imp_com ]=> $st1) => `(Com.EvalR (imp { $c }) $st0 $st1)
 ```
 
 The cost of defining evaluation as a relation instead of a function is
@@ -1865,14 +1871,14 @@ it for us.
 
 ```lean
 example :
-    ∅ =[ imp {
-           X := 2;
-           if (X <= 1) {
-             Y := 3;
-           } else {
-             Z := 4;
-           }
-         } ]=> (Z →ₜ 4 ; X →ₜ 2 ; ∅) := by
+    ∅ =[
+      X := 2;
+      if (X <= 1) {
+        Y := 3;
+      } else {
+        Z := 4;
+      }
+    ]=> (Z →ₜ 4 ; X →ₜ 2 ; ∅) := by
   -- We must supply the intermediate state.
   apply Com.EvalR.seq (st' := (X →ₜ 2 ; ∅))
   · apply Com.EvalR.asgn; rfl
@@ -1884,11 +1890,11 @@ example :
 :::::exercise (rating := 2) (name := "ceval_example2")
 ```lean
 example :
-    ∅ =[ imp {
-           X := 0;
-           Y := 1;
-           Z := 2;
-         } ]=> (Z →ₜ 2 ; Y →ₜ 1 ; X →ₜ 0 ; ∅) := by
+    ∅ =[
+      X := 0;
+      Y := 1;
+      Z := 2;
+    ]=> (Z →ₜ 2 ; Y →ₜ 1 ; X →ₜ 0 ; ∅) := by
   solution!
     apply Com.EvalR.seq (st' := (X →ₜ 0 ; ∅))
     · apply Com.EvalR.asgn; rfl
@@ -1916,7 +1922,7 @@ Is the following proposition provable?
 
 ```
 ∀ (c : Com) (st st' : State),
-  st =[ imp { skip; ~c } ]=> st' →
+  st =[ skip; ~c ]=> st' →
   st =[ c ]=> st'
 ```
 
@@ -1925,7 +1931,7 @@ Is the following proposition provable?
 :::answer
 ```
 theorem quiz1_answer (c : Com) (st st' : State)
-    (h : st =[ imp { skip; ~c } ]=> st') : st =[ c ]=> st' := by
+    (h : st =[ skip; ~c ]=> st') : st =[ c ]=> st' := by
   cases h with
   | seq _ _ _ smid _ h1 h2 =>
       cases h1 with
@@ -1939,7 +1945,7 @@ Is the following proposition provable?
 
 ```
 ∀ (c1 c2 : Com) (st st' : State),
-  st =[ imp { ~c1 ~c2 } ]=> st' →
+  st =[ ~c1 ~c2 ]=> st' →
   st =[ c1 ]=> st →
   st =[ c2 ]=> st'
 ```
@@ -1956,7 +1962,7 @@ Is the following proposition provable?
 
 ```
 ∀ (b : Bexp) (c : Com) (st st' : State),
-  st =[ imp { if (~b) { ~c } else { ~c } } ]=> st' →
+  st =[ if (~b) { ~c } else { ~c } ]=> st' →
   st =[ c ]=> st'
 ```
 
@@ -1965,7 +1971,7 @@ Is the following proposition provable?
 :::answer
 ```
 theorem quiz3_answer (b : Bexp) (c : Com) (st st' : State)
-    (h : st =[ imp { if (~b) { ~c } else { ~c } } ]=> st') : st =[ c ]=> st' := by
+    (h : st =[ if (~b) { ~c } else { ~c } ]=> st') : st =[ c ]=> st' := by
   cases h with
   | ifTrue _ _ _ _ _ hb hc => exact hc
   | ifFalse _ _ _ _ _ hb hc => exact hc
@@ -1980,7 +1986,7 @@ Is the following proposition provable?
 ∀ (b : Bexp),
   (∀ st, b.eval st = true) →
   ∀ (c : Com) (st : State),
-  ¬ ∃ st', st =[ imp { while (~b) { ~c } } ]=> st'
+  ¬ ∃ st', st =[ while (~b) { ~c } ]=> st'
 ```
 
 (A) Yes    (B) No    (C) Not sure
@@ -1989,7 +1995,7 @@ Is the following proposition provable?
 ```
 -- This one is tricky!
 theorem quiz4_answer (b : Bexp) (hbtrue : ∀ st, b.eval st = true)
-    (c : Com) (st : State) : ¬ ∃ st', st =[ imp { while (~b) { ~c } } ]=> st' := by
+    (c : Com) (st : State) : ¬ ∃ st', st =[ while (~b) { ~c } ]=> st' := by
   rintro ⟨st', hev⟩
   have key : ∀ (cmd : Com) (s s' : State),
       (s =[ cmd ]=> s') → cmd = (imp { while (~b) { ~c } }) → False := by
@@ -2015,7 +2021,7 @@ Is the following proposition provable?
 
 ```
 ∀ (b : Bexp) (c : Com) (st : State),
-  (¬ ∃ st', st =[ imp { while (~b) { ~c } } ]=> st') →
+  (¬ ∃ st', st =[ while (~b) { ~c } ]=> st') →
   ∀ st'', b.eval st'' = true
 ```
 
@@ -2027,7 +2033,7 @@ stuck immediately:
 
 ```
 theorem quiz5_answer (b : Bexp) (c : Com) (st : State)
-    (H : ¬ ∃ st', st =[ imp { while (~b) { ~c } } ]=> st') :
+    (H : ¬ ∃ st', st =[ while (~b) { ~c } ]=> st') :
     ∀ st'', b.eval st'' = true := by
   intro st''
   -- Can't make any progress -- the claim is false!
