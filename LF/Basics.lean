@@ -1557,7 +1557,7 @@ The purpose of this style is twofold:
 
 1. Pedagogically, executing computation one step at a time allows you as a student
   to manipulate and examine these steps at a fine-grained level.
-  This will give you a better understanding of how functions compute in Lean,
+  This will give you a better understanding of how functions compute in Lean
   and give you more control over this computation as you write your proofs.
 2. Practically, it prepares you to write more sophisticated Lean proofs on structures
   that are _only_ accessible through simplification rules and have no accessible
