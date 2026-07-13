@@ -202,8 +202,8 @@ inductive NatList : Type where
   | nil
   | cons (n : Nat) (l : NatList)
 
-/- We put our function definitions in the namespace implicitly created by the inductive definition,
-   so we can define our own versions of standard list functions for practice. -/
+/- By convention, we place the operations (functions) of an inductive type
+   inside the namespace implicitly created by that type's definition. -/
 
 namespace NatList
 -- TERSE: ***
