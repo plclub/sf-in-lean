@@ -784,12 +784,17 @@ result.
 ::::exercise (rating := 1) (name := "is_weekend")
 Define a function that takes a day and returns true if the day is
 a weekend, and false otherwise.
+Then, fill in right-hand sides of the `example` blocks below.
+If you've do both correctly, the blocks will produce no errors
+and contain no `sorry`.
+
 You may wonder what the `@[irreducible]`, `seal` and `unseal`,
 that we use in the examples below mean.
 Hold onto this question; we will explain shortly.
 
-Hint: You could do this by pattern matching on each possible day of the week,
-or you could try to come up with a shorter solution...
+Hint: You could write this function by pattern matching on
+each possible day of the week, or you could try to
+come up with a shorter solution...
 
 ```lean
 @[irreducible]
@@ -825,6 +830,9 @@ Inversion is defined by cases:
 Black is an inversion of white, and vice versa.
 Red is an inversion of blue, and vice versa.
 Green is not an inversion of anything.
+
+As before, write the right-hand sides of the `example` blocks
+to ensure they pass with no `sorry`.
 
 ```lean
 @[irreducible]
@@ -1346,13 +1354,13 @@ scoped infixl:65 " + " => add
 ## Proving properties about functions in Lean
 
 ::::full
-Being recursive, `add` is an example of a more sophisticated
-class of functions. In this chapter and beyond, we will _prove_
-properties about recursive functions like `add` over inductive
-datatypes like `Nat` using _simplification rules_ about their
-behavior.
+Being recursive on a `Nat` and returning `Nat` as well,
+`add` is the first example of a more sophisticated class of functions.
+In this chapter and beyond, we will _prove_ properties
+about recursive functions like `add` over inductive datatypes
+like `Nat`, using _simplification rules_ about their behavior.
 
-Here is a simple rule about `add`:
+Here is a simplification rule about `add`:
 
 - `n + zero = n`
 
@@ -1366,10 +1374,14 @@ theorem add_zero : ∀ n : Nat, n + zero = n := by
   rfl
 ```
 
+
+
 ::::full
+
 ```lean
 #check add_zero
 ```
+
 
 :::dev
 BCP: We will probably want to remove the "NatPlayground" stuff from
@@ -1377,7 +1389,7 @@ all these comments when we fix the printing.
 RAB: Yes! Someone please let us know how!
 :::
 
-We can then use the `add_zero` rule to carry out a simple proof
+Using our simplification rule `add_zero`, we can carry out a simple proof
 about natural numbers!
 
 ```lean
@@ -1387,8 +1399,8 @@ theorem add_zero_zero : ∀ n : Nat, n + zero + zero = n := by
   rewrite [add_zero]
   rfl
 
--- Let's walk through this proof.
 ```
+Let's walk through this proof.
 ::::
 
 ## Proof state and tactics
@@ -1492,9 +1504,9 @@ theorem add_succ' : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
 Now, let's use `add_succ` in a proof:
 
 ```lean
-theorem add_one (n : Nat) : n + (succ zero) = succ (n + zero) + zero := by
+theorem add_one (n : Nat) : n + (succ zero) = succ n + zero := by
   rewrite [add_succ]
-  rewrite [add_zero]  /- notice how this handles an addition on both sides -/
+  rewrite [add_zero]
   rewrite [add_zero]
   rfl
 ```
@@ -1510,16 +1522,41 @@ Again, we recommend stepping through these proofs in VS Code --
 The definitions and proofs above use a few somewhat mysterious conventions:
 we write `@[irreducible]` above some of our definitions, and we
 write `unseal` before some of our proofs and `seal` after them.
-These are not things you will usually see in real Lean developments;
-however, we use them in this book to enforce a particular convention
-to help you build good Lean habits.
+We use `@[irreducible]` and `seal` to prevent a function like `add`
+from _computing_ on its arguments, while `unseal` temporarily enables
+this computation for special cases like writing simplification rules.
+
+During a proof using a function like `add`, we won't let the function compute
+all at once, but instead use the _simplification rules_
+like `add_zero` and `add_succ` to perform a single step of computation.
+
+```lean
+theorem add_one_duplicated (n : Nat) : n + (succ zero) = succ n + zero := by
+  rewrite [add_succ] -- Each `rewrite` is a _single step_ of computation.
+  rewrite [add_zero] -- After each line, you can observe the proof state after this step.
+  rewrite [add_zero]
+  rfl
+```
+
+The purpose of this style is twofold:
+
+1. Pedagogically, executing computation one step at a time allows you as a student
+  to manipulate and examine these steps at a fine-grained level.
+  This will give you a better understanding of how functions compute in Lean,
+  and give you more control over this computation as you write your proofs.
+2. Practically, it prepares you to write more sophisticated Lean proofs on structures
+  that are _only_ accessible through simplification rules and have no accessible
+  computable properties at all.
+  In real-world Lean developments, this is the standard.
 
 Lean, like any other programming language, has conventions and best practices
-for writing good software. You are probably familiar with object oriented programming,
+for writing good software. You are probably familiar with Object-Oriented programming,
 for example, in which it is considered good practice not to access the
 fields of an object directly, but instead to use getter and setter methods.
 This helps to encapsulate the object's definition, so that, if its fields or implementation
 change, the interface it exposes to the outside world remains the same.
+In simple examples it may seem trivial or even silly to do so; in complex codebases,
+it is the only way to maintain crucial invariants that prevent a system from breaking down.
 
 The same principle applies to definitions and proofs in Lean.
 In idiomatic Lean, it is considered poor style to "peek" through
@@ -1537,20 +1574,18 @@ for `add_zero` and `add_succ`, but then expect that from this point on,
 these foundational theorems should provide a characterization of the behavior
 of `add` that makes further unsealing unnecessary. Instead,
 we can rewrite by these theorems anywhere we want to describe how `add`
-evaluates. The motivation for this strict discipline is both readability
-and performance; unfolding definitions can have negative effects as libraries scale.
+evaluates.
 
-:::dev
-BCP: We start by saying that what we're going to here is not what real lean developments do, but then
-explain why what we're doing in a way that makes it sound like it is (or should be) standard. And we
-never say what is the style that we *don't* do (but that standard Lean practice does).
-RAB: This will (hopefully) be addressed by our decision on hiding these
-definitions. Even if not, it seems odd to discuss how to write this section
-before we make that choice.
-:::
+In real-world Lean developments, the style of writing proofs using
+simplification rules is both standard and expected. Definitions in those
+developments may not use `@[irreducible]`, `unseal`, and `seal`, but they
+_will_ have definitions that are not meant to be reduced. We use
+`@[irreducible]`, `unseal`, and `seal` here to enforce the style of
+using simplification rules now so that it is natural to you moving forward.
 
-These two theorems also follow a particular pattern. Let's look again at the
-definition of `add`:
+
+Simplification rules- in this case, the theorems `add_zero` and `add_succ`-
+also follow a particular pattern. Let's look again at the definition of `add`:
 
 ```lean
 namespace AddPlayground
@@ -1581,7 +1616,7 @@ Because these theorems describe how to simplify more complex expressions
 involving `add`, we call them _simplification lemmas_ for `add`.
 
 These are instances of a general pattern: each definition
- operating over enumerated types like `Nat`, `Bool`, `Day`, or `Color`
+operating over enumerated types like `Nat`, `Bool`, `Day`, or `Color`
 needs a simplification lemma for each branch of control flow through
 the function.
 
@@ -1611,6 +1646,22 @@ with their simplification lemmas. After proving these lemmas, instead of using `
 to peek through the definitions, we will prefer rewriting
 by the lemmas, using `@[irreducible]` to enforce this policy,
 and only `unseal`ing the definition in the proofs of those lemmas themselves.
+
+Eventually, we will introduce a way to _automatically_ derive
+simplification rules from a function, and then a way to automatically _apply_ them.
+Real Lean programmers do this using tactics like `dsimp`, `simp`, and `grind`.
+
+For now, though, these tactics are forbidden by our autograder.
+This is so you will write the proofs out yourself now, so that you can learn!
+Real-world Lean uses automation extensively, and you will learn to do so
+by the end of this book and in the following volumes.
+Right now, it is important that you work through these early concepts
+thoroughly and without automation.
+By the time the more powerful tools are available,
+you will have the foundation to use them with precision and skill.
+
+With all this in mind, we will continue with the chapter.
+
 ::::
 
 ## Working with Numerals
@@ -1623,9 +1674,9 @@ Or probably some of it should turn into an exercise?
 RAB: This will be part of our discussion on presenting laws.
 :::
 
-We know from our definitions above that `one` is just `succ zero`,
-`two` is `succ one`, and so on. We can write rules for these equalities too:
-
+We know from our definitions above that `one` is just `succ zero`.
+The same goes for `two` being `succ one`, and so on.
+We can write rules for these equalities too:
 ```lean
 theorem one_eq_succ_zero : one = succ zero := by rfl
 theorem two_eq_succ_one : two = succ one := by rfl
@@ -1639,9 +1690,7 @@ Here's an example of how to start a proof this way.
 Finish the proof using the `add` rules:
 
 :::dev
-BCP: Should this be marked / formatted as an exercise or at least a WORKINCLASS?
-RAB: Let's decide once we choose how to present the laws.
-     My intuition is yes.
+TODO: format this as an exercise and a WORKINCLASS
 :::
 
 ```lean
@@ -1684,23 +1733,32 @@ scoped infixl:70 " * " => mul
 Multiplication, like any function we will prove properties about,
    also has simplification rules.
 
-```lean
-unseal mul in
-theorem mul_zero : ∀ n : Nat, n * zero = zero := by
-  intro n
-  rfl
-
-unseal mul add in
-theorem mul_succ : ∀ n m : Nat, n * (succ m) = (n * m) + n := by
-  intro n m
-  rfl
-```
+Fill in the simplification rules for `mul` below.
+You will likely find the model of the simplification rules for `add`
+to be helpful.
 
 :::dev
-BCP: Again, this should be an exercise.
-RAB: Agreed if we're keeping these visible; putting off
-     small decision until large decision is made.
+TODO: make this a verso exercise and get the theorem's type (starting with ∀)
+to fit within a `solution!` block.
 :::
+
+```lean
+unseal mul in
+theorem mul_zero :
+-- SOLUTION
+∀ n : Nat, n * zero = zero := by
+  intro n
+  rfl
+-- END SOLUTION
+
+unseal mul add in
+theorem mul_succ :
+-- SOLUTION
+∀ n m : Nat, n * (succ m) = (n * m) + n := by
+  intro n m
+  rfl
+-- END SOLUTION
+```
 
 Prove this property using rewriting with the simplification rules for addition and multiplication.
   (We have given you the first line.) Notice how `rewrite`
@@ -1941,7 +1999,7 @@ second is preferred in idiomatic Lean developments.
 :::dev
 Per Github discussion: Lean's convention is to prefer the declaration header style
 (`mul_zero  (n : Nat) : n * zero = zero`) over universal quantification style
-(`mul_zero : ∀ (n : Nat), n * zero = zero`). We probably still want to teach the univeral
+(`mul_zero : ∀ (n : Nat), n * zero = zero`). We probably still want to teach the universal
 quantification style at first, but should switch over to declaration header style
 quickly since that is the idiomatic Lean way to do things.
 
@@ -1972,7 +2030,7 @@ theorem add_mul_zero : ∀ p q : Nat,
 ::::full
 Of course, not everything can be proved by simple calculation and
 rewriting: In general, the presence of unknown, hypothetical values
-(arbitrary numbers, booleans, etc.) can block proof.
+(arbitrary numbers, booleans, etc.) can block a proof.
 ::::
 
 :::terse
