@@ -319,16 +319,16 @@ code is a whole process; Lean just compiles like any other programming language.
 Following the pattern of the days of the week above, we can
 define the standard type `Bool` of booleans, with members `true`
 and `false`.
-::::
-
-:::terse
-Another familiar enumerated type:
-:::
 
 We define our own `MyBool` to teach the concept of building booleans from
 scratch; later we'll switch to Lean's built-in `Bool`.
 We use a different name to make explicit that this is not the same
 type as Lean's built-in, but their definitions are equivalent.
+::::
+
+::::terse
+Another familiar enumerated type; we'll switch to Lean's built-in `Bool` later:
+::::
 
 ```lean
 inductive MyBool : Type where
@@ -336,19 +336,23 @@ inductive MyBool : Type where
   | false
 ```
 
+::::full
 The next command opens the namespace associated with the `MyBool` type,
 so subsequent definitions will be part of the `MyBool` namespace.
 In Lean, functions on a type are typically defined in that type's namespace,
 which avoids name clashes with functions of the same name elsewhere (here,
 functions on the built-in `Bool` type). We give a full treatment of namespaces below.
+::::
+
+::::terse
+This command opens the namespace associated with the `MyBool` type:
+::::
 
 ```lean
 namespace MyBool
 ```
 
-::::full
 Functions over booleans can be defined in the same way as above
-::::
 
 ```lean
 def not (b : MyBool) : MyBool :=
@@ -492,6 +496,10 @@ with the type `MyBool` to signify that the proposition holds for   all `b`s of t
 Now that we've stated the theorem we'd like to prove, let's set about proving it.
 ::::
 
+::::terse
+Let's prove something simple about booleans:
+::::
+
 ```lean
 theorem true_and : ∀ (b : MyBool), (MyBool.true && b) = b := by
   intro b
@@ -517,6 +525,10 @@ into a shape that is closer to the one we want. A tactic can also
 _close_ (solve) the current goal, finishing its proof.
 
 Let's walk through the example above with this terminology in mind.
+::::
+
+::::terse
+And now let's see it in a bit more detail:
 ::::
 
 ```lean
@@ -609,7 +621,6 @@ to prove a theorem and just accept it as a given.  This can be useful for develo
 Be careful, though: every time you say `sorry` you are leaving
 a door open for total nonsense to enter Lean's safe, formally
 checked world!
-::::
 
 :::dev
 HG: In the terse .lean output this ends up looking like an exercise.
@@ -618,6 +629,7 @@ HG: In the terse .lean output this ends up looking like an exercise.
 ```lean -keep
 theorem really_bad : MyBool.true = MyBool.false := by sorry
 ```
+::::
 
 ```lean
 end MyBool
@@ -635,25 +647,35 @@ but comes with a lot of useful functions and lemmas.
 
 ## Types
 
+::::full
 Every expression in Lean has a type describing what sort of value it computes.
 The `#check` command asks Lean to print the type of an expression.
+::::
+
+::::terse
+We can use `#check` to check the type of an expression:
+::::
 
 ```lean
 #check Bool.true
 ```
 
+::::full
 If the expression after `#check` is followed by a colon and a type,
 Lean will verify that the type of the expression
 matches the given type and signal an error if not.
+::::
 
 ```lean
 #check (Bool.true : Bool)
 #check (Bool.not Bool.true : Bool)
 ```
 
+::::full
 Functions like {name}`Bool.not` are themselves ordinary values, just like {name}`Bool.true`
 and `Bool.false`.  Their types are called _function types_, and they are
 written with arrows.
+::::
 
 ```lean
 #check Bool.not
@@ -681,7 +703,16 @@ produces a unicode symbol that you can see on the screen, just hover
 over it.
 ::::
 
+::::terse
+Lean uses unicode characters; you can type them with a backslash (`\`).
+::::
+
 ## New Types from Old
+
+:::dev
+HG: I feel like this section has too much content in terse, but I don't want to unilaterally make
+that call.
+:::
 
 ::::full
 The types we have defined so far are simple examples of "enumerated
@@ -1257,7 +1288,6 @@ def minustwo (n : Nat) : Nat :=
 ```
 
 ::::full
-
 Look the types of `succ`, `pred`, and `minustwo`:
 
 ```lean
@@ -1291,7 +1321,7 @@ more sophisticated recursive function `add`.
 ::::
 
 :::terse
-Recursive functions:
+Here are some recursive functions on natural numbers:
 :::
 
 ```lean
@@ -1328,9 +1358,7 @@ seal odd even
 :::slidebreak
 :::
 
-:::terse
-A multi-parameter recursive function.
-:::
+This function takes multiple parameters, recursing on the second:
 
 ```lean
 @[irreducible]
@@ -1344,11 +1372,10 @@ def add (n : Nat) (m : Nat) : Nat :=
 #eval add one two -- succ (succ (succ zero)) -- aka, three!
 ```
 
-::::full
 We can also define infix notation for our `add` functions.
 Don't worry too much about how this is defined; we will return to it
 in more detail later.
-::::
+
 ```lean
 scoped infixl:65 " + " => add
 ```
@@ -1374,6 +1401,10 @@ Here is a simple rule about `add`:
 In Lean, this rule looks like this:
 ::::
 
+::::terse
+We can prove properties of recursive functions like `add`:
+::::
+
 ```lean
 unseal add in
 theorem add_zero : ∀ n : Nat, n + zero = n := by
@@ -1381,7 +1412,6 @@ theorem add_zero : ∀ n : Nat, n + zero = n := by
   rfl
 ```
 
-::::full
 ```lean
 #check add_zero
 ```
@@ -1401,10 +1431,9 @@ theorem add_zero_zero : ∀ n : Nat, n + zero + zero = n := by
   rewrite [add_zero]
   rewrite [add_zero]
   rfl
-
--- Let's walk through this proof.
 ```
-::::
+
+We'll walk through this proof in the next section.
 
 ## Proof state and tactics
 
@@ -1414,6 +1443,11 @@ to transform the goal of the proof according to an equality.
 The `add_zero` in brackets is an _argument_ to the `rewrite` tactic.
 
 Let's walk through the theorem again in detail.
+::::
+
+::::terse
+Here is the previous proof in more detail:
+::::
 
 ```lean
 theorem add_zero_zero_explained : ∀  n : Nat, n + zero + zero = n := by
@@ -1431,9 +1465,11 @@ theorem add_zero_zero_explained : ∀  n : Nat, n + zero + zero = n := by
      tactic `rfl`. -/
   rfl
   /- The proof is now done! The Lean InfoView tells us there are "No goals". -/
+```
 
-/-! Here's a simple proof for you to try. -/
+Give this proof a try (it's similar):
 
+```lean
 theorem add_zero_zero_zero : ∀ n : Nat, n + zero + zero + zero = n := by
   solution!
     intro n
@@ -1442,38 +1478,50 @@ theorem add_zero_zero_zero : ∀ n : Nat, n + zero + zero + zero = n := by
     rewrite [add_zero]
     rfl
 ```
-::::
 
 ## The `rewrite` tactic
 
 ::::full
-  As we saw above, the tactic that tells Lean to rewrite (part of) a goal or
-  hypothesis based on a rule is called `rewrite`. Given the rule `add_zero`,
-  which states that `n + zero` is equal to `n` for any `n`, we can replace
-  any `n + zero` in our proof with `n` via `rewrite [add_zero]`.
+As we saw above, the tactic that tells Lean to rewrite (part of) a goal or
+hypothesis based on a rule is called `rewrite`. Given the rule `add_zero`,
+which states that `n + zero` is equal to `n` for any `n`, we can replace
+any `n + zero` in our proof with `n` via `rewrite [add_zero]`.
 
-  The `rewrite` tactic takes its argument(s) in square brackets.
+The `rewrite` tactic takes its argument(s) in square brackets.
+::::
+
+::::terse
+The `rewrite` tactic rewrites part of a goal based on a hypothesis.
 ::::
 
 ## The `rfl` tactic
 
 ::::full
- The `rfl` tactic closes a goal of the shape `a = a`, for any `a`. It
- checks that both sides of the equality are _definitionally equal_ --
- that is, that they reduce to the same term. (So, in particular, a
- term is always definitionally equal to itself.)
+The `rfl` tactic closes a goal of the shape `a = a`, for any `a`. It
+checks that both sides of the equality are _definitionally equal_ --
+that is, that they reduce to the same term. (So, in particular, a
+term is always definitionally equal to itself.)
+::::
+
+::::terse
+The `rfl` closes a goal that looks lik `a = a`.
 ::::
 
 ## A New `add` Rule
 
 ::::full
-   Here is another fundamental rule about addition:
+Here is another fundamental rule about addition:
 
-   `n + (succ m) = succ (n + m)`.
+`n + (succ m) = succ (n + m)`.
 
-   This is the rule we need to push `succ` around.
+This is the rule we need to push `succ` around.
 
 Here it is in Lean:
+::::
+
+::::terse
+Here's another rule we can use for `add`:
+::::
 
 ```lean
 unseal add in
@@ -1482,6 +1530,7 @@ theorem add_succ : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
   rfl
 ```
 
+::::full
 You may notice stepping through the above proof that Lean's InfoView
 displays `n + (succ m)` instead as `n + m.succ` and `succ (n + m)` as
 `(n + m).succ`. These expressions are equivalent, but when printing constructors,
@@ -1490,6 +1539,11 @@ argument to the constructor first, followed by a dot, followed by the constructo
 as if the constructor were a field of its argument. In some cases this is convenient, but for
 natural numbers it is confusing, so we will disable this printing behavior for the `succ`
 constructor with this command:
+::::
+
+::::terse
+This command turns off some fancy printing that Lean does around the `succ` constructor:
+::::
 
 ```lean
 attribute [pp_nodot] succ
@@ -1514,6 +1568,7 @@ theorem add_one (n : Nat) : n + (succ zero) = succ (n + zero) + zero := by
   rfl
 ```
 
+::::full
 Again, we recommend stepping through these proofs in VS Code --
 that is, moving past each tactic with your cursor to see how it
 changes the proof state and hovering over each argument to `rewrite` to see its type.
@@ -1542,7 +1597,13 @@ definitions by using `rfl` to implicitly simplify expressions
 that aren't syntactically identical. If you take a look at the proofs of
 `add_zero` and `add_succ` above, you will notice this is exactly what we did
 when we used the `rfl` tactic.
+::::
 
+::::terse
+Marking a definition `@[irreducible]` prevents proofs from "peeking" through it with `rfl`.
+::::
+
+::::full
 In this text, to enforce idiomatic style, we mark
 definitions with `@[irreducible]` to prevent this peeking,
 also called *definitional equality abuse* (*defeq abuse*, for short).
@@ -1554,6 +1615,11 @@ of `add` that makes further unsealing unnecessary. Instead,
 we can rewrite by these theorems anywhere we want to describe how `add`
 evaluates. The motivation for this strict discipline is both readability
 and performance; unfolding definitions can have negative effects as libraries scale.
+::::
+
+::::terse
+`unseal` lifts that restriction just long enough to prove the theorems that characterize the definition.
+::::
 
 :::dev
 BCP: We start by saying that what we're going to here is not what real lean developments do, but then
@@ -1569,6 +1635,7 @@ definition of `add`:
 
 ```lean
 namespace AddPlayground
+
 /- repeating the definition here for ease of reference:
 def add (n : Nat) (m : Nat) : Nat :=
   match m with
@@ -1588,6 +1655,7 @@ theorem add_succ : ∀ (n m : Nat), n + (succ m) = succ (n + m) := by
 end AddPlayground
 ```
 
+::::full
 Each of `add_zero` and `add_succ` correspond to one branch of the `match`
 statement defining `add` and describe how the evaluation of `add` proceeds
 in that case. The `add_zero` theorem describes how `n + zero` evaluates,
@@ -1601,6 +1669,12 @@ needs a simplification lemma for each branch of control flow through
 the function.
 
 So, for example, we need two simplification lemmas for the definition of `pred`:
+::::
+
+::::terse
+Each branch of a definition's control flow gets one _simplification lemma_. Here are the two for
+`pred`:
+::::
 
 ```lean
 unseal Nat.pred in
@@ -1621,11 +1695,17 @@ theorem even_succ_succ n : even (succ (succ n)) = even n := rfl
 seal even
 ```
 
+::::full
 In the remainder of this textbook, we will pair definitions
 with their simplification lemmas. After proving these lemmas, instead of using `rfl`
 to peek through the definitions, we will prefer rewriting
 by the lemmas, using `@[irreducible]` to enforce this policy,
 and only `unseal`ing the definition in the proofs of those lemmas themselves.
+::::
+
+::::terse
+From here on, we pair each definition with its simplification lemmas and rewrite by those lemmas
+rather than `rfl`-ing through the definition.
 ::::
 
 ## Working with Numerals
@@ -1648,9 +1728,12 @@ theorem three_eq_succ_two : three = succ two := by rfl
 theorem four_eq_succ_three : four = succ three := by rfl
 ```
 
+::::full
 We can rewrite with these rules to expand numerals into their definitions,
-   which allows us to use our `add` rules.
+which allows us to use our `add` rules.
 Here's an example of how to start a proof this way.
+::::
+
 Finish the proof using the `add` rules:
 
 :::dev
@@ -1725,6 +1808,8 @@ RAB: Agreed if we're keeping these visible; putting off
 :::
 
 Prove this property using rewriting with the simplification rules for addition and multiplication.
+
+::::full
 (We have given you the first line.) Notice how `rewrite`
 can take any number of arguments. You can use this rewrite with all of the
 simplification rules at once, for example.
@@ -1733,6 +1818,7 @@ After each rewrite, check the proof state by placing the cursor immediately
 after a rule to see how the goal is changing. This happens naturally
 as you write the proof, which makes it convenient to use `rewrite` blocks
 with multiple rules.
+::::
 
 ::::exercise (rating := 2) (name := "test_mult1")
 ```lean
@@ -1974,21 +2060,6 @@ section title.
 
 :::slidebreak
 :::
-
-:::dev
-BCP: Is there a missing section header here?
-:::
-
-We can use the `rewrite` tactic with a previously proved theorem
-instead of a hypothesis from the context.
-
-```lean
-theorem add_mul_zero : ∀ p q : Nat,
-    (p * zero) + (q * zero) = zero := by
-  intro p q
-  rewrite [mul_zero, mul_zero, add_zero]
-  rfl
-```
 
 # Proof by Case Analysis
 
