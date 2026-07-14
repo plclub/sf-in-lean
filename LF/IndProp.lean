@@ -3430,40 +3430,18 @@ theorem palindrome_converse: ∀ {α: Type} (l: List α),
 /- [] -/
 
 /- EX4A? (NoDup) -/
-/- Recall the definition of the `In` property from the `Logic`
-    chapter, which asserts that a value `x` appears at least once in a
-    list `l`: -/
 
-/- HIDEFROMHTML -/
-namespace RecallIn
-
-/- /HIDEFROMHTML -/
-@[irreducible]
-def In {α : Type} (x : α) (xs : List α) : Prop :=
-  match xs with
-  | [] => False
-  | x' :: xs' => x = x' ∨ In x xs'
-
-unseal In in
-theorem In_nil {α} (x : α) : In x [] = False := rfl
-
-unseal In in
-theorem In_cons {α} (x x' : α) (xs : List α) : In x (x' :: xs) = (x = x' ∨ In x xs) := rfl
-/- HIDEFROMHTML -/
-end RecallIn
-/- /HIDEFROMHTML -/
-
-/- Your first task is to use `In` to define a proposition `disjoint α l₁ l₂`,
+/- Use the `∈` property to define a proposition `disjoint α l₁ l₂`,
     which should be provable exactly when `l₁` and `l₂` are
     lists (with elements of type α) that have no elements in
     common. -/
 
 /- SOLUTION -/
 def disjoint {α:Type} (l₁ l₂: List α) :=
-  ∀ (x:α), In x l₁ → ¬ In x l₂
+  ∀ (x:α), x ∈ l₁ → ¬ x ∈ l₂
 /- /SOLUTION -/
 
-/- Next, use [In] to define an inductive proposition [NoDup α
+/- Next, use `∈` to define an inductive proposition [NoDup α
     l], which should be provable exactly when `l` is a list (with
     elements of type `α`) where every member is different from every
     other.  For example, `NoDup Nat [1, 2, 3,  4]` and `NoDup Bool []`
@@ -3474,7 +3452,7 @@ def disjoint {α:Type} (l₁ l₂: List α) :=
 inductive NoDup {α:Type} : List α → Prop where
   | NoDup_nil : NoDup []
   | NoDup_cons : ∀ a l,
-              ¬ In a l →
+              ¬ a ∈ l →
               NoDup l →
               NoDup (a::l)
 /- /SOLUTION -/
@@ -3494,17 +3472,17 @@ theorem NoDup_append : ∀ (α:Type) (l₁ l₂: List α),
   case nil => rw [List.nil_append]; assumption
   case cons hd tl ih =>
     constructor
-    . intro contra; rw [List.append_eq, In_app_iff] at contra
+    . intro contra; rw [List.append_eq, List.mem_append] at contra
       rcases contra with contra | contra
       . inversion h₁
         case _ hdup hin =>
         apply hin; assumption
       . apply hdis hd _ contra
-        rw [In_cons]; left; rfl
+        rw [List.mem_cons]; left; rfl
     . apply ih _ _ h₂ _
       . inversion h₁; assumption
       . intros x hin
-        apply hdis; rw [In_cons]
+        apply hdis; rw [List.mem_cons]
         right; assumption
 
 theorem NoDup_disjoint : ∀ (α:Type) (l₁ l₂: List α),
@@ -3512,14 +3490,14 @@ theorem NoDup_disjoint : ∀ (α:Type) (l₁ l₂: List α),
 
   intro α l₁ l₂ hdis x hin contra
   induction l₁ generalizing l₂ x
-  case nil => rw [In_nil] at hin; contradiction
+  case nil => rw [List.mem_nil_iff] at hin; contradiction
   case cons hd tl ih =>
-    rw [In_cons] at hin
+    rw [List.mem_cons] at hin
     inversion hdis
     case NoDup_cons hdup hnotin =>
       rcases hin with hin | hin
       . subst hin; apply hnotin
-        rw [List.append_eq, In_app_iff]; right; assumption
+        rw [List.append_eq, List.mem_append]; right; assumption
       . exact ih _ hdup _ hin contra
 
 /- We can also show the following results about [NoDup] and [++]
@@ -3535,7 +3513,7 @@ theorem NoDup_left : ∀ (α:Type) (l₁ l₂: List α),
     case _ hdup' hin =>
       constructor
       . intro contra; apply hin
-        rw [List.append_eq, In_app_iff]; left; assumption
+        rw [List.append_eq, List.mem_append]; left; assumption
       . exact ih _ hdup'
 
 theorem NoDup_right: ∀ (α:Type) (l₁ l₂: List α),
@@ -3577,27 +3555,27 @@ theorem NoDup_disjoint_app : ∀ {α:Type} (l₁ l₂: List α),
 
 /- First prove an easy and useful lemma. -/
 
-theorem in_split : ∀ (α:Type) (x:α) (l:List α),
-  In x l →
+theorem mem_split : ∀ (α:Type) (x:α) (l:List α),
+  x ∈ l →
   ∃ l₁ l₂, l = l₁ ++ x :: l₂ := by
   /- ADMITTED -/
   intro α x l hin
   induction l generalizing x
-  case nil => rw [In_nil] at hin; contradiction
+  case nil => rw [List.mem_nil_iff] at hin; contradiction
   case cons hd tl ih =>
-    rw [In_cons] at hin; rcases hin with hin | hin
+    rw [List.mem_cons] at hin; rcases hin with hin | hin
     . subst hin; exists []; exists tl
     . have ⟨l₁', ⟨l₂', ih⟩⟩ := ih x hin
       subst ih
       exists hd :: l₁'; exists l₂'
 /- /ADMITTED -/
 
-/- Now define a property [repeats] such that [repeats α l] asserts
+/- Now define a property `repeats` such that `repeats α l` asserts
     that `l` contains at least one repeated element (of type `α`).  -/
 
 inductive Repeats {α:Type} : List α → Prop where
   /- SOLUTION -/
-  | rep_here : ∀ a l, In a l → Repeats (a::l)
+  | rep_here : ∀ a l, a ∈ l → Repeats (a::l)
   | rep_later : ∀ a l, Repeats l → Repeats (a::l)
 /- /SOLUTION -/
 
@@ -3617,7 +3595,7 @@ inductive Repeats {α:Type} : List α → Prop where
    students couldn't do it this year. -/
 theorem pigeonhole_principle:
   ∀ (α:Type) (l₁  l₂:List α),
-  (∀ x, In x l₁ → In x l₂) →
+  (∀ x, x ∈ l₁ → x ∈ l₂) →
   l₂.length < l₁.length →
   Repeats l₁ := by
   /- ADMITTED -/
@@ -3628,22 +3606,22 @@ theorem pigeonhole_principle:
     apply Nat.not_lt_zero at hlen
     contradiction
   case cons x l₁' ih =>
-    by_cases h : In x l₁'
+    by_cases h : x ∈ l₁'
     . constructor; assumption
     . apply Repeats.rep_later
-      have h₂ : In x l₂ := by
-        apply hin; rw [In_cons]; left; rfl
-      have ⟨l₂a, ⟨l₂b, heq⟩⟩ := in_split _ _ _ h₂
-      have hin₂ : ∀ x' : α, In x' l₁' -> In x' (l₂a ++ l₂b) := by
+      have h₂ : x ∈ l₂ := by
+        apply hin; rw [List.mem_cons]; left; rfl
+      have ⟨l₂a, ⟨l₂b, heq⟩⟩ := mem_split _ _ _ h₂
+      have hin₂ : ∀ x' : α, x' ∈ l₁' -> x' ∈ (l₂a ++ l₂b) := by
         intro x₀ hin₀
         have hneq : x ≠ x₀ := by
           intro heq; subst heq; apply h; assumption
-        have h₁ : In x₀ l₂ := by
-          apply hin; rw [In_cons]; right; assumption
-        rw [heq, In_app_iff] at h₁; rcases h₁ with h₁ | h₁
-        . rw [In_app_iff]; left; assumption
-        . rw [In_app_iff]; right;
-          rw [In_cons] at h₁; rcases h₁ with h₁ | h₁
+        have h₁ : x₀ ∈ l₂ := by
+          apply hin; rw [List.mem_cons]; right; assumption
+        rw [heq, List.mem_append] at h₁; rcases h₁ with h₁ | h₁
+        . rw [List.mem_append]; left; assumption
+        . rw [List.mem_append]; right;
+          rw [List.mem_cons] at h₁; rcases h₁ with h₁ | h₁
           . subst h₁; contradiction
           . assumption
       have hlen₂ : (l₂a ++ l₂b).length < l₁'.length := by
