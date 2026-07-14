@@ -580,7 +580,7 @@ theorem even_succ (n : Nat) :
     rw [even_zero, even_one]
     rfl
   | succ n' ih =>
-    rw [even, ih, notb_involutive]
+    rw [even, ih, not_involutive]
 -- /ADMITTED
 -- GRADE_THEOREM 1: even_succ
 -- []
