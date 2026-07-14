@@ -487,20 +487,30 @@ theorem double_mul (n : Nat) : double n = 2 * n := by
 -- GRADE_THEOREM 1: double_mul
 
 /-
-  # Using the Code Action to Generate Match Skeletons
+  # Using Code Actions to Generate Match Skeletons
 -/
 
 /-
-  Lean's language server provides code actions that can generate the
-  missing branches for pattern matching.
+  Lean's language server can suggest _code actions_, which are
+  small editor commands that modify the source code.
+  In VSCode, a light-bulb icon appears on the left
+  when a code action is available at your cursor.
+  You can click the icon or open the code action menu with `Ctrl + .`
+  on Windows/Linux or `Command + .` on macOS.
 
-  This is very useful when using `match`,
-  or tactics such as `cases` and `induction`, which we've seen in the previous chapters.
+
+  For more information, see [Lean 4 VS Code extension manual](https://github.com/leanprover/vscode-lean4/blob/master/vscode-lean4/manual/manual.md#code-actions).
+
+  Some code actions can generate the explicit branches needed for pattern
+  matching. This is especially useful when working with `match` expressions,
+  or with tactics such as `cases` and `induction`, which we saw in previous chapters.
+
+  Let's look at an example using `induction`.
 -/
 
 -- FULL
 /-
-  For example, suppose we start with the following proof:
+  For example, suppose we start with the following incomplete proof:
 -/
 /--
 error: unsolved goals
@@ -517,12 +527,11 @@ theorem foo (n : Nat) : eqb n n := by
   induction n
 
 /-
-  If you put your cursor after after `induction n`, Lean will offer a code action
-  "Generate an explicit pattern match for 'induction'."
-  In VSCode, you can usually open the code action menu with `Ctrl + .`
-  on Windows/Linux and `Command + .` on macOS.
-
-  After running the code action, Lean fills in the cases for us:
+  Put your cursor on `induction n` and open the code action menu.
+  You should see
+  "Generate an explicit pattern match for 'induction'." in the list.
+  If you choose this action,
+  Lean adds an explicit branch for each constructor:
 -/
 /-- warning: declaration uses `sorry` -/
 #guard_msgs in
@@ -532,10 +541,10 @@ example (n : Nat) : eqb n n := by
   | succ n _ => sorry
 
 /-
-  Without writing out all the branches by hand, we get the basic shape of the proof tree —
-  now we can focus on filling in what should happen in each case.
+  This gives us basic structure of the proof without requiring us to write each
+  branch by hand. We can then cfocus on proving each case.
 
-  One possible proof of this example is:
+  One possible proof is:
 -/
 example (n : Nat) : eqb n n := by
   induction n with
@@ -543,14 +552,17 @@ example (n : Nat) : eqb n n := by
   | succ n ih => rw [eqb, ih]
 
 /-
-  The code action didn't give a name to the induction hypothesis in `.succ` branch.
-  Since we need to use it in `rw`, we manually named to `ih`.
+  Note that Lean used `_` for the induction hypothesis in the generated `.succ` branch.
+  At that point, Lean didn't know the unfinished proof would need to refer to the hypothesis.
+  Since we use it in `rw`, we replace `_` with the name `ih`.
 
-  We'll see the some tactics that can bring back those inaccessible names in later chapters.
+  In later chapters, we will see some tactics that can make such
+  inaccessible names available again.
 -/
 
 /-
-  The same trick also works work for `match` expressions. For example, if we start with
+  The same trick also works work for `match` expressions.
+  For example, suppose we start with
 
   ```lean
   def isZero (n : Nat) : Bool :=
@@ -585,14 +597,8 @@ def isZero (n : Nat) : Bool :=
   | n + 1 => _
 
 /-
-  You might notice that Lean generated `0` and `n + 1`, not `zero` and `succ n`.
-  That is because Lean has a feature called _custom pattern functions_.
-  Usually, patterns are written using constructors,
-  but Lean also lets certain specially marked functions appear in patterns.
-  These functions are unfolded until Lean sees the constructor pattern they stand for.
-
-  We will keep writing the constructors as `zero` and `succ` anyway, because it makes the structure
-  of `Nat` easier to see.
+  Note that for the built-in {name}`Nat` type, the patterns `0` and `n + 1` correspond to
+  `zero` and `succ n`.
 -/
 
 -- /FULL
