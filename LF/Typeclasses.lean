@@ -158,7 +158,7 @@ As an example, suppose that we
 wanted to express the idea that a type has at least two distinct elements. A first attempt might be
 
 ```lean -keep
-class HasTwo (α : Type) where
+class HasTwoIncomplete (α : Type) where
   one : α
   two : α
 ```
@@ -209,8 +209,10 @@ instance : HasThree Nat where
   two := 2
   three := 3
   one_neq_two := solution!(by intro contra; contradiction)
+  -- SOLUTION
   one_neq_three := solution!(by intro contra; contradiction)
   two_neq_three := solution!(by intro contra; contradiction)
+  -- END SOLUTION
 ```
 ::::
 
@@ -250,12 +252,25 @@ This function takes a natural number `a` and a list of natural numbers `xs`, the
 If we wanted to construct a polymorphic version of this, how would we proceed? If we try to simply
 replace {name}`Nat` with a type variable `α`, we get a somewhat mysterious error
 
-```lean -keep +error
+:::dev
+@dsainati - The Verso compilation is not actually removing this from the generated file despite th e
+-keep flag. It is, however, stripping the message guard, so this results in an error. Once
+we figure out how we are handling these cases, uncomment this.
+
+```lean -keep
+/--
+error: failed to synthesize instance of type class
+  BEq α
+
+Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
+-/
+#guard_msgs in
 def List.elem_poly {α : Type} (a : α) (xs : List α) : Bool :=
   match xs with
   | [] => false
   | b :: tl => bif a == b then true else elem_poly a tl
 ```
+:::
 
 that mentions a typeclass {name}`BEq`. Perhaps a better question is what exactly the `==` notation
 meant in our original {name}`List.elem_nat`. Let's look at a usage of this notation with natural
@@ -673,11 +688,19 @@ rogerburtonpatel1 day ago
 I think right after this part on decidability is good. It's a hefty chunk of information already, so keeping distinct ideas distinct is more likely than not a good call.
 :::
 
+:::dev
+@dsainati - commenting this out for the same reason as above
+
 ```lean -keep +error
 def eq {α : Type} (a₁ a₂ : α) : Bool := if a₁ = a₂ then true else false
 ```
+:::
 
 Lean will complain here that it cannot find an instance of {name}`Decidable`. This typeclass
+
+:::dev
+@dsainati - commenting this out because the -keep doesn't work during extraction;
+this causes Lean to get the two instances (the real one and this one) confused
 
 ```lean -keep
 class inductive Decidable (p : Prop) where
@@ -686,6 +709,7 @@ class inductive Decidable (p : Prop) where
   /-- Proves that `p` is decidable by supplying a proof of `p` -/
   | isTrue (h : p) : Decidable p
 ```
+:::
 
 is the way that we express in Lean that a given proposition is decidable. This is the generalization
 of our observation that {name}`isEven_iff_Even` was reflecting a proof between boolean and
