@@ -4,6 +4,13 @@ import SFLMeta.Save
 
 import LF.Basics
 import LF.Typeclasses
+import LF.Induction
+import LF.UsingLean
+import LF.Lists
+import LF.Poly
+import LF.Logic
+import LF.Tactics
+import LF.IndProp
 -- Add `import LF.XXXVerso` here for each generated chapter included below.
 
 import VersoManual
