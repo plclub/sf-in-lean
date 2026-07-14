@@ -378,6 +378,18 @@ guidelines.
   easily misread as the `Aexp` type, so `AExp.Bexp` reads like a field of
   `Aexp`).  (Rocq's `Module AExp` warm-up in `Imp` became `namespace Warmup`.)
 
+* **Companion namespaces open *after* the type, with bare member names.**
+  Define a datatype at top level, then open its like-named `namespace`
+  immediately after, and write the type's functions and theorems with
+  *unqualified* names — `def app`, not `def NatList.app`.  This keeps the type a
+  clean top-level `NatList` while its operations live at `NatList.app`,
+  `NatList.length`, etc., and it is the implicit style `Basics` establishes with
+  `namespace Nat` (`def pred`, not `def Nat.pred`).  Do **not** open the
+  namespace *before* the type is declared and then qualify every member: that
+  nests the type inside its own namespace (`NatList.NatList`) and reads against
+  the grain of the rest of the book.  (Established in `Basics`; applied to
+  `Lists`.)
+
 ### Notation and simplification
 
 When notation is implemented via typeclass instances, `dsimp [add]` /

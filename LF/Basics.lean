@@ -82,6 +82,15 @@ some basic _tactics_ that can be used to prove properties of
 programs.
 ::::
 
+:::dev
+HG: The above makes some assumptions about jargon and terminology that I'm not sure we'll have
+covered at this point. For example, I've found "side effects" is often not intuitive. Also, I think
+"a concrete method for computing a mathematical function" is setting an OOP-trained student up for
+confusion around the word "method." I don't want to just go editing long-standing text if it's been
+working, but my two cents is that there are some opportunities to remove friction in this opening
+bit, and I'd be happy to propose a rewrite.
+:::
+
 # Data and Functions
 
 ## Enumerated Types
@@ -258,8 +267,7 @@ and the `Day` type to see their definitions, and experiment with adding your own
 For `#eval` and other commands, we show Lean's responses in comments; if you
 hover over the `#eval` commands above, you will see the popup that contains
 the output should match what's in the comment below. Experiment with adding
-your own `#eval` commands to test other inputs.
-
+your own `#eval` commands explore how other functions work.
 ::::
 
 Continuing with our simple type and function, we can record what we _expect_
@@ -300,6 +308,9 @@ executable programming language (unlike Gallina)? We should get a Lean pro's
 take on what to say here.
 @dsainati1: Per GitHub discussion, we should either include a diagram in a later chapter,
 or potentially link to https://lean-lang.org/doc/reference/latest/Elaboration-and-Compilation/
+HG: IMO it's not really useful to go to this level of detail here. I would cut the preceeding text
+off at "Try it out!" and drop the rest. (I suspect this framing came from Rocq, where extracting
+code is a whole process; Lean just compiles like any other programming language.)
 :::
 
 ## Booleans
@@ -325,9 +336,11 @@ inductive MyBool : Type where
   | false
 ```
 
-The next command opens a new namespace so that our definitions don't
-clash with ones from the standard library. We'll discuss it in more
-detail below.
+The next command opens the namespace associated with the `MyBool` type,
+so subsequent definitions will be part of the `MyBool` namespace.
+In Lean, functions on a type are typically defined in that type's namespace,
+which avoids name clashes with functions of the same name elsewhere (here,
+functions on the built-in `Bool` type). We give a full treatment of namespaces below.
 
 ```lean
 namespace MyBool
@@ -338,7 +351,7 @@ Functions over booleans can be defined in the same way as above
 ::::
 
 ```lean
-def notb (b : MyBool) : MyBool :=
+def not (b : MyBool) : MyBool :=
   match b with
   | MyBool.true => MyBool.false
   | MyBool.false => MyBool.true
@@ -348,12 +361,12 @@ def notb (b : MyBool) : MyBool :=
 :::
 
 ```lean
-def andb (b1 : MyBool) (b2 : MyBool) : MyBool :=
+def and (b1 : MyBool) (b2 : MyBool) : MyBool :=
   match b1 with
   | MyBool.true => b2
   | MyBool.false => MyBool.false
 
-def orb (b1 : MyBool) (b2 : MyBool) : MyBool :=
+def or (b1 : MyBool) (b2 : MyBool) : MyBool :=
   match b1 with
   | MyBool.true => MyBool.true
   | MyBool.false => b2
@@ -363,28 +376,27 @@ def orb (b1 : MyBool) (b2 : MyBool) : MyBool :=
 The last two definitions illustrate Lean's syntax for multi-argument
 functions.  The corresponding multi-argument _application_ syntax is
 illustrated by the following tests, which effectively constitute a
-complete specification -- a truth table -- for the `orb` function:
+complete specification -- a truth table -- for the `or` function:
 ::::
 
 :::terse
-Note the syntax for defining multi-argument functions (`andb` and `orb`).
+Note the syntax for defining multi-argument functions (`and` and `or`).
 :::
 
-
 ```lean
-example : orb MyBool.true  MyBool.false = MyBool.true  := by rfl
-example : orb MyBool.false MyBool.false = MyBool.false := by rfl
-example : orb MyBool.false MyBool.true  = MyBool.true  := by rfl
-example : orb MyBool.true  MyBool.true  = MyBool.true  := by rfl
+example : or MyBool.true  MyBool.false = MyBool.true  := by rfl
+example : or MyBool.false MyBool.false = MyBool.false := by rfl
+example : or MyBool.false MyBool.true  = MyBool.true  := by rfl
+example : or MyBool.true  MyBool.true  = MyBool.true  := by rfl
 ```
 
 We can define new symbolic notations for existing definitions.
 Don't worry for now about how the notation is defined.
 
 ```lean
-local prefix:40 (priority := high) "!" => notb
-local infixl:35 (priority := high) " && " => andb
-local infixl:30 (priority := high) " || " => orb
+local prefix:40 (priority := high) "!" => not
+local infixl:35 (priority := high) " && " => and
+local infixl:30 (priority := high) " || " => or
 ```
 
 ```lean
@@ -396,7 +408,7 @@ example : (!MyBool.false) = MyBool.true := by rfl
 :::slidebreak
 :::
 
-::::exercise (rating := 1) (name := "nandb")
+::::exercise (rating := 1) (name := "nand")
 The `sorry` keyword is a placeholder for an incomplete proof or
 definition.  We use it in exercises to indicate the parts that we're
 leaving for you -- i.e., your job is to replace `sorry` with real
@@ -408,42 +420,42 @@ its inputs are `MyBool.false`. Make sure that the `example` assertions
 below can be verified by Lean.
 
 ```lean
-def nandb (b1 : MyBool) (b2 : MyBool) : MyBool
+def nand (b1 : MyBool) (b2 : MyBool) : MyBool
   := solution!(match b1 with
-  | MyBool.true => notb b2
+  | MyBool.true => not b2
   | MyBool.false => MyBool.true)
 
-example : nandb MyBool.true  MyBool.false  = MyBool.true  := solution!(by rfl)
-example : nandb MyBool.false MyBool.false =  MyBool.true  := solution!(by rfl)
-example : nandb MyBool.false MyBool.true  =  MyBool.true  := solution!(by rfl)
-example : nandb MyBool.true  MyBool.true   = MyBool.false := solution!(by rfl)
+example : nand MyBool.true  MyBool.false  = MyBool.true  := solution!(by rfl)
+example : nand MyBool.false MyBool.false =  MyBool.true  := solution!(by rfl)
+example : nand MyBool.false MyBool.true  =  MyBool.true  := solution!(by rfl)
+example : nand MyBool.true  MyBool.true   = MyBool.false := solution!(by rfl)
 ```
 
 :::grade
 ```
-GRADE_THEOREM 1: nandb_test4
+GRADE_THEOREM 1: nand_test4
 ```
 :::
 ::::
 
-::::exercise (rating := 1) (name := "andb3")
-Do the same for the `andb3` function below. This function should
+::::exercise (rating := 1) (name := "and3")
+Do the same for the `and3` function below. This function should
 return `true` when all of its inputs are `true`, and `false`
 otherwise.
 
 ```lean
-def andb3 (b1 : MyBool) (b2 : MyBool) (b3 : MyBool) : MyBool
-  := solution!(andb b1 (andb b2 b3))
+def and3 (b1 : MyBool) (b2 : MyBool) (b3 : MyBool) : MyBool
+  := solution!(and b1 (and b2 b3))
 
-example : andb3 MyBool.true  MyBool.true  MyBool.true  = MyBool.true  := solution!(by rfl)
-example : andb3 MyBool.false MyBool.true  MyBool.true  = MyBool.false := solution!(by rfl)
-example : andb3 MyBool.true  MyBool.false MyBool.true  = MyBool.false := solution!(by rfl)
-example : andb3 MyBool.true  MyBool.true  MyBool.false = MyBool.false := solution!(by rfl)
+example : and3 MyBool.true  MyBool.true  MyBool.true  = MyBool.true  := solution!(by rfl)
+example : and3 MyBool.false MyBool.true  MyBool.true  = MyBool.false := solution!(by rfl)
+example : and3 MyBool.true  MyBool.false MyBool.true  = MyBool.false := solution!(by rfl)
+example : and3 MyBool.true  MyBool.true  MyBool.false = MyBool.false := solution!(by rfl)
 ```
 
 :::grade
 ```
-GRADE_THEOREM 1: andb3_test4
+GRADE_THEOREM 1: and3_test4
 ```
 :::
 ::::
@@ -481,7 +493,7 @@ Now that we've stated the theorem we'd like to prove, let's set about proving it
 ::::
 
 ```lean
-theorem true_andb : ∀ (b : MyBool), (MyBool.true && b) = b := by
+theorem true_and : ∀ (b : MyBool), (MyBool.true && b) = b := by
   intro b
   rfl
 ```
@@ -508,7 +520,7 @@ Let's walk through the example above with this terminology in mind.
 ::::
 
 ```lean
-theorem true_andb_explained : ∀ (b : MyBool), (MyBool.true && b) = b := by
+theorem true_and_explained : ∀ (b : MyBool), (MyBool.true && b) = b := by
   /- Move your cursor (click) here to see the initial proof state in
       the InfoView. The context (before the ⊢) is empty.
       The goal is `∀ (b : MyBool), (MyBool.true && b) = b`. -/
@@ -535,7 +547,7 @@ theorem true_andb_explained : ∀ (b : MyBool), (MyBool.true && b) = b := by
     inspecting our goal will show that it is `(MyBool.true && b) = b`, which
     may not appear to be equal to itself. However, the tactic
     _evaluates_ both sides of the equality before comparing them. In
-    this case, if we look at the definition of `andb`, we can see that,
+    this case, if we look at the definition of `and`, we can see that,
     when its first argument is `MyBool.true`, the result is its second
     argument. So the two terms `MyBool.true && b` and `b` are in fact equal because one
     evaluates to the other.
@@ -552,9 +564,10 @@ instead written the following:
 
 :::dev
 @dsainati1: Ideally would change this to a #guardmsgs(error) if we can
+HG: +1
 :::
 
-/- theorem trueandb : ∀ (b : MyBool), (MyBool.true && b) = b := by
+/- theorem true_and_wrong : ∀ (b : MyBool), (MyBool.true && b) = b := by
   intro b
     rfl
 -/
@@ -565,17 +578,17 @@ In general, sequential tactics applied to the same goal must be on subsequent li
 level of indentation or separated on the same line by a `;` like so:
 
 ```lean
-theorem true_andb' : ∀ (b : MyBool), (MyBool.true && b) = b := by
+theorem true_and' : ∀ (b : MyBool), (MyBool.true && b) = b := by
   intro b; rfl
 ```
 ::::
 
-::::exercise (rating := 1) (name := "false_orb_exercise")
+::::exercise (rating := 1) (name := "false_or_exercise")
 Here's a simple proof for you to try.
 Remove `sorry` and fill in the proof.
 
 ```lean
-theorem false_orb : ∀ (b : MyBool), (MyBool.false || b) = b := by
+theorem false_or : ∀ (b : MyBool), (MyBool.false || b) = b := by
   solution!
     intro b
     rfl
@@ -583,7 +596,7 @@ theorem false_orb : ∀ (b : MyBool), (MyBool.false || b) = b := by
 
 :::grade
 ```
-GRADE_THEOREM 1: false_orb_exercise
+GRADE_THEOREM 1: false_or_exercise
 ```
 :::
 ::::
@@ -597,6 +610,10 @@ Be careful, though: every time you say `sorry` you are leaving
 a door open for total nonsense to enter Lean's safe, formally
 checked world!
 ::::
+
+:::dev
+HG: In the terse .lean output this ends up looking like an exercise.
+:::
 
 ```lean -keep
 theorem really_bad : MyBool.true = MyBool.false := by sorry
@@ -1121,8 +1138,8 @@ Note: The `bits` constructor illustrates a feature of multi-parameter
 declarations, both for constructors and for functions: Instead
 of writing `(x0 : Bit) (x1 : Bit) ...` we write `(x0 x1 ... : Bit)`
 since all of the variables have the same type. We could have done
-the same with the function definition `orb` above, writing
-`orb (b1 b2 : MyBool)` rather than `orb (b1 : MyBool) (b2 : MyBool)`.
+the same with the function definition `or` above, writing
+`or (b1 b2 : MyBool)` rather than `or (b1 : MyBool) (b2 : MyBool)`.
 
 The `bits` constructor acts as a wrapper for its contents.
 Unwrapping is done by pattern matching, as in the `allZero` function
@@ -1498,8 +1515,8 @@ theorem add_one (n : Nat) : n + (succ zero) = succ (n + zero) + zero := by
 ```
 
 Again, we recommend stepping through these proofs in VS Code --
-   that is, moving past each tactic with your cursor to see how it
-   changes the proof state and hovering over each argument to `rewrite` to see its type.
+that is, moving past each tactic with your cursor to see how it
+changes the proof state and hovering over each argument to `rewrite` to see its type.
 ::::
 
 ## Irreducibility, Rewriting, and Proof Engineering
@@ -1662,6 +1679,13 @@ theorem two_plus_two_eq_four : two + two = four := by
     rfl
 ```
 
+:::dev
+HG: I don't want to introduce new things here, but it occurs to me that it would actually be kind of
+nice to use `calc` or `conv` to scaffold these very intentional symbol pushing proofs. Maybe a good
+compromise would be be able to put comments that clarify that the first line "rewrites the righthand
+side to `succ (succ (succ (succ zero)))`"?
+:::
+
 ::::full
 Now that we know how addition is defined, we can use it to define multiplication:
 ::::
@@ -1701,14 +1725,14 @@ RAB: Agreed if we're keeping these visible; putting off
 :::
 
 Prove this property using rewriting with the simplification rules for addition and multiplication.
-  (We have given you the first line.) Notice how `rewrite`
-   can take any number of arguments. You can use this rewrite with all of the
-   simplification rules at once, for example.
+(We have given you the first line.) Notice how `rewrite`
+can take any number of arguments. You can use this rewrite with all of the
+simplification rules at once, for example.
 
-   After each rewrite, check the proof state by placing the cursor immediately
-   after a rule to see how the goal is changing. This happens naturally
-   as you write the proof, which makes it convenient to use `rewrite` blocks
-   with multiple rules.
+After each rewrite, check the proof state by placing the cursor immediately
+after a rule to see how the goal is changing. This happens naturally
+as you write the proof, which makes it convenient to use `rewrite` blocks
+with multiple rules.
 
 ::::exercise (rating := 2) (name := "test_mult1")
 ```lean
@@ -1734,8 +1758,9 @@ GRADE_THEOREM 2: test_mult1
 :::slidebreak
 :::
 
-When we say that Lean comes with almost nothing built-in, we really
-mean it: even testing equality is a user-defined operation!
+When we say that Lean relies on almost nothing that's truly built-in, we really mean it: even
+testing equality is not a primitive operation, but an ordinary function that we could re-implement
+ourselves as users.
 
 Here is a function `beq` that tests natural numbers for
 equality, yielding a boolean.
@@ -2074,7 +2099,7 @@ Another example, using booleans:
 :::
 
 ```lean
-theorem notb_involutive : ∀ b : Bool, (!!b) = b := by
+theorem not_involutive : ∀ b : Bool, (!!b) = b := by
   intro b
   cases b
   case false =>
@@ -2105,7 +2130,7 @@ We can have nested case analysis:
 :::
 
 ```lean
-theorem andb_commutative : ∀ b c : Bool,
+theorem and_commutative : ∀ b c : Bool,
     (b && c) = (c && b) := by
   intro b c
   cases b
@@ -2126,7 +2151,7 @@ theorem andb_commutative : ∀ b c : Bool,
       rewrite [Bool.and_self]
       rfl
 
-theorem andb3_exchange : ∀ b c d : Bool,
+theorem and3_exchange : ∀ b c d : Bool,
     ((b && c) && d) = ((b && d) && c) := by
   intro b c d
   cases b
@@ -2185,13 +2210,13 @@ example, if `h : P` is in the context and the goal is `P`, then `exact h`
 closes the goal.  You can also transform `h` slightly, but we will
 explain how when we get to an example where we need to.
 
-::::exercise (rating := 2) (name := "orb_false_true")
+::::exercise (rating := 2) (name := "or_false_true")
 Prove the following claim.
 
 Tip: the rewrite rule to simplify `(b || false)` is called `Bool.or_false`.
 
 ```lean
-theorem orb_false_true : ∀ b : Bool,
+theorem or_false_true : ∀ b : Bool,
     (b || false) = true → b = true := by
   solution!
     intro b h
@@ -2201,7 +2226,7 @@ theorem orb_false_true : ∀ b : Bool,
 
 :::grade
 ```
-GRADE_THEOREM 2: orb_false_true
+GRADE_THEOREM 2: or_false_true
 ```
 :::
 ::::
@@ -2479,11 +2504,11 @@ GRADE_MANUAL 1: negation_fn_applied_twice
 :::
 ::::
 
-::::exercise (rating := 3) (name := "andb_eq_orb")
+::::exercise (rating := 3) (name := "and_eq_or")
 Prove the following theorem.
 
 ```lean
-theorem andb_eq_orb : ∀ b c : Bool, (b && c) = (b || c) → b = c := by
+theorem and_eq_or : ∀ b c : Bool, (b && c) = (b || c) → b = c := by
   solution!
     intro b c h
     cases c
@@ -2505,7 +2530,7 @@ theorem andb_eq_orb : ∀ b c : Bool, (b && c) = (b || c) → b = c := by
 
 :::grade
 ```
-GRADE_THEOREM 3: andb_eq_orb
+GRADE_THEOREM 3: and_eq_or
 ```
 :::
 ::::
