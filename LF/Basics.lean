@@ -82,6 +82,15 @@ some basic _tactics_ that can be used to prove properties of
 programs.
 ::::
 
+:::dev
+HG: The above makes some assumptions about jargon and terminology that I'm not sure we'll have
+covered at this point. For example, I've found "side effects" is often not intuitive. Also, I think
+"a concrete method for computing a mathematical function" is setting an OOP-trained student up for
+confusion around the word "method." I don't want to just go editing long-standing text if it's been
+working, but my two cents is that there are some opportunities to remove friction in this opening
+bit, and I'd be happy to propose a rewrite.
+:::
+
 # Data and Functions
 
 ## Enumerated Types
@@ -182,69 +191,16 @@ to say about pattern matching -- we'll introduce more of its features
 as the need arises.)
 
 You may notice that we qualified all the constructors before using them,
-writing `Day.monday` instead of just `monday`, for example. You may
-wonder if this is necessary.
-
+writing `Day.monday` instead of just `monday`, for example.
 Lean places all constructors into a "namespace" associated with their type,
 and requires uses of those constructors to be prefixed with their namespace.
-We will see in a little bit how to enter a namespace and avoid this requirement,
-but for now, if we wish to be a bit more concise, we can use just a `.`,
-like `.monday`, that signals that we're qualifying a name
-without having to type too much. A more concise (but equivalent) definition
-of `nextWorkingDay` is given below.
-
-:::dev
-BCP: I *still* find this quite tangled.  We say Lean requires all uses of constructors to be prefixed with their namespace, but then, right after, we suggest exactly not doing this!  (And I am still confused, myself, about identifiers like `true` and `false`, which seem not to need to be prefixed, even though they come from their own namespace.)
-DHS: I spent some time thinking about how to clean up this explanation, and what I realized
-is that I'm having trouble justifying Lean's convention here because I don't actually understand it
-either! To me, the difference betweeen `.CName` and `CName` seems minimal, so I don't really
-understand why Lean requires the former. I would be curious to know if there is a canonical
-explanation of why Lean works this way that we can lean on.
-DHS: Maybe the thing to do then is to defer the explanation of the .monday style until later, when there is actually a motivating example for why it's nice. So we only use the fully qualified Day.monday style until the section about namespaces, then we can explain opening namespaces to get just monday, and then even later when we have long names we can explain .monday.
-What to say: Lean usually resolves names by looking at the current namespace, and this is the single explanation for why whether I'm in namespace Day or the body of a function Day.nextWorkingDay, I don't need to write the full Day.monday. When you use the leading dot notation you are asking Lean to instead use the expected type's namespace, so that .monday used in a place expecting something of type Day will resolve to Day.monday.
-:::
-
-```lean
-def nextWorkingDay' (d : Day) : Day :=
-  match d with
-  | .monday    => .tuesday
-  | .tuesday   => .wednesday
-  | .wednesday => .thursday
-  | .thursday  => .friday
-  | .friday    => .monday
-  | .saturday  => .monday
-  | .sunday    => .monday
-```
-
-When full qualification is not necessary to disambiguate, we will
-prefer the shorter syntax with just the `.`.
+There are a few circumstances in which this requirement can be relaxed,
+which we shall see in a little bit. For now, however, we proceed by
+fully qualifying all constructor names.
 
 If you ever need to know the type of *any* pattern, object, or function,
 you can hover over it with your mouse in any editor that supports Lean,
 like VS Code or the web version we provide.
-
-:::dev
-RAB: I'm resolving the discussion for now. The `.pattern` syntax shows
-up in the Lean suggestions, in the documentation, and (less importantly)
-in our examples pervasively after this point, and we need to introduce it early.
-I think we should ask for feedback from people who aren't writing the book on
-this part and on others; I feel our curse of knowledge is leading to a lot of
-focus on something that may not be that important.
-
-BCP: I respectfully disagree that it's not important -- that is, the concept
-doesn't seem all that important, but not confusing readers is important, and right now I think we are doing that.  We need *some* consistent story.
-
-Old conversation, for reference:
-MWH - it seems that the full explanation comes later? I'm still not sure I get
-what's being said here. I think it's maybe worth being systematic, right here,
-if it seems to slow you down.
-DHS - I worry that explaining namespaces right here is too soon. This is essentially
-the very first thing we explain in the whole textbook, and going directly in to the
-details of how namespaces work immediately seems like a lot. Does it seem appropriate
-to say "names have to be qualified" here and then explain namespaces later?
-MWH - This is a key concept as the current comment explains. I'm a little inclined to
-put it all here. But I'm good with whatever for now. We can always change it later.
-:::
 ::::
 
 :::slidebreak
@@ -263,11 +219,11 @@ in comments.)
 ::::
 
 ```lean
-#eval nextWorkingDay .friday
+#eval nextWorkingDay Day.friday
 ```
 
 ```lean
-#eval nextWorkingDay (nextWorkingDay .saturday)
+#eval nextWorkingDay (nextWorkingDay Day.saturday)
 ```
 
 ::::full
@@ -278,7 +234,7 @@ from the book's Lean sources, find the above example, and observe
 the result in the Lean InfoView panel.
 
 :::dev
-DHS: Where are we showing responses in comments? I don't see them.
+@dsainati1: Where are we showing responses in comments? I don't see them.
 RAB: Why did we remove the comments?
 Per GitHub discussion, MWH agrees - this is unresolved.
 BCP: Don't understand the state of play here...
@@ -311,15 +267,14 @@ and the `Day` type to see their definitions, and experiment with adding your own
 For `#eval` and other commands, we show Lean's responses in comments; if you
 hover over the `#eval` commands above, you will see the popup that contains
 the output should match what's in the comment below. Experiment with adding
-your own `#eval` commands to test other inputs.
-
+your own `#eval` commands explore how other functions work.
 ::::
 
 Continuing with our simple type and function, we can record what we _expect_
 the result of calling a function to be in the form of a Lean `example`:
 
 ```lean
-example : nextWorkingDay (nextWorkingDay .saturday) = .tuesday := by
+example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
   rfl
 ```
 
@@ -333,8 +288,8 @@ the same term."
 `rfl` stands for "reflexivity," which is the principle that any value is
 equal to itself. After evaluation, both sides of the equality are the same
 value, so the assertion is true by reflexivity.  If we had made a different
-assertion, such as `example : nextWorkingDay (nextWorkingDay .saturday) =
-.monday`, then Lean would not be able to verify it and would instead signal an
+assertion, such as `example : nextWorkingDay (nextWorkingDay Day.saturday) =
+Day.monday`, then Lean would not be able to verify it and would instead signal an
 error. Try it out!
 
 We can also ask Lean to _compile_ our definitions to efficient
@@ -351,8 +306,11 @@ chapters.
 RAB: Is Lean compiling to C its "killer app," or is it the fact that it is an
 executable programming language (unlike Gallina)? We should get a Lean pro's
 take on what to say here.
-DHS: Per GitHub discussion, we should either include a diagram in a later chapter,
+@dsainati1: Per GitHub discussion, we should either include a diagram in a later chapter,
 or potentially link to https://lean-lang.org/doc/reference/latest/Elaboration-and-Compilation/
+HG: IMO it's not really useful to go to this level of detail here. I would cut the preceeding text
+off at "Try it out!" and drop the rest. (I suspect this framing came from Rocq, where extracting
+code is a whole process; Lean just compiles like any other programming language.)
 :::
 
 ## Booleans
@@ -367,7 +325,7 @@ and `false`.
 Another familiar enumerated type:
 :::
 
-We define our own `MyBool` to teach the concept of building from
+We define our own `MyBool` to teach the concept of building booleans from
 scratch; later we'll switch to Lean's built-in `Bool`.
 We use a different name to make explicit that this is not the same
 type as Lean's built-in, but their definitions are equivalent.
@@ -378,9 +336,11 @@ inductive MyBool : Type where
   | false
 ```
 
-The next command opens a new namespace so that our definitions don't
-clash with ones from the standard library. We'll discuss it in more
-detail below.
+The next command opens the namespace associated with the `MyBool` type,
+so subsequent definitions will be part of the `MyBool` namespace.
+In Lean, functions on a type are typically defined in that type's namespace,
+which avoids name clashes with functions of the same name elsewhere (here,
+functions on the built-in `Bool` type). We give a full treatment of namespaces below.
 
 ```lean
 namespace MyBool
@@ -391,112 +351,111 @@ Functions over booleans can be defined in the same way as above
 ::::
 
 ```lean
-def notb (b : MyBool) : MyBool :=
+def not (b : MyBool) : MyBool :=
   match b with
-  | .true => .false
-  | .false => .true
+  | MyBool.true => MyBool.false
+  | MyBool.false => MyBool.true
 ```
 
 :::slidebreak
 :::
 
 ```lean
-def andb (b1 : MyBool) (b2 : MyBool) : MyBool :=
+def and (b1 : MyBool) (b2 : MyBool) : MyBool :=
   match b1 with
-  | .true => b2
-  | .false => .false
+  | MyBool.true => b2
+  | MyBool.false => MyBool.false
 
-def orb (b1 : MyBool) (b2 : MyBool) : MyBool :=
+def or (b1 : MyBool) (b2 : MyBool) : MyBool :=
   match b1 with
-  | .true => .true
-  | .false => b2
+  | MyBool.true => MyBool.true
+  | MyBool.false => b2
 ```
 
 ::::full
 The last two definitions illustrate Lean's syntax for multi-argument
 functions.  The corresponding multi-argument _application_ syntax is
 illustrated by the following tests, which effectively constitute a
-complete specification -- a truth table -- for the `orb` function:
+complete specification -- a truth table -- for the `or` function:
 ::::
 
 :::terse
-Note the syntax for defining multi-argument functions (`andb` and `orb`).
+Note the syntax for defining multi-argument functions (`and` and `or`).
 :::
 
-
 ```lean
-example : orb .true  .false = .true  := by rfl
-example : orb .false .false = .false := by rfl
-example : orb .false .true  = .true  := by rfl
-example : orb .true  .true  = .true  := by rfl
+example : or MyBool.true  MyBool.false = MyBool.true  := by rfl
+example : or MyBool.false MyBool.false = MyBool.false := by rfl
+example : or MyBool.false MyBool.true  = MyBool.true  := by rfl
+example : or MyBool.true  MyBool.true  = MyBool.true  := by rfl
 ```
 
 We can define new symbolic notations for existing definitions.
 Don't worry for now about how the notation is defined.
 
 ```lean
-local prefix:40 (priority := high) "!" => notb
-local infixl:35 (priority := high) " && " => andb
-local infixl:30 (priority := high) " || " => orb
+local prefix:40 (priority := high) "!" => not
+local infixl:35 (priority := high) " && " => and
+local infixl:30 (priority := high) " || " => or
 ```
 
 ```lean
-example : (.false || .false || .true) = .true := by rfl
+example : (MyBool.false || MyBool.false || MyBool.true) = MyBool.true := by rfl
 
-example : (!.false) = .true := by rfl
+example : (!MyBool.false) = MyBool.true := by rfl
 ```
 
 :::slidebreak
 :::
 
-::::exercise (rating := 1) (name := "nandb")
+::::exercise (rating := 1) (name := "nand")
 The `sorry` keyword is a placeholder for an incomplete proof or
 definition.  We use it in exercises to indicate the parts that we're
 leaving for you -- i.e., your job is to replace `sorry` with real
 definitions and proofs.
 
 Remove `sorry` below and complete the definition of the following
-function.  The function should return `.true` if either or both of
-its inputs are `.false`. Make sure that the `example` assertions
+function.  The function should return `MyBool.true` if either or both of
+its inputs are `MyBool.false`. Make sure that the `example` assertions
 below can be verified by Lean.
 
 ```lean
-def nandb (b1 : MyBool) (b2 : MyBool) : MyBool
+def nand (b1 : MyBool) (b2 : MyBool) : MyBool
   := solution!(match b1 with
-  | .true => notb b2
-  | .false => .true)
+  | MyBool.true => not b2
+  | MyBool.false => MyBool.true)
 
-example : nandb .true  .false  = .true  := solution!(by rfl)
-example : nandb .false .false =  .true  := solution!(by rfl)
-example : nandb .false .true  =  .true  := solution!(by rfl)
-example : nandb .true  .true   = .false := solution!(by rfl)
+example : nand MyBool.true  MyBool.false  = MyBool.true  := solution!(by rfl)
+example : nand MyBool.false MyBool.false =  MyBool.true  := solution!(by rfl)
+example : nand MyBool.false MyBool.true  =  MyBool.true  := solution!(by rfl)
+example : nand MyBool.true  MyBool.true   = MyBool.false := solution!(by rfl)
 ```
 
 :::grade
 ```
-GRADE_THEOREM 1: nandb_test4
+GRADE_THEOREM 1: nand_test4
 ```
 :::
 ::::
 
-::::exercise (rating := 1) (name := "andb3")
-Do the same for the `andb3` function below. This function should
+::::exercise (rating := 1) (name := "and3")
+Do the same for the `and3` function below. This function should
 return `true` when all of its inputs are `true`, and `false`
 otherwise.
 
 ```lean
-def andb3 (b1 : MyBool) (b2 : MyBool) (b3 : MyBool) : MyBool
-  := solution!(andb b1 (andb b2 b3))
+def and3 (b1 : MyBool) (b2 : MyBool) (b3 : MyBool) : MyBool
+  := solution!(and b1 (and b2 b3))
 
-example : andb3 .true .true .true  = .true  := solution!(by rfl)
-example : andb3 .false .true .true = .false := solution!(by rfl)
-example : andb3 .true .false .true = .false := solution!(by rfl)
-example : andb3 .true .true .false = .false := solution!(by rfl)
+example : and3 MyBool.true  MyBool.true  MyBool.true  = MyBool.true  := solution!(by rfl)
+example : and3 MyBool.false MyBool.true  MyBool.true  = MyBool.false := solution!(by rfl)
+example : and3 MyBool.true  MyBool.false MyBool.true  = MyBool.false := solution!(by rfl)
+example : and3 MyBool.true  MyBool.true  MyBool.false = MyBool.false := solution!(by rfl)
 ```
 
 :::grade
 ```
-GRADE_THEOREM 1: andb3_test4
+GRADE_THEOREM 1: and3_test4
 ```
 :::
 ::::
@@ -511,14 +470,14 @@ Now that we've defined some basic functions on booleans, let's see how to
 _prove_ some simple properties of those functions. Here is a simple rule
 about `&&`:
 
-- `.true && b = b`
+- `MyBool.true && b = b`
 
 This is an example of a _proposition_, a logical _claim_ that we can try to prove.
-It says that `.true && b` is equal to `b` for every `MyBool` `b`.
+It says that `MyBool.true && b` is equal to `b` for every `MyBool` `b`.
 
 How might we write this proposition in Lean?
 
-- `theorem true_and : ∀ (b : MyBool), (.true && b) = b`
+- `theorem true_and : ∀ (b : MyBool), (MyBool.true && b) = b`
 
 The keyword `theorem` indicates that we are stating (and eventually proving)
 a proposition; the text after the first `:` is the proposition we want to prove.
@@ -534,7 +493,7 @@ Now that we've stated the theorem we'd like to prove, let's set about proving it
 ::::
 
 ```lean
-theorem true_andb : ∀ (b : MyBool), (.true && b) = b := by
+theorem true_and : ∀ (b : MyBool), (MyBool.true && b) = b := by
   intro b
   rfl
 ```
@@ -561,10 +520,10 @@ Let's walk through the example above with this terminology in mind.
 ::::
 
 ```lean
-theorem true_andb_explained : ∀ (b : MyBool), (.true && b) = b := by
+theorem true_and_explained : ∀ (b : MyBool), (MyBool.true && b) = b := by
   /- Move your cursor (click) here to see the initial proof state in
       the InfoView. The context (before the ⊢) is empty.
-      The goal is `∀ (b : MyBool), (true && b) = b`. -/
+      The goal is `∀ (b : MyBool), (MyBool.true && b) = b`. -/
   intro b
   /- Now click here to see the new proof state that results from the
      tactic. Notice how `intro b` has changed the _context_: it now
@@ -585,12 +544,13 @@ theorem true_andb_explained : ∀ (b : MyBool), (.true && b) = b := by
     As in the `example`s above, we can use the `rfl` tactic,
     which closes goals about equality where both sides are equal to
     one another according to the principle of reflexivity. Now,
-    inspecting our goal will show that it is `(true && b) = b`, which
+    inspecting our goal will show that it is `(MyBool.true && b) = b`, which
     may not appear to be equal to itself. However, the tactic
     _evaluates_ both sides of the equality before comparing them. In
-    this case, if we look at the definition of `andb`, we can see that,
-    when its first argument is `true`, the result is its second
-    argument. So the two terms `true && b` and `b` are in fact equal because one evaluates to the other.
+    this case, if we look at the definition of `and`, we can see that,
+    when its first argument is `MyBool.true`, the result is its second
+    argument. So the two terms `MyBool.true && b` and `b` are in fact equal because one
+    evaluates to the other.
   -/
   rfl
   /- The proof is now done! The Lean InfoView tells us there are "No goals". -/
@@ -603,10 +563,11 @@ it can change the meaning of the proof, usually causing the proof to break. If w
 instead written the following:
 
 :::dev
-DHS: Ideally would change this to a #guardmsgs(error) if we can
+@dsainati1: Ideally would change this to a #guardmsgs(error) if we can
+HG: +1
 :::
 
-/- theorem trueandb : ∀ (b : MyBool), (.true && b) = b := by
+/- theorem true_and_wrong : ∀ (b : MyBool), (MyBool.true && b) = b := by
   intro b
     rfl
 -/
@@ -617,17 +578,17 @@ In general, sequential tactics applied to the same goal must be on subsequent li
 level of indentation or separated on the same line by a `;` like so:
 
 ```lean
-theorem true_andb' : ∀ (b : MyBool), (.true && b) = b := by
+theorem true_and' : ∀ (b : MyBool), (MyBool.true && b) = b := by
   intro b; rfl
 ```
 ::::
 
-::::exercise (rating := 1) (name := "false_orb_exercise")
+::::exercise (rating := 1) (name := "false_or_exercise")
 Here's a simple proof for you to try.
 Remove `sorry` and fill in the proof.
 
 ```lean
-theorem false_orb : ∀ (b : MyBool), (.false || b) = b := by
+theorem false_or : ∀ (b : MyBool), (MyBool.false || b) = b := by
   solution!
     intro b
     rfl
@@ -635,7 +596,7 @@ theorem false_orb : ∀ (b : MyBool), (.false || b) = b := by
 
 :::grade
 ```
-GRADE_THEOREM 1: false_orb_exercise
+GRADE_THEOREM 1: false_or_exercise
 ```
 :::
 ::::
@@ -650,8 +611,16 @@ a door open for total nonsense to enter Lean's safe, formally
 checked world!
 ::::
 
+:::dev
+HG: In the terse .lean output this ends up looking like an exercise.
+:::
+
 ```lean -keep
-theorem really_bad : MyBool.true = .false := by sorry
+theorem really_bad : MyBool.true = MyBool.false := by sorry
+```
+
+```lean
+end MyBool
 ```
 
 ::::full
@@ -662,18 +631,7 @@ introduce new tactics and proof techniques gradually, enriching the propositions
 Now that we've seen how to define our own booleans and prove some basic
 properties about them, let's switch to Lean's built-in `Bool` type, which has the same structure
 but comes with a lot of useful functions and lemmas.
-
-Because `Bool` is such an important type in Lean, its `true` and `false` constructors can be written
-without a `.` to qualify them.
-:::dev
-BCP: Do we need to be so vague?  It sounds like it's saying that `true` and `false` are built in / treated specially by the language,
-which is not what we mean.
-:::
 ::::
-
-```lean
-end MyBool
-```
 
 ## Types
 
@@ -681,7 +639,7 @@ Every expression in Lean has a type describing what sort of value it computes.
 The `#check` command asks Lean to print the type of an expression.
 
 ```lean
-#check true
+#check Bool.true
 ```
 
 If the expression after `#check` is followed by a colon and a type,
@@ -689,23 +647,23 @@ Lean will verify that the type of the expression
 matches the given type and signal an error if not.
 
 ```lean
-#check (true : Bool)
-#check (not true : Bool)
+#check (Bool.true : Bool)
+#check (Bool.not Bool.true : Bool)
 ```
 
-Functions like `not` are themselves data values, just like `true`
-and `false`.  Their types are called _function types_, and they are
+Functions like {name}`Bool.not` are themselves ordinary values, just like {name}`Bool.true`
+and `Bool.false`.  Their types are called _function types_, and they are
 written with arrows.
 
 ```lean
-#check not
+#check Bool.not
 ```
 
 ::::full
-The type of `not`, written `Bool → Bool` and pronounced "`Bool`
+The type of `Bool.not`, written `Bool → Bool` and pronounced "`Bool`
 arrow `Bool`," can be read, "Given an input of type `Bool`, this
 function produces an output of type `Bool`." Similarly, the type of
-`and`, written `Bool → Bool → Bool`, can be read, "Given two inputs,
+{name}`Bool.and`, written `Bool → Bool → Bool`, can be read, "Given two inputs,
 each of type `Bool`, this function produces an output of type
 `Bool`."
 ::::
@@ -752,7 +710,7 @@ inductive Color : Type where
 An `inductive` definition does two things:
 
 - It introduces a set of new _constructors_. E.g., {name}`RGB.red`,
-  {name}`Color.primary`, {name}`true`, {name}`false`, {name}`Day.monday`,
+  {name}`Color.primary`, {name}`Bool.true`, {name}`Bool.false`, {name}`Day.monday`,
   etc. are constructors.
 
 - It groups them into a new named type, like `Bool`, `RGB`, or
@@ -764,22 +722,14 @@ obeying the declared number and types of the constructor arguments.
 E.g., these are valid constructor expressions...
 
 - {name}`RGB.red`
-- {name}`true`
+- {name}`Bool.true`
 - {name}`Color.primary` {name}`RGB.red`
 
 ...but these are not:
 
 - `RGB.red Color.primary`
-- `true RGB.red`
-- `Color.primary (.primary .red)`
-
-Note that we don't need to qualify `true` as `Bool.true`.
-Lean recognizes `Bool` as a type whose constructors
-are usable without qualification by default.
-
-:::dev
-BCP: "One of the types..." is mysterious.  What are these types?  Have we been told about them already?
-:::
+- `Bool.true RGB.red`
+- `Color.primary (Color.primary RGB.red)`
 
 :::slidebreak
 :::
@@ -790,41 +740,41 @@ we did for `Day` and `Bool`.
 ```lean
 def monochrome (c : Color) : Bool :=
   match c with
-  | .black => true
-  | .white => true
-  | .primary p => false
+  | Color.black => Bool.true
+  | Color.white => Bool.true
+  | Color.primary p => Bool.false
 ```
 
 Since the `primary` constructor takes an argument, a pattern
 that matches `.primary` should include either a variable, a constant
 of appropriate type, or `_`. Lean's convention is to use a `_` (called a
 _wildcard_) when the argument to a constructor doesn't matter. In
-the definition of `monochrome`, we don't use the argument to `.primary`, so
+the definition of `monochrome`, we don't use the argument to `Color.primary`, so
 a more idiomatic definition would be:
 
 ```lean
 def monochrome' (c : Color) : Bool :=
   match c with
-  | .black => true
-  | .white => true
-  | .primary _ => false
+  | Color.black => Bool.true
+  | Color.white => Bool.true
+  | Color.primary _ => Bool.false
 ```
 
-We can use a constant argument to `.primary` to match a specific primary color:
+We can use a constant argument to `Color.primary` to match a specific primary color:
 
 ```lean
 def isRed (c : Color) : Bool :=
   match c with
-  | .black => false
-  | .white => false
-  | .primary .red => true
-  | .primary _ => false
+  | Color.black => Bool.false
+  | Color.white => Bool.false
+  | Color.primary RGB.red => Bool.true
+  | Color.primary _ => Bool.false
 ```
 
-The pattern `.primary .red` will match only when `c` is
-`.primary` with the argument `.red`. The pattern `.primary _` matches
-every `.primary` color, but because patterns are checked in
-order, the `.primary _` case will never be reached if the color is `.red`.
+The pattern `Color.primary RGB.red` will match only when `c` is
+`Color.primary` with the argument `RGB.red`. The pattern `Color.primary _` matches
+every `Color.primary` color, but because patterns are checked in
+order, the `Color.primary _` case will never be reached if the color is `RGB.red`.
 
 An alternative way to write the same function would be to explicitly
 nest match statements:
@@ -832,17 +782,17 @@ nest match statements:
 ```lean
 def isRed' (c : Color) : Bool :=
   match c with
-  | .black => false
-  | .white => false
-  | .primary r =>
+  | Color.black => Bool.false
+  | Color.white => Bool.false
+  | Color.primary r =>
     match r with
-    | .red => true
-    | _ => false
+    | RGB.red => Bool.true
+    | _ => Bool.false
 ```
 
 This function produces the same result as the old
 `isRed` but illustrates the use of a pattern matching variable: the
-`.primary r` pattern stores the `RGB` argument into variable `r`,
+`Color.primary r` pattern stores the `RGB` argument into variable `r`,
 and then pattern matches on that argument to produce the final
 result.
 
@@ -861,14 +811,14 @@ or you could try to come up with a shorter solution...
 def is_weekend (d : Day) : Bool
   := solution!
     (match d with
-    | .saturday => true
-    | .sunday => true
+    | Day.saturday => true
+    | Day.sunday => true
     | _ => false
     )
 
 unseal is_weekend
-example : is_weekend .sunday = true := solution!(by rfl)
-example : is_weekend .friday = false := solution!(by rfl)
+example : is_weekend Day.sunday = true := solution!(by rfl)
+example : is_weekend Day.friday = false := solution!(by rfl)
 seal is_weekend
 ```
 :::dev
@@ -896,18 +846,20 @@ Green is not an inversion of anything.
 def is_inversion (c1 c2 : Color) : Bool
   := solution!
     (match c1, c2 with
-    | .black, .white => true
-    | .white, .black => true
-    | .primary .red, .primary .blue => true
-    | .primary .blue, .primary .red => true
+    | Color.black, Color.white => Bool.true
+    | Color.white, Color.black => Bool.true
+    | Color.primary RGB.red, Color.primary RGB.blue => Bool.true
+    | Color.primary RGB.blue, Color.primary RGB.red => Bool.true
     | _, _ => false
     )
 
 unseal is_inversion
-example : is_inversion .black .white = true := solution!(by rfl)
-example : is_inversion .white .black = true := solution!(by rfl)
-example : is_inversion (.primary .red) (.primary .blue) = true := solution!(by rfl)
-example : is_inversion (.primary .green) (.primary .red) = false := solution!(by rfl)
+example : is_inversion Color.black Color.white = true := solution!(by rfl)
+example : is_inversion Color.white Color.black = Bool.true := solution!(by rfl)
+example : is_inversion (Color.primary RGB.red) (Color.primary RGB.blue) = Bool.true :=
+  solution!(by rfl)
+example : is_inversion (Color.primary RGB.green) (Color.primary RGB.red) = Bool.false :=
+  solution!(by rfl)
 seal is_inversion
 ```
 :::dev
@@ -950,29 +902,9 @@ end Playground
 #check Playground.myFoo  -- RGB
 ```
 
-::::exercise(rating:=0) (name := "custom_namespace_checks")
-Predict the output of each of these statements below.
-Do you think their results will change depending on which `namespace`
-they are in? How?
-
-#check .black -- Write your prediction here.
-#check Color.black -- Write your prediction here.
-#check RGB -- Write your prediction here.
-#check NatPlayground.myFoo -- Write your prediction here.
-
-Once you have written your predictions, copy the lines from the comment into
-an active section of the book to evaluate them.
-::::
-
-:::dev
-RAB: This seems like a reasonable exercise; I'm not quite sure if/how we should grade it?
-BCP: Not all exercises need to be graded.  (In Rocq we had a notation for manually graded exercises. An optional and manually graded exercise would serve for this.)
-:::
-
-::::full
 Namespaces can be opened and closed as often as you like to add new definitions and access old ones.
-When inside a `namespace`, definitions from the same namespace can be referenced without prefixes.
-::::
+When inside a `namespace`, definitions from the that namespace can be referenced
+without prefixes.
 
 ```lean
 namespace Playground
@@ -984,11 +916,16 @@ end Playground
 ```
 
 ::::full
-When a `namespace` shares the same name as a type, definitions on that type are
-available inside the `namespace` without a prefix. In the example
-below, we can use the `blue` constructor without a `.` because
+When a type is created, a `namespace` with the same name as that type is implicitly created as well;
+definitions on that type are available inside that `namespace` without a prefix. In the example
+below, we can use the `blue` constructor without qualification because
 we are inside the `RGB` `namespace`, which is the same as `blue`'s type.
 ::::
+
+::::terse
+Type definitions implicitly create namespaces.
+::::
+
 
 ```lean
 namespace RGB
@@ -996,11 +933,8 @@ def myBlue : RGB := blue
 end RGB
 ```
 
-::::full
-Top-level definitions can also be prefixed by a namespace to put
-them in the namespace "from the outside," without having to open and
-close it.
-::::
+Top-level definitions can also be prefixed by a namespace,
+which opens the namespace temporarily for the body of the definition.
 
 ```lean
 --- this works, because the definition is qualified by `RGB.`
@@ -1011,7 +945,7 @@ def RGB.myOtherBlue : RGB := myBlue
 ```
 
 :::dev
-DHS: see my comment later in the file about guard msgs
+@dsainati1: see my comment later in the file about guard msgs
 
 ```lean
 --- this doesn't work; the identifier is unknown
@@ -1022,13 +956,12 @@ DHS: see my comment later in the file about guard msgs
 :::
 
 ::::full
-When we do this, definitions inside that namespace are available without
-qualification. So, for example, we could write the definition of `nextWorkingDay''`
-earlier inside the `Day` namespace like so:
+Similarly, we could rewrite the definition of `nextWorkingDay`
+from above inside the `Day` namespace like so:
 ::::
 
 ```lean
-def Day.nextWorkingDay'' (d : Day) : Day :=
+def Day.nextWorkingDay' (d : Day) : Day :=
   match d with
   | monday    => tuesday
   | tuesday   => wednesday
@@ -1039,21 +972,136 @@ def Day.nextWorkingDay'' (d : Day) : Day :=
   | sunday    => monday
 ```
 
-::::full
 We can also use `open` to bring the definitions of a namespace into
 the current scope; after that, we can refer to any of the namespace's
 definitions without a prefix.
-::::
 
 ```lean
 namespace MyNamespace
-def myDef : Bool := true
+def myDef : Bool := Bool.true
 end MyNamespace
 
 open MyNamespace
 
 #check myDef -- Bool
 ```
+
+:::dev
+@dsainati1: We should come to a concrete decision about whether or not we are
+putting types in comments for #check and #eval commands.
+:::
+
+If we only want to bring _some_, rather than all, of the definitions
+of a namespace into the current scope, we can use the `export` command:
+
+```lean
+namespace MyOtherNamespace
+def myHiddenDef : Bool := Bool.true
+def myVisibleDef : Bool := Bool.false
+end MyOtherNamespace
+
+export MyOtherNamespace (myVisibleDef)
+
+-- This makes `myvisibleDef` usable without qualification, but not `myHiddenDef`:
+#check myVisibleDef -- Bool
+```
+
+::::full
+In fact, this is what exactly what Lean does with the standard `Bool` type by default.
+Since it is such an important
+part of many proofs and programs, Lean implicitly `export`s many of `Bool`s functions and
+constructors. Accordingly, we can use constructors like `true` and `false` and functions like `not`
+without qualifying them with `Bool.`.
+::::
+
+::::terse
+Names from the `Bool` `namespace` are `export`ed and thus available without qualification.
+::::
+
+```lean
+#check Bool.true -- Bool
+#check true -- Bool
+```
+
+::::full
+Finally, Lean can often automatically figure out which namespace a qualified name lives in,
+saving us the need to explicitly specify it every time we use the name. Instead of
+the fully qualified style (e.g., `Day.monday`), we can opt for an implicitly qualified style,
+writing just `.monday`.
+
+When we do this, Lean tries to resolve the `.monday` name by seeing what its expected type is
+and inferring which namespace it must be from based on that type. If there is only one such
+namespace (i.e., if it is unambiguous which constructor we're referring to), then it will
+automatically resolve to the expected value.
+
+So, for example, we can also write `nextWorkingDay` as follows, using the shorter
+style for both the value being matched upon and the value being returned:
+::::
+
+::::terse
+Lean can often guess which qualified name we mean if we don't supply it explicitly:
+::::
+
+```lean
+def nextWorkingDay' (d : Day) : Day :=
+  match d with
+  | .monday    => .tuesday
+  | .tuesday   => .wednesday
+  | .wednesday => .thursday
+  | .thursday  => .friday
+  | .friday    => .monday
+  | .saturday  => .monday
+  | .sunday    => .monday
+```
+
+::::full
+In the function above, both the type of `d` and the return type of the function are declared
+to be `Day`s. When we use the `.monday` style in the function body, Lean can figure
+out that we must mean `Day.monday`. However, in the example below, Lean can't figure out
+which version of `.true` we mean, since it could either be `Bool.true` or `MyBool.true`.
+In this case, it will raise an error:
+
+:::dev
+@dsainati1: see my comment later in the file about guard msgs
+
+```lean
+-- This doesn't work: Lean doesn't know which `true` we mean
+-- BCP: Why is this an inline comment?
+-- BCP: Is the `drop all` syntax explained?
+#guard_msgs(drop all) in
+#check .true --
+```
+:::
+::::
+
+::::full
+Here, though, because `not` is a function that takes a `Bool` argument, Lean knows that
+`.true` must here be a `Bool`:
+
+```lean
+#check (Bool.not .true)
+```
+::::
+
+-- BCP: This is not going to typeset well!
+::::exercise(rating:=0) (name := "custom_namespace_checks")
+Predict the output of each of the statements below.
+Do you think their results would change depending on which namespace
+the statements appear in? How?
+
+#check .black -- Write your prediction here.
+#check Color.black -- Write your prediction here.
+#check RGB -- Write your prediction here.
+#check Playground.myFoo -- Write your prediction here.
+
+Once you have written your predictions, copy the lines from the comment into
+an active section of the book to evaluate them.
+::::
+
+:::dev
+RAB: This seems like a reasonable exercise; I'm not quite sure if/how we should grade it?
+BCP: Not all exercises need to be graded.  (In Rocq we had a notation for manually graded exercises. An optional and manually graded exercise would serve for this.)
+:::
 
 ## Constructors with Multiple Parameters
 
@@ -1090,8 +1138,8 @@ Note: The `bits` constructor illustrates a feature of multi-parameter
 declarations, both for constructors and for functions: Instead
 of writing `(x0 : Bit) (x1 : Bit) ...` we write `(x0 x1 ... : Bit)`
 since all of the variables have the same type. We could have done
-the same with the function definition `orb` above, writing
-`orb (b1 b2 : MyBool)` rather than `orb (b1 : MyBool) (b2 : MyBool)`.
+the same with the function definition `or` above, writing
+`or (b1 b2 : MyBool)` rather than `or (b1 : MyBool) (b2 : MyBool)`.
 
 The `bits` constructor acts as a wrapper for its contents.
 Unwrapping is done by pattern matching, as in the `allZero` function
@@ -1467,8 +1515,8 @@ theorem add_one (n : Nat) : n + (succ zero) = succ (n + zero) + zero := by
 ```
 
 Again, we recommend stepping through these proofs in VS Code --
-   that is, moving past each tactic with your cursor to see how it
-   changes the proof state and hovering over each argument to `rewrite` to see its type.
+that is, moving past each tactic with your cursor to see how it
+changes the proof state and hovering over each argument to `rewrite` to see its type.
 ::::
 
 ## Irreducibility, Rewriting, and Proof Engineering
@@ -1631,6 +1679,13 @@ theorem two_plus_two_eq_four : two + two = four := by
     rfl
 ```
 
+:::dev
+HG: I don't want to introduce new things here, but it occurs to me that it would actually be kind of
+nice to use `calc` or `conv` to scaffold these very intentional symbol pushing proofs. Maybe a good
+compromise would be be able to put comments that clarify that the first line "rewrites the righthand
+side to `succ (succ (succ (succ zero)))`"?
+:::
+
 ::::full
 Now that we know how addition is defined, we can use it to define multiplication:
 ::::
@@ -1670,14 +1725,14 @@ RAB: Agreed if we're keeping these visible; putting off
 :::
 
 Prove this property using rewriting with the simplification rules for addition and multiplication.
-  (We have given you the first line.) Notice how `rewrite`
-   can take any number of arguments. You can use this rewrite with all of the
-   simplification rules at once, for example.
+(We have given you the first line.) Notice how `rewrite`
+can take any number of arguments. You can use this rewrite with all of the
+simplification rules at once, for example.
 
-   After each rewrite, check the proof state by placing the cursor immediately
-   after a rule to see how the goal is changing. This happens naturally
-   as you write the proof, which makes it convenient to use `rewrite` blocks
-   with multiple rules.
+After each rewrite, check the proof state by placing the cursor immediately
+after a rule to see how the goal is changing. This happens naturally
+as you write the proof, which makes it convenient to use `rewrite` blocks
+with multiple rules.
 
 ::::exercise (rating := 2) (name := "test_mult1")
 ```lean
@@ -1703,8 +1758,9 @@ GRADE_THEOREM 2: test_mult1
 :::slidebreak
 :::
 
-When we say that Lean comes with almost nothing built-in, we really
-mean it: even testing equality is a user-defined operation!
+When we say that Lean relies on almost nothing that's truly built-in, we really mean it: even
+testing equality is not a primitive operation, but an ordinary function that we could re-implement
+ourselves as users.
 
 Here is a function `beq` that tests natural numbers for
 equality, yielding a boolean.
@@ -1955,7 +2011,7 @@ because it gets stripped out when verso files are translated to
 :::
 
 :::dev
-DHS: At the moment our convention for unfinished proofs is to end with sorry and
+@dsainati1: At the moment our convention for unfinished proofs is to end with sorry and
 guard the "proof uses sorry" warning. However after going through MRC's comments here
 I realized we don't need to do this: we can leave the proof unfinished and guard the error
 about goals being unsolved. IMO this is preferable because it illustrates more directly
@@ -1966,6 +2022,8 @@ compiled to Lean. If we just naïvely strip out #guard msgs, the generated .lean
 errors since those commands were guarding actual errors rather than just warnings. So we would need
 a way to have .lean files with errors in them permitted by the make command, or we would need to
 leave in #guard msgs that are guarding actual errors.
+
+BCP: This is a tricky balancing act!!  Let's talk about it.
 
 ```lean
 /--
@@ -2041,7 +2099,7 @@ Another example, using booleans:
 :::
 
 ```lean
-theorem notb_involutive : ∀ b : Bool, (!!b) = b := by
+theorem not_involutive : ∀ b : Bool, (!!b) = b := by
   intro b
   cases b
   case false =>
@@ -2072,7 +2130,7 @@ We can have nested case analysis:
 :::
 
 ```lean
-theorem andb_commutative : ∀ b c : Bool,
+theorem and_commutative : ∀ b c : Bool,
     (b && c) = (c && b) := by
   intro b c
   cases b
@@ -2093,7 +2151,7 @@ theorem andb_commutative : ∀ b c : Bool,
       rewrite [Bool.and_self]
       rfl
 
-theorem andb3_exchange : ∀ b c d : Bool,
+theorem and3_exchange : ∀ b c d : Bool,
     ((b && c) && d) = ((b && d) && c) := by
   intro b c d
   cases b
@@ -2152,13 +2210,13 @@ example, if `h : P` is in the context and the goal is `P`, then `exact h`
 closes the goal.  You can also transform `h` slightly, but we will
 explain how when we get to an example where we need to.
 
-::::exercise (rating := 2) (name := "orb_false_true")
+::::exercise (rating := 2) (name := "or_false_true")
 Prove the following claim.
 
 Tip: the rewrite rule to simplify `(b || false)` is called `Bool.or_false`.
 
 ```lean
-theorem orb_false_true : ∀ b : Bool,
+theorem or_false_true : ∀ b : Bool,
     (b || false) = true → b = true := by
   solution!
     intro b h
@@ -2168,7 +2226,7 @@ theorem orb_false_true : ∀ b : Bool,
 
 :::grade
 ```
-GRADE_THEOREM 2: orb_false_true
+GRADE_THEOREM 2: or_false_true
 ```
 :::
 ::::
@@ -2191,7 +2249,7 @@ GRADE_THEOREM 1: zero_nbeq_add_1
 ::::
 
 :::dev
-DHS: I move that we just cut this section entirely and come back to it when
+@dsainati1: I move that we just cut this section entirely and come back to it when
 we've presented enough of the requisite material that we can actually explain
 mwhicks1: I'm going to leave this here for now, but perhaps make a note to
 fix later on---when you've fixed it, come back and delete this, rather than
@@ -2446,11 +2504,11 @@ GRADE_MANUAL 1: negation_fn_applied_twice
 :::
 ::::
 
-::::exercise (rating := 3) (name := "andb_eq_orb")
+::::exercise (rating := 3) (name := "and_eq_or")
 Prove the following theorem.
 
 ```lean
-theorem andb_eq_orb : ∀ b c : Bool, (b && c) = (b || c) → b = c := by
+theorem and_eq_or : ∀ b c : Bool, (b && c) = (b || c) → b = c := by
   solution!
     intro b c h
     cases c
@@ -2472,7 +2530,7 @@ theorem andb_eq_orb : ∀ b c : Bool, (b && c) = (b || c) → b = c := by
 
 :::grade
 ```
-GRADE_THEOREM 3: andb_eq_orb
+GRADE_THEOREM 3: and_eq_or
 ```
 :::
 ::::

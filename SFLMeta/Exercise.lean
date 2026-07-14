@@ -136,6 +136,11 @@ instance : Inhabited SolutionEditRaw where
 
 initialize studentEditRef : IO.Ref (Array SolutionEditRaw) ← IO.mkRef #[]
 initialize teacherEditRef : IO.Ref (Array SolutionEditRaw) ← IO.mkRef #[]
+/-- Edits producing the *terse* (lecture) source variant.  `solution!` records
+the same span-to-`sorry` edit here as for the student variant (exercises are
+stubbed on slides too); `workinclass!` records its edit *only* here (the proof
+is shown in the student and solutions builds but worked live in lecture). -/
+initialize terseEditRef : IO.Ref (Array SolutionEditRaw) ← IO.mkRef #[]
 
 private def recordStudentEdit (edits : Array (Syntax × String)) : IO Unit := do
     let ranges := edits.filterMap fun (stx, replacement) => do
@@ -153,6 +158,14 @@ private def recordTeacherEdit (edits : Array (Syntax × String)) : IO Unit := do
       teacherEditRef.modify
         (·.push ⟨ranges, h⟩)
 
+private def recordTerseEdit (edits : Array (Syntax × String)) : IO Unit := do
+    let ranges := edits.filterMap fun (stx, replacement) => do
+      let range ← stx.getRange?
+      pure { range, replacement}
+    if h : ranges.size > 0 then
+      terseEditRef.modify
+        (·.push ⟨ranges, h⟩)
+
 syntax (name := solutionTerm) "solution!" "(" term ")" : term
 
 @[term_elab solutionTerm]
@@ -160,6 +173,7 @@ def elabSolutionTerm : Term.TermElab := fun stx expectedType? => do
   match stx with
   | `(solution!%$tk1 ( $e )) =>
     recordStudentEdit #[(stx, "sorry")]
+    recordTerseEdit #[(stx, "sorry")]
     recordTeacherEdit #[(tk1, "")]
     Term.elabTerm e expectedType?
   | _ => throwUnsupportedSyntax
@@ -173,6 +187,26 @@ def evalSolutionTac : Tactic := fun stx => do
   match stx with
   | `(tactic| solution!%$tk $t:tacticSeq ) =>
     recordStudentEdit #[(stx, "sorry")]
+    recordTerseEdit #[(stx, "sorry")]
+    recordTeacherEdit #[(tk, "all_goals")]
+    evalTactic t
+  | _ => throwUnsupportedSyntax
+
+/-! ## `workinclass!` marker
+
+The inverse of `solution!` along the build axis: a `workinclass!` tactic block
+is elaborated normally and *shown* in both the student and solutions builds,
+but replaced by `sorry` in the terse (lecture) build, where the instructor
+works the proof out live. -/
+
+syntax (name := workinclassTac) withPosition("workinclass!" tacticSeqIndentGt) : tactic
+
+@[tactic workinclassTac]
+def evalWorkinclassTac : Tactic := fun stx => do
+  match stx with
+  | `(tactic| workinclass!%$tk $t:tacticSeq ) =>
+    recordTerseEdit #[(stx, "sorry")]
+    recordStudentEdit #[(tk, "all_goals")]
     recordTeacherEdit #[(tk, "all_goals")]
     evalTactic t
   | _ => throwUnsupportedSyntax

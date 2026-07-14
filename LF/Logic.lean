@@ -14,7 +14,7 @@ import LF.Induction
 import LF.Poly
 import LF.Tactics
 import LF.CustomTactics
-open Nat hiding add_succ mul_succ beq beq_eq
+open Nat hiding add_succ mul_succ beq beq_eq beq_refl
 -- (OA) : added these to use Lean's Nat.
 open Nat (add add_comm add_assoc add_zero zero_add mul_zero mul_one zero_mul)
 -- /HIDEFROMHTML
@@ -581,7 +581,7 @@ theorem contrapositive (P Q : Prop) (h : P → Q) : (¬ Q → ¬ P) := by
     Recall that `¬ P` is defined as `P → False`.
     Given `P` and `P → False`, we can prove `False`,
     so `(P ∧ ¬ P) → False`, i.e. `¬ (P ∧ ¬ P)`. -/
--- / SOLUTION
+-- /SOLUTION
 
 -- GRADE_MANUAL 1: not_PNP_informal
 -- []
@@ -967,7 +967,6 @@ abbrev Even x := ∃ n : Nat, x = double n
 
 #check (Even : Nat → Prop)
 
-unseal double in
 example : Even 4 := by exists 2
   -- `4 = double 2` holds by `rfl`,
   -- but is proven automatically by `exists`
@@ -1294,7 +1293,6 @@ theorem combined_odd_even_elim_even Podd Peven n
   -- /ADMITTED
 -- []
 
--------------------------------------------------------------------------------
 /- ## Applying Theorems to Arguments -/
 
 /- FULL: Lean treats _proofs_ as first-class objects.
@@ -1353,16 +1351,14 @@ theorem combined_odd_even_elim_even Podd Peven n
 /-- warning: declaration uses `sorry` -/
 #guard_msgs in
 example (x y z : Nat) : x + (y + z) = (z + y) + x := by
-
-/- It appears at first sight that we ought to be able to prove this
-    be rewriting with `add_comm` twice to make the two sides match.
-    The problem is that the second rewrite will undo the effect
-    of the first. -/
-
   rw [add_comm]
   rw [add_comm]
   sorry
-  /- We are back where we started... -/
+
+/- It appears at first sight that we ought to be able to prove this
+    be rewriting with `add_comm` twice to make the two sides match.
+    The problem is that the second rewrite undoes the effect
+    of the first, leaving us back where we started... -/
 
 /- We can fix this by applying `add_comm` to the arguments we want it
     to be instantiated with, in much the same way as we apply
@@ -1385,90 +1381,10 @@ example (x y z : Nat) : x + (y + z) = (z + y) + x := by
 
 theorem identity {P : Prop} : P → P := fun h => h
 
--- JC: Omitting this example below because `apply` in Lean works like `eapply` in Rocq,
---     and I don't think this is the right moment to introduce the concept of
---     metavariables and the fact that goals are just term holes.
-/- Here's another example of using a theorem about lists like a function.
-    Suppose we have proven the following simple fact about lists...
-
-theorem In_not_nil : ∀ α (x : α) (xs : List α),
-    In x xs → xs ≠ [] := by
-  -- FOLD
-  intro α x xs H Hxs; rw [Hxs] at H; cases H
-  -- /FOLD
-
-/- FULL: (i.e., if a list `xs` contains some element `x`,
-    then `xs` must be nonempty.) -/
-
-/- Note that one quantified variable (`x`) does not appear in the conclusion
-    (`xs ≠ []`). Intuitively, we should be able ot use this theorem to prove
-    the special case where `x` is `42`. However, simply invoking the tactic
-    `apply In_not_nil` will fail because it cannot infer the value of `x`. -/
-
-example : ∀ xs : List Nat, In 42 xs → xs ≠ [] := by
-  intros xs H
-  apply In_not_nil
-  exact H
-
-/- There are several way sto work around this: -/
-
-/- We can use `apply ... at ...`: -/
-example : ∀ xs : List Nat, In 42 xs → xs ≠ [] := by
-  intros xs H
-  apply In_not_nil at H
-  exact H
-
-/- We can explicitly supply the argument `42` for the parameter `x`: -/
-example : ∀ xs : List Nat, In 42 xs → xs ≠ [] := by
-  intros xs H
-  apply In_not_nil (x := 42)
-  exact H
-
-/- Or we can explicitly apply the argument to the lemma directly: -/
-example : ∀ xs : List Nat, In 42 xs → xs ≠ [] := by
-  intros xs H
-  apply In_not_nil Nat 42
-  exact H
-
-/- We can also provide the `exact` proof by applying the lemma
-    to the hypothesis and allow the other arguments to be inferred: -/
-example : ∀ xs : List Nat, In 42 xs → xs ≠ [] := by
-  intros xs H
-  exact In_not_nil _ _ _ H
--/
-
--- FULL
-/- You can "use a theorem as a function" in this way with almost any tactic
-    that can take a theorem's name as an argument.
-
-    Note, also, that theorem application uses the same inference mechanisms
-    as function application; thus, it is possible, for example, to supply
-    wildcards as arguments to be inferred, or to declare some hypotheses
-    to a theorem as implicit by default. These features are illustrated in
-    the proof below. (The details of how this proof works are not critical
-    -- the goal here is just to illustrate applying theorems to arguments.) -/
-
-example {n : Nat} {ns : List Nat}
-    (h : In n (List.map (fun m => m * 0) ns)) : n = 0 := by
-  let ⟨m, hm, _⟩ := (In_map_iff _ _ _ _ _).mp h
-  rw [mul_zero] at hm; rw [hm]
-
-/- We will see many more examples in later chapters. -/
--- /FULL
-
 -- HIDEFROMADVANCED
 -- TERSE
 
--- HIDE
 namespace FunctionTheoremQuiz
--- /HIDE
-
--- HIDEFROMHTML
-/--  warning: declaration uses `sorry` -/
-#guard_msgs in
-example (n m : Nat) (h1 : n = m) (h2 : m = 42)
-    (trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c) : True := by
--- /HIDEFROMHTML
 
 -- QUIZ
 /- Suppose we have
@@ -1488,9 +1404,10 @@ example (n m : Nat) (h1 : n = m) (h2 : m = 42)
     3. `n = 42`
     4. Does not typecheck
    -/
-  -- FOLD
-  have : n = 42 := trans_eq Nat n m 42 h1 h2
-  -- /FOLD
+-- INSTRUCTORS: Answer:
+-- example (n m : Nat) (h1 : n = m) (h2 : m = 42)
+--    (trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c) : True := by
+--   have : n = 42 := trans_eq Nat n m 42 h1 h2
 -- /QUIZ
 
 -- QUIZ
@@ -1511,9 +1428,7 @@ example (n m : Nat) (h1 : n = m) (h2 : m = 42)
     3. `n = 42`
     4. Does not typecheck
    -/
-  -- FOLD
-  have : n = 42 := trans_eq _ _ _ _ h1 h2
-  -- /FOLD
+-- INSTRUCTORS: Answer: have : n = 42 := trans_eq _ _ _ _ h1 h2
 -- /QUIZ
 
 -- QUIZ
@@ -1534,9 +1449,7 @@ example (n m : Nat) (h1 : n = m) (h2 : m = 42)
     3. `42 = n → m = n`
     4. Does not typecheck
    -/
-  -- FOLD
-  have : 42 = n → m = n := trans_eq Nat m 42 n h2
-  -- /FOLD
+-- INSTRUCTORS: Answer:   have : 42 = n → m = n := trans_eq Nat m 42 n h2
 -- /QUIZ
 
 -- QUIZ
@@ -1557,9 +1470,7 @@ example (n m : Nat) (h1 : n = m) (h2 : m = 42)
     3. `n = 42 → 42 = m → n = m`
     4. Does not typecheck
    -/
-  -- FOLD
-  have : 42 = n → n = m → 42 = m := trans_eq _ 42 n m
-  -- /FOLD
+-- INSTRUCTORS: Answer: have : 42 = n → n = m → 42 = m := trans_eq _ 42 n m
 -- /QUIZ
 
 -- QUIZ
@@ -1580,25 +1491,17 @@ example (n m : Nat) (h1 : n = m) (h2 : m = 42)
     3. `a = 42`
     4. Does not typecheck
    -/
-  -- FOLD
-  /- have := trans_eq _ _ _ _ H2 H1 -/
-  -- /FOLD
+-- INSTRUCTORS: Answer: have := trans_eq _ _ _ _ H2 H1
 -- /QUIZ
 
-  -- HIDEFROMHTML
-  sorry
-  -- /HIDEFROMHTML
-
--- HIDE
 end FunctionTheoremQuiz
--- /HIDE
 
 -- /TERSE
 -- /HIDEFROMADVANCED
 
--------------------------------------------------------------------------------
 /- ## Working with Decidable Properties -/
 
+-- BCP: This will need better typesetting...
 /- We've seen two different ways of expressing logical claims in Lean:
     with _booleans_ (of type `Bool`), and with _propositions_ (of type `Prop`).
     Here are the key differences between `Bool` and `Prop`:
@@ -1614,7 +1517,7 @@ end FunctionTheoremQuiz
     mechanical procedure for deciding whether or not it is `true`.
 
     This means that, for example, the type `Nat → Bool` is inhabited only by
-    functions that, given a `Nat, always yield either `true` or `false` in
+    functions that, given a `Nat`, always yield either `true` or `false` in
     finite time; this, in turn, means (by a standard computability argument)
     that there is _no_ function in `Nat → Bool` that checks whether a given
     number is the code of a terminating Turing machine.
@@ -1646,7 +1549,6 @@ end FunctionTheoremQuiz
 example : even 42 = true := rfl
 
 /- ... or that there exists some `k` such that `n = double k`. -/
-unseal double in
 example : Even 42 := by dsimp [Even]; exists 21
 
 /- Of course, it would be deeply strange if these two characterizations
@@ -1673,7 +1575,7 @@ theorem even_double_conv (n : Nat) : ∃ k : Nat,
   induction n
   case zero =>
     rw [even_zero]; dsimp
-    exists 0; rw [double_zero]
+    exists 0  -- (`0 = double 0` is closed by `exists`'s final `rfl`)
   case succ n' ihn =>
     let ⟨k', ihk⟩ := ihn
     rw [even_succ]
@@ -1732,12 +1634,17 @@ theorem nonzero_bool_prop (n : Nat) :
 
     Again, these two notions are equivalent: -/
 
+/- (For the reverse direction we need the simple fact that `==` is
+    reflexive.) -/
+-- BCP: @dsainati1 wonders whether this tactic has been explained.
+theorem beq_refl (n : Nat) : (n == n) = true := decide_eq_true rfl
+
 theorem beq_eq_true (n1 n2 : Nat) :
     (n1 == n2) = true ↔ n1 = n2 := by
   -- FOLD
   constructor
   case mp => apply beq_eq
-  case mpr => intro H; rw [H, eqb_refl]
+  case mpr => intro H; rw [H, beq_refl]
   -- /FOLD
 
 -- HIDEFROMADVANCED
@@ -1772,9 +1679,8 @@ abbrev is_even_prime (n : Nat) : Bool :=
 
 -- JC: This was originally 1000 but Lean's default recursion depth
 --     is not large enough to reduce `double 50` lol
-unseal double in
-example : Even 100 := by
 /- The most direct way to prove this is to give the value of `k` explicitly. -/
+example : Even 100 := by
   exists 50
 
 /- The proof of the corresponding boolean statement is simpler,
@@ -1809,14 +1715,14 @@ example : even 101 = false := rfl
 /- In contrast, propositional negation can be difficult to work with directly.
     For example, suppose we state the nonevenness of `101` propositionally: -/
 
--- unseal even in -- JC (TODO): mark `even` as irreducible
-example : ¬ Even 101 := by
+-- JC (TODO): mark `even` as irreducible (this example was `unseal even in`)
 /- Proving this directly -- by assuming that there is some `n` such that
     `101 = double n` and then somehow reasoning to a contradiction --
     would be rather complicated.
 
     But if we convert it to a claim about the boolean `even` function,
     we can let Lean do the work for us. -/
+example : ¬ Even 101 := by
   -- WORKINCLASS
   intro h; apply (even_bool_prop 101).mpr at h
   dsimp [even] at h; contradiction
@@ -1832,7 +1738,7 @@ theorem add_beq_true (n m p : Nat) (h : (n == m) = true) :
     (n + p == m + p) = true := by
   -- WORKINCLASS
   apply (beq_eq_true n m).mp at h
-  rw [h, eqb_refl]
+  rw [h, beq_refl]
   -- /WORKINCLASS
 
 /- FULL: We won't discuss reflection any further for the moment,
@@ -2089,15 +1995,13 @@ theorem and_assoc_eq (P Q R : Prop) : ((P ∧ Q) ∧ R) = (P ∧ (Q ∧ R)) := b
 /- Here is an example of where using `=` instead of `↔` is more convenient:
     we show that it's possible to "flip" three conjoined propositions. -/
 
-theorem and_comm_flip (P Q R : Prop) : (P ∧ Q ∧ R) ↔ (R ∧ Q ∧ P) := by
-
 /- This can be proven by constructing the `↔`, then destructing the `↔`
     in `add_comm` and `add_assoc`, then applying them a few times.
     But this is a lot of hassle, when the proof is conceptually simple:
     we flip `Q` and `R`, then we flip that conjunction with `P`, and we
     finish by associativity. By using `and_comm_eq`, this is easily done
     by rewriting equal propositions. -/
-
+theorem and_comm_flip (P Q R : Prop) : (P ∧ Q ∧ R) ↔ (R ∧ Q ∧ P) := by
   rw [and_comm_eq Q R, and_comm_eq P, and_assoc_eq]
 
 /- The pattern of deriving an equality of propositions out of `↔`
@@ -2168,7 +2072,7 @@ example : (fun x => x + 2) = (fun x => x + (pred 3)) := rfl
     ```
 
     This is known as _functional extensionality_,
-    which Lean provides as funext`. -/
+    which Lean provides as `funext`. -/
 
 #check (fun f g => funext (f := f) (g := g) :
     ∀ {α β : Type} (f g : α → β), (∀ x, f x = g x) → f = g)

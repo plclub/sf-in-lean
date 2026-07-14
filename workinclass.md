@@ -1,5 +1,26 @@
 # The `WORKINCLASS` directive: current status and proposed fixes
 
+> **STATUS (2026-07-08): IMPLEMENTED — Option B.** (Implementation by Claude.)
+> `workinclass!` tactic added in `SFLMeta/Exercise.lean` (records its span into
+> a new `terseEditRef`; the keyword becomes `all_goals` in the student and
+> solutions variants, the whole span becomes `sorry` in the terse variant).
+> `SFLMeta/Save.lean` now carries **three** source variants (teacher, student,
+> terse) through `Block.leanSaved` (three children; traversal selects by
+> `showSolutions` / `isDraft`), and `emitSavedImpl` keys the emitted file on
+> the build-variant string. `solution!` also records its student edit into
+> `terseEditRef`, so exercises remain stubbed in the terse build.
+> `scripts/to_verso.py` (`_normalize_workinclass_markers`,
+> `_convert_workinclass_markers`) rewrites WORKINCLASS regions into
+> `workinclass!` blocks, normalizes the `FULL: ADMITTED`/`TERSE: WORKINCLASS`
+> and FULL/TERSE-wrapped marker combinations down to plain `solution!`
+> regions, and handles the whole-declaration form (marker before `theorem`).
+> **Known limitation:** a *narrative* region (body containing column-0 prose
+> comments rendered as book text) cannot become one code block; its markers
+> are dropped and the terse build shows the discussion. The only such region
+> is IndProp.lean's "stuck proof" demo (`example : ∀ n, Ev n → Even n`),
+> which ends in `sorry` anyway.
+> The analysis below is retained for background.
+
 ## Intended semantics
 
 `WORKINCLASS` marks a proof (or a sub-region of a proof) that the
