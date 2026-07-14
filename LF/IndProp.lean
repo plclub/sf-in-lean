@@ -531,8 +531,8 @@ inductive Le : Nat → Nat → Prop where
 scoped infix:50 (priority := high) " ≤ " => Le
 
 /- FULL: This definition is a bit simpler and more elegant than the
-   Boolean function `leb` we defined in `Basics`.  As usual, `Le`
-   and `leb` are equivalent, and there is an exercise about that
+   Boolean function `ble` we defined in `Basics`.  As usual, `Le`
+   and `ble` are equivalent, and there is an exercise about that
    later. -/
 
 example : 3 ≤ 5 := by
@@ -1471,7 +1471,7 @@ example : ∀ n, Ev n → Even n := by
   intro n h
   inversion h
   /- h = ev_0 -/
-  case ev_0 => exists 0; rw [double_zero]
+  case ev_0 => exists 0
   /- h = ev_succ_succ n' h' -/
   case ev_succ_succ n' h' =>
   /- Unfortunately, the second case is harder.  We need to show
@@ -1544,7 +1544,7 @@ theorem ev_Even : ∀ n, Ev n → Even n := by
   intro n h
   induction h
   /- h = ev_0 -/
-  case ev_0 => exists 0; rw [double_zero]
+  case ev_0 => exists 0
   /- h = ev_succ_succ n' h',  with ih : Even n' -/
   case ev_succ_succ n' h' ih =>
     let ⟨k, hk⟩ := ih
@@ -1621,6 +1621,56 @@ theorem ev_plus_plus : ∀ n m p,
 /- /ADMITTED -/
 /- [] -/
 
+-- FULL
+/-
+  Another example of a proposition that can be characterized both recursively and
+  inductively is the `In` predicate we defined in the Logic chapter. As a reminder,
+  the recursive definition we saw looked like this:
+-/
+-- /FULL
+
+-- TERSE
+/-
+  Recall the definition of `In` from last chapter:
+-/
+-- /TERSE
+
+@[irreducible]
+def In' {α : Type} (x : α) (xs : List α) : Prop :=
+  match xs with
+  | [] => False
+  | x' :: xs' => x = x' ∨ In' x xs'
+
+/-
+  We can also write this definition inductively like so:
+-/
+
+inductive In_Inductive {α : Type} (a : α) : List α → Prop
+  | head (as : List α) : In_Inductive a (a::as)
+  | tail (b : α) {as : List α} : In_Inductive a as → In_Inductive a (b::as)
+
+/- In fact, this is exactly how Lean defines this proposition, which it calls `Mem`, and which
+   is written `x ∈ l`. A good exercise to test your understanding of induction on
+   evidence is to prove the equivalence of these definitions: -/
+
+/- EX2 (in_mem) -/
+theorem in_mem α (x : α) (l : List α) : In x l ↔ x ∈ l := by
+  /- ADMITTED -/
+  constructor
+  . intro h; induction l with
+    | nil => rw [In_nil] at h; contradiction
+    | cons hd tl ih =>
+      rw [In_cons] at h
+      obtain h | h := h
+      . subst h; constructor
+      . constructor; exact ih h
+  . intro h; induction h with
+    | head l' => rw [In_cons]; left; rfl
+    | tail y h ih => rw [In_cons]; right; assumption
+/- /ADMITTED -/
+/- [] -/
+
+/- The characterizing lemmas for `∈` are called `List.mem_nil_iff` and `List.mem_cons` -/
 
 /- ####################################################### -/
 /- ** Multiple Induction Hypotheses -/
@@ -1761,19 +1811,19 @@ theorem Perm3_symm : ∀ (α : Type) (l₁ l₂ : List α),
 /- If you find yourself dealing with deeply nested `cases` in this proof,
    think back to `Logic` where you learned about the `obtain` tactic -/
 theorem Perm3_In : ∀ (α : Type) (x : α) (l₁ l₂ : List α),
-    Perm3 l₁ l₂ → In x l₁ → In x l₂ := by
+    Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
   /- ADMITTED -/
   intros α x l₁ l₂ hPerm hIn
   induction hPerm
   case perm3_swap12 a b c =>
-    rw [In_cons, In_cons, In_cons, In_nil] at *
+    rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
     obtain h | h | h | h := hIn
     . right; left; assumption
     . left; assumption
     . right; right; left; assumption
     . contradiction
   case perm3_swap23 a b c =>
-    rw [In_cons, In_cons, In_cons, In_nil] at *
+    rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
     obtain h | h | h | h := hIn
     . left; assumption
     . right; right; left; assumption
@@ -1787,7 +1837,7 @@ theorem Perm3_In : ∀ (α : Type) (x : α) (l₁ l₂ : List α),
 
 /- EX1? (Perm3_NotIn) -/
 theorem Perm3_NotIn : ∀ (α : Type) (x : α) (l₁ l₂ : List α),
-    Perm3 l₁ l₂ → ¬In x l₁ → ¬In x l₂ := by
+    Perm3 l₁ l₂ → ¬x ∈ l₁ → ¬x ∈ l₂ := by
   /- ADMITTED -/
   intros α x l₁ l₂ hPerm hIn hContra
   apply hIn; apply Perm3_In
@@ -1802,15 +1852,15 @@ theorem Perm3_NotIn : ∀ (α : Type) (x : α) (l₁ l₂ : List α),
 example : ¬ Perm3 [1, 2, 3] [1, 2, 4] := by
   /- ADMITTED -/
   intro h; apply (Perm3_In Nat 3) at h
-  have h4 : ¬In 3 [1, 2, 4] := by
-    rw [In_cons, In_cons, In_cons, In_nil]; intro h4
+  have h4 : ¬3 ∈ [1, 2, 4] := by
+    rw [List.mem_cons, List.mem_cons, List.mem_cons]; intro h4
     obtain h | h | h | h := h4
     . contradiction
     . contradiction
     . contradiction
     . contradiction
   apply h4; apply h
-  rw [In_cons, In_cons, In_cons, In_nil]
+  rw [List.mem_cons, List.mem_cons, List.mem_cons]
   right; right; left; rfl
 /- /ADMITTED -/
 /- [] -/
@@ -2130,8 +2180,8 @@ theorem plus_lt : ∀ (n₁ n₂ m : Nat),
 /- GRADE_THEOREM 1: plus_lt -/
 /- [] -/
 
-/- EX4? (leb_le) -/
-theorem leb_complete : ∀ (n m : Nat),
+/- EX4? (ble_le) -/
+theorem ble_complete : ∀ (n m : Nat),
   n ≤? m = true → n ≤ m := by
   /- ADMITTED -/
   intro n m h; induction n generalizing m
@@ -2141,54 +2191,54 @@ theorem leb_complete : ∀ (n m : Nat),
     case zero =>
       contradiction
     case succ m' =>
-      rw [succ_leb_succ] at h
+      dsimp [Nat.ble] at h
       apply n_le_m__succ_n_le_succ_m
       apply ih; apply h
 /- /ADMITTED -/
-/- GRADE_THEOREM 2: leb_complete -/
+/- GRADE_THEOREM 2: ble_complete -/
 
-theorem leb_correct : ∀ n m,
+theorem ble_correct : ∀ n m,
   n ≤ m →
   n ≤? m = true := by
   /- ADMITTED -/
   intro n m h
   induction n generalizing m
-  case zero => rw [zero_leb]
+  case zero => dsimp [Nat.ble]
   case succ n' ih =>
     cases m
     case zero => contradiction
     case succ m' =>
-      rw [succ_leb_succ]
+      dsimp [Nat.ble]
       apply succ_n_le_succ_m__n_le_m at h
       apply ih at h
       assumption
 /- /ADMITTED -/
-/- GRADE_THEOREM 2: leb_correct -/
+/- GRADE_THEOREM 2: ble_correct -/
 
 /- Hint: The next two can easily be proved without using `induction`. -/
 
-/- LATER: AC'21: To me what would be interesting for this last lemma `leb_iff`
+/- LATER: AC'21: To me what would be interesting for this last lemma `ble_iff`
    would be to show that the proofs of completeness and correctness can
    be carried out in a single induction. -/
 
-theorem leb_iff : ∀ n m,
+theorem ble_iff : ∀ n m,
   n ≤? m = true ↔ n ≤ m := by
   /- ADMITTED -/
   intro n m; apply Iff.intro
-  . apply leb_complete
-  . apply leb_correct
+  . apply ble_complete
+  . apply ble_correct
 /- /ADMITTED -/
-/- GRADE_THEOREM 1: leb_iff -/
+/- GRADE_THEOREM 1: ble_iff -/
 
-theorem leb_true_trans : ∀ n m o,
+theorem ble_true_trans : ∀ n m o,
   n ≤? m = true → m ≤? o = true → n ≤? o = true := by
   /- ADMITTED -/
   intros n m o
-  rw [leb_iff, leb_iff, leb_iff]
+  rw [ble_iff, ble_iff, ble_iff]
   apply le_trans
 /- /ADMITTED -/
 /- /HIDE -/
-/- GRADE_THEOREM 1: leb_true_trans -/
+/- GRADE_THEOREM 1: ble_true_trans -/
 /- [] -/
 
 
@@ -2707,9 +2757,10 @@ inductive EmptyRelation : Nat → Nat → Prop where
   /- SOLUTION -/
 /- /SOLUTION -/
 
+/- Fix after https://github.com/plclub/sf-in-lean/issues/52 -/
 theorem empty_relation_is_empty : ∀ n m, ¬ EmptyRelation n m := by
   /- ADMITTED -/
-  intros n m contra; inversion contra
+  intros n m contra; cases contra
 /- /ADMITTED -/
 /- GRADE_THEOREM 2: empty_relation_is_empty -/
 /- [] -/
