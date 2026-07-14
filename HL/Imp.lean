@@ -13,7 +13,7 @@ import SFLMeta.Quiz
 import SFLMeta.SlideBreak
 import SFLMeta.Solution
 import SFLMeta.Terse
-import LF.Maps
+import LF.Typeclasses
 import Lean.PrettyPrinter.Delaborator
 import Lean.PrettyPrinter.Parenthesizer
 open Verso.Genre Manual

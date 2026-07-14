@@ -83,6 +83,12 @@ class HasOne (α : Type) where
 
 While the definition is essentially the same, including the constructor {name}`HasOne.mk`, the usage of typeclasses is different, and what allows us to use them to express ad hoc polymorphism. Instead of using `def` to define inhabitants of this type, we will instead use the `instance` keyword:
 
+:::dev
+From GitHub (@chenson2018): Part of the point here is that we don't usually refer to instances
+explicitly, even me providing an explicit name is for pedagogy reasons. I'll make it more explicit
+in the text that what we're looking for in the infoview is the presence of this instance.
+:::
+
 ```lean
 instance instHasOneNat : HasOne Nat where
   one := 1
@@ -440,6 +446,13 @@ When we use maps in later chapters, we'll need several fundamental facts about h
 Even if you don't work the following exercises, make sure you thoroughly understand the statements of the lemmas!
 
 (Some of the proofs require the functional extensionality axiom, which was discussed in the Logic chapter.)
+
+```lean
+theorem update_eq (m : TotalMap α β) (a : α) (b : β) : (a →ₜ b; m)[a] = b := by
+  unfold update
+  rewrite [getElem_def, ReflBEq.rfl, cond_true]
+  rfl
+```
 
 :::dev
 exercises here...
