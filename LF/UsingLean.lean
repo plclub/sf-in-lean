@@ -391,21 +391,18 @@ example (n : Nat) : square n + 0 = n * n := by
    what's going on.
 
    Later in this volume, we will introduce the more powerful automated
-   tactic `simp`, and in following volumes we introduce the even-more
-   powerful `grind`. These are tactics that can sometimes solve entire
-   complex proofs by themselves, and are correspondingly extremely
-   common in real-world Lean developments.
+   tactic `simp`, which can sometimes solve complex goals by itself and is
+   accordingly extremely common in real-world Lean developments.
 
-   But using these tactics now does not help (in fact, it hurts!) the
+   But, using this tactic now does not help (in fact, it hurts!) the
    process of learning logical reasoning, formal theorem proving, and
    Lean. Additionally, real Lean programmers are careful when using
    automation: it can hurt the readability of a proof, and real-world
    Lean is often used to _communicate_ a result as much as to prove
-   it. We will continue to use only light automation, like `dsimp` and
-   `rw`, for this volume so that you have a firm grasp of both the
+   it. We will continue to use only simple tactics, like `dsimp` and
+   `rw`, for most of this volume so that you have a firm grasp of both the
    logic behind the proofs you are writing and the ways to structure
    those proofs to make your logic clear.
-
  -/
 -- /FULL
 
