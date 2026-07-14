@@ -74,7 +74,8 @@ theorem test_mult1_nat : (3 * 3 : Nat) = 9 := by
   which enable more powerful and concise proofs.
 
   In fact, from now on, we will use the built-in `Nat` type and its powerful
-  features.
+  features. To do so, write `Nat.<theorem>` to reference Lean's version
+  of `<theorem>`.
 -/
 
 /-
@@ -231,7 +232,7 @@ theorem mul_three_beq (p : Nat) :
 /-
   In Lean proofs, long `rw` chains are useful, but they are sometimes hard to
   read because the intermediate goals are invisible. Furthermore, sometimes we
-  _know_ exactly how we want to maniuplate the terms of a proof, but don't want
+  _know_ exactly how we want to manipulate the terms of a proof, but don't want
   to have the tactics like `add_comm` and `add_assoc` "guess" which subterms to
   rewrite.
 
@@ -369,6 +370,44 @@ example (n : Nat) : square n + 0 = n * n := by
 
 /- Like `rw` and `exact`, `dsimp` also has a `?` version that searches for
    functions to simplify by. Many Lean tactics have `?` versions; try it out if you are unsure. -/
+
+-- DEV
+-- RAB : TODO- hard pointer needed to this section once we
+-- versify. Also, we may want a pointer to where we introduce `simp`
+-- (and _maybe_ `grind` in the next volume).
+-- /DEV
+
+-- FULL
+/- ## A New Step Towards Automation -/
+
+-- BCP: This section reference should be a live pointer, at least in the HTML.
+/- In the section on `Irreducibility, Rewriting, and Proof
+   Engineering` of `Basics.lean`, we hinted at introducing more
+   automated tactics than `rewrite` for writing proofs. The
+   first of these is `dsimp`: by using `dsimp`, we allow Lean to introduce a
+   small amount of its own automatic reasoning using other basic
+   tactics like `rfl`. If you're ever confused by what `dsimp` is
+   doing, don't be afraid to switch back to `rewrite` to examine
+   what's going on.
+
+   Later in this volume, we will introduce the more powerful automated
+   tactic `simp`, and in following volumes we introduce the even-more
+   powerful `grind`. These are tactics that can sometimes solve entire
+   complex proofs by themselves, and are correspondingly extremely
+   common in real-world Lean developments.
+
+   But using these tactics now does not help (in fact, it hurts!) the
+   process of learning logical reasoning, formal theorem proving, and
+   Lean. Additionally, real Lean programmers are careful when using
+   automation: it can hurt the readability of a proof, and real-world
+   Lean is often used to _communicate_ a result as much as to prove
+   it. We will continue to use only light automation, like `dsimp` and
+   `rw`, for this volume so that you have a firm grasp of both the
+   logic behind the proofs you are writing and the ways to structure
+   those proofs to make your logic clear.
+
+ -/
+-- /FULL
 
 /-
   ######################################################################

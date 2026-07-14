@@ -361,6 +361,11 @@ theorem beq_self : ∀ n : Nat,
     exact ih
 -- /WORKINCLASS
 
+-- DEV
+-- RAB: We need to make sure this section below is true! It won't be once we switch
+--      to the indexed style.
+-- /DEV
+
 -- FULL
 /-
   Up until this point, we have been explicitly writing out all the parameters
@@ -575,7 +580,7 @@ theorem even_succ (n : Nat) :
     rw [even_zero, even_one]
     rfl
   | succ n' ih =>
-    rw [even, ih, not_involutive]
+    rw [even, ih, notb_involutive]
 -- /ADMITTED
 -- GRADE_THEOREM 1: even_succ
 -- []
