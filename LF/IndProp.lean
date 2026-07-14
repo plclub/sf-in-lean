@@ -1650,7 +1650,7 @@ inductive In_Inductive {α : Type} (a : α) : List α → Prop
   | tail (b : α) {as : List α} : In_Inductive a as → In_Inductive a (b::as)
 
 /- In fact, this is exactly how Lean defines this proposition, which it calls `Mem` and which
-   is written `x ∈ l`. A good exercise to test your understanding of induction on
+   is written `x ∈ l` (the Unicode symbol is written \in). A good exercise to test your understanding of induction on
    evidence is to prove the equivalence of these definitions: -/
 
 /- EX2 (in_mem) -/
