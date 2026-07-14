@@ -1534,12 +1534,18 @@ changes the proof state and hovering over each argument to `rewrite` to see its 
 ## Irreducibility, Rewriting, and Proof Engineering
 
 ::::full
+:::dev
+@dsainati11:
+I believe we had wanted to experiment with changing this to setting the definition after defining the function and its simplification rules, so this way we don't ever need to unseal. IMO if we are going to be modifying the wording here we should also update the annotations to this lighter weight version?
+@rogerburtonpatel1:
+Let's update once the lighter-weight version is integrated.
+:::
 The definitions and proofs above use a few somewhat mysterious conventions:
 we write `@[irreducible]` above some of our definitions, and we
 write `unseal` before some of our proofs and `seal` after them.
 We use `@[irreducible]` and `seal` to prevent a function like `add`
 from _computing_ on its arguments, while `unseal` temporarily enables
-this computation for special cases like writing simplification rules.
+this computation for special situations like writing simplification rules.
 
 During a proof using a function like `add`, we won't let the function compute
 all at once, but instead use the _simplification rules_
@@ -1564,14 +1570,22 @@ The purpose of this style is twofold:
   computable properties at all.
   In real-world Lean developments, this is the standard.
 
+:::dev
+@rogerburtonpatel1: Suggested change:
+2. Practically, it prepares you to write more sophisticated Lean proofs on structures
+  that are _only_ meant to be accessed through simplification rules, and on which trying to force computation to run all the way can have disastrous results on performance and readability.
+@dsainati11:
+Still not sure of the wording on this one. Written this way IMO it begs the question of what we could possibly be talking about. Can we just cut the whole thing after the comma and leave it at that?
+:::
+
 Lean, like any other programming language, has conventions and best practices
-for writing good software. You are probably familiar with object-oriented programming,
-for example, in which it is considered good practice not to access the
+for writing good software. In object-oriented programming,
+for example, it is considered good practice not to access the
 fields of an object directly, but instead to use getter and setter methods.
 This helps to encapsulate the object's definition, so that, if its fields or implementation
-change, the interface it exposes to the outside world remains the same.
-In simple examples it may seem trivial or even silly to do so; in complex codebases,
-it is the only way to maintain crucial invariants that prevent a system from breaking down.
+ever change, the interface it exposes to the outside world remains the same.
+In simple examples such conventions may seem trivial or even silly; in complex codebases,
+it is the only way to maintain crucial invariants that prevent a system from becoming unmaintainable.
 
 The same principle applies to definitions and proofs in Lean.
 In idiomatic Lean, it is considered poor style to "peek" through
@@ -1579,10 +1593,13 @@ definitions by using `rfl` to implicitly simplify expressions
 that aren't syntactically identical. If you take a look at the proofs of
 `add_zero` and `add_succ` above, you will notice this is exactly what we did
 when we used the `rfl` tactic.
+:::dev
+@bcpierce00: This seems to be saying that what we did before was wrong...?
+:::
 
 In this text, to enforce idiomatic style, we mark
 definitions with `@[irreducible]` to prevent this peeking,
-also called *definitional equality abuse* (*defeq abuse*, for short).
+also called *definitional equality abuse* (or *defeq abuse*).
 The `unseal` we wrote before the proof of `add_zero` temporarily
 allows this, but only in that proof. We allow unsealing the definition
 for `add_zero` and `add_succ`, but then expect that from this point on,
@@ -1598,9 +1615,8 @@ _will_ have definitions that are not meant to be reduced. We use
 `@[irreducible]`, `unseal`, and `seal` here to enforce the style of
 using simplification rules now so that it is natural to you moving forward.
 
-
-Simplification rules- in this case, the theorems `add_zero` and `add_succ`-
-also follow a particular pattern. Let's look again at the definition of `add`:
+Simplification rules -- in this case, the theorems `add_zero` and `add_succ` --
+follow a particular pattern. Let's look again at the definition of `add`:
 
 ```lean
 namespace AddPlayground
@@ -1663,19 +1679,16 @@ by the lemmas, using `@[irreducible]` to enforce this policy,
 and only `unseal`ing the definition in the proofs of those lemmas themselves.
 
 Eventually, we will introduce a way to _automatically_ derive
-simplification rules from a function, and then a way to automatically _apply_ them.
+simplification rules from a function, plus a way to automatically _apply_ them.
 Real Lean programmers do this using tactics like `dsimp`, `simp`, and `grind`.
 
 For now, though, these tactics are forbidden by our autograder.
-This is so you will write the proofs out yourself now, so that you can learn!
 Real-world Lean uses automation extensively, and you will learn to do so
 by the end of this book and in the following volumes.
-Right now, it is important that you work through these early concepts
-thoroughly and without automation.
-By the time the more powerful tools are available,
+For the moment it is important that you work through these early concepts
+by hand, without automation.
+By the time the more powerful tools are introduced,
 you will have the foundation to use them with precision and skill.
-
-With all this in mind, we will continue with the chapter.
 
 ::::
 

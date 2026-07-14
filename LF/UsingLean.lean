@@ -380,10 +380,11 @@ example (n : Nat) : square n + 0 = n * n := by
 -- FULL
 /- ## A New Step Towards Automation -/
 
-/- Recall in section `Irreducibility, Rewriting, and Proof
+-- BCP: This section reference should be a live pointer, at least in the HTML.
+/- In the section on `Irreducibility, Rewriting, and Proof
    Engineering` of `Basics.lean`, we hinted at introducing more
-   automated tactics than `rewrite` for writing proofs. `dsimp` is the
-   first of these: by using `dsimp`, we allow Lean to introduce a
+   automated tactics than `rewrite` for writing proofs. The
+   first of these is `dsimp`: by using `dsimp`, we allow Lean to introduce a
    small amount of its own automatic reasoning using other basic
    tactics like `rfl`. If you're ever confused by what `dsimp` is
    doing, don't be afraid to switch back to `rewrite` to examine
