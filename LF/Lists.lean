@@ -38,6 +38,8 @@
 import LF.Induction
 import LF.UsingLean
 
+namespace Lists
+
 -- ######################################################################
 -- # Pairs of Numbers
 
@@ -215,7 +217,7 @@ namespace NatList
 
 -- Don't worry too much about what this is doing
 scoped infixr:65 " :: " => cons
-macro (priority := high) "[ " elems:term,* "]" : term => do
+scoped macro (priority := high) "[ " elems:term,* "]" : term => do
   elems.getElems.foldrM (``(cons $(⟨·⟩) $(⟨·⟩))) (← ``(nil))
 
 -- Now these all mean exactly the same thing:
@@ -1788,3 +1790,5 @@ def count_trues (x : Baz) : Nat :=
 
 -- []
 -- /HIDE
+
+end Lists
