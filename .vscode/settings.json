@@ -1,0 +1,7 @@
+{
+    "rewrap.wrappingColumn": 70,
+    "editor.rulers": [100],
+    "[lean4]": {
+        "editor.wordWrap": "on"
+    }
+}
