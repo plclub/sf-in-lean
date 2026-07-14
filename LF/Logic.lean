@@ -1190,7 +1190,7 @@ theorem In_map_iff (α β : Type) (f : α → β) (xs : List α) (y : β) :
     rw [← h1]; apply In_map; exact h2
     -- /ADMITTED
 -- []
--- /FULl
+-- /FULL
 
 -- FULL
 -- EX3! (All)
