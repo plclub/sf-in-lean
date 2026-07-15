@@ -4,7 +4,20 @@ This file contains instructions to help Claude assist in creating and
 maintaining SF-in-Lean materials.
 
 The file `CONTRIBUTING.md` details the rules and conventions to be 
-followed by (human and AI) contributions to this project. 
+followed by (human and AI) contributions to this project. It should be read in addition to this file. In case of conflict, `CONTRIBUTING.md` wins.
+
+## Conventions
+- Naming, proof style, and chapter structure follow existing chapters.
+
+## Workflow
+- Branch names: claude/<short-topic>
+- Commit messages: one-line summary, then bullet points for decisions made.
+- Never push directly to main; open a PR.
+
+## When in doubt
+- Prefer the simpler design and note the choice in the PR description.
+- If a task is genuinely blocked (missing file, failing toolchain), stop and
+  report the blocker in your summary rather than guessing.
 
 ## Marking AI-generated material
 
