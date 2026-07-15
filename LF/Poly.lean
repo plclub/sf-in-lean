@@ -615,7 +615,8 @@ theorem app_length {α : Type} : ∀ (l1 l2 : List α),
   case cons h t ih =>
    dsimp [List.cons_append, List.length_cons]
    rw [Nat.succ_add, ih]
-/- /ADMITTED
+/- /ADMITTED -/
+/-
    GRADE_THEOREM 0.5: app_nil_r
    GRADE_THEOREM 1: app_assoc
    GRADE_THEOREM 0.5: app_length
@@ -647,7 +648,8 @@ theorem rev_involutive {α : Type} : ∀ (l : List α),
   case cons h t ih =>
    rw [rev_cons, rev_app_distr, ih, rev_cons, rev_nil]
    dsimp only [List.nil_append, List.cons_append]
-/- /ADMITTED
+/- /ADMITTED -/
+/-
    GRADE_THEOREM 1: rev_app_distr
    GRADE_THEOREM 1: rev_involutive
    []
@@ -1171,7 +1173,8 @@ theorem map_rev {α : Type} {β : Type} : ∀ (f : α → β) (l : List α),
    rw [rev_nil, map_nil, rev_nil]
   case cons h t ih =>
    rw [rev_cons, map_cons, map_app, rev_cons, ih, map_cons, map_nil]
-/- /ADMITTED
+/- /ADMITTED -/
+/-
    GRADE_THEOREM 3: map_rev
    [] -/
 
@@ -1438,7 +1441,8 @@ theorem fold_length_correct {α : Type} (l : List α) :
   case cons h t ih =>
     dsimp only [foldLength] at *
     rw [List.length_cons, fold_cons, ih]
-/- /ADMITTED
+/- /ADMITTED -/
+/-
    GRADE_THEOREM 2: Exercises.fold_length_correct
    [] -/
 
@@ -1454,8 +1458,8 @@ abbrev foldMap {α : Type} {β : Type} (f : α → β) (l : List α) : List β :
 /- Write down a theorem `fold_map_correct` stating that `foldMap` is
    correct, and prove it in Lean. -/
 
-/- SOLUTION
-   fold_map_correct -/
+/- SOLUTION -/
+/- fold_map_correct -/
 theorem fold_map_correct {α : Type} {β : Type} (f : α → β) (l : List α) :
     foldMap f l = map f l := by
   induction l
@@ -1536,8 +1540,8 @@ theorem curry_uncurry {α β γ : Type} (f : α × β → γ) (p : α × β) :
     prodUncurry (prodCurry f) p = f p := by
   /- ADMITTED -/
   rfl
-/- /ADMITTED
-   GRADE_THEOREM 1: Exercises.uncurry_curry
+/- /ADMITTED -/
+/- GRADE_THEOREM 1: Exercises.uncurry_curry
    GRADE_THEOREM 1: Exercises.curry_uncurry
    [] -/
 

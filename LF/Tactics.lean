@@ -959,7 +959,7 @@ theorem trans_eq_example'''''' (a b c d e f : Nat) :
 
 -- TERSE
 /- Recall this function for doubling a natural number from the
-    \CHAP{Arithmetic} chapter:
+    \CHAP{Induction} chapter:
 
     def double (n : Nat) : Nat :=
     match n with
@@ -2208,10 +2208,10 @@ def forallb {α : Type} (test : α → Bool) (l : List α) : Bool :=
   | x :: l' => (test x) && (forallb test l')
 -- /ADMITDEF
 
-example : forallb odd [1,3,5,7,9] = true := by rfl
-example : forallb not [false,false] = true := by rfl
-example : forallb even [0,2,4,5] = false := by rfl
-example : forallb (· == 5) [] = true := by rfl
+example : forallb odd [1,3,5,7,9] = true := by rfl -- ADMITTED
+example : forallb not [false,false] = true := by rfl -- ADMITTED
+example : forallb even [0,2,4,5] = false := by rfl -- ADMITTED
+example : forallb (· == 5) [] = true := by rfl -- ADMITTED
 
 def existsb {α : Type} (test : α → Bool) (l : List α) : Bool :=
 -- ADMITDEF
@@ -2220,10 +2220,10 @@ def existsb {α : Type} (test : α → Bool) (l : List α) : Bool :=
   | x :: l' => (test x) || (existsb test l')
 -- /ADMITDEF
 
-example : existsb (· == 5) [0,2,3,6] = false := by rfl
-example : existsb (· && true) [true,true,false] = true := by rfl
-example : existsb odd [1,0,0,0,0,3] = true := by rfl
-example : existsb even [] = false := by rfl
+example : existsb (· == 5) [0,2,3,6] = false := by rfl -- ADMITTED
+example : existsb (· && true) [true,true,false] = true := by rfl -- ADMITTED
+example : existsb odd [1,0,0,0,0,3] = true := by rfl -- ADMITTED
+example : existsb even [] = false := by rfl -- ADMITTED
 
 def existsb' {α : Type} (test : α → Bool) (l : List α) : Bool :=
 -- ADMITDEF

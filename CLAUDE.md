@@ -152,7 +152,7 @@ Two complementary automated checks help here (both take
 * `scripts/check_verso_markers.py` — catches silently-flattened **structural
   markers**. It inventories markers in the source and, for each one that should
   become a Verso directive (`FULL`→`::::full`, `HIDE`→`::::hide`, `EX`→
-  `::::exercise`, `QUIZ`→`::+quiz`, author notes→` ```dev `, …), verifies the
+  `::::exercise`, `QUIZ`→`::+quiz`, author notes→`:::dev`, …), verifies the
   directive is present in the output. A `FLATTENED` line means a marker was
   dropped with no Verso analog (this is how the `-- QUIZ` drop went unnoticed —
   the word-diff saw no loss). `WARN` count-mismatches are soft (verify by hand);

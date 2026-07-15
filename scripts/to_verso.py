@@ -152,7 +152,7 @@ _BLOCK_MARKER_RE = re.compile(
     r'|\[\]'                                   # exercise close
     r'|GRADE_\S[^\n]*?'                        # grading spec
     r'|/?(?:HIDEFROMADVANCED|HIDEFROMHTML|FULL|TERSE|HIDE|QUIZ|QUIETSOLUTION|SOLUTION'
-    r'|INSTRUCTORS|WORKINCLASS)'
+    r'|INSTRUCTORS|WORKINCLASS|ADMITTED|ADMITDEF)'
     r')[ \t]*-/')
 
 
@@ -818,6 +818,19 @@ def tokenize(text: str):
                 body_lines.append(lines[i].strip()[2:].strip())
                 i += 1
             tokens.append(('instructor', '\n'.join(body_lines)))
+            continue
+
+        # `-- DEV` … `-- /DEV` region: an author/developer note without a tag
+        # prefix.  The whole body routes to a ```dev block (markers consumed).
+        if stripped == '-- DEV':
+            body_lines = []
+            i += 1
+            while i < n and lines[i].strip() != '-- /DEV':
+                body_lines.append(re.sub(r'^--\s?', '', lines[i].strip()))
+                i += 1
+            i += 1  # skip the closing -- /DEV (or run off EOF)
+            if body_lines:
+                tokens.append(('author_comment', '\n'.join(body_lines)))
             continue
 
         if _FULL_OPEN_RE.match(stripped):
@@ -1934,8 +1947,21 @@ def _convert_solution_markers(src: str) -> str:
 
         # --- trailing ADMITTED: a one-line proof term ---
         if s.endswith('-- ADMITTED') and s != '-- ADMITTED':
-            out.append(re.sub(r':=\s*(.*?)\s*--\s*ADMITTED\s*$',
-                              lambda m: ':= solution!(' + m.group(1) + ')', line))
+            if ':=' in line:
+                out.append(re.sub(r':=\s*(.*?)\s*--\s*ADMITTED\s*$',
+                                  lambda m: ':= solution!(' + m.group(1) + ')', line))
+            else:
+                # The `:=` sits on an earlier line (`theorem foo ... :=\n
+                #   by rfl -- ADMITTED`): wrap just this line's proof term,
+                # provided the previous non-blank line really ends with `:=`.
+                p = len(out) - 1
+                while p >= 0 and not out[p].strip():
+                    p -= 1
+                m = re.match(r'^(\s*)(.*?)\s*--\s*ADMITTED\s*$', line)
+                if p >= 0 and out[p].rstrip().endswith(':=') and m:
+                    out.append(m.group(1) + 'solution!(' + m.group(2) + ')')
+                else:
+                    out.append(line)
             i += 1
             continue
 

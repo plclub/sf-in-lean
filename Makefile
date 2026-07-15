@@ -55,7 +55,7 @@ all: verso lf hl ts check-bare-lean-chapters check-verso-chapters
 # when it has been incorporated into the book via a *Verso.lean include.
 .PHONY: check-lean
 check-bare-lean-chapters:
-	@echo "no bare (un-versified) chapters to build"
+	lake build LF.IndProp LF.IndPropRegexp
 
 # Temporary:
 # Build the generated HL/TS Verso chapters that aren't in a book yet, so the

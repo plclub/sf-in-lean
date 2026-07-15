@@ -191,7 +191,10 @@ private partial def blockToText (width : Nat) : Verso.Doc.Block Manual → Strin
 additional `lean_lib`s holding bundled prerequisite sources (e.g. `LF` for the
 bare `LF/Maps.lean` that Imp depends on). -/
 private def lakefileTemplate (vol : String) (extraLibs : Array String) : String :=
-  let extra := extraLibs.foldl (init := "") fun acc l =>
+  -- A bundled prerequisite may live in the volume's own namespace (e.g. the
+  -- bare `LF/CustomTactics.lean` bundled into the LF project): the volume's
+  -- `lean_lib` already covers it, and Lake rejects a duplicate target.
+  let extra := (extraLibs.filter (· != vol)).foldl (init := "") fun acc l =>
     acc ++ "\n[[lean_lib]]\nname = \"" ++ l ++ "\"\n"
   "name = \"" ++ vol.toLower ++ "-extracted\"\n" ++
   "version = \"0.1.0\"\n" ++
@@ -279,12 +282,13 @@ block_extension Block.leanSaved (teacher : String) (student : String) (terse : S
 
 A chapter's cross-chapter `import` lines (e.g. `import LF.Basics`) must live in
 the Verso module *header* (where they are rewritten to the `…Verso` module
-names), so they never appear in the chapter's elaborated `lean` blocks. But the
-generated student/solutions/terse projects need the original `import` line at
-the top of each extracted chapter file, and the book reader should see it too.
-A ` ```savedImport ` code block carries the original import line(s) verbatim:
-it renders as a plain code block in HTML, and the saver copies its body as
-live code (not comments) into all three generated variants. -/
+names), so they never appear in the chapter's elaborated `lean` blocks — yet
+the book reader should still see them where the prose introduces them.  A
+` ```savedImport ` code block carries the original import line(s) verbatim and
+renders as a plain code block in HTML.  It is display-only: the extracted
+student/solutions/terse chapter files get their `import` preamble from the
+chapter source's header in `emitSavedImpl` (which also bundles non-chapter
+prerequisite modules into the generated project). -/
 
 block_extension Block.savedImport (source : String) where
   data := Json.str source
@@ -404,8 +408,18 @@ partial def stripGuardMsgs (src : String) : String := Id.run do
       while j < n && !(lines[j]!.trimAscii.toString.endsWith "-/") do
         j := j + 1
       if j + 1 < n && (lines[j + 1]!.trimAscii.toString.startsWith "#guard_msgs") then
-        -- Expected-message docstring for a `#guard_msgs`: drop it and the modifier.
-        i := j + 2
+        -- Expected-message docstring for a `#guard_msgs`.  Strip the pair only
+        -- when the expectation is benign (a `warning:`/`info:` message, e.g.
+        -- `declaration uses sorry`): without the guard the command still
+        -- compiles.  An expected *error* (`error:`, `Tactic … failed`, …)
+        -- means the wrapped command deliberately fails — the guard must stay
+        -- in the extracted file or it would not build.
+        let body := ((lines[i]!.trimAscii.toString.drop 3).trimAscii).toString
+        if body.startsWith "warning" || body.startsWith "info" then
+          i := j + 2
+        else
+          for k in [i:j+2] do out := out.push lines[k]!
+          i := j + 2
       else
         for k in [i:j+1] do out := out.push lines[k]!
         i := j + 1
@@ -635,10 +649,10 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
           (terse.trimAscii.toString ++ "\n\n")
       return buf
     if name == ``Block.savedImport then
-      -- Cross-chapter `import` lines: copied verbatim (as live code, not
-      -- comments) into every generated variant.
-      if let .str src := which.data then
-        return appendBoth buf file (src.trimAscii.toString ++ "\n\n")
+      -- Cross-chapter `import` lines shown to the reader.  The extracted
+      -- files get their import lines from the chapter source's header
+      -- preamble in `emitSavedImpl` (which also bundles non-chapter
+      -- prerequisites), so nothing is emitted here.
       return buf
     if name == ``Block.exercise then
       -- Emit a `### Exercise (N⭐): name` heading; the contained `lean`
@@ -753,14 +767,6 @@ def walkOuter (width : Nat) (vol : String) (text : Part Manual) (buf : SaveBuffe
   return buf
 
 /--
-Plain-Lean support modules copied verbatim into the generated project. They
-are imported by chapter code (via ` ```savedImport ` blocks) but are not book
-chapters themselves, so the walker never emits them. Each must be
-self-contained (importing only core `Lean.*` modules). -/
-private def supportModules (vol : String) : List System.FilePath :=
-  if vol == "LF" then ["LF/CustomTactics.lean"] else []
-
-/--
 Write a complete generated Lake project at `dest`: the per-file buffer
 contents under `dest/`, plus `lakefile.toml`, `lean-toolchain`, and a `LF.lean`
 that imports `LF.STLC`. -/
@@ -784,11 +790,6 @@ private def writeProject (dest : System.FilePath) (toolchain : String)
     let target := dest / relPath
     target.parent.forM IO.FS.createDirAll
     IO.FS.writeFile target body
-  for src in supportModules vol do
-    if ← src.pathExists then
-      let target := dest / src
-      target.parent.forM IO.FS.createDirAll
-      IO.FS.writeFile target (← IO.FS.readFile src)
 
 /--
 Run `lake build` inside `dest` and report any failure via `logError`. Used to

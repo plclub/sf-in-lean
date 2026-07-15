@@ -1167,8 +1167,8 @@ theorem In_map_iff (α β : Type) (f : α → β) (xs : List α) (y : β) :
     In y (List.map f xs) ↔ ∃ x, f x = y ∧ In x xs := by
   constructor
   case mp =>
-    induction xs
     -- ADMITTED
+    induction xs
     case nil => intro h; rw [List.map_nil, In_nil] at h; contradiction
     case cons x' xs' ih =>
       intro h
@@ -1213,10 +1213,10 @@ def All {α : Type} (P : α → Prop) (xs : List α) : Prop :=
   -- /ADMITDEF
 
 unseal All in
-theorem All_nil {α} (P : α → Prop) : All P [] = True := rfl
+theorem All_nil {α} (P : α → Prop) : All P [] = True := rfl -- ADMITTED
 
 unseal All in
-theorem All_cons {α} (P : α → Prop) x xs : All P (x :: xs) = (P x ∧ All P xs) := rfl
+theorem All_cons {α} (P : α → Prop) x xs : All P (x :: xs) = (P x ∧ All P xs) := rfl -- ADMITTED
 
 theorem All_In α (P : α → Prop) (xs : List α) :
     (∀ x, In x xs → P x) ↔ All P xs := by
@@ -1807,20 +1807,20 @@ def beq_list {α : Type} (beq : α → α → Bool) (xs1 xs2 : List α) : Bool :
 
 unseal beq_list in
 theorem beq_list_nil_nil {α} (beq : α → α → Bool) :
-    beq_list beq [] [] = true := rfl
+    beq_list beq [] [] = true := rfl -- ADMITTED
 
 unseal beq_list in
 theorem beq_list_cons_cons {α} (beq : α → α → Bool) x1 x2 xs1 xs2 :
     beq_list beq (x1 :: xs1) (x2 :: xs2) =
-    (beq x1 x2 && beq_list beq xs1 xs2) := rfl
+    (beq x1 x2 && beq_list beq xs1 xs2) := rfl -- ADMITTED
 
 unseal beq_list in
 theorem beq_list_nil_cons {α} (beq : α → α → Bool) x xs :
-    beq_list beq [] (x :: xs) = false := rfl
+    beq_list beq [] (x :: xs) = false := rfl -- ADMITTED
 
 unseal beq_list in
 theorem beq_list_cons_nil {α} (beq : α → α → Bool) x xs :
-    beq_list beq (x :: xs) [] = false := rfl
+    beq_list beq (x :: xs) [] = false := rfl -- ADMITTED
 
 -- JC: Should this also go after `propext` to use rewriting by `↔`?j
 theorem beq_list_true_iff α (beq : α → α → Bool)
@@ -1878,11 +1878,11 @@ def Logic.forallb {α : Type} (test : α → Bool) (xs : List α) : Bool :=
   -- /ADMITDEF
 
 unseal Logic.forallb in
-theorem forallb_nil {α} (test : α → Bool) : Logic.forallb test [] = true := rfl
+theorem forallb_nil {α} (test : α → Bool) : Logic.forallb test [] = true := rfl -- ADMITTED
 
 unseal Logic.forallb in
 theorem forallb_cons {α} (test : α → Bool) x xs :
-    Logic.forallb test (x :: xs) = (test x && Logic.forallb test xs) := rfl
+    Logic.forallb test (x :: xs) = (test x && Logic.forallb test xs) := rfl -- ADMITTED
 
 theorem forallb_true_iff α (test : α → Bool) (xs : List α) :
     Logic.forallb test xs = true ↔ All (fun x => test x = true) xs := by
@@ -2036,8 +2036,8 @@ theorem mul_eq_0_ternary (n m p : Nat) :
 -- EX2 (In_app_iff)
 theorem In_app_iff (α : Type) (xs xs' : List α) (x : α) :
     In x (xs ++ xs') ↔ In x xs ∨ In x xs' := by
-  induction xs
   -- ADMITTED
+  induction xs
   case nil =>
     constructor
     case mp => intro h; right; exact h

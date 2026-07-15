@@ -21,6 +21,7 @@ open InlineLean hiding lean
 
 #doc (Manual) "Basics: Functional Programming in Lean" =>
 %%%
+tag := "Basics"
 htmlSplit := .never
 file := "Basics"
 %%%
@@ -1474,6 +1475,7 @@ theorem add_zero_zero_zero : ∀ n : Nat, n + zero + zero + zero = n := by
    This is the rule we need to push `succ` around.
 
 Here it is in Lean:
+::::
 
 ```lean
 unseal add in
@@ -1482,6 +1484,7 @@ theorem add_succ : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
   rfl
 ```
 
+::::full
 You may notice stepping through the above proof that Lean's InfoView
 displays `n + (succ m)` instead as `n + m.succ` and `succ (n + m)` as
 `(n + m).succ`. These expressions are equivalent, but when printing constructors,

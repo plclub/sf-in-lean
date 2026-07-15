@@ -1085,10 +1085,10 @@ theorem mul_assoc (n m p : Nat) :
 -- /ADMITTED
 -- []
 
--- FULL
 /- ## Nat to Bin and Back to Nat -/
 
 namespace NatToBin
+-- FULL
 
 /- Recall the `Bin` type we defined in Basics: -/
 
@@ -1208,8 +1208,8 @@ in an exercise that it will turn into -- FILL IN HERE in both student version of
 BCP: Could they be moved later so that at least the reader has the chance to do the exercise before encountering them?
 -/
 unseal natToBin
-theorem natToBin_zero : natToBin zero = .z := by rfl
-theorem natToBin_succ m : natToBin (succ m) = incr (natToBin m) := by rfl
+theorem natToBin_zero : natToBin zero = .z := by rfl -- ADMITTED
+theorem natToBin_succ m : natToBin (succ m) = incr (natToBin m) := by rfl -- ADMITTED
 seal natToBin
 
 /-

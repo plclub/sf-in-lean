@@ -30,7 +30,7 @@
           ###  PLEASE DO NOT DISTRIBUTE SOLUTIONS PUBLICLY  ###
           #####################################################
 
-   (See the \CHAP{Preface} for why.)
+   (See the Preface for why.)
    /FULL
    /HIDEFROMHTML
 -/
@@ -555,10 +555,10 @@ example : count 1 (sum [1, 2, 3] [1, 4, 1]) = 3 := by rfl -- ADMITTED
 -- GRADE_THEOREM 0.5: NatList.test_sum1
 
 unseal app in
-theorem nil_sum (l : NatList) : sum [] l = l := rfl
+theorem nil_sum (l : NatList) : sum [] l = l := rfl -- ADMITTED
 
 unseal app in
-theorem cons_sum (n : Nat) (l1 l2 : Bag) : sum (n::l1) l2 = n :: (sum l1 l2) := rfl
+theorem cons_sum (n : Nat) (l1 l2 : Bag) : sum (n::l1) l2 = n :: (sum l1 l2) := rfl -- ADMITTED
 
 abbrev add (v : Nat) (s : Bag) : Bag :=
   -- ADMITDEF
@@ -1239,18 +1239,22 @@ def eqblist (l1 l2 : NatList) : Bool :=
   -- /ADMITDEF
 
 unseal eqblist in
-theorem eqblist_nil : eqblist [] [] = true := by rfl
+theorem eqblist_nil : eqblist [] [] = true := by rfl -- ADMITTED
 
 unseal eqblist in
 theorem eqblist_cons_same h t1 t2 : eqblist (h :: t1) (h :: t2) = eqblist t1 t2 := by
+  -- ADMITTED
   dsimp [eqblist]
   rw [BEq.refl, Bool.true_and]
+  -- /ADMITTED
 
 unseal eqblist in
 theorem eqblist_cons_diff h1 h2 t1 t2 : (h1 == h2) = false -> eqblist (h1 :: t1) (h2 :: t2) = false := by
+  -- ADMITTED
   intro h
   dsimp [eqblist]
   rw [h, Bool.false_and]
+  -- /ADMITTED
 
 -- test_eqblist1
 unseal eqblist

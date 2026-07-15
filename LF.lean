@@ -3,13 +3,9 @@ import SFLMeta.Ignore
 import SFLMeta.Save
 
 import LF.Basics
-import LF.Induction
-import LF.UsingLean
-import LF.Lists
-import LF.Poly
-import LF.Logic
-import LF.Tactics
-import LF.IndProp
+-- NB: bare (not-yet-versified) chapters must NOT be imported here once their
+-- Verso version is included below — both declare the same names.  They are
+-- built by `make check-bare-lean-chapters` instead.
 -- Add `import LF.XXXVerso` here for each generated chapter included below.
 import LF.InductionVerso
 import LF.UsingLeanVerso

@@ -147,28 +147,30 @@ Skipped per BCP (no `LF/Typeclasses.lean` exists yet).
 
 ### Merging `origin/main` (required before finishing; 8 commits ahead)
 
-Known merge hotspots (`git diff HEAD...origin/main --stat`):
-- `LF.lean`: main imports the *bare* chapters (CI build); ours includes the
-  Verso chapters. Bare and Verso chapters declare the same names, so both
-  chains cannot be imported together — drop bare imports for graduated
-  chapters and build `LF.IndProp` / `LF.IndPropRegexp` via
-  `check-bare-lean-chapters` in the Makefile instead (main currently has that
-  target as a no-op echo).
-- `SFLMeta/Save.lean`: main's #78 (Imp conversion) added `headerImports` /
-  `keepImport` / `lakefileTemplate extraLibs` — an alternative mechanism for
-  getting imports into generated projects. Reconcile with our
-  `Block.savedImport` + `supportModules` (they may compose: theirs derives
-  header imports, ours renders the import to the reader and pins the original
-  module name; pick one source of truth for the emitted import lines).
-- `scripts/to_verso.py`: main widened `_HIDE_OPEN_RE` to cover
-  `-- INSTRUCTORS` regions and touched heading normalization and solution
-  markers — mostly disjoint from our changes but adjacent; merge by hand.
-- Chapter sources: main has "Fixes to Induction and UsingLean (#85)",
-  "Polish and build fixes for IndProp (#84)", and two Lists-edit PRs — these
-  overlap our marker repairs; re-run the full check suite on every chapter
-  after the merge (`make verso` + the three checks + `make lf`).
-- `HL/Imp.lean` is now Verso-authored on main (#78) and `HL.lean` includes
-  it; our HL is untouched, should merge cleanly.
+**Merge performed 2026-07-14** (`origin/main`, 8 commits). Resolutions made:
+- `LF/IndProp.lean`: only textual conflict — both sides made the same
+  `exists 0` fix; kept ours (with explanatory comment).
+- `LF.lean`: dropped main's bare-chapter imports for all graduated chapters
+  (bare and Verso chapters declare the same names, so both chains cannot be
+  imported together); `LF.IndProp` / `LF.IndPropRegexp` are built by
+  `check-bare-lean-chapters` in the Makefile instead.
+- `SFLMeta/Save.lean`: adopted main's #78 mechanism (`headerImports` +
+  `bundleLoop` — prepends each extracted chapter's framework-stripped header
+  imports and transitively bundles non-chapter prerequisites like
+  CustomTactics, with `lakefileTemplate extraLibs`) as the single source of
+  truth for extracted-project imports. Our `Block.savedImport` is now
+  **display-only** (renders the import to the book reader; the saver emits
+  nothing for it); our `supportModules` copying was removed as redundant.
+- Author/dev notes: main's #78 decided notes are `:::dev` **directives**
+  (verbatim-fenced body), not ` ```dev ` code blocks — merged CLAUDE.md
+  documents this; the ` ```dev ` expander remains for back-compat. Our
+  checker policy follows `:::dev`.
+- New `-- DEV` … `-- /DEV` region marker (introduced by main's #85 in
+  Induction/UsingLean): taught to_verso to route the body to `:::dev`
+  (markers consumed) and added `DEV` to `check_verso_markers._POLICY`.
+- Post-merge verification: `make verso` + prose/marker/scoping checks re-run
+  on all six graduated chapters — prose 0 everywhere, 0 flattenings,
+  remaining warnings all in the known-benign classes.
 
 ### After the merge
 
