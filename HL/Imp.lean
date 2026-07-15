@@ -2208,7 +2208,7 @@ theorem plus2_spec (st : State) (n : Nat) (st' : State)
   unfold plus2 at heval
   cases heval with
   | asgn _ _ m _ h =>
-      simp at h
+      simp only [Aexp.eval_plus, Aexp.eval_id, Aexp.eval_num] at h
       rw [TotalMap.update_eq]
       lia
 ```
@@ -2229,7 +2229,7 @@ theorem XtimesYinZ_spec1 (st : State) (nx ny : Nat) (st' : State)
   unfold XtimesYinZ at heval
   cases heval with
   | asgn _ _ n _ h =>
-      simp at h
+      simp only [Aexp.eval_mult, Aexp.eval_id] at h
       subst hx hy
       rw [TotalMap.update_eq]
       exact h.symm
