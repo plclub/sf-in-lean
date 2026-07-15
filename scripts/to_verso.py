@@ -1318,6 +1318,16 @@ class Renderer:
             # Outermost close: drop any deferred open and close the emitted
             # :::full if there is one (a stray -- /FULL emits nothing).
             self.pending_full = False
+            # A region cannot outlive an exercise it contains: a `-- /FULL`
+            # while the (nested) exercise is still open force-closes the
+            # exercise first (matching the source idiom `-- FULL` /
+            # `-- EX… (name)` / `-- /FULL`, which scopes just the exercise
+            # banner to the full build and leaves the following theorem
+            # common).  Without this, the ::::full would silently extend past
+            # the exercise and swallow everything up to the next close.
+            if self.in_exercise and self.full_open:
+                self._append(_c_close() + '\n\n')
+                self.in_exercise = False
             if not self.in_exercise:
                 self._close_full_if_open()
 
@@ -1343,19 +1353,21 @@ class Renderer:
 
     def _on_exercise_open(self, rating, name):
         self._flush_code()
-        # Exercises cannot be nested inside :::full.  If a :::full is
-        # currently open, close it first and re-arm pending_full so that any
-        # content after the exercise (before -- /FULL) opens a new :::full.
-        # If pending_full is still True (no :::full was opened yet), leave it
-        # True — _open_full_if_pending won't fire inside an exercise, so the
-        # :::full is still deferred.
-        if self.full_open and not self.in_exercise:
-            self._close_full_if_open()
-            self.pending_full = True
-        # A new exercise ends the previous one (the source sometimes omits the
-        # `-- []` close before the next `-- EX`).
+        # An exercise nests inside an open (or pending) :::full — fence widths
+        # are computed by _resolve_fences, so the containers never collide.
+        # BCP decision 2026-07-15: the terse build should elide (almost) all
+        # exercises, so a FULL-scoped "Exercises" section drops out of terse
+        # *wholesale* — exercises, their supporting definitions and namespaces
+        # together.  When later terse-visible material depends on a definition
+        # made inside a FULL region, that definition must be made
+        # terse-visible in the source, case by case (the terse generated
+        # project, `lake exe sfl lf terse`, is the detector).
+        # A new exercise still ends the previous one (the source sometimes
+        # omits the `-- []` close before the next `-- EX`).
         if self.in_exercise:
             self._append(_c_close() + '\n\n')
+            self.in_exercise = False
+        self._open_full_if_pending()
         self.in_exercise = True
         self._append(
             _c_open(f'exercise (rating := {rating}) (name := "{name}")') + '\n\n')

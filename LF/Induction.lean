@@ -413,6 +413,7 @@ theorem succ_add (n m : Nat) :
     rfl
 -- /ADMITTED
 -- GRADE_THEOREM 0.5: succ_add
+-- []
 -- /FULL
 -- TERSE
 /- *** -/
@@ -449,7 +450,6 @@ theorem add_assoc (n m p : Nat) :
     rfl
 -- /ADMITTED
 -- GRADE_THEOREM 0.5: add_assoc
--- []
 
 -- EX2 (double_plus)
 /- Consider the following function, which doubles its argument: -/
@@ -1085,10 +1085,10 @@ theorem mul_assoc (n m p : Nat) :
 -- /ADMITTED
 -- []
 
+-- FULL
 /- ## Nat to Bin and Back to Nat -/
 
 namespace NatToBin
--- FULL
 
 /- Recall the `Bin` type we defined in Basics: -/
 

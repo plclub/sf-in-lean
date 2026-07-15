@@ -1043,11 +1043,11 @@ example : filterEvenGt7 [1, 2, 6, 9, 10, 3, 12, 8] = [10, 12, 8] := by rfl  /- A
 
 /- test_filter_even_gt7_2 -/
 example : filterEvenGt7 [5, 2, 6, 19, 129] = [] := by rfl  /- ADMITTED -/
+seal filter
+seal List.length
 /- GRADE_THEOREM 1: test_filter_even_gt7_1
    GRADE_THEOREM 1: test_filter_even_gt7_2
    [] -/
-seal filter
-seal List.length
 
 
 /- EX3 (partition)
@@ -1203,9 +1203,7 @@ example : flatMap (fun n => [n, n, n]) [1, 5, 4]
   = [1, 1, 1, 5, 5, 5, 4, 4, 4] := by rfl  /- ADMITTED -/
 /- GRADE_THEOREM 1: flatMap
    GRADE_THEOREM 1: test_flat_map1
-   []
-   /FULL
-   HIDEFROMADVANCED -/
+   [] -/
 
 unseal flatMap in
 theorem flatMap_nil {α : Type} {β : Type} (f : α → List β) : flatMap f [] = [] :=
@@ -1214,6 +1212,8 @@ theorem flatMap_nil {α : Type} {β : Type} (f : α → List β) : flatMap f [] 
 unseal flatMap in
 theorem flatMap_cons {α : Type} {β : Type} (f : α → List β) h t :
    flatMap f (h :: t) = f h ++ flatMap f t := by rfl -- ADMITTED
+/- /FULL
+   HIDEFROMADVANCED -/
 
 /- Lists are not the only inductive type for which `map` makes sense.
    Here is a `map` for the `Option` type: -/

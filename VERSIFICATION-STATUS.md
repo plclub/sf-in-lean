@@ -202,10 +202,35 @@ chapters' projects). Fixed, in order:
 - Terse-build visibility (terse drops `::::full` wholesale, and to_verso puts
   code following a `FULL:` paragraph inside the region): moved Basics
   `add_succ` out of its `::::full`; moved Induction's `-- FULL` below
-  `namespace NatToBin` (the namespace `end` was terse-visible via the
-  exercise, the open wasn't). More of this class may remain — the last
-  `make all` (terse variant) was still running at session end; if it fails,
-  the errors name the next definition to un-FULL.
+  `namespace NatToBin`; made Lists' `abbrev Bag`/`namespace Bag`/`end Bag`,
+  `open Bag`, and `option_elim` (+ its two lemmas) terse-visible; moved
+  Poly's `seal filter`/`seal List.length` before the exercise-closing `[]`
+  (they were escaping the exercise while their `unseal` partners didn't).
+- **Exercise/FULL semantics (BCP decision, 2026-07-15): exercises NEST inside
+  an enclosing `::::full`** (documented in `_on_exercise_open`), so the terse
+  build elides (almost) all exercises — a FULL-scoped "Exercises" section
+  drops from terse wholesale, definitions and namespaces included. Two
+  supporting rules in to_verso:
+  - A `-- /FULL` while a nested exercise is open **force-closes the exercise
+    first** (a region cannot outlive an exercise it contains). This is what
+    makes the recurring source idiom `-- FULL` / `-- EX… (name)` / `-- /FULL`
+    mean "the exercise *banner* is full-only; the theorem after it is
+    common" (Tactics beq_eq, Logic even_double_conf), and it prevents a
+    straddling region from silently swallowing everything after the
+    exercise.
+  - When terse-visible material depends on a definition made inside a FULL
+    region, the definition must be made terse-visible in the source, case by
+    case; the terse generated project (`lake exe sfl lf terse`) is the
+    detector. Fixed this way: Induction basic_induction restructured
+    (exercise now closes with `-- []` before its `-- /FULL`; `add_comm` /
+    `add_assoc` follow as common graded ADMITTED theorems, since terse
+    lecture material uses `add_comm`); Poly flatMap_nil/flatMap_cons moved
+    *inside* the FULL region with their exercise (no terse consumers).
+
+**FINAL STATE: `make all` passes end to end (exit 0)** — LF/HL/TS books in
+all three variants, all nine generated projects compile, both check targets
+green, and the six graduated chapters pass prose (0 missing spans) and
+marker (0 flattenings) checks.
 
 ### After the merge
 

@@ -6,7 +6,7 @@
    Putting it together with Induction.lean makes a reasonable
    second week's homework assignment. -/
 
-/- SOONER: (BCP 9/18) Since the domain type in Maps.v has changed from
+/- SOONER: (BCP 9/18) Since the domain type of Maps has changed from
    id to string, we should either do the same here (in the partial
    maps section) or else comment there that we are making a different
    choice.  For the moment, it feels cleaner to avoid importing the
@@ -21,19 +21,6 @@
    alias Definition Id := string). -/
 
 /- SOONER: This chapter could use another WORKINCLASS or three. -/
-
-/- HIDEFROMHTML
-   FULL
-   REMINDER:
-
-          #####################################################
-          ###  PLEASE DO NOT DISTRIBUTE SOLUTIONS PUBLICLY  ###
-          #####################################################
-
-   (See the Preface for why.)
-   /FULL
-   /HIDEFROMHTML
--/
 
 import LF.Induction
 import LF.UsingLean
@@ -486,8 +473,10 @@ seal alternate
    representing a bag of numbers is as a list.  The following definition
    introduces a new type, `Bag`, as an abbreviation for `NatList`. -/
 
+-- /FULL
 abbrev Bag := NatList
 namespace Bag
+-- FULL
 
 -- EX3! (bag_functions)
 /- Complete the following definitions for the functions `count`,
@@ -776,10 +765,10 @@ theorem add_inc_count (s : Bag) (v : Nat) :
 -- /QUIETSOLUTION
 -- GRADE_MANUAL 2: add_inc_count
 -- []
+-- /FULL
 
 end Bag
 
--- /FULL
 -- ######################################################################
 -- # Reasoning About Lists
 
@@ -1280,7 +1269,9 @@ theorem eqblist_refl (l : NatList) :
 -- ######################################################################
 -- ## List Exercises, Part 2
 
+-- /FULL
 open Bag
+-- FULL
 
 -- Here are a couple of little theorems to prove about your
 -- definitions about bags above.
@@ -1489,6 +1480,7 @@ seal nth_error
 -- The function below pulls the `Nat` out of an `NatOption`,
 -- returning a supplied default in the `none` case.
 
+-- /FULL
 @[irreducible]
 def option_elim (d : Nat) (o : NatOption) : Nat :=
   match o with
@@ -1500,6 +1492,7 @@ theorem option_elim_none d : option_elim d .none = d := by rfl
 
 unseal option_elim in
 theorem option_elim_some d1 d2 : option_elim d1 (.some d2) = d2 := by rfl
+-- FULL
 
 -- EX2 (hd_error)
 -- Using the same idea, fix the `hd` function from earlier so we
