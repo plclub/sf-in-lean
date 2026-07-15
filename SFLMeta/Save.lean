@@ -278,33 +278,33 @@ block_extension Block.leanSaved (teacher : String) (student : String) (terse : S
   toHtml := some fun _ goB _ _ contents => contents.mapM goB
   toTeX  := some fun _ goB _ _ contents => contents.mapM goB
 
-/-! ## `savedImport` code block
+/-! ## `importBlock` code block
 
 A chapter's cross-chapter `import` lines (e.g. `import LF.Basics`) must live in
 the Verso module *header* (where they are rewritten to the `…Verso` module
 names), so they never appear in the chapter's elaborated `lean` blocks — yet
-the book reader should still see them where the prose introduces them.  A
-` ```savedImport ` code block carries the original import line(s) verbatim and
+the book reader should still see them where the prose introduces them.  An
+` ```importBlock ` code block carries the original import line(s) verbatim and
 renders as a plain code block in HTML.  It is display-only: the extracted
 student/solutions/terse chapter files get their `import` preamble from the
 chapter source's header in `emitSavedImpl` (which also bundles non-chapter
 prerequisite modules into the generated project). -/
 
-block_extension Block.savedImport (source : String) where
+block_extension Block.importBlock (source : String) where
   data := Json.str source
   traverse _ _ _ := pure none
   toHtml := some fun _ goB _ _ contents => contents.mapM goB
   toTeX := some fun _ goB _ _ contents => contents.mapM goB
 
-/-- A ` ```savedImport ` code block: cross-chapter `import` lines for the
+/-- An ` ```importBlock ` code block: cross-chapter `import` lines for the
 generated projects, rendered to the reader as a plain code block. The body is
 not elaborated here (the real imports for the book build are in the Verso
 module header). -/
 @[code_block]
-def savedImport : CodeBlockExpanderOf Unit
+def importBlock : CodeBlockExpanderOf Unit
   | (), str => do
     let src := str.getString
-    ``(Verso.Doc.Block.other (SFLMeta.Block.savedImport $(quote src))
+    ``(Verso.Doc.Block.other (SFLMeta.Block.importBlock $(quote src))
         #[Verso.Doc.Block.code $(quote src)])
 
 /-! ## Syntactic rewriting of `solution!` markers
@@ -648,7 +648,7 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
           (student.trimAscii.toString ++ "\n\n")
           (terse.trimAscii.toString ++ "\n\n")
       return buf
-    if name == ``Block.savedImport then
+    if name == ``Block.importBlock then
       -- Cross-chapter `import` lines shown to the reader.  The extracted
       -- files get their import lines from the chapter source's header
       -- preamble in `emitSavedImpl` (which also bundles non-chapter

@@ -40,8 +40,8 @@ Per-chapter verification that nothing is lost from the bare `.lean`:
 ## Infrastructure changes this pass (review these!)
 
 `scripts/to_verso.py`:
-- **` ```savedImport ` blocks**: `_extract_imports` plants `--SAVEDIMPORT`
-  sentinels for volume-module imports; the renderer emits a `savedImport`
+- **` ```importBlock ` blocks**: `_extract_imports` plants `--IMPORTBLOCK`
+  sentinels for volume-module imports; the renderer emits an `importBlock`
   code block at that spot. The saver copies its body as *live code* into all
   three generated chapter files (this fixed the extracted-project build:
   extracted Induction had no `import LF.Basics`). The Verso module *header*
@@ -59,7 +59,7 @@ Per-chapter verification that nothing is lost from the bare `.lean`:
   `/- QUIETSOLUTION -/` is recognized (routes like SOLUTION).
 
 `SFLMeta/Save.lean`:
-- `Block.savedImport` extension + `@[code_block] savedImport` expander +
+- `Block.importBlock` extension + `@[code_block] importBlock` expander +
   `walkBlock` case (emits body verbatim into teacher/student/terse buffers).
 - `supportModules`: `LF/CustomTactics.lean` is copied into the generated
   projects (graduated chapters import it; it is self-contained, core-only
@@ -158,7 +158,7 @@ Skipped per BCP (no `LF/Typeclasses.lean` exists yet).
   `bundleLoop` — prepends each extracted chapter's framework-stripped header
   imports and transitively bundles non-chapter prerequisites like
   CustomTactics, with `lakefileTemplate extraLibs`) as the single source of
-  truth for extracted-project imports. Our `Block.savedImport` is now
+  truth for extracted-project imports. Our `Block.importBlock` is now
   **display-only** (renders the import to the book reader; the saver emits
   nothing for it); our `supportModules` copying was removed as redundant.
 - Author/dev notes: main's #78 decided notes are `:::dev` **directives**

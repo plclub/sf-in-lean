@@ -4,14 +4,6 @@
       lectures is a bit tight -- if that's your plan, don't dawdle on
       this chapter. -/
 
-/- HIDEFROMHTML
-   FULL
-   Final reminder: Please do not put solutions to the exercises in
-      publicly accessible places. Thank you!! -/
-
-/- /FULL
-   /HIDEFROMHTML
-   TERSE: HIDEFROMHTML -/
 import LF.Induction
 import LF.UsingLean
 /- TERSE: /HIDEFROMHTML -/

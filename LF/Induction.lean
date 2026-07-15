@@ -455,6 +455,7 @@ theorem add_assoc (n m p : Nat) :
 /- Consider the following function, which doubles its argument: -/
 
 -- TODO Rule rewrite
+-- BCP: What is "ASSUME HIDDEN"??
 -- ASSUME HIDDEN
 @[irreducible]
 def double (n : Nat) : Nat :=
@@ -462,6 +463,8 @@ def double (n : Nat) : Nat :=
   | zero    => zero
   | succ n' => succ (succ (double n'))
 
+-- BCP: All this `unseal` stuff is a bit ugly and potentially confusing for students.
+-- Anything we can to about this?
 unseal double in
 theorem double_zero : double zero = zero := by rfl
 
@@ -471,7 +474,7 @@ theorem double_succ : ∀ n, double (succ n) = succ (succ (double n)) := by
 
 -- END ASSUME
 
-
+-- BCP: We need better typesetting for displays like the following ones:
 /- ## Tip: the `rw` tactic
   As you've probably noticed, a common pattern in Lean proofs is `rewrite [...]`
   followed by `rfl`. There is a tactic that combines these two steps: `rw [...]`
@@ -480,18 +483,18 @@ theorem double_succ : ∀ n, double (succ n) = succ (succ (double n)) := by
 
      `rewrite [double_zero]; rfl`
 
-     We could write :
+  We could write this:
 
     `rw [double_zero]`
 
-    Using `rw` in your proofs is optional, but it will save you time
-    (and is better style!). -/
+  Using `rw` in your proofs is optional, but it will save you time
+  (and is better style). -/
 
 -- FULL
 /-
-  Keep in mind there is one small caveat: `rw [...]` only performs a quick reflexivity check
-  after rewriting. It does not unfold every definition. So, in rare
-  cases, `rw` may leave a goal that is still solved immediately by `rfl`.
+  (One small caveat: `rw [...]` only performs a quick reflexivity check
+  after rewriting; it does not unfold every definition. So, in rare
+  cases, `rw` may leave a goal that is still solved immediately by `rfl`.)
 -/
 
 def aliasOfTwo := two
@@ -733,10 +736,10 @@ theorem plus_rearrange (n m p q : Nat) :
   communicating ideas between human beings.
 -/
 
-/- For example, here is a proof that addition is associative: -/
+/- For example, here is a proof that addition is associative 
+   (you might have written it yourself, earlier in this chapter!): -/
 
 
--- TODO (DHS): Wasn't this just an exercise? Why are we giving them the solution here?
 /- add_assoc' -/
 theorem add_assoc' (n m p : Nat) :
     n + (m + p) = (n + m) + p := by
@@ -746,7 +749,7 @@ theorem add_assoc' (n m p : Nat) :
 
 /-
   Lean is perfectly happy with this.  For a human, however, it
-  is difficult to make much sense of it.  We can use
+  is difficult to make much sense of it.  We can
   pass arguments to the `add_succ` theorems to show the structure more clearly...
 -/
 -- JC: This would be a great location to introduce `calc`!
@@ -771,6 +774,7 @@ theorem add_assoc'' (n m p : Nat) :
   this:
 -/
 
+-- BCP: Again, the math displays need to be displayed!
 /-
   - _Theorem_: For any `n`, `m` and `p`,
 
@@ -829,6 +833,7 @@ theorem add_assoc'' (n m p : Nat) :
 
   Proof:
 -/
+-- BCP: Somebody please check that this typesets nicely!  (I doubt it does...) Ditto below.
 -- SOLUTION
 /-
   Let natural numbers `n` and `m` be given.  We show `n + m = m +
@@ -919,7 +924,7 @@ theorem mul_two (p : Nat) :
 
 -- TERSE
 /-
-  These additional exercises state facts that will be used in
+  These exercises state facts that will be used in
   later chapters.  We don't need to work them in class.
 -/
 -- /TERSE
@@ -969,6 +974,9 @@ theorem mul_comm (m n : Nat) :
 -- GRADE_THEOREM 2: mul_comm
 -- []
 
+-- BCP: This comment is placed a bit awkwardly: In the terse version, we 
+-- usually skim past these exercises, but now we'll need to pause and look
+-- at how <;> works...
 -- TERSE
 /-
   New tactic combinator: `t₁ <;> t₂` runs `t₁`, then runs `t₂` on every
@@ -1031,7 +1039,8 @@ example (b c : Bool) : (b && c) = (c && b) := by
   Some of these proofs can be shortened
   with `<;>` when several generated subgoals have the same proof.
 -/
-
+-- BCP: Is that the main reason for introducing <;> here?  Seems weak if so.
+-- Could we consider moving it later?  
 
 theorem ble_refl (n : Nat) :
     ble n n = true := by
@@ -1113,6 +1122,8 @@ def incr (m : Bin) : Bin
   | .b1 m' => .b0 (incr m')
   -- /ADMITDEF
 
+-- BCP: Will students need to do all this unseal/seal stuff to do the exercises?
+
 unseal incr
 theorem incr_z : incr .z = .b1 .z := by rfl  -- ADMITTED
 theorem incr_b0 m : incr (.b0 m) = .b1 m := by rfl  -- ADMITTED
@@ -1143,9 +1154,11 @@ attribute [pp_nodot] Bin.b0 Bin.b1
 
 -- EX3! (binary_commute)
 
-/- SOONER (DHS): This is a very-category theoretic way to present
+/- SOONER (DHS): This is a very category theoretic way to present
    this idea. Is this the most useful way to convey this to
    an audience who is presumably unfamiliar with commutative diagrams? -/
+-- BCP: I think it's fine, though the english version could precede the diagram 
+-- instead of following it...
 
 /-
   Prove that the following diagram commutes:
@@ -1163,7 +1176,7 @@ binToNat   |                             |  binToNat
   it to a natural number and then incrementing.
 
   If you want to change your previous definitions of `incr` or `binToNat`
-  to make the property easier to prove, feel free to do so!
+  to make the property easier to prove, feel free!
 -/
 
 theorem bin_to_nat_pres_incr (b : Bin) :
@@ -1199,18 +1212,20 @@ def natToBin (n : Nat) : Bin :=
 
 -- TODO (DHS): How to hide these theorem statements so that students can get practice writing them?
 /- From GitHub:
-CH:
-  David set it up so that if you put:
+CH: David set it up so that if you put:
 -- SOLUTION
 -- END SOLUTION
 
-in an exercise that it will turn into -- FILL IN HERE in both student version of the Lean files and the generated HTML.
-BCP: Could they be moved later so that at least the reader has the chance to do the exercise before encountering them?
+in an exercise that it will turn into 
+  -- FILL IN HERE 
+in both student version of the Lean files and the generated HTML.
 -/
 unseal natToBin
 theorem natToBin_zero : natToBin zero = .z := by rfl -- ADMITTED
 theorem natToBin_succ m : natToBin (succ m) = incr (natToBin m) := by rfl -- ADMITTED
 seal natToBin
+-- BCP: Could these be moved later so that at least the reader has the chance to do the exercise 
+-- before encountering them?
 
 /-
   Prove that, if we start with any `Nat`, convert it to `Bin`, and
@@ -1251,9 +1266,9 @@ theorem nat_bin_nat (n : Nat) :
 example : ∀ b, natToBin (binToNat b) = b := by sorry
 
 /-
-  Let's explore why that theorem fails, and how to prove a modified
+  Let's explore why this theorem fails and how to prove a modified
   version of it. We'll start with some lemmas that might seem
-  unrelated, but will turn out to be relevant.
+  unrelated but will turn out to be relevant.
 -/
 
 -- EX2A (double_bin)

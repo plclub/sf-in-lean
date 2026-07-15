@@ -50,9 +50,11 @@ import VersoManual
 import VersoManual.InlineLean
 import Illuminate
 import SFLMeta.Bnf
+import SFLMeta.DisplayMath
 import SFLMeta.Ignore
 import SFLMeta.Save
 import SFLMeta.Comment
+import SFLMeta.Epigraph
 import SFLMeta.Exercise
 import SFLMeta.Grade
 import SFLMeta.Hide
@@ -202,12 +204,12 @@ def _extract_imports(body: str):
                 mod = f'LF.{lf.group(1)}Verso'
             imports.append(f'import {mod}')
             # A volume-module import also stays in the body, as a sentinel that
-            # the renderer turns into a ```savedImport code block: the header
+            # the renderer turns into a ```importBlock code block: the header
             # import above names the Verso module, but the generated student/
             # solutions/terse chapter files need the original import line (and
             # the reader should see it where the prose introduces it).
             if re.match(r'(?:LF|HL|TS)\.\w+$', m.group(1)):
-                kept.append('--SAVEDIMPORT ' + line.strip())
+                kept.append('--IMPORTBLOCK ' + line.strip())
         else:
             kept.append(line)
     return has_prelude, imports, '\n'.join(kept)
@@ -252,6 +254,15 @@ def _is_label_comment(text: str) -> bool:
     return (bool(re.match(r"^[\w.']+$", t)) or
             bool(re.match(r'^#{3,}[ \t#-]*$', t)) or
             bool(re.match(r'^=+>', t)))
+
+def _is_epigraph_comment(text: str) -> bool:
+    """True when a standalone comment body is a section epigraph — a quotation
+    whose first character is a double quote (straight or curly).  In the Rocq
+    sources these were wrapped in `#<div class="quote">#…#</div>#`; the block
+    markup was lost in the port, so the leading quote is the only surviving
+    signal.  (Heuristic first pass: no ported chapter has a non-epigraph
+    comment that opens with a quote.)"""
+    return bool(re.match(r'^\s*["“]', text))
 
 # ######... divider lines; tolerate trailing decoration (`###### --`, spaces)
 _SEPARATOR_LINE_RE = re.compile(r'^\s*#{4,}[ \t#-]*$')
@@ -732,14 +743,14 @@ def tokenize(text: str):
             i += 1
             continue
 
-        # --- savedImport sentinel (planted by _extract_imports) ---
-        if stripped.startswith('--SAVEDIMPORT '):
-            body = [stripped[len('--SAVEDIMPORT '):]]
+        # --- importBlock sentinel (planted by _extract_imports) ---
+        if stripped.startswith('--IMPORTBLOCK '):
+            body = [stripped[len('--IMPORTBLOCK '):]]
             i += 1
-            while i < n and lines[i].strip().startswith('--SAVEDIMPORT '):
-                body.append(lines[i].strip()[len('--SAVEDIMPORT '):])
+            while i < n and lines[i].strip().startswith('--IMPORTBLOCK '):
+                body.append(lines[i].strip()[len('--IMPORTBLOCK '):])
                 i += 1
-            tokens.append(('saved_import', '\n'.join(body)))
+            tokens.append(('import_block', '\n'.join(body)))
             continue
 
         # --- Block comment /- ... -/ ---
@@ -783,6 +794,14 @@ def tokenize(text: str):
                 tokens.append(('author_comment', body))
             elif _is_label_comment(body):
                 tokens.append(('block_comment_label', body))
+            elif _is_epigraph_comment(body):
+                # A standalone comment that is entirely a quotation (its first
+                # character is a double quote) is a section epigraph: in the
+                # Rocq sources these were wrapped `#<div class="quote">#…#</div>#`,
+                # markup that was lost in the port and survives only as the bare
+                # quoted comment.  Restore it as a :::epigraph directive (rendered
+                # italic for now).
+                tokens.append(('epigraph', _prose_markup(body.strip())))
             elif not body.strip():
                 tokens.append(('blank', None))
             else:
@@ -1058,6 +1077,52 @@ def tokenize(text: str):
 
     return tokens
 
+def _hoist_slidebreaks_from_terse(tokens):
+    """Lift every slide break out of any enclosing `::::terse` region.
+
+    A slide break only matters in the terse HTML build (it renders an empty
+    `<div class="slide-break">` there) and is stripped from every other product
+    — full HTML and all three generated `.lean` files.  So it never needs to
+    sit *inside* a `::::terse` container; doing so is just noise (and, when the
+    break is a region's sole content, leaves a pointless one-item terse block).
+
+    A source like `/- TERSE: *** text -/` tokenizes to
+    `terse_open, slidebreak, prose, terse_close`.  Rewrite each `slidebreak`
+    that falls within an open terse region to `terse_close, slidebreak,
+    terse_open` — hoisting the break to top level and reopening the region for
+    whatever terse content follows — then drop any `terse_open … terse_close`
+    pair left empty (the break was the first or last item), so no bare
+    `::::terse` survives."""
+    lifted = []
+    terse_depth = 0
+    for kind, content in tokens:
+        if kind == 'terse_open':
+            terse_depth += 1
+            lifted.append((kind, content))
+        elif kind == 'terse_close':
+            terse_depth = max(0, terse_depth - 1)
+            lifted.append((kind, content))
+        elif kind == 'slidebreak' and terse_depth > 0:
+            lifted.append(('terse_close', None))
+            lifted.append(('slidebreak', None))
+            lifted.append(('terse_open', None))
+        else:
+            lifted.append((kind, content))
+    # Drop terse regions left holding nothing but blank tokens.
+    out = []
+    i, n = 0, len(lifted)
+    while i < n:
+        if lifted[i][0] == 'terse_open':
+            j = i + 1
+            while j < n and lifted[j][0] == 'blank':
+                j += 1
+            if j < n and lifted[j][0] == 'terse_close':
+                i = j + 1
+                continue
+        out.append(lifted[i])
+        i += 1
+    return out
+
 def _strip_lean_comments(text: str) -> str:
     """Return *text* with `--` line comments and (nested) `/- ... -/` block
     comments removed; used to detect code blocks that contain no real code."""
@@ -1176,6 +1241,23 @@ def _verbatim_block(text: str) -> str:
     return fence + '\n' + text + '\n' + fence
 
 
+def _unwrap_prose_note(text: str) -> str:
+    """If *text* is a single `/- … -/` block comment (a pure prose note with no
+    code), return its inner content with the comment delimiters stripped;
+    otherwise return *text* unchanged.  A `-- HIDE` region wrapping only a note
+    would otherwise stack `/- … -/` inside the verbatim fence inside `:::hide` —
+    three redundant layers, since the fence already guards the body and the
+    directive already discards it.  Anything with a further `/-`/`-/` inside
+    (nested comments, or a comment mixed with code) is preserved verbatim."""
+    stripped = text.strip()
+    if not (stripped.startswith('/-') and stripped.endswith('-/')):
+        return text
+    inner = stripped[2:-2]
+    if '/-' in inner or '-/' in inner:
+        return text
+    return inner.strip('\n')
+
+
 def _code_block(tag: str, text: str) -> str:
     """Wrap *text* in a fenced code block tagged *tag* (e.g. ` ```dev `).  A
     Verso code block delivers its body to the expander as a raw string that is
@@ -1264,13 +1346,18 @@ class Renderer:
 
     def _on_code_display(self, text):
         # coqdoc `[[ … ]]` display code (see _comment_tokens): a NON-elaborated
-        # verbatim code block.  The snippet is often deliberately ill-formed
-        # ("the following definitions are ill-formed"), so it must never become a
-        # ```lean block that Verso would try to compile.  The fence is grown to
+        # display, rendered by the `SFLMeta` ```display code block (see
+        # SFLMeta/DisplayMath.lean).  The snippet is often deliberately ill-formed
+        # ("the following definitions are ill-formed"), or an informal-proof
+        # equation, or a shell transcript, so it must never become a ```lean block
+        # that Verso would try to compile — ```display shows it verbatim as Lean
+        # code with no elaboration.  Emitting a *named* display (rather than an
+        # anonymous ``` fence) marks it so a later pass can promote the
+        # genuinely-mathematical ones to ```displaymath.  The fence is grown to
         # outrun any backticks inside the snippet, like other verbatim blocks.
         self._flush_code()
         self._open_full_if_pending()
-        self._append(_verbatim_block(text) + '\n\n')
+        self._append(_code_block('display', text) + '\n\n')
 
     def _on_block_comment_header(self, hdr):
         level, title = hdr
@@ -1384,6 +1471,13 @@ class Renderer:
         self._flush_code()
         self._append(':::slidebreak\n:::\n\n')
 
+    def _on_epigraph(self, text):
+        # A section-opening quotation -> :::epigraph (rendered italic for now;
+        # SFLMeta.Block.epigraph).  The body is a single line of quoted prose,
+        # holds no nested directive, so a plain 3-colon fence is safe.
+        self._flush_code()
+        self._append(':::epigraph\n' + text + '\n:::\n\n')
+
     def _on_terse_inline(self, text):
         self._flush_code()
         if text.strip() == '***':
@@ -1406,7 +1500,7 @@ class Renderer:
         if self.full_open and not self.in_exercise:
             self._close_full_if_open()
             self.pending_full = True
-        self._append(_c_open('hide') + '\n' + _verbatim_block(text)
+        self._append(_c_open('hide') + '\n' + _verbatim_block(_unwrap_prose_note(text))
                      + '\n' + _c_close() + '\n\n')
 
     def _on_quiz_open(self):
@@ -1436,7 +1530,7 @@ class Renderer:
         self._flush_code()
         if not text.strip():
             return
-        self._append(':::answer\n' + _verbatim_block(text) + '\n:::\n\n')
+        self._append(':::answer\n' + _verbatim_block(_unwrap_prose_note(text)) + '\n:::\n\n')
 
     def _on_grade(self, text):
         # -- GRADE_THEOREM / GRADE_MANUAL -> :::grade.  A noop for now, but the
@@ -1447,16 +1541,16 @@ class Renderer:
             return
         self._append(':::grade\n' + _verbatim_block(text) + '\n:::\n\n')
 
-    def _on_saved_import(self, text):
+    def _on_import_block(self, text):
         # Cross-chapter `import` lines (sentinels from _extract_imports) -> a
-        # ```savedImport code block: rendered to the reader as a plain code
+        # ```importBlock code block: rendered to the reader as a plain code
         # block, and copied verbatim into the generated student/solutions/terse
-        # chapter files by the saver (SFLMeta.Block.savedImport).  Emitted at
+        # chapter files by the saver (SFLMeta.Block.importBlock).  Emitted at
         # the top level, never inside a deferred :::full — the terse build
         # drops :::full content wholesale, and the import must survive in all
         # three generated variants.
         self._flush_code()
-        self._append(_code_block('savedImport', text) + '\n\n')
+        self._append(_code_block('importBlock', text) + '\n\n')
 
     def _on_solution_prose(self, text):
         # Prose / non-compiling solution -> :::solution block, shown only in the
@@ -1509,6 +1603,8 @@ class Renderer:
                 self._on_exercise_close()
             elif kind == 'slidebreak':
                 self._on_slidebreak()
+            elif kind == 'epigraph':
+                self._on_epigraph(content)
             elif kind == 'terse_inline':
                 self._on_terse_inline(content)
             elif kind == 'author_comment':
@@ -1529,8 +1625,8 @@ class Renderer:
                 self._on_solution_prose(content)
             elif kind == 'grade_theorem':
                 self._on_grade(content)
-            elif kind == 'saved_import':
-                self._on_saved_import(content)
+            elif kind == 'import_block':
+                self._on_import_block(content)
             # else: unknown token — ignore
 
         # Flush any trailing code
@@ -2393,6 +2489,7 @@ def convert(src_text: str, title: str, file_key: str) -> str:
     body_src = _convert_workinclass_markers(body_src)
     body_src = _convert_solution_markers(body_src)
     tokens = tokenize(body_src)
+    tokens = _hoist_slidebreaks_from_terse(tokens)
     renderer = Renderer()
     renderer.process(tokens)
     body = renderer.result()
