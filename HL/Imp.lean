@@ -441,14 +441,6 @@ In informal discussions, it is convenient to write the rules for
 {name}`Aexp.EvalR` and similar relations in the more readable graphical form of
 _inference rules_, where the premises above the line justify the
 conclusion below the line.  For example, the constructor `plus`
-
-```
-    | plus (a1 a2 : Aexp) (n1 n2 : Nat) :
-        EvalR a1 n1 →
-        EvalR a2 n2 →
-        EvalR (.plus a1 a2) (n1 + n2)
-```
-
 can be written like this as an inference rule:
 
 ```
