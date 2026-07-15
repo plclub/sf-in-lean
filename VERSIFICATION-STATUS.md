@@ -172,6 +172,41 @@ Skipped per BCP (no `LF/Typeclasses.lean` exists yet).
   on all six graduated chapters — prose 0 everywhere, 0 flattenings,
   remaining warnings all in the known-benign classes.
 
+**Post-merge build repair (2026-07-14 late).** Main's improved ADMITDEF
+conversion + our graduated chapters exposed a series of latent issues in the
+generated-project builds (`make all` exercises them; main never built these
+chapters' projects). Fixed, in order:
+- lakefileTemplate: skip an extraLib equal to the volume lib (duplicate
+  `lean_lib LF` from bundling LF/CustomTactics.lean).
+- Characteristic-equation lemmas / test examples proved by `rfl` against
+  ADMITDEF'd (student-`sorry`d) definitions now carry trailing `-- ADMITTED`
+  (student gets `:= sorry`), matching the existing doubleBin/test_sum1
+  convention: Induction natToBin_zero/succ; Tactics forallb/existsb tests ×8;
+  Lists nil_sum/cons_sum/eqblist ×3; Logic All_nil/All_cons/beq_list ×4/
+  forallb_nil/forallb_cons. Logic In_map_iff/In_app_iff: `-- ADMITTED` moved
+  above `induction xs` (a single student `sorry` can't close two goals).
+- to_verso: `_BLOCK_MARKER_RE` also normalizes `/- ADMITTED -/`/`/- ADMITDEF -/`
+  (standalone AND trailing forms); trailing `-- ADMITTED` conversion handles
+  the proof term on a line after `… :=`; **multi-marker close comments like
+  `/- /ADMITTED␤GRADE_THEOREM … -/` are NOT recognized** — the close must be
+  its own `/- /ADMITTED -/` comment (5 such comments split in Poly; watch for
+  the pattern in IndProp/Maps).
+- Save.lean stripGuardMsgs: keeps `#guard_msgs` + docstring in extracted files
+  when the expectation is an *error* (stripping left deliberately-failing
+  examples bare, e.g. Logic's `P ∧ Q = Q ∧ P := by rfl`); still strips
+  benign warning:/info: guards.
+- `\CHAP{X}` refs (main's new macro → `{ref "X"}[X]`): added the missing
+  `tag := "Basics"` to LF/Basics.lean's `%%%`; `\CHAP{Preface}` → plain text
+  (no Preface chapter exists — re-link when one does); `\CHAP{Arithmetic}` →
+  `\CHAP{Induction}` (where `double` lives).
+- Terse-build visibility (terse drops `::::full` wholesale, and to_verso puts
+  code following a `FULL:` paragraph inside the region): moved Basics
+  `add_succ` out of its `::::full`; moved Induction's `-- FULL` below
+  `namespace NatToBin` (the namespace `end` was terse-visible via the
+  exercise, the open wasn't). More of this class may remain — the last
+  `make all` (terse variant) was still running at session end; if it fails,
+  the errors name the next definition to un-FULL.
+
 ### After the merge
 
 1. `make verso` (regenerate all `LF/*Verso.lean`).
