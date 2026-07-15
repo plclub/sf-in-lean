@@ -1504,7 +1504,8 @@ term is always definitionally equal to itself.)
 ::::
 
 ::::terse
-The `rfl` closes a goal that looks lik `a = a`.
+The `rfl` closes a goal that looks like `a = a`, reducing both sides of the equality in
+the process.
 ::::
 
 ## A New `add` Rule
