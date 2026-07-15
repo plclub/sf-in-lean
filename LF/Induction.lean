@@ -394,7 +394,7 @@ theorem zero_mul (n : Nat) :
     rewrite [mul_succ, ih, add_zero]
     rfl
 -- /ADMITTED
--- GRADE_THEOREM zero.5: mul_zero_l
+-- GRADE_THEOREM 0.5: mul_zero_l
 
 theorem succ_add (n m : Nat) :
     (succ n) + m = succ (n + m) := by
@@ -407,7 +407,7 @@ theorem succ_add (n m : Nat) :
     rewrite [add_succ, add_succ, ih]
     rfl
 -- /ADMITTED
--- GRADE_THEOREM zero.5: succ_add
+-- GRADE_THEOREM 0.5: succ_add
 -- /FULL
 -- TERSE
 /- *** -/
@@ -430,7 +430,7 @@ theorem add_comm (n m : Nat) :
     rewrite [add_succ, ih, succ_add]
     rfl
 -- /ADMITTED
--- GRADE_THEOREM zero.5: add_comm
+-- GRADE_THEOREM 0.5: add_comm
 
 theorem add_assoc (n m p : Nat) :
     n + (m + p) = (n + m) + p := by
@@ -561,8 +561,8 @@ theorem beq_refl (n : Nat) :
   alternative characterization of `even (succ n)` that works better
   with induction:
 
-  /- ## Tip: Rewriting by definitions
-    To expand the body of `even`, use `rewrite [even]` or `rw [even]`. -/
+  (Tip: To expand the body of `even` in a proof, use `rewrite [even]` or
+  `rw [even]`.)
 -/
 -- /FULL
 
@@ -896,8 +896,9 @@ theorem mul_one (p : Nat) :
   | succ p' ih => rw [mul_succ, ih, succ_eq_add_one]
   -- /ADMITTED
 -- GRADE_THEOREM 1: mul_one
+-- []
 
--- EX2 (mul_one)
+-- EX2 (mul_two)
 theorem mul_two (p : Nat) :
     two * p = p + p := by
   -- ADMITTED
@@ -908,7 +909,8 @@ theorem mul_two (p : Nat) :
     rw [add_assoc, add_assoc, ←add_assoc p' p' one]
     rw [add_comm p' one, add_comm p']
   -- /ADMITTED
-  -- GRADE_THEOREM 1: mul_two
+-- GRADE_THEOREM 1: mul_two
+-- []
 
 -- TERSE
 /-
@@ -1287,7 +1289,7 @@ seal doubleBin
 /- double_bin_zero -/
 unseal doubleBin in
 example : doubleBin .z = .z := by rfl  -- ADMITTED
--- GRADE_THEOREM zero.5: double_bin_zero
+-- GRADE_THEOREM 0.5: double_bin_zero
 
 /- Prove this lemma, which corresponds to `double_incr`. -/
 

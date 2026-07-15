@@ -4,6 +4,12 @@ import SFLMeta.Save
 
 import LF.Basics
 -- Add `import LF.XXXVerso` here for each generated chapter included below.
+import LF.InductionVerso
+import LF.UsingLeanVerso
+import LF.ListsVerso
+import LF.PolyVerso
+import LF.TacticsVerso
+import LF.LogicVerso
 
 import VersoManual
 
@@ -15,3 +21,9 @@ open Verso Genre Manual
 -- comment syntax, so don't put comments after the includes.)
 #doc (Manual) "Logical Foundations" =>
 {include LF.Basics}
+{include LF.InductionVerso}
+{include LF.UsingLeanVerso}
+{include LF.ListsVerso}
+{include LF.PolyVerso}
+{include LF.TacticsVerso}
+{include LF.LogicVerso}

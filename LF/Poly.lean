@@ -365,13 +365,12 @@ def myRepeat''' {α : Type} (x : α) (count : Nat) : List α :=
 /- (Note that we didn't even have to provide a type argument to the
     recursive call to myRepeat'''. Indeed, it would be invalid to
     provide one, because Lean is not expecting it.) -/
+-- /FULL
 
 /- ######################################################
    ### Supplying Type Arguments Explicitly -/
 
-/- FULL
-
-   One small problem with implicit arguments is that, once in a
+/- FULL: One small problem with implicit arguments is that, once in a
    while, Lean does not have enough local information to determine
    a type argument; in such cases, we need to tell Lean the type
    explicitly. For example: -/
@@ -512,6 +511,7 @@ def mynil' := @List.nil Nat
 
 /- TERSE: /HIDEFROMHTML -/
 
+/- FULL -/
 
 /- EX2M? (mumble_grumble) -/
 /- Consider the following two inductively defined types. -/
@@ -936,7 +936,7 @@ theorem filter_cons_fail {α : Type} {test : α → Bool} h t :
    dsimp
 
 
--- TERSE:
+-- TERSE: ***
 /- LATER: This material would sink in better if it were made clearer
    why map and filter and such were useful in the real world. Talk
    about map/reduce, collection-oriented programming, etc. Esp in the

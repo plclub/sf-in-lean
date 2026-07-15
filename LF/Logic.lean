@@ -295,6 +295,7 @@ example (n m : Nat) : n = 0 ∧ m = 0 → n + m = 0 := by
 example (n m : Nat) : n = 0 → m = 0 → n + m = 0 := by
   intro hn hm
   rw [hn, hm]
+-- /FULL
 
 /- TERSE: For the present example, both ways work.
     But in other situations, we may wind up with a conjunctive hypothesis
@@ -312,7 +313,6 @@ example (n m : Nat) (h : n + m = 0) : n * m = 0 := by
   let ⟨hn, hm⟩ := h
   rw [hm]; rfl
   -- /WORKINCLASS
--- /FULL
 
 -- FULL
 /- Another common situation is that we know `A /\ B` but in some
@@ -1190,7 +1190,7 @@ theorem In_map_iff (α β : Type) (f : α → β) (xs : List α) (y : β) :
     rw [← h1]; apply In_map; exact h2
     -- /ADMITTED
 -- []
--- /FULl
+-- /FULL
 
 -- FULL
 -- EX3! (All)
@@ -1292,6 +1292,7 @@ theorem combined_odd_even_elim_even Podd Peven n
   dsimp at h; exact h
   -- /ADMITTED
 -- []
+-- /FULL
 
 /- ## Applying Theorems to Arguments -/
 
@@ -1569,6 +1570,7 @@ theorem even_double (k : Nat) :
 
 -- FULL
 -- EX3 (even_double_conf)
+-- /FULL
 theorem even_double_conv (n : Nat) : ∃ k : Nat,
     n = bif even n then double k else succ (double k) := by
   -- ADMITTED

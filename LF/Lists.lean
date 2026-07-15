@@ -61,7 +61,7 @@ inductive NatProd where
 -- HIDEFROMADVANCED
 #check (NatProd.pair 3 5)
 
--- TERSE:
+-- TERSE: ***
 -- /HIDEFROMADVANCED
 /- Functions for extracting the first and second components of a pair
     can then be defined by pattern matching. -/
@@ -828,8 +828,8 @@ theorem tl_length_pred (l : NatList) :
   think about what each step achieves.  Otherwise it is more or less
   guaranteed that the exercises will make no sense when you get to
   them.  'Nuff said.)
-  /FULL
 -/
+-- /FULL
 
 -- ######################################################################
 -- ## Induction on Lists
@@ -1052,7 +1052,7 @@ theorem foo1 (n : Nat) (l : NatList) :
 -- /HIDE
 -- /QUIZ
 
--- QUIZ --
+-- QUIZ
 /- What about the next one?
 
       theorem foo2 :  forall n m : Nat,
@@ -1073,8 +1073,9 @@ theorem foo2 (n m : Nat) :
     rewrite [repeat_succ, cons_length, ih]; rfl
 -- /HIDE
 -- /QUIZ
+-- /TERSE
 
--- FULL --
+-- FULL
 /- For comparison, here are informal proofs of these two theorems:
 
     _Theorem_: For all lists [l1] and [l2],

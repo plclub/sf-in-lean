@@ -270,6 +270,34 @@ block_extension Block.leanSaved (teacher : String) (student : String) (terse : S
   toHtml := some fun _ goB _ _ contents => contents.mapM goB
   toTeX  := some fun _ goB _ _ contents => contents.mapM goB
 
+/-! ## `savedImport` code block
+
+A chapter's cross-chapter `import` lines (e.g. `import LF.Basics`) must live in
+the Verso module *header* (where they are rewritten to the `…Verso` module
+names), so they never appear in the chapter's elaborated `lean` blocks. But the
+generated student/solutions/terse projects need the original `import` line at
+the top of each extracted chapter file, and the book reader should see it too.
+A ` ```savedImport ` code block carries the original import line(s) verbatim:
+it renders as a plain code block in HTML, and the saver copies its body as
+live code (not comments) into all three generated variants. -/
+
+block_extension Block.savedImport (source : String) where
+  data := Json.str source
+  traverse _ _ _ := pure none
+  toHtml := some fun _ goB _ _ contents => contents.mapM goB
+  toTeX := some fun _ goB _ _ contents => contents.mapM goB
+
+/-- A ` ```savedImport ` code block: cross-chapter `import` lines for the
+generated projects, rendered to the reader as a plain code block. The body is
+not elaborated here (the real imports for the book build are in the Verso
+module header). -/
+@[code_block]
+def savedImport : CodeBlockExpanderOf Unit
+  | (), str => do
+    let src := str.getString
+    ``(Verso.Doc.Block.other (SFLMeta.Block.savedImport $(quote src))
+        #[Verso.Doc.Block.code $(quote src)])
+
 /-! ## Syntactic rewriting of `solution!` markers
 
 The `solution!` term and tactic elaborators (declared in `SFLMeta.Exercise`)
@@ -601,6 +629,12 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
           (student.trimAscii.toString ++ "\n\n")
           (terse.trimAscii.toString ++ "\n\n")
       return buf
+    if name == ``Block.savedImport then
+      -- Cross-chapter `import` lines: copied verbatim (as live code, not
+      -- comments) into every generated variant.
+      if let .str src := which.data then
+        return appendBoth buf file (src.trimAscii.toString ++ "\n\n")
+      return buf
     if name == ``Block.exercise then
       -- Emit a `### Exercise (N⭐): name` heading; the contained `lean`
       -- blocks render normally via recursion below.
@@ -714,6 +748,14 @@ def walkOuter (width : Nat) (vol : String) (text : Part Manual) (buf : SaveBuffe
   return buf
 
 /--
+Plain-Lean support modules copied verbatim into the generated project. They
+are imported by chapter code (via ` ```savedImport ` blocks) but are not book
+chapters themselves, so the walker never emits them. Each must be
+self-contained (importing only core `Lean.*` modules). -/
+private def supportModules (vol : String) : List System.FilePath :=
+  if vol == "LF" then ["LF/CustomTactics.lean"] else []
+
+/--
 Write a complete generated Lake project at `dest`: the per-file buffer
 contents under `dest/`, plus `lakefile.toml`, `lean-toolchain`, and a `LF.lean`
 that imports `LF.STLC`. -/
@@ -734,6 +776,11 @@ private def writeProject (dest : System.FilePath) (toolchain : String)
     let target := dest / relPath
     target.parent.forM IO.FS.createDirAll
     IO.FS.writeFile target body
+  for src in supportModules vol do
+    if ← src.pathExists then
+      let target := dest / src
+      target.parent.forM IO.FS.createDirAll
+      IO.FS.writeFile target (← IO.FS.readFile src)
 
 /--
 Run `lake build` inside `dest` and report any failure via `logError`. Used to

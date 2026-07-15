@@ -349,7 +349,7 @@ def collatz_holds_for (n : Nat) : Prop :=
   | _ => if even n then collatz_holds_for (div2 n)
                    else collatz_holds_for ((3 * n) + 1)
 
-/-- This recursive function is also rejected by the termination
+/- This recursive function is also rejected by the termination
     checker, since, while we could in principle convince Lean that
     `div2 n` is smaller than `n`, we certainly can't convince it that
     `(3 * n) + 1` is smaller than `n`! -/
@@ -360,7 +360,7 @@ def collatz_holds_for (n : Nat) : Prop :=
    concept "reaches `1` eventually in the Collatz sequence" as an
    _inductively defined property_ of numbers. Intuitively, this
    property is defined by a set of rules:
-
+[[
                        ─────────────────── (chf_one)
                        CollatzHoldsFor 1
 
@@ -371,7 +371,7 @@ def collatz_holds_for (n : Nat) : Prop :=
          even n = false    CollatzHoldsFor ((3 * n) + 1)
          ─────────────────────────────────────────────── (chf_odd)
                         CollatzHoldsFor n
-
+]]
    So there are three ways to prove that a number `n` eventually
    reaches `1` in the Collatz sequence:
      - `n` is `1`;
@@ -384,7 +384,7 @@ def collatz_holds_for (n : Nat) : Prop :=
    derivation using these rules. For instance, here is the
    derivation proving that `12` reaches `1` (where we leave out the
    evenness/oddness premises):
-
+[[
                     ─────────────────────── (chf_one)
                     CollatzHoldsFor 1
                     ─────────────────────── (chf_even)
@@ -404,7 +404,9 @@ def collatz_holds_for (n : Nat) : Prop :=
                     ─────────────────────── (chf_even)
                     CollatzHoldsFor 6
                     ─────────────────────── (chf_even)
-                    CollatzHoldsFor 12 -/
+                    CollatzHoldsFor 12
+]]
+-/
 
 /- TERSE: *** -/
 
@@ -506,13 +508,15 @@ def collatz := ∀ n, n ≠ 0 → CollatzHoldsFor n
 /- For example, one familiar binary relation on `Nat` is `Le : Nat
    → Nat → Prop`, the less-than-or-equal-to relation, which can be
    inductively defined by the following two rules:
-
+[[
                             ─────── (le_refl)
                             Le n n
 
                              Le n m
                           ───────────── (le_step)
-                          Le n (m + 1) -/
+                          Le n (m + 1)
+]]
+-/
 
 /- FULL: These rules say that there are two ways to show that a
    number is less than or equal to another: either observe that
@@ -543,7 +547,7 @@ end LePlayground
 -- /HIDEFROMHTML
 
 -- ##############################################
-/- ** Example: Transitive Closure -/
+/- ## Example: Transitive Closure -/
 
 /- Another example: The _transitive closure_ of a
     relation [R] is the smallest relation that contains [R] and that
@@ -571,7 +575,7 @@ inductive ClosTrans {α: Type} (R: α→α→Prop) : α → α → Prop where
       ClosTrans R y z →
       ClosTrans R x z
 
--- TERSE:
+-- TERSE: ***
 
 /- For example, suppose we define a "parent of" relation on a group
     of people... -/
@@ -786,7 +790,7 @@ inductive Perm3 {α : Type} : List α → List α → Prop where
 -- /FULL
 
 -- ##############################################
-/- ** Example: Evenness (yet again) -/
+/- ## Example: Evenness (yet again) -/
 
 /- We've already seen two ways of stating a proposition that a number
     `n` is even: We can say
@@ -855,7 +859,7 @@ inductive Ev : Nat → Prop where
     inductive List (α:Type) : Type where
       | nil                       : List α
       | cons (x : α) (l : List α) : List α.
-]]]
+]]
     The most important difference is that the constructors of `Ev`,
     `ev_0` and `ev_succ_succ`, yield different types (`Ev 0` and `Ev (n + 2)`),
     whereas the `List` constructors both build `List α` values. -/
@@ -1063,7 +1067,7 @@ theorem Perm3_refl : ∀ (α : Type) (a b c : α ), Perm3 [a, b, c] [a, b, c] :=
 /- TERSE: This suggests that it should be possible to do _case
     analysis_ and even _induction_ on evidence of evenness... -/
 
-/- ** Destructing and Inverting Evidence -/
+/- ## Destructing and Inverting Evidence -/
 
 /- FULL: Suppose we are proving some fact involving a number `n`, and
     we are given `Ev n` as a hypothesis.  We already know how to
@@ -1460,18 +1464,16 @@ theorem inversion_ex2 : ∀ (n : Nat),
 #guard_msgs in
 example : ∀ n, Ev n → Even n := by
   /- WORKINCLASS -/
-
-/- We could try to proceed by case analysis or induction on `n`.  But
-    since `Ev` is mentioned in a premise, this strategy seems
-    unpromising, because (as we've noted before) the induction
-    hypothesis will talk about `n-1` (which is _not_ even!).  Thus, it
-    seems better to first try `inversion` on the evidence for `Ev`.
-    Indeed, the first case can be solved trivially. -/
-
+  /- We could try to proceed by case analysis or induction on `n`.  But
+      since `Ev` is mentioned in a premise, this strategy seems
+      unpromising, because (as we've noted before) the induction
+      hypothesis will talk about `n-1` (which is _not_ even!).  Thus, it
+      seems better to first try `inversion` on the evidence for `Ev`.
+      Indeed, the first case can be solved trivially. -/
   intro n h
   inversion h
   /- h = ev_0 -/
-  case ev_0 => exists 0; rw [double_zero]
+  case ev_0 => exists 0  -- (`0 = double 0` is closed by `exists`'s final `rfl`)
   /- h = ev_succ_succ n' h' -/
   case ev_succ_succ n' h' =>
   /- Unfortunately, the second case is harder.  We need to show
@@ -1515,7 +1517,7 @@ example : ∀ n, Ev n → Even n := by
 
 
 /- ####################################################### -/
-/- ** Induction on Evidence -/
+/- ## Induction on Evidence -/
 
 /- If this story feels familiar, it is no coincidence: We
     encountered similar problems in the \CHAP{Induction} chapter, when
@@ -1544,7 +1546,7 @@ theorem ev_Even : ∀ n, Ev n → Even n := by
   intro n h
   induction h
   /- h = ev_0 -/
-  case ev_0 => exists 0; rw [double_zero]
+  case ev_0 => exists 0  -- (`0 = double 0` is closed by `exists`'s final `rfl`)
   /- h = ev_succ_succ n' h',  with ih : Even n' -/
   case ev_succ_succ n' h' ih =>
     let ⟨k, hk⟩ := ih
@@ -1623,7 +1625,7 @@ theorem ev_plus_plus : ∀ n m p,
 
 
 /- ####################################################### -/
-/- ** Multiple Induction Hypotheses -/
+/- ## Multiple Induction Hypotheses -/
 
 /- Recall the definition of the reflexive, transitive, closure of a
     relation: -/
@@ -1826,7 +1828,7 @@ example : ¬ Perm3 [1, 2, 3] [1, 2, 4] := by
 
 /- FULL -/
 /- ####################################################### -/
-/- * Exercising with inductive Relations -/
+/- # Exercising with Inductive Relations -/
 
 /- SOONER: CH: Bad flow + duplication needs fixing.
    Could move some of this to the top.
@@ -2709,7 +2711,7 @@ inductive EmptyRelation : Nat → Nat → Prop where
 
 theorem empty_relation_is_empty : ∀ n m, ¬ EmptyRelation n m := by
   /- ADMITTED -/
-  intros n m contra; inversion contra
+  intros n m contra; cases contra
 /- /ADMITTED -/
 /- GRADE_THEOREM 2: empty_relation_is_empty -/
 /- [] -/
@@ -2733,7 +2735,7 @@ theorem empty_relation_is_empty : ∀ n m, ¬ EmptyRelation n m := by
 
 /- FULL -/
 /- ####################################################### -/
-/- * Additional Exercises -/
+/- # Additional Exercises -/
 
 /- EX3! (nostutter_defn) -/
 /- Formulating inductive definitions of properties is an important
@@ -3603,7 +3605,6 @@ theorem pigeonhole_principle:
         apply succ_n_le_succ_m__n_le_m
         exact hlen
       apply ih (l₂a ++ l₂b) hin₂ hlen₂
-
   /-.
       destruct (EM (In x l1')) as [H | H].
       + /- In x l1' -/
@@ -4069,3 +4070,4 @@ Should check to see how much harder this makes things.
     End Pigeon.
 -/
 /- /QUIETSOLUTION -/
+/- /FULL -/

@@ -131,7 +131,7 @@ theorem silly_ex p :
     being applied must match the goal exactly (perhaps after
     simplification) -- for example, `apply` will not work if the left
     and right sides of the equality are swapped. -/
--- TERSE:
+-- TERSE: ***
 /- TERSE: The goal must match the hypothesis _exactly_ for `apply` to
     work: -/
 
@@ -1321,7 +1321,7 @@ theorem double_injective_take2_FAILED : ∀ n m,
     most natural way. -/
 
 -- /HIDEFROMADVANCED
--- TERSE:
+-- TERSE: ***
 /- What we can do instead is to first introduce all the quantified
     variables and then explicitly generalize one or more of them
     The `generalizing` option for the `induction` tactic does this. -/
@@ -1409,6 +1409,7 @@ theorem double_injective_take2 : ∀ n m,
 -- Answer: No, just replaces uses of it by Nat.ble!
 infix:52 " ≤? " => Nat.ble
 
+theorem zero_leb (m : Nat) : (0 ≤? m) = true := rfl
 theorem succ_leb_succ (n m : Nat) : ((n + 1) ≤? (m + 1)) = (n ≤? m) := rfl
 
 /- Suppose that we want to show that `add` is the inverse of

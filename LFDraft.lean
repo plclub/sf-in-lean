@@ -15,11 +15,6 @@ import SFLMeta.Bnf
 import SFLMeta.Ignore
 import SFLMeta.Save
 
-import LF.InductionVerso
-import LF.UsingLeanVerso
-import LF.ListsVerso
-import LF.PolyVerso
-import LF.TacticsVerso
 -- NB LF.MapsVerso builds standalone but cannot join the draft yet: it
 -- redefines `PartialMap.update` (etc.) already defined by ListsVerso's
 -- partial-maps preview section, and Verso imports share one environment.
@@ -29,8 +24,3 @@ import VersoManual
 open Verso Genre Manual
 
 #doc (Manual) "Logical Foundations (draft)" =>
-{include LF.InductionVerso}
-{include LF.UsingLeanVerso}
-{include LF.ListsVerso}
-{include LF.PolyVerso}
-{include LF.TacticsVerso}

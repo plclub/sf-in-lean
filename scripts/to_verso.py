@@ -147,10 +147,10 @@ _IMPORT_RE = re.compile(r'^import\s+(\S+)\s*$')
 # to `-- MARKER`.  Plain `/- label -/` / `/- prose -/` comments are left alone.
 _BLOCK_MARKER_RE = re.compile(
     r'/-[ \t]*('
-    r'EX\d+[A-Za-z!?]*[ \t]+\(\w[\w \-]*\)'   # exercise open: EX2M? (name)
+    r"EX\d+[A-Za-z!?]*[ \t]+\(\w[\w' \-]*\)"   # exercise open: EX2M? (name)
     r'|\[\]'                                   # exercise close
     r'|GRADE_\S[^\n]*?'                        # grading spec
-    r'|/?(?:HIDEFROMADVANCED|HIDEFROMHTML|FULL|TERSE|HIDE|QUIZ|SOLUTION'
+    r'|/?(?:HIDEFROMADVANCED|HIDEFROMHTML|FULL|TERSE|HIDE|QUIZ|QUIETSOLUTION|SOLUTION'
     r'|INSTRUCTORS|WORKINCLASS)'
     r')[ \t]*-/')
 
@@ -200,6 +200,13 @@ def _extract_imports(body: str):
             if lf and lf.group(1) not in DIRECT_LF_MODULES:
                 mod = f'LF.{lf.group(1)}Verso'
             imports.append(f'import {mod}')
+            # A volume-module import also stays in the body, as a sentinel that
+            # the renderer turns into a ```savedImport code block: the header
+            # import above names the Verso module, but the generated student/
+            # solutions/terse chapter files need the original import line (and
+            # the reader should see it where the prose introduces it).
+            if re.match(r'(?:LF|HL|TS)\.\w+$', m.group(1)):
+                kept.append('--SAVEDIMPORT ' + line.strip())
         else:
             kept.append(line)
     return has_prelude, imports, '\n'.join(kept)
@@ -340,6 +347,31 @@ def _prose_markup(text: str) -> str:
             _bullets_to_verso(_strip_coq_comment_markers(text)))))
 
 
+def _lean_comment_balance(line: str, depth: int = 0) -> int:
+    """Net count of block comments opened minus closed on *line*, honoring
+    `--` line comments: a `--` ends the scan only when no block comment is
+    open at that point — *depth* is the block-comment depth carried in from
+    previous lines, so a `--` inside a still-open `/-- … -/` (e.g. the
+    `  -- no goals -/` tail of a #guard_msgs docstring) does not hide the
+    closing `-/`."""
+    bal = 0
+    i = 0
+    n = len(line)
+    while i < n - 1:
+        two = line[i:i + 2]
+        if two == '/-':
+            bal += 1
+            i += 2
+        elif two == '-/':
+            bal -= 1
+            i += 2
+        elif two == '--' and depth + bal == 0:
+            break
+        else:
+            i += 1
+    return bal
+
+
 def _comment_tokens(body: str):
     """Split a block-comment body into header and prose tokens.
 
@@ -450,7 +482,7 @@ def _comment_tokens(body: str):
         # than as `-- ` line markers, so recognize the same set the main
         # tokenizer does — otherwise they flatten to prose (or are dropped) and
         # the quiz/exercise/grade structure is lost.
-        m_ex = re.match(r'^EX(\d+)[A-Za-z!?]*\s+\((\w+)\)$', s)
+        m_ex = re.match(r"^EX(\d+)[A-Za-z!?]*\s+\((\w[\w']*)\)$", s)
         if s == '/QUIZ':
             flush_prose()
             tokens.append(('quiz_close', None))
@@ -478,16 +510,33 @@ def _comment_tokens(body: str):
             flush_prose()
             tokens.append(('instructor', re.sub(r'^INSTRUCTORS:\s*', '', s)))
             idx += 1; continue
-        # Whole-comment FULL/TERSE wrappers: a bare `FULL` / `TERSE` line opens a
-        # mode and `/FULL` / `/TERSE` closes it (the `/- FULL … /FULL -/` comment
-        # form, distinct from the inline `FULL:` prefix handled just below).
+        # FULL/TERSE markers in comment position come in two distinct forms:
+        #
+        # * A bare `FULL` / `TERSE` line is a *region* marker — the in-comment
+        #   analogue of a `-- FULL` line.  Its `/FULL` close often lives in a
+        #   *later* comment (Poly writes whole sections this way), so it must
+        #   NOT be comment-local: emit the open/close token directly and let
+        #   the renderer's region state span comments.  (Before 2026-07-14
+        #   these were auto-closed at the end of the comment, silently
+        #   widening every cross-comment region to both builds.)
+        # * A `FULL:` / `TERSE:` *prefix* switches the mode for the lines that
+        #   follow it within this comment only (handled via set_mode below and
+        #   auto-closed at the end of the comment).
         m_close = re.match(r'^/(FULL|TERSE)$', s)
         m_open_bare = re.match(r'^(FULL|TERSE)$', s)
         m_mode = re.match(r'^\s*(FULL|TERSE):\s?(.*)$', l)
         if m_close:
-            set_mode(None)
+            if mode[0] is not None:
+                set_mode(None)
+            else:
+                flush_prose()
+                tokens.append(('full_close' if m_close.group(1) == 'FULL'
+                               else 'terse_close', None))
         elif m_open_bare:
-            set_mode(m_open_bare.group(1))
+            set_mode(None)
+            flush_prose()
+            tokens.append(('full_open' if m_open_bare.group(1) == 'FULL'
+                           else 'terse_open', None))
         elif m_mode:
             set_mode(m_mode.group(1))
             # A payload that is itself a dropped region marker (`TERSE:
@@ -579,7 +628,7 @@ _TERSE_PLAIN_RE = re.compile(r'^-- TERSE:\s+(.+)$')
 # (advanced), `M` (manual), and combinations like `2AM?`.  A name is usually an
 # identifier but occasionally a phrase (`EX2 (logical connectives)`), so allow
 # internal spaces/hyphens.
-_EX_RE = re.compile(r'^-- EX(\d+)[A-Za-z!?]*\s+\((\w[\w \-]*)\)$')
+_EX_RE = re.compile(r"^-- EX(\d+)[A-Za-z!?]*\s+\((\w[\w' \-]*)\)$")
 _EX_CLOSE_RE = re.compile(r'^-- \[\]$')
 _GRADE_RE = re.compile(r'^--\s+GRADE_')
 # Coq-SF-style section headers written as line comments: `-- # Title` …
@@ -654,15 +703,36 @@ def tokenize(text: str):
     i = 0
     n = len(lines)
     quiz_depth = 0   # >0 while inside a -- QUIZ region (so nested HIDE -> answer)
+    code_comment_depth = 0  # open /-- … -/ (docstring) balance carried by code lines
 
     while i < n:
         line = lines[i]
         stripped = line.strip()
 
+        # --- Inside a docstring (`/-- … -/` spanning code lines) ---
+        # Everything is consumed verbatim as code — including blank lines,
+        # which must NOT collapse: `#guard_msgs` docstrings quote expected
+        # messages exactly, consecutive blanks and all.
+        if code_comment_depth > 0:
+            tokens.append(('code_line', line))
+            code_comment_depth += _lean_comment_balance(line, code_comment_depth)
+            i += 1
+            continue
+
         # --- Blank line ---
         if stripped == '':
             tokens.append(('blank', None))
             i += 1
+            continue
+
+        # --- savedImport sentinel (planted by _extract_imports) ---
+        if stripped.startswith('--SAVEDIMPORT '):
+            body = [stripped[len('--SAVEDIMPORT '):]]
+            i += 1
+            while i < n and lines[i].strip().startswith('--SAVEDIMPORT '):
+                body.append(lines[i].strip()[len('--SAVEDIMPORT '):])
+                i += 1
+            tokens.append(('saved_import', '\n'.join(body)))
             continue
 
         # --- Block comment /- ... -/ ---
@@ -963,6 +1033,7 @@ def tokenize(text: str):
 
         # --- Default: code line ---
         tokens.append(('code_line', line))
+        code_comment_depth += _lean_comment_balance(line, code_comment_depth)
         i += 1
 
     return tokens
@@ -1344,6 +1415,17 @@ class Renderer:
             return
         self._append(':::grade\n' + _verbatim_block(text) + '\n:::\n\n')
 
+    def _on_saved_import(self, text):
+        # Cross-chapter `import` lines (sentinels from _extract_imports) -> a
+        # ```savedImport code block: rendered to the reader as a plain code
+        # block, and copied verbatim into the generated student/solutions/terse
+        # chapter files by the saver (SFLMeta.Block.savedImport).  Emitted at
+        # the top level, never inside a deferred :::full — the terse build
+        # drops :::full content wholesale, and the import must survive in all
+        # three generated variants.
+        self._flush_code()
+        self._append(_code_block('savedImport', text) + '\n\n')
+
     def _on_solution_prose(self, text):
         # Prose / non-compiling solution -> :::solution block, shown only in the
         # solutions build (SFLMeta.Block.solution).  Body is verbatim-fenced so
@@ -1417,6 +1499,8 @@ class Renderer:
                 self._on_solution_prose(content)
             elif kind == 'grade_theorem':
                 self._on_grade(content)
+            elif kind == 'saved_import':
+                self._on_saved_import(content)
             # else: unknown token — ignore
 
         # Flush any trailing code
@@ -1863,7 +1947,7 @@ def _convert_solution_markers(src: str) -> str:
 #     comment; a space is inserted (`- /`, `/ -`) — visible, harmless.
 
 _RQ_STRUCT_MARKERS = (
-    r'EX\d+[A-Za-z!?]*[ \t]+\(\w[\w \-]*\)'    # exercise open: EX2M? (name)
+    r"EX\d+[A-Za-z!?]*[ \t]+\(\w[\w' \-]*\)"    # exercise open: EX2M? (name)
     r'|\[\]'                                    # exercise close
     r'|GRADE_\S.*'                              # grading spec (rest of comment)
     r'|\*\*\*'                                  # slide break
