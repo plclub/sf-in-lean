@@ -205,13 +205,6 @@ implementations and proofs.
 
 _Evaluating_ an arithmetic expression produces a number.
 
-:::dev
-chenson2018: TODO: seal evaluators with `@[irreducible]` and prove
-   *characterizing lemmas* (one
-   `rfl` equation per constructor) that proofs rewrite with instead of
-   unfolding the definition; tag lemmas `@[simp]`.
-:::
-
 ```lean
 def Aexp.eval (a : Aexp) : Nat :=
   match a with
@@ -219,11 +212,26 @@ def Aexp.eval (a : Aexp) : Nat :=
   | plus  a1 a2 =>  eval a1 + eval a2
   | minus a1 a2 =>  eval a1 - eval a2
   | mult  a1 a2 =>  eval a1 * eval a2
-
-example : Aexp.eval (.plus (.num 2) (.num 2)) = 4 := by rfl
 ```
 
-Similarly, evaluating a boolean expression yields a boolean.
+::::full
+By convention, we pair the definition with one _simplification lemma_ which says
+how `eval` behaves on each constructor. Proofs then rewrite by these lemmas rather
+than peeking through the definition of `eval`.  We tag each lemma `@[simp]`, so `simp`
+applies them automatically.
+::::
+
+```lean
+@[simp] theorem Aexp.eval_num (n : Nat) : (num n).eval = n := rfl
+@[simp] theorem Aexp.eval_plus (a1 a2 : Aexp) : (plus a1 a2).eval = a1.eval + a2.eval := rfl
+@[simp] theorem Aexp.eval_minus (a1 a2 : Aexp) : (minus a1 a2).eval = a1.eval - a2.eval := rfl
+@[simp] theorem Aexp.eval_mult (a1 a2 : Aexp) : (mult a1 a2).eval = a1.eval * a2.eval := rfl
+
+example : Aexp.eval (.plus (.num 2) (.num 2)) = 4 := by simp
+```
+
+Similarly, evaluating a boolean expression yields a boolean, and we give it
+the same treatment.
 
 ```lean
 def Bexp.eval (b : Bexp) : Bool :=
@@ -235,6 +243,14 @@ def Bexp.eval (b : Bexp) : Bool :=
   | gt   a1 a2 =>  a1.eval > a2.eval
   | not  b1    =>  !eval b1
   | and  b1 b2 =>  eval b1 && eval b2
+
+@[simp] theorem Bexp.eval_bool (b : Bool) : (bool b).eval = b := rfl
+@[simp] theorem Bexp.eval_eq (a1 a2 : Aexp) : (eq a1 a2).eval = (a1.eval == a2.eval) := rfl
+@[simp] theorem Bexp.eval_neq (a1 a2 : Aexp) : (neq a1 a2).eval = (a1.eval != a2.eval) := rfl
+@[simp] theorem Bexp.eval_le (a1 a2 : Aexp) : (le a1 a2).eval = (a1.eval ≤ a2.eval : Bool) := rfl
+@[simp] theorem Bexp.eval_gt (a1 a2 : Aexp) : (gt a1 a2).eval = (a1.eval > a2.eval : Bool) := rfl
+@[simp] theorem Bexp.eval_not (b : Bexp) : (not b).eval = !b.eval := rfl
+@[simp] theorem Bexp.eval_and (b1 b2 : Bexp) : (and b1 b2).eval = (b1.eval && b2.eval) := rfl
 ```
 
 ::::quiz
@@ -250,7 +266,7 @@ Aexp.eval (.plus (.num 3) (.minus (.num 4) (.num 1)))
 ## Optimization
 
 ::::full
-We haven't defined very much yet, but we can already get some mileage
+We haven't done much yet, but we can already get some mileage
 out of the definitions. Suppose we define a function that takes an
 arithmetic expression and slightly simplifies it, changing every
 occurrence of `0 + e` (i.e., `.plus (.num 0) e`) into just `e`.
@@ -284,9 +300,14 @@ But if we want to be certain the optimization is correct -- that
 evaluating an optimized expression _always_ gives the same result as
 the original -- we should prove it!
 
-Here is a first, deliberately explicit proof. It works, but notice how
-much of it is repetitive: several cases are discharged by exactly the
-same three-step incantation.
+Here is a first, deliberately explicit proof, by induction on `a`. The
+interesting case is `plus`: because `optimize_0plus` treats `plus (num 0) e`
+specially, we case-split on the left operand `a1` -- and, when it is a numeral,
+on whether that numeral is `0` -- to line the proof up with the function's own
+branches. Once the constructors are exposed, each case is discharged by
+essentially the same incantation: unfold `optimize_0plus`, rewrite `eval` by its
+characterizing lemmas, then finish with the induction hypotheses. Notice how
+repetitive that makes the proof.
 ::::
 
 ```lean
@@ -299,26 +320,51 @@ theorem optimize_0plus_sound (a : Aexp) :
     | num n =>
       cases n with
       | zero =>
-        simp only [Aexp.optimize_0plus, Aexp.eval, Nat.zero_add]
+        simp only [Aexp.optimize_0plus, Aexp.eval_plus, Aexp.eval_num, Nat.zero_add]
         exact ih2
       | succ n =>
-        simp only [Aexp.optimize_0plus, Aexp.eval]
+        simp only [Aexp.optimize_0plus, Aexp.eval_plus, Aexp.eval_num]
         rw [ih2]
     | plus b1 b2 =>
-      simp only [Aexp.optimize_0plus, Aexp.eval] at ih1 ⊢
+      simp only [Aexp.optimize_0plus, Aexp.eval_plus] at ih1 ⊢
       rw [ih1, ih2]
     | minus b1 b2 =>
-      simp only [Aexp.optimize_0plus, Aexp.eval] at ih1 ⊢
+      simp only [Aexp.optimize_0plus, Aexp.eval_plus] at ih1 ⊢
       rw [ih1, ih2]
     | mult b1 b2 =>
-      simp only [Aexp.optimize_0plus, Aexp.eval] at ih1 ⊢
+      simp only [Aexp.optimize_0plus, Aexp.eval_plus] at ih1 ⊢
       rw [ih1, ih2]
   | minus a1 a2 ih1 ih2 =>
-    simp only [Aexp.optimize_0plus, Aexp.eval]
+    simp only [Aexp.optimize_0plus, Aexp.eval_minus]
     rw [ih1, ih2]
   | mult a1 a2 ih1 ih2 =>
-    simp only [Aexp.optimize_0plus, Aexp.eval]
+    simp only [Aexp.optimize_0plus, Aexp.eval_mult]
     rw [ih1, ih2]
+```
+
+::::full
+We can do much better. The case analysis we performed by hand -- peeling
+`plus` apart to reach the `plus (num 0) e` branch -- is exactly the case
+analysis that `optimize_0plus` itself performs. For any function, Lean
+generates a matching *induction principle*, here `Aexp.optimize_0plus.induct`,
+that follows the function's own recursion structure.  Inducting with it (via
+`induction a using …`) hands us one goal per branch of `optimize_0plus`, the
+special `plus (num 0) e` branch included -- so the nested `cases` disappear.
+
+Every remaining goal now has the same shape, so we can attack them uniformly
+with the `<;>` combinator, which runs a single tactic on *all* the goals
+produced by the `induction`.  That tactic is `simp_all [Aexp.optimize_0plus]`:
+it unfolds `optimize_0plus`, rewrites `eval` by the `@[simp]` characterizing
+lemmas, and uses the induction hypotheses -- which `simp_all` picks up from the
+local context automatically -- to close each goal. The whole proof collapses to
+two lines.
+::::
+
+```lean
+theorem optimize_0plus_sound' (a : Aexp) :
+    a.optimize_0plus.eval = a.eval := by
+  induction a using Aexp.optimize_0plus.induct <;>
+    simp_all [Aexp.optimize_0plus]
 ```
 
 # Optimizing Booleans
@@ -327,7 +373,7 @@ theorem optimize_0plus_sound (a : Aexp) :
 Since the {name}`Aexp.optimize_0plus` transformation doesn't change the value of an
 `Aexp`, we should be able to apply it to all the `Aexp`s that appear in a
 `Bexp` without changing the `Bexp`'s value.  Write a function that
-performs this transformation on `Bexp`s and prove it sound.  Use the
+performs this transformation on `Bexp`s and prove it sound. Use the
 combinators we've just seen to make the proof as short and elegant as
 possible.
 
@@ -371,10 +417,8 @@ GRADE_THEOREM 0.5: optimize_0plus_b_test2
 theorem optimize_0plus_b_sound (b : Bexp) :
     b.optimize_0plus_b.eval = b.eval := by
   solution!
-    induction b with
-    | not b1 ih => simp only [Bexp.optimize_0plus_b, Bexp.eval]; rw [ih]
-    | and b1 b2 ih1 ih2 => simp only [Bexp.optimize_0plus_b, Bexp.eval]; rw [ih1, ih2]
-    | _ => simp only [Bexp.optimize_0plus_b, Bexp.eval, optimize_0plus_sound]
+    induction b <;>
+      simp_all [Bexp.optimize_0plus_b, optimize_0plus_sound]
 ```
 
 :::grade
@@ -382,6 +426,14 @@ theorem optimize_0plus_b_sound (b : Bexp) :
 GRADE_THEOREM 2: optimize_0plus_b_sound
 ```
 :::
+:::::
+
+:::::exercise (rating := 4) (name := "optimize")
+The optimization implemented by our {name}`Aexp.optimize_0plus` is only one of
+many possible optimizations on arithmetic and boolean expressions. Write a more
+sophisticated optimizer and prove it correct. (You will probably find it easiest
+to start small -- add just a single, simple optimization and its correctness proof
+and build up incrementally to something more interesting.)
 :::::
 
 # Evaluation as a Relation
@@ -510,11 +562,6 @@ BCP 21: Too heavy.
 LATER: The first two quizzes here seem kind of boring.
 :::
 
-:::dev
-mwhicks1: both of the next two quizzes were hidden in the source
-material; the first quiz here is shown, the second is kept under `HIDE`.
-:::
-
 ::::quiz
 Which rules are needed to prove the following?
 
@@ -555,7 +602,9 @@ mwhicks1: Not sure if we need ⇓b, or whether we can define
 :::
 
 :::dev
-chenson2018: About `Bexp.eval` below: We should discuss a way to recall definitions without having to write them out manually like this. I think a simple `#print` may work as an alternative, assuming there are no namespace issues..
+chenson2018: About `Bexp.eval` below: We should discuss a way to recall definitions without
+having to write them out manually like this. I think a simple `#print` may work as an
+alternative, assuming there are no namespace issues..
 :::
 
 :::::exercise (rating := 1) (name := "beval_rules")
@@ -628,10 +677,6 @@ GRADE_MANUAL 1: beval_rules
 It is straightforward to prove that the relational and functional
 definitions of evaluation agree.
 
-:::dev
-SOONER: BCP 23: Why can't we do induction on H in the ← direction??
-:::
-
 ```lean
 theorem Aexp.evalR_iff_eval (a : Aexp) (n : Nat) :
     a ⇓ n ↔ a.eval = n := by
@@ -639,9 +684,9 @@ theorem Aexp.evalR_iff_eval (a : Aexp) (n : Nat) :
   · intro h
     induction h with
     | num n => rfl
-    | plus a1 a2 n1 n2 h1 h2 ih1 ih2 => simp only [Aexp.eval]; rw [ih1, ih2]
-    | minus a1 a2 n1 n2 h1 h2 ih1 ih2 => simp only [Aexp.eval]; rw [ih1, ih2]
-    | mult a1 a2 n1 n2 h1 h2 ih1 ih2 => simp only [Aexp.eval]; rw [ih1, ih2]
+    | plus a1 a2 n1 n2 h1 h2 ih1 ih2 => simp only [Aexp.eval_plus]; rw [ih1, ih2]
+    | minus a1 a2 n1 n2 h1 h2 ih1 ih2 => simp only [Aexp.eval_minus]; rw [ih1, ih2]
+    | mult a1 a2 n1 n2 h1 h2 ih1 ih2 => simp only [Aexp.eval_mult]; rw [ih1, ih2]
   · intro h
     subst h
     induction a with
@@ -651,11 +696,13 @@ theorem Aexp.evalR_iff_eval (a : Aexp) (n : Nat) :
     | mult a1 a2 ih1 ih2 => exact .mult a1 a2 _ _ ih1 ih2
 ```
 
-Again, we can make the proof quite a bit shorter using the combinators
-from the previous section.
+We can make the proof quite a bit shorter using more automation like we did in
+the previous section.
 
 :::dev
-mwhicks1: the `-- WORKINCLASS` marker leaves this shorter proof as a live in-class exercise.
+mwhicks1: the `workinclass!` marker should signal this  live in-class exercise.
+But it is not rendering properly on the HTML. In fact it replaces `workinclass!` with
+the `all_goals` tactic, which we don't need.
 :::
 
 ```lean
@@ -663,7 +710,7 @@ theorem Aexp.evalR_iff_eval' (a : Aexp) (n : Nat) :
     a ⇓ n ↔ a.eval = n := by
   workinclass!
     constructor
-    · intro h; induction h <;> simp_all [Aexp.eval]
+    · intro h; induction h <;> simp_all
     · intro h; subst h; induction a <;> constructor <;> assumption
 ```
 
@@ -698,40 +745,10 @@ theorem Bexp.evalR_iff_eval (b : Bexp) (bv : Bool) :
   solution!
     constructor
     · intro h
-      induction h with
-      | bool b => rfl
-      | eq a1 a2 n1 n2 h1 h2 =>
-          simp only [Bexp.eval]
-          rw [(Aexp.evalR_iff_eval a1 n1).mp h1, (Aexp.evalR_iff_eval a2 n2).mp h2]
-      | neq a1 a2 n1 n2 h1 h2 =>
-          simp only [Bexp.eval]
-          rw [(Aexp.evalR_iff_eval a1 n1).mp h1, (Aexp.evalR_iff_eval a2 n2).mp h2]
-      | le a1 a2 n1 n2 h1 h2 =>
-          simp only [Bexp.eval]
-          rw [(Aexp.evalR_iff_eval a1 n1).mp h1, (Aexp.evalR_iff_eval a2 n2).mp h2]
-      | gt a1 a2 n1 n2 h1 h2 =>
-          simp only [Bexp.eval]
-          rw [(Aexp.evalR_iff_eval a1 n1).mp h1, (Aexp.evalR_iff_eval a2 n2).mp h2]
-      | not b bv h ih => simp only [Bexp.eval]; rw [ih]
-      | and b1 b2 tv1 tv2 h1 h2 ih1 ih2 => simp only [Bexp.eval]; rw [ih1, ih2]
+      induction h <;> simp_all [Aexp.evalR_iff_eval]
     · intro h
       subst h
-      induction b with
-      | bool b => exact .bool b
-      | eq a1 a2  =>
-          exact .eq a1 a2 _ _
-            ((Aexp.evalR_iff_eval a1 _).mpr rfl) ((Aexp.evalR_iff_eval a2 _).mpr rfl)
-      | neq a1 a2 =>
-          exact .neq a1 a2 _ _
-            ((Aexp.evalR_iff_eval a1 _).mpr rfl) ((Aexp.evalR_iff_eval a2 _).mpr rfl)
-      | le a1 a2  =>
-          exact .le a1 a2 _ _
-            ((Aexp.evalR_iff_eval a1 _).mpr rfl) ((Aexp.evalR_iff_eval a2 _).mpr rfl)
-      | gt a1 a2  =>
-          exact .gt a1 a2 _ _
-            ((Aexp.evalR_iff_eval a1 _).mpr rfl) ((Aexp.evalR_iff_eval a2 _).mpr rfl)
-      | not b ih => exact .not b _ ih
-      | and b1 b2 ih1 ih2 => exact .and b1 b2 _ _ ih1 ih2
+      induction b <;> constructor <;> simp_all [Aexp.evalR_iff_eval]
 ```
 
 :::grade
@@ -967,27 +984,7 @@ inductive Bexp where
   | and (b1 b2 : Bexp)
 ```
 
-Defining a few variable names as shorthands will make examples easier
-   to read.
-
-:::instructors
-We usually don't use x as a "bare identifier" in examples
-   -- it is normally wrapped in an id constructor.  If this were _always_
-   the case, then it would make more sense to define the notation `[x]` to
-   mean `[id (Id 0)]`.  But there quite a few counterexamples. Maybe we
-   could define `[xx]` to mean `[id (Id 0)]`, or some such? But it's still
-   awkward.
-   BCP/AAA 2/16: Should we use a coercion for this?  It means introducing a
-   new concept -- a somewhat magical one -- but it will make examples look
-   quite a bit nicer...
-   BCP 11/16: It will also solve some problems later on with confusions
-   about bound identifiers in Stlc vs. "global" ones in Imp. I think it's a
-   good idea to try it for the next big revision.
-   ET 10/17: coercions and notations are done, see below.  (still keeping
-   the global variables W, X, Y, Z for readability)
-   BCP 7/20: This still needs another look to see if there's a way to make
-   it globally better.
-:::
+Defining a few variable names as shorthands will make examples easier to read.
 
 ```lean
 def W : Ident := "W"
@@ -1376,6 +1373,28 @@ def Bexp.eval (st : State) (b : Bexp) : Bool :=
   | gt   a1 a2  =>  a1.eval st >  a2.eval st
   | not  b1     =>  !b1.eval st
   | and  b1 b2  =>  b1.eval st && b2.eval st
+
+@[simp] theorem Aexp.eval_num (st : State) (n : Nat) : (num n).eval st = n := rfl
+@[simp] theorem Aexp.eval_id (st : State) (x : Ident) : (Aexp.id x).eval st = st[x] := rfl
+@[simp] theorem Aexp.eval_plus (st : State) (a1 a2 : Aexp) :
+    (plus a1 a2).eval st = a1.eval st + a2.eval st := rfl
+@[simp] theorem Aexp.eval_minus (st : State) (a1 a2 : Aexp) :
+    (minus a1 a2).eval st = a1.eval st - a2.eval st := rfl
+@[simp] theorem Aexp.eval_mult (st : State) (a1 a2 : Aexp) :
+    (mult a1 a2).eval st = a1.eval st * a2.eval st := rfl
+
+@[simp] theorem Bexp.eval_bool (st : State) (b : Bool) : (bool b).eval st = b := rfl
+@[simp] theorem Bexp.eval_eq (st : State) (a1 a2 : Aexp) :
+    (eq a1 a2).eval st = (a1.eval st == a2.eval st) := rfl
+@[simp] theorem Bexp.eval_neq (st : State) (a1 a2 : Aexp) :
+    (neq a1 a2).eval st = (a1.eval st != a2.eval st) := rfl
+@[simp] theorem Bexp.eval_le (st : State) (a1 a2 : Aexp) :
+    (le a1 a2).eval st = (a1.eval st ≤ a2.eval st : Bool) := rfl
+@[simp] theorem Bexp.eval_gt (st : State) (a1 a2 : Aexp) :
+    (gt a1 a2).eval st = (a1.eval st > a2.eval st : Bool) := rfl
+@[simp] theorem Bexp.eval_not (st : State) (b : Bexp) : (not b).eval st = !b.eval st := rfl
+@[simp] theorem Bexp.eval_and (st : State) (b1 b2 : Bexp) :
+    (and b1 b2).eval st = (b1.eval st && b2.eval st) := rfl
 ```
 
 We reuse the total-map notation (`x →ₜ v ; ∅` etc.) for states.
@@ -1389,7 +1408,10 @@ example : bexp { true && !(X <= 4) }.eval (X →ₜ 5 ; ∅) = true := by rfl
 ```
 
 :::dev
-dsainati: Bikeshedding: I'm not sure how I feel about this arrow subscript for maps. Easy to change later but just flagging to discuss. mwhicks1: This comes from the Maps chapter, which chenson2018 is working on. There is a keyboard shortcut for ↦ we could use (\mapsto).
+dsainati: Bikeshedding: I'm not sure how I feel about this arrow subscript for maps.
+Easy to change later but just flagging to discuss. mwhicks1: This comes from the Maps
+chapter, which chenson2018 is working on.
+There is a keyboard shortcut for ↦ we could use (\mapsto).
 :::
 
 # Commands
@@ -1419,22 +1441,26 @@ inductive Com where
   | whileDo (b : Bexp) (c : Com)
 ```
 
+:::instructors
 Concrete syntax for commands, in the style of the `ssft24` Imp `Stmt`
    grammar: an `imp_com` category with an `imp { … }` hook. Assignments and
    `skip` end in `;`, and sequencing is written by juxtaposition. Conditions use
    the `imp_bexp` grammar; the branch/loop bodies use the `imp_com` grammar. As
    with expressions, `~c` escapes back to an ordinary Lean term of type `Com`.
+:::
 
 ```lean
 /-- Imp commands -/
 declare_syntax_cat imp_com
 ```
 
+:::instructors
 `skip` is *not* a reserved keyword: it is accepted through a bare
    identifier-terminated command (`syntax ident ";" : imp_com`) and recognised
    in the macro below, which rejects any other identifier. This keeps `skip`
    usable as the bare constructor name {name}`Com.skip` in `match`/`induction`
    elsewhere in the file, and avoids reserving `skip` globally.
+:::
 
 ```lean
 /-- The command that does nothing (`skip;`) -/
@@ -2182,7 +2208,7 @@ theorem plus2_spec (st : State) (n : Nat) (st' : State)
   unfold plus2 at heval
   cases heval with
   | asgn _ _ m _ h =>
-      simp only [Aexp.eval] at h
+      simp only [Aexp.eval_plus, Aexp.eval_id, Aexp.eval_num] at h
       rw [TotalMap.update_eq]
       lia
 ```
@@ -2203,7 +2229,7 @@ theorem XtimesYinZ_spec1 (st : State) (nx ny : Nat) (st' : State)
   unfold XtimesYinZ at heval
   cases heval with
   | asgn _ _ n _ h =>
-      simp only [Aexp.eval] at h
+      simp only [Aexp.eval_mult, Aexp.eval_id] at h
       subst hx hy
       rw [TotalMap.update_eq]
       exact h.symm
@@ -2244,7 +2270,7 @@ theorem loop_never_stops (st st' : State) : ¬ (st =[ loop ]=> st') := by
       induction hce with
       | whileFalse b s0 c0 hb =>
           intro heq; unfold loop at heq; injection heq with e1 _
-          subst e1; simp [Bexp.eval] at hb
+          subst e1; simp at hb
       | whileTrue s0 s0' s0'' b c0 hb hc hloop ih1 ih2 =>
           intro heq; exact ih2 heq
       | skip s0 => intro heq; simp [loop] at heq
