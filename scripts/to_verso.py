@@ -2544,8 +2544,16 @@ def main() -> None:
     title = args.title or extract_title(src_text, file_key)
 
     result = convert(src_text, title, file_key)
-    dst_path.write_text(result)
-    print(f'Written {dst_path}  (title: {title!r}, file key: {file_key!r})')
+    # Write-if-different: only touch the output (and thus bump its mtime, which
+    # forces `lake` to re-elaborate every chapter that imports it) when the
+    # generated content actually changed.  A comment-only edit whose tokens are
+    # dropped by to_verso, or a change to this script that doesn't affect a
+    # given chapter, then costs zero downstream Lean rebuilds.
+    if dst_path.exists() and dst_path.read_text() == result:
+        print(f'Unchanged {dst_path}  (skipped write)')
+    else:
+        dst_path.write_text(result)
+        print(f'Written {dst_path}  (title: {title!r}, file key: {file_key!r})')
 
 
 if __name__ == '__main__':

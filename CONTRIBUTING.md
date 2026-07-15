@@ -447,6 +447,13 @@ displays (`make Basics.vo`) and for displayed math, and the two are not
 mechanically distinguishable, so `to_verso` treats them uniformly as
 `` ```display `` — always safe, never elaborated.
 
+In the HTML a display is set off and indented a few characters from the left
+margin (not flush left, not centered).  In the *generated* `.lean` files (the
+per-variant student/solutions/terse extracts) a display is rendered specially: it
+becomes its own comment, each source line kept on its own line and indented under
+`-- `, and — unlike ordinary prose — it is **never reflowed/filled** into a
+paragraph, because a display's line structure is significant.
+
 **`` ```displaymath `` — real typeset math.** For a genuine *displayed equation*,
 typeset as mathematics by the bundled KaTeX:
 

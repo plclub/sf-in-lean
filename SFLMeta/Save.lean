@@ -1,5 +1,6 @@
 import VersoManual
 import SFLMeta.Bnf
+import SFLMeta.DisplayMath
 import SFLMeta.Ignore
 import SFLMeta.Exercise
 import SFLMeta.Terse
@@ -154,6 +155,21 @@ def fillText (width : Nat) (text : String) : String := Id.run do
 /-- Pretty-print a paragraph's inlines, reflowing them to `width` columns. -/
 def paraToText (width : Nat) (inls : Array (Verso.Doc.Inline Manual)) : String :=
   fillText width (inlinesToText inls)
+
+/-- Drop leading and trailing all-whitespace lines from `s`, preserving each
+remaining line's own leading whitespace (so ASCII diagrams and hand-aligned
+displays keep their column alignment).
+
+Defined as a `String.` method (not a plain `SFLMeta` function) on purpose: its one
+caller applies it to a `let`-bound `match` whose result type is not yet pinned,
+and a plain application there leaves the elaborator stuck on a universe
+constraint.  Dot-notation (`src.stripBlankEdgeLines`, like `src.trimAscii`) pins
+`src : String` first and elaborates cleanly — so keep the dot-notation call. -/
+def _root_.String.stripBlankEdgeLines (s : String) : String :=
+  let blank : String → Bool := fun l => l.all (·.isWhitespace)
+  let ls := s.splitOn "\n"
+  let ls := (((ls.dropWhile blank).reverse).dropWhile blank).reverse
+  String.intercalate "\n" ls
 
 /--
 Render a Verso block to a Markdown-like string for inclusion in a `/-! … -/`
@@ -667,6 +683,34 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     if name == ``Block.bnf then
       if let some src := decodeBnfSource? which.data then
         return appendBoth buf file (asModuleDoc src.trimAscii.toString)
+    if name == ``Block.display || name == ``Block.displaymath then
+      -- A ` ```display ` / ` ```displaymath ` block is a *display*: its line
+      -- structure is significant, so it is emitted verbatim as a comment — each
+      -- source line kept on its own line and indented a couple of spaces to set
+      -- it off — and is NEVER reflowed/filled into a paragraph the way ordinary
+      -- prose is.  `display` stores its source string directly; `displaymath`
+      -- carries no data, so recover the text from its `Block.para`/math children.
+      let src :=
+        match which.data with
+        | .str s => s
+        | _ =>
+          -- `displaymath`: one `Block.para` per equation, each holding a single
+          -- math inline; take the raw inline text (unfilled), one line each.
+          String.intercalate "\n" (contents.toList.filterMap fun (b : Verso.Doc.Block Manual) =>
+            match b with
+            | .para inls => some (inlinesToText inls)
+            | _ => none)
+      -- Emit as its own comment, built by hand rather than via `asModuleDoc`:
+      -- each source line kept on its own line and indented under `-- ` to set the
+      -- display off, and NEVER reflowed/filled the way prose is.  Only leading and
+      -- trailing *blank lines* are dropped — a line's own leading whitespace is
+      -- preserved verbatim, so ASCII diagrams and hand-aligned displays keep their
+      -- column alignment.  (`asModuleDoc`/`trimAscii` would trim the whole block
+      -- and so drop the first line's indentation.)
+      let commented := String.intercalate "\n"
+        ((src.stripBlankEdgeLines.splitOn "\n").map fun l =>
+          if l.all (·.isWhitespace) then "" else "--   " ++ l)
+      return appendBoth buf file (commented ++ "\n\n")
     if name == ``Block.diagramWithAlt then
       match findAlt? contents with
       | some alt => return appendBoth buf file (asModuleDoc alt.trimAscii.toString)

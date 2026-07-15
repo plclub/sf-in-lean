@@ -1162,7 +1162,7 @@ attribute [pp_nodot] Bin.b0 Bin.b1
 
 /-
   Prove that the following diagram commutes:
-
+[[
        incr Bin ----------------------> Bin
            |                             |
 binToNat   |                             |  binToNat
@@ -1170,7 +1170,7 @@ binToNat   |                             |  binToNat
            v                             v
           Nat ------------------------> Nat
                       succ
-
+]]
   That is, incrementing a binary number and then converting it to
   a (unary) natural number yields the same result as first converting
   it to a natural number and then incrementing.

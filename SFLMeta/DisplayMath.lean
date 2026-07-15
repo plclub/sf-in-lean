@@ -45,16 +45,16 @@ block_extension Block.display (source : String) where
       | _ => pure .empty
   extraCss := [
 r##"
+/* A display is set off vertically and indented a few characters from the left
+   margin — not flush left, not centered — the way a textbook indents a displayed
+   line. */
 .sf-display {
   margin: 1em 0;
+  margin-left: 2.5em;
 }
 .sf-display pre {
   margin: 0;
-  padding: 0.5em 0.8em;
   overflow-x: auto;
-  background: var(--verso-code-background, rgba(0, 0, 0, 0.03));
-  border-left: 3px solid var(--sf-rule, #ccc);
-  border-radius: 2px;
 }
 .sf-display pre code {
   font-family: var(--verso-code-font-family, monospace);
