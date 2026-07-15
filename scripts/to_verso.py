@@ -135,12 +135,12 @@ def _strip_title_comment(src: str, stem: str = None) -> str:
     return src[:m.start()] + src[m.end():]
 
 
-# LF modules that are authored directly in Verso (Basics) or are plain Lean
-# support modules (CustomTactics, Maps): an `import LF.X` of one of these passes
-# through unchanged.  Every *other* `import LF.X` refers to a generated chapter,
-# so it is rewritten to `import LF.XVerso`.
+# LF modules that are authored directly in Verso (Basics, Induction) or are
+# plain Lean support modules (CustomTactics, Maps): an `import LF.X` of one of
+# these passes through unchanged.  Every *other* `import LF.X` refers to a
+# generated chapter, so it is rewritten to `import LF.XVerso`.
 # (Maps added by Claude: HL/TS chapters import LF.Maps for its definitions.)
-DIRECT_LF_MODULES = {"Basics", "CustomTactics", "Maps"}
+DIRECT_LF_MODULES = {"Basics", "Induction", "CustomTactics", "Maps"}
 
 _IMPORT_RE = re.compile(r'^import\s+(\S+)\s*$')
 
