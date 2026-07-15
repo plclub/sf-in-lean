@@ -373,9 +373,10 @@ guidelines.
   Define a datatype at top level, then open its like-named `namespace`
   immediately after, and write the type's functions and theorems with
   *unqualified* names — `def app`, not `def NatList.app`. Exception:
-  if you are defining multiple types at once (e.g., inductive definitions
-  that reference one another), define their operations with qualified 
-  names, e.g., `Aexp.eval` and `Bexp.eval` in Imp.
+  if it makes pedagogical sense to define the operations of multiple
+  types together, define their operations with qualified names, without 
+  opening a namespace, e.g., `Aexp.eval` and `Bexp.eval` which are adjacent
+  in Imp.
 
 * **Name namespaces for what they are.**
   A warm-up / redefinition section goes in a clearly-named namespace, 
