@@ -37,3 +37,11 @@ jobs:
       # extracted Lean sources and then `lake build` them; a compile failure in
       # any variant turns the executable's exit code (and so this step) red.
       - run: make
+      
+    # When several commits are pushed to the same PR in quick succession, cancel the
+    # in-progress run for the older commit so runners aren't wasted and the latest
+    # result arrives sooner. Only cancel for pull requests: never interrupt a `main`
+    # push build, which must always complete so `main`'s status stays accurate.
+    concurrency:
+        group: ci-${{ github.workflow }}-${{ github.ref }}
+        cancel-in-progress: ${{ github.event_name == 'pull_request' }}

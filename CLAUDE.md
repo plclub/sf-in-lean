@@ -77,28 +77,30 @@ source:
 
 In general, there should be at most one blank line at a time in .lean files.  
 
-## Avoid inner ``` fences inside noop author blocks
+## Author notes are `:::` directives (not code blocks)
 
-Author/developer notes are emitted by `to_verso` as **code blocks**
-(` ```dev ` and ` ```instructors `), NOT as `:::dev` / `:::instructors`
-directives. Reason: a Verso *directive* always parses its body as markdown, so
-arbitrary author prose (`:::`, `*`, `#`, `[…]`, backticks) could derail the
-parser and used to require an ugly inner verbatim ` ``` ` fence. A Verso **code
-block** (`@[code_block]`, `CodeBlockExpanderOf`) instead receives its body as a
-raw string that is never parsed — so a single tagged fence suffices and no inner
-fence is needed. See `SFLMeta/Comment.lean` (` ```dev `), `SFLMeta/Instructors.lean`
-(` ```instructors `), and the models `SFLMeta/Bnf.lean` / `SFLMeta/Save.lean`.
-The code block is registered under the directive's name via `@[code_block dev]`
-(explicit ident) so the fence reads ` ```dev ` even though a same-named
-`@[directive] def dev` still exists (directives and code blocks live in separate
-expander tables). In `to_verso`, `_emit_noop_directive` uses `_code_block(tag,
-text)`. Do NOT reintroduce the inner-fence pattern for these.
+Author/developer notes are emitted by `to_verso` as **directives** — `:::dev`
+and `:::instructors` — the same as `:::hide` / `:::answer` / `:::grade` /
+`:::solution`, NOT as ` ```dev ` / ` ```instructors ` code blocks. This is the
+preferred authoring convention (see CONTRIBUTING.md, "Author-only annotations").
 
-Still verbatim-fenced (`_verbatim_block`), intentionally: `:::hide`,
-`:::solution`, `:::grade`. Unlike dev/instructors, `solution` and `grade` bodies
-are meant to be *consumed* later (solutions build / grading), so converting them
-to raw-body code blocks needs separate design. If you do convert one, follow the
-` ```dev ` pattern above.
+A directive parses its body as markdown, so `to_verso` wraps the body in a
+**verbatim ` ``` ` fence** (`_verbatim_block`) — arbitrary author prose (`:::`,
+`*`, `#`, `[…]`, backticks) then can't derail the parser. `_emit_noop_directive`
+emits `:::<tag>` + `_verbatim_block(text)` + `:::`, and `_fuse_noop_blocks` fuses
+adjacent same-tag runs. The `dev`/`instructors` directives live in
+`SFLMeta/Comment.lean` / `SFLMeta/Instructors.lean`; a same-named
+`@[code_block dev]` still exists for back-compat but `to_verso` no longer emits
+it. (Earlier guidance preferred the ` ```dev ` code-block form to avoid the inner
+fence — that was reversed 2026-07-11 in favor of the directive form.)
+
+When editing a **versified** chapter by hand, prefer inlining the note body as
+plain markdown (backtick code identifiers, escape markdown-special text just as
+in `::::full` prose); reach for an inner ` ``` ` fence only when the body is
+code-dense or embeds a ` ```lean ` snippet that must not elaborate. All of
+`dev`/`instructors`/`hide`/`answer`/`grade`/`solution` are noops (bodies dropped
+from every build); the tag name reserves each for a future build that treats it
+differently.
 
 ## Rough-draft conversion straight from a .v chapter
 

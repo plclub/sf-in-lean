@@ -3,6 +3,13 @@ import SFLMeta.Ignore
 import SFLMeta.Save
 
 import LF.Basics
+import LF.Induction
+import LF.UsingLean
+import LF.Lists
+import LF.Poly
+import LF.Logic
+import LF.Tactics
+import LF.IndProp
 -- Add `import LF.XXXVerso` here for each generated chapter included below.
 import LF.InductionVerso
 import LF.UsingLeanVerso
