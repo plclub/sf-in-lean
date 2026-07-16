@@ -2041,7 +2041,7 @@ Another simple but important-to-note automatic display feature is _indexing_:
 `mul_zero : ∀ (n : Nat), n * zero = zero` may display as
 `mul_zero  (n : Nat) : n * zero = zero`.
 
-Note how the (n : Nat) has moved _before_ the colon and has lost the ∀.
+Note how the `(n : Nat)` has moved _before_ the colon and has lost the ∀.
 The two definitions are equivalent for our purposes right now, but the
 second is preferred in idiomatic Lean developments.
 ::::
