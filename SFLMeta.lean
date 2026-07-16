@@ -2,6 +2,7 @@
 import SFLMeta.Bnf
 import SFLMeta.Comment
 import SFLMeta.Details
+import SFLMeta.Epigraph
 import SFLMeta.Exercise
 import SFLMeta.Grade
 import SFLMeta.Hide

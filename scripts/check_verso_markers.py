@@ -78,6 +78,8 @@ _POLICY = [
     # -> :::answer, so both count as a translated HIDE.
     ("HIDE",                 r"::+hide\b|:::answer\b"),
     ("QUIZ",                 r"::+quiz\b"),
+    # `-- DEV` … `-- /DEV` region: an untagged author/dev note -> :::dev.
+    ("DEV",                  r":::dev\b"),
     # Intentionally dropped: region semantics not honored, prose kept as-is.
     ("HIDEFROMHTML",         None),
     # FOLD marks a proof region to render collapsed; folding is not honored

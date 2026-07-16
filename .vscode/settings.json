@@ -1,7 +1,17 @@
 {
+    "explorer.excludeGitIgnore": false,
     "rewrap.wrappingColumn": 70,
     "editor.rulers": [100],
     "[lean4]": {
         "editor.wordWrap": "on"
-    }
+    },
+    "workbench.iconTheme": "material-icon-theme",
+    "material-icon-theme.folders.customClones": [
+        {
+            "name": "blue-highlight",
+            "base": "folder",
+            "color": "blue-500",
+            "folderNames": ["HL", "LF", "TS"]
+        }
+    ]
 }
