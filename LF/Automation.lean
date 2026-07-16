@@ -72,10 +72,6 @@ theorem Perm3_In_old (α : Type) (x : α) (l₁ l₂ : List α) :
 In this file, we will introduce tactics that will shrink this proof from
 around eighteen lines to five.
 
-:::dev
-@dsainati1: come up with new motivating example
-:::
-
 # The `lia` Tactic
 
 ::::full
@@ -469,8 +465,17 @@ theorem Perm3_In_best (α : Type) (x : α) (l₁ l₂ : List α) :
 
 # The `trivial` tactic
 
+The `trivial` tactic tries a number of different simple tactics (such as `rfl` or `contradiction`)
+to try to close the current goal. Some examples:
+
+```lean
+example : 1 = 1 := by trivial
+example : (1, 2).fst = 1 := by trivial
+example (A B : Prop) : ¬ A -> A -> B := by intro h₁ h₂; trivial
+```
+
 :::dev
-TODO
+DHS: Do we want to teach students about extending `trivial` via `macro_rules`?
 :::
 
 # Case Study: Regular Expressions
