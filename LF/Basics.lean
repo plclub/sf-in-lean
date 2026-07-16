@@ -33,7 +33,7 @@ get through in a not-too-rushed fashion (with questions, etc.).
 (N.b. This estimate may need to be revised now that the chapter has been converted to Lean! Please edit this note to reflect your own experience teaching it.)
 
 You may want to assign both files together as the homework for the
-first week, depending on the level of the class.  Just Basics is
+first week, depending on the level of the class. Just Basics is
 fairly light for many students, but in a mixed class there will
 be people that struggle with some of it.
 
@@ -67,18 +67,18 @@ program behavior. This is one sense of the word "functional" in
 The other sense in which functional programming is "functional" is
 that it emphasizes the use of functions as _first-class_ values --
 i.e., values that can be passed as arguments to other functions,
-returned as results, included in data structures, etc.  The
+returned as results, included in data structures, etc. The
 recognition that functions can be treated as data gives rise to a
 host of useful and powerful programming idioms.
 
 Other common features of functional languages include _algebraic
 data types_ and _pattern matching_, which make it easy to
 construct and manipulate rich data structures, and _polymorphic
-types_ supporting abstraction and code reuse.  Lean offers
+types_ supporting abstraction and code reuse. Lean offers
 all of these features.
 
 The first half of this chapter introduces some key elements of
-Lean's functional programming language.  The second half introduces
+Lean's functional programming language. The second half introduces
 some basic _tactics_ that can be used to prove properties of
 programs.
 ::::
@@ -111,8 +111,8 @@ familiar types as instances.
 
 Naturally, Lean also comes with an extensive standard library
 providing definitions of booleans, numbers, and many common data
-structures like lists and hash tables.  But there is nothing magic
-or primitive about these library definitions.  To illustrate this
+structures like lists and hash tables. But there is nothing magic
+or primitive about these library definitions. To illustrate this
 fact, we will explicitly recapitulate most of the definitions we
 need in this course, rather than just referring
 to the standard library. However, we take care to harmonize
@@ -131,7 +131,7 @@ A datatype definition:
 
 ::::full
 To see how the datatype definition mechanism works, let's
-start with a very simple example.  The following declaration tells
+start with a very simple example. The following declaration tells
 Lean that we are defining a set of data values -- a _type_.
 ::::
 
@@ -176,7 +176,7 @@ def nextWorkingDay (d : Day) : Day :=
 
 ::::full
 Note that the argument and return types of this function are
-explicitly declared on the first line.  Like most functional
+explicitly declared on the first line. Like most functional
 programming languages, Lean can often figure out these types for
 itself when they are not given explicitly -- i.e., it can do _type
 inference_ -- but we'll generally include them to make reading
@@ -213,9 +213,9 @@ Evaluation:
 
 ::::full
 Having defined a function, we should check that it works on some
-examples.  There are a few different ways to do this in
-Lean.  One is to use the `#eval` command to evaluate a compound
-expression involving `nextWorkingDay`.  (Lean's responses are shown
+examples. There are a few different ways to do this in
+Lean. One is to use the `#eval` command to evaluate a compound
+expression involving `nextWorkingDay`. (Lean's responses are shown
 in comments.)
 ::::
 
@@ -244,7 +244,7 @@ the same term."
 
 `rfl` stands for "reflexivity," which is the principle that any value is
 equal to itself. After evaluation, both sides of the equality are the same
-value, so the assertion is true by reflexivity.  If we had made a different
+value, so the assertion is true by reflexivity. If we had made a different
 assertion, such as `example : nextWorkingDay (nextWorkingDay Day.saturday) =
 Day.monday`, then Lean would not be able to verify it and would instead signal an
 error. Try it out!
@@ -259,7 +259,7 @@ The `rfl` tactic is used to observe that both sides of an equal sign evaluate to
 ::::full
 If you have a computer handy, this would be an excellent moment
 to fire up VS Code with the Lean extension or the Lean web interface
-and try it for yourself.  Load this file, `Basics.lean`,
+and try it for yourself. Load this file, `Basics.lean`,
 from the book's Lean sources, find the above example, and observe
 the result in the Lean InfoView panel.
 
@@ -365,7 +365,7 @@ def or (b1 : MyBool) (b2 : MyBool) : MyBool :=
 
 ::::full
 The last two definitions illustrate Lean's syntax for multi-argument
-functions.  The corresponding multi-argument _application_ syntax is
+functions. The corresponding multi-argument _application_ syntax is
 illustrated by the following tests, which effectively constitute a
 complete specification -- a truth table -- for the `or` function:
 ::::
@@ -401,12 +401,12 @@ example : (!MyBool.false) = MyBool.true := by rfl
 
 ::::exercise (rating := 1) (name := "nand")
 The `sorry` keyword is a placeholder for an incomplete proof or
-definition.  We use it in exercises to indicate the parts that we're
+definition. We use it in exercises to indicate the parts that we're
 leaving for you -- i.e., your job is to replace `sorry` with real
 definitions and proofs.
 
 Remove `sorry` below and complete the definition of the following
-function.  The function should return `MyBool.true` if either or both of
+function. The function should return `MyBool.true` if either or both of
 its inputs are `MyBool.false`. Make sure that the `example` assertions
 below can be verified by Lean.
 
@@ -531,7 +531,7 @@ theorem true_and_explained : ∀ (b : MyBool), (MyBool.true && b) = b := by
     The `intro` tactic is used to name variables quantified by a `∀`.
     Since we are trying to prove a property of all `MyBools`, we
     proceed by introducing an unknown `MyBool` `b` and prove
-    the property holds for `b`, regardless of what it is.  Informally, this move can be read,
+    the property holds for `b`, regardless of what it is. Informally, this move can be read,
     "We want to prove <some property> for all `MyBool`s `b`. So suppose
     `b` is some arbitrary `MyBool`... <and then go on to prove the
     property for this particular `b`>..." Since `b` was chosen
@@ -603,7 +603,7 @@ GRADE_THEOREM 1: false_or_exercise
 ::::full
 While in this book we often use `sorry` as a placeholder for you to
 replace with an actual proof, in general, `sorry` tells Lean that we want to skip trying
-to prove a theorem and just accept it as a given.  This can be useful for developing longer proofs.
+to prove a theorem and just accept it as a given. This can be useful for developing longer proofs.
 
 Be careful, though: every time you say `sorry` you are leaving
 a door open for total nonsense to enter Lean's safe, formally
@@ -664,7 +664,7 @@ matches the given type and signal an error if not.
 
 ::::full
 Functions like {name}`Bool.not` are themselves ordinary values, just like {name}`Bool.true`
-and `Bool.false`.  Their types are called _function types_, and they are
+and `Bool.false`. Their types are called _function types_, and they are
 written with arrows.
 ::::
 
@@ -709,7 +709,7 @@ TODO
 ::::full
 The types we have defined so far are simple examples of "enumerated
 types": their definitions explicitly enumerate a finite set of
-elements, called _constructors_.  Here is a more interesting type
+elements, called _constructors_. Here is a more interesting type
 definition, `Color`, where one of the constructors takes an
 argument:
 ::::
@@ -1127,7 +1127,7 @@ an active section of the book to evaluate them.
 
 :::dev
 RAB: This seems like a reasonable exercise; I'm not quite sure if/how we should grade it?
-BCP: Not all exercises need to be graded.  (In Rocq we had a notation for manually graded exercises. An optional and manually graded exercise would serve for this.)
+BCP: Not all exercises need to be graded. (In Rocq we had a notation for manually graded exercises. An optional and manually graded exercise would serve for this.)
 :::
 
 ## Constructors with Multiple Parameters
@@ -1913,7 +1913,7 @@ scoped infixl:30 " == " => beq
 
 ::::full
 We now have two symbols that both look like equality: `=`
-and `==`.  We'll have much more to say about their differences and
+and `==`. We'll have much more to say about their differences and
 similarities later. For now, notice that
 `x = y` is a logical _claim_ -- a "proposition" -- that we can try to
 prove, while `x == y` is a boolean _expression_ whose value (either
@@ -1976,12 +1976,12 @@ equal to each other (`n = m`). The arrow symbol is pronounced "implies."
 Enter it with `\to` or `\->` or `\r`.
 
 The `intro` tactic moves the universally quantified variables and the
-hypothesis into the context, giving them names.  The goal is now to prove
+hypothesis into the context, giving them names. The goal is now to prove
 `n + n = m + m` under the assumption `h : n = m`.
 
 The tactic that tells Lean to perform replacement is one we have seen
 before: `rewrite`. It can take a hypothesis from the context as an argument,
-just like it can take a previously proved theorem.  In this case, we want to
+just like it can take a previously proved theorem. In this case, we want to
 rewrite with the hypothesis `h`, which says that `n` and `m` are equal, so
 that we can replace `n` with `m` in the goal.
 
@@ -2041,7 +2041,7 @@ Another simple but important-to-note automatic display feature is _indexing_:
 `mul_zero : ∀ (n : Nat), n * zero = zero` may display as
 `mul_zero  (n : Nat) : n * zero = zero`.
 
-Note how the (n : Nat) has moved _before_ the colon and has lost the ∀.
+Note how the `(n : Nat)` has moved _before_ the colon and has lost the `∀`.
 The two definitions are equivalent for our purposes right now, but the
 second is preferred in idiomatic Lean developments.
 ::::
@@ -2053,7 +2053,7 @@ Per Github discussion: Lean's convention is to prefer the declaration header sty
 quantification style at first, but should switch over to declaration header style
 quickly since that is the idiomatic Lean way to do things.
 
-BCP: Needs to be explained better.  And the "indexing" part doesn't really fit the
+BCP: Needs to be explained better. And the "indexing" part doesn't really fit the
 section title.
 HG: +1, also we need terse content once we figure out what this section is
 TODO
@@ -2077,7 +2077,7 @@ Sometimes simple calculation and rewriting are not enough...
 :::instructors
 We use `#guard_msgs` in a number of places in the SFL
 source files to help deter bit-rot, and you are encouraged to add
-your own instances.  It doesn't need to be explained to students
+your own instances. It doesn't need to be explained to students
 because it gets stripped out when verso files are translated to
 .lean and .html.
 :::
@@ -2281,9 +2281,9 @@ The `rewrite ... at` tactic can be used to rewrite in a hypothesis instead of th
 goal. For example, if `h : P` is in the context and we have a rule `P = Q`,
 then `rewrite [P = Q] at h` changes the hypothesis to `h : Q`.
 
-The `exact` tactic closes a goal by providing the exact proof of the goal.  For
+The `exact` tactic closes a goal by providing the exact proof of the goal. For
 example, if `h : P` is in the context and the goal is `P`, then `exact h`
-closes the goal.  You can also transform `h` slightly, but we will
+closes the goal. You can also transform `h` slightly, but we will
 explain how when we get to an example where we need to.
 ::::
 
@@ -2340,10 +2340,10 @@ delete it now.
 ## More on Notation (Optional)
 
 ::::full
-Lean has a very flexible notation system.  Operators like `+` and `*`
-are defined with specified precedence and associativity.  For example,
+Lean has a very flexible notation system. Operators like `+` and `*`
+are defined with specified precedence and associativity. For example,
 `+` has precedence 65 and is left-associative, while `*` has
-precedence 70 and is also left-associative.  This means that `1+2*3*4`
+precedence 70 and is also left-associative. This means that `1+2*3*4`
 is parsed as `1+((2*3)*4)`.
 
 You can define custom notation using the `notation`, `infixl`,
@@ -2380,7 +2380,7 @@ def even' (n : Nat) : Bool :=
 ```
 
 When Lean checks this definition, it verifies that the recursion
-terminates.  Specifically, it checks that one of the parameters
+terminates. Specifically, it checks that one of the parameters
 is _structurally decreasing_ -- that each recursive call made in the body of the
 definition is made on an argument that is smaller than the original input.
 In `even` example above, the argument to the recursive call to `even` is the variable `n'`.
@@ -2390,7 +2390,7 @@ termination checker, and so this recursive definition is accepted.
 
 This requirement is a fundamental feature of Lean's design: In
 particular, it guarantees that every function that can be defined
-in Lean will terminate on all inputs.  However, because Lean's
+in Lean will terminate on all inputs. However, because Lean's
 termination analysis is not always able to figure things out
 automatically, it is sometimes necessary to provide hints or
 write functions in slightly different ways.
@@ -2437,7 +2437,7 @@ For example:
 
 Note that the low-order bit is on the left and the high-order bit
 is on the right -- the opposite of the way binary numbers are
-usually written.  This choice makes them easier to manipulate.
+usually written. This choice makes them easier to manipulate.
 
 (Comprehension check: What unary numeral does `b0 z` represent?)
 
@@ -2677,7 +2677,7 @@ inductive Modifier : Type where
 
 ::::full
 A full `Grade`, then, is just a `Letter` and a `Modifier`.
-In Lean, a combination of several values is called a _structure_.  The `structure`
+In Lean, a combination of several values is called a _structure_. The `structure`
 keyword is used to define a new structure type.
 ::::
 
@@ -2689,11 +2689,11 @@ structure Grade where
 
 ::::full
 We will want to be able to say when one grade is "better" than
-another.  In other words, we need a way to compare two grades.  As
+another. In other words, we need a way to compare two grades. As
 with natural numbers, we could define `bool`-valued functions
 `grade_eqb`, `grade_ltb`, etc., and that would work fine.
 However, we can also define a slightly more informative type for
-comparing two values, as shown below.  This datatype has three
+comparing two values, as shown below. This datatype has three
 constructors that can be used to indicate whether two values are
 "equal", "less than", or "greater than" one another.
 ::::
