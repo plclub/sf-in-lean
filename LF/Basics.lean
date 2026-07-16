@@ -1760,7 +1760,7 @@ RAB: Agreed if we're keeping these visible; putting off
      small decision until large decision is made.
 :::
 
-Prove this property using rewriting with the simplification rules for addition and multiplication.
+Prove these thoerems using rewriting with the simplification rules for addition and multiplication.
 
 ::::full
 (We have given you the first line.) Notice how `rewrite`
@@ -1775,7 +1775,34 @@ with multiple rules.
 
 ::::exercise (rating := 2) (name := "test_mult1")
 ```lean
-theorem test_mult1 : (two * two : Nat) = four := by
+theorem zero_add_one : (zero + one : Nat) = one := by
+  rewrite [one_eq_succ_zero]
+  solution!
+    rewrite [add_succ, add_zero]
+    rfl
+
+theorem one_add_one : (one + one : Nat) = two := by
+  rewrite [one_eq_succ_zero]
+  solution!
+    rewrite [add_succ, add_zero]
+    rfl
+
+
+theorem zero_mul_two : (zero * two : Nat) = zero := by
+  rewrite [two_eq_succ_one, one_eq_succ_zero]
+  solution!
+    rewrite [mul_succ, mul_succ, mul_zero]
+    rewrite [add_zero, add_zero]
+    rfl
+
+theorem one_mul_two : (one * two : Nat) = two := by
+  rewrite [two_eq_succ_one, one_eq_succ_zero]
+  solution!
+    rewrite [mul_succ, mul_succ, mul_zero]
+    rewrite [add_succ, add_zero, add_succ, add_zero]
+    rfl
+
+theorem two_mul_two : (two * two : Nat) = four := by
   rewrite [two_eq_succ_one, one_eq_succ_zero]
   solution!
     rewrite [mul_succ, mul_succ, mul_zero]
@@ -2399,6 +2426,8 @@ inductive Bin : Type where
   | b0 (n : Bin)
   | b1 (n : Bin)
 
+attribute [pp_nodot] Bin.b1 Bin.b0
+
 def incr (m : Bin) : Bin
   := solution!(match m with
   | .z => .b1 .z
@@ -2424,11 +2453,31 @@ theorem binToNat_b0 m : binToNat (.b0 m) = binToNat m * two := solution!(by rfl)
 theorem binToNat_b1 m : binToNat (.b1 m) = binToNat m * two + one := solution!(by rfl)
 ```
 
+You may find your previous proofs of `zero_add_one`, `one_add_one`, `zero_mul_two`,
+`one_mul_two`, and `two_mul_two` useful here.
+
 ```lean
-example : binToNat (.b0 (.b1 .z)) = two := solution!(by rfl)
-example : binToNat (incr (.b1 .z)) = add one (binToNat (.b1 .z)) := solution!(by rfl)
-example : binToNat (incr (incr (.b1 .z))) = add two (binToNat (.b1 .z)) := solution!(by rfl)
-example : binToNat (.b0 (.b0 (.b1 .z))) = four := solution!(by rfl)
+example : binToNat (.b0 (.b1 .z)) = two := solution!(by
+  rewrite [binToNat_b0, binToNat_b1, binToNat_z]
+  rewrite [zero_mul_two, zero_add_one, one_mul_two]
+  rfl
+
+)
+example : binToNat (incr (.b1 .z)) = add one (binToNat (.b1 .z)) := solution!(by
+    rewrite [binToNat_b1, binToNat_z, incr_b1, binToNat_b0, incr_z, binToNat_b1, binToNat_z]
+    rewrite [zero_mul_two, zero_add_one, one_mul_two, one_add_one]
+    rfl
+)
+example : binToNat (incr (incr (.b1 .z))) = add two (binToNat (.b1 .z)) := solution!(by
+  rewrite [binToNat_b1, binToNat_z, incr_b1, incr_b0, binToNat_b1, incr_z, binToNat_b1, binToNat_z]
+  rewrite [zero_mul_two, zero_add_one, one_mul_two]
+  rfl
+)
+example : binToNat (.b0 (.b0 (.b1 .z))) = four := solution!(by
+  rewrite [binToNat_b0, binToNat_b0, binToNat_b1, binToNat_z]
+  rewrite [zero_mul_two, zero_add_one, one_mul_two, two_mul_two]
+  rfl
+)
 
 attribute [irreducible] incr binToNat
 ```
