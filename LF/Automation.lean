@@ -420,9 +420,41 @@ Our `Perm3_In` example is getting quite short! But can we do better?
 
 # The `simp` Tactic
 
-:::dev
-TODO
+:::full
+The `simp` tactic is Lean's _simplifier_, and it is one of the most powerful
+tools in the language. Given a set of lemmas- some built-in, some user-provided-
+`simp` attempts to reduce a goal or hypothesis by rewriting with those lemmas
+as much as possible.
+
+Indeed, these _simplification lemmas_ , or _`simp` lemmas_ as they're called
+by Lean programmers, are exactly the ones we wrote in the `Basics`
+and `Induction` chapters!
+
+```lean
+namespace simp_lemmas_example
+@[irreducible]
+def add (n : Nat) (m : Nat) : Nat :=
+  match m with
+  | .zero => n
+  | .succ m' => .succ (add n m')
+
+unseal add in
+theorem add_zero : ∀ n : Nat, n + .zero = n := by
+  intro n
+  rfl
+/- `add_zero` and `add_succ` are the simp lemmas for `add`. ↕ -/
+unseal add in
+theorem add_succ : ∀ n m : Nat, n + (.succ m) = .succ (n + m) := by
+  intro n m
+  rfl
+end simp_lemmas_example
+```
 :::
+:::dev
+TODO: @rogerburtonpatel will get confirmation about which style of simp tagging -
+  lemmas or definitions - we use and write this portion accordingly.
+:::
+
 
 ```lean
 theorem Perm3_In_best (α : Type) (x : α) (l₁ l₂ : List α) :
