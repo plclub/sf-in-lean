@@ -557,14 +557,12 @@ abbrev add (v : Nat) (s : Bag) : Bag :=
 -- test_add1
 example : count 1 (add 1 [1, 4, 1]) = 3 := by
   -- ADMITTED
-  dsimp [add]
-  rw [count_cons_same, count_cons_same, count_cons_diff, count_cons_same, count_nil] <;> dsimp
+  dsimp [add, count]
   -- /ADMITTED
 -- test_add2
 example : count 5 (add 1 [1, 4, 1]) = 0 := by
   -- ADMITTED
-  dsimp [add]
-  rw [count_cons_diff, count_cons_diff, count_cons_diff, count_cons_diff, count_nil] <;> dsimp
+  dsimp [add, count]
   -- /ADMITTED
 -- GRADE_THEOREM 0.5: NatList.test_add1
 -- GRADE_THEOREM 0.5: NatList.test_add2
@@ -773,12 +771,11 @@ end Bag
 -- # Reasoning About Lists
 
 /- FULL: As with numbers, simple facts about list-processing
-   functions can sometimes be proved entirely by simplification.
-   For example, just `rfl` is enough for this theorem... -/
+   functions can sometimes be proved entirely by rewriting.
+   For example, just rewriting the left-hand side of the following equality using the theorem
+   `nil_append` is enough for this theorem... -/
 /- TERSE: As with numbers, some proofs about list functions need only
-   simplification... -/
-/- TODO (KH): The above comment is wrong, since we use `rw` here.
-   -/
+   rewriting... -/
 
 theorem nil_app (l : NatList) : ([] : NatList) ++ l = l := by rw [nil_append]
 
