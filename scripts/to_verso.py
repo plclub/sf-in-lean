@@ -50,9 +50,11 @@ import VersoManual
 import VersoManual.InlineLean
 import Illuminate
 import SFLMeta.Bnf
+import SFLMeta.DisplayMath
 import SFLMeta.Ignore
 import SFLMeta.Save
 import SFLMeta.Comment
+import SFLMeta.Epigraph
 import SFLMeta.Exercise
 import SFLMeta.Grade
 import SFLMeta.Hide
@@ -133,12 +135,12 @@ def _strip_title_comment(src: str, stem: str = None) -> str:
     return src[:m.start()] + src[m.end():]
 
 
-# LF modules that are authored directly in Verso (Basics) or are plain Lean
-# support modules (CustomTactics, Maps): an `import LF.X` of one of these passes
-# through unchanged.  Every *other* `import LF.X` refers to a generated chapter,
-# so it is rewritten to `import LF.XVerso`.
+# LF modules that are authored directly in Verso (Basics, Induction) or are
+# plain Lean support modules (CustomTactics, Maps): an `import LF.X` of one of
+# these passes through unchanged.  Every *other* `import LF.X` refers to a
+# generated chapter, so it is rewritten to `import LF.XVerso`.
 # (Maps added by Claude: HL/TS chapters import LF.Maps for its definitions.)
-DIRECT_LF_MODULES = {"Basics", "CustomTactics", "Maps"}
+DIRECT_LF_MODULES = {"Basics", "Induction", "CustomTactics", "Maps"}
 
 _IMPORT_RE = re.compile(r'^import\s+(\S+)\s*$')
 
@@ -148,11 +150,11 @@ _IMPORT_RE = re.compile(r'^import\s+(\S+)\s*$')
 # to `-- MARKER`.  Plain `/- label -/` / `/- prose -/` comments are left alone.
 _BLOCK_MARKER_RE = re.compile(
     r'/-[ \t]*('
-    r'EX\d+[A-Za-z!?]*[ \t]+\(\w[\w \-]*\)'   # exercise open: EX2M? (name)
+    r"EX\d+[A-Za-z!?]*[ \t]+\(\w[\w' \-]*\)"   # exercise open: EX2M? (name)
     r'|\[\]'                                   # exercise close
     r'|GRADE_\S[^\n]*?'                        # grading spec
-    r'|/?(?:HIDEFROMADVANCED|HIDEFROMHTML|FULL|TERSE|HIDE|QUIZ|SOLUTION'
-    r'|INSTRUCTORS|WORKINCLASS)'
+    r'|/?(?:HIDEFROMADVANCED|HIDEFROMHTML|FULL|TERSE|HIDE|QUIZ|QUIETSOLUTION|SOLUTION'
+    r'|INSTRUCTORS|WORKINCLASS|ADMITTED|ADMITDEF)'
     r')[ \t]*-/')
 
 
@@ -201,6 +203,13 @@ def _extract_imports(body: str):
             if lf and lf.group(1) not in DIRECT_LF_MODULES:
                 mod = f'LF.{lf.group(1)}Verso'
             imports.append(f'import {mod}')
+            # A volume-module import also stays in the body, as a sentinel that
+            # the renderer turns into a ```importBlock code block: the header
+            # import above names the Verso module, but the generated student/
+            # solutions/terse chapter files need the original import line (and
+            # the reader should see it where the prose introduces it).
+            if re.match(r'(?:LF|HL|TS)\.\w+$', m.group(1)):
+                kept.append('--IMPORTBLOCK ' + line.strip())
         else:
             kept.append(line)
     return has_prelude, imports, '\n'.join(kept)
@@ -245,6 +254,15 @@ def _is_label_comment(text: str) -> bool:
     return (bool(re.match(r"^[\w.']+$", t)) or
             bool(re.match(r'^#{3,}[ \t#-]*$', t)) or
             bool(re.match(r'^=+>', t)))
+
+def _is_epigraph_comment(text: str) -> bool:
+    """True when a standalone comment body is a section epigraph — a quotation
+    whose first character is a double quote (straight or curly).  In the Rocq
+    sources these were wrapped in `#<div class="quote">#…#</div>#`; the block
+    markup was lost in the port, so the leading quote is the only surviving
+    signal.  (Heuristic first pass: no ported chapter has a non-epigraph
+    comment that opens with a quote.)"""
+    return bool(re.match(r'^\s*["“]', text))
 
 # ######... divider lines; tolerate trailing decoration (`###### --`, spaces)
 _SEPARATOR_LINE_RE = re.compile(r'^\s*#{4,}[ \t#-]*$')
@@ -339,6 +357,31 @@ def _prose_markup(text: str) -> str:
     return _latex_macros_to_verso(
         _sf_inline_code(_md_bold_to_verso(
             _bullets_to_verso(_strip_coq_comment_markers(text)))))
+
+
+def _lean_comment_balance(line: str, depth: int = 0) -> int:
+    """Net count of block comments opened minus closed on *line*, honoring
+    `--` line comments: a `--` ends the scan only when no block comment is
+    open at that point — *depth* is the block-comment depth carried in from
+    previous lines, so a `--` inside a still-open `/-- … -/` (e.g. the
+    `  -- no goals -/` tail of a #guard_msgs docstring) does not hide the
+    closing `-/`."""
+    bal = 0
+    i = 0
+    n = len(line)
+    while i < n - 1:
+        two = line[i:i + 2]
+        if two == '/-':
+            bal += 1
+            i += 2
+        elif two == '-/':
+            bal -= 1
+            i += 2
+        elif two == '--' and depth + bal == 0:
+            break
+        else:
+            i += 1
+    return bal
 
 
 def _comment_tokens(body: str):
@@ -451,7 +494,7 @@ def _comment_tokens(body: str):
         # than as `-- ` line markers, so recognize the same set the main
         # tokenizer does — otherwise they flatten to prose (or are dropped) and
         # the quiz/exercise/grade structure is lost.
-        m_ex = re.match(r'^EX(\d+)[A-Za-z!?]*\s+\((\w+)\)$', s)
+        m_ex = re.match(r"^EX(\d+)[A-Za-z!?]*\s+\((\w[\w']*)\)$", s)
         if s == '/QUIZ':
             flush_prose()
             tokens.append(('quiz_close', None))
@@ -479,16 +522,33 @@ def _comment_tokens(body: str):
             flush_prose()
             tokens.append(('instructor', re.sub(r'^INSTRUCTORS:\s*', '', s)))
             idx += 1; continue
-        # Whole-comment FULL/TERSE wrappers: a bare `FULL` / `TERSE` line opens a
-        # mode and `/FULL` / `/TERSE` closes it (the `/- FULL … /FULL -/` comment
-        # form, distinct from the inline `FULL:` prefix handled just below).
+        # FULL/TERSE markers in comment position come in two distinct forms:
+        #
+        # * A bare `FULL` / `TERSE` line is a *region* marker — the in-comment
+        #   analogue of a `-- FULL` line.  Its `/FULL` close often lives in a
+        #   *later* comment (Poly writes whole sections this way), so it must
+        #   NOT be comment-local: emit the open/close token directly and let
+        #   the renderer's region state span comments.  (Before 2026-07-14
+        #   these were auto-closed at the end of the comment, silently
+        #   widening every cross-comment region to both builds.)
+        # * A `FULL:` / `TERSE:` *prefix* switches the mode for the lines that
+        #   follow it within this comment only (handled via set_mode below and
+        #   auto-closed at the end of the comment).
         m_close = re.match(r'^/(FULL|TERSE)$', s)
         m_open_bare = re.match(r'^(FULL|TERSE)$', s)
         m_mode = re.match(r'^\s*(FULL|TERSE):\s?(.*)$', l)
         if m_close:
-            set_mode(None)
+            if mode[0] is not None:
+                set_mode(None)
+            else:
+                flush_prose()
+                tokens.append(('full_close' if m_close.group(1) == 'FULL'
+                               else 'terse_close', None))
         elif m_open_bare:
-            set_mode(m_open_bare.group(1))
+            set_mode(None)
+            flush_prose()
+            tokens.append(('full_open' if m_open_bare.group(1) == 'FULL'
+                           else 'terse_open', None))
         elif m_mode:
             set_mode(m_mode.group(1))
             # A payload that is itself a dropped region marker (`TERSE:
@@ -580,7 +640,7 @@ _TERSE_PLAIN_RE = re.compile(r'^-- TERSE:\s+(.+)$')
 # (advanced), `M` (manual), and combinations like `2AM?`.  A name is usually an
 # identifier but occasionally a phrase (`EX2 (logical connectives)`), so allow
 # internal spaces/hyphens.
-_EX_RE = re.compile(r'^-- EX(\d+)[A-Za-z!?]*\s+\((\w[\w \-]*)\)$')
+_EX_RE = re.compile(r"^-- EX(\d+)[A-Za-z!?]*\s+\((\w[\w' \-]*)\)$")
 _EX_CLOSE_RE = re.compile(r'^-- \[\]$')
 _GRADE_RE = re.compile(r'^--\s+GRADE_')
 # Coq-SF-style section headers written as line comments: `-- # Title` …
@@ -661,15 +721,36 @@ def tokenize(text: str):
     i = 0
     n = len(lines)
     quiz_depth = 0   # >0 while inside a -- QUIZ region (so nested HIDE -> answer)
+    code_comment_depth = 0  # open /-- … -/ (docstring) balance carried by code lines
 
     while i < n:
         line = lines[i]
         stripped = line.strip()
 
+        # --- Inside a docstring (`/-- … -/` spanning code lines) ---
+        # Everything is consumed verbatim as code — including blank lines,
+        # which must NOT collapse: `#guard_msgs` docstrings quote expected
+        # messages exactly, consecutive blanks and all.
+        if code_comment_depth > 0:
+            tokens.append(('code_line', line))
+            code_comment_depth += _lean_comment_balance(line, code_comment_depth)
+            i += 1
+            continue
+
         # --- Blank line ---
         if stripped == '':
             tokens.append(('blank', None))
             i += 1
+            continue
+
+        # --- importBlock sentinel (planted by _extract_imports) ---
+        if stripped.startswith('--IMPORTBLOCK '):
+            body = [stripped[len('--IMPORTBLOCK '):]]
+            i += 1
+            while i < n and lines[i].strip().startswith('--IMPORTBLOCK '):
+                body.append(lines[i].strip()[len('--IMPORTBLOCK '):])
+                i += 1
+            tokens.append(('import_block', '\n'.join(body)))
             continue
 
         # --- Block comment /- ... -/ ---
@@ -713,6 +794,14 @@ def tokenize(text: str):
                 tokens.append(('author_comment', body))
             elif _is_label_comment(body):
                 tokens.append(('block_comment_label', body))
+            elif _is_epigraph_comment(body):
+                # A standalone comment that is entirely a quotation (its first
+                # character is a double quote) is a section epigraph: in the
+                # Rocq sources these were wrapped `#<div class="quote">#…#</div>#`,
+                # markup that was lost in the port and survives only as the bare
+                # quoted comment.  Restore it as a :::epigraph directive (rendered
+                # italic for now).
+                tokens.append(('epigraph', _prose_markup(body.strip())))
             elif not body.strip():
                 tokens.append(('blank', None))
             else:
@@ -748,6 +837,19 @@ def tokenize(text: str):
                 body_lines.append(lines[i].strip()[2:].strip())
                 i += 1
             tokens.append(('instructor', '\n'.join(body_lines)))
+            continue
+
+        # `-- DEV` … `-- /DEV` region: an author/developer note without a tag
+        # prefix.  The whole body routes to a ```dev block (markers consumed).
+        if stripped == '-- DEV':
+            body_lines = []
+            i += 1
+            while i < n and lines[i].strip() != '-- /DEV':
+                body_lines.append(re.sub(r'^--\s?', '', lines[i].strip()))
+                i += 1
+            i += 1  # skip the closing -- /DEV (or run off EOF)
+            if body_lines:
+                tokens.append(('author_comment', '\n'.join(body_lines)))
             continue
 
         if _FULL_OPEN_RE.match(stripped):
@@ -970,9 +1072,56 @@ def tokenize(text: str):
 
         # --- Default: code line ---
         tokens.append(('code_line', line))
+        code_comment_depth += _lean_comment_balance(line, code_comment_depth)
         i += 1
 
     return tokens
+
+def _hoist_slidebreaks_from_terse(tokens):
+    """Lift every slide break out of any enclosing `::::terse` region.
+
+    A slide break only matters in the terse HTML build (it renders an empty
+    `<div class="slide-break">` there) and is stripped from every other product
+    — full HTML and all three generated `.lean` files.  So it never needs to
+    sit *inside* a `::::terse` container; doing so is just noise (and, when the
+    break is a region's sole content, leaves a pointless one-item terse block).
+
+    A source like `/- TERSE: *** text -/` tokenizes to
+    `terse_open, slidebreak, prose, terse_close`.  Rewrite each `slidebreak`
+    that falls within an open terse region to `terse_close, slidebreak,
+    terse_open` — hoisting the break to top level and reopening the region for
+    whatever terse content follows — then drop any `terse_open … terse_close`
+    pair left empty (the break was the first or last item), so no bare
+    `::::terse` survives."""
+    lifted = []
+    terse_depth = 0
+    for kind, content in tokens:
+        if kind == 'terse_open':
+            terse_depth += 1
+            lifted.append((kind, content))
+        elif kind == 'terse_close':
+            terse_depth = max(0, terse_depth - 1)
+            lifted.append((kind, content))
+        elif kind == 'slidebreak' and terse_depth > 0:
+            lifted.append(('terse_close', None))
+            lifted.append(('slidebreak', None))
+            lifted.append(('terse_open', None))
+        else:
+            lifted.append((kind, content))
+    # Drop terse regions left holding nothing but blank tokens.
+    out = []
+    i, n = 0, len(lifted)
+    while i < n:
+        if lifted[i][0] == 'terse_open':
+            j = i + 1
+            while j < n and lifted[j][0] == 'blank':
+                j += 1
+            if j < n and lifted[j][0] == 'terse_close':
+                i = j + 1
+                continue
+        out.append(lifted[i])
+        i += 1
+    return out
 
 def _strip_lean_comments(text: str) -> str:
     """Return *text* with `--` line comments and (nested) `/- ... -/` block
@@ -1092,6 +1241,23 @@ def _verbatim_block(text: str) -> str:
     return fence + '\n' + text + '\n' + fence
 
 
+def _unwrap_prose_note(text: str) -> str:
+    """If *text* is a single `/- … -/` block comment (a pure prose note with no
+    code), return its inner content with the comment delimiters stripped;
+    otherwise return *text* unchanged.  A `-- HIDE` region wrapping only a note
+    would otherwise stack `/- … -/` inside the verbatim fence inside `:::hide` —
+    three redundant layers, since the fence already guards the body and the
+    directive already discards it.  Anything with a further `/-`/`-/` inside
+    (nested comments, or a comment mixed with code) is preserved verbatim."""
+    stripped = text.strip()
+    if not (stripped.startswith('/-') and stripped.endswith('-/')):
+        return text
+    inner = stripped[2:-2]
+    if '/-' in inner or '-/' in inner:
+        return text
+    return inner.strip('\n')
+
+
 def _code_block(tag: str, text: str) -> str:
     """Wrap *text* in a fenced code block tagged *tag* (e.g. ` ```dev `).  A
     Verso code block delivers its body to the expander as a raw string that is
@@ -1180,13 +1346,18 @@ class Renderer:
 
     def _on_code_display(self, text):
         # coqdoc `[[ … ]]` display code (see _comment_tokens): a NON-elaborated
-        # verbatim code block.  The snippet is often deliberately ill-formed
-        # ("the following definitions are ill-formed"), so it must never become a
-        # ```lean block that Verso would try to compile.  The fence is grown to
+        # display, rendered by the `SFLMeta` ```display code block (see
+        # SFLMeta/DisplayMath.lean).  The snippet is often deliberately ill-formed
+        # ("the following definitions are ill-formed"), or an informal-proof
+        # equation, or a shell transcript, so it must never become a ```lean block
+        # that Verso would try to compile — ```display shows it verbatim as Lean
+        # code with no elaboration.  Emitting a *named* display (rather than an
+        # anonymous ``` fence) marks it so a later pass can promote the
+        # genuinely-mathematical ones to ```displaymath.  The fence is grown to
         # outrun any backticks inside the snippet, like other verbatim blocks.
         self._flush_code()
         self._open_full_if_pending()
-        self._append(_verbatim_block(text) + '\n\n')
+        self._append(_code_block('display', text) + '\n\n')
 
     def _on_block_comment_header(self, hdr):
         level, title = hdr
@@ -1234,6 +1405,16 @@ class Renderer:
             # Outermost close: drop any deferred open and close the emitted
             # :::full if there is one (a stray -- /FULL emits nothing).
             self.pending_full = False
+            # A region cannot outlive an exercise it contains: a `-- /FULL`
+            # while the (nested) exercise is still open force-closes the
+            # exercise first (matching the source idiom `-- FULL` /
+            # `-- EX… (name)` / `-- /FULL`, which scopes just the exercise
+            # banner to the full build and leaves the following theorem
+            # common).  Without this, the ::::full would silently extend past
+            # the exercise and swallow everything up to the next close.
+            if self.in_exercise and self.full_open:
+                self._append(_c_close() + '\n\n')
+                self.in_exercise = False
             if not self.in_exercise:
                 self._close_full_if_open()
 
@@ -1259,19 +1440,21 @@ class Renderer:
 
     def _on_exercise_open(self, rating, name):
         self._flush_code()
-        # Exercises cannot be nested inside :::full.  If a :::full is
-        # currently open, close it first and re-arm pending_full so that any
-        # content after the exercise (before -- /FULL) opens a new :::full.
-        # If pending_full is still True (no :::full was opened yet), leave it
-        # True — _open_full_if_pending won't fire inside an exercise, so the
-        # :::full is still deferred.
-        if self.full_open and not self.in_exercise:
-            self._close_full_if_open()
-            self.pending_full = True
-        # A new exercise ends the previous one (the source sometimes omits the
-        # `-- []` close before the next `-- EX`).
+        # An exercise nests inside an open (or pending) :::full — fence widths
+        # are computed by _resolve_fences, so the containers never collide.
+        # BCP decision 2026-07-15: the terse build should elide (almost) all
+        # exercises, so a FULL-scoped "Exercises" section drops out of terse
+        # *wholesale* — exercises, their supporting definitions and namespaces
+        # together.  When later terse-visible material depends on a definition
+        # made inside a FULL region, that definition must be made
+        # terse-visible in the source, case by case (the terse generated
+        # project, `lake exe sfl lf terse`, is the detector).
+        # A new exercise still ends the previous one (the source sometimes
+        # omits the `-- []` close before the next `-- EX`).
         if self.in_exercise:
             self._append(_c_close() + '\n\n')
+            self.in_exercise = False
+        self._open_full_if_pending()
         self.in_exercise = True
         self._append(
             _c_open(f'exercise (rating := {rating}) (name := "{name}")') + '\n\n')
@@ -1287,6 +1470,13 @@ class Renderer:
     def _on_slidebreak(self):
         self._flush_code()
         self._append(':::slidebreak\n:::\n\n')
+
+    def _on_epigraph(self, text):
+        # A section-opening quotation -> :::epigraph (rendered italic for now;
+        # SFLMeta.Block.epigraph).  The body is a single line of quoted prose,
+        # holds no nested directive, so a plain 3-colon fence is safe.
+        self._flush_code()
+        self._append(':::epigraph\n' + text + '\n:::\n\n')
 
     def _on_terse_inline(self, text):
         self._flush_code()
@@ -1310,7 +1500,7 @@ class Renderer:
         if self.full_open and not self.in_exercise:
             self._close_full_if_open()
             self.pending_full = True
-        self._append(_c_open('hide') + '\n' + _verbatim_block(text)
+        self._append(_c_open('hide') + '\n' + _verbatim_block(_unwrap_prose_note(text))
                      + '\n' + _c_close() + '\n\n')
 
     def _on_quiz_open(self):
@@ -1340,7 +1530,7 @@ class Renderer:
         self._flush_code()
         if not text.strip():
             return
-        self._append(':::answer\n' + _verbatim_block(text) + '\n:::\n\n')
+        self._append(':::answer\n' + _verbatim_block(_unwrap_prose_note(text)) + '\n:::\n\n')
 
     def _on_grade(self, text):
         # -- GRADE_THEOREM / GRADE_MANUAL -> :::grade.  A noop for now, but the
@@ -1350,6 +1540,17 @@ class Renderer:
         if not text.strip():
             return
         self._append(':::grade\n' + _verbatim_block(text) + '\n:::\n\n')
+
+    def _on_import_block(self, text):
+        # Cross-chapter `import` lines (sentinels from _extract_imports) -> a
+        # ```importBlock code block: rendered to the reader as a plain code
+        # block, and copied verbatim into the generated student/solutions/terse
+        # chapter files by the saver (SFLMeta.Block.importBlock).  Emitted at
+        # the top level, never inside a deferred :::full — the terse build
+        # drops :::full content wholesale, and the import must survive in all
+        # three generated variants.
+        self._flush_code()
+        self._append(_code_block('importBlock', text) + '\n\n')
 
     def _on_solution_prose(self, text):
         # Prose / non-compiling solution -> :::solution block, shown only in the
@@ -1402,6 +1603,8 @@ class Renderer:
                 self._on_exercise_close()
             elif kind == 'slidebreak':
                 self._on_slidebreak()
+            elif kind == 'epigraph':
+                self._on_epigraph(content)
             elif kind == 'terse_inline':
                 self._on_terse_inline(content)
             elif kind == 'author_comment':
@@ -1422,6 +1625,8 @@ class Renderer:
                 self._on_solution_prose(content)
             elif kind == 'grade_theorem':
                 self._on_grade(content)
+            elif kind == 'import_block':
+                self._on_import_block(content)
             # else: unknown token — ignore
 
         # Flush any trailing code
@@ -1850,8 +2055,21 @@ def _convert_solution_markers(src: str) -> str:
 
         # --- trailing ADMITTED: a one-line proof term ---
         if s.endswith('-- ADMITTED') and s != '-- ADMITTED':
-            out.append(re.sub(r':=\s*(.*?)\s*--\s*ADMITTED\s*$',
-                              lambda m: ':= solution!(' + m.group(1) + ')', line))
+            if ':=' in line:
+                out.append(re.sub(r':=\s*(.*?)\s*--\s*ADMITTED\s*$',
+                                  lambda m: ':= solution!(' + m.group(1) + ')', line))
+            else:
+                # The `:=` sits on an earlier line (`theorem foo ... :=\n
+                #   by rfl -- ADMITTED`): wrap just this line's proof term,
+                # provided the previous non-blank line really ends with `:=`.
+                p = len(out) - 1
+                while p >= 0 and not out[p].strip():
+                    p -= 1
+                m = re.match(r'^(\s*)(.*?)\s*--\s*ADMITTED\s*$', line)
+                if p >= 0 and out[p].rstrip().endswith(':=') and m:
+                    out.append(m.group(1) + 'solution!(' + m.group(2) + ')')
+                else:
+                    out.append(line)
             i += 1
             continue
 
@@ -1891,13 +2109,15 @@ def _convert_solution_markers(src: str) -> str:
 #   * the bare `(* INSTRUCTORS *)` … `(* /INSTRUCTORS *)` *region* (quiz
 #     answers in Imp; no line-form analogue) is mapped to `-- HIDE` … `-- /HIDE`
 #     (same verbatim-capture treatment; renders as the quiz's :::answer).
-#   * `(* ADVANCED: HIDEFROMHTML *)` -> `-- TERSE: HIDEFROMHTML` (both are
-#     dropped-marker forms downstream).
+#   * HIDEFROMHTML / HIDEFROMADVANCED markers (bare or `TERSE:`/`ADVANCED:`
+#     prefixed) are dropped outright at conversion — the region semantics are
+#     not honored anywhere downstream, and dropping here also keeps the marker
+#     word out of verbatim-captured bodies.  The enclosed content is kept.
 #   * `-/` / `/-` occurring inside comment text would break the emitted Lean
 #     comment; a space is inserted (`- /`, `/ -`) — visible, harmless.
 
 _RQ_STRUCT_MARKERS = (
-    r'EX\d+[A-Za-z!?]*[ \t]+\(\w[\w \-]*\)'    # exercise open: EX2M? (name)
+    r"EX\d+[A-Za-z!?]*[ \t]+\(\w[\w' \-]*\)"    # exercise open: EX2M? (name)
     r'|\[\]'                                    # exercise close
     r'|GRADE_\S.*'                              # grading spec (rest of comment)
     r'|\*\*\*'                                  # slide break
@@ -2006,14 +2226,21 @@ def _rq_block_lines(text, indent=''):
 
 
 def _rq_marker_line(m):
-    """Render a _RQ_MARKER_BODY_RE match as its `-- MARKER` line form."""
+    """Render a _RQ_MARKER_BODY_RE match as its `-- MARKER` line form, or
+    None for a marker that is dropped outright at conversion."""
     prefix, marker = m.group(1), m.group(2)
+    if marker.lstrip('/') in ('HIDEFROMHTML', 'HIDEFROMADVANCED'):
+        # Region semantics are not honored anywhere downstream: dropping the
+        # marker and keeping the enclosed content is the intended behavior
+        # (see CLAUDE.md).  Dropping *here*, rather than relying on the
+        # downstream prose-level drops, also keeps the marker word out of
+        # verbatim-captured bodies (hide / answer / solution regions) and
+        # covers the `ADVANCED:`/`TERSE:`-prefixed spellings uniformly.
+        return None
     if marker.lstrip('/') == 'INSTRUCTORS':
         # Bare region form (quiz answers): no line-form analogue; HIDE gives
         # the same verbatim-capture treatment (-> :::answer inside a quiz).
         marker = marker.replace('INSTRUCTORS', 'HIDE')
-    if prefix == 'ADVANCED':
-        prefix = 'TERSE'   # only ADVANCED: HIDEFROMHTML occurs; dropped downstream
     marker = ' '.join(marker.split())
     return f'-- {prefix}: {marker}' if prefix else f'-- {marker}'
 
@@ -2027,8 +2254,9 @@ def _rq_flat(body):
 
 def _rq_track_hide(marker_line, state):
     """Maintain state['hide_depth'] across emitted -- HIDE / -- /HIDE markers
-    (used to suppress the untagged-comment triage banner inside hide regions)."""
-    s = marker_line.strip()
+    (used to suppress the untagged-comment triage banner inside hide regions).
+    Tolerates a dropped (None) marker."""
+    s = marker_line.strip() if marker_line else ''
     if s == '-- HIDE':
         state['hide_depth'] = state.get('hide_depth', 0) + 1
     elif s == '-- /HIDE':
@@ -2048,7 +2276,9 @@ def _rq_hoist_inline_markers(line):
         if before.strip():
             out.append(before.rstrip())
         mb = _RQ_MARKER_BODY_RE.match(' '.join(m.group(1).split()))
-        out.append(_rq_marker_line(mb))
+        ml = _rq_marker_line(mb)
+        if ml is not None:
+            out.append(ml)
         pos = m.end()
     rest = line[pos:]
     if rest.strip():
@@ -2144,7 +2374,9 @@ def _rq_emit_coqdoc(text, stem, state):
             flush()
             mm2 = _RQ_MARKER_BODY_RE.match(_rq_flat(body2)) if body2.strip() else None
             if mm2:
-                out.append(_rq_marker_line(mm2))
+                ml2 = _rq_marker_line(mm2)
+                if ml2 is not None:
+                    out.append(ml2)
             else:
                 out.extend(_rq_classify_standalone(body2, stem, state))
             if trailing2.strip():
@@ -2183,7 +2415,9 @@ def rocq_to_lean_dialect(src, stem=None):
                 if mm:
                     # `(* ADMITTED *) Proof. …`: marker on its own line, then
                     # reprocess the remainder (it may hold more comments).
-                    out.append(_rq_track_hide(_rq_marker_line(mm), state))
+                    ml = _rq_track_hide(_rq_marker_line(mm), state)
+                    if ml is not None:
+                        out.append(ml)
                     lines[li] = indent + trailing.lstrip()
                     i = li
                 else:
@@ -2194,7 +2428,9 @@ def rocq_to_lean_dialect(src, stem=None):
                     i = li + 1
                 continue
             if mm:
-                out.append(_rq_track_hide(_rq_marker_line(mm), state))
+                ml = _rq_track_hide(_rq_marker_line(mm), state)
+                if ml is not None:
+                    out.append(ml)
             elif indent and prev_code:
                 # Indented commentary directly continuing a code run (between
                 # tactics): keep it in code position, as the tokenizer expects.
@@ -2253,6 +2489,7 @@ def convert(src_text: str, title: str, file_key: str) -> str:
     body_src = _convert_workinclass_markers(body_src)
     body_src = _convert_solution_markers(body_src)
     tokens = tokenize(body_src)
+    tokens = _hoist_slidebreaks_from_terse(tokens)
     renderer = Renderer()
     renderer.process(tokens)
     body = renderer.result()
@@ -2307,8 +2544,16 @@ def main() -> None:
     title = args.title or extract_title(src_text, file_key)
 
     result = convert(src_text, title, file_key)
-    dst_path.write_text(result)
-    print(f'Written {dst_path}  (title: {title!r}, file key: {file_key!r})')
+    # Write-if-different: only touch the output (and thus bump its mtime, which
+    # forces `lake` to re-elaborate every chapter that imports it) when the
+    # generated content actually changed.  A comment-only edit whose tokens are
+    # dropped by to_verso, or a change to this script that doesn't affect a
+    # given chapter, then costs zero downstream Lean rebuilds.
+    if dst_path.exists() and dst_path.read_text() == result:
+        print(f'Unchanged {dst_path}  (skipped write)')
+    else:
+        dst_path.write_text(result)
+        print(f'Written {dst_path}  (title: {title!r}, file key: {file_key!r})')
 
 
 if __name__ == '__main__':

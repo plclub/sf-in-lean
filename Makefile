@@ -21,7 +21,7 @@ define VOLUME_template
 
 # Build the sfl executable (shared across all volumes) before running any
 # variant.  Lake detects nothing changed on subsequent calls and skips quickly.
-$(1)-build:
+$(1)-build: ensure-build-symlink
 	lake build sfl
 
 $(1)-student: $(1)-build
@@ -45,24 +45,34 @@ $(eval $(call VOLUME_template,ts))
 
 # ── Top-level targets ─────────────────────────────────────────────────────────
 
-.PHONY: all serve clean
+.PHONY: all serve clean ensure-build-symlink
 
 all: verso lf hl ts check-bare-lean-chapters check-verso-chapters
+
+# In this devcontainer /workspaces/l is a slow host bind mount, so the Lake
+# build cache is relocated to the container-native fs and `.lake/build` is a
+# symlink to it (see scripts/relocate-lake-build.sh).  `lake clean` deletes that
+# symlink and Lake would otherwise recreate a real (slow) dir, so every target
+# that invokes `lake` first re-establishes the symlink.  The script is idempotent
+# and near-instant when the symlink is already correct.  Outside a container
+# (e.g. `make` on the macOS host) it is a no-op.
+ensure-build-symlink:
+	@scripts/relocate-lake-build.sh
 
 # Temporary:
 # Build bare .lean chapters that compile but are not yet fully versified.
 # Remove a module from this list only when it is broken (then fix it), or
 # when it has been incorporated into the book via a *Verso.lean include.
 .PHONY: check-lean
-check-bare-lean-chapters:
-	@echo "no bare (un-versified) chapters to build"
+check-bare-lean-chapters: ensure-build-symlink
+	lake build LF.IndProp LF.IndPropRegexp
 
 # Temporary:
 # Build the generated HL/TS Verso chapters that aren't in a book yet, so the
 # to_verso round-trip stays compilable.  `verso` (a prerequisite) regenerates
 # the sources first.  Drop a module here once it's `{include}`d in its book.
 .PHONY: check-verso-chapters
-check-verso-chapters: verso
+check-verso-chapters: verso ensure-build-symlink
 	@if [ -n "$(HL_VERSO_MODULES)" ]; then lake build $(HL_VERSO_MODULES); else echo "no generated Verso chapters to build"; fi
 
 serve: all
@@ -71,6 +81,7 @@ serve: all
 clean:
 	lake clean
 	rm -rf _out/
+	@scripts/relocate-lake-build.sh
 
 # ── Generating Verso chapters from bare Lean (temporary!) ─────────
 # Chapters that are not yet authored directly in Verso are generated from their
@@ -84,7 +95,7 @@ clean:
 
 # This will all be ripped out once all chapters are versified.
 
-LF_CHAPTERS := Induction UsingLean Lists Poly Tactics Logic IndProp IndPropRegexp Maps
+LF_CHAPTERS := UsingLean Lists Poly Tactics Logic IndProp IndPropRegexp Maps
 
 LF_VERSO_FILES := $(addprefix LF/,$(addsuffix Verso.lean,$(LF_CHAPTERS)))
 
@@ -115,5 +126,5 @@ HL/%Verso.lean: HL/%.lean scripts/to_verso.py
 # for diffing against the bare LF/<Ch>.lean sources for completeness.  Add a
 # chapter to LFDraft.lean once its Verso source builds.
 .PHONY: lf-draft-solutions
-lf-draft-solutions: verso
+lf-draft-solutions: verso ensure-build-symlink
 	lake exe sfl-draft solutions

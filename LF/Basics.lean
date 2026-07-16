@@ -21,6 +21,7 @@ open InlineLean hiding lean
 
 #doc (Manual) "Basics: Functional Programming in Lean" =>
 %%%
+tag := "Basics"
 htmlSplit := .never
 file := "Basics"
 %%%
@@ -226,6 +227,35 @@ in comments.)
 #eval nextWorkingDay (nextWorkingDay Day.saturday)
 ```
 
+We can also record what we _expect_ the result of calling a function to be in the form of a Lean
+`example`:
+
+```lean
+example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
+  rfl
+```
+
+::::full
+This declaration asserts that the second working day after `saturday` is `tuesday`.
+Having made the assertion, we can also ask Lean to _verify_ it.
+The `by rfl` can be read as "The assertion we've just made can be
+proved by observing that both sides of the equality evaluate to
+the same term."
+
+`rfl` stands for "reflexivity," which is the principle that any value is
+equal to itself. After evaluation, both sides of the equality are the same
+value, so the assertion is true by reflexivity.  If we had made a different
+assertion, such as `example : nextWorkingDay (nextWorkingDay Day.saturday) =
+Day.monday`, then Lean would not be able to verify it and would instead signal an
+error. Try it out!
+::::
+
+::::terse
+The `rfl` tactic is used to observe that both sides of an equal sign evaluate to the same value.
+::::
+
+## Aside: Using the VS Code Lean Extension
+
 ::::full
 If you have a computer handy, this would be an excellent moment
 to fire up VS Code with the Lean extension or the Lean web interface
@@ -239,11 +269,7 @@ RAB: Why did we remove the comments?
 Per GitHub discussion, MWH agrees - this is unresolved.
 BCP: Don't understand the state of play here...
 :::
-::::
 
-## Aside: Using the VS Code Lean Extension
-
-::::full
 In VS Code, development of Lean code is supported by the Lean Extension,
 which provides an interactive "InfoView" panel that displays the results
 of commands like `#eval`, as well as the current goal state
@@ -270,48 +296,9 @@ the output should match what's in the comment below. Experiment with adding
 your own `#eval` commands explore how other functions work.
 ::::
 
-Continuing with our simple type and function, we can record what we _expect_
-the result of calling a function to be in the form of a Lean `example`:
-
-```lean
-example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
-  rfl
-```
-
-::::full
-This declaration asserts that the second working day after `saturday` is `tuesday`.
-Having made the assertion, we can also ask Lean to _verify_ it.
-The `by rfl` can be read as "The assertion we've just made can be
-proved by observing that both sides of the equality evaluate to
-the same term."
-
-`rfl` stands for "reflexivity," which is the principle that any value is
-equal to itself. After evaluation, both sides of the equality are the same
-value, so the assertion is true by reflexivity.  If we had made a different
-assertion, such as `example : nextWorkingDay (nextWorkingDay Day.saturday) =
-Day.monday`, then Lean would not be able to verify it and would instead signal an
-error. Try it out!
-
-We can also ask Lean to _compile_ our definitions to efficient
-native code.
-
-Lean compiles to C, which is then compiled to machine code by a
-standard C compiler.  This facility is very useful, since it gives
-us a path from proved-correct algorithms written in Lean to
-efficient executables. We'll come back to this topic in later
-chapters.
+::::terse
+If you are not already, we recommend exploring this file using the Lean extension in VS Code.
 ::::
-
-:::dev
-RAB: Is Lean compiling to C its "killer app," or is it the fact that it is an
-executable programming language (unlike Gallina)? We should get a Lean pro's
-take on what to say here.
-@dsainati1: Per GitHub discussion, we should either include a diagram in a later chapter,
-or potentially link to https://lean-lang.org/doc/reference/latest/Elaboration-and-Compilation/
-HG: IMO it's not really useful to go to this level of detail here. I would cut the preceeding text
-off at "Try it out!" and drop the rest. (I suspect this framing came from Rocq, where extracting
-code is a whole process; Lean just compiles like any other programming language.)
-:::
 
 ## Booleans
 
@@ -319,16 +306,16 @@ code is a whole process; Lean just compiles like any other programming language.
 Following the pattern of the days of the week above, we can
 define the standard type `Bool` of booleans, with members `true`
 and `false`.
-::::
-
-:::terse
-Another familiar enumerated type:
-:::
 
 We define our own `MyBool` to teach the concept of building booleans from
 scratch; later we'll switch to Lean's built-in `Bool`.
 We use a different name to make explicit that this is not the same
 type as Lean's built-in, but their definitions are equivalent.
+::::
+
+::::terse
+Another familiar enumerated type; we'll switch to Lean's built-in `Bool` later:
+::::
 
 ```lean
 inductive MyBool : Type where
@@ -336,19 +323,23 @@ inductive MyBool : Type where
   | false
 ```
 
+::::full
 The next command opens the namespace associated with the `MyBool` type,
 so subsequent definitions will be part of the `MyBool` namespace.
 In Lean, functions on a type are typically defined in that type's namespace,
 which avoids name clashes with functions of the same name elsewhere (here,
 functions on the built-in `Bool` type). We give a full treatment of namespaces below.
+::::
+
+::::terse
+This command opens the namespace associated with the `MyBool` type:
+::::
 
 ```lean
 namespace MyBool
 ```
 
-::::full
 Functions over booleans can be defined in the same way as above
-::::
 
 ```lean
 def not (b : MyBool) : MyBool :=
@@ -492,6 +483,10 @@ with the type `MyBool` to signify that the proposition holds for   all `b`s of t
 Now that we've stated the theorem we'd like to prove, let's set about proving it.
 ::::
 
+::::terse
+Let's prove something simple about booleans:
+::::
+
 ```lean
 theorem true_and : ∀ (b : MyBool), (MyBool.true && b) = b := by
   intro b
@@ -517,6 +512,10 @@ into a shape that is closer to the one we want. A tactic can also
 _close_ (solve) the current goal, finishing its proof.
 
 Let's walk through the example above with this terminology in mind.
+::::
+
+::::terse
+And now let's see it in a bit more detail:
 ::::
 
 ```lean
@@ -609,7 +608,6 @@ to prove a theorem and just accept it as a given.  This can be useful for develo
 Be careful, though: every time you say `sorry` you are leaving
 a door open for total nonsense to enter Lean's safe, formally
 checked world!
-::::
 
 :::dev
 HG: In the terse .lean output this ends up looking like an exercise.
@@ -618,6 +616,7 @@ HG: In the terse .lean output this ends up looking like an exercise.
 ```lean -keep
 theorem really_bad : MyBool.true = MyBool.false := by sorry
 ```
+::::
 
 ```lean
 end MyBool
@@ -633,27 +632,41 @@ properties about them, let's switch to Lean's built-in `Bool` type, which has th
 but comes with a lot of useful functions and lemmas.
 ::::
 
+::::terse
+Now we'll switch to Lean's definition of booleans.
+::::
+
 ## Types
 
+::::full
 Every expression in Lean has a type describing what sort of value it computes.
 The `#check` command asks Lean to print the type of an expression.
+::::
+
+::::terse
+We can use `#check` to check the type of an expression:
+::::
 
 ```lean
 #check Bool.true
 ```
 
+::::full
 If the expression after `#check` is followed by a colon and a type,
 Lean will verify that the type of the expression
 matches the given type and signal an error if not.
+::::
 
 ```lean
 #check (Bool.true : Bool)
 #check (Bool.not Bool.true : Bool)
 ```
 
+::::full
 Functions like {name}`Bool.not` are themselves ordinary values, just like {name}`Bool.true`
 and `Bool.false`.  Their types are called _function types_, and they are
 written with arrows.
+::::
 
 ```lean
 #check Bool.not
@@ -681,7 +694,17 @@ produces a unicode symbol that you can see on the screen, just hover
 over it.
 ::::
 
+::::terse
+Lean uses unicode characters; you can type them with a backslash (`\`).
+::::
+
 ## New Types from Old
+
+:::dev
+HG: I feel like this section has too much content in terse, but I don't want to unilaterally make
+that call.
+TODO
+:::
 
 ::::full
 The types we have defined so far are simple examples of "enumerated
@@ -827,7 +850,7 @@ RAB, to NH: 1/2 new exercises to grade. Thanks!
 
 :::grade
 ```
-GRADE_THEOREM 1: is_inversion
+GRADE_THEOREM 1: is_weekend
 ```
 :::
 ::::
@@ -1083,7 +1106,11 @@ Here, though, because `not` is a function that takes a `Bool` argument, Lean kno
 ```
 ::::
 
--- BCP: This is not going to typeset well!
+:::dev
+BCP: This is not going to typeset well!
+TODO
+:::
+
 ::::exercise(rating:=0) (name := "custom_namespace_checks")
 Predict the output of each of the statements below.
 Do you think their results would change depending on which namespace
@@ -1173,7 +1200,6 @@ numbers does not interfere with the one from the standard library.
 In the remainder of the book, we'll use the standard library's.
 ::::
 
-
 ```lean
 namespace NatPlayground
 ```
@@ -1257,7 +1283,6 @@ def minustwo (n : Nat) : Nat :=
 ```
 
 ::::full
-
 Look the types of `succ`, `pred`, and `minustwo`:
 
 ```lean
@@ -1291,7 +1316,7 @@ more sophisticated recursive function `add`.
 ::::
 
 :::terse
-Recursive functions:
+Here are some recursive functions on natural numbers:
 :::
 
 ```lean
@@ -1328,9 +1353,7 @@ seal odd even
 :::slidebreak
 :::
 
-:::terse
-A multi-parameter recursive function.
-:::
+This function takes multiple parameters, recursing on the second:
 
 ```lean
 @[irreducible]
@@ -1344,11 +1367,10 @@ def add (n : Nat) (m : Nat) : Nat :=
 #eval add one two -- succ (succ (succ zero)) -- aka, three!
 ```
 
-::::full
 We can also define infix notation for our `add` functions.
 Don't worry too much about how this is defined; we will return to it
 in more detail later.
-::::
+
 ```lean
 scoped infixl:65 " + " => add
 ```
@@ -1374,6 +1396,10 @@ Here is a simple rule about `add`:
 In Lean, this rule looks like this:
 ::::
 
+::::terse
+We can prove properties of recursive functions like `add`:
+::::
+
 ```lean
 unseal add in
 theorem add_zero : ∀ n : Nat, n + zero = n := by
@@ -1381,7 +1407,6 @@ theorem add_zero : ∀ n : Nat, n + zero = n := by
   rfl
 ```
 
-::::full
 ```lean
 #check add_zero
 ```
@@ -1401,10 +1426,9 @@ theorem add_zero_zero : ∀ n : Nat, n + zero + zero = n := by
   rewrite [add_zero]
   rewrite [add_zero]
   rfl
-
--- Let's walk through this proof.
 ```
-::::
+
+We'll walk through this proof in the next section.
 
 ## Proof state and tactics
 
@@ -1414,6 +1438,11 @@ to transform the goal of the proof according to an equality.
 The `add_zero` in brackets is an _argument_ to the `rewrite` tactic.
 
 Let's walk through the theorem again in detail.
+::::
+
+::::terse
+Here is the previous proof in more detail:
+::::
 
 ```lean
 theorem add_zero_zero_explained : ∀  n : Nat, n + zero + zero = n := by
@@ -1431,9 +1460,11 @@ theorem add_zero_zero_explained : ∀  n : Nat, n + zero + zero = n := by
      tactic `rfl`. -/
   rfl
   /- The proof is now done! The Lean InfoView tells us there are "No goals". -/
+```
 
-/-! Here's a simple proof for you to try. -/
+Give this proof a try (it's similar):
 
+```lean
 theorem add_zero_zero_zero : ∀ n : Nat, n + zero + zero + zero = n := by
   solution!
     intro n
@@ -1442,38 +1473,51 @@ theorem add_zero_zero_zero : ∀ n : Nat, n + zero + zero + zero = n := by
     rewrite [add_zero]
     rfl
 ```
-::::
 
 ## The `rewrite` tactic
 
 ::::full
-  As we saw above, the tactic that tells Lean to rewrite (part of) a goal or
-  hypothesis based on a rule is called `rewrite`. Given the rule `add_zero`,
-  which states that `n + zero` is equal to `n` for any `n`, we can replace
-  any `n + zero` in our proof with `n` via `rewrite [add_zero]`.
+As we saw above, the tactic that tells Lean to rewrite (part of) a goal or
+hypothesis based on a rule is called `rewrite`. Given the rule `add_zero`,
+which states that `n + zero` is equal to `n` for any `n`, we can replace
+any `n + zero` in our proof with `n` via `rewrite [add_zero]`.
 
-  The `rewrite` tactic takes its argument(s) in square brackets.
+The `rewrite` tactic takes its argument(s) in square brackets.
+::::
+
+::::terse
+The `rewrite` tactic rewrites part of a goal based on a hypothesis.
 ::::
 
 ## The `rfl` tactic
 
 ::::full
- The `rfl` tactic closes a goal of the shape `a = a`, for any `a`. It
- checks that both sides of the equality are _definitionally equal_ --
- that is, that they reduce to the same term. (So, in particular, a
- term is always definitionally equal to itself.)
+The `rfl` tactic closes a goal of the shape `a = a`, for any `a`. It
+checks that both sides of the equality are _definitionally equal_ --
+that is, that they reduce to the same term. (So, in particular, a
+term is always definitionally equal to itself.)
+::::
+
+::::terse
+The `rfl` closes a goal that looks like `a = a`, reducing both sides of the equality in
+the process.
 ::::
 
 ## A New `add` Rule
 
 ::::full
-   Here is another fundamental rule about addition:
+Here is another fundamental rule about addition:
 
-   `n + (succ m) = succ (n + m)`.
+`n + (succ m) = succ (n + m)`.
 
-   This is the rule we need to push `succ` around.
+This is the rule we need to push `succ` around.
 
 Here it is in Lean:
+::::
+
+::::terse
+Here's another rule we can use for `add`:
+::::
 
 ```lean
 unseal add in
@@ -1482,6 +1526,7 @@ theorem add_succ : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
   rfl
 ```
 
+::::full
 You may notice stepping through the above proof that Lean's InfoView
 displays `n + (succ m)` instead as `n + m.succ` and `succ (n + m)` as
 `(n + m).succ`. These expressions are equivalent, but when printing constructors,
@@ -1490,6 +1535,11 @@ argument to the constructor first, followed by a dot, followed by the constructo
 as if the constructor were a field of its argument. In some cases this is convenient, but for
 natural numbers it is confusing, so we will disable this printing behavior for the `succ`
 constructor with this command:
+::::
+
+::::terse
+This command turns off some fancy printing that Lean does around the `succ` constructor:
+::::
 
 ```lean
 attribute [pp_nodot] succ
@@ -1514,6 +1564,7 @@ theorem add_one (n : Nat) : n + (succ zero) = succ (n + zero) + zero := by
   rfl
 ```
 
+::::full
 Again, we recommend stepping through these proofs in VS Code --
 that is, moving past each tactic with your cursor to see how it
 changes the proof state and hovering over each argument to `rewrite` to see its type.
@@ -1542,7 +1593,13 @@ definitions by using `rfl` to implicitly simplify expressions
 that aren't syntactically identical. If you take a look at the proofs of
 `add_zero` and `add_succ` above, you will notice this is exactly what we did
 when we used the `rfl` tactic.
+::::
 
+::::terse
+Marking a definition `@[irreducible]` prevents proofs from "peeking" through it with `rfl`.
+::::
+
+::::full
 In this text, to enforce idiomatic style, we mark
 definitions with `@[irreducible]` to prevent this peeking,
 also called *definitional equality abuse* (*defeq abuse*, for short).
@@ -1554,6 +1611,11 @@ of `add` that makes further unsealing unnecessary. Instead,
 we can rewrite by these theorems anywhere we want to describe how `add`
 evaluates. The motivation for this strict discipline is both readability
 and performance; unfolding definitions can have negative effects as libraries scale.
+::::
+
+::::terse
+`unseal` lifts that restriction just long enough to prove the theorems that characterize the definition.
+::::
 
 :::dev
 BCP: We start by saying that what we're going to here is not what real lean developments do, but then
@@ -1569,6 +1631,7 @@ definition of `add`:
 
 ```lean
 namespace AddPlayground
+
 /- repeating the definition here for ease of reference:
 def add (n : Nat) (m : Nat) : Nat :=
   match m with
@@ -1588,6 +1651,7 @@ theorem add_succ : ∀ (n m : Nat), n + (succ m) = succ (n + m) := by
 end AddPlayground
 ```
 
+::::full
 Each of `add_zero` and `add_succ` correspond to one branch of the `match`
 statement defining `add` and describe how the evaluation of `add` proceeds
 in that case. The `add_zero` theorem describes how `n + zero` evaluates,
@@ -1601,6 +1665,12 @@ needs a simplification lemma for each branch of control flow through
 the function.
 
 So, for example, we need two simplification lemmas for the definition of `pred`:
+::::
+
+::::terse
+Each branch of a definition's control flow gets one _simplification lemma_. Here are the two for
+`pred`:
+::::
 
 ```lean
 unseal Nat.pred in
@@ -1621,11 +1691,17 @@ theorem even_succ_succ n : even (succ (succ n)) = even n := rfl
 seal even
 ```
 
+::::full
 In the remainder of this textbook, we will pair definitions
 with their simplification lemmas. After proving these lemmas, instead of using `rfl`
 to peek through the definitions, we will prefer rewriting
 by the lemmas, using `@[irreducible]` to enforce this policy,
 and only `unseal`ing the definition in the proofs of those lemmas themselves.
+::::
+
+::::terse
+From here on, we pair each definition with its simplification lemmas and rewrite by those lemmas
+rather than `rfl`-ing through the definition.
 ::::
 
 ## Working with Numerals
@@ -1648,9 +1724,12 @@ theorem three_eq_succ_two : three = succ two := by rfl
 theorem four_eq_succ_three : four = succ three := by rfl
 ```
 
+::::full
 We can rewrite with these rules to expand numerals into their definitions,
-   which allows us to use our `add` rules.
+which allows us to use our `add` rules.
 Here's an example of how to start a proof this way.
+::::
+
 Finish the proof using the `add` rules:
 
 :::dev
@@ -1725,6 +1804,8 @@ RAB: Agreed if we're keeping these visible; putting off
 :::
 
 Prove this property using rewriting with the simplification rules for addition and multiplication.
+
+::::full
 (We have given you the first line.) Notice how `rewrite`
 can take any number of arguments. You can use this rewrite with all of the
 simplification rules at once, for example.
@@ -1733,6 +1814,7 @@ After each rewrite, check the proof state by placing the cursor immediately
 after a rule to see how the goal is changing. This happens naturally
 as you write the proof, which makes it convenient to use `rewrite` blocks
 with multiple rules.
+::::
 
 ::::exercise (rating := 2) (name := "test_mult1")
 ```lean
@@ -1758,9 +1840,11 @@ GRADE_THEOREM 2: test_mult1
 :::slidebreak
 :::
 
+::::full
 When we say that Lean relies on almost nothing that's truly built-in, we really mean it: even
 testing equality is not a primitive operation, but an ordinary function that we could re-implement
 ourselves as users.
+::::
 
 Here is a function `beq` that tests natural numbers for
 equality, yielding a boolean.
@@ -1836,6 +1920,11 @@ prove, while `x == y` is a boolean _expression_ whose value (either
 `true` or `false`) Lean can compute.
 ::::
 
+::::terse
+Note that now `==` and `=` are different; the former means `beq` whereas the latter is a logical
+claim.
+::::
+
 ::::full
 We can also now define the simplification lemmas for `beq` with our new notation,
 one for each of the four cases of control flow through the function.
@@ -1909,10 +1998,6 @@ theorem add_id_example : ∀ n m : Nat,
   rfl
 ```
 
-:::terse
-We make a general claim about natural numbers and prove it
-:::
-
 ::::exercise (rating := 1) (name := "add_id_exercise")
 Remove `sorry` and fill in the proof.
 
@@ -1970,25 +2055,12 @@ quickly since that is the idiomatic Lean way to do things.
 
 BCP: Needs to be explained better.  And the "indexing" part doesn't really fit the
 section title.
+HG: +1, also we need terse content once we figure out what this section is
+TODO
 :::
 
 :::slidebreak
 :::
-
-:::dev
-BCP: Is there a missing section header here?
-:::
-
-We can use the `rewrite` tactic with a previously proved theorem
-instead of a hypothesis from the context.
-
-```lean
-theorem add_mul_zero : ∀ p q : Nat,
-    (p * zero) + (q * zero) = zero := by
-  intro p q
-  rewrite [mul_zero, mul_zero, add_zero]
-  rfl
-```
 
 # Proof by Case Analysis
 
@@ -2122,12 +2194,15 @@ for theorems like these. For now, note that if you hover over the name of these 
 in VSCode, the Lean 4 extension will show you their type, i.e., what the theorem proves.
 ::::
 
+::::terse
+Some of the above proofs use standard library lemmas; later on we will discuss how to search for
+those yourself.
+::::
+
 :::slidebreak
 :::
 
-:::terse
-We can have nested case analysis:
-:::
+We can also have nested case analysis:
 
 ```lean
 theorem and_commutative : ∀ b c : Bool,
@@ -2199,9 +2274,10 @@ by case analysis in `Tactics.lean`.
 
 ## New Tactics: `rewrite ... at` and `exact`
 
+::::full
 Some new tactics will be useful for the exercises ahead.
 
-The `rewrite` tactic can be used to rewrite in a hypothesis instead of the
+The `rewrite ... at` tactic can be used to rewrite in a hypothesis instead of the
 goal. For example, if `h : P` is in the context and we have a rule `P = Q`,
 then `rewrite [P = Q] at h` changes the hypothesis to `h : Q`.
 
@@ -2209,6 +2285,11 @@ The `exact` tactic closes a goal by providing the exact proof of the goal.  For
 example, if `h : P` is in the context and the goal is `P`, then `exact h`
 closes the goal.  You can also transform `h` slightly, but we will
 explain how when we get to an example where we need to.
+::::
+
+::::terse
+You will need the `rewrite ... at` and `exact` tactics to complete the following exercises.
+::::
 
 ::::exercise (rating := 2) (name := "or_false_true")
 Prove the following claim.
@@ -2280,6 +2361,11 @@ titles that turned them into HTML links...
 :::
 ::::
 
+::::terse
+Lean has commands like `notation`, `infixl`, `infixr`, `prefix`, and `postfix` for defining new
+notation.
+::::
+
 ## Structural Recursion (Optional)
 
 ::::full
@@ -2311,10 +2397,11 @@ write functions in slightly different ways.
 ::::
 
 ::::exercise (rating := 2) (name := "decreasing")
-To get a concrete sense of this, find a way to write a sensible
-recursive definition (of a simple function on numbers, say) that
-does actually terminate on all inputs, but that Lean will reject
-because it cannot automatically prove termination.
+To get a concrete sense of how termination checking works in Lean,
+find a way to write a sensible recursive definition (of a simple
+function on numbers, say) that does actually terminate on all inputs,
+but that Lean will reject because it cannot automatically prove
+termination.
 
 :::solution
 ```
@@ -2546,6 +2633,8 @@ our discipline of defining and using rewrite rules for all our functions,
 as they would require a frustrating number of such rules. We should come up with
 a new exercise here of similar size and difficulty, but that works better with
 the new presentation style of this material.
+HG: Also, we should make sure that this reads OK in full/terse
+TODO
 :::
 
 ::::full
