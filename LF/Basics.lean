@@ -42,8 +42,8 @@ is recommended for the first few lectures, so students see exactly
 what's in the source file.
 :::
 
-:::dev
-MRC: The first issue I had was that I don't have Lean installed. Since LF:Preface hasn't
+:::dev "Michael Clarkson (clarksmr)"
+The first issue I had was that I don't have Lean installed. Since LF:Preface hasn't
 been ported, I had to figure out how to install it. New instructors will face the same issue.
 Here is what I did:
 * Install Lean 4 through the VS Code extension.
@@ -83,8 +83,8 @@ some basic _tactics_ that can be used to prove properties of
 programs.
 ::::
 
-:::dev
-HG: The above makes some assumptions about jargon and terminology that I'm not sure we'll have
+:::dev "Harrison Goldstein (hgoldstein95)"
+The above makes some assumptions about jargon and terminology that I'm not sure we'll have
 covered at this point. For example, I've found "side effects" is often not intuitive. Also, I think
 "a concrete method for computing a mathematical function" is setting an OOP-trained student up for
 confusion around the word "method." I don't want to just go editing long-standing text if it's been
@@ -234,8 +234,8 @@ and try it for yourself.  Load this file, `Basics.lean`,
 from the book's Lean sources, find the above example, and observe
 the result in the Lean InfoView panel.
 
-:::dev
-@dsainati1: Where are we showing responses in comments? I don't see them.
+:::dev "Daniel Sainati (dsainati1)"
+Where are we showing responses in comments? I don't see them.
 RAB: Why did we remove the comments?
 Per GitHub discussion, MWH agrees - this is unresolved.
 BCP: Don't understand the state of play here...
@@ -303,8 +303,8 @@ efficient executables. We'll come back to this topic in later
 chapters.
 ::::
 
-:::dev
-RAB: Is Lean compiling to C its "killer app," or is it the fact that it is an
+:::dev "Roger Burtonpatel (rogerburtonpatel)"
+Is Lean compiling to C its "killer app," or is it the fact that it is an
 executable programming language (unlike Gallina)? We should get a Lean pro's
 take on what to say here.
 @dsainati1: Per GitHub discussion, we should either include a diagram in a later chapter,
@@ -575,8 +575,8 @@ Lean is _whitespace-sensitive_. That is, the indentation in proofs is important 
 it can change the meaning of the proof, usually causing the proof to break. If we had
 instead written the following:
 
-:::dev
-@dsainati1: Ideally would change this to a #guardmsgs(error) if we can
+:::dev "Daniel Sainati (dsainati1)"
+Ideally would change this to a #guardmsgs(error) if we can
 HG: +1
 :::
 
@@ -623,8 +623,8 @@ Be careful, though: every time you say `sorry` you are leaving
 a door open for total nonsense to enter Lean's safe, formally
 checked world!
 
-:::dev
-HG: In the terse .lean output this ends up looking like an exercise.
+:::dev "Harrison Goldstein (hgoldstein95)"
+In the terse .lean output this ends up looking like an exercise.
 :::
 
 ```lean -keep
@@ -710,8 +710,8 @@ Lean uses unicode characters; you can type them with a backslash (`\`).
 
 ## New Types from Old
 
-:::dev
-HG: I feel like this section has too much content in terse, but I don't want to unilaterally make
+:::dev "Harrison Goldstein (hgoldstein95)"
+I feel like this section has too much content in terse, but I don't want to unilaterally make
 that call.
 :::
 
@@ -853,8 +853,8 @@ example : is_weekend Day.sunday = true := solution!(by rfl)
 example : is_weekend Day.friday = false := solution!(by rfl)
 seal is_weekend
 ```
-:::dev
-RAB, to NH: 1/2 new exercises to grade. Thanks!
+:::dev "Roger Burtonpatel (rogerburtonpatel)"
+, to NH: 1/2 new exercises to grade. Thanks!
 :::
 
 :::grade
@@ -894,8 +894,8 @@ example : is_inversion (Color.primary RGB.green) (Color.primary RGB.red) = Bool.
   solution!(by rfl)
 seal is_inversion
 ```
-:::dev
-RAB, to NH: 2/2 new exercise to grade
+:::dev "Roger Burtonpatel (rogerburtonpatel)"
+, to NH: 2/2 new exercise to grade
 :::
 
 :::grade
@@ -976,8 +976,8 @@ def RGB.myOtherBlue : RGB := myBlue
 #check RGB.myOtherBlue -- RGB
 ```
 
-:::dev
-@dsainati1: see my comment later in the file about guard msgs
+:::dev "Daniel Sainati (dsainati1)"
+see my comment later in the file about guard msgs
 
 ```lean
 --- this doesn't work; the identifier is unknown
@@ -1018,8 +1018,8 @@ open MyNamespace
 #check myDef -- Bool
 ```
 
-:::dev
-@dsainati1: We should come to a concrete decision about whether or not we are
+:::dev "Daniel Sainati (dsainati1)"
+We should come to a concrete decision about whether or not we are
 putting types in comments for #check and #eval commands.
 :::
 
@@ -1093,8 +1093,8 @@ out that we must mean `Day.monday`. However, in the example below, Lean can't fi
 which version of `.true` we mean, since it could either be `Bool.true` or `MyBool.true`.
 In this case, it will raise an error:
 
-:::dev
-@dsainati1: see my comment later in the file about guard msgs
+:::dev "Daniel Sainati (dsainati1)"
+see my comment later in the file about guard msgs
 
 ```lean
 -- This doesn't work: Lean doesn't know which `true` we mean
@@ -1130,8 +1130,8 @@ Once you have written your predictions, copy the lines from the comment into
 an active section of the book to evaluate them.
 ::::
 
-:::dev
-RAB: This seems like a reasonable exercise; I'm not quite sure if/how we should grade it?
+:::dev "Roger Burtonpatel (rogerburtonpatel)"
+This seems like a reasonable exercise; I'm not quite sure if/how we should grade it?
 BCP: Not all exercises need to be graded.  (In Rocq we had a notation for manually graded exercises. An optional and manually graded exercise would serve for this.)
 :::
 
@@ -1417,8 +1417,8 @@ theorem add_zero : ∀ n : Nat, n + zero = n := by
 #check add_zero
 ```
 
-:::dev
-BCP: We will probably want to remove the "NatPlayground" stuff from
+:::dev "Benjamin Pierce (bcpierce00)"
+We will probably want to remove the "NatPlayground" stuff from
 all these comments when we fix the printing.
 RAB: Yes! Someone please let us know how!
 :::
@@ -1623,8 +1623,8 @@ and performance; unfolding definitions can have negative effects as libraries sc
 `unseal` lifts that restriction just long enough to prove the theorems that characterize the definition.
 ::::
 
-:::dev
-BCP: We start by saying that what we're going to here is not what real lean developments do, but then
+:::dev "Benjamin Pierce (bcpierce00)"
+We start by saying that what we're going to here is not what real lean developments do, but then
 explain why what we're doing in a way that makes it sound like it is (or should be) standard. And we
 never say what is the style that we *don't* do (but that standard Lean practice does).
 RAB: This will (hopefully) be addressed by our decision on hiding these
@@ -1712,8 +1712,8 @@ rather than `rfl`-ing through the definition.
 
 ## Working with Numerals
 
-:::dev
-BCP: The following lemmas are also needed by the TERSE version,
+:::dev "Benjamin Pierce (bcpierce00)"
+The following lemmas are also needed by the TERSE version,
 so I am un-fulling them for now.
 But indeed the whole discussion here needs both TERSE and FULL versions.
 Or probably some of it should turn into an exercise?
@@ -1738,8 +1738,8 @@ Here's an example of how to start a proof this way.
 
 Finish the proof using the `add` rules:
 
-:::dev
-BCP: Should this be marked / formatted as an exercise or at least a WORKINCLASS?
+:::dev "Benjamin Pierce (bcpierce00)"
+Should this be marked / formatted as an exercise or at least a WORKINCLASS?
 RAB: Let's decide once we choose how to present the laws.
      My intuition is yes.
 :::
@@ -1764,8 +1764,8 @@ theorem two_plus_two_eq_four : two + two = four := by
     rfl
 ```
 
-:::dev
-HG: I don't want to introduce new things here, but it occurs to me that it would actually be kind of
+:::dev "Harrison Goldstein (hgoldstein95)"
+I don't want to introduce new things here, but it occurs to me that it would actually be kind of
 nice to use `calc` or `conv` to scaffold these very intentional symbol pushing proofs. Maybe a good
 compromise would be be able to put comments that clarify that the first line "rewrites the righthand
 side to `succ (succ (succ (succ zero)))`"?
@@ -1803,8 +1803,8 @@ theorem mul_succ : ∀ n m : Nat, n * (succ m) = (n * m) + n := by
   rfl
 ```
 
-:::dev
-BCP: Again, this should be an exercise.
+:::dev "Benjamin Pierce (bcpierce00)"
+Again, this should be an exercise.
 RAB: Agreed if we're keeping these visible; putting off
      small decision until large decision is made.
 :::
@@ -2083,8 +2083,8 @@ because it gets stripped out when verso files are translated to
 .lean and .html.
 :::
 
-:::dev
-@dsainati1: At the moment our convention for unfinished proofs is to end with sorry and
+:::dev "Daniel Sainati (dsainati1)"
+At the moment our convention for unfinished proofs is to end with sorry and
 guard the "proof uses sorry" warning. However after going through MRC's comments here
 I realized we don't need to do this: we can leave the proof unfinished and guard the error
 about goals being unsolved. IMO this is preferable because it illustrates more directly
@@ -2321,8 +2321,8 @@ GRADE_THEOREM 1: zero_nbeq_add_1
 :::
 ::::
 
-:::dev
-@dsainati1: I move that we just cut this section entirely and come back to it when
+:::dev "Daniel Sainati (dsainati1)"
+I move that we just cut this section entirely and come back to it when
 we've presented enough of the requisite material that we can actually explain
 mwhicks1: I'm going to leave this here for now, but perhaps make a note to
 fix later on---when you've fixed it, come back and delete this, rather than
@@ -2347,8 +2347,8 @@ depending on the expected type, thanks to Lean's `OfNat` type class.
 We will explain type classes in more detail in the `Typeclasses` chapter,
 found in `Typeclasses.lean`.
 
-:::dev
-BCP: In SF-classic, there was some special typesetting magic for chapter
+:::dev "Benjamin Pierce (bcpierce00)"
+In SF-classic, there was some special typesetting magic for chapter
 titles that turned them into HTML links...
 :::
 ::::
@@ -2525,8 +2525,8 @@ learned so far to prove the following theorem about boolean functions.
 
 Hint: You can use `rewrite` with _any_ hypothesis that has an `=` in it
 as long as the types line up.
-:::dev
-BCP: Roger, you changed the statement of the theorem From
+:::dev "Benjamin Pierce (bcpierce00)"
+Roger, you changed the statement of the theorem From
     (∀ x : Bool, f x = x)
      → ∀ b : Bool, f (f b) = b
      := by
@@ -2920,8 +2920,8 @@ theorem lowerGrade_lowers : ∀ g : Grade,
       all_goals rfl
 ```
 
-:::dev
-RAB: in removing `dsimp` from these proofs, I found
+:::dev "Roger Burtonpatel (rogerburtonpatel)"
+in removing `dsimp` from these proofs, I found
 that you might need the `contradiction` tactic here instead,
 or some other reasoning that's not accomplishable
 with the tactics we've introduced so far. Can you make this
@@ -2992,8 +2992,8 @@ GRADE_THEOREM 2: grade_lowered_once
 ```lean
 end LateDays
 ```
-:::dev
-RAB: If we are to have this exercise, we must either
+:::dev "Roger Burtonpatel (rogerburtonpatel)"
+If we are to have this exercise, we must either
 make the functions irreducible or teach about
 `rw` of a reducible definition.
 We also have to figure out how to make lowerGrade\_lowers

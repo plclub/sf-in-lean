@@ -17,15 +17,17 @@ open Verso.Genre.Manual.InlineLean.Scopes (getScopes setScopes)
 
 namespace SFLMeta
 
-/-- Author-facing configuration for `:::dev`.  Both fields are optional named
-arguments: `:::dev`, `:::dev (author := "Benjamin Pierce (bcpierce00)")`,
-`:::dev (urgency := SOONER)`, and
-`:::dev (author := "Benjamin Pierce (bcpierce00)") (urgency := SOONER)` are
-all valid. -/
+/-- Author-facing configuration for `:::dev`.  All fields are optional; the
+author is positional and the rest are named:  `:::dev`,
+`:::dev "Benjamin Pierce (bcpierce00)"`, `:::dev (urgency := SOONER)`, and
+`:::dev "Noé De Santo (Ef55)" (year := 2025) (urgency := LATER)` are all
+valid. -/
 structure DevConfig where
   /-- Who filed the note, conventionally a full name followed by a GitHub
   handle in parentheses: `"Benjamin Pierce (bcpierce00)"`. -/
   author : Option String
+  /-- The year the note was filed (from a `BCP'20`-style tag). -/
+  year : Option Nat
   /-- An urgency keyword, conventionally `SOONER`, `LATER`, `TODO`, or `TOFIX`. -/
   urgency : Option String
 deriving Repr
@@ -43,10 +45,12 @@ def ValDesc.identOrStr : ValDesc m String where
     | .str s => Pure.pure s.getString
     | other => throwError "Expected identifier or string, got {toMessageData other}"
 
-/-- Argument parser for `DevConfig`: optional named author and urgency. -/
+/-- Argument parser for `DevConfig`: an optional positional author and
+optional named year and urgency. -/
 def DevConfig.parse : ArgParse m DevConfig :=
   DevConfig.mk
-    <$> ArgParse.named `author ValDesc.identOrStr true
+    <$> ((some <$> ArgParse.positional `author ValDesc.identOrStr) <|> Pure.pure none)
+    <*> ArgParse.named `year .nat true
     <*> ArgParse.named `urgency ValDesc.identOrStr true
 
 instance : FromArgs DevConfig m := ⟨DevConfig.parse⟩
@@ -56,8 +60,9 @@ end
 /-! `Block.devcomment` records its author/urgency metadata in `data` so that a
 future dev-facing build can typeset notes in a standard way; the current
 builds render nothing. -/
-block_extension Block.devcomment (author : Option String) (urgency : Option String) where
-  data := Json.arr #[toJson author, toJson urgency]
+block_extension Block.devcomment (author : Option String) (year : Option Nat)
+    (urgency : Option String) where
+  data := Json.arr #[toJson author, toJson year, toJson urgency]
   traverse _ _ _ := pure none
   toHtml := some fun _ _ _ _ _ => pure .empty
   toTeX := none
@@ -71,9 +76,9 @@ def noopDirectiveFor (blockName : Name) : DirectiveExpanderOf Unit
   | (), _ => ``(Verso.Doc.Block.other $(mkIdent blockName) #[])
 
 /-- A `:::dev` directive is a noop for author/developer comments.  It accepts
-optional named author and urgency arguments, e.g.
-`:::dev (author := "Benjamin Pierce (bcpierce00)") (urgency := SOONER)`; both
-are recorded in the block's data (for a future dev-facing build) while the
+an optional positional author and optional named year and urgency arguments,
+e.g. `:::dev "Benjamin Pierce (bcpierce00)" (year := 2020) (urgency := SOONER)`;
+all are recorded in the block's data (for a future dev-facing build) while the
 body is dropped at elaboration. -/
 @[directive]
 def dev : DirectiveExpanderOf DevConfig
@@ -81,7 +86,10 @@ def dev : DirectiveExpanderOf DevConfig
     let author ← match cfg.author with
       | some a => ``(some $(quote a))
       | none => ``(none)
+    let year ← match cfg.year with
+      | some y => ``(some $(quote y))
+      | none => ``(none)
     let urgency ← match cfg.urgency with
       | some u => ``(some $(quote u))
       | none => ``(none)
-    ``(Verso.Doc.Block.other (SFLMeta.Block.devcomment $author $urgency) #[])
+    ``(Verso.Doc.Block.other (SFLMeta.Block.devcomment $author $year $urgency) #[])

@@ -663,17 +663,18 @@ Assign Basics + Induction together as the first week's homework.
 ```
 
 **`:::dev … :::`** — Internal author commentary: unresolved design
-questions, inline review threads, TODO items.  Use freely.  It takes two
-optional named arguments, so the note's provenance can be typeset uniformly by
-a future dev-facing build: `author` (a string, conventionally
-`"Full Name (github-handle)"`) and `urgency` (an identifier or string,
-conventionally `SOONER`, `LATER`, `TODO`, or `TOFIX`).  Prefer the arguments
-over leading `BCP:` / `SOONER:` tags in the body; `to_verso` promotes such
-leading tags to arguments automatically (see `_AUTHOR_NAMES` in
-`scripts/to_verso.py` for the initials-to-name mapping).
+questions, inline review threads, TODO items.  Use freely.  It takes optional
+arguments, so the note's provenance can be typeset uniformly by a future
+dev-facing build: a positional author (a string, conventionally
+`"Full Name (github-handle)"`) and named `year` (a number, from `BCP'20`-style
+tags) and `urgency` (an identifier or string, conventionally `SOONER`,
+`LATER`, `TODO`, or `TOFIX`).  Prefer the arguments over leading `BCP:` /
+`SOONER:` tags in the body; `to_verso` promotes such leading tags to arguments
+automatically (see `_AUTHOR_NAMES` in `scripts/to_verso.py` for the
+initials-to-name mapping).
 
 ```
-:::dev (author := "Benjamin Pierce (bcpierce00)") (urgency := SOONER)
+:::dev "Benjamin Pierce (bcpierce00)" (urgency := SOONER)
 Still not happy with this explanation — the namespace story
 feels rushed.  See GitHub discussion #42.
 :::

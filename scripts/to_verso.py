@@ -272,38 +272,69 @@ _AUTHOR_NAMES = {
 }
 
 
+# GitHub handles (as written in `@handle:` attributions in hand-versified
+# chapters) -> the full author string from `_AUTHOR_NAMES`.
+_HANDLE_NAMES = {}
+for _v in set(_AUTHOR_NAMES.values()):
+    _m = re.search(r'\(([^)]+)\)$', _v)
+    if _m:
+        _HANDLE_NAMES[_m.group(1)] = _v
+del _v
+
+
+def _tag_year(digits):
+    """Expand a `'NN` tag-year suffix to a full year (SF development spans
+    2007–now, so two-digit years below 90 are 20NN)."""
+    n = int(digits)
+    return 2000 + n if n < 90 else 1900 + n
+
+
 def _split_dev_tags(text):
     """Promote the leading tag(s) of a dev-note body into :::dev arguments.
 
-    Returns ``(author, urgency, body)``.  The note's first token is the tag
-    that routed it to :::dev: an urgency keyword (-> the `(urgency := …)`
-    argument) or an author tag (-> the `(author := "Full Name (handle)")`
-    argument, via `_AUTHOR_NAMES`).  After an urgency keyword, a clean author
+    Returns ``(author, year, urgency, body)``.  The note's first token is the
+    tag that routed it to :::dev: an urgency keyword (-> the `(urgency := …)`
+    argument) or an author tag (-> the positional author argument, as
+    `"Full Name (handle)"` via `_AUTHOR_NAMES`; a `@handle:` attribution is
+    looked up via `_HANDLE_NAMES`).  After an urgency keyword, a clean author
     attribution — `BCP:`, `(DHS)`, `(BCP'20)` — is promoted too; anything
     murkier (dates as in `LATER: BCP 9/16: …`, unmapped initials, plain prose)
     stays in the body.  Topic keywords (NOTATION:, HIDE:, COMMENT:) and
-    unmapped tags leave the note untouched.  Year suffixes on promoted tags
-    (`NDS'25`, `BCP'20`) are subsumed by the attribution."""
+    unmapped tags leave the note untouched.  A year suffix on a promoted tag
+    (`NDS'25`, `BCP'20`) becomes the `(year := 20NN)` argument."""
     body = text.lstrip()
-    author = urgency = None
-    m = re.match(r"([A-Za-z][A-Za-z0-9]*)(?:'\d+)?\s*:?\s*", body)
-    if not m:
-        return None, None, text
-    tok = m.group(1)
-    if tok in _URGENCY_TAGS:
-        urgency = tok
-    elif tok in _AUTHOR_NAMES:
-        author = _AUTHOR_NAMES[tok]
+    author = year = urgency = None
+    m = re.match(r"@([A-Za-z][A-Za-z0-9-]*)\s*:?\s*", body)
+    if m and m.group(1) in _HANDLE_NAMES:
+        author = _HANDLE_NAMES[m.group(1)]
+        body = body[m.end():]
     else:
-        return None, None, text
-    body = body[m.end():]
+        m = re.match(r"([A-Za-z][A-Za-z0-9]*)(?:'(\d+))?\s*:?\s*", body)
+        if not m:
+            return None, None, None, text
+        tok = m.group(1)
+        if tok in _URGENCY_TAGS:
+            urgency = tok
+        elif tok in _AUTHOR_NAMES:
+            author = _AUTHOR_NAMES[tok]
+            if m.group(2):
+                year = _tag_year(m.group(2))
+        else:
+            return None, None, None, text
+        body = body[m.end():]
     if urgency:
-        # `TODO: (DHS) …` / `SOONER: (BCP'20) …` / `LATER: KK: …`
-        m2 = re.match(r"\(([A-Za-z][A-Za-z0-9]*)(?:'\d+)?\)\s*:?\s*", body)
+        # `TODO: (DHS) …` / `SOONER: (BCP'20) …` / `LATER: KK: …`; a bare tag
+        # WITH a year suffix (`LATER: NDS'25 This list…`) is also unambiguously
+        # an attribution, colon or not.
+        m2 = re.match(r"\(([A-Za-z][A-Za-z0-9]*)(?:'(\d+))?\)\s*:?\s*", body)
         if not m2:
-            m2 = re.match(r"([A-Za-z][A-Za-z0-9]*)(?:'\d+)?\s*:\s*", body)
+            m2 = re.match(r"([A-Za-z][A-Za-z0-9]*)(?:'(\d+))?\s*:\s*", body)
+        if not m2:
+            m2 = re.match(r"([A-Za-z][A-Za-z0-9]*)'(\d+)\s+", body)
         if m2 and m2.group(1) in _AUTHOR_NAMES:
             author = _AUTHOR_NAMES[m2.group(1)]
+            if m2.group(2):
+                year = _tag_year(m2.group(2))
             body = body[m2.end():]
     else:
         # `BCP: SOONER: …`
@@ -313,7 +344,7 @@ def _split_dev_tags(text):
             body = body[m2.end():]
     if not body.strip():
         body = text  # tag-only note: keep the original text as the body
-    return author, urgency, body
+    return author, year, urgency, body
 
 
 def _is_block_dev_comment(text: str) -> bool:
@@ -1654,15 +1685,17 @@ class Renderer:
         # differently later.  (Hand-authored chapters may instead inline the body as
         # markdown, backticking/escaping as needed — see CONTRIBUTING.md.)
         # For :::dev, a leading author/urgency tag is promoted to directive
-        # arguments — `:::dev (author := "Benjamin Pierce (bcpierce00)")
+        # arguments — `:::dev "Benjamin Pierce (bcpierce00)" (year := 2020)
         # (urgency := SOONER)` — via `_split_dev_tags`; :::instructors
         # deliberately takes no arguments.
         self._flush_code()  # still acts as a block separator
         header = ':::' + directive
         if directive == 'dev':
-            author, urgency, text = _split_dev_tags(text)
+            author, year, urgency, text = _split_dev_tags(text)
             if author:
-                header += ' (author := "%s")' % author
+                header += ' "%s"' % author
+            if year:
+                header += ' (year := %d)' % year
             if urgency:
                 header += ' (urgency := %s)' % urgency
         self._append(header + '\n' + _verbatim_block(text) + '\n:::\n\n')

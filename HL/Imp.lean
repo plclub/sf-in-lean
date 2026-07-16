@@ -39,8 +39,8 @@ This chapter plus `Maps` takes a little more than one
    definitions harder to talk about.)
 :::
 
-:::dev
-SOONER: Needs some WORKINCLASSes and some quizzes
+:::dev (urgency := SOONER)
+Needs some WORKINCLASSes and some quizzes
 
 LATER: Another nice challenge exercise at some point would be to add
    C-style arrays (i.e., indirect read/write).  This sets up some
@@ -92,8 +92,8 @@ _Hoare Logic_, a popular logic for reasoning about imperative programs.
 
 # Arithmetic and Boolean Expressions
 
-:::dev
-SOONER: At this point, I usually take some of the lecture time to
+:::dev (urgency := SOONER)
+At this point, I usually take some of the lecture time to
    give a high-level picture of the structure of an interpreter, the
    processes of lexing and parsing, the notion of ASTs, etc.  Might be
    nice to work some of those ideas into the notes. - BCP
@@ -138,8 +138,8 @@ inductive Bexp where
   | and (b1 b2 : Bexp)
 ```
 
-:::dev
-  SOONER: mwhicks1: Will we develop `ImpParser`? Mentioned below as an optional chapter
+:::dev "Michael Hicks (mwhicks1)" (urgency := SOONER)
+Will we develop `ImpParser`? Mentioned below as an optional chapter
 :::
 
 ::::full
@@ -596,13 +596,13 @@ Which rules are needed to prove the following?
 ````
 ::::
 
-:::dev
-mwhicks1: Not sure if we need ⇓b, or whether we can define
+:::dev "Michael Hicks (mwhicks1)"
+Not sure if we need ⇓b, or whether we can define
 ⇓ overloaded. Don't understand Lean notation yet!
 :::
 
-:::dev
-chenson2018: About `Bexp.eval` below: We should discuss a way to recall definitions without
+:::dev "Chris Henson (chenson2018)"
+About `Bexp.eval` below: We should discuss a way to recall definitions without
 having to write them out manually like this. I think a simple `#print` may work as an
 alternative, assuming there are no namespace issues..
 :::
@@ -699,8 +699,8 @@ theorem Aexp.evalR_iff_eval (a : Aexp) (n : Nat) :
 We can make the proof quite a bit shorter using more automation like we did in
 the previous section.
 
-:::dev
-mwhicks1: the `workinclass!` marker should signal this  live in-class exercise.
+:::dev "Michael Hicks (mwhicks1)"
+the `workinclass!` marker should signal this  live in-class exercise.
 But it is not rendering properly on the HTML. In fact it replaces `workinclass!` with
 the `all_goals` tactic, which we don't need.
 :::
@@ -734,8 +734,8 @@ inductive Bexp.EvalR : Bexp → Bool → Prop where
 scoped notation:55 e:56 " ⇓b " b:56 => Bexp.EvalR e b
 ```
 
-:::dev
-mwhicks1: There is no keyboard shortcut for a subscript b, nor is there one for c
+:::dev "Michael Hicks (mwhicks1)"
+There is no keyboard shortcut for a subscript b, nor is there one for c
 (to use used with cevalR below). There are numbers, x, y, z, l, m, n, etc.
 :::
 
@@ -863,8 +863,8 @@ inductive Aexp.EvalR : Aexp → Nat → Prop where
 end AevalRExtended
 ```
 
-:::dev
-mwhicks1: The following text seems not quite right to me. First, you can
+:::dev "Michael Hicks (mwhicks1)"
+The following text seems not quite right to me. First, you can
 use options for partial functions, and that's very natural to do in Lean
 as a monad. Second, and related, monadic functions need not even be
 terminating if the implement the `CCPO` typeclass and are labeled as
@@ -906,8 +906,8 @@ only hold numbers.
 
 ## States
 
-:::dev
-LATER: Maybe this section needs a little preface talking about "what is
+:::dev (urgency := LATER)
+Maybe this section needs a little preface talking about "what is
    the meaning of an expression with variables?"...
 
 LATER: (Note copied from Equiv right before the `assign_aequiv`
@@ -952,8 +952,8 @@ inductive Aexp where
   | mult (a1 a2 : Aexp)
 ```
 
-:::dev
-chenson2018: Rather than define identifiers as Ident, a more general approach is
+:::dev "Chris Henson (chenson2018)"
+Rather than define identifiers as Ident, a more general approach is
 to use a *type variable* with `DecidableEq` (as the
 `Maps` chapter does), threaded through `Aexp`/`Bexp`/`Com`/`State`.  Stashed
 for a future decision; the parameterized version would look like:
@@ -1704,8 +1704,8 @@ evaluation function tricky.
 Here's an attempt at defining an evaluation function for commands (with
 a bogus `while` case).
 
-:::dev
-LATER: In SmallStep we need to package the state and command into a pair,
+:::dev (urgency := LATER)
+In SmallStep we need to package the state and command into a pair,
    so that we can talk about normal forms and such. Probably we should do it
    here too, for consistency. (Won't change much except the type
    declarations, but we'll need to add a comment why we wrote them this
@@ -1781,8 +1781,8 @@ definition of evaluation to be nondeterministic -- i.e., not only will it
 not be total, it will not even be a function!
 ::::
 
-:::dev
-mwhicks1: I kind of hate this notation. Is there something more standard
+:::dev "Michael Hicks (mwhicks1)"
+I kind of hate this notation. Is there something more standard
 in Lean? CSLib precedent maybe?
 :::
 
@@ -1796,8 +1796,8 @@ state `st` to `st'`".
 
 Operational Semantics
 
-:::dev
-SOONER: BCP 21: I wonder if `seq` would be easier to work with if st' and
+:::dev (urgency := SOONER)
+BCP 21: I wonder if `seq` would be easier to work with if st' and
    st'' were swapped...
 :::
 
@@ -1841,8 +1841,8 @@ for readability:
 Here is the formal definition.  Make sure you understand how it
 corresponds to the inference rules.
 
-:::dev
-chenson2018: TODO Propose you use inline notation such as `Com.EvalR (imp {skip;}) st st`
+:::dev "Chris Henson (chenson2018)"
+TODO Propose you use inline notation such as `Com.EvalR (imp {skip;}) st st`
 :::
 
 ```lean
@@ -2052,8 +2052,8 @@ theorem quiz5_answer (b : Bexp) (c : Com) (st : State)
 
 ## Determinism of Evaluation
 
-:::dev
-LATER: Maybe this should go at the end of the file in a section marked
+:::dev (urgency := LATER)
+Maybe this should go at the end of the file in a section marked
    optional? Not everybody will want to spend time on it.
 :::
 
@@ -2070,8 +2070,8 @@ In fact this cannot happen: `ceval` _is_ a partial function.
 Finally, we should pause to check that our evaluation relation really is a (partial) function...
 :::
 
-:::dev
-LATER: Informal proof needed! (And one can surely be found in some past
+:::dev (urgency := LATER)
+Informal proof needed! (And one can surely be found in some past
    CIS500 exam solutions!)
 :::
 
@@ -2169,8 +2169,8 @@ theorem pup_to_2_ceval :
 ```
 :::::
 
-:::dev
-LATER: Comment from reader: Another good place to mention lack of
+:::dev (urgency := LATER)
+Comment from reader: Another good place to mention lack of
    functional extensionality.  The 6 `→ₜ`/`t_update`s in the above theorem
    are not redundant, nor would `pup_to_2_ceval` be provable if the
    algorithm were defined differently (e.g., if it used `Z` as a "buffer"
@@ -2179,8 +2179,8 @@ LATER: Comment from reader: Another good place to mention lack of
 
 # Reasoning About Imp Programs
 
-:::dev
-LATER: This section doesn't seem very useful -- to anybody! It takes too
+:::dev (urgency := LATER)
+This section doesn't seem very useful -- to anybody! It takes too
    much time to go through it in class, and even for advanced students it's
    too low-level and grubby to be a very convincing motivation for what
    follows -- i.e., to feel motivated by its grubbiness, you have to
@@ -2213,8 +2213,8 @@ theorem plus2_spec (st : State) (n : Nat) (st' : State)
       lia
 ```
 
-:::dev
-LATER: This used to be recommended.  Should it be reinstated?
+:::dev (urgency := LATER)
+This used to be recommended.  Should it be reinstated?
 :::
 
 :::::exercise (rating := 3) (name := "XtimesYinZ_spec")
@@ -2282,8 +2282,8 @@ theorem loop_never_stops (st st' : State) : ¬ (st =[ loop ]=> st') := by
 ```
 :::::
 
-:::dev
-LATER: Marc Bezem 2022:
+:::dev (urgency := LATER)
+Marc Bezem 2022:
    There are trade-offs between using tactics and additional lemmas. Here is
    a case where a lemma would make things clearer. For `loop_never_stops`,
    the surprise is that it is proved by induction, and the Rocq tactic
@@ -2404,9 +2404,9 @@ theorem no_whiles_terminating' (c : Com) (st1 : State)
 ```
 :::::
 
-:::dev
+:::dev "Michael Hicks (mwhicks1)"
 ```
-mwhicks1: NOT PORTED YET — remaining sections of sfdev/lf/Imp.v to port:
+NOT PORTED YET — remaining sections of sfdev/lf/Imp.v to port:
   - Case Study (Optional), Imp.v:2774
       * subtract_slowly_spec (EX4?, Imp.v:2919): loop-invariant style proof
         about `subtract_slowly`.

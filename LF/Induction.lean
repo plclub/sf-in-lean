@@ -29,9 +29,9 @@ htmlSplit := .never
 file := some "Induction"
 %%%
 
-:::dev
+:::dev (urgency := SOONER)
 ```
-SOONER: Readers might expect us to add eqn:H annotations to uses of
+Readers might expect us to add eqn:H annotations to uses of
 induction, but this changes the shape of the IH in a nasty way! :-(
 We should at least comment.  (BCP: Is this still relevant in Lean?)
 
@@ -57,9 +57,9 @@ harder?
 
 # Separate Compilation
 
-:::dev
+:::dev "Benjamin Pierce (bcpierce00)"
 ```
-BCP: This section will need some tidying and rewriting...
+This section will need some tidying and rewriting...
 ```
 :::
 
@@ -215,9 +215,9 @@ or (E) can't be done with the tactics we've seen.
 :::
 ::::
 
-:::dev
+:::dev "Daniel Sainati (dsainati1)" (urgency := TODO)
 ```
-TODO (DHS): We use this theorem later,
+We use this theorem later,
    so let's make it into a review exercise here
 ```
 :::
@@ -406,9 +406,9 @@ theorem beq_self : ∀ n : Nat,
       exact ih
 ```
 
-:::dev
+:::dev "Roger Burtonpatel (rogerburtonpatel)"
 ```
-RAB: We need to make sure this section below is true! It won't be once we switch
+We need to make sure this section below is true! It won't be once we switch
      to the indexed style.
 ```
 :::
@@ -521,9 +521,9 @@ GRADE_THEOREM 0.5: add_assoc
 :::::exercise (rating := 2) (name := "double_plus")
 Consider the following function, which doubles its argument:
 
-:::dev
+:::dev (urgency := TODO)
 ```
-TODO Rule rewrite
+Rule rewrite
 
 BCP: What is "ASSUME HIDDEN"??
 ASSUME HIDDEN
@@ -538,9 +538,9 @@ def double (n : Nat) : Nat :=
   | succ n' => succ (succ (double n'))
 ```
 
-:::dev
+:::dev "Benjamin Pierce (bcpierce00)"
 ```
-BCP: All this `unseal` stuff is a bit ugly and potentially confusing for students.
+All this `unseal` stuff is a bit ugly and potentially confusing for students.
 Anything we can to about this?
 ```
 :::
@@ -556,9 +556,9 @@ theorem double_succ : ∀ n, double (succ n) = succ (succ (double n)) := by
 
 END ASSUME
 
-:::dev
+:::dev "Benjamin Pierce (bcpierce00)"
 ```
-BCP: We need better typesetting for displays like the following ones:
+We need better typesetting for displays like the following ones:
 ```
 :::
 :::::
@@ -833,9 +833,9 @@ Lean is perfectly happy with this.  For a human, however, it
 is difficult to make much sense of it.  We can
 pass arguments to the `add_succ` theorems to show the structure more clearly...
 
-:::dev
+:::dev "Jonathan Chan (ionathanch)"
 ```
-JC: This would be a great location to introduce `calc`!
+This would be a great location to introduce `calc`!
 ```
 :::
 
@@ -858,9 +858,9 @@ to impossible.
 A (pedantic) mathematician might write the proof something like
 this:
 
-:::dev
+:::dev "Benjamin Pierce (bcpierce00)"
 ```
-BCP: Again, the math displays need to be displayed!
+Again, the math displays need to be displayed!
 ```
 :::
 
@@ -921,9 +921,9 @@ Theorem: Addition is commutative.
 
 Proof:
 
-:::dev
+:::dev "Benjamin Pierce (bcpierce00)"
 ```
-BCP: Somebody please check that this typesets nicely!  (I doubt it does...) Ditto below.
+Somebody please check that this typesets nicely!  (I doubt it does...) Ditto below.
 SOLUTION
 ```
 :::
@@ -1085,9 +1085,9 @@ GRADE_THEOREM 2: mul_comm
 :::
 :::::
 
-:::dev
+:::dev "Benjamin Pierce (bcpierce00)"
 ```
-BCP: This comment is placed a bit awkwardly: In the terse version, we
+This comment is placed a bit awkwardly: In the terse version, we
 usually skim past these exercises, but now we'll need to pause and look
 at how <;> works...
 TERSE
@@ -1149,9 +1149,9 @@ reflect before you hack!)
 Some of these proofs can be shortened
 with `<;>` when several generated subgoals have the same proof.
 
-:::dev
+:::dev "Benjamin Pierce (bcpierce00)"
 ```
-BCP: Is that the main reason for introducing <;> here?  Seems weak if so.
+Is that the main reason for introducing <;> here?  Seems weak if so.
 Could we consider moving it later?
 ```
 :::
@@ -1234,9 +1234,9 @@ def incr (m : Bin) : Bin
   | .b1 m' => .b0 (incr m'))
 ```
 
-:::dev
+:::dev "Benjamin Pierce (bcpierce00)"
 ```
-BCP: Will students need to do all this unseal/seal stuff to do the exercises?
+Will students need to do all this unseal/seal stuff to do the exercises?
 ```
 :::
 
@@ -1267,9 +1267,9 @@ In Basics, we did some unit testing of `binToNat`, but we
 didn't prove its correctness. Now we'll do so.
 
 :::::exercise (rating := 3) (name := "binary_commute")
-:::dev
+:::dev "Daniel Sainati (dsainati1)" (urgency := SOONER)
 ```
-SOONER (DHS): This is a very category theoretic way to present
+This is a very category theoretic way to present
    this idea. Is this the most useful way to convey this to
    an audience who is presumably unfamiliar with commutative diagrams?
 
@@ -1332,9 +1332,9 @@ def natToBin (n : Nat) : Bin := solution!(
   | succ n' => incr (natToBin n'))
 ```
 
-:::dev
+:::dev "Daniel Sainati (dsainati1)" (urgency := TODO)
 ```
-TODO (DHS): How to hide these theorem statements so that students can get practice writing them?
+How to hide these theorem statements so that students can get practice writing them?
 ```
 :::
 
@@ -1354,9 +1354,9 @@ theorem natToBin_succ m : natToBin (succ m) = incr (natToBin m) := solution!(by 
 seal natToBin
 ```
 
-:::dev
+:::dev "Benjamin Pierce (bcpierce00)"
 ```
-BCP: Could these be moved later so that at least the reader has the chance to do the exercise
+Could these be moved later so that at least the reader has the chance to do the exercise
 before encountering them?
 ```
 :::
@@ -1436,9 +1436,9 @@ def doubleBin (b : Bin) : Bin := solution!(
   | _  => .b0 b)
 ```
 
-:::dev
+:::dev "Daniel Sainati (dsainati1)" (urgency := TODO)
 ```
-TODO (DHS): How to hide these theorem statements so that students can get practice writing them?
+How to hide these theorem statements so that students can get practice writing them?
 ```
 :::
 
@@ -1537,9 +1537,9 @@ def normalize (b : Bin) : Bin := solution!(
   | .b1 b' => incr (doubleBin (normalize b')))
 ```
 
-:::dev
+:::dev "Daniel Sainati (dsainati1)" (urgency := TODO)
 ```
-TODO (DHS): How to hide these theorem statements so that students can get practice writing them?
+How to hide these theorem statements so that students can get practice writing them?
 ```
 :::
 
