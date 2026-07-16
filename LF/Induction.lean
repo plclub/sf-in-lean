@@ -29,7 +29,7 @@ htmlSplit := .never
 file := some "Induction"
 %%%
 
-:::dev (urgency := SOONER)
+:::dev SOONER
 ```
 Readers might expect us to add eqn:H annotations to uses of
 induction, but this changes the shape of the IH in a nasty way! :-(
@@ -215,7 +215,7 @@ or (E) can't be done with the tactics we've seen.
 :::
 ::::
 
-:::dev "Daniel Sainati (dsainati1)" (urgency := TODO)
+:::dev "Daniel Sainati (dsainati1)" TODO
 ```
 We use this theorem later,
    so let's make it into a review exercise here
@@ -521,7 +521,7 @@ GRADE_THEOREM 0.5: add_assoc
 :::::exercise (rating := 2) (name := "double_plus")
 Consider the following function, which doubles its argument:
 
-:::dev (urgency := TODO)
+:::dev TODO
 ```
 Rule rewrite
 
@@ -1267,7 +1267,7 @@ In Basics, we did some unit testing of `binToNat`, but we
 didn't prove its correctness. Now we'll do so.
 
 :::::exercise (rating := 3) (name := "binary_commute")
-:::dev "Daniel Sainati (dsainati1)" (urgency := SOONER)
+:::dev "Daniel Sainati (dsainati1)" SOONER
 ```
 This is a very category theoretic way to present
    this idea. Is this the most useful way to convey this to
@@ -1332,7 +1332,7 @@ def natToBin (n : Nat) : Bin := solution!(
   | succ n' => incr (natToBin n'))
 ```
 
-:::dev "Daniel Sainati (dsainati1)" (urgency := TODO)
+:::dev "Daniel Sainati (dsainati1)" TODO
 ```
 How to hide these theorem statements so that students can get practice writing them?
 ```
@@ -1436,7 +1436,7 @@ def doubleBin (b : Bin) : Bin := solution!(
   | _  => .b0 b)
 ```
 
-:::dev "Daniel Sainati (dsainati1)" (urgency := TODO)
+:::dev "Daniel Sainati (dsainati1)" TODO
 ```
 How to hide these theorem statements so that students can get practice writing them?
 ```
@@ -1537,7 +1537,7 @@ def normalize (b : Bin) : Bin := solution!(
   | .b1 b' => incr (doubleBin (normalize b')))
 ```
 
-:::dev "Daniel Sainati (dsainati1)" (urgency := TODO)
+:::dev "Daniel Sainati (dsainati1)" TODO
 ```
 How to hide these theorem statements so that students can get practice writing them?
 ```

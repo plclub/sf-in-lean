@@ -93,11 +93,14 @@ adjacent runs with an identical header line (same tag *and* arguments). The
 `SFLMeta/Instructors.lean`; the same-named back-compat ` ```dev ` /
 ` ```instructors ` code blocks were removed 2026-07-15 (no uses remained).
 
-`:::dev` takes an optional positional author — `:::dev "Full Name
-(github-handle)"` — and optional named `(year := 2020)` (from a `BCP'20`-style
-tag) and `(urgency := SOONER)` (or `LATER`/`TODO`/`TOFIX`; identifier or
-string) arguments, recorded in the block's data so a future dev-facing build
-can typeset provenance uniformly. `to_verso` promotes a dev note's leading tag
+`:::dev` takes two optional positional arguments — an author, always a
+*string* (`:::dev "Full Name (github-handle)"`), and an urgency keyword,
+always a *bare identifier* (`SOONER`/`LATER`/`TODO`/`TOFIX`) — plus an
+optional named `(year := 2020)` (from a `BCP'20`-style tag):
+`:::dev "Noé De Santo (Ef55)" LATER (year := 2025)`. The string/identifier
+split is what disambiguates the two positionals, so don't quote urgencies or
+unquote authors. All values are recorded in the block's data so a future
+dev-facing build can typeset provenance uniformly. `to_verso` promotes a dev note's leading tag
 to these arguments via `_split_dev_tags` / `_AUTHOR_NAMES` in
 `scripts/to_verso.py` (add newly identified initials there); unmapped initials
 and topic keywords (`NOTATION:`, `HIDE:`, `COMMENT:`) stay in the body

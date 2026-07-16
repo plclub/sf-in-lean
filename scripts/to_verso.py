@@ -1685,19 +1685,19 @@ class Renderer:
         # differently later.  (Hand-authored chapters may instead inline the body as
         # markdown, backticking/escaping as needed — see CONTRIBUTING.md.)
         # For :::dev, a leading author/urgency tag is promoted to directive
-        # arguments — `:::dev "Benjamin Pierce (bcpierce00)" (year := 2020)
-        # (urgency := SOONER)` — via `_split_dev_tags`; :::instructors
-        # deliberately takes no arguments.
+        # arguments — `:::dev "Benjamin Pierce (bcpierce00)" SOONER
+        # (year := 2020)` — via `_split_dev_tags`; :::instructors deliberately
+        # takes no arguments.
         self._flush_code()  # still acts as a block separator
         header = ':::' + directive
         if directive == 'dev':
             author, year, urgency, text = _split_dev_tags(text)
             if author:
                 header += ' "%s"' % author
+            if urgency:
+                header += ' %s' % urgency
             if year:
                 header += ' (year := %d)' % year
-            if urgency:
-                header += ' (urgency := %s)' % urgency
         self._append(header + '\n' + _verbatim_block(text) + '\n:::\n\n')
 
     # --- Main dispatch ---

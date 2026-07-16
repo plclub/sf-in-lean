@@ -39,7 +39,7 @@ This chapter plus `Maps` takes a little more than one
    definitions harder to talk about.)
 :::
 
-:::dev (urgency := SOONER)
+:::dev SOONER
 Needs some WORKINCLASSes and some quizzes
 
 LATER: Another nice challenge exercise at some point would be to add
@@ -92,7 +92,7 @@ _Hoare Logic_, a popular logic for reasoning about imperative programs.
 
 # Arithmetic and Boolean Expressions
 
-:::dev (urgency := SOONER)
+:::dev SOONER
 At this point, I usually take some of the lecture time to
    give a high-level picture of the structure of an interpreter, the
    processes of lexing and parsing, the notion of ASTs, etc.  Might be
@@ -138,7 +138,7 @@ inductive Bexp where
   | and (b1 b2 : Bexp)
 ```
 
-:::dev "Michael Hicks (mwhicks1)" (urgency := SOONER)
+:::dev "Michael Hicks (mwhicks1)" SOONER
 Will we develop `ImpParser`? Mentioned below as an optional chapter
 :::
 
@@ -906,7 +906,7 @@ only hold numbers.
 
 ## States
 
-:::dev (urgency := LATER)
+:::dev LATER
 Maybe this section needs a little preface talking about "what is
    the meaning of an expression with variables?"...
 
@@ -1704,7 +1704,7 @@ evaluation function tricky.
 Here's an attempt at defining an evaluation function for commands (with
 a bogus `while` case).
 
-:::dev (urgency := LATER)
+:::dev LATER
 In SmallStep we need to package the state and command into a pair,
    so that we can talk about normal forms and such. Probably we should do it
    here too, for consistency. (Won't change much except the type
@@ -1796,7 +1796,7 @@ state `st` to `st'`".
 
 Operational Semantics
 
-:::dev (urgency := SOONER)
+:::dev SOONER
 BCP 21: I wonder if `seq` would be easier to work with if st' and
    st'' were swapped...
 :::
@@ -2052,7 +2052,7 @@ theorem quiz5_answer (b : Bexp) (c : Com) (st : State)
 
 ## Determinism of Evaluation
 
-:::dev (urgency := LATER)
+:::dev LATER
 Maybe this should go at the end of the file in a section marked
    optional? Not everybody will want to spend time on it.
 :::
@@ -2070,7 +2070,7 @@ In fact this cannot happen: `ceval` _is_ a partial function.
 Finally, we should pause to check that our evaluation relation really is a (partial) function...
 :::
 
-:::dev (urgency := LATER)
+:::dev LATER
 Informal proof needed! (And one can surely be found in some past
    CIS500 exam solutions!)
 :::
@@ -2169,7 +2169,7 @@ theorem pup_to_2_ceval :
 ```
 :::::
 
-:::dev (urgency := LATER)
+:::dev LATER
 Comment from reader: Another good place to mention lack of
    functional extensionality.  The 6 `→ₜ`/`t_update`s in the above theorem
    are not redundant, nor would `pup_to_2_ceval` be provable if the
@@ -2179,7 +2179,7 @@ Comment from reader: Another good place to mention lack of
 
 # Reasoning About Imp Programs
 
-:::dev (urgency := LATER)
+:::dev LATER
 This section doesn't seem very useful -- to anybody! It takes too
    much time to go through it in class, and even for advanced students it's
    too low-level and grubby to be a very convincing motivation for what
@@ -2213,7 +2213,7 @@ theorem plus2_spec (st : State) (n : Nat) (st' : State)
       lia
 ```
 
-:::dev (urgency := LATER)
+:::dev LATER
 This used to be recommended.  Should it be reinstated?
 :::
 
@@ -2282,7 +2282,7 @@ theorem loop_never_stops (st st' : State) : ¬ (st =[ loop ]=> st') := by
 ```
 :::::
 
-:::dev (urgency := LATER)
+:::dev LATER
 Marc Bezem 2022:
    There are trade-offs between using tactics and additional lemmas. Here is
    a case where a lemma would make things clearer. For `loop_never_stops`,
