@@ -251,7 +251,6 @@ theorem succ_eq_add_one : ∀ n : Nat, succ n = n + one := by
   for `+` on the _right_ using just `rfl`:
 
 ```
-  unseal add in
   theorem add_zero : forall (n : Nat), n + zero = n := by
     intro n
     rfl
@@ -271,7 +270,6 @@ But the proof that it is also a neutral element on the
 ```lean
 /-- warning: declaration uses `sorry` -/
 #guard_msgs in
-unseal add in
 example : ∀ n : Nat, zero + n = n := by
   intro n
   -- `rfl` doesn't work here!
@@ -392,7 +390,6 @@ Let's try this one together:
 ::::
 
 ```lean
-unseal beq in
 theorem beq_self : ∀ n : Nat,
     (n == n) = true := by
   workinclass!
@@ -531,27 +528,18 @@ ASSUME HIDDEN
 :::
 
 ```lean
-@[irreducible]
 def double (n : Nat) : Nat :=
   match n with
   | zero    => zero
   | succ n' => succ (succ (double n'))
 ```
 
-:::dev
-```
-BCP: All this `unseal` stuff is a bit ugly and potentially confusing for students.
-Anything we can to about this?
-```
-:::
-
 ```lean
-unseal double in
 theorem double_zero : double zero = zero := by rfl
-
-unseal double in
 theorem double_succ : ∀ n, double (succ n) = succ (succ (double n)) := by
   intro n; rfl
+
+attribute [irreducible] double
 ```
 
 END ASSUME
@@ -615,7 +603,6 @@ The following theorem relates the computational equality `beq` on
 `Nat` with the definitional equality `=` on `Bool`.
 
 ```lean
-unseal beq in
 theorem beq_refl (n : Nat) :
     (n == n) = true := by
   solution!
@@ -653,7 +640,6 @@ with induction:
 `rw [even]`.)
 
 ```lean
-unseal even in
 theorem even_succ (n : Nat) :
     even (succ n) = !even n := by
   solution!
@@ -818,7 +804,7 @@ completely forget about informal ones!  Formal proofs are useful
 in many ways, but they are _not_ very efficient ways of
 communicating ideas between human beings.
 
-For example, here is a proof that addition is associative 
+For example, here is a proof that addition is associative
    (you might have written it yourself, earlier in this chapter!):
 
 ```lean
@@ -898,7 +884,7 @@ _Qed_.
  MMG: the proof above makes no use of lemmas, so it's hard for
    students to know what to do.  It might be good to also give them a
    sample proof of mult_1_l so they know how to "invoke" things
-   they've already proved.  
+   they've already proved.
 ```
 ::::
 
@@ -1226,7 +1212,6 @@ from Basics.  That will make it possible for this file to be graded
 on its own.
 
 ```lean
-@[irreducible]
 def incr (m : Bin) : Bin
   := solution!(match m with
   | .z     => .b1 .z
@@ -1234,31 +1219,22 @@ def incr (m : Bin) : Bin
   | .b1 m' => .b0 (incr m'))
 ```
 
-:::dev
-```
-BCP: Will students need to do all this unseal/seal stuff to do the exercises?
-```
-:::
-
 ```lean
-unseal incr
 theorem incr_z : incr .z = .b1 .z := solution!(by rfl)
 theorem incr_b0 m : incr (.b0 m) = .b1 m := solution!(by rfl)
 theorem incr_b1 m : incr (.b1 m) = .b0 (incr m) := solution!(by rfl)
-seal incr
+```
 
-@[irreducible]
+```lean
 def binToNat (m : Bin) : Nat
   := solution!(match m with
   | .z     => zero
   | .b0 m' => (binToNat m') * two
   | .b1 m' => ((binToNat m') * two) + one)
 
-unseal binToNat
 theorem binToNat_z : binToNat .z = zero := solution!(by rfl)
 theorem binToNat_b0 m : binToNat (.b0 m) = mul (binToNat m) two := solution!(by rfl)
 theorem binToNat_b1 m : binToNat (.b1 m) = add (mul (binToNat m) two) one := solution!(by rfl)
-seal binToNat
 
 attribute [pp_nodot] Bin.b0 Bin.b1
 ```
@@ -1325,7 +1301,6 @@ Write a function to convert natural numbers to binary numbers.
   Also write some simplification lemmas for it.
 
 ```lean
-@[irreducible]
 def natToBin (n : Nat) : Bin := solution!(
   match n with
   | zero    => .z
@@ -1343,15 +1318,13 @@ CH: David set it up so that if you put:
 -- SOLUTION
 -- END SOLUTION
 
-in an exercise that it will turn into 
-  -- FILL IN HERE 
+in an exercise that it will turn into
+  -- FILL IN HERE
 in both student version of the Lean files and the generated HTML.
 
 ```lean
-unseal natToBin
 theorem natToBin_zero : natToBin zero = .z := solution!(by rfl)
 theorem natToBin_succ m : natToBin (succ m) = incr (natToBin m) := solution!(by rfl)
-seal natToBin
 ```
 
 :::dev
@@ -1429,7 +1402,6 @@ GRADE_THEOREM 0.5: double_incr
 Now define a similar doubling function for `Bin`.
 
 ```lean
-@[irreducible]
 def doubleBin (b : Bin) : Bin := solution!(
   match b with
   | .z => .z
@@ -1443,17 +1415,15 @@ TODO (DHS): How to hide these theorem statements so that students can get practi
 :::
 
 ```lean
-unseal doubleBin
 theorem doubleBin_z : doubleBin .z = .z := solution!(by rfl)
 theorem doubleBin_b0 m : doubleBin (.b0 m) = .b0 (.b0 m) := solution!(by rfl)
 theorem doubleBin_b1 m : doubleBin (.b1 m) = .b0 (.b1 m) := solution!(by rfl)
-seal doubleBin
+
 ```
 
 Check that your function correctly doubles zero.
 
 ```lean
-unseal doubleBin in
 example : doubleBin .z = .z := solution!(by rfl)
 ```
 
@@ -1529,7 +1499,6 @@ end of the `Bin` and _only_ processes each bit once. Do not
 try to "look ahead" at future bits.
 
 ```lean
-@[irreducible]
 def normalize (b : Bin) : Bin := solution!(
   match b with
   | .z     => .z
@@ -1544,11 +1513,10 @@ TODO (DHS): How to hide these theorem statements so that students can get practi
 :::
 
 ```lean
-unseal normalize
 theorem normalize_z : normalize .z = .z := solution!(by rfl)
 theorem normalize_b0 m : normalize (.b0 m) = doubleBin (normalize m) := solution!(by rfl)
 theorem normalize_b1 m : normalize (.b1 m) = incr (doubleBin (normalize m)) := solution!(by rfl)
-seal normalize
+
 ```
 
 It would be wise to do some `example` proofs to check that your
@@ -1558,7 +1526,6 @@ proceed. They won't be graded, but fill them in below.
 ```lean
 -- SOLUTION
 /- normalize_test_zero -/
-unseal normalize doubleBin incr
 example : normalize .z = .z := by rfl
 /- normalize_test_1 -/
 example : normalize (.b1 .z) = .b1 .z := by rfl
@@ -1568,8 +1535,9 @@ example : normalize (.b0 .z) = .z := by rfl
 example : normalize (.b0 (.b0 .z)) = .z := by rfl
 /- normalize_test_4 -/
 example : normalize (.b1 (.b0 .z)) = .b1 .z := by rfl
-seal normalize doubleBin incr
 -- END SOLUTION
+
+attribute [irreducible] normalize doubleBin natToBin incr binToNat
 ```
 
 Finally, prove the main theorem. The inductive cases could be a
@@ -1653,4 +1621,3 @@ end NatPlayground.Nat
   SF.
 ```
 ::::
-

@@ -1637,7 +1637,6 @@ theorem ev_plus_plus : ∀ n m p,
 -/
 -- /TERSE
 
-@[irreducible]
 def In' {α : Type} (x : α) (xs : List α) : Prop :=
   match xs with
   | [] => False
