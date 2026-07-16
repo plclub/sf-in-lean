@@ -4,7 +4,20 @@ This file contains instructions to help Claude assist in creating and
 maintaining SF-in-Lean materials.
 
 The file `CONTRIBUTING.md` details the rules and conventions to be 
-followed by (human and AI) contributions to this project. 
+followed by (human and AI) contributions to this project. It should be read in addition to this file. In case of conflict, `CONTRIBUTING.md` wins.
+
+## Conventions
+- Naming, proof style, and chapter structure follow existing chapters.
+
+## Workflow
+- Branch names: claude/<short-topic>
+- Commit messages: one-line summary, then bullet points for decisions made.
+- Never push directly to main; open a PR.
+
+## When in doubt
+- Prefer the simpler design and note the choice in the PR description.
+- If a task is genuinely blocked (missing file, failing toolchain), stop and
+  report the blocker in your summary rather than guessing.
 
 ## Marking AI-generated material
 
@@ -105,10 +118,12 @@ does. Points to know:
 
 * **Losslessness is the contract**: every `.v` comment routes somewhere. The
   only token-level exceptions, all deliberate: `####…` separator lines are
-  dropped; the bare `(* INSTRUCTORS *)…(* /INSTRUCTORS *)` *region* form maps
-  to `-- HIDE`…`-- /HIDE` (same verbatim-capture treatment; renders as a quiz
-  `:::answer`); `(* ADVANCED: HIDEFROMHTML *)` maps to the equivalent
-  `-- TERSE: HIDEFROMHTML` dropped-marker form.
+  dropped; HIDEFROMHTML/HIDEFROMADVANCED markers (bare or `TERSE:`/`ADVANCED:`
+  prefixed) are dropped outright at conversion (content kept — and unlike the
+  .lean path, the marker word never survives into verbatim-captured
+  hide/answer/solution bodies); the bare `(* INSTRUCTORS *)…(* /INSTRUCTORS *)`
+  *region* form maps to `-- HIDE`…`-- /HIDE` (same verbatim-capture treatment;
+  renders as a quiz `:::answer`).
 * Untagged single-star `(* … *)` comments at prose position are probable
   errors in the source; they route to `:::dev` with a `COMMENT: [untagged …]`
   banner naming their origin. Each is a triage point for the manual pass
@@ -137,7 +152,7 @@ Two complementary automated checks help here (both take
 * `scripts/check_verso_markers.py` — catches silently-flattened **structural
   markers**. It inventories markers in the source and, for each one that should
   become a Verso directive (`FULL`→`::::full`, `HIDE`→`::::hide`, `EX`→
-  `::::exercise`, `QUIZ`→`::+quiz`, author notes→` ```dev `, …), verifies the
+  `::::exercise`, `QUIZ`→`::+quiz`, author notes→`:::dev`, …), verifies the
   directive is present in the output. A `FLATTENED` line means a marker was
   dropped with no Verso analog (this is how the `-- QUIZ` drop went unnoticed —
   the word-diff saw no loss). `WARN` count-mismatches are soft (verify by hand);
