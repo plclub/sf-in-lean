@@ -636,13 +636,14 @@ hand-authored Verso must use `-- END SOLUTION`.)
 These directives are invisible in all rendered outputs (HTML, TeX, and
 generated `.lean` files).  They exist only in the Verso source.
 
-Write author-facing notes as `:::` **directives** — not ` ```dev ` /
-` ```instructors ` code blocks.  A directive's body is parsed as markdown, so
-backtick code identifiers (`foo_bar`, `[x]`) and escape markdown-special text
-just as you would in `::::full` prose; reach for an inner ` ``` ` fence only when
-the body is code-dense or embeds a ` ```lean ` snippet that must not elaborate.
-(`to_verso` generates these directives with the body verbatim-fenced, which is
-always safe; a hand pass can un-fence and inline the markdown.)
+Write author-facing notes as `:::` **directives**.  (The old ` ```dev ` /
+` ```instructors ` code-block forms were removed 2026-07-15.)  A directive's
+body is parsed as markdown, so backtick code identifiers (`foo_bar`, `[x]`) and
+escape markdown-special text just as you would in `::::full` prose; reach for
+an inner ` ``` ` fence only when the body is code-dense or embeds a ` ```lean `
+snippet that must not elaborate.  (`to_verso` generates these directives with
+the body verbatim-fenced, which is always safe; a hand pass can un-fence and
+inline the markdown.)
 
 Pick the tag by intent — `:::instructors` (instructor notes), `:::dev` (author
 TODOs / review threads), `:::answer` (a quiz's answer — see **Quizzes**),
@@ -662,11 +663,21 @@ Assign Basics + Induction together as the first week's homework.
 ```
 
 **`:::dev … :::`** — Internal author commentary: unresolved design
-questions, inline review threads, TODO items.  Use freely.
+questions, inline review threads, TODO items.  Use freely.  It takes optional
+arguments, so the note's provenance can be typeset uniformly by a future
+dev-facing build: a positional author (always a *string*, conventionally
+`"Full Name (github-handle)"`), a positional urgency keyword (always a *bare
+identifier*, conventionally `SOONER`, `LATER`, `TODO`, or `TOFIX`), and a
+named `year` (a number, from `BCP'20`-style tags).  The string/identifier
+split is what tells the two positionals apart, so don't quote urgencies or
+unquote authors.  Prefer the arguments over leading `BCP:` / `SOONER:` tags in
+the body; `to_verso` promotes such leading tags to arguments automatically
+(see `_AUTHOR_NAMES` in `scripts/to_verso.py` for the initials-to-name
+mapping).
 
 ```
-:::dev
-BCP: Still not happy with this explanation — the namespace story
+:::dev "Benjamin Pierce (bcpierce00)" SOONER
+Still not happy with this explanation — the namespace story
 feels rushed.  See GitHub discussion #42.
 :::
 ```

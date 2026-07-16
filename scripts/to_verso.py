@@ -233,6 +233,119 @@ _BLOCK_DEV_RE = re.compile(r'^(HIDE(?=:)|(?:' + _DEV_TAGS + r')\b)')
 # form `_INSTRUCTOR_RE`).
 _BLOCK_INSTRUCTOR_RE = re.compile(r'^INSTRUCTORS:')
 
+# Urgency keywords: when one of these opens a dev note it becomes the :::dev
+# directive's `(urgency := …)` argument rather than an author.
+_URGENCY_TAGS = ('SOONER', 'LATER', 'TODO', 'TOFIX')
+
+# Authors behind the initials appearing in dev notes, as "Full Name
+# (github-handle)".  When a note opens with one of these tags (or, after an
+# urgency keyword, with a clean `TAG:` / `(TAG)` attribution), the tag is
+# promoted to the :::dev directive's `(author := "…")` argument.  Initials
+# with no entry here are left in the note body untouched — add entries as the
+# people behind the initials are identified.
+_AUTHOR_NAMES = {
+    'BCP': 'Benjamin Pierce (bcpierce00)',
+    'MWH': 'Michael Hicks (mwhicks1)',
+    'mwhicks1': 'Michael Hicks (mwhicks1)',
+    'JC': 'Jonathan Chan (ionathanch)',
+    'RAB': 'Roger Burtonpatel (rogerburtonpatel)',
+    # CH is Chris Henson in sf-in-lean notes; in old sfdev notes CH was
+    # Catalin Hritcu — none of those are ported yet.
+    'CH': 'Chris Henson (chenson2018)',
+    'chenson2018': 'Chris Henson (chenson2018)',
+    'HG': 'Harrison Goldstein (hgoldstein95)',
+    'DHS': 'Daniel Sainati (dsainati1)',
+    'AAA': 'Arthur Azevedo de Amorim (arthuraa)',
+    'BAY': 'Brent Yorgey (byorgey)',
+    'MRC': 'Michael Clarkson (clarksmr)',
+    'ORI': 'Ori Lahav (orilahav)',
+    'Ori': 'Ori Lahav (orilahav)',
+    'APT': 'Andrew Tolmach (AndrewTolmach)',
+    'SAZ': 'Steve Zdancewic (Zdancewic)',
+    'NDS': 'Noé De Santo (Ef55)',
+    'OA': 'One An (meluge)',
+    'KH': 'Kihong Heo (KihongHeo)',
+    'KK': 'Konstantinos Kallas (angelhof)',
+    'Claude': 'Claude',   # AI-generated notes keep the plain name
+    # Unresolved initials (left verbatim in note bodies until identified):
+    # CGH, NB, ET, PR, FSR, MMG.
+}
+
+
+# GitHub handles (as written in `@handle:` attributions in hand-versified
+# chapters) -> the full author string from `_AUTHOR_NAMES`.
+_HANDLE_NAMES = {}
+for _v in set(_AUTHOR_NAMES.values()):
+    _m = re.search(r'\(([^)]+)\)$', _v)
+    if _m:
+        _HANDLE_NAMES[_m.group(1)] = _v
+del _v
+
+
+def _tag_year(digits):
+    """Expand a `'NN` tag-year suffix to a full year (SF development spans
+    2007–now, so two-digit years below 90 are 20NN)."""
+    n = int(digits)
+    return 2000 + n if n < 90 else 1900 + n
+
+
+def _split_dev_tags(text):
+    """Promote the leading tag(s) of a dev-note body into :::dev arguments.
+
+    Returns ``(author, year, urgency, body)``.  The note's first token is the
+    tag that routed it to :::dev: an urgency keyword (-> the `(urgency := …)`
+    argument) or an author tag (-> the positional author argument, as
+    `"Full Name (handle)"` via `_AUTHOR_NAMES`; a `@handle:` attribution is
+    looked up via `_HANDLE_NAMES`).  After an urgency keyword, a clean author
+    attribution — `BCP:`, `(DHS)`, `(BCP'20)` — is promoted too; anything
+    murkier (dates as in `LATER: BCP 9/16: …`, unmapped initials, plain prose)
+    stays in the body.  Topic keywords (NOTATION:, HIDE:, COMMENT:) and
+    unmapped tags leave the note untouched.  A year suffix on a promoted tag
+    (`NDS'25`, `BCP'20`) becomes the `(year := 20NN)` argument."""
+    body = text.lstrip()
+    author = year = urgency = None
+    m = re.match(r"@([A-Za-z][A-Za-z0-9-]*)\s*:?\s*", body)
+    if m and m.group(1) in _HANDLE_NAMES:
+        author = _HANDLE_NAMES[m.group(1)]
+        body = body[m.end():]
+    else:
+        m = re.match(r"([A-Za-z][A-Za-z0-9]*)(?:'(\d+))?\s*:?\s*", body)
+        if not m:
+            return None, None, None, text
+        tok = m.group(1)
+        if tok in _URGENCY_TAGS:
+            urgency = tok
+        elif tok in _AUTHOR_NAMES:
+            author = _AUTHOR_NAMES[tok]
+            if m.group(2):
+                year = _tag_year(m.group(2))
+        else:
+            return None, None, None, text
+        body = body[m.end():]
+    if urgency:
+        # `TODO: (DHS) …` / `SOONER: (BCP'20) …` / `LATER: KK: …`; a bare tag
+        # WITH a year suffix (`LATER: NDS'25 This list…`) is also unambiguously
+        # an attribution, colon or not.
+        m2 = re.match(r"\(([A-Za-z][A-Za-z0-9]*)(?:'(\d+))?\)\s*:?\s*", body)
+        if not m2:
+            m2 = re.match(r"([A-Za-z][A-Za-z0-9]*)(?:'(\d+))?\s*:\s*", body)
+        if not m2:
+            m2 = re.match(r"([A-Za-z][A-Za-z0-9]*)'(\d+)\s+", body)
+        if m2 and m2.group(1) in _AUTHOR_NAMES:
+            author = _AUTHOR_NAMES[m2.group(1)]
+            if m2.group(2):
+                year = _tag_year(m2.group(2))
+            body = body[m2.end():]
+    else:
+        # `BCP: SOONER: …`
+        m2 = re.match(r"(%s)\s*:\s*" % '|'.join(_URGENCY_TAGS), body)
+        if m2:
+            urgency = m2.group(1)
+            body = body[m2.end():]
+    if not body.strip():
+        body = text  # tag-only note: keep the original text as the body
+    return author, year, urgency, body
+
 
 def _is_block_dev_comment(text: str) -> bool:
     """True when a `/- … -/` block comment is an author/dev note (e.g. `MWH: …`).
@@ -840,7 +953,7 @@ def tokenize(text: str):
             continue
 
         # `-- DEV` … `-- /DEV` region: an author/developer note without a tag
-        # prefix.  The whole body routes to a ```dev block (markers consumed).
+        # prefix.  The whole body routes to a :::dev block (markers consumed).
         if stripped == '-- DEV':
             body_lines = []
             i += 1
@@ -1259,7 +1372,7 @@ def _unwrap_prose_note(text: str) -> str:
 
 
 def _code_block(tag: str, text: str) -> str:
-    """Wrap *text* in a fenced code block tagged *tag* (e.g. ` ```dev `).  A
+    """Wrap *text* in a fenced code block tagged *tag* (e.g. ` ```display `).  A
     Verso code block delivers its body to the expander as a raw string that is
     never parsed as markdown, so arbitrary author prose can't derail the parser
     — no inner verbatim fence is needed.  The fence is grown to outrun any
@@ -1571,8 +1684,21 @@ class Renderer:
         # (see SFLMeta); they differ only in name so instructor notes can be treated
         # differently later.  (Hand-authored chapters may instead inline the body as
         # markdown, backticking/escaping as needed — see CONTRIBUTING.md.)
+        # For :::dev, a leading author/urgency tag is promoted to directive
+        # arguments — `:::dev "Benjamin Pierce (bcpierce00)" SOONER
+        # (year := 2020)` — via `_split_dev_tags`; :::instructors deliberately
+        # takes no arguments.
         self._flush_code()  # still acts as a block separator
-        self._append(':::' + directive + '\n' + _verbatim_block(text) + '\n:::\n\n')
+        header = ':::' + directive
+        if directive == 'dev':
+            author, year, urgency, text = _split_dev_tags(text)
+            if author:
+                header += ' "%s"' % author
+            if urgency:
+                header += ' %s' % urgency
+            if year:
+                header += ' (year := %d)' % year
+        self._append(header + '\n' + _verbatim_block(text) + '\n:::\n\n')
 
     # --- Main dispatch ---
 
@@ -1702,7 +1828,7 @@ def _normalize_heading_levels(text: str) -> str:
     than its parent), but the sources mix `#`/`##` markers with coqdoc
     `*`/`**`/`***` section markers, which can leave gaps.  Walk the document-level
     headings in order and compress each source level to the shallowest legal
-    output level via a stack.  Lines inside fenced code blocks (```lean, ```dev,
+    output level via a stack.  Lines inside fenced code blocks (```lean,
     verbatim, display) are skipped so a `#` inside a note or snippet is left
     alone."""
     out = []
@@ -1739,19 +1865,22 @@ def _fuse_noop_blocks(text: str) -> str:
     is a `:::<tag>` directive wrapping a verbatim fence (see `_emit_noop_directive`);
     the fused body is re-wrapped via `_verbatim_block`, so a fence that had to grow
     to outrun backticks in one note still outruns backticks in the combined body.
-    Only same-tag directives fuse (a `dev` never merges into an `instructors`)."""
+    Only directives with an identical header line fuse — same tag AND same
+    author/urgency arguments (a `:::dev bcpierce00` never merges into a bare
+    `:::dev` or a `:::dev (urgency := SOONER)`, and `dev` never merges into
+    `instructors`)."""
     lines = text.split('\n')
     out, i, n = [], 0, len(lines)
     while i < n:
-        m = re.match(r'^:::(dev|instructors)$', lines[i])
+        m = re.match(r'^:::(dev|instructors)\b.*$', lines[i])
         # Only fuse a directive immediately wrapping a verbatim fence.
         if not (m and i + 1 < n and re.match(r'^`{3,}$', lines[i + 1])):
             out.append(lines[i]); i += 1; continue
-        tag = m.group(1)
+        header = lines[i]
         bodies = []
         while i < n:
-            mm = re.match(r'^:::' + tag + r'$', lines[i])
-            fm = re.match(r'^(`{3,})$', lines[i + 1]) if mm and i + 1 < n else None
+            same = lines[i] == header
+            fm = re.match(r'^(`{3,})$', lines[i + 1]) if same and i + 1 < n else None
             if not fm:
                 break
             fence = fm.group(1)
@@ -1766,7 +1895,7 @@ def _fuse_noop_blocks(text: str) -> str:
             while j < n and lines[j].strip() == '':  # skip blanks between blocks
                 j += 1
             i = j
-        out.append(':::' + tag)
+        out.append(header)
         out.append(_verbatim_block('\n\n'.join(bodies)))
         out.append(':::')
         out.append('')
