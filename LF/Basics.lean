@@ -1672,17 +1672,6 @@ rather than `rfl`-ing through the definition.
 
 ## Working with Numerals
 
-<<<<<<< HEAD
-=======
-:::dev "Benjamin Pierce (bcpierce00)"
-The following lemmas are also needed by the TERSE version,
-so I am un-fulling them for now.
-But indeed the whole discussion here needs both TERSE and FULL versions.
-Or probably some of it should turn into an exercise?
-RAB: This will be part of our discussion on presenting laws.
-:::
-
->>>>>>> 1a5154146468620661601b131d88102d0d94d9b8
 We know from our definitions above that `one` is just `succ zero`,
 `two` is `succ one`, and so on. We can write rules for these equalities too:
 
