@@ -31,7 +31,7 @@ file := "Postscript"
 :::
 
  Congratulations: We've made it to the end of _Logical
-    Foundations_!
+    Foundations in Lean_!
 
  Looking Back
 
@@ -44,20 +44,18 @@ file := "Postscript"
           \- higher-order functions
           \- polymorphism
 
- TERSE:
 
      \- _Logic_, the mathematical basis for software engineering:
-<<
+
                logic                        calculus
         --------------------   ~   ----------------------------
         software engineering       mechanical/civil engineering
->>
+
 
           \- inductively defined sets and relations
           \- inductive proofs
           \- proof objects
 
- TERSE:
 
      \- _Lean_, an industrial-strength proof assistant
           \- functional core language
@@ -70,22 +68,40 @@ file := "Postscript"
 
  If what you've seen so far has whetted your interest, you have
     several choices for further reading in later volumes of the
-    _Software Foundations_ series.  Some of these are intended to be
-    accessible to readers immediately after finishing _Logical
-    Foundations_; others require a few chapters from Volume 2,
-    _Programming Language Foundations_.  The Preface chapter in each
-    volume gives details about prerequisites.
-:::dev
- SOONER: Might be worth explicitly advertising each volume, like
-   this?  Some danger of redunancy tho...
-:::
-           \- _Programming Language Foundations_ (volume 2, by a set of
-             authors similar to this book's) covers material that
-             might be found in a graduate course on the theory of
-             programming languages, including Hoare logic, operational
-             semantics, and type systems.
+    _Software Foundations_ series.
 
-            TODO LEAN RESOURCES
+    As of August 2026, there are two more volumes written in Lean.
+
+    _Hoare Logic_: This short volume describes one of the primary methods
+    for reasoning about _imperative_ programs- programs with state and
+    mutation, like C++, Java, C, and Assembly- in a pure logic
+    like Lean's. This method, called _Hoare Logic_, is embeddable into
+    Lean's type system and is a powerful tool for determining
+    the correct behavior of imperative code. Since most of the code
+    in the wild today is imperative, this technique is both well-established
+    and popular among industry professionals who analyze and fortify the
+    correctness of systems.
+
+    _Type Systems_: Another tool for reasoning about the correctness of a program
+    is a _type system_. You have interacted thoroughly with Lean's rich type system,
+    which is one of the most complex in a modern programming language. Most
+    languages have type systems that are far less complex, but which still provide
+    incredibly useful guardrails against ill-behaved programs. In this volume you
+    will explore how to read, analyze, and design type systems in a proof assistant.
+
+    Combined, these form the aggregate volume
+    _Programming Language Foundations in Lean_.
+
+    You may notice the "in Lean" tag on this and the next volume.
+    The original _Logical Foundations_, _Programming Language Foundations_,
+    and continuation of the _Software Foundations_ series is written in
+    in _Rocq_, another proof assistant. Switching from Lean to Rocq has a
+    medium-sized learning curve, but it's one that you are now more
+    than prepared to tackle if you wish to do so.
+    Additionally, there are active efforts to translate the following
+    volumes of _Software Foundations_ into Lean. If this interests you,
+    please see `CONTRIBUTING.md` and write the `sf-dev` team a note!
+
 
  ######################################################################
  Resources
@@ -101,7 +117,7 @@ file := "Postscript"
        \- For questions about Lean, the Lean Zulip (TODO LINK)
          is an excellent community resource.
 
-       \- Here are some great books on functional programming
+       \- Here are some great books on functional programming:
             \- Learn You a Haskell for Great Good, by Miran Lipovaca
               \CITE Lipovaca 2011.
             \- Real World Haskell, by Bryan O'Sullivan, John Goerzen,
