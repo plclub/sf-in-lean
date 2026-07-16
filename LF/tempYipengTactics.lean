@@ -57,8 +57,8 @@ how to use the fact that they are injective and disjoint;
 * more details on how to reason by case analysis.
 :::
 
-:::dev
-OA: added these to use Lean's Nat. `open Nat (add_comm add_assoc add_zero add_succ mul_one succ_sub_succ)`
+:::dev "One An (meluge)"
+added these to use Lean's Nat. `open Nat (add_comm add_assoc add_zero add_succ mul_one succ_sub_succ)`
 YL: I prefer not to `open Nat` because it's not a good practice in idiomatic Lean code:
 some of them are `protected` (accessible via `simp`, not supposed to be opened);
 and in Mathlib-style code they should have meant the generalized algebraic version.
