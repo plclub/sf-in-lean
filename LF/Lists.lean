@@ -778,8 +778,6 @@ end Bag
 /- TERSE: As with numbers, some proofs about list functions need only
    simplification... -/
 /- TODO (KH): The above comment is wrong, since we use `rw` here.
-   Should we put
-   uses `unseal` and `dsimp` extensively.
    -/
 
 theorem nil_app (l : NatList) : ([] : NatList) ++ l = l := by rw [nil_append]
