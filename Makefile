@@ -54,7 +54,8 @@ all: verso lf hl ts check-bare-lean-chapters check-verso-chapters
 # symlink to it (see scripts/relocate-lake-build.sh).  `lake clean` deletes that
 # symlink and Lake would otherwise recreate a real (slow) dir, so every target
 # that invokes `lake` first re-establishes the symlink.  The script is idempotent
-# and near-instant when the symlink is already correct.
+# and near-instant when the symlink is already correct.  Outside a container
+# (e.g. `make` on the macOS host) it is a no-op.
 ensure-build-symlink:
 	@scripts/relocate-lake-build.sh
 

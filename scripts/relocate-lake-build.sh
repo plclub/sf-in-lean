@@ -12,11 +12,26 @@
 # rebuild.  For durability across full container *rebuilds*, also add the named
 # volume described in the project README / devcontainer.json (see the block that
 # mounts a volume at $CACHE); this script then just ensures the symlink exists.
+#
+# Container-only: relocating makes sense (and $CACHE is creatable) only inside
+# the devcontainer/CI container.  Outside one — e.g. `make` on the macOS host —
+# this is a no-op so builds just use a plain .lake/build.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 CACHE="${SFL_LAKE_BUILD_DIR:-/home/vscode/.cache/sfl-lake-build}"
 BUILD="$REPO/.lake/build"
+
+if [ ! -e /.dockerenv ] && [ ! -d /run/.containerenv ] && [ -z "${SFL_LAKE_BUILD_DIR:-}" ]; then
+  # A symlink left behind by a container run dangles on the host; drop it so
+  # Lake can create a real .lake/build (the container run re-relocates later).
+  if [ -L "$BUILD" ] && [ ! -e "$BUILD" ]; then
+    rm -f "$BUILD"
+    echo "removed dangling container symlink at $BUILD"
+  fi
+  echo "skip: not running in a container; leaving .lake/build in place"
+  exit 0
+fi
 
 mkdir -p "$CACHE" "$REPO/.lake"
 
