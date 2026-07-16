@@ -295,6 +295,7 @@ example (n m : Nat) : n = 0 ∧ m = 0 → n + m = 0 := by
 example (n m : Nat) : n = 0 → m = 0 → n + m = 0 := by
   intro hn hm
   rw [hn, hm]
+-- /FULL
 
 /- TERSE: For the present example, both ways work.
     But in other situations, we may wind up with a conjunctive hypothesis
@@ -312,7 +313,6 @@ example (n m : Nat) (h : n + m = 0) : n * m = 0 := by
   let ⟨hn, hm⟩ := h
   rw [hm]; rfl
   -- /WORKINCLASS
--- /FULL
 
 -- FULL
 /- Another common situation is that we know `A /\ B` but in some
@@ -791,16 +791,13 @@ example : True := by constructor
     to convert an unprovable statement (like `False`) to one that is
     provable (like `True`). -/
 
-@[irreducible]
 def discr_fun (n : Nat) : Prop :=
   match n with
   | 0 => True
   | _ + 1 => False
 
-unseal discr_fun in
 theorem discr_fun_zero : discr_fun 0 = True := rfl
 
-unseal discr_fun in
 theorem discr_fun_succ n : discr_fun (n + 1) = False := rfl
 
 theorem discr_example (n : Nat) : ¬ (0 = n + 1) := by
@@ -818,16 +815,13 @@ theorem discr_example (n : Nat) : ¬ (0 = n + 1) := by
     Do not use the `contradiction` tactic. -/
 
 -- QUIETSOLUTION
-@[irreducible]
 def is_nil {α : Type} (xs : List α) : Prop :=
   match xs with
   | [] => True
   | _ :: _ => False
 
-unseal is_nil in
 theorem is_nil_nil {α} : @is_nil α [] = True := rfl
 
-unseal is_nil in
 theorem is_nil_cons {α} (x : α) (xs : List α) : is_nil (x :: xs) = False := rfl
 -- /QUIETSOLUTION
 
@@ -1107,28 +1101,23 @@ theorem add_exists_leb' : ∀ n m, (∃ x, m = x + n) → n ≤? m = true := by
 /- We can translate this directly into a straightforward recursive function
     taken an element and a list and returning... a proposition! -/
 
-@[irreducible]
 def In {α : Type} (x : α) (xs : List α) : Prop :=
   match xs with
   | [] => False
   | x' :: xs' => x = x' ∨ In x xs'
 
-unseal In in
 theorem In_nil {α} (x : α) : In x [] = False := rfl
 
-unseal In in
 theorem In_cons {α} (x x' : α) (xs : List α) : In x (x' :: xs) = (x = x' ∨ In x xs) := rfl
 
 /- When `In` is applied to a concrete list, it exapnds into a concrete sequence
    of nested disjunctions. -/
 
-unseal In in
 example : In 4 [1, 2, 3, 4, 5] := by
   -- WORKINCLASS
   dsimp [In]; right; right; right; left; rfl
   -- /WORKINCLASS
 
-unseal In in
 example (n : Nat) (h : In n [2, 4]) : ∃ n' : Nat, n = 2 * n' := by
   -- WORKINCLASS
   dsimp [In] at h
@@ -1167,8 +1156,8 @@ theorem In_map_iff (α β : Type) (f : α → β) (xs : List α) (y : β) :
     In y (List.map f xs) ↔ ∃ x, f x = y ∧ In x xs := by
   constructor
   case mp =>
-    induction xs
     -- ADMITTED
+    induction xs
     case nil => intro h; rw [List.map_nil, In_nil] at h; contradiction
     case cons x' xs' ih =>
       intro h
@@ -1204,7 +1193,6 @@ theorem In_map_iff (α β : Type) (f : α → β) (xs : List α) (y : β) :
     lemma below.  (Of course, your definition should _not_ just
     restate the left-hand side of `All_In`.) -/
 
-@[irreducible]
 def All {α : Type} (P : α → Prop) (xs : List α) : Prop :=
   -- ADMITDEF
   match xs with
@@ -1212,11 +1200,9 @@ def All {α : Type} (P : α → Prop) (xs : List α) : Prop :=
   | x :: xs' => P x ∧ All P xs'
   -- /ADMITDEF
 
-unseal All in
-theorem All_nil {α} (P : α → Prop) : All P [] = True := rfl
+theorem All_nil {α} (P : α → Prop) : All P [] = True := rfl -- ADMITTED
 
-unseal All in
-theorem All_cons {α} (P : α → Prop) x xs : All P (x :: xs) = (P x ∧ All P xs) := rfl
+theorem All_cons {α} (P : α → Prop) x xs : All P (x :: xs) = (P x ∧ All P xs) := rfl -- ADMITTED
 
 theorem All_In α (P : α → Prop) (xs : List α) :
     (∀ x, In x xs → P x) ↔ All P xs := by
@@ -1292,6 +1278,7 @@ theorem combined_odd_even_elim_even Podd Peven n
   dsimp at h; exact h
   -- /ADMITTED
 -- []
+-- /FULL
 
 /- ## Applying Theorems to Arguments -/
 
@@ -1569,6 +1556,7 @@ theorem even_double (k : Nat) :
 
 -- FULL
 -- EX3 (even_double_conf)
+-- /FULL
 theorem even_double_conv (n : Nat) : ∃ k : Nat,
     n = bif even n then double k else succ (double k) := by
   -- ADMITTED
@@ -1715,7 +1703,6 @@ example : even 101 = false := rfl
 /- In contrast, propositional negation can be difficult to work with directly.
     For example, suppose we state the nonevenness of `101` propositionally: -/
 
--- JC (TODO): mark `even` as irreducible (this example was `unseal even in`)
 /- Proving this directly -- by assuming that there is some `n` such that
     `101 = double n` and then somehow reasoning to a contradiction --
     would be rather complicated.
@@ -1794,7 +1781,6 @@ theorem orb_true_iff (b1 b2 : Bool) :
     of the `beq_list` function below. to make sure that your definition
     is correct, prove the lemma `beq_list_true_iff`. -/
 
-@[irreducible]
 def beq_list {α : Type} (beq : α → α → Bool) (xs1 xs2 : List α) : Bool :=
   -- ADMITDEF
   match xs1, xs2 with
@@ -1803,22 +1789,18 @@ def beq_list {α : Type} (beq : α → α → Bool) (xs1 xs2 : List α) : Bool :
   | _, _ => false
   -- /ADMITDEF
 
-unseal beq_list in
 theorem beq_list_nil_nil {α} (beq : α → α → Bool) :
-    beq_list beq [] [] = true := rfl
+    beq_list beq [] [] = true := rfl -- ADMITTED
 
-unseal beq_list in
 theorem beq_list_cons_cons {α} (beq : α → α → Bool) x1 x2 xs1 xs2 :
     beq_list beq (x1 :: xs1) (x2 :: xs2) =
-    (beq x1 x2 && beq_list beq xs1 xs2) := rfl
+    (beq x1 x2 && beq_list beq xs1 xs2) := rfl -- ADMITTED
 
-unseal beq_list in
 theorem beq_list_nil_cons {α} (beq : α → α → Bool) x xs :
-    beq_list beq [] (x :: xs) = false := rfl
+    beq_list beq [] (x :: xs) = false := rfl -- ADMITTED
 
-unseal beq_list in
 theorem beq_list_cons_nil {α} (beq : α → α → Bool) x xs :
-    beq_list beq (x :: xs) [] = false := rfl
+    beq_list beq (x :: xs) [] = false := rfl -- ADMITTED
 
 -- JC: Should this also go after `propext` to use rewriting by `↔`?j
 theorem beq_list_true_iff α (beq : α → α → Bool)
@@ -1867,7 +1849,6 @@ theorem beq_list_true_iff α (beq : α → α → Bool)
 
 /- Copy the definition of `forallb` from Tactics here so that this file can be
     graded on its own. -/
-@[irreducible]
 def Logic.forallb {α : Type} (test : α → Bool) (xs : List α) : Bool :=
   -- ADMITDEF
   match xs with
@@ -1875,12 +1856,10 @@ def Logic.forallb {α : Type} (test : α → Bool) (xs : List α) : Bool :=
   | x :: xs' => test x && forallb test xs'
   -- /ADMITDEF
 
-unseal Logic.forallb in
-theorem forallb_nil {α} (test : α → Bool) : Logic.forallb test [] = true := rfl
+theorem forallb_nil {α} (test : α → Bool) : Logic.forallb test [] = true := rfl -- ADMITTED
 
-unseal Logic.forallb in
 theorem forallb_cons {α} (test : α → Bool) x xs :
-    Logic.forallb test (x :: xs) = (test x && Logic.forallb test xs) := rfl
+    Logic.forallb test (x :: xs) = (test x && Logic.forallb test xs) := rfl -- ADMITTED
 
 theorem forallb_true_iff α (test : α → Bool) (xs : List α) :
     Logic.forallb test xs = true ↔ All (fun x => test x = true) xs := by
@@ -2034,8 +2013,8 @@ theorem mul_eq_0_ternary (n m p : Nat) :
 -- EX2 (In_app_iff)
 theorem In_app_iff (α : Type) (xs xs' : List α) (x : α) :
     In x (xs ++ xs') ↔ In x xs ∨ In x xs' := by
-  induction xs
   -- ADMITTED
+  induction xs
   case nil =>
     constructor
     case mp => intro h; right; exact h
@@ -2129,16 +2108,13 @@ example : (fun xs => 1 :: xs) = (fun xs => [1] ++ xs) := rfl
 
     We can improve this with the following two-argument definition: -/
 
-@[irreducible]
 def rev_append {α} (xs1 xs2 : List α) : List α :=
   match xs1 with
   | [] => xs2
   | x1 :: xs1' => rev_append xs1' (x1 :: xs2)
 
-unseal rev_append in
 theorem rev_append_nil {α} (xs : List α) : rev_append [] xs = xs := rfl
 
-unseal rev_append in
 theorem rev_append_cons {α} (x : α) xs1 xs2 :
     rev_append (x :: xs1) xs2 = rev_append xs1 (x :: xs2) := rfl
 
@@ -2152,7 +2128,6 @@ abbrev tr_rev {α} (xs : List α) : List α := rev_append xs []
     Prove that the two definitions are indeed equivalent. -/
 
 -- QUIETSOLUTION
-unseal List.rev in
 theorem rev_append_rev {α} : ∀ xs1 xs2 : List α,
     rev_append xs1 xs2 = xs1.rev ++ xs2 := by
   intro xs1; induction xs1

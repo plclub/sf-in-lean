@@ -418,6 +418,60 @@ in the Verso source and are elaborated by Lean as the book is compiled,
 so type errors and broken proofs are caught at build time.  Code that
 should appear in the rendered HTML uses fenced `` ```lean `` blocks.
 
+### Displays: `` ```display `` and `` ```displaymath ``
+
+Two fenced blocks (parallel to `` ```lean `` and `` ```bnf ``) set material off
+from the prose as a *display*.  Both are implemented by
+`SFLMeta/DisplayMath.lean`.
+
+**`` ```display `` — set-off Lean code, no typesetting.** Shows its body verbatim
+as (non-elaborated, non-highlighted) monospace code, set off from the prose.  The
+body is never parsed or elaborated, so anything is safe — deliberately ill-formed
+snippets, shell transcripts, and the informal `[[ … ]]` equations of the paper
+proofs:
+
+````
+```display
+n + (m + p) = (n + m) + p.
+```
+````
+
+This is the home for the coqdoc `[[ … ]]` displays: **`to_verso` emits a
+`` ```display `` block for every `[[ … ]]`** (in both the `.lean` and the `.v`
+front-ends).  The content is thus preserved and marked as a display rather than
+left as an anonymous `` ``` `` fence.  coqdoc uses the same `[[ … ]]` for shell/code
+displays (`make Basics.vo`) and for displayed math, and the two are not
+mechanically distinguishable, so `to_verso` treats them uniformly as
+`` ```display `` — always safe, never elaborated.
+
+In the HTML a display is set off and indented a few characters from the left
+margin (not flush left, not centered).  In the *generated* `.lean` files (the
+per-variant student/solutions/terse extracts) a display is rendered specially: it
+becomes its own comment, each source line kept on its own line and indented under
+`-- `, and — unlike ordinary prose — it is **never reflowed/filled** into a
+paragraph, because a display's line structure is significant.
+
+**`` ```displaymath `` — real typeset math.** For a genuine *displayed equation*,
+typeset as mathematics by the bundled KaTeX:
+
+````
+```displaymath
+n + (m + p) = (n + m) + p.
+```
+````
+
+Each non-blank line becomes one centered display equation.  The body is **LaTeX**:
+for the plain arithmetic identities that pervade the informal proofs
+(`0 + (m + p) = (0 + m) + p.`) the source text is already valid LaTeX and renders
+directly; where finer control is wanted an author writes the corresponding LaTeX
+(`\mathsf{S}` for a roman constructor, `\text{and}` between two columns, an
+`aligned` environment to line up `=`).  Verso also accepts a single inline display
+natively as `` $$`…` `` inside prose.
+
+Promoting the genuinely-mathematical `` ```display `` blocks to `` ```displaymath ``
+is a manual editing pass on the `.lean` chapter; `to_verso` does not attempt it
+automatically.
+
 ### Fence depth: `:::` vs `::::`
 
 Verso uses colon-fence depth the same way markdown uses backtick depth
@@ -582,13 +636,14 @@ hand-authored Verso must use `-- END SOLUTION`.)
 These directives are invisible in all rendered outputs (HTML, TeX, and
 generated `.lean` files).  They exist only in the Verso source.
 
-Write author-facing notes as `:::` **directives** — not ` ```dev ` /
-` ```instructors ` code blocks.  A directive's body is parsed as markdown, so
-backtick code identifiers (`foo_bar`, `[x]`) and escape markdown-special text
-just as you would in `::::full` prose; reach for an inner ` ``` ` fence only when
-the body is code-dense or embeds a ` ```lean ` snippet that must not elaborate.
-(`to_verso` generates these directives with the body verbatim-fenced, which is
-always safe; a hand pass can un-fence and inline the markdown.)
+Write author-facing notes as `:::` **directives**.  (The old ` ```dev ` /
+` ```instructors ` code-block forms were removed 2026-07-15.)  A directive's
+body is parsed as markdown, so backtick code identifiers (`foo_bar`, `[x]`) and
+escape markdown-special text just as you would in `::::full` prose; reach for
+an inner ` ``` ` fence only when the body is code-dense or embeds a ` ```lean `
+snippet that must not elaborate.  (`to_verso` generates these directives with
+the body verbatim-fenced, which is always safe; a hand pass can un-fence and
+inline the markdown.)
 
 Pick the tag by intent — `:::instructors` (instructor notes), `:::dev` (author
 TODOs / review threads), `:::answer` (a quiz's answer — see **Quizzes**),
@@ -608,11 +663,21 @@ Assign Basics + Induction together as the first week's homework.
 ```
 
 **`:::dev … :::`** — Internal author commentary: unresolved design
-questions, inline review threads, TODO items.  Use freely.
+questions, inline review threads, TODO items.  Use freely.  It takes optional
+arguments, so the note's provenance can be typeset uniformly by a future
+dev-facing build: a positional author (always a *string*, conventionally
+`"Full Name (github-handle)"`), a positional urgency keyword (always a *bare
+identifier*, conventionally `SOONER`, `LATER`, `TODO`, or `TOFIX`), and a
+named `year` (a number, from `BCP'20`-style tags).  The string/identifier
+split is what tells the two positionals apart, so don't quote urgencies or
+unquote authors.  Prefer the arguments over leading `BCP:` / `SOONER:` tags in
+the body; `to_verso` promotes such leading tags to arguments automatically
+(see `_AUTHOR_NAMES` in `scripts/to_verso.py` for the initials-to-name
+mapping).
 
 ```
-:::dev
-BCP: Still not happy with this explanation — the namespace story
+:::dev "Benjamin Pierce (bcpierce00)" SOONER
+Still not happy with this explanation — the namespace story
 feels rushed.  See GitHub discussion #42.
 :::
 ```

@@ -28,6 +28,15 @@ jobs:
       # Get the source code.
       - uses: actions/checkout@v6
 
+      # Regenerate the `LF/<Ch>Verso.lean` (and `HL/<Ch>Verso.lean`) sources.
+      # These are generated from their bare `.lean` chapters by
+      # `scripts/to_verso.py` and are `.gitignored`, so a clean checkout does
+      # not have them.  `LF.lean` `import`s several of them, so they must exist
+      # *before* the `lake build` below (which lean-action runs automatically)
+      # or the build fails with `bad import`.  `make verso` is pure Python (no
+      # Lean toolchain needed), so it can run first.
+      - run: make verso
+
       # Install the Lean toolchain pinned in `lean-toolchain` (with build
       # caching) and run `lake build`, which builds the book.
       - uses: leanprover/lean-action@v1
