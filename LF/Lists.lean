@@ -1,5 +1,3 @@
--- Note that rewrite laws should sometimes differ from pattern matching now
-
 /- Lists: Working with Structured Data -/
 
 /- INSTRUCTORS: This file takes about 60 minutes to get through.
@@ -25,7 +23,10 @@
 import LF.Induction
 import LF.UsingLean
 
+-- BCP: Why is this namespace needed??
 namespace Lists
+
+/- SOONER: Note that rewrite laws should sometimes differ from pattern matching now -/
 
 -- ######################################################################
 -- # Pairs of Numbers
@@ -71,7 +72,7 @@ example : (NatProd.pair 3 5).fst = 3 := by rfl
 
 -- FULL: Since pairs will be used heavily in what follows, it will be
 -- convenient to write them with angle bracket notation `⟨x, y⟩`
--- instead of `NatProd.pair x y`.  This notation is built into Lean, and is
+-- instead of `NatProd.pair x y`.  This notation is built into Lean and is
 -- called "anonymous constructor syntax".  It is available for any inductive
 -- type with a single constructor, as long as the expected type is declared or
 -- can be inferred from the context.
@@ -202,7 +203,8 @@ namespace NatList
     for constructing lists. -/
 -- TERSE: Some notation for lists to make our lives easier:
 
--- Don't worry too much about what this is doing
+-- Don't worry too much about what this is doing:
+-- BCP: Can we be a little more helpful, or tell them when we are going to tell them, or tell them where to look?
 scoped infixr:65 " :: " => cons
 scoped macro (priority := high) "[ " elems:term,* "]" : term => do
   elems.getElems.foldrM (``(cons $(⟨·⟩) $(⟨·⟩))) (← ``(nil))
@@ -226,7 +228,7 @@ def myRepeat (n count : Nat) : NatList :=
   | 0 => []
   | count' + 1 => n :: myRepeat n count'
 
--- Some simple facts about repetition
+-- Some simple facts about repetition:
 unseal myRepeat in
 theorem repeat_zero v : myRepeat v 0 = [] := rfl
 
@@ -243,7 +245,7 @@ def length (l : NatList) : Nat :=
   | [] => 0
   | _ :: t => (length t) + 1
 
--- Some simple facts about list lengths
+-- Some simple facts about list lengths:
 unseal length in
 theorem nil_length : [].length = 0 := rfl
 
@@ -260,7 +262,8 @@ def app (l1 l2 : NatList) : NatList :=
   | h :: t => h :: app t l2
 
 
--- *** Type Classes and Overloading
+-- ## Type Classes and Overloading
+-- BCP: One word, or two?
 
 /- FULL: In Lean, operators like `++`, `==`, and `+` are not
    hardwired to particular types.  Instead, they are defined using
@@ -278,7 +281,7 @@ instance : HAppend NatList NatList NatList where
 
 -- Now `l1 ++ l2` means `app l1 l2` within `NatList`.
 
--- Some simple facts about appending lists
+-- Some simple facts about appending lists:
 unseal app in
 theorem nil_append (l : NatList) : [] ++ l = l := rfl
 
@@ -869,7 +872,7 @@ theorem app_assoc (l1 l2 l3 : NatList) :
 -- TERSE: ***
 -- TERSE: For comparison, here is an informal proof of the same theorem.
 
--- bcpierce00: What's the best Lean markup for a displayed equation? The markup below is going to get squished into a paragraph with all the rest by default, but IMO it would look better as a separate display. Also: Are we going to consistently write Qed at the end of proofs? We should agree on a convention.
+-- BCP: What's the best Lean markup for a displayed equation? The markup below is going to get squished into a paragraph with all the rest by default, but IMO it would look better as a separate display. Also: Are we going to consistently write Qed at the end of proofs? We should agree on a convention.
 
 /-
  _Theorem_: For all lists `l1`, `l2`, and `l3`,
