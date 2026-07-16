@@ -525,6 +525,14 @@ def _comment_tokens(body: str):
         while seg and not seg[-1].strip():
             seg.pop()
         if seg:
+            # Dedent the run by its common indent (uniform, so relative
+            # indentation — bullets, display material — is preserved).
+            # Catches alignment indents that survive `_extract_comment_text`,
+            # e.g. when a column-0 fence line drags the comment-wide minimum
+            # to zero.
+            cut = min(len(l) - len(l.lstrip()) for l in seg if l.strip())
+            if cut:
+                seg = [l[cut:] if l.strip() else l for l in seg]
             tokens.append(('block_comment_prose',
                            _prose_markup('\n'.join(seg))))
         prose.clear()
@@ -717,12 +725,23 @@ def _extract_comment_text(raw_lines):
     # Remove closing -/
     lines[-1] = re.sub(r'\s*-/\s*$', '', lines[-1])
 
-    # Dedent: remove common leading whitespace from non-blank lines
-    non_blank = [l for l in lines if l.strip()]
-    if non_blank:
-        min_indent = min(len(l) - len(l.lstrip()) for l in non_blank)
-        lines = [l[min_indent:] if len(l) >= min_indent else l.lstrip()
-                 for l in lines]
+    rest_non_blank = [l for l in lines[1:] if l.strip()]
+    if lines[0].strip() and rest_non_blank:
+        # Text starts on the opener line, which now sits at column 0 (its
+        # indent went with the `/- `), while continuation lines keep the
+        # source's alignment indent (3 or 4 spaces depending on the comment).
+        # Dedent them by their own common indent; being uniform, this keeps
+        # any relative indentation among the continuation lines (bullets,
+        # display material) intact.
+        cut = min(len(l) - len(l.lstrip()) for l in rest_non_blank)
+        lines = [lines[0]] + [l[cut:] if l.strip() else l for l in lines[1:]]
+    else:
+        # Opener on a line of its own: plain common dedent over all lines.
+        non_blank = [l for l in lines if l.strip()]
+        if non_blank:
+            min_indent = min(len(l) - len(l.lstrip()) for l in non_blank)
+            lines = [l[min_indent:] if len(l) >= min_indent else l.lstrip()
+                     for l in lines]
 
     # Trim leading/trailing blank lines
     while lines and not lines[0].strip():
