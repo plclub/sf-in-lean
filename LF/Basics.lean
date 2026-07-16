@@ -1445,6 +1445,7 @@ theorem add_zero_zero : ∀ n : Nat, n + zero + zero = n := by
   rewrite [add_zero]
   rfl
 ```
+::::
 
 We'll walk through this proof in the next section.
 
@@ -1630,9 +1631,7 @@ The purpose of this style is twofold:
 :::dev
 @rogerburtonpatel1: Suggested change:
 2. Practically, it prepares you to write more sophisticated Lean proofs on structures
-  that are _only_ meant to be accessed through simplification rules, and on which trying to force computation to run all the way can have disastrous results on performance and readability.
-@dsainati11:
-Still not sure of the wording on this one. Written this way IMO it begs the question of what we could possibly be talking about. Can we just cut the whole thing after the comma and leave it at that?
+  that are _only_ meant to be accessed through simplification rules.
 :::
 
 Lean, like any other programming language, has conventions and best practices
@@ -1653,7 +1652,7 @@ when we used the `rfl` tactic.
 :::dev
 @bcpierce00: This seems to be saying that what we did before was wrong...?
 :::
-
+::::
 ::::terse
 Marking a definition `@[irreducible]` prevents proofs from "peeking" through it with `rfl`.
 ::::
@@ -1850,35 +1849,33 @@ def mul (n m : Nat) : Nat :=
 scoped infixl:70 " * " => mul
 ```
 
+::::exercise (rating := 1) (name := "mul_simpl_rules")
 Multiplication, like any function we will prove properties about,
-   also has simplification rules.
+also has simplification rules.
 
-Fill in the simplification rules for `mul` below.
-You will likely find the model of the simplification rules for `add`
-to be helpful.
+Remove `sorry` and prove the simplification rules for `mul` below.
+You will likely find the proofs of the simplification rules for `add`
+to be helpful as a model.
 
 :::dev
-TODO: make this a verso exercise and get the theorem's type (starting with ∀)
-to fit within a `solution!` block.
+@rogerburtonpatel: it would be nice if we could get the
+theorem _statements_ inside a `solution!` block as well.
 :::
 
 ```lean
 unseal mul in
-theorem mul_zero :
--- SOLUTION
-∀ n : Nat, n * zero = zero := by
-  intro n
-  rfl
--- END SOLUTION
+theorem mul_zero : ∀ n : Nat, n * zero = zero := by
+  solution!
+    intro n
+    rfl
 
 unseal mul add in
-theorem mul_succ :
--- SOLUTION
-∀ n m : Nat, n * (succ m) = (n * m) + n := by
-  intro n m
-  rfl
--- END SOLUTION
+theorem mul_succ : ∀ n m : Nat, n * (succ m) = (n * m) + n := by
+  solution!
+    intro n m
+    rfl
 ```
+::::
 
 Prove this property using rewriting with the simplification rules for addition and multiplication.
 
