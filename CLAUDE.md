@@ -88,11 +88,20 @@ A directive parses its body as markdown, so `to_verso` wraps the body in a
 **verbatim ` ``` ` fence** (`_verbatim_block`) — arbitrary author prose (`:::`,
 `*`, `#`, `[…]`, backticks) then can't derail the parser. `_emit_noop_directive`
 emits `:::<tag>` + `_verbatim_block(text)` + `:::`, and `_fuse_noop_blocks` fuses
-adjacent same-tag runs. The `dev`/`instructors` directives live in
-`SFLMeta/Comment.lean` / `SFLMeta/Instructors.lean`; a same-named
-`@[code_block dev]` still exists for back-compat but `to_verso` no longer emits
-it. (Earlier guidance preferred the ` ```dev ` code-block form to avoid the inner
-fence — that was reversed 2026-07-11 in favor of the directive form.)
+adjacent runs with an identical header line (same tag *and* arguments). The
+`dev`/`instructors` directives live in `SFLMeta/Comment.lean` /
+`SFLMeta/Instructors.lean`; the same-named back-compat ` ```dev ` /
+` ```instructors ` code blocks were removed 2026-07-15 (no uses remained).
+
+`:::dev` takes two optional named arguments — `(author := "Full Name
+(github-handle)")` and `(urgency := SOONER)` (or `LATER`/`TODO`/`TOFIX`;
+identifier or string) — recorded in the block's data so a future dev-facing
+build can typeset provenance uniformly. `to_verso` promotes a dev note's
+leading tag to these arguments via `_split_dev_tags` / `_AUTHOR_NAMES` in
+`scripts/to_verso.py` (add newly identified initials there); unmapped initials
+and topic keywords (`NOTATION:`, `HIDE:`, `COMMENT:`) stay in the body
+untouched. `:::instructors` deliberately takes no arguments — instructor notes
+speak for the book, not an individual author.
 
 When editing a **versified** chapter by hand, prefer inlining the note body as
 plain markdown (backtick code identifiers, escape markdown-special text just as

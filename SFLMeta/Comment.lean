@@ -17,11 +17,14 @@ open Verso.Genre.Manual.InlineLean.Scopes (getScopes setScopes)
 
 namespace SFLMeta
 
-/-- Author-facing configuration for `:::dev`.  Both fields are optional:
-`:::dev`, `:::dev bcpierce00`, `:::dev (urgency := SOONER)`, and
-`:::dev bcpierce00 (urgency := SOONER)` are all valid. -/
+/-- Author-facing configuration for `:::dev`.  Both fields are optional named
+arguments: `:::dev`, `:::dev (author := "Benjamin Pierce (bcpierce00)")`,
+`:::dev (urgency := SOONER)`, and
+`:::dev (author := "Benjamin Pierce (bcpierce00)") (urgency := SOONER)` are
+all valid. -/
 structure DevConfig where
-  /-- Who filed the note, as a GitHub handle (e.g. `bcpierce00`). -/
+  /-- Who filed the note, conventionally a full name followed by a GitHub
+  handle in parentheses: `"Benjamin Pierce (bcpierce00)"`. -/
   author : Option String
   /-- An urgency keyword, conventionally `SOONER`, `LATER`, `TODO`, or `TOFIX`. -/
   urgency : Option String
@@ -31,7 +34,7 @@ section
 variable [Monad m] [MonadError m]
 
 /-- An argument value written either as a bare identifier or as a string
-literal (`bcpierce00` or `"bcpierce00"`), yielding its text. -/
+literal (`SOONER` or `"SOONER"`), yielding its text. -/
 def ValDesc.identOrStr : ValDesc m String where
   description := doc!"an identifier or string literal"
   signature := CanMatch.Ident ∪ CanMatch.String
@@ -40,11 +43,10 @@ def ValDesc.identOrStr : ValDesc m String where
     | .str s => Pure.pure s.getString
     | other => throwError "Expected identifier or string, got {toMessageData other}"
 
-/-- Argument parser for `DevConfig`: an optional positional author and an
-optional named urgency. -/
+/-- Argument parser for `DevConfig`: optional named author and urgency. -/
 def DevConfig.parse : ArgParse m DevConfig :=
   DevConfig.mk
-    <$> ((some <$> ArgParse.positional `author ValDesc.identOrStr) <|> Pure.pure none)
+    <$> ArgParse.named `author ValDesc.identOrStr true
     <*> ArgParse.named `urgency ValDesc.identOrStr true
 
 instance : FromArgs DevConfig m := ⟨DevConfig.parse⟩
@@ -69,10 +71,10 @@ def noopDirectiveFor (blockName : Name) : DirectiveExpanderOf Unit
   | (), _ => ``(Verso.Doc.Block.other $(mkIdent blockName) #[])
 
 /-- A `:::dev` directive is a noop for author/developer comments.  It accepts
-an optional positional author (a GitHub handle) and an optional named urgency,
-e.g. `:::dev bcpierce00 (urgency := SOONER)`; both are recorded in the block's
-data (for a future dev-facing build) while the body is dropped at
-elaboration. -/
+optional named author and urgency arguments, e.g.
+`:::dev (author := "Benjamin Pierce (bcpierce00)") (urgency := SOONER)`; both
+are recorded in the block's data (for a future dev-facing build) while the
+body is dropped at elaboration. -/
 @[directive]
 def dev : DirectiveExpanderOf DevConfig
   | cfg, _contents => do
