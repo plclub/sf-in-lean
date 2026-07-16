@@ -534,16 +534,7 @@ def double (n : Nat) : Nat :=
   | succ n' => succ (succ (double n'))
 ```
 
-<<<<<<< HEAD
-=======
-:::dev "Benjamin Pierce (bcpierce00)"
-```
-All this `unseal` stuff is a bit ugly and potentially confusing for students.
-Anything we can to about this?
-```
-:::
 
->>>>>>> 1a5154146468620661601b131d88102d0d94d9b8
 ```lean
 theorem double_zero : double zero = zero := by rfl
 theorem double_succ : ∀ n, double (succ n) = succ (succ (double n)) := by
