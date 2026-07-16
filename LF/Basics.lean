@@ -375,10 +375,10 @@ Note the syntax for defining multi-argument functions (`and` and `or`).
 :::
 
 ```lean
-example : or MyBool.true  MyBool.false = MyBool.true  := by rfl
+example : or MyBool.true  MyBool.false = MyBool.true := by rfl
 example : or MyBool.false MyBool.false = MyBool.false := by rfl
-example : or MyBool.false MyBool.true  = MyBool.true  := by rfl
-example : or MyBool.true  MyBool.true  = MyBool.true  := by rfl
+example : or MyBool.false MyBool.true  = MyBool.true := by rfl
+example : or MyBool.true  MyBool.true  = MyBool.true := by rfl
 ```
 
 We can define new symbolic notations for existing definitions.
@@ -416,9 +416,9 @@ def nand (b1 : MyBool) (b2 : MyBool) : MyBool
   | MyBool.true => not b2
   | MyBool.false => MyBool.true)
 
-example : nand MyBool.true  MyBool.false  = MyBool.true  := solution!(by rfl)
-example : nand MyBool.false MyBool.false =  MyBool.true  := solution!(by rfl)
-example : nand MyBool.false MyBool.true  =  MyBool.true  := solution!(by rfl)
+example : nand MyBool.true  MyBool.false  = MyBool.true := solution!(by rfl)
+example : nand MyBool.false MyBool.false =  MyBool.true := solution!(by rfl)
+example : nand MyBool.false MyBool.true  =  MyBool.true := solution!(by rfl)
 example : nand MyBool.true  MyBool.true   = MyBool.false := solution!(by rfl)
 ```
 
@@ -438,7 +438,7 @@ otherwise.
 def and3 (b1 : MyBool) (b2 : MyBool) (b3 : MyBool) : MyBool
   := solution!(and b1 (and b2 b3))
 
-example : and3 MyBool.true  MyBool.true  MyBool.true  = MyBool.true  := solution!(by rfl)
+example : and3 MyBool.true  MyBool.true  MyBool.true  = MyBool.true := solution!(by rfl)
 example : and3 MyBool.false MyBool.true  MyBool.true  = MyBool.false := solution!(by rfl)
 example : and3 MyBool.true  MyBool.false MyBool.true  = MyBool.false := solution!(by rfl)
 example : and3 MyBool.true  MyBool.true  MyBool.false = MyBool.false := solution!(by rfl)
@@ -1116,10 +1116,12 @@ Predict the output of each of the statements below.
 Do you think their results would change depending on which namespace
 the statements appear in? How?
 
+```
 #check .black -- Write your prediction here.
 #check Color.black -- Write your prediction here.
 #check RGB -- Write your prediction here.
 #check Playground.myFoo -- Write your prediction here.
+```
 
 Once you have written your predictions, copy the lines from the comment into
 an active section of the book to evaluate them.
@@ -1187,7 +1189,7 @@ def allZero (nb : Nibble) : Bool :=
   | .bits _   _   _   _   => false
 
 example : allZero (.bits .b1 .b0 .b1 .b0) = false := by rfl
-example : allZero (.bits .b0 .b0 .b0 .b0) = true  := by rfl
+example : allZero (.bits .b0 .b0 .b0 .b0) = true := by rfl
 
 end Playground
 ```
@@ -1257,10 +1259,10 @@ so we don't need to use `.` notation everywhere.
 ```lean
 namespace Nat
 
-def one   : Nat := succ zero
-def two   : Nat := succ one
+def one : Nat := succ zero
+def two : Nat := succ one
 def three : Nat := succ two
-def four  : Nat := succ three
+def four : Nat := succ three
 ```
 
 We can also write functions on `Nat`.
@@ -1328,7 +1330,7 @@ def even (n : Nat) : Bool :=
   | succ (succ n') => even n'
 
 unseal even
-example : even one = false  := by rfl
+example : even one = false := by rfl
 example : even four = true := by rfl
 seal even
 ```
@@ -1345,7 +1347,7 @@ def odd (n : Nat) : Bool :=
   not (even n)
 
 unseal odd even
-example : odd one = true  := by rfl
+example : odd one = true := by rfl
 example : odd four = false := by rfl
 seal odd even
 ```
@@ -1896,8 +1898,8 @@ theorem zero_ble (n : Nat) : ble zero n = true := by rfl
 theorem succ_ble_zero (n : Nat) : ble (succ n) zero = false := by rfl
 theorem succ_ble_succ (n m : Nat) : ble (succ n) (succ m) = ble n m := by rfl
 
-example : ble two two = true  := by rfl
-example : ble two four = true  := by rfl
+example : ble two two = true := by rfl
+example : ble two four = true := by rfl
 example : ble four two = false := by rfl
 seal ble
 ```
@@ -1949,7 +1951,7 @@ def blt (n m : Nat) : Bool
 
 unseal blt ble
 example : blt two two = false := solution!(by rfl)
-example : blt two four = true  := solution!(by rfl)
+example : blt two four = true := solution!(by rfl)
 example : blt four two = false := solution!(by rfl)
 seal blt ble
 ```
