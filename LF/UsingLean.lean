@@ -1,15 +1,15 @@
--- Chapter goals:
--- Nats
--- dsimp
--- calc
--- maybe simp annotations
--- maybe typeclasses?
-
 /- Lean: Using the full power of a proof assistant -/
 
--- INSTRUCTORS: This chapter is the bridge to Lean's natural numbers,
--- `dsimp`, `calc`, maybe, `simp` annotations, and maybe typeclasses.
--- It is relatively short -- should take about 30 minutes to cover.
+/- TODO: Chapter goals:
+   Nats
+   dsimp
+   calc
+   maybe simp annotations
+   maybe typeclasses? -/
+
+/- INSTRUCTORS: This chapter is the bridge to Lean's natural numbers,
+   `dsimp`, `calc`, maybe, `simp` annotations, and maybe typeclasses.
+   It is relatively short -- should take about 30 minutes to cover. -/
 
 -- HIDEFROMHTML
 -- FULL
@@ -20,6 +20,7 @@
 -/
 import LF.Basics
 import LF.Induction
+-- /FULL
 
 /-
   Until now, we have been working with our own custom natural numbers, using the
@@ -214,7 +215,7 @@ theorem mul_three (p : Nat) :
   -- ADMITTED
   rw [Nat.add_one_mul, Nat.two_mul]
   -- /ADMITTED
-  -- GRADE_THEOREM 1: mul_three
+-- GRADE_THEOREM 1: mul_three
 
 theorem mul_three_beq (p : Nat) :
     (3 * p == p + p + p) = true := by
@@ -222,7 +223,7 @@ theorem mul_three_beq (p : Nat) :
   rw [Nat.beq_eq_true_eq]
   exact mul_three p
   -- /ADMITTED
-  -- GRADE_THEOREM 1: mul_three_beq
+-- GRADE_THEOREM 1: mul_three_beq
 
 /-
   ######################################################################

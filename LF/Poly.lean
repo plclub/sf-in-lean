@@ -4,14 +4,6 @@
       lectures is a bit tight -- if that's your plan, don't dawdle on
       this chapter. -/
 
-/- HIDEFROMHTML
-   FULL
-   Final reminder: Please do not put solutions to the exercises in
-      publicly accessible places. Thank you!! -/
-
-/- /FULL
-   /HIDEFROMHTML
-   TERSE: HIDEFROMHTML -/
 import LF.Induction
 import LF.UsingLean
 /- TERSE: /HIDEFROMHTML -/
@@ -365,13 +357,12 @@ def myRepeat''' {α : Type} (x : α) (count : Nat) : List α :=
 /- (Note that we didn't even have to provide a type argument to the
     recursive call to myRepeat'''. Indeed, it would be invalid to
     provide one, because Lean is not expecting it.) -/
+-- /FULL
 
 /- ######################################################
    ### Supplying Type Arguments Explicitly -/
 
-/- FULL
-
-   One small problem with implicit arguments is that, once in a
+/- FULL: One small problem with implicit arguments is that, once in a
    while, Lean does not have enough local information to determine
    a type argument; in such cases, we need to tell Lean the type
    explicitly. For example: -/
@@ -512,6 +503,7 @@ def mynil' := @List.nil Nat
 
 /- TERSE: /HIDEFROMHTML -/
 
+/- FULL -/
 
 /- EX2M? (mumble_grumble) -/
 /- Consider the following two inductively defined types. -/
@@ -615,7 +607,8 @@ theorem app_length {α : Type} : ∀ (l1 l2 : List α),
   case cons h t ih =>
    dsimp [List.cons_append, List.length_cons]
    rw [Nat.succ_add, ih]
-/- /ADMITTED
+/- /ADMITTED -/
+/-
    GRADE_THEOREM 0.5: app_nil_r
    GRADE_THEOREM 1: app_assoc
    GRADE_THEOREM 0.5: app_length
@@ -647,7 +640,8 @@ theorem rev_involutive {α : Type} : ∀ (l : List α),
   case cons h t ih =>
    rw [rev_cons, rev_app_distr, ih, rev_cons, rev_nil]
    dsimp only [List.nil_append, List.cons_append]
-/- /ADMITTED
+/- /ADMITTED -/
+/-
    GRADE_THEOREM 1: rev_app_distr
    GRADE_THEOREM 1: rev_involutive
    []
@@ -936,7 +930,7 @@ theorem filter_cons_fail {α : Type} {test : α → Bool} h t :
    dsimp
 
 
--- TERSE:
+-- TERSE: ***
 /- LATER: This material would sink in better if it were made clearer
    why map and filter and such were useful in the real world. Talk
    about map/reduce, collection-oriented programming, etc. Esp in the
@@ -1041,11 +1035,11 @@ example : filterEvenGt7 [1, 2, 6, 9, 10, 3, 12, 8] = [10, 12, 8] := by rfl  /- A
 
 /- test_filter_even_gt7_2 -/
 example : filterEvenGt7 [5, 2, 6, 19, 129] = [] := by rfl  /- ADMITTED -/
+seal filter
+seal List.length
 /- GRADE_THEOREM 1: test_filter_even_gt7_1
    GRADE_THEOREM 1: test_filter_even_gt7_2
    [] -/
-seal filter
-seal List.length
 
 
 /- EX3 (partition)
@@ -1171,7 +1165,8 @@ theorem map_rev {α : Type} {β : Type} : ∀ (f : α → β) (l : List α),
    rw [rev_nil, map_nil, rev_nil]
   case cons h t ih =>
    rw [rev_cons, map_cons, map_app, rev_cons, ih, map_cons, map_nil]
-/- /ADMITTED
+/- /ADMITTED -/
+/-
    GRADE_THEOREM 3: map_rev
    [] -/
 
@@ -1200,9 +1195,7 @@ example : flatMap (fun n => [n, n, n]) [1, 5, 4]
   = [1, 1, 1, 5, 5, 5, 4, 4, 4] := by rfl  /- ADMITTED -/
 /- GRADE_THEOREM 1: flatMap
    GRADE_THEOREM 1: test_flat_map1
-   []
-   /FULL
-   HIDEFROMADVANCED -/
+   [] -/
 
 unseal flatMap in
 theorem flatMap_nil {α : Type} {β : Type} (f : α → List β) : flatMap f [] = [] :=
@@ -1211,6 +1204,8 @@ theorem flatMap_nil {α : Type} {β : Type} (f : α → List β) : flatMap f [] 
 unseal flatMap in
 theorem flatMap_cons {α : Type} {β : Type} (f : α → List β) h t :
    flatMap f (h :: t) = f h ++ flatMap f t := by rfl -- ADMITTED
+/- /FULL
+   HIDEFROMADVANCED -/
 
 /- Lists are not the only inductive type for which `map` makes sense.
    Here is a `map` for the `Option` type: -/
@@ -1438,7 +1433,8 @@ theorem fold_length_correct {α : Type} (l : List α) :
   case cons h t ih =>
     dsimp only [foldLength] at *
     rw [List.length_cons, fold_cons, ih]
-/- /ADMITTED
+/- /ADMITTED -/
+/-
    GRADE_THEOREM 2: Exercises.fold_length_correct
    [] -/
 
@@ -1454,8 +1450,8 @@ abbrev foldMap {α : Type} {β : Type} (f : α → β) (l : List α) : List β :
 /- Write down a theorem `fold_map_correct` stating that `foldMap` is
    correct, and prove it in Lean. -/
 
-/- SOLUTION
-   fold_map_correct -/
+/- SOLUTION -/
+/- fold_map_correct -/
 theorem fold_map_correct {α : Type} {β : Type} (f : α → β) (l : List α) :
     foldMap f l = map f l := by
   induction l
@@ -1536,8 +1532,8 @@ theorem curry_uncurry {α β γ : Type} (f : α × β → γ) (p : α × β) :
     prodUncurry (prodCurry f) p = f p := by
   /- ADMITTED -/
   rfl
-/- /ADMITTED
-   GRADE_THEOREM 1: Exercises.uncurry_curry
+/- /ADMITTED -/
+/- GRADE_THEOREM 1: Exercises.uncurry_curry
    GRADE_THEOREM 1: Exercises.curry_uncurry
    [] -/
 

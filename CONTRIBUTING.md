@@ -418,6 +418,60 @@ in the Verso source and are elaborated by Lean as the book is compiled,
 so type errors and broken proofs are caught at build time.  Code that
 should appear in the rendered HTML uses fenced `` ```lean `` blocks.
 
+### Displays: `` ```display `` and `` ```displaymath ``
+
+Two fenced blocks (parallel to `` ```lean `` and `` ```bnf ``) set material off
+from the prose as a *display*.  Both are implemented by
+`SFLMeta/DisplayMath.lean`.
+
+**`` ```display `` — set-off Lean code, no typesetting.** Shows its body verbatim
+as (non-elaborated, non-highlighted) monospace code, set off from the prose.  The
+body is never parsed or elaborated, so anything is safe — deliberately ill-formed
+snippets, shell transcripts, and the informal `[[ … ]]` equations of the paper
+proofs:
+
+````
+```display
+n + (m + p) = (n + m) + p.
+```
+````
+
+This is the home for the coqdoc `[[ … ]]` displays: **`to_verso` emits a
+`` ```display `` block for every `[[ … ]]`** (in both the `.lean` and the `.v`
+front-ends).  The content is thus preserved and marked as a display rather than
+left as an anonymous `` ``` `` fence.  coqdoc uses the same `[[ … ]]` for shell/code
+displays (`make Basics.vo`) and for displayed math, and the two are not
+mechanically distinguishable, so `to_verso` treats them uniformly as
+`` ```display `` — always safe, never elaborated.
+
+In the HTML a display is set off and indented a few characters from the left
+margin (not flush left, not centered).  In the *generated* `.lean` files (the
+per-variant student/solutions/terse extracts) a display is rendered specially: it
+becomes its own comment, each source line kept on its own line and indented under
+`-- `, and — unlike ordinary prose — it is **never reflowed/filled** into a
+paragraph, because a display's line structure is significant.
+
+**`` ```displaymath `` — real typeset math.** For a genuine *displayed equation*,
+typeset as mathematics by the bundled KaTeX:
+
+````
+```displaymath
+n + (m + p) = (n + m) + p.
+```
+````
+
+Each non-blank line becomes one centered display equation.  The body is **LaTeX**:
+for the plain arithmetic identities that pervade the informal proofs
+(`0 + (m + p) = (0 + m) + p.`) the source text is already valid LaTeX and renders
+directly; where finer control is wanted an author writes the corresponding LaTeX
+(`\mathsf{S}` for a roman constructor, `\text{and}` between two columns, an
+`aligned` environment to line up `=`).  Verso also accepts a single inline display
+natively as `` $$`…` `` inside prose.
+
+Promoting the genuinely-mathematical `` ```display `` blocks to `` ```displaymath ``
+is a manual editing pass on the `.lean` chapter; `to_verso` does not attempt it
+automatically.
+
 ### Fence depth: `:::` vs `::::`
 
 Verso uses colon-fence depth the same way markdown uses backtick depth

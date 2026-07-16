@@ -5,4 +5,11 @@ __pycache__/
 LF/*Verso.lean
 HL/*Verso.lean
 TS/*Verso.lean
+# Archived bare-Lean sources kept locally after a chapter graduates to Verso
+# (e.g. LF/OldInduction.lean); the original is preserved in git history.
+LF/Old*.lean
+HL/Old*.lean
+TS/Old*.lean
 .claude/settings.json
+.claude/settings.local.json
+*.tmp

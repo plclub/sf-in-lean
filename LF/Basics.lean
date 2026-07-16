@@ -21,6 +21,7 @@ open InlineLean hiding lean
 
 #doc (Manual) "Basics: Functional Programming in Lean" =>
 %%%
+tag := "Basics"
 htmlSplit := .never
 file := "Basics"
 %%%

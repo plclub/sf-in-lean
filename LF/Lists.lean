@@ -6,7 +6,7 @@
    Putting it together with Induction.lean makes a reasonable
    second week's homework assignment. -/
 
-/- SOONER: (BCP 9/18) Since the domain type in Maps.v has changed from
+/- SOONER: (BCP 9/18) Since the domain type of Maps has changed from
    id to string, we should either do the same here (in the partial
    maps section) or else comment there that we are making a different
    choice.  For the moment, it feels cleaner to avoid importing the
@@ -21,19 +21,6 @@
    alias Definition Id := string). -/
 
 /- SOONER: This chapter could use another WORKINCLASS or three. -/
-
-/- HIDEFROMHTML
-   FULL
-   REMINDER:
-
-          #####################################################
-          ###  PLEASE DO NOT DISTRIBUTE SOLUTIONS PUBLICLY  ###
-          #####################################################
-
-   (See the \CHAP{Preface} for why.)
-   /FULL
-   /HIDEFROMHTML
--/
 
 import LF.Induction
 import LF.UsingLean
@@ -60,7 +47,7 @@ inductive NatProd where
 -- HIDEFROMADVANCED
 #check (NatProd.pair 3 5)
 
--- TERSE:
+-- TERSE: ***
 -- /HIDEFROMADVANCED
 /- Functions for extracting the first and second components of a pair
     can then be defined by pattern matching. -/
@@ -486,8 +473,10 @@ seal alternate
    representing a bag of numbers is as a list.  The following definition
    introduces a new type, `Bag`, as an abbreviation for `NatList`. -/
 
+-- /FULL
 abbrev Bag := NatList
 namespace Bag
+-- FULL
 
 -- EX3! (bag_functions)
 /- Complete the following definitions for the functions `count`,
@@ -555,10 +544,10 @@ example : count 1 (sum [1, 2, 3] [1, 4, 1]) = 3 := by rfl -- ADMITTED
 -- GRADE_THEOREM 0.5: NatList.test_sum1
 
 unseal app in
-theorem nil_sum (l : NatList) : sum [] l = l := rfl
+theorem nil_sum (l : NatList) : sum [] l = l := rfl -- ADMITTED
 
 unseal app in
-theorem cons_sum (n : Nat) (l1 l2 : Bag) : sum (n::l1) l2 = n :: (sum l1 l2) := rfl
+theorem cons_sum (n : Nat) (l1 l2 : Bag) : sum (n::l1) l2 = n :: (sum l1 l2) := rfl -- ADMITTED
 
 abbrev add (v : Nat) (s : Bag) : Bag :=
   -- ADMITDEF
@@ -776,10 +765,10 @@ theorem add_inc_count (s : Bag) (v : Nat) :
 -- /QUIETSOLUTION
 -- GRADE_MANUAL 2: add_inc_count
 -- []
+-- /FULL
 
 end Bag
 
--- /FULL
 -- ######################################################################
 -- # Reasoning About Lists
 
@@ -827,8 +816,8 @@ theorem tl_length_pred (l : NatList) :
   think about what each step achieves.  Otherwise it is more or less
   guaranteed that the exercises will make no sense when you get to
   them.  'Nuff said.)
-  /FULL
 -/
+-- /FULL
 
 -- ######################################################################
 -- ## Induction on Lists
@@ -1052,7 +1041,7 @@ theorem foo1 (n : Nat) (l : NatList) :
 -- /HIDE
 -- /QUIZ
 
--- QUIZ --
+-- QUIZ
 /- What about the next one?
 
       theorem foo2 :  ∀ n m : Nat,
@@ -1072,8 +1061,9 @@ theorem foo2 (n m : Nat) :
   | succ m' ih => rw [repeat_succ, cons_length, ih]
 -- /HIDE
 -- /QUIZ
+-- /TERSE
 
--- FULL --
+-- FULL
 /- For comparison, here are informal proofs of these two theorems:
 
     _Theorem_: For all lists `l1` and `l2`,
@@ -1238,18 +1228,22 @@ def eqblist (l1 l2 : NatList) : Bool :=
   -- /ADMITDEF
 
 unseal eqblist in
-theorem eqblist_nil : eqblist [] [] = true := by rfl
+theorem eqblist_nil : eqblist [] [] = true := by rfl -- ADMITTED
 
 unseal eqblist in
 theorem eqblist_cons_same h t1 t2 : eqblist (h :: t1) (h :: t2) = eqblist t1 t2 := by
+  -- ADMITTED
   dsimp [eqblist]
   rw [BEq.refl, Bool.true_and]
+  -- /ADMITTED
 
 unseal eqblist in
 theorem eqblist_cons_diff h1 h2 t1 t2 : (h1 == h2) = false -> eqblist (h1 :: t1) (h2 :: t2) = false := by
+  -- ADMITTED
   intro h
   dsimp [eqblist]
   rw [h, Bool.false_and]
+  -- /ADMITTED
 
 -- test_eqblist1
 unseal eqblist
@@ -1275,7 +1269,9 @@ theorem eqblist_refl (l : NatList) :
 -- ######################################################################
 -- ## List Exercises, Part 2
 
+-- /FULL
 open Bag
+-- FULL
 
 -- Here are a couple of little theorems to prove about your
 -- definitions about bags above.
@@ -1484,6 +1480,7 @@ seal nth_error
 -- The function below pulls the `Nat` out of an `NatOption`,
 -- returning a supplied default in the `none` case.
 
+-- /FULL
 @[irreducible]
 def option_elim (d : Nat) (o : NatOption) : Nat :=
   match o with
@@ -1495,6 +1492,7 @@ theorem option_elim_none d : option_elim d .none = d := by rfl
 
 unseal option_elim in
 theorem option_elim_some d1 d2 : option_elim d1 (.some d2) = d2 := by rfl
+-- FULL
 
 -- EX2 (hd_error)
 -- Using the same idea, fix the `hd` function from earlier so we
