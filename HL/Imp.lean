@@ -2,6 +2,7 @@ import VersoManual
 import VersoManual.InlineLean
 import Illuminate
 import SFLMeta.Bnf
+import SFLMeta.DisplayMath
 import SFLMeta.Ignore
 import SFLMeta.Save
 import SFLMeta.Comment
@@ -76,7 +77,7 @@ conventional mainstream languages such as C and Java.
 
 Here is a familiar mathematical function written in Imp.
 
-```
+```display
 Z := X;
 Y := 1;
 while Z <> 0 do
@@ -146,7 +147,11 @@ Will we develop `ImpParser`? Mentioned below as an optional chapter
 In this chapter, we'll mostly elide the translation from the concrete
 syntax that a programmer would actually write to these abstract syntax
 trees -- the process that, for example, would translate the string
-`"1 + 2 * 3"` to the AST `.plus (.num 1) (.mult (.num 2) (.num 3))`.
+`"1 + 2 * 3"` to the AST
+
+```display
+      .plus (.num 1) (.mult (.num 2) (.num 3))
+```
 
 The optional chapter `ImpParser` develops a simple lexical analyzer and
 parser that can perform this translation.  You do not need to understand
@@ -157,7 +162,7 @@ you may want to skim it.
 For comparison, here's a conventional BNF (Backus-Naur Form) grammar
 defining the same abstract syntax:
 
-```
+```display
 a := nat
     | a + a
     | a - a
@@ -256,7 +261,7 @@ def Bexp.eval (b : Bexp) : Bool :=
 ::::quiz
 What does the following expression evaluate to?
 
-```
+```display
 Aexp.eval (.plus (.num 3) (.minus (.num 4) (.num 1)))
 ```
 
@@ -495,7 +500,7 @@ _inference rules_, where the premises above the line justify the
 conclusion below the line.  For example, the constructor `plus`
 can be written like this as an inference rule:
 
-```
+```display
                           e1 ⇓ n1
                           e2 ⇓ n2
                     --------------------          (plus)
@@ -505,7 +510,7 @@ can be written like this as an inference rule:
 Notice the structural correspondence between this rule and our version of the inductive
 type with unnamed hypotheses:
 
-```
+```display
     | plus (a1 a2 : Aexp) (n1 n2 : Nat) :
         EvalR a1 n1 →
         EvalR a2 n2 →
@@ -532,7 +537,7 @@ like `e1` and `n1` are implicitly universally quantified. The whole
 collection of rules defines `⇓` as the smallest relation closed under
 them:
 
-```
+```display
                         -----------                (num)
                         num n ⇓ n
 
@@ -565,7 +570,7 @@ LATER: The first two quizzes here seem kind of boring.
 ::::quiz
 Which rules are needed to prove the following?
 
-```
+```display
 .mult (.plus (.num 3) (.num 1)) (.num 0) ⇓ 0
 ```
 
@@ -610,7 +615,7 @@ alternative, assuming there are no namespace issues..
 :::::exercise (rating := 1) (name := "beval_rules")
 Here, again, is the definition of the {name}`Bexp.eval` function:
 
-```
+```display
 def Bexp.eval (b : Bexp) : Bool :=
   match b with
   | bool b     => b
@@ -1421,7 +1426,7 @@ Now we are ready to define the syntax and behavior of Imp _commands_
 (or _statements_). Informally, commands `c` are described by the
 following BNF grammar:
 
-```
+```display
 c := skip
    | x := a
    | c ; c
@@ -1804,7 +1809,7 @@ BCP 21: I wonder if `seq` would be easier to work with if st' and
 Here is an informal definition of evaluation, presented as inference rules
 for readability:
 
-```
+```display
                       -----------------                  (skip)
                       st =[ skip ]=> st
 
@@ -1929,7 +1934,7 @@ some simple examples...
 ::::quiz
 Is the following proposition provable?
 
-```
+```display
 ∀ (c : Com) (st st' : State),
   st =[ skip; ~c ]=> st' →
   st =[ c ]=> st'
@@ -1952,7 +1957,7 @@ theorem quiz1_answer (c : Com) (st st' : State)
 ::::quiz
 Is the following proposition provable?
 
-```
+```display
 ∀ (c1 c2 : Com) (st st' : State),
   st =[ ~c1 ~c2 ]=> st' →
   st =[ c1 ]=> st →
@@ -1969,7 +1974,7 @@ Answer is given later (`quiz2_answer`) as it depends on `ceval_deterministic`.
 ::::quiz
 Is the following proposition provable?
 
-```
+```display
 ∀ (b : Bexp) (c : Com) (st st' : State),
   st =[ if (~b) { ~c } else { ~c } ]=> st' →
   st =[ c ]=> st'
@@ -1991,7 +1996,7 @@ theorem quiz3_answer (b : Bexp) (c : Com) (st st' : State)
 ::::quiz
 Is the following proposition provable?
 
-```
+```display
 ∀ (b : Bexp),
   (∀ st, b.eval st = true) →
   ∀ (c : Com) (st : State),
@@ -2028,7 +2033,7 @@ theorem quiz4_answer (b : Bexp) (hbtrue : ∀ st, b.eval st = true)
 ::::quiz
 Is the following proposition provable?
 
-```
+```display
 ∀ (b : Bexp) (c : Com) (st : State),
   (¬ ∃ st', st =[ while (~b) { ~c } ]=> st') →
   ∀ st'', b.eval st'' = true

@@ -117,7 +117,6 @@ Troubleshooting:
 namespace NatPlayground.Nat
 ```
 
-
 # Review
 
 ::::quiz
@@ -125,7 +124,9 @@ To prove the following theorem, which tactics will we need besides
 `intro` and `rfl`?  (A) none, (B) `rewrite`, (C) `cases`, (D) both
 `rewrite` and `cases`, or (E) can't be done with the tactics we've seen.
 
+```display
     theorem review1 : (true || false) = true
+```
 
 :::answer
 ```
@@ -138,7 +139,9 @@ theorem review1 : (true || false) = true := by rfl
 ::::quiz
 What about the next one?
 
+```display
     theorem review2 : ∀ b, (true || b) = true
+```
 
 Which tactics do we need besides `intro` and `rfl`?  (A)
 none (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`,
@@ -157,7 +160,9 @@ theorem review2 : ∀ b : Bool, (true || b) = true := by
 ::::quiz
 What if we change the order of the arguments of `||`?
 
+```display
     theorem review3 : ∀ b, (b || true) = true
+```
 
 Which tactics do we need besides `intro` and `rfl`?  (A)
 none (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`,
@@ -180,7 +185,9 @@ What about this one?  (Recall that in Lean, `Nat.add` recurses on the _second_
 argument: `n + zero = n` by definition, and `n + (m + 1) = (n + m) + 1` by
 definition.)
 
+```display
     theorem review4 : ∀ n : Nat, n + zero = n
+```
 
 (A) none, (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`, or (E)
 can't be done with the tactics we've seen.
@@ -199,7 +206,9 @@ theorem review4 : ∀ n : Nat, n + zero = n := by
 ::::quiz
 What about this?
 
+```display
     theorem review5 : ∀ n : Nat, zero + n = n
+```
 
 (A) none, (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`,
 or (E) can't be done with the tactics we've seen.
@@ -866,28 +875,38 @@ Again, the math displays need to be displayed!
 
 - _Theorem_: For any `n`, `m` and `p`,
 
-n + (m + p) = (n + m) + p.
+```display
+      n + (m + p) = (n + m) + p.
+```
 
 _Proof_: By induction on `p`.
 
 - First, suppose `p = zero`.  We must show that
 
-n + (m + zero) = (n + m) + zero.
+```display
+        n + (m + zero) = (n + m) + zero.
+```
 
 This follows directly from the definition of `+`
 (since `x + zero = x` for any `x`).
 
 - Next, suppose `p = p' + 1`, where
 
-n + (m + p') = (n + m) + p'.
+```display
+        n + (m + p') = (n + m) + p'.
+```
 
 We must now show that
 
-n + (m + (p' + 1)) = (n + m) + (p' + 1).
+```display
+        n + (m + (p' + 1)) = (n + m) + (p' + 1).
+```
 
 By the definition of `+`, both sides reduce to
 
-(n + (m + p')) + 1   and   ((n + m) + p') + 1
+```display
+        (n + (m + p')) + 1   and   ((n + m) + p') + 1
+```
 
 respectively, which are equal by the induction hypothesis.
 _Qed_.

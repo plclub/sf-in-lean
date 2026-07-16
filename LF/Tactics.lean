@@ -340,11 +340,11 @@ theorem trans_eq_exercise (n m o p : Nat) :
 -- # The `injection` and `contradiction` Tactics
 
 /- FULL: Recall the definition of natural numbers:
-
+[[
      inductive Nat : Type :=
        | zero
        | succ (n : Nat).
-
+]]
     It is obvious from this definition that every number has one of
     two forms: either it is the constructor `0` or it is built by
     applying the constructor `.succ` to another number.  But there is more
@@ -587,11 +587,13 @@ inductive Color : Type where |
   black | white | primary (p: RGB)
 
 Suppose Lean's proof state looks like
+[[
     x : RGB
     y : RGB
     h : .primary x = .primary y
 
     ⊢ y = x
+]]
     and we apply the tactic `injection h with hxy`.  What will happen?
 
     (1) "No goals."
@@ -614,11 +616,13 @@ theorem quiz0 (x y : RGB) :
 
 -- QUIZ
 /- Suppose Lean's proof state looks like
+[[
       x : Bool
       y : Bool
       h : !x = !y
 
       ⊢ y = x
+]]
     and we apply the tactic `injection h with hxy`  What will happen?
 
     (A) "No more goals."
@@ -644,13 +648,13 @@ theorem quiz1 (x y : Bool) : !x = !y → y = x := by
 
 -- QUIZ
 /- Now suppose Lean's proof state looks like
-
+[[
         x : Nat
         y : Nat
         h : x + 1 = y + 1
 
         ⊢ y = x
-
+]]
     and we apply the tactic `injection h with hxy`.  What will happen?
 
     (A) "No more goals."
@@ -672,13 +676,13 @@ theorem quiz2 (x y : Nat) : x + 1 = y + 1 → y = x := by
 
 -- QUIZ
 /- Finally, suppose Lean's proof state looks like
-
+[[
          x : Nat
          y : Nat
          h : 1 + x = 1 + y
 
          ⊢ y = x
-
+]]
     and we apply the tactic `injection h with hxy`.  What will happen?
 
     (A) "No more goals."

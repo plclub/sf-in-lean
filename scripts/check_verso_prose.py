@@ -56,6 +56,12 @@ _MARKER_LINE_RE = re.compile(
     re.IGNORECASE,
 )
 _DIVIDER_LINE_RE = re.compile(r"^\s*--\s*[#*=-]{3,}")
+# Lone `[[` / `]]` (or `[[[` / `]]]`) display-fence lines: to_verso turns the
+# enclosed material into a ```display code block, so the fence interrupts the
+# translation's word stream (the fence info string sits between prose and
+# body).  Treat them as segment boundaries here too, or an n-gram spanning
+# prose -> display body is (falsely) reported missing.
+_DISPLAY_FENCE_RE = re.compile(r"^\s*(\[\[\[?|\]\]\]?)\s*$")
 _TERSE_INLINE_RE = re.compile(r"^\s*--\s*TERSE:", re.IGNORECASE)
 
 # Unambiguous marker lines *inside* a block comment (no `--` prefix there), e.g.
@@ -122,7 +128,7 @@ def source_segments(text: str) -> List[str]:
                 continue
             run: List[str] = []
             for bl in body:
-                if _BLOCK_MARKER_RE.match(bl):
+                if _BLOCK_MARKER_RE.match(bl) or _DISPLAY_FENCE_RE.match(bl):
                     if run:
                         segments.append(" ".join(run))
                         run = []
@@ -142,7 +148,8 @@ def source_segments(text: str) -> List[str]:
         # Plain line comment.
         if re.match(r"^\s*--", line):
             if (_MARKER_LINE_RE.match(line) or _DIVIDER_LINE_RE.match(line)
-                    or _TERSE_INLINE_RE.match(line)):
+                    or _TERSE_INLINE_RE.match(line)
+                    or _DISPLAY_FENCE_RE.match(re.sub(r"^\s*--\s?", "", line))):
                 flush_run()  # marker ends the current prose run
             else:
                 line_run.append(_MODE_PREFIX_RE.sub(

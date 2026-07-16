@@ -137,9 +137,9 @@ theorem succ_inj' : injective succ := by
 #check (true : Prop)
 
 /- QUIZ: What is the type of the following expression?
-    ```
+[[
     pred (succ zero) = zero
-    ```
+]]
 
    1. `Prop`
    2. `Nat → Prop`
@@ -150,9 +150,9 @@ theorem succ_inj' : injective succ := by
 #check (pred (succ zero) = zero : Prop)
 
 /- QUIZ: What is the type of the following expression?
-    ```
+[[
     ∀ n : Nat, pred (succ n) = n
-    ```
+]]
 
    1. `Prop`
    2. `Nat → Prop`
@@ -163,9 +163,9 @@ theorem succ_inj' : injective succ := by
 #check (∀ n : Nat, pred (succ n) = n : Prop)
 
 /- QUIZ: What is the type of the following expression?
-    ```
+[[
     ∀ n : Nat, succ (pred n)
-    ```
+]]
 
    1. `Prop`
    2. `Nat → Prop`
@@ -179,9 +179,9 @@ theorem succ_inj' : injective succ := by
 #check_failure ∀ n : Nat, succ (pred n)
 
 /- QUIZ: What is the type of the following expression?
-    ```
+[[
     fun n : Nat => succ (pred n)
-    ```
+]]
 
    1. `Prop`
    2. `Nat → Prop`
@@ -192,9 +192,9 @@ theorem succ_inj' : injective succ := by
 #check (fun n : Nat => succ (pred n) : Nat → Nat)
 
 /- QUIZ: What is the type of the following expression?
-    ```
+[[
     fun n : Nat => succ (pred n) = n
-    ```
+]]
 
    1. `Prop`
    2. `Nat → Prop`
@@ -668,9 +668,9 @@ theorem not_true_is_false' (b : Bool) (h : b ≠ true) : b = false := by
 
 /- QUIZ: To prove the following proposition, which tactics will we need
     besides `intro`, `apply`, and `exact`?
-    ```
+[[
     ∀ X : Prop, ∀ a b : X, a = b ∧ a ≠ b → False
-    ```
+]]
 
     1. `cases`, `unfold`, `left`, and `right`
     2. `cases` and `unfold`
@@ -686,9 +686,9 @@ example (X : Prop) (a b : X) : a = b ∧ a ≠ b → False := by
 
 /- QUIZ: To prove the following proposition, which tactics will we need
     besides `intro`, `apply`, and `exact`?
-    ```
+[[
     ∀ P Q : Prop, P ∨ Q → ¬ ¬ (P ∨ Q)
-    ```
+]]
 
     1. `cases`, `unfold`, `left`, and `right`
     2. `cases` and `unfold`
@@ -704,9 +704,9 @@ example (P Q : Prop) (h : P ∨ Q) : ¬ ¬ (P ∨ Q) := by
 
 /- QUIZ: To prove the following proposition, which tactics will we need
     besides `intro`, `apply`, and `exact`?
-    ```
+[[
     ∀ P Q : Prop, P → (P ∨ ¬ ¬ Q)
-    ```
+]]
 
     1. `cases`, `unfold`, `left`, and `right`
     2. `cases` and `unfold`
@@ -722,9 +722,9 @@ example (P Q : Prop) (h : P) : P ∨ ¬ ¬ Q := by
 
 /- QUIZ: To prove the following proposition, which tactics will we need
     besides `intro`, `apply`, and `exact`?
-    ```
+[[
     ∀ P Q : Prop, P ∨ Q → (¬ ¬ P) ∨ (¬ ¬ Q)
-    ```
+]]
 
     1. `cases`, `unfold`, `left`, and `right`
     2. `cases` and `unfold`
@@ -742,9 +742,9 @@ example (P Q : Prop) (h : P ∨ Q) : (¬ ¬ P) ∨ (¬ ¬ Q) := by
 
 /- QUIZ: To prove the following proposition, which tactics will we need
     besides `intro`, `apply`, and `exact`?
-    ```
+[[
     ∀ A : Prop, 1 = 0 → (A ∨ ¬ A)
-    ```
+]]
 
     1. `contradiction`, `unfold`, `left`, and `right`
     2. `contradiction` and `unfold`
@@ -1389,16 +1389,16 @@ namespace FunctionTheoremQuiz
 
 -- QUIZ
 /- Suppose we have
-    ```
+[[
     n m : Nat
     H1 : n = m
     H2 : b = 42
     trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c
-    ```
+]]
     What is the type of this "proof object"?
-    ```
+[[
     trans_eq Nat n m 42 H1 H2
-    ```
+]]
 
     1. `n = m`
     2. `42 = n`
@@ -1413,16 +1413,16 @@ namespace FunctionTheoremQuiz
 
 -- QUIZ
 /- Suppose, again, we have
-    ```
+[[
     n m : Nat
     H1 : n = m
     H2 : b = 42
     trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c
-    ```
+]]
     What is the type of this proof object?
-    ```
+[[
     trans_eq _ _ _ _ H1 H2
-    ```
+]]
 
     1. `n = m`
     2. `42 = n`
@@ -1434,16 +1434,16 @@ namespace FunctionTheoremQuiz
 
 -- QUIZ
 /- Suppose, again, we have
-    ```
+[[
     n m : Nat
     H1 : n = m
     H2 : b = 42
     trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c
-    ```
+]]
     What is the type of this proof object?
-    ```
+[[
     trans_eq Nat m 42 n H2
-    ```
+]]
 
     1. `m = n`
     2. `m = n → 42 = n`
@@ -1455,16 +1455,16 @@ namespace FunctionTheoremQuiz
 
 -- QUIZ
 /- Suppose, again, we have
-    ```
+[[
     n m : Nat
     H1 : n = m
     H2 : b = 42
     trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c
-    ```
+]]
     What is the type of this proof object?
-    ```
+[[
     trans_eq _ 42 n m
-    ```
+]]
 
     1. `n = m → m = 42 → n = 42`
     2. `42 = n → n = m → 42 = m`
@@ -1476,16 +1476,16 @@ namespace FunctionTheoremQuiz
 
 -- QUIZ
 /- Suppose, again, we have
-    ```
+[[
     n m : Nat
     H1 : n = m
     H2 : b = 42
     trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c
-    ```
+]]
     What is the type of this proof object?
-    ```
+[[
     trans_eq _ _ _ _ H2 H1
-    ```
+]]
 
     1. `b = a`
     2. `42 = a`
@@ -2069,9 +2069,9 @@ example : (fun x => x + 2) = (fun x => x + (pred 3)) := rfl
 /- In general, functions can be equal for more interesting reasons.
     In common mathematical practice, two functions `f` and `g` are considered
     equal if they produce the same output on every input:
-    ```
+[[
     (∀ x, f x = g x) → f = g
-    ```
+]]
 
     This is known as _functional extensionality_,
     which Lean provides as `funext`. -/
@@ -2325,10 +2325,10 @@ theorem excluded_middle_irrefutable (P : Prop) : ¬ ¬ (P ∨ ¬ P) := by
 /- It is a theorem of classical logic that the following two assertions
     are equivalent:
 
-    ```
+[[
     ¬ ∃ x, ¬ P x
     ∀ x, P x
-    ```
+]]
 
     The `dist_not_exists` theorem proves one side of this equivalence.
     Interestingly, the other direction cannot be proven in constructive logic,

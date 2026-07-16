@@ -99,17 +99,17 @@ def NatProd.swap (p : NatProd) : NatProd :=
   examples illustrate pattern matching on a pair with elements `x`
   and `y`, whereas, for example, the definition of `sub` in
   \CHAP{Basics} performs pattern matching on the values `n` and `m`:
-```
+[[
     def sub (n m : Nat) : Nat :=
       match n, m with
       | 0,        _        => 0
       | .succ _,  0        => n
       | .succ n', .succ m' => sub n' m'
-```
+]]
     The distinction is minor, but it is worth understanding that they
     are not the same. For instance, the following definitions are
     ill-formed:
-```
+[[
       -- Can't match on a pair with multiple patterns:
       def bad_fst (p : NatProd) : Nat :=
         match p with
@@ -121,7 +121,7 @@ def NatProd.swap (p : NatProd) : NatProd :=
         | ⟨0,        _⟩       => 0
         | ⟨.succ _,  0⟩        => n
         | ⟨.succ n', .succ m'⟩ => sub n' m'
-```
+]]
 /FULL -/
 
 /- TODO (DHS): Wrote this, let me know how it reads. -/
@@ -881,15 +881,23 @@ theorem app_assoc (l1 l2 l3 : NatList) :
  _Proof_: By induction on `l1`.
 
  - First, suppose `l1 = []`.  We must show
-       `([] ++ l2) ++ l3 = [] ++ (l2 ++ l3)`,
+[[
+       ([] ++ l2) ++ l3 = [] ++ (l2 ++ l3),
+]]
    which follows directly from the definition of `app`.
 
  - Next, suppose `l1 = n :: l1'`, with
-       `(l1' ++ l2) ++ l3 = l1' ++ (l2 ++ l3)`
+[[
+       (l1' ++ l2) ++ l3 = l1' ++ (l2 ++ l3)
+]]
    (the induction hypothesis). We must show
-       `((n :: l1') ++ l2) ++ l3 = (n :: l1') ++ (l2 ++ l3)`.
+[[
+       ((n :: l1') ++ l2) ++ l3 = (n :: l1') ++ (l2 ++ l3).
+]]
    By the definition of `app`, this follows from
-       `n :: ((l1' ++ l2) ++ l3) = n :: (l1' ++ (l2 ++ l3))`,
+[[
+       n :: ((l1' ++ l2) ++ l3) = n :: (l1' ++ (l2 ++ l3)),
+]]
    which is immediate from the induction hypothesis.  _Qed_. -/
 
 -- Generalizing Statements
@@ -1032,9 +1040,11 @@ theorem app_length (l1 l2 : NatList) :
     `intro`, `dsimp`, `rw`, and `rfl`?  (A) none,
     (B) `cases`, (C) `induction` on `n`, (D) `induction` on `l`, or
     (E) can't be done with the tactics we've seen.
-
+[[
       theorem foo1 : ∀ n : Nat, ∀ l : NatList,
-        myRepeat n 0 = l -> l.length = 0 -/
+        myRepeat n 0 = l -> l.length = 0
+]]
+-/
 
 -- HIDE
 theorem foo1 (n : Nat) (l : NatList) :
@@ -1046,10 +1056,10 @@ theorem foo1 (n : Nat) (l : NatList) :
 
 -- QUIZ
 /- What about the next one?
-
+[[
       theorem foo2 :  ∀ n m : Nat,
         (myRepeat n m).length = m
-
+]]
     Which tactics do we need besides `intro`, `dsimp`, `rw`, and
     `rfl`?  (A) none, (B) `cases`, (C) `induction` on `n`,
     (D) `induction` on `m`, or (E) can't be done with the tactics we've
@@ -1075,14 +1085,20 @@ theorem foo2 (n m : Nat) :
     _Proof_: By induction on `l1`.
 
     - First, suppose `l1 = []`.  We must show
-          `([] ++ l2).length = [].length + l2.length`,
+[[
+        ([] ++ l2).length = [].length + l2.length,
+]]
       which follows directly from the definitions of `length`,
       `++`, and `+`.
 
     - Next, suppose `l1 = n::l1'`, with
-          `(l1' ++ l2).length = l1'.length + l2.length`
+[[
+        (l1' ++ l2).length = l1'.length + l2.length
+]]
       We must show
-          `((n::l1') ++ l2).length = (n::l1').length + l2.length`.
+[[
+        ((n::l1') ++ l2).length = (n::l1').length + l2.length.
+]]
       This follows directly from the definitions of `length` and `++`
       together with the induction hypothesis.  _Qed_. -/
 
@@ -1091,18 +1107,28 @@ theorem foo2 (n m : Nat) :
     _Proof_: By induction on `l`.
 
       - First, suppose `l = []`.  We must show
-            `[].rev.length = [].length`,
+[[
+          [].rev.length = [].length,
+]]
         which follows directly from the definitions of `length`
         and `rev`.
 
       - Next, suppose `l = n::l'`, with
-            `l'.rev.length = l'.length`
+[[
+          l'.rev.length = l'.length
+]]
         We must show
-            `(n :: l').rev.length = (n :: l').length`.
+[[
+          (n :: l').rev.length = (n :: l').length.
+]]
         By the definition of `rev`, this follows from
-            `(l'.rev ++ [n]).length = .succ (l'.length)`,
+[[
+          (l'.rev ++ [n]).length = .succ (l'.length),
+]]
         which, by the previous lemma, is the same as
-            `l'.rev.length + [n].length = .succ (l'.length)`.
+[[
+          l'.rev.length + [n].length = .succ (l'.length).
+]]
         This follows directly from the induction hypothesis and the
         definition of `length`.  _Qed_. -/
 
