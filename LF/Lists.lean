@@ -557,14 +557,12 @@ abbrev add (v : Nat) (s : Bag) : Bag :=
 -- test_add1
 example : count 1 (add 1 [1, 4, 1]) = 3 := by
   -- ADMITTED
-  dsimp [add]
-  rw [count_cons_same, count_cons_same, count_cons_diff, count_cons_same, count_nil] <;> dsimp
+  dsimp [add, count]
   -- /ADMITTED
 -- test_add2
 example : count 5 (add 1 [1, 4, 1]) = 0 := by
   -- ADMITTED
-  dsimp [add]
-  rw [count_cons_diff, count_cons_diff, count_cons_diff, count_cons_diff, count_nil] <;> dsimp
+  dsimp [add, count]
   -- /ADMITTED
 -- GRADE_THEOREM 0.5: NatList.test_add1
 -- GRADE_THEOREM 0.5: NatList.test_add2
