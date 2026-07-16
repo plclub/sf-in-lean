@@ -729,12 +729,16 @@ def _extract_comment_text(raw_lines):
     if lines[0].strip() and rest_non_blank:
         # Text starts on the opener line, which now sits at column 0 (its
         # indent went with the `/- `), while continuation lines keep the
-        # source's alignment indent (3 or 4 spaces depending on the comment).
-        # Dedent them by their own common indent; being uniform, this keeps
-        # any relative indentation among the continuation lines (bullets,
-        # display material) intact.
-        cut = min(len(l) - len(l.lstrip()) for l in rest_non_blank)
-        lines = [lines[0]] + [l[cut:] if l.strip() else l for l in lines[1:]]
+        # source's alignment indent (2-4 spaces depending on the comment).
+        # Take the first continuation line's indent as the alignment column
+        # and strip up to that much whitespace from every continuation:
+        # lines indented deeper (bullet bodies, display material) keep their
+        # offset, and lines shallower than the alignment column (a `[[` or
+        # fence marker at column 0, a raggedly-indented prose line) lose
+        # only the whitespace they actually have.
+        align = len(rest_non_blank[0]) - len(rest_non_blank[0].lstrip())
+        lines = [lines[0]] + [l[min(align, len(l) - len(l.lstrip())):]
+                              for l in lines[1:]]
     else:
         # Opener on a line of its own: plain common dedent over all lines.
         non_blank = [l for l in lines if l.strip()]
