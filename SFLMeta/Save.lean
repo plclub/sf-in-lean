@@ -206,17 +206,25 @@ private partial def blockToText (width : Nat) : Verso.Doc.Block Manual → Strin
 
 /-- Contents of the generated project's `lakefile.toml`. `extraLibs` names the
 additional `lean_lib`s holding bundled prerequisite sources (e.g. `LF` for the
-bare `LF/Maps.lean` that Imp depends on). -/
-private def lakefileTemplate (vol : String) (extraLibs : Array String) : String :=
+bare `LF/Maps.lean` that Imp depends on).  `pkgRequires` lists external package
+dependencies `(name, git url, rev)` needed by some emitted chapter's imports
+(e.g. batteries for `import Batteries.CodeAction`), each pinned to the same
+revision the book itself builds with. -/
+private def lakefileTemplate (vol : String) (extraLibs : Array String)
+    (pkgRequires : Array (String × String × String)) : String :=
   -- A bundled prerequisite may live in the volume's own namespace (e.g. the
   -- bare `LF/CustomTactics.lean` bundled into the LF project): the volume's
   -- `lean_lib` already covers it, and Lake rejects a duplicate target.
   let extra := (extraLibs.filter (· != vol)).foldl (init := "") fun acc l =>
     acc ++ "\n[[lean_lib]]\nname = \"" ++ l ++ "\"\n"
+  let reqs := pkgRequires.foldl (init := "") fun acc (name, url, rev) =>
+    acc ++ "\n[[require]]\nname = \"" ++ name ++ "\"\ngit = \"" ++ url ++
+      "\"\nrev = \"" ++ rev ++ "\"\n"
   "name = \"" ++ vol.toLower ++ "-extracted\"\n" ++
   "version = \"0.1.0\"\n" ++
-  "defaultTargets = [\"" ++ vol ++ "\"]\n\n" ++
-  "[[lean_lib]]\n" ++
+  "defaultTargets = [\"" ++ vol ++ "\"]\n" ++
+  reqs ++
+  "\n[[lean_lib]]\n" ++
   "name = \"" ++ vol ++ "\"\n" ++
   extra
 
@@ -861,7 +869,8 @@ contents under `dest/`, plus `lakefile.toml`, `lean-toolchain`, and a `LF.lean`
 that imports `LF.STLC`. -/
 private def writeProject (dest : System.FilePath) (toolchain : String)
     (vol kind : String) (files : Array (String × String))
-    (extraLibs : Array String) : IO Unit := do
+    (extraLibs : Array String)
+    (pkgRequires : Array (String × String × String)) : IO Unit := do
   IO.FS.createDirAll dest
   -- Clear the volume source tree (and any bundled-prerequisite lib trees) so
   -- files that have since been renamed or removed don't linger as stale
@@ -871,7 +880,7 @@ private def writeProject (dest : System.FilePath) (toolchain : String)
     let libRoot := dest / lib
     if ← libRoot.pathExists then
       IO.FS.removeDirAll libRoot
-  IO.FS.writeFile (dest / "lakefile.toml") (lakefileTemplate vol extraLibs)
+  IO.FS.writeFile (dest / "lakefile.toml") (lakefileTemplate vol extraLibs pkgRequires)
   IO.FS.writeFile (dest / "lean-toolchain") toolchain
   IO.FS.writeFile (dest / "README.md")
     s!"# {vol} — {kind} version\n\nGenerated from the Verso source.\n"
@@ -905,7 +914,10 @@ outside dependencies must be reconstructed from its own header `import`s: drop
 the framework imports (they build the book, not student code), re-emit the rest,
 and bundle the source of any that is a content prerequisite (not toolchain, not
 an emitted book chapter — e.g. the bare `LF.Maps`) under its own `lean_lib`. A
-bundled module is copied verbatim, so it must be plain (non-Verso) Lean. -/
+bundled module is copied verbatim, so it must be plain (non-Verso) Lean.
+An import from an external package (e.g. `Batteries.CodeAction`) is re-emitted
+too, and the generated `lakefile.toml` gains a matching `[[require]]` pinned to
+the revision in the book's `lake-manifest.json`. -/
 
 /-- Module top-namespaces belonging to the authoring framework: their imports
 build the book but must never appear in an extracted `.lean` file. -/
@@ -915,10 +927,32 @@ private def frameworkPrefixes : List String :=
 /-- Toolchain-provided top-namespaces: always available in any Lake project, so
 they stay as `import` lines but are never bundled as source. -/
 private def corePrefixes : List String :=
-  ["Lean", "Std", "Init", "Batteries"]
+  ["Lean", "Std", "Init"]
+
+/-- Top-namespaces provided by external packages: their imports stay as
+`import` lines and are never bundled as source, but the extracted project's
+`lakefile.toml` must `require` the package (pinned via `manifestPin`) for them
+to resolve. The package's Lake name is the prefix lowercased. -/
+private def pkgPrefixes : List String :=
+  ["Batteries"]
 
 /-- Top namespace of a module name (`LF.Maps` ⇒ `LF`). -/
 private def modTop (m : String) : String := (m.splitOn ".").headD m
+
+/-- Look up package `name` in the book's own `lake-manifest.json`, returning
+its `(git url, pinned rev)` so an extracted project can `require` the package
+at exactly the revision the book builds with. -/
+private def manifestPin (name : String) : IO (Option (String × String)) := do
+  let .ok raw ← (IO.FS.readFile "lake-manifest.json").toBaseIO | return none
+  let .ok json := Lean.Json.parse raw | return none
+  let .ok pkgs := json.getObjVal? "packages" | return none
+  let .ok arr := pkgs.getArr? | return none
+  for p in arr do
+    if (p.getObjValAs? String "name").toOption == some name then
+      let .ok url := p.getObjValAs? String "url" | return none
+      let .ok rev := p.getObjValAs? String "rev" | return none
+      return some (url, rev)
+  return none
 
 /-- Should module `m` appear as an `import` in an extracted file? (Framework
 imports are dropped; everything else — toolchain and content — is kept.) -/
@@ -996,11 +1030,13 @@ private def emitSavedImpl (destSlug modPrefix variant : String)
     let chapterModules := entries.map (·.1) |>.filter (·.any (· == '/'))
       |>.map fun k => ((k.dropEnd 5).toString).replace "/" "."
     let needsBundle (m : String) : Bool :=
-      keepImport m && ! corePrefixes.contains (modTop m) && ! chapterModules.contains m
+      keepImport m && ! corePrefixes.contains (modTop m)
+        && ! pkgPrefixes.contains (modTop m) && ! chapterModules.contains m
     -- Pick the variant per file; prepend each chapter's (framework-stripped)
     -- import preamble; collect bundle seeds from the chapters' source imports.
     let mut files : Array (String × String) := #[]
     let mut seeds : List String := []
+    let mut usedPkgs : Array String := #[]
     for (file, teacher, student, terse) in entries do
       let chosen := mergeAdjacentModuleDocs <|
         if variant == "solutions" then teacher
@@ -1025,13 +1061,27 @@ private def emitSavedImpl (destSlug modPrefix variant : String)
           then (m.dropEnd 5).toString else m
         let imps := ((headerImports src).toList.filter keepImport).map deVerso
         seeds := seeds ++ imps.filter needsBundle
+        for i in imps do
+          if pkgPrefixes.contains (modTop i) && ! usedPkgs.contains (modTop i) then
+            usedPkgs := usedPkgs.push (modTop i)
         let preamble := imps.foldl (init := "") fun acc i => acc ++ "import " ++ i ++ "\n"
         let preamble := if preamble.isEmpty then "" else preamble ++ "\n"
         files := files.push (file, preamble ++ chosen)
     let (bundleFiles, extraLibs) ← bundleLoop needsBundle seeds [] #[] #[]
     let allFiles := files ++ bundleFiles
+    -- Chapters importing an external package (e.g. Batteries) need the
+    -- extracted lakefile to `require` it, pinned to the book's own revision.
+    let mut pkgRequires : Array (String × String × String) := #[]
+    for pre in usedPkgs do
+      let name := pre.toLower
+      match ← manifestPin name with
+      | some (url, rev) => pkgRequires := pkgRequires.push (name, url, rev)
+      | none => reportError <|
+          s!"package '{name}' (needed for `import {pre}.…` in an extracted " ++
+          s!"chapter) is not in lake-manifest.json, so the extracted project " ++
+          s!"cannot pin it"
     let dest := System.FilePath.mk "_out" / destSlug / variant / "lean"
-    writeProject dest toolchain modPrefix variant allFiles extraLibs
+    writeProject dest toolchain modPrefix variant allFiles extraLibs pkgRequires
     if verify then buildProject dest variant
 
 /-- `ExtraStep` for the student build: solutions elided. -/

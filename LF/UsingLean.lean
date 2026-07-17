@@ -27,6 +27,8 @@
 import LF.Basics
 import LF.Induction
 
+import Batteries.CodeAction
+
 /-
   Until now, we have been working with our own custom natural numbers, using the
   `Nat` type that we defined in `Basics.lean`.
@@ -504,3 +506,120 @@ theorem double_mul (n : Nat) : double n = 2 * n := by
   -- /ADMITTED
 -- []
 -- GRADE_THEOREM 1: double_mul
+
+/-
+  # Using Code Actions to Generate Match Skeletons
+-/
+
+/-
+  Lean's language server can suggest _code actions_, which are
+  small editor commands that modify the source code.
+  In VSCode, a light-bulb icon appears on the left
+  when a code action is available at your cursor.
+  You can click the icon or open the code action menu with `Ctrl + .`
+  on Windows/Linux or `Command + .` on macOS.
+
+
+  For more information, see [Lean 4 VS Code extension manual](https://github.com/leanprover/vscode-lean4/blob/master/vscode-lean4/manual/manual.md#code-actions).
+
+  Some code actions can generate the explicit branches needed for pattern
+  matching. This is especially useful when working with `match` expressions,
+  or with tactics such as `cases` and `induction`, which we saw in previous chapters.
+
+  Let's look at an example using `induction`.
+-/
+
+-- FULL
+/-
+  For example, suppose we start with the following incomplete proof:
+-/
+/--
+error: unsolved goals
+case zero
+⊢ eqb 0 0 = true
+
+case succ
+n✝ : Nat
+a✝ : eqb n✝ n✝ = true
+⊢ eqb (n✝ + 1) (n✝ + 1) = true
+-/
+#guard_msgs(error) in
+theorem foo (n : Nat) : eqb n n := by
+  induction n
+
+/-
+  Put your cursor on `induction n` and open the code action menu.
+  You should see
+  "Generate an explicit pattern match for 'induction'." in the list.
+  If you choose this action,
+  Lean adds an explicit branch for each constructor:
+-/
+/-- warning: declaration uses `sorry` -/
+#guard_msgs in
+example (n : Nat) : eqb n n := by
+  induction n with
+  | zero => sorry
+  | succ n _ => sorry
+
+/-
+  This gives us basic structure of the proof without requiring us to write each
+  branch by hand. We can then focus on proving each case.
+
+  One possible proof is:
+-/
+example (n : Nat) : eqb n n := by
+  induction n with
+  | zero      => rfl
+  | succ n ih => rw [eqb, ih]
+
+/-
+  Note that Lean used `_` for the induction hypothesis in the generated `.succ` branch.
+  At that point, Lean didn't know the unfinished proof would need to refer to the hypothesis.
+  Since we use it in `rw`, we replace `_` with the name `ih`.
+
+  In later chapters, we will see some tactics that can make such
+  inaccessible names available again.
+-/
+
+/-
+  The same trick also works for `match` expressions.
+  For example, suppose we start with
+
+  ```
+  def isZero (n : Nat) : Bool :=
+    match n
+  ```
+-/
+
+/- HIDE:
+  @berberman: Incomplete `match` term would cause parse errors which `#guard_msgs` can't suppress.
+  Use code block in docstring for now.
+-/
+
+/-
+  Lean can generate the missing branches:
+-/
+
+/--
+error: don't know how to synthesize placeholder
+context:
+n✝ n : Nat
+⊢ Bool
+---
+error: don't know how to synthesize placeholder
+context:
+n : Nat
+⊢ Bool
+-/
+#guard_msgs in
+def isZero (n : Nat) : Bool :=
+  match n with
+  | 0 => _
+  | n + 1 => _
+
+/-
+  Note that for the built-in {name}`Nat` type, the patterns `0` and `n + 1` correspond to
+  `zero` and `succ n`.
+-/
+
+-- /FULL
