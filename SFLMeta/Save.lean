@@ -1016,8 +1016,8 @@ private def emitSavedImpl (destSlug modPrefix variant : String)
           | .error _ => pure ""
         -- A chapter authored directly in Verso imports its not-yet-graduated
         -- dependencies under their *Verso* module names (`import
-        -- LF.<X>Verso`); the extracted project has each such chapter
-        -- under its file key (`LF/<X>.lean`), so map the import back to
+        -- LF.UsingLeanVerso`); the extracted project has each such chapter
+        -- under its file key (`LF/UsingLean.lean`), so map the import back to
         -- the emitted module name — which also keeps the Verso source itself
         -- out of the bundle.
         let deVerso (m : String) : String :=

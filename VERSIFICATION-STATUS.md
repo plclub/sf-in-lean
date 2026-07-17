@@ -14,12 +14,11 @@ Tactics, Logic** — each `{include LF.<Ch>Verso}`d in `LF.lean`.
 build, and the three *generated* Lake projects under `_out/lf/*/lean/`
 compile. `LFDraft.lean` is now empty (everything graduated).
 
-Update 2026-07-16/17: **Induction**, **Lists**, and **UsingLean** are now
-authored *directly* in Verso — `LF/Induction.lean` / `LF/Lists.lean` /
-`LF/UsingLean.lean` are the Verso sources (the old bare sources are archived
-locally as `LF/Old<Ch>.lean`, untracked), imported and `{include}`d in
-`LF.lean` without the `Verso` suffix, removed from the Makefile's
-`LF_CHAPTERS` generation list, and listed in `to_verso.py`'s
+Update 2026-07-16: **Induction** and **Lists** are now authored *directly* in
+Verso — `LF/Induction.lean` / `LF/Lists.lean` are the Verso sources (the old
+bare sources are archived locally as `LF/Old<Ch>.lean`, untracked), imported
+and `{include}`d in `LF.lean` without the `Verso` suffix, removed from the
+Makefile's `LF_CHAPTERS` generation list, and listed in `to_verso.py`'s
 `DIRECT_LF_MODULES` so other chapters' `import LF.<Ch>` lines pass through
 unchanged.
 
