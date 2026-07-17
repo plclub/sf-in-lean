@@ -19,9 +19,33 @@ We are also not set up yet to consider PRs from outside the
 translation team.  If you are interested in joining the team, please
 email Benjamin Pierce and we can discuss.
 
+## Quick start: building and viewing the book
+
+To build everything and preview the HTML locally:
+
+    make serve
+
+then visit <http://localhost:8000>.  (This builds all volumes in all
+three variants — student / solutions / terse — into `_out/`, then
+serves that directory on port 8000.)
+
+To rebuild just one volume, use its make target and then serve `_out/`:
+
+    make lf          # or: hl, ts
+    make lf-student  # just one variant: -student, -solutions, -terse
+    python3 -m http.server 8000 -d _out/
+
+The HTML for a given volume and variant lands in
+`_out/<vol>/<variant>/html-multi/`, one page per chapter.  (There is no
+per-chapter build target; a volume is the smallest unit.)
+
+The first build compiles the Lean toolchain's worth of dependencies and
+takes a while; later builds are incremental.
+
 ## Orientation
 
-See [Contributing.md](CONTRIBUTING.md).
+For everything else — repo layout, conventions, PR workflow — see
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
