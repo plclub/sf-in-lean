@@ -2382,8 +2382,8 @@ inductive R : Nat → Nat → Nat → Prop where
 /- TODO (DHS): They really need to use (+) here, not Nat.add,
    or there's some typeclass nonsense in the proofs -/
 def fR : Nat → Nat → Nat
-  /- ADMITDEF -/ :=
-  fun x y => x + y
+  /- ADMITDEF -/
+  := fun x y => x + y
 /- /ADMITDEF -/
 
 theorem R_equiv_fR : ∀ m n o, R m n o ↔ fR m n = o := by

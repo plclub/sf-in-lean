@@ -69,7 +69,7 @@ open SFLMeta
 
 open InlineLean hiding lean
 
-#doc (Manual) "{title}" =>
+{doc_options}#doc (Manual) "{title}" =>
 %%%
 tag := "{file}"
 htmlSplit := .never
@@ -77,6 +77,21 @@ file := some "{file}"
 %%%
 
 """
+
+# Per-chapter document-level `set_option`s emitted just before `#doc`.  Unlike a
+# `set_option … in` inside a ```lean block, options here cover the whole
+# command — including InlineLean's syntax highlighting (which re-drives
+# elaboration) and the code generator's pass over the generated `Verso.Doc.Block`
+# document term.  IndPropRegexp needs both: its pumping proofs elaborate under
+# the highlighting overhead well past the default 200000 heartbeats, and the
+# chapter's deep directive nesting overflows the code generator's recursion
+# limit compiling the document `block` term (which then reports as noncomputable).
+# Other chapters compile within the defaults, so they are left untouched.  Keyed
+# by file_key; a graduated (direct-Verso) chapter carries the same options inline.
+DOC_LEVEL_OPTIONS = {
+    "IndPropRegexp": "set_option maxHeartbeats 2000000\n"
+                     "set_option maxRecDepth 100000\n\n",
+}
 
 FOOTER = ""
 
@@ -141,8 +156,8 @@ def _strip_title_comment(src: str, stem: str = None) -> str:
 # `import LF.X` refers to a generated chapter, so it is rewritten to
 # `import LF.XVerso`.
 # (Maps added by Claude: HL/TS chapters import LF.Maps for its definitions.)
-DIRECT_LF_MODULES = {"Basics", "Induction", "UsingLean", "Lists",
-                     "CustomTactics", "Maps"}
+DIRECT_LF_MODULES = {"Basics", "Induction", "UsingLean", "Lists", "Poly",
+                     "Tactics", "CustomTactics", "Maps"}
 
 _IMPORT_RE = re.compile(r'^import\s+(\S+)\s*$')
 
@@ -299,11 +314,12 @@ def _split_dev_tags(text):
     argument) or an author tag (-> the positional author argument, as
     `"Full Name (handle)"` via `_AUTHOR_NAMES`; a `@handle:` attribution is
     looked up via `_HANDLE_NAMES`).  After an urgency keyword, a clean author
-    attribution — `BCP:`, `(DHS)`, `(BCP'20)` — is promoted too; anything
-    murkier (dates as in `LATER: BCP 9/16: …`, unmapped initials, plain prose)
-    stays in the body.  Topic keywords (NOTATION:, HIDE:, COMMENT:) and
-    unmapped tags leave the note untouched.  A year suffix on a promoted tag
-    (`NDS'25`, `BCP'20`) becomes the `(year := 20NN)` argument."""
+    attribution — `BCP:`, `(DHS)`, `(BCP'20)`, a bare year `BCP 25:`, or an
+    `MM/YY` date `BCP 9/16:` (month dropped, year kept) — is promoted too;
+    anything murkier (unmapped initials, plain prose) stays in the body.
+    Topic keywords (NOTATION:, HIDE:, COMMENT:) and unmapped tags leave the
+    note untouched.  A year suffix on a promoted tag (`NDS'25`, `BCP'20`)
+    becomes the `(year := 20NN)` argument."""
     body = text.lstrip()
     author = year = urgency = None
     m = re.match(r"@([A-Za-z][A-Za-z0-9-]*)\s*:?\s*", body)
@@ -333,6 +349,14 @@ def _split_dev_tags(text):
             m2 = re.match(r"([A-Za-z][A-Za-z0-9]*)(?:'(\d+))?\s*:\s*", body)
         if not m2:
             m2 = re.match(r"([A-Za-z][A-Za-z0-9]*)'(\d+)\s+", body)
+        if not m2:
+            # `SOONER: BCP 25: …` — initials, a space, a bare two-digit year,
+            # then a colon.  The space-then-year spelling of `BCP'25:`.
+            m2 = re.match(r"([A-Za-z][A-Za-z0-9]*)\s+(\d{2})\s*:\s*", body)
+        if not m2:
+            # `LATER: BCP 9/16: …` / `SOONER: MRC 3/22: …` — an `MM/YY` date;
+            # we keep only the year (after the slash) and drop the month.
+            m2 = re.match(r"([A-Za-z][A-Za-z0-9]*)\s+\d{1,2}/(\d{2})\s*:\s*", body)
         if m2 and m2.group(1) in _AUTHOR_NAMES:
             author = _AUTHOR_NAMES[m2.group(1)]
             if m2.group(2):
@@ -360,13 +384,14 @@ def _is_label_comment(text: str) -> bool:
 
     This covers:
       - Single identifiers like "test_nandb1" or "test_leb3'" (test-case labels)
+      - The same with a one-word parenthetical, like "star_app (helper)"
       - Pure separator lines like "############################" (visual dividers)
       - Lean output annotations like "==> true : Bool" or "===> ..." (#check/#eval)
     These act as code-block separators but produce no visible Verso output.
     (Author/dev block notes are *not* labels — see `_is_block_dev_comment`.)
     """
     t = text.strip()
-    return (bool(re.match(r"^[\w.']+$", t)) or
+    return (bool(re.match(r"^[\w.']+(?:\s+\(\w[\w.']*\))?$", t)) or
             bool(re.match(r'^#{3,}[ \t#-]*$', t)) or
             bool(re.match(r'^=+>', t)))
 
@@ -779,7 +804,10 @@ _TERSE_PLAIN_RE = re.compile(r'^-- TERSE:\s+(.+)$')
 # identifier but occasionally a phrase (`EX2 (logical connectives)`), so allow
 # internal spaces/hyphens.
 _EX_RE = re.compile(r"^-- EX(\d+)[A-Za-z!?]*\s+\((\w[\w' \-]*)\)$")
-_EX_CLOSE_RE = re.compile(r'^-- \[\]$')
+# The close marker may carry a redundant `(end name)` label (IndPropRegexp
+# style); it is consumed with the marker — the :::::exercise block records the
+# name already.
+_EX_CLOSE_RE = re.compile(r"^-- \[\](?:\s*\(end \w[\w']*\))?$")
 _GRADE_RE = re.compile(r'^--\s+GRADE_')
 # Coq-SF-style section headers written as line comments: `-- # Title` …
 # `-- ###### Title`, and `-- * Title` / `-- ** Title` / `-- *** Title`.  These
@@ -1215,8 +1243,8 @@ def tokenize(text: str):
 
     return tokens
 
-def _hoist_slidebreaks_from_terse(tokens):
-    """Lift every slide break out of any enclosing `::::terse` region.
+def _hoist_from_terse(tokens):
+    """Lift slide breaks and quizzes out of any enclosing `::::terse` region.
 
     A slide break only matters in the terse HTML build (it renders an empty
     `<div class="slide-break">` there) and is stripped from every other product
@@ -1224,37 +1252,69 @@ def _hoist_slidebreaks_from_terse(tokens):
     sit *inside* a `::::terse` container; doing so is just noise (and, when the
     break is a region's sole content, leaves a pointless one-item terse block).
 
+    The same goes for a whole `-- QUIZ … -- /QUIZ` region: quizzes are shown
+    only in the terse build product anyway, so nesting them in `::::terse`
+    adds nothing — and keeping them at top level leaves the door open to
+    including quizzes in the student/solutions products later.  The sources
+    routinely wrap quiz runs in a TERSE region (Poly, Logic), so this pattern
+    is the norm, not an error.
+
     A source like `/- TERSE: *** text -/` tokenizes to
     `terse_open, slidebreak, prose, terse_close`.  Rewrite each `slidebreak`
     that falls within an open terse region to `terse_close, slidebreak,
     terse_open` — hoisting the break to top level and reopening the region for
-    whatever terse content follows — then drop any `terse_open … terse_close`
-    pair left empty (the break was the first or last item), so no bare
-    `::::terse` survives."""
+    whatever terse content follows — and likewise wrap each top-level
+    `quiz_open … quiz_close` span in `terse_close … terse_open`; then drop any
+    `terse_open … terse_close` pair left empty (the hoisted item was the
+    region's first or last, or sat between two quizzes), so no bare
+    `::::terse` survives.  Terse markers arriving *inside* a hoisted quiz span
+    only adjust the source-depth bookkeeping and emit nothing: the enclosing
+    region's fence is already suspended, and whether it resumes after the quiz
+    is decided by the source depth at the `quiz_close`."""
     lifted = []
-    terse_depth = 0
+    terse_depth = 0   # source-level terse nesting (markers seen, hoisted or not)
+    quiz_depth = 0
     for kind, content in tokens:
         if kind == 'terse_open':
             terse_depth += 1
-            lifted.append((kind, content))
+            if quiz_depth == 0:
+                lifted.append((kind, content))
         elif kind == 'terse_close':
             terse_depth = max(0, terse_depth - 1)
-            lifted.append((kind, content))
-        elif kind == 'slidebreak' and terse_depth > 0:
+            if quiz_depth == 0:
+                lifted.append((kind, content))
+        elif kind == 'slidebreak' and terse_depth > 0 and quiz_depth == 0:
             lifted.append(('terse_close', None))
             lifted.append(('slidebreak', None))
             lifted.append(('terse_open', None))
+        elif kind == 'quiz_open':
+            if quiz_depth == 0 and terse_depth > 0:
+                lifted.append(('terse_close', None))
+            quiz_depth += 1
+            lifted.append((kind, content))
+        elif kind == 'quiz_close':
+            quiz_depth = max(0, quiz_depth - 1)
+            lifted.append((kind, content))
+            if quiz_depth == 0 and terse_depth > 0:
+                lifted.append(('terse_open', None))
         else:
             lifted.append((kind, content))
-    # Drop terse regions left holding nothing but blank tokens.
+    # Drop terse regions left holding nothing but blanks and noop annotation
+    # notes (:::dev / :::instructors, e.g. the `INSTRUCTORS: (A)` answer lines
+    # between consecutive hoisted quizzes).  The notes are kept, promoted to
+    # top level — they are noops in every build, so the terse wrapper around
+    # them was pure noise (and would strand quiz answers in terse-only should
+    # quizzes later join the student/solutions products).
     out = []
     i, n = 0, len(lifted)
     while i < n:
         if lifted[i][0] == 'terse_open':
             j = i + 1
-            while j < n and lifted[j][0] == 'blank':
+            while j < n and lifted[j][0] in ('blank', 'instructor',
+                                             'author_comment'):
                 j += 1
             if j < n and lifted[j][0] == 'terse_close':
+                out.extend(t for t in lifted[i + 1:j] if t[0] != 'blank')
                 i = j + 1
                 continue
         out.append(lifted[i])
@@ -1742,12 +1802,18 @@ class Renderer:
 
     def _on_solution_prose(self, text):
         # Prose / non-compiling solution -> :::solution block, shown only in the
-        # solutions build (SFLMeta.Block.solution).  Body is verbatim-fenced so
-        # arbitrary illustrative code can't perturb the parser.
+        # solutions build (SFLMeta.Block.solution).  The body is inlined as plain
+        # markdown when `_inline_note_body` can prove that safe (so backtick
+        # identifiers render as inline code rather than a monospace block), and
+        # verbatim-fenced otherwise so arbitrary illustrative code — Lean
+        # snippets, `:::`, stray emphasis chars — can't perturb the parser.
         self._flush_code()
         if not text.strip():
             return
-        self._append(':::solution\n' + _verbatim_block(text) + '\n:::\n\n')
+        body = _inline_note_body(text)
+        if body is None:
+            body = _verbatim_block(text)
+        self._append(':::solution\n' + body + '\n:::\n\n')
 
     def _emit_noop_directive(self, directive, text):
         # Author notes become noop annotation *directives* (:::dev / :::instructors),
@@ -2045,6 +2111,10 @@ def _indent_of(line: str) -> str:
 
 _WIC_MARKER_RE = re.compile(r'^--\s*(/?)WORKINCLASS\s*$')
 _ADM_MARKER_RE = re.compile(r'^--\s*/?ADMITTED\s*$')
+# The block-comment wrapper around a suggested proof that student builds show
+# commented out (an empty ADMITTED region precedes it; see _convert_solution_markers).
+_OPEN_COMMENT_RE = re.compile(r'^/-\s*OPEN COMMENT WHEN HIDING SOLUTIONS\s*-/$')
+_CLOSE_COMMENT_RE = re.compile(r'^/-\s*CLOSE COMMENT WHEN HIDING SOLUTIONS\s*-/$')
 _FT_PREFIXED_RE = re.compile(r'^(\s*)--\s*(?:FULL|TERSE):\s*(/?)(ADMITTED|WORKINCLASS)\s*$')
 _DECL_START_RE = re.compile(r'^(theorem|lemma|example|def|instance|abbrev)\b')
 
@@ -2209,7 +2279,19 @@ def _convert_solution_markers(src: str) -> str:
         <tactics>
         -- /ADMITTED
 
+      <inside `by`>           ->   solution!
+        -- ADMITTED                   <suggested proof, reindented>
+        -- /ADMITTED
+        /- OPEN COMMENT WHEN HIDING SOLUTIONS -/
+        <suggested proof>
+        /- CLOSE COMMENT WHEN HIDING SOLUTIONS -/
+
       expr := <proof>  -- ADMITTED   ->   expr := solution!(<proof>)
+
+      <decl ending in `:=`>   ->   solution!(<term>)
+        -- ADMITTED
+        <term>
+        -- /ADMITTED
 
     (`-- SOLUTION … -- /SOLUTION` blocks are handled in the tokenizer, which
     splits compilable answers from prose ones.)
@@ -2261,6 +2343,7 @@ def _convert_solution_markers(src: str) -> str:
             body = []
             while j < n and lines[j].strip() != '-- /ADMITTED':
                 body.append(lines[j]); j += 1
+            resume = j + 1
             # An interleaved bare `-- FULL`/`-- TERSE` marker (the source's
             # "back to full mode for the GRADE/[] lines" idiom, cf. beq_eq in
             # Tactics) must stay a structural marker, not become a comment
@@ -2269,6 +2352,43 @@ def _convert_solution_markers(src: str) -> str:
                         if re.fullmatch(r'--\s*/?(?:FULL|TERSE)', b.strip())]
             body = [b for b in body
                     if not re.fullmatch(r'--\s*/?(?:FULL|TERSE)', b.strip())]
+            # A region whose declaration ends in a bare `:=` holds a *term*
+            # proof, not tactics (cf. mstar'' in IndPropRegexp): wrap it in
+            # the parenthesized form `solution!(<term>)` instead of emitting
+            # the tactic form after a nonexistent `by`.
+            p = len(out) - 1
+            while p >= 0 and not out[p].strip():
+                p -= 1
+            if (p >= 0 and out[p].rstrip().endswith(':=')
+                    and any(b.strip() for b in body)):
+                first = next(k for k, b in enumerate(body) if b.strip())
+                last = len(body) - 1
+                while last > first and not body[last].strip():
+                    last -= 1
+                ind = _indent_of(body[first])
+                body[first] = ind + 'solution!(' + body[first].strip()
+                body[last] = body[last] + ')'
+                out.extend(body[:last + 1])
+                out.extend(trailing)
+                i = resume
+                continue
+            # An *empty* region followed by an `OPEN COMMENT WHEN HIDING
+            # SOLUTIONS` … `CLOSE COMMENT …` wrapper (the source idiom for
+            # "students see the suggested proof as a comment", cf. the
+            # NoStutter examples in IndProp) takes the wrapped suggested
+            # proof as its `solution!` body.
+            if not any(b.strip() for b in body):
+                k = resume
+                while k < n and not lines[k].strip():
+                    k += 1
+                if k < n and _OPEN_COMMENT_RE.match(lines[k].strip()):
+                    k += 1
+                    wrapped = []
+                    while k < n and not _CLOSE_COMMENT_RE.match(lines[k].strip()):
+                        wrapped.append(lines[k]); k += 1
+                    if k < n:
+                        body = wrapped
+                        resume = k + 1
             # `solution!` must align with the proof body (which sits inside the
             # `by`), not with the `-- ADMITTED` marker — the marker is often at
             # column 0 while the tactics are indented, and a column-0 `solution!`
@@ -2280,7 +2400,7 @@ def _convert_solution_markers(src: str) -> str:
                 # tacticSeqIndentGt: body must sit deeper than `solution!`.
                 out.append(('  ' + bl) if bl.strip() else bl)
             out.extend(trailing)
-            i = j + 1
+            i = resume
             continue
 
         # --- trailing ADMITTED: a one-line proof term ---
@@ -2706,7 +2826,8 @@ def convert(src_text: str, title: str, file_key: str) -> str:
     # they can't live in a ```lean``` code block.
     has_prelude, extra_imports, body_src = _extract_imports(body_src)
     header = HEADER_TEMPLATE.format(
-        title=title, file=file_key, extra_imports='\n'.join(extra_imports))
+        title=title, file=file_key, extra_imports='\n'.join(extra_imports),
+        doc_options=DOC_LEVEL_OPTIONS.get(file_key, ''))
     if has_prelude:
         header = 'prelude\n' + header
     # Normalize block-comment markers (/- EX … -/, /- /TERSE -/, …) to line form.
@@ -2719,7 +2840,7 @@ def convert(src_text: str, title: str, file_key: str) -> str:
     body_src = _convert_workinclass_markers(body_src)
     body_src = _convert_solution_markers(body_src)
     tokens = tokenize(body_src)
-    tokens = _hoist_slidebreaks_from_terse(tokens)
+    tokens = _hoist_from_terse(tokens)
     renderer = Renderer()
     renderer.process(tokens)
     body = renderer.result()
