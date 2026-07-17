@@ -395,6 +395,9 @@ theorem weak_pumping_char : ∀ {α : Type} (x : α),
   simp [pumpingConstant] at contra
   -- /ADMITTED
 
+-- The Verso build's elaboration overhead pushes this proof past the
+-- default heartbeat budget.
+set_option maxHeartbeats 400000 in
 theorem weak_pumping_app : ∀ {α : Type}
                          (s1 s2 : List α) (re1 re2 : RegExp α),
   s1 =~ re1 ->
