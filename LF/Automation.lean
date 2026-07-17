@@ -416,7 +416,7 @@ Our `Perm3_In` example is getting quite short! But can we do better?
 
 # The `simp` Tactic
 
-:::full
+::::full
 The `simp` tactic is Lean's _simplifier_, and it is one of the most powerful
 tools in the language. Given a set of lemmas- some built-in, some user-provided-
 `simp` attempts to reduce a goal or hypothesis by rewriting with those lemmas
@@ -425,7 +425,13 @@ as much as possible.
 Indeed, these _simplification lemmas_ , or _`simp` lemmas_ as they're called
 by Lean programmers, are exactly the ones we wrote in the `Basics`
 and `Induction` chapters!
+::::
 
+::::terse
+The lemmas we introduced the Basics chapter for rewriting are
+the same ones we'll give to `simp` for it to automatically
+solve goals involving those theorems.
+::::
 ```lean
 namespace simp_lemmas_example
 @[irreducible]
@@ -435,48 +441,93 @@ def add (n : Nat) (m : Nat) : Nat :=
   | .succ m' => .succ (add n m')
 
 unseal add in
-theorem add_zero : ∀ n : Nat, n + .zero = n := by
+theorem add_zero : ∀ n : Nat, add n .zero = n := by
   intro n
   rfl
-/- `add_zero` and `add_succ` are the simp lemmas for `add`. ↕ -/
+/- `add_zero` and `add_succ` are the `simp` lemmas for `add`. ↕ -/
 unseal add in
-theorem add_succ : ∀ n m : Nat, n + (.succ m) = .succ (n + m) := by
+theorem add_succ : ∀ n m : Nat, add n (.succ m) = .succ (add n m) := by
   intro n m
   rfl
 end simp_lemmas_example
 ```
-:::
-:::dev
-TODO: @rogerburtonpatel will get confirmation about which style of simp tagging -
-  lemmas or definitions - we use and write this portion accordingly.
-:::
 
+When we tag theorems with `@[simp]`, like so:
 
 ```lean
-theorem Perm3_In_best (α : Type) (x : α) (l₁ l₂ : List α) :
+attribute [simp] simp_lemmas_example.add_zero simp_lemmas_example.add_succ
+```
+
+then `simp` will add them to the list of rules it considers when simplifying a term.
+
+```lean
+open simp_lemmas_example in
+theorem add_succ_nested : ∀ n m : Nat,
+    add n (.succ (.succ m)) = .succ (.succ (add n m)) := by
+  intro n m
+  simp
+```
+::::full
+If you know what theorems you want `simp` to use for your goal proof, you can write
+`simp [<theorems>]`. If you want `simp` to _only_ use those,
+you can use `simp only [<theorems>]`.
+::::
+
+::::terse
+`simp only` uses only the provided theorems:
+::::
+```lean
+open simp_lemmas_example in
+theorem add_succ_nested_2 : ∀ n m : Nat,
+    add n (.succ (.succ m)) = .succ (.succ (add n m)) := by
+  intro n m
+  simp only [Nat.succ_eq_add_one, add_succ]
+```
+
+If you want to know what `simp` is doing, you can run `simp?`.
+```lean
+open simp_lemmas_example in
+theorem add_succ_nested_3 : ∀ n m : Nat,
+    add n (.succ (.succ m)) = .succ (.succ (add n m)) := by
+  intro n m
+  simp?
+```
+::::full
+In the InfoView, Lean will show you what `simp` is doing.
+You can click the `[apply]` button to replace `simp?` with
+the suggested replacement. You should always do this
+for your final proof scripts: `simp?` is helpful for writing
+a proof, but it should not show up in its final presentation.
+
+
+`simp` is quite a powerful automated tactic, and is used
+heavily in real Lean developments. We can use `simp` as the
+final step to simplify our `Perm3_In` proof.
+::::
+
+::::terse
+`simp` makes our final example _much_ shorter.
+::::
+```lean
+theorem Perm3_In_shortest (α : Type) (x : α) (l₁ l₂ : List α) :
     Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
   intros hPerm hIn
   induction hPerm <;>
-  -- TODO autoformat
   first
   | simp at * <;> lia
   | lia
 ```
 
+
 # The `trivial` tactic
 
-The `trivial` tactic tries a number of different simple tactics (such as `rfl` or `contradiction`)
-to try to close the current goal. Some examples:
+A final automated tactic to have in your toolkit is `trivial`, which tries a number of different simple tactics (such as `rfl` or `contradiction`) to try to close the current goal. Some examples:
 
 ```lean
 example : 1 = 1 := by trivial
 example : (1, 2).fst = 1 := by trivial
 example (A B : Prop) : ¬ A -> A -> B := by intro h₁ h₂; trivial
 ```
-
-:::dev
-DHS: Do we want to teach students about extending `trivial` via `macro_rules`?
-:::
 
 # Case Study: Regular Expressions
 
