@@ -11,7 +11,7 @@ are certain to be things that are not clear.  Please help us figure
 out what those are and document the clarifications in this file.
 
 ## Top-level orientation
-###    Guiding Philosophy
+### Guiding Philosophy
 
 These are the tenets of the SFL effort, in order. Consult these tenets
 when making a change: If your change is supported by them, then
@@ -37,7 +37,7 @@ refer to the tenets to drive a decision (potentially updating the tenets).
    possible. Some of SFL's languages, semantics, etc. might eventually
    be contributed to CSLib.
 
-##    Zulip
+## Zulip
 
 The [SFL contributors
   channel](https://leanprover.zulipchat.com/#narrow/channel/607217-lean-software-foundations-contributors)
@@ -69,8 +69,10 @@ For discussions, we use a combination of tools.
   some point when they have that section of the material paged in, put
   it directly in the appropriate .lean file, either in a comment (if
   it's a plain .lean file) or in a `:::dev` block (if it's been
-  versified), marked with your initials.  These comments are not
-  included in the final build products.
+  versified), marked with your initials.  A `:::dev` note tagged
+  `NOW` or `TODO` (or carrying no urgency) is surfaced — highlighted —
+  in the build products; notes tagged `SOONER`, `LATER`, or `TOFIX`
+  are excluded from them (see **Author-only annotations** below).
 
   In-text comments can also be used for coordinating work on specific
   issues.
@@ -481,7 +483,8 @@ whenever the body itself contains three-colon directives.
 
 In practice the widths follow the nesting: leaf directives (`:::dev`,
 `:::instructors`, `:::hide`, `:::answer`, `:::grade`, `:::solution`, `:::terse`,
-`:::slidebreak`) are always three colons; a `::::full` / `::::hide` / `::::quiz`
+`:::slidebreak`, `:::suppressPreviousHeaderWhenTerse`) are always three colons;
+a `::::full` / `::::hide` / `::::quiz`
 that nests a leaf uses four; an `:::::exercise` that nests those uses five.
 `to_verso` computes the minimal correct width automatically; when hand-authoring,
 just make each container strictly wider than everything directly nested inside
@@ -508,6 +511,26 @@ atomic data types (booleans, integers, strings, etc.), Lean offers
 a powerful mechanism for defining new data types from scratch…
 ::::
 ```
+
+**`:::suppressPreviousHeaderWhenTerse` / `:::`** — Marks the section
+heading immediately above it as full-only.  A heading cannot be nested
+inside `::::full` (headings create document sections; directives hold
+blocks), so a heading that should appear only in the reading builds stays
+at document level and is followed by this empty marker instead:
+
+```
+# Additional Exercises
+
+:::suppressPreviousHeaderWhenTerse
+:::
+```
+
+In the terse build the heading is suppressed (hidden in the HTML, omitted
+from the generated `.lean`); the section's *content* is unaffected and
+still follows the usual `::::full` / `:::terse` controls.  `to_verso`
+emits the marker for every heading that sits inside a `-- FULL` region in
+the bare-Lean source (the SF convention scopes most book section headings
+to the full build; lecture flow is structured by `:::slidebreak` instead).
 
 **`:::terse … :::`** — Content shown _only_ in the terse build.
 Typically a one- or two-sentence cue for a live-coding presenter,
@@ -633,24 +656,28 @@ hand-authored Verso must use `-- END SOLUTION`.)
 
 ### Author-only annotations
 
-These directives are invisible in all rendered outputs (HTML, TeX, and
-generated `.lean` files).  They exist only in the Verso source.
+These directives are invisible in rendered outputs (HTML, TeX, and generated
+`.lean` files) — with one exception: an *actionable* `:::dev` note (urgency
+`NOW`, `TODO`, or none — see below) is passed through, brightly highlighted in
+the HTML and as a labelled comment in the generated `.lean` files.
 
 Write author-facing notes as `:::` **directives**.  (The old ` ```dev ` /
 ` ```instructors ` code-block forms were removed 2026-07-15.)  A directive's
 body is parsed as markdown, so backtick code identifiers (`foo_bar`, `[x]`) and
 escape markdown-special text just as you would in `::::full` prose; reach for
-an inner ` ``` ` fence only when the body is code-dense or embeds a ` ```lean `
-snippet that must not elaborate.  (`to_verso` generates these directives with
-the body verbatim-fenced, which is always safe; a hand pass can un-fence and
-inline the markdown.)
+an inner ` ``` ` fence only when the body is code-dense or embeds a Lean
+snippet that must not elaborate.  NB: a `:::dev` body *elaborates* (its blocks
+are kept so shown notes can render), so an inner ` ```lean ` fence there runs
+the Lean code — use a plain ` ``` ` fence for code that must stay inert.
+(`to_verso` generates these directives with the body verbatim-fenced, which is
+always safe; a hand pass can un-fence and inline the markdown.)
 
 Pick the tag by intent — `:::instructors` (instructor notes), `:::dev` (author
 TODOs / review threads), `:::answer` (a quiz's answer — see **Quizzes**),
-`:::hide` (genuinely hidden content).  All are noops today (dropped from every
-build), so the choice is *semantic*: the name reserves each for a future build
-that could treat it differently (reveal `:::answer`, show `:::instructors` to
-instructors).
+`:::hide` (genuinely hidden content).  Apart from shown `:::dev` notes, all are
+noops today (dropped from every build), so the choice is *semantic*: the name
+reserves each for a future build that could treat it differently (reveal
+`:::answer`, show `:::instructors` to instructors).
 
 **`:::instructors … :::`** — Notes for instructors: pacing advice,
 classroom caveats, which sections to skip for a short course, etc.
@@ -664,16 +691,22 @@ Assign Basics + Induction together as the first week's homework.
 
 **`:::dev … :::`** — Internal author commentary: unresolved design
 questions, inline review threads, TODO items.  Use freely.  It takes optional
-arguments, so the note's provenance can be typeset uniformly by a future
-dev-facing build: a positional author (always a *string*, conventionally
-`"Full Name (github-handle)"`), a positional urgency keyword (always a *bare
-identifier*, conventionally `SOONER`, `LATER`, `TODO`, or `TOFIX`), and a
-named `year` (a number, from `BCP'20`-style tags).  The string/identifier
-split is what tells the two positionals apart, so don't quote urgencies or
-unquote authors.  Prefer the arguments over leading `BCP:` / `SOONER:` tags in
-the body; `to_verso` promotes such leading tags to arguments automatically
-(see `_AUTHOR_NAMES` in `scripts/to_verso.py` for the initials-to-name
-mapping).
+arguments, so the note's provenance can be typeset uniformly: a positional
+author (always a *string*, conventionally `"Full Name (github-handle)"`), a
+positional urgency keyword (always a *bare identifier*, conventionally `NOW`,
+`SOONER`, `LATER`, `TODO`, or `TOFIX`), and a named `year` (a number, from
+`BCP'20`-style tags).  The string/identifier split is what tells the two
+positionals apart, so don't quote urgencies or unquote authors.  Prefer the
+arguments over leading `BCP:` / `SOONER:` tags in the body; `to_verso` promotes
+such leading tags to arguments automatically (see `_AUTHOR_NAMES` in
+`scripts/to_verso.py` for the initials-to-name mapping).
+
+The urgency controls whether the note is *shown* (`devNoteShown` in
+`SFLMeta/Comment.lean`): a note tagged `NOW` or `TODO` — or carrying no
+urgency at all — passes through into the rendered outputs, brightly
+highlighted (with a `Note to developers (…)` provenance label) in the HTML and as a
+labelled comment block in the generated `.lean` files.  `SOONER`, `LATER`,
+and `TOFIX` notes are suppressed from every build as before.
 
 ```
 :::dev "Benjamin Pierce (bcpierce00)" SOONER

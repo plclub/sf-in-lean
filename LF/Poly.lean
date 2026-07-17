@@ -390,8 +390,9 @@ def mynil' := @List.nil Nat
    (The square brackets in this quiz and the following ones are list
    brackets.)
    /HIDEFROMHTML
-
+[[
        [1, 2, 3]
+]]
 
    (A) `List Nat`
 
@@ -405,8 +406,9 @@ def mynil' := @List.nil Nat
 
 /- QUIZ
    What about this one?
-
+[[
        [3 + 4] ++ []
+]]
 
    (A) `List Nat`
 
@@ -420,8 +422,9 @@ def mynil' := @List.nil Nat
 
 /- QUIZ
    What about this one?
-
+[[
        (true && false) :: []
+]]
 
    (A) `List Nat`
 
@@ -435,8 +438,9 @@ def mynil' := @List.nil Nat
 
 /- QUIZ
    What about this one?
-
+[[
        [1, []]
+]]
 
    (A) `List Nat`
 
@@ -450,8 +454,9 @@ def mynil' := @List.nil Nat
 
 /- QUIZ
    What about this one?
-
+[[
        [[1], []]
+]]
 
    (A) `List Nat`
 
@@ -465,8 +470,9 @@ def mynil' := @List.nil Nat
 
 /- QUIZ
    And what about this one?
-
+[[
        [1] :: [[]]
+]]
 
    (A) `List Nat`
 
@@ -480,8 +486,9 @@ def mynil' := @List.nil Nat
 
 /- QUIZ
    This one?
-
+[[
        @List.nil Bool
+]]
 
    (A) `List Nat`
 
@@ -707,7 +714,9 @@ theorem zip_cons α β lx ly (x : α) (y : β) :
    - What is the type of `zip` (i.e., what does `#check @zip`
      print?)
    - What does
+[[
          #eval zip [1, 2] [false, false, true, true]
+]]
      print?
    [] -/
 
@@ -1056,12 +1065,12 @@ example : map (fun n => [even n, odd n]) [2, 1, 2, 5]
 /- TERSE
    QUIZ
    Recall the definition of `map`:
-
+[[
        def map (f : α → β) (l : List α) : List β :=
          match l with
          | [] => []
          | h :: t => f h :: map f t
-
+]]
    What is the type of `@map`?
 
    (A) `{α β : Type} → α → β → List α → List β`
@@ -1119,9 +1128,10 @@ theorem map_rev {α : Type} {β : Type} : ∀ (f : α → β) (l : List α),
    which maps a `List α` to a `List β` using a function `f` of type
    `α → List β`. Your definition should work by 'flattening' the
    results of `f`, like so:
-
+[[
        flatMap (fun n => [n, n + 1, n + 2]) [1, 5, 10]
-         = [1, 2, 3, 5, 6, 7, 10, 11, 12] -/
+         = [1, 2, 3, 5, 6, 7, 10, 11, 12]
+]] -/
 
 def flatMap {α : Type} {β : Type} (f : α → List β) (l : List α) : List β :=
   /- ADMITDEF -/
@@ -1191,12 +1201,13 @@ def fold {α : Type} {β : Type} (f : α → β → β) (l : List α) (b : β) :
    intuitively means `1 + 2 + 3 + 4`. To make this precise, we also
    need a "starting element" that serves as the initial second input
    to `f`. So, for example,
-
+[[
        fold (· + ·) [1, 2, 3, 4] 0
-
+]]
    yields
-
-       1 + (2 + (3 + (4 + 0))). -/
+[[
+       1 + (2 + (3 + (4 + 0))).
+]] -/
 
 /- fold_example1 -/
 example : fold (· && ·) [true, true, false, true] true = false := by rfl
@@ -1218,12 +1229,12 @@ theorem fold_cons {α : Type} {β : Type} (f : α → β → β) h t (b : β) :
 /- TERSE
    QUIZ
    Here is the definition of `fold` again:
-
+[[
        def fold (f : α → β → β) (l : List α) (b : β) : β :=
          match l with
          | [] => b
          | h :: t => f h (fold f t b)
-
+]]
    What is the type of `@fold`?
 
    (A) `{α β : Type} → (α → β → β) → List α → β → β`
@@ -1470,18 +1481,18 @@ theorem curry_uncurry {α β γ : Type} (f : α × β → γ) (p : α × β) :
 
 /- EX2AM? (nth_error_informal)
    Recall the definition of the `nthError` function:
-
+[[
        def nthError (l : List α) (n : Nat) : Option α :=
          match l with
          | [] => none
          | a :: l' => match n with
            | 0 => some a
            | n' + 1 => nthError l' n'
-
+]]
    Write a careful informal proof of the following theorem:
-
+[[
        ∀ (l : List α) (n : Nat), l.length = n → nthError l n = none
-
+]]
    Make sure to state the induction hypothesis _explicitly_. -/
 
 /- SOLUTION

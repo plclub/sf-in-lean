@@ -57,6 +57,14 @@ main h1, main h2, main h3, main h4, main h5, main h6,
   color: var(--sf-heading);
 }
 
+/* A section whose heading is full-only (see
+   SFLMeta.Block.suppressPreviousHeaderWhenTerse): the marker div is present
+   only in the terse build, where the heading hides. */
+section:has(> .suppress-previous-header-when-terse)
+    > :is(h1, h2, h3, h4, h5, h6):first-child {
+  display: none;
+}
+
 a, a:visited { color: var(--sf-link); }
 a:hover, a:active { color: var(--sf-link-hover); }
 

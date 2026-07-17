@@ -135,12 +135,14 @@ def _strip_title_comment(src: str, stem: str = None) -> str:
     return src[:m.start()] + src[m.end():]
 
 
-# LF modules that are authored directly in Verso (Basics, Induction) or are
-# plain Lean support modules (CustomTactics, Maps): an `import LF.X` of one of
-# these passes through unchanged.  Every *other* `import LF.X` refers to a
-# generated chapter, so it is rewritten to `import LF.XVerso`.
+# LF modules that are authored directly in Verso (Basics, Induction, UsingLean,
+# Lists) or are plain Lean support modules (CustomTactics, Maps): an
+# `import LF.X` of one of these passes through unchanged.  Every *other*
+# `import LF.X` refers to a generated chapter, so it is rewritten to
+# `import LF.XVerso`.
 # (Maps added by Claude: HL/TS chapters import LF.Maps for its definitions.)
-DIRECT_LF_MODULES = {"Basics", "Induction", "CustomTactics", "Maps"}
+DIRECT_LF_MODULES = {"Basics", "Induction", "UsingLean", "Lists",
+                     "CustomTactics", "Maps"}
 
 _IMPORT_RE = re.compile(r'^import\s+(\S+)\s*$')
 
@@ -220,7 +222,7 @@ def _extract_imports(body: str):
 # generated outputs.  Add new tags here so they route cleanly instead of leaking
 # into the rendered chapter as prose.  INSTRUCTORS is deliberately NOT in this
 # set: it routes to :::instructor (handled separately, both line and block).
-_DEV_TAGS = (r'BCP|JC|MWH|CGH|RAB|CH|HG|NB|Claude|TODO|TOFIX|LATER|SOONER'
+_DEV_TAGS = (r'BCP|JC|MWH|CGH|RAB|CH|HG|NB|Claude|TODO|TOFIX|LATER|SOONER|NOW'
              r'|NDS|NOTATION|APT|BAY|SAZ|ET|AAA|MRC|PR|ORI|Ori|mwhicks1|chenson2018'
              r'|COMMENT')  # COMMENT: untagged (* .. *) comments from a .v source
 # The block set additionally recognizes `HIDE:` (a `/- HIDE: … -/` dev note).
@@ -235,7 +237,7 @@ _BLOCK_INSTRUCTOR_RE = re.compile(r'^INSTRUCTORS:')
 
 # Urgency keywords: when one of these opens a dev note it becomes the :::dev
 # directive's `(urgency := …)` argument rather than an author.
-_URGENCY_TAGS = ('SOONER', 'LATER', 'TODO', 'TOFIX')
+_URGENCY_TAGS = ('NOW', 'SOONER', 'LATER', 'TODO', 'TOFIX')
 
 # Authors behind the initials appearing in dev notes, as "Full Name
 # (github-handle)".  When a note opens with one of these tags (or, after an
@@ -525,6 +527,14 @@ def _comment_tokens(body: str):
         while seg and not seg[-1].strip():
             seg.pop()
         if seg:
+            # Dedent the run by its common indent (uniform, so relative
+            # indentation — bullets, display material — is preserved).
+            # Catches alignment indents that survive `_extract_comment_text`,
+            # e.g. when a column-0 fence line drags the comment-wide minimum
+            # to zero.
+            cut = min(len(l) - len(l.lstrip()) for l in seg if l.strip())
+            if cut:
+                seg = [l[cut:] if l.strip() else l for l in seg]
             tokens.append(('block_comment_prose',
                            _prose_markup('\n'.join(seg))))
         prose.clear()
@@ -717,12 +727,27 @@ def _extract_comment_text(raw_lines):
     # Remove closing -/
     lines[-1] = re.sub(r'\s*-/\s*$', '', lines[-1])
 
-    # Dedent: remove common leading whitespace from non-blank lines
-    non_blank = [l for l in lines if l.strip()]
-    if non_blank:
-        min_indent = min(len(l) - len(l.lstrip()) for l in non_blank)
-        lines = [l[min_indent:] if len(l) >= min_indent else l.lstrip()
-                 for l in lines]
+    rest_non_blank = [l for l in lines[1:] if l.strip()]
+    if lines[0].strip() and rest_non_blank:
+        # Text starts on the opener line, which now sits at column 0 (its
+        # indent went with the `/- `), while continuation lines keep the
+        # source's alignment indent (2-4 spaces depending on the comment).
+        # Take the first continuation line's indent as the alignment column
+        # and strip up to that much whitespace from every continuation:
+        # lines indented deeper (bullet bodies, display material) keep their
+        # offset, and lines shallower than the alignment column (a `[[` or
+        # fence marker at column 0, a raggedly-indented prose line) lose
+        # only the whitespace they actually have.
+        align = len(rest_non_blank[0]) - len(rest_non_blank[0].lstrip())
+        lines = [lines[0]] + [l[min(align, len(l) - len(l.lstrip())):]
+                              for l in lines[1:]]
+    else:
+        # Opener on a line of its own: plain common dedent over all lines.
+        non_blank = [l for l in lines if l.strip()]
+        if non_blank:
+            min_indent = min(len(l) - len(l.lstrip()) for l in non_blank)
+            lines = [l[min_indent:] if len(l) >= min_indent else l.lstrip()
+                     for l in lines]
 
     # Trim leading/trailing blank lines
     while lines and not lines[0].strip():
@@ -1354,6 +1379,41 @@ def _verbatim_block(text: str) -> str:
     return fence + '\n' + text + '\n' + fence
 
 
+# A backtick code span in note prose; its content is opaque to Verso's markdown
+# parser, so hazard scanning skips it.
+_NOTE_SPAN_RE = re.compile(r'`[^`\n]+`')
+# Characters that can derail Verso's markdown when they appear in plain prose:
+# backticks (an unpaired one, or a ≥3 run opening a fence), `*`/`_` (Verso
+# bold/emphasis — an unpaired one is a parse error), `{`/`}` (role syntax),
+# `|` (tables), and any backslash.  A backslash also flags `_sf_inline_code`'s
+# own `\[`/`\]` escapes: an escape means the note had stray or nested brackets
+# (`[sub_nil : subseq [] []]`), which the `[…]`→span conversion garbles rather
+# than translates, so such a note must stay verbatim.
+_NOTE_CHAR_HAZARD_RE = re.compile(r'[`*_{}|\\]')
+# Line-initial constructs that a directive body must not contain: a heading
+# (Verso forbids headings inside directives), a `:::…` line (would close or
+# nest directives), a `%%%` metadata block, a `>` blockquote.
+_NOTE_LINE_HAZARD_RE = re.compile(r'^[ \t]*[#:%>]')
+
+
+def _inline_note_body(text: str):
+    """Render an author-note body as a plain markdown directive body, or return
+    None when that isn't provably safe.  The only rewrite applied is
+    `_sf_inline_code` (SF's `[ident]` code markup → a backtick span, stray
+    brackets escaped — the same treatment ::::full prose gets); the result is
+    then scanned, outside backtick code spans, for anything that could derail
+    Verso's markdown parser.  Callers fall back to `_verbatim_block` on the
+    *original* text, so a hazardous note is preserved verbatim rather than
+    half-rewritten."""
+    body = _sf_inline_code(text.strip('\n'))
+    plain = _NOTE_SPAN_RE.sub(' ', body)
+    if _NOTE_CHAR_HAZARD_RE.search(plain):
+        return None
+    if any(_NOTE_LINE_HAZARD_RE.match(l) for l in plain.split('\n')):
+        return None
+    return body
+
+
 def _unwrap_prose_note(text: str) -> str:
     """If *text* is a single `/- … -/` block comment (a pure prose note with no
     code), return its inner content with the comment delimiters stripped;
@@ -1494,6 +1554,15 @@ class Renderer:
         # would also trip Verso's bold parser in the rendered heading).
         title = re.sub(r'[ \t*]+$', '', title)
         self._append('#' * level + ' ' + title + '\n\n')
+        # A header inside a source FULL region is a *full-only* heading: the
+        # heading itself must go at document level (above), but a
+        # :::suppressPreviousHeaderWhenTerse marker directly after it records
+        # the FULL scoping so terse builds can suppress the heading (see
+        # SFLMeta.Block.suppressPreviousHeaderWhenTerse).  A leaf directive
+        # like :::slidebreak — empty body, always at top level (the header just
+        # closed any open containers), so a literal 3-colon fence is safe.
+        if self.full_depth > 0:
+            self._append(':::suppressPreviousHeaderWhenTerse\n:::\n\n')
 
     def _on_code_line(self, line):
         # Code is treated like prose with respect to :::full — it stays inside
@@ -1647,12 +1716,18 @@ class Renderer:
 
     def _on_grade(self, text):
         # -- GRADE_THEOREM / GRADE_MANUAL -> :::grade.  A noop for now, but the
-        # grading spec is preserved (verbatim-fenced, since names contain `_`)
-        # for the future grading infrastructure to consume.
+        # grading spec is preserved for the future grading infrastructure to
+        # consume — as a backtick code span, since the spec is a single line
+        # whose underscored names would trip Verso's emphasis parser as bare
+        # prose.  A spec a span can't hold (a backtick, an embedded newline —
+        # neither occurs in practice) falls back to the verbatim fence.
         self._flush_code()
-        if not text.strip():
+        text = text.strip()
+        if not text:
             return
-        self._append(':::grade\n' + _verbatim_block(text) + '\n:::\n\n')
+        body = ('`' + text + '`' if '`' not in text and '\n' not in text
+                else _verbatim_block(text))
+        self._append(':::grade\n' + body + '\n:::\n\n')
 
     def _on_import_block(self, text):
         # Cross-chapter `import` lines (sentinels from _extract_imports) -> a
@@ -1677,13 +1752,15 @@ class Renderer:
     def _emit_noop_directive(self, directive, text):
         # Author notes become noop annotation *directives* (:::dev / :::instructors),
         # consistent with :::hide / :::answer / :::grade / :::solution.  The body is
-        # wrapped in a verbatim fence so arbitrary author prose (underscores, `*`,
-        # `[...]`, a leading `#`, `:::`, ...) can never derail Verso's directive
-        # parser; the directive discards its body at elaboration, so nothing reaches
-        # the generated outputs.  :::dev and :::instructors are processed identically
-        # (see SFLMeta); they differ only in name so instructor notes can be treated
-        # differently later.  (Hand-authored chapters may instead inline the body as
-        # markdown, backticking/escaping as needed — see CONTRIBUTING.md.)
+        # inlined as plain markdown when `_inline_note_body` can prove that safe
+        # (the usual case — most notes are short prose), matching the hand-authoring
+        # convention (see CONTRIBUTING.md); a body containing markdown hazards
+        # (unbalanced backticks/`*`/`_`, a leading `#` or `:::`, ...) that could
+        # derail Verso's directive parser is instead wrapped verbatim in a fence.
+        # Either way the directive discards its body at elaboration, so nothing
+        # reaches the generated outputs.  :::dev and :::instructors are processed
+        # identically (see SFLMeta); they differ only in name so instructor notes
+        # can be treated differently later.
         # For :::dev, a leading author/urgency tag is promoted to directive
         # arguments — `:::dev "Benjamin Pierce (bcpierce00)" SOONER
         # (year := 2020)` — via `_split_dev_tags`; :::instructors deliberately
@@ -1698,7 +1775,10 @@ class Renderer:
                 header += ' %s' % urgency
             if year:
                 header += ' (year := %d)' % year
-        self._append(header + '\n' + _verbatim_block(text) + '\n:::\n\n')
+        body = _inline_note_body(text)
+        if body is None:
+            body = _verbatim_block(text)
+        self._append(header + '\n' + body + '\n:::\n\n')
 
     # --- Main dispatch ---
 
@@ -1802,10 +1882,13 @@ def _drop_empty_directives(text: str) -> str:
         lines = t.split('\n')
         out, i, n = [], 0, len(lines)
         while i < n:
-            # An opening directive with a name — but NOT `:::slidebreak`, which is
-            # an intentionally empty self-closing marker (`:::slidebreak` / `:::`),
-            # not an empty container to drop.
-            m = re.match(r'^(:::+)(?!slidebreak\b)\w', lines[i])
+            # An opening directive with a name — but NOT `:::slidebreak` or
+            # `:::suppressPreviousHeaderWhenTerse`, which are intentionally
+            # empty self-closing markers (`:::slidebreak` / `:::`), not empty
+            # containers to drop.
+            m = re.match(
+                r'^(:::+)(?!slidebreak\b|suppressPreviousHeaderWhenTerse\b)\w',
+                lines[i])
             if m:
                 fence = m.group(1)
                 j = i + 1
@@ -1858,47 +1941,65 @@ def _normalize_heading_levels(text: str) -> str:
     return '\n'.join(out)
 
 
+def _parse_noop_block(lines, i):
+    """Parse the :::dev / :::instructors directive opening at ``lines[i]``.
+    Returns ``(header, body_lines, j)`` with *j* just past the closing `:::`
+    line, or None when ``lines[i]`` opens no such directive or the close is
+    missing.  A backtick fence in the body is honored, so a `:::` inside a
+    verbatim-fenced body is body text, not the close (an *inline* body can
+    never contain a line-initial `:` — `_inline_note_body` fences those)."""
+    if not re.match(r'^:::(dev|instructors)\b', lines[i]):
+        return None
+    n = len(lines)
+    j, fence, body = i + 1, None, []
+    while j < n:
+        line = lines[j]
+        if fence is not None:
+            if line.rstrip() == fence:
+                fence = None
+        elif line.rstrip() == ':::':
+            return lines[i], body, j + 1
+        else:
+            m = re.match(r'^(`{3,})[ \t]*$', line)
+            if m:
+                fence = m.group(1)
+        body.append(line)
+        j += 1
+    return None
+
+
 def _fuse_noop_blocks(text: str) -> str:
     """Fuse runs of consecutive :::dev / :::instructors directives (separated
     only by blank lines) into a single same-tag directive, so a run of adjacent
-    author notes renders as one box rather than a stack of tiny ones.  Each note
-    is a `:::<tag>` directive wrapping a verbatim fence (see `_emit_noop_directive`);
-    the fused body is re-wrapped via `_verbatim_block`, so a fence that had to grow
-    to outrun backticks in one note still outruns backticks in the combined body.
-    Only directives with an identical header line fuse — same tag AND same
-    author/urgency arguments (a `:::dev bcpierce00` never merges into a bare
-    `:::dev` or a `:::dev (urgency := SOONER)`, and `dev` never merges into
-    `instructors`)."""
+    author notes renders as one box rather than a stack of tiny ones.  Each
+    note's body — inline markdown or a verbatim fence (see
+    `_emit_noop_directive`) — is kept in its own form; the fused bodies are
+    joined by a blank line, so a fenced body stays its own code block next to
+    an inline neighbor.  Only directives with an identical header line fuse —
+    same tag AND same author/urgency arguments (a `:::dev bcpierce00` never
+    merges into a bare `:::dev` or a `:::dev SOONER`, and `dev` never merges
+    into `instructors`)."""
     lines = text.split('\n')
     out, i, n = [], 0, len(lines)
     while i < n:
-        m = re.match(r'^:::(dev|instructors)\b.*$', lines[i])
-        # Only fuse a directive immediately wrapping a verbatim fence.
-        if not (m and i + 1 < n and re.match(r'^`{3,}$', lines[i + 1])):
+        parsed = _parse_noop_block(lines, i) if lines[i].startswith(':::') else None
+        if not parsed:
             out.append(lines[i]); i += 1; continue
-        header = lines[i]
-        bodies = []
-        while i < n:
-            same = lines[i] == header
-            fm = re.match(r'^(`{3,})$', lines[i + 1]) if same and i + 1 < n else None
-            if not fm:
-                break
-            fence = fm.group(1)
-            j = i + 2
-            body = []
-            while j < n and lines[j] != fence:
-                body.append(lines[j]); j += 1
-            j += 1                                  # skip the closing fence
-            if j < n and lines[j].strip() == ':::':  # skip the directive close
-                j += 1
-            bodies.append('\n'.join(body))
+        header, body, j = parsed
+        bodies = ['\n'.join(body)]
+        while True:
             while j < n and lines[j].strip() == '':  # skip blanks between blocks
                 j += 1
-            i = j
+            nxt = _parse_noop_block(lines, j) if j < n and lines[j] == header else None
+            if not nxt:
+                break
+            bodies.append('\n'.join(nxt[1]))
+            j = nxt[2]
         out.append(header)
-        out.append(_verbatim_block('\n\n'.join(bodies)))
+        out.append('\n\n'.join(b.strip('\n') for b in bodies))
         out.append(':::')
         out.append('')
+        i = j
     return '\n'.join(out)
 
 
