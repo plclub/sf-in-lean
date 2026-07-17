@@ -57,7 +57,11 @@
 import LF.Poly
 import LF.CustomTactics
 
--- (OA) : added these to use Lean's Nat.
+-- OA: added these to use Lean's Nat.
+-- BCP: Deserves a comment.  (In general, the reader should be given
+-- enough information to understand every line in the files we give them.
+-- This will not always be possible, but when it is not we should mark
+-- it explicitly.)
 open Nat (add_comm add_assoc add_zero add_succ mul_one succ_sub_succ)
 
 -- ######################################################
@@ -81,7 +85,7 @@ theorem silly1 (n m : Nat) : n = m → n = m := by
     the premises of this implication will be added to the list of
     subgoals needing to be proved. -/
 -- TERSE: ***
-/- `apply` also works with _conditional_ hypotheses: -/
+/- TERSE: `apply` also works with _conditional_ hypotheses: -/
 
 theorem silly2 (n m o p : Nat) :
     n = m →
@@ -189,7 +193,9 @@ theorem rev_exercise1 {α} (l l' : List α) :
 -- ###################################################### --
 -- ## Supplying arguments to `apply`
 
-/- HIDE: AAA dislikes the [...with...] variants of tactics, which he
+/- BCP: This note is probably dead...
+
+   AAA dislikes the [...with...] variants of tactics, which he
    feels don't work very well.  But we (Arthur and BCP) decided to
    leave things alone for now, since removing [...with...] would
    require changing MANY proofs. -/
@@ -218,10 +224,12 @@ theorem trans_eq {α : Type} (x y z : α) :
   intro eq1 eq2
   rw [eq1, eq2]
 
-/- Now, we should be able to use [trans_eq] to prove the above
+/- Nowwe *should* be able to use [trans_eq] to prove the above
     example.  -/
 
-/- HIDE: Robert Rand: This one makes a nice workinclass. You can show
+/- BCP: Is this still true?
+
+   Robert Rand: This one makes a nice workinclass. You can show
    the various ways around the problem, including named "with",
    unnamed "with", and (if you desire), explicitly providing the
    arguments to trans_eq. -/
@@ -304,7 +312,7 @@ theorem trans_eq_example_exact (a b c d e f : Nat) :
   exact trans_eq _ _ _ eq1 eq2
 
 /- TODO: (DHS) if we decide we want to introduce `calc` earlier, we can
-   remove this explanation or tweak it. -/
+   remove this explanation or tweak it.  BCP: I think we did introduce it earlier... -/
 /- FULL: Lean also has a built-in tactic `calc` that
     accomplishes the same purpose as applying `trans_eq`.
     The tactic allows us to specify the in-between states
@@ -387,8 +395,8 @@ theorem succ_injective (n m : Nat) :
   rfl
 -- /TERSE
 
-/- LATER: FSR'25 - I wrote an explanation for `have` here,
-    though I feel its inclusion here breaks the flow. -/
+/- SOON: FSR'25 - I wrote an explanation for `have` here,
+   though I feel its inclusion here breaks the flow. -/
 
 /- FULL: Lean's `have` tactic, used above, adds the given hypothesis
     to the context, but it first requires you to prove the hypothesis
@@ -514,11 +522,11 @@ theorem disjoint_ex2 (n : Nat) :
     hypothesis entails anything (even manifestly false things!). -/
 
 /-  FULL: If you find the principle of explosion confusing, remember
-    that these proofs are _not_ showing that the conclusion of the
+    that these proofs are _not_ simply showing that the conclusion of the
     statement holds.  Rather, they are showing that, _if_ the
     nonsensical situation described by the premise did somehow hold,
-    _then_ the nonsensical conclusion would too -- because we'd be
-    living in an inconsistent universe where every statement is true.
+    _then_ the nonsensical conclusion would hold too (because we'd be
+    living in an inconsistent universe where every statement is true).
 
     We'll explore the principle of explosion in more detail in the
     next chapter. -/
@@ -578,8 +586,11 @@ theorem beq_0_l (n : Nat) :
 /- HIDE: Robert Rand: I think it's nice to start them off with a
    easy question and also to use more datatypes than Nat and Bool. -/
 
+-- BCP: All these quizzes (here and elsewhere) need to be checked!
+
 -- QUIZ
-/- Recall our rgb and color types:
+-- BCP: In Rocq, there was a line of = signs between premises and conclusion.  They've gotten lost here.  There are probably more instances of this elsewhere!
+/- Recall our `RGB` and `Color` types:
 
 inductive RGB : Type where
   | red | green | blue
@@ -744,9 +755,9 @@ theorem eq_implies_succ_equal' (n m : Nat) :
   intro eq
   congr
 
-/- TODO: (DHS) how is this explanation of `congr`.
+/- TODO: (DHS) how is this explanation of `congr`? -/
 
-   FULL: The `congr` tactic also accepts a numerical argument,
+/- FULL: The `congr` tactic also accepts a numerical argument,
    which tells Lean how deeply to decompose the goal.
    So, given a goal like `((a, b), (c, d)) = ((e, f), (g, h))`,
    `congr 1` only applies `congr` once to the goal, and would produce
@@ -880,7 +891,7 @@ theorem silly4 (n m p q : Nat) :
 /- TODO: (DHS) this part has been changed
    from the original Rocq, let me know what you think -/
 -- ######################################################
--- Specializing Hypotheses
+-- # Specializing Hypotheses
 
 /- We've already seen how we can use `have` to do
    forward reasoning, by letting us state and prove useful facts
@@ -906,7 +917,7 @@ theorem have_example m :
   rw [mul_one] at h
   exact h
 
-/- You may notice that in the above proof, after using `have`
+/- You may notice that, in the above proof, after using `have`
    we were left with a leftover hypothesis in the context,
    the old `h`, so to speak. Often we don't care to keep
    this old hypothesis around, and so we can use the `replace`
@@ -957,7 +968,7 @@ theorem trans_eq_example'''''' (a b c d e f : Nat) :
   assumption
 
 -- ######################################################
-/- Varying the Induction Hypothesis -/
+/- # Varying the Induction Hypothesis -/
 
 -- TERSE
 /- Recall this function for doubling a natural number from the
@@ -1401,7 +1412,7 @@ theorem double_injective_take2 : ∀ n m,
 /- LATER: Maybe we should put one more good example to round out this section? -/
 
 -- ######################################################
--- Rewriting with conditional statements
+-- # Rewriting with Conditional Statements
 
 /- We'll use a boolean "less or equal" test on numbers, written `n ≤? m`
     (the library function `Nat.ble`), together with the fact that it
@@ -1695,7 +1706,7 @@ Qed. -/
 -- /HIDE
 
 -- ######################################################
--- Using `cases` on Compound Expressions
+-- # Using `cases` on Compound Expressions
 
 /- HIDE: CH: If eqn is only useful for compound expressions and those
    are only discussed here, why has eqn been introduced before this
@@ -1740,7 +1751,7 @@ theorem sillyfun_false (n : Nat) :
     are replaced by `c`. -/
 
 -- ######################################################
--- Destructing Tuples
+-- ## Destructing Tuples
 
 /- `cases` is useful when we are dealing with inductively defined types
    that can be one thing or another; a `Bool` is either a `false` or a `true`,

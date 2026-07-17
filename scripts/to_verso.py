@@ -314,11 +314,12 @@ def _split_dev_tags(text):
     argument) or an author tag (-> the positional author argument, as
     `"Full Name (handle)"` via `_AUTHOR_NAMES`; a `@handle:` attribution is
     looked up via `_HANDLE_NAMES`).  After an urgency keyword, a clean author
-    attribution — `BCP:`, `(DHS)`, `(BCP'20)` — is promoted too; anything
-    murkier (dates as in `LATER: BCP 9/16: …`, unmapped initials, plain prose)
-    stays in the body.  Topic keywords (NOTATION:, HIDE:, COMMENT:) and
-    unmapped tags leave the note untouched.  A year suffix on a promoted tag
-    (`NDS'25`, `BCP'20`) becomes the `(year := 20NN)` argument."""
+    attribution — `BCP:`, `(DHS)`, `(BCP'20)`, a bare year `BCP 25:`, or an
+    `MM/YY` date `BCP 9/16:` (month dropped, year kept) — is promoted too;
+    anything murkier (unmapped initials, plain prose) stays in the body.
+    Topic keywords (NOTATION:, HIDE:, COMMENT:) and unmapped tags leave the
+    note untouched.  A year suffix on a promoted tag (`NDS'25`, `BCP'20`)
+    becomes the `(year := 20NN)` argument."""
     body = text.lstrip()
     author = year = urgency = None
     m = re.match(r"@([A-Za-z][A-Za-z0-9-]*)\s*:?\s*", body)
@@ -348,6 +349,14 @@ def _split_dev_tags(text):
             m2 = re.match(r"([A-Za-z][A-Za-z0-9]*)(?:'(\d+))?\s*:\s*", body)
         if not m2:
             m2 = re.match(r"([A-Za-z][A-Za-z0-9]*)'(\d+)\s+", body)
+        if not m2:
+            # `SOONER: BCP 25: …` — initials, a space, a bare two-digit year,
+            # then a colon.  The space-then-year spelling of `BCP'25:`.
+            m2 = re.match(r"([A-Za-z][A-Za-z0-9]*)\s+(\d{2})\s*:\s*", body)
+        if not m2:
+            # `LATER: BCP 9/16: …` / `SOONER: MRC 3/22: …` — an `MM/YY` date;
+            # we keep only the year (after the slash) and drop the month.
+            m2 = re.match(r"([A-Za-z][A-Za-z0-9]*)\s+\d{1,2}/(\d{2})\s*:\s*", body)
         if m2 and m2.group(1) in _AUTHOR_NAMES:
             author = _AUTHOR_NAMES[m2.group(1)]
             if m2.group(2):
@@ -1793,12 +1802,18 @@ class Renderer:
 
     def _on_solution_prose(self, text):
         # Prose / non-compiling solution -> :::solution block, shown only in the
-        # solutions build (SFLMeta.Block.solution).  Body is verbatim-fenced so
-        # arbitrary illustrative code can't perturb the parser.
+        # solutions build (SFLMeta.Block.solution).  The body is inlined as plain
+        # markdown when `_inline_note_body` can prove that safe (so backtick
+        # identifiers render as inline code rather than a monospace block), and
+        # verbatim-fenced otherwise so arbitrary illustrative code — Lean
+        # snippets, `:::`, stray emphasis chars — can't perturb the parser.
         self._flush_code()
         if not text.strip():
             return
-        self._append(':::solution\n' + _verbatim_block(text) + '\n:::\n\n')
+        body = _inline_note_body(text)
+        if body is None:
+            body = _verbatim_block(text)
+        self._append(':::solution\n' + body + '\n:::\n\n')
 
     def _emit_noop_directive(self, directive, text):
         # Author notes become noop annotation *directives* (:::dev / :::instructors),
