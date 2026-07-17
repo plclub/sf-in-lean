@@ -1,4 +1,4 @@
-/- Lean: Using the full power of a proof assistant -/
+/- UsingLean: Using the full power of a proof assistant -/
 
 /- TODO: Chapter goals:
    Nats
@@ -14,13 +14,18 @@
 -- HIDEFROMHTML
 -- FULL
 
+-- BCP: NOW: Did we intend for this section header to be in a "full" block?  
+
 /-
   ######################################################################
   # More powerful Natural Numbers
 -/
+-- /FULL
+
+-- BCP: Is Basics needed explicitly?  And why are these here instead of at the top of the file?
+
 import LF.Basics
 import LF.Induction
--- /FULL
 
 /-
   Until now, we have been working with our own custom natural numbers, using the
@@ -40,6 +45,9 @@ import LF.Induction
 
 -- BCP: Just making a note that we need to explain the
 -- `zero.succ.succ` notation someplace well before this file!
+
+-- BCP: Have we already explained sections, and how they differ from namespaces? Will it be clear to readers why we need one here? Can we choose a better name than `long_example`?
+
 section long_example
 open NatPlayground.Nat
 /- Previously, we did computation like this... -/
@@ -50,7 +58,7 @@ theorem test_mult1' : (two * two : NatPlayground.Nat) = four := by
   rewrite [add_succ, add_succ, add_zero]
   rfl
 end long_example
--- BCP: The info viewed in the InfoView during this proof is kind of
+-- BCP: NOW: The info viewed in the InfoView during this proof is kind of
 -- mysterious (to me) here.  Have we already given people enough help
 -- to understand it here?
 
@@ -75,9 +83,10 @@ theorem test_mult1_nat : (3 * 3 : Nat) = 9 := by
   which enable more powerful and concise proofs.
 
   In fact, from now on, we will use the built-in `Nat` type and its powerful
-  features. To do so, write `Nat.<theorem>` to reference Lean's version
+  features, writing `Nat.<theorem>` to reference Lean's version
   of `<theorem>`.
 -/
+-- BCP: Why can't we just write <theorem>?  
 
 /-
   ## `rfl` and computation with `Nat`
@@ -134,7 +143,7 @@ theorem rfl_not_enough' (n m : Nat) (h : n = m) : n = m := by
 -- /FULL
 
 -- TERSE
-/- We can use the `exact?` tactic to search for relevant theorems in the standard library -/
+/- Use the `exact?` tactic to search for relevant theorems in the standard library. -/
 -- /TERSE
 
 /-- info: Try this:
@@ -156,6 +165,7 @@ example (a b : Nat) : a + b = b + a := by
   in the finished versions of proofs and instead replaces them with
   the tactics they found during search.
 -/
+-- BCP: Why do we say "Lean 4" in some places, instead of just "Lean"
 -- /FULL
 
 -- FULL
@@ -243,12 +253,12 @@ theorem mul_three_beq (p : Nat) :
 
   `calc` is designed to mimic the style of proofs in mathematics textbooks, which will
   often look something like this:
-
+[[
   a + (b + c)
   = (a + b) + c        ...   [by associativity of addition]
   = (b + a) + c        ...   [by commutativity of addition]
   = b + (a + c)        ...   [by associativity of addition]
-
+]]
   Note how we can see each intermediate step of this proof when we
   look at it this way. Let's look at how we might prove this theorem
   (i.e., that `a + (b + c) = b + (a + c)`) in Lean.
@@ -304,6 +314,8 @@ theorem succ_mul_succ' (n m : Nat) :
   will be tools in your ever-growing toolbox of tactics.
 -/
 
+-- BCP: Needs some exercises!!
+
 /-
   ######################################################################
   # Definitional simplification: `dsimp`
@@ -346,13 +358,15 @@ example (n m : Nat) (h : n + n = m) : triple n = m + n := by
   /- `rw [triple]` unfolds `triple n`. -/
   rw [triple, h]
 
--- EX 2: Complete this proof, using `dsimp` or `rw` as appropriate.
+-- EX2 (dsimp1)
+-- Complete this proof, using `dsimp` or `rw` as appropriate.
 example (n m : Nat) (h : m = n) : triple m = n + (n + n) := by
   -- ADMITTED
   rw [h]
   dsimp [triple]
   rw [Nat.add_assoc]
   -- /ADMITTED
+-- []
 
 /- `dsimp at h` also works on hypotheses, which rfl can't touch. -/
 example (n : Nat) (h : square n = 16) : n * n = 16 := by
@@ -446,7 +460,8 @@ def double (n : Nat) : Nat :=
   match n with
   | .zero    => 0
   | .succ n' => .succ (.succ (double n'))
-
+  
+-- EX2 (even_succ)  
 theorem even_succ (n : Nat) :
     even (.succ n) = !even n := by
   -- ADMITTED
@@ -457,6 +472,7 @@ theorem even_succ (n : Nat) :
     rw [even, ih, Bool.not_not]
   -- /ADMITTED
 -- GRADE_THEOREM 1: even_succ
+-- []
 
   -- TODO: talk about using `Nat.add_zero` and friends from now on.
 
@@ -469,6 +485,7 @@ theorem double_zero : double 0 = 0 := by rfl
 
 theorem double_succ (n : Nat) : double (n + 1) = double n + 2 := by rfl
 
+-- EX2 (double_add)
 theorem double_add (n : Nat) : double n = n + n := by
   -- ADMITTED
   induction n with
@@ -478,9 +495,12 @@ theorem double_add (n : Nat) : double n = n + n := by
     rw [double_succ, ih, Nat.succ_add n' (n' + 1), Nat.add_succ n' n']
   -- /ADMITTED
 -- GRADE_THEOREM 1: double_add
+-- []
 
+-- EX2 (double_mul)
 theorem double_mul (n : Nat) : double n = 2 * n := by
   -- ADMITTED
   rw [double_add, Nat.two_mul]
   -- /ADMITTED
+-- []
 -- GRADE_THEOREM 1: double_mul

@@ -11,7 +11,7 @@ are certain to be things that are not clear.  Please help us figure
 out what those are and document the clarifications in this file.
 
 ## Top-level orientation
-###    Guiding Philosophy
+### Guiding Philosophy
 
 These are the tenets of the SFL effort, in order. Consult these tenets
 when making a change: If your change is supported by them, then
@@ -37,7 +37,7 @@ refer to the tenets to drive a decision (potentially updating the tenets).
    possible. Some of SFL's languages, semantics, etc. might eventually
    be contributed to CSLib.
 
-##    Zulip
+## Zulip
 
 The [SFL contributors
   channel](https://leanprover.zulipchat.com/#narrow/channel/607217-lean-software-foundations-contributors)

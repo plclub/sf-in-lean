@@ -21,7 +21,7 @@ email Benjamin Pierce and we can discuss.
 
 ## Orientation
 
-See [Contributors.md](CONTRIBUTORS.md).
+See [Contributing.md](CONTRIBUTING.md).
 
 ## License
 

@@ -1,5 +1,6 @@
 import VersoManual
 import SFLMeta.Bnf
+import SFLMeta.Comment
 import SFLMeta.DisplayMath
 import SFLMeta.Ignore
 import SFLMeta.Exercise
@@ -242,6 +243,16 @@ private def asModuleDoc (s : String) : String :=
     ((t.splitOn "\n").map fun line =>
       if line.all (·.isWhitespace) then "" else "-- " ++ line)
   commented ++ "\n\n"
+
+/-- Render a shown dev note as one contiguous `--` comment block, visually set
+off from surrounding prose: the label line first, body lines indented 4 spaces
+under it, and interior blank lines kept as bare `--` (not truly blank) so the
+note reads as a single unit. -/
+private def devNoteComment (label body : String) : String :=
+  let indented := String.intercalate "\n"
+    ((body.trimAscii.toString.splitOn "\n").map fun l =>
+      if l.all (·.isWhitespace) then "--" else "--     " ++ l)
+  "-- " ++ label ++ ":\n" ++ indented ++ "\n\n"
 
 /-- Merge adjacent `/-! … -/` blocks into one, separating their contents with a blank line. -/
 private def mergeAdjacentModuleDocs (s : String) : String :=
@@ -736,9 +747,26 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     if name == ``Block.slidebreak then
       -- Slide-break marker: emit nothing in all generated .lean files.
       return buf
+    if name == ``Block.suppressPreviousHeaderWhenTerse then
+      -- Full-only-heading marker: consumed by `walkSection` (which suppresses
+      -- the heading it follows); emits nothing itself.
+      return buf
+    if name == ``Block.devcomment then
+      -- A dev note passes through as a labelled comment when its urgency makes
+      -- it shown (`devNoteShown`: `NOW`, `TODO`, or none); otherwise nothing is
+      -- emitted.  `devNoteComment` sets the note off from surrounding prose
+      -- (indented body, contiguous comment block); the body is filled 4
+      -- columns narrower to compensate for that indentation.
+      if let some (author, urgency, year) := decodeDevData? which.data then
+        if devNoteShown urgency then
+          let body := String.intercalate "\n\n"
+            (contents.toList.map (blockToText (width - 4)))
+          return appendBoth buf file
+            (devNoteComment (devNoteLabel author urgency year "NOTE FOR DEVELOPERS") body)
+      return buf
     -- Unknown extension block: recurse into children as a best-effort.
-    -- NB: :::dev / :::instructor blocks carry no children (their bodies are
-    -- dropped at elaboration), so this recursion is a no-op for them.
+    -- NB: :::instructors blocks carry no children (their bodies are dropped at
+    -- elaboration), so this recursion is a no-op for them.
     walkBlocks width file contents buf
   | .para inls => return appendBoth buf file (asModuleDoc (paraToText width inls))
   | .code s => return appendBoth buf file (asModuleDoc s.trimAscii.toString)
@@ -775,6 +803,17 @@ private def chapterModule (vol : String) (p : Part Manual) : String :=
   if base.all (fun c => c.isAlphanum || c == '_') then vol ++ "." ++ base
   else vol ++ ".«" ++ base ++ "»"
 
+/-- Does one of `blocks` contain a `Block.suppressPreviousHeaderWhenTerse`
+marker?  The marker is emitted at a section's top level, but elaboration wraps
+each source block in `.concat` layers, so look through those (only — the marker
+never sits inside another extension block in the terse tree). -/
+private partial def hasSuppressHeaderMarker (blocks : Array (Block Manual)) : Bool :=
+  blocks.any fun b =>
+    match b with
+    | .other which _ => which.name == ``Block.suppressPreviousHeaderWhenTerse
+    | .concat bs => hasSuppressHeaderMarker bs
+    | _ => false
+
 /--
 Walk a section (a Part at depth ≥ 1, inside a chapter). The section's title is
 emitted as a `#`-prefixed module-doc heading whose level equals `depth`; all
@@ -785,7 +824,13 @@ partial def walkSection (width : Nat) (depth : Nat) (file : String) (part : Part
   let mut buf := buf
   let hashes := String.ofList (List.replicate depth '#')
   let titleText := inlinesToText titleInlines
-  buf := appendBoth buf file (asModuleDoc s!"{hashes} {titleText}")
+  -- A `Block.suppressPreviousHeaderWhenTerse` marker among the section's own
+  -- blocks means the heading is full-only. The marker survives traversal only
+  -- in terse builds (full builds replace it with an empty block), so its
+  -- presence here says: this is the terse tree, suppress the heading (the
+  -- content still flows).
+  if !hasSuppressHeaderMarker intro then
+    buf := appendBoth buf file (asModuleDoc s!"{hashes} {titleText}")
   buf := walkBlocks width file intro buf
   for p in subParts do
     buf := walkSection width (depth + 1) file p buf

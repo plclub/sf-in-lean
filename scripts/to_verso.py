@@ -220,7 +220,7 @@ def _extract_imports(body: str):
 # generated outputs.  Add new tags here so they route cleanly instead of leaking
 # into the rendered chapter as prose.  INSTRUCTORS is deliberately NOT in this
 # set: it routes to :::instructor (handled separately, both line and block).
-_DEV_TAGS = (r'BCP|JC|MWH|CGH|RAB|CH|HG|NB|Claude|TODO|TOFIX|LATER|SOONER'
+_DEV_TAGS = (r'BCP|JC|MWH|CGH|RAB|CH|HG|NB|Claude|TODO|TOFIX|LATER|SOONER|NOW'
              r'|NDS|NOTATION|APT|BAY|SAZ|ET|AAA|MRC|PR|ORI|Ori|mwhicks1|chenson2018'
              r'|COMMENT')  # COMMENT: untagged (* .. *) comments from a .v source
 # The block set additionally recognizes `HIDE:` (a `/- HIDE: … -/` dev note).
@@ -235,7 +235,7 @@ _BLOCK_INSTRUCTOR_RE = re.compile(r'^INSTRUCTORS:')
 
 # Urgency keywords: when one of these opens a dev note it becomes the :::dev
 # directive's `(urgency := …)` argument rather than an author.
-_URGENCY_TAGS = ('SOONER', 'LATER', 'TODO', 'TOFIX')
+_URGENCY_TAGS = ('NOW', 'SOONER', 'LATER', 'TODO', 'TOFIX')
 
 # Authors behind the initials appearing in dev notes, as "Full Name
 # (github-handle)".  When a note opens with one of these tags (or, after an
@@ -1552,6 +1552,15 @@ class Renderer:
         # would also trip Verso's bold parser in the rendered heading).
         title = re.sub(r'[ \t*]+$', '', title)
         self._append('#' * level + ' ' + title + '\n\n')
+        # A header inside a source FULL region is a *full-only* heading: the
+        # heading itself must go at document level (above), but a
+        # :::suppressPreviousHeaderWhenTerse marker directly after it records
+        # the FULL scoping so terse builds can suppress the heading (see
+        # SFLMeta.Block.suppressPreviousHeaderWhenTerse).  A leaf directive
+        # like :::slidebreak — empty body, always at top level (the header just
+        # closed any open containers), so a literal 3-colon fence is safe.
+        if self.full_depth > 0:
+            self._append(':::suppressPreviousHeaderWhenTerse\n:::\n\n')
 
     def _on_code_line(self, line):
         # Code is treated like prose with respect to :::full — it stays inside
@@ -1871,10 +1880,13 @@ def _drop_empty_directives(text: str) -> str:
         lines = t.split('\n')
         out, i, n = [], 0, len(lines)
         while i < n:
-            # An opening directive with a name — but NOT `:::slidebreak`, which is
-            # an intentionally empty self-closing marker (`:::slidebreak` / `:::`),
-            # not an empty container to drop.
-            m = re.match(r'^(:::+)(?!slidebreak\b)\w', lines[i])
+            # An opening directive with a name — but NOT `:::slidebreak` or
+            # `:::suppressPreviousHeaderWhenTerse`, which are intentionally
+            # empty self-closing markers (`:::slidebreak` / `:::`), not empty
+            # containers to drop.
+            m = re.match(
+                r'^(:::+)(?!slidebreak\b|suppressPreviousHeaderWhenTerse\b)\w',
+                lines[i])
             if m:
                 fence = m.group(1)
                 j = i + 1

@@ -52,7 +52,8 @@ WORD_RE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_']*")
 _MARKER_LINE_RE = re.compile(
     r"^\s*--\s*(/?FULL|/?TERSE|/?HIDE\w*|/?QUIZ|/?SOLUTION|/?QUIETSOLUTION"
     r"|/?WORKINCLASS|/?ADMIT\w*|EX\d*\w*|GRADE_\w+|INSTRUCTORS|RAB|RADDITION"
-    r"|BCP|JC|MWH|CGH|CH|HG|NB|MMG|APT|DHS|TODO|TOFIX|LATER|SOONER|\[\])\b",
+    r"|BCP|JC|MWH|CGH|CH|HG|NB|MMG|APT|DHS|TODO|TOFIX|LATER|SOONER"
+    r"|NOW(?=:)|\[\])\b",  # NOW needs the colon: plain prose often starts "Now"
     re.IGNORECASE,
 )
 _DIVIDER_LINE_RE = re.compile(r"^\s*--\s*[#*=-]{3,}")
@@ -76,7 +77,8 @@ _BLOCK_MARKER_RE = re.compile(
 # A dev/author note block (`/- BCP: … -/`, `/- TODO: … -/`) is routed to :::dev
 # and is not pedagogical prose; skip it so it isn't reported as a loss.
 _DEV_BLOCK_RE = re.compile(
-    r"^\s*(BCP|JC|MWH|CGH|RAB|CH|HG|NB|TODO|TOFIX|LATER|SOONER)\b", re.IGNORECASE)
+    r"^\s*(BCP|JC|MWH|CGH|RAB|CH|HG|NB|TODO|TOFIX|LATER|SOONER|NOW(?=:))\b",
+    re.IGNORECASE)  # NOW needs the colon: plain prose often starts "Now"
 # `FULL:` / `TERSE:` inline-mode prefixes are consumed by to_verso; drop them so
 # they don't appear (unmatched) in the source word stream.
 _MODE_PREFIX_RE = re.compile(r"^\s*(FULL|TERSE):\s?", re.IGNORECASE)
