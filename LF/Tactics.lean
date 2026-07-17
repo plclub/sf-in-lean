@@ -131,7 +131,7 @@ theorem silly_ex p :
     being applied must match the goal exactly (perhaps after
     simplification) -- for example, `apply` will not work if the left
     and right sides of the equality are swapped. -/
--- TERSE:
+-- TERSE: ***
 /- TERSE: The goal must match the hypothesis _exactly_ for `apply` to
     work: -/
 
@@ -920,8 +920,6 @@ theorem replace_example m :
 
 /- Use `have` or `replace` to prove the the following lemma, following the
     model of the examples above. Do not use `induction`. -/
--- TODO:CGH  temporary unseal so we can test the Verso build!
-unseal nthError in
 theorem nth_error_always_none (l : List Nat) :
     (∀ i, nthError l i = none) →
     l = [] := by
@@ -959,7 +957,7 @@ theorem trans_eq_example'''''' (a b c d e f : Nat) :
 
 -- TERSE
 /- Recall this function for doubling a natural number from the
-    \CHAP{Arithmetic} chapter:
+    \CHAP{Induction} chapter:
 
     def double (n : Nat) : Nat :=
     match n with
@@ -1321,7 +1319,7 @@ theorem double_injective_take2_FAILED : ∀ n m,
     most natural way. -/
 
 -- /HIDEFROMADVANCED
--- TERSE:
+-- TERSE: ***
 /- What we can do instead is to first introduce all the quantified
     variables and then explicitly generalize one or more of them
     The `generalizing` option for the `induction` tactic does this. -/
@@ -1409,6 +1407,7 @@ theorem double_injective_take2 : ∀ n m,
 -- Answer: No, just replaces uses of it by Nat.ble!
 infix:52 " ≤? " => Nat.ble
 
+theorem zero_leb (m : Nat) : (0 ≤? m) = true := rfl
 theorem succ_leb_succ (n m : Nat) : ((n + 1) ≤? (m + 1)) = (n ≤? m) := rfl
 
 /- Suppose that we want to show that `add` is the inverse of
@@ -1450,8 +1449,6 @@ theorem sub_add_leb : ∀ (n m : Nat),
 -- EX3! (gen_dep_practice)
 -- Prove this by induction on `l`.
 
--- TODO:CGH  temporary unseal so we can test the Verso build!
-unseal nthError in
 theorem nth_error_after_last {α : Type} (n : Nat) (l : List α) :
     l.length = n →
     nthError l n = none := by
@@ -1766,8 +1763,6 @@ def split {α β : Type} (l : List (α × β)) : (List α) × (List β) :=
     | (lx, ly) => (x :: lx, y :: ly)
 
 /- Prove that `split` and `zip` are inverses in the following sense: -/
--- TODO:CGH  temporary unseal so we can test the Verso build!
-unseal zip in
 theorem split_zip {α β : Type} (l : List (α × β)) l1 l2 :
     split l = (l1, l2) →
     zip l1 l2 = l := by
@@ -2070,8 +2065,6 @@ def split_combine_statement : Prop :=
     split (zip l1 l2) = (l1, l2)
 -- /ADMITDEF
 
--- TODO:CGH  temporary unseal so we can test the Verso build!
-unseal zip in
 theorem split_combine : split_combine_statement := by
 -- ADMITTED
   intros α β l1 l2 h
@@ -2091,9 +2084,6 @@ theorem split_combine : split_combine_statement := by
 -- QUIETSOLUTION
 
 /- Here are more approaches -/
-
--- TODO:CGH  temporary unseal so we can test the Verso build!
-unseal zip in
 theorem split_combine' (α β :Type) l (l1 : List α) (l2 : List β) :
     (l1, l2) = split l → split (zip l1 l2) = (l1, l2) := by
   intro h
@@ -2149,8 +2139,6 @@ Proof.
 
 -- FULL
 -- EX3A (filter_exercise)
--- TODO:CGH  temporary unseal so we can test the Verso build!
-unseal filter in
 theorem filter_exercise {α : Type} (test : α → Bool) (a : α) (l lf : List α) :
     filter test l = a :: lf →
     test a = true := by
@@ -2207,10 +2195,10 @@ def forallb {α : Type} (test : α → Bool) (l : List α) : Bool :=
   | x :: l' => (test x) && (forallb test l')
 -- /ADMITDEF
 
-example : forallb odd [1,3,5,7,9] = true := by rfl
-example : forallb not [false,false] = true := by rfl
-example : forallb even [0,2,4,5] = false := by rfl
-example : forallb (· == 5) [] = true := by rfl
+example : forallb odd [1,3,5,7,9] = true := by rfl -- ADMITTED
+example : forallb not [false,false] = true := by rfl -- ADMITTED
+example : forallb even [0,2,4,5] = false := by rfl -- ADMITTED
+example : forallb (· == 5) [] = true := by rfl -- ADMITTED
 
 def existsb {α : Type} (test : α → Bool) (l : List α) : Bool :=
 -- ADMITDEF
@@ -2219,10 +2207,10 @@ def existsb {α : Type} (test : α → Bool) (l : List α) : Bool :=
   | x :: l' => (test x) || (existsb test l')
 -- /ADMITDEF
 
-example : existsb (· == 5) [0,2,3,6] = false := by rfl
-example : existsb (· && true) [true,true,false] = true := by rfl
-example : existsb odd [1,0,0,0,0,3] = true := by rfl
-example : existsb even [] = false := by rfl
+example : existsb (· == 5) [0,2,3,6] = false := by rfl -- ADMITTED
+example : existsb (· && true) [true,true,false] = true := by rfl -- ADMITTED
+example : existsb odd [1,0,0,0,0,3] = true := by rfl -- ADMITTED
+example : existsb even [] = false := by rfl -- ADMITTED
 
 def existsb' {α : Type} (test : α → Bool) (l : List α) : Bool :=
 -- ADMITDEF
@@ -2261,8 +2249,6 @@ def forallbF {X : Type} (test : X → Bool) (l : List X) : Bool :=
 def existsbF {X : Type} (test : X → Bool) (l : List X) : Bool :=
   fold (fun x b => (test x) || b) l false
 
--- TODO:CGH  temporary unseal so we can test the Verso build!
-unseal fold in
 theorem existsbF_existsb {α : Type} (test : α → Bool) (l : List α) :
     existsbF test l = existsb test l := by
   unfold existsbF

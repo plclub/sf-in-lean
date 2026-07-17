@@ -1,5 +1,6 @@
 import VersoManual
 import SFLMeta.Bnf
+import SFLMeta.DisplayMath
 import SFLMeta.Ignore
 import SFLMeta.Exercise
 import SFLMeta.Terse
@@ -155,6 +156,21 @@ def fillText (width : Nat) (text : String) : String := Id.run do
 def paraToText (width : Nat) (inls : Array (Verso.Doc.Inline Manual)) : String :=
   fillText width (inlinesToText inls)
 
+/-- Drop leading and trailing all-whitespace lines from `s`, preserving each
+remaining line's own leading whitespace (so ASCII diagrams and hand-aligned
+displays keep their column alignment).
+
+Defined as a `String.` method (not a plain `SFLMeta` function) on purpose: its one
+caller applies it to a `let`-bound `match` whose result type is not yet pinned,
+and a plain application there leaves the elaborator stuck on a universe
+constraint.  Dot-notation (`src.stripBlankEdgeLines`, like `src.trimAscii`) pins
+`src : String` first and elaborates cleanly — so keep the dot-notation call. -/
+def _root_.String.stripBlankEdgeLines (s : String) : String :=
+  let blank : String → Bool := fun l => l.all (·.isWhitespace)
+  let ls := s.splitOn "\n"
+  let ls := (((ls.dropWhile blank).reverse).dropWhile blank).reverse
+  String.intercalate "\n" ls
+
 /--
 Render a Verso block to a Markdown-like string for inclusion in a `/-! … -/`
 comment, filling prose to `width` columns.  List items are prefixed with `- ` /
@@ -191,7 +207,10 @@ private partial def blockToText (width : Nat) : Verso.Doc.Block Manual → Strin
 additional `lean_lib`s holding bundled prerequisite sources (e.g. `LF` for the
 bare `LF/Maps.lean` that Imp depends on). -/
 private def lakefileTemplate (vol : String) (extraLibs : Array String) : String :=
-  let extra := extraLibs.foldl (init := "") fun acc l =>
+  -- A bundled prerequisite may live in the volume's own namespace (e.g. the
+  -- bare `LF/CustomTactics.lean` bundled into the LF project): the volume's
+  -- `lean_lib` already covers it, and Lake rejects a duplicate target.
+  let extra := (extraLibs.filter (· != vol)).foldl (init := "") fun acc l =>
     acc ++ "\n[[lean_lib]]\nname = \"" ++ l ++ "\"\n"
   "name = \"" ++ vol.toLower ++ "-extracted\"\n" ++
   "version = \"0.1.0\"\n" ++
@@ -274,6 +293,35 @@ block_extension Block.leanSaved (teacher : String) (student : String) (terse : S
       return none
   toHtml := some fun _ goB _ _ contents => contents.mapM goB
   toTeX  := some fun _ goB _ _ contents => contents.mapM goB
+
+/-! ## `importBlock` code block
+
+A chapter's cross-chapter `import` lines (e.g. `import LF.Basics`) must live in
+the Verso module *header* (where they are rewritten to the `…Verso` module
+names), so they never appear in the chapter's elaborated `lean` blocks — yet
+the book reader should still see them where the prose introduces them.  An
+` ```importBlock ` code block carries the original import line(s) verbatim and
+renders as a plain code block in HTML.  It is display-only: the extracted
+student/solutions/terse chapter files get their `import` preamble from the
+chapter source's header in `emitSavedImpl` (which also bundles non-chapter
+prerequisite modules into the generated project). -/
+
+block_extension Block.importBlock (source : String) where
+  data := Json.str source
+  traverse _ _ _ := pure none
+  toHtml := some fun _ goB _ _ contents => contents.mapM goB
+  toTeX := some fun _ goB _ _ contents => contents.mapM goB
+
+/-- An ` ```importBlock ` code block: cross-chapter `import` lines for the
+generated projects, rendered to the reader as a plain code block. The body is
+not elaborated here (the real imports for the book build are in the Verso
+module header). -/
+@[code_block]
+def importBlock : CodeBlockExpanderOf Unit
+  | (), str => do
+    let src := str.getString
+    ``(Verso.Doc.Block.other (SFLMeta.Block.importBlock $(quote src))
+        #[Verso.Doc.Block.code $(quote src)])
 
 /-! ## Syntactic rewriting of `solution!` markers
 
@@ -376,8 +424,18 @@ partial def stripGuardMsgs (src : String) : String := Id.run do
       while j < n && !(lines[j]!.trimAscii.toString.endsWith "-/") do
         j := j + 1
       if j + 1 < n && (lines[j + 1]!.trimAscii.toString.startsWith "#guard_msgs") then
-        -- Expected-message docstring for a `#guard_msgs`: drop it and the modifier.
-        i := j + 2
+        -- Expected-message docstring for a `#guard_msgs`.  Strip the pair only
+        -- when the expectation is benign (a `warning:`/`info:` message, e.g.
+        -- `declaration uses sorry`): without the guard the command still
+        -- compiles.  An expected *error* (`error:`, `Tactic … failed`, …)
+        -- means the wrapped command deliberately fails — the guard must stay
+        -- in the extracted file or it would not build.
+        let body := ((lines[i]!.trimAscii.toString.drop 3).trimAscii).toString
+        if body.startsWith "warning" || body.startsWith "info" then
+          i := j + 2
+        else
+          for k in [i:j+2] do out := out.push lines[k]!
+          i := j + 2
       else
         for k in [i:j+1] do out := out.push lines[k]!
         i := j + 1
@@ -606,6 +664,12 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
           (student.trimAscii.toString ++ "\n\n")
           (terse.trimAscii.toString ++ "\n\n")
       return buf
+    if name == ``Block.importBlock then
+      -- Cross-chapter `import` lines shown to the reader.  The extracted
+      -- files get their import lines from the chapter source's header
+      -- preamble in `emitSavedImpl` (which also bundles non-chapter
+      -- prerequisites), so nothing is emitted here.
+      return buf
     if name == ``Block.exercise then
       -- Emit a `### Exercise (N⭐): name` heading; the contained `lean`
       -- blocks render normally via recursion below.
@@ -619,6 +683,34 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     if name == ``Block.bnf then
       if let some src := decodeBnfSource? which.data then
         return appendBoth buf file (asModuleDoc src.trimAscii.toString)
+    if name == ``Block.display || name == ``Block.displaymath then
+      -- A ` ```display ` / ` ```displaymath ` block is a *display*: its line
+      -- structure is significant, so it is emitted verbatim as a comment — each
+      -- source line kept on its own line and indented a couple of spaces to set
+      -- it off — and is NEVER reflowed/filled into a paragraph the way ordinary
+      -- prose is.  `display` stores its source string directly; `displaymath`
+      -- carries no data, so recover the text from its `Block.para`/math children.
+      let src :=
+        match which.data with
+        | .str s => s
+        | _ =>
+          -- `displaymath`: one `Block.para` per equation, each holding a single
+          -- math inline; take the raw inline text (unfilled), one line each.
+          String.intercalate "\n" (contents.toList.filterMap fun (b : Verso.Doc.Block Manual) =>
+            match b with
+            | .para inls => some (inlinesToText inls)
+            | _ => none)
+      -- Emit as its own comment, built by hand rather than via `asModuleDoc`:
+      -- each source line kept on its own line and indented under `-- ` to set the
+      -- display off, and NEVER reflowed/filled the way prose is.  Only leading and
+      -- trailing *blank lines* are dropped — a line's own leading whitespace is
+      -- preserved verbatim, so ASCII diagrams and hand-aligned displays keep their
+      -- column alignment.  (`asModuleDoc`/`trimAscii` would trim the whole block
+      -- and so drop the first line's indentation.)
+      let commented := String.intercalate "\n"
+        ((src.stripBlankEdgeLines.splitOn "\n").map fun l =>
+          if l.all (·.isWhitespace) then "" else "--   " ++ l)
+      return appendBoth buf file (commented ++ "\n\n")
     if name == ``Block.diagramWithAlt then
       match findAlt? contents with
       | some alt => return appendBoth buf file (asModuleDoc alt.trimAscii.toString)
