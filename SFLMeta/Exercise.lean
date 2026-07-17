@@ -15,34 +15,77 @@ structure ExerciseConfig where
   rating : Nat
   /-- A short identifier for the exercise, used in headings and cross-references. -/
   name : String
+  /-- Difficulty level, written as a bare identifier: `Advanced` marks an
+  advanced exercise (SF's `A` flag).  Absent means a standard exercise. -/
+  level : Option String
+  /-- Whether the exercise is graded manually rather than automatically (SF's
+  `M` flag).  Written `(manual := true)`. -/
+  manual : Bool
 deriving Repr
 
 section
-variable [Monad m] [MonadError m]
+variable [Monad m] [MonadInfoTree m] [MonadLiftT CoreM m] [MonadEnv m] [MonadError m]
 
-/-- Argument parser for `ExerciseConfig`. -/
+/-- An argument value written as a bare identifier (`Advanced`), yielding its
+text.  Shared with `:::dev`'s urgency argument (see `SFLMeta.Comment`). -/
+def ValDesc.identText : ValDesc m String where
+  description := doc!"an identifier"
+  signature := CanMatch.Ident
+  get
+    | .name x => Pure.pure x.getId.toString
+    | other => throwError "Expected identifier, got {toMessageData other}"
+
+/-- Argument parser for `ExerciseConfig`.  `rating`/`name` are required; the
+`level` (`Advanced`) and `manual` (`true`/`false`) designations are optional. -/
 def ExerciseConfig.parse : ArgParse m ExerciseConfig :=
-  ExerciseConfig.mk <$> .named `rating .nat false <*> .named `name .string false
+  ExerciseConfig.mk
+    <$> .named `rating .nat false
+    <*> .named `name .string false
+    <*> .named `level ValDesc.identText true
+    <*> namedD `manual .bool false
 
 instance : FromArgs ExerciseConfig m := ⟨ExerciseConfig.parse⟩
 
 end
 
+/-- The parenthetical designation string for an exercise's level/grading flags,
+e.g. `" (Advanced)"`, `" (Advanced, manually graded)"`, `" (manually graded)"`,
+or `""` when the exercise is standard and auto-graded.  Shared by the HTML, TeX,
+and `.lean` renderings so they mark advanced/manual exercises identically. -/
+def exerciseDesignation (level : Option String) (manual : Bool) : String :=
+  let parts := (if level == some "Advanced" then ["Advanced"] else []) ++
+               (if manual then ["manually graded"] else [])
+  match parts with
+  | [] => ""
+  | _  => " (" ++ String.intercalate ", " parts ++ ")"
+
 /-! `Block.exercise` carries the exercise rating and name; HTML output wraps the
 contents in a styled box; TeX output emits a paragraph header; the saver emits
 a `### Exercise (rating⭐): name` module-doc heading before the contents. -/
 
-block_extension Block.exercise (rating : Nat) (name : String) where
-  data := Json.arr #[.num (.fromNat rating), .str name]
+/-- Decode a `Block.exercise` payload `(rating, name, level, manual)`, tolerating
+the older 2-element `(rating, name)` form. -/
+def decodeExerciseData (data : Json) : Nat × String × Option String × Bool :=
+  match data with
+  | .arr #[.num jr, .str n, lvl, .bool man] =>
+    let level := match lvl with | .str s => some s | _ => none
+    (jr.toFloat.toUInt32.toNat, n, level, man)
+  | .arr #[.num jr, .str n] => (jr.toFloat.toUInt32.toNat, n, none, false)
+  | _ => (0, "", none, false)
+
+block_extension Block.exercise (rating : Nat) (name : String)
+    (level : Option String) (manual : Bool) where
+  data := Json.arr #[.num (.fromNat rating), .str name, toJson level, .bool manual]
   traverse _ _ _ := pure none
   toHtml :=
     open Verso.Output.Html in
     some fun _ goB _ data contents => do
-      let (rating, name) :=
-        match data with
-        | .arr #[.num jr, .str n] => (jr.toFloat.toUInt32.toNat, n)
-        | _ => (0, "")
+      let (rating, name, level, manual) := decodeExerciseData data
       let stars := String.ofList (List.replicate rating '★')
+      let desig := exerciseDesignation level manual
+      let levelHtml : Verso.Output.Html :=
+        if desig.isEmpty then .empty
+        else {{ <span class="exercise-level">{{desig}}</span> }}
       let body : Verso.Output.Html ← contents.foldlM (init := .empty) fun acc b =>
         return acc ++ (← goB b)
       return {{
@@ -51,6 +94,7 @@ block_extension Block.exercise (rating : Nat) (name : String) where
             <span class="exercise-label">"Exercise"</span>
             <span class="exercise-stars">{{stars}}</span>
             <span class="exercise-name">{{s!"({name})"}}</span>
+            {{levelHtml}}
           </div>
           {{body}}
         </div>
@@ -58,14 +102,12 @@ block_extension Block.exercise (rating : Nat) (name : String) where
   toTeX :=
     open Verso.Output.TeX in
     some fun _ goB _ data contents => do
-      let (rating, name) :=
-        match data with
-        | .arr #[.num jr, .str n] => (jr.toFloat.toUInt32.toNat, n)
-        | _ => (0, "")
+      let (rating, name, level, manual) := decodeExerciseData data
+      let desig := exerciseDesignation level manual
       let body : Verso.Output.TeX ← contents.foldlM (init := .empty) fun acc b =>
         return acc ++ (← goB b)
       pure <| .seq #[
-        .raw s!"\\paragraph\{Exercise ({rating} stars): {name}.}",
+        .raw s!"\\paragraph\{Exercise ({rating} stars): {name}{desig}.}",
         body
       ]
   extraCss := [
@@ -83,7 +125,8 @@ r##"
 }
 .exercise-header .exercise-label,
 .exercise-header .exercise-stars,
-.exercise-header .exercise-name {
+.exercise-header .exercise-name,
+.exercise-header .exercise-level {
   font-family: inherit;
 }
 .exercise-stars { margin: 0 0.5em; color: #c08000; }
@@ -91,6 +134,11 @@ r##"
   font-family: var(--verso-code-font-family);
   font-style: italic;
   color: #555;
+}
+.exercise-level {
+  margin-left: 0.5em;
+  font-weight: 700;
+  color: #a00;
 }
 "##
   ]
@@ -102,7 +150,8 @@ def exercise : DirectiveExpanderOf ExerciseConfig
   | cfg, contents => do
     let blocks ← contents.mapM elabBlock
     ``(Verso.Doc.Block.other
-        (SFLMeta.Block.exercise $(quote cfg.rating) $(quote cfg.name))
+        (SFLMeta.Block.exercise $(quote cfg.rating) $(quote cfg.name)
+          $(quote cfg.level) $(quote cfg.manual))
         #[$blocks,*])
 
 /-! ## `solution!` marker macros and source-range registry

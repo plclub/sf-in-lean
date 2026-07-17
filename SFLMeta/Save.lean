@@ -4,6 +4,7 @@ import SFLMeta.Comment
 import SFLMeta.DisplayMath
 import SFLMeta.Ignore
 import SFLMeta.Exercise
+import SFLMeta.Quiz
 import SFLMeta.Terse
 import SFLMeta.SlideBreak
 import SFLMeta.Details
@@ -272,10 +273,11 @@ private def decodeBnfSource? (data : Json) : Option String :=
   | .arr #[_, .str src] => some src
   | _ => none
 
-/-- Decode a `Block.exercise` payload `(rating, name)`. -/
-private def decodeExercise? (data : Json) : Option (Nat × String) :=
+/-- Decode a `Block.exercise` payload `(rating, name, level, manual)`, tolerating
+the older 2-element `(rating, name)` form.  (See `SFLMeta.decodeExerciseData`.) -/
+private def decodeExercise? (data : Json) : Option (Nat × String × Option String × Bool) :=
   match data with
-  | .arr #[.num r, .str n] => some (r.toFloat.toUInt32.toNat, n)
+  | .arr #[.num _, .str _, _, _] | .arr #[.num _, .str _] => some (decodeExerciseData data)
   | _ => none
 
 /-! ## Block extension that carries pre-computed teacher and student source -/
@@ -692,9 +694,10 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     if name == ``Block.exercise then
       -- Emit a `### Exercise (N⭐): name` heading; the contained `lean`
       -- blocks render normally via recursion below.
-      if let some (rating, exName) := decodeExercise? which.data then
+      if let some (rating, exName, level, manual) := decodeExercise? which.data then
         let stars := String.ofList (List.replicate rating '⭐')
-        let header := s!"### Exercise ({rating} star{if rating == 1 then "" else "s"}): {exName} {stars}"
+        let desig := exerciseDesignation level manual
+        let header := s!"### Exercise ({rating} star{if rating == 1 then "" else "s"}): {exName}{desig} {stars}"
         let mut buf := appendBoth buf file (asModuleDoc header)
         buf := walkBlocks width file contents buf
         return buf
@@ -743,6 +746,13 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
         | .str s => s
         | _ => ""
       let mut buf := appendBoth buf file (asModuleDoc s!"_Details:_ {summary}")
+      buf := walkBlocks width file contents buf
+      return buf
+    if name == ``Block.quizSolution then
+      -- A quiz answer, shown in every build: emit a label and the answer body
+      -- as comments (the body is usually a plain code block, so `walkBlocks`
+      -- renders it commented).
+      let mut buf := appendBoth buf file (asModuleDoc "_Quiz solution:_")
       buf := walkBlocks width file contents buf
       return buf
     if name == ``Block.terse then
