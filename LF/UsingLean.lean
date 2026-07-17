@@ -564,7 +564,7 @@ example (n : Nat) : eqb n n := by
   The same trick also works work for `match` expressions.
   For example, suppose we start with
 
-  ```lean
+  ```
   def isZero (n : Nat) : Bool :=
     match n
   ```
