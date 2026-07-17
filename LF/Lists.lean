@@ -64,6 +64,10 @@ import LF.UsingLean
 Why is this namespace needed??
 :::
 
+:::dev "Daniel Sainati (dsainati1)"
+So that the definitions here don't clash with the standard library.
+:::
+
 ```lean
 namespace Lists
 ```
@@ -2138,4 +2142,3 @@ def count_trues (x : Baz) : Nat :=
 ```lean
 end Lists
 ```
-

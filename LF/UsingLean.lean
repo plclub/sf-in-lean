@@ -84,6 +84,12 @@ Just making a note that we need to explain the
 Have we already explained sections, and how they differ from namespaces? Will it be clear to readers why we need one here? Can we choose a better name than `long_example`?
 :::
 
+:::dev "Daniel Sainati (dsainati1)"
+We turn off the postfix notation for our new definition of succ in `Basics`, should
+we also turn it off here for Nats? I really find it to be less readable, but maybe that's
+just me.
+:::
+
 ```lean
 section long_example
 open NatPlayground.Nat
