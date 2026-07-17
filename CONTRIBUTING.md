@@ -704,7 +704,7 @@ such leading tags to arguments automatically (see `_AUTHOR_NAMES` in
 The urgency controls whether the note is *shown* (`devNoteShown` in
 `SFLMeta/Comment.lean`): a note tagged `NOW` or `TODO` — or carrying no
 urgency at all — passes through into the rendered outputs, brightly
-highlighted (with a `Dev note (…)` provenance label) in the HTML and as a
+highlighted (with a `Note to developers (…)` provenance label) in the HTML and as a
 labelled comment block in the generated `.lean` files.  `SOONER`, `LATER`,
 and `TOFIX` notes are suppressed from every build as before.
 

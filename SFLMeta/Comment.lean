@@ -82,11 +82,12 @@ def devNoteShown (urgency : Option String) : Bool :=
   | some u => u == "NOW" || u == "TODO"
 
 /-- Provenance label for a rendered dev note —
-`Dev note (Benjamin Pierce (bcpierce00), NOW, 2020)` — with absent fields
-omitted.  `heading` selects the leading phrase: the HTML rendering uses the
-default; the generated `.lean` files use `"NOTE FOR DEVELOPERS"`. -/
+`Note to developers (Benjamin Pierce (bcpierce00), NOW, 2020)` — with absent
+fields omitted.  `heading` selects the leading phrase: the HTML rendering uses
+the default (uppercased by CSS); the generated `.lean` files use
+`"NOTE TO DEVELOPERS"`. -/
 def devNoteLabel (author urgency : Option String) (year : Option Nat)
-    (heading : String := "Dev note") : String :=
+    (heading : String := "Note to developers") : String :=
   let fields := author.toList ++ urgency.toList ++ (year.map toString).toList
   if fields.isEmpty then heading
   else s!"{heading} ({String.intercalate ", " fields})"

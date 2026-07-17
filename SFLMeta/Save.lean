@@ -762,7 +762,7 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
           let body := String.intercalate "\n\n"
             (contents.toList.map (blockToText (width - 4)))
           return appendBoth buf file
-            (devNoteComment (devNoteLabel author urgency year "NOTE FOR DEVELOPERS") body)
+            (devNoteComment (devNoteLabel author urgency year "NOTE TO DEVELOPERS") body)
       return buf
     -- Unknown extension block: recurse into children as a best-effort.
     -- NB: :::instructors blocks carry no children (their bodies are dropped at
