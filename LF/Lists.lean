@@ -16,7 +16,7 @@ import SFLMeta.SlideBreak
 import SFLMeta.Solution
 import SFLMeta.Terse
 import LF.Induction
-import LF.UsingLeanVerso
+import LF.UsingLean
 open Verso.Genre Manual
 open SFLMeta
 

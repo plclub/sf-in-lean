@@ -880,6 +880,12 @@ private def writeProject (dest : System.FilePath) (toolchain : String)
     let libRoot := dest / lib
     if ← libRoot.pathExists then
       IO.FS.removeDirAll libRoot
+  -- Also drop any manifest left by a previous emit: `lake build` auto-resolves
+  -- dependencies when there is no manifest, but refuses ("missing manifest")
+  -- when an existing manifest lacks a package the lakefile now `require`s.
+  let manifest := dest / "lake-manifest.json"
+  if ← manifest.pathExists then
+    IO.FS.removeFile manifest
   IO.FS.writeFile (dest / "lakefile.toml") (lakefileTemplate vol extraLibs pkgRequires)
   IO.FS.writeFile (dest / "lean-toolchain") toolchain
   IO.FS.writeFile (dest / "README.md")
@@ -1052,8 +1058,8 @@ private def emitSavedImpl (destSlug modPrefix variant : String)
           | .error _ => pure ""
         -- A chapter authored directly in Verso imports its not-yet-graduated
         -- dependencies under their *Verso* module names (`import
-        -- LF.UsingLeanVerso`); the extracted project has each such chapter
-        -- under its file key (`LF/UsingLean.lean`), so map the import back to
+        -- LF.<X>Verso`); the extracted project has each such chapter
+        -- under its file key (`LF/<X>.lean`), so map the import back to
         -- the emitted module name — which also keeps the Verso source itself
         -- out of the bundle.
         let deVerso (m : String) : String :=
