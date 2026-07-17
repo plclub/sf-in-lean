@@ -69,7 +69,7 @@ open SFLMeta
 
 open InlineLean hiding lean
 
-#doc (Manual) "{title}" =>
+{doc_options}#doc (Manual) "{title}" =>
 %%%
 tag := "{file}"
 htmlSplit := .never
@@ -77,6 +77,21 @@ file := some "{file}"
 %%%
 
 """
+
+# Per-chapter document-level `set_option`s emitted just before `#doc`.  Unlike a
+# `set_option … in` inside a ```lean block, options here cover the whole
+# command — including InlineLean's syntax highlighting (which re-drives
+# elaboration) and the code generator's pass over the generated `Verso.Doc.Block`
+# document term.  IndPropRegexp needs both: its pumping proofs elaborate under
+# the highlighting overhead well past the default 200000 heartbeats, and the
+# chapter's deep directive nesting overflows the code generator's recursion
+# limit compiling the document `block` term (which then reports as noncomputable).
+# Other chapters compile within the defaults, so they are left untouched.  Keyed
+# by file_key; a graduated (direct-Verso) chapter carries the same options inline.
+DOC_LEVEL_OPTIONS = {
+    "IndPropRegexp": "set_option maxHeartbeats 2000000\n"
+                     "set_option maxRecDepth 100000\n\n",
+}
 
 FOOTER = ""
 
@@ -2796,7 +2811,8 @@ def convert(src_text: str, title: str, file_key: str) -> str:
     # they can't live in a ```lean``` code block.
     has_prelude, extra_imports, body_src = _extract_imports(body_src)
     header = HEADER_TEMPLATE.format(
-        title=title, file=file_key, extra_imports='\n'.join(extra_imports))
+        title=title, file=file_key, extra_imports='\n'.join(extra_imports),
+        doc_options=DOC_LEVEL_OPTIONS.get(file_key, ''))
     if has_prelude:
         header = 'prelude\n' + header
     # Normalize block-comment markers (/- EX … -/, /- /TERSE -/, …) to line form.
