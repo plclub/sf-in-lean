@@ -16,7 +16,7 @@ import SFLMeta.Ignore
 import SFLMeta.Save
 
 -- NB LF.MapsVerso builds standalone but cannot join the draft yet: it
--- redefines `PartialMap.update` (etc.) already defined by LF.Lists'
+-- redefines `PartialMap.update` (etc.) already defined by ListsVerso's
 -- partial-maps preview section, and Verso imports share one environment.
 
 import VersoManual

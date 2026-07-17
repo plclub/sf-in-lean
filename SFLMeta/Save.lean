@@ -969,16 +969,7 @@ private def emitSavedImpl (destSlug modPrefix variant : String)
         let src ← (IO.FS.readFile file).toBaseIO >>= fun
           | .ok s => pure s
           | .error _ => pure ""
-        -- A chapter authored directly in Verso imports its not-yet-graduated
-        -- dependencies under their *Verso* module names (`import
-        -- LF.UsingLeanVerso`); the extracted project has each such chapter
-        -- under its file key (`LF/UsingLean.lean`), so map the import back to
-        -- the emitted module name — which also keeps the Verso source itself
-        -- out of the bundle.
-        let deVerso (m : String) : String :=
-          if m.endsWith "Verso" && chapterModules.contains ((m.dropEnd 5).toString)
-          then (m.dropEnd 5).toString else m
-        let imps := ((headerImports src).toList.filter keepImport).map deVerso
+        let imps := (headerImports src).toList.filter keepImport
         seeds := seeds ++ imps.filter needsBundle
         let preamble := imps.foldl (init := "") fun acc i => acc ++ "import " ++ i ++ "\n"
         let preamble := if preamble.isEmpty then "" else preamble ++ "\n"

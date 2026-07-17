@@ -95,7 +95,7 @@ clean:
 
 # This will all be ripped out once all chapters are versified.
 
-LF_CHAPTERS := UsingLean Poly Tactics Logic IndProp IndPropRegexp Maps
+LF_CHAPTERS := UsingLean Lists Poly Tactics Logic IndProp IndPropRegexp Maps
 
 LF_VERSO_FILES := $(addprefix LF/,$(addsuffix Verso.lean,$(LF_CHAPTERS)))
 
