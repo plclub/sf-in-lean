@@ -157,7 +157,7 @@ def _strip_title_comment(src: str, stem: str = None) -> str:
 # `import LF.XVerso`.
 # (Maps added by Claude: HL/TS chapters import LF.Maps for its definitions.)
 DIRECT_LF_MODULES = {"Basics", "Induction", "UsingLean", "Lists", "Poly",
-                     "CustomTactics", "Maps"}
+                     "Tactics", "CustomTactics", "Maps"}
 
 _IMPORT_RE = re.compile(r'^import\s+(\S+)\s*$')
 

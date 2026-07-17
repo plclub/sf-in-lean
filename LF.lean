@@ -11,7 +11,7 @@ import LF.Lists
 -- built by `make check-bare-lean-chapters` instead.
 -- Add `import LF.XXXVerso` here for each generated chapter included below.
 import LF.Poly
-import LF.TacticsVerso
+import LF.Tactics
 import LF.LogicVerso
 
 import VersoManual
@@ -28,5 +28,5 @@ open Verso Genre Manual
 {include LF.UsingLean}
 {include LF.Lists}
 {include LF.Poly}
-{include LF.TacticsVerso}
+{include LF.Tactics}
 {include LF.LogicVerso}
