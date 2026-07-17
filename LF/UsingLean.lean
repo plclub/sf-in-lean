@@ -543,7 +543,7 @@ example (n : Nat) : eqb n n := by
 
 /-
   This gives us basic structure of the proof without requiring us to write each
-  branch by hand. We can then cfocus on proving each case.
+  branch by hand. We can then focus on proving each case.
 
   One possible proof is:
 -/
@@ -562,7 +562,7 @@ example (n : Nat) : eqb n n := by
 -/
 
 /-
-  The same trick also works work for `match` expressions.
+  The same trick also works for `match` expressions.
   For example, suppose we start with
 
   ```
