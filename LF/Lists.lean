@@ -222,40 +222,40 @@ def mylist3 : NatList := [1, 2, 3]
    and a `count` and returns a list of length `count` in which every element is `n`.
    (We use `myRepeat` because `repeat` is a reserved keyword in Lean.) -/
 
-@[irreducible]
+
 def myRepeat (n count : Nat) : NatList :=
   match count with
   | 0 => []
   | count' + 1 => n :: myRepeat n count'
 
 -- Some simple facts about repetition:
-unseal myRepeat in
+
 theorem repeat_zero v : myRepeat v 0 = [] := rfl
 
-unseal myRepeat in
+
 theorem repeat_succ v count : myRepeat v (count + 1) = v :: myRepeat v count := rfl
 
 -- Length
 
 -- FULL: The `length` function calculates the length of a list.
 
-@[irreducible]
+
 def length (l : NatList) : Nat :=
   match l with
   | [] => 0
   | _ :: t => (length t) + 1
 
 -- Some simple facts about list lengths:
-unseal length in
+
 theorem nil_length : [].length = 0 := rfl
 
-unseal length in
+
 theorem cons_length (n : Nat) (l : NatList) : (n::l).length = l.length + 1 := rfl
 
 -- *** Append
 
 -- FULL: The `app` function appends (concatenates) two lists.
-@[irreducible]
+
 def app (l1 l2 : NatList) : NatList :=
   match l1 with
   | [] => l2
@@ -282,20 +282,20 @@ instance : HAppend NatList NatList NatList where
 -- Now `l1 ++ l2` means `app l1 l2` within `NatList`.
 
 -- Some simple facts about appending lists:
-unseal app in
+
 theorem nil_append (l : NatList) : [] ++ l = l := rfl
 
-unseal app in
+
 theorem cons_append (n : Nat) (l1 l2 : NatList) : (n::l1) ++ l2 = n :: (l1 ++ l2) := rfl
 
 -- test_app1
-unseal app
+
 example : [1, 2, 3] ++ [4, 5] = [1, 2, 3, 4, 5] := by rfl
 -- test_app2
 example : ([] : NatList) ++ [4, 5] = [4, 5] := by rfl
 -- test_app3
 example : [1, 2, 3] ++ ([] : NatList) = [1, 2, 3] := by rfl
-seal app
+
 
 /- TODO (OA): Experiment: introduce `BEq.refl` here, at the point where the `BEq` class is named. -/
 
@@ -328,28 +328,28 @@ seal app
    the list, while `tl` returns everything but the first element (the
    "tail").  Since the empty list has no first element, we pass
    a default value to be returned in that case. -/
-@[irreducible]
+
 def hd (default : Nat) (l : NatList) : Nat :=
   match l with
   | [] => default
   | h :: _ => h
 
 -- Basic theorems about how `hd` behaves:
-unseal hd in
+
 theorem hd_cons h x (t : NatList) : (h :: t).hd x = h := by rfl
-unseal hd in
+
 theorem hd_nil x : [].hd x = x := by rfl
 
-@[irreducible]
+
 def tl (l : NatList) : NatList :=
   match l with
   | [] => []
   | _ :: t => t
 
 -- Basic theorems about how `tl` behaves:
-unseal tl in
+
 theorem tl_cons h (t : NatList) : (h :: t).tl = t := by rfl
-unseal tl in
+
 theorem tl_nil : [].tl = [] := by rfl
 
 -- test_hd1
@@ -376,7 +376,7 @@ def foo (n : Nat) : NatList :=
 -- `countoddmembers` below. Have a look at the tests to understand
 -- what these functions should do.
 
-@[irreducible]
+
 def nonzeros (l : NatList) : NatList :=
   -- ADMITDEF
   match l with
@@ -388,21 +388,21 @@ def nonzeros (l : NatList) : NatList :=
   -- /ADMITDEF
 
 -- test_nonzeros
-unseal nonzeros in
+
 example : nonzeros [0, 1, 0, 2, 3, 0, 0] = [1, 2, 3] := by rfl  -- ADMITTED
 -- GRADE_THEOREM 0.5: NatList.test_nonzeros
 
 -- the following lemmas should hold about your definition
-unseal nonzeros
+
 theorem nonzeros_cons_zero (t : NatList) :
   nonzeros (0 :: t) = nonzeros t := by rfl -- ADMITTED
 theorem nonzeros_nil :
   nonzeros [] = [] := by rfl -- ADMITTED
 theorem nonzeros_cons_nonzero h (t : NatList) :
   nonzeros ((h + 1) :: t) = (h + 1) :: nonzeros t := by rfl -- ADMITTED
-seal nonzeros
 
-@[irreducible]
+
+
 def oddmembers (l : NatList) : NatList :=
   -- ADMITDEF
   match l with
@@ -411,7 +411,7 @@ def oddmembers (l : NatList) : NatList :=
   -- /ADMITDEF
 
 -- test_oddmembers
-unseal oddmembers in
+
 example : oddmembers [0, 1, 0, 2, 3, 0, 0] = [1, 3] := by rfl  -- ADMITTED
 -- GRADE_THEOREM 0.5: NatList.test_oddmembers
 
@@ -423,13 +423,13 @@ abbrev countoddmembers (l : NatList) : Nat :=
   -- /ADMITDEF
 
 -- test_countoddmembers1
-unseal oddmembers length
+
 example : countoddmembers [1, 0, 3, 1, 4, 5] = 4 := by rfl  -- ADMITTED
 -- test_countoddmembers2
 example : countoddmembers [0, 2, 4] = 0 := by rfl  -- ADMITTED
 -- test_countoddmembers3
 example : countoddmembers [] = 0 := by rfl  -- ADMITTED
-seal oddmembers length
+
 -- GRADE_THEOREM 0.5: NatList.test_countoddmembers2
 -- GRADE_THEOREM 0.5: NatList.test_countoddmembers3
 -- []
@@ -444,7 +444,7 @@ seal oddmembers length
   _structurally recursive_, as mentioned in `"Basics"`.
   If you encounter this difficulty,
   consider pattern matching against both lists at the same time. -/
-@[irreducible]
+
 def alternate (l1 l2 : NatList) : NatList :=
   -- ADMITDEF
   match l1, l2 with
@@ -453,7 +453,7 @@ def alternate (l1 l2 : NatList) : NatList :=
   | h1 :: t1, h2 :: t2 => h1 :: h2 :: alternate t1 t2
   -- /ADMITDEF
 
-unseal alternate
+
 -- test_alternate1
 example : alternate [1, 2, 3] [4, 5, 6] = [1, 4, 2, 5, 3, 6] := by rfl  -- ADMITTED
 -- GRADE_THEOREM 1: NatList.test_alternate1
@@ -464,7 +464,7 @@ example : alternate [1] [4, 5, 6] = [1, 4, 5, 6] := by rfl  -- ADMITTED
 example : alternate [1, 2, 3] [4] = [1, 4, 2, 3] := by rfl  -- ADMITTED
 -- test_alternate4
 example : alternate ([] : NatList) [20, 30] = [20, 30] := by rfl  -- ADMITTED
-seal alternate
+
 -- GRADE_THEOREM 1: NatList.test_alternate4
 -- []
 
@@ -485,7 +485,7 @@ namespace Bag
 /- Complete the following definitions for the functions `count`,
    `sum`, `add`, and `member` for bags. -/
 
-@[irreducible]
+
 def count (v : Nat) (s : Bag) : Nat :=
   -- ADMITDEF
   match s with
@@ -494,10 +494,10 @@ def count (v : Nat) (s : Bag) : Nat :=
   -- /ADMITDEF
 
 -- These lemmas should hold about your definition
-unseal count in
+
 theorem count_nil x  : count x [] = 0 := by rfl -- ADMITTED
 
-unseal count in
+
 theorem count_cons_same x y l : (y == x) = true → count x (y :: l) = count x l + 1 := by
   -- ADMITTED
   intro h
@@ -506,7 +506,7 @@ theorem count_cons_same x y l : (y == x) = true → count x (y :: l) = count x l
   dsimp
   -- /ADMITTED
 
-unseal count in
+
 theorem count_cons_diff x y l : (y == x) = false → count x (y :: l) = count x l := by
   -- ADMITTED
   intro h
@@ -518,11 +518,11 @@ theorem count_cons_diff x y l : (y == x) = false → count x (y :: l) = count x 
 -- All these proofs can be completed with `rfl`.
 
 -- test_count1
-unseal count
+
 example : count 1 [1, 2, 3, 1, 4, 1] = 3 := by rfl  -- ADMITTED
 -- test_count2
 example : count 6 [1, 2, 3, 1, 4, 1] = 0 := by rfl  -- ADMITTED
-seal count
+
 -- GRADE_THEOREM 0.5: NatList.test_count2
 
 /- Multiset `sum` is similar to set `union`: `sum a b` contains all
@@ -541,15 +541,15 @@ abbrev sum : Bag → Bag → Bag :=
   -- /ADMITDEF
 
 -- test_sum1
-unseal count in
-unseal app in
+
+
 example : count 1 (sum [1, 2, 3] [1, 4, 1]) = 3 := by rfl -- ADMITTED
 -- GRADE_THEOREM 0.5: NatList.test_sum1
 
-unseal app in
+
 theorem nil_sum (l : NatList) : sum [] l = l := rfl -- ADMITTED
 
-unseal app in
+
 theorem cons_sum (n : Nat) (l1 l2 : Bag) : sum (n::l1) l2 = n :: (sum l1 l2) := rfl -- ADMITTED
 
 abbrev add (v : Nat) (s : Bag) : Bag :=
@@ -560,19 +560,17 @@ abbrev add (v : Nat) (s : Bag) : Bag :=
 -- test_add1
 example : count 1 (add 1 [1, 4, 1]) = 3 := by
   -- ADMITTED
-  dsimp [add]
-  rw [count_cons_same, count_cons_same, count_cons_diff, count_cons_same, count_nil] <;> dsimp
+  dsimp [add, count]
   -- /ADMITTED
 -- test_add2
 example : count 5 (add 1 [1, 4, 1]) = 0 := by
   -- ADMITTED
-  dsimp [add]
-  rw [count_cons_diff, count_cons_diff, count_cons_diff, count_cons_diff, count_nil] <;> dsimp
+  dsimp [add, count]
   -- /ADMITTED
 -- GRADE_THEOREM 0.5: NatList.test_add1
 -- GRADE_THEOREM 0.5: NatList.test_add2
 
-@[irreducible]
+
 def member (v : Nat) (s : Bag) : Bool :=
   -- ADMITDEF
   match s with
@@ -581,20 +579,20 @@ def member (v : Nat) (s : Bag) : Bool :=
   -- /ADMITDEF
 
 -- test_member1
-unseal member in
+
 example : member 1 [1, 4, 1] = true := by rfl  -- ADMITTED
 -- GRADE_THEOREM 0.5: NatList.test_member1
 
 -- test_member2
-unseal member in
+
 example : member 2 [1, 4, 1] = false := by rfl  -- ADMITTED
 -- GRADE_THEOREM 0.5: NatList.test_member2
 -- []
 
-unseal member in
+
 theorem member_nil v : member v [] = false := by rfl -- ADMITTED
 
-unseal member in
+
 theorem member_add_same v t : member v (add v t) = true := by
   -- ADMITTED
   dsimp [add, member]
@@ -605,7 +603,7 @@ theorem member_add_same v t : member v (add v t) = true := by
   dsimp
   -- /ADMITTED
 
-unseal member in
+
 theorem member_add_diff v1 v2 t : (v1 == v2) = false -> member v1 (add v2 t) = member v1 t := by
   -- ADMITTED
   intro h
@@ -626,7 +624,7 @@ theorem member_add_diff v1 v2 t : (v1 == v2) = false -> member v1 (add v2 t) = m
    between standard and advanced tracks, which made the wording above
    confusing. Maybe just make this an exercise for everybody? -/
 
-@[irreducible]
+
 def remove_one (v : Nat) (s : Bag) : Bag :=
   -- ADMITDEF
   match s with
@@ -635,8 +633,8 @@ def remove_one (v : Nat) (s : Bag) : Bag :=
   -- /ADMITDEF
 
 -- test_remove_one1
-unseal count
-unseal remove_one
+
+
 example : count 5 (remove_one 5 [2, 1, 5, 4, 1]) = 0 := by rfl  -- ADMITTED
 -- test_remove_one2
 example : count 5 (remove_one 5 [2, 1, 4, 1]) = 0 := by rfl  -- ADMITTED
@@ -646,13 +644,13 @@ example : count 4 (remove_one 5 [2, 1, 4, 5, 1, 4]) = 2 := by rfl  -- ADMITTED
 -- test_remove_one4
 example : count 5 (remove_one 5 [2, 1, 5, 4, 5, 1, 4]) = 1 := by rfl  -- ADMITTED
 -- GRADE_THEOREM 0.5: NatList.test_remove_one4
-seal count
-seal remove_one
 
-unseal remove_one in
+
+
+
 theorem remove_one_nil v : remove_one v [] = [] := by rfl -- ADMITTED
 
-unseal remove_one in
+
 theorem remove_one_add_same v1 v2 t : (v2 == v1) = true -> remove_one v1 (add v2 t) = t := by
   -- ADMITTED
   intro h
@@ -661,7 +659,7 @@ theorem remove_one_add_same v1 v2 t : (v2 == v1) = true -> remove_one v1 (add v2
   dsimp
   -- /ADMITTED
 
-unseal remove_one in
+
 theorem remove_one_add_diff v1 v2 t : (v2 == v1) = false -> remove_one v1 (add v2 t) = add v2 (remove_one v1 t) := by
   -- ADMITTED
   intro h
@@ -670,7 +668,7 @@ theorem remove_one_add_diff v1 v2 t : (v2 == v1) = false -> remove_one v1 (add v
   dsimp
   -- /ADMITTED
 
-@[irreducible]
+
 def remove_all (v : Nat) (s : Bag) : Bag :=
   -- ADMITDEF
   match s with
@@ -678,8 +676,8 @@ def remove_all (v : Nat) (s : Bag) : Bag :=
   | h :: t => bif h == v then remove_all v t else h :: remove_all v t
   -- /ADMITDEF
 
-unseal count
-unseal remove_all
+
+
 -- test_remove_all1
 example : count 5 (remove_all 5 [2, 1, 5, 4, 1]) = 0 := by rfl  -- ADMITTED
 -- test_remove_all2
@@ -690,13 +688,13 @@ example : count 4 (remove_all 5 [2, 1, 4, 5, 1, 4]) = 2 := by rfl  -- ADMITTED
 -- test_remove_all4
 example : count 5 (remove_all 5 [2, 1, 5, 4, 5, 1, 4, 5, 1, 4]) = 0 := by rfl  -- ADMITTED
 -- GRADE_THEOREM 0.5: NatList.test_remove_all4
-seal count
-seal remove_all
 
-unseal remove_all in
+
+
+
 theorem remove_all_nil v : remove_all v [] = [] := by rfl -- ADMITTED
 
-unseal remove_all in
+
 theorem remove_all_add_same v t : remove_all v (add v t) = remove_all v t := by
   -- ADMITTED
   dsimp [add, remove_all]
@@ -704,7 +702,7 @@ theorem remove_all_add_same v t : remove_all v (add v t) = remove_all v t := by
   dsimp
   -- /ADMITTED
 
-unseal remove_all in
+
 theorem remove_all_add_diff v1 v2 t : (v2 == v1) = false -> remove_all v1 (add v2 t) = add v2 (remove_all v1 t) := by
   -- ADMITTED
   intro h
@@ -713,7 +711,7 @@ theorem remove_all_add_diff v1 v2 t : (v2 == v1) = false -> remove_all v1 (add v
   dsimp
   -- /ADMITTED
 
-@[irreducible]
+
 def included (s1 s2 : Bag) : Bool :=
   -- ADMITDEF
   match s1 with
@@ -722,23 +720,23 @@ def included (s1 s2 : Bag) : Bool :=
   -- /ADMITDEF
 
 -- test_included1
-unseal included
-unseal member
-unseal remove_one
+
+
+
 example : included [1, 2] [2, 1, 4, 1] = true := by rfl  -- ADMITTED
 -- GRADE_THEOREM 0.5: NatList.test_included1
 -- test_included2
 example : included [1, 2, 2] [2, 1, 4, 1] = false := by rfl  -- ADMITTED
 -- GRADE_THEOREM 0.5: NatList.test_included2
 -- []
-seal included
-seal member
-seal remove_one
 
-unseal included in
+
+
+
+
 theorem included_nil s : included [] s = true := by rfl -- ADMITTED
 
-unseal included in
+
 theorem included_add_member v s1 s2 : member v s2 = true -> included (add v s1) s2 = included s1 (remove_one v s2) := by
   -- ADMITTED
   intro h
@@ -747,7 +745,7 @@ theorem included_add_member v s1 s2 : member v s2 = true -> included (add v s1) 
   rfl
   -- /ADMITTED
 
-unseal included in
+
 theorem included_add_nonmember v s1 s2 : member v s2 = false -> included (add v s1) s2 = false := by
   -- ADMITTED
   intro h
@@ -776,14 +774,11 @@ end Bag
 -- # Reasoning About Lists
 
 /- FULL: As with numbers, simple facts about list-processing
-   functions can sometimes be proved entirely by simplification.
-   For example, just `rfl` is enough for this theorem... -/
+   functions can sometimes be proved entirely by rewriting.
+   For example, just rewriting the left-hand side of the following equality using the theorem
+   `nil_append` is enough for this theorem... -/
 /- TERSE: As with numbers, some proofs about list functions need only
-   simplification... -/
-/- TODO (KH): The above comment is wrong, since we use `rw` here.
-   Should we put unseal + rfl? Or change the comments? I am a bit confused because this file
-   uses `unseal` and `dsimp` extensively.
-   -/
+   rewriting... -/
 
 theorem nil_app (l : NatList) : ([] : NatList) ++ l = l := by rw [nil_append]
 
@@ -940,24 +935,24 @@ theorem myRepeat_plus (c1 c2 n : Nat) :
    `rev`: -/
 -- TERSE: A more interesting example of induction over lists:
 
-@[irreducible]
+
 def rev (l : NatList) : NatList :=
   match l with
   | [] => []
   | h :: t => t.rev ++ [h]
 
-unseal rev in
+
 theorem rev_nil : [].rev = [] := by rfl
 
-unseal rev in
+
 theorem rev_cons h (t : NatList) : (h :: t).rev = t.rev ++ [h] := by rfl
 
 -- test_rev1
-unseal rev in
-unseal app in
+
+
 example : [1, 2, 3].rev = [3, 2, 1] := by rfl
 -- test_rev2
-unseal rev in
+
 example : ([] : NatList).rev = [] := by rfl
 
 
@@ -1247,7 +1242,7 @@ theorem nonzeros_app (l1 l2 : NatList) :
 -- lists of numbers for equality.  Prove that `eqblist l l`
 -- yields `true` for every list `l`.
 
-@[irreducible]
+
 def eqblist (l1 l2 : NatList) : Bool :=
   -- ADMITDEF
   match l1, l2 with
@@ -1256,17 +1251,17 @@ def eqblist (l1 l2 : NatList) : Bool :=
   | _, _ => false
   -- /ADMITDEF
 
-unseal eqblist in
+
 theorem eqblist_nil : eqblist [] [] = true := by rfl -- ADMITTED
 
-unseal eqblist in
+
 theorem eqblist_cons_same h t1 t2 : eqblist (h :: t1) (h :: t2) = eqblist t1 t2 := by
   -- ADMITTED
   dsimp [eqblist]
   rw [BEq.refl, Bool.true_and]
   -- /ADMITTED
 
-unseal eqblist in
+
 theorem eqblist_cons_diff h1 h2 t1 t2 : (h1 == h2) = false -> eqblist (h1 :: t1) (h2 :: t2) = false := by
   -- ADMITTED
   intro h
@@ -1275,13 +1270,13 @@ theorem eqblist_cons_diff h1 h2 t1 t2 : (h1 == h2) = false -> eqblist (h1 :: t1)
   -- /ADMITTED
 
 -- test_eqblist1
-unseal eqblist
+
 example : eqblist [] [] = true := by rfl  -- ADMITTED
 -- test_eqblist2
 example : eqblist [1, 2, 3] [1, 2, 3] = true := by rfl  -- ADMITTED
 -- test_eqblist3
 example : eqblist [1, 2, 3] [1, 2, 4] = false := by rfl  -- ADMITTED
-seal eqblist
+
 
 -- eqblist_refl
 theorem eqblist_refl (l : NatList) :
@@ -1459,7 +1454,7 @@ theorem rev_injective (l1 l2 : NatList) :
 -- TERSE: Suppose we'd like a function to retrieve the `n`th element
 --     of a list.  What to do if the list is too short?
 
-@[irreducible]
+
 def nth_bad (l : NatList) (n : Nat) : Nat :=
   match l with
   | [] => 42
@@ -1487,7 +1482,7 @@ inductive NatOption : Type where
     this new function `nth_error` to indicate that it may result in an
     error. -/
 
-@[irreducible]
+
 def nth_error (l : NatList) (n : Nat) : NatOption :=
   match l with
   | [] => .none
@@ -1496,13 +1491,13 @@ def nth_error (l : NatList) (n : Nat) : NatOption :=
     | n' + 1 => nth_error l' n'
 
 -- test_nth_error1
-unseal nth_error
+
 example : nth_error [4, 5, 6, 7] 0 = .some 4 := by rfl
 -- test_nth_error2
 example : nth_error [4, 5, 6, 7] 3 = .some 7 := by rfl
 -- test_nth_error3
 example : nth_error [4, 5, 6, 7] 9 = .none := by rfl
-seal nth_error
+
 
 -- FULL
 
@@ -1510,16 +1505,16 @@ seal nth_error
 -- returning a supplied default in the `none` case.
 
 -- /FULL
-@[irreducible]
+
 def option_elim (d : Nat) (o : NatOption) : Nat :=
   match o with
   | .some n => n
   | .none => d
 
-unseal option_elim in
+
 theorem option_elim_none d : option_elim d .none = d := by rfl
 
-unseal option_elim in
+
 theorem option_elim_some d1 d2 : option_elim d1 (.some d2) = d2 := by rfl
 -- FULL
 
@@ -1527,7 +1522,7 @@ theorem option_elim_some d1 d2 : option_elim d1 (.some d2) = d2 := by rfl
 -- Using the same idea, fix the `hd` function from earlier so we
 -- don't have to pass a default element for the `nil` case.
 
-@[irreducible]
+
 def hd_error (l : NatList) : NatOption :=
   -- ADMITDEF
   match l with
@@ -1536,21 +1531,21 @@ def hd_error (l : NatList) : NatOption :=
   -- /ADMITDEF
 
 -- test_hd_error1
-unseal hd_error
+
 example : hd_error ([] : NatList) = .none := by rfl  -- ADMITTED
 -- test_hd_error2
 example : hd_error [1] = .some 1 := by rfl  -- ADMITTED
 -- test_hd_error3
 example : hd_error [5, 6] = .some 5 := by rfl  -- ADMITTED
-seal hd_error
+
 -- GRADE_THEOREM 1: test_hd_error1
 -- GRADE_THEOREM 1: test_hd_error2
 -- []
 
-unseal hd_error in
+
 theorem hd_error_nil : hd_error [] = .none := by rfl -- ADMITTED
 
-unseal hd_error in
+
 theorem hd_error_cons h t : hd_error (h :: t) = .some h := by rfl -- ADMITTED
 
 
