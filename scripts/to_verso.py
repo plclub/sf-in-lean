@@ -1705,12 +1705,18 @@ class Renderer:
 
     def _on_grade(self, text):
         # -- GRADE_THEOREM / GRADE_MANUAL -> :::grade.  A noop for now, but the
-        # grading spec is preserved (verbatim-fenced, since names contain `_`)
-        # for the future grading infrastructure to consume.
+        # grading spec is preserved for the future grading infrastructure to
+        # consume — as a backtick code span, since the spec is a single line
+        # whose underscored names would trip Verso's emphasis parser as bare
+        # prose.  A spec a span can't hold (a backtick, an embedded newline —
+        # neither occurs in practice) falls back to the verbatim fence.
         self._flush_code()
-        if not text.strip():
+        text = text.strip()
+        if not text:
             return
-        self._append(':::grade\n' + _verbatim_block(text) + '\n:::\n\n')
+        body = ('`' + text + '`' if '`' not in text and '\n' not in text
+                else _verbatim_block(text))
+        self._append(':::grade\n' + body + '\n:::\n\n')
 
     def _on_import_block(self, text):
         # Cross-chapter `import` lines (sentinels from _extract_imports) -> a
