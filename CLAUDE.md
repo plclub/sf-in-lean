@@ -84,11 +84,16 @@ and `:::instructors` — the same as `:::hide` / `:::answer` / `:::grade` /
 `:::solution`, NOT as ` ```dev ` / ` ```instructors ` code blocks. This is the
 preferred authoring convention (see CONTRIBUTING.md, "Author-only annotations").
 
-A directive parses its body as markdown, so `to_verso` wraps the body in a
-**verbatim ` ``` ` fence** (`_verbatim_block`) — arbitrary author prose (`:::`,
-`*`, `#`, `[…]`, backticks) then can't derail the parser. `_emit_noop_directive`
-emits `:::<tag>` + `_verbatim_block(text)` + `:::`, and `_fuse_noop_blocks` fuses
-adjacent runs with an identical header line (same tag *and* arguments). The
+A directive parses its body as markdown. `to_verso` inlines a note body as
+plain markdown when `_inline_note_body` can prove that safe — the usual case:
+it applies the same `[…]`→backtick-span conversion as `::::full` prose, then
+scans outside code spans for anything that could derail Verso's parser. A
+hazardous body (unbalanced backticks/`*`/`_`, braces, backslashes — including
+the escapes that betray stray or nested brackets, which the span conversion
+would garble — or a line-initial `#`/`:`/`>`/`%`) is instead wrapped verbatim
+in a **` ``` ` fence** (`_verbatim_block`), preserving the original text
+exactly. `_fuse_noop_blocks` fuses adjacent runs with an identical header line
+(same tag *and* arguments), each fused body keeping its own form. The
 `dev`/`instructors` directives live in `SFLMeta/Comment.lean` /
 `SFLMeta/Instructors.lean`; the same-named back-compat ` ```dev ` /
 ` ```instructors ` code blocks were removed 2026-07-15 (no uses remained).
