@@ -338,15 +338,15 @@ Here is the single-step relation, first informally...
 inductive Tm.Step : Tm → Tm → Prop where
   | ifTrue (t1 t2 : Tm) : Tm.Step <{ if true then t1 else t2 }> t1
   | ifFalse (t1 t2 : Tm) : Tm.Step <{ if false then t1 else t2 }> t2
-  | ifStep (c c' t2 t3 : Tm) :
-      Tm.Step c c' → Tm.Step <{ if c then t2 else t3 }> <{ if c' then t2 else t3 }>
-  | succStep (t1 t1' : Tm) : Tm.Step t1 t1' → Tm.Step <{ succ t1 }> <{ succ t1' }>
+  | ifStep (c c' t2 t3 : Tm) (h : Tm.Step c c') :
+      Tm.Step <{ if c then t2 else t3 }> <{ if c' then t2 else t3 }>
+  | succStep (t1 t1' : Tm) (h : Tm.Step t1 t1') : Tm.Step <{ succ t1 }> <{ succ t1' }>
   | predZero : Tm.Step <{ pred 0 }> <{ 0 }>
-  | predSucc (v : Tm) : Tm.IsNValue v → Tm.Step <{ pred (succ v) }> v
-  | predStep (t1 t1' : Tm) : Tm.Step t1 t1' → Tm.Step <{ pred t1 }> <{ pred t1' }>
+  | predSucc (v : Tm) (hv : Tm.IsNValue v) : Tm.Step <{ pred (succ v) }> v
+  | predStep (t1 t1' : Tm) (h : Tm.Step t1 t1') : Tm.Step <{ pred t1 }> <{ pred t1' }>
   | isZeroZero : Tm.Step <{ iszero 0 }> <{ true }>
-  | isZeroSucc (v : Tm) : Tm.IsNValue v → Tm.Step <{ iszero (succ v) }> <{ false }>
-  | isZeroStep (t1 t1' : Tm) : Tm.Step t1 t1' → Tm.Step <{ iszero t1 }> <{ iszero t1' }>
+  | isZeroSucc (v : Tm) (hv : Tm.IsNValue v) : Tm.Step <{ iszero (succ v) }> <{ false }>
+  | isZeroStep (t1 t1' : Tm) (h : Tm.Step t1 t1') : Tm.Step <{ iszero t1 }> <{ iszero t1' }>
 
 scoped notation:40 t:41 " ⟶ " t':41 => Tm.Step t t'
 ```
@@ -811,13 +811,13 @@ macro_rules
 inductive Tm.HasType : Tm → Ty → Prop where
   | tru : <{ ⊢ true ⦂ Bool }>
   | fls : <{ ⊢ false ⦂ Bool }>
-  | ite (t1 t2 t3 : Tm) (T : Ty) :
-      <{ ⊢ t1 ⦂ Bool }> → <{ ⊢ t2 ⦂ T }> → <{ ⊢ t3 ⦂ T }> →
+  | ite (t1 t2 t3 : Tm) (T : Ty)
+      (h1 : <{ ⊢ t1 ⦂ Bool }>) (h2 : <{ ⊢ t2 ⦂ T }>) (h3 : <{ ⊢ t3 ⦂ T }>) :
       <{ ⊢ if t1 then t2 else t3 ⦂ T }>
   | zero : <{ ⊢ 0 ⦂ Nat }>
-  | succ (t1 : Tm) : <{ ⊢ t1 ⦂ Nat }> → <{ ⊢ succ t1 ⦂ Nat }>
-  | pred (t1 : Tm) : <{ ⊢ t1 ⦂ Nat }> → <{ ⊢ pred t1 ⦂ Nat }>
-  | isZero (t1 : Tm) : <{ ⊢ t1 ⦂ Nat }> → <{ ⊢ iszero t1 ⦂ Bool }>
+  | succ (t1 : Tm) (h : <{ ⊢ t1 ⦂ Nat }>) : <{ ⊢ succ t1 ⦂ Nat }>
+  | pred (t1 : Tm) (h : <{ ⊢ t1 ⦂ Nat }>) : <{ ⊢ pred t1 ⦂ Nat }>
+  | isZero (t1 : Tm) (h : <{ ⊢ t1 ⦂ Nat }>) : <{ ⊢ iszero t1 ⦂ Bool }>
 
 open Lean PrettyPrinter Delaborator SubExpr in
 /-- Print `Ty.bool`/`Ty.nat` as `Bool`/`Nat`. -/
