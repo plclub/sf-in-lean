@@ -40,7 +40,7 @@ This chapter plus `Maps` takes a little more than one
    definitions harder to talk about.)
 :::
 
-:::dev SOONER
+:::dev BeforeNextRelease
 Needs some WORKINCLASSes and some quizzes
 
 LATER: Another nice challenge exercise at some point would be to add
@@ -116,7 +116,7 @@ only hold numbers.
 
 ## States
 
-:::dev LATER
+:::dev PotentialImprovement
 Maybe this section needs a little preface talking about "what is
    the meaning of an expression with variables?"...
 
@@ -914,7 +914,7 @@ evaluation function tricky.
 Here's an attempt at defining an evaluation function for commands (with
 a bogus `while` case).
 
-:::dev LATER
+:::dev PotentialImprovement
 In SmallStep we need to package the state and command into a pair,
    so that we can talk about normal forms and such. Probably we should do it
    here too, for consistency. (Won't change much except the type
@@ -1006,7 +1006,7 @@ state `st` to `st'`".
 
 Operational Semantics
 
-:::dev SOONER
+:::dev BeforeNextRelease
 BCP 21: I wonder if `seq` would be easier to work with if st' and
    st'' were swapped...
 :::
@@ -1147,7 +1147,7 @@ Is the following proposition provable?
 
 (A) Yes    (B) No    (C) Not sure
 
-:::answer
+:::quizSolution
 ```
 theorem quiz1_answer (c : Com) (st st' : State)
     (h : st =[ skip; ~c ]=> st') : st =[ c ]=> st' := by
@@ -1187,7 +1187,7 @@ Is the following proposition provable?
 
 (A) Yes    (B) No    (C) Not sure
 
-:::answer
+:::quizSolution
 ```
 theorem quiz3_answer (b : Bexp) (c : Com) (st st' : State)
     (h : st =[ if (~b) { ~c } else { ~c } ]=> st') : st =[ c ]=> st' := by
@@ -1210,7 +1210,7 @@ Is the following proposition provable?
 
 (A) Yes    (B) No    (C) Not sure
 
-:::answer
+:::quizSolution
 ```
 -- This one is tricky!
 theorem quiz4_answer (b : Bexp) (hbtrue : ∀ st, b.eval st = true)
@@ -1246,7 +1246,7 @@ Is the following proposition provable?
 
 (A) Yes    (B) No    (C) Not sure
 
-:::answer
+:::quizSolution
 This claim is *false*, so it cannot be proved -- the proof gets
 stuck immediately:
 
@@ -1262,7 +1262,7 @@ theorem quiz5_answer (b : Bexp) (c : Com) (st : State)
 
 ## Determinism of Evaluation
 
-:::dev LATER
+:::dev PotentialImprovement
 Maybe this should go at the end of the file in a section marked
    optional? Not everybody will want to spend time on it.
 :::
@@ -1280,7 +1280,7 @@ In fact this cannot happen: `ceval` _is_ a partial function.
 Finally, we should pause to check that our evaluation relation really is a (partial) function...
 :::
 
-:::dev LATER
+:::dev PotentialImprovement
 Informal proof needed! (And one can surely be found in some past
    CIS500 exam solutions!)
 :::
@@ -1379,7 +1379,7 @@ theorem pup_to_2_ceval :
 ```
 :::::
 
-:::dev LATER
+:::dev PotentialImprovement
 Comment from reader: Another good place to mention lack of
    functional extensionality.  The 6 `→ₜ`/`t_update`s in the above theorem
    are not redundant, nor would `pup_to_2_ceval` be provable if the
@@ -1389,7 +1389,7 @@ Comment from reader: Another good place to mention lack of
 
 # Reasoning About Imp Programs
 
-:::dev LATER
+:::dev PotentialImprovement
 This section doesn't seem very useful -- to anybody! It takes too
    much time to go through it in class, and even for advanced students it's
    too low-level and grubby to be a very convincing motivation for what
@@ -1423,7 +1423,7 @@ theorem plus2_spec (st : State) (n : Nat) (st' : State)
       lia
 ```
 
-:::dev LATER
+:::dev PotentialImprovement
 This used to be recommended.  Should it be reinstated?
 :::
 
@@ -1492,7 +1492,7 @@ theorem loop_never_stops (st st' : State) : ¬ (st =[ loop ]=> st') := by
 ```
 :::::
 
-:::dev LATER
+:::dev PotentialImprovement
 Marc Bezem 2022:
    There are trade-offs between using tactics and additional lemmas. Here is
    a case where a lemma would make things clearer. For `loop_never_stops`,

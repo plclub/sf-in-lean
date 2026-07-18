@@ -68,10 +68,13 @@ _POLICY = [
     ("FULL",                 r"::+full\b|:::suppressPreviousHeaderWhenTerse\b"),
     ("TERSE",                r"::+(?:terse|slidebreak)\b"),
     ("EX\\d+[A-Za-z!?]*",    r"::+exercise\b"),
-    ("GRADE_\\w+",           r":::grade\b"),
+    # GRADE_THEOREM -> the structured :::gradeTheorem; every other GRADE_ spec
+    # (GRADE_MANUAL) keeps the older :::grade form.
+    ("GRADE_\\w+",           r":::grade\b|:::gradeTheorem\b"),
     # `-- INSTRUCTORS:` notes -> :::instructors; a bare `-- INSTRUCTORS` region
-    # is a hidden region (-> ::::hide, or :::answer inside a quiz).
-    ("INSTRUCTORS",          r":::instructors\b|::+hide\b|:::answer\b"),
+    # is a hidden region (-> ::::hide, or :::quizSolution inside a quiz); a bare
+    # `(X)` multiple-choice instructor answer -> :::quizSolution.
+    ("INSTRUCTORS",          r":::instructors\b|::+hide\b|:::quizSolution\b"),
     # A SOLUTION is one of two things: a *compilable* answer becomes the in-code
     # `solution!` / `-- SOLUTION` form SFLMeta rewrites; a *prose* answer becomes
     # a :::solution directive.  Either counts as translated.  QUIETSOLUTION (a
@@ -79,8 +82,8 @@ _POLICY = [
     ("SOLUTION",             r":::solution\b|solution!|-- SOLUTION\b"),
     ("QUIETSOLUTION",        r":::solution\b|solution!|-- SOLUTION\b"),
     # HIDE normally -> ::::hide, but a HIDE *inside* a QUIZ is the quiz's answer
-    # -> :::answer, so both count as a translated HIDE.
-    ("HIDE",                 r"::+hide\b|:::answer\b"),
+    # -> :::quizSolution, so both count as a translated HIDE.
+    ("HIDE",                 r"::+hide\b|:::quizSolution\b"),
     ("QUIZ",                 r"::+quiz\b"),
     # `-- DEV` … `-- /DEV` region: an untagged author/dev note -> :::dev.
     ("DEV",                  r":::dev\b"),
@@ -100,6 +103,13 @@ _POLICY = [
     # Left as Lean comments inside the code block; the code itself is preserved.
     ("ADMITTED",             None),
     ("ADMITDEF",             None),
+    # `OPEN`/`CLOSE COMMENT WHEN HIDING SOLUTIONS` wraps a suggested proof that
+    # (with its preceding empty ADMITTED region) becomes a `suggested!` tactic
+    # block: the proof is shown live in the teacher/terse builds and kept as a
+    # comment in the student build.  One `suggested!` is emitted per open/close
+    # pair, so both keywords expect the same construct.
+    ("OPEN",                 r"suggested!"),
+    ("CLOSE",                r"suggested!"),
 ]
 
 # Author / developer notes -> :::dev directives.  Matched separately because
