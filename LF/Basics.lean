@@ -823,8 +823,13 @@ result.
 Define a function that takes a day and returns true if the day is
 a weekend, and false otherwise.
 
-Hint: You could do this by pattern matching on each possible day of the week,
-or you could try to come up with a shorter solution...
+Then, fill in right-hand sides of the `example` blocks below.
+If you've done both correctly, the blocks will produce no errors
+and contain no `sorry`.
+
+Hint: You could write this function by pattern matching on
+each possible day of the week, or you could try to
+come up with a shorter solution...
 
 ```lean
 def is_weekend (d : Day) : Bool
@@ -857,6 +862,9 @@ Inversion is defined by cases:
 Black is an inversion of white, and vice versa.
 Red is an inversion of blue, and vice versa.
 Green is not an inversion of anything.
+
+As before, write the right-hand sides of the `example` blocks
+to ensure they pass with no `sorry`.
 
 ```lean
 def is_inversion (c1 c2 : Color) : Bool
@@ -1365,13 +1373,13 @@ scoped infixl:65 " + " => add
 ## Proving properties about functions in Lean
 
 ::::full
-Being recursive, `add` is an example of a more sophisticated
-class of functions. In this chapter and beyond, we will _prove_
-properties about recursive functions like `add` over inductive
-datatypes like `Nat` using _simplification rules_ about their
-behavior.
+Being recursive on a `Nat` and returning `Nat` as well,
+`add` is the first example of a more sophisticated class of functions.
+In this chapter and beyond, we will _prove_ properties
+about recursive functions like `add` over inductive datatypes
+like `Nat`, using _simplification rules_ about their behavior.
 
-Here is a simple rule about `add`:
+Here is a simplification rule about `add`:
 
 - `n + zero = n`
 
@@ -1398,7 +1406,7 @@ all these comments when we fix the printing.
 RAB: Yes! Someone please let us know how!
 :::
 
-We can then use the `add_zero` rule to carry out a simple proof
+Using our simplification rule `add_zero`, we can carry out a simple proof
 about natural numbers!
 
 ```lean
@@ -1536,9 +1544,9 @@ theorem add_succ' : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
 Now, let's use `add_succ` in a proof:
 
 ```lean
-theorem add_one (n : Nat) : n + (succ zero) = succ (n + zero) + zero := by
+theorem add_one (n : Nat) : n + (succ zero) = succ n + zero := by
   rewrite [add_succ]
-  rewrite [add_zero]  /- notice how this handles an addition on both sides -/
+  rewrite [add_zero]
   rewrite [add_zero]
   rfl
 ```
@@ -1553,11 +1561,13 @@ changes the proof state and hovering over each argument to `rewrite` to see its 
 
 ::::full
 Lean, like any other programming language, has conventions and best practices
-for writing good software. You are probably familiar with object oriented programming,
-for example, in which it is considered good practice not to access the
+for writing good software. In object-oriented programming,
+for example, it is considered good practice not to access the
 fields of an object directly, but instead to use getter and setter methods.
 This helps to encapsulate the object's definition, so that, if its fields or implementation
-change, the interface it exposes to the outside world remains the same.
+ever change, the interface it exposes to the outside world remains the same.
+In simple examples such conventions may seem trivial or even silly; in complex codebases,
+it is the only way to maintain crucial invariants that prevent a system from becoming unmaintainable.
 
 The same principle applies to definitions and proofs in Lean.
 In idiomatic Lean, it is considered poor style to "peek" through
@@ -1577,9 +1587,14 @@ also called *definitional equality abuse* (*defeq abuse*, for short).
 We place this attribute after the proofs of `add_zero` and `add_succ`,
 and can then rewrite by these theorems anywhere we want to describe
 how `add` evaluates.
+In real-world Lean developments, the style of writing proofs using
+simplification rules is both standard and expected. Definitions in those
+developments may not use `attribute [irreducible]`,
+but they _will_ have definitions that are not meant to be reduced.
 
-We will relax this discipline in later chapters, but for now we enforce it to build good
-proof engineering habits.
+We use `attribute [irreducible]` here to enforce the style of
+using simplification rules now so that it is natural to you moving forward.
+We will relax this discipline in later chapters.
 ::::
 
 ::::terse
@@ -1663,6 +1678,15 @@ In the remainder of this textbook, we will pair definitions
 with their simplification lemmas. After proving these lemmas,
 instead of using `rfl` to peek through the definitions, we will prefer rewriting
 by the lemmas.
+
+Eventually, we will introduce a way to automatically apply these simplfication lemmas,
+but for now these tactics are forbidden by our autograder.
+Real-world Lean uses automation extensively, and you will learn to do so
+by the end of this book and in the following volumes.
+For the moment it is important that you work through these early concepts
+by hand, without automation.
+By the time the more powerful tools are introduced,
+you will have the foundation to use them with precision and skill.
 ::::
 
 ::::terse
@@ -1739,20 +1763,39 @@ def mul (n m : Nat) : Nat :=
 scoped infixl:70 " * " => mul
 ```
 
+::::exercise (rating := 1) (name := "mul_simpl_rules")
 Multiplication, like any function we will prove properties about,
-   also has simplification rules.
+also has simplification rules.
+
+Remove `sorry` and prove the simplification rules for `mul` below.
+You will likely find the proofs of the simplification rules for `add`
+to be helpful as a model.
+
+:::dev
+@rogerburtonpatel: it would be nice if we could get the
+theorem _statements_ inside a `solution!` block as well.
+:::
 
 ```lean
 theorem mul_zero : ∀ n : Nat, n * zero = zero := by
-  intro n
-  rfl
+  solution!
+    intro n
+    rfl
 
 theorem mul_succ : ∀ n m : Nat, n * (succ m) = (n * m) + n := by
-  intro n m
-  rfl
+  solution!
+    intro n m
+    rfl
 
 attribute [irreducible] mul
 ```
+
+:::grade
+```
+GRADE_THEOREM 1: mul_simpl_rules
+```
+:::
+::::
 
 :::dev "Benjamin Pierce (bcpierce00)"
 Again, this should be an exercise.
@@ -1773,7 +1816,7 @@ as you write the proof, which makes it convenient to use `rewrite` blocks
 with multiple rules.
 ::::
 
-::::exercise (rating := 2) (name := "test_mult1")
+::::exercise (rating := 2) (name := "test_mul_add")
 ```lean
 theorem zero_add_one : (zero + one : Nat) = one := by
   rewrite [one_eq_succ_zero]
@@ -1813,13 +1856,10 @@ theorem two_mul_two : (two * two : Nat) = four := by
 
 :::grade
 ```
-GRADE_THEOREM 2: test_mult1
+GRADE_THEOREM 2: test_mul_add
 ```
 :::
 ::::
-
-:::slidebreak
-:::
 
 :::slidebreak
 :::
@@ -2028,7 +2068,7 @@ second is preferred in idiomatic Lean developments.
 :::dev
 Per Github discussion: Lean's convention is to prefer the declaration header style
 (`mul_zero  (n : Nat) : n * zero = zero`) over universal quantification style
-(`mul_zero : ∀ (n : Nat), n * zero = zero`). We probably still want to teach the univeral
+(`mul_zero : ∀ (n : Nat), n * zero = zero`). We probably still want to teach the universal
 quantification style at first, but should switch over to declaration header style
 quickly since that is the idiomatic Lean way to do things.
 
@@ -2046,7 +2086,7 @@ TODO
 ::::full
 Of course, not everything can be proved by simple calculation and
 rewriting: In general, the presence of unknown, hypothetical values
-(arbitrary numbers, booleans, etc.) can block proof.
+(arbitrary numbers, booleans, etc.) can block a proof.
 ::::
 
 :::terse
