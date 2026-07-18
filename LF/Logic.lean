@@ -137,9 +137,9 @@ theorem succ_inj' : injective succ := by
 #check (true : Prop)
 
 /- QUIZ: What is the type of the following expression?
-    ```
+[[
     pred (succ zero) = zero
-    ```
+]]
 
    1. `Prop`
    2. `Nat → Prop`
@@ -150,9 +150,9 @@ theorem succ_inj' : injective succ := by
 #check (pred (succ zero) = zero : Prop)
 
 /- QUIZ: What is the type of the following expression?
-    ```
+[[
     ∀ n : Nat, pred (succ n) = n
-    ```
+]]
 
    1. `Prop`
    2. `Nat → Prop`
@@ -163,9 +163,9 @@ theorem succ_inj' : injective succ := by
 #check (∀ n : Nat, pred (succ n) = n : Prop)
 
 /- QUIZ: What is the type of the following expression?
-    ```
+[[
     ∀ n : Nat, succ (pred n)
-    ```
+]]
 
    1. `Prop`
    2. `Nat → Prop`
@@ -179,9 +179,9 @@ theorem succ_inj' : injective succ := by
 #check_failure ∀ n : Nat, succ (pred n)
 
 /- QUIZ: What is the type of the following expression?
-    ```
+[[
     fun n : Nat => succ (pred n)
-    ```
+]]
 
    1. `Prop`
    2. `Nat → Prop`
@@ -192,9 +192,9 @@ theorem succ_inj' : injective succ := by
 #check (fun n : Nat => succ (pred n) : Nat → Nat)
 
 /- QUIZ: What is the type of the following expression?
-    ```
+[[
     fun n : Nat => succ (pred n) = n
-    ```
+]]
 
    1. `Prop`
    2. `Nat → Prop`
@@ -668,9 +668,9 @@ theorem not_true_is_false' (b : Bool) (h : b ≠ true) : b = false := by
 
 /- QUIZ: To prove the following proposition, which tactics will we need
     besides `intro`, `apply`, and `exact`?
-    ```
+[[
     ∀ X : Prop, ∀ a b : X, a = b ∧ a ≠ b → False
-    ```
+]]
 
     1. `cases`, `unfold`, `left`, and `right`
     2. `cases` and `unfold`
@@ -686,9 +686,9 @@ example (X : Prop) (a b : X) : a = b ∧ a ≠ b → False := by
 
 /- QUIZ: To prove the following proposition, which tactics will we need
     besides `intro`, `apply`, and `exact`?
-    ```
+[[
     ∀ P Q : Prop, P ∨ Q → ¬ ¬ (P ∨ Q)
-    ```
+]]
 
     1. `cases`, `unfold`, `left`, and `right`
     2. `cases` and `unfold`
@@ -704,9 +704,9 @@ example (P Q : Prop) (h : P ∨ Q) : ¬ ¬ (P ∨ Q) := by
 
 /- QUIZ: To prove the following proposition, which tactics will we need
     besides `intro`, `apply`, and `exact`?
-    ```
+[[
     ∀ P Q : Prop, P → (P ∨ ¬ ¬ Q)
-    ```
+]]
 
     1. `cases`, `unfold`, `left`, and `right`
     2. `cases` and `unfold`
@@ -722,9 +722,9 @@ example (P Q : Prop) (h : P) : P ∨ ¬ ¬ Q := by
 
 /- QUIZ: To prove the following proposition, which tactics will we need
     besides `intro`, `apply`, and `exact`?
-    ```
+[[
     ∀ P Q : Prop, P ∨ Q → (¬ ¬ P) ∨ (¬ ¬ Q)
-    ```
+]]
 
     1. `cases`, `unfold`, `left`, and `right`
     2. `cases` and `unfold`
@@ -742,9 +742,9 @@ example (P Q : Prop) (h : P ∨ Q) : (¬ ¬ P) ∨ (¬ ¬ Q) := by
 
 /- QUIZ: To prove the following proposition, which tactics will we need
     besides `intro`, `apply`, and `exact`?
-    ```
+[[
     ∀ A : Prop, 1 = 0 → (A ∨ ¬ A)
-    ```
+]]
 
     1. `contradiction`, `unfold`, `left`, and `right`
     2. `contradiction` and `unfold`
@@ -791,16 +791,13 @@ example : True := by constructor
     to convert an unprovable statement (like `False`) to one that is
     provable (like `True`). -/
 
-@[irreducible]
 def discr_fun (n : Nat) : Prop :=
   match n with
   | 0 => True
   | _ + 1 => False
 
-unseal discr_fun in
 theorem discr_fun_zero : discr_fun 0 = True := rfl
 
-unseal discr_fun in
 theorem discr_fun_succ n : discr_fun (n + 1) = False := rfl
 
 theorem discr_example (n : Nat) : ¬ (0 = n + 1) := by
@@ -818,16 +815,13 @@ theorem discr_example (n : Nat) : ¬ (0 = n + 1) := by
     Do not use the `contradiction` tactic. -/
 
 -- QUIETSOLUTION
-@[irreducible]
 def is_nil {α : Type} (xs : List α) : Prop :=
   match xs with
   | [] => True
   | _ :: _ => False
 
-unseal is_nil in
 theorem is_nil_nil {α} : @is_nil α [] = True := rfl
 
-unseal is_nil in
 theorem is_nil_cons {α} (x : α) (xs : List α) : is_nil (x :: xs) = False := rfl
 -- /QUIETSOLUTION
 
@@ -1107,28 +1101,23 @@ theorem add_exists_leb' : ∀ n m, (∃ x, m = x + n) → n ≤? m = true := by
 /- We can translate this directly into a straightforward recursive function
     taken an element and a list and returning... a proposition! -/
 
-@[irreducible]
 def In {α : Type} (x : α) (xs : List α) : Prop :=
   match xs with
   | [] => False
   | x' :: xs' => x = x' ∨ In x xs'
 
-unseal In in
 theorem In_nil {α} (x : α) : In x [] = False := rfl
 
-unseal In in
 theorem In_cons {α} (x x' : α) (xs : List α) : In x (x' :: xs) = (x = x' ∨ In x xs) := rfl
 
 /- When `In` is applied to a concrete list, it exapnds into a concrete sequence
    of nested disjunctions. -/
 
-unseal In in
 example : In 4 [1, 2, 3, 4, 5] := by
   -- WORKINCLASS
   dsimp [In]; right; right; right; left; rfl
   -- /WORKINCLASS
 
-unseal In in
 example (n : Nat) (h : In n [2, 4]) : ∃ n' : Nat, n = 2 * n' := by
   -- WORKINCLASS
   dsimp [In] at h
@@ -1204,7 +1193,6 @@ theorem In_map_iff (α β : Type) (f : α → β) (xs : List α) (y : β) :
     lemma below.  (Of course, your definition should _not_ just
     restate the left-hand side of `All_In`.) -/
 
-@[irreducible]
 def All {α : Type} (P : α → Prop) (xs : List α) : Prop :=
   -- ADMITDEF
   match xs with
@@ -1212,10 +1200,8 @@ def All {α : Type} (P : α → Prop) (xs : List α) : Prop :=
   | x :: xs' => P x ∧ All P xs'
   -- /ADMITDEF
 
-unseal All in
 theorem All_nil {α} (P : α → Prop) : All P [] = True := rfl -- ADMITTED
 
-unseal All in
 theorem All_cons {α} (P : α → Prop) x xs : All P (x :: xs) = (P x ∧ All P xs) := rfl -- ADMITTED
 
 theorem All_In α (P : α → Prop) (xs : List α) :
@@ -1389,16 +1375,16 @@ namespace FunctionTheoremQuiz
 
 -- QUIZ
 /- Suppose we have
-    ```
+[[
     n m : Nat
     H1 : n = m
     H2 : b = 42
     trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c
-    ```
+]]
     What is the type of this "proof object"?
-    ```
+[[
     trans_eq Nat n m 42 H1 H2
-    ```
+]]
 
     1. `n = m`
     2. `42 = n`
@@ -1413,16 +1399,16 @@ namespace FunctionTheoremQuiz
 
 -- QUIZ
 /- Suppose, again, we have
-    ```
+[[
     n m : Nat
     H1 : n = m
     H2 : b = 42
     trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c
-    ```
+]]
     What is the type of this proof object?
-    ```
+[[
     trans_eq _ _ _ _ H1 H2
-    ```
+]]
 
     1. `n = m`
     2. `42 = n`
@@ -1434,16 +1420,16 @@ namespace FunctionTheoremQuiz
 
 -- QUIZ
 /- Suppose, again, we have
-    ```
+[[
     n m : Nat
     H1 : n = m
     H2 : b = 42
     trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c
-    ```
+]]
     What is the type of this proof object?
-    ```
+[[
     trans_eq Nat m 42 n H2
-    ```
+]]
 
     1. `m = n`
     2. `m = n → 42 = n`
@@ -1455,16 +1441,16 @@ namespace FunctionTheoremQuiz
 
 -- QUIZ
 /- Suppose, again, we have
-    ```
+[[
     n m : Nat
     H1 : n = m
     H2 : b = 42
     trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c
-    ```
+]]
     What is the type of this proof object?
-    ```
+[[
     trans_eq _ 42 n m
-    ```
+]]
 
     1. `n = m → m = 42 → n = 42`
     2. `42 = n → n = m → 42 = m`
@@ -1476,16 +1462,16 @@ namespace FunctionTheoremQuiz
 
 -- QUIZ
 /- Suppose, again, we have
-    ```
+[[
     n m : Nat
     H1 : n = m
     H2 : b = 42
     trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c
-    ```
+]]
     What is the type of this proof object?
-    ```
+[[
     trans_eq _ _ _ _ H2 H1
-    ```
+]]
 
     1. `b = a`
     2. `42 = a`
@@ -1717,7 +1703,6 @@ example : even 101 = false := rfl
 /- In contrast, propositional negation can be difficult to work with directly.
     For example, suppose we state the nonevenness of `101` propositionally: -/
 
--- JC (TODO): mark `even` as irreducible (this example was `unseal even in`)
 /- Proving this directly -- by assuming that there is some `n` such that
     `101 = double n` and then somehow reasoning to a contradiction --
     would be rather complicated.
@@ -1796,7 +1781,6 @@ theorem orb_true_iff (b1 b2 : Bool) :
     of the `beq_list` function below. to make sure that your definition
     is correct, prove the lemma `beq_list_true_iff`. -/
 
-@[irreducible]
 def beq_list {α : Type} (beq : α → α → Bool) (xs1 xs2 : List α) : Bool :=
   -- ADMITDEF
   match xs1, xs2 with
@@ -1805,20 +1789,16 @@ def beq_list {α : Type} (beq : α → α → Bool) (xs1 xs2 : List α) : Bool :
   | _, _ => false
   -- /ADMITDEF
 
-unseal beq_list in
 theorem beq_list_nil_nil {α} (beq : α → α → Bool) :
     beq_list beq [] [] = true := rfl -- ADMITTED
 
-unseal beq_list in
 theorem beq_list_cons_cons {α} (beq : α → α → Bool) x1 x2 xs1 xs2 :
     beq_list beq (x1 :: xs1) (x2 :: xs2) =
     (beq x1 x2 && beq_list beq xs1 xs2) := rfl -- ADMITTED
 
-unseal beq_list in
 theorem beq_list_nil_cons {α} (beq : α → α → Bool) x xs :
     beq_list beq [] (x :: xs) = false := rfl -- ADMITTED
 
-unseal beq_list in
 theorem beq_list_cons_nil {α} (beq : α → α → Bool) x xs :
     beq_list beq (x :: xs) [] = false := rfl -- ADMITTED
 
@@ -1869,7 +1849,6 @@ theorem beq_list_true_iff α (beq : α → α → Bool)
 
 /- Copy the definition of `forallb` from Tactics here so that this file can be
     graded on its own. -/
-@[irreducible]
 def Logic.forallb {α : Type} (test : α → Bool) (xs : List α) : Bool :=
   -- ADMITDEF
   match xs with
@@ -1877,10 +1856,8 @@ def Logic.forallb {α : Type} (test : α → Bool) (xs : List α) : Bool :=
   | x :: xs' => test x && forallb test xs'
   -- /ADMITDEF
 
-unseal Logic.forallb in
 theorem forallb_nil {α} (test : α → Bool) : Logic.forallb test [] = true := rfl -- ADMITTED
 
-unseal Logic.forallb in
 theorem forallb_cons {α} (test : α → Bool) x xs :
     Logic.forallb test (x :: xs) = (test x && Logic.forallb test xs) := rfl -- ADMITTED
 
@@ -2069,9 +2046,9 @@ example : (fun x => x + 2) = (fun x => x + (pred 3)) := rfl
 /- In general, functions can be equal for more interesting reasons.
     In common mathematical practice, two functions `f` and `g` are considered
     equal if they produce the same output on every input:
-    ```
+[[
     (∀ x, f x = g x) → f = g
-    ```
+]]
 
     This is known as _functional extensionality_,
     which Lean provides as `funext`. -/
@@ -2131,16 +2108,13 @@ example : (fun xs => 1 :: xs) = (fun xs => [1] ++ xs) := rfl
 
     We can improve this with the following two-argument definition: -/
 
-@[irreducible]
 def rev_append {α} (xs1 xs2 : List α) : List α :=
   match xs1 with
   | [] => xs2
   | x1 :: xs1' => rev_append xs1' (x1 :: xs2)
 
-unseal rev_append in
 theorem rev_append_nil {α} (xs : List α) : rev_append [] xs = xs := rfl
 
-unseal rev_append in
 theorem rev_append_cons {α} (x : α) xs1 xs2 :
     rev_append (x :: xs1) xs2 = rev_append xs1 (x :: xs2) := rfl
 
@@ -2154,7 +2128,6 @@ abbrev tr_rev {α} (xs : List α) : List α := rev_append xs []
     Prove that the two definitions are indeed equivalent. -/
 
 -- QUIETSOLUTION
-unseal List.rev in
 theorem rev_append_rev {α} : ∀ xs1 xs2 : List α,
     rev_append xs1 xs2 = xs1.rev ++ xs2 := by
   intro xs1; induction xs1
@@ -2325,10 +2298,10 @@ theorem excluded_middle_irrefutable (P : Prop) : ¬ ¬ (P ∨ ¬ P) := by
 /- It is a theorem of classical logic that the following two assertions
     are equivalent:
 
-    ```
+[[
     ¬ ∃ x, ¬ P x
     ∀ x, P x
-    ```
+]]
 
     The `dist_not_exists` theorem proves one side of this equivalence.
     Interestingly, the other direction cannot be proven in constructive logic,

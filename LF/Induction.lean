@@ -29,9 +29,9 @@ htmlSplit := .never
 file := some "Induction"
 %%%
 
-:::dev
+:::dev SOONER
 ```
-SOONER: Readers might expect us to add eqn:H annotations to uses of
+Readers might expect us to add eqn:H annotations to uses of
 induction, but this changes the shape of the IH in a nasty way! :-(
 We should at least comment.  (BCP: Is this still relevant in Lean?)
 
@@ -57,9 +57,9 @@ harder?
 
 # Separate Compilation
 
-:::dev
+:::dev "Benjamin Pierce (bcpierce00)"
 ```
-BCP: This section will need some tidying and rewriting...
+This section will need some tidying and rewriting...
 ```
 :::
 
@@ -117,7 +117,6 @@ Troubleshooting:
 namespace NatPlayground.Nat
 ```
 
-
 # Review
 
 ::::quiz
@@ -125,7 +124,9 @@ To prove the following theorem, which tactics will we need besides
 `intro` and `rfl`?  (A) none, (B) `rewrite`, (C) `cases`, (D) both
 `rewrite` and `cases`, or (E) can't be done with the tactics we've seen.
 
+```display
     theorem review1 : (true || false) = true
+```
 
 :::answer
 ```
@@ -138,7 +139,9 @@ theorem review1 : (true || false) = true := by rfl
 ::::quiz
 What about the next one?
 
+```display
     theorem review2 : ∀ b, (true || b) = true
+```
 
 Which tactics do we need besides `intro` and `rfl`?  (A)
 none (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`,
@@ -157,7 +160,9 @@ theorem review2 : ∀ b : Bool, (true || b) = true := by
 ::::quiz
 What if we change the order of the arguments of `||`?
 
+```display
     theorem review3 : ∀ b, (b || true) = true
+```
 
 Which tactics do we need besides `intro` and `rfl`?  (A)
 none (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`,
@@ -180,7 +185,9 @@ What about this one?  (Recall that in Lean, `Nat.add` recurses on the _second_
 argument: `n + zero = n` by definition, and `n + (m + 1) = (n + m) + 1` by
 definition.)
 
+```display
     theorem review4 : ∀ n : Nat, n + zero = n
+```
 
 (A) none, (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`, or (E)
 can't be done with the tactics we've seen.
@@ -199,7 +206,9 @@ theorem review4 : ∀ n : Nat, n + zero = n := by
 ::::quiz
 What about this?
 
+```display
     theorem review5 : ∀ n : Nat, zero + n = n
+```
 
 (A) none, (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`,
 or (E) can't be done with the tactics we've seen.
@@ -215,9 +224,9 @@ or (E) can't be done with the tactics we've seen.
 :::
 ::::
 
-:::dev
+:::dev "Daniel Sainati (dsainati1)" TODO
 ```
-TODO (DHS): We use this theorem later,
+We use this theorem later,
    so let's make it into a review exercise here
 ```
 :::
@@ -251,7 +260,6 @@ theorem succ_eq_add_one : ∀ n : Nat, succ n = n + one := by
   for `+` on the _right_ using just `rfl`:
 
 ```
-  unseal add in
   theorem add_zero : forall (n : Nat), n + zero = n := by
     intro n
     rfl
@@ -271,7 +279,6 @@ But the proof that it is also a neutral element on the
 ```lean
 /-- warning: declaration uses `sorry` -/
 #guard_msgs in
-unseal add in
 example : ∀ n : Nat, zero + n = n := by
   intro n
   -- `rfl` doesn't work here!
@@ -392,7 +399,6 @@ Let's try this one together:
 ::::
 
 ```lean
-unseal beq in
 theorem beq_self : ∀ n : Nat,
     (n == n) = true := by
   workinclass!
@@ -406,9 +412,9 @@ theorem beq_self : ∀ n : Nat,
       exact ih
 ```
 
-:::dev
+:::dev "Roger Burtonpatel (rogerburtonpatel)"
 ```
-RAB: We need to make sure this section below is true! It won't be once we switch
+We need to make sure this section below is true! It won't be once we switch
      to the indexed style.
 ```
 :::
@@ -521,9 +527,9 @@ GRADE_THEOREM 0.5: add_assoc
 :::::exercise (rating := 2) (name := "double_plus")
 Consider the following function, which doubles its argument:
 
-:::dev
+:::dev TODO
 ```
-TODO Rule rewrite
+Rule rewrite
 
 BCP: What is "ASSUME HIDDEN"??
 ASSUME HIDDEN
@@ -531,34 +537,26 @@ ASSUME HIDDEN
 :::
 
 ```lean
-@[irreducible]
 def double (n : Nat) : Nat :=
   match n with
   | zero    => zero
   | succ n' => succ (succ (double n'))
 ```
 
-:::dev
-```
-BCP: All this `unseal` stuff is a bit ugly and potentially confusing for students.
-Anything we can to about this?
-```
-:::
 
 ```lean
-unseal double in
 theorem double_zero : double zero = zero := by rfl
-
-unseal double in
 theorem double_succ : ∀ n, double (succ n) = succ (succ (double n)) := by
   intro n; rfl
+
+attribute [irreducible] double
 ```
 
 END ASSUME
 
-:::dev
+:::dev "Benjamin Pierce (bcpierce00)"
 ```
-BCP: We need better typesetting for displays like the following ones:
+We need better typesetting for displays like the following ones:
 ```
 :::
 :::::
@@ -615,7 +613,6 @@ The following theorem relates the computational equality `beq` on
 `Nat` with the definitional equality `=` on `Bool`.
 
 ```lean
-unseal beq in
 theorem beq_refl (n : Nat) :
     (n == n) = true := by
   solution!
@@ -653,7 +650,6 @@ with induction:
 `rw [even]`.)
 
 ```lean
-unseal even in
 theorem even_succ (n : Nat) :
     even (succ n) = !even n := by
   solution!
@@ -818,7 +814,7 @@ completely forget about informal ones!  Formal proofs are useful
 in many ways, but they are _not_ very efficient ways of
 communicating ideas between human beings.
 
-For example, here is a proof that addition is associative 
+For example, here is a proof that addition is associative
    (you might have written it yourself, earlier in this chapter!):
 
 ```lean
@@ -833,9 +829,9 @@ Lean is perfectly happy with this.  For a human, however, it
 is difficult to make much sense of it.  We can
 pass arguments to the `add_succ` theorems to show the structure more clearly...
 
-:::dev
+:::dev "Jonathan Chan (ionathanch)"
 ```
-JC: This would be a great location to introduce `calc`!
+This would be a great location to introduce `calc`!
 ```
 :::
 
@@ -858,36 +854,46 @@ to impossible.
 A (pedantic) mathematician might write the proof something like
 this:
 
-:::dev
+:::dev "Benjamin Pierce (bcpierce00)"
 ```
-BCP: Again, the math displays need to be displayed!
+Again, the math displays need to be displayed!
 ```
 :::
 
 - _Theorem_: For any `n`, `m` and `p`,
 
-n + (m + p) = (n + m) + p.
+```display
+      n + (m + p) = (n + m) + p.
+```
 
 _Proof_: By induction on `p`.
 
 - First, suppose `p = zero`.  We must show that
 
-n + (m + zero) = (n + m) + zero.
+```display
+        n + (m + zero) = (n + m) + zero.
+```
 
 This follows directly from the definition of `+`
 (since `x + zero = x` for any `x`).
 
 - Next, suppose `p = p' + 1`, where
 
-n + (m + p') = (n + m) + p'.
+```display
+        n + (m + p') = (n + m) + p'.
+```
 
 We must now show that
 
-n + (m + (p' + 1)) = (n + m) + (p' + 1).
+```display
+        n + (m + (p' + 1)) = (n + m) + (p' + 1).
+```
 
 By the definition of `+`, both sides reduce to
 
-(n + (m + p')) + 1   and   ((n + m) + p') + 1
+```display
+        (n + (m + p')) + 1   and   ((n + m) + p') + 1
+```
 
 respectively, which are equal by the induction hypothesis.
 _Qed_.
@@ -898,7 +904,7 @@ _Qed_.
  MMG: the proof above makes no use of lemmas, so it's hard for
    students to know what to do.  It might be good to also give them a
    sample proof of mult_1_l so they know how to "invoke" things
-   they've already proved.  
+   they've already proved.
 ```
 ::::
 
@@ -921,9 +927,9 @@ Theorem: Addition is commutative.
 
 Proof:
 
-:::dev
+:::dev "Benjamin Pierce (bcpierce00)"
 ```
-BCP: Somebody please check that this typesets nicely!  (I doubt it does...) Ditto below.
+Somebody please check that this typesets nicely!  (I doubt it does...) Ditto below.
 SOLUTION
 ```
 :::
@@ -1085,9 +1091,9 @@ GRADE_THEOREM 2: mul_comm
 :::
 :::::
 
-:::dev
+:::dev "Benjamin Pierce (bcpierce00)"
 ```
-BCP: This comment is placed a bit awkwardly: In the terse version, we
+This comment is placed a bit awkwardly: In the terse version, we
 usually skim past these exercises, but now we'll need to pause and look
 at how <;> works...
 TERSE
@@ -1149,9 +1155,9 @@ reflect before you hack!)
 Some of these proofs can be shortened
 with `<;>` when several generated subgoals have the same proof.
 
-:::dev
+:::dev "Benjamin Pierce (bcpierce00)"
 ```
-BCP: Is that the main reason for introducing <;> here?  Seems weak if so.
+Is that the main reason for introducing <;> here?  Seems weak if so.
 Could we consider moving it later?
 ```
 :::
@@ -1226,7 +1232,6 @@ from Basics.  That will make it possible for this file to be graded
 on its own.
 
 ```lean
-@[irreducible]
 def incr (m : Bin) : Bin
   := solution!(match m with
   | .z     => .b1 .z
@@ -1234,31 +1239,22 @@ def incr (m : Bin) : Bin
   | .b1 m' => .b0 (incr m'))
 ```
 
-:::dev
-```
-BCP: Will students need to do all this unseal/seal stuff to do the exercises?
-```
-:::
-
 ```lean
-unseal incr
 theorem incr_z : incr .z = .b1 .z := solution!(by rfl)
 theorem incr_b0 m : incr (.b0 m) = .b1 m := solution!(by rfl)
 theorem incr_b1 m : incr (.b1 m) = .b0 (incr m) := solution!(by rfl)
-seal incr
+```
 
-@[irreducible]
+```lean
 def binToNat (m : Bin) : Nat
   := solution!(match m with
   | .z     => zero
   | .b0 m' => (binToNat m') * two
   | .b1 m' => ((binToNat m') * two) + one)
 
-unseal binToNat
 theorem binToNat_z : binToNat .z = zero := solution!(by rfl)
 theorem binToNat_b0 m : binToNat (.b0 m) = mul (binToNat m) two := solution!(by rfl)
 theorem binToNat_b1 m : binToNat (.b1 m) = add (mul (binToNat m) two) one := solution!(by rfl)
-seal binToNat
 
 attribute [pp_nodot] Bin.b0 Bin.b1
 ```
@@ -1267,9 +1263,9 @@ In Basics, we did some unit testing of `binToNat`, but we
 didn't prove its correctness. Now we'll do so.
 
 :::::exercise (rating := 3) (name := "binary_commute")
-:::dev
+:::dev "Daniel Sainati (dsainati1)" SOONER
 ```
-SOONER (DHS): This is a very category theoretic way to present
+This is a very category theoretic way to present
    this idea. Is this the most useful way to convey this to
    an audience who is presumably unfamiliar with commutative diagrams?
 
@@ -1325,16 +1321,15 @@ Write a function to convert natural numbers to binary numbers.
   Also write some simplification lemmas for it.
 
 ```lean
-@[irreducible]
 def natToBin (n : Nat) : Bin := solution!(
   match n with
   | zero    => .z
   | succ n' => incr (natToBin n'))
 ```
 
-:::dev
+:::dev "Daniel Sainati (dsainati1)" TODO
 ```
-TODO (DHS): How to hide these theorem statements so that students can get practice writing them?
+How to hide these theorem statements so that students can get practice writing them?
 ```
 :::
 
@@ -1343,20 +1338,18 @@ CH: David set it up so that if you put:
 -- SOLUTION
 -- END SOLUTION
 
-in an exercise that it will turn into 
-  -- FILL IN HERE 
+in an exercise that it will turn into
+  -- FILL IN HERE
 in both student version of the Lean files and the generated HTML.
 
 ```lean
-unseal natToBin
 theorem natToBin_zero : natToBin zero = .z := solution!(by rfl)
 theorem natToBin_succ m : natToBin (succ m) = incr (natToBin m) := solution!(by rfl)
-seal natToBin
 ```
 
-:::dev
+:::dev "Benjamin Pierce (bcpierce00)"
 ```
-BCP: Could these be moved later so that at least the reader has the chance to do the exercise
+Could these be moved later so that at least the reader has the chance to do the exercise
 before encountering them?
 ```
 :::
@@ -1429,31 +1422,28 @@ GRADE_THEOREM 0.5: double_incr
 Now define a similar doubling function for `Bin`.
 
 ```lean
-@[irreducible]
 def doubleBin (b : Bin) : Bin := solution!(
   match b with
   | .z => .z
   | _  => .b0 b)
 ```
 
-:::dev
+:::dev "Daniel Sainati (dsainati1)" TODO
 ```
-TODO (DHS): How to hide these theorem statements so that students can get practice writing them?
+How to hide these theorem statements so that students can get practice writing them?
 ```
 :::
 
 ```lean
-unseal doubleBin
 theorem doubleBin_z : doubleBin .z = .z := solution!(by rfl)
 theorem doubleBin_b0 m : doubleBin (.b0 m) = .b0 (.b0 m) := solution!(by rfl)
 theorem doubleBin_b1 m : doubleBin (.b1 m) = .b0 (.b1 m) := solution!(by rfl)
-seal doubleBin
+
 ```
 
 Check that your function correctly doubles zero.
 
 ```lean
-unseal doubleBin in
 example : doubleBin .z = .z := solution!(by rfl)
 ```
 
@@ -1529,7 +1519,6 @@ end of the `Bin` and _only_ processes each bit once. Do not
 try to "look ahead" at future bits.
 
 ```lean
-@[irreducible]
 def normalize (b : Bin) : Bin := solution!(
   match b with
   | .z     => .z
@@ -1537,18 +1526,17 @@ def normalize (b : Bin) : Bin := solution!(
   | .b1 b' => incr (doubleBin (normalize b')))
 ```
 
-:::dev
+:::dev "Daniel Sainati (dsainati1)" TODO
 ```
-TODO (DHS): How to hide these theorem statements so that students can get practice writing them?
+How to hide these theorem statements so that students can get practice writing them?
 ```
 :::
 
 ```lean
-unseal normalize
 theorem normalize_z : normalize .z = .z := solution!(by rfl)
 theorem normalize_b0 m : normalize (.b0 m) = doubleBin (normalize m) := solution!(by rfl)
 theorem normalize_b1 m : normalize (.b1 m) = incr (doubleBin (normalize m)) := solution!(by rfl)
-seal normalize
+
 ```
 
 It would be wise to do some `example` proofs to check that your
@@ -1558,7 +1546,6 @@ proceed. They won't be graded, but fill them in below.
 ```lean
 -- SOLUTION
 /- normalize_test_zero -/
-unseal normalize doubleBin incr
 example : normalize .z = .z := by rfl
 /- normalize_test_1 -/
 example : normalize (.b1 .z) = .b1 .z := by rfl
@@ -1568,8 +1555,9 @@ example : normalize (.b0 .z) = .z := by rfl
 example : normalize (.b0 (.b0 .z)) = .z := by rfl
 /- normalize_test_4 -/
 example : normalize (.b1 (.b0 .z)) = .b1 .z := by rfl
-seal normalize doubleBin incr
 -- END SOLUTION
+
+attribute [irreducible] normalize doubleBin natToBin incr binToNat
 ```
 
 Finally, prove the main theorem. The inductive cases could be a
@@ -1653,4 +1641,3 @@ end NatPlayground.Nat
   SF.
 ```
 ::::
-

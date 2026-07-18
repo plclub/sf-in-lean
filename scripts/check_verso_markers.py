@@ -61,7 +61,11 @@ from typing import Optional
 # closing `-- /QUIZ` all reduce to the keyword `QUIZ`).
 _POLICY = [
     # keyword regex          expect (output construct) / None
-    ("FULL",                 r"::+full\b"),
+    # A FULL region wrapping a section heading emits the heading at document
+    # level followed by a `:::suppressPreviousHeaderWhenTerse` marker (headings
+    # can't nest inside a directive), so both spellings count as a translated
+    # FULL.
+    ("FULL",                 r"::+full\b|:::suppressPreviousHeaderWhenTerse\b"),
     ("TERSE",                r"::+(?:terse|slidebreak)\b"),
     ("EX\\d+[A-Za-z!?]*",    r"::+exercise\b"),
     ("GRADE_\\w+",           r":::grade\b"),
@@ -101,7 +105,7 @@ _POLICY = [
 # Author / developer notes -> :::dev directives.  Matched separately because
 # the keyword is an author initial or task word, not a region name.
 _AUTHOR_KEYWORDS = ("BCP", "JC", "MWH", "CGH", "RAB", "CH", "HG", "NB", "MMG",
-                    "APT", "DHS", "TODO", "TOFIX", "LATER", "SOONER")
+                    "APT", "DHS", "TODO", "TOFIX", "LATER", "SOONER", "NOW")
 _AUTHOR_EXPECT = r":::dev\b"
 
 # A line reduces to a "marker keyword" candidate if, after stripping a leading
