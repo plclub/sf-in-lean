@@ -1809,11 +1809,6 @@ theorem Perm3_symm : ∀ (α : Type) (l₁ l₂ : List α),
     exact Perm3.perm3_trans _ _ _ ih₂3 ih₁2
 
 
--- DEV
--- RAB & DHS: swap to Lean's `In` predicate (∈) rather than our own
--- Also, we might use this as a running example in Automation.
--- /DEV
-
 /- EX2 (Perm3_In) -/
 /- If you find yourself dealing with deeply nested `cases` in this proof,
    think back to `Logic` where you learned about the `obtain` tactic -/
