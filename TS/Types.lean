@@ -378,7 +378,7 @@ of reduction").
 
 Such terms are _stuck_.
 
-:::dev "Claude" LATER
+:::dev "Claude" PotentialImprovement
 These two facts about `Tm` are the single-sorted successors of the `Combined`-language
 exercises `combined_step_deterministic` and `combined_strong_progress`, which were cut
 from the Smallstep chapter (the two-sorted Slang cannot express the ill-formed / stuck
