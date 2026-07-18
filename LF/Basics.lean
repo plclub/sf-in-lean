@@ -1396,10 +1396,6 @@ theorem add_zero : ∀ n : Nat, n + zero = n := by
   rfl
 ```
 
-
-
-::::full
-
 ```lean
 #check add_zero
 ```
@@ -1420,7 +1416,6 @@ theorem add_zero_zero : ∀ n : Nat, n + zero + zero = n := by
   rewrite [add_zero]
   rfl
 ```
-::::
 
 We'll walk through this proof in the next section.
 
@@ -1551,7 +1546,7 @@ Now, let's use `add_succ` in a proof:
 ```lean
 theorem add_one (n : Nat) : n + (succ zero) = succ n + zero := by
   rewrite [add_succ]
-  rewrite [add_zero]
+  rewrite [add_zero] /- notice how this handles an addition on both sides -/
   rewrite [add_zero]
   rfl
 ```
