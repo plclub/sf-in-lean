@@ -27,15 +27,15 @@ htmlSplit := .never
 file := some "Smallstep"
 %%%
 
-:::dev
-mwhicks1: This chapter adapts Smallstep to follow Slang, the initial part
+:::dev "Michael Hicks (mwhicks1)"
+This chapter adapts Smallstep to follow Slang, the initial part
 of Imp, on just Aexp and Bexp (without variables). This means that parts
 of this chapter had to adjust: Concurrent Imp is dropped in favor of Nondeterministic
 Aexp, and the stack machine is simplified to just Aexps without variables.
 :::
 
-:::dev
-SOONER: In this and later chapters, we are not very consistent about
+:::dev BeforeNextRelease
+In this and later chapters, we are not very consistent about
    presenting computation rules first and congruence rules after...
 :::
 
@@ -340,6 +340,10 @@ To what does the following term step?
 (E) None of the above
 ::::
 
+:::quizSolution
+(B) `.p (.c 3) (.p (.c 1) (.c 2))`
+:::
+
 ::::quiz
 What about this one?
 
@@ -351,6 +355,10 @@ What about this one?
 (B) `.p (.c 0) (.c 1)`
 (C) None of the above
 ::::
+
+:::quizSolution
+(C) None of the above
+:::
 
 ```lean
 end SimpleArith1
@@ -374,8 +382,8 @@ by two elements of `X` -- i.e., a proposition about pairs of elements of
 The step relation `⟶` is an example of a relation on `Tm`.
 :::
 
-:::dev
-mwhicks1: SOONER: Should we be getting this (and `Deterministic`, `Multi`, etc.
+:::dev "Michael Hicks (mwhicks1)" BeforeNextRelease
+Should we be getting this (and `Deterministic`, `Multi`, etc.
    if appropriate) from the Lean standard library? If not, should we match the
    concepts in CSLib, if they exists there?
 :::
@@ -438,8 +446,8 @@ theorem step_deterministic : Deterministic SimpleArith1.Step := by
 end SimpleArith2
 ```
 
-:::dev
-mwhicks1: In the Rocq there is the development of a special tactic to make this proof simpler.
+:::dev "Michael Hicks (mwhicks1)"
+In the Rocq there is the development of a special tactic to make this proof simpler.
 Do we want that here?
 :::
 
@@ -572,10 +580,7 @@ theorem step_deterministic : Deterministic Step := by
         | plusRight _ _ _ hv2 hs2 => rw [ih _ hs2]
 ```
 
-:::grade
-```
-GRADE_THEOREM 3: step_deterministic
-```
+:::gradeTheorem 3 "step_deterministic"
 :::
 :::::
 
@@ -709,7 +714,7 @@ the following term reduce in zero or more steps?
 .p (.p (.c 1) (.c 2)) (.c 3)
 ```
 
-:::instructors
+:::quizSolution
 ```
 Three:  `.p (.p (.c 1) (.c 2)) (.c 3)` itself is a value;
 `.p (.c 3) (.c 3)` is a value; `.c 6` is a value.
@@ -736,7 +741,7 @@ To how many different terms does the following term `Step` (in one step)?
 .p (.p (.c 1) (.c 2)) (.p (.c 3) (.c 4))
 ```
 
-:::instructors
+:::quizSolution
 ```
 Two: `.p (.c 3) (.p (.c 3) (.c 4))` via `plusLeft` and
 `.p (.p (.c 1) (.c 2)) (.c 7)` via `plusRight`.
@@ -786,7 +791,7 @@ step (in exactly one step)?
 .p (.c 1) (.c 3)
 ```
 
-:::instructors
+:::quizSolution
 ```
 Three: `plus` yields `.c 4`; `plusLeft` with `funny` yields
 `.p (.p (.c 1) (.c 0)) (.c 3)`; `plusRight` with `funny` yields
@@ -835,7 +840,7 @@ one step)?
 .p (.c 1) (.p (.c 1) (.c 2))
 ```
 
-:::instructors
+:::quizSolution
 none!
 :::
 ::::
@@ -856,8 +861,6 @@ theorem value_not_same_as_normal_form :
 end Temp3
 ```
 :::::
-
-TODO: Missing "Additional Exercises" here from old/orig-plf-files/Smallstep.v
 
 # Multi-Step Reduction
 
@@ -947,6 +950,10 @@ Which of the following relations on numbers _cannot_ be expressed as
 (D) none of the above
 ::::
 
+:::quizSolution
+(B) strictly less than
+:::
+
 ## Examples
 
 ```lean
@@ -1007,8 +1014,8 @@ as "`t'` is _the_ normal form of `t`."
 When `R` is deterministic (as for our language's semantics), then its normal form is _unique_.
 :::
 
-:::dev
-LATER: YOTAM: The proof can be given for the general case, i.e. that
+:::dev PotentialImprovement
+YOTAM: The proof can be given for the general case, i.e. that
    determinism of a relation implies the determinism of its `IsNormalFormOf`
    induced counterpart.  BCP 23: That would be a nice improvement.
 :::
@@ -1111,8 +1118,8 @@ theorem step_normalizing : Normalizing Step := by
 
 ## Equivalence of Big-Step and Small-Step
 
-:::dev
-LATER: We could really use more informal proofs in this section, at least
+:::dev PotentialImprovement
+We could really use more informal proofs in this section, at least
    in the solutions!
 :::
 
@@ -1248,8 +1255,8 @@ theorem eval_of_multistep (t t' : Tm) (h : IsNormalFormOf Step t t') :
 ```
 :::::
 
-:::dev
-LATER: MRC: I would have thought this is how to state and prove the theorem:
+:::dev "Michael Clarkson (clarksmr)" PotentialImprovement
+I would have thought this is how to state and prove the theorem:
 
 ```
 theorem eval_of_multistep' (t : Tm) (n : Nat) (h : t ⟶* .c n) : t ⇓ n
@@ -1355,7 +1362,7 @@ Warn students about the notational confusion with the rules plus, etc.
 
 ```lean
 inductive AStep : Aexp → Aexp → Prop where
-  | plusLeft (a1 a1' a2 : Aexp) (h : AStep a1 a1') :  AStep (.plus a1 a2) (.plus a1' a2)
+  | plusLeft (a1 a1' a2 : Aexp) (h : AStep a1 a1') : AStep (.plus a1 a2) (.plus a1' a2)
   | plusRight (v1 a2 a2' : Aexp) (hv : IsAValue v1) (h : AStep a2 a2') :
       AStep (.plus v1 a2) (.plus v1 a2')
   | plus (n1 n2 : Nat) :  AStep (.plus (.num n1) (.num n2)) (.num (n1 + n2))
@@ -1518,10 +1525,8 @@ expressions satisfy?  (Yes or No for each.)
   - values and normal forms coincide (i.e., there are no "stuck" terms)
   - the step relation is normalizing (i.e., evaluation always terminates)
 
-:::instructors
-Yes to all four.  In particular, unlike the full Imp language whose
-   commands include `while` and so can loop, expression evaluation always
-   terminates, so `⟶a` (and `⟶b`) are normalizing.
+:::quizSolution
+Yes to all four.  Expression evaluation always terminates, so `⟶a` (and `⟶b`) are normalizing.
 :::
 ::::
 
@@ -1755,7 +1760,7 @@ theorem stack_step_deterministic : Deterministic StackStep := by
   cases h1 <;> cases h2 <;> rfl
 ```
 
-:::::exercise (rating := 3) (name := "compiler_is_correct")
+:::::exercise (rating := 3) (name := "compiler_is_correct") (level := Advanced)
 Prove the compiler correct: running the compiled program from the empty stack
 reduces, in some number of steps, to a stack holding exactly the value of the
 expression.
