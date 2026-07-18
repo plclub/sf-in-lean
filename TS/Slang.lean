@@ -18,10 +18,6 @@ open SFLMeta
 
 open InlineLean hiding lean
 
--- Claude-generated: this chapter is the first ("expressions") part of the Imp
--- material, extracted from `HL/Imp.lean` and placed in its own `Slang` namespace
--- as a shared foundation for the Type Systems (and, later, Hoare Logic) volumes.
-
 #doc (Manual) "Slang: Arithmetic and Boolean Expressions" =>
 %%%
 tag := "Slang"
@@ -30,32 +26,24 @@ file := some "Slang"
 %%%
 
 ::::full
-Before studying a full imperative language, we look at its simplest
-ingredient: _expressions_.  This short chapter defines the abstract syntax of
-arithmetic and boolean expressions, gives them meaning in two complementary
-styles -- as recursive _functions_ and as _inductive relations_ -- and proves
-that the two agree.
-
-These ideas -- inductive syntax, evaluation, inference-rule notation, and the
-choice between computational and relational definitions -- are the foundation
-that later chapters build on, from small-step semantics and type systems to
-the imperative commands of Imp.
+We begin our study of type systems for programming languages by looking at a language
+we call *Slang* (_simple language_). Despite its simplicity, Slang
+lets us introduce key concepts for specifying the _syntax_ and _semantics_ of
+programming languages, and show how those concepts are realized in Lean.
 ::::
 
 # Arithmetic and Boolean Expressions
 
-:::dev
-SOONER: At this point, I usually take some of the lecture time to
+:::instructors
+At this point, I usually take some of the lecture time to
    give a high-level picture of the structure of an interpreter, the
    processes of lexing and parsing, the notion of ASTs, etc.  Might be
    nice to work some of those ideas into the notes. - BCP
 :::
 
 ::::full
-We'll present Imp in three parts: first a core language of _arithmetic
-and boolean expressions_, then an extension of these with _variables_,
-and finally a language of _commands_ including assignment, conditionals,
-sequencing, and loops.
+Slang is a simple core language of _arithmetic and boolean expressions_
+sufficient to express simple computations and logical predicates.
 ::::
 
 ## Syntax
@@ -91,7 +79,13 @@ inductive Bexp where
 ```
 
 :::dev
-  SOONER: mwhicks1: Will we develop `ImpParser`? Mentioned below as an optional chapter
+  SOONER: mwhicks1: Will we develop `ImpParser`? Previously, the text
+  below said "The optional chapter `ImpParser` develops a simple lexical analyzer and
+  parser that can perform this translation.  You do not need to understand
+  that chapter to understand this one, but if you haven't already taken a
+  course where these techniques are covered (e.g., a course on compilers)
+  you may want to skim it." I removed this because now this chapter is not
+  about Imp but about a much simpler language, and also it lives in TS not HL.
 :::
 
 ::::full
@@ -100,28 +94,22 @@ syntax that a programmer would actually write to these abstract syntax
 trees -- the process that, for example, would translate the string
 `"1 + 2 * 3"` to the AST `.plus (.num 1) (.mult (.num 2) (.num 3))`.
 
-The optional chapter `ImpParser` develops a simple lexical analyzer and
-parser that can perform this translation.  You do not need to understand
-that chapter to understand this one, but if you haven't already taken a
-course where these techniques are covered (e.g., a course on compilers)
-you may want to skim it.
-
 For comparison, here's a conventional BNF (Backus-Naur Form) grammar
 defining the same abstract syntax:
 
 ```
-a := nat
-    | a + a
-    | a - a
-    | a * a
+  a := nat
+      | a + a
+      | a − a
+      | a × a
 
-b := bool
-    | a = a
-    | a <> a
-    | a <= a
-    | a > a
-    | ~ b
-    | b && b
+  b := bool
+      | a = a
+      | a ≠ a
+      | a ≤ a
+      | a > a
+      | ¬ b
+      | b ∧ b
 ```
 
 Compared to the Lean version above...
@@ -218,10 +206,9 @@ Aexp.eval (.plus (.num 3) (.minus (.num 4) (.num 1)))
 ## Optimization
 
 ::::full
-We haven't done much yet, but we can already get some mileage
-out of the definitions. Suppose we define a function that takes an
-arithmetic expression and slightly simplifies it, changing every
-occurrence of `0 + e` (i.e., `.plus (.num 0) e`) into just `e`.
+We can now get some mileage out of these definitions. Suppose we define a
+function that takes an arithmetic expression and slightly simplifies it, changing
+every occurrence of `0 + e` (i.e., `.plus (.num 0) e`) into just `e`.
 ::::
 
 ```lean
@@ -319,8 +306,6 @@ theorem optimize0plus_sound' (a : Aexp) :
     simp_all [Aexp.optimize0plus]
 ```
 
-# Optimizing Booleans
-
 :::::exercise (rating := 3) (name := "optimize0plusB_sound")
 Since the {name}`Aexp.optimize0plus` transformation doesn't change the value of an
 `Aexp`, we should be able to apply it to all the `Aexp`s that appear in a
@@ -395,8 +380,7 @@ We have presented {name}`Aexp.eval` and {name}`Bexp.eval` as functions defined b
 recursion. Another way to think about evaluation -- one that is often
 more flexible -- is as a _relation_ between expressions and their
 values. This perspective leads to inductive definitions like the
-following. We name the hypotheses in each case (`h1`, `h2`); this
-gives us readable names to refer to during proofs.
+following.
 ::::
 
 ```lean
@@ -410,33 +394,45 @@ inductive Aexp.EvalR : Aexp → Nat → Prop where
       EvalR (.mult a1 a2) (n1 * n2)
 ```
 
-::::full
-A small notational aside. We could instead have presented this relation
-with *positional* hypotheses -- no names for the premises:
+We could instead have presented this relation with *positional* hypotheses --
+no names for the premises.
 
-```
+```lean
+namespace ArithUnnamed
+
 inductive Aexp.EvalR : Aexp → Nat → Prop where
   | num (n : Nat) : EvalR (.num n) n
   | plus (e1 e2 : Aexp) (n1 n2 : Nat) : EvalR e1 n1 → EvalR e2 n2 → EvalR (.plus e1 e2) (n1 + n2)
   | minus (e1 e2 : Aexp) (n1 n2 : Nat) : EvalR e1 n1 → EvalR e2 n2 → EvalR (.minus e1 e2) (n1 - n2)
   | mult (e1 e2 : Aexp) (n1 n2 : Nat) : EvalR e1 n1 → EvalR e2 n2 → EvalR (.mult e1 e2) (n1 * n2)
+
+end ArithUnnamed
 ```
 
-The version above instead gives explicit names to the hypotheses in each
-case (the `h1`/`h2`). Naming the hypotheses gives us more control over the
-names chosen during proofs involving the relation, at the cost of making
-the definition a little more verbose. We adopt the named style.
+::::full
+The version above makes the rules somewhat easier to read, but gives less control over naming
+the hypotheses during proofs involving the relation. For this reason we adopt the named style.
 ::::
 
-It will be convenient to have an infix notation for {name}`Aexp.EvalR`.  We'll
+It will be convenient to have an infix notation for {name}`Aexp.EvalR`. We'll
 write `e ⇓ n` to mean that arithmetic expression `e` evaluates to
-value `n`.  (We scope the notation to this namespace so it doesn't
-collide with other evaluation relations later.)  In Lean the notation is
-declared right after the inductive.
+value `n`.
 
 ```lean
 scoped notation:55 e:56 " ⇓ " n:56 => Aexp.EvalR e n
 ```
+
+::::full
+In Lean the `notation` is declared right after the inductive.
+The `scoped` keyword allows us to scope the notation to the present namespace so it doesn't
+collide with other evaluation relations later.
+::::
+
+:::dev
+SOONER: mwhicks1: The Rocq version here says "As we saw in our case study of regular expressions
+in chapter IndProp, Rocq provides a way to use this notation in the definition of aevalR itself."
+It then re-shows the definition with Downarrow. We need to resolve how we want to do this.
+:::
 
 ## Inference Rule Notation
 
@@ -444,13 +440,13 @@ scoped notation:55 e:56 " ⇓ " n:56 => Aexp.EvalR e n
 In informal discussions, it is convenient to write the rules for
 {name}`Aexp.EvalR` and similar relations in the more readable graphical form of
 _inference rules_, where the premises above the line justify the
-conclusion below the line.  For example, the constructor `plus`
+conclusion below the line. For example, the constructor `plus`
 can be written like this as an inference rule:
 
 ```
-                          e1 ⇓ n1
-                          e2 ⇓ n2
-                    --------------------          (plus)
+                         e1 ⇓ n1
+                         e2 ⇓ n2
+                    ------------------          (plus)
                     plus e1 e2 ⇓ n1+n2
 ```
 
@@ -485,22 +481,22 @@ collection of rules defines `⇓` as the smallest relation closed under
 them:
 
 ```
-                        -----------                (num)
+                        ---------                (num)
                         num n ⇓ n
 
-                          e1 ⇓ n1
-                          e2 ⇓ n2
-                    --------------------           (plus)
+                         e1 ⇓ n1
+                         e2 ⇓ n2
+                    ------------------           (plus)
                     plus e1 e2 ⇓ n1+n2
 
-                          e1 ⇓ n1
-                          e2 ⇓ n2
-                   ---------------------           (minus)
+                         e1 ⇓ n1
+                         e2 ⇓ n2
+                   -------------------           (minus)
                    minus e1 e2 ⇓ n1-n2
 
-                          e1 ⇓ n1
-                          e2 ⇓ n2
-                    --------------------           (mult)
+                         e1 ⇓ n1
+                         e2 ⇓ n2
+                    ------------------           (mult)
                     mult e1 e2 ⇓ n1*n2
 ```
 ::::
@@ -529,7 +525,6 @@ Which rules are needed to prove the following?
 ::::
 
 ::::hide
-````
 -- QUIZ
 /-
   Which rules are needed to prove the following?
@@ -545,16 +540,15 @@ Which rules are needed to prove the following?
   (E) `num`, `minus`, and `plus`
 -/
 -- /QUIZ
-````
 ::::
 
 :::dev
-mwhicks1: Not sure if we need ⇓b, or whether we can define
+SOONER: mwhicks1: Not sure if we need ⇓b, or whether we can define
 ⇓ overloaded. Don't understand Lean notation yet!
 :::
 
 :::dev
-chenson2018: About `Bexp.eval` below: We should discuss a way to recall definitions without
+SOONER: chenson2018: About `Bexp.eval` below: We should discuss a way to recall definitions without
 having to write them out manually like this. I think a simple `#print` may work as an
 alternative, assuming there are no namespace issues..
 :::
@@ -582,36 +576,36 @@ Write out a corresponding definition of boolean evaluation as a relation
 Answer (`⇓b` is defined below):
 
 ```
-                        -------------              (bool)
+                        -----------              (bool)
                         bool b ⇓b b
 
-                          e1 ⇓ n1
-                          e2 ⇓ n2
-                   -------------------------        (eq)
+                        e1 ⇓ n1
+                        e2 ⇓ n2
+                   ----------------------        (eq)
                    eq e1 e2 ⇓b (n1 =? n2)
 
-                          e1 ⇓ n1
-                          e2 ⇓ n2
-                 -------------------------------    (neq)
+                        e1 ⇓ n1
+                        e2 ⇓ n2
+                 ----------------------------    (neq)
                  neq e1 e2 ⇓b negb (n1 =? n2)
 
-                          e1 ⇓ n1
-                          e2 ⇓ n2
-                   --------------------------       (le)
+                        e1 ⇓ n1
+                        e2 ⇓ n2
+                   -----------------------       (le)
                    le e1 e2 ⇓b (n1 <=? n2)
 
-                          e1 ⇓ n1
-                          e2 ⇓ n2
-                -------------------------------     (gt)
+                        e1 ⇓ n1
+                        e2 ⇓ n2
+                ----------------------------     (gt)
                 gt e1 e2 ⇓b negb (n1 <=? n2)
 
-                           e ⇓b b
-                      ------------------            (not)
+                          e ⇓b b
+                      ---------------            (not)
                       not e ⇓b negb b
 
-                          e1 ⇓b b1
-                          e2 ⇓b b2
-                  --------------------------        (and)
+                        e1 ⇓b b1
+                        e2 ⇓b b2
+                  -----------------------        (and)
                   and e1 e2 ⇓b andb b1 b2
 ```
 ````
@@ -652,7 +646,7 @@ We can make the proof quite a bit shorter using more automation like we did in
 the previous section.
 
 :::dev
-mwhicks1: the `workinclass!` marker should signal this  live in-class exercise.
+SOONER: mwhicks1: the `workinclass!` marker should signal this live in-class exercise.
 But it is not rendering properly on the HTML. In fact it replaces `workinclass!` with
 the `all_goals` tactic, which we don't need.
 :::
@@ -719,7 +713,7 @@ end Slang
 ::::full
 For the definitions of evaluation for arithmetic and boolean
 expressions, the choice of whether to use functional or relational
-definitions is mainly a matter of taste. However, there are many
+definitions is mainly a matter of taste. However, there are
 situations where relational definitions work much better than
 functional ones.
 ::::
@@ -745,8 +739,9 @@ inductive Aexp where
 ```
 
 Extending the definition of `Aexp.eval` to handle this new operation would
-not be straightforward (what should we return as the result of
-`.div (.num 5) (.num 0)`?). But extending the relation is easy.
+not be straightforward due to division being a _partial_ operation; i.e.,
+what should we return as the result of `.div (.num 5) (.num 0)`?
+Partiality is no problem for the relational definition.
 
 :::terse
 What should `Aexp.eval` return for `.div (.num 1) (.num 0)`??
@@ -766,8 +761,8 @@ inductive Aexp.EvalR : Aexp → Nat → Prop where
       EvalR (.div a1 a2) n3
 ```
 
-Notice that this evaluation relation corresponds to a _partial_
-function: there are some inputs for which it does not specify an output.
+Notice that there are some inputs (those with a divisor of 0) for which this relation
+does not specify an output.
 
 ```lean
 end Slang.AevalRDivision
@@ -779,9 +774,9 @@ namespace Slang.AevalRExtended
 Another example: a _nondeterministic_ number generator:
 :::
 
-Or suppose that we want to extend the arithmetic operations by a
+As another example, suppose that we want to extend the arithmetic operations by a
 nondeterministic number generator `any` that, when evaluated, may
-yield any number.  (This is not the same as making a _probabilistic_
+yield any number. (This is not the same as making a _probabilistic_
 choice among all numbers -- we only say which results are _possible_.)
 
 ```lean
@@ -816,7 +811,7 @@ end Slang.AevalRExtended
 ```
 
 :::dev
-mwhicks1: The following text seems not quite right to me. First, you can
+SOONER: mwhicks1: The following text seems not quite right to me. First, you can
 use options for partial functions, and that's very natural to do in Lean
 as a monad. Second, and related, monadic functions need not even be
 terminating if the implement the `CCPO` typeclass and are labeled as
