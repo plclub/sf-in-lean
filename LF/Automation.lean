@@ -204,8 +204,8 @@ example : ∀ n, silly n → n ≠ 1 := by
   . lia
 ```
 
-:::dev
-TODO (@dsainati1): replace `cases` with `inversion` when its issue is fixed
+:::dev "Daniel Sainati (@dsainati1)"
+Replace `cases` with `inversion` when its issue is fixed
 :::
 
 ::::full
@@ -243,8 +243,8 @@ Note that `try lia <;> try rw [...] <;> lia` _doesn't_ work, because
 the first time that `try` catches a failure in a `<;>` sequence, the whole
 sequence will stop executing.
 
-:::dev
-RAB: Use @berberman's infrastructure for expected failure here.
+:::dev "Roger Burtonpatel (@rogerburtonpatel)"
+Use @berberman's infrastructure for expected failure here.
 :::
 ```lean
 /--
@@ -401,12 +401,15 @@ This leaves us with the goal `10 ∈ []`, which is of course false.
 With `first`, we can solve the earlier issue with `try` where it would stop executing
 the sequence on the first failure.
 
+:::dev "Daniel Sainati (@dsainati1)"
+Autoformat this later
+:::
+
 ```lean
 theorem Perm3_In_better_with_first (α : Type) (x : α) (l₁ l₂ : List α) :
     Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
   intros hPerm hIn
   induction hPerm <;>
-  -- TODO autoformat
   first
   | rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
   | lia
@@ -418,34 +421,34 @@ Our `Perm3_In` example is getting quite short! But can we do better?
 
 ::::full
 The `simp` tactic is Lean's _simplifier_, and it is one of the most powerful
-tools in the language. Given a set of lemmas- some built-in, some user-provided-
+tools in the language. Given a set of lemmas -- some built-in, some user-provided --
 `simp` attempts to reduce a goal or hypothesis by rewriting with those lemmas
 as much as possible.
 
-Indeed, these _simplification lemmas_ , or _`simp` lemmas_ as they're called
-by Lean programmers, are exactly the ones we wrote in the `Basics`
-and `Induction` chapters!
+Indeed, the characterizing lemmas we've been writing for
+our definitions all throughout this book are examples
+of these _simplification lemmas_, or
+_`simp` lemmas_ as they're called by Lean programmers.
 ::::
 
 ::::terse
-The lemmas we introduced the Basics chapter for rewriting are
+The lemmas we've been using for rewriting are
 the same ones we'll give to `simp` for it to automatically
 solve goals involving those theorems.
 ::::
+
 ```lean
 namespace simp_lemmas_example
-@[irreducible]
 def add (n : Nat) (m : Nat) : Nat :=
   match m with
   | .zero => n
   | .succ m' => .succ (add n m')
 
-unseal add in
 theorem add_zero : ∀ n : Nat, add n .zero = n := by
   intro n
   rfl
-/- `add_zero` and `add_succ` are the `simp` lemmas for `add`. ↕ -/
-unseal add in
+
+/- `add_zero` and `add_succ` are the `simp` lemmas for `add`. -/
 theorem add_succ : ∀ n m : Nat, add n (.succ m) = .succ (add n m) := by
   intro n m
   rfl
@@ -460,6 +463,9 @@ attribute [simp] simp_lemmas_example.add_zero simp_lemmas_example.add_succ
 
 then `simp` will add them to the list of rules it considers when simplifying a term.
 
+Instead of manually rewriting by the characterizing lemmas in the example below,
+`simp` does it automatically.
+
 ```lean
 open simp_lemmas_example in
 theorem add_succ_nested : ∀ n m : Nat,
@@ -467,6 +473,7 @@ theorem add_succ_nested : ∀ n m : Nat,
   intro n m
   simp
 ```
+
 ::::full
 If you know what theorems you want `simp` to use for your goal proof, you can write
 `simp [<theorems>]`. If you want `simp` to _only_ use those,
@@ -518,6 +525,45 @@ theorem Perm3_In_shortest (α : Type) (x : α) (l₁ l₂ : List α) :
   | lia
 ```
 
+::::full
+Like `apply` and `rw`, there's also a version of `simp` that can simplify in
+hypotheses, rather than the goal. The `simp [<lemmas>] at h` tactic
+runs the simplifier with at hypothesis `h`.
+::::
+
+::::terse
+The `simp ... at ...` tactic simplifies in a hypothesis.
+::::
+
+```lean
+example : ∀ α x (l₁ l₂ l₃ : List α),
+  x ∈ l₁ ++ l₂ →
+  x ∈ l₂ ++ l₃ ->
+  x ∈ l₁ ++  l₃ ∨ x ∈ l₂ := by
+  intro α x l₁ l₂ l₃ h₁ h₂
+
+  simp at h₁; simp at h₂; simp; lia
+```
+
+::::full
+If we just want to simplify everywhere, we can use the `simp_all` tactic, which
+simplifies in all hypotheses and in the goal at the same time. Rewriting the
+example above:
+::::
+
+::::terse
+The `simp_all ...` tactic simplifies in all hypotheses and the goal.
+::::
+
+```lean
+example : ∀ α x (l₁ l₂ l₃ : List α),
+  x ∈ l₁ ++ l₂ →
+  x ∈ l₂ ++ l₃ ->
+  x ∈ l₁ ++  l₃ ∨ x ∈ l₂ := by
+  intro α x l₁ l₂ l₃ h₁ h₂
+
+  simp_all; lia
+```
 
 # The `trivial` tactic
 
@@ -648,8 +694,8 @@ inductive ExpMatch {α : Type} : List α → RegExp α → Prop where
 infix:40 " =~ " => ExpMatch
 ```
 
-:::dev
-TODO (@dsainati1) - replace with quiz directive
+:::dev "Daniel Sainati (@dsainati1)"
+replace with quiz directive
 :::
 ::::full
 Notice that this clause in our informal definition...
@@ -770,8 +816,8 @@ Something more interesting:
 ::::
 
 
-:::dev
-TODO: (@dsainati1) - how to make this a WORKINCLASS in verso?
+:::dev "Daniel Sainati (@dsainati1)"
+How to make this a WORKINCLASS in verso?
 :::
 ```lean
 theorem MStar1 α s (re : RegExp α) :
@@ -911,8 +957,8 @@ def reChars {α : Type} (re : RegExp α) : List α :=
 
 Now, the main theorem:
 
-:::dev
-TODO (@dsainati1) : This should be a workinclass
+:::dev "Daniel Sainati (@dsainati1)"
+This should be a workinclass
 :::
 
 ```lean
@@ -1462,8 +1508,8 @@ theorem weak_pumping {α : Type} {re : RegExp α} {s : List α}
 
 ## The (Strong) Pumping Lemma
 
-:::dev
-TODO (DHS): If this exercise is going to be optional we should still fill in the
+:::dev "Daniel Sainati (@dsainati1)"
+If this exercise is going to be optional we should still fill in the
 solution but it's lower priority.
 :::
 
