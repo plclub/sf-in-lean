@@ -221,6 +221,15 @@ Two complementary automated checks help here (both take
   NB: `WORKINCLASS` is *not* in this category — it is translated to the
   `workinclass!` tactic (proof shown in student/solutions builds, `sorry` in
   the terse build).
+* `OPEN COMMENT WHEN HIDING SOLUTIONS` / `CLOSE COMMENT WHEN HIDING SOLUTIONS`
+  (with their preceding empty `ADMITTED` region) wrap a *suggested proof* the
+  student is invited to uncomment and adapt. `to_verso` translates the whole
+  idiom to the `suggested!` tactic (`SFLMeta/Exercise.lean`): the proof is
+  elaborated and shown live in the teacher/terse builds, but in the student
+  build the goal is closed with `sorry` and the proof is preserved *commented
+  out* (rather than replaced by a bare `sorry` as `solution!` would). The
+  `OPEN`/`CLOSE` keywords map to `suggested!` in `check_verso_markers.py`'s
+  `_POLICY`.
 
 **Must be preserved** (these were bugs, now fixed): block-style author/dev
 notes (`/- MWH: … -/`, `/- BCP: … -/`, `/- NDS'25: … -/`, `/- NOTATION: … -/`,

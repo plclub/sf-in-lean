@@ -103,6 +103,13 @@ _POLICY = [
     # Left as Lean comments inside the code block; the code itself is preserved.
     ("ADMITTED",             None),
     ("ADMITDEF",             None),
+    # `OPEN`/`CLOSE COMMENT WHEN HIDING SOLUTIONS` wraps a suggested proof that
+    # (with its preceding empty ADMITTED region) becomes a `suggested!` tactic
+    # block: the proof is shown live in the teacher/terse builds and kept as a
+    # comment in the student build.  One `suggested!` is emitted per open/close
+    # pair, so both keywords expect the same construct.
+    ("OPEN",                 r"suggested!"),
+    ("CLOSE",                r"suggested!"),
 ]
 
 # Author / developer notes -> :::dev directives.  Matched separately because

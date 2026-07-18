@@ -2342,7 +2342,7 @@ def _convert_solution_markers(src: str) -> str:
         <tactics>
         -- /ADMITTED
 
-      <inside `by`>           ->   solution!
+      <inside `by`>           ->   suggested!
         -- ADMITTED                   <suggested proof, reindented>
         -- /ADMITTED
         /- OPEN COMMENT WHEN HIDING SOLUTIONS -/
@@ -2438,8 +2438,12 @@ def _convert_solution_markers(src: str) -> str:
             # An *empty* region followed by an `OPEN COMMENT WHEN HIDING
             # SOLUTIONS` … `CLOSE COMMENT …` wrapper (the source idiom for
             # "students see the suggested proof as a comment", cf. the
-            # NoStutter examples in IndProp) takes the wrapped suggested
-            # proof as its `solution!` body.
+            # NoStutter examples in IndProp) takes the wrapped suggested proof
+            # as its body and emits the `suggested!` marker instead of
+            # `solution!`: the teacher/terse builds show the live proof, but the
+            # student build keeps it commented out rather than replacing it with
+            # a bare `sorry`.
+            marker = 'solution!'
             if not any(b.strip() for b in body):
                 k = resume
                 while k < n and not lines[k].strip():
@@ -2452,15 +2456,16 @@ def _convert_solution_markers(src: str) -> str:
                     if k < n:
                         body = wrapped
                         resume = k + 1
-            # `solution!` must align with the proof body (which sits inside the
-            # `by`), not with the `-- ADMITTED` marker — the marker is often at
-            # column 0 while the tactics are indented, and a column-0 `solution!`
+                        marker = 'suggested!'
+            # The marker must align with the proof body (which sits inside the
+            # `by`), not with the `-- ADMITTED` marker — the latter is often at
+            # column 0 while the tactics are indented, and a column-0 marker
             # would be read as a new command after an empty `by` block.
             first_body = next((b for b in body if b.strip()), '')
             indent = _indent_of(first_body) if first_body else _indent_of(line)
-            out.append(indent + 'solution!')
+            out.append(indent + marker)
             for bl in body:
-                # tacticSeqIndentGt: body must sit deeper than `solution!`.
+                # tacticSeqIndentGt: body must sit deeper than the marker.
                 out.append(('  ' + bl) if bl.strip() else bl)
             out.extend(trailing)
             i = resume
