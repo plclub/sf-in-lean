@@ -831,7 +831,7 @@ result.
 Define a function that takes a day and returns true if the day is
 a weekend, and false otherwise.
 Then, fill in right-hand sides of the `example` blocks below.
-If you've do both correctly, the blocks will produce no errors
+If you've done both correctly, the blocks will produce no errors
 and contain no `sorry`.
 
 You may wonder what the `@[irreducible]`, `seal` and `unseal`,
