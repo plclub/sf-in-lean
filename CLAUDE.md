@@ -138,9 +138,10 @@ for integers, quoted for fractions like `"0.5"`); other `GRADE_` specs
 (`GRADE_MANUAL`) keep the older `:::grade` body form. It renders nothing for now
 but records `(points, name)` for later autograding (`SFLMeta/Grade.lean`).
 `:::quizSolution` is the uniform quiz-answer block (superseding the old
-quiz-answer conventions `:::answer` and a bare-`(X)` `:::instructors`): it is
-*shown in every build* — a click-to-reveal disclosure in HTML, a labelled
-comment in the generated `.lean` files (`SFLMeta/Quiz.lean`, saver case in
+quiz-answer conventions `:::answer` and a bare-`(X)` `:::instructors`): in the
+HTML book it renders as a click-to-reveal disclosure button, and it is *elided
+from every generated `.lean` build product* (kept through traversal for the HTML
+rendering; the saver emits nothing — `SFLMeta/Quiz.lean`, saver case in
 `SFLMeta/Save.lean`). `to_verso` emits it for a `-- HIDE` inside a `-- QUIZ` and
 for a bare `(A)`…`(E)` instructor answer.
 
@@ -219,7 +220,7 @@ Two complementary automated checks help here (both take
   also means neither verifies the marker is actually *gone* from the output.
   NB: `WORKINCLASS` is *not* in this category — it is translated to the
   `workinclass!` tactic (proof shown in student/solutions builds, `sorry` in
-  the terse build); see `workinclass.md` for the design and edge cases.
+  the terse build).
 
 **Must be preserved** (these were bugs, now fixed): block-style author/dev
 notes (`/- MWH: … -/`, `/- BCP: … -/`, `/- NDS'25: … -/`, `/- NOTATION: … -/`,

@@ -749,11 +749,10 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
       buf := walkBlocks width file contents buf
       return buf
     if name == ``Block.quizSolution then
-      -- A quiz answer, shown in every build: emit a label and the answer body
-      -- as comments (the body is usually a plain code block, so `walkBlocks`
-      -- renders it commented).
-      let mut buf := appendBoth buf file (asModuleDoc "_Quiz solution:_")
-      buf := walkBlocks width file contents buf
+      -- A quiz answer is elided from every generated `.lean` build product — it
+      -- surfaces only in the HTML book, as a click-to-reveal button.  (The block
+      -- is still kept through traversal for that HTML rendering; the saver just
+      -- emits nothing.)
       return buf
     if name == ``Block.terse then
       -- Terse content kept in the tree only in terse builds (full builds replace
