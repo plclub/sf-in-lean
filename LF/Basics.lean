@@ -1546,7 +1546,7 @@ Now, let's use `add_succ` in a proof:
 ```lean
 theorem add_one (n : Nat) : n + (succ zero) = succ n + zero := by
   rewrite [add_succ]
-  rewrite [add_zero] /- notice how this handles an addition on both sides -/
+  rewrite [add_zero]
   rewrite [add_zero]
   rfl
 ```
