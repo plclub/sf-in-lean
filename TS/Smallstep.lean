@@ -86,8 +86,7 @@ HIDE: Wonder whether it would be interesting to show them how to make a
 # Big-step and Small-step Evaluation
 
 ::::full
-The evaluators we have seen so far (for the arithmetic and boolean
-expressions of the previous chapter) have been formulated in a "big-step"
+The evaluators we saw for {ref "Slang"}[Slang] were formulated in a "big-step"
 style: they specify how a given expression can be evaluated to its final
 value "all in one big step":
 
@@ -252,9 +251,14 @@ Now, here is the corresponding _small-step_ relation, written `t ⟶ t'`:
 namespace SimpleArith1
 
 inductive Step : Tm → Tm → Prop where
-  | plus (n1 n2 : Nat) : Step (.p (.c n1) (.c n2)) (.c (n1 + n2))
-  | plusLeft (t1 t1' t2 : Tm) (h : Step t1 t1') : Step (.p t1 t2) (.p t1' t2)
-  | plusRight (n1 : Nat) (t2 t2' : Tm) (h : Step t2 t2') : Step (.p (.c n1) t2) (.p (.c n1) t2')
+  | plus (n1 n2 : Nat) :
+      Step (.p (.c n1) (.c n2)) (.c (n1 + n2))
+  | plusLeft (t1 t1' t2 : Tm)
+      (h : Step t1 t1') :
+      Step (.p t1 t2) (.p t1' t2)
+  | plusRight (n1 : Nat) (t2 t2' : Tm)
+      (h : Step t2 t2') :
+      Step (.p (.c n1) t2) (.p (.c n1) t2')
 
 scoped notation:40 t:41 " ⟶ " t':41 => Step t t'
 ```
@@ -371,9 +375,9 @@ The step relation `⟶` is an example of a relation on `Tm`.
 :::
 
 :::dev
-LATER: Should we be getting this (and `Deterministic`, `Multi`, etc.) from
-   the standard library?  Arguably yes, though the naming in the library is
-   awkward in places.
+mwhicks1: SOONER: Should we be getting this (and `Deterministic`, `Multi`, etc.
+   if appropriate) from the Lean standard library? If not, should we match the
+   concepts in CSLib, if they exists there?
 :::
 
 ```lean
@@ -409,9 +413,6 @@ last rule in the given derivation of `x ⟶ y2`.
   - Similarly, it cannot happen that one is `plusLeft` and the other is
     `plusRight`, since this would imply that `x` has the form `p t1 t2` where
     `t1` has both the form `p t11 t12` and the form `c n`.
-
-TODO: Does the sketch above match the actual proof below? Could the proof below
-be changed to match the sketch more closely?
 
 Formally,
 
@@ -511,9 +512,15 @@ Here are the formal rules.
 
 ```lean
 inductive Step : Tm → Tm → Prop where
-  | plus (n1 n2 : Nat) : Step (.p (.c n1) (.c n2)) (.c (n1 + n2))
-  | plusLeft (t1 t1' t2 : Tm) (h : Step t1 t1') : Step (.p t1 t2) (.p t1' t2)
-  | plusRight (v1 t2 t2' : Tm) (hv : IsValue v1) (h : Step t2 t2') : Step (.p v1 t2) (.p v1 t2')
+  | plus (n1 n2 : Nat) :
+      Step (.p (.c n1) (.c n2)) (.c (n1 + n2))
+  | plusLeft (t1 t1' t2 : Tm)
+      (h : Step t1 t1') :
+      Step (.p t1 t2) (.p t1' t2)
+  | plusRight (v1 t2 t2' : Tm)
+      (hv : IsValue v1)
+      (h : Step t2 t2') :
+      Step (.p v1 t2) (.p v1 t2')
 
 notation:40 t:41 " ⟶ " t':41 => Step t t'
 ```
@@ -542,8 +549,6 @@ Most of this proof is the same as the one above.  But to get maximum
 benefit from the exercise you should try to write your formal version from
 scratch and just use the earlier one if you get stuck.  The impossible
 cross-cases now also use the fact that a `IsValue` (a `c n`) cannot step.
-
-TODO: Does the formal proof below match the reasoning of the information discussion above?
 
 ```lean
 theorem step_deterministic : Deterministic Step := by
@@ -602,8 +607,6 @@ _Proof_: By induction on `t`.
 Or, formally:
 ::::
 
-TODO: Does the formal proof below match the reasoning of the informal proof above?
-
 ```lean
 theorem strong_progress (t : Tm) : IsValue t ∨ ∃ t', t ⟶ t' := by
   induction t with
@@ -651,12 +654,6 @@ in at the moment.  We'll re-use the same terminology for talking about
 other relations later in the course.
 ::::
 
-::::quiz
-What is a _value_ in this language?
-
-What is a _normal form_?
-::::
-
 We can use this terminology to generalize the observation we made in the
 strong progress theorem: in this language (though not necessarily, in
 general), normal forms and values are actually the same thing.
@@ -686,7 +683,7 @@ It is not obvious that these concepts should characterize the same set of terms!
 Indeed, we could easily have written the definitions (incorrectly) so that
 they would _not_ coincide.
 
-We might, for example, define `IsValue` so that it includes some terms that
+Suppose, for example, we define `IsValue` so that it includes some terms that
 are not finished reducing.  (Even if you don't work the exercise
 `value_not_same_as_normal_form1` below and the following ones, make sure you
 can think of an example of such a term.)
@@ -860,6 +857,8 @@ end Temp3
 ```
 :::::
 
+TODO: Missing "Additional Exercises" here from old/orig-plf-files/Smallstep.v
+
 # Multi-Step Reduction
 
 ::::full
@@ -878,45 +877,54 @@ follows:
 Since we'll want to reuse the idea of multi-step reduction many times with
 many different single-step relations, let's define the concept generically.
 Given a relation `R` (e.g., the step relation `⟶`), we define a new relation
-`Multi R`, called the _multi-step closure of `R`_, as follows.  (In the
-`Rel` chapter of Logical Foundations and in the standard library this is
-`clos_refl_trans_1n`; we use a shorter name here for readability.)
+`Multi R`, called the _multi-step closure of `R`_, as follows.
 ::::
-
-:::dev
-```
-SOONER: The explanation here might not be good enough for students that are
-   not very familiar with relations.  (Definitely not -- needs more. -BCP)
-```
-:::
 
 ```lean
 inductive Multi {X : Type} (R : Relation X) : X → X → Prop where
   | refl (x : X) : Multi R x x
   | step (x y z : X) (h1 : R x y) (h2 : Multi R y z) : Multi R x z
-
-notation:40 t:41 " ⟶* " t':41 => Multi Step t t'
 ```
 
 ::::full
-The effect of this definition is that `Multi R` relates two elements `x` and
-`y` if `x = y` or there is some nonempty sequence `z1`, `z2`,
-..., `zn` such that `R x z1`, `R z1 z2`, ..., `R zn y`.  Intuitively, if `R`
-describes a single step of computation, then `z1 … zn` are the intermediate
-steps that get us from `x` to `y`.
+The effect of this definition is that `Multi R` relates two elements `x` and `y` if
+- `x = y`, or
+- `R x y`, or
+- there is some nonempty sequence `z₁`, `z₂` , ..., `zₙ` such that
+           `R x₁ z₁`,
+           `R z₁ z₂`,
+           ...,
+           `R zₙ y`.
 
-The relation `Multi R` has several crucial properties.  First, it is
-obviously _reflexive_ (a term can execute to itself by taking zero steps).
+Intuitively, if `R` describes a single-step of computation, then `z₁ ... zₙ` are the intermediate steps of computation that get us from `x` to `y`.
+::::
+
+We write `⟶*` for the `Multi Step` relation on terms
+```lean
+notation:40 t:41 " ⟶* " t':41 => Multi Step t t'
+```
+
+The relation `Multi R` has several crucial properties.
+
+::::full
+First, it is obviously _reflexive_ (a term can execute to itself by taking zero steps).
+
 Second, it _contains_ `R` -- single-step reductions are a particular case of
 multi-step executions.  (It is this fact that justifies the word "closure"
-in "multi-step closure of `R`.")  Third, `Multi R` is _transitive_.
+in "multi-step closure of `R`.")
 ::::
 
 ```lean
 theorem multi_single {X : Type} (R : Relation X) (x y : X) (h : R x y) :
     Multi R x y :=
   .step x y y h (.refl y)
+```
 
+::::full
+Third, `Multi R` is _transitive_.
+::::
+
+```lean
 theorem multi_trans {X : Type} (R : Relation X) (x y z : X)
     (g : Multi R x y) (h : Multi R y z) : Multi R x z := by
   induction g with
@@ -924,8 +932,10 @@ theorem multi_trans {X : Type} (R : Relation X) (x y z : X)
   | step a b c h1 h2 ih => exact .step a b z h1 (ih h)
 ```
 
+::::full
 In particular, for the `Multi Step` relation on terms, if `t1 ⟶* t2` and
    `t2 ⟶* t3`, then `t1 ⟶* t3`.
+::::
 
 ::::quiz
 Which of the following relations on numbers _cannot_ be expressed as
@@ -987,7 +997,9 @@ def IsNormalFormOf {X : Type} (R : Relation X) (t t' : X) : Prop :=
 We have already seen that, for our language, single-step reduction is
 deterministic -- i.e., a given term can take a single step in at most one
 way.  It follows that, if `t` can reach a normal form, then this normal form
-is unique.  In other words, we can actually pronounce `IsNormalFormOf t t'`
+is unique.
+
+In other words, we can actually pronounce `IsNormalFormOf t t'`
 as "`t'` is _the_ normal form of `t`."
 :::
 
@@ -1106,12 +1118,25 @@ LATER: We could really use more informal proofs in this section, at least
 
 Having defined the operational semantics of our tiny programming language in
 two different ways (big-step and small-step), it makes sense to ask whether
-these definitions actually define the same thing!  They do, though it takes
+these definitions actually define the same thing!
+
+They do, though it takes
 a little work to show it.  The details are left as an exercise.  We consider
 the two implications separately.  First, big-step evaluation implies
 multi-step reduction to a value.
 
 :::::exercise (rating := 3) (name := "multistep_of_eval")
+```lean
+theorem multistep_of_eval (t : Tm) (n : Nat) (h : t ⇓ n) : t ⟶* .c n := by
+  solution!
+    induction h with
+    | const n => exact .refl _
+    | plus t1 t2 n1 n2 h1 h2 ih1 ih2 =>
+        apply multi_trans _ _ _ _ (multistep_congr_1 t1 (.c n1) t2 ih1)
+        apply multi_trans _ _ _ _ (multistep_congr_2 (.c n1) t2 (.c n2) (.const n1) ih2)
+        exact multi_single _ _ _ (.plus n1 n2)
+```
+
 The key ideas in the proof can be seen in the following picture:
 
 ```
@@ -1141,17 +1166,6 @@ three phases:
 To formalize this intuition, you'll need the congruence lemmas from above,
 plus some basic properties of `⟶*` (that it is reflexive, transitive, and
 includes `⟶`).
-
-```lean
-theorem multistep_of_eval (t : Tm) (n : Nat) (h : t ⇓ n) : t ⟶* .c n := by
-  solution!
-    induction h with
-    | const n => exact .refl _
-    | plus t1 t2 n1 n2 h1 h2 ih1 ih2 =>
-        apply multi_trans _ _ _ _ (multistep_congr_1 t1 (.c n1) t2 ih1)
-        apply multi_trans _ _ _ _ (multistep_congr_2 (.c n1) t2 (.c n2) (.const n1) ih2)
-        exact multi_single _ _ _ (.plus n1 n2)
-```
 :::::
 
 :::::exercise (rating := 3) (name := "multistep_of_eval_inf")
@@ -1277,415 +1291,11 @@ theorem evalF_eval (t : Tm) (n : Nat) : evalF t = n ↔ t ⇓ n := by
 ```
 :::::
 
-# A Different Toy Language: Booleans
-
-::::full
-Here is another simple language, whose terms are the booleans `tru` and
-`fls` plus a conditional `test`.  It illustrates the same ideas on a
-language with genuine control flow.
-::::
-
-```lean
-namespace Temp4
-
-inductive BTm where
-  | tru
-  | fls
-  | test (t1 t2 t3 : BTm)
-
-inductive IsBValue : BTm → Prop where
-  | tru : IsBValue .tru
-  | fls : IsBValue .fls
-
-inductive BStep : BTm → BTm → Prop where
-  | ifTrue (t1 t2 : BTm) : BStep (.test .tru t1 t2) t1
-  | ifFalse (t1 t2 : BTm) : BStep (.test .fls t1 t2) t2
-  | ifStep (t1 t1' t2 t3 : BTm) (h : BStep t1 t1') :
-      BStep (.test t1 t2 t3) (.test t1' t2 t3)
-
-scoped notation:40 t:41 " ⟶ " t':41 => BStep t t'
-```
-
-:::::exercise (rating := 1) (name := "smallstep_bools")
-Which of the following propositions are provable?  (This is just a thought
-exercise, but for an extra challenge feel free to prove your answers.)
-
-```lean
-def bool_step_prop1 : Prop := BStep .fls .fls
--- SOLUTION
-/- No -- no rule applies. -/
-theorem not_bool_step_prop1 : ¬ bool_step_prop1 := by
-  intro h; cases h
--- END SOLUTION
-
-def bool_step_prop2 : Prop :=
-  BStep (.test .tru (.test .tru .tru .tru) (.test .fls .fls .fls)) .tru
--- SOLUTION
-/- No -- it takes two steps to do that; first it steps to `.test .tru .tru .tru`. -/
-theorem not_bool_step_prop2 : ¬ bool_step_prop2 := by
-  intro h; cases h
--- END SOLUTION
-
-def bool_step_prop3 : Prop :=
-  BStep (.test (.test .tru .tru .tru) (.test .tru .tru .tru) .fls)
-        (.test .tru (.test .tru .tru .tru) .fls)
--- SOLUTION
-/- Yes, using `ifStep` followed by `ifTrue`. -/
-theorem bool_step_prop3_pf : bool_step_prop3 := by
-  apply BStep.ifStep; apply BStep.ifTrue
--- END SOLUTION
-```
-
-:::grade
-```
-GRADE_MANUAL 1: smallstep_bools
-```
-:::
-:::::
-
-:::::exercise (rating := 3) (name := "strong_progress_bool")
-```lean
-theorem strong_progress_bool (t : BTm) : IsBValue t ∨ ∃ t', t ⟶ t' := by
-  solution!
-    induction t with
-    | tru => left; exact .tru
-    | fls => left; exact .fls
-    | test t1 t2 t3 ih1 _ _ =>
-        right
-        cases ih1 with
-        | inl hv =>
-            cases hv with
-            | tru => exact ⟨t2, .ifTrue t2 t3⟩
-            | fls => exact ⟨t3, .ifFalse t2 t3⟩
-        | inr h => obtain ⟨t1', ht1⟩ := h; exact ⟨.test t1' t2 t3, .ifStep t1 t1' t2 t3 ht1⟩
-```
-:::::
-
-:::::exercise (rating := 2) (name := "step_deterministic")
-```lean
-theorem step_deterministic : Deterministic BStep := by
-  solution!
-    intro x y1 y2 h1
-    induction h1 generalizing y2 with
-    | ifTrue t1 t2 =>
-        intro h2; cases h2 with
-        | ifTrue => rfl
-        | ifStep _ _ _ _ hs => cases hs
-    | ifFalse t1 t2 =>
-        intro h2; cases h2 with
-        | ifFalse => rfl
-        | ifStep _ _ _ _ hs => cases hs
-    | ifStep t1 t1' t2 t3 hs ih =>
-        intro h2; cases h2 with
-        | ifTrue => cases hs
-        | ifFalse => cases hs
-        | ifStep _ _ _ _ hs2 => rw [ih _ hs2]
-```
-:::::
-
-```lean
-namespace Temp5
-```
-
-:::::exercise (rating := 2) (name := "smallstep_bool_shortcut")
-Suppose we want to add a "short circuit" to the step relation for boolean
-expressions, so that it can recognize when the `then` and `else` branches of
-a conditional are the same value (either `tru` or `fls`) and reduce the whole
-conditional to this value in a single step, even if the guard has not yet
-been reduced to a value.  For example, we would like this proposition to be
-provable:
-
-```
-.test (.test .tru .tru .tru) .fls .fls ⟶ .fls
-```
-
-Write an extra clause for the step relation that achieves this effect (here,
-`shortCircuit`) and prove `bool_step_prop4`.
-
-```lean
-inductive BStep : BTm → BTm → Prop where
-  | ifTrue (t1 t2 : BTm) : BStep (.test .tru t1 t2) t1
-  | ifFalse (t1 t2 : BTm) : BStep (.test .fls t1 t2) t2
-  | ifStep (t1 t1' t2 t3 : BTm) (h : BStep t1 t1') : BStep (.test t1 t2 t3) (.test t1' t2 t3)
-  -- SOLUTION
-  | shortCircuit (t1 v2 : BTm) (hv : IsBValue v2) : BStep (.test t1 v2 v2) v2
-  -- /SOLUTION
-
-def bool_step_prop4 : Prop :=
-  BStep (.test (.test .tru .tru .tru) .fls .fls) .fls
-
-theorem bool_step_prop4_holds : bool_step_prop4 := by
-  solution!
-    exact .shortCircuit _ _ .fls
-```
-
-:::grade
-```
-GRADE_THEOREM 2: bool_step_prop4_holds
-```
-:::
-:::::
-
-:::::exercise (rating := 3) (name := "properties_of_altered_step")
-After we add the clause `shortCircuit`:
-
-  - Is the `Step` relation still deterministic?  Write yes or no and briefly
-    explain.  (Answer: no.)  Optionally prove your answer.
-  - Does a strong progress theorem hold?  Write yes or no and briefly
-    explain.  (Answer: yes -- we're never _compelled_ to use
-    `shortCircuit`; the same proof script works.)  Optionally prove it.
-  - In general, is there any way we could cause strong progress to fail if
-    we took away one or more constructors from the original step relation?
-    (Answer: yes -- each rule is used in the proof; if any one of them is
-    missing, the proof won't work.)
-
-```lean
--- SOLUTION
-/- A counterexample to determinism: `test (test tru tru tru) tru tru` can step
-   to `test tru tru tru` (via `ifStep`/`ifTrue`) or to `tru` (via
-   `shortCircuit`). -/
-theorem step_nondeterministic : ¬ Deterministic BStep := by
-  intro hd
-  have hs1 : BStep (.test (.test .tru .tru .tru) .tru .tru) (.test .tru .tru .tru) := by
-    apply BStep.ifStep; apply BStep.ifTrue
-  have hs2 : BStep (.test (.test .tru .tru .tru) .tru .tru) .tru :=
-    .shortCircuit _ _ .tru
-  have habsurd : (BTm.test .tru .tru .tru) = .tru := hd _ _ _ hs1 hs2
-  cases habsurd
-
-/- Strong progress still holds -- the same proof works. -/
-theorem strong_progress_bool' (t : BTm) : IsBValue t ∨ ∃ t', BStep t t' := by
-  induction t with
-  | tru => left; exact .tru
-  | fls => left; exact .fls
-  | test t1 t2 t3 ih1 _ _ =>
-      right
-      cases ih1 with
-      | inl hv =>
-          cases hv with
-          | tru => exact ⟨t2, .ifTrue t2 t3⟩
-          | fls => exact ⟨t3, .ifFalse t2 t3⟩
-      | inr h => obtain ⟨t1', ht1⟩ := h; exact ⟨.test t1' t2 t3, .ifStep t1 t1' t2 t3 ht1⟩
--- END SOLUTION
-```
-
-:::grade
-```
-GRADE_MANUAL 3: properties_of_altered_step
-```
-:::
-:::::
-
-```lean
-end Temp5
-end Temp4
-```
-
-# Combining Numbers and Booleans
-
-:::dev
-mwhicks1: I'm not sure that reaching this point through boolean expressions first is a
-bit long winded. Why not jump to this directly?
-:::
-
-We've considered arithmetic and conditional expressions separately.  This
-exercise explores how the two interact.  Earlier, we separately proved for
-both plus- and if-expressions that the step relation was deterministic, and
-a strong progress lemma stating that every term is either a value or can take
-a step.  We now ask whether these two properties still hold for the combined
-language; formally prove or disprove each.
-
-```lean
-namespace Combined
-
-inductive CTm where
-  | c (n : Nat)
-  | p (t1 t2 : CTm)
-  | tru
-  | fls
-  | test (t1 t2 t3 : CTm)
-
-inductive IsCValue : CTm → Prop where
-  | const (n : Nat) : IsCValue (.c n)
-  | tru : IsCValue .tru
-  | fls : IsCValue .fls
-
-inductive CStep : CTm → CTm → Prop where
-  | plus (n1 n2 : Nat) : CStep (.p (.c n1) (.c n2)) (.c (n1 + n2))
-  | plusLeft (t1 t1' t2 : CTm) (h : CStep t1 t1') : CStep (.p t1 t2) (.p t1' t2)
-  | plusRight (v1 t2 t2' : CTm) (hv : IsCValue v1) (h : CStep t2 t2') :
-      CStep (.p v1 t2) (.p v1 t2')
-  | ifTrue (t1 t2 : CTm) : CStep (.test .tru t1 t2) t1
-  | ifFalse (t1 t2 : CTm) : CStep (.test .fls t1 t2) t2
-  | ifStep (t1 t1' t2 t3 : CTm) (h : CStep t1 t1') : CStep (.test t1 t2 t3) (.test t1' t2 t3)
-
-scoped notation:40 t:41 " ⟶ " t':41 => CStep t t'
-```
-
-:::::exercise (rating := 3) (name := "combined_step_deterministic")
-```lean
-theorem combined_step_deterministic : Deterministic CStep ∨ ¬ Deterministic CStep := by
-  solution!
-    left
-    intro x y1 y2 h1
-    induction h1 generalizing y2 with
-    | plus n1 n2 =>
-        intro h2; cases h2 with
-        | plus => rfl
-        | plusLeft _ _ _ hs => cases hs
-        | plusRight _ _ _ hv hs => cases hs
-    | plusLeft t1 t1' t2 hs ih =>
-        intro h2; cases h2 with
-        | plus => cases hs
-        | plusLeft _ _ _ hs2 => rw [ih _ hs2]
-        | plusRight _ _ _ hv hs2 => cases hv <;> cases hs
-    | plusRight v1 t2 t2' hv hs ih =>
-        intro h2; cases h2 with
-        | plus => cases hs
-        | plusLeft _ _ _ hs2 => cases hv <;> cases hs2
-        | plusRight _ _ _ hv2 hs2 => rw [ih _ hs2]
-    | ifTrue t1 t2 =>
-        intro h2; cases h2 with
-        | ifTrue => rfl
-        | ifStep _ _ _ _ hs => cases hs
-    | ifFalse t1 t2 =>
-        intro h2; cases h2 with
-        | ifFalse => rfl
-        | ifStep _ _ _ _ hs => cases hs
-    | ifStep t1 t1' t2 t3 hs ih =>
-        intro h2; cases h2 with
-        | ifTrue => cases hs
-        | ifFalse => cases hs
-        | ifStep _ _ _ _ hs2 => rw [ih _ hs2]
-```
-:::::
-
-:::::exercise (rating := 3) (name := "combined_strong_progress")
-```lean
-theorem combined_strong_progress :
-    (∀ t, IsCValue t ∨ ∃ t', t ⟶ t') ∨ ¬ (∀ t, IsCValue t ∨ ∃ t', t ⟶ t') := by
-  solution!
-    right
-    intro h
-    -- `p tru tru` is stuck: not a value and cannot step.
-    cases h (.p .tru .tru) with
-    | inl hv => cases hv
-    | inr hs =>
-        obtain ⟨t', ht⟩ := hs
-        cases ht with
-        | plusLeft _ _ _ hs2 => cases hs2
-        | plusRight _ _ _ hv hs2 => cases hs2
-```
-:::::
-
-```lean
-end Combined
-```
-
-:::hide
-ANOTHER PROBLEM... Suppose we extend the language with a new
-primitive `flip t` that can step, nondeterministically, to either `0` or
-`t`.  So, for example, `p (flip 1) (c 1)` normalizes (in multiple steps) to
-either `c 1` or `c 2`, and `p (flip 3) (flip 4)` normalizes to `c 0`, `c 3`,
-`c 4`, or `c 7`.  We begin by extending the syntax of terms:
-
-```
-Inductive tm : Type :=
-  | c : nat -> tm
-  | p : tm -> tm -> tm
-  | tflip : tm -> tm.
-```
-
-1. What rule or rules do we need to add to the definition of `Step` to
-  formalize this behavior?  (Answer needed -- it's a bit tricky; there are
-  different ways, depending on the order of evaluation.)
-2. What are the possible normal forms of `tflip (tflip (tflip 1))`?
-  (Answer: `c 0` and `c 1`.)
-3. Is `p (tflip 1) (tflip 1)` more likely to normalize to `0` or to `1`?
-  (Answer: neither! The operational semantics talks
-  only about the _possibility_ of outcomes; there's no notion of
-  probability.)
-:::
-
-# Aside: A `normalize` Tactic
-
-::::full
-Proofs that a concrete term multi-steps to another are tedious to do by
-hand.  We can automate them.  `step_tac` finds the single step of the
-leftmost redex, and `normalize` applies it repeatedly until the term is stuck,
-finishing with reflexivity.  Because the final `Multi.refl` unifies the
-(possibly existential) target with the reached normal form, `normalize`
-also _computes_ the normal form.
-::::
-
-:::dev
-mwhicks1: `step_tac` below is *specialized* to this language -- it names this
-`Step`'s constructors (`plus`/`plusLeft`/`plusRight`) and `IsValue.const` directly, so it
-does not work for the chapter's other step relations (`AStep`, `BStep`,
-`StackStep`, ...) without a per-language copy. This is just stopgap while waiting
-to see how the Automation chapter turns out.
-:::
-
-```lean
--- `step_tac`: prove a single-step goal `t ⟶ ?t'` by finding the leftmost
--- redex -- reduce a ready pair with `plus`, else step the left operand
--- (`plusLeft`), else (the left operand being a value) step the right (`plusRight`).
-syntax "step_tac" : tactic
-macro_rules
-  | `(tactic| step_tac) =>
-      `(tactic|
-        first
-        | exact Step.plus _ _
-        | (apply Step.plusLeft; step_tac)
-        | (apply Step.plusRight <;> (first | exact IsValue.const _ | step_tac)))
-
--- `normalize`: step with `step_tac` as many times as possible, then finish
--- with `refl`.  We step *first* and fall back to `refl` only when
--- no step applies, so an existential target is driven all the way to a value
--- rather than being closed prematurely at zero steps.
-syntax "normalize" : tactic
-macro_rules
-  | `(tactic| normalize) =>
-      `(tactic|
-        first
-        | (apply Multi.step <;> (first | step_tac | normalize))
-        | exact Multi.refl _)
-```
-
-Now that we have the tactic, the hand-written derivation collapses to a single
-call:
-
-```lean
-example : (.p (.c 3) (.p (.c 3) (.c 4))) ⟶* .c 10 := by normalize
-```
-
-:::::exercise (rating := 1) (name := "normalize_ex")
-```lean
-theorem normalize_ex : ∃ e', (.p (.c 3) (.p (.c 2) (.c 1))) ⟶* e' ∧ IsValue e' := by
-  solution!
-    apply Exists.intro
-    apply And.intro
-    · normalize
-    · exact IsValue.const _
-```
-:::::
-
-:::::exercise (rating := 1) (name := "normalize_ex'")
-For comparison, prove it again in term-mode: `normalize` computes the witness
-inside the anonymous constructor, so the whole proof is a single expression.
-
-```lean
-theorem normalize_ex' : ∃ e', (.p (.c 3) (.p (.c 2) (.c 1))) ⟶* e' ∧ IsValue e' := by
-  solution!
-    exact ⟨_, by normalize, IsValue.const _⟩
-```
-:::::
-
-# Small-Step Arithmetic and Boolean Expressions
+# Small-Step Slang
 
 ::::full
 Now for a more serious example: a small-step semantics for the richer
-arithmetic and boolean expressions of the `Slang` chapter (with subtraction,
+arithmetic and boolean expressions of the {ref "Slang"}[Slang] chapter (with subtraction,
 multiplication, and the boolean operators) rather than the two-constructor
 toy language we have used so far.
 
@@ -1708,6 +1318,8 @@ syntax (`Aexp`, `Bexp`) and the big-step evaluator (`Aexp.eval`) from the
 namespace Slang
 ```
 
+## Arithmetic Expressions
+
 The arithmetic _values_ (the normal forms of the small-step relation below)
 are just the numeric literals:
 
@@ -1717,30 +1329,22 @@ inductive IsAValue : Aexp → Prop where
 ```
 
 ::::full
-We are not actually going to bother to define boolean values, since they
-aren't needed in the definition of `⟶b` below (why?), though they might be if
-our language were a bit more complicated (why?).
-::::
-
-## Arithmetic Expressions
-
-::::full
 Here is the small-step relation for arithmetic expressions.  A compound
 expression reduces its left operand first; once that is a value, it reduces
 its right operand; once both are values, it computes the result.  (We show
-the rules for `+` in full; those for `-` and `*` have exactly the same
+the rules for `+` in full; those for `−` and `×` have exactly the same
 shape.)
 
 ```
-                          a1 ⟶a a1'
-                   -------------------------            (plusLeft)
+                        a1 ⟶a a1'
+                   --------------------             (plusLeft)
                    a1 + a2 ⟶a a1' + a2
 
                  IsAValue v1      a2 ⟶a a2'
-                 -----------------------                (plusRight)
+                 ---------------------------        (plusRight)
                    v1 + a2 ⟶a v1 + a2'
 
-                 --------------------------             (plus)
+                 -------------------------          (plus)
                  n1 + n2 ⟶a num (n1 + n2)
 ```
 ::::
@@ -1823,6 +1427,145 @@ theorem strong_progress_arith (a : Aexp) : IsAValue a ∨ ∃ a', a ⟶a a' := b
                         exact ⟨_, .multRight _ _ _ (.num n1) ha2⟩
             | inl hv2 => cases hv2 with
               | num n2 => exact ⟨_, .mult n1 n2⟩
+```
+:::::
+
+## Boolean Expressions
+
+::::full
+The small-step relation for boolean expressions reduces the arithmetic
+subexpressions of a comparison (using `⟶a`) and then applies the comparison,
+and it short-circuits `¬` and `∧` on boolean literals.
+
+We are not actually going to bother to define boolean values, since they
+aren't needed in the definition of `⟶b` below (why?), though they might be if
+our language were a bit more complicated (why?).
+
+Again we show a
+representative sample; `neq`, `le`, and `gt` follow the same pattern as `eq`.
+
+```
+                        a1 ⟶a a1'
+                  --------------------             (eqLeft)
+                  a1 = a2 ⟶b a1' = a2
+
+                IsAValue v1      a2 ⟶a a2'
+                ---------------------------        (eqRight)
+                  v1 = a2 ⟶b v1 = a2'
+
+                  ---------------------            (eq)
+                  n1 = n2 ⟶b (n1 = n2)
+
+                        b1 ⟶b b1'
+                      --------------               (notStep)
+                      ¬ b1 ⟶b ¬ b1'
+
+                    ----------------               (notTrue)
+                    ¬ true ⟶b false
+
+                  ---------------------            (andFalse)
+                  false ∧ b2 ⟶b false
+```
+
+Here are the formal rules.
+::::
+
+```lean
+inductive BStep : Bexp → Bexp → Prop where
+  | eqLeft (a1 a1' a2 : Aexp) (h : AStep a1 a1') : BStep (.eq a1 a2) (.eq a1' a2)
+  | eqRight (v1 a2 a2' : Aexp) (hv : IsAValue v1) (h : AStep a2 a2') :
+      BStep (.eq v1 a2) (.eq v1 a2')
+  | eq (n1 n2 : Nat) : BStep (.eq (.num n1) (.num n2)) (.bool (decide (n1 = n2)))
+  | neqLeft (a1 a1' a2 : Aexp) (h : AStep a1 a1') : BStep (.neq a1 a2) (.neq a1' a2)
+  | neqRight (v1 a2 a2' : Aexp) (hv : IsAValue v1) (h : AStep a2 a2') :
+      BStep (.neq v1 a2) (.neq v1 a2')
+  | neq (n1 n2 : Nat) : BStep (.neq (.num n1) (.num n2)) (.bool (decide (n1 ≠ n2)))
+  | leLeft (a1 a1' a2 : Aexp) (h : AStep a1 a1') : BStep (.le a1 a2) (.le a1' a2)
+  | leRight (v1 a2 a2' : Aexp) (hv : IsAValue v1) (h : AStep a2 a2') :
+      BStep (.le v1 a2) (.le v1 a2')
+  | le (n1 n2 : Nat) : BStep (.le (.num n1) (.num n2)) (.bool (decide (n1 ≤ n2)))
+  | gtLeft (a1 a1' a2 : Aexp) (h : AStep a1 a1') : BStep (.gt a1 a2) (.gt a1' a2)
+  | gtRight (v1 a2 a2' : Aexp) (hv : IsAValue v1) (h : AStep a2 a2') :
+      BStep (.gt v1 a2) (.gt v1 a2')
+  | gt (n1 n2 : Nat) : BStep (.gt (.num n1) (.num n2)) (.bool (decide (n1 > n2)))
+  | notStep (b1 b1' : Bexp) (h : BStep b1 b1') : BStep (.not b1) (.not b1')
+  | notTrue : BStep (.not (.bool true)) (.bool false)
+  | notFalse : BStep (.not (.bool false)) (.bool true)
+  | andStep (b1 b1' b2 : Bexp) (h : BStep b1 b1') : BStep (.and b1 b2) (.and b1' b2)
+  | andTrueStep (b2 b2' : Bexp) (h : BStep b2 b2') :
+      BStep (.and (.bool true) b2) (.and (.bool true) b2')
+  | andFalse (b2 : Bexp) : BStep (.and (.bool false) b2) (.bool false)
+  | andTrueTrue : BStep (.and (.bool true) (.bool true)) (.bool true)
+  | andTrueFalse : BStep (.and (.bool true) (.bool false)) (.bool false)
+
+scoped notation:40 b:41 " ⟶b " b':41 => BStep b b'
+```
+
+A boolean example -- the left comparison operand reduces first:
+
+```lean
+example :
+    (Bexp.le (.plus (.num 1) (.num 1)) (.num 3)) ⟶b (.le (.num 2) (.num 3)) :=
+  .leLeft _ _ _ (.plus 1 1)
+```
+
+::::quiz
+Which of these properties does this small-step semantics for `Slang`
+expressions satisfy?  (Yes or No for each.)
+
+  - determinism
+  - strong progress (every non-value takes a step)
+  - values and normal forms coincide (i.e., there are no "stuck" terms)
+  - the step relation is normalizing (i.e., evaluation always terminates)
+
+:::instructors
+Yes to all four.  In particular, unlike the full Imp language whose
+   commands include `while` and so can loop, expression evaluation always
+   terminates, so `⟶a` (and `⟶b`) are normalizing.
+:::
+::::
+
+::::full
+Let us make good on the first of those answers.  Both step relations are
+_deterministic_: the value guards on the "step the right operand" rules mean
+that at most one rule ever applies to a given term.
+::::
+
+:::::exercise (rating := 3) (name := "astep_deterministic")
+The arithmetic step relation is deterministic.  (Structurally this is the
+value-based determinism proof from the toy language, repeated for `+`, `−`,
+and `×`; the impossible cross-cases close because a value `num n` cannot step.)
+
+```lean
+theorem astep_deterministic : Deterministic AStep := by
+  solution!
+    intro x y1 y2 h1
+    induction h1 generalizing y2 <;> intro h2 <;> cases h2 <;>
+      first
+        | rfl
+        | cases ‹AStep (Aexp.num _) _›
+        | (cases ‹IsAValue _›; cases ‹AStep (Aexp.num _) _›)
+        | (congr 1 <;> first | rfl | (apply ‹∀ _, AStep _ _ → _ = _› <;> assumption))
+```
+:::::
+
+:::::exercise (rating := 3) (name := "bstep_deterministic")
+The boolean step relation is deterministic too.  The comparison cases (`eq`,
+`neq`, `le`, `gt`) reduce their operands with `⟶a`, so they inherit determinism
+from `astep_deterministic`; `¬` and the short-circuiting `∧` contribute only
+base cases.
+
+```lean
+theorem bstep_deterministic : Deterministic BStep := by
+  solution!
+    intro x y1 y2 h1
+    induction h1 generalizing y2 <;> intro h2 <;> cases h2 <;>
+      first
+        | rfl
+        | cases ‹AStep (Aexp.num _) _›
+        | (cases ‹IsAValue _›; cases ‹AStep (Aexp.num _) _›)
+        | cases ‹BStep (Bexp.bool _) _›
+        | (congr 1 <;> first | rfl | (apply astep_deterministic <;> assumption) | (apply ‹∀ _, BStep _ _ → _ = _› <;> assumption))
 ```
 :::::
 
@@ -1958,93 +1701,6 @@ result_ is exactly the property one wants when reordering or parallelizing the
 evaluation of pure expressions.
 ::::
 
-## Boolean Expressions
-
-::::full
-The small-step relation for boolean expressions reduces the arithmetic
-subexpressions of a comparison (using `⟶a`) and then applies the comparison,
-and it short-circuits `~` and `&&` on boolean literals.  Again we show a
-representative sample; `neq`, `le`, and `gt` follow the same pattern as `eq`.
-
-```
-                        a1 ⟶a a1'
-                  -------------------------             (eqLeft)
-                  a1 = a2 ⟶b a1' = a2
-
-                IsAValue v1      a2 ⟶a a2'
-                -----------------------                 (eqRight)
-                  v1 = a2 ⟶b v1 = a2'
-
-                --------------------------              (eq)
-                n1 = n2 ⟶b bool (n1 = n2)
-
-                        b1 ⟶b b1'
-                      ---------------                    (notStep)
-                      ~ b1 ⟶b ~ b1'
-
-                    --------------------                 (notTrue)
-                    ~ true ⟶b false
-
-                    --------------------                 (andFalse)
-                    false && b2 ⟶b false
-```
-::::
-
-```lean
-inductive BStep : Bexp → Bexp → Prop where
-  | eqLeft (a1 a1' a2 : Aexp) (h : AStep a1 a1') : BStep (.eq a1 a2) (.eq a1' a2)
-  | eqRight (v1 a2 a2' : Aexp) (hv : IsAValue v1) (h : AStep a2 a2') :
-      BStep (.eq v1 a2) (.eq v1 a2')
-  | eq (n1 n2 : Nat) : BStep (.eq (.num n1) (.num n2)) (.bool (decide (n1 = n2)))
-  | neqLeft (a1 a1' a2 : Aexp) (h : AStep a1 a1') : BStep (.neq a1 a2) (.neq a1' a2)
-  | neqRight (v1 a2 a2' : Aexp) (hv : IsAValue v1) (h : AStep a2 a2') :
-      BStep (.neq v1 a2) (.neq v1 a2')
-  | neq (n1 n2 : Nat) : BStep (.neq (.num n1) (.num n2)) (.bool (decide (n1 ≠ n2)))
-  | leLeft (a1 a1' a2 : Aexp) (h : AStep a1 a1') : BStep (.le a1 a2) (.le a1' a2)
-  | leRight (v1 a2 a2' : Aexp) (hv : IsAValue v1) (h : AStep a2 a2') :
-      BStep (.le v1 a2) (.le v1 a2')
-  | le (n1 n2 : Nat) : BStep (.le (.num n1) (.num n2)) (.bool (decide (n1 ≤ n2)))
-  | gtLeft (a1 a1' a2 : Aexp) (h : AStep a1 a1') : BStep (.gt a1 a2) (.gt a1' a2)
-  | gtRight (v1 a2 a2' : Aexp) (hv : IsAValue v1) (h : AStep a2 a2') :
-      BStep (.gt v1 a2) (.gt v1 a2')
-  | gt (n1 n2 : Nat) : BStep (.gt (.num n1) (.num n2)) (.bool (decide (n1 > n2)))
-  | notStep (b1 b1' : Bexp) (h : BStep b1 b1') : BStep (.not b1) (.not b1')
-  | notTrue : BStep (.not (.bool true)) (.bool false)
-  | notFalse : BStep (.not (.bool false)) (.bool true)
-  | andStep (b1 b1' b2 : Bexp) (h : BStep b1 b1') : BStep (.and b1 b2) (.and b1' b2)
-  | andTrueStep (b2 b2' : Bexp) (h : BStep b2 b2') :
-      BStep (.and (.bool true) b2) (.and (.bool true) b2')
-  | andFalse (b2 : Bexp) : BStep (.and (.bool false) b2) (.bool false)
-  | andTrueTrue : BStep (.and (.bool true) (.bool true)) (.bool true)
-  | andTrueFalse : BStep (.and (.bool true) (.bool false)) (.bool false)
-
-scoped notation:40 b:41 " ⟶b " b':41 => BStep b b'
-```
-
-A boolean example -- the left comparison operand reduces first:
-
-```lean
-example :
-    (Bexp.le (.plus (.num 1) (.num 1)) (.num 3)) ⟶b (.le (.num 2) (.num 3)) :=
-  .leLeft _ _ _ (.plus 1 1)
-```
-
-::::quiz
-Which of these properties does this small-step semantics for `Slang`
-expressions satisfy?  (Yes or No for each.)
-
-  - determinism
-  - strong progress (every non-value takes a step)
-  - values and normal forms coincide (i.e., there are no "stuck" terms)
-  - the step relation is normalizing (i.e., evaluation always terminates)
-
-:::instructors
-Yes to all four.  In particular, unlike the full Imp language whose
-   commands include `while` and so can loop, expression evaluation always
-   terminates, so `⟶a` (and `⟶b`) are normalizing.
-:::
-::::
-
 ## A Small-Step Stack Machine
 
 Our last example is a small-step semantics for a _stack machine_ that evaluates
@@ -2149,78 +1805,3 @@ theorem compiler_is_correct (a : Aexp) :
 ```lean
 end Slang
 ```
-
-:::dev
-```
-Claude: PORT STATUS — this chapter covers the Logical-Foundations-reachable
-core of `Smallstep.v` and every exercise graded by the current class
-(`SmallstepTest.v`) that does not depend on Imp.
-
-DONE (bare + Verso build): the toy arithmetic language (Tm, big-step `Eval`,
-small-step `SimpleArith1.Step`, determinism), the value-based `Step`
-(redo_determinism), strong progress and normal forms, multi-step reduction
-(`⟶*`, congruence, normalizing), big-step/small-step equivalence
-(multistep_of_eval, eval_of_step, eval_of_multistep), the boolean language
-(`Temp4`/`Temp5`, bool_step_prop4_holds), the combined language
-(`Combined`, combined_step_deterministic/strong_progress), the
-`normalize_ex` example, the small-step arithmetic/boolean expression
-relations for the variable-free `Slang` expressions (`Slang.AStep`/`Slang.BStep`
-with `⟶a`/`⟶b`, and `strong_progress_arith`), the nondeterministic-evaluation
-variant (`Slang.ANStep` with `⟶n`, `anstep_not_deterministic`,
-`anstep_preserves_eval`, `astep_anstep_agree`), and the variable-free
-small-step stack machine (`Slang.StackStep`, `stack_step_deterministic`,
-`compile`, `compiler_is_correct`).  Graded exercises covered:
-SimpleArith1.test_step_2, step_deterministic, Temp4.Temp5.bool_step_prop4_holds,
-test_multistep_4, multistep_congr_2, multistep_of_eval, eval_of_step,
-eval_of_multistep, Combined.combined_step_deterministic,
-Combined.combined_strong_progress, normalize_ex.
-
-LF DEPENDENCY (goal: reachable from LF directly, not via Hoare Logic).  This
-file needs NO `import` -- it uses only Lean's stdlib and built-in tactics, so
-the dependency on Logical Foundations is purely CONCEPTUAL.  Tactics used are
-all introduced somewhere in LF EXCEPT three, which LF (through
-`IndPropRegexp`) should introduce to support this chapter: `refine`, `suffices`
-(eval_of_multistep), `revert` (multi_trans).  The reflexive-transitive
-(multi-step) closure concept (`Multi` / `clos_refl_trans`, i.e. Rocq `Rel.v`
-material) is also assumed; it is defined locally here.  See CONTRIBUTING.md.
-
-Non-graded exercises now also covered: the `Temp1`/`Temp2`/`Temp3`
-"wrong value/step" thought-experiment modules, `smallstep_bools`,
-`properties_of_altered_step`, `normal_forms_unique`, `multistep_of_eval_inf`
-(paper), `interp_tm` (`evalF_eval`), `normalize_ex'`,
-`strong_progress_arith` (strong progress for the `Slang` arithmetic step
-relation), `anstep_preserves_eval`/`astep_anstep_agree` (nondeterministic
-evaluation), and `compiler_is_correct` (the `Slang` stack machine).
-
-SMALL-STEP IMP, limited to `Slang` (Claude, 2026-07-16): the arithmetic and
-boolean small-step relations of the Rocq "Small-Step Imp" section, plus its
-small-step stack machine, are ported over the variable-free `Slang`
-expressions -- `Slang.AStep`/`Slang.BStep` (`⟶a`/`⟶b`) and `Slang.StackStep`
-(`compile`/`compiler_is_correct`).  Rocq's state parameter and its `AS_Id`
-(variable lookup) / `SS_Load` (stack load) rules are dropped (no variables in
-`Slang`), which also means `AStep` and `StackStep` are genuine `Relation`s.
-The command-level `cstep` is NOT included: it needs Imp's commands
-(`skip`/`;`/`if`/`while`) and a state.
-
-CONCURRENT IMP substitute (Claude, 2026-07-16): in place of Rocq's "Concurrent
-Imp" (which needs commands + a parallel `||` and so requires full Imp), we add
-a `Slang`-level illustration of evaluation-order nondeterminism -- `Slang.ANStep`
-(`⟶n`), the arithmetic step relation with the `IsAValue` guard dropped so either
-operand may step.  The payoff exercise (`astep_anstep_agree`) shows the final
-result is nonetheless unique (both `⟶a` and `⟶n` compute `Aexp.eval`), the
-confluence intuition concurrency motivates.
-
-NOT DONE (deferred): everything that depends on the full Imp language
-(command-level Small-Step Imp / `cstep`, true Concurrent Imp with commands and
-`||`, and the *graded* `compiler_is_correct`, which needs Imp's
-`aexp`/`aeval`/`state`/`s_compile` -- the `Slang` version above is the same
-result specialised to variable-free expressions, not the graded artifact).
-Imp lives in the Hoare Logic volume; port those once Imp is available to TS,
-or via a minimal shared Imp.  (The Rocq `normalize` `Ltac` tactic IS ported --
-`step_tac`/`normalize` as recursive `macro_rules`, used by the `normalize_ex`
-examples -- so nothing in scope now remains commentary-only.)
-
-NOTATION DEVIATION (Claude): Rocq's `-->` cannot be a Lean notation token
-(`--` starts a comment), so single-step uses `⟶` and multi-step `⟶*`.
-```
-:::
