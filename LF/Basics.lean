@@ -1559,6 +1559,7 @@ changes the proof state and hovering over each argument to `rewrite` to see its 
 
 ## Irreducibility, Rewriting, and Proof Engineering
 
+::::full
 Lean, like any other programming language, has conventions and best practices
 for writing good software. In object-oriented programming,
 for example, it is considered good practice not to access the
@@ -1789,6 +1790,13 @@ theorem mul_succ : ∀ n m : Nat, n * (succ m) = (n * m) + n := by
 attribute [irreducible] mul
 ```
 
+:::grade
+```
+GRADE_THEOREM 1: mul_simpl_rules
+```
+:::
+::::
+
 :::dev "Benjamin Pierce (bcpierce00)"
 Again, this should be an exercise.
 RAB: Agreed if we're keeping these visible; putting off
@@ -1808,7 +1816,7 @@ as you write the proof, which makes it convenient to use `rewrite` blocks
 with multiple rules.
 ::::
 
-::::exercise (rating := 2) (name := "test_mult1")
+::::exercise (rating := 2) (name := "test_mul_add")
 ```lean
 theorem zero_add_one : (zero + one : Nat) = one := by
   rewrite [one_eq_succ_zero]
@@ -1848,13 +1856,10 @@ theorem two_mul_two : (two * two : Nat) = four := by
 
 :::grade
 ```
-GRADE_THEOREM 2: test_mult1
+GRADE_THEOREM 2: test_mul_add
 ```
 :::
 ::::
-
-:::slidebreak
-:::
 
 :::slidebreak
 :::
