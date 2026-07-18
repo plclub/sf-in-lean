@@ -1,5 +1,7 @@
 import VersoManual
 import SFLMeta.Bnf
+import SFLMeta.Comment
+import SFLMeta.DisplayMath
 import SFLMeta.Ignore
 import SFLMeta.Exercise
 import SFLMeta.Terse
@@ -155,6 +157,21 @@ def fillText (width : Nat) (text : String) : String := Id.run do
 def paraToText (width : Nat) (inls : Array (Verso.Doc.Inline Manual)) : String :=
   fillText width (inlinesToText inls)
 
+/-- Drop leading and trailing all-whitespace lines from `s`, preserving each
+remaining line's own leading whitespace (so ASCII diagrams and hand-aligned
+displays keep their column alignment).
+
+Defined as a `String.` method (not a plain `SFLMeta` function) on purpose: its one
+caller applies it to a `let`-bound `match` whose result type is not yet pinned,
+and a plain application there leaves the elaborator stuck on a universe
+constraint.  Dot-notation (`src.stripBlankEdgeLines`, like `src.trimAscii`) pins
+`src : String` first and elaborates cleanly — so keep the dot-notation call. -/
+def _root_.String.stripBlankEdgeLines (s : String) : String :=
+  let blank : String → Bool := fun l => l.all (·.isWhitespace)
+  let ls := s.splitOn "\n"
+  let ls := (((ls.dropWhile blank).reverse).dropWhile blank).reverse
+  String.intercalate "\n" ls
+
 /--
 Render a Verso block to a Markdown-like string for inclusion in a `/-! … -/`
 comment, filling prose to `width` columns.  List items are prefixed with `- ` /
@@ -189,14 +206,25 @@ private partial def blockToText (width : Nat) : Verso.Doc.Block Manual → Strin
 
 /-- Contents of the generated project's `lakefile.toml`. `extraLibs` names the
 additional `lean_lib`s holding bundled prerequisite sources (e.g. `LF` for the
-bare `LF/Maps.lean` that Imp depends on). -/
-private def lakefileTemplate (vol : String) (extraLibs : Array String) : String :=
-  let extra := extraLibs.foldl (init := "") fun acc l =>
+bare `LF/Maps.lean` that Imp depends on).  `pkgRequires` lists external package
+dependencies `(name, git url, rev)` needed by some emitted chapter's imports
+(e.g. batteries for `import Batteries.CodeAction`), each pinned to the same
+revision the book itself builds with. -/
+private def lakefileTemplate (vol : String) (extraLibs : Array String)
+    (pkgRequires : Array (String × String × String)) : String :=
+  -- A bundled prerequisite may live in the volume's own namespace (e.g. the
+  -- bare `LF/CustomTactics.lean` bundled into the LF project): the volume's
+  -- `lean_lib` already covers it, and Lake rejects a duplicate target.
+  let extra := (extraLibs.filter (· != vol)).foldl (init := "") fun acc l =>
     acc ++ "\n[[lean_lib]]\nname = \"" ++ l ++ "\"\n"
+  let reqs := pkgRequires.foldl (init := "") fun acc (name, url, rev) =>
+    acc ++ "\n[[require]]\nname = \"" ++ name ++ "\"\ngit = \"" ++ url ++
+      "\"\nrev = \"" ++ rev ++ "\"\n"
   "name = \"" ++ vol.toLower ++ "-extracted\"\n" ++
   "version = \"0.1.0\"\n" ++
-  "defaultTargets = [\"" ++ vol ++ "\"]\n\n" ++
-  "[[lean_lib]]\n" ++
+  "defaultTargets = [\"" ++ vol ++ "\"]\n" ++
+  reqs ++
+  "\n[[lean_lib]]\n" ++
   "name = \"" ++ vol ++ "\"\n" ++
   extra
 
@@ -223,6 +251,16 @@ private def asModuleDoc (s : String) : String :=
     ((t.splitOn "\n").map fun line =>
       if line.all (·.isWhitespace) then "" else "-- " ++ line)
   commented ++ "\n\n"
+
+/-- Render a shown dev note as one contiguous `--` comment block, visually set
+off from surrounding prose: the label line first, body lines indented 4 spaces
+under it, and interior blank lines kept as bare `--` (not truly blank) so the
+note reads as a single unit. -/
+private def devNoteComment (label body : String) : String :=
+  let indented := String.intercalate "\n"
+    ((body.trimAscii.toString.splitOn "\n").map fun l =>
+      if l.all (·.isWhitespace) then "--" else "--     " ++ l)
+  "-- " ++ label ++ ":\n" ++ indented ++ "\n\n"
 
 /-- Merge adjacent `/-! … -/` blocks into one, separating their contents with a blank line. -/
 private def mergeAdjacentModuleDocs (s : String) : String :=
@@ -274,6 +312,35 @@ block_extension Block.leanSaved (teacher : String) (student : String) (terse : S
       return none
   toHtml := some fun _ goB _ _ contents => contents.mapM goB
   toTeX  := some fun _ goB _ _ contents => contents.mapM goB
+
+/-! ## `importBlock` code block
+
+A chapter's cross-chapter `import` lines (e.g. `import LF.Basics`) must live in
+the Verso module *header* (where they are rewritten to the `…Verso` module
+names), so they never appear in the chapter's elaborated `lean` blocks — yet
+the book reader should still see them where the prose introduces them.  An
+` ```importBlock ` code block carries the original import line(s) verbatim and
+renders as a plain code block in HTML.  It is display-only: the extracted
+student/solutions/terse chapter files get their `import` preamble from the
+chapter source's header in `emitSavedImpl` (which also bundles non-chapter
+prerequisite modules into the generated project). -/
+
+block_extension Block.importBlock (source : String) where
+  data := Json.str source
+  traverse _ _ _ := pure none
+  toHtml := some fun _ goB _ _ contents => contents.mapM goB
+  toTeX := some fun _ goB _ _ contents => contents.mapM goB
+
+/-- An ` ```importBlock ` code block: cross-chapter `import` lines for the
+generated projects, rendered to the reader as a plain code block. The body is
+not elaborated here (the real imports for the book build are in the Verso
+module header). -/
+@[code_block]
+def importBlock : CodeBlockExpanderOf Unit
+  | (), str => do
+    let src := str.getString
+    ``(Verso.Doc.Block.other (SFLMeta.Block.importBlock $(quote src))
+        #[Verso.Doc.Block.code $(quote src)])
 
 /-! ## Syntactic rewriting of `solution!` markers
 
@@ -376,8 +443,18 @@ partial def stripGuardMsgs (src : String) : String := Id.run do
       while j < n && !(lines[j]!.trimAscii.toString.endsWith "-/") do
         j := j + 1
       if j + 1 < n && (lines[j + 1]!.trimAscii.toString.startsWith "#guard_msgs") then
-        -- Expected-message docstring for a `#guard_msgs`: drop it and the modifier.
-        i := j + 2
+        -- Expected-message docstring for a `#guard_msgs`.  Strip the pair only
+        -- when the expectation is benign (a `warning:`/`info:` message, e.g.
+        -- `declaration uses sorry`): without the guard the command still
+        -- compiles.  An expected *error* (`error:`, `Tactic … failed`, …)
+        -- means the wrapped command deliberately fails — the guard must stay
+        -- in the extracted file or it would not build.
+        let body := ((lines[i]!.trimAscii.toString.drop 3).trimAscii).toString
+        if body.startsWith "warning" || body.startsWith "info" then
+          i := j + 2
+        else
+          for k in [i:j+2] do out := out.push lines[k]!
+          i := j + 2
       else
         for k in [i:j+1] do out := out.push lines[k]!
         i := j + 1
@@ -606,6 +683,12 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
           (student.trimAscii.toString ++ "\n\n")
           (terse.trimAscii.toString ++ "\n\n")
       return buf
+    if name == ``Block.importBlock then
+      -- Cross-chapter `import` lines shown to the reader.  The extracted
+      -- files get their import lines from the chapter source's header
+      -- preamble in `emitSavedImpl` (which also bundles non-chapter
+      -- prerequisites), so nothing is emitted here.
+      return buf
     if name == ``Block.exercise then
       -- Emit a `### Exercise (N⭐): name` heading; the contained `lean`
       -- blocks render normally via recursion below.
@@ -619,6 +702,34 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     if name == ``Block.bnf then
       if let some src := decodeBnfSource? which.data then
         return appendBoth buf file (asModuleDoc src.trimAscii.toString)
+    if name == ``Block.display || name == ``Block.displaymath then
+      -- A ` ```display ` / ` ```displaymath ` block is a *display*: its line
+      -- structure is significant, so it is emitted verbatim as a comment — each
+      -- source line kept on its own line and indented a couple of spaces to set
+      -- it off — and is NEVER reflowed/filled into a paragraph the way ordinary
+      -- prose is.  `display` stores its source string directly; `displaymath`
+      -- carries no data, so recover the text from its `Block.para`/math children.
+      let src :=
+        match which.data with
+        | .str s => s
+        | _ =>
+          -- `displaymath`: one `Block.para` per equation, each holding a single
+          -- math inline; take the raw inline text (unfilled), one line each.
+          String.intercalate "\n" (contents.toList.filterMap fun (b : Verso.Doc.Block Manual) =>
+            match b with
+            | .para inls => some (inlinesToText inls)
+            | _ => none)
+      -- Emit as its own comment, built by hand rather than via `asModuleDoc`:
+      -- each source line kept on its own line and indented under `-- ` to set the
+      -- display off, and NEVER reflowed/filled the way prose is.  Only leading and
+      -- trailing *blank lines* are dropped — a line's own leading whitespace is
+      -- preserved verbatim, so ASCII diagrams and hand-aligned displays keep their
+      -- column alignment.  (`asModuleDoc`/`trimAscii` would trim the whole block
+      -- and so drop the first line's indentation.)
+      let commented := String.intercalate "\n"
+        ((src.stripBlankEdgeLines.splitOn "\n").map fun l =>
+          if l.all (·.isWhitespace) then "" else "--   " ++ l)
+      return appendBoth buf file (commented ++ "\n\n")
     if name == ``Block.diagramWithAlt then
       match findAlt? contents with
       | some alt => return appendBoth buf file (asModuleDoc alt.trimAscii.toString)
@@ -644,9 +755,26 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     if name == ``Block.slidebreak then
       -- Slide-break marker: emit nothing in all generated .lean files.
       return buf
+    if name == ``Block.suppressPreviousHeaderWhenTerse then
+      -- Full-only-heading marker: consumed by `walkSection` (which suppresses
+      -- the heading it follows); emits nothing itself.
+      return buf
+    if name == ``Block.devcomment then
+      -- A dev note passes through as a labelled comment when its urgency makes
+      -- it shown (`devNoteShown`: `NOW`, `TODO`, or none); otherwise nothing is
+      -- emitted.  `devNoteComment` sets the note off from surrounding prose
+      -- (indented body, contiguous comment block); the body is filled 4
+      -- columns narrower to compensate for that indentation.
+      if let some (author, urgency, year) := decodeDevData? which.data then
+        if devNoteShown urgency then
+          let body := String.intercalate "\n\n"
+            (contents.toList.map (blockToText (width - 4)))
+          return appendBoth buf file
+            (devNoteComment (devNoteLabel author urgency year "NOTE TO DEVELOPERS") body)
+      return buf
     -- Unknown extension block: recurse into children as a best-effort.
-    -- NB: :::dev / :::instructor blocks carry no children (their bodies are
-    -- dropped at elaboration), so this recursion is a no-op for them.
+    -- NB: :::instructors blocks carry no children (their bodies are dropped at
+    -- elaboration), so this recursion is a no-op for them.
     walkBlocks width file contents buf
   | .para inls => return appendBoth buf file (asModuleDoc (paraToText width inls))
   | .code s => return appendBoth buf file (asModuleDoc s.trimAscii.toString)
@@ -683,6 +811,17 @@ private def chapterModule (vol : String) (p : Part Manual) : String :=
   if base.all (fun c => c.isAlphanum || c == '_') then vol ++ "." ++ base
   else vol ++ ".«" ++ base ++ "»"
 
+/-- Does one of `blocks` contain a `Block.suppressPreviousHeaderWhenTerse`
+marker?  The marker is emitted at a section's top level, but elaboration wraps
+each source block in `.concat` layers, so look through those (only — the marker
+never sits inside another extension block in the terse tree). -/
+private partial def hasSuppressHeaderMarker (blocks : Array (Block Manual)) : Bool :=
+  blocks.any fun b =>
+    match b with
+    | .other which _ => which.name == ``Block.suppressPreviousHeaderWhenTerse
+    | .concat bs => hasSuppressHeaderMarker bs
+    | _ => false
+
 /--
 Walk a section (a Part at depth ≥ 1, inside a chapter). The section's title is
 emitted as a `#`-prefixed module-doc heading whose level equals `depth`; all
@@ -693,7 +832,13 @@ partial def walkSection (width : Nat) (depth : Nat) (file : String) (part : Part
   let mut buf := buf
   let hashes := String.ofList (List.replicate depth '#')
   let titleText := inlinesToText titleInlines
-  buf := appendBoth buf file (asModuleDoc s!"{hashes} {titleText}")
+  -- A `Block.suppressPreviousHeaderWhenTerse` marker among the section's own
+  -- blocks means the heading is full-only. The marker survives traversal only
+  -- in terse builds (full builds replace it with an empty block), so its
+  -- presence here says: this is the terse tree, suppress the heading (the
+  -- content still flows).
+  if !hasSuppressHeaderMarker intro then
+    buf := appendBoth buf file (asModuleDoc s!"{hashes} {titleText}")
   buf := walkBlocks width file intro buf
   for p in subParts do
     buf := walkSection width (depth + 1) file p buf
@@ -724,7 +869,8 @@ contents under `dest/`, plus `lakefile.toml`, `lean-toolchain`, and a `LF.lean`
 that imports `LF.STLC`. -/
 private def writeProject (dest : System.FilePath) (toolchain : String)
     (vol kind : String) (files : Array (String × String))
-    (extraLibs : Array String) : IO Unit := do
+    (extraLibs : Array String)
+    (pkgRequires : Array (String × String × String)) : IO Unit := do
   IO.FS.createDirAll dest
   -- Clear the volume source tree (and any bundled-prerequisite lib trees) so
   -- files that have since been renamed or removed don't linger as stale
@@ -734,7 +880,13 @@ private def writeProject (dest : System.FilePath) (toolchain : String)
     let libRoot := dest / lib
     if ← libRoot.pathExists then
       IO.FS.removeDirAll libRoot
-  IO.FS.writeFile (dest / "lakefile.toml") (lakefileTemplate vol extraLibs)
+  -- Also drop any manifest left by a previous emit: `lake build` auto-resolves
+  -- dependencies when there is no manifest, but refuses ("missing manifest")
+  -- when an existing manifest lacks a package the lakefile now `require`s.
+  let manifest := dest / "lake-manifest.json"
+  if ← manifest.pathExists then
+    IO.FS.removeFile manifest
+  IO.FS.writeFile (dest / "lakefile.toml") (lakefileTemplate vol extraLibs pkgRequires)
   IO.FS.writeFile (dest / "lean-toolchain") toolchain
   IO.FS.writeFile (dest / "README.md")
     s!"# {vol} — {kind} version\n\nGenerated from the Verso source.\n"
@@ -768,7 +920,10 @@ outside dependencies must be reconstructed from its own header `import`s: drop
 the framework imports (they build the book, not student code), re-emit the rest,
 and bundle the source of any that is a content prerequisite (not toolchain, not
 an emitted book chapter — e.g. the bare `LF.Maps`) under its own `lean_lib`. A
-bundled module is copied verbatim, so it must be plain (non-Verso) Lean. -/
+bundled module is copied verbatim, so it must be plain (non-Verso) Lean.
+An import from an external package (e.g. `Batteries.CodeAction`) is re-emitted
+too, and the generated `lakefile.toml` gains a matching `[[require]]` pinned to
+the revision in the book's `lake-manifest.json`. -/
 
 /-- Module top-namespaces belonging to the authoring framework: their imports
 build the book but must never appear in an extracted `.lean` file. -/
@@ -778,10 +933,32 @@ private def frameworkPrefixes : List String :=
 /-- Toolchain-provided top-namespaces: always available in any Lake project, so
 they stay as `import` lines but are never bundled as source. -/
 private def corePrefixes : List String :=
-  ["Lean", "Std", "Init", "Batteries"]
+  ["Lean", "Std", "Init"]
+
+/-- Top-namespaces provided by external packages: their imports stay as
+`import` lines and are never bundled as source, but the extracted project's
+`lakefile.toml` must `require` the package (pinned via `manifestPin`) for them
+to resolve. The package's Lake name is the prefix lowercased. -/
+private def pkgPrefixes : List String :=
+  ["Batteries"]
 
 /-- Top namespace of a module name (`LF.Maps` ⇒ `LF`). -/
 private def modTop (m : String) : String := (m.splitOn ".").headD m
+
+/-- Look up package `name` in the book's own `lake-manifest.json`, returning
+its `(git url, pinned rev)` so an extracted project can `require` the package
+at exactly the revision the book builds with. -/
+private def manifestPin (name : String) : IO (Option (String × String)) := do
+  let .ok raw ← (IO.FS.readFile "lake-manifest.json").toBaseIO | return none
+  let .ok json := Lean.Json.parse raw | return none
+  let .ok pkgs := json.getObjVal? "packages" | return none
+  let .ok arr := pkgs.getArr? | return none
+  for p in arr do
+    if (p.getObjValAs? String "name").toOption == some name then
+      let .ok url := p.getObjValAs? String "url" | return none
+      let .ok rev := p.getObjValAs? String "rev" | return none
+      return some (url, rev)
+  return none
 
 /-- Should module `m` appear as an `import` in an extracted file? (Framework
 imports are dropped; everything else — toolchain and content — is kept.) -/
@@ -859,11 +1036,13 @@ private def emitSavedImpl (destSlug modPrefix variant : String)
     let chapterModules := entries.map (·.1) |>.filter (·.any (· == '/'))
       |>.map fun k => ((k.dropEnd 5).toString).replace "/" "."
     let needsBundle (m : String) : Bool :=
-      keepImport m && ! corePrefixes.contains (modTop m) && ! chapterModules.contains m
+      keepImport m && ! corePrefixes.contains (modTop m)
+        && ! pkgPrefixes.contains (modTop m) && ! chapterModules.contains m
     -- Pick the variant per file; prepend each chapter's (framework-stripped)
     -- import preamble; collect bundle seeds from the chapters' source imports.
     let mut files : Array (String × String) := #[]
     let mut seeds : List String := []
+    let mut usedPkgs : Array String := #[]
     for (file, teacher, student, terse) in entries do
       let chosen := mergeAdjacentModuleDocs <|
         if variant == "solutions" then teacher
@@ -877,15 +1056,38 @@ private def emitSavedImpl (destSlug modPrefix variant : String)
         let src ← (IO.FS.readFile file).toBaseIO >>= fun
           | .ok s => pure s
           | .error _ => pure ""
-        let imps := (headerImports src).toList.filter keepImport
+        -- A chapter authored directly in Verso imports its not-yet-graduated
+        -- dependencies under their *Verso* module names (`import
+        -- LF.<X>Verso`); the extracted project has each such chapter
+        -- under its file key (`LF/<X>.lean`), so map the import back to
+        -- the emitted module name — which also keeps the Verso source itself
+        -- out of the bundle.
+        let deVerso (m : String) : String :=
+          if m.endsWith "Verso" && chapterModules.contains ((m.dropEnd 5).toString)
+          then (m.dropEnd 5).toString else m
+        let imps := ((headerImports src).toList.filter keepImport).map deVerso
         seeds := seeds ++ imps.filter needsBundle
+        for i in imps do
+          if pkgPrefixes.contains (modTop i) && ! usedPkgs.contains (modTop i) then
+            usedPkgs := usedPkgs.push (modTop i)
         let preamble := imps.foldl (init := "") fun acc i => acc ++ "import " ++ i ++ "\n"
         let preamble := if preamble.isEmpty then "" else preamble ++ "\n"
         files := files.push (file, preamble ++ chosen)
     let (bundleFiles, extraLibs) ← bundleLoop needsBundle seeds [] #[] #[]
     let allFiles := files ++ bundleFiles
+    -- Chapters importing an external package (e.g. Batteries) need the
+    -- extracted lakefile to `require` it, pinned to the book's own revision.
+    let mut pkgRequires : Array (String × String × String) := #[]
+    for pre in usedPkgs do
+      let name := pre.toLower
+      match ← manifestPin name with
+      | some (url, rev) => pkgRequires := pkgRequires.push (name, url, rev)
+      | none => reportError <|
+          s!"package '{name}' (needed for `import {pre}.…` in an extracted " ++
+          s!"chapter) is not in lake-manifest.json, so the extracted project " ++
+          s!"cannot pin it"
     let dest := System.FilePath.mk "_out" / destSlug / variant / "lean"
-    writeProject dest toolchain modPrefix variant allFiles extraLibs
+    writeProject dest toolchain modPrefix variant allFiles extraLibs pkgRequires
     if verify then buildProject dest variant
 
 /-- `ExtraStep` for the student build: solutions elided. -/

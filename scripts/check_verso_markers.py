@@ -61,7 +61,11 @@ from typing import Optional
 # closing `-- /QUIZ` all reduce to the keyword `QUIZ`).
 _POLICY = [
     # keyword regex          expect (output construct) / None
-    ("FULL",                 r"::+full\b"),
+    # A FULL region wrapping a section heading emits the heading at document
+    # level followed by a `:::suppressPreviousHeaderWhenTerse` marker (headings
+    # can't nest inside a directive), so both spellings count as a translated
+    # FULL.
+    ("FULL",                 r"::+full\b|:::suppressPreviousHeaderWhenTerse\b"),
     ("TERSE",                r"::+(?:terse|slidebreak)\b"),
     ("EX\\d+[A-Za-z!?]*",    r"::+exercise\b"),
     ("GRADE_\\w+",           r":::grade\b"),
@@ -78,6 +82,8 @@ _POLICY = [
     # -> :::answer, so both count as a translated HIDE.
     ("HIDE",                 r"::+hide\b|:::answer\b"),
     ("QUIZ",                 r"::+quiz\b"),
+    # `-- DEV` … `-- /DEV` region: an untagged author/dev note -> :::dev.
+    ("DEV",                  r":::dev\b"),
     # Intentionally dropped: region semantics not honored, prose kept as-is.
     ("HIDEFROMHTML",         None),
     # FOLD marks a proof region to render collapsed; folding is not honored
@@ -94,12 +100,19 @@ _POLICY = [
     # Left as Lean comments inside the code block; the code itself is preserved.
     ("ADMITTED",             None),
     ("ADMITDEF",             None),
+    # `OPEN`/`CLOSE COMMENT WHEN HIDING SOLUTIONS` wraps a suggested proof that
+    # (with its preceding empty ADMITTED region) becomes a `suggested!` tactic
+    # block: the proof is shown live in the teacher/terse builds and kept as a
+    # comment in the student build.  One `suggested!` is emitted per open/close
+    # pair, so both keywords expect the same construct.
+    ("OPEN",                 r"suggested!"),
+    ("CLOSE",                r"suggested!"),
 ]
 
 # Author / developer notes -> :::dev directives.  Matched separately because
 # the keyword is an author initial or task word, not a region name.
 _AUTHOR_KEYWORDS = ("BCP", "JC", "MWH", "CGH", "RAB", "CH", "HG", "NB", "MMG",
-                    "APT", "DHS", "TODO", "TOFIX", "LATER", "SOONER")
+                    "APT", "DHS", "TODO", "TOFIX", "LATER", "SOONER", "NOW")
 _AUTHOR_EXPECT = r":::dev\b"
 
 # A line reduces to a "marker keyword" candidate if, after stripping a leading

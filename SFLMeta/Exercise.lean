@@ -166,6 +166,14 @@ private def recordTerseEdit (edits : Array (Syntax × String)) : IO Unit := do
       terseEditRef.modify
         (·.push ⟨ranges, h⟩)
 
+/-- Record student-variant edits given `Replacement`s directly (rather than
+deriving their ranges from syntax).  Needed by `suggested!`, whose student edit
+includes a zero-width insertion — a comment closer spliced at the body's end
+position — for which there is no corresponding syntax node. -/
+private def recordStudentRepls (repls : Array Replacement) : IO Unit := do
+    if h : repls.size > 0 then
+      studentEditRef.modify (·.push ⟨repls, h⟩)
+
 syntax (name := solutionTerm) "solution!" "(" term ")" : term
 
 @[term_elab solutionTerm]
@@ -208,5 +216,43 @@ def evalWorkinclassTac : Tactic := fun stx => do
     recordTerseEdit #[(stx, "sorry")]
     recordStudentEdit #[(tk, "all_goals")]
     recordTeacherEdit #[(tk, "all_goals")]
+    evalTactic t
+  | _ => throwUnsupportedSyntax
+
+/-! ## `suggested!` marker
+
+The SF idiom `OPEN COMMENT WHEN HIDING SOLUTIONS` … `CLOSE COMMENT WHEN HIDING
+SOLUTIONS`: an exercise whose "solution" is a suggested proof that the student
+is invited to uncomment and adapt.  The body is a real proof, elaborated (and
+so typechecked) in the teacher and terse builds and shown live there — exactly
+as `solution!` treats the teacher build.  In the *student* build it is not
+stubbed to a bare `sorry`; instead the goal is closed with `sorry` and the
+suggested proof is preserved, commented out, for the student to uncomment. -/
+
+syntax (name := suggestedTac) withPosition("suggested!" tacticSeqIndentGt) : tactic
+
+@[tactic suggestedTac]
+def evalSuggestedTac : Tactic := fun stx => do
+  match stx with
+  | `(tactic| suggested!%$tk $t:tacticSeq ) =>
+    -- Teacher and terse builds keep the suggested proof live and shown.
+    recordTeacherEdit #[(tk, "all_goals")]
+    recordTerseEdit #[(tk, "all_goals")]
+    -- Student build: close the goal with `sorry`, then wrap the suggested proof
+    -- in a block comment so it survives verbatim for the student to uncomment.
+    -- The opening `/-` replaces the `suggested!` keyword (indented to its
+    -- column); the closing `-/` is a zero-width insertion at the body's end.
+    let fileMap ← getFileMap
+    let indent := match tk.getPos? with
+      | some p => String.ofList (List.replicate (fileMap.toPosition p).column ' ')
+      | none   => ""
+    match tk.getRange?, t.raw.getRange? with
+    | some tkR, some tR =>
+      recordStudentRepls #[
+        { range := tkR,
+          replacement := s!"sorry\n{indent}/- Suggested proof — uncomment and adapt:" },
+        { range := { start := tR.stop, stop := tR.stop },
+          replacement := s!"\n{indent}-/" }]
+    | _, _ => recordStudentEdit #[(stx, "sorry")]
     evalTactic t
   | _ => throwUnsupportedSyntax
