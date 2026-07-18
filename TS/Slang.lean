@@ -78,8 +78,8 @@ inductive Bexp where
   | and (b1 b2 : Bexp)
 ```
 
-:::dev
-  SOONER: mwhicks1: Will we develop `ImpParser`? Previously, the text
+:::dev "Michael Hicks (mwhicks1)" BeforeNextRelease
+  Will we develop `ImpParser`? Previously, the text
   below said "The optional chapter `ImpParser` develops a simple lexical analyzer and
   parser that can perform this translation.  You do not need to understand
   that chapter to understand this one, but if you haven't already taken a
@@ -202,6 +202,10 @@ Aexp.eval (.plus (.num 3) (.minus (.num 4) (.num 1)))
 
 (A) true    (B) false    (C) 0    (D) 3    (E) 6
 ::::
+
+:::quizSolution
+(E) 6
+:::
 
 ## Optimization
 
@@ -331,10 +335,7 @@ example :
       = (.not (.gt (.num 4) (.num 8))) := solution!(by rfl)
 ```
 
-:::grade
-```
-GRADE_THEOREM 0.5: optimize0plusB_test1
-```
+:::gradeTheorem "0.5" "optimize0plusB_test1"
 :::
 
 ```lean
@@ -344,10 +345,7 @@ example :
       = (.and (.le (.num 4) (.num 5)) (.bool true)) := solution!(by rfl)
 ```
 
-:::grade
-```
-GRADE_THEOREM 0.5: optimize0plusB_test2
-```
+:::gradeTheorem "0.5" "optimize0plusB_test2"
 :::
 
 ```lean
@@ -358,10 +356,7 @@ theorem optimize0plusB_sound (b : Bexp) :
       simp_all [Bexp.optimize0plusB, optimize0plus_sound]
 ```
 
-:::grade
-```
-GRADE_THEOREM 2: optimize0plusB_sound
-```
+:::gradeTheorem 2 "optimize0plusB_sound"
 :::
 :::::
 
@@ -428,8 +423,8 @@ The `scoped` keyword allows us to scope the notation to the present namespace so
 collide with other evaluation relations later.
 ::::
 
-:::dev
-SOONER: mwhicks1: The Rocq version here says "As we saw in our case study of regular expressions
+:::dev "Michael Hicks (mwhicks1)" BeforeNextRelease
+The Rocq version here says "As we saw in our case study of regular expressions
 in chapter IndProp, Rocq provides a way to use this notation in the definition of aevalR itself."
 It then re-shows the definition with Downarrow. We need to resolve how we want to do this.
 :::
@@ -524,6 +519,10 @@ Which rules are needed to prove the following?
 (E) `num`, `mult`, and `plus`
 ::::
 
+:::quizSolution
+(E) `num`, `mult`, and `plus`
+:::
+
 ::::hide
 -- QUIZ
 /-
@@ -542,13 +541,13 @@ Which rules are needed to prove the following?
 -- /QUIZ
 ::::
 
-:::dev
-SOONER: mwhicks1: Not sure if we need ⇓b, or whether we can define
+:::dev "Michael Hicks (mwhicks1)" BeforeNextRelease
+Not sure if we need ⇓b, or whether we can define
 ⇓ overloaded. Don't understand Lean notation yet!
 :::
 
-:::dev
-SOONER: chenson2018: About `Bexp.eval` below: We should discuss a way to recall definitions without
+:::dev "Chris Henson (chenson2018)" BeforeNextRelease
+About `Bexp.eval` below: We should discuss a way to recall definitions without
 having to write them out manually like this. I think a simple `#print` may work as an
 alternative, assuming there are no namespace issues..
 :::
@@ -645,8 +644,8 @@ theorem Aexp.evalR_iff_eval (a : Aexp) (n : Nat) :
 We can make the proof quite a bit shorter using more automation like we did in
 the previous section.
 
-:::dev
-SOONER: mwhicks1: the `workinclass!` marker should signal this live in-class exercise.
+:::dev "Michael Hicks (mwhicks1)" BeforeNextRelease
+the `workinclass!` marker should signal this live in-class exercise.
 But it is not rendering properly on the HTML. In fact it replaces `workinclass!` with
 the `all_goals` tactic, which we don't need.
 :::
@@ -680,8 +679,8 @@ inductive Bexp.EvalR : Bexp → Bool → Prop where
 scoped notation:55 e:56 " ⇓b " b:56 => Bexp.EvalR e b
 ```
 
-:::dev
-mwhicks1: There is no keyboard shortcut for a subscript b, nor is there one for c
+:::dev "Michael Hicks (mwhicks1)"
+There is no keyboard shortcut for a subscript b, nor is there one for c
 (to use used with cevalR below). There are numbers, x, y, z, l, m, n, etc.
 :::
 
@@ -697,10 +696,7 @@ theorem Bexp.evalR_iff_eval (b : Bexp) (bv : Bool) :
       induction b <;> constructor <;> simp_all [Aexp.evalR_iff_eval]
 ```
 
-:::grade
-```
-GRADE_THEOREM 3: Bexp.evalR_iff_eval
-```
+:::gradeTheorem 3 "Bexp.evalR_iff_eval"
 :::
 :::::
 
@@ -810,8 +806,8 @@ inductive Aexp.EvalR : Aexp → Nat → Prop where
 end Slang.AevalRExtended
 ```
 
-:::dev
-SOONER: mwhicks1: The following text seems not quite right to me. First, you can
+:::dev "Michael Hicks (mwhicks1)" BeforeNextRelease
+The following text seems not quite right to me. First, you can
 use options for partial functions, and that's very natural to do in Lean
 as a monad. Second, and related, monadic functions need not even be
 terminating if the implement the `CCPO` typeclass and are labeled as
