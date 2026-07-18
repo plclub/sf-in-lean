@@ -418,11 +418,9 @@ language, the set of values is a subset of the set of normal forms.
 This is important because it shows we did not accidentally define things
 so that some value could still take a step.
 
-:::dev
-```
-SOONER: Not exactly sure why, but this seems to be very tricky for
+:::dev BeforeNextRelease
+Not exactly sure why, but this seems to be very tricky for
 students.
-```
 :::
 
 ```lean
@@ -557,6 +555,10 @@ iszero (if true then (succ 0) else 0)
 (A) Yes    (B) No
 ::::
 
+:::quizSolution
+(B) No
+:::
+
 ::::quiz
 What about this one? Is it stuck?
 ```
@@ -565,6 +567,10 @@ if (succ 0) then true else false
 (A) Yes    (B) No
 ::::
 
+:::quizSolution
+(A) Yes
+:::
+
 ::::quiz
 What about this one? Is it stuck?
 ```
@@ -572,6 +578,10 @@ succ (succ 0)
 ```
 (A) Yes    (B) No
 ::::
+
+:::quizSolution
+(B) No
+:::
 
 ::::quiz
 What about this one? Is it stuck?
@@ -585,6 +595,10 @@ expression being stepped makes global sense -- it just checks that the
 operation in the _next_ reduction step is being applied to the right
 kinds of operands.)
 ::::
+
+:::quizSolution
+(B) No
+:::
 
 ::::full
 _Optional aside, good practice with step relations but tangential to the
@@ -931,10 +945,7 @@ theorem progress (t : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) : Tm.IsValue t ∨ �
         | inr hs => obtain ⟨t', h'⟩ := hs; exact ⟨<{ iszero t' }>, .isZeroStep t1 t' h'⟩
 ```
 
-:::grade
-```
-GRADE_THEOREM 3: progress
-```
+:::gradeTheorem 3 "progress"
 :::
 :::::
 
@@ -952,6 +963,10 @@ _strong progress_ from the Smallstep chapter?
 
 (E) Dunno
 ::::
+
+:::quizSolution
+(C) Strong progress implies progress
+:::
 
 :::::exercise (rating := 3) (name := "finish_progress_informal")
 Complete the corresponding informal proof.
@@ -1041,7 +1056,7 @@ Quick review: in the language defined at the start of this chapter...
 
 (A) True    (B) False
 
-:::answer
+:::quizSolution
 TRUE: This is the content of the progress theorem.
 :::
 ::::
@@ -1053,7 +1068,7 @@ In this language...
 
 (A) True    (B) False
 
-:::answer
+:::quizSolution
 TRUE: This can be proved by induction on values.
 :::
 ::::
@@ -1066,7 +1081,7 @@ In this language...
 
 (A) True    (B) False
 
-:::answer
+:::quizSolution
 TRUE: This is the determinism theorem.
 :::
 ::::
@@ -1078,7 +1093,7 @@ In this language...
 
 (A) True    (B) False
 
-:::answer
+:::quizSolution
 FALSE: normal forms do not reduce to anything.
 :::
 ::::
@@ -1120,10 +1135,7 @@ theorem preservation (t t' : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) (he : t ⟶ t
         | isZeroStep _ t1' hs => exact .isZero t1' (ih t1' hs)
 ```
 
-:::grade
-```
-GRADE_THEOREM 2: preservation
-```
+:::gradeTheorem 2 "preservation"
 :::
 :::::
 
@@ -1228,10 +1240,7 @@ theorem preservation' (t t' : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) (he : t ⟶ 
     | isZeroStep t1 t1' hs ih => cases hT with | isZero _ h => exact .isZero t1' (ih .nat h)
 ```
 
-:::grade
-```
-GRADE_THEOREM 3: preservation'
-```
+:::gradeTheorem 3 "preservation'"
 :::
 :::::
 
@@ -1275,7 +1284,7 @@ rules?  (Choose 1 for yes, 2 for no.)
   - Progress
   - Preservation
 
-:::answer
+:::quizSolution
 All three remain true.
 :::
 ::::
@@ -1292,7 +1301,7 @@ rule?
   - Progress
   - Preservation
 
-:::answer
+:::quizSolution
 All three remain true.
 :::
 ::::
@@ -1349,7 +1358,7 @@ variation1b (EX2M?): add the typing rule
 ```
 :::
 
-:::::exercise (rating := 2) (name := "variation1")
+:::::exercise (rating := 2) (name := "variation1") (manual := true)
 Suppose that we add this new rule to the typing relation:
 ```
 T_SuccBool : ⊢ t ⦂ Bool → ⊢ succ t ⦂ Bool
@@ -1378,7 +1387,7 @@ GRADE_MANUAL 2: variation1
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "variation2")
+:::::exercise (rating := 2) (name := "variation2") (manual := true)
 Suppose, instead, that we add this new rule to the `Tm.Step` relation:
 ```
 ST_Funny1 : if true then t2 else t3 ⟶ t3
@@ -1472,13 +1481,11 @@ of changing the definitions that break just one of the properties and
 leave the others alone.
 :::::
 
-:::dev
-```
-LATER: How about turning this into variation9?
-```
+:::dev PotentialImprovement
+How about turning this into variation9?
 :::
 
-:::::exercise (rating := 1) (name := "remove_pred0")
+:::::exercise (rating := 1) (name := "remove_pred0") (manual := true)
 The reduction rule `predZero` is a bit counter-intuitive: we might feel
 that it makes more sense for the predecessor of `0` to be undefined,
 rather than being defined to be `0`.  Can we achieve this simply by
@@ -1500,7 +1507,7 @@ GRADE_MANUAL 1: remove_pred0
 :::
 :::::
 
-:::::exercise (rating := 4) (name := "prog_pres_bigstep")
+:::::exercise (rating := 4) (name := "prog_pres_bigstep") (level := Advanced) (manual := true)
 Suppose our evaluation relation is defined in the big-step style.  State
 appropriate analogs of the progress and preservation properties.  (You do
 not need to prove them.)
