@@ -378,6 +378,16 @@ of reduction").
 
 Such terms are _stuck_.
 
+:::dev "Claude" LATER
+These two facts about `Tm` are the single-sorted successors of the `Combined`-language
+exercises `combined_step_deterministic` and `combined_strong_progress`, which were cut
+from the Smallstep chapter (the two-sorted Slang cannot express the ill-formed / stuck
+terms they relied on).  Make sure this chapter covers both angles those exercises did:
+determinism of stepping (`step_deterministic`, below) and the failure of strong
+progress via stuck terms (`some_term_is_stuck`, below).  If either is thinner than the
+cut Combined exercises, port the missing part here.
+:::
+
 ```lean
 def Tm.IsNormalForm (t : Tm) : Prop := _root_.IsNormalForm Tm.Step t
 
