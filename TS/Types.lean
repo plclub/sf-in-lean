@@ -29,15 +29,6 @@ htmlSplit := .never
 file := some "Types"
 %%%
 
-:::dev
-mwhicks1: This chapter comes after Smallstep in PLF, which comes after Imp
-and Hoare Logic. It defines its own typed language and does not use Imp; for
-the generic relation vocabulary (`Relation`, `IsNormalForm`, `Deterministic`,
-`Multi`) it imports the Smallstep chapter rather than re-inlining those
-definitions. Its own language and `⟶`/`⟶*` notation live in a `TM` namespace
-so they don't clash with Smallstep's when both chapters are in the book.
-:::
-
 :::instructors
 This chapter is short, but chewy.  Although all the individual pieces
 are reasonably simple and familiar, there are quite a few of them and
@@ -61,13 +52,6 @@ help.
 :::
 
 :::dev
-SOONER: Beginning at the Types chapter, the text gets a bit sparse!
-
-SOONER: The quizzes we have are pretty good, but the ones at the end of
-the chapter are too hard to jump straight into -- we need something in
-the middle.  (BCP 11/18: Actually, the ones at the end of the chapter
-are OK, but it's disappointing that no property breaks!)
-
 LATER: For consistency with the STLC definitions in future chapters, it
 would be better and simpler to represent numbers by a simple nat, rather
 than as strings of `succ` applied to `0` (which also introduces
@@ -81,10 +65,6 @@ LATER: There are a bunch of slides from earlier offerings of CIS500 that
 might be wonderful additions to the TERSE notes.
   https://www.seas.upenn.edu/~cis500/cis500-f06/lectures/1002.pdf
   https://www.seas.upenn.edu/~cis500/cis500-f06/lectures/1004.pdf
-
-LATER: There are some notational choices that need to be made
-consistently throughout the rest of the notes: naming of inference
-rules, naming of constructors, naming of syntactic categories, ...
 :::
 
 ::::full
@@ -255,8 +235,7 @@ partial def delabTm : Delab := whenPPOption getPPNotation do
 
 ### Values
 
-_Values_ are terms that are "terminal", in the sense that they cannot evaluate further.
-`true`, `false`, and numeric values (`0`, and `succ` (successor) of a numeric value).
+_Values_ are `true`, `false`, and numeric values (`0`, and `succ` of a numeric value).
 
 ```lean
 inductive Tm.IsBValue : Tm → Prop where
@@ -270,15 +249,6 @@ inductive Tm.IsNValue : Tm → Prop where
 def Tm.IsValue (t : Tm) : Prop := Tm.IsBValue t ∨ Tm.IsNValue t
 ```
 
-:::dev
-```
-HIDE: CH: This definition of numeric values that insists on well-typing
-seems overly complicated to me.  This idea is later dropped in MoreStlc
-both for numbers and also for lists, and some careful students do seem
-to notice the change and wonder about it.
-```
-:::
-
 ## Operational Semantics
 
 ::::full
@@ -286,40 +256,40 @@ Here is the single-step relation, first informally...
 ::::
 
 ```
-                   -------------------------------                   (ifTrue)
+                   -----------------------------                 (ifTrue)
                    if true then t1 else t2 ⟶ t1
 
-                   -------------------------------                  (ifFalse)
+                   ------------------------------                (ifFalse)
                    if false then t1 else t2 ⟶ t2
 
-                               t1 ⟶ t1'
-            ------------------------------------------------             (ifStep)
+                              t1 ⟶ t1'
+            -----------------------------------------------      (ifStep)
             if t1 then t2 else t3 ⟶ if t1' then t2 else t3
 
-                             t1 ⟶ t1'
-                         --------------------                          (succStep)
+                              t1 ⟶ t1'
+                         -------------------                     (succStep)
                          succ t1 ⟶ succ t1'
 
-                           ------------                               (predZero)
+                           -----------                           (predZero)
                            pred 0 ⟶ 0
 
-                         numeric value v
-                        -------------------                        (predSucc)
+                            IsNValue v
+                        ------------------                       (predSucc)
                         pred (succ v) ⟶ v
 
                               t1 ⟶ t1'
-                         --------------------                          (predStep)
+                         -------------------                     (predStep)
                          pred t1 ⟶ pred t1'
 
-                          -----------------                         (isZeroZero)
+                          ----------------                       (isZeroZero)
                           iszero 0 ⟶ true
 
-                         numeric value v
-                      -------------------------                  (isZeroSucc)
+                             IsNValue v
+                      ------------------------                   (isZeroSucc)
                       iszero (succ v) ⟶ false
 
-                            t1 ⟶ t1'
-                       ------------------------                      (isZeroStep)
+                              t1 ⟶ t1'
+                       -----------------------                   (isZeroStep)
                        iszero t1 ⟶ iszero t1'
 ```
 
@@ -330,11 +300,16 @@ Here is the single-step relation, first informally...
 :::slidebreak
 :::
 
+:::dev "mwhicks1" NOW
+We need to decide how we are going to do notation. Here we are defining the scoped
+notation after the inductive definition, but using the expression syntax within
+the definition. Further down we play some macro tricks to reserve the notation
+prior to defining the inductive that uses it. This looks better but may be
+distasteful or dangerous. Decide on what to do and stick with it. Reflect it
+back in Slang and Smallstep, potentially.
+:::
+
 ```lean
--- We give the rules with explicit `Tm.Step …` and then attach `⟶` as a
--- *scoped* notation.  Scoping keeps it from clashing with the Smallstep
--- chapter's own global `⟶` (a different relation): inside this chapter's `TM`
--- namespace the two overload, and Lean picks the one that typechecks.
 inductive Tm.Step : Tm → Tm → Prop where
   | ifTrue (t1 t2 : Tm) : Tm.Step <{ if true then t1 else t2 }> t1
   | ifFalse (t1 t2 : Tm) : Tm.Step <{ if false then t1 else t2 }> t2
@@ -371,22 +346,12 @@ can take a step (once, before becoming stuck).
 ## Normal Forms and Values
 
 The first interesting thing to notice about this `Tm.Step` relation is that
-the strong progress theorem from the Smallstep chapter fails here.  That
+the strong progress theorem from the {ref "Smallstep"}[Smallstep] chapter fails here.  That
 is, there are terms that are normal forms (they can't take a step) but
 not values (they are not included in our definition of possible "results
 of reduction").
 
 Such terms are _stuck_.
-
-:::dev "Claude" PotentialImprovement
-These two facts about `Tm` are the single-sorted successors of the `Combined`-language
-exercises `combined_step_deterministic` and `combined_strong_progress`, which were cut
-from the Smallstep chapter (the two-sorted Slang cannot express the ill-formed / stuck
-terms they relied on).  Make sure this chapter covers both angles those exercises did:
-determinism of stepping (`step_deterministic`, below) and the failure of strong
-progress via stuck terms (`some_term_is_stuck`, below).  If either is thinner than the
-cut Combined exercises, port the missing part here.
-:::
 
 ```lean
 def Tm.IsNormalForm (t : Tm) : Prop := _root_.IsNormalForm Tm.Step t
@@ -418,10 +383,10 @@ language, the set of values is a subset of the set of normal forms.
 This is important because it shows we did not accidentally define things
 so that some value could still take a step.
 
-:::dev BeforeNextRelease
+::::instructors
 Not exactly sure why, but this seems to be very tricky for
 students.
-:::
+::::
 
 ```lean
 theorem nvalue_is_nf (t : Tm) (h : Tm.IsNValue t) : Tm.IsNormalForm t := by
@@ -451,13 +416,13 @@ theorem value_is_nf (t : Tm) (h : Tm.IsValue t) : Tm.IsNormalForm t := by
 ```
 :::::
 
-:::dev
+::::instructors
 ```
-HIDE: The "other way" mentioned in the hint -- induction on the term
+The "other way" mentioned in the hint: induction on the term
 itself rather than on the numeric-value evidence.  It goes through, but
 is a bit longer than the `nvalue_is_nf` route above.
 ```
-:::
+::::
 
 ```lean
 theorem value_is_nf' : ∀ t, Tm.IsValue t → Tm.IsNormalForm t := by
@@ -608,12 +573,11 @@ live Lean using this chapter's `<{ … }>` grammar and reserved-notation
 setup.
 ::::
 
-:::dev
+:::dev "mwhicks1"
 ```
-HIDE: In the Rocq source these were a hidden, never-uncommented draft
+In the Rocq source these were a hidden, never-uncommented draft
 (with `eval` still to be renamed to `step`).  Here they are activated as
-live Lean.  The step relation and function build; the yes/no answers below
-are stated but not (yet) proved -- a natural follow-up exercise.
+live Lean. Not sure if we want to keep this.
 ```
 :::
 
@@ -624,6 +588,7 @@ not a numeric value.  (It is built with exactly the same reserved-notation
 setup as `Tm.Step`; note `predSucc`/`isZeroSucc` no longer take a premise.)
 
 ```lean
+-- Reserve the notation ⇢ here so we can use it in the definition
 syntax:40 term:41 " ⇢ " term:41 : term
 macro_rules | `($t ⇢ $t') => `($(Lean.mkIdent `Tm.AltStep) $t $t')
 
@@ -723,32 +688,6 @@ types (either numeric or boolean) of their final results.
 _Types_ describe the possible shapes of values.
 :::
 
-:::dev
-```
-NOTATION: SOONER: BCP 19: Wondering if we should replace "\in" by just
-"in"...  The backslash is ugly, and I've never succeeded in getting the
-\in to reliably typeset as a symbol.  I suppose something like :: would be
-another alternative.  Or indeed just :, if we put <{...}> around all
-typing judgements.  BCP 23: :: seems not to work (not sure why - maybe
-used in the standard library?), but putting <{...}> around all typing
-judgements seems like a better solution anyway.  Then, I think, we could
-just use :, which would be perfect.  Maybe even |- instead of |-- ??
-
-SOONER: BCP 21: What about putting the brackets around the very outside?
-I.e., <{ |-- true \in Bool }> instead of |-- <{ true }> \in Bool?  After
-all, the type (and later the context) are also from the object language...
-
-NOTATION: SAZ 2024 - I have implemented this suggestion, which I think is
-a bit nicer.  We can get away with a simpler solution in this file because
-we don't have variables, etc.
-
-SOONER: Andrew Appel 23: In my opinion, 80 is the wrong level, and Iris
-made the wrong decision.  However, last year we modified the VST level to
-80 because some research projects import both VST and Iris.  So I still
-recommend 80 for SF.
-```
-:::
-
 ::::full
 The _typing relation_ `⊢ t ⦂ T` relates terms to the types of their
 results.  In informal notation it is often written `⊢ t ⦂ T` and
@@ -758,34 +697,41 @@ additional "context" arguments are written to the left of the turnstile.
 For the moment, the context is always empty.
 
 ```
-                     ---------------              (tru)
+                     -------------                (tru)
                      ⊢ true ⦂ Bool
 
-                     ----------------             (fls)
+                     --------------               (fls)
                      ⊢ false ⦂ Bool
 
-      ⊢ t1 ⦂ Bool    ⊢ t2 ⦂ T    ⊢ t3 ⦂ T
-      -----------------------------------------   (ite)
-            ⊢ if t1 then t2 else t3 ⦂ T
+          ⊢ t1 ⦂ Bool    ⊢ t2 ⦂ T    ⊢ t3 ⦂ T
+          -----------------------------------     (ite)
+              ⊢ if t1 then t2 else t3 ⦂ T
 
-                     ----------                   (zero)
-                     ⊢ 0 ⦂ Nat
+                       ---------                  (zero)
+                       ⊢ 0 ⦂ Nat
 
-                     ⊢ t1 ⦂ Nat
-                   ----------------               (succ)
-                   ⊢ succ t1 ⦂ Nat
+                      ⊢ t1 ⦂ Nat
+                    ---------------               (succ)
+                    ⊢ succ t1 ⦂ Nat
 
-                     ⊢ t1 ⦂ Nat
-                   ----------------               (pred)
-                   ⊢ pred t1 ⦂ Nat
+                      ⊢ t1 ⦂ Nat
+                    ---------------               (pred)
+                    ⊢ pred t1 ⦂ Nat
 
-                     ⊢ t1 ⦂ Nat
-                  -------------------             (isZero)
-                  ⊢ iszero t1 ⦂ Bool
+                      ⊢ t1 ⦂ Nat
+                   ------------------             (isZero)
+                   ⊢ iszero t1 ⦂ Bool
 ```
 ::::
 
 :::slidebreak
+:::
+
+Here are the formal rules.
+
+:::dev "mwhicks1" NOW
+What follows is really ugly, with lots of notation hackery around the bit
+we want the reader to actually see. Not sure what an easy fix would be.
 :::
 
 ```lean
@@ -793,11 +739,11 @@ inductive Ty where
   | bool
   | nat
 
--- As with `⟶`, reserve the typing notation so the relation can be defined
--- using it.  The whole judgment is wrapped in `<{ … }>` (like the Rocq
--- `<{ |-- t \in T }>`): the term is written in the object grammar (bare
--- variables, no inner `<{ }>`) and the type as `Bool`/`Nat` (a type variable is
--- spliced, `~T` escapes to a Lean `Ty`).  The `app_unexpander` prints it back.
+-- Here we reserve the typing notation so the relation can be defined
+-- using it.  The whole judgment is wrapped in `<{ … }>` : the term is written in
+-- the object grammar (bare variables, no inner `<{ }>`) and the type as `Bool`/`Nat`
+-- (a type variable is spliced, `~T` escapes to a Lean `Ty`).
+-- The `app_unexpander` prints it back.
 syntax:max "<{ " "⊢ " tm " ⦂ " ident " }>" : term
 syntax:max "<{ " "⊢ " tm " ⦂ " "~" term:max " }>" : term
 macro_rules
@@ -951,7 +897,7 @@ theorem progress (t : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) : Tm.IsValue t ∨ �
 
 ::::quiz
 What is the relation between the _progress_ property defined here and the
-_strong progress_ from the Smallstep chapter?
+_strong progress_ from the {ref "Smallstep"}[Smallstep] chapter?
 
 (A) No difference -- they mean the same thing
 
@@ -1045,7 +991,7 @@ GRADE_MANUAL 3: finish_progress_informal
 
 ::::full
 This theorem is more interesting than the strong progress theorem that we
-saw in the Smallstep chapter, where _all_ normal forms were values.  Here
+saw in the {ref "Smallstep"}[Smallstep] chapter, where _all_ normal forms were values.  Here
 a term can be stuck, but only if it is ill typed.
 ::::
 
@@ -1274,8 +1220,8 @@ theorem soundness (t t' : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) (hm : t ⟶* t')
 ::::quiz
 Suppose we add the following two new rules to the reduction relation:
 ```
-| ST_PredTrue  : pred true  ⟶ pred false
-| ST_PredFalse : pred false ⟶ pred true
+| predTrue  : pred true  ⟶ pred false
+| predFalse : pred false ⟶ pred true
 ```
 Which of the following properties remain true in the presence of these
 rules?  (Choose 1 for yes, 2 for no.)
@@ -1292,7 +1238,7 @@ All three remain true.
 ::::quiz
 Suppose, instead, that we add this new rule to the typing relation:
 ```
-| T_IfFunny : ⊢ t2 ⦂ Nat → ⊢ if true then t2 else t3 ⦂ Nat
+| ifFunny : ⊢ t2 ⦂ Nat → ⊢ if true then t2 else t3 ⦂ Nat
 ```
 Which of the following properties remain true in the presence of this
 rule?
@@ -1348,12 +1294,12 @@ HIDE: Two further variations kept for the instructors only (they overlap
 with the two quizzes in the Type Soundness section above).
 
 variation1a (EX2M?): add the two step rules
-  ST_PredTrue  : pred true  ⟶ pred false
-  ST_PredFalse : pred false ⟶ pred true
+  predTrue  : pred true  ⟶ pred false
+  predFalse : pred false ⟶ pred true
 -- Determinism, Progress, and Preservation all remain true.
 
 variation1b (EX2M?): add the typing rule
-  T_IfFunny : ⊢ t2 ⦂ Nat → ⊢ if true then t2 else t3 ⦂ Nat
+  ifFunny : ⊢ t2 ⦂ Nat → ⊢ if true then t2 else t3 ⦂ Nat
 -- Determinism, Progress, and Preservation all remain true.
 ```
 :::
@@ -1361,7 +1307,7 @@ variation1b (EX2M?): add the typing rule
 :::::exercise (rating := 2) (name := "variation1") (manual := true)
 Suppose that we add this new rule to the typing relation:
 ```
-T_SuccBool : ⊢ t ⦂ Bool → ⊢ succ t ⦂ Bool
+succBool : ⊢ t ⦂ Bool → ⊢ succ t ⦂ Bool
 ```
 Which of the following properties remain true in the presence of this
 rule?  For each one, write either "remains true" or else "becomes false."
@@ -1390,7 +1336,7 @@ GRADE_MANUAL 2: variation1
 :::::exercise (rating := 2) (name := "variation2") (manual := true)
 Suppose, instead, that we add this new rule to the `Tm.Step` relation:
 ```
-ST_Funny1 : if true then t2 else t3 ⟶ t3
+funny1 : if true then t2 else t3 ⟶ t3
 ```
 Which of the above properties become false in the presence of this rule?
 For each one that does, give a counter-example.
@@ -1398,7 +1344,7 @@ For each one that does, give a counter-example.
 :::solution
 ```
 - Determinism: becomes false -- `if true then 0 else (succ 0)` can now step
-  to either `0` (ifTrue) or `succ 0` (ST_Funny1).
+  to either `0` (ifTrue) or `succ 0` (funny1).
 - Progress and preservation: remain true.
 ```
 :::
@@ -1413,7 +1359,7 @@ GRADE_MANUAL 2: variation2
 :::::exercise (rating := 2) (name := "variation3")
 Suppose instead that we add this rule:
 ```
-ST_Funny2 : t2 ⟶ t2' → if t1 then t2 else t3 ⟶ if t1 then t2' else t3
+funny2 : t2 ⟶ t2' → if t1 then t2 else t3 ⟶ if t1 then t2' else t3
 ```
 Which of the above properties become false in the presence of this rule?
 For each one that does, give a counter-example.
@@ -1430,7 +1376,7 @@ preservation remain true.
 :::::exercise (rating := 2) (name := "variation4")
 Suppose instead that we add this rule:
 ```
-ST_Funny3 : pred false ⟶ pred (pred false)
+funny3 : pred false ⟶ pred (pred false)
 ```
 Which of the above properties become false in the presence of this rule?
 For each one that does, give a counter-example.
@@ -1445,7 +1391,7 @@ All three properties remain true.
 :::::exercise (rating := 2) (name := "variation5")
 Suppose instead that we add this rule:
 ```
-T_Funny4 : ⊢ 0 ⦂ Bool
+funny4 : ⊢ 0 ⦂ Bool
 ```
 Which of the above properties become false in the presence of this rule?
 For each one that does, give a counter-example.
@@ -1461,7 +1407,7 @@ Progress becomes false: `if 0 then true else true` has type `Bool`, is a
 :::::exercise (rating := 2) (name := "variation6")
 Suppose instead that we add this rule:
 ```
-T_Funny5 : ⊢ pred 0 ⦂ Bool
+funny5 : ⊢ pred 0 ⦂ Bool
 ```
 Which of the above properties become false in the presence of this rule?
 For each one that does, give a counter-example.
@@ -1548,18 +1494,3 @@ GRADE_MANUAL 6: prog_pres_bigstep
 ```
 :::
 :::::
-
-:::dev
-```
-PORT STATUS: Covers everything except the HIDE
-"Typed Imp" (TImp) section, which uses Imp (deferred with the rest of the
-Imp-dependent TS material).  Graded exercises from the class autograder
-(`TypesTest.v`) all present & building (bare + Verso), 0 sorries:
-`some_term_is_stuck`, `value_is_nf`, `progress`, `preservation`, `preservation'`,
-subject_expansion, and the manual/prose exercises finish_progress_informal,
-finish_preservation_informal, variation1, variation2, remove_pred0,
-prog_pres_bigstep.  All chapter quizzes, the informal progress/preservation
-proofs, `not_has_type'`, and the alternate `value_is_nf'` proof (term
-induction) are now present.
-```
-:::
