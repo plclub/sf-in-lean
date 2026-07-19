@@ -422,10 +422,7 @@ example : nand MyBool.false MyBool.true  =  MyBool.true  := solution!(by rfl)
 example : nand MyBool.true  MyBool.true   = MyBool.false := solution!(by rfl)
 ```
 
-:::grade
-```
-GRADE_THEOREM 1: nand_test4
-```
+:::gradeTheorem 1 "nand_test4"
 :::
 ::::
 
@@ -444,10 +441,7 @@ example : and3 MyBool.true  MyBool.false MyBool.true  = MyBool.false := solution
 example : and3 MyBool.true  MyBool.true  MyBool.false = MyBool.false := solution!(by rfl)
 ```
 
-:::grade
-```
-GRADE_THEOREM 1: and3_test4
-```
+:::gradeTheorem 1 "and3_test4"
 :::
 ::::
 
@@ -593,10 +587,7 @@ theorem false_or : ∀ (b : MyBool), (MyBool.false || b) = b := by
     rfl
 ```
 
-:::grade
-```
-GRADE_THEOREM 1: false_or_exercise
-```
+:::gradeTheorem 1 "false_or_exercise"
 :::
 ::::
 
@@ -822,15 +813,16 @@ result.
 ::::exercise (rating := 1) (name := "is_weekend")
 Define a function that takes a day and returns true if the day is
 a weekend, and false otherwise.
-You may wonder what the `@[irreducible]`, `seal` and `unseal`,
-that we use in the examples below mean.
-Hold onto this question; we will explain shortly.
 
-Hint: You could do this by pattern matching on each possible day of the week,
-or you could try to come up with a shorter solution...
+Then, fill in right-hand sides of the `example` blocks below.
+If you've done both correctly, the blocks will produce no errors
+and contain no `sorry`.
+
+Hint: You could write this function by pattern matching on
+each possible day of the week, or you could try to
+come up with a shorter solution...
 
 ```lean
-@[irreducible]
 def is_weekend (d : Day) : Bool
   := solution!
     (match d with
@@ -839,19 +831,14 @@ def is_weekend (d : Day) : Bool
     | _ => false
     )
 
-unseal is_weekend
 example : is_weekend Day.sunday = true := solution!(by rfl)
 example : is_weekend Day.friday = false := solution!(by rfl)
-seal is_weekend
 ```
 :::dev "Roger Burtonpatel (rogerburtonpatel)"
 , to NH: 1/2 new exercises to grade. Thanks!
 :::
 
-:::grade
-```
-GRADE_THEOREM 1: is_weekend
-```
+:::gradeTheorem 1 "is_weekend"
 :::
 ::::
 
@@ -864,8 +851,10 @@ Black is an inversion of white, and vice versa.
 Red is an inversion of blue, and vice versa.
 Green is not an inversion of anything.
 
+As before, write the right-hand sides of the `example` blocks
+to ensure they pass with no `sorry`.
+
 ```lean
-@[irreducible]
 def is_inversion (c1 c2 : Color) : Bool
   := solution!
     (match c1, c2 with
@@ -876,23 +865,18 @@ def is_inversion (c1 c2 : Color) : Bool
     | _, _ => false
     )
 
-unseal is_inversion
 example : is_inversion Color.black Color.white = true := solution!(by rfl)
 example : is_inversion Color.white Color.black = Bool.true := solution!(by rfl)
 example : is_inversion (Color.primary RGB.red) (Color.primary RGB.blue) = Bool.true :=
   solution!(by rfl)
 example : is_inversion (Color.primary RGB.green) (Color.primary RGB.red) = Bool.false :=
   solution!(by rfl)
-seal is_inversion
 ```
 :::dev "Roger Burtonpatel (rogerburtonpatel)"
 , to NH: 2/2 new exercise to grade
 :::
 
-:::grade
-```
-GRADE_THEOREM 1: is_inversion
-```
+:::gradeTheorem 1 "is_inversion"
 :::
 ::::
 
@@ -1266,13 +1250,11 @@ def four  : Nat := succ three
 We can also write functions on `Nat`.
 
 ```lean
-@[irreducible]
 def pred (n : Nat) : Nat :=
   match n with
   | zero => zero
   | succ n' => n'
 
-@[irreducible]
 def minustwo (n : Nat) : Nat :=
   match n with
   | zero => zero
@@ -1320,17 +1302,14 @@ Here are some recursive functions on natural numbers:
 :::
 
 ```lean
-@[irreducible]
 def even (n : Nat) : Bool :=
   match n with
   | zero => true
   | succ (zero) => false
   | succ (succ n') => even n'
 
-unseal even
 example : even one = false  := by rfl
 example : even four = true := by rfl
-seal even
 ```
 
 :::slidebreak
@@ -1340,14 +1319,11 @@ We could define `odd` by a similar recursive declaration, but
 here is a simpler way:
 
 ```lean
-@[irreducible]
 def odd (n : Nat) : Bool :=
   not (even n)
 
-unseal odd even
 example : odd one = true  := by rfl
 example : odd four = false := by rfl
-seal odd even
 ```
 
 :::slidebreak
@@ -1356,7 +1332,6 @@ seal odd even
 This function takes multiple parameters, recursing on the second:
 
 ```lean
-@[irreducible]
 def add (n : Nat) (m : Nat) : Nat :=
   match m with
   | zero => n
@@ -1383,13 +1358,13 @@ scoped infixl:65 " + " => add
 ## Proving properties about functions in Lean
 
 ::::full
-Being recursive, `add` is an example of a more sophisticated
-class of functions. In this chapter and beyond, we will _prove_
-properties about recursive functions like `add` over inductive
-datatypes like `Nat` using _simplification rules_ about their
-behavior.
+Being recursive on a `Nat` and returning `Nat` as well,
+`add` is the first example of a more sophisticated class of functions.
+In this chapter and beyond, we will _prove_ properties
+about recursive functions like `add` over inductive datatypes
+like `Nat`, using _simplification rules_ about their behavior.
 
-Here is a simple rule about `add`:
+Here is a simplification rule about `add`:
 
 - `n + zero = n`
 
@@ -1401,7 +1376,6 @@ We can prove properties of recursive functions like `add`:
 ::::
 
 ```lean
-unseal add in
 theorem add_zero : ∀ n : Nat, n + zero = n := by
   intro n
   rfl
@@ -1417,7 +1391,7 @@ all these comments when we fix the printing.
 RAB: Yes! Someone please let us know how!
 :::
 
-We can then use the `add_zero` rule to carry out a simple proof
+Using our simplification rule `add_zero`, we can carry out a simple proof
 about natural numbers!
 
 ```lean
@@ -1520,7 +1494,6 @@ Here's another rule we can use for `add`:
 ::::
 
 ```lean
-unseal add in
 theorem add_succ : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
   intro n m
   rfl
@@ -1548,7 +1521,6 @@ attribute [pp_nodot] succ
 Step through the proof below again and see how Lean's printing has changed.
 
 ```lean
-unseal add in
 theorem add_succ' : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
   intro n m
   rfl
@@ -1557,9 +1529,9 @@ theorem add_succ' : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
 Now, let's use `add_succ` in a proof:
 
 ```lean
-theorem add_one (n : Nat) : n + (succ zero) = succ (n + zero) + zero := by
+theorem add_one (n : Nat) : n + (succ zero) = succ n + zero := by
   rewrite [add_succ]
-  rewrite [add_zero]  /- notice how this handles an addition on both sides -/
+  rewrite [add_zero]
   rewrite [add_zero]
   rfl
 ```
@@ -1573,19 +1545,14 @@ changes the proof state and hovering over each argument to `rewrite` to see its 
 ## Irreducibility, Rewriting, and Proof Engineering
 
 ::::full
-The definitions and proofs above use a few somewhat mysterious conventions:
-we write `@[irreducible]` above some of our definitions, and we
-write `unseal` before some of our proofs and `seal` after them.
-These are not things you will usually see in real Lean developments;
-however, we use them in this book to enforce a particular convention
-to help you build good Lean habits.
-
 Lean, like any other programming language, has conventions and best practices
-for writing good software. You are probably familiar with object oriented programming,
-for example, in which it is considered good practice not to access the
+for writing good software. In object-oriented programming,
+for example, it is considered good practice not to access the
 fields of an object directly, but instead to use getter and setter methods.
 This helps to encapsulate the object's definition, so that, if its fields or implementation
-change, the interface it exposes to the outside world remains the same.
+ever change, the interface it exposes to the outside world remains the same.
+In simple examples such conventions may seem trivial or even silly; in complex codebases,
+it is the only way to maintain crucial invariants that prevent a system from becoming unmaintainable.
 
 The same principle applies to definitions and proofs in Lean.
 In idiomatic Lean, it is considered poor style to "peek" through
@@ -1593,58 +1560,54 @@ definitions by using `rfl` to implicitly simplify expressions
 that aren't syntactically identical. If you take a look at the proofs of
 `add_zero` and `add_succ` above, you will notice this is exactly what we did
 when we used the `rfl` tactic.
-::::
 
-::::terse
-Marking a definition `@[irreducible]` prevents proofs from "peeking" through it with `rfl`.
-::::
+However, the foundational theorems `add_zero` and `add_succ` provide a
+characterization of the behavior of `add` that makes using `rfl` to simplify
+expressions unnecessary; instead, we can rewrite by these theorems anywhere we want to describe
+how `add` evaluates.
 
-::::full
 In this text, to enforce idiomatic style, we mark
-definitions with `@[irreducible]` to prevent this peeking,
+definitions with `attribute [irreducible]` to prevent this peeking,
 also called *definitional equality abuse* (*defeq abuse*, for short).
-The `unseal` we wrote before the proof of `add_zero` temporarily
-allows this, but only in that proof. We allow unsealing the definition
-for `add_zero` and `add_succ`, but then expect that from this point on,
-these foundational theorems should provide a characterization of the behavior
-of `add` that makes further unsealing unnecessary. Instead,
-we can rewrite by these theorems anywhere we want to describe how `add`
-evaluates. The motivation for this strict discipline is both readability
-and performance; unfolding definitions can have negative effects as libraries scale.
+We place this attribute after the proofs of `add_zero` and `add_succ`,
+and can then rewrite by these theorems anywhere we want to describe
+how `add` evaluates.
+In real-world Lean developments, the style of writing proofs using
+simplification rules is both standard and expected. Definitions in those
+developments may not use `attribute [irreducible]`,
+but they _will_ have definitions that are not meant to be reduced.
+
+We use `attribute [irreducible]` here to enforce the style of
+using simplification rules now so that it is natural to you moving forward.
+We will relax this discipline in later chapters.
 ::::
 
 ::::terse
-`unseal` lifts that restriction just long enough to prove the theorems that characterize the definition.
+After proving the theorems that characterize a definition,
+we mark the definition `irreducible` to require rewriting by them instead
+of using `rfl`.
 ::::
 
-:::dev "Benjamin Pierce (bcpierce00)"
-We start by saying that what we're going to here is not what real lean developments do, but then
-explain why what we're doing in a way that makes it sound like it is (or should be) standard. And we
-never say what is the style that we *don't* do (but that standard Lean practice does).
-RAB: This will (hopefully) be addressed by our decision on hiding these
-definitions. Even if not, it seems odd to discuss how to write this section
-before we make that choice.
-:::
+```lean
+attribute [irreducible] add
+```
 
-These two theorems also follow a particular pattern. Let's look again at the
-definition of `add`:
+These characterizing theorems also follow a particular pattern. Let's look again at the
+definition of `add`, without the `+` notation for maximum clarity:
 
 ```lean
 namespace AddPlayground
 
-/- repeating the definition here for ease of reference:
 def add (n : Nat) (m : Nat) : Nat :=
   match m with
   | zero => n
-  | succ m' => succ (add n m') -/
+  | succ m' => succ (add n m')
 
-unseal add in
-theorem add_zero : ∀ (n : Nat), n + zero = n := by
+theorem add_zero : ∀ (n : Nat), add n zero = n := by
   intro n
   rfl
 
-unseal add in
-theorem add_succ : ∀ (n m : Nat), n + (succ m) = succ (n + m) := by
+theorem add_succ : ∀ (n m : Nat), add n (succ m) = succ (add n m) := by
   intro n m
   rfl
 
@@ -1654,13 +1617,13 @@ end AddPlayground
 ::::full
 Each of `add_zero` and `add_succ` correspond to one branch of the `match`
 statement defining `add` and describe how the evaluation of `add` proceeds
-in that case. The `add_zero` theorem describes how `n + zero` evaluates,
-while `add_succ` describes (symbolically) how `n + succ m` evaluates.
+in that case. The `add_zero` theorem describes how `add n zero` evaluates,
+while `add_succ` describes (symbolically) how `add n (succ m)` evaluates.
 Because these theorems describe how to simplify more complex expressions
 involving `add`, we call them _simplification lemmas_ for `add`.
 
 These are instances of a general pattern: each definition
- operating over enumerated types like `Nat`, `Bool`, `Day`, or `Color`
+operating over enumerated types like `Nat`, `Bool`, `Day`, or `Color`
 needs a simplification lemma for each branch of control flow through
 the function.
 
@@ -1673,30 +1636,42 @@ Each branch of a definition's control flow gets one _simplification lemma_. Here
 ::::
 
 ```lean
-unseal Nat.pred in
-theorem pred_zero : Nat.pred zero = zero := by rfl
+theorem pred_zero : pred zero = zero := by rfl
+theorem pred_succ n : pred (succ n) = n := by rfl
+```
 
-unseal Nat.pred in
-theorem pred_succ n : Nat.pred (succ n) = n := by rfl
+Now that we have defined and proved `pred`'s simplification lemmas,
+we can mark it `irreducible`, to enforce rewriting by these lemmas.
+
+```lean
+attribute [irreducible] pred
 ```
 
 Similarly, for each of the three branches of the definition of `even`,
 we need one simplification lemma:
 
 ```lean
-unseal even
 theorem even_zero : even zero = true := rfl
 theorem even_one : even (succ zero) = false := rfl
 theorem even_succ_succ n : even (succ (succ n)) = even n := rfl
-seal even
+
+attribute [irreducible] even odd
 ```
 
 ::::full
 In the remainder of this textbook, we will pair definitions
-with their simplification lemmas. After proving these lemmas, instead of using `rfl`
-to peek through the definitions, we will prefer rewriting
-by the lemmas, using `@[irreducible]` to enforce this policy,
-and only `unseal`ing the definition in the proofs of those lemmas themselves.
+with their simplification lemmas. After proving these lemmas,
+instead of using `rfl` to peek through the definitions, we will prefer rewriting
+by the lemmas.
+
+Eventually, we will introduce a way to automatically apply these simplfication lemmas,
+but for now these tactics are forbidden by our autograder.
+Real-world Lean uses automation extensively, and you will learn to do so
+by the end of this book and in the following volumes.
+For the moment it is important that you work through these early concepts
+by hand, without automation.
+By the time the more powerful tools are introduced,
+you will have the foundation to use them with precision and skill.
 ::::
 
 ::::terse
@@ -1705,14 +1680,6 @@ rather than `rfl`-ing through the definition.
 ::::
 
 ## Working with Numerals
-
-:::dev "Benjamin Pierce (bcpierce00)"
-The following lemmas are also needed by the TERSE version,
-so I am un-fulling them for now.
-But indeed the whole discussion here needs both TERSE and FULL versions.
-Or probably some of it should turn into an exercise?
-RAB: This will be part of our discussion on presenting laws.
-:::
 
 We know from our definitions above that `one` is just `succ zero`,
 `two` is `succ one`, and so on. We can write rules for these equalities too:
@@ -1773,7 +1740,6 @@ Now that we know how addition is defined, we can use it to define multiplication
 :::
 
 ```lean
-@[irreducible]
 def mul (n m : Nat) : Nat :=
   match m with
   | zero => zero
@@ -1782,20 +1748,39 @@ def mul (n m : Nat) : Nat :=
 scoped infixl:70 " * " => mul
 ```
 
+::::exercise (rating := 1) (name := "mul_simpl_rules")
 Multiplication, like any function we will prove properties about,
-   also has simplification rules.
+also has simplification rules.
+
+Remove `sorry` and prove the simplification rules for `mul` below.
+You will likely find the proofs of the simplification rules for `add`
+to be helpful as a model.
+
+:::dev
+@rogerburtonpatel: it would be nice if we could get the
+theorem _statements_ inside a `solution!` block as well.
+:::
 
 ```lean
-unseal mul in
 theorem mul_zero : ∀ n : Nat, n * zero = zero := by
-  intro n
-  rfl
+  solution!
+    intro n
+    rfl
 
-unseal mul add in
 theorem mul_succ : ∀ n m : Nat, n * (succ m) = (n * m) + n := by
-  intro n m
-  rfl
+  solution!
+    intro n m
+    rfl
+
+attribute [irreducible] mul
 ```
+
+:::grade
+```
+GRADE_THEOREM 1: mul_simpl_rules
+```
+:::
+::::
 
 :::dev "Benjamin Pierce (bcpierce00)"
 Again, this should be an exercise.
@@ -1803,7 +1788,7 @@ RAB: Agreed if we're keeping these visible; putting off
      small decision until large decision is made.
 :::
 
-Prove this property using rewriting with the simplification rules for addition and multiplication.
+Prove these thoerems using rewriting with the simplification rules for addition and multiplication.
 
 ::::full
 (We have given you the first line.) Notice how `rewrite`
@@ -1816,9 +1801,36 @@ as you write the proof, which makes it convenient to use `rewrite` blocks
 with multiple rules.
 ::::
 
-::::exercise (rating := 2) (name := "test_mult1")
+::::exercise (rating := 2) (name := "test_mul_add")
 ```lean
-theorem test_mult1 : (two * two : Nat) = four := by
+theorem zero_add_one : (zero + one : Nat) = one := by
+  rewrite [one_eq_succ_zero]
+  solution!
+    rewrite [add_succ, add_zero]
+    rfl
+
+theorem one_add_one : (one + one : Nat) = two := by
+  rewrite [one_eq_succ_zero]
+  solution!
+    rewrite [add_succ, add_zero]
+    rfl
+
+
+theorem zero_mul_two : (zero * two : Nat) = zero := by
+  rewrite [two_eq_succ_one, one_eq_succ_zero]
+  solution!
+    rewrite [mul_succ, mul_succ, mul_zero]
+    rewrite [add_zero, add_zero]
+    rfl
+
+theorem one_mul_two : (one * two : Nat) = two := by
+  rewrite [two_eq_succ_one, one_eq_succ_zero]
+  solution!
+    rewrite [mul_succ, mul_succ, mul_zero]
+    rewrite [add_succ, add_zero, add_succ, add_zero]
+    rfl
+
+theorem two_mul_two : (two * two : Nat) = four := by
   rewrite [two_eq_succ_one, one_eq_succ_zero]
   solution!
     rewrite [mul_succ, mul_succ, mul_zero]
@@ -1827,15 +1839,9 @@ theorem test_mult1 : (two * two : Nat) = four := by
     rfl
 ```
 
-:::grade
-```
-GRADE_THEOREM 2: test_mult1
-```
+:::gradeTheorem 2 "test_mul_add"
 :::
 ::::
-
-:::slidebreak
-:::
 
 :::slidebreak
 :::
@@ -1850,7 +1856,6 @@ Here is a function `beq` that tests natural numbers for
 equality, yielding a boolean.
 
 ```lean
-@[irreducible]
 def beq (n m : Nat) : Bool :=
   match n with
   | zero => match m with
@@ -1864,7 +1869,6 @@ def beq (n m : Nat) : Bool :=
 We could also write this by pattern matching on both `n` and `m` at the same time:
 
 ```lean
-@[irreducible]
 def beq' (n m : Nat) : Bool :=
   match n, m with
   | zero, zero => true
@@ -1882,7 +1886,6 @@ Similarly, the `ble` function tests whether its first argument is
 less than or equal to its second argument, yielding a boolean.
 
 ```lean
-@[irreducible]
 def ble (n m : Nat) : Bool :=
   match n with
   | zero => true
@@ -1891,7 +1894,6 @@ def ble (n m : Nat) : Bool :=
       | zero => false
       | succ m' => ble n' m'
 
-unseal ble
 theorem zero_ble (n : Nat) : ble zero n = true := by rfl
 theorem succ_ble_zero (n : Nat) : ble (succ n) zero = false := by rfl
 theorem succ_ble_succ (n m : Nat) : ble (succ n) (succ m) = ble n m := by rfl
@@ -1899,8 +1901,26 @@ theorem succ_ble_succ (n m : Nat) : ble (succ n) (succ m) = ble n m := by rfl
 example : ble two two = true  := by rfl
 example : ble two four = true  := by rfl
 example : ble four two = false := by rfl
-seal ble
+
 ```
+
+::::exercise (rating := 1) (name := "blt")
+Define a less-than function in terms of `ble`.
+
+```lean
+def blt (n m : Nat) : Bool
+  := solution!(ble (succ n) m)
+
+example : blt two two = false := solution!(by rfl)
+example : blt two four = true  := solution!(by rfl)
+example : blt four two = false := solution!(by rfl)
+
+attribute [irreducible] blt ble
+```
+
+:::gradeTheorem 1 "blt_test3"
+:::
+::::
 
 :::slidebreak
 :::
@@ -1931,35 +1951,13 @@ one for each of the four cases of control flow through the function.
 ::::
 
 ```lean
-unseal beq
 theorem zero_zero_beq_true : (zero == zero) = true := by rfl
 theorem zero_succ_beq_false (n : Nat) : (zero == (succ n)) = false := by rfl
 theorem succ_zero_beq_false (n : Nat) : ((succ n) == zero) = false := by rfl
 theorem succ_succ_beq (n m : Nat) : ((succ n) == (succ m)) = (n == m) := by rfl
-seal beq
-```
 
-::::exercise (rating := 1) (name := "blt")
-Define a less-than function in terms of `ble`.
-
-```lean
-@[irreducible]
-def blt (n m : Nat) : Bool
-  := solution!(ble (succ n) m)
-
-unseal blt ble
-example : blt two two = false := solution!(by rfl)
-example : blt two four = true  := solution!(by rfl)
-example : blt four two = false := solution!(by rfl)
-seal blt ble
+attribute [irreducible] beq
 ```
-
-:::grade
-```
-GRADE_THEOREM 1: blt_test3
-```
-:::
-::::
 
 # General Proofs about Natural Numbers
 
@@ -2010,10 +2008,7 @@ theorem add_id_exercise : ∀ n m o : Nat,
     rfl
 ```
 
-:::grade
-```
-GRADE_THEOREM 1: add_id_exercise
-```
+:::gradeTheorem 1 "add_id_exercise"
 :::
 ::::
 
@@ -2041,7 +2036,7 @@ Another simple but important-to-note automatic display feature is _indexing_:
 `mul_zero : ∀ (n : Nat), n * zero = zero` may display as
 `mul_zero  (n : Nat) : n * zero = zero`.
 
-Note how the (n : Nat) has moved _before_ the colon and has lost the ∀.
+Note how the `(n : Nat)` has moved _before_ the colon and has lost the ∀.
 The two definitions are equivalent for our purposes right now, but the
 second is preferred in idiomatic Lean developments.
 ::::
@@ -2049,7 +2044,7 @@ second is preferred in idiomatic Lean developments.
 :::dev
 Per Github discussion: Lean's convention is to prefer the declaration header style
 (`mul_zero  (n : Nat) : n * zero = zero`) over universal quantification style
-(`mul_zero : ∀ (n : Nat), n * zero = zero`). We probably still want to teach the univeral
+(`mul_zero : ∀ (n : Nat), n * zero = zero`). We probably still want to teach the universal
 quantification style at first, but should switch over to declaration header style
 quickly since that is the idiomatic Lean way to do things.
 
@@ -2067,7 +2062,7 @@ TODO
 ::::full
 Of course, not everything can be proved by simple calculation and
 rewriting: In general, the presence of unknown, hypothetical values
-(arbitrary numbers, booleans, etc.) can block proof.
+(arbitrary numbers, booleans, etc.) can block a proof.
 ::::
 
 :::terse
@@ -2305,10 +2300,7 @@ theorem or_false_true : ∀ b : Bool,
     exact h
 ```
 
-:::grade
-```
-GRADE_THEOREM 2: or_false_true
-```
+:::gradeTheorem 2 "or_false_true"
 :::
 ::::
 
@@ -2322,10 +2314,7 @@ theorem zero_neb_add_one : ∀ n : Nat,
     case succ n' => rewrite [zero_succ_beq_false]; rfl
 ```
 
-:::grade
-```
-GRADE_THEOREM 1: zero_nbeq_add_1
-```
+:::gradeTheorem 1 "zero_nbeq_add_1"
 :::
 ::::
 
@@ -2447,21 +2436,20 @@ inductive Bin : Type where
   | b0 (n : Bin)
   | b1 (n : Bin)
 
-@[irreducible]
+attribute [pp_nodot] Bin.b1 Bin.b0
+
 def incr (m : Bin) : Bin
   := solution!(match m with
   | .z => .b1 .z
   | .b0 m' => .b1 m'
   | .b1 m' => .b0 (incr m'))
 
-@[irreducible]
 def binToNat (m : Bin) : Nat
   := solution!(match m with
   | .z => zero
   | .b0 m' => binToNat m' * two
   | .b1 m' => binToNat m' * two + one)
 
-unseal incr
 example : incr (.b1 .z) = .b0 (.b1 .z) := solution!(by rfl)
 example : incr (.b0 (.b1 .z)) = .b1 (.b1 .z) := solution!(by rfl)
 example : incr (.b1 (.b1 .z)) = .b0 (.b0 (.b1 .z)) := solution!(by rfl)
@@ -2469,58 +2457,57 @@ example : incr (.b1 (.b1 .z)) = .b0 (.b0 (.b1 .z)) := solution!(by rfl)
 theorem incr_z : incr .z = .b1 .z := solution!(by rfl)
 theorem incr_b0 m : incr (.b0 m) = .b1 m := solution!(by rfl)
 theorem incr_b1 m : incr (.b1 m) = .b0 (incr m) := solution!(by rfl)
-seal incr
 
-unseal binToNat
 theorem binToNat_z : binToNat .z = zero := solution!(by rfl)
 theorem binToNat_b0 m : binToNat (.b0 m) = binToNat m * two := solution!(by rfl)
 theorem binToNat_b1 m : binToNat (.b1 m) = binToNat m * two + one := solution!(by rfl)
-seal binToNat
 ```
+
+You may find your previous proofs of `zero_add_one`, `one_add_one`, `zero_mul_two`,
+`one_mul_two`, and `two_mul_two` useful here.
 
 ```lean
-unseal Nat.mul Nat.add incr binToNat
-example : binToNat (.b0 (.b1 .z)) = two := solution!(by rfl)
-example : binToNat (incr (.b1 .z)) = add one (binToNat (.b1 .z)) := solution!(by rfl)
-example : binToNat (incr (incr (.b1 .z))) = add two (binToNat (.b1 .z)) := solution!(by rfl)
-example : binToNat (.b0 (.b0 (.b1 .z))) = four := solution!(by rfl)
-seal Nat.mul Nat.add incr binToNat
+example : binToNat (.b0 (.b1 .z)) = two := solution!(by
+  rewrite [binToNat_b0, binToNat_b1, binToNat_z]
+  rewrite [zero_mul_two, zero_add_one, one_mul_two]
+  rfl
+
+)
+example : binToNat (incr (.b1 .z)) = add one (binToNat (.b1 .z)) := solution!(by
+    rewrite [binToNat_b1, binToNat_z, incr_b1, binToNat_b0, incr_z, binToNat_b1, binToNat_z]
+    rewrite [zero_mul_two, zero_add_one, one_mul_two, one_add_one]
+    rfl
+)
+example : binToNat (incr (incr (.b1 .z))) = add two (binToNat (.b1 .z)) := solution!(by
+  rewrite [binToNat_b1, binToNat_z, incr_b1, incr_b0, binToNat_b1, incr_z, binToNat_b1, binToNat_z]
+  rewrite [zero_mul_two, zero_add_one, one_mul_two]
+  rfl
+)
+example : binToNat (.b0 (.b0 (.b1 .z))) = four := solution!(by
+  rewrite [binToNat_b0, binToNat_b0, binToNat_b1, binToNat_z]
+  rewrite [zero_mul_two, zero_add_one, one_mul_two, two_mul_two]
+  rfl
+)
+
+attribute [irreducible] incr binToNat
 ```
 
-:::grade
-```
-GRADE_THEOREM 0.5: incr_test1
-```
+:::gradeTheorem "0.5" "incr_test1"
 :::
 
-:::grade
-```
-GRADE_THEOREM 0.5: incr_test2
-```
+:::gradeTheorem "0.5" "incr_test2"
 :::
 
-:::grade
-```
-GRADE_THEOREM 0.5: incr_test3
-```
+:::gradeTheorem "0.5" "incr_test3"
 :::
 
-:::grade
-```
-GRADE_THEOREM 0.5: binToNat_test1
-```
+:::gradeTheorem "0.5" "binToNat_test1"
 :::
 
-:::grade
-```
-GRADE_THEOREM 0.5: binToNat_test2
-```
+:::gradeTheorem "0.5" "binToNat_test2"
 :::
 
-:::grade
-```
-GRADE_THEOREM 0.5: binToNat_test3
-```
+:::gradeTheorem "0.5" "binToNat_test3"
 :::
 ::::
 
@@ -2560,10 +2547,7 @@ theorem identity_fn_applied_twice : ∀ f : Bool → Bool,
     rfl
 ```
 
-:::grade
-```
-GRADE_THEOREM 1: identity_fn_applied_twice
-```
+:::gradeTheorem 1 "identity_fn_applied_twice"
 :::
 ::::
 
@@ -2615,10 +2599,7 @@ theorem and_eq_or : ∀ b c : Bool, (b && c) = (b || c) → b = c := by
       rfl
 ```
 
-:::grade
-```
-GRADE_THEOREM 3: and_eq_or
-```
+:::gradeTheorem 3 "and_eq_or"
 :::
 ::::
 
@@ -2755,10 +2736,7 @@ theorem letterComparison_Eq : ∀ l : Letter,
     intro l; cases l <;> rfl
 ```
 
-:::grade
-```
-GRADE_THEOREM 1: letterComparison_Eq
-```
+:::gradeTheorem 1 "letterComparison_Eq"
 :::
 ::::
 
@@ -2792,28 +2770,16 @@ example : gradeComparison ⟨F, plus⟩ ⟨F, plus⟩ = eq := solution!(by rfl)
 example : gradeComparison ⟨B, minus⟩ ⟨C, plus⟩ = gt := solution!(by rfl)
 ```
 
-:::grade
-```
-GRADE_THEOREM 0.5: gradeComparison_test1
-```
+:::gradeTheorem "0.5" "gradeComparison_test1"
 :::
 
-:::grade
-```
-GRADE_THEOREM 0.5: gradeComparison_test2
-```
+:::gradeTheorem "0.5" "gradeComparison_test2"
 :::
 
-:::grade
-```
-GRADE_THEOREM 0.5: gradeComparison_test3
-```
+:::gradeTheorem "0.5" "gradeComparison_test3"
 :::
 
-:::grade
-```
-GRADE_THEOREM 0.5: gradeComparison_test4
-```
+:::gradeTheorem "0.5" "gradeComparison_test4"
 :::
 ::::
 
@@ -2855,10 +2821,7 @@ theorem lowerLetter_lowers : ∀ l : Letter,
     | F => exact h
 ```
 
-:::grade
-```
-GRADE_THEOREM 2: lowerLetter_lowers
-```
+:::gradeTheorem 2 "lowerLetter_lowers"
 :::
 ::::
 
@@ -2889,16 +2852,10 @@ example : lowerGrade (lowerGrade (lowerGrade ⟨B, minus⟩)) = ⟨C, minus⟩ :
 theorem lowerGrade_F_Minus : lowerGrade ⟨F, minus⟩ = ⟨F, minus⟩ := solution!(by rfl)
 ```
 
-:::grade
-```
-GRADE_THEOREM 0.25: lowerGrade_A_Plus
-```
+:::gradeTheorem "0.25" "lowerGrade_A_Plus"
 :::
 
-:::grade
-```
-GRADE_THEOREM 0.25: lowerGrade_F_Minus
-```
+:::gradeTheorem "0.25" "lowerGrade_F_Minus"
 :::
 ::::
 
@@ -2944,10 +2901,7 @@ with the tactics we've introduced so far. Can you make this
 proof work with only `rw`, `rfl`, `exact`, etc?
 :::
 
-:::grade
-```
-GRADE_THEOREM 3: lowerGrade_lowers
-```
+:::gradeTheorem 3 "lowerGrade_lowers"
 :::
 ::::
 
@@ -2979,10 +2933,7 @@ theorem no_penalty_for_mostly_on_time : ∀ (lateDays : NatPlayground.Nat) (g : 
     rewrite [h]; rfl
 ```
 
-:::grade
-```
-GRADE_THEOREM 2: no_penalty_for_mostly_on_time
-```
+:::gradeTheorem 2 "no_penalty_for_mostly_on_time"
 :::
 ::::
 
@@ -2998,10 +2949,7 @@ theorem grade_lowered_once : ∀ (lateDays : NatPlayground.Nat) (g : Grade),
     rewrite [h9, h17]; rfl
 ```
 
-:::grade
-```
-GRADE_THEOREM 2: grade_lowered_once
-```
+:::gradeTheorem 2 "grade_lowered_once"
 :::
 ::::
 

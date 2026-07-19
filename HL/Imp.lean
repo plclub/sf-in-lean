@@ -2,6 +2,7 @@ import VersoManual
 import VersoManual.InlineLean
 import Illuminate
 import SFLMeta.Bnf
+import SFLMeta.DisplayMath
 import SFLMeta.Ignore
 import SFLMeta.Save
 import SFLMeta.Comment
@@ -39,7 +40,7 @@ This chapter plus `Maps` takes a little more than one
    definitions harder to talk about.)
 :::
 
-:::dev SOONER
+:::dev BeforeNextRelease
 Needs some WORKINCLASSes and some quizzes
 
 LATER: Another nice challenge exercise at some point would be to add
@@ -76,7 +77,7 @@ conventional mainstream languages such as C and Java.
 
 Here is a familiar mathematical function written in Imp.
 
-```
+```display
 Z := X;
 Y := 1;
 while Z <> 0 do
@@ -92,7 +93,7 @@ _Hoare Logic_, a popular logic for reasoning about imperative programs.
 
 # Arithmetic and Boolean Expressions
 
-:::dev SOONER
+:::dev BeforeNextRelease
 At this point, I usually take some of the lecture time to
    give a high-level picture of the structure of an interpreter, the
    processes of lexing and parsing, the notion of ASTs, etc.  Might be
@@ -138,7 +139,7 @@ inductive Bexp where
   | and (b1 b2 : Bexp)
 ```
 
-:::dev "Michael Hicks (mwhicks1)" SOONER
+:::dev "Michael Hicks (mwhicks1)" BeforeNextRelease
 Will we develop `ImpParser`? Mentioned below as an optional chapter
 :::
 
@@ -146,7 +147,11 @@ Will we develop `ImpParser`? Mentioned below as an optional chapter
 In this chapter, we'll mostly elide the translation from the concrete
 syntax that a programmer would actually write to these abstract syntax
 trees -- the process that, for example, would translate the string
-`"1 + 2 * 3"` to the AST `.plus (.num 1) (.mult (.num 2) (.num 3))`.
+`"1 + 2 * 3"` to the AST
+
+```display
+      .plus (.num 1) (.mult (.num 2) (.num 3))
+```
 
 The optional chapter `ImpParser` develops a simple lexical analyzer and
 parser that can perform this translation.  You do not need to understand
@@ -157,7 +162,7 @@ you may want to skim it.
 For comparison, here's a conventional BNF (Backus-Naur Form) grammar
 defining the same abstract syntax:
 
-```
+```display
 a := nat
     | a + a
     | a - a
@@ -256,7 +261,7 @@ def Bexp.eval (b : Bexp) : Bool :=
 ::::quiz
 What does the following expression evaluate to?
 
-```
+```display
 Aexp.eval (.plus (.num 3) (.minus (.num 4) (.num 1)))
 ```
 
@@ -394,10 +399,7 @@ example :
       = (.not (.gt (.num 4) (.num 8))) := solution!(by rfl)
 ```
 
-:::grade
-```
-GRADE_THEOREM 0.5: optimize_0plus_b_test1
-```
+:::gradeTheorem "0.5" "optimize_0plus_b_test1"
 :::
 
 ```lean
@@ -407,10 +409,7 @@ example :
       = (.and (.le (.num 4) (.num 5)) (.bool true)) := solution!(by rfl)
 ```
 
-:::grade
-```
-GRADE_THEOREM 0.5: optimize_0plus_b_test2
-```
+:::gradeTheorem "0.5" "optimize_0plus_b_test2"
 :::
 
 ```lean
@@ -421,10 +420,7 @@ theorem optimize_0plus_b_sound (b : Bexp) :
       simp_all [Bexp.optimize_0plus_b, optimize_0plus_sound]
 ```
 
-:::grade
-```
-GRADE_THEOREM 2: optimize_0plus_b_sound
-```
+:::gradeTheorem 2 "optimize_0plus_b_sound"
 :::
 :::::
 
@@ -495,7 +491,7 @@ _inference rules_, where the premises above the line justify the
 conclusion below the line.  For example, the constructor `plus`
 can be written like this as an inference rule:
 
-```
+```display
                           e1 ⇓ n1
                           e2 ⇓ n2
                     --------------------          (plus)
@@ -505,7 +501,7 @@ can be written like this as an inference rule:
 Notice the structural correspondence between this rule and our version of the inductive
 type with unnamed hypotheses:
 
-```
+```display
     | plus (a1 a2 : Aexp) (n1 n2 : Nat) :
         EvalR a1 n1 →
         EvalR a2 n2 →
@@ -532,7 +528,7 @@ like `e1` and `n1` are implicitly universally quantified. The whole
 collection of rules defines `⇓` as the smallest relation closed under
 them:
 
-```
+```display
                         -----------                (num)
                         num n ⇓ n
 
@@ -565,7 +561,7 @@ LATER: The first two quizzes here seem kind of boring.
 ::::quiz
 Which rules are needed to prove the following?
 
-```
+```display
 .mult (.plus (.num 3) (.num 1)) (.num 0) ⇓ 0
 ```
 
@@ -610,7 +606,7 @@ alternative, assuming there are no namespace issues..
 :::::exercise (rating := 1) (name := "beval_rules")
 Here, again, is the definition of the {name}`Bexp.eval` function:
 
-```
+```display
 def Bexp.eval (b : Bexp) : Bool :=
   match b with
   | bool b     => b
@@ -751,10 +747,7 @@ theorem Bexp.evalR_iff_eval (b : Bexp) (bv : Bool) :
       induction b <;> constructor <;> simp_all [Aexp.evalR_iff_eval]
 ```
 
-:::grade
-```
-GRADE_THEOREM 3: Bexp.evalR_iff_eval
-```
+:::gradeTheorem 3 "Bexp.evalR_iff_eval"
 :::
 :::::
 
@@ -906,7 +899,7 @@ only hold numbers.
 
 ## States
 
-:::dev LATER
+:::dev PotentialImprovement
 Maybe this section needs a little preface talking about "what is
    the meaning of an expression with variables?"...
 
@@ -1421,7 +1414,7 @@ Now we are ready to define the syntax and behavior of Imp _commands_
 (or _statements_). Informally, commands `c` are described by the
 following BNF grammar:
 
-```
+```display
 c := skip
    | x := a
    | c ; c
@@ -1704,7 +1697,7 @@ evaluation function tricky.
 Here's an attempt at defining an evaluation function for commands (with
 a bogus `while` case).
 
-:::dev LATER
+:::dev PotentialImprovement
 In SmallStep we need to package the state and command into a pair,
    so that we can talk about normal forms and such. Probably we should do it
    here too, for consistency. (Won't change much except the type
@@ -1796,7 +1789,7 @@ state `st` to `st'`".
 
 Operational Semantics
 
-:::dev SOONER
+:::dev BeforeNextRelease
 BCP 21: I wonder if `seq` would be easier to work with if st' and
    st'' were swapped...
 :::
@@ -1804,7 +1797,7 @@ BCP 21: I wonder if `seq` would be easier to work with if st' and
 Here is an informal definition of evaluation, presented as inference rules
 for readability:
 
-```
+```display
                       -----------------                  (skip)
                       st =[ skip ]=> st
 
@@ -1929,7 +1922,7 @@ some simple examples...
 ::::quiz
 Is the following proposition provable?
 
-```
+```display
 ∀ (c : Com) (st st' : State),
   st =[ skip; ~c ]=> st' →
   st =[ c ]=> st'
@@ -1937,7 +1930,7 @@ Is the following proposition provable?
 
 (A) Yes    (B) No    (C) Not sure
 
-:::answer
+:::quizSolution
 ```
 theorem quiz1_answer (c : Com) (st st' : State)
     (h : st =[ skip; ~c ]=> st') : st =[ c ]=> st' := by
@@ -1952,7 +1945,7 @@ theorem quiz1_answer (c : Com) (st st' : State)
 ::::quiz
 Is the following proposition provable?
 
-```
+```display
 ∀ (c1 c2 : Com) (st st' : State),
   st =[ ~c1 ~c2 ]=> st' →
   st =[ c1 ]=> st →
@@ -1969,7 +1962,7 @@ Answer is given later (`quiz2_answer`) as it depends on `ceval_deterministic`.
 ::::quiz
 Is the following proposition provable?
 
-```
+```display
 ∀ (b : Bexp) (c : Com) (st st' : State),
   st =[ if (~b) { ~c } else { ~c } ]=> st' →
   st =[ c ]=> st'
@@ -1977,7 +1970,7 @@ Is the following proposition provable?
 
 (A) Yes    (B) No    (C) Not sure
 
-:::answer
+:::quizSolution
 ```
 theorem quiz3_answer (b : Bexp) (c : Com) (st st' : State)
     (h : st =[ if (~b) { ~c } else { ~c } ]=> st') : st =[ c ]=> st' := by
@@ -1991,7 +1984,7 @@ theorem quiz3_answer (b : Bexp) (c : Com) (st st' : State)
 ::::quiz
 Is the following proposition provable?
 
-```
+```display
 ∀ (b : Bexp),
   (∀ st, b.eval st = true) →
   ∀ (c : Com) (st : State),
@@ -2000,7 +1993,7 @@ Is the following proposition provable?
 
 (A) Yes    (B) No    (C) Not sure
 
-:::answer
+:::quizSolution
 ```
 -- This one is tricky!
 theorem quiz4_answer (b : Bexp) (hbtrue : ∀ st, b.eval st = true)
@@ -2028,7 +2021,7 @@ theorem quiz4_answer (b : Bexp) (hbtrue : ∀ st, b.eval st = true)
 ::::quiz
 Is the following proposition provable?
 
-```
+```display
 ∀ (b : Bexp) (c : Com) (st : State),
   (¬ ∃ st', st =[ while (~b) { ~c } ]=> st') →
   ∀ st'', b.eval st'' = true
@@ -2036,7 +2029,7 @@ Is the following proposition provable?
 
 (A) Yes    (B) No    (C) Not sure
 
-:::answer
+:::quizSolution
 This claim is *false*, so it cannot be proved -- the proof gets
 stuck immediately:
 
@@ -2052,7 +2045,7 @@ theorem quiz5_answer (b : Bexp) (c : Com) (st : State)
 
 ## Determinism of Evaluation
 
-:::dev LATER
+:::dev PotentialImprovement
 Maybe this should go at the end of the file in a section marked
    optional? Not everybody will want to spend time on it.
 :::
@@ -2070,7 +2063,7 @@ In fact this cannot happen: `ceval` _is_ a partial function.
 Finally, we should pause to check that our evaluation relation really is a (partial) function...
 :::
 
-:::dev LATER
+:::dev PotentialImprovement
 Informal proof needed! (And one can surely be found in some past
    CIS500 exam solutions!)
 :::
@@ -2169,7 +2162,7 @@ theorem pup_to_2_ceval :
 ```
 :::::
 
-:::dev LATER
+:::dev PotentialImprovement
 Comment from reader: Another good place to mention lack of
    functional extensionality.  The 6 `→ₜ`/`t_update`s in the above theorem
    are not redundant, nor would `pup_to_2_ceval` be provable if the
@@ -2179,7 +2172,7 @@ Comment from reader: Another good place to mention lack of
 
 # Reasoning About Imp Programs
 
-:::dev LATER
+:::dev PotentialImprovement
 This section doesn't seem very useful -- to anybody! It takes too
    much time to go through it in class, and even for advanced students it's
    too low-level and grubby to be a very convincing motivation for what
@@ -2213,7 +2206,7 @@ theorem plus2_spec (st : State) (n : Nat) (st' : State)
       lia
 ```
 
-:::dev LATER
+:::dev PotentialImprovement
 This used to be recommended.  Should it be reinstated?
 :::
 
@@ -2282,7 +2275,7 @@ theorem loop_never_stops (st st' : State) : ¬ (st =[ loop ]=> st') := by
 ```
 :::::
 
-:::dev LATER
+:::dev PotentialImprovement
 Marc Bezem 2022:
    There are trade-offs between using tactics and additional lemmas. Here is
    a case where a lemma would make things clearer. For `loop_never_stops`,

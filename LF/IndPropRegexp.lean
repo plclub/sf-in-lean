@@ -1,5 +1,55 @@
 -- IndPropRegexp: Regular Expressions (Case Study from IndProp)
 
+/- Claude: PERFORMANCE NOTE (Claude-generated) — why the generated
+   `IndPropRegexpVerso` build carries document-level `maxHeartbeats` and
+   `maxRecDepth` options (emitted by `DOC_LEVEL_OPTIONS["IndPropRegexp"]` in
+   `scripts/to_verso.py`). Nothing below has been executed beyond the two
+   experiments explicitly marked VERIFIED.
+
+   Symptom. The bare chapter (`LF/IndPropRegexp.lean`) builds at Lean's
+   defaults, but the generated Verso chapter fails with (1) a `(deterministic)
+   timeout at isDefEq` on `weak_pumping_app`, and (2) once heartbeats are
+   raised, `maximum recursion depth reached in the code generator` plus a
+   `noncomputable ... block✝` error on the deep `::::::full` sections.
+
+   Root cause — both limits are hit in DOCUMENT-SCOPED passes, not in the proofs
+   themselves:
+   - Heartbeats: Verso's InlineLean re-drives elaboration during syntax
+     highlighting (attaching type/hover info per token). The pumping proofs are
+     heavy enough that highlighting `weak_pumping_app` alone exceeds the default
+     200000. The budget resets per top-level declaration, not per block.
+   - Recursion depth: the Lean code generator walks the generated
+     `Verso.Doc.Block` document term; this chapter's deep directive nesting
+     (`::::::full` around `:::::exercise` around code) overflows the default
+     limit, and the dependent def then reports as noncomputable.
+
+   Alternatives considered (why the obvious ones do NOT work):
+   - Splitting the big `lean` code block into smaller blocks: VERIFIED not to
+     help. Isolating `weak_pumping_app` in its own block still times out at
+     200000 — the budget is per-declaration, and that one proof is over budget
+     by itself.
+   - Scoping the bump with `set_option maxHeartbeats ... in` on the theorem:
+     VERIFIED not to help. The cost is in the highlighting pass, which runs
+     after the command and honors only document-level options, not a
+     per-theorem `... in`.
+   - Slimming `weak_pumping_app`'s proof (fewer broad `simp`/`omega` calls):
+     would cut the heartbeat cost but not the recursion-depth cost.
+
+   Current fix. `DOC_LEVEL_OPTIONS["IndPropRegexp"]` emits, just before `#doc`,
+   `set_option maxHeartbeats 2000000` and `set_option maxRecDepth 100000`. Other
+   chapters are untouched.
+
+   Proposed next step (NOT yet done). Extract the heavy `App` case of
+   `weak_pumping_app` into a named helper lemma — the same pattern the chapter
+   already uses for `star_app` (`star_app_aux`) and `mstar''` (`mstar''_aux`).
+   That turns one over-budget declaration into several under-budget ones, each
+   highlighted against its own fresh 200000 budget, and would likely let us drop
+   the `maxHeartbeats` override. Caveats: (a) it does NOT remove the
+   `maxRecDepth` line, which is driven by document nesting depth and is
+   independent of any single proof; (b) each extracted lemma must itself stay
+   under 200000 (confirm empirically); (c) it edits verbatim SF exercise proofs,
+   so it is a small pedagogy call, not a purely mechanical change. -/
+
 -- HIDEFROMHTML
 import LF.IndProp
 -- /HIDEFROMHTML

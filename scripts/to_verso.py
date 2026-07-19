@@ -69,7 +69,7 @@ open SFLMeta
 
 open InlineLean hiding lean
 
-#doc (Manual) "{title}" =>
+{doc_options}#doc (Manual) "{title}" =>
 %%%
 tag := "{file}"
 htmlSplit := .never
@@ -77,6 +77,21 @@ file := some "{file}"
 %%%
 
 """
+
+# Per-chapter document-level `set_option`s emitted just before `#doc`.  Unlike a
+# `set_option … in` inside a ```lean block, options here cover the whole
+# command — including InlineLean's syntax highlighting (which re-drives
+# elaboration) and the code generator's pass over the generated `Verso.Doc.Block`
+# document term.  IndPropRegexp needs both: its pumping proofs elaborate under
+# the highlighting overhead well past the default 200000 heartbeats, and the
+# chapter's deep directive nesting overflows the code generator's recursion
+# limit compiling the document `block` term (which then reports as noncomputable).
+# Other chapters compile within the defaults, so they are left untouched.  Keyed
+# by file_key; a graduated (direct-Verso) chapter carries the same options inline.
+DOC_LEVEL_OPTIONS = {
+    "IndPropRegexp": "set_option maxHeartbeats 2000000\n"
+                     "set_option maxRecDepth 100000\n\n",
+}
 
 FOOTER = ""
 
@@ -135,12 +150,14 @@ def _strip_title_comment(src: str, stem: str = None) -> str:
     return src[:m.start()] + src[m.end():]
 
 
-# LF modules that are authored directly in Verso (Basics, Induction) or are
-# plain Lean support modules (CustomTactics, Maps): an `import LF.X` of one of
-# these passes through unchanged.  Every *other* `import LF.X` refers to a
-# generated chapter, so it is rewritten to `import LF.XVerso`.
+# LF modules that are authored directly in Verso (Basics, Induction, UsingLean,
+# Lists) or are plain Lean support modules (CustomTactics, Maps): an
+# `import LF.X` of one of these passes through unchanged.  Every *other*
+# `import LF.X` refers to a generated chapter, so it is rewritten to
+# `import LF.XVerso`.
 # (Maps added by Claude: HL/TS chapters import LF.Maps for its definitions.)
-DIRECT_LF_MODULES = {"Basics", "Induction", "CustomTactics", "Maps"}
+DIRECT_LF_MODULES = {"Basics", "Induction", "UsingLean", "Lists", "Poly",
+                     "Tactics", "CustomTactics", "Maps"}
 
 _IMPORT_RE = re.compile(r'^import\s+(\S+)\s*$')
 
@@ -220,7 +237,7 @@ def _extract_imports(body: str):
 # generated outputs.  Add new tags here so they route cleanly instead of leaking
 # into the rendered chapter as prose.  INSTRUCTORS is deliberately NOT in this
 # set: it routes to :::instructor (handled separately, both line and block).
-_DEV_TAGS = (r'BCP|JC|MWH|CGH|RAB|CH|HG|NB|Claude|TODO|TOFIX|LATER|SOONER'
+_DEV_TAGS = (r'BCP|JC|MWH|CGH|RAB|CH|HG|NB|Claude|TODO|TOFIX|LATER|SOONER|SOON|NOW'
              r'|NDS|NOTATION|APT|BAY|SAZ|ET|AAA|MRC|PR|ORI|Ori|mwhicks1|chenson2018'
              r'|COMMENT')  # COMMENT: untagged (* .. *) comments from a .v source
 # The block set additionally recognizes `HIDE:` (a `/- HIDE: … -/` dev note).
@@ -234,8 +251,31 @@ _BLOCK_DEV_RE = re.compile(r'^(HIDE(?=:)|(?:' + _DEV_TAGS + r')\b)')
 _BLOCK_INSTRUCTOR_RE = re.compile(r'^INSTRUCTORS:')
 
 # Urgency keywords: when one of these opens a dev note it becomes the :::dev
-# directive's `(urgency := …)` argument rather than an author.
-_URGENCY_TAGS = ('SOONER', 'LATER', 'TODO', 'TOFIX')
+# directive's urgency argument rather than an author.  The source spellings are
+# canonicalized to the three urgencies the :::dev directive recognizes:
+#   NOW                 — actionable now (`NOW`, `TODO`)
+#   BeforeNextRelease   — before the next release (`SOON`, `SOONER`)
+#   PotentialImprovement— a someday-maybe improvement (`LATER`)
+# The map is keyed by the uppercased source tag.  (SFLMeta.Comment applies the
+# same canonicalization to a hand-written `:::dev` urgency and errors on any tag
+# outside the canonical three.)
+_URGENCY_CANON = {
+    'NOW': 'NOW',
+    'TODO': 'NOW',
+    'SOON': 'BeforeNextRelease',
+    'SOONER': 'BeforeNextRelease',
+    'BEFORENEXTRELEASE': 'BeforeNextRelease',
+    'LATER': 'PotentialImprovement',
+    'POTENTIALIMPROVEMENT': 'PotentialImprovement',
+}
+# The source spellings recognized as urgency keywords (for `_split_dev_tags`).
+_URGENCY_TAGS = ('NOW', 'SOON', 'SOONER', 'LATER', 'TODO')
+
+
+def _canon_urgency(tag):
+    """Canonicalize a source urgency spelling (case-insensitively) to one of
+    `NOW` / `BeforeNextRelease` / `PotentialImprovement`, or None if unknown."""
+    return _URGENCY_CANON.get(tag.upper())
 
 # Authors behind the initials appearing in dev notes, as "Full Name
 # (github-handle)".  When a note opens with one of these tags (or, after an
@@ -297,11 +337,12 @@ def _split_dev_tags(text):
     argument) or an author tag (-> the positional author argument, as
     `"Full Name (handle)"` via `_AUTHOR_NAMES`; a `@handle:` attribution is
     looked up via `_HANDLE_NAMES`).  After an urgency keyword, a clean author
-    attribution — `BCP:`, `(DHS)`, `(BCP'20)` — is promoted too; anything
-    murkier (dates as in `LATER: BCP 9/16: …`, unmapped initials, plain prose)
-    stays in the body.  Topic keywords (NOTATION:, HIDE:, COMMENT:) and
-    unmapped tags leave the note untouched.  A year suffix on a promoted tag
-    (`NDS'25`, `BCP'20`) becomes the `(year := 20NN)` argument."""
+    attribution — `BCP:`, `(DHS)`, `(BCP'20)`, a bare year `BCP 25:`, or an
+    `MM/YY` date `BCP 9/16:` (month dropped, year kept) — is promoted too;
+    anything murkier (unmapped initials, plain prose) stays in the body.
+    Topic keywords (NOTATION:, HIDE:, COMMENT:) and unmapped tags leave the
+    note untouched.  A year suffix on a promoted tag (`NDS'25`, `BCP'20`)
+    becomes the `(year := 20NN)` argument."""
     body = text.lstrip()
     author = year = urgency = None
     m = re.match(r"@([A-Za-z][A-Za-z0-9-]*)\s*:?\s*", body)
@@ -314,7 +355,7 @@ def _split_dev_tags(text):
             return None, None, None, text
         tok = m.group(1)
         if tok in _URGENCY_TAGS:
-            urgency = tok
+            urgency = _canon_urgency(tok)
         elif tok in _AUTHOR_NAMES:
             author = _AUTHOR_NAMES[tok]
             if m.group(2):
@@ -331,6 +372,14 @@ def _split_dev_tags(text):
             m2 = re.match(r"([A-Za-z][A-Za-z0-9]*)(?:'(\d+))?\s*:\s*", body)
         if not m2:
             m2 = re.match(r"([A-Za-z][A-Za-z0-9]*)'(\d+)\s+", body)
+        if not m2:
+            # `SOONER: BCP 25: …` — initials, a space, a bare two-digit year,
+            # then a colon.  The space-then-year spelling of `BCP'25:`.
+            m2 = re.match(r"([A-Za-z][A-Za-z0-9]*)\s+(\d{2})\s*:\s*", body)
+        if not m2:
+            # `LATER: BCP 9/16: …` / `SOONER: MRC 3/22: …` — an `MM/YY` date;
+            # we keep only the year (after the slash) and drop the month.
+            m2 = re.match(r"([A-Za-z][A-Za-z0-9]*)\s+\d{1,2}/(\d{2})\s*:\s*", body)
         if m2 and m2.group(1) in _AUTHOR_NAMES:
             author = _AUTHOR_NAMES[m2.group(1)]
             if m2.group(2):
@@ -340,7 +389,7 @@ def _split_dev_tags(text):
         # `BCP: SOONER: …`
         m2 = re.match(r"(%s)\s*:\s*" % '|'.join(_URGENCY_TAGS), body)
         if m2:
-            urgency = m2.group(1)
+            urgency = _canon_urgency(m2.group(1))
             body = body[m2.end():]
     if not body.strip():
         body = text  # tag-only note: keep the original text as the body
@@ -358,13 +407,14 @@ def _is_label_comment(text: str) -> bool:
 
     This covers:
       - Single identifiers like "test_nandb1" or "test_leb3'" (test-case labels)
+      - The same with a one-word parenthetical, like "star_app (helper)"
       - Pure separator lines like "############################" (visual dividers)
       - Lean output annotations like "==> true : Bool" or "===> ..." (#check/#eval)
     These act as code-block separators but produce no visible Verso output.
     (Author/dev block notes are *not* labels — see `_is_block_dev_comment`.)
     """
     t = text.strip()
-    return (bool(re.match(r"^[\w.']+$", t)) or
+    return (bool(re.match(r"^[\w.']+(?:\s+\(\w[\w.']*\))?$", t)) or
             bool(re.match(r'^#{3,}[ \t#-]*$', t)) or
             bool(re.match(r'^=+>', t)))
 
@@ -525,6 +575,14 @@ def _comment_tokens(body: str):
         while seg and not seg[-1].strip():
             seg.pop()
         if seg:
+            # Dedent the run by its common indent (uniform, so relative
+            # indentation — bullets, display material — is preserved).
+            # Catches alignment indents that survive `_extract_comment_text`,
+            # e.g. when a column-0 fence line drags the comment-wide minimum
+            # to zero.
+            cut = min(len(l) - len(l.lstrip()) for l in seg if l.strip())
+            if cut:
+                seg = [l[cut:] if l.strip() else l for l in seg]
             tokens.append(('block_comment_prose',
                            _prose_markup('\n'.join(seg))))
         prose.clear()
@@ -607,7 +665,7 @@ def _comment_tokens(body: str):
         # than as `-- ` line markers, so recognize the same set the main
         # tokenizer does — otherwise they flatten to prose (or are dropped) and
         # the quiz/exercise/grade structure is lost.
-        m_ex = re.match(r"^EX(\d+)[A-Za-z!?]*\s+\((\w[\w']*)\)$", s)
+        m_ex = re.match(r"^EX(\d+)([A-Za-z!?]*)\s+\((\w[\w']*)\)$", s)
         if s == '/QUIZ':
             flush_prose()
             tokens.append(('quiz_close', None))
@@ -621,7 +679,8 @@ def _comment_tokens(body: str):
             idx += 1; continue
         if m_ex:
             flush_prose()
-            tokens.append(('exercise_open', (int(m_ex.group(1)), m_ex.group(2))))
+            tokens.append(('exercise_open',
+                           (int(m_ex.group(1)), m_ex.group(3), m_ex.group(2))))
             idx += 1; continue
         if s == '[]':
             flush_prose()
@@ -717,12 +776,27 @@ def _extract_comment_text(raw_lines):
     # Remove closing -/
     lines[-1] = re.sub(r'\s*-/\s*$', '', lines[-1])
 
-    # Dedent: remove common leading whitespace from non-blank lines
-    non_blank = [l for l in lines if l.strip()]
-    if non_blank:
-        min_indent = min(len(l) - len(l.lstrip()) for l in non_blank)
-        lines = [l[min_indent:] if len(l) >= min_indent else l.lstrip()
-                 for l in lines]
+    rest_non_blank = [l for l in lines[1:] if l.strip()]
+    if lines[0].strip() and rest_non_blank:
+        # Text starts on the opener line, which now sits at column 0 (its
+        # indent went with the `/- `), while continuation lines keep the
+        # source's alignment indent (2-4 spaces depending on the comment).
+        # Take the first continuation line's indent as the alignment column
+        # and strip up to that much whitespace from every continuation:
+        # lines indented deeper (bullet bodies, display material) keep their
+        # offset, and lines shallower than the alignment column (a `[[` or
+        # fence marker at column 0, a raggedly-indented prose line) lose
+        # only the whitespace they actually have.
+        align = len(rest_non_blank[0]) - len(rest_non_blank[0].lstrip())
+        lines = [lines[0]] + [l[min(align, len(l) - len(l.lstrip())):]
+                              for l in lines[1:]]
+    else:
+        # Opener on a line of its own: plain common dedent over all lines.
+        non_blank = [l for l in lines if l.strip()]
+        if non_blank:
+            min_indent = min(len(l) - len(l.lstrip()) for l in non_blank)
+            lines = [l[min_indent:] if len(l) >= min_indent else l.lstrip()
+                     for l in lines]
 
     # Trim leading/trailing blank lines
     while lines and not lines[0].strip():
@@ -753,8 +827,11 @@ _TERSE_PLAIN_RE = re.compile(r'^-- TERSE:\s+(.+)$')
 # (advanced), `M` (manual), and combinations like `2AM?`.  A name is usually an
 # identifier but occasionally a phrase (`EX2 (logical connectives)`), so allow
 # internal spaces/hyphens.
-_EX_RE = re.compile(r"^-- EX(\d+)[A-Za-z!?]*\s+\((\w[\w' \-]*)\)$")
-_EX_CLOSE_RE = re.compile(r'^-- \[\]$')
+_EX_RE = re.compile(r"^-- EX(\d+)([A-Za-z!?]*)\s+\((\w[\w' \-]*)\)$")
+# The close marker may carry a redundant `(end name)` label (IndPropRegexp
+# style); it is consumed with the marker — the :::::exercise block records the
+# name already.
+_EX_CLOSE_RE = re.compile(r"^-- \[\](?:\s*\(end \w[\w']*\))?$")
 _GRADE_RE = re.compile(r'^--\s+GRADE_')
 # Coq-SF-style section headers written as line comments: `-- # Title` …
 # `-- ###### Title`, and `-- * Title` / `-- ** Title` / `-- *** Title`.  These
@@ -790,6 +867,10 @@ _SOL_CLOSE_RE = re.compile(r'^--\s+/\s?(?:QUIET)?SOLUTION$')
 # and the bare `-- INSTRUCTORS` region form is a hidden region (see
 # `_HIDE_OPEN_RE`); TERSE/FULL have their own dedicated markers.
 _AUTHOR_RE = re.compile(r'^-- (' + _DEV_TAGS + r')[: (](.*)$')
+
+# A bare multiple-choice answer (`(A)` … `(E)`): an instructor note of this exact
+# form is a quiz answer, routed to :::quizSolution rather than :::instructors.
+_MC_ANSWER_RE = re.compile(r'^\([A-E]\)$')
 
 # `-- ==> …` / `-- ===> …` hand-written eval-output annotations: intentionally
 # dropped (Verso renders the real output live), so they must not be swept into
@@ -1036,7 +1117,8 @@ def tokenize(text: str):
 
         m = _EX_RE.match(stripped)
         if m:
-            tokens.append(('exercise_open', (int(m.group(1)), m.group(2))))
+            tokens.append(('exercise_open',
+                           (int(m.group(1)), m.group(3), m.group(2))))
             i += 1
             continue
 
@@ -1190,8 +1272,8 @@ def tokenize(text: str):
 
     return tokens
 
-def _hoist_slidebreaks_from_terse(tokens):
-    """Lift every slide break out of any enclosing `::::terse` region.
+def _hoist_from_terse(tokens):
+    """Lift slide breaks and quizzes out of any enclosing `::::terse` region.
 
     A slide break only matters in the terse HTML build (it renders an empty
     `<div class="slide-break">` there) and is stripped from every other product
@@ -1199,37 +1281,69 @@ def _hoist_slidebreaks_from_terse(tokens):
     sit *inside* a `::::terse` container; doing so is just noise (and, when the
     break is a region's sole content, leaves a pointless one-item terse block).
 
+    The same goes for a whole `-- QUIZ … -- /QUIZ` region: quizzes are shown
+    only in the terse build product anyway, so nesting them in `::::terse`
+    adds nothing — and keeping them at top level leaves the door open to
+    including quizzes in the student/solutions products later.  The sources
+    routinely wrap quiz runs in a TERSE region (Poly, Logic), so this pattern
+    is the norm, not an error.
+
     A source like `/- TERSE: *** text -/` tokenizes to
     `terse_open, slidebreak, prose, terse_close`.  Rewrite each `slidebreak`
     that falls within an open terse region to `terse_close, slidebreak,
     terse_open` — hoisting the break to top level and reopening the region for
-    whatever terse content follows — then drop any `terse_open … terse_close`
-    pair left empty (the break was the first or last item), so no bare
-    `::::terse` survives."""
+    whatever terse content follows — and likewise wrap each top-level
+    `quiz_open … quiz_close` span in `terse_close … terse_open`; then drop any
+    `terse_open … terse_close` pair left empty (the hoisted item was the
+    region's first or last, or sat between two quizzes), so no bare
+    `::::terse` survives.  Terse markers arriving *inside* a hoisted quiz span
+    only adjust the source-depth bookkeeping and emit nothing: the enclosing
+    region's fence is already suspended, and whether it resumes after the quiz
+    is decided by the source depth at the `quiz_close`."""
     lifted = []
-    terse_depth = 0
+    terse_depth = 0   # source-level terse nesting (markers seen, hoisted or not)
+    quiz_depth = 0
     for kind, content in tokens:
         if kind == 'terse_open':
             terse_depth += 1
-            lifted.append((kind, content))
+            if quiz_depth == 0:
+                lifted.append((kind, content))
         elif kind == 'terse_close':
             terse_depth = max(0, terse_depth - 1)
-            lifted.append((kind, content))
-        elif kind == 'slidebreak' and terse_depth > 0:
+            if quiz_depth == 0:
+                lifted.append((kind, content))
+        elif kind == 'slidebreak' and terse_depth > 0 and quiz_depth == 0:
             lifted.append(('terse_close', None))
             lifted.append(('slidebreak', None))
             lifted.append(('terse_open', None))
+        elif kind == 'quiz_open':
+            if quiz_depth == 0 and terse_depth > 0:
+                lifted.append(('terse_close', None))
+            quiz_depth += 1
+            lifted.append((kind, content))
+        elif kind == 'quiz_close':
+            quiz_depth = max(0, quiz_depth - 1)
+            lifted.append((kind, content))
+            if quiz_depth == 0 and terse_depth > 0:
+                lifted.append(('terse_open', None))
         else:
             lifted.append((kind, content))
-    # Drop terse regions left holding nothing but blank tokens.
+    # Drop terse regions left holding nothing but blanks and noop annotation
+    # notes (:::dev / :::instructors, e.g. the `INSTRUCTORS: (A)` answer lines
+    # between consecutive hoisted quizzes).  The notes are kept, promoted to
+    # top level — they are noops in every build, so the terse wrapper around
+    # them was pure noise (and would strand quiz answers in terse-only should
+    # quizzes later join the student/solutions products).
     out = []
     i, n = 0, len(lifted)
     while i < n:
         if lifted[i][0] == 'terse_open':
             j = i + 1
-            while j < n and lifted[j][0] == 'blank':
+            while j < n and lifted[j][0] in ('blank', 'instructor',
+                                             'author_comment'):
                 j += 1
             if j < n and lifted[j][0] == 'terse_close':
+                out.extend(t for t in lifted[i + 1:j] if t[0] != 'blank')
                 i = j + 1
                 continue
         out.append(lifted[i])
@@ -1352,6 +1466,41 @@ def _verbatim_block(text: str) -> str:
     longest = max((len(m) for m in re.findall(r'`+', text)), default=0)
     fence = '`' * max(3, longest + 1)
     return fence + '\n' + text + '\n' + fence
+
+
+# A backtick code span in note prose; its content is opaque to Verso's markdown
+# parser, so hazard scanning skips it.
+_NOTE_SPAN_RE = re.compile(r'`[^`\n]+`')
+# Characters that can derail Verso's markdown when they appear in plain prose:
+# backticks (an unpaired one, or a ≥3 run opening a fence), `*`/`_` (Verso
+# bold/emphasis — an unpaired one is a parse error), `{`/`}` (role syntax),
+# `|` (tables), and any backslash.  A backslash also flags `_sf_inline_code`'s
+# own `\[`/`\]` escapes: an escape means the note had stray or nested brackets
+# (`[sub_nil : subseq [] []]`), which the `[…]`→span conversion garbles rather
+# than translates, so such a note must stay verbatim.
+_NOTE_CHAR_HAZARD_RE = re.compile(r'[`*_{}|\\]')
+# Line-initial constructs that a directive body must not contain: a heading
+# (Verso forbids headings inside directives), a `:::…` line (would close or
+# nest directives), a `%%%` metadata block, a `>` blockquote.
+_NOTE_LINE_HAZARD_RE = re.compile(r'^[ \t]*[#:%>]')
+
+
+def _inline_note_body(text: str):
+    """Render an author-note body as a plain markdown directive body, or return
+    None when that isn't provably safe.  The only rewrite applied is
+    `_sf_inline_code` (SF's `[ident]` code markup → a backtick span, stray
+    brackets escaped — the same treatment ::::full prose gets); the result is
+    then scanned, outside backtick code spans, for anything that could derail
+    Verso's markdown parser.  Callers fall back to `_verbatim_block` on the
+    *original* text, so a hazardous note is preserved verbatim rather than
+    half-rewritten."""
+    body = _sf_inline_code(text.strip('\n'))
+    plain = _NOTE_SPAN_RE.sub(' ', body)
+    if _NOTE_CHAR_HAZARD_RE.search(plain):
+        return None
+    if any(_NOTE_LINE_HAZARD_RE.match(l) for l in plain.split('\n')):
+        return None
+    return body
 
 
 def _unwrap_prose_note(text: str) -> str:
@@ -1494,6 +1643,15 @@ class Renderer:
         # would also trip Verso's bold parser in the rendered heading).
         title = re.sub(r'[ \t*]+$', '', title)
         self._append('#' * level + ' ' + title + '\n\n')
+        # A header inside a source FULL region is a *full-only* heading: the
+        # heading itself must go at document level (above), but a
+        # :::suppressPreviousHeaderWhenTerse marker directly after it records
+        # the FULL scoping so terse builds can suppress the heading (see
+        # SFLMeta.Block.suppressPreviousHeaderWhenTerse).  A leaf directive
+        # like :::slidebreak — empty body, always at top level (the header just
+        # closed any open containers), so a literal 3-colon fence is safe.
+        if self.full_depth > 0:
+            self._append(':::suppressPreviousHeaderWhenTerse\n:::\n\n')
 
     def _on_code_line(self, line):
         # Code is treated like prose with respect to :::full — it stays inside
@@ -1551,7 +1709,7 @@ class Renderer:
             self._append(_c_close() + '\n\n')
             self.terse_open = False
 
-    def _on_exercise_open(self, rating, name):
+    def _on_exercise_open(self, rating, name, flags=''):
         self._flush_code()
         # An exercise nests inside an open (or pending) :::full — fence widths
         # are computed by _resolve_fences, so the containers never collide.
@@ -1569,8 +1727,16 @@ class Renderer:
             self.in_exercise = False
         self._open_full_if_pending()
         self.in_exercise = True
-        self._append(
-            _c_open(f'exercise (rating := {rating}) (name := "{name}")') + '\n\n')
+        # SF difficulty/grading flags follow the rating digits: `A` (advanced),
+        # `M` (manually graded), plus `!`/`?` (recommended/optional).  Preserve
+        # the two that survive to the Verso directive: `A` -> (level := Advanced)
+        # and `M` -> (manual := true).  (`!`/`?` have no directive analogue yet.)
+        header = f'exercise (rating := {rating}) (name := "{name}")'
+        if 'A' in flags:
+            header += ' (level := Advanced)'
+        if 'M' in flags:
+            header += ' (manual := true)'
+        self._append(_c_open(header) + '\n\n')
 
     def _on_exercise_close(self):
         self._flush_code()
@@ -1637,22 +1803,45 @@ class Renderer:
             self.quiz_depth = max(0, self.quiz_depth - 1)
 
     def _on_answer(self, text):
-        # The -- HIDE region inside a -- QUIZ.  Like :::hide it is preserved
-        # verbatim and dropped at elaboration for now (rendering it sensibly is a
-        # later step); a 3-colon :::answer nests inside the 4-colon ::::quiz.
+        # The -- HIDE region inside a -- QUIZ is the quiz's answer.  It becomes a
+        # :::quizSolution — the uniform, *shown* quiz-answer block (HTML reveal
+        # button; kept in every build) — rather than the old noop :::answer.  The
+        # body stays a verbatim code fence (a plain ``` block, never elaborated),
+        # so a deliberately-broken/admitted answer can't perturb the build; a
+        # 3-colon :::quizSolution nests inside the 4-colon ::::quiz.
         self._flush_code()
         if not text.strip():
             return
-        self._append(':::answer\n' + _verbatim_block(_unwrap_prose_note(text)) + '\n:::\n\n')
+        self._append(':::quizSolution\n' + _verbatim_block(_unwrap_prose_note(text))
+                     + '\n:::\n\n')
 
     def _on_grade(self, text):
-        # -- GRADE_THEOREM / GRADE_MANUAL -> :::grade.  A noop for now, but the
-        # grading spec is preserved (verbatim-fenced, since names contain `_`)
-        # for the future grading infrastructure to consume.
+        # -- GRADE_THEOREM / GRADE_MANUAL grading directives.  A `GRADE_THEOREM
+        # <pts>: <name>` spec becomes the structured `:::gradeTheorem <pts>
+        # "<name>"` directive (point value and theorem name as arguments, empty
+        # body).  Any other spec — `GRADE_MANUAL <pts>: <name>` and the like —
+        # keeps the older `:::grade` form carrying the spec as body text (a
+        # backtick span, since the spec's underscored names would trip Verso's
+        # emphasis parser as bare prose; a spec a span can't hold falls back to
+        # the verbatim fence).  Both are noops for now, preserved for the future
+        # grading infrastructure to consume.
         self._flush_code()
-        if not text.strip():
+        text = text.strip()
+        if not text:
             return
-        self._append(':::grade\n' + _verbatim_block(text) + '\n:::\n\n')
+        m = re.match(r'^GRADE_THEOREM\s+(\d+(?:\.\d+)?)\s*:\s*(\S+)$', text)
+        if m:
+            # Points can be fractional (`0.5`).  An integer is written bare; a
+            # fraction is quoted (a bare `0.5` is not a valid directive-arg
+            # token, and quoting preserves the exact value as a string).
+            pts = m.group(1)
+            pts_arg = pts if pts.isdigit() else '"%s"' % pts
+            self._append(':::gradeTheorem %s "%s"\n:::\n\n'
+                         % (pts_arg, m.group(2)))
+            return
+        body = ('`' + text + '`' if '`' not in text and '\n' not in text
+                else _verbatim_block(text))
+        self._append(':::grade\n' + body + '\n:::\n\n')
 
     def _on_import_block(self, text):
         # Cross-chapter `import` lines (sentinels from _extract_imports) -> a
@@ -1667,23 +1856,31 @@ class Renderer:
 
     def _on_solution_prose(self, text):
         # Prose / non-compiling solution -> :::solution block, shown only in the
-        # solutions build (SFLMeta.Block.solution).  Body is verbatim-fenced so
-        # arbitrary illustrative code can't perturb the parser.
+        # solutions build (SFLMeta.Block.solution).  The body is inlined as plain
+        # markdown when `_inline_note_body` can prove that safe (so backtick
+        # identifiers render as inline code rather than a monospace block), and
+        # verbatim-fenced otherwise so arbitrary illustrative code — Lean
+        # snippets, `:::`, stray emphasis chars — can't perturb the parser.
         self._flush_code()
         if not text.strip():
             return
-        self._append(':::solution\n' + _verbatim_block(text) + '\n:::\n\n')
+        body = _inline_note_body(text)
+        if body is None:
+            body = _verbatim_block(text)
+        self._append(':::solution\n' + body + '\n:::\n\n')
 
     def _emit_noop_directive(self, directive, text):
         # Author notes become noop annotation *directives* (:::dev / :::instructors),
         # consistent with :::hide / :::answer / :::grade / :::solution.  The body is
-        # wrapped in a verbatim fence so arbitrary author prose (underscores, `*`,
-        # `[...]`, a leading `#`, `:::`, ...) can never derail Verso's directive
-        # parser; the directive discards its body at elaboration, so nothing reaches
-        # the generated outputs.  :::dev and :::instructors are processed identically
-        # (see SFLMeta); they differ only in name so instructor notes can be treated
-        # differently later.  (Hand-authored chapters may instead inline the body as
-        # markdown, backticking/escaping as needed — see CONTRIBUTING.md.)
+        # inlined as plain markdown when `_inline_note_body` can prove that safe
+        # (the usual case — most notes are short prose), matching the hand-authoring
+        # convention (see CONTRIBUTING.md); a body containing markdown hazards
+        # (unbalanced backticks/`*`/`_`, a leading `#` or `:::`, ...) that could
+        # derail Verso's directive parser is instead wrapped verbatim in a fence.
+        # Either way the directive discards its body at elaboration, so nothing
+        # reaches the generated outputs.  :::dev and :::instructors are processed
+        # identically (see SFLMeta); they differ only in name so instructor notes
+        # can be treated differently later.
         # For :::dev, a leading author/urgency tag is promoted to directive
         # arguments — `:::dev "Benjamin Pierce (bcpierce00)" SOONER
         # (year := 2020)` — via `_split_dev_tags`; :::instructors deliberately
@@ -1698,7 +1895,10 @@ class Renderer:
                 header += ' %s' % urgency
             if year:
                 header += ' (year := %d)' % year
-        self._append(header + '\n' + _verbatim_block(text) + '\n:::\n\n')
+        body = _inline_note_body(text)
+        if body is None:
+            body = _verbatim_block(text)
+        self._append(header + '\n' + body + '\n:::\n\n')
 
     # --- Main dispatch ---
 
@@ -1723,8 +1923,8 @@ class Renderer:
             elif kind == 'terse_close':
                 self._on_terse_close()
             elif kind == 'exercise_open':
-                rating, name = content
-                self._on_exercise_open(rating, name)
+                rating, name, flags = content
+                self._on_exercise_open(rating, name, flags)
             elif kind == 'exercise_close':
                 self._on_exercise_close()
             elif kind == 'slidebreak':
@@ -1736,7 +1936,15 @@ class Renderer:
             elif kind == 'author_comment':
                 self._emit_noop_directive('dev', content)
             elif kind == 'instructor':
-                self._emit_noop_directive('instructors', content)
+                # A bare multiple-choice answer (`(A)`) in an instructor note is
+                # a quiz answer, not a note to instructors: emit it as the shown
+                # :::quizSolution rather than the dropped :::instructors.
+                if _MC_ANSWER_RE.match(content.strip()):
+                    self._flush_code()
+                    self._append(':::quizSolution\n' + content.strip()
+                                 + '\n:::\n\n')
+                else:
+                    self._emit_noop_directive('instructors', content)
             elif kind == 'hide':
                 self._on_hide(content)
             elif kind == 'quiz_open':
@@ -1802,10 +2010,14 @@ def _drop_empty_directives(text: str) -> str:
         lines = t.split('\n')
         out, i, n = [], 0, len(lines)
         while i < n:
-            # An opening directive with a name — but NOT `:::slidebreak`, which is
-            # an intentionally empty self-closing marker (`:::slidebreak` / `:::`),
-            # not an empty container to drop.
-            m = re.match(r'^(:::+)(?!slidebreak\b)\w', lines[i])
+            # An opening directive with a name — but NOT `:::slidebreak` or
+            # `:::suppressPreviousHeaderWhenTerse`, which are intentionally
+            # empty self-closing markers (`:::slidebreak` / `:::`), not empty
+            # containers to drop.
+            m = re.match(
+                r'^(:::+)(?!slidebreak\b|suppressPreviousHeaderWhenTerse\b'
+                r'|gradeTheorem\b)\w',
+                lines[i])
             if m:
                 fence = m.group(1)
                 j = i + 1
@@ -1858,47 +2070,65 @@ def _normalize_heading_levels(text: str) -> str:
     return '\n'.join(out)
 
 
+def _parse_noop_block(lines, i):
+    """Parse the :::dev / :::instructors directive opening at ``lines[i]``.
+    Returns ``(header, body_lines, j)`` with *j* just past the closing `:::`
+    line, or None when ``lines[i]`` opens no such directive or the close is
+    missing.  A backtick fence in the body is honored, so a `:::` inside a
+    verbatim-fenced body is body text, not the close (an *inline* body can
+    never contain a line-initial `:` — `_inline_note_body` fences those)."""
+    if not re.match(r'^:::(dev|instructors)\b', lines[i]):
+        return None
+    n = len(lines)
+    j, fence, body = i + 1, None, []
+    while j < n:
+        line = lines[j]
+        if fence is not None:
+            if line.rstrip() == fence:
+                fence = None
+        elif line.rstrip() == ':::':
+            return lines[i], body, j + 1
+        else:
+            m = re.match(r'^(`{3,})[ \t]*$', line)
+            if m:
+                fence = m.group(1)
+        body.append(line)
+        j += 1
+    return None
+
+
 def _fuse_noop_blocks(text: str) -> str:
     """Fuse runs of consecutive :::dev / :::instructors directives (separated
     only by blank lines) into a single same-tag directive, so a run of adjacent
-    author notes renders as one box rather than a stack of tiny ones.  Each note
-    is a `:::<tag>` directive wrapping a verbatim fence (see `_emit_noop_directive`);
-    the fused body is re-wrapped via `_verbatim_block`, so a fence that had to grow
-    to outrun backticks in one note still outruns backticks in the combined body.
-    Only directives with an identical header line fuse — same tag AND same
-    author/urgency arguments (a `:::dev bcpierce00` never merges into a bare
-    `:::dev` or a `:::dev (urgency := SOONER)`, and `dev` never merges into
-    `instructors`)."""
+    author notes renders as one box rather than a stack of tiny ones.  Each
+    note's body — inline markdown or a verbatim fence (see
+    `_emit_noop_directive`) — is kept in its own form; the fused bodies are
+    joined by a blank line, so a fenced body stays its own code block next to
+    an inline neighbor.  Only directives with an identical header line fuse —
+    same tag AND same author/urgency arguments (a `:::dev bcpierce00` never
+    merges into a bare `:::dev` or a `:::dev SOONER`, and `dev` never merges
+    into `instructors`)."""
     lines = text.split('\n')
     out, i, n = [], 0, len(lines)
     while i < n:
-        m = re.match(r'^:::(dev|instructors)\b.*$', lines[i])
-        # Only fuse a directive immediately wrapping a verbatim fence.
-        if not (m and i + 1 < n and re.match(r'^`{3,}$', lines[i + 1])):
+        parsed = _parse_noop_block(lines, i) if lines[i].startswith(':::') else None
+        if not parsed:
             out.append(lines[i]); i += 1; continue
-        header = lines[i]
-        bodies = []
-        while i < n:
-            same = lines[i] == header
-            fm = re.match(r'^(`{3,})$', lines[i + 1]) if same and i + 1 < n else None
-            if not fm:
-                break
-            fence = fm.group(1)
-            j = i + 2
-            body = []
-            while j < n and lines[j] != fence:
-                body.append(lines[j]); j += 1
-            j += 1                                  # skip the closing fence
-            if j < n and lines[j].strip() == ':::':  # skip the directive close
-                j += 1
-            bodies.append('\n'.join(body))
+        header, body, j = parsed
+        bodies = ['\n'.join(body)]
+        while True:
             while j < n and lines[j].strip() == '':  # skip blanks between blocks
                 j += 1
-            i = j
+            nxt = _parse_noop_block(lines, j) if j < n and lines[j] == header else None
+            if not nxt:
+                break
+            bodies.append('\n'.join(nxt[1]))
+            j = nxt[2]
         out.append(header)
-        out.append(_verbatim_block('\n\n'.join(bodies)))
+        out.append('\n\n'.join(b.strip('\n') for b in bodies))
         out.append(':::')
         out.append('')
+        i = j
     return '\n'.join(out)
 
 
@@ -1944,6 +2174,10 @@ def _indent_of(line: str) -> str:
 
 _WIC_MARKER_RE = re.compile(r'^--\s*(/?)WORKINCLASS\s*$')
 _ADM_MARKER_RE = re.compile(r'^--\s*/?ADMITTED\s*$')
+# The block-comment wrapper around a suggested proof that student builds show
+# commented out (an empty ADMITTED region precedes it; see _convert_solution_markers).
+_OPEN_COMMENT_RE = re.compile(r'^/-\s*OPEN COMMENT WHEN HIDING SOLUTIONS\s*-/$')
+_CLOSE_COMMENT_RE = re.compile(r'^/-\s*CLOSE COMMENT WHEN HIDING SOLUTIONS\s*-/$')
 _FT_PREFIXED_RE = re.compile(r'^(\s*)--\s*(?:FULL|TERSE):\s*(/?)(ADMITTED|WORKINCLASS)\s*$')
 _DECL_START_RE = re.compile(r'^(theorem|lemma|example|def|instance|abbrev)\b')
 
@@ -2108,7 +2342,19 @@ def _convert_solution_markers(src: str) -> str:
         <tactics>
         -- /ADMITTED
 
+      <inside `by`>           ->   suggested!
+        -- ADMITTED                   <suggested proof, reindented>
+        -- /ADMITTED
+        /- OPEN COMMENT WHEN HIDING SOLUTIONS -/
+        <suggested proof>
+        /- CLOSE COMMENT WHEN HIDING SOLUTIONS -/
+
       expr := <proof>  -- ADMITTED   ->   expr := solution!(<proof>)
+
+      <decl ending in `:=`>   ->   solution!(<term>)
+        -- ADMITTED
+        <term>
+        -- /ADMITTED
 
     (`-- SOLUTION … -- /SOLUTION` blocks are handled in the tokenizer, which
     splits compilable answers from prose ones.)
@@ -2160,6 +2406,7 @@ def _convert_solution_markers(src: str) -> str:
             body = []
             while j < n and lines[j].strip() != '-- /ADMITTED':
                 body.append(lines[j]); j += 1
+            resume = j + 1
             # An interleaved bare `-- FULL`/`-- TERSE` marker (the source's
             # "back to full mode for the GRADE/[] lines" idiom, cf. beq_eq in
             # Tactics) must stay a structural marker, not become a comment
@@ -2168,18 +2415,60 @@ def _convert_solution_markers(src: str) -> str:
                         if re.fullmatch(r'--\s*/?(?:FULL|TERSE)', b.strip())]
             body = [b for b in body
                     if not re.fullmatch(r'--\s*/?(?:FULL|TERSE)', b.strip())]
-            # `solution!` must align with the proof body (which sits inside the
-            # `by`), not with the `-- ADMITTED` marker — the marker is often at
-            # column 0 while the tactics are indented, and a column-0 `solution!`
+            # A region whose declaration ends in a bare `:=` holds a *term*
+            # proof, not tactics (cf. mstar'' in IndPropRegexp): wrap it in
+            # the parenthesized form `solution!(<term>)` instead of emitting
+            # the tactic form after a nonexistent `by`.
+            p = len(out) - 1
+            while p >= 0 and not out[p].strip():
+                p -= 1
+            if (p >= 0 and out[p].rstrip().endswith(':=')
+                    and any(b.strip() for b in body)):
+                first = next(k for k, b in enumerate(body) if b.strip())
+                last = len(body) - 1
+                while last > first and not body[last].strip():
+                    last -= 1
+                ind = _indent_of(body[first])
+                body[first] = ind + 'solution!(' + body[first].strip()
+                body[last] = body[last] + ')'
+                out.extend(body[:last + 1])
+                out.extend(trailing)
+                i = resume
+                continue
+            # An *empty* region followed by an `OPEN COMMENT WHEN HIDING
+            # SOLUTIONS` … `CLOSE COMMENT …` wrapper (the source idiom for
+            # "students see the suggested proof as a comment", cf. the
+            # NoStutter examples in IndProp) takes the wrapped suggested proof
+            # as its body and emits the `suggested!` marker instead of
+            # `solution!`: the teacher/terse builds show the live proof, but the
+            # student build keeps it commented out rather than replacing it with
+            # a bare `sorry`.
+            marker = 'solution!'
+            if not any(b.strip() for b in body):
+                k = resume
+                while k < n and not lines[k].strip():
+                    k += 1
+                if k < n and _OPEN_COMMENT_RE.match(lines[k].strip()):
+                    k += 1
+                    wrapped = []
+                    while k < n and not _CLOSE_COMMENT_RE.match(lines[k].strip()):
+                        wrapped.append(lines[k]); k += 1
+                    if k < n:
+                        body = wrapped
+                        resume = k + 1
+                        marker = 'suggested!'
+            # The marker must align with the proof body (which sits inside the
+            # `by`), not with the `-- ADMITTED` marker — the latter is often at
+            # column 0 while the tactics are indented, and a column-0 marker
             # would be read as a new command after an empty `by` block.
             first_body = next((b for b in body if b.strip()), '')
             indent = _indent_of(first_body) if first_body else _indent_of(line)
-            out.append(indent + 'solution!')
+            out.append(indent + marker)
             for bl in body:
-                # tacticSeqIndentGt: body must sit deeper than `solution!`.
+                # tacticSeqIndentGt: body must sit deeper than the marker.
                 out.append(('  ' + bl) if bl.strip() else bl)
             out.extend(trailing)
-            i = j + 1
+            i = resume
             continue
 
         # --- trailing ADMITTED: a one-line proof term ---
@@ -2605,7 +2894,8 @@ def convert(src_text: str, title: str, file_key: str) -> str:
     # they can't live in a ```lean``` code block.
     has_prelude, extra_imports, body_src = _extract_imports(body_src)
     header = HEADER_TEMPLATE.format(
-        title=title, file=file_key, extra_imports='\n'.join(extra_imports))
+        title=title, file=file_key, extra_imports='\n'.join(extra_imports),
+        doc_options=DOC_LEVEL_OPTIONS.get(file_key, ''))
     if has_prelude:
         header = 'prelude\n' + header
     # Normalize block-comment markers (/- EX … -/, /- /TERSE -/, …) to line form.
@@ -2618,7 +2908,7 @@ def convert(src_text: str, title: str, file_key: str) -> str:
     body_src = _convert_workinclass_markers(body_src)
     body_src = _convert_solution_markers(body_src)
     tokens = tokenize(body_src)
-    tokens = _hoist_slidebreaks_from_terse(tokens)
+    tokens = _hoist_from_terse(tokens)
     renderer = Renderer()
     renderer.process(tokens)
     body = renderer.result()
