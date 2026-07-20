@@ -1706,15 +1706,17 @@ theorem succ_ble_succ (n m : Nat) : ((n + 1) ≤? (m + 1)) = (n ≤? m) := rfl
 ```
 
 :::dev "Claude" BeforeNextRelease
-Claude-generated note. The `leb_*` → `ble_*` rename is now applied across
+Claude-generated note. 
+(BCP: Whoever reviews this part of the chapter next should read and delete it.)
+
+The `leb_*` → `ble_*` rename is now applied across
 `Lists`, `Tactics`, and `Logic`, matching the `ble_complete` / `ble_correct` /
 `ble_iff` names already used in `IndProp`: every one of these is stated over
 `≤?`, which is notation for `Nat.ble` (declared just above), so the name now
 tracks the function. Statements keep the `≤?` notation rather than spelling out
 `Nat.ble`, following `IndProp`.
 
-Two things deliberately left alone. `LF/Scratch.lean` uses a genuinely different
-`leb` — the chapter's own definition, not `Nat.ble` — so those names stay. And
+One thing to think about:
 `beq_succ` (above, and used in `Logic`) is a separate `BEq` question: it could
 likewise be restated via `Nat.beq_eq_true_eq` / `BEq.comm`, which would let the
 `beq_symm` exercise below drop its induction. Worth a decision, but it changes
