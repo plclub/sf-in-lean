@@ -55,10 +55,11 @@ Here is what I did:
 
 ::::full
 The _functional style_ of programming is founded on simple, everyday
-mathematical intuitions: If a program has no side effects, then --
-ignoring efficiency -- all we need to understand about it is how it
+mathematical intuitions: If a program has no side effects, such
+as reading or writing files or network packets, then (ignoring efficiency)
+all we need to understand about it is how it
 maps inputs to outputs. That is, we can think of it as just a
-concrete method for computing a mathematical function. This direct
+concrete means for computing a mathematical function. This direct
 connection between programs and simple mathematical objects supports
 both formal correctness proofs and sound informal reasoning about
 program behavior. This is one sense of the word "functional" in
@@ -83,56 +84,46 @@ some basic _tactics_ that can be used to prove properties of
 programs.
 ::::
 
-:::dev "Harrison Goldstein (hgoldstein95)"
-The above makes some assumptions about jargon and terminology that I'm not sure we'll have
-covered at this point. For example, I've found "side effects" is often not intuitive. Also, I think
-"a concrete method for computing a mathematical function" is setting an OOP-trained student up for
-confusion around the word "method." I don't want to just go editing long-standing text if it's been
-working, but my two cents is that there are some opportunities to remove friction in this opening
-bit, and I'd be happy to propose a rewrite.
-:::
-
 # Data and Functions
 
-## Enumerated Types
-
 :::terse
-In Lean, we can
-build practically
-everything from first principles...
+In Lean, we can build practically everything from first principles...
 :::
 
 ::::full
 Lean's set of built-in features is extremely small.
-For example, instead of the usual palette of atomic
-data types (booleans, integers, strings, etc.), Lean offers a powerful
-mechanism for defining new data types from scratch, with all these
-familiar types as instances.
+For example, instead of providing the usual palette of atomic
+_datatypes_ -- types whose values are data, such as booleans,
+integers, and strings -- as primitives, Lean's extensive standard
+library _defines_ them, along with many common data structures
+besides, like lists and hash tables. It does so with a single
+powerful and general mechanism: the _inductive definition_.
+A type introduced this way is called an _inductive type_; the
+word "inductive" hints at the use of mathematical induction
+to prove statements about its values.
 
-Naturally, Lean also comes with an extensive standard library
-providing definitions of booleans, numbers, and many common data
-structures like lists and hash tables.  But there is nothing magic
-or primitive about these library definitions.  To illustrate this
-fact, we will explicitly recapitulate most of the definitions we
-need in this course, rather than just referring
-to the standard library. However, we take care to harmonize
-those definitions with the ones in the standard library, as well
-as to gradually introduce the actual library definitions a little later in the course.
+To demonstrate how inductive definitions work, and make the
+point that the Lean library's use of them is routine and
+not magical, we will recapitulate most of the datatype definitions we
+need in this course, rather than immediately referring
+to those in the standard library. We take care to harmonize
+the definitions we present with the actual definitions in the standard library, which
+we gradually introduce throughout the course.
 By the time you are finished, you will have a good grasp
 of how the Lean standard library is organized and how to efficiently
 navigate it.
 ::::
 
-## Days of the Week
+## Days of the Week (Enumerated Types)
 
 :::terse
 A datatype definition:
 :::
 
 ::::full
-To see how the datatype definition mechanism works, let's
+To see how inductive datatype definitions work, let's
 start with a very simple example.  The following declaration tells
-Lean that we are defining a set of data values -- a _type_.
+Lean that we are defining a set of data values, i.e. a _type_.
 ::::
 
 ```lean
@@ -150,6 +141,8 @@ inductive Day : Type where
 The new type is called `Day`, and its members are `monday`,
 `tuesday`, etc. These members are also called the _constructors_
 of the `Day` type, since they can be use to construct elements of that type.
+We often call this sort of inductive type an _enumerated type_
+since all values that have the type are enumerated in its definition.
 
 Having defined `Day`, we can write Lean functions that operate on
 days.
@@ -196,7 +189,7 @@ writing `Day.monday` instead of just `monday`, for example.
 Lean places all constructors into a "namespace" associated with their type,
 and requires uses of those constructors to be prefixed with their namespace.
 There are a few circumstances in which this requirement can be relaxed,
-which we shall see in a little bit. For now, however, we proceed by
+which we shall see in a little bit. For now we proceed by
 fully qualifying all constructor names.
 
 If you ever need to know the type of *any* pattern, object, or function,
@@ -226,6 +219,23 @@ in comments.)
 ```lean
 #eval nextWorkingDay (nextWorkingDay Day.saturday)
 ```
+
+:::dev "Daniel Sainati (dsainati1)"
+Where are we showing responses in comments? I don't see them.
+MWH: I think we landed at three possibilities:
+1. Don't include them
+2. Include responses in comments
+3. Use `#guard_msgs(...)` to include the responses and also check that
+they are correct.
+I vote that we do the last of these. It's useful for quietening the build,
+for helping readers be sure that things are working as expected, and for
+keeping things up to date.
+
+Also: Further down in the text it says you can hover over the definitions to
+see their output. This is not happening in the web interface; it just shows
+the type of `#eval` and the types of the arguments, not the "message" it
+produces.
+:::
 
 We can also record what we _expect_ the result of calling a function to be in the form of a Lean
 `example`:
@@ -263,14 +273,8 @@ and try it for yourself.  Load this file, `Basics.lean`,
 from the book's Lean sources, find the above example, and observe
 the result in the Lean InfoView panel.
 
-:::dev "Daniel Sainati (dsainati1)"
-Where are we showing responses in comments? I don't see them.
-RAB: Why did we remove the comments?
-Per GitHub discussion, MWH agrees - this is unresolved.
-BCP: Don't understand the state of play here...
-:::
-
-In VS Code, development of Lean code is supported by the Lean Extension,
+In VS Code, development of Lean code is supported by the
+[Lean Extension](https://marketplace.visualstudio.com/items?itemName=leanprover.lean4),
 which provides an interactive "InfoView" panel that displays the results
 of commands like `#eval`, as well as the current goal state
 when working on proofs. You can hover over expressions in the source code
@@ -290,6 +294,12 @@ to see the InfoView in action. Try hovering over the `nextWorkingDay` function
 and the `Day` type to see their definitions, and experiment with adding your own
 `#eval` commands to test other inputs.
 
+:::dev "mwhicks1"
+What is the "interactive web client"? Is it just the Verso-rendered book? That's not
+interactive in the sense that you can see `#eval` output or change code. Let's link
+the thing we mean.
+:::
+
 For `#eval` and other commands, we show Lean's responses in comments; if you
 hover over the `#eval` commands above, you will see the popup that contains
 the output should match what's in the comment below. Experiment with adding
@@ -304,13 +314,12 @@ If you are not already, we recommend exploring this file using the Lean extensio
 
 ::::full
 Following the pattern of the days of the week above, we can
-define the standard type `Bool` of booleans, with members `true`
+define the standard type `Bool` of booleans by enumerating its members `true`
 and `false`.
 
 We define our own `MyBool` to teach the concept of building booleans from
-scratch; later we'll switch to Lean's built-in `Bool`.
-We use a different name to make explicit that this is not the same
-type as Lean's built-in, but their definitions are equivalent.
+scratch. Our definition is equivalent to Lean's built-in `Bool`,
+which we switch to later.
 ::::
 
 ::::terse
@@ -327,7 +336,7 @@ inductive MyBool : Type where
 The next command opens the namespace associated with the `MyBool` type,
 so subsequent definitions will be part of the `MyBool` namespace.
 In Lean, functions on a type are typically defined in that type's namespace,
-which avoids name clashes with functions of the same name elsewhere (here,
+which avoids name clashes with functions of the same name elsewhere (e.g.,
 functions on the built-in `Bool` type). We give a full treatment of namespaces below.
 ::::
 
@@ -339,7 +348,7 @@ This command opens the namespace associated with the `MyBool` type:
 namespace MyBool
 ```
 
-Functions over booleans can be defined in the same way as above
+Functions over booleans can be defined in the same way as functions over days of the week.
 
 ```lean
 def not (b : MyBool) : MyBool :=
@@ -416,10 +425,10 @@ def nand (b1 : MyBool) (b2 : MyBool) : MyBool
   | MyBool.true => not b2
   | MyBool.false => MyBool.true)
 
-example : nand MyBool.true  MyBool.false  = MyBool.true  := solution!(by rfl)
-example : nand MyBool.false MyBool.false =  MyBool.true  := solution!(by rfl)
-example : nand MyBool.false MyBool.true  =  MyBool.true  := solution!(by rfl)
-example : nand MyBool.true  MyBool.true   = MyBool.false := solution!(by rfl)
+example : nand MyBool.true  MyBool.false = MyBool.true  := solution!(by rfl)
+example : nand MyBool.false MyBool.false = MyBool.true  := solution!(by rfl)
+example : nand MyBool.false MyBool.true  = MyBool.true  := solution!(by rfl)
+example : nand MyBool.true  MyBool.true  = MyBool.false := solution!(by rfl)
 ```
 
 :::gradeTheorem 1 "nand_test4"
@@ -512,6 +521,12 @@ Let's walk through the example above with this terminology in mind.
 And now let's see it in a bit more detail:
 ::::
 
+:::dev "mwhicks1"
+The theorem below has wonderful explaining what's going on, but it
+is not typeset. Are we planning to fix that problem? I re-flowed the
+text so it reads better on the WWW in case not.
+:::
+
 ```lean
 theorem true_and_explained : ∀ (b : MyBool), (MyBool.true && b) = b := by
   /- Move your cursor (click) here to see the initial proof state in
@@ -525,11 +540,12 @@ theorem true_and_explained : ∀ (b : MyBool), (MyBool.true && b) = b := by
     The `intro` tactic is used to name variables quantified by a `∀`.
     Since we are trying to prove a property of all `MyBools`, we
     proceed by introducing an unknown `MyBool` `b` and prove
-    the property holds for `b`, regardless of what it is.  Informally, this move can be read,
-    "We want to prove <some property> for all `MyBool`s `b`. So suppose
-    `b` is some arbitrary `MyBool`... <and then go on to prove the
-    property for this particular `b`>..." Since `b` was chosen
-    arbitrarily, we've now proved the property for all `b`.
+    the property holds for `b`, regardless of what it is.  Informally,
+    this move can be read, "We want to prove <some property> for all
+    `MyBool`s `b`. So suppose `b` is some arbitrary `MyBool`...
+    <and then go on to prove the property for this particular `b`>..."
+    Since `b` was chosen arbitrarily, we've now proved the property
+    for all `b`.
 
     A proof of a theorem beginning with a ∀ will typically start with
     an `intro`.
@@ -537,13 +553,13 @@ theorem true_and_explained : ∀ (b : MyBool), (MyBool.true && b) = b := by
     As in the `example`s above, we can use the `rfl` tactic,
     which closes goals about equality where both sides are equal to
     one another according to the principle of reflexivity. Now,
-    inspecting our goal will show that it is `(MyBool.true && b) = b`, which
-    may not appear to be equal to itself. However, the tactic
+    inspecting our goal will show that it is `(MyBool.true && b) = b`,
+    which may not appear to be equal to itself. However, the tactic
     _evaluates_ both sides of the equality before comparing them. In
     this case, if we look at the definition of `and`, we can see that,
     when its first argument is `MyBool.true`, the result is its second
-    argument. So the two terms `MyBool.true && b` and `b` are in fact equal because one
-    evaluates to the other.
+    argument. So the two terms `MyBool.true && b` and `b` are in fact
+    equal because one evaluates to the other.
   -/
   rfl
   /- The proof is now done! The Lean InfoView tells us there are "No goals". -/
@@ -555,15 +571,11 @@ Lean is _whitespace-sensitive_. That is, the indentation in proofs is important 
 it can change the meaning of the proof, usually causing the proof to break. If we had
 instead written the following:
 
-:::dev "Daniel Sainati (dsainati1)"
-Ideally would change this to a #guardmsgs(error) if we can
-HG: +1
-:::
-
-/- theorem true_and_wrong : ∀ (b : MyBool), (MyBool.true && b) = b := by
+```lean +error
+theorem true_and_wrong : ∀ (b : MyBool), (MyBool.true && b) = b := by
   intro b
     rfl
--/
+```
 
 Lean would complain, since the `rfl` is not at the same level of indentation as the `intro b`,
 so it does not recognize these two tactics as being sequential in the way they should be.
@@ -609,10 +621,6 @@ theorem really_bad : MyBool.true = MyBool.false := by sorry
 ```
 ::::
 
-```lean
-end MyBool
-```
-
 ::::full
 The facts we've seen so far about booleans are quite simple, so the tactics we need to
 prove them are also quite simple. Over the course of this book we are going to
@@ -626,6 +634,10 @@ but comes with a lot of useful functions and lemmas.
 ::::terse
 Now we'll switch to Lean's definition of booleans.
 ::::
+
+```lean
+end MyBool
+```
 
 ## Types
 
@@ -655,7 +667,7 @@ matches the given type and signal an error if not.
 
 ::::full
 Functions like {name}`Bool.not` are themselves ordinary values, just like {name}`Bool.true`
-and `Bool.false`.  Their types are called _function types_, and they are
+and {name}`Bool.false`.  Their types are called _function types_, and they are
 written with arrows.
 ::::
 
@@ -672,7 +684,7 @@ each of type `Bool`, this function produces an output of type
 `Bool`."
 ::::
 
-### Aside: Unicode in Lean
+## Aside: Unicode in Lean
 
 ::::full
 Note that → is a unicode symbol, not a simple ASCII character. The
@@ -682,7 +694,9 @@ name of the symbol, and the extension will automatically replace it
 with the actual symbol. For example, typing `\->` or `\to` will produce
 →, and `\lambda` will produce λ. To find out what backslash sequence
 produces a unicode symbol that you can see on the screen, just hover
-over it.
+over it. To see all of the Unicode shortcodes, open the Command Palette
+(Ctrl+Shift+P on Windows/Linux or Cmd+Shift+P on macOS), type
+"Lean 4: Show Unicode Input Abbreviations", and press Enter.
 ::::
 
 ::::terse
@@ -698,11 +712,11 @@ TODO
 :::
 
 ::::full
-The types we have defined so far are simple examples of "enumerated
-types": their definitions explicitly enumerate a finite set of
-elements, called _constructors_.  Here is a more interesting type
-definition, `Color`, where one of the constructors takes an
-argument:
+The enumerated types we have seen so far are so-named because
+their definitions explicitly enumerate a finite set of
+elements, their constructors. Here is a more interesting
+inductive type definition, `Color`, where one of the constructors
+takes an argument:
 ::::
 
 :::terse
@@ -804,14 +818,14 @@ def isRed' (c : Color) : Bool :=
     | _ => Bool.false
 ```
 
-This function produces the same result as the old
-`isRed` but illustrates the use of a pattern matching variable: the
+This `isRed'` function produces the same result as
+`isRed` but illustrates the _use_ of a pattern matching variable: the
 `Color.primary r` pattern stores the `RGB` argument into variable `r`,
 and then pattern matches on that argument to produce the final
 result.
 
 ::::exercise (rating := 1) (name := "is_weekend")
-Define a function that takes a day and returns true if the day is
+Define a function that takes a `Day` and returns true if the day is
 a weekend, and false otherwise.
 
 Then, fill in right-hand sides of the `example` blocks below.
@@ -834,9 +848,6 @@ def is_weekend (d : Day) : Bool
 example : is_weekend Day.sunday = true := solution!(by rfl)
 example : is_weekend Day.friday = false := solution!(by rfl)
 ```
-:::dev "Roger Burtonpatel (rogerburtonpatel)"
-, to NH: 1/2 new exercises to grade. Thanks!
-:::
 
 :::gradeTheorem 1 "is_weekend"
 :::
@@ -872,9 +883,6 @@ example : is_inversion (Color.primary RGB.red) (Color.primary RGB.blue) = Bool.t
 example : is_inversion (Color.primary RGB.green) (Color.primary RGB.red) = Bool.false :=
   solution!(by rfl)
 ```
-:::dev "Roger Burtonpatel (rogerburtonpatel)"
-, to NH: 2/2 new exercise to grade
-:::
 
 :::gradeTheorem 1 "is_inversion"
 :::
@@ -883,14 +891,14 @@ example : is_inversion (Color.primary RGB.green) (Color.primary RGB.red) = Bool.
 ## Namespaces
 
 ::::full
-Lean provides a _namespace system_ to aid in organizing large
-developments. If we enclose a collection of declarations in
-`namespace X ... end X`, then, in the rest of the file after the
-`end`, these definitions will be referred to by names like `X.foo`
-instead of just `foo`. In this book, we will use this feature to
-limit the scope of definitions so that we are free to reuse names
-from the standard library so we can redefine them and learn about
-how they work. In large Lean developments, namespaces are
+We have been using Lean's system of _namespaces_ for managing potentially
+conflicting names. Now we have seen enough that we can look more closely at
+how it works.
+
+When we enclose a collection of declarations in `namespace X ... end X`,
+references from outside this collection to names declared within
+it are referred to with prefix `X.`, like `X.foo` instead of just `foo`.
+In large Lean developments, namespaces are
 used to organize definitions and theorems the same way
 modules are used in other programming languages.
 ::::
@@ -993,11 +1001,6 @@ open MyNamespace
 #check myDef -- Bool
 ```
 
-:::dev "Daniel Sainati (dsainati1)"
-We should come to a concrete decision about whether or not we are
-putting types in comments for #check and #eval commands.
-:::
-
 If we only want to bring _some_, rather than all, of the definitions
 of a namespace into the current scope, we can use the `export` command:
 
@@ -1009,16 +1012,23 @@ end MyOtherNamespace
 
 export MyOtherNamespace (myVisibleDef)
 
--- This makes `myvisibleDef` usable without qualification, but not `myHiddenDef`:
+-- `myVisibleDef` is now usable without qualification:
 #check myVisibleDef -- Bool
+```
+
+But `myHiddenDef`, which we did not `export`, still needs its full name;
+using it unqualified is an error:
+
+```lean +error
+#check myHiddenDef
 ```
 
 ::::full
 In fact, this is what exactly what Lean does with the standard `Bool` type by default.
 Since it is such an important
 part of many proofs and programs, Lean implicitly `export`s many of `Bool`s functions and
-constructors. Accordingly, we can use constructors like `true` and `false` and functions like `not`
-without qualifying them with `Bool.`.
+constructors. Accordingly, we can use constructors like `true` and `false` and functions
+like `not` without qualifying them with `Bool.`.
 ::::
 
 ::::terse
@@ -1068,20 +1078,10 @@ out that we must mean `Day.monday`. However, in the example below, Lean can't fi
 which version of `.true` we mean, since it could either be `Bool.true` or `MyBool.true`.
 In this case, it will raise an error:
 
-:::dev "Daniel Sainati (dsainati1)"
-see my comment later in the file about guard msgs
-
-```lean
--- This doesn't work: Lean doesn't know which `true` we mean
--- BCP: Why is this an inline comment?
--- BCP: Is the `drop all` syntax explained?
-#guard_msgs(drop all) in
-#check .true --
+```lean +error
+#check .true
 ```
-:::
-::::
 
-::::full
 Here, though, because `not` is a function that takes a `Bool` argument, Lean knows that
 `.true` must here be a `Bool`:
 
@@ -1093,6 +1093,7 @@ Here, though, because `not` is a function that takes a `Bool` argument, Lean kno
 :::dev
 BCP: This is not going to typeset well!
 TODO
+MWH: What is "this" referring to?
 :::
 
 ::::exercise(rating:=0) (name := "custom_namespace_checks")
@@ -1100,29 +1101,46 @@ Predict the output of each of the statements below.
 Do you think their results would change depending on which namespace
 the statements appear in? How?
 
+```
 #check .black -- Write your prediction here.
 #check Color.black -- Write your prediction here.
 #check RGB -- Write your prediction here.
 #check Playground.myFoo -- Write your prediction here.
+```
 
 Once you have written your predictions, copy the lines from the comment into
 an active section of the book to evaluate them.
 ::::
 
-:::dev "Roger Burtonpatel (rogerburtonpatel)"
-This seems like a reasonable exercise; I'm not quite sure if/how we should grade it?
-BCP: Not all exercises need to be graded.  (In Rocq we had a notation for manually graded exercises. An optional and manually graded exercise would serve for this.)
+:::grade
+```
+GRADE_MANUAL 1: custom_namespace_checks
+```
 :::
 
-## Constructors with Multiple Parameters
+:::dev "mwhicks1"
+This namespace section is great, but it interrupts the pedagogical flow of the
+presentation of inductive types. We were prevoiusly looking at constructors With
+one argument, then there was this big digression, and now we are back to two.
+Are we able to move the namespace stuff to the end of this section (Data and Functions)?
+Then we can start it by saying we are finishing with it but readers can skip it
+if they prefer to "follow their nose" regarding namespaces, and come back when they
+want to know more.
+:::
+
+## Constructors with Multiple Parameters (Tuple Types)
 
 ```lean
 namespace Playground
 ```
 
 ::::full
-A single constructor with multiple parameters can be used to create
-a tuple type. As an example, consider representing the four bits in
+A single constructor of an inductive type can have multiple parameters,
+not just zero or one. This feature is one way to define _tuple types_ in Lean,
+which are like record/struct types but their fields are accessed by their _position_
+in patterns rather than by a specific (field) _name_.
+
+As an example, consider representing the four bits in
 a nibble (half a byte). We first define a datatype `Bit` that
 resembles `Bool` (using the constructors `b1` and `b0` for the two
 possible bit values) and then define the datatype `Nibble`, which is
@@ -1176,6 +1194,12 @@ example : allZero (.bits .b0 .b0 .b0 .b0) = true  := by rfl
 end Playground
 ```
 
+:::dev "mwhicks1"
+Lean has structure types which provide tuple types directly.
+I could imagine reworking the `Nibble` definition to be a structure instead.
+Should we do that? Should we at least mention structures
+:::
+
 ## Natural Numbers
 
 ::::full
@@ -1189,13 +1213,15 @@ namespace NatPlayground
 ```
 
 ::::full
-All the types we have defined so far -- both "enumerated types"
+All the types we have defined so far -- both enumerated types
 such as `Day`, `Bool`, and `Bit` and tuple types such as
 `Nibble` built from them -- are finite. The natural numbers, on
 the other hand, are an infinite set, so we'll need to use a
-slightly richer form of type declaration to represent them.
+slightly richer form of inductive type declaration to represent
+them: _recursive_ inductive types.
 
-There are many representations of numbers to choose from. You are
+While the need for recursion is unequivocal, there are many recursively-defined
+representations of numbers to choose from. You are
 certainly familiar with decimal notation (base 10), using the digits
 0 through 9, for example, to form the number 123. You have likely
 also encountered hexadecimal notation (base 16), in which the same
