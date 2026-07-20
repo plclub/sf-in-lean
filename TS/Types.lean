@@ -252,7 +252,7 @@ def Tm.IsValue (t : Tm) : Prop := Tm.IsBValue t ∨ Tm.IsNValue t
 ## Operational Semantics
 
 ::::full
-Here is the single-step relation, first informally...
+Here is the single-step relation, informally.
 ::::
 
 ```
@@ -294,34 +294,34 @@ Here is the single-step relation, first informally...
 ```
 
 ::::full
-... and then formally:
+The formal rules are below. We are defining them differently than we have
+previously: We are using the relation's own notation (`⟶`) inside the
+constructors. We achieve this by defining  `Tm.Step` within a `section`,
+and within that section using `set_option hygiene false` on `⟶` so that
+the constructors read in this syntax; after the `section`
+closes, we use a `scoped notation` as we have done before.
 ::::
 
 :::slidebreak
 :::
 
-:::dev "mwhicks1" NOW
-We need to decide how we are going to do notation. Here we are defining the scoped
-notation after the inductive definition, but using the expression syntax within
-the definition. Further down we play some macro tricks to reserve the notation
-prior to defining the inductive that uses it. This looks better but may be
-distasteful or dangerous. Decide on what to do and stick with it. Reflect it
-back in Slang and Smallstep, potentially.
-:::
-
 ```lean
+section
+set_option hygiene false in
+local notation:40 t:41 " ⟶ " t':41 => Tm.Step t t'
 inductive Tm.Step : Tm → Tm → Prop where
-  | ifTrue (t1 t2 : Tm) : Tm.Step <{ if true then t1 else t2 }> t1
-  | ifFalse (t1 t2 : Tm) : Tm.Step <{ if false then t1 else t2 }> t2
-  | ifStep (c c' t2 t3 : Tm) (h : Tm.Step c c') :
-      Tm.Step <{ if c then t2 else t3 }> <{ if c' then t2 else t3 }>
-  | succStep (t1 t1' : Tm) (h : Tm.Step t1 t1') : Tm.Step <{ succ t1 }> <{ succ t1' }>
-  | predZero : Tm.Step <{ pred 0 }> <{ 0 }>
-  | predSucc (v : Tm) (hv : Tm.IsNValue v) : Tm.Step <{ pred (succ v) }> v
-  | predStep (t1 t1' : Tm) (h : Tm.Step t1 t1') : Tm.Step <{ pred t1 }> <{ pred t1' }>
-  | isZeroZero : Tm.Step <{ iszero 0 }> <{ true }>
-  | isZeroSucc (v : Tm) (hv : Tm.IsNValue v) : Tm.Step <{ iszero (succ v) }> <{ false }>
-  | isZeroStep (t1 t1' : Tm) (h : Tm.Step t1 t1') : Tm.Step <{ iszero t1 }> <{ iszero t1' }>
+  | ifTrue (t1 t2 : Tm) : <{ if true then t1 else t2 }> ⟶ t1
+  | ifFalse (t1 t2 : Tm) : <{ if false then t1 else t2 }> ⟶ t2
+  | ifStep (c c' t2 t3 : Tm) (h : c ⟶ c') :
+      <{ if c then t2 else t3 }> ⟶ <{ if c' then t2 else t3 }>
+  | succStep (t1 t1' : Tm) (h : t1 ⟶ t1') : <{ succ t1 }> ⟶ <{ succ t1' }>
+  | predZero : <{ pred 0 }> ⟶ <{ 0 }>
+  | predSucc (v : Tm) (hv : Tm.IsNValue v) : <{ pred (succ v) }> ⟶ v
+  | predStep (t1 t1' : Tm) (h : t1 ⟶ t1') : <{ pred t1 }> ⟶ <{ pred t1' }>
+  | isZeroZero : <{ iszero 0 }> ⟶ <{ true }>
+  | isZeroSucc (v : Tm) (hv : Tm.IsNValue v) : <{ iszero (succ v) }> ⟶ <{ false }>
+  | isZeroStep (t1 t1' : Tm) (h : t1 ⟶ t1') : <{ iszero t1 }> ⟶ <{ iszero t1' }>
+end
 
 scoped notation:40 t:41 " ⟶ " t':41 => Tm.Step t t'
 ```
@@ -569,7 +569,7 @@ kinds of operands.)
 _Optional aside, good practice with step relations but tangential to the
 main development._  We define an alternate step relation `⇢` and a step
 _function_ for it -- converting a hidden draft from the Rocq source into
-live Lean using this chapter's `<{ … }>` grammar and reserved-notation
+live Lean using this chapter's `<{ … }>` grammar and notation
 setup.
 ::::
 
@@ -584,14 +584,13 @@ live Lean. Not sure if we want to keep this.
 Suppose we define an alternate single-step relation, written `t ⇢ t'`,
 that _drops_ the `Tm.IsNValue` premise from the `predSucc` and `isZeroSucc`
 rules -- so `pred (succ t)` and `iszero (succ t)` may step even when `t` is
-not a numeric value.  (It is built with exactly the same reserved-notation
+not a numeric value.  (It is built with exactly the same notation
 setup as `Tm.Step`; note `predSucc`/`isZeroSucc` no longer take a premise.)
 
 ```lean
--- Reserve the notation ⇢ here so we can use it in the definition
-syntax:40 term:41 " ⇢ " term:41 : term
-macro_rules | `($t ⇢ $t') => `($(Lean.mkIdent `Tm.AltStep) $t $t')
-
+section
+set_option hygiene false in
+local notation:40 t:41 " ⇢ " t':41 => Tm.AltStep t t'
 inductive Tm.AltStep : Tm → Tm → Prop where
   | ifTrue (t1 t2 : Tm) : <{ if true then t1 else t2 }> ⇢ t1
   | ifFalse (t1 t2 : Tm) : <{ if false then t1 else t2 }> ⇢ t2
@@ -604,11 +603,9 @@ inductive Tm.AltStep : Tm → Tm → Prop where
   | isZeroZero : <{ iszero 0 }> ⇢ <{ true }>
   | isZeroSucc (t1 : Tm) : <{ iszero (succ t1) }> ⇢ <{ false }>
   | isZeroStep (t1 t1' : Tm) : t1 ⇢ t1' → <{ iszero t1 }> ⇢ <{ iszero t1' }>
+end
 
-@[app_unexpander Tm.AltStep]
-def Tm.AltStep.unexpand : Lean.PrettyPrinter.Unexpander
-  | `($_ $t $t') => `($t ⇢ $t')
-  | _ => throw ()
+scoped notation:40 t:41 " ⇢ " t':41 => Tm.AltStep t t'
 ```
 
 Some questions about this relation (answers inline):
