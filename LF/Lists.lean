@@ -68,6 +68,10 @@ Why is this namespace needed??
 So that the definitions here don't clash with the standard library.
 :::
 
+:::dev "Benjamin Pierce (bcpierce00)"
+Then let's explain it, if really needed.
+:::
+
 ```lean
 namespace Lists
 ```
