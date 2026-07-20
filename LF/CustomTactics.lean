@@ -187,7 +187,6 @@ def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (List CasesS
         else pure subgoals
       return subgoals.toList
 
-#check optParam
 /-- Given an inversion alternative and a list of goals,
   solve the tagged goal with the provided tactics,
   throwing an error if the goal cannot be found or solved. -/
