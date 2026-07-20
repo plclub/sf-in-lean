@@ -805,14 +805,14 @@ example : count 5 (remove_one 5 [2, 1, 5, 4, 5, 1, 4]) = 1 := solution!(by rfl)
 ```lean
 theorem remove_one_nil v : remove_one v [] = [] := solution!(by rfl)
 
-theorem remove_one_add_same v1 v2 t : (v2 == v1) = true -> remove_one v1 (add v2 t) = t := by
+theorem remove_one_add_same v1 v2 t : (v2 == v1) = true → remove_one v1 (add v2 t) = t := by
   solution!
     intro h
     dsimp [remove_one]
     rw [h]
     dsimp
 
-theorem remove_one_add_diff v1 v2 t : (v2 == v1) = false -> remove_one v1 (add v2 t) = add v2 (remove_one v1 t) := by
+theorem remove_one_add_diff v1 v2 t : (v2 == v1) = false → remove_one v1 (add v2 t) = add v2 (remove_one v1 t) := by
   solution!
     intro h
     dsimp [remove_one]
@@ -848,7 +848,7 @@ theorem remove_all_add_same v t : remove_all v (add v t) = remove_all v t := by
     rw [BEq.refl]
     dsimp
 
-theorem remove_all_add_diff v1 v2 t : (v2 == v1) = false -> remove_all v1 (add v2 t) = add v2 (remove_all v1 t) := by
+theorem remove_all_add_diff v1 v2 t : (v2 == v1) = false → remove_all v1 (add v2 t) = add v2 (remove_all v1 t) := by
   solution!
     intro h
     dsimp [add, remove_all]
@@ -877,14 +877,14 @@ example : included [1, 2, 2] [2, 1, 4, 1] = false := solution!(by rfl)
 ```lean
 theorem included_nil s : included [] s = true := solution!(by rfl)
 
-theorem included_add_member v s1 s2 : member v s2 = true -> included (add v s1) s2 = included s1 (remove_one v s2) := by
+theorem included_add_member v s1 s2 : member v s2 = true → included (add v s1) s2 = included s1 (remove_one v s2) := by
   solution!
     intro h
     dsimp [add, included]
     rw [h]
     rfl
 
-theorem included_add_nonmember v s1 s2 : member v s2 = false -> included (add v s1) s2 = false := by
+theorem included_add_nonmember v s1 s2 : member v s2 = false → included (add v s1) s2 = false := by
   solution!
     intro h
     dsimp [add, included]
@@ -1252,13 +1252,13 @@ To prove the following theorem, which tactics will we need besides
 
 ```display
 theorem foo1 : ∀ n : Nat, ∀ l : NatList,
-  myRepeat n 0 = l -> l.length = 0
+  myRepeat n 0 = l → l.length = 0
 ```
 
 :::quizSolution
 ```
 theorem foo1 (n : Nat) (l : NatList) :
-    myRepeat n 0 = l -> l.length = 0 := by
+    myRepeat n 0 = l → l.length = 0 := by
   intro h
   rw [← h, repeat_zero, nil_length]
 ```
@@ -1505,7 +1505,7 @@ theorem eqblist_cons_same h t1 t2 : eqblist (h :: t1) (h :: t2) = eqblist t1 t2 
     dsimp [eqblist]
     rw [BEq.refl, Bool.true_and]
 
-theorem eqblist_cons_diff h1 h2 t1 t2 : (h1 == h2) = false -> eqblist (h1 :: t1) (h2 :: t2) = false := by
+theorem eqblist_cons_diff h1 h2 t1 t2 : (h1 == h2) = false → eqblist (h1 :: t1) (h2 :: t2) = false := by
   solution!
     intro h
     dsimp [eqblist]
