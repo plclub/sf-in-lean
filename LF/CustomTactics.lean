@@ -161,7 +161,7 @@ structure InversionConfig where
 declare_config_elab elabInversionConfig InversionConfig
 
 open Cases in
-def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (List MVarId) := withMainContext do
+def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (List CasesSubgoal) := withMainContext do
   let goal ← getMainGoal
   goal.withContext do
     let some ctx ← mkCasesContext? h
@@ -172,7 +172,7 @@ def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (List MVarId
       let subgoals ← if config.clear
         then casesClearMany subgoals #[h]
         else pure subgoals
-      return subgoals.toList.map (·.mvarId)
+      return subgoals.toList
     -- Otherwise, use custom [unifyEqs] to not fail on unifying HEqs
     else
       let gis@⟨newGoal, _, newTarget, numEqs⟩ ← generalizeIndices goal h
@@ -185,30 +185,33 @@ def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (List MVarId
       let subgoals ← if config.clear
         then casesClearMany subgoals #[h, targetEq]
         else pure subgoals
-      return subgoals.toList.map (·.mvarId)
+      return subgoals.toList
 
+#check optParam
 /-- Given an inversion alternative and a list of goals,
   solve the tagged goal with the provided tactics,
   throwing an error if the goal cannot be found or solved. -/
-def evalInvAlt (goals : List MVarId) (alt : TSyntax `invAlt) : TacticM (List MVarId) :=
+def evalInvAlt (goals : List CasesSubgoal) (alt : TSyntax `invAlt) : TacticM (List MVarId) :=
   match alt with
   | `(invAlt| | $tag:ident $vars:binderIdent* => $tactics:tacticSeq) => do
-    if let some goal ← findTag? goals tag.getId then
-      return [← trySolveGoal vars tactics goal]
+    if let some goal := goals.find? (matchTag tag.getId $ ·.ctorName.getD default) then
+      return [← trySolveGoal vars tactics goal.mvarId]
     else throwError m!"Invalid alternative name `{tag.getId}`: {← errorMsg}"
   | `(invAlt| | _ $vars:binderIdent* => $tactics:tacticSeq) => do
     if !goals.isEmpty then
-      goals.mapM $ trySolveGoal vars tactics
+      goals.mapM (trySolveGoal vars tactics ·.mvarId)
     else throwErrorAt alt m!"Invalid wildcard alternative: {← errorMsg}"
   | _ => throwErrorAt alt "Could not parse inversion alternative"
 where
+  matchTag tag name : Bool :=
+    tag == name || tag.isPrefixOf name || tag.isSuffixOf name
   trySolveGoal vars tactics goal : TacticM MVarId := do
     let goals ← renameInaccessibles goal vars >>= evalTacticAt tactics
     unless goals.isEmpty do
       reportUnsolvedGoals goals
     return goal
   errorMsg : TacticM MessageData := do
-    let goalMsgs ← goals.mapM (.ofName <$> ·.getUserName)
+    let goalMsgs := goals.filterMap (.ofName <$> ·.ctorName)
     return if goals.isEmpty
       then m!"There are no unhandled alternatives"
       else m!"Expected {.orList goalMsgs}"
@@ -222,10 +225,10 @@ public meta def evalInversion : Tactic
       let expandedAlts ← Array.flatten <$> alts.mapM expandInvAlts
       for alt in expandedAlts do
         let solvedGoals ← evalInvAlt goals alt
-        goals := goals.removeAll solvedGoals
+        goals := goals.filter (!solvedGoals.contains ·.mvarId)
       unless goals.isEmpty do
-        reportUnsolvedGoals goals
-    replaceMainGoal goals
+        reportUnsolvedGoals $ goals.map (·.mvarId)
+    replaceMainGoal $ goals.map (·.mvarId)
   | stx => throwErrorAt stx "Could not parse inversion tactic"
 where expandInvAlts
   | `(invAlts| $[| $args:caseArg]* => $tactics:tacticSeq) =>
@@ -239,6 +242,7 @@ end -- meta section
 namespace Tests
 open Nat
 
+set_option autoImplicit false
 set_option pp.proofs true
 set_option pp.fieldNotation false
 
@@ -343,6 +347,13 @@ example (n : Nat) : Nat := by
   inversion n with
   | zero => exact zero
   | succ n' => exact n'
+
+inductive The : ∀ {α}, α → Prop where
+  | mk : The zero
+
+example (h : The 0) : True := by
+  inversion h with
+  | mk => exact ⟨⟩
 
 lemma doubleNegation : ∀ P, P → ¬ ¬ P := by
   intro P p np; exact (np p)
