@@ -1008,8 +1008,8 @@ theorem dist_exists_or (X : Type) (P Q : X → Prop) :
 -- GRADE_THEOREM 2: dist_exists_or
 -- []
 
--- EX3? (leb_plus_exists)
-theorem leb_plus_exists : ∀ n m : Nat, (n ≤? m = true) → ∃ x, m = x + n := by
+-- EX3? (ble_plus_exists)
+theorem ble_plus_exists : ∀ n m : Nat, (n ≤? m = true) → ∃ x, m = x + n := by
   -- ADMITTED
   intro n
   induction n
@@ -1019,7 +1019,7 @@ theorem leb_plus_exists : ∀ n m : Nat, (n ≤? m = true) → ∃ x, m = x + n 
     case zero => intro h; contradiction
     case succ m' =>
       intro h
-      rw [succ_leb_succ] at h
+      rw [succ_ble_succ] at h
       apply ih at h
       let ⟨x, hx⟩ := h
       exists x
@@ -1027,27 +1027,27 @@ theorem leb_plus_exists : ∀ n m : Nat, (n ≤? m = true) → ∃ x, m = x + n 
   -- /ADMITTED
 
 -- QUIETSOLUTION
-theorem leb_plus (n m : Nat) : (n ≤? (m + n)) = true := by
+theorem ble_plus (n m : Nat) : (n ≤? (m + n)) = true := by
   induction n
   case zero => rfl
-  case succ n' ih => rw [Nat.add_succ m, succ_leb_succ]; exact ih
+  case succ n' ih => rw [Nat.add_succ m, succ_ble_succ]; exact ih
 -- /QUIETSOLUTION
 
-theorem add_exists_leb (n m : Nat) (h : ∃ x, m = x + n) : n ≤? m = true := by
+theorem add_exists_ble (n m : Nat) (h : ∃ x, m = x + n) : n ≤? m = true := by
   -- ADMITTED
   let ⟨x, hx⟩ := h
   rw [hx]
-  apply leb_plus
+  apply ble_plus
   -- /ADMITTED
 
 -- HIDE
 /- A direct proof without a lemma. -/
-theorem add_exists_leb' : ∀ n m, (∃ x, m = x + n) → n ≤? m = true := by
+theorem add_exists_ble' : ∀ n m, (∃ x, m = x + n) → n ≤? m = true := by
   intro n; induction n
   case zero => intro m H; rfl
   case succ n' ih =>
     intro m ⟨x, hx⟩
-    rw [hx, Nat.add_succ x, succ_leb_succ]
+    rw [hx, Nat.add_succ x, succ_ble_succ]
     apply ih; exists x
 -- /HIDE
 -- []

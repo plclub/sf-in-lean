@@ -25,20 +25,37 @@ htmlSplit := .never
 file := some "Slang"
 %%%
 
+:::dev "Benjamin Pierce (bcpierce00)"
+We need to figure out our approach to text width, especially
+for proofs.  Quite a few proofs here don't render into the
+chosen page width, and for terse mode it will be worse.
+:::
+
 ::::full
 We begin our study of type systems for programming languages by looking at a language
-we call *Slang* (_simple language_). Despite its simplicity, Slang
+we call *Slang* (for _simple language_). Despite its simplicity, Slang
 lets us introduce key concepts for specifying the _syntax_ and _semantics_ of
-programming languages, and show how those concepts are realized in Lean.
+programming languages and show how those concepts are realized in Lean.
 ::::
 
 # Arithmetic and Boolean Expressions
 
 :::instructors
 At this point, I usually take some of the lecture time to
-   give a high-level picture of the structure of an interpreter, the
-   processes of lexing and parsing, the notion of ASTs, etc.  Might be
-   nice to work some of those ideas into the notes. - BCP
+give a high-level picture of the structure of an interpreter, the
+processes of lexing and parsing, the notion of ASTs, etc.  Might be
+nice to work some of those ideas into the notes. - BCP
+:::
+:::dev "Michael Hicks (mwhicks1)" PotentialImprovement
+  Will we develop `ImpParser`? Previously, the text
+  below said "The optional chapter `ImpParser` develops a simple lexical analyzer and
+  parser that can perform this translation.  You do not need to understand
+  that chapter to understand this one, but if you haven't already taken a
+  course where these techniques are covered (e.g., a course on compilers)
+  you may want to skim it." I removed this because now this chapter is not
+  about Imp but about a much simpler language, and also it lives in TS not HL.
+  BCP: We don't need to take this digression for now.  Later, we could consider
+  making a real chapter about lexing and parsing, maybe even with some proofs.
 :::
 
 ::::full
@@ -78,30 +95,23 @@ inductive Bexp where
   | and (b1 b2 : Bexp)
 ```
 
-:::dev "Michael Hicks (mwhicks1)" BeforeNextRelease
-  Will we develop `ImpParser`? Previously, the text
-  below said "The optional chapter `ImpParser` develops a simple lexical analyzer and
-  parser that can perform this translation.  You do not need to understand
-  that chapter to understand this one, but if you haven't already taken a
-  course where these techniques are covered (e.g., a course on compilers)
-  you may want to skim it." I removed this because now this chapter is not
-  about Imp but about a much simpler language, and also it lives in TS not HL.
-:::
-
 ::::full
-In this chapter, we'll mostly elide the translation from the concrete
-syntax that a programmer would actually write to these abstract syntax
+In this chapter, we'll ignore the translation from the _concrete
+syntax_ that a programmer would actually write to these abstract syntax
 trees -- the process that, for example, would translate the string
 `"1 + 2 * 3"` to the AST `.plus (.num 1) (.mult (.num 2) (.num 3))`.
 
 For comparison, here's a conventional BNF (Backus-Naur Form) grammar
 defining the same abstract syntax:
 
+:::dev "Benjamin Pierce (bcpierce00)"
+This is inconsistent about `×` vs. `*`.
+:::
 ```
   a := nat
       | a + a
       | a − a
-      | a × a
+      | a * a
 
   b := bool
       | a = a
@@ -122,7 +132,6 @@ Compared to the Lean version above...
     unspecified.  Some additional information -- and human intelligence --
     would be required to turn this description into a formal definition,
     e.g., for implementing a compiler.
-
     The Lean version consistently omits all this information and
     concentrates on the abstract syntax only.
 
@@ -155,8 +164,9 @@ def Aexp.eval (a : Aexp) : Nat :=
 ```
 
 ::::full
-By convention, we pair the definition with one _simplification lemma_ which says
-how `eval` behaves on each constructor. Proofs then rewrite by these lemmas rather
+By convention, we pair the definition with one _simplification lemma_ per constructor,
+specifying
+how `eval` behaves on that constructor. Proofs then rewrite by these lemmas rather
 than peeking through the definition of `eval`.  We tag each lemma `@[simp]`, so `simp`
 applies them automatically.
 ::::
@@ -210,7 +220,7 @@ Aexp.eval (.plus (.num 3) (.minus (.num 4) (.num 1)))
 ## Optimization
 
 ::::full
-We can now get some mileage out of these definitions. Suppose we define a
+We can now start to get some mileage out of these definitions. Suppose we define a
 function that takes an arithmetic expression and slightly simplifies it, changing
 every occurrence of `0 + e` (i.e., `.plus (.num 0) e`) into just `e`.
 ::::
@@ -243,7 +253,7 @@ But if we want to be certain the optimization is correct -- that
 evaluating an optimized expression _always_ gives the same result as
 the original -- we should prove it!
 
-Here is a first, deliberately explicit proof, by induction on `a`. The
+Here is a first, deliberately explicit, proof, by induction on `a`. The
 interesting case is `plus`: because `optimize0plus` treats `plus (num 0) e`
 specially, we case-split on the left operand `a1` -- and, when it is a numeral,
 on whether that numeral is `0` -- to line the proof up with the function's own
@@ -288,27 +298,33 @@ theorem optimize0plus_sound (a : Aexp) :
 ::::full
 We can do much better. The case analysis we performed by hand -- peeling
 `plus` apart to reach the `plus (num 0) e` branch -- is exactly the case
-analysis that `optimize0plus` itself performs. For any function, Lean
-generates a matching *induction principle*, here `Aexp.optimize0plus.induct`,
-that follows the function's own recursion structure.  Inducting with it (via
-`induction a using …`) hands us one goal per branch of `optimize0plus`, the
+analysis that `optimize0plus` itself performs. The `fun_induction` tactic
+inducts along a function's *own* recursion structure: `fun_induction
+Aexp.optimize0plus a` hands us one goal per branch of `optimize0plus` -- the
 special `plus (num 0) e` branch included -- so the nested `cases` disappear.
 
 Every remaining goal now has the same shape, so we can attack them uniformly
 with the `<;>` combinator, which runs a single tactic on *all* the goals
-produced by the `induction`.  That tactic is `simp_all [Aexp.optimize0plus]`:
-it unfolds `optimize0plus`, rewrites `eval` by the `@[simp]` characterizing
-lemmas, and uses the induction hypotheses -- which `simp_all` picks up from the
-local context automatically -- to close each goal. The whole proof collapses to
-two lines.
+produced by the induction.  That single tactic is `simp_all`: it rewrites
+`eval` by the `@[simp]` characterizing lemmas and uses the induction hypotheses
+-- which `simp_all` picks up from the local context automatically -- to close
+each goal. The whole proof collapses to two lines.
 ::::
 
 ```lean
 theorem optimize0plus_sound' (a : Aexp) :
     a.optimize0plus.eval = a.eval := by
-  induction a using Aexp.optimize0plus.induct <;>
-    simp_all [Aexp.optimize0plus]
+  fun_induction Aexp.optimize0plus a <;> simp_all
 ```
+
+:::dev PotentialImprovement
+Following a suggestion from berberman:
+`fun_induction` (and `simp_all`) are used here but not yet introduced to the
+reader: neither appears in the CONTRIBUTING.md tactic-introduction table, and
+`fun_induction` is not (yet) used in `Automation`. To be decided: introduce
+`fun_induction` in `Automation` (its natural home, since TS follows it) or
+locally here, and add it to the tactic table either way.
+:::
 
 :::::exercise (rating := 3) (name := "optimize0plusB_sound")
 Since the {name}`Aexp.optimize0plus` transformation doesn't change the value of an
@@ -364,7 +380,7 @@ theorem optimize0plusB_sound (b : Bexp) :
 The optimization implemented by our {name}`Aexp.optimize0plus` is only one of
 many possible optimizations on arithmetic and boolean expressions. Write a more
 sophisticated optimizer and prove it correct. (You will probably find it easiest
-to start small -- add just a single, simple optimization and its correctness proof
+to start small -- add just a single, simple optimization and its correctness proof --
 and build up incrementally to something more interesting.)
 :::::
 
@@ -389,6 +405,7 @@ inductive Aexp.EvalR : Aexp → Nat → Prop where
       EvalR (.mult a1 a2) (n1 * n2)
 ```
 
+One comment on the style of this definition.
 We could instead have presented this relation with *positional* hypotheses --
 no names for the premises.
 
@@ -423,6 +440,8 @@ The `scoped` keyword allows us to scope the notation to the present namespace so
 collide with other evaluation relations later.
 ::::
 
+
+
 :::dev "Michael Hicks (mwhicks1)" BeforeNextRelease
 The Rocq version here says "As we saw in our case study of regular expressions
 in chapter IndProp, Rocq provides a way to use this notation in the definition of aevalR itself."
@@ -456,21 +475,23 @@ type with unnamed hypotheses:
 ```
 
 Formally, there is nothing deep about inference rules: they are just
-implications. You can read the rule name on the right as the name of the
+an informal notation for implications.
+You can read the rule name on the right as the name of the
 constructor and read each of the linebreaks between the premises above the
 line (as well as the line itself) as `→`.  All the variables mentioned in
 the rule (`e1`, `n1`, etc.) are implicitly bound by universal quantifiers
 at the beginning. (Such variables are often called _metavariables_ to
-distinguish them from the variables of the language we are defining. At
+distinguish them from the variables of whatever language we are defining. At
 the moment, our arithmetic expressions don't include variables, but we'll
 soon be adding them.) The whole collection of rules is understood as being
-wrapped in an inductive declaration. In informal prose, this is sometimes
+wrapped, implicitly, in an inductive declaration.
+In informal prose, this is sometimes
 indicated by saying something like "Let `Aexp.EvalR` be the smallest relation
 closed under the following rules...".
 
 To summarize: a group of inference rules corresponds to a single inductive
 definition; each rule's name corresponds to a constructor name; above the
-line are the premises, below the line the conclusion; and metavariables
+line are the premises, below the line the conclusion; metavariables
 like `e1` and `n1` are implicitly universally quantified. The whole
 collection of rules defines `⇓` as the smallest relation closed under
 them:
@@ -496,13 +517,8 @@ them:
 ```
 ::::
 
-:::instructors
-It might be useful to write the inference rules on the
-chalkboard, walking through the translation from the inductive
-definition, and then use these quizzes to check comprehension.
-BCP 21: Too heavy.
-
-LATER: The first two quizzes here seem kind of boring.
+:::dev "Benjamin Pierce (bcpierce00)"
+The first two quizzes here seem kind of boring.
 :::
 
 ::::quiz
@@ -545,7 +561,6 @@ Which rules are needed to prove the following?
 Not sure if we need ⇓b, or whether we can define
 ⇓ overloaded. Don't understand Lean notation yet!
 :::
-
 :::dev "Chris Henson (chenson2018)" BeforeNextRelease
 About `Bexp.eval` below: We should discuss a way to recall definitions without
 having to write them out manually like this. I think a simple `#print` may work as an
@@ -570,11 +585,14 @@ def Bexp.eval (b : Bexp) : Bool :=
 Write out a corresponding definition of boolean evaluation as a relation
 (in inference rule notation).
 
-:::solution
-````
-Answer (`⇓b` is defined below):
+::::solution
+:::dev "Benjamin Pierce (bcpierce00)"
+Don't understand the parenthetical comment here.
+:::
 
 ```
+Answer (`⇓b` is defined below):
+
                         -----------              (bool)
                         bool b ⇓b b
 
@@ -607,8 +625,7 @@ Answer (`⇓b` is defined below):
                   -----------------------        (and)
                   and e1 e2 ⇓b andb b1 b2
 ```
-````
-:::
+::::
 
 :::grade
 ```
@@ -737,7 +754,8 @@ inductive Aexp where
 Extending the definition of `Aexp.eval` to handle this new operation would
 not be straightforward due to division being a _partial_ operation; i.e.,
 what should we return as the result of `.div (.num 5) (.num 0)`?
-Partiality is no problem for the relational definition.
+By contrast, partiality is no problem for the relational
+version of the definition.
 
 :::terse
 What should `Aexp.eval` return for `.div (.num 1) (.num 0)`??
@@ -815,6 +833,10 @@ a `partial_fixpoint`. Maybe we don't want to get into the second thing here,
 but failing to mention options (which I think were introduced in LF) seems
 a bit surprising.
 :::
+:::dev "Benjamin Pierce (bcpierce00)"
+Agreed.
+:::
+
 
 ::::full
 At this point you may be wondering: which of these styles should I use
@@ -825,13 +847,18 @@ or is genuinely _not_ a function -- there is no real choice. When both
 styles are workable, relational definitions can be more elegant and
 easier to understand, and Lean generates useful inversion and induction
 principles from them. On the other hand, functional definitions are
-automatically deterministic and total (for a relation we must _prove_
-these if we need them), and we can use Lean's computation mechanism to
-simplify them during proofs.
+automatically deterministic and total -- whereas, for a relation,
+we must _prove_ these if we need them --
+and we can use Lean's computation mechanism to simplify them during proofs.
 
 In large developments it is common to give a definition in _both_
 styles plus a lemma that the two coincide, allowing later proofs to
 switch between points of view at will -- exactly what we did above.
+:::dev "Benjamin Pierce (bcpierce00)"
+Well, we didn't actually do a proof that switched between the points
+of view.  Should we?
+:::
+
 ::::
 
 :::terse
