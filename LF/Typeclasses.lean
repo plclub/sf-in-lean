@@ -414,7 +414,7 @@ instance : EmptyCollection (TotalMap α β) where
   emptyCollection := TotalMap.empty
 ```
 
-so that we can use the `∅` notation for this empty map. We'sl also declare the instance
+so that we can use the `∅` notation for this empty map. We'll also declare the instance
 
 ```lean
 instance : GetElem (TotalMap α β) α β (fun _ _ => True) where
@@ -453,7 +453,7 @@ notation a " →ₜ " b " ; " m => TotalMap.update m a b
 The `examplemap` above can now be defined as follows:
 
 ```lean
-def examplemap' : TotalMap String Bool := "bar" →ₜ true; "foo" →ₜ true ; ∅
+def examplemap' : TotalMap String Bool := "bar" →ₜ true ; "foo" →ₜ true ; ∅
 ```
 
 When we use maps in later chapters, we'll need several fundamental facts about how they behave.
@@ -463,7 +463,7 @@ Even if you don't work the following exercises, make sure you thoroughly underst
 (Some of the proofs require the functional extensionality axiom, which was discussed in the Logic chapter.)
 
 ```lean
-theorem update_eq (m : TotalMap α β) (a : α) (b : β) : (a →ₜ b; m)[a] = b := by
+theorem update_eq (m : TotalMap α β) (a : α) (b : β) : (a →ₜ b ; m)[a] = b := by
   unfold update
   rewrite [getElem_def, ReflBEq.rfl, cond_true]
   rfl
