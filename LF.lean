@@ -4,15 +4,15 @@ import SFLMeta.Save
 
 import LF.Basics
 import LF.Induction
+import LF.UsingLean
+import LF.Lists
 import LF.Typeclasses
 -- NB: bare (not-yet-versified) chapters must NOT be imported here once their
 -- Verso version is included below — both declare the same names.  They are
 -- built by `make check-bare-lean-chapters` instead.
 -- Add `import LF.XXXVerso` here for each generated chapter included below.
-import LF.UsingLeanVerso
-import LF.ListsVerso
-import LF.PolyVerso
-import LF.TacticsVerso
+import LF.Poly
+import LF.Tactics
 import LF.LogicVerso
 import LF.IndPropVerso
 
@@ -28,9 +28,9 @@ open Verso Genre Manual
 {include LF.Basics}
 {include LF.Typeclasses}
 {include LF.Induction}
-{include LF.UsingLeanVerso}
-{include LF.ListsVerso}
-{include LF.PolyVerso}
-{include LF.TacticsVerso}
+{include LF.UsingLean}
+{include LF.Lists}
+{include LF.Poly}
+{include LF.Tactics}
 {include LF.LogicVerso}
 {include LF.IndPropVerso}

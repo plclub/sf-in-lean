@@ -29,7 +29,7 @@ htmlSplit := .never
 file := some "Induction"
 %%%
 
-:::dev SOONER
+:::dev BeforeNextRelease
 ```
 Readers might expect us to add eqn:H annotations to uses of
 induction, but this changes the shape of the IH in a nasty way! :-(
@@ -117,7 +117,6 @@ Troubleshooting:
 namespace NatPlayground.Nat
 ```
 
-
 # Review
 
 ::::quiz
@@ -125,9 +124,11 @@ To prove the following theorem, which tactics will we need besides
 `intro` and `rfl`?  (A) none, (B) `rewrite`, (C) `cases`, (D) both
 `rewrite` and `cases`, or (E) can't be done with the tactics we've seen.
 
+```display
     theorem review1 : (true || false) = true
+```
 
-:::answer
+:::quizSolution
 ```
 /- review1 -/
 theorem review1 : (true || false) = true := by rfl
@@ -138,13 +139,15 @@ theorem review1 : (true || false) = true := by rfl
 ::::quiz
 What about the next one?
 
+```display
     theorem review2 : ∀ b, (true || b) = true
+```
 
 Which tactics do we need besides `intro` and `rfl`?  (A)
 none (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`,
 or (E) can't be done with the tactics we've seen.
 
-:::answer
+:::quizSolution
 ```
 /- review2 -/
 theorem review2 : ∀ b : Bool, (true || b) = true := by
@@ -157,13 +160,15 @@ theorem review2 : ∀ b : Bool, (true || b) = true := by
 ::::quiz
 What if we change the order of the arguments of `||`?
 
+```display
     theorem review3 : ∀ b, (b || true) = true
+```
 
 Which tactics do we need besides `intro` and `rfl`?  (A)
 none (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`,
 or (E) can't be done with the tactics we've seen.
 
-:::answer
+:::quizSolution
 ```
 /- review3 -/
 theorem review3 : ∀ b : Bool, (b || true) = true := by
@@ -180,12 +185,14 @@ What about this one?  (Recall that in Lean, `Nat.add` recurses on the _second_
 argument: `n + zero = n` by definition, and `n + (m + 1) = (n + m) + 1` by
 definition.)
 
+```display
     theorem review4 : ∀ n : Nat, n + zero = n
+```
 
 (A) none, (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`, or (E)
 can't be done with the tactics we've seen.
 
-:::answer
+:::quizSolution
 ```
 /- review4 -/
 theorem review4 : ∀ n : Nat, n + zero = n := by
@@ -199,12 +206,14 @@ theorem review4 : ∀ n : Nat, n + zero = n := by
 ::::quiz
 What about this?
 
+```display
     theorem review5 : ∀ n : Nat, zero + n = n
+```
 
 (A) none, (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`,
 or (E) can't be done with the tactics we've seen.
 
-:::answer
+:::quizSolution
 ```
 /- review5 -/
 /-
@@ -215,7 +224,7 @@ or (E) can't be done with the tactics we've seen.
 :::
 ::::
 
-:::dev "Daniel Sainati (dsainati1)" TODO
+:::dev "Daniel Sainati (dsainati1)" NOW
 ```
 We use this theorem later,
    so let's make it into a review exercise here
@@ -441,10 +450,7 @@ theorem zero_mul (n : Nat) :
       rfl
 ```
 
-:::grade
-```
-GRADE_THEOREM 0.5: mul_zero_l
-```
+:::gradeTheorem "0.5" "mul_zero_l"
 :::
 
 ```lean
@@ -460,10 +466,7 @@ theorem succ_add (n m : Nat) :
       rfl
 ```
 
-:::grade
-```
-GRADE_THEOREM 0.5: succ_add
-```
+:::gradeTheorem "0.5" "succ_add"
 :::
 :::::
 
@@ -490,10 +493,7 @@ theorem add_comm (n m : Nat) :
       rfl
 ```
 
-:::grade
-```
-GRADE_THEOREM 0.5: add_comm
-```
+:::gradeTheorem "0.5" "add_comm"
 :::
 
 ```lean
@@ -509,16 +509,13 @@ theorem add_assoc (n m p : Nat) :
       rfl
 ```
 
-:::grade
-```
-GRADE_THEOREM 0.5: add_assoc
-```
+:::gradeTheorem "0.5" "add_assoc"
 :::
 
 :::::exercise (rating := 2) (name := "double_plus")
 Consider the following function, which doubles its argument:
 
-:::dev TODO
+:::dev NOW
 ```
 Rule rewrite
 
@@ -652,10 +649,7 @@ theorem even_succ (n : Nat) :
       rw [even, ih, not_involutive]
 ```
 
-:::grade
-```
-GRADE_THEOREM 1: even_succ
-```
+:::gradeTheorem 1 "even_succ"
 :::
 :::::
 
@@ -853,28 +847,38 @@ Again, the math displays need to be displayed!
 
 - _Theorem_: For any `n`, `m` and `p`,
 
-n + (m + p) = (n + m) + p.
+```display
+      n + (m + p) = (n + m) + p.
+```
 
 _Proof_: By induction on `p`.
 
 - First, suppose `p = zero`.  We must show that
 
-n + (m + zero) = (n + m) + zero.
+```display
+        n + (m + zero) = (n + m) + zero.
+```
 
 This follows directly from the definition of `+`
 (since `x + zero = x` for any `x`).
 
 - Next, suppose `p = p' + 1`, where
 
-n + (m + p') = (n + m) + p'.
+```display
+        n + (m + p') = (n + m) + p'.
+```
 
 We must now show that
 
-n + (m + (p' + 1)) = (n + m) + (p' + 1).
+```display
+        n + (m + (p' + 1)) = (n + m) + (p' + 1).
+```
 
 By the definition of `+`, both sides reduce to
 
-(n + (m + p')) + 1   and   ((n + m) + p') + 1
+```display
+        (n + (m + p')) + 1   and   ((n + m) + p') + 1
+```
 
 respectively, which are equal by the induction hypothesis.
 _Qed_.
@@ -901,7 +905,7 @@ state" at any given point in the Lean proof is completely implicit,
 whereas the informal proof reminds the reader several times where
 things stand).
 
-:::::exercise (rating := 2) (name := "add_comm_informal")
+:::::exercise (rating := 2) (name := "add_comm_informal") (level := Advanced) (manual := true)
 Translate your solution for `add_comm` into an informal proof:
 
 Theorem: Addition is commutative.
@@ -987,10 +991,7 @@ theorem mul_one (p : Nat) :
     | succ p' ih => rw [mul_succ, ih, succ_eq_add_one]
 ```
 
-:::grade
-```
-GRADE_THEOREM 1: mul_one
-```
+:::gradeTheorem 1 "mul_one"
 :::
 :::::
 
@@ -1007,10 +1008,7 @@ theorem mul_two (p : Nat) :
       rw [add_comm p' one, add_comm p']
 ```
 
-:::grade
-```
-GRADE_THEOREM 1: mul_two
-```
+:::gradeTheorem 1 "mul_two"
 :::
 :::::
 
@@ -1034,10 +1032,7 @@ theorem add_shuffle3 : ∀ n m p : Nat,
     rw [← add_assoc, add_comm m p, add_assoc]
 ```
 
-:::grade
-```
-GRADE_THEOREM 1: add_shuffle3
-```
+:::gradeTheorem 1 "add_shuffle3"
 :::
 
 ```lean
@@ -1065,10 +1060,7 @@ theorem mul_comm (m n : Nat) :
       rw [mul_succ, ih, succ_mul]
 ```
 
-:::grade
-```
-GRADE_THEOREM 2: mul_comm
-```
+:::gradeTheorem 2 "mul_comm"
 :::
 :::::
 
@@ -1244,7 +1236,7 @@ In Basics, we did some unit testing of `binToNat`, but we
 didn't prove its correctness. Now we'll do so.
 
 :::::exercise (rating := 3) (name := "binary_commute")
-:::dev "Daniel Sainati (dsainati1)" SOONER
+:::dev "Daniel Sainati (dsainati1)" BeforeNextRelease
 ```
 This is a very category theoretic way to present
    this idea. Is this the most useful way to convey this to
@@ -1290,10 +1282,7 @@ theorem bin_to_nat_pres_incr (b : Bin) :
       rw [add_shuffle3 _ one]
 ```
 
-:::grade
-```
-GRADE_THEOREM 3: bin_to_nat_pres_incr
-```
+:::gradeTheorem 3 "bin_to_nat_pres_incr"
 :::
 :::::
 
@@ -1308,7 +1297,7 @@ def natToBin (n : Nat) : Bin := solution!(
   | succ n' => incr (natToBin n'))
 ```
 
-:::dev "Daniel Sainati (dsainati1)" TODO
+:::dev "Daniel Sainati (dsainati1)" NOW
 ```
 How to hide these theorem statements so that students can get practice writing them?
 ```
@@ -1356,10 +1345,7 @@ theorem nat_bin_nat (n : Nat) :
       rw [natToBin_succ, bin_to_nat_pres_incr, ih, ← succ_eq_add_one]
 ```
 
-:::grade
-```
-GRADE_THEOREM 3: nat_bin_nat
-```
+:::gradeTheorem 3 "nat_bin_nat"
 :::
 :::::
 
@@ -1382,7 +1368,7 @@ Let's explore why this theorem fails and how to prove a modified
 version of it. We'll start with some lemmas that might seem
 unrelated but will turn out to be relevant.
 
-:::::exercise (rating := 2) (name := "double_bin")
+:::::exercise (rating := 2) (name := "double_bin") (level := Advanced)
 Prove this lemma about `double`, which we defined earlier in the
 chapter.
 
@@ -1394,10 +1380,7 @@ theorem double_incr (n : Nat) :
     rw [two_eq_succ_one, one_eq_succ_zero, add_succ, add_succ, add_zero]
 ```
 
-:::grade
-```
-GRADE_THEOREM 0.5: double_incr
-```
+:::gradeTheorem "0.5" "double_incr"
 :::
 
 Now define a similar doubling function for `Bin`.
@@ -1409,7 +1392,7 @@ def doubleBin (b : Bin) : Bin := solution!(
   | _  => .b0 b)
 ```
 
-:::dev "Daniel Sainati (dsainati1)" TODO
+:::dev "Daniel Sainati (dsainati1)" NOW
 ```
 How to hide these theorem statements so that students can get practice writing them?
 ```
@@ -1428,10 +1411,7 @@ Check that your function correctly doubles zero.
 example : doubleBin .z = .z := solution!(by rfl)
 ```
 
-:::grade
-```
-GRADE_THEOREM 0.5: double_bin_zero
-```
+:::gradeTheorem "0.5" "double_bin_zero"
 :::
 
 Prove this lemma, which corresponds to `double_incr`.
@@ -1446,10 +1426,7 @@ theorem double_incr_bin (b : Bin) :
     | b1 n => rw [incr_b1, doubleBin_b0, doubleBin_b1, incr_b0, incr_b1, incr_b1]
 ```
 
-:::grade
-```
-GRADE_THEOREM 1: double_incr_bin
-```
+:::gradeTheorem 1 "double_incr_bin"
 :::
 :::::
 
@@ -1490,7 +1467,7 @@ that selects the simplest `Bin` out of all the equivalent
 `Bin`. Then we can prove that the conversion from `Bin` to `Nat` and
 back again produces that normalized, simplest `Bin`.
 
-:::::exercise (rating := 4) (name := "bin_nat_bin")
+:::::exercise (rating := 4) (name := "bin_nat_bin") (level := Advanced)
 Define `normalize`. You will need to keep its definition as simple
 as possible for later proofs to go smoothly. Do not use
 `binToNat` or `natToBin`, but do use `doubleBin`.
@@ -1507,7 +1484,7 @@ def normalize (b : Bin) : Bin := solution!(
   | .b1 b' => incr (doubleBin (normalize b')))
 ```
 
-:::dev "Daniel Sainati (dsainati1)" TODO
+:::dev "Daniel Sainati (dsainati1)" NOW
 ```
 How to hide these theorem statements so that students can get practice writing them?
 ```
@@ -1597,10 +1574,7 @@ theorem bin_nat_bin (b : Bin) :
 end NatToBin
 ```
 
-:::grade
-```
-GRADE_THEOREM 6: bin_nat_bin
-```
+:::gradeTheorem 6 "bin_nat_bin"
 :::
 :::::
 

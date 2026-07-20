@@ -1,8 +1,10 @@
 import VersoManual
 import SFLMeta.Bnf
+import SFLMeta.Comment
 import SFLMeta.DisplayMath
 import SFLMeta.Ignore
 import SFLMeta.Exercise
+import SFLMeta.Quiz
 import SFLMeta.Terse
 import SFLMeta.SlideBreak
 import SFLMeta.Details
@@ -31,7 +33,7 @@ author errors in solutions are always reported); this flag merely selects
 which variant survives traversal.  Each `Main*.lean` executable sets it before
 calling `manualMain`, which is what makes the student and solutions builds two
 runs of the same compiled document rather than two compilations. -/
-initialize showSolutions : IO.Ref Bool ← IO.mkRef false
+initialize Save.showSolutions : IO.Ref Bool ← IO.mkRef false
 
 /-! ## Block extensions used by the saver -/
 
@@ -72,6 +74,10 @@ def diagramWithAlt : DirectiveExpanderOf Unit
     ``(Verso.Doc.Block.other SFLMeta.Block.diagramWithAlt #[$blocks,*])
 
 /-! ## Inline-to-text pretty printer -/
+
+namespace Save
+
+namespace Text
 
 /--
 Render a piece of Verso inline content to a plain-text fragment suitable for
@@ -201,23 +207,45 @@ private partial def blockToText (width : Nat) : Verso.Doc.Block Manual → Strin
       String.intercalate "\n    " (di.desc.toList.map (blockToText width)))
   | .other _ bs => String.intercalate "\n\n" (bs.toList.map (blockToText width))
 
+end Text
+
 /-! ## Lake project scaffold templates -/
 
 /-- Contents of the generated project's `lakefile.toml`. `extraLibs` names the
 additional `lean_lib`s holding bundled prerequisite sources (e.g. `LF` for the
-bare `LF/Maps.lean` that Imp depends on). -/
-private def lakefileTemplate (vol : String) (extraLibs : Array String) : String :=
+bare `LF/Maps.lean` that Imp depends on).  `pkgRequires` lists external package
+dependencies `(name, git url, rev)` needed by some emitted chapter's imports
+(e.g. batteries for `import Batteries.CodeAction`), each pinned to the same
+revision the book itself builds with. -/
+private def lakefileTemplate (vol : String) (extraLibs : Array String)
+    (pkgRequires : Array (String × String × String)) : String :=
   -- A bundled prerequisite may live in the volume's own namespace (e.g. the
   -- bare `LF/CustomTactics.lean` bundled into the LF project): the volume's
   -- `lean_lib` already covers it, and Lake rejects a duplicate target.
   let extra := (extraLibs.filter (· != vol)).foldl (init := "") fun acc l =>
     acc ++ "\n[[lean_lib]]\nname = \"" ++ l ++ "\"\n"
+  let reqs := pkgRequires.foldl (init := "") fun acc (name, url, rev) =>
+    acc ++ "\n[[require]]\nname = \"" ++ name ++ "\"\ngit = \"" ++ url ++
+      "\"\nrev = \"" ++ rev ++ "\"\n"
   "name = \"" ++ vol.toLower ++ "-extracted\"\n" ++
   "version = \"0.1.0\"\n" ++
-  "defaultTargets = [\"" ++ vol ++ "\"]\n\n" ++
-  "[[lean_lib]]\n" ++
+  "defaultTargets = [\"" ++ vol ++ "\"]\n" ++
+  reqs ++
+  "\n[[lean_lib]]\n" ++
   "name = \"" ++ vol ++ "\"\n" ++
   extra
+
+/-! ## Support module template
+  Create `SFLCompat.lean` with custom commands used in generated projects.
+-/
+
+private def supportModuleName (vol : String) : String :=
+  vol ++ ".SFLCompat"
+
+private def supportModulePath (vol : String) : String :=
+  vol ++ "/SFLCompat.lean"
+
+private def readSFLCompat : IO String := IO.FS.readFile "SFLMeta/SFLCompat.lean"
 
 /-! ## ExtraStep walker -/
 
@@ -243,6 +271,16 @@ private def asModuleDoc (s : String) : String :=
       if line.all (·.isWhitespace) then "" else "-- " ++ line)
   commented ++ "\n\n"
 
+/-- Render a shown dev note as one contiguous `--` comment block, visually set
+off from surrounding prose: the label line first, body lines indented 4 spaces
+under it, and interior blank lines kept as bare `--` (not truly blank) so the
+note reads as a single unit. -/
+private def devNoteComment (label body : String) : String :=
+  let indented := String.intercalate "\n"
+    ((body.trimAscii.toString.splitOn "\n").map fun l =>
+      if l.all (·.isWhitespace) then "--" else "--     " ++ l)
+  "-- " ++ label ++ ":\n" ++ indented ++ "\n\n"
+
 /-- Merge adjacent `/-! … -/` blocks into one, separating their contents with a blank line. -/
 private def mergeAdjacentModuleDocs (s : String) : String :=
   s.replace "\n-/\n\n/-!\n" "\n\n"
@@ -253,42 +291,106 @@ private def decodeBnfSource? (data : Json) : Option String :=
   | .arr #[_, .str src] => some src
   | _ => none
 
-/-- Decode a `Block.exercise` payload `(rating, name)`. -/
-private def decodeExercise? (data : Json) : Option (Nat × String) :=
+/-- Decode a `Block.exercise` payload `(rating, name, level, manual)`, tolerating
+the older 2-element `(rating, name)` form.  (See `SFLMeta.decodeExerciseData`.) -/
+private def decodeExercise? (data : Json) : Option (Nat × String × Option String × Bool) :=
   match data with
-  | .arr #[.num r, .str n] => some (r.toFloat.toUInt32.toNat, n)
+  | .arr #[.num _, .str _, _, _] | .arr #[.num _, .str _] => some (decodeExerciseData data)
   | _ => none
+
+private def wrap (startText endText body : String) : String :=
+  let body := body.trimAscii.toString.splitOn "\n" |>.map ("  " ++ ·) |> String.intercalate "\n"
+  startText ++ "\n\n" ++ body ++ "\n\n" ++ endText ++ "\n\n"
 
 /-! ## Block extension that carries pre-computed teacher and student source -/
 
+namespace LeanSaved
+/--
+  `ExtractionMode` defines three ways that a Lean code block can be emitted.
+-/
+private inductive ExtractionMode where
+  | code
+  | experiment
+  | expectFailure
+  deriving ToJson, FromJson, Quote
+
+/--
+  A subset of `InlineLean.LeanBlockConfig` flags:
+  - `keep` -> `persistent`
+  - `error` -> `expectedError`
+
+  Note: `show` is dropped, because it's for rendered book visibility
+  and shouldn't affect generated projects.
+
+  They are used to derive the extraction policy (`Data.extractionMode`).
+-/
+structure Config where
+  persistent : Bool
+  expectedError : Bool
+  deriving ToJson, FromJson, Quote
+
+def Config.fromInlineLean (config : InlineLean.LeanBlockConfig) :=
+  Config.mk config.keep config.error
+
+/--
+  The saved-payload format for `Block.leanSaved`.
+-/
+structure Data where
+  teacher : String
+  student : String
+  terse : String
+  config : Config
+  deriving ToJson, FromJson, Quote
+
+/-- Decode a `Block.leanSaved` payload. -/
+def decode? (data : Json) : Option Data :=
+  match fromJson? data with
+  | .ok saved => some saved
+  | .error _ => none
+
+/--
+  * persistent, non-error blocks become executable Lean;
+  * non-persistent blocks (`-keep`) become `sf_experiment ... end`;
+  * expected-error blocks (`+error`) become `sf_expect_failure ... end`
+-/
+private def Data.extractionMode (saved : Data) : ExtractionMode :=
+  let {persistent, expectedError} := saved.config
+  if expectedError then
+    .expectFailure
+  else if persistent then
+    .code
+  else
+    .experiment
+
+end LeanSaved
+
+end Save
+
 /-!
 `Block.leanSaved` wraps an elaborated `lean` block and records the teacher,
-student, and terse source variants computed at elaboration time. Its three
-children are the teacher-, student-, and terse-rendered forms of the block;
-traversal keeps the one selected by the `showSolutions` flag / draft (terse)
-mode, so the same compiled document serves all three builds. HTML/TeX
-rendering passes through to the surviving child; the saver consumes the
-recorded strings directly without re-parsing anything. -/
-
-/-- Decode a `Block.leanSaved` payload `(teacher, student, terse)`. -/
-private def decodeLeanSaved? (data : Json) : Option (String × String × String) :=
-  match data with
-  | .arr #[.str t, .str s, .str tr] => some (t, s, tr)
-  | _ => none
-
-block_extension Block.leanSaved (teacher : String) (student : String) (terse : String) where
-  data := Json.arr #[.str teacher, .str student, .str terse]
+student, and terse source variants computed at elaboration time, together with
+the original block's extraction-relevant flags. Its three children are the
+teacher-, student-, and terse-rendered forms of the block; traversal keeps the
+one selected by the `Save.showSolutions` flag / draft (terse) mode, so the same
+compiled document serves all three builds. HTML/TeX rendering passes through to
+the surviving child; the saver checks the stored metadata to decide whether to
+emit the saved source into extracted `.lean` files as raw code, `sf_experiment`,
+or `sf_expect_failure`.
+-/
+open Save in
+block_extension Block.leanSaved (saved : Save.LeanSaved.Data) where
+  data := toJson saved
   traverse _ data contents := do
     -- Three children = still unselected: keep the teacher, student, or terse
     -- variant (the terse build is the draft build, cf. `Block.terse`).
     -- One child (or anything else) = already selected; nothing to do.
     if h : contents.size = 3 then
-      let some (t, s, tr) := decodeLeanSaved? data | return none
+      let some saved := LeanSaved.decode? data | return none
       let chosen ←
         if ← showSolutions.get then pure contents[0]
         else if ← isDraft then pure contents[2]
         else pure contents[1]
-      return some (.other (Block.leanSaved t s tr) #[chosen])
+      return some (.other (Block.leanSaved saved) #[chosen])
     else
       return none
   toHtml := some fun _ goB _ _ contents => contents.mapM goB
@@ -323,17 +425,24 @@ def importBlock : CodeBlockExpanderOf Unit
     ``(Verso.Doc.Block.other (SFLMeta.Block.importBlock $(quote src))
         #[Verso.Doc.Block.code $(quote src)])
 
+namespace Save
+
 /-! ## Syntactic rewriting of `solution!` markers
 
 The `solution!` term and tactic elaborators (declared in `SFLMeta.Exercise`)
 register the source range of each invocation into `solutionEditsRef` as they
 run. The project-local `lean` code-block expander (below) snapshots that ref
 around its call to the upstream Lean elaborator, then uses the freshly added
-ranges to compute two variants of the block's source: a teacher form (just the
-`solution!` keyword removed, parenthesised body kept) and a student form (the
-whole `solution!(…)` invocation replaced by `sorry`). Both variants are stored
-in a `Block.leanSaved` wrapper that the saver consumes verbatim — no parsing
-happens at extraction time. -/
+ranges to compute three variants of the block's source: a teacher form (just
+the `solution!` keyword removed, parenthesised body kept), a student form (the
+whole `solution!(…)` invocation replaced by `sorry`), and a terse form (also
+stubbing `workinclass!`). The variants, together with the block's
+extraction-relevant flags, are stored in a `Block.leanSaved` wrapper.
+Extraction does not re-parse Lean source; it reads this saved payload and emits
+raw code, `sf_experiment`, or `sf_expect_failure` according to the saved flags.
+-/
+
+namespace SourceRewrite
 
 /-- Apply a set of byte-range replacements right-to-left so earlier edits
 don't shift later positions. Works at the byte level via `ByteArray`. -/
@@ -446,6 +555,8 @@ partial def stripGuardMsgs (src : String) : String := Id.run do
       i := i + 1
   return String.intercalate "\n" out.toList
 
+end SourceRewrite
+
 /-! ## Student elaboration & highlighting
 
 `elabAndHighlightStudent` runs the student variant of a `lean` block through a
@@ -459,6 +570,8 @@ upstream teacher elaboration of the same block, so the student elaboration sees
 all prior chapter definitions (e.g. types referenced from the student code)
 but does *not* see the teacher-side defs of this same block (which would
 collide when the student variant redefines them). -/
+
+namespace LeanElab
 
 def elabAndHighlightStudent
     (initEnv : Environment) (initScopes : List Command.Scope) (src : String) :
@@ -515,6 +628,10 @@ def elabAndHighlightStudent
       lastPos := (cmd.getTrailingTailPos?).getD lastPos
     return hls
 
+end LeanElab
+
+end Save
+
 /-! ## `lean` code-block override
 
 Wraps each ` ```lean … ``` ` code block. The pipeline is:
@@ -533,8 +650,12 @@ Wraps each ` ```lean … ``` ` code block. The pipeline is:
 5. Emit a `Block.leanSaved` with three children: the upstream
    (teacher-rendered) block and `Block.lean`s wrapping the student and terse
    `Highlighted`s. Traversal later keeps one of the three according to the
-   `showSolutions` flag and draft (terse) mode. -/
+   `showSolutions` flag and draft (terse) mode, while the saver uses the
+   recorded block config to decide whether to wrap extracted output Lean code
+   in `sf_expect_failure` or `sf_experiment`.
+-/
 
+open Save SourceRewrite LeanElab LeanSaved in
 @[code_block]
 def lean : CodeBlockExpanderOf Verso.Genre.Manual.InlineLean.LeanBlockConfig
   | config, str => do
@@ -572,6 +693,9 @@ def lean : CodeBlockExpanderOf Verso.Genre.Manual.InlineLean.LeanBlockConfig
     let studentHls ← elabAndHighlightStudent preEnv preScopes student
     let range := Syntax.getRange? str
     let lspRange := range.map (← getFileMap).utf8RangeToLspRange
+    let saved := {
+      teacher, student, terse, config := Config.fromInlineLean config : Data
+    }
     -- The upstream `underlying` block highlights the original source, which
     -- still shows the `#guard_msgs` wrapper.  When stripping changed the teacher
     -- form, re-highlight the stripped form for the teacher-side HTML instead.
@@ -592,7 +716,7 @@ def lean : CodeBlockExpanderOf Verso.Genre.Manual.InlineLean.LeanBlockConfig
       if terse == student then pure studentHls
       else elabAndHighlightStudent preEnv preScopes terse
     ``(Verso.Doc.Block.other
-        (SFLMeta.Block.leanSaved $(quote teacher) $(quote student) $(quote terse))
+        (SFLMeta.Block.leanSaved $(quote saved))
         #[$teacherChild,
           Verso.Doc.Block.other
             (Verso.Genre.Manual.InlineLean.Block.lean
@@ -607,11 +731,7 @@ def lean : CodeBlockExpanderOf Verso.Genre.Manual.InlineLean.LeanBlockConfig
               $(quote lspRange))
             #[Verso.Doc.Block.code $(quote terse)]])
 
-/-- Find the first `Block.code` source string in `contents`. -/
-private def findCodeSource? (contents : Array (Block Manual)) : Option String :=
-  contents.findSome? fun
-    | .code s => some s
-    | _ => none
+namespace Save
 
 /-- Find the ASCII alt text inside a `diagramWithAlt`: the first plain code block. -/
 private def findAlt? (contents : Array (Verso.Doc.Block Manual)) : Option String :=
@@ -619,6 +739,7 @@ private def findAlt? (contents : Array (Verso.Doc.Block Manual)) : Option String
     | .code s => some s
     | _ => none
 
+open Text in
 mutual
 
 /--
@@ -654,15 +775,28 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
       return buf
     if name == ``Verso.Genre.Manual.Block.diagram then
       return buf
-    if name == ``Verso.Genre.Manual.Block.diagram then
-      return buf
-    if name == ``Block.leanSaved then
-      -- The wrapper carries pre-computed teacher, student, and terse variants.
-      if let some (teacher, student, terse) := decodeLeanSaved? which.data then
-        return appendVariants buf file
-          (teacher.trimAscii.toString ++ "\n\n")
-          (student.trimAscii.toString ++ "\n\n")
-          (terse.trimAscii.toString ++ "\n\n")
+    if name == ``SFLMeta.Block.leanSaved then
+      -- The wrapper carries pre-computed teacher/student/terse source plus the
+      -- extraction-relevant `lean` block flags. Verso still checks and renders
+      -- the block normally; the generated project gets code, `sf_experiment`,
+      -- or `sf_expect_failure` according to `LeanSaved.Data.extractionMode`.
+      if let some saved := LeanSaved.decode? which.data then
+        match saved.extractionMode with
+        | .code =>
+          return appendVariants buf file
+            (saved.teacher.trimAscii.toString ++ "\n\n")
+            (saved.student.trimAscii.toString ++ "\n\n")
+            (saved.terse.trimAscii.toString ++ "\n\n")
+        | .experiment =>
+          return appendVariants buf file
+            (wrap "sf_experiment" "end" saved.teacher)
+            (wrap "sf_experiment" "end" saved.student)
+            (wrap "sf_experiment" "end" saved.terse)
+        | .expectFailure =>
+          return appendVariants buf file
+            (wrap "sf_expect_failure" "end" saved.teacher)
+            (wrap "sf_expect_failure" "end" saved.student)
+            (wrap "sf_expect_failure" "end" saved.terse)
       return buf
     if name == ``Block.importBlock then
       -- Cross-chapter `import` lines shown to the reader.  The extracted
@@ -673,9 +807,10 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     if name == ``Block.exercise then
       -- Emit a `### Exercise (N⭐): name` heading; the contained `lean`
       -- blocks render normally via recursion below.
-      if let some (rating, exName) := decodeExercise? which.data then
+      if let some (rating, exName, level, manual) := decodeExercise? which.data then
         let stars := String.ofList (List.replicate rating '⭐')
-        let header := s!"### Exercise ({rating} star{if rating == 1 then "" else "s"}): {exName} {stars}"
+        let desig := exerciseDesignation level manual
+        let header := s!"### Exercise ({rating} star{if rating == 1 then "" else "s"}): {exName}{desig} {stars}"
         let mut buf := appendBoth buf file (asModuleDoc header)
         buf := walkBlocks width file contents buf
         return buf
@@ -726,6 +861,12 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
       let mut buf := appendBoth buf file (asModuleDoc s!"_Details:_ {summary}")
       buf := walkBlocks width file contents buf
       return buf
+    if name == ``Block.quizSolution then
+      -- A quiz answer is elided from every generated `.lean` build product — it
+      -- surfaces only in the HTML book, as a click-to-reveal button.  (The block
+      -- is still kept through traversal for that HTML rendering; the saver just
+      -- emits nothing.)
+      return buf
     if name == ``Block.terse then
       -- Terse content kept in the tree only in terse builds (full builds replace
       -- with concat #[] during traverse). Recurse into children.
@@ -736,9 +877,26 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     if name == ``Block.slidebreak then
       -- Slide-break marker: emit nothing in all generated .lean files.
       return buf
+    if name == ``Block.suppressPreviousHeaderWhenTerse then
+      -- Full-only-heading marker: consumed by `walkSection` (which suppresses
+      -- the heading it follows); emits nothing itself.
+      return buf
+    if name == ``Block.devcomment then
+      -- A dev note passes through as a labelled comment when its urgency makes
+      -- it shown (`devNoteShown`: `NOW`, `TODO`, or none); otherwise nothing is
+      -- emitted.  `devNoteComment` sets the note off from surrounding prose
+      -- (indented body, contiguous comment block); the body is filled 4
+      -- columns narrower to compensate for that indentation.
+      if let some (author, urgency, year) := decodeDevData? which.data then
+        if devNoteShown urgency then
+          let body := String.intercalate "\n\n"
+            (contents.toList.map (blockToText (width - 4)))
+          return appendBoth buf file
+            (devNoteComment (devNoteLabel author urgency year "NOTE TO DEVELOPERS") body)
+      return buf
     -- Unknown extension block: recurse into children as a best-effort.
-    -- NB: :::dev / :::instructor blocks carry no children (their bodies are
-    -- dropped at elaboration), so this recursion is a no-op for them.
+    -- NB: :::instructors blocks carry no children (their bodies are dropped at
+    -- elaboration), so this recursion is a no-op for them.
     walkBlocks width file contents buf
   | .para inls => return appendBoth buf file (asModuleDoc (paraToText width inls))
   | .code s => return appendBoth buf file (asModuleDoc s.trimAscii.toString)
@@ -775,6 +933,17 @@ private def chapterModule (vol : String) (p : Part Manual) : String :=
   if base.all (fun c => c.isAlphanum || c == '_') then vol ++ "." ++ base
   else vol ++ ".«" ++ base ++ "»"
 
+/-- Does one of `blocks` contain a `Block.suppressPreviousHeaderWhenTerse`
+marker?  The marker is emitted at a section's top level, but elaboration wraps
+each source block in `.concat` layers, so look through those (only — the marker
+never sits inside another extension block in the terse tree). -/
+private partial def hasSuppressHeaderMarker (blocks : Array (Block Manual)) : Bool :=
+  blocks.any fun b =>
+    match b with
+    | .other which _ => which.name == ``Block.suppressPreviousHeaderWhenTerse
+    | .concat bs => hasSuppressHeaderMarker bs
+    | _ => false
+
 /--
 Walk a section (a Part at depth ≥ 1, inside a chapter). The section's title is
 emitted as a `#`-prefixed module-doc heading whose level equals `depth`; all
@@ -784,8 +953,14 @@ partial def walkSection (width : Nat) (depth : Nat) (file : String) (part : Part
   let .mk titleInlines _ _ intro subParts := part
   let mut buf := buf
   let hashes := String.ofList (List.replicate depth '#')
-  let titleText := inlinesToText titleInlines
-  buf := appendBoth buf file (asModuleDoc s!"{hashes} {titleText}")
+  let titleText := Text.inlinesToText titleInlines
+  -- A `Block.suppressPreviousHeaderWhenTerse` marker among the section's own
+  -- blocks means the heading is full-only. The marker survives traversal only
+  -- in terse builds (full builds replace it with an empty block), so its
+  -- presence here says: this is the terse tree, suppress the heading (the
+  -- content still flows).
+  if !hasSuppressHeaderMarker intro then
+    buf := appendBoth buf file (asModuleDoc s!"{hashes} {titleText}")
   buf := walkBlocks width file intro buf
   for p in subParts do
     buf := walkSection width (depth + 1) file p buf
@@ -805,18 +980,18 @@ def walkOuter (width : Nat) (vol : String) (text : Part Manual) (buf : SaveBuffe
     buf := appendBoth buf rootFile s!"import {chapterModule vol p}\n"
   for p in subParts do
     let chapterFile := chapterPath vol p
-    -- BCP: Maybe this is not needed?
-    -- buf := appendBoth buf chapterFile "import Lean\n\nopen Lean\n\n"
+    buf := appendBoth buf chapterFile s!"import {supportModuleName vol}\n\n"
     buf := walkSection width 1 chapterFile p buf
   return buf
 
 /--
-Write a complete generated Lake project at `dest`: the per-file buffer
-contents under `dest/`, plus `lakefile.toml`, `lean-toolchain`, and a `LF.lean`
-that imports `LF.STLC`. -/
+Write a complete generated Lake project at `dest`: the per-file buffer contents
+under `dest/`, plus `lakefile.toml`, `lean-toolchain`, and a README. The root
+module file is one of the saved buffers produced by `walkOuter`. -/
 private def writeProject (dest : System.FilePath) (toolchain : String)
     (vol kind : String) (files : Array (String × String))
-    (extraLibs : Array String) : IO Unit := do
+    (extraLibs : Array String)
+    (pkgRequires : Array (String × String × String)) : IO Unit := do
   IO.FS.createDirAll dest
   -- Clear the volume source tree (and any bundled-prerequisite lib trees) so
   -- files that have since been renamed or removed don't linger as stale
@@ -826,7 +1001,13 @@ private def writeProject (dest : System.FilePath) (toolchain : String)
     let libRoot := dest / lib
     if ← libRoot.pathExists then
       IO.FS.removeDirAll libRoot
-  IO.FS.writeFile (dest / "lakefile.toml") (lakefileTemplate vol extraLibs)
+  -- Also drop any manifest left by a previous emit: `lake build` auto-resolves
+  -- dependencies when there is no manifest, but refuses ("missing manifest")
+  -- when an existing manifest lacks a package the lakefile now `require`s.
+  let manifest := dest / "lake-manifest.json"
+  if ← manifest.pathExists then
+    IO.FS.removeFile manifest
+  IO.FS.writeFile (dest / "lakefile.toml") (lakefileTemplate vol extraLibs pkgRequires)
   IO.FS.writeFile (dest / "lean-toolchain") toolchain
   IO.FS.writeFile (dest / "README.md")
     s!"# {vol} — {kind} version\n\nGenerated from the Verso source.\n"
@@ -838,7 +1019,8 @@ private def writeProject (dest : System.FilePath) (toolchain : String)
 /--
 Run `lake build` inside `dest` and report any failure via `logError`. Used to
 verify each generated project compiles. Student builds are expected to succeed
-with `sorry` warnings only. -/
+with `sorry` warnings only; expected-error doc examples have already been
+wrapped in `expect_failure` during extraction. -/
 private def buildProject (dest : System.FilePath) (kind : String) :
     BuildLogT IO Unit := do
   IO.println s!"Building generated {kind} project at {dest}…"
@@ -860,7 +1042,10 @@ outside dependencies must be reconstructed from its own header `import`s: drop
 the framework imports (they build the book, not student code), re-emit the rest,
 and bundle the source of any that is a content prerequisite (not toolchain, not
 an emitted book chapter — e.g. the bare `LF.Maps`) under its own `lean_lib`. A
-bundled module is copied verbatim, so it must be plain (non-Verso) Lean. -/
+bundled module is copied verbatim, so it must be plain (non-Verso) Lean.
+An import from an external package (e.g. `Batteries.CodeAction`) is re-emitted
+too, and the generated `lakefile.toml` gains a matching `[[require]]` pinned to
+the revision in the book's `lake-manifest.json`. -/
 
 /-- Module top-namespaces belonging to the authoring framework: their imports
 build the book but must never appear in an extracted `.lean` file. -/
@@ -870,10 +1055,32 @@ private def frameworkPrefixes : List String :=
 /-- Toolchain-provided top-namespaces: always available in any Lake project, so
 they stay as `import` lines but are never bundled as source. -/
 private def corePrefixes : List String :=
-  ["Lean", "Std", "Init", "Batteries"]
+  ["Lean", "Std", "Init"]
+
+/-- Top-namespaces provided by external packages: their imports stay as
+`import` lines and are never bundled as source, but the extracted project's
+`lakefile.toml` must `require` the package (pinned via `manifestPin`) for them
+to resolve. The package's Lake name is the prefix lowercased. -/
+private def pkgPrefixes : List String :=
+  ["Batteries"]
 
 /-- Top namespace of a module name (`LF.Maps` ⇒ `LF`). -/
 private def modTop (m : String) : String := (m.splitOn ".").headD m
+
+/-- Look up package `name` in the book's own `lake-manifest.json`, returning
+its `(git url, pinned rev)` so an extracted project can `require` the package
+at exactly the revision the book builds with. -/
+private def manifestPin (name : String) : IO (Option (String × String)) := do
+  let .ok raw ← (IO.FS.readFile "lake-manifest.json").toBaseIO | return none
+  let .ok json := Lean.Json.parse raw | return none
+  let .ok pkgs := json.getObjVal? "packages" | return none
+  let .ok arr := pkgs.getArr? | return none
+  for p in arr do
+    if (p.getObjValAs? String "name").toOption == some name then
+      let .ok url := p.getObjValAs? String "url" | return none
+      let .ok rev := p.getObjValAs? String "rev" | return none
+      return some (url, rev)
+  return none
 
 /-- Should module `m` appear as an `import` in an extracted file? (Framework
 imports are dropped; everything else — toolchain and content — is kept.) -/
@@ -938,10 +1145,11 @@ private def emitSavedImpl (destSlug modPrefix variant : String)
     (verify : Bool := true) :
     Mode → Config → TraverseState → Part Manual → BuildLogT IO Unit :=
   fun _mode _cfg _state text => do
-    let buf : SaveBuffers := walkOuter (fillWidthFor variant) modPrefix text ({} : SaveBuffers)
+    let buf : SaveBuffers := walkOuter (Text.fillWidthFor variant) modPrefix text ({} : SaveBuffers)
     let toolchain ← (IO.FS.readFile "lean-toolchain").toBaseIO >>= fun
       | .ok s => pure s
       | .error _ => pure "leanprover/lean4:v4.30.0-rc2\n"
+    let supportModuleTemplate ← readSFLCompat
     let rootFile := modPrefix ++ ".lean"
     -- Snapshot the buffer as a list so we can read source files (IO) per entry.
     let entries := buf.fold (init := ([] : List (String × (String × String × String))))
@@ -951,11 +1159,13 @@ private def emitSavedImpl (destSlug modPrefix variant : String)
     let chapterModules := entries.map (·.1) |>.filter (·.any (· == '/'))
       |>.map fun k => ((k.dropEnd 5).toString).replace "/" "."
     let needsBundle (m : String) : Bool :=
-      keepImport m && ! corePrefixes.contains (modTop m) && ! chapterModules.contains m
+      keepImport m && ! corePrefixes.contains (modTop m)
+        && ! pkgPrefixes.contains (modTop m) && ! chapterModules.contains m
     -- Pick the variant per file; prepend each chapter's (framework-stripped)
     -- import preamble; collect bundle seeds from the chapters' source imports.
-    let mut files : Array (String × String) := #[]
+    let mut files : Array (String × String) := #[(supportModulePath modPrefix, supportModuleTemplate)]
     let mut seeds : List String := []
+    let mut usedPkgs : Array String := #[]
     for (file, teacher, student, terse) in entries do
       let chosen := mergeAdjacentModuleDocs <|
         if variant == "solutions" then teacher
@@ -969,15 +1179,38 @@ private def emitSavedImpl (destSlug modPrefix variant : String)
         let src ← (IO.FS.readFile file).toBaseIO >>= fun
           | .ok s => pure s
           | .error _ => pure ""
-        let imps := (headerImports src).toList.filter keepImport
+        -- A chapter authored directly in Verso imports its not-yet-graduated
+        -- dependencies under their *Verso* module names (`import
+        -- LF.<X>Verso`); the extracted project has each such chapter
+        -- under its file key (`LF/<X>.lean`), so map the import back to
+        -- the emitted module name — which also keeps the Verso source itself
+        -- out of the bundle.
+        let deVerso (m : String) : String :=
+          if m.endsWith "Verso" && chapterModules.contains ((m.dropEnd 5).toString)
+          then (m.dropEnd 5).toString else m
+        let imps := ((headerImports src).toList.filter keepImport).map deVerso
         seeds := seeds ++ imps.filter needsBundle
+        for i in imps do
+          if pkgPrefixes.contains (modTop i) && ! usedPkgs.contains (modTop i) then
+            usedPkgs := usedPkgs.push (modTop i)
         let preamble := imps.foldl (init := "") fun acc i => acc ++ "import " ++ i ++ "\n"
         let preamble := if preamble.isEmpty then "" else preamble ++ "\n"
         files := files.push (file, preamble ++ chosen)
     let (bundleFiles, extraLibs) ← bundleLoop needsBundle seeds [] #[] #[]
     let allFiles := files ++ bundleFiles
+    -- Chapters importing an external package (e.g. Batteries) need the
+    -- extracted lakefile to `require` it, pinned to the book's own revision.
+    let mut pkgRequires : Array (String × String × String) := #[]
+    for pre in usedPkgs do
+      let name := pre.toLower
+      match ← manifestPin name with
+      | some (url, rev) => pkgRequires := pkgRequires.push (name, url, rev)
+      | none => reportError <|
+          s!"package '{name}' (needed for `import {pre}.…` in an extracted " ++
+          s!"chapter) is not in lake-manifest.json, so the extracted project " ++
+          s!"cannot pin it"
     let dest := System.FilePath.mk "_out" / destSlug / variant / "lean"
-    writeProject dest toolchain modPrefix variant allFiles extraLibs
+    writeProject dest toolchain modPrefix variant allFiles extraLibs pkgRequires
     if verify then buildProject dest variant
 
 /-- `ExtraStep` for the student build: solutions elided. -/
@@ -1002,5 +1235,7 @@ def emitSavedStudentTo (destSlug modPrefix : String) :=
 
 def emitSavedTerseTo (destSlug modPrefix : String) :=
   emitSavedImpl destSlug modPrefix "terse" (verify := false)
+
+end Save
 
 end SFLMeta
