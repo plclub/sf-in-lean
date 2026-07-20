@@ -171,9 +171,6 @@ than peeking through the definition of `eval`.  We tag each lemma `@[simp]`, so 
 applies them automatically.
 ::::
 
-:::dev "Benjamin Pierce (bcpierce00)"
-:::
-
 ```lean
 @[simp] theorem Aexp.eval_num (n : Nat) : (num n).eval = n := rfl
 @[simp] theorem Aexp.eval_plus (a1 a2 : Aexp) : (plus a1 a2).eval = a1.eval + a2.eval := rfl
