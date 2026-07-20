@@ -473,6 +473,53 @@ theorem update_eq (m : TotalMap α β) (a : α) (b : β) : (a →ₜ b ; m)[a] =
 exercises here...
 :::
 
+## Notation for Concrete Maps
+
+Wouldn't it be nice if we could use a more natural notation for concrete maps like `{ "bar" ↦ true, "foo" ↦ true }`?
+To accomplish this we define a simple structure that consists of a key and a value along with `↦` notation for it.
+
+```lean
+/--
+A key-value pair with `↦` syntax.
+-/
+@[ext]
+structure KVPair (K : Type u) (V : Type v) where
+  key : K
+  value : V
+
+namespace KVPair
+scoped notation k " ↦ " v => KVPair.mk k v
+end KVPair
+
+open scoped KVPair
+```
+
+Next, we declare `Insert` and `Singleton` instances which control the `{}` notation in lean.
+
+```lean
+instance : Insert (KVPair α β) (TotalMap α β) where
+  insert kv m := kv.key →ₜ kv.value ; m
+
+instance : Singleton (KVPair α β) (TotalMap α β) where
+  singleton kv := insert kv ∅
+
+instance : LawfulSingleton (KVPair α β) (TotalMap α β) where
+  insert_empty_eq _ := rfl
+```
+
+:::dev
+xhalo32: Should we explain why `example : ({ "foo" ↦ true })["foo"]! = true := rfl` doesn't work (the collection that has Insert and GetElem is ambiguous)?
+:::
+
+Here are a couple of examples using the new notation:
+
+```lean
+example : ({ "bar" ↦ true, "foo" ↦ true }) = "bar" →ₜ true ; "foo" →ₜ true ; ∅ := rfl
+
+example : ({ "foo" ↦ true } : TotalMap String Bool)["foo"]! = true := rfl
+
+example : ({ 1 ↦ 2, 1 ↦ 3 } : TotalMap Nat Nat)[1]! = 2 := rfl
+```
 
 ## Partial Map
 
