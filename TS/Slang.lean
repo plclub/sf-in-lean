@@ -298,27 +298,33 @@ theorem optimize0plus_sound (a : Aexp) :
 ::::full
 We can do much better. The case analysis we performed by hand -- peeling
 `plus` apart to reach the `plus (num 0) e` branch -- is exactly the case
-analysis that `optimize0plus` itself performs. For any function, Lean
-generates a matching *induction principle*, here `Aexp.optimize0plus.induct`,
-that follows the function's own recursion structure.  Inducting with it (via
-`induction a using …`) hands us one goal per branch of `optimize0plus` -- the
+analysis that `optimize0plus` itself performs. The `fun_induction` tactic
+inducts along a function's *own* recursion structure: `fun_induction
+Aexp.optimize0plus a` hands us one goal per branch of `optimize0plus` -- the
 special `plus (num 0) e` branch included -- so the nested `cases` disappear.
 
 Every remaining goal now has the same shape, so we can attack them uniformly
 with the `<;>` combinator, which runs a single tactic on *all* the goals
-produced by the `induction`.  That single tactic is `simp_all [Aexp.optimize0plus]`:
-it unfolds `optimize0plus`, rewrites `eval` by the `@[simp]` characterizing
-lemmas, and uses the induction hypotheses -- which `simp_all` picks up from the
-local context automatically -- to close each goal. The whole proof collapses to
-two lines.
+produced by the induction.  That single tactic is `simp_all`: it rewrites
+`eval` by the `@[simp]` characterizing lemmas and uses the induction hypotheses
+-- which `simp_all` picks up from the local context automatically -- to close
+each goal. The whole proof collapses to two lines.
 ::::
 
 ```lean
 theorem optimize0plus_sound' (a : Aexp) :
     a.optimize0plus.eval = a.eval := by
-  induction a using Aexp.optimize0plus.induct <;>
-    simp_all [Aexp.optimize0plus]
+  fun_induction Aexp.optimize0plus a <;> simp_all
 ```
+
+:::dev PotentialImprovement
+Following a suggestion from berberman:
+`fun_induction` (and `simp_all`) are used here but not yet introduced to the
+reader: neither appears in the CONTRIBUTING.md tactic-introduction table, and
+`fun_induction` is not (yet) used in `Automation`. To be decided: introduce
+`fun_induction` in `Automation` (its natural home, since TS follows it) or
+locally here, and add it to the tactic table either way.
+:::
 
 :::::exercise (rating := 3) (name := "optimize0plusB_sound")
 Since the {name}`Aexp.optimize0plus` transformation doesn't change the value of an

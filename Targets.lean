@@ -19,11 +19,11 @@ def main (args : List String) : IO UInt32 := do
   match args with
   | vol :: mode :: rest =>
     let showSols := mode == "solutions"
-    SFLMeta.showSolutions.set showSols
+    SFLMeta.Save.showSolutions.set showSols
     let extraSteps :=
-      if showSols then [SFLMeta.emitSavedSolutions vol.toUpper]
-      else if mode == "terse" then [SFLMeta.emitSavedTerse vol.toUpper]
-      else [SFLMeta.emitSavedStudent vol.toUpper]
+      if showSols then [SFLMeta.Save.emitSavedSolutions vol.toUpper]
+      else if mode == "terse" then [SFLMeta.Save.emitSavedTerse vol.toUpper]
+      else [SFLMeta.Save.emitSavedStudent vol.toUpper]
     let config := mkConfig vol mode
     match vol with
     | "lf" => manualMain (%doc LF) (options := rest) (config := config) (extraSteps := extraSteps)
