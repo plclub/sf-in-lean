@@ -55,7 +55,7 @@ nice to work some of those ideas into the notes. - BCP
   you may want to skim it." I removed this because now this chapter is not
   about Imp but about a much simpler language, and also it lives in TS not HL.
   BCP: We don't need to take this digression for now.  Later, we could consider
-  making a real chapter about lexing and parsing, maybe even with some proofs.  
+  making a real chapter about lexing and parsing, maybe even with some proofs.
 :::
 
 ::::full
@@ -111,7 +111,7 @@ This is inconsistent about `×` vs. `*`.
   a := nat
       | a + a
       | a − a
-      | a × a
+      | a * a
 
   b := bool
       | a = a
@@ -164,8 +164,8 @@ def Aexp.eval (a : Aexp) : Nat :=
 ```
 
 ::::full
-By convention, we pair the definition with one _simplification lemma_ per constructor, 
-specifying 
+By convention, we pair the definition with one _simplification lemma_ per constructor,
+specifying
 how `eval` behaves on that constructor. Proofs then rewrite by these lemmas rather
 than peeking through the definition of `eval`.  We tag each lemma `@[simp]`, so `simp`
 applies them automatically.
@@ -399,7 +399,7 @@ inductive Aexp.EvalR : Aexp → Nat → Prop where
       EvalR (.mult a1 a2) (n1 * n2)
 ```
 
-One comment on the style of this definition.  
+One comment on the style of this definition.
 We could instead have presented this relation with *positional* hypotheses --
 no names for the premises.
 
@@ -469,7 +469,7 @@ type with unnamed hypotheses:
 ```
 
 Formally, there is nothing deep about inference rules: they are just
-an informal notation for implications. 
+an informal notation for implications.
 You can read the rule name on the right as the name of the
 constructor and read each of the linebreaks between the premises above the
 line (as well as the line itself) as `→`.  All the variables mentioned in
@@ -478,7 +478,7 @@ at the beginning. (Such variables are often called _metavariables_ to
 distinguish them from the variables of whatever language we are defining. At
 the moment, our arithmetic expressions don't include variables, but we'll
 soon be adding them.) The whole collection of rules is understood as being
-wrapped, implicitly, in an inductive declaration. 
+wrapped, implicitly, in an inductive declaration.
 In informal prose, this is sometimes
 indicated by saying something like "Let `Aexp.EvalR` be the smallest relation
 closed under the following rules...".
@@ -511,7 +511,7 @@ them:
 ```
 ::::
 
-:::dev "Benjamin Pierce (bcpierce00)" 
+:::dev "Benjamin Pierce (bcpierce00)"
 The first two quizzes here seem kind of boring.
 :::
 
@@ -748,7 +748,7 @@ inductive Aexp where
 Extending the definition of `Aexp.eval` to handle this new operation would
 not be straightforward due to division being a _partial_ operation; i.e.,
 what should we return as the result of `.div (.num 5) (.num 0)`?
-By contrast, partiality is no problem for the relational 
+By contrast, partiality is no problem for the relational
 version of the definition.
 
 :::terse
@@ -828,7 +828,7 @@ but failing to mention options (which I think were introduced in LF) seems
 a bit surprising.
 :::
 :::dev "Benjamin Pierce (bcpierce00)"
-Agreed. 
+Agreed.
 :::
 
 
@@ -841,8 +841,8 @@ or is genuinely _not_ a function -- there is no real choice. When both
 styles are workable, relational definitions can be more elegant and
 easier to understand, and Lean generates useful inversion and induction
 principles from them. On the other hand, functional definitions are
-automatically deterministic and total -- whereas, for a relation, 
-we must _prove_ these if we need them -- 
+automatically deterministic and total -- whereas, for a relation,
+we must _prove_ these if we need them --
 and we can use Lean's computation mechanism to simplify them during proofs.
 
 In large developments it is common to give a definition in _both_
@@ -850,7 +850,7 @@ styles plus a lemma that the two coincide, allowing later proofs to
 switch between points of view at will -- exactly what we did above.
 :::dev "Benjamin Pierce (bcpierce00)"
 Well, we didn't actually do a proof that switched between the points
-of view.  Should we?  
+of view.  Should we?
 :::
 
 ::::
