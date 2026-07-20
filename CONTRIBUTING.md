@@ -358,6 +358,10 @@ guidelines.
   example : … := sorry
   ```
 
+  The `#guard_msgs` wrapper is checked while the book is compiled.
+  In the rendered book and generated projects, the expected-message docstring and
+  `#guard_msgs ... in` are stripped.
+
 * **Aborted/abandoned lemmas** become unnamed `example`s closed with
   `sorry` (the SFL analogue of Rocq's `Abort`).
 
@@ -583,6 +587,27 @@ GRADE_THEOREM 1: nandb_test4
 `GRADE_MANUAL <pts>: <name>` lines for autograding scripts. Currently
 a noop in all rendered outputs (body discarded at elaboration); the
 spec survives verbatim in the Verso source for tooling.
+
+### `lean` block flags
+
+Use ordinary fenced `lean` blocks for examples that should elaborate in
+the chapter, appear in the rendered book, affect later Lean blocks,
+and be emitted as normal Lean code in generated projects for teachers and students.
+
+Some examples are meant to be shown or checked without becoming persistent code in
+generated projects:
+
+|block|rendered book|generated project|
+|---|---|---|
+|`` ```lean ``|shown|normal (executable) code|
+|`` ```lean -show``|hidden|normal code|
+|`` ```lean +error``|shown as expected failure|wrapped in `sf_expect_failure ... end`|
+|`` ```lean +error -show``(rare)|hidden|wrapped in `sf_expect_failure ... end`|
+|`` ```lean -keep``|shown|wrapped in `sf_experiment ... end`|
+|`` ```lean -keep -show`` (rare)|hidden|wrapped in `sf_experiment ... end`|
+
+Do not put definitions needed later in `-keep` or `+error` blocks as they will not become
+executable declarations in the generated projects, though they still get rendered in the book. 
 
 ### Quizzes
 
@@ -881,5 +906,4 @@ indication that that's what it is.
 Scripts that are mostly or wholly AI generated should be marked as
 such, because these will typically be lower quality than human-created
 or heavily vetted code, and people looking at them should understand
-that. 
-
+that.
