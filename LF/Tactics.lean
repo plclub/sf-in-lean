@@ -1701,21 +1701,24 @@ Answer: No, just replaces uses of it by Nat.ble!
 ```lean
 infix:52 " ≤? " => Nat.ble
 
-theorem zero_leb (m : Nat) : (0 ≤? m) = true := rfl
-theorem succ_leb_succ (n m : Nat) : ((n + 1) ≤? (m + 1)) = (n ≤? m) := rfl
+theorem zero_ble (m : Nat) : (0 ≤? m) = true := rfl
+theorem succ_ble_succ (n m : Nat) : ((n + 1) ≤? (m + 1)) = (n ≤? m) := rfl
 ```
 
 :::dev "Claude" BeforeNextRelease
-Claude-generated note. In `Lists` the two lemmas stated over `Nat.ble` were
-renamed `leb_n_Sn` → `ble_n_Sn` and `leb_pred_n_n` → `ble_pred_n_n`, so the name
-tracks the function they are about. The same argument applies to the `leb` names
-that are still here and in `Logic`: `zero_leb` and `succ_leb_succ` above, and
-`leb_plus_exists` / `leb_plus` in `Logic`, are all stated over `≤?`, which is
-notation for `Nat.ble` (declared just above). Should they be renamed `ble_*` too?
+Claude-generated note. The `leb_*` → `ble_*` rename is now applied across
+`Lists`, `Tactics`, and `Logic`, matching the `ble_complete` / `ble_correct` /
+`ble_iff` names already used in `IndProp`: every one of these is stated over
+`≤?`, which is notation for `Nat.ble` (declared just above), so the name now
+tracks the function. Statements keep the `≤?` notation rather than spelling out
+`Nat.ble`, following `IndProp`.
 
-Worth deciding as one sweep rather than piecemeal. Note that `LF/Scratch.lean`
-uses a genuinely different `leb` — the chapter's own definition, not `Nat.ble` —
-so those names should stay as they are.
+Two things deliberately left alone. `LF/Scratch.lean` uses a genuinely different
+`leb` — the chapter's own definition, not `Nat.ble` — so those names stay. And
+`beq_succ` (above, and used in `Logic`) is a separate `BEq` question: it could
+likewise be restated via `Nat.beq_eq_true_eq` / `BEq.comm`, which would let the
+`beq_symm` exercise below drop its induction. Worth a decision, but it changes
+an exercise's shape, not just a name.
 :::
 
 Suppose that we want to show that `add` is the inverse of
@@ -1728,7 +1731,7 @@ we induct on `n` before introducing `m`, so that the induction
 hypothesis becomes sufficiently general.
 
 ```lean
-theorem sub_add_leb : ∀ (n m : Nat),
+theorem sub_add_ble : ∀ (n m : Nat),
     n ≤? m = true → (m - n) + n = m := by
   intro n
   induction n
@@ -1740,7 +1743,7 @@ theorem sub_add_leb : ∀ (n m : Nat),
     intro m h; cases m
     case zero => contradiction
     case succ m' =>
-      rw [succ_leb_succ] at h
+      rw [succ_ble_succ] at h
       rw [succ_sub_succ, add_succ]
     -- At this point, we need to show `(m' - n') + n' + 1 = m' + 1`
     -- from the assumption `(n' <= m') = true`.  We could use the
