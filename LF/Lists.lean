@@ -171,7 +171,7 @@ examples illustrate pattern matching on a pair with elements `x`
 and `y`, whereas, for example, the definition of `sub` in
 {ref "Basics"}[Basics] performs pattern matching on the values `n` and `m`:
 
-```display
+```lean
 def sub (n m : Nat) : Nat :=
   match n, m with
   | 0,        _        => 0
@@ -183,7 +183,7 @@ The distinction is minor, but it is worth understanding that they
 are not the same. For instance, the following definitions are
 ill-formed:
 
-```display
+```lean +error
 -- Can't match on a pair with multiple patterns:
 def bad_fst (p : NatProd) : Nat :=
   match p with
@@ -542,7 +542,7 @@ example : nonzeros [0, 1, 0, 2, 3, 0, 0] = [1, 2, 3] := solution!(by rfl)
 :::gradeTheorem "0.5" "NatList.test_nonzeros"
 :::
 
-the following lemmas should hold about your definition
+The following lemmas should hold about your definition
 
 ```lean
 theorem nonzeros_cons_zero (t : NatList) :
@@ -589,7 +589,7 @@ from the first list and elements from the second.
 
 Hint: there are natural ways of writing `alternate` that fail to
 satisfy Lean's requirement that all recursive definitions be
-_structurally recursive_, as mentioned in `"Basics"`.
+_structurally recursive_, as mentioned in {ref "Basics"}[Basics].
 If you encounter this difficulty,
 consider pattern matching against both lists at the same time.
 
@@ -754,7 +754,7 @@ theorem member_add_same v t : member v (add v t) = true := by
     rw [BEq.refl]
     dsimp
 
-theorem member_add_diff v1 v2 t : (v1 == v2) = false -> member v1 (add v2 t) = member v1 t := by
+theorem member_add_diff v1 v2 t : (v1 == v2) = false → member v1 (add v2 t) = member v1 t := by
   solution!
     intro h
     dsimp [add, member]
@@ -1070,7 +1070,7 @@ n :: ((l1' ++ l2) ++ l3) = n :: (l1' ++ (l2 ++ l3)),
 
 which is immediate from the induction hypothesis.  _Qed_.
 
-Generalizing Statements
+### Generalizing Statements
 
 ::::full
 In some situations, it is necessary to generalize a
@@ -1165,7 +1165,7 @@ example (l : NatList) :
   | nil => rw [rev_nil]
   | cons n l' ih =>
     rw [rev_cons]
-    -- Now we seem to be stuck: the goal involves `++`, but we
+    -- Now we seem to be stuck: the goal involves `++`,
     -- but we don't have any useful equations
     -- in either the immediate context or in the global
     -- environment!
@@ -1727,7 +1727,7 @@ We call this new type `NatOption`.
 ::::
 
 :::terse
-The solution: return an `NatOption`.
+The solution: return a `NatOption`.
 :::
 
 ```lean
@@ -1758,7 +1758,7 @@ example : nth_error [4, 5, 6, 7] 9 = .none := by rfl
 ```
 
 ::::full
-The function below pulls the `Nat` out of an `NatOption`,
+The function below pulls the `Nat` out of a `NatOption`,
 returning a supplied default in the `none` case.
 ::::
 
