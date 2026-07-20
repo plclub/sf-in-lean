@@ -869,7 +869,11 @@ python3 scripts/to_verso.py old/orig-plf-files/Hoare.v HL/Hoare.lean
 
 ## (Temp) Porting from Rocq: comment fidelity and framing
 
-(Claude-drafted; human review welcome.)  
+[BCP: This section seems out of date: We do not use Claude any more
+for rough translations of chapters from Rocq; instead, we use
+to_verso.py to go directly from the Rocq to a non-compiling Verso file
+with all the easy markup changes implemented and all the interesting
+actual translation work left for manual effort.]  
 
 When porting a Rocq
 `sfdev/<vol>/<Ch>.v` to `<Ch>.lean`:
