@@ -347,6 +347,14 @@ example (n : Nat) : Nat := by
   | zero => exact zero
   | succ n' => exact n'
 
+inductive silly : Nat → Prop where
+| silly1 n (h : n > 1) : silly n
+| silly2 n (h : exists m, m * 2 = n) : silly n
+| silly3 n (h : exists m, n = m + 2) : silly n
+
+example {n} (h : silly n) : n ≠ 1 := by
+  inversion h <;> omega
+
 inductive The : ∀ {α}, α → Prop where
   | mk : The zero
 
