@@ -292,15 +292,15 @@ syntax:max ident : imp_bexp
 /-- Equality of arithmetic expressions -/
 syntax:50 imp_aexp:51 " = " imp_aexp:51 : imp_bexp
 /-- Disequality of arithmetic expressions -/
-syntax:50 imp_aexp:51 " <> " imp_aexp:51 : imp_bexp
+syntax:50 imp_aexp:51 " ≠ " imp_aexp:51 : imp_bexp
 /-- Less than or equal -/
-syntax:50 imp_aexp:51 " <= " imp_aexp:51 : imp_bexp
+syntax:50 imp_aexp:51 " ≤ " imp_aexp:51 : imp_bexp
 /-- Greater than -/
 syntax:50 imp_aexp:51 " > " imp_aexp:51 : imp_bexp
 /-- Boolean negation -/
-syntax:70 "! " imp_bexp:70 : imp_bexp
+syntax:70 "¬ " imp_bexp:70 : imp_bexp
 /-- Boolean conjunction -/
-syntax:35 imp_bexp:36 " && " imp_bexp:35 : imp_bexp
+syntax:35 imp_bexp:36 " ∧ " imp_bexp:35 : imp_bexp
 /-- Parentheses for grouping -/
 syntax "(" imp_bexp ")" : imp_bexp
 /-- Escape to Lean -/
@@ -327,11 +327,11 @@ macro_rules
     | _      => Macro.throwErrorAt x s!"expected 'true' or 'false', got '{x.getId}'"
   | `(bexp { ~$e }) => pure e
   | `(bexp { $a:imp_aexp = $b:imp_aexp }) => `(Bexp.eq (aexp {$a}) (aexp {$b}))
-  | `(bexp { $a:imp_aexp <> $b:imp_aexp }) => `(Bexp.neq (aexp {$a}) (aexp {$b}))
-  | `(bexp { $a:imp_aexp <= $b:imp_aexp }) => `(Bexp.le (aexp {$a}) (aexp {$b}))
+  | `(bexp { $a:imp_aexp ≠ $b:imp_aexp }) => `(Bexp.neq (aexp {$a}) (aexp {$b}))
+  | `(bexp { $a:imp_aexp ≤ $b:imp_aexp }) => `(Bexp.le (aexp {$a}) (aexp {$b}))
   | `(bexp { $a:imp_aexp > $b:imp_aexp }) => `(Bexp.gt (aexp {$a}) (aexp {$b}))
-  | `(bexp { ! $b:imp_bexp }) => `(Bexp.not (bexp {$b}))
-  | `(bexp { $b1:imp_bexp && $b2:imp_bexp }) => `(Bexp.and (bexp {$b1}) (bexp {$b2}))
+  | `(bexp { ¬ $b:imp_bexp }) => `(Bexp.not (bexp {$b}))
+  | `(bexp { $b1:imp_bexp ∧ $b2:imp_bexp }) => `(Bexp.and (bexp {$b1}) (bexp {$b2}))
   | `(bexp { ($b:imp_bexp) }) => `(bexp {$b})
 ```
 
@@ -368,7 +368,7 @@ With these coercions we can write `.plus 3 (.mult X 2)` instead of the fully
 
 ```lean
 def example_aexp : Aexp := aexp { 3 + (X * 2) }
-def example_bexp : Bexp := bexp { true && !(X <= 4) }
+def example_bexp : Bexp := bexp { true ∧ ¬(X ≤ 4) }
 ```
 
 ## Delaborators
@@ -478,22 +478,22 @@ partial def delabBexpInner : DelabM (TSyntax `imp_bexp) := do
     | Bexp.neq _ _ =>
       let s1 ← withAppFn <| withAppArg delabAexpInner
       let s2 ← withAppArg delabAexpInner
-      `(imp_bexp| $s1:imp_aexp <> $s2:imp_aexp)
+      `(imp_bexp| $s1:imp_aexp ≠ $s2:imp_aexp)
     | Bexp.le _ _ =>
       let s1 ← withAppFn <| withAppArg delabAexpInner
       let s2 ← withAppArg delabAexpInner
-      `(imp_bexp| $s1:imp_aexp <= $s2:imp_aexp)
+      `(imp_bexp| $s1:imp_aexp ≤ $s2:imp_aexp)
     | Bexp.gt _ _ =>
       let s1 ← withAppFn <| withAppArg delabAexpInner
       let s2 ← withAppArg delabAexpInner
       `(imp_bexp| $s1:imp_aexp > $s2:imp_aexp)
     | Bexp.not _ =>
       let s ← withAppArg delabBexpInner
-      `(imp_bexp| ! $s)
+      `(imp_bexp| ¬ $s)
     | Bexp.and _ _ =>
       let s1 ← withAppFn <| withAppArg delabBexpInner
       let s2 ← withAppArg delabBexpInner
-      `(imp_bexp| $s1 && $s2)
+      `(imp_bexp| $s1 ∧ $s2)
     | _ => `(imp_bexp| ~$(← delab))
   annAsTerm stx
 ```
@@ -547,9 +547,9 @@ concrete syntax rather than their raw constructors.
 #guard_msgs in
 #check aexp { 3 + (X * 2) }
 
-/-- info: bexp {true && ! (X <= 4)} : Bexp -/
+/-- info: bexp {true ∧ ¬ (X ≤ 4)} : Bexp -/
 #guard_msgs in
-#check bexp { true && !(X <= 4) }
+#check bexp { true ∧ ¬(X ≤ 4) }
 ```
 
 ## Evaluation
@@ -614,7 +614,7 @@ example : aexp { 3 + (X * 2) }.eval (X →ₜ 5 ; ∅) = 13 := by rfl
 
 example : aexp { Z + (X * Y) }.eval (X →ₜ 5 ; Y →ₜ 4 ; ∅) = 20 := by rfl
 
-example : bexp { true && !(X <= 4) }.eval (X →ₜ 5 ; ∅) = true := by rfl
+example : bexp { true ∧ ¬(X ≤ 4) }.eval (X →ₜ 5 ; ∅) = true := by rfl
 ```
 
 :::dev
@@ -778,7 +778,7 @@ the concrete Imp program at the very start of the chapter.)
 def fact_in_lean : Com := imp {
   Z := X;
   Y := 1;
-  while (Z <> 0) {
+  while (Z ≠ 0) {
     Y := Y * Z;
     Z := Z - 1;
   }
@@ -796,7 +796,7 @@ info: def fact_in_lean : Com :=
 imp {
   Z := X;
   Y := 1;
-  while (Z <> 0) {
+  while (Z ≠ 0) {
     Y := Y * Z;
     Z := Z - 1;
   }
@@ -864,7 +864,7 @@ def subtract_slowly_body : Com := imp {
 }
 
 def subtract_slowly : Com := imp {
-  while (X <> 0) {
+  while (X ≠ 0) {
     ~subtract_slowly_body
   }
 }
@@ -1092,7 +1092,7 @@ it for us.
 example :
     ∅ =[
       X := 2;
-      if (X <= 1) {
+      if (X ≤ 1) {
         Y := 3;
       } else {
         Z := 4;
@@ -1346,7 +1346,7 @@ you should write.  The proof of that theorem will be somewhat lengthy.
 def pup_to_n : Com := solution!(
   imp {
     Y := 0;
-    while (1 <= X) {
+    while (1 ≤ X) {
       Y := Y + X;
       X := X - 1;
     }
