@@ -1705,6 +1705,19 @@ theorem zero_leb (m : Nat) : (0 ≤? m) = true := rfl
 theorem succ_leb_succ (n m : Nat) : ((n + 1) ≤? (m + 1)) = (n ≤? m) := rfl
 ```
 
+:::dev "Claude" BeforeNextRelease
+Claude-generated note. In `Lists` the two lemmas stated over `Nat.ble` were
+renamed `leb_n_Sn` → `ble_n_Sn` and `leb_pred_n_n` → `ble_pred_n_n`, so the name
+tracks the function they are about. The same argument applies to the `leb` names
+that are still here and in `Logic`: `zero_leb` and `succ_leb_succ` above, and
+`leb_plus_exists` / `leb_plus` in `Logic`, are all stated over `≤?`, which is
+notation for `Nat.ble` (declared just above). Should they be renamed `ble_*` too?
+
+Worth deciding as one sweep rather than piecemeal. Note that `LF/Scratch.lean`
+uses a genuinely different `leb` — the chapter's own definition, not `Nat.ble` —
+so those names should stay as they are.
+:::
+
 Suppose that we want to show that `add` is the inverse of
 `sub`.  Since we are working with natural numbers, we need an
 assumption to prevent `sub` from truncating its result. With
