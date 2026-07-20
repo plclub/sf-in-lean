@@ -165,18 +165,27 @@ def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (List MVarId
   let goal ← getMainGoal
   goal.withContext do
     let some ctx ← mkCasesContext? h
-    | throwTacticEx `inversion goal "Not applicable to the given hypothesis"
-    let gis@⟨newGoal, _, newTarget, numEqs⟩ ← generalizeIndices goal h
-    let (newEqs, newGoal) ← newGoal.introN numEqs
-    let some targetEq := newEqs.back?
-    | throwTacticEx `inversion newGoal "Failed to generalize target"
-    let subgoals ← inductionCasesOn newGoal newTarget default ctx
-    let subgoals ← elimAuxIndices gis subgoals
-    let subgoals ← unifyCasesEqs newEqs.toList subgoals
-    let subgoals ← if config.clear
-      then casesClearMany subgoals #[h, targetEq]
-      else pure subgoals
-    return subgoals.toList.map (·.mvarId)
+    | throwTacticEx `inversion goal "Target {Expr.fvar h} does not belong to an inductive type"
+    -- If the target's type isn't a predicate with indices, behave like `cases`
+    if ← hasIndepIndices ctx then
+      let subgoals ← inductionCasesOn goal h default ctx
+      let subgoals ← if config.clear
+        then casesClearMany subgoals #[h]
+        else pure subgoals
+      return subgoals.toList.map (·.mvarId)
+    -- Otherwise, use custom [unifyEqs] to not fail on unifying HEqs
+    else
+      let gis@⟨newGoal, _, newTarget, numEqs⟩ ← generalizeIndices goal h
+      let (newEqs, newGoal) ← newGoal.introN numEqs
+      let some targetEq := newEqs.back?
+      | throwTacticEx `inversion newGoal "Failed to generalize target"
+      let subgoals ← inductionCasesOn newGoal newTarget default ctx
+      let subgoals ← elimAuxIndices gis subgoals
+      let subgoals ← unifyCasesEqs newEqs.toList subgoals
+      let subgoals ← if config.clear
+        then casesClearMany subgoals #[h, targetEq]
+        else pure subgoals
+      return subgoals.toList.map (·.mvarId)
 
 /-- Given an inversion alternative and a list of goals,
   solve the tagged goal with the provided tactics,
@@ -324,6 +333,16 @@ example {α} (n : Nat) (v : Wec α (succ n)) :
 
 example (H : Bool → Nat → False) (n : Nat) : False := by
   apply H at n; apply n; exact true
+
+inductive EmptyRelation : Nat → Nat → Prop where
+
+example n m : ¬ EmptyRelation n m := by
+  intro contra; inversion contra
+
+example (n : Nat) : Nat := by
+  inversion n with
+  | zero => exact zero
+  | succ n' => exact n'
 
 lemma doubleNegation : ∀ P, P → ¬ ¬ P := by
   intro P p np; exact (np p)
