@@ -1547,7 +1547,7 @@ The following lemma about `Nat.ble` might help you in the next
 exercise (it will also be useful in later chapters).
 
 ```lean
-theorem leb_n_Sn (n : Nat) :
+theorem ble_n_Sn (n : Nat) :
     Nat.ble n (n + 1) = true := by
   induction n with
   | zero       => rfl
@@ -1580,20 +1580,20 @@ theorem count_remove_one v s :
       rw [remove_one_add_same, count_cons_same]
       dsimp; exact h; exact h
 
-theorem leb_pred_n_n n :
+theorem ble_pred_n_n n :
     Nat.ble n.pred n = true := by
   induction n with
   | zero => dsimp [Nat.ble]
   | succ n ih =>
     dsimp
-    rw [leb_n_Sn]
+    rw [ble_n_Sn]
 
 theorem remove_does_not_increase_count' (s : Bag) (n : Nat) :
     Nat.ble (count n (remove_one n s)) (count n s) = true := by
   induction s with
   | nil => rw [remove_one_nil, count_nil]; rfl
   | cons n' l ih =>
-    rw [count_remove_one, leb_pred_n_n]
+    rw [count_remove_one, ble_pred_n_n]
 ```
 ::::
 
@@ -1608,7 +1608,7 @@ theorem remove_does_not_increase_count (s : Bag) :
     | cons n s' ih =>
       cases n with
       | zero =>
-        rw [remove_one_add_same, count_cons_same, leb_n_Sn] <;> rfl
+        rw [remove_one_add_same, count_cons_same, ble_n_Sn] <;> rfl
       | succ n' =>
         rw [remove_one_add_diff, count_cons_diff, count_cons_diff]
         exact ih; rfl; rfl; rfl

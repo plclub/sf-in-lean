@@ -249,7 +249,8 @@ should be kept in sync as chapters are rewritten.
 - `IndPropRegexp` has been folded into `Automation`
 - `Maps` will be folded into `Typeclasses`
 - Candidate tactics still to be placed include `show`, `rename_i`, `revert`, `suffices`, `tauto`. 
-- Tactics `grind`, `aesop`, are deferred to a later volume. 
+- Tactics `grind`, `aesop`, are deferred to a later volume, following
+  FPiL's caution that `grind` is overwhelming for beginners. 
 
 Related notation introduced alongside tactics: anonymous constructor
 `⟨…⟩` (`Lists`); destructuring `let ⟨…⟩ := …` and `cases h : …`,
@@ -897,7 +898,7 @@ maintain content in this repo.  AI-generated content, especially
 public-facing content such as words and proofs in book chapters,
 should be carefully vetted.
 
-For PRs with publict-facing content, we follow the [mathlib AI
+For PRs with public-facing content, we follow the [mathlib AI
 policy][mathlib-ai-policy], which mandates summarizing how AI is used
 in the PR description. PR descriptions should be written (or at least
 carefully rewritten) by hand.
