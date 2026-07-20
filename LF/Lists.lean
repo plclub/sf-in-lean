@@ -60,17 +60,11 @@ import LF.Induction
 import LF.UsingLean
 ```
 
-:::dev "Benjamin Pierce (bcpierce00)"
-Why is this namespace needed??
-:::
-
-:::dev "Daniel Sainati (dsainati1)"
-So that the definitions here don't clash with the standard library.
-:::
-
-:::dev "Benjamin Pierce (bcpierce00)"
-Then let's explain it, if really needed.
-:::
+::::full
+This chapter introduces basic data structures and functions for working with
+them. We place all these definitions in the `Lists` namespace to avoid name
+clashes with Lean's standard library and with definitions from other chapters.
+::::
 
 ```lean
 namespace Lists
