@@ -102,9 +102,8 @@ A type introduced this way is called an _inductive type_; the
 word "inductive" hints at the use of mathematical induction
 to prove statements about its values.
 
-To demonstrate how inductive definitions work, and make the
-point that the Lean library's use of them is routine and
-not magical, we will recapitulate most of the datatype definitions we
+To demonstrate how inductive definitions work, and illustrate their
+expressive power, we will recapitulate most of the datatype definitions we
 need in this course, rather than immediately referring
 to those in the standard library. We take care to harmonize
 the definitions we present with the actual definitions in the standard library, which
