@@ -570,9 +570,9 @@ def Aexp.eval (st : State) (a : Aexp) : Nat :=
   match a with
   | num   n     =>  n
   | id    x     =>  st[x]                    -- NEW
-  | plus  a1 a2 =>  eval st a1 + eval st a2
-  | minus a1 a2 =>  eval st a1 - eval st a2
-  | mult  a1 a2 =>  eval st a1 * eval st a2
+  | plus  a1 a2 =>  a1.eval st + a2.eval st
+  | minus a1 a2 =>  a1.eval st - a2.eval st
+  | mult  a1 a2 =>  a1.eval st * a2.eval st
 
 def Bexp.eval (st : State) (b : Bexp) : Bool :=
   match b with
