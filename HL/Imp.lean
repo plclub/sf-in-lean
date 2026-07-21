@@ -80,10 +80,10 @@ Here is a familiar mathematical function written in Imp.
 ```display
 Z := X;
 Y := 1;
-while Z <> 0 do
+while (Z ≠ 0) {
   Y := Y * Z;
-  Z := Z - 1
-end
+  Z := Z - 1;
+}
 ```
 ::::
 
