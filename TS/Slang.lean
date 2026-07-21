@@ -158,9 +158,9 @@ _Evaluating_ an arithmetic expression produces a number.
 def Aexp.eval (a : Aexp) : Nat :=
   match a with
   | num   n     =>  n
-  | plus  a1 a2 =>  eval a1 + eval a2
-  | minus a1 a2 =>  eval a1 - eval a2
-  | mult  a1 a2 =>  eval a1 * eval a2
+  | plus  a1 a2 =>  a1.eval + a2.eval
+  | minus a1 a2 =>  a1.eval - a2.eval
+  | mult  a1 a2 =>  a1.eval * a2.eval
 ```
 
 ::::full
