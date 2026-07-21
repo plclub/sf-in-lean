@@ -104,9 +104,6 @@ trees -- the process that, for example, would translate the string
 For comparison, here's a conventional BNF (Backus-Naur Form) grammar
 defining the same abstract syntax:
 
-:::dev "Benjamin Pierce (bcpierce00)"
-This is inconsistent about `×` vs. `*`.
-:::
 ```
   a := nat
       | a + a
