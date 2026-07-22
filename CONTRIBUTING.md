@@ -402,6 +402,39 @@ theorem add_succ : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
 6) In and after the `Automation.lean` chapter, using `simp` and `dsimp` is
     appropriate.
 
+### Definitions vs. Abbreviations
+
+Abbreviations let syntax-based tactics like `rw` and `simp` to see the underlying term implicitly.
+Abbreviations should never be used for functions -- use definitions plus characterizing lemmas instead.
+To encapsulate a type with an API boundary, use a definition rather than an abbreviation.
+However, abbreviations can be used to create a type alias that do not intend to encapsulate an inner type.
+
+As an example, the `DefDemo` is idiomatic, whereas the `AbbrevDemo` is not:
+
+```lean
+namespace AbbrevDemo
+
+abbrev Bag := List Nat
+abbrev Bag.empty : Bag := []
+theorem Bag.foo : empty ++ empty = empty := by
+  rw [List.append_nil]
+
+end AbbrevDemo
+
+namespace DefDemo
+
+def Bag := List Nat
+deriving Append
+
+def Bag.empty : Bag := []
+theorem Bag.empty_def : Bag.empty = [] := rfl
+theorem Bag.append_nil (s : Bag) : s ++ empty = s := List.append_nil s
+theorem Bag.foo : empty ++ empty = empty := by
+  rw [Bag.append_nil]
+
+end DefDemo
+```
+
 ### Arithmetic / the custom `Nat`
 
 `Basics` defines its own `Nat` with `zero`/`succ` constructors and
