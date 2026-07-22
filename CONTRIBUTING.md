@@ -270,46 +270,6 @@ Related notation introduced alongside tactics: anonymous constructor
   over the separate `case` syntax *and* over the bare `·` goal selector — i.e. prefer
   `cases h with | …` / `induction h with …`.
   Put each alternative on its own unindented line beginning with `|`.
-  
-* **`rewrite` before `rw`** (see tactic chart above) --
-  `rw [h]` is roughly `rewrite [h]; rfl`, which is too strong at
-  first: it hides the closing `rfl` and makes proofs step
-  confusingly (the goal vanishes when you step past the final `]`).
-  We introduce `rw` specifically in `Induction.lean` and use from
-  then on.
-
-* **`example` for one-off demos.** Prefer `example …` over a named
-  `theorem foo …` for throwaway illustrations (tactic demos, "silly" lemmas,
-  etc.) that are never referenced later — Lean's `example` doesn't force us to
-  invent a name (unlike Rocq).
-
-* **Explicit rewrites over `dsimp`/`simp` through notation** (see
-  "Notation and simplification").
-
-* **`sorry` placeholders are checked, not silent.** Where a `sorry`
-  appears , wrap it so the warning is asserted:
-  ```lean
-  /-- warning: declaration uses `sorry` -/
-  #guard_msgs in
-  example : … := sorry
-  ```
-
-* **Aborted/abandoned lemmas** failing proofs and examples with type errors
-  should have a `#guard_msgs` above them with the expected error, rather than
-  ending with `sorry`.
-
-* **Library vs. client code.** Inside a definition's own library it is
-  fine to unfold and simplify through definitions; *using* that code,
-  do not "peek through the interface."
-
-### Unicode Text and Formatting
-
-Go Unicode-native! Use subscripts on variables, like x₁ x₂  etc. Use α Γ etc. 
-for type variables and other standard notation. Use arrows like → ⇓ for reduction
-and evaluation. TODO: Elaborate on guidelines here.
-
-We will use the standard Lean auto-formatter. Until then, here are some formatting
-guidelines.
 
 * Keep short branch bodies inline: 
   
@@ -347,12 +307,17 @@ guidelines.
   We introduce `rw` specifically in `Induction.lean` and use from
   then on.
 
+* **`example` for one-off demos.** Prefer `example …` over a named
+  `theorem foo …` for throwaway illustrations (tactic demos, "silly" lemmas,
+  etc.) that are never referenced later — Lean's `example` doesn't force us to
+  invent a name (unlike Rocq).  Reserve names for results used elsewhere or
+  graded. (berberman, review of PR #61.)
+
 * **Explicit rewrites over `dsimp`/`simp` through notation** (see
   "Notation and simplification").
 
 * **`sorry` placeholders are checked, not silent.** Where a `sorry`
-  appears (incomplete proof, exercise scaffold), wrap it so the
-  warning is asserted:
+  appears (incomplete proof, exercise scaffold), wrap it so the warning is asserted:
   ```lean
   /-- warning: declaration uses `sorry` -/
   #guard_msgs in
@@ -363,14 +328,12 @@ guidelines.
   In the rendered book and generated projects, the expected-message docstring and
   `#guard_msgs ... in` are stripped.
 
-* **Aborted/abandoned lemmas** become unnamed `example`s closed with
-  `sorry` (the SFL analogue of Rocq's `Abort`).
+* **Aborted/abandoned lemmas** failing proofs and examples with type errors
+  should have a `#guard_msgs` above them with the expected error, rather than
+  ending with `sorry`. (OLD)
 
-* **`example` for one-off demos.** Prefer `example …` over a named
-  `theorem foo …` for throwaway illustrations (tactic demos, "silly" lemmas,
-  etc.) that are never referenced later — Lean's `example` doesn't force us to
-  invent a name (unlike Rocq).  Reserve names for results used elsewhere or
-  graded. (berberman, review of PR #61.)
+* **Aborted/abandoned lemmas** become unnamed `example`s closed with
+  `sorry` (the SFL analogue of Rocq's `Abort`). (NEW)
 
 * **Library vs. client code.** Inside a definition's own library it is
   fine to unfold and simplify through definitions; *using* that code,
@@ -389,6 +352,14 @@ guidelines.
   A warm-up / redefinition section goes in a clearly-named namespace, 
   e.g. `namespace Warmup`. Functions on a new type are placed in that
   type's namespace (per the above).
+
+### Unicode Text and Formatting
+
+Go Unicode-native! Use subscripts on variables, like x₁ x₂  etc. Use α Γ etc. 
+for type variables and other standard notation. Use arrows like → ⇓ for reduction
+and evaluation. TODO: Elaborate on guidelines here.
+
+We will use the standard Lean auto-formatter when it's released.
 
 ### Notation and simplification
 
