@@ -605,7 +605,7 @@ example α x (l₁ l₂ l₃ : List α) :
 ::::full
 Using `simp` this way is brittle because if we add new `simp` lemmas to our library,
 this can change the way that our hypotheses and goals are simplified. Because our proof
-after the `simp`s rely on the precise structure of the goals and hypotheses, these
+after the `simp`s relies on the precise structure of the goals and hypotheses, these
 changes could cause the proof to break as the structure of the development evolves.
 ::::
 
