@@ -597,10 +597,21 @@ example α x (l₁ l₂ l₃ : List α) :
   intro h₁ h₂
 
   simp at h₁; simp at h₂; simp
-  cases h₁
-  . left; left; assumption
-  . right; assumption
+  cases h₁ with
+  | inl h => left; left; exact h
+  | inr h => right; exact h
 ```
+
+::::full
+Using `simp` this way is brittle because if we add new `simp` lemmas to our library,
+this can change the way that our hypotheses and goals are simplified. Because our proof
+after the `simp`s rely on the precise structure of the goals and hypotheses, these
+changes could cause the proof to break as the structure of the development evolves.
+::::
+
+::::terse
+This usage of `simp` is brittle and can break due to upstream changes.
+::::
 
 We can fix the style of this proof by changing the `simp`s to specify which theorems they are
 using to simplify:
@@ -614,10 +625,15 @@ example α x (l₁ l₂ l₃ : List α) :
 
   -- the * here targets all hypotheses and the goal
   simp only [List.mem_append] at *
-  cases h₁
-  . left; left; assumption
-  . right; assumption
+  cases h₁ with
+  | inl h => left; left; exact h
+  | inr h => right; exact h
 ```
+
+::::full
+This usage of `simp only` is better because the addition of new `simp` lemmas won't
+cause this proof to change.
+::::
 
 :::dev "Daniel Sainati (@dsainati1)"
 Chris suggested using Mathlib's `linter.flexible` option to enforce proper `simp` usage.
@@ -1443,7 +1459,7 @@ theorem weak_pumping_union_l  {α : Type} (s₁ : List α) (re₁ re₂ : RegExp
       lia
   solution!
     specialize ih h
-    let ⟨s₁₁, s₁₂, s₁₃, h₁, h₂, h₃⟩ := ih
+    obtain ⟨s₁₁, s₁₂, s₁₃, h₁, h₂, h₃⟩ := ih
     exists s₁₁; exists s₁₂; exists s₁₃
     constructor
     . assumption
