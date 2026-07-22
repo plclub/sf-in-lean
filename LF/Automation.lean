@@ -49,23 +49,23 @@ Consider the proof below. Notice all the repetition and near-repetition...
 ```lean
 theorem Perm3_In_old (α : Type) (x : α) (l₁ l₂ : List α) :
     Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
-  intros hPerm hIn
-  induction hPerm
-  case perm3_swap12 a b c =>
+  intro hPerm hIn
+  induction hPerm with
+  | perm3_swap12 a b c =>
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
     obtain h | h | h | h := hIn
     . right; left; assumption
     . left; assumption
     . right; right; left; assumption
     . contradiction
-  case perm3_swap23 a b c =>
+  | perm3_swap23 a b c =>
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
     obtain h | h | h | h := hIn
     . left; assumption
     . right; right; left; assumption
     . right; left; assumption
     . contradiction
-  case perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
+  | perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
     apply ih₂3; apply ih₁2; apply hIn
 ```
 
@@ -123,20 +123,20 @@ example (A B C D : Prop) :
 ```lean
 theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α) :
     Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
-  intros hPerm hIn
-  induction hPerm
-  case perm3_swap12 a b c =>
+  intro hPerm hIn
+  induction hPerm with
+  | perm3_swap12 a b c =>
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
     obtain h | h | h | h := hIn
     . lia /- was right; left; assumption -/
     . lia
     . lia
     . lia
-  case perm3_swap23 a b c =>
+  | perm3_swap23 a b c =>
   -- Here, we solve _all_ goals- and eschew the `obtain` - with
   -- the <;> tactic combinator, which we saw in the `Induction` chapter.
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
-  case perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
+  | perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
     lia /- was apply ih₂3; apply ih₁2; apply hIn -/
 ```
 
@@ -194,9 +194,9 @@ these, but it is very useful together with the `<;>` combinator.
 
 ```lean
 inductive silly : Nat → Prop where
-| silly1 n (h : n > 1) : silly n
-| silly2 n (h : 1 ∈ []) : silly n
-| silly3 n (h : exists m, n = m + 2) : silly n
+| mk1 n (h : n > 1) : silly n
+| mk2 n (h : 1 ∈ []) : silly n
+| mk3 n (h : exists m, n = m + 2) : silly n
 
 example : ∀ n, silly n → n ≠ 1 := by
   intro n h
@@ -229,12 +229,9 @@ We can further simplify our `Perm3_In` example with `try`.
 ```lean
 theorem Perm3_In_better_with_try (α : Type) (x : α) (l₁ l₂ : List α) :
     Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
-  intros hPerm hIn
-  -- TODO: autoformatter needs to make this look decent
-  induction hPerm <;>
-  try rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
-  case perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
-    lia
+  intro hPerm hIn
+  induction hPerm with (try rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia)
+  | perm3_trans => lia
 ```
 
 Note that `try lia <;> try rw [...] <;> lia` _doesn't_ work, because
@@ -266,7 +263,7 @@ hIn : x ∈ [a✝, b✝, c✝]
 #guard_msgs(error) in
 example (α : Type) (x : α) (l₁ l₂ : List α) :
     Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
-  intros hPerm hIn
+  intro hPerm hIn
   induction hPerm <;> try lia <;>
   try rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
 ```
@@ -405,11 +402,11 @@ Autoformat this later
 ```lean
 theorem Perm3_In_better_with_first (α : Type) (x : α) (l₁ l₂ : List α) :
     Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
-  intros hPerm hIn
+  intro hPerm hIn
   induction hPerm <;>
-  first
-  | rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
-  | lia
+    first
+    | rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
+    | lia
 ```
 
 Our `Perm3_In` example is getting quite short! But can we do better?
@@ -502,7 +499,7 @@ heavily in real Lean developments. We can use `simp` to further simplify our
 ```lean
 theorem Perm3_In_almost_shortest (α : Type) (x : α) (l₁ l₂ : List α) :
     Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
-  intros hPerm hIn
+  intro hPerm hIn
   induction hPerm <;>
   first
   | simp at * <;> lia
@@ -554,7 +551,7 @@ The simplest version of our theorem uses `simp_all`:
 ```lean
 theorem Perm3_In_shortest (α : Type) (x : α) (l₁ l₂ : List α) :
     Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
-  intros hPerm hIn
+  intro hPerm hIn
   induction hPerm <;> simp_all <;> lia
 ```
 
@@ -931,7 +928,7 @@ inductive definition.
 ```lean
 theorem EmptySet_is_empty α (s : List α) : ¬(s =~ EmptySet) := by
   solution!
-    intros h
+    intro h
     inversion h
 ```
 :::grade
@@ -1201,7 +1198,7 @@ theorem star_app α (s₁ s₂ : List α) (re : RegExp α) :
   s₂ =~ Star re →
   s₁ ++ s₂ =~ Star re := by
 
-  intros h₁
+  intro h₁
   generalize heq : Star re = re' at h₁
   -- We now have `heq : Star re = re'`
   -- `heq` is contradictory in most cases, allowing us to conclude immediately via `contradiction`
@@ -1388,13 +1385,13 @@ theorem weak_pumping_app {α : Type}
     s₁ ++ s₂ = s₀ ++ s₃ ++ s₄ ∧
     s₃ ≠ [ ] ∧
     (∀ m : Nat, s₀ ++ napp m s₃ ++ s₄ =~ App re₁ re₂) := by
-  intro hmatch₁ Hmatch2 ih₁ ih₂ Hlen
+  intro hmatch₁ hMatch2 ih₁ ih₂ hLen
   obtain H | H :
     pumpingConstant re₁ ≤ s₁.length ∨ pumpingConstant re₂ ≤ s₂.length := by
     solution!
-      rw [app_length] at Hlen
+      rw [app_length] at hLen
       apply add_le_cases
-      apply Hlen
+      apply hLen
   . solution!
       specialize ih₁ H
       let ⟨s₁₂, s₁₃, s₁₄, h₁, h₂, h₃⟩ := ih₁
@@ -1439,14 +1436,14 @@ theorem weak_pumping_union_l  {α : Type} (s₁ : List α) (re₁ re₂ : RegExp
     s₁ = s₀ ++ s₂ ++ s₃ ∧
     s₂ ≠ [ ] ∧
     (∀ m : Nat, s₀ ++ napp m s₂ ++ s₃ =~ Union re₁ re₂) := by
-  intro Hmatch IH Hlen
-  have H : pumpingConstant re₁ ≤ s₁.length := by
+  intro hMatch ih hLen
+  have h : pumpingConstant re₁ ≤ s₁.length := by
     solution!
-      simp [pumpingConstant] at Hlen
+      simp [pumpingConstant] at hLen
       lia
   solution!
-    specialize IH H
-    let ⟨s₁₁, s₁₂, s₁₃, h₁, h₂, h₃⟩ := IH
+    specialize ih h
+    let ⟨s₁₁, s₁₂, s₁₃, h₁, h₂, h₃⟩ := ih
     exists s₁₁; exists s₁₂; exists s₁₃
     constructor
     . assumption
@@ -1473,14 +1470,14 @@ theorem weak_pumping_union_r {α : Type} (s₂ : List α) (re₁ re₂ : RegExp 
     s₀ ≠ [ ] ∧
     (∀ m : Nat, s₁ ++ napp m s₀ ++ s₃ =~ Union re₁ re₂) := by
   -- symmetric to the previous
-  intro Hmatch IH Hlen
+  intro hMatch ih hLen
   have H : pumpingConstant re₂ ≤ s₂.length := by
    solution!
-      simp [pumpingConstant] at Hlen
+      simp [pumpingConstant] at hLen
       lia
   solution!
-    specialize IH H
-    let ⟨s₂₁, s₂₂, s₂₃, h₁, h₂, h₃⟩ := IH
+    specialize ih H
+    let ⟨s₂₁, s₂₂, s₂₃, h₁, h₂, h₃⟩ := ih
     exists s₂₁; exists s₂₂; exists s₂₃
     constructor
     . assumption
@@ -1530,7 +1527,7 @@ theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α)
     s₁ ++ s₂ = s₀ ++ s₃ ++ s₄ ∧
     s₃  ≠ [ ] ∧
     (∀ m : Nat, s₀ ++ napp m s₃ ++ s₄ =~ .Star re)  := by
-  intro hmatch₁ hmatch₂ ih₁ ih₂ Hlen
+  intro hmatch₁ hmatch₂ ih₁ ih₂ hLen
   rw [app_length] at *
   obtain Hs1len0 | ⟨s1len, Hs1re1⟩ | Hs1re1 :
     (s₁.length = 0
@@ -1555,8 +1552,8 @@ theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α)
       have Hs1nil : s₁ = [] := by
         cases s₁; rfl; contradiction
       subst Hs1nil
-      simp only [List.length_nil, Nat.zero_add] at Hlen
-      apply ih₂; apply Hlen
+      simp only [List.length_nil, Nat.zero_add] at hLen
+      apply ih₂; apply hLen
   . solution!
       exists []; exists s₁; exists s₂
       constructor; rfl
