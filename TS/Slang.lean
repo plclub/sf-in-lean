@@ -858,7 +858,6 @@ switch between points of view at will -- exactly what we did above.
 Well, we didn't actually do a proof that switched between the points
 of view.  Should we?
 :::
-
 ::::
 
 :::terse
