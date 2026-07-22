@@ -104,9 +104,6 @@ trees -- the process that, for example, would translate the string
 For comparison, here's a conventional BNF (Backus-Naur Form) grammar
 defining the same abstract syntax:
 
-:::dev "Benjamin Pierce (bcpierce00)"
-This is inconsistent about `×` vs. `*`.
-:::
 ```
   a := nat
       | a + a
@@ -158,9 +155,9 @@ _Evaluating_ an arithmetic expression produces a number.
 def Aexp.eval (a : Aexp) : Nat :=
   match a with
   | num   n     =>  n
-  | plus  a1 a2 =>  eval a1 + eval a2
-  | minus a1 a2 =>  eval a1 - eval a2
-  | mult  a1 a2 =>  eval a1 * eval a2
+  | plus  a1 a2 =>  a1.eval + a2.eval
+  | minus a1 a2 =>  a1.eval - a2.eval
+  | mult  a1 a2 =>  a1.eval * a2.eval
 ```
 
 ::::full
@@ -202,6 +199,9 @@ def Bexp.eval (b : Bexp) : Bool :=
 @[simp] theorem Bexp.eval_not (b : Bexp) : (not b).eval = !b.eval := rfl
 @[simp] theorem Bexp.eval_and (b1 b2 : Bexp) : (and b1 b2).eval = (b1.eval && b2.eval) := rfl
 ```
+
+It's worth noting that `≤` and `>` are `Prop`-valued, i.e. `a1.eval st ≤ a2.eval st` is a proposition, but {name}`Bexp.eval` returns a {name}`Bool` so Lean implicitly inserts a {name}`decide` coercion.
+You can observe the call to {name}`decide` by hovering over {name}`Bexp.eval_le` and {name}`Bexp.eval_gt`.
 
 ::::quiz
 What does the following expression evaluate to?
