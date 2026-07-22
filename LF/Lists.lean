@@ -701,7 +701,6 @@ theorem NatList.test_alternate4 :
 
 ## Counting
 
-::::::full
 :::::exercise (rating := 1) (name := "counting")
 Define a `count` function for {name}`NatList`s that counts the number of times an element `v` appears in the list.
 
@@ -754,11 +753,9 @@ Again, all these proofs could be completed with just `rfl`, because the proof is
 example : count 1 [1, 2, 3, 1, 4, 1] = 3 := solution!(by rfl)
 example : count 6 [1, 2, 3, 1, 4, 1] = 0 := solution!(by rfl)
 ```
-::::::
 
 ## Membership
 
-::::::full
 :::::exercise (rating := 1) (name := "membership")
 
 ```lean
@@ -800,7 +797,6 @@ theorem NatList.test_member2 : member 2 [1, 4, 1] = false := solution!(by rfl)
 :::gradeTheorem "0.5" "NatList.test_member2"
 :::
 :::::
-::::::
 
 ## Removing
 
@@ -863,8 +859,8 @@ theorem NatList.test_removeOne2 : count 5 (removeOne 5 [1, 5, 5, 4]) = 1 := solu
 
 
 ```lean
-def removeAll (v : Nat) (s : NatList) : NatList := solution!(
-  match s with
+def removeAll (v : Nat) (l : NatList) : NatList := solution!(
+  match l with
   | [] => []
   | h :: t => bif v == h then removeAll v t else h :: removeAll v t)
 
@@ -914,19 +910,19 @@ theorem NatList.test_removeAll2 : count 5 (removeAll 5 [2, 5, 5, 5, 1]) = 0 := s
 :::instructors
 The following is also a valid definition because we don't provide `included_cons_def` in the student handout:
 ```lean
-def included (s₁ s₂ : NatList) : Bool :=
-  match s₁ with
+def included (l₁ l₂ : NatList) : Bool :=
+  match l₁ with
   | [] => true
-  | h :: t => if member h s₂ then included t (removeOne h s₂) else false
+  | h :: t => if member h l₂ then included t (removeOne h l₂) else false
 ```
 :::
 
 :::::exercise (rating := 3) (name := "included")
 ```lean
-def included (s₁ s₂ : NatList) : Bool := solution!(
-  match s₁ with
+def included (l₁ l₂ : NatList) : Bool := solution!(
+  match l₁ with
   | [] => true
-  | h :: t => member h s₂ && included t (removeOne h s₂))
+  | h :: t => member h l₂ && included t (removeOne h l₂))
 ```
 
 :::dev "Niklas Halonen (xhalo32)" BeforeNextRelease
@@ -934,24 +930,24 @@ Do we need to introduce Bool.true_and, Bool.false_and and maybe their mirror ver
 :::
 
 ```lean
-theorem included_nil {s₂ : NatList} : included nil s₂ = true := solution!(by rfl)
+theorem included_nil {l₂ : NatList} : included nil l₂ = true := solution!(by rfl)
 ```
 
 :::solution
 ```lean
-theorem included_cons_def {h : Nat} {t s₂ : NatList} :
-    included (cons h t) s₂ = (member h s₂ && included t (removeOne h s₂)) := solution!(by rfl)
+theorem included_cons_def {h : Nat} {t l₂ : NatList} :
+    included (cons h t) l₂ = (member h l₂ && included t (removeOne h l₂)) := solution!(by rfl)
 ```
 :::
 
 ```lean
-theorem included_cons_member {v : Nat} {s₁ s₂ : NatList} (h : member v s₂ = true) :
-    included (cons v s₁) s₂ = included s₁ (removeOne v s₂) := by
+theorem included_cons_member {v : Nat} {l₁ l₂ : NatList} (h : member v l₂ = true) :
+    included (cons v l₁) l₂ = included l₁ (removeOne v l₂) := by
   solution!
     rw [included_cons_def, h, Bool.true_and]
 
-theorem included_cons_nonmember {v : Nat} {s₁ s₂ : NatList} (h : member v s₂ = false) :
-    included (cons v s₁) s₂ = false := by
+theorem included_cons_nonmember {v : Nat} {l₁ l₂ : NatList} (h : member v l₂ = false) :
+    included (cons v l₁) l₂ = false := by
   solution!
     rw [included_cons_def, h, Bool.false_and]
 ```
@@ -992,8 +988,8 @@ State this as a theorem and prove it.
 
 :::solution
 ```lean
-theorem count_cons_inc (s : NatList) (v : Nat) :
-    count v (v :: s) = (count v s) + 1 := by
+theorem count_cons_inc (l : NatList) (v : Nat) :
+    count v (v :: l) = (count v l) + 1 := by
   rw [count_cons_same]
   exact BEq.refl v
 ```
@@ -1358,7 +1354,7 @@ example (n : Nat) (l : NatList) :
 ```
 
 :::quizSolution
-```
+```lean
 theorem foo1 (n : Nat) (l : NatList) :
     myRepeat n 0 = l → l.length = 0 := by
   intro h
@@ -1389,7 +1385,7 @@ To prove the following theorem, which tactics will we need besides
 
 
 :::quizSolution
-```
+```lean
 example (n m : Nat) : (myRepeat n m).length = m := by
   induction m with
   | zero       => rw [repeat_zero, length_nil]
@@ -1659,8 +1655,8 @@ However, `Nat.ble` doesn't seem to have characterizing lemmas:
 theorem _root_.Nat.ble_zero (m : Nat) : Nat.ble 0 m = true := rfl
 theorem _root_.Nat.ble_succ_zero (m : Nat) : Nat.ble (m + 1) 0 = false := rfl
 theorem _root_.Nat.ble_succ_succ (m n : Nat) (h : Nat.ble m n = true) : Nat.ble (m + 1) (n + 1) = true := h
-theorem count_member_nonzero (s : NatList) :
-    Nat.ble 1 (count 1 (1 :: s)) = true := by
+theorem count_member_nonzero (l : NatList) :
+    Nat.ble 1 (count 1 (1 :: l)) = true := by
   solution!
     rw [count_cons_same rfl]
     rw [Nat.ble_succ_succ]
@@ -1736,9 +1732,9 @@ theorem ble_pred_n_n (n : Nat) :
     rw [Nat.pred_succ]
     rw [ble_n_Sn]
 
-theorem remove_does_not_increase_count' (s : NatList) (n : Nat) :
-    Nat.ble (count n (removeOne n s)) (count n s) = true := by
-  induction s with
+theorem remove_does_not_increase_count' (l : NatList) (n : Nat) :
+    Nat.ble (count n (removeOne n l)) (count n l) = true := by
+  induction l with
   | nil =>
     rw [removeOne_nil, count_nil]
     rfl
