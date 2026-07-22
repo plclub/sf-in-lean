@@ -35,7 +35,7 @@ Putting it together with Induction.lean makes a reasonable
 second week's homework assignment.
 :::
 
-:::dev SOONER
+:::dev BeforeNextRelease
 ```
 (BCP 9/18) Since the domain type of Maps has changed from
 id to string, we should either do the same here (in the partial
@@ -60,19 +60,17 @@ import LF.Induction
 import LF.UsingLean
 ```
 
-:::dev "Benjamin Pierce (bcpierce00)"
-Why is this namespace needed??
-:::
-
-:::dev "Daniel Sainati (dsainati1)"
-So that the definitions here don't clash with the standard library.
-:::
+::::full
+This chapter introduces basic data structures and functions for working with
+them. We place all these definitions in the `Lists` namespace to avoid name
+clashes with Lean's standard library and with definitions from other chapters.
+::::
 
 ```lean
 namespace Lists
 ```
 
-:::dev SOONER
+:::dev BeforeNextRelease
 Note that rewrite laws should sometimes differ from pattern matching now
 :::
 
@@ -171,7 +169,7 @@ examples illustrate pattern matching on a pair with elements `x`
 and `y`, whereas, for example, the definition of `sub` in
 {ref "Basics"}[Basics] performs pattern matching on the values `n` and `m`:
 
-```display
+```lean
 def sub (n m : Nat) : Nat :=
   match n, m with
   | 0,        _        => 0
@@ -183,7 +181,7 @@ The distinction is minor, but it is worth understanding that they
 are not the same. For instance, the following definitions are
 ill-formed:
 
-```display
+```lean +error
 -- Can't match on a pair with multiple patterns:
 def bad_fst (p : NatProd) : Nat :=
   match p with
@@ -198,7 +196,7 @@ def bad_sub (n m : Nat) : Nat :=
 ```
 ::::
 
-:::dev "Daniel Sainati (dsainati1)" TODO
+:::dev "Daniel Sainati (dsainati1)" NOW
 Wrote this, let me know how it reads.
 :::
 
@@ -425,7 +423,7 @@ example : ([] : NatList) ++ [4, 5] = [4, 5] := by rfl
 example : [1, 2, 3] ++ ([] : NatList) = [1, 2, 3] := by rfl
 ```
 
-:::dev "One An (meluge)" TODO
+:::dev "One An (meluge)" NOW
 Experiment: introduce `BEq.refl` here, at the point where the `BEq` class is named.
 :::
 
@@ -462,7 +460,7 @@ implementation of that interface for a particular type.
 _Functional Programming in Lean_.)
 ::::
 
-:::dev "Daniel Sainati (dsainati1)" TODO
+:::dev "Daniel Sainati (dsainati1)" NOW
 Should we replace the above with a forward link to our typeclasses chapter,
 once we have one?
 :::
@@ -539,11 +537,10 @@ def nonzeros (l : NatList) : NatList := solution!(
 example : nonzeros [0, 1, 0, 2, 3, 0, 0] = [1, 2, 3] := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.test_nonzeros`
+:::gradeTheorem "0.5" "NatList.test_nonzeros"
 :::
 
-the following lemmas should hold about your definition
+The following lemmas should hold about your definition
 
 ```lean
 theorem nonzeros_cons_zero (t : NatList) :
@@ -561,8 +558,7 @@ def oddmembers (l : NatList) : NatList := solution!(
 example : oddmembers [0, 1, 0, 2, 3, 0, 0] = [1, 3] := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.test_oddmembers`
+:::gradeTheorem "0.5" "NatList.test_oddmembers"
 :::
 
 For the next problem, `countoddmembers`, we encourage you to implement it using
@@ -577,23 +573,21 @@ example : countoddmembers [0, 2, 4] = 0 := solution!(by rfl)
 example : countoddmembers [] = 0 := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.test_countoddmembers2`
+:::gradeTheorem "0.5" "NatList.test_countoddmembers2"
 :::
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.test_countoddmembers3`
+:::gradeTheorem "0.5" "NatList.test_countoddmembers3"
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "alternate")
+:::::exercise (rating := 3) (name := "alternate") (level := Advanced)
 Complete the following definition of `alternate`, which
 interleaves two lists into one, alternating between elements taken
 from the first list and elements from the second.
 
 Hint: there are natural ways of writing `alternate` that fail to
 satisfy Lean's requirement that all recursive definitions be
-_structurally recursive_, as mentioned in `"Basics"`.
+_structurally recursive_, as mentioned in {ref "Basics"}[Basics].
 If you encounter this difficulty,
 consider pattern matching against both lists at the same time.
 
@@ -607,16 +601,14 @@ def alternate (l1 l2 : NatList) : NatList := solution!(
 example : alternate [1, 2, 3] [4, 5, 6] = [1, 4, 2, 5, 3, 6] := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 1: NatList.test_alternate1`
+:::gradeTheorem 1 "NatList.test_alternate1"
 :::
 
 ```lean
 example : alternate [1] [4, 5, 6] = [1, 4, 5, 6] := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 1: NatList.test_alternate2`
+:::gradeTheorem 1 "NatList.test_alternate2"
 :::
 
 ```lean
@@ -624,8 +616,7 @@ example : alternate [1, 2, 3] [4] = [1, 4, 2, 3] := solution!(by rfl)
 example : alternate ([] : NatList) [20, 30] = [20, 30] := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 1: NatList.test_alternate4`
+:::gradeTheorem 1 "NatList.test_alternate4"
 :::
 :::::
 
@@ -684,8 +675,7 @@ example : count 1 [1, 2, 3, 1, 4, 1] = 3 := solution!(by rfl)
 example : count 6 [1, 2, 3, 1, 4, 1] = 0 := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.test_count2`
+:::gradeTheorem "0.5" "NatList.test_count2"
 :::
 
 Multiset `sum` is similar to set `union`: `sum a b` contains all
@@ -705,8 +695,7 @@ abbrev sum : Bag → Bag → Bag := solution!(
 example : count 1 (sum [1, 2, 3] [1, 4, 1]) = 3 := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.test_sum1`
+:::gradeTheorem "0.5" "NatList.test_sum1"
 :::
 
 ```lean
@@ -725,12 +714,10 @@ example : count 5 (add 1 [1, 4, 1]) = 0 := by
     dsimp [add, count]
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.test_add1`
+:::gradeTheorem "0.5" "NatList.test_add1"
 :::
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.test_add2`
+:::gradeTheorem "0.5" "NatList.test_add2"
 :::
 
 ```lean
@@ -742,16 +729,14 @@ def member (v : Nat) (s : Bag) : Bool := solution!(
 example : member 1 [1, 4, 1] = true := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.test_member1`
+:::gradeTheorem "0.5" "NatList.test_member1"
 :::
 
 ```lean
 example : member 2 [1, 4, 1] = false := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.test_member2`
+:::gradeTheorem "0.5" "NatList.test_member2"
 :::
 :::::
 
@@ -767,7 +752,7 @@ theorem member_add_same v t : member v (add v t) = true := by
     rw [BEq.refl]
     dsimp
 
-theorem member_add_diff v1 v2 t : (v1 == v2) = false -> member v1 (add v2 t) = member v1 t := by
+theorem member_add_diff v1 v2 t : (v1 == v2) = false → member v1 (add v2 t) = member v1 t := by
   solution!
     intro h
     dsimp [add, member]
@@ -784,7 +769,7 @@ is optional, but students following the advanced track will need
 to fill in the definition of `remove_one` for a later
 exercise.)
 
-:::dev SOONER
+:::dev BeforeNextRelease
 BCP 25: At Penn this year, we removed the distinction
 between standard and advanced tracks, which made the wording above
 confusing. Maybe just make this an exercise for everybody?
@@ -801,29 +786,27 @@ example : count 5 (remove_one 5 [2, 1, 4, 1]) = 0 := solution!(by rfl)
 example : count 4 (remove_one 5 [2, 1, 4, 5, 1, 4]) = 2 := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.test_remove_one3`
+:::gradeTheorem "0.5" "NatList.test_remove_one3"
 :::
 
 ```lean
 example : count 5 (remove_one 5 [2, 1, 5, 4, 5, 1, 4]) = 1 := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.test_remove_one4`
+:::gradeTheorem "0.5" "NatList.test_remove_one4"
 :::
 
 ```lean
 theorem remove_one_nil v : remove_one v [] = [] := solution!(by rfl)
 
-theorem remove_one_add_same v1 v2 t : (v2 == v1) = true -> remove_one v1 (add v2 t) = t := by
+theorem remove_one_add_same v1 v2 t : (v2 == v1) = true → remove_one v1 (add v2 t) = t := by
   solution!
     intro h
     dsimp [remove_one]
     rw [h]
     dsimp
 
-theorem remove_one_add_diff v1 v2 t : (v2 == v1) = false -> remove_one v1 (add v2 t) = add v2 (remove_one v1 t) := by
+theorem remove_one_add_diff v1 v2 t : (v2 == v1) = false → remove_one v1 (add v2 t) = add v2 (remove_one v1 t) := by
   solution!
     intro h
     dsimp [remove_one]
@@ -840,16 +823,14 @@ example : count 5 (remove_all 5 [2, 1, 4, 1]) = 0 := solution!(by rfl)
 example : count 4 (remove_all 5 [2, 1, 4, 5, 1, 4]) = 2 := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.test_remove_all3`
+:::gradeTheorem "0.5" "NatList.test_remove_all3"
 :::
 
 ```lean
 example : count 5 (remove_all 5 [2, 1, 5, 4, 5, 1, 4, 5, 1, 4]) = 0 := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.test_remove_all4`
+:::gradeTheorem "0.5" "NatList.test_remove_all4"
 :::
 
 ```lean
@@ -861,7 +842,7 @@ theorem remove_all_add_same v t : remove_all v (add v t) = remove_all v t := by
     rw [BEq.refl]
     dsimp
 
-theorem remove_all_add_diff v1 v2 t : (v2 == v1) = false -> remove_all v1 (add v2 t) = add v2 (remove_all v1 t) := by
+theorem remove_all_add_diff v1 v2 t : (v2 == v1) = false → remove_all v1 (add v2 t) = add v2 (remove_all v1 t) := by
   solution!
     intro h
     dsimp [add, remove_all]
@@ -876,30 +857,28 @@ def included (s1 s2 : Bag) : Bool := solution!(
 example : included [1, 2] [2, 1, 4, 1] = true := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.test_included1`
+:::gradeTheorem "0.5" "NatList.test_included1"
 :::
 
 ```lean
 example : included [1, 2, 2] [2, 1, 4, 1] = false := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.test_included2`
+:::gradeTheorem "0.5" "NatList.test_included2"
 :::
 :::::
 
 ```lean
 theorem included_nil s : included [] s = true := solution!(by rfl)
 
-theorem included_add_member v s1 s2 : member v s2 = true -> included (add v s1) s2 = included s1 (remove_one v s2) := by
+theorem included_add_member v s1 s2 : member v s2 = true → included (add v s1) s2 = included s1 (remove_one v s2) := by
   solution!
     intro h
     dsimp [add, included]
     rw [h]
     rfl
 
-theorem included_add_nonmember v s1 s2 : member v s2 = false -> included (add v s1) s2 = false := by
+theorem included_add_nonmember v s1 s2 : member v s2 = false → included (add v s1) s2 = false := by
   solution!
     intro h
     dsimp [add, included]
@@ -907,7 +886,7 @@ theorem included_add_nonmember v s1 s2 : member v s2 = false -> included (add v 
     rfl
 ```
 
-:::::exercise (rating := 2) (name := "add_inc_count")
+:::::exercise (rating := 2) (name := "add_inc_count") (manual := true)
 Adding a value to a bag should increase the value's count by one.
 State this as a theorem and prove it.
 
@@ -1089,7 +1068,7 @@ n :: ((l1' ++ l2) ++ l3) = n :: (l1' ++ (l2 ++ l3)),
 
 which is immediate from the induction hypothesis.  _Qed_.
 
-Generalizing Statements
+### Generalizing Statements
 
 ::::full
 In some situations, it is necessary to generalize a
@@ -1184,7 +1163,7 @@ example (l : NatList) :
   | nil => rw [rev_nil]
   | cons n l' ih =>
     rw [rev_cons]
-    -- Now we seem to be stuck: the goal involves `++`, but we
+    -- Now we seem to be stuck: the goal involves `++`,
     -- but we don't have any useful equations
     -- in either the immediate context or in the global
     -- environment!
@@ -1267,13 +1246,13 @@ To prove the following theorem, which tactics will we need besides
 
 ```display
 theorem foo1 : ∀ n : Nat, ∀ l : NatList,
-  myRepeat n 0 = l -> l.length = 0
+  myRepeat n 0 = l → l.length = 0
 ```
 
-:::answer
+:::quizSolution
 ```
 theorem foo1 (n : Nat) (l : NatList) :
-    myRepeat n 0 = l -> l.length = 0 := by
+    myRepeat n 0 = l → l.length = 0 := by
   intro h
   rw [← h, repeat_zero, nil_length]
 ```
@@ -1293,7 +1272,7 @@ Which tactics do we need besides `intro`, `dsimp`, `rw`, and
 (D) `induction` on `m`, or (E) can't be done with the tactics we've
 seen.
 
-:::answer
+:::quizSolution
 ```
 theorem foo2 (n m : Nat) :
     (myRepeat n m).length = m := by
@@ -1433,8 +1412,7 @@ theorem app_nil_r (l : NatList) :
       rw [cons_append, ih]
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.app_nil_r`
+:::gradeTheorem "0.5" "NatList.app_nil_r"
 :::
 
 ```lean
@@ -1447,8 +1425,7 @@ theorem rev_app_distr (l1 l2 : NatList) :
       rw [cons_append, rev_cons, ih, rev_cons, app_assoc]
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.rev_app_distr`
+:::gradeTheorem "0.5" "NatList.rev_app_distr"
 :::
 
 An _involution_ is a function that is its own inverse. That is,
@@ -1464,8 +1441,7 @@ theorem rev_involutive (l : NatList) :
       rw [rev_cons, rev_app_distr, ih, rev_cons, rev_nil, nil_append, cons_append, nil_append]
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.rev_involutive`
+:::gradeTheorem "0.5" "NatList.rev_involutive"
 :::
 
 There is a short solution to the next one.  If you find yourself
@@ -1478,8 +1454,7 @@ theorem app_assoc4 (l1 l2 l3 l4 : NatList) :
     rw [app_assoc, app_assoc]
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: NatList.app_assoc4`
+:::gradeTheorem "0.5" "NatList.app_assoc4"
 :::
 
 An exercise about your implementation of `nonzeros`:
@@ -1498,14 +1473,12 @@ theorem nonzeros_app (l1 l2 : NatList) :
         rw [cons_append, nonzeros_cons_nonzero, nonzeros_cons_nonzero, ih, cons_append]
 ```
 
-:::grade
-`GRADE_THEOREM 1: NatList.nonzeros_app`
+:::gradeTheorem 1 "NatList.nonzeros_app"
 :::
 :::::
 
 :::::exercise (rating := 2) (name := "eqblist")
-:::grade
-`GRADE_THEOREM 2: NatList.eqblist_refl`
+:::gradeTheorem 2 "NatList.eqblist_refl"
 :::
 
 Fill in the definition of `eqblist`, which compares
@@ -1526,7 +1499,7 @@ theorem eqblist_cons_same h t1 t2 : eqblist (h :: t1) (h :: t2) = eqblist t1 t2 
     dsimp [eqblist]
     rw [BEq.refl, Bool.true_and]
 
-theorem eqblist_cons_diff h1 h2 t1 t2 : (h1 == h2) = false -> eqblist (h1 :: t1) (h2 :: t2) = false := by
+theorem eqblist_cons_diff h1 h2 t1 t2 : (h1 == h2) = false → eqblist (h1 :: t1) (h2 :: t2) = false := by
   solution!
     intro h
     dsimp [eqblist]
@@ -1572,7 +1545,7 @@ The following lemma about `Nat.ble` might help you in the next
 exercise (it will also be useful in later chapters).
 
 ```lean
-theorem leb_n_Sn (n : Nat) :
+theorem ble_n_Sn (n : Nat) :
     Nat.ble n (n + 1) = true := by
   induction n with
   | zero       => rfl
@@ -1605,25 +1578,25 @@ theorem count_remove_one v s :
       rw [remove_one_add_same, count_cons_same]
       dsimp; exact h; exact h
 
-theorem leb_pred_n_n n :
+theorem ble_pred_n_n n :
     Nat.ble n.pred n = true := by
   induction n with
   | zero => dsimp [Nat.ble]
   | succ n ih =>
     dsimp
-    rw [leb_n_Sn]
+    rw [ble_n_Sn]
 
 theorem remove_does_not_increase_count' (s : Bag) (n : Nat) :
     Nat.ble (count n (remove_one n s)) (count n s) = true := by
   induction s with
   | nil => rw [remove_one_nil, count_nil]; rfl
   | cons n' l ih =>
-    rw [count_remove_one, leb_pred_n_n]
+    rw [count_remove_one, ble_pred_n_n]
 ```
 ::::
 
 ::::::full
-:::::exercise (rating := 3) (name := "remove_does_not_increase_count")
+:::::exercise (rating := 3) (name := "remove_does_not_increase_count") (level := Advanced)
 ```lean
 theorem remove_does_not_increase_count (s : Bag) :
     Nat.ble (count 0 (remove_one 0 s)) (count 0 s) = true := by
@@ -1633,19 +1606,19 @@ theorem remove_does_not_increase_count (s : Bag) :
     | cons n s' ih =>
       cases n with
       | zero =>
-        rw [remove_one_add_same, count_cons_same, leb_n_Sn] <;> rfl
+        rw [remove_one_add_same, count_cons_same, ble_n_Sn] <;> rfl
       | succ n' =>
         rw [remove_one_add_diff, count_cons_diff, count_cons_diff]
         exact ih; rfl; rfl; rfl
 ```
 :::::
 
-:::::exercise (rating := 3) (name := "bag_count_sum")
+:::::exercise (rating := 3) (name := "bag_count_sum") (manual := true)
 Write down an interesting theorem `bag_count_sum` about bags
 involving the functions `count` and `sum`, and prove it.
 (You may find that the difficulty of the proof depends on how you defined `count`!
 
-:::dev "Andrew Tolmach (AndrewTolmach)" LATER
+:::dev "Andrew Tolmach (AndrewTolmach)" PotentialImprovement
 This is the obvious theorem, and everyone came up with
 it.  But how hard it is to prove (in terms of Rocq mechanics)
 depends critically on how the student defined `count` -- the
@@ -1683,7 +1656,7 @@ theorem bag_count_sum (s1 s2 : Bag) (v : Nat) :
 ```
 :::::
 
-:::::exercise (rating := 3) (name := "involution_injective")
+:::::exercise (rating := 3) (name := "involution_injective") (level := Advanced)
 Prove that every involution is injective.
 
 Involutions were defined above in `rev_involutive`. An _injective_
@@ -1700,7 +1673,7 @@ theorem involution_injective (f : Nat → Nat) :
 ```
 :::::
 
-:::::exercise (rating := 2) (name := "rev_injective")
+:::::exercise (rating := 2) (name := "rev_injective") (level := Advanced)
 Prove that `rev` is injective. Do not prove this by induction --
 that would be hard. Instead, re-use the same proof technique that
 you used for `involution_injective`. (But: Don't try to use that
@@ -1752,7 +1725,7 @@ We call this new type `NatOption`.
 ::::
 
 :::terse
-The solution: return an `NatOption`.
+The solution: return a `NatOption`.
 :::
 
 ```lean
@@ -1783,7 +1756,7 @@ example : nth_error [4, 5, 6, 7] 9 = .none := by rfl
 ```
 
 ::::full
-The function below pulls the `Nat` out of an `NatOption`,
+The function below pulls the `Nat` out of a `NatOption`,
 returning a supplied default in the `none` case.
 ::::
 
@@ -1814,12 +1787,10 @@ example : hd_error [1] = .some 1 := solution!(by rfl)
 example : hd_error [5, 6] = .some 5 := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 1: test_hd_error1`
+:::gradeTheorem 1 "test_hd_error1"
 :::
 
-:::grade
-`GRADE_THEOREM 1: test_hd_error2`
+:::gradeTheorem 1 "test_hd_error2"
 :::
 :::::
 
@@ -1830,8 +1801,7 @@ theorem hd_error_cons h t : hd_error (h :: t) = .some h := solution!(by rfl)
 ```
 
 :::::exercise (rating := 1) (name := "option_elim_hd")
-:::grade
-`GRADE_THEOREM 1: NatList.option_elim_hd`
+:::gradeTheorem 1 "NatList.option_elim_hd"
 :::
 
 This exercise relates your new `hd_error` to the old `hd`.
@@ -1929,8 +1899,7 @@ def eqb_id (x1 x2 : MyId) : Bool :=
 ```
 
 :::::exercise (rating := 1) (name := "eqb_id_refl")
-:::grade
-`GRADE_THEOREM 1: eqb_id_refl`
+:::gradeTheorem 1 "eqb_id_refl"
 :::
 
 ```lean
@@ -2035,8 +2004,7 @@ theorem quiz2  (d : PartialMap) (x y : MyId) (o : Nat) :
 
 ::::::full
 :::::exercise (rating := 1) (name := "update_eq")
-:::grade
-`GRADE_THEOREM 1: PartialMap.update_eq`
+:::gradeTheorem 1 "PartialMap.update_eq"
 :::
 
 ```lean
@@ -2050,8 +2018,7 @@ theorem update_eq (d : PartialMap) (x : MyId) (v : Nat) :
 :::::
 
 :::::exercise (rating := 1) (name := "update_neq")
-:::grade
-`GRADE_THEOREM 1: PartialMap.update_neq`
+:::gradeTheorem 1 "PartialMap.update_neq"
 :::
 
 ```lean

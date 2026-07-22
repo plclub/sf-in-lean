@@ -17,19 +17,37 @@ open Verso.Genre.Manual.InlineLean.Scopes (getScopes setScopes)
 
 namespace SFLMeta
 
+/-- The three urgency keywords a `:::dev` note may carry, in canonical spelling.
+Any other urgency is rejected as an error by the directive's argument parser. -/
+def devUrgencies : List String := ["NOW", "BeforeNextRelease", "PotentialImprovement"]
+
+/-- Canonicalize a `:::dev` urgency keyword, recognized case-insensitively:
+`NOW`, `BeforeNextRelease`, `PotentialImprovement` (in any case) map to their
+canonical spelling; every other keyword yields `none` (an error at parse time).
+The older source spellings are rewritten upstream by `to_verso.py` (`TODO` →
+`NOW`, `SOON`/`SOONER` → `BeforeNextRelease`, `LATER` → `PotentialImprovement`),
+so only the canonical three should ever reach a hand-authored `:::dev`. -/
+def canonUrgency? (s : String) : Option String :=
+  match s.toUpper with
+  | "NOW" => some "NOW"
+  | "BEFORENEXTRELEASE" => some "BeforeNextRelease"
+  | "POTENTIALIMPROVEMENT" => some "PotentialImprovement"
+  | _ => none
+
 /-- Author-facing configuration for `:::dev`.  All fields are optional; author
 and urgency are positional and year is named:  `:::dev`,
-`:::dev "Benjamin Pierce (bcpierce00)"`, `:::dev SOONER`, and
-`:::dev "Noé De Santo (Ef55)" LATER (year := 2025)` are all valid.  The two
-positionals cannot be confused: an author is always a *string literal* (it
-contains spaces and parentheses) while an urgency keyword is always a *bare
+`:::dev "Benjamin Pierce (bcpierce00)"`, `:::dev BeforeNextRelease`, and
+`:::dev "Noé De Santo (Ef55)" PotentialImprovement (year := 2025)` are all valid.
+The two positionals cannot be confused: an author is always a *string literal*
+(it contains spaces and parentheses) while an urgency keyword is always a *bare
 identifier*, and the parsers accept only their own category. -/
 structure DevConfig where
   /-- Who filed the note, conventionally a full name followed by a GitHub
   handle in parentheses: `"Benjamin Pierce (bcpierce00)"`. -/
   author : Option String
-  /-- An urgency keyword, conventionally `NOW`, `SOONER`, `LATER`, `TODO`, or
-  `TOFIX`; written as a bare identifier. -/
+  /-- An urgency keyword — one of `NOW`, `BeforeNextRelease`, or
+  `PotentialImprovement` (recognized in any case), written as a bare identifier
+  and stored canonicalized. -/
   urgency : Option String
   /-- The year the note was filed (from a `BCP'20`-style tag). -/
   year : Option Nat
@@ -38,17 +56,12 @@ deriving Repr
 section
 variable [Monad m] [MonadError m]
 
-/-- An argument value written as a bare identifier (`SOONER`), yielding its
-text. -/
-def ValDesc.identText : ValDesc m String where
-  description := doc!"an identifier"
-  signature := CanMatch.Ident
-  get
-    | .name x => Pure.pure x.getId.toString
-    | other => throwError "Expected identifier, got {toMessageData other}"
-
 /-- Argument parser for `DevConfig`: optional positional author (a string) and
-urgency (an identifier), and an optional named year. -/
+urgency (an identifier, validated/canonicalized later by the `dev` expander via
+`canonUrgency?`), and an optional named year.  Urgency is parsed permissively
+here — an `<|>`-guarded positional swallows a `get`-time error, which would turn
+an invalid urgency into a confusing leftover-argument message — and validated in
+the expander instead, so a bad keyword gets a precise error. -/
 def DevConfig.parse : ArgParse m DevConfig :=
   DevConfig.mk
     <$> ((some <$> ArgParse.positional `author ValDesc.string) <|> Pure.pure none)
@@ -73,22 +86,42 @@ def decodeDevData? (data : Json) : Option (Option String × Option String × Opt
   | _ => none
 
 /-- Should a dev note surface in reader-facing outputs (the HTML book and the
-generated `.lean` files)?  Only *actionable* notes are shown: those with
-urgency `NOW` or `TODO`, or with no urgency at all.  `SOONER`/`LATER`/`TOFIX`
+generated `.lean` files)?  Only *actionable* notes are shown: those with urgency
+`NOW` or `BeforeNextRelease`, or with no urgency at all.  `PotentialImprovement`
 notes remain suppressed. -/
 def devNoteShown (urgency : Option String) : Bool :=
   match urgency with
   | none => true
-  | some u => u == "NOW" || u == "TODO"
+  | some u => u == "NOW" || u == "BeforeNextRelease"
+
+/-- Render an author for a note label.  The authoring convention puts the GitHub
+handle in parentheses (`"Benjamin Pierce (bcpierce00)"`), which would nest inside
+the label's own parenthesized field list, so a trailing `(handle)` is rewritten
+to an `@handle` suffix.  An author in any other shape is left alone. -/
+def devNoteAuthorText (author : String) : String :=
+  if author.endsWith ")" then
+    match (author.dropRight 1).splitOn " (" with
+    | [name, handle] => s!"{name} @{handle}"
+    | _ => author
+  else author
+
+/-- Render an urgency keyword for a note label: the multi-word canonical
+spellings are spelled out with spaces (`BeforeNextRelease` → `before next
+release`), `NOW` is left as is. -/
+def devUrgencyText (urgency : String) : String :=
+  match urgency with
+  | "BeforeNextRelease" => "before next release"
+  | "PotentialImprovement" => "potential improvement"
+  | u => u
 
 /-- Provenance label for a rendered dev note —
-`Note to developers (Benjamin Pierce (bcpierce00), NOW, 2020)` — with absent
-fields omitted.  `heading` selects the leading phrase: the HTML rendering uses
-the default (uppercased by CSS); the generated `.lean` files use
-`"NOTE TO DEVELOPERS"`. -/
+`Note to developers (Benjamin Pierce @bcpierce00, before next release, 2020)` —
+with absent fields omitted.  `heading` selects the leading phrase; both the HTML
+rendering and the generated `.lean` files use the mixed-case default. -/
 def devNoteLabel (author urgency : Option String) (year : Option Nat)
     (heading : String := "Note to developers") : String :=
-  let fields := author.toList ++ urgency.toList ++ (year.map toString).toList
+  let fields := (author.map devNoteAuthorText).toList
+    ++ (urgency.map devUrgencyText).toList ++ (year.map toString).toList
   if fields.isEmpty then heading
   else s!"{heading} ({String.intercalate ", " fields})"
 
@@ -132,7 +165,6 @@ div.sf-dev-note > .sf-dev-note-label {
   font-family: var(--verso-structure-font-family);
   font-weight: 700;
   font-size: 0.85em;
-  text-transform: uppercase;
   letter-spacing: 0.03em;
   color: #7a5800;
   margin-bottom: 0.3em;
@@ -163,7 +195,11 @@ def dev : DirectiveExpanderOf DevConfig
       | some a => ``(some $(quote a))
       | none => ``(none)
     let urgency ← match cfg.urgency with
-      | some u => ``(some $(quote u))
+      | some u =>
+        match canonUrgency? u with
+        | some c => ``(some $(quote c))
+        | none =>
+          throwError m!"Unknown :::dev urgency '{u}'; expected one of {devUrgencies}"
       | none => ``(none)
     let year ← match cfg.year with
       | some y => ``(some $(quote y))

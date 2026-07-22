@@ -237,7 +237,7 @@ def _extract_imports(body: str):
 # generated outputs.  Add new tags here so they route cleanly instead of leaking
 # into the rendered chapter as prose.  INSTRUCTORS is deliberately NOT in this
 # set: it routes to :::instructor (handled separately, both line and block).
-_DEV_TAGS = (r'BCP|JC|MWH|CGH|RAB|CH|HG|NB|Claude|TODO|TOFIX|LATER|SOONER|NOW'
+_DEV_TAGS = (r'BCP|JC|MWH|CGH|RAB|CH|HG|NB|Claude|TODO|TOFIX|LATER|SOONER|SOON|NOW'
              r'|NDS|NOTATION|APT|BAY|SAZ|ET|AAA|MRC|PR|ORI|Ori|mwhicks1|chenson2018'
              r'|COMMENT')  # COMMENT: untagged (* .. *) comments from a .v source
 # The block set additionally recognizes `HIDE:` (a `/- HIDE: … -/` dev note).
@@ -251,8 +251,31 @@ _BLOCK_DEV_RE = re.compile(r'^(HIDE(?=:)|(?:' + _DEV_TAGS + r')\b)')
 _BLOCK_INSTRUCTOR_RE = re.compile(r'^INSTRUCTORS:')
 
 # Urgency keywords: when one of these opens a dev note it becomes the :::dev
-# directive's `(urgency := …)` argument rather than an author.
-_URGENCY_TAGS = ('NOW', 'SOONER', 'LATER', 'TODO', 'TOFIX')
+# directive's urgency argument rather than an author.  The source spellings are
+# canonicalized to the three urgencies the :::dev directive recognizes:
+#   NOW                 — actionable now (`NOW`, `TODO`)
+#   BeforeNextRelease   — before the next release (`SOON`, `SOONER`)
+#   PotentialImprovement— a someday-maybe improvement (`LATER`)
+# The map is keyed by the uppercased source tag.  (SFLMeta.Comment applies the
+# same canonicalization to a hand-written `:::dev` urgency and errors on any tag
+# outside the canonical three.)
+_URGENCY_CANON = {
+    'NOW': 'NOW',
+    'TODO': 'NOW',
+    'SOON': 'BeforeNextRelease',
+    'SOONER': 'BeforeNextRelease',
+    'BEFORENEXTRELEASE': 'BeforeNextRelease',
+    'LATER': 'PotentialImprovement',
+    'POTENTIALIMPROVEMENT': 'PotentialImprovement',
+}
+# The source spellings recognized as urgency keywords (for `_split_dev_tags`).
+_URGENCY_TAGS = ('NOW', 'SOON', 'SOONER', 'LATER', 'TODO')
+
+
+def _canon_urgency(tag):
+    """Canonicalize a source urgency spelling (case-insensitively) to one of
+    `NOW` / `BeforeNextRelease` / `PotentialImprovement`, or None if unknown."""
+    return _URGENCY_CANON.get(tag.upper())
 
 # Authors behind the initials appearing in dev notes, as "Full Name
 # (github-handle)".  When a note opens with one of these tags (or, after an
@@ -332,7 +355,7 @@ def _split_dev_tags(text):
             return None, None, None, text
         tok = m.group(1)
         if tok in _URGENCY_TAGS:
-            urgency = tok
+            urgency = _canon_urgency(tok)
         elif tok in _AUTHOR_NAMES:
             author = _AUTHOR_NAMES[tok]
             if m.group(2):
@@ -366,7 +389,7 @@ def _split_dev_tags(text):
         # `BCP: SOONER: …`
         m2 = re.match(r"(%s)\s*:\s*" % '|'.join(_URGENCY_TAGS), body)
         if m2:
-            urgency = m2.group(1)
+            urgency = _canon_urgency(m2.group(1))
             body = body[m2.end():]
     if not body.strip():
         body = text  # tag-only note: keep the original text as the body
@@ -642,7 +665,7 @@ def _comment_tokens(body: str):
         # than as `-- ` line markers, so recognize the same set the main
         # tokenizer does — otherwise they flatten to prose (or are dropped) and
         # the quiz/exercise/grade structure is lost.
-        m_ex = re.match(r"^EX(\d+)[A-Za-z!?]*\s+\((\w[\w']*)\)$", s)
+        m_ex = re.match(r"^EX(\d+)([A-Za-z!?]*)\s+\((\w[\w']*)\)$", s)
         if s == '/QUIZ':
             flush_prose()
             tokens.append(('quiz_close', None))
@@ -656,7 +679,8 @@ def _comment_tokens(body: str):
             idx += 1; continue
         if m_ex:
             flush_prose()
-            tokens.append(('exercise_open', (int(m_ex.group(1)), m_ex.group(2))))
+            tokens.append(('exercise_open',
+                           (int(m_ex.group(1)), m_ex.group(3), m_ex.group(2))))
             idx += 1; continue
         if s == '[]':
             flush_prose()
@@ -803,7 +827,7 @@ _TERSE_PLAIN_RE = re.compile(r'^-- TERSE:\s+(.+)$')
 # (advanced), `M` (manual), and combinations like `2AM?`.  A name is usually an
 # identifier but occasionally a phrase (`EX2 (logical connectives)`), so allow
 # internal spaces/hyphens.
-_EX_RE = re.compile(r"^-- EX(\d+)[A-Za-z!?]*\s+\((\w[\w' \-]*)\)$")
+_EX_RE = re.compile(r"^-- EX(\d+)([A-Za-z!?]*)\s+\((\w[\w' \-]*)\)$")
 # The close marker may carry a redundant `(end name)` label (IndPropRegexp
 # style); it is consumed with the marker — the :::::exercise block records the
 # name already.
@@ -843,6 +867,10 @@ _SOL_CLOSE_RE = re.compile(r'^--\s+/\s?(?:QUIET)?SOLUTION$')
 # and the bare `-- INSTRUCTORS` region form is a hidden region (see
 # `_HIDE_OPEN_RE`); TERSE/FULL have their own dedicated markers.
 _AUTHOR_RE = re.compile(r'^-- (' + _DEV_TAGS + r')[: (](.*)$')
+
+# A bare multiple-choice answer (`(A)` … `(E)`): an instructor note of this exact
+# form is a quiz answer, routed to :::quizSolution rather than :::instructors.
+_MC_ANSWER_RE = re.compile(r'^\([A-E]\)$')
 
 # `-- ==> …` / `-- ===> …` hand-written eval-output annotations: intentionally
 # dropped (Verso renders the real output live), so they must not be swept into
@@ -1089,7 +1117,8 @@ def tokenize(text: str):
 
         m = _EX_RE.match(stripped)
         if m:
-            tokens.append(('exercise_open', (int(m.group(1)), m.group(2))))
+            tokens.append(('exercise_open',
+                           (int(m.group(1)), m.group(3), m.group(2))))
             i += 1
             continue
 
@@ -1680,7 +1709,7 @@ class Renderer:
             self._append(_c_close() + '\n\n')
             self.terse_open = False
 
-    def _on_exercise_open(self, rating, name):
+    def _on_exercise_open(self, rating, name, flags=''):
         self._flush_code()
         # An exercise nests inside an open (or pending) :::full — fence widths
         # are computed by _resolve_fences, so the containers never collide.
@@ -1698,8 +1727,16 @@ class Renderer:
             self.in_exercise = False
         self._open_full_if_pending()
         self.in_exercise = True
-        self._append(
-            _c_open(f'exercise (rating := {rating}) (name := "{name}")') + '\n\n')
+        # SF difficulty/grading flags follow the rating digits: `A` (advanced),
+        # `M` (manually graded), plus `!`/`?` (recommended/optional).  Preserve
+        # the two that survive to the Verso directive: `A` -> (level := Advanced)
+        # and `M` -> (manual := true).  (`!`/`?` have no directive analogue yet.)
+        header = f'exercise (rating := {rating}) (name := "{name}")'
+        if 'A' in flags:
+            header += ' (level := Advanced)'
+        if 'M' in flags:
+            header += ' (manual := true)'
+        self._append(_c_open(header) + '\n\n')
 
     def _on_exercise_close(self):
         self._flush_code()
@@ -1766,24 +1803,41 @@ class Renderer:
             self.quiz_depth = max(0, self.quiz_depth - 1)
 
     def _on_answer(self, text):
-        # The -- HIDE region inside a -- QUIZ.  Like :::hide it is preserved
-        # verbatim and dropped at elaboration for now (rendering it sensibly is a
-        # later step); a 3-colon :::answer nests inside the 4-colon ::::quiz.
+        # The -- HIDE region inside a -- QUIZ is the quiz's answer.  It becomes a
+        # :::quizSolution — the uniform, *shown* quiz-answer block (HTML reveal
+        # button; kept in every build) — rather than the old noop :::answer.  The
+        # body stays a verbatim code fence (a plain ``` block, never elaborated),
+        # so a deliberately-broken/admitted answer can't perturb the build; a
+        # 3-colon :::quizSolution nests inside the 4-colon ::::quiz.
         self._flush_code()
         if not text.strip():
             return
-        self._append(':::answer\n' + _verbatim_block(_unwrap_prose_note(text)) + '\n:::\n\n')
+        self._append(':::quizSolution\n' + _verbatim_block(_unwrap_prose_note(text))
+                     + '\n:::\n\n')
 
     def _on_grade(self, text):
-        # -- GRADE_THEOREM / GRADE_MANUAL -> :::grade.  A noop for now, but the
-        # grading spec is preserved for the future grading infrastructure to
-        # consume — as a backtick code span, since the spec is a single line
-        # whose underscored names would trip Verso's emphasis parser as bare
-        # prose.  A spec a span can't hold (a backtick, an embedded newline —
-        # neither occurs in practice) falls back to the verbatim fence.
+        # -- GRADE_THEOREM / GRADE_MANUAL grading directives.  A `GRADE_THEOREM
+        # <pts>: <name>` spec becomes the structured `:::gradeTheorem <pts>
+        # "<name>"` directive (point value and theorem name as arguments, empty
+        # body).  Any other spec — `GRADE_MANUAL <pts>: <name>` and the like —
+        # keeps the older `:::grade` form carrying the spec as body text (a
+        # backtick span, since the spec's underscored names would trip Verso's
+        # emphasis parser as bare prose; a spec a span can't hold falls back to
+        # the verbatim fence).  Both are noops for now, preserved for the future
+        # grading infrastructure to consume.
         self._flush_code()
         text = text.strip()
         if not text:
+            return
+        m = re.match(r'^GRADE_THEOREM\s+(\d+(?:\.\d+)?)\s*:\s*(\S+)$', text)
+        if m:
+            # Points can be fractional (`0.5`).  An integer is written bare; a
+            # fraction is quoted (a bare `0.5` is not a valid directive-arg
+            # token, and quoting preserves the exact value as a string).
+            pts = m.group(1)
+            pts_arg = pts if pts.isdigit() else '"%s"' % pts
+            self._append(':::gradeTheorem %s "%s"\n:::\n\n'
+                         % (pts_arg, m.group(2)))
             return
         body = ('`' + text + '`' if '`' not in text and '\n' not in text
                 else _verbatim_block(text))
@@ -1869,8 +1923,8 @@ class Renderer:
             elif kind == 'terse_close':
                 self._on_terse_close()
             elif kind == 'exercise_open':
-                rating, name = content
-                self._on_exercise_open(rating, name)
+                rating, name, flags = content
+                self._on_exercise_open(rating, name, flags)
             elif kind == 'exercise_close':
                 self._on_exercise_close()
             elif kind == 'slidebreak':
@@ -1882,7 +1936,15 @@ class Renderer:
             elif kind == 'author_comment':
                 self._emit_noop_directive('dev', content)
             elif kind == 'instructor':
-                self._emit_noop_directive('instructors', content)
+                # A bare multiple-choice answer (`(A)`) in an instructor note is
+                # a quiz answer, not a note to instructors: emit it as the shown
+                # :::quizSolution rather than the dropped :::instructors.
+                if _MC_ANSWER_RE.match(content.strip()):
+                    self._flush_code()
+                    self._append(':::quizSolution\n' + content.strip()
+                                 + '\n:::\n\n')
+                else:
+                    self._emit_noop_directive('instructors', content)
             elif kind == 'hide':
                 self._on_hide(content)
             elif kind == 'quiz_open':
@@ -1953,7 +2015,8 @@ def _drop_empty_directives(text: str) -> str:
             # empty self-closing markers (`:::slidebreak` / `:::`), not empty
             # containers to drop.
             m = re.match(
-                r'^(:::+)(?!slidebreak\b|suppressPreviousHeaderWhenTerse\b)\w',
+                r'^(:::+)(?!slidebreak\b|suppressPreviousHeaderWhenTerse\b'
+                r'|gradeTheorem\b)\w',
                 lines[i])
             if m:
                 fence = m.group(1)

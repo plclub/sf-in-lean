@@ -249,7 +249,8 @@ should be kept in sync as chapters are rewritten.
 - `IndPropRegexp` has been folded into `Automation`
 - `Maps` will be folded into `Typeclasses`
 - Candidate tactics still to be placed include `show`, `rename_i`, `revert`, `suffices`, `tauto`. 
-- Tactics `grind`, `aesop`, are deferred to a later volume. 
+- Tactics `grind`, `aesop`, are deferred to a later volume, following
+  FPiL's caution that `grind` is overwhelming for beginners. 
 
 Related notation introduced alongside tactics: anonymous constructor
 `⟨…⟩` (`Lists`); destructuring `let ⟨…⟩ := …` and `cases h : …`,
@@ -357,6 +358,10 @@ guidelines.
   #guard_msgs in
   example : … := sorry
   ```
+
+  The `#guard_msgs` wrapper is checked while the book is compiled.
+  In the rendered book and generated projects, the expected-message docstring and
+  `#guard_msgs ... in` are stripped.
 
 * **Aborted/abandoned lemmas** become unnamed `example`s closed with
   `sorry` (the SFL analogue of Rocq's `Abort`).
@@ -615,6 +620,27 @@ GRADE_THEOREM 1: nandb_test4
 `GRADE_MANUAL <pts>: <name>` lines for autograding scripts. Currently
 a noop in all rendered outputs (body discarded at elaboration); the
 spec survives verbatim in the Verso source for tooling.
+
+### `lean` block flags
+
+Use ordinary fenced `lean` blocks for examples that should elaborate in
+the chapter, appear in the rendered book, affect later Lean blocks,
+and be emitted as normal Lean code in generated projects for teachers and students.
+
+Some examples are meant to be shown or checked without becoming persistent code in
+generated projects:
+
+|block|rendered book|generated project|
+|---|---|---|
+|`` ```lean ``|shown|normal (executable) code|
+|`` ```lean -show``|hidden|normal code|
+|`` ```lean +error``|shown as expected failure|wrapped in `sf_expect_failure ... end`|
+|`` ```lean +error -show``(rare)|hidden|wrapped in `sf_expect_failure ... end`|
+|`` ```lean -keep``|shown|wrapped in `sf_experiment ... end`|
+|`` ```lean -keep -show`` (rare)|hidden|wrapped in `sf_experiment ... end`|
+
+Do not put definitions needed later in `-keep` or `+error` blocks as they will not become
+executable declarations in the generated projects, though they still get rendered in the book. 
 
 ### Quizzes
 
@@ -875,7 +901,11 @@ python3 scripts/to_verso.py old/orig-plf-files/Hoare.v HL/Hoare.lean
 
 ## (Temp) Porting from Rocq: comment fidelity and framing
 
-(Claude-drafted; human review welcome.)  
+[BCP: This section seems out of date: We do not use Claude any more
+for rough translations of chapters from Rocq; instead, we use
+to_verso.py to go directly from the Rocq to a non-compiling Verso file
+with all the easy markup changes implemented and all the interesting
+actual translation work left for manual effort.]  
 
 When porting a Rocq
 `sfdev/<vol>/<Ch>.v` to `<Ch>.lean`:
@@ -904,6 +934,21 @@ maintain content in this repo.  AI-generated content, especially
 public-facing content such as words and proofs in book chapters,
 should be carefully vetted.
 
+For PRs with public-facing content, we follow the [mathlib AI
+policy][mathlib-ai-policy], which mandates summarizing how AI is used
+in the PR description. PR descriptions should be written (or at least
+carefully rewritten) by hand.
+
+Here is the part of the [mathlib AI policy][mathlib-ai-policy] that
+should be applied when AI tools are adding or changing public-facing content:
+> Explain which tool(s) you used and how you used it. This provides 
+> useful context for reviewers: tools make different mistakes than humans,
+> so knowing this makes it easier to spot common errors.
+
+Scripts and other infrastructure in the repository that are used to
+help create public-facing content are excluded, i.e., AI usage here
+doesn't need to be explained in the PR description.
+
 Instructions for Claude live in `CLAUDE.md` (which also asks Claude to
 pay attention to the conventions in this file).
 
@@ -911,7 +956,8 @@ Raw AI output should not be posted to GitHub or zulip without an
 indication that that's what it is.  
 
 Scripts that are mostly or wholly AI generated should be marked as
-such, because these will typically be lower quality than human-created
-or heavily vetted code, and people looking at them should understand
-that. 
+such: these will typically be lower quality than human-created or
+heavily vetted code, and people looking at them should understand
+that.
 
+[mathlib-ai-policy]: https://leanprover-community.github.io/contribute/index.html#use-of-ai

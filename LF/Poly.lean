@@ -171,7 +171,7 @@ containing just the natural number 3.
 #check (MyList.cons 3 MyList.nil : MyList Nat)
 ```
 
-:::dev SOONER
+:::dev BeforeNextRelease
 Unclear - Reword
 :::
 
@@ -198,11 +198,11 @@ type parameter:
 #check (@MyList.cons : {α : Type} → α → MyList α → MyList α)
 ```
 
-:::dev "Daniel Sainati (dsainati1)" TODO
+:::dev "Daniel Sainati (dsainati1)" NOW
 Does this still apply?
 :::
 
-:::dev "Jonathan Chan (ionathanch)" TODO
+:::dev "Jonathan Chan (ionathanch)" NOW
 We should never write `forall` in place of `∀`,
 but somewhere in `Basics` we ought to tell people
 that you can find out how to type a symbol by hovering over it.
@@ -224,7 +224,7 @@ out in letters. In the corresponding HTML files, it is usually
 typeset as the standard mathematical "upside down A."
 ::::
 
-:::dev LATER
+:::dev PotentialImprovement
 Maybe explain better?  (Maybe NOT using the "forall is a
 funny kind of function type" intuition.)
 :::
@@ -345,14 +345,14 @@ def list123 : List Nat := [1, 2, 3]
 
 ### Type Annotation Inference
 
-:::dev "Daniel Sainati (dsainati1)" TODO
+:::dev "Daniel Sainati (dsainati1)" NOW
 I copied this over mostly verbatim from Poly.v,
 but I think the point doesn't work in Lean. The definition of `repeat'`
 below doesn't typecheck, I think Lean does less inference than Rocq here.
 Should we just delete this?
 :::
 
-:::dev "Jonathan Chan (ionathanch)" TODO
+:::dev "Jonathan Chan (ionathanch)" NOW
 Lean can still infer the types of arguments that are used dependently,
 so I've adapted the text below to only omit `α`. The question of what Lean infers
 as its type is still tricky to present, since `#check repeat'` alone will show
@@ -516,7 +516,7 @@ We can use the `@` prefix to supply the type
 argument explicitly. The `@` makes all implicit arguments
 of a function explicit:
 
-:::dev "Jonathan Chan (ionathanch)" TODO
+:::dev "Jonathan Chan (ionathanch)" NOW
 Didn't we alredy use this feature back on lines 121/126?
 :::
 
@@ -547,7 +547,7 @@ brackets.)
 (D) No type can be assigned
 ::::
 
-:::instructors
+:::quizSolution
 (A)
 :::
 
@@ -567,7 +567,7 @@ What about this one?
 (D) No type can be assigned
 ::::
 
-:::instructors
+:::quizSolution
 (A)
 :::
 
@@ -587,7 +587,7 @@ What about this one?
 (D) No type can be assigned
 ::::
 
-:::instructors
+:::quizSolution
 (B)
 :::
 
@@ -607,7 +607,7 @@ What about this one?
 (D) No type can be assigned
 ::::
 
-:::instructors
+:::quizSolution
 (D)
 :::
 
@@ -627,7 +627,7 @@ What about this one?
 (D) No type can be assigned
 ::::
 
-:::instructors
+:::quizSolution
 (B)
 :::
 
@@ -647,7 +647,7 @@ And what about this one?
 (D) No type can be assigned
 ::::
 
-:::instructors
+:::quizSolution
 (B)
 :::
 
@@ -667,12 +667,12 @@ This one?
 (D) No type can be assigned
 ::::
 
-:::instructors
+:::quizSolution
 (C)
 :::
 
 ::::::full
-:::::exercise (rating := 2) (name := "mumble_grumble")
+:::::exercise (rating := 2) (name := "mumble_grumble") (manual := true)
 Consider the following two inductively defined types.
 
 ```lean
@@ -776,16 +776,13 @@ theorem app_length {α : Type} : ∀ (l1 l2 : List α),
      rw [Nat.succ_add, ih]
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: app_nil_r`
+:::gradeTheorem "0.5" "app_nil_r"
 :::
 
-:::grade
-`GRADE_THEOREM 1: app_assoc`
+:::gradeTheorem 1 "app_assoc"
 :::
 
-:::grade
-`GRADE_THEOREM 0.5: app_length`
+:::gradeTheorem "0.5" "app_length"
 :::
 :::::
 
@@ -815,12 +812,10 @@ theorem rev_involutive {α : Type} : ∀ (l : List α),
      dsimp only [List.nil_append, List.cons_append]
 ```
 
-:::grade
-`GRADE_THEOREM 1: rev_app_distr`
+:::gradeTheorem 1 "rev_app_distr"
 :::
 
-:::grade
-`GRADE_THEOREM 1: rev_involutive`
+:::gradeTheorem 1 "rev_involutive"
 :::
 :::::
 
@@ -947,12 +942,10 @@ theorem unzip_cons_snd α β l (x : α) (y : β) :
 example : unzip [(1, false), (2, false)] = ([1, 2], [false, false]) := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 1: split`
+:::gradeTheorem 1 "split"
 :::
 
-:::grade
-`GRADE_THEOREM 1: test_split`
+:::gradeTheorem 1 "test_split"
 :::
 :::::
 
@@ -1021,8 +1014,7 @@ theorem hd_error_cons α (h : α) t : hdError (h :: t) = some h := solution!(by 
 example : hdError [1, 2] = some 1 := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: test_hd_error1`
+:::gradeTheorem "0.5" "test_hd_error1"
 :::
 
 test_hd_error2
@@ -1031,8 +1023,7 @@ test_hd_error2
 example : hdError [[1], [2]] = some [1] := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 0.5: test_hd_error2`
+:::gradeTheorem "0.5" "test_hd_error2"
 :::
 :::::
 
@@ -1149,7 +1140,7 @@ theorem filter_cons_fail {α : Type} {test : α → Bool} h t :
 :::slidebreak
 :::
 
-:::dev LATER
+:::dev PotentialImprovement
 This material would sink in better if it were made clearer
 why map and filter and such were useful in the real world. Talk
 about map/reduce, collection-oriented programming, etc. Esp in the
@@ -1256,12 +1247,10 @@ example : filterEvenGt7 [1, 2, 6, 9, 10, 3, 12, 8] = [10, 12, 8] := solution!(by
 example : filterEvenGt7 [5, 2, 6, 19, 129] = [] := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 1: test_filter_even_gt7_1`
+:::gradeTheorem 1 "test_filter_even_gt7_1"
 :::
 
-:::grade
-`GRADE_THEOREM 1: test_filter_even_gt7_2`
+:::gradeTheorem 1 "test_filter_even_gt7_2"
 :::
 :::::
 
@@ -1282,16 +1271,13 @@ example : partition (· % 2 != 0) [1, 2, 3, 4, 5] = ([1, 3, 5], [2, 4]) := solut
 example : partition (fun _ => false) [5, 9, 0] = ([], [5, 9, 0]) := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 1: partition`
+:::gradeTheorem 1 "partition"
 :::
 
-:::grade
-`GRADE_THEOREM 1: test_partition1`
+:::gradeTheorem 1 "test_partition1"
 :::
 
-:::grade
-`GRADE_THEOREM 1: test_partition2`
+:::gradeTheorem 1 "test_partition2"
 :::
 :::::
 
@@ -1407,8 +1393,7 @@ theorem map_rev {α : Type} {β : Type} : ∀ (f : α → β) (l : List α),
      rw [rev_cons, map_cons, map_app, rev_cons, ih, map_cons, map_nil]
 ```
 
-:::grade
-`GRADE_THEOREM 3: map_rev`
+:::gradeTheorem 3 "map_rev"
 :::
 :::::
 
@@ -1434,12 +1419,10 @@ example : flatMap (fun n => [n, n, n]) [1, 5, 4]
   = [1, 1, 1, 5, 5, 5, 4, 4, 4] := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 1: flatMap`
+:::gradeTheorem 1 "flatMap"
 :::
 
-:::grade
-`GRADE_THEOREM 1: test_flat_map1`
+:::gradeTheorem 1 "test_flat_map1"
 :::
 :::::
 
@@ -1566,7 +1549,7 @@ What does `fold (· + ·) [1, 2, 3, 4] 0` simplify to?
 ::::
 
 ::::::full
-:::::exercise (rating := 1) (name := "fold_types_different")
+:::::exercise (rating := 1) (name := "fold_types_different") (manual := true)
 Observe that the type of `fold` is parameterized by _two_ type
 variables, `α` and `β`, and the parameter `f` is a binary operator
 that takes an `α` and a `β` and returns a `β`. Example
@@ -1699,12 +1682,11 @@ theorem fold_length_correct {α : Type} (l : List α) :
       rw [List.length_cons, fold_cons, ih]
 ```
 
-:::grade
-`GRADE_THEOREM 2: Exercises.fold_length_correct`
+:::gradeTheorem 2 "Exercises.fold_length_correct"
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "fold_map")
+:::::exercise (rating := 3) (name := "fold_map") (manual := true)
 We can also define `map` in terms of `fold`. Finish `foldMap`
 below.
 
@@ -1734,7 +1716,7 @@ theorem fold_map_correct {α : Type} {β : Type} (f : α → β) (l : List α) :
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "currying")
+:::::exercise (rating := 2) (name := "currying") (level := Advanced)
 The type `α → β → γ` can be read as describing functions that
 take two arguments, one of type `α` and another of type `β`, and
 return an output of type `γ`. Recall from our discussion
@@ -1810,22 +1792,20 @@ theorem curry_uncurry {α β γ : Type} (f : α × β → γ) (p : α × β) :
     rfl
 ```
 
-:::grade
-`GRADE_THEOREM 1: Exercises.uncurry_curry`
+:::gradeTheorem 1 "Exercises.uncurry_curry"
 :::
 
-:::grade
-`GRADE_THEOREM 1: Exercises.curry_uncurry`
+:::gradeTheorem 1 "Exercises.curry_uncurry"
 :::
 :::::
 
-:::dev SOONER
+:::dev BeforeNextRelease
 This isn't quite the definition given above. (And the one
 above is VASTLY easier to work with for the proof!)  We should
 really fix this!
 :::
 
-:::::exercise (rating := 2) (name := "nth_error_informal")
+:::::exercise (rating := 2) (name := "nth_error_informal") (level := Advanced) (manual := true)
 Recall the definition of the `nthError` function:
 
 ```display
@@ -1965,7 +1945,7 @@ can by completing the definitions of the following functions. Make
 sure that the corresponding unit tests pass by proving them with
 `rfl`.
 
-:::::exercise (rating := 2) (name := "church_scc")
+:::::exercise (rating := 2) (name := "church_scc") (level := Advanced)
 Define a function that computes the successor of a Church numeral.
 Given a Church numeral `n`, its successor `scc n` should iterate
 its function argument once more than `n`. That is, given
@@ -1982,16 +1962,14 @@ example : scc one = two := solution!(by rfl)
 example : scc two = three := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 1: Exercises.Church.scc_2`
+:::gradeTheorem 1 "Exercises.Church.scc_2"
 :::
 
-:::grade
-`GRADE_THEOREM 1: Exercises.Church.scc_3`
+:::gradeTheorem 1 "Exercises.Church.scc_3"
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "church_plus")
+:::::exercise (rating := 3) (name := "church_plus") (level := Advanced)
 Define a function that computes the addition of two Church
 numerals. Given `fun X f x => f^n x` and `fun X f x => f^m x`
 as input, `plus` should produce `fun X f x => f^(n + m) x` as
@@ -2008,20 +1986,17 @@ example : plus two three = plus three two := solution!(by rfl)
 example : plus (plus two two) three = plus one (plus three three) := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 1: Exercises.Church.plus_1`
+:::gradeTheorem 1 "Exercises.Church.plus_1"
 :::
 
-:::grade
-`GRADE_THEOREM 1: Exercises.Church.plus_2`
+:::gradeTheorem 1 "Exercises.Church.plus_2"
 :::
 
-:::grade
-`GRADE_THEOREM 1: Exercises.Church.plus_3`
+:::gradeTheorem 1 "Exercises.Church.plus_3"
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "church_mult")
+:::::exercise (rating := 3) (name := "church_mult") (level := Advanced)
 Define a function that computes the multiplication of two Church
 numerals.
 
@@ -2045,20 +2020,17 @@ example : mult zero (plus three three) = zero := solution!(by rfl)
 example : mult two three = plus three three := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 1: Exercises.Church.mult_1`
+:::gradeTheorem 1 "Exercises.Church.mult_1"
 :::
 
-:::grade
-`GRADE_THEOREM 1: Exercises.Church.mult_2`
+:::gradeTheorem 1 "Exercises.Church.mult_2"
 :::
 
-:::grade
-`GRADE_THEOREM 1: Exercises.Church.mult_3`
+:::gradeTheorem 1 "Exercises.Church.mult_3"
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "church_exp")
+:::::exercise (rating := 3) (name := "church_exp") (level := Advanced)
 Exponentiation:
 
 Define a function that computes the exponentiation of two Church
@@ -2076,16 +2048,13 @@ example : exp three zero = one := solution!(by rfl)
 example : exp three two = plus (mult two (mult two two)) one := solution!(by rfl)
 ```
 
-:::grade
-`GRADE_THEOREM 1: Exercises.Church.exp_1`
+:::gradeTheorem 1 "Exercises.Church.exp_1"
 :::
 
-:::grade
-`GRADE_THEOREM 1: Exercises.Church.exp_2`
+:::gradeTheorem 1 "Exercises.Church.exp_2"
 :::
 
-:::grade
-`GRADE_THEOREM 1: Exercises.Church.exp_3`
+:::gradeTheorem 1 "Exercises.Church.exp_3"
 :::
 :::::
 

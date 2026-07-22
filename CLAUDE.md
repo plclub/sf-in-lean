@@ -100,11 +100,16 @@ exactly. `_fuse_noop_blocks` fuses adjacent runs with an identical header line
 
 `:::dev` takes two optional positional arguments — an author, always a
 *string* (`:::dev "Full Name (github-handle)"`), and an urgency keyword,
-always a *bare identifier* (`NOW`/`SOONER`/`LATER`/`TODO`/`TOFIX`) — plus an
-optional named `(year := 2020)` (from a `BCP'20`-style tag):
-`:::dev "Noé De Santo (Ef55)" LATER (year := 2025)`. The string/identifier
-split is what disambiguates the two positionals, so don't quote urgencies or
-unquote authors. All values are recorded in the block's data so a future
+always a *bare identifier* — plus an optional named `(year := 2020)` (from a
+`BCP'20`-style tag): `:::dev "Noé De Santo (Ef55)" PotentialImprovement
+(year := 2025)`. The string/identifier split is what disambiguates the two
+positionals, so don't quote urgencies or unquote authors. The **only** urgency
+keywords are `NOW`, `BeforeNextRelease`, and `PotentialImprovement` (recognized
+in any case and stored canonicalized); any other urgency is a build error.
+`to_verso` rewrites the older source spellings on the way in — `TODO` → `NOW`,
+`SOON`/`SOONER` → `BeforeNextRelease`, `LATER` → `PotentialImprovement`
+(`_URGENCY_CANON` in `scripts/to_verso.py`) — so a hand-authored `:::dev`
+should use only the canonical three. All values are recorded in the block's data so a future
 dev-facing build can typeset provenance uniformly. `to_verso` promotes a dev note's leading tag
 to these arguments via `_split_dev_tags` / `_AUTHOR_NAMES` in
 `scripts/to_verso.py` (add newly identified initials there); unmapped initials
@@ -118,13 +123,27 @@ in `::::full` prose); reach for an inner ` ``` ` fence only when the body is
 code-dense or embeds a Lean snippet that must not elaborate — and note that a
 `:::dev` body *elaborates*, so a ` ```lean ` fence there runs the code (use a
 plain ` ``` ` fence for inert code). A `:::dev` note whose urgency is `NOW` or
-`TODO` — or absent — is *shown*: brightly highlighted in the HTML build and
-passed through as a labelled comment in the generated `.lean` files
+`BeforeNextRelease` — or absent — is *shown*: brightly highlighted in the HTML
+build and passed through as a labelled comment in the generated `.lean` files
 (`devNoteShown` in `SFLMeta/Comment.lean`, saver case in `SFLMeta/Save.lean`);
-`SOONER`/`LATER`/`TOFIX` notes are dropped from every build. The other
-annotation directives (`instructors`/`hide`/`answer`/`grade`/`solution`) are
-noops (bodies dropped from every build); the tag name reserves each for a
-future build that treats it differently.
+`PotentialImprovement` notes are dropped from every build. The other annotation
+directives (`instructors`/`hide`/`grade`/`solution`) are noops (bodies dropped
+from every build); the tag name reserves each for a future build that treats it
+differently.
+
+Two related directives are **not** noops. `:::gradeTheorem <pts> "<name>"` is
+the structured successor to a `:::grade` block wrapping a `GRADE_THEOREM <pts>:
+<name>` spec — `to_verso` emits it for every `GRADE_THEOREM` marker (points bare
+for integers, quoted for fractions like `"0.5"`); other `GRADE_` specs
+(`GRADE_MANUAL`) keep the older `:::grade` body form. It renders nothing for now
+but records `(points, name)` for later autograding (`SFLMeta/Grade.lean`).
+`:::quizSolution` is the uniform quiz-answer block (superseding the old
+quiz-answer conventions `:::answer` and a bare-`(X)` `:::instructors`): in the
+HTML book it renders as a click-to-reveal disclosure button, and it is *elided
+from every generated `.lean` build product* (kept through traversal for the HTML
+rendering; the saver emits nothing — `SFLMeta/Quiz.lean`, saver case in
+`SFLMeta/Save.lean`). `to_verso` emits it for a `-- HIDE` inside a `-- QUIZ` and
+for a bare `(A)`…`(E)` instructor answer.
 
 ## Rough-draft conversion straight from a .v chapter
 
@@ -201,7 +220,7 @@ Two complementary automated checks help here (both take
   also means neither verifies the marker is actually *gone* from the output.
   NB: `WORKINCLASS` is *not* in this category — it is translated to the
   `workinclass!` tactic (proof shown in student/solutions builds, `sorry` in
-  the terse build); see `workinclass.md` for the design and edge cases.
+  the terse build).
 * `OPEN COMMENT WHEN HIDING SOLUTIONS` / `CLOSE COMMENT WHEN HIDING SOLUTIONS`
   (with their preceding empty `ADMITTED` region) wrap a *suggested proof* the
   student is invited to uncomment and adapt. `to_verso` translates the whole
@@ -216,8 +235,15 @@ Two complementary automated checks help here (both take
 notes (`/- MWH: … -/`, `/- BCP: … -/`, `/- NDS'25: … -/`, `/- NOTATION: … -/`,
 …) → `:::dev`; `/- INSTRUCTORS: … -/` and `-- INSTRUCTORS:` → `:::instructor`;
 `/- HIDE: … -/` and `-- HIDE … -- /HIDE` → `:::dev`/`:::hide` (body kept);
-`-- GRADE_THEOREM …` → `:::grade`. Only the *marker keyword* is consumed; the
-note **body** is always kept.
+`-- GRADE_THEOREM …` → `:::gradeTheorem` (`-- GRADE_MANUAL …` → `:::grade`).
+Only the *marker keyword* is consumed; the note **body** is always kept.
+
+An exercise's SF difficulty/grading flags are preserved on the directive: the
+`A` (advanced) flag becomes `(level := Advanced)` and the `M` (manually graded)
+flag becomes `(manual := true)` on the generated `::::exercise` (rendered
+`(Advanced)` / `(manually graded)` in the HTML and generated `.lean` headings;
+`SFLMeta/Exercise.lean`). `!`/`?` (recommended/optional) have no directive
+analogue yet.
 
 A section heading inside a `-- FULL` region (the SF idiom scoping book
 headings to the reading builds) emits the heading at document level — headings

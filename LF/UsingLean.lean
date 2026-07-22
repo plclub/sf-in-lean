@@ -30,7 +30,7 @@ htmlSplit := .never
 file := some "UsingLean"
 %%%
 
-:::dev TODO
+:::dev NOW
 Chapter goals:
 Nats
 dsimp
@@ -275,8 +275,7 @@ theorem mul_three (p : Nat) :
     rw [Nat.add_one_mul, Nat.two_mul]
 ```
 
-:::grade
-`GRADE_THEOREM 1: mul_three`
+:::gradeTheorem 1 "mul_three"
 :::
 
 ```lean
@@ -287,8 +286,7 @@ theorem mul_three_beq (p : Nat) :
     exact mul_three p
 ```
 
-:::grade
-`GRADE_THEOREM 1: mul_three_beq`
+:::gradeTheorem 1 "mul_three_beq"
 :::
 
 # Structuring proofs with `calc`
@@ -555,12 +553,11 @@ theorem even_succ (n : Nat) :
       rw [even, ih, Bool.not_not]
 ```
 
-:::grade
-`GRADE_THEOREM 1: even_succ`
+:::gradeTheorem 1 "even_succ"
 :::
 :::::
 
-:::dev TODO
+:::dev NOW
 talk about using `Nat.add_zero` and friends from now on.
 :::
 
@@ -586,8 +583,7 @@ theorem double_add (n : Nat) : double n = n + n := by
       rw [double_succ, ih, Nat.succ_add n' (n' + 1), Nat.add_succ n' n']
 ```
 
-:::grade
-`GRADE_THEOREM 1: double_add`
+:::gradeTheorem 1 "double_add"
 :::
 :::::
 
@@ -599,8 +595,7 @@ theorem double_mul (n : Nat) : double n = 2 * n := by
 ```
 :::::
 
-:::grade
-`GRADE_THEOREM 1: double_mul`
+:::gradeTheorem 1 "double_mul"
 :::
 
 # Using Code Actions to Generate Match Skeletons

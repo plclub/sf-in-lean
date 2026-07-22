@@ -95,14 +95,14 @@ Chapter sources — marker/structure repairs (found by the checks):
   terse-visible, matching its marking).
 - Five dropped `TERSE: ***` slide breaks (`-- TERSE:` with lost payload):
   Lists 64, Poly 939, Tactics 134 & 1324, IndProp 574.
-- Tactics: `theorem zero_leb` added next to `succ_leb_succ` (deleted from
+- Tactics: `theorem zero_ble` added next to `succ_ble_succ` (deleted from
   UsingLean 2026-06-29 but still used by IndProp).
 
 ## Remaining work
 
 ### IndProp (deferred — needs more work)
 
-Bare `LF.IndProp` **builds again** (was broken): `zero_leb` restored;
+Bare `LF.IndProp` **builds again** (was broken): `zero_ble` restored;
 `exists 0; rw [double_zero]` → `exists 0` (×2, `exists` closes the goal);
 `inversion contra` → `cases contra` on the empty relation (`inversion` can't
 handle a no-constructor indexed inductive).
