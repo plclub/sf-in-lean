@@ -119,11 +119,11 @@ example (A B C D : Prop) :
 
 ```
 
-`lia` can many of the cases of our old `Perm3_In` example.
+`lia` can solve many of the cases of our old `Perm3_In` example.
 ```lean
-theorem Perm3_In_better_with_lia : ∀ (α : Type) (x : α) (l₁ l₂ : List α),
+theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α) :
     Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
-  intros α x l₁ l₂ hPerm hIn
+  intros hPerm hIn
   induction hPerm
   case perm3_swap12 a b c =>
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
@@ -200,15 +200,11 @@ inductive silly : Nat → Prop where
 
 example : ∀ n, silly n → n ≠ 1 := by
   intro n h
-  cases h
+  inversion h
   . lia
   . contradiction
   . lia
 ```
-
-:::dev "Daniel Sainati (@dsainati1)"
-Replace `cases` with `inversion` when its issue is fixed
-:::
 
 ::::full
 Here, we can use the `lia` tactic to close some of these goals, but not all of them. So,
@@ -221,8 +217,8 @@ but not all, goals...
 ::::
 
 ```lean
-example : ∀ n, silly n → n ≠ 1 := by
-  intro n h
+example n : silly n → n ≠ 1 := by
+  intro h
   cases h <;> try lia
   -- `lia` doesn't know that `1 ∈ []` is impossible, but we can use `contradiction`
   contradiction
@@ -322,9 +318,8 @@ forever.
 ```lean
 /-- warning: declaration uses `sorry` -/
 #guard_msgs in
-example : ∀ (m n : Nat),
+example (m n : Nat) :
   m + n = n + m := by
-  intros m n
   /- Uncomment the next line to see the infinite loop occur.  You will
      then need to recomment it make Lean listen to you again. -/
   -- repeat rewrite [Nat.add_comm]
@@ -357,7 +352,7 @@ The `first` combinator applies the first successful tactic in a list:
 ::::
 
 ```lean
-example : ∀ n m, n * (m + 1) = n * m + n := by
+example n m : n * (m + 1) = n * m + n := by
   first | rfl | left | lia | induction n
 ```
 
@@ -422,7 +417,7 @@ Our `Perm3_In` example is getting quite short! But can we do better?
 # The `simp` Tactic
 
 ::::full
-The `simp` tactic is Lean's _simplifier_, and it is one of the most powerful
+The {tactic}`simp` tactic is Lean's _simplifier_, and it is one of the most powerful
 tools in the language. Given a set of lemmas -- some built-in, some user-provided --
 `simp` attempts to reduce a goal or hypothesis by rewriting with those lemmas
 as much as possible.
@@ -439,74 +434,61 @@ the same ones we'll give to `simp` for it to automatically
 solve goals involving those theorems.
 ::::
 
+We tag theorems with `@[simp]` to add them to the set of rules `simp` considers when
+simplifying a term.
+
 ```lean
 namespace simp_lemmas_example
-def add (n : Nat) (m : Nat) : Nat :=
-  match m with
-  | .zero => n
-  | .succ m' => .succ (add n m')
 
-theorem add_zero : ∀ n : Nat, add n .zero = n := by
-  intro n
-  rfl
+/- `add_zero` and `add_succ` are the `simp` lemmas for `+`. -/
+@[simp]
+theorem add_zero (n : Nat) : n + 0 = n := by rfl
 
-/- `add_zero` and `add_succ` are the `simp` lemmas for `add`. -/
-theorem add_succ : ∀ n m : Nat, add n (.succ m) = .succ (add n m) := by
-  intro n m
-  rfl
-end simp_lemmas_example
+@[simp]
+theorem add_succ (n m : Nat) : n + (m + 1) = (n + m) + 1:= by rfl
 ```
-
-When we tag theorems with `@[simp]`, like so:
-
-```lean
-attribute [simp] simp_lemmas_example.add_zero simp_lemmas_example.add_succ
-```
-
-then `simp` will add them to the list of rules it considers when simplifying a term.
 
 Instead of manually rewriting by the characterizing lemmas in the example below,
 `simp` does it automatically.
 
 ```lean
-open simp_lemmas_example in
-theorem add_succ_nested : ∀ n m : Nat,
-    add n (.succ (.succ m)) = .succ (.succ (add n m)) := by
-  intro n m
+theorem add_succ_nested (n m : Nat) :
+    n + (m + 1 + 1) = (n + m + 1)  + 1 := by
   simp
 ```
 
 ::::full
 If you know what theorems you want `simp` to use for your goal proof, you can write
 `simp [<theorems>]`. If you want `simp` to _only_ use those,
-you can use `simp only [<theorems>]`.
+you can use `simp only [<theorems>]`. Like with `dsimp`, you can also supply a
+definition to `simp` to simplify using that definition.
 ::::
 
 ::::terse
 `simp only` uses only the provided theorems:
 ::::
 ```lean
-open simp_lemmas_example in
-theorem add_succ_nested_2 : ∀ n m : Nat,
-    add n (.succ (.succ m)) = .succ (.succ (add n m)) := by
-  intro n m
-  simp only [Nat.succ_eq_add_one, add_succ]
+theorem add_succ_nested_2 (n m : Nat) :
+    n + (m + 1 + 1) = (n + m + 1)  + 1 := by
+  simp only [add_succ, add_zero]
 ```
 
 If you want to know what `simp` is doing, you can run `simp?`.
+
 ```lean
-open simp_lemmas_example in
-theorem add_succ_nested_3 : ∀ n m : Nat,
-    add n (.succ (.succ m)) = .succ (.succ (add n m)) := by
-  intro n m
+theorem add_succ_nested_3 (n m : Nat) :
+    n + (m + 1 + 1) = (n + m + 1) + 1 := by
   simp?
+
+end simp_lemmas_example
 ```
+
 ::::full
 In the InfoView, Lean will show you what `simp` is doing.
 You can click the `[apply]` button to replace `simp?` with
 the suggested replacement. You should always do this
 for your final proof scripts: `simp?` is helpful for writing
-a proof, but it should not show up in its final presentation.
+a proof, but it should not show up in the final script.
 
 `simp` is quite a powerful automated tactic, and is used
 heavily in real Lean developments. We can use `simp` to further simplify our
@@ -538,11 +520,11 @@ The `simp ... at ...` tactic simplifies in a hypothesis.
 ::::
 
 ```lean
-example : ∀ α x (l₁ l₂ l₃ : List α),
+example α x (l₁ l₂ l₃ : List α) :
   x ∈ l₁ ++ l₂ →
   x ∈ l₂ ++ l₃ ->
   x ∈ l₁ ++  l₃ ∨ x ∈ l₂ := by
-  intro α x l₁ l₂ l₃ h₁ h₂
+  intro h₁ h₂
 
   simp at h₁; simp at h₂; simp; lia
 ```
@@ -558,11 +540,11 @@ The `simp_all ...` tactic simplifies in all hypotheses and the goal.
 ::::
 
 ```lean
-example : ∀ α x (l₁ l₂ l₃ : List α),
+example α x (l₁ l₂ l₃ : List α) :
   x ∈ l₁ ++ l₂ →
   x ∈ l₂ ++ l₃ ->
   x ∈ l₁ ++  l₃ ∨ x ∈ l₂ := by
-  intro α x l₁ l₂ l₃ h₁ h₂
+  intro h₁ h₂
 
   simp_all; lia
 ```
@@ -575,6 +557,100 @@ theorem Perm3_In_shortest (α : Type) (x : α) (l₁ l₂ : List α) :
   intros hPerm hIn
   induction hPerm <;> simp_all <;> lia
 ```
+
+## Idiomatic `simp` Usage
+
+::::full
+Because `simp` is such a powerful tactic, the Lean community has developed a number of
+conventions surrounding appropriate usage. One such convention is around _terminal_ `simp` usage.
+
+A call to `simp` is considered terminal either when it is the last tactic used to close a goal
+or when it is followed only by other automatic (also called "flexible") tactics like
+`simp` or `lia`. In idiomatic Lean, all non-terminal uses of `simp` should use the `only`
+qualifier and specify exactly which lemmas are being used to simplify. Use of `simp`
+without `only` should only occur in terminal positions.
+
+In our example from before, the use of `simp` is terminal (and therefore okay)
+because it is followed only by other `simp`s and `lia`:
+
+```lean
+example α x (l₁ l₂ l₃ : List α) :
+  x ∈ l₁ ++ l₂ →
+  x ∈ l₂ ++ l₃ ->
+  x ∈ l₁ ++  l₃ ∨ x ∈ l₂ := by
+  intro h₁ h₂
+
+  simp at h₁; simp at h₂; simp; lia
+```
+
+On the other hand, if we instead decline to use `lia` and solve the goal manually,
+this example uses `simp` in a non-terminal position, and is considered poor style:
+::::
+
+::::terse
+Don't use `simp` without `only` unless you're closing a goal or following with a flexible tactic,
+like in this example below:
+::::
+
+```lean
+example α x (l₁ l₂ l₃ : List α) :
+  x ∈ l₁ ++ l₂ →
+  x ∈ l₂ ++ l₃ ->
+  x ∈ l₁ ++ l₃ ∨ x ∈ l₂ := by
+  intro h₁ h₂
+
+  simp at h₁; simp at h₂; simp
+  cases h₁
+  . left; left; assumption
+  . right; assumption
+```
+
+We can fix the style of this proof by changing the `simp`s to specify which theorems they are
+using to simplify:
+
+```lean
+example α x (l₁ l₂ l₃ : List α) :
+  x ∈ l₁ ++ l₂ →
+  x ∈ l₂ ++ l₃ ->
+  x ∈ l₁ ++ l₃ ∨ x ∈ l₂ := by
+  intro h₁ h₂
+
+  -- the * here targets all hypotheses and the goal
+  simp only [List.mem_append] at *
+  cases h₁
+  . left; left; assumption
+  . right; assumption
+```
+
+:::dev "Daniel Sainati (@dsainati1)"
+Chris suggested using Mathlib's `linter.flexible` option to enforce proper `simp` usage.
+How do we feel about adding a Mathlib dependency for this?
+:::
+
+Another rule around proper `simp` usage applies to the appropriate definition of `simp` lemmas.
+
+::::full
+All of the theorems marked with the `@[simp]` attribute in a Lean library compose the _simp set_
+for that library, and the result of simplifying an expression iteratively using all of the
+theorems in the simp set is the _simp normal form_ of that expression.
+
+It's important for the stability of proofs using `simp` that all the theorems in the simp set
+progress towards this normal form. Accordingly, library designers often first consider
+what they want that normal form to look like, and then structure their theorem definitions
+accordingly. As a simple example, the simp normal form for lists prefers to use the `++`
+notation instead of `List.append`, so there is a `simp` theorem `List.append_eq`
+whose type is `List.append_eq {α : Type u} {as bs : List α} : as.append bs = as ++ bs`.
+
+The `simp` normal form appears on the right, while the expression in need of simplification
+appears on the left. We can thus think of this theorem as simplifying from left to right.
+
+For our purposes, in this textbook and in later ones, we will take care to define our `simp`
+lemmas such that they respect this left-to-right simplification behavior.
+::::
+
+::::terse
+Appropriately defined `simp` lemmas simplify left to right.
+::::
 
 # The `trivial` tactic
 
@@ -725,8 +801,8 @@ need to add something?
 ::::
 
 ```lean
-theorem quiz : ∀ α (s: List α), ¬(s =~ EmptySet) := by
-  intro α s contra; inversion contra
+theorem quiz α (s: List α) : ¬(s =~ EmptySet) := by
+  intro contra; inversion contra
 ```
 
 ::::full
@@ -804,7 +880,7 @@ theorem regexp_match_of_list α (l : List α) : l =~ reg_exp_of_list l := by
     induction l with
     | nil => constructor
     | cons hd tl ih =>
-        simp [reg_exp_of_list]
+        simp only [reg_exp_of_list]
         have h : hd :: tl = [hd] ++ tl := by simp
         rw [h]
         constructor; constructor; assumption
@@ -868,11 +944,11 @@ GRADE_THEOREM 0.5: EmptySet_is_empty
 ::::exercise (rating := 1) (name := "MUnion'")
 
 ```lean
-theorem MUnion' : ∀ α (s : List α) (re₁ re₂ : RegExp α),
+theorem MUnion' α (s : List α) (re₁ re₂ : RegExp α) :
   s =~ re₁ ∨ s =~ re₂ →
   s =~ Union re₁ re₂ := by
   solution!
-    rintro α s re₁ re₂ (h | h)
+    rintro (h | h)
     . apply ExpMatch.mUnionL; assumption
     . apply ExpMatch.mUnionR; assumption
 ```
@@ -1027,17 +1103,17 @@ theorem re_not_empty_correct {α : Type} (re : RegExp α) :
     (∃ s, s =~ re) ↔ re_not_empty re = true := by
   induction re with
   | EmptySet =>
-    simp [re_not_empty]; intro s h; inversion h
+    simp only [re_not_empty, Bool.false_eq_true, iff_false, not_exists]; intro s h; inversion h
   | EmptyStr =>
-    simp [re_not_empty]; exists []; constructor
+    simp only [re_not_empty, iff_true]; exists []; constructor
   | Char x =>
-    simp [re_not_empty]; exists [x]; constructor
+    simp only [re_not_empty, iff_true]; exists [x]; constructor
   | App re₁ re₂ ih₁ ih₂ =>
-    simp [re_not_empty]
+    simp only [re_not_empty, Bool.and_eq_true]
     constructor
     · rintro ⟨s, h⟩
       inversion h with
-      | App s₁ s₂ h₁ h₂ =>
+      | mApp s₁ s₂ h₁ h₂ =>
         constructor
         . apply ih₁.mp; exists s₁
         . apply ih₂.mp; exists s₂
@@ -1046,7 +1122,7 @@ theorem re_not_empty_correct {α : Type} (re : RegExp α) :
       obtain ⟨s₂, hs₂⟩ := ih₂.mpr h₂
       exists (s₁ ++ s₂); constructor <;> assumption
   | Union re₁ re₂ ih₁ ih₂ =>
-    simp [re_not_empty]
+    simp only [re_not_empty, Bool.or_eq_true]
     constructor
     · rintro ⟨s, h⟩
       inversion h with
@@ -1056,7 +1132,7 @@ theorem re_not_empty_correct {α : Type} (re : RegExp α) :
       · obtain ⟨s, hs⟩ := ih₁.mpr h₁; exists s; constructor; assumption
       · obtain ⟨s, hs⟩ := ih₂.mpr h₂; exists s; apply ExpMatch.mUnionR; assumption
   | Star re _ =>
-      simp [re_not_empty]; exists []; constructor
+      simp only [re_not_empty, iff_true]; exists []; constructor
 ```
 :::
 ::::
@@ -1131,10 +1207,10 @@ theorem star_app α (s₁ s₂ : List α) (re : RegExp α) :
   -- `heq` is contradictory in most cases, allowing us to conclude immediately via `contradiction`
   induction h₁ <;> try contradiction
   -- The interesting cases are those that correspond to `Star`
-  case mStar0 _ => intro h₂; simp; exact h₂
+  case mStar0 _ => intro h₂; simp only [List.nil_append]; exact h₂
   case mStarApp _ _ _ _ _ _ ih₂ =>
     injections heq; subst heq
-    intro h₂; simp
+    intro h₂; simp only [List.append_assoc]
     apply ExpMatch.mStarApp
     . assumption
     . apply ih₂ <;> trivial
@@ -1163,7 +1239,8 @@ theorem MStar'' α (s : List α) (re : RegExp α) :
     case mStarApp s₁ s₂ re h₁ h₂ ih₁ ih₂ =>
       injections heq; subst heq
       obtain ⟨ss, hfold, hall⟩ := ih₂ rfl
-      exists (s₁ :: ss); simp; rw [←hfold]
+      exists (s₁ :: ss);
+      simp only [List.foldr_cons, List.mem_cons, forall_eq_or_imp]; rw [←hfold]
       repeat
         constructor
         trivial
@@ -1221,13 +1298,20 @@ theorem pumping_constant_0_false {α : Type} (re : RegExp α)
 ```
 
 Next, it is useful to define an auxiliary function that repeats a
-string (appends it to itself) some number of times.
+string (appends it to itself) some number of times. Note
+how we define `simp` lemmas for `napp` to go with its definition.
 
 ```lean
 def napp {α : Type} (n : Nat) (l : List α) : List α :=
   match n with
   | 0 => []
   | n' + 1 => l ++ napp n' l
+
+@[simp]
+theorem napp_zero {α : Type} (l : List α) : napp 0 l = [] := by rfl
+
+@[simp]
+theorem napp_succ {α : Type} (n : Nat) (l : List α) : napp (n + 1) l = l ++ napp n l := by rfl
 ```
 
 These auxiliary lemmas might also be useful in your proof of the
@@ -1238,16 +1322,16 @@ pumping lemma.
 theorem napp_plus {α : Type} (n m : Nat) (l : List α) :
     napp (n + m) l = napp n l ++ napp m l := by
   induction n with
-  | zero => simp [napp]
-  | succ n ih => simp [Nat.succ_add, napp, ih]
+  | zero => simp
+  | succ n ih => rw [Nat.succ_add]; simp [ih]
 
 theorem napp_star {α : Type} (m : Nat) (s₁ s₂ : List α) (re : RegExp α)
     (hs1 : s₁ =~ re) (hs₂ : s₂ =~ RegExp.Star re) :
     napp m s₁ ++ s₂ =~ RegExp.Star re := by
   induction m with
-  | zero => simp [napp]; exact hs₂
+  | zero => simp only [napp_zero, List.nil_append]; trivial
   | succ m ih =>
-    simp only [napp]
+    simp only [napp_succ]
     rw [List.append_assoc]
     apply ExpMatch.mStarApp <;> trivial
 ```
@@ -1336,14 +1420,14 @@ theorem weak_pumping_app {α : Type}
           simp only [List.append_assoc]
           constructor
           . assumption
-          . simp at h₃
+          . simp only [List.append_assoc] at h₃
             assumption
 ```
 ::::
 
 ::::exercise (rating := 3) (name := "weak_pumping_union_l")
 ```lean
-theorem weak_pumping_union_l :  ∀ {α : Type} (s₁ : List α) (re₁ re₂ : RegExp α),
+theorem weak_pumping_union_l  {α : Type} (s₁ : List α) (re₁ re₂ : RegExp α) :
   s₁ =~ re₁ →
   (pumpingConstant re₁ ≤ s₁.length →
     ∃ s₂ s₃ s₄ : List α,
@@ -1355,7 +1439,7 @@ theorem weak_pumping_union_l :  ∀ {α : Type} (s₁ : List α) (re₁ re₂ : 
     s₁ = s₀ ++ s₂ ++ s₃ ∧
     s₂ ≠ [ ] ∧
     (∀ m : Nat, s₀ ++ napp m s₂ ++ s₃ =~ Union re₁ re₂) := by
-  intro α s₁ re₁ re₂ Hmatch IH Hlen
+  intro Hmatch IH Hlen
   have H : pumpingConstant re₁ ≤ s₁.length := by
     solution!
       simp [pumpingConstant] at Hlen
@@ -1428,7 +1512,7 @@ theorem weak_pumping_star_zero {α : Type} (re : RegExp α) :
 
 ::::exercise (rating := 5) (name := "weak_pumping_star_app")
 ```lean
-theorem weak_pumping_star_app : ∀ {α : Type}  (s₁ s₂ : List α) (re : RegExp α),
+theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α) :
   s₁ =~ re →
   s₂ =~ .Star re →
   (pumpingConstant re ≤ List.length s₁ →
@@ -1446,7 +1530,7 @@ theorem weak_pumping_star_app : ∀ {α : Type}  (s₁ s₂ : List α) (re : Reg
     s₁ ++ s₂ = s₀ ++ s₃ ++ s₄ ∧
     s₃  ≠ [ ] ∧
     (∀ m : Nat, s₀ ++ napp m s₃ ++ s₄ =~ .Star re)  := by
-  intro T s₁ s₂ re hmatch₁ hmatch₂ ih₁ ih₂ Hlen
+  intro hmatch₁ hmatch₂ ih₁ ih₂ Hlen
   rw [app_length] at *
   obtain Hs1len0 | ⟨s1len, Hs1re1⟩ | Hs1re1 :
     (s₁.length = 0
@@ -1471,7 +1555,7 @@ theorem weak_pumping_star_app : ∀ {α : Type}  (s₁ s₂ : List α) (re : Reg
       have Hs1nil : s₁ = [] := by
         cases s₁; rfl; contradiction
       subst Hs1nil
-      simp at Hlen
+      simp only [List.length_nil, Nat.zero_add] at Hlen
       apply ih₂; apply Hlen
   . solution!
       exists []; exists s₁; exists s₂
