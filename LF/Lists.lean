@@ -367,9 +367,9 @@ def myRepeat (n count : Nat) : NatList :=
 Some simple facts about repetition:
 
 ```lean
-theorem repeat_zero v : myRepeat v 0 = [] := rfl
+theorem repeat_zero (v : Nat) : myRepeat v 0 = [] := rfl
 
-theorem repeat_succ v count : myRepeat v (count + 1) = v :: myRepeat v count := rfl
+theorem repeat_succ (v count : Nat) : myRepeat v (count + 1) = v :: myRepeat v count := rfl
 ```
 
 ::::full
@@ -438,8 +438,8 @@ theorem nil_append (l : NatList) : [] ++ l = l := rfl
 theorem cons_append (n : Nat) (l1 l2 : NatList) : (n::l1) ++ l2 = n :: (l1 ++ l2) := rfl
 
 example : [1, 2, 3] ++ [4, 5] = [1, 2, 3, 4, 5] := by rfl
-example : ([] : NatList) ++ [4, 5] = [4, 5] := by rfl
-example : [1, 2, 3] ++ ([] : NatList) = [1, 2, 3] := by rfl
+example : [] ++ [4, 5] = [4, 5] := by rfl
+example : [1, 2, 3] ++ [] = [1, 2, 3] := by rfl
 ```
 
 :::dev "One An (meluge)" NOW
@@ -503,9 +503,9 @@ def hd (default : Nat) (l : NatList) : Nat :=
 Basic theorems about how `hd` behaves:
 
 ```lean
-theorem hd_cons h x (t : NatList) : (h :: t).hd x = h := by rfl
+theorem hd_cons (h x : Nat) (t : NatList) : (h :: t).hd x = h := by rfl
 
-theorem hd_nil x : [].hd x = x := by rfl
+theorem hd_nil (x : Nat) : [].hd x = x := by rfl
 
 def tl (l : NatList) : NatList :=
   match l with
@@ -516,7 +516,7 @@ def tl (l : NatList) : NatList :=
 Basic theorems about how `tl` behaves:
 
 ```lean
-theorem tl_cons h (t : NatList) : (h :: t).tl = t := by rfl
+theorem tl_cons (h : Nat) (t : NatList) : (h :: t).tl = t := by rfl
 
 theorem tl_nil : [].tl = [] := by rfl
 
@@ -538,10 +538,18 @@ def foo (n : Nat) : NatList :=
 
 ### Exercises
 
+:::instructors
+Each exercise comes with non-graded examples followed by graded tests.
+We show how to rewrite with the lemmas explicitly in the first example and the fact that one can just use `rfl` in the second (this is only visible in the solution because it would not type-check otherwise).
+The point of the graded tests is nearly always to be an `rfl` proof that relies on a correctly formulated definition.
+The characterizing lemmas are provided (as statements) but not graded.
+The student is expected to also use `rfl` as it's the easiest, and most idiomatic solution.
+:::
+
 ::::::full
 :::::exercise (rating := 2) (name := "list_funs")
 Complete the definitions of `nonZeros`, `oddMembers`, and
-`countOddMembers` below. Have a look at the tests to understand
+`countOddMembers` below. Have a look at the lemmas and examples to understand
 what these functions should do.
 
 ```lean
@@ -552,12 +560,7 @@ def nonZeros (l : NatList) : NatList := solution!(
       match h with
       | 0 => nonZeros t
       | _ + 1 => h :: (nonZeros t))
-
-example : nonZeros [0, 1, 0, 2, 3, 0, 0] = [1, 2, 3] := solution!(by rfl)
 ```
-
-:::gradeTheorem "0.5" "NatList.test_nonZeros"
-:::
 
 The following lemmas should hold about your definition
 
@@ -566,9 +569,21 @@ theorem nonZeros_cons_zero (t : NatList) :
   nonZeros (0 :: t) = nonZeros t := solution!(by rfl)
 theorem nonZeros_nil :
   nonZeros [] = [] := solution!(by rfl)
-theorem nonZeros_cons_nonZero h (t : NatList) :
+theorem nonZeros_cons_nonZero (h : Nat) (t : NatList) :
   nonZeros ((h + 1) :: t) = (h + 1) :: nonZeros t := solution!(by rfl)
 
+theorem test_nonZeros : nonZeros [0, 1, 0] = [1] := by
+  solution!
+    rw [nonZeros_cons_zero]
+    rw [nonZeros_cons_nonZero]
+    rw [nonZeros_cons_zero]
+    rw [nonZeros_nil]
+```
+
+:::gradeTheorem "0.5" "NatList.test_nonZeros"
+:::
+
+```lean
 def oddMembers (l : NatList) : NatList := solution!(
   match l with
   | [] => []
@@ -588,20 +603,38 @@ theorem oddMembers_cons_not_odd (x : Nat) (l : NatList) (h : x.odd = false) :
     oddMembers (x :: l) = oddMembers l := by
   solution!
     rw [oddMembers_cons, h, cond_false]
+```
 
+Now, we can prove that `oddMembers [1, 2]` returns `[1]` using the lemmas:
+
+```lean
 example : oddMembers [1, 2] = [1] := by
-  rw [oddMembers_cons_odd _ _ rfl]
-  rw [oddMembers_cons_not_odd _ _ rfl]
-  rw [oddMembers_nil]
+  rw [oddMembers_cons_odd]
+  · rw [oddMembers_cons_not_odd]
+    · rw [oddMembers_nil]
+    · rw [Nat.odd_def]
+      rw [even_succ, even_succ, even_zero, Bool.not_true, Bool.not_false, Bool.not_true]
+  · rw [Nat.odd, even_succ, even_zero, Bool.not_true, Bool.not_false]
+```
 
-theorem test_oddMembers : oddMembers [0, 1, 2, 3, 0] = [1, 3] := by
-  solution!
-    rw [oddMembers_cons_not_odd _ _ rfl]
-    rw [oddMembers_cons_odd _ _ rfl]
-    rw [oddMembers_cons_not_odd _ _ rfl]
-    rw [oddMembers_cons_odd _ _ rfl]
-    rw [oddMembers_cons_not_odd _ _ rfl]
-    rw [oddMembers_nil]
+This gets pretty verbose quite fast, however we can use `rfl` to deal with subgoals such as `Nat.odd 2 = false`:
+
+```lean
+example : oddMembers [1, 2] = [1] := by
+  rw [oddMembers_cons_odd]
+  · rw [oddMembers_cons_not_odd]
+    · rw [oddMembers_nil]
+    · rfl
+  · rfl
+```
+
+In fact, as the entire proof is just plain computation, it can be done with a single `rfl`.
+This is possible because all of the elements and lists are concrete -- there are no variables involved.
+
+```lean
+example : oddMembers [1, 2] = [1] := solution!(by rfl)
+
+theorem test_oddMembers : oddMembers [0, 1, 2, 3, 0] = [1, 3] := solution!(by rfl)
 ```
 
 :::gradeTheorem "0.5" "NatList.test_oddMembers"
@@ -621,24 +654,17 @@ example : countOddMembers [0, 1, 2, 3, 0] = 2 := by
   rw [test_oddMembers]
   rw [length_cons, length_cons, length_nil]
 
-example : countOddMembers [0, 2, 4] = 0 := by
-  solution!
-    rw [countOddMembers_def]
-    rw [oddMembers_cons_not_odd _ _ rfl]
-    rw [oddMembers_cons_not_odd _ _ rfl]
-    rw [oddMembers_cons_not_odd _ _ rfl]
-    rw [oddMembers_nil]
-    rw [length_nil]
+example : countOddMembers [0, 1, 2, 3, 0] = 2 := solution!(by rfl) -- rfl
 
-example : countOddMembers [] = 0 := by
-  solution!
-    rw [countOddMembers_def, oddMembers_nil, length_nil]
+theorem NatList.test_countOddMembers1 : countOddMembers [0, 2, 4] = 0 := solution!(by rfl)
+
+theorem NatList.test_countOddMembers2 : countOddMembers [] = 0 := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" "NatList.test_countOddMembers2"
+:::gradeTheorem "0.5" "NatList.test_countOddMembers1"
 :::
 
-:::gradeTheorem "0.5" "NatList.test_countOddMembers3"
+:::gradeTheorem "0.5" "NatList.test_countOddMembers2"
 :::
 :::::
 
@@ -659,22 +685,22 @@ def alternate (l1 l2 : NatList) : NatList := solution!(
   | _, [] => l1
   | h1 :: t1, h2 :: t2 => h1 :: h2 :: alternate t1 t2)
 
-example : alternate [1, 2, 3] [4, 5, 6] = [1, 4, 2, 5, 3, 6] := solution!(by rfl)
+theorem NatList.test_alternate1 : alternate [1, 2, 3] [4, 5, 6] = [1, 4, 2, 5, 3, 6] := solution!(by rfl)
 ```
 
 :::gradeTheorem 1 "NatList.test_alternate1"
 :::
 
 ```lean
-example : alternate [1] [4, 5, 6] = [1, 4, 5, 6] := solution!(by rfl)
+theorem NatList.test_alternate2 : alternate [1] [4, 5, 6] = [1, 4, 5, 6] := solution!(by rfl)
 ```
 
 :::gradeTheorem 1 "NatList.test_alternate2"
 :::
 
 ```lean
-example : alternate [1, 2, 3] [4] = [1, 4, 2, 3] := solution!(by rfl)
-example : alternate ([] : NatList) [20, 30] = [20, 30] := solution!(by rfl)
+theorem NatList.test_alternate3 : alternate [1, 2, 3] [4] = [1, 4, 2, 3] := solution!(by rfl)
+theorem NatList.test_alternate4 : alternate [] [20, 30] = [20, 30] := solution!(by rfl)
 ```
 
 :::gradeTheorem 1 "NatList.test_alternate4"
@@ -683,238 +709,116 @@ example : alternate ([] : NatList) [20, 30] = [20, 30] := solution!(by rfl)
 
 ::::::
 
-## Bags via Lists
-
-::::full
-A `bag` (or `multiset`) is like a set, except that each element
-can appear multiple times rather than just once.  One way of
-representing a bag of numbers is as a list.  The following definition
-introduces a new type, `Bag`, as an abbreviation for `NatList`.
-
-We define `Bag` as its own new definition, so it needs an API so that we can work with it.
-Even though it's equal to `NatList`, tactics that operate solely on syntax, like `rw` and `dsimp`, can't see this fact.
-Therefore, we need to avoid using `[]` and `::` in `Bag`'s API.
-::::
-
-
-```lean
-def Bag := NatList
-
-namespace Bag
-```
-
-::::full
-We define an "empty bag" and "adding an element to a bag" separately and express the bag's API using these definitions instead of `[]` and `::`.
-The implementation body of the definitions can freely mix these up because, ideally, they are unfolded only in the proofs of their characterizing lemmas.
-
-When working with a new definition encapsulating an inductive type, it's convenient to declare its constructors with a `@[match_pattern]` attribute.
-The attribute lets us use the name of the constructor in match arms.
-For example, we define the empty bag with the attribute so that the `match` expression in `is_empty` can be written as
-```
-match s with
-| empty => true
-| _ => false
-```
-instead of
-```
-match s with
-| [] => true
-| _ => false
-```
-although the latter style also works.
-::::
-
-```lean
-@[match_pattern]
-def empty : Bag := []
-
-theorem empty_def : empty = [] := rfl
-
-def is_empty (s : Bag) : Bool :=
-  match s with
-  | empty => true
-  | _ => false
-```
-
-:::dev "Niklas Halonen (xhalo32)" PotentialImprovement
-Do we want to define an induction principle for `Bag` so that it (hopefully) doesn't expose the constructors of `NatList`?
-:::
+## Counting
 
 ::::::full
-:::::exercise (rating := 3) (name := "bag_functions")
-Complete the following definitions for the functions `add`, `count`,
-`sum`, and `member` and prove the lemmas and examples about them.
+:::::exercise (rating := 1) (name := "counting")
+Define a `count` function for {name}`NatList`s that counts the number of times an element `v` appears in the list.
 
 ```lean
-@[match_pattern]
-def add (v : Nat) (s : Bag) : Bag := solution!(v :: s)
-
-theorem add_def {v : Nat} {s : Bag} : s.add v = v :: s := solution!(by rfl)
-
-def count (v : Nat) (s : Bag) : Nat := solution!(
-  match s with
-  | empty => 0
-  | add h t => bif v == h then (count v t) + 1 else count v t)
+def count (v : Nat) (l : NatList) : Nat := solution!(
+  match l with
+  | [] => 0
+  | h :: t => bif v == h then (count v t) + 1 else count v t)
 ```
 
-```lean -show
-@[elab_as_elim, induction_eliminator]
-theorem inductionOn
-    {motive : Bag → Prop}
-    (s : Bag)
-    (empty : motive Bag.empty)
-    (add : ∀ n t, motive t → motive (Bag.add n t)) :
-    motive s := by
-  induction s with
-  | nil => exact empty
-  | cons n t ih =>
-    have h : motive (Bag.add n t) := add n t ih
-    rw [add_def] at h
-    exact h
-```
-
-These lemmas should hold about your definition.
+Now, prove these lemmas which should hold about your definition.
 
 ```lean
-theorem count_empty {x : Nat} : count x empty = 0 := solution!(by rfl)
+theorem count_nil {x : Nat} : count x [] = 0 := solution!(by rfl)
 
-theorem count_add_def {v h : Nat} {s : Bag} :
-    count v (add h s) = bif v == h then (count v s) + 1 else count v s := solution!(by rfl)
+theorem count_cons_def {v h : Nat} {t : NatList} :
+    count v (h :: t) = bif v == h then (count v t) + 1 else count v t := solution!(by rfl)
 
-theorem count_add_same {v₁ v₂ : Nat} {s : Bag} (h : (v₁ == v₂) = true) :
-    count v₁ (add v₂ s) = count v₁ s + 1 := by
+theorem count_cons_same {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = true) :
+    count v₁ (v₂ :: t) = count v₁ t + 1 := by
   solution!
-    rw [count_add_def, h, cond_true]
+    rw [count_cons_def, h, cond_true]
 
-theorem count_add_self {v : Nat} {s : Bag} :
-    count v (add v s) = count v s + 1 := by
-  rw [count_add_same]
-  rw [Nat.beq_eq_true_eq]
-
-theorem count_add_diff {v₁ v₂ : Nat} {s : Bag} (h : (v₁ == v₂) = false) :
-    count v₁ (add v₂ s) = count v₁ s := by
+theorem count_cons_diff {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = false) :
+    count v₁ (v₂ :: t) = count v₁ t := by
   solution!
-    rw [count_add_def, h, cond_false]
+    rw [count_cons_def, h, cond_false]
 
-example : count 1 (add 1 empty) = 1 := by
-  rw [count_add_self]
-  rw [count_empty]
+example : count 1 [1] = 1 := by
+  rw [count_cons_same rfl]
+  rw [count_nil]
 
-example : count 2 (add 2 (add 2 empty)) = 2 := by
-  rw [count_add_self]
-  rw [count_add_self]
-  rw [count_empty]
+example : count 2 [2, 2] = 2 := solution!(by rfl) -- rfl
 
-example : count 1 (add 1 (add 1 (add 4 empty))) = 2 := by
-  solution!
-    rw [count_add_self]
-    rw [count_add_self]
-    rw [count_add_diff rfl]
-    rw [count_empty]
+theorem NatList.test_count1 : count 1 [1, 1, 4] = 2 := solution!(by rfl)
 
-example : count 5 (add 1 (add 1 (add 4 empty))) = 0 := by
-  solution!
-    rw [count_add_diff rfl]
-    rw [count_add_diff rfl]
-    rw [count_add_diff rfl]
-    rw [count_empty]
+theorem NatList.test_count2 : count 5 [1, 1, 4] = 0 := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" "Bag.test_count1"
+:::gradeTheorem "0.5" "NatList.test_count1"
 :::
-
-:::gradeTheorem "0.5" "Bag.test_count2"
-:::
-
-All these proofs can be completed with `rfl`.
-
-```lean
-example : count 1 (add 1 (add 2 (add 3 (add 1 (add 4 (add 1 empty)))))) = 3 := solution!(by rfl)
-example : count 6 (add 1 (add 2 (add 3 (add 1 (add 4 (add 1 empty)))))) = 0 := solution!(by rfl)
-```
 
 :::gradeTheorem "0.5" "NatList.test_count2"
 :::
+:::::
 
-Multiset `sum` is similar to set `union`: `sum a b` contains all
-the elements of `a` and those of `b`.  (Mathematicians usually
-define `union` on multisets a little bit differently -- using max
-instead of sum -- which is why we don't call this operation
-`union`.)
-
-We've deliberately given you a header that does not give explicit
-names to the arguments.  Implement `sum` in terms of an
-already-defined function, without changing the header.
+Again, all these proofs could be completed with just `rfl`, because the proof is computationally straight-forward -- compute both sides of the equality and check if they are the same.
 
 ```lean
-def sum : Bag → Bag → Bag := solution!(app)
-
-example : count 1 (sum [1, 2, 3] [1, 4, 1]) = 3 := solution!(by rfl)
+example : count 1 [1, 2, 3, 1, 4, 1] = 3 := solution!(by rfl)
+example : count 6 [1, 2, 3, 1, 4, 1] = 0 := solution!(by rfl)
 ```
+::::::
 
-:::gradeTheorem "0.5" "NatList.test_sum1"
-:::
+## Membership
 
-```lean
-theorem sum_empty {s : Bag} : sum empty s = s := solution!(rfl)
-
-theorem sum_add {n : Nat} {s₁ s₂ : Bag} : sum (add n s₁) s₂ = add n (sum s₁ s₂) := solution!(rfl)
-```
+::::::full
+:::::exercise (rating := 1) (name := "membership")
 
 ```lean
-def member (v : Nat) (s : Bag) : Bool := solution!(
-  match s with
-  | empty => false
-  | add h t => bif v == h then true else member v t)
+def member (v : Nat) (l : NatList) : Bool := solution!(
+  match l with
+  | [] => false
+  | h :: t => bif v == h then true else member v t)
 
-theorem member_empty {v : Nat} : member v empty = false := solution!(by rfl)
+theorem member_nil {v : Nat} : member v [] = false := solution!(by rfl)
 
-theorem member_add_def {v h : Nat} {t : Bag} :
-  member v (add h t) = bif v == h then true else member v t := solution!(by rfl)
+theorem member_cons_def {v h : Nat} {t : NatList} :
+  member v (h :: t) = bif v == h then true else member v t := solution!(by rfl)
 
-theorem member_add_same {v₁ v₂ : Nat} {t : Bag} (h : (v₁ == v₂) = true) :
-    member v₁ (add v₂ t) = true := by
+theorem member_cons_same {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = true) :
+    member v₁ (v₂ :: t) = true := by
   solution!
-    rw [member_add_def, h, cond_true]
+    rw [member_cons_def, h, cond_true]
 
-theorem member_add_diff {v₁ v₂ : Nat} {t : Bag} (h : (v₁ == v₂) = false) :
-    member v₁ (add v₂ t) = member v₁ t := by
+theorem member_cons_diff {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = false) :
+    member v₁ (v₂ :: t) = member v₁ t := by
   solution!
-    rw [member_add_def, h, cond_false]
+    rw [member_cons_def, h, cond_false]
 
-example : member 1 (add 1 empty) = true := by
-  rw [member_add_same rfl]
+example : member 1 [1] = true := by
+  rw [member_cons_same rfl]
 
-example : member 2 (add 1 empty) = false := by
-  rw [member_add_diff rfl]
-  apply member_empty
+example : member 2 [1] = false := solution!(by rfl) -- rfl
 
-example : member 1 (add 1 (add 4 (add 1 empty))) = true := by
-  solution!
-    rw [member_add_same rfl]
+theorem NatList.test_member1 : member 1 [1, 4, 1] = true := solution!(by rfl)
 ```
 
 :::gradeTheorem "0.5" "NatList.test_member1"
 :::
 
 ```lean
-example : member 2 (add 1 (add 4 (add 1 empty))) = false := by
-  solution!
-    rw [member_add_diff rfl]
-    rw [member_add_diff rfl]
-    rw [member_add_diff rfl]
-    rw [member_empty]
+theorem NatList.test_member2 : member 2 [1, 4, 1] = false := solution!(by rfl)
 ```
 
 :::gradeTheorem "0.5" "NatList.test_member2"
 :::
 :::::
+::::::
 
-:::::exercise (rating := 3) (name := "bag_more_functions")
-Here are some more `bag` functions for you to practice with.
+## Removing
 
-When `removeOne` is applied to a bag without the number to
-remove, it should return the same bag unchanged.  (This exercise
+:::::exercise (rating := 3) (name := "removing")
+Here are some more `NatList` functions for you to practice with.
+
+When `removeOne` is applied to a list without the number to
+remove, it should return the same list unchanged.  (This exercise
 is optional, but students following the advanced track will need
 to fill in the definition of `removeOne` for a later
 exercise.)
@@ -926,226 +830,189 @@ confusing. Maybe just make this an exercise for everybody?
 :::
 
 ```lean
-def removeOne (v : Nat) (s : Bag) : Bag := solution!(
+def removeOne (v : Nat) (l : NatList) : NatList := solution!(
+  match l with
+  | [] => nil
+  | h :: t => bif v == h then t else h :: removeOne v t)
+
+theorem removeOne_nil {v : Nat} : removeOne v nil = nil := solution!(by rfl)
+
+theorem removeOne_cons_def {v h : Nat} {t : NatList} :
+  removeOne v (h :: t) = bif v == h then t else h :: removeOne v t := solution!(by rfl)
+
+theorem removeOne_cons_same {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = true) :
+    removeOne v₁ (v₂ :: t) = t := by
+  solution!
+    rw [removeOne_cons_def, h, cond_true]
+
+theorem removeOne_cons_diff {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = false) :
+    removeOne v₁ (v₂ :: t) = v₂ :: removeOne v₁ t := by
+  solution!
+    rw [removeOne_cons_def, h, cond_false]
+```
+
+```lean
+example : removeOne 5 [1, 5, 4] = [1, 4] := by
+  rw [removeOne_cons_diff rfl]
+  rw [removeOne_cons_same rfl]
+
+example : count 5 (removeOne 5 [1, 5, 4]) = 0 := solution!(by rfl) -- rfl
+
+theorem NatList.test_removeOne1 : count 4 (removeOne 5 [4, 5, 1, 4]) = 2 := solution!(by rfl)
+```
+
+:::gradeTheorem "0.5" "NatList.test_removeOne1"
+:::
+
+```lean
+theorem NatList.test_removeOne2 : count 5 (removeOne 5 [1, 5, 5, 4]) = 1 := solution!(by rfl)
+```
+
+:::gradeTheorem "0.5" "NatList.test_removeOne2"
+:::
+
+
+```lean
+def removeAll (v : Nat) (s : NatList) : NatList := solution!(
   match s with
-  | empty => empty
-  | add h t => bif v == h then t else add h (removeOne v t))
+  | [] => []
+  | h :: t => bif v == h then removeAll v t else h :: removeAll v t)
 
-theorem removeOne_empty {v : Nat} : removeOne v empty = empty := solution!(by rfl)
+theorem removeAll_nil {v : Nat} : removeAll v [] = [] := solution!(by rfl)
 
-theorem removeOne_add_def {v h : Nat} {t : Bag} :
-  removeOne v (add h t) = bif v == h then t else add h (removeOne v t) := solution!(by rfl)
+theorem removeAll_cons_def {v h : Nat} {t : NatList} :
+  removeAll v (h :: t) = bif v == h then removeAll v t else h :: removeAll v t := solution!(by rfl)
 
-theorem removeOne_add_same {v₁ v₂ : Nat} {t : Bag} (h : (v₁ == v₂) = true) :
-    removeOne v₁ (add v₂ t) = t := by
+theorem removeAll_cons_same {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = true) :
+    removeAll v₁ (v₂ :: t) = removeAll v₁ t := by
   solution!
-    rw [removeOne_add_def, h, cond_true]
+    rw [removeAll_cons_def, h, cond_true]
 
-theorem removeOne_add_diff {v₁ v₂ : Nat} {t : Bag} (h : (v₁ == v₂) = false) :
-    removeOne v₁ (add v₂ t) = add v₂ (removeOne v₁ t) := by
+theorem removeAll_cons_diff {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = false) :
+    removeAll v₁ (v₂ :: t) = v₂ :: removeAll v₁ t := by
   solution!
-    rw [removeOne_add_def, h, cond_false]
+    rw [removeAll_cons_def, h, cond_false]
 ```
 
 ```lean
-example : count 5 (removeOne 5 (add 1 (add 5 (add 4 empty)))) = 0 := by
-  rw [removeOne_add_diff rfl]
-  rw [removeOne_add_same rfl]
-  rw [count_add_diff rfl]
-  rw [count_add_diff rfl]
-  rw [count_empty]
+example : count 5 (removeAll 5 [5, 1]) = 0 := by
+  rw [removeAll_cons_same rfl]
+  rw [removeAll_cons_diff rfl]
+  rw [removeAll_nil]
+  rw [count_cons_diff rfl]
+  rw [count_nil]
 
-example : count 4 (removeOne 5 (add 4 (add 5 (add 1 (add 4 empty))))) = 2 := by
-  solution!
-    rw [removeOne_add_diff rfl]
-    rw [removeOne_add_same rfl]
-    rw [count_add_same rfl]
-    rw [count_add_diff rfl]
-    rw [count_add_same rfl]
-    rw [count_empty]
+example : count 5 (removeAll 5 [5, 5]) = 0 := solution!(by rfl) -- rfl
+
+theorem NatList.test_removeAll1 : count 4 (removeAll 5 [4, 5, 4]) = 2 := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" "NatList.test_removeOne3"
+:::gradeTheorem "0.5" "NatList.test_removeAll1"
 :::
 
 ```lean
-example : count 5 (removeOne 5 (add 1 (add 5 (add 5 (add 4 empty))))) = 1 := by
-  solution!
-    rw [removeOne_add_diff rfl]
-    rw [removeOne_add_same rfl]
-    rw [count_add_diff rfl]
-    rw [count_add_same rfl]
-    rw [count_add_diff rfl]
-    rw [count_empty]
+theorem NatList.test_removeAll2 : count 5 (removeAll 5 [2, 5, 5, 5, 1]) = 0 := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" "NatList.test_removeOne4"
+:::gradeTheorem "0.5" "NatList.test_removeAll2"
 :::
 
+:::::
 
+## Included
+
+:::instructors
+The following is also a valid definition because we don't provide `included_cons_def` in the student handout:
 ```lean
-def removeAll (v : Nat) (s : Bag) : Bag := solution!(
-  match s with
-  | empty => empty
-  | add h t => bif v == h then removeAll v t else add h (removeAll v t))
-
-theorem removeAll_empty {v : Nat} : removeAll v empty = empty := solution!(by rfl)
-
-theorem removeAll_add_def {v h : Nat} {t : Bag} :
-  removeAll v (add h t) = bif v == h then removeAll v t else add h (removeAll v t) := solution!(by rfl)
-
-theorem removeAll_add_same {v₁ v₂ : Nat} {t : Bag} (h : (v₁ == v₂) = true) :
-    removeAll v₁ (add v₂ t) = removeAll v₁ t := by
-  solution!
-    rw [removeAll_add_def, h, cond_true]
-
-theorem removeAll_add_diff {v₁ v₂ : Nat} {t : Bag} (h : (v₁ == v₂) = false) :
-    removeAll v₁ (add v₂ t) = add v₂ (removeAll v₁ t) := by
-  solution!
-    rw [removeAll_add_def, h, cond_false]
-```
-
-```lean
-example : count 5 (removeAll 5 (add 5 (add 5 empty))) = 0 := by
-  rw [removeAll_add_same rfl]
-  rw [removeAll_add_same rfl]
-  rw [removeAll_empty]
-  rw [count_empty]
-
-example : count 5 (removeAll 5 (add 5 (add 1 empty))) = 0 := by
-  rw [removeAll_add_same rfl]
-  rw [removeAll_add_diff rfl]
-  rw [removeAll_empty]
-  rw [count_add_diff rfl]
-  rw [count_empty]
-
-example : count 4 (removeAll 5 (add 4 (add 5 (add 4 empty)))) = 2 := by
-  solution!
-    rw [removeAll_add_diff rfl]
-    rw [removeAll_add_same rfl]
-    rw [removeAll_add_diff rfl]
-    rw [removeAll_empty]
-    rw [count_add_same rfl]
-    rw [count_add_same rfl]
-    rw [count_empty]
-```
-
-:::gradeTheorem "0.5" "NatList.test_removeAll3"
-:::
-
-```lean
-example : count 5 (removeAll 5 (add 2 (add 5 (add 5 (add 5 (add 1 empty)))))) = 0 := by
-  solution!
-    rw [removeAll_add_diff rfl]
-    rw [removeAll_add_same rfl]
-    rw [removeAll_add_same rfl]
-    rw [removeAll_add_same rfl]
-    rw [removeAll_add_diff rfl]
-    rw [removeAll_empty]
-    rw [count_add_diff rfl]
-    rw [count_add_diff rfl]
-    rw [count_empty]
-```
-
-:::gradeTheorem "0.5" "NatList.test_removeAll4"
-:::
-
-```lean
-def included (s₁ s₂ : Bag) : Bool := solution!(
+def included (s₁ s₂ : NatList) : Bool :=
   match s₁ with
-  | empty => true
-  | add h t => member h s₂ && included t (removeOne h s₂))
+  | [] => true
+  | h :: t => if member h s₂ then included t (removeOne h s₂) else false
+```
+:::
+
+:::::exercise (rating := 3) (name := "included")
+```lean
+def included (s₁ s₂ : NatList) : Bool := solution!(
+  match s₁ with
+  | [] => true
+  | h :: t => member h s₂ && included t (removeOne h s₂))
 ```
 
 :::dev "Niklas Halonen (xhalo32)" BeforeNextRelease
-Do we need to introduce Bool.true_and, Bool.false_and and maybe their mirror versions?
+Do we need to introduce Bool.true_and, Bool.false_and and maybe their mirror versions? There's also {name}`NatPlayground.Nat.andb_false` from Induction.lean...
 :::
 
 ```lean
-theorem included_empty {s₂ : Bag} : included empty s₂ = true := solution!(by rfl)
+theorem included_nil {s₂ : NatList} : included nil s₂ = true := solution!(by rfl)
+```
 
-theorem included_add_def {h : Nat} {t s₂ : Bag} :
-    included (add h t) s₂ = (member h s₂ && included t (removeOne h s₂)) := solution!(by rfl)
+:::solution
+```lean
+theorem included_cons_def {h : Nat} {t s₂ : NatList} :
+    included (cons h t) s₂ = (member h s₂ && included t (removeOne h s₂)) := solution!(by rfl)
+```
+:::
 
-theorem included_add_member {v : Nat} {s₁ s₂ : Bag} (h : member v s₂ = true) :
-    included (add v s₁) s₂ = included s₁ (removeOne v s₂) := by
+```lean
+theorem included_cons_member {v : Nat} {s₁ s₂ : NatList} (h : member v s₂ = true) :
+    included (cons v s₁) s₂ = included s₁ (removeOne v s₂) := by
   solution!
-    rw [included_add_def, h, Bool.true_and]
+    rw [included_cons_def, h, Bool.true_and]
 
-theorem included_add_nonmember {v : Nat} {s₁ s₂ : Bag} (h : member v s₂ = false) :
-    included (add v s₁) s₂ = false := by
+theorem included_cons_nonmember {v : Nat} {s₁ s₂ : NatList} (h : member v s₂ = false) :
+    included (cons v s₁) s₂ = false := by
   solution!
-    rw [included_add_def, h, Bool.false_and]
+    rw [included_cons_def, h, Bool.false_and]
 ```
 
 ```lean
-example : included (add 1 empty) (add 2 (add 1 empty)) = true := by
-  rw [included_add_member]
-  · apply included_empty
-  · rw [member_add_diff rfl]
-    rw [member_add_same rfl]
+example : included [1] [2, 1] = true := by
+  rw [included_cons_member]
+  · apply included_nil
+  · rw [member_cons_diff rfl]
+    rw [member_cons_same rfl]
+
+example : included [1, 1] [2, 1, 4, 1] = true := solution!(by rfl) -- rfl
 ```
 
 ```lean
-example : included (add 1 (add 2 empty)) (add 2 (add 1 (add 4 (add 1 empty)))) = true := by
-  solution!
-    rw [included_add_member]
-    · rw [included_add_member]
-      · apply included_empty
-      · rw [removeOne_add_diff rfl]
-        rw [member_add_same rfl]
-    · rw [member_add_diff rfl]
-      rw [member_add_same rfl]
+theorem NatList.test_included1 : included [1, 2] [2, 1, 4, 1] = true := solution!(by rfl)
 ```
 
 :::gradeTheorem "0.5" "NatList.test_included1"
 :::
 
 ```lean
-example : included (add 1 (add 2 (add 2 empty))) (add 2 (add 1 (add 4 (add 1 empty)))) = false := by
-  solution!
-    rw [included_add_member]
-    · rw [included_add_member]
-      · rw [included_add_nonmember]
-        rw [removeOne_add_diff rfl]
-        rw [removeOne_add_same rfl]
-        rw [removeOne_add_same rfl]
-        rw [member_add_diff rfl]
-        rw [member_add_diff rfl]
-        rw [member_empty]
-      · rw [removeOne_add_diff rfl]
-        rw [member_add_same rfl]
-    · rw [member_add_diff rfl]
-      rw [member_add_same rfl]
+theorem NatList.test_included2 : included [1, 2, 2] [2, 1, 4, 1] = false := solution!(by rfl)
 ```
 
 :::gradeTheorem "0.5" "NatList.test_included2"
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "add_inc_count") (manual := true)
-Adding a value to a bag should increase the value's count by one.
+:::dev "Niklas Halonen (xhalo32)" BeforeNextRelease
+The next exercise is merely a special case of `count_cons_same`.
+Is this on purpose?
+:::
+
+:::::exercise (rating := 2) (name := "count_cons_inc") (manual := true)
+Adding a value to a list should increase the value's count by one.
 State this as a theorem and prove it.
 
+:::solution
 ```lean
--- SOLUTION
-theorem add_inc_count (s : Bag) (v : Nat) :
-    count v (add v s) = (count v s) + 1 := by
-  rw [count_add_same]
+theorem count_cons_inc (s : NatList) (v : Nat) :
+    count v (v :: s) = (count v s) + 1 := by
+  rw [count_cons_same]
   exact BEq.refl v
--- END SOLUTION
 ```
+:::
 
 :::grade
-`GRADE_MANUAL 2: add_inc_count`
+`GRADE_MANUAL 2: count_cons_inc`
 :::
 :::::
-
-::::::
-
-```lean
-end Bag
-```
 
 # Reasoning About Lists
 
@@ -1161,8 +1028,19 @@ As with numbers, some proofs about list functions need only
 rewriting...
 ::::
 
+:::dev "Niklas Halonen (xhalo32)" BeforeNextRelease
+What's the point of `nil_app` as we already have `nil_append`?
+The text
+
+  ...because the `[]` is substituted into the "scrutinee" (the
+  expression whose value is being "scrutinized" by the match) in the
+  definition of `app`, allowing the match itself to be simplified.
+
+seems to be outdated as the definition of `app` is not unfolded.
+:::
+
 ```lean
-theorem nil_app (l : NatList) : ([] : NatList) ++ l = l := by rw [nil_append]
+theorem nil_app (l : NatList) : [] ++ l = l := by rw [nil_append]
 ```
 
 ::::full
@@ -1374,7 +1252,7 @@ theorem rev_cons h (t : NatList) : (h :: t).rev = t.rev ++ [h] := by rfl
 
 example : [1, 2, 3].rev = [3, 2, 1] := by rfl
 
-example : ([] : NatList).rev = [] := by rfl
+example : [].rev = [] := by rfl
 ```
 
 ::::full
@@ -1415,7 +1293,7 @@ will fail because the inductive hypothesis is not general enough.
 ```lean
 /-- warning: declaration uses `sorry` -/
 #guard_msgs in
-example (l : NatList) n :
+example (l : NatList) (n : Nat) :
     (l.rev ++ [n]).length = .succ l.rev.length := by
   induction l with
   | nil =>
@@ -1640,7 +1518,7 @@ More practice with lists:
 
 ```lean
 theorem app_nil_r (l : NatList) :
-    l ++ ([] : NatList) = l := by
+    l ++ [] = l := by
   solution!
     induction l with
     | nil => rw [nil_append]
@@ -1704,7 +1582,7 @@ theorem nonZeros_app (l1 l2 : NatList) :
     | cons n l1' ih =>
       cases n with
       | zero =>
-        rw [nonZeros_cons_zero, ←ih, cons_append, nonZeros_cons_zero]
+        rw [nonZeros_cons_zero, ← ih, cons_append, nonZeros_cons_zero]
       | succ n' =>
         rw [cons_append, nonZeros_cons_nonZero, nonZeros_cons_nonZero, ih, cons_append]
 ```
@@ -1730,20 +1608,25 @@ def eqblist (l1 l2 : NatList) : Bool := solution!(
 
 theorem eqblist_nil : eqblist [] [] = true := solution!(by rfl)
 
-theorem eqblist_cons_same h t1 t2 : eqblist (h :: t1) (h :: t2) = eqblist t1 t2 := by
-  solution!
-    dsimp [eqblist]
-    rw [BEq.refl, Bool.true_and]
+theorem eqblist_cons_def {h1 h2 : Nat} {t1 t2 : NatList} : eqblist (h1 :: t1) (h2 :: t2) = ((h1 == h2) && eqblist t1 t2) := solution!(by rfl)
 
-theorem eqblist_cons_diff h1 h2 t1 t2 : (h1 == h2) = false → eqblist (h1 :: t1) (h2 :: t2) = false := by
+theorem eqblist_cons_same {h1 h2 : Nat} {t1 t2 : NatList} (h : (h1 == h2) = true) :
+    eqblist (h1 :: t1) (h2 :: t2) = eqblist t1 t2 := by
   solution!
-    intro h
-    dsimp [eqblist]
-    rw [h, Bool.false_and]
+    rw [eqblist_cons_def, h, Bool.true_and]
+
+theorem eqblist_cons_diff {h1 h2 : Nat} {t1 t2 : NatList} (h : (h1 == h2) = false) :
+    eqblist (h1 :: t1) (h2 :: t2) = false := by
+  solution!
+    rw [eqblist_cons_def, h, Bool.false_and]
 
 example : eqblist [] [] = true := solution!(by rfl)
 example : eqblist [1, 2, 3] [1, 2, 3] = true := solution!(by rfl)
-example : eqblist [1, 2, 3] [1, 2, 4] = false := solution!(by rfl)
+example : eqblist [1, 2, 3] [1, 2, 4] = false := by
+  solution!
+    rw [eqblist_cons_same rfl]
+    rw [eqblist_cons_same rfl]
+    rw [eqblist_cons_diff rfl]
 
 theorem eqblist_refl (l : NatList) :
     eqblist l l = true := by
@@ -1751,7 +1634,7 @@ theorem eqblist_refl (l : NatList) :
     induction l with
     | nil => rw [eqblist_nil]
     | cons n l' ih =>
-      rw [eqblist_cons_same]
+      rw [eqblist_cons_same BEq.rfl]
       exact ih
 ```
 :::::
@@ -1761,20 +1644,20 @@ theorem eqblist_refl (l : NatList) :
 ## List Exercises, Part 2
 
 ```lean
-open Bag
+open NatList
 ```
 
 :::dev "Niklas Halonen (xhalo32)" PotentialImprovement
-Using `rfl` in the following `count_member_nonzero` exercise feels like defeq abuse.
+Using `rfl` to prove `Nat.ble 1 (count 1 l + 1) = true` in the following `count_member_nonzero` exercise feels like defeq abuse.
 However, `Nat.ble` doesn't seem to have characterizing lemmas:
 ```
 theorem _root_.Nat.ble_zero (m : Nat) : Nat.ble 0 m = true := rfl
 theorem _root_.Nat.ble_succ_zero (m : Nat) : Nat.ble (m + 1) 0 = false := rfl
 theorem _root_.Nat.ble_succ_succ (m n : Nat) (h : Nat.ble m n = true) : Nat.ble (m + 1) (n + 1) = true := h
-theorem count_member_nonzero (s : Bag) :
-    Nat.ble 1 (count 1 (add 1 s)) = true := by
+theorem count_member_nonzero (s : NatList) :
+    Nat.ble 1 (count 1 (1 :: s)) = true := by
   solution!
-    rw [count_add_same _ _ _ rfl]
+    rw [count_cons_same rfl]
     rw [Nat.ble_succ_succ]
     rw [Nat.ble_zero]
 theorem ble_n_Sn (n : Nat) :
@@ -1790,14 +1673,14 @@ theorem ble_n_Sn (n : Nat) :
 
 ::::::full
 Here are a couple of little theorems to prove about your
-definitions about bags above.
+definition above.
 
 :::::exercise (rating := 1) (name := "count_member_nonzero")
 ```lean
-theorem count_member_nonzero (s : Bag) :
-    Nat.ble 1 (count 1 (add 1 s)) = true := by
+theorem count_member_nonzero (l : NatList) :
+    Nat.ble 1 (count 1 (1 :: l)) = true := by
   solution!
-    rw [count_add_same] <;> rfl
+    rw [count_cons_same] <;> rfl
 ```
 :::::
 
@@ -1824,23 +1707,23 @@ definition of `removeOne` above.
      hack-free theorem looks like this: -/
 /- LATER: BCP 20: We'd need to find a way to get through the first
    lemma's proof without using features they don't know... -/
-theorem count_removeOne v s :
-    count v (removeOne v s) = (count v s).pred := by
-  induction s with
+theorem count_removeOne (v : Nat) (l : NatList) :
+    count v (removeOne v l) = (count v l).pred := by
+  induction l with
   | nil =>
-    rw [removeOne_empty, count_empty]
+    rw [removeOne_nil, count_nil]
     rfl
   | cons n l ih =>
   -- XXX they don't know about generalizing or casing on expressions yet !!!
     cases h : v == n with
     | false =>
-      rw [removeOne_add_diff _ _ _ h, count_add_diff _ _ _ h, ih, count_add_diff _ _ _ h]
+      rw [removeOne_cons_diff h, count_cons_diff h, ih, count_cons_diff h]
     | true =>
       -- they don't yet have tools for this case
-      rw [removeOne_add_same _ _ _ h, count_add_same _ _ _ h]
+      rw [removeOne_cons_same h, count_cons_same h]
       rw [Nat.pred_succ]
 
-theorem ble_pred_n_n n :
+theorem ble_pred_n_n (n : Nat) :
     Nat.ble n.pred n = true := by
   induction n with
   | zero => dsimp [Nat.ble]
@@ -1848,11 +1731,11 @@ theorem ble_pred_n_n n :
     rw [Nat.pred_succ]
     rw [ble_n_Sn]
 
-theorem remove_does_not_increase_count' (s : Bag) (n : Nat) :
+theorem remove_does_not_increase_count' (s : NatList) (n : Nat) :
     Nat.ble (count n (removeOne n s)) (count n s) = true := by
   induction s with
   | nil =>
-    rw [removeOne_empty, count_empty]
+    rw [removeOne_nil, count_nil]
     rfl
   | cons n' l ih =>
     rw [count_removeOne, ble_pred_n_n]
@@ -1862,27 +1745,27 @@ theorem remove_does_not_increase_count' (s : Bag) (n : Nat) :
 ::::::full
 :::::exercise (rating := 3) (name := "remove_does_not_increase_count") (level := Advanced)
 ```lean
-theorem remove_does_not_increase_count (s : Bag) :
-    Nat.ble (count 0 (removeOne 0 s)) (count 0 s) = true := by
+theorem remove_does_not_increase_count (l : NatList) :
+    Nat.ble (count 0 (removeOne 0 l)) (count 0 l) = true := by
   solution!
-    induction s with
-    | empty =>
-      rw [removeOne_empty, count_empty]
+    induction l with
+    | nil =>
+      rw [removeOne_nil, count_nil]
       rfl
-    | add n s' ih =>
+    | cons n s' ih =>
       cases n with
       | zero =>
-        rw [removeOne_add_same rfl, count_add_same rfl, ble_n_Sn]
+        rw [removeOne_cons_same rfl, count_cons_same rfl, ble_n_Sn]
       | succ n' =>
-        rw [removeOne_add_diff rfl, count_add_diff rfl, count_add_diff rfl]
+        rw [removeOne_cons_diff rfl, count_cons_diff rfl, count_cons_diff rfl]
         exact ih
 ```
 :::::
 
-:::::exercise (rating := 3) (name := "bag_count_sum") (manual := true)
-Write down an interesting theorem `bag_count_sum` about bags
-involving the functions `count` and `sum`, and prove it.
-(You may find that the difficulty of the proof depends on how you defined `count`!
+:::::exercise (rating := 3) (name := "count_app") (manual := true)
+Write down an interesting theorem `count_app` about lists
+involving the functions `count` and `app`, and prove it.
+(You may find that the difficulty of the proof depends on how you defined `count`!)
 
 :::dev "Andrew Tolmach (AndrewTolmach)" PotentialImprovement
 This is the obvious theorem, and everyone came up with
@@ -1908,10 +1791,10 @@ because it uses `cases` on a term rather than identifier.
 One can write `match hv : (v == h) with` instead of `cases hv : (v == h) with`, or even
 ```
 if hv : (v == h) then
-  rw [count_add_same _ _ _ hv, count_add_same _ _ _ hv, Nat.succ_add, ← ih]
+  rw [count_cons_same hv, count_cons_same hv, Nat.succ_cons, ← ih]
 else
   rw [Bool.not_eq_true] at hv
-  rw [count_add_diff _ _ _ hv, count_add_diff _ _ _ hv]
+  rw [count_cons_diff hv, count_cons_diff hv]
   exact ih
 ```
 in the following exercise.
@@ -1919,23 +1802,23 @@ in the following exercise.
 More information in the reference: <https://lean-lang.org/doc/reference/latest/find/?domain=Verso.Genre.Manual.section&name=pattern-matching>
 :::
 
+:::solution
 ```lean
--- SOLUTION
-theorem bag_count_sum (s₁ s₂ : Bag) (v : Nat) :
-    count v (sum s₁ s₂) = (count v s₁) + (count v s₂) := by
-  induction s₁ with
-  | empty =>
-    rw [sum_empty, count_empty, Nat.zero_add]
-  | add h s1' ih =>
-    rw [sum_add]
+theorem count_app (l₁ l₂ : NatList) (v : Nat) :
+    count v (l₁ ++ l₂) = (count v l₁) + (count v l₂) := by
+  induction l₁ with
+  | nil =>
+    rw [nil_append, count_nil, Nat.zero_add]
+  | cons h s1' ih =>
+    rw [cons_append]
     cases hv : (v == h) with
     | false =>
-      rw [count_add_diff hv, count_add_diff hv]
+      rw [count_cons_diff hv, count_cons_diff hv]
       exact ih
     | true =>
-      rw [count_add_same hv, count_add_same hv, Nat.succ_add, ← ih]
--- END SOLUTION
+      rw [count_cons_same hv, count_cons_same hv, Nat.succ_add, ← ih]
 ```
+:::
 :::::
 
 :::::exercise (rating := 3) (name := "involution_injective") (level := Advanced)
@@ -2064,7 +1947,7 @@ def hd_error (l : NatList) : NatOption := solution!(
   | [] => .none
   | h :: _ => .some h)
 
-example : hd_error ([] : NatList) = .none := solution!(by rfl)
+example : hd_error [] = .none := solution!(by rfl)
 example : hd_error [1] = .some 1 := solution!(by rfl)
 example : hd_error [5, 6] = .some 5 := solution!(by rfl)
 ```
