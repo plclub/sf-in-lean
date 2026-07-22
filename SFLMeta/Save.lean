@@ -861,6 +861,12 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
       let mut buf := appendBoth buf file (asModuleDoc s!"_Details:_ {summary}")
       buf := walkBlocks width file contents buf
       return buf
+    if name == ``Block.quiz then
+      -- A quiz is shown in every build product; label it so the reader of the
+      -- generated `.lean` can tell the question apart from surrounding prose.
+      let mut buf := appendBoth buf file (asModuleDoc "_Quiz:_")
+      buf := walkBlocks width file contents buf
+      return buf
     if name == ``Block.quizSolution then
       -- A quiz answer is elided from every generated `.lean` build product — it
       -- surfaces only in the HTML book, as a click-to-reveal button.  (The block
@@ -892,7 +898,7 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
           let body := String.intercalate "\n\n"
             (contents.toList.map (blockToText (width - 4)))
           return appendBoth buf file
-            (devNoteComment (devNoteLabel author urgency year "NOTE TO DEVELOPERS") body)
+            (devNoteComment (devNoteLabel author urgency year) body)
       return buf
     -- Unknown extension block: recurse into children as a best-effort.
     -- NB: :::instructors blocks carry no children (their bodies are dropped at
