@@ -153,6 +153,11 @@ We can add variables to the arithmetic expressions we had before simply
 by including one more constructor.  (This is a fresh `Aexp`, replacing
 the variable-free one from the _Slang_ chapter.)
 
+:::dev "Benjamin Pierce (bcpierce00)"
+That should be a live chapter link.
+:::
+
+
 ```lean
 inductive Aexp where
   | num (n : Nat)
