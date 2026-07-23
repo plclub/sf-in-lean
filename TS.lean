@@ -4,6 +4,7 @@ import SFLMeta.Save
 
 import TS.Intro
 import TS.Slang
+import TS.Smallstep
 
 import VersoManual
 
@@ -12,3 +13,4 @@ open Verso Genre Manual
 #doc (Manual) "Type Systems" =>
 {include TS.Intro}
 {include TS.Slang}
+{include TS.Smallstep}
