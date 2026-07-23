@@ -6,6 +6,7 @@ import LF.Basics
 import LF.Induction
 import LF.UsingLean
 import LF.Lists
+import LF.Typeclasses
 -- NB: bare (not-yet-versified) chapters must NOT be imported here once their
 -- Verso version is included below — both declare the same names.  They are
 -- built by `make check-bare-lean-chapters` instead.
@@ -13,6 +14,7 @@ import LF.Lists
 import LF.Poly
 import LF.Tactics
 import LF.LogicVerso
+import LF.IndPropVerso
 
 import VersoManual
 
@@ -24,9 +26,11 @@ open Verso Genre Manual
 -- comment syntax, so don't put comments after the includes.)
 #doc (Manual) "Logical Foundations" =>
 {include LF.Basics}
+{include LF.Typeclasses}
 {include LF.Induction}
 {include LF.UsingLean}
 {include LF.Lists}
 {include LF.Poly}
 {include LF.Tactics}
 {include LF.LogicVerso}
+{include LF.IndPropVerso}

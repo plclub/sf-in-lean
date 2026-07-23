@@ -740,7 +740,7 @@ and the `{lean}` inline-term role (`@[role lean]` on `leanInline`) under the
 constant `InlineLean.lean`.
 
 Our `SFLMeta.lean` override above shadows `InlineLean.lean` as a code block. In a
-document that does `open InlineLean hiding lean` (needed so the bare name `lean`
+document that does `import SFLMeta` (needed so the bare name `lean`
 resolves to *our* code block without ambiguity), `{lean}` therefore resolves to
 `SFLMeta.lean` — which has no role registered under it, so the role fails with
 "can be used as a code block … but is not registered as a role".
@@ -1071,7 +1071,11 @@ outside dependencies must be reconstructed from its own header `import`s: drop
 the framework imports (they build the book, not student code), re-emit the rest,
 and bundle the source of any that is a content prerequisite (not toolchain, not
 an emitted book chapter — e.g. the bare `LF.Maps`) under its own `lean_lib`. A
-bundled module is copied verbatim, so it must be plain (non-Verso) Lean.
+bundled module is copied verbatim, so it must be plain (non-Verso) Lean; a
+content prerequisite that is itself a Verso chapter of an earlier volume (e.g.
+`LF.Typeclasses` imported by `HL.Imp`) cannot be bundled this way and is instead
+walked and emitted like a native chapter via `emitSavedImpl`'s `crossVol`
+parameter (which also excludes it from this bundle).
 An import from an external package (e.g. `Batteries.CodeAction`) is re-emitted
 too, and the generated `lakefile.toml` gains a matching `[[require]]` pinned to
 the revision in the book's `lake-manifest.json`. -/
@@ -1171,10 +1175,26 @@ solutions stubbed), anything else the student form.
 the draft emitter passes `verify := false`, since its not-yet-graduated
 chapters are not expected to build standalone. -/
 private def emitSavedImpl (destSlug modPrefix variant : String)
+    (crossVol : List (String × Part Manual) := [])
     (verify : Bool := true) :
     Mode → Config → TraverseState → Part Manual → BuildLogT IO Unit :=
   fun _mode _cfg _state text => do
-    let buf : SaveBuffers := walkOuter (Text.fillWidthFor variant) modPrefix text ({} : SaveBuffers)
+    let width := Text.fillWidthFor variant
+    let mut buf : SaveBuffers := walkOuter width modPrefix text ({} : SaveBuffers)
+    -- Cross-volume Verso prerequisites (e.g. `LF.Typeclasses`, imported by
+    -- `HL.Imp`) are chapters of an *earlier* volume that a chapter here depends
+    -- on.  They are authored in Verso just like this volume's own chapters, so
+    -- they must go through the same transformation rather than be copied
+    -- verbatim (a Verso `#doc` file is not plain Lean and won't compile as a
+    -- bundled prerequisite).  Walk each into the buffer under its own volume
+    -- prefix, producing e.g. `LF/Typeclasses.lean` with the same import
+    -- preamble reconstruction and variant selection as a native chapter.  This
+    -- also adds the module to `chapterModules` below, which keeps it out of the
+    -- verbatim bundle; its prefix becomes an extra `lean_lib` (see `extraLibs`).
+    for (pre, part) in crossVol do
+      let chFile := chapterPath pre part
+      buf := appendBoth buf chFile s!"import {supportModuleName modPrefix}\n\n"
+      buf := walkSection width 1 chFile part buf
     let toolchain ← (IO.FS.readFile "lean-toolchain").toBaseIO >>= fun
       | .ok s => pure s
       | .error _ => pure "leanprover/lean4:v4.30.0-rc2\n"
@@ -1225,7 +1245,13 @@ private def emitSavedImpl (destSlug modPrefix variant : String)
         let preamble := imps.foldl (init := "") fun acc i => acc ++ "import " ++ i ++ "\n"
         let preamble := if preamble.isEmpty then "" else preamble ++ "\n"
         files := files.push (file, preamble ++ chosen)
-    let (bundleFiles, extraLibs) ← bundleLoop needsBundle seeds [] #[] #[]
+    let (bundleFiles, bundleLibs) ← bundleLoop needsBundle seeds [] #[] #[]
+    -- The cross-volume prerequisite chapters emitted above (under their own
+    -- volume prefix, e.g. `LF/Typeclasses.lean`) each need their prefix declared
+    -- as a `lean_lib` in the generated `lakefile.toml`, just like a verbatim
+    -- bundle does.
+    let extraLibs := crossVol.foldl (init := bundleLibs) fun acc (pre, _) =>
+      if acc.contains pre then acc else acc.push pre
     let allFiles := files ++ bundleFiles
     -- Chapters importing an external package (e.g. Batteries) need the
     -- extracted lakefile to `require` it, pinned to the book's own revision.
@@ -1242,15 +1268,20 @@ private def emitSavedImpl (destSlug modPrefix variant : String)
     writeProject dest toolchain modPrefix variant allFiles extraLibs pkgRequires
     if verify then buildProject dest variant
 
-/-- `ExtraStep` for the student build: solutions elided. -/
-def emitSavedStudent (vol : String) := emitSavedImpl vol.toLower vol "student"
+/-- `ExtraStep` for the student build: solutions elided.  `crossVol` lists any
+Verso chapters from earlier volumes that a chapter here imports (see
+`emitSavedImpl`), as `(volume-prefix, chapter-part)` pairs. -/
+def emitSavedStudent (vol : String) (crossVol : List (String × Part Manual) := []) :=
+  emitSavedImpl vol.toLower vol "student" crossVol
 
 /-- `ExtraStep` for the solutions build: solutions shown. -/
-def emitSavedSolutions (vol : String) := emitSavedImpl vol.toLower vol "solutions"
+def emitSavedSolutions (vol : String) (crossVol : List (String × Part Manual) := []) :=
+  emitSavedImpl vol.toLower vol "solutions" crossVol
 
 /-- `ExtraStep` for the terse build: solutions elided and `workinclass!`
 proofs stubbed to `sorry`. -/
-def emitSavedTerse (vol : String) := emitSavedImpl vol.toLower vol "terse"
+def emitSavedTerse (vol : String) (crossVol : List (String × Part Manual) := []) :=
+  emitSavedImpl vol.toLower vol "terse" crossVol
 
 /-- Like `emitSavedSolutions`/`emitSavedStudent` but writes to
 `_out/<destSlug>/…` while using `modPrefix` as the chapter module/path prefix.
