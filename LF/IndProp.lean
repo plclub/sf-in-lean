@@ -969,7 +969,7 @@ theorem ev_4'' : Ev 4 := by
 
 theorem ev_plus4 (n : Nat) (h : Ev n) : Ev (4 + n) := by
   rw [Nat.add_comm]
-  exact (Ev.ev_succ_succ _ (Ev.ev_succ_succ _ Hn))
+  exact (Ev.ev_succ_succ _ (Ev.ev_succ_succ _ h))
 
 -- FULL
 -- EX1 (ev_double)
