@@ -1,24 +1,9 @@
-import VersoManual
-import VersoManual.InlineLean
-import Illuminate
-import SFLMeta.Bnf
-import SFLMeta.Ignore
-import SFLMeta.Save
-import SFLMeta.Comment
-import SFLMeta.Exercise
-import SFLMeta.Grade
-import SFLMeta.Hide
-import SFLMeta.Instructors
-import SFLMeta.SlideBreak
-import SFLMeta.Solution
-import SFLMeta.Terse
+import SFLMeta
 
 import LF.IndProp
 
 open Verso.Genre Manual
 open SFLMeta
-
-open InlineLean hiding lean
 
 #doc (Manual) "Automation: More Automation" =>
 %%%
@@ -656,8 +641,10 @@ accordingly. As a simple example, the simp normal form for lists prefers to use 
 notation instead of `List.append`, so there is a `simp` theorem `List.append_eq`
 whose type is `List.append_eq {α : Type u} {as bs : List α} : as.append bs = as ++ bs`.
 
-The `simp` normal form appears on the right, while the expression in need of simplification
-appears on the left. We can thus think of this theorem as simplifying from left to right.
+In this case, the `simp` normal form appears on the right, while the expression in need of
+simplification appears on the left. We can thus think of this theorem as simplifying from left
+to right. Not every `simp` lemma in the standard library has a `simp` normal form on its right-hand
+side, but all make progress towards `simp` normal form when applied.
 
 For our purposes, in this textbook and in later ones, we will take care to define our `simp`
 lemmas such that they respect this left-to-right simplification behavior.
