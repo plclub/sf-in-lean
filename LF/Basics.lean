@@ -19,6 +19,8 @@ open SFLMeta
 
 open InlineLean hiding lean
 
+set_option pp.fieldNotation false
+
 #doc (Manual) "Basics: Functional Programming in Lean" =>
 %%%
 tag := "Basics"
@@ -1520,33 +1522,6 @@ Here's another rule we can use for `add`:
 
 ```lean
 theorem add_succ : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
-  intro n m
-  rfl
-```
-
-::::full
-You may notice stepping through the above proof that Lean's InfoView
-displays `n + (succ m)` instead as `n + m.succ` and `succ (n + m)` as
-`(n + m).succ`. These expressions are equivalent, but when printing constructors,
-Lean defaults to printing using _field notation_; that is, it prints the
-argument to the constructor first, followed by a dot, followed by the constructor name --
-as if the constructor were a field of its argument. In some cases this is convenient, but for
-natural numbers it is confusing, so we will disable this printing behavior for the `succ`
-constructor with this command:
-::::
-
-::::terse
-This command turns off some fancy printing that Lean does around the `succ` constructor:
-::::
-
-```lean
-attribute [pp_nodot] succ
-```
-
-Step through the proof below again and see how Lean's printing has changed.
-
-```lean
-theorem add_succ' : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
   intro n m
   rfl
 ```

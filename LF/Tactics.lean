@@ -162,10 +162,10 @@ Complete the following proof using only `intros` and `apply`.
 
 ```lean
 theorem silly_ex p :
-    (∀ n, even n = true → even (n + 1) = false) →
-    (∀ n, even n = false → odd n = true) →
-    even p = true →
-    odd (p + 1) = true := by
+    (∀ n, even n = true → (n + 1).even = false) →
+    (∀ n, even n = false → n.odd = true) →
+    p.even = true →
+    (p + 1).odd = true := by
   solution!
     intro eq1 eq2 eq3
     apply eq2; apply eq1; apply eq3
@@ -1706,7 +1706,7 @@ theorem succ_ble_succ (n m : Nat) : ((n + 1) ≤? (m + 1)) = (n ≤? m) := rfl
 ```
 
 :::dev "Claude" BeforeNextRelease
-Claude-generated note. 
+Claude-generated note.
 (BCP: Whoever reviews this part of the chapter next should read and delete it.)
 
 The `leb_*` → `ble_*` rename is now applied across
@@ -2009,7 +2009,7 @@ Proof.
   destruct m eqn:E.
   - reflexivity.
   - reflexivity.
-Qed. 
+Qed.
 ```
 ::::
 
@@ -2151,7 +2151,7 @@ this (with no `h:` on the `cases`)...
 #guard_msgs(warning) in
 example (n : Nat) :
     sillyfun1 n = true →
-    odd n = true := by
+    n.odd = true := by
   intro eq
   unfold sillyfun1 at eq
   cases (n == 3)
@@ -2174,13 +2174,13 @@ This is precisely what the
 :::
 
 :::terse
-Adding the `h:` qualifier saves this information so we can use it. 
+Adding the `h:` qualifier saves this information so we can use it.
 :::
 
 ```lean
 theorem sillyfun1_odd (n : Nat) :
     sillyfun1 n = true →
-    odd n = true := by
+    n.odd = true := by
   intro eq
   unfold sillyfun1 at eq
   cases h : (n == 3)
@@ -2551,9 +2551,9 @@ first checks whether every element in a list satisfies a given
 predicate:
 
 ```display
-forallb odd [1,3,5,7,9] = true
+forallb Nat.odd [1,3,5,7,9] = true
 forallb negb [false,false] = true
-forallb even [0,2,4,5] = false
+forallb Nat.even [0,2,4,5] = false
 forallb (beq 5) [] = true
 ```
 
@@ -2563,7 +2563,7 @@ satisfies a given predicate:
 ```display
 existsb (beq 5) [0,2,3,6] = false
 existsb (andb true) [true,true,false] = true
-existsb odd [1,0,0,0,0,3] = true
+existsb Nat.odd [1,0,0,0,0,3] = true
 existsb even [] = false
 ```
 
@@ -2579,9 +2579,9 @@ def forallb {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
   | [] => true
   | x :: l' => (test x) && (forallb test l'))
 
-example : forallb odd [1,3,5,7,9] = true := solution!(by rfl)
+example : forallb Nat.odd [1,3,5,7,9] = true := solution!(by rfl)
 example : forallb not [false,false] = true := solution!(by rfl)
-example : forallb even [0,2,4,5] = false := solution!(by rfl)
+example : forallb Nat.even [0,2,4,5] = false := solution!(by rfl)
 example : forallb (· == 5) [] = true := solution!(by rfl)
 
 def existsb {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
@@ -2591,8 +2591,8 @@ def existsb {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
 
 example : existsb (· == 5) [0,2,3,6] = false := solution!(by rfl)
 example : existsb (· && true) [true,true,false] = true := solution!(by rfl)
-example : existsb odd [1,0,0,0,0,3] = true := solution!(by rfl)
-example : existsb even [] = false := solution!(by rfl)
+example : existsb Nat.odd [1,0,0,0,0,3] = true := solution!(by rfl)
+example : existsb Nat.even [] = false := solution!(by rfl)
 
 def existsb' {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
   !(forallb (fun x => !(test x)) l))
@@ -2645,4 +2645,3 @@ theorem existsbF_existsb {α : Type} (test : α → Bool) (l : List α) :
     rw [ih]
 ```
 ::::
-

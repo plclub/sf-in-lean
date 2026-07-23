@@ -22,6 +22,8 @@ open SFLMeta
 
 open InlineLean hiding lean
 
+set_option pp.fieldNotation false
+
 #doc (Manual) "Induction: Proof by Induction" =>
 %%%
 tag := "Induction"

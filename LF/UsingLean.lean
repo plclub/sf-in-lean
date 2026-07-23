@@ -35,8 +35,6 @@ Chapter goals:
 Nats
 dsimp
 calc
-maybe simp annotations
-maybe typeclasses?
 :::
 
 :::instructors
@@ -509,48 +507,91 @@ those proofs to make your logic clear.
 ::::full
 Now that we've switched over to using Lean's standard library, we can
 redefine some of the functions from the last few chapters on `Nat`s.
+Note that for the built-in {name}`Nat` type, the patterns `0` and `n + 1` correspond to
+`zero` and `succ n`.
 
 Prove some of these theorems using the techniques we've discussed this chapter.
 ::::
 
-```lean
-def even (n : Nat) :=
-  match n with
-  | .zero           => true
-  | .succ .zero     => false
-  | .succ (.succ n) => even n
+::::terse
+Let's redefine some functions on Lean's `Nat`s and prove some theorems about them.
+::::
 
-def odd n := (not (even n))
+```lean
+def Nat.even (n : Nat) :=
+  match n with
+  | 0     => true
+  | 1     => false
+  | n + 2 => even n
+
+def Nat.odd n := !(even n)
 
 def eqb (n m : Nat) :=
   match n, m with
   | 0, 0             => true
-  | .succ _, 0
-  | 0, .succ _       => false
-  | .succ n, .succ m => eqb n m
+  | _ + 1, 0
+  | 0, _ + 1       => false
+  | n + 1, m + 1 => eqb n m
 
 def minustwo (n : Nat) : Nat :=
   match n with
-  | .zero            => .zero
-  | .succ (.zero)    => .zero
-  | .succ (.succ n') => n'
+  | 0    => .zero
+  | 1    => .zero
+  | n' + 2 => n'
 
-def double (n : Nat) : Nat :=
+def Nat.double (n : Nat) : Nat :=
   match n with
-  | .zero    => 0
-  | .succ n' => .succ (.succ (double n'))
+  | 0    => 0
+  | n' + 1 => double n' + 2
 ```
+
+::::full
+Note that we defined some of these functions in the `Nat` namespace. When we do this,
+something interesting happens to the way Lean's InfoView prints them. Take a look at
+the info view inside the proof of this thoerem (i.e., before the `rfl` tactic):
+
+```lean
+theorem even_add_three (n : Nat) : Nat.even (n + 3) = Nat.even (n + 1) := by
+  rfl
+```
+
+Instead of printing the goal the way we wrote it in the theorem statement, Lean
+prints `(n + 3).even = (n + 1).even`! This is an example of Lean's _field notation_,
+whereby Lean prints functions inside the namespace of a type _after_ their first argument,
+separated by a `.`. At first glance, this may appear similar to how object-oriented methods work,
+but it's important to note that it's purely a syntactic difference from the normal style
+we've seen so far. That is, `Nat.even n` and `n.even` are just different ways to write the exact
+same term.
+
+In previous chapters we disabled this notation by putting `set_option pp.fieldNotation false`
+at the top of each file, but from now on we will leave it enabled, since use of dot notation
+is common in idiomatic Lean developments. However, you can feel free to disable it
+if it's confusing you. Additionally, if you want to disable it only for a specific function
+or constructor, you can do so with `attribute [pp_nodot] <Name>`.
+
+As an example, observe the difference in how Lean prints the goal in the following two examples:
+
+```lean
+example (n m : Nat) : Nat.double (n + 0) = Nat.double n := by
+  rfl
+
+attribute [pp_nodot] Nat.double
+
+example (n m : Nat) : Nat.double (n + 0) = Nat.double n := by
+  rfl
+```
+::::
 
 :::::exercise (rating := 2) (name := "even_succ")
 ```lean
 theorem even_succ (n : Nat) :
-    even (.succ n) = !even n := by
+    (n + 1).even = !(n.even) := by
   solution!
     induction n with
     | zero =>
       rfl
     | succ n' ih =>
-      rw [even, ih, Bool.not_not]
+      rw [Nat.even, ih, Bool.not_not]
 ```
 
 :::gradeTheorem 1 "even_succ"
@@ -565,16 +606,16 @@ talk about using `Nat.add_zero` and friends from now on.
        later files from breaking.
 
 ```lean
-theorem even_zero : even 0 = true := by rfl
+theorem even_zero : Nat.even 0 = true := by rfl
 
-theorem double_zero : double 0 = 0 := by rfl
+theorem double_zero : Nat.double 0 = 0 := by rfl
 
-theorem double_succ (n : Nat) : double (n + 1) = double n + 2 := by rfl
+theorem double_succ (n : Nat) : (n + 1).double = n.double + 2 := by rfl
 ```
 
 :::::exercise (rating := 2) (name := "double_add")
 ```lean
-theorem double_add (n : Nat) : double n = n + n := by
+theorem double_add (n : Nat) : n.double = n + n := by
   solution!
     induction n with
     | zero =>
@@ -589,7 +630,7 @@ theorem double_add (n : Nat) : double n = n + n := by
 
 :::::exercise (rating := 2) (name := "double_mul")
 ```lean
-theorem double_mul (n : Nat) : double n = 2 * n := by
+theorem double_mul (n : Nat) : n.double = 2 * n := by
   solution!
     rw [double_add, Nat.two_mul]
 ```
@@ -703,7 +744,4 @@ def isZero (n : Nat) : Bool :=
   | 0 => _
   | n + 1 => _
 ```
-
-Note that for the built-in {name}`Nat` type, the patterns `0` and `n + 1` correspond to
-`zero` and `succ n`.
 ::::

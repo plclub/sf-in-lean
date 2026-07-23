@@ -32,7 +32,7 @@ file := some "Poly"
 :::instructors
 To get through this plus Tactics.lean in two 80-minute
 lectures is a bit tight -- if that's your plan, don't dawdle on
-this chapter. 
+this chapter.
 
 (This comment may now be misaligned with the flow of lectures in CIS5000 at least, since we've
 added significant new material before we get here.)
@@ -431,7 +431,7 @@ Check repeat
     annotations (which can clutter and distract) and too few (which
     can sometimes require readers to perform complex type inference in
     their heads in order to understand your code)."
-     
+
 ```
 ::::
 
@@ -740,7 +740,7 @@ from Lean's standard library:
    `List.cons_append {α} {a : α} {as bs : List α} : a :: as ++ bs = a :: (as ++ bs)`
 
 :::instructors
-(Maybe outdated after the switch to Lean?) 
+(Maybe outdated after the switch to Lean?)
 There's a little inconsistency between this definition
 and the standard library one: in the library, the type argument is
 implicit. :-( I (BCP) have chosen to leave things inconsistent to
@@ -1106,7 +1106,7 @@ even members.
 ::::
 
 ```lean
-example : filter even [1, 2, 3, 4] = [2, 4] := by rfl
+example : filter Nat.even [1, 2, 3, 4] = [2, 4] := by rfl
 ```
 
 :::slidebreak
@@ -1160,7 +1160,7 @@ We can use `filter` to give a concise version of the
 
 ```lean
 abbrev countoddmembers' (l : List Nat) : Nat :=
-  (filter odd l).length
+  (filter Nat.odd l).length
 
 example : countoddmembers' [1, 0, 3, 1, 4, 5] = 4 := by rfl
 example : countoddmembers' [0, 2, 4] = 0 := by rfl
@@ -1240,7 +1240,7 @@ and returns a list of just those that are even and greater than 7.
 
 ```lean
 abbrev filterEvenGt7 (l : List Nat) : List Nat := solution!(
-  filter (fun n => even n && n > 7) l)
+  filter (fun n => n.even && n > 7) l)
 
 example : filterEvenGt7 [1, 2, 6, 9, 10, 3, 12, 8] = [10, 12, 8] := solution!(by rfl)
 
@@ -1314,7 +1314,7 @@ numbers to booleans to yield a list of booleans:
 ::::
 
 ```lean
-example : map odd [2, 1, 2, 5] = [false, true, false, true] := by rfl
+example : map Nat.odd [2, 1, 2, 5] = [false, true, false, true] := by rfl
 ```
 
 ::::full
@@ -1324,7 +1324,7 @@ yield a _list of lists_ of booleans:
 ::::
 
 ```lean
-example : map (fun n => [even n, odd n]) [2, 1, 2, 5]
+example : map (fun n => [n.even, n.odd]) [2, 1, 2, 5]
   = [[true, false], [false, true], [true, false], [false, true]] := by rfl
 ```
 
@@ -1461,7 +1461,7 @@ can throw away afterwards.)
 ## Fold
 
 ::::full
-An even more powerful higher-order function is 
+An even more powerful higher-order function is
 `fold`. It is the inspiration for the "reduce"
 operation that lies at the heart of Google's map/reduce
 distributed programming framework.
@@ -2063,4 +2063,3 @@ end Church
 end Exercises
 ```
 ::::::
-
