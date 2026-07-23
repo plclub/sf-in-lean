@@ -12,7 +12,7 @@ file := "Basics"
 %%%
 
 :::dev "Jonathan Chan (ionathanch)"
-[BCP: Old comment -- might be out of date?]
+\[BCP: Old comment -- might be out of date?\]
 There should be some instruction on interaction with the IDE, namely:
 * how to read the proof state
 * clicking immediately after a tactic will show you what it changed
