@@ -100,7 +100,7 @@ the label's own parenthesized field list, so a trailing `(handle)` is rewritten
 to an `@handle` suffix.  An author in any other shape is left alone. -/
 def devNoteAuthorText (author : String) : String :=
   if author.endsWith ")" then
-    match (author.dropRight 1).splitOn " (" with
+    match (author.dropEnd 1).split "(" |>.toStringList with
     | [name, handle] => s!"{name} @{handle}"
     | _ => author
   else author
