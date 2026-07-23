@@ -67,7 +67,7 @@ private def rawIndentedLineFn : ParserFn := atomicFn <|
     (checkColGeFn "indented command sequence" >> rawLineFn))
 
 private def rawCommandBlockFn : ParserFn :=
-  rawFn (rawLineFn >> manyFn rawIndentedLineFn)
+  rawFn (rawLineFn >> manyFn rawIndentedLineFn) (trailingWs := true)
 
 private def rawCommandBlock : Parser := { fn := rawCommandBlockFn }
 
