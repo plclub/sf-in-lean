@@ -13,6 +13,20 @@ htmlSplit := .never
 file := some "Poly"
 %%%
 
+:::dev "Daniel Sainati (dsainati1)"
+[BCP: Old comment -- might be out of date?]
+None of the comments at the start of the chapter motivating the polymorphic
+definition of lists make sense with the change to use `List Nat` in the previous chapter.
+
+Using the built-in definition of `List.reverse` is dramatically more complicated
+than implementing our own reverse function, since it is implemented in terms of an auxiliary
+function.
+
+The associativity of `++` in Lean is different than Rocq. In Rocq the definition
+of `app_assoc` is `l ++ m ++ n = (l ++ m) ++ n`, but in Lean it's
+`l ++ m ++ n = l ++ (m ++ n)`.
+:::
+
 :::instructors
 To get through this plus Tactics.lean in two 80-minute
 lectures is a bit tight -- if that's your plan, don't dawdle on

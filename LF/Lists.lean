@@ -13,6 +13,41 @@ htmlSplit := .never
 file := some "Lists"
 %%%
 
+:::dev "Daniel Sainati (dsainati1)"
+[BCP: Old comment -- might be out of date?]
+Weird that this file contains the first `inductive` definition students have seen up to this point,
+but that definition is also actually a `structure`. Probably need to restructure this.
+
+Unsure if it's a good idea to actually use the built-in `List` definition here, since it's polymorphic,
+and we aren't introducing this idea until a later chapter. This also means we don't get the chance
+to show students how to actually produce an inductive definition if we're relying on the built-in ones.
+
+We probably need to actually take time to explain what a `@[simp]` annotation on a lemma
+means before we introduce it, and I don't think this chapter is the right place to do it anyway.
+This is probably a better fit for `Auto.lean`.
+
+Claude picked a bad definition for `nonzeroes`:
+```
+  match l with
+  | [] => []
+  | 0 :: t => nonzeros t
+  | h :: t => h :: nonzeros t
+```
+which makes many of the later proofs hard to do without the full automation of `simp`.
+I changed it, but it's worth pointing this out.
+:::
+
+:::dev "Konstantinos Kallas (angelhof)"
+The `Baz` "how many elements does this type have?" exercise (the last exercise
+in the chapter) is a *manual* exercise, and that's a poor fit: a student who
+doesn't realize an inductive definition needs a base case will simply fail it and
+only see why in the grader comment — and it's easy to wrongly think you have the
+right answer and move on without thinking. Better to either add a short section
+that explains this directly, or add a hint like the `one_true_baz` / `count_trues`
+scaffold ("try to write a value of type `Baz` for which the lemma holds"). Worth
+reworking for easier grading.
+:::
+
 :::instructors
 This file takes about 60 minutes to get through.
 Putting it together with Induction.lean makes a reasonable

@@ -11,6 +11,18 @@ htmlSplit := .never
 file := "Basics"
 %%%
 
+:::dev "Jonathan Chan (ionathanch)"
+[BCP: Old comment -- might be out of date?]
+There should be some instruction on interaction with the IDE, namely:
+* how to read the proof state
+* clicking immediately after a tactic will show you what it changed
+* clicking after each `h` in `rw [h₁, h₂, ...]` will show you what was rewritten
+* hovering over a tactic will provide documentation on how to use it
+* hovering over a definition will give its type
+* hovering over a Unicode character will tell you how to type it
+* Ctrl-clicking on a definition will take you to the definition location
+:::
+
 :::instructors
 This file and Induction.lean each take about an hour to
 get through in a not-too-rushed fashion (with questions, etc.).
