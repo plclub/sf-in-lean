@@ -1,6 +1,6 @@
 import SFLMeta
 
-import LF.Maps
+import LF.Typeclasses
 
 import Lean.PrettyPrinter.Delaborator
 import Lean.PrettyPrinter.Parenthesizer

@@ -20,10 +20,19 @@ def main (args : List String) : IO UInt32 := do
   | vol :: mode :: rest =>
     let showSols := mode == "solutions"
     SFLMeta.Save.showSolutions.set showSols
+    -- Verso chapters from earlier volumes that a later volume's chapters import
+    -- (e.g. `HL.Imp` imports `LF.Typeclasses`).  They must go through the same
+    -- Verso → Lean transformation as the volume's own chapters when their
+    -- standalone `.lean` is extracted, so they are handed to the saver as
+    -- `(volume-prefix, chapter-part)` pairs rather than bundled verbatim.
+    let crossVol : List (String × Verso.Doc.Part Manual) :=
+      match vol with
+      | "hl" => [("LF", %doc LF.Typeclasses)]
+      | _ => []
     let extraSteps :=
-      if showSols then [SFLMeta.Save.emitSavedSolutions vol.toUpper]
-      else if mode == "terse" then [SFLMeta.Save.emitSavedTerse vol.toUpper]
-      else [SFLMeta.Save.emitSavedStudent vol.toUpper]
+      if showSols then [SFLMeta.Save.emitSavedSolutions vol.toUpper crossVol]
+      else if mode == "terse" then [SFLMeta.Save.emitSavedTerse vol.toUpper crossVol]
+      else [SFLMeta.Save.emitSavedStudent vol.toUpper crossVol]
     let config := mkConfig vol mode
     match vol with
     | "lf" => manualMain (%doc LF) (options := rest) (config := config) (extraSteps := extraSteps)

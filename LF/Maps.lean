@@ -2,6 +2,8 @@
 
 import LF.CustomTactics
 
+namespace OldMapsFileNamespaceToAvoidNameCollisionsWeShouldDeleteThisFileAndUseTypeclassesInstead
+
 /- CH: This is just the code with the prose left out, but I've left comments mentioning
   various issues and my thought processes
 
@@ -243,3 +245,5 @@ end PartialMap
 -- Restore the `Option` coercion removed above (see the `attribute [-instance]`
 -- note), so it is in effect at end-of-document for Verso's metadata coercion.
 attribute [instance] optionCoe
+
+end OldMapsFileNamespaceToAvoidNameCollisionsWeShouldDeleteThisFileAndUseTypeclassesInstead
