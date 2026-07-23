@@ -1808,6 +1808,7 @@ theorem Perm3_symm : ∀ (α : Type) (l₁ l₂ : List α),
   case perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
     exact Perm3.perm3_trans _ _ _ ih₂3 ih₁2
 
+
 /- EX2 (Perm3_In) -/
 /- If you find yourself dealing with deeply nested `cases` in this proof,
    think back to `Logic` where you learned about the `obtain` tactic -/
@@ -2758,7 +2759,7 @@ inductive EmptyRelation : Nat → Nat → Prop where
   /- SOLUTION -/
 /- /SOLUTION -/
 
-/- Fix after https://github.com/plclub/sf-in-lean/issues/52 -/
+-- TODO: @dsainati1 replace with inversion once https://github.com/plclub/sf-in-lean/issues/52 is fixed
 theorem empty_relation_is_empty : ∀ n m, ¬ EmptyRelation n m := by
   /- ADMITTED -/
   intros n m contra; cases contra
@@ -3590,7 +3591,7 @@ inductive Repeats {α:Type} : List α → Prop where
     label -- i.e., list `l₁` must contain repeats.
 
     This proof is much easier if you use the excluded middle
-    to show that `In` is decidable, i.e., `∀ x l, (In x l) \/ ~ (In x l)`.
+    to show that `∈` is decidable, i.e., `∀ x l, (x ∈ l) \/ ~ (x ∈ l)`.
     Remember the `by_cases` tactic from Logic! -/
 /- HIDE: APT21: Apparently, this is really quite hard; even the strongest
    students couldn't do it this year. -/
