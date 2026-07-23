@@ -721,31 +721,38 @@ For the moment, the context is always empty.
 
 Here are the formal rules.
 
-:::dev "mwhicks1" NOW
-What follows is really ugly, with lots of notation hackery around the bit
-we want the reader to actually see. Not sure what an easy fix would be.
-:::
+::::full
+The typing judgment is written `<{ ⊢ t ⦂ T }>`: the whole judgment is wrapped
+in `<{ … }>`, the term is in the object grammar (bare variables, no inner
+`<{ }>`) and the type as `Bool`/`Nat` (a type variable is spliced, `~T` escapes
+to a Lean `Ty`).  As with `Tm.Step`, we define the relation using its own
+notation, inside a `section` with `set_option hygiene false` so the bare name
+`Tm.HasType` in the expansion resolves to the relation being defined; after the
+`section` we re-declare the same rules hygienically for real use.  Unlike `⟶`,
+the judgment builds on the custom `tm` syntactic category, so it must use
+`syntax`/`macro_rules` rather than `notation` -- which is why it still needs the
+`app_unexpander` to print the judgment back.
+::::
 
 ```lean
 inductive Ty where
   | bool
   | nat
 
--- Here we reserve the typing notation so the relation can be defined
--- using it.  The whole judgment is wrapped in `<{ … }>` : the term is written in
--- the object grammar (bare variables, no inner `<{ }>`) and the type as `Bool`/`Nat`
--- (a type variable is spliced, `~T` escapes to a Lean `Ty`).
--- The `app_unexpander` prints it back.
 syntax:max "<{ " "⊢ " tm " ⦂ " ident " }>" : term
 syntax:max "<{ " "⊢ " tm " ⦂ " "~" term:max " }>" : term
-macro_rules
+
+section
+set_option hygiene false in
+local macro_rules
   | `(<{ ⊢ $t ⦂ $T:ident }>) =>
       match T.getId.toString with
-      | "Bool" => `($(Lean.mkIdent `Tm.HasType) <{ $t }> Ty.bool)
-      | "Nat"  => `($(Lean.mkIdent `Tm.HasType) <{ $t }> Ty.nat)
-      | _      => `($(Lean.mkIdent `Tm.HasType) <{ $t }> $T)
-  | `(<{ ⊢ $t ⦂ ~$T }>) => `($(Lean.mkIdent `Tm.HasType) <{ $t }> $T)
+      | "Bool" => `(Tm.HasType <{ $t }> Ty.bool)
+      | "Nat"  => `(Tm.HasType <{ $t }> Ty.nat)
+      | _      => `(Tm.HasType <{ $t }> $T)
+  | `(<{ ⊢ $t ⦂ ~$T }>) => `(Tm.HasType <{ $t }> $T)
 
+-- The actual definition, written in the notation above.
 inductive Tm.HasType : Tm → Ty → Prop where
   | tru : <{ ⊢ true ⦂ Bool }>
   | fls : <{ ⊢ false ⦂ Bool }>
@@ -756,9 +763,19 @@ inductive Tm.HasType : Tm → Ty → Prop where
   | succ (t1 : Tm) (h : <{ ⊢ t1 ⦂ Nat }>) : <{ ⊢ succ t1 ⦂ Nat }>
   | pred (t1 : Tm) (h : <{ ⊢ t1 ⦂ Nat }>) : <{ ⊢ pred t1 ⦂ Nat }>
   | isZero (t1 : Tm) (h : <{ ⊢ t1 ⦂ Nat }>) : <{ ⊢ iszero t1 ⦂ Bool }>
+end
 
+-- The same rules repeated with hygiene enabled, for use after the section.
+macro_rules
+  | `(<{ ⊢ $t ⦂ $T:ident }>) =>
+      match T.getId.toString with
+      | "Bool" => `(Tm.HasType <{ $t }> Ty.bool)
+      | "Nat"  => `(Tm.HasType <{ $t }> Ty.nat)
+      | _      => `(Tm.HasType <{ $t }> $T)
+  | `(<{ ⊢ $t ⦂ ~$T }>) => `(Tm.HasType <{ $t }> $T)
+
+-- Print `Tm.HasType`/`Ty` values back as `<{ ⊢ … ⦂ … }>` notation: `delabTy`
 open Lean PrettyPrinter Delaborator SubExpr in
-/-- Print `Ty.bool`/`Ty.nat` as `Bool`/`Nat`. -/
 @[delab app.Ty.bool, delab app.Ty.nat]
 def delabTy : Delab := whenPPOption getPPNotation do
   match_expr ← getExpr with
