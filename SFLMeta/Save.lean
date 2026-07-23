@@ -298,9 +298,9 @@ private def decodeExercise? (data : Json) : Option (Nat × String × Option Stri
   | .arr #[.num _, .str _, _, _] | .arr #[.num _, .str _] => some (decodeExerciseData data)
   | _ => none
 
-private def wrap (startText endText body : String) : String :=
+private def wrapIndented (startText body : String) : String :=
   let body := body.trimAscii.toString.splitOn "\n" |>.map ("  " ++ ·) |> String.intercalate "\n"
-  startText ++ "\n\n" ++ body ++ "\n\n" ++ endText ++ "\n\n"
+  startText ++ "\n" ++ body ++ "\n\n"
 
 /-! ## Block extension that carries pre-computed teacher and student source -/
 
@@ -350,8 +350,8 @@ def decode? (data : Json) : Option Data :=
 
 /--
   * persistent, non-error blocks become executable Lean;
-  * non-persistent blocks (`-keep`) become `sf_experiment ... end`;
-  * expected-error blocks (`+error`) become `sf_expect_failure ... end`
+  * non-persistent blocks (`-keep`) become indented `sf_experiment` blocks;
+  * expected-error blocks (`+error`) become indented `sf_expect_failure` blocks
 -/
 private def Data.extractionMode (saved : Data) : ExtractionMode :=
   let {persistent, expectedError} := saved.config
@@ -812,14 +812,14 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
             (saved.terse.trimAscii.toString ++ "\n\n")
         | .experiment =>
           return appendVariants buf file
-            (wrap "sf_experiment" "end" saved.teacher)
-            (wrap "sf_experiment" "end" saved.student)
-            (wrap "sf_experiment" "end" saved.terse)
+            (wrapIndented "sf_experiment" saved.teacher)
+            (wrapIndented "sf_experiment" saved.student)
+            (wrapIndented "sf_experiment" saved.terse)
         | .expectFailure =>
           return appendVariants buf file
-            (wrap "sf_expect_failure" "end" saved.teacher)
-            (wrap "sf_expect_failure" "end" saved.student)
-            (wrap "sf_expect_failure" "end" saved.terse)
+            (wrapIndented "sf_expect_failure" saved.teacher)
+            (wrapIndented "sf_expect_failure" saved.student)
+            (wrapIndented "sf_expect_failure" saved.terse)
       return buf
     if name == ``Block.importBlock then
       -- Cross-chapter `import` lines shown to the reader.  The extracted
