@@ -303,19 +303,30 @@ def render(branches, conf, prs, have_token, slug):
     out.append("| Branch | PR | Author | Last activity | Ahead | Files | → main | Overlaps |")
     out.append("|---|---|---|---|--:|--:|:--:|---|")
     for r, b in sorted(active.items(), key=lambda x: -x[1]["ahead"]):
-        overlaps = sorted(
-            o for o in active if o != r and active[o]["files"] & b["files"]
-        )
-        ov = ", ".join(
-            ("⚠️ " if o in conf[r] else "") + branch_link(active[o]["short"], slug)
-            for o in overlaps
-        ) or "—"
+        overlaps = [o for o in active if o != r and active[o]["files"] & b["files"]]
+        # Group superseded overlaps under the branch that already contains them,
+        # so one line of work carried across several branches reads as a single
+        # overlap with a single ⚠️, not several.  `A ⊃ B` = A contains B's
+        # commits; the ⚠️ (real merge conflict) is shown once, on the container.
+        heads = sorted(independent_branches(overlaps))
+        pieces = []
+        for h in heads:
+            subs = sorted(o for o in overlaps if o != h and contains(h, o))
+            piece = ("⚠️ " if h in conf[r] else "") + branch_link(active[h]["short"], slug)
+            if subs:
+                piece += " ⊃ " + ", ".join(
+                    branch_link(active[o]["short"], slug) for o in subs)
+            pieces.append(piece)
+        ov = ", ".join(pieces) or "—"
         main_flag = "✅" if b["clean_to_main"] else "⚠️"
         out.append(
             f"| {branch_link(b['short'], slug, maxlen=25)} | {pr_cell(b['short'], prs)} | {b['author']} | "
             f"{b['when']} | {b['ahead']} | {files_cell(b['files'])} | "
             f"{main_flag} | {ov} |"
         )
+    out.append("")
+    out.append("_Overlaps: ⚠️ = a real merge conflict; `A ⊃ B` = A already "
+               "contains B's commits (shown as one overlap, one marker)._")
     out.append("")
 
     # ---- files: conflicting first, then clean co-edits, then single-branch ----
