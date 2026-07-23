@@ -15,6 +15,7 @@ import LF.Poly
 import LF.Tactics
 import LF.LogicVerso
 import LF.IndPropVerso
+import LF.IndPropRegexpVerso
 
 import VersoManual
 
@@ -34,3 +35,4 @@ open Verso Genre Manual
 {include LF.Tactics}
 {include LF.LogicVerso}
 {include LF.IndPropVerso}
+{include LF.IndPropRegexpVerso}

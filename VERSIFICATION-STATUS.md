@@ -138,10 +138,18 @@ handle a no-constructor indexed inductive).
   (both quizzes are inside `-- HIDE` regions, captured verbatim into
   `::::hide` bodies).
 
-### IndPropRegexp (not started)
+### IndPropRegexp (done — in the book)
 
-Bare `LF.IndPropRegexp` builds (warnings only). Run the same per-chapter
-pipeline once IndProp's Verso builds (it imports IndProp).
+`{include LF.IndPropRegexpVerso}` in `LF.lean` (2026-07-23). All three variants
+build end to end (`make lf`), and the student/solutions/terse extracted projects
+compile. Prose/marker checks are clean (0 missing spans, 0 flattenings). The
+generated chapter carries document-level `maxHeartbeats`/`maxRecDepth` (see the
+performance note atop `LF/IndPropRegexp.lean`). One student-variant fix was
+needed: `weak_pumping_star_app` had nested `-- ADMITTED` regions whose outer one
+collapsed a 3-way `obtain` into a single `sorry` (→ "unsolved goals"); it now
+uses one whole-proof `-- ADMITTED`, matching the neighboring `weak_pumping`.
+Still bare-authored (generated `…Verso`), not yet graduated to a directly
+authored chapter.
 
 ### Maps (not started; known blocker)
 

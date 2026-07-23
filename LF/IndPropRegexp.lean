@@ -606,6 +606,7 @@ theorem weak_pumping_star_app : ∀ {α : Type}  (s1 s2 : List α) (re : RegExp 
     s1 ++ s2 = s0 ++ s3 ++ s4 /\
     s3  ≠ [ ] /\
     (∀ m : Nat, s0 ++ napp m s3 ++ s4 =~ .Star re)  := by
+  -- ADMITTED
   intro T s1 s2 re Hmatch1 Hmatch2 IH1 IH2 Hlen
   rw [app_length] at *
   obtain Hs1len0 | ⟨s1len, Hs1re1⟩ | Hs1re1 :
@@ -613,10 +614,7 @@ theorem weak_pumping_star_app : ∀ {α : Type}  (s1 s2 : List α) (re : RegExp 
       ∨ (List.length s1 ≠ 0 /\ List.length s1 < pumpingConstant re)
       ∨ pumpingConstant re <= List.length s1) := by
     cases s1
-    -- ADMITTED
     . left; rfl
-    -- /ADMITTED
-    -- ADMITTED
     . case cons h s1' =>
       right
       have Hcases : (List.length (h :: s1') < pumpingConstant re
@@ -628,8 +626,6 @@ theorem weak_pumping_star_app : ∀ {α : Type}  (s1 s2 : List α) (re : RegExp 
           contradiction
         . assumption
       . right; assumption
-    -- /ADMITTED
-  -- ADMITTED
   . have Hs1nil : s1 = [] := by
       cases s1; rfl; contradiction
     subst Hs1nil
