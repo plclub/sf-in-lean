@@ -489,7 +489,7 @@ those proofs to make your logic clear.
 Now that we've switched over to using Lean's standard library, we can
 redefine some of the functions from the last few chapters on `Nat`s.
 Note that for the built-in {name}`Nat` type, the patterns `0` and `n + 1` correspond to
-`zero` and `succ n`.
+`zero` and `succ n`. Likewise, the pattern `n + 2` is equivalent to `n + 1 + 1`.
 
 Prove some of these theorems using the techniques we've discussed this chapter.
 ::::
@@ -507,17 +507,10 @@ def Nat.even (n : Nat) :=
 
 def Nat.odd n := !(even n)
 
-def eqb (n m : Nat) :=
-  match n, m with
-  | 0, 0             => true
-  | _ + 1, 0
-  | 0, _ + 1       => false
-  | n + 1, m + 1 => eqb n m
-
-def minustwo (n : Nat) : Nat :=
+def Nat.minustwo (n : Nat) : Nat :=
   match n with
-  | 0    => .zero
-  | 1    => .zero
+  | 0    => 0
+  | 1    => 0
   | n' + 2 => n'
 
 def Nat.double (n : Nat) : Nat :=
@@ -527,15 +520,24 @@ def Nat.double (n : Nat) : Nat :=
 ```
 
 ::::full
-Note that we defined some of these functions in the `Nat` namespace. When we do this,
+Note that we defined these functions in the `Nat` namespace;
+Lean's naming conventions advise that functions on a type should be defined in that type's
+namepsace in almost all circumstnaces.
+When we define functions this way, though,
 something interesting happens to the way Lean's InfoView prints them. Take a look at
 the info view inside the proof of this thoerem (i.e., before the `rfl` tactic):
+::::
+
+::::terse
+Defining functions in the `Nat` namespace changes how they print:
+::::
 
 ```lean
 theorem even_add_three (n : Nat) : Nat.even (n + 3) = Nat.even (n + 1) := by
   rfl
 ```
 
+::::full
 Instead of printing the goal the way we wrote it in the theorem statement, Lean
 prints `(n + 3).even = (n + 1).even`! This is an example of Lean's _field notation_,
 whereby Lean prints functions inside the namespace of a type _after_ their first argument,
@@ -551,17 +553,22 @@ if it's confusing you. Additionally, if you want to disable it only for a specif
 or constructor, you can do so with `attribute [pp_nodot] <Name>`.
 
 As an example, observe the difference in how Lean prints the goal in the following two examples:
+::::
+
+::::terse
+This printing style is called _field notation_ and can be disabled with the `pp_nodot` attribute.
+::::
 
 ```lean
-example (n m : Nat) : Nat.double (n + 0) = Nat.double n := by
+example (n : Nat) : Nat.double (n + 0) = Nat.double n := by
   rfl
 
 attribute [pp_nodot] Nat.double
 
-example (n m : Nat) : Nat.double (n + 0) = Nat.double n := by
+example (n : Nat) : Nat.double (n + 0) = Nat.double n := by
   rfl
 ```
-::::
+
 
 :::::exercise (rating := 2) (name := "even_succ")
 ```lean
@@ -645,15 +652,15 @@ For example, suppose we start with the following incomplete proof:
 /--
 error: unsolved goals
 case zero
-⊢ eqb 0 0 = true
+⊢ Nat.beq 0 0 = true
 
 case succ
 n✝ : Nat
-a✝ : eqb n✝ n✝ = true
-⊢ eqb (n✝ + 1) (n✝ + 1) = true
+a✝ : n✝.beq n✝ = true
+⊢ (n✝ + 1).beq (n✝ + 1) = true
 -/
 #guard_msgs(error) in
-theorem foo (n : Nat) : eqb n n := by
+theorem foo (n : Nat) : Nat.beq n n := by
   induction n
 ```
 
@@ -666,7 +673,7 @@ Lean adds an explicit branch for each constructor:
 ```lean
 /-- warning: declaration uses `sorry` -/
 #guard_msgs in
-example (n : Nat) : eqb n n := by
+example (n : Nat) : Nat.beq n n := by
   induction n with
   | zero => sorry
   | succ n _ => sorry
@@ -678,10 +685,10 @@ branch by hand. We can then focus on proving each case.
 One possible proof is:
 
 ```lean
-example (n : Nat) : eqb n n := by
+example (n : Nat) : Nat.beq n n := by
   induction n with
   | zero      => rfl
-  | succ n ih => rw [eqb, ih]
+  | succ n ih => rw [Nat.beq, ih]
 ```
 
 Note that Lean used `_` for the induction hypothesis in the generated `.succ` branch.

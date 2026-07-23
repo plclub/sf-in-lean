@@ -427,14 +427,14 @@ theorem trans_eq_example''''' (a b c d e f : Nat) :
 :::::exercise (rating := 3) (name := "trans_eq_exercise")
 ```lean
 theorem trans_eq_exercise (n m o p : Nat) :
-    m = (minustwo o) →
+    m = o.minustwo →
     (n + p) = m →
-    (n + p) = (minustwo o) := by
+    (n + p) = o.minustwo := by
   solution!
     intro eq1 eq2
     calc n + p
     _ = m := by rw [eq2]
-    _ = minustwo o := by rw [eq1]
+    _ = o.minustwo := by rw [eq1]
 ```
 :::::
 
@@ -2533,9 +2533,9 @@ first checks whether every element in a list satisfies a given
 predicate:
 
 ```display
-forallb ·.odd [1,3,5,7,9] = true
+forallb Nat.odd [1,3,5,7,9] = true
 forallb negb [false,false] = true
-forallb ·.even [0,2,4,5] = false
+forallb Nat.even [0,2,4,5] = false
 forallb (beq 5) [] = true
 ```
 
@@ -2545,7 +2545,7 @@ satisfies a given predicate:
 ```display
 existsb (beq 5) [0,2,3,6] = false
 existsb (andb true) [true,true,false] = true
-existsb ·.odd [1,0,0,0,0,3] = true
+existsb Nat.odd [1,0,0,0,0,3] = true
 existsb even [] = false
 ```
 
@@ -2561,9 +2561,9 @@ def forallb {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
   | [] => true
   | x :: l' => (test x) && (forallb test l'))
 
-example : forallb (·.odd) [1,3,5,7,9] = true := solution!(by rfl)
+example : forallb (Nat.odd) [1,3,5,7,9] = true := solution!(by rfl)
 example : forallb not [false,false] = true := solution!(by rfl)
-example : forallb (·.even) [0,2,4,5] = false := solution!(by rfl)
+example : forallb (Nat.even) [0,2,4,5] = false := solution!(by rfl)
 example : forallb (· == 5) [] = true := solution!(by rfl)
 
 def existsb {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
@@ -2573,8 +2573,8 @@ def existsb {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
 
 example : existsb (· == 5) [0,2,3,6] = false := solution!(by rfl)
 example : existsb (· && true) [true,true,false] = true := solution!(by rfl)
-example : existsb (·.odd) [1,0,0,0,0,3] = true := solution!(by rfl)
-example : existsb (·.even) ([] : List Nat) = false := solution!(by rfl)
+example : existsb (Nat.odd) [1,0,0,0,0,3] = true := solution!(by rfl)
+example : existsb (Nat.even) ([] : List Nat) = false := solution!(by rfl)
 
 def existsb' {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
   !(forallb (fun x => !(test x)) l))
