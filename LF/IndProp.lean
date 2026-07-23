@@ -967,7 +967,7 @@ theorem ev_4'' : Ev 4 := by
 /- In this way, we can also prove theorems that have hypotheses
     involving `Ev`. -/
 
-theorem ev_plus4 n : Ev n → Ev (4 + n) := by
+theorem ev_plus4 (n : Nat) (h : Ev n) : Ev (4 + n) := by
   intro Hn
   rw [Nat.add_comm]
   exact (Ev.ev_succ_succ _ (Ev.ev_succ_succ _ Hn))
