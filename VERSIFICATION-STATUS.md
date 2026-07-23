@@ -138,18 +138,16 @@ handle a no-constructor indexed inductive).
   (both quizzes are inside `-- HIDE` regions, captured verbatim into
   `::::hide` bodies).
 
-### IndPropRegexp (done — in the book)
+### IndPropRegexp (deleted — folded into Automation)
 
-`{include LF.IndPropRegexpVerso}` in `LF.lean` (2026-07-23). All three variants
-build end to end (`make lf`), and the student/solutions/terse extracted projects
-compile. Prose/marker checks are clean (0 missing spans, 0 flattenings). The
-generated chapter carries document-level `maxHeartbeats`/`maxRecDepth` (see the
-performance note atop `LF/IndPropRegexp.lean`). One student-variant fix was
-needed: `weak_pumping_star_app` had nested `-- ADMITTED` regions whose outer one
-collapsed a 3-way `obtain` into a single `sorry` (→ "unsolved goals"); it now
-uses one whole-proof `-- ADMITTED`, matching the neighboring `weak_pumping`.
-Still bare-authored (generated `…Verso`), not yet graduated to a directly
-authored chapter.
+The standalone RegExp case-study chapter is no longer needed: its material is
+folded into the future `Automation` chapter (see `CONTRIBUTING.md`). `LF/
+IndPropRegexp.lean` was deleted and fully unwired (`LF.lean` include, Makefile
+`LF_CHAPTERS` / `check-bare-lean-chapters`, and `to_verso.py`'s
+`DOC_LEVEL_OPTIONS`) on 2026-07-23. The versified-and-included state (it did
+build end to end across all three variants first) is preserved on the branch
+`archive/indpropregexp-versified` should the RegExp/pumping material be wanted
+later.
 
 ### Maps (not started; known blocker)
 
@@ -170,7 +168,7 @@ Skipped per BCP (no `LF/Typeclasses.lean` exists yet).
   `exists 0` fix; kept ours (with explanatory comment).
 - `LF.lean`: dropped main's bare-chapter imports for all graduated chapters
   (bare and Verso chapters declare the same names, so both chains cannot be
-  imported together); `LF.IndProp` / `LF.IndPropRegexp` are built by
+  imported together); `LF.IndProp` is built by
   `check-bare-lean-chapters` in the Makefile instead.
 - `SFLMeta/Save.lean`: adopted main's #78 mechanism (`headerImports` +
   `bundleLoop` — prepends each extracted chapter's framework-stripped header
@@ -257,8 +255,9 @@ marker (0 flattenings) checks.
    re-trace any *new* warnings.
 3. `make all` (lf + hl + ts + check targets) — this also rebuilds and
    compiles the generated projects.
-4. Finish IndProp (timeout), then IndPropRegexp, then Maps (conflict above),
-   graduating each into `LF.lean` the same way.
+4. Finish IndProp (timeout), then Maps (conflict above), graduating each into
+   `LF.lean` the same way.  (IndPropRegexp has since been dropped — folded into
+   Automation.)
 
 ### Eventually: permanent versification
 

@@ -65,7 +65,7 @@ ensure-build-symlink:
 # when it has been incorporated into the book via a *Verso.lean include.
 .PHONY: check-lean
 check-bare-lean-chapters: ensure-build-symlink
-	lake build LF.IndProp LF.IndPropRegexp
+	lake build LF.IndProp
 
 # Temporary:
 # Build the generated HL/TS Verso chapters that aren't in a book yet, so the
@@ -95,7 +95,7 @@ clean:
 
 # This will all be ripped out once all chapters are versified.
 
-LF_CHAPTERS := Logic IndProp IndPropRegexp Maps
+LF_CHAPTERS := Logic IndProp Maps
 
 LF_VERSO_FILES := $(addprefix LF/,$(addsuffix Verso.lean,$(LF_CHAPTERS)))
 
