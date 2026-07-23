@@ -256,9 +256,11 @@ marker (0 flattenings) checks.
 
 When a chapter is made *permanently* Verso — the generated `<Ch>Verso.lean`
 promoted to the hand-maintained source of truth and the code-forward
-`LF/<Ch>.lean` retired, as already happened for Basics and HL/Imp — **keep
-the plain .lean version in the repo as `LF/Old<Ch>.lean`** for manual
-comparison (BCP instruction, 2026-07-14).
+`LF/<Ch>.lean` retired, as already happened for Basics and HL/Imp — the plain
+`.lean` version is **not** kept in the repo. (Earlier passes archived it as an
+untracked `LF/Old<Ch>.lean` for manual comparison; those archives are no longer
+useful and are not retained — BCP instruction, 2026-07-23. The original bare
+sources still live in `old/orig-lf-files/` if a comparison is ever needed.)
 
 ---
 
@@ -293,7 +295,6 @@ generated `SFLCompat.lean` are **not** chapters and stay plain Lean; see
   in `SFLMeta/Save.lean` (~L1237) that maps `LF.<Ch>Verso` back to the emitted
   `LF.<Ch>`. Once every chapter is directly authored under its plain name (as
   Basics/Induction/… already are), `deVerso` is a no-op and removable.
-* The `LF/Old<Ch>.lean` comparison archives (kept per the note above).
 * The porting/checking prose in `CLAUDE.md` ("Porting a chapter from Rocq",
   "Rough-draft conversion", "Checking to_verso outputs", "Writing comments that
   survive `to_verso`") becomes historical.

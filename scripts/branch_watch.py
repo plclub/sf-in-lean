@@ -37,6 +37,7 @@ import os
 import subprocess
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 
@@ -185,6 +186,21 @@ def pr_cell(short, prs):
     return f"[#{pr['num']}]({pr['url']}){tag}"
 
 
+def branch_link(short, slug):
+    """A Markdown link from a branch's name to its page on GitHub.
+
+    Points at the branch's tree view (`/tree/<branch>`); the separate PR column
+    links the branch's open PR, if any.  Works without a token, since the URL is
+    derived purely from the branch name.  The slash in a name like
+    `bcp/versification5` is kept (GitHub tree paths use it); other reserved
+    characters are percent-encoded.  Falls back to a bare code span if the repo
+    slug could not be determined."""
+    if not slug:
+        return f"`{short}`"
+    quoted = urllib.parse.quote(short, safe="/")
+    return f"[`{short}`](https://github.com/{slug}/tree/{quoted})"
+
+
 def files_cell(files):
     """A <details> expander listing files, valid inside a Markdown table cell."""
     n = len(files)
@@ -194,7 +210,7 @@ def files_cell(files):
     return f"<details><summary>{n}</summary>{inner}</details>"
 
 
-def render(branches, conf, prs, have_token):
+def render(branches, conf, prs, have_token, slug):
     active = {r: b for r, b in branches.items() if b["ahead"] > 0}
     merged = {r: b for r, b in branches.items() if b["ahead"] == 0}
 
@@ -235,11 +251,12 @@ def render(branches, conf, prs, have_token):
             o for o in active if o != r and active[o]["files"] & b["files"]
         )
         ov = ", ".join(
-            ("⚠️ " if o in conf[r] else "") + active[o]["short"] for o in overlaps
+            ("⚠️ " if o in conf[r] else "") + branch_link(active[o]["short"], slug)
+            for o in overlaps
         ) or "—"
         main_flag = "✅" if b["clean_to_main"] else "⚠️"
         out.append(
-            f"| `{b['short']}` | {pr_cell(b['short'], prs)} | {b['author']} | "
+            f"| {branch_link(b['short'], slug)} | {pr_cell(b['short'], prs)} | {b['author']} | "
             f"{b['when']} | {b['ahead']} | {files_cell(b['files'])} | "
             f"{main_flag} | {ov} |"
         )
@@ -255,7 +272,7 @@ def render(branches, conf, prs, have_token):
             labels = []
             for o in sorted(refs):
                 clash = any(o in conf[p] for p in refs if p != o)
-                labels.append(("⚠️ " if clash else "") + active[o]["short"])
+                labels.append(("⚠️ " if clash else "") + branch_link(active[o]["short"], slug))
             rows.append(f"| `{f}` | {len(refs)} | {', '.join(labels)} |")
         return rows
 
@@ -280,7 +297,7 @@ def render(branches, conf, prs, have_token):
         out.append("_0 commits ahead of `main` — fully merged or pointing at an ancestor._")
         out.append("")
         for r, b in sorted(merged.items()):
-            out.append(f"- `{b['short']}` — last activity {b['when']} ({b['author']})")
+            out.append(f"- {branch_link(b['short'], slug)} — last activity {b['when']} ({b['author']})")
     else:
         out.append("_None._")
     out.append("")
@@ -339,14 +356,15 @@ def main():
         git("fetch", "--prune", REMOTE)
 
     token = os.environ.get("GITHUB_TOKEN")
+    slug = repo_slug()
     branches = collect_branches()
     conf = pairwise_conflicts(branches)
 
     prs = {}
     if token:
-        prs = fetch_prs(repo_slug(), token)
+        prs = fetch_prs(slug, token)
 
-    body = render(branches, conf, prs, have_token=bool(token))
+    body = render(branches, conf, prs, have_token=bool(token), slug=slug)
 
     if args.update_issue:
         if not token:
