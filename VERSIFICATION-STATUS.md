@@ -259,3 +259,67 @@ promoted to the hand-maintained source of truth and the code-forward
 `LF/<Ch>.lean` retired, as already happened for Basics and HL/Imp — **keep
 the plain .lean version in the repo as `LF/Old<Ch>.lean`** for manual
 comparison (BCP instruction, 2026-07-14).
+
+---
+
+## Infrastructure teardown when versification is fully complete (whole project)
+
+<!-- This section is PROJECT-WIDE (all volumes), not LF-specific.  Preserve it
+     (move it somewhere permanent) even when the LF-specific parts of this file
+     are deleted. -->
+
+The trigger for this cleanup is **no more plain-Lean *chapter* source files
+anywhere** — every chapter in every volume is authored directly in Verso.
+(Genuine plain-Lean *support libraries* such as `LF/CustomTactics.lean` and the
+generated `SFLCompat.lean` are **not** chapters and stay plain Lean; see
+"Stays" below.)
+
+### Goes away — the bare-Lean → Verso generation pipeline
+
+* `scripts/to_verso.py` (the whole Rocq/bare-Lean front-end + converter), and
+  its two fidelity checkers `scripts/check_verso_prose.py` /
+  `scripts/check_verso_markers.py`.
+* Everything in the `Makefile` under the "Temporary" / "(temporary!)" banners:
+  `make verso`, `LF_CHAPTERS` / `HL_CHAPTERS` (+ `*_VERSO_FILES` /
+  `*_VERSO_MODULES`), the `LF/%Verso.lean` / `HL/%Verso.lean` pattern rules, the
+  `verso` prerequisite of `lf-build`, `check-bare-lean-chapters`,
+  `check-verso-chapters`, and `lf-draft-solutions`. (Line 96: "This will all be
+  ripped out once all chapters are versified.")
+* `LFDraft.lean` / `TargetsDraft.lean` and the `sfl-draft` executable
+  (`emitSaved*To` in `SFLMeta/Save.lean` exist only for not-yet-graduated
+  chapters).
+* The `…Verso`-suffixed module convention itself: `import LF.<Ch>Verso` /
+  `{include LF.<Ch>Verso}` lines in `LF.lean`, and the **`deVerso` remapping**
+  in `SFLMeta/Save.lean` (~L1237) that maps `LF.<Ch>Verso` back to the emitted
+  `LF.<Ch>`. Once every chapter is directly authored under its plain name (as
+  Basics/Induction/… already are), `deVerso` is a no-op and removable.
+* The `LF/Old<Ch>.lean` comparison archives (kept per the note above).
+* The porting/checking prose in `CLAUDE.md` ("Porting a chapter from Rocq",
+  "Rough-draft conversion", "Checking to_verso outputs", "Writing comments that
+  survive `to_verso`") becomes historical.
+
+### Stays — the extraction machinery is permanent, not scaffolding
+
+The standalone-`.lean` **extractor** (`SFLMeta/Save.lean`, `emitSavedImpl`) is
+part of the shipping product (it produces the student/solutions/terse Lake
+projects under `_out/<vol>/<variant>/lean/`), so it and its two import-resolution
+paths remain:
+
+* **`crossVol` (cross-volume Verso chapter imports)** — e.g. `HL.Imp` imports
+  `LF.Typeclasses`; `TS`/future volumes will import earlier-volume chapters too.
+  This is the **permanent** path for such deps (they must be walked/transformed,
+  never bundled verbatim), *not* a temporary bridge. **Ongoing maintenance
+  burden:** the list is hand-maintained in `Targets.lean` (`main`'s `crossVol`
+  match) and must gain an entry for **every** new cross-volume Verso-chapter
+  import. It is not auto-derived because mapping a module name → its `Part`
+  needs a compile-time `%doc`.
+  * *Possible future improvement:* a macro that, given a volume, scans its
+    chapters' header imports and emits `%doc <Ch>` for each cross-volume Verso
+    chapter — replacing the hand-maintained match.
+* **`bundleLoop` (verbatim plain-Lean prerequisites)** — still needed, but only
+  for genuine plain-Lean **support libraries** (`LF/CustomTactics.lean`,
+  `SFLCompat.lean`), never chapters. Once no plain-Lean *chapters* remain, the
+  set of things this bundles is small and fixed, so `needsBundle` /
+  `frameworkPrefixes` / `pkgPrefixes` could optionally be simplified — but the
+  path cannot be deleted outright while any chapter imports a plain-Lean support
+  lib.
