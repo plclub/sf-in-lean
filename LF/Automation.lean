@@ -705,6 +705,11 @@ a somewhat different theory of regular expressions, but the
 difference is not significant for present purposes.)
 ::::
 
+::::dev "Daniel Sainati" (@dsainati1)
+CH: Do you mean here that this is different because the inductive type doesn't specify α is finite? In Lean the convention is for inductives not to carry Prop-valued typeclasss assumptions, enforcing this only at the theorems that use them. So this could give off a slightly wrong impression.
+DHS: @bcpierce00 What was the purpose of this aside in the original Rocq text? Does it make sense to keep here?
+::::
+
 We connect regular expressions and strings by defining when a
 regular expression _matches_ some string.
 
