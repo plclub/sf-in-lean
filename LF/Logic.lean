@@ -8,6 +8,14 @@
  WORKINCLASSes in this chapter.  BCP 20: But conversely some more
  quizzes would be great! -/
 
+/- JC: Classical axioms are more pervasive in Lean and the section from Rocq
+   needs to be rewritten to acknowledge this and teach idiomatic style.
+   [BCP: Old comment -- might be out of date?]
+   -/
+
+/- CH: There's several style things to mention here like `classical` vs.
+   `open Classical`. [BCP: This one too?] -/
+
 -- HIDEFROMHTML
 import LF.Basics
 import LF.Induction
