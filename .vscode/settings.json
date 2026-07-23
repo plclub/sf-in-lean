@@ -4,5 +4,19 @@
     "editor.rulers": [100],
     "[lean4]": {
         "editor.wordWrap": "on"
-    }
+    },
+    // Lean input abbreviation for the type-colon glyph ⦂ (U+2982) used in the
+    // typing judgment `⊢ t ⦂ T` (see TS/Types.lean): type `\tc` then space.
+    "lean4.input.customTranslations": {
+        "tc": "⦂"
+    },
+    "workbench.iconTheme": "material-icon-theme",
+    "material-icon-theme.folders.customClones": [
+        {
+            "name": "blue-highlight",
+            "base": "folder",
+            "color": "blue-500",
+            "folderNames": ["HL", "LF", "TS"]
+        }
+    ]
 }
