@@ -740,7 +740,7 @@ and the `{lean}` inline-term role (`@[role lean]` on `leanInline`) under the
 constant `InlineLean.lean`.
 
 Our `SFLMeta.lean` override above shadows `InlineLean.lean` as a code block. In a
-document that does `open InlineLean hiding lean` (needed so the bare name `lean`
+document that does `import SFLMeta` (needed so the bare name `lean`
 resolves to *our* code block without ambiguity), `{lean}` therefore resolves to
 `SFLMeta.lean` — which has no role registered under it, so the role fails with
 "can be used as a code block … but is not registered as a role".

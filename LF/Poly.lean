@@ -1,26 +1,10 @@
-import VersoManual
-import VersoManual.InlineLean
-import Illuminate
-import SFLMeta.Bnf
-import SFLMeta.DisplayMath
-import SFLMeta.Ignore
-import SFLMeta.Save
-import SFLMeta.Comment
-import SFLMeta.Epigraph
-import SFLMeta.Exercise
-import SFLMeta.Grade
-import SFLMeta.Hide
-import SFLMeta.Instructors
-import SFLMeta.Quiz
-import SFLMeta.SlideBreak
-import SFLMeta.Solution
-import SFLMeta.Terse
+import SFLMeta
+
 import LF.Induction
 import LF.UsingLean
+
 open Verso.Genre Manual
 open SFLMeta
-
-open InlineLean hiding lean
 
 #doc (Manual) "Poly: Polymorphism and Higher-Order Functions" =>
 %%%
@@ -32,7 +16,7 @@ file := some "Poly"
 :::instructors
 To get through this plus Tactics.lean in two 80-minute
 lectures is a bit tight -- if that's your plan, don't dawdle on
-this chapter. 
+this chapter.
 
 (This comment may now be misaligned with the flow of lectures in CIS5000 at least, since we've
 added significant new material before we get here.)
@@ -431,7 +415,7 @@ Check repeat
     annotations (which can clutter and distract) and too few (which
     can sometimes require readers to perform complex type inference in
     their heads in order to understand your code)."
-     
+
 ```
 ::::
 
@@ -740,7 +724,7 @@ from Lean's standard library:
    `List.cons_append {α} {a : α} {as bs : List α} : a :: as ++ bs = a :: (as ++ bs)`
 
 :::instructors
-(Maybe outdated after the switch to Lean?) 
+(Maybe outdated after the switch to Lean?)
 There's a little inconsistency between this definition
 and the standard library one: in the library, the type argument is
 implicit. :-( I (BCP) have chosen to leave things inconsistent to
@@ -1461,7 +1445,7 @@ can throw away afterwards.)
 ## Fold
 
 ::::full
-An even more powerful higher-order function is 
+An even more powerful higher-order function is
 `fold`. It is the inspiration for the "reduce"
 operation that lies at the heart of Google's map/reduce
 distributed programming framework.
@@ -2063,4 +2047,3 @@ end Church
 end Exercises
 ```
 ::::::
-

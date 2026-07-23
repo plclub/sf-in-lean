@@ -1,23 +1,8 @@
 prelude
-import VersoManual
-import VersoManual.InlineLean
-import Illuminate
-import SFLMeta.Bnf
-import SFLMeta.Ignore
-import SFLMeta.Save
-import SFLMeta.Comment
-import SFLMeta.Exercise
-import SFLMeta.Grade
-import SFLMeta.Hide
-import SFLMeta.Instructors
-import SFLMeta.SlideBreak
-import SFLMeta.Solution
-import SFLMeta.Terse
+import SFLMeta
 
 open Verso.Genre Manual
 open SFLMeta
-
-open InlineLean hiding lean
 
 #doc (Manual) "Basics: Functional Programming in Lean" =>
 %%%
