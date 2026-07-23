@@ -80,10 +80,10 @@ Here is a familiar mathematical function written in Imp.
 ```display
 Z := X;
 Y := 1;
-while Z <> 0 do
+while (Z ≠ 0) {
   Y := Y * Z;
-  Z := Z - 1
-end
+  Z := Z - 1;
+}
 ```
 ::::
 
@@ -152,6 +152,11 @@ abbrev State := TotalMap Ident Nat
 We can add variables to the arithmetic expressions we had before simply
 by including one more constructor.  (This is a fresh `Aexp`, replacing
 the variable-free one from the _Slang_ chapter.)
+
+:::dev "Benjamin Pierce (bcpierce00)"
+That should be a live chapter link.
+:::
+
 
 ```lean
 inductive Aexp where
@@ -538,8 +543,13 @@ end Imp.Delab
 ```
 
 ::::full
-With the delaborators in place, Lean now prints Imp expressions using the
-concrete syntax rather than their raw constructors.
+With the delaborators in place, Lean now pretty prints Imp expressions using the
+syntax rather than their raw constructors. The pretty printed syntax might not always
+match the concrete expression because some of the information can be lost in the macro
+expansion.
+
+For example, the parentheses around `X * 2` in `aexp { 3 + (X * 2) }` are lost because
+they are redundant -- which the parenthesizer knows.
 ::::
 
 ```lean
@@ -570,9 +580,9 @@ def Aexp.eval (st : State) (a : Aexp) : Nat :=
   match a with
   | num   n     =>  n
   | id    x     =>  st[x]                    -- NEW
-  | plus  a1 a2 =>  eval st a1 + eval st a2
-  | minus a1 a2 =>  eval st a1 - eval st a2
-  | mult  a1 a2 =>  eval st a1 * eval st a2
+  | plus  a1 a2 =>  a1.eval st + a2.eval st
+  | minus a1 a2 =>  a1.eval st - a2.eval st
+  | mult  a1 a2 =>  a1.eval st * a2.eval st
 
 def Bexp.eval (st : State) (b : Bexp) : Bool :=
   match b with
@@ -787,7 +797,7 @@ def fact_in_lean : Com := imp {
 
 ::::full
 Because we registered a delaborator, we can inspect a defined program with
-`#print`, which shows the stored definition using the same concrete syntax:
+`#print`, which pretty prints the stored definition using the same syntax:
 ::::
 
 ```lean

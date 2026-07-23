@@ -28,13 +28,18 @@ block_extension Block.quiz where
     some fun _ goB _ _ contents => do
       let body : Verso.Output.Html ← contents.foldlM (init := .empty) fun acc b =>
         return acc ++ (← goB b)
-      return {{ <div class="sf-quiz">{{body}}</div> }}
+      return {{
+        <div class="sf-quiz">
+          <div class="sf-quiz-label">"Quiz"</div>
+          {{body}}
+        </div>
+      }}
   toTeX :=
     open Verso.Output.TeX in
     some fun _ goB _ _ contents => do
       let body : Verso.Output.TeX ← contents.foldlM (init := .empty) fun acc b =>
         return acc ++ (← goB b)
-      pure body
+      pure <| .seq #[.raw "\\paragraph{Quiz.} ", body]
   extraCss := [
 r##"
 div.sf-quiz {
@@ -43,6 +48,11 @@ div.sf-quiz {
   border-left: 3px solid var(--sf-rule, #ccc);
   background: rgba(0, 0, 0, 0.02);
   border-radius: 2px;
+}
+div.sf-quiz > .sf-quiz-label {
+  font-family: var(--verso-structure-font-family);
+  font-weight: 600;
+  margin-bottom: 0.4em;
 }
 "##
   ]
