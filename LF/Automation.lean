@@ -51,14 +51,14 @@ theorem Perm3_In_old (α : Type) (x : α) (l₁ l₂ : List α) :
     Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
   intro hPerm hIn
   induction hPerm with
-  | perm3_swap12 a b c =>
+  | perm3_swap12 =>
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
     obtain h | h | h | h := hIn
     . right; left; assumption
     . left; assumption
     . right; right; left; assumption
     . contradiction
-  | perm3_swap23 a b c =>
+  | perm3_swap23 =>
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
     obtain h | h | h | h := hIn
     . left; assumption
@@ -125,14 +125,16 @@ theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α) :
     Perm3 l₁ l₂ → x ∈ l₁ → x ∈ l₂ := by
   intro hPerm hIn
   induction hPerm with
-  | perm3_swap12 a b c =>
+  | perm3_swap12 =>
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
     obtain h | h | h | h := hIn
+    -- In addition to basic arithmetic, `lia` can also discharge goals
+    -- that are simple facts about logic.
     . lia /- was right; left; assumption -/
     . lia
     . lia
     . lia
-  | perm3_swap23 a b c =>
+  | perm3_swap23 =>
   -- Here, we solve _all_ goals- and eschew the `obtain` - with
   -- the <;> tactic combinator, which we saw in the `Induction` chapter.
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
@@ -687,7 +689,7 @@ eventually working up to a proof of the pumping lemma.
 ## Definitions
 
 ::::full
-Regular expressions are a natural language for describing sets of
+Regular expressions are a formal language for describing sets of
 strings. Their syntax is defined as follows:
 ::::
 
@@ -1096,33 +1098,33 @@ theorem in_re_match {α : Type} {s : List α} {re : RegExp α} {x : α}
 ```
 
 
-::::exercise (rating := 1) (name := "re_not_empty")
-Write a recursive function `re_not_empty` that tests whether a
+::::exercise (rating := 1) (name := "reNotEmpty")
+Write a recursive function `reNotEmpty` that tests whether a
 regular expression matches some string. Prove that your function
 is correct.
 
 :::solution
 ```lean
-def re_not_empty {α : Type} (re : RegExp α) : Bool :=
+def reNotEmpty {α : Type} (re : RegExp α) : Bool :=
   match re with
   | EmptySet => false
   | EmptyStr => true
   | Char _ => true
-  | App re₁ re₂ => re_not_empty re₁ && re_not_empty re₂
-  | Union re₁ re₂ => re_not_empty re₁ || re_not_empty re₂
+  | App re₁ re₂ => reNotEmpty re₁ && reNotEmpty re₂
+  | Union re₁ re₂ => reNotEmpty re₁ || reNotEmpty re₂
   | Star _ => true
 
-theorem re_not_empty_correct {α : Type} (re : RegExp α) :
-    (∃ s, s =~ re) ↔ re_not_empty re = true := by
-  induction re with
+theorem reNotEmpty_correct {α : Type} (re : RegExp α) :
+    (∃ s, s =~ re) ↔ reNotEmpty re = true := by
+  induction re with (simp only [reNotEmpty])
   | EmptySet =>
-    simp only [re_not_empty, Bool.false_eq_true, iff_false, not_exists]; intro s h; inversion h
+    simp only [Bool.false_eq_true, iff_false, not_exists]; intro s h; inversion h
   | EmptyStr =>
-    simp only [re_not_empty, iff_true]; exists []; constructor
+    simp only [iff_true]; exists []; constructor
   | Char x =>
-    simp only [re_not_empty, iff_true]; exists [x]; constructor
+    simp only [iff_true]; exists [x]; constructor
   | App re₁ re₂ ih₁ ih₂ =>
-    simp only [re_not_empty, Bool.and_eq_true]
+    simp only [Bool.and_eq_true]
     constructor
     · rintro ⟨s, h⟩
       inversion h with
@@ -1135,7 +1137,7 @@ theorem re_not_empty_correct {α : Type} (re : RegExp α) :
       obtain ⟨s₂, hs₂⟩ := ih₂.mpr h₂
       exists (s₁ ++ s₂); constructor <;> assumption
   | Union re₁ re₂ ih₁ ih₂ =>
-    simp only [re_not_empty, Bool.or_eq_true]
+    simp only [Bool.or_eq_true]
     constructor
     · rintro ⟨s, h⟩
       inversion h with
@@ -1145,7 +1147,7 @@ theorem re_not_empty_correct {α : Type} (re : RegExp α) :
       · obtain ⟨s, hs⟩ := ih₁.mpr h₁; exists s; constructor; assumption
       · obtain ⟨s, hs⟩ := ih₂.mpr h₂; exists s; apply ExpMatch.mUnionR; assumption
   | Star re _ =>
-      simp only [re_not_empty, iff_true]; exists []; constructor
+      simp only [iff_true]; exists []; constructor
 ```
 :::
 ::::
