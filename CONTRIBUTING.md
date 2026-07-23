@@ -241,7 +241,7 @@ should be kept in sync as chapters are rewritten.
 | `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
 | `IndProp`         | `rcases`, `subst` |
 | `Typeclasses`     | `decide` |
-| `Automation`      | `lia`, `try`, `repeat`, `specialize`, `trivial`, `simp` |
+| `Automation`      | `lia`, `try`, `repeat`, `specialize`, `trivial`, `simp`, `generalize` |
 | `HL/Imp`          | *(none new)* |
 
 **Notes**
@@ -392,12 +392,44 @@ guidelines.
 
 ### Notation and simplification
 
-When notation is implemented via typeclass instances, `dsimp [add]` /
-`dsimp [app]` do *not* resolve the instance down to the underlying
-definition, and `simp` is often too powerful for teaching. So
-**rewrite explicitly by equational lemmas** instead — e.g. `n + (m +
-1) = n + m + 1` or `(h :: t) ++ l = h :: t ++ l` — rather than
-reaching for `dsimp`/`simp`.
+When notation is implemented via typeclass instances, `dsimp [add]` / `dsimp
+[app]` do *not* resolve the instance down to the underlying definition, and
+`simp` is often too powerful for teaching. So **rewrite explicitly by equational
+lemmas** when possible instead — e.g. `n + (m + 1) = n + m + 1` or `(h :: t) ++
+l = h :: t ++ l` — rather than reaching for `dsimp`/`simp` in this book.
+
+There is some flexibility here, but there are some **important** nuances. 
+Please read the list below to understand when using `dsimp`/`simp` is appropriate.
+
+
+1) When possible, use `rewrite`/`rw` over `dsimp`. 
+2) If you must use `dsimp`, **do not use `dsimp`** before `UsingLean.lean`. 
+3) If you must use `simp`, **do not use `simp`** before `Automation.lean`. 
+4) If using `simp` with definitions (only in or after `Automation.lean`), 
+   **tag theorems not definitions, with `@[simp]`**. 
+Example: 
+
+```lean
+/- Do not use @[simp] here -/
+def add (n : Nat) (m : Nat) : Nat :=
+  match m with
+  | zero => n
+  | succ m' => succ (add n m')
+
+@[simp] /- Use it here instead... -/
+theorem add_zero : ∀ n : Nat, n + zero = n := by
+  intro n
+  rfl
+@[simp] /- ... and here. -/
+theorem add_succ : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
+  intro n m
+  rfl
+
+```
+
+5) **The book may not use `grind` in any place.**
+6) In and after the `Automation.lean` chapter, using `simp` and `dsimp` is
+    appropriate.
 
 ### Arithmetic / the custom `Nat`
 
