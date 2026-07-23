@@ -18,6 +18,9 @@ import TS.Slang
 open Verso.Genre Manual
 open SFLMeta
 
+:::dev "Benjamin Pierce (bcpierce00)"
+The `hiding lean` should not be needed any more and should be removed from all files everywhere it exists.
+:::
 open InlineLean hiding lean
 
 #doc (Manual) "Smallstep: Small-step Operational Semantics" =>

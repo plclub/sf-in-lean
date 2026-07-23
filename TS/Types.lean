@@ -424,6 +424,10 @@ is a bit longer than the `nvalue_is_nf` route above.
 ```
 ::::
 
+:::dev "Benjamin Pierce (bcpierce00)"
+Should the following be hidden except in the solutions version?  And doesn't it need a comment in that version saying what it is?
+:::
+
 ```lean
 theorem value_is_nf' : ∀ t, Tm.IsValue t → Tm.IsNormalForm t := by
   intro t
@@ -566,6 +570,9 @@ kinds of operands.)
 :::
 
 ::::full
+:::dev "Benjamin Pierce (bcpierce00)"
+What is this? Who wrote it? (The text reads like Claude, but it is not marked as such...)
+:::
 _Optional aside, good practice with step relations but tangential to the
 main development._  We define an alternate step relation `⇢` and a step
 _function_ for it -- converting a hidden draft from the Rocq source into
@@ -913,6 +920,10 @@ _strong progress_ from the {ref "Smallstep"}[Smallstep] chapter?
 
 :::::exercise (rating := 3) (name := "finish_progress_informal")
 Complete the corresponding informal proof.
+
+:::dev "Benjamin Pierce (bcpierce00)"
+Check the typesetting of this...
+:::
 
 _Theorem_: If `⊢ t ⦂ T`, then either `t` is a value or else `t ⟶ t'` for
 some `t'`.
@@ -1485,6 +1496,13 @@ reason that language theorists generally prefer the small-step style.
 ```
 :::
 
+:::dev "Benjamin Pierce (bcpierce00)"
+This next is not using the new conventions for `grade` blocks, which I thought
+`to_verso.py` was now enforcing.  Is that because this file was converted a while back,
+before these improvements?  (I suspect yes because the indentation is also
+wonky and I improved that too.) Anyway, the `grade` block headers should be fixed, throughout (and maybe in Smallstep and Imp?)... `dev` block headers too, if we want
+to be really consistent.
+:::
 :::grade
 ```
 GRADE_MANUAL 6: prog_pres_bigstep
