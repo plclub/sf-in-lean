@@ -3420,7 +3420,6 @@ Proof. {
     }
   }
 } Qed. -/
-/- /QUIETSOLUTION -/
 
 theorem palindrome_converse: ∀ {α: Type} (l: List α),
     l = l.reverse → Pal l := by
@@ -3428,6 +3427,7 @@ theorem palindrome_converse: ∀ {α: Type} (l: List α),
   intros α l h
   exact reverse_pal _ _ rfl h
   /- /ADMITTED -/
+/- /QUIETSOLUTION -/
 /- [] -/
 
 /- EX4A? (NoDup) -/
