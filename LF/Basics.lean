@@ -1,23 +1,8 @@
 prelude
-import VersoManual
-import VersoManual.InlineLean
-import Illuminate
-import SFLMeta.Bnf
-import SFLMeta.Ignore
-import SFLMeta.Save
-import SFLMeta.Comment
-import SFLMeta.Exercise
-import SFLMeta.Grade
-import SFLMeta.Hide
-import SFLMeta.Instructors
-import SFLMeta.SlideBreak
-import SFLMeta.Solution
-import SFLMeta.Terse
+import SFLMeta
 
 open Verso.Genre Manual
 open SFLMeta
-
-open InlineLean hiding lean
 
 #doc (Manual) "Basics: Functional Programming in Lean" =>
 %%%
@@ -40,12 +25,8 @@ be people that struggle with some of it.
 PRESENTATION ADVICE: Working with the .lean file directly in VS Code
 is recommended for the first few lectures, so students see exactly
 what's in the source file.
-:::
 
-:::dev "Michael Clarkson (clarksmr)"
-The first issue I had was that I don't have Lean installed. Since LF:Preface hasn't
-been ported, I had to figure out how to install it. New instructors will face the same issue.
-Here is what I did:
+If you don't have Lean installed yet:
 * Install Lean 4 through the VS Code extension.
 * Start a new terminal session to pick up environment changes.
 * Run `make`. I got many warnings about "expose"; are those expected?
@@ -265,6 +246,9 @@ The `rfl` tactic is used to observe that both sides of an equal sign evaluate to
 
 ## Aside: Using the VS Code Lean Extension
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
 ::::full
 If you have a computer handy, this would be an excellent moment
 to fire up VS Code with the Lean extension or the Lean web interface
@@ -303,10 +287,6 @@ For `#eval` and other commands, we show Lean's responses in comments; if you
 hover over the `#eval` commands above, you will see the popup that contains
 the output should match what's in the comment below. Experiment with adding
 your own `#eval` commands explore how other functions work.
-::::
-
-::::terse
-If you are not already, we recommend exploring this file using the Lean extension in VS Code.
 ::::
 
 ## Booleans
@@ -685,6 +665,9 @@ each of type `Bool`, this function produces an output of type
 
 ## Aside: Unicode in Lean
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
 ::::full
 Note that → is a unicode symbol, not a simple ASCII character. The
 Lean Extension for VS Code provides convenient shortcuts for
@@ -696,10 +679,6 @@ produces a unicode symbol that you can see on the screen, just hover
 over it. To see all of the Unicode shortcodes, open the Command Palette
 (Ctrl+Shift+P on Windows/Linux or Cmd+Shift+P on macOS), type
 "Lean 4: Show Unicode Input Abbreviations", and press Enter.
-::::
-
-::::terse
-Lean uses unicode characters; you can type them with a backslash (`\`).
 ::::
 
 ## New Types from Old
@@ -734,6 +713,7 @@ inductive Color : Type where
   | primary (p : RGB)
 ```
 
+:::full
 An `inductive` definition does two things:
 
 - It introduces a set of new _constructors_. E.g., {name}`RGB.red`,
@@ -757,6 +737,7 @@ E.g., these are valid constructor expressions...
 - `RGB.red Color.primary`
 - `Bool.true RGB.red`
 - `Color.primary (Color.primary RGB.red)`
+:::
 
 :::slidebreak
 :::
@@ -772,12 +753,18 @@ def monochrome (c : Color) : Bool :=
   | Color.primary p => Bool.false
 ```
 
+:::full
 Since the `primary` constructor takes an argument, a pattern
 that matches `.primary` should include either a variable, a constant
 of appropriate type, or `_`. Lean's convention is to use a `_` (called a
 _wildcard_) when the argument to a constructor doesn't matter. In
 the definition of `monochrome`, we don't use the argument to `Color.primary`, so
 a more idiomatic definition would be:
+:::
+
+:::terse
+We can use a _wildcard_ pattern `_` to match something we don't care about:
+:::
 
 ```lean
 def monochrome' (c : Color) : Bool :=
@@ -798,10 +785,12 @@ def isRed (c : Color) : Bool :=
   | Color.primary _ => Bool.false
 ```
 
+:::full
 The pattern `Color.primary RGB.red` will match only when `c` is
 `Color.primary` with the argument `RGB.red`. The pattern `Color.primary _` matches
 every `Color.primary` color, but because patterns are checked in
 order, the `Color.primary _` case will never be reached if the color is `RGB.red`.
+:::
 
 An alternative way to write the same function would be to explicitly
 nest match statements:
@@ -817,11 +806,13 @@ def isRed' (c : Color) : Bool :=
     | _ => Bool.false
 ```
 
+:::full
 This `isRed'` function produces the same result as
 `isRed` but illustrates the _use_ of a pattern matching variable: the
 `Color.primary r` pattern stores the `RGB` argument into variable `r`,
 and then pattern matches on that argument to produce the final
 result.
+:::
 
 ::::exercise (rating := 1) (name := "is_weekend")
 Define a function that takes a `Day` and returns true if the day is
@@ -916,9 +907,11 @@ end Playground
 #check Playground.myFoo  -- RGB
 ```
 
+:::full
 Namespaces can be opened and closed as often as you like to add new definitions and access old ones.
 When inside a `namespace`, definitions from the that namespace can be referenced
 without prefixes.
+:::
 
 ```lean
 namespace Playground
@@ -986,9 +979,15 @@ def Day.nextWorkingDay' (d : Day) : Day :=
   | sunday    => monday
 ```
 
+:::full
 We can also use `open` to bring the definitions of a namespace into
 the current scope; after that, we can refer to any of the namespace's
 definitions without a prefix.
+:::
+
+:::terse
+`open` brings definitions from a namespace into scope.
+:::
 
 ```lean
 namespace MyNamespace
@@ -1089,12 +1088,6 @@ Here, though, because `not` is a function that takes a `Bool` argument, Lean kno
 ```
 ::::
 
-:::dev
-BCP: This is not going to typeset well!
-TODO
-MWH: What is "this" referring to?
-:::
-
 ::::exercise(rating:=0) (name := "custom_namespace_checks")
 Predict the output of each of the statements below.
 Do you think their results would change depending on which namespace
@@ -1193,10 +1186,25 @@ example : allZero (.bits .b0 .b0 .b0 .b0) = true  := by rfl
 end Playground
 ```
 
-:::dev "mwhicks1"
-Lean has structure types which provide tuple types directly.
-I could imagine reworking the `Nibble` definition to be a structure instead.
-Should we do that? Should we at least mention structures
+### Aside: Structures
+
+:::suppressPreviousHeaderWhenTerse
+:::
+
+:::full
+When defining an inductive type with just case, we can instead use a `structure`:
+```lean
+structure NibbleStruct : Type where
+  x0 : Playground.Bit
+  x1 : Playground.Bit
+  x2 : Playground.Bit
+  x3 : Playground.Bit
+```
+Rather than construct this as `.bits .b0 .b0 .b0 .b0` we construct it as:
+```
+#check NibbleStruct.mk .b0 .b0 .b0 .b0
+```
+The `.mk` constructor is created for us.
 :::
 
 ## Natural Numbers
@@ -1255,6 +1263,7 @@ inductive Nat : Type where
   | succ (n : Nat)
 ```
 
+:::full
 Naturally, Lean has its own definition of natural numbers,
 with some slightly fancy features for reasoning and
 notation. As we are just beginning to reason about natural numbers,
@@ -1262,6 +1271,11 @@ we use our own definition here and introduce the Lean one in a later chapter.
 
 We'll define some shorthands for numbers, putting them in the `Nat` namespace
 so we don't need to use `.` notation everywhere.
+:::
+
+:::terse
+Eventually we'll swap to Lean's definition of natural numbers, which is very similar to this.
+:::
 
 ```lean
 namespace Nat
@@ -1368,8 +1382,10 @@ def add (n : Nat) (m : Nat) : Nat :=
 ```
 
 We can also define infix notation for our `add` functions.
+:::full
 Don't worry too much about how this is defined; we will return to it
 in more detail later.
+:::
 
 ```lean
 scoped infixl:65 " + " => add
@@ -1409,12 +1425,6 @@ theorem add_zero : ∀ n : Nat, n + zero = n := by
 ```lean
 #check add_zero
 ```
-
-:::dev "Benjamin Pierce (bcpierce00)"
-We will probably want to remove the "NatPlayground" stuff from
-all these comments when we fix the printing.
-RAB: Yes! Someone please let us know how!
-:::
 
 Using our simplification rule `add_zero`, we can carry out a simple proof
 about natural numbers!
@@ -1475,6 +1485,9 @@ theorem add_zero_zero_zero : ∀ n : Nat, n + zero + zero + zero = n := by
 
 ## The `rewrite` tactic
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
 ::::full
 As we saw above, the tactic that tells Lean to rewrite (part of) a goal or
 hypothesis based on a rule is called `rewrite`. Given the rule `add_zero`,
@@ -1484,11 +1497,10 @@ any `n + zero` in our proof with `n` via `rewrite [add_zero]`.
 The `rewrite` tactic takes its argument(s) in square brackets.
 ::::
 
-::::terse
-The `rewrite` tactic rewrites part of a goal based on a hypothesis.
-::::
-
 ## The `rfl` tactic
+
+:::suppressPreviousHeaderWhenTerse
+:::
 
 ::::full
 The `rfl` tactic closes a goal of the shape `a = a`, for any `a`. It
@@ -1750,13 +1762,6 @@ theorem two_plus_two_eq_four : two + two = four := by
     rfl
 ```
 
-:::dev "Harrison Goldstein (hgoldstein95)"
-I don't want to introduce new things here, but it occurs to me that it would actually be kind of
-nice to use `calc` or `conv` to scaffold these very intentional symbol pushing proofs. Maybe a good
-compromise would be be able to put comments that clarify that the first line "rewrites the righthand
-side to `succ (succ (succ (succ zero)))`"?
-:::
-
 ::::full
 Now that we know how addition is defined, we can use it to define multiplication:
 ::::
@@ -1806,12 +1811,6 @@ GRADE_THEOREM 1: mul_simpl_rules
 ```
 :::
 ::::
-
-:::dev "Benjamin Pierce (bcpierce00)"
-Again, this should be an exercise.
-RAB: Agreed if we're keeping these visible; putting off
-     small decision until large decision is made.
-:::
 
 Prove these thoerems using rewriting with the simplification rules for addition and multiplication.
 

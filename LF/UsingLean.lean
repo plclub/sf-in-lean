@@ -1,27 +1,10 @@
-import VersoManual
-import VersoManual.InlineLean
-import Illuminate
-import SFLMeta.Bnf
-import SFLMeta.DisplayMath
-import SFLMeta.Ignore
-import SFLMeta.Save
-import SFLMeta.Comment
-import SFLMeta.Epigraph
-import SFLMeta.Exercise
-import SFLMeta.Grade
-import SFLMeta.Hide
-import SFLMeta.Instructors
-import SFLMeta.Quiz
-import SFLMeta.SlideBreak
-import SFLMeta.Solution
-import SFLMeta.Terse
+import SFLMeta
+
 import LF.Basics
 import LF.Induction
-import Batteries.CodeAction
+
 open Verso.Genre Manual
 open SFLMeta
-
-open InlineLean hiding lean
 
 #doc (Manual) "UsingLean: Using the full power of a proof assistant" =>
 %%%
@@ -462,12 +445,10 @@ example (n : Nat) : square n + 0 = n * n := by
 Like `rw` and `exact`, `dsimp` also has a `?` version that searches for
 functions to simplify by. Many Lean tactics have `?` versions; try it out if you are unsure.
 
-:::dev "Roger Burtonpatel (rogerburtonpatel)"
-```
-TODO- hard pointer needed to this section once we
+:::dev "Roger Burtonpatel (rogerburtonpatel)" NOW
+Hard pointer needed to this section once we
 versify. Also, we may want a pointer to where we introduce `simp`
 (and _maybe_ `grind` in the next volume).
-```
 :::
 
 ## A New Step Towards Automation
