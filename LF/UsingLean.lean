@@ -547,7 +547,7 @@ we've seen so far. That is, `Nat.even n` and `n.even` are just different ways to
 same term.
 
 In previous chapters we disabled this notation by putting `set_option pp.fieldNotation false`
-at the top of each file, but from now on we will leave it enabled, since use of dot notation
+at the top of each file, but from now on we will leave it enabled, since use of field notation
 is common in idiomatic Lean developments. However, you can feel free to disable it
 if it's confusing you. Additionally, if you want to disable it only for a specific function
 or constructor, you can do so with `attribute [pp_nodot] <Name>`.
