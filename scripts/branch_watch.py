@@ -241,6 +241,7 @@ def render(branches, conf, prs, have_token, slug):
 
     conflicting_files = {f: rs for f, rs in hot.items() if file_conflicts(rs)}
     clean_files = {f: rs for f, rs in hot.items() if not file_conflicts(rs)}
+    single_files = {f: rs for f, rs in fmap.items() if len(rs) == 1}
 
     n_conf_main = sum(1 for b in active.values() if not b["clean_to_main"])
     n_conf_pairs = sum(len(v) for v in conf.values()) // 2
@@ -277,13 +278,13 @@ def render(branches, conf, prs, have_token, slug):
         )
     out.append("")
 
-    # ---- hot files: conflicting first, then clean co-edits ----
-    out.append("### Hot files")
+    # ---- files: conflicting first, then clean co-edits, then single-branch ----
+    out.append("### Files")
     out.append("")
 
-    def hot_table(files):
+    def file_table(files):
         rows = ["| File | # | Branches |", "|---|--:|---|"]
-        for f, refs in sorted(files.items(), key=lambda x: -len(x[1])):
+        for f, refs in sorted(files.items(), key=lambda x: (-len(x[1]), x[0])):
             labels = []
             for o in sorted(refs):
                 clash = any(o in conf[p] for p in refs if p != o)
@@ -294,15 +295,20 @@ def render(branches, conf, prs, have_token, slug):
     if conflicting_files:
         out.append("#### ⚠️ Conflicting")
         out.append("")
-        out += hot_table(conflicting_files)
+        out += file_table(conflicting_files)
         out.append("")
     if clean_files:
         out.append("#### Co-edited (merges clean)")
         out.append("")
-        out += hot_table(clean_files)
+        out += file_table(clean_files)
         out.append("")
-    if not hot:
-        out.append("_No file is touched by more than one active branch._")
+    if single_files:
+        out.append("#### Single-branch")
+        out.append("")
+        out += file_table(single_files)
+        out.append("")
+    if not fmap:
+        out.append("_No files modified on any active branch._")
         out.append("")
 
     # ---- merged / inactive branches (always shown) ----
