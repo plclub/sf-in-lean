@@ -14,7 +14,7 @@ file := some "Tactics"
 %%%
 
 :::dev "Daniel Sainati (dsainati1)"
-[BCP: Old comment -- might be out of date?]
+\[BCP: Old comment -- might be out of date?\]
 There is a section here on unfolding definitions that should probably move earlier,
 to `Basics` or `Induction`, once those chapters are rewritten to not use arithmetic. This will
 also require changing the examples.

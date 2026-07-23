@@ -14,7 +14,7 @@ file := some "Induction"
 %%%
 
 :::dev "Jonathan Chan (ionathanch)"
-[BCP: Old comment -- might be out of date?]
+\[BCP: Old comment -- might be out of date?\]
 A lot of the proofs on the naturals rely on how operations on naturals were defined in `Basics.lean`,
 but in the stdlib they're slightly different
 (e.g. `sub` is defined via `pred` rather than directly by recursion),

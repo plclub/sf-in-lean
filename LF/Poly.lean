@@ -14,7 +14,7 @@ file := some "Poly"
 %%%
 
 :::dev "Daniel Sainati (dsainati1)"
-[BCP: Old comment -- might be out of date?]
+\[BCP: Old comment -- might be out of date?\]
 None of the comments at the start of the chapter motivating the polymorphic
 definition of lists make sense with the change to use `List Nat` in the previous chapter.
 

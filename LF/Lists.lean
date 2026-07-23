@@ -14,7 +14,7 @@ file := some "Lists"
 %%%
 
 :::dev "Daniel Sainati (dsainati1)"
-[BCP: Old comment -- might be out of date?]
+\[BCP: Old comment -- might be out of date?\]
 Weird that this file contains the first `inductive` definition students have seen up to this point,
 but that definition is also actually a `structure`. Probably need to restructure this.
 
