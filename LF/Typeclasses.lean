@@ -414,7 +414,7 @@ instance : EmptyCollection (TotalMap α β) where
   emptyCollection := TotalMap.empty
 ```
 
-so that we can use the `∅` notation for this empty map. We'sl also declare the instance
+so that we can use the `∅` notation for this empty map. We'll also declare the instance
 
 ```lean
 instance : GetElem (TotalMap α β) α β (fun _ _ => True) where
@@ -453,7 +453,7 @@ notation a " →ₜ " b " ; " m => TotalMap.update m a b
 The `examplemap` above can now be defined as follows:
 
 ```lean
-def examplemap' : TotalMap String Bool := "bar" →ₜ true; "foo" →ₜ true ; ∅
+def examplemap' : TotalMap String Bool := "bar" →ₜ true ; "foo" →ₜ true ; ∅
 ```
 
 When we use maps in later chapters, we'll need several fundamental facts about how they behave.
@@ -463,7 +463,7 @@ Even if you don't work the following exercises, make sure you thoroughly underst
 (Some of the proofs require the functional extensionality axiom, which was discussed in the Logic chapter.)
 
 ```lean
-theorem update_eq (m : TotalMap α β) (a : α) (b : β) : (a →ₜ b; m)[a] = b := by
+theorem update_eq (m : TotalMap α β) (a : α) (b : β) : (a →ₜ b ; m)[a] = b := by
   unfold update
   rewrite [getElem_def, ReflBEq.rfl, cond_true]
   rfl
@@ -473,6 +473,53 @@ theorem update_eq (m : TotalMap α β) (a : α) (b : β) : (a →ₜ b; m)[a] = 
 exercises here...
 :::
 
+## Notation for Concrete Maps
+
+Wouldn't it be nice if we could use a more natural notation for concrete maps like `{ "bar" ↦ true, "foo" ↦ true }`?
+To accomplish this we define a simple structure that consists of a key and a value along with `↦` notation for it.
+
+```lean
+/--
+A key-value pair with `↦` syntax.
+-/
+@[ext]
+structure KVPair (K : Type u) (V : Type v) where
+  key : K
+  value : V
+
+namespace KVPair
+scoped notation k " ↦ " v => KVPair.mk k v
+end KVPair
+
+open scoped KVPair
+```
+
+Next, we declare `Insert` and `Singleton` instances which control the `{}` notation in lean.
+
+```lean
+instance : Insert (KVPair α β) (TotalMap α β) where
+  insert kv m := kv.key →ₜ kv.value ; m
+
+instance : Singleton (KVPair α β) (TotalMap α β) where
+  singleton kv := insert kv ∅
+
+instance : LawfulSingleton (KVPair α β) (TotalMap α β) where
+  insert_empty_eq _ := rfl
+```
+
+:::dev
+xhalo32: Should we explain why `example : ({ "foo" ↦ true })["foo"]! = true := rfl` doesn't work (the collection that has Insert and GetElem is ambiguous)?
+:::
+
+Here are a couple of examples using the new notation:
+
+```lean
+example : ({ "bar" ↦ true, "foo" ↦ true }) = "bar" →ₜ true ; "foo" →ₜ true ; ∅ := rfl
+
+example : ({ "foo" ↦ true } : TotalMap String Bool)["foo"]! = true := rfl
+
+example : ({ 1 ↦ 2, 1 ↦ 3 } : TotalMap Nat Nat)[1]! = 2 := rfl
+```
 
 ## Partial Map
 
