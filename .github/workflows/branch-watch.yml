@@ -1,0 +1,60 @@
+# Branch & file activity dashboard.
+#
+# WHAT THIS DOES
+#   Runs scripts/branch_watch.py, which walks every remote branch, works out
+#   which files each one touches that aren't yet in `main`, computes real merge
+#   conflicts, and rewrites a pinned tracking issue with the result. This lets
+#   contributors see at a glance who is editing what and where two branches
+#   would collide.
+#
+# WHEN IT RUNS
+#   * on a schedule (every 30 min, best-effort — GitHub may delay cron under
+#     load), so the dashboard stays roughly current;
+#   * on every push to `main`, so it refreshes the moment something merges;
+#   * on demand via the "Run workflow" button.
+#
+# FIRST RUN
+#   With no tracking issue yet, the script CREATES one (its body carries a
+#   marker every later run uses to find it) and prints its URL. Pin that issue
+#   once in the UI; updates thereafter land in place.
+#
+# PERMISSIONS
+#   `issues: write` lets the built-in GITHUB_TOKEN create/update the issue.
+#   `contents: read` is the default for checkout.
+
+name: branch-watch
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Never run two updaters at once (a scheduled tick overlapping a push) — the
+# later one would race the issue body. Let the newest win.
+concurrency:
+  group: branch-watch
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      # Full history + all branches: the script needs merge-bases and every
+      # remote ref, which a shallow single-branch checkout would not have.
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # `checkout` only creates the tracking ref for `main`; fetch the rest so
+      # `origin/<branch>` refs exist for the analysis.
+      - run: git fetch --prune origin "+refs/heads/*:refs/remotes/origin/*"
+
+      - run: python3 scripts/branch_watch.py --update-issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

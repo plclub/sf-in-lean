@@ -12,6 +12,10 @@ htmlSplit := .never
 file := some "Smallstep"
 %%%
 
+:::dev "Benjamin Pierce (bcpierce00)"
+The `hiding lean` (above in the source file) should not be needed any more and should be removed from all files everywhere it exists.
+:::
+
 :::dev "Michael Hicks (mwhicks1)"
 This chapter adapts Smallstep to follow Slang, the initial part
 of Imp, on just Aexp and Bexp (without variables). This means that parts
