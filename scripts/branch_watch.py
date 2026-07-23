@@ -133,6 +133,8 @@ def collect_branches():
             set(git("diff", "--name-only", base, ref).splitlines()) if base else set()
         )
         author = git("log", "-1", "--format=%an", ref)
+        email = git("log", "-1", "--format=%ae", ref)
+        sha = git("log", "-1", "--format=%H", ref)
         when = git("log", "-1", "--format=%ad", "--date=relative", ref)
         clean_to_main = merges_clean(main, ref) if ahead else True
         branches[ref] = {
@@ -140,6 +142,9 @@ def collect_branches():
             "ahead": ahead,
             "files": files,
             "author": author,
+            "email": email,
+            "sha": sha,
+            "login": None,  # GitHub username, filled in later when a token is set
             "when": when,
             "clean_to_main": clean_to_main,
         }
@@ -191,6 +196,24 @@ def api(method, path, token, body=None):
         return None
 
 
+def login_from_email(email):
+    """GitHub username parsed from a `…@users.noreply.github.com` commit email
+    (`user@…` or `12345+user@…`), or None for any other address."""
+    if not email.endswith("@users.noreply.github.com"):
+        return None
+    local = email.split("@", 1)[0]
+    return local.split("+", 1)[1] if "+" in local else local
+
+
+def commit_login(slug, sha, token):
+    """The GitHub username linked to commit `sha` (via its verified author
+    email), from the API — or None if unlinked or unavailable."""
+    data = api("GET", f"/repos/{slug}/commits/{sha}", token)
+    if isinstance(data, dict) and isinstance(data.get("author"), dict):
+        return data["author"].get("login")
+    return None
+
+
 def fetch_prs(slug, token):
     """Map branch short-name -> {num, url, draft} for open PRs."""
     prs = {}
@@ -218,6 +241,11 @@ def fetch_prs(slug, token):
 # --------------------------------------------------------------------------
 # markdown rendering
 # --------------------------------------------------------------------------
+def author_cell(b):
+    """Last-commit author name, with its GitHub `@handle` appended when known."""
+    return f"{b['author']} (@{b['login']})" if b.get("login") else b["author"]
+
+
 def pr_cell(short, prs):
     pr = prs.get(short)
     if not pr:
@@ -313,7 +341,7 @@ def render(branches, conf, prs, have_token, slug):
         ov = ", ".join(pieces) or "—"
         main_flag = "✅" if b["clean_to_main"] else "⚠️"
         out.append(
-            f"| {branch_link(b['short'], slug, maxlen=25)} | {pr_cell(b['short'], prs)} | {b['author']} | "
+            f"| {branch_link(b['short'], slug, maxlen=25)} | {pr_cell(b['short'], prs)} | {author_cell(b)} | "
             f"{b['when']} | {b['ahead']} | {files_cell(b['files'])} | "
             f"{main_flag} | {ov} |"
         )
@@ -362,7 +390,7 @@ def render(branches, conf, prs, have_token, slug):
         out.append("_0 commits ahead of `main` — fully merged or pointing at an ancestor._")
         out.append("")
         for r, b in sorted(merged.items()):
-            out.append(f"- {branch_link(b['short'], slug)} — last activity {b['when']} ({b['author']})")
+            out.append(f"- {branch_link(b['short'], slug)} — last activity {b['when']} ({author_cell(b)})")
     else:
         out.append("_None._")
     out.append("")
@@ -428,6 +456,12 @@ def main():
     prs = {}
     if token:
         prs = fetch_prs(slug, token)
+
+    # Resolve each branch's author GitHub handle: the commits API (accurate) when
+    # a token is available, else parse a noreply commit email.
+    for b in branches.values():
+        b["login"] = (commit_login(slug, b["sha"], token) if token else None) \
+            or login_from_email(b["email"])
 
     body = render(branches, conf, prs, have_token=bool(token), slug=slug)
 
