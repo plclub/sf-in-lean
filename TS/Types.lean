@@ -414,53 +414,46 @@ theorem value_is_nf (t : Tm) (h : Tm.IsValue t) : Tm.IsNormalForm t := by
     | inl hb => intro hc; obtain ⟨t', hstp⟩ := hc; cases hb <;> cases hstp
     | inr hn => exact nvalue_is_nf t hn
 ```
-:::::
 
-::::instructors
-```
-The "other way" mentioned in the hint: induction on the term
-itself rather than on the numeric-value evidence.  It goes through, but
-is a bit longer than the `nvalue_is_nf` route above.
-```
-::::
-
-:::dev "Benjamin Pierce (bcpierce00)"
-Should the following be hidden except in the solutions version?  And doesn't it need a comment in that version saying what it is?
-:::
+The "other way" mentioned in the hint proves the same fact by induction on
+the term itself rather than on the evidence that it is a numeric value.  It
+goes through, but is a bit longer than the `nvalue_is_nf` route above.
 
 ```lean
 theorem value_is_nf' : ∀ t, Tm.IsValue t → Tm.IsNormalForm t := by
-  intro t
-  induction t with
-  | tru => intro _ hc; obtain ⟨t', hstp⟩ := hc; cases hstp
-  | fls => intro _ hc; obtain ⟨t', hstp⟩ := hc; cases hstp
-  | ite c t0 e _ _ _ =>
-      intro h; cases h with
-      | inl hb => cases hb
-      | inr hn => cases hn
-  | zero => intro _ hc; obtain ⟨t', hstp⟩ := hc; cases hstp
-  | succ t0 ih =>
-      -- The `succ` case is the only one that doesn't immediately present a
-      -- contradiction.  Considering how a `succ` term can be a value, it is
-      -- syntactically not a boolean value, but the numeric value case
-      -- requires a bit more work.
-      intro h hc; obtain ⟨t', hstp⟩ := hc
-      cases hstp with
-      | succStep _ t1' hstp' =>
-          cases h with
-          | inl hb => cases hb
-          -- By the IH, if `t0` is a numeric value, then it can not step.
-          | inr hn => cases hn with
-            | succ _ hn0 => exact ih (.inr hn0) ⟨t1', hstp'⟩
-  | pred t0 _ =>
-      intro h; cases h with
-      | inl hb => cases hb
-      | inr hn => cases hn
-  | isZero t0 _ =>
-      intro h; cases h with
-      | inl hb => cases hb
-      | inr hn => cases hn
+  solution!
+    intro t
+    induction t with
+    | tru => intro _ hc; obtain ⟨t', hstp⟩ := hc; cases hstp
+    | fls => intro _ hc; obtain ⟨t', hstp⟩ := hc; cases hstp
+    | ite c t0 e _ _ _ =>
+        intro h; cases h with
+        | inl hb => cases hb
+        | inr hn => cases hn
+    | zero => intro _ hc; obtain ⟨t', hstp⟩ := hc; cases hstp
+    | succ t0 ih =>
+        -- The `succ` case is the only one that doesn't immediately present a
+        -- contradiction.  Considering how a `succ` term can be a value, it is
+        -- syntactically not a boolean value, but the numeric value case
+        -- requires a bit more work.
+        intro h hc; obtain ⟨t', hstp⟩ := hc
+        cases hstp with
+        | succStep _ t1' hstp' =>
+            cases h with
+            | inl hb => cases hb
+            -- By the IH, if `t0` is a numeric value, then it can not step.
+            | inr hn => cases hn with
+              | succ _ hn0 => exact ih (.inr hn0) ⟨t1', hstp'⟩
+    | pred t0 _ =>
+        intro h; cases h with
+        | inl hb => cases hb
+        | inr hn => cases hn
+    | isZero t0 _ =>
+        intro h; cases h with
+        | inl hb => cases hb
+        | inr hn => cases hn
 ```
+:::::
 
 :::::exercise (rating := 3) (name := "step_deterministic")
 Use `value_is_nf` (here, `nvalue_is_nf`) to show that the `Tm.Step` relation
@@ -570,14 +563,9 @@ kinds of operands.)
 :::
 
 ::::full
-:::dev "Benjamin Pierce (bcpierce00)"
-What is this? Who wrote it? (The text reads like Claude, but it is not marked as such...)
-:::
 _Optional aside, good practice with step relations but tangential to the
 main development._  We define an alternate step relation `⇢` and a step
-_function_ for it -- converting a hidden draft from the Rocq source into
-live Lean using this chapter's `<{ … }>` grammar and notation
-setup.
+_function_ for it.
 ::::
 
 :::dev "mwhicks1"
