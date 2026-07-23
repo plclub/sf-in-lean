@@ -14,6 +14,16 @@ Tactics, Logic** — each `{include LF.<Ch>Verso}`d in `LF.lean`.
 build, and the three *generated* Lake projects under `_out/lf/*/lean/`
 compile. `LFDraft.lean` is now empty (everything graduated).
 
+Update 2026-07-16/17: **Induction**, **Lists**, **UsingLean**, **Poly**, and
+**Tactics** are
+now authored *directly* in Verso — `LF/Induction.lean` / `LF/Lists.lean` /
+`LF/UsingLean.lean` / `LF/Poly.lean` / `LF/Tactics.lean` are the Verso sources (the old bare sources
+are archived locally as `LF/Old<Ch>.lean`, untracked), imported
+and `{include}`d in `LF.lean` without the `Verso` suffix, removed from the
+Makefile's `LF_CHAPTERS` generation list, and listed in `to_verso.py`'s
+`DIRECT_LF_MODULES` so other chapters' `import LF.<Ch>` lines pass through
+unchanged.
+
 Per-chapter verification that nothing is lost from the bare `.lean`:
 
 1. `lake build LF.<Ch>` (bare chapter compiles);
@@ -85,14 +95,14 @@ Chapter sources — marker/structure repairs (found by the checks):
   terse-visible, matching its marking).
 - Five dropped `TERSE: ***` slide breaks (`-- TERSE:` with lost payload):
   Lists 64, Poly 939, Tactics 134 & 1324, IndProp 574.
-- Tactics: `theorem zero_leb` added next to `succ_leb_succ` (deleted from
+- Tactics: `theorem zero_ble` added next to `succ_ble_succ` (deleted from
   UsingLean 2026-06-29 but still used by IndProp).
 
 ## Remaining work
 
 ### IndProp (deferred — needs more work)
 
-Bare `LF.IndProp` **builds again** (was broken): `zero_leb` restored;
+Bare `LF.IndProp` **builds again** (was broken): `zero_ble` restored;
 `exists 0; rw [double_zero]` → `exists 0` (×2, `exists` closes the goal);
 `inversion contra` → `cases contra` on the empty relation (`inversion` can't
 handle a no-constructor indexed inductive).
@@ -136,7 +146,7 @@ pipeline once IndProp's Verso builds (it imports IndProp).
 ### Maps (not started; known blocker)
 
 `LF.MapsVerso` builds standalone but **cannot join the book yet**: it
-redefines `PartialMap.update` (etc.) already defined by ListsVerso's
+redefines `PartialMap.update` (etc.) already defined by LF.Lists'
 partial-maps preview section, and Verso imports share one environment (see
 the old note in LFDraft.lean's history). Resolve by renaming/namespacing one
 side or dropping the Lists preview definitions, then run the pipeline.
