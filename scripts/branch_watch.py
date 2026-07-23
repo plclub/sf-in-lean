@@ -84,8 +84,12 @@ def collect_branches():
     branches = {}
     for ref in refs:
         ref = ref.strip()
+        short = ref[len(REMOTE) + 1:]
         # `refs/remotes/origin/HEAD` shortens to bare `origin`; skip it too.
-        if ref in (REMOTE, f"{REMOTE}/HEAD", main) or "->" in ref:
+        # `archive/*` branches are point-in-time snapshots, not active work, so
+        # they are left out of the activity table.
+        if (ref in (REMOTE, f"{REMOTE}/HEAD", main) or "->" in ref
+                or short.startswith("archive/")):
             continue
         base = git("merge-base", main, ref)
         ahead = int(git("rev-list", "--count", f"{main}..{ref}") or "0")
@@ -186,7 +190,7 @@ def pr_cell(short, prs):
     return f"[#{pr['num']}]({pr['url']}){tag}"
 
 
-def branch_link(short, slug):
+def branch_link(short, slug, maxlen=None):
     """A Markdown link from a branch's name to its page on GitHub.
 
     Points at the branch's tree view (`/tree/<branch>`); the separate PR column
@@ -194,11 +198,22 @@ def branch_link(short, slug):
     derived purely from the branch name.  The slash in a name like
     `bcp/versification5` is kept (GitHub tree paths use it); other reserved
     characters are percent-encoded.  Falls back to a bare code span if the repo
-    slug could not be determined."""
+    slug could not be determined.
+
+    When `maxlen` is given and the name is longer, the *visible* text is
+    truncated with an ellipsis and the full name is kept as the link's hover
+    title, so a wide table stays narrow; the link target is always the full
+    branch name."""
+    if maxlen and len(short) > maxlen:
+        display = short[: maxlen - 1] + "…"
+        title = f' "{short}"'
+    else:
+        display = short
+        title = ""
     if not slug:
-        return f"`{short}`"
+        return f"`{display}`"
     quoted = urllib.parse.quote(short, safe="/")
-    return f"[`{short}`](https://github.com/{slug}/tree/{quoted})"
+    return f"[`{display}`](https://github.com/{slug}/tree/{quoted}{title})"
 
 
 def files_cell(files):
@@ -256,7 +271,7 @@ def render(branches, conf, prs, have_token, slug):
         ) or "—"
         main_flag = "✅" if b["clean_to_main"] else "⚠️"
         out.append(
-            f"| {branch_link(b['short'], slug)} | {pr_cell(b['short'], prs)} | {b['author']} | "
+            f"| {branch_link(b['short'], slug, maxlen=25)} | {pr_cell(b['short'], prs)} | {b['author']} | "
             f"{b['when']} | {b['ahead']} | {files_cell(b['files'])} | "
             f"{main_flag} | {ov} |"
         )
