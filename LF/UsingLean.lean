@@ -462,12 +462,10 @@ example (n : Nat) : square n + 0 = n * n := by
 Like `rw` and `exact`, `dsimp` also has a `?` version that searches for
 functions to simplify by. Many Lean tactics have `?` versions; try it out if you are unsure.
 
-:::dev "Roger Burtonpatel (rogerburtonpatel)"
-```
-TODO- hard pointer needed to this section once we
+:::dev "Roger Burtonpatel (rogerburtonpatel)" NOW
+Hard pointer needed to this section once we
 versify. Also, we may want a pointer to where we introduce `simp`
 (and _maybe_ `grind` in the next volume).
-```
 :::
 
 ## A New Step Towards Automation

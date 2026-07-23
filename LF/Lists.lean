@@ -60,13 +60,11 @@ import LF.Induction
 import LF.UsingLean
 ```
 
-:::dev "Benjamin Pierce (bcpierce00)"
-Why is this namespace needed??
-:::
-
-:::dev "Daniel Sainati (dsainati1)"
-So that the definitions here don't clash with the standard library.
-:::
+::::full
+This chapter introduces basic data structures and functions for working with
+them. We place all these definitions in the `Lists` namespace to avoid name
+clashes with Lean's standard library and with definitions from other chapters.
+::::
 
 ```lean
 namespace Lists
@@ -171,7 +169,7 @@ examples illustrate pattern matching on a pair with elements `x`
 and `y`, whereas, for example, the definition of `sub` in
 {ref "Basics"}[Basics] performs pattern matching on the values `n` and `m`:
 
-```display
+```lean
 def sub (n m : Nat) : Nat :=
   match n, m with
   | 0,        _        => 0
@@ -183,7 +181,7 @@ The distinction is minor, but it is worth understanding that they
 are not the same. For instance, the following definitions are
 ill-formed:
 
-```display
+```lean +error
 -- Can't match on a pair with multiple patterns:
 def bad_fst (p : NatProd) : Nat :=
   match p with
@@ -542,7 +540,7 @@ example : nonzeros [0, 1, 0, 2, 3, 0, 0] = [1, 2, 3] := solution!(by rfl)
 :::gradeTheorem "0.5" "NatList.test_nonzeros"
 :::
 
-the following lemmas should hold about your definition
+The following lemmas should hold about your definition
 
 ```lean
 theorem nonzeros_cons_zero (t : NatList) :
@@ -589,7 +587,7 @@ from the first list and elements from the second.
 
 Hint: there are natural ways of writing `alternate` that fail to
 satisfy Lean's requirement that all recursive definitions be
-_structurally recursive_, as mentioned in `"Basics"`.
+_structurally recursive_, as mentioned in {ref "Basics"}[Basics].
 If you encounter this difficulty,
 consider pattern matching against both lists at the same time.
 
@@ -754,7 +752,7 @@ theorem member_add_same v t : member v (add v t) = true := by
     rw [BEq.refl]
     dsimp
 
-theorem member_add_diff v1 v2 t : (v1 == v2) = false -> member v1 (add v2 t) = member v1 t := by
+theorem member_add_diff v1 v2 t : (v1 == v2) = false → member v1 (add v2 t) = member v1 t := by
   solution!
     intro h
     dsimp [add, member]
@@ -801,14 +799,14 @@ example : count 5 (remove_one 5 [2, 1, 5, 4, 5, 1, 4]) = 1 := solution!(by rfl)
 ```lean
 theorem remove_one_nil v : remove_one v [] = [] := solution!(by rfl)
 
-theorem remove_one_add_same v1 v2 t : (v2 == v1) = true -> remove_one v1 (add v2 t) = t := by
+theorem remove_one_add_same v1 v2 t : (v2 == v1) = true → remove_one v1 (add v2 t) = t := by
   solution!
     intro h
     dsimp [remove_one]
     rw [h]
     dsimp
 
-theorem remove_one_add_diff v1 v2 t : (v2 == v1) = false -> remove_one v1 (add v2 t) = add v2 (remove_one v1 t) := by
+theorem remove_one_add_diff v1 v2 t : (v2 == v1) = false → remove_one v1 (add v2 t) = add v2 (remove_one v1 t) := by
   solution!
     intro h
     dsimp [remove_one]
@@ -844,7 +842,7 @@ theorem remove_all_add_same v t : remove_all v (add v t) = remove_all v t := by
     rw [BEq.refl]
     dsimp
 
-theorem remove_all_add_diff v1 v2 t : (v2 == v1) = false -> remove_all v1 (add v2 t) = add v2 (remove_all v1 t) := by
+theorem remove_all_add_diff v1 v2 t : (v2 == v1) = false → remove_all v1 (add v2 t) = add v2 (remove_all v1 t) := by
   solution!
     intro h
     dsimp [add, remove_all]
@@ -873,14 +871,14 @@ example : included [1, 2, 2] [2, 1, 4, 1] = false := solution!(by rfl)
 ```lean
 theorem included_nil s : included [] s = true := solution!(by rfl)
 
-theorem included_add_member v s1 s2 : member v s2 = true -> included (add v s1) s2 = included s1 (remove_one v s2) := by
+theorem included_add_member v s1 s2 : member v s2 = true → included (add v s1) s2 = included s1 (remove_one v s2) := by
   solution!
     intro h
     dsimp [add, included]
     rw [h]
     rfl
 
-theorem included_add_nonmember v s1 s2 : member v s2 = false -> included (add v s1) s2 = false := by
+theorem included_add_nonmember v s1 s2 : member v s2 = false → included (add v s1) s2 = false := by
   solution!
     intro h
     dsimp [add, included]
@@ -1070,7 +1068,7 @@ n :: ((l1' ++ l2) ++ l3) = n :: (l1' ++ (l2 ++ l3)),
 
 which is immediate from the induction hypothesis.  _Qed_.
 
-Generalizing Statements
+### Generalizing Statements
 
 ::::full
 In some situations, it is necessary to generalize a
@@ -1165,7 +1163,7 @@ example (l : NatList) :
   | nil => rw [rev_nil]
   | cons n l' ih =>
     rw [rev_cons]
-    -- Now we seem to be stuck: the goal involves `++`, but we
+    -- Now we seem to be stuck: the goal involves `++`,
     -- but we don't have any useful equations
     -- in either the immediate context or in the global
     -- environment!
@@ -1248,13 +1246,13 @@ To prove the following theorem, which tactics will we need besides
 
 ```display
 theorem foo1 : ∀ n : Nat, ∀ l : NatList,
-  myRepeat n 0 = l -> l.length = 0
+  myRepeat n 0 = l → l.length = 0
 ```
 
 :::quizSolution
 ```
 theorem foo1 (n : Nat) (l : NatList) :
-    myRepeat n 0 = l -> l.length = 0 := by
+    myRepeat n 0 = l → l.length = 0 := by
   intro h
   rw [← h, repeat_zero, nil_length]
 ```
@@ -1501,7 +1499,7 @@ theorem eqblist_cons_same h t1 t2 : eqblist (h :: t1) (h :: t2) = eqblist t1 t2 
     dsimp [eqblist]
     rw [BEq.refl, Bool.true_and]
 
-theorem eqblist_cons_diff h1 h2 t1 t2 : (h1 == h2) = false -> eqblist (h1 :: t1) (h2 :: t2) = false := by
+theorem eqblist_cons_diff h1 h2 t1 t2 : (h1 == h2) = false → eqblist (h1 :: t1) (h2 :: t2) = false := by
   solution!
     intro h
     dsimp [eqblist]
@@ -1547,7 +1545,7 @@ The following lemma about `Nat.ble` might help you in the next
 exercise (it will also be useful in later chapters).
 
 ```lean
-theorem leb_n_Sn (n : Nat) :
+theorem ble_n_Sn (n : Nat) :
     Nat.ble n (n + 1) = true := by
   induction n with
   | zero       => rfl
@@ -1580,20 +1578,20 @@ theorem count_remove_one v s :
       rw [remove_one_add_same, count_cons_same]
       dsimp; exact h; exact h
 
-theorem leb_pred_n_n n :
+theorem ble_pred_n_n n :
     Nat.ble n.pred n = true := by
   induction n with
   | zero => dsimp [Nat.ble]
   | succ n ih =>
     dsimp
-    rw [leb_n_Sn]
+    rw [ble_n_Sn]
 
 theorem remove_does_not_increase_count' (s : Bag) (n : Nat) :
     Nat.ble (count n (remove_one n s)) (count n s) = true := by
   induction s with
   | nil => rw [remove_one_nil, count_nil]; rfl
   | cons n' l ih =>
-    rw [count_remove_one, leb_pred_n_n]
+    rw [count_remove_one, ble_pred_n_n]
 ```
 ::::
 
@@ -1608,7 +1606,7 @@ theorem remove_does_not_increase_count (s : Bag) :
     | cons n s' ih =>
       cases n with
       | zero =>
-        rw [remove_one_add_same, count_cons_same, leb_n_Sn] <;> rfl
+        rw [remove_one_add_same, count_cons_same, ble_n_Sn] <;> rfl
       | succ n' =>
         rw [remove_one_add_diff, count_cons_diff, count_cons_diff]
         exact ih; rfl; rfl; rfl
@@ -1727,7 +1725,7 @@ We call this new type `NatOption`.
 ::::
 
 :::terse
-The solution: return an `NatOption`.
+The solution: return a `NatOption`.
 :::
 
 ```lean
@@ -1758,7 +1756,7 @@ example : nth_error [4, 5, 6, 7] 9 = .none := by rfl
 ```
 
 ::::full
-The function below pulls the `Nat` out of an `NatOption`,
+The function below pulls the `Nat` out of a `NatOption`,
 returning a supplied default in the `none` case.
 ::::
 

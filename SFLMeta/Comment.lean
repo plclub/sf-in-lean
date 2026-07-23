@@ -94,14 +94,34 @@ def devNoteShown (urgency : Option String) : Bool :=
   | none => true
   | some u => u == "NOW" || u == "BeforeNextRelease"
 
+/-- Render an author for a note label.  The authoring convention puts the GitHub
+handle in parentheses (`"Benjamin Pierce (bcpierce00)"`), which would nest inside
+the label's own parenthesized field list, so a trailing `(handle)` is rewritten
+to an `@handle` suffix.  An author in any other shape is left alone. -/
+def devNoteAuthorText (author : String) : String :=
+  if author.endsWith ")" then
+    match (author.dropRight 1).splitOn " (" with
+    | [name, handle] => s!"{name} @{handle}"
+    | _ => author
+  else author
+
+/-- Render an urgency keyword for a note label: the multi-word canonical
+spellings are spelled out with spaces (`BeforeNextRelease` → `before next
+release`), `NOW` is left as is. -/
+def devUrgencyText (urgency : String) : String :=
+  match urgency with
+  | "BeforeNextRelease" => "before next release"
+  | "PotentialImprovement" => "potential improvement"
+  | u => u
+
 /-- Provenance label for a rendered dev note —
-`Note to developers (Benjamin Pierce (bcpierce00), NOW, 2020)` — with absent
-fields omitted.  `heading` selects the leading phrase: the HTML rendering uses
-the default (uppercased by CSS); the generated `.lean` files use
-`"NOTE TO DEVELOPERS"`. -/
+`Note to developers (Benjamin Pierce @bcpierce00, before next release, 2020)` —
+with absent fields omitted.  `heading` selects the leading phrase; both the HTML
+rendering and the generated `.lean` files use the mixed-case default. -/
 def devNoteLabel (author urgency : Option String) (year : Option Nat)
     (heading : String := "Note to developers") : String :=
-  let fields := author.toList ++ urgency.toList ++ (year.map toString).toList
+  let fields := (author.map devNoteAuthorText).toList
+    ++ (urgency.map devUrgencyText).toList ++ (year.map toString).toList
   if fields.isEmpty then heading
   else s!"{heading} ({String.intercalate ", " fields})"
 
@@ -145,7 +165,6 @@ div.sf-dev-note > .sf-dev-note-label {
   font-family: var(--verso-structure-font-family);
   font-weight: 700;
   font-size: 0.85em;
-  text-transform: uppercase;
   letter-spacing: 0.03em;
   color: #7a5800;
   margin-bottom: 0.3em;

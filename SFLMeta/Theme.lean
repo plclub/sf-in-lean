@@ -5,8 +5,8 @@ open Verso.Genre Manual
 namespace SFLMeta
 
 /-- Inline CSS that paints the rendered HTML in *Software Foundations*-style
-colors: warm cream background, deep maroon section headings, dark red accents,
-off-white code background. Wired into the build via `Config.extraCss` in
+colors: warm cream page background, deep maroon section headings, dark red
+accents, neutral light-gray block surfaces (code, TOC, callouts). Wired into the build via `Config.extraCss` in
 `Main.lean`. The original Verso layout, typography, and code highlighting are
 otherwise untouched — only colors and a small amount of border styling are
 overridden. -/
@@ -19,9 +19,13 @@ def sfTheme : CSS where
   --sf-accent: #a00;
   --sf-link: #7a1a1a;
   --sf-link-hover: #a00;
-  --sf-code-bg: #f6efe0;
-  --sf-rule: #e6dcc4;
-  --sf-toc-bg: #fbf6e8;
+  /* Block-level surfaces (code blocks, the TOC column, callouts) are a neutral
+     light gray rather than a tint of the warm page color, so highlighted Lean
+     reads against a plain backdrop. */
+  --sf-code-bg: #f1f1f0;
+  --sf-rule: #dcdcda;
+  --sf-toc-bg: #f6f6f5;
+  --sf-surface: #f4f4f3;
 
   /* Override Verso's syntax highlighting palette */
   --verso-code-keyword-color: #697f2f;
@@ -100,15 +104,15 @@ pre:not(.hl) {
 
 blockquote {
   border-left: 3px solid var(--sf-accent);
-  background: #fbf5e2;
+  background: var(--sf-surface);
   margin-left: 0;
   padding: 0.4em 1em;
-  color: #3a2a10;
+  color: #2b2b28;
 }
 
 /* Tighten the exercise box to share the same palette */
 .exercise {
-  background: #fbf5e2;
+  background: var(--sf-surface);
   border-left: 3px solid var(--sf-accent);
 }
 "###
