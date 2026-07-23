@@ -684,6 +684,9 @@ _Types_ describe the possible shapes of values.
 The _typing relation_ `⊢ t ⦂ T` relates terms to the types of their
 results.  In informal notation it is often written `⊢ t ⦂ T` and
 pronounced "`t` has type `T`."  The `⊢` symbol is called a "turnstile."
+The `⦂` between the term and its type is a dedicated type-colon glyph
+(distinct from an ordinary `:`); in the editor you enter it with the Lean
+input abbreviation `\tc` followed by a space.
 Below, we're going to see richer typing relations where one or more
 additional "context" arguments are written to the left of the turnstile.
 For the moment, the context is always empty.
@@ -715,6 +718,14 @@ For the moment, the context is always empty.
                    ⊢ iszero t1 ⦂ Bool
 ```
 ::::
+
+:::dev PotentialImprovement
+We use the dedicated glyph `⦂` (U+2982) for the typing colon rather than an
+ordinary `:`, and ship a `\tc`-space input abbreviation for it in
+`.vscode/settings.json`. Flagging for a later discussion: is a special glyph
+(plus a custom abbreviation contributors must learn) worth it here, or should
+the judgment just use `:`?
+:::
 
 :::slidebreak
 :::
