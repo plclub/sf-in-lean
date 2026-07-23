@@ -17,12 +17,20 @@ compile. `LFDraft.lean` is now empty (everything graduated).
 Update 2026-07-16/17: **Induction**, **Lists**, **UsingLean**, **Poly**, and
 **Tactics** are
 now authored *directly* in Verso — `LF/Induction.lean` / `LF/Lists.lean` /
-`LF/UsingLean.lean` / `LF/Poly.lean` / `LF/Tactics.lean` are the Verso sources (the old bare sources
-are archived locally as `LF/Old<Ch>.lean`, untracked), imported
+`LF/UsingLean.lean` / `LF/Poly.lean` / `LF/Tactics.lean` are the Verso sources, imported
 and `{include}`d in `LF.lean` without the `Verso` suffix, removed from the
 Makefile's `LF_CHAPTERS` generation list, and listed in `to_verso.py`'s
 `DIRECT_LF_MODULES` so other chapters' `import LF.<Ch>` lines pass through
 unchanged.
+
+Update 2026-07-23: **Logic** graduated the same way — `LF/Logic.lean` is now the
+directly-authored Verso source (was code-forward + generated `LogicVerso`),
+`{include LF.Logic}` in `LF.lean`, added to `DIRECT_LF_MODULES`, dropped from
+`LF_CHAPTERS`.  `IndProp` (its only importer) regenerated to import `LF.Logic`.
+All three variants build end to end and the extracted projects compile. The old
+bare sources are **no longer archived** as `LF/Old<Ch>.lean` (see the
+"permanent versification" note below); git history preserves them.  Still
+generated (not yet graduated): **IndProp**.
 
 Per-chapter verification that nothing is lost from the bare `.lean`:
 
