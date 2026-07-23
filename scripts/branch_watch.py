@@ -283,15 +283,8 @@ def render(branches, conf, prs, have_token, slug):
     clean_files = {f: rs for f, rs in hot.items() if not file_conflicts(rs)}
     single_files = {f: rs for f, rs in fmap.items() if len(rs) == 1}
 
-    n_conf_main = sum(1 for b in active.values() if not b["clean_to_main"])
-    n_conf_pairs = sum(len(v) for v in conf.values()) // 2
-
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    summary = (
-        f"_Auto-updated {now} · {len(active)} active branch(es) · "
-        f"{n_conf_main} conflict with `main` · {n_conf_pairs} conflicting "
-        f"branch-pair(s) · {len(conflicting_files)} contested file(s)_"
-    )
+    summary = f"_Auto-updated {now}_"
     out = [ISSUE_MARKER, "", "## 🔭 Branch & file activity", ""]
     if not have_token:
         out.append("> ⚠️ No `GITHUB_TOKEN` available — PR column left blank.")
