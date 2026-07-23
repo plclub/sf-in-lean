@@ -13,6 +13,35 @@ htmlSplit := .never
 file := some "Induction"
 %%%
 
+:::dev "Jonathan Chan (ionathanch)"
+\[BCP: Old comment -- might be out of date?\]
+A lot of the proofs on the naturals rely on how operations on naturals were defined in `Basics.lean`,
+but in the stdlib they're slightly different
+(e.g. `sub` is defined via `pred` rather than directly by recursion),
+and the notations all go through typeclasses,
+which makes the proofs a lot less direct
+(e.g. the existing `0 + n` proof refers to `Nat.add_succ`).
+We should do one of the following:
+1.  Not use `+`, `-`, `*` notation and instead use `add`, `sub`, `mul` directly; or
+2.  Override stdlib notation with ones pointing to the definitions in `Basics.lean`.
+:::
+
+:::dev "Harrison Goldstein (hgoldstein95)"
+Option 1 is a very reasonable way to go about this if we're attached to arithmetic being the way we teach induction.
+My primary concern is that operators and type classes are already so confusing
+that adding another meaning of `+` is liable to throw someone way off.
+Is there another context we can teach induction in that also doesn't require a ton of background?
+:::
+
+:::dev "Jonathan Chan (ionathanch)"
+`Basics.lean` now overrides the typeclasses for `-`, `*`, and `^`,
+but not `+`, since that one is pervasive throughout the stdlib and causes problems;
+I think this works okay and isn't too confusing.
+
+If we continue doing arithmetic proofs,
+this is a good place to introduce equational reasoning via `calc`.
+:::
+
 :::dev BeforeNextRelease
 ```
 Readers might expect us to add eqn:H annotations to uses of
