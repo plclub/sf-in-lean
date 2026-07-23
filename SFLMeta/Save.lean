@@ -731,6 +731,29 @@ def lean : CodeBlockExpanderOf Verso.Genre.Manual.InlineLean.LeanBlockConfig
               $(quote lspRange))
             #[Verso.Doc.Block.code $(quote terse)]])
 
+/-! ## `{lean}` inline-role re-export
+
+Verso resolves a role or code-block *name* to a constant (`realizeGlobalConst…`)
+and then looks that constant up in the role registry and the code-block registry
+*independently*. Upstream registers both a `lean` code block (`@[code_block]`)
+and the `{lean}` inline-term role (`@[role lean]` on `leanInline`) under the
+constant `InlineLean.lean`.
+
+Our `SFLMeta.lean` override above shadows `InlineLean.lean` as a code block. In a
+document that does `open InlineLean hiding lean` (needed so the bare name `lean`
+resolves to *our* code block without ambiguity), `{lean}` therefore resolves to
+`SFLMeta.lean` — which has no role registered under it, so the role fails with
+"can be used as a code block … but is not registered as a role".
+
+Registering the upstream inline-term role a second time under the `SFLMeta.lean`
+constant closes the gap: now that constant carries both a code block and a role,
+so ` ```lean ``` and `{lean}`…` both work with the same `open` line, with no need
+for the `{InlineLean.lean}`…` workaround. -/
+open Verso.Genre.Manual.InlineLean in
+@[role SFLMeta.lean]
+meta def leanInline : RoleExpanderOf LeanInlineConfig :=
+  Verso.Genre.Manual.InlineLean.leanInline
+
 namespace Save
 
 /-- Find the ASCII alt text inside a `diagramWithAlt`: the first plain code block. -/

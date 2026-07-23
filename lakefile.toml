@@ -11,24 +11,15 @@ weak.verso.code.warnLineLength = 0 # 0 disables warnings; consider setting to 70
 # scope = "leanprover-community"
 # rev = "v4.30.0"
 
-# Using nightly-testing (not main) because it contains the "migrate to module
-# system" fix (commit 77c5da4) that silences the `@[expose] has no effect
-# outside a module file` warning. This branch requires a Lean nightly; the
-# matching toolchain is pinned in lean-toolchain. When this causes a future
-# build failure (Verso bumped its required nightly), update lean-toolchain to
-# match the nightly date in .lake/packages/verso/lean-toolchain, then re-run
-# `lake update`. Once the fix lands on Verso's main branch, switch rev back
-# to "main" and lean-toolchain back to the current stable RC.
 [[require]]
 name = "verso"
 git = "https://github.com/leanprover/verso"
-rev = "nightly-2026-06-25"
+rev = "v4.32.0"
 
-# To be switched back to main. See the note above verso.
 [[require]]
 name = "batteries"
 git = "https://github.com/leanprover-community/batteries"
-rev = "nightly-testing-2026-06-25"
+rev = "v4.32.0"
 
 [[lean_lib]]
 name = "SFLMeta"
