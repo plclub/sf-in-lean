@@ -70,6 +70,42 @@ def merges_clean(a, b):
     return r.returncode == 0
 
 
+_ANCESTRY_CACHE = {}
+
+
+def contains(container, ref):
+    """True if `container` includes every commit of `ref` — i.e. `ref` is an
+    ancestor of `container` (or they are the same commit)."""
+    key = (container, ref)
+    if key not in _ANCESTRY_CACHE:
+        r = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", ref, container],
+            capture_output=True, text=True,
+        )
+        _ANCESTRY_CACHE[key] = r.returncode == 0
+    return _ANCESTRY_CACHE[key]
+
+
+def independent_branches(refs):
+    """Reduce a set of branches that all touched one file to the independent
+    lines of work: drop any branch whose commits are already contained in
+    another branch in the set (it has been merged into, or is an ancestor of,
+    that other branch).  Without this, a file edited only on branch A is
+    reported as "co-edited" by every downstream branch that has since pulled A
+    in — not a real concurrent edit.  Two branches at the same commit (mutually
+    contained) keep the lexicographically smaller name."""
+    refs = list(refs)
+    keep = []
+    for x in refs:
+        subsumed = any(
+            y != x and contains(y, x) and not (contains(x, y) and x < y)
+            for y in refs
+        )
+        if not subsumed:
+            keep.append(x)
+    return keep
+
+
 def main_ref():
     """Remote-tracking ref for the default branch."""
     return f"{REMOTE}/main"
@@ -234,6 +270,10 @@ def render(branches, conf, prs, have_token, slug):
     for r, b in active.items():
         for f in b["files"]:
             fmap.setdefault(f, []).append(r)
+    # Collapse each file's editor list to independent lines of work: if one
+    # branch already contains another's commits, that "shared" edit is a single
+    # edit carried downstream, not a concurrent co-edit.
+    fmap = {f: independent_branches(rs) for f, rs in fmap.items()}
     hot = {f: rs for f, rs in fmap.items() if len(rs) > 1}
 
     def file_conflicts(refs):
