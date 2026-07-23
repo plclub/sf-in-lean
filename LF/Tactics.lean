@@ -146,8 +146,8 @@ Complete the following proof using only `intros` and `apply`.
 
 ```lean
 theorem silly_ex p :
-    (∀ n, even n = true → (n + 1).even = false) →
-    (∀ n, even n = false → n.odd = true) →
+    (∀ (n : Nat), n.even = true → (n + 1).even = false) →
+    (∀ (n : Nat), n.even = false → n.odd = true) →
     p.even = true →
     (p + 1).odd = true := by
   solution!
@@ -1236,10 +1236,9 @@ _start_ this proof is a little bit delicate:
 ```lean
 /-- warning: declaration uses `sorry` -/
 #guard_msgs(warning) in
-example : ∀ n m,
-    double n = double m →
+example (n m : Nat) :
+    n.double = m.double →
     n = m := by
-  intro n m
   induction n
   case zero =>
     rw [double_zero]
@@ -1333,8 +1332,8 @@ version, and probably not nicely typeset in the full version
 :::
 
 ```lean
-theorem double_injective : ∀ n m,
-    double n = double m →
+theorem double_injective : ∀ (n m : Nat),
+    n.double = m.double →
     n = m := by
   intro n
   induction n
@@ -1545,10 +1544,9 @@ on `m` instead of `n`.
 ```lean
 /-- warning: declaration uses `sorry` -/
 #guard_msgs(warning) in
-theorem double_injective_take2_FAILED : ∀ n m,
-    double n = double m →
+theorem double_injective_take2_FAILED (n m : Nat) :
+    n.double = m.double →
     n = m := by
-  intro n m
   induction m
   case zero =>
     intro eq
@@ -1592,10 +1590,10 @@ variables and then explicitly generalize one or more of them
 The `generalizing` option for the `induction` tactic does this.
 
 ```lean
-theorem double_injective_take2 : ∀ n m,
-    double n = double m →
+theorem double_injective_take2 (n m : Nat) :
+    n.double = m.double →
     n = m := by
-  intro n m eq
+  intro eq
   -- `n` and `m` are both in the context
   -- This lets us do induction on `m` and get a sufficiently general IH
   induction m generalizing n
@@ -2535,9 +2533,9 @@ first checks whether every element in a list satisfies a given
 predicate:
 
 ```display
-forallb Nat.odd [1,3,5,7,9] = true
+forallb ·.odd [1,3,5,7,9] = true
 forallb negb [false,false] = true
-forallb Nat.even [0,2,4,5] = false
+forallb ·.even [0,2,4,5] = false
 forallb (beq 5) [] = true
 ```
 
@@ -2547,7 +2545,7 @@ satisfies a given predicate:
 ```display
 existsb (beq 5) [0,2,3,6] = false
 existsb (andb true) [true,true,false] = true
-existsb Nat.odd [1,0,0,0,0,3] = true
+existsb ·.odd [1,0,0,0,0,3] = true
 existsb even [] = false
 ```
 
@@ -2563,9 +2561,9 @@ def forallb {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
   | [] => true
   | x :: l' => (test x) && (forallb test l'))
 
-example : forallb Nat.odd [1,3,5,7,9] = true := solution!(by rfl)
+example : forallb (·.odd) [1,3,5,7,9] = true := solution!(by rfl)
 example : forallb not [false,false] = true := solution!(by rfl)
-example : forallb Nat.even [0,2,4,5] = false := solution!(by rfl)
+example : forallb (·.even) [0,2,4,5] = false := solution!(by rfl)
 example : forallb (· == 5) [] = true := solution!(by rfl)
 
 def existsb {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
@@ -2575,8 +2573,8 @@ def existsb {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
 
 example : existsb (· == 5) [0,2,3,6] = false := solution!(by rfl)
 example : existsb (· && true) [true,true,false] = true := solution!(by rfl)
-example : existsb Nat.odd [1,0,0,0,0,3] = true := solution!(by rfl)
-example : existsb Nat.even [] = false := solution!(by rfl)
+example : existsb (·.odd) [1,0,0,0,0,3] = true := solution!(by rfl)
+example : existsb (·.even) ([] : List Nat) = false := solution!(by rfl)
 
 def existsb' {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
   !(forallb (fun x => !(test x)) l))

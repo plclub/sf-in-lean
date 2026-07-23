@@ -249,7 +249,7 @@ def div2 (n : Nat) : Nat :=
   | n' + 2 => div2 n' + 1
 
 def csf (n : Nat) : Nat :=
-  if even n then div2 n
+  if n.even then div2 n
   else (3 * n) + 1
 
 /- HIDE: CH: This is now called `csf` and not just `f` for a good
@@ -338,7 +338,7 @@ failed to prove termination, possible solutions:
   - Use `termination_by` to specify a different well-founded relation
   - Use `decreasing_by` to specify your own tactic for discharging this kind of goal
 n x✝ : Nat
-h✝ : even n = true
+h✝ : n.even = true
 ⊢ div2 n < x✝
 -/
 #guard_msgs in
@@ -346,7 +346,7 @@ def collatz_holds_for (n : Nat) : Prop :=
   match n with
   | 0 => False
   | 1 => True
-  | _ => if even n then collatz_holds_for (div2 n)
+  | _ => if n.even then collatz_holds_for (div2 n)
                    else collatz_holds_for ((3 * n) + 1)
 
 /- This recursive function is also rejected by the termination
@@ -415,10 +415,10 @@ def collatz_holds_for (n : Nat) : Prop :=
 
 inductive CollatzHoldsFor : Nat → Prop where
   | chf_one  : CollatzHoldsFor 1
-  | chf_even (n : Nat) : even n = true →
+  | chf_even (n : Nat) : n.even = true →
                          CollatzHoldsFor (div2 n) →
                          CollatzHoldsFor n
-  | chf_odd  (n : Nat) : even n = false →
+  | chf_odd  (n : Nat) : n.even = false →
                          CollatzHoldsFor ((3 * n) + 1) →
                          CollatzHoldsFor n
 
@@ -967,16 +967,16 @@ theorem ev_4'' : Ev 4 := by
 /- In this way, we can also prove theorems that have hypotheses
     involving `Ev`. -/
 
-theorem ev_plus4 : ∀ n, Ev n → Ev (4 + n) := by
-  intro n Hn
+theorem ev_plus4 n : Ev n → Ev (4 + n) := by
+  intro Hn
   rw [Nat.add_comm]
   exact (Ev.ev_succ_succ _ (Ev.ev_succ_succ _ Hn))
 
 -- FULL
 -- EX1 (ev_double)
-theorem ev_double : ∀ n, Ev (double n) := by
+theorem ev_double (n : Nat) : Ev n.double := by
   -- ADMITTED
-  intros n; induction n
+  induction n
   case zero =>
     rw [double_zero]; exact Ev.ev_0
   case succ n IH =>
@@ -1462,7 +1462,7 @@ theorem inversion_ex2 : ∀ (n : Nat),
 
 /-- warning: declaration uses `sorry` -/
 #guard_msgs in
-example : ∀ n, Ev n → Even n := by
+example (n : Nat) : Ev n → Even n := by
   /- WORKINCLASS -/
   /- We could try to proceed by case analysis or induction on `n`.  But
       since `Ev` is mentioned in a premise, this strategy seems
@@ -1470,7 +1470,7 @@ example : ∀ n, Ev n → Even n := by
       hypothesis will talk about `n-1` (which is _not_ even!).  Thus, it
       seems better to first try `inversion` on the evidence for `Ev`.
       Indeed, the first case can be solved trivially. -/
-  intro n h
+  intro h
   inversion h
   /- h = ev_0 -/
   case ev_0 => exists 0  -- (`0 = double 0` is closed by `exists`'s final `rfl`)
@@ -1494,7 +1494,7 @@ example : ∀ n, Ev n → Even n := by
     which is the same as the original statement, but with `n'` instead
     of `n`.  Indeed, it is not difficult to convince Lean that this
     intermediate result would suffice. -/
-    have he : (∃ k', n' = double k') → (∃ n₀, n' + 2 = double n₀) := by
+    have he : (∃ (k' : Nat), n' = k'.double) → (∃ (n₀ : Nat), n' + 2 = n₀.double) := by
       intro ⟨k, hk⟩; exists (k + 1); rw [double_succ, hk]
     apply he
     /- Unfortunately, now we are stuck: we are trying to prove another instance

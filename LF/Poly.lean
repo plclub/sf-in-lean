@@ -1084,13 +1084,13 @@ def filter {α : Type} (test : α → Bool) (l : List α) : List α :=
 ```
 
 ::::full
-For example, if we apply `filter` to the predicate `Nat.even`
+For example, if we apply `filter` to the predicate `·.even`
 and a list of numbers, it returns a list containing just the
 even members.
 ::::
 
 ```lean
-example : filter Nat.even [1, 2, 3, 4] = [2, 4] := by rfl
+example : filter (·.even) [1, 2, 3, 4] = [2, 4] := by rfl
 ```
 
 :::slidebreak
@@ -1144,7 +1144,7 @@ We can use `filter` to give a concise version of the
 
 ```lean
 abbrev countoddmembers' (l : List Nat) : Nat :=
-  (filter Nat.odd l).length
+  (filter (·.odd) l).length
 
 example : countoddmembers' [1, 0, 3, 1, 4, 5] = 4 := by rfl
 example : countoddmembers' [0, 2, 4] = 0 := by rfl
@@ -1298,7 +1298,7 @@ numbers to booleans to yield a list of booleans:
 ::::
 
 ```lean
-example : map Nat.odd [2, 1, 2, 5] = [false, true, false, true] := by rfl
+example : map (·.odd) [2, 1, 2, 5] = [false, true, false, true] := by rfl
 ```
 
 ::::full
