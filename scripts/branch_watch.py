@@ -319,7 +319,7 @@ def render(branches, conf, prs, have_token, slug):
         out.append("")
 
     # ---- per-branch table (most commits ahead first) ----
-    out.append("### Branches")
+    out.append("### Active branches")
     out.append("")
     out.append("| Branch | PR | Author | Last activity | Ahead | Files | → main | Overlaps |")
     out.append("|---|---|---|---|--:|--:|:--:|---|")
@@ -346,12 +346,13 @@ def render(branches, conf, prs, have_token, slug):
             f"{main_flag} | {ov} |"
         )
     out.append("")
-    out.append("_Overlaps: ⚠️ = a real merge conflict; `A ⊃ B` = A already "
+    out.append("_Overlaps: ⚠️ = real merge conflict; `A ⊃ B` = A already "
                "contains B's commits (shown as one overlap, one marker)._")
+    out.append("Branches named 'archive/...' not shown.")
     out.append("")
 
     # ---- files: conflicting first, then clean co-edits, then single-branch ----
-    out.append("### Files")
+    out.append("### Active files")
     out.append("")
 
     def file_table(files):
