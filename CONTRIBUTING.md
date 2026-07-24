@@ -316,6 +316,94 @@ Related notation introduced alongside tactics: anonymous constructor
 * **Explicit rewrites over `dsimp`/`simp` through notation** (see
   "Notation and simplification").
 
+* **Library vs. client code.** Inside a definition's own library it is
+  fine to unfold and simplify through definitions; *using* that code,
+  do not "peek through the interface."
+
+* **Companion namespaces open *after* the type, with bare member names.**
+  Define a datatype at top level, then open its like-named `namespace`
+  immediately after, and write the type's functions and theorems with
+  *unqualified* names — `def app`, not `def NatList.app`. Exception:
+  if it makes pedagogical sense to define the operations of multiple
+  types together, define their operations with qualified names, without 
+  opening a namespace, e.g., `Aexp.eval` and `Bexp.eval` which are adjacent
+  in Imp.
+
+* **Name namespaces for what they are.**
+  A warm-up / redefinition section goes in a clearly-named namespace, 
+  e.g. `namespace Warmup`. Functions on a new type are placed in that
+  type's namespace (per the above).
+
+#### Theorem arguments and visibility
+
+Put a theorem's arguments before the colon rather than introducing them with
+`∀` in its result. For example, prefer the following style
+
+```lean
+theorem add_swap (a b c : Nat) :
+    a + (b + c) = b + (a + c) := by
+  ...
+```
+
+over:
+
+```lean
+theorem add_swap : ∀ a b c : Nat,
+    a + (b + c) = b + (a + c) := by
+  ...
+```
+
+Always give binders explicit type annotations, even when Lean can infer them.
+For example, write `(n : Nat)`, `{α : Type}`, and `(h : P)` rather than bare `n`, `{α}`, or `h`.
+
+Type parameters should normally be implicit when later arguments determine them:
+
+```lean
+theorem isNil_cons {α : Type} (x : α) (xs : List α) :
+    isNil (x :: xs) = False := by
+  ...
+```
+
+For small equational lemmas for `rw` or `simp`, make arguments
+implicit when the displayed equation determines them. This follows the style of
+Lean's list lemmas. For example, `map_cons` can be used simply as `rw [map_cons]`:
+
+```lean
+theorem map_cons {α β : Type} {f : α → β}
+    {head : α} {tail : List α} :
+    map f (head :: tail) = f head :: map f tail := by
+  ...
+```
+
+However, do _not_ make a theorem's main inputs implicit merely because unification could
+infer them from the conclusion. Keep the principal function, collection,
+point, or other subject explicit when callers are likely to apply the theorem
+directly. For example:
+
+```lean
+theorem foldMap_correct {α β : Type}
+    (f : α → β) (l : List α) :
+    foldMap f l = map f l := by
+  ...
+
+theorem uncurry_curry {α β γ : Type}
+    (f : α → β → γ) (x : α) (y : β) :
+    prodCurry (prodUncurry f) x y = f x y := by
+  ...
+```
+
+If those arguments were implicit, callers would need
+named arguments such as `(f := f)` and `(l := l)`.
+
+An index may be implicit when treating it as inferred data is natural for the
+theorem's use:
+
+```lean
+theorem isEven_iff_Even {n : Nat} :
+    isEven n = true ↔ Even n := by
+  ...
+```
+
 ### Incomplete code, expected errors, and diagnostics
 
 Use `sorry` to admit a declaration, `+error` to show code that Lean rejects,
@@ -433,24 +521,6 @@ example, `Imp` checks its custom delaborator this way:
 #check aexp {3 + (X * 2)}
 ```
 ````
-
-* **Library vs. client code.** Inside a definition's own library it is
-  fine to unfold and simplify through definitions; *using* that code,
-  do not "peek through the interface."
-
-* **Companion namespaces open *after* the type, with bare member names.**
-  Define a datatype at top level, then open its like-named `namespace`
-  immediately after, and write the type's functions and theorems with
-  *unqualified* names — `def app`, not `def NatList.app`. Exception:
-  if it makes pedagogical sense to define the operations of multiple
-  types together, define their operations with qualified names, without 
-  opening a namespace, e.g., `Aexp.eval` and `Bexp.eval` which are adjacent
-  in Imp.
-
-* **Name namespaces for what they are.**
-  A warm-up / redefinition section goes in a clearly-named namespace, 
-  e.g. `namespace Warmup`. Functions on a new type are placed in that
-  type's namespace (per the above).
 
 ### Unicode Text and Formatting
 
