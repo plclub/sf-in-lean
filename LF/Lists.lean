@@ -572,7 +572,7 @@ theorem nonzeros_cons_nonzero h (t : NatList) :
 def oddmembers (l : NatList) : NatList := solution!(
   match l with
   | [] => []
-  | h :: t => bif odd h then h :: oddmembers t else oddmembers t)
+  | h :: t => bif h.odd then h :: oddmembers t else oddmembers t)
 
 example : oddmembers [0, 1, 0, 2, 3, 0, 0] = [1, 3] := solution!(by rfl)
 ```

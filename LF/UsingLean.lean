@@ -18,8 +18,6 @@ Chapter goals:
 Nats
 dsimp
 calc
-maybe simp annotations
-maybe typeclasses?
 :::
 
 :::instructors
@@ -490,48 +488,102 @@ those proofs to make your logic clear.
 ::::full
 Now that we've switched over to using Lean's standard library, we can
 redefine some of the functions from the last few chapters on `Nat`s.
+Note that, for the built-in {name}`Nat` type, the patterns `0` and `n + 1` correspond to
+`zero` and `succ n`. Likewise, the pattern `n + 2` is equivalent to `n + 1 + 1`.
 
 Prove some of these theorems using the techniques we've discussed this chapter.
 ::::
 
+::::terse
+Let's redefine some functions on Lean's `Nat`s and prove some theorems about them.
+::::
+
 ```lean
-def even (n : Nat) :=
+def Nat.even (n : Nat) :=
   match n with
-  | .zero           => true
-  | .succ .zero     => false
-  | .succ (.succ n) => even n
+  | 0     => true
+  | 1     => false
+  | n + 2 => even n
 
-def odd n := (not (even n))
+def Nat.odd n := !(even n)
 
-def eqb (n m : Nat) :=
-  match n, m with
-  | 0, 0             => true
-  | .succ _, 0
-  | 0, .succ _       => false
-  | .succ n, .succ m => eqb n m
-
-def minustwo (n : Nat) : Nat :=
+def Nat.minustwo (n : Nat) : Nat :=
   match n with
-  | .zero            => .zero
-  | .succ (.zero)    => .zero
-  | .succ (.succ n') => n'
+  | 0    => 0
+  | 1    => 0
+  | n' + 2 => n'
 
-def double (n : Nat) : Nat :=
+def Nat.double (n : Nat) : Nat :=
   match n with
-  | .zero    => 0
-  | .succ n' => .succ (.succ (double n'))
+  | 0    => 0
+  | n' + 1 => double n' + 2
 ```
+
+::::full
+Note that we defined these functions in the `Nat` namespace;
+Lean's naming conventions advise that functions on a type should be defined in that type's
+namepsace in almost all circumstnaces.
+
+When we define functions this way,
+something interesting happens to the way Lean's InfoView prints them. Take a look at
+the info view inside the proof of this thoerem (i.e., before the `rfl` tactic):
+::::
+
+::::terse
+Defining functions in the `Nat` namespace changes how they print:
+::::
+
+```lean
+theorem even_add_three (n : Nat) : Nat.even (n + 3) = Nat.even (n + 1) := by
+  rfl
+```
+
+::::full
+Instead of printing the goal the way we wrote it in the theorem statement, Lean
+prints `(n + 3).even = (n + 1).even`! This is an example of Lean's _field notation_,
+whereby Lean prints functions inside the namespace of a type _after_ their first argument,
+separated by a `.`. At first glance, this may appear similar to how object-oriented methods work,
+but it's really just a syntactic variation on the normal fu8nction-application style
+we've seen so far. That is, `Nat.even n` and `n.even` are just different ways to write the exact
+same term.
+
+In previous chapters we disabled this notation by putting `set_option pp.fieldNotation false`
+at the top of each file, but from now on we will leave it enabled, since  field notation
+is recommended in idiomatic Lean developments.
+
+:::dev "Benjamin Pierce (bcpierce00)"
+Cut this: "It can also be disabled just for a specific function
+or constructor by writing `attribute [pp_nodot] <Name>`."  Do they need to know it in SFL?
+:::
+
+As an example, observe the difference in how Lean prints the goal in the following two examples:
+::::
+
+::::terse
+This printing style is called _field notation_ and can be disabled with the `pp_nodot` attribute.
+::::
+
+```lean
+example (n : Nat) : Nat.double (n + 0) = Nat.double n := by
+  rfl
+
+attribute [pp_nodot] Nat.double
+
+example (n : Nat) : Nat.double (n + 0) = Nat.double n := by
+  rfl
+```
+
 
 :::::exercise (rating := 2) (name := "even_succ")
 ```lean
 theorem even_succ (n : Nat) :
-    even (.succ n) = !even n := by
+    (n + 1).even = !(n.even) := by
   solution!
     induction n with
     | zero =>
       rfl
     | succ n' ih =>
-      rw [even, ih, Bool.not_not]
+      rw [Nat.even, ih, Bool.not_not]
 ```
 
 :::gradeTheorem 1 "even_succ"
@@ -546,16 +598,16 @@ talk about using `Nat.add_zero` and friends from now on.
        later files from breaking.
 
 ```lean
-theorem even_zero : even 0 = true := by rfl
+theorem even_zero : Nat.even 0 = true := by rfl
 
-theorem double_zero : double 0 = 0 := by rfl
+theorem double_zero : Nat.double 0 = 0 := by rfl
 
-theorem double_succ (n : Nat) : double (n + 1) = double n + 2 := by rfl
+theorem double_succ (n : Nat) : (n + 1).double = n.double + 2 := by rfl
 ```
 
 :::::exercise (rating := 2) (name := "double_add")
 ```lean
-theorem double_add (n : Nat) : double n = n + n := by
+theorem double_add (n : Nat) : n.double = n + n := by
   solution!
     induction n with
     | zero =>
@@ -570,7 +622,7 @@ theorem double_add (n : Nat) : double n = n + n := by
 
 :::::exercise (rating := 2) (name := "double_mul")
 ```lean
-theorem double_mul (n : Nat) : double n = 2 * n := by
+theorem double_mul (n : Nat) : n.double = 2 * n := by
   solution!
     rw [double_add, Nat.two_mul]
 ```
@@ -601,7 +653,7 @@ Let's look at an example using `induction`.
 For example, suppose we start with the following incomplete proof:
 
 ```lean -keep +error
-theorem foo (n : Nat) : eqb n n := by
+theorem foo (n : Nat) : Nat.beq n n := by
   induction n
 ```
 
@@ -612,7 +664,7 @@ If you choose this action,
 Lean adds an explicit branch for each constructor:
 
 ```lean
-example (n : Nat) : eqb n n := by
+example (n : Nat) : Nat.beq n n := by
   induction n with
   | zero => sorry
   | succ n _ => sorry
@@ -624,10 +676,10 @@ branch by hand. We can then focus on proving each case.
 One possible proof is:
 
 ```lean
-example (n : Nat) : eqb n n := by
+example (n : Nat) : Nat.beq n n := by
   induction n with
   | zero      => rfl
-  | succ n ih => rw [eqb, ih]
+  | succ n ih => rw [Nat.beq, ih]
 ```
 
 Note that Lean used `_` for the induction hypothesis in the generated `.succ` branch.
@@ -653,7 +705,4 @@ def isZero (n : Nat) : Bool :=
   | 0 => _
   | n + 1 => _
 ```
-
-Note that for the built-in {name}`Nat` type, the patterns `0` and `n + 1` correspond to
-`zero` and `succ n`.
 ::::

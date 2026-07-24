@@ -6,6 +6,8 @@ import LF.Basics
 open Verso.Genre Manual
 open SFLMeta
 
+set_option pp.fieldNotation false
+
 #doc (Manual) "Induction: Proof by Induction" =>
 %%%
 tag := "Induction"

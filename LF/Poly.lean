@@ -1068,7 +1068,7 @@ value `n`.
 ```lean
 #check @doit3times  /- @doit3times : {α : Type} → (α → α) → α → α -/
 
-example : doit3times minustwo 9 = 3 := by rfl
+example : doit3times Nat.minustwo 9 = 3 := by rfl
 
 example : doit3times not true = false := by rfl
 ```
@@ -1098,13 +1098,13 @@ def filter {α : Type} (test : α → Bool) (l : List α) : List α :=
 ```
 
 ::::full
-For example, if we apply `filter` to the predicate `Nat.even`
+For example, if we apply `filter` to the predicate `·.even`
 and a list of numbers, it returns a list containing just the
 even members.
 ::::
 
 ```lean
-example : filter even [1, 2, 3, 4] = [2, 4] := by rfl
+example : filter Nat.even [1, 2, 3, 4] = [2, 4] := by rfl
 ```
 
 :::slidebreak
@@ -1158,7 +1158,7 @@ We can use `filter` to give a concise version of the
 
 ```lean
 abbrev countoddmembers' (l : List Nat) : Nat :=
-  (filter odd l).length
+  (filter Nat.odd l).length
 
 example : countoddmembers' [1, 0, 3, 1, 4, 5] = 4 := by rfl
 example : countoddmembers' [0, 2, 4] = 0 := by rfl
@@ -1238,7 +1238,7 @@ and returns a list of just those that are even and greater than 7.
 
 ```lean
 abbrev filterEvenGt7 (l : List Nat) : List Nat := solution!(
-  filter (fun n => even n && n > 7) l)
+  filter (fun n => n.even && n > 7) l)
 
 example : filterEvenGt7 [1, 2, 6, 9, 10, 3, 12, 8] = [10, 12, 8] := solution!(by rfl)
 
@@ -1312,7 +1312,7 @@ numbers to booleans to yield a list of booleans:
 ::::
 
 ```lean
-example : map odd [2, 1, 2, 5] = [false, true, false, true] := by rfl
+example : map Nat.odd [2, 1, 2, 5] = [false, true, false, true] := by rfl
 ```
 
 ::::full
@@ -1322,7 +1322,7 @@ yield a _list of lists_ of booleans:
 ::::
 
 ```lean
-example : map (fun n => [even n, odd n]) [2, 1, 2, 5]
+example : map (fun n => [n.even, n.odd]) [2, 1, 2, 5]
   = [[true, false], [false, true], [true, false], [false, true]] := by rfl
 ```
 
