@@ -14,7 +14,7 @@ import LF.Typeclasses
 import LF.Poly
 import LF.Tactics
 import LF.Logic
-import LF.IndPropVerso
+import LF.IndProp
 import LF.Automation
 
 import VersoManual
@@ -34,5 +34,5 @@ open Verso Genre Manual
 {include LF.Poly}
 {include LF.Tactics}
 {include LF.Logic}
-{include LF.IndPropVerso}
+{include LF.IndProp}
 {include LF.Automation}
