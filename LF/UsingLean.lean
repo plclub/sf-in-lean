@@ -488,7 +488,7 @@ those proofs to make your logic clear.
 ::::full
 Now that we've switched over to using Lean's standard library, we can
 redefine some of the functions from the last few chapters on `Nat`s.
-Note that for the built-in {name}`Nat` type, the patterns `0` and `n + 1` correspond to
+Note that, for the built-in {name}`Nat` type, the patterns `0` and `n + 1` correspond to
 `zero` and `succ n`. Likewise, the pattern `n + 2` is equivalent to `n + 1 + 1`.
 
 Prove some of these theorems using the techniques we've discussed this chapter.
@@ -523,7 +523,8 @@ def Nat.double (n : Nat) : Nat :=
 Note that we defined these functions in the `Nat` namespace;
 Lean's naming conventions advise that functions on a type should be defined in that type's
 namepsace in almost all circumstnaces.
-When we define functions this way, though,
+
+When we define functions this way,
 something interesting happens to the way Lean's InfoView prints them. Take a look at
 the info view inside the proof of this thoerem (i.e., before the `rfl` tactic):
 ::::
@@ -542,15 +543,18 @@ Instead of printing the goal the way we wrote it in the theorem statement, Lean
 prints `(n + 3).even = (n + 1).even`! This is an example of Lean's _field notation_,
 whereby Lean prints functions inside the namespace of a type _after_ their first argument,
 separated by a `.`. At first glance, this may appear similar to how object-oriented methods work,
-but it's important to note that it's purely a syntactic difference from the normal style
+but it's really just a syntactic variation on the normal fu8nction-application style
 we've seen so far. That is, `Nat.even n` and `n.even` are just different ways to write the exact
 same term.
 
 In previous chapters we disabled this notation by putting `set_option pp.fieldNotation false`
-at the top of each file, but from now on we will leave it enabled, since use of field notation
-is common in idiomatic Lean developments. However, you can feel free to disable it
-if it's confusing you. Additionally, if you want to disable it only for a specific function
-or constructor, you can do so with `attribute [pp_nodot] <Name>`.
+at the top of each file, but from now on we will leave it enabled, since  field notation
+is recommended in idiomatic Lean developments.
+
+:::dev "Benjamin Pierce (bcpierce00)"
+Cut this: "It can also be disabled just for a specific function
+or constructor by writing `attribute [pp_nodot] <Name>`."  Do they need to know it in SFL?
+:::
 
 As an example, observe the difference in how Lean prints the goal in the following two examples:
 ::::
