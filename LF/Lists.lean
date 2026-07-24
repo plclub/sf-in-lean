@@ -704,7 +704,7 @@ namespace Bag
 ```
 
 ::::full
-We define an "empty bag" and "adding an element to a bag" separately, and express the API using these definitions instead of `[]` and `::`.
+We define an "empty bag" and "adding an element to a bag" separately and express the bag's API using these definitions instead of `[]` and `::`.
 The implementation body of the definitions can freely mix these up because, ideally, they are unfolded only in the proofs of their characterizing lemmas.
 
 When working with a new definition encapsulating an inductive type, it's convenient to declare its constructors with a `@[match_pattern]` attribute.
