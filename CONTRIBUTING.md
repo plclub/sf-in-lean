@@ -193,25 +193,28 @@ not to step on.
 5. Resolve the issue when the PR is resolved. Edit the work-in-progress
    to remove the activity.
 
-### Status; plain lean vs. verso files (temporary)
+### Native-Verso chapters and the extractor
 
-At the moment, most of the files in Logical Foundations have been
-converted to regular Lean files.  (Programming Language Foundations
-remains to be translated.)  The `.lean` files are currently in regular
-Lean syntax, but we want them to be formatted as Verso files
-("documentation first") and are working on translating them one by
-one.  
+Every chapter in every volume is now authored **directly in Verso** — a plain
+`<Vol>/<Ch>.lean` whose prose lives in `#doc (Manual)` markup.  (Genuine
+plain-Lean *support libraries* such as `LF/CustomTactics.lean` are not chapters
+and stay plain Lean.)  There is no longer a code-forward `.lean` → generated
+`<Ch>Verso.lean` step: `make` just builds the books and extracts the three
+per-variant `.lean`/HTML projects under `_out/`.
 
-Benjamin owns the conversion tooling (`scripts/to_verso.py`) and the
-eventual native-Verso format decisions, so you can work on a given
-`.lean` file in whatever format it exists in at the moment.  But note
-that `make` now regenerates and builds each `<Ch>Verso.lean` (via the
-`check-verso-chapters` target, which CI runs), so if you edit a
-code-forward `.lean` chapter, keep that round-trip green: after a
-change, regenerate (`python3 scripts/to_verso.py <Vol>/<Ch>.lean`) and
-build the generated Verso (`make check-verso-chapters`).  CLAUDE.md
-("Writing comments that survive to_verso") lists the authoring rules
-that keep the conversion happy.
+`scripts/to_verso.py` (and its two fidelity checkers) is retained only for
+**porting a new chapter from Rocq** — see "Porting chapters from Rocq" below;
+it is no longer part of the `make` build.
+
+**Extractor maintenance (permanent).**  The standalone-`.lean` extractor
+(`SFLMeta/Save.lean`) resolves a chapter's dependencies two ways, and one needs
+ongoing upkeep: when a chapter imports a Verso chapter from an *earlier volume*
+(e.g. `HL.Imp` imports `LF.Typeclasses`), that cross-volume dependency must be
+listed in `Targets.lean`'s `crossVol` match — add an entry for **every** new
+such import (it can't be auto-derived, since mapping a module name to its `Part`
+needs a compile-time `%doc`).  Plain-Lean support-lib prerequisites
+(`CustomTactics`, `SFLCompat`) are instead bundled verbatim by `bundleLoop` and
+need no per-import upkeep.
 
 ## Lean Style
 

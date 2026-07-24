@@ -7,13 +7,6 @@
       "command": "make",
       "group": { "kind": "build", "isDefault": true },
       "presentation": { "reveal": "always", "clear": true }
-    },
-    {
-      "label": "make verso",
-      "type": "shell",
-      "command": "make verso",
-      "group": "build",
-      "presentation": { "reveal": "always", "clear": true }
     }
   ]
 }
