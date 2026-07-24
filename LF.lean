@@ -13,8 +13,9 @@ import LF.Typeclasses
 -- Add `import LF.XXXVerso` here for each generated chapter included below.
 import LF.Poly
 import LF.Tactics
-import LF.LogicVerso
+import LF.Logic
 import LF.IndPropVerso
+import LF.Automation
 
 import VersoManual
 
@@ -32,5 +33,6 @@ open Verso Genre Manual
 {include LF.Lists}
 {include LF.Poly}
 {include LF.Tactics}
-{include LF.LogicVerso}
+{include LF.Logic}
 {include LF.IndPropVerso}
+{include LF.Automation}

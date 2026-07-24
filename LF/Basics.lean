@@ -41,7 +41,7 @@ what's in the source file.
 If you don't have Lean installed yet:
 * Install Lean 4 through the VS Code extension.
 * Start a new terminal session to pick up environment changes.
-* Run `make`. I got many warnings about "expose"; are those expected?
+* Run `make`.
 * Run `make serve`. Navigate to "http://localhost:8000/lf/student/html-multi/" to start reading.
 * Make a copy of "\_out/lf/student/lean" to start solving as if I were a student.
 :::

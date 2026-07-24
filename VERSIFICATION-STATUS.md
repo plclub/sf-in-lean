@@ -17,12 +17,20 @@ compile. `LFDraft.lean` is now empty (everything graduated).
 Update 2026-07-16/17: **Induction**, **Lists**, **UsingLean**, **Poly**, and
 **Tactics** are
 now authored *directly* in Verso — `LF/Induction.lean` / `LF/Lists.lean` /
-`LF/UsingLean.lean` / `LF/Poly.lean` / `LF/Tactics.lean` are the Verso sources (the old bare sources
-are archived locally as `LF/Old<Ch>.lean`, untracked), imported
+`LF/UsingLean.lean` / `LF/Poly.lean` / `LF/Tactics.lean` are the Verso sources, imported
 and `{include}`d in `LF.lean` without the `Verso` suffix, removed from the
 Makefile's `LF_CHAPTERS` generation list, and listed in `to_verso.py`'s
 `DIRECT_LF_MODULES` so other chapters' `import LF.<Ch>` lines pass through
 unchanged.
+
+Update 2026-07-23: **Logic** graduated the same way — `LF/Logic.lean` is now the
+directly-authored Verso source (was code-forward + generated `LogicVerso`),
+`{include LF.Logic}` in `LF.lean`, added to `DIRECT_LF_MODULES`, dropped from
+`LF_CHAPTERS`.  `IndProp` (its only importer) regenerated to import `LF.Logic`.
+All three variants build end to end and the extracted projects compile. The old
+bare sources are **no longer archived** as `LF/Old<Ch>.lean` (see the
+"permanent versification" note below); git history preserves them.  Still
+generated (not yet graduated): **IndProp**.
 
 Per-chapter verification that nothing is lost from the bare `.lean`:
 
@@ -138,10 +146,16 @@ handle a no-constructor indexed inductive).
   (both quizzes are inside `-- HIDE` regions, captured verbatim into
   `::::hide` bodies).
 
-### IndPropRegexp (not started)
+### IndPropRegexp (deleted — folded into Automation)
 
-Bare `LF.IndPropRegexp` builds (warnings only). Run the same per-chapter
-pipeline once IndProp's Verso builds (it imports IndProp).
+The standalone RegExp case-study chapter is no longer needed: its material is
+folded into the future `Automation` chapter (see `CONTRIBUTING.md`). `LF/
+IndPropRegexp.lean` was deleted and fully unwired (`LF.lean` include, Makefile
+`LF_CHAPTERS` / `check-bare-lean-chapters`, and `to_verso.py`'s
+`DOC_LEVEL_OPTIONS`) on 2026-07-23. The versified-and-included state (it did
+build end to end across all three variants first) is preserved on the branch
+`archive/indpropregexp-versified` should the RegExp/pumping material be wanted
+later.
 
 ### Maps (not started; known blocker)
 
@@ -162,7 +176,7 @@ Skipped per BCP (no `LF/Typeclasses.lean` exists yet).
   `exists 0` fix; kept ours (with explanatory comment).
 - `LF.lean`: dropped main's bare-chapter imports for all graduated chapters
   (bare and Verso chapters declare the same names, so both chains cannot be
-  imported together); `LF.IndProp` / `LF.IndPropRegexp` are built by
+  imported together); `LF.IndProp` is built by
   `check-bare-lean-chapters` in the Makefile instead.
 - `SFLMeta/Save.lean`: adopted main's #78 mechanism (`headerImports` +
   `bundleLoop` — prepends each extracted chapter's framework-stripped header
@@ -249,16 +263,19 @@ marker (0 flattenings) checks.
    re-trace any *new* warnings.
 3. `make all` (lf + hl + ts + check targets) — this also rebuilds and
    compiles the generated projects.
-4. Finish IndProp (timeout), then IndPropRegexp, then Maps (conflict above),
-   graduating each into `LF.lean` the same way.
+4. Finish IndProp (timeout), then Maps (conflict above), graduating each into
+   `LF.lean` the same way.  (IndPropRegexp has since been dropped — folded into
+   Automation.)
 
 ### Eventually: permanent versification
 
 When a chapter is made *permanently* Verso — the generated `<Ch>Verso.lean`
 promoted to the hand-maintained source of truth and the code-forward
-`LF/<Ch>.lean` retired, as already happened for Basics and HL/Imp — **keep
-the plain .lean version in the repo as `LF/Old<Ch>.lean`** for manual
-comparison (BCP instruction, 2026-07-14).
+`LF/<Ch>.lean` retired, as already happened for Basics and HL/Imp — the plain
+`.lean` version is **not** kept in the repo. (Earlier passes archived it as an
+untracked `LF/Old<Ch>.lean` for manual comparison; those archives are no longer
+useful and are not retained — BCP instruction, 2026-07-23. The original bare
+sources still live in `old/orig-lf-files/` if a comparison is ever needed.)
 
 ---
 
@@ -293,7 +310,6 @@ generated `SFLCompat.lean` are **not** chapters and stay plain Lean; see
   in `SFLMeta/Save.lean` (~L1237) that maps `LF.<Ch>Verso` back to the emitted
   `LF.<Ch>`. Once every chapter is directly authored under its plain name (as
   Basics/Induction/… already are), `deVerso` is a no-op and removable.
-* The `LF/Old<Ch>.lean` comparison archives (kept per the note above).
 * The porting/checking prose in `CLAUDE.md` ("Porting a chapter from Rocq",
   "Rough-draft conversion", "Checking to_verso outputs", "Writing comments that
   survive `to_verso`") becomes historical.
