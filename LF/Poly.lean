@@ -771,9 +771,9 @@ def zip {α β : Type} (lx : List α) (ly : List β) : List (α × β) :=
   | _, [] => []
   | x :: tx, y :: ty => (x, y) :: zip tx ty
 
-theorem zip_nil_r {α β : Type} {ly : List β} : zip [] ly = ([] : List (α × β)) := by rfl
+theorem zip_nil_r {α β : Type} (ly : List β) : zip [] ly = ([] : List (α × β)) := by rfl
 
-theorem zip_nil_l {α β : Type} {lx : List α} : zip lx [] = ([] : List (α × β)) := by
+theorem zip_nil_l {α β : Type} (lx : List α) : zip lx [] = ([] : List (α × β)) := by
    cases lx <;> rfl
 
 theorem zip_cons {α β : Type} {lx : List α} {ly : List β} {x : α} {y : β} :
@@ -1546,7 +1546,7 @@ Hint: It may help to use `dsimp [foldLength, fold]` to unfold
 the definition.
 
 ```lean
-theorem fold_length_correct {α : Type} {l : List α} :
+theorem fold_length_correct {α : Type} (l : List α) :
     foldLength l = l.length := by
   solution!
     induction l with
@@ -1575,7 +1575,7 @@ Write down a theorem `fold_map_correct` stating that `foldMap` is
 correct, and prove it in Lean.
 
 ```lean
-theorem fold_map_correct {α : Type} {β : Type} {f : α → β} {l : List α} :
+theorem fold_map_correct {α : Type} {β : Type} (f : α → β) (l : List α) :
     foldMap f l = map f l := by
   solution!
     induction l with
@@ -1645,12 +1645,12 @@ calculate the types of {name}`prodCurry` and {name}`prodUncurry`?
 ```
 
 ```lean
-theorem uncurry_curry {α β γ : Type} {f : α → β → γ} {x : α} {y : β} :
+theorem uncurry_curry {α β γ : Type} (f : α → β → γ) (x : α) (y : β) :
     prodCurry (prodUncurry f) x y = f x y := by
   solution!
     rfl
 
-theorem curry_uncurry {α β γ : Type} {f : α × β → γ} {p : α × β} :
+theorem curry_uncurry {α β γ : Type} (f : α × β → γ) {p : α × β} :
     prodUncurry (prodCurry f) p = f p := by
   solution!
     rfl
