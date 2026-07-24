@@ -1220,7 +1220,6 @@ theorem nat_bin_nat (n : Nat) :
 
 ## Bin to Nat and Back to Bin (Advanced)
 
-::::::full
 The opposite direction -- starting with a `Bin`, converting to `Nat`,
 then converting back to `Bin` -- turns out to be problematic. That
 is, the following "theorem" does not hold.
@@ -1431,17 +1430,14 @@ theorem bin_nat_bin (b : Bin) :
       rw [← succ_eq_add_one]
       rw [natToBin_succ]
       rw [natToBin_two_mul, ih]
-
-end NatToBin
 ```
 
 :::gradeTheorem 6 "bin_nat_bin"
 :::
 :::::
 
-::::::
-
 ```lean
+end NatToBin
 end NatPlayground.Nat
 ```
 
