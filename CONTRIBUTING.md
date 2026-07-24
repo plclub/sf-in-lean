@@ -316,24 +316,123 @@ Related notation introduced alongside tactics: anonymous constructor
 * **Explicit rewrites over `dsimp`/`simp` through notation** (see
   "Notation and simplification").
 
-* **`sorry` placeholders are checked, not silent.** Where a `sorry`
-  appears (incomplete proof, exercise scaffold), wrap it so the warning is asserted:
-  ```lean
-  /-- warning: declaration uses `sorry` -/
-  #guard_msgs in
-  example : … := sorry
-  ```
+### Incomplete code, expected errors, and diagnostics
 
-  The `#guard_msgs` wrapper is checked while the book is compiled.
-  In the rendered book and generated projects, the expected-message docstring and
-  `#guard_msgs ... in` are stripped.
+Use `sorry` to admit a declaration, `+error` to show code that Lean rejects,
+`-keep` to keep a block from changing the later environment, and
+`#guard_msgs` only when the output itself is being checked.
 
-* **Aborted/abandoned lemmas** failing proofs and examples with type errors
-  should have a `#guard_msgs` above them with the expected error, rather than
-  ending with `sorry`. (OLD)
+#### `sorry`
 
-* **Aborted/abandoned lemmas** become unnamed `example`s closed with
-  `sorry` (the SFL analogue of Rocq's `Abort`). (NEW)
+Use `sorry` when an unfinished declaration must remain available to later code,
+as with an exercise scaffold or a theorem used below. Do _not_ normally wrap it
+in `#guard_msgs`: the generic warning is not what we are testing, and the guard
+is stripped from the HTML and extracted projects.
+
+````lean
+```lean
+theorem pumping ... : ... := by
+  sorry
+```
+````
+
+#### `+error`
+
+Use `+error` for stuck proofs, failed tactics, incomplete matches, type errors,
+and other code that Lean should reject.
+
+If the point is simply that `rfl` fails, use an expected-error block rather
+than checking its diagnostic:
+
+````lean
+```lean +error
+example (a b : Nat) : a + b = b + a := by
+  -- `rfl` doesn't work here!
+  rfl
+```
+````
+
+Likewise, leave a one-off stuck proof unfinished instead of closing it with `sorry`:
+
+````lean
+```lean +error
+example (c n : Nat) :
+    myRepeat n c ++ myRepeat n c = myRepeat n (c + c) := by
+  induction c with
+  ...
+  | succ c' ih =>
+    ...
+    -- Now we seem to be stuck.
+```
+````
+
+#### `-keep`
+
+Use `-keep` for successful code whose declarations or other effects should not
+reach later blocks. This instance, for example, is deliberately misleading:
+
+````lean
+```lean -keep
+instance : HasOne Nat where
+  one := 2
+```
+````
+
+Combine `-keep` with `+error` when a failed declaration would otherwise reserve
+its name:
+
+````lean
+```lean +error -keep
+def x : Nat := "str"
+```
+````
+
+Without `-keep`, `x` cannot be redefined later in the chapter.
+
+#### `#guard_msgs`
+
+Use `#guard_msgs` when the message text, severity, or position is part of the
+test. The guard and its expected-message doc comment are checked while the book
+is compiled, then stripped from the HTML and extracted projects.
+
+This includes interactive-tactic suggestions:
+
+```lean
+/-- info: Try this:
+  exact Nat.add_comm a b -/
+#guard_msgs(info) in
+example (a b : Nat) : a + b = b + a := by
+  exact?
+```
+
+It also includes regression tests for custom tactics and commands:
+
+```lean
+#guard_msgs in
+sf_expect_failure?
+  def incomplete (n : Nat) : Nat :=
+    match n
+```
+
+Do _not_ guard every command that happens to print information. In particular,
+an __ordinary `#check` needs no guard__:
+
+````lean
+```lean
+#check Nat.add
+```
+````
+
+Guard `#check` only when its printed form is what the example is testing. For
+example, `Imp` checks its custom delaborator this way:
+
+````lean
+```lean
+/-- info: aexp {3 + X * 2} : Aexp -/
+#guard_msgs in
+#check aexp {3 + (X * 2)}
+```
+````
 
 * **Library vs. client code.** Inside a definition's own library it is
   fine to unfold and simplify through definitions; *using* that code,
