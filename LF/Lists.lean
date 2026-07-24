@@ -168,11 +168,11 @@ example : (⟨3, 5⟩ : NatProd).fst = 3 := by rfl
 The anonymous constructor can be used in both expressions and in pattern matches.
 
 ```lean
-def fst' (p : NatProd) : Nat :=
+def NatProd.fst' (p : NatProd) : Nat :=
   match p with
   | ⟨x, _⟩ => x
 
-def snd' (p : NatProd) : Nat :=
+def NatProd.snd' (p : NatProd) : Nat :=
   match p with
   | ⟨_, y⟩ => y
 
@@ -209,7 +209,7 @@ def bad_fst (p : NatProd) : Nat :=
 -- Can't match on multiple values with pair patterns:
 def bad_sub (n m : Nat) : Nat :=
   match n, m with
-  | ⟨0,        _⟩       => 0
+  | ⟨0,        _⟩        => 0
   | ⟨.succ _,  0⟩        => n
   | ⟨.succ n', .succ m'⟩ => sub n' m'
 ```
@@ -577,14 +577,14 @@ def oddmembers (l : NatList) : NatList := solution!(
 theorem oddmembers_nil : oddmembers [] = [] := solution!(by rfl)
 
 theorem oddmembers_cons (h : Nat) (t : NatList) :
-    oddmembers (h :: t) = bif odd h then h :: oddmembers t else oddmembers t := solution!(by rfl)
+    oddmembers (h :: t) = bif h.odd then h :: oddmembers t else oddmembers t := solution!(by rfl)
 
-theorem oddmembers_cons_odd (x : Nat) (l : NatList) (h : odd x = true) :
+theorem oddmembers_cons_odd (x : Nat) (l : NatList) (h : x.odd= true) :
     oddmembers (x :: l) = x :: oddmembers l := by
   solution!
     rw [oddmembers_cons, h, cond_true]
 
-theorem oddmembers_cons_not_odd (x : Nat) (l : NatList) (h : odd x = false) :
+theorem oddmembers_cons_not_odd (x : Nat) (l : NatList) (h : x.odd = false) :
     oddmembers (x :: l) = oddmembers l := by
   solution!
     rw [oddmembers_cons, h, cond_false]
