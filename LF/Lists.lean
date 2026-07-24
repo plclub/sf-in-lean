@@ -691,7 +691,7 @@ can appear multiple times rather than just once.  One way of
 representing a bag of numbers is as a list.  The following definition
 introduces a new type, `Bag`, as an abbreviation for `NatList`.
 
-We define `Bag` as it's own new definition, so it needs an "API" so that we can work with it.
+We define `Bag` as its own new definition, so it needs an API so that we can work with it.
 Even though it's equal to `NatList`, tactics that operate solely on syntax, like `rw` and `dsimp`, can't see this fact.
 Therefore, we need to avoid using `[]` and `::` in `Bag`'s API.
 ::::
