@@ -15,41 +15,8 @@ htmlSplit := .never
 file := some "Induction"
 %%%
 
-:::dev "Jonathan Chan (ionathanch)"
-\[BCP: Old comment -- might be out of date?\]
-A lot of the proofs on the naturals rely on how operations on naturals were defined in `Basics.lean`,
-but in the stdlib they're slightly different
-(e.g. `sub` is defined via `pred` rather than directly by recursion),
-and the notations all go through typeclasses,
-which makes the proofs a lot less direct
-(e.g. the existing `0 + n` proof refers to `Nat.add_succ`).
-We should do one of the following:
-1.  Not use `+`, `-`, `*` notation and instead use `add`, `sub`, `mul` directly; or
-2.  Override stdlib notation with ones pointing to the definitions in `Basics.lean`.
-:::
-
-:::dev "Harrison Goldstein (hgoldstein95)"
-Option 1 is a very reasonable way to go about this if we're attached to arithmetic being the way we teach induction.
-My primary concern is that operators and type classes are already so confusing
-that adding another meaning of `+` is liable to throw someone way off.
-Is there another context we can teach induction in that also doesn't require a ton of background?
-:::
-
-:::dev "Jonathan Chan (ionathanch)"
-`Basics.lean` now overrides the typeclasses for `-`, `*`, and `^`,
-but not `+`, since that one is pervasive throughout the stdlib and causes problems;
-I think this works okay and isn't too confusing.
-
-If we continue doing arithmetic proofs,
-this is a good place to introduce equational reasoning via `calc`.
-:::
-
 :::dev BeforeNextRelease
 ```
-Readers might expect us to add eqn:H annotations to uses of
-induction, but this changes the shape of the IH in a nasty way! :-(
-We should at least comment.  (BCP: Is this still relevant in Lean?)
-
 SOONER: We should also consider adding more examples to clarify
 the concepts introduced in this chapter. This could help in
 reinforcing the understanding of induction principles.
@@ -136,7 +103,7 @@ namespace NatPlayground.Nat
 
 ::::quiz
 To prove the following theorem, which tactics will we need besides
-`intro` and `rfl`?  (A) none, (B) `rewrite`, (C) `cases`, (D) both
+`rfl`?  (A) none, (B) `rewrite`, (C) `cases`, (D) both
 `rewrite` and `cases`, or (E) can't be done with the tactics we've seen.
 
 ```display
@@ -155,18 +122,17 @@ theorem review1 : (true || false) = true := by rfl
 What about the next one?
 
 ```display
-    theorem review2 : ∀ b, (true || b) = true
+    theorem review2 b : (true || b) = true
 ```
 
-Which tactics do we need besides `intro` and `rfl`?  (A)
+Which tactics do we need besides `rfl`?  (A)
 none (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`,
 or (E) can't be done with the tactics we've seen.
 
 :::quizSolution
 ```
 /- review2 -/
-theorem review2 : ∀ b : Bool, (true || b) = true := by
-  intro b
+theorem review2 (b : Bool) : (true || b) = true := by
   rfl
 ```
 :::
@@ -176,18 +142,17 @@ theorem review2 : ∀ b : Bool, (true || b) = true := by
 What if we change the order of the arguments of `||`?
 
 ```display
-    theorem review3 : ∀ b, (b || true) = true
+    theorem review3 b : (b || true) = true
 ```
 
-Which tactics do we need besides `intro` and `rfl`?  (A)
+Which tactics do we need besides `rfl`?  (A)
 none (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`,
 or (E) can't be done with the tactics we've seen.
 
 :::quizSolution
 ```
 /- review3 -/
-theorem review3 : ∀ b : Bool, (b || true) = true := by
-  intro b
+theorem review3 (b : Bool) (b || true) = true := by
   cases b with
   | false => rfl
   | true  => rfl
@@ -201,7 +166,7 @@ argument: `n + zero = n` by definition, and `n + (m + 1) = (n + m) + 1` by
 definition.)
 
 ```display
-    theorem review4 : ∀ n : Nat, n + zero = n
+    theorem review4 (n : Nat) : n + zero = n
 ```
 
 (A) none, (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`, or (E)
@@ -210,8 +175,7 @@ can't be done with the tactics we've seen.
 :::quizSolution
 ```
 /- review4 -/
-theorem review4 : ∀ n : Nat, n + zero = n := by
-  intro n
+theorem review4 (n : Nat) : n + zero = n := by
   rewrite [add_zero]
   rfl
 ```
@@ -222,7 +186,7 @@ theorem review4 : ∀ n : Nat, n + zero = n := by
 What about this?
 
 ```display
-    theorem review5 : ∀ n : Nat, zero + n = n
+    theorem review5 (n : Nat) : zero + n = n
 ```
 
 (A) none, (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`,
@@ -246,6 +210,8 @@ We use this theorem later,
 ```
 :::
 
+::::exercise (rating := 1) (name := "succ_eq_add_one")
+One more warm-up exercise.
 Prove the following theorem, using theorems from Basics:
 
 ```lean
@@ -255,6 +221,11 @@ theorem succ_eq_add_one : ∀ n : Nat, succ n = n + one := by
     rewrite [one_eq_succ_zero, add_succ, add_zero]
     rfl
 ```
+
+:::gradeTheorem 1 "succ_eq_add_one"
+:::
+::::
+
 
 ## Proof by Induction
 
@@ -291,13 +262,10 @@ But the proof that it is also a neutral element on the
    _left_ gets stuck...
 ::::
 
-```lean
-/-- warning: declaration uses `sorry` -/
-#guard_msgs in
+```lean +error
 example : ∀ n : Nat, zero + n = n := by
   intro n
   -- `rfl` doesn't work here!
-  sorry
 ```
 
 :::slidebreak
@@ -308,9 +276,7 @@ further: the branch of the case analysis where we assume `n = zero`
 goes through just fine, but in the branch where `n = n' + 1` for
 some `n'` we get stuck in exactly the same way.
 
-```lean
-/-- warning: declaration uses `sorry` -/
-#guard_msgs in
+```lean +error
 example : ∀ n : Nat, zero + n = n := by
   intro n
   cases n with
@@ -320,7 +286,6 @@ example : ∀ n : Nat, zero + n = n := by
     -- so far so good...
   | succ n' =>   /- n = succ n' -/
     -- ...but we're stuck on zero + n'
-    sorry
 ```
 
 ::::full
@@ -426,13 +391,6 @@ theorem beq_self : ∀ n : Nat,
       rewrite [succ_succ_beq]
       exact ih
 ```
-
-:::dev "Roger Burtonpatel (rogerburtonpatel)"
-```
-We need to make sure this section below is true! It won't be once we switch
-     to the indexed style.
-```
-:::
 
 ::::full
 Up until this point, we have been explicitly writing out all the parameters
