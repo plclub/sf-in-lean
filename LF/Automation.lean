@@ -1,10 +1,6 @@
 import SFLMeta
 
--- IndProp is not yet graduated, so in the book it appears as the generated
--- `IndPropVerso`; import that (not bare `LF.IndProp`) to avoid a duplicate-name
--- clash with the `{include}`d chapter.  Revert to `LF.IndProp` once IndProp
--- graduates.
-import LF.IndPropVerso
+import LF.IndProp
 
 open Verso.Genre Manual
 open SFLMeta
