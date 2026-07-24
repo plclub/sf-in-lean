@@ -529,12 +529,12 @@ end Imp.Delab
 ```
 
 ::::full
-With the delaborators in place, Lean now pretty prints Imp expressions using the
-syntax rather than their raw constructors. The pretty printed syntax might not always
-match the concrete expression because some of the information can be lost in the macro
-expansion.
+With these delaborators in place, Lean pretty-prints Imp expressions with the higher-level
+notations rather than their raw constructors.
 
-For example, the parentheses around `X * 2` in `aexp { 3 + (X * 2) }` are lost because
+The pretty-printed version of an expression might not exactly
+match its original form.
+For example, the parentheses around `X * 2` in `aexp { 3 + (X * 2) }` are not printed because
 they are redundant -- which the parenthesizer knows.
 ::::
 
