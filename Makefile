@@ -14,24 +14,24 @@ default: all
 # ── Volume target template ────────────────────────────────────────────────────
 # Usage: $(eval $(call VOLUME_template,slug))
 #   slug   lowercase short name used in make targets and CLI args, e.g. lf
-#          The single `sfl` executable is called as: lake exe sfl <slug> <mode>
+#          Each volume has its own executable, called as: lake exe sfl-<slug> <mode>
 define VOLUME_template
 
 .PHONY: $(1) $(1)-build $(1)-student $(1)-solutions $(1)-terse
 
-# Build the sfl executable (shared across all volumes) before running any
-# variant.  Lake detects nothing changed on subsequent calls and skips quickly.
+# Build this volume's executable before running any variant.  Lake detects
+# nothing changed on subsequent calls and skips quickly.
 $(1)-build: ensure-build-symlink
-	lake build sfl
+	lake build sfl-$(1)
 
 $(1)-student: $(1)-build
-	lake exe sfl $(1) student
+	lake exe sfl-$(1) student
 
 $(1)-solutions: $(1)-build
-	lake exe sfl $(1) solutions
+	lake exe sfl-$(1) solutions
 
 $(1)-terse: $(1)-build
-	lake exe sfl $(1) terse
+	lake exe sfl-$(1) terse
 
 $(1): $(1)-student $(1)-solutions $(1)-terse
 
