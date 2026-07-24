@@ -46,6 +46,15 @@ jobs:
       # extracted Lean sources and then `lake build` them; a compile failure in
       # any variant turns the executable's exit code (and so this step) red.
       - run: make
+      # Upload the build artifact to CI
+      - name: Upload generated outputs
+        uses: actions/upload-artifact@v7
+        if: ${{ success() }}
+        with:
+          name: sfl-out
+          path: _out/
+          if-no-files-found: error
+          retention-days: 7
       
     # When several commits are pushed to the same PR in quick succession, cancel the
     # in-progress run for the older commit so runners aren't wasted and the latest
