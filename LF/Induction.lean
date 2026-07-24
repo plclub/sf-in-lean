@@ -107,12 +107,11 @@ To prove the following theorem, which tactics will we need besides
 `rewrite` and `cases`, or (E) can't be done with the tactics we've seen.
 
 ```display
-    theorem review1 : (true || false) = true
+theorem review1 : (true || false) = true
 ```
 
 :::quizSolution
-```
-/- review1 -/
+```lean
 theorem review1 : (true || false) = true := by rfl
 ```
 :::
@@ -122,7 +121,7 @@ theorem review1 : (true || false) = true := by rfl
 What about the next one?
 
 ```display
-    theorem review2 b : (true || b) = true
+theorem review2 b : (true || b) = true
 ```
 
 Which tactics do we need besides `rfl`?  (A)
@@ -130,10 +129,8 @@ none (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`,
 or (E) can't be done with the tactics we've seen.
 
 :::quizSolution
-```
-/- review2 -/
-theorem review2 (b : Bool) : (true || b) = true := by
-  rfl
+```lean
+theorem review2 (b : Bool) : (true || b) = true := by rfl
 ```
 :::
 ::::
@@ -142,7 +139,7 @@ theorem review2 (b : Bool) : (true || b) = true := by
 What if we change the order of the arguments of `||`?
 
 ```display
-    theorem review3 b : (b || true) = true
+theorem review3 b : (b || true) = true
 ```
 
 Which tactics do we need besides `rfl`?  (A)
@@ -150,9 +147,8 @@ none (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`,
 or (E) can't be done with the tactics we've seen.
 
 :::quizSolution
-```
-/- review3 -/
-theorem review3 (b : Bool) (b || true) = true := by
+```lean
+theorem review3 (b : Bool) : (b || true) = true := by
   cases b with
   | false => rfl
   | true  => rfl
@@ -166,15 +162,14 @@ argument: `n + zero = n` by definition, and `n + (m + 1) = (n + m) + 1` by
 definition.)
 
 ```display
-    theorem review4 (n : Nat) : n + zero = n
+theorem review4 (n : Nat) : n + zero = n
 ```
 
 (A) none, (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`, or (E)
 can't be done with the tactics we've seen.
 
 :::quizSolution
-```
-/- review4 -/
+```lean
 theorem review4 (n : Nat) : n + zero = n := by
   rewrite [add_zero]
   rfl
@@ -186,29 +181,17 @@ theorem review4 (n : Nat) : n + zero = n := by
 What about this?
 
 ```display
-    theorem review5 (n : Nat) : zero + n = n
+theorem review5 (n : Nat) : zero + n = n
 ```
 
 (A) none, (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`,
 or (E) can't be done with the tactics we've seen.
 
 :::quizSolution
-```
-/- review5 -/
-/-
-  This one CANNOT be proved by rfl, cases, or rewriting alone --
-  it needs induction!  (We'll see why below.)
--/
-```
+This one CANNOT be proved by rfl, cases, or rewriting alone --
+it needs induction!  (We'll see why below.)
 :::
 ::::
-
-:::dev "Daniel Sainati (dsainati1)" NOW
-```
-We use this theorem later,
-   so let's make it into a review exercise here
-```
-:::
 
 ::::exercise (rating := 1) (name := "succ_eq_add_one")
 One more warm-up exercise.
@@ -485,42 +468,11 @@ theorem add_assoc (n m p : Nat) :
 :::gradeTheorem "0.5" "add_assoc"
 :::
 
-:::::exercise (rating := 2) (name := "double_plus")
-Consider the following function, which doubles its argument:
-
-:::dev NOW
-```
-Rule rewrite
-
-BCP: What is "ASSUME HIDDEN"??
-ASSUME HIDDEN
-```
-:::
-
-```lean
-def double (n : Nat) : Nat :=
-  match n with
-  | zero    => zero
-  | succ n' => succ (succ (double n'))
-```
-
-
-```lean
-theorem double_zero : double zero = zero := by rfl
-theorem double_succ : ∀ n, double (succ n) = succ (succ (double n)) := by
-  intro n; rfl
-
-attribute [irreducible] double
-```
-
-END ASSUME
-
 :::dev "Benjamin Pierce (bcpierce00)"
 ```
 We need better typesetting for displays like the following ones:
 ```
 :::
-:::::
 
 ## Tip: the `rw` tactic
 
@@ -558,8 +510,22 @@ If `rw` leaves a goal that looks definitionally true, try adding `rfl`
 after it.
 ::::
 
+:::::exercise (rating := 2) (name := "double_add")
+Consider the following function, which doubles its argument:
+
+```lean
+def double (n : Nat) : Nat :=
+  match n with
+  | zero    => zero
+  | succ n' => succ (succ (double n'))
+
+theorem double_zero : double zero = zero := by rfl
+theorem double_succ n : double (succ n) = succ (succ (double n)) := by rfl
+attribute [irreducible] double
+```
+
 Use induction to prove this simple fact about `double`.
-   Experiment with using `rw` instead of `rewrite` as well.
+Experiment with using `rw` instead of `rewrite` as well.
 
 ```lean
 theorem double_add (n : Nat) : double n = n + n := by
@@ -569,31 +535,9 @@ theorem double_add (n : Nat) : double n = n + n := by
     | succ n' ih => rw [double_succ, ih, add_succ, succ_add]
 ```
 
-:::::exercise (rating := 2) (name := "beq_refl")
-The following theorem relates the computational equality `beq` on
-`Nat` with the definitional equality `=` on `Bool`.
-
-```lean
-theorem beq_refl (n : Nat) :
-    (n == n) = true := by
-  solution!
-    induction n with
-    | zero       => rw [zero_zero_beq_true]
-    | succ n' ih => rw [succ_succ_beq, ih]
-```
+:::gradeTheorem "0.5" "double_add"
+:::
 :::::
-
-::::hide
-```
-  Note: we might expect a similar property to hold on
-  UNequal [nat]'s:
-     Theorem beq_n_n' : forall n n' : nat,
-          n ≠ n' ->
-          n =? n' = false.
-  But it will be a while before we get to terms with what
-  [n ≠ n'] really means...
-```
-::::
 
 ::::::full
 :::::exercise (rating := 2) (name := "even_succ")
@@ -601,9 +545,9 @@ Here's a useful theorem that proves `even (n + 1)` flips
 the parity.  This will facilitate proofs by induction on `n`:
 
 One inconvenient aspect of our definition of `even n` is the
-recursive call on `n - two`. This makes proofs about `even n`
+recursive call on `n'` when `n = succ (succ n')`. This makes proofs about `even n`
 harder when done by induction on `n`, since we may need an
-induction hypothesis about `n - two`. The following lemma gives an
+induction hypothesis about `succ (succ n')`. The following lemma gives an
 alternative characterization of `even (succ n)` that works better
 with induction:
 
@@ -670,7 +614,7 @@ theorem mult_zero_plus' (n m : Nat) :
 
 ::::full
 The `have` tactic introduces a local lemma into the proof.
-We prove it immediately, and then it's available as a hypothesis
+We prove it immediately, and it's available as a hypothesis
 for the rest of the proof.
 ::::
 
@@ -688,9 +632,7 @@ it applies the rewrite.  There are three uses of `+` here, and
 `rw [add_comm]` may affect the wrong one...
 ::::
 
-```lean
-/-- warning: declaration uses `sorry` -/
-#guard_msgs in
+```lean +error
 example (n m p q : Nat) :
    (n + m) + (p + q) = (m + n) + (p + q) := by
   /-
@@ -699,18 +641,15 @@ example (n m p q : Nat) :
     But `rw [add_comm]` might rewrite the wrong `+`!
   -/
   rw [add_comm]
-  sorry
 ```
 
 :::slidebreak
 :::
 
-::::terse
 To use `add_comm` at the point where we need it, we can supply
 explicit arguments: `rw [add_comm n m]` tells Lean exactly which
 `+` to rewrite.  (We can also use `have` to establish the specific
 equation we want, then rewrite with it.)
-::::
 
 ```lean
 theorem plus_rearrange (n m p q : Nat) :
@@ -787,12 +726,6 @@ Lean is perfectly happy with this.  For a human, however, it
 is difficult to make much sense of it.  We can
 pass arguments to the `add_succ` theorems to show the structure more clearly...
 
-:::dev "Jonathan Chan (ionathanch)"
-```
-This would be a great location to introduce `calc`!
-```
-:::
-
 ```lean
 theorem add_assoc'' (n m p : Nat) :
     add n (add m p) = add (add n m) p := by
@@ -812,16 +745,10 @@ to impossible.
 A (pedantic) mathematician might write the proof something like
 this:
 
-:::dev "Benjamin Pierce (bcpierce00)"
-```
-Again, the math displays need to be displayed!
-```
-:::
-
 - _Theorem_: For any `n`, `m` and `p`,
 
 ```display
-      n + (m + p) = (n + m) + p.
+  n + (m + p) = (n + m) + p.
 ```
 
 _Proof_: By induction on `p`.
@@ -829,7 +756,7 @@ _Proof_: By induction on `p`.
 - First, suppose `p = zero`.  We must show that
 
 ```display
-        n + (m + zero) = (n + m) + zero.
+  n + (m + zero) = (n + m) + zero.
 ```
 
 This follows directly from the definition of `+`
@@ -838,19 +765,19 @@ This follows directly from the definition of `+`
 - Next, suppose `p = p' + 1`, where
 
 ```display
-        n + (m + p') = (n + m) + p'.
+  n + (m + p') = (n + m) + p'.
 ```
 
 We must now show that
 
 ```display
-        n + (m + (p' + 1)) = (n + m) + (p' + 1).
+  n + (m + (p' + 1)) = (n + m) + (p' + 1).
 ```
 
 By the definition of `+`, both sides reduce to
 
 ```display
-        (n + (m + p')) + 1   and   ((n + m) + p') + 1
+  (n + (m + p')) + 1   and   ((n + m) + p') + 1
 ```
 
 respectively, which are equal by the induction hypothesis.
@@ -877,6 +804,7 @@ formal proof is much more explicit in some ways (e.g., the use of
 state" at any given point in the Lean proof is completely implicit,
 whereas the informal proof reminds the reader several times where
 things stand).
+::::::
 
 :::::exercise (rating := 2) (name := "add_comm_informal") (level := Advanced) (manual := true)
 Translate your solution for `add_comm` into an informal proof:
@@ -885,27 +813,39 @@ Theorem: Addition is commutative.
 
 Proof:
 
-:::dev "Benjamin Pierce (bcpierce00)"
-```
-Somebody please check that this typesets nicely!  (I doubt it does...) Ditto below.
-SOLUTION
-```
-:::
-
+:::solution
 Let natural numbers `n` and `m` be given.  We show `n + m = m +
 n` by induction on `m`.
 
-- First, suppose `m = zero`.  We must show `n + zero = zero + n`.  By
-the definition of `+`, `n + zero = n`.  We have already shown
-(lemma `zero_add`) that `zero + n = n`.  Thus both sides equal
-`n`.
+- First, suppose `m = zero`.  We must show
 
-- Next, suppose `m = m' + 1` for some `m'`, where `n + m' = m'
-+ n`.  We must show that `n + (m' + 1) = (m' + 1) + n`.  By
-the definition of `+`, `n + (m' + 1) = (n + m') + 1`.  By
-`succ_add`, `(m' + 1) + n = (m' + n) + 1`.  By the induction
-hypothesis, `n + m' = m' + n`, so both sides equal
-`(m' + n) + 1`.
+```display
+n + zero = zero + n.
+```
+
+By the definition of `+`, `n + zero = n`, so we now must show
+
+```display
+n = zero + n
+```
+
+We have already shown (lemma `zero_add`) that `zero + n = n`.  Thus both sides equal `n`.
+
+- Next, suppose `m = m' + 1` for some `m'`, where `n + m' = m' + n`. We must show that
+
+```display
+n + (m' + 1) = (m' + 1) + n`.
+```
+
+By the definition of `+`, `n + (m' + 1) = (n + m') + 1`, so our new goal is to show
+
+```display
+(n + m') + 1 = (m' + 1) + n`.
+```
+
+By `succ_add`, `(m' + 1) + n = (m' + n) + 1`, so our new goal is, and by the induction
+hypothesis, `n + m' = m' + n`, so both sides equal `(m' + n) + 1`.
+:::
 
 :::grade
 ```
@@ -944,8 +884,6 @@ GRADE_MANUAL 2: beq_refl_informal
 :::
 :::::
 
-::::::
-
 # More Exercises
 
 Tip: By default, `rewrite` and `rw` rewrite left to right, i.e.,
@@ -954,7 +892,7 @@ the left side of the equality to the right side. To rewrite from
 right to left, use `rewrite [← h]` or `rw [← h]`, where `←` is entered
 as `\l` or `\<-`.
 
-:::::exercise (rating := 1) (name := "mul_one")
+::::exercise (rating := 1) (name := "mul_one")
 ```lean
 theorem mul_one (p : Nat) :
     one * p = p := by
@@ -966,9 +904,9 @@ theorem mul_one (p : Nat) :
 
 :::gradeTheorem 1 "mul_one"
 :::
-:::::
+::::
 
-:::::exercise (rating := 2) (name := "mul_two")
+::::exercise (rating := 2) (name := "mul_two")
 ```lean
 theorem mul_two (p : Nat) :
     two * p = p + p := by
@@ -983,25 +921,22 @@ theorem mul_two (p : Nat) :
 
 :::gradeTheorem 1 "mul_two"
 :::
-:::::
-
-::::terse
-These exercises state facts that will be used in
-later chapters.  We don't need to work them in class.
 ::::
 
-:::::exercise (rating := 3) (name := "mul_comm")
-Use `have` (or `rw` with explicit arguments) to help prove
-`add_shuffle3`.  You don't need to use induction yet.
+::::terse
+These exercises state facts that will be used later.
+We don't need to work them in class.
+::::
 
-Note: By default, `rewrite` and `rw` rewrite left-to-right. To rewrite from
-right to left, use `rw [← h]`, where `←` is typed as `\l` or `\<-`.
+::::exercise (rating := 3) (name := "mul_comm")
+
+Use `have` (or `rw` with explicit arguments) to help prove
+`add_shuffle3`.  You don't need to use induction.
 
 ```lean
-theorem add_shuffle3 : ∀ n m p : Nat,
+theorem add_shuffle3 (n m p : Nat) :
     add (add n m) p = add (add n p) m := by
   solution!
-    intro n m p
     rw [← add_assoc, add_comm m p, add_assoc]
 ```
 
@@ -1009,15 +944,14 @@ theorem add_shuffle3 : ∀ n m p : Nat,
 :::
 
 ```lean
--- SOLUTION
 theorem succ_mul (m n : Nat) :
     (succ n) * m = (n * m) + m := by
-  induction m with
-  | zero => rw [mul_zero, mul_zero, add_zero]
-  | succ m ih =>
-    rw [mul_succ, ih, add_succ, add_comm _ n,
-        add_assoc n _ m, add_comm n, mul_succ, add_succ]
--- END SOLUTION
+  solution!
+    induction m with
+    | zero => rw [mul_zero, mul_zero, add_zero]
+    | succ m ih =>
+      rw [mul_succ, ih, add_succ, add_comm _ n,
+          add_assoc n _ m, add_comm n, mul_succ, add_succ]
 ```
 
 Now prove commutativity of multiplication.
@@ -1035,62 +969,9 @@ theorem mul_comm (m n : Nat) :
 
 :::gradeTheorem 2 "mul_comm"
 :::
-:::::
-
-:::dev "Benjamin Pierce (bcpierce00)"
-```
-This comment is placed a bit awkwardly: In the terse version, we
-usually skim past these exercises, but now we'll need to pause and look
-at how <;> works...
-TERSE
-```
-:::
-
-New tactic combinator: `t₁ <;> t₂` runs `t₁`, then runs `t₂` on every
-subgoal produced by `t₁`.
-
-::::full
-Before moving on to the next batch of exercises, let's introduce one
-small _tactic combinator_. A tactic combinator combines tactics to form
-a larger tactic.
-
-If `t₁` and `t₂` are tactics, then `t₁ <;> t₂` means: run `t₁`, then
-run `t₂` on every subgoal produced by `t₁`.
-
-This is useful when one tactic splits the goal into several subgoals
-and all of them can be finished in the same way.
 ::::
 
-```lean
-example (b : Bool) : (b || true) = true := by
-  cases b <;> rfl
-```
-
-::::full
-This is short for:
-
-```lean
-example (b : Bool) : (b || true) = true := by
-  cases b with
-  | false => rfl
-  | true  => rfl
-```
-
-We can also chain `<;>`s.  In the next example, `cases b` creates two
-goals; in each of them, `cases c` splits the goal again; then `rfl`
-solves all four remaining goals.
-
-```lean
-example (b c : Bool) : (b && c) = (c && b) := by
-  cases b <;> cases c <;> rfl
-```
-
-Use `<;>` when the generated subgoals really do have the same proof.
-If different branches need different arguments, it is usually clearer
-to write the cases explicitly.
-::::
-
-:::::exercise (rating := 3) (name := "more_exercises")
+::::exercise (rating := 3) (name := "more_exercises")
 Take a piece of paper.  For each of the following theorems, first
 _think_ about whether (a) it can be proved using only
 simplification and rewriting, (b) it also requires case
@@ -1098,15 +979,6 @@ analysis (`cases`), or (c) it also requires induction.  Write
 down your prediction.  Then fill in the proof.  (There is no need
 to turn in your piece of paper; this is just to encourage you to
 reflect before you hack!)
-Some of these proofs can be shortened
-with `<;>` when several generated subgoals have the same proof.
-
-:::dev "Benjamin Pierce (bcpierce00)"
-```
-Is that the main reason for introducing <;> here?  Seems weak if so.
-Could we consider moving it later?
-```
-:::
 
 ```lean
 theorem ble_refl (n : Nat) :
@@ -1127,7 +999,9 @@ theorem all3_spec (b c : Bool) :
     (b && c) || ((!b) || (!c)) = true := by
   solution!
     cases b with
-    | true  => cases c <;> rfl
+    | true => cases c with
+      | false => rfl
+      | true => rfl
     | false => rfl
 
 theorem right_distrib (n m p : Nat) :
@@ -1154,11 +1028,65 @@ theorem mul_assoc (n m p : Nat) :
     | zero       => rw [mul_zero, mul_zero, mul_zero]
     | succ p' ih => rw [mul_succ, mul_succ, ← ih, left_distrib]
 ```
-:::::
+::::
+
+## A New Tactic Combinator
+
+::::full
+Before moving on to the next batch of exercises, let's introduce one
+small _tactic combinator_. A tactic combinator combines tactics to form
+a larger tactic.
+
+If `t₁` and `t₂` are tactics, then `t₁ <;> t₂` means: run `t₁`, then
+run `t₂` on every subgoal produced by `t₁`.
+
+This is useful when one tactic splits the goal into several subgoals
+and all of them can be finished in the same way.
+::::
+
+::::terse
+New tactic combinator: `t₁ <;> t₂` runs `t₁`, then runs `t₂` on every
+subgoal produced by `t₁`.
+::::
+
+```lean
+example (b : Bool) : (b || true) = true := by
+  cases b <;> rfl
+```
+
+This is short for:
+
+```lean
+example (b : Bool) : (b || true) = true := by
+  cases b with
+  | false => rfl
+  | true  => rfl
+```
+
+::::full
+We can also chain `<;>`s.  In the next example, `cases b` creates two
+goals; in each of them, `cases c` splits the goal again; then `rfl`
+solves all four remaining goals.
+::::
+
+::::terse
+We can also chain `<;>`s.
+::::
+
+```lean
+example (b c : Bool) : (b && c) = (c && b) := by
+  cases b <;> cases c <;> rfl
+```
+
+::::full
+Use `<;>` when the generated subgoals really do have the same proof.
+If different branches need different arguments, it is usually clearer
+to write the cases explicitly. We'll discuss some other tactic combinators
+much later in this book.
+::::
 
 ## Nat to Bin and Back to Nat
 
-::::::full
 ```lean
 namespace NatToBin
 ```
@@ -1209,18 +1137,10 @@ In Basics, we did some unit testing of `binToNat`, but we
 didn't prove its correctness. Now we'll do so.
 
 :::::exercise (rating := 3) (name := "binary_commute")
-:::dev "Daniel Sainati (dsainati1)" BeforeNextRelease
-```
-This is a very category theoretic way to present
-   this idea. Is this the most useful way to convey this to
-   an audience who is presumably unfamiliar with commutative diagrams?
 
-BCP: I think it's fine, though the english version could precede the diagram
-instead of following it...
-```
-:::
-
-  Prove that the following diagram commutes:
+  Prove that the following diagram commutes---that is, incrementing a binary number and
+  then converting it to a (unary) natural number yields the same result as first converting
+  it to a natural number and then incrementing:
 
 ```display
        incr Bin ----------------------> Bin
@@ -1231,10 +1151,6 @@ binToNat   |                             |  binToNat
           Nat ------------------------> Nat
                       succ
 ```
-
-  That is, incrementing a binary number and then converting it to
-  a (unary) natural number yields the same result as first converting
-  it to a natural number and then incrementing.
 
   If you want to change your previous definitions of `incr` or `binToNat`
   to make the property easier to prove, feel free!
@@ -1270,32 +1186,12 @@ def natToBin (n : Nat) : Bin := solution!(
   | succ n' => incr (natToBin n'))
 ```
 
-:::dev "Daniel Sainati (dsainati1)" NOW
-```
-How to hide these theorem statements so that students can get practice writing them?
-```
-:::
-
-From GitHub:
-CH: David set it up so that if you put:
--- SOLUTION
--- END SOLUTION
-
-in an exercise that it will turn into
-  -- FILL IN HERE
-in both student version of the Lean files and the generated HTML.
-
 ```lean
+-- SOLUTION
 theorem natToBin_zero : natToBin zero = .z := solution!(by rfl)
 theorem natToBin_succ m : natToBin (succ m) = incr (natToBin m) := solution!(by rfl)
+-- END SOLUTION
 ```
-
-:::dev "Benjamin Pierce (bcpierce00)"
-```
-Could these be moved later so that at least the reader has the chance to do the exercise
-before encountering them?
-```
-:::
 
 Prove that, if we start with any `Nat`, convert it to `Bin`, and
 convert it back, we get the same `Nat` which we started with.
@@ -1322,19 +1218,15 @@ theorem nat_bin_nat (n : Nat) :
 :::
 :::::
 
-::::::
-
 ## Bin to Nat and Back to Bin (Advanced)
 
 ::::::full
 The opposite direction -- starting with a `Bin`, converting to `Nat`,
 then converting back to `Bin` -- turns out to be problematic. That
-is, the following theorem does not hold.
+is, the following "theorem" does not hold.
 
-```lean
-/-- warning: declaration uses `sorry` -/
-#guard_msgs in
-example : ∀ b, natToBin (binToNat b) = b := by sorry
+```lean +error
+example b : natToBin (binToNat b) = b := by
 ```
 
 Let's explore why this theorem fails and how to prove a modified
@@ -1365,17 +1257,14 @@ def doubleBin (b : Bin) : Bin := solution!(
   | _  => .b0 b)
 ```
 
-:::dev "Daniel Sainati (dsainati1)" NOW
-```
-How to hide these theorem statements so that students can get practice writing them?
-```
-:::
+Fill in the characterizing lemmas for this definition below:
 
 ```lean
+-- SOLUTION
 theorem doubleBin_z : doubleBin .z = .z := solution!(by rfl)
 theorem doubleBin_b0 m : doubleBin (.b0 m) = .b0 (.b0 m) := solution!(by rfl)
 theorem doubleBin_b1 m : doubleBin (.b1 m) = .b0 (.b1 m) := solution!(by rfl)
-
+-- END SOLUTION
 ```
 
 Check that your function correctly doubles zero.
@@ -1405,10 +1294,8 @@ theorem double_incr_bin (b : Bin) :
 
 Let's return to our desired theorem:
 
-```lean
-/-- warning: declaration uses `sorry` -/
-#guard_msgs in
-example b : natToBin (binToNat b) = b := by sorry
+```lean +error
+example b : natToBin (binToNat b) = b := by
 ```
 
 The theorem fails because there are some `Bin` such that we won't
@@ -1424,7 +1311,6 @@ stuck on this, think about alternative implementations of
 yet otherwise seem correct.
 
 :::solution
-```
 The problem is that `zero` has many representations: it can be written
 `.z`, `.b0 .z`, `.b0 (.b0 .z)`, and so on.  For these alternate
 representations, if you do `binToNat` then `natToBin`, you
@@ -1432,7 +1318,6 @@ don't get back what you started with.
 
 Any other number also has many representations, after applying
 constructors to the multiple representations of zero.
-```
 :::
 
 To solve that problem, we can introduce a _normalization_ function
@@ -1457,17 +1342,14 @@ def normalize (b : Bin) : Bin := solution!(
   | .b1 b' => incr (doubleBin (normalize b')))
 ```
 
-:::dev "Daniel Sainati (dsainati1)" NOW
-```
-How to hide these theorem statements so that students can get practice writing them?
-```
-:::
+Also specify the characterizing lemmas for this definition:
 
 ```lean
+-- SOLUTION
 theorem normalize_z : normalize .z = .z := solution!(by rfl)
 theorem normalize_b0 m : normalize (.b0 m) = doubleBin (normalize m) := solution!(by rfl)
 theorem normalize_b1 m : normalize (.b1 m) = incr (doubleBin (normalize m)) := solution!(by rfl)
-
+-- END SOLUTION
 ```
 
 It would be wise to do some `example` proofs to check that your
@@ -1487,7 +1369,13 @@ example : normalize (.b0 (.b0 .z)) = .z := by rfl
 /- normalize_test_4 -/
 example : normalize (.b1 (.b0 .z)) = .b1 .z := by rfl
 -- END SOLUTION
+```
 
+Now that we have defined all of our functions and their relevant characterizing lemmas,
+we mark them irreducible as usual. From here on out, our proofs about these definitions
+should use `rewrite` or `rw`.
+
+```lean
 attribute [irreducible] normalize doubleBin natToBin incr binToNat
 ```
 
