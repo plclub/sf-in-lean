@@ -652,19 +652,8 @@ Let's look at an example using `induction`.
 ::::full
 For example, suppose we start with the following incomplete proof:
 
-```lean
-/--
-error: unsolved goals
-case zero
-⊢ Nat.beq 0 0 = true
-
-case succ
-n✝ : Nat
-a✝ : n✝.beq n✝ = true
-⊢ (n✝ + 1).beq (n✝ + 1) = true
--/
-#guard_msgs(error) in
-theorem foo (n : Nat) : Nat.beq n n := by
+```lean -keep +error
+theorem foo (n : Nat) : eqb n n := by
   induction n
 ```
 
@@ -675,9 +664,7 @@ If you choose this action,
 Lean adds an explicit branch for each constructor:
 
 ```lean
-/-- warning: declaration uses `sorry` -/
-#guard_msgs in
-example (n : Nat) : Nat.beq n n := by
+example (n : Nat) : eqb n n := by
   induction n with
   | zero => sorry
   | succ n _ => sorry
@@ -705,32 +692,14 @@ inaccessible names available again.
 The same trick also works for `match` expressions.
 For example, suppose we start with
 
-```
+```lean -keep +error
 def isZero (n : Nat) : Bool :=
   match n
 ```
 
-:::dev
-HIDE:
-@berberman: Incomplete `match` term would cause parse errors which `#guard_msgs` can't suppress.
-Use code block in docstring for now.
-:::
-
 Lean can generate the missing branches:
 
-```lean
-/--
-error: don't know how to synthesize placeholder
-context:
-n✝ n : Nat
-⊢ Bool
----
-error: don't know how to synthesize placeholder
-context:
-n : Nat
-⊢ Bool
--/
-#guard_msgs in
+```lean -keep +error
 def isZero (n : Nat) : Bool :=
   match n with
   | 0 => _

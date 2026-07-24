@@ -66,15 +66,11 @@ file := some "{file}"
 # `set_option … in` inside a ```lean block, options here cover the whole
 # command — including InlineLean's syntax highlighting (which re-drives
 # elaboration) and the code generator's pass over the generated `Verso.Doc.Block`
-# document term.  IndPropRegexp needs both: its pumping proofs elaborate under
-# the highlighting overhead well past the default 200000 heartbeats, and the
-# chapter's deep directive nesting overflows the code generator's recursion
-# limit compiling the document `block` term (which then reports as noncomputable).
-# Other chapters compile within the defaults, so they are left untouched.  Keyed
-# by file_key; a graduated (direct-Verso) chapter carries the same options inline.
+# document term.  Keyed by file_key; a graduated (direct-Verso) chapter would
+# carry the same options inline.  Currently empty: the only entry was the (now
+# deleted) IndPropRegexp chapter, whose heavy pumping proofs needed raised
+# `maxHeartbeats`/`maxRecDepth`.  Other chapters compile within the defaults.
 DOC_LEVEL_OPTIONS = {
-    "IndPropRegexp": "set_option maxHeartbeats 2000000\n"
-                     "set_option maxRecDepth 100000\n\n",
 }
 
 FOOTER = ""
@@ -141,7 +137,7 @@ def _strip_title_comment(src: str, stem: str = None) -> str:
 # `import LF.XVerso`.
 # (Maps added by Claude: HL/TS chapters import LF.Maps for its definitions.)
 DIRECT_LF_MODULES = {"Basics", "Induction", "UsingLean", "Lists", "Poly",
-                     "Tactics", "CustomTactics", "Maps"}
+                     "Tactics", "CustomTactics", "Maps", "Logic"}
 
 _IMPORT_RE = re.compile(r'^import\s+(\S+)\s*$')
 

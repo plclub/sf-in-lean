@@ -37,6 +37,7 @@ import os
 import subprocess
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 
@@ -69,6 +70,42 @@ def merges_clean(a, b):
     return r.returncode == 0
 
 
+_ANCESTRY_CACHE = {}
+
+
+def contains(container, ref):
+    """True if `container` includes every commit of `ref` — i.e. `ref` is an
+    ancestor of `container` (or they are the same commit)."""
+    key = (container, ref)
+    if key not in _ANCESTRY_CACHE:
+        r = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", ref, container],
+            capture_output=True, text=True,
+        )
+        _ANCESTRY_CACHE[key] = r.returncode == 0
+    return _ANCESTRY_CACHE[key]
+
+
+def independent_branches(refs):
+    """Reduce a set of branches that all touched one file to the independent
+    lines of work: drop any branch whose commits are already contained in
+    another branch in the set (it has been merged into, or is an ancestor of,
+    that other branch).  Without this, a file edited only on branch A is
+    reported as "co-edited" by every downstream branch that has since pulled A
+    in — not a real concurrent edit.  Two branches at the same commit (mutually
+    contained) keep the lexicographically smaller name."""
+    refs = list(refs)
+    keep = []
+    for x in refs:
+        subsumed = any(
+            y != x and contains(y, x) and not (contains(x, y) and x < y)
+            for y in refs
+        )
+        if not subsumed:
+            keep.append(x)
+    return keep
+
+
 def main_ref():
     """Remote-tracking ref for the default branch."""
     return f"{REMOTE}/main"
@@ -83,8 +120,12 @@ def collect_branches():
     branches = {}
     for ref in refs:
         ref = ref.strip()
+        short = ref[len(REMOTE) + 1:]
         # `refs/remotes/origin/HEAD` shortens to bare `origin`; skip it too.
-        if ref in (REMOTE, f"{REMOTE}/HEAD", main) or "->" in ref:
+        # `archive/*` branches are point-in-time snapshots, not active work, so
+        # they are left out of the activity table.
+        if (ref in (REMOTE, f"{REMOTE}/HEAD", main) or "->" in ref
+                or short.startswith("archive/")):
             continue
         base = git("merge-base", main, ref)
         ahead = int(git("rev-list", "--count", f"{main}..{ref}") or "0")
@@ -92,6 +133,8 @@ def collect_branches():
             set(git("diff", "--name-only", base, ref).splitlines()) if base else set()
         )
         author = git("log", "-1", "--format=%an", ref)
+        email = git("log", "-1", "--format=%ae", ref)
+        sha = git("log", "-1", "--format=%H", ref)
         when = git("log", "-1", "--format=%ad", "--date=relative", ref)
         clean_to_main = merges_clean(main, ref) if ahead else True
         branches[ref] = {
@@ -99,6 +142,9 @@ def collect_branches():
             "ahead": ahead,
             "files": files,
             "author": author,
+            "email": email,
+            "sha": sha,
+            "login": None,  # GitHub username, filled in later when a token is set
             "when": when,
             "clean_to_main": clean_to_main,
         }
@@ -150,6 +196,24 @@ def api(method, path, token, body=None):
         return None
 
 
+def login_from_email(email):
+    """GitHub username parsed from a `…@users.noreply.github.com` commit email
+    (`user@…` or `12345+user@…`), or None for any other address."""
+    if not email.endswith("@users.noreply.github.com"):
+        return None
+    local = email.split("@", 1)[0]
+    return local.split("+", 1)[1] if "+" in local else local
+
+
+def commit_login(slug, sha, token):
+    """The GitHub username linked to commit `sha` (via its verified author
+    email), from the API — or None if unlinked or unavailable."""
+    data = api("GET", f"/repos/{slug}/commits/{sha}", token)
+    if isinstance(data, dict) and isinstance(data.get("author"), dict):
+        return data["author"].get("login")
+    return None
+
+
 def fetch_prs(slug, token):
     """Map branch short-name -> {num, url, draft} for open PRs."""
     prs = {}
@@ -177,12 +241,43 @@ def fetch_prs(slug, token):
 # --------------------------------------------------------------------------
 # markdown rendering
 # --------------------------------------------------------------------------
+def author_cell(b):
+    """Last-commit author name, with its GitHub `@handle` appended when known."""
+    return f"{b['author']} (@{b['login']})" if b.get("login") else b["author"]
+
+
 def pr_cell(short, prs):
     pr = prs.get(short)
     if not pr:
         return "—"
     tag = " _(draft)_" if pr["draft"] else ""
     return f"[#{pr['num']}]({pr['url']}){tag}"
+
+
+def branch_link(short, slug, maxlen=None):
+    """A Markdown link from a branch's name to its page on GitHub.
+
+    Points at the branch's tree view (`/tree/<branch>`); the separate PR column
+    links the branch's open PR, if any.  Works without a token, since the URL is
+    derived purely from the branch name.  The slash in a name like
+    `bcp/versification5` is kept (GitHub tree paths use it); other reserved
+    characters are percent-encoded.  Falls back to a bare code span if the repo
+    slug could not be determined.
+
+    When `maxlen` is given and the name is longer, the *visible* text is
+    truncated with an ellipsis and the full name is kept as the link's hover
+    title, so a wide table stays narrow; the link target is always the full
+    branch name."""
+    if maxlen and len(short) > maxlen:
+        display = short[: maxlen - 1] + "…"
+        title = f' "{short}"'
+    else:
+        display = short
+        title = ""
+    if not slug:
+        return f"`{display}`"
+    quoted = urllib.parse.quote(short, safe="/")
+    return f"[`{display}`](https://github.com/{slug}/tree/{quoted}{title})"
 
 
 def files_cell(files):
@@ -194,7 +289,7 @@ def files_cell(files):
     return f"<details><summary>{n}</summary>{inner}</details>"
 
 
-def render(branches, conf, prs, have_token):
+def render(branches, conf, prs, have_token, slug):
     active = {r: b for r, b in branches.items() if b["ahead"] > 0}
     merged = {r: b for r, b in branches.items() if b["ahead"] == 0}
 
@@ -203,6 +298,10 @@ def render(branches, conf, prs, have_token):
     for r, b in active.items():
         for f in b["files"]:
             fmap.setdefault(f, []).append(r)
+    # Collapse each file's editor list to independent lines of work: if one
+    # branch already contains another's commits, that "shared" edit is a single
+    # edit carried downstream, not a concurrent co-edit.
+    fmap = {f: independent_branches(rs) for f, rs in fmap.items()}
     hot = {f: rs for f, rs in fmap.items() if len(rs) > 1}
 
     def file_conflicts(refs):
@@ -210,16 +309,10 @@ def render(branches, conf, prs, have_token):
 
     conflicting_files = {f: rs for f, rs in hot.items() if file_conflicts(rs)}
     clean_files = {f: rs for f, rs in hot.items() if not file_conflicts(rs)}
-
-    n_conf_main = sum(1 for b in active.values() if not b["clean_to_main"])
-    n_conf_pairs = sum(len(v) for v in conf.values()) // 2
+    single_files = {f: rs for f, rs in fmap.items() if len(rs) == 1}
 
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    summary = (
-        f"_Auto-updated {now} · {len(active)} active branch(es) · "
-        f"{n_conf_main} conflict with `main` · {n_conf_pairs} conflicting "
-        f"branch-pair(s) · {len(conflicting_files)} contested file(s)_"
-    )
+    summary = f"_Auto-updated {now}_"
     out = [ISSUE_MARKER, "", "## 🔭 Branch & file activity", ""]
     if not have_token:
         out.append("> ⚠️ No `GITHUB_TOKEN` available — PR column left blank.")
@@ -231,46 +324,63 @@ def render(branches, conf, prs, have_token):
     out.append("| Branch | PR | Author | Last activity | Ahead | Files | → main | Overlaps |")
     out.append("|---|---|---|---|--:|--:|:--:|---|")
     for r, b in sorted(active.items(), key=lambda x: -x[1]["ahead"]):
-        overlaps = sorted(
-            o for o in active if o != r and active[o]["files"] & b["files"]
-        )
-        ov = ", ".join(
-            ("⚠️ " if o in conf[r] else "") + active[o]["short"] for o in overlaps
-        ) or "—"
+        overlaps = [o for o in active if o != r and active[o]["files"] & b["files"]]
+        # Group superseded overlaps under the branch that already contains them,
+        # so one line of work carried across several branches reads as a single
+        # overlap with a single ⚠️, not several.  `A ⊃ B` = A contains B's
+        # commits; the ⚠️ (real merge conflict) is shown once, on the container.
+        heads = sorted(independent_branches(overlaps))
+        pieces = []
+        for h in heads:
+            subs = sorted(o for o in overlaps if o != h and contains(h, o))
+            piece = ("⚠️ " if h in conf[r] else "") + branch_link(active[h]["short"], slug)
+            if subs:
+                piece += " ⊃ " + ", ".join(
+                    branch_link(active[o]["short"], slug) for o in subs)
+            pieces.append(piece)
+        ov = ", ".join(pieces) or "—"
         main_flag = "✅" if b["clean_to_main"] else "⚠️"
         out.append(
-            f"| `{b['short']}` | {pr_cell(b['short'], prs)} | {b['author']} | "
+            f"| {branch_link(b['short'], slug, maxlen=25)} | {pr_cell(b['short'], prs)} | {author_cell(b)} | "
             f"{b['when']} | {b['ahead']} | {files_cell(b['files'])} | "
             f"{main_flag} | {ov} |"
         )
     out.append("")
-
-    # ---- hot files: conflicting first, then clean co-edits ----
-    out.append("### Hot files")
+    out.append("_Overlaps: ⚠️ = a real merge conflict; `A ⊃ B` = A already "
+               "contains B's commits (shown as one overlap, one marker)._")
     out.append("")
 
-    def hot_table(files):
+    # ---- files: conflicting first, then clean co-edits, then single-branch ----
+    out.append("### Files")
+    out.append("")
+
+    def file_table(files):
         rows = ["| File | # | Branches |", "|---|--:|---|"]
-        for f, refs in sorted(files.items(), key=lambda x: -len(x[1])):
+        for f, refs in sorted(files.items(), key=lambda x: (-len(x[1]), x[0])):
             labels = []
             for o in sorted(refs):
                 clash = any(o in conf[p] for p in refs if p != o)
-                labels.append(("⚠️ " if clash else "") + active[o]["short"])
+                labels.append(("⚠️ " if clash else "") + branch_link(active[o]["short"], slug))
             rows.append(f"| `{f}` | {len(refs)} | {', '.join(labels)} |")
         return rows
 
     if conflicting_files:
         out.append("#### ⚠️ Conflicting")
         out.append("")
-        out += hot_table(conflicting_files)
+        out += file_table(conflicting_files)
         out.append("")
     if clean_files:
         out.append("#### Co-edited (merges clean)")
         out.append("")
-        out += hot_table(clean_files)
+        out += file_table(clean_files)
         out.append("")
-    if not hot:
-        out.append("_No file is touched by more than one active branch._")
+    if single_files:
+        out.append("#### Single-branch")
+        out.append("")
+        out += file_table(single_files)
+        out.append("")
+    if not fmap:
+        out.append("_No files modified on any active branch._")
         out.append("")
 
     # ---- merged / inactive branches (always shown) ----
@@ -280,7 +390,7 @@ def render(branches, conf, prs, have_token):
         out.append("_0 commits ahead of `main` — fully merged or pointing at an ancestor._")
         out.append("")
         for r, b in sorted(merged.items()):
-            out.append(f"- `{b['short']}` — last activity {b['when']} ({b['author']})")
+            out.append(f"- {branch_link(b['short'], slug)} — last activity {b['when']} ({author_cell(b)})")
     else:
         out.append("_None._")
     out.append("")
@@ -339,14 +449,21 @@ def main():
         git("fetch", "--prune", REMOTE)
 
     token = os.environ.get("GITHUB_TOKEN")
+    slug = repo_slug()
     branches = collect_branches()
     conf = pairwise_conflicts(branches)
 
     prs = {}
     if token:
-        prs = fetch_prs(repo_slug(), token)
+        prs = fetch_prs(slug, token)
 
-    body = render(branches, conf, prs, have_token=bool(token))
+    # Resolve each branch's author GitHub handle: the commits API (accurate) when
+    # a token is available, else parse a noreply commit email.
+    for b in branches.values():
+        b["login"] = (commit_login(slug, b["sha"], token) if token else None) \
+            or login_from_email(b["email"])
+
+    body = render(branches, conf, prs, have_token=bool(token), slug=slug)
 
     if args.update_issue:
         if not token:
