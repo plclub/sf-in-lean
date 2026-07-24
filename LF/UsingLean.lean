@@ -653,7 +653,7 @@ Let's look at an example using `induction`.
 For example, suppose we start with the following incomplete proof:
 
 ```lean -keep +error
-theorem foo (n : Nat) : eqb n n := by
+theorem foo (n : Nat) : Nat.beq n n := by
   induction n
 ```
 
@@ -664,7 +664,7 @@ If you choose this action,
 Lean adds an explicit branch for each constructor:
 
 ```lean
-example (n : Nat) : eqb n n := by
+example (n : Nat) : Nat.beq n n := by
   induction n with
   | zero => sorry
   | succ n _ => sorry
