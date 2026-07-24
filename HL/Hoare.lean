@@ -3,10 +3,12 @@ import SFLMeta
 import LF.CustomTactics
 import HL.Imp
 
--- Claude: processing this chapter's larger proof blocks (notably the
--- `RepeatExercise` module) exceeds the default elaboration budget inside the
--- `#doc` pipeline, so we raise it for this file.
-set_option maxHeartbeats 1000000
+-- Claude: a few of this chapter's larger proof blocks (notably the
+-- `hoare_while` proofs in the extension modules) exceed the default
+-- elaboration budget inside the `#doc` pipeline, so we raise it for this
+-- file.  (An earlier draft of Basics had to do the same for `maxRecDepth`;
+-- see old/BasicsVerso_old_single_block.lean.)
+set_option maxHeartbeats 400000
 
 open Verso.Genre Manual
 open SFLMeta
