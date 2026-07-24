@@ -320,19 +320,34 @@ Related notation introduced alongside tactics: anonymous constructor
   fine to unfold and simplify through definitions; *using* that code,
   do not "peek through the interface."
 
-* **Companion namespaces open *after* the type, with bare member names.**
-  Define a datatype at top level, then open its like-named `namespace`
-  immediately after, and write the type's functions and theorems with
-  *unqualified* names — `def app`, not `def NatList.app`. Exception:
-  if it makes pedagogical sense to define the operations of multiple
-  types together, define their operations with qualified names, without 
-  opening a namespace, e.g., `Aexp.eval` and `Bexp.eval` which are adjacent
-  in Imp.
+#### Names and namespaces
 
-* **Name namespaces for what they are.**
-  A warm-up / redefinition section goes in a clearly-named namespace, 
-  e.g. `namespace Warmup`. Functions on a new type are placed in that
-  type's namespace (per the above).
+Follow the Lean library's naming conventions:
+
+- Theorems and proof names use `snake_case`, e.g. `add_swap`, `rev_app_distr`;
+- Types and propositions (including definitions returning `Prop`) use `UpperCamelCase`, e.g. `Aexp`, `IsValue`;
+- Other values and functions use `lowerCamelCase`, e.g. `isEven`, `doubleBin`.
+
+Almost always, definitions and theorems relating to a type belong in a
+namespace with the same name as the type. Define the type first, then open its
+companion namespace and use bare member names inside it:
+
+```lean
+inductive Tm where
+  ...
+
+namespace Tm
+
+def IsValue (t : Tm) : Prop := ...
+
+theorem value_is_nf (t : Tm) (h : IsValue t) : IsNormalForm t := by
+  ...
+
+end Tm
+```
+
+Write `def eval` inside `namespace Aexp`, rather than `def Aexp.eval` inside
+that namespace.
 
 #### Theorem arguments and visibility
 
