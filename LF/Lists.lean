@@ -30,8 +30,8 @@ Claude picked a bad definition for `nonzeroes`:
 ```
   match l with
   | [] => []
-  | 0 :: t => nonzeros t
-  | h :: t => h :: nonzeros t
+  | 0 :: t => nonZeros t
+  | h :: t => h :: nonZeros t
 ```
 which makes many of the later proofs hard to do without the full automation of `simp`.
 I changed it, but it's worth pointing this out.
@@ -540,105 +540,105 @@ def foo (n : Nat) : NatList :=
 
 ::::::full
 :::::exercise (rating := 2) (name := "list_funs")
-Complete the definitions of `nonzeros`, `oddmembers`, and
-`countoddmembers` below. Have a look at the tests to understand
+Complete the definitions of `nonZeros`, `oddMembers`, and
+`countOddMembers` below. Have a look at the tests to understand
 what these functions should do.
 
 ```lean
-def nonzeros (l : NatList) : NatList := solution!(
+def nonZeros (l : NatList) : NatList := solution!(
   match l with
   | [] => []
   | h :: t =>
       match h with
-      | 0 => nonzeros t
-      | _ + 1 => h :: (nonzeros t))
+      | 0 => nonZeros t
+      | _ + 1 => h :: (nonZeros t))
 
-example : nonzeros [0, 1, 0, 2, 3, 0, 0] = [1, 2, 3] := solution!(by rfl)
+example : nonZeros [0, 1, 0, 2, 3, 0, 0] = [1, 2, 3] := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" "NatList.test_nonzeros"
+:::gradeTheorem "0.5" "NatList.test_nonZeros"
 :::
 
 The following lemmas should hold about your definition
 
 ```lean
-theorem nonzeros_cons_zero (t : NatList) :
-  nonzeros (0 :: t) = nonzeros t := solution!(by rfl)
-theorem nonzeros_nil :
-  nonzeros [] = [] := solution!(by rfl)
-theorem nonzeros_cons_nonzero h (t : NatList) :
-  nonzeros ((h + 1) :: t) = (h + 1) :: nonzeros t := solution!(by rfl)
+theorem nonZeros_cons_zero (t : NatList) :
+  nonZeros (0 :: t) = nonZeros t := solution!(by rfl)
+theorem nonZeros_nil :
+  nonZeros [] = [] := solution!(by rfl)
+theorem nonZeros_cons_nonZero h (t : NatList) :
+  nonZeros ((h + 1) :: t) = (h + 1) :: nonZeros t := solution!(by rfl)
 
-def oddmembers (l : NatList) : NatList := solution!(
+def oddMembers (l : NatList) : NatList := solution!(
   match l with
   | [] => []
-  | h :: t => bif h.odd then h :: oddmembers t else oddmembers t)
+  | h :: t => bif h.odd then h :: oddMembers t else oddMembers t)
 
-theorem oddmembers_nil : oddmembers [] = [] := solution!(by rfl)
+theorem oddMembers_nil : oddMembers [] = [] := solution!(by rfl)
 
-theorem oddmembers_cons (h : Nat) (t : NatList) :
-    oddmembers (h :: t) = bif h.odd then h :: oddmembers t else oddmembers t := solution!(by rfl)
+theorem oddMembers_cons (h : Nat) (t : NatList) :
+    oddMembers (h :: t) = bif h.odd then h :: oddMembers t else oddMembers t := solution!(by rfl)
 
-theorem oddmembers_cons_odd (x : Nat) (l : NatList) (h : x.odd= true) :
-    oddmembers (x :: l) = x :: oddmembers l := by
+theorem oddMembers_cons_odd (x : Nat) (l : NatList) (h : x.odd = true) :
+    oddMembers (x :: l) = x :: oddMembers l := by
   solution!
-    rw [oddmembers_cons, h, cond_true]
+    rw [oddMembers_cons, h, cond_true]
 
-theorem oddmembers_cons_not_odd (x : Nat) (l : NatList) (h : x.odd = false) :
-    oddmembers (x :: l) = oddmembers l := by
+theorem oddMembers_cons_not_odd (x : Nat) (l : NatList) (h : x.odd = false) :
+    oddMembers (x :: l) = oddMembers l := by
   solution!
-    rw [oddmembers_cons, h, cond_false]
+    rw [oddMembers_cons, h, cond_false]
 
-example : oddmembers [1, 2] = [1] := by
-  rw [oddmembers_cons_odd _ _ rfl]
-  rw [oddmembers_cons_not_odd _ _ rfl]
-  rw [oddmembers_nil]
+example : oddMembers [1, 2] = [1] := by
+  rw [oddMembers_cons_odd _ _ rfl]
+  rw [oddMembers_cons_not_odd _ _ rfl]
+  rw [oddMembers_nil]
 
-theorem test_oddmembers : oddmembers [0, 1, 2, 3, 0] = [1, 3] := by
+theorem test_oddMembers : oddMembers [0, 1, 2, 3, 0] = [1, 3] := by
   solution!
-    rw [oddmembers_cons_not_odd _ _ rfl]
-    rw [oddmembers_cons_odd _ _ rfl]
-    rw [oddmembers_cons_not_odd _ _ rfl]
-    rw [oddmembers_cons_odd _ _ rfl]
-    rw [oddmembers_cons_not_odd _ _ rfl]
-    rw [oddmembers_nil]
+    rw [oddMembers_cons_not_odd _ _ rfl]
+    rw [oddMembers_cons_odd _ _ rfl]
+    rw [oddMembers_cons_not_odd _ _ rfl]
+    rw [oddMembers_cons_odd _ _ rfl]
+    rw [oddMembers_cons_not_odd _ _ rfl]
+    rw [oddMembers_nil]
 ```
 
-:::gradeTheorem "0.5" "NatList.test_oddmembers"
+:::gradeTheorem "0.5" "NatList.test_oddMembers"
 :::
 
-For the next problem, `countoddmembers`, we encourage you to implement it using
+For the next problem, `countOddMembers`, we encourage you to implement it using
 already-defined functions, rather than recursion.
 
 ```lean
-def countoddmembers (l : NatList) : Nat := solution!(
-  (oddmembers l).length)
+def countOddMembers (l : NatList) : Nat := solution!(
+  (oddMembers l).length)
 
-theorem countoddmembers_def (l : NatList) : countoddmembers l = (oddmembers l).length := solution!(by rfl)
+theorem countOddMembers_def (l : NatList) : countOddMembers l = (oddMembers l).length := solution!(by rfl)
 
-example : countoddmembers [0, 1, 2, 3, 0] = 2 := by
-  rw [countoddmembers_def]
-  rw [test_oddmembers]
+example : countOddMembers [0, 1, 2, 3, 0] = 2 := by
+  rw [countOddMembers_def]
+  rw [test_oddMembers]
   rw [length_cons, length_cons, length_nil]
 
-example : countoddmembers [0, 2, 4] = 0 := by
+example : countOddMembers [0, 2, 4] = 0 := by
   solution!
-    rw [countoddmembers_def]
-    rw [oddmembers_cons_not_odd _ _ rfl]
-    rw [oddmembers_cons_not_odd _ _ rfl]
-    rw [oddmembers_cons_not_odd _ _ rfl]
-    rw [oddmembers_nil]
+    rw [countOddMembers_def]
+    rw [oddMembers_cons_not_odd _ _ rfl]
+    rw [oddMembers_cons_not_odd _ _ rfl]
+    rw [oddMembers_cons_not_odd _ _ rfl]
+    rw [oddMembers_nil]
     rw [length_nil]
 
-example : countoddmembers [] = 0 := by
+example : countOddMembers [] = 0 := by
   solution!
-    rw [countoddmembers_def, oddmembers_nil, length_nil]
+    rw [countOddMembers_def, oddMembers_nil, length_nil]
 ```
 
-:::gradeTheorem "0.5" "NatList.test_countoddmembers2"
+:::gradeTheorem "0.5" "NatList.test_countOddMembers2"
 :::
 
-:::gradeTheorem "0.5" "NatList.test_countoddmembers3"
+:::gradeTheorem "0.5" "NatList.test_countOddMembers3"
 :::
 :::::
 
@@ -1677,20 +1677,20 @@ theorem app_assoc4 (l1 l2 l3 l4 : NatList) :
 :::gradeTheorem "0.5" "NatList.app_assoc4"
 :::
 
-An exercise about your implementation of `nonzeros`:
+An exercise about your implementation of `nonZeros`:
 
 ```lean
-theorem nonzeros_app (l1 l2 : NatList) :
-    nonzeros (l1 ++ l2) = (nonzeros l1) ++ (nonzeros l2) := by
+theorem nonZeros_app (l1 l2 : NatList) :
+    nonZeros (l1 ++ l2) = (nonZeros l1) ++ (nonZeros l2) := by
   solution!
     induction l1 with
-    | nil => rw [nonzeros_nil, nil_app, nil_app]
+    | nil => rw [nonZeros_nil, nil_app, nil_app]
     | cons n l1' ih =>
       cases n with
       | zero =>
-        rw [nonzeros_cons_zero, ←ih, cons_append, nonzeros_cons_zero]
+        rw [nonZeros_cons_zero, ←ih, cons_append, nonZeros_cons_zero]
       | succ n' =>
-        rw [cons_append, nonzeros_cons_nonzero, nonzeros_cons_nonzero, ih, cons_append]
+        rw [cons_append, nonZeros_cons_nonZero, nonZeros_cons_nonZero, ih, cons_append]
 ```
 
 :::gradeTheorem 1 "NatList.nonzeros_app"
