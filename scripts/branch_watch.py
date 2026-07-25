@@ -272,6 +272,7 @@ query($owner:String!, $name:String!, $cursor:String) {
         autoMergeRequest { enabledAt }
         mergeQueueEntry { state }
         reviewThreads(first:100) { nodes { isResolved } }
+        closingIssuesReferences(first:10) { nodes { number url } }
       }
     }
   }
@@ -298,6 +299,10 @@ def fetch_prs(slug, token):
         for pr in conn["nodes"]:
             threads = pr["reviewThreads"]["nodes"]
             unresolved = sum(1 for t in threads if not t["isResolved"])
+            # Issues the PR body links with a GitHub closing keyword
+            # (fixes/closes/resolves #N); GitHub resolves these for us.
+            closes = [{"num": i["number"], "url": i["url"]}
+                      for i in pr["closingIssuesReferences"]["nodes"]]
             prs[pr["headRefName"]] = {
                 "num": pr["number"],
                 "url": pr["url"],
@@ -306,6 +311,7 @@ def fetch_prs(slug, token):
                 "unresolved": unresolved,
                 "auto_merge": pr["autoMergeRequest"] is not None,
                 "in_queue": pr["mergeQueueEntry"] is not None,
+                "closes": closes,
             }
         if conn["pageInfo"]["hasNextPage"]:
             cursor = conn["pageInfo"]["endCursor"]
@@ -333,22 +339,33 @@ def status_text(pr):
     * "Ready" — approved with nothing unresolved.
     * "🚧 auto-merge held" — auto-merge is enabled but the PR is not in the
       merge queue, so something (failing check, missing approval, conflict) is
-      holding it up; "⏳ queued" when it *is* sitting in the queue."""
+      holding it up; "⏳ queued" when it *is* sitting in the queue.
+    * "Fixes #N" — issues the PR closes (via a fixes/closes/resolves keyword),
+      linked; several are comma-separated.
+
+    Segments are joined with " · "; the readiness word and its "(N unresolved)"
+    parenthetical stay together as one segment."""
     unresolved = pr["unresolved"]
-    parts = []
+    readiness = []
     if not pr["draft"]:
         dec = pr["review_decision"]
         if dec == "REVIEW_REQUIRED":
-            parts.append("Review required")
+            readiness.append("Review required")
         elif dec == "CHANGES_REQUESTED":
-            parts.append("Changes requested")
+            readiness.append("Changes requested")
         else:  # APPROVED, or None (no required review configured — rare here)
-            parts.append("Ready" if unresolved == 0 else "Approved")
+            readiness.append("Ready" if unresolved == 0 else "Approved")
     if unresolved:
-        parts.append(f"({unresolved} unresolved)")
+        readiness.append(f"({unresolved} unresolved)")
+    segments = []
+    if readiness:
+        segments.append(" ".join(readiness))
     if pr["auto_merge"]:
-        parts.append("⏳ queued" if pr["in_queue"] else "🚧 auto-merge held")
-    return " ".join(parts)
+        segments.append("⏳ queued" if pr["in_queue"] else "🚧 auto-merge held")
+    if pr["closes"]:
+        links = ", ".join(f"[#{i['num']}]({i['url']})" for i in pr["closes"])
+        segments.append(f"Fixes {links}")
+    return " · ".join(segments)
 
 
 def pr_cell(short, prs):
@@ -435,7 +452,7 @@ def render(branches, conf, prs, have_token, slug):
     summary = (f"_Auto-updated {now} by the {workflow_link} workflow running "
                f"{script_link} — run the script with `--update-issue` (and a "
                f"`GITHUB_TOKEN`) to refresh manually._")
-    out = [ISSUE_MARKER, "", "## 🔭 Branch & file activity", ""]
+    out = [ISSUE_MARKER, "", "## Current Activity", ""]
     if not have_token:
         out.append("> ⚠️ No `GITHUB_TOKEN` available — PR column left blank.")
         out.append("")
@@ -554,7 +571,7 @@ def find_issue(slug, token, explicit):
     return None
 
 
-ISSUE_TITLE = "🔭 Branch & file activity"
+ISSUE_TITLE = "Current Activity"
 
 
 def update_issue(slug, token, number, body):
@@ -569,7 +586,10 @@ def update_issue(slug, token, number, body):
         print(f"Created issue #{res['number']}: {res['html_url']} "
               f"(pin it once in the UI)", file=sys.stderr)
         return
-    res = api("PATCH", f"/repos/{slug}/issues/{number}", token, {"body": body})
+    # Send the title too, so renaming ISSUE_TITLE renames the existing issue in
+    # place on the next run (the issue is found by ISSUE_MARKER, not its title).
+    res = api("PATCH", f"/repos/{slug}/issues/{number}", token,
+              {"title": ISSUE_TITLE, "body": body})
     if res is None:
         raise SystemExit(1)
     print(f"Updated issue #{number}: {res['html_url']}", file=sys.stderr)
