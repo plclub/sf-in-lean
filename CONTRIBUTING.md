@@ -201,20 +201,6 @@ regenerated automatically and shows the status of every active branch and file.
 
 We use this display very actively to make sure we're not stepping on each others' toes and see where coordination is required.
 
-Reading the table:
-
-- **Status** — the branch's open PR (or "No PR") and how close it is to
-  merging: "Review required" while a `sfl-mergers` code owner still has to
-  approve; "(N unresolved)" open review threads; "Ready" once approved with
-  nothing unresolved; "🚧 auto-merge held" when auto-merge is on but the PR is
-  stuck outside the merge queue; and "⚠️ conflicts with `main`" when the branch
-  no longer merges cleanly.
-- **Overlaps** — other active branches touching the same files. ⚠️ marks a real
-  merge conflict. `(includes)` / `(included in)` means this branch fully
-  contains / is contained in the other (stacked work, never a conflict). `A ⊃
-  B` groups a concurrent overlap B under another overlap A that contains it.
-- `archive/…` branches are omitted.
-
 ### Native-Verso chapters and the extractor
 
 Every chapter in every volume is now authored **directly in Verso** — a plain
