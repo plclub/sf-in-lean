@@ -5,10 +5,8 @@ about writing *Software Foundations in Lean* (SFL): workflow, Lean
 coding style, Verso markup, comment conventions, the order in which
 tactics are introduced, etc. Please help keep it clear and up to date!
 
-> **Style.** This file is about *workflow and mechanics*. For how the material
-> itself should be written — Lean conventions, pedagogical and presentational
-> conventions, and writing style — see [STYLE.md](STYLE.md), which is normative
-> for all contributions. Read it before contributing.
+> **Style guide:** The present file covers *workflow and mechanics*. For stylistic matters — Lean conventions, pedagogical and presentational
+> conventions, and writing style — see [STYLE.md](STYLE.md). Please have a look at it before contributing.
 
 ## Top-level orientation
 ### Guiding Philosophy
@@ -30,24 +28,17 @@ tactics are introduced, etc. Please help keep it clear and up to date!
    possible. Some of SFL's languages, semantics, etc. might eventually
    be contributed to CSLib.
 
-## Zulip
-
-The private [SFL contributors
-  channel](https://leanprover.zulipchat.com/#narrow/channel/607217-lean-software-foundations-contributors)
-  channel on the Lean Zulip is the main forum for discussing the translation
-  effort. 
-
 ## Communicating among ourselves
 
 For discussions, we use a combination of tools.  
 
-- If you have a high-level comment or want to start a discussion about
-  an issue of general interest, post on the [SFL contributors Zulip
-  channel](https://leanprover.zulipchat.com/#narrow/channel/607217-lean-software-foundations-contributors).  
-
-  This channel is private and is expected to remain private. If, at
+- **Zulip:** The private [SFL contributors
+  channel](https://leanprover.zulipchat.com/#narrow/channel/607217-lean-software-foundations-contributors)
+  channel on the Lean Zulip is the main forum for discussing the translation effort. 
+  If you have a high-level comment or want to start a discussion about
+  an issue of general interest, post here. (This channel is private and is expected to remain private. If, at
   some point, we find ourselves with a lot more people actively
-  involved and/or no need to keep anything private, we may sunset it. 
+  involved and/or no need to keep anything private, we may sunset it.)
 
   There is also a `lean-software-foundations` channel, which is
   currently not used for much (most people working on SFL are not even
@@ -55,10 +46,10 @@ For discussions, we use a combination of tools.
   main role for the moment is that some of the lead maintainers of
   Verso are members.
 
-- If you are working with others to tackle a specific GitHub issue,
+- **GitHub issues:** If you are working with others to tackle a specific GitHub issue,
   you can use comments on that issue for discussion and coordination.
 
-- If you have a local comment that you want someone to think about at
+- **In-text:** If you have a local comment that you want someone to think about at
   some point when they have that section of the material paged in, put
   it directly in the appropriate .lean file, either in a comment (if
   it's a plain .lean file) or in a `:::dev` block (if it's been
@@ -70,20 +61,17 @@ For discussions, we use a combination of tools.
   In-text comments can also be used for coordinating work on specific
   issues.
 
-We prefer _not_ holding discussions in annotations on PRs, because
-they tend to either get lost when the PR is merged or delay merging.
-Putting very local or short-term comments in this medium is fine -- or
-you can just make the change by directly editing the PR, if you think
-it's clear.
+- **On PRs:** We prefer _not_ holding longer discussions in annotations on 
+  PRs, because they tend to either get lost when the PR is merged or delay merging. Putting very local or short-term comments in this medium is fine -- or you can just make the change by directly adding commits to the PR, if it's clear whaet needs to be done.
 
 These conventions are still developing, so feel free to suggest better
 ways of working if you see them! 
 
 ### Repo organization and make-fu
 
-Each volume gets its own top-level directory (LF, HL, etc.).
+Each volume has its own top-level directory (LF, HL, etc.).
 
-Within that directory, each chapter gets a `.lean` file, in Verso format.
+Within that directory, each chapter has a `.lean` file, in Verso format.
 
 Running `make` at the top level produces, for each volume, three
 different ready-for-distribution outputs in a temporary top-level
@@ -92,6 +80,7 @@ different ready-for-distribution outputs in a temporary top-level
   - **solutions** (full prose, solutions shown)
   - **terse**     (little prose, no solutions, workinclass elided;
                    for lecturing)
+There are also more specific `make` targets that build faster: see the `Makefile`.
 
 To build everything and preview it locally, do `make serve`,
 then visit http://localhost:8000
@@ -116,11 +105,13 @@ Our CI uses a small GitHub Actions workflow:
 It runs `make` on every pull request and on every push to `main`.
 
 We also have branch protection enabled, which requires the following before merging:
-* At least one approval before merge is allowed
-* Linear history (use rebase and squash merge)
+* At least one approval from someone on the `sf-mergers` list before merge is allowed
+* No outstanding conversations on the PR
 * CI build succeeds
 
-## Cadence of code changes
+We use a linear history, with squash-and-rebase merges.
+
+## Workflow
 
 General guideline: Prefer just making changes as a PR rather than
 talking about them first. To make sure your PR is likely to be
@@ -232,27 +223,6 @@ Reading the table:
   contains / is contained in the other (stacked work, never a conflict); `A ⊃
   B` groups a concurrent overlap B under another overlap A that contains it.
 - `archive/…` branches are omitted.
-
-Every chapter in every volume is now authored **directly in Verso** — a plain
-`<Vol>/<Ch>.lean` whose prose lives in `#doc (Manual)` markup.  (Genuine
-plain-Lean *support libraries* such as `LF/CustomTactics.lean` are not chapters
-and stay plain Lean.)  There is no longer a code-forward `.lean` → generated
-`<Ch>Verso.lean` step: `make` just builds the books and extracts the three
-per-variant `.lean`/HTML projects under `_out/`.
-
-`scripts/to_verso.py` (and its two fidelity checkers) is retained only for
-**porting a new chapter from Rocq** — see "Porting chapters from Rocq" below;
-it is no longer part of the `make` build.
-
-**Extractor maintenance (permanent).**  The standalone-`.lean` extractor
-(`SFLMeta/Save.lean`) resolves a chapter's dependencies two ways, and one needs
-ongoing upkeep: when a chapter imports a Verso chapter from an *earlier volume*
-(e.g. `HL.Imp` imports `LF.Typeclasses`), that cross-volume dependency must be
-listed in `Targets.lean`'s `crossVol` match — add an entry for **every** new
-such import (it can't be auto-derived, since mapping a module name to its `Part`
-needs a compile-time `%doc`).  Plain-Lean support-lib prerequisites
-(`CustomTactics`, `SFLCompat`) are instead bundled verbatim by `bundleLoop` and
-need no per-import upkeep.
 
 ## Lean Style
 
@@ -1118,8 +1088,21 @@ occurrence):
   `{margin}[…]` (sidebar notes), `{index}` / `{see}` / `{seeAlso}` (book index),
   `{citep}` / `{citet}` (bibliography).
 
-## Porting chapters from Rocq
+## Repo organization technicalities (optional)
 
+[Most contributors can skip this section.]
+
+**Extractor maintenance.**  The standalone-`.lean` extractor
+(`SFLMeta/Save.lean`) resolves a chapter's dependencies two ways, and one needs
+ongoing upkeep: when a chapter imports a Verso chapter from an *earlier volume*
+(e.g. `HL.Imp` imports `LF.Typeclasses`), that cross-volume dependency must be
+listed in `Targets.lean`'s `crossVol` match — add an entry for **every** new
+such import (it can't be auto-derived, since mapping a module name to its `Part`
+needs a compile-time `%doc`).  Plain-Lean support-lib prerequisites
+(`CustomTactics`, `SFLCompat`) are instead bundled verbatim by `bundleLoop` and
+need no per-import upkeep.
+
+**Porting chapters from Rocq.**
 The `to_verso` script automates the mechanical parts of translating from Rocq to 
 Verso-formatted Lean.  It leaves all the interesting bits to be translated manually.
 
@@ -1127,34 +1110,6 @@ Example usage:
 ```
 python3 scripts/to_verso.py old/orig-plf-files/Hoare.v HL/Hoare.lean
 ```
-
-## (Temp) Porting from Rocq: comment fidelity and framing
-
-[BCP: This section seems out of date: We do not use Claude any more
-for rough translations of chapters from Rocq; instead, we use
-to_verso.py to go directly from the Rocq to a non-compiling Verso file
-with all the easy markup changes implemented and all the interesting
-actual translation work left for manual effort.]  
-
-When porting a Rocq
-`sfdev/<vol>/<Ch>.v` to `<Ch>.lean`:
-
-* **Preserve the whole comment layer.**  Carry over every internal
-  dev/instructor note (keep the original prefix/attribution), translate
-  `(* HIDE *)` content (re-marked `-- HIDE`/`/- HIDE: … -/`), and expand
-  condensed prose back to the source's full wording.  Nothing is
-  silently dropped.
-* **Make the chapter stand on its own.**  Don't reference the porting
-  process, and don't narrate "the Rocq original did X" in the
-  reader-facing (`::::full`) text.  Park Rocq-specific material that has
-  no Lean analogue (custom grammars, `Set Printing`, `Locate`, `Ltac`,
-  dropped proof variants) in `/- Claude: … -/` dev notes as reminders
-  for a future pass.  Rewrite genuine pedagogy that the source happened
-  to narrate via Rocq into Lean-native `::::full` prose.
-
-Full details (and the marker/HIDE mechanics) are in CLAUDE.md, "Porting
-a chapter from Rocq: comment fidelity" and "Framing translated
-comments".
 
 ## AI policy
 
