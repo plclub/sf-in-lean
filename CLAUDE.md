@@ -256,7 +256,7 @@ the `FULL` policy.
 
 ### Writing comments that survive `to_verso`
 
-The generated `<Ch>Verso.lean` must build (`make check-verso-chapters`). Two
+The generated `<Ch>Verso.lean` must build (`lake build <Vol>.<Ch>Verso`). Two
 things that break it, and how to avoid them:
 
 * **Fenced code in prose**: use a plain ```` ``` ```` fence, never a language
@@ -271,8 +271,9 @@ Author/dev notes route to `:::dev` (`:::instructor` for `INSTRUCTORS:`) and are
 auto-fenced, so arbitrary markup in them can't break Verso. Routing is keyed on
 the tag set `_DEV_TAGS` in `scripts/to_verso.py` (block form needs a colon:
 `HIDE:`, `INSTRUCTORS:`). **To make a new author/keyword prefix route cleanly,
-add it to `_DEV_TAGS` (one place) and re-run `make check-verso-chapters`.**
+add it to `_DEV_TAGS` (one place) and re-build the generated Verso
+(`lake build <Vol>.<Ch>Verso`).**
 
 **Workflow per chunk:** `lake build <Vol>.<Ch>` (bare chapter compiles) →
-regenerate with `python3 scripts/to_verso.py <Vol>/<Ch>.lean` → `make
-check-verso-chapters` (generated Verso builds).
+regenerate with `python3 scripts/to_verso.py <Vol>/<Ch>.lean` → `lake build
+<Vol>.<Ch>Verso` (generated Verso builds).
