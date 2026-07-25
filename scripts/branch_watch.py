@@ -424,7 +424,13 @@ def render(branches, conf, prs, have_token, slug):
     single_files = {f: rs for f, rs in fmap.items() if len(rs) == 1}
 
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    summary = f"_Auto-updated {now}_"
+    script = "scripts/branch_watch.py"
+    script_link = (
+        f"[`{script}`](https://github.com/{slug}/blob/main/{script})"
+        if slug else f"`{script}`"
+    )
+    summary = (f"_Auto-updated {now} by {script_link} — run it with "
+               f"`--update-issue` (and a `GITHUB_TOKEN`) to refresh._")
     out = [ISSUE_MARKER, "", "## 🔭 Branch & file activity", ""]
     if not have_token:
         out.append("> ⚠️ No `GITHUB_TOKEN` available — PR column left blank.")
