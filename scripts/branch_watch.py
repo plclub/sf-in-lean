@@ -6,17 +6,17 @@ branch_watch.py  —  Report which files are being changed on which branches.
 Walks every remote branch, finds the commits not yet in `main`, and builds a
 picture of who is touching what:
 
-  * a per-branch table (most recently active first) — PR (with review/merge
-    status), author, last activity, files touched, whether the branch still
-    merges cleanly into `main`, and which *other* active branches it overlaps
-    (⚠️ = those overlaps would actually conflict, computed with a real
-    in-memory merge, not a filename guess).  The Branch cell links straight to
-    the PR when one exists (else the branch tree).  The PR cell reports, per
-    open PR: "Review required" (a code owner on `sfl-mergers` still has to
-    approve), "(N unresolved)" review comments, "Ready" (approved, nothing
-    unresolved), and — when auto-merge is enabled but the PR is *not* sitting
-    in the merge queue because something is holding it up — a "🚧 auto-merge
-    held" flag;
+  * a per-branch table (most recently active first) — a Status column, author,
+    activity, files touched, and which *other* active branches it overlaps (⚠️
+    = those overlaps would actually conflict, computed with a real in-memory
+    merge, not a filename guess).  The Branch cell links straight to the PR
+    when one exists (else the branch tree).  The Status cell reports the open
+    PR (or "No PR") and its readiness: "Review required" (a code owner on
+    `sfl-mergers` still has to approve), "(N unresolved)" review comments,
+    "Ready" (approved, nothing unresolved), a "🚧 auto-merge held" flag when
+    auto-merge is enabled but the PR is *not* sitting in the merge queue
+    because something is holding it up, and a "⚠️ conflicts with `main`" flag
+    when the branch no longer merges cleanly;
   * a "hot files" view — files edited on more than one branch, conflicting
     files first;
   * an always-on list of merged / inactive branches (0 commits ahead of main).
@@ -272,6 +272,7 @@ query($owner:String!, $name:String!, $cursor:String) {
         autoMergeRequest { enabledAt }
         mergeQueueEntry { state }
         reviewThreads(first:100) { nodes { isResolved } }
+        closingIssuesReferences(first:10) { nodes { number url } }
       }
     }
   }
@@ -298,6 +299,10 @@ def fetch_prs(slug, token):
         for pr in conn["nodes"]:
             threads = pr["reviewThreads"]["nodes"]
             unresolved = sum(1 for t in threads if not t["isResolved"])
+            # Issues the PR body links with a GitHub closing keyword
+            # (fixes/closes/resolves #N); GitHub resolves these for us.
+            closes = [{"num": i["number"], "url": i["url"]}
+                      for i in pr["closingIssuesReferences"]["nodes"]]
             prs[pr["headRefName"]] = {
                 "num": pr["number"],
                 "url": pr["url"],
@@ -306,6 +311,7 @@ def fetch_prs(slug, token):
                 "unresolved": unresolved,
                 "auto_merge": pr["autoMergeRequest"] is not None,
                 "in_queue": pr["mergeQueueEntry"] is not None,
+                "closes": closes,
             }
         if conn["pageInfo"]["hasNextPage"]:
             cursor = conn["pageInfo"]["endCursor"]
@@ -333,22 +339,33 @@ def status_text(pr):
     * "Ready" — approved with nothing unresolved.
     * "🚧 auto-merge held" — auto-merge is enabled but the PR is not in the
       merge queue, so something (failing check, missing approval, conflict) is
-      holding it up; "⏳ queued" when it *is* sitting in the queue."""
+      holding it up; "⏳ queued" when it *is* sitting in the queue.
+    * "Fixes #N" — issues the PR closes (via a fixes/closes/resolves keyword),
+      linked; several are comma-separated.
+
+    Segments are joined with " · "; the readiness word and its "(N unresolved)"
+    parenthetical stay together as one segment."""
     unresolved = pr["unresolved"]
-    parts = []
+    readiness = []
     if not pr["draft"]:
         dec = pr["review_decision"]
         if dec == "REVIEW_REQUIRED":
-            parts.append("Review required")
+            readiness.append("Review required")
         elif dec == "CHANGES_REQUESTED":
-            parts.append("Changes requested")
+            readiness.append("Changes requested")
         else:  # APPROVED, or None (no required review configured — rare here)
-            parts.append("Ready" if unresolved == 0 else "Approved")
+            readiness.append("Ready" if unresolved == 0 else "Approved")
     if unresolved:
-        parts.append(f"({unresolved} unresolved)")
+        readiness.append(f"({unresolved} unresolved)")
+    segments = []
+    if readiness:
+        segments.append(" ".join(readiness))
     if pr["auto_merge"]:
-        parts.append("⏳ queued" if pr["in_queue"] else "🚧 auto-merge held")
-    return " ".join(parts)
+        segments.append("⏳ queued" if pr["in_queue"] else "🚧 auto-merge held")
+    if pr["closes"]:
+        links = ", ".join(f"[#{i['num']}]({i['url']})" for i in pr["closes"])
+        segments.append(f"Fixes {links}")
+    return " · ".join(segments)
 
 
 def pr_cell(short, prs):
@@ -356,7 +373,7 @@ def pr_cell(short, prs):
     were merged into one column)."""
     pr = prs.get(short)
     if not pr:
-        return "—"
+        return "No PR"
     tag = " _(draft)_" if pr["draft"] else ""
     status = status_text(pr)
     sep = f" — {status}" if status else ""
@@ -424,14 +441,18 @@ def render(branches, conf, prs, have_token, slug):
     single_files = {f: rs for f, rs in fmap.items() if len(rs) == 1}
 
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    script = "scripts/branch_watch.py"
-    script_link = (
-        f"[`{script}`](https://github.com/{slug}/blob/main/{script})"
-        if slug else f"`{script}`"
-    )
-    summary = (f"_Auto-updated {now} by {script_link} — run it with "
-               f"`--update-issue` (and a `GITHUB_TOKEN`) to refresh._")
-    out = [ISSUE_MARKER, "", "## 🔭 Branch & file activity", ""]
+
+    def _blob(path, text=None):
+        text = text or path
+        return (f"[`{text}`](https://github.com/{slug}/blob/main/{path})"
+                if slug else f"`{text}`")
+
+    script_link = _blob("scripts/branch_watch.py")
+    workflow_link = _blob(".github/workflows/branch-watch.yml", "branch-watch")
+    summary = (f"_Auto-updated {now} by the {workflow_link} workflow running "
+               f"{script_link} — run the script with `--update-issue` (and a "
+               f"`GITHUB_TOKEN`) to refresh manually._")
+    out = [ISSUE_MARKER, "", "## Current Activity", ""]
     if not have_token:
         out.append("> ⚠️ No `GITHUB_TOKEN` available — PR column left blank.")
         out.append("")
@@ -439,8 +460,8 @@ def render(branches, conf, prs, have_token, slug):
     # ---- per-branch table (most recently active first) ----
     out.append("### Active branches")
     out.append("")
-    out.append("| Branch | PR | Author | Last activity | Files | → main | Overlaps |")
-    out.append("|---|---|---|---|--:|:--:|---|")
+    out.append("| Branch | Status | Author | Activity | Files | Overlaps |")
+    out.append("|---|---|---|---|--:|---|")
     for r, b in sorted(active.items(), key=lambda x: (-x[1]["ts"], x[1]["short"])):
         overlaps = [o for o in active if o != r and active[o]["files"] & b["files"]]
         # A stacked branch — one that fully contains the other's commits — is the
@@ -470,25 +491,18 @@ def render(branches, conf, prs, have_token, slug):
         pieces += [branch_link(active[o]["short"], slug) + " _(included in)_"
                    for o in contained_by]
         ov = ", ".join(pieces) or "—"
-        main_flag = "✅" if b["clean_to_main"] else "⚠️"
         pr = prs.get(b["short"])
         first = branch_link(b["short"], slug, maxlen=25,
                             href=pr["url"] if pr else None)
+        # The old "→ main" column is folded in here: flag a branch that no
+        # longer merges cleanly right in the Status cell.
+        status = pr_cell(b["short"], prs)
+        if not b["clean_to_main"]:
+            status += " · ⚠️ conflicts with `main`"
         out.append(
-            f"| {first} | {pr_cell(b['short'], prs)} | {author_cell(b)} | "
-            f"{b['when']} | {files_cell(b['files'])} | {main_flag} | {ov} |"
+            f"| {first} | {status} | {author_cell(b)} | "
+            f"{b['when']} | {files_cell(b['files'])} | {ov} |"
         )
-    out.append("")
-    out.append("_Status (in the PR column): \"Review required\" = a `sfl-mergers` "
-               "code owner still has to approve; \"(N unresolved)\" = open review "
-               "threads; \"Ready\" = approved & nothing unresolved; "
-               "\"🚧 auto-merge held\" = auto-merge on but stuck outside the "
-               "merge queue._")
-    out.append("_Overlaps: ⚠️ = real merge conflict.  `(includes)` / "
-               "`(included in)` = this branch fully contains / is contained in "
-               "the other (stacked work, never a conflict).  `A ⊃ B` groups a "
-               "concurrent overlap B under another overlap A that contains it._")
-    out.append("_`archive/…` branches are omitted._")
     out.append("")
 
     # ---- files: conflicting first, then clean co-edits, then single-branch ----
@@ -557,7 +571,7 @@ def find_issue(slug, token, explicit):
     return None
 
 
-ISSUE_TITLE = "🔭 Branch & file activity"
+ISSUE_TITLE = "Current Activity"
 
 
 def update_issue(slug, token, number, body):
@@ -572,7 +586,10 @@ def update_issue(slug, token, number, body):
         print(f"Created issue #{res['number']}: {res['html_url']} "
               f"(pin it once in the UI)", file=sys.stderr)
         return
-    res = api("PATCH", f"/repos/{slug}/issues/{number}", token, {"body": body})
+    # Send the title too, so renaming ISSUE_TITLE renames the existing issue in
+    # place on the next run (the issue is found by ISSUE_MARKER, not its title).
+    res = api("PATCH", f"/repos/{slug}/issues/{number}", token,
+              {"title": ISSUE_TITLE, "body": body})
     if res is None:
         raise SystemExit(1)
     print(f"Updated issue #{number}: {res['html_url']}", file=sys.stderr)
