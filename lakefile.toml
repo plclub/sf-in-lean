@@ -1,7 +1,7 @@
 name = "SFL"
 version = "0.1.0"
 license = "Apache-2.0"
-defaultTargets = ["sfl"]
+defaultTargets = ["sfl-lf", "sfl-hl", "sfl-ts"]
 
 [leanOptions]
 weak.verso.code.warnLineLength = 0 # 0 disables warnings; consider setting to 70
@@ -36,9 +36,21 @@ name = "HL"
 [[lean_lib]]
 name = "TS"
 
+# One executable per volume.  Keeping the volumes in separate executables means
+# no single module imports more than one volume root, so chapters shared across
+# volumes (a symlinked `HL/Slang.lean` ↔ `TS/Slang.lean`) don't collide on their
+# `namespace` declarations.  Each is invoked as: lake exe sfl-<vol> <mode>
 [[lean_exe]]
-name = "sfl"
-root = "Targets"
+name = "sfl-lf"
+root = "TargetsLF"
+
+[[lean_exe]]
+name = "sfl-hl"
+root = "TargetsHL"
+
+[[lean_exe]]
+name = "sfl-ts"
+root = "TargetsTS"
 
 # Temporary scaffolding: draft book + executable that emits solutions .lean for
 # generated LF/<Ch>Verso.lean chapters not yet in the real book, so they can be

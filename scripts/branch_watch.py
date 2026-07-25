@@ -138,7 +138,7 @@ def collect_branches():
         when = git("log", "-1", "--format=%ad", "--date=relative", ref)
         clean_to_main = merges_clean(main, ref) if ahead else True
         branches[ref] = {
-            "short": ref[len(REMOTE) + 1:],
+            "short": short,
             "ahead": ahead,
             "files": files,
             "author": author,
@@ -319,25 +319,38 @@ def render(branches, conf, prs, have_token, slug):
         out.append("")
 
     # ---- per-branch table (most commits ahead first) ----
-    out.append("### Branches")
+    out.append("### Active branches")
     out.append("")
     out.append("| Branch | PR | Author | Last activity | Ahead | Files | → main | Overlaps |")
     out.append("|---|---|---|---|--:|--:|:--:|---|")
-    for r, b in sorted(active.items(), key=lambda x: -x[1]["ahead"]):
+    for r, b in sorted(active.items(), key=lambda x: (-x[1]["ahead"], x[1]["short"])):
         overlaps = [o for o in active if o != r and active[o]["files"] & b["files"]]
-        # Group superseded overlaps under the branch that already contains them,
-        # so one line of work carried across several branches reads as a single
-        # overlap with a single ⚠️, not several.  `A ⊃ B` = A contains B's
-        # commits; the ⚠️ (real merge conflict) is shown once, on the container.
-        heads = sorted(independent_branches(overlaps))
+        # A stacked branch — one that fully contains the other's commits — is the
+        # same line of work, not a concurrent co-edit (and can never conflict, so
+        # never a ⚠️).  Pull those out of the overlap list and label them
+        # explicitly, relative to this row's branch: `o (includes)` when r
+        # contains o, `o (included in)` when r itself sits inside o.
+        contains_o = sorted(o for o in overlaps if contains(r, o))
+        contained_by = sorted(o for o in overlaps if contains(o, r))
+        rest = [o for o in overlaps if o not in contains_o and o not in contained_by]
+        # Among the genuinely concurrent overlaps that remain, group a superseded
+        # one under the branch that already contains it, so one line of work
+        # carried across several branches reads as a single overlap with a single
+        # ⚠️, not several.  `A ⊃ B` = A contains B's commits; the ⚠️ (real merge
+        # conflict) is shown once, on the container.
+        heads = sorted(independent_branches(rest))
         pieces = []
         for h in heads:
-            subs = sorted(o for o in overlaps if o != h and contains(h, o))
+            subs = sorted(o for o in rest if o != h and contains(h, o))
             piece = ("⚠️ " if h in conf[r] else "") + branch_link(active[h]["short"], slug)
             if subs:
                 piece += " ⊃ " + ", ".join(
                     branch_link(active[o]["short"], slug) for o in subs)
             pieces.append(piece)
+        pieces += [branch_link(active[o]["short"], slug) + " _(includes)_"
+                   for o in contains_o]
+        pieces += [branch_link(active[o]["short"], slug) + " _(included in)_"
+                   for o in contained_by]
         ov = ", ".join(pieces) or "—"
         main_flag = "✅" if b["clean_to_main"] else "⚠️"
         out.append(
@@ -346,12 +359,15 @@ def render(branches, conf, prs, have_token, slug):
             f"{main_flag} | {ov} |"
         )
     out.append("")
-    out.append("_Overlaps: ⚠️ = a real merge conflict; `A ⊃ B` = A already "
-               "contains B's commits (shown as one overlap, one marker)._")
+    out.append("_Overlaps: ⚠️ = real merge conflict.  `(includes)` / "
+               "`(included in)` = this branch fully contains / is contained in "
+               "the other (stacked work, never a conflict).  `A ⊃ B` groups a "
+               "concurrent overlap B under another overlap A that contains it._")
+    out.append("_`archive/…` branches are omitted._")
     out.append("")
 
     # ---- files: conflicting first, then clean co-edits, then single-branch ----
-    out.append("### Files")
+    out.append("### Active files")
     out.append("")
 
     def file_table(files):
@@ -469,7 +485,6 @@ def main():
         if not token:
             sys.stderr.write("--update-issue needs GITHUB_TOKEN.\n")
             raise SystemExit(1)
-        slug = repo_slug()
         update_issue(slug, token, find_issue(slug, token, args.issue), body)
     else:
         print(body)
