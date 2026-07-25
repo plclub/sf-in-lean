@@ -43,6 +43,8 @@ STYLE = os.path.join(ROOT, "STYLE.md")
 # Files worth scanning: tracked chapter/prose sources, not build output or deps.
 _SCAN_EXT = (".lean", ".md")
 _SCAN_SKIP = ("_out/", ".lake/", "old/")
+# The style rulebook/plan quote the phrases and markers the checks look for.
+_META_DOCS = {"STYLE.md", "STYLE-CHECKING.md"}
 
 
 # --------------------------------------------------------------------------
@@ -86,9 +88,9 @@ def tracked_files():
     for path in out.split("\0"):
         if not path or not path.endswith(_SCAN_EXT):
             continue
-        # STYLE.md is the rulebook, not material under review — it quotes the
-        # very phrases/markers the checks look for, so never scan it.
-        if path == "STYLE.md":
+        # The style meta-docs are the rulebook, not material under review — they
+        # quote the very phrases/markers the checks look for, so never scan them.
+        if path in _META_DOCS:
             continue
         if any(path.startswith(s) or f"/{s}" in path for s in _SCAN_SKIP):
             continue
