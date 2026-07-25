@@ -107,12 +107,12 @@ To prove the following theorem, which tactics will we need besides
 `rewrite` and `cases`, or (E) can't be done with the tactics we've seen.
 
 ```display
-theorem review1 : (true || false) = true
+theorem review₁ : (true || false) = true
 ```
 
 :::quizSolution
 ```lean
-theorem review1 : (true || false) = true := by rfl
+theorem review₁ : (true || false) = true := by rfl
 ```
 :::
 ::::
@@ -121,7 +121,7 @@ theorem review1 : (true || false) = true := by rfl
 What about the next one?
 
 ```display
-theorem review2 (b : Bool) : (true || b) = true
+theorem review₂ (b : Bool) : (true || b) = true
 ```
 
 Which tactics do we need besides `rfl`?  (A)
@@ -130,7 +130,7 @@ or (E) can't be done with the tactics we've seen.
 
 :::quizSolution
 ```lean
-theorem review2 (b : Bool) : (true || b) = true := by rfl
+theorem review₂ (b : Bool) : (true || b) = true := by rfl
 ```
 :::
 ::::
@@ -139,7 +139,7 @@ theorem review2 (b : Bool) : (true || b) = true := by rfl
 What if we change the order of the arguments of `||`?
 
 ```display
-theorem review3 b : (b || true) = true
+theorem review₃ b : (b || true) = true
 ```
 
 Which tactics do we need besides `rfl`?  (A)
@@ -148,7 +148,7 @@ or (E) can't be done with the tactics we've seen.
 
 :::quizSolution
 ```lean
-theorem review3 (b : Bool) : (b || true) = true := by
+theorem review₃ (b : Bool) : (b || true) = true := by
   cases b with
   | false => rfl
   | true  => rfl
@@ -162,7 +162,7 @@ argument: `n + zero = n` by definition, and `n + (m + 1) = (n + m) + 1` by
 definition.)
 
 ```display
-theorem review4 (n : Nat) : n + zero = n
+theorem review₄ (n : Nat) : n + zero = n
 ```
 
 (A) none, (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`, or (E)
@@ -170,7 +170,7 @@ can't be done with the tactics we've seen.
 
 :::quizSolution
 ```lean
-theorem review4 (n : Nat) : n + zero = n := by
+theorem review₄ (n : Nat) : n + zero = n := by
   rewrite [add_zero]
   rfl
 ```
@@ -181,14 +181,14 @@ theorem review4 (n : Nat) : n + zero = n := by
 What about this?
 
 ```display
-theorem review5 (n : Nat) : zero + n = n
+theorem review₅ (n : Nat) : zero + n = n
 ```
 
 (A) none, (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`,
 or (E) can't be done with the tactics we've seen.
 
 :::quizSolution
-This one CANNOT be proved by rfl, cases, or rewriting alone --
+This one CANNOT be proved by `rfl`, `cases`, or rewriting alone --
 it needs induction!  (We'll see why below.)
 :::
 ::::
@@ -215,7 +215,7 @@ theorem succ_eq_add_one : ∀ n : Nat, succ n = n + one := by
 ::::full
   We defined `add` to recurse on its _second_ argument:
 
-```
+```display
   def add (n : Nat) (m : Nat) : Nat :=
     match m with
     | zero => n
@@ -228,16 +228,16 @@ theorem succ_eq_add_one : ∀ n : Nat, succ n = n + one := by
   In `add_zero`, we were able to prove that `zero` is a neutral element
   for `+` on the _right_ using just `rfl`:
 
-```
-  theorem add_zero : forall (n : Nat), n + zero = n := by
+```display
+  theorem add_zero : ∀ (n : Nat), n + zero = n := by
     intro n
     rfl
 ```
 
 But the proof that it is also a neutral element on the _left_
-   can't be done in the same simple way.  Just applying `rfl` doesn't
-   work, since the `n` in `zero + n` is an arbitrary unknown number, so
-   the `match` in the definition of `+` can't be simplified.
+can't be done in the same simple way.  Just applying `rfl` doesn't
+work, since the `n` in `zero + n` is an arbitrary unknown number, so
+the `match` in the definition of `+` can't be simplified.
 ::::
 
 ::::terse
@@ -342,7 +342,7 @@ that specifies the names of the variables to be introduced in the
 subgoals.  Since there are two subgoals (for `zero` and `succ`),
 the `with` clause has two branches.
 
-In the first subgoal, `n` is replaced by `zero`. The goal becomes
+In the first subgoal, `n` is replaced by {name}`zero`. The goal becomes
 `zero + zero = zero`, which follows by `rfl`.
 
 In the second subgoal, `n` is replaced by `succ n'`, and the
@@ -380,9 +380,11 @@ Up until this point, we have been explicitly writing out all the parameters
 to theorems with ∀s, which makes us introduce them explicitly with `intro` before we
 can use them. A more Lean-idiomatic way is to write them on the left side of the `:`
 in the theorem statement, which introduces them automatically. So, the statement
-of `beq_self` that we just wrote could also be:
+of {name}`beq_self` that we just wrote could also be:
 
-`theorem beq_self (n : Nat) : (n == n) = true := by ...`
+```display
+theorem beq_self (n : Nat) : (n == n) = true := by ...
+```
 
 When written this way, we don't need to `intro n` at the start of the proof, as
 `n` will already be in the context when we begin. We will prefer this style going forward.
@@ -476,19 +478,23 @@ We need better typesetting for displays like the following ones:
 
 ## Tip: the `rw` tactic
 
-  As you've probably noticed, a common pattern in Lean proofs is `rewrite [...]`
-  followed by `rfl`. There is a tactic that combines these two steps: `rw [...]`
-  will automatically close the goal if the rewrite makes the goal true by
-  definition. For example, instead of writing
+As you've probably noticed, a common pattern in Lean proofs is `rewrite [...]`
+followed by `rfl`. There is a tactic that combines these two steps: `rw [...]`
+will automatically close the goal if the rewrite makes the goal true by
+definition. For example, instead of writing
 
-     `rewrite [double_zero]; rfl`
+```display
+rewrite [double_zero]; rfl
+```
 
-  We could write this:
+We could write this:
 
-    `rw [double_zero]`
+```display
+rw [double_zero]
+```
 
-  Using `rw` in your proofs is optional, but it will save you time
-  (and is better style).
+Using `rw` in your proofs is optional, but it will save you time
+(and is better style).
 
 ::::full
 (One small caveat: `rw [...]` only performs a quick reflexivity check
@@ -524,7 +530,7 @@ theorem double_succ n : double (succ n) = succ (succ (double n)) := by rfl
 attribute [irreducible] double
 ```
 
-Use induction to prove this simple fact about `double`.
+Use induction to prove this simple fact about {name}`double`.
 Experiment with using `rw` instead of `rewrite` as well.
 
 ```lean
@@ -605,7 +611,7 @@ New tactic: `have`.
 ::::
 
 ```lean
-theorem mult_zero_plus' (n m : Nat) :
+theorem mult_zero_add' (n m : Nat) :
     ((zero + n) + zero) * m = n * m := by
   have h : (zero + n) + zero = n := by
     rw [zero_add, add_zero]
@@ -646,13 +652,13 @@ example (n m p q : Nat) :
 :::slidebreak
 :::
 
-To use `add_comm` at the point where we need it, we can supply
+To use {name}`add_comm` at the point where we need it, we can supply
 explicit arguments: `rw [add_comm n m]` tells Lean exactly which
 `+` to rewrite.  (We can also use `have` to establish the specific
 equation we want, then rewrite with it.)
 
 ```lean
-theorem plus_rearrange (n m p q : Nat) :
+theorem add_rearrange (n m p q : Nat) :
     (n + m) + (p + q) = (m + n) + (p + q) := by
   rw [add_comm n m]
 ```
@@ -724,7 +730,7 @@ theorem add_assoc' (n m p : Nat) :
 
 Lean is perfectly happy with this.  For a human, however, it
 is difficult to make much sense of it.  We can
-pass arguments to the `add_succ` theorems to show the structure more clearly...
+pass arguments to the {name}`add_succ` theorems to show the structure more clearly...
 
 ```lean
 theorem add_assoc'' (n m p : Nat) :
@@ -807,7 +813,7 @@ things stand).
 ::::::
 
 :::::exercise (rating := 2) (name := "add_comm_informal") (level := Advanced) (manual := true)
-Translate your solution for `add_comm` into an informal proof:
+Translate your solution for {name}`add_comm` into an informal proof:
 
 Theorem: Addition is commutative.
 
@@ -829,7 +835,7 @@ By the definition of `+`, `n + zero = n`, so we now must show
 n = zero + n
 ```
 
-We have already shown (lemma `zero_add`) that `zero + n = n`.  Thus both sides equal `n`.
+We have already shown (lemma {name}`zero_add`) that `zero + n = n`.  Thus both sides equal `n`.
 
 - Next, suppose `m = m' + 1` for some `m'`, where `n + m' = m' + n`. We must show that
 
@@ -843,7 +849,7 @@ By the definition of `+`, `n + (m' + 1) = (n + m') + 1`, so our new goal is to s
 (n + m') + 1 = (m' + 1) + n`.
 ```
 
-By `succ_add`, `(m' + 1) + n = (m' + n) + 1`, so our new goal is, and by the induction
+By {name}`succ_add`, `(m' + 1) + n = (m' + n) + 1`, so our new goal is, and by the induction
 hypothesis, `n + m' = m' + n`, so both sides equal `(m' + n) + 1`.
 :::
 
@@ -856,7 +862,7 @@ GRADE_MANUAL 2: add_comm_informal
 
 :::::exercise (rating := 2) (name := "beq_refl_informal")
 Write an informal proof of the following theorem, using the
-informal proof of `add_assoc` as a model.  Don't just
+informal proof of {name}`add_assoc` as a model.  Don't just
 paraphrase the Lean tactics into English!
 
 Theorem: `(n == n) = true` for any `n`.
@@ -873,7 +879,7 @@ follows directly from the definition of `beq`.
 - Next, suppose `n = n' + 1`, where `(n' == n') = true`.  We
 must show `(n' + 1 == n' + 1) = true`. This
 follows directly from the induction hypothesis and the
-definition of `beq`.
+definition of {name}`beq`.
 ```
 :::
 
@@ -982,7 +988,7 @@ reflect before you hack!)
 
 ```lean
 theorem ble_refl (n : Nat) :
-    ble n n = true := by
+    Nat.ble n n = true := by
   solution!
     induction n with
     | zero       => rw [zero_ble]
@@ -1091,7 +1097,7 @@ much later in this book.
 namespace NatToBin
 ```
 
-Recall the `Bin` type we defined in Basics:
+Recall the {name}`Bin` type we defined in Basics:
 
 ```lean
 inductive Bin : Type where
@@ -1101,7 +1107,7 @@ inductive Bin : Type where
 ```
 
 Before you start working on the next exercise, replace the stub
-definitions of `incr` and `binToNat`, below, with your solution
+definitions of {name}`incr` and {name}`binToNat`, below, with your solution
 from Basics.  That will make it possible for this file to be graded
 on its own.
 
@@ -1133,7 +1139,7 @@ theorem binToNat_b1 m : binToNat (.b1 m) = add (mul (binToNat m) two) one := sol
 attribute [pp_nodot] Bin.b0 Bin.b1
 ```
 
-In Basics, we did some unit testing of `binToNat`, but we
+In Basics, we did some unit testing of {name}`binToNat`, but we
 didn't prove its correctness. Now we'll do so.
 
 :::::exercise (rating := 3) (name := "binary_commute")
@@ -1152,7 +1158,7 @@ binToNat   |                             |  binToNat
                       succ
 ```
 
-  If you want to change your previous definitions of `incr` or `binToNat`
+  If you want to change your previous definitions of {name}`incr` or {name}`binToNat`
   to make the property easier to prove, feel free!
 
 ```lean
@@ -1193,11 +1199,11 @@ theorem natToBin_succ m : natToBin (succ m) = incr (natToBin m) := by rfl
 -- END SOLUTION
 ```
 
-Prove that, if we start with any `Nat`, convert it to `Bin`, and
-convert it back, we get the same `Nat` which we started with.
+Prove that, if we start with any {name}`Nat`, convert it to {name}`Bin`, and
+convert it back, we get the same {name}`Nat` which we started with.
 
 Hint: This proof should go through smoothly using the previous
-exercise about `incr` as a lemma. If not, revisit your definitions
+exercise about {name}`incr` as a lemma. If not, revisit your definitions
 of the functions involved and consider whether they are more
 complicated than necessary: the shape of a proof by induction will
 match the recursive structure of the program being verified, so
@@ -1220,8 +1226,8 @@ theorem nat_bin_nat (n : Nat) :
 
 ## Bin to Nat and Back to Bin (Advanced)
 
-The opposite direction -- starting with a `Bin`, converting to `Nat`,
-then converting back to `Bin` -- turns out to be problematic. That
+The opposite direction -- starting with a {name}`Bin`, converting to {name}`Nat`,
+then converting back to {name}`Bin` -- turns out to be problematic. That
 is, the following "theorem" does not hold.
 
 ```lean +error
@@ -1233,7 +1239,7 @@ version of it. We'll start with some lemmas that might seem
 unrelated but will turn out to be relevant.
 
 :::::exercise (rating := 2) (name := "double_bin") (level := Advanced)
-Prove this lemma about `double`, which we defined earlier in the
+Prove this lemma about {name}`double`, which we defined earlier in the
 chapter.
 
 ```lean
@@ -1247,7 +1253,7 @@ theorem double_incr (n : Nat) :
 :::gradeTheorem "0.5" "double_incr"
 :::
 
-Now define a similar doubling function for `Bin`.
+Now define a similar doubling function for {name}`Bin`.
 
 ```lean
 def doubleBin (b : Bin) : Bin := solution!(
@@ -1269,13 +1275,13 @@ theorem doubleBin_b1 m : doubleBin (.b1 m) = .b0 (.b1 m) := by rfl
 Check that your function correctly doubles zero.
 
 ```lean
-example : doubleBin .z = .z := solution!(by rfl)
+theorem double_bin_zero : doubleBin .z = .z := solution!(by rfl)
 ```
 
 :::gradeTheorem "0.5" "double_bin_zero"
 :::
 
-Prove this lemma, which corresponds to `double_incr`.
+Prove this lemma, which corresponds to {name}`double_incr`.
 
 ```lean
 theorem double_incr_bin (b : Bin) :
@@ -1297,22 +1303,22 @@ Let's return to our desired theorem:
 example b : natToBin (binToNat b) = b := by
 ```
 
-The theorem fails because there are some `Bin` such that we won't
-necessarily get back to the _original_ `Bin`, but instead to an
-"equivalent" `Bin`.  (We deliberately leave that notion undefined
+The theorem fails because there are some {name}`Bin` such that we won't
+necessarily get back to the _original_ {name}`Bin`, but instead to an
+"equivalent" {name}`Bin`.  (We deliberately leave that notion undefined
 here for you to think about.)
 
 Explain in a comment, below, why this failure occurs. Your
 explanation will not be graded, but it's important that you get it
 clear in your mind before going on to the next part. If you're
 stuck on this, think about alternative implementations of
-`doubleBin` that might have failed to satisfy `double_bin_zero`
+{name}`doubleBin` that might have failed to satisfy {name}`double_bin_zero`
 yet otherwise seem correct.
 
 :::solution
-The problem is that `zero` has many representations: it can be written
+The problem is that {name}`zero` has many representations: it can be written
 `.z`, `.b0 .z`, `.b0 (.b0 .z)`, and so on.  For these alternate
-representations, if you do `binToNat` then `natToBin`, you
+representations, if you do {name}`binToNat` then {name}`natToBin`, you
 don't get back what you started with.
 
 Any other number also has many representations, after applying
@@ -1320,14 +1326,14 @@ constructors to the multiple representations of zero.
 :::
 
 To solve that problem, we can introduce a _normalization_ function
-that selects the simplest `Bin` out of all the equivalent
-`Bin`. Then we can prove that the conversion from `Bin` to `Nat` and
-back again produces that normalized, simplest `Bin`.
+that selects the simplest {name}`Bin` out of all the equivalent
+{name}`Bin`. Then we can prove that the conversion from {name}`Bin` to {name}`Nat` and
+back again produces that normalized, simplest {name}`Bin`.
 
 :::::exercise (rating := 4) (name := "bin_nat_bin") (level := Advanced)
 Define `normalize`. You will need to keep its definition as simple
 as possible for later proofs to go smoothly. Do not use
-`binToNat` or `natToBin`, but do use `doubleBin`.
+{name}`binToNat` or {name}`natToBin`, but do use {name}`doubleBin`.
 
 Hint: Structure the recursion such that it _always_ reaches the
 end of the `Bin` and _only_ processes each bit once. Do not
@@ -1352,7 +1358,7 @@ theorem normalize_b1 m : normalize (.b1 m) = incr (doubleBin (normalize m)) := b
 ```
 
 It would be wise to do some `example` proofs to check that your
-definition of `normalize` works the way you intend before you
+definition of {name}`normalize` works the way you intend before you
 proceed. They won't be graded, but fill them in below.
 
 ```lean
@@ -1385,7 +1391,7 @@ Hint: Start by trying to prove the main statement, see where you
 get stuck, and see if you can find a lemma -- perhaps requiring
 its own inductive proof -- that will allow the main proof to make
 progress. We have one lemma for the `b0` case (which also makes
-use of `double_incr_bin`) and another for the `b1` case.
+use of {name}`double_incr_bin`) and another for the `b1` case.
 
 ```lean
 -- SOLUTION
