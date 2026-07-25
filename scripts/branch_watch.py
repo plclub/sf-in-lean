@@ -6,10 +6,17 @@ branch_watch.py  —  Report which files are being changed on which branches.
 Walks every remote branch, finds the commits not yet in `main`, and builds a
 picture of who is touching what:
 
-  * a per-branch table — PR, author, last activity, commits ahead, files
-    touched, whether the branch still merges cleanly into `main`, and which
-    *other* active branches it overlaps (⚠️ = those overlaps would actually
-    conflict, computed with a real in-memory merge, not a filename guess);
+  * a per-branch table (most recently active first) — a Status column, author,
+    activity, files touched, and which *other* active branches it overlaps (⚠️
+    = those overlaps would actually conflict, computed with a real in-memory
+    merge, not a filename guess).  The Branch cell links straight to the PR
+    when one exists (else the branch tree).  The Status cell reports the open
+    PR (or "No PR") and its readiness: "Review required" (a code owner on
+    `sfl-mergers` still has to approve), "(N unresolved)" review comments,
+    "Ready" (approved, nothing unresolved), a "🚧 auto-merge held" flag when
+    auto-merge is enabled but the PR is *not* sitting in the merge queue
+    because something is holding it up, and a "⚠️ conflicts with `main`" flag
+    when the branch no longer merges cleanly;
   * a "hot files" view — files edited on more than one branch, conflicting
     files first;
   * an always-on list of merged / inactive branches (0 commits ahead of main).
@@ -25,9 +32,10 @@ USAGE
       # (finds the open issue whose body carries the ISSUE_MARKER below, or the
       #  issue given by --issue N; needs GITHUB_TOKEN in the environment)
 
-PR data and issue updates use the GitHub REST API over stdlib urllib — no `gh`
-or `jq` needed. Without a token the PR column is left blank and the git-only
-analysis still runs.
+PR data is read via the GitHub GraphQL API (review decision, unresolved
+threads, auto-merge, merge-queue membership); issue updates use the REST API.
+Both go over stdlib urllib — no `gh` or `jq` needed. Without a token the PR
+column is left blank and the git-only analysis still runs.
 """
 
 import argparse
@@ -136,6 +144,12 @@ def collect_branches():
         email = git("log", "-1", "--format=%ae", ref)
         sha = git("log", "-1", "--format=%H", ref)
         when = git("log", "-1", "--format=%ad", "--date=relative", ref)
+        # Git's relative dates end in " ago"; drop it for a tighter column.
+        if when.endswith(" ago"):
+            when = when[:-4]
+        # Committer timestamp (unix) of the branch tip, for "most recent
+        # activity" sorting — the relative `when` string can't be sorted.
+        ts = int(git("log", "-1", "--format=%ct", ref) or "0")
         clean_to_main = merges_clean(main, ref) if ahead else True
         branches[ref] = {
             "short": short,
@@ -146,6 +160,7 @@ def collect_branches():
             "sha": sha,
             "login": None,  # GitHub username, filled in later when a token is set
             "when": when,
+            "ts": ts,
             "clean_to_main": clean_to_main,
         }
     return branches
@@ -196,6 +211,31 @@ def api(method, path, token, body=None):
         return None
 
 
+def graphql(query, variables, token):
+    """Minimal GitHub GraphQL call. Returns the parsed `data` object, or None on
+    transport/GraphQL error."""
+    req = urllib.request.Request(
+        "https://api.github.com/graphql",
+        method="POST",
+        data=json.dumps({"query": query, "variables": variables}).encode(),
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "Content-Type": "application/json",
+            "User-Agent": "branch-watch",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req) as resp:
+            payload = json.load(resp)
+    except urllib.error.HTTPError as e:
+        sys.stderr.write(f"GitHub GraphQL -> {e.code}: {e.read()[:200]}\n")
+        return None
+    if payload.get("errors"):
+        sys.stderr.write(f"GitHub GraphQL errors: {payload['errors']}\n")
+    return payload.get("data")
+
+
 def login_from_email(email):
     """GitHub username parsed from a `…@users.noreply.github.com` commit email
     (`user@…` or `12345+user@…`), or None for any other address."""
@@ -214,27 +254,69 @@ def commit_login(slug, sha, token):
     return None
 
 
+# GraphQL is used (rather than the REST `pulls` list) because it returns the
+# review decision, unresolved-thread count, auto-merge flag, and merge-queue
+# membership in one request per page — the REST API exposes none of these
+# directly.
+_PR_QUERY = """
+query($owner:String!, $name:String!, $cursor:String) {
+  repository(owner:$owner, name:$name) {
+    pullRequests(states:OPEN, first:50, after:$cursor) {
+      pageInfo { hasNextPage endCursor }
+      nodes {
+        number
+        url
+        isDraft
+        headRefName
+        reviewDecision
+        autoMergeRequest { enabledAt }
+        mergeQueueEntry { state }
+        reviewThreads(first:100) { nodes { isResolved } }
+        closingIssuesReferences(first:10) { nodes { number url } }
+      }
+    }
+  }
+}
+"""
+
+
 def fetch_prs(slug, token):
-    """Map branch short-name -> {num, url, draft} for open PRs."""
+    """Map branch short-name -> per-PR dict for open PRs.
+
+    Each value carries `num`, `url`, `draft`, `review_decision`
+    (`REVIEW_REQUIRED`/`APPROVED`/`CHANGES_REQUESTED`/None), the count of
+    `unresolved` review threads, and the `auto_merge` / `in_queue` booleans that
+    together reveal an auto-merge that is stuck outside the merge queue."""
+    owner, _, name = slug.partition("/")
     prs = {}
-    page = 1
+    cursor = None
     while True:
-        batch = api(
-            "GET",
-            f"/repos/{slug}/pulls?state=open&per_page=100&page={page}",
-            token,
-        )
-        if not batch:
+        data = graphql(_PR_QUERY, {"owner": owner, "name": name, "cursor": cursor}, token)
+        repo = (data or {}).get("repository")
+        if not repo:
             break
-        for pr in batch:
-            prs[pr["head"]["ref"]] = {
+        conn = repo["pullRequests"]
+        for pr in conn["nodes"]:
+            threads = pr["reviewThreads"]["nodes"]
+            unresolved = sum(1 for t in threads if not t["isResolved"])
+            # Issues the PR body links with a GitHub closing keyword
+            # (fixes/closes/resolves #N); GitHub resolves these for us.
+            closes = [{"num": i["number"], "url": i["url"]}
+                      for i in pr["closingIssuesReferences"]["nodes"]]
+            prs[pr["headRefName"]] = {
                 "num": pr["number"],
-                "url": pr["html_url"],
-                "draft": pr.get("draft", False),
+                "url": pr["url"],
+                "draft": pr["isDraft"],
+                "review_decision": pr["reviewDecision"],
+                "unresolved": unresolved,
+                "auto_merge": pr["autoMergeRequest"] is not None,
+                "in_queue": pr["mergeQueueEntry"] is not None,
+                "closes": closes,
             }
-        if len(batch) < 100:
+        if conn["pageInfo"]["hasNextPage"]:
+            cursor = conn["pageInfo"]["endCursor"]
+        else:
             break
-        page += 1
     return prs
 
 
@@ -246,23 +328,68 @@ def author_cell(b):
     return f"{b['author']} (@{b['login']})" if b.get("login") else b["author"]
 
 
+def status_text(pr):
+    """Review / merge readiness of an open PR, as a short string (may be empty
+    for a draft with nothing else to report).
+
+    * "Review required" — a code owner on `sfl-mergers` still has to approve
+      (GitHub's `reviewDecision`, which the "Require review from Code Owners"
+      rule ties to that team).
+    * "(N unresolved)" — N review threads are still open.
+    * "Ready" — approved with nothing unresolved.
+    * "🚧 auto-merge held" — auto-merge is enabled but the PR is not in the
+      merge queue, so something (failing check, missing approval, conflict) is
+      holding it up; "⏳ queued" when it *is* sitting in the queue.
+    * "Fixes #N" — issues the PR closes (via a fixes/closes/resolves keyword),
+      linked; several are comma-separated.
+
+    Segments are joined with " · "; the readiness word and its "(N unresolved)"
+    parenthetical stay together as one segment."""
+    unresolved = pr["unresolved"]
+    readiness = []
+    if not pr["draft"]:
+        dec = pr["review_decision"]
+        if dec == "REVIEW_REQUIRED":
+            readiness.append("Review required")
+        elif dec == "CHANGES_REQUESTED":
+            readiness.append("Changes requested")
+        else:  # APPROVED, or None (no required review configured — rare here)
+            readiness.append("Ready" if unresolved == 0 else "Approved")
+    if unresolved:
+        readiness.append(f"({unresolved} unresolved)")
+    segments = []
+    if readiness:
+        segments.append(" ".join(readiness))
+    if pr["auto_merge"]:
+        segments.append("⏳ queued" if pr["in_queue"] else "🚧 auto-merge held")
+    if pr["closes"]:
+        links = ", ".join(f"[#{i['num']}]({i['url']})" for i in pr["closes"])
+        segments.append(f"Fixes {links}")
+    return " · ".join(segments)
+
+
 def pr_cell(short, prs):
+    """The PR link for a branch, followed by its review/merge status (the two
+    were merged into one column)."""
     pr = prs.get(short)
     if not pr:
-        return "—"
+        return "No PR"
     tag = " _(draft)_" if pr["draft"] else ""
-    return f"[#{pr['num']}]({pr['url']}){tag}"
+    status = status_text(pr)
+    sep = f" — {status}" if status else ""
+    return f"[#{pr['num']}]({pr['url']}){tag}{sep}"
 
 
-def branch_link(short, slug, maxlen=None):
-    """A Markdown link from a branch's name to its page on GitHub.
+def branch_link(short, slug, maxlen=None, href=None):
+    """A Markdown link from a branch's name to a page on GitHub.
 
-    Points at the branch's tree view (`/tree/<branch>`); the separate PR column
-    links the branch's open PR, if any.  Works without a token, since the URL is
+    By default points at the branch's tree view (`/tree/<branch>`); pass `href`
+    to retarget it — the per-branch table sends the first cell straight to the
+    open PR when one exists.  Works without a token, since the tree URL is
     derived purely from the branch name.  The slash in a name like
     `bcp/versification5` is kept (GitHub tree paths use it); other reserved
-    characters are percent-encoded.  Falls back to a bare code span if the repo
-    slug could not be determined.
+    characters are percent-encoded.  Falls back to a bare code span if neither
+    an `href` nor a repo slug is available.
 
     When `maxlen` is given and the name is longer, the *visible* text is
     truncated with an ellipsis and the full name is kept as the link's hover
@@ -274,10 +401,12 @@ def branch_link(short, slug, maxlen=None):
     else:
         display = short
         title = ""
-    if not slug:
-        return f"`{display}`"
-    quoted = urllib.parse.quote(short, safe="/")
-    return f"[`{display}`](https://github.com/{slug}/tree/{quoted}{title})"
+    if href is None:
+        if not slug:
+            return f"`{display}`"
+        quoted = urllib.parse.quote(short, safe="/")
+        href = f"https://github.com/{slug}/tree/{quoted}"
+    return f"[`{display}`]({href}{title})"
 
 
 def files_cell(files):
@@ -312,18 +441,28 @@ def render(branches, conf, prs, have_token, slug):
     single_files = {f: rs for f, rs in fmap.items() if len(rs) == 1}
 
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    summary = f"_Auto-updated {now}_"
-    out = [ISSUE_MARKER, "", "## 🔭 Branch & file activity", ""]
+
+    def _blob(path, text=None):
+        text = text or path
+        return (f"[`{text}`](https://github.com/{slug}/blob/main/{path})"
+                if slug else f"`{text}`")
+
+    script_link = _blob("scripts/branch_watch.py")
+    workflow_link = _blob(".github/workflows/branch-watch.yml", "branch-watch")
+    summary = (f"_Auto-updated {now} by the {workflow_link} workflow running "
+               f"{script_link} — run the script with `--update-issue` (and a "
+               f"`GITHUB_TOKEN`) to refresh manually._")
+    out = [ISSUE_MARKER, "", "## Current Activity", ""]
     if not have_token:
         out.append("> ⚠️ No `GITHUB_TOKEN` available — PR column left blank.")
         out.append("")
 
-    # ---- per-branch table (most commits ahead first) ----
+    # ---- per-branch table (most recently active first) ----
     out.append("### Active branches")
     out.append("")
-    out.append("| Branch | PR | Author | Last activity | Ahead | Files | → main | Overlaps |")
-    out.append("|---|---|---|---|--:|--:|:--:|---|")
-    for r, b in sorted(active.items(), key=lambda x: (-x[1]["ahead"], x[1]["short"])):
+    out.append("| Branch | Status | Author | Activity | Files | Overlaps |")
+    out.append("|---|---|---|---|--:|---|")
+    for r, b in sorted(active.items(), key=lambda x: (-x[1]["ts"], x[1]["short"])):
         overlaps = [o for o in active if o != r and active[o]["files"] & b["files"]]
         # A stacked branch — one that fully contains the other's commits — is the
         # same line of work, not a concurrent co-edit (and can never conflict, so
@@ -352,18 +491,18 @@ def render(branches, conf, prs, have_token, slug):
         pieces += [branch_link(active[o]["short"], slug) + " _(included in)_"
                    for o in contained_by]
         ov = ", ".join(pieces) or "—"
-        main_flag = "✅" if b["clean_to_main"] else "⚠️"
+        pr = prs.get(b["short"])
+        first = branch_link(b["short"], slug, maxlen=25,
+                            href=pr["url"] if pr else None)
+        # The old "→ main" column is folded in here: flag a branch that no
+        # longer merges cleanly right in the Status cell.
+        status = pr_cell(b["short"], prs)
+        if not b["clean_to_main"]:
+            status += " · ⚠️ conflicts with `main`"
         out.append(
-            f"| {branch_link(b['short'], slug, maxlen=25)} | {pr_cell(b['short'], prs)} | {author_cell(b)} | "
-            f"{b['when']} | {b['ahead']} | {files_cell(b['files'])} | "
-            f"{main_flag} | {ov} |"
+            f"| {first} | {status} | {author_cell(b)} | "
+            f"{b['when']} | {files_cell(b['files'])} | {ov} |"
         )
-    out.append("")
-    out.append("_Overlaps: ⚠️ = real merge conflict.  `(includes)` / "
-               "`(included in)` = this branch fully contains / is contained in "
-               "the other (stacked work, never a conflict).  `A ⊃ B` groups a "
-               "concurrent overlap B under another overlap A that contains it._")
-    out.append("_`archive/…` branches are omitted._")
     out.append("")
 
     # ---- files: conflicting first, then clean co-edits, then single-branch ----
@@ -405,8 +544,10 @@ def render(branches, conf, prs, have_token, slug):
     if merged:
         out.append("_0 commits ahead of `main` — fully merged or pointing at an ancestor._")
         out.append("")
-        for r, b in sorted(merged.items()):
-            out.append(f"- {branch_link(b['short'], slug)} — last activity {b['when']} ({author_cell(b)})")
+        for r, b in sorted(merged.items(), key=lambda x: -x[1]["ts"]):
+            pr = prs.get(b["short"])
+            link = branch_link(b["short"], slug, href=pr["url"] if pr else None)
+            out.append(f"- {link} — last activity {b['when']} ({author_cell(b)})")
     else:
         out.append("_None._")
     out.append("")
@@ -430,7 +571,7 @@ def find_issue(slug, token, explicit):
     return None
 
 
-ISSUE_TITLE = "🔭 Branch & file activity"
+ISSUE_TITLE = "Current Activity"
 
 
 def update_issue(slug, token, number, body):
@@ -445,7 +586,10 @@ def update_issue(slug, token, number, body):
         print(f"Created issue #{res['number']}: {res['html_url']} "
               f"(pin it once in the UI)", file=sys.stderr)
         return
-    res = api("PATCH", f"/repos/{slug}/issues/{number}", token, {"body": body})
+    # Send the title too, so renaming ISSUE_TITLE renames the existing issue in
+    # place on the next run (the issue is found by ISSUE_MARKER, not its title).
+    res = api("PATCH", f"/repos/{slug}/issues/{number}", token,
+              {"title": ISSUE_TITLE, "body": body})
     if res is None:
         raise SystemExit(1)
     print(f"Updated issue #{number}: {res['html_url']}", file=sys.stderr)
