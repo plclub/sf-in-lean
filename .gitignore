@@ -2,14 +2,11 @@
 .DS_Store
 _out/
 __pycache__/
+# Rough-draft intermediates from a one-off `to_verso.py` port of a .v/.lean
+# chapter (see CLAUDE.md); the hand-maintained chapter is the plain <Ch>.lean.
 LF/*Verso.lean
 HL/*Verso.lean
 TS/*Verso.lean
-# Archived bare-Lean sources kept locally after a chapter graduates to Verso
-# (e.g. LF/OldInduction.lean); the original is preserved in git history.
-LF/Old*.lean
-HL/Old*.lean
-TS/Old*.lean
 .claude/settings.json
 .claude/settings.local.json
 *.tmp
