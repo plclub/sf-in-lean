@@ -1575,16 +1575,17 @@ Write down a theorem `fold_map_correct` stating that `foldMap` is
 correct, and prove it in Lean.
 
 ```lean
+-- SOLUTION
 theorem fold_map_correct {α : Type} {β : Type} (f : α → β) (l : List α) :
     foldMap f l = map f l := by
-  solution!
-    induction l with
-    | nil =>
-      dsimp only [foldMap]
-      rw [fold_nil, map_nil]
-    | cons head tail ih =>
-      dsimp only [foldMap] at *
-      rw [fold_cons, map_cons, ih]
+  induction l with
+  | nil =>
+    dsimp only [foldMap]
+    rw [fold_nil, map_nil]
+  | cons head tail ih =>
+    dsimp only [foldMap] at *
+    rw [fold_cons, map_cons, ih]
+-- END SOLUTION
 ```
 
 :::grade
