@@ -193,25 +193,36 @@ not to step on.
 5. Resolve the issue when the PR is resolved. Edit the work-in-progress
    to remove the activity.
 
-### Status; plain lean vs. verso files (temporary)
+### Branch activity dashboard
 
-At the moment, most of the files in Logical Foundations have been
-converted to regular Lean files.  (Programming Language Foundations
-remains to be translated.)  The `.lean` files are currently in regular
-Lean syntax, but we want them to be formatted as Verso files
-("documentation first") and are working on translating them one by
-one.  
+To see at a glance who is working on what, look at the pinned [🔭 Branch &
+file activity](https://github.com/plclub/sf-in-lean/issues/123) issue. It is
+regenerated automatically and shows the status of every active branch and file.
 
-Benjamin owns the conversion tooling (`scripts/to_verso.py`) and the
-eventual native-Verso format decisions, so you can work on a given
-`.lean` file in whatever format it exists in at the moment.  But note
-that `make` now regenerates and builds each `<Ch>Verso.lean` (via the
-`check-verso-chapters` target, which CI runs), so if you edit a
-code-forward `.lean` chapter, keep that round-trip green: after a
-change, regenerate (`python3 scripts/to_verso.py <Vol>/<Ch>.lean`) and
-build the generated Verso (`make check-verso-chapters`).  CLAUDE.md
-("Writing comments that survive to_verso") lists the authoring rules
-that keep the conversion happy.
+We use this display very actively to make sure we're not stepping on each others' toes and see where coordination is required.
+
+### Native-Verso chapters and the extractor
+
+Every chapter in every volume is now authored **directly in Verso** — a plain
+`<Vol>/<Ch>.lean` whose prose lives in `#doc (Manual)` markup.  (Genuine
+plain-Lean *support libraries* such as `LF/CustomTactics.lean` are not chapters
+and stay plain Lean.)  There is no longer a code-forward `.lean` → generated
+`<Ch>Verso.lean` step: `make` just builds the books and extracts the three
+per-variant `.lean`/HTML projects under `_out/`.
+
+`scripts/to_verso.py` (and its two fidelity checkers) is retained only for
+**porting a new chapter from Rocq** — see "Porting chapters from Rocq" below;
+it is no longer part of the `make` build.
+
+**Extractor maintenance (permanent).**  The standalone-`.lean` extractor
+(`SFLMeta/Save.lean`) resolves a chapter's dependencies two ways, and one needs
+ongoing upkeep: when a chapter imports a Verso chapter from an *earlier volume*
+(e.g. `HL.Imp` imports `LF.Typeclasses`), that cross-volume dependency must be
+listed in `Targets.lean`'s `crossVol` match — add an entry for **every** new
+such import (it can't be auto-derived, since mapping a module name to its `Part`
+needs a compile-time `%doc`).  Plain-Lean support-lib prerequisites
+(`CustomTactics`, `SFLCompat`) are instead bundled verbatim by `bundleLoop` and
+need no per-import upkeep.
 
 ## Lean Style
 
@@ -270,46 +281,6 @@ Related notation introduced alongside tactics: anonymous constructor
   over the separate `case` syntax *and* over the bare `·` goal selector — i.e. prefer
   `cases h with | …` / `induction h with …`.
   Put each alternative on its own unindented line beginning with `|`.
-  
-* **`rewrite` before `rw`** (see tactic chart above) --
-  `rw [h]` is roughly `rewrite [h]; rfl`, which is too strong at
-  first: it hides the closing `rfl` and makes proofs step
-  confusingly (the goal vanishes when you step past the final `]`).
-  We introduce `rw` specifically in `Induction.lean` and use from
-  then on.
-
-* **`example` for one-off demos.** Prefer `example …` over a named
-  `theorem foo …` for throwaway illustrations (tactic demos, "silly" lemmas,
-  etc.) that are never referenced later — Lean's `example` doesn't force us to
-  invent a name (unlike Rocq).
-
-* **Explicit rewrites over `dsimp`/`simp` through notation** (see
-  "Notation and simplification").
-
-* **`sorry` placeholders are checked, not silent.** Where a `sorry`
-  appears , wrap it so the warning is asserted:
-  ```lean
-  /-- warning: declaration uses `sorry` -/
-  #guard_msgs in
-  example : … := sorry
-  ```
-
-* **Aborted/abandoned lemmas** failing proofs and examples with type errors
-  should have a `#guard_msgs` above them with the expected error, rather than
-  ending with `sorry`.
-
-* **Library vs. client code.** Inside a definition's own library it is
-  fine to unfold and simplify through definitions; *using* that code,
-  do not "peek through the interface."
-
-### Unicode Text and Formatting
-
-Go Unicode-native! Use subscripts on variables, like x₁ x₂  etc. Use α Γ etc. 
-for type variables and other standard notation. Use arrows like → ⇓ for reduction
-and evaluation. TODO: Elaborate on guidelines here.
-
-We will use the standard Lean auto-formatter. Until then, here are some formatting
-guidelines.
 
 * Keep short branch bodies inline: 
   
@@ -347,48 +318,243 @@ guidelines.
   We introduce `rw` specifically in `Induction.lean` and use from
   then on.
 
-* **Explicit rewrites over `dsimp`/`simp` through notation** (see
-  "Notation and simplification").
-
-* **`sorry` placeholders are checked, not silent.** Where a `sorry`
-  appears (incomplete proof, exercise scaffold), wrap it so the
-  warning is asserted:
-  ```lean
-  /-- warning: declaration uses `sorry` -/
-  #guard_msgs in
-  example : … := sorry
-  ```
-
-  The `#guard_msgs` wrapper is checked while the book is compiled.
-  In the rendered book and generated projects, the expected-message docstring and
-  `#guard_msgs ... in` are stripped.
-
-* **Aborted/abandoned lemmas** become unnamed `example`s closed with
-  `sorry` (the SFL analogue of Rocq's `Abort`).
-
 * **`example` for one-off demos.** Prefer `example …` over a named
   `theorem foo …` for throwaway illustrations (tactic demos, "silly" lemmas,
   etc.) that are never referenced later — Lean's `example` doesn't force us to
   invent a name (unlike Rocq).  Reserve names for results used elsewhere or
   graded. (berberman, review of PR #61.)
 
+* **Explicit rewrites over `dsimp`/`simp` through notation** (see
+  "Notation and simplification").
+
 * **Library vs. client code.** Inside a definition's own library it is
   fine to unfold and simplify through definitions; *using* that code,
   do not "peek through the interface."
 
-* **Companion namespaces open *after* the type, with bare member names.**
-  Define a datatype at top level, then open its like-named `namespace`
-  immediately after, and write the type's functions and theorems with
-  *unqualified* names — `def app`, not `def NatList.app`. Exception:
-  if it makes pedagogical sense to define the operations of multiple
-  types together, define their operations with qualified names, without 
-  opening a namespace, e.g., `Aexp.eval` and `Bexp.eval` which are adjacent
-  in Imp.
+#### Names and namespaces
 
-* **Name namespaces for what they are.**
-  A warm-up / redefinition section goes in a clearly-named namespace, 
-  e.g. `namespace Warmup`. Functions on a new type are placed in that
-  type's namespace (per the above).
+Follow the Lean library's naming conventions:
+
+- Theorems and proof names use `snake_case`, e.g. `add_swap`, `rev_app_distr`;
+- Types and propositions (including definitions returning `Prop`) use `UpperCamelCase`, e.g. `Aexp`, `IsValue`;
+- Other values and functions use `lowerCamelCase`, e.g. `isEven`, `doubleBin`.
+
+Almost always, definitions and theorems relating to a type belong in a
+namespace with the same name as the type. Define the type first, then open its
+companion namespace and use bare member names inside it:
+
+```lean
+inductive Tm where
+  ...
+
+namespace Tm
+
+def IsValue (t : Tm) : Prop := ...
+
+theorem value_is_nf (t : Tm) (h : IsValue t) : IsNormalForm t := by
+  ...
+
+end Tm
+```
+
+Write `def eval` inside `namespace Aexp`, rather than `def Aexp.eval` inside
+that namespace.
+
+#### Theorem arguments and visibility
+
+Put a theorem's arguments before the colon rather than introducing them with
+`∀` in its result. For example, prefer the following style
+
+```lean
+theorem add_swap (a b c : Nat) :
+    a + (b + c) = b + (a + c) := by
+  ...
+```
+
+over:
+
+```lean
+theorem add_swap : ∀ a b c : Nat,
+    a + (b + c) = b + (a + c) := by
+  ...
+```
+
+Always give binders explicit type annotations, even when Lean can infer them.
+For example, write `(n : Nat)`, `{α : Type}`, and `(h : P)` rather than bare `n`, `{α}`, or `h`.
+
+Type parameters should normally be implicit when later arguments determine them:
+
+```lean
+theorem isNil_cons {α : Type} (x : α) (xs : List α) :
+    isNil (x :: xs) = False := by
+  ...
+```
+
+For small equational lemmas for `rw` or `simp`, make arguments
+implicit when the displayed equation determines them. This follows the style of
+Lean's list lemmas. For example, `map_cons` can be used simply as `rw [map_cons]`:
+
+```lean
+theorem map_cons {α β : Type} {f : α → β}
+    {head : α} {tail : List α} :
+    map f (head :: tail) = f head :: map f tail := by
+  ...
+```
+
+However, do _not_ make a theorem's main inputs implicit merely because unification could
+infer them from the conclusion. Keep the principal function, collection,
+point, or other subject explicit when callers are likely to apply the theorem
+directly. For example:
+
+```lean
+theorem foldMap_correct {α β : Type}
+    (f : α → β) (l : List α) :
+    foldMap f l = map f l := by
+  ...
+
+theorem uncurry_curry {α β γ : Type}
+    (f : α → β → γ) (x : α) (y : β) :
+    prodCurry (prodUncurry f) x y = f x y := by
+  ...
+```
+
+If those arguments were implicit, callers would need
+named arguments such as `(f := f)` and `(l := l)`.
+
+An index may be implicit when treating it as inferred data is natural for the
+theorem's use:
+
+```lean
+theorem isEven_iff_Even {n : Nat} :
+    isEven n = true ↔ Even n := by
+  ...
+```
+
+### Incomplete code, expected errors, and diagnostics
+
+Use `sorry` to admit a declaration, `+error` to show code that Lean rejects,
+`-keep` to keep a block from changing the later environment, and
+`#guard_msgs` only when the output itself is being checked.
+
+#### `sorry`
+
+Use `sorry` when an unfinished declaration must remain available to later code,
+as with an exercise scaffold or a theorem used below. Do _not_ normally wrap it
+in `#guard_msgs`: the generic warning is not what we are testing, and the guard
+is stripped from the HTML and extracted projects.
+
+````lean
+```lean
+theorem pumping ... : ... := by
+  sorry
+```
+````
+
+#### `+error`
+
+Use `+error` for stuck proofs, failed tactics, incomplete matches, type errors,
+and other code that Lean should reject.
+
+If the point is simply that `rfl` fails, use an expected-error block rather
+than checking its diagnostic:
+
+````lean
+```lean +error
+example (a b : Nat) : a + b = b + a := by
+  -- `rfl` doesn't work here!
+  rfl
+```
+````
+
+Likewise, leave a one-off stuck proof unfinished instead of closing it with `sorry`:
+
+````lean
+```lean +error
+example (c n : Nat) :
+    myRepeat n c ++ myRepeat n c = myRepeat n (c + c) := by
+  induction c with
+  ...
+  | succ c' ih =>
+    ...
+    -- Now we seem to be stuck.
+```
+````
+
+#### `-keep`
+
+Use `-keep` for successful code whose declarations or other effects should not
+reach later blocks. This instance, for example, is deliberately misleading:
+
+````lean
+```lean -keep
+instance : HasOne Nat where
+  one := 2
+```
+````
+
+Combine `-keep` with `+error` when a failed declaration would otherwise reserve
+its name:
+
+````lean
+```lean +error -keep
+def x : Nat := "str"
+```
+````
+
+Without `-keep`, `x` cannot be redefined later in the chapter.
+
+#### `#guard_msgs`
+
+Use `#guard_msgs` when the message text, severity, or position is part of the
+test. The guard and its expected-message doc comment are checked while the book
+is compiled, then stripped from the HTML and extracted projects.
+
+This includes interactive-tactic suggestions:
+
+```lean
+/-- info: Try this:
+  exact Nat.add_comm a b -/
+#guard_msgs(info) in
+example (a b : Nat) : a + b = b + a := by
+  exact?
+```
+
+It also includes regression tests for custom tactics and commands:
+
+```lean
+#guard_msgs in
+sf_expect_failure?
+  def incomplete (n : Nat) : Nat :=
+    match n
+```
+
+Do _not_ guard every command that happens to print information. In particular,
+an __ordinary `#check` needs no guard__:
+
+````lean
+```lean
+#check Nat.add
+```
+````
+
+Guard `#check` only when its printed form is what the example is testing. For
+example, `Imp` checks its custom delaborator this way:
+
+````lean
+```lean
+/-- info: aexp {3 + X * 2} : Aexp -/
+#guard_msgs in
+#check aexp {3 + (X * 2)}
+```
+````
+
+### Unicode Text and Formatting
+
+Go Unicode-native! Use subscripts on variables, like x₁ x₂  etc. Use α Γ etc. 
+for type variables and other standard notation. Use arrows like → ⇓ for reduction
+and evaluation. TODO: Elaborate on guidelines here.
+
+We will use the standard Lean auto-formatter when it's released.
 
 ### Notation and simplification
 
@@ -430,6 +596,39 @@ theorem add_succ : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
 5) **The book may not use `grind` in any place.**
 6) In and after the `Automation.lean` chapter, using `simp` and `dsimp` is
     appropriate.
+
+### Definitions vs. Abbreviations
+
+Abbreviations let syntax-based tactics like `rw` and `simp` to see the underlying term implicitly.
+Abbreviations should never be used for functions -- use definitions plus characterizing lemmas instead.
+To encapsulate a type with an API boundary, use a definition rather than an abbreviation.
+However, abbreviations can be used to create a type alias that do not intend to encapsulate an inner type.
+
+As an example, the `DefDemoGood` is idiomatic, whereas the `AbbrevDemoBad` is not:
+
+```lean
+namespace AbbrevDemoBad
+
+abbrev Bag := List Nat
+abbrev Bag.empty : Bag := []
+theorem Bag.foo : empty ++ empty = empty := by
+  rw [List.append_nil]
+
+end AbbrevDemoBad
+
+namespace DefDemoGood
+
+def Bag := List Nat
+deriving Append
+
+def Bag.empty : Bag := []
+theorem Bag.empty_def : Bag.empty = [] := rfl
+theorem Bag.append_nil (s : Bag) : s ++ empty = s := List.append_nil s
+theorem Bag.foo : empty ++ empty = empty := by
+  rw [Bag.append_nil]
+
+end DefDemoGood
+```
 
 ### Arithmetic / the custom `Nat`
 
