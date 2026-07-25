@@ -899,8 +899,33 @@ notation:40 t:41 " ⟶* " t':41 => Multi Step t t'
 The relation `Multi R` has several crucial properties.
 
 ::::full
-First, it is obviously _reflexive_ (a term can execute to itself by taking zero steps).
+First, it is obviously _reflexive_ (a term can execute to itself by taking zero
+steps).  That is just what the `Multi.refl` constructor says, so such a goal can
+always be closed with `exact .refl _`.  It comes up often enough that it is
+worth registering the constructor as a _reflexivity lemma_, with the `@[refl]`
+attribute.  The `rfl` tactic then closes a zero-step execution exactly as it
+closes `x = x`:
+::::
 
+```lean
+attribute [refl] Multi.refl
+
+example : (.c 5 : Tm) ⟶* .c 5 := by rfl
+```
+
+::::full
+This pays off at the _end_ of a reduction sequence too: the final `Multi.step`
+leaves a goal relating a term to itself, which `rfl` discharges.
+::::
+
+```lean
+example : (.p (.c 1) (.c 2)) ⟶* .c (1 + 2) := by
+  apply Multi.step (y := .c (1 + 2))
+  · exact .plus 1 2
+  · rfl
+```
+
+::::full
 Second, it _contains_ `R` -- single-step reductions are a particular case of
 multi-step executions.  (It is this fact that justifies the word "closure"
 in "multi-step closure of `R`.")
@@ -976,6 +1001,21 @@ example :
     apply Multi.step (y := .p (.c 0) (.p (.c 2) (.c (0 + 3))))
     · exact .plusRight _ _ _ (.const 0) (.plusRight _ _ _ (.const 2) (.plus 0 3))
     · exact multi_single _ _ _ (.plusRight _ _ _ (.const 0) (.plus 2 (0 + 3)))
+```
+:::::
+
+:::::exercise (rating := 2) (name := "test_multistep_rfl")
+Prove the following reduction, ending the chain with `rfl` instead of
+`multi_single`.
+
+```lean
+example : (.p (.p (.c 1) (.c 2)) (.c 4)) ⟶* .c ((1 + 2) + 4) := by
+  solution!
+    apply Multi.step (y := .p (.c (1 + 2)) (.c 4))
+    · exact .plusLeft _ _ _ (.plus 1 2)
+    apply Multi.step (y := .c ((1 + 2) + 4))
+    · exact .plus (1 + 2) 4
+    · rfl
 ```
 :::::
 
