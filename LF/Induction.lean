@@ -121,7 +121,7 @@ theorem review1 : (true || false) = true := by rfl
 What about the next one?
 
 ```display
-theorem review2 b : (true || b) = true
+theorem review2 (b : Bool) : (true || b) = true
 ```
 
 Which tactics do we need besides `rfl`?  (A)
