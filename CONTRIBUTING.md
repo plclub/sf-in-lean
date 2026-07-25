@@ -5,6 +5,11 @@ about writing *Software Foundations in Lean* (SFL): workflow, Lean
 coding style, Verso markup, comment conventions, the order in which
 tactics are introduced, etc. Please help keep it clear and up to date!
 
+> **Style.** This file is about *workflow and mechanics*. For how the material
+> itself should be written — Lean conventions, pedagogical and presentational
+> conventions, and writing style — see [STYLE.md](STYLE.md), which is normative
+> for all contributions. Read it before contributing.
+
 ## Top-level orientation
 ### Guiding Philosophy
 
@@ -227,8 +232,6 @@ Reading the table:
   contains / is contained in the other (stacked work, never a conflict); `A ⊃
   B` groups a concurrent overlap B under another overlap A that contains it.
 - `archive/…` branches are omitted.
-
-### Native-Verso chapters and the extractor
 
 Every chapter in every volume is now authored **directly in Verso** — a plain
 `<Vol>/<Ch>.lean` whose prose lives in `#doc (Manual)` markup.  (Genuine
