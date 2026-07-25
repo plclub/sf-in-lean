@@ -593,19 +593,19 @@ Abbreviations should never be used for functions -- use definitions plus charact
 To encapsulate a type with an API boundary, use a definition rather than an abbreviation.
 However, abbreviations can be used to create a type alias that do not intend to encapsulate an inner type.
 
-As an example, the `DefDemo` is idiomatic, whereas the `AbbrevDemo` is not:
+As an example, the `DefDemoGood` is idiomatic, whereas the `AbbrevDemoBad` is not:
 
 ```lean
-namespace AbbrevDemo
+namespace AbbrevDemoBad
 
 abbrev Bag := List Nat
 abbrev Bag.empty : Bag := []
 theorem Bag.foo : empty ++ empty = empty := by
   rw [List.append_nil]
 
-end AbbrevDemo
+end AbbrevDemoBad
 
-namespace DefDemo
+namespace DefDemoGood
 
 def Bag := List Nat
 deriving Append
@@ -616,7 +616,7 @@ theorem Bag.append_nil (s : Bag) : s ++ empty = s := List.append_nil s
 theorem Bag.foo : empty ++ empty = empty := by
   rw [Bag.append_nil]
 
-end DefDemo
+end DefDemoGood
 ```
 
 ### Arithmetic / the custom `Nat`
