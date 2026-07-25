@@ -193,6 +193,24 @@ not to step on.
 5. Resolve the issue when the PR is resolved. Edit the work-in-progress
    to remove the activity.
 
+### Branch activity dashboard
+
+To see at a glance who is working on what, look at the pinned [🔭 Branch &
+file activity](https://github.com/plclub/sf-in-lean/issues/123) issue. It is
+regenerated automatically and shows, for every active branch (most recently
+active first): its open PR and review/merge status ("Review required" until a
+`sfl-mergers` code owner approves, the count of unresolved review threads,
+"Ready", or a "🚧 auto-merge held" flag when auto-merge is on but the PR is
+stuck outside the merge queue), the author, last activity, files touched,
+whether it still merges cleanly into `main`, and which other branches it
+overlaps (⚠️ marks a real merge conflict). A companion "Files" view lists files
+edited on more than one branch, conflicting ones first.
+
+The dashboard is produced by [`scripts/branch_watch.py`](scripts/branch_watch.py);
+run it locally (`python3 scripts/branch_watch.py --fetch`) to print the report,
+or with `--update-issue` (and a `GITHUB_TOKEN`) to refresh the pinned issue in
+place.
+
 ### Native-Verso chapters and the extractor
 
 Every chapter in every volume is now authored **directly in Verso** — a plain
