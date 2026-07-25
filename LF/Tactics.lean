@@ -20,6 +20,14 @@ to `Basics` or `Induction`, once those chapters are rewritten to not use arithme
 also require changing the examples.
 :::
 
+:::dev "Benjamin Pierce (bcpierce00)"
+(Old and possibly out of date -- check!)
+Many exercises in this chapter are
+based on defining and proving properties about Nat.ble and BEq.eq, which are not
+idiomatic in Lean. We should consider replacing these with a different set of exercises.
+:::
+
+
 :::instructors
 This material is a bit too much to cover in detail in
 one 80-minute lecture.  90-100 minutes is more reasonable, but that
