@@ -45,9 +45,18 @@ $(eval $(call VOLUME_template,ts))
 
 # ── Top-level targets ─────────────────────────────────────────────────────────
 
-.PHONY: all serve clean ensure-build-symlink
+.PHONY: all serve clean ensure-build-symlink style-check style-checklist
 
 all: lf hl ts
+
+# Mechanical conformance checks for STYLE.md (auto checks fail the run; assisted
+# ones are advisory). `style-checklist` prints the audit checklist for the
+# judgement-based conventions. See scripts/style_check.py.
+style-check:
+	python3 scripts/style_check.py
+
+style-checklist:
+	@python3 scripts/style_check.py --checklist
 
 # In this devcontainer /workspaces/l is a slow host bind mount, so the Lake
 # build cache is relocated to the container-native fs and `.lake/build` is a
