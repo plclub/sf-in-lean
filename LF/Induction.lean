@@ -1188,8 +1188,8 @@ def natToBin (n : Nat) : Bin := solution!(
 
 ```lean
 -- SOLUTION
-theorem natToBin_zero : natToBin zero = .z := solution!(by rfl)
-theorem natToBin_succ m : natToBin (succ m) = incr (natToBin m) := solution!(by rfl)
+theorem natToBin_zero : natToBin zero = .z := by rfl
+theorem natToBin_succ m : natToBin (succ m) = incr (natToBin m) := by rfl
 -- END SOLUTION
 ```
 
@@ -1260,9 +1260,9 @@ Fill in the characterizing lemmas for this definition below:
 
 ```lean
 -- SOLUTION
-theorem doubleBin_z : doubleBin .z = .z := solution!(by rfl)
-theorem doubleBin_b0 m : doubleBin (.b0 m) = .b0 (.b0 m) := solution!(by rfl)
-theorem doubleBin_b1 m : doubleBin (.b1 m) = .b0 (.b1 m) := solution!(by rfl)
+theorem doubleBin_z : doubleBin .z = .z := by rfl
+theorem doubleBin_b0 m : doubleBin (.b0 m) = .b0 (.b0 m) := by rfl
+theorem doubleBin_b1 m : doubleBin (.b1 m) = .b0 (.b1 m) := by rfl
 -- END SOLUTION
 ```
 
@@ -1345,9 +1345,9 @@ Also specify the characterizing lemmas for this definition:
 
 ```lean
 -- SOLUTION
-theorem normalize_z : normalize .z = .z := solution!(by rfl)
-theorem normalize_b0 m : normalize (.b0 m) = doubleBin (normalize m) := solution!(by rfl)
-theorem normalize_b1 m : normalize (.b1 m) = incr (doubleBin (normalize m)) := solution!(by rfl)
+theorem normalize_z : normalize .z = .z := by rfl
+theorem normalize_b0 m : normalize (.b0 m) = doubleBin (normalize m) := by rfl
+theorem normalize_b1 m : normalize (.b1 m) = incr (doubleBin (normalize m)) := by rfl
 -- END SOLUTION
 ```
 
