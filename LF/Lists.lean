@@ -728,8 +728,6 @@ although the latter style also works.
 @[match_pattern]
 def empty : Bag := []
 
-theorem empty_def : empty = [] := rfl
-
 def is_empty (s : Bag) : Bool :=
   match s with
   | empty => true
@@ -749,56 +747,70 @@ Complete the following definitions for the functions `add`, `count`,
 @[match_pattern]
 def add (v : Nat) (s : Bag) : Bag := solution!(v :: s)
 
-theorem add_def (v : Nat) (s : Bag) : s.add v = v :: s := solution!(by rfl)
-
 def count (v : Nat) (s : Bag) : Nat := solution!(
   match s with
   | empty => 0
   | add h t => bif v == h then (count v t) + 1 else count v t)
 ```
 
+```lean -show
+@[elab_as_elim, induction_eliminator]
+theorem inductionOn
+    {motive : Bag → Prop}
+    (s : Bag)
+    (empty : motive Bag.empty)
+    (add : ∀ n t, motive t → motive (Bag.add n t)) :
+    motive s := by
+  induction s with
+  | nil => exact empty
+  | cons n t ih => exact add n t ih
+```
+
 These lemmas should hold about your definition.
 
 ```lean
-theorem count_empty (x : Nat) : count x empty = 0 := solution!(by rfl)
+theorem count_empty {x : Nat} : count x empty = 0 := solution!(by rfl)
 
-theorem count_add_def (v h : Nat) (s : Bag) :
+theorem count_add_def {v h : Nat} {s : Bag} :
     count v (add h s) = bif v == h then (count v s) + 1 else count v s := solution!(by rfl)
 
-theorem count_add_same (v₁ v₂ : Nat) (s : Bag) (h : (v₁ == v₂) = true) :
+theorem count_add_same {v₁ v₂ : Nat} {s : Bag} (h : (v₁ == v₂) = true) :
     count v₁ (add v₂ s) = count v₁ s + 1 := by
   solution!
     rw [count_add_def, h, cond_true]
 
-theorem count_add_diff (v₁ v₂ : Nat) (s : Bag) (h : (v₁ == v₂) = false) :
+theorem count_add_self {v : Nat} {s : Bag} :
+    count v (add v s) = count v s + 1 := by
+  rw [count_add_same]
+  rw [Nat.beq_eq_true_eq]
+
+theorem count_add_diff {v₁ v₂ : Nat} {s : Bag} (h : (v₁ == v₂) = false) :
     count v₁ (add v₂ s) = count v₁ s := by
   solution!
     rw [count_add_def, h, cond_false]
 
 example : count 1 (add 1 empty) = 1 := by
-  rw [count_add_same _ _ _ rfl]
+  rw [count_add_self]
   rw [count_empty]
 
-example : count 2 ([2, 2]) = 2 := by
-  rw [← add_def, count_add_same _ _ _ rfl]
-  rw [← add_def, count_add_same _ _ _ rfl]
-  rw [← empty_def, count_empty]
+example : count 2 (add 2 (add 2 empty)) = 2 := by
+  rw [count_add_self]
+  rw [count_add_self]
+  rw [count_empty]
 
-example : count 1 (add 1 [1, 4]) = 2 := by
+example : count 1 (add 1 (add 1 (add 4 empty))) = 2 := by
   solution!
-    rw [count_add_same _ _ _ rfl]
-    rw [← add_def, count_add_same _ _ _ rfl]
-    rw [← add_def, count_add_diff _ _ _ rfl]
-    rewrite [← empty_def, count_empty]
-    rfl
+    rw [count_add_self]
+    rw [count_add_self]
+    rw [count_add_diff rfl]
+    rw [count_empty]
 
-example : count 5 (add 1 [1, 4]) = 0 := by
+example : count 5 (add 1 (add 1 (add 4 empty))) = 0 := by
   solution!
-    rw [count_add_diff _ _ _ rfl]
-    rw [← add_def, count_add_diff _ _ _ rfl]
-    rw [← add_def, count_add_diff _ _ _ rfl]
-    rewrite [← empty_def, count_empty]
-    rfl
+    rw [count_add_diff rfl]
+    rw [count_add_diff rfl]
+    rw [count_add_diff rfl]
+    rw [count_empty]
 ```
 
 :::gradeTheorem "0.5" "Bag.test_count1"
@@ -810,8 +822,8 @@ example : count 5 (add 1 [1, 4]) = 0 := by
 All these proofs can be completed with `rfl`.
 
 ```lean
-example : count 1 [1, 2, 3, 1, 4, 1] = 3 := solution!(by rfl)
-example : count 6 [1, 2, 3, 1, 4, 1] = 0 := solution!(by rfl)
+example : count 1 (add 1 (add 2 (add 3 (add 1 (add 4 (add 1 empty)))))) = 3 := solution!(by rfl)
+example : count 6 (add 1 (add 2 (add 3 (add 1 (add 4 (add 1 empty)))))) = 0 := solution!(by rfl)
 ```
 
 :::gradeTheorem "0.5" "NatList.test_count2"
@@ -837,9 +849,9 @@ example : count 1 (sum [1, 2, 3] [1, 4, 1]) = 3 := solution!(by rfl)
 :::
 
 ```lean
-theorem sum_empty (s : Bag) : sum empty s = s := solution!(rfl)
+theorem sum_empty {s : Bag} : sum empty s = s := solution!(rfl)
 
-theorem sum_add (n : Nat) (s₁ s₂ : Bag) : sum (add n s₁) s₂ = add n (sum s₁ s₂) := solution!(rfl)
+theorem sum_add {n : Nat} {s₁ s₂ : Bag} : sum (add n s₁) s₂ = add n (sum s₁ s₂) := solution!(rfl)
 ```
 
 ```lean
@@ -848,43 +860,43 @@ def member (v : Nat) (s : Bag) : Bool := solution!(
   | empty => false
   | add h t => bif v == h then true else member v t)
 
-theorem member_empty (v : Nat) : member v empty = false := solution!(by rfl)
+theorem member_empty {v : Nat} : member v empty = false := solution!(by rfl)
 
-theorem member_add_def (v h : Nat) (t : Bag) :
+theorem member_add_def {v h : Nat} {t : Bag} :
   member v (add h t) = bif v == h then true else member v t := solution!(by rfl)
 
-theorem member_add_same (v₁ v₂ : Nat) (t : Bag) (h : (v₁ == v₂) = true) :
+theorem member_add_same {v₁ v₂ : Nat} {t : Bag} (h : (v₁ == v₂) = true) :
     member v₁ (add v₂ t) = true := by
   solution!
     rw [member_add_def, h, cond_true]
 
-theorem member_add_diff (v₁ v₂ : Nat) (t : Bag) (h : (v₁ == v₂) = false) :
+theorem member_add_diff {v₁ v₂ : Nat} {t : Bag} (h : (v₁ == v₂) = false) :
     member v₁ (add v₂ t) = member v₁ t := by
   solution!
     rw [member_add_def, h, cond_false]
 
-example : member 1 [1] = true := by
-  rw [← add_def, member_add_same _ _ _ rfl]
+example : member 1 (add 1 empty) = true := by
+  rw [member_add_same rfl]
 
-example : member 2 [1] = false := by
-  rw [← add_def, member_add_diff _ _ _ rfl]
+example : member 2 (add 1 empty) = false := by
+  rw [member_add_diff rfl]
   apply member_empty
 
-example : member 1 [1, 4, 1] = true := by
+example : member 1 (add 1 (add 4 (add 1 empty))) = true := by
   solution!
-    rw [← add_def, member_add_same _ _ _ rfl]
+    rw [member_add_same rfl]
 ```
 
 :::gradeTheorem "0.5" "NatList.test_member1"
 :::
 
 ```lean
-example : member 2 [1, 4, 1] = false := by
+example : member 2 (add 1 (add 4 (add 1 empty))) = false := by
   solution!
-    rw [← add_def, member_add_diff _ _ _ rfl]
-    rw [← add_def, member_add_diff _ _ _ rfl]
-    rw [← add_def, member_add_diff _ _ _ rfl]
-    apply member_empty
+    rw [member_add_diff rfl]
+    rw [member_add_diff rfl]
+    rw [member_add_diff rfl]
+    rw [member_empty]
 ```
 
 :::gradeTheorem "0.5" "NatList.test_member2"
@@ -912,52 +924,52 @@ def removeOne (v : Nat) (s : Bag) : Bag := solution!(
   | empty => empty
   | add h t => bif v == h then t else add h (removeOne v t))
 
-theorem removeOne_empty (v : Nat) : removeOne v empty = empty := solution!(by rfl)
+theorem removeOne_empty {v : Nat} : removeOne v empty = empty := solution!(by rfl)
 
-theorem removeOne_add_def (v h : Nat) (t : Bag) :
+theorem removeOne_add_def {v h : Nat} {t : Bag} :
   removeOne v (add h t) = bif v == h then t else add h (removeOne v t) := solution!(by rfl)
 
-theorem removeOne_add_same (v₁ v₂ : Nat) (t : Bag) (h : (v₁ == v₂) = true) :
+theorem removeOne_add_same {v₁ v₂ : Nat} {t : Bag} (h : (v₁ == v₂) = true) :
     removeOne v₁ (add v₂ t) = t := by
   solution!
     rw [removeOne_add_def, h, cond_true]
 
-theorem removeOne_add_diff (v₁ v₂ : Nat) (t : Bag) (h : (v₁ == v₂) = false) :
+theorem removeOne_add_diff {v₁ v₂ : Nat} {t : Bag} (h : (v₁ == v₂) = false) :
     removeOne v₁ (add v₂ t) = add v₂ (removeOne v₁ t) := by
   solution!
     rw [removeOne_add_def, h, cond_false]
 ```
 
 ```lean
-example : count 5 (removeOne 5 [1, 5, 4]) = 0 := by
-  rw [← add_def, removeOne_add_diff _ _ _ rfl]
-  rw [← add_def, removeOne_add_same _ _ _ rfl]
-  rw [count_add_diff _ _ _ rfl]
-  rw [← add_def, count_add_diff _ _ _ rfl]
-  rw [← empty_def, count_empty]
+example : count 5 (removeOne 5 (add 1 (add 5 (add 4 empty)))) = 0 := by
+  rw [removeOne_add_diff rfl]
+  rw [removeOne_add_same rfl]
+  rw [count_add_diff rfl]
+  rw [count_add_diff rfl]
+  rw [count_empty]
 
-example : count 4 (removeOne 5 [4, 5, 1, 4]) = 2 := by
+example : count 4 (removeOne 5 (add 4 (add 5 (add 1 (add 4 empty))))) = 2 := by
   solution!
-    rw [← add_def, removeOne_add_diff _ _ _ rfl]
-    rw [← add_def, removeOne_add_same _ _ _ rfl]
-    rw [count_add_same _ _ _ rfl]
-    rw [← add_def, count_add_diff _ _ _ rfl]
-    rw [← add_def, count_add_same _ _ _ rfl]
-    rw [← empty_def, count_empty]
+    rw [removeOne_add_diff rfl]
+    rw [removeOne_add_same rfl]
+    rw [count_add_same rfl]
+    rw [count_add_diff rfl]
+    rw [count_add_same rfl]
+    rw [count_empty]
 ```
 
 :::gradeTheorem "0.5" "NatList.test_removeOne3"
 :::
 
 ```lean
-example : count 5 (removeOne 5 [1, 5, 5, 4]) = 1 := by
+example : count 5 (removeOne 5 (add 1 (add 5 (add 5 (add 4 empty))))) = 1 := by
   solution!
-    rw [← add_def, removeOne_add_diff _ _ _ rfl]
-    rw [← add_def, removeOne_add_same _ _ _ rfl]
-    rw [count_add_diff _ _ _ rfl]
-    rw [← add_def, count_add_same _ _ _ rfl]
-    rw [← add_def, count_add_diff _ _ _ rfl]
-    rw [← empty_def, count_empty]
+    rw [removeOne_add_diff rfl]
+    rw [removeOne_add_same rfl]
+    rw [count_add_diff rfl]
+    rw [count_add_same rfl]
+    rw [count_add_diff rfl]
+    rw [count_empty]
 ```
 
 :::gradeTheorem "0.5" "NatList.test_removeOne4"
@@ -970,44 +982,44 @@ def removeAll (v : Nat) (s : Bag) : Bag := solution!(
   | empty => empty
   | add h t => bif v == h then removeAll v t else add h (removeAll v t))
 
-theorem removeAll_empty (v : Nat) : removeAll v empty = empty := solution!(by rfl)
+theorem removeAll_empty {v : Nat} : removeAll v empty = empty := solution!(by rfl)
 
-theorem removeAll_add_def (v h : Nat) (t : Bag) :
+theorem removeAll_add_def {v h : Nat} {t : Bag} :
   removeAll v (add h t) = bif v == h then removeAll v t else add h (removeAll v t) := solution!(by rfl)
 
-theorem removeAll_add_same (v₁ v₂ : Nat) (t : Bag) (h : (v₁ == v₂) = true) :
+theorem removeAll_add_same {v₁ v₂ : Nat} {t : Bag} (h : (v₁ == v₂) = true) :
     removeAll v₁ (add v₂ t) = removeAll v₁ t := by
   solution!
     rw [removeAll_add_def, h, cond_true]
 
-theorem removeAll_add_diff (v₁ v₂ : Nat) (t : Bag) (h : (v₁ == v₂) = false) :
+theorem removeAll_add_diff {v₁ v₂ : Nat} {t : Bag} (h : (v₁ == v₂) = false) :
     removeAll v₁ (add v₂ t) = add v₂ (removeAll v₁ t) := by
   solution!
     rw [removeAll_add_def, h, cond_false]
 ```
 
 ```lean
-example : count 5 (removeAll 5 [5, 5]) = 0 := by
-  rw [← add_def, removeAll_add_same _ _ _ rfl]
-  rw [← add_def, removeAll_add_same _ _ _ rfl]
-  rw [← empty_def, removeAll_empty]
-  apply count_empty
+example : count 5 (removeAll 5 (add 5 (add 5 empty))) = 0 := by
+  rw [removeAll_add_same rfl]
+  rw [removeAll_add_same rfl]
+  rw [removeAll_empty]
+  rw [count_empty]
 
-example : count 5 (removeAll 5 [5, 1]) = 0 := by
-  rw [← add_def, removeAll_add_same _ _ _ rfl]
-  rw [← add_def, removeAll_add_diff _ _ _ rfl]
-  rw [← empty_def, removeAll_empty]
-  rw [count_add_diff _ _ _ rfl]
-  apply count_empty
+example : count 5 (removeAll 5 (add 5 (add 1 empty))) = 0 := by
+  rw [removeAll_add_same rfl]
+  rw [removeAll_add_diff rfl]
+  rw [removeAll_empty]
+  rw [count_add_diff rfl]
+  rw [count_empty]
 
-example : count 4 (removeAll 5 [4, 5, 4]) = 2 := by
+example : count 4 (removeAll 5 (add 4 (add 5 (add 4 empty)))) = 2 := by
   solution!
-    rw [← add_def, removeAll_add_diff _ _ _ rfl]
-    rw [← add_def, removeAll_add_same _ _ _ rfl]
-    rw [← add_def, removeAll_add_diff _ _ _ rfl]
-    rw [← empty_def, removeAll_empty]
-    rw [count_add_same _ _ _ rfl]
-    rw [count_add_same _ _ _ rfl]
+    rw [removeAll_add_diff rfl]
+    rw [removeAll_add_same rfl]
+    rw [removeAll_add_diff rfl]
+    rw [removeAll_empty]
+    rw [count_add_same rfl]
+    rw [count_add_same rfl]
     rw [count_empty]
 ```
 
@@ -1015,16 +1027,16 @@ example : count 4 (removeAll 5 [4, 5, 4]) = 2 := by
 :::
 
 ```lean
-example : count 5 (removeAll 5 [2, 5, 5, 5, 1]) = 0 := by
+example : count 5 (removeAll 5 (add 2 (add 5 (add 5 (add 5 (add 1 empty)))))) = 0 := by
   solution!
-    rw [← add_def, removeAll_add_diff _ _ _ rfl]
-    rw [← add_def, removeAll_add_same _ _ _ rfl]
-    rw [← add_def, removeAll_add_same _ _ _ rfl]
-    rw [← add_def, removeAll_add_same _ _ _ rfl]
-    rw [← add_def, removeAll_add_diff _ _ _ rfl]
-    rw [← empty_def, removeAll_empty]
-    rw [count_add_diff _ _ _ rfl]
-    rw [count_add_diff _ _ _ rfl]
+    rw [removeAll_add_diff rfl]
+    rw [removeAll_add_same rfl]
+    rw [removeAll_add_same rfl]
+    rw [removeAll_add_same rfl]
+    rw [removeAll_add_diff rfl]
+    rw [removeAll_empty]
+    rw [count_add_diff rfl]
+    rw [count_add_diff rfl]
     rw [count_empty]
 ```
 
@@ -1043,64 +1055,61 @@ Do we need to introduce Bool.true_and, Bool.false_and and maybe their mirror ver
 :::
 
 ```lean
-theorem included_empty (s₂ : Bag) : included empty s₂ = true := solution!(by rfl)
+theorem included_empty {s₂ : Bag} : included empty s₂ = true := solution!(by rfl)
 
-theorem included_add_def (h : Nat) (t s₂ : Bag) :
+theorem included_add_def {h : Nat} {t s₂ : Bag} :
     included (add h t) s₂ = (member h s₂ && included t (removeOne h s₂)) := solution!(by rfl)
 
-theorem included_add_member (v : Nat) (s₁ s₂ : Bag) (h : member v s₂ = true) :
+theorem included_add_member {v : Nat} {s₁ s₂ : Bag} (h : member v s₂ = true) :
     included (add v s₁) s₂ = included s₁ (removeOne v s₂) := by
   solution!
     rw [included_add_def, h, Bool.true_and]
 
-theorem included_add_nonmember (v : Nat) (s₁ s₂ : Bag) (h : member v s₂ = false) :
+theorem included_add_nonmember {v : Nat} {s₁ s₂ : Bag} (h : member v s₂ = false) :
     included (add v s₁) s₂ = false := by
   solution!
     rw [included_add_def, h, Bool.false_and]
 ```
 
 ```lean
-example : included [1] [2, 1] = true := by
-  rw [← add_def, ← add_def, ← empty_def]
+example : included (add 1 empty) (add 2 (add 1 empty)) = true := by
   rw [included_add_member]
   · apply included_empty
-  · rw [member_add_diff _ _ _ rfl]
-    rw [member_add_same _ _ _ rfl]
+  · rw [member_add_diff rfl]
+    rw [member_add_same rfl]
 ```
 
 ```lean
-example : included [1, 2] [2, 1, 4, 1] = true := by
+example : included (add 1 (add 2 empty)) (add 2 (add 1 (add 4 (add 1 empty)))) = true := by
   solution!
-    rw [← add_def, ← add_def, ← add_def, ← add_def, ← add_def, ← add_def, ← empty_def]
     rw [included_add_member]
     · rw [included_add_member]
       · apply included_empty
-      · rw [removeOne_add_diff _ _ _ rfl]
-        rw [member_add_same _ _ _ rfl]
-    · rw [member_add_diff _ _ _ rfl]
-      rw [member_add_same _ _ _ rfl]
+      · rw [removeOne_add_diff rfl]
+        rw [member_add_same rfl]
+    · rw [member_add_diff rfl]
+      rw [member_add_same rfl]
 ```
 
 :::gradeTheorem "0.5" "NatList.test_included1"
 :::
 
 ```lean
-example : included [1, 2, 2] [2, 1, 4, 1] = false := by
+example : included (add 1 (add 2 (add 2 empty))) (add 2 (add 1 (add 4 (add 1 empty)))) = false := by
   solution!
-    rw [← add_def, ← add_def, ← add_def, ← add_def, ← add_def, ← add_def, ← add_def, ← empty_def]
     rw [included_add_member]
     · rw [included_add_member]
       · rw [included_add_nonmember]
-        rw [removeOne_add_diff _ _ _ rfl]
-        rw [removeOne_add_same _ _ _ rfl]
-        rw [removeOne_add_same _ _ _ rfl]
-        rw [member_add_diff _ _ _ rfl]
-        rw [member_add_diff _ _ _ rfl]
+        rw [removeOne_add_diff rfl]
+        rw [removeOne_add_same rfl]
+        rw [removeOne_add_same rfl]
+        rw [member_add_diff rfl]
+        rw [member_add_diff rfl]
         rw [member_empty]
-      · rw [removeOne_add_diff _ _ _ rfl]
-        rw [member_add_same _ _ _ rfl]
-    · rw [member_add_diff _ _ _ rfl]
-      rw [member_add_same _ _ _ rfl]
+      · rw [removeOne_add_diff rfl]
+        rw [member_add_same rfl]
+    · rw [member_add_diff rfl]
+      rw [member_add_same rfl]
 ```
 
 :::gradeTheorem "0.5" "NatList.test_included2"
@@ -1812,16 +1821,16 @@ theorem count_removeOne v s :
     count v (removeOne v s) = (count v s).pred := by
   induction s with
   | nil =>
-    rw [← empty_def, removeOne_empty, count_empty]
+    rw [removeOne_empty, count_empty]
     rfl
   | cons n l ih =>
   -- XXX they don't know about generalizing or casing on expressions yet !!!
     cases h : v == n with
     | false =>
-      rw [← add_def, removeOne_add_diff _ _ _ h, count_add_diff _ _ _ h, ih, count_add_diff _ _ _ h]
+      rw [removeOne_add_diff _ _ _ h, count_add_diff _ _ _ h, ih, count_add_diff _ _ _ h]
     | true =>
       -- they don't yet have tools for this case
-      rw [← add_def, removeOne_add_same _ _ _ h, count_add_same _ _ _ h]
+      rw [removeOne_add_same _ _ _ h, count_add_same _ _ _ h]
       rw [Nat.pred_succ]
 
 theorem ble_pred_n_n n :
@@ -1836,7 +1845,7 @@ theorem remove_does_not_increase_count' (s : Bag) (n : Nat) :
     Nat.ble (count n (removeOne n s)) (count n s) = true := by
   induction s with
   | nil =>
-    rw [← empty_def, removeOne_empty, count_empty]
+    rw [removeOne_empty, count_empty]
     rfl
   | cons n' l ih =>
     rw [count_removeOne, ble_pred_n_n]
@@ -1850,16 +1859,15 @@ theorem remove_does_not_increase_count (s : Bag) :
     Nat.ble (count 0 (removeOne 0 s)) (count 0 s) = true := by
   solution!
     induction s with
-    | nil =>
-      rw [← empty_def, removeOne_empty, count_empty]
+    | empty =>
+      rw [removeOne_empty, count_empty]
       rfl
-    | cons n s' ih =>
-      rw [← add_def]
+    | add n s' ih =>
       cases n with
       | zero =>
-        rw [removeOne_add_same _ _ _ rfl, count_add_same _ _ _ rfl, ble_n_Sn]
+        rw [removeOne_add_same rfl, count_add_same rfl, ble_n_Sn]
       | succ n' =>
-        rw [removeOne_add_diff _ _ _ rfl, count_add_diff _ _ _ rfl, count_add_diff _ _ _ rfl]
+        rw [removeOne_add_diff rfl, count_add_diff rfl, count_add_diff rfl]
         exact ih
 ```
 :::::
@@ -1909,16 +1917,16 @@ More information in the reference: <https://lean-lang.org/doc/reference/latest/f
 theorem bag_count_sum (s₁ s₂ : Bag) (v : Nat) :
     count v (sum s₁ s₂) = (count v s₁) + (count v s₂) := by
   induction s₁ with
-  | nil =>
-    rw [← empty_def, sum_empty, count_empty, Nat.zero_add]
-  | cons h s1' ih =>
-    rw [← add_def, sum_add]
+  | empty =>
+    rw [sum_empty, count_empty, Nat.zero_add]
+  | add h s1' ih =>
+    rw [sum_add]
     cases hv : (v == h) with
     | false =>
-      rw [count_add_diff _ _ _ hv, count_add_diff _ _ _ hv]
+      rw [count_add_diff hv, count_add_diff hv]
       exact ih
     | true =>
-      rw [count_add_same _ _ _ hv, count_add_same _ _ _ hv, Nat.succ_add, ← ih]
+      rw [count_add_same hv, count_add_same hv, Nat.succ_add, ← ih]
 -- END SOLUTION
 ```
 :::::
