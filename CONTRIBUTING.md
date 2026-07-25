@@ -3,22 +3,10 @@
 This file records the conventions and important decisions we have made
 about writing *Software Foundations in Lean* (SFL): workflow, Lean
 coding style, Verso markup, comment conventions, the order in which
-tactics are introduced, etc.
-
-We don't have many contributors yet outside the core group that's been
-working together on the translation for a couple of months, so there
-are certain to be things that are not clear.  Please help us figure
-out what those are and document the clarifications in this file.
+tactics are introduced, etc. Please help keep it clear and up to date!
 
 ## Top-level orientation
 ### Guiding Philosophy
-
-These are the tenets of the SFL effort, in order. Consult these tenets
-when making a change: If your change is supported by them, then
-make it; no need for excessive coordination. If it is not supported by
-at least one tenet, then either your change is out of scope or a tenet
-is missing. If you are not sure then have a discussion (see below), and
-refer to the tenets to drive a decision (potentially updating the tenets).
 
 1. SFL aims for exceptional pedagogy and presentational polish.
 2. SFL is _exercise-based_: Every important concept comes with
@@ -30,8 +18,8 @@ refer to the tenets to drive a decision (potentially updating the tenets).
     - Corollary: Definitions and proofs are written in idiomatic Lean
       (mostly the way it is for engineering/maintainability reasons),
       only deviating (temporarily) for strong pedagogical reasons.
-      (Specific patterns and rules are given at the end of this file,
-       starting with **Lean Style**.)
+      Specific patterns and rules are given later in this file,
+      starting with **Lean Style**.
 4. SFL developments connect with those in
    [CSLib](https://github.com/leanprover/cslib/tree/main) where
    possible. Some of SFL's languages, semantics, etc. might eventually
@@ -39,7 +27,7 @@ refer to the tenets to drive a decision (potentially updating the tenets).
 
 ## Zulip
 
-The [SFL contributors
+The private [SFL contributors
   channel](https://leanprover.zulipchat.com/#narrow/channel/607217-lean-software-foundations-contributors)
   channel on the Lean Zulip is the main forum for discussing the translation
   effort. 
@@ -167,6 +155,35 @@ review it. Please address these comments in a subsequent commit, either
 making appropriate changes or else responding in the file with your
 own comments.
 
+### Stacked PRs
+
+Sometimes you want to keep working on a follow-up (chunk 2) while chunk 1 is
+still waiting for review, and chunk 2 builds on chunk 1. Don't wait — and don't
+branch chunk 2 off `main`, or it will show chunk 1's changes too and report
+spurious conflicts. Instead **base the second branch and PR on the first
+branch**:
+
+```
+gh pr create --base <chunk-1-branch> --head <chunk-2-branch>
+```
+
+GitHub then diffs chunk 2 against chunk 1, so the PR shows only the incremental
+change, with no false conflicts, and it automatically retargets chunk 2's base
+to `main` once chunk 1 merges. You can keep stacking (chunk 3 on chunk 2, …)
+and review/merge bottom-up.
+
+One wrinkle: we use **squash-merge** for PRs, and squashing collapses chunk 1 into a
+single new commit on `main` that shares no history with the original branch, so after
+chunk 1 merges the still-open chunk 2 will suddenly report conflicts. The fix
+is a one-time rebase that drops the now-redundant commits and replants your real
+work on top of `main`:
+
+```
+git fetch origin
+git rebase --onto origin/main <old-chunk-1-tip> <chunk-2-branch>
+git push --force-with-lease
+```
+
 ## Tools for coordinating work
 
 We prefer to move fast rather than over-coordinate synchronously, but
@@ -174,8 +191,7 @@ we also want to avoid conflicts when possible. We use the [GitHub
 issue tracker](https://github.com/plclub/sf-in-lean/issues) for
 recording large tasks that need to be done (small or local tasks can
 just be recorded in comments in the affected .lean file) and for
-keeping track of work in progress that other people should be careful
-not to step on.
+keeping track of work in progress, plus the status meta-issue for getting an overview of who is working where.
 1. Assign yourself or others to an issue if it is something you _may_
    work on or you want to be updated on discussions associated with
    the issue.  Being assigned to an issue does _not_ mean that you
@@ -183,11 +199,8 @@ not to step on.
    associated files.
 2. When you start working on an issue, assign it to yourself so that
    other people know you are thinking about it (if not already assigned).
-3. When you start *actually making changes* on a branch, edit the
-   [Work In Progress](https://github.com/plclub/sf-in-lean/issues/25)
-   issue (it is pinned at the top of the issues page on GH) so that
-   people know to be careful not to step on your work. If/when you have
-   a branch for your work, link it from the work-in-progress issue.
+3. When you start *actually making changes*, make sure you
+   are working on a branch in the main repo (not a fork), and push your commits back to `main` frequently, so that others can see which files you are touching (by looking at the status meta-issue)
 4. When you submit a PR on your work, refer to the relevant issue in the
    PR message. Edit the work-in-progress issue with a pointer to the PR.
 5. Resolve the issue when the PR is resolved. Edit the work-in-progress
@@ -195,11 +208,25 @@ not to step on.
 
 ### Branch activity dashboard
 
-To see at a glance who is working on what, look at the pinned [🔭 Branch &
-file activity](https://github.com/plclub/sf-in-lean/issues/123) issue. It is
-regenerated automatically and shows the status of every active branch and file.
+To see at a glance who is working on what, look at the pinned [Current
+Activity](https://github.com/plclub/sf-in-lean/issues/123) issue. It is
+regenerated automatically every half hour (and when PRs are created or merged) and shows the status of every active branch and file on the remote.
 
 We use this display very actively to make sure we're not stepping on each others' toes and see where coordination is required.
+
+Reading the table:
+
+- **Status** — the branch's open PR (or "No PR") and how close it is to
+  merging: "Review required" while a `sfl-mergers` code owner still has to
+  approve; "(N unresolved)" open review threads; "Ready" once approved with
+  nothing unresolved; "🚧 auto-merge held" when auto-merge is on but the PR is
+  stuck outside the merge queue; and "⚠️ conflicts with `main`" when the branch
+  no longer merges cleanly.
+- **Overlaps** — other active branches touching the same files. ⚠️ marks a 
+  merge conflict; `(includes)` / `(included in)` means this branch fully
+  contains / is contained in the other (stacked work, never a conflict); `A ⊃
+  B` groups a concurrent overlap B under another overlap A that contains it.
+- `archive/…` branches are omitted.
 
 ### Native-Verso chapters and the extractor
 
