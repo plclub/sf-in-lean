@@ -728,6 +728,8 @@ although the latter style also works.
 @[match_pattern]
 def empty : Bag := []
 
+theorem empty_def : empty = [] := rfl
+
 def is_empty (s : Bag) : Bool :=
   match s with
   | empty => true
@@ -747,6 +749,8 @@ Complete the following definitions for the functions `add`, `count`,
 @[match_pattern]
 def add (v : Nat) (s : Bag) : Bag := solution!(v :: s)
 
+theorem add_def {v : Nat} {s : Bag} : s.add v = v :: s := solution!(by rfl)
+
 def count (v : Nat) (s : Bag) : Nat := solution!(
   match s with
   | empty => 0
@@ -763,7 +767,10 @@ theorem inductionOn
     motive s := by
   induction s with
   | nil => exact empty
-  | cons n t ih => exact add n t ih
+  | cons n t ih =>
+    have h : motive (Bag.add n t) := add n t ih
+    rw [add_def] at h
+    exact h
 ```
 
 These lemmas should hold about your definition.
