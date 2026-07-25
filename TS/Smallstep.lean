@@ -878,6 +878,10 @@ inductive Multi {X : Type} (R : Relation X) : X → X → Prop where
   | step (x y z : X) (h1 : R x y) (h2 : Multi R y z) : Multi R x z
 ```
 
+:::dev "berberman"
+I would make some arguments implicit to proivde a cleaner interface (FYI the [mathlib version](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Logic/Relation.html#Relation.ReflTransGen))
+:::
+
 ::::full
 The effect of this definition is that `Multi R` relates two elements `x` and `y` if
 - `x = y`, or
