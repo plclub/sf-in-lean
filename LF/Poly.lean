@@ -961,7 +961,7 @@ Did we literally see `Option Nat` or was it spelled some other way?
 Our last polymorphic type for now is _polymorphic options_.
 Lean's standard library provides `Option α`, with constructors
 `none` and `some x`. (We already saw `Option Nat` in the
-previous chapter.)  Let's briefly look at the definition:
+previous chapter.)  Let's briefly look at the definition from the standard library:
 
 ```display
 inductive Option (α : Type) : Type where
