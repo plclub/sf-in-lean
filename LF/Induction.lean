@@ -139,7 +139,7 @@ Which tactics do we need besides `rfl`?
 
 (B) {tactic}`rewrite`
 
-(C) `cases`
+(C) {tactic}`cases`
 
 (D) both {tactic}`rewrite` and {tactic}`cases`
 
@@ -672,7 +672,7 @@ example {m n : Nat} (h : Nat.succ m = Nat.succ n) : m = n := by
 ```lean
 -- acyclicity
 example (n : Nat) (h : n = Nat.succ n) : False := by
-  induction h
+  -- induction h
   cases h
 ```
 
@@ -733,8 +733,8 @@ As another example, suppose we want to prove that `(n + m)
 + (p + q) = (m + n) + (p + q)`. The only difference between the
 two sides of the `=` is that the arguments `m` and `n` to the
 first inner `+` are swapped, so it seems we should be able to use
-the commutativity of addition (`add_comm`) to rewrite one into the
-other.  However, the `rw` tactic is not very smart about _where_
+the commutativity of addition ({name}`add_comm`) to rewrite one into the
+other.  However, the {tactic}`rw` tactic is not very smart about _where_
 it applies the rewrite.  There are three uses of `+` here, and
 `rw [add_comm]` may affect the wrong one...
 ::::
@@ -999,7 +999,7 @@ GRADE_MANUAL 2: beq_refl_informal
 
 # More Exercises
 
-Tip: By default, `rewrite` and `rw` rewrite left to right, i.e.,
+Tip: By default, {tactic}`rewrite` and {tactic}`rw` rewrite left to right, i.e.,
 they transform the hypothesis or goal being rewritten from the form on
 the left side of the equality to the right side. To rewrite from
 right to left, use `rewrite [← h]` or `rw [← h]`, where `←` is entered
@@ -1043,8 +1043,8 @@ We don't need to work them in class.
 
 ::::exercise (rating := 3) (name := "mul_comm")
 
-Use `have` (or `rw` with explicit arguments) to help prove
-`add_shuffle3`.  You don't need to use induction.
+Use {tactic}`have` (or {tactic}`rw` with explicit arguments) to help prove
+`add_shuffle3`. You don't need to use induction.
 
 ```lean
 theorem add_shuffle3 (n m p : Nat) :
