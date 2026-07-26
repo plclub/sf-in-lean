@@ -156,8 +156,8 @@ seeing the pattern once:
 - Each `syntax` directive declares one production of that non-terminal, with
   annotations fixing precedence, and the last one declares the `<{ … }>`
   brackets that let a `tm` appear where Lean expects a term.
-- `macro_rules` then translates each production into the corresponding
-  constructor of {name}`Tm`.
+- `macro_rules` then translates the resulting syntax forms into the
+  corresponding constructors of {name}`Tm`.
 ::::
 
 ```lean
