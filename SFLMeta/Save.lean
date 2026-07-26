@@ -285,10 +285,17 @@ private def devNoteComment (label body : String) : String :=
 private def mergeAdjacentModuleDocs (s : String) : String :=
   s.replace "\n-/\n\n/-!\n" "\n\n"
 
-/-- Decode a `Block.bnf` payload and return its original source string. -/
+/-- Decode a `Block.bnf` payload and render the grammar as an aligned plain-text
+display (`Bnf.toTextImpl`), which is what an extracted `.lean` file wants: the
+authoring source spells terminals as string literals and metavariables with a
+leading underscore, and neither is meant to be read.  Falls back to the original
+source if the payload cannot be decoded. -/
 private def decodeBnfSource? (data : Json) : Option String :=
   match data with
-  | .arr #[_, .str src] => some src
+  | .arr #[.str jsonStr, .str src] =>
+    match Json.parse jsonStr >>= fromJson? with
+    | .ok (b : BNF) => some (Bnf.toTextImpl b)
+    | .error _      => some src
   | _ => none
 
 /-- Decode a `Block.exercise` payload `(rating, name, level, manual)`, tolerating

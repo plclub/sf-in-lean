@@ -208,6 +208,37 @@ def toHtmlImpl (b : BNF) : Html :=
          </tr> }}
   {{ <table class="bnf">{{Html.seq rows}}</table> }}
 
+/-! ## Plain-text rendering
+
+The extracted `.lean` files have no styling to distinguish a terminal from a
+non-terminal, so a grammar is rendered there as SF's original aligned display:
+tokens separated by spaces, quotes dropped, glosses lined up in a right-hand
+column. -/
+
+/-- Render a single token as plain text. -/
+def tokToText : BnfToken → String
+  | .nonterm s => s
+  | .meta    s => s
+  | .lit     s => s
+
+/-- Render an alternative as plain text: its tokens, space-separated. -/
+def altToText (alt : BnfAlt) : String :=
+  String.intercalate " " (alt.tokens.toList.map tokToText)
+
+/-- Render a full BNF grammar as an aligned plain-text display.  The gloss
+column is aligned across the whole grammar, not per production. -/
+def toTextImpl (b : BNF) : String :=
+  let rows : Array (String × Option String) := b.productions.flatMap fun p =>
+    p.alts.mapIdx fun i alt =>
+      let lhs := if i = 0 then p.lhs else String.ofList (List.replicate p.lhs.length ' ')
+      let sep := if i = 0 then "::=" else "  |"
+      (lhs ++ " " ++ sep ++ " " ++ altToText alt, alt.note)
+  let width := rows.foldl (init := 0) fun w (l, _) => max w l.length
+  String.intercalate "\n" (rows.toList.map fun (l, note) =>
+    match note with
+    | some n => l ++ String.ofList (List.replicate (width + 4 - l.length) ' ') ++ "(" ++ n ++ ")"
+    | none   => l)
+
 /-! ## TeX rendering -/
 
 /-- Render a single token as a TeX fragment. -/
