@@ -2067,7 +2067,10 @@ want a way to get the pieces of that value out from it.
 
 When we have a value `v : α × β` in our context, we can
 get the first and second projections of `v` using this tactic:
-   `let ⟨a, β⟩ := v`
+
+```display
+let ⟨a, β⟩ := v
+```
 
 ::::::full
 :::::exercise (rating := 3) (name := "combine_split")
