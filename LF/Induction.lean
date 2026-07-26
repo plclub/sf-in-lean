@@ -1459,8 +1459,8 @@ Also specify the characterizing lemmas for this definition:
 ```lean
 -- SOLUTION
 theorem normalize_z : normalize .z = .z := by rfl
-theorem normalize_b0 m : normalize (.b0 m) = doubleBin (normalize m) := by rfl
-theorem normalize_b1 m : normalize (.b1 m) = incr (doubleBin (normalize m)) := by rfl
+theorem normalize_b0 (m : Bin) : normalize (.b0 m) = doubleBin (normalize m) := by rfl
+theorem normalize_b1 (m : Bin) : normalize (.b1 m) = incr (doubleBin (normalize m)) := by rfl
 -- END SOLUTION
 ```
 
