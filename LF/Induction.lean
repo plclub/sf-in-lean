@@ -156,7 +156,7 @@ theorem review₂ (b : Bool) : (true || b) = true := by rfl
 What if we change the order of the arguments of `||`?
 
 ```display
-theorem review₃ b : (b || true) = true
+theorem review₃ (b : Bool) : (b || true) = true
 ```
 
 Which tactics do we need besides `rfl`?
