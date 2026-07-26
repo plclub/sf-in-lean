@@ -47,7 +47,7 @@ This section will need some tidying and rewriting...
 
 :::terse
 Lean will first need to compile `Basics.lean` so it can
-be imported here -- detailed instructions are in the full version
+be imported here — detailed instructions are in the full version
 of this chapter...
 :::
 
@@ -103,8 +103,17 @@ namespace NatPlayground.Nat
 
 ::::quiz
 To prove the following theorem, which tactics will we need besides
-`rfl`?  (A) none, (B) `rewrite`, (C) `cases`, (D) both
-`rewrite` and `cases`, or (E) can't be done with the tactics we've seen.
+{tactic}`rfl`?
+
+(A) none
+
+(B) {tactic}`rewrite`
+
+(C) {tactic}`cases`
+
+(D) both {tactic}`rewrite` and {tactic}`cases`
+
+(E) can't be done with the tactics we've seen.
 
 ```display
 theorem review₁ : (true || false) = true
@@ -124,9 +133,17 @@ What about the next one?
 theorem review₂ (b : Bool) : (true || b) = true
 ```
 
-Which tactics do we need besides `rfl`?  (A)
-none (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`,
-or (E) can't be done with the tactics we've seen.
+Which tactics do we need besides `rfl`?
+
+(A) none
+
+(B) {tactic}`rewrite`
+
+(C) `cases`
+
+(D) both {tactic}`rewrite` and {tactic}`cases`
+
+(E) can't be done with the tactics we've seen.
 
 :::quizSolution
 ```lean
@@ -142,9 +159,17 @@ What if we change the order of the arguments of `||`?
 theorem review₃ b : (b || true) = true
 ```
 
-Which tactics do we need besides `rfl`?  (A)
-none (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`,
-or (E) can't be done with the tactics we've seen.
+Which tactics do we need besides `rfl`?
+
+(A) none
+
+(B) {tactic}`rewrite`
+
+(C) {tactic}`cases`
+
+(D) both {tactic}`rewrite` and {tactic}`cases`
+
+(E) can't be done with the tactics we've seen.
 
 :::quizSolution
 ```lean
@@ -165,8 +190,15 @@ definition.)
 theorem review₄ (n : Nat) : n + zero = n
 ```
 
-(A) none, (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`, or (E)
-can't be done with the tactics we've seen.
+(A) none
+
+(B) {tactic}`rewrite`
+
+(C) {tactic}`cases`
+
+(D) both {tactic}`rewrite` and {tactic}`cases`
+
+(E) can't be done with the tactics we've seen.
 
 :::quizSolution
 ```lean
@@ -184,11 +216,18 @@ What about this?
 theorem review₅ (n : Nat) : zero + n = n
 ```
 
-(A) none, (B) `rewrite`, (C) `cases`, (D) both `rewrite` and `cases`,
-or (E) can't be done with the tactics we've seen.
+(A) none
+
+(B) {tactic}`rewrite`
+
+(C) {tactic}`cases`
+
+(D) both {tactic}`rewrite` and {tactic}`cases`
+
+(E) can't be done with the tactics we've seen.
 
 :::quizSolution
-This one CANNOT be proved by `rfl`, `cases`, or rewriting alone --
+This one CANNOT be proved by `rfl`, `cases`, or rewriting alone —
 it needs induction!  (We'll see why below.)
 :::
 ::::
@@ -213,25 +252,24 @@ theorem succ_eq_add_one : ∀ n : Nat, succ n = n + one := by
 ## Proof by Induction
 
 ::::full
-  We defined `add` to recurse on its _second_ argument:
+We defined `add` to recurse on its _second_ argument:
 
 ```display
-  def add (n : Nat) (m : Nat) : Nat :=
-    match m with
-    | zero => n
-    | succ m' => succ (add n m')
+def add (n : Nat) (m : Nat) : Nat :=
+  match m with
+  | zero => n
+  | succ m' => succ (add n m')
 ```
 
-  This means `n + zero` reduces to `n` by definition, but `zero + n` does
-  _not_.
+This means `n + zero` reduces to `n` by definition, but `zero + n` does _not_.
 
-  In `add_zero`, we were able to prove that `zero` is a neutral element
-  for `+` on the _right_ using just `rfl`:
+In `add_zero`, we were able to prove that `zero` is a neutral element
+for `+` on the _right_ using just `rfl`:
 
 ```display
-  theorem add_zero : ∀ (n : Nat), n + zero = n := by
-    intro n
-    rfl
+theorem add_zero : ∀ (n : Nat), n + zero = n := by
+  intro n
+  rfl
 ```
 
 But the proof that it is also a neutral element on the _left_
@@ -241,14 +279,23 @@ the `match` in the definition of `+` can't be simplified.
 ::::
 
 ::::terse
-But the proof that it is also a neutral element on the
-   _left_ gets stuck...
+But the proof that it is also a neutral element on the _left_ gets stuck...
 ::::
 
-```lean +error
+```lean +error (name := rfl_ex)
 example : ∀ n : Nat, zero + n = n := by
   intro n
-  -- `rfl` doesn't work here!
+  rfl -- `rfl` doesn't work here!
+```
+
+```leanOutput rfl_ex
+Tactic `rfl` failed: The left-hand side
+  zero + n
+is not definitionally equal to the right-hand side
+  n
+
+n : Nat
+⊢ zero + n = n
 ```
 
 :::slidebreak
@@ -259,7 +306,7 @@ further: the branch of the case analysis where we assume `n = zero`
 goes through just fine, but in the branch where `n = n' + 1` for
 some `n'` we get stuck in exactly the same way.
 
-```lean +error
+```lean +error (name := cases_ex)
 example : ∀ n : Nat, zero + n = n := by
   intro n
   cases n with
@@ -268,7 +315,14 @@ example : ∀ n : Nat, zero + n = n := by
     rfl
     -- so far so good...
   | succ n' =>   /- n = succ n' -/
-    -- ...but we're stuck on zero + n'
+    _ -- ...but we're stuck on zero + n'
+```
+
+```leanOutput cases_ex
+unsolved goals
+case succ
+n' : Nat
+⊢ zero + succ n' = succ n'
 ```
 
 ::::full
@@ -579,6 +633,53 @@ theorem even_succ (n : Nat) :
 ::::::
 
 ::::hide
+
+:::dev "Yipeng Liu (berberman)"
+
+This is an interesting question...
+
+Logically, induction subsumes case analysis —
+you can simply ignore those inductive hypotheses
+so anything provable by case analysis is also provable
+using the induction principle.
+
+However, Lean's `cases` has specialized machinery for indexed inductive families.
+Here are some examples that `cases` can solve while `induction` can't:
+
+```lean
+-- substitution
+example (x : Nat) (h : x = 0) : Nat.succ x = 1 := by
+  -- induction h
+  cases h
+  rfl
+```
+
+```lean
+-- disjointness
+example (h : (0 : Nat) = 1) : False := by
+  -- induction h
+  cases h
+```
+
+```lean
+-- injectivity
+example {m n : Nat} (h : Nat.succ m = Nat.succ n) : m = n := by
+  -- induction h
+  cases h
+  rfl
+```
+
+```lean
+-- acyclicity
+example (n : Nat) (h : n = Nat.succ n) : False := by
+  induction h
+  cases h
+```
+
+... and there are more!
+
+:::
+
 ```
 -- QUIZ
 /- We've seen that there are goals that `cases` can't solve but
@@ -638,7 +739,7 @@ it applies the rewrite.  There are three uses of `+` here, and
 `rw [add_comm]` may affect the wrong one...
 ::::
 
-```lean +error
+```lean +error (name := comm_ex)
 example (n m p q : Nat) :
    (n + m) + (p + q) = (m + n) + (p + q) := by
   /-
@@ -647,6 +748,12 @@ example (n m p q : Nat) :
     But `rw [add_comm]` might rewrite the wrong `+`!
   -/
   rw [add_comm]
+```
+
+```leanOutput comm_ex
+unsolved goals
+n m p q : Nat
+⊢ p + q + (n + m) = m + n + (p + q)
 ```
 
 :::slidebreak
@@ -675,7 +782,7 @@ What constitutes a successful proof of a mathematical claim?
 The question has challenged philosophers for millennia, but a
 rough and ready answer could be this: A proof of a mathematical
 proposition `P` is a written (or spoken) text that instills in the
-reader or hearer the certainty that `P` is true -- an unassailable
+reader or hearer the certainty that `P` is true — an unassailable
 argument for the truth of `P`.  That is, a proof is an act of
 communication.
 
@@ -706,7 +813,7 @@ conceivable reader.
 
 In practice, however, mathematicians have developed a rich set of
 conventions and idioms for writing about complex mathematical
-objects that -- at least within a certain community -- make
+objects that — at least within a certain community — make
 communication fairly reliable.  The conventions of this stylized
 form of communication give a reasonably clear standard for judging
 proofs good or bad.
@@ -1144,7 +1251,7 @@ didn't prove its correctness. Now we'll do so.
 
 :::::exercise (rating := 3) (name := "binary_commute")
 
-  Prove that the following diagram commutes---that is, incrementing a binary number and
+  Prove that the following diagram commutes — that is, incrementing a binary number and
   then converting it to a (unary) natural number yields the same result as first converting
   it to a natural number and then incrementing:
 
@@ -1226,8 +1333,8 @@ theorem nat_bin_nat (n : Nat) :
 
 ## Bin to Nat and Back to Bin (Advanced)
 
-The opposite direction -- starting with a {name}`Bin`, converting to {name}`Nat`,
-then converting back to {name}`Bin` -- turns out to be problematic. That
+The opposite direction — starting with a {name}`Bin`, converting to {name}`Nat`,
+then converting back to {name}`Bin` — turns out to be problematic. That
 is, the following "theorem" does not hold.
 
 ```lean +error
@@ -1388,8 +1495,8 @@ Finally, prove the main theorem. The inductive cases could be a
 bit tricky.
 
 Hint: Start by trying to prove the main statement, see where you
-get stuck, and see if you can find a lemma -- perhaps requiring
-its own inductive proof -- that will allow the main proof to make
+get stuck, and see if you can find a lemma — perhaps requiring
+its own inductive proof — that will allow the main proof to make
 progress. We have one lemma for the `b0` case (which also makes
 use of {name}`double_incr_bin`) and another for the `b1` case.
 
