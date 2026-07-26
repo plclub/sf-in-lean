@@ -15,6 +15,7 @@ import SFLMeta.Save
 import SFLMeta.SlideBreak
 import SFLMeta.Solution
 import SFLMeta.Terse
+import SFLMeta.Test
 import SFLMeta.Theme
 
 namespace SFLMeta

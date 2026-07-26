@@ -6,6 +6,7 @@ import SFLMeta.Ignore
 import SFLMeta.Exercise
 import SFLMeta.Quiz
 import SFLMeta.Terse
+import SFLMeta.Test
 import SFLMeta.SlideBreak
 import SFLMeta.Details
 import Std.Data.HashMap
@@ -795,6 +796,9 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
   | .other which contents =>
     let name := which.name
     if name == ``Block.ignore then
+      return buf
+    if name == ``Block.test then
+      -- Elaborated when the book is built, but part of no build product.
       return buf
     if name == ``Verso.Genre.Manual.Block.diagram then
       return buf

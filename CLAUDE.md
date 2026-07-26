@@ -129,7 +129,14 @@ build and passed through as a labelled comment in the generated `.lean` files
 `PotentialImprovement` notes are dropped from every build. The other annotation
 directives (`instructors`/`hide`/`grade`/`solution`) are noops (bodies dropped
 from every build); the tag name reserves each for a future build that treats it
-differently.
+differently.  "Dropped from every build" means dropped *at elaboration*: Lean
+code inside `::::hide` is inert text that is never checked — right for the
+parked, aspirational code the LF chapters' hide blocks hold, but the opposite of
+what a live check wants.  For content that must elaborate (and so can fail the
+build) while appearing in no build product — a run of `#check`s guarding a
+chapter's own notation, say — use `:::test` (`SFLMeta/Test.lean`), whose body is
+elaborated but rendered nowhere and saved nowhere.  Contrast `:::ignore`, which
+elaborates *and* renders, and is dropped only from the extracted `.lean`.
 
 Two related directives are **not** noops. `:::gradeTheorem <pts> "<name>"` is
 the structured successor to a `:::grade` block wrapping a `GRADE_THEOREM <pts>:
