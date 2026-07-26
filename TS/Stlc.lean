@@ -136,7 +136,7 @@ We will follow exactly the same pattern as in the previous chapter
 when formalizing this calculus (syntax, small-step semantics,
 typing rules) and its main properties (progress and preservation).
 The new technical challenges arise from the mechanisms of
-_variable binding_ and _substitution_.  It will take some work to
+{deftech}_variable binding_ and {deftech}_substitution_.  It will take some work to
 deal with these.
 ::::
 
@@ -145,7 +145,7 @@ Our job for this chapter: Formalize a small _functional_
 language and its type system.
 
 Language: The _simply typed lambda-calculus_ (STLC).
-   - A small subset of Rocq's built-in functional language...
+   - A small subset of Lean's built-in functional language...
    - ...but we'll use different concrete syntax (to avoid
      confusion, and for consistency with standard treatments)
 
@@ -249,19 +249,21 @@ t ::= _x ("variable")
 ::::
 
 ::::full
-The `\` symbol in a function abstraction `\x:T,t` is usually
-written as a Greek letter "lambda" (hence the name of the
-calculus).  The variable `x` is called the _parameter_ to the
+The Greek letter "lambda" in a function abstraction `λx:T. t` is what gives
+the calculus its name.  The variable `x` is called the _parameter_ to the
 function; the term `t` is its _body_.  The annotation `:T`
 specifies the type of arguments that the function can be applied
 to.
-
-If you've seen lambda-calculus notation elsewhere, you might
-be wondering why abstraction is written here as `\x:T,t` instead
-of the usual "`\x:T.t`". The reason is that some user interfaces
-for interacting with Rocq use periods to separate a file into
-"sentences" to be passed separately to the Rocq top level.
 ::::
+
+:::dev
+The Rocq source writes abstraction as `\x:T,t` -- a backslash for the lambda,
+and a comma where the standard notation has a period -- and explains that a
+period would confuse user interfaces that split a file into "sentences" to be
+passed separately to the Rocq top level.  Neither constraint applies here, so
+the chapter uses `λ` and `.` throughout, and the paragraph explaining the comma
+is dropped.
+:::
 
 :::dev PotentialImprovement
 Robert Rand: The examples below make good in-class quizzes
@@ -272,19 +274,19 @@ Robert Rand: The examples below make good in-class quizzes
 
 Some examples:
 
-- `\x:Bool, x`
+: `λx:Bool. x`
 
   The identity function for booleans.
 
-- `(\x:Bool, x) true`
+: `(λx:Bool. x) true`
 
   The identity function for booleans, applied to the boolean `true`.
 
-- `\x:Bool, if x then false else true`
+: `λx:Bool. if x then false else true`
 
   The boolean "not" function.
 
-- `\x:Bool, true`
+: `λx:Bool. true`
 
   The constant function that takes every (boolean) argument to
   `true`.
@@ -292,37 +294,37 @@ Some examples:
 :::slidebreak
 :::
 
-- `\x:Bool, \y:Bool, x`
+: `λx:Bool. λy:Bool. x`
 
-A two-argument function that takes two booleans and returns
-the first one.
+  A two-argument function that takes two booleans and returns
+  the first one.
 
-::::full
-(As in Rocq, a two-argument function in the
-lambda-calculus is really a one-argument function whose body
-is also a one-argument function.)
-::::
+  ::::full
+  (As in Lean, a two-argument function in the
+  lambda-calculus is really a one-argument function whose body
+  is also a one-argument function.)
+  ::::
 
-- `(\x:Bool, \y:Bool, x) false true`
+: `(λx:Bool. λy:Bool. x) false true`
 
-A two-argument function that takes two booleans and returns
-the first one, applied to the booleans `false` and `true`.
+  A two-argument function that takes two booleans and returns
+  the first one, applied to the booleans `false` and `true`.
 
-::::full
-(As in Rocq, application associates to the left -- i.e., this
-expression is parsed as `((\x:Bool, \y:Bool, x) false) true`.)
-::::
+  ::::full
+  (As in Lean, application associates to the left -- i.e., this
+  expression is parsed as `((λx:Bool. λy:Bool. x) false) true`.)
+  ::::
 
-- `\f:Bool->Bool, f (f true)`
+: `λf:Bool → Bool. f (f true)`
 
-A higher-order function that takes a _function_ `f` (from
-booleans to booleans) as an argument, applies `f` to `true`,
-and applies `f` again to the result.
+  A higher-order function that takes a _function_ `f` (from
+  booleans to booleans) as an argument, applies `f` to `true`,
+  and applies `f` again to the result.
 
-- `(\f:Bool->Bool, f (f true)) (\x:Bool, false)`
+: `(λf:Bool → Bool. f (f true)) (λx:Bool. false)`
 
-The same higher-order function, applied to the constantly
-`false` function.
+  The same higher-order function, applied to the constantly
+  `false` function.
 
 :::slidebreak
 :::
@@ -336,7 +338,7 @@ sugar" in the `MoreStlc` chapter.
 
 ::::full
 As the last several examples show, the STLC is a language of
-_higher-order_ functions: we can write down functions that take
+{deftech}_higher-order_ functions: we can write down functions that take
 other functions as arguments and/or return other functions as
 results.
 
@@ -371,31 +373,31 @@ T ::= "Bool"
 
 For example:
 
-- `\x:Bool, false` has type `Bool->Bool`
+- `λx:Bool. false` has type `Bool → Bool`
 
-- `\x:Bool, x` has type `Bool->Bool`
+- `λx:Bool. x` has type `Bool → Bool`
 
-- `(\x:Bool, x) true` has type `Bool`
+- `(λx:Bool. x) true` has type `Bool`
 
-- `\x:Bool, \y:Bool, x` has type `Bool->Bool->Bool`
-                        (i.e., `Bool -> (Bool->Bool)`)
+- `λx:Bool. λy:Bool. x` has type `Bool → Bool → Bool`
+                        (i.e., `Bool → (Bool → Bool)`)
 
-- `(\x:Bool, \y:Bool, x) false` has type `Bool->Bool`
+- `(λx:Bool. λy:Bool. x) false` has type `Bool → Bool`
 
-- `(\x:Bool, \y:Bool, x) false true` has type `Bool`
+- `(λx:Bool. λy:Bool. x) false true` has type `Bool`
 
 ::::quiz
 What is the type of the following term?
 
 ```display
-\f:Bool->Bool, f (f true)
+λf:Bool → Bool. f (f true)
 ```
 
-(A) `Bool -> (Bool -> Bool)`
+(A) `Bool → (Bool → Bool)`
 
-(B) `(Bool->Bool) -> Bool`
+(B) `(Bool → Bool) → Bool`
 
-(C) `Bool->Bool`
+(C) `Bool → Bool`
 
 (D) `Bool`
 
@@ -406,14 +408,14 @@ What is the type of the following term?
 How about the type of this one?
 
 ```display
-(\f:Bool->Bool, f (f true)) (\x:Bool, false)
+(λf:Bool → Bool. f (f true)) (λx:Bool. false)
 ```
 
-(A) `Bool-> (Bool -> Bool)`
+(A) `Bool → (Bool → Bool)`
 
-(B) `(Bool->Bool) -> Bool`
+(B) `(Bool → Bool) → Bool`
 
-(C) `Bool->Bool`
+(C) `Bool → Bool`
 
 (D) `Bool`
 
@@ -470,13 +472,6 @@ we did in the {ref "Types"}[Types] chapter...
 :::instructors
 If anything ever changes here, make sure to do the same
 adjustment in all the other grammars for Stlc-like languages...
-:::
-
-:::dev
-The Rocq source writes lambda abstraction with a comma, `\x:T,t`, rather than
-the standard `\x:T.t`, because a period there confuses user interfaces that
-split a file into "sentences" with simple regexps.  Lean has no such
-restriction, so we write the usual mathematical form with a period.
 :::
 
 ::::full
@@ -539,12 +534,12 @@ We'll write types inside of `<{{ ... }}>` brackets:
 ::::hide
 ```
 -- INSTRUCTORS: note that the `T` below is spliced in as a Lean variable
-#check ∀ (T : Ty), <{{ T -> Bool }}> = <{{ Bool -> ((T -> T) -> T) }}>
+#check ∀ (T : Ty), <{{ T → Bool }}> = <{{ Bool → ((T → T) → T) }}>
 
 -- INSTRUCTORS: example of using the escape to Lean
 def foo (T : Ty) := Ty.arrow T T
-#check <{{ ~(foo <{{ Bool }}>) -> Bool }}>
-#check <{{ ~(foo Ty.bool) -> ~(foo Ty.bool) }}>
+#check <{{ ~(foo <{{ Bool }}>) → Bool }}>
+#check <{{ ~(foo Ty.bool) → ~(foo Ty.bool) }}>
 ```
 ::::
 
@@ -802,8 +797,8 @@ But hugo says this is a bad idea anyway:
 
 ::::hide
 ```
-#check <{{ Bool -> Bool }}>
-#check <{{ Bool -> Bool -> Bool }}>
+#check <{{ Bool → Bool }}>
+#check <{{ Bool → Bool → Bool }}>
 #check <{ x }>
 #check <{ x y }>
 #check <{ (x y) (x y) }>
@@ -883,7 +878,7 @@ transparently wherever they appear in a proof.)
 ::::full
 To define the small-step semantics of STLC terms, we begin,
 as always, by defining the set of values.  Next, we define the
-critical notions of _free variables_ and _substitution_, which are
+critical notions of {deftech}_free variables_ and {tech}_substitution_, which are
 used in the reduction rule for application expressions.  And
 finally we give the small-step relation itself.
 ::::
@@ -924,29 +919,29 @@ choices consistent in comments...
 
 Third, for abstractions, we have a choice:
 
-- We can say that `\x:T, t` is a value only when `t` is a
+- We can say that `λx:T. t` is a value only when `t` is a
   value -- i.e., only if the function's body has been
   reduced (as much as it can be without knowing what argument it
   is going to be applied to).
 
-- Or we can say that `\x:T, t` is always a value, no matter
+- Or we can say that `λx:T. t` is always a value, no matter
   whether `t` is one or not -- in other words, we can say that
   reduction stops at abstractions.
 
-Our usual way of evaluating expressions in Gallina makes the first
+Our usual way of evaluating expressions in Lean makes the first
 choice -- for example,
 
 ```display
-Compute (fun x:bool => 3 + 4)
+#reduce fun x : Bool => 3 + 4
 ```
 
 yields:
 
 ```display
-fun x:bool => 7
+fun x => 7
 ```
 
-But Gallina is rather unusual in this respect.  Most functional
+But Lean is rather unusual in this respect.  Most functional
 programming languages make the second choice -- reduction of a
 function's body only begins when the function is actually applied
 to an argument.
@@ -981,10 +976,10 @@ Finally, we must consider what constitutes a _complete_ program.
 Intuitively, a "complete program" must not refer to any undefined
 variables.  We'll see shortly how to define the _free_ variables
 in a STLC term.  A complete program, then, is one that is
-_closed_ -- that is, that contains no free variables.
+{deftech}_closed_ -- that is, that contains no free variables.
 
 (Conversely, a term that may contain free variables is often
-called an _open term_.)
+called an {deftech}_open term_.)
 
 :::dev "Chris Henson (chenson2018)" BeforeNextRelease
 Is the "shortly" above setting wrong expectations?
@@ -1010,7 +1005,7 @@ argument term for the function parameter in the function's body.
 For example, we reduce
 
 ```display
-(\x:Bool, if x then true else x) false
+(λx:Bool. if x then true else x) false
 ```
 
 to
@@ -1024,7 +1019,7 @@ function.
 
 In general, we need to be able to substitute some given term `s`
 for occurrences of some variable `x` in another term `t`.
-Informally, this is written ` \[x:=s`t \] and pronounced "substitute
+Informally, this is written `[x:=s]t` and pronounced "substitute
 `s` for `x` in `t`."
 
 :::slidebreak
@@ -1032,29 +1027,29 @@ Informally, this is written ` \[x:=s`t \] and pronounced "substitute
 
 Here are some examples:
 
-- `\[x:=true` (if x then true else false)\]
+- `[x:=true] (if x then true else false)`
      yields `if true then true else false`
 
-- `\[x:=true` x\] yields `true`
+- `[x:=true] x` yields `true`
 
-- `\[x:=true` (if x then x else y)\] yields `if true then true else y`
+- `[x:=true] (if x then x else y)` yields `if true then true else y`
 
-- `\[x:=true` y\] yields `y`
+- `[x:=true] y` yields `y`
 
-- `\[x:=true` false\] yields `false` (vacuous substitution)
+- `[x:=true] false` yields `false` (vacuous substitution)
 
-- `\[x:=true` (\y:Bool, if y then x else false)\]
-     yields `\y:Bool, if y then true else false`
+- `[x:=true] (λy:Bool. if y then x else false)`
+     yields `λy:Bool. if y then true else false`
 
-- `\[x:=true` (\y:Bool, x)\] yields `\y:Bool, true`
+- `[x:=true] (λy:Bool. x)` yields `λy:Bool. true`
 
-- `\[x:=true` (\y:Bool, y)\] yields `\y:Bool, y`
+- `[x:=true] (λy:Bool. y)` yields `λy:Bool. y`
 
-- `\[x:=true` (\x:Bool, x)\] yields `\x:Bool, x`
+- `[x:=true] (λx:Bool. x)` yields `λx:Bool. x`
 
 The last example is key: substituting `x` with `true` in
-`\x:Bool, x` does _not_ yield `\x:Bool, true`!  The reason for
-this is that the `x` in the body of `\x:Bool, x` is _bound_ by the
+`λx:Bool. x` does _not_ yield `λx:Bool. true`!  The reason for
+this is that the `x` in the body of `λx:Bool. x` is _bound_ by the
 abstraction: it is a new, local name that just happens to be
 spelled the same as some global name `x`.
 
@@ -1065,9 +1060,9 @@ Here is the definition, informally...
 
 ```display
 [x:=s]x               = s
-[x:=s]y               = y                     if x <> y
-[x:=s](\x:T, t)       = \x:T, t
-[x:=s](\y:T, t)       = \y:T, [x:=s]t         if x <> y
+[x:=s]y               = y                     if x ≠ y
+[x:=s](λx:T. t)       = λx:T. t
+[x:=s](λy:T. t)       = λy:T. [x:=s]t         if x ≠ y
 [x:=s](t1 t2)         = ([x:=s]t1) ([x:=s]t2)
 [x:=s]true            = true
 [x:=s]false           = false
@@ -1169,14 +1164,14 @@ def delabSubst : Delab := whenPPOption getPPNotation do
 What is the result of the following substitution?
 
 ```display
-[x:=s](\y:T1, x (\x:T2, x))
+[x:=s](λy:T1. x (λx:T2. x))
 ```
 
-(1) `(\y:T1, x (\x:T2, x))`
+(1) `(λy:T1. x (λx:T2. x))`
 
-(2) `(\y:T1, s (\x:T2, s))`
+(2) `(λy:T1. s (λx:T2. s))`
 
-(3) `(\y:T1, s (\x:T2, x))`
+(3) `(λy:T1. s (λx:T2. x))`
 
 (4) none of the above
 ::::
@@ -1197,20 +1192,20 @@ to substitute _open_ terms. Using the simple definition of
 substitution above to substitute the open term
 
 ```display
-s = \x:Bool, r
+s = λx:Bool. r
 ```
 
 (where `r` is a _free_ reference to some global resource) for
 the free variable `z` in the term
 
 ```display
-t = \r:Bool, z
+t = λr:Bool. z
 ```
 
 where `r` is a bound variable, we would get
 
 ```display
-\r:Bool, \x:Bool, r
+λr:Bool. λx:Bool. r
 ```
 
 where the free reference to `r` in `s` has been "captured" by
@@ -1224,19 +1219,19 @@ names of bound variables do not matter.  For example, if we rename
 the bound variable in `t`, e.g., let
 
 ```display
-t' = \w:Bool, z
+t' = λw:Bool. z
 ```
 
-then `\[z:=s`t'\] is
+then `[z:=s]t'` is
 
 ```display
-\w:Bool, \x:Bool, r
+λw:Bool. λx:Bool. r
 ```
 
 which does not behave the same as the substituting in the original t:
 
 ```display
-[z:=s]t = \r:Bool, \x:Bool, r
+[z:=s]t = λr:Bool. λx:Bool. r
 ```
 
 That is, renaming a bound variable in `t` would change how `t`
@@ -1253,7 +1248,7 @@ of this issue.
 :::
 
 Fortunately, since we are only interested here in defining the
-`step` relation on _closed_ terms (i.e., terms like `\x:Bool, x`
+`step` relation on {tech}_closed_ terms (i.e., terms like `λx:Bool. x`
 that include binders for all of the variables they mention), we
 can sidestep this extra complexity, but it must be dealt with when
 formalizing richer languages.
@@ -1344,25 +1339,25 @@ variable in the body of the abstraction.  This last rule, written
 informally as
 
 ```display
-(\x:T,t12) v2 --> [x:=v2] t12
+(λx:T. t12) v2 ⟶ [x:=v2] t12
 ```
 
-is traditionally called _beta-reduction_.
+is traditionally called {deftech}_beta-reduction_.
 ::::
 
 ```display
 value v
 -----------------------                      (ST_AppAbs)
-(\x:T,t) v --> [x:=v]t
+(λx:T. t) v ⟶ [x:=v]t
 
-t1 --> t1'
+t1 ⟶ t1'
 ----------------                           (ST_App1)
-t1 t2 --> t1' t2
+t1 t2 ⟶ t1' t2
 
 value v1
-t2 --> t2'
+t2 ⟶ t2'
 ----------------                           (ST_App2)
-v1 t2 --> v1 t2'
+v1 t2 ⟶ v1 t2'
 ```
 
 ::::terse
@@ -1374,24 +1369,24 @@ v1 t2 --> v1 t2'
 
 ```display
               --------------------------------               (ST_IfTrue)
-              (if true then t1 else t2) --> t1
+              (if true then t1 else t2) ⟶ t1
 
               ---------------------------------              (ST_IfFalse)
-              (if false then t1 else t2) --> t2
+              (if false then t1 else t2) ⟶ t2
 
-                       t1 --> t1'
+                       t1 ⟶ t1'
 --------------------------------------------------------     (ST_If)
-(if t1 then t2 else t3) --> (if t1' then t2 else t3)
+(if t1 then t2 else t3) ⟶ (if t1' then t2 else t3)
 ```
 ::::
 
 ::::terse
-The `ST_AppAbs` rule is often called _beta-reduction_.
+The `ST_AppAbs` rule is often called {deftech}_beta-reduction_.
 ::::
 
-This is _call by value_ reduction: to reduce an
+This is {deftech}_call by value_ reduction: to reduce an
 application `(t1 t2)`, we
-  - first reduce `t1` to a value: a function `\x:T,t`
+  - first reduce `t1` to a value: a function `λx:T. t`
   - then reduce the argument `t2` to a value `v`
   - then reduce the application itself by substituting `v` for
     the bound variable `x` in the body `t`.
@@ -1433,14 +1428,14 @@ of `⟶` -- that is, {name}`Multi` applied to this chapter's step relation.
 What does the following term step to?
 
 ```display
-(\x:Bool->Bool, x) (\x:Bool, x) --> ???
+(λx:Bool → Bool. x) (λx:Bool. x) ⟶ ???
 ```
 
-(A) ` \x:Bool, x `
+(A) ` λx:Bool. x `
 
-(B) ` \x:Bool->Bool, x `
+(B) ` λx:Bool → Bool. x `
 
-(C) ` (\x:Bool->Bool, x) (\x:Bool, x) `
+(C) ` (λx:Bool → Bool. x) (λx:Bool. x) `
 
 (D) none of the above
 ::::
@@ -1449,18 +1444,18 @@ What does the following term step to?
 What does the following term step to?
 
 ```display
-(\x:Bool->Bool, x)
-    ((\x:Bool->Bool, x) (\x:Bool, x))
---> ???
+(λx:Bool → Bool. x)
+    ((λx:Bool → Bool. x) (λx:Bool. x))
+⟶ ???
 ```
 
-(A) ` \x:Bool, x `
+(A) ` λx:Bool. x `
 
-(B) ` \x:Bool->Bool, x `
+(B) ` λx:Bool → Bool. x `
 
-(C) ` (\x:Bool->Bool, x) (\x:Bool, x) `
+(C) ` (λx:Bool → Bool. x) (λx:Bool. x) `
 
-(D) ` (\x:Bool->Bool, x) ((\x:Bool->Bool, x) (\x:Bool, x)) `
+(D) ` (λx:Bool → Bool. x) ((λx:Bool → Bool. x) (λx:Bool. x)) `
 
 (E) none of the above
 ::::
@@ -1469,12 +1464,12 @@ What does the following term step to?
 What does the following term _normalize_ to?
 
 ```display
-(\x:Bool->Bool, x) notB true  -->* ???
+(λx:Bool → Bool. x) notB true  ⟶* ???
 ```
 
-where `notB` abbreviates `\x:Bool, if x then false else true`
+where `notB` abbreviates `λx:Bool. if x then false else true`
 
-(A) ` \x:Bool, x `
+(A) ` λx:Bool. x `
 
 (B) ` true `
 
@@ -1489,10 +1484,10 @@ where `notB` abbreviates `\x:Bool, if x then false else true`
 What does the following term normalize to?
 
 ```display
-(\x:Bool, x) (notB true) -->* ???
+(λx:Bool. x) (notB true) ⟶* ???
 ```
 
-(A) ` \x:Bool, x `
+(A) ` λx:Bool. x `
 
 (B) ` true `
 
@@ -1508,13 +1503,13 @@ What does the following term normalize to?
 Example:
 
 ```display
-(\x:Bool->Bool, x) (\x:Bool, x) -->* \x:Bool, x
+(λx:Bool → Bool. x) (λx:Bool. x) ⟶* λx:Bool. x
 ```
 
 i.e.,
 
 ```display
-idBB idB -->* idB
+idBB idB ⟶* idB
 ```
 
 ```lean
@@ -1530,14 +1525,14 @@ example : <{ ~idBB ~idB }> ⟶* idB := by
 Example:
 
 ```display
-(\x:Bool->Bool, x) ((\x:Bool->Bool, x) (\x:Bool, x))
-      -->* \x:Bool, x
+(λx:Bool → Bool. x) ((λx:Bool → Bool. x) (λx:Bool. x))
+      ⟶* λx:Bool. x
 ```
 
 i.e.,
 
 ```display
-(idBB (idBB idB)) -->* idB.
+(idBB (idBB idB)) ⟶* idB.
 ```
 
 ```lean
@@ -1556,16 +1551,16 @@ example : <{ ~idBB (~idBB ~idB) }> ⟶* idB := by
 Example:
 
 ```display
-(\x:Bool->Bool, x)
-   (\x:Bool, if x then false else true)
+(λx:Bool → Bool. x)
+   (λx:Bool. if x then false else true)
    true
-      -->* false
+      ⟶* false
 ```
 
 i.e.,
 
 ```display
-(idBB notB) true -->* false.
+(idBB notB) true ⟶* false.
 ```
 
 ```lean
@@ -1586,15 +1581,15 @@ example : <{ ~idBB ~notB true }> ⟶* <{ false }> := by
 Example:
 
 ```display
-(\x:Bool -> Bool, x)
-   ((\x:Bool, if x then false else true) true)
-      -->* false
+(λx:Bool → Bool. x)
+   ((λx:Bool. if x then false else true) true)
+      ⟶* false
 ```
 
 i.e.,
 
 ```display
-idBB (notB true) -->* false.
+idBB (notB true) ⟶* false.
 ```
 
 (Note that this term doesn't actually typecheck; even so, we can
@@ -1660,7 +1655,7 @@ meant to prevent reduction from getting stuck.
 
 ::::full
 For instance, the following two STLC terms are both stuck
-`if \x:Bool,x then true else false` (where we branch on a function
+`if λx:Bool. x then true else false` (where we branch on a function
 as a boolean) and `true false` (where we apply a boolean as a
 function).
 ::::
@@ -1669,12 +1664,12 @@ function).
 
 ::::full
 Although we are primarily interested in the binary relation
-`|-- t \in T`, relating a closed term `t` to its type `T`, we need
+`⊢ t ⦂ T`, relating a closed term `t` to its type `T`, we need
 to generalize a bit to make the definitions work.
 
-Consider checking that `\x:T11,t12` has type
-`T11->T12`. Intuitively, we need to check that `t12` has type
-`T12`. However, we have removed the binder `\x`, so `x` may occur
+Consider checking that `λx:T11. t12` has type
+`T11 → T12`. Intuitively, we need to check that `t12` has type
+`T12`. However, we have removed the binder `λx`, so `x` may occur
 free in `t12` (that is, `t12` may be _open_).  While checking that
 `t12` has type `T12`, we must remember that `x` has type `T11`, in
 order to deal with these free occurrences of `x`. Similarly, `t12`
@@ -1683,16 +1678,16 @@ could require looking up the declared types of yet more free
 variables.
 
 To keep track of all this, we add a third element to the relation,
-a _typing context_ `Gamma`, which records the types of the
-variables that may occur free in a term -- that is, Gamma is a
+a {deftech}_typing context_ `Γ`, which records the types of the
+variables that may occur free in a term -- that is, Γ is a
 partial map from variables to types.
 
-The new _typing judgment_ is written `Gamma |-- t \in T` and
+The new {deftech}_typing judgment_ is written `Γ ⊢ t ⦂ T` and
 informally read as "term `t` has type `T`, given the types of free
-variables in `t` as specified by `Gamma`".
+variables in `t` as specified by `Γ`".
 
-We'll also write `x |-> T ; Gamma` for "update the partial map
-`Gamma` so that it maps `x` to `T`," following the notation from
+We'll also write `x ↦ T ; Γ` for "update the partial map
+`Γ` so that it maps `x` to `T`," following the notation from
 the `Maps` chapter.
 
 With these refinements, we are ready to give informal and formal
@@ -1716,7 +1711,7 @@ what assumptions we should make about the types of its free
 variables.
 
 This leads us to a three-place _typing judgment_, informally
-written `Gamma |-- t \in T`, where `Gamma` is a
+written `Γ ⊢ t ⦂ T`, where `Γ` is a
 "typing context" -- a mapping from variables to their types.
 ::::
 
@@ -1732,7 +1727,7 @@ optional: {name}`none` at a variable means "not bound here".
 
 ::::terse
 Following the usual notation for partial maps, we write
-`(x |-> T, Gamma)` for "update the partial function `Gamma` so
+`(x ↦ T, Γ)` for "update the partial function `Γ` so
 that it maps `x` to `T`."
 ::::
 
@@ -1754,32 +1749,32 @@ More text needed? (YES!)
 :::
 
 ```display
-Gamma x = T1
+Γ x = T1
 ------------------                             (T_Var)
-Gamma |-- x \in T1
+Γ ⊢ x ⦂ T1
 
-x |-> T2 ; Gamma |-- t1 \in T1
+x ↦ T2 ; Γ ⊢ t1 ⦂ T1
 ------------------------------                     (T_Abs)
-Gamma |-- \x:T2,t1 \in T2->T1
+Γ ⊢ λx:T2. t1 ⦂ T2 → T1
 
-Gamma |-- t1 \in T2->T1
-Gamma |-- t2 \in T2
+Γ ⊢ t1 ⦂ T2 → T1
+Γ ⊢ t2 ⦂ T2
 ----------------------                          (T_App)
-Gamma |-- t1 t2 \in T1
+Γ ⊢ t1 t2 ⦂ T1
 
 -----------------------                         (T_True)
-Gamma |-- true \in Bool
+Γ ⊢ true ⦂ Bool
 
 ------------------------                       (T_False)
-Gamma |-- false \in Bool
+Γ ⊢ false ⦂ Bool
 
-Gamma |-- t1 \in Bool    Gamma |-- t2 \in T    Gamma |-- t3 \in T
+Γ ⊢ t1 ⦂ Bool    Γ ⊢ t2 ⦂ T    Γ ⊢ t3 ⦂ T
 -----------------------------------------------------------------    (T_If)
-Gamma |-- if t1 then t2 else t3 \in T
+Γ ⊢ if t1 then t2 else t3 ⦂ T
 ```
 
-We can read the three-place relation `Gamma |-- t \in T` as:
-"under the assumptions in Gamma, the term `t` has the type `T`."
+We can read the three-place relation `Γ ⊢ t ⦂ T` as:
+"under the assumptions in Γ, the term `t` has the type `T`."
 
 ::::full
 In the formal development, we write this judgment in
@@ -1999,8 +1994,8 @@ have no hint database, so both derivations are given explicitly.
 More examples:
 
 ```display
-empty |-- \x:Bool, \y:Bool->Bool, y (y x)
-      \in Bool -> (Bool->Bool) -> Bool.
+∅ ⊢ λx:Bool. λy:Bool → Bool. y (y x)
+      ⦂ Bool → (Bool → Bool) → Bool.
 ```
 
 ```lean
@@ -2064,11 +2059,10 @@ example :
 
 We can also show that some terms are _not_ typable.  For example,
 we can check that there is no typing derivation assigning a type
-to the term `\x:Bool, \y:Bool, x y` -- i.e.,
+to the term `λx:Bool. λy:Bool. x y` -- i.e.,
 
 ```display
-~ exists T,
-    empty |-- \x:Bool, \y:Bool, x y \in T.
+¬ ∃ T, ∅ ⊢ λx:Bool. λy:Bool. x y ⦂ T
 ```
 
 ```lean
@@ -2093,8 +2087,7 @@ example : ¬ ∃ T, <{ ∅ ⊢ λ x : Bool . λ y : Bool . x y ⦂ ~T }> := by
 Another nonexample:
 
 ```display
-~ (exists S T,
-      empty |-- \x:S, x x \in T).
+¬ ∃ S T, ∅ ⊢ λx:S. x x ⦂ T
 ```
 
 ::::full
@@ -2132,25 +2125,25 @@ inversion hypotheses.  Neither issue arises in this encoding.
 ::::quiz
 Which of the following propositions is _not_ provable?
 
-(A) `y:Bool |-- \x:Bool, x \in Bool->Bool`
+(A) `y ↦ Bool ; ∅ ⊢ λx:Bool. x ⦂ Bool → Bool`
 
-(B) `exists T,  empty |-- \y:Bool->Bool, \x:Bool, y x \in T`
+(B) `∃ T,  ∅ ⊢ λy:Bool → Bool. λx:Bool. y x ⦂ T`
 
-(C) `exists T,  empty |-- \y:Bool->Bool, \x:Bool, x y \in T`
+(C) `∃ T,  ∅ ⊢ λy:Bool → Bool. λx:Bool. x y ⦂ T`
 
-(D) `exists S, x:S |-- \y:Bool->Bool, y x \in (Bool->Bool)->S`
+(D) `∃ S, x ↦ S ; ∅ ⊢ λy:Bool → Bool. y x ⦂ (Bool → Bool) → S`
 ::::
 
 ::::quiz
 Which of these is not provable?
 
-(A) `exists T,  empty |-- \y:Bool->Bool->Bool, \x:Bool, y x \in T`
+(A) `∃ T,  ∅ ⊢ λy:Bool → Bool → Bool. λx:Bool. y x ⦂ T`
 
-(B) `exists S T,  x:S |-- x x x \in T`
+(B) `∃ S T, x ↦ S ; ∅ ⊢ x x x ⦂ T`
 
-(C) `exists S U T,  x:S, y:U |-- \z:Bool, x (y z) \in T`
+(C) `∃ S U T, x ↦ S ; y ↦ U ; ∅ ⊢ λz:Bool. x (y z) ⦂ T`
 
-(D) `exists S T,  x:S |-- \y:Bool, x (x y) \in T`
+(D) `∃ S T, x ↦ S ; ∅ ⊢ λy:Bool. x (x y) ⦂ T`
 ::::
 
 ::::hide
@@ -2160,23 +2153,23 @@ Which of these is not provable?
 -- EX1? (typing_statements)
 
 /- Which of the following propositions are provable?
-       - [y:Bool |-- \x:Bool,x \in Bool->Bool] -/
+       - [y:Bool ⊢ λx:Bool. x ⦂ Bool → Bool] -/
 -- QUIETSOLUTION
 /-             - Yes -/
 -- /QUIETSOLUTION
-/-        - [exists T,  empty |-- \y:Bool->Bool, \x:Bool, y x \in T] -/
+/-        - [∃ T,  ∅ ⊢ λy:Bool → Bool. λx:Bool. y x ⦂ T] -/
 -- QUIETSOLUTION
 /-             - Yes -/
 -- /QUIETSOLUTION
-/-        - [exists T,  empty |-- \y:Bool->Bool, \x:Bool, x y \in T] -/
+/-        - [∃ T,  ∅ ⊢ λy:Bool → Bool. λx:Bool. x y ⦂ T] -/
 -- QUIETSOLUTION
 /-             - No -/
 -- /QUIETSOLUTION
-/-        - [exists S, x:S |-- \y:Bool->Bool, y x \in (Bool->Bool)->S] -/
+/-        - [∃ S, x:S ⊢ λy:Bool → Bool. y x ⦂ (Bool → Bool) → S] -/
 -- QUIETSOLUTION
 /-             - Yes -/
 -- /QUIETSOLUTION
-/-        - [exists S T,  x:S |-- x x x \in T] -/
+/-        - [∃ S T,  x:S ⊢ x x x ⦂ T] -/
 -- QUIETSOLUTION
 /-             - No -/
 -- /QUIETSOLUTION
@@ -2188,44 +2181,44 @@ interesting if A/B/C are all changed to Bool. -/
 /- Which of the following propositions are provable (where [A], [B],
     and [C] stand for arbitrary types)?  For the ones that are, give
     witnesses for the existentially bound variables.
-       - [exists T,  empty |-- \y:B->B->B, \x:B, y x \in T] -/
+       - [∃ T,  ∅ ⊢ λy:B → B → B. λx:B. y x ⦂ T] -/
 -- QUIETSOLUTION
 /-          - Answer: Yes
 [[
-           T = (B->B->B)->B->(B->B)
+           T = (B → B → B) → B → (B → B)
 ]] -/
 -- /QUIETSOLUTION
-/-        - [exists T,  empty |-- \x:A->B, \y:B->C, \z:A, y (x z) \in T] -/
+/-        - [∃ T,  ∅ ⊢ λx:A → B. λy:B → C. λz:A. y (x z) ⦂ T] -/
 -- QUIETSOLUTION
 /-          - Answer: Yes
 [[
-           T = (A->B)->(B->C)->A->C
+           T = (A → B) → (B → C) → A → C
 ]] -/
 -- /QUIETSOLUTION
-/-        - [exists S U T,  x:S, y:U |-- \z:A, x (y z) \in T] -/
+/-        - [∃ S U T,  x:S, y:U ⊢ λz:A. x (y z) ⦂ T] -/
 -- QUIETSOLUTION
 /-          - Answer: Yes
 [[
-           S == B->C
-           U == A->B
-           T == A->C
+           S == B → C
+           U == A → B
+           T == A → C
 ]]
 or
 [[
-           S = A -> A
-           U = A -> A
-           T = A -> A
+           S = A → A
+           U = A → A
+           T = A → A
 ]] -/
 -- /QUIETSOLUTION
-/-        - [exists S T,  x:S |-- \y:A, x (x y) \in T] -/
+/-        - [∃ S T,  x:S ⊢ λy:A. x (x y) ⦂ T] -/
 -- QUIETSOLUTION
 /-          - Answer: Yes
 [[
-           S == A->A
-           T == A->A
+           S == A → A
+           T == A → A
 ]] -/
 -- /QUIETSOLUTION
-/-        - [exists S U T,  x:S |-- x (\z:U, z x) \in T] -/
+/-        - [∃ S U T,  x:S ⊢ x (λz:U. z x) ⦂ T] -/
 -- QUIETSOLUTION
 /-          - Answer: No -/
 -- /QUIETSOLUTION
