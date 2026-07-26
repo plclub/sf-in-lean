@@ -1225,7 +1225,9 @@ scoped notation:40 t:41 " ⟶* " t':41 => Multi Step t t'
 
 ::::full
 As in the {ref "Smallstep"}[Smallstep] chapter, `⟶*` is the multi-step closure
-of `⟶` -- that is, {name}`Multi` applied to this chapter's step relation.
+of `⟶` -- that is, {name}`Multi` applied to this chapter's step relation.  We
+inherit its reflexivity lemma along with it, so a zero-step execution goal
+`t ⟶* t` is closed by `rfl`.
 ::::
 
 ::::quiz
@@ -1320,7 +1322,7 @@ idBB idB ⟶* idB
 example : <{ ~idBB ~idB }> ⟶* idB := by
   apply Multi.step (y := idB)
   · exact .appAbs "x" <{ Bool → Bool }> <{ x }> idB (.abs ..)
-  · exact .refl _
+  · rfl
 ```
 
 :::slidebreak
@@ -1346,7 +1348,7 @@ example : <{ ~idBB (~idBB ~idB) }> ⟶* idB := by
       (.appAbs "x" <{ Bool → Bool }> <{ x }> idB (.abs ..))
   apply Multi.step (y := idB)
   · exact .appAbs "x" <{ Bool → Bool }> <{ x }> idB (.abs ..)
-  · exact .refl _
+  · rfl
 ```
 
 :::slidebreak
@@ -1376,7 +1378,7 @@ example : <{ ~idBB ~notB true }> ⟶* <{ false }> := by
   · exact .appAbs "x" <{ Bool }> <{ if x then false else true }> <{ true }> .tru
   apply Multi.step (y := <{ false }>)
   · exact .ifTrue <{ false }> <{ true }>
-  · exact .refl _
+  · rfl
 ```
 
 :::slidebreak
@@ -1409,7 +1411,7 @@ example : <{ ~idBB (~notB true) }> ⟶* <{ false }> := by
       (.ifTrue <{ false }> <{ true }>)
   apply Multi.step (y := <{ false }>)
   · exact .appAbs "x" <{ Bool → Bool }> <{ x }> <{ false }> .fls
-  · exact .refl _
+  · rfl
 ```
 
 ::::quiz
@@ -1446,7 +1448,7 @@ example : <{ ~idBBBB ~idBB ~idB }> ⟶* idB := by
         (.appAbs "x" <{ (Bool → Bool) → Bool → Bool }> <{ x }> idBB (.abs ..))
     apply Multi.step (y := idB)
     · exact .appAbs "x" <{ Bool → Bool }> <{ x }> idB (.abs ..)
-    · exact .refl _
+    · rfl
 ```
 :::::
 
