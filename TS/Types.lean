@@ -112,8 +112,14 @@ The language definition is completely routine.
 
 Here is the syntax of program terms, informally:
 
-```
-t ::= true | false | if t then t else t | 0 | succ t | pred t | iszero t
+```bnf
+t ::= "true"
+    | "false"
+    | "if" t "then" t "else" t
+    | "0"
+    | "succ" t
+    | "pred" t
+    | "iszero" t ;
 ```
 
 And here it is formally:
@@ -140,6 +146,18 @@ written inside `<{ … }>` -- for example `<{ if false then 0 else succ 0 }>` --
 mirroring the informal grammar above.  A bare identifier is spliced as a Lean
 term (so a variable `t` is written just `t`); `~e` escapes an arbitrary Lean
 expression, and `( … )` groups.
+
+You do not need to understand exactly how the declarations below work; every
+object language in this book is given its syntax the same way, so it is worth
+seeing the pattern once:
+
+- `declare_syntax_cat` adds a new non-terminal to Lean's grammar -- here `tm`,
+  the terms of this chapter's language.
+- Each `syntax` directive declares one production of that non-terminal, with
+  annotations fixing precedence, and the last one declares the `<{ … }>`
+  brackets that let a `tm` appear where Lean expects a term.
+- `macro_rules` then translates each production into the corresponding
+  constructor of {name}`Tm`.
 ::::
 
 ```lean
@@ -185,6 +203,7 @@ output print as `<{ … }>` rather than as a pile of constructors.  (Setting
 prints as `Bool` or `Nat`.
 ::::
 
+::::details (summary := "Notation encoding: printing terms back")
 ```lean
 open Lean PrettyPrinter Delaborator SubExpr Parenthesizer in
 /-- Re-inserts parentheses in `tm` output according to the grammar's precedences. -/
@@ -232,6 +251,7 @@ partial def delabTm : Delab := whenPPOption getPPNotation do
   | `(tm| ~$e) => pure e
   | e => `(<{ $e }>)
 ```
+::::
 
 ### Values
 
