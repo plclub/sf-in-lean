@@ -625,13 +625,13 @@ some type `X`?  (Add YES or NO to each line.)
   - `Mumble.c`
 
 :::solution
-- YES - {lean}`Grumble.d (Mumble.b Mumble.a 5)`
-- YES - {lean}`@Grumble.d Mumble (Mumble.b Mumble.a 5)`
-- YES - {lean}`@Grumble.d Bool (Mumble.b Mumble.a 5)`
-- YES - {lean}`@Grumble.e Bool true`
-- YES - {lean}`@Grumble.e Mumble (Mumble.b Mumble.c 0)`
-- NO  - `@Grumble.e Bool (Mumble.b Mumble.c 0)`
-- NO  - `Mumble.c`
+- YES — {lean}`Grumble.d (Mumble.b Mumble.a 5)`
+- YES — {lean}`@Grumble.d Mumble (Mumble.b Mumble.a 5)`
+- YES — {lean}`@Grumble.d Bool (Mumble.b Mumble.a 5)`
+- YES — {lean}`@Grumble.e Bool true`
+- YES — {lean}`@Grumble.e Mumble (Mumble.b Mumble.c 0)`
+- NO  — `@Grumble.e Bool (Mumble.b Mumble.c 0)`
+- NO  — `Mumble.c`
 :::
 
 :::::
@@ -1108,8 +1108,8 @@ Fortunately, there is a better way. We can construct a function
 "on the fly" without declaring it at the top level or giving it a
 name. Lean provides two syntaxes for anonymous functions:
 
-- `fun n => n * n` -- traditional lambda syntax
-- `(· * ·)` -- "term with holes" syntax, where `·` marks arguments
+- `fun n => n * n` — traditional lambda syntax
+- `(· * ·)` — "term with holes" syntax, where `·` marks arguments
 ::::
 
 ::::terse
