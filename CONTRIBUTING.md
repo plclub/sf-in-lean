@@ -11,6 +11,13 @@ tactics are introduced, etc. Please help keep it clear and up to date!
 ## Top-level orientation
 ### Guiding Philosophy
 
+These are the tenets of the SFL effort, in order. Consult these tenets
+when making a change: If your change is supported by them, then
+make it; no need for excessive coordination. If it is not supported by
+at least one tenet, then either your change is out of scope or a tenet
+is missing. If you are not sure then have a discussion (see below), and
+refer to the tenets to drive a decision (potentially updating the tenets).
+
 1. SFL aims for exceptional pedagogy and presentational polish.
 2. SFL is _exercise-based_: Every important concept comes with
    hands-on exercises to reinforce it, with solutions.
@@ -62,7 +69,7 @@ For discussions, we use a combination of tools.
   issues.
 
 - **On PRs:** We prefer _not_ holding longer discussions in annotations on 
-  PRs, because they tend to either get lost when the PR is merged or delay merging. Putting very local or short-term comments in this medium is fine -- or you can just make the change by directly adding commits to the PR, if it's clear whaet needs to be done.
+  PRs, because they tend to either get lost when the PR is merged or delay merging. Putting very local or short-term comments in this medium is fine -- or you can just make the change by directly adding commits to the PR, if it's clear what needs to be done.
 
 These conventions are still developing, so feel free to suggest better
 ways of working if you see them! 
@@ -187,7 +194,7 @@ we also want to avoid conflicts when possible. We use the [GitHub
 issue tracker](https://github.com/plclub/sf-in-lean/issues) for
 recording large tasks that need to be done (small or local tasks can
 just be recorded in comments in the affected .lean file) and for
-keeping track of work in progress, plus the status meta-issue for getting an overview of who is working where.
+keeping track of work in progress, plus the [Current Activity](https://github.com/plclub/sf-in-lean/issues/123) meta-issue for getting an overview of who is working where.
 1. Assign yourself or others to an issue if it is something you _may_
    work on or you want to be updated on discussions associated with
    the issue.  Being assigned to an issue does _not_ mean that you
@@ -196,7 +203,7 @@ keeping track of work in progress, plus the status meta-issue for getting an ove
 2. When you start working on an issue, assign it to yourself so that
    other people know you are thinking about it (if not already assigned).
 3. When you start *actually making changes*, make sure you
-   are working on a branch in the main repo (not a fork), and push your commits back to `main` frequently, so that others can see which files you are touching (by looking at the status meta-issue)
+   are working on a branch in the main repo (not a fork), and push your commits back to `main` frequently, so that others can see which files you are touching in the Current Activity meta-issue.
 4. When you submit a PR on your work, refer to the relevant issue in the
    PR message. Edit the work-in-progress issue with a pointer to the PR.
 5. Resolve the issue when the PR is resolved. Edit the work-in-progress

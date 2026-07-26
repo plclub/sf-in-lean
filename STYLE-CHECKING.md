@@ -73,7 +73,7 @@ ids to validate against — both come alive again as soon as the convention set
 ## Appendix — drafted convention set (starting point)
 
 _Preserved from the first STYLE.md draft; **not yet authoritative**. Detailed
-mechanics for several Lean items live in `CONTRIBUTING.md` under **Lean Style**._
+mechanics for several Lean items live in `STYLE.md` under **Lean Style**._
 
 ### Lean conventions
 - **LEAN-1 — Mathlib alignment.** Follow the Mathlib style and naming
@@ -84,7 +84,7 @@ mechanics for several Lean items live in `CONTRIBUTING.md` under **Lean Style**.
 - **LEAN-3 — Tactic discipline.** Introduce and use tactics in the established
   order; never use a tactic before the chapter has taught it.
 - **LEAN-4 — Naming and namespaces.** Follow the naming/namespace rules in
-  `CONTRIBUTING.md`.
+  `STYLE.md`.
 - **LEAN-5 — Argument visibility.** Choose implicit vs. explicit arguments per
   `CONTRIBUTING.md`.
 - **LEAN-6 — Clean elaboration.** Finished material elaborates with no linter
