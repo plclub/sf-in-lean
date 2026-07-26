@@ -239,14 +239,8 @@ or (E) can't be done with the tactics we've seen.
 :::
 ::::
 
-:::dev "Daniel Sainati (dsainati1)" NOW
-```
-We use this theorem later,
-   so let's make it into a review exercise here
-```
-:::
-
-Prove the following theorem, using theorems from Basics:
+:::::exercise (rating := 1) (name := "succ_eq_add_one")
+Prove the following theorem, using theorems from Basics.
 
 ```lean
 theorem succ_eq_add_one : ∀ n : Nat, succ n = n + one := by
@@ -255,6 +249,10 @@ theorem succ_eq_add_one : ∀ n : Nat, succ n = n + one := by
     rewrite [one_eq_succ_zero, add_succ, add_zero]
     rfl
 ```
+
+:::gradeTheorem 1 "succ_eq_add_one"
+:::
+:::::
 
 ## Proof by Induction
 
