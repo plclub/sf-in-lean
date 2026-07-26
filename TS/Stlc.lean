@@ -676,7 +676,7 @@ theorem notB_def : notB = <{ λ x : Bool . if x then false else true }> := rfl
 
 :::dev
 The Rocq source writes these as `Notation`s rather than `Definition`s, so that
-`auto` sees through them for free.  Our convention (CONTRIBUTING, "Definitions
+`auto` sees through them for free.  Our convention (STYLE, "Definitions
 vs. Abbreviations") is a `def` plus characterizing lemmas, so the places that
 depend on what a name stands for are visible in the proof rather than left to
 the elaborator.
