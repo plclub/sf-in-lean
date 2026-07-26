@@ -646,25 +646,41 @@ Here are the terms we will use as running examples, written in the new
 notation:
 
 ```lean
-abbrev idB := <{ λ x : Bool . x }>
+def idB := <{ λ x : Bool . x }>
 
-abbrev idBB := <{ λ x : Bool → Bool . x }>
+def idBB := <{ λ x : Bool → Bool . x }>
 
-abbrev idBBBB := <{ λ x : (Bool → Bool) → (Bool → Bool) . x }>
+def idBBBB := <{ λ x : (Bool → Bool) → (Bool → Bool) . x }>
 
-abbrev k := <{ λ x : Bool . λ y : Bool . x }>
+def k := <{ λ x : Bool . λ y : Bool . x }>
 ```
 
 :::slidebreak
 :::
 
 ```lean
-abbrev notB := <{ λ x : Bool . if x then false else true }>
+def notB := <{ λ x : Bool . if x then false else true }>
 ```
+
 ::::full
-(We write these as `abbrev`s rather than `def`s so that they unfold
-transparently wherever they appear in a proof.)
+These terms `def`s each with a characterizing lemma, which are used when proving reductions.
 ::::
+
+```lean
+theorem idB_def : idB = <{ λ x : Bool . x }> := rfl
+theorem idBB_def : idBB = <{ λ x : Bool → Bool . x }> := rfl
+theorem idBBBB_def : idBBBB = <{ λ x : (Bool → Bool) → (Bool → Bool) . x }> := rfl
+theorem k_def : k = <{ λ x : Bool . λ y : Bool . x }> := rfl
+theorem notB_def : notB = <{ λ x : Bool . if x then false else true }> := rfl
+```
+
+:::dev
+The Rocq source writes these as `Notation`s rather than `Definition`s, so that
+`auto` sees through them for free.  Our convention (CONTRIBUTING, "Definitions
+vs. Abbreviations") is a `def` plus characterizing lemmas, so the places that
+depend on what a name stands for are visible in the proof rather than left to
+the elaborator.
+:::
 
 Note that an abstraction `λ x : T . t` (formally, {name}`Tm.abs` applied to
 `x`, `T`, and `t`) is
@@ -751,6 +767,18 @@ inductive Value : Tm → Prop where
   | abs (x : String) (T2 : Ty) (t1 : Tm) : Value <{ λ ~x : ~T2 . ~t1 }>
   | tru : Value <{ true }>
   | fls : Value <{ false }>
+```
+
+::::full
+The example terms named above are all abstractions, hence all values.  We
+record that once each, so that the reduction examples can cite the fact by name
+instead of unfolding the definition again at every use.
+::::
+
+```lean
+theorem idB_value : Value idB := by rw [idB_def]; exact .abs ..
+theorem idBB_value : Value idBB := by rw [idBB_def]; exact .abs ..
+theorem notB_value : Value notB := by rw [notB_def]; exact .abs ..
 ```
 
 :::dev
@@ -1318,7 +1346,7 @@ idBB idB ⟶* idB
 ```lean
 example : <{ ~idBB ~idB }> ⟶* idB := by
   apply Multi.step (y := idB)
-  · exact .appAbs "x" <{ Bool → Bool }> <{ x }> idB (.abs ..)
+  · rw [idBB_def]; exact .appAbs "x" <{ Bool → Bool }> <{ x }> idB idB_value
   · rfl
 ```
 
@@ -1340,11 +1368,13 @@ i.e.,
 
 ```lean
 example : <{ ~idBB (~idBB ~idB) }> ⟶* idB := by
+  -- the same reduction happens twice, so we name it
+  have step1 : <{ ~idBB ~idB }> ⟶ idB := by
+    rw [idBB_def]; exact .appAbs "x" <{ Bool → Bool }> <{ x }> idB idB_value
   apply Multi.step (y := <{ ~idBB ~idB }>)
-  · exact .app2 idBB <{ ~idBB ~idB }> idB (.abs ..)
-      (.appAbs "x" <{ Bool → Bool }> <{ x }> idB (.abs ..))
+  · exact .app2 idBB <{ ~idBB ~idB }> idB idBB_value step1
   apply Multi.step (y := idB)
-  · exact .appAbs "x" <{ Bool → Bool }> <{ x }> idB (.abs ..)
+  · exact step1
   · rfl
 ```
 
@@ -1369,10 +1399,11 @@ i.e.,
 ```lean
 example : <{ ~idBB ~notB true }> ⟶* <{ false }> := by
   apply Multi.step (y := <{ ~notB true }>)
-  · exact .app1 <{ ~idBB ~notB }> notB <{ true }>
-      (.appAbs "x" <{ Bool → Bool }> <{ x }> notB (.abs ..))
+  · refine .app1 <{ ~idBB ~notB }> notB <{ true }> ?_
+    rw [idBB_def]; exact .appAbs "x" <{ Bool → Bool }> <{ x }> notB notB_value
   apply Multi.step (y := <{ if true then false else true }>)
-  · exact .appAbs "x" <{ Bool }> <{ if x then false else true }> <{ true }> .tru
+  · rw [notB_def]
+    exact .appAbs "x" <{ Bool }> <{ if x then false else true }> <{ true }> .tru
   apply Multi.step (y := <{ false }>)
   · exact .ifTrue <{ false }> <{ true }>
   · rfl
@@ -1401,13 +1432,14 @@ ask how it reduces.)
 ```lean
 example : <{ ~idBB (~notB true) }> ⟶* <{ false }> := by
   apply Multi.step (y := <{ ~idBB (if true then false else true) }>)
-  · exact .app2 idBB <{ ~notB true }> <{ if true then false else true }> (.abs ..)
-      (.appAbs "x" <{ Bool }> <{ if x then false else true }> <{ true }> .tru)
+  · refine .app2 idBB <{ ~notB true }> <{ if true then false else true }> idBB_value ?_
+    rw [notB_def]
+    exact .appAbs "x" <{ Bool }> <{ if x then false else true }> <{ true }> .tru
   apply Multi.step (y := <{ ~idBB false }>)
-  · exact .app2 idBB <{ if true then false else true }> <{ false }> (.abs ..)
+  · exact .app2 idBB <{ if true then false else true }> <{ false }> idBB_value
       (.ifTrue <{ false }> <{ true }>)
   apply Multi.step (y := <{ false }>)
-  · exact .appAbs "x" <{ Bool → Bool }> <{ x }> <{ false }> .fls
+  · rw [idBB_def]; exact .appAbs "x" <{ Bool → Bool }> <{ x }> <{ false }> .fls
   · rfl
 ```
 
@@ -1441,10 +1473,11 @@ and it belongs in the Smallstep chapter, not here.
 example : <{ ~idBBBB ~idBB ~idB }> ⟶* idB := by
   solution!
     apply Multi.step (y := <{ ~idBB ~idB }>)
-    · exact .app1 <{ ~idBBBB ~idBB }> idBB idB
-        (.appAbs "x" <{ (Bool → Bool) → Bool → Bool }> <{ x }> idBB (.abs ..))
+    · refine .app1 <{ ~idBBBB ~idBB }> idBB idB ?_
+      rw [idBBBB_def]
+      exact .appAbs "x" <{ (Bool → Bool) → Bool → Bool }> <{ x }> idBB idBB_value
     apply Multi.step (y := idB)
-    · exact .appAbs "x" <{ Bool → Bool }> <{ x }> idB (.abs ..)
+    · rw [idBB_def]; exact .appAbs "x" <{ Bool → Bool }> <{ x }> idB idB_value
     · rfl
 ```
 :::::
@@ -1526,16 +1559,6 @@ written `Γ ⊢ t ⦂ T`, where `Γ` is a
 ```lean
 abbrev Context := TotalMap String (Option Ty)
 ```
-
-:::dev
-`abbrev`, not `def`: CONTRIBUTING's rule is that a `def` encapsulates a type
-behind an API, while an `abbrev` names one whose innards stay visible.  A
-{name}`Context` is the latter -- we never build a `Context.*` API, and every use
-below reaches straight through to the map operations (`Γ[x]`, `∅`, update).
-`HL.Imp`'s `State` is the same shape and is likewise an `abbrev`.  Contrast
-`Lists`' `Bag`, which is becoming a `def` precisely because it *does* have an
-API of its own.
-:::
 
 ::::full
 A context is a _partial map_ from variable names to types, which we build --
