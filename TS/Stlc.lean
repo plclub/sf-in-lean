@@ -929,6 +929,42 @@ def delabSubst : Delab := whenPPOption getPPNotation do
 ```
 ::::
 
+::::full
+As we did for the evaluators in the {ref "Slang"}[Slang] chapter, we pair the
+definition with one _simplification lemma_ per constructor, saying how `subst`
+behaves on that constructor. The variable and abstraction cases
+each need two lemmas, since substitution treats a bound name differently
+depending on whether it is the name being substituted for.
+::::
+
+```lean
+variable (x y : String) (s t t1 t2 t3 : Tm) (T : Ty)
+
+@[simp] theorem subst_var_eq : <{ [~x := ~s] ~(Tm.var x) }> = s := by
+  simp [subst]
+
+@[simp] theorem subst_var_ne (h : x ≠ y) : <{ [~x := ~s] ~(Tm.var y) }> = .var y := by
+  simp [subst, h]
+
+@[simp] theorem subst_abs_eq : <{ [~x := ~s] (λ ~x : ~T . ~t) }> = <{ λ ~x : ~T . ~t }> := by
+  simp [subst]
+
+@[simp] theorem subst_abs_ne (h : x ≠ y) :
+    <{ [~x := ~s] (λ ~y : ~T . ~t) }> = <{ λ ~y : ~T . [~x := ~s] ~t }> := by
+  simp [subst, h]
+
+@[simp] theorem subst_app :
+    <{ [~x := ~s] (~t1 ~t2) }> = <{ ([~x := ~s] ~t1) ([~x := ~s] ~t2) }> := rfl
+
+@[simp] theorem subst_tru : <{ [~x := ~s] true }> = <{ true }> := rfl
+
+@[simp] theorem subst_fls : <{ [~x := ~s] false }> = <{ false }> := rfl
+
+@[simp] theorem subst_ite :
+    <{ [~x := ~s] (if ~t1 then ~t2 else ~t3) }> =
+      <{ if [~x := ~s] ~t1 then [~x := ~s] ~t2 else [~x := ~s] ~t3 }> := rfl
+```
+
 :::ignore
 Checks that the substitution notation parses and nests as intended.
 
@@ -1073,27 +1109,19 @@ theorem substi_correct (s : Tm) (x : String) (t t' : Tm) :
       induction t with
       | var y =>
           by_cases hxy : x = y
-          · subst hxy; simpa [subst] using Substi.var1
-          · simpa [subst, hxy] using Substi.var2 y hxy
+          · subst hxy; simp; exact .var1
+          · simp [hxy]; exact .var2 y hxy
       | app t1 t2 ih1 ih2 => exact .app _ _ _ _ ih1 ih2
       | abs y T t1 ih =>
           by_cases hxy : x = y
-          · subst hxy; simpa [subst] using Substi.abs1 T t1
-          · simpa [subst, hxy] using Substi.abs2 y T t1 _ hxy ih
+          · subst hxy; simp; exact .abs1 T t1
+          · simp [hxy]; exact .abs2 y T t1 _ hxy ih
       | tru => exact .tru
       | fls => exact .fls
       | ite t1 t2 t3 ih1 ih2 ih3 => exact .ite _ _ _ _ _ _ ih1 ih2 ih3
     · -- ←
       intro h
-      induction h with
-      | var1 => simp [subst]
-      | var2 y hxy => simp [subst, hxy]
-      | abs1 T t1 => simp [subst]
-      | abs2 y T t1 t1' hxy _ ih => simp [subst, hxy, ih]
-      | app t1 t2 t1' t2' _ _ ih1 ih2 => simp [subst, ih1, ih2]
-      | tru => simp [subst]
-      | fls => simp [subst]
-      | ite t1 t2 t3 t1' t2' t3' _ _ _ ih1 ih2 ih3 => simp [subst, ih1, ih2, ih3]
+      induction h <;> simp_all
 ```
 :::::
 
@@ -1427,6 +1455,8 @@ example : <{ ~idBBBB ~idBB ~idB }> ⟶* idB := by
 
 Next we consider the typing relation of the STLC, which is
 meant to prevent reduction from getting stuck.
+
+TODO: Put the following two examples in a decription list maybe?
 
 ::::full
 For instance, the following two STLC terms are both stuck
