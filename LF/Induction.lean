@@ -1407,7 +1407,7 @@ theorem double_incr_bin (b : Bin) :
 Let's return to our desired theorem:
 
 ```lean +error
-example b : natToBin (binToNat b) = b := by
+example (b : Bin) : natToBin (binToNat b) = b := by
 ```
 
 The theorem fails because there are some {name}`Bin` such that we won't
