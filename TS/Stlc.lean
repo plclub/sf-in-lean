@@ -259,38 +259,40 @@ Some examples of STLC terms:
 :::slidebreak
 :::
 
-Now reconsider our examples, each along with its type:
+::::full
+The last two examples show, the STLC is a language of
+{deftech}_higher-order_ functions: we can write down functions that take
+other functions as arguments and/or return other functions as results.
 
-- `λx:Bool. false` has type `Bool → Bool`
+The STLC doesn't provide any primitive syntax for defining _named_
+functions: i.e., all functions are "anonymous."  We'll see in chapter
+`MoreStlc` that it is easy to add named functions -- indeed, the
+fundamental naming and binding mechanisms are exactly the same.
+::::
+
+Now reconsider our examples, each along with its type:
 
 - `λx:Bool. x` has type `Bool → Bool`
 
 - `(λx:Bool. x) true` has type `Bool`
 
+- `λx:Bool. if x then false else true` has type `Bool → Bool`
+
+- `λx:Bool. true` has type `Bool → Bool`
+
 - `λx:Bool. λy:Bool. x` has type `Bool → Bool → Bool`
                         (i.e., `Bool → (Bool → Bool)`)
 
-- `(λx:Bool. λy:Bool. x) false` has type `Bool → Bool`
-
 - `(λx:Bool. λy:Bool. x) false true` has type `Bool`
+
+The last two, higher-order examples are left off the list on purpose -- working out
+their types is the subject of the quizzes that follow.
 
 ::::terse
 Note that _all_ functions are anonymous.
 
 We'll see how to add named function declarations as "syntactic
 sugar" in the `MoreStlc` chapter.
-::::
-
-::::full
-As the last few of the examples show, the STLC is a language of
-{deftech}_higher-order_ functions: we can write down functions that take
-other functions as arguments and/or return other functions as
-results.
-
-The STLC doesn't provide any primitive syntax for defining _named_
-functions: i.e., all functions are "anonymous."  We'll see in chapter
-`MoreStlc` that it is easy to add named functions -- indeed, the
-fundamental naming and binding mechanisms are exactly the same.
 ::::
 
 :::slidebreak
@@ -646,41 +648,21 @@ Here are the terms we will use as running examples, written in the new
 notation:
 
 ```lean
-def idB := <{ λ x : Bool . x }>
+abbrev idB := <{ λ x : Bool . x }>
 
-def idBB := <{ λ x : Bool → Bool . x }>
+abbrev idBB := <{ λ x : Bool → Bool . x }>
 
-def idBBBB := <{ λ x : (Bool → Bool) → (Bool → Bool) . x }>
+abbrev idBBBB := <{ λ x : (Bool → Bool) → (Bool → Bool) . x }>
 
-def k := <{ λ x : Bool . λ y : Bool . x }>
+abbrev k := <{ λ x : Bool . λ y : Bool . x }>
 ```
 
 :::slidebreak
 :::
 
 ```lean
-def notB := <{ λ x : Bool . if x then false else true }>
+abbrev notB := <{ λ x : Bool . if x then false else true }>
 ```
-
-::::full
-These terms `def`s each with a characterizing lemma, which are used when proving reductions.
-::::
-
-```lean
-theorem idB_def : idB = <{ λ x : Bool . x }> := rfl
-theorem idBB_def : idBB = <{ λ x : Bool → Bool . x }> := rfl
-theorem idBBBB_def : idBBBB = <{ λ x : (Bool → Bool) → (Bool → Bool) . x }> := rfl
-theorem k_def : k = <{ λ x : Bool . λ y : Bool . x }> := rfl
-theorem notB_def : notB = <{ λ x : Bool . if x then false else true }> := rfl
-```
-
-:::dev
-The Rocq source writes these as `Notation`s rather than `Definition`s, so that
-`auto` sees through them for free.  Our convention (STYLE, "Definitions
-vs. Abbreviations") is a `def` plus characterizing lemmas, so the places that
-depend on what a name stands for are visible in the proof rather than left to
-the elaborator.
-:::
 
 Note that an abstraction `λ x : T . t` (formally, {name}`Tm.abs` applied to
 `x`, `T`, and `t`) is
@@ -776,9 +758,9 @@ instead of unfolding the definition again at every use.
 ::::
 
 ```lean
-theorem idB_value : Value idB := by rw [idB_def]; exact .abs ..
-theorem idBB_value : Value idBB := by rw [idBB_def]; exact .abs ..
-theorem notB_value : Value notB := by rw [notB_def]; exact .abs ..
+theorem idB_value : Value idB := .abs ..
+theorem idBB_value : Value idBB := .abs ..
+theorem notB_value : Value notB := .abs ..
 ```
 
 :::dev
@@ -1174,19 +1156,19 @@ informally as
 is traditionally called {deftech}_beta-reduction_.
 ::::
 
-```display
-value v
------------------------                      (ST_AppAbs)
-(λx:T. t) v ⟶ [x:=v]t
+```
+                               value v
+                       -----------------------      (appAbs)
+                        (λx:T. t) v ⟶ [x:=v]t
 
-t1 ⟶ t1'
-----------------                           (ST_App1)
-t1 t2 ⟶ t1' t2
+                              t1 ⟶ t1'
+                          ----------------          (app1)
+                           t1 t2 ⟶ t1' t2
 
-value v1
-t2 ⟶ t2'
-----------------                           (ST_App2)
-v1 t2 ⟶ v1 t2'
+                              value v1
+                              t2 ⟶ t2'
+                          ----------------          (app2)
+                           v1 t2 ⟶ v1 t2'
 ```
 
 ::::terse
@@ -1196,21 +1178,21 @@ v1 t2 ⟶ v1 t2'
 ::::full
 ... plus the usual rules for conditionals:
 
-```display
-              --------------------------------               (ST_IfTrue)
-              (if true then t1 else t2) ⟶ t1
+```
+                  --------------------------------                (ifTrue)
+                   (if true then t1 else t2) ⟶ t1
 
-              ---------------------------------              (ST_IfFalse)
-              (if false then t1 else t2) ⟶ t2
+                  ---------------------------------               (ifFalse)
+                   (if false then t1 else t2) ⟶ t2
 
-                       t1 ⟶ t1'
---------------------------------------------------------     (ST_If)
-(if t1 then t2 else t3) ⟶ (if t1' then t2 else t3)
+                              t1 ⟶ t1'
+        ----------------------------------------------------      (ifStep)
+         (if t1 then t2 else t3) ⟶ (if t1' then t2 else t3)
 ```
 ::::
 
 ::::terse
-The `ST_AppAbs` rule is often called {deftech}_beta-reduction_.
+The `appAbs` rule is often called {deftech}_beta-reduction_.
 ::::
 
 This is {deftech}_call by value_ reduction: to reduce an
@@ -1346,7 +1328,7 @@ idBB idB ⟶* idB
 ```lean
 example : <{ ~idBB ~idB }> ⟶* idB := by
   apply Multi.step (y := idB)
-  · rw [idBB_def]; exact .appAbs "x" <{ Bool → Bool }> <{ x }> idB idB_value
+  · exact .appAbs "x" <{ Bool → Bool }> <{ x }> idB idB_value
   · rfl
 ```
 
@@ -1370,7 +1352,7 @@ i.e.,
 example : <{ ~idBB (~idBB ~idB) }> ⟶* idB := by
   -- the same reduction happens twice, so we name it
   have step1 : <{ ~idBB ~idB }> ⟶ idB := by
-    rw [idBB_def]; exact .appAbs "x" <{ Bool → Bool }> <{ x }> idB idB_value
+    exact .appAbs "x" <{ Bool → Bool }> <{ x }> idB idB_value
   apply Multi.step (y := <{ ~idBB ~idB }>)
   · exact .app2 idBB <{ ~idBB ~idB }> idB idBB_value step1
   apply Multi.step (y := idB)
@@ -1399,11 +1381,10 @@ i.e.,
 ```lean
 example : <{ ~idBB ~notB true }> ⟶* <{ false }> := by
   apply Multi.step (y := <{ ~notB true }>)
-  · refine .app1 <{ ~idBB ~notB }> notB <{ true }> ?_
-    rw [idBB_def]; exact .appAbs "x" <{ Bool → Bool }> <{ x }> notB notB_value
+  · exact .app1 <{ ~idBB ~notB }> notB <{ true }>
+      (.appAbs "x" <{ Bool → Bool }> <{ x }> notB notB_value)
   apply Multi.step (y := <{ if true then false else true }>)
-  · rw [notB_def]
-    exact .appAbs "x" <{ Bool }> <{ if x then false else true }> <{ true }> .tru
+  · exact .appAbs "x" <{ Bool }> <{ if x then false else true }> <{ true }> .tru
   apply Multi.step (y := <{ false }>)
   · exact .ifTrue <{ false }> <{ true }>
   · rfl
@@ -1432,14 +1413,13 @@ ask how it reduces.)
 ```lean
 example : <{ ~idBB (~notB true) }> ⟶* <{ false }> := by
   apply Multi.step (y := <{ ~idBB (if true then false else true) }>)
-  · refine .app2 idBB <{ ~notB true }> <{ if true then false else true }> idBB_value ?_
-    rw [notB_def]
-    exact .appAbs "x" <{ Bool }> <{ if x then false else true }> <{ true }> .tru
+  · exact .app2 idBB <{ ~notB true }> <{ if true then false else true }> idBB_value
+      (.appAbs "x" <{ Bool }> <{ if x then false else true }> <{ true }> .tru)
   apply Multi.step (y := <{ ~idBB false }>)
   · exact .app2 idBB <{ if true then false else true }> <{ false }> idBB_value
       (.ifTrue <{ false }> <{ true }>)
   apply Multi.step (y := <{ false }>)
-  · rw [idBB_def]; exact .appAbs "x" <{ Bool → Bool }> <{ x }> <{ false }> .fls
+  · exact .appAbs "x" <{ Bool → Bool }> <{ x }> <{ false }> .fls
   · rfl
 ```
 
@@ -1473,11 +1453,10 @@ and it belongs in the Smallstep chapter, not here.
 example : <{ ~idBBBB ~idBB ~idB }> ⟶* idB := by
   solution!
     apply Multi.step (y := <{ ~idBB ~idB }>)
-    · refine .app1 <{ ~idBBBB ~idBB }> idBB idB ?_
-      rw [idBBBB_def]
-      exact .appAbs "x" <{ (Bool → Bool) → Bool → Bool }> <{ x }> idBB idBB_value
+    · exact .app1 <{ ~idBBBB ~idBB }> idBB idB
+        (.appAbs "x" <{ (Bool → Bool) → Bool → Bool }> <{ x }> idBB idBB_value)
     apply Multi.step (y := idB)
-    · rw [idBB_def]; exact .appAbs "x" <{ Bool → Bool }> <{ x }> idB idB_value
+    · exact .appAbs "x" <{ Bool → Bool }> <{ x }> idB idB_value
     · rfl
 ```
 :::::
@@ -1574,29 +1553,29 @@ that it maps `x` to `T`."
 
 ## Typing Relation
 
-```display
-Γ x = T1
-------------------                             (T_Var)
-Γ ⊢ x ⦂ T1
+```
+                              Γ x = T1
+                            ------------                       (var)
+                             Γ ⊢ x ⦂ T1
 
-x ↦ T2 ; Γ ⊢ t1 ⦂ T1
-------------------------------                     (T_Abs)
-Γ ⊢ λx:T2. t1 ⦂ T2 → T1
+                        x ↦ T2 ; Γ ⊢ t1 ⦂ T1
+                      -------------------------                (abs)
+                       Γ ⊢ λx:T2. t1 ⦂ T2 → T1
 
-Γ ⊢ t1 ⦂ T2 → T1
-Γ ⊢ t2 ⦂ T2
-----------------------                          (T_App)
-Γ ⊢ t1 t2 ⦂ T1
+                          Γ ⊢ t1 ⦂ T2 → T1
+                            Γ ⊢ t2 ⦂ T2
+                         ------------------                    (app)
+                           Γ ⊢ t1 t2 ⦂ T1
 
------------------------                         (T_True)
-Γ ⊢ true ⦂ Bool
+                          -----------------                    (tru)
+                           Γ ⊢ true ⦂ Bool
 
-------------------------                       (T_False)
-Γ ⊢ false ⦂ Bool
+                         ------------------                    (fls)
+                          Γ ⊢ false ⦂ Bool
 
-Γ ⊢ t1 ⦂ Bool    Γ ⊢ t2 ⦂ T    Γ ⊢ t3 ⦂ T
------------------------------------------------------------------    (T_If)
-Γ ⊢ if t1 then t2 else t3 ⦂ T
+             Γ ⊢ t1 ⦂ Bool    Γ ⊢ t2 ⦂ T1    Γ ⊢ t3 ⦂ T1
+            ---------------------------------------------      (ite)
+                   Γ ⊢ if t1 then t2 else t3 ⦂ T1
 ```
 
 We can read the three-place relation `Γ ⊢ t ⦂ T` as:
@@ -1614,20 +1593,22 @@ In the formal development, we write this judgment inside the same
 ::::
 
 ::::full
-Contexts get a grammar of their own, `stlcCtx`: the empty context is `∅`, a
-context extended with a binding is `x ↦ T ; Γ`, and `~e` escapes to a Lean
-expression of type {name}`Context`.  The whole judgment then goes inside the
-same `<{ … }>` brackets as terms, written with the turnstile and colon of the
-{ref "Types"}[Types] chapter: `<{ Γ ⊢ t ⦂ T }>`.
-
-The *meaning* is the map update we already have -- `x ↦ T ; Γ` expands to
-exactly the `Typeclasses` chapter's update on `Γ` -- but its surface syntax has
-to be our own, because inside these brackets all three positions are in object
-syntax.  Writing the map notation directly would mean writing the binding as
-`"x" →ₜ some <{ Bool → Bool }> ; Γ`: the name quoted, the value wrapped in
-{name}`some`, and the type escaped back out of the brackets it belongs in.  The
-grammar hides those three encoding details, and nothing else.
+A context is written `∅` when empty and `x ↦ T ; Γ` when extended with a
+binding, and `~e` escapes to a Lean expression of type {name}`Context`.  The
+whole judgment then goes inside the same `<{ … }>` brackets as terms, written
+with the turnstile and colon of the {ref "Types"}[Types] chapter:
+`<{ Γ ⊢ t ⦂ T }>`.
 ::::
+
+::::details (summary := "Notation encoding: contexts and judgments")
+Contexts get a grammar of their own, `stlcCtx`.  The *meaning* is the map update
+we already have -- `x ↦ T ; Γ` expands to exactly the `Typeclasses` chapter's
+update on `Γ` -- but its surface syntax has to be our own, because inside these
+brackets all three positions are in object syntax.  Writing the map notation
+directly would mean writing the binding as `"x" →ₜ some <{ Bool → Bool }> ; Γ`:
+the name quoted, the value wrapped in {name}`some`, and the type escaped back
+out of the brackets it belongs in.  The grammar hides those three encoding
+details, and nothing else.
 
 ```lean
 declare_syntax_cat stlcCtx
@@ -1648,13 +1629,21 @@ partial def ctxTerm (G : TSyntax `stlcCtx) : MacroM Term :=
   | _ => Macro.throwUnsupported
 ```
 
+As with `subst`, the judgment notation is used inside the definition it names,
+so it is introduced in two steps: the rule below is declared `local` with
+hygiene off, so the `HasType` in its expansion resolves to the relation being
+declared, and after the `section` closes it is declared again for real use.
+
 ```lean
 section
 set_option hygiene false in
 local macro_rules (kind := judgeBracket)
   | `(<{ $G:stlcCtx ⊢ $t:stlcTm ⦂ $T:stlcTy }>) => do
       `(HasType $(← ctxTerm G) <{ $t:stlcTm }> <{ $T:stlcTy }>)
+```
+::::
 
+```lean
 inductive HasType : Context → Tm → Ty → Prop where
   | var (Γ : Context) (x : String) (T1 : Ty) (h : Γ[x] = some T1) :
       <{ ~Γ ⊢ ~(Tm.var x) ⦂ ~T1 }>
@@ -1672,12 +1661,20 @@ inductive HasType : Context → Tm → Ty → Prop where
       (h1 : <{ ~Γ ⊢ ~t1 ⦂ Bool }>) (h2 : <{ ~Γ ⊢ ~t2 ⦂ ~T1 }>)
       (h3 : <{ ~Γ ⊢ ~t3 ⦂ ~T1 }>) :
       <{ ~Γ ⊢ if ~t1 then ~t2 else ~t3 ⦂ ~T1 }>
+```
+
+::::details (summary := "Notation encoding: the judgment, for real")
+Closing the `section` retires the hygiene-free rule; the same rule is then
+declared again, hygienically, for every later use.
+
+```lean
 end
 
 macro_rules (kind := judgeBracket)
   | `(<{ $G:stlcCtx ⊢ $t:stlcTm ⦂ $T:stlcTy }>) => do
       `(HasType $(← ctxTerm G) <{ $t:stlcTm }> <{ $T:stlcTy }>)
 ```
+::::
 
 ::::details (summary := "Notation encoding: printing judgments back")
 As with terms, a judgment prints back in its own notation, so that a goal reads
