@@ -201,6 +201,13 @@ def evalF (t : Tm) : Nat :=
 Here is the same evaluator, written in exactly the same style, but formulated as an
 inductively defined relation. We use the notation `t ⇓ n` for "`t` evaluates to `n`."
 
+The `notation` command below is how that is declared: it introduces `⇓` as
+infix syntax for the `Eval` relation defined with it, with a precedence saying
+how tightly it binds.
+This is the lightweight way to name a relation; later chapters, where a whole
+object language needs a grammar rather than a single operator, reach for
+`declare_syntax_cat` instead.
+
 ```
                         -------                (const)
                         c n ⇓ n
