@@ -1302,7 +1302,7 @@ def natToBin (n : Nat) : Bin := solution!(
 ```lean
 -- SOLUTION
 theorem natToBin_zero : natToBin zero = .z := by rfl
-theorem natToBin_succ m : natToBin (succ m) = incr (natToBin m) := by rfl
+theorem natToBin_succ (m : Nat) : natToBin (succ m) = incr (natToBin m) := by rfl
 -- END SOLUTION
 ```
 
