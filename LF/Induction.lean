@@ -1056,17 +1056,6 @@ theorem add_shuffle3 (n m p : Nat) :
 :::gradeTheorem 1 "add_shuffle3"
 :::
 
-:::dev "Claude" NOW
-Rendering bug (all three build products look wrong). This helper-lemma block
-wraps its *entire* contents in the `-- SOLUTION`/`-- END SOLUTION`
-comment-marker idiom, which the Verso HTML build does not process (only the
-`solution!` tactic is handled). Result: in *student* and *terse* the block
-renders empty with a spurious `unexpected end of input` error and a doubled
-`-- FILL IN HERE`; in *solutions* the lemma is shown but the literal
-`-- SOLUTION` / `-- END SOLUTION` comment lines leak into the displayed code.
-(The generated `.lean` files are correct.) Fix by expressing `succ_mul` with
-the `solution!` tactic instead of the comment markers.
-:::
 ```lean
 theorem succ_mul (m n : Nat) :
     (succ n) * m = (n * m) + m := by
