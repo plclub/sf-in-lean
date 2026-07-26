@@ -887,10 +887,13 @@ The effect of this definition is that `Multi R` relates two elements `x` and `y`
 - `x = y`, or
 - `R x y`, or
 - there is some nonempty sequence `z₁`, `z₂` , ..., `zₙ` such that
-           `R x₁ z₁`,
-           `R z₁ z₂`,
-           ...,
-           `R zₙ y`.
+
+  ```display
+  R x₁ z₁,
+  R z₁ z₂,
+  ...,
+  R zₙ y.
+  ```
 
 Intuitively, if `R` describes a single-step of computation, then `z₁ ... zₙ` are the intermediate steps of computation that get us from `x` to `y`.
 ::::

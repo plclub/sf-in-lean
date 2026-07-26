@@ -3,12 +3,10 @@
 This file records the conventions and important decisions we have made
 about writing *Software Foundations in Lean* (SFL): workflow, Lean
 coding style, Verso markup, comment conventions, the order in which
-tactics are introduced, etc.
+tactics are introduced, etc. Please help keep it clear and up to date!
 
-We don't have many contributors yet outside the core group that's been
-working together on the translation for a couple of months, so there
-are certain to be things that are not clear.  Please help us figure
-out what those are and document the clarifications in this file.
+> **Style guide:** The present file covers *workflow and mechanics*. For stylistic matters — Lean conventions, pedagogical and presentational
+> conventions, and writing style — see [STYLE.md](STYLE.md). Please have a look at it before contributing.
 
 ## Top-level orientation
 ### Guiding Philosophy
@@ -30,31 +28,24 @@ refer to the tenets to drive a decision (potentially updating the tenets).
     - Corollary: Definitions and proofs are written in idiomatic Lean
       (mostly the way it is for engineering/maintainability reasons),
       only deviating (temporarily) for strong pedagogical reasons.
-      (Specific patterns and rules are given at the end of this file,
-       starting with **Lean Style**.)
+      Specific patterns and rules are given later in this file,
+      starting with **Lean Style**.
 4. SFL developments connect with those in
    [CSLib](https://github.com/leanprover/cslib/tree/main) where
    possible. Some of SFL's languages, semantics, etc. might eventually
    be contributed to CSLib.
 
-## Zulip
-
-The [SFL contributors
-  channel](https://leanprover.zulipchat.com/#narrow/channel/607217-lean-software-foundations-contributors)
-  channel on the Lean Zulip is the main forum for discussing the translation
-  effort. 
-
 ## Communicating among ourselves
 
 For discussions, we use a combination of tools.  
 
-- If you have a high-level comment or want to start a discussion about
-  an issue of general interest, post on the [SFL contributors Zulip
-  channel](https://leanprover.zulipchat.com/#narrow/channel/607217-lean-software-foundations-contributors).  
-
-  This channel is private and is expected to remain private. If, at
+- **Zulip:** The private [SFL contributors
+  channel](https://leanprover.zulipchat.com/#narrow/channel/607217-lean-software-foundations-contributors)
+  channel on the Lean Zulip is the main forum for discussing the translation effort. 
+  If you have a high-level comment or want to start a discussion about
+  an issue of general interest, post here. (This channel is private and is expected to remain private. If, at
   some point, we find ourselves with a lot more people actively
-  involved and/or no need to keep anything private, we may sunset it. 
+  involved and/or no need to keep anything private, we may sunset it.)
 
   There is also a `lean-software-foundations` channel, which is
   currently not used for much (most people working on SFL are not even
@@ -62,10 +53,10 @@ For discussions, we use a combination of tools.
   main role for the moment is that some of the lead maintainers of
   Verso are members.
 
-- If you are working with others to tackle a specific GitHub issue,
+- **GitHub issues:** If you are working with others to tackle a specific GitHub issue,
   you can use comments on that issue for discussion and coordination.
 
-- If you have a local comment that you want someone to think about at
+- **In-text:** If you have a local comment that you want someone to think about at
   some point when they have that section of the material paged in, put
   it directly in the appropriate .lean file, either in a comment (if
   it's a plain .lean file) or in a `:::dev` block (if it's been
@@ -77,20 +68,17 @@ For discussions, we use a combination of tools.
   In-text comments can also be used for coordinating work on specific
   issues.
 
-We prefer _not_ holding discussions in annotations on PRs, because
-they tend to either get lost when the PR is merged or delay merging.
-Putting very local or short-term comments in this medium is fine -- or
-you can just make the change by directly editing the PR, if you think
-it's clear.
+- **On PRs:** We prefer _not_ holding longer discussions in annotations on 
+  PRs, because they tend to either get lost when the PR is merged or delay merging. Putting very local or short-term comments in this medium is fine -- or you can just make the change by directly adding commits to the PR, if it's clear what needs to be done.
 
 These conventions are still developing, so feel free to suggest better
 ways of working if you see them! 
 
 ### Repo organization and make-fu
 
-Each volume gets its own top-level directory (LF, HL, etc.).
+Each volume has its own top-level directory (LF, HL, etc.).
 
-Within that directory, each chapter gets a `.lean` file, in Verso format.
+Within that directory, each chapter has a `.lean` file, in Verso format.
 
 Running `make` at the top level produces, for each volume, three
 different ready-for-distribution outputs in a temporary top-level
@@ -99,6 +87,7 @@ different ready-for-distribution outputs in a temporary top-level
   - **solutions** (full prose, solutions shown)
   - **terse**     (little prose, no solutions, workinclass elided;
                    for lecturing)
+There are also more specific `make` targets that build faster: see the `Makefile`.
 
 To build everything and preview it locally, do `make serve`,
 then visit http://localhost:8000
@@ -123,11 +112,13 @@ Our CI uses a small GitHub Actions workflow:
 It runs `make` on every pull request and on every push to `main`.
 
 We also have branch protection enabled, which requires the following before merging:
-* At least one approval before merge is allowed
-* Linear history (use rebase and squash merge)
+* At least one approval from someone on the `sf-mergers` list before merge is allowed
+* No outstanding conversations on the PR
 * CI build succeeds
 
-## Cadence of code changes
+We use a linear history, with squash-and-rebase merges.
+
+## Workflow
 
 General guideline: Prefer just making changes as a PR rather than
 talking about them first. To make sure your PR is likely to be
@@ -167,6 +158,35 @@ review it. Please address these comments in a subsequent commit, either
 making appropriate changes or else responding in the file with your
 own comments.
 
+### Stacked PRs
+
+Sometimes you want to keep working on a follow-up (chunk 2) while chunk 1 is
+still waiting for review, and chunk 2 builds on chunk 1. Don't wait — and don't
+branch chunk 2 off `main`, or it will show chunk 1's changes too and report
+spurious conflicts. Instead **base the second branch and PR on the first
+branch**:
+
+```
+gh pr create --base <chunk-1-branch> --head <chunk-2-branch>
+```
+
+GitHub then diffs chunk 2 against chunk 1, so the PR shows only the incremental
+change, with no false conflicts, and it automatically retargets chunk 2's base
+to `main` once chunk 1 merges. You can keep stacking (chunk 3 on chunk 2, …)
+and review/merge bottom-up.
+
+One wrinkle: we use **squash-merge** for PRs, and squashing collapses chunk 1 into a
+single new commit on `main` that shares no history with the original branch, so after
+chunk 1 merges the still-open chunk 2 will suddenly report conflicts. The fix
+is a one-time rebase that drops the now-redundant commits and replants your real
+work on top of `main`:
+
+```
+git fetch origin
+git rebase --onto origin/main <old-chunk-1-tip> <chunk-2-branch>
+git push --force-with-lease
+```
+
 ## Tools for coordinating work
 
 We prefer to move fast rather than over-coordinate synchronously, but
@@ -174,8 +194,7 @@ we also want to avoid conflicts when possible. We use the [GitHub
 issue tracker](https://github.com/plclub/sf-in-lean/issues) for
 recording large tasks that need to be done (small or local tasks can
 just be recorded in comments in the affected .lean file) and for
-keeping track of work in progress that other people should be careful
-not to step on.
+keeping track of work in progress, plus the [Current Activity](https://github.com/plclub/sf-in-lean/issues/123) meta-issue for getting an overview of who is working where.
 1. Assign yourself or others to an issue if it is something you _may_
    work on or you want to be updated on discussions associated with
    the issue.  Being assigned to an issue does _not_ mean that you
@@ -183,11 +202,8 @@ not to step on.
    associated files.
 2. When you start working on an issue, assign it to yourself so that
    other people know you are thinking about it (if not already assigned).
-3. When you start *actually making changes* on a branch, edit the
-   [Work In Progress](https://github.com/plclub/sf-in-lean/issues/25)
-   issue (it is pinned at the top of the issues page on GH) so that
-   people know to be careful not to step on your work. If/when you have
-   a branch for your work, link it from the work-in-progress issue.
+3. When you start *actually making changes*, make sure you
+   are working on a branch in the main repo (not a fork), and push your commits back to `main` frequently, so that others can see which files you are touching in the Current Activity meta-issue.
 4. When you submit a PR on your work, refer to the relevant issue in the
    PR message. Edit the work-in-progress issue with a pointer to the PR.
 5. Resolve the issue when the PR is resolved. Edit the work-in-progress
@@ -195,26 +211,31 @@ not to step on.
 
 ### Branch activity dashboard
 
-To see at a glance who is working on what, look at the pinned [🔭 Branch &
-file activity](https://github.com/plclub/sf-in-lean/issues/123) issue. It is
-regenerated automatically and shows the status of every active branch and file.
+To see at a glance who is working on what, look at the pinned [Current
+Activity](https://github.com/plclub/sf-in-lean/issues/123) issue. It is
+regenerated automatically every half hour (and when PRs are created or merged) and shows the status of every active branch and file on the remote.
 
 We use this display very actively to make sure we're not stepping on each others' toes and see where coordination is required.
 
-### Native-Verso chapters and the extractor
+Reading the table:
 
-Every chapter in every volume is now authored **directly in Verso** — a plain
-`<Vol>/<Ch>.lean` whose prose lives in `#doc (Manual)` markup.  (Genuine
-plain-Lean *support libraries* such as `LF/CustomTactics.lean` are not chapters
-and stay plain Lean.)  There is no longer a code-forward `.lean` → generated
-`<Ch>Verso.lean` step: `make` just builds the books and extracts the three
-per-variant `.lean`/HTML projects under `_out/`.
+- **Status** — the branch's open PR (or "No PR") and how close it is to
+  merging: "Review required" while a `sfl-mergers` code owner still has to
+  approve; "(N unresolved)" open review threads; "Ready" once approved with
+  nothing unresolved; "🚧 auto-merge held" when auto-merge is on but the PR is
+  stuck outside the merge queue; and "⚠️ conflicts with `main`" when the branch
+  no longer merges cleanly.
+- **Overlaps** — other active branches touching the same files. ⚠️ marks a 
+  merge conflict; `(includes)` / `(included in)` means this branch fully
+  contains / is contained in the other (stacked work, never a conflict); `A ⊃
+  B` groups a concurrent overlap B under another overlap A that contains it.
+- `archive/…` branches are omitted.
 
-`scripts/to_verso.py` (and its two fidelity checkers) is retained only for
-**porting a new chapter from Rocq** — see "Porting chapters from Rocq" below;
-it is no longer part of the `make` build.
+## Repo organization technicalities (optional)
 
-**Extractor maintenance (permanent).**  The standalone-`.lean` extractor
+[Most contributors can skip this section.]
+
+**Extractor maintenance.**  The standalone-`.lean` extractor
 (`SFLMeta/Save.lean`) resolves a chapter's dependencies two ways, and one needs
 ongoing upkeep: when a chapter imports a Verso chapter from an *earlier volume*
 (e.g. `HL.Imp` imports `LF.Typeclasses`), that cross-volume dependency must be
@@ -224,872 +245,7 @@ needs a compile-time `%doc`).  Plain-Lean support-lib prerequisites
 (`CustomTactics`, `SFLCompat`) are instead bundled verbatim by `bundleLoop` and
 need no per-import upkeep.
 
-## Lean Style
-
-We generally follow the [Mathlib style
-guide](https://leanprover-community.github.io/contribute/style.html)
-and [naming conventions](https://leanprover-community.github.io/contribute/naming.html),
-with the caveat around pedagogy in our SFL **Philosophy** (given above),
-which requires (among other things) adhering to the order of tactics, given next.
-We use the Lean linter by default.
-
-### Tactics: order of introduction
-
-A core pedagogical decision is that tactics are introduced gradually.
-The table below lists the tactics **first introduced** in each
-chapter, in chapter order. It is derived from the current sources
-(tactic-position occurrences in real code, comments excluded) and
-should be kept in sync as chapters are rewritten.
-
-| Chapter           | Tactics first introduced |
-|-------------------|--------------------------|
-| `Basics`          | `rfl`, `intro`, `rewrite`, `cases`, `exact` |
-| `Induction`       | `induction`, `have`, `rw`, `<;>` |
-| `UsingLean`       | `dsimp`, `calc`, `exact?`, `rw?` |
-| `Lists`           | *(none new)* |
-| `Poly`            | *(none new)* |
-| `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `unfold`, `split` |
-| `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
-| `IndProp`         | `rcases`, `subst` |
-| `Typeclasses`     | `decide` |
-| `Automation`      | `lia`, `try`, `repeat`, `specialize`, `trivial`, `simp`, `generalize` |
-| `HL/Imp`          | *(none new)* |
-
-**Notes**
-- **`lia` rather than `omega`** The latter is being phased out.
-- `IndPropRegexp` has been folded into `Automation`
-- `Maps` will be folded into `Typeclasses`
-- Candidate tactics still to be placed include `show`, `rename_i`, `revert`, `suffices`, `tauto`. 
-- Tactics `grind`, `aesop`, are deferred to a later volume, following
-  FPiL's caution that `grind` is overwhelming for beginners. 
-
-Related notation introduced alongside tactics: anonymous constructor
-`⟨…⟩` (`Lists`); destructuring `let ⟨…⟩ := …` and `cases h : …`,
-`induction … generalizing …` (`Tactics`); projection/`Iff` syntax
-`.left`, `.right`, `.mp`, `.mpr`, and rewriting by an `↔` (`Logic`).
-
-### SFL-specific conventions
-
-* **Structured `cases`/`induction`.** Prefer
-
-  ```lean
-  cases b with
-  | true  => …
-  | false => …
-  ```
-
-  over the separate `case` syntax *and* over the bare `·` goal selector — i.e. prefer
-  `cases h with | …` / `induction h with …`.
-  Put each alternative on its own unindented line beginning with `|`.
-
-* Keep short branch bodies inline: 
-  
-  ```lean
-  cases b, c with
-  | true, false => rfl
-  | false, _ => simp
-  ```
-
-  *Optionally*, align patterns across alternatives:
-
-  ```lean
-  cases b, c with
-  | true,  _ => rfl
-  | false, _ => simp
-  ```
-
-  For multiline branch bodies, put `=>` after the alternative *without* padding
-  and indent the body by two spaces, **aligned** with the alternative name:
-
-  ```lean
-  cases b with
-  | true =>
-    simp
-    exact h
-  | false =>
-    rw [h]
-    exact hf
-  ```
-  
-* **`rewrite` before `rw`** (see tactic chart above) --
-  `rw [h]` is roughly `rewrite [h]; rfl`, which is too strong at
-  first: it hides the closing `rfl` and makes proofs step
-  confusingly (the goal vanishes when you step past the final `]`).
-  We introduce `rw` specifically in `Induction.lean` and use from
-  then on.
-
-* **`example` for one-off demos.** Prefer `example …` over a named
-  `theorem foo …` for throwaway illustrations (tactic demos, "silly" lemmas,
-  etc.) that are never referenced later — Lean's `example` doesn't force us to
-  invent a name (unlike Rocq).  Reserve names for results used elsewhere or
-  graded. (berberman, review of PR #61.)
-
-* **Explicit rewrites over `dsimp`/`simp` through notation** (see
-  "Notation and simplification").
-
-* **Library vs. client code.** Inside a definition's own library it is
-  fine to unfold and simplify through definitions; *using* that code,
-  do not "peek through the interface."
-
-#### Names and namespaces
-
-Follow the Lean library's naming conventions:
-
-- Theorems and proof names use `snake_case`, e.g. `add_swap`, `rev_app_distr`;
-- Types and propositions (including definitions returning `Prop`) use `UpperCamelCase`, e.g. `Aexp`, `IsValue`;
-- Other values and functions use `lowerCamelCase`, e.g. `isEven`, `doubleBin`.
-
-Almost always, definitions and theorems relating to a type belong in a
-namespace with the same name as the type. Define the type first, then open its
-companion namespace and use bare member names inside it:
-
-```lean
-inductive Tm where
-  ...
-
-namespace Tm
-
-def IsValue (t : Tm) : Prop := ...
-
-theorem value_is_nf (t : Tm) (h : IsValue t) : IsNormalForm t := by
-  ...
-
-end Tm
-```
-
-Write `def eval` inside `namespace Aexp`, rather than `def Aexp.eval` inside
-that namespace.
-
-#### Theorem arguments and visibility
-
-Put a theorem's arguments before the colon rather than introducing them with
-`∀` in its result. For example, prefer the following style
-
-```lean
-theorem add_swap (a b c : Nat) :
-    a + (b + c) = b + (a + c) := by
-  ...
-```
-
-over:
-
-```lean
-theorem add_swap : ∀ a b c : Nat,
-    a + (b + c) = b + (a + c) := by
-  ...
-```
-
-Always give binders explicit type annotations, even when Lean can infer them.
-For example, write `(n : Nat)`, `{α : Type}`, and `(h : P)` rather than bare `n`, `{α}`, or `h`.
-
-Type parameters should normally be implicit when later arguments determine them:
-
-```lean
-theorem isNil_cons {α : Type} (x : α) (xs : List α) :
-    isNil (x :: xs) = False := by
-  ...
-```
-
-For small equational lemmas for `rw` or `simp`, make arguments
-implicit when the displayed equation determines them. This follows the style of
-Lean's list lemmas. For example, `map_cons` can be used simply as `rw [map_cons]`:
-
-```lean
-theorem map_cons {α β : Type} {f : α → β}
-    {head : α} {tail : List α} :
-    map f (head :: tail) = f head :: map f tail := by
-  ...
-```
-
-However, do _not_ make a theorem's main inputs implicit merely because unification could
-infer them from the conclusion. Keep the principal function, collection,
-point, or other subject explicit when callers are likely to apply the theorem
-directly. For example:
-
-```lean
-theorem foldMap_correct {α β : Type}
-    (f : α → β) (l : List α) :
-    foldMap f l = map f l := by
-  ...
-
-theorem uncurry_curry {α β γ : Type}
-    (f : α → β → γ) (x : α) (y : β) :
-    prodCurry (prodUncurry f) x y = f x y := by
-  ...
-```
-
-If those arguments were implicit, callers would need
-named arguments such as `(f := f)` and `(l := l)`.
-
-An index may be implicit when treating it as inferred data is natural for the
-theorem's use:
-
-```lean
-theorem isEven_iff_Even {n : Nat} :
-    isEven n = true ↔ Even n := by
-  ...
-```
-
-### Incomplete code, expected errors, and diagnostics
-
-Use `sorry` to admit a declaration, `+error` to show code that Lean rejects,
-`-keep` to keep a block from changing the later environment, and
-`#guard_msgs` only when the output itself is being checked.
-
-#### `sorry`
-
-Use `sorry` when an unfinished declaration must remain available to later code,
-as with an exercise scaffold or a theorem used below. Do _not_ normally wrap it
-in `#guard_msgs`: the generic warning is not what we are testing, and the guard
-is stripped from the HTML and extracted projects.
-
-````lean
-```lean
-theorem pumping ... : ... := by
-  sorry
-```
-````
-
-#### `+error`
-
-Use `+error` for stuck proofs, failed tactics, incomplete matches, type errors,
-and other code that Lean should reject.
-
-If the point is simply that `rfl` fails, use an expected-error block rather
-than checking its diagnostic:
-
-````lean
-```lean +error
-example (a b : Nat) : a + b = b + a := by
-  -- `rfl` doesn't work here!
-  rfl
-```
-````
-
-Likewise, leave a one-off stuck proof unfinished instead of closing it with `sorry`:
-
-````lean
-```lean +error
-example (c n : Nat) :
-    myRepeat n c ++ myRepeat n c = myRepeat n (c + c) := by
-  induction c with
-  ...
-  | succ c' ih =>
-    ...
-    -- Now we seem to be stuck.
-```
-````
-
-#### `-keep`
-
-Use `-keep` for successful code whose declarations or other effects should not
-reach later blocks. This instance, for example, is deliberately misleading:
-
-````lean
-```lean -keep
-instance : HasOne Nat where
-  one := 2
-```
-````
-
-Combine `-keep` with `+error` when a failed declaration would otherwise reserve
-its name:
-
-````lean
-```lean +error -keep
-def x : Nat := "str"
-```
-````
-
-Without `-keep`, `x` cannot be redefined later in the chapter.
-
-#### `#guard_msgs`
-
-Use `#guard_msgs` when the message text, severity, or position is part of the
-test. The guard and its expected-message doc comment are checked while the book
-is compiled, then stripped from the HTML and extracted projects.
-
-This includes interactive-tactic suggestions:
-
-```lean
-/-- info: Try this:
-  exact Nat.add_comm a b -/
-#guard_msgs(info) in
-example (a b : Nat) : a + b = b + a := by
-  exact?
-```
-
-It also includes regression tests for custom tactics and commands:
-
-```lean
-#guard_msgs in
-sf_expect_failure?
-  def incomplete (n : Nat) : Nat :=
-    match n
-```
-
-Do _not_ guard every command that happens to print information. In particular,
-an __ordinary `#check` needs no guard__:
-
-````lean
-```lean
-#check Nat.add
-```
-````
-
-Guard `#check` only when its printed form is what the example is testing. For
-example, `Imp` checks its custom delaborator this way:
-
-````lean
-```lean
-/-- info: aexp {3 + X * 2} : Aexp -/
-#guard_msgs in
-#check aexp {3 + (X * 2)}
-```
-````
-
-### Unicode Text and Formatting
-
-Go Unicode-native! Use subscripts on variables, like x₁ x₂  etc. Use α Γ etc. 
-for type variables and other standard notation. Use arrows like → ⇓ for reduction
-and evaluation. TODO: Elaborate on guidelines here.
-
-We will use the standard Lean auto-formatter when it's released.
-
-### Notation and simplification
-
-When notation is implemented via typeclass instances, `dsimp [add]` / `dsimp
-[app]` do *not* resolve the instance down to the underlying definition, and
-`simp` is often too powerful for teaching. So **rewrite explicitly by equational
-lemmas** when possible instead — e.g. `n + (m + 1) = n + m + 1` or `(h :: t) ++
-l = h :: t ++ l` — rather than reaching for `dsimp`/`simp` in this book.
-
-There is some flexibility here, but there are some **important** nuances. 
-Please read the list below to understand when using `dsimp`/`simp` is appropriate.
-
-
-1) When possible, use `rewrite`/`rw` over `dsimp`. 
-2) If you must use `dsimp`, **do not use `dsimp`** before `UsingLean.lean`. 
-3) If you must use `simp`, **do not use `simp`** before `Automation.lean`. 
-4) If using `simp` with definitions (only in or after `Automation.lean`), 
-   **tag theorems not definitions, with `@[simp]`**. 
-Example: 
-
-```lean
-/- Do not use @[simp] here -/
-def add (n : Nat) (m : Nat) : Nat :=
-  match m with
-  | zero => n
-  | succ m' => succ (add n m')
-
-@[simp] /- Use it here instead... -/
-theorem add_zero : ∀ n : Nat, n + zero = n := by
-  intro n
-  rfl
-@[simp] /- ... and here. -/
-theorem add_succ : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
-  intro n m
-  rfl
-
-```
-
-5) **The book may not use `grind` in any place.**
-6) In and after the `Automation.lean` chapter, using `simp` and `dsimp` is
-    appropriate.
-
-### Definitions vs. Abbreviations
-
-Abbreviations let syntax-based tactics like `rw` and `simp` to see the underlying term implicitly.
-Abbreviations should never be used for functions -- use definitions plus characterizing lemmas instead.
-To encapsulate a type with an API boundary, use a definition rather than an abbreviation.
-However, abbreviations can be used to create a type alias that do not intend to encapsulate an inner type.
-
-As an example, the `DefDemoGood` is idiomatic, whereas the `AbbrevDemoBad` is not:
-
-```lean
-namespace AbbrevDemoBad
-
-abbrev Bag := List Nat
-abbrev Bag.empty : Bag := []
-theorem Bag.foo : empty ++ empty = empty := by
-  rw [List.append_nil]
-
-end AbbrevDemoBad
-
-namespace DefDemoGood
-
-def Bag := List Nat
-deriving Append
-
-def Bag.empty : Bag := []
-theorem Bag.empty_def : Bag.empty = [] := rfl
-theorem Bag.append_nil (s : Bag) : s ++ empty = s := List.append_nil s
-theorem Bag.foo : empty ++ empty = empty := by
-  rw [Bag.append_nil]
-
-end DefDemoGood
-```
-
-### Arithmetic / the custom `Nat`
-
-`Basics` defines its own `Nat` with `zero`/`succ` constructors and
-overrides the stdlib typeclasses for `-`, `*`, and `^` (but **not**
-`+`, which is too pervasive in the stdlib to shadow safely). Write
-arithmetic proofs against these definitions (`add_succ`, `add_zero`,
-`mul_succ`, …). `calc`-style equational reasoning is introduced in
-`Induction`.
-
-
-## Verso markup conventions
-
-BCP: Claude-generated material here -- human review needed...
-
-### Chapter file structure
-
-Each chapter is a single `.lean` file in its volume directory.
-
-Sections within a chapter use standard markdown headings (`#`, `##`,
-`###`, …) relative to the `#doc` level.
-
-Lean declarations (`def`, `theorem`, `inductive`, etc.) appear directly
-in the Verso source and are elaborated by Lean as the book is compiled,
-so type errors and broken proofs are caught at build time.  Code that
-should appear in the rendered HTML uses fenced `` ```lean `` blocks.
-
-### Displays: `` ```display `` and `` ```displaymath ``
-
-Two fenced blocks (parallel to `` ```lean `` and `` ```bnf ``) set material off
-from the prose as a *display*.  Both are implemented by
-`SFLMeta/DisplayMath.lean`.
-
-**`` ```display `` — set-off Lean code, no typesetting.** Shows its body verbatim
-as (non-elaborated, non-highlighted) monospace code, set off from the prose.  The
-body is never parsed or elaborated, so anything is safe — deliberately ill-formed
-snippets, shell transcripts, and the informal `[[ … ]]` equations of the paper
-proofs:
-
-````
-```display
-n + (m + p) = (n + m) + p.
-```
-````
-
-This is the home for the coqdoc `[[ … ]]` displays: **`to_verso` emits a
-`` ```display `` block for every `[[ … ]]`** (in both the `.lean` and the `.v`
-front-ends).  The content is thus preserved and marked as a display rather than
-left as an anonymous `` ``` `` fence.  coqdoc uses the same `[[ … ]]` for shell/code
-displays (`make Basics.vo`) and for displayed math, and the two are not
-mechanically distinguishable, so `to_verso` treats them uniformly as
-`` ```display `` — always safe, never elaborated.
-
-In the HTML a display is set off and indented a few characters from the left
-margin (not flush left, not centered).  In the *generated* `.lean` files (the
-per-variant student/solutions/terse extracts) a display is rendered specially: it
-becomes its own comment, each source line kept on its own line and indented under
-`-- `, and — unlike ordinary prose — it is **never reflowed/filled** into a
-paragraph, because a display's line structure is significant.
-
-**`` ```displaymath `` — real typeset math.** For a genuine *displayed equation*,
-typeset as mathematics by the bundled KaTeX:
-
-````
-```displaymath
-n + (m + p) = (n + m) + p.
-```
-````
-
-Each non-blank line becomes one centered display equation.  The body is **LaTeX**:
-for the plain arithmetic identities that pervade the informal proofs
-(`0 + (m + p) = (0 + m) + p.`) the source text is already valid LaTeX and renders
-directly; where finer control is wanted an author writes the corresponding LaTeX
-(`\mathsf{S}` for a roman constructor, `\text{and}` between two columns, an
-`aligned` environment to line up `=`).  Verso also accepts a single inline display
-natively as `` $$`…` `` inside prose.
-
-Promoting the genuinely-mathematical `` ```display `` blocks to `` ```displaymath ``
-is a manual editing pass on the `.lean` chapter; `to_verso` does not attempt it
-automatically.
-
-### Fence depth: `:::` vs `::::`
-
-Verso uses colon-fence depth the same way markdown uses backtick depth
-for nesting.  Use **three colons** (`:::`) for a directive whose body
-contains only prose and code blocks.  Use **four colons** (`::::`)
-whenever the body itself contains three-colon directives.
-
-In practice the widths follow the nesting: leaf directives (`:::dev`,
-`:::instructors`, `:::hide`, `:::answer`, `:::grade`, `:::solution`, `:::terse`,
-`:::slidebreak`, `:::suppressPreviousHeaderWhenTerse`) are always three colons;
-a `::::full` / `::::hide` / `::::quiz`
-that nests a leaf uses four; an `:::::exercise` that nests those uses five.
-`to_verso` computes the minimal correct width automatically; when hand-authoring,
-just make each container strictly wider than everything directly nested inside
-it.
-
-### Build variants and prose directives
-
-Every chapter is compiled once but rendered in three _variants_:
-- **student** — full prose, solutions elided
-- **solutions** — full prose, solutions shown
-- **terse** — abridged prose for live-coding / lecturing
-
-Three directives control what prose appears in which variant.
-
-**`::::full … ::::`** — Content for the reading builds (student and
-solutions). This is the main narrative that students encounter in the
-book. Hidden in the terse build to keep lecture slides uncluttered.
-
-```
-::::full
-One notable thing about Lean is that its set of built-in features is
-_extremely_ small.  For example, instead of the usual palette of
-atomic data types (booleans, integers, strings, etc.), Lean offers
-a powerful mechanism for defining new data types from scratch…
-::::
-```
-
-**`:::suppressPreviousHeaderWhenTerse` / `:::`** — Marks the section
-heading immediately above it as full-only.  A heading cannot be nested
-inside `::::full` (headings create document sections; directives hold
-blocks), so a heading that should appear only in the reading builds stays
-at document level and is followed by this empty marker instead:
-
-```
-# Additional Exercises
-
-:::suppressPreviousHeaderWhenTerse
-:::
-```
-
-In the terse build the heading is suppressed (hidden in the HTML, omitted
-from the generated `.lean`); the section's *content* is unaffected and
-still follows the usual `::::full` / `:::terse` controls.  `to_verso`
-emits the marker for every heading that sits inside a `-- FULL` region in
-the bare-Lean source (the SF convention scopes most book section headings
-to the full build; lecture flow is structured by `:::slidebreak` instead).
-
-**`:::terse … :::`** — Content shown _only_ in the terse build.
-Typically a one- or two-sentence cue for a live-coding presenter,
-standing in for the adjacent `::::full` prose.
-
-```
-:::terse
-A datatype definition:
-:::
-```
-
-**`:::solution … :::`** — Prose shown only in the **solutions** build.
-Use this for worked prose answers to open-ended exercises:
-discussions, design rationale, or illustrative code that is not
-intended to compile. (For _compilable_ answers inside `lean` blocks,
-use `solution!` or `-- SOLUTION`, described below.)
-
-The standard pattern at each presentation point is a `:::terse` cue
-followed by a `::::full` narrative block followed by a shared `lean`
-code block.  All three builds see the code; only the relevant prose
-builds see each prose variant.
-
-### Exercise and grading infrastructure
-
-**`::::exercise (rating := N) (name := "foo") … ::::`** — Marks an
-exercise block.  `rating` is a difficulty from 1 (easy) to 5 (hard);
-`name` is a short identifier used in headings and cross-references.
-Renders as a styled box with stars in HTML; produces a `### Exercise
-(N stars): foo` module-doc heading in the extracted `.lean` files.
-Should always contain a nested `:::grade` block.
-
-Typical structure:
-
-```
-::::exercise (rating := 1) (name := "nandb")
-Remove the `sorry`s below and complete the definition of `nandb`…
-
-  [lean block with solution! markers]
-
-:::grade
-```
-GRADE_THEOREM 1: nandb_test4
-```
-:::
-::::
-```
-
-**`:::grade … :::`** — Grading spec, always nested inside
-`::::exercise`. Contains one or more `GRADE_THEOREM <pts>: <name>` or
-`GRADE_MANUAL <pts>: <name>` lines for autograding scripts. Currently
-a noop in all rendered outputs (body discarded at elaboration); the
-spec survives verbatim in the Verso source for tooling.
-
-### `lean` block flags
-
-Use ordinary fenced `lean` blocks for examples that should elaborate in
-the chapter, appear in the rendered book, affect later Lean blocks,
-and be emitted as normal Lean code in generated projects for teachers and students.
-
-Some examples are meant to be shown or checked without becoming persistent code in
-generated projects:
-
-|block|rendered book|generated project|
-|---|---|---|
-|`` ```lean ``|shown|normal (executable) code|
-|`` ```lean -show``|hidden|normal code|
-|`` ```lean +error``|shown as expected failure|wrapped in an indented `sf_expect_failure` block|
-|`` ```lean +error -show``(rare)|hidden|wrapped in an indented `sf_expect_failure` block|
-|`` ```lean -keep``|shown|wrapped in an indented `sf_experiment` block|
-|`` ```lean -keep -show`` (rare)|hidden|wrapped in an indented `sf_experiment` block|
-
-Do not put definitions needed later in `-keep` or `+error` blocks as they will not become
-executable declarations in the generated projects, though they still get rendered in the book. 
-
-### Quizzes
-
-**`::::quiz … ::::`** — A multiple-choice review question: the body holds the
-question prose and the options, and the answer goes in a nested **`:::answer`**.
-
-* A *provable* answer is a plain (verbatim) ` ``` ` fence holding the Lean
-  theorem — shown for reference, not re-elaborated (so it is not type-checked;
-  keep it in sync with live definitions by hand).
-* A deliberately *false* / unprovable claim is kept as an illustration: state it
-  and leave the proof stuck with an explanatory comment (the SFL analogue of
-  Rocq's `Abort`) — do **not** `sorry` it, and do **not** make it a live
-  ` ```lean ` block.
-
-`:::answer` — like the other author-only tags — is a noop today (dropped from
-every build), reserved for a future answer-revealing build.  Use `:::answer`
-(not `:::hide`) for a quiz's answer, so that future build can find it.
-
-### Solution mechanisms inside `lean` blocks
-
-Both mechanisms are elaborated by Lean at compile time (errors in the
-model solution are caught during the build) and produce two source
-variants — teacher (solutions visible) and student (solutions hidden)
-— written to `_out/<vol>/solutions/lean/` and
-`_out/<vol>/student/lean/`.
-
-**`solution!(expr)`** — Wraps a single term or tactic sequence.
-In the teacher variant the `solution!` keyword is stripped, leaving
-the body.  In the student variant the entire `solution!(…)` call is
-replaced with `sorry`.
-
-```lean
-def nandb (b1 : MyBool) (b2 : MyBool) : MyBool
-  := solution!(match b1 with
-  | .true  => notb b2
-  | .false => .true)
-
-example : nandb .true .false = .true := solution!(by rfl)
-```
-
-For tactic proofs, write `solution! <tacticSeq>` inside a `by` block.
-
-**`-- SOLUTION … -- END SOLUTION`** — Textual block for answers that
-span multiple lines and cannot be wrapped in a single expression: the
-constructors of an inductive type, a multi-line proof, etc.  In the
-student variant the whole region (markers included) is replaced with a
-single `-- FILL IN HERE` comment at the same indentation.  In the
-teacher variant the marker lines are stripped and the body is kept.
-
-```lean
-inductive Bin : Type where
--- SOLUTION
-  | z  : Bin
-  | b0 : Bin → Bin
-  | b1 : Bin → Bin
--- END SOLUTION
-```
-
-**Convention:** prefer `solution!(…)` for a single term or tactic sequence.
-Use `-- SOLUTION … -- END SOLUTION` only where the elided region stays *valid as
-a comment* — the constructors of an `inductive`, or a whole top-level
-declaration (the student sees `-- FILL IN HERE` in its place).
-
-**Do not use `-- SOLUTION` for a `def` body or a proof body.**  Eliding those to
-`-- FILL IN HERE` leaves an incomplete `def … :=` or an empty `by` block, which
-fails to compile — and a stubbed `def` must keep its *name* defined so later code
-still elaborates.  Wrap those in `solution!(…)` instead, so the student variant
-becomes `:= sorry` / `by sorry`.  (Use `-- END SOLUTION` as the closer, not
-`-- /SOLUTION`; `to_verso` rewrites the code-forward `-- /SOLUTION` to it, but
-hand-authored Verso must use `-- END SOLUTION`.)
-
-### Author-only annotations
-
-These directives are invisible in rendered outputs (HTML, TeX, and generated
-`.lean` files) — with one exception: an *actionable* `:::dev` note (urgency
-`NOW`, `TODO`, or none — see below) is passed through, brightly highlighted in
-the HTML and as a labelled comment in the generated `.lean` files.
-
-Write author-facing notes as `:::` **directives**.  (The old ` ```dev ` /
-` ```instructors ` code-block forms were removed 2026-07-15.)  A directive's
-body is parsed as markdown, so backtick code identifiers (`foo_bar`, `[x]`) and
-escape markdown-special text just as you would in `::::full` prose; reach for
-an inner ` ``` ` fence only when the body is code-dense or embeds a Lean
-snippet that must not elaborate.  NB: a `:::dev` body *elaborates* (its blocks
-are kept so shown notes can render), so an inner ` ```lean ` fence there runs
-the Lean code — use a plain ` ``` ` fence for code that must stay inert.
-(`to_verso` generates these directives with the body verbatim-fenced, which is
-always safe; a hand pass can un-fence and inline the markdown.)
-
-Pick the tag by intent — `:::instructors` (instructor notes), `:::dev` (author
-TODOs / review threads), `:::answer` (a quiz's answer — see **Quizzes**),
-`:::hide` (genuinely hidden content).  Apart from shown `:::dev` notes, all are
-noops today (dropped from every build), so the choice is *semantic*: the name
-reserves each for a future build that could treat it differently (reveal
-`:::answer`, show `:::instructors` to instructors).
-
-**`:::instructors … :::`** — Notes for instructors: pacing advice,
-classroom caveats, which sections to skip for a short course, etc.
-
-```
-:::instructors
-This file takes about two hours in a not-too-rushed lecture.
-Assign Basics + Induction together as the first week's homework.
-:::
-```
-
-**`:::dev … :::`** — Internal author commentary: unresolved design
-questions, inline review threads, TODO items.  Use freely.  It takes optional
-arguments, so the note's provenance can be typeset uniformly: a positional
-author (always a *string*, conventionally `"Full Name (github-handle)"`), a
-positional urgency keyword (always a *bare identifier*, conventionally `NOW`,
-`SOONER`, `LATER`, `TODO`, or `TOFIX`), and a named `year` (a number, from
-`BCP'20`-style tags).  The string/identifier split is what tells the two
-positionals apart, so don't quote urgencies or unquote authors.  Prefer the
-arguments over leading `BCP:` / `SOONER:` tags in the body; `to_verso` promotes
-such leading tags to arguments automatically (see `_AUTHOR_NAMES` in
-`scripts/to_verso.py` for the initials-to-name mapping).
-
-The urgency controls whether the note is *shown* (`devNoteShown` in
-`SFLMeta/Comment.lean`): a note tagged `NOW` or `TODO` — or carrying no
-urgency at all — passes through into the rendered outputs, brightly
-highlighted (with a `Note to developers (…)` provenance label) in the HTML and as a
-labelled comment block in the generated `.lean` files.  `SOONER`, `LATER`,
-and `TOFIX` notes are suppressed from every build as before.
-
-```
-:::dev "Benjamin Pierce (bcpierce00)" SOONER
-Still not happy with this explanation — the namespace story
-feels rushed.  See GitHub discussion #42.
-:::
-```
-
-**`:::hide … :::`** — Marks a region hidden from all rendered outputs.
-In native Verso chapters, prefer `:::dev` or `:::instructors` for
-author notes.  The `:::hide` directive exists primarily for
-code-forward source files where `-- HIDE … -- /HIDE` comments are
-translated to `:::hide` blocks by the conversion script.
-
-### Code-forward comments → Verso directives (`to_verso`)
-
-(Claude-drafted; human review welcome.)  Chapters still authored as
-code-forward `.lean` are converted by `scripts/to_verso.py`, which
-routes their comments to the directives above:
-
-* `-- FULL … -- /FULL` → `::::full`; `-- TERSE: /- … -/` → `:::terse`.
-* Author/dev notes (`/- BCP: … -/`, `-- MWH: …`, `/- NDS'25: … -/`,
-  `/- NOTATION: … -/`, …) → `:::dev`; `/- INSTRUCTORS: … -/` and
-  `-- INSTRUCTORS:` → `:::instructors`; `-- HIDE … -- /HIDE` and
-  `/- HIDE: … -/` → `:::hide` / `:::dev`.  The recognized tag set is
-  `_DEV_TAGS` in the script — add a new author initial or keyword there
-  (one place) so it routes cleanly instead of leaking into the chapter
-  as prose.
-* Author/dev bodies are emitted verbatim-fenced, so arbitrary markup
-  inside a note is always safe.  Prose *outside* notes is real markdown:
-  a fenced block must use a plain `` ``` `` fence (never a language tag
-  such as `` ```coq ``), and raw object-language operator notation
-  (`=[ … ]=>`, quoted notation strings) must be fenced or backticked or
-  it breaks the parser.
-
-Full authoring rules are in CLAUDE.md ("Checking to_verso outputs" /
-"Writing comments that survive to_verso").
-
-### Structural and presentation blocks
-
-**`:::details (summary := "…") … :::`** — A collapsible disclosure
-block.  The `summary` string appears as a clickable one-line teaser;
-the body is hidden until the reader expands it.  Implemented with
-native HTML `<details>/<summary>` (no JavaScript required).  Good for
-encoding details, macro plumbing, or helper notation that is correct
-but not central to the main narrative.  In generated `.lean` files the
-body is emitted inlined, preceded by a short `_Details: …` comment.
-
-**`:::ignore … :::`** — Content that appears in HTML and TeX but is
-**omitted** from the generated `.lean` files.  Use it to wrap prose,
-diagrams, or declarations that make sense in the book context but
-would be confusing or redundant in the standalone extracted source.
-Unlike the author-annotation directives, `:::ignore` content _is_
-visible to students reading the HTML book.
-
-**`:::slidebreak … :::`** — A slide-break marker with no body. In the
-terse build it renders as `<div class="slide-break">` (a hook for
-CSS-based slide tooling).  In full builds and in all generated `.lean`
-files it emits nothing.  Written as a self-closing empty block:
-
-```
-:::slidebreak
-:::
-```
-
-### BNF grammars
-
-Use fenced `` ```bnf `` blocks to typeset object-language grammars.
-Productions end with `;`; alternatives are separated by `|`.
-A plain identifier is a non-terminal; a double-quoted string is a
-terminal; an identifier with a **leading underscore** is a schematic
-meta-variable, rendered in italics (`_x` → *x*).
-
-```
-t ::= "true" | "false" | "if" t "then" t "else" t | _x ;
-T ::= "Bool" | T "->" T ;
-```
-
-HTML renders BNF as a styled table.  The saver emits the raw source
-text as a `--`-comment in generated `.lean` files, so the grammar
-survives in the extracted source.
-
-The `bnf%` term-mode syntax provides the same grammar inline in a Lean
-expression, for cases where the grammar is computed programmatically.
-
-### Diagrams with ASCII fallback
-
-For diagrams that need a text fallback in the extracted `.lean` files,
-use `:::diagramWithAlt` with two children: a code block containing the
-diagram (e.g., SVG), and a plain code block containing the ASCII art.
-HTML renders only the diagram child; the saver emits only the ASCII
-fallback wrapped in a `/-! … -/` module-doc comment.
-
-### Verso markup for nicer HTML
-
-Beyond the structural directives above, the Manual genre offers **inline roles**
-that enrich expository prose in the HTML.  Use them where they add value (and
-don't over-link — link the first substantive mention in a passage, not every
-occurrence):
-
-* `` {name}`Foo.bar` `` — a clickable identifier that hovers to show its
-  type/signature and links to its definition.  Use for references to real
-  declarations (defs, theorems, constructors, types) in prose.  **Caveat:** the
-  name must resolve *in scope at that point in the document* — defined earlier
-  and reachable (mind namespaces and forward references), or the build fails.  So
-  this is a targeted, build-verified pass, not a global `` `x` ``→`` {name}`x` ``
-  replace; and it applies only in visible prose (not inside `lean` blocks, quiz
-  options, or dropped author notes).
-* `` {lean}`expr` `` — an inline *elaborated expression* (any term or type, with
-  hover types).  Use when a whole expression — not just a single name — belongs
-  in prose, e.g. `` {lean}`Aexp → Nat` `` or `` {lean}`Coe Ident Aexp` ``.
-* `{ref "tag"}[link text]` — a cross-reference link to a section.  Tag the target
-  by putting a `%%% tag := "the-tag" %%%` block right under its heading, then
-  reference it with `{ref "the-tag"}[…]`.  Use for "see the X section
-  above/below" phrasings.
-* `` {tactic}`simp` `` — links a tactic name to its documentation; good for prose
-  that mentions tactics.
-* `` {deftech}`term` `` / `` {tech}`term` `` — define a technical term (glossary
-  entry + anchor) and link its later uses.  Good for a chapter's recurring
-  defined terms.
-* Also available: `{option}` (Lean options), `` {module}`Foo` `` (module links),
-  `{margin}[…]` (sidebar notes), `{index}` / `{see}` / `{seeAlso}` (book index),
-  `{citep}` / `{citet}` (bibliography).
-
-## Porting chapters from Rocq
-
+**Porting chapters from Rocq.**
 The `to_verso` script automates the mechanical parts of translating from Rocq to 
 Verso-formatted Lean.  It leaves all the interesting bits to be translated manually.
 
@@ -1097,34 +253,6 @@ Example usage:
 ```
 python3 scripts/to_verso.py old/orig-plf-files/Hoare.v HL/Hoare.lean
 ```
-
-## (Temp) Porting from Rocq: comment fidelity and framing
-
-[BCP: This section seems out of date: We do not use Claude any more
-for rough translations of chapters from Rocq; instead, we use
-to_verso.py to go directly from the Rocq to a non-compiling Verso file
-with all the easy markup changes implemented and all the interesting
-actual translation work left for manual effort.]  
-
-When porting a Rocq
-`sfdev/<vol>/<Ch>.v` to `<Ch>.lean`:
-
-* **Preserve the whole comment layer.**  Carry over every internal
-  dev/instructor note (keep the original prefix/attribution), translate
-  `(* HIDE *)` content (re-marked `-- HIDE`/`/- HIDE: … -/`), and expand
-  condensed prose back to the source's full wording.  Nothing is
-  silently dropped.
-* **Make the chapter stand on its own.**  Don't reference the porting
-  process, and don't narrate "the Rocq original did X" in the
-  reader-facing (`::::full`) text.  Park Rocq-specific material that has
-  no Lean analogue (custom grammars, `Set Printing`, `Locate`, `Ltac`,
-  dropped proof variants) in `/- Claude: … -/` dev notes as reminders
-  for a future pass.  Rewrite genuine pedagogy that the source happened
-  to narrate via Rocq into Lean-native `::::full` prose.
-
-Full details (and the marker/HIDE mechanics) are in CLAUDE.md, "Porting
-a chapter from Rocq: comment fidelity" and "Framing translated
-comments".
 
 ## AI policy
 

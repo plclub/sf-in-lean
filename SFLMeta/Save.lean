@@ -325,19 +325,22 @@ private inductive ExtractionMode where
   A subset of `InlineLean.LeanBlockConfig` flags:
   - `keep` -> `persistent`
   - `error` -> `expectedError`
+  - `show` -> `render`
 
-  Note: `show` is dropped, because it's for rendered book visibility
-  and shouldn't affect generated projects.
-
-  They are used to derive the extraction policy (`Data.extractionMode`).
+  Only `keep` and `error` are used to derive the extraction policy (`Data.extractionMode`).
 -/
 structure Config where
   persistent : Bool
   expectedError : Bool
+  render : Bool
   deriving ToJson, FromJson, Quote
 
-def Config.fromInlineLean (config : InlineLean.LeanBlockConfig) :=
-  Config.mk config.keep config.error
+def Config.fromInlineLean (config : InlineLean.LeanBlockConfig) : Config :=
+  {
+    persistent := config.keep,
+    expectedError := config.error,
+    render := config.show
+  }
 
 /--
   The saved-payload format for `Block.leanSaved`.
@@ -361,7 +364,7 @@ def decode? (data : Json) : Option Data :=
   * expected-error blocks (`+error`) become indented `sf_expect_failure` blocks
 -/
 private def Data.extractionMode (saved : Data) : ExtractionMode :=
-  let {persistent, expectedError} := saved.config
+  let {persistent, expectedError, ..} := saved.config
   if expectedError then
     .expectFailure
   else if persistent then
@@ -400,8 +403,18 @@ block_extension Block.leanSaved (saved : Save.LeanSaved.Data) where
       return some (.other (Block.leanSaved saved) #[chosen])
     else
       return none
-  toHtml := some fun _ goB _ _ contents => contents.mapM goB
-  toTeX  := some fun _ goB _ _ contents => contents.mapM goB
+  toHtml := some fun _ goB _ data contents => do
+    let some saved := Save.LeanSaved.decode? data
+      | return .empty
+    unless saved.config.render do
+      return .empty
+    contents.mapM goB
+  toTeX := some fun _ goB _ data contents => do
+    let some saved := Save.LeanSaved.decode? data
+      | return .empty
+    unless saved.config.render do
+      return .empty
+    contents.mapM goB
 
 /-! ## `importBlock` code block
 

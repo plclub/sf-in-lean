@@ -555,6 +555,13 @@ theorem double_succ : ∀ n, double (succ n) = succ (succ (double n)) := by
 attribute [irreducible] double
 ```
 
+:::dev "Claude" NOW
+The `ASSUME HIDDEN` / `END ASSUME` region markers around this exercise are
+unhandled: `ASSUME HIDDEN` got swept into the developer note above, and this
+bare `END ASSUME` line renders as stray book prose in *all three* build
+products. (See BCP's "What is ASSUME HIDDEN??" note above.) Either implement
+the marker or delete both lines.
+:::
 END ASSUME
 
 :::dev "Benjamin Pierce (bcpierce00)"
@@ -571,11 +578,15 @@ We need better typesetting for displays like the following ones:
   will automatically close the goal if the rewrite makes the goal true by
   definition. For example, instead of writing
 
-     `rewrite [double_zero]; rfl`
+```display
+rewrite [double_zero]; rfl
+```
 
   We could write this:
 
-    `rw [double_zero]`
+```display
+rw [double_zero]
+```
 
   Using `rw` in your proofs is optional, but it will save you time
   (and is better style).
@@ -1050,6 +1061,17 @@ theorem add_shuffle3 : ∀ n m p : Nat,
 :::gradeTheorem 1 "add_shuffle3"
 :::
 
+:::dev "Claude" NOW
+Rendering bug (all three build products look wrong). This helper-lemma block
+wraps its *entire* contents in the `-- SOLUTION`/`-- END SOLUTION`
+comment-marker idiom, which the Verso HTML build does not process (only the
+`solution!` tactic is handled). Result: in *student* and *terse* the block
+renders empty with a spurious `unexpected end of input` error and a doubled
+`-- FILL IN HERE`; in *solutions* the lemma is shown but the literal
+`-- SOLUTION` / `-- END SOLUTION` comment lines leak into the displayed code.
+(The generated `.lean` files are correct.) Fix by expressing `succ_mul` with
+the `solution!` tactic instead of the comment markers.
+:::
 ```lean
 -- SOLUTION
 theorem succ_mul (m n : Nat) :
@@ -1318,6 +1340,14 @@ How to hide these theorem statements so that students can get practice writing t
 ```
 :::
 
+:::dev "Claude" NOW
+The developer discussion below is not wrapped in a note, so it renders as
+ordinary book prose in *all three* build products (a stray "From GitHub: CH:
+David set it up so that if you put: `-- SOLUTION` `-- END SOLUTION` …" block).
+It should be a `:::dev` note or deleted. NB it also documents the intended
+behaviour of the `-- SOLUTION`/`-- END SOLUTION` idiom that is currently
+mis-rendering elsewhere in this chapter.
+:::
 From GitHub:
 CH: David set it up so that if you put:
 -- SOLUTION
@@ -1516,6 +1546,13 @@ It would be wise to do some `example` proofs to check that your
 definition of `normalize` works the way you intend before you
 proceed. They won't be graded, but fill them in below.
 
+:::dev "Claude" BeforeNextRelease
+Same `-- SOLUTION` mishandling as elsewhere in this chapter, milder here: the
+block keeps surviving content (`attribute [irreducible] …`) after
+`-- END SOLUTION`, so student/terse don't error, but the *solutions* build
+leaks the literal `-- SOLUTION` / `-- END SOLUTION` comment lines into the
+displayed code. Prefer `solution!` over the comment markers.
+:::
 ```lean
 -- SOLUTION
 /- normalize_test_zero -/
@@ -1542,6 +1579,13 @@ its own inductive proof -- that will allow the main proof to make
 progress. We have one lemma for the `b0` case (which also makes
 use of `double_incr_bin`) and another for the `b1` case.
 
+:::dev "Claude" BeforeNextRelease
+Same `-- SOLUTION` mishandling, milder: `bin_nat_bin` survives after
+`-- END SOLUTION` so student/terse don't error, but the *solutions* build
+leaks the literal `-- SOLUTION` / `-- END SOLUTION` comment lines around
+`incr_doubleBin`/`natToBin_two_mul` into the displayed code. Prefer `solution!`
+over the comment markers.
+:::
 ```lean
 -- SOLUTION
 theorem incr_doubleBin (b : Bin) :
