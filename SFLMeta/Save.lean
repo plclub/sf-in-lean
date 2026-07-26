@@ -935,8 +935,11 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     -- only reached for a list arriving outside that batching.
     return appendBoth buf file (asModuleDoc (blockToText width b))
   | .dl dis =>
+    -- A description list: the term of each item is content too, so emit it
+    -- before walking that item's description blocks.
     let mut buf := buf
     for di in dis do
+      buf := appendBoth buf file (asModuleDoc (inlinesToText di.term))
       buf := walkBlocks width file di.desc buf
     return buf
 
