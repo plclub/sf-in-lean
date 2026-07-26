@@ -1374,8 +1374,8 @@ Fill in the characterizing lemmas for this definition below:
 ```lean
 -- SOLUTION
 theorem doubleBin_z : doubleBin .z = .z := by rfl
-theorem doubleBin_b0 m : doubleBin (.b0 m) = .b0 (.b0 m) := by rfl
-theorem doubleBin_b1 m : doubleBin (.b1 m) = .b0 (.b1 m) := by rfl
+theorem doubleBin_b0 (m : Bin) : doubleBin (.b0 m) = .b0 (.b0 m) := by rfl
+theorem doubleBin_b1 (m : Bin) : doubleBin (.b1 m) = .b0 (.b1 m) := by rfl
 -- END SOLUTION
 ```
 
