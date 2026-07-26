@@ -884,21 +884,13 @@ example : unzip [(1, false), (2, false)] = ([1, 2], [false, false]) := solution!
 ::::full
 Our last polymorphic type for now is _polymorphic options_.
 Lean's standard library provides {lean}`Option α`, with constructors
-{name}`none` and {lean}`some`. (We already saw {lean}`Option Nat` in the `Lists` chapter.)
+{name}`none` and {lean}`some`. (We already saw `NatOption` in the `Lists` chapter.)
 Let's briefly look at the definition:
 
-```lean -show
-namespace Temp
-```
-
-```lean
+```display
 inductive Option (α : Type) : Type where
   | none : Option α
   | some (x : α) : Option α
-```
-
-```lean -show
-end Temp
 ```
 
 ::::
