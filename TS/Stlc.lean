@@ -1456,13 +1456,16 @@ example : <{ ~idBBBB ~idBB ~idB }> ⟶* idB := by
 Next we consider the typing relation of the STLC, which is
 meant to prevent reduction from getting stuck.
 
-TODO: Put the following two examples in a decription list maybe?
-
 ::::full
-For instance, the following two STLC terms are both stuck
-`if λx:Bool. x then true else false` (where we branch on a function
-as a boolean) and `true false` (where we apply a boolean as a
-function).
+For instance, the following two STLC terms are both stuck:
+
+: `if λx:Bool. x then true else false`
+
+  Here we branch on a function as though it were a boolean.
+
+: `true false`
+
+  Here we apply a boolean as though it were a function.
 ::::
 
 ## Contexts
@@ -1493,7 +1496,7 @@ variables in `t` as specified by `Γ`".
 
 We'll also write `x ↦ T ; Γ` for "update the partial map
 `Γ` so that it maps `x` to `T`," following the notation from
-the `Maps` chapter.
+the `Typeclasses` chapter.
 
 With these refinements, we are ready to give informal and formal
 specifications of the typing relation.
@@ -1524,9 +1527,19 @@ written `Γ ⊢ t ⦂ T`, where `Γ` is a
 abbrev Context := TotalMap String (Option Ty)
 ```
 
+:::dev
+`abbrev`, not `def`: CONTRIBUTING's rule is that a `def` encapsulates a type
+behind an API, while an `abbrev` names one whose innards stay visible.  A
+{name}`Context` is the latter -- we never build a `Context.*` API, and every use
+below reaches straight through to the map operations (`Γ[x]`, `∅`, update).
+`HL.Imp`'s `State` is the same shape and is likewise an `abbrev`.  Contrast
+`Lists`' `Bag`, which is becoming a `def` precisely because it *does* have an
+API of its own.
+:::
+
 ::::full
 A context is a _partial map_ from variable names to types, which we build --
-as the `Maps` chapter does -- as a total map whose values are
+as the `Typeclasses` chapter does -- as a total map whose values are
 optional: {name}`none` at a variable means "not bound here".
 ::::
 
@@ -1536,22 +1549,7 @@ Following the usual notation for partial maps, we write
 that it maps `x` to `T`."
 ::::
 
-:::dev "Chris Henson (chenson2018)" BeforeNextRelease
-`Gamma` is a mouthful. What's wrong with `G`?  BCP 25:
-Indeed.  I'd be happy to see it changed.
-:::
-
 ## Typing Relation
-
-:::dev "Benjamin Pierce (bcpierce00)" BeforeNextRelease (year := 2025)
-Catalin made lots of changes to metavariable names
-in this file. They ought to be reflected in all the other files
-that depend on this one!
-:::
-
-:::dev BeforeNextRelease
-More text needed? (YES!)
-:::
 
 ```display
 Γ x = T1
@@ -1592,58 +1590,20 @@ In the formal development, we write this judgment inside the same
 `<{ .. }>` brackets.
 ::::
 
-:::dev
-NOTATION: NOWISH: The HTML typesetting of the final turnstile is ugly!
-And there are a bunch of similar ones below.  Seems like the
-spacing inside square brackets is different from inside triple
-brackets. :-( (BCP)
-
-```
-NOTATION: NOWISH: BCP 20: I'm wondering whether we could / should
-allow whole typing jusgements inside <{...}> brackets.  Having
-gotten used to seeing the brackets around object-language stuff, I
-actually find it confusing NOT to see it here.  Another alternative
-would be to put the brackets just after |-- and before \in.
-```
-
-```
-NOTATION: SAZ 2024: I have implemnted the suggestion above about
-putting the whole judgment inside [ <{ }> ] brackets.
-
-I changed the context portion of the judgment syntax to be parsed
-as a stlc_tm.  That means that we have to add the "map update"
-syntax from Maps.v to the stlc_tm grammar, but that doesn't seem
-like too big of a problem.  One advantage is that we can use the
-same [ <{ ... }> ] brackets to quote both typing judgments *and*
-stlc terms, since they both start with the same prefix that can be
-disambiguated by the LL parser.
-
-Another advantage is that we don't have to parenthesize the types
-that appear after ther [\in] in the judgment.
-```
-
-```
-NOTATION: SAZ 2024 - Per the comments above, this includes the
-map update notation into the stlc_tm grammar.  However, I also
-specialized it so that [x] is a (global) identifier and [v]
-must be a type.
-```
-:::
-
-:::instructors
--------------------------------------------------------------
-
-```
-Begin Definition of template STCL has_type notation
-```
-:::
-
 ::::full
 Contexts get a grammar of their own, `stlcCtx`: the empty context is `∅`, a
 context extended with a binding is `x ↦ T ; Γ`, and `~e` escapes to a Lean
 expression of type {name}`Context`.  The whole judgment then goes inside the
 same `<{ … }>` brackets as terms, written with the turnstile and colon of the
 {ref "Types"}[Types] chapter: `<{ Γ ⊢ t ⦂ T }>`.
+
+The *meaning* is the map update we already have -- `x ↦ T ; Γ` expands to
+exactly the `Typeclasses` chapter's update on `Γ` -- but its surface syntax has
+to be our own, because inside these brackets all three positions are in object
+syntax.  Writing the map notation directly would mean writing the binding as
+`"x" →ₜ some <{ Bool → Bool }> ; Γ`: the name quoted, the value wrapped in
+{name}`some`, and the type escaped back out of the brackets it belongs in.  The
+grammar hides those three encoding details, and nothing else.
 ::::
 
 ```lean
@@ -1664,14 +1624,6 @@ partial def ctxTerm (G : TSyntax `stlcCtx) : MacroM Term :=
       `(TotalMap.update $(← ctxTerm G) $(← varStr x) (some <{ $T:stlcTy }>))
   | _ => Macro.throwUnsupported
 ```
-
-:::instructors
-```
-End STCL has_type notation
-```
-
--------------------------------------------------------------
-:::
 
 ```lean
 section
@@ -1704,10 +1656,10 @@ macro_rules (kind := judgeBracket)
       `(HasType $(← ctxTerm G) <{ $t:stlcTm }> <{ $T:stlcTy }>)
 ```
 
-::::full
-As with terms, a judgment prints back in its own notation, so that a goal
-reads as `<{ x ↦ Bool ; ∅ ⊢ x ⦂ Bool }>`:
-::::
+::::details (summary := "Notation encoding: printing judgments back")
+As with terms, a judgment prints back in its own notation, so that a goal reads
+as `<{ x ↦ Bool ; ∅ ⊢ x ⦂ Bool }>` rather than as a `HasType` applied to a chain
+of map updates.
 
 ```lean
 open Lean PrettyPrinter in
@@ -1739,48 +1691,14 @@ def HasType.unexpand : Unexpander
       do `(<{ $(← unexpandCtx G) ⊢ ~($t) ⦂ ~($T) }>)
   | _ => throw ()
 ```
+::::
 
-::::hide
-```
+:::ignore
+```lean -show
 #check <{ true }>
 #check <{ ∅ ⊢ true ⦂ Bool }>
 ```
-::::
-
-:::dev
-```
-COMMENT: [untagged (* .. *) comment at prose position in the Rocq source -- probably an error there; decide whether it is book prose or an author note]
-NOWISH: Ori: In Records.v, the context is a parameter,
-   like in the next defintion. Which one is better? why?
-   anyway, we better be consistent.
-Reserved Notation "Gamma '|-a' t '\in' T"
-                  (at level 101,
-                   t custom stlc, T custom stlc at level 0).
-
-Inductive has_type_a (Gamma : context) : tm -> ty -> Prop :=
-  | T_Vara : forall x T1,
-      Gamma x = Some T1 ->
-      Gamma |-a x \in T1
-  | T_Absa : forall x T1 T2 t1,
-      x |-> T2 ; Gamma |-a t1 \in T1 ->
-      Gamma |-a \x:T2, t1 \in (T2 -> T1)
-  | T_Appa : forall T1 T2 t1 t2,
-      Gamma |-a t1 \in (T2 -> T1) ->
-      Gamma |-a t2 \in T2 ->
-      Gamma |-a t1 t2 \in T1
-  | T_Truea : Gamma |-a true \in Bool
-  | T_Falsea : Gamma |-a false \in Bool
-  | T_Ifa : forall t1 t2 t3 T1,
-       Gamma |-a t1 \in Bool ->
-       Gamma |-a t2 \in T1 ->
-       Gamma |-a t3 \in T1 ->
-       Gamma |-a if t1 then t2 else t3 \in T1
-
-where "Gamma '|-a' t '\in' T" := (has_type_a Gamma t T).
-```
 :::
-
-
 
 ## Examples
 
@@ -2043,14 +1961,3 @@ or
 ```lean
 end Stlc
 ```
-
-::::hide
-```
-/- Local Variables: -/
-/- fill-column: 70 -/
-/- outline-regexp: "(\\*\\* \\*+\\|(\\* EX[1-5]..." -/
-/- End: -/
-/- mode: outline-minor -/
-/- outline-heading-end-regexp: "\n" -/
-```
-::::
