@@ -887,12 +887,15 @@ Lean's standard library provides {lean}`Option α`, with constructors
 {name}`none` and {lean}`some`. (We already saw `NatOption` in the `Lists` chapter.)
 Let's briefly look at the definition:
 
-```display
+```lean
+namespace OptionPlayground
+
 inductive Option (α : Type) : Type where
   | none : Option α
   | some (x : α) : Option α
-```
 
+end OptionPlayground
+```
 ::::
 
 :::slidebreak
