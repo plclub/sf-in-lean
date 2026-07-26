@@ -1,4 +1,5 @@
 import SFLMeta
+import SFLMeta.Diagrams
 import Lean.PrettyPrinter.Delaborator
 import Lean.PrettyPrinter.Parenthesizer
 import LF.Typeclasses
@@ -6,6 +7,13 @@ import TS.Smallstep
 
 open Verso.Genre Manual
 open SFLMeta
+open InlineLean hiding lean
+
+/-- An array that contains precisely `n` numbers.  Used only as an example of a
+dependent type in the opening discussion of the lambda cube. -/
+structure ArrayOfSize (n : Nat) : Type where
+  nats : Array Nat
+  nats_size_eq_n : nats.size = n
 
 #doc (Manual) "Stlc: The Simply Typed Lambda-Calculus" =>
 %%%
@@ -150,11 +158,16 @@ Main new technical challenges:
 :::
 
 The STLC lives in the lower-left front corner of the famous
-_lambda cube_ (also called the _Barendregt Cube_), which
+{deftech}_lambda cube_ (also called the {deftech}_Barendregt Cube_), which
 visualizes three sets of features that can be added to its
 simple core:
 
-```display
+:::diagramWithAlt
+```diagram (cssWidth := "28em") (texWidth := "20em")
+SFLMeta.Diagrams.lambdaCubeDiagram
+```
+
+```
                           Calculus of Constructions
  type operators +--------+
                /|       /|
@@ -167,20 +180,21 @@ polymorphism +--------+  |
              +--------+ dependent types
            STLC
 ```
+:::
 
 Moving from bottom to top in the cube corresponds to adding
-_polymorphic types_ like `∀ α, α → α`.  Adding _just_
+{deftech}_polymorphic types_ like {lean}`∀ α : Type, α → α`.  Adding _just_
 polymorphism gives us the famous Girard-Reynolds calculus, System F.
 
 Moving from front to back corresponds to adding _type operators_
-like `list`.
+like {name}`List`.
 
 Moving from left to right corresponds to adding _dependent types_
-like `forall n, array-of-size n`.
+like {lean}`∀ n, ArrayOfSize n`.
 
 The top right corner on the back, which combines all three features,
-is called the _Calculus of Constructions_.  First studied by
-Coquand and Huet, it forms the foundation of Rocq's logic.
+is called the {deftech}_Calculus of Constructions_.  First studied by
+Coquand and Huet, it forms the foundation of Lean's logic.
 
 # Overview
 
@@ -205,13 +219,13 @@ This gives us the following collection of abstract syntax
 constructors (written out first in informal BNF notation -- we'll
 formalize it below).
 
-```display
-t ::= x                         (variable)
-    | \x:T,t                    (abstraction)
-    | t1 t2                     (application)
-    | true                      (constant true)
-    | false                     (constant false)
-    | if t1 then t2 else t3     (conditional)
+```bnf
+t ::= _x ("variable")
+    | "λ" _x ":" T "." t ("abstraction")
+    | t t ("application")
+    | "true" ("constant true")
+    | "false" ("constant false")
+    | "if" t "then" t "else" t ("conditional") ;
 ```
 ::::
 
@@ -224,13 +238,13 @@ Add: variables, function abstractions, and applications
 ::::terse
 Informal concrete syntax:
 
-```display
-t ::= x                         (variable)
-    | \x:T,t                    (abstraction)
-    | t1 t2                     (application)
-    | true                      (constant true)
-    | false                     (constant false)
-    | if t1 then t2 else t3     (conditional)
+```bnf
+t ::= _x ("variable")
+    | "λ" _x ":" T "." t ("abstraction")
+    | t t ("application")
+    | "true" ("constant true")
+    | "false" ("constant false")
+    | "if" t "then" t "else" t ("conditional") ;
 ```
 ::::
 
@@ -336,9 +350,9 @@ boolean constants `true` and `false` as well as more complex
 computations that yield booleans, plus _arrow types_ that classify
 functions.
 
-```display
-T ::= Bool
-    | T -> T
+```bnf
+T ::= "Bool"
+    | T "→" T ;
 ```
 ::::
 
@@ -349,9 +363,9 @@ T ::= Bool
 The _types_ of the STLC include the base type `Bool` for
 boolean values and arrow types for functions.
 
-```display
-T ::= Bool
-    | T -> T
+```bnf
+T ::= "Bool"
+    | T "→" T ;
 ```
 ::::
 
@@ -481,6 +495,7 @@ for a type, so that a local `T` -- or any other Lean expression of type `Ty` --
 can appear directly inside the brackets.
 :::
 
+::::details (summary := "Type notation encoding")
 ```lean
 declare_syntax_cat stlcTy
 syntax:max "~" term:max : stlcTy
@@ -500,6 +515,7 @@ macro_rules
   | `(<{{ $T1 → $T2 }}>)  => `(Ty.arrow <{{ $T1 }}> <{{ $T2 }}>)
   | `(<{{ $T1 -> $T2 }}>) => `(Ty.arrow <{{ $T1 }}> <{{ $T2 }}>)
 ```
+::::
 
 :::dev
 NOTATION: SAZ 2024 - I recommend following the pattern below for all grammars
@@ -539,6 +555,7 @@ A variable in binding position is a plain identifier, quoted to the string
 that names it; `~e` again escapes to a Lean expression, here of type `String`.
 :::
 
+::::details (summary := "Variable notation encoding")
 ```lean
 declare_syntax_cat stlcVar
 syntax:max ident : stlcVar
@@ -550,6 +567,7 @@ macro_rules
   | `(<<{ $x:ident }>>) => pure (quote x.getId.toString : Term)
   | `(<<{ ~$e }>>)      => pure e
 ```
+::::
 
 ::::full
 Terms are built from variables, application (which associates to the left),
@@ -560,6 +578,7 @@ a whole term, escape it: `<{ ~t1 ~t2 }>` is the application of the term `t1`
 to the term `t2`.
 ::::
 
+::::details (summary := "Term notation encoding")
 ```lean
 declare_syntax_cat stlcTm
 syntax:max "~" term:max : stlcTm
@@ -584,6 +603,7 @@ macro_rules
   | `(<{ λ $x : $T . $t }>) => `(Tm.abs <<{ $x }>> <{{ $T }}> <{ $t }>)
   | `(<{ if $c then $t else $e }>) => `(Tm.ite <{ $c }> <{ $t }> <{ $e }>)
 ```
+::::
 
 :::instructors
 End of the `stlcTm` grammar.
@@ -605,6 +625,7 @@ rather than as a pile of constructors.  (Setting `pp.notation false` turns it
 off, revealing the underlying representation.)
 ::::
 
+::::details (summary := "Printing STLC syntax back")
 ```lean
 open Lean PrettyPrinter Delaborator SubExpr Parenthesizer in
 /-- Re-inserts parentheses in `stlcTy` output according to the grammar's precedences. -/
@@ -723,6 +744,7 @@ def delabTm : Delab := whenPPOption getPPNotation do
   | `(stlcTm| ~$e) => pure e
   | e => `(<{ $e }>)
 ```
+::::
 
 ::::hide
 ```
