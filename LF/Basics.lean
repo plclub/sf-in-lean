@@ -957,6 +957,13 @@ end RGB
 Top-level definitions can also be prefixed by a namespace,
 which opens the namespace temporarily for the body of the definition.
 
+:::dev "Claude" NOW
+Rendering bug in *student* and *terse* (solutions is fine): the leading
+`--- …` triple-dash comment lines in this block and the next one each render
+*twice* in a row (e.g. two consecutive `--- this works, because …` lines). The
+solutions build shows each once, so this is a Verso rendering quirk with
+`---`-style comments in the elided builds, not a source duplication.
+:::
 ```lean
 --- this works, because the definition is qualified by `RGB.`
 def RGB.myOtherBlue : RGB := myBlue
@@ -2423,17 +2430,18 @@ and 1s), terminated by a `z`.
 
 For example:
 
-| decimal |            binary     |                                                unary         |
-|:-------:| ---------------------:| ------------------------------------------------------------:|
-|    0    | `               z   ` | `                                               zero       ` |
-|    1    | `            b1 z   ` | `                                          succ zero       ` |
-|    2    | `        b0 (b1 z)  ` | `                                    succ (succ zero)      ` |
-|    3    | `        b1 (b1 z)  ` | `                              succ (succ (succ zero))     ` |
-|    4    | `    b0 (b0 (b1 z)) ` | `                        succ (succ (succ (succ zero)))    ` |
-|    5    | `    b1 (b0 (b1 z)) ` | `                  succ (succ (succ (succ (succ zero))))   ` |
-|    6    | `    b0 (b1 (b1 z)) ` | `            succ (succ (succ (succ (succ (succ zero)))))  ` |
-|    7    | `    b1 (b1 (b1 z)) ` | `      succ (succ (succ (succ (succ (succ (succ zero)))))) ` |
-|    8    | `b0 (b0 (b0 (b1 z)))` | `succ (succ (succ (succ (succ (succ (succ (succ zero)))))))` |
+```
+decimal                binary   unary
+      0                     z   zero
+      1                  b1 z   succ zero
+      2             b0 (b1 z)   succ (succ zero)
+      3             b1 (b1 z)   succ (succ (succ zero))
+      4        b0 (b0 (b1 z))   succ (succ (succ (succ zero)))
+      5        b1 (b0 (b1 z))   succ (succ (succ (succ (succ zero))))
+      6        b0 (b1 (b1 z))   succ (succ (succ (succ (succ (succ zero)))))
+      7        b1 (b1 (b1 z))   succ (succ (succ (succ (succ (succ (succ zero))))))
+      8   b0 (b0 (b0 (b1 z)))   succ (succ (succ (succ (succ (succ (succ (succ zero)))))))
+```
 
 Note that the low-order bit is on the left and the high-order bit
 is on the right -- the opposite of the way binary numbers are
@@ -2567,6 +2575,18 @@ Now state and prove a theorem `negation_fn_applied_twice` similar
 to the previous one but where the hypothesis says that the
 function `f` has the property that `f x = !x`.
 
+:::dev "Claude" NOW
+Rendering bug (all three build products look wrong). This exercise wraps its
+*entire* theorem in the `-- SOLUTION`/`-- END SOLUTION` comment-marker idiom,
+which the Verso HTML build does not process (only the `solution!` tactic is
+handled). Result: in *student* and *terse* the code block renders empty
+with a spurious `unexpected end of input` error and a doubled `-- FILL IN
+HERE`; in *solutions* the theorem is shown but the literal `-- SOLUTION` /
+`-- END SOLUTION` comment lines leak into the displayed code. (The generated
+`.lean` files are correct — this is purely an HTML-rendering gap.) Fix by
+rewriting with the `solution!` tactic, as the neighbouring
+`identity_fn_applied_twice` exercise does.
+:::
 ```lean
 -- SOLUTION
 theorem negation_fn_applied_twice : ∀ f : Bool → Bool,
