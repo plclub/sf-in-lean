@@ -13,13 +13,15 @@ htmlSplit := .never
 file := some "Poly"
 %%%
 
+:::ignore
 ```lean -show
-variable (α β γ : Type)
+variable (α β γ : Type) (x : α) (y : β)
 ```
+:::
 
 :::instructors
 To get through this plus Tactics.lean in two 80-minute
-lectures is a bit tight -- if that's your plan, don't dawdle on
+lectures is a bit tight — if that's your plan, don't dawdle on
 this chapter.
 
 (This comment may now be misaligned with the flow of lectures in CIS5000 at least, since we've
@@ -124,8 +126,18 @@ What is {name}`MyList` itself?
 It is a _type constructor_ — a function from types to types.
 ::::
 
-```lean
-#check (MyList : Type → Type)
+:::dev "Yipeng Liu (berberman)"
+A trick used below: parenthesizing the declaration makes it a term —
+Lean elaborates it and prints its inferred function type,
+instead of the declaration signature: `MyList (α : Type) : Type`.
+:::
+
+```lean (name := MyList)
+#check (MyList)
+```
+
+```leanOutput MyList
+MyList : Type → Type
 ```
 
 :::slidebreak
@@ -145,8 +157,12 @@ The `α` in the definition of {name}`MyList` becomes an implicit
 parameter to the list constructors `nil` and `cons`.
 ::::
 
-```lean
-#check (MyList.nil : MyList Nat)
+```lean (name := nil)
+#check MyList.nil
+```
+
+```leanOutput nil
+MyList.nil {α : Type} : MyList α
 ```
 
 ::::full
@@ -155,8 +171,12 @@ list of type {lean}`MyList Nat`. Here is an example of forming a list
 containing just the natural number 3.
 ::::
 
-```lean
-#check (MyList.cons 3 MyList.nil : MyList Nat)
+```lean (name := cons3)
+#check MyList.cons 3 MyList.nil
+```
+
+```leanOutput cons3
+MyList.cons 3 MyList.nil : MyList Nat
 ```
 
 ::::full
@@ -167,8 +187,12 @@ Since the type argument to the constructor is implicit,
 Lean writes its type as {lean}`{α : Type} → MyList α`.
 ::::
 
-```lean
-#check (MyList.nil : {α : Type} → MyList α)
+```lean (name := nil)
+#check MyList.nil
+```
+
+```leanOutput nil
+MyList.nil {α : Type} : MyList α
 ```
 
 ::::full
@@ -176,8 +200,12 @@ Similarly, the type of {name}`MyList.cons` includes the implicit
 type parameter:
 ::::
 
-```lean
-#check (MyList.cons : {α : Type} → α → MyList α → MyList α)
+```lean (name := cons)
+#check MyList.cons
+```
+
+```leanOutput cons
+MyList.cons {α : Type} (x : α) (l : MyList α) : MyList α
 ```
 
 ::::full
@@ -235,13 +263,13 @@ example : myRepeat Bool false 1 = .cons false .nil := by rfl
 ::::quiz
 What is the type of `MyList.cons true (MyList.cons 3 MyList.nil)`?
 
-(A) `MyList Nat`
+(A) {lean}`MyList Nat`
 
-(B) `{α : Type} → α → MyList α → MyList α`
+(B) {lean}`{α : Type} → α → MyList α → MyList α`
 
-(C) `MyList Bool`
+(C) {lean}`MyList Bool`
 
-(D) `MyList (Nat × Bool)`
+(D) {lean}`MyList (Nat × Bool)`
 
 (E) Ill-typed
 ::::
@@ -249,11 +277,11 @@ What is the type of `MyList.cons true (MyList.cons 3 MyList.nil)`?
 ::::quiz
 What is the type of {name}`myRepeat`?
 
-(A) `Nat → Nat → MyList Nat`
+(A) {lean}`Nat → Nat → MyList Nat`
 
-(B) `(α : Type) → α → Nat → MyList α`
+(B) {lean}`(α : Type) → α → Nat → MyList α`
 
-(C) `(α : Type) → {β : Type} → α → Nat → MyList β`
+(C) {lean}`(α : Type) → {β : Type} → α → Nat → MyList β`
 
 (D) Ill-typed
 ::::
@@ -261,11 +289,11 @@ What is the type of {name}`myRepeat`?
 ::::quiz
 What is the type of `myRepeat 1 2`?
 
-(A) `MyList Nat`
+(A) {lean}`MyList Nat`
 
-(B) `(α : Type) → α → Nat → MyList α`
+(B) {lean}`(α : Type) → α → Nat → MyList α`
 
-(C) `MyList Bool`
+(C) {lean}`MyList Bool`
 
 (D) Ill-typed
 ::::
@@ -307,10 +335,18 @@ def myRepeat' α (x : α) (count : Nat) : List α :=
   | count' + 1 => .cons x (myRepeat' α x count')
 ```
 
-Indeed it will. We can see that `α` has the type {lean}`Type`, as expected.
+Indeed it will. Lean infers that `α` is a type. The generated
+`u_1` is part of Lean's bookkeeping for treating types more generally.
+We will not need to interpret names like this for now —
+you can ignore them when they appear in Lean's output unless we explicitly
+call attention to them.
 
-```lean
-#check (myRepeat' : ∀ (α : Type), α → Nat → List α)
+```lean (name := myRepeat')
+#check myRepeat'
+```
+
+```leanOutput myRepeat'
+myRepeat'.{u_1} (α : Type u_1) (x : α) (count : Nat) : List α
 ```
 
 ::::terse
@@ -408,10 +444,14 @@ We can use the `@` prefix to supply the type
 argument explicitly. The `@` makes all implicit arguments
 of a function explicit:
 
-```lean
-#check (@List.nil : {α : Type} → List α)
+```lean (name := nil2)
+#check @List.nil
 
-def mynil' := @List.nil Nat
+def myNil' := @List.nil Nat
+```
+
+```leanOutput nil2
+@List.nil : {α : Type u_1} → List α
 ```
 
 :::slidebreak
@@ -426,11 +466,11 @@ brackets.)
 [1, 2, 3]
 ```
 
-(A) `List Nat`
+(A) {lean}`List Nat`
 
-(B) `List Bool`
+(B) {lean}`List Bool`
 
-(C) `Bool`
+(C) {name}`Bool`
 
 (D) No type can be assigned
 ::::
@@ -446,11 +486,11 @@ What about this one?
 [3 + 4] ++ []
 ```
 
-(A) `List Nat`
+(A) {lean}`List Nat`
 
-(B) `List Bool`
+(B) {lean}`List Bool`
 
-(C) `Bool`
+(C) {lean}`Bool`
 
 (D) No type can be assigned
 ::::
@@ -466,11 +506,11 @@ What about this one?
 (true && false) :: []
 ```
 
-(A) `List Nat`
+(A) {lean}`List Nat`
 
-(B) `List Bool`
+(B) {lean}`List Bool`
 
-(C) `Bool`
+(C) {name}`Bool`
 
 (D) No type can be assigned
 ::::
@@ -486,11 +526,11 @@ What about this one?
 [1, []]
 ```
 
-(A) `List Nat`
+(A) {lean}`List Nat`
 
-(B) `List (List Nat)`
+(B) {lean}`List (List Nat)`
 
-(C) `List Bool`
+(C) {lean}`List Bool`
 
 (D) No type can be assigned
 ::::
@@ -506,11 +546,11 @@ What about this one?
 [[1], []]
 ```
 
-(A) `List Nat`
+(A) {lean}`List Nat`
 
-(B) `List (List Nat)`
+(B) {lean}`List (List Nat)`
 
-(C) `List Bool`
+(C) {lean}`List Bool`
 
 (D) No type can be assigned
 ::::
@@ -526,11 +566,11 @@ And what about this one?
 [1] :: [[]]
 ```
 
-(A) `List Nat`
+(A) {lean}`List Nat`
 
-(B) `List (List Nat)`
+(B) {lean}`List (List Nat)`
 
-(C) `List Bool`
+(C) {lean}`List Bool`
 
 (D) No type can be assigned
 ::::
@@ -546,11 +586,11 @@ This one?
 @List.nil Bool
 ```
 
-(A) `List Nat`
+(A) {lean}`List Nat`
 
-(B) `List (List Nat)`
+(B) {lean}`List (List Nat)`
 
-(C) `List Bool`
+(C) {lean}`List Bool`
 
 (D) No type can be assigned
 ::::
@@ -564,8 +604,6 @@ This one?
 Consider the following two inductively defined types.
 
 ```lean
-namespace MumbleGrumble
-
 inductive Mumble : Type where
   | a : Mumble
   | b (x : Mumble) (y : Nat) : Mumble
@@ -587,20 +625,15 @@ some type `X`?  (Add YES or NO to each line.)
   - `Mumble.c`
 
 :::solution
-```
-YES - [Grumble.d (Mumble.b Grumble.a 5)]
-YES - [@Grumble.d Mumble (Mumble.b Mumble.a 5)]
-YES - [@Grumble.d Bool (Mumble.b Mumble.a 5)]
-YES - [@Grumble.e Bool true]
-YES - [@Grumble.e Mumble (Mumble.b Mumble.c 0)]
-NO  - [@Grumble.e Bool (Mumble.b Mumble.c 0)]
-NO  - [Mumble.c]
-```
+- YES - {lean}`Grumble.d (Mumble.b Mumble.a 5)`
+- YES - {lean}`@Grumble.d Mumble (Mumble.b Mumble.a 5)`
+- YES - {lean}`@Grumble.d Bool (Mumble.b Mumble.a 5)`
+- YES - {lean}`@Grumble.e Bool true`
+- YES - {lean}`@Grumble.e Mumble (Mumble.b Mumble.c 0)`
+- NO  - `@Grumble.e Bool (Mumble.b Mumble.c 0)`
+- NO  - `Mumble.c`
 :::
 
-```lean
-end MumbleGrumble
-```
 :::::
 
 ::::::
@@ -622,12 +655,20 @@ theorem rev_cons {α : Type} (head : α) (tail : List α) :
 :::::exercise (rating := 2) (name := "poly_exercises")
 Here are a few simple exercises, just like ones in the `Lists`
 chapter, for practice with polymorphism. Complete the proofs below.
-You will likely find useful the following lemmas about append and length
-from Lean's standard library:
+You will likely find useful the following
+characterizing lemmas for {name}`List.append` in Lean standard library:
 
-```lean
+```lean (name := lemmas_append)
 #check List.nil_append
 #check List.cons_append
+```
+
+```leanOutput lemmas_append
+List.cons_append.{u} {α : Type u} {a : α} {as bs : List α} : a :: as ++ bs = a :: (as ++ bs)
+```
+
+```leanOutput lemmas_append
+List.nil_append.{u} {α : Type u} (as : List α) : [] ++ as = as
 ```
 
 ```lean
@@ -646,6 +687,7 @@ theorem app_assoc {α : Type} (l m n : List α) :
     | cons h t ih =>
       dsimp [List.cons_append]
       rw [ih]
+
 theorem app_length {α : Type} {l₁ l₂ : List α} :
     (l₁ ++ l₂).length = l₁.length + l₂.length := by
   solution!
@@ -716,37 +758,44 @@ Lean's built-in product type `Prod` provides a `Prod.mk` constructor,
 and `fst` and `snd` functions for accessing the first and second components
 of the pair. It also has special syntax for creating products:
 
-```lean
-#check (1, true)  /- (1, true) : Nat × Bool -/
-#check (1, true).fst  /- access first component -/
-#check (1, true).snd  /- access second component -/
+```lean (name := pair)
+#check (1, true)
+#eval (1, true).fst
+#eval (1, true).snd
+```
+
+```leanOutput pair
+(1, true) : Nat × Bool
+```
+
+```leanOutput pair
+1
+```
+
+```leanOutput pair
+true
 ```
 
 You can also use `.1` instead of `.fst` and `.2` instead of `.snd`
 
 ```lean
-#check (1, true).1  /- access first component -/
-#check (1, true).2  /- access second component -/
-
 example : (3, 5).1 = 3 := by rfl
 example : (3, 5).2 = 5 := by rfl
 ```
 
-The notation {lean}`α × β` is syntactic sugar for {lean}`Prod α β`.
+Lean writes the product type {lean}`Prod α β` as {lean}`α × β`.
+In VS Code you can type `\times` or `\x` to enter the `×` symbol.
 
-:::dev "Benjamin Pierce (bcpierce00)"
-Do we need to tell them how to type it in vscode?  (If yes, then should we be doing this for every notation when it is introduced? (If yes, we should record this decision in the Claude prompt that we use for checking nitpicky regressions like this, creating and documenting it if it doesn't already exist.))
-:::
 
 ::::full
-It is easy at first to get `(x, y)` and {lean}`α × β` confused.
-Remember that `(x, y)` is a _value_ built from two other values,
-while {lean}`α × β` is a _type_ built from two other types. If `x` has
-type {lean}`α` and `y` has type {lean}`β`, then `(x, y)` has type {lean}`α × β`.
+It is easy at first to get {lean}`(x, y)` and {lean}`α × β` confused.
+Remember that {lean}`(x, y)` is a _value_ built from two other values,
+while {lean}`α × β` is a _type_ built from two other types. If {lean}`x` has
+type {lean}`α` and {lean}`y` has type {lean}`β`, then {lean}`(x, y)` has type {lean}`α × β`.
 ::::
 
 ::::terse
-Be careful not to get `(x, y)` and {lean}`α × β` confused!
+Be careful not to get {lean}`(x, y)` and {lean}`α × β` confused!
 ::::
 
 :::slidebreak
@@ -889,8 +938,6 @@ def hdError {α : Type} (l : List α) : Option α := solution!(
   | [] => none
   | a :: _ => some a)
 
-#check hdError
-
 theorem hdError_nil {α : Type} : hdError ([] : List α) = none := solution!(by rfl)
 
 theorem hdError_cons {α : Type} {head : α} {tail : List α} : hdError (head :: tail) = some head :=
@@ -945,12 +992,16 @@ The argument `f` here is itself a function (from {lean}`α` to
 value `n`.
 ::::
 
-```lean
+```lean (name := doIt3Times)
 #check doIt3Times
 
 example : doIt3Times Nat.minustwo 9 = 3 := by rfl
 
 example : doIt3Times not true = false := by rfl
+```
+
+```leanOutput doIt3Times
+doIt3Times {α : Type} (f : α → α) (n : α) : α
 ```
 
 ## Filter
@@ -1218,13 +1269,13 @@ def map (f : α → β) (l : List α) : List β :=
 
 What is the type of `@map`?
 
-(A) `{α β : Type} → α → β → List α → List β`
+(A) {lean}`{α β : Type} → α → β → List α → List β`
 
-(B) `α → β → List α → List β`
+(B) {lean}`α → β → List α → List β`
 
-(C) `{α β : Type} → (α → β) → List α → List β`
+(C) {lean}`{α β : Type} → (α → β) → List α → List β`
 
-(D) `{α : Type} → (α → α) → List α → List α`
+(D) {lean}`{α : Type} → (α → α) → List α → List α`
 ::::
 
 :::slidebreak
@@ -1250,13 +1301,13 @@ Show that {name}`map` and `rev` commute. (Hint: You may need to
 define an auxiliary lemma.)
 
 ```lean
+-- SOLUTION
 theorem map_app {α β : Type} {f : α → β} {l l' : List α} :
     map f (l ++ l') = map f l ++ map f l' := by
   induction l with
   | nil => rw [map_nil, List.nil_append, List.nil_append]
   | cons h t ih => rw [List.cons_append, map_cons, map_cons, ih, List.cons_append]
-
--- /QUIETSOLUTION
+-- END SOLUTION
 
 theorem map_rev {α : Type} {β : Type} : ∀ (f : α → β) (l : List α),
     map f l.rev = (map f l).rev := by
@@ -1481,24 +1532,38 @@ A two-argument function in Lean is actually a function that
 returns a function!
 ::::
 
-```lean
-#check (Nat.add : Nat → Nat → Nat)
+```lean (name := add)
+#check Nat.add
+```
 
+```leanOutput add
+Nat.add : Nat → Nat → Nat
+```
+
+```lean (name := plus3)
 abbrev plus3 := Nat.add 3
-#check (plus3 : Nat → Nat)
+#check plus3
 
 example : plus3 4 = 7 := by rfl
 example : doIt3Times plus3 0 = 9 := by rfl
 example : doIt3Times (Nat.add 3) 0 = 9 := by rfl
 ```
 
+```leanOutput plus3
+plus3 : Nat → Nat
+```
+
 Similarly, we can write:
 
-```lean
+```lean (name := fold_plus)
 abbrev fold_plus : List Nat → Nat → Nat :=
   fold (· + ·)
 
-#check (fold_plus : List Nat → Nat → Nat)
+#check fold_plus
+```
+
+```leanOutput fold_plus
+fold_plus : List Nat → Nat → Nat
 ```
 
 ::::full
@@ -1640,9 +1705,17 @@ example : map (Nat.add 3) [2, 0, 2] = [5, 3, 5] := by rfl
 Thought exercise: before running the following commands, can you
 calculate the types of {name}`prodCurry` and {name}`prodUncurry`?
 
-```lean
+```lean (name := c_uc)
 #check @prodCurry
 #check @prodUncurry
+```
+
+```leanOutput c_uc
+@prodCurry : {α β γ : Type} → (α × β → γ) → α → β → γ
+```
+
+```leanOutput c_uc
+@prodUncurry : {α β γ : Type} → (α → β → γ) → α × β → γ
 ```
 
 ```lean

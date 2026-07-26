@@ -19,6 +19,6 @@ import SFLMeta.Theme
 
 namespace SFLMeta
 
-export Verso.Genre.Manual.InlineLean (name leanCommand leanTerm module leanSection)
+export Verso.Genre.Manual.InlineLean (name leanCommand leanTerm module leanSection leanOutput)
 
 end SFLMeta
