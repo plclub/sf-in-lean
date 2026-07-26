@@ -259,29 +259,7 @@ Some examples of STLC terms:
 :::slidebreak
 :::
 
-::::terse
-Note that _all_ functions are anonymous.
-
-We'll see how to add named function declarations as "syntactic
-sugar" in the `MoreStlc` chapter.
-::::
-
-::::full
-As the last several examples show, the STLC is a language of
-{deftech}_higher-order_ functions: we can write down functions that take
-other functions as arguments and/or return other functions as
-results.
-
-The STLC doesn't provide any primitive syntax for defining _named_
-functions: i.e., all functions are "anonymous."  We'll see in chapter
-`MoreStlc` that it is easy to add named functions -- indeed, the
-fundamental naming and binding mechanisms are exactly the same.
-::::
-
-:::slidebreak
-:::
-
-Revisiting our term examples, here they are along with their type:
+Now reconsider our examples, each along with its type:
 
 - `λx:Bool. false` has type `Bool → Bool`
 
@@ -295,6 +273,28 @@ Revisiting our term examples, here they are along with their type:
 - `(λx:Bool. λy:Bool. x) false` has type `Bool → Bool`
 
 - `(λx:Bool. λy:Bool. x) false true` has type `Bool`
+
+::::terse
+Note that _all_ functions are anonymous.
+
+We'll see how to add named function declarations as "syntactic
+sugar" in the `MoreStlc` chapter.
+::::
+
+::::full
+As the last few of the examples show, the STLC is a language of
+{deftech}_higher-order_ functions: we can write down functions that take
+other functions as arguments and/or return other functions as
+results.
+
+The STLC doesn't provide any primitive syntax for defining _named_
+functions: i.e., all functions are "anonymous."  We'll see in chapter
+`MoreStlc` that it is easy to add named functions -- indeed, the
+fundamental naming and binding mechanisms are exactly the same.
+::::
+
+:::slidebreak
+:::
 
 ::::quiz
 What is the type of the following term?
@@ -615,12 +615,12 @@ def delabTm : Delab := whenPPOption getPPNotation do
 ```
 ::::
 
+:::ignore
 A few checks that the grammar parses the way it should -- application
 associating to the left, conditionals nesting without parentheses, and `~`
 escaping to Lean:
 
-::::full
-```lean
+```lean -show
 #check <{ λ x : Bool . λ y : Bool . x }>
 #check <{ Bool → Bool }>
 #check <{ Bool → Bool → Bool }>
@@ -637,14 +637,13 @@ escaping to Lean:
 #check <{ (if x then if x then y else x else y) z }>
 #check <{ λ ~"z" : Bool . z z }>
 ```
-::::
+:::
 
 :::slidebreak
 :::
 
-::::terse
-And terms inside the same brackets:
-::::
+Here are the terms we will use as running examples, written in the new
+notation:
 
 ```lean
 abbrev idB := <{ λ x : Bool . x }>
@@ -662,6 +661,10 @@ abbrev k := <{ λ x : Bool . λ y : Bool . x }>
 ```lean
 abbrev notB := <{ λ x : Bool . if x then false else true }>
 ```
+::::full
+(We write these as `abbrev`s rather than `def`s so that they unfold
+transparently wherever they appear in a proof.)
+::::
 
 Note that an abstraction `λ x : T . t` (formally, {name}`Tm.abs` applied to
 `x`, `T`, and `t`) is
@@ -669,11 +672,6 @@ always annotated with the type `T` of its parameter, in contrast
 to Lean (and other functional languages like ML, Haskell, etc.),
 which use type inference to fill in missing annotations.  We're
 not considering type inference at all here.
-
-::::full
-(We write these as `abbrev`s rather than `def`s so that they unfold
-transparently wherever they appear in a proof.)
-::::
 
 # Operational Semantics
 
@@ -714,11 +712,6 @@ to do.
 :::slidebreak
 :::
 
-:::dev BeforeNextRelease
-There is going to be some work making the metavariable
-choices consistent in comments...
-:::
-
 Third, for abstractions, we have a choice:
 
 - We can say that `λx:T. t` is a value only when `t` is a
@@ -733,14 +726,14 @@ Third, for abstractions, we have a choice:
 Our usual way of evaluating expressions in Lean makes the first
 choice -- for example,
 
-```display
-#reduce fun x : Bool => 3 + 4
+```lean
+#reduce fun _x : Bool => 3 + 4
 ```
 
 yields:
 
 ```display
-fun x => 7
+fun _x => 7
 ```
 
 But Lean is rather unusual in this respect.  Most functional
@@ -767,11 +760,10 @@ proofs then lean on `auto`/`eauto` to assemble derivations.  We have no
 counterpart here: the proofs below name their constructors explicitly, in the
 style of the {ref "Types"}[Types] chapter.  Lean's `grind` would be the closest
 analogue if a later pass wants automation.
+
 :::
 
-::::terse
-*STLC Programs*
-::::
+## STLC Programs
 
 Finally, we must consider what constitutes a _complete_ program.
 
@@ -800,7 +792,7 @@ the `step` relation will always be working with closed terms.
 ## Substitution
 
 Now we come to the heart of the STLC: the operation of
-substituting one term for a variable in another term.  This
+_substituting_ one term for a variable in another term.  This
 operation is used below to define the operational semantics of
 function application, where we will need to substitute the
 argument term for the function parameter in the function's body.
@@ -849,7 +841,7 @@ Here are some examples:
 
 - `[x:=true] (λx:Bool. x)` yields `λx:Bool. x`
 
-The last example is key: substituting `x` with `true` in
+The last example is illuminating: substituting `x` with `true` in
 `λx:Bool. x` does _not_ yield `λx:Bool. true`!  The reason for
 this is that the `x` in the body of `λx:Bool. x` is _bound_ by the
 abstraction: it is a new, local name that just happens to be
@@ -881,34 +873,6 @@ Here is the definition, informally...
 explain better about alpha-conversion.
 :::
 
-:::instructors
--------------------------------------------------------------
-
-Begin Definition of templat subst
-:::
-
-:::dev
-```
-NOTATION: SAZ 2024 - I think this notation should bind tigher than
-application, which is a good reason to put application higher than
-level 1 in the base stlc_tm grammar.
-```
-:::
-
-::::full
-The notation is used inside the definition it names, so we introduce its
-meaning in two steps, as the {ref "Types"}[Types] chapter does for its step
-relation: inside a `section`, `set_option hygiene false` lets the expansion
-refer to the `subst` being defined; after the `section` closes we declare the
-same rule again, for real use.
-::::
-
-:::instructors
-End Definition of template subst
-
--------------------------------------------------------------
-:::
-
 ```lean
 section
 set_option hygiene false in
@@ -918,6 +882,8 @@ local macro_rules (kind := tmBracket)
 
 def subst (x : String) (s : Tm) (t : Tm) : Tm :=
   match t with
+  -- `.var y`, not `<{ ~y }>`: `y` is the variable's *name*, a `String`
+  -- (see the note below the definition).
   | .var y =>
       if x = y then s else t
   | <{ λ ~y : ~T . ~t1 }> =>
@@ -937,10 +903,21 @@ macro_rules (kind := tmBracket)
       `(subst $(← varStr x) <{ $s:stlcTm }> <{ $t:stlcTm }>)
 ```
 
-::::full
-One more line registers substitutions with the printer, so that a goal
-mentioning one reads as `[x := s] t` rather than as a `subst` application:
+::::instructors
+About the definition above:
+the variable case matches `.var y` rather than `<{ ~y }>`, because the
+two `~`s mean different things.  Inside `<{ … }>` at a *term* position, `~e`
+splices a Lean expression of type {name}`Tm`; at the *variable* position of a
+`λ` (or of a substitution), `~e` splices a {name}`String`.  Destructuring
+{name}`Tm.var` binds `y` to the variable's name -- a {name}`String` -- so
+`<{ ~y }>` would be a type error.  The grammar has no production for "the
+variable with this name", because naming a variable is what a bare identifier
+already does, and a bare identifier is a literal rather than a splice.
 ::::
+
+::::details (summary := "Notation encoding: substitution")
+One more line registers substitutions with the printer, so that a goal
+mentioning one reads as `[x := s] t` rather than as a `subst` application.
 
 ```lean
 open Lean PrettyPrinter Delaborator SubExpr in
@@ -950,10 +927,12 @@ def delabSubst : Delab := whenPPOption getPPNotation do
   | `(stlcTm| ~$e) => pure e
   | e => `(<{ $e:stlcTm }>)
 ```
+::::
 
-::::hide
-```
--- NOTATION: these are useful checks
+:::ignore
+Checks that the substitution notation parses and nests as intended.
+
+```lean -show
 #check <{ [x := x] x }>
 #check <{ [x := x] [x := y] z }>
 #check <{ [x := x] (λ y : Bool . x) }>
@@ -962,7 +941,7 @@ def delabSubst : Delab := whenPPOption getPPNotation do
 #check <{ ([x := z] y) ([x := z] x) }>
 #check <{ [x := (λ y : Bool . y)] (x z) }>
 ```
-::::
+:::
 
 ::::quiz
 What is the result of the following substitution?
@@ -980,20 +959,15 @@ What is the result of the following substitution?
 (4) none of the above
 ::::
 
-_Technical note_: Substitution also becomes trickier to define if
+_Technical note_: Substitution becomes trickier to define if
 we consider the case where `s`, the term being substituted for a
 variable in some other term, may itself contain free variables.
+We say that `s` is an _open_ term.
 
 :::slidebreak
 :::
 
-:::dev PotentialImprovement
-This bit might need more tersification
-:::
-
-Here is an example of how things would become trickier if one were
-to substitute _open_ terms. Using the simple definition of
-substitution above to substitute the open term
+Here is an example. Using the above definition to substitute the open term
 
 ```display
 s = λx:Bool. r
@@ -1032,7 +1006,7 @@ then `[z:=s]t'` is
 λw:Bool. λx:Bool. r
 ```
 
-which does not behave the same as the substituting in the original t:
+which does not behave the same as the substituting in the original `t`:
 
 ```display
 [z:=s]t = λr:Bool. λx:Bool. r
@@ -1042,11 +1016,6 @@ That is, renaming a bound variable in `t` would change how `t`
 behaves under our simple substitution. So substitution gets more
 complicated in that setting, but fortunately we don't have that
 problem in our STLC variant.
-
-::::full
-See, for example, Aydemir 2008 for further discussion
-of this issue.
-::::
 
 :::slidebreak
 :::
