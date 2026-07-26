@@ -1,6 +1,8 @@
 import SFLMeta
-
-
+import Lean.PrettyPrinter.Delaborator
+import Lean.PrettyPrinter.Parenthesizer
+import LF.Typeclasses
+import TS.Smallstep
 
 open Verso.Genre Manual
 open SFLMeta
@@ -315,7 +317,7 @@ The same higher-order function, applied to the constantly
 Note that _all_ functions are anonymous.
 
 We'll see how to add named function declarations as "syntactic
-sugar" in the {ref "MoreStlc"}[MoreStlc] chapter.
+sugar" in the `MoreStlc` chapter.
 ::::
 
 ::::full
@@ -326,7 +328,7 @@ results.
 
 The STLC doesn't provide any primitive syntax for defining _named_
 functions: i.e., all functions are "anonymous."  We'll see in chapter
-{ref "MoreStlc"}[MoreStlc] that it is easy to add named functions -- indeed, the
+`MoreStlc` that it is easy to add named functions -- indeed, the
 fundamental naming and binding mechanisms are exactly the same.
 
 The _types_ of the STLC include `Bool`, which classifies the
@@ -416,208 +418,330 @@ namespacing.
 :::
 
 ```lean
-Module STLC.
+namespace Stlc
 ```
 
 ## Types
 
 ```lean
-Inductive ty : Type :=
-  | Ty_Bool  : ty
-  | Ty_Arrow : ty -> ty -> ty.
+inductive Ty where
+  | bool
+  | arrow (T1 T2 : Ty)
 ```
 
 ## Terms
 
 ```lean
-Inductive tm : Type :=
-  | tm_var   : string -> tm
-  | tm_app   : tm -> tm -> tm
-  | tm_abs   : string -> ty -> tm -> tm
-  | tm_true  : tm
-  | tm_false : tm
-  | tm_if    : tm -> tm -> tm -> tm.
+inductive Tm where
+  | var (x : String)
+  | app (t1 t2 : Tm)
+  | abs (x : String) (T : Ty) (t : Tm)
+  | tru
+  | fls
+  | ite (c t e : Tm)
 ```
+
+:::dev
+The constructors for the boolean constants are `tru` and `fls`, and the
+conditional is `ite`, following the {ref "Types"}[Types] chapter -- `true`,
+`false`, and `if` are Lean keywords and cannot name constructors.
+:::
 
 :::slidebreak
 :::
 
 We need some notation magic to set up the concrete syntax, as
-we did in the `Imp` chapter...
+we did in the {ref "Types"}[Types] chapter...
 
 :::instructors
 If anything ever changes here, make sure to do the same
 adjustment in all the other grammars for Stlc-like languages...
+:::
 
-Pro tip: You might be tempted to use . instead of , in
-the definition of lambda abstractions, to follow standard
-mathematical notation; indeed, this will work fine for Rocq itself,
-but it will confuse UIs (i.e. RocqIDE and Proof General), which use
-simple regexps to figure out where "sentences" end!
+:::dev
+The Rocq source writes lambda abstraction with a comma, `\x:T,t`, rather than
+the standard `\x:T.t`, because a period there confuses user interfaces that
+split a file into "sentences" with simple regexps.  Lean has no such
+restriction, so we write the usual mathematical form with a period.
+:::
+
+::::full
+The encoding uses three syntactic categories: `stlcTy` for types, written
+inside `<{{ … }}>` brackets; `stlcVar` for a binding occurrence of a variable;
+and `stlcTm` for terms, written inside `<{ … }>` brackets.  In any of them,
+`~e` escapes back to an arbitrary Lean expression -- it plays the role of the
+Rocq source's `$( … )`.
+::::
+
+:::instructors
+Begin the definition of the `stlcTy` grammar.
+
+A bare identifier is either the base type `Bool` or a Lean variable standing
+for a type, so that a local `T` -- or any other Lean expression of type `Ty` --
+can appear directly inside the brackets.
 :::
 
 ```lean
-Declare Scope stlc_scope.
-Delimit Scope stlc_scope with stlc.
-Open Scope stlc_scope.
+declare_syntax_cat stlcTy
+syntax:max "~" term:max : stlcTy
+syntax:max "(" stlcTy ")" : stlcTy
+syntax:max ident : stlcTy
+syntax:50 stlcTy:51 " → " stlcTy:50 : stlcTy
+syntax:50 stlcTy:51 " -> " stlcTy:50 : stlcTy
+syntax:max "<{{ " stlcTy " }}>" : term
 
-Declare Custom Entry stlc_ty.
-Declare Custom Entry stlc_tm.
+macro_rules
+  | `(<{{ ~$T }}>)  => pure T
+  | `(<{{ ($T) }}>) => `(<{{ $T }}>)
+  | `(<{{ $x:ident }}>) =>
+      match x.getId.toString with
+      | "Bool" => `(Ty.bool)
+      | _ => `($x)
+  | `(<{{ $T1 → $T2 }}>)  => `(Ty.arrow <{{ $T1 }}> <{{ $T2 }}>)
+  | `(<{{ $T1 -> $T2 }}>) => `(Ty.arrow <{{ $T1 }}> <{{ $T2 }}>)
 ```
-
-:::instructors
-```
-stlc_ty -----------------------------------------------------
-```
-
-```
-Begin Definition of template stlc_ty
-```
-
-allow (global) identifiers,
-e.g. just a local variable or Fooo.bar.baz to appear as types.
-:::
-
-```lean
-Notation "x" := x (in custom stlc_ty at level 0, x global) : stlc_scope.
-```
-
-:::instructors
-```
-quotation for shifting into stlc_ty parsing mode
-```
-:::
-
-```lean
-Notation "<{{ x }}>" := x (x custom stlc_ty).
-
-Notation "( t )" := t (in custom stlc_ty at level 0, t custom stlc_ty) : stlc_scope.
-Notation "S -> T" := (Ty_Arrow S T) (in custom stlc_ty at level 99, right associativity) : stlc_scope.
-```
-
-:::instructors
-to extend this template, add new type constructs below.
-:::
 
 :::dev
 NOTATION: SAZ 2024 - I recommend following the pattern below for all grammars
 :::
 
 :::instructors
-escape to arbitrary Rocq constr notation
-:::
-
-```lean
-Notation "$( t )" := t (in custom stlc_ty at level 0, t constr) : stlc_scope.
-```
-
-:::instructors
-```
-End Definition of template stlc_ty
-```
-
--------------------------------------------------------------
-
-```
-Begin Definition of template stlc_bool
-```
-:::
-
-```lean
-Notation "'Bool'" := Ty_Bool (in custom stlc_ty at level 0) : stlc_scope.
-Notation "'if' x 'then' y 'else' z" :=
-  (tm_if x y z) (in custom stlc_tm at level 200,
-                    x custom stlc_tm,
-                    y custom stlc_tm,
-                    z custom stlc_tm at level 200,
-                    left associativity).
-Notation "'true'"  := true (at level 1).
-Notation "'true'"  := tm_true (in custom stlc_tm at level 0).
-Notation "'false'"  := false (at level 1).
-Notation "'false'"  := tm_false (in custom stlc_tm at level 0).
-```
-
-:::instructors
-```
-End Definition of template stlc_bool
-```
+End of the `stlcTy` grammar.  To extend it, add a `syntax` line to the
+category and a matching `macro_rules` case -- that is all a later chapter
+needs to do to add a new type construct.  The arrow is written both as `→`
+and as `->`; both associate to the right.
 :::
 
 We'll write types inside of `<{{ ... }}>` brackets:
 
 ```lean
-Check <{{ Bool }}>.
-Check <{{ Bool -> Bool }}>.
-Check <{{ (Bool -> Bool) -> Bool }}>.
+#check <{{ Bool }}>
+#check <{{ Bool -> Bool }}>
+#check <{{ (Bool -> Bool) -> Bool }}>
 ```
 
 ::::hide
 ```
-/- INSTRUCTORS: note that the [t] below parses as a "global" -/
-Check forall (t:ty), <{{ t -> Bool }}> = <{{ Bool -> ((t -> t) -> t) }}>.
+-- INSTRUCTORS: note that the `T` below is spliced in as a Lean variable
+#check ∀ (T : Ty), <{{ T -> Bool }}> = <{{ Bool -> ((T -> T) -> T) }}>
 
-/- INSTRUCTORS: example of using the escape to Rocq -/
-Definition foo (t:ty) := Ty_Arrow t t.
-Check <{{ $(foo <{{ Bool }}>) -> Bool }}>.
-Check <{{ $(foo Ty_Bool) -> $(foo Ty_Bool) }}>.
+-- INSTRUCTORS: example of using the escape to Lean
+def foo (T : Ty) := Ty.arrow T T
+#check <{{ ~(foo <{{ Bool }}>) -> Bool }}>
+#check <{{ ~(foo Ty.bool) -> ~(foo Ty.bool) }}>
 ```
 ::::
 
 :::instructors
-```
-stcl_tm -----------------------------------------------------
-```
+Begin the definition of the `stlcVar` and `stlcTm` grammars.
 
-```
-Begin Definition of template stlc_tm
-```
+A variable in binding position is a plain identifier, quoted to the string
+that names it; `~e` again escapes to a Lean expression, here of type `String`.
 :::
 
 ```lean
-Notation "$( x )" := x (in custom stlc_tm at level 0, x constr, only parsing) : stlc_scope.
-Notation "x" := x (in custom stlc_tm at level 0, x constr at level 0) : stlc_scope.
-Notation "<{ e }>" := e (e custom stlc_tm at level 200) : stlc_scope.
-Notation "( x )" := x (in custom stlc_tm at level 0, x custom stlc_tm) : stlc_scope.
+declare_syntax_cat stlcVar
+syntax:max ident : stlcVar
+syntax:max "~" term:max : stlcVar
+syntax:max "<<{ " stlcVar " }>>" : term
 
-Notation "x y" := (tm_app x y) (in custom stlc_tm at level 10, left associativity) : stlc_scope.
-Notation "\ x : t , y" :=
-  (tm_abs x t y) (in custom stlc_tm at level 200, x global,
-                     t custom stlc_ty,
-                     y custom stlc_tm at level 200,
-                     left associativity).
-Coercion tm_var : string >-> tm.
-Arguments tm_var _%_string.
+open Lean in
+macro_rules
+  | `(<<{ $x:ident }>>) => pure (quote x.getId.toString : Term)
+  | `(<<{ ~$e }>>)      => pure e
+```
+
+::::full
+Terms are built from variables, application (which associates to the left),
+abstraction, the two boolean constants, and conditionals.  A bare identifier
+inside `<{ … }>` *is* the object-language variable of that name: `<{ x }>`
+means {name}`Tm.var` applied to `"x"`.  To use a Lean variable that stands for
+a whole term, escape it: `<{ ~t1 ~t2 }>` is the application of the term `t1`
+to the term `t2`.
+::::
+
+```lean
+declare_syntax_cat stlcTm
+syntax:max "~" term:max : stlcTm
+syntax:max "(" stlcTm ")" : stlcTm
+syntax:max ident : stlcTm
+syntax:75 stlcTm:75 ppSpace stlcTm:76 : stlcTm
+syntax:50 "λ " stlcVar " : " stlcTy " . " stlcTm:50 : stlcTm
+syntax:50 "if " stlcTm:51 " then " stlcTm:51 " else " stlcTm:50 : stlcTm
+syntax:max "[" stlcVar " := " stlcTm "] " stlcTm:max : stlcTm
+syntax:max "<{ " stlcTm " }>" : term
+
+open Lean in
+macro_rules
+  | `(<{ ~$e }>)  => pure e
+  | `(<{ ($t) }>) => `(<{ $t }>)
+  | `(<{ $x:ident }>) =>
+      match x.getId.toString with
+      | "true"  => `(Tm.tru)
+      | "false" => `(Tm.fls)
+      | _       => `(Tm.var $(quote x.getId.toString))
+  | `(<{ $t1 $t2 }>) => `(Tm.app <{ $t1 }> <{ $t2 }>)
+  | `(<{ λ $x : $T . $t }>) => `(Tm.abs <<{ $x }>> <{{ $T }}> <{ $t }>)
+  | `(<{ if $c then $t else $e }>) => `(Tm.ite <{ $c }> <{ $t }> <{ $e }>)
 ```
 
 :::instructors
-```
-End Definition of template stlc_tm
-```
-
--------------------------------------------------------------
+End of the `stlcTm` grammar.
 :::
 
+::::full
+The one production with no `macro_rules` case yet is `[x := s] t`, the
+notation for substitution; we give it its meaning when we define substitution
+below.  It binds tighter than application, so `[x:=s] t1 t2` is the
+application of `[x:=s] t1` to `t2`, and a `λ` or `if` body must be
+parenthesized: `[x:=s] (λ y : Bool . x)`.
+::::
+
+::::full
+The last piece is a _delaborator_, which runs the grammar backwards: it
+rebuilds the concrete syntax from a `Tm` or `Ty` value, so that terms
+appearing in goals and in `#check` output print as `<{ λ x : Bool . x }>`
+rather than as a pile of constructors.  (Setting `pp.notation false` turns it
+off, revealing the underlying representation.)
+::::
+
 ```lean
-Definition x : string := "x".
-Definition y : string := "y".
-Definition z : string := "z".
-Hint Unfold x : core.
-Hint Unfold y : core.
-Hint Unfold z : core.
+open Lean PrettyPrinter Delaborator SubExpr Parenthesizer in
+/-- Re-inserts parentheses in `stlcTy` output according to the grammar's precedences. -/
+@[category_parenthesizer stlcTy]
+def stlcTy.parenthesizer : CategoryParenthesizer | prec => do
+  maybeParenthesize `stlcTy true wrapParens prec <|
+    parenthesizeCategoryCore `stlcTy prec
+where
+  wrapParens (stx : Syntax) : Syntax := Unhygienic.run do
+    let pstx ← `(stlcTy| ($(⟨stx⟩)))
+    return pstx.raw.setInfo (SourceInfo.fromRef stx)
+
+open Lean PrettyPrinter Delaborator SubExpr Parenthesizer in
+/-- Re-inserts parentheses in `stlcTm` output according to the grammar's precedences. -/
+@[category_parenthesizer stlcTm]
+def stlcTm.parenthesizer : CategoryParenthesizer | prec => do
+  maybeParenthesize `stlcTm true wrapParens prec <|
+    parenthesizeCategoryCore `stlcTm prec
+where
+  wrapParens (stx : Syntax) : Syntax := Unhygienic.run do
+    let pstx ← `(stlcTm| ($(⟨stx⟩)))
+    return pstx.raw.setInfo (SourceInfo.fromRef stx)
+
+open Lean PrettyPrinter Delaborator SubExpr in
+/-- Rebuild `stlcTy` concrete syntax from a `Ty` value. -/
+partial def delabTyInner : DelabM (TSyntax `stlcTy) := do
+  let stx ←
+    match_expr ← getExpr with
+    | Ty.bool => `(stlcTy| $(mkIdent `Bool):ident)
+    | Ty.arrow _ _ => do
+        let a ← withAppFn <| withAppArg delabTyInner
+        let b ← withAppArg delabTyInner
+        `(stlcTy| $a → $b)
+    | _ => do
+        match ← delab with
+        | `($i:ident) => `(stlcTy| $i:ident)
+        | e => `(stlcTy| ~$e)
+  (⟨·⟩) <$> annotateTermInfo ⟨stx.raw⟩
+
+open Lean in
+/-- Is `s` usable as a bare identifier in the object syntax? -/
+def isPlainName (s : String) : Bool :=
+  !s.isEmpty && !s.front.isDigit && s.all fun c => c.isAlphanum || c == '_'
+
+open Lean PrettyPrinter Delaborator SubExpr in
+/-- Rebuild `stlcVar` concrete syntax from the string in a binding position. -/
+def delabVarInner : DelabM (TSyntax `stlcVar) := do
+  match ← delab with
+  | `($s:str) =>
+      if isPlainName s.getString then
+        `(stlcVar| $(mkIdent (Name.mkSimple s.getString)):ident)
+      else `(stlcVar| ~$s)
+  | e => `(stlcVar| ~$e)
+
+open Lean PrettyPrinter Delaborator SubExpr in
+/-- Rebuild `stlcTm` concrete syntax from a `Tm` value. -/
+partial def delabTmInner : DelabM (TSyntax `stlcTm) := do
+  let stx ←
+    match_expr ← getExpr with
+    | Tm.tru => `(stlcTm| $(mkIdent `true):ident)
+    | Tm.fls => `(stlcTm| $(mkIdent `false):ident)
+    | Tm.var _ => do
+        match ← withAppArg delab with
+        | `($s:str) =>
+            if isPlainName s.getString then
+              `(stlcTm| $(mkIdent (Name.mkSimple s.getString)):ident)
+            else `(stlcTm| ~($(⟨← delab⟩)))
+        | _ => `(stlcTm| ~($(⟨← delab⟩)))
+    | Tm.app _ _ => do
+        let f ← withAppFn <| withAppArg delabTmInner
+        let a ← withAppArg delabTmInner
+        `(stlcTm| $f $a)
+    | Tm.abs _ _ _ => do
+        let x ← withAppFn <| withAppFn <| withAppArg delabVarInner
+        let T ← withAppFn <| withAppArg delabTyInner
+        let t ← withAppArg delabTmInner
+        `(stlcTm| λ $x : $T . $t)
+    | Tm.ite _ _ _ => do
+        let c ← withAppFn <| withAppFn <| withAppArg delabTmInner
+        let t ← withAppFn <| withAppArg delabTmInner
+        let e ← withAppArg delabTmInner
+        `(stlcTm| if $c then $t else $e)
+    | _ => do
+        -- `subst` is defined below, so it is matched by name rather than with
+        -- `match_expr`; a substitution prints in its own bracket notation.
+        let e ← getExpr
+        if e.getAppFn.constName? == some `Stlc.subst && e.getAppNumArgs == 3 then
+          let x ← withAppFn <| withAppFn <| withAppArg delabVarInner
+          let s ← withAppFn <| withAppArg delabTmInner
+          let t ← withAppArg delabTmInner
+          `(stlcTm| [$x := $s] $t)
+        else
+          match ← delab with
+          | `($i:ident) => `(stlcTm| $i:ident)
+          | e => `(stlcTm| ~$e)
+  (⟨·⟩) <$> annotateTermInfo ⟨stx.raw⟩
+
+open Lean PrettyPrinter Delaborator SubExpr in
+@[delab app.Stlc.Ty.bool, delab app.Stlc.Ty.arrow]
+def delabTy : Delab := whenPPOption getPPNotation do
+  guard <| match_expr ← getExpr with
+    | Ty.bool => true | Ty.arrow _ _ => true | _ => false
+  match ← delabTyInner with
+  | `(stlcTy| ~$e) => pure e
+  | e => `(<{{ $e }}>)
+
+open Lean PrettyPrinter Delaborator SubExpr in
+@[delab app.Stlc.Tm.var, delab app.Stlc.Tm.app, delab app.Stlc.Tm.abs,
+  delab app.Stlc.Tm.tru, delab app.Stlc.Tm.fls, delab app.Stlc.Tm.ite]
+def delabTm : Delab := whenPPOption getPPNotation do
+  guard <| match_expr ← getExpr with
+    | Tm.var _ => true | Tm.app _ _ => true | Tm.abs _ _ _ => true
+    | Tm.tru => true | Tm.fls => true | Tm.ite _ _ _ => true
+    | _ => false
+  match ← delabTmInner with
+  | `(stlcTm| ~$e) => pure e
+  | e => `(<{ $e }>)
 ```
 
 ::::hide
 ```
-Check <{ \ x : Bool, \ y : Bool, x }>.
-Check <{ \ x : Bool, \ y : Bool, x }>.
-Fail Check <{ \ w : Bool, \ y : Bool, x }>.
+#check <{ λ x : Bool . λ y : Bool . x }>
+#check <{ λ x : Bool . λ y : Bool . x }>
 ```
 ::::
 
 :::dev
-NOTATION: NOWISH: Explain it!!! (BCP)
+The Rocq source needs `Definition x : string := "x"` (and likewise for `y` and
+`z`), plus a coercion `tm_var : string >-> tm`, before a bare `x` can be
+written inside its brackets.  Our `stlcTm` grammar quotes a bare identifier to
+a string itself, so those globals -- and the coercion -- are not needed.  That
+removes the problem the author notes below complain about: there is no global
+`x` to be picked up accidentally by a term that forgot to bind one.
 
 ```
+NOTATION: NOWISH: Explain it!!! (BCP)
+
 NOTATION: LATER: These definitions are problematic: they cause
 confusion in later chapters (in particular, MoreStlc) because, if
 someone accidentally omits a quantifier for, say x, Rocq will find
@@ -656,28 +780,29 @@ But hugo says this is a bad idea anyway:
 
 ::::hide
 ```
-Check <{{Bool -> Bool}}>.
-Check <{{Bool -> Bool -> Bool}}>.
-Check <{x}>.
-Check <{x y}>.
-Check <{(x y) (x y)}>.
-Check <{x (y x) y x y}>.
-Check <{\x:Bool, x}>.
-Check <{(\x:Bool, x) y}>.
-Check <{ if x then x else x }>.
-Check <{ if x y then x else x }>.
-Check <{ if (x y) then x else x }>.
-Check <{ if x then if x then y else x else y z }>.
-Check <{ (if x then if x then y else x else y) z }>.
+#check <{{ Bool -> Bool }}>
+#check <{{ Bool -> Bool -> Bool }}>
+#check <{ x }>
+#check <{ x y }>
+#check <{ (x y) (x y) }>
+#check <{ x (y x) y x y }>
+#check <{ λ x : Bool . x }>
+#check <{ (λ x : Bool . x) y }>
+#check <{ if x then x else x }>
+#check <{ if x y then x else x }>
+#check <{ if (x y) then x else x }>
+#check <{ if x then if x then y else x else y z }>
+#check <{ (if x then if x then y else x else y) z }>
 ```
 ::::
 
 ::::full
 The upshot of these notation definitions is that we can
 write STLC terms in these brackets: `<{ .. }>` (similar to how we
-wrote Imp commands) and STLC types in these brackets: `<{{ .. }}>`.
+wrote the terms of the previous chapter) and STLC types in these
+brackets: `<{{ .. }}>`.
 
-As before, we can use `$(..)` to "escape" to arbitrary Rocq notation.
+As before, we can use `~..` to "escape" to arbitrary Lean expressions.
 ::::
 
 :::slidebreak
@@ -691,28 +816,25 @@ conditionals.  (And then use them in various places later...)
 :::
 
 ```lean
-Notation idB :=
-  <{ \x:Bool, x }>.
+abbrev idB := <{ λ x : Bool . x }>
 
-Notation idBB :=
-  <{ \x:Bool->Bool, x }>.
+abbrev idBB := <{ λ x : Bool → Bool . x }>
 
-Notation idBBBB :=
-  <{ \x: (Bool->Bool)->(Bool->Bool), x}>.
+abbrev idBBBB := <{ λ x : (Bool → Bool) → (Bool → Bool) . x }>
 
-Notation k := <{ \x:Bool, \y:Bool, x }>.
+abbrev k := <{ λ x : Bool . λ y : Bool . x }>
 ```
 
 :::slidebreak
 :::
 
 ```lean
-Notation notB := <{ \x:Bool, if x then false else true }>.
+abbrev notB := <{ λ x : Bool . if x then false else true }>
 ```
 
-Note that an abstraction `\x:T,t` (formally, `tm_abs x T t`) is
+Note that an abstraction `λ x : T . t` (formally, `Tm.abs x T t`) is
 always annotated with the type `T` of its parameter, in contrast
-to Rocq (and other functional languages like ML, Haskell, etc.),
+to Lean (and other functional languages like ML, Haskell, etc.),
 which use type inference to fill in missing annotations.  We're
 not considering type inference at all here.
 
@@ -730,8 +852,8 @@ BCP 19: might be a good idea to try this again?
 :::
 
 ::::full
-(We write these as `Notation`s rather than `Definition`s to make
-things easier for `auto`.)
+(We write these as `abbrev`s rather than `def`s so that they unfold
+transparently wherever they appear in a proof.)
 ::::
 
 # Operational Semantics
@@ -813,19 +935,23 @@ We also make the second choice here.
 :::
 
 ```lean
-Inductive value : tm -> Prop :=
-  | v_abs : forall x T2 t1,
-      value <{\x:T2, t1}>
-  | v_true :
-      value <{true}>
-  | v_false :
-      value <{false}>.
-
-Hint Constructors value : core.
+inductive Value : Tm → Prop where
+  | abs (x : String) (T2 : Ty) (t1 : Tm) : Value <{ λ ~x : ~T2 . ~t1 }>
+  | tru : Value <{ true }>
+  | fls : Value <{ false }>
 ```
 
+:::dev
+The Rocq source follows each inductive definition in this chapter with a
+`Hint Constructors … : core`, registering the constructors with `auto`; the
+proofs then lean on `auto`/`eauto` to assemble derivations.  We have no
+counterpart here: the proofs below name their constructors explicitly, in the
+style of the {ref "Types"}[Types] chapter.  Lean's `grind` would be the closest
+analogue if a later pass wants automation.
+:::
+
 ::::terse
-** STLC Programs
+*STLC Programs*
 ::::
 
 Finally, we must consider what constitutes a _complete_ program.
@@ -950,47 +1076,70 @@ level 1 in the base stlc_tm grammar.
 ```
 :::
 
-```lean
-Reserved Notation "'[' x ':=' s ']' t" (in custom stlc_tm at level 5, x global, s custom stlc_tm,
-      t custom stlc_tm at next level, right associativity).
-```
+::::full
+The notation is used inside the definition it names, so we introduce its
+meaning in two steps, as the {ref "Types"}[Types] chapter does for its step
+relation: inside a `section`, `set_option hygiene false` lets the expansion
+refer to the `subst` being defined; after the `section` closes we declare the
+same rule again, for real use.
+::::
 
 :::instructors
-End Definition of subst subst
+End Definition of template subst
 
 -------------------------------------------------------------
 :::
 
 ```lean
-Fixpoint subst (x : string) (s : tm) (t : tm) : tm :=
-  match t with
-  | tm_var y =>
-      if String.eqb x y then s else t
-  | <{\y:T, t1}> =>
-      if String.eqb x y then t else <{\y:T, [x:=s] t1}>
-  | <{t1 t2}> =>
-      <{[x:=s] t1 [x:=s] t2}>
-  | <{true}> =>
-      <{true}>
-  | <{false}> =>
-      <{false}>
-  | <{if t1 then t2 else t3}> =>
-      <{if [x:=s] t1 then [x:=s] t2 else [x:=s] t3}>
-  end
+section
+set_option hygiene false in
+local macro_rules
+  | `(<{ [$x := $s] $t }>) => `(subst <<{ $x }>> <{ $s }> <{ $t }>)
 
-where "'[' x ':=' s ']' t" := (subst x s t) (in custom stlc_tm).
+def subst (x : String) (s : Tm) (t : Tm) : Tm :=
+  match t with
+  | .var y =>
+      if x = y then s else t
+  | <{ λ ~y : ~T . ~t1 }> =>
+      if x = y then t else <{ λ ~y : ~T . [~x := ~s] ~t1 }>
+  | <{ ~t1 ~t2 }> =>
+      <{ ([~x := ~s] ~t1) ([~x := ~s] ~t2) }>
+  | <{ true }> =>
+      <{ true }>
+  | <{ false }> =>
+      <{ false }>
+  | <{ if ~t1 then ~t2 else ~t3 }> =>
+      <{ if [~x := ~s] ~t1 then [~x := ~s] ~t2 else [~x := ~s] ~t3 }>
+end
+
+macro_rules
+  | `(<{ [$x := $s] $t }>) => `(subst <<{ $x }>> <{ $s }> <{ $t }>)
+```
+
+::::full
+One more line registers substitutions with the printer, so that a goal
+mentioning one reads as `[x := s] t` rather than as a `subst` application:
+::::
+
+```lean
+open Lean PrettyPrinter Delaborator SubExpr in
+@[delab app.Stlc.subst]
+def delabSubst : Delab := whenPPOption getPPNotation do
+  match ← delabTmInner with
+  | `(stlcTm| ~$e) => pure e
+  | e => `(<{ $e }>)
 ```
 
 ::::hide
 ```
-/- NOTATION: these are useful checks -/
-Check <{ [x := x]x }>.
-Check <{ [x := x][x := y]z }>.
-Check <{ [x := x] \y:Bool, x }>.
-Check <{ [x := x] \y:Bool, x y }>.
-Check <{ [x := x] (\y:Bool, [x:=x]x y)}>.
-Check <{ ([x := z]y) ([x := z]x) }>.
-Check <{ [x := \y:Bool, y](x z) }>.
+-- NOTATION: these are useful checks
+#check <{ [x := x] x }>
+#check <{ [x := x] [x := y] z }>
+#check <{ [x := x] (λ y : Bool . x) }>
+#check <{ [x := x] (λ y : Bool . x y) }>
+#check <{ [x := x] (λ y : Bool . ([x := x] x) y) }>
+#check <{ ([x := z] y) ([x := z] x) }>
+#check <{ [x := (λ y : Bool . y)] (x z) }>
 ```
 ::::
 
@@ -1092,80 +1241,69 @@ formalizing richer languages.
 
 ::::::full
 :::::exercise (rating := 3) (name := "substi_correct")
-The definition that we gave above uses Rocq's `Fixpoint` facility
-to define substitution as a _function_.  Suppose, instead, we
-wanted to define substitution as an inductive _relation_ `substi`.
-We've begun the definition by providing the `Inductive` header and
+The definition that we gave above defines substitution as a
+_function_.  Suppose, instead, we wanted to define substitution as an
+inductive _relation_ `Substi`.
+We've begun the definition by providing the `inductive` header and
 one of the constructors; your job is to fill in the rest of the
 constructors and prove that the relation you've defined coincides
 with the function given above.
 
 ```lean
-Inductive substi (s : tm) (x : string) : tm -> tm -> Prop :=
-  | s_var1 :
-      substi s x (tm_var x) s
+inductive Substi (s : Tm) (x : String) : Tm → Tm → Prop where
+  | var1 :
+      Substi s x (.var x) s
 -- SOLUTION
-  | s_var2 : forall x',
-      x <> x' ->
-      substi s x (tm_var x') (tm_var x')
-  | s_abs1 : forall T2 t1,
-      substi s x <{\x:T2, t1}> <{\x:T2, t1}>
-  | s_abs2 : forall x' T1 t1 t1',
-      x <> x' ->
-      substi s x t1 t1' ->
-      substi s x <{\x':T1, t1}> <{\x':T1, t1'}>
-  | s_app : forall t1 t2 t1' t2',
-      substi s x t1 t1' ->
-      substi s x t2 t2' ->
-      substi s x <{t1 t2}> <{t1' t2'}>
-  | s_true :
-      substi s x <{true}> <{true}>
-  | s_false :
-      substi s x <{false}> <{false}>
-  | s_if : forall t1 t2 t3 t1' t2' t3',
-      substi s x t1 t1' ->
-      substi s x t2 t2' ->
-      substi s x t3 t3' ->
-      substi s x <{if t1 then t2 else t3}> <{if t1' then t2' else t3'}>
+  | var2 (x' : String) (h : x ≠ x') :
+      Substi s x (.var x') (.var x')
+  | abs1 (T2 : Ty) (t1 : Tm) :
+      Substi s x <{ λ ~x : ~T2 . ~t1 }> <{ λ ~x : ~T2 . ~t1 }>
+  | abs2 (x' : String) (T1 : Ty) (t1 t1' : Tm)
+      (hx : x ≠ x') (h : Substi s x t1 t1') :
+      Substi s x <{ λ ~x' : ~T1 . ~t1 }> <{ λ ~x' : ~T1 . ~t1' }>
+  | app (t1 t2 t1' t2' : Tm)
+      (h1 : Substi s x t1 t1') (h2 : Substi s x t2 t2') :
+      Substi s x <{ ~t1 ~t2 }> <{ ~t1' ~t2' }>
+  | tru :
+      Substi s x <{ true }> <{ true }>
+  | fls :
+      Substi s x <{ false }> <{ false }>
+  | ite (t1 t2 t3 t1' t2' t3' : Tm)
+      (h1 : Substi s x t1 t1') (h2 : Substi s x t2 t2') (h3 : Substi s x t3 t3') :
+      Substi s x <{ if ~t1 then ~t2 else ~t3 }> <{ if ~t1' then ~t2' else ~t3' }>
 -- END SOLUTION
-.
 
-Hint Constructors substi : core.
-
-Theorem substi_correct : forall s x t t',
-  <{ [x:=s]t }> = t' <-> substi s x t t'.
-Proof.
+theorem substi_correct (s : Tm) (x : String) (t t' : Tm) :
+    <{ [~x := ~s] ~t }> = t' ↔ Substi s x t t' := by
   solution!
-    intros s x t t'.
-    split.
-    - (* -> *)
-      generalize dependent t'.
-      (induction t); intros; unfold subst in H; subst; fold subst in *; auto.
-      + (* var *)
-        destruct (String.eqb_spec x s0) as [H | H]; subst; auto.
-      + (* abs *)
-        destruct (String.eqb_spec x s0) as [H | H]; subst; auto.
-    - (* <- *)
-      generalize dependent t'.
-      induction t;
-         intros; unfold subst; subst; fold subst in *; auto;
-         try solve [inversion H; auto].
-      + (* var *)
-        inversion H; subst.
-        * rewrite String.eqb_refl; auto.
-        * rewrite <- String.eqb_neq in H1. rewrite H1. auto.
-      + (* app *)
-        inversion H; subst.
-        rewrite -> (IHt1 t1'); auto. rewrite -> (IHt2 t2'); auto.
-      + (* abs *)
-        inversion H; subst.
-        * rewrite String.eqb_refl; auto.
-        * rewrite <- String.eqb_neq in H4. rewrite H4. auto.
-          rewrite (IHt t1'); auto.
-      + (* if *)
-        inversion H; subst.
-        rewrite (IHt1 t1'); auto. rewrite (IHt2 t2'); auto.
-        rewrite (IHt3 t3'); auto. Qed.
+    constructor
+    · -- →
+      intro h
+      subst h
+      induction t with
+      | var y =>
+          by_cases hxy : x = y
+          · subst hxy; simpa [subst] using Substi.var1
+          · simpa [subst, hxy] using Substi.var2 y hxy
+      | app t1 t2 ih1 ih2 => exact .app _ _ _ _ ih1 ih2
+      | abs y T t1 ih =>
+          by_cases hxy : x = y
+          · subst hxy; simpa [subst] using Substi.abs1 T t1
+          · simpa [subst, hxy] using Substi.abs2 y T t1 _ hxy ih
+      | tru => exact .tru
+      | fls => exact .fls
+      | ite t1 t2 t3 ih1 ih2 ih3 => exact .ite _ _ _ _ _ _ ih1 ih2 ih3
+    · -- ←
+      intro h
+      induction h with
+      | var1 => simp [subst]
+      | var2 y hxy => simp [subst, hxy]
+      | abs1 T t1 => simp [subst]
+      | abs2 y T t1 t1' hxy _ ih => simp [subst, hxy, ih]
+      | app t1 t2 t1' t2' _ _ ih1 ih2 => simp [subst, ih1, ih2]
+      | tru => simp [subst]
+      | fls => simp [subst]
+      | ite t1 t2 t3 t1' t2' t3' _ _ _ ih1 ih2 ih3 => simp [subst, ih1, ih2, ih3]
 ```
 :::::
 
@@ -1241,34 +1379,33 @@ Formally:
 ::::
 
 ```lean
-Reserved Notation "t '-->' t'" (at level 40).
+section
+set_option hygiene false in
+local notation:40 t:41 " ⟶ " t':41 => Step t t'
 
-Inductive step : tm -> tm -> Prop :=
-  | ST_AppAbs : forall x T t v,
-         value v ->
-         <{(\x:T, t) v}> --> <{ [x:=v]t }>
-  | ST_App1 : forall t1 t1' t2,
-         t1 --> t1' ->
-         <{t1 t2}> --> <{t1' t2}>
-  | ST_App2 : forall v1 t2 t2',
-         value v1 ->
-         t2 --> t2' ->
-         <{v1 t2}> --> <{v1  t2'}>
-  | ST_IfTrue : forall t1 t2,
-      <{if true then t1 else t2}> --> t1
-  | ST_IfFalse : forall t1 t2,
-      <{if false then t1 else t2}> --> t2
-  | ST_If : forall t1 t1' t2 t3,
-      t1 --> t1' ->
-      <{if t1 then t2 else t3}> --> <{if t1' then t2 else t3}>
+inductive Step : Tm → Tm → Prop where
+  | appAbs (x : String) (T : Ty) (t v : Tm) (hv : Value v) :
+      <{ (λ ~x : ~T . ~t) ~v }> ⟶ <{ [~x := ~v] ~t }>
+  | app1 (t1 t1' t2 : Tm) (h : t1 ⟶ t1') :
+      <{ ~t1 ~t2 }> ⟶ <{ ~t1' ~t2 }>
+  | app2 (v1 t2 t2' : Tm) (hv : Value v1) (h : t2 ⟶ t2') :
+      <{ ~v1 ~t2 }> ⟶ <{ ~v1 ~t2' }>
+  | ifTrue (t1 t2 : Tm) :
+      <{ if true then ~t1 else ~t2 }> ⟶ t1
+  | ifFalse (t1 t2 : Tm) :
+      <{ if false then ~t1 else ~t2 }> ⟶ t2
+  | ifStep (t1 t1' t2 t3 : Tm) (h : t1 ⟶ t1') :
+      <{ if ~t1 then ~t2 else ~t3 }> ⟶ <{ if ~t1' then ~t2 else ~t3 }>
+end
 
-where "t '-->' t'" := (step t t').
-
-Hint Constructors step : core.
-
-Notation multistep := (multi step).
-Notation "t1 '-->*' t2" := (multistep t1 t2) (at level 40).
+scoped notation:40 t:41 " ⟶ " t':41 => Step t t'
+scoped notation:40 t:41 " ⟶* " t':41 => Multi Step t t'
 ```
+
+::::full
+As in the {ref "Smallstep"}[Smallstep] chapter, `⟶*` is the multi-step closure
+of `⟶` -- that is, {name}`Multi` applied to this chapter's step relation.
+::::
 
 ::::quiz
 What does the following term step to?
@@ -1359,14 +1496,10 @@ idBB idB -->* idB
 ```
 
 ```lean
-Lemma step_example1 :
-  <{idBB idB}> -->* idB.
-Proof.
-  eapply multi_step.
-  - apply ST_AppAbs.
-    apply v_abs.
-  - simpl.
-    apply multi_refl.  Qed.
+example : <{ ~idBB ~idB }> ⟶* idB := by
+  apply Multi.step (y := idB)
+  · exact .appAbs "x" <{{ Bool → Bool }}> <{ x }> idB (.abs ..)
+  · exact .refl _
 ```
 
 :::slidebreak
@@ -1386,16 +1519,13 @@ i.e.,
 ```
 
 ```lean
-Lemma step_example2 :
-  <{idBB (idBB idB)}> -->* idB.
-Proof.
-  eapply multi_step.
-  - apply ST_App2.
-    + auto.
-    + apply ST_AppAbs. auto.
-  - eapply multi_step.
-    + apply ST_AppAbs. simpl. auto.
-    + simpl. apply multi_refl.  Qed.
+example : <{ ~idBB (~idBB ~idB) }> ⟶* idB := by
+  apply Multi.step (y := <{ ~idBB ~idB }>)
+  · exact .app2 idBB <{ ~idBB ~idB }> idB (.abs ..)
+      (.appAbs "x" <{{ Bool → Bool }}> <{ x }> idB (.abs ..))
+  apply Multi.step (y := idB)
+  · exact .appAbs "x" <{{ Bool → Bool }}> <{ x }> idB (.abs ..)
+  · exact .refl _
 ```
 
 :::slidebreak
@@ -1417,16 +1547,15 @@ i.e.,
 ```
 
 ```lean
-Lemma step_example3 :
-  <{idBB notB true}> -->* <{false}>.
-Proof.
-  eapply multi_step.
-  - apply ST_App1. apply ST_AppAbs. auto.
-  - simpl. eapply multi_step.
-    + apply ST_AppAbs. auto.
-    + simpl. eapply multi_step.
-      * apply ST_IfTrue.
-      * apply multi_refl.  Qed.
+example : <{ ~idBB ~notB true }> ⟶* <{ false }> := by
+  apply Multi.step (y := <{ ~notB true }>)
+  · exact .app1 <{ ~idBB ~notB }> notB <{ true }>
+      (.appAbs "x" <{{ Bool → Bool }}> <{ x }> notB (.abs ..))
+  apply Multi.step (y := <{ if true then false else true }>)
+  · exact .appAbs "x" <{{ Bool }}> <{ if x then false else true }> <{ true }> .tru
+  apply Multi.step (y := <{ false }>)
+  · exact .ifTrue <{ false }> <{ true }>
+  · exact .refl _
 ```
 
 :::slidebreak
@@ -1450,17 +1579,16 @@ idBB (notB true) -->* false.
 ask how it reduces.)
 
 ```lean
-Lemma step_example4 :
-  <{idBB (notB true)}> -->* <{false}>.
-Proof.
-  eapply multi_step.
-  - apply ST_App2; auto.
-  - eapply multi_step.
-    + apply ST_App2; auto.
-      apply ST_IfTrue.
-    + eapply multi_step.
-      * apply ST_AppAbs. auto.
-      * simpl. apply multi_refl.  Qed.
+example : <{ ~idBB (~notB true) }> ⟶* <{ false }> := by
+  apply Multi.step (y := <{ ~idBB (if true then false else true) }>)
+  · exact .app2 idBB <{ ~notB true }> <{ if true then false else true }> (.abs ..)
+      (.appAbs "x" <{{ Bool }}> <{ if x then false else true }> <{ true }> .tru)
+  apply Multi.step (y := <{ ~idBB false }>)
+  · exact .app2 idBB <{ if true then false else true }> <{ false }> (.abs ..)
+      (.ifTrue <{ false }> <{ true }>)
+  apply Multi.step (y := <{ false }>)
+  · exact .appAbs "x" <{{ Bool → Bool }}> <{ x }> <{ false }> .fls
+  · exact .refl _
 ```
 
 ::::quiz
@@ -1477,50 +1605,27 @@ E.g., `true true` is a normal form but not a value.
 :::
 
 ::::::full
-We can use the `normalize` tactic defined in the {ref "Smallstep"}[Smallstep] chapter
-to simplify these proofs.
-
-```lean
-Lemma step_example1' :
-  <{idBB idB}> -->* idB.
-Proof. normalize.  Qed.
-
-Lemma step_example2' :
-  <{idBB (idBB idB)}> -->* idB.
-Proof. normalize. Qed.
-
-Lemma step_example3' :
-  <{idBB notB true}> -->* <{false}>.
-Proof. normalize.  Qed.
-
-Lemma step_example4' :
-  <{idBB (notB true)}> -->* <{false}>.
-Proof. normalize.  Qed.
-```
+:::dev
+The Rocq source repeats the four examples above using the `normalize` tactic
+defined in its `Smallstep` chapter, and the exercise below asks for
+`step_example5` both with and without it.  We have no such tactic: the
+{ref "Smallstep"}[Smallstep] chapter here does not define one, so the repeats
+are dropped and the exercise is stated once, proved by hand.  Writing a
+`normalize` tactic -- repeatedly applying {name}`Multi.step` with the unique
+available reduction, then closing with reflexivity -- is the natural follow-up,
+and it belongs in the Smallstep chapter, not here.
+:::
 
 :::::exercise (rating := 2) (name := "step_example5")
-Try to do this one both with and without `normalize`.
-
 ```lean
-Lemma step_example5 :
-       <{idBBBB idBB idB}>
-  -->* idB.
-Proof.
+example : <{ ~idBBBB ~idBB ~idB }> ⟶* idB := by
   solution!
-    eapply multi_step.
-    - apply ST_App1.
-      apply ST_AppAbs;
-      auto.
-    - eapply multi_step.
-      + simpl. apply ST_AppAbs; auto.
-      + simpl. apply multi_refl.  Qed.
-
-Lemma step_example5_with_normalize :
-       <{idBBBB idBB idB}>
-  -->* idB.
-Proof.
-  solution!
-    normalize. Qed.
+    apply Multi.step (y := <{ ~idBB ~idB }>)
+    · exact .app1 <{ ~idBBBB ~idBB }> idBB idB
+        (.appAbs "x" <{{ (Bool → Bool) → Bool → Bool }}> <{ x }> idBB (.abs ..))
+    apply Multi.step (y := idB)
+    · exact .appAbs "x" <{{ Bool → Bool }}> <{ x }> idB (.abs ..)
+    · exact .refl _
 ```
 :::::
 
@@ -1566,7 +1671,7 @@ variables in `t` as specified by `Gamma`".
 
 We'll also write `x |-> T ; Gamma` for "update the partial map
 `Gamma` so that it maps `x` to `T`," following the notation from
-the {ref "Maps"}[Maps] chapter.
+the `Maps` chapter.
 
 With these refinements, we are ready to give informal and formal
 specifications of the typing relation.
@@ -1594,8 +1699,14 @@ written `Gamma |-- t \in T`, where `Gamma` is a
 ::::
 
 ```lean
-Definition context := partial_map ty.
+abbrev Context := TotalMap String (Option Ty)
 ```
+
+::::full
+A context is a _partial map_ from variable names to types, which we build --
+as the `Maps` chapter does -- as a total map whose values are
+optional: {name}`none` at a variable means "not bound here".
+::::
 
 ::::terse
 Following the usual notation for partial maps, we write
@@ -1705,26 +1816,28 @@ Begin Definition of template STCL has_type notation
 ```
 :::
 
-```lean
-Notation "x '|->' v ';' m " := (update m x v)
-  (in custom stlc_tm at level 0, x constr at level 0, v  custom stlc_ty, right associativity) : stlc_scope.
-
-Notation "x '|->' v " := (update empty x v)
-  (in custom stlc_tm at level 0, x constr at level 0, v custom stlc_ty) : stlc_scope.
-```
-
-:::dev
-```
-NOTATION: If we don't include the following, then <{ empty |-- t : T }>
-will print as <{ $(empty) |-- t : T }>
-```
-:::
+::::full
+Contexts get a grammar of their own, `stlcCtx`: the empty context is `∅`, a
+context extended with a binding is `x ↦ T ; Γ`, and `~e` escapes to a Lean
+expression of type {name}`Context`.  The whole judgment then goes inside the
+same `<{ … }>` brackets as terms, written with the turnstile and colon of the
+{ref "Types"}[Types] chapter: `<{ Γ ⊢ t ⦂ T }>`.
+::::
 
 ```lean
-Notation "'empty'" := empty (in custom stlc_tm) : stlc_scope.
+declare_syntax_cat stlcCtx
+syntax:max "∅" : stlcCtx
+syntax:max "~" term:max : stlcCtx
+syntax:max stlcVar " ↦ " stlcTy " ; " stlcCtx : stlcCtx
+syntax:max "ctx% " stlcCtx : term
 
-Reserved Notation "<{ Gamma '|--' t '\in' T }>"
-            (at level 0, Gamma custom stlc_tm at level 200, t custom stlc_tm, T custom stlc_ty).
+macro_rules
+  | `(ctx% ∅)   => `((∅ : Context))
+  | `(ctx% ~$e) => pure e
+  | `(ctx% $x:stlcVar ↦ $T:stlcTy ; $G:stlcCtx) =>
+      `(TotalMap.update (ctx% $G) <<{ $x }>> (some <{{ $T }}>))
+
+syntax:max "<{ " stlcCtx " ⊢ " stlcTm " ⦂ " stlcTy " }>" : term
 ```
 
 :::instructors
@@ -1736,34 +1849,72 @@ End STCL has_type notation
 :::
 
 ```lean
-Inductive has_type : context -> tm -> ty -> Prop :=
-  | T_Var : forall Gamma x T1,
-      Gamma x = Some T1 ->
-      <{ Gamma |-- x \in T1 }>
-  | T_Abs : forall Gamma x T1 T2 t1,
-      <{ x |-> T2 ; Gamma |-- t1 \in T1 }> ->
-      <{ Gamma |-- \x:T2, t1 \in T2 -> T1 }>
-  | T_App : forall T1 T2 Gamma t1 t2,
-      <{ Gamma |-- t1 \in T2 -> T1 }> ->
-      <{ Gamma |-- t2 \in T2 }> ->
-      <{ Gamma |-- t1 t2 \in T1 }>
-  | T_True : forall Gamma,
-      <{ Gamma |-- true \in Bool }>
-  | T_False : forall Gamma,
-      <{ Gamma |-- false \in Bool }>
-  | T_If : forall t1 t2 t3 T1 Gamma,
-       <{ Gamma |-- t1 \in Bool }> ->
-       <{ Gamma |-- t2 \in T1 }> ->
-       <{ Gamma |-- t3 \in T1 }> ->
-       <{ Gamma |-- if t1 then t2 else t3 \in T1 }>
+section
+set_option hygiene false in
+local macro_rules
+  | `(<{ $G:stlcCtx ⊢ $t:stlcTm ⦂ $T:stlcTy }>) =>
+      `(HasType (ctx% $G) <{ $t }> <{{ $T }}>)
 
-where "<{ Gamma '|--' t '\in' T }>" := (has_type Gamma t T) : stlc_scope.
+inductive HasType : Context → Tm → Ty → Prop where
+  | var (Γ : Context) (x : String) (T1 : Ty) (h : Γ[x] = some T1) :
+      <{ ~Γ ⊢ ~(Tm.var x) ⦂ ~T1 }>
+  | abs (Γ : Context) (x : String) (T1 T2 : Ty) (t1 : Tm)
+      (h : <{ ~x ↦ ~T2 ; ~Γ ⊢ ~t1 ⦂ ~T1 }>) :
+      <{ ~Γ ⊢ λ ~x : ~T2 . ~t1 ⦂ ~T2 → ~T1 }>
+  | app (Γ : Context) (T1 T2 : Ty) (t1 t2 : Tm)
+      (h1 : <{ ~Γ ⊢ ~t1 ⦂ ~T2 → ~T1 }>) (h2 : <{ ~Γ ⊢ ~t2 ⦂ ~T2 }>) :
+      <{ ~Γ ⊢ ~t1 ~t2 ⦂ ~T1 }>
+  | tru (Γ : Context) :
+      <{ ~Γ ⊢ true ⦂ Bool }>
+  | fls (Γ : Context) :
+      <{ ~Γ ⊢ false ⦂ Bool }>
+  | ite (Γ : Context) (t1 t2 t3 : Tm) (T1 : Ty)
+      (h1 : <{ ~Γ ⊢ ~t1 ⦂ Bool }>) (h2 : <{ ~Γ ⊢ ~t2 ⦂ ~T1 }>)
+      (h3 : <{ ~Γ ⊢ ~t3 ⦂ ~T1 }>) :
+      <{ ~Γ ⊢ if ~t1 then ~t2 else ~t3 ⦂ ~T1 }>
+end
+
+macro_rules
+  | `(<{ $G:stlcCtx ⊢ $t:stlcTm ⦂ $T:stlcTy }>) =>
+      `(HasType (ctx% $G) <{ $t }> <{{ $T }}>)
+```
+
+::::full
+As with terms, a judgment prints back in its own notation, so that a goal
+reads as `<{ x ↦ Bool ; ∅ ⊢ x ⦂ Bool }>`:
+::::
+
+```lean
+open Lean PrettyPrinter in
+/-- Rebuild `stlcCtx` syntax from the term syntax of a `Context`, so that a
+context prints as `x ↦ Bool ; Γ` rather than as a chain of map updates. -/
+partial def unexpandCtx : Term → UnexpandM (TSyntax `stlcCtx)
+  | `(∅) => `(stlcCtx| ∅)
+  | `($x:str →ₜ some $T ; $G) => do
+      let G' ← unexpandCtx G
+      let x' : TSyntax `stlcVar ←
+        if isPlainName x.getString then
+          `(stlcVar| $(mkIdent (Name.mkSimple x.getString)):ident)
+        else `(stlcVar| ~$x)
+      match T with
+      | `(<{{ $T' }}>) => `(stlcCtx| $x':stlcVar ↦ $T' ; $G')
+      | _              => `(stlcCtx| $x':stlcVar ↦ ~($T) ; $G')
+  | G => `(stlcCtx| ~($G))
+
+open Lean PrettyPrinter in
+@[app_unexpander Stlc.HasType]
+def HasType.unexpand : Unexpander
+  | `($_ $G <{ $t }> <{{ $T }}>) => do `(<{ $(← unexpandCtx G) ⊢ $t ⦂ $T }>)
+  | `($_ $G <{ $t }> $T)         => do `(<{ $(← unexpandCtx G) ⊢ $t ⦂ ~($T) }>)
+  | `($_ $G $t <{{ $T }}>)       => do `(<{ $(← unexpandCtx G) ⊢ ~($t) ⦂ $T }>)
+  | `($_ $G $t $T)               => do `(<{ $(← unexpandCtx G) ⊢ ~($t) ⦂ ~($T) }>)
+  | _ => throw ()
 ```
 
 ::::hide
 ```
-Check <{ true }>.
-Check <{ empty |-- true \in Bool }>.
+#check <{ true }>
+#check <{ ∅ ⊢ true ⦂ Bool }>
 ```
 ::::
 
@@ -1800,31 +1951,25 @@ where "Gamma '|-a' t '\in' T" := (has_type_a Gamma t T).
 ```
 :::
 
-```lean
-Hint Constructors has_type : core.
-```
+
 
 ## Examples
 
 ```lean
-Example typing_example_1 :
-  <{ empty |-- \x:Bool, x \in Bool -> Bool }>.
-Proof. eauto. Qed.
+example : <{ ∅ ⊢ λ x : Bool . x ⦂ Bool → Bool }> :=
+  .abs _ "x" _ _ _ (.var _ "x" _ rfl)
 ```
 
-Note that, since we added the `has_type` constructors to the hints
-database, `eauto` can solve this one immediately.
+The derivation is small enough to write out directly: an abstraction rule
+whose premise is the variable rule, and the variable rule's premise -- that the
+extended context maps `x` to `Bool` -- holds by computation, hence `rfl`.
 
-::::full
-For what it's worth, in this case `auto` works too, since our term
-contains no application nodes:
-
-```lean
-Example typing_example_1' :
-  <{ empty |-- \x:Bool, x \in Bool -> Bool }>.
-Proof. auto.  Qed.
-```
-::::
+:::dev
+The Rocq source proves this one, and the next, by `eauto`, having registered
+the `has_type` constructors in the `core` hint database; it also observes that
+plain `auto` suffices here because the term contains no application nodes.  We
+have no hint database, so both derivations are given explicitly.
+:::
 
 :::slidebreak
 :::
@@ -1837,36 +1982,31 @@ empty |-- \x:Bool, \y:Bool->Bool, y (y x)
 ```
 
 ```lean
-Example typing_example_2 :
-  <{ empty |--
-    \x:Bool,
-       \y:Bool->Bool,
-          (y (y x)) \in
-    Bool -> (Bool -> Bool) -> Bool }>.
-Proof. eauto 20. Qed.
+example :
+    <{ ∅ ⊢ λ x : Bool . λ y : Bool → Bool . y (y x) ⦂
+       Bool → (Bool → Bool) → Bool }> :=
+  .abs _ _ _ _ _ (.abs _ _ _ _ _
+    (.app _ _ Ty.bool _ _ (.var _ "y" _ rfl)
+      (.app _ _ Ty.bool _ _ (.var _ "y" _ rfl) (.var _ "x" _ rfl))))
 ```
 
 ::::::full
 :::::exercise (rating := 2) (name := "typing_example_2_full")
-Prove the same result without using `auto`, `eauto`, or
-`eapply` (or `...`).
+Prove the same result in tactic mode, applying one rule at a time and
+naming the argument type of each application explicitly.
 
 ```lean
-Example typing_example_2_full :
- <{ empty |--
-    \x:Bool,
-       \y:Bool->Bool,
-          (y (y x)) \in
-    Bool -> (Bool -> Bool) -> Bool }>.
-Proof.
+example :
+    <{ ∅ ⊢ λ x : Bool . λ y : Bool → Bool . y (y x) ⦂
+       Bool → (Bool → Bool) → Bool }> := by
   solution!
-    apply T_Abs.
-    apply T_Abs.
-    apply T_App with (T2 := <{{ Bool }}>).
-    - apply T_Var. reflexivity.
-    - apply T_App with (T2 := <{{ Bool }}> ).
-      + apply T_Var. reflexivity.
-      + apply T_Var. reflexivity.  Qed.
+    apply HasType.abs
+    apply HasType.abs
+    apply HasType.app (T2 := <{{ Bool }}>)
+    · apply HasType.var; rfl
+    · apply HasType.app (T2 := <{{ Bool }}>)
+      · apply HasType.var; rfl
+      · apply HasType.var; rfl
 ```
 :::::
 
@@ -1875,40 +2015,27 @@ Proof.
 ::::::full
 :::::exercise (rating := 2) (name := "typing_example_3")
 Formally prove the following typing derivation holds:
+
+```display
+∃ T,
+   ∅ ⊢ λ x : Bool → Bool . λ y : Bool → Bool . λ z : Bool .
+               y (x z)
+         ⦂ T
+```
+
+```lean
+example :
+    ∃ T, <{ ∅ ⊢ λ x : Bool → Bool . λ y : Bool → Bool . λ z : Bool . y (x z)
+            ⦂ ~T }> :=
+  solution!(
+    ⟨<{{ (Bool → Bool) → (Bool → Bool) → (Bool → Bool) }}>,
+     .abs _ _ _ _ _ (.abs _ _ _ _ _ (.abs _ _ _ _ _
+       (.app _ _ Ty.bool _ _ (.var _ "y" _ rfl)
+         (.app _ _ Ty.bool _ _ (.var _ "x" _ rfl) (.var _ "z" _ rfl)))))⟩)
+```
 :::::
 
 ::::::
-
-```display
-exists T,
-   empty |-- \x:Bool->Bool, \y:Bool->Bool, \z:Bool,
-               y (x z)
-         \in T.
-```
-
-::::full
-```lean
-Example typing_example_3 :
-  exists T,
-   <{ empty |--
-      \x:Bool->Bool,
-         \y:Bool->Bool,
-            \z:Bool,
-               (y (x z)) \in
-      T }>.
-Proof.
-  solution!
-    exists <{{ (Bool -> Bool) ->
-              (Bool -> Bool) ->
-              (Bool -> Bool) }}>.
-    /- LATER : Why doesn't [eauto 30] do anything??? -/
-    apply T_Abs.
-    apply T_Abs.
-    apply T_Abs.
-    apply T_App with (T2 := <{{ Bool }}> ); auto.
-    apply T_App with (T2 := <{{ Bool }}> ); auto.  Qed.
-```
-::::
 
 :::slidebreak
 :::
@@ -1923,23 +2050,21 @@ to the term `\x:Bool, \y:Bool, x y` -- i.e.,
 ```
 
 ```lean
-Example typing_nonexample_1 :
-  ~ exists T,
-    <{  empty |--
-        \x:Bool,
-            \y:Bool,
-               (x y) \in
-        T }>.
-Proof.
-  intros Hc. destruct Hc as [T Hc].
-  /- The [clear] tactic is useful here for tidying away bits of
-  the context that we're not going to need again. -/
-  inversion Hc; subst; clear Hc.
-  inversion H4; subst; clear H4.
-  inversion H5; subst; clear H5 H4.
-  inversion H2; subst; clear H2.
-  discriminate H1.
-Qed.
+example : ¬ ∃ T, <{ ∅ ⊢ λ x : Bool . λ y : Bool . x y ⦂ ~T }> := by
+  intro ⟨T, hc⟩
+  -- Each `cases` peels off one rule of the derivation, naming the premise it
+  -- leaves behind; the context stays small because the old hypothesis goes away.
+  cases hc with
+  | abs _ _ _ _ _ h1 =>
+    cases h1 with
+    | abs _ _ _ _ _ h2 =>
+      cases h2 with
+      | app _ _ _ _ _ hf _ =>
+        cases hf with
+        | var _ _ _ hx =>
+          -- `x` is bound to `Bool` in the context, but the application rule
+          -- needs it to have an arrow type.
+          exact Ty.noConfusion (Option.some.inj hx)
 ```
 
 
@@ -1952,29 +2077,35 @@ Another nonexample:
 
 ::::full
 ```lean
-Example typing_nonexample_3 :
-  ~ (exists S T,
-      <{ empty |--
-          \x:S, x x \in T }>).
-Proof.
+example : ¬ ∃ S T, <{ ∅ ⊢ λ x : ~S . x x ⦂ ~T }> := by
   solution!
-    intros Hc. destruct Hc as [S [T Hc]].
-    inversion Hc; subst; clear Hc.
-    inversion H4; subst; clear H4.
-    inversion H2; subst; clear H2.
-    inversion H5; subst; clear H5.
-    rewrite H1 in H2. clear H1.
-    injection H2 as H2.
-    /- At this point, we have an assumption that [T2] is equal
-    to [T2->T1].  But there can't be any such (finite) [T2]. -/
-    induction T2.
-      - (* Bool *) discriminate.
-      - (* Arrow *)
-        /- NOTATION: NOWISH: Ori: error with associativity of arrow in H2?! -/
-        injection H2 as H2. apply IHT2_1. rewrite H. assumption.
-  Qed.
+    -- The two occurrences of `x` force its type `S` to satisfy `S = S → T`,
+    -- and no (finite) type does.
+    have arrow_ne : ∀ (T1 T2 : Ty), T1 ≠ Ty.arrow T1 T2 := by
+      intro T1
+      induction T1 with
+      | bool => intro T2 h; cases h
+      | arrow A B ihA _ => intro T2 h; injection h with h1 _; exact ihA B h1
+    intro ⟨S, T, hc⟩
+    cases hc with
+    | abs _ _ _ _ _ h1 =>
+      cases h1 with
+      | app _ _ _ _ _ hf ha =>
+        cases hf with
+        | var _ _ _ hx =>
+          cases ha with
+          | var _ _ _ hy =>
+            exact arrow_ne _ _ ((Option.some.inj hy).symm.trans (Option.some.inj hx))
 ```
 ::::
+
+:::dev
+The Rocq proof gets to the same contradiction through a chain of `inversion`s
+and then an induction on the offending type; the `LATER` note there asks why
+`eauto 30` makes no progress on the previous example, and a `NOTATION` note
+from Ori reports an error with the associativity of the arrow in one of the
+inversion hypotheses.  Neither issue arises in this encoding.
+:::
 
 ::::quiz
 Which of the following propositions is _not_ provable?
@@ -2083,7 +2214,7 @@ or
 ::::
 
 ```lean
-End STLC.
+end Stlc
 ```
 
 ::::hide
