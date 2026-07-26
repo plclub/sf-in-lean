@@ -93,19 +93,18 @@ trees -- the process that, for example, would translate the string
 For comparison, here's a conventional BNF (Backus-Naur Form) grammar
 defining the same abstract syntax:
 
-```
-  a := nat
-      | a + a
-      | a − a
-      | a * a
-
-  b := bool
-      | a = a
-      | a ≠ a
-      | a ≤ a
-      | a > a
-      | ¬ b
-      | b ∧ b
+```bnf
+a ::= nat
+    | a "+" a
+    | a "−" a
+    | a "*" a ;
+b ::= bool
+    | a "=" a
+    | a "≠" a
+    | a "≤" a
+    | a ">" a
+    | "¬" b
+    | b "∧" b ;
 ```
 
 Compared to the Lean version above...

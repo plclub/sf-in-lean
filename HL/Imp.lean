@@ -210,17 +210,21 @@ tag := "imp-notations"
 To make Imp programs easier to read and write, we introduce some notations and implicit
 coercions.
 
-You do not need to understand exactly what these declarations do. Briefly, though:
+You do not need to understand exactly what these declarations do. Briefly, though,
+here is how the two blocks below fit together:
 
 - The `declare_syntax_cat` directive adds a new non-terminal to Lean's grammar, called
   `imp_aexp`. We'll add additional non-terminals further below.
 - Each `syntax` directive defines a grammar production, of which there are eight in
   total. The first two define literals, `num` and `ident`, as `imp_aexp`s. The next
-  deveral directives define productions for building larger expressions, with
+  several directives define productions for building larger expressions, with
   some annotations to define precedence, etc.
 - Finally, `macro_rules` is used to translate each production of the `imp_aexp` nonterminal
   into a Lean expression.
-- The same basic pattern is followed for `bexp`s too.
+
+Boolean expressions and, later, commands follow this same pattern exactly, so
+their declarations are collapsed where they appear: open one if you want to see
+the pattern repeated, and skip them otherwise.
 ::::
 
 ```lean
@@ -275,6 +279,7 @@ ordinary Lean uses of `true`/`false`, and as non-reserved symbols they would
 clash with the bare-identifier form of `imp_aexp`.
 :::
 
+::::details (summary := "Notation encoding: boolean expressions")
 ```lean
 /-- Boolean expressions of Imp -/
 declare_syntax_cat imp_bexp
@@ -300,6 +305,7 @@ syntax:max "~" term:max : imp_bexp
 /-- Embed an Imp boolean expression into a Lean term -/
 syntax:min "bexp " "{" imp_bexp "}" : term
 ```
+::::
 
 :::instructors
 The antiquotations are annotated with their category (`$a:imp_aexp`,
@@ -308,6 +314,7 @@ comparison); without the annotation the parser would descend into `imp_aexp`
 and then insist on a comparison operator.
 :::
 
+::::details (summary := "Notation encoding: boolean expressions, macro rules")
 ```lean
 open Lean in
 macro_rules
@@ -325,6 +332,7 @@ macro_rules
   | `(bexp { $b1:imp_bexp ∧ $b2:imp_bexp }) => `(Bexp.and (bexp {$b1}) (bexp {$b2}))
   | `(bexp { ($b:imp_bexp) }) => `(bexp {$b})
 ```
+::::
 
 ::::full
 We make it a little easier to write Imp programs using normal constructors (i.e.,
@@ -376,7 +384,7 @@ turns surface syntax into a term (_elaboration_), a delaborator does the
 reverse: it turns an elaborated term back into surface syntax so that Lean's
 own output uses our concrete Imp notation.
 
-Each delaborator below walks a term of the given type and rebuilds the
+Each delaborator walks a term of the given type and rebuilds the
 matching piece of `imp_aexp`/`imp_bexp` syntax; a subterm Lean doesn't
 recognize is printed with the `~` escape. The `@[delab …]` attribute
 registers the top-level function to fire whenever Lean is about to display a
@@ -387,11 +395,13 @@ companion _category parenthesizer_ re-inserts the parentheses the grammar's
 precedences demand, so that, e.g., `(1 + 2) * 3` prints with its parentheses
 intact.
 
-You do not need to understand the details. The result is that a `#check`, an
-`#eval`, or a proof goal mentioning an Imp expression is displayed in
-readable Imp syntax rather than as a pile of constructors.
+You do not need to understand the details, and the code is collapsed below for
+that reason. The result is that a `#check`, an `#eval`, or a proof goal
+mentioning an Imp expression is displayed in readable Imp syntax rather than as
+a pile of constructors.
 ::::
 
+::::details (summary := "Notation encoding: printing expressions back")
 ```lean
 namespace Imp.Delab
 open Lean PrettyPrinter Delaborator SubExpr Parenthesizer
@@ -488,11 +498,13 @@ partial def delabBexpInner : DelabM (TSyntax `imp_bexp) := do
     | _ => `(imp_bexp| ~$(← delab))
   annAsTerm stx
 ```
+::::
 
 The `whenPPOption getPPNotation` wrapper lets `set_option pp.notation false`
 switch this delaborator off, revealing the raw constructors (see the
 "Desugaring Notations" discussion, after the commands are introduced).
 
+::::details (summary := "Notation encoding: registering the delaborators")
 ```lean
 @[delab app.Aexp.num, delab app.Aexp.id, delab app.Aexp.plus,
   delab app.Aexp.minus, delab app.Aexp.mult]
@@ -527,6 +539,7 @@ partial def delabBexp : Delab := whenPPOption getPPNotation do
 
 end Imp.Delab
 ```
+::::
 
 ::::full
 With these delaborators in place, Lean pretty-prints Imp expressions with the higher-level
@@ -627,12 +640,12 @@ Now we are ready to define the syntax and behavior of Imp _commands_
 (or _statements_). Informally, commands `c` are described by the
 following BNF grammar:
 
-```display
-c := skip
-   | x := a
-   | c ; c
-   | if b then c else c end
-   | while b do c end
+```bnf
+c ::= "skip"
+    | x ":=" a
+    | c ";" c
+    | "if" b "then" c "else" c "end"
+    | "while" b "do" c "end" ;
 ```
 
 Here is the formal definition of the abstract syntax of commands.
@@ -655,10 +668,12 @@ Concrete syntax for commands, in the style of the `ssft24` Imp `Stmt`
    with expressions, `~c` escapes back to an ordinary Lean term of type `Com`.
 :::
 
+::::details (summary := "Notation encoding: commands")
 ```lean
 /-- Imp commands -/
 declare_syntax_cat imp_com
 ```
+::::
 
 :::instructors
 `skip` is *not* a reserved keyword: it is accepted through a bare
@@ -668,6 +683,7 @@ declare_syntax_cat imp_com
    elsewhere in the file, and avoids reserving `skip` globally.
 :::
 
+::::details (summary := "Notation encoding: commands, macro rules")
 ```lean
 /-- The command that does nothing (`skip;`) -/
 syntax ident ";" : imp_com
@@ -701,6 +717,7 @@ macro_rules
   | `(imp { ~$c }) =>
     pure c
 ```
+::::
 
 ::::full
 Just as we did for expressions, we add a delaborator so that Lean prints
@@ -711,6 +728,7 @@ delaborators for the condition of an
 unrecognized subcommand with the `~` escape.
 ::::
 
+::::details (summary := "Notation encoding: printing commands back")
 ```lean
 namespace Imp.Delab
 open Lean PrettyPrinter Delaborator SubExpr
@@ -762,6 +780,7 @@ partial def delabCom : Delab := whenPPOption getPPNotation do
 
 end Imp.Delab
 ```
+::::
 
 ::::full
 As an example, here is the factorial function again, written as a formal
