@@ -1338,7 +1338,7 @@ then converting back to {name}`Bin` — turns out to be problematic. That
 is, the following "theorem" does not hold.
 
 ```lean +error
-example b : natToBin (binToNat b) = b := by
+example (b : Bin) : natToBin (binToNat b) = b := by
 ```
 
 Let's explore why this theorem fails and how to prove a modified
