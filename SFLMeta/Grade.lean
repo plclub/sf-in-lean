@@ -70,16 +70,23 @@ end
 directive as structured `(points, name)` data.  A noop like `Block.grade`:
 rendered empty and dropped at elaboration; the spec survives verbatim in the
 `…Verso.lean` source for later autograding. -/
-block_extension Block.gradeTheorem (points : String) (name : String) where
-  data := Json.arr #[.str points, .str name]
+block_extension Block.gradeTheorem (points : String) (name : Name) where
+  data := Json.arr #[.str points, .str name.toString]
   traverse _ _ _ := pure none
   toHtml := some fun _ _ _ _ _ => pure .empty
   toTeX := none
 
+-- TODO can we make the name elaborate so that it gives an error immediately if the name doesn't exist?
 @[directive]
 def gradeTheorem : DirectiveExpanderOf GradeTheoremConfig
   | cfg, _contents => do
     ``(Verso.Doc.Block.other
-        (SFLMeta.Block.gradeTheorem $(quote cfg.points) $(quote cfg.name)) #[])
+        (SFLMeta.Block.gradeTheorem $(quote cfg.points) $(quote cfg.name.toName)) #[])
+
+def decodeGradeTheoremData (data : Json) : String × Name :=
+  match data with
+  | .arr #[Json.str points, Json.str name] =>
+    (points, name.toName)
+  | _ => unreachable!
 
 end SFLMeta

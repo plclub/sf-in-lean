@@ -21,6 +21,11 @@ name = "batteries"
 git = "https://github.com/leanprover-community/batteries"
 rev = "v4.32.0"
 
+[[require]]
+name = "autograder"
+git = "https://github.com/plclub/lean4-autograder-main"
+rev = "bump-4-32-0"
+
 [[lean_lib]]
 name = "SFLMeta"
 
