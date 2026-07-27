@@ -95,8 +95,8 @@ Troubleshooting:
    in the dependency tree.
 ::::
 
-We reopen the namespace from the previous chapter to keep our definitions
-and theorems in this chapter localized to this file.
+We reopen the namespace from the previous chapter to keep the definitions
+and theorems introduced in this chapter local to this file, so they don't clash with the standard library.
 
 ```lean
 namespace NatPlayground.Nat
@@ -288,7 +288,7 @@ But the proof that it is also a neutral element on the _left_ gets stuck...
 ```lean +error (name := rfl_ex)
 example : ∀ n : Nat, zero + n = n := by
   intro n
-  rfl -- `rfl` doesn't work here!
+  rfl    -- doesn't work here!
 ```
 
 ```leanOutput rfl_ex
@@ -308,6 +308,13 @@ And reasoning by cases using `cases n` doesn't get us much
 further: the branch of the case analysis where we assume `n = zero`
 goes through just fine, but in the branch where `n = n' + 1` for
 some `n'` we get stuck in exactly the same way.
+:::dev "Benjamin Pierce (bcpierce00)"
+This is not high priority, but at some point we should make a decision between
+/* ... */ comments and -- comments in lean code and try to be consistent.  Here
+we're inconsistent in the very same code block!  Are there standard Lean conventions
+we should just follow?
+:::
+
 
 ```lean +error (name := cases_ex)
 example : ∀ n : Nat, zero + n = n := by
@@ -318,7 +325,7 @@ example : ∀ n : Nat, zero + n = n := by
     rfl
     -- so far so good...
   | succ n' =>   /- n = succ n' -/
-    _ -- ...but we're stuck on zero + n'
+    _     -- ...but we're stuck on zero + n'
 ```
 
 ```leanOutput cases_ex
@@ -635,6 +642,11 @@ theorem even_succ (n : Nat) :
 
 ::::::
 
+:::dev "Benjamin Pierce (bcpierce00)"
+Should the following comment really be hidden?  We can postpone it for after the
+initial release, but it should be discussed at some point after that...
+:::
+
 ::::hide
 
 :::dev "Yipeng Liu (berberman)"
@@ -785,7 +797,7 @@ What constitutes a successful proof of a mathematical claim?
 The question has challenged philosophers for millennia, but a
 rough and ready answer could be this: A proof of a mathematical
 proposition `P` is a written (or spoken) text that instills in the
-reader or hearer the certainty that `P` is true — an unassailable
+reader (or hearer) the certainty that `P` is true — an unassailable
 argument for the truth of `P`.  That is, a proof is an act of
 communication.
 
@@ -1149,8 +1161,8 @@ theorem mul_assoc (n m p : Nat) :
 ## A New Tactic Combinator
 
 ::::full
-Before moving on to the next batch of exercises, let's introduce one
-small _tactic combinator_. A tactic combinator combines tactics to form
+Before moving on to the next batch of exercises, let's introduce a
+simple _tactic combinator_. A tactic combinator combines tactics to form
 a larger tactic.
 
 If `t₁` and `t₂` are tactics, then `t₁ <;> t₂` means: run `t₁`, then
@@ -1469,7 +1481,7 @@ theorem normalize_b1 (m : Bin) : normalize (.b1 m) = incr (doubleBin (normalize 
 
 It would be wise to do some `example` proofs to check that your
 definition of {name}`normalize` works the way you intend before you
-proceed. They won't be graded, but fill them in below.
+proceed. They won't be graded, but do fill in a few below.
 
 :::dev "Claude" BeforeNextRelease
 Same `-- SOLUTION` mishandling as elsewhere in this chapter, milder here: the
