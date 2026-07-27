@@ -95,6 +95,9 @@ Troubleshooting:
    in the dependency tree.
 ::::
 
+We reopen the namespace from the previous chapter to keep our definitions
+and theorems in this chapter localized to this file.
+
 ```lean
 namespace NatPlayground.Nat
 ```
