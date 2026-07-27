@@ -468,11 +468,30 @@ The `examplemap` above can now be defined as follows:
 def examplemap' : TotalMap String Bool := "bar" →ₜ true ; "foo" →ₜ true ; ∅
 ```
 
+This completes the definition of total maps. Note that we don't need to define a `find` operation on this representation of maps because it is just function application!
+
+```lean
+example : example_map = examplemap' := rfl
+
+example : examplemap'["baz"] = false := rfl
+example : examplemap'["foo"] = true := rfl
+example : examplemap'["quux"] = false := rfl
+example : examplemap'["bar"] = true := rfl
+```
+
 When we use maps in later chapters, we'll need several fundamental facts about how they behave.
 
 Even if you don't work the following exercises, make sure you thoroughly understand the statements of the lemmas!
 
 (Some of the proofs require the functional extensionality axiom, which was discussed in the Logic chapter.)
+
+First, the empty map returns its default element for all keys:
+
+```lean
+theorem apply_empty (a : α) : (∅ : TotalMap α β)[a] = default := rfl
+```
+
+Next, if we update a map `m` at a key `a` with a new value `b` and then look up `a` in the map resulting from the {name}`update`, we get back `b`:
 
 ```lean
 theorem update_eq (m : TotalMap α β) (a : α) (b : β) : (a →ₜ b ; m)[a] = b := by
@@ -481,8 +500,133 @@ theorem update_eq (m : TotalMap α β) (a : α) (b : β) : (a →ₜ b ; m)[a] =
   rfl
 ```
 
+On the other hand, if we update a map `m` at a key `a₁` and then look up a _different_ key `a₂` in the resulting map, we get the same result that `m` would have given:
+
+::::exercise (rating := 2) (name := "update_neq")
+```lean
+theorem update_neq (m : TotalMap α β) (a₁ a₂ : α) (h : a₁ ≠ a₂) (b : β) :
+    (a₁ →ₜ b ; m)[a₂] = m[a₂] := by
+  solution!
+    by_cases h' : a₁ = a₂
+    · contradiction
+    · unfold update
+      rewrite [getElem_def, beq_false_of_ne h, cond_false]
+      rfl
+```
+
+:::dev "Claude" PotentialImprovement
+The opening `by_cases`/`contradiction` is vacuous -- `h : a₁ ≠ a₂` is already a
+hypothesis, so the first branch is discharged by the very hypothesis that makes
+the second branch provable. The proof goes through as just
+
+```
+unfold update
+rewrite [getElem_def, beq_false_of_ne h, cond_false]
+rfl
+```
+
+:::
+::::
+
+The two remaining facts are equalities _between maps_, so we first need to say when two maps are equal. Since a total map _is_ a function, this is exactly the functional extensionality principle from the Logic chapter: two maps are equal when they agree at every key. Recording it once, for maps, and tagging it `@[ext]` lets the {tactic}`ext` tactic reduce a goal `m₁ = m₂` to the pointwise one in the proofs below.
+
+```lean
+@[ext]
+theorem ext (m₁ m₂ : TotalMap α β) (h : ∀ a : α, m₁[a] = m₂[a]) : m₁ = m₂ := funext h
+```
+
+If we update a map `m` at a key `a` with a value `b₁` and then update again with the same key `a` and another value `b₂`, the resulting map behaves the same (gives the same result when applied to any key) as the simpler map obtained by performing just the second {name}`update` on `m`:
+
+::::exercise (rating := 2) (name := "update_shadow")
+```lean
+theorem update_shadow (m : TotalMap α β) (a : α) (b₁ b₂ : β) :
+    (a →ₜ b₂ ; a →ₜ b₁ ; m) = (a →ₜ b₂ ; m) := by
+  solution!
+    ext a'
+    by_cases h : a = a'
+    · subst h
+      rewrite [update_eq, update_eq]
+      rfl
+    · rewrite [update_neq _ _ _ h, update_neq _ _ _ h, update_neq _ _ _ h]
+      rfl
+```
+
+:::dev "Ori Lahav (orilahav)" PotentialImprovement
+I prefer proving this by case analysis on whether the two keys are equal,
+using `update_eq` and `update_neq`, over unfolding `update`. Why? Because it
+shows that this lemma is not essential: it follows from the previous ones (and
+functional extensionality). An implementation of map update/lookup that
+satisfies the first three will always satisfy `update_shadow`. The first three
+lemmas plus functional extensionality are the axiomatization of arrays in
+SMT solvers' theory of arrays. The same applies to the exercises below that
+unfold `update`.
+
+Claude: the proof above already has this shape; it is the observation that was
+missing from the chapter.
+:::
+::::
+
+Given keys `a₁` and `a₂`, the tactic {tactic}`by_cases` `h : a₁ = a₂` splits the proof into the case where they are equal -- where `subst h` then replaces one by the other -- and the case where they are not, which is what {name}`update_neq` wants. Use it to prove the following theorem, which states that if we update a map to assign key `a` the same value as it already has in `m`, then the result is equal to `m`:
+
+:::dev "mwhicks1" NOW
+Two things the Rocq source says here have been dropped.
+
+Rocq frames this case analysis around `destruct (eqb_spec x1 x2)`, which
+"simultaneously performs case analysis on the result of `String.eqb x1 x2` and
+generates hypotheses about the equality (in the sense of `=`) of `x1` and `x2`"
+-- the boolean/propositional reflection idiom. The paragraph above replaces that
+with `by_cases`/`subst`, which is what the Lean proof uses. But
+reflection is what the `Reflection` section *below* is about, so the two
+may want to be connected rather than have one silently displace the other.
+
+Rocq then says "With the example in chapter *IndProp* as a template, use
+`String.eqb_spec` to prove ...". That cross-reference is dropped, since it is
+unclear what the Lean `IndProp` chapter will end up containing. Revisit later.
+:::
+
+::::exercise (rating := 2) (name := "update_same")
+```lean
+theorem update_same (m : TotalMap α β) (a : α) : (a →ₜ m[a] ; m) = m := by
+  solution!
+    ext a'
+    by_cases h : a = a'
+    · subst h
+      rw [update_eq]
+    · rw [update_neq _ _ _ h]
+```
+::::
+
+Similarly, prove one final property of the {name}`update` function: if we update a map `m` at two distinct keys, it doesn't matter in which order we do the updates.
+
+:::dev "mwhicks1" NOW
+Rocq says "Similarly, use `String.eqb_spec` to prove ..."; the instruction to use
+a specific lemma is dropped here for the same reason as in the note above.
+:::
+
+::::exercise (rating := 3) (name := "update_permute")
+:::gradeTheorem 3 "TotalMap.update_permute"
+:::
+
+```lean
+theorem update_permute (m : TotalMap α β) (a₁ a₂ : α) (b₁ b₂ : β) (h : a₁ ≠ a₂) :
+    (a₁ →ₜ b₁ ; a₂ →ₜ b₂ ; m) = (a₂ →ₜ b₂ ; a₁ →ₜ b₁ ; m) := by
+  solution!
+    ext a'
+    by_cases h₁ : a₁ = a'
+    · subst h₁
+      rw [update_eq, update_neq _ _ _ h.symm, update_eq]
+    · rw [update_neq _ _ _ h₁]
+      by_cases h₂ : a₂ = a'
+      · subst h₂
+        rw [update_eq, update_eq]
+      · rw [update_neq _ _ _ h₂, update_neq _ _ _ h₂, update_neq _ _ _ h₁]
+```
+::::
+
 :::dev
-exercises here...
+The Rocq source also has {name}`apply_empty` and {name}`update_eq` as (optional)
+exercises; here they are worked examples, since {name}`update_eq` was already
+presented that way. Reconsider if this section is rebalanced.
 :::
 
 ## Notation for Concrete Maps
@@ -535,10 +679,156 @@ example : ({ 1 ↦ 2, 1 ↦ 3 } : TotalMap Nat Nat)[1]! = 2 := rfl
 
 ## Partial Maps
 
-:::dev
-rest of section here...
-(from Maps.lean + text)
+Lastly, we define _partial maps_ on top of total maps. A partial map with elements of type `β` is simply a total map with elements of type `Option β`, whose default element is {name}`none`.
+
+```lean
+end TotalMap
+
+abbrev PartialMap (α : Type u) (β : Type v) := TotalMap α (Option β)
+```
+
+:::dev "Chris Henson (chenson2018)"
+Making this an `abbrev` is a design decision: a type alias avoids duplicating all
+the typeclass instances (`GetElem`, `EmptyCollection`, ...) for partial maps. If
+this is confusing for any reason, feel free to change.
 :::
+
+:::dev "Claude" NOW
+The Maps chapter removed the `optionCoe` instance for the duration of its
+partial-map development (`attribute [-instance] optionCoe`, restored at
+`end PartialMap`), on the grounds that a coercion from `β` to `Option β` might
+be confusing at this point. It also recorded two things about doing so: the
+removal must not leak to end-of-file, or Verso's `tag`/`file` metadata coercion
+(`Tag → Option Tag`) fails at end-of-document; and `[-instance]` cannot be
+scoped `local`, hence the manual add/restore pair.
+
+We have not carried that over -- nothing here needs it and it is not clear it is
+wanted. Decide whether to reinstate it.
+:::
+
+Updating a partial map at a key means storing {name}`some` value there, and we introduce a similar notation for it:
+
+```lean
+namespace PartialMap
+
+def update (m : PartialMap α β) (a : α) (b : β) : PartialMap α β :=
+  (a →ₜ some b ; m)
+
+notation a " →ₚ " b " ; " m => PartialMap.update m a b
+```
+
+We can also hide the last case when it is empty:
+
+```lean
+notation a " →ₚ " b => PartialMap.update ∅ a b
+
+def examplepmap : PartialMap String Bool := "Church" →ₚ true ; "Turing" →ₚ false
+```
+
+Since {name}`PartialMap.update` is _defined_ as a total-map update that stores {name}`some` value, the two sides below are literally the same map, and the fact holds by {tactic}`rfl`. It is still worth naming: {tactic}`rw` matches goals _syntactically_, so a goal written with `→ₚ` will not match a total-map lemma written with `→ₜ` until it has been rewritten with this one. Each of the partial-map lemmas that follow begins by doing exactly that.
+
+```lean
+theorem totalMap_eq (m : PartialMap α β) (a : α) (b : β) : (a →ₚ b ; m) = (a →ₜ some b ; m) := rfl
+```
+
+We now straightforwardly lift all of the basic lemmas about total maps to partial maps.
+
+```lean
+@[ext]
+theorem ext (m₁ m₂ : PartialMap α β) (h : ∀ a : α, m₁[a] = m₂[a]) : m₁ = m₂ := funext h
+
+theorem apply_empty (a : α) : (∅ : PartialMap α β)[a] = none := rfl
+
+theorem update_eq (m : PartialMap α β) (a : α) (b : β) : (a →ₚ b ; m)[a] = some b := by
+  rw [totalMap_eq, TotalMap.update_eq]
+
+theorem update_neq (m : PartialMap α β) (a₁ a₂ : α) (h : a₁ ≠ a₂) (b : β) :
+    (a₁ →ₚ b ; m)[a₂] = m[a₂] := by
+  rw [totalMap_eq, TotalMap.update_neq _ _ _ h]
+
+theorem update_shadow (m : PartialMap α β) (a : α) (b₁ b₂ : β) :
+    (a →ₚ b₂ ; a →ₚ b₁ ; m) = (a →ₚ b₂ ; m) := by
+  simp [totalMap_eq]
+  exact TotalMap.update_shadow m a (some b₁) (some b₂)
+
+theorem update_same (m : PartialMap α β) (a : α) (b : β) (h : m[a] = some b) :
+    (a →ₚ b ; m) = m := by
+  rw [totalMap_eq, ← h, TotalMap.update_same]
+
+theorem update_permute (m : PartialMap α β) (a₁ a₂ : α) (b₁ b₂ : β) (h : a₁ ≠ a₂) :
+    (a₁ →ₚ b₁ ; a₂ →ₚ b₂ ; m) = (a₂ →ₚ b₂ ; a₁ →ₚ b₁ ; m) := by
+  simp only [totalMap_eq]
+  exact TotalMap.update_permute m a₁ a₂ (some b₁) (some b₂) h
+```
+
+One last thing: for partial maps, it's convenient to introduce a notion of map inclusion, stating that all the entries in one map are also present in another. Lean already has notation for this -- `m₁ ⊆ m₂` -- which we get by supplying a {name}`HasSubset` instance.
+
+```lean
+def Subset (m₁ m₂ : PartialMap α β) : Prop :=
+  ∀ (a : α) (b : β), m₁[a] = some b → m₂[a] = some b
+
+instance : HasSubset (PartialMap α β) where
+  Subset := PartialMap.Subset
+
+def subset_def (m₁ m₂ : PartialMap α β) :
+    m₁ ⊆ m₂ ↔ (∀ (a : α) (b : β), m₁[a] = some b → m₂[a] = some b) := .rfl
+```
+
+:::dev "Claude" PotentialImprovement
+`subset_def` states a `Prop` (an `Iff`), so should it be a `theorem`, not a
+`def` ?
+:::
+
+We can then show that map update preserves map inclusion, that is:
+
+```lean
+theorem update_subset (m₁ m₂ : PartialMap α β) (a : α) (b : β) (h : m₁ ⊆ m₂) :
+    (a →ₚ b ; m₁) ⊆ (a →ₚ b ; m₂) := by
+  rw [subset_def]
+  intro a' b' eq
+  rw [← eq]
+  by_cases eq : a = a'
+  · subst eq
+    simp [update_eq]
+  · simp only [update_neq _ _ _ eq] at *
+    rw [h a' b' eq]
+    symm
+    assumption
+
+end PartialMap
+```
+
+:::dev "Claude" PotentialImprovement
+In the above proof, the name `eq` is bound twice -- first as the equation `m₁[a'] = some b'`, then
+shadowed by the `by_cases` hypothesis `a = a'` -- which makes the branches hard
+to read. An unshadowed version (verified against this file):
+
+```
+theorem update_subset ... := by
+  rw [subset_def]
+  intro a' b' hb
+  by_cases ha : a = a'
+  · subst ha
+    rw [update_eq] at hb ⊢
+    exact hb
+  · rw [update_neq _ _ _ ha] at hb ⊢
+    exact h a' b' hb
+```
+:::
+
+This property is quite useful for reasoning about languages with variable binding -- e.g., the Simply Typed Lambda Calculus, which we will see in _Type Systems_, where maps are used to keep track of which program variables are defined in a given scope.
+
+:::dev
+`namespace TotalMap` is reopened here only because the `Reflection` section below
+happens to sit inside it (its `Nat.isEven`/`Nat.double` are really
+`TotalMap.Nat.*`, and moving them to the root `Nat` namespace would collide with
+`UsingLean`'s `Nat.double`). Drop the reopen when that section is given a home of
+its own.
+:::
+
+```lean
+namespace TotalMap
+```
 
 # Reflection
 

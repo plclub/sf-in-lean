@@ -6,12 +6,12 @@ import LF.Basics
 import LF.Induction
 import LF.UsingLean
 import LF.Lists
-import LF.Typeclasses
 import LF.Poly
 import LF.Tactics
 import LF.Logic
 import LF.IndProp
 import LF.Automation
+import LF.Typeclasses
 
 import VersoManual
 
@@ -28,6 +28,6 @@ open Verso Genre Manual
 {include LF.Poly}
 {include LF.Tactics}
 {include LF.Logic}
-{include LF.Typeclasses}
 {include LF.IndProp}
 {include LF.Automation}
+{include LF.Typeclasses}

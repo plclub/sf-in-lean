@@ -212,8 +212,8 @@ end Text
 /-! ## Lake project scaffold templates -/
 
 /-- Contents of the generated project's `lakefile.toml`. `extraLibs` names the
-additional `lean_lib`s holding bundled prerequisite sources (e.g. `LF` for the
-bare `LF/Maps.lean` that Imp depends on).  `pkgRequires` lists external package
+additional `lean_lib`s holding prerequisite sources (e.g. `LF` for the
+`LF.Typeclasses` that `HL.Imp` depends on).  `pkgRequires` lists external package
 dependencies `(name, git url, rev)` needed by some emitted chapter's imports
 (e.g. batteries for `import Batteries.CodeAction`), each pinned to the same
 revision the book itself builds with. -/
@@ -1093,8 +1093,8 @@ Extracted `.lean` projects are standalone Lake packages, so each chapter's
 outside dependencies must be reconstructed from its own header `import`s: drop
 the framework imports (they build the book, not student code), re-emit the rest,
 and bundle the source of any that is a content prerequisite (not toolchain, not
-an emitted book chapter — e.g. the bare `LF.Maps`) under its own `lean_lib`. A
-bundled module is copied verbatim, so it must be plain (non-Verso) Lean; a
+an emitted book chapter — e.g. the bare `LF.CustomTactics`) under its own
+`lean_lib`. A bundled module is copied verbatim, so it must be plain (non-Verso) Lean; a
 content prerequisite that is itself a Verso chapter of an earlier volume (e.g.
 `LF.Typeclasses` imported by `HL.Imp`) cannot be bundled this way and is instead
 walked and emitted like a native chapter via `emitSavedImpl`'s `crossVol`
@@ -1120,7 +1120,7 @@ to resolve. The package's Lake name is the prefix lowercased. -/
 private def pkgPrefixes : List String :=
   ["Batteries"]
 
-/-- Top namespace of a module name (`LF.Maps` ⇒ `LF`). -/
+/-- Top namespace of a module name (`LF.Typeclasses` ⇒ `LF`). -/
 private def modTop (m : String) : String := (m.splitOn ".").headD m
 
 /-- Look up package `name` in the book's own `lake-manifest.json`, returning
@@ -1142,7 +1142,8 @@ private def manifestPin (name : String) : IO (Option (String × String)) := do
 imports are dropped; everything else — toolchain and content — is kept.) -/
 private def keepImport (m : String) : Bool := ! frameworkPrefixes.contains (modTop m)
 
-/-- The relative source path of a module (`LF.Maps` ⇒ `LF/Maps.lean`). -/
+/-- The relative source path of a module
+(`LF.Typeclasses` ⇒ `LF/Typeclasses.lean`). -/
 private def modToPath (m : String) : String := m.replace "." "/" ++ ".lean"
 
 /-- Header `import` module names in Lean source text, scanning only the file
