@@ -104,6 +104,13 @@ namespace NatPlayground.Nat
 
 # Review
 
+:::dev "Daniel Sainati @dsainati1" PotentialImprovement
+From GitHub discussion, the display blocks below don't have nice syntax
+highlighting, but using full Lean blocks with +error would also not be nice
+because they would show error messages that aren't relevant to the questions.
+We should try to figure out a nicer way to format these
+:::
+
 ::::quiz
 To prove the following theorem, which tactics will we need besides
 {tactic}`rfl`?
@@ -644,14 +651,7 @@ theorem even_succ (n : Nat) :
 
 ::::::
 
-:::dev "Benjamin Pierce (bcpierce00)"
-Should the following comment really be hidden?  We can postpone it for after the
-initial release, but it should be discussed at some point after that...
-:::
-
-::::hide
-
-:::dev "Yipeng Liu (berberman)"
+:::dev "Yipeng Liu (berberman)" PotentialImprovement
 
 This is an interesting question...
 
@@ -697,6 +697,7 @@ example (n : Nat) (h : n = Nat.succ n) : False := by
 
 :::
 
+::::hide
 ```
 -- QUIZ
 /- We've seen that there are goals that `cases` can't solve but
