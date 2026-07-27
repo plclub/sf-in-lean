@@ -309,10 +309,12 @@ further: the branch of the case analysis where we assume `n = zero`
 goes through just fine, but in the branch where `n = n' + 1` for
 some `n'` we get stuck in exactly the same way.
 :::dev "Benjamin Pierce (bcpierce00)"
+```
 This is not high priority, but at some point we should make a decision between
 /* ... */ comments and -- comments in lean code and try to be consistent.  Here
 we're inconsistent in the very same code block!  Are there standard Lean conventions
 we should just follow?
+```
 :::
 
 
