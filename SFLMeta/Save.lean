@@ -720,7 +720,9 @@ def lean : CodeBlockExpanderOf Verso.Genre.Manual.InlineLean.LeanBlockConfig
     -- still shows the `#guard_msgs` wrapper.  When stripping changed the teacher
     -- form, re-highlight the stripped form for the teacher-side HTML instead.
     let teacherChild ← do
-      if teacher != teacherRaw then
+      -- If `stripGuardMsgs` or `stripFillInMarkers` caused any changes,
+      -- drop the old `underlying` and redo the elaboration.
+      if teacher != src then
         let teacherHls ← elabAndHighlightStudent preEnv preScopes teacher
         `(Verso.Doc.Block.other
             (Verso.Genre.Manual.InlineLean.Block.lean
