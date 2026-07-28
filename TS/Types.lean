@@ -38,7 +38,7 @@ challenging.
 
 Spending an entire 80-minute class on this chapter feels about right.
 Going through the proofs of progress and preservation very carefully,
-at the board, was critical.  Doing the quizzes together is good -- a few
+at the board, was critical.  Doing the quizzes together is good — a few
 more quizzes would be better.
 
 For this lecture, I (BCP) find it useful to make a physical 1-page
@@ -68,7 +68,7 @@ might be wonderful additions to the TERSE notes.
 :::
 
 ::::full
-Our next major topic is _type systems_ -- static program analyses that
+Our next major topic is _type systems_ — static program analyses that
 classify expressions according to the "shapes" of their results.  We'll
 begin with a typed version of the simplest imaginable language, to
 introduce the basic ideas of types and typing rules and the fundamental
@@ -92,7 +92,7 @@ New topic: _type systems_
 To motivate the discussion of type systems, let's begin as usual with a
 tiny toy language. We want it to have the potential for programs to go
 wrong because of runtime type errors, so we endow it with two kinds of
-data -- numbers and booleans -- where not every operation is defined on
+data — numbers and booleans — where not every operation is defined on
 both types of data. For example, program terms like `5 + true` and
 `if 42 then 0 else 1` use undefined operator/data-type combinations.
 
@@ -142,7 +142,7 @@ inductive Tm where
 ::::full
 Writing terms as raw constructors (`.ite .fls .zero (.succ .zero)`) gets
 unreadable quickly.  We introduce a _concrete syntax_ so that a term can be
-written inside `<{ … }>` -- for example `<{ if false then 0 else succ 0 }>` --
+written inside `<{ … }>` — for example `<{ if false then 0 else succ 0 }>` —
 mirroring the informal grammar above.  A bare identifier is spliced as a Lean
 term (so a variable `t` is written just `t`); `~e` escapes an arbitrary Lean
 expression, and `( … )` groups.
@@ -151,7 +151,7 @@ You do not need to understand exactly how the declarations below work; every
 object language in this book is given its syntax the same way, so it is worth
 seeing the pattern once:
 
-- `declare_syntax_cat` adds a new non-terminal to Lean's grammar -- here `tm`,
+- `declare_syntax_cat` adds a new non-terminal to Lean's grammar — here `tm`,
   the terms of this chapter's language.
 - Each `syntax` directive declares one production of that non-terminal, with
   annotations fixing precedence, and the last one declares the `<{ … }>`
@@ -194,6 +194,31 @@ macro_rules
   | `(<{ ~$e }>)  => pure e
   | `(<{ if $c then $t else $e }>) => `(Tm.ite <{ $c }> <{ $t }> <{ $e }>)
 ```
+
+:::dev "mwhicks1" PotentialImprovement
+As observed by berberman, the precedences above are strict, so an argument position
+accepts only an atom or a parenthesized term.
+`succ succ 0`, `succ if true then 0 else 0`, and
+a chained `if … else if … else …` are all rejected; they have to be written
+`succ (succ 0)`, `succ (if true then 0 else 0)`, and
+`if … else (if … else …)`.
+
+This matches the Rocq original, whose notation levels are equally strict
+(`succ x` at level 90 with `x` at 80; `if` at level 90 with all three slots at
+80), and the SF text writes `succ (succ 0)` throughout. It does not match the
+informal BNF above, where every recursive position is an unrestricted `t`.
+
+A later pass could loosen the grammar to follow the BNF — put the argument of
+a unary operator and the three slots of `if` at level 50, the lowest level in
+this category. That change should come together with a delaborator that
+parenthesizes explicitly, since the parenthesizer derives parens from these
+same precedences: with the loose grammar it prints `iszero pred succ 0` and
+`if if true then true else false then 0 else 0`. Wrapping a compound argument
+(`succ`/`pred`/`iszero`/`if`) in parens in the argument position of a unary
+operator and in the condition of an `if`, but not in the branches, keeps the
+current output (`iszero (pred (succ 0))`) while letting `else if` chains print
+flat.
+:::
 
 ::::full
 A _delaborator_ closes the loop: it walks a `Tm` value and rebuilds the
@@ -240,8 +265,10 @@ partial def delabTmInner : DelabM (TSyntax `tm) := do
   (⟨·⟩) <$> annotateTermInfo ⟨stx.raw⟩
 
 open Lean PrettyPrinter Delaborator SubExpr in
-@[delab app.Tm.tru, delab app.Tm.fls, delab app.Tm.zero, delab app.Tm.succ,
-  delab app.Tm.pred, delab app.Tm.isZero, delab app.Tm.ite]
+-- The keys are the constants' full names: `Tm` lives in namespace `TM`, and the
+-- `delab` attribute does not resolve its argument against the current namespace.
+@[delab app.TM.Tm.tru, delab app.TM.Tm.fls, delab app.TM.Tm.zero, delab app.TM.Tm.succ,
+  delab app.TM.Tm.pred, delab app.TM.Tm.isZero, delab app.TM.Tm.ite]
 partial def delabTm : Delab := whenPPOption getPPNotation do
   guard <| match_expr ← getExpr with
     | Tm.tru => true | Tm.fls => true | Tm.zero => true
@@ -353,7 +380,7 @@ for determinism (this will be proved in an optional exercise below).
 
 ::::full
 Notice that the `Tm.Step` relation doesn't care about whether the
-expression being stepped makes global sense -- it just checks that the
+expression being stepped makes global sense — it just checks that the
 operation in the _next_ reduction step is being applied to the right
 kinds of operands.  For example, the term `succ true` cannot take a
 step, but the almost as obviously nonsensical term
@@ -573,7 +600,7 @@ succ (if true then true else true)
 (A) Yes    (B) No
 
 (Hint: Notice that the `Tm.Step` relation doesn't care about whether the
-expression being stepped makes global sense -- it just checks that the
+expression being stepped makes global sense — it just checks that the
 operation in the _next_ reduction step is being applied to the right
 kinds of operands.)
 ::::
@@ -598,7 +625,7 @@ live Lean. Not sure if we want to keep this.
 
 Suppose we define an alternate single-step relation, written `t ⇢ t'`,
 that _drops_ the `Tm.IsNValue` premise from the `predSucc` and `isZeroSucc`
-rules -- so `pred (succ t)` and `iszero (succ t)` may step even when `t` is
+rules — so `pred (succ t)` and `iszero (succ t)` may step even when `t` is
 not a numeric value.  (It is built with exactly the same notation
 setup as `Tm.Step`; note `predSucc`/`isZeroSucc` no longer take a premise.)
 
@@ -633,7 +660,7 @@ Some questions about this relation (answers inline):
     `pred (succ true)` is stuck for `Tm.Step` but steps under `⇢` (to
     `true`, by `predSucc`, now that the `Tm.IsNValue` premise is gone).
 
-  - Is every `⇢` normal form also a `Tm.Step` normal form?  Yes -- `Tm.Step`
+  - Is every `⇢` normal form also a `Tm.Step` normal form?  Yes — `Tm.Step`
     is a subrelation of `⇢`, so anything stuck for `⇢` is stuck for `Tm.Step`.
 
   - Is every value reachable by `Tm.Step` (in many steps) also reachable by
@@ -761,7 +788,7 @@ notation, inside a `section` with `set_option hygiene false` so the bare name
 `Tm.HasType` in the expansion resolves to the relation being defined; after the
 `section` we re-declare the same rules hygienically for real use.  Unlike `⟶`,
 the judgment builds on the custom `tm` syntactic category, so it must use
-`syntax`/`macro_rules` rather than `notation` -- which is why it still needs the
+`syntax`/`macro_rules` rather than `notation` — which is why it still needs the
 `app_unexpander` to print the judgment back.
 ::::
 
@@ -807,7 +834,7 @@ macro_rules
 
 -- Print `Tm.HasType`/`Ty` values back as `<{ ⊢ … ⦂ … }>` notation: `delabTy`
 open Lean PrettyPrinter Delaborator SubExpr in
-@[delab app.Ty.bool, delab app.Ty.nat]
+@[delab app.TM.Ty.bool, delab app.TM.Ty.nat]
 def delabTy : Delab := whenPPOption getPPNotation do
   match_expr ← getExpr with
   | Ty.bool => `($(mkIdent `Bool):ident)
@@ -831,7 +858,7 @@ example : <{ ⊢ if false then 0 else succ 0 ⦂ Nat }> :=
 ::::full
 It's important to realize that the typing relation is a _conservative_
 (or _static_) approximation: it does not consider what happens when the
-term is reduced -- in particular, it does not calculate the type of its
+term is reduced — in particular, it does not calculate the type of its
 normal form.
 ::::
 
@@ -884,14 +911,14 @@ theorem nat_canonical (t : Tm) (hT : <{ ⊢ t ⦂ Nat }>) (hv : Tm.IsValue t) : 
 
 The typing relation enjoys two critical properties.
 
-The first is that well-typed normal forms are not stuck -- or conversely,
+The first is that well-typed normal forms are not stuck — or conversely,
 if a term is well typed, then either it is a value or it can take at
 least one step.  We call this _progress_.
 
 :::::exercise (rating := 3) (name := "finish_progress")
 Complete the formal proof of the `progress` property.  (Make sure you
 understand the parts we've given of the informal proof in the following
-exercise before starting -- this will save you a lot of time.)
+exercise before starting — this will save you a lot of time.)
 
 ```lean
 theorem progress (t : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) : Tm.IsValue t ∨ ∃ t', t ⟶ t' := by
@@ -939,7 +966,7 @@ theorem progress (t : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) : Tm.IsValue t ∨ �
 What is the relation between the _progress_ property defined here and the
 _strong progress_ from the {ref "Smallstep"}[Smallstep] chapter?
 
-(A) No difference -- they mean the same thing
+(A) No difference — they mean the same thing
 
 (B) Progress implies strong progress
 
@@ -972,7 +999,7 @@ _Proof_: By induction on a derivation of `⊢ t ⦂ T`.
 
     - If `t1` is a value, then by the canonical forms lemmas and the fact
       that `⊢ t1 ⦂ Bool` we have that `t1` is a boolean value
-      (`Tm.IsBValue`) -- i.e., it is either `true` or `false`.  If `t1 = true`, then `t` steps to `t2` by
+      (`Tm.IsBValue`) — i.e., it is either `true` or `false`.  If `t1 = true`, then `t` steps to `t2` by
       `ifTrue`, while if `t1 = false`, then `t` steps to `t3` by
       `ifFalse`.  Either way, `t` can step, which is what we wanted to
       show.
@@ -1300,7 +1327,7 @@ All three remain true.
 
 :::::exercise (rating := 3) (name := "subject_expansion")
 Having seen the subject reduction property, one might wonder whether the
-opposite property -- subject _expansion_ -- also holds.  That is, is it
+opposite property — subject _expansion_ — also holds.  That is, is it
 always the case that, if `t ⟶ t'` and `⊢ t' ⦂ T`, then `⊢ t ⦂ T`?  If so,
 prove it.  If not, give a counter-example.
 
@@ -1466,7 +1493,7 @@ Preservation becomes false: `pred 0` has type `Bool` and steps to `0`,
 
 :::::exercise (rating := 3) (name := "more_variations")
 Make up some exercises of your own along the same lines as the ones
-above.  Try to find ways of selectively breaking properties -- i.e., ways
+above.  Try to find ways of selectively breaking properties — i.e., ways
 of changing the definitions that break just one of the properties and
 leave the others alone.
 :::::
