@@ -47,7 +47,7 @@ familiar with in other languages such as traits in Rust.
 
 # First Example: Inhabited Types
 
-Suppose we wanted to specify that a type has at least one inhabitant -- i.e.,
+Suppose we wanted to specify that a type has at least one inhabitant — i.e.,
 that it is not empty. We have previously seen `structure`, which would allow us to express
 this as
 
@@ -376,8 +376,8 @@ set_option linter.unusedSectionVars false
 :::dev "Claude" PotentialImprovement
 The instance arguments in the `variable` line above are automatically included in
 every later declaration whose statement mentions `α`, but the lemmas that only
-look maps up -- `getElem_def`, `apply_empty`, `ext` (both copies), and
-`subset_def` -- never use them, so `linter.unusedSectionVars` fires on each of
+look maps up — `getElem_def`, `apply_empty`, `ext` (both copies), and
+`subset_def` — never use them, so `linter.unusedSectionVars` fires on each of
 them. The warnings are an artifact of the chapter-wide `variable` scope rather
 than of the lemmas, hence the blanket disable above (in a hidden block, so the
 reader never sees it).
@@ -533,7 +533,7 @@ theorem update_neq (m : TotalMap α β) (a₁ a₂ : α) (h : a₁ ≠ a₂) (b 
 ```
 
 :::dev "Claude" PotentialImprovement
-The opening `by_cases`/`contradiction` is vacuous -- `h : a₁ ≠ a₂` is already a
+The opening `by_cases`/`contradiction` is vacuous — `h : a₁ ≠ a₂` is already a
 hypothesis, so the first branch is discharged by the very hypothesis that makes
 the second branch provable. The proof goes through as just
 
@@ -584,7 +584,7 @@ missing from the chapter.
 :::
 ::::
 
-Given keys `a₁` and `a₂`, the tactic {tactic}`by_cases` `h : a₁ = a₂` splits the proof into the case where they are equal -- where `subst h` then replaces one by the other -- and the case where they are not, which is what {name}`update_neq` wants. Use it to prove the following theorem, which states that if we update a map to assign key `a` the same value as it already has in `m`, then the result is equal to `m`:
+Given keys `a₁` and `a₂`, the tactic {tactic}`by_cases` `h : a₁ = a₂` splits the proof into the case where they are equal — where `subst h` then replaces one by the other — and the case where they are not, which is what {name}`update_neq` wants. Use it to prove the following theorem, which states that if we update a map to assign key `a` the same value as it already has in `m`, then the result is equal to `m`:
 
 :::dev "mwhicks1" NOW
 Two things the Rocq source says here have been dropped.
@@ -592,7 +592,7 @@ Two things the Rocq source says here have been dropped.
 Rocq frames this case analysis around `destruct (eqb_spec x1 x2)`, which
 "simultaneously performs case analysis on the result of `String.eqb x1 x2` and
 generates hypotheses about the equality (in the sense of `=`) of `x1` and `x2`"
--- the boolean/propositional reflection idiom. The paragraph above replaces that
+— the boolean/propositional reflection idiom. The paragraph above replaces that
 with `by_cases`/`subst`, which is what the Lean proof uses. But
 reflection is what the `Reflection` section *below* is about, so the two
 may want to be connected rather than have one silently displace the other.
@@ -720,7 +720,7 @@ removal must not leak to end-of-file, or Verso's `tag`/`file` metadata coercion
 (`Tag → Option Tag`) fails at end-of-document; and `[-instance]` cannot be
 scoped `local`, hence the manual add/restore pair.
 
-We have not carried that over -- nothing here needs it and it is not clear it is
+We have not carried that over — nothing here needs it and it is not clear it is
 wanted. Decide whether to reinstate it.
 :::
 
@@ -780,8 +780,8 @@ theorem update_permute (m : PartialMap α β) (a₁ a₂ : α) (b₁ b₂ : β) 
 ```
 
 One last thing: for partial maps, it's convenient to introduce a notion of map inclusion, stating
-that all the entries in one map are also present in another. Lean already has notation for this --
-`m₁ ⊆ m₂` -- which we get by supplying a {name}`HasSubset` instance.
+that all the entries in one map are also present in another. Lean already has notation for this —
+`m₁ ⊆ m₂` — which we get by supplying a {name}`HasSubset` instance.
 
 ```lean
 def Subset (m₁ m₂ : PartialMap α β) : Prop :=
@@ -811,7 +811,7 @@ theorem update_subset (m₁ m₂ : PartialMap α β) (a : α) (b : β) (h : m₁
 end PartialMap
 ```
 
-This property is quite useful for reasoning about languages with variable binding -- e.g., the Simply Typed Lambda Calculus, which we will see in _Type Systems_, where maps are used to keep track of which program variables are defined in a given scope.
+This property is quite useful for reasoning about languages with variable binding — e.g., the Simply Typed Lambda Calculus, which we will see in _Type Systems_, where maps are used to keep track of which program variables are defined in a given scope.
 
 :::dev
 `namespace TotalMap` is reopened here only because the `Reflection` section below
@@ -829,7 +829,7 @@ namespace TotalMap
 
 :::dev
 I think this will still exist in previous chapters, just not have the reflection explanations until
-here? Since I can't import these yet, just placing here at the top of this section -- CGH
+here? Since I can't import these yet, just placing here at the top of this section — CGH
 Burtonpatel: These definitions of even as boolean computation and Prop should go below, after the table where we explain the difference.
 :::
 
@@ -898,7 +898,7 @@ Here are the key differences between `Bool` and `Prop`:
 :::
 
 The crucial difference between the two worlds is decidability. Every (closed) Lean expression of
-type `Bool` can be simplified in a finite number of steps to either `true` or `false` -- i.e., there
+type `Bool` can be simplified in a finite number of steps to either `true` or `false` — i.e., there
 is a terminating mechanical procedure for deciding whether or not it is true.
 
 This means that, for example, the type `Nat → Bool` is inhabited only by functions that, given a
@@ -1002,7 +1002,7 @@ the proposition `∃ k, n = double k`.
  Again, these two notions are equivalent:
 
 :::dev
-This proof is from the typeclass version, which makes more sense if maps are included --CGH
+This proof is from the typeclass version, which makes more sense if maps are included — CGH
 :::
 
  ```lean
@@ -1127,7 +1127,7 @@ with computational features of Lean such as the {tactic}`decide` tactic or the `
 Below are some stray examples from IndProp. `Decidable` only carries the proposition and not the
 boolean, so one direction of `reflect_iff` is easily translated, but the other is a bit different.
 I list some theorems below but you should Loogle and see if that's what you want. Some the the
-proofs can be a bit advanced if you follow core, or otherwise a bit circular. -- CGH
+proofs can be a bit advanced if you follow core, or otherwise a bit circular. — CGH
 :::
 
 ```lean
@@ -1148,7 +1148,7 @@ example {P : Prop} (b : Bool) (h : b = true ↔ P) : Decidable P := by
 
 :::dev
 I'm not sure what part of the signature here is important to translate. Is the point the
-`Bool`/`Prop` mismatch? -- CGH
+`Bool`/`Prop` mismatch? — CGH
 :::
 
 ```lean
