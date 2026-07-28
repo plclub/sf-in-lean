@@ -1536,13 +1536,13 @@ written `Γ ⊢ t ⦂ T`, where `Γ` is a
 ::::
 
 ```lean
-abbrev Context := TotalMap String (Option Ty)
+abbrev Context := PartialMap String Ty
 ```
 
 ::::full
-A context is a _partial map_ from variable names to types, which we build --
-as the `Typeclasses` chapter does -- as a total map whose values are
-optional: {name}`none` at a variable means "not bound here".
+A context is a {name}`PartialMap` from variable names to types -- the partial
+maps of the `Typeclasses` chapter, which are total maps whose values are
+optional, so that {name}`none` at a variable means "not bound here".
 ::::
 
 ::::terse
@@ -1603,12 +1603,11 @@ with the turnstile and colon of the {ref "Types"}[Types] chapter:
 ::::details (summary := "Notation encoding: contexts and judgments")
 Contexts get a grammar of their own, `stlcCtx`.  The *meaning* is the map update
 we already have -- `x ↦ T ; Γ` expands to exactly the `Typeclasses` chapter's
-update on `Γ` -- but its surface syntax has to be our own, because inside these
-brackets all three positions are in object syntax.  Writing the map notation
-directly would mean writing the binding as `"x" →ₜ some <{ Bool → Bool }> ; Γ`:
-the name quoted, the value wrapped in {name}`some`, and the type escaped back
-out of the brackets it belongs in.  The grammar hides those three encoding
-details, and nothing else.
+partial-map update on `Γ` -- but its surface syntax has to be our own, because
+inside these brackets all three positions are in object syntax.  Writing the map
+notation directly would mean writing the binding as `"x" →ₚ <{ Bool → Bool }> ; Γ`:
+the name quoted, and the type escaped back out of the brackets it belongs in.
+The grammar hides those two encoding details, and nothing else.
 
 ```lean
 declare_syntax_cat stlcCtx
@@ -1625,7 +1624,7 @@ partial def ctxTerm (G : TSyntax `stlcCtx) : MacroM Term :=
   | `(stlcCtx| ∅)   => `((∅ : Context))
   | `(stlcCtx| ~$e) => pure e
   | `(stlcCtx| $x:stlcVar ↦ $T:stlcTy ; $G:stlcCtx) => do
-      `(TotalMap.update $(← ctxTerm G) $(← varStr x) (some <{ $T:stlcTy }>))
+      `(PartialMap.update $(← ctxTerm G) $(← varStr x) <{ $T:stlcTy }>)
   | _ => Macro.throwUnsupported
 ```
 
@@ -1687,7 +1686,7 @@ open Lean PrettyPrinter in
 context prints as `x ↦ Bool ; Γ` rather than as a chain of map updates. -/
 partial def unexpandCtx : Term → UnexpandM (TSyntax `stlcCtx)
   | `(∅) => `(stlcCtx| ∅)
-  | `($x:str →ₜ some $T ; $G) => do
+  | `($x:str →ₚ $T ; $G) => do
       let G' ← unexpandCtx G
       let x' : TSyntax `stlcVar ←
         if isPlainName x.getString then
