@@ -369,6 +369,24 @@ universe u v
 variable {α : Type u} {β : Type v} [BEq α] [ReflBEq α] [LawfulBEq α]
 ```
 
+```lean -show
+set_option linter.unusedSectionVars false
+```
+
+:::dev "Claude" PotentialImprovement
+The instance arguments in the `variable` line above are automatically included in
+every later declaration whose statement mentions `α`, but the lemmas that only
+look maps up -- `getElem_def`, `apply_empty`, `ext` (both copies), and
+`subset_def` -- never use them, so `linter.unusedSectionVars` fires on each of
+them. The warnings are an artifact of the chapter-wide `variable` scope rather
+than of the lemmas, hence the blanket disable above (in a hidden block, so the
+reader never sees it).
+
+A tidier fix, if this is ever revisited: keep `{α}` and `{β}` chapter-wide but
+introduce `[BEq α] [ReflBEq α] [LawfulBEq α]` in a section that covers only the
+`update` material, which is the only place they are actually needed.
+:::
+
 where `α` is the type of our map keys and `β` the corresponding values. Looking at {name}`ReflBEq` and {name}`LawfulBEq`, we see that these typeclasses:
 
 ```
@@ -761,7 +779,9 @@ theorem update_permute (m : PartialMap α β) (a₁ a₂ : α) (b₁ b₂ : β) 
   exact TotalMap.update_permute m a₁ a₂ (some b₁) (some b₂) h
 ```
 
-One last thing: for partial maps, it's convenient to introduce a notion of map inclusion, stating that all the entries in one map are also present in another. Lean already has notation for this -- `m₁ ⊆ m₂` -- which we get by supplying a {name}`HasSubset` instance.
+One last thing: for partial maps, it's convenient to introduce a notion of map inclusion, stating
+that all the entries in one map are also present in another. Lean already has notation for this --
+`m₁ ⊆ m₂` -- which we get by supplying a {name}`HasSubset` instance.
 
 ```lean
 def Subset (m₁ m₂ : PartialMap α β) : Prop :=
@@ -770,41 +790,15 @@ def Subset (m₁ m₂ : PartialMap α β) : Prop :=
 instance : HasSubset (PartialMap α β) where
   Subset := PartialMap.Subset
 
-def subset_def (m₁ m₂ : PartialMap α β) :
+theorem subset_def (m₁ m₂ : PartialMap α β) :
     m₁ ⊆ m₂ ↔ (∀ (a : α) (b : β), m₁[a] = some b → m₂[a] = some b) := .rfl
 ```
-
-:::dev "Claude" PotentialImprovement
-`subset_def` states a `Prop` (an `Iff`), so should it be a `theorem`, not a
-`def` ?
-:::
 
 We can then show that map update preserves map inclusion, that is:
 
 ```lean
 theorem update_subset (m₁ m₂ : PartialMap α β) (a : α) (b : β) (h : m₁ ⊆ m₂) :
     (a →ₚ b ; m₁) ⊆ (a →ₚ b ; m₂) := by
-  rw [subset_def]
-  intro a' b' eq
-  rw [← eq]
-  by_cases eq : a = a'
-  · subst eq
-    simp [update_eq]
-  · simp only [update_neq _ _ _ eq] at *
-    rw [h a' b' eq]
-    symm
-    assumption
-
-end PartialMap
-```
-
-:::dev "Claude" PotentialImprovement
-In the above proof, the name `eq` is bound twice -- first as the equation `m₁[a'] = some b'`, then
-shadowed by the `by_cases` hypothesis `a = a'` -- which makes the branches hard
-to read. An unshadowed version (verified against this file):
-
-```
-theorem update_subset ... := by
   rw [subset_def]
   intro a' b' hb
   by_cases ha : a = a'
@@ -813,8 +807,9 @@ theorem update_subset ... := by
     exact hb
   · rw [update_neq _ _ _ ha] at hb ⊢
     exact h a' b' hb
+
+end PartialMap
 ```
-:::
 
 This property is quite useful for reasoning about languages with variable binding -- e.g., the Simply Typed Lambda Calculus, which we will see in _Type Systems_, where maps are used to keep track of which program variables are defined in a given scope.
 
