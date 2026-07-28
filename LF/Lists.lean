@@ -30,26 +30,6 @@ Putting it together with Induction.lean makes a reasonable
 second week's homework assignment.
 :::
 
-:::dev BeforeNextRelease
-```
-(BCP 9/18) Since the domain type of Maps has changed from
-id to string, we should either do the same here (in the partial
-maps section) or else comment there that we are making a different
-choice.  For the moment, it feels cleaner to avoid importing the
-string library, explaining or handwaving string_dec, etc., so I've
-added a comment there. BCP 25: I wonder whether we can get away
-with just using (... =? ...)%string instead of string_dec.  Would
-make it a lot more palatable. I now think this is probably a good
-idea. However: At the moment, the Stdlib has String.eqb to compare
-strings, but it returns a standard bool, which is not the one we
-are using. We'd have to put our booleans inside a module in
-Basics.v. That's probably fine. After that, I think we just have to
-alias Definition Id := string).
-```
-
-This chapter could use another WORKINCLASS or three.
-:::
-
 ```importBlock
 import LF.Induction
 import LF.UsingLean
