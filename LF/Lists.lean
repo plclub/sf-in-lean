@@ -13,30 +13,6 @@ htmlSplit := .never
 file := some "Lists"
 %%%
 
-:::dev "Daniel Sainati (dsainati1)"
-\[BCP: Old comment -- might be out of date?\]
-Weird that this file contains the first `inductive` definition students have seen up to this point,
-but that definition is also actually a `structure`. Probably need to restructure this.
-
-Unsure if it's a good idea to actually use the built-in `List` definition here, since it's polymorphic,
-and we aren't introducing this idea until a later chapter. This also means we don't get the chance
-to show students how to actually produce an inductive definition if we're relying on the built-in ones.
-
-We probably need to actually take time to explain what a `@[simp]` annotation on a lemma
-means before we introduce it, and I don't think this chapter is the right place to do it anyway.
-This is probably a better fit for `Auto.lean`.
-
-Claude picked a bad definition for `nonzeroes`:
-```
-  match l with
-  | [] => []
-  | 0 :: t => nonZeros t
-  | h :: t => h :: nonZeros t
-```
-which makes many of the later proofs hard to do without the full automation of `simp`.
-I changed it, but it's worth pointing this out.
-:::
-
 :::dev "Konstantinos Kallas (angelhof)"
 The `Baz` "how many elements does this type have?" exercise (the last exercise
 in the chapter) is a *manual* exercise, and that's a poor fit: a student who
@@ -556,10 +532,9 @@ what these functions should do.
 def nonZeros (l : NatList) : NatList := solution!(
   match l with
   | [] => []
-  | h :: t =>
-      match h with
-      | 0 => nonZeros t
-      | _ + 1 => h :: (nonZeros t))
+  | 0 :: t => nonZeros t
+  | h :: t => h :: nonZeros t
+)
 ```
 
 The following lemmas should hold about your definition
