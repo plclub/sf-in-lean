@@ -1105,7 +1105,10 @@ What's the best Lean markup for a displayed equation? The markup below is going 
 :::
 
 _Theorem_: For all lists `l1`, `l2`, and `l3`,
-    `(l1 ++ l2) ++ l3 = l1 ++ (l2 ++ l3)`.
+
+```display
+(l1 ++ l2) ++ l3 = l1 ++ (l2 ++ l3).
+```
 
 _Proof_: By induction on `l1`.
 
@@ -1358,7 +1361,10 @@ theorem foo2 (n m : Nat) :
 For comparison, here are informal proofs of these two theorems:
 
 _Theorem_: For all lists `l1` and `l2`,
-   `(l1 ++ l2).length = l1.length + l2.length`.
+
+```display
+(l1 ++ l2).length = l1.length + l2.length.
+```
 
 _Proof_: By induction on `l1`.
 

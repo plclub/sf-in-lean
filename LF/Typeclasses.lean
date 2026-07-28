@@ -187,6 +187,18 @@ instance : HasTwo Nat where
 Following the pattern of {name}`HasOne` and {name}`HasTwo`, define a class `HasThree` that
 specifies a type with at least three distinct elements.
 
+:::dev "Claude" NOW
+Rendering bug in this exercise and `instHasThree` below. Both use the
+`-- SOLUTION`/`-- END SOLUTION` comment-marker idiom to hide *some* class
+fields / instance fields, but the Verso HTML build does not process those
+markers (only the `solution!` tactic is handled). In *student* and *terse*
+the class shows only the visible fields while the `instHasThree` instance then
+reports a spurious `Fields missing: one_neq_three, two_neq_three` error; in
+*solutions* the hidden fields are shown but the literal `-- SOLUTION` /
+`-- END SOLUTION` comment lines leak into the displayed code. The generated
+`.lean` is fine — HTML-only. Fix by expressing the hidden fields with
+`solution!` rather than the comment markers.
+:::
 ```lean
 class HasThree (α : Type) where
   one : α
@@ -521,10 +533,11 @@ example : ({ "foo" ↦ true } : TotalMap String Bool)["foo"]! = true := rfl
 example : ({ 1 ↦ 2, 1 ↦ 3 } : TotalMap Nat Nat)[1]! = 2 := rfl
 ```
 
-## Partial Map
+## Partial Maps
 
 :::dev
 rest of section here...
+(from Maps.lean + text)
 :::
 
 # Reflection
@@ -694,11 +707,11 @@ theorem isEven_iff_Even {n : Nat} : isEven n = true ↔ Even n where
     exact even_double k
 ```
 
-In view of this theorem, we can say that the boolean computation even n is reflected in the truth of
+In view of this theorem, we can say that the boolean computation `isEven n` is reflected in the truth of
 the proposition `∃ k, n = double k`.
 
  Similarly, to state that two numbers n and m are equal, we can say either
- * that `n == m` returns `true`
+ * that `n == m` returns `true`, or
  * that `n = m`
 
  Again, these two notions are equivalent:

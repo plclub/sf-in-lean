@@ -285,10 +285,17 @@ private def devNoteComment (label body : String) : String :=
 private def mergeAdjacentModuleDocs (s : String) : String :=
   s.replace "\n-/\n\n/-!\n" "\n\n"
 
-/-- Decode a `Block.bnf` payload and return its original source string. -/
+/-- Decode a `Block.bnf` payload and render the grammar as an aligned plain-text
+display (`Bnf.toTextImpl`), which is what an extracted `.lean` file wants: the
+authoring source spells terminals as string literals and metavariables with a
+leading underscore, and neither is meant to be read.  Falls back to the original
+source if the payload cannot be decoded. -/
 private def decodeBnfSource? (data : Json) : Option String :=
   match data with
-  | .arr #[_, .str src] => some src
+  | .arr #[.str jsonStr, .str src] =>
+    match Json.parse jsonStr >>= fromJson? with
+    | .ok (b : BNF) => some (Bnf.toTextImpl b)
+    | .error _      => some src
   | _ => none
 
 /-- Decode a `Block.exercise` payload `(rating, name, level, manual)`, tolerating
@@ -318,19 +325,22 @@ private inductive ExtractionMode where
   A subset of `InlineLean.LeanBlockConfig` flags:
   - `keep` -> `persistent`
   - `error` -> `expectedError`
+  - `show` -> `render`
 
-  Note: `show` is dropped, because it's for rendered book visibility
-  and shouldn't affect generated projects.
-
-  They are used to derive the extraction policy (`Data.extractionMode`).
+  Only `keep` and `error` are used to derive the extraction policy (`Data.extractionMode`).
 -/
 structure Config where
   persistent : Bool
   expectedError : Bool
+  render : Bool
   deriving ToJson, FromJson, Quote
 
-def Config.fromInlineLean (config : InlineLean.LeanBlockConfig) :=
-  Config.mk config.keep config.error
+def Config.fromInlineLean (config : InlineLean.LeanBlockConfig) : Config :=
+  {
+    persistent := config.keep,
+    expectedError := config.error,
+    render := config.show
+  }
 
 /--
   The saved-payload format for `Block.leanSaved`.
@@ -354,7 +364,7 @@ def decode? (data : Json) : Option Data :=
   * expected-error blocks (`+error`) become indented `sf_expect_failure` blocks
 -/
 private def Data.extractionMode (saved : Data) : ExtractionMode :=
-  let {persistent, expectedError} := saved.config
+  let {persistent, expectedError, ..} := saved.config
   if expectedError then
     .expectFailure
   else if persistent then
@@ -393,8 +403,18 @@ block_extension Block.leanSaved (saved : Save.LeanSaved.Data) where
       return some (.other (Block.leanSaved saved) #[chosen])
     else
       return none
-  toHtml := some fun _ goB _ _ contents => contents.mapM goB
-  toTeX  := some fun _ goB _ _ contents => contents.mapM goB
+  toHtml := some fun _ goB _ data contents => do
+    let some saved := Save.LeanSaved.decode? data
+      | return .empty
+    unless saved.config.render do
+      return .empty
+    contents.mapM goB
+  toTeX := some fun _ goB _ data contents => do
+    let some saved := Save.LeanSaved.decode? data
+      | return .empty
+    unless saved.config.render do
+      return .empty
+    contents.mapM goB
 
 /-! ## `importBlock` code block
 
@@ -935,8 +955,11 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     -- only reached for a list arriving outside that batching.
     return appendBoth buf file (asModuleDoc (blockToText width b))
   | .dl dis =>
+    -- A description list: the term of each item is content too, so emit it
+    -- before walking that item's description blocks.
     let mut buf := buf
     for di in dis do
+      buf := appendBoth buf file (asModuleDoc (inlinesToText di.term))
       buf := walkBlocks width file di.desc buf
     return buf
 
