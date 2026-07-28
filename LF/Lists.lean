@@ -156,12 +156,19 @@ The distinction is minor, but it is worth understanding that they
 are not the same. For instance, the following definitions are
 ill-formed:
 
-```lean +error
+```lean +error (name := bad_fst)
 -- Can't match on a pair with multiple patterns:
 def bad_fst (p : NatProd) : Nat :=
   match p with
   | x, y => x
+```
 
+```leanOutput bad_fst
+Too many patterns in match alternative: Expected 1, but found 2:
+  x, y
+```
+
+```lean +error (name := bad_sub)
 -- Can't match on multiple values with pair patterns:
 def bad_sub (n m : Nat) : Nat :=
   match n, m with
@@ -169,11 +176,14 @@ def bad_sub (n m : Nat) : Nat :=
   | ⟨.succ _,  0⟩        => n
   | ⟨.succ n', .succ m'⟩ => sub n' m'
 ```
-::::
 
-:::dev "Daniel Sainati (dsainati1)" NOW
-Wrote this, let me know how it reads.
-:::
+```leanOutput bad_sub
+Invalid `⟨...⟩` notation: The expected type `Nat` has more than one constructor
+
+Note: This notation can only be used when the expected type is an inductive type with a single constructor
+```
+
+::::
 
 Lean also provides a convenient way to define `inductive` structures like pairs
 that have a single constructor but multiple ways to access their data,
@@ -196,13 +206,19 @@ example : (⟨3, 5⟩ : NatProd').fst = 3 := by rfl
 
 ::::full
 A property like `p = ⟨p.fst, p.snd⟩` can be proved by exposing
-the structure of the pair, either with `cases` or by destructuring in
-`intro`.
+the structure of the pair, either with {tactic}`cases` or by destructuring in
+{tactic}`intro`.
 ::::
 
 ::::terse
-To expose the structure of a pair, use `cases` (or destructuring).
+To expose the structure of a pair, use {tactic}`cases` (or destructuring).
 ::::
+
+:::dev "Yipeng Liu (berberman)" PotentialImprovement
+Use better examples to show structure destruction.
+`surjective_pairing` and `surjective_pairing_cases` can be closed by `rfl`
+without destruction because Lean supports projection eta for structures.
+:::
 
 ```lean
 theorem surjective_pairing : ∀ p : NatProd,
@@ -215,9 +231,9 @@ theorem surjective_pairing_cases (p : NatProd) :
 ```
 
 ::::full
-Notice that, by contrast with the behavior of `cases` on
-`Nat`s, where it generates two subgoals, `cases` generates just
-one subgoal here.  That's because `NatProd`s can only be
+Notice that, by contrast with the behavior of {tactic}`cases` on
+{name}`Nat`s, where it generates two subgoals, {tactic}`cases` generates just
+one subgoal here.  That's because {name}`NatProd`s can only be
 constructed in one way.
 ::::
 
@@ -283,15 +299,21 @@ Some notation for lists to make our lives easier:
 
 Don't worry too much about what this is doing:
 
-:::dev "Benjamin Pierce (bcpierce00)"
-Can we be a little more helpful, or tell them when we are going to tell them, or tell them where to look?
+
+:::dev "Yipeng Liu (berberman)" PotentialImprovement
+Need unexpander?
 :::
+
 
 ```lean
 scoped infixr:65 " :: " => cons
 scoped macro (priority := high) "[ " elems:term,* "]" : term => do
   elems.getElems.foldrM (``(cons $(⟨·⟩) $(⟨·⟩))) (← ``(nil))
 ```
+
+We first define `::` as right-associative notation for {name}`cons`,
+and then define list notation, allowing us to write `[1, 2]` instead of `1 :: 2 :: []`. We also have an unpander that prints `cons 1 (cons 2 [])` to `[1, 2]`.
+
 
 Now these all mean exactly the same thing:
 
@@ -323,9 +345,9 @@ def myRepeat (n count : Nat) : NatList :=
 Some simple facts about repetition:
 
 ```lean
-theorem repeat_zero (v : Nat) : myRepeat v 0 = [] := rfl
+theorem repeat_zero {v : Nat} : myRepeat v 0 = [] := rfl
 
-theorem repeat_succ (v count : Nat) : myRepeat v (count + 1) = v :: myRepeat v count := rfl
+theorem repeat_succ {v count : Nat} : myRepeat v (count + 1) = v :: myRepeat v count := rfl
 ```
 
 ::::full
@@ -344,7 +366,7 @@ Some simple facts about list lengths:
 ```lean
 theorem length_nil : [].length = 0 := rfl
 
-theorem length_cons (n : Nat) (l : NatList) : (n::l).length = l.length + 1 := rfl
+theorem length_cons {n : Nat} {l : NatList} : (n :: l).length = l.length + 1 := rfl
 ```
 
 ## Append
@@ -391,7 +413,7 @@ Some simple facts about appending lists:
 ```lean
 theorem nil_append (l : NatList) : [] ++ l = l := rfl
 
-theorem cons_append (n : Nat) (l1 l2 : NatList) : (n::l1) ++ l2 = n :: (l1 ++ l2) := rfl
+theorem cons_append {n : Nat} {l1 l2 : NatList} : (n :: l1) ++ l2 = n :: (l1 ++ l2) := rfl
 
 example : [1, 2, 3] ++ [4, 5] = [1, 2, 3, 4, 5] := by rfl
 example : [] ++ [4, 5] = [4, 5] := by rfl
@@ -456,12 +478,12 @@ def hd (default : Nat) (l : NatList) : Nat :=
   | h :: _ => h
 ```
 
-Basic theorems about how `hd` behaves:
+Basic theorems about how {name}`hd` behaves:
 
 ```lean
-theorem hd_cons (h x : Nat) (t : NatList) : (h :: t).hd x = h := by rfl
+theorem hd_cons {h x : Nat} {t : NatList} : (h :: t).hd x = h := by rfl
 
-theorem hd_nil (x : Nat) : [].hd x = x := by rfl
+theorem hd_nil {x : Nat} : [].hd x = x := by rfl
 
 def tl (l : NatList) : NatList :=
   match l with
@@ -469,10 +491,10 @@ def tl (l : NatList) : NatList :=
   | _ :: t => t
 ```
 
-Basic theorems about how `tl` behaves:
+Basic theorems about how {name}`tl` behaves:
 
 ```lean
-theorem tl_cons (h : Nat) (t : NatList) : (h :: t).tl = t := by rfl
+theorem tl_cons {h : Nat} {t : NatList} : (h :: t).tl = t := by rfl
 
 theorem tl_nil : [].tl = [] := by rfl
 
@@ -496,10 +518,10 @@ def foo (n : Nat) : NatList :=
 
 :::instructors
 Each exercise comes with non-graded examples followed by graded tests.
-We show how to rewrite with the lemmas explicitly in the first example and the fact that one can just use `rfl` in the second (this is only visible in the solution because it would not type-check otherwise).
-The point of the graded tests is nearly always to be an `rfl` proof that relies on a correctly formulated definition.
+We show how to rewrite with the lemmas explicitly in the first example and the fact that one can just use {tactic}`rfl` in the second (this is only visible in the solution because it would not type-check otherwise).
+The point of the graded tests is nearly always to be an {tactic}`rfl` proof that relies on a correctly formulated definition.
 The characterizing lemmas are provided (as statements) but not graded.
-The student is expected to also use `rfl` as it's the easiest, and most idiomatic solution.
+The student is expected to also use {tactic}`rfl` as it's the easiest, and most idiomatic solution.
 :::
 
 ::::::full
@@ -520,12 +542,14 @@ def nonZeros (l : NatList) : NatList := solution!(
 The following lemmas should hold about your definition
 
 ```lean
-theorem nonZeros_cons_zero (t : NatList) :
-  nonZeros (0 :: t) = nonZeros t := solution!(by rfl)
+theorem nonZeros_cons_zero {t : NatList} :
+    nonZeros (0 :: t) = nonZeros t := solution!(by rfl)
+
 theorem nonZeros_nil :
-  nonZeros [] = [] := solution!(by rfl)
-theorem nonZeros_cons_nonZero (h : Nat) (t : NatList) :
-  nonZeros ((h + 1) :: t) = (h + 1) :: nonZeros t := solution!(by rfl)
+    nonZeros [] = [] := solution!(by rfl)
+
+theorem nonZeros_cons_nonZero {h : Nat} {t : NatList} :
+    nonZeros ((h + 1) :: t) = (h + 1) :: nonZeros t := solution!(by rfl)
 
 theorem test_nonZeros : nonZeros [0, 1, 0] = [1] := by
   solution!
@@ -544,23 +568,28 @@ def oddMembers (l : NatList) : NatList := solution!(
   | [] => []
   | h :: t => bif h.odd then h :: oddMembers t else oddMembers t)
 
-theorem oddMembers_nil : oddMembers [] = [] := solution!(by rfl)
+theorem oddMembers_nil :
+    oddMembers [] = [] := solution!(by rfl)
 
-theorem oddMembers_cons (h : Nat) (t : NatList) :
-    oddMembers (h :: t) = bif h.odd then h :: oddMembers t else oddMembers t := solution!(by rfl)
+theorem oddMembers_cons {h : Nat} {t : NatList} :
+    oddMembers (h :: t) =
+      bif h.odd then h :: oddMembers t else oddMembers t :=
+  solution!(by rfl)
 
-theorem oddMembers_cons_odd (x : Nat) (l : NatList) (h : x.odd = true) :
+theorem oddMembers_cons_odd {x : Nat} {l : NatList}
+    (h : x.odd = true) :
     oddMembers (x :: l) = x :: oddMembers l := by
   solution!
     rw [oddMembers_cons, h, cond_true]
 
-theorem oddMembers_cons_not_odd (x : Nat) (l : NatList) (h : x.odd = false) :
+theorem oddMembers_cons_not_odd {x : Nat} {l : NatList}
+    (h : x.odd = false) :
     oddMembers (x :: l) = oddMembers l := by
   solution!
     rw [oddMembers_cons, h, cond_false]
 ```
 
-Now, we can prove that `oddMembers [1, 2]` returns `[1]` using the lemmas:
+Now, we can prove that {lean}`oddMembers [1, 2]` returns {lean}`[1]` using the lemmas:
 
 ```lean
 example : oddMembers [1, 2] = [1] := by
@@ -572,7 +601,7 @@ example : oddMembers [1, 2] = [1] := by
   · rw [Nat.odd, even_succ, even_zero, Bool.not_true, Bool.not_false]
 ```
 
-This gets pretty verbose quite fast, however we can use `rfl` to deal with subgoals such as `Nat.odd 2 = false`:
+This gets pretty verbose quite fast, however we can use {tactic}`rfl` to deal with subgoals such as {lean}`Nat.odd 2 = false`:
 
 ```lean
 example : oddMembers [1, 2] = [1] := by
@@ -602,14 +631,15 @@ already-defined functions, rather than recursion.
 def countOddMembers (l : NatList) : Nat := solution!(
   (oddMembers l).length)
 
-theorem countOddMembers_def (l : NatList) : countOddMembers l = (oddMembers l).length := solution!(by rfl)
+theorem countOddMembers_def (l : NatList) :
+    countOddMembers l = (oddMembers l).length := solution!(by rfl)
 
 example : countOddMembers [0, 1, 2, 3, 0] = 2 := by
   rw [countOddMembers_def]
   rw [test_oddMembers]
   rw [length_cons, length_cons, length_nil]
 
-example : countOddMembers [0, 1, 2, 3, 0] = 2 := solution!(by rfl) -- rfl
+example : countOddMembers [0, 1, 2, 3, 0] = 2 := solution!(by rfl)
 
 theorem NatList.test_countOddMembers1 : countOddMembers [0, 2, 4] = 0 := solution!(by rfl)
 
@@ -640,22 +670,27 @@ def alternate (l1 l2 : NatList) : NatList := solution!(
   | _, [] => l1
   | h1 :: t1, h2 :: t2 => h1 :: h2 :: alternate t1 t2)
 
-theorem NatList.test_alternate1 : alternate [1, 2, 3] [4, 5, 6] = [1, 4, 2, 5, 3, 6] := solution!(by rfl)
+theorem NatList.test_alternate1 :
+    alternate [1, 2, 3] [4, 5, 6] = [1, 4, 2, 5, 3, 6] := solution!(by rfl)
 ```
 
 :::gradeTheorem 1 "NatList.test_alternate1"
 :::
 
 ```lean
-theorem NatList.test_alternate2 : alternate [1] [4, 5, 6] = [1, 4, 5, 6] := solution!(by rfl)
+theorem NatList.test_alternate2 :
+    alternate [1] [4, 5, 6] = [1, 4, 5, 6] := solution!(by rfl)
 ```
 
 :::gradeTheorem 1 "NatList.test_alternate2"
 :::
 
 ```lean
-theorem NatList.test_alternate3 : alternate [1, 2, 3] [4] = [1, 4, 2, 3] := solution!(by rfl)
-theorem NatList.test_alternate4 : alternate [] [20, 30] = [20, 30] := solution!(by rfl)
+theorem NatList.test_alternate3 :
+    alternate [1, 2, 3] [4] = [1, 4, 2, 3] := solution!(by rfl)
+
+theorem NatList.test_alternate4 :
+    alternate [] [20, 30] = [20, 30] := solution!(by rfl)
 ```
 
 :::gradeTheorem 1 "NatList.test_alternate4"
@@ -699,7 +734,7 @@ example : count 1 [1] = 1 := by
   rw [count_cons_same rfl]
   rw [count_nil]
 
-example : count 2 [2, 2] = 2 := solution!(by rfl) -- rfl
+example : count 2 [2, 2] = 2 := solution!(by rfl)
 
 theorem NatList.test_count1 : count 1 [1, 1, 4] = 2 := solution!(by rfl)
 
@@ -811,7 +846,7 @@ example : removeOne 5 [1, 5, 4] = [1, 4] := by
   rw [removeOne_cons_diff rfl]
   rw [removeOne_cons_same rfl]
 
-example : count 5 (removeOne 5 [1, 5, 4]) = 0 := solution!(by rfl) -- rfl
+example : count 5 (removeOne 5 [1, 5, 4]) = 0 := solution!(by rfl)
 
 theorem NatList.test_removeOne1 : count 4 (removeOne 5 [4, 5, 1, 4]) = 2 := solution!(by rfl)
 ```
@@ -983,31 +1018,6 @@ As with numbers, some proofs about list functions need only
 rewriting...
 ::::
 
-:::dev "Niklas Halonen (xhalo32)" BeforeNextRelease
-What's the point of `nil_app` as we already have `nil_append`?
-The text
-
-  ...because the `[]` is substituted into the "scrutinee" (the
-  expression whose value is being "scrutinized" by the match) in the
-  definition of `app`, allowing the match itself to be simplified.
-
-seems to be outdated as the definition of `app` is not unfolded.
-:::
-
-```lean
-theorem nil_app (l : NatList) : [] ++ l = l := by rw [nil_append]
-```
-
-::::full
-...because the `[]` is substituted into the "scrutinee" (the
-expression whose value is being "scrutinized" by the match) in the
-definition of `app`, allowing the match itself to be simplified.
-
-Also, as with numbers, it is sometimes helpful to perform case
-analysis on the possible shapes -- empty or non-empty -- of an
-unknown list.
-::::
-
 :::slidebreak
 :::
 
@@ -1024,8 +1034,8 @@ theorem tl_length_pred (l : NatList) :
 ```
 
 ::::full
-Here, the `nil` case works because we've chosen to define
-`tl [] = []`. Notice that the `cons` case introduces two names,
+Here, the {name}`nil` case works because we've chosen to define
+{lean}`tl [] = []`. Notice that the `cons` case introduces two names,
 `n` and `l'`, corresponding to the fact that the `cons` constructor
 for lists takes two arguments (the head and tail of the list it is
 constructing).
