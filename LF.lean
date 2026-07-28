@@ -22,12 +22,12 @@ open Verso Genre Manual
 -- put comments after the includes.)
 #doc (Manual) "Logical Foundations" =>
 {include LF.Basics}
-{include LF.Typeclasses}
 {include LF.Induction}
 {include LF.UsingLean}
 {include LF.Lists}
 {include LF.Poly}
 {include LF.Tactics}
 {include LF.Logic}
+{include LF.Typeclasses}
 {include LF.IndProp}
 {include LF.Automation}
