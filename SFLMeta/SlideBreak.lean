@@ -1,5 +1,7 @@
 import VersoManual
 
+import SFLMeta.Variant
+
 open Lean Elab
 open Verso ArgParse Doc Elab Genre.Manual
 open Verso.Output.Html
@@ -13,10 +15,11 @@ in full HTML output and in all generated `.lean` files it emits nothing. -/
 block_extension Block.slidebreak where
   data := Json.null
   traverse _ _ _ := do
-    if ← isDraft then
-      return none            -- terse build: keep block for toHtml
+    if (← getCurrVariant).isTerse then
+      -- keep slidebreak blocks in terse variant
+      return none
     else
-      return some (.concat #[])  -- full build: replace with empty
+      return some (.concat #[])
   toHtml :=
     some fun _ _ _ _ _ =>
       pure (.tag "div" #[("class", "slide-break")] .empty)

@@ -22,19 +22,6 @@ open Verso (BuildLogT reportError)
 
 namespace SFLMeta
 
-/--
-When `true`, `lean` code blocks render with the teacher (solution-filled)
-source in the HTML and TeX output. When `false` (the default), the rendered
-output shows the student form: each `solution!(…)` is replaced by `sorry` and
-each `-- SOLUTION … -- END SOLUTION` region is collapsed to `-- FILL IN HERE`.
-
-Both variants are elaborated and highlighted when the chapter is compiled (so
-author errors in solutions are always reported); this flag merely selects
-which variant survives traversal.  Each `Main*.lean` executable sets it before
-calling `manualMain`, which is what makes the student and solutions builds two
-runs of the same compiled document rather than two compilations. -/
-initialize Save.showSolutions : IO.Ref Bool ← IO.mkRef false
-
 /-! ## Block extensions used by the saver -/
 
 /-!
@@ -396,9 +383,10 @@ block_extension Block.leanSaved (saved : Save.LeanSaved.Data) where
     -- One child (or anything else) = already selected; nothing to do.
     if h : contents.size = 3 then
       let some saved := LeanSaved.decode? data | return none
+      let variant ← getCurrVariant
       let chosen ←
-        if ← showSolutions.get then pure contents[0]
-        else if ← isDraft then pure contents[2]
+        if variant.isSolution then pure contents[0]
+        else if variant.isTerse then pure contents[2]
         else pure contents[1]
       return some (.other (Block.leanSaved saved) #[chosen])
     else

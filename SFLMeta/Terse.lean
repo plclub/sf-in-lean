@@ -1,5 +1,7 @@
 import VersoManual
 
+import SFLMeta.Variant
+
 open Lean Elab
 open Verso ArgParse Doc Elab Genre.Manual
 open Verso.Output.Html
@@ -12,10 +14,11 @@ builds. During traversal of a full build it is replaced with an empty block. -/
 block_extension Block.terse where
   data := Json.null
   traverse _ _ _ := do
-    if ← isDraft then
-      return none            -- terse build: keep, recurse into children
+    if (← getCurrVariant).isTerse then
+      -- keep terse blocks in terse variant
+      return none
     else
-      return some (.concat #[])  -- full build: hide
+      return some (.concat #[])
   toHtml :=
     some fun _ goB _ _ contents =>
       Verso.Output.Html.seq <$> contents.mapM goB
@@ -27,10 +30,11 @@ During traversal of a terse build it is replaced with an empty block. -/
 block_extension Block.full where
   data := Json.null
   traverse _ _ _ := do
-    if ← isDraft then
-      return some (.concat #[])  -- terse build: hide
+    if (← getCurrVariant).isTerse then
+      -- drop the full block in terse variant
+      return some (.concat #[])
     else
-      return none            -- full build: keep, recurse into children
+      return none
   toHtml :=
     some fun _ goB _ _ contents =>
       Verso.Output.Html.seq <$> contents.mapM goB
@@ -50,10 +54,11 @@ the rendered heading. -/
 block_extension Block.suppressPreviousHeaderWhenTerse where
   data := Json.null
   traverse _ _ _ := do
-    if ← isDraft then
-      return none            -- terse build: keep the marker for its consumers
+    if (← getCurrVariant).isTerse then
+      -- Keep the marker in terse variant
+      return none
     else
-      return some (.concat #[])  -- full build: heading shows; no marker needed
+      return some (.concat #[])
   toHtml :=
     some fun _ _ _ _ _ =>
       pure (Verso.Output.Html.tag "div"
