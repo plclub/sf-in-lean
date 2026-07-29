@@ -975,7 +975,7 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 1. {tactic}`contradiction` {tactic}`left`, and {tactic}`right`
 2. only {tactic}`contradiction`
 3. {tactic}`left` and/or {tactic}`right`
-. none of the above
+4. none of the above
 
 :::quizSolution
 ```lean
