@@ -460,9 +460,6 @@ fact about it, which several proofs below will need, is that `==` is
 reflexive:
 
   `BEq.refl : (a == a) = true`
-
-This is the standard library's version of the `beq_refl` theorem you
-proved in {ref "Induction"}[Induction].
 ::::
 
 ::::terse

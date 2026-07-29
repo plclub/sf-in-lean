@@ -1256,15 +1256,15 @@ example (n m : Nat) :
     n = m := by
   induction n
   case zero =>
-    rw [double_zero]
+    rw [Nat.double_zero]
     intro eq
     cases m
     case zero => rfl
-    case succ _ => rw [double_succ] at eq; contradiction
+    case succ _ => rw [Nat.double_succ] at eq; contradiction
   case succ n' ih =>
     intro eq
     cases m
-    case zero => rw [double_zero, double_succ] at eq; contradiction
+    case zero => rw [Nat.double_zero, Nat.double_succ] at eq; contradiction
     case succ m' =>
       congr
       /- At this point, the induction hypothesis `ih` does _not_ give us
@@ -1353,12 +1353,12 @@ theorem double_injective : ∀ (n m : Nat),
   intro n
   induction n
   case zero =>
-    rw [double_zero]
+    rw [Nat.double_zero]
     intro m eq
     cases m
     case zero => rfl
     case succ _ =>
-      rw [double_succ] at eq
+      rw [Nat.double_succ] at eq
       contradiction
   case succ n' ih =>
   -- Notice that both the goal and the induction hypothesis are
@@ -1373,7 +1373,7 @@ theorem double_injective : ∀ (n m : Nat),
   cases m
   case zero =>
     -- The 0 case is trivial:
-    rw [double_zero, double_succ] at eq
+    rw [Nat.double_zero, Nat.double_succ] at eq
     contradiction
   case succ m' =>
     congr
@@ -1384,7 +1384,7 @@ theorem double_injective : ∀ (n m : Nat),
     -- in the IH with the current `m'` (this instantiation is performed
     -- automatically by the `apply` in the next step), then `ih` gives
     -- us exactly what we need to finish the proof.
-    apply ih; rw [double_succ, double_succ] at eq; injections
+    apply ih; rw [Nat.double_succ, Nat.double_succ] at eq; injections
 ```
 
 :::dev
@@ -1568,13 +1568,13 @@ theorem double_injective_take2_FAILED (n m : Nat) :
     cases n
     case zero => rfl
     case succ =>
-      rw [double_zero, double_succ] at eq
+      rw [Nat.double_zero, Nat.double_succ] at eq
       contradiction
   case succ =>
     intro eq
     cases n
     case zero =>
-      rw [double_zero, double_succ] at eq
+      rw [Nat.double_zero, Nat.double_succ] at eq
       contradiction
     case succ =>
       congr
@@ -1616,16 +1616,16 @@ theorem double_injective_take2 (n m : Nat) :
     cases n
     case zero => rfl
     case succ =>
-      rw [double_zero, double_succ] at eq
+      rw [Nat.double_zero, Nat.double_succ] at eq
       contradiction
   case succ _ ih =>
     cases n
     case zero =>
-      rw [double_zero, double_succ] at eq
+      rw [Nat.double_zero, Nat.double_succ] at eq
       contradiction
     case succ =>
       congr
-      rw [double_succ, double_succ] at eq
+      rw [Nat.double_succ, Nat.double_succ] at eq
       injections _ eq; exact ih _ eq
 ```
 

@@ -534,7 +534,7 @@ Defining functions in the `Nat` namespace changes how they print:
 ::::
 
 ```lean
-theorem even_add_three (n : Nat) : Nat.even (n + 3) = Nat.even (n + 1) := by
+theorem Nat.even_add_three (n : Nat) : Nat.even (n + 3) = Nat.even (n + 1) := by
   rfl
 ```
 
@@ -576,7 +576,7 @@ example (n : Nat) : Nat.double (n + 0) = Nat.double n := by
 
 :::::exercise (rating := 2) (name := "even_succ")
 ```lean
-theorem even_succ (n : Nat) :
+theorem Nat.even_succ (n : Nat) :
     (n + 1).even = !(n.even) := by
   solution!
     induction n with
@@ -598,22 +598,22 @@ talk about using `Nat.add_zero` and friends from now on.
        later files from breaking.
 
 ```lean
-theorem even_zero : Nat.even 0 = true := by rfl
+theorem Nat.even_zero : Nat.even 0 = true := by rfl
 
-theorem double_zero : Nat.double 0 = 0 := by rfl
+theorem Nat.double_zero : Nat.double 0 = 0 := by rfl
 
-theorem double_succ (n : Nat) : (n + 1).double = n.double + 2 := by rfl
+theorem Nat.double_succ (n : Nat) : (n + 1).double = n.double + 2 := by rfl
 ```
 
 :::::exercise (rating := 2) (name := "double_add")
 ```lean
-theorem double_add (n : Nat) : n.double = n + n := by
+theorem Nat.double_add (n : Nat) : n.double = n + n := by
   solution!
     induction n with
     | zero =>
-      rw [double_zero]
+      rw [Nat.double_zero]
     | succ n' ih =>
-      rw [double_succ, ih, Nat.succ_add n' (n' + 1), Nat.add_succ n' n']
+      rw [Nat.double_succ, ih, Nat.succ_add n' (n' + 1), Nat.add_succ n' n']
 ```
 
 :::gradeTheorem 1 "double_add"
@@ -622,9 +622,9 @@ theorem double_add (n : Nat) : n.double = n + n := by
 
 :::::exercise (rating := 2) (name := "double_mul")
 ```lean
-theorem double_mul (n : Nat) : n.double = 2 * n := by
+theorem Nat.double_mul (n : Nat) : n.double = 2 * n := by
   solution!
-    rw [double_add, Nat.two_mul]
+    rw [Nat.double_add, Nat.two_mul]
 ```
 :::::
 

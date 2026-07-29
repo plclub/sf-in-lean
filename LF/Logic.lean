@@ -122,9 +122,9 @@ For example, we can name them:
 ::::
 
 ```lean
-def plus_claim : Prop := 2 + 2 = 4
+def PlusClaim : Prop := 2 + 2 = 4
 
-#check (plus_claim : Prop)
+#check (PlusClaim : Prop)
 ```
 
 ::::full
@@ -133,7 +133,7 @@ expected -- for example, as the claim in a `theorem` declaration.
 ::::
 
 ```lean
-theorem plus_claim_is_true : plus_claim := rfl
+theorem PlusClaim_is_true : PlusClaim := rfl
 ```
 
 We can also write _parameterized_ propositions -- that is,
@@ -146,9 +146,9 @@ returns a proposition asserting that this number is equal to three:
 ::::
 
 ```lean
-def is_three (n : Nat) : Prop := n = 3
+def IsThree (n : Nat) : Prop := n = 3
 
-#check (is_three : Nat → Prop)
+#check (IsThree : Nat → Prop)
 ```
 
 In Lean, functions that return propositions are said to define
@@ -158,10 +158,10 @@ For instance, here's a (polymorphic) property defining the
 familiar notion of an _injective function_.
 
 ```lean
-def injective {α β} (f : α → β) : Prop :=
+def Injective {α β} (f : α → β) : Prop :=
   ∀ x y : α, f x = f y → x = y
 
-theorem succ_inj' : injective Nat.succ := by
+theorem succ_inj' : Injective Nat.succ := by
   intro x y H; injection H
 ```
 
@@ -992,23 +992,23 @@ to convert an unprovable statement (like `False`) to one that is
 provable (like `True`).
 
 ```lean
-def discr_fun (n : Nat) : Prop :=
+def DiscrFun (n : Nat) : Prop :=
   match n with
   | 0 => True
   | _ + 1 => False
 
-theorem discr_fun_zero : discr_fun 0 = True := rfl
+theorem DiscrFun_zero : DiscrFun 0 = True := rfl
 
-theorem discr_fun_succ n : discr_fun (n + 1) = False := rfl
+theorem DiscrFun_succ n : DiscrFun (n + 1) = False := rfl
 
 theorem discr_example (n : Nat) : ¬ (0 = n + 1) := by
   intro h
-  have hd : discr_fun 0 := by rw [discr_fun_zero]; exact ⟨⟩
-  rw [h, discr_fun_succ] at hd; exact hd
+  have hd : DiscrFun 0 := by rw [DiscrFun_zero]; exact ⟨⟩
+  rw [h, DiscrFun_succ] at hd; exact hd
 ```
 
 To generalize this to other constructors, we simply have to provide
-an appropriate variant of `discr_fun`. To generalize it to other
+an appropriate variant of `DiscrFun`. To generalize it to other
 conclusions, we can use `exfalso` to replace them with `False`.
 The `contradiction` tactic takes care of all of this for us.
 
@@ -1018,22 +1018,22 @@ Do not use the `contradiction` tactic.
 
 ```lean
 -- SOLUTION
-def is_nil {α : Type} (xs : List α) : Prop :=
+def IsNil {α : Type} (xs : List α) : Prop :=
   match xs with
   | [] => True
   | _ :: _ => False
 
-theorem is_nil_nil {α} : @is_nil α [] = True := rfl
+theorem IsNil_nil {α} : @IsNil α [] = True := rfl
 
-theorem is_nil_cons {α} (x : α) (xs : List α) : is_nil (x :: xs) = False := rfl
+theorem IsNil_cons {α} (x : α) (xs : List α) : IsNil (x :: xs) = False := rfl
 -- END SOLUTION
 
 theorem nil_is_not_cons {α : Type} (x : α) (xs : List α) :
     ¬ ([] = x :: xs) := by
   solution!
     intro h
-    have hn : @is_nil α [] := by rw [is_nil_nil]; exact ⟨⟩
-    rw [h, is_nil_cons] at hn; exact hn
+    have hn : @IsNil α [] := by rw [IsNil_nil]; exact ⟨⟩
+    rw [h, IsNil_cons] at hn; exact hn
 ```
 :::::
 
@@ -1099,11 +1099,11 @@ theorem iff_refl (P : Prop) : P ↔ P := by
     case mp => intro h; exact h
     case mpr => intro h; exact h
 
-theorem iff_trans (P Q R : Prop) (h1 : P ↔ Q) (h2 : Q ↔ R) : (P ↔ R) := by
+theorem iff_trans (P Q R : Prop) (h₁ : P ↔ Q) (h₂ : Q ↔ R) : (P ↔ R) := by
   solution!
     constructor
-    case mp => intro hP; apply h2.mp; apply h1.mp; exact hP
-    case mpr => intro hR; apply h1.mpr; apply h2.mpr; exact hR
+    case mp => intro hP; apply h₂.mp; apply h₁.mp; exact hP
+    case mpr => intro hR; apply h₁.mpr; apply h₂.mpr; exact hR
 ```
 :::::
 
@@ -1420,14 +1420,14 @@ theorem In_map_iff (α β : Type) (f : α → β) (xs : List α) (y : β) :
           case left => rfl
           case right => rw [In_cons]; left; rfl
         case inr =>
-          let ⟨x', h1, h2⟩ := ih h
+          let ⟨x', h₁, h₂⟩ := ih h
           exists x'; constructor
-          case left => exact h1
-          case right => rw [In_cons]; right; exact h2
+          case left => exact h₁
+          case right => rw [In_cons]; right; exact h₂
   case mpr =>
     solution!
-      intro ⟨x, h1, h2⟩
-      rw [← h1]; apply In_map; exact h2
+      intro ⟨x, h₁, h₂⟩
+      rw [← h₁]; apply In_map; exact h₂
 ```
 :::::
 
@@ -1477,9 +1477,9 @@ theorem All_In α (P : α → Prop) (xs : List α) :
         rw [All_cons]
         intro ⟨hx, hP⟩ x' h
         rw [In_cons] at h
-        obtain h1 | h2 := h
-        case inl => rw [h1]; exact hx
-        case inr => apply ih2; apply hP; exact h2
+        obtain h₁ | h₂ := h
+        case inl => rw [h₁]; exact hx
+        case inr => apply ih2; apply hP; exact h₂
 ```
 
 :::gradeTheorem 3 "All_In"
@@ -1494,18 +1494,18 @@ and equivalent to `Peven n` otherwise.
 
 ```lean
 abbrev combine_odd_even (Podd Peven : Nat → Prop) : Nat → Prop := solution!(
-  fun n => bif odd n then Podd n else Peven n)
+  fun n => bif Nat.odd n then Podd n else Peven n)
 ```
 
 To test your definition, prove the following facts:
 
 ```lean
 theorem combined_odd_even_intro Podd Peven n
-    (hodd : odd n = true → Podd n)
-    (heven : odd n = false → Peven n) :
+    (hodd : Nat.odd n = true → Podd n)
+    (heven : Nat.odd n = false → Peven n) :
     combine_odd_even Podd Peven n := by
   solution!
-    cases h : odd n
+    cases h : Nat.odd n
     case false =>
       dsimp [combine_odd_even]; rw [h]; dsimp
       apply heven; exact h
@@ -1515,7 +1515,7 @@ theorem combined_odd_even_intro Podd Peven n
 
 theorem combined_odd_even_elim_odd Podd Peven n
     (h : combine_odd_even Podd Peven n)
-    (hodd : odd n = true) : Podd n := by
+    (hodd : Nat.odd n = true) : Podd n := by
   solution!
     dsimp [combine_odd_even] at h
     rw [hodd] at h
@@ -1523,7 +1523,7 @@ theorem combined_odd_even_elim_odd Podd Peven n
 
 theorem combined_odd_even_elim_even Podd Peven n
     (h : combine_odd_even Podd Peven n)
-    (hodd : odd n = false) : Peven n := by
+    (hodd : Nat.odd n = false) : Peven n := by
   solution!
     dsimp [combine_odd_even] at h
     rw [hodd] at h
@@ -1538,10 +1538,15 @@ theorem combined_odd_even_elim_even Podd Peven n
 ::::full
 Lean treats _proofs_ as first-class objects.
 There is a great deal to be said about this, but it is not necessary
-to understand it all to use Lean. This section gives just a taste,
+to understand it all to use Lean. This section gives just a taste.
+::::
+
+:::dev "Daniel Sainati (@dsainati1)" PotentialImprovement
+Add this text back later if and when these chapters actually exist:
+
 leaving a deeper exploration for the optional chapters
 `ProofObjects` and `IndPrinciples`.
-::::
+:::
 
 ::::terse
 Lean also treats _proofs_ as first-class objects!
@@ -1551,7 +1556,7 @@ We have seen that we can use `#check` to ask Lean whether an expression
 has a given type:
 
 ```lean
-#check (add : Nat → Nat → Nat)
+#check (Nat.add : Nat → Nat → Nat)
 ```
 
 We can also use it to check what theorem a particular identifier refers to:
@@ -1559,15 +1564,15 @@ We can also use it to check what theorem a particular identifier refers to:
 ```lean
 /-- info: Nat.add_comm (n m : Nat) : n + m = m + n -/
 #guard_msgs in
-#check add_comm
+#check Nat.add_comm
 
 /-- info: Nat.add_assoc (n m k : Nat) : n + m + k = n + (m + k) -/
 #guard_msgs in
-#check add_assoc
+#check Nat.add_assoc
 ```
 
-Lean checks the _statements_ of the `add_comm` and `add_assoc` theorems
-in the same way that it checks the _type_ of any term (e.g. `add`).
+Lean checks the _statements_ of the `Nat.add_comm` and `Nat.add_assoc` theorems
+in the same way that it checks the _type_ of any term (e.g. `Nat.add`).
 Leaving off the colon and the type, Lean prints these types
 in the infoview for us.
 
@@ -1575,7 +1580,7 @@ Why?
 
 The reason is that the identifier `add_comm` actually refers to a
 _proof object_ -- a logical derivation establishing the truth of the
-statement `∀ n m, n + m = m + n`. The type of this object
+statement `∀ n m : Nat, n + m = m + n`. The type of this object
 is the proposition that it is a proof of.
 
 The type of an ordinary function tells us what we can do with it.
@@ -1583,7 +1588,7 @@ The type of an ordinary function tells us what we can do with it.
     two `Nat`s as arguments and get a `Nat` back.
 Similarly, the statement of a theorem tells us what we can use
 that theorem for.
-  - If we have a term of type `∀ n m, n = m → n + n = m + n`,
+  - If we have a term of type `∀ n m : Nat, n = m → n + n = m + n`,
     and we provide it two numbers `n` and `m` and a third "arugment"
     of type `n = m`, we get back a proof object of type `n + n = m + m`.
 
@@ -1605,25 +1610,26 @@ we want to prove the following:
 /-- warning: declaration uses `sorry` -/
 #guard_msgs in
 example (x y z : Nat) : x + (y + z) = (z + y) + x := by
-  rw [add_comm]
-  rw [add_comm]
+  rw [Nat.add_comm]
+  rw [Nat.add_comm]
   sorry
 ```
 
 It appears at first sight that we ought to be able to prove this
-be rewriting with `add_comm` twice to make the two sides match.
+be rewriting with `Nat.add_comm` twice to make the two sides match.
 The problem is that the second rewrite undoes the effect
 of the first, leaving us back where we started...
 
-We can fix this by applying `add_comm` to the arguments we want it
+We encountered similar issues back in the Induction chapter, and we
+saw that we can fix them by applying `Nat.add_comm` to the arguments we want it
 to be instantiated with, in much the same way as we apply
 a polymorphic function to a type argument. Then the rewrite is forced
 to happen exactly where we want it.
 
 ```lean
 example (x y z : Nat) : x + (y + z) = (z + y) + x := by
-  rw [add_comm]
-  rw [add_comm z y]
+  rw [Nat.add_comm]
+  rw [Nat.add_comm z y]
 ```
 
 ::::full
@@ -1631,8 +1637,8 @@ If we really wanted, we could in fact do it for both rewrites.
 
 ```lean
 example (x y z : Nat) : x + (y + z) = (z + y) + x := by
-  rw [add_comm x (y + z)]
-  rw [add_comm z y]
+  rw [Nat.add_comm x (y + z)]
+  rw [Nat.add_comm z y]
 ```
 ::::
 
@@ -1654,15 +1660,15 @@ Suppose we have
 
 ```display
 n m : Nat
-H1 : n = m
-H2 : b = 42
+h₁ : n = m
+h₂ : b = 42
 trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c
 ```
 
 What is the type of this "proof object"?
 
 ```display
-trans_eq Nat n m 42 H1 H2
+trans_eq Nat n m 42 h₁ h₂
 ```
 
 1. `n = m`
@@ -1670,39 +1676,12 @@ trans_eq Nat n m 42 H1 H2
 3. `n = 42`
 4. Does not typecheck
 
-:::instructors
-Answer:
-:::
-
-example (n m : Nat) (h1 : n = m) (h2 : m = 42)
+:::quizSolution
+```lean
+example (n m : Nat) (h₁ : n = m) (h₂ : m = 42)
    (trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c) : True := by
-  have : n = 42 := trans_eq Nat n m 42 h1 h2
-::::
-
-::::quiz
-Suppose, again, we have
-
-```display
-n m : Nat
-H1 : n = m
-H2 : b = 42
-trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c
-```
-
-What is the type of this proof object?
-
-```display
-trans_eq _ _ _ _ H1 H2
-```
-
-1. `n = m`
-2. `42 = n`
-3. `n = 42`
-4. Does not typecheck
-
-:::instructors
-```
-Answer: have : n = 42 := trans_eq _ _ _ _ h1 h2
+  have : n = 42 := trans_eq Nat n m 42 h₁ h₂
+  sorry
 ```
 :::
 ::::
@@ -1712,15 +1691,46 @@ Suppose, again, we have
 
 ```display
 n m : Nat
-H1 : n = m
-H2 : b = 42
+h₁ : n = m
+h₂ : b = 42
 trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c
 ```
 
 What is the type of this proof object?
 
 ```display
-trans_eq Nat m 42 n H2
+trans_eq _ _ _ _ h₁ h₂
+```
+
+1. `n = m`
+2. `42 = n`
+3. `n = 42`
+4. Does not typecheck
+
+:::quizSolution
+```lean
+example (n m : Nat) (h₁ : n = m) (h₂ : m = 42)
+   (trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c) : True := by
+    have : n = 42 := trans_eq _ _ _ _ h₁ h₂
+    sorry
+```
+:::
+::::
+
+::::quiz
+Suppose, again, we have
+
+```display
+n m : Nat
+h₁ : n = m
+h₂ : b = 42
+trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c
+```
+
+What is the type of this proof object?
+
+```display
+trans_eq Nat m 42 n h₂
 ```
 
 1. `m = n`
@@ -1728,9 +1738,12 @@ trans_eq Nat m 42 n H2
 3. `42 = n → m = n`
 4. Does not typecheck
 
-:::instructors
-```
-Answer:   have : 42 = n → m = n := trans_eq Nat m 42 n h2
+:::quizSolution
+```lean
+example (n m : Nat) (h₁ : n = m) (h₂ : m = 42)
+   (trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c) : True := by
+   have : 42 = n → m = n := trans_eq Nat m 42 n h₂
+   sorry
 ```
 :::
 ::::
@@ -1740,8 +1753,8 @@ Suppose, again, we have
 
 ```display
 n m : Nat
-H1 : n = m
-H2 : b = 42
+h₁ : n = m
+h₂ : b = 42
 trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c
 ```
 
@@ -1756,9 +1769,12 @@ trans_eq _ 42 n m
 3. `n = 42 → 42 = m → n = m`
 4. Does not typecheck
 
-:::instructors
-```
-Answer: have : 42 = n → n = m → 42 = m := trans_eq _ 42 n m
+:::quizSolution
+```lean
+example (n m : Nat) (h₁ : n = m) (h₂ : m = 42)
+   (trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c) : True := by
+    have : 42 = n → n = m → 42 = m := trans_eq _ 42 n m
+    sorry
 ```
 :::
 ::::
@@ -1768,15 +1784,15 @@ Suppose, again, we have
 
 ```display
 n m : Nat
-H1 : n = m
-H2 : b = 42
+h₁ : n = m
+h₂ : b = 42
 trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c
 ```
 
 What is the type of this proof object?
 
 ```display
-trans_eq _ _ _ _ H2 H1
+trans_eq _ _ _ _ h₂ h₁
 ```
 
 1. `b = a`
@@ -1784,9 +1800,11 @@ trans_eq _ _ _ _ H2 H1
 3. `a = 42`
 4. Does not typecheck
 
-:::instructors
-```
-Answer: have := trans_eq _ _ _ _ H2 H1
+:::quizSolution
+```lean +error
+example (n m : Nat) (h₁ : n = m) (h₂ : m = 42)
+   (trans_eq : ∀ (α : Type) (a b c : α), a = b → b = c → a = c) : True := by
+    have := trans_eq _ _ _ _ h₂ h₁
 ```
 :::
 ::::
@@ -1799,21 +1817,20 @@ end FunctionTheoremQuiz
 
 # Working with Decidable Properties
 
-:::dev "Benjamin Pierce (bcpierce00)"
-This will need better typesetting...
-:::
 
 We've seen two different ways of expressing logical claims in Lean:
 with _booleans_ (of type `Bool`), and with _propositions_ (of type `Prop`).
 Here are the key differences between `Bool` and `Prop`:
 
+```display
 |                     | `Bool` | `Prop` |
 | ------------------- | ------ | ------ |
 | decidable?          | yes    | no     |
 | useable with match? | yes    | no     |
+```
 
 ::::full
- FULL: The crucial difference between the two worlds is _decidability_.
+The crucial difference between the two worlds is _decidability_.
 Every (closed) expression of type `Bool` can be simplified in a finite
 number of steps to either `true` or `false` -- i.e., there is a terminating
 mechanical procedure for deciding whether or not it is `true`.
@@ -1832,7 +1849,7 @@ does contain functions representing properties like
 The second table row follows directly from this essential difference.
 To evaluate a pattern match (or conditional) on a boolean, we need to know
 whether the scrutinee evaluates to `true` or `false`; this only works for
-`bool`, not `Prop`.
+`Bool`, not `Prop`.
 ::::
 
 ::::terse
@@ -1840,7 +1857,7 @@ Since functions in Lean by default must terminate on all inputs,
 a terminating function of type `Nat → Bool` is a _decision procedure_ --
 i.e., it yields `true` or `false` on all inputs.
 
-For example, `even : Nat → Bool` is a decision procedure for the property
+For example, `Nat.even : Nat → Bool` is a decision procedure for the property
 "is even".
 ::::
 
@@ -1853,7 +1870,7 @@ For instance, to claim that a number `n` is even,
 we can say either that `even n` evaluates to `true`...
 
 ```lean
-example : even 42 = true := rfl
+example : Nat.even 42 = true := rfl
 ```
 
 ... or that there exists some `k` such that `n = double k`.
@@ -1870,30 +1887,29 @@ To prove this, we first need two helper lemmas.
 
 ```lean
 theorem even_double (k : Nat) :
-    even (double k) = true := by
+    Nat.even (Nat.double k) = true := by
   -- FOLD
   induction k
-  case zero => rw [double_zero]; rfl
-  case succ k' ih => rw [double_succ]; exact ih
+  case zero => rw [Nat.double_zero]; rfl
+  case succ k' ih => rw [Nat.double_succ]; exact ih
   -- /FOLD
 ```
 
-
 ```lean
 theorem even_double_conv (n : Nat) : ∃ k : Nat,
-    n = bif even n then double k else succ (double k) := by
+    n = bif Nat.even n then Nat.double k else Nat.double k + 1 := by
   solution!
     induction n
     case zero =>
-      rw [even_zero]; dsimp
-      exists 0  -- (`0 = double 0` is closed by `exists`'s final `rfl`)
+      rw [Nat.even_zero]; dsimp
+      exists 0  -- (`0 = Nat.double 0` is closed by `exists`'s final `rfl`)
     case succ n' ihn =>
       let ⟨k', ihk⟩ := ihn
-      rw [even_succ]
-      cases h : even n'
+      rw [Nat.even_succ]
+      cases h : Nat.even n'
       case false =>
         rw [h] at ihk; rw [not] at *; dsimp at *
-        exists (k' + 1); rw [ihk, double_succ]
+        exists (k' + 1); rw [ihk, Nat.double_succ]
       case true =>
         rw [h] at ihk; rw [not] at *; dsimp at *
         exists k'; congr
@@ -1902,7 +1918,7 @@ theorem even_double_conv (n : Nat) : ∃ k : Nat,
 Now the main theorem:
 
 ```lean
-theorem even_bool_prop (n : Nat) : even n = true ↔ Even n := by
+theorem even_bool_prop (n : Nat) : Nat.even n = true ↔ Even n := by
   -- FOLD
   constructor
   case mp =>
@@ -1949,19 +1965,13 @@ Again, these two notions are equivalent:
 (For the reverse direction we need the simple fact that `==` is
 reflexive.)
 
-:::dev "Benjamin Pierce (bcpierce00)"
-@dsainati1 wonders whether this tactic has been explained.
-:::
-
 ```lean
-theorem beq_refl (n : Nat) : (n == n) = true := decide_eq_true rfl
-
 theorem beq_eq_true (n1 n2 : Nat) :
     (n1 == n2) = true ↔ n1 = n2 := by
   -- FOLD
   constructor
   case mp => apply beq_eq
-  case mpr => intro H; rw [H, beq_refl]
+  case mpr => intro H; rw [H, BEq.rfl]
   -- /FOLD
 ```
 
@@ -1979,7 +1989,7 @@ abbrev is_even_prime (n : Nat) : Bool :=
 ```
 
 ::::full
- FULL: Beyond the fact that non-computable properties are possible
+Beyond the fact that non-computable properties are possible
 in general to phrase as boolean computations, even many _computable_
 properties are easier to express using `Prop` than `bool`, since
 recursive function definitions are subject to significant restrictions.
@@ -1997,11 +2007,6 @@ technique known as _proof by reflection_.
 Consider the following statement:
 ::::
 
-:::dev "Jonathan Chan (ionathanch)"
-This was originally 1000 but Lean's default recursion depth
-is not large enough to reduce `double 50` lol
-:::
-
 The most direct way to prove this is to give the value of `k` explicitly.
 
 ```lean
@@ -2014,7 +2019,7 @@ because we don't have to invent the witness `50`:
 computation does it for us!
 
 ```lean
-example : even 100 := rfl
+example : Nat.even 100 := rfl
 ```
 
 Now, the useful observation is that, since the two notions are equivalent,
@@ -2031,10 +2036,6 @@ Although we haven't gained much in terms of proof-script simplicity
 in this case, larger proofs can often be made considerably simpler
 by the use of reflection.
 
-:::dev "Jonathan Chan (ionathanch)"
-Is there a Lean version? Or maybe just mention Rocq?
-:::
-
 As an extreme example, a famous mechanized proof of the even more famous
 _four colour theorem_ uses reflection ot reduce the analysis of hundreds
 of different cases to a boolean computation.
@@ -2044,7 +2045,7 @@ booleans is straightforward to state and (when true) to prove:
 simply slip the expected boolean result.
 
 ```lean
-example : even 101 = false := rfl
+example : Nat.even 101 = false := rfl
 ```
 
 In contrast, propositional negation can be difficult to work with directly.
@@ -2061,7 +2062,7 @@ we can let Lean do the work for us.
 example : ¬ Even 101 := by
   workinclass!
     intro h; apply (even_bool_prop 101).mpr at h
-    dsimp [even] at h; contradiction
+    dsimp [Nat.even] at h; contradiction
 ```
 
 Conversely, there are situations where it can be easier to work with
@@ -2075,11 +2076,12 @@ theorem add_beq_true (n m p : Nat) (h : (n == m) = true) :
     (n + p == m + p) = true := by
   workinclass!
     apply (beq_eq_true n m).mp at h
-    rw [h, beq_refl]
+    rw [h, BEq.rfl]
 ```
 
 ::::full
-We won't discuss reflection any further for the moment,
+We'll come back to
+reflection and decidable propositions in a later chapter,
 but it serves as a good example showing the different strengths
 of booleans and general propositions.
 Being able to cross back and forth between the boolean and propositional
@@ -2129,76 +2131,70 @@ theorem orb_true_iff (b1 b2 : Bool) :
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "beq_list")
+:::::exercise (rating := 3) (name := "beqList")
 Given a boolean operator `beq` for testing equality of elements
-of some type `α`, we can define a function `beq_list` for testing
+of some type `α`, we can define a function `beqList` for testing
 equality of lists with elements in `α`. Complete the definition
-of the `beq_list` function below. to make sure that your definition
-is correct, prove the lemma `beq_list_true_iff`.
+of the `beqList` function below. to make sure that your definition
+is correct, prove the lemma `beqList_true_iff`.
 
 ```lean
-def beq_list {α : Type} (beq : α → α → Bool) (xs1 xs2 : List α) : Bool := solution!(
+def beqList {α : Type} (beq : α → α → Bool) (xs1 xs2 : List α) : Bool := solution!(
   match xs1, xs2 with
   | [], [] => true
-  | x1 :: xs1, x2 :: xs2 => beq x1 x2 && beq_list beq xs1 xs2
+  | x1 :: xs1, x2 :: xs2 => beq x1 x2 && beqList beq xs1 xs2
   | _, _ => false)
 
-theorem beq_list_nil_nil {α} (beq : α → α → Bool) :
-    beq_list beq [] [] = true := solution!(rfl)
+theorem beqList_nil_nil {α} (beq : α → α → Bool) :
+    beqList beq [] [] = true := solution!(rfl)
 
-theorem beq_list_cons_cons {α} (beq : α → α → Bool) x1 x2 xs1 xs2 :
-    beq_list beq (x1 :: xs1) (x2 :: xs2) =
-    (beq x1 x2 && beq_list beq xs1 xs2) := solution!(rfl)
+theorem beqList_cons_cons {α} (beq : α → α → Bool) x1 x2 xs1 xs2 :
+    beqList beq (x1 :: xs1) (x2 :: xs2) =
+    (beq x1 x2 && beqList beq xs1 xs2) := solution!(rfl)
 
-theorem beq_list_nil_cons {α} (beq : α → α → Bool) x xs :
-    beq_list beq [] (x :: xs) = false := solution!(rfl)
+theorem beqList_nil_cons {α} (beq : α → α → Bool) x xs :
+    beqList beq [] (x :: xs) = false := solution!(rfl)
 
-theorem beq_list_cons_nil {α} (beq : α → α → Bool) x xs :
-    beq_list beq (x :: xs) [] = false := solution!(rfl)
-```
+theorem beqList_cons_nil {α} (beq : α → α → Bool) x xs :
+    beqList beq (x :: xs) [] = false := solution!(rfl)
 
-:::dev "Jonathan Chan (ionathanch)"
-Should this also go after `propext` to use rewriting by `↔`?j
-:::
-
-```lean
-theorem beq_list_true_iff α (beq : α → α → Bool)
+theorem beqList_true_iff α (beq : α → α → Bool)
     (h : ∀ x1 x2, beq x1 x2 = true ↔ x1 = x2) :
-    ∀ xs1 xs2, beq_list beq xs1 xs2 = true ↔ xs1 = xs2 := by
+    ∀ xs1 xs2, beqList beq xs1 xs2 = true ↔ xs1 = xs2 := by
   solution!
     intro xs1; induction xs1
     case nil =>
       intro xs2; cases xs2
       case nil =>
-        rw [beq_list_nil_nil]; constructor
+        rw [beqList_nil_nil]; constructor
         case mp => intro; rfl
         case mpr => intro; rfl
       case cons x2 xs2' =>
-        rw [beq_list_nil_cons]; constructor
+        rw [beqList_nil_cons]; constructor
         case mp => intro; contradiction
         case mpr => intro; contradiction
     case cons x1 xs1' ih =>
       intro xs2; cases xs2
       case nil =>
-        rw [beq_list_cons_nil]; constructor
+        rw [beqList_cons_nil]; constructor
         case mp => intro; contradiction
         case mpr => intro; contradiction
       case cons x2 xs2' =>
-        rw [beq_list_cons_cons]
-        let ⟨h1, h2⟩ := andb_true_iff (beq x1 x2) (beq_list beq xs1' xs2')
+        rw [beqList_cons_cons]
+        let ⟨h₁, h₂⟩ := andb_true_iff (beq x1 x2) (beqList beq xs1' xs2')
         let ⟨hx1, hx2⟩ := h x1 x2
         let ⟨ih1, ih2⟩ := ih xs2'
         constructor
         case mp =>
           intro h; congr
-          . exact hx1 (h1 h).left
-          . exact ih1 (h1 h).right
+          . exact hx1 (h₁ h).left
+          . exact ih1 (h₁ h).right
         case mpr =>
           intro h; injection h with hx hxs
-          apply h2; exact ⟨hx2 hx, ih2 hxs⟩
+          apply h₂; exact ⟨hx2 hx, ih2 hxs⟩
 ```
 
-:::gradeTheorem 3 "beq_list_true_iff"
+:::gradeTheorem 3 "beqList_true_iff"
 :::
 :::::
 
@@ -2231,12 +2227,12 @@ theorem forallb_true_iff α (test : α → Bool) (xs : List α) :
       rw [forallb_nil, All_nil]
       exact ⟨fun _ => ⟨⟩, fun _ => rfl⟩
     case cons x xs' ih =>
-      let ⟨h1, h2⟩ := andb_true_iff (test x) (Logic.forallb test xs')
+      let ⟨h₁, h₂⟩ := andb_true_iff (test x) (Logic.forallb test xs')
       let ⟨ih1, ih2⟩ := ih
       rw [forallb_cons, All_cons]
       constructor
-      case mp => intro h; exact ⟨(h1 h).left, ih1 (h1 h).right⟩
-      case mpr => intro ⟨h1', h2'⟩; exact h2 ⟨h1', ih2 h2'⟩
+      case mp => intro h; exact ⟨(h₁ h).left, ih1 (h₁ h).right⟩
+      case mpr => intro ⟨h1', h2'⟩; exact h₂ ⟨h1', ih2 h2'⟩
 ```
 
 (Ungraded thought question) Are there any important properties often
@@ -2280,14 +2276,14 @@ but a few points are useful to understand.
 
 Lean's logic is quite minimalistic. This means that on occasionally
 encounters cases where translating standard mathematical reasoning
-into Lean is cumbersome -- or even impossible -- unless we enrich
+into Lean is cumbersome - or even impossible - unless we enrich
 its core logic with additional axioms.
 
 ::::full
 For example, the equality assertions that we have seen so far mostly
-have concerned elements of inductive types (`Nat`, `Bool`, etc.).
+have concerned elements of inductive types ({lean}`Nat`, {lean}`Bool`, etc.).
 But since the equality operator is polymorphic, we can use it at _any_ type
--- in particular, we can write propositions claiming that two _propositions_
+- in particular, we can write propositions claiming that two _propositions_
 are equal to each other:
 ::::
 
@@ -2375,7 +2371,7 @@ theorem and_comm_flip (P Q R : Prop) : (P ∧ Q ∧ R) ↔ (R ∧ Q ∧ P) := by
 The pattern of deriving an equality of propositions out of `↔`
 then rewriting by that equality is so common that Lean will implicitly
 cast `↔` to `=`, allowing you to rewrite on `↔` directly.
-Notice that `rw` is also close goals of the form `P ↔ P` by reflexivity.
+Notice that `rw` is also able to close goals of the form `P ↔ P` by reflexivity.
 
 ```lean
 theorem and_comm_flip' (P Q R : Prop) : (P ∧ Q ∧ R) ↔ (R ∧ Q ∧ P) := by
@@ -2439,7 +2435,7 @@ to each other. In some cases, we can also prove that two functions are
 equal by reflexivity when both reduce to the same expression:
 
 ```lean
-example : (fun x => x + 2) = (fun x => x + (pred 3)) := rfl
+example : (fun x => x + 2) = (fun x => x + (Nat.pred 3)) := rfl
 ```
 
 In general, functions can be equal for more interesting reasons.
@@ -2482,7 +2478,7 @@ that would otherwise not be provable without `funext`.
 theorem add_comm_fun : (fun (n m : Nat) => n + m) = (fun (n m : Nat) => m + n) := by
   apply funext; intro n
   apply funext; intro m
-  exact add_comm n m
+  exact Nat.add_comm n m
 ```
 
 The `ext` tactic will also apply `funext` as many times as possible,
@@ -2491,26 +2487,27 @@ introducing all variables in one go.
 
 ```lean
 theorem add_comm_fun' : (fun (n m : Nat) => n + m) = (fun (n m : Nat) => m + n) := by
-  ext n m; exact add_comm n m
+  ext n m; exact Nat.add_comm n m
 ```
 
-::::hide
-````
-/- QUIZ: Is the following statement provable by just `rfl`, without `funext`?
-    ```
-    (fun xs => 1 :: xs) = (fun xs => [1] ++ xs)
-    ```
+::::quiz
+Is the following statement provable by just `rfl`, without `funext`?
+```display
+(fun xs => 1 :: xs) = (fun xs => [1] ++ xs)
+```
 
-    1. Yes
-    2. No -/
--- FOLD
+1. Yes
+2. No
+
+:::quizSolution
+```lean
 example : (fun xs => 1 :: xs) = (fun xs => [1] ++ xs) := rfl
--- /FOLD
-````
+```
+:::
 ::::
 
 ::::::full
-:::::exercise (rating := 4) (name := "tr_rev_correct")
+:::::exercise (rating := 4) (name := "trRev_correct")
 One problem with the definition of the list-reversing function `List.rev`
 is that it performs a call to `++` on each step.
 Running `++` takes time asymptotically linear in the size of the list,
@@ -2519,17 +2516,17 @@ which means that `List.rev` is asymptotically quadratic.
 We can improve this with the following two-argument definition:
 
 ```lean
-def rev_append {α} (xs1 xs2 : List α) : List α :=
+def revAppend {α} (xs1 xs2 : List α) : List α :=
   match xs1 with
   | [] => xs2
-  | x1 :: xs1' => rev_append xs1' (x1 :: xs2)
+  | x1 :: xs1' => revAppend xs1' (x1 :: xs2)
 
-theorem rev_append_nil {α} (xs : List α) : rev_append [] xs = xs := rfl
+theorem revAppend_nil {α} (xs : List α) : revAppend [] xs = xs := rfl
 
-theorem rev_append_cons {α} (x : α) xs1 xs2 :
-    rev_append (x :: xs1) xs2 = rev_append xs1 (x :: xs2) := rfl
+theorem revAppend_cons {α} (x : α) xs1 xs2 :
+    revAppend (x :: xs1) xs2 = revAppend xs1 (x :: xs2) := rfl
 
-abbrev tr_rev {α} (xs : List α) : List α := rev_append xs []
+abbrev trRev {α} (xs : List α) : List α := revAppend xs []
 ```
 
 This version of `rev` is said to be _tail recursive_, because the recursive
@@ -2541,21 +2538,20 @@ Prove that the two definitions are indeed equivalent.
 
 ```lean
 -- SOLUTION
-theorem rev_append_rev {α} : ∀ xs1 xs2 : List α,
-    rev_append xs1 xs2 = xs1.rev ++ xs2 := by
+theorem revAppend_rev {α} : ∀ xs1 xs2 : List α,
+    revAppend xs1 xs2 = xs1.rev ++ xs2 := by
   intro xs1; induction xs1
-  case nil => intro; rw [rev_append_nil]; rfl
+  case nil => intro; rw [revAppend_nil]; rfl
   case cons x1 xs1' ih =>
     intro xs2
-    --rw [rev_append_cons, List.rev, ← List.append_cons]
-    --apply ih
-    sorry
+    rw [revAppend_cons, List.rev, ← List.append_cons]
+    apply ih
 -- END SOLUTION
 
-theorem tr_rev_correct {α} : @tr_rev α = @List.rev α := by
+theorem trRev_correct {α} : @trRev α = @List.rev α := by
   solution!
-    ext1 xs; dsimp [tr_rev]
-    rw [rev_append_rev, List.append_nil]
+    ext1 xs; dsimp [trRev]
+    rw [revAppend_rev, List.append_nil]
 ```
 :::::
 
@@ -2568,11 +2564,11 @@ We have seen that it is not possible to test whether or not a
 proposition `P` holds while defining a Lean function. You may be
 surprised to learn that a similar restriction applies in _proofs_!
 In other words, the following intuitive reasoning principle is not
-derivable in Lean:
+derivable in Lean with the tools we've seen so far:
 ::::
 
 ::::terse
-The following reasoning principle is _not_ derivable in Lean:
+The following reasoning principle is _not_ derivable with the tools we've seen so far:
 ::::
 
 ```lean
@@ -2766,6 +2762,11 @@ prove a single circular chain of implications that connects them all.
 You should not use `by_cases`, as this implicitly introduces
 a dependency on `excluded_middle`.
 
+:::dev "Jonathan Chan"
+If the hint suggests proving the implications in a loop,
+why do the solutions not do this?
+:::
+
 ```lean
 abbrev peirce := ∀ P Q : Prop, ((P → Q) → P) → P
 
@@ -2778,9 +2779,6 @@ abbrev imp_or := ∀ P Q : Prop, (P → Q) → (¬ P ∨ Q)
 abbrev consequentia_mirabilis := ∀ P : Prop, (¬ P → P) → P
 
 -- SOLUTION
--- JC: If the hint suggests proving the implications in a loop,
---     why do the solutions not do this?
-
 theorem imp_or_em : imp_or → excluded_middle := by
   intro h P
   obtain hnP | hP := h P P (fun hP => hP)
