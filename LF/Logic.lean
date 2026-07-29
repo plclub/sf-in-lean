@@ -121,10 +121,14 @@ Propositions are first-class entities.
 For example, we can name them:
 ::::
 
-```lean
+```lean (name := PlusClaim)
 def PlusClaim : Prop := 2 + 2 = 4
 
-#check (PlusClaim : Prop)
+#check PlusClaim
+```
+
+```leanOutput PlusClaim
+PlusClaim : Prop
 ```
 
 ::::full
@@ -145,10 +149,14 @@ For instance, the following function takes a number and
 returns a proposition asserting that this number is equal to three:
 ::::
 
-```lean
+```lean (name := IsThree)
 def IsThree (n : Nat) : Prop := n = 3
 
-#check (IsThree : Nat → Prop)
+#check IsThree
+```
+
+```leanOutput IsThree
+IsThree (n : Nat) : Prop
 ```
 
 In Lean, functions that return propositions are said to define
@@ -170,7 +178,7 @@ a {lean}`Prop`. The expression `n = m` is notation for `Eq n m`.
 Because `eq` can be used with elements of any type, it is also
 polymorphic:
 
-:::dev "Jonathan Chan (ionathanch)"
+:::instructors
 Actually it quantifies over `Sort`, where `Prop = Sort 0`
 and `Type u = Sort (u + 1)`. Not something that needs teaching
 right at this moment, but they'll see `Sort` when hovering.
@@ -193,14 +201,20 @@ For clarity, we will avoid relying on these implicit casts.
   Would we want to?
 :::
 
-```lean
-/-- info: false = true : Prop -/
-#guard_msgs in
+```lean (name := false)
 #check (false : Prop)
+```
 
-/-- info: true = true : Prop -/
-#guard_msgs in
+```leanOutput false
+false = true : Prop
+```
+
+```lean (name := true)
 #check (true : Prop)
+```
+
+```leanOutput true
+true = true : Prop
 ```
 
 ::::quiz
@@ -210,15 +224,18 @@ What is the type of the following expression?
 Nat.pred 1 = 0
 ```
 
-1. `Prop`
-2. `Nat → Prop`
-3. `∀ n : Nat, Prop`
-4. `Nat → Nat`
+1. {lean}`Prop`
+2. {lean}`Nat → Prop`
+3. {lean}`∀ n : Nat, Prop`
+4. {lean}`Nat → Nat`
 5. Not typeable
 
 :::quizSolution
-```lean
-#check (Nat.pred 1 = 0 : Prop)
+```lean (name := pred)
+#check Nat.pred 1 = 0
+```
+```leanOutput pred
+Nat.pred 1 = 0 : Prop
 ```
 :::
 ::::
@@ -230,28 +247,33 @@ What is the type of the following expression?
 ∀ n : Nat, (n + 1).pred = n
 ```
 
-1. `Prop`
-2. `Nat → Prop`
-3. `∀ n : Nat, Prop`
-4. `Nat → Nat`
+1. {lean}`Prop`
+2. {lean}`Nat → Prop`
+3. {lean}`∀ n : Nat, Prop`
+4. {lean}`Nat → Nat`
 5. Not typeable
-::::
 
-```lean
+:::quizSolution
+```lean (name := succ_pred)
 #check (∀ n : Nat, (n + 1).pred = n : Prop)
 ```
+```leanOutput succ_pred
+∀ (n : Nat), (n + 1).pred = n : Prop
+```
+:::
+::::
 
 ::::quiz
 What is the type of the following expression?
 
 ```display
-∀ n : Nat, succ (pred n)
+∀ n : Nat, n.pred + 1
 ```
 
-1. `Prop`
-2. `Nat → Prop`
-3. `∀ n : Nat, Prop`
-4. `Nat → Nat`
+1. {lean}`Prop`
+2. {lean}`Nat → Prop`
+3. {lean}`∀ n : Nat, Prop`
+4. {lean}`Nat → Nat`
 5. Not typeable
 
 :::quizSolution
@@ -268,15 +290,19 @@ What is the type of the following expression?
 fun n : Nat => n.pred + 1
 ```
 
-1. `Prop`
-2. `Nat → Prop`
-3. `∀ n : Nat, Prop`
-4. `Nat → Nat`
+1. {lean}`Prop`
+2. {lean}`Nat → Prop`
+3. {lean}`∀ n : Nat, Prop`
+4. {lean}`Nat → Nat`
 5. Not typeable
 
 :::quizSolution
-```lean
-#check (fun n : Nat => (n.pred) + 1 : Nat → Nat)
+```lean (name := pred_fun)
+#check (fun n : Nat => n.pred + 1 : Nat → Nat)
+```
+
+```leanOutput pred_fun
+fun n => n.pred + 1 : Nat → Nat
 ```
 :::
 ::::
@@ -288,15 +314,19 @@ What is the type of the following expression?
 fun n : Nat => n.pred + 1 = n
 ```
 
-1. `Prop`
-2. `Nat → Prop`
-3. `∀ n : Nat, Prop`
-4. `Nat → Nat`
+1. {lean}`Prop`
+2. {lean}`Nat → Prop`
+3. {lean}`∀ n : Nat, Prop`
+4. {lean}`Nat → Nat`
 5. Not typeable
 
 :::quizSolution
-```lean
+```lean (name := pred_fun2)
 #check (fun n : Nat => n.pred + 1 = n : Nat → Prop)
+```
+
+```leanOutput pred_fun2
+fun n => n.pred + 1 = n : Nat → Prop
 ```
 :::
 ::::
@@ -304,16 +334,19 @@ fun n : Nat => n.pred + 1 = n
 ::::quiz
 Which of the following is _not_ a proposition?
 
-1. `3 + 2 = 4`
-2. `3 + 2 = 5`
-3. `3 + 2 == 5`
-4. `(3 + 2 == 4) = false`
-5. `∀ n, (3 + 2 == n) = true → n = 5`
+1. {lean}`3 + 2 = 4`
+2. {lean}`3 + 2 = 5`
+3. {lean}`3 + 2 == 5`
+4. {lean}`(3 + 2 == 4) = false`
+5. {lean}`∀ n, (3 + 2 == n) = true → n = 5`
 6. All of these are propositions
 
 :::quizSolution
-```lean
+```lean (name := add_eq)
 #check (3 + 2 == 5 : Bool)
+```
+```leanOutput add_eq
+3 + 2 == 5 : Bool
 ```
 :::
 ::::
