@@ -13,8 +13,10 @@ structure ExtractConfig where
   destSlug : String
   modPrefix : String
   variant : Variant
-  verify : Bool := false
+  verify : Bool
 
+def ExtractConfig.fromVolume (vol : String) (variant : Variant) (verify : Bool) : ExtractConfig :=
+  { destSlug := vol.toLower, modPrefix := vol, variant, verify}
 
 /-! ## Lake project scaffold templates -/
 
@@ -294,16 +296,16 @@ private def emitSavedImpl (config : ExtractConfig)
 Verso chapters from earlier volumes that a chapter here imports (see
 `emitSavedImpl`), as `(volume-prefix, chapter-part)` pairs. -/
 def emitSavedStudent (vol : String) (crossVol : List (String × Part Manual) := []) :=
-    emitSavedImpl { destSlug := vol.toLower, modPrefix := vol, variant := .student} crossVol
+    emitSavedImpl (ExtractConfig.fromVolume vol .student true) crossVol
 
 /-- `ExtraStep` for the solutions build: solutions shown. -/
 def emitSavedSolutions (vol : String) (crossVol : List (String × Part Manual) := []) :=
-    emitSavedImpl { destSlug := vol.toLower, modPrefix := vol, variant := .solutions} crossVol
+    emitSavedImpl (ExtractConfig.fromVolume vol .solutions true) crossVol
 
 /-- `ExtraStep` for the terse build: solutions elided and `workinclass!`
 proofs stubbed to `sorry`. -/
 def emitSavedTerse (vol : String) (crossVol : List (String × Part Manual) := []) :=
-  emitSavedImpl { destSlug := vol.toLower, modPrefix := vol, variant := .terse} crossVol
+  emitSavedImpl (ExtractConfig.fromVolume vol .terse true) crossVol
 
 
 end SFLMeta.Save

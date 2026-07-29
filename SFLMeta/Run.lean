@@ -40,6 +40,7 @@ def runVolume (vol : String) (doc : Verso.Doc.Part Manual)
       | IO.eprintln s!"invalid mode: {mode}"
         IO.eprintln "mode must be student, solutions, or terse"
         return 1
+    setCurrVariant variant
     let extraStep := match variant with
       | .student => Save.emitSavedStudent vol.toUpper crossVol
       | .solutions => Save.emitSavedSolutions vol.toUpper crossVol
