@@ -128,6 +128,7 @@ Also follow Lean's variable naming conventions:
 
 - Types are Greek letters like `α`, `β`
 - Propositions are lowercase `a`, `b`, `c`, etc
+- Predicates (functions into `Prop`) are lowercase `p`, `q`, `r`, etc
 - Natural numbers are lower case `n` and `m`, etc
 - Hypotheses are lower case starting with `h`
 - Functions are `f`, `g`, etc

@@ -1860,19 +1860,19 @@ evidence is to prove the equivalence of these definitions:
 
 :::::exercise (rating := 2) (name := "in_mem")
 ```lean
-theorem in_mem α (x : α) (l : List α) : In x l ↔ x ∈ l := by
+theorem in_mem α (x : α) (l : List α) : List.In x l ↔ x ∈ l := by
   solution!
     constructor
     . intro h; induction l with
-      | nil => rw [In_nil] at h; contradiction
+      | nil => apply List.In_nil _ at h; contradiction
       | cons hd tl ih =>
-        rw [In_cons] at h
+        rw [List.In_cons] at h
         obtain h | h := h
         . subst h; constructor
         . constructor; exact ih h
     . intro h; induction h with
-      | head l' => rw [In_cons]; left; rfl
-      | tail y h ih => rw [In_cons]; right; assumption
+      | head l' => rw [List.In_cons]; left; rfl
+      | tail y h ih => rw [List.In_cons]; right; assumption
 ```
 :::::
 
