@@ -32,14 +32,18 @@ should be kept in sync as chapters are rewritten.
 | `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `unfold`, `split` |
 | `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
 | `IndProp`         | `rcases`, `subst` |
-| `Typeclasses`     | `decide` |
 | `Automation`      | `lia`, `try`, `repeat`, `specialize`, `trivial`, `simp`, `generalize` |
+| `Typeclasses`     | `decide` |
 | `HL/Imp`          | *(none new)* |
 
 **Notes**
 - **`lia` rather than `omega`** The latter is being phased out.
 - `IndPropRegexp` has been folded into `Automation`
-- `Maps` will be folded into `Typeclasses`
+- `Maps` has been folded into `Typeclasses`; the total- and partial-map
+  development now lives there, so `Typeclasses` may use `simp`, `ext`, and the
+  rest of the budget accumulated by `Automation` and everything before it.
+  (`LF/Maps.lean` has been deleted; Rocq's `Maps.v` remains the source for the
+  prose.)
 - Candidate tactics still to be placed include `show`, `rename_i`, `revert`, `suffices`, `tauto`. 
 - Tactics `grind`, `aesop`, are deferred to a later volume, following
   FPiL's caution that `grind` is overwhelming for beginners. 
