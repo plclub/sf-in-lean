@@ -29,7 +29,7 @@ In this and later chapters, we are not very consistent about
 :::
 
 :::instructors
-This chapter is meaty, but quite short -- probably too short
+This chapter is meaty, but quite short — probably too short
    for a whole week of class (though long enough that it will probably spill
    into part of a second 80-minute lecture).  Some of the material from
    Types (maybe even the whole thing) can be included in the same week (and
@@ -83,11 +83,11 @@ value "all in one big step":
 2 + 2 + 3 * 4 ⇓ 16
 ```
 
-This style is simple and natural for many purposes -- indeed, Gilles Kahn,
+This style is simple and natural for many purposes — indeed, Gilles Kahn,
 who popularized it, called it _natural semantics_.  But there are some
 things it does not do well.  In particular, it does not give us a convenient
 way of talking about _concurrent_ programming languages, where the semantics
-of a program -- the essence of how it behaves -- includes not just which
+of a program — the essence of how it behaves — includes not just which
 input states get mapped to which output states, but also the intermediate
 states that it passes through along the way; this is crucial, since these
 states can also be observed by concurrently executing code.
@@ -100,12 +100,12 @@ write strange expressions like `2 + nil`, and our semantics for arithmetic
 expressions will then need to say something about how such expressions
 behave.  One possibility is to maintain the convention that every arithmetic
 expression evaluates to some number by choosing some way of viewing a list
-as a number -- e.g., by specifying that a list should be interpreted as `0`
+as a number — e.g., by specifying that a list should be interpreted as `0`
 when it occurs in a context expecting a number.  But this would be a bit of
 a hack.
 
 A much more natural approach is simply to say that the behavior of the
-expression `2 + nil` is _undefined_ -- i.e., it doesn't evaluate to any
+expression `2 + nil` is _undefined_ — i.e., it doesn't evaluate to any
 result at all.  And we can easily do this: we just have to formulate `aeval`
 and `beval` as inductive propositions rather than functions, so that we can
 make them partial functions instead of total ones.
@@ -118,8 +118,8 @@ infinite loop or because, at some point, the program tries to do an
 operation that makes no sense, such as adding a number to a list, so that
 none of the evaluation rules can be applied.
 
-These two outcomes -- nontermination vs. getting stuck in an erroneous
-configuration -- should not be confused.  In particular, we want to _allow_
+These two outcomes — nontermination vs. getting stuck in an erroneous
+configuration — should not be confused.  In particular, we want to _allow_
 the first (because permitting the possibility of infinite loops is the price
 we pay for the convenience of programming with general looping constructs)
 but _prevent_ the second (which is just wrong), for example by
@@ -179,7 +179,7 @@ Advantages of the small-step style include:
 ::::full
 To save space, we start with an incredibly simple language of just
 constants and addition.  (We use single-letter constructors `c` and `p`
--- for Constant and Plus -- for brevity.)  The same techniques scale up to
+— for Constant and Plus — for brevity.)  The same techniques scale up to
 richer languages.
 ::::
 
@@ -200,6 +200,13 @@ def evalF (t : Tm) : Nat :=
 
 Here is the same evaluator, written in exactly the same style, but formulated as an
 inductively defined relation. We use the notation `t ⇓ n` for "`t` evaluates to `n`."
+
+The `notation` command below is how that is declared: it introduces `⇓` as
+infix syntax for the `Eval` relation defined with it, with a precedence saying
+how tightly it binds.
+This is the lightweight way to name a relation; later chapters, where a whole
+object language needs a grammar rather than a single operator, reach for
+`declare_syntax_cat` instead.
 
 ```
                         -------                (const)
@@ -267,8 +274,8 @@ Things to notice:
 ::::
 
 :::terse
-Notice: each step reduces the _leftmost_ `p` node that is ready to go -- the first rule tells how
-to rewrite it, the second and third tell where to find it -- and constants do not step to anything.
+Notice: each step reduces the _leftmost_ `p` node that is ready to go — the first rule tells how
+to rewrite it, the second and third tell where to find it — and constants do not step to anything.
 :::
 
 Let's pause and check a couple of examples of reasoning with the step relation.
@@ -363,7 +370,7 @@ develops some of these ideas in a bit more detail; reviewing that chapter
 may be useful if the treatment here feels too terse.)
 
 A _binary relation_ on a type `X` is a family of propositions parameterized
-by two elements of `X` -- i.e., a proposition about pairs of elements of
+by two elements of `X` — i.e., a proposition about pairs of elements of
 `X`.
 ::::
 
@@ -384,7 +391,7 @@ def Relation (X : Type) := X → X → Prop
 :::full
 Our main examples of such relations in this chapter will be the
 single-step reduction relation, `⟶`, and its multi-step variant, `⟶*`,
-defined below, but there are many other examples -- e.g., the "equals,"
+defined below, but there are many other examples — e.g., the "equals,"
 "less than," "less than or equal to," and "is the square of" relations on
 numbers, and the "prefix of" relation on lists and strings.
 :::
@@ -450,7 +457,7 @@ It can be useful to think of the `⟶` relation as defining an _abstract
 machine_:
 
   - At any moment, the _state_ of the machine is a term.
-  - A _step_ of the machine is an atomic unit of computation -- here, a
+  - A _step_ of the machine is an atomic unit of computation — here, a
     single "add" operation.
   - The _halting states_ of the machine are ones where there is no more
     computation to be done.
@@ -668,9 +675,9 @@ theorem nf_same_as_value (t : Tm) : IsNormalForm Step t ↔ IsValue t :=
   ⟨nf_is_value t, value_is_nf t⟩
 ```
 
-Why is this interesting? Because `IsValue` is a _syntactic_ concept -- it is
-defined by looking at the way a term is written -- while `IsNormalForm` is a
-_semantic_ one -- it is defined by looking at how the term steps.
+Why is this interesting? Because `IsValue` is a _syntactic_ concept — it is
+defined by looking at the way a term is written — while `IsNormalForm` is a
+_semantic_ one — it is defined by looking at how the term steps.
 
 It is not obvious that these concepts should characterize the same set of terms!
 
@@ -856,7 +863,7 @@ end Temp3
 ::::full
 We've been working so far with the _single-step reduction_ relation `⟶`,
 which formalizes the individual steps of an abstract machine for executing
-programs.  We can use the same machine to reduce programs to completion --
+programs.  We can use the same machine to reduce programs to completion —
 to find out what final result they yield.  This can be formalized as
 follows:
 
@@ -933,7 +940,7 @@ example : (.p (.c 1) (.c 2)) ⟶* .c (1 + 2) := by
 ```
 
 ::::full
-Second, it _contains_ `R` -- single-step reductions are a particular case of
+Second, it _contains_ `R` — single-step reductions are a particular case of
 multi-step executions.  (It is this fact that justifies the word "closure"
 in "multi-step closure of `R`.")
 ::::
@@ -1038,7 +1045,7 @@ def IsNormalFormOf {X : Type} (R : Relation X) (t t' : X) : Prop :=
 
 :::full
 We have already seen that, for our language, single-step reduction is
-deterministic -- i.e., a given term can take a single step in at most one
+deterministic — i.e., a given term can take a single step in at most one
 way.  It follows that, if `t` can reach a normal form, then this normal form
 is unique.
 
@@ -1082,7 +1089,7 @@ theorem normal_forms_unique : Deterministic (IsNormalFormOf Step) := by
 :::full
 Indeed, something stronger is true for this language (though not for all the
 languages we will see): the reduction of _any_ term `t` will eventually
-reach a normal form in a finite number of steps -- i.e., `IsNormalFormOf` is
+reach a normal form in a finite number of steps — i.e., `IsNormalFormOf` is
 a _total_ function.  We say the `Step` relation is _normalizing_.  To prove
 it, we need a couple of congruence lemmas.
 :::
@@ -1116,7 +1123,7 @@ theorem multistep_congr_2 (v1 t2 t2' : Tm) (hv : IsValue v1) (h : t2 ⟶* t2') :
 ::::full
 With these lemmas in hand, the main proof is a straightforward induction.
 
-_Theorem_: The `Step` relation is normalizing -- i.e., for every `t` there
+_Theorem_: The `Step` relation is normalizing — i.e., for every `t` there
 exists some `t'` such that `t` reduces to `t'` and `t'` is a normal form.
 
 _Proof sketch_: By induction on terms.  There are two cases:
@@ -1213,7 +1220,7 @@ includes `⟶`).
 
 :::::exercise (rating := 3) (name := "multistep_of_eval_inf")
 Write a detailed informal version of the proof of `multistep_of_eval`.  (A
-paper exercise -- there is no Lean proof to fill in here.)
+paper exercise — there is no Lean proof to fill in here.)
 
 :::solution
 ```
@@ -1298,8 +1305,8 @@ I would have thought this is how to state and prove the theorem:
 theorem eval_of_multistep' (t : Tm) (n : Nat) (h : t ⟶* .c n) : t ⇓ n
 ```
 
-It's simpler to prove this version -- no reasoning about normal forms is
-needed -- and the statement is clearly the converse of `multistep_of_eval`,
+It's simpler to prove this version — no reasoning about normal forms is
+needed — and the statement is clearly the converse of `multistep_of_eval`,
 so we could get a corollary stating an equivalence:
 `t ⇓ n ↔ t ⟶* c n`.  And that seems to finish the subsection on a much
 stronger note.
@@ -1415,7 +1422,7 @@ scoped notation:40 a:41 " ⟶a " a':41 => AStep a a'
 ```
 
 ::::full
-Notice that `AStep` has exactly the shape `Aexp → Aexp → Prop` -- i.e., it is a
+Notice that `AStep` has exactly the shape `Aexp → Aexp → Prop` — i.e., it is a
 `Relation Aexp` in the sense of the _Relations_ section above. So the generic
 vocabulary from that section (`Deterministic`, `IsNormalForm`, the multi-step
 closure `Multi`, ...) applies to it directly.
@@ -1431,7 +1438,7 @@ example :
 ```
 
 :::::exercise (rating := 2) (name := "strong_progress_arith")
-Every arithmetic expression is either a value or can take a step -- the same
+Every arithmetic expression is either a value or can take a step — the same
 _strong progress_ property we proved for the toy language, now for the richer
 `Slang` arithmetic expressions.
 
@@ -1544,7 +1551,7 @@ inductive BStep : Bexp → Bexp → Prop where
 scoped notation:40 b:41 " ⟶b " b':41 => BStep b b'
 ```
 
-A boolean example -- the left comparison operand reduces first:
+A boolean example — the left comparison operand reduces first:
 
 ```lean
 example :
@@ -1615,7 +1622,7 @@ theorem bstep_deterministic : Deterministic BStep := by
 ::::full
 The relation `⟶a` above bakes in a _left-to-right_ evaluation order: the rule
 `plusRight` can fire only once the left operand is already a value (`IsAValue v1`).
-But nothing about the _meaning_ of `+` requires that order -- we could just as
+But nothing about the _meaning_ of `+` requires that order — we could just as
 well reduce the right operand first, or interleave the two.  Different orders
 are exactly what a concurrent or optimizing implementation might choose, so it
 is natural to ask whether the choice can affect the final answer.
@@ -1664,7 +1671,7 @@ theorem anstep_not_deterministic : ¬ Deterministic ANStep := by
 ::::full
 Remarkably, this nondeterminism does _not_ affect the final answer.  The key
 observation is that a single step never changes the big-step _value_ of an
-expression -- whichever operand we advance, `eval` is preserved.
+expression — whichever operand we advance, `eval` is preserved.
 ::::
 
 :::::exercise (rating := 2) (name := "anstep_preserves_eval")
@@ -1736,7 +1743,7 @@ theorem astep_anstep_agree (a : Aexp) (n1 n2 : Nat)
 
 ::::full
 So even though `⟶n` is genuinely nondeterministic, the value it eventually
-produces is completely determined -- and it is the same value the deterministic
+produces is completely determined — and it is the same value the deterministic
 machine (and the big-step evaluator) computes.  This _confluence to a unique
 result_ is exactly the property one wants when reordering or parallelizing the
 evaluation of pure expressions.
@@ -1801,7 +1808,7 @@ Prove the compiler correct: running the compiled program from the empty stack
 reduces, in some number of steps, to a stack holding exactly the value of the
 expression.
 
-_Hint:_ this will not go through by a direct induction -- the induction
+_Hint:_ this will not go through by a direct induction — the induction
 hypothesis is too weak.  Prove a more general statement first, about running
 `compile a` followed by _any_ leftover program `p`, starting from _any_ stack
 `stk`.  (Reassociating the `++`s with `List.append_assoc`, and chaining steps
