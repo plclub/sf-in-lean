@@ -42,7 +42,7 @@ def runVolume (vol : String) (doc : Verso.Doc.Part Manual)
         return 1
     let extraStep := match variant with
       | .student => Save.emitSavedStudent vol.toUpper crossVol
-      | .solution => Save.emitSavedSolutions vol.toUpper crossVol
+      | .solutions => Save.emitSavedSolutions vol.toUpper crossVol
       | .terse => Save.emitSavedTerse vol.toUpper crossVol
     let config := mkConfig vol mode
     manualMain doc (options := rest) (config := config) (extraSteps := [extraStep])
