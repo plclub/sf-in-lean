@@ -975,7 +975,7 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 1. {tactic}`contradiction` {tactic}`left`, and {tactic}`right`
 2. only {tactic}`contradiction`
 3. {tactic}`left` and/or {tactic}`right`
-4. none of the above
+. none of the above
 
 :::quizSolution
 ```lean
@@ -1033,7 +1033,7 @@ theorem DiscrFun_succ (n : Nat) : ¬ DiscrFun (n + 1) := by
 
 theorem discr_example (n : Nat) : ¬ (0 = n + 1) := by
   intro h
-  have hd : DiscrFun 0 := by exact DiscrFun_zero
+  have hd : DiscrFun 0 := DiscrFun_zero
   apply DiscrFun_succ 0
   rw [h] at hd; exact hd
 ```
@@ -1066,7 +1066,7 @@ theorem nil_is_not_cons {α : Type} (x : α) (xs : List α) :
     ¬ ([] = x :: xs) := by
   solution!
     intro h
-    have hn : List.IsNil ([] : List α) := by exact IsNil_nil
+    have hn : List.IsNil ([] : List α) := IsNil_nil
     apply IsNil_cons x xs; rw [←h]; exact hn
 ```
 :::::
