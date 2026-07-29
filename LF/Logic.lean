@@ -886,12 +886,10 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 ∀ α : Type, ∀ x y : α, x = y ∧ x ≠ y → False
 ```
 
-1. `cases`, `unfold`, `left`, and `right`
-2. `cases` and `unfold`
-3. only `cases`
-4. `left` and/or `right`
-5. only `unfold`
-6. none of the above
+1. {tactic}`cases`, {tactic}`left`, and {tactic}`right`
+2. only {tactic}`cases`
+3. {tactic}`left` and/or {tactic}`right`
+4. none of the above
 
 :::quizSolution
 ```lean
@@ -909,12 +907,10 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 ∀ a b : Prop, a ∨ b → ¬ ¬ (a ∨ b)
 ```
 
-1. `cases`, `unfold`, `left`, and `right`
-2. `cases` and `unfold`
-3. only `cases`
-4. `left` and/or `right`
-5. only `unfold`
-6. none of the above
+1. {tactic}`cases`, {tactic}`left`, and {tactic}`right`
+2. only {tactic}`cases`
+3. {tactic}`left` and/or {tactic}`right`
+4. none of the above
 
 :::quizSolution
 ```lean
@@ -932,12 +928,10 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 ∀ a b : Prop, a → (a ∨ ¬ ¬ b)
 ```
 
-1. `cases`, `unfold`, `left`, and `right`
-2. `cases` and `unfold`
-3. only `cases`
-4. `left` and/or `right`
-5. only `unfold`
-6. none of the above
+1. {tactic}`cases`, {tactic}`left`, and {tactic}`right`
+2. only {tactic}`cases`
+3. {tactic}`left` and/or {tactic}`right`
+4. none of the above
 
 :::quizSolution
 ```lean
@@ -955,12 +949,10 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 ∀ a b : Prop, a ∨ b → (¬ ¬ a) ∨ (¬ ¬ b)
 ```
 
-1. `cases`, `unfold`, `left`, and `right`
-2. `cases` and `unfold`
-3. only `cases`
-4. `left` and/or `right`
-5. only `unfold`
-6. none of the above
+1. {tactic}`cases`, {tactic}`left`, and {tactic}`right`
+2. only {tactic}`cases`
+3. {tactic}`left` and/or {tactic}`right`
+4. none of the above
 
 :::quizSolution
 ```lean
@@ -980,12 +972,10 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 ∀ A : Prop, 1 = 0 → (A ∨ ¬ A)
 ```
 
-1. `contradiction`, `unfold`, `left`, and `right`
-2. `contradiction` and `unfold`
-3. only `contradiction`
-4. `left` and/or `right`
-5. only `unfold`
-6. none of the above
+1. {tactic}`contradiction` {tactic}`left`, and {tactic}`right`
+2. only {tactic}`contradiction`
+3. {tactic}`left` and/or {tactic}`right`
+4. none of the above
 
 :::quizSolution
 ```lean
