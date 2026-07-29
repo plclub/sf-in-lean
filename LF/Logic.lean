@@ -45,16 +45,6 @@ IMPORTBLOCK import LF.Poly
 IMPORTBLOCK import LF.Tactics
 IMPORTBLOCK import LF.CustomTactics
 
-```lean
-open Nat hiding add_succ mul_succ beq beq_eq beq_refl
-```
-
-(OA) : added these to use Lean's Nat.
-
-```lean
-open Nat (add add_comm add_assoc add_zero zero_add mul_zero mul_one zero_mul)
-```
-
 ::::full
 We have now seen many examples of factual claims (i.e.,
 _propositions_) and ways of presenting evidence of their truth
@@ -171,7 +161,7 @@ familiar notion of an _injective function_.
 def injective {α β} (f : α → β) : Prop :=
   ∀ x y : α, f x = f y → x = y
 
-theorem succ_inj' : injective succ := by
+theorem succ_inj' : injective Nat.succ := by
   intro x y H; injection H
 ```
 
@@ -189,7 +179,7 @@ right at this moment, but they'll see `Sort` when hovering.
 ```lean
 #check (Eq : ∀ {α : Type}, α → α → Prop)
 
-#check pred
+#check Nat.pred
 ```
 
 As a convenience, Lean will cast booleans by equating them to `true`,
@@ -197,6 +187,11 @@ which is why checking them against `Prop` succeeds.
 It also casts boolean equalities to propositions by equating to `true`,
 and boolean inequalities by equating to `false`.
 For clarity, we will avoid relying on these implicit casts.
+
+:::dev "Daniel Sainati (@dsainati)" PotentialImprovement
+  Is there a flag we can set or option we can enable to turn off implicit Bool to Prop casts?
+  Would we want to?
+:::
 
 ```lean
 /-- info: false = true : Prop -/
@@ -212,7 +207,7 @@ For clarity, we will avoid relying on these implicit casts.
 What is the type of the following expression?
 
 ```display
-pred (succ zero) = zero
+Nat.pred 1 = 0
 ```
 
 1. `Prop`
@@ -220,17 +215,19 @@ pred (succ zero) = zero
 3. `∀ n : Nat, Prop`
 4. `Nat → Nat`
 5. Not typeable
-::::
 
+:::quizSolution
 ```lean
-#check (pred (succ zero) = zero : Prop)
+#check (Nat.pred 1 = 0 : Prop)
 ```
+:::
+::::
 
 ::::quiz
 What is the type of the following expression?
 
 ```display
-∀ n : Nat, pred (succ n) = n
+∀ n : Nat, (n + 1).pred = n
 ```
 
 1. `Prop`
@@ -241,7 +238,7 @@ What is the type of the following expression?
 ::::
 
 ```lean
-#check (∀ n : Nat, pred (succ n) = n : Prop)
+#check (∀ n : Nat, (n + 1).pred = n : Prop)
 ```
 
 ::::quiz
@@ -256,20 +253,19 @@ What is the type of the following expression?
 3. `∀ n : Nat, Prop`
 4. `Nat → Nat`
 5. Not typeable
-::::
 
+:::quizSolution
 ```lean
-/-- info: type expected, got
-  (n.pred.succ : Nat) -/
-#guard_msgs in
-#check_failure ∀ n : Nat, succ (pred n)
+#check_failure ∀ n : Nat, n.pred + 1
 ```
+:::
+::::
 
 ::::quiz
 What is the type of the following expression?
 
 ```display
-fun n : Nat => succ (pred n)
+fun n : Nat => n.pred + 1
 ```
 
 1. `Prop`
@@ -277,17 +273,19 @@ fun n : Nat => succ (pred n)
 3. `∀ n : Nat, Prop`
 4. `Nat → Nat`
 5. Not typeable
-::::
 
+:::quizSolution
 ```lean
-#check (fun n : Nat => succ (pred n) : Nat → Nat)
+#check (fun n : Nat => (n.pred) + 1 : Nat → Nat)
 ```
+:::
+::::
 
 ::::quiz
 What is the type of the following expression?
 
 ```display
-fun n : Nat => succ (pred n) = n
+fun n : Nat => n.pred + 1 = n
 ```
 
 1. `Prop`
@@ -295,11 +293,13 @@ fun n : Nat => succ (pred n) = n
 3. `∀ n : Nat, Prop`
 4. `Nat → Nat`
 5. Not typeable
-::::
 
+:::quizSolution
 ```lean
-#check (fun n : Nat => succ (pred n) = n : Nat → Prop)
+#check (fun n : Nat => n.pred + 1 = n : Nat → Prop)
 ```
+:::
+::::
 
 ::::quiz
 Which of the following is _not_ a proposition?
@@ -310,11 +310,13 @@ Which of the following is _not_ a proposition?
 4. `(3 + 2 == 4) = false`
 5. `∀ n, (3 + 2 == n) = true → n = 5`
 6. All of these are propositions
-::::
 
+:::quizSolution
 ```lean
 #check (3 + 2 == 5 : Bool)
 ```
+:::
+::::
 
 -----------------------------------------------------------------------------
 
@@ -373,7 +375,7 @@ theorem add_is_zero (n m : Nat) : n + m = 0 → n = 0 ∧ m = 0 := by
   solution!
     intro h; cases m
     case zero =>
-      rw [add_zero] at h
+      rw [Nat.add_zero] at h
       constructor
       case left => exact h
       case right => rfl
@@ -397,7 +399,7 @@ example (n m : Nat) : n = 0 ∧ m = 0 → n + m = 0 := by
     rw [hn, hm]
 ```
 
-As usual, we can also match on `h` right at the point where we
+We can also match on `h` right at the point where we
 introduce it, instead of introducing and then destructing it:
 
 ```lean
@@ -441,7 +443,7 @@ example (n m : Nat) (h : n + m = 0) : n * m = 0 := by
 ```
 
 ::::::full
-Another common situation is that we know `A /\ B` but in some
+Another common situation is that we know `A ∧ B` but in some
 context we need just `A` or just `B`.  In such cases we can use
 an underscore pattern `_` to indicate that the unneeded conjunct
 should just be thrown away.
@@ -531,9 +533,9 @@ or "in the right case").
 theorem factor_is_zero (n m : Nat) (h : n = 0 ∨ m = 0) : n * m = 0 := by
   cases h
   /- `n = 0` -/
-  case inl hn => rw [hn, zero_mul]
+  case inl hn => rw [hn, Nat.zero_mul]
   /- `m = 0` -/
-  case inr hm => rw [hm, mul_zero]
+  case inr hm => rw [hm, Nat.mul_zero]
 ```
 
 ::::full
@@ -545,7 +547,7 @@ in the second.
 ::::
 
 Rather than performing case analysis via `cases`, we can also use `obtain`
-to match on the two possible injections, much like with `let`.
+to match on the two possible injections, much like with `let` and `∧`.
 
 ```lean
 theorem and_is_false (b1 b2 : Bool) (h : (b1 = false) ∨ (b2 = false)) :
@@ -570,7 +572,7 @@ theorem or_intro_l (P Q : Prop) (h : P) : P ∨ Q := by
 `left` and `right`:
 
 ```lean
-theorem zero_or_succ (n : Nat) : n = 0 ∨ n = pred (succ n) := by
+theorem zero_or_succ (n : Nat) : n = 0 ∨ n = (n + 1).pred := by
   workinclass!
     cases n
     case zero => left; rfl
@@ -625,8 +627,8 @@ unprovable proposition defined in the standard library.
 #check (Not : Prop → Prop)
 #print Not
 
-example : ∀ P, Not P = (P → False) := by intro; rfl
-example : ∀ P, (¬ P) = (P → False) := by intro; rfl
+example (P : Prop) : Not P = (P → False) := rfl
+example (P : Prop) : (¬ P) = (P → False) := rfl
 ```
 
 Since `False` is a contradictory proposition, the principle of
@@ -675,8 +677,6 @@ theorem zero_not_one : 0 ≠ 1 := by
       disjointness of constructors `zero` and `succ`, so `contradiction`
       takes care of it. -/
   contradiction
-  -- JC: `cases contra` and `injection contra` both also work,
-  -- but is probably harder to explain.
 ```
 
 It takes a little practice to get used to working with negation in Lean.
@@ -706,12 +706,10 @@ Write an _informal_ proof of `double_neg`:
 _Theorem_: `P` implies `¬ ¬ P`, for any proposition `P`.
 
 :::solution
-```
-_Proof_: Suppose some proposition `P` holds. We must show `¬ ¬ P` --
+_Proof_: Suppose some proposition `P` holds. We must show `¬ ¬ P` -
 i.e., `¬ P → False`, so suppose `¬ P` as well and try to derive `False`.
 Then we have both `P` and `¬ P` (i.e., `P → False`) from which
 we can indeed derive `False`. So `¬ ¬ P` holds.
-```
 :::
 
 :::grade
@@ -732,12 +730,10 @@ Write an informal proof of the proposition
 `∀ P : Prop, ¬ (P ∧ ¬ P)`.
 
 :::solution
-```
 _Proof_: Suppose, for some `P`, that `P ∧ ¬ P` holds.
 Recall that `¬ P` is defined as `P → False`.
 Given `P` and `P → False`, we can prove `False`,
 so `(P ∧ ¬ P) → False`, i.e. `¬ (P ∧ ¬ P)`.
-```
 :::
 
 :::grade
@@ -765,10 +761,12 @@ theorem de_morgan_not_or (P Q : Prop) (h : ¬ (P ∨ Q)) : ¬ P ∧ ¬ Q := by
 
 :::::exercise (rating := 1) (name := "not_succ_inverse_pred")
 Since we are working with natural numbers, we can disprove that
-`succ` and `pred` are inverses of each other:
+`succ` and `pred` are inverses of each other. This proof
+will require you to come up with a specific _counterexample_ to the
+claim being disproved:
 
 ```lean
-theorem not_succ_pred_n : ¬ (∀ n : Nat, succ (pred n) = n) := by
+theorem not_succ_pred_n : ¬ (∀ n : Nat, n.pred + 1 = n) := by
   solution!
     intro h
     replace h := h 0
@@ -855,12 +853,14 @@ besides `intro`, `apply`, and `exact`?
 4. `left` and/or `right`
 5. only `unfold`
 6. none of the above
-::::
 
+:::quizSolution
 ```lean
 example (X : Prop) (a b : X) : a = b ∧ a ≠ b → False := by
   intro ⟨h, hn⟩; apply hn; exact h
 ```
+:::
+::::
 
 ::::quiz
 To prove the following proposition, which tactics will we need
@@ -876,12 +876,14 @@ besides `intro`, `apply`, and `exact`?
 4. `left` and/or `right`
 5. only `unfold`
 6. none of the above
-::::
 
+:::quizSolution
 ```lean
 example (P Q : Prop) (h : P ∨ Q) : ¬ ¬ (P ∨ Q) := by
   intro hn; apply hn; exact h
 ```
+:::
+::::
 
 ::::quiz
 To prove the following proposition, which tactics will we need
@@ -897,12 +899,14 @@ besides `intro`, `apply`, and `exact`?
 4. `left` and/or `right`
 5. only `unfold`
 6. none of the above
-::::
 
+:::quizSolution
 ```lean
 example (P Q : Prop) (h : P) : P ∨ ¬ ¬ Q := by
   left; exact h
 ```
+:::
+::::
 
 ::::quiz
 To prove the following proposition, which tactics will we need
@@ -918,14 +922,16 @@ besides `intro`, `apply`, and `exact`?
 4. `left` and/or `right`
 5. only `unfold`
 6. none of the above
-::::
 
+:::quizSolution
 ```lean
 example (P Q : Prop) (h : P ∨ Q) : (¬ ¬ P) ∨ (¬ ¬ Q) := by
   cases h
   case inl hP => left; intro hnP; apply hnP; exact hP
   case inr hQ => right; intro hnQ; apply hnQ; exact hQ
 ```
+:::
+::::
 
 ::::quiz
 To prove the following proposition, which tactics will we need
@@ -941,12 +947,14 @@ besides `intro`, `apply`, and `exact`?
 4. `left` and/or `right`
 5. only `unfold`
 6. none of the above
-::::
 
+:::quizSolution
 ```lean
 example (A : Prop) (h : 1 = 0) : (A ∨ ¬ A) := by
   contradiction
 ```
+:::
+::::
 
 # Truth
 
@@ -1037,6 +1045,23 @@ The handy "if and only if" connective, which asserts that two
 propositions have the same truth value, is a structure containing
 the two implication directions. `P ↔ Q` is notation for `Iff P Q`.
 
+::::full
+In Lean, `Iff` is a structure packaging two fields and a constructor, which allow
+you to access its component implications. Given an `Iff` hypothesis, you can
+access the "forward direction" implication via the `Iff.mp` (short for _modus ponens_,
+the Latin name for reasoning by implication) field, and the "reverse direction"
+via the `Iff.mpr` (_modus ponens reverse_) field.
+
+If your goal is an `Iff`, you can convert it into two goals, one for each direction
+of the implication, via the `Iff.intro` constructor. Or you can just use the `constructor` tactic.
+::::
+
+::::terse
+You can use `Iff.mp` to access the forward direction of the iff,
+`Iff.mpr` to access the backwards direction, and `Iff.intro` to convert a goal
+of the form `P ↔ Q` to two goals of the form `P → Q` and `Q → P`.
+::::
+
 ```lean
 /-- info:
 structure Iff (a b : Prop) : Prop
@@ -1082,25 +1107,36 @@ theorem iff_trans (P Q R : Prop) (h1 : P ↔ Q) (h2 : Q ↔ R) : (P ↔ R) := by
 ```
 :::::
 
+::::exercise (rating := 3) (name := "iff_practice")
+Prove the following theorems about `iff`:
+
 ```lean
 theorem or_associate (P Q R : Prop) : P ∨ (Q ∨ R) ↔ (P ∨ Q) ∨ R := by
-  constructor
-  case mp =>
-    intro h
-    obtain hP | (hQ | hR) := h
-    case inl     => left; left; exact hP
-    case inr.inl => left; right; exact hQ
-    case inr.inr => right; exact hR
-  case mpr =>
-    intro h
-    obtain (hP | hQ) | hR := h
-    case inl.inl => left; exact hP
-    case inl.inr => right; left; exact hQ
-    case inr     => right; right; exact hR
+  solution!
+    constructor
+    case mp =>
+      intro h
+      obtain hP | (hQ | hR) := h
+      case inl     => left; left; exact hP
+      case inr.inl => left; right; exact hQ
+      case inr.inr => right; exact hR
+    case mpr =>
+      intro h
+      obtain (hP | hQ) | hR := h
+      case inl.inl => left; exact hP
+      case inl.inr => right; left; exact hQ
+      case inr     => right; right; exact hR
 ```
 
-::::::full
-:::::exercise (rating := 3) (name := "or_distributes_over_and")
+```lean
+theorem mul_eq_0 (n m : Nat) :
+    n * m = 0 ↔ n = 0 ∨ m = 0 := by
+  solution!
+    constructor
+    case mp => apply mul_is_zero
+    case mpr => apply factor_is_zero
+```
+
 ```lean
 theorem or_distributes_over_and (P Q R : Prop) :
     P ∨ (Q ∧ R) ↔ (P ∨ Q) ∧ (P ∨ R) := by
@@ -1125,17 +1161,7 @@ theorem or_distributes_over_and (P Q R : Prop) :
       case inr.inl => left; exact hP
       case inr.inr => right; exact ⟨hQ, hR⟩
 ```
-:::::
-
-::::::
-
-```lean
-theorem mul_eq_0 (n m : Nat) :
-    n * m = 0 ↔ n = 0 ∨ m = 0 := by
-  constructor
-  case mp => apply mul_is_zero
-  case mpr => apply factor_is_zero
-```
+::::
 
 ## Existential Quantification
 
@@ -1160,17 +1186,17 @@ have to prove `P` explicitly.
 ```lean
 #check (Exists : ∀ {T : Type}, (T → Prop) → Prop)
 
-abbrev Even x := ∃ n : Nat, x = double n
+abbrev Even x := ∃ n : Nat, x = Nat.double n
 
 #check (Even : Nat → Prop)
 
 example : Even 4 := by exists 2
-  -- `4 = double 2` holds by `rfl`,
+  -- `4 = Nat.double 2` holds by `rfl`,
   -- but is proven automatically by `exists`
 ```
 
 Conversely, if we have an existential hypothesis `∃ x, P` in the context,
-can destruct it to obtain a witness `x` and a hypothesis stating that `P`
+can destrucure it to obtain a witness `x` and a hypothesis stating that `P`
 holds of `x`.
 
 ```lean
@@ -1182,7 +1208,7 @@ example n : (∃ m, n = m + 4) → (∃ o, n = o + 2) := by
 ::::::full
 :::::exercise (rating := 1) (name := "dist_not_exists")
 Prove that "`P` holds for all `x` implies "there is no `x` for which
-`P` does not hold." (Hint: `cases` works on existential assumptions!)
+`P` does not hold." (Hint: `cases` and `let` work on existential assumptions!)
 
 ```lean
 theorem dist_not_exists (X : Type) (P : X → Prop) (h : ∀ x, P x) :
@@ -1222,7 +1248,7 @@ theorem dist_exists_or (X : Type) (P Q : X → Prop) :
 
 :::::exercise (rating := 3) (name := "ble_plus_exists")
 ```lean
-theorem ble_plus_exists : ∀ n m : Nat, (n ≤? m = true) → ∃ x, m = x + n := by
+theorem ble_plus_exists : ∀ n m : Nat, (Nat.ble n m = true) → ∃ x, m = x + n := by
   solution!
     intro n
     induction n
@@ -1239,13 +1265,13 @@ theorem ble_plus_exists : ∀ n m : Nat, (n ≤? m = true) → ∃ x, m = x + n 
         rw [hx]; rfl
 
 -- SOLUTION
-theorem ble_plus (n m : Nat) : (n ≤? (m + n)) = true := by
+theorem ble_plus (n m : Nat) : Nat.ble n (m + n) = true := by
   induction n
   case zero => rfl
   case succ n' ih => rw [Nat.add_succ m, succ_ble_succ]; exact ih
 -- END SOLUTION
 
-theorem add_exists_ble (n m : Nat) (h : ∃ x, m = x + n) : n ≤? m = true := by
+theorem add_exists_ble (n m : Nat) (h : ∃ x, m = x + n) : Nat.ble n m = true := by
   solution!
     let ⟨x, hx⟩ := h
     rw [hx]
@@ -1255,7 +1281,7 @@ theorem add_exists_ble (n m : Nat) (h : ∃ x, m = x + n) : n ≤? m = true := b
 ::::hide
 ```
 /- A direct proof without a lemma. -/
-theorem add_exists_ble' : ∀ n m, (∃ x, m = x + n) → n ≤? m = true := by
+theorem add_exists_ble' : ∀ n m, (∃ x, m = x + n) → Nat.ble n m = true := by
   intro n; induction n
   case zero => intro m H; rfl
   case succ n' ih =>
@@ -1275,10 +1301,10 @@ theorem add_exists_ble' : ∀ n m, (∃ x, m = x + n) → n ≤? m = true := by
 Connectives introduced in this chapter:
 - `A ∧ B` (conjunction):
   - introduced with `constructor`
-  - eliminated with `intro ⟨HA, HB⟩` or `let ⟨HA, HB⟩ := H`
+  - eliminated with `intro ⟨ha, hb⟩` or `let ⟨ha, hb⟩ := h`
 - `A ∨ B` (disjunction):
   - introduced with `left` and `right`
-  - eliminated with `cases`
+  - eliminated with `cases` or `obtain h | h := h`
 - `False` (falsehood):
   - eliminated with `cases` or `contradiction`
 - `¬ A` (negation):
@@ -1287,7 +1313,7 @@ Connectives introduced in this chapter:
   - introduced as`True.intro` or with `constructor`
 - `A ↔ B` (iff):
   - introduced with `constructor`
-  - eliminated with `intro ⟨HAB, HBA⟩` or `let ⟨HAB, HBA⟩ := H`
+  - eliminated with `intro ⟨hab, hba⟩`, `let ⟨hab, hba⟩ := h`, or `Iff.mp` and `Iff.mpr`
 - `∃ x : A, P` (existential):
   - introduced with `exists t`
   - eliminated with `intro ⟨x, Hx⟩` or `let ⟨x, Hx⟩ := H`
@@ -2822,4 +2848,3 @@ theorem peirce_cm : peirce → consequentia_mirabilis := by
 :::::
 
 ::::::
-
