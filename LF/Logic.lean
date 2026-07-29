@@ -166,7 +166,7 @@ For instance, here's a (polymorphic) property defining the
 familiar notion of an _injective function_.
 
 ```lean
-def Injective {α β} (f : α → β) : Prop :=
+def Injective {α β : Type} (f : α → β) : Prop :=
   ∀ x y : α, f x = f y → x = y
 
 theorem succ_inj' : Injective Nat.succ := by
