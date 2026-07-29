@@ -1089,9 +1089,9 @@ theorem ev_double (n : Nat) : Ev n.double := by
   solution!
     induction n
     case zero =>
-      rw [double_zero]; exact Ev.ev_0
+      rw [Nat.double_zero]; exact Ev.ev_0
     case succ n IH =>
-      rw [double_succ]; exact Ev.ev_succ_succ _ IH
+      rw [Nat.double_succ]; exact Ev.ev_succ_succ _ IH
 ```
 :::::
 
@@ -1689,7 +1689,7 @@ example (n : Nat) : Ev n → Even n := by
     of `n`.  Indeed, it is not difficult to convince Lean that this
     intermediate result would suffice. -/
     have he : (∃ (k' : Nat), n' = k'.double) → (∃ (n₀ : Nat), n' + 2 = n₀.double) := by
-      intro ⟨k, hk⟩; exists (k + 1); rw [double_succ, hk]
+      intro ⟨k, hk⟩; exists (k + 1); rw [Nat.double_succ, hk]
     apply he
     /- Unfortunately, now we are stuck: we are trying to prove another instance
         of the same theorem we set out to prove -- only here we are
@@ -1754,7 +1754,7 @@ theorem ev_Even : ∀ n, Ev n → Even n := by
   /- h = ev_succ_succ n' h',  with ih : Even n' -/
   case ev_succ_succ n' h' ih =>
     let ⟨k, hk⟩ := ih
-    exists k + 1; rw [double_succ, hk]
+    exists k + 1; rw [Nat.double_succ, hk]
 ```
 
 ::::full
@@ -1829,7 +1829,7 @@ theorem ev_plus_plus : ∀ n m p,
       apply ev_sum
       . assumption
       . assumption
-    . rw [←double_add]; exact ev_double n
+    . rw [←Nat.double_add]; exact ev_double n
 ```
 :::::
 
@@ -3310,7 +3310,7 @@ theorem merge_filter : ∀ (α : Type) (test: α→ Bool) (l l₁ l₂ : List α
          | (x1::rest1,x2::rest2) =>
               (map (fun l => cons x1 l) (all_merges rest1 l₂))
            ++ (map (fun l => cons x2 l) (all_merges l₁ rest2))
-         end. 
+         end.
 ```
 ::::
 
@@ -4524,4 +4524,3 @@ End Pigeon.
 ```
 :::
 ::::::
-
