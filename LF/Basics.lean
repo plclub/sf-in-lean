@@ -319,7 +319,7 @@ inductive MyBool : Type where
 
 :::ignore
 ```lean -show
-variable (b : MyBool)
+variable (b : MyBool) (n m : Nat) (α : Type) (a : α)
 ```
 :::
 
@@ -884,7 +884,7 @@ example : is_weekend Day.friday = false := solution!(by rfl)
 :::
 ::::
 
-::::exercise (rating := 1) (name := "is_inversion")
+::::exercise (rating := 1) (name := "isInversion")
 Define a function that takes two colors and returns `true` if
 the second color is an _inversion_ of the first, and false otherwise.
 
@@ -897,7 +897,7 @@ As before, write the right-hand sides of the `example` blocks
 to ensure they pass with no {tactic}`sorry`.
 
 ```lean
-def is_inversion (c1 c2 : Color) : Bool
+def isInversion (c1 c2 : Color) : Bool
   := solution!
     (match c1, c2 with
     | Color.black, Color.white => Bool.true
@@ -907,11 +907,11 @@ def is_inversion (c1 c2 : Color) : Bool
     | _, _ => false
     )
 
-example : is_inversion Color.black Color.white = true := solution!(by rfl)
-example : is_inversion Color.white Color.black = Bool.true := solution!(by rfl)
-example : is_inversion (Color.primary RGB.red) (Color.primary RGB.blue) = Bool.true :=
+example : isInversion Color.black Color.white = true := solution!(by rfl)
+example : isInversion Color.white Color.black = Bool.true := solution!(by rfl)
+example : isInversion (Color.primary RGB.red) (Color.primary RGB.blue) = Bool.true :=
   solution!(by rfl)
-example : is_inversion (Color.primary RGB.green) (Color.primary RGB.red) = Bool.false :=
+example : isInversion (Color.primary RGB.green) (Color.primary RGB.red) = Bool.false :=
   solution!(by rfl)
 ```
 
@@ -1003,24 +1003,30 @@ Rendering bug in *student* and *terse* (solutions is fine): the leading
 solutions build shows each once, so this is a Verso rendering quirk with
 `---`-style comments in the elided builds, not a source duplication.
 :::
-```lean
+```lean (name := rgb_1)
 --- this works, because the definition is qualified by `RGB.`
 def RGB.myOtherBlue : RGB := myBlue
 
-#check RGB.myBlue      -- RGB
-#check RGB.myOtherBlue -- RGB
+#check RGB.myBlue
+#check RGB.myOtherBlue
 ```
 
-:::dev "Daniel Sainati (dsainati1)"
-see my comment later in the file about guard msgs
-
-```lean
---- this doesn't work; the identifier is unknown
-/-- error: Unknown identifier `myBlue` -/
-#guard_msgs(error) in
-#check myBlue -- unknown identifier
+```leanOutput rgb_1
+RGB.myBlue : RGB
 ```
-:::
+
+```leanOutput rgb_1
+RGB.myOtherBlue : RGB
+```
+
+```lean +error (name := rgb_2)
+-- this doesn't work; the identifier is unknown
+#check myBlue
+```
+
+```leanOutput rgb_2
+Unknown identifier `myBlue`
+```
 
 ::::full
 Similarly, we could rewrite the definition of `nextWorkingDay`
@@ -1049,20 +1055,24 @@ definitions without a prefix.
 `open` brings definitions from a namespace into scope.
 :::
 
-```lean
+```lean (name := ns_1)
 namespace MyNamespace
 def myDef : Bool := Bool.true
 end MyNamespace
 
 open MyNamespace
 
-#check myDef -- Bool
+#check myDef
+```
+
+```leanOutput ns_1
+MyNamespace.myDef : Bool
 ```
 
 If we only want to bring _some_, rather than all, of the definitions
 of a namespace into the current scope, we can use the `export` command:
 
-```lean
+```lean (name := ns_2)
 namespace MyOtherNamespace
 def myHiddenDef : Bool := Bool.true
 def myVisibleDef : Bool := Bool.false
@@ -1071,37 +1081,54 @@ end MyOtherNamespace
 export MyOtherNamespace (myVisibleDef)
 
 -- `myVisibleDef` is now usable without qualification:
-#check myVisibleDef -- Bool
+#check myVisibleDef
+```
+
+```leanOutput ns_2
+MyOtherNamespace.myVisibleDef : Bool
 ```
 
 But `myHiddenDef`, which we did not `export`, still needs its full name;
 using it unqualified is an error:
 
-```lean +error
+```lean +error (name := ns_3)
 #check myHiddenDef
 ```
 
+```leanOutput ns_3
+Unknown identifier `myHiddenDef`
+```
+
 ::::full
-In fact, this is what exactly what Lean does with the standard `Bool` type by default.
+In fact, this is what exactly what Lean does with the standard {name}`Bool` type by default.
 Since it is such an important
-part of many proofs and programs, Lean implicitly `export`s many of `Bool`s functions and
-constructors. Accordingly, we can use constructors like `true` and `false` and functions
-like `not` without qualifying them with `Bool.`.
+part of many proofs and programs, Lean implicitly `export`s many of {name}`Bool`s functions and
+constructors. Accordingly, we can use constructors like {name}`true` and {name}`false` and functions
+like {name}`not` without qualifying them with {name}`Bool`.
 ::::
 
 ::::terse
-Names from the `Bool` `namespace` are `export`ed and thus available without qualification.
+Names from the {name}`Bool` `namespace` are `export`ed and thus available without qualification.
 ::::
 
-```lean
-#check Bool.true -- Bool
-#check true -- Bool
+```lean (name := tt)
+#check Bool.true
+#check true
 ```
+
+```leanOutput tt
+Bool.true : Bool
+```
+
+```leanOutput tt
+Bool.true : Bool
+```
+
 
 ::::full
 Finally, Lean can often automatically figure out which namespace a qualified name lives in,
 saving us the need to explicitly specify it every time we use the name. Instead of
-the fully qualified style (e.g., `Day.monday`), we can opt for an implicitly qualified style,
+the fully qualified style (e.g., {name}`Day.monday`), we can opt for an implicitly qualified style,
 writing just `.monday`.
 
 When we do this, Lean tries to resolve the `.monday` name by seeing what its expected type is
@@ -1109,7 +1136,7 @@ and inferring which namespace it must be from based on that type. If there is on
 namespace (i.e., if it is unambiguous which constructor we're referring to), then it will
 automatically resolve to the expected value.
 
-So, for example, we can also write `nextWorkingDay` as follows, using the shorter
+So, for example, we can also write {name}`nextWorkingDay` as follows, using the shorter
 style for both the value being matched upon and the value being returned:
 ::::
 
@@ -1131,21 +1158,38 @@ def nextWorkingDay' (d : Day) : Day :=
 
 ::::full
 In the function above, both the type of `d` and the return type of the function are declared
-to be `Day`s. When we use the `.monday` style in the function body, Lean can figure
+to be {name}`Day`s. When we use the `.monday` style in the function body, Lean can figure
 out that we must mean `Day.monday`. However, in the example below, Lean can't figure out
-which version of `.true` we mean, since it could either be `Bool.true` or `MyBool.true`.
+which version of `.true` we mean, since it could either be {name}`Bool.true` or {name}`MyBool.true`.
 In this case, it will raise an error:
 
-```lean +error
+```lean +error (name := am)
 #check .true
 ```
 
-Here, though, because `not` is a function that takes a `Bool` argument, Lean knows that
-`.true` must here be a `Bool`:
+```leanOutput am
+Invalid dotted identifier notation: The expected type of `.true` could not be determined
 
-```lean
+Hint: Using one of these would be unambiguous:
+  [apply] `true`
+  [apply] `MyBool.true`
+  [apply] `Lake.Toml.true`
+  [apply] `Lean.LBool.true`
+  [apply] `Std.Do.ExceptConds.true`
+  [apply] `Lean.Meta.Grind.Filter.true`
+```
+
+Here, though, because {name}`not` is a function that takes a {name}`Bool` argument, Lean knows that
+`.true` must here be a {name}`Bool`:
+
+```lean (name := bt)
 #check (Bool.not .true)
 ```
+
+```leanOutput bt
+!true : Bool
+```
+
 ::::
 
 ::::exercise(rating:=0) (name := "custom_namespace_checks")
@@ -1194,16 +1238,16 @@ in patterns rather than by a specific (field) _name_.
 
 As an example, consider representing the four bits in
 a nibble (half a byte). We first define a datatype `Bit` that
-resembles `Bool` (using the constructors `b1` and `b0` for the two
+resembles {name}`Bool` (using the constructors `b1` and `b0` for the two
 possible bit values) and then define the datatype `Nibble`, which is
 a tuple of four bits.
 ::::
 
 :::terse
-A Nibble is half a byte -- four bits.
+A Nibble is half a byte — four bits.
 :::
 
-```lean
+```lean (name := nb1)
 inductive Bit : Type where
   | b1
   | b0
@@ -1211,7 +1255,11 @@ inductive Bit : Type where
 inductive Nibble : Type where
   | bits (x0 x1 x2 x3 : Bit)
 
-#check (.bits .b1 .b0 .b1 .b0 : Nibble)
+#check Nibble.bits .b1 .b0 .b1 .b0
+```
+
+```leanOutput nb1
+Nibble.bits Bit.b1 Bit.b0 Bit.b1 Bit.b0 : Nibble
 ```
 
 ::::full
@@ -1219,7 +1267,7 @@ Note: The `bits` constructor illustrates a feature of multi-parameter
 declarations, both for constructors and for functions: Instead
 of writing `(x0 : Bit) (x1 : Bit) ...` we write `(x0 x1 ... : Bit)`
 since all of the variables have the same type. We could have done
-the same with the function definition `or` above, writing
+the same with the function definition {name}`MyBool.or` above, writing
 `or (b1 b2 : MyBool)` rather than `or (b1 : MyBool) (b2 : MyBool)`.
 
 The `bits` constructor acts as a wrapper for its contents.
@@ -1261,9 +1309,15 @@ structure NibbleStruct : Type where
   x3 : Playground.Bit
 ```
 Rather than construct this as `.bits .b0 .b0 .b0 .b0` we construct it as:
-```
+
+```lean (name := nbs)
 #check NibbleStruct.mk .b0 .b0 .b0 .b0
 ```
+
+```leanOutput nbs
+{ x0 := Playground.Bit.b0, x1 := Playground.Bit.b0, x2 := Playground.Bit.b0, x3 := Playground.Bit.b0 } : NibbleStruct
+```
+
 The `.mk` constructor is created for us.
 :::
 
@@ -1281,8 +1335,8 @@ namespace NatPlayground
 
 ::::full
 All the types we have defined so far -- both enumerated types
-such as `Day`, `Bool`, and `Bit` and tuple types such as
-`Nibble` built from them -- are finite. The natural numbers, on
+such as {name}`Day`, {name}`MyBool`, and {name}`Playground.Bit` and tuple types such as
+{name}`Playground.Nibble` built from them — are finite. The natural numbers, on
 the other hand, are an infinite set, so we'll need to use a
 slightly richer form of inductive type declaration to represent
 them: _recursive_ inductive types.
@@ -1306,8 +1360,8 @@ Here we choose an even simpler _unary_ (base 1) representation, for
 the sake of streamlining proofs. As a Lean datatype, it uses two
 constructors. The `zero` constructor represents the number zero. The
 `succ` constructor can be applied to the representation of the
-natural number `n`, yielding the representation of `n+1`, where
-`succ` stands for "successor." The number `n` is then represented by
+natural number {lean}`n`, yielding the representation of {lean}`n + 1`, where
+`succ` stands for "successor." The number {lean}`n` is then represented by
 `n` applications of `succ` to `zero`.
 
 Here is the complete datatype definition:
@@ -1346,7 +1400,7 @@ def three : Nat := succ two
 def four  : Nat := succ three
 ```
 
-We can also write functions on `Nat`.
+We can also write functions on {name}`Nat`.
 
 ```lean
 def pred (n : Nat) : Nat :=
@@ -1354,31 +1408,43 @@ def pred (n : Nat) : Nat :=
   | zero => zero
   | succ n' => n'
 
-def minustwo (n : Nat) : Nat :=
+def minusTwo (n : Nat) : Nat :=
   match n with
   | zero => zero
   | succ (zero) => zero
   | succ (succ n') => n'
 
-#eval minustwo four
+#eval minusTwo four
 ```
 
 ::::full
-Look the types of `succ`, `pred`, and `minustwo`:
+Look the types of {name}`succ`, {name}`pred`, and {name}`minusTwo`:
 
-```lean
-#check succ  -- Nat → Nat
-#check pred  -- Nat → Nat
-#check minustwo  -- Nat → Nat
+```lean (name := nat1)
+#check (succ)
+#check (pred)
+#check (minusTwo)
+```
+
+```leanOutput nat1
+succ : Nat → Nat
+```
+
+```leanOutput nat1
+pred : Nat → Nat
+```
+
+```leanOutput nat1
+minusTwo : Nat → Nat
 ```
 
 These are all things that can be applied to a number to yield a
 number. However, there is a fundamental difference between
-`Nat.succ` and the other two: functions like `Nat.pred` and
-`Nat.minustwo` are defined by giving _computation rules_ -- e.g.,
-the definition of `Nat.pred` says that `Nat.pred (succ (succ zero))`
-can be simplified to `succ zero` -- while the definition of
-`Nat.succ` has no such behavior attached. Although it is like a
+{name}`succ` and the other two: functions like {name}`pred` and
+{name}`minusTwo` are defined by giving _computation rules_ — e.g.,
+the definition of {name}`pred` says that {lean}`pred (succ (succ zero))`
+can be simplified to {lean}`succ zero` — while the definition of
+{name}`succ` has no such behavior attached. Although it is like a
 function in the sense that it can be applied to an argument, it does
 not _do_ anything at all! It is just the way we write down numbers.
 ::::
@@ -1437,11 +1503,15 @@ def add (n : Nat) (m : Nat) : Nat :=
   | succ m' => succ (add n m')
 ```
 
-```lean
+```lean (name :=  three_1)
 #eval add one two -- succ (succ (succ zero)) -- aka, three!
 ```
 
-We can also define infix notation for our `add` functions.
+```leanOutput three_1
+NatPlayground.Nat.succ (NatPlayground.Nat.succ (NatPlayground.Nat.succ (NatPlayground.Nat.zero)))
+```
+
+We can also define infix notation for our {name}`add` functions.
 :::full
 Don't worry too much about how this is defined; we will return to it
 in more detail later.
@@ -1450,8 +1520,13 @@ in more detail later.
 ```lean
 scoped infixl:65 " + " => add
 ```
-```lean
+
+```lean (name := three_2)
 #eval one + two -- succ (succ (succ zero)) -- aka, three again.
+```
+
+```leanOutput three_2
+NatPlayground.Nat.succ (NatPlayground.Nat.succ (NatPlayground.Nat.succ (NatPlayground.Nat.zero)))
 ```
 
 # Proof by Rewriting
@@ -1459,21 +1534,21 @@ scoped infixl:65 " + " => add
 ## Proving properties about functions in Lean
 
 ::::full
-Being recursive on a `Nat` and returning `Nat` as well,
-`add` is the first example of a more sophisticated class of functions.
+Being recursive on a {name}`Nat` and returning {name}`Nat` as well,
+{name}`add` is the first example of a more sophisticated class of functions.
 In this chapter and beyond, we will _prove_ properties
 about recursive functions like `add` over inductive datatypes
-like `Nat`, using _simplification rules_ about their behavior.
+like {name}`Nat`, using _simplification rules_, or _characterizing lemmas_, about their behavior.
 
-Here is a simplification rule about `add`:
+Here is a simplification rule about {name}`add`:
 
-- `n + zero = n`
+- {lean}`n + zero = n`
 
 In Lean, this rule looks like this:
 ::::
 
 ::::terse
-We can prove properties of recursive functions like `add`:
+We can prove properties of recursive functions like {name}`add`:
 ::::
 
 ```lean
@@ -1482,11 +1557,15 @@ theorem add_zero : ∀ n : Nat, n + zero = n := by
   rfl
 ```
 
-```lean
+```lean (name := add_zero)
 #check add_zero
 ```
 
-Using our simplification rule `add_zero`, we can carry out a simple proof
+```leanOutput add_zero
+NatPlayground.Nat.add_zero (n : Nat) : n + zero = n
+```
+
+Using our simplification rule {name}`add_zero`, we can carry out a simple proof
 about natural numbers!
 
 ```lean
@@ -1502,9 +1581,9 @@ We'll walk through this proof in the next section.
 ## Proof state and tactics
 
 ::::full
-The `rewrite` tactic in the proof of `add_zero_zero` is used
+The {tactic}`rewrite` tactic in the proof of {name}`add_zero_zero` is used
 to transform the goal of the proof according to an equality.
-The `add_zero` in brackets is an _argument_ to the `rewrite` tactic.
+The {name}`add_zero` in brackets is an _argument_ to the {tactic}`rewrite` tactic.
 
 Let's walk through the theorem again in detail.
 ::::
@@ -1543,51 +1622,51 @@ theorem add_zero_zero_zero : ∀ n : Nat, n + zero + zero + zero = n := by
     rfl
 ```
 
-## The `rewrite` tactic
+## The {tactic}`rewrite` tactic
 
 :::suppressPreviousHeaderWhenTerse
 :::
 
 ::::full
 As we saw above, the tactic that tells Lean to rewrite (part of) a goal or
-hypothesis based on a rule is called `rewrite`. Given the rule `add_zero`,
-which states that `n + zero` is equal to `n` for any `n`, we can replace
-any `n + zero` in our proof with `n` via `rewrite [add_zero]`.
+hypothesis based on a rule is called {tactic}`rewrite`. Given the rule {name}`add_zero`,
+which states that {lean}`n + zero` is equal to {lean}`n` for any {lean}`n`, we can replace
+any {lean}`n + zero` in our proof with {lean}`n` via `rewrite [add_zero]`.
 
-The `rewrite` tactic takes its argument(s) in square brackets.
+The {tactic}`rewrite` tactic takes its argument(s) in square brackets.
 ::::
 
-## The `rfl` tactic
+## The {tactic}`rfl` tactic
 
 :::suppressPreviousHeaderWhenTerse
 :::
 
 ::::full
-The `rfl` tactic closes a goal of the shape `a = a`, for any `a`. It
-checks that both sides of the equality are _definitionally equal_ --
+The {tactic}`rfl` tactic closes a goal of the shape {lean}`a = a`, for any {lean}`a`. It
+checks that both sides of the equality are _definitionally equal_ —
 that is, that they reduce to the same term. (So, in particular, a
 term is always definitionally equal to itself.)
 ::::
 
 ::::terse
-The `rfl` closes a goal that looks like `a = a`, reducing both sides of the equality in
+The {tactic}`rfl` closes a goal that looks like {lean}`a = a`, reducing both sides of the equality in
 the process.
 ::::
 
-## A New `add` Rule
+## A New {lean}`add` Rule
 
 ::::full
 Here is another fundamental rule about addition:
 
-`n + (succ m) = succ (n + m)`.
+{lean}`n + (succ m) = succ (n + m)`.
 
-This is the rule we need to push `succ` around.
+This is the rule we need to push {name}`succ` around.
 
 Here it is in Lean:
 ::::
 
 ::::terse
-Here's another rule we can use for `add`:
+Here's another rule we can use for {name}`add`:
 ::::
 
 ```lean
@@ -1596,7 +1675,7 @@ theorem add_succ : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
   rfl
 ```
 
-Now, let's use `add_succ` in a proof:
+Now, let's use {name}`add_succ` in a proof:
 
 ```lean
 theorem add_one (n : Nat) : n + (succ zero) = succ n + zero := by
@@ -1607,9 +1686,9 @@ theorem add_one (n : Nat) : n + (succ zero) = succ n + zero := by
 ```
 
 ::::full
-Again, we recommend stepping through these proofs in VS Code --
+Again, we recommend stepping through these proofs in VS Code —
 that is, moving past each tactic with your cursor to see how it
-changes the proof state and hovering over each argument to `rewrite` to see its type.
+changes the proof state and hovering over each argument to {tactic}`rewrite` to see its type.
 ::::
 
 ## Irreducibility, Rewriting, and Proof Engineering
@@ -1626,22 +1705,22 @@ it is the only way to maintain crucial invariants that prevent a system from bec
 
 The same principle applies to definitions and proofs in Lean.
 In idiomatic Lean, it is considered poor style to "peek" through
-definitions by using `rfl` to implicitly simplify expressions
+definitions by using {tactic}`rfl` to implicitly simplify expressions
 that aren't syntactically identical. If you take a look at the proofs of
-`add_zero` and `add_succ` above, you will notice this is exactly what we did
-when we used the `rfl` tactic.
+{name}`add_zero` and {name}`add_succ` above, you will notice this is exactly what we did
+when we used the {tactic}`rfl` tactic.
 
-However, the foundational theorems `add_zero` and `add_succ` provide a
-characterization of the behavior of `add` that makes using `rfl` to simplify
+However, the foundational theorems {name}`add_zero` and {name}`add_succ` provide a
+characterization of the behavior of {name}`add` that makes using {tactic}`rfl` to simplify
 expressions unnecessary; instead, we can rewrite by these theorems anywhere we want to describe
-how `add` evaluates.
+how {name}`add` evaluates.
 
 In this text, to enforce idiomatic style, we mark
 definitions with `attribute [irreducible]` to prevent this peeking,
 also called *definitional equality abuse* (*defeq abuse*, for short).
-We place this attribute after the proofs of `add_zero` and `add_succ`,
+We place this attribute after the proofs of {name}`add_zero` and {name}`add_succ`,
 and can then rewrite by these theorems anywhere we want to describe
-how `add` evaluates.
+how {name}`add` evaluates.
 In real-world Lean developments, the style of writing proofs using
 simplification rules is both standard and expected. Definitions in those
 developments may not use `attribute [irreducible]`,
@@ -1655,7 +1734,7 @@ We will relax this discipline in later chapters.
 ::::terse
 After proving the theorems that characterize a definition,
 we mark the definition `irreducible` to require rewriting by them instead
-of using `rfl`.
+of using {tactic}`rfl`.
 ::::
 
 ```lean
@@ -1663,7 +1742,7 @@ attribute [irreducible] add
 ```
 
 These characterizing theorems also follow a particular pattern. Let's look again at the
-definition of `add`, without the `+` notation for maximum clarity:
+definition of {name}`add`, without the `+` notation for maximum clarity:
 
 ```lean
 namespace AddPlayground
