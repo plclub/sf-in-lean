@@ -7,17 +7,21 @@ Walks every remote branch, finds the commits not yet in `main`, and builds a
 picture of who is touching what:
 
   * a per-PR table (most recently active first) — the branch (linked to its
-    PR) with its author beneath in small type, a Status column, any `#Note: …`
-    lines reviewers left on the PR, activity, which *other* PR branches it
-    shares files with (⚠️ = those overlaps would actually conflict, computed
-    with a real in-memory merge, not a filename guess), and a compact Changes
-    count.  The Status cell reports the open PR's readiness: "N comments" (open
+    PR) followed by its author in small type, a Status column, which *other* PR
+    branches it shares files with (⚠️ = those overlaps would actually conflict,
+    computed with a real in-memory merge, not a filename guess), a compact
+    Changes count, the activity time, and any `#Note: …` lines reviewers left on
+    the PR.  The Status cell reports the open PR's readiness: "N comments" (open
     review threads), "Ready to merge" (approved, nothing unresolved), a
     "🚧 auto-merge held" flag when auto-merge is enabled but the PR is *not*
     sitting in the merge queue because something is holding it up, and a
     "⚠️ conflicts with `main`" flag when the branch no longer merges cleanly.
-    Only branches with an open PR appear, and only they are weighed when marking
-    overlaps and conflicts;
+    Only branches with an open PR appear in the table, and only they are weighed
+    when marking its overlaps and conflicts;
+  * an "Other branches:" line just below the table — a compact list of every
+    active branch *without* a PR: name (linked to its GitHub page), its author
+    (same style as the table), how long since it was created and last active,
+    and a ⚠️ when it would conflict with any open PR;
   * a "hot files" view — files edited on more than one PR branch, conflicting
     files first;
   * an always-on list of merged / inactive branches (0 commits ahead of main).
@@ -153,6 +157,16 @@ def collect_branches():
         # Committer timestamp (unix) of the branch tip, for "most recent
         # activity" sorting — the relative `when` string can't be sorted.
         ts = int(git("log", "-1", "--format=%ct", ref) or "0")
+        # Rough branch "age": the date of its oldest commit not yet in main —
+        # i.e. when this line of work first diverged. A branch with nothing
+        # ahead has no divergent commit, so fall back to the tip date.
+        if ahead:
+            first_sha = git("rev-list", f"{main}..{ref}").splitlines()[-1]
+            created = git("log", "-1", "--format=%cr", first_sha)
+            if created.endswith(" ago"):
+                created = created[:-4]
+        else:
+            created = when
         clean_to_main = merges_clean(main, ref) if ahead else True
         branches[ref] = {
             "short": short,
@@ -163,6 +177,7 @@ def collect_branches():
             "sha": sha,
             "login": None,  # GitHub username, filled in later when a token is set
             "when": when,
+            "created": created,
             "ts": ts,
             "clean_to_main": clean_to_main,
         }
@@ -468,8 +483,16 @@ def files_cell(files):
 
 
 def render(branches, conf, prs, have_token, slug):
-    active = {r: b for r, b in branches.items() if b["ahead"] > 0}
-    merged = {r: b for r, b in branches.items() if b["ahead"] == 0}
+    # The PR table (and the file/overlap analysis beneath it) covers active
+    # branches that have an open PR; the "Merged / inactive" section covers PR
+    # branches with nothing ahead of main.  Active branches *without* a PR are
+    # summarised in the compact "Other branches:" paragraph instead.
+    active = {r: b for r, b in branches.items()
+              if b["ahead"] > 0 and b["short"] in prs}
+    non_pr = {r: b for r, b in branches.items()
+              if b["ahead"] > 0 and b["short"] not in prs}
+    merged = {r: b for r, b in branches.items()
+              if b["ahead"] == 0 and b["short"] in prs}
 
     # file -> [active refs]
     fmap = {}
@@ -510,8 +533,8 @@ def render(branches, conf, prs, have_token, slug):
     # ---- per-PR table (most recently active first) ----
     out.append("### Current PRs")
     out.append("")
-    out.append("| Branch / Author | Status | `#Note`s | Activity | Shares files with | Changes |")
-    out.append("|---|---|---|---|---|--:|")
+    out.append("| Branch / Author | Status | Shares files with | Changes | Activity | `#Note`s |")
+    out.append("|---|---|---|--:|---|---|")
     for r, b in sorted(active.items(), key=lambda x: (-x[1]["ts"], x[1]["short"])):
         overlaps = [o for o in active if o != r and active[o]["files"] & b["files"]]
         # A stacked branch — one that fully contains the other's commits — is the
@@ -545,23 +568,41 @@ def render(branches, conf, prs, have_token, slug):
                    for o in contains_o]
         pieces += ["included in " + branch_link(active[o]["short"], slug)
                    for o in contained_by]
-        ov = ", ".join(pieces) or "—"
+        ov = ", ".join(pieces)
         pr = prs.get(b["short"])
-        # First cell: the branch (linked to its PR) with its author beneath in
-        # small type — the two former columns folded into one.
-        branch = branch_link(b["short"], slug, maxlen=25,
+        # First cell on a single line: the branch (linked to its PR) followed by
+        # its author in small type — the two former columns folded into one.  A
+        # wider branch label (fewer names truncated) keeps the column readable.
+        branch = branch_link(b["short"], slug, maxlen=40,
                              href=pr["url"] if pr else None)
-        first = f"{branch}<br><sub>{author_cell(b)}</sub>"
+        first = f"{branch} <sub>{author_cell(b)}</sub>"
         # The old "→ main" column is folded in here: flag a branch that no
         # longer merges cleanly right in the Status cell.
         status = pr_cell(b["short"], prs)
         if not b["clean_to_main"]:
             status += " · ⚠️ conflicts with `main`"
         out.append(
-            f"| {first} | {status} | {notes_cell(pr)} | "
-            f"{b['when']} | {ov} | {files_cell(b['files'])} |"
+            f"| {first} | {status} | {ov} | {files_cell(b['files'])} | "
+            f"<sub>{b['when']}</sub> | <sub>{notes_cell(pr)}</sub> |"
         )
     out.append("")
+
+    # ---- non-PR branches: one compact "Other branches:" line ----
+    if non_pr:
+        items, any_clash = [], False
+        for r, b in sorted(non_pr.items(), key=lambda x: -x[1]["ts"]):
+            # ⚠️ if this branch would actually conflict with any open PR branch.
+            clash = any(o in active for o in conf[r])
+            any_clash = any_clash or clash
+            items.append(
+                f"{branch_link(b['short'], slug)} {author_cell(b)} "
+                f"(created {b['created']}, active {b['when']}"
+                f"){' ⚠️' if clash else ''}"
+            )
+        legend = (" &nbsp;_(⚠️ = conflicts with an open PR)_" if any_clash else "")
+        # The whole paragraph is set in small type.
+        out.append("<sub>**Other branches:** " + ", ".join(items) + "." + legend + "</sub>")
+        out.append("")
 
     # ---- files: conflicting first, then clean co-edits, then single-branch ----
     out.append("### Active files")
@@ -674,16 +715,20 @@ def main():
     if token:
         prs = fetch_prs(slug, token)
 
-    # Only branches with an open PR appear anywhere in the report — and only they
-    # are weighed when marking shared-file overlaps and conflicts — so drop the
-    # rest before the conflict analysis and enrichment below.
-    branches = {r: b for r, b in branches.items() if b["short"] in prs}
+    # Conflicts are computed over *all* active branches: PR branches populate the
+    # main table's overlap column, and the non-PR "Other branches:" paragraph
+    # needs to know whether each such branch clashes with any open PR.
     conf = pairwise_conflicts(branches)
 
-    # Resolve each branch's author GitHub handle: the commits API (accurate) when
-    # a token is available, else parse a noreply commit email. With the handle,
-    # look up the person's real name from their GitHub profile for display.
+    # Resolve author identity for every branch shown with an author: the PR
+    # table, the "Other branches:" line, and the merged/inactive list — i.e. all
+    # but the non-PR branches with nothing ahead (which appear nowhere).  The
+    # commits API (accurate) gives the GitHub handle when a token is available,
+    # else a noreply commit email is parsed; with the handle, the person's real
+    # name is looked up from their GitHub profile for display.
     for b in branches.values():
+        if b["short"] not in prs and b["ahead"] == 0:
+            continue
         b["login"] = (commit_login(slug, b["sha"], token) if token else None) \
             or login_from_email(b["email"])
         b["realname"] = user_realname(b["login"], token)
