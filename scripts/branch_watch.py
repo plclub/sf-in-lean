@@ -359,11 +359,16 @@ def fetch_prs(slug, token):
 # markdown rendering
 # --------------------------------------------------------------------------
 def author_cell(b):
-    """Author identity for a branch: the person's real name from their GitHub
-    profile when it has one (so `@berberman` reads as `Yipeng Liu`), otherwise
-    the last-commit author name, with the GitHub `@handle` appended when known."""
-    name = b.get("realname") or b["author"]
-    return f"{name} (@{b['login']})" if b.get("login") else name
+    """Author identity for a branch. When the person's GitHub profile gives a
+    real name that differs from the commit author name, show it with the commit
+    name (their alias) in parentheses — e.g. `Yipeng Liu (Potato Hatsue)`.
+    Otherwise fall back to the commit author name, with the GitHub `@handle`
+    appended when known."""
+    author = b["author"]
+    real = b.get("realname")
+    if real and real != author:
+        return f"{real} ({author})"
+    return f"{author} (@{b['login']})" if b.get("login") else author
 
 
 def status_text(pr):
