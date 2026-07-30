@@ -528,8 +528,8 @@ HIDE: Some coercions
 :::
 
 ```lean
-abbrev Assertion.ofProp (P : Prop) : Assertion := fun _ => P
-abbrev Aexp'.ofNat (n : Nat) : Aexp' := fun _ => n
+def Assertion.ofProp (P : Prop) : Assertion := fun _ => P
+def Aexp'.ofNat (n : Nat) : Aexp' := fun _ => n
 ```
 
 :::dev
@@ -537,7 +537,14 @@ HIDE: maybe this one should be explicit.
 :::
 
 ```lean
-abbrev Aexp'.ofAexp (a : Aexp) : Aexp' := fun st => a.eval st
+def Aexp'.ofAexp (a : Aexp) : Aexp' := fun st => a.eval st
+
+@[simp] theorem Assertion.ofProp_apply (P : Prop) (st : State) :
+    Assertion.ofProp P st = P := rfl
+@[simp] theorem Aexp'.ofNat_apply (n : Nat) (st : State) :
+    Aexp'.ofNat n st = n := rfl
+@[simp] theorem Aexp'.ofAexp_apply (a : Aexp) (st : State) :
+    Aexp'.ofAexp a st = a.eval st := rfl
 
 instance : Coe Prop Assertion := ⟨Assertion.ofProp⟩
 instance : Coe Nat Aexp' := ⟨Aexp'.ofNat⟩
@@ -563,8 +570,8 @@ the Rocq manual to find it:  this version of the `Arguments` command is
 documented under `simpl`.
 :::
 
-:::dev
-Claude: the Rocq source here issues `Arguments assert_of_Prop /.` (and
+:::dev "Claude"
+The Rocq source here issues `Arguments assert_of_Prop /.` (and
 likewise for the other two lifting functions) so that `simpl` always unfolds
 them, with this instructors note: "These `Arguments` commands tell Rocq that
 these functions should always be unfolded during simplification (by `simpl`)."
@@ -576,11 +583,13 @@ Ans: If [a : aexp] then in the assertion_scope [(X →ₜ a st; st)] and
 thanks to the coercion [Aexp_of_aexp].
 ```
 
-In this Lean version the closest analogue is declaring the three lifting
-functions `abbrev` (reducible): unification then sees through them
-everywhere, which is what the Rocq `Arguments` commands were after.  The
-`assertion_auto` tactic defined below additionally lists them in its simp
-set, for goals where `simp` must unfold them by name.
+In this Lean version the analogue is the `@[simp]`-tagged characterizing
+lemmas next to the three lifting functions: a global simp attribute means
+every `simp` unfolds applied occurrences, which is exactly what the Rocq
+`Arguments` commands arrange for `simpl` -- and it follows the STYLE.md
+doctrine of definitions plus characterizing lemmas rather than abbrevs.
+The `assertion_auto` tactic defined below also lists the definitions in its
+simp set, covering the unapplied occurrences.
 :::
 
 :::dev
@@ -608,8 +617,8 @@ without lifting.  Parentheses can be used as in {{ $(foo bar) }}.
 ```
 :::
 
-:::dev
-Claude: the Rocq source declares the custom entry together with an
+:::dev "Claude"
+The Rocq source declares the custom entry together with an
 `assertion_scope` bound to `Assertion` and `Aexp`; Lean has no notation
 scopes, so only the grammar declarations are needed.  Delaborators for this
 grammar are defined in the _Printing Assertions_ section below (after
@@ -760,8 +769,8 @@ We can "escape" a raw Lean function using a `~` prefix:
 For example: `{{ ~(fun st => ∀ x, st[x] = 0) }}`
 ::::
 
-:::dev
-Claude: the Rocq source writes this escape as a `$` prefix and additionally
+:::dev "Claude"
+The Rocq source writes this escape as a `$` prefix and additionally
 declares a fallback notation lifting arbitrary terms into `assertion_scope`,
 plus a `hoare_spec_scope` for the triple notation below.  In Lean the escape
 is the `~` production declared with the grammar above, the fallback is the
@@ -868,8 +877,8 @@ assertions:
 notation:26 P:27 " <<->> " Q:27 => AssertImplies P Q ∧ AssertImplies Q P
 ```
 
-:::dev
-Claude: the Rocq source puts these notations in a `hoare_spec_scope`, with a
+:::dev "Claude"
+The Rocq source puts these notations in a `hoare_spec_scope`, with a
 book comment explaining that "the `hoare_spec_scope` annotation tells Rocq
 that this notation is not global but is intended to be used in particular
 contexts."  Lean has no notation scopes, so the notations are simply global
@@ -2428,12 +2437,13 @@ unfold in this chapter are `ValidHoareTriple`, `AssertImplies`,
 We'll pass these to `simp` explicitly below (and shortly package the
 recipe up as a tactic of our own).
 
-:::dev
-Claude: the Rocq source instead registers these unfoldings once and for all
-in the `core` hint database (`Hint Unfold assert_implies assertion_sub
-t_update`, etc.) so that `auto` can use them; Lean has no analogous global
-hint database for `simp`-style unfolding, so the unfoldings travel with each
-call (and with the `assertion_auto` tactic below).
+:::dev "Claude"
+The Rocq source here registers `Hint Unfold assert_implies assertion_sub
+t_update : core` for `auto`.  That only widens `auto`'s search (unlike the
+`Arguments /.` commands, it does not affect `simpl`), so its Lean
+counterpart is the `assertion_auto` tactic's simp list below -- not global
+`@[simp]` lemmas as for the notation wrappers, whose folded names carry no
+meaning in goals the way `->>` and `Assertion.sub` do.
 :::
 
 ::::full
@@ -2987,6 +2997,9 @@ We'll write `bassertion b` for the assertion "the boolean expression
 def bassertion (b : Bexp) : Assertion :=
   fun st => (b.eval st = true)
 
+@[simp] theorem bassertion_apply (b : Bexp) (st : State) :
+    bassertion b st = (b.eval st = true) := rfl
+
 instance : Coe Bexp Assertion := ⟨bassertion⟩
 ```
 
@@ -3016,8 +3029,8 @@ Here `simp` is able to find that `b.eval st` is assumed to be
 `true`, and use the resulting contradiction to complete the proof.
 ::::
 
-:::dev
-Claude: the Rocq proof is the single tactic `congruence`, and the
+:::dev "Claude"
+The Rocq proof is the single tactic `congruence`, and the
 accompanying book paragraph relates it to the `find_rwd` tactic built in
 its `Auto` chapter; neither exists in the Lean development, so the
 paragraph above is rephrased around `simp`.  Rocq also registers
@@ -3156,8 +3169,8 @@ theorem if_example''' :
     (try apply hoare_asgn) <;> try assertion_auto'
 ```
 
-:::dev
-Claude: at this point the Rocq source defines a further refinement
+:::dev "Claude"
+At this point the Rocq source defines a further refinement
 `assertion_auto''` that also rewrites with `leb_le`, "for inequalities".
 In Lean the boolean comparisons produced by `Bexp.eval` are already
 reduced by `simp`'s standard `decide`/`==` lemmas, so `assertion_auto'`
@@ -3437,8 +3450,8 @@ you are using a definition or theorem (e.g., `hoare_skip`) from
 above this exercise without re-proving it for the new version of
 Imp with `if1`.
 
-:::dev
-Claude: the Rocq solution defines here a further `Ltac`
+:::dev "Claude"
+The Rocq solution defines here a further `Ltac`
 `assertion_auto'''` that also rewrites with `negb_true_iff` and
 `not_false_iff_true` before the `eqb_eq`/`leb_le` steps.  In Lean the
 corresponding boolean reasoning is already covered by `simp`'s standard
@@ -4353,8 +4366,8 @@ repeat {
 :::
 :::::
 
-:::dev
-Claude: the Rocq source keeps everything up to `End RepeatExercise` inside
+:::dev "Claude"
+The Rocq source keeps everything up to `End RepeatExercise` inside
 the `hoare_repeat` exercise region; here the exercise directive is closed
 after the litmus-test display and the remainder of the solution follows as
 ordinary (solution-marked) blocks, because Verso struggles to compile the
@@ -4858,8 +4871,8 @@ end Himp
 :::
 
 ::::::full
-:::dev
-Claude: the Rocq source wraps this entire section (up to
+:::dev "Claude"
+The Rocq source wraps this entire section (up to
 `End HoareAssertAssume`) in one `assert_vs_assume` exercise region; here the
 exercise directive covers only the first student tasks, and the rest follows
 as ordinary (solution-marked) blocks, because Verso struggles to compile the
