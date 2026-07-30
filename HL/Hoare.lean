@@ -570,7 +570,7 @@ the Rocq manual to find it:  this version of the `Arguments` command is
 documented under `simpl`.
 :::
 
-:::dev "Claude"
+:::dev "One An (meluge)"
 The Rocq source here issues `Arguments assert_of_Prop /.` (and
 likewise for the other two lifting functions) so that `simpl` always unfolds
 them, with this instructors note: "These `Arguments` commands tell Rocq that
@@ -583,13 +583,9 @@ Ans: If [a : aexp] then in the assertion_scope [(X →ₜ a st; st)] and
 thanks to the coercion [Aexp_of_aexp].
 ```
 
-In this Lean version the analogue is the `@[simp]`-tagged characterizing
-lemmas next to the three lifting functions: a global simp attribute means
-every `simp` unfolds applied occurrences, which is exactly what the Rocq
-`Arguments` commands arrange for `simpl` -- and it follows the STYLE.md
-doctrine of definitions plus characterizing lemmas rather than abbrevs.
-The `assertion_auto` tactic defined below also lists the definitions in its
-simp set, covering the unapplied occurrences.
+Claude suggested `@[simp]`-tagged characterizing
+lemmas next to the three lifting functions, a global simp attribute means
+every `simp` unfolds applied occurrences. Is there a better way?
 :::
 
 :::dev
@@ -768,18 +764,6 @@ We can "escape" a raw Lean function using a `~` prefix:
 
 For example: `{{ ~(fun st => ∀ x, st[x] = 0) }}`
 ::::
-
-:::dev "Claude"
-The Rocq source writes this escape as a `$` prefix and additionally
-declares a fallback notation lifting arbitrary terms into `assertion_scope`,
-plus a `hoare_spec_scope` for the triple notation below.  In Lean the escape
-is the `~` production declared with the grammar above, the fallback is the
-bare-identifier production, and no scope declarations are needed.  We cannot
-use `$` as the escape: inside syntax quotations (which every macro rule over
-the grammar uses) `$` is always consumed as the antiquotation marker, so the
-object-language escape must be a different sigil -- and `~` is the one the
-Imp chapter's grammars already established.
-:::
 
 :::dev
 NOTATION: SAZ 2024: It is important that this custom notation be
@@ -3029,13 +3013,9 @@ Here `simp` is able to find that `b.eval st` is assumed to be
 `true`, and use the resulting contradiction to complete the proof.
 ::::
 
-:::dev "Claude"
-The Rocq proof is the single tactic `congruence`, and the
-accompanying book paragraph relates it to the `find_rwd` tactic built in
-its `Auto` chapter; neither exists in the Lean development, so the
-paragraph above is rephrased around `simp`.  Rocq also registers
-`Hint Resolve bexp_eval_false : core` for use by `auto`/`eauto`; there is
-no analogue here -- the lemma is simply applied by name where needed.
+:::dev "One An (meluge)"
+The Rocq proof is the single tactic `congruence`. Using simp seems to work
+but should we build our own `congruence` tactic?
 :::
 
 :::slidebreak
@@ -3449,14 +3429,6 @@ top-level `Com` with commands from this namespace, it probably means
 you are using a definition or theorem (e.g., `hoare_skip`) from
 above this exercise without re-proving it for the new version of
 Imp with `if1`.
-
-:::dev "Claude"
-The Rocq solution defines here a further `Ltac`
-`assertion_auto'''` that also rewrites with `negb_true_iff` and
-`not_false_iff_true` before the `eqb_eq`/`leb_le` steps.  In Lean the
-corresponding boolean reasoning is already covered by `simp`'s standard
-lemmas, so `assertion_auto'` suffices and no new tactic is defined.
-:::
 
 :::dev "Benjamin Pierce (bcpierce00)" BeforeNextRelease (year := 2021)
 Not quite fair to give them a 2-point exercise
@@ -4872,11 +4844,9 @@ end Himp
 
 ::::::full
 :::dev "Claude"
-The Rocq source wraps this entire section (up to
-`End HoareAssertAssume`) in one `assert_vs_assume` exercise region; here the
-exercise directive covers only the first student tasks, and the rest follows
-as ordinary (solution-marked) blocks, because Verso struggles to compile the
-whole module as a single block.
+The Rocq exercise region extends to End HoareAssertAssume. The directive
+here covers only the initial student tasks because Verso cannot compile the
+whole module as one block.
 :::
 
 In this exercise, we will extend IMP with two commands, `assert`
@@ -5309,10 +5279,7 @@ end HoareAssertAssume
 
 ::::hide
 ```
-/- Claude: this hidden sketch depends on `ThrowImp` from the `exn_imp`
-exercise of the Imp chapter, which has not been ported to Lean yet (see the
-"NOT PORTED YET" note at the end of HL/Imp.lean).  It is therefore kept in
-its original Rocq form for a future pass. -/
+/- One An (meluge) : TODO translate this when `ThrowImp` becomes implemented in Imp. -/
 /- LATER: A possible exercise on hoare logic with exceptions... -/
 -- EX4A? (throw_hoare)
 /- In the [exn_imp] exercise in chapter Imp of _Logical
