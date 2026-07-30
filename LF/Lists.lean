@@ -299,21 +299,25 @@ Some notation for lists to make our lives easier:
 
 Don't worry too much about what this is doing:
 
-
-:::dev "Yipeng Liu (berberman)" PotentialImprovement
-Need unexpander?
-:::
-
-
 ```lean
 scoped infixr:65 " :: " => cons
-scoped macro (priority := high) "[ " elems:term,* "]" : term => do
+scoped macro (priority := high) "[" elems:term,* "]" : term => do
   elems.getElems.foldrM (``(cons $(⟨·⟩) $(⟨·⟩))) (← ``(nil))
+
+@[scoped app_unexpander nil]
+def unexpandNil : Lean.PrettyPrinter.Unexpander
+  | `($_) => `([])
+
+@[scoped app_unexpander cons]
+def unexpandCons : Lean.PrettyPrinter.Unexpander
+  | `($_ $x []) => `([$x])
+  | `($_ $x [$xs,*]) => `([$x, $xs,*])
+  | _ => throw ()
 ```
 
-We first define `::` as right-associative notation for {name}`cons`,
-and then define list notation, allowing us to write `[1, 2]` instead of `1 :: 2 :: []`. We also have an unexpander that prints `cons 1 (cons 2 [])` to `[1, 2]`.
-
+We first define `::` as right-associative _notation_ for {name}`cons`,
+and then define list notation _macro_ with _unexpander_,
+allowing us to write `[1, 2]` instead of `1 :: 2 :: []`.
 
 Now these all mean exactly the same thing:
 
@@ -1256,7 +1260,7 @@ case cons
 n : Nat
 l' : NatList
 ih : l'.reverse.length = l'.length
-⊢ (l'.reverse ++ (n :: nil)).length = (n :: l').length
+⊢ (l'.reverse ++ [n]).length = (n :: l').length
 ```
 
 ::::full
@@ -1281,8 +1285,8 @@ unsolved goals
 case cons
 n✝ n : Nat
 l' : NatList
-ih : (l'.reverse ++ (n✝ :: nil)).length = l'.reverse.length + 1
-⊢ (l'.reverse ++ (n :: nil) ++ (n✝ :: nil)).length = (l'.reverse ++ (n :: nil)).length + 1
+ih : (l'.reverse ++ [n✝]).length = l'.reverse.length + 1
+⊢ (l'.reverse ++ [n] ++ [n✝]).length = (l'.reverse ++ [n]).length + 1
 ```
 
 ::::full
