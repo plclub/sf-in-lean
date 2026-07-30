@@ -1676,62 +1676,10 @@ Of course, we'd probably prefer to work with this simpler triple:
 
 We will see how to do so in the next section.
 
-Several proofs below need a few more facts about
-total-map updates, complementing `TotalMap.update_eq` from the
-_Typeclasses_ chapter.  Make sure you understand their statements.
-
-:::dev
-Claude: these lemmas correspond to `t_update_neq`, `t_update_shadow`,
-`t_update_same`, and `t_update_permute` from the Rocq `Maps` chapter.  The
-Lean _Typeclasses_ chapter currently proves only `update_eq` (its dev notes
-say "exercises here..."), so we prove the rest here for now; they should
-migrate to that chapter's exercises eventually.
-:::
-
-```lean
-namespace TotalMap
-variable {α : Type} {β : Type} [BEq α] [LawfulBEq α] [Inhabited β]
-
-theorem update_neq (m : TotalMap α β) (a₁ a₂ : α) (h : a₁ ≠ a₂) (b : β) :
-    (a₁ →ₜ b ; m)[a₂] = m[a₂] := by
-  unfold update
-  rewrite [getElem_def, beq_eq_false_iff_ne.mpr h, cond_false]
-  rfl
-
-theorem update_shadow (m : TotalMap α β) (a : α) (b₁ b₂ : β) :
-    (a →ₜ b₂ ; a →ₜ b₁ ; m) = (a →ₜ b₂ ; m) := by
-  funext a'
-  by_cases h : a = a'
-  · subst h
-    exact (update_eq _ _ _).trans (update_eq _ _ _).symm
-  · exact ((update_neq _ _ _ h _).trans (update_neq _ _ _ h _)).trans
-      (update_neq _ _ _ h _).symm
-
-theorem update_same (m : TotalMap α β) (a : α) :
-    (a →ₜ m[a] ; m) = m := by
-  funext a'
-  by_cases h : a = a'
-  · subst h
-    exact update_eq _ _ _
-  · exact update_neq _ _ _ h _
-
-theorem update_permute (m : TotalMap α β) (a₁ a₂ : α) (b₁ b₂ : β)
-    (h : a₁ ≠ a₂) :
-    (a₁ →ₜ b₁ ; a₂ →ₜ b₂ ; m) = (a₂ →ₜ b₂ ; a₁ →ₜ b₁ ; m) := by
-  funext a'
-  by_cases h₁ : a₁ = a'
-  · subst h₁
-    exact (update_eq _ _ _).trans
-      ((update_neq _ _ _ (Ne.symm h) _).trans (update_eq _ _ _)).symm
-  · by_cases h₂ : a₂ = a'
-    · subst h₂
-      exact ((update_neq _ _ _ h₁ _).trans (update_eq _ _ _)).trans
-        (update_eq _ _ _).symm
-    · exact ((update_neq _ _ _ h₁ _).trans (update_neq _ _ _ h₂ _)).trans
-        ((update_neq _ _ _ h₂ _).trans (update_neq _ _ _ h₁ _)).symm
-
-end TotalMap
-```
+Several proofs below use the facts about total-map updates
+proved in the _Typeclasses_ chapter -- `TotalMap.update_eq`,
+`TotalMap.update_neq`, `TotalMap.update_shadow`, `TotalMap.update_same`,
+and `TotalMap.update_permute`.  Make sure you understand their statements.
 
 ::::::full
 Complete these Hoare triples by providing an appropriate
