@@ -614,10 +614,7 @@ without lifting.  Parentheses can be used as in {{ $(foo bar) }}.
 :::
 
 :::dev "Claude"
-The Rocq source declares the custom entry together with an
-`assertion_scope` bound to `Assertion` and `Aexp`; Lean has no notation
-scopes, so only the grammar declarations are needed.  Delaborators for this
-grammar are defined in the _Printing Assertions_ section below (after
+Delaborators for this grammar are defined in the _Printing Assertions_ section below (after
 assertion substitution, the last notation they need to recognize).  They
 cover the base chapter's forms -- triples, `->>`, substitution, and lifted
 `Prop`s; not covered are the extension modules' shadowed triples (each
@@ -3154,8 +3151,9 @@ At this point the Rocq source defines a further refinement
 `assertion_auto''` that also rewrites with `leb_le`, "for inequalities".
 In Lean the boolean comparisons produced by `Bexp.eval` are already
 reduced by `simp`'s standard `decide`/`==` lemmas, so `assertion_auto'`
-handles inequalities as it stands and no `assertion_auto''` is needed;
-later occurrences of `assertion_auto''` in the Rocq text are rendered as
+handles inequalities as it stands and no `assertion_auto''` is needed
+(nor the later `assertion_auto'''`, whose extra `negb`/`not_false` rewrites
+`simp` also covers); occurrences of both in the Rocq text are rendered as
 `assertion_auto'`.
 :::
 
@@ -4339,11 +4337,9 @@ repeat {
 :::::
 
 :::dev "Claude"
-The Rocq source keeps everything up to `End RepeatExercise` inside
-the `hoare_repeat` exercise region; here the exercise directive is closed
-after the litmus-test display and the remainder of the solution follows as
-ordinary (solution-marked) blocks, because Verso struggles to compile the
-whole module as a single exercise block.
+The Rocq exercise region extends to End RepeatExercise. The directive
+here covers only the part up to the litmus-test display because Verso
+cannot compile the whole module as one block.
 :::
 
 ::::::
@@ -5394,9 +5390,8 @@ End ThrowHoare.
 
 ::::hide
 ```
-/- Claude: exam scratch space, kept in its original Rocq form for a future
-pass (it would need its own `swap`-extended command namespace, following the
-same pattern as the Himp/havoc module above). -/
+/- One An (meluge) : TODO translate this exam scratch space (it needs its
+own `swap`-extended command namespace, following the Himp/havoc pattern). -/
 /- SAZ: Midterm 2 - 2022 scratch space. -/
 
 /- ## Atomic Swap -/
