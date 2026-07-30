@@ -3,11 +3,9 @@ import SFLMeta
 import LF.CustomTactics
 import HL.Imp
 
--- Claude: a few of this chapter's larger proof blocks (notably the
--- `hoare_while` proofs in the extension modules) exceed the default
--- elaboration budget inside the `#doc` pipeline, so we raise it for this
--- file.  (An earlier draft of Basics had to do the same for `maxRecDepth`;
--- see old/BasicsVerso_old_single_block.lean.)
+-- One An (meluge) : It looks like this file is too long
+-- (and also proofs are more costly?) for it to be elaborated
+-- without extending the maxHeartbeats.
 set_option maxHeartbeats 400000
 
 open Verso.Genre Manual
@@ -150,13 +148,6 @@ in the HTML, consider changing the sizes of some symbols,
 e.g. make ∀ bigger and make <<->> and ->> and ↦ smaller.
 Check that both full and terse look good.
 ```
-:::
-
-:::dev
-Claude: The Rocq source begins with a `Require` block (`Maps`, `Bool`, `Arith`,
-`EqNat`, `PeanoNat`, `Lia`, `Imp`).  In Lean the corresponding `import HL.Imp`
-and `import LF.CustomTactics` lines live at the top of this file, outside the
-document body; `lia` needs no import.
 :::
 
 ::::full
@@ -524,9 +515,8 @@ assertion notation.
 HIDE: Assertion-level arith expressions.  (BCP: Not sure this is
 an optimally clear name.)
 
-Claude: the Rocq development calls this type `Aexp` (capitalized), in
-contrast to the object-level `aexp`.  In Lean the object-level syntax type is
-already named `Aexp`, so we write `Aexp'` for the assertion-level version.
+One An (meluge): the Rocq development calls this type `Aexp`, in
+contrast to the object-level `aexp`.  In Lean the object-level syntax type is named `Aexp` in Imp, so we use `Aexp'` for the assertion level version.
 :::
 
 ```lean
@@ -555,13 +545,6 @@ instance (n : Nat) : OfNat Aexp' n := ⟨Aexp'.ofNat n⟩
 instance : Coe Aexp Aexp' := ⟨Aexp'.ofAexp⟩
 instance : Coe Ident Aexp' := ⟨fun x => Aexp'.ofAexp (.id x)⟩
 ```
-
-:::dev
-Claude: from the Rocq source, about its `Add Printing Coercion` command
-(which has no Lean analogue -- Lean hides coercion functions behind `↑` by
-default): "The following command *turns on* printing of coercions, which we
-don't want."
-:::
 
 ::::hide
 ```
@@ -595,13 +578,6 @@ thanks to the coercion [Aexp_of_aexp].
 
 In this Lean version there is no direct analogue; instead the
 `assertion_auto` tactic defined below unfolds these functions explicitly.
-:::
-
-:::dev
-Claude: from the Rocq source (about its notation-scope mechanism, which has
-no Lean analogue): "(APT) For some reason, True%assertion does not produce
-an assertion, whereas (True:Assertion) does. (Lyxia) This is because
-coercions ignore scope."
 :::
 
 :::dev
