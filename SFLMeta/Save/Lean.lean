@@ -6,7 +6,7 @@ import SFLMeta.Variant
 
 import SFLMeta.Save.SourceRewrite
 
-open Verso Doc Elab Genre Manual InlineLean
+open Verso Doc Elab Genre Manual InlineLean ArgParse
 open SubVerso.Highlighting
 open Lean Elab
 open Verso.Genre.Manual.InlineLean.Scopes (getScopes setScopes)
@@ -114,14 +114,32 @@ structure Config where
   persistent : Bool
   expectedError : Bool
   render : Bool
+  name : Option Name
   deriving ToJson, FromJson, Quote
 
-def Config.fromInlineLean (config : InlineLean.LeanBlockConfig) : Config :=
+namespace Config
+
+variable [Monad m] [MonadInfoTree m] [MonadLiftT CoreM m] [MonadEnv m] [MonadError m]
+
+def parse : ArgParse m Config :=
+  Config.mk <$>
+    .flag `keep true <*>
+    .flag `error false <*>
+    .flag `sgiw true <*>
+    .named `name .name true
+
+instance : FromArgs Config m := ⟨Config.parse⟩
+
+def toInlineLean (config : Config) : InlineLean.LeanBlockConfig :=
   {
-    persistent := config.keep,
-    expectedError := config.error,
-    render := config.show
+    «show» := config.render,
+    keep := config.persistent,
+    name := config.name,
+    error := config.expectedError,
+    fresh := false
   }
+
+end Config
 
 /--
   The saved-payload format for `Block.leanSaved`.
@@ -224,14 +242,14 @@ Wraps each ` ```lean … ``` ` code block. The pipeline is:
 
 open Save SourceRewrite LeanElab LeanSaved in
 @[code_block]
-def lean : CodeBlockExpanderOf Verso.Genre.Manual.InlineLean.LeanBlockConfig
+def lean : CodeBlockExpanderOf LeanSaved.Config
   | config, str => do
     SFLMeta.studentEditRef.set #[]
     SFLMeta.teacherEditRef.set #[]
     SFLMeta.terseEditRef.set #[]
     let preEnv ← getEnv
     let preScopes ← getScopes
-    let underlying ← Verso.Genre.Manual.InlineLean.lean config str
+    let underlying ← Verso.Genre.Manual.InlineLean.lean config.toInlineLean str
     let student ← studentEditRef.get
     let teacher ← teacherEditRef.get
     let terse ← terseEditRef.get
@@ -270,7 +288,7 @@ def lean : CodeBlockExpanderOf Verso.Genre.Manual.InlineLean.LeanBlockConfig
     let lspRange := range.map (← getFileMap).utf8RangeToLspRange
     let variants := {student, solution := teacher, terse : Variants String}
     let saved := {
-      variants, config := Config.fromInlineLean config : Data
+      variants, config : Data
     }
     -- The upstream `underlying` block highlights the original source, which
     -- still shows the `#guard_msgs` wrapper.  When stripping changed the teacher
