@@ -11,9 +11,8 @@ picture of who is touching what:
     = those overlaps would actually conflict, computed with a real in-memory
     merge, not a filename guess).  The Branch cell links straight to the PR
     when one exists (else the branch tree).  The Status cell reports the open
-    PR (or "No PR") and its readiness: "Review required" (a code owner on
-    `sfl-mergers` still has to approve), "(N unresolved)" review comments,
-    "Ready" (approved, nothing unresolved), a "🚧 auto-merge held" flag when
+    PR (or "No PR") and its readiness: "N comments" (open review threads),
+    "Ready to merge" (approved, nothing unresolved), a "🚧 auto-merge held" flag when
     auto-merge is enabled but the PR is *not* sitting in the merge queue
     because something is holding it up, and a "⚠️ conflicts with `main`" flag
     when the branch no longer merges cleanly;
@@ -332,31 +331,26 @@ def status_text(pr):
     """Review / merge readiness of an open PR, as a short string (may be empty
     for a draft with nothing else to report).
 
-    * "Review required" — a code owner on `sfl-mergers` still has to approve
-      (GitHub's `reviewDecision`, which the "Require review from Code Owners"
-      rule ties to that team).
-    * "(N unresolved)" — N review threads are still open.
-    * "Ready" — approved with nothing unresolved.
+    * "N comments" — N review threads are still open.
+    * "Ready to merge" — approved with nothing unresolved.
     * "🚧 auto-merge held" — auto-merge is enabled but the PR is not in the
       merge queue, so something (failing check, missing approval, conflict) is
       holding it up; "⏳ queued" when it *is* sitting in the queue.
     * "Fixes #N" — issues the PR closes (via a fixes/closes/resolves keyword),
       linked; several are comma-separated.
 
-    Segments are joined with " · "; the readiness word and its "(N unresolved)"
-    parenthetical stay together as one segment."""
+    Segments are joined with " · "; the readiness word and its "N comments"
+    count stay together as one segment."""
     unresolved = pr["unresolved"]
     readiness = []
     if not pr["draft"]:
         dec = pr["review_decision"]
-        if dec == "REVIEW_REQUIRED":
-            readiness.append("Review required")
-        elif dec == "CHANGES_REQUESTED":
+        if dec == "CHANGES_REQUESTED":
             readiness.append("Changes requested")
-        else:  # APPROVED, or None (no required review configured — rare here)
-            readiness.append("Ready" if unresolved == 0 else "Approved")
+        elif dec != "REVIEW_REQUIRED":  # APPROVED, or None (no required review configured — rare here)
+            readiness.append("Ready to merge" if unresolved == 0 else "Approved")
     if unresolved:
-        readiness.append(f"({unresolved} unresolved)")
+        readiness.append(f"{unresolved} comments")
     segments = []
     if readiness:
         segments.append(" ".join(readiness))
@@ -460,35 +454,36 @@ def render(branches, conf, prs, have_token, slug):
     # ---- per-branch table (most recently active first) ----
     out.append("### Active branches")
     out.append("")
-    out.append("| Branch | Status | Author | Activity | Files | Overlaps |")
+    out.append("| Branch | Status | Author | Activity | Files | Shares files with |")
     out.append("|---|---|---|---|--:|---|")
     for r, b in sorted(active.items(), key=lambda x: (-x[1]["ts"], x[1]["short"])):
         overlaps = [o for o in active if o != r and active[o]["files"] & b["files"]]
         # A stacked branch — one that fully contains the other's commits — is the
         # same line of work, not a concurrent co-edit (and can never conflict, so
         # never a ⚠️).  Pull those out of the overlap list and label them
-        # explicitly, relative to this row's branch: `o (includes)` when r
-        # contains o, `o (included in)` when r itself sits inside o.
+        # explicitly, relative to this row's branch: `includes o` when r
+        # contains o, `included in o` when r itself sits inside o.
         contains_o = sorted(o for o in overlaps if contains(r, o))
         contained_by = sorted(o for o in overlaps if contains(o, r))
         rest = [o for o in overlaps if o not in contains_o and o not in contained_by]
         # Among the genuinely concurrent overlaps that remain, group a superseded
         # one under the branch that already contains it, so one line of work
         # carried across several branches reads as a single overlap with a single
-        # ⚠️, not several.  `A ⊃ B` = A contains B's commits; the ⚠️ (real merge
-        # conflict) is shown once, on the container.
+        # ⚠️, not several.  `A (which is included in B)` renders the container A
+        # first, then the branches B whose commits it already contains; the ⚠️
+        # (real merge conflict) is shown once, on the container.
         heads = sorted(independent_branches(rest))
         pieces = []
         for h in heads:
             subs = sorted(o for o in rest if o != h and contains(h, o))
             piece = ("⚠️ " if h in conf[r] else "") + branch_link(active[h]["short"], slug)
             if subs:
-                piece += " ⊃ " + ", ".join(
-                    branch_link(active[o]["short"], slug) for o in subs)
+                piece += " (which is included in " + ", ".join(
+                    branch_link(active[o]["short"], slug) for o in subs) + ")"
             pieces.append(piece)
-        pieces += [branch_link(active[o]["short"], slug) + " _(includes)_"
+        pieces += ["includes " + branch_link(active[o]["short"], slug)
                    for o in contains_o]
-        pieces += [branch_link(active[o]["short"], slug) + " _(included in)_"
+        pieces += ["included in " + branch_link(active[o]["short"], slug)
                    for o in contained_by]
         ov = ", ".join(pieces) or "—"
         pr = prs.get(b["short"])
