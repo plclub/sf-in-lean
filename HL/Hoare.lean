@@ -528,8 +528,8 @@ HIDE: Some coercions
 :::
 
 ```lean
-def Assertion.ofProp (P : Prop) : Assertion := fun _ => P
-def Aexp'.ofNat (n : Nat) : Aexp' := fun _ => n
+abbrev Assertion.ofProp (P : Prop) : Assertion := fun _ => P
+abbrev Aexp'.ofNat (n : Nat) : Aexp' := fun _ => n
 ```
 
 :::dev
@@ -537,7 +537,7 @@ HIDE: maybe this one should be explicit.
 :::
 
 ```lean
-def Aexp'.ofAexp (a : Aexp) : Aexp' := fun st => a.eval st
+abbrev Aexp'.ofAexp (a : Aexp) : Aexp' := fun st => a.eval st
 
 instance : Coe Prop Assertion := ⟨Assertion.ofProp⟩
 instance : Coe Nat Aexp' := ⟨Aexp'.ofNat⟩
@@ -576,8 +576,11 @@ Ans: If [a : aexp] then in the assertion_scope [(X →ₜ a st; st)] and
 thanks to the coercion [Aexp_of_aexp].
 ```
 
-In this Lean version there is no direct analogue; instead the
-`assertion_auto` tactic defined below unfolds these functions explicitly.
+In this Lean version the closest analogue is declaring the three lifting
+functions `abbrev` (reducible): unification then sees through them
+everywhere, which is what the Rocq `Arguments` commands were after.  The
+`assertion_auto` tactic defined below additionally lists them in its simp
+set, for goals where `simp` must unfold them by name.
 :::
 
 :::dev
@@ -608,11 +611,15 @@ without lifting.  Parentheses can be used as in {{ $(foo bar) }}.
 :::dev
 Claude: the Rocq source declares the custom entry together with an
 `assertion_scope` bound to `Assertion` and `Aexp`; Lean has no notation
-scopes, so only the grammar declarations are needed.  No delaborators are
-defined for this grammar yet (unlike the `imp { … }` notation), so proof
-goals display assertions as the underlying `fun st => …` terms -- the same
-thing that happens in the Rocq development as soon as `simpl` unfolds the
-notation.  A future pass could add delaborators.
+scopes, so only the grammar declarations are needed.  Delaborators for this
+grammar are defined in the _Printing Assertions_ section below (after
+assertion substitution, the last notation they need to recognize).  They
+cover the base chapter's forms -- triples, `->>`, substitution, and lifted
+`Prop`s; not covered are the extension modules' shadowed triples (each
+module defines its own `Com` and `ValidHoareTriple`) and the `bassertion`
+coercion, which fall back to raw display.  An assertion applied to a state
+(after `intro st`) also prints raw -- the same thing that happens in the
+Rocq development as soon as `simpl` unfolds the notation.
 :::
 
 ```lean
@@ -758,7 +765,11 @@ Claude: the Rocq source writes this escape as a `$` prefix and additionally
 declares a fallback notation lifting arbitrary terms into `assertion_scope`,
 plus a `hoare_spec_scope` for the triple notation below.  In Lean the escape
 is the `~` production declared with the grammar above, the fallback is the
-bare-identifier production, and no scope declarations are needed.
+bare-identifier production, and no scope declarations are needed.  We cannot
+use `$` as the escape: inside syntax quotations (which every macro rule over
+the grammar uses) `$` is always consumed as the antiquotation marker, so the
+object-language escape must be a different sigil -- and `~` is the one the
+Imp chapter's grammars already established.
 :::
 
 :::dev
@@ -785,12 +796,6 @@ The upshot is that means that this notation and the Hoare triple notation
 (which overlaps with [{{ _ }}]) must be changed in tandem and use identical
 level specifications.
 ```
-:::
-
-:::dev
-Claude: the `{{ e }}` hook itself was declared together with the grammar
-above (Rocq declares it separately, at the end, as
-`Notation "{{ e }}" := e (at level 2, e custom assn at level 99)`).
 :::
 
 ::::hide
@@ -1629,6 +1634,272 @@ example :
 end ExampleAssertionSub
 ```
 
+## Printing Assertions
+%%%
+tag := "assn-delaborators"
+%%%
+
+::::full
+As in the {ref "imp-delaborators"}[Imp chapter], the assertion notations
+above are _input_ only: Lean reads `{{ X ≤ 5 }}` but still prints the
+underlying function.  The delaborators below close the loop for the common
+cases: Hoare triples, `->>` implications, and assertion substitutions are
+printed back in their concrete notation, and an assertion Lean cannot
+rebuild falls back to the `~` escape (or, ultimately, to the raw term).  As
+before, there is no need to understand the details, and everything can be
+switched off with `set_option pp.notation false`.
+::::
+
+::::details (summary := "Notation encoding: printing assertions back")
+```lean
+namespace Assn.Delab
+open Lean PrettyPrinter Delaborator SubExpr Parenthesizer Imp.Delab
+
+/-- Re-inserts parentheses in `assn_aexp` output according to the grammar's
+precedences. -/
+@[category_parenthesizer assn_aexp]
+def assn_aexp.parenthesizer : CategoryParenthesizer | prec => do
+  maybeParenthesize `assn_aexp true wrapParens prec <|
+    parenthesizeCategoryCore `assn_aexp prec
+where
+  wrapParens (stx : Syntax) : Syntax := Unhygienic.run do
+    let pstx ← `(assn_aexp| ($(⟨stx⟩)))
+    return pstx.raw.setInfo (SourceInfo.fromRef stx)
+
+/-- Re-inserts parentheses in `assn` output according to the grammar's
+precedences. -/
+@[category_parenthesizer assn]
+def assn.parenthesizer : CategoryParenthesizer | prec => do
+  maybeParenthesize `assn true wrapParens prec <|
+    parenthesizeCategoryCore `assn prec
+where
+  wrapParens (stx : Syntax) : Syntax := Unhygienic.run do
+    let pstx ← `(assn| ($(⟨stx⟩)))
+    return pstx.raw.setInfo (SourceInfo.fromRef stx)
+
+/-- Print the focused term as a bare identifier if it delaborates to one,
+and with the `~` escape otherwise. -/
+def identOrEscapeAexp : DelabM (TSyntax `assn_aexp) := do
+  match ← delab with
+  | `($x:ident) => `(assn_aexp| $x:ident)
+  | t => `(assn_aexp| ~$t)
+
+/-- Print the focused term as a bare identifier if it delaborates to one,
+and with the `~` escape otherwise. -/
+def identOrEscapeAssn : DelabM (TSyntax `assn) := do
+  match ← delab with
+  | `($x:ident) => `(assn| $x:ident)
+  | t => `(assn| ~$t)
+
+/-- Rebuild `assn_aexp` syntax from an `Aexp` (the argument of the
+`Aexp'.ofAexp` coercion). -/
+partial def delabAexpAsAssn : DelabM (TSyntax `assn_aexp) := do
+  let stx ←
+    match_expr ← getExpr with
+    | Aexp.num _ =>
+      match (← withAppArg getExpr).nat? with
+      | some v => pure ⟨Syntax.mkNumLit (toString v) |>.raw⟩
+      | none => identOrEscapeAexp
+    | Aexp.id _ =>
+      match ← withAppArg getExpr with
+      | .const nm _ => `(assn_aexp| $(mkIdent nm):ident)
+      | _ => identOrEscapeAexp
+    | Aexp.plus _ _ =>
+      let s1 ← withAppFn <| withAppArg delabAexpAsAssn
+      let s2 ← withAppArg delabAexpAsAssn
+      `(assn_aexp| $s1 + $s2)
+    | Aexp.minus _ _ =>
+      let s1 ← withAppFn <| withAppArg delabAexpAsAssn
+      let s2 ← withAppArg delabAexpAsAssn
+      `(assn_aexp| $s1 - $s2)
+    | Aexp.mult _ _ =>
+      let s1 ← withAppFn <| withAppArg delabAexpAsAssn
+      let s2 ← withAppArg delabAexpAsAssn
+      `(assn_aexp| $s1 * $s2)
+    | _ => identOrEscapeAexp
+  annAsTerm stx
+
+mutual
+
+/-- Rebuild `assn_aexp` syntax from an assertion-level numeric value -- the
+body form the `{{ … }}` macros produce, applied to the state variable. -/
+partial def delabAssnAexpVal : DelabM (TSyntax `assn_aexp) := do
+  let e ← getExpr
+  let stx ←
+    match_expr e with
+    | HAdd.hAdd _ _ _ _ _ _ =>
+      let s1 ← withNaryArg 4 delabAssnAexpVal
+      let s2 ← withNaryArg 5 delabAssnAexpVal
+      `(assn_aexp| $s1 + $s2)
+    | HSub.hSub _ _ _ _ _ _ =>
+      let s1 ← withNaryArg 4 delabAssnAexpVal
+      let s2 ← withNaryArg 5 delabAssnAexpVal
+      `(assn_aexp| $s1 - $s2)
+    | HMul.hMul _ _ _ _ _ _ =>
+      let s1 ← withNaryArg 4 delabAssnAexpVal
+      let s2 ← withNaryArg 5 delabAssnAexpVal
+      `(assn_aexp| $s1 * $s2)
+    | _ =>
+      let .app f v := e | failure
+      guard v.isFVar
+      match_expr f with
+      | Aexp'.ofNat _ =>
+        match (← withAppFn <| withAppArg getExpr).nat? with
+        | some val => pure ⟨Syntax.mkNumLit (toString val) |>.raw⟩
+        | none => withAppFn <| withAppArg identOrEscapeAexp
+      | Aexp'.ofAexp _ => withAppFn <| withAppArg delabAexpAsAssn
+      | _ =>
+        if f.isLambda then
+          withAppFn do withBindingBody (← getExpr).bindingName! delabAssnAexpVal
+        else
+          withAppFn identOrEscapeAexp
+  annAsTerm stx
+
+/-- Rebuild `assn` syntax from an assertion body -- the proposition the
+`{{ … }}` macros produce, applied to the state variable. -/
+partial def delabAssnVal : DelabM (TSyntax `assn) := do
+  let e ← getExpr
+  let stx ←
+    match_expr e with
+    | Eq _ _ _ =>
+      let s1 ← withNaryArg 1 delabAssnAexpVal
+      let s2 ← withNaryArg 2 delabAssnAexpVal
+      `(assn| $s1:assn_aexp = $s2:assn_aexp)
+    | Ne _ _ _ =>
+      let s1 ← withNaryArg 1 delabAssnAexpVal
+      let s2 ← withNaryArg 2 delabAssnAexpVal
+      `(assn| $s1:assn_aexp ≠ $s2:assn_aexp)
+    | LE.le _ _ _ _ =>
+      let s1 ← withNaryArg 2 delabAssnAexpVal
+      let s2 ← withNaryArg 3 delabAssnAexpVal
+      `(assn| $s1:assn_aexp ≤ $s2:assn_aexp)
+    | LT.lt _ _ _ _ =>
+      let s1 ← withNaryArg 2 delabAssnAexpVal
+      let s2 ← withNaryArg 3 delabAssnAexpVal
+      `(assn| $s1:assn_aexp < $s2:assn_aexp)
+    | GE.ge _ _ _ _ =>
+      let s1 ← withNaryArg 2 delabAssnAexpVal
+      let s2 ← withNaryArg 3 delabAssnAexpVal
+      `(assn| $s1:assn_aexp ≥ $s2:assn_aexp)
+    | GT.gt _ _ _ _ =>
+      let s1 ← withNaryArg 2 delabAssnAexpVal
+      let s2 ← withNaryArg 3 delabAssnAexpVal
+      `(assn| $s1:assn_aexp > $s2:assn_aexp)
+    | And _ _ =>
+      let s1 ← withNaryArg 0 delabAssnVal
+      let s2 ← withNaryArg 1 delabAssnVal
+      `(assn| $s1 ∧ $s2)
+    | Or _ _ =>
+      let s1 ← withNaryArg 0 delabAssnVal
+      let s2 ← withNaryArg 1 delabAssnVal
+      `(assn| $s1 ∨ $s2)
+    | Iff _ _ =>
+      let s1 ← withNaryArg 0 delabAssnVal
+      let s2 ← withNaryArg 1 delabAssnVal
+      `(assn| $s1 ↔ $s2)
+    | Not _ =>
+      `(assn| ¬$(← withAppArg delabAssnVal))
+    | _ =>
+      if e.isArrow then
+        let s1 ← withBindingDomain delabAssnVal
+        let s2 ← withBindingBody e.bindingName! delabAssnVal
+        `(assn| $s1 → $s2)
+      else
+        let .app f v := e | failure
+        guard v.isFVar
+        match_expr f with
+        | Assertion.ofProp _ =>
+          match ← withAppFn <| withAppArg getExpr with
+          | .const nm _ => `(assn| $(mkIdent nm):ident)
+          | _ => withAppFn <| withAppArg identOrEscapeAssn
+        | Assertion.sub _ _ _ => withAppFn delabSubInner
+        | _ =>
+          if f.isLambda then
+            withAppFn do withBindingBody (← getExpr).bindingName! delabAssnVal
+          else
+            withAppFn identOrEscapeAssn
+  annAsTerm stx
+
+/-- Rebuild the substitution notation from an `Assertion.sub` application. -/
+partial def delabSubInner : DelabM (TSyntax `assn) := do
+  let .const nm _ ← withNaryArg 0 getExpr | failure
+  let a ← withNaryArg 1 delabAexpInner
+  let P ← withNaryArg 2 delabAssnFun
+  `(assn| $P [$(mkIdent nm):ident ↦ $a:imp_aexp])
+
+/-- Rebuild `assn` syntax from an `Assertion`-valued term. -/
+partial def delabAssnFun : DelabM (TSyntax `assn) := do
+  let e ← getExpr
+  let stx ←
+    match_expr e with
+    | Assertion.ofProp _ =>
+      match ← withAppArg getExpr with
+      | .const nm _ => `(assn| $(mkIdent nm):ident)
+      | _ => withAppArg identOrEscapeAssn
+    | Assertion.sub _ _ _ => delabSubInner
+    | _ =>
+      if e.isLambda then
+        withBindingBody e.bindingName! delabAssnVal
+      else
+        identOrEscapeAssn
+  annAsTerm stx
+
+end
+
+/-- Rebuild `assn` syntax from an `Assertion`, falling back to the escaped
+raw term. -/
+def delabAssnTotal : DelabM (TSyntax `assn) :=
+  delabAssnFun <|> identOrEscapeAssn
+```
+::::
+
+::::details (summary := "Notation encoding: registering the delaborators")
+```lean
+@[delab app.ValidHoareTriple]
+def delabTriple : Delab := whenPPOption getPPNotation do
+  guard <| (← getExpr).isAppOfArity ``ValidHoareTriple 3
+  let P ← withNaryArg 0 delabAssnTotal
+  let c ← withNaryArg 1 delabComInner
+  let Q ← withNaryArg 2 delabAssnTotal
+  `({{ $P }} $c:imp_com {{ $Q }})
+
+@[delab app.AssertImplies]
+def delabAssertImplies : Delab := whenPPOption getPPNotation do
+  guard <| (← getExpr).isAppOfArity ``AssertImplies 2
+  let P ← withNaryArg 0 delabAssnTotal
+  let Q ← withNaryArg 1 delabAssnTotal
+  `({{ $P }} ->> {{ $Q }})
+
+@[delab app.Assertion.sub]
+def delabSub : Delab := whenPPOption getPPNotation do
+  guard <| (← getExpr).isAppOfArity ``Assertion.sub 3
+  `({{ $(← delabSubInner) }})
+
+@[delab app.Assertion.ofProp]
+def delabOfProp : Delab := whenPPOption getPPNotation do
+  guard <| (← getExpr).isAppOfArity ``Assertion.ofProp 1
+  `({{ $(← delabAssnFun) }})
+
+end Assn.Delab
+```
+::::
+
+::::hide
+```
+/-- info: {{X ≤ 5}} X := X + 1; {{X ≤ 7}} : Prop -/
+#guard_msgs in
+#check {{ X ≤ 5 }} X := X + 1; {{ X ≤ 7 }}
+
+/-- info: {{X < 4}} ->> {{X < 5}} : Prop -/
+#guard_msgs in
+#check ({{ X < 4 }} ->> {{ X < 5 }})
+
+/-- info: {{(X ≤ 10) [X ↦ 2 * X]}} : Assertion -/
+#guard_msgs in
+#check {{ (X ≤ 10) [X ↦ 2 * X] }}
+```
+::::
+
 :::slidebreak
 :::
 
@@ -2260,16 +2531,6 @@ theorem hoare_consequence_post' (P Q Q' : Assertion) (c : Com)
   exact himp st' (hhoare st st' heval hpre)
 ```
 
-:::dev
-Claude: the Rocq versions of this passage demonstrate `auto` (failing, as
-`hoare_consequence_pre''`), then `eapply`/`eassumption` (as `pre'''`), then
-one-line `eauto` proofs (`pre''''` and `post'`).  Lean's `apply` and
-`assumption` handle metavariables natively, so the `eapply` story is folded
-into `apply`; the `auto`-makes-no-progress demonstration has no Lean
-analogue and is dropped; and the `eauto` one-liners are rendered as `exact`
-one-liners.
-:::
-
 :::slidebreak
 :::
 
@@ -2728,14 +2989,6 @@ def bassertion (b : Bexp) : Assertion :=
 
 instance : Coe Bexp Assertion := ⟨bassertion⟩
 ```
-
-:::dev
-HIDE: This allows `simpl` to unfold definitions.
-
-Claude: the Rocq source follows the coercion with `Arguments bassertion /.`
-so that `simpl` unfolds it; in Lean we instead add `bassertion` to the
-unfoldings performed by `assertion_auto'` below.
-:::
 
 A useful fact about `bassertion`:
 
@@ -4982,13 +5235,6 @@ theorem hoare_while (P : Assertion) (b : Bexp) (c : Com)
     | assume s0 b0 hb => intro heq; simp at heq
   exact key _ st r he rfl hP
 ```
-
-:::dev
-Claude: the Rocq proof of this `hoare_while` uses `remember` plus
-`induction`, dismissing the non-`while` cases with `inversion` on the
-remembered equation; the Lean version uses the same generalized-`key`
-pattern as the main chapter's `hoare_while`.
-:::
 
 ::::::
 
