@@ -44,16 +44,16 @@ def getCurrVariant : IO Variant := currVariantRef.get
 
 structure Variants (α : Type) where
   student : α
-  solution : α
+  solutions : α
   terse : α
 deriving Repr, BEq, DecidableEq, Inhabited, ToJson, FromJson
 
 instance [Quote α] : Quote (Variants α) where
   quote vs :=
     let student := quote vs.student
-    let solution := quote vs.solution
+    let solutions := quote vs.solutions
     let terse := quote vs.terse
-    Lean.Unhygienic.run `(Variants.mk $student $solution $terse)
+    Lean.Unhygienic.run `(Variants.mk $student $solutions $terse)
 
 namespace Variants
 
@@ -62,12 +62,12 @@ variable {α β γ : Type}
 def get (vs : Variants α) (v : Variant) : α :=
   match v with
   | .student => vs.student
-  | .solutions => vs.solution
+  | .solutions => vs.solutions
   | .terse => vs.terse
 
 def map {β : Type} (f : α → β) (vs : Variants α) : Variants β := {
   student := f vs.student
-  solution := f vs.solution
+  solutions := f vs.solutions
   terse := f vs.terse
 }
 
@@ -77,7 +77,7 @@ instance : GetElem (Variants α) Variant α (fun _ _ => True) where
 instance [HAppend α β γ] : HAppend (Variants α) (Variants β) (Variants γ) where
   hAppend vs1 vs2 := {
     student := vs1.student ++ vs2.student
-    solution := vs1.solution ++ vs2.solution
+    solutions := vs1.solutions ++ vs2.solutions
     terse := vs1.terse ++ vs2.terse
   }
 

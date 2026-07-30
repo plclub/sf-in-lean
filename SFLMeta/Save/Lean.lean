@@ -335,7 +335,7 @@ def lean : CodeBlockExpanderOf LeanSaved.Config
       let teacherChild ← mkChild teacherDisplay teacherHls
       let studentChild ← mkChild student studentHls
       let terseChild ← mkChild terse terseHls
-      let variants := {student, solution := teacher, terse : Variants String}
+      let variants := {student, solutions := teacher, terse : Variants String}
       let saved := { variants, config : Data }
       ``(Verso.Doc.Block.other
           (SFLMeta.Block.leanSaved $(quote saved))
