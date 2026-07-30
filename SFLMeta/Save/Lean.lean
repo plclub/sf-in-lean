@@ -145,7 +145,7 @@ def parse : ArgParse m Config :=
   Config.mk <$>
     .flag `keep true <*>
     .flag `error false <*>
-    .flag `sgiw true <*>
+    .flag `show true <*>
     .named `name .name true
 
 instance : FromArgs Config m := ⟨Config.parse⟩
