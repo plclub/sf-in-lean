@@ -469,7 +469,7 @@ def render(branches, conf, prs, have_token, slug):
         # Among the genuinely concurrent overlaps that remain, group a superseded
         # one under the branch that already contains it, so one line of work
         # carried across several branches reads as a single overlap with a single
-        # ⚠️, not several.  `A (which is included in B)` names the superseded
+        # ⚠️, not several.  `A (included in B)` names the superseded
         # branches A first, then the container B whose commits already include
         # them; the ⚠️ (real merge conflict) is shown once, on the container.
         heads = sorted(independent_branches(rest))
@@ -481,7 +481,7 @@ def render(branches, conf, prs, have_token, slug):
             if subs:
                 piece = prefix + ", ".join(
                     branch_link(active[o]["short"], slug) for o in subs) \
-                    + " (which is included in " + h_link + ")"
+                    + " (included in " + h_link + ")"
             else:
                 piece = prefix + h_link
             pieces.append(piece)
