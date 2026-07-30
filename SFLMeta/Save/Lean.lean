@@ -31,6 +31,26 @@ collide when the student variant redefines them). -/
 
 namespace LeanElab
 
+/--
+  Go through the lines of `hls` and drop the line that is not appear in lines of `src`.
+
+  This is for reusing highlighting results from elbaoration for solution (teacher) variant: removing `-- SOLUTION`/`-- END SOLUTION` and `#guard_msgs` should not
+  cause elaboration again.
+-/
+defmethod Highlighted.filterBySource (hls : Highlighted) (src : String) : Highlighted := Id.run do
+  let expected := (src.splitOn "\n").toArray
+  let mut nextExpected := 0
+  let mut out : Highlighted := .empty
+  for line in hls.lines do
+    if nextExpected < expected.size then
+      let rendered := line.toString
+      let rendered := if rendered.endsWith "\n" then rendered.dropEnd 1 |>.toString else rendered
+      if rendered == expected[nextExpected]! then
+        out := out ++ line
+        nextExpected := nextExpected + 1
+  return if nextExpected == expected.size then out else .unparsed src
+
+
 def elabAndHighlightStudent
     (initEnv : Environment) (initScopes : List Command.Scope) (src : String) :
     DocElabM Highlighted := do
@@ -244,86 +264,83 @@ open Save SourceRewrite LeanElab LeanSaved in
 @[code_block]
 def lean : CodeBlockExpanderOf LeanSaved.Config
   | config, str => do
-    SFLMeta.studentEditRef.set #[]
-    SFLMeta.teacherEditRef.set #[]
-    SFLMeta.terseEditRef.set #[]
+    studentEditRef.set #[]
+    teacherEditRef.set #[]
+    terseEditRef.set #[]
     let preEnv ← getEnv
     let preScopes ← getScopes
-    let underlying ← Verso.Genre.Manual.InlineLean.lean config.toInlineLean str
-    let student ← studentEditRef.get
-    let teacher ← teacherEditRef.get
-    let terse ← terseEditRef.get
-    let src := str.getString
+    -- Run InlineLean.elabCommands so that we can reuse some highlightings
+    -- after edits for different variants
+    elabCommands config.toInlineLean str fun _ originalHls str => do
+      let studentEdits ← studentEditRef.get
+      let teacherEdits ← teacherEditRef.get
+      let terseEdits ← terseEditRef.get
+      let src := str.getString
 
-    -- `strLitInputContext` parses starting at `str.getPos?`, so the byte
-    -- indices recorded by the elaborator are absolute file offsets. The
-    -- string-literal contents begin one byte past the opening quote.
-    let relativize (edits : Array SolutionEditRaw) : Array Replacement :=
-      edits.flatMap (·.edits) |>.map fun r =>
-        { r with
-          range.start.byteIdx := r.range.start.byteIdx - str.raw.getPos!.byteIdx
-          range.stop.byteIdx := r.range.stop.byteIdx - str.raw.getPos!.byteIdx
-          }
-    let teacherRanges := relativize teacher
-    let studentRanges := relativize student
-    let terseRanges := relativize terse
+      -- `strLitInputContext` parses starting at `str.getPos?`, so the byte
+      -- indices recorded by the elaborator are absolute file offsets. The
+      -- string-literal contents begin one byte past the opening quote.
+      let relativize (edits : Array SolutionEditRaw) : Array Replacement :=
+        edits.flatMap (·.edits) |>.map fun r =>
+          { r with
+            range.start.byteIdx := r.range.start.byteIdx - str.raw.getPos!.byteIdx
+            range.stop.byteIdx := r.range.stop.byteIdx - str.raw.getPos!.byteIdx
+            }
+      let teacherEdited := applyEdits src <| relativize teacherEdits
+      let studentEdited := applyEdits src <| relativize studentEdits
+      let terseEdited := applyEdits src <| relativize terseEdits
 
-    let teacherEdited := applyEdits src teacherRanges
-    let teacherNoMarkers := stripFillInMarkers teacherEdited
-    let teacher := stripGuardMsgs teacherNoMarkers
+      let teacher := stripGuardMsgs ∘ stripFillInMarkers <| teacherEdited
+      let student := stripGuardMsgs ∘ applyFillInForStudent <| studentEdited
+      let terse := stripGuardMsgs <| applyFillInForStudent <| terseEdited
 
-    let studentEdited := applyEdits src studentRanges
-    let studentNoMarkers := applyFillInForStudent studentEdited
-    let student := stripGuardMsgs studentNoMarkers
+      -- Note: this is different from `teacher`.
+      -- `teacher` is for extracted projects which includes `teacherEdits`,
+      -- while `teacherDisplay` is the string that will be shown in HTML.
+      let teacherDisplay := stripGuardMsgs ∘ stripFillInMarkers <| src
 
-    let terseEdited := applyEdits src terseRanges
-    let terseNoMarkers := applyFillInForStudent terseEdited
-    let terse := stripGuardMsgs terseNoMarkers
+      -- Always reuse orignal elaboration for teacher
+      let teacherHls :=
+        if teacherDisplay == src then originalHls
+        else originalHls.filterBySource teacherDisplay
 
-    let teacherReHighlight := teacherNoMarkers != teacherEdited
-      || teacher != teacherNoMarkers
+      -- Reuse original elaboration for student if the edits didn't change the source
+      let studentHls ←
+        if student == src then pure originalHls
+        else elabAndHighlightStudent preEnv preScopes student
 
-    let studentHls ← elabAndHighlightStudent preEnv preScopes student
-    let range := Syntax.getRange? str
-    let lspRange := range.map (← getFileMap).utf8RangeToLspRange
-    let variants := {student, solution := teacher, terse : Variants String}
-    let saved := {
-      variants, config : Data
-    }
-    -- The upstream `underlying` block highlights the original source, which
-    -- still shows the `#guard_msgs` wrapper.  When stripping changed the teacher
-    -- form, re-highlight the stripped form for the teacher-side HTML instead.
-    let teacherChild ← do
-      if teacherReHighlight then
-        let teacherHls ← elabAndHighlightStudent preEnv preScopes teacher
+      -- Reuse student/original elaboration if they still apply
+      let terseHls ←
+        if terse == student
+          then pure studentHls
+        else if terse == src
+          then pure originalHls
+        else
+          elabAndHighlightStudent preEnv preScopes terse
+
+      let range := Syntax.getRange? str
+      let lspRange := range.map (← getFileMap).utf8RangeToLspRange
+      let fileName ← getFileName
+
+      let mkChild (source : String) (hls : Highlighted) : DocElabM Term := do
+        -- Serialize highlighted tree with `hlToExport`/`hlFromExport!` to reduce the term size
+        let encoded := hlToExport hls
         `(Verso.Doc.Block.other
             (Verso.Genre.Manual.InlineLean.Block.lean
-              $(quote teacherHls)
-              (some $(quote (← getFileName)))
+              (hlFromExport! $(quote encoded))
+              (some $(quote fileName))
               $(quote lspRange))
-            #[Verso.Doc.Block.code $(quote teacher)])
-      else
-        pure underlying
-    -- The terse variant usually coincides with the student one (no
-    -- `workinclass!` in the block); reuse the student highlighting then.
-    let terseHls ←
-      if terse == student then pure studentHls
-      else elabAndHighlightStudent preEnv preScopes terse
-    ``(Verso.Doc.Block.other
-        (SFLMeta.Block.leanSaved $(quote saved))
-        #[$teacherChild,
-          Verso.Doc.Block.other
-            (Verso.Genre.Manual.InlineLean.Block.lean
-              $(quote studentHls)
-              (some $(quote (← getFileName)))
-              $(quote lspRange))
-            #[Verso.Doc.Block.code $(quote student)],
-          Verso.Doc.Block.other
-            (Verso.Genre.Manual.InlineLean.Block.lean
-              $(quote terseHls)
-              (some $(quote (← getFileName)))
-              $(quote lspRange))
-            #[Verso.Doc.Block.code $(quote terse)]])
+            #[Verso.Doc.Block.code $(quote source)])
+
+      let teacherChild ← mkChild teacherDisplay teacherHls
+      let studentChild ← mkChild student studentHls
+      let terseChild ← mkChild terse terseHls
+      let variants := {student, solution := teacher, terse : Variants String}
+      let saved := { variants, config : Data }
+      ``(Verso.Doc.Block.other
+          (SFLMeta.Block.leanSaved $(quote saved))
+          #[$teacherChild, $studentChild, $terseChild])
+
 
 open Verso.Genre.Manual.InlineLean in
 
