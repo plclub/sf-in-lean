@@ -17,10 +17,14 @@ chosen page width, and for terse mode it will be worse.
 :::
 
 ::::full
-We begin our study of type systems for programming languages by looking at a language
-we call *Slang* (for _simple language_). Despite its simplicity, Slang
-lets us introduce key concepts for specifying the _syntax_ and _semantics_ of
-programming languages and show how those concepts are realized in Lean.
+We begin by looking at a language we call *Slang* (for _simple
+language_). Despite its simplicity, Slang lets us introduce key concepts for
+specifying the _syntax_ and _semantics_ of programming languages and show how
+those concepts are realized in Lean.
+
+(This chapter is shared, word for word, between two volumes: *Type Systems* (TS) and
+*Hoare Logic* (HL). If you have already worked through it in the other volume, you can
+safely skip ahead to the next chapter of this one.)
 ::::
 
 # Arithmetic and Boolean Expressions
@@ -89,19 +93,18 @@ trees -- the process that, for example, would translate the string
 For comparison, here's a conventional BNF (Backus-Naur Form) grammar
 defining the same abstract syntax:
 
-```
-  a := nat
-      | a + a
-      | a − a
-      | a * a
-
-  b := bool
-      | a = a
-      | a ≠ a
-      | a ≤ a
-      | a > a
-      | ¬ b
-      | b ∧ b
+```bnf
+a ::= nat
+    | a "+" a
+    | a "−" a
+    | a "*" a ;
+b ::= bool
+    | a "=" a
+    | a "≠" a
+    | a "≤" a
+    | a ">" a
+    | "¬" b
+    | b "∧" b ;
 ```
 
 Compared to the Lean version above...

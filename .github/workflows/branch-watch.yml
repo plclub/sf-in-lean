@@ -1,4 +1,4 @@
-# Branch & file activity dashboard.
+# "Current Activity" — the branch & file activity dashboard.
 #
 # WHAT THIS DOES
 #   Runs scripts/branch_watch.py, which walks every remote branch, works out
