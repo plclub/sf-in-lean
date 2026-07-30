@@ -323,7 +323,9 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
       if let some saved := LeanSaved.decode? which.data then
         match saved.extractionMode with
         | .code =>
-          return buf.appendVariants file <| saved.variants.map (·.trimAscii.toString)
+          return buf.appendVariants file <| saved.variants.map fun src =>
+            -- `src` doesn't have ending newline
+           src.trimAscii.toString ++ "\n\n"
         | .experiment =>
           return buf.appendVariants file <| saved.variants.map (wrapIndented "sf_experiment")
         | .expectFailure =>
