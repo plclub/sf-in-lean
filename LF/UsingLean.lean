@@ -505,7 +505,9 @@ def Nat.even (n : Nat) :=
   | 1     => false
   | n + 2 => even n
 
-def Nat.odd n := !(even n)
+def Nat.odd (n : Nat) := !(even n)
+
+theorem Nat.odd_def (n : Nat) : n.odd = !(n.even) := rfl
 
 def Nat.minustwo (n : Nat) : Nat :=
   match n with
