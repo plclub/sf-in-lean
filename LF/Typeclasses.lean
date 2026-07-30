@@ -469,9 +469,74 @@ theorem update_eq (m : TotalMap α β) (a : α) (b : β) : (a →ₜ b ; m)[a] =
   rfl
 ```
 
-:::dev
-exercises here...
-:::
+::::exercise (rating := 2) (name := "TotalMap.update_neq")
+On the other hand, if we update a map `m` at a key `a₁` and then look up a _different_ key `a₂` in the resulting map, we get the same result that `m` would have given:
+
+```lean
+theorem update_neq (m : TotalMap α β) (a₁ a₂ : α) (h : a₁ ≠ a₂) (b : β) :
+    (a₁ →ₜ b ; m)[a₂] = m[a₂] := by
+  solution!(
+  unfold update
+  rewrite [getElem_def, beq_eq_false_iff_ne.mpr h, cond_false]
+  rfl)
+```
+::::
+
+::::exercise (rating := 2) (name := "TotalMap.update_shadow")
+If we update a map `m` at a key `a` with a value `b₁` and then update again with the same key `a` and another value `b₂`, the resulting map behaves the same (gives the same result when applied to any key) as the simpler map obtained by performing just the second update on `m`.
+
+The `by_cases` tactic from the Logic chapter lets us split on whether two keys are equal, after which {name}`update_eq` and {name}`update_neq` cover the two cases:
+
+```lean
+theorem update_shadow (m : TotalMap α β) (a : α) (b₁ b₂ : β) :
+    (a →ₜ b₂ ; a →ₜ b₁ ; m) = (a →ₜ b₂ ; m) := by
+  solution!(
+  funext a'
+  by_cases h : a = a'
+  · subst h
+    exact (update_eq _ _ _).trans (update_eq _ _ _).symm
+  · exact ((update_neq _ _ _ h _).trans (update_neq _ _ _ h _)).trans
+      (update_neq _ _ _ h _).symm)
+```
+::::
+
+
+::::exercise (rating := 2) (name := "TotalMap.update_same")
+Prove the following theorem, which states that if we update a map to assign key `a` the same value as it already has in `m`, then the result is equal to `m`:
+
+```lean
+theorem update_same (m : TotalMap α β) (a : α) :
+    (a →ₜ m[a] ; m) = m := by
+  solution!(
+  funext a'
+  by_cases h : a = a'
+  · subst h
+    exact update_eq _ _ _
+  · exact update_neq _ _ _ h _)
+```
+::::
+
+::::exercise (rating := 3) (name := "TotalMap.update_permute")
+Similarly, prove one final property of the {name}`update` function: if we update a map `m` at two distinct keys, it doesn't matter in which order we do the updates.
+
+```lean
+theorem update_permute (m : TotalMap α β) (a₁ a₂ : α) (b₁ b₂ : β)
+    (h : a₁ ≠ a₂) :
+    (a₁ →ₜ b₁ ; a₂ →ₜ b₂ ; m) = (a₂ →ₜ b₂ ; a₁ →ₜ b₁ ; m) := by
+  solution!(
+  funext a'
+  by_cases h₁ : a₁ = a'
+  · subst h₁
+    exact (update_eq _ _ _).trans
+      ((update_neq _ _ _ (Ne.symm h) _).trans (update_eq _ _ _)).symm
+  · by_cases h₂ : a₂ = a'
+    · subst h₂
+      exact ((update_neq _ _ _ h₁ _).trans (update_eq _ _ _)).trans
+        (update_eq _ _ _).symm
+    · exact ((update_neq _ _ _ h₁ _).trans (update_neq _ _ _ h₂ _)).trans
+        ((update_neq _ _ _ h₂ _).trans (update_neq _ _ _ h₁ _)).symm)
+```
+::::
 
 ## Notation for Concrete Maps
 
