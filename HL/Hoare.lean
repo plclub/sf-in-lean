@@ -281,7 +281,7 @@ MRC'20: this is the former terse intro.
 # Assertions
 
 An _assertion_ is a logical claim about the state of a program's
-memory -- formally, a property of `State`s.
+memory -- formally, a predicate of `State`s.
 
 ```lean
 abbrev Assertion := State → Prop
@@ -507,57 +507,6 @@ assertion notation.
 ::::
 
 :::dev
-HIDE: Assertion-level arith expressions.  (BCP: Not sure this is
-an optimally clear name.)
-
-One An (meluge): the Rocq development calls this type `Aexp`, in
-contrast to the object-level `aexp`.  In Lean the object-level syntax type is named `Aexp` in Imp, so we use `Aexp'` for the assertion level version.
-:::
-
-```lean
-abbrev Aexp' : Type := State → Nat
-```
-
-:::dev
-HIDE: Some coercions
-:::
-
-```lean
-def Assertion.ofProp (P : Prop) : Assertion := fun _ => P
-def Aexp'.ofNat (n : Nat) : Aexp' := fun _ => n
-```
-
-:::dev
-HIDE: maybe this one should be explicit.
-:::
-
-```lean
-def Aexp'.ofAexp (a : Aexp) : Aexp' := fun st => a.eval st
-
-@[simp] theorem Assertion.ofProp_apply (P : Prop) (st : State) :
-    Assertion.ofProp P st = P := rfl
-@[simp] theorem Aexp'.ofNat_apply (n : Nat) (st : State) :
-    Aexp'.ofNat n st = n := rfl
-@[simp] theorem Aexp'.ofAexp_apply (a : Aexp) (st : State) :
-    Aexp'.ofAexp a st = a.eval st := rfl
-
-instance : Coe Prop Assertion := ⟨Assertion.ofProp⟩
-instance : Coe Nat Aexp' := ⟨Aexp'.ofNat⟩
-instance (n : Nat) : OfNat Aexp' n := ⟨Aexp'.ofNat n⟩
-instance : Coe Aexp Aexp' := ⟨Aexp'.ofAexp⟩
-instance : Coe Ident Aexp' := ⟨fun x => Aexp'.ofAexp (.id x)⟩
-```
-
-::::hide
-```
-#check (True : Assertion)
-#check (3 : Aexp')
-#check (X)
-#check (X : Aexp')
-```
-::::
-
-:::dev
 HIDE: Make things easily unfoldable.
 
 HIDE: MRC'20: Recording this here because it took a merry chase through
@@ -620,63 +569,101 @@ Rocq development as soon as `simpl` unfolds the notation.
 :::
 
 ```lean
-/-- Assertion-level arithmetic expressions -/
-declare_syntax_cat assn_aexp
-/-- Numeric literal -/
-syntax:max num : assn_aexp
-/-- A variable: an Imp variable, or a Lean identifier of type `Nat`,
-`Aexp`, or `Aexp'` -/
-syntax:max ident : assn_aexp
-/-- Lifted application of a Lean function to assertion-level arguments -/
-syntax:max "#" term:max (assn_aexp:max)+ : assn_aexp
-/-- Addition -/
-syntax:65 assn_aexp:65 " + " assn_aexp:66 : assn_aexp
-/-- Subtraction -/
-syntax:65 assn_aexp:65 " - " assn_aexp:66 : assn_aexp
-/-- Multiplication -/
-syntax:70 assn_aexp:70 " * " assn_aexp:71 : assn_aexp
-/-- Parentheses for grouping -/
-syntax "(" assn_aexp ")" : assn_aexp
-/-- Escape to Lean -/
-syntax:max "~" term:max : assn_aexp
+-- xhalo32: I have put everything we need here
+class MyGetElem (coll : Type u) (idx : Type v) (elem : outParam (Type w)) where
+  getElem (xs : coll) (i : idx) : elem
 
-/-- The grammar for Hoare logic assertions -/
-declare_syntax_cat assn
-/-- Equality of arithmetic expressions -/
-syntax:50 assn_aexp:51 " = " assn_aexp:51 : assn
-/-- Disequality of arithmetic expressions -/
-syntax:50 assn_aexp:51 " ≠ " assn_aexp:51 : assn
-/-- Less than or equal -/
-syntax:50 assn_aexp:51 " ≤ " assn_aexp:51 : assn
-/-- Less than -/
-syntax:50 assn_aexp:51 " < " assn_aexp:51 : assn
-/-- Greater than or equal -/
-syntax:50 assn_aexp:51 " ≥ " assn_aexp:51 : assn
-/-- Greater than -/
-syntax:50 assn_aexp:51 " > " assn_aexp:51 : assn
-/-- Conjunction -/
-syntax:35 assn:36 " ∧ " assn:35 : assn
-/-- Disjunction -/
-syntax:30 assn:31 " ∨ " assn:30 : assn
-/-- Negation -/
-syntax:40 "¬" assn:41 : assn
-/-- Implication -/
-syntax:25 assn:26 " → " assn:25 : assn
-/-- Iff -/
-syntax:20 assn:21 " ↔ " assn:21 : assn
-/-- A bare identifier: an `Assertion`, a `Prop` (such as `True` and
-`False`), or -- later in the chapter -- a `Bexp` -/
-syntax:max ident : assn
-/-- Parentheses for grouping -/
-syntax "(" assn ")" : assn
-/-- Escape to Lean -/
-syntax:max "~" term:max : assn
+namespace MyGetElem
+scoped macro_rules | `($xs[$i]) => `(getElem $xs $i)
 
-/-- Embed an assertion into a Lean term -/
-syntax:max "{{" assn "}}" : term
-/-- (Internal) embed an assertion-level arithmetic expression into a Lean
-term -/
-syntax:max "assnAexp " "{" assn_aexp "}" : term
+@[app_unexpander MyGetElem.getElem]
+def unexpandGetElem : Lean.PrettyPrinter.Unexpander
+  | `($_ $xs $i) => `($xs[$i])
+  | _ => throw ()
+end MyGetElem
+
+open scoped MyGetElem
+
+namespace TotalMap
+instance : MyGetElem (TotalMap α β) α β where
+  getElem m a := m a
+end TotalMap
+
+namespace Assertion
+
+scoped syntax:max (name := assn) "assn(" ident "; " term ")" : term
+scoped syntax "{{" term "}}" : term
+
+section
+open Lean Elab Term
+
+@[term_elab assn]
+def assnElab : TermElab := fun stx type => do
+  match stx with
+  | `(assn($st; $x:term)) =>
+    let x ← elabTerm x none
+    let ty ← Meta.inferType x
+    dbg_trace ty
+    -- if (← Meta.isDefEq ty (mkConst ``_root_.Ident)) then -- this incorrectly assigns metavariables
+    if (ty.constName == ``_root_.Ident) then
+      return mkApp6 (mkConst ``_root_.MyGetElem.getElem [0, 0, 0])
+        (mkApp2 (mkConst ``TotalMap [0, 0]) (mkConst ``String) (mkConst ``Nat))
+        (mkConst ``String)
+        (mkConst ``Nat)
+        (mkApp2 (mkConst ``_root_.TotalMap.instMyGetElem [0, 0]) (mkConst ``String)  (mkConst ``Nat))
+        (← elabTerm st none) x
+    else
+      return x
+  | _ => throwUnsupportedSyntax
+
+macro_rules
+  | `({{ $t }}) => `((fun st : _root_.State => assn(st; $t:term) : Assertion))
+
+macro_rules
+  | `(assn($st; ($P))) => ``((assn($st; $P:term)))
+  | `(assn($st; fun $xs* => $b)) => ``(fun $xs* => assn($st; $b:term))
+  | `(assn($st; if $c then $t else $e)) => ``(if $c then assn($st; $t:term) else assn($st; $e:term))
+  | `(assn($st; ($P : $t))) => ``((assn($st; $P:term) : $t))
+  | `(assn($st; $l = $r)) => ``(assn($st; $l:term) = assn($st; $r:term))
+  | `(assn($st; $l + $r)) => ``(assn($st; $l) + assn($st; $r))
+  | `(assn($st; $l - $r)) => ``(assn($st; $l) - assn($st; $r))
+  | `(assn($st; $l * $r)) => ``(assn($st; $l) * assn($st; $r))
+  | `(assn($st; $l ≤ $r)) => ``(assn($st; $l) ≤ assn($st; $r))
+  | `(assn($st; $l < $r)) => ``(assn($st; $l) < assn($st; $r))
+  | `(assn($st; $l ≥ $r)) => ``(assn($st; $l) ≥ assn($st; $r))
+  | `(assn($st; $l > $r)) => ``(assn($st; $l) > assn($st; $r))
+  | `(assn($st; $l ∧ $r)) => ``(assn($st; $l) ∧ assn($st; $r))
+  | `(assn($st; $l ∨ $r)) => ``(assn($st; $l) ∨ assn($st; $r))
+  | `(assn($st; $l → $r)) => ``(assn($st; $l) → assn($st; $r))
+  | `(assn($st; $l ↔ $r)) => ``(assn($st; $l) ↔ assn($st; $r))
+  | `(assn($st; ¬ $t)) => ``(¬ assn($st; $t:term))
+  | `(assn($st; $f $a1)) => ``($f assn($st; $a1:term))
+  | `(assn($st; $f $a1 $a2)) => ``($f assn($st; $a1:term) assn($st; $a2:term))
+  -- | `(assn($st; $f $t*)) => ``($f ) -- TODO how to get arbitrary applications
+end
+
+#check {{ 1 = 2 }}
+#check {{ X = X }}
+#check {{ X = 2 * X }} -- X is the constant "X" defined in Imp
+#check_failure {{ X }} -- fails as expected
+#check {{ True }}
+
+def assertion1 : Assertion := {{ X = 3 }}
+def assertion2 : Assertion := {{ True }}
+def assertion3 : Assertion := {{ False }}
+def assertion4 : Assertion := {{ True ∨ False }}
+def assertion5 : Assertion := {{ X ≤ Y }}
+def assertion6 : Assertion := {{ X = 3 ∨ X ≤ Y }}
+def assertion7 : Assertion := {{ Z = (max X Y) }}
+/-- info: fun st => st[Z] * st[Z] ≤ st[X] ∧ ¬st[Z].succ * st[Z].succ ≤ st[X] : State → Prop -/
+#guard_msgs in
+#check {{ Z * Z ≤ X ∧ ¬ (((Nat.succ Z) * (Nat.succ Z)) ≤ X) }}
+def assertion9 : Assertion := {{ Nat.add X Y > max Y X }}
+
+-- For Hoare triples, we could take inspiration from https://github.com/leanprover/lean4/blob/a97629d96ed5a65b32ec91161d3e30e398864c8b/src/Std/Do/Triple/Basic.lean#L41
+
+end Assertion
+
 ```
 
 ::::terse
@@ -700,46 +687,6 @@ NOTATION: This notation should come early so that later
 notations for arithmetic expressions take precedence for printing.
 Otherwise `{{ X + X }}` would print as `{{ #add X Y }}`.
 :::
-
-```lean
-open Lean in
-macro_rules
-  | `(assnAexp { $n:num }) => `(Aexp'.ofNat $n)
-  | `(assnAexp { $x:ident }) => `(($x : Aexp'))
-  | `(assnAexp { ~$e }) => `(($e : Aexp'))
-  | `(assnAexp { # $f $args* }) => do
-      let st := mkIdent `st
-      let mut r : Term := f
-      for a in args do
-        r ← `($r ((assnAexp { $a }) $st))
-      `(fun $st => $r)
-  | `(assnAexp { $a + $b }) => `(fun st => (assnAexp { $a }) st + (assnAexp { $b }) st)
-  | `(assnAexp { $a - $b }) => `(fun st => (assnAexp { $a }) st - (assnAexp { $b }) st)
-  | `(assnAexp { $a * $b }) => `(fun st => (assnAexp { $a }) st * (assnAexp { $b }) st)
-  | `(assnAexp { ($a) }) => `(assnAexp { $a })
-
-macro_rules
-  | `({{ $a:assn_aexp = $b:assn_aexp }}) =>
-      `(fun st => (assnAexp { $a }) st = (assnAexp { $b }) st)
-  | `({{ $a:assn_aexp ≠ $b:assn_aexp }}) =>
-      `(fun st => (assnAexp { $a }) st ≠ (assnAexp { $b }) st)
-  | `({{ $a:assn_aexp ≤ $b:assn_aexp }}) =>
-      `(fun st => (assnAexp { $a }) st ≤ (assnAexp { $b }) st)
-  | `({{ $a:assn_aexp < $b:assn_aexp }}) =>
-      `(fun st => (assnAexp { $a }) st < (assnAexp { $b }) st)
-  | `({{ $a:assn_aexp ≥ $b:assn_aexp }}) =>
-      `(fun st => (assnAexp { $a }) st ≥ (assnAexp { $b }) st)
-  | `({{ $a:assn_aexp > $b:assn_aexp }}) =>
-      `(fun st => (assnAexp { $a }) st > (assnAexp { $b }) st)
-  | `({{ $p ∧ $q }}) => `(fun st => ({{ $p }}) st ∧ ({{ $q }}) st)
-  | `({{ $p ∨ $q }}) => `(fun st => ({{ $p }}) st ∨ ({{ $q }}) st)
-  | `({{ ¬ $p }}) => `(fun st => ¬ ({{ $p }}) st)
-  | `({{ $p → $q }}) => `(fun st => ({{ $p }}) st → ({{ $q }}) st)
-  | `({{ $p ↔ $q }}) => `(fun st => ({{ $p }}) st ↔ ({{ $q }}) st)
-  | `({{ $x:ident }}) => `(($x : Assertion))
-  | `({{ ($p:assn) }}) => `({{ $p }})
-  | `({{ ~$e }}) => `(($e : Assertion))
-```
 
 ::::full
 Occasionally we need to "escape" a raw Lean function to express
@@ -815,16 +762,18 @@ new notation.
 
 ```lean
 namespace ExamplePrettyAssertions
+open scoped Assertion
+
 def assertion1 : Assertion := {{ X = 3 }}
 def assertion2 : Assertion := {{ True }}
 def assertion3 : Assertion := {{ False }}
 def assertion4 : Assertion := {{ True ∨ False }}
 def assertion5 : Assertion := {{ X ≤ Y }}
 def assertion6 : Assertion := {{ X = 3 ∨ X ≤ Y }}
-def assertion7 : Assertion := {{ Z = (#max X Y) }}
+def assertion7 : Assertion := {{ Z = (max X Y) }}
 def assertion8 : Assertion := {{ Z * Z ≤ X
-                                 ∧ ¬ (((#Nat.succ Z) * (#Nat.succ Z)) ≤ X) }}
-def assertion9 : Assertion := {{ #Nat.add X Y > #max Y X }}
+                                 ∧ ¬ (((Nat.succ Z) * (Nat.succ Z)) ≤ X) }}
+def assertion9 : Assertion := {{ Nat.add X Y > max Y X }}
 end ExamplePrettyAssertions
 ```
 
