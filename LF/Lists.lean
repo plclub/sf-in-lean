@@ -312,7 +312,7 @@ scoped macro (priority := high) "[ " elems:term,* "]" : term => do
 ```
 
 We first define `::` as right-associative notation for {name}`cons`,
-and then define list notation, allowing us to write `[1, 2]` instead of `1 :: 2 :: []`. We also have an unpander that prints `cons 1 (cons 2 [])` to `[1, 2]`.
+and then define list notation, allowing us to write `[1, 2]` instead of `1 :: 2 :: []`. We also have an unexpander that prints `cons 1 (cons 2 [])` to `[1, 2]`.
 
 
 Now these all mean exactly the same thing:
