@@ -6,17 +6,19 @@ branch_watch.py  —  Report which files are being changed on which branches.
 Walks every remote branch, finds the commits not yet in `main`, and builds a
 picture of who is touching what:
 
-  * a per-branch table (most recently active first) — a Status column, author,
-    activity, files touched, and which *other* active branches it overlaps (⚠️
-    = those overlaps would actually conflict, computed with a real in-memory
-    merge, not a filename guess).  The Branch cell links straight to the PR
-    when one exists (else the branch tree).  The Status cell reports the open
-    PR (or "No PR") and its readiness: "N comments" (open review threads),
-    "Ready to merge" (approved, nothing unresolved), a "🚧 auto-merge held" flag when
-    auto-merge is enabled but the PR is *not* sitting in the merge queue
-    because something is holding it up, and a "⚠️ conflicts with `main`" flag
-    when the branch no longer merges cleanly;
-  * a "hot files" view — files edited on more than one branch, conflicting
+  * a per-PR table (most recently active first) — the branch (linked to its
+    PR) with its author beneath in small type, a Status column, any `#Note: …`
+    lines reviewers left on the PR, activity, which *other* PR branches it
+    shares files with (⚠️ = those overlaps would actually conflict, computed
+    with a real in-memory merge, not a filename guess), and a compact Changes
+    count.  The Status cell reports the open PR's readiness: "N comments" (open
+    review threads), "Ready to merge" (approved, nothing unresolved), a
+    "🚧 auto-merge held" flag when auto-merge is enabled but the PR is *not*
+    sitting in the merge queue because something is holding it up, and a
+    "⚠️ conflicts with `main`" flag when the branch no longer merges cleanly.
+    Only branches with an open PR appear, and only they are weighed when marking
+    overlaps and conflicts;
+  * a "hot files" view — files edited on more than one PR branch, conflicting
     files first;
   * an always-on list of merged / inactive branches (0 commits ahead of main).
 
@@ -33,14 +35,16 @@ USAGE
 
 PR data is read via the GitHub GraphQL API (review decision, unresolved
 threads, auto-merge, merge-queue membership); issue updates use the REST API.
-Both go over stdlib urllib — no `gh` or `jq` needed. Without a token the PR
-column is left blank and the git-only analysis still runs.
+Both go over stdlib urllib — no `gh` or `jq` needed. Because the report now
+shows PR branches only, a run without a token (which cannot see PRs) produces
+an empty report.
 """
 
 import argparse
 import itertools
 import json
 import os
+import re
 import subprocess
 import sys
 import urllib.error
@@ -253,6 +257,30 @@ def commit_login(slug, sha, token):
     return None
 
 
+_REALNAME_CACHE = {}
+
+
+def user_realname(login, token):
+    """The display name on a GitHub user's profile (e.g. `Yipeng Liu` for
+    `@berberman`), from the users API — or None if the profile sets no name or
+    the lookup is unavailable.  This is how a handle that hides a real identity
+    ("Potato Hatsue (@berberman)") gets the actual person's name attached
+    automatically.  Cached per login, so someone with several branches is
+    fetched once.  Needs a token; without one the users endpoint is rate-limited
+    to near-uselessness, so we skip it."""
+    if not token or not login:
+        return None
+    if login not in _REALNAME_CACHE:
+        data = api("GET", f"/users/{login}", token)
+        _REALNAME_CACHE[login] = data.get("name") if isinstance(data, dict) else None
+    return _REALNAME_CACHE[login]
+
+
+# A reviewer flags a note for this table by writing a line `#Note: …` in a PR
+# comment; the text after the marker (to end of line) is surfaced in the table.
+_NOTE_RE = re.compile(r"#Note:\s*(.*)", re.IGNORECASE)
+
+
 # GraphQL is used (rather than the REST `pulls` list) because it returns the
 # review decision, unresolved-thread count, auto-merge flag, and merge-queue
 # membership in one request per page — the REST API exposes none of these
@@ -272,6 +300,7 @@ query($owner:String!, $name:String!, $cursor:String) {
         mergeQueueEntry { state }
         reviewThreads(first:100) { nodes { isResolved } }
         closingIssuesReferences(first:10) { nodes { number url } }
+        comments(first:100) { nodes { body } }
       }
     }
   }
@@ -284,8 +313,9 @@ def fetch_prs(slug, token):
 
     Each value carries `num`, `url`, `draft`, `review_decision`
     (`REVIEW_REQUIRED`/`APPROVED`/`CHANGES_REQUESTED`/None), the count of
-    `unresolved` review threads, and the `auto_merge` / `in_queue` booleans that
-    together reveal an auto-merge that is stuck outside the merge queue."""
+    `unresolved` review threads, the `auto_merge` / `in_queue` booleans that
+    together reveal an auto-merge that is stuck outside the merge queue, and the
+    list of `#Note: …` `notes` reviewers left in the PR conversation."""
     owner, _, name = slug.partition("/")
     prs = {}
     cursor = None
@@ -302,6 +332,11 @@ def fetch_prs(slug, token):
             # (fixes/closes/resolves #N); GitHub resolves these for us.
             closes = [{"num": i["number"], "url": i["url"]}
                       for i in pr["closingIssuesReferences"]["nodes"]]
+            # `#Note: …` lines a reviewer left in the PR conversation.
+            notes = []
+            for c in pr["comments"]["nodes"]:
+                notes += _NOTE_RE.findall(c["body"] or "")
+            notes = [n.strip() for n in notes if n.strip()]
             prs[pr["headRefName"]] = {
                 "num": pr["number"],
                 "url": pr["url"],
@@ -311,6 +346,7 @@ def fetch_prs(slug, token):
                 "auto_merge": pr["autoMergeRequest"] is not None,
                 "in_queue": pr["mergeQueueEntry"] is not None,
                 "closes": closes,
+                "notes": notes,
             }
         if conn["pageInfo"]["hasNextPage"]:
             cursor = conn["pageInfo"]["endCursor"]
@@ -323,15 +359,18 @@ def fetch_prs(slug, token):
 # markdown rendering
 # --------------------------------------------------------------------------
 def author_cell(b):
-    """Last-commit author name, with its GitHub `@handle` appended when known."""
-    return f"{b['author']} (@{b['login']})" if b.get("login") else b["author"]
+    """Author identity for a branch: the person's real name from their GitHub
+    profile when it has one (so `@berberman` reads as `Yipeng Liu`), otherwise
+    the last-commit author name, with the GitHub `@handle` appended when known."""
+    name = b.get("realname") or b["author"]
+    return f"{name} (@{b['login']})" if b.get("login") else name
 
 
 def status_text(pr):
     """Review / merge readiness of an open PR, as a short string (may be empty
     for a draft with nothing else to report).
 
-    * "N comments" — N review threads are still open.
+    * "(N comments)" — N review threads are still open.
     * "Ready to merge" — approved with nothing unresolved.
     * "🚧 auto-merge held" — auto-merge is enabled but the PR is not in the
       merge queue, so something (failing check, missing approval, conflict) is
@@ -339,8 +378,8 @@ def status_text(pr):
     * "Fixes #N" — issues the PR closes (via a fixes/closes/resolves keyword),
       linked; several are comma-separated.
 
-    Segments are joined with " · "; the readiness word and its "N comments"
-    count stay together as one segment."""
+    Segments are joined with " · "; the readiness word and its "(N comments)"
+    count stay together as one segment (e.g. "Approved (1 comment)")."""
     unresolved = pr["unresolved"]
     readiness = []
     if not pr["draft"]:
@@ -350,7 +389,7 @@ def status_text(pr):
         elif dec != "REVIEW_REQUIRED":  # APPROVED, or None (no required review configured — rare here)
             readiness.append("Ready to merge" if unresolved == 0 else "Approved")
     if unresolved:
-        readiness.append(f"{unresolved} comments")
+        readiness.append(f"({unresolved} comment{'' if unresolved == 1 else 's'})")
     segments = []
     if readiness:
         segments.append(" ".join(readiness))
@@ -370,7 +409,7 @@ def pr_cell(short, prs):
         return "No PR"
     tag = " _(draft)_" if pr["draft"] else ""
     status = status_text(pr)
-    sep = f" — {status}" if status else ""
+    sep = f": {status}" if status else ""
     return f"[#{pr['num']}]({pr['url']}){tag}{sep}"
 
 
@@ -378,7 +417,7 @@ def branch_link(short, slug, maxlen=None, href=None):
     """A Markdown link from a branch's name to a page on GitHub.
 
     By default points at the branch's tree view (`/tree/<branch>`); pass `href`
-    to retarget it — the per-branch table sends the first cell straight to the
+    to retarget it — the per-PR table sends the first cell straight to the
     open PR when one exists.  Works without a token, since the tree URL is
     derived purely from the branch name.  The slash in a name like
     `bcp/versification5` is kept (GitHub tree paths use it); other reserved
@@ -401,6 +440,15 @@ def branch_link(short, slug, maxlen=None, href=None):
         quoted = urllib.parse.quote(short, safe="/")
         href = f"https://github.com/{slug}/tree/{quoted}"
     return f"[`{display}`]({href}{title})"
+
+
+def notes_cell(pr):
+    """The `#Note: …` lines reviewers left on a PR, one per line — or an em dash
+    when there are none (or no PR)."""
+    notes = pr.get("notes") if pr else None
+    if not notes:
+        return "—"
+    return "<br>".join(notes)
 
 
 def files_cell(files):
@@ -448,14 +496,15 @@ def render(branches, conf, prs, have_token, slug):
                f"`GITHUB_TOKEN`) to refresh manually._")
     out = [ISSUE_MARKER, "", "## Current Activity", ""]
     if not have_token:
-        out.append("> ⚠️ No `GITHUB_TOKEN` available — PR column left blank.")
+        out.append("> ⚠️ No `GITHUB_TOKEN` available — PRs cannot be read, so "
+                   "this report is empty.")
         out.append("")
 
-    # ---- per-branch table (most recently active first) ----
-    out.append("### Active branches")
+    # ---- per-PR table (most recently active first) ----
+    out.append("### Current PRs")
     out.append("")
-    out.append("| Branch | Status | Author | Activity | Files | Shares files with |")
-    out.append("|---|---|---|---|--:|---|")
+    out.append("| Branch / Author | Status | `#Note`s | Activity | Shares files with | Changes |")
+    out.append("|---|---|---|---|---|--:|")
     for r, b in sorted(active.items(), key=lambda x: (-x[1]["ts"], x[1]["short"])):
         overlaps = [o for o in active if o != r and active[o]["files"] & b["files"]]
         # A stacked branch — one that fully contains the other's commits — is the
@@ -491,16 +540,19 @@ def render(branches, conf, prs, have_token, slug):
                    for o in contained_by]
         ov = ", ".join(pieces) or "—"
         pr = prs.get(b["short"])
-        first = branch_link(b["short"], slug, maxlen=25,
-                            href=pr["url"] if pr else None)
+        # First cell: the branch (linked to its PR) with its author beneath in
+        # small type — the two former columns folded into one.
+        branch = branch_link(b["short"], slug, maxlen=25,
+                             href=pr["url"] if pr else None)
+        first = f"{branch}<br><sub>{author_cell(b)}</sub>"
         # The old "→ main" column is folded in here: flag a branch that no
         # longer merges cleanly right in the Status cell.
         status = pr_cell(b["short"], prs)
         if not b["clean_to_main"]:
             status += " · ⚠️ conflicts with `main`"
         out.append(
-            f"| {first} | {status} | {author_cell(b)} | "
-            f"{b['when']} | {files_cell(b['files'])} | {ov} |"
+            f"| {first} | {status} | {notes_cell(pr)} | "
+            f"{b['when']} | {ov} | {files_cell(b['files'])} |"
         )
     out.append("")
 
@@ -534,7 +586,7 @@ def render(branches, conf, prs, have_token, slug):
         out += file_table(single_files)
         out.append("")
     if not fmap:
-        out.append("_No files modified on any active branch._")
+        out.append("_No files modified on any PR branch._")
         out.append("")
 
     # ---- merged / inactive branches (always shown) ----
@@ -610,17 +662,24 @@ def main():
     token = os.environ.get("GITHUB_TOKEN")
     slug = repo_slug()
     branches = collect_branches()
-    conf = pairwise_conflicts(branches)
 
     prs = {}
     if token:
         prs = fetch_prs(slug, token)
 
+    # Only branches with an open PR appear anywhere in the report — and only they
+    # are weighed when marking shared-file overlaps and conflicts — so drop the
+    # rest before the conflict analysis and enrichment below.
+    branches = {r: b for r, b in branches.items() if b["short"] in prs}
+    conf = pairwise_conflicts(branches)
+
     # Resolve each branch's author GitHub handle: the commits API (accurate) when
-    # a token is available, else parse a noreply commit email.
+    # a token is available, else parse a noreply commit email. With the handle,
+    # look up the person's real name from their GitHub profile for display.
     for b in branches.values():
         b["login"] = (commit_login(slug, b["sha"], token) if token else None) \
             or login_from_email(b["email"])
+        b["realname"] = user_realname(b["login"], token)
 
     body = render(branches, conf, prs, have_token=bool(token), slug=slug)
 
