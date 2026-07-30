@@ -443,11 +443,11 @@ def branch_link(short, slug, maxlen=None, href=None):
 
 
 def notes_cell(pr):
-    """The `#Note: …` lines reviewers left on a PR, one per line — or an em dash
-    when there are none (or no PR)."""
+    """The `#Note: …` lines reviewers left on a PR, one per line — or an empty
+    cell when there are none (or no PR)."""
     notes = pr.get("notes") if pr else None
     if not notes:
-        return "—"
+        return ""
     return "<br>".join(notes)
 
 
