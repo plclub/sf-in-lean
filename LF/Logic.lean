@@ -408,7 +408,7 @@ example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
 ::::::full
 :::::exercise (rating := 2) (name := "add_is_zero")
 ```lean
-theorem add_is_zero (n m : Nat) : n + m = 0 → n = 0 ∧ m = 0 := by
+theorem Nat.add_is_zero (n m : Nat) : n + m = 0 → n = 0 ∧ m = 0 := by
   solution!
     intro h; cases m
     case zero =>
@@ -417,7 +417,7 @@ theorem add_is_zero (n m : Nat) : n + m = 0 → n = 0 ∧ m = 0 := by
       case left => exact h
       case right => rfl
     case succ =>
-      rw [Nat.add_succ]
+      rw [add_succ]
       contradiction
 ```
 :::::
@@ -474,7 +474,7 @@ simple example:
 ```lean
 example (n m : Nat) (h : n + m = 0) : n * m = 0 := by
   workinclass!
-    apply add_is_zero at h
+    apply Nat.add_is_zero at h
     obtain ⟨hn, hm⟩ := h
     rw [hm]; rfl
 ```
@@ -567,7 +567,7 @@ or "in the left case") and `inr` (for "right injection",
 or "in the right case").
 
 ```lean
-theorem factor_is_zero (n m : Nat) (h : n = 0 ∨ m = 0) : n * m = 0 := by
+theorem Nat.factor_is_zero (n m : Nat) (h : n = 0 ∨ m = 0) : n * m = 0 := by
   cases h
   /- `n = 0` -/
   case inl hn => rw [hn, Nat.zero_mul]
@@ -609,7 +609,7 @@ theorem or_intro_l (a b : Prop) (h : a) : a ∨ b := by
 {tactic}`left` and {tactic}`right`:
 
 ```lean
-theorem zero_or_succ (n : Nat) : n = 0 ∨ n = (n + 1).pred := by
+theorem Nat.zero_or_succ (n : Nat) : n = 0 ∨ n = (n + 1).pred := by
   workinclass!
     cases n
     case zero => left; rfl
@@ -618,7 +618,7 @@ theorem zero_or_succ (n : Nat) : n = 0 ∨ n = (n + 1).pred := by
 
 :::::exercise (rating := 2) (name := "mul_is_zero")
 ```lean
-theorem mul_is_zero (n m : Nat) (h : n * m = 0) : n = 0 ∨ m = 0 := by
+theorem Nat.mul_is_zero (n m : Nat) (h : n * m = 0) : n = 0 ∨ m = 0 := by
   solution!
     cases m
     case zero => right; rfl
@@ -626,7 +626,7 @@ theorem mul_is_zero (n m : Nat) (h : n * m = 0) : n = 0 ∨ m = 0 := by
       cases n
       case zero => left; rfl
       case succ n' =>
-        rw [Nat.mul_succ, Nat.add_succ] at h
+        rw [mul_succ, add_succ] at h
         contradiction
 ```
 :::::
@@ -967,7 +967,7 @@ To prove the following proposition, which tactics will we need
 besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 
 ```display
-∀ A : Prop, 1 = 0 → (A ∨ ¬ A)
+∀ a : Prop, 1 = 0 → (a ∨ ¬ a)
 ```
 
 1. {tactic}`contradiction` {tactic}`left`, and {tactic}`right`
@@ -977,7 +977,7 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 
 :::quizSolution
 ```lean
-example (A : Prop) (h : 1 = 0) : (A ∨ ¬ A) := by
+example (a : Prop) (h : 1 = 0) : (a ∨ ¬ a) := by
   contradiction
 ```
 :::
@@ -1026,13 +1026,13 @@ def DiscrFun (n : Nat) : Prop :=
 
 theorem discrFun_zero : DiscrFun 0 := by constructor
 
-theorem DiscrFun_succ (n : Nat) : ¬ DiscrFun (n + 1) := by
+theorem discrFun_succ (n : Nat) : ¬ DiscrFun (n + 1) := by
   dsimp [DiscrFun]; intro h; assumption
 
 theorem discr_example (n : Nat) : ¬ (0 = n + 1) := by
   intro h
-  have hd : DiscrFun 0 := DiscrFun_zero
-  apply DiscrFun_succ 0
+  have hd : DiscrFun 0 := discrFun_zero
+  apply discrFun_succ 0
   rw [h] at hd; exact hd
 ```
 
@@ -1166,8 +1166,8 @@ theorem mul_eq_0 (n m : Nat) :
     n * m = 0 ↔ n = 0 ∨ m = 0 := by
   solution!
     constructor
-    case mp => apply mul_is_zero
-    case mpr => apply factor_is_zero
+    case mp => apply Nat.mul_is_zero
+    case mpr => apply Nat.factor_is_zero
 ```
 
 ```lean
@@ -1226,12 +1226,13 @@ have to prove {lean}`a` explicitly.
 ```lean
 #check (Exists : ∀ {T : Type}, (T → Prop) → Prop)
 
-abbrev Even x := ∃ n : Nat, x = Nat.double n
+abbrev Nat.Even x := ∃ n : Nat, x = Nat.double n
 
-#check (Even : Nat → Prop)
+#check (Nat.Even : Nat → Prop)
 
+open Nat in
 example : Even 4 := by exists 2
-  -- `4 = Nat.double 2` holds by `rfl`,
+  -- `4 = double 2` holds by `rfl`,
   -- but is proven automatically by `exists`
 ```
 
@@ -1930,7 +1931,7 @@ example : Nat.even 42 = true := rfl
 ... or that there exists some `k` such that `n = double k`.
 
 ```lean
-example : Even 42 := by dsimp [Even]; exists 21
+example : Nat.Even 42 := by dsimp [Nat.Even]; exists 21
 ```
 
 Of course, it would be deeply strange if these two characterizations
@@ -1972,7 +1973,7 @@ theorem even_double_conv (n : Nat) : ∃ k : Nat,
 Now the main theorem:
 
 ```lean
-theorem even_bool_prop (n : Nat) : Nat.even n = true ↔ Even n := by
+theorem Nat.even_bool_prop (n : Nat) : Nat.even n = true ↔ Even n := by
   -- FOLD
   constructor
   case mp =>
@@ -2064,7 +2065,7 @@ Consider the following statement:
 The most direct way to prove this is to give the value of `k` explicitly.
 
 ```lean
-example : Even 100 := by
+example : Nat.Even 100 := by
   exists 50
 ```
 
@@ -2081,8 +2082,8 @@ we can use the boolean formulation to prove the other one
 without mentioning the value 500 explicitly:
 
 ```lean
-example : Even 100 := by
-  obtain ⟨H, _⟩ := even_bool_prop 100
+example : Nat.Even 100 := by
+  obtain ⟨H, _⟩ := Nat.even_bool_prop 100
   apply H; rfl
 ```
 
@@ -2113,9 +2114,9 @@ But if we convert it to a claim about the boolean {lean}`Nat.even` function,
 we can let Lean do the work for us.
 
 ```lean
-example : ¬ Even 101 := by
+example : ¬ Nat.Even 101 := by
   workinclass!
-    intro h; apply (even_bool_prop 101).mpr at h
+    intro h; apply (Nat.even_bool_prop 101).mpr at h
     dsimp [Nat.even] at h; contradiction
 ```
 
@@ -2193,7 +2194,7 @@ of the `beqList` function below. to make sure that your definition
 is correct, prove the lemma `beqList_true_iff`.
 
 ```lean
-def List.beq {α : Type} (beq : α → α → Bool) (xs1 xs2 : List α) : Bool := solution!(
+def beqList {α : Type} (beq : α → α → Bool) (xs1 xs2 : List α) : Bool := solution!(
   match xs1, xs2 with
   | [], [] => true
   | x1 :: xs1, x2 :: xs2 => beq x1 x2 && beqList beq xs1 xs2
@@ -2258,49 +2259,49 @@ theorem beqList_true_iff α (beq : α → α → Bool)
 ::::::
 
 ::::::full
-:::::exercise (rating := 2) (name := "All_forallb")
-Prove the theorem below, which relates {lean}`forallb`, from the exercise
+:::::exercise (rating := 2) (name := "List.allb")
+Prove the theorem below, which relates `List.allb`, from the exercise
 `Tactics.forall_exists_challenge`, to the {lean}`List.All` property defined above.
 
-Copy the definition of {lean}`forallb` from Tactics here so that this file can be
+Copy the definition of `List.allb` from Tactics here so that this file can be
 graded on its own.
 
 ```lean
 def List.allb {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
   match l with
   | [] => true
-  | x :: xs' => test x && forallb test xs')
+  | x :: xs' => test x && allb test xs')
 
-theorem forallb_nil {α} (test : α → Bool) : Logic.forallb test [] = true := solution!(rfl)
+theorem List.allb_nil {α} (test : α → Bool) : allb test [] = true := solution!(rfl)
 
-theorem forallb_cons {α} (test : α → Bool) (x : α) (l : List α) :
-    Logic.forallb test (x :: l) = (test x && Logic.forallb test l) := solution!(rfl)
+theorem List.allb_cons {α} (test : α → Bool) (x : α) (l : List α) :
+    allb test (x :: l) = (test x && allb test l) := solution!(rfl)
 
-theorem forallb_true_iff α (test : α → Bool) (l : List α) :
-    Logic.forallb test l = true ↔ List.All (fun x => test x = true) l := by
+theorem List.allb_true_iff α (test : α → Bool) (l : List α) :
+    allb test l = true ↔ All (fun x => test x = true) l := by
   solution!
     induction l
     case nil =>
-      rw [forallb_nil]
-      exact ⟨fun _ => List.All_nil _, fun _ => rfl⟩
+      rw [allb_nil]
+      exact ⟨fun _ => All_nil _, fun _ => rfl⟩
     case cons x xs' ih =>
-      obtain ⟨h₁, h₂⟩ := andb_true_iff (test x) (Logic.forallb test xs')
+      obtain ⟨h₁, h₂⟩ := andb_true_iff (test x) (allb test xs')
       obtain ⟨ih1, ih2⟩ := ih
-      rw [forallb_cons, List.All_cons]
+      rw [allb_cons, All_cons]
       constructor
       case mp => intro h; exact ⟨(h₁ h).left, ih1 (h₁ h).right⟩
       case mpr => intro ⟨h1', h2'⟩; exact h₂ ⟨h1', ih2 h2'⟩
 ```
 
 (Ungraded thought question) Are there any important properties often
-the function {lean}`forallb` which are not captured by this specification?
+the function {lean}`List.allb` which are not captured by this specification?
 
 :::solution
-This theorem exactly captures the input-output behavior of {lean}`forallb`.
+This theorem exactly captures the input-output behavior of {lean}`List.allb`.
 However, it does not say anything about the running time.
 :::
 
-:::gradeTheorem 2 "forallb_true_iff"
+:::gradeTheorem 2 "List.allb_true_iff"
 :::
 :::::
 

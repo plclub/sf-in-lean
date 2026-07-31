@@ -536,7 +536,7 @@ Defining functions in the `Nat` namespace changes how they print:
 ::::
 
 ```lean
-theorem Nat.even_add_three (n : Nat) : Nat.even (n + 3) = Nat.even (n + 1) := by
+theorem Nat.even_add_three (n : Nat) : even (n + 3) = even (n + 1) := by
   rfl
 ```
 
@@ -585,7 +585,7 @@ theorem Nat.even_succ (n : Nat) :
     | zero =>
       rfl
     | succ n' ih =>
-      rw [Nat.even, ih, Bool.not_not]
+      rw [even, ih, Bool.not_not]
 ```
 
 :::gradeTheorem 1 "even_succ"
@@ -600,9 +600,9 @@ talk about using `Nat.add_zero` and friends from now on.
        later files from breaking.
 
 ```lean
-theorem Nat.even_zero : Nat.even 0 = true := by rfl
+theorem Nat.even_zero : even 0 = true := by rfl
 
-theorem Nat.double_zero : Nat.double 0 = 0 := by rfl
+theorem Nat.double_zero : double 0 = 0 := by rfl
 
 theorem Nat.double_succ (n : Nat) : (n + 1).double = n.double + 2 := by rfl
 ```
@@ -613,9 +613,9 @@ theorem Nat.double_add (n : Nat) : n.double = n + n := by
   solution!
     induction n with
     | zero =>
-      rw [Nat.double_zero]
+      rw [double_zero]
     | succ n' ih =>
-      rw [Nat.double_succ, ih, Nat.succ_add n' (n' + 1), Nat.add_succ n' n']
+      rw [double_succ, ih, succ_add n' (n' + 1), add_succ n' n']
 ```
 
 :::gradeTheorem 1 "double_add"
@@ -626,7 +626,7 @@ theorem Nat.double_add (n : Nat) : n.double = n + n := by
 ```lean
 theorem Nat.double_mul (n : Nat) : n.double = 2 * n := by
   solution!
-    rw [Nat.double_add, Nat.two_mul]
+    rw [double_add, Nat.two_mul]
 ```
 :::::
 

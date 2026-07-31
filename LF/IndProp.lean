@@ -1657,7 +1657,7 @@ This whole part of the section is a mess!!
 ```lean
 /-- warning: declaration uses `sorry` -/
 #guard_msgs in
-example (n : Nat) : Ev n → Even n := by
+example (n : Nat) : Ev n → Nat.Even n := by
   /- We could try to proceed by case analysis or induction on `n`.  But
       since `Ev` is mentioned in a premise, this strategy seems
       unpromising, because (as we've noted before) the induction
@@ -1746,7 +1746,7 @@ that the property we are trying to prove holds for `n'`.
 Let's try proving that lemma again:
 
 ```lean
-theorem ev_Even : ∀ n, Ev n → Even n := by
+theorem Nat.ev_Even : ∀ n, Ev n → Even n := by
   intro n h
   induction h
   /- h = ev_0 -/
@@ -1754,7 +1754,7 @@ theorem ev_Even : ∀ n, Ev n → Even n := by
   /- h = ev_succ_succ n' h',  with ih : Even n' -/
   case ev_succ_succ n' h' ih =>
     let ⟨k, hk⟩ := ih
-    exists k + 1; rw [Nat.double_succ, hk]
+    exists k + 1; rw [double_succ, hk]
 ```
 
 ::::full
@@ -1769,9 +1769,9 @@ The equivalence between the second and third definitions of
 evenness now follows.
 
 ```lean
-theorem ev_Even_iff : ∀ n, Ev n ↔ Even n := by
+theorem Nat.ev_Even_iff : ∀ n, Ev n ↔ Even n := by
   intro n; apply Iff.intro
-  . intro h; exact ev_Even _ h
+  . intro h; exact Nat.ev_Even _ h
   . intro ⟨k, hk⟩; rw [hk]; exact ev_double k
 ```
 
