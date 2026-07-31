@@ -65,6 +65,8 @@ def nat_hasOneStruct_brace : HasOneStruct Nat := {one := 1}
 
 def nat_hasOneStruct_where : HasOneStruct Nat where
   one := 1
+
+def nat_hasOneStruct_anonymous : HasOneStruct Nat := ⟨1⟩
 ```
 
 All of these are the same value, a structure of type {InlineLean.lean}`HasOneStruct Nat` that we
@@ -365,8 +367,7 @@ We'll define two flavors of maps: total maps, which include a "default" element 
 To define maps, we first need a type for the keys that we will use to index into our maps. Instead of using concrete types, we will use a type variables
 
 ```lean
-universe u v w
-variable {α : Type u} {β : Type v} [BEq α] [ReflBEq α] [LawfulBEq α]
+variable {α : Type} {β : Type} [BEq α] [ReflBEq α] [LawfulBEq α]
 ```
 
 ```lean -show
@@ -418,7 +419,7 @@ This time around, though, we're going to use functions, rather than lists of key
 We build up to partial maps in two steps. First, we define a type of total maps that return a default value when we look up a key that is not present in the map.
 
 ```lean
-def TotalMap (α : Type u) (β : Type v) := α → β
+def TotalMap (α : Type) (β : Type) := α → β
 
 namespace TotalMap
 ```
@@ -450,31 +451,51 @@ so that we can use the `∅` notation for this empty map.
 
 To access values in a map, which are functions, we can apply the map to a key:
 
+:::dev "Chris Henson (chenson2018), Niklas Halonen (xhalo32)"
+Using `default` in the early examples might be confusing.
+We could use something concrete, like `0` which is the default `Nat` instead.
+:::
+
 ```lean
 example : (∅ : TotalMap Nat Nat) 1 = default := rfl
 
 end TotalMap
 ```
 
-Let's introduce notation for accessing elements using square brackets.
-We'll call the typeclass `MyGetElem` after {name}`GetElem` from the standard library.
-The reason we are defining a new typeclass is for simplicity -- {name}`GetElem` contains logic for when keys are valid which we don't need.
+Here we have made use of the the fact that the type {name}`TotalMap` is defined as a function type, so technically Lean let's us use a function application to get an element.
+While this is possible, it goes against the spirit we have seen in previous chapters of defining interfaces to our types, like characterizing lemmas.
+We would like that the public interface we design for TotalMap to be independent of the fact that the definition is `α → β`.
 
+In the ideal, we should be able to substitute in a different type with similar behavior without needing to change the public interface.
+Suppose, just for the sake of argument, that we wanted to define total maps as {lean}`List (α × β)` or `Std.HashMap α β`.
+Neither of these are functions, so the syntax `∅ 1` wouldn't work.
+If this is the public interface to access elements, it restricts the definition ot {name}`TotalMap`, forcing it to be a function of some kind.
+
+To abstract away the function application, we introduce notation for accessing elements using square brackets.
+This let's us write `∅[1]` or `m[a]` regardless of the underlying definition of {name}`TotalMap`.
+
+We'll call the typeclass `MyGetElem`.
 The typeclass takes three type parameters: the collection, the keys that can be used to index and the elements that it returns.
 For example, let's say we have declared an instance `MyGetElem (List Bool) Nat Bool`.
 One can think of the instance as saying that _indexing into `xs : List Bool` with an index `i : Nat` returns a `Bool`_.
 The notation we introduce for this is: `xs[i] = MyGetElem.getElem xs i`.
 
-Don't worry about the `outParam`, `macro_rules` or the `app_unexpander`, they are minor technicalities.
+:::instructors
+`MyGetElem` is named after {name}`GetElem` from the standard library.
+The reason we are defining a new typeclass is for simplicity -- {name}`GetElem` contains logic for when keys are valid which we don't need.
+:::
+
+Don't worry about the `outParam`, it's like a normal paramater with a hint to Lean that helps typeclass inference.
+The `macro_rules` and the `app_unexpander` are minor technicalities for getting the syntax to work.
 
 ```lean
-class MyGetElem (coll : Type u) (idx : Type v) (elem : outParam (Type w)) where
+class MyGetElem (coll : Type) (idx : Type) (elem : outParam (Type)) where
   getElem (xs : coll) (i : idx) : elem
 
 namespace MyGetElem
 scoped macro_rules | `($xs[$i]) => `(getElem $xs $i)
 
-@[app_unexpander MyGetElem.getElem]
+@[app_unexpander getElem]
 def unexpandGetElem : Lean.PrettyPrinter.Unexpander
   | `($_ $xs $i) => `($xs[$i])
   | _ => throw ()
@@ -497,11 +518,32 @@ variable [Inhabited β]
 instance : MyGetElem (TotalMap α β) α β where
   getElem m a := m a
 
-theorem getElem_def (m : TotalMap α β) (a : α) : m[a] = m a :=
-  rfl
+theorem getElem_def (m : TotalMap α β) (a : α) : m[a] = m a := by rfl
 
-example : (∅ : TotalMap Nat Nat)[1] = default := rfl
+example : (∅ : TotalMap Nat Nat)[1] = default := by rfl
 ```
+
+When proving some of the upcoming characterizing lemmas, we will rewrite using {name}`getElem_def`.
+However, {name}`getElem_def` exposes the underlying implementation that accessing elements in total maps is a function application, therefore it should only be used sparingly, and only inside the `TotalMap` namespace.
+
+:::dev "Niklas Halonen (xhalo32)"
+As per the discussion in `https://github.com/plclub/sf-in-lean/pull/166#discussion_r3690573597`, we should provide the reverse of `getElem_def` as a simp-lemma, however it doesn't seem to behave nicely
+
+```
+@[simp]
+theorem apply_eq_getElem (m : TotalMap α β) (a : α) : m a = m[a] := by rfl
+```
+
+The reverse direction of {name}`getElem_def` is provided as a `simp`-lemma.
+
+```
+example (m : TotalMap α β) (a : α) : m a = m[a] := by
+  -- simp -- doesn't work (infinite loop)
+  -- dsimp -- doesn't work (nothing happens)
+  -- rw [apply_eq_getElem] -- doesn't work: The pattern to be substituted is a metavariable (`?m ?a`) in this equality: ?m ?a = ?m[?a]
+  rw [apply_eq_getElem m a] -- works
+```
+:::
 
 ### Updating
 
@@ -700,7 +742,7 @@ To accomplish this we define a simple structure that consists of a key and a val
 A key-value pair with `↦` syntax.
 -/
 @[ext]
-structure KVPair (K : Type u) (V : Type v) where
+structure KVPair (K : Type) (V : Type) where
   key : K
   value : V
 
@@ -760,12 +802,11 @@ example : ({ "foo" ↦ true })["foo"] = true := rfl
 ## Partial Maps
 
 Lastly, we define _partial maps_ on top of total maps. A partial map with elements of type `β` is simply a total map with elements of type `Option β`, whose default element is {name}`none`.
-We use define partial maps as a one-field structure encapsulating the inner total map.
 
 ```lean
-structure PartialMap (α : Type u) (β : Type v) where
+structure PartialMap (α : Type) (β : Type) where
   /-- The inner total map. Should not appear in the public API, use `PartialMap.toTotal` instead. -/
-  private inner : TotalMap α (Option β)
+  inner : TotalMap α (Option β)
 
 instance : EmptyCollection (PartialMap α β) where
   emptyCollection := { inner := ∅ }
@@ -778,9 +819,29 @@ instance : MyGetElem (PartialMap α β) α (Option β) where
 theorem getElem_def (m : PartialMap α β) (a : α) : m[a] = m.toTotal[a] := rfl
 ```
 
-:::dev "Niklas Halonen (xhalo32)" NOW
-Explain why we use a one-field structure (instead of a `def` for example)
-:::
+Remember that we discussed earlier with total maps that using function application exposes the implementation and that's why we introduced a new notation {name}`MyGetElem`?
+Here we take that concept to a new level, and instead of using a `def` for partial maps, like this:
+
+```display
+def PartialMap (α : Type) (β : Type) := TotalMap α (Option β)`
+```
+
+we define partial maps as a structure containing just a total map.
+This more strongly hides the fact that it's a total map.
+Now, the type system doesn't consider {lean}`PartialMap α β` to be definitionally equal to {lean}`TotalMap α (Option β)`, so the following equality doesn't type check:
+
+```lean -keep +error (name := empty_eq)
+example : (∅ : PartialMap α β) = (∅ : TotalMap α (Option β)) := by rfl
+```
+
+```leanOutput empty_eq
+Type mismatch
+  ∅
+has type
+  TotalMap α (Option β)
+but is expected to have type
+  PartialMap α β
+```
 
 :::dev "Claude" NOW
 The Maps chapter removed the `optionCoe` instance for the duration of its
@@ -848,11 +909,7 @@ theorem toTotal_eq_iff (m₁ m₂ : PartialMap α β) : m₁.toTotal = m₂.toTo
 @[ext]
 theorem ext (m₁ m₂ : PartialMap α β) (h : ∀ a : α, m₁[a] = m₂[a]) : m₁ = m₂ := by
   rw [← toTotal_eq_iff]
-  have heq (a : α) : m₁.toTotal[a] = m₂.toTotal[a] := by
-    specialize h a
-    dsimp [getElem_def] at h
-    exact h
-  rw [TotalMap.ext heq]
+  exact TotalMap.ext h
 ```
 
 Now, let's lift the {name}`TotalMap` lemmas:
@@ -871,26 +928,25 @@ theorem update_neq {m : PartialMap α β} {a₁ a₂ : α} (h : a₁ ≠ a₂) (
 
 theorem update_shadow (m : PartialMap α β) (a : α) (b₁ b₂ : β) :
     (a →ₚ b₂ ; a →ₚ b₁ ; m) = (a →ₚ b₂ ; m) := by
-  ext x : 1
+  apply ext
+  intro x
   dsimp [getElem_def, toTotal_update]
   rw [TotalMap.update_shadow]
 
 theorem update_same {m : PartialMap α β} {a : α} {b : β} (h : m[a] = some b) :
     (a →ₚ b ; m) = m := by
-  ext x : 1
+  apply ext
+  intro x
   dsimp [getElem_def, toTotal_update]
   rw [← h, getElem_def, TotalMap.update_same]
 
 theorem update_permute {m : PartialMap α β} {a₁ a₂ : α} {b₁ b₂ : β} (h : a₁ ≠ a₂) :
     (a₁ →ₚ b₁ ; a₂ →ₚ b₂ ; m) = (a₂ →ₚ b₂ ; a₁ →ₚ b₁ ; m) := by
-  ext x : 1
+  apply ext
+  intro x
   dsimp [getElem_def, toTotal_update]
   rw [TotalMap.update_permute h]
 ```
-
-:::dev "Niklas Halonen (xhalo32)" NOW
-`ext x : 1` has to be explained somewhere.
-:::
 
 And let's add `{}`-notation for partial maps as well.
 
