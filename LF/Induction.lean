@@ -965,17 +965,18 @@ We have already shown (lemma {name}`zero_add`) that `zero + n = n`.  Thus both s
 - Next, suppose `m = m' + 1` for some `m'`, where `n + m' = m' + n`. We must show that
 
 ```display
-n + (m' + 1) = (m' + 1) + n`.
+n + (m' + 1) = (m' + 1) + n.
 ```
 
 By the definition of `+`, `n + (m' + 1) = (n + m') + 1`, so our new goal is to show
 
 ```display
-(n + m') + 1 = (m' + 1) + n`.
+(n + m') + 1 = (m' + 1) + n.
 ```
 
-By {name}`succ_add`, `(m' + 1) + n = (m' + n) + 1`, so our new goal is, and by the induction
-hypothesis, `n + m' = m' + n`, so both sides equal `(m' + n) + 1`.
+By {name}`succ_add`, `(m' + 1) + n = (m' + n) + 1`, so it remains to show
+`(n + m') + 1 = (m' + n) + 1`.  This follows from the induction hypothesis
+`n + m' = m' + n`.
 :::
 
 :::grade
@@ -995,7 +996,6 @@ Theorem: `(n == n) = true` for any `n`.
 Proof:
 
 :::solution
-```
 By induction on `n`.
 
 - First, suppose `n = zero`.  We must show `(zero == zero) = true`.  This
@@ -1005,7 +1005,6 @@ follows directly from the definition of `beq`.
 must show `(n' + 1 == n' + 1) = true`. This
 follows directly from the induction hypothesis and the
 definition of {name}`beq`.
-```
 :::
 
 :::grade
