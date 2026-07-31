@@ -482,7 +482,7 @@ The notation we introduce for this is: `xs[i] = MyGetElem.getElem xs i`.
 
 :::instructors
 `MyGetElem` is named after {name}`GetElem` from the standard library.
-The reason we are defining a new typeclass is for simplicity -- {name}`GetElem` contains logic for when keys are valid which we don't need.
+The reason we are defining a new typeclass is for simplicity — {name}`GetElem` contains logic for when keys are valid which we don't need.
 :::
 
 Don't worry about the `outParam`, it's like a normal paramater with a hint to Lean that helps typeclass inference.
