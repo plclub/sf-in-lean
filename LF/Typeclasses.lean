@@ -416,7 +416,7 @@ Our main job in this chapter will be to build a definition of partial maps that 
 
 This time around, though, we're going to use functions, rather than lists of key-value pairs, to build maps. The advantage of this representation is that it offers a more "extensional" view of maps: two maps that respond to queries in the same way will be represented as exactly the same function, rather than just as "equivalent" list structures. This simplifies proofs that use maps.
 
-We build up to partial maps in two steps. First, we define a type of total maps that return a default value when we look up a key that is not present in the map.
+We build up to partial maps in two steps. First, we define total maps that return a default value when we look up a key that is not present in the map.
 
 ```lean
 def TotalMap (α : Type) (β : Type) := α → β
@@ -449,7 +449,14 @@ so that we can use the `∅` notation for this empty map.
 
 ### Getting Elements
 
-To access values in a map, which are functions, we can apply the map to a key:
+:::dev "Benjamin Pierce (bcpierce00)"
+This introductory bit seems heavier than necessary.  Why not just say that
+we want to treat TotalMap as an abstract thing, not rely on the fact that it is defined
+in terms of functions, and then go ahead and do that?
+:::
+
+
+To access values in a map (i.e., a function), we can apply the map to a key:
 
 :::dev "Chris Henson (chenson2018), Niklas Halonen (xhalo32)"
 Using `default` in the early examples might be confusing.
@@ -462,11 +469,11 @@ example : (∅ : TotalMap Nat Nat) 1 = default := rfl
 end TotalMap
 ```
 
-Here we have made use of the the fact that the type {name}`TotalMap` is defined as a function type, so technically Lean let's us use a function application to get an element.
+Here we have made use of the the fact that the type {name}`TotalMap` is defined as a function type, so technically Lean lets us use a function application to get an element.
 While this is possible, it goes against the spirit we have seen in previous chapters of defining interfaces to our types, like characterizing lemmas.
 We would like that the public interface we design for TotalMap to be independent of the fact that the definition is `α → β`.
 
-In the ideal, we should be able to substitute in a different type with similar behavior without needing to change the public interface.
+In the ideal, we should be able to substitute a different type with similar behavior without needing to change the public interface.
 Suppose, just for the sake of argument, that we wanted to define total maps as {lean}`List (α × β)` or `Std.HashMap α β`.
 Neither of these are functions, so the syntax `∅ 1` wouldn't work.
 If this is the public interface to access elements, it restricts the definition ot {name}`TotalMap`, forcing it to be a function of some kind.
@@ -485,7 +492,7 @@ The notation we introduce for this is: `xs[i] = MyGetElem.getElem xs i`.
 The reason we are defining a new typeclass is for simplicity — {name}`GetElem` contains logic for when keys are valid which we don't need.
 :::
 
-Don't worry about what `outParam Type` means, it's like a normal type paramater with a hint to Lean that helps typeclass inference.
+Don't worry about what `outParam Type` means (it's like a normal type parameter with a hint to Lean that helps typeclass inference).
 The `macro_rules` and the `app_unexpander` are minor technicalities for getting the syntax to work.
 
 ```lean
@@ -509,7 +516,15 @@ Since the standard library already declares the `$x[$i]` syntax, we only need to
 It's scoped since we don't want to override the default `GetElem` everywhere, but only when `open scoped MyGetElem`.
 :::
 
+:::dev "Benjamin Pierce (bcpierce00)"
+Make sure we've really explained `open scoped` somewhere...
+:::
+
 To use the notation `m[a]` to access elements of a map `m`, we add a {name}`MyGetElem` instance for total maps.
+
+:::dev "Benjamin Pierce (bcpierce00)"
+Have we explained `variable [Inhabited β]`?
+:::
 
 ```lean
 namespace TotalMap
@@ -523,11 +538,15 @@ theorem getElem_def (m : TotalMap α β) (a : α) : m[a] = m a := by rfl
 example : (∅ : TotalMap Nat Nat)[1] = default := by rfl
 ```
 
-When proving some of the upcoming characterizing lemmas, we will rewrite using {name}`getElem_def`.
+When proving some of the characterizing lemmas below, we will rewrite using {name}`getElem_def`.
 However, {name}`getElem_def` exposes the underlying implementation that accessing elements in total maps is a function application, therefore it should only be used sparingly, and only inside the `TotalMap` namespace.
 
+:::dev "Benjamin Pierce (bcpierce00)"
+That is a bit mysterious.
+:::
+
 :::dev "Niklas Halonen (xhalo32)"
-As per the discussion in `https://github.com/plclub/sf-in-lean/pull/166#discussion_r3690573597`, we should provide the reverse of `getElem_def` as a simp-lemma, however it doesn't seem to behave nicely
+As per the discussion in `https://github.com/plclub/sf-in-lean/pull/166#discussion_r3690573597`, we should provide the reverse of `getElem_def` as a simp-lemma, but it doesn't seem to behave nicely:
 
 ```
 @[simp]
@@ -588,6 +607,12 @@ def exampleMap'' : TotalMap String Bool := "bar" →ₜ true ; "foo" →ₜ true
 ```
 
 This completes the definition of total maps. Note that we don't need to define a `find` operation (as we did in the Lists chapter) on this representation of maps because it is just function application!
+
+:::dev "Benjamin Pierce (bcpierce00)"
+... but we said that we wanted to abstract away from the underlying function
+representation, no?
+:::
+
 
 ```lean
 example : exampleMap = exampleMap' := rfl
@@ -802,6 +827,9 @@ example : ({ "foo" ↦ true })["foo"] = true := rfl
 ## Partial Maps
 
 Lastly, we define _partial maps_ on top of total maps. A partial map with elements of type `β` is simply a total map with elements of type `Option β`, whose default element is {name}`none`.
+:::dev "Benjamin Pierce (bcpierce00)"
+I don't understand the comment on the `inner` field...
+:::
 
 ```lean
 structure PartialMap (α : Type) (β : Type) where
@@ -819,15 +847,19 @@ instance : MyGetElem (PartialMap α β) α (Option β) where
 theorem getElem_def (m : PartialMap α β) (a : α) : m[a] = m.toTotal[a] := rfl
 ```
 
-Remember that we discussed earlier with total maps that using function application exposes the implementation and that's why we introduced a new notation {name}`MyGetElem`?
-Here we take that concept to a new level, and instead of using a `def` for partial maps, like this:
+Remember that we discussed earlier with total maps that using function application exposes the implementation, and that's why we introduced a new notation {name}`MyGetElem`?
+Here we take that concept to a new level, and instead of using a `def` for partial maps, like this...
 
 ```display
 def PartialMap (α : Type) (β : Type) := TotalMap α (Option β)`
 ```
 
-we define partial maps as a structure containing just a total map.
+...we define partial maps as a structure containing just a total map.
 This more strongly hides the fact that it's a total map.
+:::dev "Benjamin Pierce (bcpierce00)"
+If this way is better, then why didn't we do it for total maps too?  Just for the sake
+of explaining two different mechanisms? We should explain our reasoning.
+:::
 Now, the type system doesn't consider {lean}`PartialMap α β` to be definitionally equal to {lean}`TotalMap α (Option β)`, so the following equality doesn't type check:
 
 ```lean -keep +error (name := empty_eq)
