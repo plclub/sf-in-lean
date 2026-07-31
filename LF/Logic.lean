@@ -1024,7 +1024,7 @@ def DiscrFun (n : Nat) : Prop :=
   | 0 => True
   | _ + 1 => False
 
-theorem DiscrFun_zero : DiscrFun 0 := by constructor
+theorem discrFun_zero : DiscrFun 0 := by constructor
 
 theorem DiscrFun_succ (n : Nat) : ¬ DiscrFun (n + 1) := by
   dsimp [DiscrFun]; intro h; assumption
@@ -1109,7 +1109,7 @@ constructor:
 
 #check (fun α β : Prop => α ↔ β : Prop → Prop → Prop)
 
-theorem iff_sym (a b : Prop) (h : a ↔ b) : (b ↔ a) := by
+theorem iff_sym (a b : Prop) (h : a ↔ b) : b ↔ a := by
   workinclass!
     constructor
     case mp => exact h.mpr
@@ -1248,7 +1248,7 @@ example n : (∃ m, n = m + 4) → (∃ o, n = o + 2) := by
 ::::::full
 :::::exercise (rating := 1) (name := "dist_not_exists")
 Prove that "{lean}`a` holds for all {lean}`x` implies "there is no {lean}`x` for which
-{lean}`a` does not hold." (Hint: `cases` and `let` work on existential assumptions!)
+{lean}`a` does not hold." (Hint: `cases` and `obtain` work on existential assumptions!)
 
 ```lean
 theorem dist_not_exists (α : Type) (p : α → Prop) (h : ∀ x, p x) :
@@ -1482,10 +1482,10 @@ theorem List.In_map_iff (α β : Type) (f : α → β) (xs : List α) (y : β) :
 :::::exercise (rating := 3) (name := "All")
 We noted above that functions returning propositions can be seen as
 _properties_ of their arguments. For instance, if `p` has type
-{lean}`Nat -> Prop`, then `p n` says that property `p` holds of {lean}`n`.
+{lean}`Nat → Prop`, then `p n` says that property `p` holds of {lean}`n`.
 
 Drawing inspiration from {lean}`List.In`, write a recursive function `All`
-stating that some property `a` holds of all elements of a list
+stating that some property `p` holds of all elements of a list
 `l`. To make sure your definition is correct, prove the `All_In`
 lemma below.  (Of course, your definition should _not_ just
 restate the left-hand side of `All_In`.)
@@ -1535,7 +1535,7 @@ theorem List.All_In α (p : α → Prop) (l : List α) :
 :::::exercise (rating := 2) (name := "combine_odd_even")
 Complete the definition of `combine_odd_even` below. It takes as arguments
 two properties of numbers, `Podd` and `Peven`, and it should return
-a property `a` such that `a n` is equivalent to `Podd n` when `n` is odd
+a property `p` such that `p n` is equivalent to `Podd n` when `n` is odd
 and equivalent to `Peven n` otherwise.
 
 ```lean
@@ -2193,7 +2193,7 @@ of the `beqList` function below. to make sure that your definition
 is correct, prove the lemma `beqList_true_iff`.
 
 ```lean
-def beqList {α : Type} (beq : α → α → Bool) (xs1 xs2 : List α) : Bool := solution!(
+def List.beq {α : Type} (beq : α → α → Bool) (xs1 xs2 : List α) : Bool := solution!(
   match xs1, xs2 with
   | [], [] => true
   | x1 :: xs1, x2 :: xs2 => beq x1 x2 && beqList beq xs1 xs2
@@ -2266,7 +2266,7 @@ Copy the definition of {lean}`forallb` from Tactics here so that this file can b
 graded on its own.
 
 ```lean
-def Logic.forallb {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
+def List.allb {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
   match l with
   | [] => true
   | x :: xs' => test x && forallb test xs')
