@@ -485,11 +485,11 @@ The notation we introduce for this is: `xs[i] = MyGetElem.getElem xs i`.
 The reason we are defining a new typeclass is for simplicity — {name}`GetElem` contains logic for when keys are valid which we don't need.
 :::
 
-Don't worry about the `outParam`, it's like a normal paramater with a hint to Lean that helps typeclass inference.
+Don't worry about what `outParam Type` means, it's like a normal type paramater with a hint to Lean that helps typeclass inference.
 The `macro_rules` and the `app_unexpander` are minor technicalities for getting the syntax to work.
 
 ```lean
-class MyGetElem (coll : Type) (idx : Type) (elem : outParam (Type)) where
+class MyGetElem (coll : Type) (idx : Type) (elem : outParam Type) where
   getElem (xs : coll) (i : idx) : elem
 
 namespace MyGetElem
