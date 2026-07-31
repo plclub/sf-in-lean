@@ -606,13 +606,7 @@ def exampleMap' : TotalMap String Bool := "bar" →ₜ true ; "foo" →ₜ true 
 def exampleMap'' : TotalMap String Bool := "bar" →ₜ true ; "foo" →ₜ true
 ```
 
-This completes the definition of total maps. Note that we don't need to define a `find` operation (as we did in the Lists chapter) on this representation of maps because it is just function application!
-
-:::dev "Benjamin Pierce (bcpierce00)"
-... but we said that we wanted to abstract away from the underlying function
-representation, no?
-:::
-
+This completes the definition of total maps.
 
 ```lean
 example : exampleMap = exampleMap' := rfl
