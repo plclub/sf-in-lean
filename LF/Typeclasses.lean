@@ -907,7 +907,7 @@ theorem toTotal_eq_iff (m₁ m₂ : PartialMap α β) : m₁.toTotal = m₂.toTo
   rfl
 
 @[ext]
-theorem ext (m₁ m₂ : PartialMap α β) (h : ∀ a : α, m₁[a] = m₂[a]) : m₁ = m₂ := by
+theorem ext {m₁ m₂ : PartialMap α β} (h : ∀ a : α, m₁[a] = m₂[a]) : m₁ = m₂ := by
   rw [← toTotal_eq_iff]
   exact TotalMap.ext h
 ```
