@@ -200,11 +200,10 @@ end Save
 student, and terse source variants computed at elaboration time, together with
 the original block's extraction-relevant flags. Its three children are the
 teacher-, student-, and terse-rendered forms of the block; traversal keeps the
-one selected by the `Save.showSolutions` flag / draft (terse) mode, so the same
-compiled document serves all three builds. HTML/TeX rendering passes through to
-the surviving child; the saver checks the stored metadata to decide whether to
-emit the saved source into extracted `.lean` files as raw code, `sf_experiment`,
-or `sf_expect_failure`.
+one selected by the build's typed `Variant`, so the same compiled document serves
+all three builds. HTML/TeX rendering passes through to the surviving child; the
+saver checks the stored metadata to decide whether to emit the saved source into
+extracted `.lean` files as raw code, `sf_experiment`, or `sf_expect_failure`.
 -/
 open Save in
 block_extension Block.leanSaved (saved : Save.LeanSaved.Data) where
@@ -255,9 +254,9 @@ Wraps each ` ```lean … ``` ` code block. The pipeline is:
 5. Emit a `Block.leanSaved` with three children: the upstream
    (teacher-rendered) block and `Block.lean`s wrapping the student and terse
    `Highlighted`s. Traversal later keeps one of the three according to the
-   `showSolutions` flag and draft (terse) mode, while the saver uses the
-   recorded block config to decide whether to wrap extracted output Lean code
-   in `sf_expect_failure` or `sf_experiment`.
+   build's typed `Variant`, while the saver uses the recorded block config to
+   decide whether to wrap extracted output Lean code in `sf_expect_failure` or
+   `sf_experiment`.
 -/
 
 open Save SourceRewrite LeanElab LeanSaved in

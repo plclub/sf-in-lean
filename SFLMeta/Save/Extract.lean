@@ -70,11 +70,10 @@ def terseFillWidth : Nat := 60
 solutions builds' generated `.lean` files. -/
 def proseFillWidth : Nat := 75
 
-/-- The prose fill width for a build variant (`"terse"`, `"student"`, or
-`"solutions"`). -/
-def fillWidthFor (variant : String) : Nat :=
-  if variant == "terse" then terseFillWidth else proseFillWidth
-
+/-- The prose fill width for a build variant. -/
+def fillWidthFor : Variant → Nat
+  | .terse => terseFillWidth
+  | .student | .solutions => proseFillWidth
 /--
 Split `s` into whitespace-separated words, keeping each `` `code span` `` intact
 as a single token even when it contains spaces (so wrapping never splits one

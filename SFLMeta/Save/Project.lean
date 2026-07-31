@@ -205,9 +205,9 @@ module names and paths (e.g. `"LF"`, `"HL"`, `"TS"`); it is normally the same
 as `destSlug` uppercased, but the draft executable passes `modPrefix := "LF"`
 with `destSlug := "lf-draft"` so its output lands under `LF/…` in a separate
 tree that never clobbers the real `lf` build.
-`variant` selects which form of the code is written: `"solutions"` the
-solution-filled form, `"terse"` the lecture form (`workinclass!` proofs and
-solutions stubbed), anything else the student form.
+`variant` selects which typed source variant is written: `.solutions` the
+solution-filled form, `.terse` the lecture form (`workinclass!` proofs and
+solutions stubbed), and `.student` the student form.
 `verify` runs `lake build` on the extracted project to confirm it compiles;
 the draft emitter passes `verify := false`, since its not-yet-graduated
 chapters are not expected to build standalone. -/
@@ -215,7 +215,7 @@ private def emitSavedImpl (config : ExtractConfig)
     (crossVol : List (String × Part Manual) := []) :
     Mode → Config → TraverseState → Part Manual → BuildLogT IO Unit :=
   fun _mode _cfg _state text => do
-    let width := Text.fillWidthFor <| config.variant.toString
+    let width := Text.fillWidthFor <| config.variant
     let mut buf : SaveBuffers := walkOuter width config.modPrefix text {}
     -- Cross-volume Verso prerequisites (e.g. `LF.Typeclasses`, imported by
     -- `HL.Imp`) are chapters of an *earlier* volume that a chapter here depends
