@@ -1132,7 +1132,7 @@ theorem iff_refl (a : Prop) : a ↔ a := by
     case mp => intro h; exact h
     case mpr => intro h; exact h
 
-theorem iff_trans (a b c : Prop) (h₁ : a ↔ b) (h₂ : b ↔ c) : (a ↔ c) := by
+theorem iff_trans (a b c : Prop) (h₁ : a ↔ b) (h₂ : b ↔ c) : a ↔ c := by
   solution!
     constructor
     case mp => intro hP; apply h₂.mp; apply h₁.mp; exact hP
@@ -1459,12 +1459,14 @@ theorem List.In_map_iff (α β : Type) (f : α → β) (xs : List α) (y : β) :
         rw [List.map_cons, In_cons] at h
         obtain h | h := h
         case inl =>
-          rw [h]; exists x'; constructor
+          rw [h]; exists x'
+          constructor
           case left => rfl
           case right => rw [In_cons]; left; rfl
         case inr =>
           obtain ⟨x', h₁, h₂⟩ := ih h
-          exists x'; constructor
+          exists x'
+          constructor
           case left => exact h₁
           case right => rw [In_cons]; right; exact h₂
   case mpr =>
@@ -1510,7 +1512,8 @@ theorem List.All_In α (p : α → Prop) (l : List α) :
       obtain ⟨ih1, ih2⟩ := ih
       constructor
       case mp =>
-        intro h; rw [All_cons]; constructor
+        intro h; rw [All_cons]
+        constructor
         case left => apply h; rw [In_cons]; left; rfl
         case right =>
           apply ih1
@@ -2217,17 +2220,20 @@ theorem beqList_true_iff α (beq : α → α → Bool)
     case nil =>
       intro xs2; cases xs2
       case nil =>
-        rw [beqList_nil_nil]; constructor
+        rw [beqList_nil_nil]
+        constructor
         case mp => intro; rfl
         case mpr => intro; rfl
       case cons x2 xs2' =>
-        rw [beqList_nil_cons]; constructor
+        rw [beqList_nil_cons]
+        constructor
         case mp => intro; contradiction
         case mpr => intro; contradiction
     case cons x1 xs1' ih =>
       intro xs2; cases xs2
       case nil =>
-        rw [beqList_cons_nil]; constructor
+        rw [beqList_cons_nil]
+        constructor
         case mp => intro; contradiction
         case mpr => intro; contradiction
       case cons x2 xs2' =>
