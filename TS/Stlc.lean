@@ -880,7 +880,8 @@ Here is the definition, informally...
 ... and formally:
 
 :::dev PotentialImprovement
-explain better about alpha-conversion.
+1) explain better about alpha-conversion below.
+2) Fix formatting of subst above to line up more nicely.
 :::
 
 ```lean
@@ -987,6 +988,10 @@ Checks that the substitution notation parses and nests as intended.
 #check <{ ([x := z] y) ([x := z] x) }>
 #check <{ [x := (λ y : Bool . y)] (x z) }>
 ```
+:::
+
+:::dev "mwhicks1" PotentialImprovement
+Make one or two of the above `example` to make sure they produce the right term?
 :::
 
 ::::quiz
@@ -1157,7 +1162,7 @@ is traditionally called {deftech}_beta-reduction_.
 ::::
 
 ```
-                               value v
+                              v.IsValue
                        -----------------------      (appAbs)
                         (λx:T. t) v ⟶ [x:=v]t
 
@@ -1165,7 +1170,7 @@ is traditionally called {deftech}_beta-reduction_.
                           ----------------          (app1)
                            t₁ t₂ ⟶ t₁' t₂
 
-                              value v₁
+                              v.IsValue
                               t₂ ⟶ t₂'
                           ----------------          (app2)
                            v₁ t₂ ⟶ v₁ t₂'
