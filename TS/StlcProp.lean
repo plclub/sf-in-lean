@@ -19,14 +19,14 @@ The document-level `set_option maxHeartbeats 1000000` above is needed by
 not in the proof itself (the same proof elaborates well inside budget as plain
 Lean) but in Verso's InlineLean highlighting pass, which re-drives elaboration
 to attach type and hover information. That pass honors only document-level
-options -- a `set_option maxHeartbeats ... in` on the theorem was verified not
+options — a `set_option maxHeartbeats ... in` on the theorem was verified not
 to help here, and neither does splitting the code block, since the budget is
 per-declaration. `LF/IndPropRegexpVerso.lean` carries the same override and
 documents the mechanism at length.
 
 The way to remove this would be to break the substitution lemma's variable and
 abstraction cases out as named helper lemmas, so each is highlighted against
-its own fresh budget -- the pattern `IndPropRegexp` uses for `star_app_aux`.
+its own fresh budget — the pattern `IndPropRegexp` uses for `star_app_aux`.
 That is a pedagogy call (it changes how the central proof of the chapter
 reads), so it is left for review rather than done here.
 :::
@@ -73,7 +73,7 @@ Substitution:
 
 Small-step operational semantics:
 ```
-                               value v
+                              v.IsValue
                        -----------------------                    (appAbs)
                         (λx:T. t) v ⟶ [x:=v]t
 
@@ -81,7 +81,7 @@ Small-step operational semantics:
                           ----------------                        (app1)
                            t₁ t₂ ⟶ t₁' t₂
 
-                              value v₁
+                             v₁.IsValue
                               t₂ ⟶ t₂'
                           ----------------                        (app2)
                            v₁ t₂ ⟶ v₁ t₂'
@@ -129,12 +129,6 @@ Ori 2020: we have slightly simplified the preservation proof.  We still need
 the substitution lemma, but the latter is proved using weakening.
 :::
 
-:::dev "Benjamin Pierce (bcpierce00)" BeforeNextRelease (year := 2021)
-The `stlc_arith` exercise needs cleaning up -- instead of asking people to copy
-stuff over, we should give the headers of all the definitions and just ask
-them to complete them.
-:::
-
 :::dev "Benjamin Pierce (bcpierce00)" BeforeNextRelease (year := 2022)
 In Wadler's "PLF in Agda", he defines an "animator" for STLC terms using the
 proof terms for progress + preservation.  This would be a FANTASTIC example
@@ -142,7 +136,7 @@ proof terms for progress + preservation.  This would be a FANTASTIC example
 :::
 
 In this chapter, we develop the fundamental theory of the Simply
-Typed Lambda Calculus -- in particular, the type safety
+Typed Lambda Calculus — in particular, the type safety
 theorem.
 
 We pick up where the {ref "Stlc"}[Stlc] chapter left off, so everything below
@@ -164,7 +158,7 @@ arrow types, they are lambda-abstractions.
 ::::
 
 Formally, we will need these lemmas only for terms that are not
-only well typed but _closed_ -- i.e., well typed in the empty
+only well typed but _closed_ — i.e., well typed in the empty
 context.
 
 ```lean
@@ -437,7 +431,7 @@ theorem weakening_empty (Γ : Context) (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂
 ## The Substitution Lemma
 
 Now we come to the conceptual heart of the proof that reduction
-preserves types -- namely, the observation that _substitution_
+preserves types — namely, the observation that _substitution_
 preserves types.
 
 ::::full
@@ -563,7 +557,7 @@ _Proof_: We show, by induction on `t`, that for all `T` and
 
 ::::full
 One technical subtlety in the statement of the above lemma is that
-we assume `v` has type `U` in the _empty_ context -- in other
+we assume `v` has type `U` in the _empty_ context — in other
 words, we assume `v` is closed.  (Since we are using a simple
 definition of substition that is not capture-avoiding, it doesn't
 make sense to substitute non-closed terms into other terms.
@@ -702,7 +696,7 @@ Show this by giving a counter-example that does _not involve
 conditionals_.
 
 :::solution
-COMMENT: `untagged (* .. *) comment at prose position in the Rocq source -- probably an error there; decide whether it is book prose or an author note`
+COMMENT: `untagged (* .. *) comment at prose position in the Rocq source — probably an error there; decide whether it is book prose or an author note`
 For example,
 `((\a:Bool→Bool, λy:Bool. y) true)` is ill typed, but it evaluates
 to the well-typed term `λy:Bool. y`,
@@ -820,12 +814,12 @@ so keeping it as such.
 ::::::full
 Another standard technical lemma associated with typed languages
 is _context invariance_. It states that typing is preserved under
-"inessential changes" to the context `Γ` -- in particular,
+"inessential changes" to the context `Γ` — in particular,
 changes that do not affect any of the free variables of the
 term. In this section, we establish this property for our system,
 introducing some other standard terminology on the way.
 
-First, we need to define the _free variables_ in a term -- i.e.,
+First, we need to define the _free variables_ in a term — i.e.,
 variables that are used in the term in positions that are _not_ in
 the scope of an enclosing function abstraction binding a variable
 of the same name.
@@ -860,7 +854,7 @@ scoped infix:50 " ∈ᶠ " => AppearsFreeIn
 ```
 
 The _free variables_ of a term are just the variables that appear
-free in it.  This gives us another way to define _closed_ terms --
+free in it.  This gives us another way to define _closed_ terms —
 arguably a better one, since it applies even to ill-typed
 terms.  Indeed, this is the standard definition of the term
 "closed."
@@ -878,14 +872,14 @@ containing free variables.")
 (Officially optional, but strongly recommended!) In the space
 below, write out the rules of the `∈ᶠ` relation in
 informal inference-rule notation.  (Use whatever notational
-conventions you like -- the point of the exercise is just for you
+conventions you like — the point of the exercise is just for you
 to think a bit about the meaning of each rule.)  Although this is
 a rather low-level, technical definition, understanding it is
 crucial to understanding substitution and its properties, which
 are really the crux of the lambda-calculus.
 
 :::solution
-COMMENT: `untagged (* .. *) comment at prose position in the Rocq source -- probably an error there; decide whether it is book prose or an author note`
+COMMENT: `untagged (* .. *) comment at prose position in the Rocq source — probably an error there; decide whether it is book prose or an author note`
 (no solution yet) -/
 /- LATER: Fill in an official solution
 :::
@@ -1043,11 +1037,6 @@ Complete the following proof.
 The context invariance lemma can actually be used in place of the
 weakening lemma to prove the crucial substitution lemma stated
 earlier.
-
-:::dev
-HIDE: BCP 20: Maybe this deserves an exercise?  BCP 21: Nah. People
-can just try it if they really want.
-:::
 ::::::
 
 # Additional Exercises
@@ -1080,7 +1069,7 @@ Proof. apply progress. Qed.
 ::::
 
 :::solution
-COMMENT: `untagged (* .. *) comment at prose position in the Rocq source -- probably an error there; decide whether it is book prose or an author note`
+COMMENT: `untagged (* .. *) comment at prose position in the Rocq source — probably an error there; decide whether it is book prose or an author note`
 See progress and preservation from before.
 :::
 
@@ -1440,7 +1429,7 @@ type of numbers and some constants and primitive
 operators.
 
 The arithmetic we are adding is the arithmetic of the {ref "Slang"}[Slang]
-chapter -- numeric constants and multiplication -- together with the
+chapter — numeric constants and multiplication — together with the
 successor, predecessor, and zero-test operations of the
 {ref "Types"}[Types] chapter.  What is new is the setting: those operations now
 live in a language that also has variables, abstraction, and application, so
@@ -1484,14 +1473,14 @@ inductive Tm where
 ::::full
 `StlcArith` is a *different* language from the STLC of this chapter, not an
 extension of it, so it needs its own concrete syntax.  Rather than invent a new
-one, we reuse the grammars set up in the {ref "Stlc"}[Stlc] chapter -- the
-syntax categories `stlcTy`, `stlcTm`, and `stlcVar` -- and give them a new
+one, we reuse the grammars set up in the {ref "Stlc"}[Stlc] chapter — the
+syntax categories `stlcTy`, `stlcTm`, and `stlcVar` — and give them a new
 meaning here.  Terms and types of this language are therefore written inside
 the same `<{ … }>` brackets, with the same `~e` escape back to Lean.
 ::::
 
 :::instructors
-The three grammars -- `stlcTy`, `stlcTm`, and (below) `stlcCtx` -- are meant to
+The three grammars — `stlcTy`, `stlcTm`, and (below) `stlcCtx` — are meant to
 be read as *templates*.  A new Stlc-like language reuses the categories, adds
 productions for whatever constructs it has that the template lacks, and
 supplies a `macro_rules` group mapping every production to its own
@@ -1505,7 +1494,7 @@ adjustment in all the others.
 The type grammar needs no new productions: `Nat` is a bare identifier, which
 the template already accepts, and arrows and parentheses are unchanged.  Only
 the `macro_rules` are new, and they differ from the STLC's in just two places
--- the identifier `Nat` names this language's base type, and the arrow builds
+— the identifier `Nat` names this language's base type, and the arrow builds
 this language's {name}`StlcArith.Ty.arrow`.
 
 ```lean
@@ -1528,7 +1517,7 @@ multiplies `x` by the application `y z`; it associates to the right, so
 `x * y * z` is `x * (y * z)`.
 
 `succ` and `pred` get no production of their own.  Making them keywords would
-reserve those words globally -- and we would then be unable to write `succ` as
+reserve those words globally — and we would then be unable to write `succ` as
 a case name in a proof, including for Lean's own {name}`Nat`.  Instead they are
 written as though they were functions applied to an argument, `succ t`, and the
 application rule below recognizes them.  `if0` *is* a keyword, since `then` and
@@ -1714,22 +1703,13 @@ as before.
 
 Make sure Lean accepts the whole file before submitting.
 
-:::dev "Claude"
-The Rocq source also asks the reader to fill in the `Reserved Notation`, `Notation`,
-and `Hint Constructors` declarations, and warns that an error reading
-`"STLC.tm" found instead of term "tm"` means Rocq is still picking up the old
-module's notation.  Neither carries over: the grammar is given above, the
-`scoped` rules keep the two languages' brackets apart by construction, and we
-have no hint databases.
-:::
-
 :::::exercise (rating := 5) (name := "StlcArith.subst")
 Substitution is defined exactly as it was for the STLC, with one clause per new
 constructor.
 
 ::::details (summary := "Why the definition is wrapped in a section")
 Substitution is written using its own `[x := s] t` notation, which is being
-defined at the same time, so -- as in the {ref "Stlc"}[Stlc] chapter -- the rule
+defined at the same time, so — as in the {ref "Stlc"}[Stlc] chapter — the rule
 is first declared `local`, with hygiene off so that the `subst` in its expansion
 refers to the function being defined, and then declared again for real once the
 section closes.
@@ -1784,7 +1764,7 @@ def delabSubst : Delab := whenPPOption getPPNotation do
 
 You will also want one `@[simp]` simplification lemma per constructor, saying
 how your `subst` behaves on that constructor, in the style of the
-{ref "Stlc"}[Stlc] chapter -- the substitution lemma below is proved by
+{ref "Stlc"}[Stlc] chapter — the substitution lemma below is proved by
 rewriting with them rather than by unfolding the definition.  Two of the
 constructors need two lemmas apiece, since substitution treats a bound name
 differently depending on whether it is the name being substituted for.
@@ -1901,7 +1881,7 @@ theorem Nat_step_example : ∃ t, <{ (λ x : Nat . λ y : Nat . x * y) 3 2 }> �
 :::
 
 :::dev BeforeNextRelease
-The reduction example above ought to be joined by a bigger one -- something to
+The reduction example above ought to be joined by a bigger one — something to
 replace the factorial example that used to live here.
 :::
 
@@ -2179,10 +2159,6 @@ theorem preservation (t t' : Tm) (T : Ty)
 :::
 
 ::::::full
-:::dev PotentialImprovement
-`auto` can do even more if we `Hint Constructors ex`, but maybe it's cleaner
-not to?
-:::
 
 :::::exercise (rating := 4) (name := "StlcArith.progress")
 ```lean
@@ -2276,7 +2252,7 @@ end StlcArith
 ```
 
 :::dev "Claude"
-The source's grading file weights this exercise at 28 points -- 10 for
+The source's grading file weights this exercise at 28 points — 10 for
 `STLCArith.subst` and 6 each for `weakening`, `preservation`, and `progress`.
 The three theorems carry those weights directly; the 10 points for the
 definitions are split between the two examples that exercise them,
