@@ -141,9 +141,9 @@ Coquand and Huet, it forms the foundation of Lean's logic.
 ::::full
 The STLC is built on some collection of _base types_:
 booleans, numbers, strings, etc.  The exact choice of base types
-doesn't matter much -- the definition of the language as well as
+doesn't matter much — the definition of the language as well as
 its theoretical properties work out the same no matter what we
-choose -- so for the sake of brevity let's take just `Bool` for
+choose — so for the sake of brevity let's take just `Bool` for
 the moment.  In the next chapter we'll see how to add more
 base types, and in later chapters we'll enrich the pure STLC with
 other useful constructs like pairs, records, subtyping, and
@@ -156,7 +156,7 @@ things:
     - application
 
 This gives us the following collection of abstract syntax
-constructors (written out first in informal BNF notation -- we'll
+constructors (written out first in informal BNF notation — we'll
 formalize it below) for STLC terms `t`.
 ::::
 
@@ -241,7 +241,7 @@ Some examples of STLC terms:
   the first one, applied to the booleans `false` and `true`.
 
   ::::full
-  (As in Lean, application associates to the left -- i.e., this
+  (As in Lean, application associates to the left — i.e., this
   expression is parsed as `((λx:Bool. λy:Bool. x) false) true`.)
   ::::
 
@@ -266,7 +266,7 @@ other functions as arguments and/or return other functions as results.
 
 The STLC doesn't provide any primitive syntax for defining _named_
 functions: i.e., all functions are "anonymous."  We'll see in chapter
-`MoreStlc` that it is easy to add named functions -- indeed, the
+`MoreStlc` that it is easy to add named functions — indeed, the
 fundamental naming and binding mechanisms are exactly the same.
 ::::
 
@@ -285,7 +285,7 @@ Now reconsider our examples, each along with its type:
 
 - `(λx:Bool. λy:Bool. x) false true` has type `Bool`
 
-The last two, higher-order examples are left off the list on purpose -- working out
+The last two, higher-order examples are left off the list on purpose — working out
 their types is the subject of the quizzes that follow.
 
 ::::terse
@@ -374,12 +374,12 @@ inside one pair of brackets, `<{ … }>`, and that `~e` inside the brackets
 escapes back to an arbitrary Lean expression:
 
 - `<{ Bool → Bool }>` is a type;
-- `<{ λ x : Bool . x }>` is a term -- a bare identifier inside the brackets is
+- `<{ λ x : Bool . x }>` is a term — a bare identifier inside the brackets is
   the object-language variable of that name, so `<{ x }>` is the variable `x`;
 - `<{ ~t₁ ~t₂ }>` applies one Lean-level term to another.
 
 Lean works out from context which of the two a given bracket holds, so the same
-brackets serve for types, for terms, and -- when we come to typing -- for
+brackets serve for types, for terms, and — when we come to typing — for
 typing judgments too.  How that works is in the collapsed blocks below; nothing
 later in the chapter depends on it.
 ::::
@@ -396,8 +396,8 @@ adjustment in all the other grammars for Stlc-like languages...
 ::::details (summary := "Notation encoding: types")
 The `stlcTy` grammar covers `Bool`, arrows (written `→` or `->`, associating to
 the right), parentheses, and `~e`.  A bare identifier other than `Bool` is
-spliced in as a Lean term, so a local `T` -- or any Lean expression of type
-{name}`Ty` -- can appear directly inside the brackets.
+spliced in as a Lean term, so a local `T` — or any Lean expression of type
+{name}`Ty` — can appear directly inside the brackets.
 
 To extend the grammar, a later chapter adds a `syntax` line to the category and
 a matching `macro_rules` case; that is all it takes to add a new type construct.
@@ -434,7 +434,7 @@ We'll write types inside of `<{ ... }>` brackets:
 ::::details (summary := "Notation encoding: terms")
 Terms are built from variables, application (associating to the left),
 abstraction, the two boolean constants, and conditionals.  A binding
-occurrence -- the `x` in `λ x : T . t` -- has a small grammar of its own,
+occurrence — the `x` in `λ x : T . t` — has a small grammar of its own,
 `stlcVar`, and `varStr` turns it into the string that {name}`Tm.abs` stores.
 
 Because types and terms share the brackets, each `macro_rules` group says which
@@ -618,7 +618,7 @@ def delabTm : Delab := whenPPOption getPPNotation do
 ::::
 
 :::ignore
-A few checks that the grammar parses the way it should -- application
+A few checks that the grammar parses the way it should — application
 associating to the left, conditionals nesting without parentheses, and `~`
 escaping to Lean:
 
@@ -713,16 +713,16 @@ to do.
 Third, for abstractions, we have a choice:
 
 - We can say that `λx:T. t` is a value only when `t` is a
-  value -- i.e., only if the function's body has been
+  value — i.e., only if the function's body has been
   reduced (as much as it can be without knowing what argument it
   is going to be applied to).
 
 - Or we can say that `λx:T. t` is always a value, no matter
-  whether `t` is one or not -- in other words, we can say that
+  whether `t` is one or not — in other words, we can say that
   reduction stops at abstractions.
 
 Our usual way of evaluating expressions in Lean makes the first
-choice -- for example,
+choice — for example,
 
 ```lean
 #reduce fun _x : Bool => 3 + 4
@@ -735,7 +735,7 @@ fun _x => 7
 ```
 
 But Lean is rather unusual in this respect.  Most functional
-programming languages make the second choice -- reduction of a
+programming languages make the second choice — reduction of a
 function's body only begins when the function is actually applied
 to an argument.
 
@@ -780,7 +780,7 @@ Finally, we must consider what constitutes a _complete_ program.
 Intuitively, a "complete program" must not refer to any undefined
 variables.  We'll see shortly how to define the _free_ variables
 in a STLC term.  A complete program, then, is one that is
-{deftech}_closed_ -- that is, that contains no free variables.
+{deftech}_closed_ — that is, that contains no free variables.
 
 (Conversely, a term that may contain free variables is often
 called an {deftech}_open term_.)
@@ -920,7 +920,7 @@ the variable case matches `.var y` rather than `<{ ~y }>`, because the
 two `~`s mean different things.  Inside `<{ … }>` at a *term* position, `~e`
 splices a Lean expression of type {name}`Tm`; at the *variable* position of a
 `λ` (or of a substitution), `~e` splices a {name}`String`.  Destructuring
-{name}`Tm.var` binds `y` to the variable's name -- a {name}`String` -- so
+{name}`Tm.var` binds `y` to the variable's name — a {name}`String` — so
 `<{ ~y }>` would be a type error.  The grammar has no production for "the
 variable with this name", because naming a variable is what a bare identifier
 already does, and a bare identifier is a literal rather than a splice.
@@ -1237,7 +1237,7 @@ scoped notation:40 t:41 " ⟶* " t':41 => Multi Step t t'
 
 ::::full
 As in the {ref "Smallstep"}[Smallstep] chapter, `⟶*` is the multi-step closure
-of `⟶` -- that is, {name}`Multi` applied to this chapter's step relation.  We
+of `⟶` — that is, {name}`Multi` applied to this chapter's step relation.  We
 inherit its reflexivity lemma along with it, so a zero-step execution goal
 `t ⟶* t` is closed by `rfl`.
 ::::
@@ -1448,8 +1448,8 @@ defined in its `Smallstep` chapter, and the exercise below asks for
 `step_example5` both with and without it.  We have no such tactic: the
 {ref "Smallstep"}[Smallstep] chapter here does not define one, so the repeats
 are dropped and the exercise is stated once, proved by hand.  Writing a
-`normalize` tactic -- repeatedly applying {name}`Multi.step` with the unique
-available reduction, then closing with reflexivity -- is the natural follow-up,
+`normalize` tactic — repeatedly applying {name}`Multi.step` with the unique
+available reduction, then closing with reflexivity — is the natural follow-up,
 and it belongs in the Smallstep chapter, not here.
 :::
 
@@ -1504,7 +1504,7 @@ variables.
 
 To keep track of all this, we add a third element to the relation,
 a {deftech}_typing context_ `Γ`, which records the types of the
-variables that may occur free in a term -- that is, Γ is a
+variables that may occur free in a term — that is, Γ is a
 partial map from variables to types.
 
 The new {deftech}_typing judgment_ is written `Γ ⊢ t ⦂ T` and
@@ -1537,7 +1537,7 @@ variables.
 
 This leads us to a three-place _typing judgment_, informally
 written `Γ ⊢ t ⦂ T`, where `Γ` is a
-"typing context" -- a mapping from variables to their types.
+"typing context" — a mapping from variables to their types.
 ::::
 
 ```lean
@@ -1545,7 +1545,7 @@ abbrev Context := PartialMap String Ty
 ```
 
 ::::full
-A context is a {name}`PartialMap` from variable names to types -- the partial
+A context is a {name}`PartialMap` from variable names to types — the partial
 maps of the `Typeclasses` chapter, which are total maps whose values are
 optional, so that {name}`none` at a variable means "not bound here".
 ::::
@@ -1607,8 +1607,8 @@ with the turnstile and colon of the {ref "Types"}[Types] chapter:
 
 ::::details (summary := "Notation encoding: contexts and judgments")
 Contexts get a grammar of their own, `stlcCtx`.  The *meaning* is the map update
-we already have -- `x ↦ T ; Γ` expands to exactly the `Typeclasses` chapter's
-partial-map update on `Γ` -- but its surface syntax has to be our own, because
+we already have — `x ↦ T ; Γ` expands to exactly the `Typeclasses` chapter's
+partial-map update on `Γ` — but its surface syntax has to be our own, because
 inside these brackets all three positions are in object syntax.  Writing the map
 notation directly would mean writing the binding as `"x" →ₚ <{ Bool → Bool }> ; Γ`:
 the name quoted, and the type escaped back out of the brackets it belongs in.
@@ -1732,8 +1732,8 @@ example : <{ ∅ ⊢ λ x : Bool . x ⦂ Bool → Bool }> :=
 ```
 
 The derivation is small enough to write out directly: an abstraction rule
-whose premise is the variable rule, and the variable rule's premise -- that the
-extended context maps `x` to `Bool` -- holds by computation, hence `rfl`.
+whose premise is the variable rule, and the variable rule's premise — that the
+extended context maps `x` to `Bool` — holds by computation, hence `rfl`.
 
 :::dev
 The Rocq source proves this one, and the next, by `eauto`, having registered
@@ -1813,7 +1813,7 @@ example :
 
 We can also show that some terms are _not_ typable.  For example,
 we can check that there is no typing derivation assigning a type
-to the term `λx:Bool. λy:Bool. x y` -- i.e.,
+to the term `λx:Bool. λy:Bool. x y` — i.e.,
 
 ```display
 ¬ ∃ T, ∅ ⊢ λx:Bool. λy:Bool. x y ⦂ T
