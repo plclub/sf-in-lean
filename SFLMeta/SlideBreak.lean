@@ -11,7 +11,8 @@ namespace SFLMeta
 /-!
 `Block.slidebreak` marks a slide-break point. In terse HTML output it renders
 as an empty `<div class="slide-break">` (a hook for slide tooling via CSS);
-in full HTML output and in all generated `.lean` files it emits nothing. -/
+in student and solutions HTML output it is removed, and in all generated `.lean`
+files it emits nothing. -/
 block_extension Block.slidebreak where
   data := Json.null
   traverse _ _ _ := do

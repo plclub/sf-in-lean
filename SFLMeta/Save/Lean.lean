@@ -110,7 +110,7 @@ end LeanElab
 
 
 
-/-! ## Block extension that carries pre-computed teacher and student source -/
+/-! ## Block extension that carries pre-computed source variants -/
 
 namespace LeanSaved
 /--
@@ -196,10 +196,10 @@ end Save
 
 
 /-!
-`Block.leanSaved` wraps an elaborated `lean` block and records the teacher,
-student, and terse source variants computed at elaboration time, together with
+`Block.leanSaved` wraps an elaborated `lean` block and records the student,
+solutions, and terse source variants computed at elaboration time, together with
 the original block's extraction-relevant flags. Its three children are the
-teacher-, student-, and terse-rendered forms of the block; traversal keeps the
+solutions-, student-, and terse-rendered forms of the block; traversal keeps the
 one selected by the build's typed `Variant`, so the same compiled document serves
 all three builds. HTML/TeX rendering passes through to the surviving child; the
 saver checks the stored metadata to decide whether to emit the saved source into
@@ -209,8 +209,8 @@ open Save in
 block_extension Block.leanSaved (saved : Save.LeanSaved.Data) where
   data := toJson saved
   traverse _ data contents := do
-    -- Three children = still unselected: keep the teacher, student, or terse
-    -- variant (the terse build is the draft build, cf. `Block.terse`).
+    -- Three children = still unselected: keep the solutions, student, or terse
+    -- variant selected by the current typed `Variant`.
     -- One child (or anything else) = already selected; nothing to do.
     if h : contents.size = 3 then
       let some saved := LeanSaved.decode? data | return none

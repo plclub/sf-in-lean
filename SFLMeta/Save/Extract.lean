@@ -303,8 +303,9 @@ partial def walkBlocks (width : Nat) (file : String) (bs : Array (Verso.Doc.Bloc
   return buf
 
 /--
-Walk a single block, accumulating teacher and student content into `buf` for
-`file`. The bulk of the saver's logic lives here. -/
+Walk a single block, accumulating content for the student, solutions, and terse
+variants in `buf` for `file`. The bulk of the extraction walker's block-specific
+logic lives here. -/
 partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     (buf : SaveBuffers) : SaveBuffers := Id.run do
   match b with
@@ -315,10 +316,11 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     if name == ``Verso.Genre.Manual.Block.diagram then
       return buf
     if name == ``SFLMeta.Block.leanSaved then
-      -- The wrapper carries pre-computed teacher/student/terse source plus the
-      -- extraction-relevant `lean` block flags. Verso still checks and renders
-      -- the block normally; the generated project gets code, `sf_experiment`,
-      -- or `sf_expect_failure` according to `LeanSaved.Data.extractionMode`.
+      -- The wrapper carries pre-computed student, solutions, and terse source
+      -- variants plus the extraction-relevant `lean` block flags. Verso still
+      -- checks and renders the selected child normally; the generated project
+      -- gets code, `sf_experiment`, or `sf_expect_failure` according to
+      -- `LeanSaved.Data.extractionMode`.
       if let some saved := LeanSaved.decode? which.data then
         match saved.extractionMode with
         | .code =>
@@ -421,10 +423,10 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
       return buf
     if name == ``Block.devcomment then
       -- A dev note passes through as a labelled comment when its urgency makes
-      -- it shown (`devNoteShown`: `NOW`, `TODO`, or none); otherwise nothing is
-      -- emitted.  `devNoteComment` sets the note off from surrounding prose
-      -- (indented body, contiguous comment block); the body is filled 4
-      -- columns narrower to compensate for that indentation.
+      -- it shown (`devNoteShown`: `NOW`, `BeforeNextRelease`, or none);
+      -- otherwise nothing is emitted. `devNoteComment` sets the note off from
+      -- surrounding prose (indented body, contiguous comment block); the body is
+      -- filled 4 columns narrower to compensate for that indentation.
       if let some (author, urgency, year) := decodeDevData? which.data then
         if devNoteShown urgency then
           let body := String.intercalate "\n\n"

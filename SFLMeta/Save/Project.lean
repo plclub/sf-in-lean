@@ -78,9 +78,9 @@ private def writeProject (dest : System.FilePath) (toolchain : String)
 
 /--
 Run `lake build` inside `dest` and report any failure via `logError`. Used to
-verify each generated project compiles. Student builds are expected to succeed
-with `sorry` warnings only; expected-error doc examples have already been
-wrapped in `expect_failure` during extraction. -/
+verify each generated project compiles. Student and terse builds may contain
+intentional `sorry` warnings; expected-error doc examples have already been
+wrapped in `sf_expect_failure` during extraction. -/
 private def buildProject (dest : System.FilePath) (v : Variant) :
     BuildLogT IO Unit := do
   IO.println s!"Building generated {v} project at {dest}…"
