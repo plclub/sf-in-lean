@@ -600,7 +600,9 @@ partial def delabTmInner : DelabM (TSyntax `stlcTm) := do
           let t ← withAppArg delabTmInner
           `(stlcTm| [$x := $s] $t)
         else
-          match ← delab with
+          let partialSubst := e.getAppFn.constName? == some `Stlc.subst
+          match ← withOptions (fun o => if partialSubst then o.setBool `pp.notation false else o)
+                    delab with
           | `($i:ident) => `(stlcTm| $i:ident)
           | e => `(stlcTm| ~$e)
   (⟨·⟩) <$> annotateTermInfo ⟨stx.raw⟩
@@ -1768,6 +1770,12 @@ variable (x : String)
 /-- info: Stlc.Tm.var x : Tm -/
 #guard_msgs in
 #check Tm.var x
+
+variable (s : Tm)
+
+/-- info: subst x s : Tm → Tm -/
+#guard_msgs in
+#check subst x s
 ```
 :::
 
