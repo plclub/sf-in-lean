@@ -1799,10 +1799,7 @@ theorem mul_succ : ∀ n m : Nat, n * (succ m) = (n * m) + n := by
 attribute [irreducible] mul
 ```
 
-:::grade
-```
-GRADE_THEOREM 1: mul_simpl_rules
-```
+:::gradeTheorem "0.5" NatPlayground.Nat.mul_zero NatPlayground.Nat.mul_succ
 :::
 ::::
 

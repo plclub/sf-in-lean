@@ -622,9 +622,6 @@ a specific lemma is dropped here for the same reason as in the note above.
 :::
 
 ::::exercise (rating := 3) (name := "update_permute")
-:::gradeTheorem 3 "TotalMap.update_permute"
-:::
-
 ```lean
 theorem update_permute (m : TotalMap α β) (a₁ a₂ : α) (b₁ b₂ : β) (h : a₁ ≠ a₂) :
     (a₁ →ₜ b₁ ; a₂ →ₜ b₂ ; m) = (a₂ →ₜ b₂ ; a₁ →ₜ b₁ ; m) := by
@@ -639,6 +636,9 @@ theorem update_permute (m : TotalMap α β) (a₁ a₂ : α) (b₁ b₂ : β) (h
         rw [update_eq, update_eq]
       · rw [update_neq _ _ _ h₂, update_neq _ _ _ h₂, update_neq _ _ _ h₁]
 ```
+
+:::gradeTheorem 3 TotalMap.update_permute
+:::
 ::::
 
 :::dev

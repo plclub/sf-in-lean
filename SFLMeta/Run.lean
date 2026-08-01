@@ -45,10 +45,11 @@ def runVolume (vol : String) (doc : Verso.Doc.Part Manual)
       | .student => Save.emitSavedStudent vol.toUpper crossVol
       | .solutions => Save.emitSavedSolutions vol.toUpper crossVol
       | .terse => Save.emitSavedTerse vol.toUpper crossVol
+      | .grading => Save.emitSavedGrading vol.toUpper crossVol
     let config := mkConfig vol mode
     manualMain doc (options := rest) (config := config) (extraSteps := [extraStep])
   | _ =>
-    IO.eprintln "usage: sfl-<vol> <mode>  (mode: student | solutions | terse)"
+    IO.eprintln "usage: sfl-<vol> <mode>  (mode: student | solutions | terse | grading)"
     return 1
 
 end SFLMeta

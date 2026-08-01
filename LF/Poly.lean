@@ -700,13 +700,13 @@ theorem app_length {α : Type} {l₁ l₂ : List α} :
       rw [Nat.succ_add, ih]
 ```
 
-:::gradeTheorem "0.5" "app_nil_r"
+:::gradeTheorem "0.5" app_nil_r
 :::
 
-:::gradeTheorem 1 "app_assoc"
+:::gradeTheorem 1 app_assoc
 :::
 
-:::gradeTheorem "0.5" "app_length"
+:::gradeTheorem "0.5" app_length
 :::
 :::::
 
@@ -735,10 +735,10 @@ theorem rev_involutive {α : Type} (l : List α) :
       dsimp [List.nil_append, List.cons_append]
 ```
 
-:::gradeTheorem 1 "rev_app_distr"
+:::gradeTheorem 1 rev_app_distr
 :::
 
-:::gradeTheorem 1 "rev_involutive"
+:::gradeTheorem 1 rev_involutive
 :::
 :::::
 
@@ -844,7 +844,7 @@ checking your answers in Lean:
 print?
 :::::
 
-:::::exercise (rating := 2) (name := "split")
+:::::exercise (rating := 2) (name := "unzip")
 The function `unzip` goes in the other direction from {name}`zip`: it takes a
  list of pairs and returns a pair of lists.
 
@@ -867,13 +867,10 @@ theorem unzip_cons_fst {α β : Type} {l : List (α × β)} {x : α} {y : β} :
 theorem unzip_cons_snd {α β : Type} {l : List (α × β)} {x : α} {y : β} :
    (unzip ((x, y) :: l)).snd = y :: (unzip l).snd := solution!(by rfl)
 
-example : unzip [(1, false), (2, false)] = ([1, 2], [false, false]) := solution!(by rfl)
+theorem unzip_test1 : unzip [(1, false), (2, false)] = ([1, 2], [false, false]) := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 "split"
-:::
-
-:::gradeTheorem 1 "test_split"
+:::gradeTheorem "0.25" unzip_nil unzip_cons_fst unzip_cons_snd unzip_test1
 :::
 :::::
 
@@ -938,17 +935,17 @@ theorem hdError_nil {α : Type} : hdError ([] : List α) = none := solution!(by 
 theorem hdError_cons {α : Type} {head : α} {tail : List α} : hdError (head :: tail) = some head :=
   solution!(by rfl)
 
-example : hdError [1, 2] = some 1 := solution!(by rfl)
+theorem test_hdError1 : hdError [1, 2] = some 1 := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" "test_hd_error1"
+:::gradeTheorem "0.5" test_hdError1
 :::
 
 ```lean
-example : hdError [[1], [2]] = some [1] := solution!(by rfl)
+theorem test_hdError2 : hdError [[1], [2]] = some [1] := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" "test_hd_error2"
+:::gradeTheorem "0.5" test_hdError2
 :::
 :::::
 
@@ -1166,15 +1163,12 @@ and returns a list of just those that are even and greater than 7.
 abbrev filterEvenGt7 (l : List Nat) : List Nat := solution!(
   filter (fun n => n.even && n > 7) l)
 
-example : filterEvenGt7 [1, 2, 6, 9, 10, 3, 12, 8] = [10, 12, 8] := solution!(by rfl)
+theorem test_filterEvenGt7_1 : filterEvenGt7 [1, 2, 6, 9, 10, 3, 12, 8] = [10, 12, 8] := solution!(by rfl)
 
-example : filterEvenGt7 [5, 2, 6, 19, 129] = [] := solution!(by rfl)
+theorem test_filterEvenGt7_2 : filterEvenGt7 [5, 2, 6, 19, 129] = [] := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 "test_filter_even_gt7_1"
-:::
-
-:::gradeTheorem 1 "test_filter_even_gt7_2"
+:::gradeTheorem 1 test_filterEvenGt7_1 test_filterEvenGt7_2
 :::
 :::::
 
@@ -1191,17 +1185,11 @@ their order in the original list.
 abbrev partition {α : Type} (test : α → Bool) (l : List α) : List α × List α := solution!(
   (filter test l, filter (!test ·) l))
 
-example : partition (· % 2 != 0) [1, 2, 3, 4, 5] = ([1, 3, 5], [2, 4]) := solution!(by rfl)
-example : partition (fun _ => false) [5, 9, 0] = ([], [5, 9, 0]) := solution!(by rfl)
+theorem test_partition1 : partition (· % 2 != 0) [1, 2, 3, 4, 5] = ([1, 3, 5], [2, 4]) := solution!(by rfl)
+theorem test_partition2 : partition (fun _ => false) [5, 9, 0] = ([], [5, 9, 0]) := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 "partition"
-:::
-
-:::gradeTheorem 1 "test_partition1"
-:::
-
-:::gradeTheorem 1 "test_partition2"
+:::gradeTheorem "1.5" test_partition1 test_partition2
 :::
 :::::
 
@@ -1315,7 +1303,7 @@ theorem map_rev {α : Type} {β : Type} : ∀ (f : α → β) (l : List α),
      rw [rev_cons, map_cons, map_app, rev_cons, ih, map_cons, map_nil]
 ```
 
-:::gradeTheorem 3 "map_rev"
+:::gradeTheorem 3 map_rev
 :::
 :::::
 
@@ -1337,14 +1325,11 @@ def flatMap {α : Type} {β : Type} (f : α → List β) (l : List α) : List β
   | [] => []
   | h :: t => f h ++ flatMap f t)
 
-example : flatMap (fun n => [n, n, n]) [1, 5, 4]
+theorem test_flatMap : flatMap (fun n => [n, n, n]) [1, 5, 4]
   = [1, 1, 1, 5, 5, 5, 4, 4, 4] := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 "flatMap"
-:::
-
-:::gradeTheorem 1 "test_flat_map1"
+:::gradeTheorem 2 test_flatMap
 :::
 :::::
 
@@ -1618,7 +1603,7 @@ theorem fold_length_correct {α : Type} (l : List α) :
       rw [List.length_cons, fold_cons, ih]
 ```
 
-:::gradeTheorem 2 "Exercises.fold_length_correct"
+:::gradeTheorem 2 Exercises.fold_length_correct
 :::
 :::::
 
@@ -1725,10 +1710,7 @@ theorem curry_uncurry {α β γ : Type} (f : α × β → γ) {p : α × β} :
     rfl
 ```
 
-:::gradeTheorem 1 "Exercises.uncurry_curry"
-:::
-
-:::gradeTheorem 1 "Exercises.curry_uncurry"
+:::gradeTheorem 1 Exercises.uncurry_curry Exercises.curry_uncurry
 :::
 :::::
 
@@ -1885,14 +1867,11 @@ def scc (n : CNat) : CNat := solution!(
   fun (X : Type) (f : X → X) (x : X) => f (n X f x))
 
 example : scc zero = one := solution!(by rfl)
-example : scc one = two := solution!(by rfl)
-example : scc two = three := solution!(by rfl)
+theorem scc_2 : scc one = two := solution!(by rfl)
+theorem scc_3 : scc two = three := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 "Exercises.Church.scc_2"
-:::
-
-:::gradeTheorem 1 "Exercises.Church.scc_3"
+:::gradeTheorem 1 Exercises.Church.scc_2 Exercises.Church.scc_3
 :::
 :::::
 
@@ -1908,18 +1887,12 @@ Hint: the "zero" argument to a Church numeral need not be just `x`.
 def plus (n m : CNat) : CNat := solution!(
   fun (X : Type) (f : X → X) (x : X) => n X f (m X f x))
 
-example : plus zero one = one := solution!(by rfl)
-example : plus two three = plus three two := solution!(by rfl)
-example : plus (plus two two) three = plus one (plus three three) := solution!(by rfl)
+theorem plus_1 : plus zero one = one := solution!(by rfl)
+theorem plus_2 : plus two three = plus three two := solution!(by rfl)
+theorem plus_3 : plus (plus two two) three = plus one (plus three three) := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 "Exercises.Church.plus_1"
-:::
-
-:::gradeTheorem 1 "Exercises.Church.plus_2"
-:::
-
-:::gradeTheorem 1 "Exercises.Church.plus_3"
+:::gradeTheorem 1 Exercises.Church.plus_1 Exercises.Church.plus_2 Exercises.Church.plus_3
 :::
 :::::
 
@@ -1942,18 +1915,12 @@ Warning: Lean will not let you pass {name}`CNat` itself as the type `X`
 def mult (n m : CNat) : CNat := solution!(
   fun (X : Type) (f : X → X) (x : X) => n X (m X f) x)
 
-example : mult one one = one := solution!(by rfl)
-example : mult zero (plus three three) = zero := solution!(by rfl)
-example : mult two three = plus three three := solution!(by rfl)
+theorem mult_1 : mult one one = one := solution!(by rfl)
+theorem mult_2 : mult zero (plus three three) = zero := solution!(by rfl)
+theorem mult_3 : mult two three = plus three three := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 "Exercises.Church.mult_1"
-:::
-
-:::gradeTheorem 1 "Exercises.Church.mult_2"
-:::
-
-:::gradeTheorem 1 "Exercises.Church.mult_3"
+:::gradeTheorem 1 Exercises.Church.mult_1 Exercises.Church.mult_2 Exercises.Church.mult_3
 :::
 :::::
 
@@ -1970,18 +1937,12 @@ Finding the right type can be tricky.
 def exp (n m : CNat) : CNat := solution!(
   fun (X : Type) (f : X → X) (x : X) => m (X → X) (n X) f x)
 
-example : exp two two = plus two two := solution!(by rfl)
-example : exp three zero = one := solution!(by rfl)
-example : exp three two = plus (mult two (mult two two)) one := solution!(by rfl)
+theorem exp_1 : exp two two = plus two two := solution!(by rfl)
+theorem exp_2 : exp three zero = one := solution!(by rfl)
+theorem exp_3 : exp three two = plus (mult two (mult two two)) one := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 "Exercises.Church.exp_1"
-:::
-
-:::gradeTheorem 1 "Exercises.Church.exp_2"
-:::
-
-:::gradeTheorem 1 "Exercises.Church.exp_3"
+:::gradeTheorem 1 Exercises.Church.exp_1 Exercises.Church.exp_3 Exercises.Church.exp_2
 :::
 :::::
 

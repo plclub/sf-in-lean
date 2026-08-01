@@ -254,7 +254,7 @@ theorem succ_eq_add_one : ∀ n : Nat, succ n = n + one := by
     rfl
 ```
 
-:::gradeTheorem 1 "succ_eq_add_one"
+:::gradeTheorem 1 NatPlayground.Nat.succ_eq_add_one
 :::
 ::::
 
@@ -481,7 +481,7 @@ theorem zero_mul (n : Nat) :
       rfl
 ```
 
-:::gradeTheorem "0.5" "mul_zero_l"
+:::gradeTheorem "0.5" NatPlayground.Nat.zero_mul
 :::
 
 ```lean
@@ -497,7 +497,7 @@ theorem succ_add (n m : Nat) :
       rfl
 ```
 
-:::gradeTheorem "0.5" "succ_add"
+:::gradeTheorem "0.5" NatPlayground.Nat.succ_add
 :::
 :::::
 
@@ -524,7 +524,7 @@ theorem add_comm (n m : Nat) :
       rfl
 ```
 
-:::gradeTheorem "0.5" "add_comm"
+:::gradeTheorem "0.5" NatPlayground.Nat.add_comm
 :::
 
 ```lean
@@ -540,7 +540,7 @@ theorem add_assoc (n m p : Nat) :
       rfl
 ```
 
-:::gradeTheorem "0.5" "add_assoc"
+:::gradeTheorem "0.5" NatPlayground.Nat.add_assoc
 :::
 
 :::dev "Benjamin Pierce (bcpierce00)"
@@ -614,7 +614,7 @@ theorem double_add (n : Nat) : double n = n + n := by
     | succ n' ih => rw [double_succ, ih, add_succ, succ_add]
 ```
 
-:::gradeTheorem "0.5" "double_add"
+:::gradeTheorem "0.5" NatPlayground.Nat.double_add
 :::
 :::::
 
@@ -645,7 +645,7 @@ theorem even_succ (n : Nat) :
       rw [even, ih, not_involutive]
 ```
 
-:::gradeTheorem 1 "even_succ"
+:::gradeTheorem 1 NatPlayground.Nat.even_succ
 :::
 :::::
 
@@ -1032,7 +1032,7 @@ theorem mul_one (p : Nat) :
     | succ p' ih => rw [mul_succ, ih, succ_eq_add_one]
 ```
 
-:::gradeTheorem 1 "mul_one"
+:::gradeTheorem 1 NatPlayground.Nat.mul_one
 :::
 ::::
 
@@ -1049,7 +1049,7 @@ theorem mul_two (p : Nat) :
       rw [add_comm p' one, add_comm p']
 ```
 
-:::gradeTheorem 1 "mul_two"
+:::gradeTheorem 1 NatPlayground.Nat.mul_two
 :::
 ::::
 
@@ -1070,7 +1070,7 @@ theorem add_shuffle3 (n m p : Nat) :
     rw [← add_assoc, add_comm m p, add_assoc]
 ```
 
-:::gradeTheorem 1 "add_shuffle3"
+:::gradeTheorem 1 NatPlayground.Nat.add_shuffle3
 :::
 
 ```lean
@@ -1097,7 +1097,7 @@ theorem mul_comm (m n : Nat) :
       rw [mul_succ, ih, succ_mul]
 ```
 
-:::gradeTheorem 2 "mul_comm"
+:::gradeTheorem 2 NatPlayground.Nat.mul_comm
 :::
 ::::
 
@@ -1301,7 +1301,7 @@ theorem bin_to_nat_pres_incr (b : Bin) :
       rw [add_shuffle3 _ one]
 ```
 
-:::gradeTheorem 3 "bin_to_nat_pres_incr"
+:::gradeTheorem 3 NatPlayground.Nat.NatToBin.bin_to_nat_pres_incr
 :::
 :::::
 
@@ -1344,7 +1344,7 @@ theorem nat_bin_nat (n : Nat) :
       rw [natToBin_succ, bin_to_nat_pres_incr, ih, ← succ_eq_add_one]
 ```
 
-:::gradeTheorem 3 "nat_bin_nat"
+:::gradeTheorem 3 NatPlayground.Nat.NatToBin.nat_bin_nat
 :::
 :::::
 
@@ -1374,7 +1374,7 @@ theorem double_incr (n : Nat) :
     rw [two_eq_succ_one, one_eq_succ_zero, add_succ, add_succ, add_zero]
 ```
 
-:::gradeTheorem "0.5" "double_incr"
+:::gradeTheorem "0.5" NatPlayground.Nat.NatToBin.double_incr
 :::
 
 Now define a similar doubling function for {name}`Bin`.
@@ -1402,7 +1402,7 @@ Check that your function correctly doubles zero.
 theorem double_bin_zero : doubleBin .z = .z := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" "double_bin_zero"
+:::gradeTheorem "0.5" NatPlayground.Nat.NatToBin.double_bin_zero
 :::
 
 Prove this lemma, which corresponds to {name}`double_incr`.
@@ -1417,7 +1417,7 @@ theorem double_incr_bin (b : Bin) :
     | b1 n => rw [incr_b1, doubleBin_b0, doubleBin_b1, incr_b0, incr_b1, incr_b1]
 ```
 
-:::gradeTheorem 1 "double_incr_bin"
+:::gradeTheorem 1 NatPlayground.Nat.NatToBin.double_incr_bin
 :::
 :::::
 
@@ -1576,7 +1576,7 @@ theorem bin_nat_bin (b : Bin) :
       rw [natToBin_two_mul, ih]
 ```
 
-:::gradeTheorem 6 "bin_nat_bin"
+:::gradeTheorem 6 NatPlayground.Nat.NatToBin.bin_nat_bin
 :::
 :::::
 

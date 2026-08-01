@@ -8,12 +8,14 @@ inductive Variant where
   | student
   | solutions
   | terse
+  | grading
   deriving Repr, BEq, DecidableEq, Inhabited, ToJson, FromJson, Quote
 
 def Variant.toString : Variant → String
   | .student => "student"
   | .solutions => "solutions"
   | .terse => "terse"
+  | .grading => "grading"
 
 instance : ToString Variant where
   toString := Variant.toString
@@ -26,6 +28,7 @@ def fromString? : String → Option Variant
   | "student" => student
   | "solutions" => solutions
   | "terse" => terse
+  | "grading" => grading
   | _ => none
 
 def isStudent := v == .student
@@ -33,6 +36,8 @@ def isStudent := v == .student
 def isSolution := v == .solutions
 
 def isTerse := v == .terse
+
+def isGrading := v == .grading
 
 end Variant
 
@@ -46,6 +51,7 @@ structure Variants (α : Type) where
   student : α
   solutions : α
   terse : α
+  grading : α
 deriving Repr, BEq, DecidableEq, Inhabited, ToJson, FromJson
 
 instance [Quote α] : Quote (Variants α) where
@@ -53,7 +59,8 @@ instance [Quote α] : Quote (Variants α) where
     let student := quote vs.student
     let solutions := quote vs.solutions
     let terse := quote vs.terse
-    Lean.Unhygienic.run `(Variants.mk $student $solutions $terse)
+    let grading := quote vs.grading
+    Lean.Unhygienic.run `(Variants.mk $student $solutions $terse $grading)
 
 namespace Variants
 
@@ -64,11 +71,13 @@ def get (vs : Variants α) (v : Variant) : α :=
   | .student => vs.student
   | .solutions => vs.solutions
   | .terse => vs.terse
+  | .grading => vs.grading
 
 def map {β : Type} (f : α → β) (vs : Variants α) : Variants β := {
   student := f vs.student
   solutions := f vs.solutions
   terse := f vs.terse
+  grading := f vs.grading
 }
 
 instance : GetElem (Variants α) Variant α (fun _ _ => True) where
@@ -79,6 +88,7 @@ instance [HAppend α β γ] : HAppend (Variants α) (Variants β) (Variants γ) 
     student := vs1.student ++ vs2.student
     solutions := vs1.solutions ++ vs2.solutions
     terse := vs1.terse ++ vs2.terse
+    grading := vs1.grading ++ vs2.grading
   }
 
 end Variants

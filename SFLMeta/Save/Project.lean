@@ -308,5 +308,8 @@ proofs stubbed to `sorry`. -/
 def emitSavedTerse (vol : String) (crossVol : List (String × Part Manual) := []) :=
   emitSavedImpl (ExtractConfig.fromVolume vol .terse true) crossVol
 
+def emitSavedGrading (vol : String) (crossVol : List (String × Part Manual) := []) :=
+  emitSavedImpl (ExtractConfig.fromVolume vol .grading true) crossVol
+
 
 end SFLMeta.Save

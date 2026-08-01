@@ -74,7 +74,7 @@ def proseFillWidth : Nat := 75
 /-- The prose fill width for a build variant. -/
 def fillWidthFor : Variant → Nat
   | .terse => terseFillWidth
-  | .student | .solutions => proseFillWidth
+  | .student | .solutions | .grading => proseFillWidth
 /--
 Split `s` into whitespace-separated words, keeping each `` `code span` `` intact
 as a single token even when it contains spaces (so wrapping never splits one
