@@ -820,9 +820,19 @@ example : ({ "foo" ↦ true })["foo"] = true := rfl
 
 ## Partial Maps
 
+:::dev "Niklas Halonen (xhalo32)"
+We should spend some time discussing differences between the inductive approach in Lists.lean and the approach here.
+The inductive approach could be made polymorphic and proven to be equivalent with partial maps (I believe), so the point is not that the maps are extensionally different.
+A question (that I don't have an answer to) is then: what makes the new partial map better?
+:::
+
 Lastly, we define _partial maps_ on top of total maps. A partial map with elements of type `β` is simply a total map with elements of type `Option β`, whose default element is {name}`none`.
+
 :::dev "Benjamin Pierce (bcpierce00)"
 I don't understand the comment on the `inner` field...
+
+Niklas Halonen (xhalo32): This is just a technical note that discourages using `PartialMap.inner` over `PartialMap.toTotal`. We don't want both to appear in the public API.
+Compare with `MeasurableSet'` in https://github.com/leanprover-community/mathlib4/blob/1f8806b67d6f09e6d2552c031e6d3a3171016116/Mathlib/MeasureTheory/MeasurableSpace/Defs.lean#L52 which doesn't appear in the public API (it uses `MeasurableSet` instead).
 :::
 
 ```lean
