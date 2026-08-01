@@ -129,10 +129,11 @@ theorem List.elem_poly_cons [BEq α] (a b : α) (xs : List α) :
 ```
 
 As {ref "Lists"}[Lists] noted when we first used it, `==` on `Nat` comes from the `BEq` typeclass,
-and it's what {name}`List.elem_poly` uses internally wherever it writes `==`.
+and it's what {name}`List.elem_poly` uses internally wherever it writes `==`. This is done using 
+*instance implicits*, where we place a desired typeclass assumption in square bracket.
 The `[BEq α]` constraint is saying that an instance of {name}`BEq` must be provided at
 call sites for the _particular_ type `α` that is used. In the example {lean}`[0, 1].elem_poly 0`,
-this type is `Nat`, and the automatically chosen instance is {name}`Nat.beq`.
+this type is `Nat`, and the automatically chosen instance contains {name}`Nat.beq`.
 
 In the earlier version of `List.elem_poly`, `α` was fully generic, with no typeclass
 constraint — so the `==` in its body would have needed to work for _every_ type `α`, and no
