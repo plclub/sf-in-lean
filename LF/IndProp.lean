@@ -3071,7 +3071,7 @@ between every pair of natural numbers.
 inductive TotalRelation : Nat → Nat → Prop where
   -- SOLUTION
   | tot n m : TotalRelation n m
--- /SOLUTION
+  -- END SOLUTION
 
 theorem total_relation_is_total : ∀ n m, TotalRelation n m := by
   solution!
