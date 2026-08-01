@@ -36,7 +36,7 @@ $(1)-terse: $(1)-build
 $(1)-grading: $(1)-build
 	lake exe sfl-$(1) grading
 
-$(1): $(1)-student $(1)-solutions $(1)-terse
+$(1): $(1)-student $(1)-solutions $(1)-terse $(1)-grading
 
 endef
 
