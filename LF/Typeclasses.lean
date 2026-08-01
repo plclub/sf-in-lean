@@ -34,7 +34,7 @@ constraint on it:
 variable (α : Type)
 ```
 
-This lets us work with a type like {InlineLean.lean}`List α`, writing functions like
+This lets us work with a type like {lean}`List α`, writing functions like
 {name}`List.reverse` and {name}`List.length` and proofs like {name}`List.length_reverse`, which use
 only the list's structure and never inspect any particular `a : α`.
 
@@ -89,10 +89,9 @@ def List.elem_poly {α : Type} (a : α) (xs : List α) : Bool :=
 ```
 :::
 
-Lean is trying to use typeclasses to work out how `==` should behave on a value of type `α`,
-but it can't find the instance of the typeclass {name}`BEq` that it needs, since not every type can be checked for equality. As {ref "Lists"}[Lists] noted when we first used it, `==` on `Nat` comes from the `BEq` typeclass, an interface each type has to implement for itself.
-
-We could sidestep typeclasses entirely and just have the caller supply the equality test to use:
+Lean is trying to use typeclasses to work out how `==` should behave on a value of type `α`.
+We'll see exactly why shortly; for now, here's one way to sidestep the problem: have the
+caller supply the equality test to use.
 
 ```lean -keep
 def List.elem_poly_eq {α : Type} (eq : α → α → Bool) (a : α) (xs : List α) : Bool :=
@@ -104,13 +103,15 @@ def List.elem_poly_eq {α : Type} (eq : α → α → Bool) (a : α) (xs : List 
 ```
 
 This works, but it's tedious: every caller has to know, and remember to supply, the right equality
-function. Typeclasses automate this — instead of the programmer passing the function
+function.
+
+Typeclasses automate this — instead of the programmer passing the function
 explicitly, Lean searches for one and provides it on its own. We specify something we want
 Lean to search for by declaring a `class` with the needed function as a field; a `class` is like
 an interface in Java or a trait in Rust. Particular _implementations_ of that interface,
 different ones for different types, are called _instances_. Finally, we add
 the name of that class as a _typeclass constraint_ on the polymorphic variable that the
-function applies to. This directs lean to use the interface inside the function, and to
+function applies to. This directs Lean to use the interface inside the function, and to
 find and fill in the appropriate instance at call-sites to that function.
 Here is what this looks like for `List.elem_poly`:
 ```lean
@@ -127,11 +128,18 @@ theorem List.elem_poly_cons [BEq α] (a b : α) (xs : List α) :
 #eval [0, 1].elem_poly 0
 ```
 
-In sum: the `[BEq α]` argument is filled in automatically, based on whatever `α` the caller
-uses, and it's
-what {name}`List.elem_poly` uses internally wherever it writes `==`. This is the *ad hoc
-polymorphism* we mentioned above: {name}`List.elem_poly` isn't generic over every type, only over
-types that support `==`. We'll see exactly how `[BEq α]` gets filled in below, starting with how
+As {ref "Lists"}[Lists] noted when we first used it, `==` on `Nat` comes from the `BEq` typeclass,
+and it's what {name}`List.elem_poly` uses internally wherever it writes `==`.
+The `[BEq α]` constraint is saying that an instance of {name}`BEq` must be provided at
+call sites for the _particular_ type `α` that is used. In the example {lean}`[0, 1].elem_poly 0`,
+this type is `Nat`, and the automatically chosen instance is {name}`Nat.beq`.
+
+In the earlier version of `List.elem_poly`, `α` was fully generic, with no typeclass
+constraint — so the `==` in its body would have needed to work for _every_ type `α`, and no
+single `BEq` instance can do that. That's why Lean's search failed.
+
+Now it is time to dig into the details of what we have seen so far.
+We'll see exactly how `[BEq α]` gets filled in below, starting with how
 to define a typeclass in the first place.
 
 # Defining Your Own Typeclasses
@@ -214,8 +222,8 @@ set_option pp.all true in
 example : HasOne.one = (-1 : Int) := rfl
 ```
 
-which reveals {InlineLean.lean}`@HasOne.one Nat instHasOneNat` and
-{InlineLean.lean}`@HasOne.one Int instHasOneInt` on the right-hand side of each equality. The
+which reveals {lean}`@HasOne.one Nat instHasOneNat` and
+{lean}`@HasOne.one Int instHasOneInt` on the right-hand side of each equality. The
 `#synth` command runs the same search directly:
 
 ```lean (name := HasOne)
@@ -266,7 +274,7 @@ instance (priority := low) : BEq Nat where
 ```
 
 This is the instance Lean supplies for `[BEq α]` when {name}`List.elem_poly` is called on a
-{InlineLean.lean}`List Nat` — no different from Lean choosing {name}`instHasOneNat` for
+{lean}`List Nat` — no different from Lean choosing {name}`instHasOneNat` for
 {name}`HasOne.one` earlier.
 
 ::::exercise (rating := 1) (name := "List.elem_poly_eq_elem_nat")
@@ -1106,7 +1114,7 @@ theorem isEven_succ (n : Nat) : isEven (n + 1) = ! isEven n := by
 ```
 
 We've seen two different ways of expressing logical claims in Lean: with booleans (of type
-{name}`Bool`), and with propositions (of type {InlineLean.lean}`Prop`).
+{name}`Bool`), and with propositions (of type {lean}`Prop`).
 
 Here are the key differences between `Bool` and `Prop`:
 
