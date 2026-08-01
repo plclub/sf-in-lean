@@ -2575,18 +2575,6 @@ Now state and prove a theorem `negation_fn_applied_twice` similar
 to the previous one but where the hypothesis says that the
 function `f` has the property that `f x = !x`.
 
-:::dev "Claude" NOW
-Rendering bug (all three build products look wrong). This exercise wraps its
-*entire* theorem in the `-- SOLUTION`/`-- END SOLUTION` comment-marker idiom,
-which the Verso HTML build does not process (only the `solution!` tactic is
-handled). Result: in *student* and *terse* the code block renders empty
-with a spurious `unexpected end of input` error and a doubled `-- FILL IN
-HERE`; in *solutions* the theorem is shown but the literal `-- SOLUTION` /
-`-- END SOLUTION` comment lines leak into the displayed code. (The generated
-`.lean` files are correct — this is purely an HTML-rendering gap.) Fix by
-rewriting with the `solution!` tactic, as the neighbouring
-`identity_fn_applied_twice` exercise does.
-:::
 ```lean
 -- SOLUTION
 theorem negation_fn_applied_twice : ∀ f : Bool → Bool,
