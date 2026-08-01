@@ -7,6 +7,7 @@ import SFLMeta.DisplayMath
 import SFLMeta.Quiz
 import SFLMeta.Terse
 import SFLMeta.SlideBreak
+import SFLMeta.Grade
 
 import SFLMeta.Save.SourceRewrite
 import SFLMeta.Save.Lean
@@ -434,6 +435,10 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
           return buf.appendBoth file
             (devNoteComment (devNoteLabel author urgency year) body)
       return buf
+    if name == ``Block.gradeTheorem then
+      let ⟨points, names⟩ := decodeGradeTheoremData which.data
+      let names := " ".intercalate (names.map Name.toString).toList
+      return buf.appendBoth file (s!"attribute [autogradedProof {points}] {names}\n\n") -- TODO this is only needed in grading version
     -- Unknown extension block: recurse into children as a best-effort.
     -- NB: :::instructors blocks carry no children (their bodies are dropped at
     -- elaboration), so this recursion is a no-op for them.
@@ -493,6 +498,7 @@ def walkOuter (width : Nat) (vol : String) (text : Part Manual) (buf : SaveBuffe
     buf := buf.appendBoth rootFile s!"import {chapterModule vol p}\n"
   for p in subParts do
     let chapterFile := chapterPath vol p
+    buf := buf.appendBoth chapterFile s!"import AutograderLib\n" -- TODO this is only needed in grading version
     buf := buf.appendBoth chapterFile s!"import {supportModuleName vol}\n\n"
     buf := walkSection width 1 chapterFile p buf
   return buf

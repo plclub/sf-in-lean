@@ -418,13 +418,13 @@ def nand (b1 : MyBool) (b2 : MyBool) : MyBool
   | MyBool.true => not b2
   | MyBool.false => MyBool.true)
 
-example : nand MyBool.true  MyBool.false = MyBool.true  := solution!(by rfl)
-example : nand MyBool.false MyBool.false = MyBool.true  := solution!(by rfl)
-example : nand MyBool.false MyBool.true  = MyBool.true  := solution!(by rfl)
+theorem nand_test1 : nand MyBool.true  MyBool.false = MyBool.true  := solution!(by rfl)
+theorem nand_test2 : nand MyBool.false MyBool.false = MyBool.true  := solution!(by rfl)
+theorem nand_test3 : nand MyBool.false MyBool.true  = MyBool.true  := solution!(by rfl)
 theorem nand_test4 : nand MyBool.true  MyBool.true  = MyBool.false := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 "nand_test4"
+:::gradeTheorem "0.25" MyBool.nand_test1 MyBool.nand_test2 MyBool.nand_test3 MyBool.nand_test4
 :::
 ::::
 
@@ -437,13 +437,13 @@ otherwise.
 def and3 (b1 : MyBool) (b2 : MyBool) (b3 : MyBool) : MyBool
   := solution!(and b1 (and b2 b3))
 
-example : and3 MyBool.true  MyBool.true  MyBool.true  = MyBool.true  := solution!(by rfl)
-example : and3 MyBool.false MyBool.true  MyBool.true  = MyBool.false := solution!(by rfl)
-example : and3 MyBool.true  MyBool.false MyBool.true  = MyBool.false := solution!(by rfl)
+theorem and3_test1 : and3 MyBool.true  MyBool.true  MyBool.true  = MyBool.true  := solution!(by rfl)
+theorem and3_test2 : and3 MyBool.false MyBool.true  MyBool.true  = MyBool.false := solution!(by rfl)
+theorem and3_test3 : and3 MyBool.true  MyBool.false MyBool.true  = MyBool.false := solution!(by rfl)
 theorem and3_test4 : and3 MyBool.true  MyBool.true  MyBool.false = MyBool.false := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 "and3_test4"
+:::gradeTheorem "0.25" MyBool.and3_test1 MyBool.and3_test2 MyBool.and3_test3 MyBool.and3_test4
 :::
 ::::
 
@@ -592,7 +592,7 @@ theorem false_or : ∀ (b : MyBool), (MyBool.false || b) = b := by
     rfl
 ```
 
-:::gradeTheorem 1 "false_or"
+:::gradeTheorem 1 MyBool.false_or
 :::
 ::::
 
@@ -853,9 +853,7 @@ theorem is_weekend_test1 : is_weekend Day.sunday = true := solution!(by rfl)
 theorem is_weekend_test2 : is_weekend Day.friday = false := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" "is_weekend_test1"
-:::
-:::gradeTheorem "0.5" "is_weekend_test2"
+:::gradeTheorem "0.5" is_weekend_test1 is_weekend_test2
 :::
 ::::
 
@@ -890,13 +888,7 @@ theorem is_inversion_test4 : is_inversion (Color.primary RGB.green) (Color.prima
   solution!(by rfl)
 ```
 
-:::gradeTheorem "0.25" "is_inversion_test1"
-:::
-:::gradeTheorem "0.25" "is_inversion_test2"
-:::
-:::gradeTheorem "0.25" "is_inversion_test3"
-:::
-:::gradeTheorem "0.25" "is_inversion_test4"
+:::gradeTheorem "0.25" is_inversion_test1 is_inversion_test2 is_inversion_test3 is_inversion_test4
 :::
 ::::
 
@@ -1865,15 +1857,7 @@ theorem two_mul_two : (two * two : Nat) = four := by
     rfl
 ```
 
-:::gradeTheorem "0.4" "zero_add_one"
-:::
-:::gradeTheorem "0.4" "one_add_one"
-:::
-:::gradeTheorem "0.4" "zero_mul_two"
-:::
-:::gradeTheorem "0.4" "one_mul_two"
-:::
-:::gradeTheorem "0.4" "two_mul_two"
+:::gradeTheorem "0.4" NatPlayground.Nat.zero_add_one NatPlayground.Nat.one_add_one NatPlayground.Nat.zero_mul_two NatPlayground.Nat.one_mul_two NatPlayground.Nat.two_mul_two
 :::
 ::::
 
@@ -1952,7 +1936,7 @@ theorem blt_test3 : blt four two = false := solution!(by rfl)
 attribute [irreducible] blt ble
 ```
 
-:::gradeTheorem 1 "blt_test3"
+:::gradeTheorem 1 NatPlayground.Nat.blt_test3
 :::
 ::::
 
@@ -2042,7 +2026,7 @@ theorem add_id_exercise : ∀ n m o : Nat,
     rfl
 ```
 
-:::gradeTheorem 1 "add_id_exercise"
+:::gradeTheorem 1 NatPlayground.Nat.add_id_exercise
 :::
 ::::
 
@@ -2334,7 +2318,7 @@ theorem or_false_true : ∀ b : Bool,
     exact h
 ```
 
-:::gradeTheorem 2 "or_false_true"
+:::gradeTheorem 2 NatPlayground.Nat.or_false_true
 :::
 ::::
 
@@ -2348,7 +2332,7 @@ theorem zero_neb_add_one : ∀ n : Nat,
     case succ n' => rewrite [zero_succ_beq_false]; rfl
 ```
 
-:::gradeTheorem 1 "zero_neb_add_one"
+:::gradeTheorem 1 NatPlayground.Nat.zero_neb_add_one
 :::
 ::::
 
@@ -2526,17 +2510,7 @@ theorem binToNat_test3 : binToNat (.b0 (.b0 (.b1 .z))) = four := solution!(by
 attribute [irreducible] incr binToNat
 ```
 
-:::gradeTheorem "0.5" "incr_test1"
-:::
-:::gradeTheorem "0.5" "incr_test2"
-:::
-:::gradeTheorem "0.5" "incr_test3"
-:::
-:::gradeTheorem "0.5" "binToNat_test1"
-:::
-:::gradeTheorem "0.5" "binToNat_test2"
-:::
-:::gradeTheorem "0.5" "binToNat_test3"
+:::gradeTheorem "0.5" NatPlayground.Nat.incr_test1 NatPlayground.Nat.incr_test2 NatPlayground.Nat.incr_test3 NatPlayground.Nat.binToNat_test1 NatPlayground.Nat.binToNat_test2 NatPlayground.Nat.binToNat_test3
 :::
 ::::
 
@@ -2576,7 +2550,7 @@ theorem identity_fn_applied_twice : ∀ f : Bool → Bool,
     rfl
 ```
 
-:::gradeTheorem 1 "identity_fn_applied_twice"
+:::gradeTheorem 1 NatPlayground.identity_fn_applied_twice
 :::
 ::::
 
@@ -2628,7 +2602,7 @@ theorem and_eq_or : ∀ b c : Bool, (b && c) = (b || c) → b = c := by
       rfl
 ```
 
-:::gradeTheorem 3 "and_eq_or"
+:::gradeTheorem 3 NatPlayground.and_eq_or
 :::
 ::::
 
@@ -2765,7 +2739,7 @@ theorem letterComparison_Eq : ∀ l : Letter,
     intro l; cases l <;> rfl
 ```
 
-:::gradeTheorem 1 "letterComparison_Eq"
+:::gradeTheorem 1 NatPlayground.LateDays.letterComparison_Eq
 :::
 ::::
 
@@ -2799,13 +2773,7 @@ theorem gradeComparison_test3 : gradeComparison ⟨F, plus⟩ ⟨F, plus⟩ = eq
 theorem gradeComparison_test4 : gradeComparison ⟨B, minus⟩ ⟨C, plus⟩ = gt := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" "gradeComparison_test1"
-:::
-:::gradeTheorem "0.5" "gradeComparison_test2"
-:::
-:::gradeTheorem "0.5" "gradeComparison_test3"
-:::
-:::gradeTheorem "0.5" "gradeComparison_test4"
+:::gradeTheorem "0.5" NatPlayground.LateDays.gradeComparison_test1 NatPlayground.LateDays.gradeComparison_test2 NatPlayground.LateDays.gradeComparison_test3 NatPlayground.LateDays.gradeComparison_test4
 :::
 ::::
 
@@ -2847,7 +2815,7 @@ theorem lowerLetter_lowers : ∀ l : Letter,
     | F => exact h
 ```
 
-:::gradeTheorem 2 "lowerLetter_lowers"
+:::gradeTheorem 2 NatPlayground.LateDays.lowerLetter_lowers
 :::
 ::::
 
@@ -2877,9 +2845,7 @@ example : lowerGrade (lowerGrade (lowerGrade ⟨B, minus⟩)) = ⟨C, minus⟩ :
 theorem lowerGrade_F_minus : lowerGrade ⟨F, minus⟩ = ⟨F, minus⟩ := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.25" "lowerGrade_A_plus"
-:::
-:::gradeTheorem "0.25" "lowerGrade_F_minus"
+:::gradeTheorem "0.25" NatPlayground.LateDays.lowerGrade_A_plus NatPlayground.LateDays.lowerGrade_F_minus
 :::
 ::::
 
@@ -2933,7 +2899,7 @@ example : natural ≠ minus := by
 ```
 :::
 
-:::gradeTheorem 3 "lowerGrade_lowers"
+:::gradeTheorem 3 NatPlayground.LateDays.lowerGrade_lowers
 :::
 ::::
 
@@ -2965,7 +2931,7 @@ theorem no_penalty_for_mostly_on_time : ∀ (lateDays : NatPlayground.Nat) (g : 
     rewrite [h]; rfl
 ```
 
-:::gradeTheorem 2 "no_penalty_for_mostly_on_time"
+:::gradeTheorem 2 NatPlayground.LateDays.no_penalty_for_mostly_on_time
 :::
 ::::
 
@@ -2981,7 +2947,7 @@ theorem grade_lowered_once : ∀ (lateDays : NatPlayground.Nat) (g : Grade),
     rewrite [h9, h17]; rfl
 ```
 
-:::gradeTheorem 2 "grade_lowered_once"
+:::gradeTheorem 2 NatPlayground.LateDays.grade_lowered_once
 :::
 ::::
 

@@ -38,14 +38,14 @@ name of the theorem to grade, both positional (`:::gradeTheorem 1 "double_add"`)
 Points are kept as a *string* so fractional values (`0.5`, `0.25`) survive
 exactly; write an integer bare (`1`) and a fraction quoted (`"0.5"`). -/
 structure GradeTheoremConfig where
-  /-- Points awarded for the theorem, as written (`"1"`, `"0.5"`). -/
+  /-- Points awarded for the theorem, as written (`1`, `"0.5"`). -/
   points : String
-  /-- The name of the graded theorem. -/
-  name : String
+  /-- The names of the graded theorems. -/
+  names : List Name
 deriving Repr
 
 section
-variable [Monad m] [MonadError m]
+variable [Monad m] [MonadError m] [MonadLiftT CoreM m]
 
 /-- A point value written either bare as a natural-number literal (`1`) or, for
 a fractional value, as a quoted string (`"0.5"`); yields the value's text. -/
@@ -57,10 +57,12 @@ def ValDesc.pointsText : ValDesc m String where
     | .str s => Pure.pure s.getString
     | other => throwError "Expected a point value, got {toMessageData other}"
 
-/-- Argument parser for `GradeTheoremConfig`: `points` then `name`, positional. -/
+/-- Argument parser for `GradeTheoremConfig` -/
 def GradeTheoremConfig.parse : ArgParse m GradeTheoremConfig :=
   GradeTheoremConfig.mk
-    <$> .positional `points ValDesc.pointsText <*> .positional `name .string
+    <$> .positional `points ValDesc.pointsText <*> many1 (.positional `name .resolvedName)
+where
+  many1 p := (· :: ·) <$> p <*> .many p
 
 instance : FromArgs GradeTheoremConfig m := ⟨GradeTheoremConfig.parse⟩
 
@@ -70,8 +72,8 @@ end
 directive as structured `(points, name)` data.  A noop like `Block.grade`:
 rendered empty and dropped at elaboration; the spec survives verbatim in the
 `…Verso.lean` source for later autograding. -/
-block_extension Block.gradeTheorem (points : String) (name : Name) where
-  data := Json.arr #[.str points, .str name.toString]
+block_extension Block.gradeTheorem (points : String) (names : List Name) where
+  data := Json.arr #[.str points, .arr <| (names.map (Json.str ∘ Name.toString)).toArray]
   traverse _ _ _ := pure none
   toHtml := some fun _ _ _ _ _ => pure .empty
   toTeX := none
@@ -81,12 +83,16 @@ block_extension Block.gradeTheorem (points : String) (name : Name) where
 def gradeTheorem : DirectiveExpanderOf GradeTheoremConfig
   | cfg, _contents => do
     ``(Verso.Doc.Block.other
-        (SFLMeta.Block.gradeTheorem $(quote cfg.points) $(quote cfg.name.toName)) #[])
+        (SFLMeta.Block.gradeTheorem $(quote cfg.points) $(quote cfg.names)) #[])
 
-def decodeGradeTheoremData (data : Json) : String × Name :=
+def decodeGradeTheoremData (data : Json) : String × Array Name :=
   match data with
-  | .arr #[Json.str points, Json.str name] =>
-    (points, name.toName)
+  | .arr #[Json.str points, Json.arr names] => (
+      points,
+      names.map fun
+        | .str s => s.toName
+        | _ => unreachable!
+    )
   | _ => unreachable!
 
 end SFLMeta

@@ -33,7 +33,7 @@ private def lakefileTemplate (vol : String) (extraLibs : Array String)
   -- `lean_lib` already covers it, and Lake rejects a duplicate target.
   let extra := (extraLibs.filter (· != vol)).foldl (init := "") fun acc l =>
     acc ++ "\n[[lean_lib]]\nname = \"" ++ l ++ "\"\n"
-  let reqs := pkgRequires.foldl (init := "") fun acc (name, url, rev) =>
+  let reqs := (pkgRequires.push ("autograder", "https://github.com/plclub/lean4-autograder-main", "bump-4-32-0")).foldl (init := "") fun acc (name, url, rev) =>
     acc ++ "\n[[require]]\nname = \"" ++ name ++ "\"\ngit = \"" ++ url ++
       "\"\nrev = \"" ++ rev ++ "\"\n"
   "name = \"" ++ vol.toLower ++ "-extracted\"\n" ++
@@ -229,6 +229,7 @@ private def emitSavedImpl (config : ExtractConfig)
     -- verbatim bundle; its prefix becomes an extra `lean_lib` (see `extraLibs`).
     for (pre, part) in crossVol do
       let chFile := chapterPath pre part
+      buf := buf.appendBoth chFile "import AutograderLib\n" -- TODO this is only needed in grading version
       buf := buf.appendBoth chFile s!"import {supportModuleName config.modPrefix}\n\n"
       buf := walkSection width 1 chFile part buf
     let toolchain ← (IO.FS.readFile "lean-toolchain").toBaseIO >>= fun
