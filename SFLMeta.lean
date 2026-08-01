@@ -4,6 +4,7 @@ import Batteries.CodeAction
 import SFLMeta.Bnf
 import SFLMeta.Comment
 import SFLMeta.Details
+import SFLMeta.DisplayMath
 import SFLMeta.Epigraph
 import SFLMeta.Exercise
 import SFLMeta.Grade

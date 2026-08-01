@@ -156,17 +156,18 @@ def exercise : DirectiveExpanderOf ExerciseConfig
 
 /-! ## `solution!` marker macros and source-range registry
 
-A `solution!(…)` wraps a term that should be elaborated normally in the teacher
-build, but eliminated by the saver when emitting the student-side `.lean` file
-(the entire `solution!(…)` invocation is replaced with `sorry`). The same
-`solution!(…)` form works for tactic sequences inside a `by` block.
+A `solution!(…)` wraps a term that is elaborated normally in the solutions
+build, but replaced by `sorry` in the student and terse source variants emitted
+by the saver. The teacher/solutions variant removes only the `solution!` marker
+while retaining and checking the wrapped term. The same `solution!(…)` form
+works for tactic sequences inside a `by` block.
 
 The macros are *elaborators* rather than plain `macro_rules`: as a side effect
 of running, each one registers the source range of its invocation (the whole
 `solution!(…)` and just the `solution!` keyword atom) in an `IO.Ref`. The
 project-local `lean` code-block expander snapshots this ref around its call to
 the upstream Lean elaborator and uses the resulting ranges to compute the
-teacher and student source variants. -/
+teacher/solutions, student, and terse source variants. -/
 
 structure Replacement where
   range : Syntax.Range
