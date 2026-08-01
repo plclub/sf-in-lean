@@ -34,18 +34,17 @@ variable (α : Type)
 ```
 
 This lets us work with a type like {InlineLean.lean}`List α`, writing functions like
-{name}`List.reverse` and {name}`List.length`, and proofs like {name}`List.length_reverse`, that use
+{name}`List.reverse` and {name}`List.length` and proofs like {name}`List.length_reverse`, which use
 only the list's structure and never inspect any particular `a : α`.
 
-Sometimes, though, we want less freedom: rather than `α` being completely generic, we want to
+Sometimes, though, we want less freedom: rather than leaving `α` completely generic, we want to
 partially specify its behavior. In Lean, this is done through a form of "ad hoc polymorphism" called
-*typeclasses*. The concept originated in Haskell, and is analogous to features you may know from
+*typeclasses*. The concept originated in Haskell and is analogous to features you may know from
 other languages, such as traits in Rust.
 
 # Why We Need Typeclasses
 
-Consider the following function, which checks whether a natural number occurs in a list of natural
-numbers:
+Consider the following function, which checks whether a natural number occurs in a list:
 
 ```lean
 @[irreducible]
@@ -69,7 +68,7 @@ theorem List.elem_nat_cons (a b : Nat) (xs : List Nat) :
 ```
 
 What if we want this to work for lists of *any* element type, not just `Nat`? Parametric
-polymorphism suggests simply replacing `Nat` with a type variable `α` — but that produces a puzzling
+polymorphism suggests simply replacing `Nat` with a type variable `α`, but that produces a puzzling
 error:
 
 :::dev
@@ -92,12 +91,10 @@ def List.elem_poly {α : Type} (a : α) (xs : List α) : Bool :=
 ```
 :::
 
-Lean can't find a needed instance of the typeclass {name}`BEq`. This is Lean trying to use
-typeclasses to work out how `==` should behave on a value of unspecified type `α` — not every type
-gets `==` for free. As {ref "Lists"}[Lists] noted when we first used it, `==` on `Nat` comes from
-the `BEq` typeclass, an interface each type has to implement for itself.
+Lean is trying to use typeclasses to work out how `==` should behave on a value of type `α`, 
+but it can't find the instance of the typeclass {name}`BEq` that it needs, since not every type can be checked for equality. As {ref "Lists"}[Lists] noted when we first used it, `==` on `Nat` comes from the `BEq` typeclass, an interface each type has to implement for itself.
 
-We could sidestep typeclasses entirely, and just have the caller supply the equality test to use:
+We could sidestep typeclasses entirely and just have the caller supply the equality test to use:
 
 ```lean -keep
 def List.elem_poly {α : Type} (eq : α → α → Bool) (a : α) (xs : List α) : Bool :=
@@ -131,7 +128,7 @@ theorem List.elem_poly_cons [BEq α] (a b : α) (xs : List α) :
 The `[BEq α]` argument is filled in automatically, based on whatever `α` the caller uses, and it's
 what {name}`List.elem_poly` uses internally wherever it writes `==`. This is the *ad hoc
 polymorphism* we mentioned above: {name}`List.elem_poly` isn't generic over every type, only over
-types that support `==`. We'll see exactly how `[BEq α]` gets filled in below — starting with how
+types that support `==`. We'll see exactly how `[BEq α]` gets filled in below, starting with how
 to define a typeclass in the first place.
 
 # Defining Your Own Typeclasses
@@ -147,7 +144,7 @@ structure HasOneStruct (α : Type) where
   one : α
 ```
 
-A value of {InlineLean.lean}`HasOneStruct Nat`, such as {InlineLean.lean}`HasOneStruct.mk (1 : Nat)`,
+A value of {lean}`HasOneStruct Nat`, such as {lean}`HasOneStruct.mk (1 : Nat)`,
 witnesses that `Nat` is inhabited: it contains an element, namely `1`. But `HasOneStruct Nat` is
 just a wrapper around a `Nat`, the same way {InlineLean.lean}`List Nat` is — nothing makes Lean
 produce that witness *automatically*, the way it found a `BEq Nat` instance for us above.
