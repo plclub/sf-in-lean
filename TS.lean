@@ -6,6 +6,7 @@ import TS.Intro
 import TS.Slang
 import TS.Smallstep
 import TS.Types
+import TS.Stlc
 
 import VersoManual
 
@@ -16,3 +17,4 @@ open Verso Genre Manual
 {include TS.Slang}
 {include TS.Smallstep}
 {include TS.Types}
+{include TS.Stlc}
