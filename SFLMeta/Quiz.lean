@@ -87,11 +87,11 @@ def answer : DirectiveExpanderOf Unit
 
 The uniform quiz-answer block.  Unlike the old `:::answer`/`:::instructors`
 quiz-answer conventions (which dropped the answer from every build), a
-`:::quizSolution` is *shown in all build products*: its body is elaborated and
-kept through traversal, so it reaches the HTML book and every generated `.lean`
-file.  In HTML it renders as a native disclosure widget — a "Show solution"
-button that reveals the answer when clicked — so the answer is present but not
-spoiling the quiz.  The generated `.lean` files carry it as a labelled comment. -/
+`:::quizSolution` is kept through traversal for HTML and TeX rendering. In HTML
+it renders as a native disclosure widget — a "Show solution" button that reveals
+the answer when clicked — so the answer is present but not spoiling the quiz. In
+TeX it emits a solution paragraph. The saver omits it from every generated
+`.lean` file, so quiz answers are not included in extracted source. -/
 
 block_extension Block.quizSolution where
   data := Json.null
@@ -140,10 +140,10 @@ details.sf-quiz-solution > .sf-quiz-solution-body {
 "##
   ]
 
-/-- A `:::quizSolution` directive holds the answer to a quiz.  It is a real
-container (its body is elaborated and kept in every build): shown as a
-click-to-reveal disclosure in HTML and as a labelled comment in the generated
-`.lean` files. -/
+/-- A `:::quizSolution` directive holds the answer to a quiz. Its body is
+elaborated and retained for HTML and TeX rendering: HTML uses a click-to-reveal
+disclosure and TeX emits a solution paragraph. The saver omits it from generated
+0`.lean` files. -/
 @[directive]
 def quizSolution : DirectiveExpanderOf Unit
   | _, contents => do

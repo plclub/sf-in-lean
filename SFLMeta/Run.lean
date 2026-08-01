@@ -19,7 +19,6 @@ def mkConfig (vol mode : String) : RenderConfig where
   emitHtmlMulti := .immediately
   htmlDepth := 2
   extraCss := {SFLMeta.sfTheme}
-  draft := mode == "terse"
   destination := s!"_out/{vol}/{mode}"
 
 /-- Build one volume in one mode.  Each per-volume executable (`sfl-lf`,
@@ -36,15 +35,18 @@ their standalone `.lean` is extracted, so they are handed to the saver as
 def runVolume (vol : String) (doc : Verso.Doc.Part Manual)
     (crossVol : List (String × Verso.Doc.Part Manual) := []) (args : List String) : IO UInt32 := do
   match args with
-  | mode :: rest =>
-    let showSols := mode == "solutions"
-    Save.showSolutions.set showSols
-    let extraSteps :=
-      if showSols then [Save.emitSavedSolutions vol.toUpper crossVol]
-      else if mode == "terse" then [Save.emitSavedTerse vol.toUpper crossVol]
-      else [Save.emitSavedStudent vol.toUpper crossVol]
+  | mode :: rest => do
+    let some variant := Variant.fromString? mode
+      | IO.eprintln s!"invalid mode: {mode}"
+        IO.eprintln "mode must be student, solutions, or terse"
+        return 1
+    setCurrVariant variant
+    let extraStep := match variant with
+      | .student => Save.emitSavedStudent vol.toUpper crossVol
+      | .solutions => Save.emitSavedSolutions vol.toUpper crossVol
+      | .terse => Save.emitSavedTerse vol.toUpper crossVol
     let config := mkConfig vol mode
-    manualMain doc (options := rest) (config := config) (extraSteps := extraSteps)
+    manualMain doc (options := rest) (config := config) (extraSteps := [extraStep])
   | _ =>
     IO.eprintln "usage: sfl-<vol> <mode>  (mode: student | solutions | terse)"
     return 1
