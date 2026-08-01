@@ -26,64 +26,141 @@ htmlSplit := .never
 file := "Typeclasses"
 %%%
 
-
-So far we have discussed *parametric polymorphism*, where in Lean we can declare a type variable
+Chapter {ref "Poly"}[Poly] introduced *parametric polymorphism*, declaring a type variable with no
+constraint on it:
 
 ```lean
 variable (α : Type)
 ```
 
-without any further information about the details of the type `α`. Here we are able to work
-with a type like {InlineLean.lean}`List α`, and can write functions like {name}`List.reverse` or
-{name}`List.length` that only operate on the structure of a list independently of its contents.
-Along with these we have corresponding proofs like {name}`List.length_reverse` that are similarly
-structural in nature.
+This lets us work with a type like {InlineLean.lean}`List α`, writing functions like
+{name}`List.reverse` and {name}`List.length`, and proofs like {name}`List.length_reverse`, that use
+only the list's structure and never inspect any particular `a : α`.
 
-This is somewhat limiting, as we cannot inspect or non-trivially use any particular `a : α`. What we
-might want in some situations rather than `α` being completely generic is to partially specify its
-behavior. In Lean, this happens through a form of "ad hoc polymorphism" called *typeclasses*. This
-concept originated in the Haskell programming language, and is analogous to features you may be
-familiar with in other languages such as traits in Rust.
+Sometimes, though, we want less freedom: rather than `α` being completely generic, we want to
+partially specify its behavior. In Lean, this is done through a form of "ad hoc polymorphism" called
+*typeclasses*. The concept originated in Haskell, and is analogous to features you may know from
+other languages, such as traits in Rust.
 
-# First Example: Inhabited Types
+# Why We Need Typeclasses
 
-Suppose we wanted to specify that a type has at least one inhabitant — i.e.,
-that it is not empty. We have previously seen `structure`, which would allow us to express
-this as
+Consider the following function, which checks whether a natural number occurs in a list of natural
+numbers:
+
+```lean
+@[irreducible]
+def List.elem_nat (a : Nat) (xs : List Nat) : Bool :=
+  match xs with
+  | [] => false
+  | b :: tl => bif a == b then true else elem_nat a tl
+
+unseal List.elem_nat in
+theorem List.elem_nat_nil (a : Nat) : [].elem_nat a = false := rfl
+
+unseal List.elem_nat in
+theorem List.elem_nat_cons (a b : Nat) (xs : List Nat) :
+    (b :: xs).elem_nat a = bif a == b then true else elem_nat a xs := rfl
+```
+
+```lean
+#eval [0, 1].elem_nat 0
+#eval [0, 1].elem_nat 1
+#eval [0, 1].elem_nat 2
+```
+
+What if we want this to work for lists of *any* element type, not just `Nat`? Parametric
+polymorphism suggests simply replacing `Nat` with a type variable `α` — but that produces a puzzling
+error:
+
+:::dev
+@dsainati - The Verso compilation is not actually removing this from the generated file despite th e
+-keep flag. It is, however, stripping the message guard, so this results in an error. Once
+we figure out how we are handling these cases, uncomment this.
+
+```lean -keep
+/--
+error: failed to synthesize instance of type class
+  BEq α
+
+Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
+-/
+#guard_msgs in
+def List.elem_poly {α : Type} (a : α) (xs : List α) : Bool :=
+  match xs with
+  | [] => false
+  | b :: tl => bif a == b then true else elem_poly a tl
+```
+:::
+
+Lean can't find a needed instance of the typeclass {name}`BEq`. This is Lean trying to use
+typeclasses to work out how `==` should behave on a value of unspecified type `α` — not every type
+gets `==` for free. As {ref "Lists"}[Lists] noted when we first used it, `==` on `Nat` comes from
+the `BEq` typeclass, an interface each type has to implement for itself.
+
+We could sidestep typeclasses entirely, and just have the caller supply the equality test to use:
+
+```lean -keep
+def List.elem_poly {α : Type} (eq : α → α → Bool) (a : α) (xs : List α) : Bool :=
+  match xs with
+  | [] => false
+  | b :: tl => bif eq a b then true else elem_poly eq a tl
+
+#eval [0, 1].elem_poly Nat.beq 0
+```
+
+This works, but it's tedious: every caller has to know, and remember to supply, the right equality
+function. Typeclasses automate exactly this — instead of the programmer passing the function
+explicitly, Lean searches for one on its own. We specify what to search for by declaring a `class`
+with the needed function as a field. Here is where we end up:
+
+```lean
+@[irreducible]
+def List.elem_poly {α : Type} [BEq α] (a : α) (xs : List α) : Bool :=
+  match xs with
+  | [] => false
+  | b :: tl => bif a == b then true else elem_poly a tl
+
+unseal List.elem_poly in
+theorem List.elem_poly_nil [BEq α] (a : α) : [].elem_poly a = false := rfl
+
+unseal List.elem_poly in
+theorem List.elem_poly_cons [BEq α] (a b : α) (xs : List α) :
+    (b :: xs).elem_poly a = bif a == b then true else elem_poly a xs := rfl
+```
+
+The `[BEq α]` argument is filled in automatically, based on whatever `α` the caller uses, and it's
+what {name}`List.elem_poly` uses internally wherever it writes `==`. This is the *ad hoc
+polymorphism* we mentioned above: {name}`List.elem_poly` isn't generic over every type, only over
+types that support `==`. We'll see exactly how `[BEq α]` gets filled in below — starting with how
+to define a typeclass in the first place.
+
+# Defining Your Own Typeclasses
+
+`BEq` comes from Lean's standard library. Let's define a typeclass of our own, to see the
+mechanism — instances and synthesis — that made `==` resolve automatically above.
+
+Suppose we want to specify that a type has at least one inhabitant, i.e., that it is not empty. A
+`structure` (chapter {ref "Lists"}[Lists]) can express this directly:
 
 ```lean
 structure HasOneStruct (α : Type) where
   one : α
 ```
 
-As discussed previously, a structure is just an inductive type that comes with a single constructor, in this case {name}`HasOneStruct.mk`, along with a few different syntaxes for convenience:
+A value of {InlineLean.lean}`HasOneStruct Nat`, such as {InlineLean.lean}`HasOneStruct.mk (1 : Nat)`,
+witnesses that `Nat` is inhabited: it contains an element, namely `1`. But `HasOneStruct Nat` is
+just a wrapper around a `Nat`, the same way {InlineLean.lean}`List Nat` is — nothing makes Lean
+produce that witness *automatically*, the way it found a `BEq Nat` instance for us above.
 
-```lean
-def nat_hasOneStruct_mk : HasOneStruct Nat := HasOneStruct.mk 1
-
-def nat_hasOneStruct_brace : HasOneStruct Nat := {one := 1}
-
-def nat_hasOneStruct_where : HasOneStruct Nat where
-  one := 1
-
-def nat_hasOneStruct_anonymous : HasOneStruct Nat := ⟨1⟩
-```
-
-All of these are the same value, a structure of type {InlineLean.lean}`HasOneStruct Nat` that we
-can thing of as carrying a piece of data (a term that is not a proposition), the number `1`, as evidence that this type is not empty. We can use this in proofs such as
-
-```lean
-theorem nat_hasOneStruct_eq_one : nat_hasOneStruct_mk.one = 1 := rfl
-```
-
-to see how this structure provably contains the value that we have placed within it. In Lean, typeclasses work very similarly, and in fact are implemented as structures. The only difference in defining a typeclass is that we instead use the `class` keyword:
+Typeclasses solve this. In Lean, they're implemented as structures and declared the same way, but
+with `class` in place of `structure`:
 
 ```lean
 class HasOne (α : Type) where
   one : α
 ```
 
-While the definition is essentially the same, including the constructor {name}`HasOne.mk`, the usage of typeclasses is different, and what allows us to use them to express ad hoc polymorphism. Instead of using `def` to define inhabitants of this type, we will instead use the `instance` keyword:
+The difference is in how we provide values of this type. Instead of `def`, we use `instance`:
 
 :::dev
 From GitHub (@chenson2018): Part of the point here is that we don't usually refer to instances
@@ -96,28 +173,31 @@ instance instHasOneNat : HasOne Nat where
   one := 1
 ```
 
-The definition is exactly the same as above (and any of the alternative syntaxes work as well), but instead of being used as a definition that we pass around, Lean will try to infer its usage through a process called *typeclass synthesis* or *typeclass inference*. To help see this, let's define another instance of `HasOne` for {name}`Int`, the type of integers ... -2, -1, 0, 1, 2, ...
+Lean can now find this instance on its own, via *typeclass synthesis* (or *typeclass inference*) —
+the same process that found `BEq Nat` earlier. To see it choose between instances, declare a
+second one, for {name}`Int`, the type of integers `... -2, -1, 0, 1, 2, ...`:
 
 ```lean
 instance instHasOneInt : HasOne Int where
   one := -1
 ```
 
-Instead of explicitly referring to a structure like we did in the proof {name}`nat_hasOneStruct_eq_one`, we can instead use {name}`HasOne.one`, and Lean will use typeclass inference to determine the intended meaning. As an example, you can write
+Now {name}`HasOne.one` alone, with no instance named, is enough — Lean infers which instance we
+mean from the expected type:
 
 ```lean
 example : HasOne.one = (1 : Nat) := rfl
 example : HasOne.one = (-1 : Int) := rfl
 ```
 
-and based on the type annotations Lean will infer which of these instances you intended to use. So these proofs are equivalent to
+These elaborate to the same terms as naming the instances explicitly:
 
 ```lean
 example : instHasOneNat.one = (1 : Nat) := rfl
 example : instHasOneInt.one = (-1 : Int) := rfl
 ```
 
-but without needing to explicitly refer to the instances {name}`instHasOneNat` and {name}`instHasOneInt`. Another way that we can inspect what instance is being using with the constructor of a typeclass is the option `pp.all`. For example looking at
+The option `pp.all` shows which instance Lean picked:
 
 ```lean
 set_option pp.all true in
@@ -127,20 +207,73 @@ set_option pp.all true in
 example : HasOne.one = (-1 : Int) := rfl
 ```
 
-we can see that {InlineLean.lean}`@HasOne.one Nat instHasOneNat` and {InlineLean.lean}`@HasOne.one Int instHasOneInt` are the respective terms that appear on the right hand side of each equality.
-
-Lean also has a command `#synth` that allows you to search for an instance of a given type. So
-the command
+which reveals {InlineLean.lean}`@HasOne.one Nat instHasOneNat` and
+{InlineLean.lean}`@HasOne.one Int instHasOneInt` on the right-hand side of each equality. The
+`#synth` command runs the same search directly:
 
 ```lean
 #synth HasOne Nat
 ```
 
-for instance prints {name}`instHasOneNat`, informing us that this is the instance found that has type {InlineLean.lean}`HasOne Nat`. In general, the assumption is that for typeclasses like {name}`HasOne` that include data, as opposed to solely proofs, that these these instances should be unique to avoid ambiguity.
+prints {name}`instHasOneNat`. For a typeclass like {name}`HasOne` that carries data (as opposed to
+only proofs), we expect at most one instance per type, so this search has a unique answer.
 
 :::dev
 @chenson2018: I don't really want to explain diamonds here, is the above white lie hand-waving okay??
 :::
+
+We'll put `HasOne`'s standard-library cousin, {name}`Inhabited`, to work later in this chapter,
+when maps need a default value for a generic type. First, though, let's go back to
+{name}`List.elem_poly` and see how its `[BEq α]` argument actually gets resolved.
+
+# Using Typeclasses
+
+Let's check what `==` meant for `List.elem_nat`, with notation display turned off:
+
+```lean
+/-- info: BEq.beq 1 2 : Bool -/
+#guard_msgs in
+set_option pp.notation false in
+#check 1 == 2
+```
+
+Rather than {name}`Nat.beq`, `==` turns out to be notation for {name}`BEq.beq`, a field of exactly
+the kind of typeclass we just learned to define:
+
+```
+class BEq (α : Type u) where
+  /-- Boolean equality, notated as `a == b`. -/
+  beq : α → α → Bool
+```
+
+Writing `a == b` makes Lean search for an *instance* of `BEq` for the type of `a` and `b`, the same
+way it searched for a {name}`HasOne` instance above. For `Nat`, that instance is:
+
+```lean
+instance (priority := low) : BEq Nat where
+  beq := Nat.beq
+```
+
+This is the instance Lean supplies for `[BEq α]` when {name}`List.elem_poly` is called on a
+{InlineLean.lean}`List Nat` — no different from Lean choosing {name}`instHasOneNat` for
+{name}`HasOne.one` earlier.
+
+::::exercise (rating := 1) (name := "List.elem_poly_eq_elem_nat")
+Prove that {name}`List.elem_poly` agrees with {name}`List.elem_nat` when specialized to
+natural numbers.
+
+```lean
+theorem List.elem_poly_eq_elem_nat (xs : List Nat) (n : Nat) : xs.elem_poly n = xs.elem_nat n := by
+  solution!(
+  induction xs with
+  | nil =>
+    rewrite [List.elem_poly_nil, List.elem_nat_nil]
+    rfl
+  | cons hd tl ih =>
+    rewrite [List.elem_poly_cons, List.elem_nat_cons, ih]
+    rfl)
+```
+::::
 
 # Proof-Carrying Typeclasses
 
@@ -227,132 +360,6 @@ instance : HasThree Nat where
   one_neq_three := solution!(by intro contra; contradiction)
   two_neq_three := solution!(by intro contra; contradiction)
   -- END SOLUTION
-```
-::::
-
-# Notation Typeclasses
-
-Another use for typeclasses, which may be familiar from other languages, is to overload a given piece
-of syntax. To start, consider the (non-polymorphic) definition
-
-:::dev
-BCP: STOPPED READING HERE
-:::
-
-```lean
-@[irreducible]
-def List.elem_nat (a : Nat) (xs : List Nat) : Bool :=
-  match xs with
-  | [] => false
-  | b :: tl => bif a == b then true else elem_nat a tl
-
-unseal List.elem_nat in
-theorem List.elem_nat_nil (a : Nat) : [].elem_nat a = false := rfl
-
-unseal List.elem_nat in
-theorem List.elem_nat_cons (a b : Nat) (xs : List Nat) :
-    (b :: xs).elem_nat a = bif a == b then true else elem_nat a xs := rfl
-```
-
-This function takes a natural number `a` and a list of natural numbers `xs`, then returns a
-{name}`Bool` indicating if `a` occurs within `xs`. For example:
-
-```lean
-#eval [0, 1].elem_nat 0
-#eval [0, 1].elem_nat 1
-#eval [0, 1].elem_nat 2
-```
-
-If we wanted to construct a polymorphic version of this, how would we proceed? If we try to simply
-replace {name}`Nat` with a type variable `α`, we get a somewhat mysterious error
-
-:::dev
-@dsainati - The Verso compilation is not actually removing this from the generated file despite th e
--keep flag. It is, however, stripping the message guard, so this results in an error. Once
-we figure out how we are handling these cases, uncomment this.
-
-```lean -keep
-/--
-error: failed to synthesize instance of type class
-  BEq α
-
-Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
--/
-#guard_msgs in
-def List.elem_poly {α : Type} (a : α) (xs : List α) : Bool :=
-  match xs with
-  | [] => false
-  | b :: tl => bif a == b then true else elem_poly a tl
-```
-:::
-
-that mentions a typeclass {name}`BEq`. Perhaps a better question is what exactly the `==` notation
-meant in our original {name}`List.elem_nat`. Let's look at a usage of this notation with natural
-numbers, but turn off notation:
-
-```lean
-/-- info: BEq.beq 1 2 : Bool -/
-#guard_msgs in
-set_option pp.notation false in
-#check 1 == 2
-```
-
-This may be a bit surprising, as you may have been expecting to see {name}`Nat.beq`, the function
-for boolean equality on natural numbers. What we instead find is that `==` is a notation for the
-typeclass {name}`BEq`:
-
-```
-class BEq (α : Type u) where
-  /-- Boolean equality, notated as `a == b`. -/
-  beq : α → α → Bool
-```
-
-What is happening in the background when we use the `a == b` notation is that Lean is searching
-for an _instance_ of the `BEq` typeclasses that applies for `Nat`. An example of such an instance
-would be
-
-```lean
-instance (priority := low) : BEq Nat where
-  beq := Nat.beq
-```
-
-where we are specifying that the usage of `==` for natural numbers should correspond to the
-expected `Nat.beq`. So in order to write a function that uses the notation for boolean equality over
-a generic type, we need a way to express that there is some instance for {InlineLean.lean}`BEq α`.
-This is done using *instance implicits*, where we place a desired typeclass assumption in square
-brackets. Our corrected definition is then
-
-```lean
-@[irreducible]
-def List.elem_poly {α : Type} [BEq α] (a : α) (xs : List α) : Bool :=
-  match xs with
-  | [] => false
-  | b :: tl => bif a == b then true else elem_poly a tl
-
-unseal List.elem_poly in
-theorem List.elem_poly_nil [BEq α] (a : α) : [].elem_poly a = false := rfl
-
-unseal List.elem_poly in
-theorem List.elem_poly_cons [BEq α] (a b : α) (xs : List α) :
-    (b :: xs).elem_poly a = bif a == b then true else elem_poly a xs := rfl
-```
-
-where Lean can now infer the usage of `==` is the one that we have provided.
-
-::::exercise (rating := 1) (name := "List.elem_poly_eq_elem_nat")
-Prove that {name}`List.elem_poly` agrees with {name}`List.elem_nat` when specialized to
-natural numbers.
-
-```lean
-theorem List.elem_poly_eq_elem_nat (xs : List Nat) (n : Nat) : xs.elem_poly n = xs.elem_nat n := by
-  solution!(
-  induction xs with
-  | nil =>
-    rewrite [List.elem_poly_nil, List.elem_nat_nil]
-    rfl
-  | cons hd tl ih =>
-    rewrite [List.elem_poly_cons, List.elem_nat_cons, ih]
-    rfl)
 ```
 ::::
 
