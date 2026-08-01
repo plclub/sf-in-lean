@@ -24,6 +24,7 @@ open InlineLean hiding lean
 %%%
 htmlSplit := .never
 file := "Typeclasses"
+tag := "Typeclasses"
 %%%
 
 Chapter {ref "Poly"}[Poly] introduced *parametric polymorphism*, declaring a type variable with no
@@ -47,16 +48,13 @@ other languages, such as traits in Rust.
 Consider the following function, which checks whether a natural number occurs in a list:
 
 ```lean
-@[irreducible]
 def List.elem_nat (a : Nat) (xs : List Nat) : Bool :=
   match xs with
   | [] => false
   | b :: tl => bif a == b then true else elem_nat a tl
 
-unseal List.elem_nat in
 theorem List.elem_nat_nil (a : Nat) : [].elem_nat a = false := rfl
 
-unseal List.elem_nat in
 theorem List.elem_nat_cons (a b : Nat) (xs : List Nat) :
     (b :: xs).elem_nat a = bif a == b then true else elem_nat a xs := rfl
 ```
@@ -91,41 +89,46 @@ def List.elem_poly {α : Type} (a : α) (xs : List α) : Bool :=
 ```
 :::
 
-Lean is trying to use typeclasses to work out how `==` should behave on a value of type `α`, 
+Lean is trying to use typeclasses to work out how `==` should behave on a value of type `α`,
 but it can't find the instance of the typeclass {name}`BEq` that it needs, since not every type can be checked for equality. As {ref "Lists"}[Lists] noted when we first used it, `==` on `Nat` comes from the `BEq` typeclass, an interface each type has to implement for itself.
 
 We could sidestep typeclasses entirely and just have the caller supply the equality test to use:
 
 ```lean -keep
-def List.elem_poly {α : Type} (eq : α → α → Bool) (a : α) (xs : List α) : Bool :=
+def List.elem_poly_eq {α : Type} (eq : α → α → Bool) (a : α) (xs : List α) : Bool :=
   match xs with
   | [] => false
-  | b :: tl => bif eq a b then true else elem_poly eq a tl
+  | b :: tl => bif eq a b then true else elem_poly_eq eq a tl
 
-#eval [0, 1].elem_poly Nat.beq 0
+#eval [0, 1].elem_poly_eq Nat.beq 0
 ```
 
 This works, but it's tedious: every caller has to know, and remember to supply, the right equality
-function. Typeclasses automate exactly this — instead of the programmer passing the function
-explicitly, Lean searches for one on its own. We specify what to search for by declaring a `class`
-with the needed function as a field. Here is where we end up:
-
+function. Typeclasses automate this — instead of the programmer passing the function
+explicitly, Lean searches for one and provides it on its own. We specify something we want
+Lean to search for by declaring a `class` with the needed function as a field; a `class` is like
+an interface in Java or a trait in Rust. Particular _implementations_ of that interface,
+different ones for different types, are called _instances_. Finally, we add
+the name of that class as a _typeclass constraint_ on the polymorphic variable that the
+function applies to. This directs lean to use the interface inside the function, and to
+find and fill in the appropriate instance at call-sites to that function.
+Here is what this looks like for `List.elem_poly`:
 ```lean
-@[irreducible]
 def List.elem_poly {α : Type} [BEq α] (a : α) (xs : List α) : Bool :=
   match xs with
   | [] => false
   | b :: tl => bif a == b then true else elem_poly a tl
 
-unseal List.elem_poly in
 theorem List.elem_poly_nil [BEq α] (a : α) : [].elem_poly a = false := rfl
 
-unseal List.elem_poly in
 theorem List.elem_poly_cons [BEq α] (a b : α) (xs : List α) :
     (b :: xs).elem_poly a = bif a == b then true else elem_poly a xs := rfl
+
+#eval [0, 1].elem_poly 0
 ```
 
-The `[BEq α]` argument is filled in automatically, based on whatever `α` the caller uses, and it's
+In sum: the `[BEq α]` argument is filled in automatically, based on whatever `α` the caller
+uses, and it's
 what {name}`List.elem_poly` uses internally wherever it writes `==`. This is the *ad hoc
 polymorphism* we mentioned above: {name}`List.elem_poly` isn't generic over every type, only over
 types that support `==`. We'll see exactly how `[BEq α]` gets filled in below, starting with how
@@ -134,7 +137,7 @@ to define a typeclass in the first place.
 # Defining Your Own Typeclasses
 
 `BEq` comes from Lean's standard library. Let's define a typeclass of our own, to see the
-mechanism — instances and synthesis — that made `==` resolve automatically above.
+mechanism — classes, instances, and synthesis — that made `==` resolve automatically above.
 
 Suppose we want to specify that a type has at least one inhabitant, i.e., that it is not empty. A
 `structure` (chapter {ref "Lists"}[Lists]) can express this directly:
@@ -144,10 +147,17 @@ structure HasOneStruct (α : Type) where
   one : α
 ```
 
-A value of {lean}`HasOneStruct Nat`, such as {lean}`HasOneStruct.mk (1 : Nat)`,
-witnesses that `Nat` is inhabited: it contains an element, namely `1`. But `HasOneStruct Nat` is
-just a wrapper around a `Nat`, the same way {InlineLean.lean}`List Nat` is — nothing makes Lean
-produce that witness *automatically*, the way it found a `BEq Nat` instance for us above.
+A value of {lean}`HasOneStruct Nat` witnesses that `Nat` is inhabited: it's built the same way any
+structure is, by supplying a `Nat` for the `one` field:
+
+```lean
+def nat_hasOneStruct : HasOneStruct Nat := ⟨1⟩
+
+example : nat_hasOneStruct.one = 1 := rfl
+```
+
+But nothing makes Lean produce this witness *automatically*: we had to write `⟨1⟩` ourselves,
+unlike the `BEq Nat` instance that Lean found for us on its own above.
 
 Typeclasses solve this. In Lean, they're implemented as structures and declared the same way, but
 with `class` in place of `structure`:
@@ -187,7 +197,7 @@ example : HasOne.one = (1 : Nat) := rfl
 example : HasOne.one = (-1 : Int) := rfl
 ```
 
-These elaborate to the same terms as naming the instances explicitly:
+These are the same as naming the instances explicitly:
 
 ```lean
 example : instHasOneNat.one = (1 : Nat) := rfl
@@ -208,12 +218,16 @@ which reveals {InlineLean.lean}`@HasOne.one Nat instHasOneNat` and
 {InlineLean.lean}`@HasOne.one Int instHasOneInt` on the right-hand side of each equality. The
 `#synth` command runs the same search directly:
 
-```lean
+```lean (name := HasOne)
 #synth HasOne Nat
 ```
 
-prints {name}`instHasOneNat`. For a typeclass like {name}`HasOne` that carries data (as opposed to
-only proofs), we expect at most one instance per type, so this search has a unique answer.
+```leanOutput HasOne
+instHasOneNat
+```
+
+For a typeclass like {name}`HasOne` that carries data — a term, such as the `1` above, rather
+than only proofs — we expect at most one instance per type, so this search has a unique answer.
 
 :::dev
 @chenson2018: I don't really want to explain diamonds here, is the above white lie hand-waving okay??
