@@ -3,11 +3,6 @@ import SFLMeta
 import LF.CustomTactics
 import HL.Imp
 
--- One An (meluge) : It looks like this file is too long
--- (and also proofs are more costly?) for it to be elaborated
--- without extending the maxHeartbeats.
-set_option maxHeartbeats 400000
-
 open Verso.Genre Manual
 open SFLMeta
 
