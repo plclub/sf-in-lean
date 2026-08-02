@@ -594,6 +594,33 @@ example (m : TotalMap α β) (a : α) : m a = m[a] := by
   -- rw [apply_eq_getElem] -- doesn't work: The pattern to be substituted is a metavariable (`?m ?a`) in this equality: ?m ?a = ?m[?a]
   rw [apply_eq_getElem m a] -- works
 ```
+
+Explanation of the infinite loop by Yipeng Liu (berberman):
+To see why, with `trace.Meta.Tactic.simp.rewrite` enabled and specifying maxSteps to simp, we can track what's going on:
+
+```
+[Meta.Tactic.simp.rewrite] apply_eq_getElem:1000:
+      m a
+    ==>
+      m[a]
+[Meta.Tactic.simp.rewrite] apply_eq_getElem:1000:
+      m[a]
+    ==>
+      (MyGetElem.getElem m)[a]
+[Meta.Tactic.simp.rewrite] apply_eq_getElem:1000:
+      (MyGetElem.getElem m)[a]
+    ==>
+      (MyGetElem.getElem (MyGetElem.getElem m))[a]
+[Meta.Tactic.simp.rewrite] apply_eq_getElem:1000:
+      (MyGetElem.getElem (MyGetElem.getElem m))[a]
+    ==>
+      (MyGetElem.getElem (MyGetElem.getElem (MyGetElem.getElem m)))[a]
+[Meta.Tactic.simp.rewrite] apply_eq_getElem:1000:
+      (MyGetElem.getElem (MyGetElem.getElem (MyGetElem.getElem m)))[a]
+    ==>...
+```
+
+So I think the issue here is that the LHS m a is too board, causing this lemma repeating itself. First we have `m a => m[a], but m[a]` is defeq to (MyGetElem.getElem m) a, and nevertheless we require m to be a TotalMap, a TotalMap is defeq to α → β. So this lemma applies again -- `(MyGetElem.getElem m) a => (MyGetElem.getElem m)[a]` which is `(MyGetElem.getElem (MyGetElem.getElem m))[a]` and keep going.
 :::
 
 ### Updating
