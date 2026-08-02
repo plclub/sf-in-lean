@@ -18,8 +18,8 @@ picture of who is touching what:
     "⚠️ conflicts with `main`" flag when the branch no longer merges cleanly.
     Only branches with an open PR appear in the table, and only they are weighed
     when marking its overlaps and conflicts;
-  * an "Other branches:" line just below the table — a compact list of every
-    active branch *without* a PR: name (linked to its GitHub page), its author
+  * a "Branches without PRs:" line just below the table — a compact list of
+    every active branch *without* a PR: name (linked to its GitHub page), its author
     (same style as the table), how long since it was created and last active,
     and a ⚠️ when it would conflict with any open PR;
   * a "hot files" view — files edited on more than one PR branch, conflicting
@@ -486,7 +486,7 @@ def render(branches, conf, prs, have_token, slug):
     # The PR table (and the file/overlap analysis beneath it) covers active
     # branches that have an open PR; the "Merged / inactive" section covers PR
     # branches with nothing ahead of main.  Active branches *without* a PR are
-    # summarised in the compact "Other branches:" paragraph instead.
+    # summarised in the compact "Branches without PRs:" paragraph instead.
     active = {r: b for r, b in branches.items()
               if b["ahead"] > 0 and b["short"] in prs}
     non_pr = {r: b for r, b in branches.items()
@@ -531,8 +531,7 @@ def render(branches, conf, prs, have_token, slug):
         out.append("")
 
     # ---- per-PR table (most recently active first) ----
-    out.append("### Current PRs")
-    out.append("")
+    # No sub-heading here: the table sits directly under "## Current Activity".
     out.append("| Branch / Author | Status | Shares files with | Changes | Activity | `#Note`s |")
     out.append("|---|---|---|--:|---|---|")
     for r, b in sorted(active.items(), key=lambda x: (-x[1]["ts"], x[1]["short"])):
@@ -581,13 +580,16 @@ def render(branches, conf, prs, have_token, slug):
         status = pr_cell(b["short"], prs)
         if not b["clean_to_main"]:
             status += " · ⚠️ conflicts with `main`"
+        # `#Note`s can run to several lines; `<small>` keeps them at the small
+        # font's own leading, whereas `<sub>` inherits the row's line height and
+        # leaves the lines as far apart as full-size text.
         out.append(
             f"| {first} | {status} | {ov} | {files_cell(b['files'])} | "
-            f"<sub>{b['when']}</sub> | <sub>{notes_cell(pr)}</sub> |"
+            f"<sub>{b['when']}</sub> | <small>{notes_cell(pr)}</small> |"
         )
     out.append("")
 
-    # ---- non-PR branches: one compact "Other branches:" line ----
+    # ---- non-PR branches: one compact "Branches without PRs:" line ----
     if non_pr:
         items, any_clash = [], False
         for r, b in sorted(non_pr.items(), key=lambda x: -x[1]["ts"]):
@@ -600,8 +602,10 @@ def render(branches, conf, prs, have_token, slug):
                 f"){' ⚠️' if clash else ''}"
             )
         legend = (" &nbsp;_(⚠️ = conflicts with an open PR)_" if any_clash else "")
-        # The whole paragraph is set in small type.
-        out.append("<sub>**Other branches:** " + ", ".join(items) + "." + legend + "</sub>")
+        # The whole paragraph is set in small type. `<small>` (rather than
+        # `<sub>`) keeps the small text on the baseline, so wrapped lines sit at
+        # the small font's own leading instead of the regular line height.
+        out.append("<small>**Branches without PRs:** " + ", ".join(items) + "." + legend + "</small>")
         out.append("")
 
     # ---- files: conflicting first, then clean co-edits, then single-branch ----
@@ -716,12 +720,12 @@ def main():
         prs = fetch_prs(slug, token)
 
     # Conflicts are computed over *all* active branches: PR branches populate the
-    # main table's overlap column, and the non-PR "Other branches:" paragraph
-    # needs to know whether each such branch clashes with any open PR.
+    # main table's overlap column, and the non-PR "Branches without PRs:"
+    # paragraph needs to know whether each such branch clashes with any open PR.
     conf = pairwise_conflicts(branches)
 
     # Resolve author identity for every branch shown with an author: the PR
-    # table, the "Other branches:" line, and the merged/inactive list — i.e. all
+    # table, the "Branches without PRs:" line, and the merged/inactive list — all
     # but the non-PR branches with nothing ahead (which appear nowhere).  The
     # commits API (accurate) gives the GitHub handle when a token is available,
     # else a noreply commit email is parsed; with the handle, the person's real
