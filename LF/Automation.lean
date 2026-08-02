@@ -898,7 +898,7 @@ theorem regexp_match_of_list α (l : List α) : l =~ reg_exp_of_list l := by
         rw [h]
         constructor; constructor; assumption
 ```
-:::gradeTheorem 2 RegExp.regexp_match_of_list
+:::gradeTheorem 2 regexp_match_of_list
 :::
 ::::
 
@@ -944,7 +944,7 @@ theorem EmptySet_is_empty α (s : List α) : ¬(s =~ EmptySet) := by
     intro h
     inversion h
 ```
-:::gradeTheorem "0.5" RegExp.EmptySet_is_empty
+:::gradeTheorem "0.5" EmptySet_is_empty
 :::
 ::::
 
@@ -959,7 +959,7 @@ theorem MUnion' α (s : List α) (re₁ re₂ : RegExp α) :
     . apply ExpMatch.mUnionL; assumption
     . apply ExpMatch.mUnionR; assumption
 ```
-:::gradeTheorem "0.5" RegExp.MUnion'
+:::gradeTheorem "0.5" MUnion'
 :::
 ::::
 
@@ -984,7 +984,7 @@ theorem MStar' α (ss : List (List α)) (re : RegExp α)
     · apply ih; intro s' hs'
       apply h; right; assumption
 ```
-:::gradeTheorem 2 RegExp.MStar'
+:::gradeTheorem 2 MStar'
 :::
 ::::
 

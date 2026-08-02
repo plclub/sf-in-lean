@@ -339,7 +339,7 @@ theorem optimize0plusB_test1 :
       = (.not (.gt (.num 4) (.num 8))) := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" Slang.optimize0plusB_test1
+:::gradeTheorem "0.5" optimize0plusB_test1
 :::
 
 ```lean
@@ -349,7 +349,7 @@ theorem optimize0plusB_test2 :
       = (.and (.le (.num 4) (.num 5)) (.bool true)) := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" Slang.optimize0plusB_test2
+:::gradeTheorem "0.5" optimize0plusB_test2
 :::
 
 ```lean
@@ -360,7 +360,7 @@ theorem optimize0plusB_sound (b : Bexp) :
       simp_all [Bexp.optimize0plusB, optimize0plus_sound]
 ```
 
-:::gradeTheorem 2 Slang.optimize0plusB_sound
+:::gradeTheorem 2 optimize0plusB_sound
 :::
 :::::
 
@@ -701,7 +701,7 @@ theorem Bexp.evalR_iff_eval (b : Bexp) (bv : Bool) :
       induction b <;> constructor <;> simp_all [Aexp.evalR_iff_eval]
 ```
 
-:::gradeTheorem 3 Slang.Bexp.evalR_iff_eval
+:::gradeTheorem 3 Bexp.evalR_iff_eval
 :::
 :::::
 

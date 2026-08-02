@@ -1603,7 +1603,7 @@ theorem fold_length_correct {α : Type} (l : List α) :
       rw [List.length_cons, fold_cons, ih]
 ```
 
-:::gradeTheorem 2 Exercises.fold_length_correct
+:::gradeTheorem 2 fold_length_correct
 :::
 :::::
 
@@ -1710,7 +1710,7 @@ theorem curry_uncurry {α β γ : Type} (f : α × β → γ) {p : α × β} :
     rfl
 ```
 
-:::gradeTheorem 1 Exercises.uncurry_curry Exercises.curry_uncurry
+:::gradeTheorem 1 uncurry_curry curry_uncurry
 :::
 :::::
 
@@ -1871,7 +1871,7 @@ theorem scc_2 : scc one = two := solution!(by rfl)
 theorem scc_3 : scc two = three := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 Exercises.Church.scc_2 Exercises.Church.scc_3
+:::gradeTheorem 1 scc_2 scc_3
 :::
 :::::
 
@@ -1892,7 +1892,7 @@ theorem plus_2 : plus two three = plus three two := solution!(by rfl)
 theorem plus_3 : plus (plus two two) three = plus one (plus three three) := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 Exercises.Church.plus_1 Exercises.Church.plus_2 Exercises.Church.plus_3
+:::gradeTheorem 1 plus_1 plus_2 plus_3
 :::
 :::::
 
@@ -1920,7 +1920,7 @@ theorem mult_2 : mult zero (plus three three) = zero := solution!(by rfl)
 theorem mult_3 : mult two three = plus three three := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 Exercises.Church.mult_1 Exercises.Church.mult_2 Exercises.Church.mult_3
+:::gradeTheorem 1 mult_1 mult_2 mult_3
 :::
 :::::
 
@@ -1942,7 +1942,7 @@ theorem exp_2 : exp three zero = one := solution!(by rfl)
 theorem exp_3 : exp three two = plus (mult two (mult two two)) one := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 Exercises.Church.exp_1 Exercises.Church.exp_3 Exercises.Church.exp_2
+:::gradeTheorem 1 exp_1 exp_3 exp_2
 :::
 :::::
 

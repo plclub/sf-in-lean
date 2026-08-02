@@ -637,7 +637,7 @@ theorem update_permute (m : TotalMap α β) (a₁ a₂ : α) (b₁ b₂ : β) (h
       · rw [update_neq _ _ _ h₂, update_neq _ _ _ h₂, update_neq _ _ _ h₁]
 ```
 
-:::gradeTheorem 3 TotalMap.update_permute
+:::gradeTheorem 3 update_permute
 :::
 ::::
 

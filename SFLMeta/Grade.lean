@@ -45,7 +45,7 @@ structure GradeTheoremConfig where
 deriving Repr
 
 section
-variable [Monad m] [MonadError m] [MonadLiftT CoreM m]
+variable [Monad m] [MonadError m] [MonadLiftT TermElabM m]
 
 /-- A point value written either bare as a natural-number literal (`1`) or, for
 a fractional value, as a quoted string (`"0.5"`); yields the value's text. -/
@@ -57,10 +57,18 @@ def ValDesc.pointsText : ValDesc m String where
     | .str s => Pure.pure s.getString
     | other => throwError "Expected a point value, got {toMessageData other}"
 
+/-- Resolve a name using `InlineLean`'s scope (stored in an environment extension). -/
+defmethod ValDesc.inlineLeanResolvedName : ValDesc m Name where
+  description := doc!"a name resolved in the current inline Lean scope"
+  signature := .Ident
+  get
+    | .name x => InlineLean.Scopes.runWithOpenDecls <| realizeGlobalConstNoOverloadWithInfo x
+    | other => throwError "Expected identifier, got {other}"
+
 /-- Argument parser for `GradeTheoremConfig` -/
 def GradeTheoremConfig.parse : ArgParse m GradeTheoremConfig :=
   GradeTheoremConfig.mk
-    <$> .positional `points ValDesc.pointsText <*> many1 (.positional `name .resolvedName)
+    <$> .positional `points ValDesc.pointsText <*> many1 (.positional `name .inlineLeanResolvedName)
 where
   many1 p := (· :: ·) <$> p <*> .many p
 
@@ -78,7 +86,6 @@ block_extension Block.gradeTheorem (points : String) (names : List Name) where
   toHtml := some fun _ _ _ _ _ => pure .empty
   toTeX := none
 
--- TODO can we make the name elaborate so that it gives an error immediately if the name doesn't exist?
 @[directive]
 def gradeTheorem : DirectiveExpanderOf GradeTheoremConfig
   | cfg, _contents => do
