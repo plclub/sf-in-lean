@@ -66,6 +66,13 @@ namespace Variants
 
 variable {α β γ : Type}
 
+def mkD [Inhabited α]
+    (student : α := default)
+    (solutions : α := default)
+    (terse : α := default)
+    (grading : α := default) : Variants α :=
+    { student, solutions, terse, grading }
+
 def get (vs : Variants α) (v : Variant) : α :=
   match v with
   | .student => vs.student
@@ -78,6 +85,13 @@ def map {β : Type} (f : α → β) (vs : Variants α) : Variants β := {
   solutions := f vs.solutions
   terse := f vs.terse
   grading := f vs.grading
+}
+
+def mapV {β : Type} (f : Variant →  α → β) (vs : Variants α) : Variants β := {
+  student := f .student vs.student
+  solutions := f .solutions vs.solutions
+  terse := f .terse vs.terse
+  grading := f .grading vs.grading
 }
 
 instance : GetElem (Variants α) Variant α (fun _ _ => True) where
