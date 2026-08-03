@@ -34,6 +34,14 @@ constraint on it:
 variable (α : Type)
 ```
 
+:::dev "Michael Hicks (mwhicks1)"
+Students will run across universes, though. When looking at List lemmas, for example, they will see things like:
+```
+List.reverse.{u} {α : Type u} (as : List α) : List α
+```
+Are we explaining these things somewhere, maybe in Poly ?
+:::
+
 This lets us work with a type like {lean}`List α`, writing functions like
 {name}`List.reverse` and {name}`List.length` and proofs like {name}`List.length_reverse`, which use
 only the list's structure and never inspect any particular `a : α`.
