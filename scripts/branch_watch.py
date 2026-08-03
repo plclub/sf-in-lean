@@ -580,12 +580,15 @@ def render(branches, conf, prs, have_token, slug):
         status = pr_cell(b["short"], prs)
         if not b["clean_to_main"]:
             status += " · ⚠️ conflicts with `main`"
-        # `#Note`s can run to several lines; `<small>` keeps them at the small
-        # font's own leading, whereas `<sub>` inherits the row's line height and
-        # leaves the lines as far apart as full-size text.
+        # `#Note`s can run to several lines.  The gap between those lines is the
+        # cell's block line-height (GitHub's 1.5, off the 16px base font); an
+        # inline tag can only make a line box *taller*, never shorter than that
+        # strut, so neither `<sub>` nor `<small>` can tighten the leading.  We
+        # use `<sub>` purely for its smaller glyphs — on GitHub it renders
+        # smaller than `<small>` — matching the author and Activity cells.
         out.append(
             f"| {first} | {status} | {ov} | {files_cell(b['files'])} | "
-            f"<sub>{b['when']}</sub> | <small>{notes_cell(pr)}</small> |"
+            f"<sub>{b['when']}</sub> | <sub>{notes_cell(pr)}</sub> |"
         )
     out.append("")
 
@@ -602,10 +605,11 @@ def render(branches, conf, prs, have_token, slug):
                 f"){' ⚠️' if clash else ''}"
             )
         legend = (" &nbsp;_(⚠️ = conflicts with an open PR)_" if any_clash else "")
-        # The whole paragraph is set in small type. `<small>` (rather than
-        # `<sub>`) keeps the small text on the baseline, so wrapped lines sit at
-        # the small font's own leading instead of the regular line height.
-        out.append("<small>**Branches without PRs:** " + ", ".join(items) + "." + legend + "</small>")
+        # The whole paragraph is set in small type with `<sub>` (smaller than
+        # `<small>` on GitHub, and matching the table's small cells).  Wrapped
+        # lines still sit at the surrounding block line-height — that leading is
+        # fixed by the block strut and can't be tightened by an inline tag.
+        out.append("<sub>**Branches without PRs:** " + ", ".join(items) + "." + legend + "</sub>")
         out.append("")
 
     # ---- files: conflicting first, then clean co-edits, then single-branch ----
