@@ -1485,13 +1485,6 @@ It would be wise to do some `example` proofs to check that your
 definition of {name}`normalize` works the way you intend before you
 proceed. They won't be graded, but do fill in a few below.
 
-:::dev "Claude" BeforeNextRelease
-Same `-- SOLUTION` mishandling as elsewhere in this chapter, milder here: the
-block keeps surviving content (`attribute [irreducible] …`) after
-`-- END SOLUTION`, so student/terse don't error, but the *solutions* build
-leaks the literal `-- SOLUTION` / `-- END SOLUTION` comment lines into the
-displayed code. Prefer `solution!` over the comment markers.
-:::
 ```lean
 -- SOLUTION
 /- normalize_test_zero -/
@@ -1524,13 +1517,6 @@ its own inductive proof — that will allow the main proof to make
 progress. We have one lemma for the `b0` case (which also makes
 use of {name}`double_incr_bin`) and another for the `b1` case.
 
-:::dev "Claude" BeforeNextRelease
-Same `-- SOLUTION` mishandling, milder: `bin_nat_bin` survives after
-`-- END SOLUTION` so student/terse don't error, but the *solutions* build
-leaks the literal `-- SOLUTION` / `-- END SOLUTION` comment lines around
-`incr_doubleBin`/`natToBin_two_mul` into the displayed code. Prefer `solution!`
-over the comment markers.
-:::
 ```lean
 -- SOLUTION
 theorem incr_doubleBin (b : Bin) :
