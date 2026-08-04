@@ -1126,7 +1126,7 @@ theorem andb_false (b : Bool) :
     | true  => rw [Bool.true_and]
 
 theorem all3_spec (b c : Bool) :
-    (b && c) || ((!b) || (!c)) = true := by
+    ((b && c) || ((!b) || (!c))) = true := by
   solution!
     cases b with
     | true => cases c with
