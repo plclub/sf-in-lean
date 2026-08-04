@@ -465,20 +465,25 @@ def branch_link(short, slug, maxlen=None, href=None):
 
 
 def notes_cell(pr):
-    """The `#Note: …` lines reviewers left on a PR, one per line — or an empty
-    cell when there are none (or no PR)."""
+    """The `#Note: …` reviewers left on a PR, separated by a middot and left to
+    wrap — or an empty cell when there are none (or no PR).  A middot rather
+    than a `<br>` per note: forced line breaks buy no vertical space (the cell's
+    block line-height fixes the leading regardless), so flowing them onto shared
+    lines keeps the row shorter."""
     notes = pr.get("notes") if pr else None
     if not notes:
         return ""
-    return "<br>".join(notes)
+    return " · ".join(notes)
 
 
 def files_cell(files):
-    """A <details> expander listing files, valid inside a Markdown table cell."""
+    """A <details> expander listing files, valid inside a Markdown table cell.
+    The names flow middot-separated (not one `<br>` per line) so the expanded
+    list stays compact."""
     n = len(files)
     if n == 0:
         return "0"
-    inner = "<br>".join(f"`{f}`" for f in sorted(files))
+    inner = " · ".join(f"`{f}`" for f in sorted(files))
     return f"<details><summary>{n}</summary>{inner}</details>"
 
 
