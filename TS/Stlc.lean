@@ -340,6 +340,8 @@ We next formalize the syntax of the STLC.
 
 ```lean
 namespace Stlc
+
+open scoped MyGetElem
 ```
 
 ## Types
