@@ -142,7 +142,7 @@ expected — for example, as the claim in a `theorem` declaration.
 ::::
 
 ```lean
-theorem PlusClaim_is_true : PlusClaim := rfl
+theorem plusClaim_is_true : PlusClaim := rfl
 ```
 
 We can also write _parameterized_ propositions — that is,
@@ -1090,10 +1090,10 @@ def List.IsNil {α : Type} (l : List α) : Prop :=
   | [] => True
   | _ :: _ => False
 
-theorem IsNil_nil {α : Type} : List.IsNil ([] : List α) := by constructor
+theorem isNil_nil {α : Type} : List.IsNil ([] : List α) := by constructor
 
 
-theorem IsNil_cons {α} (x : α) (l : List α) : ¬ List.IsNil (x :: l) := by
+theorem isNil_cons {α} (x : α) (l : List α) : ¬ List.IsNil (x :: l) := by
   dsimp [List.IsNil, Not]
   intro h; assumption
 -- END SOLUTION
@@ -1102,8 +1102,8 @@ theorem nil_is_not_cons {α : Type} (x : α) (xs : List α) :
     ¬ ([] = x :: xs) := by
   solution!
     intro h
-    have hn : List.IsNil ([] : List α) := IsNil_nil
-    apply IsNil_cons x xs
+    have hn : List.IsNil ([] : List α) := isNil_nil
+    apply isNil_cons x xs
     rw [←h]
     exact hn
 ```
@@ -1204,8 +1204,7 @@ theorem or_associate (a b c : Prop) : a ∨ (b ∨ c) ↔ (a ∨ b) ∨ c := by
       · left; left; exact ha
       · left; right; exact hb
       · right; exact hc
-    case mpr =>
-      intro h
+    · intro h
       obtain (ha | hb) | hc := h
       · left; exact ha
       · right; left; exact hb
@@ -1602,7 +1601,7 @@ def CombineOddEven (Odd Even : Nat → Prop) : Nat → Prop := solution!(
 To test your definition, prove the following facts:
 
 ```lean
-theorem CombineOddEven_intro (Odd Even : Nat → Prop)
+theorem combineOddEven_intro (Odd Even : Nat → Prop)
     (n : Nat)
     (hOdd : Nat.odd n = true → Odd n)
     (hEven : Nat.odd n = false → Even n) :
@@ -1620,7 +1619,7 @@ theorem CombineOddEven_intro (Odd Even : Nat → Prop)
       apply hOdd
       exact h
 
-theorem CombinedOddEven_elim_odd
+theorem combineOddEven_elim_odd
     (Odd Even : Nat → Prop)
     (n : Nat)
     (h : CombineOddEven Odd Even n)
@@ -1630,7 +1629,7 @@ theorem CombinedOddEven_elim_odd
     rw [hOdd] at h
     dsimp at h; exact h
 
-theorem CombinedOddEven_elim_even
+theorem combineOddEven_elim_even
     (Odd Even : Nat → Prop)
     (n : Nat)
     (h : CombineOddEven Odd Even n)
@@ -2083,11 +2082,13 @@ theorem nonzero_bool_prop (n : Nat) :
     nonzero n = true ↔ Nonzero n := by
   workinclass!
     constructor
-    case mp =>
-      intro h; cases n
-      case zero => dsimp [nonzero] at h; rw [not] at h; contradiction
-      case succ n' => dsimp [Nonzero]; exists n'
-    case mpr => intro ⟨m, hm⟩; rw [hm]; rfl
+    · intro h
+      cases n with
+      | zero =>
+        dsimp [nonzero] at h;
+        rw [not] at h; contradiction
+      | succ n' => dsimp [Nonzero]; exists n'
+    · intro ⟨m, hm⟩; rw [hm]; rfl
 ```
 ::::
 
@@ -2256,8 +2257,8 @@ theorem orb_true_iff (b1 b2 : Bool) :
       cases b1 with
       | false =>
         obtain h | h := h
-        case inl => contradiction
-        case inr => rw [or]; exact h
+        · contradiction
+        · rw [or]; exact h
       | true => rw [or]
 ```
 
@@ -3008,8 +3009,8 @@ abbrev consequentia_mirabilis := ∀ a : Prop, (¬ a → a) → a
 theorem imp_or_em : imp_or → excluded_middle := by
   intro h a
   obtain hna | ha := h a a (fun ha => ha)
-  case inl => right; exact hna
-  case inr => left; exact ha
+  · right; exact hna
+  · left; exact ha
 
 theorem em_imp_or : excluded_middle → imp_or := by
   intro h a b hab
