@@ -10,7 +10,7 @@ picture of who is touching what:
     active) — five columns: the branch (linked to its PR) over its author and
     last-activity time on a second line in small type; a Status cell of glyph
     badges (✅ ready, 👍 approved with open threads, 🔴 changes requested,
-    💬N open threads, 📝 draft, ⏳ queued / 🚧 auto-merge held, 🔗 fixes issue,
+    💬N open threads, ✏️ draft, ⏳ queued / 🚧 auto-merge held, 🔗 fixes issue,
     ⚠️ main = no longer merges cleanly against `main`); an Overlaps cell naming
     which *other* PR branches it shares files with (plain = clean co-edit,
     ⚠️ = a real conflict from an in-memory merge not a filename guess, ⊃/⊂ = one
@@ -401,6 +401,14 @@ def tip(glyph, title):
     return f'<abbr title="{title}">{glyph}</abbr>'
 
 
+# The "draft" badge is GitHub's transparent-background pencil emoji served as an
+# <img> rather than the busier 📝 memo glyph: an image can be sized (a plain
+# emoji can't in Markdown), so it sits a touch larger, and `title` gives it the
+# same hover tooltip as the <abbr>-wrapped glyphs.  `alt` degrades gracefully.
+DRAFT_BADGE = ('<img src="https://github.githubassets.com/images/icons/emoji/'
+               'unicode/270f.png" width="20" alt="Draft" title="Draft">')
+
+
 def status_badges(pr):
     """Review / merge readiness of an open PR as compact glyph badges (each
     carrying a hover tooltip, and spelled out in the table legend).  Badges are
@@ -416,7 +424,7 @@ def status_badges(pr):
     * 🔗 #N — issues the PR closes (via a fixes/closes/resolves keyword), linked."""
     badges = []
     if pr["draft"]:
-        badges.append(tip("📝", "Draft"))
+        badges.append(DRAFT_BADGE)
     else:
         dec = pr["review_decision"]
         if dec == "CHANGES_REQUESTED":
@@ -636,11 +644,11 @@ def render(branches, conf, prs, have_token, slug):
         out.append("")
         out.append(
             "<sub>**Status** ✅&nbsp;ready · 👍&nbsp;approved, threads open · "
-            "🔴&nbsp;changes requested · 💬&nbsp;open threads · 📝&nbsp;draft · "
-            "⏳&nbsp;queued · 🚧&nbsp;auto-merge held · 🔗&nbsp;fixes issue · "
-            "⚠️&nbsp;main conflicts with `main`. &nbsp; **Overlaps** plain = "
-            "clean co-edit · ⚠️&nbsp;real conflict · ⊃&nbsp;contains · "
-            "⊂&nbsp;contained in.</sub>")
+            "🔴&nbsp;changes requested · 💬&nbsp;open threads · "
+            f"{DRAFT_BADGE}&nbsp;draft · ⏳&nbsp;queued · 🚧&nbsp;auto-merge "
+            "held · 🔗&nbsp;fixes issue · ⚠️&nbsp;main conflicts with `main`. "
+            "&nbsp; **Overlaps** plain = clean co-edit · ⚠️&nbsp;real conflict "
+            "· ⊃&nbsp;contains · ⊂&nbsp;contained in.</sub>")
     out.append("")
 
     # ---- non-PR branches: one compact "Branches without PRs:" line ----
