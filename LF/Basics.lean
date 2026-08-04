@@ -1021,7 +1021,7 @@ open MyNamespace
 ```
 
 If we only want to bring _some_, rather than all, of the definitions
-of a namespace into the current scope, we can use the `export` command:
+of a namespace into the current scope, we can use the `open (...)` form:
 
 ```lean
 namespace MyOtherNamespace
@@ -1029,13 +1029,13 @@ def myHiddenDef : Bool := Bool.true
 def myVisibleDef : Bool := Bool.false
 end MyOtherNamespace
 
-export MyOtherNamespace (myVisibleDef)
+open MyOtherNamespace (myVisibleDef)
 
 -- `myVisibleDef` is now usable without qualification:
 #check myVisibleDef -- Bool
 ```
 
-But `myHiddenDef`, which we did not `export`, still needs its full name;
+But `myHiddenDef`, which we did not `open`, still needs its full name;
 using it unqualified is an error:
 
 ```lean +error
@@ -1045,13 +1045,13 @@ using it unqualified is an error:
 ::::full
 In fact, this is what exactly what Lean does with the standard `Bool` type by default.
 Since it is such an important
-part of many proofs and programs, Lean implicitly `export`s many of `Bool`s functions and
+part of many proofs and programs, Lean implicitly `open`s many of `Bool`s functions and
 constructors. Accordingly, we can use constructors like `true` and `false` and functions
 like `not` without qualifying them with `Bool.`.
 ::::
 
 ::::terse
-Names from the `Bool` `namespace` are `export`ed and thus available without qualification.
+Names from the `Bool` `namespace` are `open`ed and thus available without qualification.
 ::::
 
 ```lean
