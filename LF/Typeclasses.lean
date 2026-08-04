@@ -82,6 +82,10 @@ error:
 -keep flag. It is, however, stripping the message guard, so this results in an error. Once
 we figure out how we are handling these cases, uncomment this.
 
+mwhicks1: Until then, readers reach the sentence below — "that produces a puzzling error" —
+without ever seeing the error. Should the error text be described in prose instead of shown as a
+(currently suppressed) code block?
+
 ```lean -keep
 /--
 error: failed to synthesize instance of type class
@@ -137,7 +141,7 @@ theorem List.elem_poly_cons [BEq α] (a b : α) (xs : List α) :
 
 #eval [0, 1].elem_poly 0
 ```
-Comparing `List.elem_poly_eq` with `List.elem_poly`, we see that there are three differences.
+Comparing {name}`List.elem_poly_eq` with {name}`List.elem_poly`, we see that there are three differences.
 First, `List.elem_poly_eq` takes an _explicit_ parameter `eq`,
 whereas `List.elem_poly` specifies an instance implicit `[BEq α]`. The instance implicit
 indicates that an instance of {name}`BEq` must be provided at
@@ -146,7 +150,7 @@ Second, whereas `List.elem_poly_eq` invokes parameter `eq` to test equality,
 `List.elem_poly` uses `==` instead. As {ref "Lists"}[Lists] noted when we first used it,
 `==` on `Nat` comes from the `BEq` typeclass.
 Finally, whereas {lean}`[0, 1].elem_poly_eq Nat.beq 0` passes the equality
-function `Nat.beq` explicitly, in {lean}`[0, 1].elem_poly 0` Lean fills it in
+function {name}`Nat.beq` explicitly, in {lean}`[0, 1].elem_poly 0` Lean fills it in
 automatically based on the type `Nat` of the `List`.
 
 :::dev "xhalo32"
@@ -166,6 +170,15 @@ to define a typeclass in the first place.
 
 `BEq` comes from Lean's standard library. Let's define a typeclass of our own, to see the
 mechanism — classes, instances, and synthesis — that made `==` resolve automatically above.
+
+:::dev "mwhicks1" PotentialImprovement
+As a programmer, I wouldn't imagine defining a `structure` to "specify" that a type has at
+least one inhabitant — that only makes sense as a constraint on something else. For example,
+if I'm defining a map and I want a default value, then requiring an element of the value's
+type as a parameter implicitly states that there is at least one; it doesn't work in a
+vacuum. I wonder if we should redo `HasOne` entirely. What could we redo it to, that's not
+far from `BEq` (say)?
+:::
 
 Suppose we want to specify that a type has at least one inhabitant, i.e., that it is not empty.
 A `structure` (chapter {ref "Lists"}[Lists]) can express this directly:
@@ -217,7 +230,7 @@ example : HasOne.one = (1 : Nat) := rfl
 ```
 
 Notice that we refer to {name}`HasOne.one` alone, with no instance named. Based on our
-equating `HasOne.one` with a `Nat`, Lean selects `instHasOneNat`, the instance for
+equating `HasOne.one` with a `Nat`, Lean selects {name}`instHasOneNat`, the instance for
 `HasOne Nat`. We know that it is this instance because we are able to
 prove that `HasOne.one` is equal to 1.
 
@@ -244,16 +257,25 @@ example : instHasOneInt.one = (-1 : Int) := rfl
 
 The option `pp.all` shows which instance Lean picked:
 
-```lean
+```lean (name := ppAllNat)
 set_option pp.all true in
-example : HasOne.one = (1 : Nat) := rfl
-
-set_option pp.all true in
-example : HasOne.one = (-1 : Int) := rfl
+#check (HasOne.one : Nat)
 ```
 
-which reveals {lean}`@HasOne.one Nat instHasOneNat` and
-{lean}`@HasOne.one Int instHasOneInt` on the right-hand side of each equality. The
+```leanOutput ppAllNat
+@HasOne.one Nat instHasOneNat : Nat
+```
+
+```lean (name := ppAllInt)
+set_option pp.all true in
+#check (HasOne.one : Int)
+```
+
+```leanOutput ppAllInt
+@HasOne.one Int instHasOneInt : Int
+```
+
+revealing {name}`instHasOneNat` and {name}`instHasOneInt` as the instances Lean picked. The
 `#synth` command runs the same search directly:
 
 ```lean (name := HasOne)
@@ -407,7 +429,7 @@ instance : HasThree Nat where
 
 # Maps
 
-Maps (or dictionaries) are ubiquitous data structures both in ordinary programming and in the theory of programming languages; we're going to need them in many places in the TS and HL volumes.
+Maps (or dictionaries) are ubiquitous data structures both in ordinary programming and in the theory of programming languages; we're going to need them in many places in the volumes that follow this one, _Type Systems_ (TS) and _Hoare Logic_ (HL).
 
 We'll define two flavors of maps: total maps, which include a "default" element to be returned when a key being looked up doesn't exist, and partial maps, which instead return an option to indicate success or failure. Partial maps are defined in terms of total maps, using {name}`none` as the default element.
 
@@ -465,8 +487,9 @@ proposition equality `=`. We place no particular constraints on the value type `
 
 ## Total Maps
 
-The Lists chapter introduced a partial maps abstraction based on lists of key-value pairs.
-Here we are going to build our maps abstraction using functions. The advantage of this representation is that it offers a more "extensional" view of maps: two maps that respond to queries in the same way will be represented as exactly the same function, rather than just as "equivalent" list structures. This simplifies proofs that use maps.
+The {ref "Lists"}[Lists] chapter introduced a partial maps abstraction, `PartialMap`, with a
+`find` function for lookup, based on lists of key-value pairs.
+Here we are going to build our maps abstraction using functions instead. The advantage of this representation is that it offers a more extensional view of maps, as we saw with functions in the {ref "Logic"}[Logic] chapter: two maps that respond to queries in the same way will be represented as exactly the same function, rather than just as "equivalent" list structures. This simplifies proofs that use maps.
 
 ```lean
 def TotalMap (α : Type) (β : Type) := α → β
@@ -488,8 +511,9 @@ The function `TotalMap.empty` yields an empty total map, given a default element
 def empty : TotalMap α β := fun _ ↦ default
 ```
 
-We'll also declare an instance of `EmptyCollection` so that we can use its `∅` notation for
-this empty map.
+Just as declaring `BEq`/`HasOne` instances above hooked `==` and `HasOne.one` up to our types,
+we can declare an instance of the standard library's `EmptyCollection` typeclass to hook `∅`
+up to this empty map.
 
 ```lean
 instance : EmptyCollection (TotalMap α β) where
@@ -516,7 +540,8 @@ the empty map. For `Nat` the `default` is `0`.
 
 While `TotalMap` happens to be implemented as a function, we would prefer not to expose that
 fact in its public interface. As such, we need to define specific operations for getting and
-updating mappings. As a first attempt at the former, we could simply define a function
+updating mappings, playing the role that `find` played for the {ref "Lists"}[Lists] chapter's
+list-based maps. As a first attempt at the former, we could simply define a function
 `getElem` for getting a key's element value:
 
 ```lean -keep
@@ -548,7 +573,7 @@ class MyGetElem (coll : Type) (idx : Type) (elem : outParam Type) where
 ```
 
 Don't worry about the `outParam` qualifier; it is a hint to Lean that helps typeclass inference.
-An instance of this typeclass for our `TotalMap` is the following:
+An instance of {name}`MyGetElem` for our `TotalMap` is the following:
 
 ```lean
 variable [Inhabited β]
@@ -556,8 +581,12 @@ instance : MyGetElem (TotalMap α β) α β where
   getElem m a := m a
 ```
 
-Now we associate the bracket syntax with `MyTypeElem.getElem`. The `macro_rules` and the
-`app_unexpander` here are minor technicalities for getting the syntax to work.
+Now we associate the bracket syntax with {name}`MyGetElem.getElem`. We've defined custom notation
+before (e.g. `::` and `[...]` for lists, or `+`/`*`/`==` for arithmetic), but always with
+`infixl`/`infixr` or `scoped macro`; this is the first time we reach for the more general
+`notation`/`macro_rules` forms. Don't worry about following the mechanism in detail — the
+`macro_rules` and the `app_unexpander` below are minor technicalities for getting the `m[a]`
+syntax to work.
 
 ```lean
 namespace MyGetElem
@@ -659,7 +688,10 @@ def exampleMap :=
     |>.update "bar" true
 ```
 
-We also introduce a notation for updating maps, in this case referencing the `TotalMap.update`
+Here `|>` is Lean's *pipe* notation: `x |>.f y` means `x.f y`, letting us chain a sequence of
+function or method calls left to right without nested parentheses.
+
+We also introduce a notation for updating maps, in this case referencing the {name}`TotalMap.update`
 function directly.
 
 ```lean
@@ -698,7 +730,7 @@ When we use maps in later volumes, we'll need several fundamental facts about ho
 
 Even if you don't work the following exercises, make sure you thoroughly understand the statements of the lemmas!
 
-(Some of the proofs require the functional extensionality axiom, which was discussed in the Logic chapter.)
+(Some of the proofs require the functional extensionality axiom {name}`funext`, discussed in the {ref "Logic"}[Logic] chapter.)
 
 First, the empty map returns its default element for all keys:
 
@@ -724,7 +756,7 @@ theorem update_neq {m : TotalMap α β} {a₁ a₂ : α} (h : a₁ ≠ a₂) (b 
 ```
 ::::
 
-The two remaining facts are equalities _between maps_, so we first need to say when two maps are equal. Since a total map is a function, this is exactly the functional extensionality principle from the Logic chapter: two maps are equal when they agree at every key. Recording it once, for maps, and tagging it `@[ext]` lets the {tactic}`ext` tactic reduce a goal `m₁ = m₂` to the pointwise one in the proofs below.
+The two remaining facts are equalities _between maps_, so we first need to say when two maps are equal. Since a total map is a function, this is exactly the functional extensionality principle ({name}`funext`) from the {ref "Logic"}[Logic] chapter: two maps are equal when they agree at every key. Recording it once, for maps, and tagging it `@[ext]` lets the {tactic}`ext` tactic reduce a goal `m₁ = m₂` to the pointwise one in the proofs below.
 
 ```lean
 @[ext]
