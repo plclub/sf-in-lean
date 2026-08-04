@@ -489,7 +489,7 @@ proposition equality `=`. We place no particular constraints on the value type `
 
 The {ref "Lists"}[Lists] chapter introduced a partial maps abstraction, `PartialMap`, with a
 `find` function for lookup, based on lists of key-value pairs.
-Here we are going to build our maps abstraction using functions instead. The advantage of this representation is that it offers a more extensional view of maps, as we saw with functions in the {ref "Logic"}[Logic] chapter: two maps that respond to queries in the same way will be represented as exactly the same function, rather than just as "equivalent" list structures. This simplifies proofs that use maps.
+Here we are going to build our maps abstraction using functions instead. The advantage of this representation is that it offers a more {tech}_extensional_ view of maps, as we saw with functions in the {ref "Logic"}[Logic] chapter: two maps that respond to queries in the same way will be represented as exactly the same function, rather than just as "equivalent" list structures. This simplifies proofs that use maps.
 
 ```lean
 def TotalMap (α : Type) (β : Type) := α → β
