@@ -42,9 +42,7 @@ def chlipala2013 : Article where
   pages   := none
   url     := some "https://tinyurl.com/zqdnyg2"
 
--- SF cites this as "Harper 2015", but the work itself is the second
--- edition, published 2016.
-def harper2015 : Article where
+def harper2016 : Article where
   title   := inlines!"Practical Foundations for Programming Languages (Second Edition)"
   authors := #[inlines!"Robert Harper"]
   journal := inlines!"Cambridge University Press"
