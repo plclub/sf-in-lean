@@ -401,14 +401,6 @@ def tip(glyph, title):
     return f'<abbr title="{title}">{glyph}</abbr>'
 
 
-# The "draft" badge is GitHub's transparent-background pencil emoji served as an
-# <img> rather than the busier 📝 memo glyph: an image can be sized (a plain
-# emoji can't in Markdown), so it sits a touch larger, and `title` gives it the
-# same hover tooltip as the <abbr>-wrapped glyphs.  `alt` degrades gracefully.
-DRAFT_BADGE = ('<img src="https://github.githubassets.com/images/icons/emoji/'
-               'unicode/270f.png" width="20" alt="Draft" title="Draft">')
-
-
 def status_badges(pr):
     """Review / merge readiness of an open PR as compact glyph badges (each
     carrying a hover tooltip, and spelled out in the table legend).  Badges are
@@ -424,7 +416,7 @@ def status_badges(pr):
     * 🔗 #N — issues the PR closes (via a fixes/closes/resolves keyword), linked."""
     badges = []
     if pr["draft"]:
-        badges.append(DRAFT_BADGE)
+        badges.append(tip("✏️", "Draft"))
     else:
         dec = pr["review_decision"]
         if dec == "CHANGES_REQUESTED":
@@ -645,7 +637,7 @@ def render(branches, conf, prs, have_token, slug):
         out.append(
             "<sub>**Status** ✅&nbsp;ready · 👍&nbsp;approved, threads open · "
             "🔴&nbsp;changes requested · 💬&nbsp;open threads · "
-            f"{DRAFT_BADGE}&nbsp;draft · ⏳&nbsp;queued · 🚧&nbsp;auto-merge "
+            "✏️&nbsp;draft · ⏳&nbsp;queued · 🚧&nbsp;auto-merge "
             "held · 🔗&nbsp;fixes issue · ⚠️&nbsp;main conflicts with `main`. "
             "&nbsp; **Overlaps** plain = clean co-edit · ⚠️&nbsp;real conflict "
             "· ⊃&nbsp;contains · ⊂&nbsp;contained in.</sub>")
