@@ -8,16 +8,18 @@ picture of who is touching what:
 
   * a per-PR table with Ready-to-merge PRs grouped first (then most recently
     active) — five columns: the branch (linked to its PR) over its author and
-    last-activity time in small type; a Status cell of glyph badges (✅ ready,
-    👍 approved with open threads, 🔴 changes requested, 💬N open threads,
-    📝 draft, ⏳ queued / 🚧 auto-merge held, 🔗 fixes issue, ⚠️main = no longer
-    merges cleanly against `main`); an Overlaps cell naming which *other* PR
-    branches it shares files with (plain = clean co-edit, ⚠️ = a real conflict
-    from an in-memory merge not a filename guess, ⊃/⊂ = one branch's commits
-    contain the other's), a Files count (expander), and any `#Note: …` lines
-    reviewers left on the PR.  A legend below the table spells out the glyphs.
-    Only branches with an open PR appear in the table, and only they are weighed
-    when marking its overlaps and conflicts;
+    last-activity time on a second line in small type; a Status cell of glyph
+    badges (✅ ready, 👍 approved with open threads, 🔴 changes requested,
+    💬N open threads, 📝 draft, ⏳ queued / 🚧 auto-merge held, 🔗 fixes issue,
+    ⚠️ main = no longer merges cleanly against `main`); an Overlaps cell naming
+    which *other* PR branches it shares files with (plain = clean co-edit,
+    ⚠️ = a real conflict from an in-memory merge not a filename guess, ⊃/⊂ = one
+    branch's commits contain the other's), a Files count (expander), and any
+    `#Note: …` lines reviewers left on the PR.  Every icon carries a hover
+    tooltip (via `<abbr>`) and is glued to its text with a non-breaking space,
+    and a legend below the table spells the glyphs out too.  Only branches with
+    an open PR appear in the table, and only they are weighed when marking its
+    overlaps and conflicts;
   * a "Branches without PRs:" line just below the table — a compact list of
     every active branch *without* a PR: name (linked to its GitHub page), its author
     (same style as the table), how long since it was created and last active,
@@ -391,9 +393,19 @@ def author_cell(b):
     return author
 
 
+def tip(glyph, title):
+    """A glyph carrying a hover tooltip.  GitHub keeps the `title` attribute on
+    `<abbr>`, so the icon renders with an explanatory pop-up (and degrades to a
+    bare glyph on any renderer that drops it — the table legend still spells
+    every icon out).  Titles are plain text, so no backticks/markdown."""
+    return f'<abbr title="{title}">{glyph}</abbr>'
+
+
 def status_badges(pr):
-    """Review / merge readiness of an open PR as compact glyph badges (spelled
-    out in the table legend).  Space-joined, possibly empty; drafts read `📝`.
+    """Review / merge readiness of an open PR as compact glyph badges (each
+    carrying a hover tooltip, and spelled out in the table legend).  Badges are
+    space-joined and each icon is glued to its own text with a non-breaking
+    space, so an icon never wraps away from the word it labels.
 
     * 📝 draft.
     * 🔴 changes requested · ✅ ready to merge (approved, nothing unresolved) ·
@@ -401,22 +413,27 @@ def status_badges(pr):
     * 💬N — N review threads still open.
     * ⏳ in the merge queue · 🚧 auto-merge enabled but held (a failing check,
       missing approval, or conflict is stalling it).
-    * 🔗#N — issues the PR closes (via a fixes/closes/resolves keyword), linked."""
+    * 🔗 #N — issues the PR closes (via a fixes/closes/resolves keyword), linked."""
     badges = []
     if pr["draft"]:
-        badges.append("📝")
+        badges.append(tip("📝", "Draft"))
     else:
         dec = pr["review_decision"]
         if dec == "CHANGES_REQUESTED":
-            badges.append("🔴")
+            badges.append(tip("🔴", "Changes requested"))
         elif dec != "REVIEW_REQUIRED":  # APPROVED, or None (no required review — rare here)
-            badges.append("✅" if pr["unresolved"] == 0 else "👍")
+            badges.append(tip("✅", "Ready to merge — approved, nothing unresolved")
+                          if pr["unresolved"] == 0
+                          else tip("👍", "Approved, but with open review threads"))
     if pr["unresolved"]:
-        badges.append(f"💬{pr['unresolved']}")
+        n = pr["unresolved"]
+        badges.append(tip(f"💬{n}", f"{n} open review thread{'' if n == 1 else 's'}"))
     if pr["auto_merge"]:
-        badges.append("⏳" if pr["in_queue"] else "🚧")
+        badges.append(tip("⏳", "In the merge queue") if pr["in_queue"]
+                      else tip("🚧", "Auto-merge enabled but held"))
     if pr["closes"]:
-        badges.append("🔗" + " ".join(f"[#{i['num']}]({i['url']})" for i in pr["closes"]))
+        links = ", ".join(f"[#{i['num']}]({i['url']})" for i in pr["closes"])
+        badges.append(tip("🔗", "Issues this PR closes") + "&nbsp;" + links)
     return " ".join(badges)
 
 
@@ -563,36 +580,42 @@ def render(branches, conf, prs, have_token, slug):
         # ⚠️, not several.  `A ⊂ B` names the superseded branches A first, then
         # the container B whose commits already include them; the ⚠️ (real merge
         # conflict) is shown once, on the container.
+        # Each overlap icon carries a tooltip and is glued to its branch link
+        # with a non-breaking space, so the symbol never wraps away from the
+        # name it qualifies.
+        warn = tip("⚠️", "Real merge conflict")
+        sup = tip("⊃", "Contains that branch's commits")
+        sub = tip("⊂", "Contained in that branch")
         heads = sorted(independent_branches(rest))
         pieces = []
         for h in heads:
             subs = sorted(o for o in rest if o != h and contains(h, o))
-            prefix = "⚠️ " if h in conf[r] else ""
+            prefix = f"{warn}&nbsp;" if h in conf[r] else ""
             h_link = branch_link(active[h]["short"], slug)
             if subs:
                 sub_links = ", ".join(
                     branch_link(active[o]["short"], slug) for o in subs)
-                piece = f"{prefix}{sub_links} ⊂ {h_link}"
+                piece = f"{prefix}{sub_links}&nbsp;{sub}&nbsp;{h_link}"
             else:
                 piece = prefix + h_link
             pieces.append(piece)
-        pieces += ["⊃ " + branch_link(active[o]["short"], slug)
+        pieces += [f"{sup}&nbsp;" + branch_link(active[o]["short"], slug)
                    for o in contains_o]
-        pieces += ["⊂ " + branch_link(active[o]["short"], slug)
+        pieces += [f"{sub}&nbsp;" + branch_link(active[o]["short"], slug)
                    for o in contained_by]
         ov = ", ".join(pieces)
         pr = prs.get(b["short"])
-        # First cell on a single line: the branch (linked to its PR) over its
-        # author and last-activity time in small type — three former columns
-        # folded into one.  A wider branch label keeps the column readable.
+        # First cell: the branch (linked to its PR) with its author and
+        # last-activity time on a second line in small type — three former
+        # columns folded into one.  A wider branch label keeps it readable.
         branch = branch_link(b["short"], slug, maxlen=40,
                              href=pr["url"] if pr else None)
-        first = f"{branch} <sub>{author_cell(b)} · {b['when']} ago</sub>"
+        first = f"{branch}<br><sub>{author_cell(b)} · {b['when']} ago</sub>"
         # The old "→ main" column is folded into the Status cell: flag a branch
-        # that no longer merges cleanly right there, as a ⚠️main badge.
+        # that no longer merges cleanly right there, as a ⚠️ main badge.
         status = pr_cell(b["short"], prs)
         if not b["clean_to_main"]:
-            status += " ⚠️main"
+            status += " " + tip("⚠️&nbsp;main", "No longer merges cleanly with main")
         # `#Note`s flow middot-separated (see notes_cell); `<sub>` is used purely
         # for smaller glyphs — the block line-height fixes the leading regardless.
         notes = notes_cell(pr)
@@ -612,11 +635,12 @@ def render(branches, conf, prs, have_token, slug):
     if active:
         out.append("")
         out.append(
-            "<sub>**Status** ✅ ready · 👍 approved, threads open · 🔴 changes "
-            "requested · 💬 open threads · 📝 draft · ⏳ queued · 🚧 auto-merge "
-            "held · 🔗 fixes issue · ⚠️main conflicts with `main`. &nbsp; "
-            "**Overlaps** plain = clean co-edit · ⚠️ real conflict · ⊃ contains "
-            "· ⊂ contained in.</sub>")
+            "<sub>**Status** ✅&nbsp;ready · 👍&nbsp;approved, threads open · "
+            "🔴&nbsp;changes requested · 💬&nbsp;open threads · 📝&nbsp;draft · "
+            "⏳&nbsp;queued · 🚧&nbsp;auto-merge held · 🔗&nbsp;fixes issue · "
+            "⚠️&nbsp;main conflicts with `main`. &nbsp; **Overlaps** plain = "
+            "clean co-edit · ⚠️&nbsp;real conflict · ⊃&nbsp;contains · "
+            "⊂&nbsp;contained in.</sub>")
     out.append("")
 
     # ---- non-PR branches: one compact "Branches without PRs:" line ----
