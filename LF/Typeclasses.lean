@@ -385,22 +385,22 @@ satisfied, which can lead to bugs.
 
 ::::exercise (rating := 1) (name := "HasThree")
 Following the pattern of {name}`HasOne` and {name}`HasTwo`, define a class `HasThree` that
-specifies a type with at least three distinct elements.
+specifies a type with at least three distinct elements, and give an instance of it for
+{name}`Nat`.
 
 :::dev "Claude"
-The class is shown in full in every build rather than hiding the two extra
-distinctness fields behind `-- SOLUTION`/`-- END SOLUTION`. Hiding class *field
-declarations* is incompatible with the `instHasThree` instance below: the
-extracted student `.lean` would carry a four-field class but an instance that
-must still satisfy all six fields (fields can't be `solution!`-stubbed), and the
-HTML render elaborates the student instance against the *teacher* six-field
-class from the shared cross-block environment — either way producing a spurious
-`Fields missing` error. The instance keeps its proofs (not its fields) behind
-`solution!`, which is the genuine fill-in for this exercise pair.
+Keep the class and its instance together in this one `lean` block. If they are
+split into separate blocks, the exercise breaks: the student/terse HTML
+re-elaborates each block's rewritten source against the *teacher* environment,
+so a separate instance block is checked against the six-field class and reports
+a spurious `Fields missing` error. Sharing one block lets the student
+re-elaboration see the four-field class defined directly above the instance, so
+the `-- SOLUTION` fill-ins stay consistent across the class and the instance.
 :::
 :::dev "Benjamin Pierce (bcpierce00)"
-Not convinced Claude did the right thing here: the rendering bug is fixed, but the exercise is kind of meaningless.  However, we may need
-to improve the infrastructure scripts to get what we really want.
+Longer term we may want to improve the infrastructure scripts so per-variant
+field hiding works across separate blocks, so this could be split back into two
+exercises.
 :::
 ```lean
 class HasThree (α : Type) where
@@ -408,22 +408,20 @@ class HasThree (α : Type) where
   two : α
   three : α
   one_neq_two : one ≠ two
+  -- SOLUTION
   one_neq_three : one ≠ three
   two_neq_three : two ≠ three
-```
-::::
+  -- END SOLUTION
 
-::::exercise (rating := 1) (name := "instHasThree")
-Provide an instance of {name}`HasThree` for {name}`Nat`.
-
-```lean
 instance : HasThree Nat where
   one := 1
   two := 2
   three := 3
   one_neq_two := solution!(by intro contra; contradiction)
+  -- SOLUTION
   one_neq_three := solution!(by intro contra; contradiction)
   two_neq_three := solution!(by intro contra; contradiction)
+  -- END SOLUTION
 ```
 ::::
 
