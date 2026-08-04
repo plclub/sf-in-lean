@@ -126,10 +126,11 @@ def devNoteLabel (author urgency : Option String) (year : Option Nat)
   else s!"{heading} ({String.intercalate ", " fields})"
 
 /-! `Block.devcomment` carries the note body as its children and records its
-author/urgency metadata in `data`.  A note whose urgency passes `devNoteShown`
-(`NOW`, `TODO`, or none) is rendered: brightly highlighted in the HTML book,
-and passed through as a comment in the generated `.lean` files (see
-`walkBlock` in `SFLMeta.Save`).  All other notes render nothing. -/
+author/urgency metadata in `data`. A note whose urgency passes `devNoteShown`
+(`NOW`, `BeforeNextRelease`, or none) is rendered: brightly highlighted in the
+HTML book, and passed through as a labelled comment in generated `.lean` files
+by `SFLMeta.Save.Extract.walkBlock`. `PotentialImprovement` notes render
+nothing. -/
 block_extension Block.devcomment (author : Option String)
     (urgency : Option String) (year : Option Nat) where
   data := Json.arr #[toJson author, toJson urgency, toJson year]
@@ -182,12 +183,12 @@ def noopDirectiveFor (blockName : Name) : DirectiveExpanderOf Unit
 
 /-- A `:::dev` directive holds an author/developer comment.  It accepts
 optional positional author and urgency arguments and an optional named year,
-e.g. `:::dev "Benjamin Pierce (bcpierce00)" SOONER (year := 2020)`; all are
+e.g. `:::dev "Benjamin Pierce (bcpierce00)" BeforeNextRelease (year := 2020)`; all are
 recorded in the block's data, and the body is elaborated and kept as the
 block's children.  Whether anything is *rendered* is decided per-note by
-`devNoteShown` (only `NOW`, `TODO`, or urgency-free notes surface).  NB: since
-the body elaborates, a ` ```lean ` fence inside a dev note runs the Lean code —
-use a plain ` ``` ` fence for code that must stay inert. -/
+`devNoteShown` (only `NOW`, `BeforeNextRelease`, or urgency-free notes surface).
+NB: since the body elaborates, a ` ```lean ` fence inside a dev note runs the
+Lean code — use a plain ` ``` ` fence for code that must stay inert. -/
 @[directive]
 def dev : DirectiveExpanderOf DevConfig
   | cfg, contents => do
