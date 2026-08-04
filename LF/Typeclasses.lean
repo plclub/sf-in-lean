@@ -141,7 +141,7 @@ theorem List.elem_poly_cons [BEq α] (a b : α) (xs : List α) :
 
 #eval [0, 1].elem_poly 0
 ```
-Comparing {name}`List.elem_poly_eq` with {name}`List.elem_poly`, we see that there are three differences.
+Comparing {name}`List.elem_poly_eq` with {name}`List.elem_poly`, we see three differences.
 First, `List.elem_poly_eq` takes an _explicit_ parameter `eq`,
 whereas `List.elem_poly` specifies an instance implicit `[BEq α]`. The instance implicit
 indicates that an instance of {name}`BEq` must be provided at
@@ -198,7 +198,7 @@ def nat_hasOneStruct : HasOneStruct Nat where
 example : nat_hasOneStruct.one = 1 := rfl
 ```
 
-But nothing makes Lean produce this witness *automatically*: we had to write `where one := 1`
+But nothing makes Lean produce this witness _automatically_: we had to write `where one := 1`
 ourselves, unlike the `BEq Nat` instance that Lean found for us on its own above.
 
 Typeclasses solve this. In Lean, they're implemented as structures and declared the same way, but
@@ -229,8 +229,9 @@ the same process that found `BEq Nat` earlier.
 example : HasOne.one = (1 : Nat) := rfl
 ```
 
-Notice that we refer to {name}`HasOne.one` alone, with no instance named. Based on our
-equating `HasOne.one` with a `Nat`, Lean selects {name}`instHasOneNat`, the instance for
+Notice that we refer to {name}`HasOne.one` alone, with no instance named. Because the
+expression equates `HasOne.one` with a `Nat`, Lean selects {name}`instHasOneNat`,
+the instance for
 `HasOne Nat`. We know that it is this instance because we are able to
 prove that `HasOne.one` is equal to 1.
 
@@ -275,8 +276,7 @@ set_option pp.all true in
 @HasOne.one Int instHasOneInt : Int
 ```
 
-revealing {name}`instHasOneNat` and {name}`instHasOneInt` as the instances Lean picked. The
-`#synth` command runs the same search directly:
+This reveals {name}`instHasOneNat` and {name}`instHasOneInt` as the instances Lean picked. The `#synth` command runs the same search directly:
 
 ```lean (name := HasOne)
 #synth HasOne Nat
@@ -291,6 +291,7 @@ than only proofs — we expect at most one instance per type, so this search has
 
 :::dev
 @chenson2018: I don't really want to explain diamonds here, is the above white lie hand-waving okay??
+@bcpierce00: Seems OK to me.
 :::
 
 We'll put `HasOne`'s standard-library cousin, {name}`Inhabited`, to work later in this chapter,
@@ -349,8 +350,8 @@ theorem List.elem_poly_eq_elem_nat (xs : List Nat) (n : Nat) : xs.elem_poly n = 
 # Proof-Carrying Typeclasses
 
 The above examples enforce no conditions on the data an instance may carry — any value of the
-right type will do. But sometimes enforcing constraints on data is useful. As an example,
-suppose that we wanted to specify that a type has not one element, but two. Here is a first attempt:
+right type will do. But sometimes enforcing constraints on data is useful. For example,
+suppose we want to specify that a type has not just a single element, but two. Here is a first attempt:
 
 ```lean -keep
 class HasTwoIncomplete (α : Type) where
@@ -369,7 +370,7 @@ class HasTwo (α : Type) where
 ```
 
 Declaring instances works in much the same
-way as before, except that now {name}`HasTwo.one_neq_two` requires a proof:
+way as before, except that now the {name}`HasTwo.one_neq_two` field requires a proof:
 
 ```lean
 instance : HasTwo Nat where
@@ -379,7 +380,7 @@ instance : HasTwo Nat where
 ```
 
 In most languages that support typeclasses (or traits) it is not possible to formally enforce
-"laws" such as `one_neq_two`. Thus it falls to the author to ensure that any desired invariants are
+laws such as `one_neq_two`. Thus it falls to the author to check, informally, that any required invariants are
 satisfied, which can lead to bugs.
 
 ::::exercise (rating := 1) (name := "HasThree")
