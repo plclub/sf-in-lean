@@ -457,7 +457,7 @@ Now that we've defined some basic functions on booleans, let's see how to
 _prove_ some simple properties of those functions. Here is a simple rule
 about `&&`:
 
-- `MyBool.true && b = b`
+- `(MyBool.true && b) = b`
 
 This is an example of a _proposition_, a logical _claim_ that we can try to prove.
 It says that `MyBool.true && b` is equal to `b` for every `MyBool` `b`.
@@ -2604,14 +2604,14 @@ theorem and_eq_or : ∀ b c : Bool, (b && c) = (b || c) → b = c := by
     cases c
     case true =>
       /-
-        h : true && c = true || c, i.e., h : c = true
+        h : (true && c) = true || c, i.e., h : c = true
       -/
       rewrite [Bool.and_true, Bool.or_true] at h
       rewrite [h]
       rfl
     case false =>
       /-
-        h : false && c = false || c, i.e., h : false = c
+        h : (false && c) = false || c, i.e., h : false = c
       -/
       rewrite [Bool.and_false, Bool.or_false] at h
       rewrite [h]
