@@ -387,17 +387,20 @@ satisfied, which can lead to bugs.
 Following the pattern of {name}`HasOne` and {name}`HasTwo`, define a class `HasThree` that
 specifies a type with at least three distinct elements.
 
-:::dev "Claude" NOW
-Rendering bug in this exercise and `instHasThree` below. Both use the
-`-- SOLUTION`/`-- END SOLUTION` comment-marker idiom to hide *some* class
-fields / instance fields, but the Verso HTML build does not process those
-markers (only the `solution!` tactic is handled). In *student* and *terse*
-the class shows only the visible fields while the `instHasThree` instance then
-reports a spurious `Fields missing: one_neq_three, two_neq_three` error; in
-*solutions* the hidden fields are shown but the literal `-- SOLUTION` /
-`-- END SOLUTION` comment lines leak into the displayed code. The generated
-`.lean` is fine — HTML-only. Fix by expressing the hidden fields with
-`solution!` rather than the comment markers.
+:::dev "Claude"
+The class is shown in full in every build rather than hiding the two extra
+distinctness fields behind `-- SOLUTION`/`-- END SOLUTION`. Hiding class *field
+declarations* is incompatible with the `instHasThree` instance below: the
+extracted student `.lean` would carry a four-field class but an instance that
+must still satisfy all six fields (fields can't be `solution!`-stubbed), and the
+HTML render elaborates the student instance against the *teacher* six-field
+class from the shared cross-block environment — either way producing a spurious
+`Fields missing` error. The instance keeps its proofs (not its fields) behind
+`solution!`, which is the genuine fill-in for this exercise pair.
+:::
+:::dev "Benjamin Pierce (bcpierce00)"
+Not convinced Claude did the right thing here: the rendering bug is fixed, but the exercise is kind of meaningless.  However, we may need
+to improve the infrastructure scripts to get what we really want.
 :::
 ```lean
 class HasThree (α : Type) where
@@ -405,10 +408,8 @@ class HasThree (α : Type) where
   two : α
   three : α
   one_neq_two : one ≠ two
-  -- SOLUTION
   one_neq_three : one ≠ three
   two_neq_three : two ≠ three
-  -- END SOLUTION
 ```
 ::::
 
@@ -421,23 +422,27 @@ instance : HasThree Nat where
   two := 2
   three := 3
   one_neq_two := solution!(by intro contra; contradiction)
-  -- SOLUTION
   one_neq_three := solution!(by intro contra; contradiction)
   two_neq_three := solution!(by intro contra; contradiction)
-  -- END SOLUTION
 ```
 ::::
 
 # Maps
 
-Maps (or dictionaries) are ubiquitous data structures both in ordinary programming and in the theory of programming languages; we're going to need them in many places in the volumes that follow this one, _Type Systems_ (TS) and _Hoare Logic_ (HL).
+Maps (or "dictionaries") are ubiquitous data structures both in ordinary programming and in the theory of programming languages; we're going to need them in many places in later volumes.
 
-We'll define two flavors of maps: total maps, which include a "default" element to be returned when a key being looked up doesn't exist, and partial maps, which instead return an option to indicate success or failure. Partial maps are defined in terms of total maps, using {name}`none` as the default element.
+We'll define two flavors of maps: _total maps_, which include a "default" element to be returned when a key being looked up doesn't exist, and _partial maps_, which instead return an option to indicate success or failure. Partial maps are defined in terms of total maps, using {name}`none` as the default element.
 
 ## Map Key and Value Types
 
-To define maps, we first need a type for the keys that we will use to index into our maps, and
-a type for the values the maps return. Instead of using concrete types, we will use type variables.
+To define maps, we first need a type for the keys that we will use to index into our maps and
+a type for the values the maps return. Instead of choosing concrete types for these, we will use type variables.
+
+:::dev "Benjamin Pierce (bcpierce00)"
+Should we perhaps refer back to where the `variable` declaration is explained?  (I guess in Poly, but which section?)
+
+More generally, the exposition gets a little thick from here to the next section header.
+:::
 
 ```lean
 variable {α : Type} {β : Type} [BEq α] [ReflBEq α] [LawfulBEq α]
@@ -461,9 +466,9 @@ introduce `[BEq α] [ReflBEq α] [LawfulBEq α]` in a section that covers only t
 `update` material, which is the only place they are actually needed.
 :::
 
-Here, `α` is the type of our map keys and `β` the corresponding values. In addition
-to {name}`BEq` which we have already seen, key types `α` require instances of the
-{name}`ReflBEq` and {name}`LawfulBEq` typeclasses.
+Here, `α` is the type of the keys and `β` the corresponding values. In addition
+to {name}`BEq`, which we have already seen, the key type `α` requires instances of the
+{name}`ReflBEq` and {name}`LawfulBEq` typeclasses:
 
 ```
 /-- `ReflBEq α` says that the `BEq` implementation is reflexive. -/
@@ -484,13 +489,15 @@ class LawfulBEq (α : Type u) [BEq α] : Prop extends ReflBEq α where
 ```
 
 These classes refine `BEq`, specifying that (`==`) is reflexive and coincides with
-proposition equality `=`. We place no particular constraints on the value type `β`.
+proposition equality `=`.
+
+We place no constraints on the value type `β`.
 
 ## Total Maps
 
-The {ref "Lists"}[Lists] chapter introduced a partial maps abstraction, `PartialMap`, with a
+The {ref "Lists"}[Lists] chapter introduced a partial map abstraction, `PartialMap`, with a
 `find` function for lookup, based on lists of key-value pairs.
-Here we are going to build our maps abstraction using functions instead. The advantage of this representation is that it offers a more {tech}_extensional_ view of maps, as we saw with functions in the {ref "Logic"}[Logic] chapter: two maps that respond to queries in the same way will be represented as exactly the same function, rather than just as "equivalent" list structures. This simplifies proofs that use maps.
+Here, we are going to build a map abstraction using functions instead. The advantage of this representation is that it offers a more {tech}_extensional_ view of maps, as we saw with functions in the {ref "Logic"}[Logic] chapter: two maps that respond to every query in the same way will be represented as exactly the same function, rather than just as "equivalent" list structures. This simplifies proofs that use maps.
 
 ```lean
 def TotalMap (α : Type) (β : Type) := α → β
@@ -513,29 +520,27 @@ def empty : TotalMap α β := fun _ ↦ default
 ```
 
 Just as declaring `BEq`/`HasOne` instances above hooked `==` and `HasOne.one` up to our types,
-we can declare an instance of the standard library's `EmptyCollection` typeclass to hook `∅`
-up to this empty map.
+we can declare an instance of the standard library's `EmptyCollection` typeclass to associate `∅`
+with this empty map.
 
 ```lean
 instance : EmptyCollection (TotalMap α β) where
   emptyCollection := TotalMap.empty
 ```
 
-Now we can define a particular empty map. Here is one that maps `Nat` keys to `Nat` values:
+Here, for example, is an empty map that takes `Nat` keys to `Nat` values:
 
 ```lean
 def emptyNatMap : TotalMap Nat Nat := ∅
 ```
 
-Since a map is a function, we could apply it to a key to get out the corresponding value, like so:
+Since a map is a function, we can apply it to a key to get out the corresponding value, like so:
 
 ```lean
 example : emptyNatMap 1 = default := rfl
 example : emptyNatMap 2 = 0 := rfl
 ```
-
-In these two examples, we prove that the value we get back is the `default`, since this is
-the empty map. For `Nat` the `default` is `0`.
+(For `Nat` the `default` is `0`.)
 
 ### Getting Elements
 
