@@ -1070,7 +1070,7 @@ MyNamespace.myDef : Bool
 ```
 
 If we only want to bring _some_, rather than all, of the definitions
-of a namespace into the current scope, we can use the `export` command:
+of a namespace into the current scope, we can use the `open (...)` form:
 
 ```lean (name := ns_2)
 namespace MyOtherNamespace
@@ -1078,7 +1078,7 @@ def myHiddenDef : Bool := Bool.true
 def myVisibleDef : Bool := Bool.false
 end MyOtherNamespace
 
-export MyOtherNamespace (myVisibleDef)
+open MyOtherNamespace (myVisibleDef)
 
 -- `myVisibleDef` is now usable without qualification:
 #check myVisibleDef
@@ -1088,7 +1088,7 @@ export MyOtherNamespace (myVisibleDef)
 MyOtherNamespace.myVisibleDef : Bool
 ```
 
-But `myHiddenDef`, which we did not `export`, still needs its full name;
+But `myHiddenDef`, which we did not `open`, still needs its full name;
 using it unqualified is an error:
 
 ```lean +error (name := ns_3)
@@ -1102,13 +1102,13 @@ Unknown identifier `myHiddenDef`
 ::::full
 In fact, this is what exactly what Lean does with the standard {name}`Bool` type by default.
 Since it is such an important
-part of many proofs and programs, Lean implicitly `export`s many of {name}`Bool`s functions and
+part of many proofs and programs, Lean implicitly `open`s many of `Bool`s functions and
 constructors. Accordingly, we can use constructors like {name}`true` and {name}`false` and functions
 like {name}`not` without qualifying them with {name}`Bool`.
 ::::
 
 ::::terse
-Names from the {name}`Bool` `namespace` are `export`ed and thus available without qualification.
+Names from the `Bool` `namespace` are `open`ed and thus available without qualification.
 ::::
 
 ```lean (name := tt)
@@ -2693,18 +2693,6 @@ Now state and prove a theorem `negation_fn_applied_twice` similar
 to the previous one but where the hypothesis says that the
 function `f` has the property that `f x = !x`.
 
-:::dev "Claude" NOW
-Rendering bug (all three build products look wrong). This exercise wraps its
-*entire* theorem in the `-- SOLUTION`/`-- END SOLUTION` comment-marker idiom,
-which the Verso HTML build does not process (only the `solution!` tactic is
-handled). Result: in *student* and *terse* the code block renders empty
-with a spurious `unexpected end of input` error and a doubled `-- FILL IN
-HERE`; in *solutions* the theorem is shown but the literal `-- SOLUTION` /
-`-- END SOLUTION` comment lines leak into the displayed code. (The generated
-`.lean` files are correct — this is purely an HTML-rendering gap.) Fix by
-rewriting with the `solution!` tactic, as the neighbouring
-`identity_fn_applied_twice` exercise does.
-:::
 ```lean
 -- SOLUTION
 theorem negation_fn_applied_twice : ∀ f : Bool → Bool,
@@ -2734,14 +2722,14 @@ theorem and_eq_or : ∀ b c : Bool, (b && c) = (b || c) → b = c := by
     cases c
     case true =>
       /-
-        h : true && c = true || c, i.e., h : c = true
+        h : (true && c) = true || c, i.e., h : c = true
       -/
       rewrite [Bool.and_true, Bool.or_true] at h
       rewrite [h]
       rfl
     case false =>
       /-
-        h : false && c = false || c, i.e., h : false = c
+        h : (false && c) = false || c, i.e., h : false = c
       -/
       rewrite [Bool.and_false, Bool.or_false] at h
       rewrite [h]
