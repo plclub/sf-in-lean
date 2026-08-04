@@ -18,7 +18,7 @@ def aydemir2008 : InProceedings where
                inlines!"Stephanie Weirich"]
   year    := 2008
   booktitle := inlines!"ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages (POPL)"
-  url     := some "https://www.cis.upenn.edu/~bcpierce/papers/binders.pdf"
+  url     := "https://www.cis.upenn.edu/~bcpierce/papers/binders.pdf"
 
 def bertot2004 : Article where
   title   := inlines!"Interactive Theorem Proving and Program Development: Coq'Art: The Calculus of Inductive Constructions"
@@ -28,8 +28,7 @@ def bertot2004 : Article where
   month   := none
   volume  := inlines!""
   number  := inlines!""
-  pages   := none
-  url     := some "https://tinyurl.com/z3o7nqu"
+  url     := "https://tinyurl.com/z3o7nqu"
 
 def chlipala2013 : Article where
   title   := inlines!"Certified Programming with Dependent Types"
@@ -39,8 +38,7 @@ def chlipala2013 : Article where
   month   := none
   volume  := inlines!""
   number  := inlines!""
-  pages   := none
-  url     := some "https://tinyurl.com/zqdnyg2"
+  url     := "https://tinyurl.com/zqdnyg2"
 
 def harper2016 : Article where
   title   := inlines!"Practical Foundations for Programming Languages (Second Edition)"
@@ -50,8 +48,7 @@ def harper2016 : Article where
   month   := none
   volume  := inlines!""
   number  := inlines!""
-  pages   := none
-  url     := some "https://tinyurl.com/z82xwta"
+  url     := "https://tinyurl.com/z82xwta"
 
 def lipovaca2011 : Article where
   title   := inlines!"Learn You a Haskell for Great Good! A Beginner's Guide"
@@ -61,8 +58,7 @@ def lipovaca2011 : Article where
   month   := some inlines!"April"
   volume  := inlines!""
   number  := inlines!""
-  pages   := none
-  url     := some "http://learnyouahaskell.com"
+  url     := "http://learnyouahaskell.com"
 
 def mitchell1996 : Article where
   title   := inlines!"Foundations for Programming Languages"
@@ -72,8 +68,7 @@ def mitchell1996 : Article where
   month   := none
   volume  := inlines!""
   number  := inlines!""
-  pages   := none
-  url     := some "https://tinyurl.com/zkosavw"
+  url     := "https://tinyurl.com/zkosavw"
 
 def nipkow2014 : Article where
   title   := inlines!"Concrete Semantics with Isabelle/HOL"
@@ -83,8 +78,7 @@ def nipkow2014 : Article where
   month   := none
   volume  := inlines!""
   number  := inlines!""
-  pages   := none
-  url     := some "http://www.concrete-semantics.org"
+  url     := "http://www.concrete-semantics.org"
 
 def osullivan2008 : Article where
   title   := inlines!"Real World Haskell: Code You Can Believe In"
@@ -95,8 +89,7 @@ def osullivan2008 : Article where
   month   := none
   volume  := inlines!""
   number  := inlines!""
-  pages   := none
-  url     := some "http://book.realworldhaskell.org"
+  url     := "http://book.realworldhaskell.org"
 
 def pierce2002 : Article where
   title   := inlines!"Types and Programming Languages"
@@ -106,15 +99,14 @@ def pierce2002 : Article where
   month   := none
   volume  := inlines!""
   number  := inlines!""
-  pages   := none
-  url     := some "https://tinyurl.com/gtnudmu"
+  url     := "https://tinyurl.com/gtnudmu"
 
 def pugh1991 : InProceedings where
   title   := inlines!"The Omega test: a fast and practical integer programming algorithm for dependence analysis"
   authors := #[inlines!"William Pugh"]
   year    := 1991
   booktitle := inlines!"Proceedings of the 1991 ACM/IEEE Conference on Supercomputing"
-  url     := some "https://dl.acm.org/citation.cfm?id=125848"
+  url     := "https://dl.acm.org/citation.cfm?id=125848"
 
 def wadler2015 : Article where
   title   := inlines!"Propositions as Types"
@@ -124,8 +116,8 @@ def wadler2015 : Article where
   month   := none
   volume  := inlines!"58"
   number  := inlines!"12"
-  pages   := some (75, 84)
-  url     := some "https://dl.acm.org/citation.cfm?id=2699407"
+  pages   := (75, 84)
+  url     := "https://dl.acm.org/citation.cfm?id=2699407"
 
 def winskel1993 : Article where
   title   := inlines!"The Formal Semantics of Programming Languages: An Introduction"
@@ -135,8 +127,7 @@ def winskel1993 : Article where
   month   := none
   volume  := inlines!""
   number  := inlines!""
-  pages   := none
-  url     := some "https://tinyurl.com/j2k6ev7"
+  url     := "https://tinyurl.com/j2k6ev7"
 
 end Bib
 
