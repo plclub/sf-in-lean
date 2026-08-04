@@ -374,19 +374,20 @@ def fetch_prs(slug, token):
 # markdown rendering
 # --------------------------------------------------------------------------
 def author_cell(b):
-    """Author identity for a branch, kept narrow: just a `@handle` linked to the
-    GitHub profile, with the person's real name (and commit alias, when it
-    differs) tucked into the link's hover `title` — e.g.
-    `[@berberman](… "Yipeng Liu (Potato Hatsue)")`. Without a resolved handle
+    """Author identity for a branch: the person's name (their GitHub real name
+    when known, else the commit-author name) shown as the visible text, linked
+    to their profile, with the `@handle` (and the commit alias when it differs
+    from the real name) tucked into the link's hover `title` — e.g.
+    `[Yipeng Liu](… "@berberman, Potato Hatsue")`. Without a resolved handle
     (no token, or unmatched) we fall back to the bare commit-author name."""
     author = b["author"]
     login = b.get("login")
     real = b.get("realname")
     if login:
-        name = real if (real and real != author) else author
-        alias = f" ({author})" if real and real != author else ""
-        title = (name + alias).replace('"', "'")
-        return f'[@{login}](https://github.com/{login} "{title}")'
+        visible = real if (real and real != author) else author
+        alias = f", {author}" if real and real != author else ""
+        title = f"@{login}{alias}".replace('"', "'")
+        return f'[{visible}](https://github.com/{login} "{title}")'
     return author
 
 
