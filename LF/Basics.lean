@@ -319,7 +319,7 @@ inductive MyBool : Type where
 
 :::ignore
 ```lean -show
-variable (b : MyBool) (n m : Nat) (α : Type) (a : α)
+variable (b : MyBool) (n m : Nat)
 ```
 :::
 
@@ -1642,14 +1642,14 @@ The {tactic}`rewrite` tactic takes its argument(s) in square brackets.
 :::
 
 ::::full
-The {tactic}`rfl` tactic closes a goal of the shape {lean}`a = a`, for any {lean}`a`. It
+The {tactic}`rfl` tactic closes a goal of the shape `a = a`, for any `a`. It
 checks that both sides of the equality are _definitionally equal_ —
 that is, that they reduce to the same term. (So, in particular, a
 term is always definitionally equal to itself.)
 ::::
 
 ::::terse
-The {tactic}`rfl` closes a goal that looks like {lean}`a = a`, reducing both sides of the equality in
+The {tactic}`rfl` closes a goal that looks like `a = a`, reducing both sides of the equality in
 the process.
 ::::
 
