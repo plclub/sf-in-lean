@@ -1,7 +1,7 @@
 -- Shared Verso infrastructure for all SF-in-Lean volumes.
 import Batteries.CodeAction
 
-import SFLMeta.Bib
+import Bib
 import SFLMeta.Bnf
 import SFLMeta.Comment
 import SFLMeta.Details
