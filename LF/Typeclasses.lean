@@ -522,11 +522,12 @@ example : emptyNatMap 2 = 0 := rfl
 
 ### Getting Elements
 
-While `TotalMap` happens to be implemented as a function, we would prefer not to expose that
-fact in its public interface. As such, we need to define specific operations for getting and
-updating mappings, playing the role that `find` played for the {ref "Lists"}[Lists] chapter's
-list-based maps. As a first attempt at the former, we could simply define a function
-`getElem` for getting a key's element value:
+While `TotalMap`s happen to be implemented as functions under the hood,
+we would prefer not to expose this
+fact in their public interface. Accordingly, we define new operations for querying and
+updating mappings. As a first attempt at a query operation, playing the role that `find` played for the {ref "Lists"}[Lists] chapter's
+list-based maps, we could define a function
+`getElem` for getting the value associated with a key:
 
 ```lean -keep
 def getElem (m : TotalMap α β) (a: α) := m a
@@ -534,12 +535,15 @@ def getElem (m : TotalMap α β) (a: α) := m a
 example : getElem emptyNatMap 2 = 0 := rfl
 ```
 
-To make element-getting lighter weight, we will define notation so we can write
+:::dev "Benjamin Pierce (bcpierce00)"
+This next paragraph gets pretty tangled -- can it be streamlined?
+:::
+To make element-getting lighter weight, we can define notation so we can write
 `emptyNatMap[2]` rather than `getElem emptyNatMap`. We could
 make notation for this specific `getElem` function; we will do precisely that for
 the `update` function below. Instead, we are going to abstract
-the concept of getting an element as its own typeclass, `MyGetElem`, and then
-develop notation for instances of that typeclass. We do this to illustrate a common
+the concept of getting an element as its own typeclass, called `MyGetElem`, and
+define notation for instances of that typeclass. We do this to illustrate a common
 pattern in Lean (indeed, `MyGetElem` is a simpler form of the {name}`GetElem` standard
 library function). We see the pattern again at the conclusion of our development of
 total maps, illustrating custom syntax for constructing maps.
@@ -556,8 +560,9 @@ class MyGetElem (coll : Type) (idx : Type) (elem : outParam Type) where
   getElem (xs : coll) (i : idx) : elem
 ```
 
-Don't worry about the `outParam` qualifier; it is a hint to Lean that helps typeclass inference.
-An instance of {name}`MyGetElem` for our `TotalMap` is the following:
+(Don't worry about the `outParam` qualifier; it is a hint to Lean that helps typeclass inference.)
+
+The appropriate instance of {name}`MyGetElem` for our `TotalMap` is:
 
 ```lean
 variable [Inhabited β]
@@ -565,12 +570,16 @@ instance : MyGetElem (TotalMap α β) α β where
   getElem m a := m a
 ```
 
-Now we associate the bracket syntax with {name}`MyGetElem.getElem`. We've defined custom notation
+Now we can associate the bracket syntax with {name}`MyGetElem.getElem`. We've defined custom notation
 before (e.g. `::` and `[...]` for lists, or `+`/`*`/`==` for arithmetic), but always with
 `infixl`/`infixr` or `scoped macro`; this is the first time we reach for the more general
-`notation`/`macro_rules` forms. Don't worry about following the mechanism in detail — the
-`macro_rules` and the `app_unexpander` below are minor technicalities for getting the `m[a]`
-syntax to work.
+`notation`/`macro_rules` forms for getting the `m[a]`
+syntax to work. (Don't worry about following the mechanism in detail — the
+`macro_rules` and the `app_unexpander` below are minor technicalities.)
+:::dev "Benjamin Pierce (bcpierce00)"
+Can we point people to where they can read about these things if they are interested?
+:::
+
 
 ```lean
 namespace MyGetElem
@@ -588,14 +597,18 @@ open scoped MyGetElem
 
 Since the standard library already declares the `$x[$i]` syntax for `GetElem`,
 we only need to define the macro.
+:::dev "Benjamin Pierce (bcpierce00)"
+What does "the macro" mean?  And didn't we say we were not going to explain the macro stuff?  I feel like this section is falling in an uncomfortable middle ground between completely skating over the technicalities and actually explaining.
+:::
+
 It's scoped since we don't want to override the default `GetElem` everywhere, but
-only when `open scoped MyGetElem`.
+only when `open scoped MyGetElem` is in force.
 
 :::dev "Benjamin Pierce (bcpierce00)"
 Make sure we've really explained `open scoped` somewhere...
 :::
 
-Since we implemented a {name}`MyGetElem` instance for `TotalMap`, we can now use the
+Since we provided a {name}`MyGetElem` instance for `TotalMap`, we can now use the
 notation `m[a]` to access elements of a map `m`.
 ```lean
 namespace TotalMap
@@ -674,9 +687,16 @@ def exampleMap :=
 
 Here `|>` is Lean's *pipe* notation: `x |>.f y` means `x.f y`, letting us chain a sequence of
 function or method calls left to right without nested parentheses.
+:::dev "Benjamin Pierce (bcpierce00)"
+Should we introduce this notation earlier?  (Are there good places to use it earlier?)
+:::
 
 We also introduce a notation for updating maps, in this case referencing the {name}`TotalMap.update`
 function directly.
+:::dev "Benjamin Pierce (bcpierce00)"
+... as opposed to what (let's be explicit!)?  And why do we make this choice?  Just to show both ways, or for some principled reason?
+:::
+
 
 ```lean
 notation a:55 " →ₜ " b:55 " ; " m:55 => TotalMap.update m a b
@@ -740,7 +760,7 @@ theorem update_neq {m : TotalMap α β} {a₁ a₂ : α} (h : a₁ ≠ a₂) (b 
 ```
 ::::
 
-The two remaining facts are equalities _between maps_, so we first need to say when two maps are equal. Since a total map is a function, this is exactly the functional extensionality principle ({name}`funext`) from the {ref "Logic"}[Logic] chapter: two maps are equal when they agree at every key. Recording it once, for maps, and tagging it `@[ext]` lets the {tactic}`ext` tactic reduce a goal `m₁ = m₂` to the pointwise one in the proofs below.
+The two remaining facts are equalities _between maps_, so we first need to say when two maps are equal. Since a total map is implemented as a function, this is exactly the functional extensionality principle ({name}`funext`) from the {ref "Logic"}[Logic] chapter: two maps are equal when they agree at every key. Recording it once, for maps, and tagging it `@[ext]` lets the {tactic}`ext` tactic reduce a goal `m₁ = m₂` to the pointwise one in the proofs below.
 
 ```lean
 @[ext]
@@ -850,7 +870,11 @@ end KVPair
 open scoped KVPair
 ```
 
-Next, we declare `Insert` and `Singleton` instances which control the `{}` notation in Lean.
+Next, we declare `Insert` and `Singleton` instances that control the `{}` notation in Lean.
+:::dev "Benjamin Pierce (bcpierce00)"
+Do readers know what `Insert` and `Singleton` are?  Should we link to their docs?
+:::
+
 
 ```lean
 namespace TotalMap
@@ -1180,6 +1204,9 @@ We've seen two different ways of expressing logical claims in Lean: with boolean
 
 Here are the key differences between `Bool` and `Prop`:
 
+:::dev "Benjamin Pierce (bcpierce00)"
+Check formatting:
+:::
 :::table +header (align := center)
 *
   * ⠀
@@ -1415,7 +1442,7 @@ set_option pp.all true in
 #print eq
 ```
 
-But we have indicated to Lean, using the `noncomputable` keyword and `Classical` namespace
+But we have indicated to Lean, using the `noncomputable` keyword and `Classical` namespace,
 that we are _not_ interested in computation.
 What is happening in the background is that this allows
 typeclass synthesis to find the scoped instance {name}`Classical.propDecidable`, which makes use of
@@ -1424,6 +1451,11 @@ sort of definition is suitable for use with proofs, but is not allowed to be use
 with computational features of Lean such as the {tactic}`decide` tactic or the `#eval` command.
 
 # TODO
+
+:::dev "Benjamin Pierce (bcpierce00)"
+Needs finishing...
+:::
+
 
 :::dev
 Below are some stray examples from IndProp. `Decidable` only carries the proposition and not the
