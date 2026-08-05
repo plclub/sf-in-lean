@@ -1334,7 +1334,7 @@ namespace NatPlayground
 ```
 
 ::::full
-All the types we have defined so far -- both enumerated types
+All the types we have defined so far — both enumerated types
 such as {name}`Day`, {name}`MyBool`, and {name}`Playground.Bit` and tuple types such as
 {name}`Playground.Nibble` built from them — are finite. The natural numbers, on
 the other hand, are an infinite set, so we'll need to use a
@@ -1473,7 +1473,7 @@ def even (n : Nat) : Bool :=
   | succ (zero) => false
   | succ (succ n') => even n'
 
-example : even one = false  := by rfl
+example : even one = false := by rfl
 example : even four = true := by rfl
 ```
 
@@ -1487,7 +1487,7 @@ here is a simpler way:
 def odd (n : Nat) : Bool :=
   not (even n)
 
-example : odd one = true  := by rfl
+example : odd one = true := by rfl
 example : odd four = false := by rfl
 ```
 
@@ -1764,15 +1764,15 @@ end AddPlayground
 ```
 
 ::::full
-Each of `add_zero` and `add_succ` correspond to one branch of the `match`
-statement defining `add` and describe how the evaluation of `add` proceeds
-in that case. The `add_zero` theorem describes how `add n zero` evaluates,
-while `add_succ` describes (symbolically) how `add n (succ m)` evaluates.
+Each of {name}`add_zero` and {name}`add_succ` correspond to one branch of the `match`
+statement defining {name}`add` and describe how the evaluation of {name}`add` proceeds
+in that case. The {name}`add_zero` theorem describes how {lean}`add n zero` evaluates,
+while {name}`add_succ` describes (symbolically) how {lean}`add n (succ m)` evaluates.
 Because these theorems describe how to simplify more complex expressions
-involving `add`, we call them _simplification lemmas_ for `add`.
+involving {name}`add`, we call them _simplification lemmas_ for {name}`add`.
 
 These are instances of a general pattern: each definition
-operating over enumerated types like `Nat`, `Bool`, `Day`, or `Color`
+operating over enumerated types like {name}`Nat`, {name}`Bool`, {name}`Day`, or {name}`Color`
 needs a simplification lemma for each branch of control flow through
 the function.
 
@@ -1781,7 +1781,7 @@ So, for example, we need two simplification lemmas for the definition of `pred`:
 
 ::::terse
 Each branch of a definition's control flow gets one _simplification lemma_. Here are the two for
-`pred`:
+{name}`pred`:
 ::::
 
 ```lean
@@ -1789,14 +1789,14 @@ theorem pred_zero : pred zero = zero := by rfl
 theorem pred_succ n : pred (succ n) = n := by rfl
 ```
 
-Now that we have defined and proved `pred`'s simplification lemmas,
+Now that we have defined and proved {name}`pred`'s simplification lemmas,
 we can mark it `irreducible`, to enforce rewriting by these lemmas.
 
 ```lean
 attribute [irreducible] pred
 ```
 
-Similarly, for each of the three branches of the definition of `even`,
+Similarly, for each of the three branches of the definition of {name}`even`,
 we need one simplification lemma:
 
 ```lean
@@ -1810,7 +1810,7 @@ attribute [irreducible] even odd
 ::::full
 In the remainder of this textbook, we will pair definitions
 with their simplification lemmas. After proving these lemmas,
-instead of using `rfl` to peek through the definitions, we will prefer rewriting
+instead of using {tactic}`rfl` to peek through the definitions, we will prefer rewriting
 by the lemmas.
 
 Eventually, we will introduce a way to automatically apply these simplfication lemmas,
@@ -1825,13 +1825,13 @@ you will have the foundation to use them with precision and skill.
 
 ::::terse
 From here on, we pair each definition with its simplification lemmas and rewrite by those lemmas
-rather than `rfl`-ing through the definition.
+rather than {tactic}`rfl`-ing through the definition.
 ::::
 
 ## Working with Numerals
 
-We know from our definitions above that `one` is just `succ zero`,
-`two` is `succ one`, and so on. We can write rules for these equalities too:
+We know from our definitions above that {name}`one` is just {lean}`succ zero`,
+{name}`two` is {lean}`succ one`, and so on. We can write rules for these equalities too:
 
 ```lean
 theorem one_eq_succ_zero : one = succ zero := by rfl
@@ -1842,20 +1842,16 @@ theorem four_eq_succ_three : four = succ three := by rfl
 
 ::::full
 We can rewrite with these rules to expand numerals into their definitions,
-which allows us to use our `add` rules.
+which allows us to use our {name}`add` rules.
 Here's an example of how to start a proof this way.
 ::::
 
-Finish the proof using the `add` rules:
+:::exercise (rating := 1) (name := "mul_simpl_rules")
 
-:::dev "Benjamin Pierce (bcpierce00)"
-Should this be marked / formatted as an exercise or at least a WORKINCLASS?
-RAB: Let's decide once we choose how to present the laws.
-     My intuition is yes.
-:::
+Finish the proof using the {name}`add` rules:
 
 ```lean
-theorem one_plus_one_eq_two : (one + one : Nat) = two := by
+theorem one_plus_one_eq_two : one + one = two := by
   rewrite [one_eq_succ_zero]
   solution!
     rewrite [add_succ]
@@ -1863,7 +1859,7 @@ theorem one_plus_one_eq_two : (one + one : Nat) = two := by
     rfl
 ```
 
-Try the same for `two + two = four`.
+Try the same for {lean}`two + two = four`.
 
 ```lean
 theorem two_plus_two_eq_four : two + two = four := by
@@ -1873,6 +1869,8 @@ theorem two_plus_two_eq_four : two + two = four := by
     rewrite [add_succ, add_succ, add_zero]
     rfl
 ```
+
+:::
 
 ::::full
 Now that we know how addition is defined, we can use it to define multiplication:
@@ -1894,8 +1892,8 @@ scoped infixl:70 " * " => mul
 Multiplication, like any function we will prove properties about,
 also has simplification rules.
 
-Remove {tactic}`sorry` and prove the simplification rules for `mul` below.
-You will likely find the proofs of the simplification rules for `add`
+Remove {tactic}`sorry` and prove the simplification rules for {name}`mul` below.
+You will likely find the proofs of the simplification rules for {name}`add`
 to be helpful as a model.
 
 :::dev
@@ -1927,13 +1925,13 @@ GRADE_THEOREM 1: mul_simpl_rules
 Prove these thoerems using rewriting with the simplification rules for addition and multiplication.
 
 ::::full
-(We have given you the first line.) Notice how `rewrite`
+(We have given you the first line.) Notice how {tactic}`rewrite`
 can take any number of arguments. You can use this rewrite with all of the
 simplification rules at once, for example.
 
 After each rewrite, check the proof state by placing the cursor immediately
 after a rule to see how the goal is changing. This happens naturally
-as you write the proof, which makes it convenient to use `rewrite` blocks
+as you write the proof, which makes it convenient to use {tactic}`rewrite` blocks
 with multiple rules.
 ::::
 
@@ -2035,17 +2033,16 @@ theorem succ_ble_zero (n : Nat) : ble (succ n) zero = false := by rfl
 theorem succ_ble_succ (n m : Nat) : ble (succ n) (succ m) = ble n m := by rfl
 
 example : ble two two = true  := by rfl
-example : ble two four = true  := by rfl
+example : ble two four = true := by rfl
 example : ble four two = false := by rfl
 
 ```
 
 ::::exercise (rating := 1) (name := "blt")
-Define a less-than function in terms of `ble`.
+Define a less-than function in terms of {name}`ble`.
 
 ```lean
-def blt (n m : Nat) : Bool
-  := solution!(ble (succ n) m)
+def blt (n m : Nat) : Bool := solution!(ble (succ n) m)
 
 example : blt two two = false := solution!(by rfl)
 example : blt two four = true  := solution!(by rfl)
@@ -2061,7 +2058,7 @@ attribute [irreducible] blt ble
 :::slidebreak
 :::
 
-We'll be using `beq` a lot, so let's give it an infix notation.
+We'll be using {name}`beq` a lot, so let's give it an infix notation.
 
 ```lean
 scoped infixl:30 " == " => beq
@@ -2071,18 +2068,18 @@ scoped infixl:30 " == " => beq
 We now have two symbols that both look like equality: `=`
 and `==`.  We'll have much more to say about their differences and
 similarities later. For now, notice that
-`x = y` is a logical _claim_ -- a "proposition" -- that we can try to
+`x = y` is a logical _claim_ — a "proposition" — that we can try to
 prove, while `x == y` is a boolean _expression_ whose value (either
-`true` or `false`) Lean can compute.
+{name}`true` or {name}`false`) Lean can compute.
 ::::
 
 ::::terse
-Note that now `==` and `=` are different; the former means `beq` whereas the latter is a logical
+Note that now `==` and `=` are different; the former means {name}`beq` whereas the latter is a logical
 claim.
 ::::
 
 ::::full
-We can also now define the simplification lemmas for `beq` with our new notation,
+We can also now define the simplification lemmas for {name}`beq` with our new notation,
 one for each of the four cases of control flow through the function.
 ::::
 
@@ -2105,22 +2102,22 @@ A (slightly) more interesting theorem:
 ::::full
 We now begin to make claims about _general_ natural numbers.
 
-We begin by making a universal claim about all numbers `n` and `m` that are
-equal to each other (`n = m`). The arrow symbol is pronounced "implies."
+We begin by making a universal claim about all numbers {lean}`n` and {lean}`m` that are
+equal to each other ({lean}`n = m`). The arrow symbol is pronounced "implies."
 Enter it with `\to` or `\->` or `\r`.
 
-The `intro` tactic moves the universally quantified variables and the
+The {tactic}`intro` tactic moves the universally quantified variables and the
 hypothesis into the context, giving them names.  The goal is now to prove
-`n + n = m + m` under the assumption `h : n = m`.
+{lean}`n + n = m + m` under the assumption `h : n = m`.
 
 The tactic that tells Lean to perform replacement is one we have seen
-before: `rewrite`. It can take a hypothesis from the context as an argument,
+before: {tactic}`rewrite`. It can take a hypothesis from the context as an argument,
 just like it can take a previously proved theorem.  In this case, we want to
-rewrite with the hypothesis `h`, which says that `n` and `m` are equal, so
-that we can replace `n` with `m` in the goal.
+rewrite with the hypothesis `h`, which says that {lean}`n` and {lean}`m` are equal, so
+that we can replace {lean}`n` with {lean}`m` in the goal.
 
-After the rewrite, the goal is `m + m = m + m`, which can be closed by
-`rfl`.
+After the rewrite, the goal is {lean}`m + m = m + m`, which can be closed by
+{tactic}`rfl`.
 ::::
 
 ```lean
@@ -2133,6 +2130,7 @@ theorem add_id_example : ∀ n m : Nat,
 ```
 
 ::::exercise (rating := 1) (name := "add_id_exercise")
+
 Remove {tactic}`sorry` and fill in the proof.
 
 ```lean
@@ -2151,44 +2149,67 @@ theorem add_id_exercise : ∀ n m o : Nat,
 :::slidebreak
 :::
 
+## Displaying Theorem Statements
+
 The `#check` command can also be used to examine the statements of
 previously declared lemmas and theorems.
 
-```lean
+```lean (name := mul_l)
 #check mul_zero  -- ∀ (n : Nat), n * 0 = 0
 #check mul_succ  -- ∀ (n m : Nat), n * Nat.succ m = n + n * m
 ```
 
-## Type Annotations
+```leanOutput mul_l
+NatPlayground.Nat.mul_zero (n : Nat) : n * zero = zero
+```
+
+```leanOutput mul_l
+NatPlayground.Nat.mul_succ (n m : Nat) : n * succ m = n * m + n
+```
+
 
 ::::full
 Note that you may see a slight discrepancy in the output:
-`#check` might show
-`NatPlayground.Nat.mul_zero (n : Nat) : n * zero = zero`.
-Qualification, like `mul_zero` to `NatPlayground.Nat.mul_zero`, can happen
-automatically when printing a type in Lean.
+`#check` shows the theorem differently from the way it was introduced earlier.
 
-Another simple but important-to-note automatic display feature is _indexing_:
-`mul_zero : ∀ (n : Nat), n * zero = zero` may display as
-`mul_zero  (n : Nat) : n * zero = zero`.
+First, Lean may print the theorem's fully qualified name {name}`NatPlayground.Nat.mul_zero`.
+The qualification identifies the namespace containing the theorem, though
+the shorter name {name}`mul_zero` is usually sufficient when Lean can determine
+which declaration we mean.
 
-Note how the `(n : Nat)` has moved _before_ the colon and has lost the ∀.
-The two definitions are equivalent for our purposes right now, but the
-second is preferred in idiomatic Lean developments.
+Second, Lean displays the theorem's arguments before the colon `mul_zero (n : Nat) : n * zero = zero`.
+The same statement can be written using an explicit universal quantifier, as we have done before:
+
+```display
+mul_zero : ∀ (n : Nat), n * zero = zero
+```
+
+These express exactly the same proposition — writing arguments as binders before
+the colon is called _declaration-header style_. It is the conventional style
+for Lean declarations, so we will generally use it from now on.
 ::::
 
-:::dev
-Per Github discussion: Lean's convention is to prefer the declaration header style
-(`mul_zero  (n : Nat) : n * zero = zero`) over universal quantification style
-(`mul_zero : ∀ (n : Nat), n * zero = zero`). We probably still want to teach the universal
-quantification style at first, but should switch over to declaration header style
-quickly since that is the idiomatic Lean way to do things.
+::::terse
 
-BCP: Needs to be explained better.  And the "indexing" part doesn't really fit the
-section title.
-HG: +1, also we need terse content once we figure out what this section is
-TODO
-:::
+Lean may:
+
+- print a fully qualified name, such as {name}`NatPlayground.Nat.mul_zero`;
+- display universally quantified variables as binders before the colon.
+
+Thus,
+
+```display
+mul_zero : ∀ (n : Nat), n * zero = zero
+```
+
+may be displayed as:
+
+```display
+mul_zero (n : Nat) : n * zero = zero
+```
+
+The second form is the conventional _declaration-header style_ in Lean.
+::::
 
 :::slidebreak
 :::
@@ -2205,60 +2226,17 @@ rewriting: In general, the presence of unknown, hypothetical values
 Sometimes simple calculation and rewriting are not enough...
 :::
 
-:::instructors
-We use `#guard_msgs` in a number of places in the SFL
-source files to help deter bit-rot, and you are encouraged to add
-your own instances.  It doesn't need to be explained to students
-because it gets stripped out when verso files are translated to
-.lean and .html.
-:::
 
-:::dev "Daniel Sainati (dsainati1)"
-At the moment our convention for unfinished proofs is to end with sorry and
-guard the "proof uses sorry" warning. However after going through MRC's comments here
-I realized we don't need to do this: we can leave the proof unfinished and guard the error
-about goals being unsolved. IMO this is preferable because it illustrates more directly
-what is going on.
-
-However, before we can do this, I think we may require a minor change to how Verso files get
-compiled to Lean. If we just naïvely strip out #guard msgs, the generated .lean files will now have
-errors since those commands were guarding actual errors rather than just warnings. So we would need
-a way to have .lean files with errors in them permitted by the make command, or we would need to
-leave in #guard msgs that are guarding actual errors.
-
-BCP: This is a tricky balancing act!!  Let's talk about it.
-
-```lean
-/--
-error: unsolved goals
-n : Nat
-⊢ (succ n == zero) = false
--/
-#guard_msgs(error) in
-example : ∀ n : Nat,
-    (succ n == zero) = false := by
+```lean +error
+example (n : Nat) : (succ n == zero) = false := by
   intro n
   /-
     We can't rewrite by any lemmas here because `n` is unknown!
   -/
-```
-:::
-
-```lean
-/-- warning: declaration uses {tactic}`sorry` -/
-#guard_msgs(warning) in
-example : ∀ n : Nat,
-    (succ n == zero) = false := by
-  intro n
-  /-
-    We can't rewrite by any lemmas here because `n` is unknown!
-  -/
-  sorry
 ```
 
 ::::full
-The tactic that tells Lean to consider separate cases is called
-`cases`.
+The tactic that tells Lean to consider separate cases is called {tactic}`cases`.
 ::::
 
 :::terse
@@ -2266,30 +2244,28 @@ We can use `cases` to perform case analysis:
 :::
 
 ```lean
-theorem add_one_neb_zero : ∀ n : Nat,
-    (succ n == zero) = false := by
-  intro n
-  cases n
-  case zero =>
+theorem add_one_neb_zero (n : Nat) : (succ n == zero) = false := by
+  cases n with
+  | zero =>
     rewrite [succ_zero_beq_false]
     rfl
-  case succ n' =>
+  | succ n' =>
     rewrite [succ_zero_beq_false]
     rfl
 ```
 
 ::::full
-The `cases` tactic generates _two_ subgoals, which we must
+The {tactic}`cases` tactic generates _two_ subgoals, which we must
 prove, separately, in order to get Lean to accept the theorem.
 
 The generated subgoals are tagged by the names of the constructors.
-`case zero =>` and `case succ n' =>` select which subgoal to work on next
+`| zero =>` and `cas| succ n' =>` select which subgoal to work on next
 and introduce variable names.
 
-Note also that when we enter a `case`, we increase the level of indentation at which we are working
+Note also that when we enter a subcase, we increase the level of indentation at which we are working
 by two spaces.
 
-The `cases` tactic can be used with any inductively defined
+The {tactic}`cases` tactic can be used with any inductively defined
 datatype. For example, we use it next to prove that boolean
 negation is involutive (that is, that negation is its own inverse).
 ::::
@@ -2302,13 +2278,12 @@ Another example, using booleans:
 :::
 
 ```lean
-theorem not_involutive : ∀ b : Bool, (!!b) = b := by
-  intro b
-  cases b
-  case false =>
+theorem not_involutive (b : Bool) : (!!b) = b := by
+  cases b with
+  | false =>
     rewrite [Bool.not_false, Bool.not_true]
     rfl
-  case true =>
+  | true =>
     rewrite [Bool.not_true, Bool.not_false]
     rfl
 ```
@@ -2318,7 +2293,7 @@ You may also notice that in the above proof we have used some rewrite rules that
 previously prove in this file! These proofs come from Lean's standard library, in particular
 from the section about booleans. Having access to these already-proved theorems about booleans
 instead of needing them to prove them ourselves is a big advantage of using Lean's built-in
-`Bool` type instead of defining our own.
+{name}`Bool` type instead of defining our own.
 
 In a few chapters we will discuss how to search through the standard library
 for theorems like these. For now, note that if you hover over the name of these theorems
@@ -2336,65 +2311,63 @@ those yourself.
 We can also have nested case analysis:
 
 ```lean
-theorem and_commutative : ∀ b c : Bool,
+theorem and_commutative (b c : Bool) :
     (b && c) = (c && b) := by
-  intro b c
-  cases b
-  case true =>
-    cases c
-    case true =>
+  cases b with
+  | true =>
+    cases c with
+    | true =>
       rewrite [Bool.and_self]
       rfl
-    case false =>
+    | false =>
       rewrite [Bool.and_false, Bool.and_true]
       rfl
-  case false =>
-    cases c
-    case true =>
+  | false =>
+    cases c with
+    | true =>
       rewrite [Bool.and_true, Bool.and_false]
       rfl
-    case false =>
+    | false =>
       rewrite [Bool.and_self]
       rfl
 
-theorem and3_exchange : ∀ b c d : Bool,
+theorem and3_exchange (b c d : Bool) :
     ((b && c) && d) = ((b && d) && c) := by
-  intro b c d
-  cases b
-  case false =>
-    cases c
-    case true =>
-      cases d
-      case false =>
+  cases b with
+  | false =>
+    cases c with
+    | true =>
+      cases d with
+      | false =>
         rewrite [Bool.and_true, Bool.and_self]
         rfl
-      case true =>
+      | true =>
         rewrite [Bool.and_true]
         rfl
-    case false =>
-      cases d
-      case false =>
+    | false =>
+      cases d with
+      | false =>
         rewrite [Bool.and_self]
         rfl
-      case true =>
+      | true =>
         rewrite [Bool.and_self, Bool.and_true]
         rfl
-  case true =>
-    cases c
-    case true =>
-      cases d
-      case false =>
+  | true =>
+    cases c with
+    | true =>
+      cases d with
+      | false =>
         rewrite [Bool.and_self, Bool.and_false, Bool.and_true]
         rfl
-      case true =>
+      | true =>
         rewrite [Bool.and_self]
         rfl
-    case false =>
-      cases d
-      case false =>
+    | false =>
+      cases d with
+      | false =>
         rewrite [Bool.and_false]
         rfl
-      case true =>
+      | true =>
         rewrite [Bool.and_false, Bool.and_true, Bool.and_self]
         rfl
 ```
@@ -2403,35 +2376,35 @@ As you can see, proofs by cases can become very verbose.
 We will introduce some tactics for writing shorter proofs
 by case analysis in `Tactics.lean`.
 
-## New Tactics: `rewrite ... at` and `exact`
+## New Tactics: `rewrite ... at` and {tactic}`exact`
 
 ::::full
 Some new tactics will be useful for the exercises ahead.
 
 The `rewrite ... at` tactic can be used to rewrite in a hypothesis instead of the
-goal. For example, if `h : P` is in the context and we have a rule `P = Q`,
-then `rewrite [P = Q] at h` changes the hypothesis to `h : Q`.
+goal. For example, if `hp : p` is in the context and we have a rule `h : p = q`,
+then `rewrite [hp] at h` changes the hypothesis to `h : q`.
 
-The `exact` tactic closes a goal by providing the exact proof of the goal.  For
-example, if `h : P` is in the context and the goal is `P`, then `exact h`
-closes the goal.  You can also transform `h` slightly, but we will
+The {tactic}`exact` tactic closes a goal by providing the exact proof of the goal.  For
+example, if `hp : p` is in the context and the goal is `p`, then `exact hp`
+closes the goal.  You can also transform `hp` slightly, but we will
 explain how when we get to an example where we need to.
 ::::
 
 ::::terse
-You will need the `rewrite ... at` and `exact` tactics to complete the following exercises.
+You will need the `rewrite ... at` and {tactic}`exact` tactics to complete the following exercises.
 ::::
 
 ::::exercise (rating := 2) (name := "or_false_true")
 Prove the following claim.
 
-Tip: the rewrite rule to simplify `(b || false)` is called `Bool.or_false`.
+Tip: the rewrite rule to simplify `(b || false)` is called {name}`Bool.or_false`.
 
 ```lean
-theorem or_false_true : ∀ b : Bool,
+theorem or_false_true (b : Bool) :
     (b || false) = true → b = true := by
   solution!
-    intro b h
+    intro h
     rewrite [Bool.or_false] at h
     exact h
 ```
@@ -2442,12 +2415,12 @@ theorem or_false_true : ∀ b : Bool,
 
 ::::exercise (rating := 1) (name := "zero_nbeq_add_1")
 ```lean
-theorem zero_neb_add_one : ∀ n : Nat,
+theorem zero_neb_add_one (n : Nat) :
   (zero == succ n) = false := by
   solution!
-    intro n; cases n
-    case zero => rewrite [zero_succ_beq_false]; rfl
-    case succ n' => rewrite [zero_succ_beq_false]; rfl
+    cases n with
+    | zero => rewrite [zero_succ_beq_false]; rfl
+    | succ n' => rewrite [zero_succ_beq_false]; rfl
 ```
 
 :::gradeTheorem 1 "zero_nbeq_add_1"
@@ -2457,9 +2430,17 @@ theorem zero_neb_add_one : ∀ n : Nat,
 :::dev "Daniel Sainati (dsainati1)"
 I move that we just cut this section entirely and come back to it when
 we've presented enough of the requisite material that we can actually explain
-mwhicks1: I'm going to leave this here for now, but perhaps make a note to
+:::
+
+:::dev "Michael Hicks (mwhicks1)" BeforeNextRelease
+I'm going to leave this here for now, but perhaps make a note to
 fix later on---when you've fixed it, come back and delete this, rather than
 delete it now.
+:::
+
+:::dev "Yipeng Liu (berberman)" BeforeNextRelease
+I feel we could split this section and push the typeclass stuff to `Typeclasses` chapter
+and complex notation syntax definitions to TS/HL.
 :::
 
 ## More on Notation (Optional)
@@ -2468,22 +2449,17 @@ delete it now.
 Lean has a very flexible notation system.  Operators like `+` and `*`
 are defined with specified precedence and associativity.  For example,
 `+` has precedence 65 and is left-associative, while `*` has
-precedence 70 and is also left-associative.  This means that `1+2*3*4`
-is parsed as `1+((2*3)*4)`.
+precedence 70 and is also left-associative.  This means that `1 + 2 * 3 * 4`
+is parsed as `1 + ((2 * 3) * 4)`.
 
 You can define custom notation using the `notation`, `infixl`,
 `infixr`, `prefix`, and `postfix` commands.
 
 Lean handles notation scoping through namespaces and _type classes_.
-The numeric literal `3` can be interpreted as `Nat`, `Int`, `Float`, etc.,
-depending on the expected type, thanks to Lean's `OfNat` type class.
-We will explain type classes in more detail in the `Typeclasses` chapter,
-found in `Typeclasses.lean`.
+The numeric literal `3` can be interpreted as {name}`Nat`, {name}`Int`, {name}`Float`, etc.,
+depending on the expected type, thanks to Lean's {name}`OfNat` type class.
+We will explain type classes in more detail in the {ref "Typeclasses"}[Typeclasses] chapter.
 
-:::dev "Benjamin Pierce (bcpierce00)"
-In SF-classic, there was some special typesetting magic for chapter
-titles that turned them into HTML links...
-:::
 ::::
 
 ::::terse
@@ -2501,16 +2477,16 @@ def even' (n : Nat) : Bool :=
   match n with
   | zero => true
   | succ (zero) => false
-  | succ (succ n') => even n'
+  | succ (succ n') => even' n'
 ```
 
 When Lean checks this definition, it verifies that the recursion
 terminates.  Specifically, it checks that one of the parameters
-is _structurally decreasing_ -- that each recursive call made in the body of the
+is _structurally decreasing_ — each recursive call made in the body of the
 definition is made on an argument that is smaller than the original input.
-In `even` example above, the argument to the recursive call to `even` is the variable `n'`.
+In {name}`even'` example above, the argument to the recursive call to {name}`even'` is the variable `n'`.
 Because of our pattern match, we know that `n` is equal to `succ (succ n')`, and therefore
-that `n'` is smaller than `n`. This makes `n'` an acceptable argument to `even` for Lean's
+that `n'` is smaller than `n`. This makes `n'` an acceptable argument to {name}`even'` for Lean's
 termination checker, and so this recursive definition is accepted.
 
 This requirement is a fundamental feature of Lean's design: In
@@ -2529,12 +2505,15 @@ but that Lean will reject because it cannot automatically prove
 termination.
 
 :::solution
-```
+
+```lean +error
 def factorial_bad (n : Nat) : Nat :=
   if n == 0 then 1
   else n * factorial_bad (n - 1)
-This fails because Lean can't see that `n - 1` is structurally smaller.
 ```
+
+This fails because Lean can't see that `n - 1` is structurally smaller.
+
 :::
 ::::
 
@@ -2562,7 +2541,7 @@ decimal                binary   unary
 ```
 
 Note that the low-order bit is on the left and the high-order bit
-is on the right -- the opposite of the way binary numbers are
+is on the right — the opposite of the way binary numbers are
 usually written.  This choice makes them easier to manipulate.
 
 (Comprehension check: What unary numeral does `b0 z` represent?)
@@ -2592,16 +2571,16 @@ example : incr (.b0 (.b1 .z)) = .b1 (.b1 .z) := solution!(by rfl)
 example : incr (.b1 (.b1 .z)) = .b0 (.b0 (.b1 .z)) := solution!(by rfl)
 
 theorem incr_z : incr .z = .b1 .z := solution!(by rfl)
-theorem incr_b0 m : incr (.b0 m) = .b1 m := solution!(by rfl)
-theorem incr_b1 m : incr (.b1 m) = .b0 (incr m) := solution!(by rfl)
+theorem incr_b0 (m : Bin) : incr (.b0 m) = .b1 m := solution!(by rfl)
+theorem incr_b1 (m : Bin) : incr (.b1 m) = .b0 (incr m) := solution!(by rfl)
 
 theorem binToNat_z : binToNat .z = zero := solution!(by rfl)
-theorem binToNat_b0 m : binToNat (.b0 m) = binToNat m * two := solution!(by rfl)
-theorem binToNat_b1 m : binToNat (.b1 m) = binToNat m * two + one := solution!(by rfl)
+theorem binToNat_b0 (m : Bin) : binToNat (.b0 m) = binToNat m * two := solution!(by rfl)
+theorem binToNat_b1 (m : Bin) : binToNat (.b1 m) = binToNat m * two + one := solution!(by rfl)
 ```
 
-You may find your previous proofs of `zero_add_one`, `one_add_one`, `zero_mul_two`,
-`one_mul_two`, and `two_mul_two` useful here.
+You may find your previous proofs of {name}`zero_add_one`, {name}`one_add_one`, {name}`zero_mul_two`,
+{name}`one_mul_two`, and {name}`two_mul_two` useful here.
 
 ```lean
 example : binToNat (.b0 (.b1 .z)) = two := solution!(by
@@ -2661,25 +2640,15 @@ You now have a small but rather powerful suite of tactics at your disposal.
 As a warmup for the last section of the chapter, use the tactics you have
 learned so far to prove the following theorem about boolean functions.
 
-Hint: You can use `rewrite` with _any_ hypothesis that has an `=` in it
+Hint: You can use {tactic}`rewrite` with _any_ hypothesis that has an `=` in it
 as long as the types line up.
-:::dev "Benjamin Pierce (bcpierce00)"
-Roger, you changed the statement of the theorem From
-    (∀ x : Bool, f x = x)
-     → ∀ b : Bool, f (f b) = b
-     := by
-to:
-    (∀ x : Bool, f x = x) → ∀ b : Bool, f (f b) = b := by
-I predict students will find this significantly harder to read.
-(I've complained before about the `:= by` living on the same line as
-the theorem statement.)  There are many related instances elsewhere.
-We should discuss.
-:::
+
 ```lean
-theorem identity_fn_applied_twice : ∀ f : Bool → Bool,
-    (∀ x : Bool, f x = x) → ∀ b : Bool, f (f b) = b := by
+theorem identity_fn_applied_twice (f : Bool → Bool) :
+    (∀ x : Bool, f x = x) →
+    ∀ b : Bool, f (f b) = b := by
   solution!
-    intro f h b
+    intro h b
     rewrite [h, h]
     rfl
 ```
@@ -2695,13 +2664,14 @@ function `f` has the property that `f x = !x`.
 
 ```lean
 -- SOLUTION
-theorem negation_fn_applied_twice : ∀ f : Bool → Bool,
-    (∀ x : Bool, f x = !x) → ∀ b : Bool, f (f b) = b := by
-  intro f h b
+theorem negation_fn_applied_twice (f : Bool → Bool) :
+    (∀ x : Bool, f x = !x) →
+    ∀ b : Bool, f (f b) = b := by
+  intro h b
   rewrite [h, h]
-  cases b
-  case true => rewrite [Bool.not_true, Bool.not_false]; rfl
-  case false => rewrite [Bool.not_false, Bool.not_true]; rfl
+  cases b with
+  | true => rewrite [Bool.not_true, Bool.not_false]; rfl
+  | false => rewrite [Bool.not_false, Bool.not_true]; rfl
 -- END SOLUTION
 ```
 
@@ -2716,18 +2686,18 @@ GRADE_MANUAL 1: negation_fn_applied_twice
 Prove the following theorem.
 
 ```lean
-theorem and_eq_or : ∀ b c : Bool, (b && c) = (b || c) → b = c := by
+theorem and_eq_or (b c : Bool) : (b && c) = (b || c) → b = c := by
   solution!
-    intro b c h
-    cases c
-    case true =>
+    intro h
+    cases c with
+    | true =>
       /-
         h : (true && c) = true || c, i.e., h : c = true
       -/
       rewrite [Bool.and_true, Bool.or_true] at h
       rewrite [h]
       rfl
-    case false =>
+    | false =>
       /-
         h : (false && c) = false || c, i.e., h : false = c
       -/
