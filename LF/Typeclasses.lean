@@ -309,11 +309,6 @@ For a typeclass like {name}`DefaultValue` that carries data — a term, such as 
 rather than only proofs (which we will see below) — we expect at most one instance per type, so this search has a unique
 answer.
 
-:::dev
-@chenson2018: I don't really want to explain diamonds here, is the above white lie hand-waving okay??
-@bcpierce00: Seems OK to me.
-:::
-
 We'll put `DefaultValue`'s standard-library cousin, {name}`Inhabited`, to work later in this
 chapter, when we define maps that need a default value for a generic type. First, though, let's go
 back to {name}`List.elem_poly` and see how its `[BEq α]` argument actually gets resolved.
@@ -572,22 +567,15 @@ def getElem (m : TotalMap α β) (a: α) := m a
 example : getElem emptyNatMap 2 = 0 := rfl
 ```
 
-:::dev "Benjamin Pierce (bcpierce00)"
-This next paragraph gets pretty tangled -- can it be streamlined?
-:::
-To make element-getting lighter weight, we can define notation so we can write
-`emptyNatMap[2]` rather than `getElem emptyNatMap`. We could
-make notation for this specific `getElem` function; we will do precisely that for
-the `update` function below. Instead, we are going to abstract
-the concept of getting an element as its own typeclass, called `MyGetElem`, and
-define notation for instances of that typeclass. We do this to illustrate a common
-pattern in Lean (indeed, `MyGetElem` is a simpler form of the {name}`GetElem` standard
-library function). It's the same pattern behind `==`: writing `a == b` doesn't call a fixed
-function, it's notation for {name}`BEq.beq`, resolved by instance search for whatever type `a`
-and `b` have. We're about to do the same thing for indexing notation, resolving `m[a]` to
-`MyGetElem.getElem m a`, so that it works for any container type with a `MyGetElem` instance,
-not just `TotalMap`. We see the pattern again at the conclusion of our development of
-total maps, illustrating custom syntax for constructing maps.
+To make element-getting lighter weight, let's define notation so we can write
+`emptyNatMap[2]` rather than `getElem emptyNatMap`. We could notate `getElem` directly — we'll do
+exactly that for `update` below — but here we'll instead make "getting an element" its own
+typeclass, `MyGetElem`, and notate *instances* of it. This is the same pattern behind `==`: writing
+`a == b` is notation for {name}`BEq.beq`, resolved by instance search for whatever type `a` and `b`
+have. Doing the same for indexing notation means `m[a]` resolves to `MyGetElem.getElem m a` for any
+type with a `MyGetElem` instance, not just `TotalMap` (indeed, `MyGetElem` is a simpler form of the
+standard library's {name}`GetElem`). We'll see the pattern once more at the end of this
+development, in the notation for constructing maps.
 
 ```lean
 end TotalMap
@@ -612,7 +600,8 @@ instance : MyGetElem (TotalMap α β) α β where
 ```
 
 Now we can associate the bracket syntax with {name}`MyGetElem.getElem`. We've defined custom notation
-before (e.g. `::` and `[...]` for lists, or `+`/`*`/`==` for arithmetic), but always with
+before — `::` and `[...]` for lists (chapter {ref "Lists"}[Lists], including an `app_unexpander` for
+printing `[...]`-notation lists back out), or `+`/`*`/`==` for arithmetic — but always with
 `infixl`/`infixr` or `scoped macro`; this is the first time we reach for the more general
 `notation`/`macro_rules` forms for getting the `m[a]`
 syntax to work. (Don't worry about following the mechanism in detail — the
@@ -620,7 +609,6 @@ syntax to work. (Don't worry about following the mechanism in detail — the
 :::dev "Benjamin Pierce (bcpierce00)"
 Can we point people to where they can read about these things if they are interested?
 :::
-
 
 ```lean
 namespace MyGetElem
@@ -637,11 +625,7 @@ open scoped MyGetElem
 ```
 
 Since the standard library already declares the `$x[$i]` syntax for `GetElem`,
-we only need to define the macro.
-:::dev "Benjamin Pierce (bcpierce00)"
-What does "the macro" mean?  And didn't we say we were not going to explain the macro stuff?  I feel like this section is falling in an uncomfortable middle ground between completely skating over the technicalities and actually explaining.
-:::
-
+we only need to define the `macro_rules` not the `notation` as we have done previously.
 It's scoped since we don't want to override the default `GetElem` everywhere, but
 only when `open scoped MyGetElem` is in force.
 
@@ -732,12 +716,11 @@ function or method calls left to right without nested parentheses.
 Should we introduce this notation earlier?  (Are there good places to use it earlier?)
 :::
 
-We also introduce a notation for updating maps, in this case referencing the {name}`TotalMap.update`
-function directly.
-:::dev "Benjamin Pierce (bcpierce00)"
-... as opposed to what (let's be explicit!)?  And why do we make this choice?  Just to show both ways, or for some principled reason?
-:::
-
+We also introduce a notation for updating maps — this time, rather than going through a typeclass
+and its own `notation`/`macro_rules` machinery as we did for {name}`MyGetElem`, we write `notation`
+that references {name}`TotalMap.update` directly. Unlike indexing, `update` doesn't need to work
+generically across container types (there's no standard-library operation like {name}`GetElem` that
+we're mirroring here), so the simpler, direct route suffices.
 
 ```lean
 notation a:55 " →ₜ " b:55 " ; " m:55 => TotalMap.update m a b
@@ -911,11 +894,9 @@ end KVPair
 open scoped KVPair
 ```
 
-Next, we declare `Insert` and `Singleton` instances that control the `{}` notation in Lean.
-:::dev "Benjamin Pierce (bcpierce00)"
-Do readers know what `Insert` and `Singleton` are?  Should we link to their docs?
-:::
-
+Next, we declare `Insert` and `Singleton` instances — the standard-library typeclasses behind the
+`{x, y, ...}` and `{x}` collection-literal notation that `List`, `Finset`, and other stdlib
+containers already support — so that `TotalMap` can use it too.
 
 ```lean
 namespace TotalMap
@@ -971,16 +952,11 @@ A question (that I don't have an answer to) is then: what makes the new partial 
 
 Lastly, we define _partial maps_ on top of total maps. A partial map with elements of type `β` is simply a total map with elements of type `Option β`, whose default element is {name}`none`.
 
-:::dev "Benjamin Pierce (bcpierce00)"
-I don't understand the comment on the `inner` field...
-
-Niklas Halonen (xhalo32): This is just a technical note that discourages using `PartialMap.inner` over `PartialMap.toTotal`. We don't want both to appear in the public API.
-Compare with `MeasurableSet'` in https://github.com/leanprover-community/mathlib4/blob/1f8806b67d6f09e6d2552c031e6d3a3171016116/Mathlib/MeasureTheory/MeasurableSpace/Defs.lean#L52 which doesn't appear in the public API (it uses `MeasurableSet` instead).
-:::
-
 ```lean
 structure PartialMap (α : Type) (β : Type) where
-  /-- The inner total map. Should not appear in the public API, use `PartialMap.toTotal` instead. -/
+  /-- The underlying total map. Lean always generates a public projection for a structure
+  field, so `inner` is technically accessible, but it isn't part of the intended interface:
+  use `PartialMap.toTotal` instead, so there's exactly one sanctioned way to get at it. -/
   inner : TotalMap α (Option β)
 
 instance : EmptyCollection (PartialMap α β) where
@@ -1006,7 +982,15 @@ This more strongly hides the fact that it's a total map.
 :::dev "Benjamin Pierce (bcpierce00)"
 If this way is better, then why didn't we do it for total maps too?  Just for the sake
 of explaining two different mechanisms? We should explain our reasoning.
+
+Claude: One possible reason — `TotalMap` is deliberately left as a bare function type because
+that transparency is the point of the Total Maps section: it's what lets two maps that answer
+every query the same way count as *literally* the same value, giving the extensional view of
+map equality. `PartialMap` doesn't need to make that same point, so it's free to hide the
+representation more thoroughly here. This is a guess at the original reasoning, not a
+confirmed answer — flagging it here for discussion rather than asserting it in the chapter text.
 :::
+
 Now, the type system doesn't consider {lean}`PartialMap α β` to be definitionally equal to {lean}`TotalMap α (Option β)`, so the following equality doesn't type check:
 
 ```lean -keep +error (name := empty_eq)
@@ -1496,7 +1480,6 @@ with computational features of Lean such as the {tactic}`decide` tactic or the `
 :::dev "Benjamin Pierce (bcpierce00)"
 Needs finishing...
 :::
-
 
 :::dev
 Below are some stray examples from IndProp. `Decidable` only carries the proposition and not the
