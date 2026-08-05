@@ -495,7 +495,18 @@ We place no constraints on the value type `β`.
 
 The {ref "Lists"}[Lists] chapter introduced a partial map abstraction, `PartialMap`, with a
 `find` function for lookup, based on lists of key-value pairs.
-Here, we are going to build a map abstraction using functions instead. The advantage of this representation is that it offers a more {tech}_extensional_ view of maps, as we saw with functions in the {ref "Logic"}[Logic] chapter: two maps that respond to every query in the same way will be represented as exactly the same function, rather than just as "equivalent" list structures. This simplifies proofs that use maps.
+Here, we are going to build a map abstraction using functions instead. The advantage of this representation is that it offers a more _extensional_ view of maps, as we saw with functions in the {ref "Logic"}[Logic] chapter: two maps that respond to every query in the same way will be represented as exactly the same function, rather than just as "equivalent" list structures. This simplifies proofs that use maps.
+:::dev "Claude"
+This paragraph previously wrote `{tech}_extensional_`, but that failed to build
+here with `No term def with key "extensional"`. The `{tech}` role emits a
+*reference* to a technical term that must resolve to a matching `{deftech}`
+definition; the only `{deftech}_extensional_` lives in the {ref "Logic"}[Logic]
+chapter, and Verso's tech-term index isn't shared with this chapter's build, so
+the key can't be found. We flattened it to plain emphasis (`_extensional_`),
+matching how Logic itself renders in the generated `.lean`. Alternative fixes if
+we want a live link: add a local `{deftech}` for the term in this chapter, or
+arrange for cross-chapter `{tech}` references to resolve in a whole-book build.
+:::
 
 ```lean
 def TotalMap (α : Type) (β : Type) := α → β
