@@ -158,132 +158,165 @@ to define a typeclass in the first place.
 `BEq` comes from Lean's standard library. Let's define a typeclass of our own, to see the
 mechanism — classes, instances, and synthesis — that made `==` resolve automatically above.
 
-:::dev "mwhicks1" PotentialImprovement
-As a programmer, I wouldn't imagine defining a `structure` to "specify" that a type has at
-least one inhabitant — that only makes sense as a constraint on something else. For example,
-if I'm defining a map and I want a default value, then requiring an element of the value's
-type as a parameter implicitly states that there is at least one; it doesn't work in a
-vacuum. I wonder if we should redo `HasOne` entirely. What could we redo it to, that's not
-far from `BEq` (say)?
-:::
-
-Suppose we want to specify that a type has at least one inhabitant, i.e., that it is not empty.
-A `structure` (chapter {ref "Lists"}[Lists]) can express this directly:
+Suppose we want a function that returns the first element of a list, defaulting to a
+given value if the list is empty. As with {name}`List.elem_poly_eq` above, here is a version
+that makes the default value an explicit parameter:
 
 ```lean
-structure HasOneStruct (α : Type) where
-  one : α
+def List.headOr_ex {α : Type} (defaultValue : α) (xs : List α) : α :=
+  match xs with
+  | [] => defaultValue
+  | hd :: _ => hd
+
+#eval [1, 2, 3].headOr_ex 0
+#eval ([] : List Nat).headOr_ex 0
 ```
 
-A value of {lean}`HasOneStruct Nat` witnesses that `Nat` is inhabited: it's built the same way any
-structure is, by supplying a `Nat` for the `one` field:
+This works, but as before it's tedious: every caller has to supply an element of `α` to default to, even when there's an obvious choice, like `0` for `Nat`.
+
+Getting Lean to fill in `defaultValue` automatically takes two things. One is marking the parameter as
+searchable, rather than something the caller always supplies explicitly. The other is giving Lean
+some information about what to search _for_: a bare `α` argument carries no content, so any value of `α` would do
+equally well.
+
+Considering the second problem first: our solution is to _name_ the type-level concept we're
+actually after — the *default value* of a type. A `structure` (chapter {ref "Lists"}[Lists]) is a
+good way to give a type-level concept a name; structures can also bundle together more than one
+piece of data, which will come in handy later, though we only need a single field here.
+
+Considering the first problem: we need to mark this particular structure as one Lean should search
+for automatically — not every `structure`-typed argument should be.
+
+Let's build this in two steps: first the naming, as a plain `structure`; then the marking, by
+upgrading it to a `class`. Here's the structure — we'll put it in its own namespace so we can reuse
+the name `DefaultValue` for the class version below:
 
 ```lean
-def nat_hasOneStruct : HasOneStruct Nat where
-  one := 1
+namespace DefaultValueScratch
 
-example : nat_hasOneStruct.one = 1 := rfl
+structure DefaultValue (α : Type) where
+  value : α
 ```
 
-But nothing makes Lean produce this witness _automatically_: we had to write `where one := 1`
-ourselves, unlike the `BEq Nat` instance that Lean found for us on its own above.
-
-Typeclasses solve this. In Lean, they're implemented as structures and declared the same way, but
-with `class` in place of `structure`:
+A value of {lean}`DefaultValue Nat` picks out a particular `Nat` to serve as the type's default:
+it's built the same way any structure is, by supplying a `Nat` for the `value` field:
 
 ```lean
-class HasOne (α : Type) where
-  one : α
+def natDefault : DefaultValue Nat where
+  value := 1
+
+example : natDefault.value = 1 := rfl
+
+end DefaultValueScratch
 ```
 
-The difference is in how we provide values of this type. Instead of `def`, we use `instance`:
-
-:::dev
-From GitHub (@chenson2018): Part of the point here is that we don't usually refer to instances
-explicitly, even me providing an explicit name is for pedagogy reasons. I'll make it more explicit
-in the text that what we're looking for in the infoview is the presence of this instance.
-:::
+Now for the marking: we need to tell Lean that `DefaultValue` is the sort of structure it should
+search for automatically, the way it needs to for {name}`List.headOr_ex`'s `defaultValue` argument.
+We do this by writing `class` in place of `structure`:
 
 ```lean
-instance instHasOneNat : HasOne Nat where
-  one := 1
+class DefaultValue (α : Type) where
+  value : α
+```
+
+Another difference is in how we provide values of this type. Instead of `def`, we use `instance`:
+
+```lean
+instance instDefaultValueNat : DefaultValue Nat where
+  value := 1
 ```
 
 Lean can now find this instance on its own, via *typeclass synthesis* (or *typeclass inference*) —
-the same process that found `BEq Nat` earlier.
+the same process that found `BEq Nat` earlier. That means we can rewrite {name}`List.headOr_ex`
+the same way we rewrote {name}`List.elem_poly_eq` into {name}`List.elem_poly` above, replacing the
+explicit `defaultValue` parameter with an instance implicit:
 
 ```lean
-example : HasOne.one = (1 : Nat) := rfl
+def List.headOr {α : Type} [DefaultValue α] (xs : List α) : α :=
+  match xs with
+  | [] => DefaultValue.value
+  | hd :: _ => hd
+
+#eval [1, 2, 3].headOr
+#eval ([] : List Nat).headOr
 ```
 
-Notice that we refer to {name}`HasOne.one` alone, with no instance named. Because the
-expression equates `HasOne.one` with a `Nat`, Lean selects {name}`instHasOneNat`,
+```lean
+example : DefaultValue.value = (1 : Nat) := rfl
+```
+
+Notice that we refer to {name}`DefaultValue.value` alone, with no instance named. Because the
+expression equates `DefaultValue.value` with a `Nat`, Lean selects {name}`instDefaultValueNat`,
 the instance for
-`HasOne Nat`. We know that it is this instance because we are able to
-prove that `HasOne.one` is equal to 1.
+`DefaultValue Nat`. We know that it is this instance because we are able to
+prove that `DefaultValue.value` is equal to 1.
 
 Let's declare a second instance, for {name}`Int`, the type of integers `... -2, -1, 0, 1, 2, ...`:
 
 ```lean
-instance instHasOneInt : HasOne Int where
-  one := -1
+instance instDefaultValueInt : DefaultValue Int where
+  value := -1
 ```
 
-Now, Lean can infer instances for both types:
+Now, Lean can infer instances for both types, including inside {name}`List.headOr`:
 
 ```lean
-example : HasOne.one = (1 : Nat) := rfl
-example : HasOne.one = (-1 : Int) := rfl
+example : DefaultValue.value = (1 : Nat) := rfl
+example : DefaultValue.value = (-1 : Int) := rfl
+example : ([] : List Nat).headOr = 1 := rfl
+example : ([] : List Int).headOr = -1 := rfl
 ```
 
 Synthesis infers instances we could have specified explicitly:
 
 ```lean
-example : instHasOneNat.one = (1 : Nat) := rfl
-example : instHasOneInt.one = (-1 : Int) := rfl
+example : instDefaultValueNat.value = (1 : Nat) := rfl
+example : instDefaultValueInt.value = (-1 : Int) := rfl
 ```
 
 The option `pp.all` shows which instance Lean picked:
 
 ```lean (name := ppAllNat)
 set_option pp.all true in
-#check (HasOne.one : Nat)
+#check (DefaultValue.value : Nat)
 ```
 
 ```leanOutput ppAllNat
-@HasOne.one Nat instHasOneNat : Nat
+@DefaultValue.value Nat instDefaultValueNat : Nat
 ```
 
 ```lean (name := ppAllInt)
 set_option pp.all true in
-#check (HasOne.one : Int)
+#check (DefaultValue.value : Int)
 ```
 
 ```leanOutput ppAllInt
-@HasOne.one Int instHasOneInt : Int
+@DefaultValue.value Int instDefaultValueInt : Int
 ```
 
-This reveals {name}`instHasOneNat` and {name}`instHasOneInt` as the instances Lean picked. The `#synth` command runs the same search directly:
+This reveals {name}`instDefaultValueNat` and {name}`instDefaultValueInt` as the instances Lean
+picked. The `#synth` command runs the same search directly:
 
-```lean (name := HasOne)
-#synth HasOne Nat
+```lean (name := synthDefaultValue)
+#synth DefaultValue Nat
 ```
 
-```leanOutput HasOne
-instHasOneNat
+```leanOutput synthDefaultValue
+instDefaultValueNat
 ```
 
-For a typeclass like {name}`HasOne` that carries data — a term, such as the `1` above, rather
-than only proofs — we expect at most one instance per type, so this search has a unique answer.
+For a typeclass like {name}`DefaultValue` that carries data — a term, such as the `1` above,
+rather than only proofs (which we will see below) — we expect at most one instance per type, so this search has a unique
+answer.
 
 :::dev
 @chenson2018: I don't really want to explain diamonds here, is the above white lie hand-waving okay??
 @bcpierce00: Seems OK to me.
 :::
 
-We'll put `HasOne`'s standard-library cousin, {name}`Inhabited`, to work later in this chapter,
-when we define maps that need a default value for a generic type. First, though, let's go back to
-{name}`List.elem_poly` and see how its `[BEq α]` argument actually gets resolved.
+We'll put `DefaultValue`'s standard-library cousin, {name}`Inhabited`, to work later in this
+chapter, when we define maps that need a default value for a generic type. First, though, let's go
+back to {name}`List.elem_poly` and see how its `[BEq α]` argument actually gets resolved.
 
 # Using Typeclasses
 
@@ -306,7 +339,7 @@ class BEq (α : Type u) where
 ```
 
 Writing `a == b` makes Lean search for an *instance* of `BEq` for the type of `a` and `b`, the same
-way it searched for a {name}`HasOne` instance above. For `Nat`, that instance is:
+way it searched for a {name}`DefaultValue` instance above. For `Nat`, that instance is:
 
 ```lean
 instance (priority := low) : BEq Nat where
@@ -314,8 +347,8 @@ instance (priority := low) : BEq Nat where
 ```
 
 This is the instance Lean supplies for `[BEq α]` when {name}`List.elem_poly` is called on a
-{lean}`List Nat` — no different from Lean choosing {name}`instHasOneNat` for
-{name}`HasOne.one` earlier when it was equated with {lean}`(1 : Nat)`.
+{lean}`List Nat` — no different from Lean choosing {name}`instDefaultValueNat` for
+{name}`DefaultValue.value` earlier when it was equated with {lean}`(1 : Nat)`.
 
 ::::exercise (rating := 1) (name := "List.elem_poly_eq_elem_nat")
 Prove that {name}`List.elem_poly` agrees with {name}`List.elem_nat` when specialized to
@@ -371,7 +404,7 @@ laws such as `one_neq_two`. Thus it falls to the author to check, informally, th
 satisfied, which can lead to bugs.
 
 ::::exercise (rating := 1) (name := "HasThree")
-Following the pattern of {name}`HasOne` and {name}`HasTwo`, define a class `HasThree` that
+Following the pattern of {name}`DefaultValue` and {name}`HasTwo`, define a class `HasThree` that
 specifies a type with at least three distinct elements, and give an instance of it for
 {name}`Nat`.
 
@@ -489,7 +522,7 @@ namespace TotalMap
 
 Intuitively, a total map over an element type `β` is just a function that can be looked up using a corresponding `a : α`.
 
-In order to declare a default value of `β` we will use the {name}`Inhabited` typeclass, which is the standard library's implementation of our {name}`HasOne` example from above:
+In order to declare a default value of `β` we will use the {name}`Inhabited` typeclass, which is the standard library's implementation of our {name}`DefaultValue` example from above:
 
 ```lean
 variable [Inhabited β]
@@ -501,7 +534,7 @@ The function `TotalMap.empty` yields an empty total map, given a default element
 def empty : TotalMap α β := fun _ ↦ default
 ```
 
-Just as declaring `BEq`/`HasOne` instances above hooked `==` and `HasOne.one` up to our types,
+Just as declaring `BEq`/`DefaultValue` instances above hooked `==` and `DefaultValue.value` up to our types,
 we can declare an instance of the standard library's `EmptyCollection` typeclass to associate `∅`
 with this empty map.
 
@@ -549,7 +582,11 @@ the `update` function below. Instead, we are going to abstract
 the concept of getting an element as its own typeclass, called `MyGetElem`, and
 define notation for instances of that typeclass. We do this to illustrate a common
 pattern in Lean (indeed, `MyGetElem` is a simpler form of the {name}`GetElem` standard
-library function). We see the pattern again at the conclusion of our development of
+library function). It's the same pattern behind `==`: writing `a == b` doesn't call a fixed
+function, it's notation for {name}`BEq.beq`, resolved by instance search for whatever type `a`
+and `b` have. We're about to do the same thing for indexing notation, resolving `m[a]` to
+`MyGetElem.getElem m a`, so that it works for any container type with a `MyGetElem` instance,
+not just `TotalMap`. We see the pattern again at the conclusion of our development of
 total maps, illustrating custom syntax for constructing maps.
 
 ```lean
