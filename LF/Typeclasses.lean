@@ -41,6 +41,10 @@ List.reverse.{u} {α : Type u} (as : List α) : List α
 ```
 Are we explaining these things somewhere, maybe in Poly ?
 :::
+:::dev "Benjamin Pierce (bcpierce00)"
+Yes, in Poly!
+:::
+
 
 This lets us work with a type like {lean}`List α`, writing functions like
 {name}`List.reverse` and {name}`List.length` and proofs like {name}`List.length_reverse`, which use
