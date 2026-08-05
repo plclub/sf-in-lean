@@ -388,20 +388,6 @@ Following the pattern of {name}`HasOne` and {name}`HasTwo`, define a class `HasT
 specifies a type with at least three distinct elements, and give an instance of it for
 {name}`Nat`.
 
-:::dev "Claude"
-Keep the class and its instance together in this one `lean` block. If they are
-split into separate blocks, the exercise breaks: the student/terse HTML
-re-elaborates each block's rewritten source against the *teacher* environment,
-so a separate instance block is checked against the six-field class and reports
-a spurious `Fields missing` error. Sharing one block lets the student
-re-elaboration see the four-field class defined directly above the instance, so
-the `-- SOLUTION` fill-ins stay consistent across the class and the instance.
-:::
-:::dev "Benjamin Pierce (bcpierce00)"
-Longer term we may want to improve the infrastructure scripts so per-variant
-field hiding works across separate blocks, so this could be split back into two
-exercises.
-:::
 ```lean
 class HasThree (α : Type) where
   one : α
