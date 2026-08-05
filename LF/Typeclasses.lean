@@ -172,22 +172,26 @@ def List.headOr_ex {α : Type} (defaultValue : α) (xs : List α) : α :=
 #eval ([] : List Nat).headOr_ex 0
 ```
 
-This works, but as before it's tedious: every caller has to supply an element of `α` to default to, even when there's an obvious choice, like `0` for `Nat`.
+This works, but again it's tedious: every caller has to supply an element of `α` to default to, even when there's an obvious choice based on the type of the things in the list, like `0` for `Nat`.
 
 Getting Lean to fill in `defaultValue` automatically takes two things. One is marking the parameter as
-searchable, rather than something the caller always supplies explicitly. The other is giving Lean
-some information about what to search _for_: a bare `α` argument carries no content, so any value of `α` would do
-equally well.
+"searchable," rather than something the caller always supplies explicitly. The other is giving Lean
+some information about what it should search _for_.
 
-Considering the second problem first: our solution is to _name_ the type-level concept we're
-actually after — the *default value* of a type. A `structure` (chapter {ref "Lists"}[Lists]) is a
+Considering the second problem first: The way to provide this information is to _name_ the type-level concept we're
+ after — the *default value* of a type. In particular, a `structure` (chapter {ref "Lists"}[Lists]) is a
 good way to give a type-level concept a name; structures can also bundle together more than one
 piece of data, which will come in handy later, though we only need a single field here.
+:::dev "Benjamin Pierce (bcpierce00)"
+"type-level concept" doesn't say much to me here, and structures are _not_ type-level things.
+(Well, `structure`s are, but _a_ structure satisfying some `structure` declaration is not,
+if you see what I mean...)
+:::
 
 Considering the first problem: we need to mark this particular structure as one Lean should search
 for automatically — not every `structure`-typed argument should be.
 
-Let's build this in two steps: first the naming, as a plain `structure`; then the marking, by
+Let's build up to what wewant in two steps: first the naming, as a plain `structure`; then the marking, by
 upgrading it to a `class`. Here's the structure — we'll put it in its own namespace so we can reuse
 the name `DefaultValue` for the class version below:
 
@@ -198,7 +202,7 @@ structure DefaultValue (α : Type) where
   value : α
 ```
 
-A value of {lean}`DefaultValue Nat` picks out a particular `Nat` to serve as the type's default:
+A value of type {lean}`DefaultValue Nat` picks out a particular `Nat` to serve as the type's default:
 it's built the same way any structure is, by supplying a `Nat` for the `value` field:
 
 ```lean
@@ -209,6 +213,10 @@ example : natDefault.value = 1 := rfl
 
 end DefaultValueScratch
 ```
+:::dev "Benjamin Pierce (bcpierce00)"
+Maybe the example is not needed?
+:::
+
 
 Now for the marking: we need to tell Lean that `DefaultValue` is the sort of structure it should
 search for automatically, the way it needs to for {name}`List.headOr_ex`'s `defaultValue` argument.
@@ -219,13 +227,16 @@ class DefaultValue (α : Type) where
   value : α
 ```
 
-Another difference is in how we provide values of this type. Instead of `def`, we use `instance`:
+We then provide values of this type a bit differently. Instead of `def`, we use `instance`:
 
 ```lean
 instance instDefaultValueNat : DefaultValue Nat where
   value := 1
 ```
 
+:::dev "Benjamin Pierce (bcpierce00)"
+Boldface, or italic?  We should write down a rule in STYLE.md!
+:::
 Lean can now find this instance on its own, via *typeclass synthesis* (or *typeclass inference*) —
 the same process that found `BEq Nat` earlier. That means we can rewrite {name}`List.headOr_ex`
 the same way we rewrote {name}`List.elem_poly_eq` into {name}`List.elem_poly` above, replacing the
@@ -246,9 +257,9 @@ example : DefaultValue.value = (1 : Nat) := rfl
 ```
 
 Notice that we refer to {name}`DefaultValue.value` alone, with no instance named. Because the
-expression equates `DefaultValue.value` with a `Nat`, Lean selects {name}`instDefaultValueNat`,
+expression equates `DefaultValue.value` with the `Nat` `1`, Lean selects {name}`instDefaultValueNat`,
 the instance for
-`DefaultValue Nat`. We know that it is this instance because we are able to
+`DefaultValue Nat`. We know this because we are able to
 prove that `DefaultValue.value` is equal to 1.
 
 Let's declare a second instance, for {name}`Int`, the type of integers `... -2, -1, 0, 1, 2, ...`:
@@ -312,6 +323,9 @@ answer.
 We'll put `DefaultValue`'s standard-library cousin, {name}`Inhabited`, to work later in this
 chapter, when we define maps that need a default value for a generic type. First, though, let's go
 back to {name}`List.elem_poly` and see how its `[BEq α]` argument actually gets resolved.
+:::dev "Benjamin Pierce (bcpierce00)"
+Is it a cousin, or a duplicate?
+:::
 
 # Using Typeclasses
 
@@ -625,7 +639,7 @@ open scoped MyGetElem
 ```
 
 Since the standard library already declares the `$x[$i]` syntax for `GetElem`,
-we only need to define the `macro_rules` not the `notation` as we have done previously.
+we only need to define the `macro_rules`, not the `notation` as we have done previously.
 It's scoped since we don't want to override the default `GetElem` everywhere, but
 only when `open scoped MyGetElem` is in force.
 
@@ -717,7 +731,7 @@ Should we introduce this notation earlier?  (Are there good places to use it ear
 :::
 
 We also introduce a notation for updating maps — this time, rather than going through a typeclass
-and its own `notation`/`macro_rules` machinery as we did for {name}`MyGetElem`, we write `notation`
+and its own `notation`/`macro_rules` machinery as we did for {name}`MyGetElem`, we write a `notation`
 that references {name}`TotalMap.update` directly. Unlike indexing, `update` doesn't need to work
 generically across container types (there's no standard-library operation like {name}`GetElem` that
 we're mirroring here), so the simpler, direct route suffices.
