@@ -587,7 +587,6 @@ def assnElab : TermElab := fun stx type? => do
   | `(assn($st; $t:term)) =>
     let t ← elabTerm t none
     let ty ← Meta.inferType t
-    dbg_trace ty
     -- if (← Meta.isDefEq ty (mkConst ``_root_.Ident)) then -- this incorrectly assigns metavariables
     if (ty.constName == ``_root_.Ident) then
       return mkApp6 (mkConst ``_root_.MyGetElem.getElem)
@@ -1595,248 +1594,126 @@ above are _input_ only: Lean reads `{{ X ≤ 5 }}` but still prints the
 underlying function.  The delaborators below close the loop for the common
 cases: Hoare triples, `->>` implications, and assertion substitutions are
 printed back in their concrete notation, and an assertion Lean cannot
-rebuild falls back to the `~` escape (or, ultimately, to the raw term).  As
+rebuild falls back to the raw `fun st => …` form -- which is exactly this
+notation's escape syntax, so what you see is always valid input.  As
 before, there is no need to understand the details, and everything can be
 switched off with `set_option pp.notation false`.
 ::::
 
--- TODO xhalo32: this all needs to be reworked
--- ::::details (summary := "Notation encoding: printing assertions back")
--- ```lean
--- namespace Assn.Delab
--- open Lean PrettyPrinter Delaborator SubExpr Parenthesizer Imp.Delab
+::::details (summary := "Notation encoding: printing assertions back")
+```lean
+namespace Assertion.Delab
+open Lean PrettyPrinter Delaborator SubExpr Imp.Delab
 
--- /-- Re-inserts parentheses in `assn_aexp` output according to the grammar's
--- precedences. -/
--- @[category_parenthesizer assn_aexp]
--- def assn_aexp.parenthesizer : CategoryParenthesizer | prec => do
---   maybeParenthesize `assn_aexp true wrapParens prec <|
---     parenthesizeCategoryCore `assn_aexp prec
--- where
---   wrapParens (stx : Syntax) : Syntax := Unhygienic.run do
---     let pstx ← `(assn_aexp| ($(⟨stx⟩)))
---     return pstx.raw.setInfo (SourceInfo.fromRef stx)
+/-- Rebuild the surface form of an assertion body, undoing the state
+threading the `assn` elaborator performs: `st[X]` prints as `X`,
+`Aexp.eval st a` as `a`, `Bexp.eval st b = true` as `b`, an applied
+assertion `P st` as `P`, and a subterm that does not mention the state
+prints as itself. -/
+partial def delabBody (stId : FVarId) : DelabM Term := do
+  let e ← getExpr
+  if !e.containsFVar stId then
+    delab
+  else
+    match_expr e with
+    | MyGetElem.getElem _ _ _ _ st _ =>
+      guard (st == .fvar stId)
+      withNaryArg 5 delab
+    | Aexp.eval st _ =>
+      guard (st == .fvar stId)
+      withAppArg delab
+    | HAdd.hAdd _ _ _ _ _ _ =>
+      `($(← withNaryArg 4 (delabBody stId)) + $(← withNaryArg 5 (delabBody stId)))
+    | HSub.hSub _ _ _ _ _ _ =>
+      `($(← withNaryArg 4 (delabBody stId)) - $(← withNaryArg 5 (delabBody stId)))
+    | HMul.hMul _ _ _ _ _ _ =>
+      `($(← withNaryArg 4 (delabBody stId)) * $(← withNaryArg 5 (delabBody stId)))
+    | Eq _ l r =>
+      -- `Bexp.eval st b = true` is the threaded form of a bare boolean `b`
+      if r.isConstOf ``Bool.true && l.isAppOfArity ``Bexp.eval 2
+          && l.appFn!.appArg! == .fvar stId then
+        withNaryArg 1 <| withAppArg delab
+      else
+        `($(← withNaryArg 1 (delabBody stId)) = $(← withNaryArg 2 (delabBody stId)))
+    | Ne _ _ _ =>
+      `($(← withNaryArg 1 (delabBody stId)) ≠ $(← withNaryArg 2 (delabBody stId)))
+    | LE.le _ _ _ _ =>
+      `($(← withNaryArg 2 (delabBody stId)) ≤ $(← withNaryArg 3 (delabBody stId)))
+    | LT.lt _ _ _ _ =>
+      `($(← withNaryArg 2 (delabBody stId)) < $(← withNaryArg 3 (delabBody stId)))
+    | GE.ge _ _ _ _ =>
+      `($(← withNaryArg 2 (delabBody stId)) ≥ $(← withNaryArg 3 (delabBody stId)))
+    | GT.gt _ _ _ _ =>
+      `($(← withNaryArg 2 (delabBody stId)) > $(← withNaryArg 3 (delabBody stId)))
+    | And _ _ =>
+      `($(← withNaryArg 0 (delabBody stId)) ∧ $(← withNaryArg 1 (delabBody stId)))
+    | Or _ _ =>
+      `($(← withNaryArg 0 (delabBody stId)) ∨ $(← withNaryArg 1 (delabBody stId)))
+    | Iff _ _ =>
+      `($(← withNaryArg 0 (delabBody stId)) ↔ $(← withNaryArg 1 (delabBody stId)))
+    | Not _ =>
+      `(¬ $(← withAppArg (delabBody stId)))
+    | _ =>
+      if e.isArrow then
+        `($(← withBindingDomain (delabBody stId)) →
+          $(← withBindingBody `h (delabBody stId)))
+      else if let .app f v := e then
+        -- an applied assertion `P st` (or an applied escape lambda)
+        guard (v == .fvar stId)
+        guard !(f.containsFVar stId)
+        withAppFn delab
+      else
+        failure
 
--- /-- Re-inserts parentheses in `assn` output according to the grammar's
--- precedences. -/
--- @[category_parenthesizer assn]
--- def assn.parenthesizer : CategoryParenthesizer | prec => do
---   maybeParenthesize `assn true wrapParens prec <|
---     parenthesizeCategoryCore `assn prec
--- where
---   wrapParens (stx : Syntax) : Syntax := Unhygienic.run do
---     let pstx ← `(assn| ($(⟨stx⟩)))
---     return pstx.raw.setInfo (SourceInfo.fromRef stx)
+/-- Print an `Assertion`-valued term as it appears inside `{{ … }}`: a
+state lambda is un-threaded; a term the printer cannot rebuild falls back
+to the raw lambda, which is exactly this notation's escape form. -/
+partial def delabAssn : DelabM Term := do
+  if (← getExpr).isLambda then
+    (withBindingBody' `st (pure ·.fvarId!) fun stId => delabBody stId)
+      <|> Delaborator.delab
+  else
+    delab
 
--- /-- Print the focused term as a bare identifier if it delaborates to one,
--- and with the `~` escape otherwise. -/
--- def identOrEscapeAexp : DelabM (TSyntax `assn_aexp) := do
---   match ← delab with
---   | `($x:ident) => `(assn_aexp| $x:ident)
---   | t => `(assn_aexp| ~$t)
+@[delab app.ValidHoareTriple]
+def delabTriple : Delab := whenPPOption getPPNotation do
+  guard <| (← getExpr).isAppOfArity ``ValidHoareTriple 3
+  let P ← withNaryArg 0 delabAssn
+  let c ← withNaryArg 1 delabComInner
+  let Q ← withNaryArg 2 delabAssn
+  `({{ $P }} $c:imp_com {{ $Q }})
 
--- /-- Print the focused term as a bare identifier if it delaborates to one,
--- and with the `~` escape otherwise. -/
--- def identOrEscapeAssn : DelabM (TSyntax `assn) := do
---   match ← delab with
---   | `($x:ident) => `(assn| $x:ident)
---   | t => `(assn| ~$t)
+/-- Print an assertion-position argument: a state lambda gets the
+`{{ … }}` notation; any other term (a named assertion, a substitution)
+already reads well bare. -/
+def delabAssnArg (i : Nat) : DelabM Term := do
+  if (← withNaryArg i getExpr).isLambda then
+    `({{ $(← withNaryArg i delabAssn) }})
+  else
+    withNaryArg i Delaborator.delab
 
--- /-- Rebuild `assn_aexp` syntax from an `Aexp` (the argument of the
--- `Aexp'.ofAexp` coercion). -/
--- partial def delabAexpAsAssn : DelabM (TSyntax `assn_aexp) := do
---   let stx ←
---     match_expr ← getExpr with
---     | Aexp.num _ =>
---       match (← withAppArg getExpr).nat? with
---       | some v => pure ⟨Syntax.mkNumLit (toString v) |>.raw⟩
---       | none => identOrEscapeAexp
---     | Aexp.id _ =>
---       match ← withAppArg getExpr with
---       | .const nm _ => `(assn_aexp| $(mkIdent nm):ident)
---       | _ => identOrEscapeAexp
---     | Aexp.plus _ _ =>
---       let s1 ← withAppFn <| withAppArg delabAexpAsAssn
---       let s2 ← withAppArg delabAexpAsAssn
---       `(assn_aexp| $s1 + $s2)
---     | Aexp.minus _ _ =>
---       let s1 ← withAppFn <| withAppArg delabAexpAsAssn
---       let s2 ← withAppArg delabAexpAsAssn
---       `(assn_aexp| $s1 - $s2)
---     | Aexp.mult _ _ =>
---       let s1 ← withAppFn <| withAppArg delabAexpAsAssn
---       let s2 ← withAppArg delabAexpAsAssn
---       `(assn_aexp| $s1 * $s2)
---     | _ => identOrEscapeAexp
---   annAsTerm stx
+@[delab app.AssertImplies]
+def delabAssertImplies : Delab := whenPPOption getPPNotation do
+  guard <| (← getExpr).isAppOfArity ``AssertImplies 2
+  `($(← delabAssnArg 0) ->> $(← delabAssnArg 1))
 
--- mutual
+@[delab app.Assertion.sub]
+def delabSub : Delab := whenPPOption getPPNotation do
+  guard <| (← getExpr).isAppOfArity ``Assertion.sub 3
+  let `($x:ident) ← withNaryArg 0 delab | failure
+  let a ← withNaryArg 1 delabAexpInner
+  let P ← withNaryArg 2 delabAssn
+  if (← withNaryArg 2 getExpr).isLambda then
+    `({{ $P }} [$x:ident ↦ $a:imp_aexp])
+  else
+    `($P [$x:ident ↦ $a:imp_aexp])
 
--- /-- Rebuild `assn_aexp` syntax from an assertion-level numeric value -- the
--- body form the `{{ … }}` macros produce, applied to the state variable. -/
--- partial def delabAssnAexpVal : DelabM (TSyntax `assn_aexp) := do
---   let e ← getExpr
---   let stx ←
---     match_expr e with
---     | HAdd.hAdd _ _ _ _ _ _ =>
---       let s1 ← withNaryArg 4 delabAssnAexpVal
---       let s2 ← withNaryArg 5 delabAssnAexpVal
---       `(assn_aexp| $s1 + $s2)
---     | HSub.hSub _ _ _ _ _ _ =>
---       let s1 ← withNaryArg 4 delabAssnAexpVal
---       let s2 ← withNaryArg 5 delabAssnAexpVal
---       `(assn_aexp| $s1 - $s2)
---     | HMul.hMul _ _ _ _ _ _ =>
---       let s1 ← withNaryArg 4 delabAssnAexpVal
---       let s2 ← withNaryArg 5 delabAssnAexpVal
---       `(assn_aexp| $s1 * $s2)
---     | _ =>
---       let .app f v := e | failure
---       guard v.isFVar
---       match_expr f with
---       | Aexp'.ofNat _ =>
---         match (← withAppFn <| withAppArg getExpr).nat? with
---         | some val => pure ⟨Syntax.mkNumLit (toString val) |>.raw⟩
---         | none => withAppFn <| withAppArg identOrEscapeAexp
---       | Aexp'.ofAexp _ => withAppFn <| withAppArg delabAexpAsAssn
---       | _ =>
---         if f.isLambda then
---           withAppFn do withBindingBody (← getExpr).bindingName! delabAssnAexpVal
---         else
---           withAppFn identOrEscapeAexp
---   annAsTerm stx
-
--- /-- Rebuild `assn` syntax from an assertion body -- the proposition the
--- `{{ … }}` macros produce, applied to the state variable. -/
--- partial def delabAssnVal : DelabM (TSyntax `assn) := do
---   let e ← getExpr
---   let stx ←
---     match_expr e with
---     | Eq _ _ _ =>
---       let s1 ← withNaryArg 1 delabAssnAexpVal
---       let s2 ← withNaryArg 2 delabAssnAexpVal
---       `(assn| $s1:assn_aexp = $s2:assn_aexp)
---     | Ne _ _ _ =>
---       let s1 ← withNaryArg 1 delabAssnAexpVal
---       let s2 ← withNaryArg 2 delabAssnAexpVal
---       `(assn| $s1:assn_aexp ≠ $s2:assn_aexp)
---     | LE.le _ _ _ _ =>
---       let s1 ← withNaryArg 2 delabAssnAexpVal
---       let s2 ← withNaryArg 3 delabAssnAexpVal
---       `(assn| $s1:assn_aexp ≤ $s2:assn_aexp)
---     | LT.lt _ _ _ _ =>
---       let s1 ← withNaryArg 2 delabAssnAexpVal
---       let s2 ← withNaryArg 3 delabAssnAexpVal
---       `(assn| $s1:assn_aexp < $s2:assn_aexp)
---     | GE.ge _ _ _ _ =>
---       let s1 ← withNaryArg 2 delabAssnAexpVal
---       let s2 ← withNaryArg 3 delabAssnAexpVal
---       `(assn| $s1:assn_aexp ≥ $s2:assn_aexp)
---     | GT.gt _ _ _ _ =>
---       let s1 ← withNaryArg 2 delabAssnAexpVal
---       let s2 ← withNaryArg 3 delabAssnAexpVal
---       `(assn| $s1:assn_aexp > $s2:assn_aexp)
---     | And _ _ =>
---       let s1 ← withNaryArg 0 delabAssnVal
---       let s2 ← withNaryArg 1 delabAssnVal
---       `(assn| $s1 ∧ $s2)
---     | Or _ _ =>
---       let s1 ← withNaryArg 0 delabAssnVal
---       let s2 ← withNaryArg 1 delabAssnVal
---       `(assn| $s1 ∨ $s2)
---     | Iff _ _ =>
---       let s1 ← withNaryArg 0 delabAssnVal
---       let s2 ← withNaryArg 1 delabAssnVal
---       `(assn| $s1 ↔ $s2)
---     | Not _ =>
---       `(assn| ¬$(← withAppArg delabAssnVal))
---     | _ =>
---       if e.isArrow then
---         let s1 ← withBindingDomain delabAssnVal
---         let s2 ← withBindingBody e.bindingName! delabAssnVal
---         `(assn| $s1 → $s2)
---       else
---         let .app f v := e | failure
---         guard v.isFVar
---         match_expr f with
---         | Assertion.ofProp _ =>
---           match ← withAppFn <| withAppArg getExpr with
---           | .const nm _ => `(assn| $(mkIdent nm):ident)
---           | _ => withAppFn <| withAppArg identOrEscapeAssn
---         | Assertion.sub _ _ _ => withAppFn delabSubInner
---         | _ =>
---           if f.isLambda then
---             withAppFn do withBindingBody (← getExpr).bindingName! delabAssnVal
---           else
---             withAppFn identOrEscapeAssn
---   annAsTerm stx
-
--- /-- Rebuild the substitution notation from an `Assertion.sub` application. -/
--- partial def delabSubInner : DelabM (TSyntax `assn) := do
---   let .const nm _ ← withNaryArg 0 getExpr | failure
---   let a ← withNaryArg 1 delabAexpInner
---   let P ← withNaryArg 2 delabAssnFun
---   `(assn| $P [$(mkIdent nm):ident ↦ $a:imp_aexp])
-
--- /-- Rebuild `assn` syntax from an `Assertion`-valued term. -/
--- partial def delabAssnFun : DelabM (TSyntax `assn) := do
---   let e ← getExpr
---   let stx ←
---     match_expr e with
---     | Assertion.ofProp _ =>
---       match ← withAppArg getExpr with
---       | .const nm _ => `(assn| $(mkIdent nm):ident)
---       | _ => withAppArg identOrEscapeAssn
---     | Assertion.sub _ _ _ => delabSubInner
---     | _ =>
---       if e.isLambda then
---         withBindingBody e.bindingName! delabAssnVal
---       else
---         identOrEscapeAssn
---   annAsTerm stx
-
--- end
-
--- /-- Rebuild `assn` syntax from an `Assertion`, falling back to the escaped
--- raw term. -/
--- def delabAssnTotal : DelabM (TSyntax `assn) :=
---   delabAssnFun <|> identOrEscapeAssn
--- ```
--- ::::
-
--- ::::details (summary := "Notation encoding: registering the delaborators")
--- ```lean
--- @[delab app.ValidHoareTriple]
--- def delabTriple : Delab := whenPPOption getPPNotation do
---   guard <| (← getExpr).isAppOfArity ``ValidHoareTriple 3
---   let P ← withNaryArg 0 delabAssnTotal
---   let c ← withNaryArg 1 delabComInner
---   let Q ← withNaryArg 2 delabAssnTotal
---   `({{ $P }} $c:imp_com {{ $Q }})
-
--- @[delab app.AssertImplies]
--- def delabAssertImplies : Delab := whenPPOption getPPNotation do
---   guard <| (← getExpr).isAppOfArity ``AssertImplies 2
---   let P ← withNaryArg 0 delabAssnTotal
---   let Q ← withNaryArg 1 delabAssnTotal
---   `({{ $P }} ->> {{ $Q }})
-
--- @[delab app.Assertion.sub]
--- def delabSub : Delab := whenPPOption getPPNotation do
---   guard <| (← getExpr).isAppOfArity ``Assertion.sub 3
---   `({{ $(← delabSubInner) }})
-
--- @[delab app.Assertion.ofProp]
--- def delabOfProp : Delab := whenPPOption getPPNotation do
---   guard <| (← getExpr).isAppOfArity ``Assertion.ofProp 1
---   `({{ $(← delabAssnFun) }})
-
--- end Assn.Delab
--- ```
--- ::::
-
-::::hide
+end Assertion.Delab
 ```
+::::
+
+:::ignore
+```lean -show
 /-- info: {{X ≤ 5}} X := X + 1; {{X ≤ 7}} : Prop -/
 #guard_msgs in
 #check {{ X ≤ 5 }} X := X + 1; {{ X ≤ 7 }}
@@ -1845,11 +1722,11 @@ switched off with `set_option pp.notation false`.
 #guard_msgs in
 #check ({{ X < 4 }} ->> {{ X < 5 }})
 
-/-- info: {{(X ≤ 10) [X ↦ 2 * X]}} : Assertion -/
+/-- info: {{X ≤ 10}} [X ↦ 2 * X] : Assertion -/
 #guard_msgs in
-#check {{ (X ≤ 10) [X ↦ 2 * X] }}
+#check {{ X ≤ 10 }} [X ↦ 2 * X]
 ```
-::::
+:::
 
 :::slidebreak
 :::
