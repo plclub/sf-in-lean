@@ -2307,7 +2307,7 @@ which is called _propositional extensionality_ (`propext`).
 ```
 
 ::::full
-(Informally, an "extensional" property is one that pertains to observable
+(Informally, an {deftech}_extensional_ property is one that pertains to observable
 behavior. Thus, propositional extensionality means that a proposition's
 identity is completely determined by what we can observe from it -- i.e.,
 whether the proposition holds. We can state this more explicitly:)

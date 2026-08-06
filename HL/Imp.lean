@@ -567,7 +567,8 @@ they are redundant -- which the parenthesizer knows.
 The arithmetic and boolean evaluators must now be extended to handle
 variables, taking a state `st` as an extra argument.  A variable is
 looked up in the state with the map-indexing notation `st[x]` from the
-`Maps` chapter.
+`Typeclasses` chapter.
+For the notation to work, we need to `open scoped MyGetElem`, which opens only the scoped items like notation from the module.
 ::::
 
 :::terse
@@ -575,6 +576,8 @@ Now we need to add an `st` parameter to both evaluation functions:
 :::
 
 ```lean
+open scoped MyGetElem
+
 def Aexp.eval (st : State) (a : Aexp) : Nat :=
   match a with
   | num   n     =>  n
@@ -1163,7 +1166,7 @@ Is the following proposition provable?
 (A) Yes    (B) No    (C) Not sure
 
 :::quizSolution
-```
+```lean
 theorem quiz1_answer (c : Com) (st st' : State)
     (h : st =[ skip; ~c ]=> st') : st =[ c ]=> st' := by
   cases h with
@@ -1203,7 +1206,7 @@ Is the following proposition provable?
 (A) Yes    (B) No    (C) Not sure
 
 :::quizSolution
-```
+```lean
 theorem quiz3_answer (b : Bexp) (c : Com) (st st' : State)
     (h : st =[ if (~b) { ~c } else { ~c } ]=> st') : st =[ c ]=> st' := by
   cases h with
@@ -1226,7 +1229,7 @@ Is the following proposition provable?
 (A) Yes    (B) No    (C) Not sure
 
 :::quizSolution
-```
+```lean
 -- This one is tricky!
 theorem quiz4_answer (b : Bexp) (hbtrue : ∀ st, b.eval st = true)
     (c : Com) (st : State) : ¬ ∃ st', st =[ while (~b) { ~c } ]=> st' := by
@@ -1265,7 +1268,7 @@ Is the following proposition provable?
 This claim is *false*, so it cannot be proved -- the proof gets
 stuck immediately:
 
-```
+```lean +error
 theorem quiz5_answer (b : Bexp) (c : Com) (st : State)
     (H : ¬ ∃ st', st =[ while (~b) { ~c } ]=> st') :
     ∀ st'', b.eval st'' = true := by

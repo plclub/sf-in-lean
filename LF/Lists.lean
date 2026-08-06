@@ -453,18 +453,13 @@ proved in {ref "Induction"}[Induction].
 ::::
 
 ::::full
-We'll learn more about type classes as we go.  For now, the
+We'll learn more about type classes in chapter {ref "Typeclasses"}[Typeclasses]. For now, the
 key idea is: a type class is an interface, and an instance is an
 implementation of that interface for a particular type.
 
 (For a thorough treatment of type classes, see Chapter 3 of
 _Functional Programming in Lean_.)
 ::::
-
-:::dev "Daniel Sainati (dsainati1)" NOW
-Should we replace the above with a forward link to our typeclasses chapter,
-once we have one?
-:::
 
 ### Head and Tail
 
