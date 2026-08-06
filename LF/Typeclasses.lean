@@ -65,6 +65,8 @@ def nat_hasOneStruct_brace : HasOneStruct Nat := {one := 1}
 
 def nat_hasOneStruct_where : HasOneStruct Nat where
   one := 1
+
+def nat_hasOneStruct_anonymous : HasOneStruct Nat := ⟨1⟩
 ```
 
 All of these are the same value, a structure of type {InlineLean.lean}`HasOneStruct Nat` that we
@@ -358,15 +360,14 @@ theorem List.elem_poly_eq_elem_nat (xs : List Nat) (n : Nat) : xs.elem_poly n = 
 
 Maps (or dictionaries) are ubiquitous data structures both in ordinary programming and in the theory of programming languages; we're going to need them in many places in the coming chapters.
 
-We'll define two flavors of maps: total maps, which include a "default" element to be returned when a key being looked up doesn't exist, and partial maps, which instead return an option to indicate success or failure. Partial maps are defined in terms of total maps, using None as the default element.
+We'll define two flavors of maps: total maps, which include a "default" element to be returned when a key being looked up doesn't exist, and partial maps, which instead return an option to indicate success or failure. Partial maps are defined in terms of total maps, using {name}`none` as the default element.
 
 ## Identifiers
 
 To define maps, we first need a type for the keys that we will use to index into our maps. Instead of using concrete types, we will use a type variables
 
 ```lean
-universe u v
-variable {α : Type u} {β : Type v} [BEq α] [ReflBEq α] [LawfulBEq α]
+variable {α : Type} {β : Type} [BEq α] [ReflBEq α] [LawfulBEq α]
 ```
 
 ```lean -show
@@ -418,7 +419,7 @@ This time around, though, we're going to use functions, rather than lists of key
 We build up to partial maps in two steps. First, we define a type of total maps that return a default value when we look up a key that is not present in the map.
 
 ```lean
-def TotalMap (α : Type u) (β : Type v) := α → β
+def TotalMap (α : Type) (β : Type) := α → β
 
 namespace TotalMap
 ```
@@ -444,17 +445,107 @@ instance : EmptyCollection (TotalMap α β) where
   emptyCollection := TotalMap.empty
 ```
 
-so that we can use the `∅` notation for this empty map. We'll also declare the instance
+so that we can use the `∅` notation for this empty map.
+
+### Getting Elements
+
+To access values in a map, which are functions, we can apply the map to a key:
+
+:::dev "Chris Henson (chenson2018), Niklas Halonen (xhalo32)"
+Using `default` in the early examples might be confusing.
+We could use something concrete, like `0` which is the default `Nat` instead.
+:::
 
 ```lean
-instance : GetElem (TotalMap α β) α β (fun _ _ => True) where
-  getElem m a _ := m a
+example : (∅ : TotalMap Nat Nat) 1 = default := rfl
 
-theorem getElem_def (m : TotalMap α β) (a : α) : m[a] = m a :=
-  rfl
+end TotalMap
 ```
 
-which allows us to use the notation `m[a]` to access elements of a map `m`.
+Here we have made use of the the fact that the type {name}`TotalMap` is defined as a function type, so technically Lean let's us use a function application to get an element.
+While this is possible, it goes against the spirit we have seen in previous chapters of defining interfaces to our types, like characterizing lemmas.
+We would like that the public interface we design for TotalMap to be independent of the fact that the definition is `α → β`.
+
+In the ideal, we should be able to substitute in a different type with similar behavior without needing to change the public interface.
+Suppose, just for the sake of argument, that we wanted to define total maps as {lean}`List (α × β)` or `Std.HashMap α β`.
+Neither of these are functions, so the syntax `∅ 1` wouldn't work.
+If this is the public interface to access elements, it restricts the definition ot {name}`TotalMap`, forcing it to be a function of some kind.
+
+To abstract away the function application, we introduce notation for accessing elements using square brackets.
+This let's us write `∅[1]` or `m[a]` regardless of the underlying definition of {name}`TotalMap`.
+
+We'll call the typeclass `MyGetElem`.
+The typeclass takes three type parameters: the collection, the keys that can be used to index and the elements that it returns.
+For example, let's say we have declared an instance `MyGetElem (List Bool) Nat Bool`.
+One can think of the instance as saying that _indexing into `xs : List Bool` with an index `i : Nat` returns a `Bool`_.
+The notation we introduce for this is: `xs[i] = MyGetElem.getElem xs i`.
+
+:::instructors
+`MyGetElem` is named after {name}`GetElem` from the standard library.
+The reason we are defining a new typeclass is for simplicity — {name}`GetElem` contains logic for when keys are valid which we don't need.
+:::
+
+Don't worry about what `outParam Type` means, it's like a normal type paramater with a hint to Lean that helps typeclass inference.
+The `macro_rules` and the `app_unexpander` are minor technicalities for getting the syntax to work.
+
+```lean
+class MyGetElem (coll : Type) (idx : Type) (elem : outParam Type) where
+  getElem (xs : coll) (i : idx) : elem
+
+namespace MyGetElem
+scoped macro_rules | `($xs[$i]) => `(getElem $xs $i)
+
+@[app_unexpander getElem]
+def unexpandGetElem : Lean.PrettyPrinter.Unexpander
+  | `($_ $xs $i) => `($xs[$i])
+  | _ => throw ()
+end MyGetElem
+
+open scoped MyGetElem
+```
+
+:::instructors
+Since the standard library already declares the `$x[$i]` syntax, we only need to define the macro.
+It's scoped since we don't want to override the default `GetElem` everywhere, but only when `open scoped MyGetElem`.
+:::
+
+To use the notation `m[a]` to access elements of a map `m`, we add a {name}`MyGetElem` instance for total maps.
+
+```lean
+namespace TotalMap
+variable [Inhabited β]
+
+instance : MyGetElem (TotalMap α β) α β where
+  getElem m a := m a
+
+theorem getElem_def (m : TotalMap α β) (a : α) : m[a] = m a := by rfl
+
+example : (∅ : TotalMap Nat Nat)[1] = default := by rfl
+```
+
+When proving some of the upcoming characterizing lemmas, we will rewrite using {name}`getElem_def`.
+However, {name}`getElem_def` exposes the underlying implementation that accessing elements in total maps is a function application, therefore it should only be used sparingly, and only inside the `TotalMap` namespace.
+
+:::dev "Niklas Halonen (xhalo32)"
+As per the discussion in `https://github.com/plclub/sf-in-lean/pull/166#discussion_r3690573597`, we should provide the reverse of `getElem_def` as a simp-lemma, however it doesn't seem to behave nicely
+
+```
+@[simp]
+theorem apply_eq_getElem (m : TotalMap α β) (a : α) : m a = m[a] := by rfl
+```
+
+The reverse direction of {name}`getElem_def` is provided as a `simp`-lemma.
+
+```
+example (m : TotalMap α β) (a : α) : m a = m[a] := by
+  -- simp -- doesn't work (infinite loop)
+  -- dsimp -- doesn't work (nothing happens)
+  -- rw [apply_eq_getElem] -- doesn't work: The pattern to be substituted is a metavariable (`?m ?a`) in this equality: ?m ?a = ?m[?a]
+  rw [apply_eq_getElem m a] -- works
+```
+:::
+
+### Updating
 
 More interesting is the map-updating function, which (as always) takes a map `m`, a key `a`, and a value `b` and returns a new map that takes `a` to `b` and takes every other key to whatever `m` does. The novelty here is that we achieve this effect by wrapping a new function around the old one.
 
@@ -468,7 +559,7 @@ This definition is a nice example of higher-order programming: {name}`update` ta
 For example, we can build a map taking {name}`String` to {name}`Bool`, where `"foo"` and `"bar"` are mapped to {name}`true` and every other key is mapped to {name}`false`, like this:
 
 ```lean
-def example_map :=
+def exampleMap :=
   (∅ : TotalMap String Bool)
     |>.update "foo" true
     |>.update "bar" true
@@ -477,24 +568,35 @@ def example_map :=
 We'll also introduce a notation for updating maps
 
 ```lean
-notation a " →ₜ " b " ; " m => TotalMap.update m a b
+notation a:55 " →ₜ " b:55 " ; " m:55 => TotalMap.update m a b
+
+theorem update_def (m : TotalMap α β) (a : α) (b : β) :
+  a →ₜ b ; m = fun a' => bif a == a' then b else m[a'] := rfl
+```
+
+We can also hide the last case when it is empty:
+
+```lean
+notation a:55 " →ₜ " b:55 => TotalMap.update ∅ a b
 ```
 
 The `examplemap` above can now be defined as follows:
 
 ```lean
-def examplemap' : TotalMap String Bool := "bar" →ₜ true ; "foo" →ₜ true ; ∅
+def exampleMap' : TotalMap String Bool := "bar" →ₜ true ; "foo" →ₜ true ; ∅
+def exampleMap'' : TotalMap String Bool := "bar" →ₜ true ; "foo" →ₜ true
 ```
 
-This completes the definition of total maps. Note that we don't need to define a `find` operation on this representation of maps because it is just function application!
+This completes the definition of total maps. Note that we don't need to define a `find` operation (as we did in the Lists chapter) on this representation of maps because it is just function application!
 
 ```lean
-example : example_map = examplemap' := rfl
+example : exampleMap = exampleMap' := rfl
+example : exampleMap' = exampleMap'' := rfl
 
-example : examplemap'["baz"] = false := rfl
-example : examplemap'["foo"] = true := rfl
-example : examplemap'["quux"] = false := rfl
-example : examplemap'["bar"] = true := rfl
+example : exampleMap'["baz"] = false := rfl
+example : exampleMap'["foo"] = true := rfl
+example : exampleMap'["quux"] = false := rfl
+example : exampleMap'["bar"] = true := rfl
 ```
 
 When we use maps in later chapters, we'll need several fundamental facts about how they behave.
@@ -506,51 +608,32 @@ Even if you don't work the following exercises, make sure you thoroughly underst
 First, the empty map returns its default element for all keys:
 
 ```lean
-theorem apply_empty (a : α) : (∅ : TotalMap α β)[a] = default := rfl
+theorem getElem_empty (a : α) : (∅ : TotalMap α β)[a] = default := rfl
 ```
 
 Next, if we update a map `m` at a key `a` with a new value `b` and then look up `a` in the map resulting from the {name}`update`, we get back `b`:
 
 ```lean
 theorem update_eq (m : TotalMap α β) (a : α) (b : β) : (a →ₜ b ; m)[a] = b := by
-  unfold update
-  rewrite [getElem_def, ReflBEq.rfl, cond_true]
-  rfl
+  rw [update_def, getElem_def, ReflBEq.rfl, cond_true]
 ```
 
 On the other hand, if we update a map `m` at a key `a₁` and then look up a _different_ key `a₂` in the resulting map, we get the same result that `m` would have given:
 
 ::::exercise (rating := 2) (name := "update_neq")
 ```lean
-theorem update_neq (m : TotalMap α β) (a₁ a₂ : α) (h : a₁ ≠ a₂) (b : β) :
+theorem update_neq {m : TotalMap α β} {a₁ a₂ : α} (h : a₁ ≠ a₂) (b : β) :
     (a₁ →ₜ b ; m)[a₂] = m[a₂] := by
   solution!
-    by_cases h' : a₁ = a₂
-    · contradiction
-    · unfold update
-      rewrite [getElem_def, beq_false_of_ne h, cond_false]
-      rfl
+    rw [update_def, getElem_def, beq_false_of_ne h, cond_false]
 ```
-
-:::dev "Claude" PotentialImprovement
-The opening `by_cases`/`contradiction` is vacuous — `h : a₁ ≠ a₂` is already a
-hypothesis, so the first branch is discharged by the very hypothesis that makes
-the second branch provable. The proof goes through as just
-
-```
-unfold update
-rewrite [getElem_def, beq_false_of_ne h, cond_false]
-rfl
-```
-
-:::
 ::::
 
 The two remaining facts are equalities _between maps_, so we first need to say when two maps are equal. Since a total map _is_ a function, this is exactly the functional extensionality principle from the Logic chapter: two maps are equal when they agree at every key. Recording it once, for maps, and tagging it `@[ext]` lets the {tactic}`ext` tactic reduce a goal `m₁ = m₂` to the pointwise one in the proofs below.
 
 ```lean
 @[ext]
-theorem ext (m₁ m₂ : TotalMap α β) (h : ∀ a : α, m₁[a] = m₂[a]) : m₁ = m₂ := funext h
+theorem ext {m₁ m₂ : TotalMap α β} (h : ∀ a : α, m₁[a] = m₂[a]) : m₁ = m₂ := funext h
 ```
 
 If we update a map `m` at a key `a` with a value `b₁` and then update again with the same key `a` and another value `b₂`, the resulting map behaves the same (gives the same result when applied to any key) as the simpler map obtained by performing just the second {name}`update` on `m`:
@@ -563,10 +646,8 @@ theorem update_shadow (m : TotalMap α β) (a : α) (b₁ b₂ : β) :
     ext a'
     by_cases h : a = a'
     · subst h
-      rewrite [update_eq, update_eq]
-      rfl
-    · rewrite [update_neq _ _ _ h, update_neq _ _ _ h, update_neq _ _ _ h]
-      rfl
+      rw [update_eq, update_eq]
+    · rw [update_neq h, update_neq h, update_neq h]
 ```
 
 :::dev "Ori Lahav (orilahav)" PotentialImprovement
@@ -610,7 +691,7 @@ theorem update_same (m : TotalMap α β) (a : α) : (a →ₜ m[a] ; m) = m := b
     by_cases h : a = a'
     · subst h
       rw [update_eq]
-    · rw [update_neq _ _ _ h]
+    · rw [update_neq h]
 ```
 ::::
 
@@ -626,26 +707,30 @@ a specific lemma is dropped here for the same reason as in the note above.
 :::
 
 ```lean
-theorem update_permute (m : TotalMap α β) (a₁ a₂ : α) (b₁ b₂ : β) (h : a₁ ≠ a₂) :
+theorem update_permute {m : TotalMap α β} {a₁ a₂ : α} {b₁ b₂ : β} (h : a₁ ≠ a₂) :
     (a₁ →ₜ b₁ ; a₂ →ₜ b₂ ; m) = (a₂ →ₜ b₂ ; a₁ →ₜ b₁ ; m) := by
   solution!
     ext a'
     by_cases h₁ : a₁ = a'
     · subst h₁
-      rw [update_eq, update_neq _ _ _ h.symm, update_eq]
-    · rw [update_neq _ _ _ h₁]
+      rw [update_eq, update_neq h.symm, update_eq]
+    · rw [update_neq h₁]
       by_cases h₂ : a₂ = a'
       · subst h₂
         rw [update_eq, update_eq]
-      · rw [update_neq _ _ _ h₂, update_neq _ _ _ h₂, update_neq _ _ _ h₁]
+      · rw [update_neq h₂, update_neq h₂, update_neq h₁]
 ```
 ::::
 
 :::dev
-The Rocq source also has {name}`apply_empty` and {name}`update_eq` as (optional)
+The Rocq source also has {name}`getElem_empty` (originally `apply_empty`) and {name}`update_eq` as (optional)
 exercises; here they are worked examples, since {name}`update_eq` was already
 presented that way. Reconsider if this section is rebalanced.
 :::
+
+```lean
+end TotalMap
+```
 
 ## Notation for Concrete Maps
 
@@ -657,7 +742,7 @@ To accomplish this we define a simple structure that consists of a key and a val
 A key-value pair with `↦` syntax.
 -/
 @[ext]
-structure KVPair (K : Type u) (V : Type v) where
+structure KVPair (K : Type) (V : Type) where
   key : K
   value : V
 
@@ -671,6 +756,10 @@ open scoped KVPair
 Next, we declare `Insert` and `Singleton` instances which control the `{}` notation in lean.
 
 ```lean
+namespace TotalMap
+
+variable [Inhabited β]
+
 instance : Insert (KVPair α β) (TotalMap α β) where
   insert kv m := kv.key →ₜ kv.value ; m
 
@@ -679,20 +768,35 @@ instance : Singleton (KVPair α β) (TotalMap α β) where
 
 instance : LawfulSingleton (KVPair α β) (TotalMap α β) where
   insert_empty_eq _ := rfl
-```
 
-:::dev
-xhalo32: Should we explain why `example : ({ "foo" ↦ true })["foo"]! = true := rfl` doesn't work (the collection that has Insert and GetElem is ambiguous)?
-:::
+end TotalMap
+```
 
 Here are a couple of examples using the new notation:
 
 ```lean
 example : ({ "bar" ↦ true, "foo" ↦ true }) = "bar" →ₜ true ; "foo" →ₜ true ; ∅ := rfl
 
-example : ({ "foo" ↦ true } : TotalMap String Bool)["foo"]! = true := rfl
+example : ({ "foo" ↦ true } : TotalMap String Bool)["foo"] = true := rfl
 
-example : ({ 1 ↦ 2, 1 ↦ 3 } : TotalMap Nat Nat)[1]! = 2 := rfl
+example : ({ 1 ↦ 2, 1 ↦ 3 } : TotalMap Nat Nat)[1] = 2 := rfl
+```
+
+The reason we need to explicitly specify the type of the map is that Lean doesn't know what type of collection `{ "foo" ↦ true }` is without type hints, as we can see with `#check`:
+
+```lean (name := foo)
+#check { "foo" ↦ true }
+```
+
+```leanOutput foo
+{"foo" ↦ true} : ?m.4
+```
+
+The type shows a `?m.4`, which indicates that Lean can't infer the type.
+A type which can't be inferred doesn't have any type classes like `MyGetElem`, so typeclass resolution gets stuck in the following example:
+
+```lean -keep +error
+example : ({ "foo" ↦ true })["foo"] = true := rfl
 ```
 
 ## Partial Maps
@@ -700,16 +804,44 @@ example : ({ 1 ↦ 2, 1 ↦ 3 } : TotalMap Nat Nat)[1]! = 2 := rfl
 Lastly, we define _partial maps_ on top of total maps. A partial map with elements of type `β` is simply a total map with elements of type `Option β`, whose default element is {name}`none`.
 
 ```lean
-end TotalMap
+structure PartialMap (α : Type) (β : Type) where
+  /-- The inner total map. Should not appear in the public API, use `PartialMap.toTotal` instead. -/
+  inner : TotalMap α (Option β)
 
-abbrev PartialMap (α : Type u) (β : Type v) := TotalMap α (Option β)
+instance : EmptyCollection (PartialMap α β) where
+  emptyCollection := { inner := ∅ }
+
+def PartialMap.toTotal (m : PartialMap α β) : TotalMap α (Option β) := m.inner
+
+instance : MyGetElem (PartialMap α β) α (Option β) where
+  getElem m a := m.toTotal[a]
+
+theorem getElem_def (m : PartialMap α β) (a : α) : m[a] = m.toTotal[a] := rfl
 ```
 
-:::dev "Chris Henson (chenson2018)"
-Making this an `abbrev` is a design decision: a type alias avoids duplicating all
-the typeclass instances (`GetElem`, `EmptyCollection`, ...) for partial maps. If
-this is confusing for any reason, feel free to change.
-:::
+Remember that we discussed earlier with total maps that using function application exposes the implementation and that's why we introduced a new notation {name}`MyGetElem`?
+Here we take that concept to a new level, and instead of using a `def` for partial maps, like this:
+
+```display
+def PartialMap (α : Type) (β : Type) := TotalMap α (Option β)`
+```
+
+we define partial maps as a structure containing just a total map.
+This more strongly hides the fact that it's a total map.
+Now, the type system doesn't consider {lean}`PartialMap α β` to be definitionally equal to {lean}`TotalMap α (Option β)`, so the following equality doesn't type check:
+
+```lean -keep +error (name := empty_eq)
+example : (∅ : PartialMap α β) = (∅ : TotalMap α (Option β)) := by rfl
+```
+
+```leanOutput empty_eq
+Type mismatch
+  ∅
+has type
+  TotalMap α (Option β)
+but is expected to have type
+  PartialMap α β
+```
 
 :::dev "Claude" NOW
 The Maps chapter removed the `optionCoe` instance for the duration of its
@@ -724,64 +856,120 @@ We have not carried that over — nothing here needs it and it is not clear it i
 wanted. Decide whether to reinstate it.
 :::
 
-Updating a partial map at a key means storing {name}`some` value there, and we introduce a similar notation for it:
+Updating a partial map at a key means storing a {name}`some` value there.
+To update, we create a new partial map from `a →ₜ some b ; m.toTotal` by wrapping it in angle brackets, i.e. using the anonymous constructor syntax.
+This is equivalent to writing `{ inner := a →ₜ some b ; m.toTotal }`.
+We also introduce a similar notation for it as for total maps.
 
 ```lean
 namespace PartialMap
 
 def update (m : PartialMap α β) (a : α) (b : β) : PartialMap α β :=
-  (a →ₜ some b ; m)
+  ⟨a →ₜ some b ; m.toTotal⟩
 
-notation a " →ₚ " b " ; " m => PartialMap.update m a b
+notation a:55 " →ₚ " b:55 " ; " m:55 => PartialMap.update m a b
+
+notation a:55 " →ₚ " b:55 => PartialMap.update ∅ a b
+
+def examplePmap : PartialMap String Bool := "Church" →ₚ true ; "Turing" →ₚ false
 ```
 
-We can also hide the last case when it is empty:
+Next, we provide some fundamental properties about {name}`toTotal`:
 
 ```lean
-notation a " →ₚ " b => PartialMap.update ∅ a b
+theorem toTotal_empty : (∅ : PartialMap α β).toTotal = (∅ : TotalMap α (Option β)) := rfl
 
-def examplepmap : PartialMap String Bool := "Church" →ₚ true ; "Turing" →ₚ false
+theorem toTotal_update (m : PartialMap α β) (a : α) (b : β) :
+    (a →ₚ b ; m).toTotal = a →ₜ some b ; m.toTotal := rfl
 ```
 
-Since {name}`PartialMap.update` is _defined_ as a total-map update that stores {name}`some` value, the two sides below are literally the same map, and the fact holds by {tactic}`rfl`. It is still worth naming: {tactic}`rw` matches goals _syntactically_, so a goal written with `→ₚ` will not match a total-map lemma written with `→ₜ` until it has been rewritten with this one. Each of the partial-map lemmas that follow begins by doing exactly that.
+As an example, here's how we can use these on some concrete maps:
 
 ```lean
-theorem totalMap_eq (m : PartialMap α β) (a : α) (b : β) : (a →ₚ b ; m) = (a →ₜ some b ; m) := rfl
+example : (2 →ₚ 3)[2] = some 3 := by
+  rw [getElem_def, toTotal_update, toTotal_empty, TotalMap.getElem_def]
+  rfl
 ```
 
-We now straightforwardly lift all of the basic lemmas about total maps to partial maps.
+This also holds by definition (`rfl`), since all the rewrites in the above proof do the computation step-by-step.
 
 ```lean
+example : (2 →ₚ 3)[2] = some 3 := by rfl
+```
+
+Next, we lift all of the basic lemmas about total maps to partial maps.
+To do this we should first prove an extensionality lemma about partial maps.
+To prove extensionality, we employ injectivity of {name}`PartialMap`'s constructor {name}`mk` using {name}`mk.injEq`.
+
+```lean
+theorem toTotal_eq_iff (m₁ m₂ : PartialMap α β) : m₁.toTotal = m₂.toTotal ↔ m₁ = m₂ := by
+  rw [mk.injEq]
+  rfl
+
 @[ext]
-theorem ext (m₁ m₂ : PartialMap α β) (h : ∀ a : α, m₁[a] = m₂[a]) : m₁ = m₂ := funext h
+theorem ext {m₁ m₂ : PartialMap α β} (h : ∀ a : α, m₁[a] = m₂[a]) : m₁ = m₂ := by
+  rw [← toTotal_eq_iff]
+  exact TotalMap.ext h
+```
 
-theorem apply_empty (a : α) : (∅ : PartialMap α β)[a] = none := rfl
+Now, let's lift the {name}`TotalMap` lemmas:
+
+```lean
+theorem getElem_empty (a : α) : (∅ : PartialMap α β)[a] = none := by
+  rw [getElem_def, toTotal_empty, TotalMap.getElem_empty, Option.default_eq_none]
 
 theorem update_eq (m : PartialMap α β) (a : α) (b : β) : (a →ₚ b ; m)[a] = some b := by
-  rw [totalMap_eq, TotalMap.update_eq]
+  rw [getElem_def, toTotal_update, TotalMap.update_eq]
 
-theorem update_neq (m : PartialMap α β) (a₁ a₂ : α) (h : a₁ ≠ a₂) (b : β) :
+theorem update_neq {m : PartialMap α β} {a₁ a₂ : α} (h : a₁ ≠ a₂) (b : β) :
     (a₁ →ₚ b ; m)[a₂] = m[a₂] := by
-  rw [totalMap_eq, TotalMap.update_neq _ _ _ h]
+  dsimp [getElem_def, toTotal_update]
+  rw [TotalMap.update_neq h]
 
 theorem update_shadow (m : PartialMap α β) (a : α) (b₁ b₂ : β) :
     (a →ₚ b₂ ; a →ₚ b₁ ; m) = (a →ₚ b₂ ; m) := by
-  simp [totalMap_eq]
-  exact TotalMap.update_shadow m a (some b₁) (some b₂)
+  apply ext
+  intro x
+  dsimp [getElem_def, toTotal_update]
+  rw [TotalMap.update_shadow]
 
-theorem update_same (m : PartialMap α β) (a : α) (b : β) (h : m[a] = some b) :
+theorem update_same {m : PartialMap α β} {a : α} {b : β} (h : m[a] = some b) :
     (a →ₚ b ; m) = m := by
-  rw [totalMap_eq, ← h, TotalMap.update_same]
+  apply ext
+  intro x
+  dsimp [getElem_def, toTotal_update]
+  rw [← h, getElem_def, TotalMap.update_same]
 
-theorem update_permute (m : PartialMap α β) (a₁ a₂ : α) (b₁ b₂ : β) (h : a₁ ≠ a₂) :
+theorem update_permute {m : PartialMap α β} {a₁ a₂ : α} {b₁ b₂ : β} (h : a₁ ≠ a₂) :
     (a₁ →ₚ b₁ ; a₂ →ₚ b₂ ; m) = (a₂ →ₚ b₂ ; a₁ →ₚ b₁ ; m) := by
-  simp only [totalMap_eq]
-  exact TotalMap.update_permute m a₁ a₂ (some b₁) (some b₂) h
+  apply ext
+  intro x
+  dsimp [getElem_def, toTotal_update]
+  rw [TotalMap.update_permute h]
+```
+
+And let's add `{}`-notation for partial maps as well.
+
+```lean
+instance : Insert (KVPair α β) (PartialMap α β) where
+  insert kv m := kv.key →ₚ kv.value ; m
+
+instance : Singleton (KVPair α β) (PartialMap α β) where
+  singleton kv := insert kv ∅
+
+instance : LawfulSingleton (KVPair α β) (PartialMap α β) where
+  insert_empty_eq _ := rfl
+
+example : { 1 ↦ 2, 2 ↦ 3 } = 1 →ₚ 2 ; 2 →ₚ 3 := rfl
 ```
 
 One last thing: for partial maps, it's convenient to introduce a notion of map inclusion, stating
 that all the entries in one map are also present in another. Lean already has notation for this —
 `m₁ ⊆ m₂` — which we get by supplying a {name}`HasSubset` instance.
+
+:::dev "Niklas Halonen (xhalo32)"
+I think it would be more idiomatic to define `Subset` as `∀ {a : α} {b : β}, m₁[a] = some b → m₂[a] = some b`.
+:::
 
 ```lean
 def Subset (m₁ m₂ : PartialMap α β) : Prop :=
@@ -799,13 +987,13 @@ We can then show that map update preserves map inclusion, that is:
 ```lean
 theorem update_subset (m₁ m₂ : PartialMap α β) (a : α) (b : β) (h : m₁ ⊆ m₂) :
     (a →ₚ b ; m₁) ⊆ (a →ₚ b ; m₂) := by
-  rw [subset_def]
+  rw [subset_def] at h ⊢
   intro a' b' hb
   by_cases ha : a = a'
   · subst ha
     rw [update_eq] at hb ⊢
     exact hb
-  · rw [update_neq _ _ _ ha] at hb ⊢
+  · rw [update_neq ha] at hb ⊢
     exact h a' b' hb
 
 end PartialMap
@@ -951,7 +1139,7 @@ theorem even_double (k : Nat) : isEven (double k) = true := by
 ::::exercise (rating := 3) (name := "isEven_double_exists")
 
 ```lean
-theorem  isEven_double_exists (n : Nat) :
+theorem isEven_double_exists (n : Nat) :
     ∃ k, n = bif isEven n then double k else double k + 1 := by solution!(
   induction n with
   | zero =>
