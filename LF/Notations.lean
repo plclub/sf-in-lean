@@ -14,7 +14,7 @@ file := some "Notations"
 
 This file provides an overview of the custom notations introduced across the volumes.
 
-## Basics
+## Logical Foundations
 
 :::table +header
 *
