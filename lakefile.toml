@@ -22,6 +22,9 @@ git = "https://github.com/leanprover-community/batteries"
 rev = "v4.32.0"
 
 [[lean_lib]]
+name = "Bib"
+
+[[lean_lib]]
 name = "SFLMeta"
 
 [[lean_lib]]
