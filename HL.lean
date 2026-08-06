@@ -4,6 +4,7 @@ import SFLMeta.Save
 
 import HL.Intro
 import HL.Slang
+import HL.Equiv
 import HL.Imp
 
 import VersoManual
