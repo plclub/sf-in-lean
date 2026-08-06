@@ -11,5 +11,5 @@ TS/*Verso.lean
 .claude/settings.local.json
 *.tmp
 
-#EMACS autbackup artefacts
+#EMACS autobackup artefacts
 *~
