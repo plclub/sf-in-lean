@@ -95,8 +95,9 @@ Troubleshooting:
    in the dependency tree.
 ::::
 
-We reopen the namespace from the previous chapter to keep the definitions
-and theorems introduced in this chapter local to this file, so they don't clash with the standard library.
+We reopen the namespace from the previous chapter to group this chapter's
+definitions and theorems with the custom natural-number development and keep
+their names distinct from the standard library.
 
 ```lean
 namespace NatPlayground.Nat
@@ -259,7 +260,7 @@ theorem succ_eq_add_one (n : Nat) : succ n = n + one := by
 ::::
 
 
-## Proof by Induction
+# Proof by Induction
 
 ::::full
 We defined {name}`add` to recurse on its _second_ argument:
@@ -906,11 +907,11 @@ course this is no accident: Lean has been designed so that its
 {tactic}`induction` tactic generates the same sub-goals, in the same
 order, as the bullet points that a mathematician would usually
 write.  But there are significant differences of detail: the
-formal proof is much more explicit in some ways (e.g., the use of
-{tactic}`rfl`) but much less explicit in others (in particular, the "proof
-state" at any given point in the Lean proof is completely implicit,
-whereas the informal proof reminds the reader several times where
-things stand).
+formal proof is much more explicit in some ways (e.g., the sequence
+of rewrites) but much less explicit in others (in particular, the
+"proof state" at any given point in the Lean proof is completely
+implicit, whereas the informal proof reminds the reader several
+times where things stand).
 ::::::
 
 :::::exercise (rating := 2) (name := "add_comm_informal") (level := Advanced) (manual := true)
@@ -1191,7 +1192,7 @@ to write the cases explicitly. We'll discuss some other tactic combinators
 in the {ref "Automation"}[Automation] chapter.
 ::::
 
-## Nat to Bin and Back to Nat
+# Nat to Bin and Back to Nat
 
 ```lean
 namespace NatToBin
@@ -1324,7 +1325,7 @@ theorem nat_bin_nat (n : Nat) :
 :::
 :::::
 
-## Bin to Nat and Back to Bin (Advanced)
+# Bin to Nat and Back to Bin (Advanced)
 
 The opposite direction — starting with a {name}`Bin`, converting to {name}`Nat`,
 then converting back to {name}`Bin` — turns out to be problematic. That
