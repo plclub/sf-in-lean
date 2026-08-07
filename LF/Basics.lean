@@ -475,7 +475,7 @@ The `intro b` and {tactic}`rfl` that you see after the `by`
 are examples of tactics. If you hover over a tactic's name, Lean shows
 its documentation, explaining what the tactic does and how to use it.
 
-Tactics manipulate the _proof state_, as you can can see the in the Lean InfoView panel.
+Tactics manipulate the _proof state_, as you can see the in the Lean InfoView panel.
 The proof state is divided by the symbol ⊢, called the _turnstile_. The part
 before it is called the _context_, and the part after it is called
 the _goal_. The context records what we know
@@ -925,7 +925,7 @@ Playground.myFoo : RGB
 
 :::full
 Namespaces can be re-opened as often as you like to add new definitions and access old ones.
-When inside a `namespace`, definitions from the that namespace can be referenced
+When inside a `namespace`, definitions from that namespace can be referenced
 without prefixes.
 :::
 
@@ -1060,7 +1060,7 @@ Unknown identifier `myHiddenDef`
 ```
 
 ::::full
-In fact, this is what exactly what Lean does with the standard {name}`Bool` type by default.
+In fact, this is exactly what Lean does with the standard {name}`Bool` type by default.
 Since it is such an important
 part of many proofs and programs, Lean implicitly `open`s many of `Bool`s functions and
 constructors. Accordingly, we can use constructors like {name}`true` and {name}`false` and functions
@@ -1272,7 +1272,7 @@ Rather than construct this as `.bits .b0 .b0 .b0 .b0`, we construct it as:
 
 The `.mk` constructor is created for us.
 Structures are more commonly constructed by assigning values to their _fields_.
-Each field name is paird with its value using `:=`:
+Each field name is paired with its value using `:=`:
 
 
 ```lean
@@ -1293,7 +1293,7 @@ how do we "update" an existing structure, or in other words, construct a new str
 while reusing some old fields?
 
 ```lean
-def setFistTwoBits (old : NibbleStruct)
+def setFirstTwoBits (old : NibbleStruct)
     (newX0 : Playground.Bit)
     (newX1 : Playground.Bit) : NibbleStruct :=
   { old with x0 := newX0, x1 := newX1 }
@@ -1309,8 +1309,8 @@ def makeNibbleStruct (x0 x1 x2 x3 : Playground.Bit) : NibbleStruct :=
   { x0, x1, x2, x3 }
 ```
 
-When a field an the variable supplying its value have the same name,
-Lean let us write just the name.
+When a field and the variable supplying its value have the same name,
+Lean lets us write just the name.
 Thus `{ x0, x1, x2, x3 }` is a shorthand for `{ x0 := x0, x1 := x1, x2 := x2, x3 := x3 }`.
 This is called _field abbreviation_.
 
@@ -1589,7 +1589,7 @@ theorem add_zero_zero_explained : ∀  n : Nat, n + zero + zero = n := by
      What can we do to simplify this expression? If you hover
      your cursor over the `add_zero` in the rewrite below, you
      can see its type: `n + zero = n`. So, we can use that
-     rewrite rule to transform an appearnce of `n + zero`
+     rewrite rule to transform an appearance of `n + zero`
      in the goal to `n`. -/
   rewrite [add_zero]
   /- Now click here to see the new proof state that results
@@ -1798,7 +1798,7 @@ with simplification rules. After proving these rules,
 instead of using {tactic}`rfl` to peek through the definitions, we will {tactic}`rewrite`
 using the rules.
 
-Eventually, we will introduce a way to _automatically_ apply these simplfication rules.
+Eventually, we will introduce a way to _automatically_ apply these simplification rules.
 Real-world Lean developments use automation extensively, and you will learn to do so
 gradually throughout this book.
 For the moment it is important that you work through these early concepts
