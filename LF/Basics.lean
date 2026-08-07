@@ -13,18 +13,6 @@ htmlSplit := .never
 file := "Basics"
 %%%
 
-:::dev "Jonathan Chan (ionathanch)"
-\[BCP: Old comment -- might be out of date?\]
-There should be some instruction on interaction with the IDE, namely:
-* how to read the proof state
-* clicking immediately after a tactic will show you what it changed
-* clicking after each `h` in `rw [h₁, h₂, ...]` will show you what was rewritten
-* hovering over a tactic will provide documentation on how to use it
-* hovering over a definition will give its type
-* hovering over a Unicode character will tell you how to type it
-* Ctrl-clicking on a definition will take you to the definition location
-:::
-
 :::instructors
 This file and Induction.lean each take about an hour to
 get through in a not-too-rushed fashion (with questions, etc.).
@@ -484,7 +472,8 @@ What does this mean?
 First we have the `by` keyword, which signals
 to Lean that we are beginning a sequence of _tactics_.
 The `intro b` and {tactic}`rfl` that you see after the `by`
-are examples of tactics.
+are examples of tactics. If you hover over a tactic's name, Lean shows
+its documentation, explaining what the tactic does and how to use it.
 
 Tactics manipulate the _proof state_, as you can can see the in the Lean InfoView panel.
 The proof state is divided by the symbol ⊢, called the _turnstile_. The part
@@ -548,7 +537,7 @@ theorem true_and_explained : ∀ (b : MyBool), (MyBool.true && b) = b := by
 ::::full
 It's also important to point out that, as with languages like Python and Haskell,
 Lean is _whitespace-sensitive_. That is, the indentation in proofs is important and changing
-it can change the meaning of the proof, usually causing the proof to break. If we had
+it can change the meaning of the proof, usually causing the proof to break. Suppose we had
 instead written the following:
 
 ```lean +error (name := indent)
@@ -557,6 +546,9 @@ theorem true_and_wrong : ∀ (b : MyBool), (MyBool.true && b) = b := by
     rfl
 ```
 
+Lean complains because the {tactic}`rfl` is not at the same level of indentation as the `{tactic}intro b`,
+so Lean does not recognize these two tactics as being sequential in the way they should be.
+
 ```leanOutput indent
 Tactic `introN` failed: There are no additional binders or `let` bindings in the goal to introduce
 
@@ -564,8 +556,6 @@ b : MyBool
 ⊢ (true && b) = b
 ```
 
-Lean would complain, since the {tactic}`rfl` is not at the same level of indentation as the `{tactic}intro b`,
-so it does not recognize these two tactics as being sequential in the way they should be.
 In general, sequential tactics applied to the same goal must be on subsequent lines at the same
 level of indentation or separated on the same line by a `;` like so:
 
@@ -712,7 +702,7 @@ TODO
 ::::full
 The enumerated types we have seen so far are so-named because
 their definitions explicitly enumerate a finite set of
-elements, their constructors. Here is a more interesting
+elements: their constructors. Here is a more interesting
 inductive type definition, `Color`, where one of the constructors
 takes an argument:
 ::::
@@ -734,15 +724,6 @@ inductive Color : Type where
 ```
 
 :::full
-An `inductive` definition does two things:
-
-- It introduces a set of new _constructors_. E.g., {name}`RGB.red`,
-  {name}`Color.primary`, {name}`Bool.true`, {name}`Bool.false`, {name}`Day.monday`,
-  etc. are constructors.
-
-- It groups them into a new named type, like {name}`Bool`, {name}`RGB`, or
-  {name}`Color`.
-
 _Constructor expressions_ are formed by applying a constructor
 to zero or more other constructors or constructor expressions,
 obeying the declared number and types of the constructor arguments.
@@ -943,7 +924,7 @@ Playground.myFoo : RGB
 ```
 
 :::full
-Namespaces can be opened and closed as often as you like to add new definitions and access old ones.
+Namespaces can be re-opened as often as you like to add new definitions and access old ones.
 When inside a `namespace`, definitions from the that namespace can be referenced
 without prefixes.
 :::
@@ -982,13 +963,6 @@ end RGB
 Top-level definitions can also be prefixed by a namespace,
 which opens the namespace temporarily for the body of the definition.
 
-:::dev "Claude" NOW
-Rendering bug in *student* and *terse* (solutions is fine): the leading
-`--- …` triple-dash comment lines in this block and the next one each render
-*twice* in a row (e.g. two consecutive `--- this works, because …` lines). The
-solutions build shows each once, so this is a Verso rendering quirk with
-`---`-style comments in the elided builds, not a source duplication.
-:::
 ```lean (name := rgb_1)
 --- this works, because the definition is qualified by `RGB.`
 def RGB.myOtherBlue : RGB := myBlue
@@ -1200,16 +1174,6 @@ GRADE_MANUAL 1: custom_namespace_checks
 ```
 :::
 
-:::dev "mwhicks1"
-This namespace section is great, but it interrupts the pedagogical flow of the
-presentation of inductive types. We were prevoiusly looking at constructors With
-one argument, then there was this big digression, and now we are back to two.
-Are we able to move the namespace stuff to the end of this section (Data and Functions)?
-Then we can start it by saying we are finishing with it but readers can skip it
-if they prefer to "follow their nose" regarding namespaces, and come back when they
-want to know more.
-:::
-
 ## Constructors with Multiple Parameters (Tuple Types)
 
 ```lean
@@ -1249,7 +1213,7 @@ Nibble.bits Bit.b1 Bit.b0 Bit.b1 Bit.b0 : Nibble
 ```
 
 ::::full
-Note: The `bits` constructor illustrates a feature of multi-parameter
+The `bits` constructor illustrates a feature of multi-parameter
 declarations, both for constructors and for functions: Instead
 of writing `(x0 : Bit) (x1 : Bit) ...` we write `(x0 x1 ... : Bit)`
 since all of the variables have the same type. We could have done
@@ -1280,7 +1244,7 @@ example : allZero (.bits .b0 .b0 .b0 .b0) = true  := by rfl
 end Playground
 ```
 
-### Aside: Structures
+### Structures
 
 :::suppressPreviousHeaderWhenTerse
 :::
@@ -1307,7 +1271,7 @@ Rather than construct this as `.bits .b0 .b0 .b0 .b0`, we construct it as:
 ```
 
 The `.mk` constructor is created for us.
-However, structures are more commonly constructed by assigning values to their _fields_.
+Structures are more commonly constructed by assigning values to their _fields_.
 Each field name is paird with its value using `:=`:
 
 
@@ -1355,9 +1319,9 @@ This is called _field abbreviation_.
 ## Natural Numbers
 
 ::::full
-We put this portion of the chapter in a namespace so that our own definition of
-numbers does not interfere with the one from the standard library.
-In the remainder of the book, we'll use the standard library's.
+We put this portion of the chapter in a namespace so that our definition of
+numbers does not interfere with the one from the standard library. Our definition
+matches the standard one, which we will use in the rest of the book.
 ::::
 
 ```lean
@@ -1409,11 +1373,6 @@ inductive Nat : Type where
 ```
 
 :::full
-Naturally, Lean has its own definition of natural numbers,
-with some slightly fancy features for reasoning and
-notation. As we are just beginning to reason about natural numbers,
-we use our own definition here and introduce the Lean one in a later chapter.
-
 We'll define some shorthands for numbers, putting them in the `Nat` namespace
 so we don't need to use `.` notation everywhere.
 :::
