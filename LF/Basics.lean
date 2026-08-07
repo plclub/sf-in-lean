@@ -243,7 +243,7 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.monday := by rfl
 ```
 
 then Lean would not be able to verify it and would instead signal an
-error. Try it out!
+error.
 ::::
 
 ::::terse
@@ -318,6 +318,7 @@ inductive MyBool : Type where
 ```
 
 :::ignore
+-- This is included to be able to format expressions involving these variables later
 ```lean -show
 variable (b : MyBool) (n m : Nat)
 ```
@@ -1021,7 +1022,7 @@ RGB.myOtherBlue : RGB
 ```
 
 ```lean +error (name := rgb_2)
--- this doesn't work; the identifier is unknown
+-- this doesn't work; the identifier is undefined
 #check myBlue
 ```
 
@@ -1339,7 +1340,7 @@ Since the result type is declared to be {name}`NibbleStruct`, Lean knows
 which structure and fields we mean. Unlike {name}`NibbleStruct.mk`,
 this construction syntax doesn't depend on the order of fields.
 
-Now that we have seen how to construct a strucure from scratch —
+Now that we have seen how to construct a structure from scratch —
 how do we "update" an existing structure, or in other words, construct a new structure
 while reusing some old fields?
 
@@ -1352,7 +1353,8 @@ def setFistTwoBits (old : NibbleStruct)
 
 The expression `{ old with ... }` constructs a new {name}`NibbleStruct` whose `x0` and `x1`
 have the given value and whose other fields are copied from `old`.
-Keep in mind that `old` was not modified — we constructed a new one.
+Keep in mind that `old` was not modified — we constructed a new structure
+starting from the old one.
 
 ```lean
 def makeNibbleStruct (x0 x1 x2 x3 : Playground.Bit) : NibbleStruct :=
@@ -2107,7 +2109,7 @@ scoped infixl:30 " == " => beq
 ```
 
 ::::full
-We now have two symbols that both look like equality: `=`
+We now have seen two symbols that both look like equality: `=`
 and `==`.  We'll have much more to say about their differences and
 similarities later. For now, notice that
 `x = y` is a logical _claim_ — a "proposition" — that we can try to
@@ -2116,7 +2118,7 @@ prove, while `x == y` is a boolean _expression_ whose value (either
 ::::
 
 ::::terse
-Note that now `==` and `=` are different; the former means {name}`beq` whereas the latter is a logical
+Note that `==` and `=` are different; the former means {name}`beq` whereas the latter is a logical
 claim.
 ::::
 
@@ -2220,15 +2222,14 @@ the shorter name {name}`mul_zero` is usually sufficient when Lean can determine
 which declaration we mean.
 
 Second, Lean displays the theorem's arguments before the colon `mul_zero (n : Nat) : n * zero = zero`.
-The same statement can be written using an explicit universal quantifier, as we have done before:
+Writing arguments as binders before the colon is called _declaration-header style_.
+The same statement can be written using an explicit universal quantifier, as we have seen before:
 
 ```display
 mul_zero : ∀ (n : Nat), n * zero = zero
 ```
 
-These express exactly the same proposition — writing arguments as binders before
-the colon is called _declaration-header style_. It is the conventional style
-for Lean declarations, so we will generally use it from now on.
+The declaration-header style is conventional in Lean, and we will generally use it from now on.
 ::::
 
 ::::terse
@@ -2429,8 +2430,8 @@ then `rewrite [hp] at h` changes the hypothesis to `h : q`.
 
 The {tactic}`exact` tactic closes a goal by providing the exact proof of the goal.  For
 example, if `hp : p` is in the context and the goal is `p`, then `exact hp`
-closes the goal.  You can also transform `hp` slightly, but we will
-explain how when we get to an example where we need to.
+closes the goal. You can also transform `hp` slightly when using `exact`, and we will
+explain how when we get to an example that needs it.
 ::::
 
 ::::terse
