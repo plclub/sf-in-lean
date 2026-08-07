@@ -2231,7 +2231,7 @@ mul_zero : ∀ (n : Nat), n * zero = zero
 
 Writing statements in declaration-header style shortens proofs because Lean
 automatically adds declared variables to the context, rather than requiring
-them to be added with `intro`.
+them to be added with {tactic}`intro`.
 The declaration-header style is conventional in Lean, and we will generally use it from now on.
 ::::
 
