@@ -212,7 +212,7 @@ block_extension Block.leanSaved (saved : Save.LeanSaved.Data) where
     -- Three children = still unselected: keep the solutions, student, or terse
     -- variant selected by the current typed `Variant`.
     -- One child (or anything else) = already selected; nothing to do.
-    if h : contents.size = 4 then
+    if h : contents.size = 3 then
       let some saved := LeanSaved.decode? data | return none
       let variant ← getCurrVariant
       let chosen ←

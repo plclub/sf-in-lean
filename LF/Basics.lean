@@ -1528,7 +1528,7 @@ Being recursive on a {name}`Nat` and returning {name}`Nat` as well,
 {name}`add` is the first example of a more sophisticated class of functions.
 In this chapter and beyond, we will _prove_ properties
 about recursive functions like `add` over inductive datatypes
-like {name}`Nat`, using _simplification rules_, or _characterizing lemmas_, about their behavior.
+like {name}`Nat`, using _simplification rules_, also known as _characterizing lemmas_, about their behavior.
 
 Here is a simplification rule about {name}`add`:
 
@@ -1556,7 +1556,7 @@ NatPlayground.Nat.add_zero (n : Nat) : n + zero = n
 ```
 
 Using our simplification rule {name}`add_zero`, we can carry out a simple proof
-about natural numbers!
+about natural numbers.
 
 ```lean
 theorem add_zero_zero : ∀ n : Nat, n + zero + zero = n := by
@@ -1586,18 +1586,22 @@ Here is the previous proof in more detail:
 theorem add_zero_zero_explained : ∀  n : Nat, n + zero + zero = n := by
   intro n
   /- After introducing `n`, our goal is `n + zero + zero = n`.
-     What can we do to simplify this expression? If you hover your cursor over the
-     `add_zero` in the rewrite below, you can see its type: `n + zero = n`. So,
-     we can use that rewrite rule to transform an appearnce of `n + zero` in the goal to `n`. -/
+     What can we do to simplify this expression? If you hover
+     your cursor over the `add_zero` in the rewrite below, you
+     can see its type: `n + zero = n`. So, we can use that
+     rewrite rule to transform an appearnce of `n + zero`
+     in the goal to `n`. -/
   rewrite [add_zero]
-  /- Now click here to see the new proof state that results from the tactic.
-     Notice how `n + zero + zero` changes to `n + zero` in the goal. -/
+  /- Now click here to see the new proof state that results
+     from the tactic. Notice how `n + zero + zero` changes to
+     `n + zero` in the goal. -/
   rewrite [add_zero]
-  /- Again the goal changes, from `n + zero` to `n`. Now the proof state
-     is an equality with both sides equal, so it can be closed by the
-     tactic `rfl`. -/
+  /- Again the goal changes, from `n + zero` to `n`. Now the
+     proof state is an equality with both sides equal, so it
+     can be closed by the tactic `rfl`. -/
   rfl
-  /- The proof is now done! The Lean InfoView tells us there are "No goals". -/
+  /- The proof is now done! The Lean InfoView tells us there are
+     "No goals". -/
 ```
 
 Give this proof a try (it's similar):
@@ -1618,12 +1622,11 @@ theorem add_zero_zero_zero : ∀ n : Nat, n + zero + zero + zero = n := by
 :::
 
 ::::full
-As we saw above, the tactic that tells Lean to rewrite (part of) a goal or
-hypothesis based on a rule is called {tactic}`rewrite`. Given the rule {name}`add_zero`,
+The {tactic}`rewrite` tactic tells Lean to rewrite (part of) a goal or
+hypothesis based on a rule (or rules), given in square brackets.
+For example, given the rule {name}`add_zero`,
 which states that {lean}`n + zero` is equal to {lean}`n` for any {lean}`n`, we can replace
 any {lean}`n + zero` in our proof with {lean}`n` via `rewrite [add_zero]`.
-
-The {tactic}`rewrite` tactic takes its argument(s) in square brackets.
 ::::
 
 ## The {tactic}`rfl` tactic
@@ -1676,7 +1679,7 @@ theorem add_one (n : Nat) : n + (succ zero) = succ n + zero := by
 ```
 
 ::::full
-Again, we recommend stepping through these proofs in VS Code —
+We recommend stepping through these proofs in VS Code —
 that is, moving past each tactic with your cursor to see how it
 changes the proof state and hovering over each argument to {tactic}`rewrite` to see its type.
 ::::
@@ -1685,16 +1688,14 @@ changes the proof state and hovering over each argument to {tactic}`rewrite` to 
 
 ::::full
 Lean, like any other programming language, has conventions and best practices
-for writing good software. In object-oriented programming,
-for example, it is considered good practice not to access the
-fields of an object directly, but instead to use getter and setter methods.
-This helps to encapsulate the object's definition, so that, if its fields or implementation
+for writing good software. Lean takes inspiration from object-oriented programming
+in favoring the use of _encapsulation_. In OOP, it is considered poor style to expose
+the fields of an object in its interface; instead, those fields should only be
+accessible by an object's methods (like getters and setters).
+Doing so hides the object's definition, so that, if its fields or implementation
 ever change, the interface it exposes to the outside world remains the same.
-In simple examples such conventions may seem trivial or even silly; in complex codebases,
-it is the only way to maintain crucial invariants that prevent a system from becoming unmaintainable.
 
-The same principle applies to definitions and proofs in Lean.
-In idiomatic Lean, it is considered poor style to "peek" through
+In idiomatic Lean, it is similarly considered poor style to "peek" through
 definitions by using {tactic}`rfl` to implicitly simplify expressions
 that aren't syntactically identical. If you take a look at the proofs of
 {name}`add_zero` and {name}`add_succ` above, you will notice this is exactly what we did
@@ -1704,20 +1705,16 @@ However, the foundational theorems {name}`add_zero` and {name}`add_succ` provide
 characterization of the behavior of {name}`add` that makes using {tactic}`rfl` to simplify
 expressions unnecessary; instead, we can rewrite by these theorems anywhere we want to describe
 how {name}`add` evaluates.
+In real-world Lean developments, the style of writing proofs using
+simplification rules is both standard and expected.
 
-In this text, to enforce idiomatic style, we mark
-definitions with `attribute [irreducible]` to prevent this peeking,
+For the next few chapters, we mark definitions with `attribute [irreducible]` to prevent this peeking,
 also called *definitional equality abuse* (*defeq abuse*, for short).
 We place this attribute after the proofs of {name}`add_zero` and {name}`add_succ`,
 and can then rewrite by these theorems anywhere we want to describe
 how {name}`add` evaluates.
-In real-world Lean developments, the style of writing proofs using
-simplification rules is both standard and expected. Definitions in those
-developments may not use `attribute [irreducible]`,
-but they _will_ have definitions that are not meant to be reduced.
-
-We use `attribute [irreducible]` here to enforce the style of
-using simplification rules now so that it is natural to you moving forward.
+We use `attribute [irreducible]` for now to enforce the style of
+using simplification rules, so that it is natural to you moving forward.
 We will relax this discipline in later chapters.
 ::::
 
@@ -1731,7 +1728,7 @@ of using {tactic}`rfl`.
 attribute [irreducible] add
 ```
 
-These characterizing theorems also follow a particular pattern. Let's look again at the
+These simplification rules also follow a particular pattern. Let's look again at the
 definition of {name}`add`, without the `+` notation for maximum clarity:
 
 ```lean
@@ -1758,19 +1755,17 @@ Each of {name}`add_zero` and {name}`add_succ` correspond to one branch of the `m
 statement defining {name}`add` and describe how the evaluation of {name}`add` proceeds
 in that case. The {name}`add_zero` theorem describes how {lean}`add n zero` evaluates,
 while {name}`add_succ` describes (symbolically) how {lean}`add n (succ m)` evaluates.
-Because these theorems describe how to simplify more complex expressions
-involving {name}`add`, we call them _simplification lemmas_ for {name}`add`.
 
 These are instances of a general pattern: each definition
 operating over enumerated types like {name}`Nat`, {name}`Bool`, {name}`Day`, or {name}`Color`
-needs a simplification lemma for each branch of control flow through
+needs a simplification rule for each branch of control flow through
 the function.
 
-So, for example, we need two simplification lemmas for the definition of `pred`:
+So, for example, we need two simplification rules for the definition of `pred`:
 ::::
 
 ::::terse
-Each branch of a definition's control flow gets one _simplification lemma_. Here are the two for
+Each branch of a definition's control flow gets one simplification rule. Here are the two for
 {name}`pred`:
 ::::
 
@@ -1779,7 +1774,7 @@ theorem pred_zero : pred zero = zero := by rfl
 theorem pred_succ n : pred (succ n) = n := by rfl
 ```
 
-Now that we have defined and proved {name}`pred`'s simplification lemmas,
+Now that we have defined and proved {name}`pred`'s simplification rules,
 we can mark it `irreducible`, to enforce rewriting by these lemmas.
 
 ```lean
@@ -1787,7 +1782,7 @@ attribute [irreducible] pred
 ```
 
 Similarly, for each of the three branches of the definition of {name}`even`,
-we need one simplification lemma:
+we need one simplification rule:
 
 ```lean
 theorem even_zero : even zero = true := rfl
@@ -1799,22 +1794,21 @@ attribute [irreducible] even odd
 
 ::::full
 In the remainder of this textbook, we will pair definitions
-with their simplification lemmas. After proving these lemmas,
-instead of using {tactic}`rfl` to peek through the definitions, we will prefer rewriting
-by the lemmas.
+with simplification rules. After proving these rules,
+instead of using {tactic}`rfl` to peek through the definitions, we will {tactic}`rewrite`
+using the rules.
 
-Eventually, we will introduce a way to automatically apply these simplfication lemmas,
-but for now these tactics are forbidden by our autograder.
-Real-world Lean uses automation extensively, and you will learn to do so
-by the end of this book and in the following volumes.
+Eventually, we will introduce a way to _automatically_ apply these simplfication rules.
+Real-world Lean developments use automation extensively, and you will learn to do so
+gradually throughout this book.
 For the moment it is important that you work through these early concepts
 by hand, without automation.
 By the time the more powerful tools are introduced,
-you will have the foundation to use them with precision and skill.
+you will have the foundational understanding to use them with precision and skill.
 ::::
 
 ::::terse
-From here on, we pair each definition with its simplification lemmas and rewrite by those lemmas
+From here on, we pair each definition with its simplification rules and rewrite by those rules
 rather than {tactic}`rfl`-ing through the definition.
 ::::
 
@@ -1861,6 +1855,8 @@ theorem two_plus_two_eq_four : two + two = four := by
 ```
 
 :::
+
+### Multiplication
 
 ::::full
 Now that we know how addition is defined, we can use it to define multiplication:
@@ -1912,8 +1908,8 @@ attribute [irreducible] mul
 Prove these thoerems using rewriting with the simplification rules for addition and multiplication.
 
 ::::full
-(We have given you the first line.) Notice how {tactic}`rewrite`
-can take any number of arguments. You can use this rewrite with all of the
+Notice how {tactic}`rewrite`
+can take any number of arguments. You can rewrite with all of the
 simplification rules at once, for example.
 
 After each rewrite, check the proof state by placing the cursor immediately
@@ -1966,6 +1962,8 @@ theorem two_mul_two : (two * two : Nat) = four := by
 
 :::slidebreak
 :::
+
+### Equality and Ordering
 
 ::::full
 When we say that Lean relies on almost nothing that's truly built-in, we really mean it: even
@@ -2066,7 +2064,7 @@ claim.
 ::::
 
 ::::full
-We can also now define the simplification lemmas for {name}`beq` with our new notation,
+We can also now define the simplification rules for {name}`beq` with our new notation,
 one for each of the four cases of control flow through the function.
 ::::
 
@@ -2079,7 +2077,7 @@ theorem succ_succ_beq (n m : Nat) : ((succ n) == (succ m)) = (n == m) := by rfl
 attribute [irreducible] beq
 ```
 
-# General Proofs about Natural Numbers
+## General Proofs about Natural Numbers
 
 :::terse
 A (slightly) more interesting theorem:
@@ -2136,7 +2134,7 @@ theorem add_id_exercise : ∀ n m o : Nat,
 :::slidebreak
 :::
 
-## Displaying Theorem Statements
+### Displaying Theorem Statements
 
 The `#check` command can also be used to examine the statements of
 previously declared lemmas and theorems.
@@ -2243,11 +2241,9 @@ theorem add_one_neb_zero (n : Nat) : (succ n == zero) = false := by
 ::::full
 The {tactic}`cases` tactic generates _two_ subgoals, which we must
 prove, separately, in order to get Lean to accept the theorem.
-
 The generated subgoals are tagged by the names of the constructors.
-`| zero =>` and `cas| succ n' =>` select which subgoal to work on next
+`| zero =>` and `| succ n' =>` select which subgoal to work on next
 and introduce variable names.
-
 Note also that when we enter a subcase, we increase the level of indentation at which we are working
 by two spaces.
 
@@ -2360,7 +2356,7 @@ theorem and3_exchange (b c d : Bool) :
 
 As you can see, proofs by cases can become very verbose.
 We will introduce some tactics for writing shorter proofs
-by case analysis in `Tactics.lean`.
+by case analysis in {ref "Tactics"}[Tactics] chapter.
 
 ## New Tactics: `rewrite ... at` and {tactic}`exact`
 
