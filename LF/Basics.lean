@@ -1372,6 +1372,16 @@ inductive Nat : Type where
   | succ (n : Nat)
 ```
 
+The following lines make ordinary numerals such as 0, 1, and 2 work with our {name}`Nat` type.You can ignore the details for now.
+
+```lean
+def ofNat : _root_.Nat → Nat
+  | .zero => .zero
+  | .succ n => .succ (ofNat n)
+
+instance (n : _root_.Nat) : OfNat Nat n := ⟨ofNat n⟩
+```
+
 :::full
 We'll define some shorthands for numbers, putting them in the `Nat` namespace
 so we don't need to use `.` notation everywhere.
@@ -2685,358 +2695,330 @@ theorem and_eq_or (b c : Bool) : (b && c) = (b || c) → b = c := by
 :::
 ::::
 
-## Course Late Policies, Formalized
+## Airport Exercise
 
-:::dev
-This exercise needs to be changed. Per GitHub discussion:
-the way this exercise is currently structured is at odds with our definition
-of Nats (use of large digits that would be tedious to work with by rewriting).
-The definitions of grades and letters also do not lend themselves well to
-our discipline of defining and using rewrite rules for all our functions,
-as they would require a frustrating number of such rules. We should come up with
-a new exercise here of similar size and difficulty, but that works better with
-the new presentation style of this material.
-HG: Also, we should make sure that this reads OK in full/terse
-TODO
+:::dev "Yipeng Liu (berberman)" BeforeNextRelease
+Add grading attributes.
 :::
 
-::::full
-Suppose that a course has a grading policy based on late days,
-where a student's final letter grade is lowered if they submit too
-many homework assignments late.
-::::
+
+:::full
+Now that we have learned the basic features of Lean 4, let's close the chapter
+with an exercise that brings them together.
+
+One fascinating aspect of using a theorem prover like Lean is that we can do
+more than implement a system — we can also state precisely what we expect the
+system to behave and prove that our implementation satisfies those expectations.
+
+In this exercise, we will model part of an airport database.
+The airport stores one database entry for each traveler.
+An entry records where the traveler is in the airport process,
+together with information about their current bag.
+
+We will implement several operations on these entries and prove
+general properties about their behavior.
+:::
+
+:::terse
+We will model a simple airport system in Lean. Besides implementing
+its operations, we will state properties that describe how the system should
+behave and prove that the implementation satisfies them.
+:::
 
 ```lean
-namespace LateDays
-open scoped NatPlayground.Nat
-
--- Numeric literals (`9`, `17`, `21`) for our unary `Nat`.
-@[reducible] def ofNat : _root_.Nat → Nat
-  | .zero => .zero
-  | .succ n => .succ (ofNat n)
-
-instance (n : _root_.Nat) : OfNat Nat n := ⟨ofNat n⟩
+namespace Airport
 ```
 
-::::full
-First, we introduce a datatype for modeling the "letter" component
-of a grade.
-::::
+:::full
+For simplicity, we assume that a bag either contains a battery, which causes
+it to fail inspection, or contains only ordinary items:
+:::
+
+:::terse
+A bag is either ordinary or contains a battery:
+:::
 
 ```lean
-inductive Letter : Type where
-  | A | B | C | D | F
+inductive BagContent : Type where
+  | battery
+  | ordinary
 ```
 
-::::full
-Then we define the modifiers — a `natural` `A` is just a "plain"
-grade of `A`.
-::::
+:::full
+The screening status records whether the bag has not yet been inspected,
+has been cleared, or has been blocked:
+:::
+
+:::terse
+A bag can be unscreened, cleared, or blocked:
+:::
 
 ```lean
-inductive Modifier : Type where
-  | plus | natural | minus
+inductive ScreeningStatus : Type where
+  | notScreened
+  | cleared
+  | blocked
 ```
 
-::::full
-A full `Grade`, then, is just a `Letter` and a `Modifier`.
-In Lean, a combination of several values is called a _structure_.  The `structure`
-keyword is used to define a new structure type.
-::::
+:::full
+A traveler can be in one of three stages:
+- they have not yet purchased a ticket;
+- they have a ticket but have not yet checked in;
+- they have checked in,in which case the
+  database also stores the screening status of their bag.
+:::
+
+:::terse
+There are three stages a traveler can be in:
+:::
 
 ```lean
-structure Grade where
-  letter : Letter
-  modifier : Modifier
+inductive Traveler : Type where
+  | noTicket (bagContent : BagContent)
+  | ticketed (bagContent : BagContent)
+  | checkedIn (bagContent : BagContent) (screeningStatus : ScreeningStatus)
 ```
 
-::::full
-We will want to be able to say when one grade is "better" than
-another.  In other words, we need a way to compare two grades.  As
-with natural numbers, we could define `bool`-valued functions
-`grade_eqb`, `grade_ltb`, etc., and that would work fine.
-However, we can also define a slightly more informative type for
-comparing two values, as shown below.  This datatype has three
-constructors that can be used to indicate whether two values are
-"equal", "less than", or "greater than" one another.
-::::
+Buying a ticket changes a traveler with no ticket into a ticketed traveler.
+If the traveler already has a ticket or has already checked in, nothing changes.
+
+:::exercise (rating := 1) (name := "buy_ticket")
+Define `buyTicket`
+```lean
+def buyTicket (t : Traveler) : Traveler := solution!(
+  match t with
+  | .noTicket bagContent => .ticketed bagContent
+  | _ => t
+)
+example : buyTicket (.noTicket .ordinary) = .ticketed .ordinary := solution!(by rfl)
+example : buyTicket (.checkedIn .battery .blocked) = .checkedIn .battery .blocked := solution!(by rfl)
+```
+:::
+
+The simplification rules for {name}`buyTicket`:
 
 ```lean
-inductive Comparison : Type where
-  | eq   -- "equal"
-  | lt   -- "less than"
-  | gt   -- "greater than"
+theorem buyTicket_noTicket (bagContent : BagContent) :
+    buyTicket (.noTicket bagContent) = .ticketed bagContent := solution!(by rfl)
+
+theorem buyTicket_ticketed (bagContent : BagContent) :
+    buyTicket (.ticketed bagContent) = .ticketed bagContent := solution!(by rfl)
+
+theorem buyTicket_checkedIn (bagContent : BagContent)
+    (screeningStatus : ScreeningStatus) :
+    buyTicket (.checkedIn bagContent screeningStatus) = .checkedIn bagContent screeningStatus := solution!(by rfl)
+
+attribute [irreducible] buyTicket
 ```
 
-::::full
-Since we're in a namespace, we can open the relevant types to
-avoid having to write `Letter.A`, etc.
-::::
+Here is our first general property: buying a ticket twice has the same
+effect as buying it once.
 
+:::exercise (rating := 2) (name := "buy_ticket_idempotent")
 ```lean
-open Letter Modifier Comparison
-```
-
-::::full
-Using pattern matching, it is not difficult to define the
-comparison operation for two letters `l1` and `l2` (see below).
-This definition uses a feature of `match` patterns: we can match
-against _two_ values simultaneously by separating them and the
-corresponding patterns with comma `,`.
-This is simply a convenient abbreviation for nested pattern
-matching.
-::::
-
-```lean
-def letterComparison (l1 l2 : Letter) : Comparison :=
-  match l1, l2 with
-  | A, A => eq
-  | A, _ => gt
-  | B, A => lt
-  | B, B => eq
-  | B, _ => gt
-  | C, A => lt
-  | C, B => lt
-  | C, C => eq
-  | C, _ => gt
-  | D, F => gt
-  | D, D => eq
-  | D, _ => lt
-  | F, F => eq
-  | F, _ => lt
-
-example : letterComparison B A = lt := by rfl
-example : letterComparison D D = eq := by rfl
-example : letterComparison B F = gt := by rfl
-```
-
-::::exercise (rating := 1) (name := "letter_comparison")
-```lean
-theorem letterComparison_Eq : ∀ l : Letter,
-    letterComparison l l = eq := by
+theorem buyTicket_idempotent (t : Traveler) :
+    buyTicket (buyTicket t) = buyTicket t := by
   solution!
-    intro l; cases l <;> rfl
+    cases t with
+    | noTicket =>
+        rewrite [buyTicket_noTicket]
+        rewrite [buyTicket_ticketed]
+        rfl
+    | ticketed =>
+        rewrite [buyTicket_ticketed]
+        rewrite [buyTicket_ticketed]
+        rfl
+    | checkedIn =>
+        rewrite [buyTicket_checkedIn]
+        rewrite [buyTicket_checkedIn]
+        rfl
 ```
-
-:::gradeTheorem 1 LateDays.letterComparison_Eq
 :::
-::::
+
+A traveler can check in only after buying a ticket.
+and their bag is marked as needing inspection.
+Calling checkIn in any other state does nothing.
+
+:::exercise (rating := 1) (name := "check_in")
+
+Define `check_in`.
 
 ```lean
-def modifierComparison (m1 m2 : Modifier) : Comparison :=
-  match m1, m2 with
-  | plus, plus => eq
-  | plus, _ => gt
-  | natural, plus => lt
-  | natural, natural => eq
-  | natural, _ => gt
-  | minus, minus => eq
-  | minus, _ => lt
+def checkIn (t : Traveler) : Traveler := solution!(
+  match t with
+  | .ticketed bagContent => .checkedIn bagContent .notScreened
+  | _ => t
+)
+
+example : checkIn (.noTicket .ordinary) = .noTicket .ordinary := solution!(by rfl)
+example : checkIn (.ticketed .battery) = .checkedIn .battery .notScreened := solution!(by rfl)
+example : checkIn (.checkedIn .ordinary .cleared) = .checkedIn .ordinary .cleared := solution!(by rfl)
 ```
-
-::::exercise (rating := 2) (name := "grade_comparison")
-Here, we will need to access the fields of the `Grade` structure.
-The field names are `letter` and `modifier`, so for a grade `g`,
-we can write `g.letter` and `g.modifier` to access these fields.
-
-```lean
-def gradeComparison (g1 g2 : Grade) : Comparison
-  := solution!(match letterComparison g1.letter g2.letter with
-  | lt => lt
-  | eq => modifierComparison g1.modifier g2.modifier
-  | gt => gt)
-
-theorem gradeComparison_test1 : gradeComparison ⟨A, minus⟩ ⟨B, plus⟩ = gt := solution!(by rfl)
-theorem gradeComparison_test2 : gradeComparison ⟨A, minus⟩ ⟨A, plus⟩ = lt := solution!(by rfl)
-theorem gradeComparison_test3 : gradeComparison ⟨F, plus⟩ ⟨F, plus⟩ = eq := solution!(by rfl)
-theorem gradeComparison_test4 : gradeComparison ⟨B, minus⟩ ⟨C, plus⟩ = gt := solution!(by rfl)
-```
-
-:::gradeTheorem "0.5" gradeComparison_test1 gradeComparison_test2 gradeComparison_test3 gradeComparison_test4
 :::
-::::
+
+Again, we record one rewrite rule for each case:
 
 ```lean
-def lowerLetter (l : Letter) : Letter :=
-  match l with
-  | A => B
-  | B => C
-  | C => D
-  | D => F
-  | F => F  -- Can't go lower than F!
+theorem checkIn_noTicket (bagContent : BagContent) :
+    checkIn (.noTicket bagContent) = .noTicket bagContent := solution!(by rfl)
+
+theorem checkIn_ticketed (bagContent : BagContent) :
+    checkIn (.ticketed bagContent) = .checkedIn bagContent .notScreened := solution!(by rfl)
+
+theorem checkIn_checkedIn (bagContent : BagContent)
+    (screeningStatus : ScreeningStatus) :
+    checkIn (.checkedIn bagContent screeningStatus) = .checkedIn bagContent screeningStatus := solution!(by rfl)
+
+attribute [irreducible] checkIn
 ```
 
-::::full
-This theorem is not provable because of the edge case of `F`!
+Buying a ticket and then checking in always leaves the traveler checked in,
+regardless of whether they were already checked in.
 
-```
-theorem lowerLetter_lowers_bad : ∀ (l : Letter),
-  letterComparison (lowerLetter l) l = lt := by ...
-```
-::::
-
+:::exercise (rating := 1) (name := "buy_ticket_then_check_in")
 ```lean
-theorem lowerLetter_F_is_F : lowerLetter F = F := by rfl
-```
-
-::::exercise (rating := 2) (name := "lower_letter_lowers")
-```lean
-theorem lowerLetter_lowers : ∀ l : Letter,
-    letterComparison F l = lt →
-    letterComparison (lowerLetter l) l = lt := by
+theorem buyTicket_then_checkIn (bagContent : BagContent) :
+    checkIn (buyTicket (.noTicket bagContent)) = .checkedIn bagContent .notScreened := by
   solution!
-    intro l h
-    cases l with
-    | A => rfl
-    | B => rfl
-    | C => rfl
-    | D => rfl
-    | F => exact h
+    rewrite [buyTicket_noTicket]
+    rewrite [checkIn_ticketed]
+    rfl
 ```
-
-:::gradeTheorem 2 lowerLetter_lowers
 :::
-::::
 
-::::exercise (rating := 2) (name := "lower_grade")
-In addition to the dot notation for accessing structure fields, we can also
-use pattern matching to access these fields.
-For example, if `g` is a grade, then we can write
-`match g with ⟨l, m⟩ => ...` to access the letter and modifier components
-of `g` as `l` and `m`, respectively.
-Note: The angle brackets `⟨` and `⟩` are typed as `\<` and `\>`.
+Bag inspection happens only after check-in.
+An ordinary bag is cleared, while a bag containing a battery is blocked.
+If the traveler has not checked in, `inspectBag` does nothing.
+
+:::exercise (rating := 1) (name := "inspect_bag")
+Define `inspectBag`.
 
 ```lean
-def lowerGrade (g : Grade) : Grade
-  := solution!(match g with
-  | ⟨l, plus⟩ => ⟨l, natural⟩
-  | ⟨l, natural⟩ => ⟨l, minus⟩
-  | ⟨F, minus⟩ => ⟨F, minus⟩
-  | ⟨l, minus⟩ => ⟨lowerLetter l, plus⟩)
+def inspectBag (t : Traveler) : Traveler := solution!(
+  match t with
+  | .checkedIn .ordinary _ => .checkedIn .ordinary .cleared
+  | .checkedIn .battery _ => .checkedIn .battery .blocked
+  | _ => t
+)
 
-theorem lowerGrade_A_plus : lowerGrade ⟨A, plus⟩ = ⟨A, natural⟩ := solution!(by rfl)
-example : lowerGrade ⟨A, natural⟩ = ⟨A, minus⟩ := solution!(by rfl)
-example : lowerGrade ⟨A, minus⟩ = ⟨B, plus⟩ := solution!(by rfl)
-example : lowerGrade ⟨B, plus⟩ = ⟨B, natural⟩ := solution!(by rfl)
-example : lowerGrade ⟨F, natural⟩ = ⟨F, minus⟩ := solution!(by rfl)
-example : lowerGrade (lowerGrade ⟨B, minus⟩) = ⟨C, natural⟩ := solution!(by rfl)
-example : lowerGrade (lowerGrade (lowerGrade ⟨B, minus⟩)) = ⟨C, minus⟩ := solution!(by rfl)
-theorem lowerGrade_F_minus : lowerGrade ⟨F, minus⟩ = ⟨F, minus⟩ := solution!(by rfl)
+example : inspectBag (.ticketed .battery) = .ticketed .battery := solution!(by rfl)
+example : inspectBag (.checkedIn .ordinary .notScreened) = .checkedIn .ordinary .cleared := solution!(by rfl)
+example : inspectBag (.checkedIn .battery .notScreened) = .checkedIn .battery .blocked := solution!(by rfl)
 ```
-
-:::gradeTheorem "0.25" lowerGrade_A_plus lowerGrade_F_minus
 :::
-::::
 
-::::exercise (rating := 3) (name := "lower_grade_lowers")
-:::dev
-For our solution we use:
-
-- Working on multiple match cases with `| _ ... | _ => ...`;
-- Working on all remaining goals with `all_goals`.
-- These are not expected of students at this point.
-:::
+Again, we record one characterization lemma for each case.
 
 ```lean
-theorem lowerGrade_lowers : ∀ g : Grade,
-    gradeComparison ⟨F, minus⟩ g = lt →
-    gradeComparison (lowerGrade g) g = lt := by
+theorem inspectBag_noTicket (bagContent : BagContent) :
+    inspectBag (.noTicket bagContent) = .noTicket bagContent := solution!(by rfl)
+
+theorem inspectBag_ticketed (bagContent : BagContent) :
+    inspectBag (.ticketed bagContent) = .ticketed bagContent := solution!(by rfl)
+
+theorem inspectBag_ordinary (screeningStatus : ScreeningStatus) :
+    inspectBag (.checkedIn .ordinary screeningStatus) = .checkedIn .ordinary .cleared := solution!(by rfl)
+
+theorem inspectBag_battery (screeningStatus : ScreeningStatus) :
+    inspectBag (.checkedIn .battery screeningStatus) = .checkedIn .battery .blocked := solution!(by rfl)
+
+attribute [irreducible] inspectBag
+```
+
+:::exercise (rating := 2) (name := "inspect_bag_idempotent")
+Inspecting the same unchanged bag twice has the same effect as inspecting it once.
+
+```lean
+theorem inspectBag_idempotent (t : Traveler) : inspectBag (inspectBag t) = inspectBag t := by
   solution!
-    intro g h
-    match g with
-    | ⟨l, plus⟩ =>
-      rewrite [lowerGrade, gradeComparison]
-      rewrite [letterComparison_Eq]
-      rewrite [modifierComparison]
+    cases t with
+    | noTicket bagContent =>
+      rewrite [inspectBag_noTicket]
+      rewrite [inspectBag_noTicket]
       rfl
-    | ⟨l, natural⟩ =>
-      rewrite [lowerGrade, gradeComparison]
-      rewrite [letterComparison_Eq]
-      rewrite [modifierComparison]
+    | ticketed bagContent =>
+      rewrite [inspectBag_ticketed]
+      rewrite [inspectBag_ticketed]
       rfl
-      intro x
-      contradiction
-    | ⟨l, minus⟩ =>
-      cases l
-      case F => rewrite [lowerGrade_F_minus]; exact h
-      all_goals rfl
-```
-
-:::dev "Roger Burtonpatel (rogerburtonpatel)"
-in removing `dsimp` from these proofs, I found
-that you might need the `contradiction` tactic here instead,
-or some other reasoning that's not accomplishable
-with the tactics we've introduced so far. Can you make this
-proof work with only `rw`, `rfl`, `exact`, etc?
-
-Niklas Halonen (xhalo32): We need to teach how to prove a goal that looks like `natural ≠ minus` for example.
-One could write `injection x` for example:
-```lean
-example : natural ≠ minus := by
-  intro x
-  injection x
+    | checkedIn bagContent screeningStatus =>
+      cases bagContent with
+      | battery =>
+        rewrite [inspectBag_battery]
+        rewrite [inspectBag_battery]
+        rfl
+      | ordinary =>
+        rewrite [inspectBag_ordinary]
+        rewrite [inspectBag_ordinary]
+        rfl
 ```
 :::
 
-:::gradeTheorem 3 lowerGrade_lowers
+If the traveler replaces the bag after check in, the previous screening result no longer
+applies to the new bag.
+
+:::exercise (rating := 1) (name := "replace_bag")
+Define `replaceBag`.
+```lean
+def replaceBag (newContent : BagContent) (t : Traveler) : Traveler := solution!(
+  match t with
+  | .checkedIn _ _ => .checkedIn newContent .notScreened
+  | .ticketed _ => .ticketed newContent
+  | .noTicket _ => .noTicket newContent
+)
+
+example : replaceBag .battery (.ticketed .ordinary) = .ticketed .battery := solution!(by rfl)
+example : replaceBag .battery (.checkedIn .ordinary .cleared) = .checkedIn .battery .notScreened := solution!(by rfl)
+```
 :::
-::::
+
+As before, we record the behavior of each case as a rewrite rule.
 
 ```lean
-def applyLatePolicy (lateDays : NatPlayground.Nat) (g : Grade) : Grade :=
-  if Nat.ble lateDays  9 then g
-  else if Nat.ble lateDays 17 then lowerGrade g
-  else if Nat.ble lateDays 21 then lowerGrade (lowerGrade g)
-  else lowerGrade (lowerGrade (lowerGrade g))
+theorem replaceBag_noTicket (newContent oldContent : BagContent) :
+    replaceBag newContent (.noTicket oldContent) = .noTicket newContent := solution!(by rfl)
 
-theorem applyLatePolicy_unfold : ∀ (lateDays : NatPlayground.Nat) (g : Grade),
-    applyLatePolicy lateDays g
-    =
-    (if Nat.ble lateDays 9 then g
-     else if Nat.ble lateDays 17 then lowerGrade g
-     else if Nat.ble lateDays 21 then lowerGrade (lowerGrade g)
-     else lowerGrade (lowerGrade (lowerGrade g))) := by
-  intro _ _; rfl
+theorem replaceBag_ticketed (newContent oldContent : BagContent) :
+    replaceBag newContent (.ticketed oldContent) = .ticketed newContent := solution!(by rfl)
+
+theorem replaceBag_checkedIn (newContent oldContent : BagContent)
+    (screeningStatus : ScreeningStatus) :
+    replaceBag newContent (.checkedIn oldContent screeningStatus) =
+    .checkedIn newContent .notScreened := solution!(by rfl)
+
+attribute [irreducible] replaceBag
 ```
 
-::::exercise (rating := 2) (name := "no_penalty_for_mostly_on_time")
+:::full
+We know that replacing a bag after it has been inspected resets its
+screening status. In other words, {name}`inspectBag` and {name}`replaceBag` cannot in
+general be performed in either order.
+
+But are there cases in which the two operations do commute?
+
+Yes. If the traveler has not checked in, {name}`inspectBag` does nothing, so
+replacing and inspecting the bag can be performed in either order.
+:::
+
+:::terse
+{name}`inspectBag` and {name}`replaceBag` commute when the traveler has not checked in.
+:::
+
+:::exercise (rating := 2) (name := "inspect_replace_commute")
 ```lean
-theorem no_penalty_for_mostly_on_time : ∀ (lateDays : NatPlayground.Nat) (g : Grade),
-    (Nat.ble lateDays 9 = true) →
-    applyLatePolicy lateDays g = g := by
+theorem inspectBag_replaceBag_comm_ticketed
+    (oldContent newContent : BagContent)
+    (screeningStatus : ScreeningStatus) :
+    inspectBag (replaceBag newContent (.ticketed oldContent)) =
+    replaceBag newContent (inspectBag (.ticketed oldContent)) := by
   solution!
-    intro lateDays g h
-    rewrite [applyLatePolicy]
-    rewrite [h]; rfl
+    rewrite [replaceBag_ticketed]
+    rewrite [inspectBag_ticketed]
+    rewrite [inspectBag_ticketed]
+    rewrite [replaceBag_ticketed]
+    rfl
 ```
-
-:::gradeTheorem 2 no_penalty_for_mostly_on_time
 :::
-::::
-
-::::exercise (rating := 2) (name := "grade_lowered_once")
-```lean
-theorem grade_lowered_once : ∀ (lateDays : NatPlayground.Nat) (g : Grade),
-    (Nat.ble lateDays 9 = false) →
-    (Nat.ble lateDays 17 = true) →
-    applyLatePolicy lateDays g = lowerGrade g := by
-  solution!
-    intro lateDays g h9 h17
-    rewrite [applyLatePolicy]
-    rewrite [h9, h17]; rfl
-```
-
-:::gradeTheorem 2 grade_lowered_once
-:::
-::::
 
 ```lean
-end LateDays
+end Airport
 ```
-:::dev "Roger Burtonpatel (rogerburtonpatel)"
-If we are to have this exercise, we must either
-make the functions irreducible or teach about
-`rw` of a reducible definition.
-We also have to figure out how to make lowerGrade\_lowers
-go through without `dsimp` or `contradiction`. To discuss.
-:::
