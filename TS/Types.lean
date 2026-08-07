@@ -958,7 +958,7 @@ theorem progress (t : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) : Tm.IsValue t ∨ �
         | inr hs => obtain ⟨t', h'⟩ := hs; exact ⟨<{ iszero t' }>, .isZeroStep t1 t' h'⟩
 ```
 
-:::gradeTheorem 3 "progress"
+:::gradeTheorem 3 progress
 :::
 :::::
 
@@ -1152,7 +1152,7 @@ theorem preservation (t t' : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) (he : t ⟶ t
         | isZeroStep _ t1' hs => exact .isZero t1' (ih t1' hs)
 ```
 
-:::gradeTheorem 2 "preservation"
+:::gradeTheorem 2 preservation
 :::
 :::::
 
@@ -1257,7 +1257,7 @@ theorem preservation' (t t' : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) (he : t ⟶ 
     | isZeroStep t1 t1' hs ih => cases hT with | isZero _ h => exact .isZero t1' (ih .nat h)
 ```
 
-:::gradeTheorem 3 "preservation'"
+:::gradeTheorem 3 preservation'
 :::
 :::::
 
