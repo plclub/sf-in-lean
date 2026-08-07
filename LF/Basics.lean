@@ -49,19 +49,20 @@ If you don't have Lean installed yet:
 :::
 
 ::::full
-The _functional style_ of programming is founded on simple, everyday
-mathematical intuitions: If a program has no side effects, such
-as reading or writing files or network packets, then (ignoring efficiency)
-all we need to understand about it is how it
-maps inputs to outputs. That is, we can think of it as just a
-concrete means for computing a mathematical function. This direct
-connection between programs and simple mathematical objects supports
-both formal correctness proofs and sound informal reasoning about
-program behavior. This is one sense of the word "functional" in
-"functional programming."
+The _functional style_ of programming is founded on simple
+mathematical intuitions: A program is essentially a concrete
+means for computing a mathematical function, which just maps
+inputs to outputs. Even when programs have side effects, such
+as reading or writing files or network packets, these side
+effects can be given a mathematical characterization (such as
+through the use of monads). This connection between programs and
+mathematical functions makes it possible to reason both precisely
+and formally about a program's behavior, i.e., to _prove
+properties_ about programs.
 
-The other sense in which functional programming is "functional" is
-that it emphasizes the use of functions as _first-class_ values --
+This functional style is one sense of the word "functional" in
+"functional programming." The other sense is
+that it emphasizes the use of functions as _first-class_ values —
 i.e., values that can be passed as arguments to other functions,
 returned as results, included in data structures, etc.  The
 recognition that functions can be treated as data gives rise to a
@@ -71,12 +72,11 @@ Other common features of functional languages include _algebraic
 data types_ and _pattern matching_, which make it easy to
 construct and manipulate rich data structures, and _polymorphic
 types_ supporting abstraction and code reuse.  Lean offers
-all of these features.
+all of these features, and we will see them often in this book.
 
 The first half of this chapter introduces some key elements of
 Lean's functional programming language.  The second half introduces
-some basic _tactics_ that can be used to prove properties of
-programs.
+how you can use Lean _tactics_ to prove properties about programs.
 ::::
 
 # Data and Functions
@@ -88,14 +88,15 @@ In Lean, we can build practically everything from first principles...
 ::::full
 Lean's set of built-in features is extremely small.
 For example, instead of providing the usual palette of atomic
-_datatypes_ -- types whose values are data, such as booleans,
-integers, and strings -- as primitives, Lean's extensive standard
+_datatypes_ — types whose values are data, such as booleans,
+integers, and strings — as primitives, Lean's extensive standard
 library _defines_ them, along with many common data structures
 besides, like lists and hash tables. It does so with a single
 powerful and general mechanism: the _inductive definition_.
 A type introduced this way is called an _inductive type_; the
 word "inductive" hints at the use of mathematical induction
-to prove statements about its values.
+to prove statements about its values (which is the subject of the
+{ref "Induction"}[next chapter]).
 
 To demonstrate how inductive definitions work, and illustrate their
 expressive power, we will recapitulate most of the datatype definitions we
@@ -103,9 +104,6 @@ need in this course, rather than immediately referring
 to those in the standard library. We take care to harmonize
 the definitions we present with the actual definitions in the standard library, which
 we gradually introduce throughout the course.
-By the time you are finished, you will have a good grasp
-of how the Lean standard library is organized and how to efficiently
-navigate it.
 ::::
 
 ## Days of the Week (Enumerated Types)
@@ -115,8 +113,7 @@ A datatype definition:
 :::
 
 ::::full
-To see how inductive datatype definitions work, let's
-start with a very simple example.  The following declaration tells
+Let's start with a very simple example.  The following declaration tells
 Lean that we are defining a set of data values, i.e. a _type_.
 ::::
 
@@ -165,8 +162,8 @@ def nextWorkingDay (d : Day) : Day :=
 Note that the argument and return types of this function are
 explicitly declared on the first line.  Like most functional
 programming languages, Lean can often figure out these types for
-itself when they are not given explicitly -- i.e., it can do _type
-inference_ -- but we'll generally include them to make reading
+itself when they are not given explicitly — i.e., it can do _type
+inference_ — but we'll generally include them to make reading
 easier.
 
 The `match` keyword is Lean's keyword for _pattern matching_: the functional
@@ -175,16 +172,14 @@ programming way of examining and making decisions on data. When evaluating
 case to execute; if `d` is `Day.monday`, for example, it will
 evaluate the first case of the `match` statement; if `d` is
 `Day.friday` it will evaluate the fifth case. (There is much more
-to say about pattern matching -- we'll introduce more of its features
+to say about pattern matching — we'll introduce more of its features
 as the need arises.)
 
-You may notice that we qualified all the constructors before using them,
+You may notice that we _qualified_ `Day`'s constructors when using them,
 writing `Day.monday` instead of just `monday`, for example.
-Lean places all constructors into a "namespace" associated with their type,
-and requires uses of those constructors to be prefixed with their namespace.
-There are a few circumstances in which this requirement can be relaxed,
-which we shall see in a little bit. For now we proceed by
-fully qualifying all constructor names.
+Lean places all constructors into a _namespace_ associated with their type,
+and generally requires those constructors to be prefixed with their namespace when they are used.
+Later, we shall see a few circumstances in which this requirement can be relaxed.
 
 If you ever need to know the type of *any* pattern, object, or function,
 you can hover over it with your mouse in any editor that supports Lean,
@@ -203,33 +198,24 @@ Having defined a function, we should check that it works on some
 examples.  There are a few different ways to do this in
 Lean.  One is to use the `#eval` command to evaluate a compound
 expression involving `nextWorkingDay`.  (Lean's responses are shown
-in comments.)
+just below.)
 ::::
 
-```lean
+```lean (name := nextWDay)
 #eval nextWorkingDay Day.friday
 ```
 
-```lean
+```leanOutput nextWDay
+Day.monday
+```
+
+```lean (name := nextNextWDay)
 #eval nextWorkingDay (nextWorkingDay Day.saturday)
 ```
 
-:::dev "Daniel Sainati (dsainati1)"
-Where are we showing responses in comments? I don't see them.
-MWH: I think we landed at three possibilities:
-1. Don't include them
-2. Include responses in comments
-3. Use `#guard_msgs(...)` to include the responses and also check that
-they are correct.
-I vote that we do the last of these. It's useful for quietening the build,
-for helping readers be sure that things are working as expected, and for
-keeping things up to date.
-
-Also: Further down in the text it says you can hover over the definitions to
-see their output. This is not happening in the web interface; it just shows
-the type of `#eval` and the types of the arguments, not the "message" it
-produces.
-:::
+```leanOutput nextNextWDay
+Day.tuesday
+```
 
 We can also record what we _expect_ the result of calling a function to be in the form of a Lean
 `example`:
@@ -264,43 +250,27 @@ The `rfl` tactic is used to observe that both sides of an equal sign evaluate to
 :::
 
 ::::full
-If you have a computer handy, this would be an excellent moment
-to fire up VS Code with the Lean extension or the Lean web interface
-and try it for yourself.  Load this file, `Basics.lean`,
-from the book's Lean sources, find the above example, and observe
-the result in the Lean InfoView panel.
+If you have not already done so, this would be an excellent moment
+to fire up VS Code with the [Lean Extension](https://marketplace.visualstudio.com/items?itemName=leanprover.lean4) and load this file, `Basics.lean`
+from the book's Lean sources. Then find the above example.
 
-In VS Code, development of Lean code is supported by the
-[Lean Extension](https://marketplace.visualstudio.com/items?itemName=leanprover.lean4),
-which provides an interactive "InfoView" panel that displays the results
-of commands like `#eval`, as well as the current goal state
-when working on proofs. You can hover over expressions in the source code
-to see their types, and you can click on the results in the InfoView
-to navigate to their definitions. This makes it easier to understand
-how your code is being interpreted by Lean and to debug any issues that
-arise.
+Observe the result in the Lean InfoView panel.
+This panel displays the results of commands like `#eval` (click on a particular `#eval` to see),
+as well as the current goal state when working on proofs.
+The InfoView content always follows your cursor.
 
-The InfoView always follows your cursor, and Lean typechecks the file as you
-edit it, so you can see the results of your changes immediately. You can also
-use the InfoView to explore the definitions of functions and types that
-you're using, which can be very helpful for understanding how they work.
+You can command-click on a type or variable name to navigate to its definition.
+Try this with the mention of `nextWorkingDay` in the above `#eval`.
 
-If you haven't already, either install the Lean Extension in VS Code and open the
-`Basics.lean` file or open `Basics.lean` on the interactive Lean web client
-to see the InfoView in action. Try hovering over the `nextWorkingDay` function
-and the `Day` type to see their definitions, and experiment with adding your own
-`#eval` commands to test other inputs.
+You can also hover over expressions in the source code to see their types.
+Try this with mentions of `nextWorkingDay` and `Day.saturday` in the above `#eval`.
+If you hover over the `#eval` command itself, you will see the popup that contains its output (at the top).
+Sometimes we show Lean's responses to commands in the text below them; by hovering over
+the command you can check against that text.
 
-:::dev "mwhicks1"
-What is the "interactive web client"? Is it just the Verso-rendered book? That's not
-interactive in the sense that you can see `#eval` output or change code. Let's link
-the thing we mean.
-:::
-
-For `#eval` and other commands, we show Lean's responses in comments; if you
-hover over the `#eval` commands above, you will see the popup that contains
-the output should match what's in the comment below. Experiment with adding
-your own `#eval` commands explore how other functions work.
+Experiment with adding your own `#eval` commands to test other inputs.
+Lean typechecks the file as you
+edit it, so you can see the results of your changes immediately.
 ::::
 
 ## Booleans
@@ -309,10 +279,8 @@ your own `#eval` commands explore how other functions work.
 Following the pattern of the days of the week above, we can
 define the standard type `Bool` of booleans by enumerating its members `true`
 and `false`.
-
-We define our own `MyBool` to teach the concept of building booleans from
-scratch. Our definition is equivalent to Lean's built-in `Bool`,
-which we switch to later.
+Our definition `MyBool` is equivalent to Lean's built-in `Bool`,
+which we'll switch to later.
 ::::
 
 ::::terse
@@ -366,10 +334,10 @@ def or (b1 : MyBool) (b2 : MyBool) : MyBool :=
 ```
 
 ::::full
-The last two definitions illustrate Lean's syntax for multi-argument
+The `and` and `or` definitions illustrate Lean's syntax for multi-argument
 functions.  The corresponding multi-argument _application_ syntax is
 illustrated by the following tests, which effectively constitute a
-complete specification -- a truth table -- for the `or` function:
+complete specification — a truth table — for the `or` function:
 ::::
 
 :::terse
@@ -383,6 +351,12 @@ example : or MyBool.false MyBool.true  = MyBool.true  := by rfl
 example : or MyBool.true  MyBool.true  = MyBool.true  := by rfl
 ```
 
+:::dev "mwhicks"
+TODO: Seems wrong to not say anything about this notation here.
+Our rule is to mention simple notations like this, but not `macro_rules`
+etc. Do we actually introduce this later?
+:::
+
 We can define new symbolic notations for existing definitions.
 Don't worry for now about how the notation is defined.
 
@@ -393,7 +367,8 @@ local infixl:30 (priority := high) " || " => or
 ```
 
 ```lean
-example : (MyBool.false || MyBool.false || MyBool.true) = MyBool.true := by rfl
+example :
+    (MyBool.false || MyBool.false || MyBool.true) = MyBool.true := by rfl
 
 example : (!MyBool.false) = MyBool.true := by rfl
 ```
@@ -404,7 +379,7 @@ example : (!MyBool.false) = MyBool.true := by rfl
 ::::exercise (rating := 1) (name := "nand")
 The `sorry` keyword is a placeholder for an incomplete proof or
 definition.  We use it in exercises to indicate the parts that we're
-leaving for you -- i.e., your job is to replace `sorry` with real
+leaving for you — i.e., your job is to replace `sorry` with real
 definitions and proofs.
 
 Remove `sorry` below and complete the definition of the following
@@ -470,7 +445,7 @@ The keyword `theorem` indicates that we are stating (and eventually proving)
 a proposition; the text after the first `:` is the proposition we want to prove.
 You'll notice that this proposition looks a lot like the one we wrote above,
 but with some additional symbols in front.
-The `∀` symbol, pronounced "forall" and written `\all` or `\forall`, is
+The `∀` symbol, pronounced "forall", is
 called a _universal quantifier_ because it _quantifies_ the variable `b` that appears
 in the proposition. Quantifying a variable with a `∀` means that the proposition
 applies to all possible values of its type; here, we annotate `b`
@@ -498,12 +473,13 @@ The `intro b` and `rfl` that you see after the `by`
 are examples of tactics.
 
 Tactics manipulate the _proof state_, as you can can see the in the Lean InfoView panel.
-The proof state is divided into the _context_, before the ⊢,
-and the _goal_, after the ⊢. The context records what we know
-at each point in the proof; the goal is what we are trying to prove
-at each point.
+The proof state is divided by the symbol ⊢, called the _turnstile_. The part
+before it is called the _context_, and the part after it is called
+the _goal_. The context records what we know
+at some point in the proof; the goal is what we are trying to prove
+at that point.
 
-A tactic manipulates both the goal and the context to get the goal
+A tactic manipulates both the goal and the context, to get the goal
 into a shape that is closer to the one we want. A tactic can also
 _close_ (solve) the current goal, finishing its proof.
 
@@ -513,12 +489,6 @@ Let's walk through the example above with this terminology in mind.
 ::::terse
 And now let's see it in a bit more detail:
 ::::
-
-:::dev "mwhicks1"
-The theorem below has wonderful explaining what's going on, but it
-is not typeset. Are we planning to fix that problem? I re-flowed the
-text so it reads better on the WWW in case not.
-:::
 
 ```lean
 theorem true_and_explained : ∀ (b : MyBool), (MyBool.true && b) = b := by
@@ -632,6 +602,24 @@ Now we'll switch to Lean's definition of booleans.
 end MyBool
 ```
 
+## Aside: Unicode in Lean
+
+:::suppressPreviousHeaderWhenTerse
+:::
+
+::::full
+Note that `∀` and `⊢` are unicode symbols, not a simple ASCII characters. The
+Lean Extension for VS Code provides convenient shortcuts for
+entering such symbols. Simply type `\` (backslash) followed by the
+name of the symbol (the "shortcode"), and the extension will automatically replace it
+with the actual symbol. For example, typing `\all` or `\forall` will produce `∀`
+and `\->` or `\to` will produce `→`. To find out what backslash sequence
+produces a unicode symbol that you can see on the screen, just hover
+over it. To see all of the Unicode shortcodes, open the Command Palette
+(Ctrl+Shift+P on Windows/Linux or Cmd+Shift+P on macOS), type
+"Lean 4: Show Unicode Input Abbreviations", and press Enter.
+::::
+
 ## Types
 
 ::::full
@@ -675,24 +663,6 @@ function produces an output of type `Bool`." Similarly, the type of
 {name}`Bool.and`, written `Bool → Bool → Bool`, can be read, "Given two inputs,
 each of type `Bool`, this function produces an output of type
 `Bool`."
-::::
-
-## Aside: Unicode in Lean
-
-:::suppressPreviousHeaderWhenTerse
-:::
-
-::::full
-Note that → is a unicode symbol, not a simple ASCII character. The
-Lean Extension for VS Code provides convenient shortcuts for
-entering such symbols. Simply type `\` (backslash) followed by the
-name of the symbol, and the extension will automatically replace it
-with the actual symbol. For example, typing `\->` or `\to` will produce
-→, and `\lambda` will produce λ. To find out what backslash sequence
-produces a unicode symbol that you can see on the screen, just hover
-over it. To see all of the Unicode shortcodes, open the Command Palette
-(Ctrl+Shift+P on Windows/Linux or Cmd+Shift+P on macOS), type
-"Lean 4: Show Unicode Input Abbreviations", and press Enter.
 ::::
 
 ## New Types from Old
@@ -1161,7 +1131,7 @@ a tuple of four bits.
 ::::
 
 :::terse
-A Nibble is half a byte -- four bits.
+A Nibble is half a byte — four bits.
 :::
 
 ```lean
@@ -1241,9 +1211,9 @@ namespace NatPlayground
 ```
 
 ::::full
-All the types we have defined so far -- both enumerated types
+All the types we have defined so far — both enumerated types
 such as `Day`, `Bool`, and `Bit` and tuple types such as
-`Nibble` built from them -- are finite. The natural numbers, on
+`Nibble` built from them — are finite. The natural numbers, on
 the other hand, are an infinite set, so we'll need to use a
 slightly richer form of inductive type declaration to represent
 them: _recursive_ inductive types.
@@ -1336,9 +1306,9 @@ Look the types of `succ`, `pred`, and `minustwo`:
 These are all things that can be applied to a number to yield a
 number. However, there is a fundamental difference between
 `Nat.succ` and the other two: functions like `Nat.pred` and
-`Nat.minustwo` are defined by giving _computation rules_ -- e.g.,
+`Nat.minustwo` are defined by giving _computation rules_ — e.g.,
 the definition of `Nat.pred` says that `Nat.pred (succ (succ zero))`
-can be simplified to `succ zero` -- while the definition of
+can be simplified to `succ zero` — while the definition of
 `Nat.succ` has no such behavior attached. Although it is like a
 function in the sense that it can be applied to an argument, it does
 not _do_ anything at all! It is just the way we write down numbers.
@@ -1525,7 +1495,7 @@ The `rewrite` tactic takes its argument(s) in square brackets.
 
 ::::full
 The `rfl` tactic closes a goal of the shape `a = a`, for any `a`. It
-checks that both sides of the equality are _definitionally equal_ --
+checks that both sides of the equality are _definitionally equal_ —
 that is, that they reduce to the same term. (So, in particular, a
 term is always definitionally equal to itself.)
 ::::
@@ -1568,7 +1538,7 @@ theorem add_one (n : Nat) : n + (succ zero) = succ n + zero := by
 ```
 
 ::::full
-Again, we recommend stepping through these proofs in VS Code --
+Again, we recommend stepping through these proofs in VS Code —
 that is, moving past each tactic with your cursor to see how it
 changes the proof state and hovering over each argument to `rewrite` to see its type.
 ::::
@@ -1953,7 +1923,7 @@ scoped infixl:30 " == " => beq
 We now have two symbols that both look like equality: `=`
 and `==`.  We'll have much more to say about their differences and
 similarities later. For now, notice that
-`x = y` is a logical _claim_ -- a "proposition" -- that we can try to
+`x = y` is a logical _claim_ — a "proposition" — that we can try to
 prove, while `x == y` is a boolean _expression_ whose value (either
 `true` or `false`) Lean can compute.
 ::::
@@ -2340,7 +2310,7 @@ theorem zero_neb_add_one : ∀ n : Nat,
 I move that we just cut this section entirely and come back to it when
 we've presented enough of the requisite material that we can actually explain
 mwhicks1: I'm going to leave this here for now, but perhaps make a note to
-fix later on---when you've fixed it, come back and delete this, rather than
+fix later on—-when you've fixed it, come back and delete this, rather than
 delete it now.
 :::
 
@@ -2388,7 +2358,7 @@ def even' (n : Nat) : Bool :=
 
 When Lean checks this definition, it verifies that the recursion
 terminates.  Specifically, it checks that one of the parameters
-is _structurally decreasing_ -- that each recursive call made in the body of the
+is _structurally decreasing_ — that each recursive call made in the body of the
 definition is made on an argument that is smaller than the original input.
 In `even` example above, the argument to the recursive call to `even` is the variable `n'`.
 Because of our pattern match, we know that `n` is equal to `succ (succ n')`, and therefore
@@ -2444,7 +2414,7 @@ decimal                binary   unary
 ```
 
 Note that the low-order bit is on the left and the high-order bit
-is on the right -- the opposite of the way binary numbers are
+is on the right — the opposite of the way binary numbers are
 usually written.  This choice makes them easier to manipulate.
 
 (Comprehension check: What unary numeral does `b0 z` represent?)
@@ -2666,7 +2636,7 @@ inductive Letter : Type where
 ```
 
 ::::full
-Then we define the modifiers -- a `natural` `A` is just a "plain"
+Then we define the modifiers — a `natural` `A` is just a "plain"
 grade of `A`.
 ::::
 
