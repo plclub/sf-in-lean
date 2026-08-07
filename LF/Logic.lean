@@ -1308,7 +1308,7 @@ theorem dist_not_exists (α : Type) (p : α → Prop) (h : ∀ x, p x) :
     apply hx; apply h
 ```
 
-:::gradeTheorem 1 "dist_not_exists"
+:::gradeTheorem 1 dist_not_exists
 :::
 :::::
 
@@ -1330,7 +1330,7 @@ theorem dist_exists_or (α : Type) (p q : α → Prop) :
       · exists x; right; exact hx
 ```
 
-:::gradeTheorem 2 "dist_exists_or"
+:::gradeTheorem 2 dist_exists_or
 :::
 :::::
 
@@ -1567,11 +1567,11 @@ theorem List.All_In {α : Type} {p : α → Prop} {l : List α} :
         · apply ih₂; apply hp; exact h₂
 ```
 
-:::gradeTheorem 3 "All_In"
+:::gradeTheorem 3 List.All_In
 :::
 :::::
 
-:::dev "Yipeng Liu (berberman)"
+:::dev "Yipeng Liu (berberman)" NOW
 I found this exercise combining too many awkward details for too little conceptual payoff:
 1. the construction is artificial
 2. before `simp` is introduced, `bif` requires noisy `dsimp`, `rw`, and Boolean case equations
@@ -2260,10 +2260,10 @@ theorem orb_true_iff (b1 b2 : Bool) :
       | true => rw [or]
 ```
 
-:::gradeTheorem 1 "andb_true_iff"
+:::gradeTheorem 1 andb_true_iff
 :::
 
-:::gradeTheorem 2 "orb_true_iff"
+:::gradeTheorem 2 orb_true_iff
 :::
 :::::
 
@@ -2338,7 +2338,7 @@ theorem beqList_true_iff α (beq : α → α → Bool)
           exact ⟨hy hxy, ih₂ hxsys⟩
 ```
 
-:::gradeTheorem 3 "beqList_true_iff"
+:::gradeTheorem 3 beqList_true_iff
 :::
 :::::
 
@@ -2391,7 +2391,7 @@ This theorem exactly captures the input-output behavior of {lean}`List.allb`.
 However, it does not say anything about the running time.
 :::
 
-:::gradeTheorem 2 "List.allb_true_iff"
+:::gradeTheorem 2 List.allb_true_iff
 :::
 :::::
 
@@ -2519,7 +2519,7 @@ axiom propext : ∀ {a b : Prop}, (a ↔ b) → a = b
 ```
 
 ::::full
-(Informally, an "extensional" property is one that pertains to observable
+(Informally, an {deftech}_extensional_ property is one that pertains to observable
 behavior. Thus, propositional extensionality means that a proposition's
 identity is completely determined by what we can observe from it — i.e.,
 whether the proposition holds. We can state this more explicitly:)

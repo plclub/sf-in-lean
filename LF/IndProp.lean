@@ -1151,10 +1151,7 @@ theorem Perm3_refl : ∀ (α : Type) (a b c : α ), Perm3 [a, b, c] [a, b, c] :=
     . apply Perm3.perm3_swap12
 ```
 
-:::gradeTheorem "0.5" "Perm3_ex1"
-:::
-
-:::gradeTheorem "0.5" "Perm3_refl"
+:::gradeTheorem "0.5" Perm3_ex1 Perm3_refl
 :::
 :::::
 
@@ -1509,7 +1506,7 @@ theorem ev_4_ev_n : ∀ n,
   case ev_succ_succ h' => apply ev_succ_succ_ev; exact h'
 ```
 
-:::gradeTheorem 1 "ev_4_ev_n"
+:::gradeTheorem 1 ev_4_ev_n
 :::
 
 - \[\]
@@ -2242,7 +2239,7 @@ theorem le_trans : ∀ (m n o : Nat), m ≤ n → n ≤ o → m ≤ o := by
     case step m' h' ih => constructor; exact ih
 ```
 
-:::gradeTheorem "0.5" "le_trans"
+:::gradeTheorem "0.5" le_trans
 :::
 
 ```lean
@@ -2253,7 +2250,7 @@ theorem zero_le_n : ∀ n, 0 ≤ n := by
     case succ n ih => constructor; assumption
 ```
 
-:::gradeTheorem "0.5" "zero_le_n"
+:::gradeTheorem "0.5" zero_le_n
 :::
 
 ```lean
@@ -2269,7 +2266,7 @@ theorem n_le_m__succ_n_le_succ_m : ∀ n m,
       assumption
 ```
 
-:::gradeTheorem "0.5" "n_le_m__Sn_le_Sm"
+:::gradeTheorem "0.5" n_le_m__succ_n_le_succ_m
 :::
 
 ```lean
@@ -2285,7 +2282,7 @@ theorem succ_n_le_succ_m__n_le_m : ∀ n m,
       . assumption
 ```
 
-:::gradeTheorem 1 "Sn_le_Sm__n_le_m"
+:::gradeTheorem 1 succ_n_le_succ_m__n_le_m
 :::
 
 ```lean
@@ -2298,9 +2295,10 @@ theorem le_add_l : ∀ (a b : Nat), a ≤ a + b := by
       rw [Nat.succ_add]
       apply n_le_m__succ_n_le_succ_m
       assumption
-  -- GRADE_THEOREM 0.5: le_add_l
-  -- []
 ```
+
+:::gradeTheorem "0.5" le_add_l
+:::
 :::::
 
 :::::exercise (rating := 2) (name := "plus_le_facts1")
@@ -2326,7 +2324,7 @@ theorem le_add_l : ∀ (a b : Nat), a ≤ a + b := by
         . apply Nat.le.step; assumption
 ```
 
-:::gradeTheorem 1 "add_le"
+:::gradeTheorem 1 add_le
 :::
 
 ```lean
@@ -2351,7 +2349,7 @@ theorem add_le_cases : ∀ (n m p q : Nat),
         . right; assumption
 ```
 
-:::gradeTheorem 1 "add_le_cases"
+:::gradeTheorem 1 add_le_cases
 :::
 :::::
 
@@ -2371,7 +2369,7 @@ theorem add_le_compat_l : ∀ (n m p : Nat),
       assumption
 ```
 
-:::gradeTheorem "0.5" "add_le_compat_l"
+:::gradeTheorem "0.5" add_le_compat_l
 :::
 
 ```lean
@@ -2385,7 +2383,7 @@ theorem plus_le_compat_r : ∀ (n m p : Nat),
     assumption
 ```
 
-:::gradeTheorem "0.5" "plus_le_compat_r"
+:::gradeTheorem "0.5" plus_le_compat_r
 :::
 
 ```lean
@@ -2400,7 +2398,7 @@ theorem le_plus_trans : ∀ (n m p : Nat),
       rw [←Nat.add_assoc]; constructor; assumption
 ```
 
-:::gradeTheorem 1 "le_plus_trans"
+:::gradeTheorem 1 le_plus_trans
 :::
 :::::
 
@@ -2432,7 +2430,7 @@ theorem lt_ge_cases : ∀ (n m : Nat),
           exact ih
 ```
 
-:::gradeTheorem "1.5" "lt_ge_cases"
+:::gradeTheorem "1.5" lt_ge_cases
 :::
 
 ```lean
@@ -2444,7 +2442,7 @@ theorem n_lt_m__n_le_m : ∀ (n m : Nat),
     apply succ_n_le_succ_m__n_le_m; constructor; assumption
 ```
 
-:::gradeTheorem "0.5" "n_lt_m__n_le_m"
+:::gradeTheorem "0.5" n_lt_m__n_le_m
 :::
 
 ```lean
@@ -2464,7 +2462,7 @@ theorem plus_lt : ∀ (n₁ n₂ m : Nat),
       . rw [Nat.add_comm n₂]; assumption
 ```
 
-:::gradeTheorem 1 "plus_lt"
+:::gradeTheorem 1 plus_lt
 :::
 :::::
 
@@ -2485,7 +2483,7 @@ theorem ble_complete : ∀ (n m : Nat),
         apply ih; apply h
 ```
 
-:::gradeTheorem 2 "ble_complete"
+:::gradeTheorem 2 ble_complete
 :::
 
 ```lean
@@ -2506,7 +2504,7 @@ theorem ble_correct : ∀ n m,
         assumption
 ```
 
-:::gradeTheorem 2 "ble_correct"
+:::gradeTheorem 2 ble_correct
 :::
 
 Hint: The next two can easily be proved without using `induction`.
@@ -2526,7 +2524,7 @@ theorem ble_iff : ∀ n m,
     . apply ble_correct
 ```
 
-:::gradeTheorem 1 "ble_iff"
+:::gradeTheorem 1 ble_iff
 :::
 
 ```lean
@@ -2539,7 +2537,7 @@ theorem ble_true_trans : ∀ n m o,
 -- /HIDE
 ```
 
-:::gradeTheorem 1 "ble_true_trans"
+:::gradeTheorem 1 ble_true_trans
 :::
 :::::
 
@@ -2906,13 +2904,13 @@ theorem subseq_trans : ∀ (l₁ l₂ l₃ : List Nat),
       constructor; apply ih; assumption;
 ```
 
-:::gradeTheorem 1 "subseq_refl"
+:::gradeTheorem 1 subseq_refl
 :::
 
-:::gradeTheorem 2 "subseq_app"
+:::gradeTheorem 2 subseq_app
 :::
 
-:::gradeTheorem 3 "subseq_trans"
+:::gradeTheorem 3 subseq_trans
 :::
 :::::
 
@@ -3073,14 +3071,14 @@ between every pair of natural numbers.
 inductive TotalRelation : Nat → Nat → Prop where
   -- SOLUTION
   | tot n m : TotalRelation n m
--- /SOLUTION
+  -- END SOLUTION
 
 theorem total_relation_is_total : ∀ n m, TotalRelation n m := by
   solution!
     intro _ _; constructor
 ```
 
-:::gradeTheorem 2 "total_relation_is_total"
+:::gradeTheorem 2 total_relation_is_total
 :::
 :::::
 
@@ -3127,7 +3125,7 @@ theorem empty_relation_is_empty : ∀ n m, ¬ EmptyRelation n m := by
     intros n m contra; cases contra
 ```
 
-:::gradeTheorem 2 "empty_relation_is_empty"
+:::gradeTheorem 2 empty_relation_is_empty
 :::
 :::::
 
@@ -3314,7 +3312,7 @@ theorem merge_filter : ∀ (α : Type) (test: α→ Bool) (l l₁ l₂ : List α
 ```
 ::::
 
-:::gradeTheorem 6 "merge_filter"
+:::gradeTheorem 6 merge_filter
 :::
 :::::
 
@@ -3619,7 +3617,7 @@ theorem pal_app_reverse : ∀ (α:Type) (l : List α),
       constructor; assumption
 ```
 
-:::gradeTheorem 3 "pal_app_reverse"
+:::gradeTheorem 3 pal_app_reverse
 :::
 
 :::dev PotentialImprovement
@@ -3638,9 +3636,10 @@ theorem pal_reverse : ∀ (α:Type) (l: List α) , Pal l → l = l.reverse := by
     case pal_consnoc x l hp ih =>
       rw [List.reverse_cons, List.reverse_append, ←List.cons_append, ←ih]
       congr
-  -- GRADE_THEOREM 3: pal_reverse
-  -- []
 ```
+
+:::gradeTheorem 3 pal_reverse
+:::
 
 :::dev "Daniel Sainati (dsainati1)" NOW
 This one is super annoying without simp.
@@ -3954,12 +3953,6 @@ theorem NoDup_disjoint_app : ∀ {α:Type} (l₁ l₂: List α),
 :::::
 
 :::::exercise (rating := 5) (name := "pigeonhole_principle") (level := Advanced)
-:::gradeTheorem 2 "in_split"
-:::
-
-:::gradeTheorem 6 "pigeonhole_principle"
-:::
-
 The _pigeonhole principle_ states a basic fact about counting: if
 we distribute more than `n` items into `n` pigeonholes, some
 pigeonhole must contain at least two items.  As often happens, this
@@ -3983,6 +3976,8 @@ theorem mem_split : ∀ (α:Type) (x:α) (l:List α),
         subst ih
         exists hd :: l₁'; exists l₂'
 ```
+:::gradeTheorem 2 mem_split
+:::
 
 Now define a property `repeats` such that `repeats α l` asserts
 that `l` contains at least one repeated element (of type `α`).
@@ -4087,6 +4082,9 @@ theorem pigeonhole_principle:
           apply (IHl1' l2' IN2 LEN2).
   Qed. -/
 ```
+
+:::gradeTheorem 6 pigeonhole_principle
+:::
 
 :::dev PotentialImprovement
 ```

@@ -157,22 +157,32 @@ that namespace.
 
 #### Theorem arguments and visibility
 
-Put a theorem's arguments before the colon rather than introducing them with
-`∀` in its result. For example, prefer the following style
+Put a theorem's ordinary arguments before the colon rather than introducing them with
+`∀` in its result. Likewise, when a proof would begin by introducing a hypothesis,
+normally put a named hypothesis before the colon:
 
 ```lean
-theorem add_swap (a b c : Nat) :
-    a + (b + c) = b + (a + c) := by
+theorem foo {α : Type} (x : α) (h : P x) : Q x := by
   ...
 ```
 
-over:
+rather than:
 
 ```lean
-theorem add_swap : ∀ a b c : Nat,
-    a + (b + c) = b + (a + c) := by
+theorem foo {α : Type} (x : α), P x → Q x := by
+  intro h
   ...
 ```
+
+This is not an absolute rule: keep quantifiers or implications in the resulting type
+when they are naturally part of the theorem's conclusion, when partial application of the theroem
+is useful, or the declaration is defined by `|` pattern matching.
+
+In `Basics`, explicit `∀` and `intro` may be used when they are being introduced.
+After declaration-header binders have been explained in section "Displaying Theorem Statements",
+use the idiomatic deceleration-header form consistently.
+
+##### Visibility
 
 Always give binders explicit type annotations, even when Lean can infer them.
 For example, write `(n : Nat)`, `{α : Type}`, and `(h : P)` rather than bare `n`, `{α}`, or `h`.

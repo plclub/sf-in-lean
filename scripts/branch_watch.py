@@ -6,12 +6,14 @@ branch_watch.py  —  Report which files are being changed on which branches.
 Walks every remote branch, finds the commits not yet in `main`, and builds a
 picture of who is touching what:
 
-  * a per-PR table with Ready-to-merge PRs grouped first (then most recently
-    active) — five columns: the branch (linked to its PR) over its author and
-    last-activity time on a second line in small type; a Status cell of glyph
-    badges (✅ ready, 👍 approved with open threads, 🔴 changes requested,
-    💬N open threads, ✏️ draft, ⏳ queued / 🚧 auto-merge held, 🔗 fixes issue,
-    ⚠️ main = no longer merges cleanly against `main`); an Overlaps cell naming
+  * a per-PR table with Ready-to-merge PRs grouped first, then in-progress PRs,
+    and draft PRs collected in their own section at the bottom; each row's most
+    recent activity orders it within its group — five columns: the branch
+    (linked to its PR) over its author and last-activity time on a second line
+    in small type; a Status cell of glyph badges (✅ ready, 👍 approved with open
+    threads, 🔴 changes requested, 💬N open threads, ✏️ draft, ❗ auto-merge held,
+    🔗 fixes issue, ⚠️ main = no longer merges cleanly against `main`); an
+    Overlaps cell naming
     which *other* PR branches it shares files with (plain = clean co-edit,
     ⚠️ = a real conflict from an in-memory merge not a filename guess, ⊃/⊂ = one
     branch's commits contain the other's), a Files count (expander), and any
@@ -401,6 +403,12 @@ def tip(glyph, title):
     return f'<abbr title="{title}">{glyph}</abbr>'
 
 
+def nbsp(text):
+    """Replace ordinary spaces with non-breaking ones, so a short phrase like a
+    relative time ("5 days ago") never wraps across a line inside a table cell."""
+    return text.replace(" ", "&nbsp;")
+
+
 def status_badges(pr):
     """Review / merge readiness of an open PR as compact glyph badges (each
     carrying a hover tooltip, and spelled out in the table legend).  Badges are
@@ -411,8 +419,9 @@ def status_badges(pr):
     * 🔴 changes requested · ✅ ready to merge (approved, nothing unresolved) ·
       👍 approved but with open threads.
     * 💬N — N review threads still open.
-    * ⏳ in the merge queue · 🚧 auto-merge enabled but held (a failing check,
-      missing approval, or conflict is stalling it).
+    * ❗ auto-merge enabled but held (a failing check, missing approval, or
+      conflict is stalling it).  A PR sitting in the merge queue is a transient
+      state, so it gets no badge.
     * 🔗 #N — issues the PR closes (via a fixes/closes/resolves keyword), linked."""
     badges = []
     if pr["draft"]:
@@ -428,9 +437,11 @@ def status_badges(pr):
     if pr["unresolved"]:
         n = pr["unresolved"]
         badges.append(tip(f"💬{n}", f"{n} open review thread{'' if n == 1 else 's'}"))
-    if pr["auto_merge"]:
-        badges.append(tip("⏳", "In the merge queue") if pr["in_queue"]
-                      else tip("🚧", "Auto-merge enabled but held"))
+    # An auto-merge that's actually *held* (enabled but not yet in the queue) is
+    # worth flagging; a PR that has reached the merge queue is a transient state
+    # on its way in, so it gets no badge.
+    if pr["auto_merge"] and not pr["in_queue"]:
+        badges.append(tip("❗", "Auto-merge enabled but held"))
     if pr["closes"]:
         links = ", ".join(f"[#{i['num']}]({i['url']})" for i in pr["closes"])
         badges.append(tip("🔗", "Issues this PR closes") + "&nbsp;" + links)
@@ -563,7 +574,7 @@ def render(branches, conf, prs, have_token, slug):
     # replaced by glyph badges (spelled out in the legend below the table).
     out.append("| Branch / Author | Status | Overlaps | Files | `#Note`s |")
     out.append("|---|---|---|--:|---|")
-    ready_rows, other_rows = [], []
+    ready_rows, other_rows, draft_rows = [], [], []
     for r, b in sorted(active.items(), key=lambda x: (-x[1]["ts"], x[1]["short"])):
         overlaps = [o for o in active if o != r and active[o]["files"] & b["files"]]
         # A stacked branch — one that fully contains the other's commits — is the
@@ -610,7 +621,7 @@ def render(branches, conf, prs, have_token, slug):
         # columns folded into one.  A wider branch label keeps it readable.
         branch = branch_link(b["short"], slug, maxlen=40,
                              href=pr["url"] if pr else None)
-        first = f"{branch}<br><sub>{author_cell(b)} · {b['when']} ago</sub>"
+        first = f"{branch}<br><sub>{author_cell(b)} · {nbsp(b['when'] + ' ago')}</sub>"
         # The old "→ main" column is folded into the Status cell: flag a branch
         # that no longer merges cleanly right there, as a ⚠️ main badge.
         status = pr_cell(b["short"], prs)
@@ -622,22 +633,39 @@ def render(branches, conf, prs, have_token, slug):
         notes = f"<sub>{notes}</sub>" if notes else ""
         row = (f"| {first} | {status} | {ov} | {files_cell(b['files'])} | "
                f"{notes} |")
-        (ready_rows if pr_ready(pr, b["clean_to_main"]) else other_rows).append(row)
-    # Ready-to-merge PRs float to the top under a labelled divider so the eye
-    # lands on what's actionable; when every row is in one group, skip the labels.
-    if ready_rows and other_rows:
-        out.append("| **✅ Ready to merge** | | | | |")
-        out += ready_rows
-        out.append("| **🛠️ In progress** | | | | |")
-        out += other_rows
+        # Drafts are their own section at the bottom; among the rest, ready-to-
+        # merge PRs float to the top, everything else lands in "In progress".
+        if pr and pr["draft"]:
+            draft_rows.append(row)
+        elif pr_ready(pr, b["clean_to_main"]):
+            ready_rows.append(row)
+        else:
+            other_rows.append(row)
+    # Each non-empty group gets a labelled divider so the eye lands on what's
+    # actionable — ready first, then in progress, then drafts last.  When only
+    # one group has rows, skip the labels (the table needs no signposting).
+    groups = [("✅ Ready to merge", ready_rows),
+              ("🛠️ In progress", other_rows),
+              ("✏️ Drafts", draft_rows)]
+    present = [(label, rows) for label, rows in groups if rows]
+    if len(present) > 1:
+        for label, rows in present:
+            # GitHub applies its own zebra striping to table rows and an issue
+            # body can't override it — and it strips CSS and drops inline math
+            # from table cells — so each group divider is set off simply with a
+            # bold, upper-cased label, which reads as a header next to the
+            # mixed-case data rows.
+            out.append(f"| **{label.upper()}** | | | | |")
+            out += rows
     else:
-        out += ready_rows + other_rows
+        for _, rows in present:
+            out += rows
     if active:
         out.append("")
         out.append(
             "<sub>**Status** ✅&nbsp;ready · 👍&nbsp;approved, threads open · "
             "🔴&nbsp;changes requested · 💬&nbsp;open threads · "
-            "✏️&nbsp;draft · ⏳&nbsp;queued · 🚧&nbsp;auto-merge "
+            "✏️&nbsp;draft · ❗&nbsp;auto-merge "
             "held · 🔗&nbsp;fixes issue · ⚠️&nbsp;main conflicts with `main`. "
             "&nbsp; **Overlaps** plain = clean co-edit · ⚠️&nbsp;real conflict "
             "· ⊃&nbsp;contains · ⊂&nbsp;contained in.</sub>")
@@ -652,8 +680,8 @@ def render(branches, conf, prs, have_token, slug):
             any_clash = any_clash or clash
             items.append(
                 f"{branch_link(b['short'], slug)} {author_cell(b)} "
-                f"(created {b['created']}, active {b['when']}"
-                f"){' ⚠️' if clash else ''}"
+                f"(created {nbsp(b['created'])}, active {nbsp(b['when'])}"
+                f"){'&nbsp;' + tip('⚠️', 'Conflicts with an open PR') if clash else ''}"
             )
         legend = (" &nbsp;_(⚠️ = conflicts with an open PR)_" if any_clash else "")
         # The whole paragraph is set in small type with `<sub>` (smaller than
@@ -673,13 +701,12 @@ def render(branches, conf, prs, have_token, slug):
             labels = []
             for o in sorted(refs):
                 clash = any(o in conf[p] for p in refs if p != o)
-                labels.append(("⚠️ " if clash else "") + branch_link(active[o]["short"], slug))
+                mark = tip("⚠️", "Real merge conflict") + "&nbsp;" if clash else ""
+                labels.append(mark + branch_link(active[o]["short"], slug))
             rows.append(f"| `{f}` | {len(refs)} | {', '.join(labels)} |")
         return rows
 
     if conflicting_files:
-        out.append("#### ⚠️ Conflicting")
-        out.append("")
         out += file_table(conflicting_files)
         out.append("")
     if clean_files:
@@ -705,7 +732,7 @@ def render(branches, conf, prs, have_token, slug):
         for r, b in sorted(merged.items(), key=lambda x: -x[1]["ts"]):
             pr = prs.get(b["short"])
             link = branch_link(b["short"], slug, href=pr["url"] if pr else None)
-            out.append(f"- {link} — last activity {b['when']} ({author_cell(b)})")
+            out.append(f"- {link} — last activity {nbsp(b['when'])} ({author_cell(b)})")
     else:
         out.append("_None._")
     out.append("")
