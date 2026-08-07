@@ -238,7 +238,7 @@ theorem review₅ (n : Nat) : zero + n = n
 (E) can't be done with the tactics we've seen.
 
 :::quizSolution
-This one CANNOT be proved by `rfl`, `cases`, or rewriting alone —
+This one CANNOT be proved by {tactic}`rfl`, {tactic}`cases`, or rewriting alone —
 it needs induction!  (We'll see why below.)
 :::
 ::::
@@ -262,7 +262,7 @@ theorem succ_eq_add_one (n : Nat) : succ n = n + one := by
 ## Proof by Induction
 
 ::::full
-We defined `add` to recurse on its _second_ argument:
+We defined {name}`add` to recurse on its _second_ argument:
 
 ```display
 def add (n : Nat) (m : Nat) : Nat :=
@@ -273,8 +273,8 @@ def add (n : Nat) (m : Nat) : Nat :=
 
 This means `n + zero` reduces to `n` by definition, but `zero + n` does _not_.
 
-For the `add_zero` simplification rule, we were able to prove that `zero` is a
-neutral element for `+` on the _right_ using just `rfl`:
+For the {name}`add_zero` simplification rule, we were able to prove that {lean}`zero` is a
+neutral element for `+` on the _right_ using just {tactic}`rfl`:
 
 ```display
 theorem add_zero : ∀ (n : Nat), n + zero = n := by
@@ -282,8 +282,8 @@ theorem add_zero : ∀ (n : Nat), n + zero = n := by
   rfl
 ```
 
-What if we wanted to prove a rule that `zero` is also a neutral element
-on the _left_? Just applying `rfl` doesn't
+What if we wanted to prove a rule that {lean}`zero` is also a neutral element
+on the _left_? Just applying {tactic}`rfl` doesn't
 work, since the `n` in `zero + n` is an arbitrary unknown number, so
 the `match` in the definition of `+` can't be reduced.
 ::::
@@ -310,7 +310,7 @@ n : Nat
 :::slidebreak
 :::
 
-And reasoning by cases using `cases n` doesn't get us much
+And reasoning by cases using {tactic}`cases` on `n` doesn't get us much
 further: the branch of the case analysis where we assume `n = zero`
 goes through just fine, but in the branch where `n = n' + 1` for
 some `n'` we get stuck in exactly the same way.
@@ -343,7 +343,7 @@ n' : Nat
 ```
 
 ::::full
-We could use `cases n'` to get a bit further, but,
+We could use {tactic}`cases` on `n'` to get a bit further, but,
 since `n` can be arbitrarily large, we'll never get all the way
 there if we just go on like this.
 ::::
@@ -366,7 +366,7 @@ all numbers `n`, we can reason like this:
 - conclude that `P(n)` holds for all `n`.
 
 In Lean, the steps are the same: we begin with the goal of proving
-`P(n)` for all `n` and use the `induction` tactic to break it down
+`P(n)` for all `n` and use the {tactic}`induction` tactic to break it down
 into two separate subgoals: one where we must show `P(zero)` and another
 where we must show `P(n') → P(succ n')`.  Here's how this works for
 the theorem at hand...
@@ -407,17 +407,17 @@ theorem zero_add (n : Nat) : zero + n = n := by
 ```
 
 ::::full
-Like `cases`, the `induction` tactic takes a `with` clause
+Like {tactic}`cases`, the {tactic}`induction` tactic takes a `with` clause
 that specifies the names of the variables to be introduced in the
-subgoals.  Since there are two subgoals (for `zero` and `succ`),
+subgoals.  Since there are two subgoals (for {name}`zero` and {name}`succ`),
 the `with` clause has two branches.
 
 In the first subgoal, `n` is replaced by {name}`zero`. The goal becomes
-`zero + zero = zero`, which follows by `rewrite [add_zero]` and `rfl`.
+{lean}`zero + zero = zero`, which follows by `rewrite [add_zero]` and {tactic}`rfl`.
 
 In the second subgoal, `n` is replaced by `succ n'`, and the
 induction hypothesis `ih : zero + n' = n'` is added to the context.
-The goal becomes `zero + (succ n') = succ n'`. `add_succ` tells
+The goal becomes `zero + (succ n') = succ n'`. {name}`add_succ` tells
 us that `a + (succ b) = succ (a + b)`, so `rewrite [add_succ]`
 transforms the goal to `succ (zero + n') = succ n'`. Then `rewrite [ih]`
 rewrites `zero + n'` to `n'`, and the goal becomes `succ n' = succ n'`,
@@ -534,10 +534,10 @@ We need better typesetting for displays like the following ones:
 ```
 :::
 
-## Tip: the `rw` tactic
+## Tip: the {tactic}`rw` tactic
 
 As you've probably noticed, a common pattern in Lean proofs is `rewrite [...]`
-followed by `rfl`. There is a tactic that combines these two steps: `rw [...]`
+followed by {tactic}`rfl`. There is a tactic that combines these two steps: `rw [...]`
 will automatically close the goal if the rewrite makes the goal true by
 definition. For example, instead of writing
 
@@ -554,7 +554,7 @@ rw [double_zero]
 ::::full
 A small caveat: `rw [...]` only performs a quick reflexivity check
 after rewriting; it does not unfold every definition. So, in rare
-cases, `rw` may leave a goal that is still solved immediately by `rfl`.
+cases, {tactic}`rw` may leave a goal that is still solved immediately by {tactic}`rfl`.
 
 ```lean
 def aliasOfTwo := two
@@ -567,7 +567,7 @@ example (n : Nat) (h : n = aliasOfTwo) : n = two := by
 ::::
 
 ::::terse
-If `rw` leaves a goal that looks definitionally true, try adding `rfl`
+If {tactic}`rw` leaves a goal that looks definitionally true, try adding {tactic}`rfl`
 after it.
 ::::
 
@@ -590,7 +590,7 @@ attribute [irreducible] double
 ```
 
 Use induction to prove this simple fact about {name}`double`.
-Try using `rw` instead of `rewrite`.
+Try using {tactic}`rw` instead of {tactic}`rewrite`.
 
 ```lean
 theorem double_add (n : Nat) : double n = n + n := by
@@ -628,7 +628,7 @@ induction hypothesis about `succ (succ n')`. The following lemma gives an
 alternative characterization of `even (succ n)` that works better
 with induction:
 
-(Tip: To expand the body of `even` in a proof, use `rewrite [even]` or
+(Tip: To expand the body of {name}`even` in a proof, use `rewrite [even]` or
 `rw [even]`.)
 
 :::gradeTheorem 1 even_succ
@@ -708,11 +708,11 @@ earlier theorems.  But sometimes a proof will involve some
 miscellaneous fact that is too trivial and of too little general
 interest to bother giving it its own top-level name.  In such
 cases, it is convenient to be able to simply state and prove the
-required fact "in place".  The `have` tactic allows us to do this.
+required fact "in place".  The {tactic}`have` tactic allows us to do this.
 ::::
 
 ::::terse
-New tactic: `have`.
+New tactic: {tactic}`have`.
 ::::
 
 ```lean
@@ -724,7 +724,7 @@ theorem mult_zero_add' (n m : Nat) :
 ```
 
 ::::full
-The `have` tactic introduces a local lemma into the proof.
+The {tactic}`have` tactic introduces a local lemma into the proof.
 We prove it immediately, and it's available as a hypothesis
 for the rest of the proof.
 ::::
@@ -765,7 +765,7 @@ n m p q : Nat
 
 To use {name}`add_comm` at the point where we need it, we can supply
 explicit arguments: `rw [add_comm n m]` tells Lean exactly which
-`+` to rewrite.  (We can also use `have` to establish the specific
+`+` to rewrite.  (We can also use {tactic}`have` to establish the specific
 equation we want, then rewrite with it.)
 
 ```lean
@@ -903,11 +903,11 @@ _Qed_.
 ::::::full
 The overall form of the proof is basically similar, and of
 course this is no accident: Lean has been designed so that its
-`induction` tactic generates the same sub-goals, in the same
+{tactic}`induction` tactic generates the same sub-goals, in the same
 order, as the bullet points that a mathematician would usually
 write.  But there are significant differences of detail: the
 formal proof is much more explicit in some ways (e.g., the use of
-`rfl`) but much less explicit in others (in particular, the "proof
+{tactic}`rfl`) but much less explicit in others (in particular, the "proof
 state" at any given point in the Lean proof is completely implicit,
 whereas the informal proof reminds the reader several times where
 things stand).
@@ -975,12 +975,12 @@ Proof:
 By induction on `n`.
 
 - First, suppose `n = zero`.  We must show `(zero == zero) = true`.  This
-follows directly from the definition of `beq`.
+follows directly from the definition of {name}`beq`.
 
 - Next, suppose `n = n' + 1`, where `(n' == n') = true`.  We
 must show `(n' + 1 == n' + 1) = true`. This
 follows directly from the induction hypothesis and the
-definition of {name}`beq`.
+definition of `beq`.
 :::
 
 :::grade
@@ -1081,7 +1081,7 @@ theorem mul_comm (m n : Nat) :
 Take a piece of paper.  For each of the following theorems, first
 _think_ about whether (a) it can be proved using only
 simplification and rewriting, (b) it also requires case
-analysis (`cases`), or (c) it also requires induction.  Write
+analysis ({tactic}`cases`), or (c) it also requires induction.  Write
 down your prediction.  Then fill in the proof.  (There is no need
 to turn in your piece of paper; this is just to encourage you to
 reflect before you hack!)
@@ -1170,8 +1170,8 @@ example (b : Bool) : (b || true) = true := by
 ```
 
 ::::full
-We can also chain `<;>`s.  In the next example, `cases b` creates two
-goals; in each of them, `cases c` splits the goal again; then `rfl`
+We can also chain `<;>`s.  In the next example, {tactic}`cases` on `b` creates two
+goals; in each of them, {tactic}`cases` on `c` splits the goal again; then {tactic}`rfl`
 solves all four remaining goals.
 ::::
 
@@ -1478,7 +1478,7 @@ example : normalize (.b1 (.b0 .z)) = .b1 .z := by rfl
 
 Now that we have defined all of our functions and their relevant characterizing lemmas,
 we mark them irreducible as usual. From here on out, our proofs about these definitions
-should use `rewrite` or `rw`.
+should use {tactic}`rewrite` or {tactic}`rw`.
 
 ```lean
 attribute [irreducible] normalize doubleBin natToBin incr binToNat

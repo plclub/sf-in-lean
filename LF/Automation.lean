@@ -7,6 +7,7 @@ open SFLMeta
 
 #doc (Manual) "Automation: More Automation" =>
 %%%
+tag := "Automation"
 htmlSplit := .never
 file := "Automation"
 %%%
