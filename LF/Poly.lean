@@ -899,7 +899,7 @@ end OptionPlayground
 
 ::::full
 We can now rewrite the `nth?` function so that it works
-with any type of list. We also define the characterizing lemmas:
+with any type of list.
 ::::
 
 ```lean
