@@ -104,6 +104,14 @@ namespace NatPlayground.Nat
 
 # Review
 
+:::dev "Mike Hicks @mwhicks1"
+I'm a little confused about the following lemmas and why `rfl` is
+sufficient for all of them. It seems that we are simplifying the functions
+which I'm a little surprised at. Maybe we need to point out that we have
+opened the `NatPlayground` namespace which allows this reduction? To be
+want to be asking about proofs of this kind, here?
+:::
+
 :::dev "Daniel Sainati @dsainati1" PotentialImprovement
 From GitHub discussion, the display blocks below don't have nice syntax
 highlighting, but using full Lean blocks with +error would also not be nice
@@ -115,6 +123,10 @@ We should try to figure out a nicer way to format these
 To prove the following theorem, which tactics will we need besides
 {tactic}`rfl`?
 
+```display
+theorem review₁ : (true || false) = true
+```
+
 (A) none
 
 (B) {tactic}`rewrite`
@@ -124,10 +136,6 @@ To prove the following theorem, which tactics will we need besides
 (D) both {tactic}`rewrite` and {tactic}`cases`
 
 (E) can't be done with the tactics we've seen.
-
-```display
-theorem review₁ : (true || false) = true
-```
 
 :::quizSolution
 ```lean
@@ -273,8 +281,8 @@ def add (n : Nat) (m : Nat) : Nat :=
 
 This means `n + zero` reduces to `n` by definition, but `zero + n` does _not_.
 
-In `add_zero`, we were able to prove that `zero` is a neutral element
-for `+` on the _right_ using just `rfl`:
+For the `add_zero` simplification rule, we were able to prove that `zero` is a
+neutral element for `+` on the _right_ using just `rfl`:
 
 ```display
 theorem add_zero : ∀ (n : Nat), n + zero = n := by
@@ -282,10 +290,10 @@ theorem add_zero : ∀ (n : Nat), n + zero = n := by
   rfl
 ```
 
-But the proof that it is also a neutral element on the _left_
-can't be done in the same simple way.  Just applying `rfl` doesn't
+What if we wanted to prove a rule that `zero` is also a neutral element
+on the _left_? Just applying `rfl` doesn't
 work, since the `n` in `zero + n` is an arbitrary unknown number, so
-the `match` in the definition of `+` can't be simplified.
+the `match` in the definition of `+` can't be reduced.
 ::::
 
 ::::terse
@@ -356,7 +364,7 @@ there if we just go on like this.
 ::::full
 To prove interesting facts about numbers, lists, and other
 inductively defined sets, we often need a more powerful reasoning
-principle: _induction_.
+principle: *induction*.
 
 Recall (from a discrete math course, probably) the _principle of
 induction over natural numbers_: If `P(n)` is some proposition
@@ -416,7 +424,7 @@ subgoals.  Since there are two subgoals (for `zero` and `succ`),
 the `with` clause has two branches.
 
 In the first subgoal, `n` is replaced by {name}`zero`. The goal becomes
-`zero + zero = zero`, which follows by `rfl`.
+`zero + zero = zero`, which follows by `rewrite [add_zero]` and `rfl`.
 
 In the second subgoal, `n` is replaced by `succ n'`, and the
 induction hypothesis `ih : zero + n' = n'` is added to the context.
@@ -434,6 +442,16 @@ which closes with reflexivity.
 Let's try this one together:
 ::::
 
+::::full
+Here's another theorem to try, this time involving a fact about equality on
+natural numbers.
+::::
+
+:::dev "Mike Hicks @mwhicks1"
+Fix: Why does `workinclass` get converted to `all_goals` in the student file?
+We want it to do the same thing as `solution!` in the solutions file, I think.
+:::
+
 ```lean
 theorem beq_self : ∀ n : Nat,
     (n == n) = true := by
@@ -447,6 +465,12 @@ theorem beq_self : ∀ n : Nat,
       rewrite [succ_succ_beq]
       exact ih
 ```
+
+:::dev "Mike Hicks @mwhicks1"
+The following comment contradicts what we said at the end of Basics, which is that
+we'd be writing theorems in the following form in general. We should fix this
+above and below.
+:::
 
 ::::full
 Up until this point, we have been explicitly writing out all the parameters
@@ -566,13 +590,16 @@ We could write this:
 rw [double_zero]
 ```
 
-Using `rw` in your proofs is optional, but it will save you time
-(and is better style).
+:::dev "Mike Hicks @mwhicks1"
+Have we defined "unfold" to this point? If not, the following text may be
+confusing. A good place to mention it is in the presentation of simplification
+rules in Basics, I'd like, since are specifically avoiding unfolding.
+:::
 
 ::::full
-(One small caveat: `rw [...]` only performs a quick reflexivity check
+A small caveat: `rw [...]` only performs a quick reflexivity check
 after rewriting; it does not unfold every definition. So, in rare
-cases, `rw` may leave a goal that is still solved immediately by `rfl`.)
+cases, `rw` may leave a goal that is still solved immediately by `rfl`.
 
 ```lean
 def aliasOfTwo := two
@@ -587,6 +614,10 @@ example (n : Nat) (h : n = aliasOfTwo) : n = two := by
 ::::terse
 If `rw` leaves a goal that looks definitionally true, try adding `rfl`
 after it.
+::::
+
+::::full
+Let's get some practice with using {tactic}`rw`.
 ::::
 
 :::::exercise (rating := 2) (name := "double_add")
@@ -604,7 +635,7 @@ attribute [irreducible] double
 ```
 
 Use induction to prove this simple fact about {name}`double`.
-Experiment with using `rw` instead of `rewrite` as well.
+Try using `rw` instead of `rewrite`.
 
 ```lean
 theorem double_add (n : Nat) : double n = n + n := by
@@ -623,16 +654,6 @@ theorem double_add (n : Nat) : double n = n + n := by
 Here's a useful theorem that proves `even (n + 1)` flips
 the parity.  This will facilitate proofs by induction on `n`:
 
-One inconvenient aspect of our definition of `even n` is the
-recursive call on `n'` when `n = succ (succ n')`. This makes proofs about `even n`
-harder when done by induction on `n`, since we may need an
-induction hypothesis about `succ (succ n')`. The following lemma gives an
-alternative characterization of `even (succ n)` that works better
-with induction:
-
-(Tip: To expand the body of `even` in a proof, use `rewrite [even]` or
-`rw [even]`.)
-
 ```lean
 theorem even_succ (n : Nat) :
     even (succ n) = !even n := by
@@ -644,6 +665,16 @@ theorem even_succ (n : Nat) :
     | succ n' ih =>
       rw [even, ih, not_involutive]
 ```
+
+One inconvenient aspect of our definition of `even n` is the
+recursive call on `n'` when `n = succ (succ n')`. This makes proofs about `even n`
+harder when done by induction on `n`, since we may need an
+induction hypothesis about `succ (succ n')`. The following lemma gives an
+alternative characterization of `even (succ n)` that works better
+with induction:
+
+(Tip: To expand the body of `even` in a proof, use `rewrite [even]` or
+`rw [even]`.)
 
 :::gradeTheorem 1 even_succ
 :::
@@ -799,10 +830,9 @@ What constitutes a successful proof of a mathematical claim?
 
 The question has challenged philosophers for millennia, but a
 rough and ready answer could be this: A proof of a mathematical
-proposition `P` is a written (or spoken) text that instills in the
-reader (or hearer) the certainty that `P` is true — an unassailable
-argument for the truth of `P`.  That is, a proof is an act of
-communication.
+proposition `P` is a text that instills in the
+reader the certainty that `P` is true.
+That is, a proof is an act of _communication_.
 
 Acts of communication may involve different sorts of readers.  On
 one hand, the "reader" can be a program like Lean, in which case
@@ -818,7 +848,7 @@ criteria for success are less clearly specified.  A "valid" proof
 is one that makes the reader believe `P`.  But the same proof may
 be read by many different readers, some of whom may be convinced
 by a particular way of phrasing the argument, while others may not
-be. Some readers may be particularly pedantic, inexperienced, or
+be. Some readers may be particularly inexperienced or
 just plain thick-headed; the only way to convince them will be to
 make the argument in painstaking detail.  Other readers, more
 familiar in the area, may find all this detail so overwhelming
@@ -913,15 +943,6 @@ By the definition of `+`, both sides reduce to
 
 respectively, which are equal by the induction hypothesis.
 _Qed_.
-::::
-
-::::hide
-```
- MMG: the proof above makes no use of lemmas, so it's hard for
-   students to know what to do.  It might be good to also give them a
-   sample proof of mult_1_l so they know how to "invoke" things
-   they've already proved.
-```
 ::::
 
 ::::::full
@@ -1207,6 +1228,12 @@ We can also chain `<;>`s.
 example (b c : Bool) : (b && c) = (c && b) := by
   cases b <;> cases c <;> rfl
 ```
+
+:::dev "Mike Hicks @mwhicks1"
+This references other tactic combinators being later in the book;
+let's add references to specific chapters, e.g., the Tactics chapter, but
+perhaps others too?
+:::
 
 ::::full
 Use `<;>` when the generated subgoals really do have the same proof.
