@@ -2,6 +2,7 @@ import SFLMeta.Bnf
 import SFLMeta.Ignore
 import SFLMeta.Save
 
+import LF.Preface
 import LF.Basics
 import LF.Induction
 import LF.UsingLean
@@ -21,6 +22,7 @@ open Verso Genre Manual
 -- line below in book order.  (The `#doc` body has no comment syntax, so don't
 -- put comments after the includes.)
 #doc (Manual) "Logical Foundations" =>
+{include LF.Preface}
 {include LF.Basics}
 {include LF.Induction}
 {include LF.UsingLean}

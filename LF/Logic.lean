@@ -1192,7 +1192,7 @@ theorem dist_not_exists (X : Type) (P : X → Prop) (h : ∀ x, P x) :
     apply hx; apply h
 ```
 
-:::gradeTheorem 1 "dist_not_exists"
+:::gradeTheorem 1 dist_not_exists
 :::
 :::::
 
@@ -1216,7 +1216,7 @@ theorem dist_exists_or (X : Type) (P Q : X → Prop) :
       case inr => exists x; right; exact hx
 ```
 
-:::gradeTheorem 2 "dist_exists_or"
+:::gradeTheorem 2 dist_exists_or
 :::
 :::::
 
@@ -1456,7 +1456,7 @@ theorem All_In α (P : α → Prop) (xs : List α) :
         case inr => apply ih2; apply hP; exact h2
 ```
 
-:::gradeTheorem 3 "All_In"
+:::gradeTheorem 3 All_In
 :::
 :::::
 
@@ -2096,10 +2096,10 @@ theorem orb_true_iff (b1 b2 : Bool) :
       case true => rw [or]
 ```
 
-:::gradeTheorem 1 "andb_true_iff"
+:::gradeTheorem 1 andb_true_iff
 :::
 
-:::gradeTheorem 2 "orb_true_iff"
+:::gradeTheorem 2 orb_true_iff
 :::
 :::::
 
@@ -2172,7 +2172,7 @@ theorem beq_list_true_iff α (beq : α → α → Bool)
           apply h2; exact ⟨hx2 hx, ih2 hxs⟩
 ```
 
-:::gradeTheorem 3 "beq_list_true_iff"
+:::gradeTheorem 3 beq_list_true_iff
 :::
 :::::
 
@@ -2221,7 +2221,7 @@ This theorem exactly captures the input-output behavior of `forallb`.
 However, it does not say anything about the running time.
 :::
 
-:::gradeTheorem 2 "forallb_true_iff"
+:::gradeTheorem 2 forallb_true_iff
 :::
 :::::
 
@@ -2307,7 +2307,7 @@ which is called _propositional extensionality_ (`propext`).
 ```
 
 ::::full
-(Informally, an "extensional" property is one that pertains to observable
+(Informally, an {deftech}_extensional_ property is one that pertains to observable
 behavior. Thus, propositional extensionality means that a proposition's
 identity is completely determined by what we can observe from it -- i.e.,
 whether the proposition holds. We can state this more explicitly:)
@@ -2822,4 +2822,3 @@ theorem peirce_cm : peirce → consequentia_mirabilis := by
 :::::
 
 ::::::
-

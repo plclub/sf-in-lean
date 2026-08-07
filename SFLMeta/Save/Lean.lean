@@ -212,16 +212,16 @@ block_extension Block.leanSaved (saved : Save.LeanSaved.Data) where
     -- Three children = still unselected: keep the solutions, student, or terse
     -- variant selected by the current typed `Variant`.
     -- One child (or anything else) = already selected; nothing to do.
-    if h : contents.size = 3 then
+    if h : contents.size = 4 then
       let some saved := LeanSaved.decode? data | return none
       let variant ← getCurrVariant
       let chosen ←
-        if variant.isSolution then pure contents[0]
+        if variant.isSolution ∨ variant.isGrading then pure contents[0]
         else if variant.isTerse then pure contents[2]
         else pure contents[1]
       return some (.other (Block.leanSaved saved) #[chosen])
     else
-      return none
+      return none -- xhalo32: shouldn't this be `unreachable!`?
   toHtml := some fun _ goB _ data contents => do
     let some saved := Save.LeanSaved.decode? data
       | return .empty
@@ -334,7 +334,7 @@ def lean : CodeBlockExpanderOf LeanSaved.Config
       let teacherChild ← mkChild teacherDisplay teacherHls
       let studentChild ← mkChild student studentHls
       let terseChild ← mkChild terse terseHls
-      let variants := {student, solutions := teacher, terse : Variants String}
+      let variants := {student, solutions := teacher, terse, grading := teacher : Variants String}
       let saved := { variants, config : Data }
       ``(Verso.Doc.Block.other
           (SFLMeta.Block.leanSaved $(quote saved))
