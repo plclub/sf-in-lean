@@ -245,6 +245,6 @@ _Proof_:
    `st =[ imp {if (b) {~c₁} else {~c₂}} ]=> st'`. 
 ::::
 
-:::full
+::::full
 Here is the formal version of this proof:
 ::::
