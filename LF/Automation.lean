@@ -1393,7 +1393,7 @@ theorem weak_pumping_app {α : Type}
   obtain H | H :
     pumpingConstant re₁ ≤ s₁.length ∨ pumpingConstant re₂ ≤ s₂.length := by
     solution!
-      rw [app_length] at hLen
+      rw [append_length] at hLen
       apply add_le_cases
       apply hLen
   . solution!
@@ -1532,7 +1532,7 @@ theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α)
     s₃  ≠ [ ] ∧
     (∀ m : Nat, s₀ ++ napp m s₃ ++ s₄ =~ .Star re)  := by
   intro hmatch₁ hmatch₂ ih₁ ih₂ hLen
-  rw [app_length] at *
+  rw [append_length] at *
   obtain Hs1len0 | ⟨s1len, Hs1re1⟩ | Hs1re1 :
     (s₁.length = 0
       ∨ (s₁.length ≠ 0 ∧ s₁.length < pumpingConstant re)
