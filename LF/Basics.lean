@@ -1751,8 +1751,8 @@ In simple examples such conventions may seem trivial or even silly; in complex c
 it is the only way to maintain crucial invariants that prevent a system from becoming unmaintainable.
 
 The same principle applies to definitions and proofs in Lean.
-In idiomatic Lean, it is considered poor style to "peek" through
-definitions by using {tactic}`rfl` to implicitly simplify expressions
+In idiomatic Lean, it is considered poor style to _unfold_ — that is, "peek"
+through — definitions by using {tactic}`rfl` to implicitly simplify expressions
 that aren't syntactically identical. If you take a look at the proofs of
 {name}`add_zero` and {name}`add_succ` above, you will notice this is exactly what we did
 when we used the {tactic}`rfl` tactic.
@@ -2229,6 +2229,9 @@ The same statement can be written using an explicit universal quantifier, as we 
 mul_zero : ∀ (n : Nat), n * zero = zero
 ```
 
+Writing statements in declaration-header style shortens proofs because Lean
+automatically adds declared variables to the context, rather than requiring
+them to be added with `intro`.
 The declaration-header style is conventional in Lean, and we will generally use it from now on.
 ::::
 
@@ -2272,7 +2275,6 @@ Sometimes simple calculation and rewriting are not enough...
 
 ```lean +error
 example (n : Nat) : (succ n == zero) = false := by
-  intro n
   /-
     We can't rewrite by any lemmas here because `n` is unknown!
   -/
