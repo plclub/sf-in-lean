@@ -208,24 +208,24 @@ cause problems with the tilde. Currently skipping them and just using
 backticks.
 :::
 ::::full
-_Theorem_: If `b` is equivalent to `true`, then `if (b) {~c₁} 
+_Theorem_: If `b` is equivalent to `true`, then `if (~b) {~c₁} 
 else {~c₂}` is equivalent to `c₁`.
 _Proof_:
  - (`->`) We must show, for all `st` and `st'`, that if 
-   `st =[ imp {if (b) {~c₁} else {~c₂}} ]=> st'` then 
+   `st =[ imp {if (~b) {~c₁} else {~c₂}} ]=> st'` then 
    `st =[ c₁ ]=> st'`.
 
    Proceed by cases on the rules that could possibly have been
-   used to show `st =[ imp {if (b) {~c₁} else {~c₂}} ]=> st'`, 
+   used to show `st =[ imp {if (~b) {~c₁} else {~c₂}} ]=> st'`, 
    namely `Com.EvalR.ifTrue` and `Com.EvalR.ifFalse`.
 
    - Suppose the final rule in the derivation of 
-     `st =[ imp {if (b) {~c₁} else {~c₂}} ]=> st'` was `Com.EvalR.ifTrue`.  
+     `st =[ imp {if (~b) {~c₁} else {~c₂}} ]=> st'` was `Com.EvalR.ifTrue`.  
      We then have, by the premises of `Com.EvalR.ifTrue`, that 
      `st =[ c₁ ]=> st'`. This is exactly what we set out to prove.
 
    - On the other hand, suppose the final rule in the derivation
-     of `st =[ imp {if (b) {~c₁} else {~c₂}} ]=> st'` was `Com.EvalR.ifFalse`.
+     of `st =[ imp {if (~b) {~c₁} else {~c₂}} ]=> st'` was `Com.EvalR.ifFalse`.
      We then know that `b.eval st = false` and `st =[ c₂ ]=> st'`.
 
      Recall that `b` is equivalent to `true`, i.e., forall `st`,
@@ -237,14 +237,38 @@ _Proof_:
 
  - (`<-`) We must show, for all `st` and `st'`, that if
    `st =[ c₁ ]=> st'` then
-   `st =[ imp {if (b) {~c₁} else {~c₂}} ]=> st'`.
+   `st =[ imp {if (~b) {~c₁} else {~c₂}} ]=> st'`.
 
    Since `b` is equivalent to `true`, we know that `b.eval st` =
    `(bexp {true}).eval st = true` = `true`.  Together with the assumption that
    `st =[ c₁ ]=> st'`, we can apply `Com.EvalR.ifTrue` to derive
-   `st =[ imp {if (b) {~c₁} else {~c₂}} ]=> st'`. 
+   `st =[ imp {if (~b) {~c₁} else {~c₂}} ]=> st'`. 
 ::::
 
 ::::full
 Here is the formal version of this proof:
 ::::
+
+:::dev "Sati (satiscugcat)"
+`if_true` causes a naming conflict, I don't know with what.
+:::
+```lean
+theorem if_true_equiv: ∀ b c₁ c₂,
+  Bexp.equiv b (bexp {true}) ->
+  Com.equiv 
+    (imp {if (~b) {~c₁} else {~c₂}})
+    c₁ := by
+    intro b c₁ c₂ hb st st'
+    constructor <;> intro h
+    case mp => 
+      cases h with 
+      | ifTrue => assumption
+      | ifFalse _ _ _ _ _ hb' hc => 
+        unfold Bexp.equiv at hb; simp at hb
+        rw [hb] at hb'
+        contradiction
+    case mpr => 
+      apply Com.EvalR.ifTrue <;> try assumption
+      unfold Bexp.equiv at hb; simp at hb
+      apply hb
+```
