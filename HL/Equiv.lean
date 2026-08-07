@@ -131,18 +131,18 @@ theorem skip_left: ∀ c,
   Com.equiv
     (imp { skip; ~c })
     c := by
-    workinclass!
-    intros c st st'
-    constructor <;> intro h
-    case mp => 
-      cases h with
-      | seq _ _ _ _ _ h1 h2 => 
-        cases h1 with
-        | skip => assumption
-    case mpr =>
-      apply Com.EvalR.seq _ _ _ st
-      · apply Com.EvalR.skip
-      · assumption
+  workinclass!
+  intros c st st'
+  constructor <;> intro h
+  case mp => 
+    cases h with
+    | seq _ _ _ _ _ h1 h2 => 
+      cases h1 with
+      | skip => assumption
+  case mpr =>
+    apply Com.EvalR.seq _ _ _ st
+    · apply Com.EvalR.skip
+    · assumption
 ```
 
 :::dev "Sati (satiscugcat)"
@@ -157,7 +157,7 @@ theorem skip_right : ∀ c,
   Com.equiv
     (imp { ~c  skip; })
     c := by
-    solution!(
+  solution!(
     intros c st st'
     constructor <;> intro h
     case mp =>
@@ -169,7 +169,7 @@ theorem skip_right : ∀ c,
       apply Com.EvalR.seq _ _ _ st'
       · assumption
       · apply Com.EvalR.skip
-    )
+  )
 ```
 :::::
 
@@ -183,16 +183,16 @@ theorem if_true_simple: ∀ c₁ c₂,
   Com.equiv 
     (imp {if (true) {~c₁} else {~c₂}})
     c₁ := by
-    intro c₁ c₂ st st'
-    constructor <;> intro h
-    case mp => 
-      cases h with
-      | ifTrue => assumption
-      | ifFalse => contradiction
-    case mpr => 
-      apply Com.EvalR.ifTrue
-      · rfl
-      · assumption
+  intro c₁ c₂ st st'
+  constructor <;> intro h
+  case mp => 
+    cases h with
+    | ifTrue => assumption
+    | ifFalse => contradiction
+  case mpr => 
+    apply Com.EvalR.ifTrue
+    · rfl
+    · assumption
 ```
 
 ::::full
@@ -258,19 +258,19 @@ theorem if_true_equiv: ∀ b c₁ c₂,
   Com.equiv 
     (imp {if (~b) {~c₁} else {~c₂}})
     c₁ := by
-    intro b c₁ c₂ hb st st'
-    constructor <;> intro h
-    case mp => 
-      cases h with 
-      | ifTrue => assumption
-      | ifFalse _ _ _ _ _ hb' hc => 
-        unfold Bexp.equiv at hb; simp at hb
-        rw [hb] at hb'
-        contradiction
-    case mpr => 
-      apply Com.EvalR.ifTrue <;> try assumption
+  intro b c₁ c₂ hb st st'
+  constructor <;> intro h
+  case mp => 
+    cases h with 
+    | ifTrue => assumption
+    | ifFalse _ _ _ _ _ hb' hc => 
       unfold Bexp.equiv at hb; simp at hb
-      apply hb
+      rw [hb] at hb'
+      contradiction
+  case mpr => 
+    apply Com.EvalR.ifTrue <;> try assumption
+    unfold Bexp.equiv at hb; dsimp at hb
+    apply hb
 ```
 
 
@@ -281,7 +281,7 @@ theorem if_false_equiv: ∀ b c₁ c₂,
   Com.equiv 
     (imp {if (~b) {~c₁} else {~c₂}})
     c₂ := by
-    solution!(
+  solution!(
     intro b c₁ c₂ hb st st'
     constructor <;> intro h
     case mp => 
@@ -295,7 +295,7 @@ theorem if_false_equiv: ∀ b c₁ c₂,
       apply Com.EvalR.ifFalse <;> try assumption
       unfold Bexp.equiv at hb; dsimp at hb
       apply hb
-    )
+  )
 ```
 :::::
 
@@ -309,7 +309,7 @@ theorem swap_if_branches : ∀ b c₁ c₂,
   Com.equiv
     (imp {if (~b) {~c₁} else {~c₂}})
     (imp {if (¬ ~b) {~c₂} else {~c₁}}) := by
-    solution!(
+  solution!(
     intro b c₁ c₂ st st'
     constructor <;> intro h
     case mp => 
@@ -328,6 +328,86 @@ theorem swap_if_branches : ∀ b c₁ c₂,
       | ifFalse _ _ _ _ _ hb hc => 
         apply Com.EvalR.ifTrue <;> try assumption
         simp_all
-    )
+  )
 ```
 :::::
+
+::::full
+For `while` loops, we can give a similar pair of theorems.  A loop
+whose guard is equivalent to `false` is equivalent to `skip`,
+while a loop whose guard is equivalent to `true` is equivalent to
+`while (true) {skip;} end` (or any other non-terminating program).
+::::
+
+::::full
+The first of these facts is easy.
+::::
+
+```lean 
+theorem while_false_equiv : ∀ b c,
+  Bexp.equiv b (bexp {false}) ->
+  Com.equiv
+    (imp {while (~b) {~c}})
+    (imp {skip;}) := by
+  intro b c hb st st'
+  constructor <;> intro h
+  case mp => 
+    cases h with
+    | whileFalse => apply Com.EvalR.skip
+    | whileTrue _ _ _ _ _ hb' hc hloop => 
+      rw [hb] at hb'
+      simp at hb'
+  case mpr => 
+    cases h with
+    | skip => 
+      apply Com.EvalR.whileFalse
+      apply hb
+```
+
+:::::exercise (rating := 2) (name := "while_false_informal") (level:= Advanced) (manual:= true)
+Write an informal proof of `while_false_equiv`.
+:::::
+
+::::full
+To prove the second fact, we need an auxiliary lemma stating that
+`while` loops whose guards are equivalent to `true` never
+terminate.
+::::
+
+::::full
+_Lemma_: If `b` is equivalent to `true`, then it cannot be
+the case that `st =[ while (~b) {~c} ]=> st'`.
+
+_Proof_: Suppose that `st =[ while (~b) {~c} ]=> st'`.  We show,
+by induction on a derivation of `st =[ while (~b) {~c} ]=> st'`,
+that this assumption leads to a contradiction. The only two cases
+to consider are `Com.EvalR.whileFalse` and `Com.EvalR.whileTrue`; the others
+are contradictory.
+
+- Suppose `st =[ while (~b) {~c} ]=> st'` is proved using rule
+  `Com.EvalR.whileFalse`.  Then by assumption `b.eval st = false`. But
+  this contradicts the assumption that `b` is equivalent to
+  `true`.
+
+- Suppose `st =[ while (~b) {~c} ]=> st'` is proved using rule
+  `Com.EvalR.whileTrue`.  We must have:
+
+  1. `b.eval st = true`, and
+  2. there is some `st₀` such that `st =[ c ] => st₀` and
+     `st₀ =[ while (~b) {~c} ]=> st'`.
+  3. Also, we are given an induction hypothesis saying that
+     `st₀ =[ while (~b) {~c} ]=> st'` leads to a contradiction,
+
+  We obtain a contradiction by 2 and 3.
+::::
+
+-- ```lean
+-- theorem while_true_nonterm : ∀ b c st st',
+--   Bexp.equiv b (bexp {true}) ->
+--   ¬ (st =[ while (~b) {~c} ]=> st') := by
+--   workinclass!
+--   intro b c st st' hb h
+--   have key : ∀ (c': Com)
+  
+  
+-- ```
