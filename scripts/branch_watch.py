@@ -11,7 +11,7 @@ picture of who is touching what:
     recent activity orders it within its group — five columns: the branch
     (linked to its PR) over its author and last-activity time on a second line
     in small type; a Status cell of glyph badges (✅ ready, 👍 approved with open
-    threads, 🔴 changes requested, 💬N open threads, ✏️ draft, 🚧 auto-merge held,
+    threads, 🔴 changes requested, 💬N open threads, ✏️ draft, ❗ auto-merge held,
     🔗 fixes issue, ⚠️ main = no longer merges cleanly against `main`); an
     Overlaps cell naming
     which *other* PR branches it shares files with (plain = clean co-edit,
@@ -419,7 +419,7 @@ def status_badges(pr):
     * 🔴 changes requested · ✅ ready to merge (approved, nothing unresolved) ·
       👍 approved but with open threads.
     * 💬N — N review threads still open.
-    * 🚧 auto-merge enabled but held (a failing check, missing approval, or
+    * ❗ auto-merge enabled but held (a failing check, missing approval, or
       conflict is stalling it).  A PR sitting in the merge queue is a transient
       state, so it gets no badge.
     * 🔗 #N — issues the PR closes (via a fixes/closes/resolves keyword), linked."""
@@ -441,7 +441,7 @@ def status_badges(pr):
     # worth flagging; a PR that has reached the merge queue is a transient state
     # on its way in, so it gets no badge.
     if pr["auto_merge"] and not pr["in_queue"]:
-        badges.append(tip("🚧", "Auto-merge enabled but held"))
+        badges.append(tip("❗", "Auto-merge enabled but held"))
     if pr["closes"]:
         links = ", ".join(f"[#{i['num']}]({i['url']})" for i in pr["closes"])
         badges.append(tip("🔗", "Issues this PR closes") + "&nbsp;" + links)
@@ -650,7 +650,12 @@ def render(branches, conf, prs, have_token, slug):
     present = [(label, rows) for label, rows in groups if rows]
     if len(present) > 1:
         for label, rows in present:
-            out.append(f"| **{label}** | | | | |")
+            # GitHub applies its own zebra striping to table rows and an issue
+            # body can't override it, so each group divider is set off instead by
+            # rendering its label larger via inline math — the emoji is kept
+            # outside the `$…$` span, since emoji don't render inside math.
+            icon, _, text = label.partition(" ")
+            out.append(f"| {icon}&nbsp;$\\Large\\textsf{{{text}}}$ | | | | |")
             out += rows
     else:
         for _, rows in present:
@@ -660,7 +665,7 @@ def render(branches, conf, prs, have_token, slug):
         out.append(
             "<sub>**Status** ✅&nbsp;ready · 👍&nbsp;approved, threads open · "
             "🔴&nbsp;changes requested · 💬&nbsp;open threads · "
-            "✏️&nbsp;draft · 🚧&nbsp;auto-merge "
+            "✏️&nbsp;draft · ❗&nbsp;auto-merge "
             "held · 🔗&nbsp;fixes issue · ⚠️&nbsp;main conflicts with `main`. "
             "&nbsp; **Overlaps** plain = clean co-edit · ⚠️&nbsp;real conflict "
             "· ⊃&nbsp;contains · ⊂&nbsp;contained in.</sub>")
@@ -702,8 +707,6 @@ def render(branches, conf, prs, have_token, slug):
         return rows
 
     if conflicting_files:
-        out.append("#### ⚠️ Conflicting")
-        out.append("")
         out += file_table(conflicting_files)
         out.append("")
     if clean_files:
