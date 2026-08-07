@@ -651,11 +651,11 @@ def render(branches, conf, prs, have_token, slug):
     if len(present) > 1:
         for label, rows in present:
             # GitHub applies its own zebra striping to table rows and an issue
-            # body can't override it, so each group divider is set off instead by
-            # rendering its label larger via inline math — the emoji is kept
-            # outside the `$…$` span, since emoji don't render inside math.
-            icon, _, text = label.partition(" ")
-            out.append(f"| {icon}&nbsp;$\\Large\\textsf{{{text}}}$ | | | | |")
+            # body can't override it — and it strips CSS and drops inline math
+            # from table cells — so each group divider is set off simply with a
+            # bold, upper-cased label, which reads as a header next to the
+            # mixed-case data rows.
+            out.append(f"| **{label.upper()}** | | | | |")
             out += rows
     else:
         for _, rows in present:
