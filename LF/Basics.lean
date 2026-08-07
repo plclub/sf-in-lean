@@ -2229,6 +2229,9 @@ The same statement can be written using an explicit universal quantifier, as we 
 mul_zero : ∀ (n : Nat), n * zero = zero
 ```
 
+Writing statements in declaration-header style shortens proofs because Lean
+automatically adds declared variables to the context, rather than requiring
+them to be added with `intro`.
 The declaration-header style is conventional in Lean, and we will generally use it from now on.
 ::::
 
@@ -2272,7 +2275,6 @@ Sometimes simple calculation and rewriting are not enough...
 
 ```lean +error
 example (n : Nat) : (succ n == zero) = false := by
-  intro n
   /-
     We can't rewrite by any lemmas here because `n` is unknown!
   -/
