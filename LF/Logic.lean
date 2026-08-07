@@ -676,7 +676,7 @@ Not (a : Prop) : Prop
 ```
 
 ```leanOutput not
-def Not : Prop → Prop :=
+@[implicit_reducible] def Not : Prop → Prop :=
 fun a => a → False
 ```
 

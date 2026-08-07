@@ -789,6 +789,8 @@ theorem getElem_empty (a : α) : (∅ : TotalMap α β)[a] = default := rfl
 Next, if we update a map `m` at a key `a` with a new value `b` and then look up `a` in the map resulting from the {name}`update`, we get back `b`:
 
 ```lean
+set_option backward.isDefEq.respectTransparency.types false
+
 theorem update_eq (m : TotalMap α β) (a : α) (b : β) : (a →ₜ b ; m)[a] = b := by
   rw [update_def, getElem_def, ReflBEq.rfl, cond_true]
 ```
