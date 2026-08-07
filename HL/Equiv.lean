@@ -129,10 +129,9 @@ def Com.equiv (c₁ c₂: Com) : Prop :=
 ```lean
 theorem skip_left: ∀ c,
   Com.equiv
-    (imp {skip; ~c})
-    c := 
-  by
-  workinclass!
+    (imp { skip; ~c })
+    c := by
+    workinclass!
     intros c st st'
     constructor <;> intro h
     case mp => 
@@ -146,4 +145,106 @@ theorem skip_left: ∀ c,
       · assumption
 ```
 
+:::dev "Sati (satiscugcat)"
+Is the syntax of Imp settled? I find this really unintuitive.
+:::
+:::::exercise (rating := 2) (name:= "skip_right")
+Prove that adding a `skip` _after_ a command also results in an
+equivalent program.
 
+```lean
+theorem skip_right : ∀ c,
+  Com.equiv
+    (imp { ~c  skip; })
+    c := by
+    solution!(
+    intros c st st'
+    constructor <;> intro h
+    case mp =>
+      cases h with
+      | seq _ _ _ _ _ h1 h2 =>
+        cases h2 with
+        | skip => assumption
+    case mpr =>
+      apply Com.EvalR.seq _ _ _ st'
+      · assumption
+      · apply Com.EvalR.skip
+    )
+```
+:::::
+
+::::full
+Similarly, here is a simple equivalence that optimises `if`
+commands.
+::::
+
+```lean
+theorem if_true_simple: ∀ c₁ c₂,
+  Com.equiv 
+    (imp {if (true) {~c₁} else {~c₂}})
+    c₁ := by
+    intro c₁ c₂ st st'
+    constructor <;> intro h
+    case mp => 
+      cases h with
+      | ifTrue => assumption
+      | ifFalse => contradiction
+    case mpr => 
+      apply Com.EvalR.ifTrue
+      · rfl
+      · assumption
+```
+
+::::full
+Of course, no programmer would write a conditional whose condition
+is literally `true`.  (At least, no human programmer -- compilers
+and macro preprocessors do this sort of thing internally all the
+time!) But they might write one whose condition is _equivalent_ to
+true:
+::::
+:::dev "Sati (satiscugcat)"
+The to\_verso script seems to use `\[\]` blocks, but these seem to
+cause problems with the tilde. Currently skipping them and just using
+backticks.
+:::
+::::full
+_Theorem_: If `b` is equivalent to `true`, then `if (b) {~c₁} 
+else {~c₂}` is equivalent to `c₁`.
+_Proof_:
+ - (`->`) We must show, for all `st` and `st'`, that if 
+   `st =[ imp {if (b) {~c₁} else {~c₂}} ]=> st'` then 
+   `st =[ c₁ ]=> st'`.
+
+   Proceed by cases on the rules that could possibly have been
+   used to show `st =[ imp {if (b) {~c₁} else {~c₂}} ]=> st'`, 
+   namely `Com.EvalR.ifTrue` and `Com.EvalR.ifFalse`.
+
+   - Suppose the final rule in the derivation of 
+     `st =[ imp {if (b) {~c₁} else {~c₂}} ]=> st'` was `Com.EvalR.ifTrue`.  
+     We then have, by the premises of `Com.EvalR.ifTrue`, that 
+     `st =[ c₁ ]=> st'`. This is exactly what we set out to prove.
+
+   - On the other hand, suppose the final rule in the derivation
+     of `st =[ imp {if (b) {~c₁} else {~c₂}} ]=> st'` was `Com.EvalR.ifFalse`.
+     We then know that `b.eval st = false` and `st =[ c₂ ]=> st'`.
+
+     Recall that `b` is equivalent to `true`, i.e., forall `st`,
+     `b.eval st = (bexp {true}).eval st`.  In particular, this means
+     that `b.eval st = true`, since `(bexp {true}).eval st = true`.  But
+     this is a contradiction, since `Com.EvalR.ifFalse` requires that
+     `b.eval st = false`.  Thus, the final rule could not have
+     been `Com.EvalR.ifFalse`.
+
+ - (`<-`) We must show, for all `st` and `st'`, that if
+   `st =[ c₁ ]=> st'` then
+   `st =[ imp {if (b) {~c₁} else {~c₂}} ]=> st'`.
+
+   Since `b` is equivalent to `true`, we know that `b.eval st` =
+   `(bexp {true}).eval st = true` = `true`.  Together with the assumption that
+   `st =[ c₁ ]=> st'`, we can apply `Com.EvalR.ifTrue` to derive
+   `st =[ imp {if (b) {~c₁} else {~c₂}} ]=> st'`. 
+::::
+
+:::full
+Here is the formal version of this proof:
+::::
