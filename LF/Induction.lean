@@ -104,14 +104,6 @@ namespace NatPlayground.Nat
 
 # Review
 
-:::dev "Mike Hicks @mwhicks1"
-I'm a little confused about the following lemmas and why `rfl` is
-sufficient for all of them. It seems that we are simplifying the functions
-which I'm a little surprised at. Maybe we need to point out that we have
-opened the `NatPlayground` namespace which allows this reduction? To be
-want to be asking about proofs of this kind, here?
-:::
-
 :::dev "Daniel Sainati @dsainati1" PotentialImprovement
 From GitHub discussion, the display blocks below don't have nice syntax
 highlighting, but using full Lean blocks with +error would also not be nice
@@ -121,7 +113,8 @@ We should try to figure out a nicer way to format these
 
 ::::quiz
 To prove the following theorem, which tactics will we need besides
-{tactic}`rfl`?
+{tactic}`rfl`?  (Recall that `||` recurses on its _first_ argument:
+`true || b = true` and `false || b = b`, by definition.)
 
 ```display
 theorem review₁ : (true || false) = true
@@ -255,9 +248,8 @@ One more warm-up exercise.
 Prove the following theorem, using theorems from Basics:
 
 ```lean
-theorem succ_eq_add_one : ∀ n : Nat, succ n = n + one := by
+theorem succ_eq_add_one (n : Nat) : succ n = n + one := by
   solution!
-    intro n
     rewrite [one_eq_succ_zero, add_succ, add_zero]
     rfl
 ```
@@ -301,8 +293,7 @@ But the proof that it is also a neutral element on the _left_ gets stuck...
 ::::
 
 ```lean +error (name := rfl_ex)
-example : ∀ n : Nat, zero + n = n := by
-  intro n
+example (n : Nat) : zero + n = n := by
   rfl    -- doesn't work here!
 ```
 
@@ -334,8 +325,7 @@ we should just follow?
 
 
 ```lean +error (name := cases_ex)
-example : ∀ n : Nat, zero + n = n := by
-  intro n
+example (n : Nat) : zero + n = n := by
   cases n with
   | zero => /- n = zero -/
     rewrite [add_zero]
@@ -401,8 +391,7 @@ For example...
 :::
 
 ```lean
-theorem zero_add : ∀ n : Nat, zero + n = n := by
-  intro n
+theorem zero_add (n : Nat) : zero + n = n := by
   induction n with
   | zero => /- n = zero -/
     rewrite [add_zero]
@@ -447,16 +436,9 @@ Here's another theorem to try, this time involving a fact about equality on
 natural numbers.
 ::::
 
-:::dev "Mike Hicks @mwhicks1"
-Fix: Why does `workinclass` get converted to `all_goals` in the student file?
-We want it to do the same thing as `solution!` in the solutions file, I think.
-:::
-
 ```lean
-theorem beq_self : ∀ n : Nat,
-    (n == n) = true := by
+theorem beq_self (n : Nat) : (n == n) = true := by
   workinclass!
-    intro n
     induction n with
     | zero =>
       rewrite [zero_zero_beq_true]
@@ -465,27 +447,6 @@ theorem beq_self : ∀ n : Nat,
       rewrite [succ_succ_beq]
       exact ih
 ```
-
-:::dev "Mike Hicks @mwhicks1"
-The following comment contradicts what we said at the end of Basics, which is that
-we'd be writing theorems in the following form in general. We should fix this
-above and below.
-:::
-
-::::full
-Up until this point, we have been explicitly writing out all the parameters
-to theorems with ∀s, which makes us introduce them explicitly with `intro` before we
-can use them. A more Lean-idiomatic way is to write them on the left side of the `:`
-in the theorem statement, which introduces them automatically. So, the statement
-of {name}`beq_self` that we just wrote could also be:
-
-```display
-theorem beq_self (n : Nat) : (n == n) = true := by ...
-```
-
-When written this way, we don't need to `intro n` at the start of the proof, as
-`n` will already be in the context when we begin. We will prefer this style going forward.
-::::
 
 ::::::full
 :::::exercise (rating := 2) (name := "basic_induction")
@@ -589,12 +550,6 @@ We could write this:
 ```display
 rw [double_zero]
 ```
-
-:::dev "Mike Hicks @mwhicks1"
-Have we defined "unfold" to this point? If not, the following text may be
-confusing. A good place to mention it is in the presentation of simplification
-rules in Basics, I'd like, since are specifically avoiding unfolding.
-:::
 
 ::::full
 A small caveat: `rw [...]` only performs a quick reflexivity check
@@ -1229,17 +1184,11 @@ example (b c : Bool) : (b && c) = (c && b) := by
   cases b <;> cases c <;> rfl
 ```
 
-:::dev "Mike Hicks @mwhicks1"
-This references other tactic combinators being later in the book;
-let's add references to specific chapters, e.g., the Tactics chapter, but
-perhaps others too?
-:::
-
 ::::full
 Use `<;>` when the generated subgoals really do have the same proof.
 If different branches need different arguments, it is usually clearer
 to write the cases explicitly. We'll discuss some other tactic combinators
-much later in this book.
+in the {ref "Automation"}[Automation] chapter.
 ::::
 
 ## Nat to Bin and Back to Nat

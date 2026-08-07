@@ -1751,8 +1751,8 @@ In simple examples such conventions may seem trivial or even silly; in complex c
 it is the only way to maintain crucial invariants that prevent a system from becoming unmaintainable.
 
 The same principle applies to definitions and proofs in Lean.
-In idiomatic Lean, it is considered poor style to "peek" through
-definitions by using {tactic}`rfl` to implicitly simplify expressions
+In idiomatic Lean, it is considered poor style to _unfold_ — that is, "peek"
+through — definitions by using {tactic}`rfl` to implicitly simplify expressions
 that aren't syntactically identical. If you take a look at the proofs of
 {name}`add_zero` and {name}`add_succ` above, you will notice this is exactly what we did
 when we used the {tactic}`rfl` tactic.
