@@ -256,7 +256,7 @@ theorem mul_three (p : Nat) :
     rw [Nat.add_one_mul, Nat.two_mul]
 ```
 
-:::gradeTheorem 1 "mul_three"
+:::gradeTheorem 1 mul_three
 :::
 
 ```lean
@@ -267,7 +267,7 @@ theorem mul_three_beq (p : Nat) :
     exact mul_three p
 ```
 
-:::gradeTheorem 1 "mul_three_beq"
+:::gradeTheorem 1 mul_three_beq
 :::
 
 # Structuring proofs with `calc`
@@ -588,7 +588,7 @@ theorem even_succ (n : Nat) :
       rw [Nat.even, ih, Bool.not_not]
 ```
 
-:::gradeTheorem 1 "even_succ"
+:::gradeTheorem 1 even_succ
 :::
 :::::
 
@@ -618,7 +618,7 @@ theorem double_add (n : Nat) : n.double = n + n := by
       rw [double_succ, ih, Nat.succ_add n' (n' + 1), Nat.add_succ n' n']
 ```
 
-:::gradeTheorem 1 "double_add"
+:::gradeTheorem 1 double_add
 :::
 :::::
 
@@ -630,7 +630,7 @@ theorem double_mul (n : Nat) : n.double = 2 * n := by
 ```
 :::::
 
-:::gradeTheorem 1 "double_mul"
+:::gradeTheorem 1 double_mul
 :::
 
 # Using Code Actions to Generate Match Skeletons

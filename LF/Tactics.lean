@@ -217,7 +217,7 @@ theorem rev_exercise1 {α} (l l' : List α) :
   -- /ADMITTED
 ```
 
-:::gradeTheorem 2 "rev_exercise1"
+:::gradeTheorem 2 rev_exercise1
 :::
 :::::
 
@@ -597,7 +597,7 @@ theorem injection_ex3 {α : Type} (x y z : α) (l j : List α) :
   rw [hxz, hyz]
 ```
 
-:::gradeTheorem 3 "injection_ex3"
+:::gradeTheorem 3 injection_ex3
 :::
 :::::
 
@@ -684,7 +684,7 @@ theorem disjoint_ex3 {α : Type} (x y z : α) (l : List α) :
     contradiction
 ```
 
-:::gradeTheorem 1 "disjoint_ex3"
+:::gradeTheorem 1 disjoint_ex3
 :::
 :::::
 
@@ -1436,7 +1436,7 @@ theorem beq_eq : ∀ (n m : Nat),
         assumption
 ```
 
-:::gradeTheorem 2 "beq_eq"
+:::gradeTheorem 2 beq_eq
 :::
 
 ::::::full
@@ -1541,7 +1541,7 @@ theorem plus_n_n_injective : ∀ (n m : Nat),
         injections eq; congr; exact ih _ eq
 ```
 
-:::gradeTheorem 3 "plus_n_n_injective"
+:::gradeTheorem 3 plus_n_n_injective
 :::
 :::::
 
@@ -1777,7 +1777,7 @@ theorem nth_error_after_last {α : Type} (n : Nat) (l : List α) :
       dsimp [nthError]; apply ih _; rfl
 ```
 
-:::gradeTheorem 3 "nth_error_after_last"
+:::gradeTheorem 3 nth_error_after_last
 :::
 :::::
 
@@ -2230,7 +2230,7 @@ theorem bool_fn_applied_thrice (f : Bool → Bool) (b : Bool) :
           rw [heqftrue, heqftrue]
 ```
 
-:::gradeTheorem 2 "bool_fn_applied_thrice"
+:::gradeTheorem 2 bool_fn_applied_thrice
 :::
 :::::
 
@@ -2346,7 +2346,7 @@ theorem beq_symm (n m : Nat) :
       exact ih _
 ```
 
-:::gradeTheorem 3 "beq_symm"
+:::gradeTheorem 3 beq_symm
 :::
 :::::
 
@@ -2541,7 +2541,7 @@ theorem filter_exercise {α : Type} (test : α → Bool) (a : α) (l lf : List �
         assumption
 ```
 
-:::gradeTheorem 3 "filter_exercise"
+:::gradeTheorem 3 filter_exercise
 :::
 :::::
 
@@ -2609,7 +2609,7 @@ theorem existsb_existsb' (α : Type) (test : α → Bool) (l : List α) :
       rw [Bool.not_and, Bool.not_not]
 ```
 
-:::gradeTheorem 6 "existsb_existsb'"
+:::gradeTheorem 6 existsb_existsb'
 :::
 :::::
 
