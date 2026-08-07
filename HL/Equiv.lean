@@ -272,3 +272,62 @@ theorem if_true_equiv: ∀ b c₁ c₂,
       unfold Bexp.equiv at hb; simp at hb
       apply hb
 ```
+
+
+:::::exercise (rating := 2) (name := "if_false_equiv")
+```lean
+theorem if_false_equiv: ∀ b c₁ c₂,
+  Bexp.equiv b (bexp {false}) ->
+  Com.equiv 
+    (imp {if (~b) {~c₁} else {~c₂}})
+    c₂ := by
+    solution!(
+    intro b c₁ c₂ hb st st'
+    constructor <;> intro h
+    case mp => 
+      cases h with 
+      | ifTrue _ _ _ _ _ hb' hc => 
+        unfold Bexp.equiv at hb; dsimp at hb
+        rw [hb] at hb'
+        contradiction
+      | ifFalse => assumption
+    case mpr => 
+      apply Com.EvalR.ifFalse <;> try assumption
+      unfold Bexp.equiv at hb; dsimp at hb
+      apply hb
+    )
+```
+:::::
+
+
+:::::exercise (rating := 3) (name := "swap_if_branches")
+Show that we can swap the branches of an `if` if we also negate its
+condition.
+
+```lean
+theorem swap_if_branches : ∀ b c₁ c₂,
+  Com.equiv
+    (imp {if (~b) {~c₁} else {~c₂}})
+    (imp {if (¬ ~b) {~c₂} else {~c₁}}) := by
+    solution!(
+    intro b c₁ c₂ st st'
+    constructor <;> intro h
+    case mp => 
+      cases h with
+      | ifTrue _ _ _ _ _ hb hc =>
+        apply Com.EvalR.ifFalse <;> try assumption
+        simp_all
+      | ifFalse _ _ _ _ _ hb hc => 
+        apply Com.EvalR.ifTrue <;> try assumption
+        simp_all
+    case mpr => 
+      cases h with
+      | ifTrue _ _ _ _ _ hb hc =>
+        apply Com.EvalR.ifFalse <;> try assumption
+        simp_all
+      | ifFalse _ _ _ _ _ hb hc => 
+        apply Com.EvalR.ifTrue <;> try assumption
+        simp_all
+    )
+```
+:::::
