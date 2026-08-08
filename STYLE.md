@@ -690,7 +690,7 @@ _Rendered in solutions variant only._
 Worked prose answers to open-ended exercises: discussions, design rationale,
 or illustrative code that is not intended to compile.
 (For _compilable_ answers inside `lean` blocks,
-use `solution!` as describe above.)
+use `solution!` as described above.)
 
 #### `:::suppressPreviousHeaderWhenTerse`
 
@@ -768,10 +768,6 @@ theorem mul_succ : ∀ n m : Nat, n * (succ m) = (n * m) + n := by
 ::::
 ````
 
-#### `:::grade`
-
-_Not rendered._
-
 ### Quiz and solution directives
 
 #### `:::quiz`, `:::quizSolution`
@@ -803,107 +799,110 @@ example : 1 = 1 := by rfl
 ::::
 ````
 
-### Author-only annotations
+### Internal commentary
 
-These directives are invisible in rendered outputs (HTML, TeX, and generated
-`.lean` files) — with one exception: an *actionable* `:::dev` note (urgency
-`NOW`, `TODO`, or none — see below) is passed through, brightly highlighted in
-the HTML and as a labelled comment in the generated `.lean` files.
+#### `:::dev`
 
-Write author-facing notes as `:::` **directives**.  (The old ` ```dev ` /
-` ```instructors ` code-block forms were removed 2026-07-15.)  A directive's
-body is parsed as markdown, so backtick code identifiers (`foo_bar`, `[x]`) and
-escape markdown-special text just as you would in `::::full` prose; reach for
-an inner ` ``` ` fence only when the body is code-dense or embeds a Lean
-snippet that must not elaborate.  NB: a `:::dev` body *elaborates* (its blocks
-are kept so shown notes can render), so an inner ` ```lean ` fence there runs
-the Lean code — use a plain ` ``` ` fence for code that must stay inert.
-(`to_verso` generates these directives with the body verbatim-fenced, which is
-always safe; a hand pass can un-fence and inline the markdown.)
+A developer note that may take the following options:
 
-Pick the tag by intent — `:::instructors` (instructor notes), `:::dev` (author
-TODOs / review threads), `:::answer` (a quiz's answer — see **Quizzes**),
-`:::hide` (genuinely hidden content).  Apart from shown `:::dev` notes, all are
-noops today (dropped from every build), so the choice is *semantic*: the name
-reserves each for a future build that could treat it differently (reveal
-`:::answer`, show `:::instructors` to instructors).
+* `<string>`: the author of the note
+* `NOW` | `BeforeNextRelease` | `PotentialImprovement`: an urgency level
+* `(year := <number>)`: the year of authorship
 
-**`:::instructors … :::`** — Notes for instructors: pacing advice,
-classroom caveats, which sections to skip for a short course, etc.
+Authors should be in the form `Full Name (github-handle)`.
+Notes marked as `PotentialImprovement` are not rendered;
+unmarked notes or those marked as `NOW` or `BeforeNextRelease` are rendered
+in all variants, appearing as yellow boxes labelled with "Note to developers
+(Author)" in the HTML and as comments in the extracted Lean.
 
-```
-:::instructors
-This file takes about two hours in a not-too-rushed lecture.
-Assign Basics + Induction together as the first week's homework.
-:::
-```
+#### `:::instructors`
 
-**`:::dev … :::`** — Internal author commentary: unresolved design
-questions, inline review threads, TODO items.  Use freely.  It takes optional
-arguments, so the note's provenance can be typeset uniformly: a positional
-author (always a *string*, conventionally `"Full Name (github-handle)"`), a
-positional urgency keyword (always a *bare identifier*, conventionally `NOW`,
-`SOONER`, `LATER`, `TODO`, or `TOFIX`), and a named `year` (a number, from
-`BCP'20`-style tags).  The string/identifier split is what tells the two
-positionals apart, so don't quote urgencies or unquote authors.  Prefer the
-arguments over leading `BCP:` / `SOONER:` tags in the body; `to_verso` promotes
-such leading tags to arguments automatically (see `_AUTHOR_NAMES` in
-`scripts/to_verso.py` for the initials-to-name mapping).
+_Not rendered._
 
-The urgency controls whether the note is *shown* (`devNoteShown` in
-`SFLMeta/Comment.lean`): a note tagged `NOW` or `TODO` — or carrying no
-urgency at all — passes through into the rendered outputs, brightly
-highlighted (with a `Note to developers (…)` provenance label) in the HTML and as a
-labelled comment block in the generated `.lean` files.  `SOONER`, `LATER`,
-and `TOFIX` notes are suppressed from every build as before.
-
-```
-:::dev "Benjamin Pierce (bcpierce00)" SOONER
-Still not happy with this explanation — the namespace story
-feels rushed.  See GitHub discussion #42.
-:::
-```
-
-**`:::hide … :::`** — Marks a region hidden from all rendered outputs.
-In native Verso chapters, prefer `:::dev` or `:::instructors` for
-author notes.  The `:::hide` directive exists primarily for
-code-forward source files where `-- HIDE … -- /HIDE` comments are
-translated to `:::hide` blocks by the conversion script.
+An instructor note for pacing advice, classroom caveats,
+which sections to skip for a short course, etc.
 
 ### Structural and presentation blocks
 
-**`:::details (summary := "…") … :::`** — A collapsible disclosure
-block.  The `summary` string appears as a clickable one-line teaser;
-the body is hidden until the reader expands it.  Implemented with
-native HTML `<details>/<summary>` (no JavaScript required).  Good for
-encoding details, macro plumbing, or helper notation that is correct
-but not central to the main narrative.  In generated `.lean` files the
-body is emitted inlined, preceded by a short `_Details: …` comment.
+#### `:::hide`
 
-**`:::ignore … :::`** — Content that appears in HTML and TeX but is
-**omitted** from the generated `.lean` files.  Use it to wrap prose,
-diagrams, or declarations that make sense in the book context but
-would be confusing or redundant in the standalone extracted source.
-Unlike the author-annotation directives, `:::ignore` content _is_
-visible to students reading the HTML book.
+_Not rendered._
 
-**`:::slidebreak … :::`** — A slide-break marker with no body. In the
-terse build it renders as `<div class="slide-break">` (a hook for
-CSS-based slide tooling).  In full builds and in all generated `.lean`
-files it emits nothing.  Written as a self-closing empty block:
+Prefer to use `:::dev` or `:::instructor` with an explanation of why
+this content is hidden.
+
+#### `:::ignore`
+
+_Rendered in all variants but **not** in the extracted Lean._
+
+Used to wrap prose, diagrams, or declarations that make sense in the
+book context but would be confusing or redundant in the extracted Lean.
+
+#### `:::slidebreak`
+
+_Rendered (invisibly) in terse variant only._
+
+In the HTML, this renders as `<div class="slide-break"></div>`
+as a hook for CSS-based slide tooling.
+This directive is always written as a self-closing empty block.
 
 ```
 :::slidebreak
 :::
 ```
 
-### Diagrams with ASCII fallback
+#### `:::details (summary := <string>)`
 
-For diagrams that need a text fallback in the extracted `.lean` files,
-use `:::diagramWithAlt` with two children: a code block containing the
-diagram (e.g., SVG), and a plain code block containing the ASCII art.
-HTML renders only the diagram child; the saver emits only the ASCII
-fallback wrapped in a `/-! … -/` module-doc comment.
+_Rendered in all variants._
+
+In the HTML, this is rendered as a collapsible `<details>` element
+with the given `<summary>` text.
+In the extracted Lean, this is rendered normally but preceded by a
+`-- _Details: <summary>_` comment.
+Good for encoding details, macro plumbing, or helper notation that is correct
+but not central to the main narrative.
+
+#### `:::diagramWithAlt`
+
+_Rendered in all variants._
+
+A diagram with two required blocks:
+a `diagram` code block containing Lean code for an Illuminate diagram,
+rendered in the HTML, and a verbatim code block containing the ASCII fallback,
+rendered as a comment in the extracted Lean.
+
+The `diagram` code block takes two options:
+
+* `(cssWidth := <length>)` | `(cssScale := <number>)`:
+  an explicit CSS length or scaling factor for HTML rendering;
+  defaults to `(cssScale := 1)`
+* `(texWidth := <length>)`:
+  an explicit TeX length for PDF rendering;
+  defaults to `(texWidth := "\textwidth")`
+
+The following is an example from `TS.Stlc.lean`:
+
+````
+:::diagramWithAlt
+```diagram (cssWidth := "28em") (texWidth := "20em")
+SFLMeta.Diagrams.lambdaCubeDiagram
+```
+
+```
+                         Calculus of Constructions
+ type operators +--------+
+               /|       /|
+              / |      / |
+polymorphism +--------+  |
+             |  |     |  |
+             |  +-----|--+
+             | /      | /
+             |/       |/
+             +--------+ dependent types
+          STLC
+```
+:::
+````
 
 ### Code-forward comments → Verso directives (`to_verso`)
 
