@@ -455,8 +455,8 @@ Sections within a chapter use standard Markdown headings (`#`, `##`,
 Unfenced text is parsed as Markdown and rendered with formatting,
 while text in code fences ` ``` ` is parsed as code.
 Verso directives fenced by `:::` control when and how the contained Markdown is
-rendered, and is also used for tooling. The below list the various types of
-code and directive blocks that are used.
+rendered, and is also used for tooling. The subsections below list the various
+types of code and directive blocks that are used.
 
 ### `lean` block flags
 
@@ -606,7 +606,7 @@ Promoting the genuinely-mathematical `` ```display `` blocks to `` ```displaymat
 is a manual editing pass on the `.lean` chapter; `to_verso` does not attempt it
 automatically.
 
-### Inline code fences
+### Inline roles
 
 Beyond the structural directives above, the Manual genre offers **inline roles**
 that enrich expository prose in the HTML.  Use them where they add value (and
@@ -716,21 +716,34 @@ This is an exercise.
 
 ### Exercise and grading directives
 
-#### `:::exercise (rating := N) (name := "foo")`
+#### `:::exercise`
 
 _Rendered in all variants._
 
-An exercise block with a `rating` difficulty from 1 (easy) to 5 (hard)
-and a short `name` identifier used in headings and cross-references.
-Rendered as `Exercise ★ (foo)` in the HTML and as a comment
-`-- ### Exercise (1 star): foo ⭐` in the extracted Lean files.
+An exercise block rendered as `Exercise ★ (foo)` in the HTML
+and as a comment `-- ### Exercise (1 star): foo ⭐` in the extracted Lean files.
+It takes the following options:
 
-#### `:::gradeTheorem N name...`
+* `(rating := <number>)` (required): difficulty from 1 (easy) to 5 (hard)
+* `(name := <identifier>)` (required): name used in headings and cross-references
+* `(level := <identifier>)` (optional): additional difficulty warning (currently only `Advanced`)
+* `(manual := <boolean>)` (optional): marks the exercise for manual grading
+
+#### `:::gradeTheorem N name...`, `:::grade`
 
 _Not rendered._
 
-A grading specification for an exercise with a declaration `name`
-and a point value of `N`. Exists only in the Verso source for tooling.
+`gradetheorem` is an autograding specification for an exercise with
+a declaration `name` and a point value of `N`, while `grade` is a manual
+grading specification. The manual specification has the following format:
+
+````
+:::grade
+```
+GRADE_MANUAL <N>: <name>
+```
+:::
+````
 
 Every exercise **must** contain a nested grading directive.
 The usual structure is an exercise statement, followed by a code block,
@@ -754,6 +767,10 @@ theorem mul_succ : ∀ n m : Nat, n * (succ m) = (n * m) + n := by
 :::
 ::::
 ````
+
+#### `:::grade`
+
+_Not rendered._
 
 ### Quiz and solution directives
 
