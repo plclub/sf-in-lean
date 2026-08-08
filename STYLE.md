@@ -35,6 +35,7 @@ should be kept in sync as chapters are rewritten.
 | `Automation`      | `lia`, `try`, `repeat`, `specialize`, `trivial`, `simp`, `generalize` |
 | `Typeclasses`     | `decide` |
 | `HL/Imp`          | *(none new)* |
+| `HL/Hoare`        | `show` (in a solution only) |
 
 **Notes**
 - **`lia` rather than `omega`** The latter is being phased out.
@@ -44,7 +45,7 @@ should be kept in sync as chapters are rewritten.
   rest of the budget accumulated by `Automation` and everything before it.
   (`LF/Maps.lean` has been deleted; Rocq's `Maps.v` remains the source for the
   prose.)
-- Candidate tactics still to be placed include `show`, `rename_i`, `revert`, `suffices`, `tauto`. 
+- Candidate tactics still to be placed include `rename_i`, `revert`, `suffices`, `tauto`. 
 - Tactics `grind`, `aesop`, are deferred to a later volume, following
   FPiL's caution that `grind` is overwhelming for beginners. 
 
