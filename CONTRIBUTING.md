@@ -37,11 +37,11 @@ refer to the tenets to drive a decision (potentially updating the tenets).
 
 ## Communicating among ourselves
 
-For discussions, we use a combination of tools.  
+For discussions, we use a combination of tools.
 
 - **Zulip:** The private [SFL contributors
   channel](https://leanprover.zulipchat.com/#narrow/channel/607217-lean-software-foundations-contributors)
-  channel on the Lean Zulip is the main forum for discussing the translation effort. 
+  channel on the Lean Zulip is the main forum for discussing the translation effort.
   If you have a high-level comment or want to start a discussion about
   an issue of general interest, post here. (This channel is private and is expected to remain private. If, at
   some point, we find ourselves with a lot more people actively
@@ -68,11 +68,11 @@ For discussions, we use a combination of tools.
   In-text comments can also be used for coordinating work on specific
   issues.
 
-- **On PRs:** We prefer _not_ holding longer discussions in annotations on 
+- **On PRs:** We prefer _not_ holding longer discussions in annotations on
   PRs, because they tend to either get lost when the PR is merged or delay merging. Putting very local or short-term comments in this medium is fine -- or you can just make the change by directly adding commits to the PR, if it's clear what needs to be done.
 
 These conventions are still developing, so feel free to suggest better
-ways of working if you see them! 
+ways of working if you see them!
 
 ### Repo organization and make-fu
 
@@ -154,7 +154,7 @@ Record the resolution here in CONTRIBUTING.md if appropriate.
 3. In-file comments should be deleted if they get resolved.
 
 4. Once a PR moves out of Draft mode, Benjamin and/or Mike will
-review it. Please address these comments in a subsequent commit, either 
+review it. Please address these comments in a subsequent commit, either
 making appropriate changes or else responding in the file with your
 own comments.
 
@@ -225,7 +225,7 @@ Reading the table:
   nothing unresolved; "🚧 auto-merge held" when auto-merge is on but the PR is
   stuck outside the merge queue; and "⚠️ conflicts with `main`" when the branch
   no longer merges cleanly.
-- **Overlaps** — other active branches touching the same files. ⚠️ marks a 
+- **Overlaps** — other active branches touching the same files. ⚠️ marks a
   merge conflict; `(includes)` / `(included in)` means this branch fully
   contains / is contained in the other (stacked work, never a conflict); `A ⊃
   B` groups a concurrent overlap B under another overlap A that contains it.
@@ -246,10 +246,10 @@ needs a compile-time `%doc`).  Plain-Lean support-lib prerequisites
 need no per-import upkeep.
 
 **Porting chapters from Rocq.**
-The `to_verso` script automates the mechanical parts of translating from Rocq to 
+The `to_verso` script automates the mechanical parts of translating from Rocq to
 Verso-formatted Lean.  It leaves all the interesting bits to be translated manually.
 
-Example usage: 
+Example usage:
 ```
 python3 scripts/to_verso.py old/orig-plf-files/Hoare.v HL/Hoare.lean
 ```
@@ -268,7 +268,7 @@ carefully rewritten) by hand.
 
 Here is the part of the [mathlib AI policy][mathlib-ai-policy] that
 should be applied when AI tools are adding or changing public-facing content:
-> Explain which tool(s) you used and how you used it. This provides 
+> Explain which tool(s) you used and how you used it. This provides
 > useful context for reviewers: tools make different mistakes than humans,
 > so knowing this makes it easier to spot common errors.
 
@@ -280,7 +280,7 @@ Instructions for Claude live in `CLAUDE.md` (which also asks Claude to
 pay attention to the conventions in this file).
 
 Raw AI output should not be posted to GitHub or zulip without an
-indication that that's what it is.  
+indication that that's what it is.
 
 Scripts that are mostly or wholly AI generated should be marked as
 such: these will typically be lower quality than human-created or
