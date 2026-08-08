@@ -13,6 +13,7 @@ import LF.Logic
 import LF.IndProp
 import LF.Automation
 import LF.Typeclasses
+import LF.Notations
 
 import VersoManual
 
@@ -33,3 +34,4 @@ open Verso Genre Manual
 {include LF.IndProp}
 {include LF.Automation}
 {include LF.Typeclasses}
+{include LF.Notations}
