@@ -560,7 +560,7 @@ theorem test_nonZeros : nonZeros [0, 1, 0] = [1] := by
 
 The next definition uses `bif`, Lean's conditional for Boolean tests.
 The expression `bif b then x else y` evaluates to `x` when `b` is
-`true` and to `y` when `b` is `false`.
+{name}`true` and to `y` when `b` is {name}`false`.
 
 ```lean
 def oddMembers (l : NatList) : NatList := solution!(
