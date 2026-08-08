@@ -2510,10 +2510,10 @@ termination.
 ```lean +error
 def factorial_bad (n : Nat) : Nat :=
   if n == 0 then 1
-  else n * factorial_bad (n - 1)
+  else n * factorial_bad (pred n)
 ```
 
-This fails because Lean can't see that `n - 1` is structurally smaller.
+This fails because Lean can't see that `pred n` is structurally smaller.
 
 :::
 ::::
@@ -2782,7 +2782,7 @@ inductive Traveler : Type where
 Buying a ticket changes a traveler with no ticket into a ticketed traveler.
 If the traveler already has a ticket or has already checked in, nothing changes.
 
-:::exercise (rating := 1) (name := "buy_ticket")
+:::exercise (rating := 1) (name := "buyTicket")
 Define `buyTicket`
 ```lean
 def buyTicket (t : Traveler) : Traveler := solution!(
@@ -2814,6 +2814,11 @@ attribute [irreducible] buyTicket
 Here is our first general property: buying a ticket twice has the same
 effect as buying it once.
 
+:::full
+N.B. An operation is called _idempotent_
+if performing it twice has the same effect as performing it once.
+:::
+
 :::exercise (rating := 2) (name := "buy_ticket_idempotent")
 ```lean
 theorem buyTicket_idempotent (t : Traveler) :
@@ -2839,9 +2844,9 @@ A traveler can check in only after buying a ticket.
 and their bag is marked as needing inspection.
 Calling checkIn in any other state does nothing.
 
-:::exercise (rating := 1) (name := "check_in")
+:::exercise (rating := 1) (name := "checkIn")
 
-Define `check_in`.
+Define `checkIn`.
 
 ```lean
 def checkIn (t : Traveler) : Traveler := solution!(
@@ -2872,8 +2877,8 @@ theorem checkIn_checkedIn (bagContent : BagContent)
 attribute [irreducible] checkIn
 ```
 
-Buying a ticket and then checking in always leaves the traveler checked in,
-regardless of whether they were already checked in.
+A traveler who does not yet have a ticket can buy one and then check in.
+After doing so, the traveler is checked in and their bag needs to be screened.
 
 :::exercise (rating := 1) (name := "buy_ticket_then_check_in")
 ```lean
@@ -2890,7 +2895,7 @@ Bag inspection happens only after check-in.
 An ordinary bag is cleared, while a bag containing a battery is blocked.
 If the traveler has not checked in, `inspectBag` does nothing.
 
-:::exercise (rating := 1) (name := "inspect_bag")
+:::exercise (rating := 1) (name := "inspectBag")
 Define `inspectBag`.
 
 ```lean
@@ -2989,14 +2994,16 @@ attribute [irreducible] replaceBag
 ```
 
 :::full
-We know that replacing a bag after it has been inspected resets its
-screening status. In other words, {name}`inspectBag` and {name}`replaceBag` cannot in
-general be performed in either order.
+It is easy to see that replacing a bag after it has been inspected resets its screening status.
+In other words, {name}`inspectBag` and {name}`replaceBag` do not, in general, commute:
+the order in which the two operations are performed can affect the result.
 
-But are there cases in which the two operations do commute?
+But are there cases in which the two operations *do* commute?
 
-Yes. If the traveler has not checked in, {name}`inspectBag` does nothing, so
-replacing and inspecting the bag can be performed in either order.
+Yes. If the traveler has not checked in, {name}`inspectBag` has no effect.
+Therefore, whether we inspect the bag before or after replacing it makes no difference.
+In this case, {name}`inspectBag` and {name}`replaceBag` commute.
+
 :::
 
 :::terse
@@ -3005,9 +3012,19 @@ replacing and inspecting the bag can be performed in either order.
 
 :::exercise (rating := 2) (name := "inspect_replace_commute")
 ```lean
+theorem inspectBag_replaceBag_comm_noTicket
+    (oldContent newContent : BagContent) :
+    inspectBag (replaceBag newContent (.noTicket oldContent)) =
+    replaceBag newContent (inspectBag (.noTicket oldContent)) := by
+  solution!
+    rewrite [replaceBag_noTicket]
+    rewrite [inspectBag_noTicket]
+    rewrite [inspectBag_noTicket]
+    rewrite [replaceBag_noTicket]
+    rfl
+
 theorem inspectBag_replaceBag_comm_ticketed
-    (oldContent newContent : BagContent)
-    (screeningStatus : ScreeningStatus) :
+    (oldContent newContent : BagContent) :
     inspectBag (replaceBag newContent (.ticketed oldContent)) =
     replaceBag newContent (inspectBag (.ticketed oldContent)) := by
   solution!
