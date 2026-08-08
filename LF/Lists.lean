@@ -558,6 +558,10 @@ theorem test_nonZeros : nonZeros [0, 1, 0] = [1] := by
 :::gradeTheorem "0.5" test_nonZeros
 :::
 
+The next definition uses `bif`, Lean's conditional for Boolean tests.
+The expression `bif b then x else y` evaluates to `x` when `b` is
+`true` and to `y` when `b` is `false`.
+
 ```lean
 def oddMembers (l : NatList) : NatList := solution!(
   match l with
