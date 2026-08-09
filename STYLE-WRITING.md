@@ -39,6 +39,11 @@ This paragraph might go stale quickly.
 ## Examples 
 
 The pairs below are real polishing diffs pulled from the repo's git history, each illustrating one of the principles above. *(This section was compiled by Claude, from `git log`/`git show` on `LF/Basics.lean`, `LF/Induction.lean`, and `LF/Typeclasses.lean`. It has been human-reviewed; it does not perfectly illustrate the above ideas, but the examples are hopefully useful nevertheless.)*
+:::dev "Benjamin Pierce (bcpierce00)"
+Ugh. 
+
+The rest needs more work.  
+:::
 
 
 ### 1. Concrete instructions beat descriptive summary
@@ -71,7 +76,6 @@ The aside defending *why* OOP encapsulation matters is cut; the OOP-to-Lean comp
 :::dev "Benjamin Pierce (bcpierce00)"
 I only see one paragraph in both before and after?
 :::
-
 
 ### 3. Motivate a typeclass with a real consumer, not an abstract spec
 
