@@ -584,12 +584,18 @@ example : getElem emptyNatMap 2 = 0 := rfl
 To make element-getting lighter weight, let's define notation so we can write
 `emptyNatMap[2]` rather than `getElem emptyNatMap`. We could notate `getElem` directly — we'll do
 exactly that for `update` below — but here we'll instead make "getting an element" its own
-typeclass, `MyGetElem`, and notate *instances* of it. This is the same pattern behind `==`: writing
-`a == b` is notation for {name}`BEq.beq`, resolved by instance search for whatever type `a` and `b`
-have. Doing the same for indexing notation means `m[a]` resolves to `MyGetElem.getElem m a` for any
-type with a `MyGetElem` instance, not just `TotalMap` (indeed, `MyGetElem` is a simpler form of the
-standard library's {name}`GetElem`). We'll see the pattern once more at the end of this
-development, in the notation for constructing maps.
+typeclass, `MyGetElem`, and notate _instances_ of it. Doing so means `m[a]` resolves to `MyGetElem.getElem m a` for any
+type with a `MyGetElem` instance, not just `TotalMap`.
+
+Using typeclasses to define notation is typical in Lean when the same notation is useful
+for many different types.
+We have seen the approach already with `==`: writing
+`a == b` is notation for {name}`BEq.beq`, resolved by instance search for whatever type `a` and `b` have.
+We also just saw overloaded notation for `EmptyCollection` above,
+where `∅` is notation for {name}`EmptyCollection.emptyCollection`.
+Our typeclass `MyGetElem` is a simpler version of the standard library's {name}`GetElem` typeclass,
+which has many instances such as {name}`Array`, {name}`List`, and {name}`Vector`.
+We develop it to illustrate the notation-as-typeclass approach.
 
 ```lean
 end TotalMap
