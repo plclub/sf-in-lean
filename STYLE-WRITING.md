@@ -1,37 +1,45 @@
 # SF-in-Lean Writing Style Advice
 
-Here's some advice on writing in SFL. It is based on general experience, and in particular on pedagogy and polishing improvements made in pull requests to SFL.
+This file gives some advice on writing new material for SFL. It is based on general experience and in particular on pedagogy and polishing improvements made in pull requests to SFL.
 
-**Know your audience.** What do students know, prior to this course? Probably your audience is diverse, and they have taken different paths through the course to get here. What do they know so far from this course to the point you are writing? Leverage concepts they know, and don't use terms or concepts they don't know. Try not to reintroduce things they do know, but reminders of a non-recent concept or term are good; readers will forget things you already told them. 
+**Imagine your audience.** What do students know, prior to this course? Probably your audience is diverse, and they have taken different paths to get here. What do they know _so far_ from this course, at the point you are writing? Leverage concepts they know and don't use terms or concepts they don't know. Don't re-explain things they know well, but reminders of a non-recent concept or term are good; readers will forget things you told them a while back. 
 
 As an example: `LF/Typeclasses.lean` does this in one sentence: it reminds readers that "Chapter Poly introduced parametric polymorphism, declaring a type variable with no constraint on it," before immediately moving past it to what's new.
 
-**Context/problem, Gap, Solution (CGS).** Students want to know _why_ they are reading/doing something. They will suspend impatience temporarily, but not for long. A good structure is in three parts: what do you want to do, why can't you do it now, and how do you solve it? Common anti-patterns that are close to this structure but not quite it:
+**Context, Gap, Solution (CGS).** Readers want to know _why_ they are reading or doing something. They will suspend impatience temporarily, but not for long. A good structure is three parts: what do we want to do, what is stopping us from doing it, and what do we do about that? 
+
+Common anti-patterns that are close to this structure but not quite it:
 1. The problem is stated but is too big. Then it's a long path to get to the solution without it being obvious why that's the right path. To address this, you want to break the big problem down into smaller problems, each of which has the three-part structure.
 2. The solution is not an obvious match to the problem. For example, the solution might appear to be more than is demanded by the problem — why not something simpler? Either the solution should be simpler, or some explanation is needed.
 
-The "Why We Need Typeclasses" section of `LF/Typeclasses.lean` is close to a model of this: it poses a concrete problem (a `Nat`-only `elem` function that we want to generalize), tries the obvious generalization and watches it fail with a puzzling error, tries a tedious explicit-parameter workaround, and only then introduces typeclasses as the solution — each step small enough to motivate the next, rather than one big leap to "here's typeclasses."
+The "Why We Need Typeclasses" section of `LF/Typeclasses.lean` is close to a model of this: it poses a concrete problem (a `Nat`-only `elem` function that we want to generalize), tries the obvious generalization and watches it fail with a puzzling error, tries a tedious explicit-parameter workaround, and only then introduces typeclasses as the solution — each step small enough to motivate the next, rather than one big "here's typeclasses."
 
-**Start from something the reader knows, being very specific, and work to something general.** This advice brings together the two bits of advice above. It has the benefit that you begin "on the same page" with your reader, and then you make small deltas that are easy to be confident about before making bigger leaps. Almost certainly you should follow this advice by using _good examples_, from small/simple to more general. `LF/Poly.lean` does this well: it starts from the concrete `BoolList` type, explicitly compares it back to the `Natlist` from the previous chapter, and only then generalizes to the polymorphic `MyList α`.
+**Start from something specific that the reader knows; work to something general.** This advice brings together the two bits of advice above. It has the benefit that you begin "on the same page" with your reader, and then you make small deltas that are easy to be confident about before making bigger leaps. Almost certainly you should follow this advice by using _good examples_, from small/simple to more general. `LF/Poly.lean` does this well: it starts from the concrete `BoolList` type, explicitly compares it back to the `Natlist` from the previous chapter, and only then generalizes to the polymorphic `MyList α`.
 
-**Minimize complexity.** This advice seems obvious but it has many instantiations. For SFL, the risk is jumping to "real Lean" too quickly, at a cost to good pedagogy. Always ask yourself the high-level question: _How can I make this simpler?_ Manifestations:
-1. When explaining by example, it's ideal to reuse examples rather than introduce new ones. At the same time, you don't want one large complex example when two simple ones would do. (`LF/Typeclasses.lean` motivates `MyGetElem` by calling back to `BEq` and `EmptyCollection`, examples the reader has already seen earlier in the same chapter, rather than reaching for a new analogy.)
-2. A multi-step solution to a problem is often preferred to a one-step solution when concerns can be separated. Ask yourself: can I break this solution into smaller, simpler parts?
-3. Avoid the full, expert-level solution if you find that it solves lots of problems you can't or don't want to explain right now. It's okay to sometimes ask people to suspend disbelief, though we'd generally prefer to avoid it.
+**Minimize complexity.** This may seem obvious, but the general principle has many specific implications. For SFL, one big risk is jumping to "real Lean" too quickly, at a cost to good pedagogy. Always ask yourself the high-level question: _How can I make this simpler?_ 
 
-**Don't forget to include exercises.** SFL is most valuable because it offers exercises for each interesting concept. Just as we develop examples for explanation purposes, we want exercises to allow readers to test their understanding. Consider making an explanation+example into an explanation+exercise instead. `LF/IndProp.lean` does this directly: right after explaining induction-on-evidence, it says "The following exercises provide simpler examples of this technique, to help you familiarize yourself with it," handing the technique straight to the reader.
+Manifestations:
+1. When explaining by example, it's good to reuse examples rather than introducing new ones. Don't use one large and complex example when two simple ones would do. (`LF/Typeclasses.lean` motivates `MyGetElem` by calling back to `BEq` and `EmptyCollection`, examples the reader has already seen earlier in the same chapter, rather than reaching for a new analogy.)
+2. A multi-step solution to a problem is often preferable over a one-step solution when concerns can be separated. Ask yourself: can I break this solution into smaller, simpler parts?
+3. Avoid giving a full, expert-level solution if it solves problems you can't or don't want to explain right now. It's okay to sometimes ask people to suspend disbelief, but we'd generally prefer to avoid it.
 
-**It's good to cut things.** Especially as material evolves, it tends to grow. The temptation is not to get rid of anything. Ask yourself, considering all of the above: "Does this serve my goal? Does my audience need this?" If the answer is "not really, but some might benefit," you might either
-1. add it in a `:::details` block inline, if it's relatively short (1-2 pages in the HTML), or
-2. add an appendix to the chapter that dives into the details.
+**Don't forget exercises.** SFL's signature style is that it offers exercises for each interesting concept. Just as we develop examples for explanation purposes, we need exercises for readers to test their understanding. Consider making an explanation+example into an explanation+exercise. `LF/IndProp.lean` does this directly: right after explaining induction-on-evidence, it says "The following exercises provide simpler examples of this technique, to help you familiarize yourself with it," handing the technique straight to the reader.
 
-(But don't waste too much time on this while we are still building the core content.) SFL doesn't yet have a `:::details` block in active use, but chapters already reach for the same idea informally with `(Optional)` and `Aside:` section headers — e.g. "More on Notation (Optional)" and "Structural Recursion (Optional)" in `LF/Basics.lean` — which are good candidates to convert once `:::details` sees wider adoption.
+**Cutting is good.** As material evolves, it tends to grow. The temptation is not to get rid of anything, ever. Ask yourself, considering all of the above: "Does this serve my goal? Does my audience need this?" If the answer is "not everybody, but some might benefit," you could either
+1. put it in a hidden-by-default `:::details` block, if it's relatively short (1-2 pages in the HTML), or
+2. add an appendix that dives into the details.
+
+(But don't waste too much time on this while we are still building out the core content.) SFL doesn't yet have a `:::details` block in active use, but chapters already reach for the same idea informally with `(Optional)` and `Aside:` section headers — e.g. "More on Notation (Optional)" and "Structural Recursion (Optional)" in `LF/Basics.lean` — which are good candidates to convert once `:::details` sees wider adoption.
+:::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement
+This paragraph might go stale quickly.
+:::
 
 ---
 
-## Examples from the field: before and after
+## Examples 
 
-The pairs below are real polishing diffs pulled from this repo's git history, each illustrating one of the principles above. *(This section was compiled by Claude, from `git log`/`git show` on `LF/Basics.lean`, `LF/Induction.lean`, and `LF/Typeclasses.lean`. It has been human-reviewed; it does not perfectly illustrate the above ideas, but the examples are hopefully useful nevertheless.)*
+The pairs below are real polishing diffs pulled from the repo's git history, each illustrating one of the principles above. *(This section was compiled by Claude, from `git log`/`git show` on `LF/Basics.lean`, `LF/Induction.lean`, and `LF/Typeclasses.lean`. It has been human-reviewed; it does not perfectly illustrate the above ideas, but the examples are hopefully useful nevertheless.)*
+
 
 ### 1. Concrete instructions beat descriptive summary
 
@@ -47,7 +55,7 @@ After, the same content is one pass of short imperative sentences tied to the ex
 
 Telling the reader what to *do* with the example in front of them replaces three restatements of what the panel is *for*.
 
-### 2. Cut the editorializing aside
+### 2. Cut editorial asides
 
 **Principle:** It's good to cut things · **Commit:** `fcf1418` · **File:** `LF/Basics.lean`
 
@@ -60,6 +68,10 @@ After:
 > "Lean takes inspiration from object-oriented programming in favoring the use of _encapsulation_. In OOP, it is considered poor style to expose the fields of an object in its interface... In idiomatic Lean, it is similarly considered poor style to 'peek' through definitions using `rfl`..."
 
 The aside defending *why* OOP encapsulation matters is cut; the OOP-to-Lean comparison is made directly instead, one paragraph instead of two.
+:::dev "Benjamin Pierce (bcpierce00)"
+I only see one paragraph in both before and after?
+:::
+
 
 ### 3. Motivate a typeclass with a real consumer, not an abstract spec
 
