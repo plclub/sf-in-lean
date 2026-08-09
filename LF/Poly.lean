@@ -986,7 +986,7 @@ value `n`.
 ```lean (name := doIt3Times)
 #check doIt3Times
 
-example : doIt3Times Nat.minustwo 9 = 3 := by rfl
+example : doIt3Times Nat.minusTwo 9 = 3 := by rfl
 
 example : doIt3Times not true = false := by rfl
 ```
