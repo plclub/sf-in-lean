@@ -16,7 +16,8 @@ picture of who is touching what:
     Overlaps cell naming
     which *other* PR branches it shares files with (plain = clean co-edit,
     ⚠️ = a real conflict from an in-memory merge not a filename guess, ⊃/⊂ = one
-    branch's commits contain the other's), a Files count (expander), and any
+    branch's commits contain the other's), a Changes count — files touched and
+    total lines changed — (expander), and any
     `#Note: …` lines reviewers left on the PR.  Every icon carries a hover
     tooltip (via `<abbr>`) and is glued to its text with a non-breaking space,
     and a legend below the table spells the glyphs out too.  Only branches with
@@ -151,6 +152,13 @@ def collect_branches():
         files = (
             set(git("diff", "--name-only", base, ref).splitlines()) if base else set()
         )
+        # Total churn = insertions + deletions across the diff, for the "Changes"
+        # column. `--numstat` gives per-file `adds\tdels\tpath`; binary files
+        # show `-` for both, which we skip.
+        churn = 0
+        for line in (git("diff", "--numstat", base, ref).splitlines() if base else []):
+            adds, dels = line.split("\t")[:2]
+            churn += (int(adds) if adds != "-" else 0) + (int(dels) if dels != "-" else 0)
         author = git("log", "-1", "--format=%an", ref)
         email = git("log", "-1", "--format=%ae", ref)
         sha = git("log", "-1", "--format=%H", ref)
@@ -176,6 +184,7 @@ def collect_branches():
             "short": short,
             "ahead": ahead,
             "files": files,
+            "churn": churn,
             "author": author,
             "email": email,
             "sha": sha,
@@ -436,7 +445,7 @@ def status_badges(pr):
                           else tip("👍", "Approved, but with open review threads"))
     if pr["unresolved"]:
         n = pr["unresolved"]
-        badges.append(tip(f"💬{n}", f"{n} open review thread{'' if n == 1 else 's'}"))
+        badges.append(tip(f"💬&nbsp;{n}", f"{n} open review thread{'' if n == 1 else 's'}"))
     # An auto-merge that's actually *held* (enabled but not yet in the queue) is
     # worth flagging; a PR that has reached the merge queue is a transient state
     # on its way in, so it gets no badge.
@@ -508,15 +517,17 @@ def notes_cell(pr):
     return " · ".join(notes)
 
 
-def files_cell(files):
-    """A <details> expander listing files, valid inside a Markdown table cell.
-    The names flow middot-separated (not one `<br>` per line) so the expanded
-    list stays compact."""
+def files_cell(files, churn):
+    """A <details> expander for the "Changes" column: its summary reads
+    `N files, XX lines` (XX = total insertions + deletions), expanding to the
+    file names.  The names flow middot-separated (not one `<br>` per line) so
+    the expanded list stays compact."""
     n = len(files)
     if n == 0:
-        return "0"
+        return "0 files, 0 lines"
     inner = " · ".join(f"`{f}`" for f in sorted(files))
-    return f"<details><summary>{n}</summary>{inner}</details>"
+    return (f"<details><summary>{n} files, {churn} lines</summary>"
+            f"{inner}</details>")
 
 
 def render(branches, conf, prs, have_token, slug):
@@ -563,7 +574,7 @@ def render(branches, conf, prs, have_token, slug):
                f"`GITHUB_TOKEN`) to refresh manually._")
     out = [ISSUE_MARKER, "", "## Current Activity", ""]
     if not have_token:
-        out.append("> ⚠️ No `GITHUB_TOKEN` available — PRs cannot be read, so "
+        out.append("> ⚠️&nbsp;No `GITHUB_TOKEN` available — PRs cannot be read, so "
                    "this report is empty.")
         out.append("")
 
@@ -572,7 +583,7 @@ def render(branches, conf, prs, have_token, slug):
     # Five columns: the old "Author" and "Activity" columns are folded into the
     # branch cell's small-type subline, and the wordy Status/overlap text is
     # replaced by glyph badges (spelled out in the legend below the table).
-    out.append("| Branch / Author | Status | Overlaps | Files | `#Note`s |")
+    out.append("| Branch / Author | Status | Overlaps | Changes | `#Note`s |")
     out.append("|---|---|---|--:|---|")
     ready_rows, other_rows, draft_rows = [], [], []
     for r, b in sorted(active.items(), key=lambda x: (-x[1]["ts"], x[1]["short"])):
@@ -631,8 +642,8 @@ def render(branches, conf, prs, have_token, slug):
         # for smaller glyphs — the block line-height fixes the leading regardless.
         notes = notes_cell(pr)
         notes = f"<sub>{notes}</sub>" if notes else ""
-        row = (f"| {first} | {status} | {ov} | {files_cell(b['files'])} | "
-               f"{notes} |")
+        row = (f"| {first} | {status} | {ov} | "
+               f"{files_cell(b['files'], b['churn'])} | {notes} |")
         # Drafts are their own section at the bottom; among the rest, ready-to-
         # merge PRs float to the top, everything else lands in "In progress".
         if pr and pr["draft"]:
@@ -660,18 +671,10 @@ def render(branches, conf, prs, have_token, slug):
     else:
         for _, rows in present:
             out += rows
-    if active:
-        out.append("")
-        out.append(
-            "<sub>**Status** ✅&nbsp;ready · 👍&nbsp;approved, threads open · "
-            "🔴&nbsp;changes requested · 💬&nbsp;open threads · "
-            "✏️&nbsp;draft · ❗&nbsp;auto-merge "
-            "held · 🔗&nbsp;fixes issue · ⚠️&nbsp;main conflicts with `main`. "
-            "&nbsp; **Overlaps** plain = clean co-edit · ⚠️&nbsp;real conflict "
-            "· ⊃&nbsp;contains · ⊂&nbsp;contained in.</sub>")
     out.append("")
 
     # ---- non-PR branches: one compact "Branches without PRs:" line ----
+    # This paragraph comes first, then the table's Status/Overlaps legend below.
     if non_pr:
         items, any_clash = [], False
         for r, b in sorted(non_pr.items(), key=lambda x: -x[1]["ts"]):
@@ -683,12 +686,21 @@ def render(branches, conf, prs, have_token, slug):
                 f"(created {nbsp(b['created'])}, active {nbsp(b['when'])}"
                 f"){'&nbsp;' + tip('⚠️', 'Conflicts with an open PR') if clash else ''}"
             )
-        legend = (" &nbsp;_(⚠️ = conflicts with an open PR)_" if any_clash else "")
-        # The whole paragraph is set in small type with `<sub>` (smaller than
-        # `<small>` on GitHub, and matching the table's small cells).  Wrapped
-        # lines still sit at the surrounding block line-height — that leading is
-        # fixed by the block strut and can't be tightened by an inline tag.
-        out.append("<sub>**Branches without PRs:** " + ", ".join(items) + "." + legend + "</sub>")
+        legend = (" &nbsp;_(⚠️&nbsp;= conflicts with an open PR)_" if any_clash else "")
+        # Set at normal body size (no `<sub>` wrapper) so it reads as a proper
+        # paragraph rather than fine print.
+        out.append("**Branches without PRs:** " + ", ".join(items) + "." + legend)
+        out.append("")
+
+    # ---- the table's Status / Overlaps legend ----
+    if active:
+        out.append(
+            "<sub>**Status** ✅&nbsp;ready · 👍&nbsp;approved, threads open · "
+            "🔴&nbsp;changes requested · 💬&nbsp;open threads · "
+            "✏️&nbsp;draft · ❗&nbsp;auto-merge "
+            "held · 🔗&nbsp;fixes issue · ⚠️&nbsp;main conflicts with `main`. "
+            "&nbsp; **Overlaps** plain = clean co-edit · ⚠️&nbsp;real conflict "
+            "· ⊃&nbsp;contains · ⊂&nbsp;contained in.</sub>")
         out.append("")
 
     # ---- files: conflicting first, then clean co-edits, then single-branch ----
