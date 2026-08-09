@@ -620,20 +620,29 @@ theorem disjoint_ex3 {α : Type} (x y z : α) (l : List α)
 :::slidebreak
 :::
 
-Recall our `RGB` and `Color` types:
+## Quizzes
 
+Recall our {name}`RGB` and {name}`Color` types:
+```display
 inductive RGB : Type where
-  | red | green | blue
-inductive Color : Type where |
-  black | white | primary (p: RGB)
+  | red
+  | green
+  | blue
 
+inductive Color : Type where
+  | black
+  | white
+  | primary (p: RGB)
+```
+
+::::quiz
 Suppose Lean's proof state looks like
 
 ```display
 x : RGB
 y : RGB
 h : .primary x = .primary y
-
+------------------------------
 ⊢ y = x
 ```
 
@@ -648,14 +657,15 @@ and we apply the tactic `injection h with hxy`.  What will happen?
 (4) None of the above.
 
 :::quizSolution
+
+```lean
+example (x y : RGB)
+    (h : Color.primary x = Color.primary y) :
+    x = y := by injection h
 ```
-theorem quiz0 (x y : RGB) :
-    Color.primary x = Color.primary y →
-    x = y := by
-  intro h
-  injection h
-```
+
 :::
+::::
 
 ::::quiz
 Suppose Lean's proof state looks like
@@ -664,43 +674,7 @@ Suppose Lean's proof state looks like
 x : Bool
 y : Bool
 h : !x = !y
-
-⊢ y = x
-```
-
-and we apply the tactic `injection h with hxy`  What will happen?
-
-(A) "No more goals."
-
-(B) The tactic fails.
-
-(C) Hypothesis `h` becomes `hxy : x = y`.
-
-(D) None of the above.
-
-:::quizSolution
-```
-/-- error: Tactic `injection` failed: equality of constructor applications expected
-
-x y : Bool
-h : (!decide (x = !y)) = true
-⊢ y = x -/
-#guard_msgs in
-theorem quiz1 (x y : Bool) : !x = !y → y = x := by
-  intro h
-  injection h with hxy
-```
-:::
-::::
-
-::::quiz
-Now suppose Lean's proof state looks like
-
-```display
-x : Nat
-y : Nat
-h : x + 1 = y + 1
-
+--------------
 ⊢ y = x
 ```
 
@@ -715,9 +689,47 @@ and we apply the tactic `injection h with hxy`.  What will happen?
 (D) None of the above.
 
 :::quizSolution
+
+```lean +error (name := qz2)
+example (x y : Bool) (h : !x = !y) : y = x := by
+  injection h with hxy
 ```
-theorem quiz2 (x y : Nat) : x + 1 = y + 1 → y = x := by
-  intro h
+
+```leanOutput qz2
+Tactic `injection` failed: equality of constructor applications expected
+
+x y : Bool
+h : (!decide (x = !y)) = true
+⊢ y = x
+```
+
+:::
+::::
+
+::::quiz
+Now suppose Lean's proof state looks like
+
+```display
+x : Nat
+y : Nat
+h : x + 1 = y + 1
+-------------------
+⊢ y = x
+```
+
+and we apply the tactic `injection h with hxy`.  What will happen?
+
+(A) "No more goals."
+
+(B) The tactic fails.
+
+(C) Hypothesis `h` becomes `hxy : x = y`.
+
+(D) None of the above.
+
+:::quizSolution
+```lean
+example (x y : Nat) (h : x + 1 = y + 1) : y = x := by
   injection h with hxy
   symm
   assumption
@@ -732,7 +744,7 @@ Finally, suppose Lean's proof state looks like
 x : Nat
 y : Nat
 h : 1 + x = 1 + y
-
+-------------------
 ⊢ y = x
 ```
 
@@ -747,27 +759,21 @@ and we apply the tactic `injection h with hxy`.  What will happen?
 (D) None of the above.
 
 :::quizSolution
+
+```lean +error (name := qz4)
+theorem quiz3 (x y : Nat) (h : 1 + x = 1 + y) : y = x := by
+  injection h with hxy
 ```
-/-- error: Tactic `injection` failed: equality of constructor applications expected
+
+```leanOutput qz4
+Tactic `injection` failed: equality of constructor applications expected
 
 x y : Nat
 h : 1 + x = 1 + y
-⊢ y = x -/
-#guard_msgs in
-theorem quiz3 (x y : Nat) : 1 + x = 1 + y → y = x := by
-  intro h
-  injection h with hxy
+⊢ y = x
 ```
 :::
 ::::
-
-:::dev
-HIDE: BCP 9/16: Not sure this theorem is pulling its weight in SF!
-It's used relatively few places, and there is nothing too
-interesting to say about it here -- indeed it kind of disrupts the
-flow.  BCP 9/18: I actually found it useful several times in the
-lecture on this chapter, so I think it's best to leave it.
-:::
 
 :::slidebreak
 :::
@@ -775,7 +781,7 @@ lecture on this chapter, so I think it's best to leave it.
 The injectivity of constructors allows us to reason that
 {lean}`∀ (n m : Nat), n + 1 = m + 1 → n = m`.  The converse of this
 implication is an instance of a more general fact about both
-constructors and functions, which we will find useful below:
+constructors and functions:
 
 ```lean
 example {α β : Type} (f : α → β) (x y : α)
@@ -788,16 +794,16 @@ example (n m : Nat) (h : n = m) :
 ```
 
 ::::full
-Indeed, there is also a tactic named `congr` that can
-prove such theorems directly.  Given a goal of the form
-`f a1 ... an = g b1 ... bn`, the tactic `congr` will produce subgoals
-of the form `f = g`, `a1 = b1`, ..., `an = bn`. At the same time,
+Indeed, there is also a tactic named {tactic}`congr` that can
+prove such goals directly.  Given a goal of the form
+`f a₁ ... aₙ = g b₁ ... bₙ`, the tactic {tactic}`congr` will produce subgoals
+of the form `f = g`, `a₁ = b₁`, ..., `aₙ = bₙ`. At the same time,
 any of these subgoals that are simple enough (e.g., immediately
-provable by `rfl`) will be automatically discharged.
+provable by {tactic}`rfl`) will be automatically discharged.
 ::::
 
 :::terse
-Lean also provides `congr` as a tactic.
+Lean also provides {tactic}`congr` as a tactic.
 :::
 
 ```lean
@@ -806,24 +812,20 @@ example (n m : Nat) (h : n = m) :
   congr
 ```
 
-:::dev "Daniel Sainati (dsainati1)" NOW
-how is this explanation of `congr`?
-:::
-
 ::::full
 The `congr` tactic also accepts a numerical argument,
 which tells Lean how deeply to decompose the goal.
 So, given a goal like `((a, b), (c, d)) = ((e, f), (g, h))`,
-`congr 1` only applies `congr` once to the goal, and would produce
+`congr 1` only applies {tactic}`congr` once to the goal, and would produce
 two subgoals: `(a, b) = (e, f)` and `(c, d) = (g, h)`.
-`congr 2`, meanwhile, would apply `congr` again to
+`congr 2`, meanwhile, would apply {tactic}`congr` again to
 both these subgoals, and produce four subgoals: `a = e`, `b = f`,
-`c = g` and `d = h`. Using `congr` without an argument always
+`c = g` and `d = h`. Using {tactic}`congr` without an argument always
 decomposes the goal as deeply as possible.
 
 Why does Lean provide this level of flexibility? Depending
 on what we are trying to prove, deeper applications
-of `congr` may make our goal unprovable. Consider
+of {tactic}`congr` may make our goal unprovable. Consider
 this example:
 ::::
 
@@ -831,26 +833,43 @@ this example:
 We can specify the recursion-depth with `congr n`.
 ::::
 
-```lean
-/-- warning: declaration uses `sorry` -/
-#guard_msgs(warning) in
-example (a b c d : Nat) :
-    a = b → c = d → (a, c + 1) = (b, 1 + d) := by
-  intro eq1 eq2
+```lean +error (name := congr1)
+example (a b c d : Nat) (hab : a = b) (hcd : c = d) :
+    (a, c + 1) = (b, 1 + d) := by
   congr
-  /- We now have three goals: `c = 1`, `1 = d`, and `1 = d`,
-     but these are not provable from our hypotheses! `congr`
-     has gone too deep. -/
-  sorry
-  sorry
-  sorry
+```
 
-theorem eq_implies_succ_proj_equal (a b c d : Nat) :
-    a = b → c = d → (a, c + 1) = (b, 1 + d) := by
-  intro eq1 eq2
+We now have three goals: `c = 1`, `1 = d`, and `1 = d`,
+but these are not provable from our hypotheses! {tactic}`congr`
+has gone too deep.
+
+```leanOutput congr1
+unsolved goals
+case e_snd.e_a
+a b c d : Nat
+hab : a = b
+hcd : c = d
+⊢ c = 1
+
+case e_snd.e_a.e_2
+a b c d : Nat
+hab : a = b
+hcd : c = d
+⊢ 1 = d
+
+case e_snd.e_a.e_3
+a b c d : Nat
+hab : a = b
+hcd : c = d
+⊢ 1 = d
+```
+
+```lean
+example (a b c d : Nat) (hab : a = b) (hcd : c = d) :
+    (a, c + 1) = (b, 1 + d) := by
   /- Only shallowly using `congr` here allows us to complete the proof -/
   congr 1
-  rw [add_comm]
+  rw [Nat.add_comm]
   congr
 ```
 
