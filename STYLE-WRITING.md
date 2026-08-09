@@ -29,9 +29,21 @@ Manifestations:
 1. put it in a hidden-by-default `:::details` block, if it's relatively short (1-2 pages in the HTML), or
 2. add an appendix that dives into the details.
 
-(But don't waste too much time on this while we are still building out the core content.) SFL doesn't yet have a `:::details` block in active use, but chapters already reach for the same idea informally with `(Optional)` and `Aside:` section headers — e.g. "More on Notation (Optional)" and "Structural Recursion (Optional)" in `LF/Basics.lean` — which are good candidates to convert once `:::details` sees wider adoption.
+(But don't waste too much time on this while we are still building out the core content.) 
+
+SFL doesn't yet have a `:::details` block in active use, but chapters already reach for the same idea informally with `(Optional)` and `Aside:` section headers — e.g. "More on Notation (Optional)" and "Structural Recursion (Optional)" in `LF/Basics.lean` — which are good candidates to convert once `:::details` sees wider adoption.
 :::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement
 This paragraph might go stale quickly.
+:::
+:::dev "Benjamin Pierce (bcpierce00)"
+The `:::details` functionality is implemented and ready to use!
+
+However, we should talk about whether it should be used for
+material currently marked optional — that has not been my expectation. (I thought `:::details` was for details that most readers really _should_ skip, like gnarly technicalities of sophisticated notations.)
+
+IMO, optional sections work fine just the way they are, especially at the ends of chapters.
+
+Asides are another thing — not quite the same as material that should be skipped — and perhaps deserve their own tag.
 :::
 
 ---
