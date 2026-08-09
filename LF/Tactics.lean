@@ -873,121 +873,67 @@ example (a b c d : Nat) (hab : a = b) (hcd : c = d) :
   congr
 ```
 
-# Using Tactics on Hypotheses
+# Using {tactic}`apply` on Hypotheses
 
 ::::full
-By default, most tactics work on the goal formula and leave
-the context unchanged.  However, most tactics also have a variant
-that performs a similar operation on a statement in the context.
+The tactic `apply t at h` matches an implication `t`
+(say, of the form `a → b`) against a hypothesis `h` in the local
+context. Unlike ordinary {tactic}`apply`, which matches the goal against `b`
+and replaces it with the subgoal `a`), `apply t at h` matches the type of `h`
+against `a` and, if successful, replaces `h` with a hypothesis of type `b`.
 
-For example, the tactic "`dsimp at H`" performs simplification on
-the hypothesis `H` in the context.
-::::
+In other words, `apply t at h` gives us a form of "forward
+reasoning": given `t : a → b` and `h : a`, it replaces `h` with a proof of `b`.
 
-::::terse
-Many tactics come with "`... at ...`" variants that work on
-hypotheses instead of goals.
-::::
+By contrast, ordinart `apply t` is "backward reasoning": given `t : a → b`
+and a goal `⊢ b`, it replaces the goal with `⊢ a`.
 
-:::dev "Benjamin Pierce (bcpierce00)"
-This is surely NOT the right way to prove this fact, and I'm not sure that
-proving it here is what we want to do anyway.  Inserting it for now for expediency,
-to get this file closer to compiling...
-:::
-
-:::dev "Claude"
-NB `rfl` does not prove this: in this chapter `==` on `Nat` elaborates via
-the generic decidable-equality instance (`n == m` is `decide (n = m)`), and
-`decide` is stuck on variables.  So we reduce to propositional injectivity.
-:::
-
-```lean
-theorem beq_succ (n m : Nat) : (n + 1 == m + 1) = (n == m) :=
-  decide_eq_decide.mpr Nat.succ_inj
-
-theorem succ_inj (n m : Nat) :
-    n + 1 == m + 1 → n == m := by
-  intro h
-  rw [beq_succ] at h
-  exact h
-```
-
-::::full
-Similarly, `apply L at H` matches some conditional statement
-`L` (of the form `X → Y`, say) against a hypothesis `H` in the
-context.  However, unlike ordinary `apply` (which rewrites a goal
-matching `Y` into a subgoal `X`), `apply L at H` matches `H`
-against `X` and, if successful, replaces it with `Y`.
-
-In other words, `apply L at H` gives us a form of "forward
-reasoning": given `X → Y` and a hypothesis matching `X`, it
-produces a hypothesis matching `Y`.
-
-By contrast, `apply L` is "backward reasoning": it says that if we
-know `X → Y` and we are trying to prove `Y`, it suffices to prove
-`X`.
-
-Here is a variant of a proof that uses forward reasoning
-throughout instead of backward reasoning.
+Here is a variant of the proof that uses forward reasoning rather than backward reasoning:
 ::::
 
 :::slidebreak
 :::
 
 ::::terse
-The ordinary `apply` tactic is a form of "backward
-reasoning."  It says "We're trying to prove `X` and we know
-`Y → X`, so if we can prove `Y` we'll be done."
+The ordinary {tactic}`apply` tactic is a form of "backward
+reasoning." It says "We are trying to prove `a` and we know
+`b → a`, so if we can prove `b` we'll be done."
 
-By contrast, the variant `apply... at...` is "forward reasoning":
-it says "We know `Y` and we know `Y → X`, so we also know `X`."
+By contrast, the variant `apply ... at ...` is "forward reasoning":
+it says "We know `b` and we know `b → a`, so we also know `a`."
 ::::
 
-:::dev
-HIDE: Robert Rand: I find the behavior of `apply in` to be hideous.
-If I have H1 : A and H2: A → B, I don't want to change H1 to B
-(leaving me with an entirely redundant H2), I want to change H2 to
-B, leaving me with H1 : A, H2 : B. I tend to point this out and
-show that `specialize (EQ H)` gives us what we want. This makes for
-a nice segue to the next section.
-:::
 
 ```lean
-theorem silly4 (n m p q : Nat) :
-    (n = m → p = q) →
-    n = m →
+example (n m p q : Nat)
+    (h : n = m → p = q)
+    (hnm : n = m) :
     p = q := by
-  intro eq1 eq2
-  apply eq1 at eq2
-  exact eq2
+  apply h at hnm
+  exact hnm
 ```
 
 ::::full
-Forward reasoning starts from what is _given_ (premises,
-previously proven theorems) and iteratively draws conclusions from
-them until the goal is reached.  Backward reasoning starts from
-the _goal_ and iteratively reasons about what would imply the
-goal, until premises or previously proven theorems are reached.
+Forward reasoning begins with what is already known — premises and
+previously proven theorems — and derives new facts from
+them until the goal is reached.  Backward reasoning begins with
+the _goal_ and works backward through implications that would prove
+it, until remaining goals are facts that are already known.
 
-The informal proofs seen in math or computer science classes tend
-to use forward reasoning.  By contrast, idiomatic use of Lean
-generally favors backward reasoning, though in some situations the
-forward style can be easier to think about.
+The informal proofs in mathematics and computer science often
+use forward reasoning.  In Lean, however, backward reasoning is often more
+idiomatic, though forward reas can sometimes be easier to follow or more natural for
+particular proofs.
 
 You may be interested to know that the `apply ... at ...` tactic
-is not part of Lean's base set of tactics. However, Lean makes it
+is not part of Lean's core set of tactics. However, Lean makes it
 very easy for users to define new tactics that suit their
-particular proof style, and so the developers of the popular
-Mathlib library defined the `apply ... at ...` tactic to
-better enable forward reasoning. Mathlib is a very large development,
-so we won't import the whole thing here, but we have
-provided you `apply ... at ...` because it is quite useful.
+particular proof style, and so the developers of the [Mathlib](https://github.com/leanprover-community/mathlib4) library
+defined the `apply ... at ...` tactic to
+better support forward reasoning. Mathlib is a very large development,
+so we will not import the whole thing here, but we have
+made `apply ... at ...` available because it is quite useful.
 ::::
-
-:::dev "Daniel Sainati (dsainati1)" NOW
-this part has been changed
-from the original Rocq, let me know what you think
-:::
 
 # Specializing Hypotheses
 
