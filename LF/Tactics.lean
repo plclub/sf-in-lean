@@ -67,19 +67,6 @@ import LF.Poly
 import LF.CustomTactics
 ```
 
-OA: added these to use Lean's Nat.
-
-:::dev "Benjamin Pierce (bcpierce00)"
-Deserves a comment.  (In general, the reader should be given
-enough information to understand every line in the files we give them.
-This will not always be possible, but when it is not we should mark
-it explicitly.)
-:::
-
-```lean
-open Nat (add_comm add_assoc add_zero add_succ mul_one succ_sub_succ)
-```
-
 # The `apply` Tactic
 
 ::::full
@@ -89,21 +76,20 @@ previously proved lemma.
 ::::
 
 ::::terse
-The `apply` tactic is useful when some hypothesis or an
+The {tactic}`apply` tactic is useful when some hypothesis or an
 earlier lemma exactly matches the goal:
 ::::
 
 ```lean
-theorem silly1 (n m : Nat) : n = m → n = m := by
-  intro eq
-  /- Here, we could finish with `rw [eq]` as we
+example (n m : Nat) (h : n = m) : n = m := by
+  /- Here, we could finish with `rw [h]` as we
     have done several times before.  Or we can finish
     by using `apply`: -/
-  apply eq
+  apply h
 ```
 
 ::::full
-The `apply` tactic also works with _conditional_ hypotheses
+The {tactic}`apply` tactic also works with _conditional_ hypotheses
 and lemmas: if the statement being applied is an implication, then
 the premises of this implication will be added to the list of
 subgoals needing to be proved.
@@ -113,28 +99,25 @@ subgoals needing to be proved.
 :::
 
 ::::terse
-`apply` also works with _conditional_ hypotheses:
+{tactic}`apply` also works with hypotheses whose types are implications:
 ::::
 
 ```lean
-theorem silly2 (n m o p : Nat) :
-    n = m →
-    (n = m → [n, o] = [m, p]) →
+example (n m o p : Nat) (hnm : n = m) (h : n = m → [n, o] = [m, p]) :
     [n, o] = [m, p] := by
-  intro eq1 eq2
-  apply eq2
-  apply eq1
+  apply h
+  apply hnm
 ```
 
 ::::full
-Typically, when we use `apply h`, the statement `h` will
-begin with a `forall` that introduces some _universally quantified variables_.
+When we use `apply h`, Lean tries to match the conclusion of the type
+of `h` with the current goal. Here `h : n = m → [n, o] = [m, p]` has conclusion
+`[n, o] = [m, p]`, which matches the current goal. Lean then replaces the goal
+with the premise that is still need, `n = m`. Then we close the goal with `apply hnm`.
 
-When Lean matches the current goal against the conclusion of `h`,
-it will try to find appropriate values for these variables.  For
-example, when we do `apply eq2` in the following proof, the
-universal variable `q` in `eq2` gets instantiated with `n`, and
-`r` gets instantiated with `m`.
+More generally, the type of a theorem or hypothesis used with {tactic}`apply` may have
+universally quantified variables and premises. Lean tries to unify its conclusion with
+the current goal to determine appropriate values for the quantified variables.
 ::::
 
 :::slidebreak
