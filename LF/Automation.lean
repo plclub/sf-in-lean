@@ -7,6 +7,7 @@ open SFLMeta
 
 #doc (Manual) "Automation: More Automation" =>
 %%%
+tag := "Automation"
 htmlSplit := .never
 file := "Automation"
 %%%
@@ -898,10 +899,7 @@ theorem regexp_match_of_list α (l : List α) : l =~ reg_exp_of_list l := by
         rw [h]
         constructor; constructor; assumption
 ```
-:::grade
-```
-GRADE_THEOREM 2: regexp_match_of_list
-```
+:::gradeTheorem 2 regexp_match_of_list
 :::
 ::::
 
@@ -947,10 +945,7 @@ theorem EmptySet_is_empty α (s : List α) : ¬(s =~ EmptySet) := by
     intro h
     inversion h
 ```
-:::grade
-```
-GRADE_THEOREM 0.5: EmptySet_is_empty
-```
+:::gradeTheorem "0.5" EmptySet_is_empty
 :::
 ::::
 
@@ -965,10 +960,7 @@ theorem MUnion' α (s : List α) (re₁ re₂ : RegExp α) :
     . apply ExpMatch.mUnionL; assumption
     . apply ExpMatch.mUnionR; assumption
 ```
-:::grade
-```
-GRADE_THEOREM 0.5: MUnion'
-```
+:::gradeTheorem "0.5" MUnion'
 :::
 ::::
 
@@ -977,7 +969,7 @@ If `ss : List (List α)` represents a sequence of
 strings `s₁, ..., sn`, then `List.foldr (· ++ ·) ss []` is the result of
 concatenating them all together.
 
-::::exercise (rating := 2) (name := "MUnion'")
+::::exercise (rating := 2) (name := "MStar'")
 
 ```lean
 theorem MStar' α (ss : List (List α)) (re : RegExp α)
@@ -993,10 +985,7 @@ theorem MStar' α (ss : List (List α)) (re : RegExp α)
     · apply ih; intro s' hs'
       apply h; right; assumption
 ```
-:::grade
-```
-GRADE_THEOREM 2: MUnion'
-```
+:::gradeTheorem 2 MStar'
 :::
 ::::
 
@@ -1405,7 +1394,7 @@ theorem weak_pumping_app {α : Type}
   obtain H | H :
     pumpingConstant re₁ ≤ s₁.length ∨ pumpingConstant re₂ ≤ s₂.length := by
     solution!
-      rw [app_length] at hLen
+      rw [append_length] at hLen
       apply add_le_cases
       apply hLen
   . solution!
@@ -1544,7 +1533,7 @@ theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α)
     s₃  ≠ [ ] ∧
     (∀ m : Nat, s₀ ++ napp m s₃ ++ s₄ =~ .Star re)  := by
   intro hmatch₁ hmatch₂ ih₁ ih₂ hLen
-  rw [app_length] at *
+  rw [append_length] at *
   obtain Hs1len0 | ⟨s1len, Hs1re1⟩ | Hs1re1 :
     (s₁.length = 0
       ∨ (s₁.length ≠ 0 ∧ s₁.length < pumpingConstant re)

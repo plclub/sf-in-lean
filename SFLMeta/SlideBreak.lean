@@ -23,7 +23,7 @@ block_extension Block.slidebreak where
       return some (.concat #[])
   toHtml :=
     some fun _ _ _ _ _ =>
-      pure (.tag "div" #[("class", "slide-break")] .empty)
+      pure {{<div class="slide-break"></div>}}
   toTeX := none
 
 @[directive]

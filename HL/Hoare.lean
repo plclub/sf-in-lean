@@ -2501,10 +2501,10 @@ theorem assertion_sub_ex2' :
     · assertion_auto
 ```
 
-:::gradeTheorem 1 "assertion_sub_ex1'"
+:::gradeTheorem 1 assertion_sub_ex1'
 :::
 
-:::gradeTheorem 1 "assertion_sub_ex2'"
+:::gradeTheorem 1 assertion_sub_ex2'
 :::
 :::::
 
@@ -3159,10 +3159,10 @@ theorem if1false_test :
     rfl
 ```
 
-:::gradeTheorem 1 "if1true_test"
+:::gradeTheorem 1 if1true_test
 :::
 
-:::gradeTheorem 1 "if1false_test"
+:::gradeTheorem 1 if1false_test
 :::
 :::::
 
@@ -4903,7 +4903,7 @@ theorem assert_assume_differ : ∃ (P : Assertion) (b : Bexp) (Q : Assertion),
       simp at heq
 ```
 
-:::gradeTheorem 1 "assert_assume_differ"
+:::gradeTheorem 1 assert_assume_differ
 :::
 
 Then prove that any triple for an `assert` also works when
@@ -4928,7 +4928,7 @@ theorem assert_implies_assume (P : Assertion) (b : Bexp) (Q : Assertion)
       exact ⟨rfl, h2⟩
 ```
 
-:::gradeTheorem 1 "assert_implies_assume"
+:::gradeTheorem 1 assert_implies_assume
 :::
 :::::
 ::::::
@@ -5122,7 +5122,7 @@ theorem assert_assume_example :
     · assertion_auto'
 ```
 
-:::gradeTheorem 4 "assert_assume_example"
+:::gradeTheorem 4 assert_assume_example
 :::
 
 ```lean

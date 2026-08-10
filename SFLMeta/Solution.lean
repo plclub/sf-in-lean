@@ -13,7 +13,8 @@ code) that should appear only in the *solutions* build. -/
 block_extension Block.solution where
   data := Json.null
   traverse _ _ _ := do
-    if (← getCurrVariant).isSolution then
+    let variant ← getCurrVariant
+    if variant.isSolution ∨ variant.isGrading then
       -- keep solution blocks in solution variant
       return none
     else

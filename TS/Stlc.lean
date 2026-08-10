@@ -541,7 +541,13 @@ partial def delabTyInner : DelabM (TSyntax `stlcTy) := do
 open Lean in
 /-- Is `s` usable as a bare identifier in the object syntax? -/
 def isPlainName (s : String) : Bool :=
-  !s.isEmpty && !s.front.isDigit && s.all fun c => c.isAlphanum || c == '_'
+  !s.isEmpty && s != "_" && !s.front.isDigit &&
+    s.all fun c => c.isAlphanum || c == '_'
+
+open Lean in
+/-- Is `s` usable as a bare variable in `stlcTm` rather than as reserved syntax? -/
+def isPlainTmVarName (s : String) : Bool :=
+  isPlainName s && s != "true" && s != "false" && s != "Bool"
 
 open Lean PrettyPrinter Delaborator SubExpr in
 /-- Rebuild `stlcVar` concrete syntax from the string in a binding position. -/
@@ -561,12 +567,17 @@ partial def delabTmInner : DelabM (TSyntax `stlcTm) := do
     | Tm.tru => `(stlcTm| $(mkIdent `true):ident)
     | Tm.fls => `(stlcTm| $(mkIdent `false):ident)
     | Tm.var _ => do
-        match ← withAppArg delab with
+        let x ← withAppArg delab
+        match x with
         | `($s:str) =>
-            if isPlainName s.getString then
+            if isPlainTmVarName s.getString then
               `(stlcTm| $(mkIdent (Name.mkSimple s.getString)):ident)
-            else `(stlcTm| ~($(⟨← delab⟩)))
-        | _ => `(stlcTm| ~($(⟨← delab⟩)))
+            else
+              let var : Term := mkIdent ``Stlc.Tm.var
+              `(stlcTm| ~($var $x))
+        | _ =>
+            let var : Term := mkIdent ``Stlc.Tm.var
+            `(stlcTm| ~($var $x))
     | Tm.app _ _ => do
         let f ← withAppFn <| withAppArg delabTmInner
         let a ← withAppArg delabTmInner
@@ -614,6 +625,7 @@ def delabTm : Delab := whenPPOption getPPNotation do
     | Tm.tru => true | Tm.fls => true | Tm.ite _ _ _ => true
     | _ => false
   match ← delabTmInner with
+  | `(stlcTm| ~($e)) => pure e
   | `(stlcTm| ~$e) => pure e
   | e => `(<{ $e:stlcTm }>)
 ```
@@ -1693,6 +1705,8 @@ open Lean PrettyPrinter in
 context prints as `x ↦ Bool ; Γ` rather than as a chain of map updates. -/
 partial def unexpandCtx : Term → UnexpandM (TSyntax `stlcCtx)
   | `(∅) => `(stlcCtx| ∅)
+  | `($x:str →ₚ $T) => do
+      unexpandCtx (← `($x →ₚ $T ; ∅))
   | `($x:str →ₚ $T ; $G) => do
       let G' ← unexpandCtx G
       let x' : TSyntax `stlcVar ←
@@ -1723,6 +1737,39 @@ def HasType.unexpand : Unexpander
 ```lean -show
 #check <{ true }>
 #check <{ ∅ ⊢ true ⦂ Bool }>
+
+/-- info: <{ x ↦ Bool ; ∅ ⊢ x ⦂ Bool }> : Prop -/
+#guard_msgs in
+#check HasType
+  (PartialMap.update (∅ : Context) "x" Ty.bool)
+  (Tm.var "x")
+  Ty.bool
+
+/-- info: Stlc.Tm.var "true" : Tm -/
+#guard_msgs in
+#check Tm.var "true"
+
+/-- info: Stlc.Tm.var "false" : Tm -/
+#guard_msgs in
+#check Tm.var "false"
+
+/-- info: Stlc.Tm.var "Bool" : Tm -/
+#guard_msgs in
+#check Tm.var "Bool"
+
+/-- info: Stlc.Tm.var "_" : Tm -/
+#guard_msgs in
+#check Tm.var "_"
+
+/-- info: <{ ~(Stlc.Tm.var "true") x }> : Tm -/
+#guard_msgs in
+#check Tm.app (Tm.var "true") (Tm.var "x")
+
+variable (x : String)
+
+/-- info: Stlc.Tm.var x : Tm -/
+#guard_msgs in
+#check Tm.var x
 ```
 :::
 

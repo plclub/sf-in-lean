@@ -4,6 +4,7 @@
 #   student    full prose, solutions elided   → _out/<vol>/student/{html-multi,lean}
 #   solutions  full prose, solutions shown    → _out/<vol>/solutions/{html-multi,lean}
 #   terse      lecture prose, solutions elided → _out/<vol>/terse/{html-multi,lean}
+#   grading    full prose, solutions show (with grading attributes) → _out/<vol>/grading/{html-multi,lean}
 #
 # To add a new volume (e.g., plf), define its targets with:
 #   $(eval $(call VOLUME_template,plf))
@@ -33,7 +34,10 @@ $(1)-solutions: $(1)-build
 $(1)-terse: $(1)-build
 	lake exe sfl-$(1) terse
 
-$(1): $(1)-student $(1)-solutions $(1)-terse
+$(1)-grading: $(1)-build
+	lake exe sfl-$(1) grading
+
+$(1): $(1)-student $(1)-solutions $(1)-terse $(1)-grading
 
 endef
 
@@ -45,9 +49,18 @@ $(eval $(call VOLUME_template,ts))
 
 # ── Top-level targets ─────────────────────────────────────────────────────────
 
-.PHONY: all serve clean ensure-build-symlink style-check style-checklist
+.PHONY: all student solutions terse grading serve clean ensure-build-symlink style-check style-checklist
 
 all: lf hl ts
+
+# Build a single variant across every volume.
+student: lf-student hl-student ts-student
+
+solutions: lf-solutions hl-solutions ts-solutions
+
+terse: lf-terse hl-terse ts-terse
+
+grading: lf-grading hl-grading ts-grading
 
 # Mechanical conformance checks for STYLE.md (auto checks fail the run; assisted
 # ones are advisory). `style-checklist` prints the audit checklist for the

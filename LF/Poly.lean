@@ -72,7 +72,7 @@ inductive BoolList : Type where
 have to make up different constructor names for each datatype, but —
 even worse — we would also need to define new versions of all
 the list manipulating functions (`length`, `++`, `reverse`,
-etc.) and all their properties (`rev_length`, `app_assoc`, etc.)
+etc.) and all their properties (`length_reverse`, `append_assoc`, etc.)
 for each new definition.
 ::::
 
@@ -653,8 +653,8 @@ theorem rev_cons {α : Type} (head : α) (tail : List α) :
 ```
 
 :::::exercise (rating := 2) (name := "poly_exercises")
-Here are a few simple exercises, just like ones in the `Lists`
-chapter, for practice with polymorphism. Complete the proofs below.
+Here are a few simple exercises, just like ones in the {ref "Lists"}[Lists] chapter,
+for practice with polymorphism. Complete the proofs below.
 You will likely find useful the following
 characterizing lemmas for {name}`List.append` in Lean standard library:
 
@@ -672,14 +672,14 @@ List.nil_append.{u} {α : Type u} (as : List α) : [] ++ as = as
 ```
 
 ```lean
-theorem app_nil_r {α : Type} (l : List α) :
+theorem append_nil {α : Type} (l : List α) :
     l ++ [] = l := by
   solution!
     induction l with
     | nil => rw [List.nil_append]
     | cons h t ih => rw [List.cons_append, ih]
 
-theorem app_assoc {α : Type} (l m n : List α) :
+theorem append_assoc {α : Type} (l m n : List α) :
     l ++ m ++ n = l ++ (m ++ n) := by
   solution!
     induction l with
@@ -688,25 +688,25 @@ theorem app_assoc {α : Type} (l m n : List α) :
       dsimp [List.cons_append]
       rw [ih]
 
-theorem app_length {α : Type} {l₁ l₂ : List α} :
+theorem append_length {α : Type} {l₁ l₂ : List α} :
     (l₁ ++ l₂).length = l₁.length + l₂.length := by
   solution!
     induction l₁ with
     | nil =>
-      dsimp [List.nil_append, app_nil_r]
+      dsimp [List.nil_append, append_nil]
       rw [Nat.zero_add]
     | cons h t ih =>
       dsimp [List.cons_append, List.length_cons]
       rw [Nat.succ_add, ih]
 ```
 
-:::gradeTheorem "0.5" "app_nil_r"
+:::gradeTheorem "0.5" append_nil
 :::
 
-:::gradeTheorem 1 "app_assoc"
+:::gradeTheorem 1 append_assoc
 :::
 
-:::gradeTheorem "0.5" "app_length"
+:::gradeTheorem "0.5" append_length
 :::
 :::::
 
@@ -714,31 +714,31 @@ theorem app_length {α : Type} {l₁ l₂ : List α} :
 Here are some slightly more interesting ones...
 
 ```lean
-theorem rev_app_distr {α : Type} {l₁ l₂ : List α} :
+theorem reverse_append {α : Type} {l₁ l₂ : List α} :
     (l₁ ++ l₂).rev = l₂.rev ++ l₁.rev := by
   solution!
     induction l₁ with
     | nil =>
       dsimp [List.nil_append]
-      rw [rev_nil, app_nil_r]
+      rw [rev_nil, append_nil]
     | cons h t ih =>
       dsimp [List.cons_append]
-      rw [rev_cons, rev_cons, ih, app_assoc]
+      rw [rev_cons, rev_cons, ih, append_assoc]
 
-theorem rev_involutive {α : Type} (l : List α) :
+theorem reverse_reverse {α : Type} (l : List α) :
     l.rev.rev = l := by
   solution!
     induction l with
     | nil => rw [rev_nil, rev_nil]
     | cons h t ih =>
-      rw [rev_cons, rev_app_distr, ih, rev_cons, rev_nil]
+      rw [rev_cons, reverse_append, ih, rev_cons, rev_nil]
       dsimp [List.nil_append, List.cons_append]
 ```
 
-:::gradeTheorem 1 "rev_app_distr"
+:::gradeTheorem 1 reverse_append
 :::
 
-:::gradeTheorem 1 "rev_involutive"
+:::gradeTheorem 1 reverse_reverse
 :::
 :::::
 
@@ -820,12 +820,11 @@ def zip {α β : Type} (lx : List α) (ly : List β) : List (α × β) :=
   | _, [] => []
   | x :: tx, y :: ty => (x, y) :: zip tx ty
 
-theorem zip_nil_r {α β : Type} (ly : List β) : zip [] ly = ([] : List (α × β)) := by rfl
+theorem zip_nil_right {α β : Type} (ly : List β) : zip [] ly = ([] : List (α × β)) := by rfl
 
-theorem zip_nil_l {α β : Type} (lx : List α) : zip lx [] = ([] : List (α × β)) := by
+theorem zip_nil_left {α β : Type} (lx : List α) : zip lx [] = ([] : List (α × β)) := by
    cases lx <;> rfl
-
-theorem zip_cons {α β : Type} {lx : List α} {ly : List β} {x : α} {y : β} :
+theorem zip_cons_cons {α β : Type} {lx : List α} {ly : List β} {x : α} {y : β} :
    zip (x :: lx) (y :: ly) = (x, y) :: zip lx ly := by rfl
 ```
 
@@ -844,12 +843,12 @@ checking your answers in Lean:
 print?
 :::::
 
-:::::exercise (rating := 2) (name := "split")
+:::::exercise (rating := 2) (name := "unzip")
 The function `unzip` goes in the other direction from {name}`zip`: it takes a
  list of pairs and returns a pair of lists.
 
 Fill in the definition of `unzip` below. Make sure it passes the
-given unit test, and you can prove the simplification lemmas about it
+given unit test, and you can prove the simplification rules about it
 
 ```lean
 def unzip {α : Type} {β : Type} (l : List (α × β)) : List α × List β := solution!(
@@ -867,13 +866,10 @@ theorem unzip_cons_fst {α β : Type} {l : List (α × β)} {x : α} {y : β} :
 theorem unzip_cons_snd {α β : Type} {l : List (α × β)} {x : α} {y : β} :
    (unzip ((x, y) :: l)).snd = y :: (unzip l).snd := solution!(by rfl)
 
-example : unzip [(1, false), (2, false)] = ([1, 2], [false, false]) := solution!(by rfl)
+theorem unzip_test1 : unzip [(1, false), (2, false)] = ([1, 2], [false, false]) := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 "split"
-:::
-
-:::gradeTheorem 1 "test_split"
+:::gradeTheorem "0.25" unzip_nil unzip_cons_fst unzip_cons_snd unzip_test1
 :::
 :::::
 
@@ -884,7 +880,7 @@ example : unzip [(1, false), (2, false)] = ([1, 2], [false, false]) := solution!
 ::::full
 Our last polymorphic type for now is _polymorphic options_.
 Lean's standard library provides {lean}`Option α`, with constructors
-{name}`none` and {lean}`some`. (We already saw `NatOption` in the `Lists` chapter.)
+{name}`none` and {lean}`some`. (We already saw `NatOption` in the {ref "Lists"}[Lists] chapter.)
 Let's briefly look at the definition:
 
 ```lean
@@ -902,53 +898,53 @@ end OptionPlayground
 :::
 
 ::::full
-We can now rewrite the `nthError` function so that it works
+We can now rewrite the `nth?` function so that it works
 with any type of list.
 ::::
 
 ```lean
-def nthError {α : Type} (l : List α) (n : Nat) : Option α :=
+def nth? {α : Type} (l : List α) (n : Nat) : Option α :=
   match l with
   | [] => none
   | a :: l' => match n with
     | 0 => some a
-    | n' + 1 => nthError l' n'
+    | n' + 1 => nth? l' n'
 ```
 
 ```lean
-example : nthError [4, 5, 6, 7] 0 = some 4 := by rfl
-example : nthError [[1], [2]] 1 = some [2] := by rfl
-example : nthError [true] 2 = none := by rfl
+example : nth? [4, 5, 6, 7] 0 = some 4 := by rfl
+example : nth? [[1], [2]] 1 = some [2] := by rfl
+example : nth? [true] 2 = none := by rfl
 ```
 
 ::::::full
-:::::exercise (rating := 1) (name := "hd_error_poly")
+:::::exercise (rating := 1) (name := "head?_poly")
 Complete the definition of a polymorphic version of the
-`hdError` function from the last chapter. Be sure that it
+`head?` function from the {ref "Lists"}[last chapter]. Be sure that it
 passes the unit tests below.
 
 ```lean
-def hdError {α : Type} (l : List α) : Option α := solution!(
+def head? {α : Type} (l : List α) : Option α := solution!(
   match l with
   | [] => none
   | a :: _ => some a)
 
-theorem hdError_nil {α : Type} : hdError ([] : List α) = none := solution!(by rfl)
+theorem head?_nil {α : Type} : head? ([] : List α) = none := solution!(by rfl)
 
-theorem hdError_cons {α : Type} {head : α} {tail : List α} : hdError (head :: tail) = some head :=
+theorem head?_cons {α : Type} {head : α} {tail : List α} : head? (head :: tail) = some head :=
   solution!(by rfl)
 
-example : hdError [1, 2] = some 1 := solution!(by rfl)
+theorem test_head?1 : head? [1, 2] = some 1 := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" "test_hd_error1"
+:::gradeTheorem "0.5" test_head?1
 :::
 
 ```lean
-example : hdError [[1], [2]] = some [1] := solution!(by rfl)
+theorem test_head?2 : head? [[1], [2]] = some [1] := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" "test_hd_error2"
+:::gradeTheorem "0.5" test_head?2
 :::
 :::::
 
@@ -977,7 +973,7 @@ as results are called higher-order functions.
 ::::
 
 ```lean
-abbrev doIt3Times {α : Type} (f : α → α) (n : α) : α :=
+def doIt3Times {α : Type} (f : α → α) (n : α) : α :=
   f (f (f n))
 ```
 
@@ -1042,23 +1038,23 @@ example : filter Nat.even [1, 2, 3, 4] = [2, 4] := by rfl
 :::
 
 ```lean
-abbrev lengthIs1 {α : Type} (l : List α) : Bool :=
+def isLength1 {α : Type} (l : List α) : Bool :=
   l.length == 1
 
-example : filter lengthIs1
+example : filter isLength1
     [[1, 2], [3], [4], [5, 6, 7], [], [8]]
   = [[3], [4], [8]] := by rfl
 
 theorem filter_nil {α : Type} {test : α → Bool} : filter test [] = [] := by rfl
 
-theorem filter_cons_success {α : Type} {test : α → Bool} {head : α}
+theorem filter_cons_of_pos {α : Type} {test : α → Bool} {head : α}
     {tail : List α} (h : test head) :
     filter test (head :: tail) = head :: filter test tail := by
   dsimp [filter]
   rw [h]
   dsimp
 
-theorem filter_cons_fail {α : Type} {test : α → Bool} {head : α}
+theorem filter_cons_of_neg {α : Type} {test : α → Bool} {head : α}
     {tail : List α} (h : test head = false) :
     filter test (head :: tail) = filter test tail := by
    dsimp [filter]
@@ -1084,23 +1080,22 @@ _wholemeal_ (or _collection-oriented_) programming style.
 
 ::::full
 We can use {name}`filter` to give a concise version of the
-`countOddMembers` function from the `Lists` chapter.
+`countOddMembers` function from the {ref "Lists"}[Lists] chapter.
 ::::
 
 ```lean
-abbrev countOddMembers' (l : List Nat) : Nat :=
-  (filter Nat.odd l).length
+def countOddMembers (l : List Nat) : Nat := (filter Nat.odd l).length
 
-example : countOddMembers' [1, 0, 3, 1, 4, 5] = 4 := by rfl
-example : countOddMembers' [0, 2, 4] = 0 := by rfl
-example : countOddMembers' [] = 0 := by rfl
+example : countOddMembers [1, 0, 3, 1, 4, 5] = 4 := by rfl
+example : countOddMembers [0, 2, 4] = 0 := by rfl
+example : countOddMembers [] = 0 := by rfl
 ```
 
 ## Anonymous Functions
 
 ::::full
 It is arguably a little sad, in the example just above, to
-be forced to define the function {name}`lengthIs1` and give it a name
+be forced to define the function {name}`isLength1` and give it a name
 just to be able to pass it as an argument to {name}`filter`, since we
 will probably never use it again. Indeed, when using higher-order
 functions, we _often_ want to pass as arguments "one-off"
@@ -1163,18 +1158,15 @@ Use `filter` (instead of a recursive `def`) to write a Lean function
 and returns a list of just those that are even and greater than 7.
 
 ```lean
-abbrev filterEvenGt7 (l : List Nat) : List Nat := solution!(
+def filterEvenGt7 (l : List Nat) : List Nat := solution!(
   filter (fun n => n.even && n > 7) l)
 
-example : filterEvenGt7 [1, 2, 6, 9, 10, 3, 12, 8] = [10, 12, 8] := solution!(by rfl)
+theorem test_filterEvenGt7_1 : filterEvenGt7 [1, 2, 6, 9, 10, 3, 12, 8] = [10, 12, 8] := solution!(by rfl)
 
-example : filterEvenGt7 [5, 2, 6, 19, 129] = [] := solution!(by rfl)
+theorem test_filterEvenGt7_2 : filterEvenGt7 [5, 2, 6, 19, 129] = [] := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 "test_filter_even_gt7_1"
-:::
-
-:::gradeTheorem 1 "test_filter_even_gt7_2"
+:::gradeTheorem 1 test_filterEvenGt7_1 test_filterEvenGt7_2
 :::
 :::::
 
@@ -1188,20 +1180,14 @@ The order of elements in the two sublists should be the same as
 their order in the original list.
 
 ```lean
-abbrev partition {α : Type} (test : α → Bool) (l : List α) : List α × List α := solution!(
+def partition {α : Type} (test : α → Bool) (l : List α) : List α × List α := solution!(
   (filter test l, filter (!test ·) l))
 
-example : partition (· % 2 != 0) [1, 2, 3, 4, 5] = ([1, 3, 5], [2, 4]) := solution!(by rfl)
-example : partition (fun _ => false) [5, 9, 0] = ([], [5, 9, 0]) := solution!(by rfl)
+theorem test_partition1 : partition (· % 2 != 0) [1, 2, 3, 4, 5] = ([1, 3, 5], [2, 4]) := solution!(by rfl)
+theorem test_partition2 : partition (fun _ => false) [5, 9, 0] = ([], [5, 9, 0]) := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 "partition"
-:::
-
-:::gradeTheorem 1 "test_partition1"
-:::
-
-:::gradeTheorem 1 "test_partition2"
+:::gradeTheorem "1.5" test_partition1 test_partition2
 :::
 :::::
 
@@ -1253,7 +1239,7 @@ example : map (fun n => [n.even, n.odd]) [2, 1, 2, 5]
 ```
 
 ::::quiz
-Recall the definition of `map`:
+Recall the definition of {name}`map`:
 
 ```display
 def map (f : α → β) (l : List α) : List β :=
@@ -1276,12 +1262,7 @@ What is the type of `@map`?
 :::slidebreak
 :::
 
-:::slidebreak
-:::
-
-::::full
-Exercises
-::::
+As usual, we define the following simplification rules for {name}`map`:
 
 ```lean
 theorem map_nil {α : Type} {β : Type} {f : α → β} : map f [] = [] := by rfl
@@ -1297,7 +1278,7 @@ define an auxiliary lemma.)
 
 ```lean
 -- SOLUTION
-theorem map_app {α β : Type} {f : α → β} {l l' : List α} :
+theorem map_append {α β : Type} {f : α → β} {l l' : List α} :
     map f (l ++ l') = map f l ++ map f l' := by
   induction l with
   | nil => rw [map_nil, List.nil_append, List.nil_append]
@@ -1312,18 +1293,18 @@ theorem map_rev {α : Type} {β : Type} : ∀ (f : α → β) (l : List α),
     case nil =>
      rw [rev_nil, map_nil, rev_nil]
     case cons h t ih =>
-     rw [rev_cons, map_cons, map_app, rev_cons, ih, map_cons, map_nil]
+     rw [rev_cons, map_cons, map_append, rev_cons, ih, map_cons, map_nil]
 ```
 
-:::gradeTheorem 3 "map_rev"
+:::gradeTheorem 3 map_rev
 :::
 :::::
 
 :::::exercise (rating := 2) (name := "flat_map")
-The function `map` maps a `List α` to a `List β` using a function
-of type `α → β`. We can define a similar function, `flatMap`,
-which maps a `List α` to a `List β` using a function `f` of type
-`α → List β`. Your definition should work by 'flattening' the
+The function {name}`map` maps a {lean}`List α` to a {lean}`List β` using a function
+of type {lean}`α → β`. We can define a similar function, `flatMap`,
+which maps a {lean}`List α` to a {lean}`List β` using a function `f` of type
+{lean}`α → List β`. Your definition should work by 'flattening' the
 results of `f`, like so:
 
 ```display
@@ -1337,14 +1318,11 @@ def flatMap {α : Type} {β : Type} (f : α → List β) (l : List α) : List β
   | [] => []
   | h :: t => f h ++ flatMap f t)
 
-example : flatMap (fun n => [n, n, n]) [1, 5, 4]
+theorem test_flatMap : flatMap (fun n => [n, n, n]) [1, 5, 4]
   = [1, 1, 1, 5, 5, 5, 4, 4, 4] := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 "flatMap"
-:::
-
-:::gradeTheorem 1 "test_flat_map1"
+:::gradeTheorem 2 test_flatMap
 :::
 :::::
 
@@ -1475,8 +1453,8 @@ What does `fold (· + ·) [1, 2, 3, 4] 0` simplify to?
 Observe that the type of {name}`fold` is parameterized by _two_ type
 variables, {lean}`α` and {lean}`β`, and the parameter `f` is a binary operator
 that takes an {lean}`α` and a {lean}`β` and returns a {lean}`β`.
-The examples above show one instance where it is useful for `α`
-and `β` to be different. Can you think of any others?
+The examples above show one instance where it is useful for {lean}`α`
+and {lean}`β` to be different. Can you think of any others?
 
 :::quizSolution
 There are many. For example, we could use {name}`fold` to count the
@@ -1503,10 +1481,10 @@ Here are two functions that _return_ functions as results.
 ::::
 
 ```lean
-abbrev constFun {α : Type} (x : α) : Nat → α :=
+def constFun {α : Type} (x : α) : Nat → α :=
   fun _ => x
 
-abbrev fTrue := constFun true
+def fTrue := constFun true
 
 example : fTrue 0 = true := by rfl
 
@@ -1536,7 +1514,7 @@ Nat.add : Nat → Nat → Nat
 ```
 
 ```lean (name := plus3)
-abbrev plus3 := Nat.add 3
+def plus3 := Nat.add 3
 #check plus3
 
 example : plus3 4 = 7 := by rfl
@@ -1551,7 +1529,7 @@ plus3 : Nat → Nat
 Similarly, we can write:
 
 ```lean (name := fold_plus)
-abbrev fold_plus : List Nat → Nat → Nat :=
+def fold_plus : List Nat → Nat → Nat :=
   fold (· + ·)
 
 #check fold_plus
@@ -1585,16 +1563,13 @@ two more arguments: a list and a starting value.
 :::
 
 ::::::full
-```lean
-namespace Exercises
-```
 
 :::::exercise (rating := 2) (name := "fold_length")
 Many common functions on lists can be implemented in terms of
 `fold`. For example, here is an alternative definition of `length`:
 
 ```lean
-abbrev foldLength {α : Type} (l : List α) : Nat :=
+def foldLength {α : Type} (l : List α) : Nat :=
   fold (fun _ n => n + 1) l 0
 
 example : foldLength [4, 7, 0] = 3 := by rfl
@@ -1618,7 +1593,7 @@ theorem fold_length_correct {α : Type} (l : List α) :
       rw [List.length_cons, fold_cons, ih]
 ```
 
-:::gradeTheorem 2 "Exercises.fold_length_correct"
+:::gradeTheorem 2 fold_length_correct
 :::
 :::::
 
@@ -1627,7 +1602,7 @@ We can also define `map` in terms of `fold`. Finish `foldMap`
 below.
 
 ```lean
-abbrev foldMap {α : Type} {β : Type} (f : α → β) (l : List α) : List β := solution!(
+def foldMap {α : Type} {β : Type} (f : α → β) (l : List α) : List β := solution!(
   fold (fun x l' => f x :: l') l [])
 ```
 
@@ -1679,14 +1654,14 @@ from {lean}`α → β → γ` to {lean}`α × β → γ` is called _uncurrying_.
 We can define currying as follows:
 
 ```lean
-abbrev prodCurry {α β γ : Type} (f : α × β → γ) (x : α) (y : β) : γ := f (x, y)
+def prodCurry {α β γ : Type} (f : α × β → γ) (x : α) (y : β) : γ := f (x, y)
 ```
 
 As an exercise, define its inverse, `prodUncurry`. Then prove
 the theorems below to show that the two are really inverses.
 
 ```lean
-abbrev prodUncurry {α β γ : Type} (f : α → β → γ) (p : α × β) : γ := solution!(
+def prodUncurry {α β γ : Type} (f : α → β → γ) (p : α × β) : γ := solution!(
   f p.fst p.snd)
 ```
 
@@ -1725,54 +1700,51 @@ theorem curry_uncurry {α β γ : Type} (f : α × β → γ) {p : α × β} :
     rfl
 ```
 
-:::gradeTheorem 1 "Exercises.uncurry_curry"
-:::
-
-:::gradeTheorem 1 "Exercises.curry_uncurry"
+:::gradeTheorem 1 uncurry_curry curry_uncurry
 :::
 :::::
 
 :::::exercise (rating := 2) (name := "nth_error_informal") (level := Advanced) (manual := true)
-Recall the definition of the {name}`nthError` function:
+Recall the definition of the {name}`nth?` function:
 
 ```display
-def nthError (l : List α) (n : Nat) : Option α :=
+def nth? (l : List α) (n : Nat) : Option α :=
   match l with
   | [] => none
   | a :: l' => match n with
     | 0 => some a
-    | n' + 1 => nthError l' n'
+    | n' + 1 => nth? l' n'
 ```
 
 Write a careful informal proof of the following theorem:
 
 ```display
-∀ (l : List α) (n : Nat), l.length = n → nthError l n = none
+∀ (l : List α) (n : Nat), l.length = n → nth? l n = none
 ```
 
 Make sure to state the induction hypothesis _explicitly_.
 
-SOLUTION
+:::solution
 Theorem: For all types `α`, lists `l`, and natural numbers `n`,
-if `l.length = n` then `nthError l n = none`.
+if `l.length = n` then `nth? l n = none`.
 
 Proof: By induction on `l`. There are two cases to consider:
 
-- If `l = []`, we must show `nthError [] n = none`. This follows
-  immediately from the definition of `nthError`.
+- If `l = []`, we must show `nth? [] n = none`. This follows
+  immediately from the definition of `nth?`.
 
 - Otherwise, `l = x :: l'` for some `x` and `l'`, and the
   induction hypothesis tells us that
-  `l'.length = n' → nthError l' n' = none`, for any `n'`.
+  `l'.length = n' → nth? l' n' = none`, for any `n'`.
 
   Let `n` be the length of `l`. We must show that
-  `nthError (x :: l') n = none`.
+  `nth? (x :: l') n = none`.
 
   But we know that `n = l.length = (x :: l').length = l'.length + 1`.
-  So it's enough to show `nthError l' l'.length = none`, which
+  So it's enough to show `nth? l' l'.length = none`, which
   follows directly from the induction hypothesis, picking `l'.length`
   for `n'`.
-/SOLUTION
+:::
 
 :::grade
 `GRADE_MANUAL 2: informal_proof`
@@ -1826,7 +1798,7 @@ def zero : CNat :=
 More generally, a number `n` can be written as
 `fun X f x => f (f ... (f x) ...)`, with `n` occurrences of `f`.
 Let's informally notate that as `fun X f x => f^n x`, with the
-convention that `f^0 x` is just `x`. Note how the `doit3times`
+convention that `f^0 x` is just `x`. Note how the {name}`doIt3Times`
 function we've defined previously is actually just the Church
 representation of 3.
 
@@ -1885,14 +1857,11 @@ def scc (n : CNat) : CNat := solution!(
   fun (X : Type) (f : X → X) (x : X) => f (n X f x))
 
 example : scc zero = one := solution!(by rfl)
-example : scc one = two := solution!(by rfl)
-example : scc two = three := solution!(by rfl)
+theorem scc_2 : scc one = two := solution!(by rfl)
+theorem scc_3 : scc two = three := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 "Exercises.Church.scc_2"
-:::
-
-:::gradeTheorem 1 "Exercises.Church.scc_3"
+:::gradeTheorem 1 scc_2 scc_3
 :::
 :::::
 
@@ -1908,18 +1877,12 @@ Hint: the "zero" argument to a Church numeral need not be just `x`.
 def plus (n m : CNat) : CNat := solution!(
   fun (X : Type) (f : X → X) (x : X) => n X f (m X f x))
 
-example : plus zero one = one := solution!(by rfl)
-example : plus two three = plus three two := solution!(by rfl)
-example : plus (plus two two) three = plus one (plus three three) := solution!(by rfl)
+theorem plus_1 : plus zero one = one := solution!(by rfl)
+theorem plus_2 : plus two three = plus three two := solution!(by rfl)
+theorem plus_3 : plus (plus two two) three = plus one (plus three three) := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 "Exercises.Church.plus_1"
-:::
-
-:::gradeTheorem 1 "Exercises.Church.plus_2"
-:::
-
-:::gradeTheorem 1 "Exercises.Church.plus_3"
+:::gradeTheorem 1 plus_1 plus_2 plus_3
 :::
 :::::
 
@@ -1942,18 +1905,12 @@ Warning: Lean will not let you pass {name}`CNat` itself as the type `X`
 def mult (n m : CNat) : CNat := solution!(
   fun (X : Type) (f : X → X) (x : X) => n X (m X f) x)
 
-example : mult one one = one := solution!(by rfl)
-example : mult zero (plus three three) = zero := solution!(by rfl)
-example : mult two three = plus three three := solution!(by rfl)
+theorem mult_1 : mult one one = one := solution!(by rfl)
+theorem mult_2 : mult zero (plus three three) = zero := solution!(by rfl)
+theorem mult_3 : mult two three = plus three three := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 "Exercises.Church.mult_1"
-:::
-
-:::gradeTheorem 1 "Exercises.Church.mult_2"
-:::
-
-:::gradeTheorem 1 "Exercises.Church.mult_3"
+:::gradeTheorem 1 mult_1 mult_2 mult_3
 :::
 :::::
 
@@ -1970,23 +1927,16 @@ Finding the right type can be tricky.
 def exp (n m : CNat) : CNat := solution!(
   fun (X : Type) (f : X → X) (x : X) => m (X → X) (n X) f x)
 
-example : exp two two = plus two two := solution!(by rfl)
-example : exp three zero = one := solution!(by rfl)
-example : exp three two = plus (mult two (mult two two)) one := solution!(by rfl)
+theorem exp_1 : exp two two = plus two two := solution!(by rfl)
+theorem exp_2 : exp three zero = one := solution!(by rfl)
+theorem exp_3 : exp three two = plus (mult two (mult two two)) one := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 "Exercises.Church.exp_1"
-:::
-
-:::gradeTheorem 1 "Exercises.Church.exp_2"
-:::
-
-:::gradeTheorem 1 "Exercises.Church.exp_3"
+:::gradeTheorem 1 exp_1 exp_3 exp_2
 :::
 :::::
 
 ```lean
 end Church
-end Exercises
 ```
 ::::::

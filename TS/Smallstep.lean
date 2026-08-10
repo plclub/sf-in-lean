@@ -576,7 +576,7 @@ theorem step_deterministic : Deterministic Step := by
         | plusRight _ _ _ hv2 hs2 => rw [ih _ hs2]
 ```
 
-:::gradeTheorem 3 "step_deterministic"
+:::gradeTheorem 3 step_deterministic
 :::
 :::::
 
