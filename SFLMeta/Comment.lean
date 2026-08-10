@@ -1,5 +1,6 @@
 import VersoManual
 import SFLMeta.Bnf
+import SFLMeta.Variant
 import SFLMeta.Ignore
 import SFLMeta.Exercise
 import SFLMeta.Details
@@ -97,11 +98,17 @@ def devNoteShown (urgency : Option String) : Bool :=
 /-- Render an author for a note label.  The authoring convention puts the GitHub
 handle in parentheses (`"Benjamin Pierce (bcpierce00)"`), which would nest inside
 the label's own parenthesized field list, so a trailing `(handle)` is rewritten
-to an `@handle` suffix.  An author in any other shape is left alone. -/
+to an `@handle` suffix.  The handle may be written with or without a leading `@`
+(`"Benjamin Pierce (@bcpierce00)"` and `"Benjamin Pierce (bcpierce00)"` are both
+accepted); either way the result carries exactly one `@`.  An author in any other
+shape is left alone. -/
 def devNoteAuthorText (author : String) : String :=
   if author.endsWith ")" then
     match (author.dropEnd 1).split "(" |>.toStringList with
-    | [name, handle] => s!"{name} @{handle}"
+    | [name, handle] =>
+      let name := if name.endsWith " " then name else name ++ " "
+      let handle := if handle.startsWith "@" then handle.drop 1 else handle
+      s!"{name}@{handle}"
     | _ => author
   else author
 
@@ -126,15 +133,27 @@ def devNoteLabel (author urgency : Option String) (year : Option Nat)
   else s!"{heading} ({String.intercalate ", " fields})"
 
 /-! `Block.devcomment` carries the note body as its children and records its
-author/urgency metadata in `data`. A note whose urgency passes `devNoteShown`
-(`NOW`, `BeforeNextRelease`, or none) is rendered: brightly highlighted in the
-HTML book, and passed through as a labelled comment in generated `.lean` files
-by `SFLMeta.Save.Extract.walkBlock`. `PotentialImprovement` notes render
-nothing. -/
+author/urgency metadata in `data`. Most dev notes are developer-facing, so in
+the *student* variant only `NOW`-urgency notes survive traversal (both the HTML
+book and the extracted `.lean` operate on the per-variant traversed tree); the
+rest are dropped. All notes survive traversal in the solutions, terse, and
+grading variants. Among the surviving blocks, a note is rendered only when its
+urgency passes `devNoteShown` (`NOW`, `BeforeNextRelease`, or none): brightly
+highlighted in the HTML book, and passed through as a labelled comment in
+generated `.lean` files by `SFLMeta.Save.Extract.walkBlock`.
+`PotentialImprovement` notes render nothing. -/
 block_extension Block.devcomment (author : Option String)
     (urgency : Option String) (year : Option Nat) where
   data := Json.arr #[toJson author, toJson urgency, toJson year]
-  traverse _ _ _ := pure none
+  traverse _ data _ := do
+    if (← getCurrVariant).isStudent then
+      -- In the student build, keep only `NOW`-urgency dev notes; drop the rest.
+      let isNow := match decodeDevData? data with
+        | some (_, urgency, _) => urgency == some "NOW"
+        | none => false
+      return if isNow then none else some (.concat #[])
+    else
+      return none
   toHtml :=
     open Verso.Output.Html in
     some fun _ goB _ data contents => do

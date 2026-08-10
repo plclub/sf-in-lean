@@ -49,9 +49,18 @@ $(eval $(call VOLUME_template,ts))
 
 # ── Top-level targets ─────────────────────────────────────────────────────────
 
-.PHONY: all serve clean ensure-build-symlink style-check style-checklist
+.PHONY: all student solutions terse grading serve clean ensure-build-symlink style-check style-checklist
 
 all: lf hl ts
+
+# Build a single variant across every volume.
+student: lf-student hl-student ts-student
+
+solutions: lf-solutions hl-solutions ts-solutions
+
+terse: lf-terse hl-terse ts-terse
+
+grading: lf-grading hl-grading ts-grading
 
 # Mechanical conformance checks for STYLE.md (auto checks fail the run; assisted
 # ones are advisory). `style-checklist` prints the audit checklist for the
