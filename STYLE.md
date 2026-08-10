@@ -29,10 +29,10 @@ should be kept in sync as chapters are rewritten.
 | `UsingLean`       | `dsimp`, `calc`, `exact?`, `rw?` |
 | `Lists`           | *(none new)* |
 | `Poly`            | *(none new)* |
-| `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `unfold`, `split` |
+| `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `specialize`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `unfold`, `split` |
 | `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
 | `IndProp`         | `rcases`, `subst` |
-| `Automation`      | `lia`, `try`, `repeat`, `specialize`, `trivial`, `simp`, `generalize` |
+| `Automation`      | `lia`, `try`, `repeat`, `trivial`, `simp`, `generalize` |
 | `Typeclasses`     | `decide` |
 | `HL/Imp`          | *(none new)* |
 

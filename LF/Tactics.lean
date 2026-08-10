@@ -937,89 +937,84 @@ made `apply ... at ...` available because it is quite useful.
 
 # Specializing Hypotheses
 
-We've already seen how we can use `have` to do
+We've already seen how we can use {tactic}`have` to do
 forward reasoning, by letting us state and prove useful facts
 that get us closer to the main goal we're trying to prove. Often,
 though, these facts are just special cases of more general hypotheses
 we already have.
 
-If `h` is a quantified hypothesis in the current context -- i.e.,
-`h : forall (x : α), P` -- then `have h := h (x := e)` will
-change `h` so that it looks like `P` with `x` replaced by `e`.
+If `h` is a quantified hypothesis in the current context — i.e.,
+`h : ∀ (x : α), P x` — then we can use {tactic}`have` to obtain a special
+case of `h` by supplying a value for `x`. For example, `have h := h (x := e)`
+introduces a new `h` which `x` has been instantiated with `e`.
 
 For example:
 
-:::dev
-HIDE: Robert Rand: I found this very useful because not all
-students realize I can get a specific case from the forall in the
-hypotheses. I've shortened the proof a bit.
-BCP: Maybe this comment is dead?
-:::
-
 ```lean
-theorem have_example m :
-    (∀ n, m * n = 0) → m = 0 := by
-  intro h
+example (m : Nat) (h : ∀ n, m * n = 0) : m = 0 := by
   have h := h (n := 1)
-  rw [mul_one] at h
+  rw [Nat.mul_one] at h
   exact h
 ```
 
-You may notice that, in the above proof, after using `have`
-we were left with a leftover hypothesis in the context,
-the old `h`, so to speak. Often we don't care to keep
-this old hypothesis around, and so we can use the `replace`
-tactic instead. It behaves the same as `have`, except
-it gets rid of the old hypothesis afterwards:
+You may notice that, in the above proof, the original `h` is still
+present in the contenxt, although it is shadowed by the new `h`.
+Often we don't care to keep this old hypothesis around, and so we can use the {tactic}`replace`
+tactic instead. It behaves like {tactic}`have`, except that
+it gets rid of the old hypothesis afterwards when possible:
 
 ```lean
-theorem replace_example m :
-    (∀ n, m * n = 0) → m = 0 := by
-  intro h
+example (m : Nat) (h : ∀ n, m * n = 0) : m = 0 := by
   replace h := h (n := 1)
-  rw [mul_one] at h
+  rw [Nat.mul_one] at h
   exact h
 ```
 
-::::::full
-:::::exercise (rating := 3) (name := "nth_error_always_none")
-Use `have` or `replace` to prove the the following lemma, following the
-model of the examples above. Do not use `induction`.
+Specializing a hypothesis in this way is common enough that Lean provides the
+{tactic}`specialize` tactic for it. For example,
+`specialize h 1` is a more concise way of writing `replace h := h 1`:
 
 ```lean
-theorem nth?_always_none (l : List Nat) :
-    (∀ i, nth? l i = none) →
+example (m : Nat) (h : ∀ n, m * n = 0) : m = 0 := by
+  specialize h 1
+  rw [Nat.mul_one] at h
+  exact h
+```
+
+:::::exercise (rating := 3) (name := "nth?_always_none")
+Use {tactic}`have`, {tactic}`replace`, or {tactic}`specialize` to prove the the following lemma,
+following the model of the examples above. Do not use {tactic}`induction`.
+
+```lean
+theorem nth?_always_none (l : List Nat) (h : ∀ i, nth? l i = none) :
     l = [] := by
   solution!
-    intro h
-    cases l
-    case nil => rfl
-    case cons hd tl =>
+    cases l with
+    | nil => rfl
+    | cons x xs =>
       have h := h (i := 0)
       dsimp [nth?] at h
       contradiction
 ```
 :::::
 
-::::::
 
-Tactics like `have` and `replace` can also be used with lemmas and
+Tactics like {tactic}`have` and {tactic}`replace` can also be used with lemmas and
 theorems we've already proven, not just things in our context.
-Using these tactis before `apply` gives us yet another way to
-control where `apply` does its work.
+Using these tactis before {tactic}`apply` gives us yet another way to
+control where {tactic}`apply` does its work.
 
 ```lean
-theorem trans_eq_example'''''' (a b c d e f : Nat) :
-    [a, b] = [c, d] →
-    [c, d] = [e, f] →
+example (a b c d e f : Nat)
+    (h₁ : [a, b] = [c, d])
+    (h₂ : [c, d] = [e, f]) :
     [a, b] = [e, f] := by
-  intros eq1 eq2
   have h := trans_eq (y:= [c, d])
   apply h
   /- This tactic closes a goal if it appears anywhere in the context.
-     In this case we could also write `exact eq1` ... -/
+     In this case we could also write `exact h₁` ... -/
   assumption
-  /- .. and here we could also write `exact eq2` -/
+  /- .. and here we could also write `exact h₂` -/
   assumption
 ```
 
