@@ -390,15 +390,19 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
       | .some alt => return buf.appendAll file (asModuleDoc alt.trimAscii.toString)
       | .none => return buf
     if name == ``Block.details then
-      -- Saved file gets the contents inlined verbatim; the summary becomes a
-      -- short comment so the reader of the `.lean` knows it was originally
-      -- collapsed in the book.
+      -- The contents are inlined verbatim, bracketed by skip markers so the
+      -- reader of the `.lean` can tell this was a collapsed, skippable aside in
+      -- the book. The summary (if any) rides along on the opening marker.
       let summary :=
         match which.data with
         | .str s => s
         | _ => ""
-      let mut buf := buf.appendAll file (asModuleDoc s!"_Details:_ {summary}")
+      let opener := if summary.isEmpty
+        then "THESE DETAILS CAN BE SKIPPED:"
+        else s!"THESE DETAILS CAN BE SKIPPED: {summary}"
+      let mut buf := buf.appendAll file (asModuleDoc opener)
       buf := walkBlocks width file contents buf
+      buf := buf.appendAll file (asModuleDoc "END DETAILS")
       return buf
     if name == ``Block.quiz then
       -- A quiz is shown in every build product; label it so the reader of the
