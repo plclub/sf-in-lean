@@ -1372,8 +1372,16 @@ inductive Nat : Type where
   | succ (n : Nat)
 ```
 
-The following lines make ordinary numerals such as 0, 1, and 2 work with our {name}`Nat` type.You can ignore the details for now.
+With a little Lean magic, we can also arrange that
+ordinary numerals such as 0, 1, and 2 will be interpreted as values of our new {name}`Nat` type
+whenever this is sensible in context.
 
+The technical details of how this is done are not important for present purposes,
+so we won't spend time explaining them here.
+Instead, we'll mark them with "You can skip this" comments in `.lean` files and
+hide them behind a button in the HTML presentation.
+
+:::details "Library Nat to SFL Nat coercion"
 ```lean
 def ofNat : _root_.Nat → Nat
   | .zero => .zero
@@ -1381,6 +1389,7 @@ def ofNat : _root_.Nat → Nat
 
 instance (n : _root_.Nat) : OfNat Nat n := ⟨ofNat n⟩
 ```
+:::
 
 :::full
 We'll define some shorthands for numbers, putting them in the `Nat` namespace
@@ -2697,38 +2706,34 @@ theorem and_eq_or (b c : Bool) : (b && c) = (b || c) → b = c := by
 
 ## Airport Exercise
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
+:::::full
 :::dev "Yipeng Liu (berberman)" BeforeNextRelease
 Add grading attributes.
 :::
 
-
-:::full
-Now that we have learned the basic features of Lean 4, let's close the chapter
+Now that we have learned some basic features of Lean, let's close the chapter
 with an exercise that brings them together.
-
-In a theorem prover like Lean, we can do
-more than just implement a system — we can also state precisely how we expect the
-system to behave and prove that our implementation satisfies that expectation.
 
 In this exercise, we will model part of a database
 storing information about travelers passing through an airport.
 The database contains one entry per traveler, recording
 information about where the traveler is in the airport process and the contents of their luggage.
 
-We will implement several operations on these entries, state
-properties that describe how the database should
-behave, and prove that the implementation satisfies them.
-:::
+We will implement several operations on these entries, state intended
+properties of the database's
+behavior, and prove that the implementation satisfies them.
 
-:::terse
-We will model a simple airport system in Lean. Besides implementing
-its operations, we will state properties that describe how the system should
-behave and prove that the implementation satisfies them.
-:::
 
 ```lean
 namespace Airport
 ```
+
+:::dev "Benjamin Pierce (bcpierce00)"
+Remove all the `:::terse` blocks and promote `:::full` blocks to top level -- the whole section is `:::::full` now.
+:::
 
 :::full
 First, we describe the possible states of a bag.
@@ -2764,7 +2769,7 @@ inductive ScreeningStatus : Type where
 ```
 
 :::full
-Next, we consider the possible stages of the airport process a traveler can inhabit:
+Next, we define the possible stages of the airport process a traveler can inhabit:
 - they have not yet purchased a ticket;
 - they have a ticket but have not yet checked in;
 - they have checked in, in which case the
@@ -2777,8 +2782,8 @@ There are three stages a traveler can be in:
 
 ```lean
 inductive Traveler : Type where
-  | noTicket (bagContent : BagContent)
-  | ticketed (bagContent : BagContent)
+  | noTicket  (bagContent : BagContent)
+  | ticketed  (bagContent : BagContent)
   | checkedIn (bagContent : BagContent) (screeningStatus : ScreeningStatus)
 ```
 
@@ -2786,7 +2791,6 @@ Buying a ticket changes a traveler with no ticket into a ticketed traveler.
 If the traveler already has a ticket or has already checked in, nothing changes.
 
 :::exercise (rating := 1) (name := "buyTicket")
-Define `buyTicket`
 ```lean
 def buyTicket (t : Traveler) : Traveler := solution!(
   match t with
@@ -2798,7 +2802,7 @@ example : buyTicket (.checkedIn .battery .blocked) = .checkedIn .battery .blocke
 ```
 :::
 
-The simplification rules for {name}`buyTicket`:
+Here are the simplification rules for {name}`buyTicket`:
 
 ```lean
 theorem buyTicket_noTicket (bagContent : BagContent) :
@@ -2815,10 +2819,9 @@ attribute [irreducible] buyTicket
 ```
 
 :::full
-An operation is called _idempotent_
-when performing it twice has the same effect as performing it once.
 The first property we will prove about our system is that
-purchasing a ticket is an idempotent operation.
+purchasing a ticket is an idempotent operation
+(i.e., performing it twice has the same effect as performing it once).
 :::
 
 :::terse
@@ -2847,12 +2850,10 @@ theorem buyTicket_idempotent (t : Traveler) :
 :::
 
 A traveler can check in only after buying a ticket,
-and their bag is marked as needing inspection.
-Calling checkIn in any other state does nothing.
+and their bag is then marked as needing inspection.
+Calling `checkIn` in any other state does nothing.
 
 :::exercise (rating := 1) (name := "checkIn")
-
-Define `checkIn`.
 
 ```lean
 def checkIn (t : Traveler) : Traveler := solution!(
@@ -2884,7 +2885,7 @@ attribute [irreducible] checkIn
 ```
 
 A traveler who does not yet have a ticket can buy one and then check in.
-After doing so, the traveler is checked in and their bag needs to be screened.
+After this, the traveler is checked in and their bag needs to be screened.
 
 :::exercise (rating := 1) (name := "buy_ticket_then_check_in")
 ```lean
@@ -2937,7 +2938,7 @@ attribute [irreducible] inspectBag
 ```
 
 :::exercise (rating := 2) (name := "inspect_bag_idempotent")
-Inspecting the same unchanged bag twice has the same effect as inspecting it once.
+Show that tnspecting the same unchanged bag twice has the same effect as inspecting it once.
 
 ```lean
 theorem inspectBag_idempotent (t : Traveler) : inspectBag (inspectBag t) = inspectBag t := by
@@ -2964,8 +2965,7 @@ theorem inspectBag_idempotent (t : Traveler) : inspectBag (inspectBag t) = inspe
 ```
 :::
 
-If the traveler replaces the bag after check in, the previous screening result no longer
-applies to the new bag.
+If the traveler replaces the bag after check in, the previous screening result no longer applies to the new bag.
 
 :::exercise (rating := 1) (name := "replace_bag")
 Define `replaceBag`.
@@ -3004,7 +3004,7 @@ It is easy to see that replacing a bag after it has been inspected resets its sc
 In other words, {name}`inspectBag` and {name}`replaceBag` do not, in general, commute:
 the order in which the two operations are performed can affect the result.
 
-But are there cases in which the two operations *do* commute?
+But are there cases in which the two operations _do_ commute?
 
 Yes. If the traveler has not checked in, {name}`inspectBag` has no effect.
 Therefore, whether we inspect the bag before or after replacing it makes no difference.
@@ -3045,3 +3045,4 @@ theorem inspectBag_replaceBag_comm_ticketed
 ```lean
 end Airport
 ```
+:::::

@@ -207,6 +207,10 @@ We use American English spelling.
 For general matters of grammar, punctuation, and usage, we follow
 the [Chicago Manual of Style](https://www.chicagomanualofstyle.org/).
 
+Except in the Preface, we use just "Lean", not "Lean 4".
+
+We generally use _italics_ for emphasis, not **boldface**.
+
 ### Informal Proofs
 
 We use informal proofs sparingly, as explanations and exercises when
