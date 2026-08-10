@@ -356,6 +356,9 @@ there if we just go on like this.
 To prove interesting facts about numbers, lists, and other
 inductively defined sets, we often need a more powerful reasoning
 principle: _induction_.
+:::dev "Benjamin Pierce (bcpierce00)"
+I changed boldface back to italic here, but I'm happy to discuss using boldface in a principled and consistent (and sparing) way...
+:::
 
 Recall (from a discrete math course, probably) the _principle of
 induction over natural numbers_: If `P(n)` is some proposition
