@@ -1689,10 +1689,10 @@ changes the proof state and hovering over each argument to {tactic}`rewrite` to 
 ::::full
 Lean, like any other programming language, has conventions and best practices
 for writing good software. Lean takes inspiration from object-oriented programming
-in favoring the use of _encapsulation_. In OOP,
-it is considered good practice not to access the
-fields of an object directly, but instead to use getter and setter methods.
-This helps to encapsulate the object's definition, so that, if its fields or implementation
+in favoring the use of _encapsulation_. In OOP, it is considered poor style to expose
+the fields of an object in its interface; instead, those fields should only be
+accessible by an object's methods (like getters and setters).
+Doing so hides the object's definition, so that, if its fields or implementation
 ever change, the interface it exposes to the outside world remains the same.
 In simple examples such conventions may seem trivial or even silly; in complex codebases,
 it is the only way to maintain crucial invariants that prevent a system from becoming unmaintainable.
