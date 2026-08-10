@@ -423,3 +423,35 @@ theorem while_true_nonterm : ∀ b c st st',
       | ifFalse => simp
   exact key (imp {while (~b) {~c}}) st st' contra (by rfl)
 ```
+:::::exercise (rating := 2) (name := "while_true_nonterm_informal") (manual:= true)
+Explain what the lemma `while_true_nonterm` means in English.
+:::::
+:::::exercise (rating := 2) (name := "while_true")
+Prove the following theorem. _Hint_: You'll want to use
+`while_true_nonterm` here.
+
+```lean 
+theorem while_true : ∀ b c,
+  Bexp.equiv b (bexp {true}) ->
+  Com.equiv
+    (imp {while (~b) {~c}})
+    (imp {while (true) {skip;}}) := by
+  solution!(
+    intro b c beq st st'
+    constructor
+    case mp => 
+      intro h
+      apply False.elim
+      exact while_true_nonterm b c st st' beq h
+    case mpr => 
+      intro h
+      apply False.elim
+      have bexp_equiv_refl : ∀ (b: Bexp), b.equiv b :=
+        by
+          intro b st
+          rfl
+      exact while_true_nonterm (bexp {true}) (imp {skip;}) st st' (bexp_equiv_refl (bexp {true})) h
+  )
+```
+:::::
+
