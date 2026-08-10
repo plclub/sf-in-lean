@@ -2706,17 +2706,18 @@ Add grading attributes.
 Now that we have learned the basic features of Lean 4, let's close the chapter
 with an exercise that brings them together.
 
-One fascinating aspect of using a theorem prover like Lean is that we can do
-more than implement a system — we can also state precisely what we expect the
-system to behave and prove that our implementation satisfies those expectations.
+In a theorem prover like Lean, we can do
+more than just implement a system — we can also state precisely how we expect the
+system to behave and prove that our implementation satisfies that expectation.
 
-In this exercise, we will model part of an airport database.
-The airport stores one database entry for each traveler.
-An entry records where the traveler is in the airport process,
-together with information about their current bag.
+In this exercise, we will model part of a database
+storing information about travelers passing through an airport.
+The database contains one entry per traveler, recording
+information about where the traveler is in the airport process and the contents of their luggage.
 
-We will implement several operations on these entries and prove
-general properties about their behavior.
+We will implement several operations on these entries, state
+properties that describe how the database should
+behave, and prove that the implementation satisfies them.
 :::
 
 :::terse
@@ -2730,6 +2731,8 @@ namespace Airport
 ```
 
 :::full
+First, we describe the possible states of a bag.
+
 For simplicity, we assume that a bag either contains a battery, which causes
 it to fail inspection, or contains only ordinary items:
 :::
@@ -2745,7 +2748,7 @@ inductive BagContent : Type where
 ```
 
 :::full
-The screening status records whether the bag has not yet been inspected,
+A bag's screening status records whether the bag has not yet been inspected,
 has been cleared, or has been blocked:
 :::
 
@@ -2761,7 +2764,7 @@ inductive ScreeningStatus : Type where
 ```
 
 :::full
-A traveler can be in one of three stages:
+Next, we consider the possible stages of the airport process a traveler can inhabit:
 - they have not yet purchased a ticket;
 - they have a ticket but have not yet checked in;
 - they have checked in, in which case the
@@ -2811,12 +2814,15 @@ theorem buyTicket_checkedIn (bagContent : BagContent)
 attribute [irreducible] buyTicket
 ```
 
-Here is our first general property: buying a ticket twice has the same
-effect as buying it once.
-
 :::full
-N.B. An operation is called _idempotent_
-if performing it twice has the same effect as performing it once.
+An operation is called _idempotent_
+when performing it twice has the same effect as performing it once.
+The first property we will prove about our system is that
+purchasing a ticket is an idempotent operation.
+:::
+
+:::terse
+Here is our first general property: buying a ticket twice is idempotent.
 :::
 
 :::exercise (rating := 2) (name := "buy_ticket_idempotent")
