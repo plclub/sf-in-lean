@@ -487,8 +487,9 @@ They may also take additional boolean options:
 
 Combine `+error` and `-keep` to produce a block that is expected to fail,
 and whose declarations don't affect later blocks.
+See the previous sections for more detailed usage guidelines.
 
-### BNF grammars
+### BNF grammar blocks
 
 Fenced `bnf` blocks render as typeset object-language grammars.
 Productions begin with a metavariable and `::=`, followed by alternatives
@@ -515,90 +516,35 @@ is rendered as comments in the extracted Lean
 
 and as a similar table in the HTML.
 
-### Displays: `` ```display `` and `` ```displaymath ``
+### Display blocks
 
-Two fenced blocks (parallel to `` ```lean `` and `` ```bnf ``) set material off
-from the prose as a *display*.  Both are implemented by
-`SFLMeta/DisplayMath.lean`.
+Fenced `display` blocks are not type checked, and are rendered verbatim in the
+HTML as plain code blocks and in the extracted Lean as indented comments.
 
-**`` ```display `` — set-off Lean code, no typesetting.** Shows its body verbatim
-as (non-elaborated, non-highlighted) monospace code, set off from the prose.  The
-body is never parsed or elaborated, so anything is safe — deliberately ill-formed
-snippets, shell transcripts, and the informal `[[ … ]]` equations of the paper
-proofs:
-
-````
-```display
-n + (m + p) = (n + m) + p.
-```
-````
-
-This is the home for the coqdoc `[[ … ]]` displays: **`to_verso` emits a
-`` ```display `` block for every `[[ … ]]`** (in both the `.lean` and the `.v`
-front-ends).  The content is thus preserved and marked as a display rather than
-left as an anonymous `` ``` `` fence.  coqdoc uses the same `[[ … ]]` for shell/code
-displays (`make Basics.vo`) and for displayed math, and the two are not
-mechanically distinguishable, so `to_verso` treats them uniformly as
-`` ```display `` — always safe, never elaborated.
-
-In the HTML a display is set off and indented a few characters from the left
-margin (not flush left, not centered).  In the *generated* `.lean` files (the
-per-variant student/solutions/terse extracts) a display is rendered specially: it
-becomes its own comment, each source line kept on its own line and indented under
-`-- `, and — unlike ordinary prose — it is **never reflowed/filled** into a
-paragraph, because a display's line structure is significant.
-
-**`` ```displaymath `` — real typeset math.** For a genuine *displayed equation*,
-typeset as mathematics by the bundled KaTeX:
-
-````
-```displaymath
-n + (m + p) = (n + m) + p.
-```
-````
-
-Each non-blank line becomes one centered display equation.  The body is **LaTeX**:
-for the plain arithmetic identities that pervade the informal proofs
-(`0 + (m + p) = (0 + m) + p.`) the source text is already valid LaTeX and renders
-directly; where finer control is wanted an author writes the corresponding LaTeX
-(`\mathsf{S}` for a roman constructor, `\text{and}` between two columns, an
-`aligned` environment to line up `=`).  Verso also accepts a single inline display
-natively as `` $$`…` `` inside prose.
-
-Promoting the genuinely-mathematical `` ```display `` blocks to `` ```displaymath ``
-is a manual editing pass on the `.lean` chapter; `to_verso` does not attempt it
-automatically.
+Fenced `displayMath` blocks contain TeX math equations;
+they are rendered in the HTML as typeset math using KaTeX,
+and in the extracted Lean as verbatim indented comments.
+Each line is a separate equation.
 
 ### Inline roles
 
-Beyond the structural directives above, the Manual genre offers **inline roles**
-that enrich expository prose in the HTML.  Use them where they add value (and
-don't over-link — link the first substantive mention in a passage, not every
-occurrence):
+Inline roles of the form `{<role>}[<text>]` provide intertext linking and
+hovertext in the HTML. If the text is a single piece of content,
+such as an inline code snippet or an italicized phrase,
+the brackets may be omitted.
 
-* `` {name}`Foo.bar` `` — a clickable identifier that hovers to show its
-  type/signature and links to its definition.  Use for references to real
-  declarations (defs, theorems, constructors, types) in prose.  **Caveat:** the
-  name must resolve *in scope at that point in the document* — defined earlier
-  and reachable (mind namespaces and forward references), or the build fails.  So
-  this is a targeted, build-verified pass, not a global `` `x` ``→`` {name}`x` ``
-  replace; and it applies only in visible prose (not inside `lean` blocks, quiz
-  options, or dropped author notes).
-* `` {lean}`expr` `` — an inline *elaborated expression* (any term or type, with
-  hover types).  Use when a whole expression — not just a single name — belongs
-  in prose, e.g. `` {lean}`Aexp → Nat` `` or `` {lean}`Coe Ident Aexp` ``.
-* `{ref "tag"}[link text]` — a cross-reference link to a section.  Tag the target
-  by putting a `%%% tag := "the-tag" %%%` block right under its heading, then
-  reference it with `{ref "the-tag"}[…]`.  Use for "see the X section
-  above/below" phrasings.
-* `` {tactic}`simp` `` — links a tactic name to its documentation; good for prose
-  that mentions tactics.
-* `` {deftech}`term` `` / `` {tech}`term` `` — define a technical term (glossary
-  entry + anchor) and link its later uses.  Good for a chapter's recurring
-  defined terms.
-* Also available: `{option}` (Lean options), `` {module}`Foo` `` (module links),
-  `{margin}[…]` (sidebar notes), `{index}` / `{see}` / `{seeAlso}` (book index),
-  `{citep}` / `{citet}` (bibliography).
+* `{ref <string>}[<text>]`:
+  a cross-reference to the section in the corresponding `<string>.lean` file
+* `` {lean}`<expression>` ``:
+  typechecked Lean code with usual hover and navigation behavior
+* `` {name}`<identifier>` ``:
+  like `{lean}`, but a single identifier that navigates to its declaration
+* `` {tactic}`<tactic>` ``:
+  a single syntax highlighted tactic with no navigation or hover
+* `{deftech}_<text>_`, `{tech}_<text>_`:
+  a defined technical term appearing in the glossary;
+  a link that navigates to the defining instance of that term
+* `{citep}[]`/`{citet}[]`: a parenthetical/textual citation
 
 ### Directive fence depth
 
@@ -817,7 +763,7 @@ example : 1 = 1 := by rfl
 ::::
 ````
 
-### Internal commentary
+### Internal commentary directives
 
 #### `:::dev`
 
@@ -840,7 +786,7 @@ _Not rendered._
 An instructor note for pacing advice, classroom caveats,
 which sections to skip for a short course, etc.
 
-### Structural and presentation blocks
+### Structural and presentation directives
 
 #### `:::hide`
 
