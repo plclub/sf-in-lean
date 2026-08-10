@@ -239,7 +239,7 @@ theorem review₅ (n : Nat) : zero + n = n
 (E) can't be done with the tactics we've seen.
 
 :::quizSolution
-This one CANNOT be proved by {tactic}`rfl`, {tactic}`cases`, or rewriting alone —
+This one _cannot_ be proved by {tactic}`rfl`, {tactic}`cases`, or rewriting alone —
 it needs induction!  (We'll see why below.)
 :::
 ::::
@@ -355,7 +355,7 @@ there if we just go on like this.
 ::::full
 To prove interesting facts about numbers, lists, and other
 inductively defined sets, we often need a more powerful reasoning
-principle: *induction*.
+principle: _induction_.
 
 Recall (from a discrete math course, probably) the _principle of
 induction over natural numbers_: If `P(n)` is some proposition
@@ -433,7 +433,7 @@ Let's try this one together:
 ::::
 
 ::::full
-Here's another theorem to try, this time involving a fact about equality on
+Here's another theorem to try, this time involving equality on
 natural numbers.
 ::::
 
@@ -555,7 +555,7 @@ rw [double_zero]
 ::::full
 A small caveat: `rw [...]` only performs a quick reflexivity check
 after rewriting; it does not unfold every definition. So, in rare
-cases, {tactic}`rw` may leave a goal that is still solved immediately by {tactic}`rfl`.
+cases, {tactic}`rw` may leave a goal that is solved immediately by {tactic}`rfl`.
 
 ```lean
 def aliasOfTwo := two
@@ -625,7 +625,7 @@ theorem even_succ (n : Nat) :
 One inconvenient aspect of our definition of `even n` is the
 recursive call on `n'` when `n = succ (succ n')`. This makes proofs about `even n`
 harder when done by induction on `n`, since we may need an
-induction hypothesis about `succ (succ n')`. The following lemma gives an
+induction hypothesis about `succ (succ n')`, while induction just gives us one about `succ n'`). The following lemma gives an
 alternative characterization of `even (succ n)` that works better
 with induction:
 

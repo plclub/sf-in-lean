@@ -1741,23 +1741,27 @@ changes the proof state and hovering over each argument to {tactic}`rewrite` to 
 ## Irreducibility, Rewriting, and Proof Engineering
 
 ::::full
-Lean, like any other programming language, has conventions and best practices
-for writing good software. In object-oriented programming,
-for example, it is considered good practice not to access the
+Every programming language has conventions and best practices
+for writing good software. In object-oriented languages, for example,
+it is considered good practice not to access the
 fields of an object directly, but instead to use getter and setter methods.
 This helps to encapsulate the object's definition, so that, if its fields or implementation
 ever change, the interface it exposes to the outside world remains the same.
-In simple examples such conventions may seem trivial or even silly; in complex codebases,
+In simple examples, such conventions may seem trivial or even silly; in complex codebases,
 it is the only way to maintain crucial invariants that prevent a system from becoming unmaintainable.
 
-The same principle applies to definitions and proofs in Lean.
+The same principle applies to programs and proofs in Lean.
 In idiomatic Lean, it is considered poor style to _unfold_ — that is, "peek"
 through — definitions by using {tactic}`rfl` to implicitly simplify expressions
 that aren't syntactically identical. If you take a look at the proofs of
 {name}`add_zero` and {name}`add_succ` above, you will notice this is exactly what we did
 when we used the {tactic}`rfl` tactic.
+:::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement
+Readers might wonder why there isn't a tactic that's just like `rfl` but insists on syntactic identity, if that's what is considered good style...
+:::
 
-However, the foundational theorems {name}`add_zero` and {name}`add_succ` provide a
+
+Fortunately, the foundational theorems {name}`add_zero` and {name}`add_succ` provide a
 characterization of the behavior of {name}`add` that makes using {tactic}`rfl` to simplify
 expressions unnecessary; instead, we can rewrite by these theorems anywhere we want to describe
 how {name}`add` evaluates.
