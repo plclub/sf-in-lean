@@ -2764,7 +2764,7 @@ inductive ScreeningStatus : Type where
 A traveler can be in one of three stages:
 - they have not yet purchased a ticket;
 - they have a ticket but have not yet checked in;
-- they have checked in,in which case the
+- they have checked in, in which case the
   database also stores the screening status of their bag.
 :::
 
@@ -2840,7 +2840,7 @@ theorem buyTicket_idempotent (t : Traveler) :
 ```
 :::
 
-A traveler can check in only after buying a ticket.
+A traveler can check in only after buying a ticket,
 and their bag is marked as needing inspection.
 Calling checkIn in any other state does nothing.
 
