@@ -488,6 +488,9 @@ _close_ (solve) the current goal, finishing its proof.
 
 Let's walk through the example above with this terminology in mind.
 ::::
+:::dev "Benjamin Pierce (bcpierce00)"
+The typesetting here is bad -- most of the text has to come out of the inline comments...
+:::
 
 ::::terse
 And now let's see it in a bit more detail:
@@ -1378,8 +1381,8 @@ whenever this is sensible in context.
 
 The technical details of how this is done are not important for present purposes,
 so we won't spend time explaining them here.
-Instead, we'll mark them with "You can skip this" comments in `.lean` files and
-hide them behind a button in the HTML presentation.
+Instead, we'll mark them with `THESE DETAILS CAN BE SKIPPED` comments in `.lean` files and
+hide them in a collapsed text segment in the HTML presentation. Click on the triangle in the HTML if you want to have a look.
 
 :::details "Library Nat to SFL Nat coercion"
 ```lean
