@@ -569,13 +569,17 @@ is an exercise that contains a solution.
 
 ### Build variants and prose directives
 
-Every chapter is compiled once but rendered in three variants:
+Every chapter is compiled once but rendered in four variants:
 
 - **student**: full prose, solutions elided
 - **solutions**: full prose, solutions shown
+- **grading**: full prose, solutions shown, with grading attributes
 - **terse**: abridged prose for live-coding / lecturing
 
 A number of directives control what prose appears in which variants.
+There is no difference between how the solutions and the grading variants are
+rendered in the HTML, so what applies to the solutions variant below
+also applies to the grading variant.
 
 #### `:::full`
 
@@ -638,18 +642,18 @@ It takes the following options:
 * `(level := <identifier>)` (optional): additional difficulty warning (currently only `Advanced`)
 * `(manual := <boolean>)` (optional): marks the exercise for manual grading
 
-#### `:::gradeTheorem N name...`, `:::grade`
+#### `:::gradeTheorem <number> <identifier>...`, `:::grade`
 
 _Not rendered._
 
 `gradetheorem` is an autograding specification for an exercise with
-a declaration `name` and a point value of `N`, while `grade` is a manual
+a point value and one or more declarations, while `grade` is a manual
 grading specification. The manual specification has the following format:
 
 ````
 :::grade
 ```
-GRADE_MANUAL <N>: <name>
+GRADE_MANUAL <number>: <identifier>...
 ```
 :::
 ````
@@ -676,6 +680,9 @@ theorem mul_succ : ∀ n m : Nat, n * (succ m) = (n * m) + n := by
 :::
 ::::
 ````
+
+In the grading Lean variant, autograding specifications are extracted to
+`attribute [autogradedProof <number>] <identifier>...`.
 
 ### Exercise solution mechanisms
 
@@ -718,8 +725,8 @@ since the tactics are indented. The replacements are summarized below.
 
 Entire lines of code can also be replaced by beginning with a `-- SOLUTION`
 comment and ending with a `-- END SOLUTION` comment. The comments are stripped
-in the `solution` variant, while all lines are replaced by a `-- FILL IN HERE`
-comment in the `student` and `terse` variants. Use this only when omitting the lines entirely still compiles, such as for the constructors of an inductive type.
+in the solutions variant, while all lines are replaced by a `-- FILL IN HERE`
+comment in the student and terse variants. Use this only when omitting the lines entirely still compiles, such as for the constructors of an inductive type.
 
 ````
 ```lean
