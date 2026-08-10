@@ -284,6 +284,8 @@ An _assertion_ is a logical claim about the state of a program's
 memory -- formally, a property of `State`s.
 
 ```lean
+open scoped MyGetElem
+
 abbrev Assertion := State → Prop
 ```
 
@@ -2661,10 +2663,10 @@ theorem assertion_sub_ex2' :
     · assertion_auto
 ```
 
-:::gradeTheorem 1 "assertion_sub_ex1'"
+:::gradeTheorem 1 assertion_sub_ex1'
 :::
 
-:::gradeTheorem 1 "assertion_sub_ex2'"
+:::gradeTheorem 1 assertion_sub_ex2'
 :::
 :::::
 
@@ -3063,7 +3065,8 @@ theorem if_example :
       unfold AssertImplies Assertion.sub bassertion
       intro st ⟨_, h⟩
       simp only [Bexp.eval_eq, Aexp.eval_id, Aexp.eval_num, beq_iff_eq] at h
-      simp [Aexp'.ofAexp, TotalMap.update_neq _ Y X (by decide),
+      simp [Aexp'.ofAexp,
+            TotalMap.update_neq (m := st) (a₁ := Y) (a₂ := X) (by decide) 2,
             TotalMap.update_eq, h]
   · -- Else
     apply hoare_consequence_pre
@@ -3319,10 +3322,10 @@ theorem if1false_test :
     rfl
 ```
 
-:::gradeTheorem 1 "if1true_test"
+:::gradeTheorem 1 if1true_test
 :::
 
-:::gradeTheorem 1 "if1false_test"
+:::gradeTheorem 1 if1false_test
 :::
 :::::
 
@@ -5041,7 +5044,7 @@ theorem assert_assume_differ : ∃ (P : Assertion) (b : Bexp) (Q : Assertion),
       simp at heq
 ```
 
-:::gradeTheorem 1 "assert_assume_differ"
+:::gradeTheorem 1 assert_assume_differ
 :::
 
 Then prove that any triple for an `assert` also works when
@@ -5066,7 +5069,7 @@ theorem assert_implies_assume (P : Assertion) (b : Bexp) (Q : Assertion)
       exact ⟨rfl, h2⟩
 ```
 
-:::gradeTheorem 1 "assert_implies_assume"
+:::gradeTheorem 1 assert_implies_assume
 :::
 :::::
 ::::::
@@ -5260,7 +5263,7 @@ theorem assert_assume_example :
     · assertion_auto'
 ```
 
-:::gradeTheorem 4 "assert_assume_example"
+:::gradeTheorem 4 assert_assume_example
 :::
 
 ```lean
