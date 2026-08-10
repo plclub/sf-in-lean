@@ -97,11 +97,17 @@ def devNoteShown (urgency : Option String) : Bool :=
 /-- Render an author for a note label.  The authoring convention puts the GitHub
 handle in parentheses (`"Benjamin Pierce (bcpierce00)"`), which would nest inside
 the label's own parenthesized field list, so a trailing `(handle)` is rewritten
-to an `@handle` suffix.  An author in any other shape is left alone. -/
+to an `@handle` suffix.  The handle may be written with or without a leading `@`
+(`"Benjamin Pierce (@bcpierce00)"` and `"Benjamin Pierce (bcpierce00)"` are both
+accepted); either way the result carries exactly one `@`.  An author in any other
+shape is left alone. -/
 def devNoteAuthorText (author : String) : String :=
   if author.endsWith ")" then
     match (author.dropEnd 1).split "(" |>.toStringList with
-    | [name, handle] => s!"{name} @{handle}"
+    | [name, handle] =>
+      let name := if name.endsWith " " then name else name ++ " "
+      let handle := if handle.startsWith "@" then handle.drop 1 else handle
+      s!"{name}@{handle}"
     | _ => author
   else author
 
