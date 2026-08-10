@@ -401,11 +401,25 @@ are contradictory.
   We obtain a contradiction by 2 and 3.
 ::::
 
--- ```lean
--- theorem while_true_nonterm : ∀ b c st st',
---   Bexp.equiv b (bexp {true}) ->
---   ¬ (st =[ while (~b) {~c} ]=> st') := by
---   workinclass!
---   intro b c st st' hb h
---   have key : ∀ (c': Com)
--- ```
+```lean
+theorem while_true_nonterm : ∀ b c st st',
+  Bexp.equiv b (bexp {true}) ->
+  ¬ (st =[ while (~b) {~c} ]=> st') := by
+  workinclass!
+  intro b c st st' hb contra
+  have key : ∀ (c': Com) (s s': State), (s =[ c' ]=> s') -> c' = (imp {while (~b) {~c}}) -> False :=
+    by
+      intro c' s s' hce
+      induction hce with
+      | whileFalse b' s0 c0 hb' => 
+        intro heq; injection heq with beq ceq
+        subst beq; rw [hb] at hb'
+        simp at hb'
+      | whileTrue s0 s0' s0'' b' c0 hb hc' hwhile ih1 ih2 => exact ih2
+      | skip => simp
+      | asgn => simp
+      | seq => simp
+      | ifTrue => simp
+      | ifFalse => simp
+  exact key (imp {while (~b) {~c}}) st st' contra (by rfl)
+```
