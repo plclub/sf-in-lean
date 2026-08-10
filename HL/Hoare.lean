@@ -288,6 +288,8 @@ An _assertion_ is a logical claim about the state of a program's
 memory -- formally, a predicate of `State`s.
 
 ```lean
+open scoped MyGetElem
+
 abbrev Assertion := State → Prop
 ```
 
