@@ -12,7 +12,7 @@ The SF-in-Lean team is also looking for contributors who have the time and inter
 SF-in-Lean is _not_ ready for ordinary readers yet. We aim to have a
 complete and polished draft of the opening chapters of _Logical
 Foundations_ in time for the start of Fall 2026 courses and to finish
-both _logical Foundations_ and _Programming Language Foundations_ by
+both _Logical Foundations_ and _Programming Language Foundations_ by
 the end of the year. 
 
 ## Quick start: building and viewing the book
