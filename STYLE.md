@@ -446,8 +446,6 @@ arithmetic proofs against these definitions (`add_succ`, `add_zero`,
 
 ## Verso markup conventions
 
-BCP: Claude-generated material here -- human review needed...
-
 Each chapter is a single `.lean` file in its volume directory.
 Sections within a chapter use standard Markdown headings (`#`, `##`,
 `###`, …) relative to the `#doc` level.
@@ -458,99 +456,64 @@ Verso directives fenced by `:::` control when and how the contained Markdown is
 rendered, and is also used for tooling. The subsections below list the various
 types of code and directive blocks that are used.
 
-### `lean` block flags
+### `lean` blocks
 
-Use ordinary fenced `lean` blocks for examples that should elaborate in
-the chapter, appear in the rendered book, affect later Lean blocks,
-and be emitted as normal Lean code in generated projects for teachers and students.
+Fenced `lean` blocks in a file are type checked in the order they appear as if
+the file contained only those Lean blocks, as is usual in literate programming.
+They are rendered in the HTML as code blocks with hoverable doc comments and
+expandable proof states in tactics.
 
-Some examples are meant to be shown or checked without becoming persistent code in
-generated projects:
+These blocks may take a `(name := <identifier>)` option.
+A later `leanOutput` block then uses the identifier to check that the Lean
+block indeed produced the expected output, e.g.
 
-|block|rendered book|generated project|
-|---|---|---|
-|`` ```lean ``|shown|normal (executable) code|
-|`` ```lean -show``|hidden|normal code|
-|`` ```lean +error``|shown as expected failure|wrapped in an indented `sf_expect_failure` block|
-|`` ```lean +error -show``(rare)|hidden|wrapped in an indented `sf_expect_failure` block|
-|`` ```lean -keep``|shown|wrapped in an indented `sf_experiment` block|
-|`` ```lean -keep -show`` (rare)|hidden|wrapped in an indented `sf_experiment` block|
-
-Do not put definitions needed later in `-keep` or `+error` blocks as they will not become
-executable declarations in the generated projects, though they still get rendered in the book.
-
-### Solution mechanisms inside `lean` blocks
-
-Both mechanisms are elaborated by Lean at compile time (errors in the
-model solution are caught during the build) and produce two source
-variants — teacher (solutions visible) and student (solutions hidden)
-— written to `_out/<vol>/solutions/lean/` and
-`_out/<vol>/student/lean/`.
-
-**`solution!(expr)`** — Wraps a single term or tactic sequence.
-In the teacher variant the `solution!` keyword is stripped, leaving
-the body.  In the student variant the entire `solution!(…)` call is
-replaced with `sorry`.
-
-```lean
-def nandb (b1 : MyBool) (b2 : MyBool) : MyBool
-  := solution!(match b1 with
-  | .true  => notb b2
-  | .false => .true)
-
-example : nandb .true .false = .true := solution!(by rfl)
+````
+```lean (name := example)
+#check Bool.true
 ```
 
-For tactic proofs, write `solution! <tacticSeq>` inside a `by` block.
-
-**`-- SOLUTION … -- END SOLUTION`** — Textual block for answers that
-span multiple lines and cannot be wrapped in a single expression: the
-constructors of an inductive type, a multi-line proof, etc.  In the
-student variant the whole region (markers included) is replaced with a
-single `-- FILL IN HERE` comment at the same indentation.  In the
-teacher variant the marker lines are stripped and the body is kept.
-
-```lean
-inductive Bin : Type where
--- SOLUTION
-  | z  : Bin
-  | b0 : Bin → Bin
-  | b1 : Bin → Bin
--- END SOLUTION
+```leanOutput example
+Bool.true : Bool
 ```
+````
 
-**Convention:** prefer `solution!(…)` for a single term or tactic sequence.
-Use `-- SOLUTION … -- END SOLUTION` only where the elided region stays *valid as
-a comment* — the constructors of an `inductive`, or a whole top-level
-declaration (the student sees `-- FILL IN HERE` in its place).
+They may also take additional boolean options:
 
-**Do not use `-- SOLUTION` for a `def` body or a proof body.**  Eliding those to
-`-- FILL IN HERE` leaves an incomplete `def … :=` or an empty `by` block, which
-fails to compile — and a stubbed `def` must keep its *name* defined so later code
-still elaborates.  Wrap those in `solution!(…)` instead, so the student variant
-becomes `:= sorry` / `by sorry`.  (Use `-- END SOLUTION` as the closer, not
-`-- /SOLUTION`; `to_verso` rewrites the code-forward `-- /SOLUTION` to it, but
-hand-authored Verso must use `-- END SOLUTION`.)
+| Option | HTML book | Extracted Lean | Usage |
+| ------ | --------- | -------------- | ----- |
+| `-show` | not rendered | normal code | For hiding unexplained technical code from the book narrative |
+| `+error` | rendered as code block with error | code in `sf_expect_failure` block | For demonstrating expected errors while supressing error diagnostics |
+| `-keep` | rendered as code block | code in `sf_experiment` block | For successfully checking code without affecting later blocks |
+
+Combine `+error` and `-keep` to produce a block that is expected to fail,
+and whose declarations don't affect later blocks.
 
 ### BNF grammars
 
-Use fenced `` ```bnf `` blocks to typeset object-language grammars.
-Productions end with `;`; alternatives are separated by `|`.
-A plain identifier is a non-terminal; a double-quoted string is a
-terminal; an identifier with a **leading underscore** is a schematic
-meta-variable, rendered in italics (`_x` → *x*).
+Fenced `bnf` blocks render as typeset object-language grammars.
+Productions begin with a metavariable and `::=`, followed by alternatives
+separated by `|`, and end with `;`.
+Plain identifiers are nonterminals, while quoted strings are terminals.
+Each variant may have a string comment enclosed by parentheses.
+For instance, the grammar
 
+````
+```bnf
+t ::= x ("variable")
+    | "λ" x ":" T "." t ("abstraction")
+    | t t ("application") ;
 ```
-t ::= "true" | "false" | "if" t "then" t "else" t | _x ;
-T ::= "Bool" | T "->" T ;
+````
+
+is rendered as comments in the extracted Lean
+
+```lean
+-- t ::= x                     (variable)
+--     | λ x : T . t           (abstraction)
+--     | t t                   (application)
 ```
 
-HTML renders BNF as a styled table.  The saver emits the raw source
-text as a `--`-comment in generated `.lean` files, so the grammar
-survives in the extracted source.
-
-The `bnf%` term-mode syntax provides the same grammar inline in a Lean
-expression, for cases where the grammar is computed programmatically.
+and as a similar table in the HTML.
 
 ### Displays: `` ```display `` and `` ```displaymath ``
 
@@ -768,6 +731,61 @@ theorem mul_succ : ∀ n m : Nat, n * (succ m) = (n * m) + n := by
 ::::
 ````
 
+### Exercise solution mechanisms
+
+#### `solution!`, `workinclass!`, `suggested!`
+
+There are several tacticals that replace a term or a sequence of tactics
+depending on the variant. A solution term is placed within parentheses.
+
+````
+```lean
+def nandb (b1 : Bool) (b2 : Bool) : Bool
+  := solution!(match b1 with
+  | .true  => notb b2
+  | .false => .true)
+
+```
+````
+
+A solution proof is placed in an indented block of tactics.
+
+````
+```lean
+theorem false_or (b : Bool) : (.false || b) = b := by
+  solution!
+    rfl
+```
+````
+
+The tactical and its term or proof is replaced either by `sorry` or by
+the term or proof itself. For proofs, they are preceded by `all_goals`,
+since the tactics are indented. The replacements are summarized below.
+
+| Tactical       | `solutions` | `student` | `terse`     | Usage |
+| -------------- | ----------- | --------- | ----------- | ----- |
+| `solution!`    | `all_goals` | `sorry`   | `sorry`     | For homework exercises |
+| `workinclass!` | `all_goals` | `sorry`   | `all_goals` | For work in class |
+| `suggested!`   | `all_goals` | `sorry` with proof in comment | `all_goals` | For exercises with a suggested proof to modify |
+
+#### `-- SOLUTION`
+
+Entire lines of code can also be replaced by beginning with a `-- SOLUTION`
+comment and ending with a `-- END SOLUTION` comment. The comments are stripped
+in the `solution` variant, while all lines are replaced by a `-- FILL IN HERE`
+comment in the `student` and `terse` variants. Use this only when omitting the lines entirely still compiles, such as for the constructors of an inductive type.
+
+````
+```lean
+inductive Bin : Type where
+-- SOLUTION
+  | z  : Bin
+  | b0 : Bin → Bin
+  | b1 : Bin → Bin
+-- END SOLUTION
+```
+````
+
 ### Quiz and solution directives
 
 #### `:::quiz`, `:::quizSolution`
@@ -857,8 +875,9 @@ _Rendered in all variants._
 
 In the HTML, this is rendered as a collapsible `<details>` element
 with the given `<summary>` text.
-In the extracted Lean, this is rendered normally but preceded by a
-`-- _Details: <summary>_` comment.
+In the extracted Lean, this is rendered preceded by a
+`-- THESE DETAILS CAN BE SKIPPED: <summary>_` comment and succeeded by a
+`-- END DETAILS` comment.
 Good for encoding details, macro plumbing, or helper notation that is correct
 but not central to the main narrative.
 
