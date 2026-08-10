@@ -7,6 +7,7 @@ import SFLMeta.DisplayMath
 import SFLMeta.Quiz
 import SFLMeta.Terse
 import SFLMeta.SlideBreak
+import SFLMeta.Grade
 
 import SFLMeta.Save.SourceRewrite
 import SFLMeta.Save.Lean
@@ -26,11 +27,15 @@ abbrev SaveBuffers := HashMap String (Variants String)
 
 namespace SaveBuffers
 
-def appendBoth (buf : SaveBuffers) (file : String) (s : String) : SaveBuffers :=
+def appendAll (buf : SaveBuffers) (file : String) (s : String) : SaveBuffers :=
   let vs := buf.getD file default
   buf.insert file <| vs.map (· ++ s)
 
-def appendVariants
+def appendOnly (buf : SaveBuffers) (file : String) (variant : Variant) (s : String) : SaveBuffers :=
+  let vs := buf.getD file default |>.mapV fun v x => if v == variant then x ++ s else x
+  buf.insert file vs
+
+def append
     (buf : SaveBuffers) (file : String) (vs' : Variants String) : SaveBuffers :=
   let vs := buf.getD file default
   buf.insert file <| vs ++ vs'
@@ -73,7 +78,7 @@ def proseFillWidth : Nat := 75
 /-- The prose fill width for a build variant. -/
 def fillWidthFor : Variant → Nat
   | .terse => terseFillWidth
-  | .student | .solutions => proseFillWidth
+  | .student | .solutions | .grading => proseFillWidth
 /--
 Split `s` into whitespace-separated words, keeping each `` `code span` `` intact
 as a single token even when it contains spaces (so wrapping never splits one
@@ -295,11 +300,11 @@ partial def walkBlocks (width : Nat) (file : String) (bs : Array (Verso.Doc.Bloc
     | .ul _ | .ol _ _ => pending := pending.push (Text.blockToText width b)
     | _ =>
       if !pending.isEmpty then
-        buf := buf.appendBoth file (asModuleDoc (String.intercalate "\n\n" pending.toList))
+        buf := buf.appendAll file (asModuleDoc (String.intercalate "\n\n" pending.toList))
         pending := #[]
       buf := walkBlock width file b buf
   if !pending.isEmpty then
-    buf := buf.appendBoth file (asModuleDoc (String.intercalate "\n\n" pending.toList))
+    buf := buf.appendAll file (asModuleDoc (String.intercalate "\n\n" pending.toList))
   return buf
 
 /--
@@ -324,13 +329,13 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
       if let some saved := LeanSaved.decode? which.data then
         match saved.extractionMode with
         | .code =>
-          return buf.appendVariants file <| saved.variants.map fun src =>
+          return buf.append file <| saved.variants.map fun src =>
             -- `src` doesn't have ending newline
            src.trimAscii.toString ++ "\n\n"
         | .experiment =>
-          return buf.appendVariants file <| saved.variants.map (wrapIndented "sf_experiment")
+          return buf.append file <| saved.variants.map (wrapIndented "sf_experiment")
         | .expectFailure =>
-          return buf.appendVariants file <| saved.variants.map (wrapIndented "sf_expect_failure")
+          return buf.append file <| saved.variants.map (wrapIndented "sf_expect_failure")
       return buf
     if name == ``Block.importBlock then
       -- Cross-chapter `import` lines shown to the reader.  The extracted
@@ -345,13 +350,13 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
         let stars := String.ofList (List.replicate rating '⭐')
         let desig := exerciseDesignation level manual
         let header := s!"### Exercise ({rating} star{if rating == 1 then "" else "s"}): {exName}{desig} {stars}"
-        let mut buf := buf.appendBoth file (asModuleDoc header)
+        let mut buf := buf.appendAll file (asModuleDoc header)
         buf := walkBlocks width file contents buf
         return buf
       return buf
     if name == ``Block.bnf then
       if let some src := decodeBnfSource? which.data then
-        return buf.appendBoth file (asModuleDoc src.trimAscii.toString)
+        return buf.appendAll file (asModuleDoc src.trimAscii.toString)
     if name == ``Block.display || name == ``Block.displaymath then
       -- A ` ```display ` / ` ```displaymath ` block is a *display*: its line
       -- structure is significant, so it is emitted verbatim as a comment — each
@@ -379,26 +384,30 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
       let commented := String.intercalate "\n"
         ((src.stripBlankEdgeLines.splitOn "\n").map fun l =>
           if l.all (·.isWhitespace) then "" else "--   " ++ l)
-      return buf.appendBoth file (commented ++ "\n\n")
+      return buf.appendAll file (commented ++ "\n\n")
     if name == ``Block.diagramWithAlt then
       match findAlt? contents with
-      | .some alt => return buf.appendBoth file (asModuleDoc alt.trimAscii.toString)
+      | .some alt => return buf.appendAll file (asModuleDoc alt.trimAscii.toString)
       | .none => return buf
     if name == ``Block.details then
-      -- Saved file gets the contents inlined verbatim; the summary becomes a
-      -- short comment so the reader of the `.lean` knows it was originally
-      -- collapsed in the book.
+      -- The contents are inlined verbatim, bracketed by skip markers so the
+      -- reader of the `.lean` can tell this was a collapsed, skippable aside in
+      -- the book. The summary (if any) rides along on the opening marker.
       let summary :=
         match which.data with
         | .str s => s
         | _ => ""
-      let mut buf := buf.appendBoth file (asModuleDoc s!"_Details:_ {summary}")
+      let opener := if summary.isEmpty
+        then "THESE DETAILS CAN BE SKIPPED:"
+        else s!"THESE DETAILS CAN BE SKIPPED: {summary}"
+      let mut buf := buf.appendAll file (asModuleDoc opener)
       buf := walkBlocks width file contents buf
+      buf := buf.appendAll file (asModuleDoc "END DETAILS")
       return buf
     if name == ``Block.quiz then
       -- A quiz is shown in every build product; label it so the reader of the
       -- generated `.lean` can tell the question apart from surrounding prose.
-      let mut buf := buf.appendBoth file (asModuleDoc "_Quiz:_")
+      let mut buf := buf.appendAll file (asModuleDoc "_Quiz:_")
       buf := walkBlocks width file contents buf
       return buf
     if name == ``Block.quizSolution then
@@ -431,26 +440,30 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
         if devNoteShown urgency then
           let body := String.intercalate "\n\n"
             (contents.toList.map (blockToText (width - 4)))
-          return buf.appendBoth file
+          return buf.appendAll file
             (devNoteComment (devNoteLabel author urgency year) body)
       return buf
+    if name == ``Block.gradeTheorem then
+      let ⟨points, names⟩ := decodeGradeTheoremData which.data
+      let names := " ".intercalate (names.map Name.toString).toList
+      return buf.appendOnly file .grading s!"attribute [autogradedProof {points}] {names}\n\n"
     -- Unknown extension block: recurse into children as a best-effort.
     -- NB: :::instructors blocks carry no children (their bodies are dropped at
     -- elaboration), so this recursion is a no-op for them.
     walkBlocks width file contents buf
-  | .para inls => return buf.appendBoth file (asModuleDoc (paraToText width inls))
-  | .code s => return buf.appendBoth file (asModuleDoc s.trimAscii.toString)
+  | .para inls => return buf.appendAll file (asModuleDoc (paraToText width inls))
+  | .code s => return buf.appendAll file (asModuleDoc s.trimAscii.toString)
   | .concat bs | .blockquote bs => walkBlocks width file bs buf
   | .ul _ | .ol _ _ =>
     -- Normally batched with adjacent paragraphs in `walkBlocks`; this case is
     -- only reached for a list arriving outside that batching.
-    return buf.appendBoth file (asModuleDoc (blockToText width b))
+    return buf.appendAll file (asModuleDoc (blockToText width b))
   | .dl dis =>
     -- A description list: the term of each item is content too, so emit it
     -- before walking that item's description blocks.
     let mut buf := buf
     for di in dis do
-      buf := buf.appendBoth file (asModuleDoc (inlinesToText di.term))
+      buf := buf.appendAll file (asModuleDoc (inlinesToText di.term))
       buf := walkBlocks width file di.desc buf
     return buf
 
@@ -473,7 +486,7 @@ partial def walkSection (width : Nat) (depth : Nat) (file : String) (part : Part
   -- presence here says: this is the terse tree, suppress the heading (the
   -- content still flows).
   if !hasSuppressHeaderMarker intro then
-    buf := buf.appendBoth file (asModuleDoc s!"{hashes} {titleText}")
+    buf := buf.appendAll file (asModuleDoc s!"{hashes} {titleText}")
   buf := walkBlocks width file intro buf
   for p in subParts do
     buf := walkSection width (depth + 1) file p buf
@@ -490,9 +503,10 @@ def walkOuter (width : Nat) (vol : String) (text : Part Manual) (buf : SaveBuffe
   let .mk _ _ _ _ subParts := text
   let mut buf := buf
   for p in subParts do
-    buf := buf.appendBoth rootFile s!"import {chapterModule vol p}\n"
+    buf := buf.appendAll rootFile s!"import {chapterModule vol p}\n"
   for p in subParts do
     let chapterFile := chapterPath vol p
-    buf := buf.appendBoth chapterFile s!"import {supportModuleName vol}\n\n"
+    buf := buf.appendOnly chapterFile .grading s!"import AutograderLib\n"
+    buf := buf.appendAll chapterFile s!"import {supportModuleName vol}\n\n"
     buf := walkSection width 1 chapterFile p buf
   return buf

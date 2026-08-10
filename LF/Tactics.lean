@@ -213,11 +213,11 @@ theorem rev_exercise1 {α} (l l' : List α) :
     l' = l.rev := by
   intro eq
   rw [eq]; symm
-  apply rev_involutive
+  apply reverse_reverse
   -- /ADMITTED
 ```
 
-:::gradeTheorem 2 "rev_exercise1"
+:::gradeTheorem 2 rev_exercise1
 :::
 :::::
 
@@ -597,7 +597,7 @@ theorem injection_ex3 {α : Type} (x y z : α) (l j : List α) :
   rw [hxz, hyz]
 ```
 
-:::gradeTheorem 3 "injection_ex3"
+:::gradeTheorem 3 injection_ex3
 :::
 :::::
 
@@ -684,7 +684,7 @@ theorem disjoint_ex3 {α : Type} (x y z : α) (l : List α) :
     contradiction
 ```
 
-:::gradeTheorem 1 "disjoint_ex3"
+:::gradeTheorem 1 disjoint_ex3
 :::
 :::::
 
@@ -1159,8 +1159,8 @@ Use `have` or `replace` to prove the the following lemma, following the
 model of the examples above. Do not use `induction`.
 
 ```lean
-theorem nth_error_always_none (l : List Nat) :
-    (∀ i, nthError l i = none) →
+theorem nth?_always_none (l : List Nat) :
+    (∀ i, nth? l i = none) →
     l = [] := by
   solution!
     intro h
@@ -1168,7 +1168,7 @@ theorem nth_error_always_none (l : List Nat) :
     case nil => rfl
     case cons hd tl =>
       have h := h (i := 0)
-      dsimp [nthError] at h
+      dsimp [nth?] at h
       contradiction
 ```
 :::::
@@ -1256,15 +1256,15 @@ example (n m : Nat) :
     n = m := by
   induction n
   case zero =>
-    rw [double_zero]
+    rw [Nat.double_zero]
     intro eq
     cases m
     case zero => rfl
-    case succ _ => rw [double_succ] at eq; contradiction
+    case succ _ => rw [Nat.double_succ] at eq; contradiction
   case succ n' ih =>
     intro eq
     cases m
-    case zero => rw [double_zero, double_succ] at eq; contradiction
+    case zero => rw [Nat.double_zero, Nat.double_succ] at eq; contradiction
     case succ m' =>
       congr
       /- At this point, the induction hypothesis `ih` does _not_ give us
@@ -1353,12 +1353,12 @@ theorem double_injective : ∀ (n m : Nat),
   intro n
   induction n
   case zero =>
-    rw [double_zero]
+    rw [Nat.double_zero]
     intro m eq
     cases m
     case zero => rfl
     case succ _ =>
-      rw [double_succ] at eq
+      rw [Nat.double_succ] at eq
       contradiction
   case succ n' ih =>
   -- Notice that both the goal and the induction hypothesis are
@@ -1373,7 +1373,7 @@ theorem double_injective : ∀ (n m : Nat),
   cases m
   case zero =>
     -- The 0 case is trivial:
-    rw [double_zero, double_succ] at eq
+    rw [Nat.double_zero, Nat.double_succ] at eq
     contradiction
   case succ m' =>
     congr
@@ -1384,7 +1384,7 @@ theorem double_injective : ∀ (n m : Nat),
     -- in the IH with the current `m'` (this instantiation is performed
     -- automatically by the `apply` in the next step), then `ih` gives
     -- us exactly what we need to finish the proof.
-    apply ih; rw [double_succ, double_succ] at eq; injections
+    apply ih; rw [Nat.double_succ, Nat.double_succ] at eq; injections
 ```
 
 :::dev
@@ -1436,7 +1436,7 @@ theorem beq_eq : ∀ (n m : Nat),
         assumption
 ```
 
-:::gradeTheorem 2 "beq_eq"
+:::gradeTheorem 2 beq_eq
 :::
 
 ::::::full
@@ -1541,7 +1541,7 @@ theorem plus_n_n_injective : ∀ (n m : Nat),
         injections eq; congr; exact ih _ eq
 ```
 
-:::gradeTheorem 3 "plus_n_n_injective"
+:::gradeTheorem 3 plus_n_n_injective
 :::
 :::::
 
@@ -1568,13 +1568,13 @@ theorem double_injective_take2_FAILED (n m : Nat) :
     cases n
     case zero => rfl
     case succ =>
-      rw [double_zero, double_succ] at eq
+      rw [Nat.double_zero, Nat.double_succ] at eq
       contradiction
   case succ =>
     intro eq
     cases n
     case zero =>
-      rw [double_zero, double_succ] at eq
+      rw [Nat.double_zero, Nat.double_succ] at eq
       contradiction
     case succ =>
       congr
@@ -1616,16 +1616,16 @@ theorem double_injective_take2 (n m : Nat) :
     cases n
     case zero => rfl
     case succ =>
-      rw [double_zero, double_succ] at eq
+      rw [Nat.double_zero, Nat.double_succ] at eq
       contradiction
   case succ _ ih =>
     cases n
     case zero =>
-      rw [double_zero, double_succ] at eq
+      rw [Nat.double_zero, Nat.double_succ] at eq
       contradiction
     case succ =>
       congr
-      rw [double_succ, double_succ] at eq
+      rw [Nat.double_succ, Nat.double_succ] at eq
       injections _ eq; exact ih _ eq
 ```
 
@@ -1766,7 +1766,7 @@ Prove this by induction on `l`.
 ```lean
 theorem nth_error_after_last {α : Type} (n : Nat) (l : List α) :
     l.length = n →
-    nthError l n = none := by
+    nth? l n = none := by
   solution!
     intros hlen
     induction l generalizing n
@@ -1774,10 +1774,10 @@ theorem nth_error_after_last {α : Type} (n : Nat) (l : List α) :
     case cons hd tl ih =>
       rw [List.length_cons] at hlen
       rw [← hlen]
-      dsimp [nthError]; apply ih _; rfl
+      dsimp [nth?]; apply ih _; rfl
 ```
 
-:::gradeTheorem 3 "nth_error_after_last"
+:::gradeTheorem 3 nth_error_after_last
 :::
 :::::
 
@@ -2230,7 +2230,7 @@ theorem bool_fn_applied_thrice (f : Bool → Bool) (b : Bool) :
           rw [heqftrue, heqftrue]
 ```
 
-:::gradeTheorem 2 "bool_fn_applied_thrice"
+:::gradeTheorem 2 bool_fn_applied_thrice
 :::
 :::::
 
@@ -2346,7 +2346,7 @@ theorem beq_symm (n m : Nat) :
       exact ih _
 ```
 
-:::gradeTheorem 3 "beq_symm"
+:::gradeTheorem 3 beq_symm
 :::
 :::::
 
@@ -2541,7 +2541,7 @@ theorem filter_exercise {α : Type} (test : α → Bool) (a : α) (l lf : List �
         assumption
 ```
 
-:::gradeTheorem 3 "filter_exercise"
+:::gradeTheorem 3 filter_exercise
 :::
 :::::
 
@@ -2609,7 +2609,7 @@ theorem existsb_existsb' (α : Type) (test : α → Bool) (l : List α) :
       rw [Bool.not_and, Bool.not_not]
 ```
 
-:::gradeTheorem 6 "existsb_existsb'"
+:::gradeTheorem 6 existsb_existsb'
 :::
 :::::
 
