@@ -789,14 +789,14 @@ This directive is always written as a self-closing empty block.
 :::
 ```
 
-#### `:::details (summary := <string>)`
+#### `:::details "<summary>"`
 
 _Rendered in all variants._
 
 In the HTML, this is rendered as a collapsible `<details>` element
-with the given `<summary>` text.
+with the given `<summary>` text, or "Details" when it is omitted.
 In the extracted Lean, this is rendered preceded by a
-`-- THESE DETAILS CAN BE SKIPPED: <summary>_` comment and succeeded by a
+`-- THESE DETAILS CAN BE SKIPPED: <summary>` comment and followed by a
 `-- END DETAILS` comment.
 Good for encoding details, macro plumbing, or helper notation that is correct
 but not central to the main narrative.
