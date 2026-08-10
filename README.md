@@ -7,23 +7,23 @@ Foundations](https://softwarefoundations.cis.upenn.edu/) in Lean.
 
 SF-in-Lean _is_ ready for adventurous alpha-testers.  See ALPHATESTERS.md for more.
 
-The SF-in-Lean team is also looking for contributors who have the time and interest to make a more significant commitment.  If you are interested in joining us, please email [Benjamin Pierce](bcpierce@cis.upenn.edu).
+The SF-in-Lean team is also looking for contributors who have the time and interest to make a more significant commitment.  If you are interested in joining us, please email Benjamin Pierce.
 
-SF-in-Lean is _not_ ready for ordinary readers yet. We aim to have a 
-complete and polished draft of most
-chapters of _Logical Foundations_ and _Programming Language
-Foundations_ in time for Fall 2026 courses. We'll make a
-posting on the Lean Zulip when appropriate.
+SF-in-Lean is _not_ ready for ordinary readers yet. We aim to have a
+complete and polished draft of the opening chapters of _Logical
+Foundations_ in time for the start of Fall 2026 courses and to finish
+both _logical Foundations_ and _Programming Language Foundations_ by
+the end of the year. 
 
 ## Quick start: building and viewing the book
 
 To build everything and preview the HTML locally:
 
     make serve
-    open http://localhost:8000
 
 (This builds all volumes in all three variants — student / solutions / terse —
-into `_out/`, then serves that directory on port 8000.)
+into `_out/`, then serves that directory on port 8000.)  
+Then open `http://localhost:8000` in a web browser.
 
 To rebuild just one volume, use its make target and then serve `_out/`:
 
@@ -33,9 +33,9 @@ To rebuild just one volume, use its make target and then serve `_out/`:
 
 The HTML for a given volume and variant lands in
 `_out/<vol>/<variant>/html-multi/`, one page per chapter.  (There is no
-per-chapter build target; a volume is the smallest unit.)
+per-chapter build target: a whole volume is the smallest unit.)
 
-The first build compiles the Lean toolchain's worth of dependencies and
+The first build compiles the whole Lean toolchain's dependencies and
 takes a while; later builds are incremental.
 
 ## Orientation
