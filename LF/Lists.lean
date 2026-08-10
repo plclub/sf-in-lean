@@ -13,17 +13,6 @@ htmlSplit := .never
 file := some "Lists"
 %%%
 
-:::dev "Konstantinos Kallas (angelhof)"
-The `Baz` "how many elements does this type have?" exercise (the last exercise
-in the chapter) is a *manual* exercise, and that's a poor fit: a student who
-doesn't realize an inductive definition needs a base case will simply fail it and
-only see why in the grader comment — and it's easy to wrongly think you have the
-right answer and move on without thinking. Better to either add a short section
-that explains this directly, or add a hint like the `one_true_baz` / `count_trues`
-scaffold ("try to write a value of type `Baz` for which the lemma holds"). Worth
-reworking for easier grading.
-:::
-
 :::instructors
 This file takes about 60 minutes to get through.
 Putting it together with Induction.lean makes a reasonable
@@ -424,10 +413,6 @@ example : [] ++ [4, 5] = [4, 5] := by rfl
 example : [1, 2, 3] ++ [] = [1, 2, 3] := by rfl
 ```
 
-:::dev "One An (meluge)" NOW
-Experiment: introduce `BEq.refl` here, at the point where the `BEq` class is named.
-:::
-
 :::slidebreak
 :::
 
@@ -442,9 +427,6 @@ fact about it, which several proofs below will need, is that `==` is
 reflexive:
 
   `BEq.refl : (a == a) = true`
-
-This is the standard library's version of the `beq_refl` theorem you
-proved in {ref "Induction"}[Induction].
 ::::
 
 ::::terse
@@ -561,6 +543,10 @@ theorem test_nonZeros : nonZeros [0, 1, 0] = [1] := by
 :::gradeTheorem "0.5" test_nonZeros
 :::
 
+The next definition uses `bif`, Lean's conditional for Boolean tests.
+The expression `bif b then x else y` evaluates to `x` when `b` is
+{name}`true` and to `y` when `b` is {name}`false`.
+
 ```lean
 def oddMembers (l : NatList) : NatList := solution!(
   match l with
@@ -596,8 +582,8 @@ example : oddMembers [1, 2] = [1] := by
   · rw [oddMembers_cons_not_odd]
     · rw [oddMembers_nil]
     · rw [Nat.odd_def]
-      rw [even_succ, even_succ, even_zero, Bool.not_true, Bool.not_false, Bool.not_true]
-  · rw [Nat.odd, even_succ, even_zero, Bool.not_true, Bool.not_false]
+      rw [Nat.even_succ, Nat.even_succ, Nat.even_zero, Bool.not_true, Bool.not_false, Bool.not_true]
+  · rw [Nat.odd, Nat.even_succ, Nat.even_zero, Bool.not_true, Bool.not_false]
 ```
 
 This gets pretty verbose quite fast, however we can use {tactic}`rfl` to deal with subgoals such as {lean}`Nat.odd 2 = false`:
@@ -948,7 +934,7 @@ theorem included_cons_nonmember {v : Nat} {l₁ l₂ : NatList} (h : member v l�
 ```lean
 example : included [1] [2, 1] = true := by
   rw [included_cons_member]
-  · apply included_nil
+  · exact included_nil
   · rw [member_cons_diff rfl]
     rw [member_cons_same rfl]
 
@@ -1100,7 +1086,7 @@ For comparison, here is an informal proof of the same theorem.
 :::
 
 :::dev "Benjamin Pierce (bcpierce00)"
-What's the best Lean markup for a displayed equation? The markup below is going to get squished into a paragraph with all the rest by default, but IMO it would look better as a separate display. Also: Are we going to consistently write Qed at the end of proofs? We should agree on a convention.
+Are we going to consistently write Qed at the end of proofs? We should agree on a convention.
 :::
 
 _Theorem_: For all lists `l1`, `l2`, and `l3`,
@@ -1117,7 +1103,7 @@ _Proof_: By induction on `l1`.
 ([] ++ l2) ++ l3 = [] ++ (l2 ++ l3),
 ```
 
-  which follows directly from the definition of `app`.
+  which follows directly from the definition of `append`.
 
 - Next, suppose `l1 = n :: l1'`, with
 
@@ -1131,7 +1117,7 @@ _Proof_: By induction on `l1`.
 ((n :: l1') ++ l2) ++ l3 = (n :: l1') ++ (l2 ++ l3).
 ```
 
-By the definition of `app`, this follows from
+By the definition of `append`, this follows from
 
 ```display
 n :: ((l1' ++ l2) ++ l3) = n :: (l1' ++ (l2 ++ l3)),
@@ -1264,7 +1250,7 @@ theorem length_append_succ {l : NatList} {n : Nat} :
   induction l with
   | nil =>
     rw [reverse_nil, nil_append, length_cons, length_nil]
-  | cons n l' ih =>
+  | cons m l' ih =>
     rw [reverse_cons]
     -- `ih` not applicable
 ```
@@ -1272,10 +1258,10 @@ theorem length_append_succ {l : NatList} {n : Nat} :
 ```leanOutput st3
 unsolved goals
 case cons
-n✝ n : Nat
+n m : Nat
 l' : NatList
-ih : (l'.reverse ++ [n✝]).length = l'.reverse.length + 1
-⊢ (l'.reverse ++ [n] ++ [n✝]).length = (l'.reverse ++ [n]).length + 1
+ih : (l'.reverse ++ [n]).length = l'.reverse.length + 1
+⊢ (l'.reverse ++ [m] ++ [n]).length = (l'.reverse ++ [m]).length + 1
 ```
 
 ::::full
@@ -1568,7 +1554,7 @@ theorem append_assoc4 {l1 l2 l3 l4 : NatList} :
 An exercise about your implementation of {name}`nonZeros`:
 
 ```lean
-theorem nonZeros_app (l1 l2 : NatList) :
+theorem nonZeros_append (l1 l2 : NatList) :
     nonZeros (l1 ++ l2) = (nonZeros l1) ++ (nonZeros l2) := by
   solution!
     induction l1 with
@@ -1581,7 +1567,7 @@ theorem nonZeros_app (l1 l2 : NatList) :
         rw [cons_append, nonZeros_cons_nonZero, nonZeros_cons_nonZero, ih, cons_append]
 ```
 
-:::gradeTheorem 1 nonZeros_app
+:::gradeTheorem 1 nonZeros_append
 :::
 :::::
 
@@ -1625,7 +1611,7 @@ theorem beq_refl {l : NatList} :
     induction l with
     | nil => rw [beq_nil]
     | cons n l' ih =>
-      rw [beq_cons_same BEq.rfl]
+      rw [beq_cons_same (BEq.refl n)]
       exact ih
 ```
 
@@ -1756,9 +1742,9 @@ theorem remove_does_not_increase_count (l : NatList) :
 ```
 :::::
 
-:::::exercise (rating := 3) (name := "count_app") (manual := true)
-Write down an interesting theorem `count_app` about lists
-involving the functions `count` and `app`, and prove it.
+:::::exercise (rating := 3) (name := "count_append") (manual := true)
+Write down an interesting theorem `count_append` about lists
+involving the functions `count` and `append`, and prove it.
 (You may find that the difficulty of the proof depends on how you defined `count`!)
 
 :::dev "Andrew Tolmach (AndrewTolmach)" PotentialImprovement

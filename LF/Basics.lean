@@ -13,18 +13,6 @@ htmlSplit := .never
 file := "Basics"
 %%%
 
-:::dev "Jonathan Chan (ionathanch)"
-\[BCP: Old comment -- might be out of date?\]
-There should be some instruction on interaction with the IDE, namely:
-* how to read the proof state
-* clicking immediately after a tactic will show you what it changed
-* clicking after each `h` in `rw [h₁, h₂, ...]` will show you what was rewritten
-* hovering over a tactic will provide documentation on how to use it
-* hovering over a definition will give its type
-* hovering over a Unicode character will tell you how to type it
-* Ctrl-clicking on a definition will take you to the definition location
-:::
-
 :::instructors
 This file and Induction.lean each take about an hour to
 get through in a not-too-rushed fashion (with questions, etc.).
@@ -49,18 +37,19 @@ If you don't have Lean installed yet:
 :::
 
 ::::full
-The _functional style_ of programming is founded on simple, everyday
-mathematical intuitions: If a program has no side effects, such
-as reading or writing files or network packets, then (ignoring efficiency)
-all we need to understand about it is how it
-maps inputs to outputs. That is, we can think of it as just a
-concrete means for computing a mathematical function. This direct
-connection between programs and simple mathematical objects supports
-both formal correctness proofs and sound informal reasoning about
-program behavior. This is one sense of the word "functional" in
-"functional programming."
+The _functional style_ of programming is founded on simple
+mathematical intuitions: A program is essentially a concrete
+means for computing a mathematical function, which just maps
+inputs to outputs. Even when programs have side effects, such
+as reading or writing files or network packets, these side
+effects can be given a mathematical characterization (such as
+through the use of monads). This connection between programs and
+mathematical functions makes it possible to reason both precisely
+and formally about a program's behavior, i.e., to _prove
+properties_ about programs.
 
-The other sense in which functional programming is "functional" is
+This functional style is one sense of the word "functional" in
+"functional programming." The other sense is
 that it emphasizes the use of functions as _first-class_ values —
 i.e., values that can be passed as arguments to other functions,
 returned as results, included in data structures, etc.
@@ -71,12 +60,11 @@ Other common features of functional languages include _algebraic
 data types_ and _pattern matching_, which make it easy to
 construct and manipulate rich data structures, and _polymorphic
 types_ supporting abstraction and code reuse.  Lean offers
-all of these features.
+all of these features, and we will see them often in this book.
 
 The first half of this chapter introduces some key elements of
-Lean's functional programming language. The second half introduces
-some basic _tactics_ that can be used to prove properties of
-programs.
+Lean's functional programming language.  The second half introduces
+how you can use Lean _tactics_ to prove properties about programs.
 ::::
 
 # Data and Functions
@@ -95,14 +83,15 @@ besides, like lists and hash tables. It does so with a single
 powerful and general mechanism: the _inductive definition_.
 A type introduced this way is called an _inductive type_; the
 word "inductive" hints at the use of mathematical induction
-to prove statements about its values.
+to prove statements about its values (which is the subject of the
+{ref "Induction"}[next chapter]).
 
 To demonstrate how inductive definitions work, and illustrate their
 expressive power, we will recapitulate most of the datatype definitions we
 need in this course, rather than immediately referring
 to those in the standard library. We take care to harmonize
-the definitions we present with the actual definitions in the standard library, which we gradually introduce throughout the course.
-By the time, you will have a good grasp of how the Lean standard library is organized and how to efficiently navigate it.
+the definitions we present with the actual definitions in the standard library, which
+we gradually introduce throughout the course.
 ::::
 
 ## Days of the Week (Enumerated Types)
@@ -112,8 +101,7 @@ A datatype definition:
 :::
 
 ::::full
-To see how inductive datatype definitions work, let's
-start with a very simple example.  The following declaration tells
+Let's start with a very simple example.  The following declaration tells
 Lean that we are defining a set of data values, i.e. a _type_.
 ::::
 
@@ -175,13 +163,11 @@ evaluate the first case of the `match` statement; if `d` is
 to say about pattern matching — we'll introduce more of its features
 as the need arises.)
 
-You may notice that we qualified all the constructors before using them,
+You may notice that we _qualified_ `Day`'s constructors when using them,
 writing {name}`Day.monday` instead of just `monday`, for example.
 Lean places all constructors into a _namespace_ associated with their type,
-and requires uses of those constructors to be prefixed with their namespace.
-There are a few circumstances in which this requirement can be relaxed,
-which we shall see in a little bit. For now we proceed by
-fully qualifying all constructor names.
+and generally requires those constructors to be prefixed with their namespace when they are used.
+Later, we shall see a few circumstances in which this requirement can be relaxed.
 
 If you ever need to know the type of *any* pattern, object, or function,
 you can hover over it with your mouse in any editor that supports Lean,
@@ -199,22 +185,23 @@ Evaluation:
 Having defined a function, we should check that it works on some
 examples.  There are a few different ways to do this in
 Lean.  One is to use the `#eval` command to evaluate a compound
-expression involving `nextWorkingDay`.
+expression involving `nextWorkingDay`.  (Lean's responses are shown
+just below.)
 ::::
 
-```lean (name := nwd1)
+```lean (name := nextWDay)
 #eval nextWorkingDay Day.friday
 ```
 
-```leanOutput nwd1
+```leanOutput nextWDay
 Day.monday
 ```
 
-```lean (name := nwd2)
+```lean (name := nextNextWDay)
 #eval nextWorkingDay (nextWorkingDay Day.saturday)
 ```
 
-```leanOutput nwd2
+```leanOutput nextNextWDay
 Day.tuesday
 ```
 
@@ -256,43 +243,27 @@ The {tactic}`rfl` tactic is used to observe that both sides of an equal sign eva
 :::
 
 ::::full
-If you have a computer handy, this would be an excellent moment
-to fire up VS Code with the Lean extension or the Lean web interface
-and try it for yourself.  Load this file, `Basics.lean`,
-from the book's Lean sources, find the above example, and observe
-the result in the Lean InfoView panel.
+If you have not already done so, this would be an excellent moment
+to fire up VS Code with the [Lean Extension](https://marketplace.visualstudio.com/items?itemName=leanprover.lean4) and load this file, `Basics.lean`
+from the book's Lean sources. Then find the above example.
 
-In VS Code, development of Lean code is supported by the
-[Lean Extension](https://marketplace.visualstudio.com/items?itemName=leanprover.lean4),
-which provides an interactive "InfoView" panel that displays the results
-of commands like `#eval`, as well as the current goal state
-when working on proofs. You can hover over expressions in the source code
-to see their types, and you can click on the results in the InfoView
-to navigate to their definitions. This makes it easier to understand
-how your code is being interpreted by Lean and to debug any issues that
-arise.
+Observe the result in the Lean InfoView panel.
+This panel displays the results of commands like `#eval` (click on a particular `#eval` to see),
+as well as the current goal state when working on proofs.
+The InfoView content always follows your cursor.
 
-The InfoView always follows your cursor, and Lean typechecks the file as you
-edit it, so you can see the results of your changes immediately. You can also
-use the InfoView to explore the definitions of functions and types that
-you're using, which can be very helpful for understanding how they work.
+You can command-click on a type or variable name to navigate to its definition.
+Try this with the mention of `nextWorkingDay` in the above `#eval`.
 
-If you haven't already, either install the Lean Extension in VS Code and open the
-`Basics.lean` file or open `Basics.lean` on the interactive Lean web client
-to see the InfoView in action. Try hovering over the {name}`nextWorkingDay` function
-and the {name}`Day` type to see their definitions, and experiment with adding your own
-`#eval` commands to test other inputs.
+You can also hover over expressions in the source code to see their types.
+Try this with mentions of {name}`nextWorkingDay` and `Day.saturday` in the above `#eval`.
+If you hover over the `#eval` command itself, you will see the popup that contains its output (at the top).
+Sometimes we show Lean's responses to commands in the text below them; by hovering over
+the command you can check against that text.
 
-:::dev "mwhicks1"
-What is the "interactive web client"? Is it just the Verso-rendered book? That's not
-interactive in the sense that you can see `#eval` output or change code. Let's link
-the thing we mean.
-:::
-
-For `#eval` and other commands, we show Lean's responses in comments; if you
-hover over the `#eval` commands above, you will see the popup that contains
-the output should match what's in the comment below. Experiment with adding
-your own `#eval` commands explore how other functions work.
+Experiment with adding your own `#eval` commands to test other inputs.
+Lean typechecks the file as you
+edit it, so you can see the results of your changes immediately.
 ::::
 
 ## Booleans
@@ -301,10 +272,9 @@ your own `#eval` commands explore how other functions work.
 Following the pattern of the days of the week above, we can
 define the standard type `Bool` of booleans by enumerating its members `true`
 and `false`.
-
 We define our own `MyBool` to teach the concept of building booleans from
-scratch. Our definition is equivalent to Lean's built-in {name}`Bool`,
-which we switch to later.
+scratch. Our definition `MyBool` is equivalent to Lean's built-in {name}`Bool`,
+which we'll switch to later.
 ::::
 
 ::::terse
@@ -365,7 +335,7 @@ def or (b1 : MyBool) (b2 : MyBool) : MyBool :=
 ```
 
 ::::full
-The last two definitions illustrate Lean's syntax for multi-argument
+The `and` and `or` definitions illustrate Lean's syntax for multi-argument
 functions.  The corresponding multi-argument _application_ syntax is
 illustrated by the following tests, which effectively constitute a
 complete specification — a truth table — for the `or` function:
@@ -382,6 +352,12 @@ example : or MyBool.false MyBool.true  = MyBool.true  := by rfl
 example : or MyBool.true  MyBool.true  = MyBool.true  := by rfl
 ```
 
+:::dev "mwhicks"
+TODO: Seems wrong to not say anything about this notation here.
+Our rule is to mention simple notations like this, but not `macro_rules`
+etc. Do we actually introduce this later?
+:::
+
 We can define new symbolic notations for existing definitions.
 Don't worry for now about how the notation is defined.
 
@@ -392,7 +368,8 @@ local infixl:30 (priority := high) " || " => or
 ```
 
 ```lean
-example : (MyBool.false || MyBool.false || MyBool.true) = MyBool.true := by rfl
+example :
+    (MyBool.false || MyBool.false || MyBool.true) = MyBool.true := by rfl
 
 example : (!MyBool.false) = MyBool.true := by rfl
 ```
@@ -469,7 +446,7 @@ The keyword `theorem` indicates that we are stating (and eventually proving)
 a proposition; the text after the first `:` is the proposition we want to prove.
 You'll notice that this proposition looks a lot like the one we wrote above,
 but with some additional symbols in front.
-The `∀` symbol, pronounced "forall" and written `\all` or `\forall`, is
+The `∀` symbol, pronounced "forall", is
 called a _universal quantifier_ because it _quantifies_ the variable {lean}`b` that appears
 in the proposition. Quantifying a variable with a `∀` means that the proposition
 applies to all possible values of its type; here, we annotate {lean}`b`
@@ -495,15 +472,17 @@ What does this mean?
 First we have the `by` keyword, which signals
 to Lean that we are beginning a sequence of _tactics_.
 The `intro b` and {tactic}`rfl` that you see after the `by`
-are examples of tactics.
+are examples of tactics. If you hover over a tactic's name, Lean shows
+its documentation, explaining what the tactic does and how to use it.
 
-Tactics manipulate the _proof state_, as you can can see the in the Lean InfoView panel.
-The proof state is divided into the _context_, before the ⊢,
-and the _goal_, after the ⊢. The context records what we know
-at each point in the proof; the goal is what we are trying to prove
-at each point.
+Tactics manipulate the _proof state_, as you can see the in the Lean InfoView panel.
+The proof state is divided by the symbol ⊢, called the _turnstile_. The part
+before it is called the _context_, and the part after it is called
+the _goal_. The context records what we know
+at some point in the proof; the goal is what we are trying to prove
+at that point.
 
-A tactic manipulates both the goal and the context to get the goal
+A tactic manipulates both the goal and the context, to get the goal
 into a shape that is closer to the one we want. A tactic can also
 _close_ (solve) the current goal, finishing its proof.
 
@@ -513,12 +492,6 @@ Let's walk through the example above with this terminology in mind.
 ::::terse
 And now let's see it in a bit more detail:
 ::::
-
-:::dev "mwhicks1"
-The theorem below has wonderful explaining what's going on, but it
-is not typeset. Are we planning to fix that problem? I re-flowed the
-text so it reads better on the WWW in case not.
-:::
 
 ```lean
 theorem true_and_explained : ∀ (b : MyBool), (MyBool.true && b) = b := by
@@ -564,7 +537,7 @@ theorem true_and_explained : ∀ (b : MyBool), (MyBool.true && b) = b := by
 ::::full
 It's also important to point out that, as with languages like Python and Haskell,
 Lean is _whitespace-sensitive_. That is, the indentation in proofs is important and changing
-it can change the meaning of the proof, usually causing the proof to break. If we had
+it can change the meaning of the proof, usually causing the proof to break. Suppose we had
 instead written the following:
 
 ```lean +error (name := indent)
@@ -573,6 +546,9 @@ theorem true_and_wrong : ∀ (b : MyBool), (MyBool.true && b) = b := by
     rfl
 ```
 
+Lean complains because the {tactic}`rfl` is not at the same level of indentation as the `{tactic}intro b`,
+so Lean does not recognize these two tactics as being sequential in the way they should be.
+
 ```leanOutput indent
 Tactic `introN` failed: There are no additional binders or `let` bindings in the goal to introduce
 
@@ -580,8 +556,6 @@ b : MyBool
 ⊢ (true && b) = b
 ```
 
-Lean would complain, since the {tactic}`rfl` is not at the same level of indentation as the `{tactic}intro b`,
-so it does not recognize these two tactics as being sequential in the way they should be.
 In general, sequential tactics applied to the same goal must be on subsequent lines at the same
 level of indentation or separated on the same line by a `;` like so:
 
@@ -642,6 +616,24 @@ Now we'll switch to Lean's definition of booleans.
 end MyBool
 ```
 
+## Aside: Unicode in Lean
+
+:::suppressPreviousHeaderWhenTerse
+:::
+
+::::full
+Note that `∀` and `⊢` are unicode symbols, not a simple ASCII characters. The
+Lean Extension for VS Code provides convenient shortcuts for
+entering such symbols. Simply type `\` (backslash) followed by the
+name of the symbol (the "shortcode"), and the extension will automatically replace it
+with the actual symbol. For example, typing `\all` or `\forall` will produce `∀`
+and `\->` or `\to` will produce `→`. To find out what backslash sequence
+produces a unicode symbol that you can see on the screen, just hover
+over it. To see all of the Unicode shortcodes, open the Command Palette
+(Ctrl+Shift+P on Windows/Linux or Cmd+Shift+P on macOS), type
+"Lean 4: Show Unicode Input Abbreviations", and press Enter.
+::::
+
 ## Types
 
 ::::full
@@ -699,24 +691,6 @@ each of type {name}`Bool`, this function produces an output of type
 {name}`Bool`."
 ::::
 
-## Aside: Unicode in Lean
-
-:::suppressPreviousHeaderWhenTerse
-:::
-
-::::full
-Note that → is a unicode symbol, not a simple ASCII character. The
-Lean Extension for VS Code provides convenient shortcuts for
-entering such symbols. Simply type `\` (backslash) followed by the
-name of the symbol, and the extension will automatically replace it
-with the actual symbol. For example, typing `\->` or `\to` will produce
-→, and `\lambda` will produce λ. To find out what backslash sequence
-produces a unicode symbol that you can see on the screen, just hover
-over it. To see all of the Unicode shortcodes, open the Command Palette
-(Ctrl+Shift+P on Windows/Linux or Cmd+Shift+P on macOS), type
-"Lean 4: Show Unicode Input Abbreviations", and press Enter.
-::::
-
 ## New Types from Old
 
 :::dev "Harrison Goldstein (hgoldstein95)"
@@ -728,7 +702,7 @@ TODO
 ::::full
 The enumerated types we have seen so far are so-named because
 their definitions explicitly enumerate a finite set of
-elements, their constructors. Here is a more interesting
+elements: their constructors. Here is a more interesting
 inductive type definition, `Color`, where one of the constructors
 takes an argument:
 ::::
@@ -750,15 +724,6 @@ inductive Color : Type where
 ```
 
 :::full
-An `inductive` definition does two things:
-
-- It introduces a set of new _constructors_. E.g., {name}`RGB.red`,
-  {name}`Color.primary`, {name}`Bool.true`, {name}`Bool.false`, {name}`Day.monday`,
-  etc. are constructors.
-
-- It groups them into a new named type, like {name}`Bool`, {name}`RGB`, or
-  {name}`Color`.
-
 _Constructor expressions_ are formed by applying a constructor
 to zero or more other constructors or constructor expressions,
 obeying the declared number and types of the constructor arguments.
@@ -959,8 +924,8 @@ Playground.myFoo : RGB
 ```
 
 :::full
-Namespaces can be opened and closed as often as you like to add new definitions and access old ones.
-When inside a `namespace`, definitions from the that namespace can be referenced
+Namespaces can be re-opened as often as you like to add new definitions and access old ones.
+When inside a `namespace`, definitions from that namespace can be referenced
 without prefixes.
 :::
 
@@ -998,13 +963,6 @@ end RGB
 Top-level definitions can also be prefixed by a namespace,
 which opens the namespace temporarily for the body of the definition.
 
-:::dev "Claude" NOW
-Rendering bug in *student* and *terse* (solutions is fine): the leading
-`--- …` triple-dash comment lines in this block and the next one each render
-*twice* in a row (e.g. two consecutive `--- this works, because …` lines). The
-solutions build shows each once, so this is a Verso rendering quirk with
-`---`-style comments in the elided builds, not a source duplication.
-:::
 ```lean (name := rgb_1)
 --- this works, because the definition is qualified by `RGB.`
 def RGB.myOtherBlue : RGB := myBlue
@@ -1102,7 +1060,7 @@ Unknown identifier `myHiddenDef`
 ```
 
 ::::full
-In fact, this is what exactly what Lean does with the standard {name}`Bool` type by default.
+In fact, this is exactly what Lean does with the standard {name}`Bool` type by default.
 Since it is such an important
 part of many proofs and programs, Lean implicitly `open`s many of `Bool`s functions and
 constructors. Accordingly, we can use constructors like {name}`true` and {name}`false` and functions
@@ -1216,16 +1174,6 @@ GRADE_MANUAL 1: custom_namespace_checks
 ```
 :::
 
-:::dev "mwhicks1"
-This namespace section is great, but it interrupts the pedagogical flow of the
-presentation of inductive types. We were prevoiusly looking at constructors With
-one argument, then there was this big digression, and now we are back to two.
-Are we able to move the namespace stuff to the end of this section (Data and Functions)?
-Then we can start it by saying we are finishing with it but readers can skip it
-if they prefer to "follow their nose" regarding namespaces, and come back when they
-want to know more.
-:::
-
 ## Constructors with Multiple Parameters (Tuple Types)
 
 ```lean
@@ -1265,7 +1213,7 @@ Nibble.bits Bit.b1 Bit.b0 Bit.b1 Bit.b0 : Nibble
 ```
 
 ::::full
-Note: The `bits` constructor illustrates a feature of multi-parameter
+The `bits` constructor illustrates a feature of multi-parameter
 declarations, both for constructors and for functions: Instead
 of writing `(x0 : Bit) (x1 : Bit) ...` we write `(x0 x1 ... : Bit)`
 since all of the variables have the same type. We could have done
@@ -1296,7 +1244,7 @@ example : allZero (.bits .b0 .b0 .b0 .b0) = true  := by rfl
 end Playground
 ```
 
-### Aside: Structures
+### Structures
 
 :::suppressPreviousHeaderWhenTerse
 :::
@@ -1323,8 +1271,8 @@ Rather than construct this as `.bits .b0 .b0 .b0 .b0`, we construct it as:
 ```
 
 The `.mk` constructor is created for us.
-However, structures are more commonly constructed by assigning values to their _fields_.
-Each field name is paird with its value using `:=`:
+Structures are more commonly constructed by assigning values to their _fields_.
+Each field name is paired with its value using `:=`:
 
 
 ```lean
@@ -1345,7 +1293,7 @@ how do we "update" an existing structure, or in other words, construct a new str
 while reusing some old fields?
 
 ```lean
-def setFistTwoBits (old : NibbleStruct)
+def setFirstTwoBits (old : NibbleStruct)
     (newX0 : Playground.Bit)
     (newX1 : Playground.Bit) : NibbleStruct :=
   { old with x0 := newX0, x1 := newX1 }
@@ -1361,8 +1309,8 @@ def makeNibbleStruct (x0 x1 x2 x3 : Playground.Bit) : NibbleStruct :=
   { x0, x1, x2, x3 }
 ```
 
-When a field an the variable supplying its value have the same name,
-Lean let us write just the name.
+When a field and the variable supplying its value have the same name,
+Lean lets us write just the name.
 Thus `{ x0, x1, x2, x3 }` is a shorthand for `{ x0 := x0, x1 := x1, x2 := x2, x3 := x3 }`.
 This is called _field abbreviation_.
 
@@ -1371,9 +1319,9 @@ This is called _field abbreviation_.
 ## Natural Numbers
 
 ::::full
-We put this portion of the chapter in a namespace so that our own definition of
-numbers does not interfere with the one from the standard library.
-In the remainder of the book, we'll use the standard library's.
+We put this portion of the chapter in a namespace so that our definition of
+numbers does not interfere with the one from the standard library. Our definition
+matches the standard one, which we will use in the rest of the book.
 ::::
 
 ```lean
@@ -1425,11 +1373,6 @@ inductive Nat : Type where
 ```
 
 :::full
-Naturally, Lean has its own definition of natural numbers,
-with some slightly fancy features for reasoning and
-notation. As we are just beginning to reason about natural numbers,
-we use our own definition here and introduce the Lean one in a later chapter.
-
 We'll define some shorthands for numbers, putting them in the `Nat` namespace
 so we don't need to use `.` notation everywhere.
 :::
@@ -1585,7 +1528,7 @@ Being recursive on a {name}`Nat` and returning {name}`Nat` as well,
 {name}`add` is the first example of a more sophisticated class of functions.
 In this chapter and beyond, we will _prove_ properties
 about recursive functions like `add` over inductive datatypes
-like {name}`Nat`, using _simplification rules_, or _characterizing lemmas_, about their behavior.
+like {name}`Nat`, using _simplification rules_, also known as _characterizing lemmas_, about their behavior.
 
 Here is a simplification rule about {name}`add`:
 
@@ -1613,7 +1556,7 @@ NatPlayground.Nat.add_zero (n : Nat) : n + zero = n
 ```
 
 Using our simplification rule {name}`add_zero`, we can carry out a simple proof
-about natural numbers!
+about natural numbers.
 
 ```lean
 theorem add_zero_zero : ∀ n : Nat, n + zero + zero = n := by
@@ -1643,18 +1586,22 @@ Here is the previous proof in more detail:
 theorem add_zero_zero_explained : ∀  n : Nat, n + zero + zero = n := by
   intro n
   /- After introducing `n`, our goal is `n + zero + zero = n`.
-     What can we do to simplify this expression? If you hover your cursor over the
-     `add_zero` in the rewrite below, you can see its type: `n + zero = n`. So,
-     we can use that rewrite rule to transform an appearnce of `n + zero` in the goal to `n`. -/
+     What can we do to simplify this expression? If you hover
+     your cursor over the `add_zero` in the rewrite below, you
+     can see its type: `n + zero = n`. So, we can use that
+     rewrite rule to transform an appearance of `n + zero`
+     in the goal to `n`. -/
   rewrite [add_zero]
-  /- Now click here to see the new proof state that results from the tactic.
-     Notice how `n + zero + zero` changes to `n + zero` in the goal. -/
+  /- Now click here to see the new proof state that results
+     from the tactic. Notice how `n + zero + zero` changes to
+     `n + zero` in the goal. -/
   rewrite [add_zero]
-  /- Again the goal changes, from `n + zero` to `n`. Now the proof state
-     is an equality with both sides equal, so it can be closed by the
-     tactic `rfl`. -/
+  /- Again the goal changes, from `n + zero` to `n`. Now the
+     proof state is an equality with both sides equal, so it
+     can be closed by the tactic `rfl`. -/
   rfl
-  /- The proof is now done! The Lean InfoView tells us there are "No goals". -/
+  /- The proof is now done! The Lean InfoView tells us there are
+     "No goals". -/
 ```
 
 Give this proof a try (it's similar):
@@ -1675,12 +1622,11 @@ theorem add_zero_zero_zero : ∀ n : Nat, n + zero + zero + zero = n := by
 :::
 
 ::::full
-As we saw above, the tactic that tells Lean to rewrite (part of) a goal or
-hypothesis based on a rule is called {tactic}`rewrite`. Given the rule {name}`add_zero`,
+The {tactic}`rewrite` tactic tells Lean to rewrite (part of) a goal or
+hypothesis based on a rule (or rules), given in square brackets.
+For example, given the rule {name}`add_zero`,
 which states that {lean}`n + zero` is equal to {lean}`n` for any {lean}`n`, we can replace
 any {lean}`n + zero` in our proof with {lean}`n` via `rewrite [add_zero]`.
-
-The {tactic}`rewrite` tactic takes its argument(s) in square brackets.
 ::::
 
 ## The {tactic}`rfl` tactic
@@ -1733,7 +1679,7 @@ theorem add_one (n : Nat) : n + (succ zero) = succ n + zero := by
 ```
 
 ::::full
-Again, we recommend stepping through these proofs in VS Code —
+We recommend stepping through these proofs in VS Code —
 that is, moving past each tactic with your cursor to see how it
 changes the proof state and hovering over each argument to {tactic}`rewrite` to see its type.
 ::::
@@ -1741,18 +1687,19 @@ changes the proof state and hovering over each argument to {tactic}`rewrite` to 
 ## Irreducibility, Rewriting, and Proof Engineering
 
 ::::full
-Every programming language has conventions and best practices
-for writing good software. In object-oriented languages, for example,
+Lean, like any other programming language, has conventions and best practices
+for writing good software. Lean takes inspiration from object-oriented programming
+in favoring the use of _encapsulation_. In OOP,
 it is considered good practice not to access the
 fields of an object directly, but instead to use getter and setter methods.
 This helps to encapsulate the object's definition, so that, if its fields or implementation
 ever change, the interface it exposes to the outside world remains the same.
-In simple examples, such conventions may seem trivial or even silly; in complex codebases,
+In simple examples such conventions may seem trivial or even silly; in complex codebases,
 it is the only way to maintain crucial invariants that prevent a system from becoming unmaintainable.
 
 The same principle applies to programs and proofs in Lean.
-In idiomatic Lean, it is considered poor style to _unfold_ — that is, "peek"
-through — definitions by using {tactic}`rfl` to implicitly simplify expressions
+In idiomatic Lean, it is considered poor style to _unfold_ — that is, "peek
+through" — definitions by using {tactic}`rfl` to implicitly simplify expressions
 that aren't syntactically identical. If you take a look at the proofs of
 {name}`add_zero` and {name}`add_succ` above, you will notice this is exactly what we did
 when we used the {tactic}`rfl` tactic.
@@ -1765,20 +1712,16 @@ Fortunately, the foundational theorems {name}`add_zero` and {name}`add_succ` pro
 characterization of the behavior of {name}`add` that makes using {tactic}`rfl` to simplify
 expressions unnecessary; instead, we can rewrite by these theorems anywhere we want to describe
 how {name}`add` evaluates.
+In real-world Lean developments, the style of writing proofs using
+simplification rules is both standard and expected.
 
-In this text, to enforce idiomatic style, we mark
-definitions with `attribute [irreducible]` to prevent this peeking,
+For the next few chapters, we mark definitions with `attribute [irreducible]` to prevent this peeking,
 also called *definitional equality abuse* (*defeq abuse*, for short).
 We place this attribute after the proofs of {name}`add_zero` and {name}`add_succ`,
 and can then rewrite by these theorems anywhere we want to describe
 how {name}`add` evaluates.
-In real-world Lean developments, the style of writing proofs using
-simplification rules is both standard and expected. Definitions in those
-developments may not use `attribute [irreducible]`,
-but they _will_ have definitions that are not meant to be reduced.
-
-We use `attribute [irreducible]` here to enforce the style of
-using simplification rules now so that it is natural to you moving forward.
+We use `attribute [irreducible]` for now to enforce the style of
+using simplification rules, so that it is natural to you moving forward.
 We will relax this discipline in later chapters.
 ::::
 
@@ -1792,7 +1735,7 @@ of using {tactic}`rfl`.
 attribute [irreducible] add
 ```
 
-These characterizing theorems also follow a particular pattern. Let's look again at the
+These simplification rules also follow a particular pattern. Let's look again at the
 definition of {name}`add`, without the `+` notation for maximum clarity:
 
 ```lean
@@ -1819,19 +1762,17 @@ Each of {name}`add_zero` and {name}`add_succ` correspond to one branch of the `m
 statement defining {name}`add` and describe how the evaluation of {name}`add` proceeds
 in that case. The {name}`add_zero` theorem describes how {lean}`add n zero` evaluates,
 while {name}`add_succ` describes (symbolically) how {lean}`add n (succ m)` evaluates.
-Because these theorems describe how to simplify more complex expressions
-involving {name}`add`, we call them _simplification lemmas_ for {name}`add`.
 
 These are instances of a general pattern: each definition
 operating over enumerated types like {name}`Nat`, {name}`Bool`, {name}`Day`, or {name}`Color`
-needs a simplification lemma for each branch of control flow through
+needs a simplification rule for each branch of control flow through
 the function.
 
-So, for example, we need two simplification lemmas for the definition of `pred`:
+So, for example, we need two simplification rules for the definition of `pred`:
 ::::
 
 ::::terse
-Each branch of a definition's control flow gets one _simplification lemma_. Here are the two for
+Each branch of a definition's control flow gets one simplification rule. Here are the two for
 {name}`pred`:
 ::::
 
@@ -1840,7 +1781,7 @@ theorem pred_zero : pred zero = zero := by rfl
 theorem pred_succ n : pred (succ n) = n := by rfl
 ```
 
-Now that we have defined and proved {name}`pred`'s simplification lemmas,
+Now that we have defined and proved {name}`pred`'s simplification rules,
 we can mark it `irreducible`, to enforce rewriting by these lemmas.
 
 ```lean
@@ -1848,7 +1789,7 @@ attribute [irreducible] pred
 ```
 
 Similarly, for each of the three branches of the definition of {name}`even`,
-we need one simplification lemma:
+we need one simplification rule:
 
 ```lean
 theorem even_zero : even zero = true := rfl
@@ -1860,22 +1801,21 @@ attribute [irreducible] even odd
 
 ::::full
 In the remainder of this textbook, we will pair definitions
-with their simplification lemmas. After proving these lemmas,
-instead of using {tactic}`rfl` to peek through the definitions, we will prefer rewriting
-by the lemmas.
+with simplification rules. After proving these rules,
+instead of using {tactic}`rfl` to peek through the definitions, we will {tactic}`rewrite`
+using the rules.
 
-Eventually, we will introduce a way to automatically apply these simplfication lemmas,
-but for now these tactics are forbidden by our autograder.
-Real-world Lean uses automation extensively, and you will learn to do so
-by the end of this book and in the following volumes.
+Eventually, we will introduce a way to _automatically_ apply these simplification rules.
+Real-world Lean developments use automation extensively, and you will learn to do so
+gradually throughout this book.
 For the moment it is important that you work through these early concepts
 by hand, without automation.
 By the time the more powerful tools are introduced,
-you will have the foundation to use them with precision and skill.
+you will have the foundational understanding to use them with precision and skill.
 ::::
 
 ::::terse
-From here on, we pair each definition with its simplification lemmas and rewrite by those lemmas
+From here on, we pair each definition with its simplification rules and rewrite by those rules
 rather than {tactic}`rfl`-ing through the definition.
 ::::
 
@@ -1922,6 +1862,8 @@ theorem two_plus_two_eq_four : two + two = four := by
 ```
 
 :::
+
+### Multiplication
 
 ::::full
 Now that we know how addition is defined, we can use it to define multiplication:
@@ -1973,8 +1915,8 @@ attribute [irreducible] mul
 Prove these thoerems using rewriting with the simplification rules for addition and multiplication.
 
 ::::full
-(We have given you the first line.) Notice how {tactic}`rewrite`
-can take any number of arguments. You can use this rewrite with all of the
+Notice how {tactic}`rewrite`
+can take any number of arguments. You can rewrite with all of the
 simplification rules at once, for example.
 
 After each rewrite, check the proof state by placing the cursor immediately
@@ -2027,6 +1969,8 @@ theorem two_mul_two : (two * two : Nat) = four := by
 
 :::slidebreak
 :::
+
+### Equality and Ordering
 
 ::::full
 When we say that Lean relies on almost nothing that's truly built-in, we really mean it: even
@@ -2127,7 +2071,7 @@ claim.
 ::::
 
 ::::full
-We can also now define the simplification lemmas for {name}`beq` with our new notation,
+We can also now define the simplification rules for {name}`beq` with our new notation,
 one for each of the four cases of control flow through the function.
 ::::
 
@@ -2140,7 +2084,7 @@ theorem succ_succ_beq (n m : Nat) : ((succ n) == (succ m)) = (n == m) := by rfl
 attribute [irreducible] beq
 ```
 
-# General Proofs about Natural Numbers
+## General Proofs about Natural Numbers
 
 :::terse
 A (slightly) more interesting theorem:
@@ -2197,7 +2141,7 @@ theorem add_id_exercise : ∀ n m o : Nat,
 :::slidebreak
 :::
 
-## Displaying Theorem Statements
+### Displaying Theorem Statements
 
 The `#check` command can also be used to examine the statements of
 previously declared lemmas and theorems.
@@ -2306,11 +2250,9 @@ theorem add_one_neb_zero (n : Nat) : (succ n == zero) = false := by
 ::::full
 The {tactic}`cases` tactic generates _two_ subgoals, which we must
 prove, separately, in order to get Lean to accept the theorem.
-
 The generated subgoals are tagged by the names of the constructors.
-`| zero =>` and `cas| succ n' =>` select which subgoal to work on next
+`| zero =>` and `| succ n' =>` select which subgoal to work on next
 and introduce variable names.
-
 Note also that when we enter a subcase, we increase the level of indentation at which we are working
 by two spaces.
 
@@ -2423,7 +2365,7 @@ theorem and3_exchange (b c d : Bool) :
 
 As you can see, proofs by cases can become very verbose.
 We will introduce some tactics for writing shorter proofs
-by case analysis in `Tactics.lean`.
+by case analysis in {ref "Tactics"}[Tactics] chapter.
 
 ## New Tactics: `rewrite ... at` and {tactic}`exact`
 
@@ -2483,7 +2425,7 @@ we've presented enough of the requisite material that we can actually explain
 
 :::dev "Michael Hicks (mwhicks1)" BeforeNextRelease
 I'm going to leave this here for now, but perhaps make a note to
-fix later on---when you've fixed it, come back and delete this, rather than
+fix later on — when you've fixed it, come back and delete this, rather than
 delete it now.
 :::
 
@@ -2787,7 +2729,7 @@ inductive Letter : Type where
 ```
 
 ::::full
-Then we define the modifiers -- a `natural` `A` is just a "plain"
+Then we define the modifiers — a `natural` `A` is just a "plain"
 grade of `A`.
 ::::
 

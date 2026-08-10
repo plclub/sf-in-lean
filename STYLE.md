@@ -124,6 +124,16 @@ Follow the Lean library's naming conventions:
 - Types and propositions (including definitions returning `Prop`) use `UpperCamelCase`, e.g. `Aexp`, `IsValue`;
 - Other values and functions use `lowerCamelCase`, e.g. `isEven`, `doubleBin`.
 
+Also follow Lean's variable naming conventions:
+
+- Types are Greek letters like `α`, `β`
+- Propositions are lowercase `a`, `b`, `c`, etc
+- Predicates (functions into `Prop`) are lowercase `p`, `q`, `r`, etc
+- Natural numbers are lower case `n` and `m`, etc
+- Hypotheses are lower case starting with `h`
+- Functions are `f`, `g`, etc
+- Lists are `l`
+
 Almost always, definitions and theorems relating to a type belong in a
 namespace with the same name as the type. Define the type first, then open its
 companion namespace and use bare member names inside it:

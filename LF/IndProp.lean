@@ -1089,9 +1089,9 @@ theorem ev_double (n : Nat) : Ev n.double := by
   solution!
     induction n
     case zero =>
-      rw [double_zero]; exact Ev.ev_0
+      rw [Nat.double_zero]; exact Ev.ev_0
     case succ n IH =>
-      rw [double_succ]; exact Ev.ev_succ_succ _ IH
+      rw [Nat.double_succ]; exact Ev.ev_succ_succ _ IH
 ```
 :::::
 
@@ -1654,7 +1654,7 @@ This whole part of the section is a mess!!
 ```lean
 /-- warning: declaration uses `sorry` -/
 #guard_msgs in
-example (n : Nat) : Ev n → Even n := by
+example (n : Nat) : Ev n → Nat.Even n := by
   /- We could try to proceed by case analysis or induction on `n`.  But
       since `Ev` is mentioned in a premise, this strategy seems
       unpromising, because (as we've noted before) the induction
@@ -1686,7 +1686,7 @@ example (n : Nat) : Ev n → Even n := by
     of `n`.  Indeed, it is not difficult to convince Lean that this
     intermediate result would suffice. -/
     have he : (∃ (k' : Nat), n' = k'.double) → (∃ (n₀ : Nat), n' + 2 = n₀.double) := by
-      intro ⟨k, hk⟩; exists (k + 1); rw [double_succ, hk]
+      intro ⟨k, hk⟩; exists (k + 1); rw [Nat.double_succ, hk]
     apply he
     /- Unfortunately, now we are stuck: we are trying to prove another instance
         of the same theorem we set out to prove -- only here we are
@@ -1743,7 +1743,7 @@ that the property we are trying to prove holds for `n'`.
 Let's try proving that lemma again:
 
 ```lean
-theorem ev_Even : ∀ n, Ev n → Even n := by
+theorem Nat.ev_Even : ∀ n, Ev n → Even n := by
   intro n h
   induction h
   /- h = ev_0 -/
@@ -1766,9 +1766,9 @@ The equivalence between the second and third definitions of
 evenness now follows.
 
 ```lean
-theorem ev_Even_iff : ∀ n, Ev n ↔ Even n := by
+theorem Nat.ev_Even_iff : ∀ n, Ev n ↔ Even n := by
   intro n; apply Iff.intro
-  . intro h; exact ev_Even _ h
+  . intro h; exact Nat.ev_Even _ h
   . intro ⟨k, hk⟩; rw [hk]; exact ev_double k
 ```
 
@@ -1826,7 +1826,7 @@ theorem ev_plus_plus : ∀ n m p,
       apply ev_sum
       . assumption
       . assumption
-    . rw [←double_add]; exact ev_double n
+    . rw [←Nat.double_add]; exact ev_double n
 ```
 :::::
 
@@ -1857,19 +1857,19 @@ evidence is to prove the equivalence of these definitions:
 
 :::::exercise (rating := 2) (name := "in_mem")
 ```lean
-theorem in_mem α (x : α) (l : List α) : In x l ↔ x ∈ l := by
+theorem in_mem α (x : α) (l : List α) : List.In x l ↔ x ∈ l := by
   solution!
     constructor
     . intro h; induction l with
-      | nil => rw [In_nil] at h; contradiction
+      | nil => apply List.In_nil at h; contradiction
       | cons hd tl ih =>
-        rw [In_cons] at h
+        rw [List.In_cons] at h
         obtain h | h := h
         . subst h; constructor
         . constructor; exact ih h
     . intro h; induction h with
-      | head l' => rw [In_cons]; left; rfl
-      | tail y h ih => rw [In_cons]; right; assumption
+      | head l' => rw [List.In_cons]; left; rfl
+      | tail y h ih => rw [List.In_cons]; right; assumption
 ```
 :::::
 
