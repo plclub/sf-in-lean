@@ -688,12 +688,12 @@ declare_syntax_cat imp_com
 
 ::::details "Notation encoding: commands, macro rules"
 ```lean
-/-- The command that does nothing (`skip;`) -/
-syntax ident ";" : imp_com
+/-- The command that does nothing (`skip`) -/
+syntax ident : imp_com
 /-- Sequencing: one command after another -/
-syntax imp_com ppDedent(ppLine imp_com) : imp_com
+syntax imp_com ";" ppDedent(ppLine imp_com) : imp_com
 /-- Assignment -/
-syntax ident " := " imp_aexp ";" : imp_com
+syntax ident " := " imp_aexp : imp_com
 /-- Conditional -/
 syntax "if " "(" imp_bexp ")" ppHardSpace "{" ppLine imp_com ppDedent(ppLine "}" ppHardSpace "else" ppHardSpace "{") ppLine imp_com ppDedent(ppLine "}") : imp_com
 /-- Loop -/
@@ -706,12 +706,12 @@ syntax:min "imp" ppHardSpace "{" ppLine imp_com ppDedent(ppLine "}") : term
 
 open Lean in
 macro_rules
-  | `(imp { $x:ident ; }) =>
+  | `(imp { $x:ident }) =>
     if x.getId == `skip then `(Com.skip)
     else Macro.throwErrorAt x s!"expected 'skip', got '{x.getId}'"
-  | `(imp { $c1 $c2 }) =>
+  | `(imp { $c1 ; $c2 }) =>
     `(Com.seq (imp {$c1}) (imp {$c2}))
-  | `(imp { $x:ident := $a; }) =>
+  | `(imp { $x:ident := $a }) =>
     `(Com.asgn $x (aexp {$a}))
   | `(imp { if ($b) {$c1} else {$c2} }) =>
     `(Com.cond (bexp {$b}) (imp {$c1}) (imp {$c2}))
@@ -743,20 +743,20 @@ partial def delabComInner : DelabM (TSyntax `imp_com) := do
     match_expr e with
     -- `mkIdent` rather than a quotation-literal `skip`, which would pick up
     -- macro hygiene scopes and print as `skip✝`.
-    | Com.skip => `(imp_com| $(mkIdent `skip):ident ;)
+    | Com.skip => `(imp_com| $(mkIdent `skip):ident)
     | Com.asgn _ _ =>
       match ← withAppFn <| withAppArg getExpr with
       | .const nm _ =>
         let a ← withAppArg delabAexpInner
-        `(imp_com| $(mkIdent nm):ident := $a;)
+        `(imp_com| $(mkIdent nm):ident := $a)
       | .lit (.strVal s) =>
         let a ← withAppArg delabAexpInner
-        `(imp_com| $(mkIdent (.mkSimple s)):ident := $a;)
+        `(imp_com| $(mkIdent (.mkSimple s)):ident := $a)
       | _ => `(imp_com| ~$(← delab))
     | Com.seq _ _ =>
       let s1 ← withAppFn <| withAppArg delabComInner
       let s2 ← withAppArg delabComInner
-      `(imp_com| $s1 $s2)
+      `(imp_com| $s1; $s2)
     | Com.cond _ _ _ =>
       let b  ← withAppFn <| withAppFn <| withAppArg delabBexpInner
       let c1 ← withAppFn <| withAppArg delabComInner
@@ -800,7 +800,7 @@ def fact_in_lean : Com := imp {
   Y := 1;
   while (Z ≠ 0) {
     Y := Y * Z;
-    Z := Z - 1;
+    Z := Z - 1
   }
 }
 ```
@@ -818,7 +818,7 @@ imp {
   Y := 1;
   while (Z ≠ 0) {
     Y := Y * Z;
-    Z := Z - 1;
+    Z := Z - 1
   }
 }
 -/
@@ -847,15 +847,15 @@ is *displayed*. Nevertheless, seeing the raw constructors is sometimes very help
 
 ```lean
 /-- info: imp {
-  X := X + 1;
+  X := X + 1
 } : Com -/
 #guard_msgs in
-#check imp { X := X + 1; }
+#check imp { X := X + 1 }
 
 /-- info: Com.asgn X ((Aexp.id X).plus (Aexp.num 1)) : Com -/
 #guard_msgs in
 set_option pp.notation false in
-#check imp { X := X + 1; }
+#check imp { X := X + 1 }
 ```
 
 ## More Examples
@@ -868,8 +868,8 @@ A few more examples.
 Assignment:
 
 ```lean
-def plus2 : Com := imp { X := X + 2; }
-def XtimesYinZ : Com := imp { Z := X * Y; }
+def plus2 : Com := imp { X := X + 2 }
+def XtimesYinZ : Com := imp { Z := X * Y }
 ```
 
 :::slidebreak
@@ -880,7 +880,7 @@ Loops:
 ```lean
 def subtract_slowly_body : Com := imp {
   Z := Z - 1;
-  X := X - 1;
+  X := X - 1
 }
 
 def subtract_slowly : Com := imp {
@@ -902,24 +902,24 @@ def subtract_3_from_5_slowly : Com := imp {
 An infinite loop:
 
 ```lean
-def loop : Com := imp { while (true) { skip; } }
+def loop : Com := imp { while (true) { skip } }
 ```
 
-::::hide
+:::hide
 ```
 /- Exponentiation: -/
 def exp_body : Com := imp {
   Z := Z * X;
-  Y := Y - 1;
+  Y := Y - 1
 }
 def pexp : Com := imp {
-  while (Y <> 0) {
+  while (Y ≠ 0) {
     ~exp_body
   }
 }
 /- (Note that `pexp` should be run in a state where `Z` is `1`.) -/
 ```
-::::
+:::
 
 # Evaluating Commands
 
@@ -945,9 +945,9 @@ In SmallStep we need to package the state and command into a pair,
 ```lean
 def Com.ceval_fun_no_while (st : State) (c : Com) : State :=
   match c with
-  | imp {skip;} => st
-  | imp {x := ~a;} => (x →ₜ a.eval st ; st)
-  | imp {~c1 ~c2} =>
+  | imp {skip} => st
+  | imp {x := ~a} => (x →ₜ a.eval st ; st)
+  | imp {~c1; ~c2} =>
       let st' := ceval_fun_no_while st c1
       ceval_fun_no_while st' c2
   | imp {if (~b) {~c1} else {~c2}} =>
@@ -1077,11 +1077,11 @@ TODO Propose you use inline notation such as `Com.EvalR (imp {skip;}) st st`
 
 ```lean
 inductive Com.EvalR : Com → State → State → Prop where
-  | skip (st : State) : EvalR (imp {skip;}) st st
+  | skip (st : State) : EvalR (imp {skip}) st st
   | asgn (st : State) (a : Aexp) (n : Nat) (x : Ident) (h : a.eval st = n) :
-      EvalR (imp {x := ~a;}) st (x →ₜ n ; st)
+      EvalR (imp {x := ~a}) st (x →ₜ n ; st)
   | seq (c1 c2 : Com) (st st' st'' : State) (h1 : EvalR c1 st st') (h2 : EvalR c2 st' st'') :
-      EvalR (imp {~c1 ~c2}) st st''
+      EvalR (imp {~c1; ~c2}) st st''
   | ifTrue (st st' : State) (b : Bexp) (c1 c2 : Com) (hb : b.eval st = true)
       (hc : EvalR c1 st st') :
       EvalR (imp {if (~b) {~c1} else {~c2}}) st st'
@@ -1103,6 +1103,30 @@ macro_rules
   | `($st0 =[ $c:imp_com ]=> $st1) => `($st0 =[ imp { $c } ]=> $st1)
 ```
 
+:::dev "Niklas Halonen"
+Currently in Hoare.lean the info view in
+```
+theorem hoare_skip (P : Assertion) :
+    {{ P }} skip {{ P }} := by
+  intro st st' h hp
+```
+displays
+```
+P : Assertion
+st st' : State
+h : st =[
+  imp {
+    skip
+  } ]=>
+  st'
+hp : P st
+⊢ P st'
+```
+but we would like it to display `h : st =[ skip ]=> st'`.
+
+This issue is also relevant for other `EvalR` present in Hoare.lean.
+:::
+
 The cost of defining evaluation as a relation instead of a function is
 that we now need to construct a _proof_ that some program evaluates to
 some result state, rather than letting Lean's computation mechanism do
@@ -1113,9 +1137,9 @@ example :
     ∅ =[
       X := 2;
       if (X ≤ 1) {
-        Y := 3;
+        Y := 3
       } else {
-        Z := 4;
+        Z := 4
       }
     ]=> (Z →ₜ 4 ; X →ₜ 2 ; ∅) := by
   -- We must supply the intermediate state.
@@ -1132,7 +1156,7 @@ example :
     ∅ =[
       X := 0;
       Y := 1;
-      Z := 2;
+      Z := 2
     ]=> (Z →ₜ 2 ; Y →ₜ 1 ; X →ₜ 0 ; ∅) := by
   solution!
     apply Com.EvalR.seq (st' := (X →ₜ 0 ; ∅))
@@ -1368,7 +1392,7 @@ def pup_to_n : Com := solution!(
     Y := 0;
     while (1 ≤ X) {
       Y := Y + X;
-      X := X - 1;
+      X := X - 1
     }
   })
 ```
@@ -1541,18 +1565,18 @@ exactly when `c` is while-free, then prove it equivalent to `Com.no_whiles`.
 ```lean
 def Com.no_whiles (c : Com) : Bool :=
   match c with
-  | imp {skip;} => true
-  | imp {_x := ~_a;} => true
-  | imp {~c1 ~c2} => no_whiles c1 && no_whiles c2
+  | imp {skip} => true
+  | imp {_x := ~_a} => true
+  | imp {~c1; ~c2} => no_whiles c1 && no_whiles c2
   | imp {if (~_) {~ct} else {~cf}} => no_whiles ct && no_whiles cf
   | imp {while (~_) {~_}} => false
 
 inductive Com.NoWhilesR : Com → Prop where
   -- SOLUTION
-  | skip : Com.NoWhilesR (imp { skip; })
-  | asgn (x : Ident) (a : Aexp) : Com.NoWhilesR (imp { x := ~a; })
+  | skip : Com.NoWhilesR (imp { skip })
+  | asgn (x : Ident) (a : Aexp) : Com.NoWhilesR (imp { x := ~a })
   | seq (c1 c2 : Com) (h1 : Com.NoWhilesR c1) (h2 : Com.NoWhilesR c2) :
-      Com.NoWhilesR (imp { ~c1 ~c2 })
+      Com.NoWhilesR (imp { ~c1; ~c2 })
   | cond (b : Bexp) (c1 c2 : Com) (h1 : Com.NoWhilesR c1) (h2 : Com.NoWhilesR c2) :
       Com.NoWhilesR (imp { if (~b) { ~c1 } else { ~c2 } })
   -- END SOLUTION

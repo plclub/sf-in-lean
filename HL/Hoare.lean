@@ -70,6 +70,11 @@ for further exploration at some point...
 ````
 :::
 
+:::dev "Niklas Halonen (xhalo32)"
+Reply to Benjamin's note above:
+The way we do it now in Lean is to have a custom elaborater which avoids all the coercions plus doesn't need the syntax category for assertions.
+:::
+
 :::dev "Benjamin Pierce (bcpierce00)" BeforeNextRelease (year := 2021)
 Any chance we could move the (awkwardly placed)
 weakest precondition discussion to this chapter instead?
@@ -574,7 +579,7 @@ scoped syntax:max (name := assn) "assn(" ident "; " term ")" : term
 scoped syntax "{{" term "}}" : term
 
 @[term_elab assn]
-def assnElab : TermElab := fun stx type? => do
+def assnElab : TermElab := fun stx _type? => do
   match stx with
   | `(assn($st; $t:term)) =>
     let t ← elabTerm t none
@@ -629,6 +634,25 @@ macro_rules
 end
 ```
 
+:::dev "Niklas Halonen"
+Mention (don't explain macro hygiene though) why
+```
+#check {{ st[X] = st[Y] }}
+```
+doesn't work, but instead one should write
+```
+#check {{ fun st => st[X] = st[Y] }}
+```
+
+And mention that when inside the brackets, one sees in the infoview
+```
+st✝ : State
+```
+but outside the brackets, one sees `fun st => st[X] = st[X] : State → Prop`
+
+Also: should we introduce the terminology "pure" for embedding propositions into assertions that are constant functions?
+:::
+
 ```lean
 #check {{ 1 = 2 }}
 #check {{ X = X }}
@@ -653,6 +677,7 @@ variable (f : Nat → Nat → Nat → Nat)
 #check {{ f X Y X = 0 }}
 
 end Assertion
+open scoped Assertion
 ```
 
 ::::terse
@@ -683,56 +708,6 @@ We can place a raw Lean function directly inside assertion notation:
 For example: `{{ fun st => ∀ x, st[x] = 0 }}`
 ::::
 
-:::dev
-NOTATION: SAZ 2024: It is important that this custom notation be
-at a level higher than 1 when added to the `constr` grammar because
-it interacts with the "application" case of `com` and the notation
-for Hoare triples.  That grammar parses embedded function arguments
-at level 1. We never want `f {{P}}` to parse `{ P }` as an
-assertion when used in a command.  Instead we want `{{P}}` to
-"close" the Hoare triple.
-
-```
-NOTATION: Note for Rocq custom grammar hackers.  From what I can tell, the
-Rocq LL(1) parser does left-factorize the grammar, *however* it uses a very
-strict notion of what counts as "equal" for the purposes of the factorization.
-In particular, a grammar entry might have a level,
-as in [e custom assn at level 99] in the notation below.  Leaving out the
-"at level 99" is *semantically equivalent*, because the [assn] grammar starts
-at that level, but omitting it will not work because the grammar for
-Hoare triples below includes "at level 99" -- the [LEVEL "99"] part of the
-grammar counts for factorization.
-
-The upshot is that means that this notation and the Hoare triple notation
-(which overlaps with [{{ _ }}]) must be changed in tandem and use identical
-level specifications.
-```
-:::
-
-::::hide
-```
-/- NOTATION: SAZ 2024 : useful for debugging notations -- use
-[set_option pp.notation false] -/
-#check X  -- X : Ident
-#check (X : Aexp)  -- Aexp.id X
-#check (X : Aexp')  -- Aexp'.ofAexp (Aexp.id X) : Aexp'
-#check (aexp { X } : Aexp')  -- Aexp'.ofAexp (Aexp.id X) : Aexp'
-#check (3 : Aexp)  -- Aexp.num 3
-#check (3 : Aexp')  -- Aexp'.ofNat 3 : Aexp'
-#check {{ X = 3 }}
-#check {{ X > 3 ∧ Y = (4 * X - (Y + Z)) }}
-#check {{ X ≠ 3 ∨ (Y = 4 ∧ Z = 5) }}
-#check {{ Z = Nat.max X Y }}
-#check {{ Z * Z ≤ X
-          ∧ ¬ (Nat.succ Z * Nat.succ Z ≤ X) }}
-#check {{ Nat.add X Y > Nat.max Y X }}
-#check (fun st => ∀ (P : Assertion) m a,
-  ({{ fun st => P (X →ₜ m ; st)
-      ∧ st[X] = Aexp.eval (X →ₜ m ; st) a }}) st)
-#check {{ fun st => st[X] = 0 }}
-```
-::::
-
 ## Example Assertions
 
 ::::full
@@ -742,7 +717,6 @@ new notation.
 
 ```lean
 namespace ExamplePrettyAssertions
-open scoped Assertion
 
 def assertion1 : Assertion := {{ X = 3 }}
 def assertion2 : Assertion := {{ True }}
@@ -750,11 +724,12 @@ def assertion3 : Assertion := {{ False }}
 def assertion4 : Assertion := {{ True ∨ False }}
 def assertion5 : Assertion := {{ X ≤ Y }}
 def assertion6 : Assertion := {{ X = 3 ∨ X ≤ Y }}
-def assertion7 : Assertion := {{ Z = (max X Y) }}
+def assertion7 : Assertion := {{ Z = max X Y }}
 def assertion8 : Assertion := {{ Z * Z ≤ X
                                  ∧ ¬ (((Nat.succ Z) * (Nat.succ Z)) ≤ X) }}
 def assertion9 : Assertion := {{ Nat.add X Y > max Y X }}
-
+variable {xs : List Nat}
+-- #check {{ xs = X }}
 /--
 info: def ExamplePrettyAssertions.assertion8 : Assertion :=
 fun st => st[Z] * st[Z] ≤ st[X] ∧ ¬st[Z].succ * st[Z].succ ≤ st[X]
@@ -790,24 +765,18 @@ assertions:
 
 ```lean
 notation:26 P:27 " <<->> " Q:27 => AssertImplies P Q ∧ AssertImplies Q P
-```
 
-:::dev "Claude"
-The Rocq source puts these notations in a `hoare_spec_scope`, with a
-book comment explaining that "the `hoare_spec_scope` annotation tells Rocq
-that this notation is not global but is intended to be used in particular
-contexts."  Lean has no notation scopes, so the notations are simply global
-and that paragraph is omitted.
-:::
+theorem assertIff_def {P Q : Assertion} : P <<->> Q ↔ AssertImplies P Q ∧ AssertImplies Q P
+    := by rfl
+```
 
 # Hoare Triples, Informally
 
-::::full
-A _Hoare triple_ is a claim about the state before and
-after executing a command.  The standard notation is
+A _Hoare triple_ is a claim about the state before and after executing a command.
+A commond notation for Hoare triples, and the one we use in this book, is
 
 ```display
-{P} c {Q}
+{{P}} c {{Q}}
 ```
 
 meaning:
@@ -819,32 +788,6 @@ meaning:
 Assertion `P` is called the _precondition_ of the triple, and `Q` is
 the _postcondition_.
 
-Because single braces are already used for other things in Lean, we'll write
-Hoare triples with double braces:
-
-```display
-{{P}} c {{Q}}
-```
-::::
-
-::::terse
-A _Hoare triple_ is a claim about the state before and
-after executing a command:
-
-```display
-{{P}} c {{Q}}
-```
-
-This means:
-
-  - If command `c` begins execution in a state satisfying
-    assertion `P`,
-  - and if `c` eventually terminates in some final state,
-  - then that final state will satisfy the assertion `Q`.
-
-Assertion `P` is called the _precondition_ of the triple, and `Q`
-is the _postcondition_.
-::::
 
 :::slidebreak
 :::
@@ -1071,31 +1014,17 @@ We formalize valid Hoare triples in Lean as follows:
 ```lean
 def ValidHoareTriple
     (P : Assertion) (c : Com) (Q : Assertion) : Prop :=
-  ∀ st st',
+  ∀ {st st' : State},
     (st =[ c ]=> st') →
     P st →
     Q st'
-```
 
-:::dev
+theorem validHoareTriple_def (P : Assertion) (c : Com) (Q : Assertion) :
+    ValidHoareTriple P c Q ↔ ∀ {st st' : State},
+      (st =[ c ]=> st') →
+      P st →
+      Q st' := by rfl
 ```
-NOTATION: SAZ 2024 One trickiness of these notations is that we
-want the [com] and [assn] grammars to be "open", so that they can
-include expressions parsed by the full [constr] grammar of Rocq.
-However, then there is a conflict of precedence of the
-"application" cases:
-
-The example " {{ True }} X := 0 {{ False }} " does not parse as
-intended because the [com] grammar includes the capability of
-parsing the (ill-typed) term "0 {{ False }}".
-
-This means that the "application" for [com] should disallow
-arguments at the level at which the [assn] grammar is included
-in constr.  The upshot is that this notation should be included
-in the grammar at the *same* level as the assertion notation
-[{{ P }}], which is 2.
-```
-:::
 
 Notation for Hoare triples.  The command between the two assertions is
 parsed with the same grammar as the `imp { … }` notation, so a command
@@ -1103,8 +1032,6 @@ that is a Lean variable (rather than concrete syntax) is spliced in with
 `~c`, just as in the `st =[ c ]=> st'` notation.
 
 ```lean
-open scoped Assertion
-
 namespace ValidHoareTriple
 
 /-- Hoare triple: `{{ P }} c {{ Q }}` -/
@@ -1121,37 +1048,11 @@ open scoped ValidHoareTriple
 ```
 
 ::::hide
-```
-#check ({{ True }} skip; {{ False }})
-#check ({{ True }} X := 0; {{ False }})
+```lean
+#check ({{ True }} skip {{ False }})
+#check ({{ True }} X := 0 {{ False }})
 ```
 ::::
-
-:::dev
-```
-HIDE: AAA: If I try to set the notation as {P} c {Q}, I get the
-following error:
-
-  Error: A notation must include at least one symbol.
-
-Maybe we could use other braces? For instance, I tried it with [P]
-c [Q] and it seems to work (although I don't know how that would
-affect the rest of the book).
-
-BCP: Let's try with the "squashed" double braces for a while and
-see if we like it.
-
-P.S.
-This works:
-   Notation "{ x }" := (x) (at level 0, x at level 99).
-But this doesn't:
-   Notation "{ P }  c  { Q }" :=
-     (ValidHoareTriple P c Q)
-     (at level 0, P at level 99, c at level 99, Q at level 99)
-   : hoare_spec_scope.
-Why??
-```
-:::
 
 :::::exercise (rating := 1) (name := "hoare_post_true")
 Prove that if `Q` holds in every state, then any triple with `Q`
@@ -1161,9 +1062,9 @@ as its postcondition is valid.
 theorem hoare_post_true (P Q : Assertion) (c : Com) (h : ∀ st, Q st) :
     {{ P }} ~c {{ Q }} := by
   solution!
-    unfold ValidHoareTriple
-    intro st st' _heval _hp
-    apply h
+    rw [validHoareTriple_def]
+    intro st st' hc hst
+    exact h st'
 ```
 :::::
 
@@ -1175,9 +1076,9 @@ its precondition is valid.
 theorem hoare_pre_false (P Q : Assertion) (c : Com) (h : ∀ st, ¬ (P st)) :
     {{ P }} ~c {{ Q }} := by
   solution!
-    unfold ValidHoareTriple
-    intro st st' _heval hp
-    apply h at hp
+    rw [validHoareTriple_def]
+    intro st st' hc hst
+    specialize h st hst
     contradiction
 ```
 :::::
@@ -1222,10 +1123,11 @@ assertion `P`:
 
 ```lean
 theorem hoare_skip (P : Assertion) :
-    {{ P }} skip; {{ P }} := by
-  intro st st' h hp
+    {{ P }} skip {{ P }} := by
+  rw [validHoareTriple_def]
+  intro st st' h hst
   inversion h
-  assumption
+  exact hst
 ```
 
 ## Sequencing
@@ -1239,17 +1141,19 @@ state where `P` holds to one where `R` holds:
  {{ P }} c1 {{ Q }}
  {{ Q }} c2 {{ R }}
 ----------------------  (hoare_seq)
-{{ P }} c1;c2 {{ R }}
+{{ P }} c1; c2 {{ R }}
 ```
 
 ```lean
 theorem hoare_seq (P Q R : Assertion) (c1 c2 : Com)
     (h1 : {{ Q }} ~c2 {{ R }}) (h2 : {{ P }} ~c1 {{ Q }}) :
-    {{ P }} ~c1 ~c2 {{ R }} := by
-  intro st st' h12 pre
-  inversion h12 with
+    {{ P }} ~c1; ~c2 {{ R }} := by
+  rw [validHoareTriple_def]
+  intro st st' h hst
+  inversion h with
   | seq st'' hc1 hc2 =>
-    exact h1 _ _ hc2 (h2 _ _ hc1 pre)
+    rw [validHoareTriple_def] at h1 h2
+    exact h1 hc2 (h2 hc1 hst)
 ```
 
 ::::full
@@ -1446,7 +1350,7 @@ However, we can achieve the same effect by evaluating `P` in an
 updated state, defined as follows:
 
 ```lean
-def Assertion.sub (x : Ident) (a : Aexp) (P : Assertion) : Assertion :=
+def Assertion.subst (x : Ident) (a : Aexp) (P : Assertion) : Assertion :=
   fun (st : State) => P (x →ₜ a.eval st ; st)
 ```
 
@@ -1463,12 +1367,25 @@ Introduce a notation typeclass for this (e.g. HasSubst)
 :::
 
 ```lean
+namespace Assertion
+
 /-- Assertion substitution: `P [X ↦ a]` -/
-syntax:100 term:100 " [" ident " ↦ " imp_aexp "]" : term
+scoped syntax:max term:arg " [" ident " ↦ " imp_aexp "]" : term
+-- scoped syntax:max term:arg " [" ident " ↦ " term "]" : term -- TODO can we get this to work
 
 macro_rules
-  | `($P [$x ↦ $a]) => `(Assertion.sub $x (aexp { $a }) $P)
-  -- | `(assn($st; $P [$x ↦ $a])) => ``(assn($st; $P) [$x ↦ $a]) -- maybe we could push substitutions inside
+  | `($P [$x ↦ $a:imp_aexp]) => `(Assertion.subst $x (aexp { $a }) $P)
+  -- | `($P [$x ↦ $a:term]) => `(Assertion.subst $x $a $P) -- TODO
+
+-- TODO unexpander!!!
+
+theorem subst_def {x : Ident} {a : Aexp} {P : Assertion} :
+    P [x ↦ ~a] = fun (st : State) => P (x →ₜ a.eval st ; st) := by rfl
+
+theorem subst_apply {x : Ident} {a : Aexp} {P : Assertion} {st : State} :
+    P [x ↦ ~a] st ↔ P (x →ₜ a.eval st ; st) := by rfl
+
+end Assertion
 ```
 
 This notation allows us to write this operation as:
@@ -1478,9 +1395,9 @@ P [ X ↦ a ]
 ```
 
 ```lean
-#check (fun st => Assertion.sub X (aexp { 2 * X }) ({{ X ≤ 10 }}) st)
+#check (fun st => Assertion.subst X (aexp { 2 * X }) ({{ X ≤ 10 }}) st)
 #check {{ X ≤ 10 }} [X ↦ 2 * X]
-#check (∀ st, ({{ X ≤ 10 }} [X ↦ 2 * X]) st)
+#check (∀ st, {{ X ≤ 10 }} [X ↦ 2 * X] st)
 ```
 
 That is, `P [X ↦ a]` stands for an assertion -- let's call it
@@ -1560,11 +1477,19 @@ We can demonstrate formally that we have captured intuitive meaning of
 namespace ExampleAssertionSub
 example :
     {{ (X ≤ 5) }} [X ↦ 3] <<->> {{ 3 ≤ 5 }} := by
-  constructor <;> (unfold AssertImplies Assertion.sub; intro st h; exact h)
+  rw [assertIff_def]
+  constructor <;>
+  · rw [assertImplies_def]
+    intro st
+    rw [Assertion.subst_apply]
 
 example :
     {{ (X ≤ 5) }} [X ↦ X + 1] <<->> {{ (X + 1) ≤ 5 }} := by
-  constructor <;> (unfold AssertImplies Assertion.sub; intro st h; exact h)
+  rw [assertIff_def]
+  constructor <;>
+  · rw [assertImplies_def]
+    intro st
+    rw [Assertion.subst_apply]
 
 end ExampleAssertionSub
 ```
@@ -1821,7 +1746,7 @@ theorem hoare_asgn_wrong : ∃ a : Aexp,
   solution!
     exists aexp { X + 1 }
     intro hc
-    unfold ValidHoareTriple at hc
+    rw [validHoareTriple_def] at hc
     have h2 : (X →ₜ 1 ; ∅)[X] = (aexp { X + 1 }).eval (X →ₜ 1 ; ∅) := by
       apply hc ∅ (X →ₜ 1 ; ∅)
       · apply Com.EvalR.asgn; rfl
@@ -1895,7 +1820,7 @@ theorem hoare_asgn_fwd (m : Nat) (a : Aexp) (P : Assertion) :
     {{ fun st => P (X →ₜ m ; st)
          ∧ st[X] = a.eval (X →ₜ m ; st) }} := by
   solution!
-    unfold ValidHoareTriple
+    rw [validHoareTriple_def]
     intro st st' heval hpre
     inversion heval with
     | asgn n h =>
@@ -1936,7 +1861,7 @@ theorem hoare_asgn_fwd_exists (a : Aexp) (P : Assertion) :
     {{ fun st => ∃ m, P (X →ₜ m ; st) ∧
          st[X] = a.eval (X →ₜ m ; st) }} := by
   solution!
-    unfold ValidHoareTriple
+    rw [validHoareTriple_def]
     intro st st' heval hpre
     inversion heval with
     | asgn n h =>
@@ -2127,7 +2052,7 @@ Here are the formal versions:
 theorem hoare_consequence_pre (P P' Q : Assertion) (c : Com)
     (hhoare : {{ P' }} ~c {{ Q }}) (himp : P ->> P') :
     {{ P }} ~c {{ Q }} := by
-  unfold ValidHoareTriple
+  rw [validHoareTriple_def]
   intro st st' heval hpre
   apply hhoare st st'
   · assumption
@@ -2137,7 +2062,7 @@ theorem hoare_consequence_pre (P P' Q : Assertion) (c : Com)
 theorem hoare_consequence_post (P Q Q' : Assertion) (c : Com)
     (hhoare : {{ P }} ~c {{ Q' }}) (himp : Q' ->> Q) :
     {{ P }} ~c {{ Q }} := by
-  unfold ValidHoareTriple
+  rw [validHoareTriple_def]
   intro st st' heval hpre
   apply himp
   apply hhoare st st'
@@ -2269,7 +2194,7 @@ Here's a good candidate for automation:
 theorem hoare_consequence_pre' (P P' Q : Assertion) (c : Com)
     (hhoare : {{ P' }} ~c {{ Q }}) (himp : P ->> P') :
     {{ P }} ~c {{ Q }} := by
-  unfold ValidHoareTriple
+  rw [validHoareTriple_def]
   intro st st' heval hpre
   apply hhoare st st'
   · assumption
@@ -2299,7 +2224,7 @@ missing part is going to be filled in later in the proof."
 theorem hoare_consequence_pre''' (P P' Q : Assertion) (c : Com)
     (hhoare : {{ P' }} ~c {{ Q }}) (himp : P ->> P') :
     {{ P }} ~c {{ Q }} := by
-  unfold ValidHoareTriple
+  rw [validHoareTriple_def]
   intro st st' heval hpre
   apply hhoare
   · assumption
@@ -2594,7 +2519,7 @@ show that it satisfies the following specification:
 {{X ≤ Y}} c {{Y ≤ X}}
 ```
 
-Your proof should not need to use `unfold ValidHoareTriple`.
+Your proof should not need to use `rw [validHoareTriple_def]`.
 
 Hints:
    - Remember that Imp commands need to be enclosed in `imp { … }`
@@ -2698,7 +2623,7 @@ theorem invalid_triple : ¬ ∀ (a : Aexp) (n : Nat),
     {{ a = n }}
       X := 3; Y := ~a;
     {{ Y = n }} := by
-  unfold ValidHoareTriple
+  rw [validHoareTriple_def]
   intro h
   solution!
     specialize h (aexp { X }) 2 (X →ₜ 2 ; ∅) (Y →ₜ 3 ; X →ₜ 3 ; X →ₜ 2 ; ∅)
@@ -3836,7 +3761,7 @@ theorem always_loop_hoare' (P Q : Assertion) :
 Hoare logic... -/
 theorem always_loop_hoare'' (P Q : Assertion) :
     {{ P }} while (true) { skip; } {{ Q }} := by
-  unfold ValidHoareTriple
+  rw [validHoareTriple_def]
   intro st st' heval _hP
   have key : ∀ (cmd : Com) (s s' : State), (s =[ cmd ]=> s') →
       cmd = (imp { while (true) { skip; } }) → Q s' := by
@@ -4160,7 +4085,7 @@ a separate namespace, with a different definition of commands). -/
 
 theorem hoare_asgn (Q : Assertion) (x : Ident) (a : Aexp) :
     {{Q [x ↦ ~a]}} x := ~a; {{ Q }} := by
-  unfold ValidHoareTriple
+  rw [validHoareTriple_def]
   intro st st' hE hQ
   inversion hE with
   | asgn n h =>
@@ -4231,7 +4156,7 @@ like this: -/
 theorem hoare_repeat' (P : Assertion) (b : Bexp) (c : Com)
     (h : {{ P }} ~c {{ P }}) :
     {{ P }} repeat { ~c } until (~b) {{ P ∧ b }} := by
-  unfold ValidHoareTriple
+  rw [validHoareTriple_def]
   intro st st' he hP
   have key : ∀ (cmd : Com) (s s' : State), (s =[ cmd ]=> s') →
       cmd = (impr { repeat { ~c } until (~b) }) → P s →
@@ -4572,7 +4497,7 @@ def havoc_pre (x : Ident) (Q : Assertion) (st : State) : Prop :=
 theorem hoare_havoc (Q : Assertion) (x : Ident) :
     {{ fun st => havoc_pre x Q st }} havoc x; {{ Q }} := by
   solution!
-    unfold ValidHoareTriple havoc_pre
+    rw [validHoareTriple_def] havoc_pre
     intro st st' heval hpre
     inversion heval with
     | havoc n => apply hpre
@@ -4837,12 +4762,12 @@ theorem assert_assume_differ : ∃ (P : Assertion) (b : Bexp) (Q : Assertion),
   solution!
     exists {{ True }}, bexp { false }, ({{ False }} : Assertion)
     constructor
-    · unfold ValidHoareTriple
+    · rw [validHoareTriple_def]
       intro st r hE _
       inversion hE with
       | assume hb => simp at hb
     · intro hC
-      unfold ValidHoareTriple at hC
+      rw [validHoareTriple_def] at hC
       have h : ∅ =[ assert (false); ]=> Result.error := by
         apply Com.EvalR.assertFalse
         rfl
@@ -4861,7 +4786,7 @@ theorem assert_implies_assume (P : Assertion) (b : Bexp) (Q : Assertion)
     (hhoare : {{ P }} assert (~b); {{ Q }}) :
     {{ P }} assume (~b); {{ Q }} := by
   solution!
-    unfold ValidHoareTriple
+    rw [validHoareTriple_def]
     intro st r hEval hP
     inversion hEval with
     | assume hb =>
