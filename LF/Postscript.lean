@@ -25,6 +25,8 @@ htmlSplit := .never
 file := "Postscript"
 %%%
 
+Testing {citet Bib.bertot2004}[].
+
  Postscript
 :::dev
  SOONER: The FULL version could use some real text

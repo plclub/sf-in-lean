@@ -11,8 +11,6 @@ htmlSplit := .never
 file := "Preface"
 %%%
 
-Testing {citet Bib.bertot2004}[].
-
 Preface
 :::dev
  SOONER: BCP 25: The SF course at Penn (CIS 5000) sometimes attracts
