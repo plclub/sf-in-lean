@@ -240,9 +240,11 @@ have been tested with Lean version {leanVersion}[].
 
 The Visual Studio Code IDE is the recommended platform for using Lean.
 
+- Clone the [SF-in-Lean git repo](https://github.com/plclub/sf-in-lean)
 - Install VS Code if needed
 - From the Extensions tab of VSCode, install the Lean 4 Extension
 - Wait for Lean to build the project
+- XXXXXX more needed
 
 ## Exercises
 
@@ -279,27 +281,13 @@ of extra practice with key concepts and introduce secondary themes
 that may be of interest to some readers.  Advanced exercises offer an
 extra challenge and a deeper cut at the ideas.
 
-## Recommended Citation Format
+## Citation Format
 
 If you want to refer to this volume in your own writing, please
 do so as follows:
 
-:::dev "Benjamin Pierce (bcpierce00)"
-Fix.  Give a citation for the whole series also?
+:::citation
 :::
-
-```
-@book            {$FIRSTAUTHOR:SF$VOLUMENUMBER,
-author       =   {$AUTHORS},
-editor       =   {Benjamin C. Pierce},
-title        =   "$VOLUMENAME",
-series       =   "Software Foundations",
-volume       =   "$VOLUMENUMBER",
-year         =   "$VOLUMEYEAR",
-publisher    =   "Electronic textbook",
-note         =   {Version $VERSION, \URL<http://softwarefoundations.cis.upenn.edu>}
-}
-```
 
 # For Potential Contributors
 
@@ -318,16 +306,9 @@ problems are still relevant.
 
 # Acknowledgements
 
-:::dev "Benjamin Pierce (bcpierce00)"
-Belongs in a separate file.
+See `ACKNOWLEDGEMENTS.md` in the [SF-in-Lean git repo](https://github.com/plclub/sf-in-lean).
 
-Should include SF classic.
-:::
 
-Development of the _Software Foundations_ series has been
-supported, in part, by the National Science Foundation under the
-NSF Expeditions grant 1521523, _The Science of Deep
-Specification_.
 
 
 

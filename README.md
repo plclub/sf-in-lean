@@ -1,22 +1,22 @@
 # Software Foundations in Lean
 
-This repository contains the work-in-progress sources for [Software
-Foundations](https://softwarefoundations.cis.upenn.edu/) in Lean.
+This repository contains the  sources for the _Software Foundations in Lean_ textbook series.
 
 ## Status and how to contribute
 
-SF-in-Lean _is_ ready for adventurous alpha-testers.  See
+SF-in-Lean is ready for adventurous alpha-testers!  See
 ALPHATESTERS.md for instructions on how to get started.
 
 The SF-in-Lean team is also looking for contributors who have time and
-interest to make a more significant commitment tothe project.  
+interest to make a bigger commitment to the project.  
 If you are interested in joining us, please email Benjamin Pierce.
 
 SF-in-Lean is _not_ ready for ordinary readers quite yet. We aim to
 have a complete and polished draft of the opening chapters of _Logical
-Foundations_ in time for the start of Fall 2026 courses and to finish
-both _Logical Foundations_ and _Programming Language Foundations_ by
-the end of the year. 
+Foundations_ in time for the start of Fall 2026 courses and to finish all of _Logical Foundations_, _Type Systems_, and _Hoare Logic_ by
+the end of the semester. 
+
+Translations of further volumes of the original _Software Foundations_ from Rocq to Lean will follow in due course.
 
 ## Quick start: Building and viewing the book
 

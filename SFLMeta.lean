@@ -12,13 +12,14 @@ import SFLMeta.Grade
 import SFLMeta.Hide
 import SFLMeta.Ignore
 import SFLMeta.Instructors
-import SFLMeta.LeanVersion
 import SFLMeta.Quiz
 import SFLMeta.Save
 import SFLMeta.SlideBreak
 import SFLMeta.Solution
 import SFLMeta.Terse
 import SFLMeta.Theme
+import SFLMeta.Version
+import SFLMeta.Volume
 
 namespace SFLMeta
 
