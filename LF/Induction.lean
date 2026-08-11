@@ -354,7 +354,7 @@ there if we just go on like this.
 
 ::::full
 To prove interesting facts about numbers, lists, and other
-inductively defined sets, we often need a more powerful reasoning
+inductive types, we often need a more powerful reasoning
 principle: _induction_.
 :::dev "Benjamin Pierce (bcpierce00)"
 I changed boldface back to italic here, but I'm happy to discuss using boldface in a principled and consistent (and sparing) way...

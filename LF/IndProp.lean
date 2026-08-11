@@ -570,7 +570,7 @@ wow!
 
 ## Example: Binary relation for comparing numbers
 
-A binary _relation_ on a set `α` has Lean type `α → α → Prop`.
+A binary _relation_ on a type `α` has Lean type `α → α → Prop`.
 This is a family of propositions parameterized by two elements
 of `α` -- i.e., a proposition about pairs of elements of `α`.
 

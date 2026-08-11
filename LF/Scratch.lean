@@ -335,7 +335,7 @@ namespace NatPlayground
   All the types we have defined so far -- both "enumerated
   types" such as `Day`, `Bool`, and `Bit` and tuple types such as
   `Nibble` built from them -- are finite.  The natural numbers, on
-  the other hand, are an infinite set, so we'll need to use a
+  the other hand, form an infinite type, so we'll need to use a
   slightly richer form of type declaration to represent them.
 -/
 

@@ -101,8 +101,8 @@ A datatype definition:
 :::
 
 ::::full
-Let's start with a very simple example.  The following declaration tells
-Lean that we are defining a set of data values, i.e. a _type_.
+Let's start with a very simple example.  The following declaration introduces
+a new type and lists its possible values.
 ::::
 
 ```lean
@@ -701,8 +701,8 @@ TODO
 
 ::::full
 The enumerated types we have seen so far are so-named because
-their definitions explicitly enumerate a finite set of
-elements: their constructors. Here is a more interesting
+their definitions explicitly list all of their values, one
+constructor at a time. Here is a more interesting
 inductive type definition, `Color`, where one of the constructors
 takes an argument:
 ::::
@@ -1332,7 +1332,7 @@ namespace NatPlayground
 All the types we have defined so far — both enumerated types
 such as {name}`Day`, {name}`MyBool`, and {name}`Playground.Bit` and tuple types such as
 {name}`Playground.Nibble` built from them — are finite. The natural numbers, on
-the other hand, are an infinite set, so we'll need to use a
+the other hand, form an infinite type, so we'll need to use a
 slightly richer form of inductive type declaration to represent
 them: _recursive_ inductive types.
 

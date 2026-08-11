@@ -979,17 +979,17 @@ them. 'Nuff said.)
 ::::full
 Proofs by induction over datatypes like {name}`NatList` are a
 little less familiar than standard natural number induction, but
-the idea is equally simple.  Each `inductive` declaration defines
-a set of data values that can be built up using the declared
+the idea is equally simple.  Each `inductive` declaration defines a
+type whose values can be built up using the declared
 constructors. For example, a boolean can be either {name}`true` or
 {name}`false`; a number can be either {lean}`0` or else {name}`Nat.succ` applied to another
 number; and a list can be either {lean}`[]` or else `::` applied to a
 number and a list.  Moreover, applications of the declared
 constructors to one another are the _only_ possible shapes that
-elements of an inductively defined set can have.
+values of an inductive type can have.
 
 This last fact directly gives rise to a way of reasoning about
-inductively defined sets: a number is either {lean}`0` or else it is {lean}`Nat.succ`
+inductive types: a number is either {lean}`0` or else it is {lean}`Nat.succ`
 applied to some _smaller_ number; a list is either {lean}`[]` or else
 it is `::` applied to some number and some _smaller_ list;
 etc.  Thus, if we have in mind some proposition `P` that mentions a
