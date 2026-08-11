@@ -1,138 +1,124 @@
 # SF-in-Lean Style Guide
 
-This file explains our conventions for how SFL
-is written and structured.
-`CONTRIBUTING.md` covers *workflow and mechanics*; this file is about
-*style*.
+This file explains our conventions for how SFL is written and structured.
+[CONTRIBUTING.md] covers *workflow and mechanics*; this file is about *style*.
 
-## Lean Style
+## Lean Style Conventions
 
-We generally follow the [Mathlib style
-guide](https://leanprover-community.github.io/contribute/style.html)
+We generally follow the Mathlib
+[style guide](https://leanprover-community.github.io/contribute/style.html)
 and [naming conventions](https://leanprover-community.github.io/contribute/naming.html),
-with the caveat around pedagogy in our SFL **Philosophy** (given above),
-which requires (among other things) adhering to the order of tactics, given next.
-We use the Lean linter by default.
+with the caveat around pedagogy in our [Guiding Philosophy](CONTRIBUTING.md#guiding-philosophy).
 
-### Tactics: order of introduction
+### Tactics and notations
 
 A core pedagogical decision is that tactics are introduced gradually.
-The table below lists the tactics **first introduced** in each
-chapter, in chapter order. It is derived from the current sources
-(tactic-position occurrences in real code, comments excluded) and
-should be kept in sync as chapters are rewritten.
+The table below lists the tactics first introduced in each chapter,
+in chapter order. It is derived from the current sources
+(tactic-position occurrences in real code, comments excluded)
+and should be kept in sync as chapters are rewritten.
+Do not use tactics before they are first introduced,
+and do not use tactics not in this table; in particular,
+`omega`, `grind`, and `aesop` may not be used in volumes `LF`, `HL`, and `TS`.
 
 | Chapter           | Tactics first introduced |
-|-------------------|--------------------------|
+| ----------------- | ------------------------ |
 | `Basics`          | `rfl`, `intro`, `rewrite`, `cases`, `exact` |
 | `Induction`       | `induction`, `have`, `rw`, `<;>` |
 | `UsingLean`       | `dsimp`, `calc`, `exact?`, `rw?` |
 | `Lists`           | *(none new)* |
 | `Poly`            | *(none new)* |
-| `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `unfold`, `split` |
+| `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `induction ... generalizing ...`, `unfold`, `cases ... : ...`, `split` |
 | `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
 | `IndProp`         | `rcases`, `subst` |
 | `Automation`      | `lia`, `try`, `repeat`, `specialize`, `trivial`, `simp`, `generalize` |
 | `Typeclasses`     | `decide` |
-| `HL/Imp`          | *(none new)* |
+| `HL` chapters     | *(none new)* |
 
-**Notes**
-- **`lia` rather than `omega`** The latter is being phased out.
-- `IndPropRegexp` has been folded into `Automation`
+Additional notation beyond the `Basics` is also introduced gradually alongside
+the tactics. The table below similarly lists new notation, which should also be
+kept in sync.
+
+| Chapter   | Notations first introduced |
+| --------- | -------------------------- |
+| `Lists`   | `structure`, `⟨...⟩` anonymous constructors, `.` accessors, `bif` |
+| `Poly`    | `{...}` implicit arguments, `_` holes, `@` explicit application |
+| `Tactics` | `let ⟨...⟩ := ...` |
+| `Logic`   | rewriting by `↔` |
+
+#### Notes
+
+- `omega` is being phased out in favor of `lia`.
+- `IndPropRegexp` has been folded into `Automation`.
 - `Maps` has been folded into `Typeclasses`; the total- and partial-map
-  development now lives there, so `Typeclasses` may use `simp`, `ext`, and the
-  rest of the budget accumulated by `Automation` and everything before it.
-  (`LF/Maps.lean` has been deleted; Rocq's `Maps.v` remains the source for the
-  prose.)
-- Candidate tactics still to be placed include `show`, `rename_i`, `revert`, `suffices`, `tauto`.
-- Tactics `grind`, `aesop`, are deferred to a later volume, following
+  development now lives there. (`LF/Maps.lean` has been deleted; Rocq's `Maps.v`
+  remains the source for the prose.)
+- Candidate tactics still to be placed include
+  `show`, `rename_i`, `revert`, `suffices`, `tauto`.
+- `grind` and `aesop` are deferred to a later volume, following
   FPiL's caution that `grind` is overwhelming for beginners.
 
-Related notation introduced alongside tactics: anonymous constructor
-`⟨…⟩` (`Lists`); destructuring `let ⟨…⟩ := …` and `cases h : …`,
-`induction … generalizing …` (`Tactics`); projection/`Iff` syntax
-`.left`, `.right`, `.mp`, `.mpr`, and rewriting by an `↔` (`Logic`).
+### Syntactic considerations
 
-### SFL-specific conventions
+#### Case analyses and induction
 
-* **Structured `cases`/`induction`.** Prefer
+Prefer `cases ... with` and `induction ... with` over `case` or `·` goal
+selectors, with each alternative on its own unindented line.
 
-  ```lean
-  cases b with
-  | true  => …
-  | false => …
-  ```
+```lean
+cases b with
+| true  => ...
+| false => ...
+```
 
-  over the separate `case` syntax *and* over the bare `·` goal selector — i.e. prefer
-  `cases h with | …` / `induction h with …`.
-  Put each alternative on its own unindented line beginning with `|`.
+Keep short branch bodies inline.
 
-* Keep short branch bodies inline:
+```lean
+cases b, c with
+| true, false => rfl
+| false, _ => simp
+```
 
-  ```lean
-  cases b, c with
-  | true, false => rfl
-  | false, _ => simp
-  ```
+Optionally, align patterns across alternatives.
 
-  *Optionally*, align patterns across alternatives:
+```lean
+cases b, c with
+| true,  _ => rfl
+| false, _ => simp
+```
 
-  ```lean
-  cases b, c with
-  | true,  _ => rfl
-  | false, _ => simp
-  ```
+For multiline branch bodies, don't pad the `=>`, and indent the body to align
+with the alternative name.
 
-  For multiline branch bodies, put `=>` after the alternative *without* padding
-  and indent the body by two spaces, **aligned** with the alternative name:
-
-  ```lean
-  cases b with
-  | true =>
-    simp
-    exact h
-  | false =>
-    rw [h]
-    exact hf
-  ```
-
-* **`rewrite` before `rw`** (see tactic chart above) --
-  `rw [h]` is roughly `rewrite [h]; rfl`, which is too strong at
-  first: it hides the closing `rfl` and makes proofs step
-  confusingly (the goal vanishes when you step past the final `]`).
-  We introduce `rw` specifically in `Induction.lean` and use from
-  then on.
-
-* **`example` for one-off demos.** Prefer `example …` over a named
-  `theorem foo …` for throwaway illustrations (tactic demos, "silly" lemmas,
-  etc.) that are never referenced later — Lean's `example` doesn't force us to
-  invent a name (unlike Rocq).  Reserve names for results used elsewhere or
-  graded. (berberman, review of PR #61.)
-
-* **Explicit rewrites over `dsimp`/`simp` through notation** (see
-  "Notation and simplification").
-
-* **Library vs. client code.** Inside a definition's own library it is
-  fine to unfold and simplify through definitions; *using* that code,
-  do not "peek through the interface."
+```lean
+cases b with
+| true =>
+  simp
+  exact h
+| false =>
+  rw [h]
+  exact hf
+```
 
 #### Names and namespaces
 
 Follow the Lean library's naming conventions:
 
-- Theorems and proof names use `snake_case`, e.g. `add_swap`, `rev_app_distr`;
-- Types and propositions (including definitions returning `Prop`) use `UpperCamelCase`, e.g. `Aexp`, `IsValue`;
-- Other values and functions use `lowerCamelCase`, e.g. `isEven`, `doubleBin`.
+- Theorems and proof names use `snake_case`, e.g. `add_swap`, `rev_app_distr`
+- Types and propositions (including definitions returning `Prop`) use
+  `PascalCase`, e.g. `Aexp`, `IsValue`
+- Other values and functions use `camelCase`, e.g. `isEven`, `doubleBin`
 
-Also follow Lean's variable naming conventions:
+Also follow Lean's variable naming conventions, using primes `'`, `''`, ...
+and numerical subscripts `₁`, `₂`, ... as needed:
 
-- Types are Greek letters like `α`, `β`
-- Propositions are lowercase `a`, `b`, `c`, etc
-- Predicates (functions into `Prop`) are lowercase `p`, `q`, `r`, etc
-- Natural numbers are lower case `n` and `m`, etc
-- Hypotheses are lower case starting with `h`
-- Functions are `f`, `g`, etc
-- Lists are `l`
+- `α`, `β`, `γ`, ... for type variables
+- `a`, `b`, `c`, ... for propositions
+- `p`, `q`, `r`, ... for predicates (functions into `Prop`)
+- `m`, `n`, `k`, ... for natural numbers
+- `h` for hypotheses
+- `f` and `g` for functions
+- `l` for lists
 
 Almost always, definitions and theorems relating to a type belong in a
 namespace with the same name as the type. Define the type first, then open its
@@ -152,14 +138,11 @@ theorem value_is_nf (t : Tm) (h : IsValue t) : IsNormalForm t := by
 end Tm
 ```
 
-Write `def eval` inside `namespace Aexp`, rather than `def Aexp.eval` inside
-that namespace.
+#### Theorem types and arguments
 
-#### Theorem arguments and visibility
-
-Put a theorem's ordinary arguments before the colon rather than introducing them with
-`∀` in its result. Likewise, when a proof would begin by introducing a hypothesis,
-normally put a named hypothesis before the colon:
+Put a theorem's ordinary arguments before the colon rather than introducing them
+with `∀` in its result. Likewise, when a proof would begin by introducing a
+hypothesis, put a named hypothesis before the colon:
 
 ```lean
 theorem foo {α : Type} (x : α) (h : P x) : Q x := by
@@ -169,23 +152,36 @@ theorem foo {α : Type} (x : α) (h : P x) : Q x := by
 rather than:
 
 ```lean
-theorem foo {α : Type} (x : α), P x → Q x := by
+theorem foo : ∀ {α : Type} (x : α), P x → Q x := by
   intro h
   ...
 ```
 
-This is not an absolute rule: keep quantifiers or implications in the resulting type
-when they are naturally part of the theorem's conclusion, when partial application of the theorem
-is useful, or the declaration is defined by `|` pattern matching.
+This is not an absolute rule: keep quantifiers or implications in the resulting
+type when they are naturally part of the theorem's conclusion, when partial
+application of the theorem is useful, or the declaration is defined by `|`
+pattern matching.
 
 In `Basics`, explicit `∀` and `intro` may be used when they are being introduced.
-After declaration-header binders have been explained in section "Displaying Theorem Statements",
-use the idiomatic deceleration-header form consistently.
+After declaration arguments have been explained in section
+"Displaying Theorem Statements", use the idiomatic declaration argument form
+consistently.
 
-##### Visibility
+Declaration types that overflow onto subsequent lines take an extra level of
+indentation relative to the declaration body:
+
+```lean
+theorem map_cons {α β : Type} {f : α → β}
+    {head : α} {tail : List α} :
+    map f (head :: tail) = f head :: map f tail := by
+  rfl
+```
+
+#### Type annotations
 
 Always give binders explicit type annotations, even when Lean can infer them.
-For example, write `(n : Nat)`, `{α : Type}`, and `(h : P)` rather than bare `n`, `{α}`, or `h`.
+For example, write `(n : Nat)`, `{α : Type}`, and `(h : P)` rather than bare
+`n`, `{α}`, or `h`.
 
 Type parameters should normally be implicit when later arguments determine them:
 
@@ -195,9 +191,11 @@ theorem isNil_cons {α : Type} (x : α) (xs : List α) :
   ...
 ```
 
-For small equational lemmas for `rw` or `simp`, make arguments
-implicit when the displayed equation determines them. This follows the style of
-Lean's list lemmas. For example, `map_cons` can be used simply as `rw [map_cons]`:
+#### Implicit arguments
+
+For small equational lemmas for `rw` or `simp`, make arguments implicit when the
+displayed equation determines them. This follows the style of Lean's list lemmas.
+For example, `map_cons` can be used simply as `rw [map_cons]`:
 
 ```lean
 theorem map_cons {α β : Type} {f : α → β}
@@ -206,10 +204,10 @@ theorem map_cons {α β : Type} {f : α → β}
   ...
 ```
 
-However, do _not_ make a theorem's main inputs implicit merely because unification could
-infer them from the conclusion. Keep the principal function, collection,
-point, or other subject explicit when callers are likely to apply the theorem
-directly. For example:
+However, do _not_ make a theorem's main inputs implicit merely because
+unification could infer them from the conclusion. Keep the principal function,
+collection, point, or other subject explicit when callers are likely to apply
+the theorem directly. For example:
 
 ```lean
 theorem foldMap_correct {α β : Type}
@@ -239,7 +237,7 @@ theorem isEven_iff_Even {n : Nat} :
 
 Use `sorry` to admit a declaration, `+error` to show code that Lean rejects,
 `-keep` to keep a block from changing the later environment, and
-`#guard_msgs` only when the output itself is being checked.
+` ```leanOutput ` when the output itself is being checked.
 
 #### `sorry`
 
@@ -308,80 +306,47 @@ def x : Nat := "str"
 
 Without `-keep`, `x` cannot be redefined later in the chapter.
 
-#### `#guard_msgs`
+#### ` ```leanOutput `
 
-Use `#guard_msgs` when the message text, severity, or position is part of the
-test. The guard and its expected-message doc comment are checked while the book
-is compiled, then stripped from the HTML and extracted projects.
+Use `(name := <identifier>)` with a later `leanOutput` block to check that the
+Lean block indeed produced the expected output, e.g.
 
-This includes interactive-tactic suggestions:
-
-```lean
-/-- info: Try this:
-  exact Nat.add_comm a b -/
-#guard_msgs(info) in
-example (a b : Nat) : a + b = b + a := by
-  exact?
+````
+```lean (name := example)
+#check Bool.true
 ```
 
-It also includes regression tests for custom tactics and commands:
+```leanOutput example
+Bool.true : Bool
+```
+````
 
-```lean
-#guard_msgs in
-sf_expect_failure?
-  def incomplete (n : Nat) : Nat :=
+Use `leanOutput` with named `+error` blocks to check for the expected error
+message, e.g.
+
+````
+```lean +error (name := test)
+def incomplete (n : Nat) : Nat :=
     match n
 ```
 
-Do _not_ guard every command that happens to print information. In particular,
-an __ordinary `#check` needs no guard__:
-
-````lean
-```lean
-#check Nat.add
+```leanOutput test
+unexpected end of input; expected 'with'
 ```
 ````
-
-Guard `#check` only when its printed form is what the example is testing. For
-example, `Imp` checks its custom delaborator this way:
-
-````lean
-```lean
-/-- info: aexp {3 + X * 2} : Aexp -/
-#guard_msgs in
-#check aexp {3 + (X * 2)}
-```
-````
-
-### Unicode Text and Formatting
-
-Go Unicode-native! Use subscripts on variables, like x₁ x₂ etc. Use α Γ etc.
-for type variables and other standard notation. Use arrows like → ⇓ for reduction
-and evaluation. TODO: Elaborate on guidelines here.
-
-We will use the standard Lean auto-formatter when it's released.
 
 ### Notation and simplification
 
-When notation is implemented via typeclass instances, `dsimp [add]` / `dsimp
-[app]` do *not* resolve the instance down to the underlying definition, and
-`simp` is often too powerful for teaching. So **rewrite explicitly by equational
-lemmas** when possible instead — e.g. `n + (m + 1) = n + m + 1` or `(h :: t) ++
-l = h :: t ++ l` — rather than reaching for `dsimp`/`simp` in this book.
+When notation is implemented via typeclass instances, `dsimp [add]` does *not*
+resolve the instance down to the underlying definition, and `simp` is often too
+powerful for teaching. Instead, rewrite explicitly by characterizing lemmas when
+possible, e.g. `n + (m + 1) = n + m + 1` or `(h :: t) ++ l = h :: t ++ l`.
 
-There is some flexibility here, but there are some **important** nuances.
-Please read the list below to understand when using `dsimp`/`simp` is appropriate.
-
-1) When possible, use `rewrite`/`rw` over `dsimp`.
-2) If you must use `dsimp`, **do not use `dsimp`** before `UsingLean.lean`.
-3) If you must use `simp`, **do not use `simp`** before `Automation.lean`.
-4) If using `simp` with definitions (only in or after `Automation.lean`),
-   **tag theorems not definitions, with `@[simp]`**.
-
-Example:
+When using `simp` with declarations (only in or after `Automation.lean`),
+tag theorems with `@[simp]`, not definitions:
 
 ```lean
-/- Do not use @[simp] here -/
+/- Do not use @[simp] here! -/
 def add (n : Nat) (m : Nat) : Nat :=
   match m with
   | zero => n
@@ -391,23 +356,22 @@ def add (n : Nat) (m : Nat) : Nat :=
 theorem add_zero : ∀ n : Nat, n + zero = n := by
   intro n
   rfl
+
 @[simp] /- ... and here. -/
 theorem add_succ : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
   intro n m
   rfl
-
 ```
 
-5) **The book may not use `grind` in any place.**
-6) In and after the `Automation.lean` chapter, using `simp` and `dsimp` is
-    appropriate.
+Inside a definition's own library, it's fine to unfold and simplify through
+definitions; when *using* that code, do not "peek through the interface."
 
-### Definitions vs. Abbreviations
+### Definitions vs. abbreviations
 
 Abbreviations let syntax-based tactics like `rw` and `simp` to see the underlying term implicitly.
-Abbreviations should never be used for functions -- use definitions plus characterizing lemmas instead.
+Abbreviations should never be used for functions; use definitions plus characterizing lemmas instead.
 To encapsulate a type with an API boundary, use a definition rather than an abbreviation.
-However, abbreviations can be used to create a type alias that do not intend to encapsulate an inner type.
+However, abbreviations can be used to create type aliases that do not intend to encapsulate an inner type.
 
 As an example, the `DefDemoGood` is idiomatic, whereas the `AbbrevDemoBad` is not:
 
@@ -435,16 +399,13 @@ theorem Bag.foo : empty ++ empty = empty := by
 end DefDemoGood
 ```
 
-### Arithmetic / the custom `Nat`
+### Theorems vs. examples
 
-`Basics` defines its own `Nat` with `zero`/`succ` constructors and
-overrides the stdlib typeclasses for `-`, `*`, and `^` (but **not**
-`+`, which is too pervasive in the stdlib to shadow safely). Write
-arithmetic proofs against these definitions (`add_succ`, `add_zero`,
-`mul_succ`, …). `calc`-style equational reasoning is introduced in
-`Induction`.
+Prefer `example : ...` over a named `theorem foo : ...` for throwaway
+illustrations (tactic demos, "silly" lemmas, etc.) that are never referenced
+later. Reserve names for results used elsewhere or for graded exercises.
 
-## Verso markup conventions
+## Verso Markup Conventions
 
 Each chapter is a single `.lean` file in its volume directory.
 Sections within a chapter use standard Markdown headings (`#`, `##`,
@@ -463,21 +424,8 @@ the file contained only those Lean blocks, as is usual in literate programming.
 They are rendered in the HTML as code blocks with hoverable doc comments and
 expandable proof states in tactics.
 
-These blocks may take a `(name := <identifier>)` option.
-A later `leanOutput` block then uses the identifier to check that the Lean
-block indeed produced the expected output, e.g.
-
-````
-```lean (name := example)
-#check Bool.true
-```
-
-```leanOutput example
-Bool.true : Bool
-```
-````
-
-They may also take additional boolean options:
+These blocks may take a `(name := <identifier>)` option for use by a later
+`leanOutput` block. They may also take additional boolean options:
 
 | Option | HTML book | Extracted Lean | Usage |
 | ------ | --------- | -------------- | ----- |
@@ -487,6 +435,8 @@ They may also take additional boolean options:
 
 Combine `+error` and `-keep` to produce a block that is expected to fail,
 and whose declarations don't affect later blocks.
+Combine `+error` and `(name := <identifier>)` to produce a block whose error
+message gets checked by ` ```leanOutput <identifier> `.
 See the previous sections for more detailed usage guidelines.
 
 ### BNF grammar blocks
@@ -900,9 +850,9 @@ routes their comments to the directives above:
 Full authoring rules are in CLAUDE.md ("Checking to_verso outputs" /
 "Writing comments that survive to_verso").
 
-## Writing conventions
+## Writing Conventions
 
-We use American spelling.
+We use American English spelling.
 
 For general matters of grammar, punctuation, and usage, we follow
 the [Chicago Manual of Style](https://www.chicagomanualofstyle.org/).
