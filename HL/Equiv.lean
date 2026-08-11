@@ -455,3 +455,82 @@ theorem while_true : ∀ b c,
 ```
 :::::
 
+::::full
+A more interesting fact about `while` commands is that any number
+of copies of the body can be "unrolled" without changing meaning.
+
+Loop unrolling is an important transformation in any real
+compiler, so its correctness is of more than just academic
+interest!
+::::
+
+```lean
+theorem loop_unrolling : ∀ b c,
+  Com.equiv
+    (imp {while (~b) {~c}})
+    (imp {
+      if (~b) {~c} else {skip;}
+      while (~b) {~c}
+    }) := by
+  workinclass!
+  intro b c st st'
+  constructor <;> intro hce
+  case mp => 
+    cases hce with
+    | whileFalse _ _ _ hb => 
+      apply Com.EvalR.seq _ _ _ st
+      · apply Com.EvalR.ifFalse <;> try assumption
+        apply Com.EvalR.skip
+      · apply Com.EvalR.whileFalse <;> try assumption
+    | whileTrue _ st'' _ _ _ hb hc hloop => 
+      apply Com.EvalR.seq _ _ _ st''
+      · apply Com.EvalR.ifTrue <;> try assumption
+      · assumption
+  case mpr =>
+    cases hce with
+    | seq _ _ _ st'' _ h1 h2 => 
+      cases h1 with
+      | ifTrue _ _ _ _ _ hb hc => 
+        apply Com.EvalR.whileTrue _ st'' <;> try assumption
+      | ifFalse _ _ _ _ _ hb hc =>
+        cases hc with
+        | skip => assumption
+```
+:::dev "Sati (satiscugcat)"
+Leaving out optional exercise `seq_assoc` for now.
+:::
+
+::::full
+Proving program properties involving assignments is one place
+where the fact that we are treating equality on program states
+extensionally (e.g., `x →ₜ m[x] ; m` and `m` are equal maps) comes
+in handy.
+::::
+
+:::dev "Sati (satiscugcat)"
+I am not able to use `m[x]` syntax here for some reason? I have to use function application and then do some weird manipulation.
+syntax.
+:::
+```lean
+theorem identity_assignment : ∀ X,
+  Com.equiv
+    (imp {X := X;})
+    (imp {skip;}) := by
+  intro X st st'
+  constructor <;> intro hce
+  case mp => 
+    cases hce with
+    | asgn _ _ n _ h =>
+      dsimp at h
+      rw [← h, TotalMap.update_same]
+      apply Com.EvalR.skip
+
+  case mpr => 
+    cases hce with
+    | skip =>
+      have intermediate : st =[ X := X; ]=> X →ₜ st X ; st := by
+        apply Com.EvalR.asgn
+        simp [TotalMap.getElem_def]
+      rw [<- TotalMap.getElem_def st X, TotalMap.update_same] at intermediate
+      exact intermediate
+```
