@@ -1,14 +1,4 @@
-import VersoManual
-import SFLMeta.Bnf
-import SFLMeta.Comment
-import SFLMeta.Exercise
-import SFLMeta.Grade
-import SFLMeta.Hide
-import SFLMeta.Ignore
-import SFLMeta.Instructors
-import SFLMeta.SlideBreak
-import SFLMeta.Solution
-import SFLMeta.Terse
+import SFLMeta
 
 open Verso.Genre Manual
 open SFLMeta

@@ -1,7 +1,7 @@
 name = "SFL"
 version = "0.1.0"
 license = "Apache-2.0"
-defaultTargets = ["sfl"]
+defaultTargets = ["sfl-lf", "sfl-hl", "sfl-ts"]
 
 [leanOptions]
 weak.verso.code.warnLineLength = 0 # 0 disables warnings; consider setting to 70
@@ -11,18 +11,23 @@ weak.verso.code.warnLineLength = 0 # 0 disables warnings; consider setting to 70
 # scope = "leanprover-community"
 # rev = "v4.30.0"
 
-# Using nightly-testing (not main) because it contains the "migrate to module
-# system" fix (commit 77c5da4) that silences the `@[expose] has no effect
-# outside a module file` warning. This branch requires a Lean nightly; the
-# matching toolchain is pinned in lean-toolchain. When this causes a future
-# build failure (Verso bumped its required nightly), update lean-toolchain to
-# match the nightly date in .lake/packages/verso/lean-toolchain, then re-run
-# `lake update`. Once the fix lands on Verso's main branch, switch rev back
-# to "main" and lean-toolchain back to the current stable RC.
 [[require]]
 name = "verso"
 git = "https://github.com/leanprover/verso"
-rev = "nightly-testing"
+rev = "v4.32.0"
+
+[[require]]
+name = "batteries"
+git = "https://github.com/leanprover-community/batteries"
+rev = "v4.32.0"
+
+[[require]]
+name = "autograder"
+git = "https://github.com/plclub/lean4-autograder-main"
+rev = "bump-4-32-0"
+
+[[lean_lib]]
+name = "Bib"
 
 [[lean_lib]]
 name = "SFLMeta"
@@ -39,6 +44,28 @@ name = "HL"
 [[lean_lib]]
 name = "TS"
 
+# One executable per volume.  Keeping the volumes in separate executables means
+# no single module imports more than one volume root, so chapters shared across
+# volumes (a symlinked `HL/Slang.lean` ↔ `TS/Slang.lean`) don't collide on their
+# `namespace` declarations.  Each is invoked as: lake exe sfl-<vol> <mode>
 [[lean_exe]]
-name = "sfl"
-root = "Targets"
+name = "sfl-lf"
+root = "TargetsLF"
+
+[[lean_exe]]
+name = "sfl-hl"
+root = "TargetsHL"
+
+[[lean_exe]]
+name = "sfl-ts"
+root = "TargetsTS"
+
+# Temporary scaffolding: draft book + executable that emits solutions .lean for
+# generated LF/<Ch>Verso.lean chapters not yet in the real book, so they can be
+# diffed against the bare LF/<Ch>.lean sources.  See LFDraft.lean.
+[[lean_lib]]
+name = "LFDraft"
+
+[[lean_exe]]
+name = "sfl-draft"
+root = "TargetsDraft"

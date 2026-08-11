@@ -1,18 +1,4 @@
-prelude
-import VersoManual
-import VersoManual.InlineLean
-import Illuminate
-import SFLMeta.Bnf
-import SFLMeta.Ignore
-import SFLMeta.Save
-import SFLMeta.Comment
-import SFLMeta.Exercise
-import SFLMeta.Grade
-import SFLMeta.Hide
-import SFLMeta.Instructors
-import SFLMeta.SlideBreak
-import SFLMeta.Solution
-import SFLMeta.Terse
+import SFLMeta
 
 open Verso.Genre Manual
 open SFLMeta
@@ -25,6 +11,7 @@ htmlSplit := .never
 file := "Preface"
 %%%
 
+Testing {citet Bib.bertot2004}[].
 
 Preface
 :::dev

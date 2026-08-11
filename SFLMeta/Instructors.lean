@@ -21,6 +21,9 @@ block_extension Block.instructors where
   toHtml := some fun _ _ _ _ _ => pure .empty
   toTeX := none
 
+/-- A `:::instructors` directive is a noop for notes addressed to instructors.
+Unlike `:::dev` it takes no arguments: instructor notes speak for the book, not
+for an individual author. -/
 @[directive]
 def instructors : DirectiveExpanderOf Unit
   | args, contents => noopDirectiveFor ``Block.instructors args contents
