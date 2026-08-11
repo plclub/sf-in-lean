@@ -252,7 +252,7 @@ import LF.CustomTactics
 
 # Inductively Defined Propositions
 
-In the Logic chapter, we looked at several ways of writing
+In the {ref "Logic"}[Logic] chapter, we looked at several ways of writing
 propositions, including conjunction, disjunction, and existential
 quantification.
 
@@ -311,19 +311,15 @@ this definition in a standard programming language, but it is
 rejected by Lean's termination checker, since the argument to
 the recursive call, `csf n`, is not "obviously smaller" than `n`.
 
-:::dev "Kihong Heo (KihongHeo)" NOW
-Probably `reaches1In` according to STYLE.md?
-:::
-
 ```lean
 /--
 error: fail to show termination for
-  reaches1_in
+  reaches1In
 with errors
 failed to infer structural recursion:
 Cannot use parameter n:
   failed to eliminate recursive application
-    reaches1_in (csf n)
+    reaches1In (csf n)
 
 
 failed to prove termination, possible solutions:
@@ -335,9 +331,9 @@ h✝ : ¬(n == 1) = true
 ⊢ csf n < n
 -/
 #guard_msgs in
-def reaches1_in (n : Nat) : Nat :=
+def reaches1In (n : Nat) : Nat :=
   if n == 1 then 0
-  else 1 + reaches1_in (csf n)
+  else 1 + reaches1In (csf n)
 ```
 
 You can write this definition in a standard programming language.
@@ -356,24 +352,20 @@ would be equivalent to settling the Collatz conjecture!
 
 Another idea could be to express the concept "eventually reaches
 `1` in the Collatz sequence" as a _recursively defined property_
-of numbers `CollatzHoldsFor : Nat → Prop`.  This is also rejected:
+of numbers `CollatzHoldsFor' : Nat → Prop`.  This is also rejected:
 while we could in principle convince Lean that `div2 n` is
 smaller than `n`, we certainly can't convince it that
 `(3 * n) + 1` is smaller than `n`!
 
-:::dev "Kihong Heo (KihongHeo)" NOW
-Probably `CollatzHoldsFor` according to STYLE.md?
-:::
-
 ```lean
 /--
 error: fail to show termination for
-  collatz_holds_for
+  CollatzHoldsFor'
 with errors
 failed to infer structural recursion:
 Cannot use parameter n:
   failed to eliminate recursive application
-    collatz_holds_for (div2 n)
+    CollatzHoldsFor' (div2 n)
 
 
 failed to prove termination, possible solutions:
@@ -385,23 +377,17 @@ h✝ : n.even = true
 ⊢ div2 n < x✝
 -/
 #guard_msgs in
-def collatz_holds_for (n : Nat) : Prop :=
+def CollatzHoldsFor' (n : Nat) : Prop :=
   match n with
   | 0 => False
   | 1 => True
-  | _ => if n.even then collatz_holds_for (div2 n)
-                   else collatz_holds_for ((3 * n) + 1)
+  | _ => if n.even then CollatzHoldsFor' (div2 n)
+                   else CollatzHoldsFor' ((3 * n) + 1)
 ```
 
-:::dev "Kihong Heo (KihongHeo)" NOW
-I feel that this paragraph does not match the error message below.
-The Lean error msg refers to `div 2`.
-:::
-
 This recursive function is also rejected by the termination
-checker, since, while we could in principle convince Lean that
-`div2 n` is smaller than `n`, we certainly can't convince it that
-`(3 * n) + 1` is smaller than `n`!
+checker. In principle, we could convince Lean that `div2 n` is smaller than `n` by supplying
+an appropriate proof. However, we still can't convince it that `(3 * n) + 1` is smaller than `n`!
 
 :::slidebreak
 :::
@@ -826,14 +812,14 @@ elements.
 We can define such permutations by the following rules:
 
 ```display
-   ------------------------- (perm3_swap12)
+   ───────────────────────── (perm3_swap12)
    Perm3 [a, b, c] [b, a, c]
 
-   ------------------------- (perm3_swap23)
+   ───────────────────────── (perm3_swap23)
    Perm3 [a, b, c] [a, c, b]
 
 Perm3 l₁ l₂       Perm3 l₂ l₃
------------------------------ (perm3_trans)
+───────────────────────────── (perm3_trans)
          Perm3 l₁ l₃
 ```
 
@@ -928,9 +914,9 @@ imagine using it to show that `4` is even:
 ```display
         ———— (ev_0)
         Ev 0
-    ———————————— (`ev_succ_succ`)
+    ———————————— (ev_succ_succ)
     Ev (S (S 0))
-———————————————————— (`ev_succ_succ`)
+———————————————————— (ev_succ_succ)
 Ev (S (S (S (S 0))))
 ```
 
@@ -986,7 +972,7 @@ the form `Ev n` for some natural number `n`.
 
 In contrast, recall the definition of `List`:
 
-```display
+```lean -keep +error
 inductive List (α:Type) : Type where
   | nil
   | cons (x : α) (l : List α)
@@ -994,7 +980,7 @@ inductive List (α:Type) : Type where
 
 or (equivalently but more explicitly):
 
-```display
+```lean -keep +error
 inductive List (α:Type) : Type where
   | nil                       : List α
   | cons (x : α) (l : List α) : List α
