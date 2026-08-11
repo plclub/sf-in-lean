@@ -1,7 +1,4 @@
 import SFLMeta
-
-
-
 open Verso.Genre Manual
 open SFLMeta
 
@@ -12,12 +9,11 @@ htmlSplit := .never
 file := some "Postscript"
 %%%
 
-:::dev BeforeNextRelease
+:::dev
 The FULL version could use some real text
 :::
 
-Congratulations: We've made it to the end of _Logical
-Foundations_!
+Congratulations: We've made it to the end of _Logical Foundations_!
 
 # Looking Back
 
@@ -48,7 +44,7 @@ software engineering       mechanical/civil engineering
 :::slidebreak
 :::
 
-- _Rocq_, an industrial-strength proof assistant
+- _Lean_, an industrial-strength proof assistant
 - functional core language
 - core tactics
 - automation

@@ -5,17 +5,20 @@ Foundations](https://softwarefoundations.cis.upenn.edu/) in Lean.
 
 ## Status and how to contribute
 
-SF-in-Lean _is_ ready for adventurous alpha-testers.  See ALPHATESTERS.md for more.
+SF-in-Lean _is_ ready for adventurous alpha-testers.  See
+ALPHATESTERS.md for instructions on how to get started.
 
-The SF-in-Lean team is also looking for contributors who have the time and interest to make a more significant commitment.  If you are interested in joining us, please email Benjamin Pierce.
+The SF-in-Lean team is also looking for contributors who have time and
+interest to make a more significant commitment tothe project.  
+If you are interested in joining us, please email Benjamin Pierce.
 
-SF-in-Lean is _not_ ready for ordinary readers yet. We aim to have a
-complete and polished draft of the opening chapters of _Logical
+SF-in-Lean is _not_ ready for ordinary readers quite yet. We aim to
+have a complete and polished draft of the opening chapters of _Logical
 Foundations_ in time for the start of Fall 2026 courses and to finish
 both _Logical Foundations_ and _Programming Language Foundations_ by
 the end of the year. 
 
-## Quick start: building and viewing the book
+## Quick start: Building and viewing the book
 
 To build everything and preview the HTML locally:
 
