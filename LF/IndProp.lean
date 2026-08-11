@@ -352,20 +352,28 @@ would be equivalent to settling the Collatz conjecture!
 
 Another idea could be to express the concept "eventually reaches
 `1` in the Collatz sequence" as a _recursively defined property_
-of numbers `CollatzHoldsFor' : Nat → Prop`.  This is also rejected:
-while we could in principle convince Lean that `div2 n` is
-smaller than `n`, we certainly can't convince it that
-`(3 * n) + 1` is smaller than `n`!
+of numbers `CollatzHoldsFor : Nat → Prop`. This is also rejected
+by the termination checker. In principle, we could convince Lean
+that `div2 n` is smaller than `n` by supplying an appropriate proof.
+However, we still can't convince it that `(3 * n) + 1` is smaller than `n`!
 
-```lean
-/--
-error: fail to show termination for
-  CollatzHoldsFor'
+```lean -keep +error (name := collatz)
+def CollatzHoldsFor (n : Nat) : Prop :=
+  match n with
+  | 0 => False
+  | 1 => True
+  | _ => if n.even then CollatzHoldsFor (div2 n)
+                   else CollatzHoldsFor ((3 * n) + 1)
+```
+
+```leanOutput collatz
+fail to show termination for
+  CollatzHoldsFor
 with errors
 failed to infer structural recursion:
 Cannot use parameter n:
   failed to eliminate recursive application
-    CollatzHoldsFor' (div2 n)
+    CollatzHoldsFor (div2 n)
 
 
 failed to prove termination, possible solutions:
@@ -375,19 +383,7 @@ failed to prove termination, possible solutions:
 n x✝ : Nat
 h✝ : n.even = true
 ⊢ div2 n < x✝
--/
-#guard_msgs in
-def CollatzHoldsFor' (n : Nat) : Prop :=
-  match n with
-  | 0 => False
-  | 1 => True
-  | _ => if n.even then CollatzHoldsFor' (div2 n)
-                   else CollatzHoldsFor' ((3 * n) + 1)
 ```
-
-This recursive function is also rejected by the termination
-checker. In principle, we could convince Lean that `div2 n` is smaller than `n` by supplying
-an appropriate proof. However, we still can't convince it that `(3 * n) + 1` is smaller than `n`!
 
 :::slidebreak
 :::
@@ -399,7 +395,7 @@ property is defined by a set of rules:
 
 ```display
               ─────────────────── (chf_one)
-              CollatzHoldsFor 1
+               CollatzHoldsFor 1
 
 even n = true     CollatzHoldsFor (div2 n)
 ─────────────────────────────────────────── (chf_even)
@@ -426,25 +422,25 @@ evenness/oddness premises):
 
 ```display
 ─────────────────────── (chf_one)
-CollatzHoldsFor 1
+  CollatzHoldsFor 1
 ─────────────────────── (chf_even)
-CollatzHoldsFor 2
+  CollatzHoldsFor 2
 ─────────────────────── (chf_even)
-CollatzHoldsFor 4
+  CollatzHoldsFor 4
 ─────────────────────── (chf_even)
-CollatzHoldsFor 8
+  CollatzHoldsFor 8
 ─────────────────────── (chf_even)
-CollatzHoldsFor 16
+  CollatzHoldsFor 16
 ─────────────────────── (chf_odd)
-CollatzHoldsFor 5
+  CollatzHoldsFor 5
 ─────────────────────── (chf_even)
-CollatzHoldsFor 10
+  CollatzHoldsFor 10
 ─────────────────────── (chf_odd)
-CollatzHoldsFor 3
+  CollatzHoldsFor 3
 ─────────────────────── (chf_even)
-CollatzHoldsFor 6
+  CollatzHoldsFor 6
 ─────────────────────── (chf_even)
-CollatzHoldsFor 12
+  CollatzHoldsFor 12
 ```
 
 :::slidebreak
@@ -529,7 +525,7 @@ inductive ChfIn : Nat → Nat → Prop where
    that the sequence beginning at `n` reaches `1` in `k` total
    steps. -/
 
-def CollatzHoldsFor' (n : Nat) : Prop := ∃ k, ChfIn n k
+def CollatzHoldsFor (n : Nat) : Prop := ∃ k, ChfIn n k
 ```
 ::::
 
