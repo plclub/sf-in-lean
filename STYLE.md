@@ -399,7 +399,7 @@ theorem add_succ : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
 ```
 
 5) **The book may not use `grind` in any place.**
-6) In and after the `Automation.lean` chapter, using `simp` and `dsimp` is
+6) In and after the `Automation.lean` chapter, using `simp` and `lia` is
     appropriate.
 
 ### Definitions vs. Abbreviations
@@ -899,3 +899,12 @@ We use American spelling.
 
 For general matters of grammar, punctuation, and usage, we follow
 the [Chicago Manual of Style](https://www.chicagomanualofstyle.org/).
+
+## Informal Proofs
+
+DHS: Flesh this out more...
+
+We use informal proofs as explanations and exercises when teaching reasoning 
+principles and proof techniques in the abstract, as opposed to Lean-specific tools.
+
+Such proofs should be finished with _Qed_.

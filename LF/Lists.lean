@@ -38,8 +38,8 @@ namespace Lists
 
 ::::full
 In an `inductive` type definition, each constructor can take
-any number of arguments -- none (as with {lean}`true` and  {lean}`0`),
-one (as with  {lean}`Nat.succ`), or more than one (as with  {lean}`Playground.Nibble` and
+any number of arguments -- none (as with {name}`true` and  {lean}`0`),
+one (as with  {name}`Nat.succ`), or more than one (as with  {name}`Playground.Nibble` and
 the following):
 ::::
 
@@ -55,8 +55,8 @@ inductive NatProd where
 
 ::::full
 This declaration can be read: "The one and only way to
-construct a pair of numbers is by applying the constructor {lean}`NatProd.pair`
-to two arguments of type {lean}`Nat`."
+construct a pair of numbers is by applying the constructor {name}`NatProd.pair`
+to two arguments of type {name}`Nat`."
 ::::
 
 ```lean
@@ -79,7 +79,7 @@ def NatProd.snd (p : NatProd) : Nat :=
   | .pair _ y => y
 ```
 
-Defining these functions with the {lean}`NatProd` type name qualifying their name
+Defining these functions with the {name}`NatProd` type name qualifying their name
 allows us to use them with `.` notation:
 
 ```lean
@@ -127,7 +127,7 @@ Note that pattern-matching on a pair (with angle brackets: `⟨x, y⟩`)
 is not to be confused with the "multiple pattern" syntax (with no
 brackets: `x, y`) that we have seen previously.  The above
 examples illustrate pattern matching on a pair with elements `x`
-and `y`, whereas, for example, the definition of `sub` for subtracting two {lean}`Nat`s performs pattern matching on the values `n` and `m`:
+and `y`, whereas, for example, the definition of `sub` for subtracting two {name}`Nat`s performs pattern matching on the values `n` and `m`:
 
 ```lean
 def sub (n m : Nat) : Nat :=
@@ -176,7 +176,7 @@ constructs.
 Lean also provides a convenient way to define `inductive` structures like pairs
 that have a single constructor but multiple ways to access their data,
 using the `structure` keyword. The definition of `NatProd'` below is equivalent
-to the {lean}`NatProd` definition from earlier, except that Lean automatically
+to the {name}`NatProd` definition from earlier, except that Lean automatically
 generates the `fst` and `snd` accessors.
 
 ```lean
@@ -416,8 +416,8 @@ example : [1, 2, 3] ++ [] = [1, 2, 3] := by rfl
 :::
 
 ::::full
-The equality test `==` on {lean}`Nat`s is another example: it comes
-from the {lean}`BEq` ("boolean equality") type class. One small but handy
+The equality test `==` on {name}`Nat`s is another example: it comes
+from the {name}`BEq` ("boolean equality") type class. One small but handy
 fact about it, which several proofs below will need, is that `==` is
 reflexive:
 
@@ -930,7 +930,7 @@ theorem test_included2 : included [1, 2, 2] [2, 1, 4, 1] = false := solution!(by
 As with numbers, simple facts about list-processing
 functions can sometimes be proved entirely by rewriting.
 For example, just rewriting the left-hand side of the following equality using the theorem
-`nil_append` is enough for this theorem...
+{name}`nil_append` is enough for this theorem...
 ::::
 
 ::::terse
@@ -949,8 +949,8 @@ rewriting...
 theorem tail_length_pred (l : NatList) :
     l.length.pred = l.tail.length := by
   cases l with
-  | nil       => rw [tail_nil, length_nil]; dsimp
-  | cons n l' => rw [tail_cons, length_cons]; dsimp
+  | nil       => rw [tail_nil, length_nil]; rfl
+  | cons n l' => rw [tail_cons, length_cons]; rfl
 ```
 
 ::::full
@@ -970,7 +970,7 @@ _reading_ proof scripts will not help you very much.  Rather, it
 is important to step through the details of each one using Lean and
 think about what each step achieves.  Otherwise it is more or less
 guaranteed that the exercises will make no sense when you get to
-them.  'Nuff said.)
+them. 'Nuff said.)
 ::::
 
 ## Induction on Lists
@@ -981,27 +981,27 @@ little less familiar than standard natural number induction, but
 the idea is equally simple.  Each `inductive` declaration defines
 a set of data values that can be built up using the declared
 constructors. For example, a boolean can be either {name}`true` or
-`false`; a number can be either `0` or else `succ` applied to another
-number; and a list can be either `[]` or else `::` applied to a
+{name}`false`; a number can be either {lean}`0` or else {name}`Nat.succ` applied to another
+number; and a list can be either {lean}`[]` or else `::` applied to a
 number and a list.  Moreover, applications of the declared
 constructors to one another are the _only_ possible shapes that
 elements of an inductively defined set can have.
 
 This last fact directly gives rise to a way of reasoning about
-inductively defined sets: a number is either `0` or else it is `succ`
-applied to some _smaller_ number; a list is either `[]` or else
+inductively defined sets: a number is either {lean}`0` or else it is {lean}`Nat.succ`
+applied to some _smaller_ number; a list is either {lean}`[]` or else
 it is `::` applied to some number and some _smaller_ list;
 etc.  Thus, if we have in mind some proposition `P` that mentions a
 list `l` and we want to argue that `P` holds for _all_ lists, we
 can reason as follows:
 
-- First, show that `P` is true of `l` when `l` is `[]`.
+- First, show that `P` is true of `l` when `l` is {lean}`[]`.
 - Then show that `P` is true of `l` when `l` is `n :: l'` for
   some number `n` and some smaller list `l'`, assuming that `P`
   is true for `l'`.
 
 Since larger lists can always be broken down into smaller ones,
-eventually reaching `[]`, these two arguments together establish
+eventually reaching {lean}`[]`, these two arguments together establish
 the truth of `P` for all lists `l`.
 
 Here's a concrete example:
@@ -1009,7 +1009,7 @@ Here's a concrete example:
 
 ::::terse
 Lean generates an induction principle for every `inductive`
-definition, including lists.  We can use the `induction` tactic on
+definition, including lists.  We can use the {tactic}`induction` tactic on
 lists to prove things like the associativity of list-append...
 ::::
 
@@ -1028,10 +1028,6 @@ theorem append_assoc (l1 l2 l3 : NatList) :
 
 :::terse
 For comparison, here is an informal proof of the same theorem.
-:::
-
-:::dev "Benjamin Pierce (bcpierce00)"
-Are we going to consistently write Qed at the end of proofs? We should agree on a convention.
 :::
 
 _Theorem_: For all lists `l1`, `l2`, and `l3`,
@@ -1076,7 +1072,8 @@ which is immediate from the induction hypothesis.  _Qed_.
 In some situations, it is necessary to generalize a
 statement in order to prove it by induction.  Intuitively, the
 reason is that a more general statement also yields a more general
-(stronger) inductive hypothesis.
+(stronger) inductive hypothesis. While the following theorem
+statement is true, we cannot prove it directly:
 ::::
 
 ::::terse
@@ -1084,8 +1081,8 @@ Sometimes statements need to be generalized to prove them
 by induction:
 ::::
 
-```lean -keep +error (name := st)
-theorem myRepeat_append {c n : Nat} :
+```lean +error (name := st)
+theorem myRepeat_append_fail {c n : Nat} :
     myRepeat n c ++ myRepeat n c = myRepeat n (c + c) := by
   induction c with
   | zero => rw [repeat_zero, nil_append]
@@ -1113,7 +1110,7 @@ A generalization that gives a stronger inductive hypothesis:
 :::
 
 ```lean
-theorem myRepeat_append {c₁ c₂ n : Nat} :
+theorem myRepeat_append_general {c₁ c₂ n : Nat} :
     myRepeat n c₁ ++ myRepeat n c₂ = myRepeat n (c₁ + c₂) := by
   induction c₁ with
   | zero =>
@@ -1122,11 +1119,19 @@ theorem myRepeat_append {c₁ c₂ n : Nat} :
     rw [Nat.succ_add, repeat_succ, repeat_succ, cons_append, ih]
 ```
 
+Then, we can use this more general theorem to prove our original goal:
+
+```lean
+theorem myRepeat_append {c n : Nat} :
+    myRepeat n c ++ myRepeat n c = myRepeat n (c + c) := by
+  exact myRepeat_append_general
+```
+
 ### Reversing a List
 
 ::::full
 For a slightly more involved example of inductive proof over
-lists, suppose we use `append` to define a list-reversing function `reverse`:
+lists, suppose we use {name}`append` to define a list-reversing function `reverse`:
 ::::
 
 :::terse
@@ -1172,6 +1177,15 @@ example (l : NatList) :
     -- but we don't have any useful equations
     -- in either the immediate context or in the global
     -- environment!
+```
+
+```leanOutput st2
+unsolved goals
+case cons
+n : Nat
+l' : NatList
+ih : l'.reverse.length = l'.length
+⊢ (l'.reverse ++ [n]).length = (n :: l').length
 ```
 
 ::::full
@@ -1408,23 +1422,6 @@ The more pedantic style is a good default for our present purposes
 because we're trying to be ultra-clear about the details.
 ::::
 
-## Search
-
-::::full
-We've seen that proofs can make use of other theorems we've
-already proved, e.g., using `rw`.  But in order to refer to a
-theorem, we need to know its name!
-
-In Lean, the `exact?` tactic will search for a lemma that closes
-the current goal.  The `#check` command shows the type of a named
-theorem.  You can also use `example` with `exact?` to search for
-lemmas matching a particular pattern.
-
-Your IDE likely has its own search functionality too.  In VS Code
-with the Lean 4 extension, you can use Ctrl+T to search for
-definitions by name.
-::::
-
 ## List Exercises, Part 1
 
 ::::::full
@@ -1461,7 +1458,7 @@ An _involution_ is a function that is its own inverse. That is,
 applying the function twice yields the original input.
 
 ```lean
-theorem reverse_reverse (l : NatList) :
+theorem reverse_involutive (l : NatList) :
     l.reverse.reverse = l := by
   solution!
     induction l with
@@ -1471,7 +1468,7 @@ theorem reverse_reverse (l : NatList) :
       rw [reverse_cons, reverse, nil_append, cons_append, nil_append]
 ```
 
-:::gradeTheorem "0.5" reverse_reverse
+:::gradeTheorem "0.5" reverse_involutive
 :::
 
 There is a short solution to the next one.  If you find yourself
@@ -1521,17 +1518,17 @@ def beq (l1 l2 : NatList) : Bool := solution!(
 
 theorem beq_nil : beq [] [] = true := solution!(by rfl)
 
-theorem beq_cons_def {h1 h2 : Nat} {t1 t2 : NatList} : beq (h1 :: t1) (h2 :: t2) = ((h1 == h2) && beq t1 t2) := solution!(by rfl)
-
 theorem beq_cons_same {h1 h2 : Nat} {t1 t2 : NatList} (h : (h1 == h2) = true) :
     beq (h1 :: t1) (h2 :: t2) = beq t1 t2 := by
   solution!
-    rw [beq_cons_def, h, Bool.true_and]
+    dsimp [beq]
+    rw [h, Bool.true_and]
 
 theorem beq_cons_diff {h1 h2 : Nat} {t1 t2 : NatList} (h : (h1 == h2) = false) :
     beq (h1 :: t1) (h2 :: t2) = false := by
   solution!
-    rw [beq_cons_def, h, Bool.false_and]
+    dsimp [beq]
+    rw [h, Bool.false_and]
 
 example : beq [] [] = true := solution!(by rfl)
 example : beq [1, 2, 3] [1, 2, 3] = true := solution!(by rfl)
@@ -1615,46 +1612,29 @@ Before doing the next exercise, make sure you've filled in the
 definition of `removeOne` above.
 ::::::
 
-::::hide
-```
-/- LATER: CH: The following exercise is not so simple.  Also the
-     shape of the theorem (with a magic constant `0`), and the fact that
-     n needs to be destructed seem like big and ugly hacks. The
-     hack-free theorem looks like this: -/
-/- LATER: BCP 20: We'd need to find a way to get through the first
-   lemma's proof without using features they don't know... -/
-theorem count_removeOne (v : Nat) (l : NatList) :
-    count v (removeOne v l) = (count v l).pred := by
-  induction l with
-  | nil =>
-    rw [removeOne_nil, count_nil]
-    rfl
-  | cons n l ih =>
-  -- XXX they don't know about generalizing or casing on expressions yet !!!
-    cases h : v == n with
-    | false =>
-      rw [removeOne_cons_diff h, count_cons_diff h, ih, count_cons_diff h]
-    | true =>
-      -- they don't yet have tools for this case
-      rw [removeOne_cons_same h, count_cons_same h]
-      rw [Nat.pred_succ]
+::::dev "Daniel Sainati @dsainati" PotentialImprovement
 
-theorem ble_pred_n_n (n : Nat) :
-    Nat.ble n.pred n = true := by
-  induction n with
-  | zero => dsimp [Nat.ble]
-  | succ n ih =>
-    rw [Nat.pred_succ]
-    rw [ble_n_Sn]
+There is a nicer solution to this exercise that doesn't require the contrived
+theorem statement that has 0s instead of arbitrary numbers. The only issue
+is that it requires using case analysis on an expression (n == n') instead
+of a variable. I think we should probably teach this by this point anyway, so if we do,
+then we can use the following exercise instead of the one we currently have.
 
-theorem remove_does_not_increase_count' (l : NatList) (n : Nat) :
+```lean
+theorem remove_does_not_increase_count' (n : Nat) (l : NatList) :
     Nat.ble (count n (removeOne n l)) (count n l) = true := by
-  induction l with
-  | nil =>
-    rw [removeOne_nil, count_nil]
-    rfl
-  | cons n' l ih =>
-    rw [count_removeOne, ble_pred_n_n]
+  solution!
+    induction l with
+    | nil =>
+      rw [removeOne_nil, count_nil]
+      rfl
+    | cons n' s' ih =>
+        cases h : (n == n') with
+        | false =>
+          rw [removeOne_cons_diff h, count_cons_diff h, count_cons_diff h]
+          exact ih
+        | true =>
+          rw [removeOne_cons_same h, count_cons_same h, ble_self_succ]
 ```
 ::::
 
@@ -1680,7 +1660,7 @@ theorem remove_does_not_increase_count (l : NatList) :
 
 :::::exercise (rating := 3) (name := "count_append") (manual := true)
 Write down an interesting theorem `count_append` about lists
-involving the functions `count` and `append`, and prove it.
+involving the functions {name}`count` and {name}`append`, and prove it.
 (You may find that the difficulty of the proof depends on how you defined `count`!)
 
 :::dev "Andrew Tolmach (AndrewTolmach)" PotentialImprovement
@@ -1740,7 +1720,7 @@ theorem count_append (l₁ l₂ : NatList) (v : Nat) :
 :::::exercise (rating := 3) (name := "involutive_injective") (level := Advanced)
 Prove that every involution is injective.
 
-Involutions were defined above in {name}`reverse_reverse`. An _injective_
+Involutions were defined above in {name}`reverse_involutive`. An _injective_
 function is one-to-one: it maps distinct inputs to distinct
 outputs, without any collisions.
 
@@ -1763,7 +1743,7 @@ exercise directly as a lemma: the types are not the same!)
 theorem reverse_injective (l₁ l₂ : NatList)
     (h : l₁.reverse = l₂.reverse) : l₁ = l₂ := by
   solution!
-    rw [← reverse_reverse l₁, ← reverse_reverse l₂, h]
+    rw [← reverse_involutive l₁, ← reverse_involutive l₂, h]
 ```
 :::::
 
@@ -1823,7 +1803,7 @@ namespace NatList
 
 ::::full
 We can then change the above definition of {name}`nthBad` to
-return `none` when the list is too short and `some a` when the
+return {name}`NatOption.none` when the list is too short and `some a` when the
 list has enough members and `a` appears at position `n`. We call
 this new function `nth?` to indicate that it may result in an
 error.
@@ -1874,15 +1854,17 @@ theorem test_head?1 : head? [1] = .some 1 := solution!(by rfl)
 theorem test_head?2 : head? [5, 6] = .some 5 := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 test_head?1 test_head?2
-:::
-:::::
-
+:::solution
 ```lean
 theorem head?_nil : head? [] = .none := solution!(by rfl)
 
 theorem head?_cons {h : Nat} {t : NatList} : head? (h :: t) = .some h := solution!(by rfl)
 ```
+:::
+
+:::gradeTheorem 1 test_head?1 test_head?2
+:::
+:::::
 
 :::::exercise (rating := 1) (name := "option_elim_head?")
 This exercise relates your new `head?` to the old `head`.
