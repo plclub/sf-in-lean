@@ -280,10 +280,6 @@ MRC'20: this is the former terse intro.
 
 # Assertions
 
-```lean
-open scoped MyGetElem
-```
-
 An _assertion_ is a logical claim about the state of a program's
 memory -- formally, a predicate of `State`s.
 
@@ -550,16 +546,12 @@ There is now a custom entry [assn] for defining the syntax of
 assertions.  Like the delimiters <{ }> used for Imp programs,
 we now also have {{ }} delimiters for use with Assertions.
 
-Inside that scope, the meaning of variables, nat literals,
-propositions, etc. is "lifted" to take a state parameter.
+Inside that scope, variables, arithmetic and boolean expressions,
+propositions, and function arguments are interpreted in the current
+state.  This replaces the need for [ap], [ap2], and explicit lifting
+markers.
 
-The notation {{ #f x1 .. xn }} now "lifts" a normal function
-that should be of type [nat -> .. -> nat -> T] so that each of
-the inputs is treated as an [Aexp] and the state is threaded through.
-(This replaces the need for [ap], [ap2], etc. throughout.)
-
-The notation {{ $rocq_term }} now "quotes" a rocq term literally
-without lifting.  Parentheses can be used as in {{ $(foo bar) }}.
+A raw Lean assertion can also be written directly inside {{ }}.
 ```
 :::
 
@@ -631,9 +623,11 @@ macro_rules
   | `(assn($st; $l → $r)) => ``(assn($st; $l) → assn($st; $r))
   | `(assn($st; $l ↔ $r)) => ``(assn($st; $l) ↔ assn($st; $r))
   | `(assn($st; ¬ $t)) => ``(¬ assn($st; $t))
-  | `(assn($st; $f $a1)) => ``($f assn($st; $a1))
-  | `(assn($st; $f $a1 $a2)) => ``($f assn($st; $a1) assn($st; $a2))
-  -- | `(assn($st; $f $t*)) => ``($f ) -- TODO how to get arbitrary applications
+  | `(assn($st; $f $args*)) => do
+    let mut result := f
+    for arg in args do
+      result ← `($result assn($st; $arg))
+    return result
 end
 ```
 
@@ -657,48 +651,38 @@ variable (b : Bexp)
 variable (P Q : Assertion)
 #check {{ P ∧ Q }}
 
+variable (f : Nat → Nat → Nat → Nat)
+#check {{ f X Y X = 0 }}
+
 end Assertion
 ```
 
 ::::terse
-TODO OUTDATED
-We will sometimes need to lift functions to operate on assertion expressions:
+Function applications inside assertions automatically interpret their
+arguments in the current state:
 
-`{{ #f e1 .. en }}` stands for `(fun st => f (e1 st) .. (en st))`
+`{{ f e1 ... en }}` stands for `(fun st => f (e1 st) ... (en st))`.
 ::::
 
 ::::full
-TODO OUTDATED
-One small limitation of this approach is that we don't have
-an automatic way to coerce a function application that appears
-within an assertion to make appropriate use of the state when its
-arguments should be interpets as Imp arithmetic expressions.
-Instead, we introduce a notation `#f e1 .. en` that stands for
-`fun st => f (e1 st) .. (en st)`, letting us manually mark such function
-calls when they're needed as part of an assertion.
+Function applications inside assertions automatically interpret their
+arguments in the current state.  Thus, `{{ f e1 ... en }}` stands for
+`fun st => f (e1 st) ... (en st)`.
 ::::
 
-:::dev
-NOTATION: This notation should come early so that later
-notations for arithmetic expressions take precedence for printing.
-Otherwise `{{ X + X }}` would print as `{{ #add X Y }}`.
-:::
-
 ::::full
-TODO OUTDATED
-Occasionally we need to "escape" a raw Lean function to express
-a particularly complicated assertion.  We can do that using a `~` prefix,
-as in `{{ ~(raw_lean) }}` -- the same escape convention that the
-`imp { … }` notation uses.
+Occasionally it is simpler to write an assertion directly as a Lean
+function.  Such a function can be placed inside the assertion notation
+without an escape marker.
 
-For example, `{{ ~(fun st => ∀ x, st[x] = 0) }}` indicates an assertion that
+For example, `{{ fun st => ∀ x, st[x] = 0 }}` indicates an assertion that
 every variable maps to `0` in the given state.
 ::::
 
 ::::terse
-We can "escape" a raw Lean function using a `~` prefix:
+We can place a raw Lean function directly inside assertion notation:
 
-For example: `{{ ~(fun st => ∀ x, st[x] = 0) }}`
+For example: `{{ fun st => ∀ x, st[x] = 0 }}`
 ::::
 
 :::dev
@@ -740,13 +724,14 @@ level specifications.
 #check {{ X = 3 }}
 #check {{ X > 3 ∧ Y = (4 * X - (Y + Z)) }}
 #check {{ X ≠ 3 ∨ (Y = 4 ∧ Z = 5) }}
-#check {{ Z = (#max X Y) }}
+#check {{ Z = Nat.max X Y }}
 #check {{ Z * Z ≤ X
-          ∧ ¬ (((#Nat.succ Z) * (#Nat.succ Z)) ≤ X) }}
-#check {{ #Nat.add X Y > (#max Y X) }}
-#check (fun st => ∀ (P : Assertion) m a, {{ ~(fun st => (P (X →ₜ m ; st)
-                                    ∧ st[X] = Aexp.eval (X →ₜ m ; st) a)) }} st)
-#check {{ ~(fun st => st[X] = 0) }}
+          ∧ ¬ (Nat.succ Z * Nat.succ Z ≤ X) }}
+#check {{ Nat.add X Y > Nat.max Y X }}
+#check (fun st => ∀ (P : Assertion) m a,
+  ({{ fun st => P (X →ₜ m ; st)
+      ∧ st[X] = Aexp.eval (X →ₜ m ; st) a }}) st)
+#check {{ fun st => st[X] = 0 }}
 ```
 ::::
 
@@ -2794,26 +2779,19 @@ Better:
 :::
 
 ::::full
-TODO OUTDATED
-To interpret this rule formally, we need to do a little work.
-Strictly speaking, the assertion we've written, `P ∧ b`, is the
-conjunction of an assertion and a boolean expression -- i.e., it
-doesn't typecheck.  To fix this, we need a way of formally
-"lifting" any bexp `b` to an assertion.  We'll write `bassertion b` for
-the assertion "the boolean expression `b` evaluates to `true` (in
-the given state)."
+Strictly speaking, `P ∧ b` combines an assertion with a boolean
+expression.  The assertion notation handles this by evaluating `b` in
+the current state.  We'll write `bassertion b` for the resulting assertion:
+"the boolean expression `b` evaluates to `true` in the given state."
 ::::
 
 ::::terse
-To make this formal, we need a way of formally "lifting"
-any bexp `b` to an assertion.
-
 We'll write `bassertion b` for the assertion "the boolean expression
-`b` evaluates to `true`."
+`b` evaluates to `true` in the given state."
 ::::
 
 ```lean
-def bassertion (b : Bexp) : Assertion := {{ b }} -- NOTE xhalo32: we don't need this IMO
+def bassertion (b : Bexp) : Assertion := {{ b }}
 
 @[simp] theorem bassertion_apply (b : Bexp) (st : State) :
     bassertion b st = (b.eval st = true) := rfl
@@ -4890,7 +4868,7 @@ theorem assert_assume_differ : ∃ (P : Assertion) (b : Bexp) (Q : Assertion),
     ({{ P }} assume (~b); {{ Q }})
     ∧ ¬ ({{ P }} assert (~b); {{ Q }}) := by
   solution!
-    exists {{True}}, bexp { false }, fun st => False -- TODO: `{{False}}` doesn't work for some reason
+    exists {{ True }}, bexp { false }, ({{ False }} : Assertion)
     constructor
     · unfold ValidHoareTriple
       intro st r hE _
