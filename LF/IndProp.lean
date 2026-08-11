@@ -581,7 +581,7 @@ they are the same number, or, if the second has the form
 namespace LePlayground
 
 inductive Le : Nat → Nat → Prop where
-  | refl (n : Nat)              : Le n n
+  | refl (n : Nat)   : Le n n
   | step (n m : Nat) : Le n m → Le n (m + 1)
 
 scoped infix:50 (priority := high) " ≤ " => Le
@@ -610,18 +610,18 @@ two rules:
 
 ```display
               R x y
-         ---------------- (t_step)
+         ─────────────── (t_step)
          ClosTrans R x y
 
 ClosTrans R x y    ClosTrans R y z
------------------------------------- (t_trans)
+──────────────────────────────────── (t_trans)
          ClosTrans R x z
 ```
 
 In Lean this looks as follows:
 
 ```lean
-inductive ClosTrans {α: Type} (R: α→α→Prop) : α → α → Prop where
+inductive ClosTrans {α: Type} (R: α → α → Prop) : α → α → Prop where
   | t_step (x y : α) :
       R x y →
       ClosTrans R x y
@@ -706,14 +706,14 @@ transitive. This can be defined by the following three rules
 
 ```display
                    R x y
-           --------------------- (rt_step)
+         ——————————————————————— (rt_step)
            ClosReflTrans R x y
 
-           --------------------- (rt_refl)
+         ——————————————————————— (rt_refl)
            ClosReflTrans R x x
 
    ClosReflTrans R x y    ClosReflTrans R y z
----------------------------------------------- (rt_trans)
+—————————————————————————————————————————————— (rt_trans)
            ClosReflTrans R x z
 ```
 
@@ -757,10 +757,10 @@ This `cms` relation defined in terms of
 linear ones of the directly-defined `CollatzHoldsFor` relation:
 
 ```display
-csf 16 = 8         csf 8 = 4         csf 4 = 2         csf 2 = 1
-————————(rt_step)  ———————(rt_step)  ———————(rt_step)  ———————(rt_step)
+csf 16 = 8           csf 8 = 4           csf 4 = 2           csf 2 = 1
+——————————(rt_step)  —————————(rt_step)  —————————(rt_step)  —————————(rt_step)
 cms 16 8           cms 8 4           cms 4 2           cms 2 1
-—————————————————————————(rt_trans)  ————————————————————————(rt_trans)
+——————————————————————————(rt_trans)  —————————————————————————(rt_trans)
     cms 16 4                              cms 4 1
     —————————————————————————————————————————————(rt_trans)
                        cms 16 1
@@ -884,12 +884,12 @@ in this chapter, is to say that a number is even if we can
 _establish_ its evenness from the following two rules:
 
 ```display
-    ---- (ev_0)
+    ———— (ev_0)
     Ev 0
 
     Ev n
------------- (ev_succ_succ)
-Ev (n + 2)
+—————————————— (ev_succ_succ)
+  Ev (n + 2)
 ```
 
 ::::full
@@ -932,7 +932,7 @@ number can be even" corresponds to a separate constructor:
 
 ```lean
 inductive Ev : Nat → Prop where
-  | ev_0                       : Ev 0
+  | ev_0                              : Ev 0
   | ev_succ_succ (n : Nat) (H : Ev n) : Ev (n + 2)
 ```
 
@@ -942,7 +942,7 @@ inductive _properties_ like `Ev` and the inductive _types_ like
 `Nat` or `List` that we have been using throughout the course:
 
 ```display
-inductive List (α:Type) : Type where
+inductive List (α : Type) : Type where
   | nil                       : List α
   | cons (x : α) (l : List α) : List α.
 ```
@@ -969,7 +969,7 @@ the form `Ev n` for some natural number `n`.
 In contrast, recall the definition of `List`:
 
 ```lean -keep +error
-inductive List (α:Type) : Type where
+inductive List (α : Type) : Type where
   | nil
   | cons (x : α) (l : List α)
 ```
@@ -977,7 +977,7 @@ inductive List (α:Type) : Type where
 or (equivalently but more explicitly):
 
 ```lean -keep +error
-inductive List (α:Type) : Type where
+inductive List (α : Type) : Type where
   | nil                       : List α
   | cons (x : α) (l : List α) : List α
 ```
