@@ -236,8 +236,9 @@ theorem isEven_iff_Even {n : Nat} :
 ### Incomplete code, expected errors, and diagnostics
 
 Use `sorry` to admit a declaration, `+error` to show code that Lean rejects,
-`-keep` to keep a block from changing the later environment, and
-` ```leanOutput ` when the output itself is being checked.
+`-keep` to keep a block from changing the later environment,
+` ```leanOutput ` when the output itself is being checked,
+and `#guard_msgs` for internal checks that are not student-facing.
 
 #### `sorry`
 
@@ -332,6 +333,19 @@ def incomplete (n : Nat) : Nat :=
 
 ```leanOutput test
 unexpected end of input; expected 'with'
+```
+````
+
+#### `#guard_msgs`
+
+Use `#guard_msgs` for testing diagnostic messages that are not intended to be student-facing.
+For example, `Imp` checks its custom delaborator this way:
+
+````lean
+```lean
+/-- info: aexp {3 + X * 2} : Aexp -/
+#guard_msgs in
+#check aexp {3 + (X * 2)}
 ```
 ````
 
