@@ -1018,82 +1018,116 @@ example (a b c d e f : Nat)
   assumption
 ```
 
-# Varying the Induction Hypothesis
+# Generalizing the Induction Hypothesis
 
-::::terse
 Recall this function for doubling a natural number from the
 {ref "Induction"}[Induction] chapter:
 
+```display
 def double (n : Nat) : Nat :=
-match n with
-| 0 => 0
-| .succ n' => (double n') + 2
+  match n with
+  | 0 => 0
+  | n' + 1 => (double n') + 2
+```
+
+::::terse
+Suppose we want to show that {name}`Nat.double` is injective (i.e.,
+it maps different arguments to different results).
 ::::
 
 ::::full
-Sometimes it is important to control the exact form of the
-induction hypothesis when carrying out inductive proofs in Lean.
-In particular, we may need to be careful about which of the
-assumptions we move (using `intro`) from the goal to the context
-before invoking the `induction` tactic.
+Sometimes {tactic}`induction` gives us an an induction hypothesis too specific to be useful.
+This can happen when another varaible in the theorem is fixed during the induction,
+even though the induction step might need to use it with different values of that
+variables.
 
-For example, suppose we want to show that `double` is injective --
+For example, suppose we want to show that {name}`Nat.double` is injective —
 i.e., that it maps different arguments to different results:
 
-```display
-theorem double_injective: forall n m,
-  double n = double m →
-  n = m
+```lean
+example (n m : Nat) (h : n.double = m.double) : n = m := sorry
 ```
 
-The way we start this proof is a bit delicate: if we begin it with
+If we begin it with
 
-```display
-intro n; induction n
-```
-
-then all will be well.  But if we begin it with introducing _both_
-variables
-
-```display
-intros n m; induction n
-```
-
-we get stuck in the middle of the inductive case...
 ::::
 
-:::slidebreak
+:::dev "Yipeng Liu (berberman)"
+A single {tactic}`contradiction` can close `zero.succ` case without any rewrite as shown below —
+`h : Nat.double 0 = Nat.double (m' + 1)` gets unfolded to `0 = ((Nat.double m').add 1).succ`,
+and then `noConfusion` kicks in. The unfold can happen because {name}`Nat.double` is not marked as
+`irreducible`. Similarly it can close `succ.zero` case. I think this is fine, and I removed the
+{name}`Nat.double_zero`/{name}`Nat.double_succ` rewrites.
 :::
 
-::::terse
-Suppose we want to show that `double` is injective (i.e.,
-it maps different arguments to different results).  The way we
-_start_ this proof is a little bit delicate:
+```lean  +error (name := gen1)
+example (n m : Nat) (h : n.double = m.double) : n = m := by
+  induction n with
+  | zero =>
+    cases m with
+    | zero => rfl
+    | succ m' => contradiction
+  | succ n' ih =>
+    cases m with
+    | zero => contradiction
+    | succ m' =>
+      congr
+```
+
+```leanOutput gen1
+unsolved goals
+case succ.succ.e_a
+n' m' : Nat
+ih : Nat.double n' = Nat.double (m' + 1) → n' = m' + 1
+h : Nat.double (n' + 1) = Nat.double (m' + 1)
+⊢ n' = m'
+```
+
+:::terse
+We get stuck, because the induction hypothesis `ih` is too specific to be useful.
+:::
+
+::::full
+We get stuck — `m` is fixed during the induction,
+so in the successor case the induction hypothesis `ih` is specialized to the current value of `m`.
+After the case split, that value is `m' + 1`, and the induction hypothesis has the form:
+
+```display
+ih : n'.double = (.succ m').double → n' = .succ m'
+```
+
+From `h`, using the definition of {name}`Nat.double` we can obtain
+
+```display
+Nat.double n' = Nat.double m'
+```
+
+and to prove the goal we would like to apply an induction hypothesis at `m'`.
+Nevertheless, `ih` is specialized to `m' + 1` — it would require
+
+```display
+Nat.double n' = Nat.double (m' + 1)
+```
+
+and would conclude
+
+```
+n' = m' + 1
+```
+
+which is not what we need. Instead, we need an induction hypothesis that is general in `m`:
+
+```display
+ih : ∀ m, Nat.double n' = Nat.double m → n' = m
+```
+
+Then in this branch we can instantiate it with `m'`.
 ::::
 
-```lean
-/-- warning: declaration uses `sorry` -/
-#guard_msgs(warning) in
-example (n m : Nat) :
-    n.double = m.double →
-    n = m := by
-  induction n
-  case zero =>
-    rw [Nat.double_zero]
-    intro eq
-    cases m
-    case zero => rfl
-    case succ _ => rw [Nat.double_succ] at eq; contradiction
-  case succ n' ih =>
-    intro eq
-    cases m
-    case zero => rw [Nat.double_zero, Nat.double_succ] at eq; contradiction
-    case succ m' =>
-      congr
-      /- At this point, the induction hypothesis `ih` does _not_ give us
-      `n' = m'` -- there is an extra `succ` in the way -- so the goal is
-      not provable. -/
-      sorry
+We can obtain a more generalized induction hypothesis by writing
+
+```display
+induction n generalizing m with
 ```
 
 :::slidebreak
@@ -1102,29 +1136,27 @@ example (n m : Nat) :
 What went wrong?
 
 ::::full
-The problem is that, at the point where we invoke the
-induction hypothesis, we have already introduced `m` into the
-context -- intuitively, we have told Lean, "Let's consider some
-particular `n` and `m`..." and we now have to prove that, if
-`double n = double m` for _these particular_ `n` and `m`, then
-`n = m`.
+The problem is that `m` is already in the context when we invoke
+`induction n`. Since `m` is an ordinary argument of the theorem,
+this is exactly what we normally want — we are considering some particular
+`n` and `m`, together with the hypothesis `n.double = m.double` and trying
+to prove `n = m`.
 
-The next tactic, `induction n` says to Lean: We are going to show
-the goal by induction on `n`.  That is, we are going to prove, for
-_all_ `n`, that the proposition
+But if we now do `induction n`, the induction is carried out while keeping this particular
+`m` fixed. That is, we are proving for all `n`, the proposition
 
   - `P n` = "if `double n = double m`, then `n = m`"
 
-holds, by showing
+for this fixed `m`, by showing
 
   - `P 0`
 
      (i.e., "if `double 0 = double m` then `0 = m`") and
 
-  - `P n → P (.succ n)`
+  - `P n → P (n + 1)`
 
     (i.e., "if `double n = double m` then `n = m`" implies "if
-    `double (.succ n) = double m` then `.succ n = m`").
+    `double (n + 1) = double m` then `n + 1 = m`").
 
 If we look closely at the second statement, it is saying something
 rather strange: that, for a _particular_ `m`, if we know
@@ -1133,27 +1165,29 @@ rather strange: that, for a _particular_ `m`, if we know
 
 then we can prove
 
-   - "if `double (.succ n) = double m` then `.succ n = m`".
+   - "if `double (n + 1) = double m` then `n = m + 1`".
 
-To see why this is strange, let's think of a particular `m` --
+To see why this is strange, let's choose of a particular `m` —
 say, `5`.  The statement is then saying that, if we know
 
   - `Q` = "if `double n = 10` then `n = 5`"
 
 then we can prove
 
-  - `R` = "if `double (.succ n) = 10` then `.succ n = 5`".
+  - `R` = "if `double (n + 1) = 10` then `n + 1 = 5`".
 
-But knowing `Q` doesn't give us any help at all with proving `R`!
+But knowing `Q` doesn't give us any help at all with proving `R`.
 If we tried to prove `R` from `Q`, we would start with something
-like "Suppose `double (.succ n) = 10`..." but then we'd be stuck:
-knowing that `double (.succ n)` is `10` tells us nothing helpful about
+like "Suppose `double (n + 1) = 10`..." but then we would be stuck:
+knowing that `double (n + 1)` is `10` tells us nothing helpful about
 whether `double n` is `10` (indeed, it strongly suggests that
-`double n` is _not_ `10`!!), so `Q` is useless.
+`double n` is _not_ `10`), so `Q` is useless.
+
+This is exactly what we saw in the proof state.
 ::::
 
-Trying to carry out this proof by induction on `n` when `m` is
-already in the context doesn't work because we are then trying to
+Trying to carry out this proof by induction on `n` with `m` fixed
+doesn't work, because we are then trying to
 prove a statement involving _every_ `n` but just a _particular_
 `m`.
 
@@ -1164,10 +1198,14 @@ A successful proof of `double_injective` keeps `m` universally
 quantified in the goal statement at the point where the
 `induction` tactic is invoked on `n`.
 
-:::dev "Benjamin Pierce (bcpierce00)"
-The comments in this proof might need trimming -- probably not appropriate in the terse
-version, and probably not nicely typeset in the full version
-:::
+:::dev "Yipeng Liu (berberman)"
+
+I decided to ot to cover this "delayed {tactic}`intro`" trick at all, given that we are sticking
+to the declaration-header style (i.e. theorem arguments are already in the context), and the
+more idiomatic way is to use `induction ... generalizing ...`.
+
+We can bring this trick back if we later find it useful though, and at that time we should introduce
+{tactic}`revert` as well.
 
 ```lean
 theorem double_injective : ∀ (n m : Nat),
@@ -1210,12 +1248,6 @@ theorem double_injective : ∀ (n m : Nat),
     apply ih; rw [Nat.double_succ, Nat.double_succ] at eq; injections
 ```
 
-:::dev
-```
-HIDE: Robert Rand: I found jumping straight to "what if we want to
-do induction on the second argument" via double_injective_take2_FAILED
-to be much more natural here.
-```
 :::
 
 :::slidebreak
