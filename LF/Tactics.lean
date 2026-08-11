@@ -1044,8 +1044,8 @@ variables.
 For example, suppose we want to show that {name}`Nat.double` is injective —
 i.e., that it maps different arguments to different results:
 
-```lean
-example (n m : Nat) (h : n.double = m.double) : n = m := sorry
+```lean -keep
+theorem double_injective (n m : Nat) (h : n.double = m.double) : n = m := sorry
 ```
 
 If we begin it with
@@ -1060,8 +1060,8 @@ and then `noConfusion` kicks in. The unfold can happen because {name}`Nat.double
 {name}`Nat.double_zero`/{name}`Nat.double_succ` rewrites.
 :::
 
-```lean  +error (name := gen1)
-example (n m : Nat) (h : n.double = m.double) : n = m := by
+```lean -keep  +error (name := gen1)
+theorem double_injective (n m : Nat) (h : n.double = m.double) : n = m := by
   induction n with
   | zero =>
     cases m with
@@ -1142,12 +1142,12 @@ this is exactly what we normally want — we are considering some particular
 `n` and `m`, together with the hypothesis `n.double = m.double` and trying
 to prove `n = m`.
 
-But if we now do `induction n`, the induction is carried out while keeping this particular
-`m` fixed. That is, we are proving for all `n`, the proposition
+The claim itself makes perfect sense, but for the induction, however, keeping `m` fixed
+causes the trouble: we are proving, for _all_ `n`, the proposition
 
   - `P n` = "if `double n = double m`, then `n = m`"
 
-for this fixed `m`, by showing
+by showing
 
   - `P 0`
 
@@ -1158,14 +1158,14 @@ for this fixed `m`, by showing
     (i.e., "if `double n = double m` then `n = m`" implies "if
     `double (n + 1) = double m` then `n + 1 = m`").
 
-If we look closely at the second statement, it is saying something
+If we look closely at the inductive step, it is saying something
 rather strange: that, for a _particular_ `m`, if we know
 
   - "if `double n = double m` then `n = m`"
 
 then we can prove
 
-   - "if `double (n + 1) = double m` then `n = m + 1`".
+   - "if `double (n + 1) = double m` then `n + 1 = m`".
 
 To see why this is strange, let's choose of a particular `m` —
 say, `5`.  The statement is then saying that, if we know
@@ -1179,9 +1179,8 @@ then we can prove
 But knowing `Q` doesn't give us any help at all with proving `R`.
 If we tried to prove `R` from `Q`, we would start with something
 like "Suppose `double (n + 1) = 10`..." but then we would be stuck:
-knowing that `double (n + 1)` is `10` tells us nothing helpful about
-whether `double n` is `10` (indeed, it strongly suggests that
-`double n` is _not_ `10`), so `Q` is useless.
+the induction hypothesis `Q` only tells us what happens if `double n = 10`,
+whereas our assumption says `double (n + 1) = 10`, so `Q` is useless here.
 
 This is exactly what we saw in the proof state.
 ::::
@@ -1194,13 +1193,30 @@ prove a statement involving _every_ `n` but just a _particular_
 :::slidebreak
 :::
 
-A successful proof of `double_injective` keeps `m` universally
-quantified in the goal statement at the point where the
-`induction` tactic is invoked on `n`.
+A successful proof of `double_injective` _generalizes_ `m` when carrying out the induction on `n`,
+so that the induction hypothesis holds for every `m`,
+rather than for just the particular `m` in the context.
+
+```lean
+theorem double_injective (n m : Nat) (h : n.double = m.double) : n = m := by
+  induction n generalizing m with
+  | zero =>
+    cases m with
+    | zero => rfl
+    | succ m' => contradiction
+  | succ n' ih =>
+    cases m with
+    | zero => contradiction
+    | succ m' =>
+      congr
+      apply ih -- now works
+      rw [Nat.double_succ, Nat.double_succ] at h
+      injections
+```
 
 :::dev "Yipeng Liu (berberman)"
 
-I decided to ot to cover this "delayed {tactic}`intro`" trick at all, given that we are sticking
+I decided not to cover this "delayed {tactic}`intro`" trick at all, given that we are sticking
 to the declaration-header style (i.e. theorem arguments are already in the context), and the
 more idiomatic way is to use `induction ... generalizing ...`.
 
@@ -1208,12 +1224,12 @@ We can bring this trick back if we later find it useful though, and at that time
 {tactic}`revert` as well.
 
 ```lean
-theorem double_injective : ∀ (n m : Nat),
+theorem double_injective' : ∀ (n m : Nat),
     n.double = m.double →
     n = m := by
   intro n
-  induction n
-  case zero =>
+  induction n with
+  | zero =>
     rw [Nat.double_zero]
     intro m eq
     cases m
@@ -1221,7 +1237,7 @@ theorem double_injective : ∀ (n m : Nat),
     case succ _ =>
       rw [Nat.double_succ] at eq
       contradiction
-  case succ n' ih =>
+  | succ n' ih =>
   -- Notice that both the goal and the induction hypothesis are
   -- different this time: the goal asks us to prove something more
   -- general (i.e., we must prove the statement for _every_ `m`), but
@@ -1231,12 +1247,12 @@ theorem double_injective : ∀ (n m : Nat),
   -- Now we've introduced the assumption that `double n = double m`.
   -- Since we are doing a case analysis on `n`, we also need a case
   -- analysis on `m` to keep the two in sync.
-  cases m
-  case zero =>
+  cases m with
+  | zero =>
     -- The 0 case is trivial:
     rw [Nat.double_zero, Nat.double_succ] at eq
     contradiction
-  case succ m' =>
+  | succ m' =>
     congr
     -- Since we are now in the second branch of the `cases m`, the
     -- `m'` mentioned in the context is the predecessor of the `m` we
@@ -1253,46 +1269,43 @@ theorem double_injective : ∀ (n m : Nat),
 :::slidebreak
 :::
 
- The thing to take away from all this is that you need to be
-careful, when using induction, that you are not trying to prove
-something too specific: When proving a property quantified over
+The thing to take away from all this is that you need to be
+careful, when using induction, that your induction hypothesis
+is not too specific. When proving a proposition quantified over
 variables `n` and `m` by induction on `n`, it is sometimes crucial
-to leave `m` "generic."
+to _generalize_ `m`, so that the induction hypothesis applies to every `m`
+rather than just the particular `m` in the context.
 
-::::full
-The following exercise, which further strengthens the link between
-`==` and `=`, follows the same pattern.
-::::
 
-::::terse
-The following theorem, which further strengthens the link between
-`==` and `=`, follows the same pattern.
-::::
+:::::exercise (rating := 3) (name := "add_self_injective")
 
+The following theorem follows the same pattern as {name}`double_injective`.
 
 ```lean
-theorem beq_eq : ∀ (n m : Nat),
-    (n == m) = true → n = m := by
+theorem add_self_injective (n m : Nat)
+    (h : n + n = m + m) :
+    n = m := by
   solution!
-    intro n
-    induction n
-    case zero =>
-      intro m eq; cases m
-      case zero => rfl
-      case succ m' =>
-        contradiction
-    case succ n' ih =>
-      intro m eq; cases m
-      case zero => contradiction
-      case succ m' =>
+    induction n generalizing m with
+    | zero =>
+      cases m with
+      | zero => rfl
+      | succ m' => dsimp at h; contradiction
+    | succ n' ih =>
+      cases m with
+      | zero => dsimp at h; contradiction
+      | succ m' =>
         congr
         apply ih
-        rw [beq_succ] at eq
-        assumption
+        rw [Nat.add_succ, Nat.add_succ (m' + 1)] at h
+        injection h with h
+        rw [Nat.add_comm, Nat.add_comm (m' + 1)] at h
+        injections h
 ```
 
-:::gradeTheorem 2 beq_eq
+:::gradeTheorem 3 add_self_injective
 :::
+:::::
 
 ::::::full
 :::::exercise (rating := 2) (name := "beq_eq_informal")
@@ -1365,38 +1378,6 @@ By induction on `n`.
 
 :::grade
 `GRADE_MANUAL 2: informal_proof`
-:::
-:::::
-
-:::::exercise (rating := 3) (name := "plus_n_n_injective")
-:::slidebreak
-:::
-
-In addition to being careful about how you use `intro`, practice
-using "at" variants in this proof.  (Hint: use `plus_n_Sm`.)
-
-```lean
-theorem plus_n_n_injective : ∀ (n m : Nat),
-    n + n = m + m →
-    n = m := by
-  solution!
-    intro n
-    induction n
-    . case zero =>
-      intro m eq; cases m
-      . case zero => rfl
-      . case succ => dsimp at eq; contradiction
-    . case succ n' ih =>
-      intro m eq; cases m
-      . case zero => dsimp at eq; contradiction
-      . case succ m' =>
-        rw [add_succ, add_succ (m' + 1)] at eq
-        injection eq with eq
-        rw [add_comm, add_comm (m' + 1)] at eq
-        injections eq; congr; exact ih _ eq
-```
-
-:::gradeTheorem 3 plus_n_n_injective
 :::
 :::::
 
