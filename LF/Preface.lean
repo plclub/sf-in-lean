@@ -14,8 +14,8 @@ file := some "Preface"
 This is the entry point to a series of electronic textbooks on various
 aspects of _Software Foundations_, the mathematical underpinnings of
 reliable software.  Topics in the series include basic concepts of
-logic, functional programming, computer-assisted theorem proving, the
- operational semantics, logics and techniques for reasoning about
+logic, functional programming, computer-assisted theorem proving,
+operational semantics, logics and techniques for reasoning about
 programs, static type systems, property-based random testing, and
 verification of practical C code.  The exposition is intended for a
 broad range of readers, from advanced undergraduates to PhD students
@@ -32,7 +32,7 @@ worked using Lean.
 
 This book, _Logical Foundations in Lean_, lays groundwork for the
 others, introducing the reader to the basic ideas of functional
-programming, formal logic, and the Lean prover itself.
+programming, formal logic, and Lean itself.
 
 # Overview
 
@@ -60,7 +60,7 @@ The present volume weaves together three conceptual threads:
 (A) basic tools from _logic_ for making and justifying precise
     claims about programs;
 
-(B) the use of provers_ (or _proof assistants_) to construct
+(B) the use of _provers_ (or _proof assistants_) to construct
     rigorous logical arguments;
 
 (C) _functional programming_, both as a programming method that
@@ -112,12 +112,9 @@ tools fall into two broad categories:
      depending on human guidance for more difficult aspects.  Widely
      used proof assistants include Isabelle, Agda, Twelf, ACL2, PVS,
      F\*, HOL4, Rocq, and Lean, among many others.
-:::dev "Benjamin Pierce (bcpierce00)"
-Check how that star is typeset!
-:::
 
 This course is based around Lean, a proof assistant that has been
-under development since 1983 and has attracted a large and active
+under development since 2013 and has attracted a large and active
 community of users in both research and at companies like DeepMind,
 OpenAI, Anthropic, MSR, and AWS.
 
@@ -176,9 +173,6 @@ can be used in almost any programming language and to a family of
  languages designed to foreground these idioms, including Haskell,
 OCaml, Standard ML, F##, Scala, Scheme, Racket, Common Lisp, Clojure,
 Erlang, F\*, and Lean itself.
-:::dev "Benjamin Pierce (bcpierce00)"
-Same question about the star.
-:::
 
 Functional programming has been developed over many decades — indeed,
 its roots go back to Church's lambda-calculus from the 1930s, well
@@ -242,15 +236,13 @@ suggestions for further reading in the {ref "Postscript"}[Postscript] chapter.
 Lean runs on Windows, Linux, and MacOS.  The files in this book
 have been tested with Lean version {leanVersion}[].
 
-### Recommended Installation Method: VSCode + Docker
+### Recommended Installation Method: VSCode
 
 The Visual Studio Code IDE is the recommended platform for using Lean.
 
 - Install VS Code if needed
-- XXXXXX
-:::dev "Benjamin Pierce (bcpierce00)"
-Finish me!!
-:::
+- From the Extensions tab of VSCode, install the Lean 4 Extension
+- Wait for Lean to build the project
 
 ## Exercises
 
@@ -312,8 +304,9 @@ note         =   {Version $VERSION, \URL<http://softwarefoundations.cis.upenn.ed
 # For Potential Contributors
 
 If you find things you'd like to help add or improve, your
-contributions are welcome!  To get started, clone the [SF-in-Lean git
-repo]() and have a look at `ALPHATESTERS.md`.
+contributions are welcome!  To get started, clone the
+[SF-in-Lean git repo](https://github.com/plclub/sf-in-lean) and
+have a look at `ALPHATESTERS.md`.
 
 # For Instructors
 
