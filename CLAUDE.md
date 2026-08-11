@@ -143,12 +143,16 @@ the build) while appearing in no build product, wrap a ` ```lean -show ` block
 in `:::ignore`: `-show` keeps it out of the rendered book, `:::ignore` keeps it
 out of the extracted `.lean`.  Neither flag alone does both.
 
-Two related directives are **not** noops. `:::gradeTheorem <pts> "<name>"` is
+Two related directives are **not** noops. `:::gradeTheorem <pts> <name>...` is
 the structured successor to a `:::grade` block wrapping a `GRADE_THEOREM <pts>:
 <name>` spec — `to_verso` emits it for every `GRADE_THEOREM` marker (points bare
 for integers, quoted for fractions like `"0.5"`); other `GRADE_` specs
-(`GRADE_MANUAL`) keep the older `:::grade` body form. It renders nothing for now
-but records `(points, name)` for later autograding (`SFLMeta/Grade.lean`).
+(`GRADE_MANUAL`) keep the older `:::grade` body form. The theorem name is a
+**bare identifier** (not a quoted string), and the directive accepts *one or
+more* of them (`:::gradeTheorem "0.25" nand_test1 nand_test2`); each is resolved
+as a real Lean constant (`.inlineLeanResolvedName`), so a quoted name no longer
+parses. It renders nothing for now but records `(points, names)` for later
+autograding (`SFLMeta/Grade.lean`).
 `:::quizSolution` is the uniform quiz-answer block (superseding the old
 quiz-answer conventions `:::answer` and a bare-`(X)` `:::instructors`): in the
 HTML book it renders as a click-to-reveal disclosure button, and it is *elided

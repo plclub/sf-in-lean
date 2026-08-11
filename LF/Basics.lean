@@ -1694,14 +1694,21 @@ the fields of an object in its interface; instead, those fields should only be
 accessible by an object's methods (like getters and setters).
 Doing so hides the object's definition, so that, if its fields or implementation
 ever change, the interface it exposes to the outside world remains the same.
+In simple examples such conventions may seem trivial or even silly; in complex codebases,
+it is the only way to maintain crucial invariants that prevent a system from becoming unmaintainable.
 
-In idiomatic Lean, it is similarly considered poor style to "peek" through
-definitions by using {tactic}`rfl` to implicitly simplify expressions
+The same principle applies to programs and proofs in Lean.
+In idiomatic Lean, it is considered poor style to _unfold_ — that is, "peek
+through" — definitions by using {tactic}`rfl` to implicitly simplify expressions
 that aren't syntactically identical. If you take a look at the proofs of
 {name}`add_zero` and {name}`add_succ` above, you will notice this is exactly what we did
 when we used the {tactic}`rfl` tactic.
+:::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement
+Readers might wonder why there isn't a tactic that's just like `rfl` but insists on syntactic identity, if that's what is considered good style...
+:::
 
-However, the foundational theorems {name}`add_zero` and {name}`add_succ` provide a
+
+Fortunately, the foundational theorems {name}`add_zero` and {name}`add_succ` provide a
 characterization of the behavior of {name}`add` that makes using {tactic}`rfl` to simplify
 expressions unnecessary; instead, we can rewrite by these theorems anywhere we want to describe
 how {name}`add` evaluates.
@@ -2170,6 +2177,9 @@ The same statement can be written using an explicit universal quantifier, as we 
 mul_zero : ∀ (n : Nat), n * zero = zero
 ```
 
+Writing statements in declaration-header style shortens proofs because Lean
+automatically adds declared variables to the context, rather than requiring
+them to be added with {tactic}`intro`.
 The declaration-header style is conventional in Lean, and we will generally use it from now on.
 ::::
 
@@ -2213,7 +2223,6 @@ Sometimes simple calculation and rewriting are not enough...
 
 ```lean +error
 example (n : Nat) : (succ n == zero) = false := by
-  intro n
   /-
     We can't rewrite by any lemmas here because `n` is unknown!
   -/

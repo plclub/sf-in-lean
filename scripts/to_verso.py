@@ -1800,8 +1800,11 @@ class Renderer:
     def _on_grade(self, text):
         # -- GRADE_THEOREM / GRADE_MANUAL grading directives.  A `GRADE_THEOREM
         # <pts>: <name>` spec becomes the structured `:::gradeTheorem <pts>
-        # "<name>"` directive (point value and theorem name as arguments, empty
-        # body).  Any other spec — `GRADE_MANUAL <pts>: <name>` and the like —
+        # <name>` directive (point value and theorem name as arguments, empty
+        # body).  The name is emitted as a bare identifier: the directive
+        # resolves it as a real Lean constant (`.inlineLeanResolvedName`), so a
+        # quoted string no longer parses.  Any other spec — `GRADE_MANUAL <pts>:
+        # <name>` and the like —
         # keeps the older `:::grade` form carrying the spec as body text (a
         # backtick span, since the spec's underscored names would trip Verso's
         # emphasis parser as bare prose; a spec a span can't hold falls back to
@@ -1818,7 +1821,7 @@ class Renderer:
             # token, and quoting preserves the exact value as a string).
             pts = m.group(1)
             pts_arg = pts if pts.isdigit() else '"%s"' % pts
-            self._append(':::gradeTheorem %s "%s"\n:::\n\n'
+            self._append(':::gradeTheorem %s %s\n:::\n\n'
                          % (pts_arg, m.group(2)))
             return
         body = ('`' + text + '`' if '`' not in text and '\n' not in text
