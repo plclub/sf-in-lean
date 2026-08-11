@@ -5,11 +5,14 @@ about writing *Software Foundations in Lean* (SFL): workflow, Lean
 coding style, Verso markup, comment conventions, the order in which
 tactics are introduced, etc. Please help keep it clear and up to date!
 
-> **Style guide:** The present file covers *workflow and mechanics*. For stylistic matters — Lean conventions, pedagogical and presentational
-> conventions, and writing style — see [STYLE.md](STYLE.md). Please have a look at it before contributing.
+> [!IMPORTANT]
+> The present file covers *workflow and mechanics*. For stylistic matters, such
+> as Lean conventions, pedagogical and presentational conventions, and writing
+> style, see [STYLE.md](STYLE.md). Please have a look at it before contributing.
 
 ## Top-level orientation
-### Guiding Philosophy
+
+### Guiding philosophy
 
 These are the tenets of the SFL effort, in order. Consult these tenets
 when making a change: If your change is supported by them, then
@@ -35,65 +38,63 @@ refer to the tenets to drive a decision (potentially updating the tenets).
    possible. Some of SFL's languages, semantics, etc. might eventually
    be contributed to CSLib.
 
-## Communicating among ourselves
+### Communicating among ourselves
 
 For discussions, we use a combination of tools.
 
-- **Zulip:** The private [SFL contributors
-  channel](https://leanprover.zulipchat.com/#narrow/channel/607217-lean-software-foundations-contributors)
+- **Zulip:** The private
+  [SFL contributors channel](https://leanprover.zulipchat.com/#narrow/channel/607217-lean-software-foundations-contributors)
   channel on the Lean Zulip is the main forum for discussing the translation effort.
-  If you have a high-level comment or want to start a discussion about
-  an issue of general interest, post here. (This channel is private and is expected to remain private. If, at
-  some point, we find ourselves with a lot more people actively
-  involved and/or no need to keep anything private, we may sunset it.)
+  If you have a high-level comment or want to start a discussion about an issue
+  of general interest, post here. (This channel is private and is expected to
+  remain private. If, at some point, we find ourselves with a lot more people
+  actively involved and/or no need to keep anything private, we may sunset it.)
 
-  There is also a `lean-software-foundations` channel, which is
-  currently not used for much (most people working on SFL are not even
-  subscribed, to avoid confusion about where things should go) -- its
-  main role for the moment is that some of the lead maintainers of
-  Verso are members.
+  There is also a `lean-software-foundations` channel, which is currently not
+  used for much (most people working on SFL are not even subscribed, to avoid
+  confusion about where things should go). Its main role for the moment is that
+  some of the lead maintainers of Verso are members.
 
 - **GitHub issues:** If you are working with others to tackle a specific GitHub issue,
   you can use comments on that issue for discussion and coordination.
 
-- **In-text:** If you have a local comment that you want someone to think about at
-  some point when they have that section of the material paged in, put
-  it directly in the appropriate .lean file, either in a comment (if
-  it's a plain .lean file) or in a `:::dev` block (if it's been
-  versified), marked with your initials.  A `:::dev` note tagged
-  `NOW` or `TODO` (or carrying no urgency) is surfaced — highlighted —
-  in the build products; notes tagged `SOONER`, `LATER`, or `TOFIX`
-  are excluded from them (see **Author-only annotations** below).
+- **In-text:** If you have a local comment that you want someone to think about
+  at some point when they have that section of the material paged in, put it
+  directly in the appropriate Lean file inside a `:::dev` block; see the
+  [style guide](STYLE.md#internal-commentary-directives) for its usage.
 
-  In-text comments can also be used for coordinating work on specific
-  issues.
+- **On PRs:** We prefer _not_ holding longer discussions in annotations on PRs,
+  because they tend to either get lost when the PR is merged or delay merging.
+  Putting very local or short-term comments in this medium is fine -- or you can
+  just make the change by directly adding commits to the PR, if it's clear what
+  needs to be done.
 
-- **On PRs:** We prefer _not_ holding longer discussions in annotations on
-  PRs, because they tend to either get lost when the PR is merged or delay merging. Putting very local or short-term comments in this medium is fine -- or you can just make the change by directly adding commits to the PR, if it's clear what needs to be done.
+These conventions are still developing, so feel free to suggest better ways of
+working if you see them!
 
-These conventions are still developing, so feel free to suggest better
-ways of working if you see them!
-
-### Repo organization and make-fu
+## Repository organization and Makefile targets
 
 Each volume has its own top-level directory (LF, HL, etc.).
 
 Within that directory, each chapter has a `.lean` file, in Verso format.
 
-Running `make` at the top level produces, for each volume, three
+Running `make` at the top level produces, for each volume, four
 different ready-for-distribution outputs in a temporary top-level
-`_out` directory, each with both .lean and .html variants.
-  - **student**   (full prose, solutions elided)
-  - **solutions** (full prose, solutions shown)
-  - **terse**     (little prose, no solutions, workinclass elided;
-                   for lecturing)
+`_out` directory, each with both `.lean` and `.html` variants.
+
+- **student**   (full prose, solutions elided)
+- **solutions** (full prose, solutions shown)
+- **terse**     (little prose, no solutions, workinclass elided;
+                 for lecturing)
+- **grading**   (solutions variant with automated grading support)
+
 There are also more specific `make` targets that build faster: see the `Makefile`.
 
 To build everything and preview it locally, do `make serve`,
 then visit http://localhost:8000
 (`make serve` builds stuff then serves `_out/` on port 8000).
 
-### Git-fu
+## Git branches and CI
 
 We use Git and GitHub, with some simple conventions:
 
@@ -107,8 +108,7 @@ than creating forks in their own GitHub accounts for working on stuff.
 This makes it easier for everybody to maintain a global view of what's
 going on.
 
-Our CI uses a small GitHub Actions workflow:
-[.github/workflows/ci.yml](.github/workflows/ci.yml).
+Our CI uses a small [GitHub Actions workflow](.github/workflows/ci.yml).
 It runs `make` on every pull request and on every push to `main`.
 
 We also have branch protection enabled, which requires the following before merging:
@@ -143,13 +143,13 @@ How should the discussion go?
 
 1. While in draft mode you are free to comment using the GitHub
 commenting feature on the PR, e.g., via the web interface. Before
-changing the PR out of draft mode, make sure all discussions on GH are
+changing the PR out of draft mode, make sure all discussions on Github are
 resolved. Ones that are unresolved can be made into comments in the PR
 itself, prefixed with your GitHub ID and a colon.
 
 2. If a review surfaces an issue whose resolution may have broader
-implications, please start a thread on on Zulip for more discussion.
-Record the resolution here in CONTRIBUTING.md if appropriate.
+implications, please start a thread on Zulip for more discussion.
+Record the resolution here in [CONTRIBUTING.md] if appropriate.
 
 3. In-file comments should be deleted if they get resolved.
 
@@ -172,7 +172,7 @@ gh pr create --base <chunk-1-branch> --head <chunk-2-branch>
 
 GitHub then diffs chunk 2 against chunk 1, so the PR shows only the incremental
 change, with no false conflicts, and it automatically retargets chunk 2's base
-to `main` once chunk 1 merges. You can keep stacking (chunk 3 on chunk 2, …)
+to `main` once chunk 1 merges. You can keep stacking (chunk 3 on chunk 2, ...)
 and review/merge bottom-up.
 
 One wrinkle: we use **squash-merge** for PRs, and squashing collapses chunk 1 into a
@@ -193,8 +193,11 @@ We prefer to move fast rather than over-coordinate synchronously, but
 we also want to avoid conflicts when possible. We use the [GitHub
 issue tracker](https://github.com/plclub/sf-in-lean/issues) for
 recording large tasks that need to be done (small or local tasks can
-just be recorded in comments in the affected .lean file) and for
-keeping track of work in progress, plus the [Current Activity](https://github.com/plclub/sf-in-lean/issues/123) meta-issue for getting an overview of who is working where.
+just be recorded in comments in the affected Lean file) and for
+keeping track of work in progress, plus the
+[Current Activity](https://github.com/plclub/sf-in-lean/issues/123)
+meta-issue for getting an overview of who is working where.
+
 1. Assign yourself or others to an issue if it is something you _may_
    work on or you want to be updated on discussions associated with
    the issue.  Being assigned to an issue does _not_ mean that you
@@ -202,8 +205,10 @@ keeping track of work in progress, plus the [Current Activity](https://github.co
    associated files.
 2. When you start working on an issue, assign it to yourself so that
    other people know you are thinking about it (if not already assigned).
-3. When you start *actually making changes*, make sure you
-   are working on a branch in the main repo (not a fork), and push your commits back to `main` frequently, so that others can see which files you are touching in the Current Activity meta-issue.
+3. When you start _actually making changes_, make sure you
+   are working on a branch in the main repo (not a fork), and push your
+   commits back to `main` frequently, so that others can see which files
+   you are touching in the Current Activity meta-issue.
 4. When you submit a PR on your work, refer to the relevant issue in the
    PR message. Edit the work-in-progress issue with a pointer to the PR.
 5. Resolve the issue when the PR is resolved. Edit the work-in-progress
@@ -211,43 +216,51 @@ keeping track of work in progress, plus the [Current Activity](https://github.co
 
 ### Branch activity dashboard
 
-To see at a glance who is working on what, look at the pinned [Current
-Activity](https://github.com/plclub/sf-in-lean/issues/123) issue. It is
-regenerated automatically every half hour (and when PRs are created or merged) and shows the status of every active branch and file on the remote.
+To see at a glance who is working on what, look at the pinned
+[Current Activity](https://github.com/plclub/sf-in-lean/issues/123) issue.
+It is regenerated automatically every half hour (and when PRs are created or
+merged) and shows the status of every active branch and file on the remote.
 
-We use this display very actively to make sure we're not stepping on each others' toes and see where coordination is required.
+We use this display very actively to make sure we're not stepping on each
+others' toes and see where coordination is required.
 
 Reading the table:
 
-- **Status** — the branch's open PR (or "No PR") and how close it is to
-  merging: "Review required" while a `sfl-mergers` code owner still has to
-  approve; "(N unresolved)" open review threads; "Ready" once approved with
-  nothing unresolved; "🚧 auto-merge held" when auto-merge is on but the PR is
-  stuck outside the merge queue; and "⚠️ conflicts with `main`" when the branch
-  no longer merges cleanly.
-- **Overlaps** — other active branches touching the same files. ⚠️ marks a
-  merge conflict; `(includes)` / `(included in)` means this branch fully
-  contains / is contained in the other (stacked work, never a conflict); `A ⊃
-  B` groups a concurrent overlap B under another overlap A that contains it.
-- `archive/…` branches are omitted.
+- **Status**: The branch's open PR (or "No PR") and how close it is to merging:
+  + "Review required" while a `sfl-mergers` code owner still has to approve
+  + "(N unresolved)" open review threads
+  + "Ready" once approved with nothing unresolved
+  + "🚧 auto-merge held" when auto-merge is on
+    but the PR is stuck outside the merge queue
+  + "⚠️ conflicts with `main`" when the branch no longer merges cleanly.
+- **Overlaps**: Other active branches touching the same files.
+  + ⚠️ marks a merge conflict
+  + `(includes)` / `(included in)` means this branch fully
+  contains / is contained in the other (stacked work, never a conflict)
+  + `A ⊃ B` groups a concurrent overlap B under another overlap A that contains it.
+
+`archive/...` branches are omitted.
 
 ## Repo organization technicalities (optional)
 
-[Most contributors can skip this section.]
+_Most contributors can skip this section._
 
-**Extractor maintenance.**  The standalone-`.lean` extractor
+### Extractor maintenance
+
+The standalone-`.lean` extractor
 (`SFLMeta/Save.lean`) resolves a chapter's dependencies two ways, and one needs
 ongoing upkeep: when a chapter imports a Verso chapter from an *earlier volume*
 (e.g. `HL.Imp` imports `LF.Typeclasses`), that cross-volume dependency must be
-listed in `Targets.lean`'s `crossVol` match — add an entry for **every** new
+listed in `Targets.lean`'s `crossVol` match; add an entry for every new
 such import (it can't be auto-derived, since mapping a module name to its `Part`
-needs a compile-time `%doc`).  Plain-Lean support-lib prerequisites
+needs a compile-time `%doc`). Plain Lean support-lib prerequisites
 (`CustomTactics`, `SFLCompat`) are instead bundled verbatim by `bundleLoop` and
 need no per-import upkeep.
 
-**Porting chapters from Rocq.**
+### Porting chapters from Rocq
+
 The `to_verso` script automates the mechanical parts of translating from Rocq to
-Verso-formatted Lean.  It leaves all the interesting bits to be translated manually.
+Verso-formatted Lean. It leaves all the interesting bits to be translated manually.
 
 Example usage:
 ```
@@ -261,13 +274,14 @@ maintain content in this repo.  AI-generated content, especially
 public-facing content such as words and proofs in book chapters,
 should be carefully vetted.
 
-For PRs with public-facing content, we follow the [mathlib AI
+For PRs with public-facing content, we follow the [Mathlib AI
 policy][mathlib-ai-policy], which mandates summarizing how AI is used
 in the PR description. PR descriptions should be written (or at least
 carefully rewritten) by hand.
 
-Here is the part of the [mathlib AI policy][mathlib-ai-policy] that
+Here is the part of the [Mathlib AI policy][mathlib-ai-policy] that
 should be applied when AI tools are adding or changing public-facing content:
+
 > Explain which tool(s) you used and how you used it. This provides
 > useful context for reviewers: tools make different mistakes than humans,
 > so knowing this makes it easier to spot common errors.
@@ -276,10 +290,10 @@ Scripts and other infrastructure in the repository that are used to
 help create public-facing content are excluded, i.e., AI usage here
 doesn't need to be explained in the PR description.
 
-Instructions for Claude live in `CLAUDE.md` (which also asks Claude to
+Instructions for Claude live in [CLAUDE.md] (which also asks Claude to
 pay attention to the conventions in this file).
 
-Raw AI output should not be posted to GitHub or zulip without an
+Raw AI output should not be posted to GitHub or Zulip without an
 indication that that's what it is.
 
 Scripts that are mostly or wholly AI generated should be marked as
