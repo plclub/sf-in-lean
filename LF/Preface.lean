@@ -295,7 +295,7 @@ This text is intended to be self contained, but readers looking
 for a deeper treatment of particular topics will find some
 suggestions for further reading in the {ref "Postscript"}[Postscript] chapter.
 Bibliographic information for all cited works can be found in the
-file {ref "Bib"}[Bib].
+file `Bib`.
 
 # Practicalities
 
