@@ -532,7 +532,7 @@ The Collatz conjecture then states that the sequence beginning
 from _any_ positive number reaches `1`:
 
 ```lean
-def collatz := ∀ n, n ≠ 0 → CollatzHoldsFor n
+def Collatz := ∀ n, n ≠ 0 → CollatzHoldsFor n
 ```
 
 If you succeed in proving this conjecture, you've got a bright
@@ -617,7 +617,7 @@ ClosTrans R x y    ClosTrans R y z
 In Lean this looks as follows:
 
 ```lean
-inductive ClosTrans {α: Type} (R: α → α → Prop) : α → α → Prop where
+inductive ClosTrans {α : Type} (R : α → α → Prop) : α → α → Prop where
   | t_step (x y : α) :
       R x y →
       ClosTrans R x y
@@ -682,7 +682,7 @@ HIDE: CH: A simple exercise could be nice here?
 
 ::::full
 Computing the transitive closure can be undecidable even for
-a relation R that is decidable (e.g., the `cms` relation below), so in
+a relation R that is decidable (e.g., the `Cms` relation below), so in
 general we can't expect to define transitive closure as a boolean
 function. Fortunately, Lean allows us to define transitive closure
 as an inductive relation.
@@ -714,7 +714,7 @@ transitive. This can be defined by the following three rules
 ```
 
 ```lean
-inductive ClosReflTrans {α: Type} (R: α → α → Prop) : α → α → Prop where
+inductive ClosReflTrans {α : Type} (R : α → α → Prop) : α → α → Prop where
   | rt_step (x y : α) :
       R x y →
       ClosReflTrans R x y
@@ -734,37 +734,37 @@ conjecture.  First we define a binary relation corresponding to
 the "Collatz step function" `csf`:
 
 ```lean
-def cs (n m : Nat) : Prop := csf n = m
+def Cs (n m : Nat) : Prop := csf n = m
 ```
 
 This Collatz step relation can be used in conjunction with the
 reflexive and transitive closure operation to define a _Collatz
-multi-step_ (`cms`) relation, expressing that a number `n`
+multi-step_ (`Cms`) relation, expressing that a number `n`
 reaches another number `m` in zero or more Collatz steps:
 
 ```lean
-def cms (n m : Nat) : Prop := ClosReflTrans cs n m
-def collatz' : Prop := ∀ (n : Nat), n ≠ 0 → cms n 1
+def Cms (n m : Nat) : Prop := ClosReflTrans Cs n m
+def Collatz' : Prop := ∀ (n : Nat), n ≠ 0 → Cms n 1
 ```
 
 ::::full
-This `cms` relation defined in terms of
+This `Cms` relation defined in terms of
 `ClosReflTrans` allows for more interesting derivations than the
 linear ones of the directly-defined `CollatzHoldsFor` relation:
 
 ```display
 csf 16 = 8           csf 8 = 4           csf 4 = 2           csf 2 = 1
 ——————————(rt_step)  —————————(rt_step)  —————————(rt_step)  —————————(rt_step)
-cms 16 8           cms 8 4           cms 4 2           cms 2 1
+Cms 16 8           Cms 8 4           Cms 4 2           Cms 2 1
 ——————————————————————————(rt_trans)  —————————————————————————(rt_trans)
-    cms 16 4                              cms 4 1
+    Cms 16 4                              Cms 4 1
     —————————————————————————————————————————————(rt_trans)
-                       cms 16 1
+                       Cms 16 1
 ```
 ::::
 
 :::dev
-HIDE: CH: Would it be helpful to add an exercise later proving cms
+HIDE: CH: Would it be helpful to add an exercise later proving Cms
 equivalent to CollatzHoldsFor
 :::
 
@@ -775,7 +775,7 @@ to define the reflexive, symmetric, and transitive closure?
 
 ```lean
 -- SOLUTION
-inductive ClosReflTransSym {α: Type} (R: α→α→Prop) : α→α→Prop where
+inductive ClosReflTransSym {α : Type} (R : α → α → Prop) : α → α → Prop where
   | srt_refl (x : α) :
       ClosReflTransSym R x x
   | srt_step (x y : α) :
@@ -929,7 +929,7 @@ number can be even" corresponds to a separate constructor:
 ```lean
 inductive Ev : Nat → Prop where
   | ev_0                              : Ev 0
-  | ev_succ_succ (n : Nat) (H : Ev n) : Ev (n + 2)
+  | ev_succ_succ (n : Nat) (h : Ev n) : Ev (n + 2)
 ```
 
 ::::terse
@@ -987,7 +987,7 @@ error:
 ```lean -keep +error (name := WrongEv)
 inductive WrongEv (n : Nat) : Prop where
   | wrong_ev_0 : WrongEv 0
-  | wrong_ev_succ_succ (H: WrongEv n) : WrongEv (n + 2)
+  | wrong_ev_succ_succ (h: WrongEv n) : WrongEv (n + 2)
 ```
 
 ```leanOutput WrongEv
@@ -1019,7 +1019,7 @@ constructors":
 
 ```lean
 #check (Ev.ev_0) -- Ev 0
-#check Ev.ev_succ_succ -- ∀ (n : Nat) (H : Ev n) : Ev (n + 2)
+#check Ev.ev_succ_succ -- ∀ (n : Nat) (h : Ev n) : Ev (n + 2)
 ```
 
 ::::full
@@ -1083,8 +1083,8 @@ theorem ev_double (n : Nat) : Ev n.double := by
     induction n
     case zero =>
       rw [Nat.double_zero]; exact Ev.ev_0
-    case succ n IH =>
-      rw [Nat.double_succ]; exact Ev.ev_succ_succ _ IH
+    case succ n ih =>
+      rw [Nat.double_succ]; exact Ev.ev_succ_succ _ ih
 ```
 :::::
 
@@ -1209,11 +1209,11 @@ using `cases`.
 theorem ev_inversion : ∀ (n : Nat),
     Ev n →
     (n = 0) ∨ ∃ n', n = n' + 2 ∧ Ev n' := by
-    intro n H
-    cases H
+    intro n h
+    cases h
     case ev_0 =>
       left; rfl
-    case ev_succ_succ n H =>
+    case ev_succ_succ n h =>
       right; exists n
 ```
 
@@ -1236,10 +1236,10 @@ theorem le_inversion : ∀ (n m : Nat),
   Le n m →
   (n = m) ∨ (∃ m', m = m' + 1 ∧ Le n m') := by
   solution!
-    intros n m E
-    cases E
+    intros n m h
+    cases h
     case refl => left; rfl
-    case step m H => right; exists m
+    case step m h => right; exists m
 ```
 :::::
 
@@ -1879,7 +1879,7 @@ relation:
 ```lean
 namespace ClosReflTransRemainder
 
-inductive ClosReflTrans {α: Type} (R: α → α → Prop) : α → α → Prop where
+inductive ClosReflTrans {α : Type} (R : α → α → Prop) : α → α → Prop where
   | rt_step (x y : α) :
       R x y →
       ClosReflTrans R x y
@@ -1970,7 +1970,7 @@ alternative definition for `Ev`:
 inductive Ev' : Nat → Prop where
   | ev'_0 : Ev' 0
   | ev'_2 : Ev' 2
-  | ev'_sum n m (Hn : Ev' n) (Hm : Ev' m) : Ev' (n + m)
+  | ev'_sum n m (h₁ : Ev' n) (h₂ : Ev' m) : Ev' (n + m)
 ```
 
 Prove that this definition is logically equivalent to the old one.
@@ -2211,7 +2211,7 @@ will generate two cases. In the first case, `e1 = e2`, and it
 will replace instances of `e2` with `e1` in the goal and context.
 In the second case, `e2 = n' + 1` for some `n'` for which `le e1 n'`
 holds, and it will replace instances of `e2` with `n' + 1`.
-Doing `inversion H` will remove impossible cases and add generated
+Doing `inversion h` will remove impossible cases and add generated
 equalities to the context for further use. Doing `induction h`
 will, in the second case, add the induction hypothesis that the
 goal holds when `e2` is replaced with `n'`.
