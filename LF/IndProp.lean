@@ -311,6 +311,10 @@ this definition in a standard programming language, but it is
 rejected by Lean's termination checker, since the argument to
 the recursive call, `csf n`, is not "obviously smaller" than `n`.
 
+:::dev "Kihong Heo (KihongHeo)" NOW
+Probably `reaches1In` according to STYLE.md?
+:::
+
 ```lean
 /--
 error: fail to show termination for
@@ -357,6 +361,10 @@ while we could in principle convince Lean that `div2 n` is
 smaller than `n`, we certainly can't convince it that
 `(3 * n) + 1` is smaller than `n`!
 
+:::dev "Kihong Heo (KihongHeo)" NOW
+Probably `CollatzHoldsFor` according to STYLE.md?
+:::
+
 ```lean
 /--
 error: fail to show termination for
@@ -384,6 +392,11 @@ def collatz_holds_for (n : Nat) : Prop :=
   | _ => if n.even then collatz_holds_for (div2 n)
                    else collatz_holds_for ((3 * n) + 1)
 ```
+
+:::dev "Kihong Heo (KihongHeo)" NOW
+I feel that this paragraph does not match the error message below.
+The Lean error msg refers to `div 2`.
+:::
 
 This recursive function is also rejected by the termination
 checker, since, while we could in principle convince Lean that
