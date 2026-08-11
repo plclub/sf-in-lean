@@ -311,9 +311,14 @@ this definition in a standard programming language, but it is
 rejected by Lean's termination checker, since the argument to
 the recursive call, `csf n`, is not "obviously smaller" than `n`.
 
-```lean
-/--
-error: fail to show termination for
+```lean -keep +error (name := reaches1In)
+def reaches1In (n : Nat) : Nat :=
+  if n == 1 then 0
+  else 1 + reaches1In (csf n)
+```
+
+```leanOutput reaches1In
+fail to show termination for
   reaches1In
 with errors
 failed to infer structural recursion:
@@ -329,17 +334,8 @@ failed to prove termination, possible solutions:
 n : Nat
 h✝ : ¬(n == 1) = true
 ⊢ csf n < n
--/
-#guard_msgs in
-def reaches1In (n : Nat) : Nat :=
-  if n == 1 then 0
-  else 1 + reaches1In (csf n)
 ```
 
-You can write this definition in a standard programming language.
-This definition is, however, rejected by Lean's termination
-checker, since the argument to the recursive call, `csf n`, is not
-"obviously smaller" than `n`.
 Indeed, this isn't just a pointless limitation: functions in Lean
 are required to be total, to ensure logical consistency.
 
@@ -357,7 +353,7 @@ by the termination checker. In principle, we could convince Lean
 that `div2 n` is smaller than `n` by supplying an appropriate proof.
 However, we still can't convince it that `(3 * n) + 1` is smaller than `n`!
 
-```lean -keep +error (name := collatz)
+```lean -keep +error (name := CollatzHoldsFor)
 def CollatzHoldsFor (n : Nat) : Prop :=
   match n with
   | 0 => False
@@ -366,7 +362,7 @@ def CollatzHoldsFor (n : Nat) : Prop :=
                    else CollatzHoldsFor ((3 * n) + 1)
 ```
 
-```leanOutput collatz
+```leanOutput CollatzHoldsFor
 fail to show termination for
   CollatzHoldsFor
 with errors
@@ -988,9 +984,14 @@ the same type (i.e., `List α`).  But if we had tried to bring `Nat`
 to the left of the colon in defining `Ev`, we would have seen an
 error:
 
-```lean
-/--
-error: Mismatched inductive type parameter in
+```lean -keep +error (name := WrongEv)
+inductive WrongEv (n : Nat) : Prop where
+  | wrong_ev_0 : WrongEv 0
+  | wrong_ev_succ_succ (H: WrongEv n) : WrongEv (n + 2)
+```
+
+```leanOutput WrongEv
+Mismatched inductive type parameter in
   WrongEv 0
 The provided argument
   0
@@ -998,11 +999,6 @@ is not definitionally equal to the expected parameter
   n
 
 Note: The value of parameter `n` must be fixed throughout the inductive declaration. Consider making this parameter an index if it must vary.
--/
-#guard_msgs in
-inductive WrongEv (n : Nat) : Prop where
-  | wrong_ev_0 : WrongEv 0
-  | wrong_ev_succ_succ (H: WrongEv n) : WrongEv (n + 2)
 ```
 
 In an `inductive` definition, an argument to the type constructor
