@@ -337,9 +337,9 @@ def myRepeat (n count : Nat) : NatList :=
 Some simple facts about repetition:
 
 ```lean
-theorem repeat_zero {v : Nat} : myRepeat v 0 = [] := rfl
+theorem repeat_zero {n : Nat} : myRepeat n 0 = [] := rfl
 
-theorem repeat_succ {v count : Nat} : myRepeat v (count + 1) = v :: myRepeat v count := rfl
+theorem repeat_succ {n count : Nat} : myRepeat n (count + 1) = n :: myRepeat n count := rfl
 ```
 
 ::::full
@@ -368,10 +368,10 @@ The `append` function appends (concatenates) two lists.
 ::::
 
 ```lean
-def append (l1 l2 : NatList) : NatList :=
-  match l1 with
-  | [] => l2
-  | h :: t => h :: append t l2
+def append (l₁ l₂ : NatList) : NatList :=
+  match l₁ with
+  | [] => l₂
+  | h :: t => h :: append t l₂
 ```
 
 ## Type Classes and Overloading
@@ -398,14 +398,14 @@ instance : HAppend NatList NatList NatList where
   hAppend := append
 ```
 
-Now `l1 ++ l2` means `append l1 l2` within `NatList`.
+Now `l₁ ++ l₂` means `append l₁ l₂` within `NatList`.
 
 Some simple facts about appending lists:
 
 ```lean
 theorem nil_append (l : NatList) : [] ++ l = l := rfl
 
-theorem cons_append {n : Nat} {l1 l2 : NatList} : (n :: l1) ++ l2 = n :: (l1 ++ l2) := rfl
+theorem cons_append {n : Nat} {l₁ l₂ : NatList} : (n :: l₁) ++ l₂ = n :: (l₁ ++ l₂) := rfl
 
 example : [1, 2, 3] ++ [4, 5] = [1, 2, 3, 4, 5] := by rfl
 example : [] ++ [4, 5] = [4, 5] := by rfl
@@ -558,15 +558,15 @@ theorem oddMembers_cons {h : Nat} {t : NatList} :
       bif h.odd then h :: oddMembers t else oddMembers t :=
   solution!(by rfl)
 
-theorem oddMembers_cons_odd {x : Nat} {l : NatList}
-    (h : x.odd = true) :
-    oddMembers (x :: l) = x :: oddMembers l := by
+theorem oddMembers_cons_odd {n : Nat} {l : NatList}
+    (h : n.odd = true) :
+    oddMembers (n :: l) = n :: oddMembers l := by
   solution!
     rw [oddMembers_cons, h, cond_true]
 
-theorem oddMembers_cons_not_odd {x : Nat} {l : NatList}
-    (h : x.odd = false) :
-    oddMembers (x :: l) = oddMembers l := by
+theorem oddMembers_cons_not_odd {n : Nat} {l : NatList}
+    (h : n.odd = false) :
+    oddMembers (n :: l) = oddMembers l := by
   solution!
     rw [oddMembers_cons, h, cond_false]
 ```
@@ -635,11 +635,11 @@ _structurally recursive_, as mentioned in {ref "Basics"}[Basics].
 If you encounter this difficulty,
 consider pattern matching against both lists at the same time.
 ```lean
-def alternate (l1 l2 : NatList) : NatList := solution!(
-  match l1, l2 with
-  | [], _ => l2
-  | _, [] => l1
-  | h1 :: t1, h2 :: t2 => h1 :: h2 :: alternate t1 t2)
+def alternate (l₁ l₂ : NatList) : NatList := solution!(
+  match l₁, l₂ with
+  | [], _ => l₂
+  | _, [] => l₁
+  | h₁ :: t₁, h₂ :: t₂ => h₁ :: h₂ :: alternate t₁ t₂)
 
 theorem test_alternate1 :
     alternate [1, 2, 3] [4, 5, 6] = [1, 4, 2, 5, 3, 6] := solution!(by rfl)
@@ -673,30 +673,30 @@ theorem test_alternate4 :
 ## Counting
 
 :::::exercise (rating := 1) (name := "counting")
-Define a `count` function for {name}`NatList`s that counts the number of times an element `v` appears in the list.
+Define a `count` function for {name}`NatList`s that counts the number of times an element `n` appears in the list.
 
 ```lean
-def count (v : Nat) (l : NatList) : Nat := solution!(
+def count (n : Nat) (l : NatList) : Nat := solution!(
   match l with
   | [] => 0
-  | h :: t => bif v == h then (count v t) + 1 else count v t)
+  | h :: t => bif n == h then (count n t) + 1 else count n t)
 ```
 
 Now, prove these lemmas which should hold about your definition.
 
 ```lean
-theorem count_nil {x : Nat} : count x [] = 0 := solution!(by rfl)
+theorem count_nil {n : Nat} : count n [] = 0 := solution!(by rfl)
 
-theorem count_cons_def {v h : Nat} {t : NatList} :
-    count v (h :: t) = bif v == h then (count v t) + 1 else count v t := solution!(by rfl)
+theorem count_cons_def {n h : Nat} {t : NatList} :
+    count n (h :: t) = bif n == h then (count n t) + 1 else count n t := solution!(by rfl)
 
-theorem count_cons_same {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = true) :
-    count v₁ (v₂ :: t) = count v₁ t + 1 := by
+theorem count_cons_same {n₁ n₂ : Nat} {t : NatList} (h : (n₁ == n₂) = true) :
+    count n₁ (n₂ :: t) = count n₁ t + 1 := by
   solution!
     rw [count_cons_def, h, cond_true]
 
-theorem count_cons_diff {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = false) :
-    count v₁ (v₂ :: t) = count v₁ t := by
+theorem count_cons_diff {n₁ n₂ : Nat} {t : NatList} (h : (n₁ == n₂) = false) :
+    count n₁ (n₂ :: t) = count n₁ t := by
   solution!
     rw [count_cons_def, h, cond_false]
 
@@ -727,21 +727,21 @@ example : count 6 [1, 2, 3, 1, 4, 1] = 0 := solution!(by rfl)
 :::::exercise (rating := 1) (name := "membership")
 
 ```lean
-def member (v : Nat) (l : NatList) : Bool := solution!(
+def member (n : Nat) (l : NatList) : Bool := solution!(
   match l with
   | [] => false
-  | h :: t => bif v == h then true else member v t)
+  | h :: t => bif n == h then true else member n t)
 
-theorem member_nil {v : Nat} : member v [] = false := solution!(by rfl)
+theorem member_nil {n : Nat} : member n [] = false := solution!(by rfl)
 
-theorem member_cons_same {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = true) :
-    member v₁ (v₂ :: t) = true := by
+theorem member_cons_same {n₁ n₂ : Nat} {t : NatList} (h : (n₁ == n₂) = true) :
+    member n₁ (n₂ :: t) = true := by
   solution!
     dsimp [member]
     rw [h, cond_true]
 
-theorem member_cons_diff {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = false) :
-    member v₁ (v₂ :: t) = member v₁ t := by
+theorem member_cons_diff {n₁ n₂ : Nat} {t : NatList} (h : (n₁ == n₂) = false) :
+    member n₁ (n₂ :: t) = member n₁ t := by
   solution!
     dsimp [member]
     rw [h, cond_false]
@@ -774,21 +774,21 @@ When `removeOne` is applied to a list without the number to
 remove, it should return the same list unchanged.
 
 ```lean
-def removeOne (v : Nat) (l : NatList) : NatList := solution!(
+def removeOne (n : Nat) (l : NatList) : NatList := solution!(
   match l with
   | [] => nil
-  | h :: t => bif v == h then t else h :: removeOne v t)
+  | h :: t => bif n == h then t else h :: removeOne n t)
 
-theorem removeOne_nil {v : Nat} : removeOne v nil = nil := solution!(by rfl)
+theorem removeOne_nil {n : Nat} : removeOne n nil = nil := solution!(by rfl)
 
-theorem removeOne_cons_same {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = true) :
-    removeOne v₁ (v₂ :: t) = t := by
+theorem removeOne_cons_same {n₁ n₂ : Nat} {t : NatList} (h : (n₁ == n₂) = true) :
+    removeOne n₁ (n₂ :: t) = t := by
   solution!
     dsimp [removeOne]
     rw [h, cond_true]
 
-theorem removeOne_cons_diff {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = false) :
-    removeOne v₁ (v₂ :: t) = v₂ :: removeOne v₁ t := by
+theorem removeOne_cons_diff {n₁ n₂ : Nat} {t : NatList} (h : (n₁ == n₂) = false) :
+    removeOne n₁ (n₂ :: t) = n₂ :: removeOne n₁ t := by
   solution!
     dsimp [removeOne]
     rw [h, cond_false]
@@ -816,21 +816,21 @@ theorem test_removeOne2 : count 5 (removeOne 5 [1, 5, 5, 4]) = 1 := solution!(by
 
 
 ```lean
-def removeAll (v : Nat) (l : NatList) : NatList := solution!(
+def removeAll (n : Nat) (l : NatList) : NatList := solution!(
   match l with
   | [] => []
-  | h :: t => bif v == h then removeAll v t else h :: removeAll v t)
+  | h :: t => bif n == h then removeAll n t else h :: removeAll n t)
 
-theorem removeAll_nil {v : Nat} : removeAll v [] = [] := solution!(by rfl)
+theorem removeAll_nil {n : Nat} : removeAll n [] = [] := solution!(by rfl)
 
-theorem removeAll_cons_same {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = true) :
-    removeAll v₁ (v₂ :: t) = removeAll v₁ t := by
+theorem removeAll_cons_same {n₁ n₂ : Nat} {t : NatList} (h : (n₁ == n₂) = true) :
+    removeAll n₁ (n₂ :: t) = removeAll n₁ t := by
   solution!
     dsimp [removeAll]
     rw [h, cond_true]
 
-theorem removeAll_cons_diff {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = false) :
-    removeAll v₁ (v₂ :: t) = v₂ :: removeAll v₁ t := by
+theorem removeAll_cons_diff {n₁ n₂ : Nat} {t : NatList} (h : (n₁ == n₂) = false) :
+    removeAll n₁ (n₂ :: t) = n₂ :: removeAll n₁ t := by
   solution!
     dsimp [removeAll]
     rw [h, cond_false]
@@ -846,10 +846,10 @@ example : count 5 (removeAll 5 [5, 1]) = 0 := by
 
 example : count 5 (removeAll 5 [5, 5]) = 0 := solution!(by rfl)
 
-theorem test_removeAll1 : count 4 (removeAll 5 [4, 5, 4]) = 2 := solution!(by rfl)
+theorem test_removeAll₁ : count 4 (removeAll 5 [4, 5, 4]) = 2 := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" test_removeAll1
+:::gradeTheorem "0.5" test_removeAll₁
 :::
 
 ```lean
@@ -886,14 +886,14 @@ theorem included_nil {l₂ : NatList} : included nil l₂ = true := solution!(by
 ```
 
 ```lean
-theorem included_cons_member {v : Nat} {l₁ l₂ : NatList} (h : member v l₂ = true) :
-    included (cons v l₁) l₂ = included l₁ (removeOne v l₂) := by
+theorem included_cons_member {n : Nat} {l₁ l₂ : NatList} (h : member n l₂ = true) :
+    included (cons n l₁) l₂ = included l₁ (removeOne n l₂) := by
   solution!
     dsimp [included]
     rw [h, Bool.true_and]
 
-theorem included_cons_nonmember {v : Nat} {l₁ l₂ : NatList} (h : member v l₂ = false) :
-    included (cons v l₁) l₂ = false := by
+theorem included_cons_nonmember {n : Nat} {l₁ l₂ : NatList} (h : member n l₂ = false) :
+    included (cons n l₁) l₂ = false := by
   solution!
     dsimp [included]
     rw [h, Bool.false_and]
@@ -1014,12 +1014,12 @@ lists to prove things like the associativity of list-append...
 ::::
 
 ```lean
-theorem append_assoc (l1 l2 l3 : NatList) :
-    (l1 ++ l2) ++ l3 = l1 ++ (l2 ++ l3) := by
-  induction l1 with
+theorem append_assoc (l₁ l₂ l₃ : NatList) :
+    (l₁ ++ l₂) ++ l₃ = l₁ ++ (l₂ ++ l₃) := by
+  induction l₁ with
   | nil =>
     rw [nil_append, nil_append]
-  | cons n l1' ih =>
+  | cons n l₁' ih =>
     rw [cons_append, cons_append, cons_append, ih]
 ```
 
@@ -1030,38 +1030,38 @@ theorem append_assoc (l1 l2 l3 : NatList) :
 For comparison, here is an informal proof of the same theorem.
 :::
 
-_Theorem_: For all lists `l1`, `l2`, and `l3`,
+_Theorem_: For all lists `l₁`, `l₂`, and `l₃`,
 
 ```display
-(l1 ++ l2) ++ l3 = l1 ++ (l2 ++ l3).
+(l₁ ++ l₂) ++ l₃ = l₁ ++ (l₂ ++ l₃).
 ```
 
-_Proof_: By induction on `l1`.
+_Proof_: By induction on `l₁`.
 
-- First, suppose `l1 = []`.  We must show
+- First, suppose `l₁ = []`.  We must show
 
 ```display
-([] ++ l2) ++ l3 = [] ++ (l2 ++ l3),
+([] ++ l₂) ++ l₃ = [] ++ (l₂ ++ l₃),
 ```
 
   which follows directly from the definition of `append`.
 
-- Next, suppose `l1 = n :: l1'`, with
+- Next, suppose `l₁ = n :: l₁'`, with
 
 ```display
-(l1' ++ l2) ++ l3 = l1' ++ (l2 ++ l3)
+(l₁' ++ l₂) ++ l₃ = l₁' ++ (l₂ ++ l₃)
 ```
 
 (the induction hypothesis). We must show
 
 ```display
-((n :: l1') ++ l2) ++ l3 = (n :: l1') ++ (l2 ++ l3).
+((n :: l₁') ++ l₂) ++ l₃ = (n :: l₁') ++ (l₂ ++ l₃).
 ```
 
 By the definition of `append`, this follows from
 
 ```display
-n :: ((l1' ++ l2) ++ l3) = n :: (l1' ++ (l2 ++ l3)),
+n :: ((l₁' ++ l₂) ++ l₃) = n :: (l₁' ++ (l₂ ++ l₃)),
 ```
 
 which is immediate from the induction hypothesis.  _Qed_.
@@ -1258,7 +1258,7 @@ theorem length_append {l₁ l₂ : NatList} :
   workinclass!
     induction l₁ with
     | nil => rw [nil_append, length_nil, Nat.zero_add]
-    | cons n l1' ih =>
+    | cons n l₁' ih =>
       rw [cons_append, length_cons, ih, length_cons, Nat.succ_add]
 ```
 
@@ -1328,33 +1328,33 @@ example (n m : Nat) : (myRepeat n m).length = m := by
 ::::full
 For comparison, here are informal proofs of these two theorems:
 
-_Theorem_: For all lists `l1` and `l2`,
+_Theorem_: For all lists `l₁` and `l₂`,
 
 ```display
-(l1 ++ l2).length = l1.length + l2.length.
+(l₁ ++ l₂).length = l₁.length + l₂.length.
 ```
 
-_Proof_: By induction on `l1`.
+_Proof_: By induction on `l₁`.
 
-- First, suppose `l1 = []`.  We must show
+- First, suppose `l₁ = []`.  We must show
 
 ```display
-([] ++ l2).length = [].length + l2.length,
+([] ++ l₂).length = [].length + l₂.length,
 ```
 
   which follows directly from the definitions of `length`,
   `++`, and `+`.
 
-- Next, suppose `l1 = n::l1'`, with
+- Next, suppose `l₁ = n::l₁'`, with
 
 ```display
-(l1' ++ l2).length = l1'.length + l2.length
+(l₁' ++ l₂).length = l₁'.length + l₂.length
 ```
 
 We must show
 
 ```display
-((n::l1') ++ l2).length = (n::l1').length + l2.length.
+((n::l₁') ++ l₂).length = (n::l₁').length + l₂.length.
 ```
 
 This follows directly from the definitions of `length` and `++`
@@ -1447,7 +1447,7 @@ theorem reverse_append {l₁ l₂ : NatList} :
   solution!
     induction l₁ with
     | nil => rw [nil_append, reverse_nil, append_nil]
-    | cons x l1' ih =>
+    | cons x l₁' ih =>
       rw [cons_append, reverse_cons, ih, reverse_cons, append_assoc]
 ```
 
@@ -1475,8 +1475,8 @@ There is a short solution to the next one.  If you find yourself
 getting tangled up, step back and try to look for a simpler way.
 
 ```lean
-theorem append_assoc4 {l1 l2 l3 l4 : NatList} :
-    l1 ++ (l2 ++ (l3 ++ l4)) = ((l1 ++ l2) ++ l3) ++ l4 := by
+theorem append_assoc4 {l₁ l₂ l₃ l4 : NatList} :
+    l₁ ++ (l₂ ++ (l₃ ++ l4)) = ((l₁ ++ l₂) ++ l₃) ++ l4 := by
   solution!
     rw [append_assoc, append_assoc]
 ```
@@ -1487,12 +1487,12 @@ theorem append_assoc4 {l1 l2 l3 l4 : NatList} :
 An exercise about your implementation of {name}`nonZeros`:
 
 ```lean
-theorem nonZeros_append (l1 l2 : NatList) :
-    nonZeros (l1 ++ l2) = (nonZeros l1) ++ (nonZeros l2) := by
+theorem nonZeros_append (l₁ l₂ : NatList) :
+    nonZeros (l₁ ++ l₂) = (nonZeros l₁) ++ (nonZeros l₂) := by
   solution!
-    induction l1 with
+    induction l₁ with
     | nil => rw [nonZeros_nil, nil_append, nil_append]
-    | cons n l1' ih =>
+    | cons n l₁' ih =>
       cases n with
       | zero =>
         rw [nonZeros_cons_zero, ← ih, cons_append, nonZeros_cons_zero]
@@ -1510,22 +1510,22 @@ lists of numbers for equality.  Prove that `beq l l`
 yields `true` for every list `l`.
 
 ```lean
-def beq (l1 l2 : NatList) : Bool := solution!(
-  match l1, l2 with
+def beq (l₁ l₂ : NatList) : Bool := solution!(
+  match l₁, l₂ with
   | [], [] => true
-  | h1 :: t1, h2 :: t2 => (h1 == h2) && beq t1 t2
+  | h₁ :: t₁, h₂ :: t₂ => (h₁ == h₂) && beq t₁ t₂
   | _, _ => false)
 
 theorem beq_nil : beq [] [] = true := solution!(by rfl)
 
-theorem beq_cons_same {h1 h2 : Nat} {t1 t2 : NatList} (h : (h1 == h2) = true) :
-    beq (h1 :: t1) (h2 :: t2) = beq t1 t2 := by
+theorem beq_cons_same {h₁ h₂ : Nat} {t₁ t₂ : NatList} (h : (h₁ == h₂) = true) :
+    beq (h₁ :: t₁) (h₂ :: t₂) = beq t₁ t₂ := by
   solution!
     dsimp [beq]
     rw [h, Bool.true_and]
 
-theorem beq_cons_diff {h1 h2 : Nat} {t1 t2 : NatList} (h : (h1 == h2) = false) :
-    beq (h1 :: t1) (h2 :: t2) = false := by
+theorem beq_cons_diff {h₁ h₂ : Nat} {t₁ t₂ : NatList} (h : (h₁ == h₂) = false) :
+    beq (h₁ :: t₁) (h₂ :: t₂) = false := by
   solution!
     dsimp [beq]
     rw [h, Bool.false_and]
@@ -1700,14 +1700,14 @@ More information in the reference: <https://lean-lang.org/doc/reference/latest/f
 
 :::solution
 ```lean
-theorem count_append (l₁ l₂ : NatList) (v : Nat) :
-    count v (l₁ ++ l₂) = (count v l₁) + (count v l₂) := by
+theorem count_append (l₁ l₂ : NatList) (n : Nat) :
+    count n (l₁ ++ l₂) = (count n l₁) + (count n l₂) := by
   induction l₁ with
   | nil =>
     rw [nil_append, count_nil, Nat.zero_add]
   | cons h s1' ih =>
     rw [cons_append]
-    cases hv : (v == h) with
+    cases hv : (n == h) with
     | false =>
       rw [count_cons_diff hv, count_cons_diff hv]
       exact ih
@@ -1984,7 +1984,7 @@ Now we define the type of partial maps:
 ```lean
 inductive PartialMap : Type where
   | empty : PartialMap
-  | record (i : MyId) (v : Nat) (m : PartialMap) : PartialMap
+  | record (i : MyId) (n : Nat) (m : PartialMap) : PartialMap
 ```
 
 ::::full
@@ -2029,8 +2029,8 @@ We can define functions on `PartialMap`s by pattern matching.
 def find (x : MyId) (d : PartialMap) : NatOption :=
   match d with
   | empty => .none
-  | record y v d' =>
-    bif MyId.beq x y then .some v
+  | record y n d' =>
+    bif MyId.beq x y then .some n
     else find x d'
 ```
 
@@ -2038,8 +2038,8 @@ def find (x : MyId) (d : PartialMap) : NatOption :=
 Is the following claim true or false?
 
 ```lean
-theorem quiz1 (d : PartialMap) (x : MyId) (v : Nat) :
-    find x (update d x v) = .some v := by
+theorem quiz1 (d : PartialMap) (x : MyId) (n : Nat) :
+    find x (update d x n) = .some n := by
   dsimp [update, find]
   rw [MyId.beq_refl]
   dsimp
@@ -2071,8 +2071,8 @@ theorem quiz2  (d : PartialMap) (x y : MyId) (o : Nat) :
 ::::::full
 :::::exercise (rating := 1) (name := "update_eq")
 ```lean
-theorem update_eq (d : PartialMap) (x : MyId) (v : Nat) :
-    find x (update d x v) = .some v := by
+theorem update_eq (d : PartialMap) (x : MyId) (n : Nat) :
+    find x (update d x n) = .some n := by
   solution!
     dsimp [update, find]
     rw [MyId.beq_refl]
