@@ -34,16 +34,12 @@ clashes with Lean's standard library and with definitions from other chapters.
 namespace Lists
 ```
 
-:::dev BeforeNextRelease
-Note that rewrite laws should sometimes differ from pattern matching now
-:::
-
 # Pairs of Numbers
 
 ::::full
 In an `inductive` type definition, each constructor can take
-any number of arguments -- none (as with `true` and `0`),
-one (as with `succ`), or more than one (as with `Nibble` and
+any number of arguments -- none (as with {lean}`true` and  {lean}`0`),
+one (as with  {lean}`Nat.succ`), or more than one (as with  {lean}`Playground.Nibble` and
 the following):
 ::::
 
@@ -59,8 +55,8 @@ inductive NatProd where
 
 ::::full
 This declaration can be read: "The one and only way to
-construct a pair of numbers is by applying the constructor `pair`
-to two arguments of type `Nat`."
+construct a pair of numbers is by applying the constructor {lean}`NatProd.pair`
+to two arguments of type {lean}`Nat`."
 ::::
 
 ```lean
@@ -83,7 +79,7 @@ def NatProd.snd (p : NatProd) : Nat :=
   | .pair _ y => y
 ```
 
-Defining these functions with the `NatProd` type name qualifying their name
+Defining these functions with the {lean}`NatProd` type name qualifying their name
 allows us to use them with `.` notation:
 
 ```lean
@@ -93,10 +89,11 @@ example : (NatProd.pair 3 5).fst = 3 := by rfl
 :::slidebreak
 :::
 
+
 ::::full
 Since pairs will be used heavily in what follows, it will be
-convenient to write them with angle bracket notation `⟨x, y⟩`
-instead of `NatProd.pair x y`.  This notation is built into Lean and is
+convenient to write them with angle bracket notation `⟨n, m⟩`
+instead of `NatProd.pair n m`.  This notation is built into Lean and is
 called "anonymous constructor syntax".  It is available for any inductive
 type with a single constructor, as long as the expected type is declared or
 can be inferred from the context.
@@ -130,8 +127,7 @@ Note that pattern-matching on a pair (with angle brackets: `⟨x, y⟩`)
 is not to be confused with the "multiple pattern" syntax (with no
 brackets: `x, y`) that we have seen previously.  The above
 examples illustrate pattern matching on a pair with elements `x`
-and `y`, whereas, for example, the definition of `sub` in
-{ref "Basics"}[Basics] performs pattern matching on the values `n` and `m`:
+and `y`, whereas, for example, the definition of `sub` for subtracting two {lean}`Nat`s performs pattern matching on the values `n` and `m`:
 
 ```lean
 def sub (n m : Nat) : Nat :=
@@ -172,12 +168,15 @@ Invalid `⟨...⟩` notation: The expected type `Nat` has more than one construc
 Note: This notation can only be used when the expected type is an inductive type with a single constructor
 ```
 
+These extensions to pattern matching also mean that the rewrite laws
+we define for each function may not always match one-to-one with the cases of our match
+constructs.
 ::::
 
 Lean also provides a convenient way to define `inductive` structures like pairs
 that have a single constructor but multiple ways to access their data,
 using the `structure` keyword. The definition of `NatProd'` below is equivalent
-to the `NatProd` definition from earlier, except that Lean automatically
+to the {lean}`NatProd` definition from earlier, except that Lean automatically
 generates the `fst` and `snd` accessors.
 
 ```lean
@@ -306,7 +305,7 @@ def unexpandCons : Lean.PrettyPrinter.Unexpander
 
 We first define `::` as right-associative _notation_ for {name}`cons`,
 and then define list notation _macro_ with _unexpander_,
-allowing us to write `[1, 2]` instead of `1 :: 2 :: []`.
+allowing us to write {lean}`[1, 2]` instead of {lean}`1 :: 2 :: []`.
 
 Now these all mean exactly the same thing:
 
@@ -416,13 +415,9 @@ example : [1, 2, 3] ++ [] = [1, 2, 3] := by rfl
 :::slidebreak
 :::
 
-:::dev "Chris Henson (chenson2018)"
-The way that this is written might mislead the student to think it is inherent to BEq, which is not true: this additionally requires the ReflBEq typeclass. How crucial is it to have this early mention of typeclasses? bcpierce00: Hopefully we can postpone it.
-:::
-
 ::::full
-The equality test `==` on `Nat`s is another example: it comes
-from the `BEq` ("boolean equality") type class. One small but handy
+The equality test `==` on {lean}`Nat`s is another example: it comes
+from the {lean}`BEq` ("boolean equality") type class. One small but handy
 fact about it, which several proofs below will need, is that `==` is
 reflexive:
 
@@ -430,7 +425,6 @@ reflexive:
 ::::
 
 ::::terse
-`==` comes from the `BEq` class;
 `BEq.refl : (a == a) = true` is worth knowing by name.
 ::::
 
@@ -438,9 +432,6 @@ reflexive:
 We'll learn more about type classes in chapter {ref "Typeclasses"}[Typeclasses]. For now, the
 key idea is: a type class is an interface, and an instance is an
 implementation of that interface for a particular type.
-
-(For a thorough treatment of type classes, see Chapter 3 of
-_Functional Programming in Lean_.)
 ::::
 
 ### Head and Tail
@@ -478,11 +469,17 @@ Basic theorems about how {name}`tail` behaves:
 theorem tail_cons {h : Nat} {t : NatList} : (h :: t).tail = t := by rfl
 
 theorem tail_nil : [].tail = [] := by rfl
+```
 
+
+:::full
+And some examples:
+```
 example : head 0 [1, 2, 3] = 1 := by rw [head_cons]
 example : head 0 [] = 0 := by rw [head_nil]
 example : [1, 2, 3].tail = [2, 3] := by rw [tail_cons]
 ```
+:::
 
 ::::quiz
 What does the following function do?
@@ -616,14 +613,6 @@ already-defined functions, rather than recursion.
 def countOddMembers (l : NatList) : Nat := solution!(
   (oddMembers l).length)
 
-theorem countOddMembers_def (l : NatList) :
-    countOddMembers l = (oddMembers l).length := solution!(by rfl)
-
-example : countOddMembers [0, 1, 2, 3, 0] = 2 := by
-  rw [countOddMembers_def]
-  rw [test_oddMembers]
-  rw [length_cons, length_cons, length_nil]
-
 example : countOddMembers [0, 1, 2, 3, 0] = 2 := solution!(by rfl)
 
 theorem test_countOddMembers1 : countOddMembers [0, 2, 4] = 0 := solution!(by rfl)
@@ -745,18 +734,17 @@ def member (v : Nat) (l : NatList) : Bool := solution!(
 
 theorem member_nil {v : Nat} : member v [] = false := solution!(by rfl)
 
-theorem member_cons_def {v h : Nat} {t : NatList} :
-  member v (h :: t) = bif v == h then true else member v t := solution!(by rfl)
-
 theorem member_cons_same {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = true) :
     member v₁ (v₂ :: t) = true := by
   solution!
-    rw [member_cons_def, h, cond_true]
+    dsimp [member]
+    rw [h, cond_true]
 
 theorem member_cons_diff {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = false) :
     member v₁ (v₂ :: t) = member v₁ t := by
   solution!
-    rw [member_cons_def, h, cond_false]
+    dsimp [member]
+    rw [h, cond_false]
 
 example : member 1 [1] = true := by
   rw [member_cons_same rfl]
@@ -783,16 +771,7 @@ theorem test_member2 : member 2 [1, 4, 1] = false := solution!(by rfl)
 Here are some more {name}`NatList` functions for you to practice with.
 
 When `removeOne` is applied to a list without the number to
-remove, it should return the same list unchanged.  (This exercise
-is optional, but students following the advanced track will need
-to fill in the definition of `removeOne` for a later
-exercise.)
-
-:::dev BeforeNextRelease
-BCP 25: At Penn this year, we removed the distinction
-between standard and advanced tracks, which made the wording above
-confusing. Maybe just make this an exercise for everybody?
-:::
+remove, it should return the same list unchanged.
 
 ```lean
 def removeOne (v : Nat) (l : NatList) : NatList := solution!(
@@ -802,18 +781,17 @@ def removeOne (v : Nat) (l : NatList) : NatList := solution!(
 
 theorem removeOne_nil {v : Nat} : removeOne v nil = nil := solution!(by rfl)
 
-theorem removeOne_cons_def {v h : Nat} {t : NatList} :
-  removeOne v (h :: t) = bif v == h then t else h :: removeOne v t := solution!(by rfl)
-
 theorem removeOne_cons_same {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = true) :
     removeOne v₁ (v₂ :: t) = t := by
   solution!
-    rw [removeOne_cons_def, h, cond_true]
+    dsimp [removeOne]
+    rw [h, cond_true]
 
 theorem removeOne_cons_diff {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = false) :
     removeOne v₁ (v₂ :: t) = v₂ :: removeOne v₁ t := by
   solution!
-    rw [removeOne_cons_def, h, cond_false]
+    dsimp [removeOne]
+    rw [h, cond_false]
 ```
 
 ```lean
@@ -845,18 +823,17 @@ def removeAll (v : Nat) (l : NatList) : NatList := solution!(
 
 theorem removeAll_nil {v : Nat} : removeAll v [] = [] := solution!(by rfl)
 
-theorem removeAll_cons_def {v h : Nat} {t : NatList} :
-  removeAll v (h :: t) = bif v == h then removeAll v t else h :: removeAll v t := solution!(by rfl)
-
 theorem removeAll_cons_same {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = true) :
     removeAll v₁ (v₂ :: t) = removeAll v₁ t := by
   solution!
-    rw [removeAll_cons_def, h, cond_true]
+    dsimp [removeAll]
+    rw [h, cond_true]
 
 theorem removeAll_cons_diff {v₁ v₂ : Nat} {t : NatList} (h : (v₁ == v₂) = false) :
     removeAll v₁ (v₂ :: t) = v₂ :: removeAll v₁ t := by
   solution!
-    rw [removeAll_cons_def, h, cond_false]
+    dsimp [removeAll]
+    rw [h, cond_false]
 ```
 
 ```lean
@@ -904,31 +881,22 @@ def included (l₁ l₂ : NatList) : Bool := solution!(
   | h :: t => member h l₂ && included t (removeOne h l₂))
 ```
 
-:::dev "Niklas Halonen (xhalo32)" BeforeNextRelease
-Do we need to introduce Bool.true_and, Bool.false_and and maybe their mirror versions? There's also {name}`NatPlayground.Nat.andb_false` from Induction.lean...
-:::
-
 ```lean
 theorem included_nil {l₂ : NatList} : included nil l₂ = true := solution!(by rfl)
 ```
-
-:::solution
-```lean
-theorem included_cons_def {h : Nat} {t l₂ : NatList} :
-    included (cons h t) l₂ = (member h l₂ && included t (removeOne h l₂)) := solution!(by rfl)
-```
-:::
 
 ```lean
 theorem included_cons_member {v : Nat} {l₁ l₂ : NatList} (h : member v l₂ = true) :
     included (cons v l₁) l₂ = included l₁ (removeOne v l₂) := by
   solution!
-    rw [included_cons_def, h, Bool.true_and]
+    dsimp [included]
+    rw [h, Bool.true_and]
 
 theorem included_cons_nonmember {v : Nat} {l₁ l₂ : NatList} (h : member v l₂ = false) :
     included (cons v l₁) l₂ = false := by
   solution!
-    rw [included_cons_def, h, Bool.false_and]
+    dsimp [included]
+    rw [h, Bool.false_and]
 ```
 
 ```lean
@@ -953,29 +921,6 @@ theorem test_included2 : included [1, 2, 2] [2, 1, 4, 1] = false := solution!(by
 ```
 
 :::gradeTheorem "0.5" test_included2
-:::
-:::::
-
-:::dev "Niklas Halonen (xhalo32)" BeforeNextRelease
-The next exercise is merely a special case of `count_cons_same`.
-Is this on purpose?
-:::
-
-:::::exercise (rating := 2) (name := "count_cons_inc") (manual := true)
-Adding a value to a list should increase the value's count by one.
-State this as a theorem and prove it.
-
-:::solution
-```lean
-theorem count_cons_inc (l : NatList) (v : Nat) :
-    count v (v :: l) = (count v l) + 1 := by
-  rw [count_cons_same]
-  exact BEq.refl v
-```
-:::
-
-:::grade
-`GRADE_MANUAL 2: count_cons_inc`
 :::
 :::::
 
@@ -1227,15 +1172,6 @@ example (l : NatList) :
     -- but we don't have any useful equations
     -- in either the immediate context or in the global
     -- environment!
-```
-
-```leanOutput st2
-unsolved goals
-case cons
-n : Nat
-l' : NatList
-ih : l'.reverse.length = l'.length
-⊢ (l'.reverse ++ [n]).length = (n :: l').length
 ```
 
 ::::full
