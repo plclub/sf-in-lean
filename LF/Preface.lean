@@ -12,6 +12,11 @@ htmlSplit := .never
 file := some "Preface"
 %%%
 
+:::dev "Benjamin Pierce (bcpierce00)"
+From Chris: For whoever takes this up, recall that lean-software-foundations-contributors > Main Achievements of Lean lists some big Lean projects you can reference to replace the Rocq-specific achievements
+:::
+
+
 :::dev "Benjamin Pierce (bcpierce00)" BeforeNextRelease (year := 2025)
 The SF course at Penn (CIS 5000) sometimes attracts
 students who don't have enough math background and begin really
@@ -653,4 +658,3 @@ Development of the _Software Foundations_ series has been
 supported, in part, by the National Science Foundation under the
 NSF Expeditions grant 1521523, _The Science of Deep
 Specification_.
-
