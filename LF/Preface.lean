@@ -57,13 +57,13 @@ on this last set of tools.
 
 The present volume weaves together three conceptual threads:
 
-(A) basic tools from _logic_ for making and justifying precise
+  - basic tools from _logic_ for making and justifying precise
     claims about programs;
 
-(B) the use of _provers_ (or _proof assistants_) to construct
+  - the use of _provers_ (or _proof assistants_) to construct
     rigorous logical arguments;
 
-(C) _functional programming_, both as a programming method that
+  - _functional programming_, both as a programming method that
     simplifies reasoning about programs and as a bridge between
     programming and logic.
 
