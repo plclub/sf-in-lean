@@ -128,7 +128,7 @@ constructing complex proofs semi-automatically, and a highly
 extensible system for defining new proof-automation tactics and
 notations for specific situations.
 
-Lean and its relatives have become a critical enablers for a huge
+Lean and its relatives have become critical enablers for a huge
 variety of work across computer science and mathematics:
 :::dev "Benjamin Pierce (bcpierce00)"
 Need more examples, including specifically things accomplished in Lean.
@@ -147,7 +147,7 @@ And there are probably things here to trim.
   sets and programming languages such as C.
 
 - As _environments for developing formally certified software
-  and hardware_, they been used, for example, to build
+  and hardware_, they have been used, for example, to build
   CompCert, a fully-verified optimizing compiler for C, and
   CertiKOS, a fully verified hypervisor, for proving the
   correctness of subtle algorithms involving floating point
@@ -170,8 +170,8 @@ And there are probably things here to trim.
 
 _Functional programming_ refers both to a collection of idioms that
 can be used in almost any programming language and to a family of
- languages designed to foreground these idioms, including Haskell,
-OCaml, Standard ML, F##, Scala, Scheme, Racket, Common Lisp, Clojure,
+languages designed to foreground these idioms, including Haskell,
+OCaml, Standard ML, F\#, Scala, Scheme, Racket, Common Lisp, Clojure,
 Erlang, F\*, and Lean itself.
 
 Functional programming has been developed over many decades — indeed,
