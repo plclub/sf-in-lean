@@ -175,7 +175,7 @@ of a small programming language, Imp.
     - correctness (in the sense of preserving meaning) of a number
       of useful program transformations
 
-    - behavioral equivalence of programs (in the {ref "Equiv"}[Equiv] chapter).
+    - behavioral equivalence of programs (in the Equiv chapter).
 
 If we stopped here, we would already have something useful: a set
 of tools for defining and discussing programming languages and
