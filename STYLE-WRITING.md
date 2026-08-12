@@ -31,22 +31,19 @@ Manifestations:
 
 (But don't waste too much time on this while we are still building out the core content.)
 
-SFL doesn't yet have a `:::details` block in active use, but chapters already reach for the same idea informally with `(Optional)` and `Aside:` section headers — e.g. "More on Notation (Optional)" and "Structural Recursion (Optional)" in `LF/Basics.lean` — which are good candidates to convert once `:::details` sees wider adoption.
-:::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement
-This paragraph might go stale quickly.
-:::
-:::dev "Benjamin Pierce (bcpierce00)"
-The `:::details` functionality is implemented and ready to use!
+Chapters already reach for the same idea informally with `(Optional)` and `Aside:` section headers — e.g. "More on Notation (Optional)" and "Structural Recursion (Optional)" in `LF/Basics.lean` — which are good candidates to convert once `:::details` sees wider adoption.
 
-However, we should talk about whether it should be used for
-material currently marked optional — that has not been my expectation. (I thought `:::details` was for details that most readers really _should_ skip, like gnarly technicalities of sophisticated notations.)
-
-IMO, optional sections work fine just the way they are, especially at the ends of chapters.
-
-Asides are another thing — not quite the same as material that should be skipped — and perhaps deserve their own tag.
-:::
-
----
+> [!WARNING]
+> Benjamin Pierce (bcpierce00):
+> 
+> The `:::details` functionality is implemented and ready to use!
+> 
+> However, we should talk about whether it should be used for
+> material currently marked optional — that has not been my expectation. (I thought `:::details` was for details that most readers really _should_ skip, like gnarly technicalities of sophisticated notations.)
+> 
+> IMO, optional sections work fine just the way they are, especially at the ends of chapters.
+> 
+> Asides are another thing — not quite the same as material that should be skipped — and perhaps deserve their own tag.
 
 ## Examples
 
@@ -202,3 +199,18 @@ After, the same explanation comes before the diagram:
 
 The reader knows what property the diagram expresses before having to
 interpret its arrows.
+
+## Writing Conventions
+
+We use American English spelling.
+
+For general matters of grammar, punctuation, and usage, we follow
+the [Chicago Manual of Style](https://www.chicagomanualofstyle.org/).
+
+### Informal Proofs
+
+We use informal proofs sparingly, as explanations and exercises when
+teaching reasoning principles and proof techniques in the abstract, as
+opposed to Lean-specific tools.
+
+Informal proofs should be finished with _QED_.

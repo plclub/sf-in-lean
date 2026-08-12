@@ -6,9 +6,11 @@ coding style, Verso markup, comment conventions, the order in which
 tactics are introduced, etc. Please help keep it clear and up to date!
 
 > [!IMPORTANT]
-> The present file covers *workflow and mechanics*. For stylistic matters, such
-> as Lean conventions, pedagogical and presentational conventions, and writing
-> style, see [STYLE.md](STYLE.md). (Please do have a look at it before contributing!)
+> The present file covers *workflow and mechanics*. For stylistic matters,
+> such as pedagogical and presentational conventions, see
+> [STYLE-CODE.md](STYLE-CODE.md) for Lean and Verso coding conventions,
+> and [STYLE-WRITING.md](STYLE-WRITING.md) for writing style advice.
+> (Please do have a look before contributing!)
 
 ## Top-level orientation
 
@@ -349,8 +351,8 @@ Scripts and other infrastructure in the repository that are used to
 help create public-facing content are excluded, i.e., AI usage here
 doesn't need to be explained in the PR description.
 
-Instructions for Claude live in [CLAUDE.md] (which also asks Claude to
-pay attention to the conventions in this file).
+Instructions for Claude live in [CLAUDE.md](CLAUDE.md) (which also
+asks Claude to pay attention to the conventions in this file).
 
 Raw AI output should not be posted to GitHub or Zulip without an
 indication that that's what it is.

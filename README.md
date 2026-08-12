@@ -1,11 +1,11 @@
 # Software Foundations in Lean
 
-This repository contains the  sources for the _Software Foundations in Lean_ textbook series.
+This repository contains the sources for the _Software Foundations in Lean_ textbook series.
 
 ## Status and how to contribute
 
 SF-in-Lean is ready for adventurous alpha-testers!  See
-ALPHATESTERS.md for instructions on how to get started.
+[ALPHATESTERS.md](AlPHATESTERS.md) for instructions on how to get started.
 
 The SF-in-Lean team is also looking for contributors who have time and
 interest to make a bigger commitment to the project.  

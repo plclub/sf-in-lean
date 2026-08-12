@@ -1,7 +1,8 @@
-# SF-in-Lean Style Guide
+# SF-in-Lean Code Style Guide
 
 This file explains our conventions for how SFL is written and structured.
-[CONTRIBUTING.md] covers *workflow and mechanics*; this file is about *style*.
+[CONTRIBUTING.md](CONTRIBUTING.md) covers *workflow and mechanics*;
+this file is about *code style*.
 
 ## Lean Style Conventions
 
@@ -865,18 +866,3 @@ routes their comments to the directives above:
 
 Full authoring rules are in CLAUDE.md ("Checking to_verso outputs" /
 "Writing comments that survive to_verso").
-
-## Writing Conventions
-
-We use American English spelling.
-
-For general matters of grammar, punctuation, and usage, we follow
-the [Chicago Manual of Style](https://www.chicagomanualofstyle.org/).
-
-## Informal Proofs
-
-We use informal proofs sparingly, as explanations and exercises when
-teaching reasoning principles and proof techniques in the abstract, as
-opposed to Lean-specific tools.
-
-Informal proofs should be finished with _Qed_.
