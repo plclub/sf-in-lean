@@ -130,6 +130,7 @@ variety of work](https://leanprover-community.github.io/papers.html) across comp
 - formalizing the proof of [Fermat's last theorem](https://github.com/ImperialCollegeLondon/FLT)
 - formalizing the [Sphere packing problem](https://github.com/thefundamentaltheor3m/Sphere-Packing-Lean)
 - Deepmind's AI model for IMO problems: [Alphaproof](https://deepmind.google/blog/ai-solves-imo-problems-at-silver-medal-level/)
+- formal specification for the [cedar polucy language](https://github.com/cedar-policy/cedar-spec)
 
 :::dev "Benjamin Pierce (bcpierce00)"
 Need more examples, including specifically things accomplished in Lean.
