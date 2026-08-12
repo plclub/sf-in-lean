@@ -672,7 +672,7 @@ def render(branches, conf, prs, have_token, slug):
     # actionable — ready first, then in progress, then drafts last.  When only
     # one group has rows, skip the labels (the table needs no signposting).
     groups = [("✅ Ready to merge", ready_rows),
-              ("🛠️ In progress", other_rows),
+              ("🛠️ Ready for review", other_rows),
               ("✏️ Drafts", draft_rows)]
     present = [(label, rows) for label, rows in groups if rows]
     if len(present) > 1:
