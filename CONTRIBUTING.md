@@ -194,7 +194,12 @@ in `ALPHATESTERS.md`), your `origin` is your fork and the shared repo is
 `upstream`, so read `upstream/main` for `origin/main` throughout — rebasing onto
 your fork's `main` would replant your work on a stale base.
 
+## Tools for coordinating work
+
 ### Branch activity dashboard
+
+We prefer to move fast rather than over-coordinate, but we also want
+to avoid conflicts when possible. 
 
 To see at a glance who is working on what, look at the pinned
 [Current Activity](https://github.com/plclub/sf-in-lean/issues/123) issue.
@@ -204,16 +209,15 @@ merged) and shows the status of every branch with a PR on the remote.
 We rely heavily on this display to make sure we're not stepping on
 each others' toes and to see where coordination is required.
 
-## Tools for coordinating work
+### GitHub tools
 
-We prefer to move fast rather than over-coordinate, but
-we also want to avoid conflicts when possible. We use the [GitHub
-issue tracker](https://github.com/plclub/sf-in-lean/issues) for
-recording large tasks that need to be done (small or local tasks can
+We use the [GitHub issue
+tracker](https://github.com/plclub/sf-in-lean/issues) for recording
+large or global tasks that need to be done (small or local tasks can
 just be recorded in comments in the affected Lean file) and for
-keeping track of work in progress, plus the [Current
-Activity](https://github.com/plclub/sf-in-lean/issues/123) meta-issue
-for getting an overview of who is working where.
+keeping track of work in progress.
+
+### Workflow
 
 1. Assign yourself or others to an issue if it is something you _may_
    work on or you want to be updated on discussions associated with
