@@ -1072,7 +1072,7 @@ which is immediate from the induction hypothesis.  _Qed_.
 In some situations, it is necessary to generalize a
 statement in order to prove it by induction.  Intuitively, the
 reason is that a more general statement also yields a more general
-(stronger) inductive hypothesis. While the following theorem
+(stronger) inductive hypothesis. While the following
 statement is true, we cannot prove it directly:
 ::::
 
