@@ -139,6 +139,15 @@ def halpern2001: Article where
   year := 2001
   month   := none
 
+def manna1971: Article where
+  title := inlines!"Toward automatic program synthesis"
+  authors := #[inlines!"Zohar Manna", inlines!"Richard J Waldinger"]
+  journal := inlines!"Communications of the ACM"
+  volume := inlines!"14"
+  number  := inlines!"3"
+  year := 1971
+  month := none
+
 
 end Bib
 
