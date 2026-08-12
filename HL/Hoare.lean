@@ -146,8 +146,7 @@ Check that both full and terse look good.
 :::
 
 ::::full
-In the final chaper of _Logical Foundations_ (_Software
-Foundations_, volume 1), we began applying the mathematical tools
+In an {ref "Imp"}[earlier chapter], we began applying the mathematical tools
 developed in the first part of the course to studying the theory
 of a small programming language, Imp.
 
@@ -176,8 +175,7 @@ of a small programming language, Imp.
     - correctness (in the sense of preserving meaning) of a number
       of useful program transformations
 
-    - behavioral equivalence of programs (in the _Equiv_
-      chapter).
+    - behavioral equivalence of programs (in the {ref "Equiv"}[Equiv] chapter).
 
 If we stopped here, we would already have something useful: a set
 of tools for defining and discussing programming languages and
@@ -190,9 +188,10 @@ languages we deal with that we might not consciously recognize
 them as "theorems."  But properties that seem intuitively obvious
 can sometimes be quite subtle (sometimes also subtly wrong!).
 
-We'll return to the theme of metatheoretic properties of whole
-languages later in this volume when we discuss _types_ and _type
-soundness_.  In this chapter, though, we turn to a different set
+In another volume of this series (_Type Systems_),
+we expand upon the theme of metatheoretic properties of whole
+languages when we discuss _types_ and _type
+soundness_. In this chapter, though, we turn to a different set
 of issues.
 ::::
 
@@ -499,8 +498,7 @@ notation automatically lifts `Aexp`s, numbers, and `Prop`s into
 `Assertion`s when they appear between the `{{ _ }}` brackets, or
 when Lean knows that the type of an expression is `Assertion`.
 
-There is no need to understand the details of how these notation
-hacks work.  (We barely understand some of it ourselves!)
+There is no need to understand the details of how these notations work.
 ::::
 
 ::::terse
@@ -908,9 +906,8 @@ Paraphrase the following in English.
 4) c doesn't terminate on any starting state
 5) If c terminates then Y contains as a value the factorial of the
    initial value of X.
-6) Starting in a state in which the value of X is equal to m, if c
-   terminates starting in an arbitrary state then Z contains the
-   integer square root of the initial value of X.
+6) If c terminates starting in a state in which the value of X is equal to,
+   then Z contains the integer square root of the initial value of X.
 :::
 ::::
 
@@ -1453,7 +1450,7 @@ def Assertion.sub (x : Ident) (a : Aexp) (P : Assertion) : Assertion :=
   fun (st : State) => P (x →ₜ a.eval st ; st)
 ```
 
-:::dev BeforeNextRelease
+:::dev PotentialImprovement
 This concrete syntax is hard to read in comments because of
 all the square brackets. Something like `P with X ↦ a` would be
 much better. I guess the same will apply to the lambda-calculus
@@ -1461,9 +1458,11 @@ chapters...  BCP 25: I still think this is a good idea, and I had
 a quick go at implementing it, but did not succeed yet.
 :::
 
-```lean
--- TODO Introduce a notation typeclass for this (e.g. HasSubst)
+:::dev "One An @meluge" BeforeNextRelease
+Introduce a notation typeclass for this (e.g. HasSubst)
+:::
 
+```lean
 /-- Assertion substitution: `P [X ↦ a]` -/
 syntax:100 term:100 " [" ident " ↦ " imp_aexp "]" : term
 
@@ -1587,7 +1586,7 @@ before, there is no need to understand the details, and everything can be
 switched off with `set_option pp.notation false`.
 ::::
 
-::::details (summary := "Notation encoding: printing assertions back")
+::::details "Notation encoding: printing assertions back"
 ```lean
 namespace Assertion.Delab
 open Lean PrettyPrinter Delaborator SubExpr Imp.Delab
@@ -3299,7 +3298,7 @@ As a first attempt at a `while` rule, we could try:
 ```display
        {{P}} c {{P}}
 ---------------------------
-{{P} while b do c end {{P}}
+{{P}} while b do c end {{P}}
 ```
 
 This rule is valid: if `P` is a command invariant of `c`, as the
