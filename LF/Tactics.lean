@@ -1020,6 +1020,13 @@ example (a b c d e f : Nat)
 
 # Generalizing the Induction Hypothesis
 
+:::ignore
+```lean -show
+variable (m n m' n' : Nat)
+open Nat (double)
+```
+:::
+
 Recall this function for doubling a natural number from the
 {ref "Induction"}[Induction] chapter:
 
@@ -1031,7 +1038,7 @@ def double (n : Nat) : Nat :=
 ```
 
 ::::terse
-Suppose we want to show that {name}`Nat.double` is injective (i.e.,
+Suppose we want to show that {name}`double` is injective (i.e.,
 it maps different arguments to different results).
 ::::
 
@@ -1041,11 +1048,11 @@ This can happen when another varaible in the theorem is fixed during the inducti
 even though the induction step might need to use it with different values of that
 variables.
 
-For example, suppose we want to show that {name}`Nat.double` is injective —
+For example, suppose we want to show that {name}`double` is injective —
 i.e., that it maps different arguments to different results:
 
 ```lean -keep
-theorem double_injective (n m : Nat) (h : n.double = m.double) : n = m := sorry
+theorem double_injective (n m : Nat) (h : double n = double m) : n = m := sorry
 ```
 
 If we begin it with
@@ -1054,14 +1061,14 @@ If we begin it with
 
 :::dev "Yipeng Liu (berberman)"
 A single {tactic}`contradiction` can close `zero.succ` case without any rewrite as shown below —
-`h : Nat.double 0 = Nat.double (m' + 1)` gets unfolded to `0 = ((Nat.double m').add 1).succ`,
-and then `noConfusion` kicks in. The unfold can happen because {name}`Nat.double` is not marked as
+`h : double 0 = double (m' + 1)` gets unfolded to `0 = ((double m').add 1).succ`,
+and then `noConfusion` kicks in. The unfold can happen because {name}`double` is not marked as
 `irreducible`. Similarly it can close `succ.zero` case. I think this is fine, and I removed the
 {name}`Nat.double_zero`/{name}`Nat.double_succ` rewrites.
 :::
 
 ```lean -keep  +error (name := gen1)
-theorem double_injective (n m : Nat) (h : n.double = m.double) : n = m := by
+theorem double_injective (n m : Nat) (h : double n = double m) : n = m := by
   induction n with
   | zero =>
     cases m with
@@ -1078,8 +1085,8 @@ theorem double_injective (n m : Nat) (h : n.double = m.double) : n = m := by
 unsolved goals
 case succ.succ.e_a
 n' m' : Nat
-ih : Nat.double n' = Nat.double (m' + 1) → n' = m' + 1
-h : Nat.double (n' + 1) = Nat.double (m' + 1)
+ih : double n' = double (m' + 1) → n' = m' + 1
+h : double (n' + 1) = double (m' + 1)
 ⊢ n' = m'
 ```
 
@@ -1088,40 +1095,40 @@ We get stuck, because the induction hypothesis `ih` is too specific to be useful
 :::
 
 ::::full
-We get stuck — `m` is fixed during the induction,
-so in the successor case the induction hypothesis `ih` is specialized to the current value of `m`.
-After the case split, that value is `m' + 1`, and the induction hypothesis has the form:
+We get stuck — {lean}`m` is fixed during the induction,
+so in the successor case the induction hypothesis `ih` is specialized to the current value of {lean}`m`.
+After the case split, that value is {lean}`m' + 1`, and the induction hypothesis has the form:
 
 ```display
-ih : n'.double = (.succ m').double → n' = .succ m'
+ih : double n' = double (m' + 1) → n' = m' + 1
 ```
 
-From `h`, using the definition of {name}`Nat.double` we can obtain
+From `h`, using the definition of {name}`double` we can obtain
 
-```display
-Nat.double n' = Nat.double m'
+```leanTerm
+double n' = double m'
 ```
 
 and to prove the goal we would like to apply an induction hypothesis at `m'`.
-Nevertheless, `ih` is specialized to `m' + 1` — it would require
+Nevertheless, `ih` is specialized to {lean}`m' + 1` — it would require
 
-```display
-Nat.double n' = Nat.double (m' + 1)
+```leanTerm
+double n' = double (m' + 1)
 ```
 
 and would conclude
 
-```
+```leanTerm
 n' = m' + 1
 ```
 
 which is not what we need. Instead, we need an induction hypothesis that is general in `m`:
 
 ```display
-ih : ∀ m, Nat.double n' = Nat.double m → n' = m
+ih : ∀ m, double n' = double m → n' = m
 ```
 
-Then in this branch we can instantiate it with `m'`.
+Then in this branch we can instantiate it with {lean}`m'`.
 ::::
 
 We can obtain a more generalized induction hypothesis by writing
@@ -1136,69 +1143,69 @@ induction n generalizing m with
 What went wrong?
 
 ::::full
-The problem is that `m` is already in the context when we invoke
-`induction n`. Since `m` is an ordinary argument of the theorem,
+The problem is that {lean}`m` is already in the context when we invoke
+`induction n`. Since {lean}`m` is an ordinary argument of the theorem,
 this is exactly what we normally want — we are considering some particular
-`n` and `m`, together with the hypothesis `n.double = m.double` and trying
+{lean}`n` and {lean}`m`, together with the hypothesis {lean}`double n = double m` and trying
 to prove `n = m`.
 
-The claim itself makes perfect sense, but for the induction, however, keeping `m` fixed
-causes the trouble: we are proving, for _all_ `n`, the proposition
+The claim itself makes perfect sense, but for the induction, however, keeping {lean}`m` fixed
+causes the trouble: we are proving, for _all_ {lean}`n`, the proposition
 
-  - `P n` = "if `double n = double m`, then `n = m`"
+  - `P n` = "if {lean}`double n = double m`, then {lean}`n = m`"
 
 by showing
 
   - `P 0`
 
-     (i.e., "if `double 0 = double m` then `0 = m`") and
+     (i.e., "if {lean}`double 0 = double m` then {lean}`0 = m`") and
 
   - `P n → P (n + 1)`
 
-    (i.e., "if `double n = double m` then `n = m`" implies "if
-    `double (n + 1) = double m` then `n + 1 = m`").
+    (i.e., "if {lean}`double n = double m` then {lean}`n = m`" implies "if
+    {lean}`double (n + 1) = double m` then {lean}`n + 1 = m`").
 
 If we look closely at the inductive step, it is saying something
-rather strange: that, for a _particular_ `m`, if we know
+rather strange: that, for a _particular_ {lean}`m`, if we know
 
-  - "if `double n = double m` then `n = m`"
+  - "if {lean}`double n = double m` then {lean}`n = m`"
 
 then we can prove
 
-   - "if `double (n + 1) = double m` then `n + 1 = m`".
+   - "if {lean}`double (n + 1) = double m` then {lean}`n + 1 = m`".
 
-To see why this is strange, let's choose of a particular `m` —
+To see why this is strange, let's choose of a particular {lean}`m` —
 say, `5`.  The statement is then saying that, if we know
 
-  - `Q` = "if `double n = 10` then `n = 5`"
+  - `Q` = "if {lean}`double n = 10` then {lean}`n = 5`"
 
 then we can prove
 
-  - `R` = "if `double (n + 1) = 10` then `n + 1 = 5`".
+  - `R` = "if {lean}`double (n + 1) = 10` then {lean}`n + 1 = 5`".
 
 But knowing `Q` doesn't give us any help at all with proving `R`.
 If we tried to prove `R` from `Q`, we would start with something
-like "Suppose `double (n + 1) = 10`..." but then we would be stuck:
-the induction hypothesis `Q` only tells us what happens if `double n = 10`,
-whereas our assumption says `double (n + 1) = 10`, so `Q` is useless here.
+like "Suppose {lean}`double (n + 1) = 10`..." but then we would be stuck:
+the induction hypothesis `Q` only tells us what happens if {lean}`double n = 10`,
+whereas our assumption says {lean}`double (n + 1) = 10`, so `Q` is useless here.
 
 This is exactly what we saw in the proof state.
 ::::
 
-Trying to carry out this proof by induction on `n` with `m` fixed
+Trying to carry out this proof by induction on {lean}`n` with {lean}`m` fixed
 doesn't work, because we are then trying to
-prove a statement involving _every_ `n` but just a _particular_
-`m`.
+prove a statement involving _every_ {lean}`n` but just a _particular_
+{lean}`m`.
 
 :::slidebreak
 :::
 
-A successful proof of `double_injective` _generalizes_ `m` when carrying out the induction on `n`,
-so that the induction hypothesis holds for every `m`,
-rather than for just the particular `m` in the context.
+A successful proof of `double_injective` _generalizes_ {lean}`m` when carrying out the induction on {lean}`n`,
+so that the induction hypothesis holds for every {lean}`m`,
+rather than for just the particular {lean}`m` in the context.
 
 ```lean
-theorem double_injective (n m : Nat) (h : n.double = m.double) : n = m := by
+theorem double_injective (n m : Nat) (h : double n = double m) : n = m := by
   induction n generalizing m with
   | zero =>
     cases m with
@@ -1269,6 +1276,40 @@ theorem double_injective' : ∀ (n m : Nat),
 :::slidebreak
 :::
 
+::::full
+Let's look at an informal proof of this theorem.  Notice that
+the induction hypothesis is generalized over {lean}`m`, corresponding to
+the use of `generalizing m`.
+
+_Theorem_: For any natural numbers {lean}`n` and {lean}`m`, if {lean}`double n = double m`, then
+  {lean}`n = m`.
+
+_Proof_: We prove by induction on {lean}`n` that, for _any_ {lean}`m`,
+  if {lean}`double n = double m` then {lean}`n = m`.
+
+  - First, suppose {lean}`n = 0`. We must show that, for any {lean}`m`, if
+    {lean}`double 0 = double m`, then {lean}`0 = m`.
+
+    There are two cases to consier for {lean}`m`:
+    1. If {lean}`m = 0`, we are done.
+    2. Otherwise if {lean}`m = m' + 1` for some {lean}`m'`, then by definition of {name}`double`
+       we have `double 0 = 0` and `double (m' + 1) = double m' + 2`.
+       Clearly {lean}`0` cannot equal {lean}`double m' + 2`, so this case is impossible.
+
+  - Second, suppose {lean}`n = n' + 1`. The induction hypothesis says that, for every {lean}`m`,
+    if {lean}`double (n' + 1) = double m` then {lean}`n' + 1 = m`. Again there are two cases
+    to consider for {lean}`m`:
+    1. If {lean}`m = 0`, then by the definition of {name}`double` our assumption says
+       {lean}`double n' + 2 = 0`, which is impossible.
+    2. Otherwise suppose {lean}`m = m' + 1`.
+       Our assumption is then {lean}`double (n' + 1) = double (m' + 1)`.
+       By the definition of {name}`double`, this gives `double n' + 2 = double m' + 2`.
+       By injectivity of {name}`Nat.succ`, we obtain {lean}`double n' = double m'`.
+       We can now instantiate the induction hypothesis with {lean}`m'`, obtaining `n' = m'`.
+       Now we can conclude `n' + 1 = m' + 1`, which is exacltly wat we wanted to show.
+
+::::
+
 The thing to take away from all this is that you need to be
 careful, when using induction, that your induction hypothesis
 is not too specific. When proving a proposition quantified over
@@ -1307,218 +1348,35 @@ theorem add_self_injective (n m : Nat)
 :::
 :::::
 
-::::::full
-:::::exercise (rating := 2) (name := "beq_eq_informal")
-Give a careful informal proof of `beq_eq`, stating the induction
+::::exercise (rating := 2) (name := "add_self_injective_informal")
+Give a careful informal proof of {name}`add_self_injective`, stating the induction
 hypothesis explicitly and being as explicit as possible about
 quantifiers, everywhere.
 
 :::solution
-```
-_Theorem_: For all natural numbers `n` and `m`, if [n == m =
-true], then `n = m`.
+_Theorem_: For any natural numbers {lean}`n` and {lean}`m`, if {lean}`n + n = m + m`, then
+  {lean}`n = m`.
+_Proof_: We prove by induction on {lean}`n` that for _every_ natrual number {lean}`m`,
+  if {lean}`n + n = m + m`, then `n = m`.
 
-_Proof_ (more pedantic, arguably less clear): We argue by
-induction on `n`.
-
-- Base case: `n = 0`.  We must show, for all natural numbers
-  `m`, that `0 == m = true` implies `0 = m`.  We proceed by
-  cases on `m`.
-
-    - If `m = 0`, we must show that `0 == 0 = true` implies [0 =
-      0], which holds by reflexivity.
-
-    - If `m = .succ m'` for some `m'`, we must show that [0 == .succ m'
-      = true] implies `0 = .succ m'`.  But `0 == .succ m'` evaluates to
-      `false`, so the antecedent of this implication is [false =
-      true], which is absurd, and hence the whole implication is
-      true.
-
-- Inductive case: `n = .succ n'`. We must show that for all natural
-  numbers `m`, `.succ n' == m = true` implies `.succ n' = m`.
-
-  We may assume the induction hypothesis: for all natural
-  numbers `m`, `n' == m = true`, implies `n' = m`.
-
-  We again proceed by cases on `m`.
-
-    - If `m = 0`, we must show that `.succ n' == 0 = true` implies
-      `.succ n' = m`. But `.succ n' == 0` evaluates to `false`, so the
-      antecedent of this implies is again absurd, and hence the
-      whole implication is true.
-
-    - If `m = .succ m'` for some `m'`, we must show that [.succ n' == .succ
-      m' = true] implies `.succ n' = .succ m'`.  So let us assume the [.succ
-      n' == .succ m' = true].  This simplifies to [n' == m' =
-      true]. Hence we can apply the induction hypothesis (with
-      `m` instantiated to `m'`) to obtain `n' = m'`.  Hence, to
-      show `.succ n' = .succ m'` it suffices to show `.succ n' = .succ n'`,
-      which is true by reflexivity. []
-
-_Alternate proof_ (in a more natural style):
-By induction on `n`.
-
-- Suppose `n = 0`.  We must show that if `0 == m = true` then [0
-  = m]. Now if `m` were of the form `.succ m'` for some `m'`, then
-  we would have `0 == .succ m' = true`, which is absurd. So `m` must
-  indeed be 0.
-
-- Otherwise, we have `n = .succ n'`. The induction hypothesis states
-  that for all m, if `n' == m = true`, then `n' = m`; and on the
-  assumption `.succ n' == m = true`, we must show that `.succ n' = m`.
-  In this case `m` must have the form `.succ m'` for some `m'`, for
-  if `m` were 0, our assumption would be `.succ n' == 0 = true`,
-  which is absurd.  So our assumption has the form [.succ n' == .succ m'
-  = true], which simplifies to `n' == m' = true`. Applying the
-  induction hypothesis to the assumption (with `m` instantiated
-  to `m'`) gives us that `n' = m'`, which directly implies our
-  goal `.succ n' = .succ m'`. []
-```
+  - First, suppose that {lean}`n = 0`. We must show that for every `m`, if {lean}`0 + 0 = m + m` then
+    {lean}`0 = m`. There are two cases for {lean}`m`. If {lean}`m = 0`, we are done.
+    Otherwise {lean}`m = m' + 1` for some {lean}`m'`.
+    Then {lean}`m + m` cannot equal {lean}`0 + 0`. Thus this case is impossible.
+  - Now suppose that {lean}`n = n' + 1`.
+    The induction hypothesis says that, for every natrual number {lean}`m`,
+    {lean}`n' + n' = m + m` implies {lean}`n' = m`.
+    We must show, for every {lean}`m`, that {lean}`(n' + 1) + (n' + 1) = m + m`
+    implies {lean}`n' + 1 = m`. Again there are two cases for {lean}`m`.
+    If {lean}`m = 0`, then the assumed equality is impossible — {lean}`(n' + 1) + (n' + 1)`
+    cannot equal to `0`. Otherwise {lean}`m = m' + 1` for some {lean}`m'`.
+    Cancelling one successor from each side of the equality and rearranging the additions gives
+    {lean}`n' + n' = m' + m'`. We can now apply the induction hypothesis with {lean}`m'` to obtain {lean}`n' = m'`.
+    Then it follows that {lean}`n' + 1 = m' + 1`, which is our final goal.
 :::
 
-:::grade
-`GRADE_MANUAL 2: informal_proof`
-:::
-:::::
-
-::::::
-
-:::slidebreak
-:::
-
-The strategy of doing fewer `intros` before an `induction` to
-obtain a more general IH doesn't always work; sometimes some
-_rearrangement_ of quantified variables is needed.  Suppose, for
-example, that we wanted to prove `double_injective` by induction
-on `m` instead of `n`.
-
-```lean
-/-- warning: declaration uses `sorry` -/
-#guard_msgs(warning) in
-theorem double_injective_take2_FAILED (n m : Nat) :
-    n.double = m.double →
-    n = m := by
-  induction m
-  case zero =>
-    intro eq
-    cases n
-    case zero => rfl
-    case succ =>
-      rw [Nat.double_zero, Nat.double_succ] at eq
-      contradiction
-  case succ =>
-    intro eq
-    cases n
-    case zero =>
-      rw [Nat.double_zero, Nat.double_succ] at eq
-      contradiction
-    case succ =>
-      congr
-    -- We are stuck here, just like before.
-      sorry
-```
-
-:::slidebreak
-:::
-
-The problem is that, to do induction on `m`, we must first
-introduce `n`.
-
-::::full
-What can we do about this?  One possibility is to rewrite the
-statement of the lemma so that `m` is quantified before `n`.  This
-works, but it's not nice: We don't want to have to twist the
-statements of lemmas to fit the needs of a particular strategy for
-proving them!  Rather we want to state them in the clearest and
-most natural way.
 ::::
 
-:::slidebreak
-:::
-
-What we can do instead is to first introduce all the quantified
-variables and then explicitly generalize one or more of them
-The `generalizing` option for the `induction` tactic does this.
-
-```lean
-theorem double_injective_take2 (n m : Nat) :
-    n.double = m.double →
-    n = m := by
-  intro eq
-  -- `n` and `m` are both in the context
-  -- This lets us do induction on `m` and get a sufficiently general IH
-  induction m generalizing n
-  case zero =>
-    cases n
-    case zero => rfl
-    case succ =>
-      rw [Nat.double_zero, Nat.double_succ] at eq
-      contradiction
-  case succ _ ih =>
-    cases n
-    case zero =>
-      rw [Nat.double_zero, Nat.double_succ] at eq
-      contradiction
-    case succ =>
-      congr
-      rw [Nat.double_succ, Nat.double_succ] at eq
-      injections _ eq; exact ih _ eq
-```
-
-:::dev PotentialImprovement
-Somewhere (in this file? in Poly?), we might want to include
-a more careful discussion of the way generalized IHs are handled in
-informal proofs.  Basically, the practice seems to be to assume
-we're working with a "general enough" IH, but seldom to bother
-saying exactly what it is!
-:::
-
-::::full
-Let's look at an informal proof of this theorem.  Note that
-the proposition we prove by induction leaves `n` quantified,
-corresponding to the use of generalize dependent in our formal
-proof.
-
-_Theorem_: For any nats `n` and `m`, if `double n = double m`, then
-  `n = m`.
-
-_Proof_: Let `m` be a `Nat`. We prove by induction on `m` that, for
-  any `n`, if `double n = double m` then `n = m`.
-
-  - First, suppose `m = 0`, and suppose `n` is a number such
-    that `double n = double m`.  We must show that `n = 0`.
-
-    Since `m = 0`, by the definition of `double` we have \[double n =
-    0\].  There are two cases to consider for `n`.  If `n = 0` we are
-    done, since `m = 0 = n`, as required.  Otherwise, if `n = .succ n'`
-    for some `n'`, we derive a contradiction: by the definition of
-    `double`, we can calculate `double n = .succ (.succ (double n'))`, but
-    this contradicts the assumption that `double n = 0`.
-
-  - Second, suppose `m = .succ m'` and that `n` is again a number such
-    that `double n = double m`.  We must show that `n = .succ m'`, with
-    the induction hypothesis that for every number `s`, if \[double s =
-    double m'\] then `s = m'`.
-
-    By the fact that `m = .succ m'` and the definition of `double`, we
-    have `double n = .succ (.succ (double m'))`.  There are two cases to
-    consider for `n`.
-
-    If `n = 0`, then by definition `double n = 0`, a contradiction.
-
-    Thus, we may assume that `n = .succ n'` for some `n'`, and again by
-    the definition of `double` we have
-    `.succ (.succ (double n')) = .succ (.succ (double m'))`,
-    which implies by injectivity that `double n' = double m'`.
-    Instantiating the induction hypothesis with `n'` thus
-    allows us to conclude that `n' = m'`, and it follows immediately
-    that `.succ n' = .succ m'`.  Since `.succ n' = n` and `.succ m' = m`, this is just
-    what we wanted to show. \[\]
-::::
-
-:::dev PotentialImprovement
-Maybe we should put one more good example to round out this section?
-:::
 
 # Rewriting with Conditional Statements
 
