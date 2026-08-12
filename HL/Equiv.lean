@@ -534,3 +534,154 @@ theorem identity_assignment : ∀ X,
       rw [<- TotalMap.getElem_def st X, TotalMap.update_same] at intermediate
       exact intermediate
 ```
+
+:::::exercise (rating := 2) (name := "assign_equiv")
+```lean
+theorem assign_equiv : ∀ (X : Ident) (a : Aexp),
+  Aexp.equiv (aexp {X}) a ->
+  Com.equiv 
+    (imp {skip;}) 
+    (imp {X := ~a;}) := by
+  solution!(
+    intro X a aeq st st'
+    constructor <;> intro hce
+    case mp => 
+      cases hce with
+      | skip => 
+        unfold Aexp.equiv at aeq
+        dsimp at aeq
+        have intermediate : st =[ X:= ~a; ]=> X →ₜ st X; st := by
+          apply Com.EvalR.asgn
+          rw [<- TotalMap.getElem_def st X, aeq]
+        rw [<- TotalMap.getElem_def st X, TotalMap.update_same] at intermediate
+        exact intermediate
+    case mpr =>
+      cases hce with
+      | asgn _ _ n _ h =>
+        unfold Aexp.equiv at aeq
+        dsimp at aeq
+        rw [← h, ← aeq, TotalMap.update_same]
+        apply Com.EvalR.skip
+  )
+```
+:::::
+
+:::dev "Sati (satiscugcat)"
+Leaving out optional exercise `equiv_classes` for now.
+:::
+
+# Properties of Behavior Equivalence
+
+::::full
+We next consider some fundamental properties of program equivalence.
+::::
+
+## Behavioral Equivalence is an Equivalence
+
+::::full
+First, let's verify that the equivalences on `Aexp`s, `Bexp`s, and
+`Com`s really are _equivalences_ -- ie, that they are reflexive,
+symmetric, and transitive. These proofs are all easy.
+::::
+
+```lean
+theorem Aexp.equiv.refl : ∀ (a : Aexp),
+  a.equiv a := by
+  intros a st
+  rfl
+```
+
+```lean 
+theorem Aexp.equiv.sym : ∀ (a₁ a₂ : Aexp),
+  a₁.equiv a₂ → a₂.equiv a₁ := by
+  intro a₁ a₂ h st
+  rw [h]
+```
+
+```lean
+theorem Aexp.equiv.trans : ∀ (a₁ a₂ a₂ : Aexp),
+  a₁.equiv a₂ → a₂.equiv a₃ → a₁.equiv a₃ := by
+  intro a₁ a₂ a₃ h₁ h₂ st
+  rw [h₁, h₂]
+```
+
+
+```lean
+theorem Bexp.equiv.refl : ∀ (b : Bexp),
+  b.equiv b := by
+  intros b st
+  rfl
+```
+
+```lean 
+theorem Bexp.equiv.sym : ∀ (b₁ b₂ : Bexp),
+  b₁.equiv b₂ → b₂.equiv b₁ := by
+  intro b₁ b₂ h st
+  rw [h]
+```
+
+```lean
+theorem Bexp.equiv.trans : ∀ (b₁ b₂ b₂ : Bexp),
+  b₁.equiv b₂ → b₂.equiv b₃ → b₁.equiv b₃ := by
+  intro b₁ b₂ b₃ h₁ h₂ st
+  rw [h₁, h₂]
+```
+
+
+```lean
+theorem Com.equiv.refl : ∀ (c : Com),
+  c.equiv c := by
+  intros c st st'
+  rfl
+```
+
+```lean 
+theorem Com.equiv.sym : ∀ (c₁ c₂ : Com),
+  c₁.equiv c₂ → c₂.equiv c₁ := by
+  intro c₁ c₂ h st st'
+  rw [h]
+```
+
+```lean
+theorem Com.equiv.trans : ∀ (c₁ c₂ c₂ : Com),
+  c₁.equiv c₂ → c₂.equiv c₃ → c₁.equiv c₃ := by
+  intro c₁ c₂ c₃ h₁ h₂ st st'
+  rw [h₁, h₂]
+```
+## Behavioral Equivalence is a Congruence
+
+::::full
+
+Less obviously, behavioral equivalence is also a _congruence_.
+That is, the equivalence of two subprograms implies the
+equivalence of the larger programs in which they are embedded:
+
+             aequiv a a'
+     -------------------------
+     cequiv (x := a) (x := a')
+
+          cequiv c1 c1'
+          cequiv c2 c2'
+     --------------------------
+     cequiv (c1;c2) (c1';c2')
+
+... and so on for the other forms of commands.
+
+(Note that we are using the inference rule notation here not
+as part of an inductive definition, but simply to write down some
+valid implications in a readable format. We prove these
+implications below.)
+::::
+
+::::full
+We will see a concrete example of why these congruence
+properties are important in the following section (in the proof of
+`fold_constants_com_sound`), but the main idea is that they allow
+us to replace a small part of a large program with an equivalent
+small part and know that the whole large programs are equivalent
+_without_ doing an explicit proof about the parts that didn't
+change -- i.e., the "proof burden" of a small change to a large
+program is proportional to the size of the change, not the
+program!
+::::
+
