@@ -8,7 +8,7 @@ tactics are introduced, etc. Please help keep it clear and up to date!
 > [!IMPORTANT]
 > The present file covers *workflow and mechanics*. For stylistic matters, such
 > as Lean conventions, pedagogical and presentational conventions, and writing
-> style, see [STYLE.md](STYLE.md). Please have a look at it before contributing.
+> style, see [STYLE.md](STYLE.md). (Please do have a look at it before contributing!)
 
 ## Top-level orientation
 
@@ -50,7 +50,7 @@ For discussions, we use a combination of tools.
   remain private. If, at some point, we find ourselves with a lot more people
   actively involved and/or no need to keep anything private, we may sunset it.)
 
-  There is also a `lean-software-foundations` channel, which is currently not
+  There is also a private `lean-software-foundations` channel, which is currently not
   used for much (most people working on SFL are not even subscribed, to avoid
   confusion about where things should go). Its main role for the moment is that
   some of the lead maintainers of Verso are members.
@@ -64,13 +64,13 @@ For discussions, we use a combination of tools.
   [style guide](STYLE.md#internal-commentary-directives) for its usage.
 
 - **On PRs:** We prefer _not_ holding longer discussions in annotations on PRs,
-  because they tend to either get lost when the PR is merged or delay merging.
-  Putting very local or short-term comments in this medium is fine -- or you can
+  because they tend to either get lost when the PR is merged or else delay merging.
+  Putting very local or short-term comments on PRs is fine... or (often simpler) you can
   just make the change by directly adding commits to the PR, if it's clear what
   needs to be done.
 
 These conventions are still developing, so feel free to suggest better ways of
-working if you see them!
+working!
 
 ## Repository organization and Makefile targets
 
@@ -86,7 +86,8 @@ different ready-for-distribution outputs in a temporary top-level
 - **solutions** (full prose, solutions shown)
 - **terse**     (little prose, no solutions, workinclass elided;
                  for lecturing)
-- **grading**   (solutions variant with automated grading support)
+- **grading**   (solutions variant with automated grading support,
+                 for instructors)
 
 There are also more specific `make` targets that build faster: see the `Makefile`.
 
@@ -193,16 +194,26 @@ in `ALPHATESTERS.md`), your `origin` is your fork and the shared repo is
 `upstream`, so read `upstream/main` for `origin/main` throughout — rebasing onto
 your fork's `main` would replant your work on a stale base.
 
+### Branch activity dashboard
+
+To see at a glance who is working on what, look at the pinned
+[Current Activity](https://github.com/plclub/sf-in-lean/issues/123) issue.
+It is regenerated automatically every half hour (and when PRs are created or
+merged) and shows the status of every branch with a PR on the remote.
+
+We rely heavily on this display to make sure we're not stepping on
+each others' toes and to see where coordination is required.
+
 ## Tools for coordinating work
 
-We prefer to move fast rather than over-coordinate synchronously, but
+We prefer to move fast rather than over-coordinate, but
 we also want to avoid conflicts when possible. We use the [GitHub
 issue tracker](https://github.com/plclub/sf-in-lean/issues) for
 recording large tasks that need to be done (small or local tasks can
 just be recorded in comments in the affected Lean file) and for
-keeping track of work in progress, plus the
-[Current Activity](https://github.com/plclub/sf-in-lean/issues/123)
-meta-issue for getting an overview of who is working where.
+keeping track of work in progress, plus the [Current
+Activity](https://github.com/plclub/sf-in-lean/issues/123) meta-issue
+for getting an overview of who is working where.
 
 1. Assign yourself or others to an issue if it is something you _may_
    work on or you want to be updated on discussions associated with
@@ -211,45 +222,20 @@ meta-issue for getting an overview of who is working where.
    associated files.
 2. When you start working on an issue, assign it to yourself so that
    other people know you are thinking about it (if not already assigned).
-3. When you start _actually making changes_, make sure you
-   are working on a branch in the main repo (not a fork), and push your
-   commits back to `main` frequently, so that others can see which files
-   you are touching in the Current Activity meta-issue.
-4. When you submit a PR on your work, refer to the relevant issue in the
-   PR message. Edit the work-in-progress issue with a pointer to the PR.
-5. Resolve the issue when the PR is resolved. Edit the work-in-progress
-   to remove the activity.
+3. When you start _actually making changes_, make sure you are working
+   on a branch in the main repo (not a fork), make a draft PR so it
+   shows up in the Current Activity meta-issue, and push your commits
+   frequently so that others can see which files you are touching in
+   the Current Activity meta-issue.
+4. Refer to the relevant issue(s) in the PR description. Edit the
+   work-in-progress issue with a pointer to the PR.
+5. Make sure the issue is resolved when the PR is merged (this may happen
+   automatically). 
 
-### Branch activity dashboard
-
-To see at a glance who is working on what, look at the pinned
-[Current Activity](https://github.com/plclub/sf-in-lean/issues/123) issue.
-It is regenerated automatically every half hour (and when PRs are created or
-merged) and shows the status of every active branch and file on the remote.
-
-We use this display very actively to make sure we're not stepping on each
-others' toes and see where coordination is required.
-
-Reading the table:
-
-- **Status**: The branch's open PR (or "No PR") and how close it is to merging:
-  + "Review required" while a `sfl-mergers` code owner still has to approve
-  + "(N unresolved)" open review threads
-  + "Ready" once approved with nothing unresolved
-  + "🚧 auto-merge held" when auto-merge is on
-    but the PR is stuck outside the merge queue
-  + "⚠️ conflicts with `main`" when the branch no longer merges cleanly.
-- **Overlaps**: Other active branches touching the same files.
-  + ⚠️ marks a merge conflict
-  + `(includes)` / `(included in)` means this branch fully
-  contains / is contained in the other (stacked work, never a conflict)
-  + `A ⊃ B` groups a concurrent overlap B under another overlap A that contains it.
-
-`archive/...` branches are omitted.
 
 ## Repo organization technicalities (optional)
 
-_Most contributors can skip this section._
+_Most contributors can skip this part._
 
 ### Extractor maintenance
 
