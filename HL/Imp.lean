@@ -279,7 +279,7 @@ ordinary Lean uses of `true`/`false`, and as non-reserved symbols they would
 clash with the bare-identifier form of `imp_aexp`.
 :::
 
-::::details (summary := "Notation encoding: boolean expressions")
+::::details "Notation encoding: boolean expressions"
 ```lean
 /-- Boolean expressions of Imp -/
 declare_syntax_cat imp_bexp
@@ -314,7 +314,7 @@ comparison); without the annotation the parser would descend into `imp_aexp`
 and then insist on a comparison operator.
 :::
 
-::::details (summary := "Notation encoding: boolean expressions, macro rules")
+::::details "Notation encoding: boolean expressions, macro rules"
 ```lean
 open Lean in
 macro_rules
@@ -401,7 +401,7 @@ mentioning an Imp expression is displayed in readable Imp syntax rather than as
 a pile of constructors.
 ::::
 
-::::details (summary := "Notation encoding: printing expressions back")
+::::details "Notation encoding: printing expressions back"
 ```lean
 namespace Imp.Delab
 open Lean PrettyPrinter Delaborator SubExpr Parenthesizer
@@ -504,7 +504,7 @@ The `whenPPOption getPPNotation` wrapper lets `set_option pp.notation false`
 switch this delaborator off, revealing the raw constructors (see the
 "Desugaring Notations" discussion, after the commands are introduced).
 
-::::details (summary := "Notation encoding: registering the delaborators")
+::::details "Notation encoding: registering the delaborators"
 ```lean
 @[delab app.Aexp.num, delab app.Aexp.id, delab app.Aexp.plus,
   delab app.Aexp.minus, delab app.Aexp.mult]
@@ -671,7 +671,7 @@ Concrete syntax for commands, in the style of the `ssft24` Imp `Stmt`
    with expressions, `~c` escapes back to an ordinary Lean term of type `Com`.
 :::
 
-::::details (summary := "Notation encoding: commands")
+::::details "Notation encoding: commands"
 ```lean
 /-- Imp commands -/
 declare_syntax_cat imp_com
@@ -686,7 +686,7 @@ declare_syntax_cat imp_com
    elsewhere in the file, and avoids reserving `skip` globally.
 :::
 
-::::details (summary := "Notation encoding: commands, macro rules")
+::::details "Notation encoding: commands, macro rules"
 ```lean
 /-- The command that does nothing (`skip;`) -/
 syntax ident ";" : imp_com
@@ -731,7 +731,7 @@ delaborators for the condition of an
 unrecognized subcommand with the `~` escape.
 ::::
 
-::::details (summary := "Notation encoding: printing commands back")
+::::details "Notation encoding: printing commands back"
 ```lean
 namespace Imp.Delab
 open Lean PrettyPrinter Delaborator SubExpr
