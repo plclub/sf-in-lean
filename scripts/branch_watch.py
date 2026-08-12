@@ -524,16 +524,20 @@ def notes_cell(pr):
 def files_cell(files, churn):
     """A <details> expander for the "Changes" column: its summary reads
     `N files, XX lines` (XX = total insertions + deletions), expanding to the
-    file names.  Each count is glued to its noun with a non-breaking space, so
-    the summary never wraps between a number and what it counts.  The names flow
+    file names.  Each count is glued to its noun with a non-breaking space (so
+    the summary never wraps between a number and what it counts) and the noun is
+    pluralized to match it.  The names flow
     middot-separated (not one `<br>` per line) so the expanded list stays
     compact."""
+    def count(n, noun):
+        return f"{n}&nbsp;{noun}{'' if n == 1 else 's'}"
+
     n = len(files)
     if n == 0:
         return "0&nbsp;files, 0&nbsp;lines"
     inner = " · ".join(f"`{f}`" for f in sorted(files))
-    return (f"<details><summary>{n}&nbsp;files, {churn}&nbsp;lines</summary>"
-            f"{inner}</details>")
+    return (f"<details><summary>{count(n, 'file')}, {count(churn, 'line')}"
+            f"</summary>{inner}</details>")
 
 
 def render(branches, conf, prs, have_token, slug):
