@@ -187,6 +187,12 @@ git rebase --onto origin/main <old-chunk-1-tip> <chunk-2-branch>
 git push --force-with-lease
 ```
 
+These recipes assume `origin` is the shared repo, which is the case if you have
+write access and cloned it directly.  If you are working from a fork (the setup
+in `ALPHATESTERS.md`), your `origin` is your fork and the shared repo is
+`upstream`, so read `upstream/main` for `origin/main` throughout — rebasing onto
+your fork's `main` would replant your work on a stale base.
+
 ## Tools for coordinating work
 
 We prefer to move fast rather than over-coordinate synchronously, but
@@ -266,6 +272,69 @@ Example usage:
 ```
 python3 scripts/to_verso.py old/orig-plf-files/Hoare.v HL/Hoare.lean
 ```
+
+## Volumes and Versions
+
+Version numbers, volume numbers, volume titles, and the release year are *build
+facts*, not prose.  Each is recorded in exactly one place and reaches the text
+through a Verso role, so a number quoted in a chapter can never drift out of
+date.  **Never write any of these out by hand in a chapter.**
+
+**Where each fact lives.**
+
+| Fact | Home |
+| --- | --- |
+| Volume number and title | the `volumes` table in `SFLMeta/Volume.lean` |
+| Which volume a chapter belongs to | `leanOptions = { weak.sfl.volume = "<slug>" }` on that volume's `[[lean_lib]]` in `lakefile.toml` |
+| Release version | `version` in `lakefile.toml`, mirrored as `weak.sfl.version` under `[leanOptions]` |
+| Release year | `weak.sfl.year` under `[leanOptions]` in `lakefile.toml` |
+| Lean toolchain version | `lean-toolchain` (read straight from the compiler; nothing to maintain) |
+| Series homepage | `sflHomepage` in `SFLMeta/Volume.lean` |
+
+**Using them in a chapter.**  The roles are defined in `SFLMeta/Version.lean`.
+Each takes no content — write the empty brackets:
+
+```
+This is version {sflVersion}[] of {volumeName}[] ({sflYear}[]), volume
+{volumeNumber}[] of the series, tested with Lean version {leanVersion}[].
+```
+
+`{volumeNumber}[]` and `{volumeName}[]` mean *the volume being compiled*.  To
+refer to another volume, name it with a slug or a number: `{volumeName "ts"}[]`,
+`{volumeNumber "ts"}[]`, `{volumeName 3}[]`.
+
+The recommended-citation BibTeX entry is generated in full, since it is entirely
+mechanical.  A Preface asks for it with an empty directive:
+
+```
+:::citation
+:::
+```
+
+which renders the entry for the current volume; `:::citation "ts"` (or
+`:::citation 2`) gives another volume's.  The entry's shape — author list,
+series, publisher — is `bibtexEntry` in `SFLMeta/Version.lean`, so a change
+there updates every volume at once.
+
+**Cutting a release.**  Bump `version` in `lakefile.toml`, bump
+`weak.sfl.version` to match, set `weak.sfl.year` to the year of the release, and
+tag the commit `v<version>` (Lake's convention, and what Reservoir reads).  The
+release year is deliberately a recorded fact rather than the wall-clock year:
+two builds of the same tag must agree, and a citation should name the year the
+edition was published, not the year someone happened to rebuild it.
+
+**Adding a volume.**  Add a row to `volumes` in `SFLMeta/Volume.lean`, add the
+`[[lean_lib]]` with its `weak.sfl.volume` option, and add the `[[lean_exe]]`
+that calls `SFLMeta.runVolume` with the same slug.  The slug is the one name
+used everywhere a volume is identified mechanically: library and executable
+names, the `_out/<slug>/…` build directory, and the saver's volume prefix.
+
+**Why an option and not an import.**  A chapter cannot simply import a module
+that says which volume it is in: chapters shared between volumes are the *same
+file* (`HL/Slang.lean` and `TS/Slang.lean` are symlinked), so the library doing
+the compiling is the only thing that can tell the two builds apart.  Hence the
+per-`lean_lib` option.  A chapter compiled outside any volume library gets a
+clear error from the role telling it which option to set.
 
 ## AI policy
 
