@@ -429,8 +429,9 @@ reflexive:
 ::::
 
 ::::full
-We'll learn more about type classes in chapter {ref "Typeclasses"}[Typeclasses]. For now, the
-key idea is: a type class is an interface, and an instance is an
+We'll learn more about type classes in chapter {ref "Typeclasses"}[Typeclasses].
+For now, the key idea is just this:
+a type class is like an _interface_, and an instance is an
 implementation of that interface for a particular type.
 ::::
 
@@ -1119,7 +1120,7 @@ theorem myRepeat_append_general {c₁ c₂ n : Nat} :
     rw [Nat.succ_add, repeat_succ, repeat_succ, cons_append, ih]
 ```
 
-Then, we can use this more general theorem to prove our original goal:
+Then, we can use this more general theorem to prove the original goal:
 
 ```lean
 theorem myRepeat_append {c n : Nat} :

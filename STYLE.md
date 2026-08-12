@@ -902,9 +902,8 @@ the [Chicago Manual of Style](https://www.chicagomanualofstyle.org/).
 
 ## Informal Proofs
 
-DHS: Flesh this out more...
+We use informal proofs sparingly, as explanations and exercises when
+teaching reasoning principles and proof techniques in the abstract, as
+opposed to Lean-specific tools.
 
-We use informal proofs as explanations and exercises when teaching reasoning 
-principles and proof techniques in the abstract, as opposed to Lean-specific tools.
-
-Such proofs should be finished with _Qed_.
+Informal proofs should be finished with _Qed_.
