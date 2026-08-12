@@ -10,7 +10,6 @@ TS/*Verso.lean
 .claude/settings.json
 .claude/settings.local.json
 *.tmp
-# Personal keybinding cheat sheet and its generator (see .vscode/KEYBINDINGS.md).
-.vscode/KEYBINDINGS.md
-.vscode/keybindings-ref.py
-.vscode/keybindings-ref.plist
+# Personal keybinding cheat sheet and its generator (see .vscode/KEYBINDINGS-SETUP.md).
+.vscode/KEYBINDINGS*.md
+.vscode/keybindings-ref.*
