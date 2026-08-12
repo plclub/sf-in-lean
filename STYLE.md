@@ -1,138 +1,124 @@
 # SF-in-Lean Style Guide
 
-This file explains our conventions for how SFL   
-is written and structured. 
-`CONTRIBUTING.md` covers *workflow and mechanics*; this file is about
-*style*.
+This file explains our conventions for how SFL is written and structured.
+[CONTRIBUTING.md] covers *workflow and mechanics*; this file is about *style*.
 
-## Lean Style
+## Lean Style Conventions
 
-We generally follow the [Mathlib style
-guide](https://leanprover-community.github.io/contribute/style.html)
+We generally follow the Mathlib
+[style guide](https://leanprover-community.github.io/contribute/style.html)
 and [naming conventions](https://leanprover-community.github.io/contribute/naming.html),
-with the caveat around pedagogy in our SFL **Philosophy** (given above),
-which requires (among other things) adhering to the order of tactics, given next.
-We use the Lean linter by default.
+with the caveat around pedagogy in our [Guiding Philosophy](CONTRIBUTING.md#guiding-philosophy).
 
-### Tactics: order of introduction
+### Tactics and notations
 
 A core pedagogical decision is that tactics are introduced gradually.
-The table below lists the tactics **first introduced** in each
-chapter, in chapter order. It is derived from the current sources
-(tactic-position occurrences in real code, comments excluded) and
-should be kept in sync as chapters are rewritten.
+The table below lists the tactics first introduced in each chapter,
+in chapter order. It is derived from the current sources
+(tactic-position occurrences in real code, comments excluded)
+and should be kept in sync as chapters are rewritten.
+Do not use tactics before they are first introduced,
+and do not use tactics not in this table; in particular,
+`omega`, `grind`, and `aesop` may not be used in volumes `LF`, `HL`, and `TS`.
 
 | Chapter           | Tactics first introduced |
-|-------------------|--------------------------|
+| ----------------- | ------------------------ |
 | `Basics`          | `rfl`, `intro`, `rewrite`, `cases`, `exact` |
 | `Induction`       | `induction`, `have`, `rw`, `<;>` |
 | `UsingLean`       | `dsimp`, `calc`, `exact?`, `rw?` |
 | `Lists`           | *(none new)* |
 | `Poly`            | *(none new)* |
-| `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `unfold`, `split` |
+| `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `induction ... generalizing ...`, `unfold`, `cases ... : ...`, `split` |
 | `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
 | `IndProp`         | `rcases`, `subst` |
 | `Automation`      | `lia`, `try`, `repeat`, `specialize`, `trivial`, `simp`, `generalize` |
 | `Typeclasses`     | `decide` |
-| `HL/Imp`          | *(none new)* |
+| `HL` chapters     | *(none new)* |
 
-**Notes**
-- **`lia` rather than `omega`** The latter is being phased out.
-- `IndPropRegexp` has been folded into `Automation`
+Additional notation beyond the `Basics` is also introduced gradually alongside
+the tactics. The table below similarly lists new notation, which should also be
+kept in sync.
+
+| Chapter   | Notations first introduced |
+| --------- | -------------------------- |
+| `Lists`   | `structure`, `⟨...⟩` anonymous constructors, `.` accessors, `bif` |
+| `Poly`    | `{...}` implicit arguments, `_` holes, `@` explicit application |
+| `Tactics` | `let ⟨...⟩ := ...` |
+| `Logic`   | rewriting by `↔` |
+
+#### Notes
+
+- `omega` is being phased out in favor of `lia`.
+- `IndPropRegexp` has been folded into `Automation`.
 - `Maps` has been folded into `Typeclasses`; the total- and partial-map
-  development now lives there, so `Typeclasses` may use `simp`, `ext`, and the
-  rest of the budget accumulated by `Automation` and everything before it.
-  (`LF/Maps.lean` has been deleted; Rocq's `Maps.v` remains the source for the
-  prose.)
-- Candidate tactics still to be placed include `show`, `rename_i`, `revert`, `suffices`, `tauto`. 
-- Tactics `grind`, `aesop`, are deferred to a later volume, following
-  FPiL's caution that `grind` is overwhelming for beginners. 
+  development now lives there. (`LF/Maps.lean` has been deleted; Rocq's `Maps.v`
+  remains the source for the prose.)
+- Candidate tactics still to be placed include
+  `show`, `rename_i`, `revert`, `suffices`, `tauto`.
+- `grind` and `aesop` are deferred to a later volume, following
+  FPiL's caution that `grind` is overwhelming for beginners.
 
-Related notation introduced alongside tactics: anonymous constructor
-`⟨…⟩` (`Lists`); destructuring `let ⟨…⟩ := …` and `cases h : …`,
-`induction … generalizing …` (`Tactics`); projection/`Iff` syntax
-`.left`, `.right`, `.mp`, `.mpr`, and rewriting by an `↔` (`Logic`).
+### Syntactic considerations
 
-### SFL-specific conventions
+#### Case analyses and induction
 
-* **Structured `cases`/`induction`.** Prefer
+Prefer `cases ... with` and `induction ... with` over `case` or `·` goal
+selectors, with each alternative on its own unindented line.
 
-  ```lean
-  cases b with
-  | true  => …
-  | false => …
-  ```
+```lean
+cases b with
+| true  => ...
+| false => ...
+```
 
-  over the separate `case` syntax *and* over the bare `·` goal selector — i.e. prefer
-  `cases h with | …` / `induction h with …`.
-  Put each alternative on its own unindented line beginning with `|`.
+Keep short branch bodies inline.
 
-* Keep short branch bodies inline: 
-  
-  ```lean
-  cases b, c with
-  | true, false => rfl
-  | false, _ => simp
-  ```
+```lean
+cases b, c with
+| true, false => rfl
+| false, _ => simp
+```
 
-  *Optionally*, align patterns across alternatives:
+Optionally, align patterns across alternatives.
 
-  ```lean
-  cases b, c with
-  | true,  _ => rfl
-  | false, _ => simp
-  ```
+```lean
+cases b, c with
+| true,  _ => rfl
+| false, _ => simp
+```
 
-  For multiline branch bodies, put `=>` after the alternative *without* padding
-  and indent the body by two spaces, **aligned** with the alternative name:
+For multiline branch bodies, don't pad the `=>`, and indent the body to align
+with the alternative name.
 
-  ```lean
-  cases b with
-  | true =>
-    simp
-    exact h
-  | false =>
-    rw [h]
-    exact hf
-  ```
-  
-* **`rewrite` before `rw`** (see tactic chart above) --
-  `rw [h]` is roughly `rewrite [h]; rfl`, which is too strong at
-  first: it hides the closing `rfl` and makes proofs step
-  confusingly (the goal vanishes when you step past the final `]`).
-  We introduce `rw` specifically in `Induction.lean` and use from
-  then on.
-
-* **`example` for one-off demos.** Prefer `example …` over a named
-  `theorem foo …` for throwaway illustrations (tactic demos, "silly" lemmas,
-  etc.) that are never referenced later — Lean's `example` doesn't force us to
-  invent a name (unlike Rocq).  Reserve names for results used elsewhere or
-  graded. (berberman, review of PR #61.)
-
-* **Explicit rewrites over `dsimp`/`simp` through notation** (see
-  "Notation and simplification").
-
-* **Library vs. client code.** Inside a definition's own library it is
-  fine to unfold and simplify through definitions; *using* that code,
-  do not "peek through the interface."
+```lean
+cases b with
+| true =>
+  simp
+  exact h
+| false =>
+  rw [h]
+  exact hf
+```
 
 #### Names and namespaces
 
 Follow the Lean library's naming conventions:
 
-- Theorems and proof names use `snake_case`, e.g. `add_swap`, `rev_app_distr`;
-- Types and propositions (including definitions returning `Prop`) use `UpperCamelCase`, e.g. `Aexp`, `IsValue`;
-- Other values and functions use `lowerCamelCase`, e.g. `isEven`, `doubleBin`.
+- Theorems and proof names use `snake_case`, e.g. `add_swap`, `rev_app_distr`
+- Types and propositions (including definitions returning `Prop`) use
+  `PascalCase`, e.g. `Aexp`, `IsValue`
+- Other values and functions use `camelCase`, e.g. `isEven`, `doubleBin`
 
-Also follow Lean's variable naming conventions:
+Also follow Lean's variable naming conventions, using primes `'`, `''`, ...
+and numerical subscripts `₁`, `₂`, ... as needed:
 
-- Types are Greek letters like `α`, `β`
-- Propositions are lowercase `a`, `b`, `c`, etc
-- Predicates (functions into `Prop`) are lowercase `p`, `q`, `r`, etc
-- Natural numbers are lower case `n` and `m`, etc
-- Hypotheses are lower case starting with `h`
-- Functions are `f`, `g`, etc
-- Lists are `l`
+- `α`, `β`, `γ`, ... for type variables
+- `a`, `b`, `c`, ... for propositions
+- `p`, `q`, `r`, ... for predicates (functions into `Prop`)
+- `m`, `n`, `k`, ... for natural numbers
+- `h` for hypotheses
+- `f` and `g` for functions
+- `l` for lists
 
 Almost always, definitions and theorems relating to a type belong in a
 namespace with the same name as the type. Define the type first, then open its
@@ -152,14 +138,11 @@ theorem value_is_nf (t : Tm) (h : IsValue t) : IsNormalForm t := by
 end Tm
 ```
 
-Write `def eval` inside `namespace Aexp`, rather than `def Aexp.eval` inside
-that namespace.
+#### Theorem types and arguments
 
-#### Theorem arguments and visibility
-
-Put a theorem's ordinary arguments before the colon rather than introducing them with
-`∀` in its result. Likewise, when a proof would begin by introducing a hypothesis,
-normally put a named hypothesis before the colon:
+Put a theorem's ordinary arguments before the colon rather than introducing them
+with `∀` in its result. Likewise, when a proof would begin by introducing a
+hypothesis, put a named hypothesis before the colon:
 
 ```lean
 theorem foo {α : Type} (x : α) (h : P x) : Q x := by
@@ -169,23 +152,36 @@ theorem foo {α : Type} (x : α) (h : P x) : Q x := by
 rather than:
 
 ```lean
-theorem foo {α : Type} (x : α), P x → Q x := by
+theorem foo : ∀ {α : Type} (x : α), P x → Q x := by
   intro h
   ...
 ```
 
-This is not an absolute rule: keep quantifiers or implications in the resulting type
-when they are naturally part of the theorem's conclusion, when partial application of the theroem
-is useful, or the declaration is defined by `|` pattern matching.
+This is not an absolute rule: keep quantifiers or implications in the resulting
+type when they are naturally part of the theorem's conclusion, when partial
+application of the theorem is useful, or the declaration is defined by `|`
+pattern matching.
 
 In `Basics`, explicit `∀` and `intro` may be used when they are being introduced.
-After declaration-header binders have been explained in section "Displaying Theorem Statements",
-use the idiomatic deceleration-header form consistently.
+After declaration arguments have been explained in section
+"Displaying Theorem Statements", use the idiomatic declaration argument form
+consistently.
 
-##### Visibility
+Declaration types that overflow onto subsequent lines take an extra level of
+indentation relative to the declaration body:
+
+```lean
+theorem map_cons {α β : Type} {f : α → β}
+    {head : α} {tail : List α} :
+    map f (head :: tail) = f head :: map f tail := by
+  rfl
+```
+
+#### Type annotations
 
 Always give binders explicit type annotations, even when Lean can infer them.
-For example, write `(n : Nat)`, `{α : Type}`, and `(h : P)` rather than bare `n`, `{α}`, or `h`.
+For example, write `(n : Nat)`, `{α : Type}`, and `(h : P)` rather than bare
+`n`, `{α}`, or `h`.
 
 Type parameters should normally be implicit when later arguments determine them:
 
@@ -195,9 +191,11 @@ theorem isNil_cons {α : Type} (x : α) (xs : List α) :
   ...
 ```
 
-For small equational lemmas for `rw` or `simp`, make arguments
-implicit when the displayed equation determines them. This follows the style of
-Lean's list lemmas. For example, `map_cons` can be used simply as `rw [map_cons]`:
+#### Implicit arguments
+
+For small equational lemmas for `rw` or `simp`, make arguments implicit when the
+displayed equation determines them. This follows the style of Lean's list lemmas.
+For example, `map_cons` can be used simply as `rw [map_cons]`:
 
 ```lean
 theorem map_cons {α β : Type} {f : α → β}
@@ -206,10 +204,10 @@ theorem map_cons {α β : Type} {f : α → β}
   ...
 ```
 
-However, do _not_ make a theorem's main inputs implicit merely because unification could
-infer them from the conclusion. Keep the principal function, collection,
-point, or other subject explicit when callers are likely to apply the theorem
-directly. For example:
+However, do _not_ make a theorem's main inputs implicit merely because
+unification could infer them from the conclusion. Keep the principal function,
+collection, point, or other subject explicit when callers are likely to apply
+the theorem directly. For example:
 
 ```lean
 theorem foldMap_correct {α β : Type}
@@ -238,8 +236,9 @@ theorem isEven_iff_Even {n : Nat} :
 ### Incomplete code, expected errors, and diagnostics
 
 Use `sorry` to admit a declaration, `+error` to show code that Lean rejects,
-`-keep` to keep a block from changing the later environment, and
-`#guard_msgs` only when the output itself is being checked.
+`-keep` to keep a block from changing the later environment,
+` ```leanOutput ` when the output itself is being checked,
+and `#guard_msgs` for internal checks that are not student-facing.
 
 #### `sorry`
 
@@ -308,42 +307,39 @@ def x : Nat := "str"
 
 Without `-keep`, `x` cannot be redefined later in the chapter.
 
-#### `#guard_msgs`
+#### ` ```leanOutput `
 
-Use `#guard_msgs` when the message text, severity, or position is part of the
-test. The guard and its expected-message doc comment are checked while the book
-is compiled, then stripped from the HTML and extracted projects.
+Use `(name := <identifier>)` with a later `leanOutput` block to check that the
+Lean block indeed produced the expected output, e.g.
 
-This includes interactive-tactic suggestions:
-
-```lean
-/-- info: Try this:
-  exact Nat.add_comm a b -/
-#guard_msgs(info) in
-example (a b : Nat) : a + b = b + a := by
-  exact?
+````
+```lean (name := example)
+#check Bool.true
 ```
 
-It also includes regression tests for custom tactics and commands:
-
-```lean
-#guard_msgs in
-sf_expect_failure?
-  def incomplete (n : Nat) : Nat :=
-    match n
-```
-
-Do _not_ guard every command that happens to print information. In particular,
-an __ordinary `#check` needs no guard__:
-
-````lean
-```lean
-#check Nat.add
+```leanOutput example
+Bool.true : Bool
 ```
 ````
 
-Guard `#check` only when its printed form is what the example is testing. For
-example, `Imp` checks its custom delaborator this way:
+Use `leanOutput` with named `+error` blocks to check for the expected error
+message, e.g.
+
+````
+```lean +error (name := test)
+def incomplete (n : Nat) : Nat :=
+    match n
+```
+
+```leanOutput test
+unexpected end of input; expected 'with'
+```
+````
+
+#### `#guard_msgs`
+
+Use `#guard_msgs` for testing diagnostic messages that are not intended to be student-facing.
+For example, `Imp` checks its custom delaborator this way:
 
 ````lean
 ```lean
@@ -353,35 +349,18 @@ example, `Imp` checks its custom delaborator this way:
 ```
 ````
 
-### Unicode Text and Formatting
-
-Go Unicode-native! Use subscripts on variables, like x₁ x₂  etc. Use α Γ etc. 
-for type variables and other standard notation. Use arrows like → ⇓ for reduction
-and evaluation. TODO: Elaborate on guidelines here.
-
-We will use the standard Lean auto-formatter when it's released.
-
 ### Notation and simplification
 
-When notation is implemented via typeclass instances, `dsimp [add]` / `dsimp
-[app]` do *not* resolve the instance down to the underlying definition, and
-`simp` is often too powerful for teaching. So **rewrite explicitly by equational
-lemmas** when possible instead — e.g. `n + (m + 1) = n + m + 1` or `(h :: t) ++
-l = h :: t ++ l` — rather than reaching for `dsimp`/`simp` in this book.
+When notation is implemented via typeclass instances, `dsimp [add]` does *not*
+resolve the instance down to the underlying definition, and `simp` is often too
+powerful for teaching. Instead, rewrite explicitly by characterizing lemmas when
+possible, e.g. `n + (m + 1) = n + m + 1` or `(h :: t) ++ l = h :: t ++ l`.
 
-There is some flexibility here, but there are some **important** nuances. 
-Please read the list below to understand when using `dsimp`/`simp` is appropriate.
-
-
-1) When possible, use `rewrite`/`rw` over `dsimp`. 
-2) If you must use `dsimp`, **do not use `dsimp`** before `UsingLean.lean`. 
-3) If you must use `simp`, **do not use `simp`** before `Automation.lean`. 
-4) If using `simp` with definitions (only in or after `Automation.lean`), 
-   **tag theorems not definitions, with `@[simp]`**. 
-Example: 
+When using `simp` with declarations (only in or after `Automation.lean`),
+tag theorems with `@[simp]`, not definitions:
 
 ```lean
-/- Do not use @[simp] here -/
+/- Do not use @[simp] here! -/
 def add (n : Nat) (m : Nat) : Nat :=
   match m with
   | zero => n
@@ -391,23 +370,24 @@ def add (n : Nat) (m : Nat) : Nat :=
 theorem add_zero : ∀ n : Nat, n + zero = n := by
   intro n
   rfl
+
 @[simp] /- ... and here. -/
 theorem add_succ : ∀ n m : Nat, n + (succ m) = succ (n + m) := by
   intro n m
   rfl
-
 ```
 
-5) **The book may not use `grind` in any place.**
-6) In and after the `Automation.lean` chapter, using `simp` and `lia` is
-    appropriate.
+### Unfolding
 
-### Definitions vs. Abbreviations
+Inside a definition's own library, it's fine to unfold and simplify through
+definitions; when *using* that code, do not "peek through the interface."
+
+### Definitions vs. abbreviations
 
 Abbreviations let syntax-based tactics like `rw` and `simp` to see the underlying term implicitly.
-Abbreviations should never be used for functions -- use definitions plus characterizing lemmas instead.
+Abbreviations should never be used for functions; use definitions plus characterizing lemmas instead.
 To encapsulate a type with an API boundary, use a definition rather than an abbreviation.
-However, abbreviations can be used to create a type alias that do not intend to encapsulate an inner type.
+However, abbreviations can be used to create type aliases that do not intend to encapsulate an inner type.
 
 As an example, the `DefDemoGood` is idiomatic, whereas the `AbbrevDemoBad` is not:
 
@@ -435,265 +415,286 @@ theorem Bag.foo : empty ++ empty = empty := by
 end DefDemoGood
 ```
 
-### Arithmetic / the custom `Nat`
+### Theorems vs. examples
 
-`Basics` defines its own `Nat` with `zero`/`succ` constructors and
-overrides the stdlib typeclasses for `-`, `*`, and `^` (but **not**
-`+`, which is too pervasive in the stdlib to shadow safely). Write
-arithmetic proofs against these definitions (`add_succ`, `add_zero`,
-`mul_succ`, …). `calc`-style equational reasoning is introduced in
-`Induction`.
+Prefer `example : ...` over a named `theorem foo : ...` for throwaway
+illustrations (tactic demos, "silly" lemmas, etc.) that are never referenced
+later. Reserve names for results used elsewhere or for graded exercises.
 
-
-## Verso markup conventions
-
-BCP: Claude-generated material here -- human review needed...
-
-### Chapter file structure
+## Verso Markup Conventions
 
 Each chapter is a single `.lean` file in its volume directory.
-
-Sections within a chapter use standard markdown headings (`#`, `##`,
+Sections within a chapter use standard Markdown headings (`#`, `##`,
 `###`, …) relative to the `#doc` level.
 
-Lean declarations (`def`, `theorem`, `inductive`, etc.) appear directly
-in the Verso source and are elaborated by Lean as the book is compiled,
-so type errors and broken proofs are caught at build time.  Code that
-should appear in the rendered HTML uses fenced `` ```lean `` blocks.
+Unfenced text is parsed as Markdown and rendered with formatting,
+while text in code fences ` ``` ` is parsed as code.
+Verso directives fenced by `:::` control when and how the contained Markdown is
+rendered, and is also used for tooling. The subsections below list the various
+types of code and directive blocks that are used.
 
-### Displays: `` ```display `` and `` ```displaymath ``
+### `lean` blocks
 
-Two fenced blocks (parallel to `` ```lean `` and `` ```bnf ``) set material off
-from the prose as a *display*.  Both are implemented by
-`SFLMeta/DisplayMath.lean`.
+Fenced `lean` blocks in a file are type checked in the order they appear as if
+the file contained only those Lean blocks, as is usual in literate programming.
+They are rendered in the HTML as code blocks with hoverable doc comments and
+expandable proof states in tactics.
 
-**`` ```display `` — set-off Lean code, no typesetting.** Shows its body verbatim
-as (non-elaborated, non-highlighted) monospace code, set off from the prose.  The
-body is never parsed or elaborated, so anything is safe — deliberately ill-formed
-snippets, shell transcripts, and the informal `[[ … ]]` equations of the paper
-proofs:
+These blocks may take a `(name := <identifier>)` option for use by a later
+`leanOutput` block. They may also take additional boolean options:
+
+| Option | HTML book | Extracted Lean | Usage |
+| ------ | --------- | -------------- | ----- |
+| `-show` | not rendered | normal code | For hiding unexplained technical code from the book narrative |
+| `+error` | rendered as code block with error | code in `sf_expect_failure` block | For demonstrating expected errors while supressing error diagnostics |
+| `-keep` | rendered as code block | code in `sf_experiment` block | For successfully checking code without affecting later blocks |
+
+Combine `+error` and `-keep` to produce a block that is expected to fail,
+and whose declarations don't affect later blocks.
+Combine `+error` and `(name := <identifier>)` to produce a block whose error
+message gets checked by ` ```leanOutput <identifier> `.
+See the previous sections for more detailed usage guidelines.
+
+### BNF grammar blocks
+
+Fenced `bnf` blocks render as typeset object-language grammars.
+Productions begin with a metavariable and `::=`, followed by alternatives
+separated by `|`, and end with `;`.
+Plain identifiers are nonterminals, while quoted strings are terminals.
+Each variant may have a string comment enclosed by parentheses.
+For instance, the grammar
 
 ````
-```display
-n + (m + p) = (n + m) + p.
+```bnf
+t ::= x ("variable")
+    | "λ" x ":" T "." t ("abstraction")
+    | t t ("application") ;
 ```
 ````
 
-This is the home for the coqdoc `[[ … ]]` displays: **`to_verso` emits a
-`` ```display `` block for every `[[ … ]]`** (in both the `.lean` and the `.v`
-front-ends).  The content is thus preserved and marked as a display rather than
-left as an anonymous `` ``` `` fence.  coqdoc uses the same `[[ … ]]` for shell/code
-displays (`make Basics.vo`) and for displayed math, and the two are not
-mechanically distinguishable, so `to_verso` treats them uniformly as
-`` ```display `` — always safe, never elaborated.
+is rendered as comments in the extracted Lean
 
-In the HTML a display is set off and indented a few characters from the left
-margin (not flush left, not centered).  In the *generated* `.lean` files (the
-per-variant student/solutions/terse extracts) a display is rendered specially: it
-becomes its own comment, each source line kept on its own line and indented under
-`-- `, and — unlike ordinary prose — it is **never reflowed/filled** into a
-paragraph, because a display's line structure is significant.
-
-**`` ```displaymath `` — real typeset math.** For a genuine *displayed equation*,
-typeset as mathematics by the bundled KaTeX:
-
-````
-```displaymath
-n + (m + p) = (n + m) + p.
+```lean
+-- t ::= x                     (variable)
+--     | λ x : T . t           (abstraction)
+--     | t t                   (application)
 ```
+
+and as a similar table in the HTML.
+
+### Display blocks
+
+Fenced `display` blocks are not type checked, and are rendered verbatim in the
+HTML as plain code blocks and in the extracted Lean as indented comments.
+
+Fenced `displayMath` blocks contain TeX math equations;
+they are rendered in the HTML as typeset math using KaTeX,
+and in the extracted Lean as verbatim indented comments.
+Each line is a separate equation.
+
+### Inline roles
+
+Inline roles of the form `{<role>}[<text>]` provide intertext linking and
+hovertext in the HTML. If the text is a single piece of content,
+such as an inline code snippet or an italicized phrase,
+the brackets may be omitted.
+
+* `{ref <string>}[<text>]`:
+  a cross-reference to the section in the corresponding `<string>.lean` file
+* `` {lean}`<expression>` ``:
+  typechecked Lean code with usual hover and navigation behavior
+* `` {name}`<identifier>` ``:
+  like `{lean}`, but a single identifier that navigates to its declaration
+* `` {tactic}`<tactic>` ``:
+  a single syntax highlighted tactic with no navigation or hover
+* `{deftech}_<text>_`, `{tech}_<text>_`:
+  a defined technical term appearing in the glossary;
+  a link that navigates to the defining instance of that term
+* `{citep}[]`/`{citet}[]`: a parenthetical/textual citation
+
+### Directive fence depth
+
+Verso uses colon depth on directives the same way Markdown uses backtick depth
+for nesting. A directive requires at least three colons (`:::`);
+and may be nested within other directives with strictly more colons.
+For instance,
+
+````lean
+::::exercise
+Prove that {lean}`1 = 1`.
+
+:::solution
+```lean
+theorem one_equals_one : 1 = 1 := rfl
+```
+:::
+::::
 ````
 
-Each non-blank line becomes one centered display equation.  The body is **LaTeX**:
-for the plain arithmetic identities that pervade the informal proofs
-(`0 + (m + p) = (0 + m) + p.`) the source text is already valid LaTeX and renders
-directly; where finer control is wanted an author writes the corresponding LaTeX
-(`\mathsf{S}` for a roman constructor, `\text{and}` between two columns, an
-`aligned` environment to line up `=`).  Verso also accepts a single inline display
-natively as `` $$`…` `` inside prose.
-
-Promoting the genuinely-mathematical `` ```display `` blocks to `` ```displaymath ``
-is a manual editing pass on the `.lean` chapter; `to_verso` does not attempt it
-automatically.
-
-### Fence depth: `:::` vs `::::`
-
-Verso uses colon-fence depth the same way markdown uses backtick depth
-for nesting.  Use **three colons** (`:::`) for a directive whose body
-contains only prose and code blocks.  Use **four colons** (`::::`)
-whenever the body itself contains three-colon directives.
-
-In practice the widths follow the nesting: leaf directives (`:::dev`,
-`:::instructors`, `:::hide`, `:::answer`, `:::grade`, `:::solution`, `:::terse`,
-`:::slidebreak`, `:::suppressPreviousHeaderWhenTerse`) are always three colons;
-a `::::full` / `::::hide` / `::::quiz`
-that nests a leaf uses four; an `:::::exercise` that nests those uses five.
-`to_verso` computes the minimal correct width automatically; when hand-authoring,
-just make each container strictly wider than everything directly nested inside
-it.
+is an exercise that contains a solution.
 
 ### Build variants and prose directives
 
-Every chapter is compiled once but rendered in three _variants_:
-- **student** — full prose, solutions elided
-- **solutions** — full prose, solutions shown
-- **terse** — abridged prose for live-coding / lecturing
+Every chapter is compiled once but rendered in four variants:
 
-Three directives control what prose appears in which variant.
+- **student**: full prose, solutions elided
+- **solutions**: full prose, solutions shown
+- **grading**: full prose, solutions shown, with grading attributes
+- **terse**: abridged prose for live-coding / lecturing
 
-**`::::full … ::::`** — Content for the reading builds (student and
-solutions). This is the main narrative that students encounter in the
-book. Hidden in the terse build to keep lecture slides uncluttered.
+A number of directives control what prose appears in which variants.
+There is no difference between how the solutions and the grading variants are
+rendered in the HTML, so what applies to the solutions variant below
+also applies to the grading variant.
 
-```
-::::full
-One notable thing about Lean is that its set of built-in features is
-_extremely_ small.  For example, instead of the usual palette of
-atomic data types (booleans, integers, strings, etc.), Lean offers
-a powerful mechanism for defining new data types from scratch…
-::::
-```
+#### `:::full`
 
-**`:::suppressPreviousHeaderWhenTerse` / `:::`** — Marks the section
-heading immediately above it as full-only.  A heading cannot be nested
-inside `::::full` (headings create document sections; directives hold
-blocks), so a heading that should appear only in the reading builds stays
-at document level and is followed by this empty marker instead:
+_Rendered in student and solutions variants._
 
-```
+The main narrative that students encounter in the book, which is hidden in the terse variant to keep lecture slides uncluttered.
+
+#### `:::terse`
+
+_Rendered in terse variant only._
+
+Typically a one- or two-sentence cue for a live-coding presenter.
+The standard pattern at each presentation point is a `:::terse` cue, followed
+by the `:::full` narrative prose it stands in for, followed by a shared
+` ```lean` code block.
+
+#### `:::solution`
+
+_Rendered in solutions variant only._
+
+Worked prose answers to open-ended exercises: discussions, design rationale,
+or illustrative code that is not intended to compile.
+(For _compilable_ answers inside `lean` blocks,
+use `solution!` as described above.)
+
+#### `:::suppressPreviousHeaderWhenTerse`
+
+_Rendered in student and solutions variants._
+
+Marks the section heading immediately above as full-only for reading.
+Headings cannot be nested inside `:::full` directives,
+since headings create document sections while directives hold blocks,
+so this is a workaround.
+An entire section can be marked as full-only using a heading followed by
+this directive, followed by a full directive, e.g.
+
+```lean
 # Additional Exercises
 
 :::suppressPreviousHeaderWhenTerse
 :::
-```
 
-In the terse build the heading is suppressed (hidden in the HTML, omitted
-from the generated `.lean`); the section's *content* is unaffected and
-still follows the usual `::::full` / `:::terse` controls.  `to_verso`
-emits the marker for every heading that sits inside a `-- FULL` region in
-the bare-Lean source (the SF convention scopes most book section headings
-to the full build; lecture flow is structured by `:::slidebreak` instead).
-
-**`:::terse … :::`** — Content shown _only_ in the terse build.
-Typically a one- or two-sentence cue for a live-coding presenter,
-standing in for the adjacent `::::full` prose.
-
-```
-:::terse
-A datatype definition:
+:::full
+This is an exercise.
 :::
 ```
 
-**`:::solution … :::`** — Prose shown only in the **solutions** build.
-Use this for worked prose answers to open-ended exercises:
-discussions, design rationale, or illustrative code that is not
-intended to compile. (For _compilable_ answers inside `lean` blocks,
-use `solution!` or `-- SOLUTION`, described below.)
+### Exercise and grading directives
 
-The standard pattern at each presentation point is a `:::terse` cue
-followed by a `::::full` narrative block followed by a shared `lean`
-code block.  All three builds see the code; only the relevant prose
-builds see each prose variant.
+#### `:::exercise`
 
-### Exercise and grading infrastructure
+_Rendered in all variants._
 
-**`::::exercise (rating := N) (name := "foo") … ::::`** — Marks an
-exercise block.  `rating` is a difficulty from 1 (easy) to 5 (hard);
-`name` is a short identifier used in headings and cross-references.
-Renders as a styled box with stars in HTML; produces a `### Exercise
-(N stars): foo` module-doc heading in the extracted `.lean` files.
-Should always contain a nested `:::grade` block.
+An exercise block rendered as `Exercise ★ (foo)` in the HTML
+and as a comment `-- ### Exercise (1 star): foo ⭐` in the extracted Lean files.
+It takes the following options:
 
-Typical structure:
+* `(rating := <number>)` (required): difficulty from 1 (easy) to 5 (hard)
+* `(name := <identifier>)` (required): name used in headings and cross-references
+* `(level := <identifier>)` (optional): additional difficulty warning (currently only `Advanced`)
+* `(manual := <boolean>)` (optional): marks the exercise for manual grading
 
-```
-::::exercise (rating := 1) (name := "nandb")
-Remove the `sorry`s below and complete the definition of `nandb`…
+#### `:::gradeTheorem <number> <identifier>...`, `:::grade`
 
-  [lean block with solution! markers]
+_Not rendered._
 
+`gradetheorem` is an autograding specification for an exercise with
+a point value and one or more declarations, while `grade` is a manual
+grading specification. The manual specification has the following format:
+
+````
 :::grade
 ```
-GRADE_THEOREM 1: nandb_test4
+GRADE_MANUAL <number>: <identifier>...
 ```
 :::
-::::
-```
+````
 
-**`:::grade … :::`** — Grading spec, always nested inside
-`::::exercise`. Contains one or more `GRADE_THEOREM <pts>: <name>` or
-`GRADE_MANUAL <pts>: <name>` lines for autograding scripts. Currently
-a noop in all rendered outputs (body discarded at elaboration); the
-spec survives verbatim in the Verso source for tooling.
+Every exercise **must** contain a nested grading directive.
+The usual structure is an exercise statement, followed by a code block,
+followed by a grading directive, e.g.
 
-### `lean` block flags
-
-Use ordinary fenced `lean` blocks for examples that should elaborate in
-the chapter, appear in the rendered book, affect later Lean blocks,
-and be emitted as normal Lean code in generated projects for teachers and students.
-
-Some examples are meant to be shown or checked without becoming persistent code in
-generated projects:
-
-|block|rendered book|generated project|
-|---|---|---|
-|`` ```lean ``|shown|normal (executable) code|
-|`` ```lean -show``|hidden|normal code|
-|`` ```lean +error``|shown as expected failure|wrapped in an indented `sf_expect_failure` block|
-|`` ```lean +error -show``(rare)|hidden|wrapped in an indented `sf_expect_failure` block|
-|`` ```lean -keep``|shown|wrapped in an indented `sf_experiment` block|
-|`` ```lean -keep -show`` (rare)|hidden|wrapped in an indented `sf_experiment` block|
-
-Do not put definitions needed later in `-keep` or `+error` blocks as they will not become
-executable declarations in the generated projects, though they still get rendered in the book. 
-
-### Quizzes
-
-**`::::quiz … ::::`** — A multiple-choice review question: the body holds the
-question prose and the options, and the answer goes in a nested **`:::answer`**.
-
-* A *provable* answer is a plain (verbatim) ` ``` ` fence holding the Lean
-  theorem — shown for reference, not re-elaborated (so it is not type-checked;
-  keep it in sync with live definitions by hand).
-* A deliberately *false* / unprovable claim is kept as an illustration: state it
-  and leave the proof stuck with an explanatory comment (the SFL analogue of
-  Rocq's `Abort`) — do **not** `sorry` it, and do **not** make it a live
-  ` ```lean ` block.
-
-`:::answer` — like the other author-only tags — is a noop today (dropped from
-every build), reserved for a future answer-revealing build.  Use `:::answer`
-(not `:::hide`) for a quiz's answer, so that future build can find it.
-
-### Solution mechanisms inside `lean` blocks
-
-Both mechanisms are elaborated by Lean at compile time (errors in the
-model solution are caught during the build) and produce two source
-variants — teacher (solutions visible) and student (solutions hidden)
-— written to `_out/<vol>/solutions/lean/` and
-`_out/<vol>/student/lean/`.
-
-**`solution!(expr)`** — Wraps a single term or tactic sequence.
-In the teacher variant the `solution!` keyword is stripped, leaving
-the body.  In the student variant the entire `solution!(…)` call is
-replaced with `sorry`.
+````
+::::exercise (rating := 1) (name := "mul_simpl_rules")
+Remove {tactic}`sorry` and prove the simplification rules for {name}`mul` below.
 
 ```lean
-def nandb (b1 : MyBool) (b2 : MyBool) : MyBool
+theorem mul_zero : ∀ n : Nat, n * zero = zero := by
+  solution!
+    ...
+
+theorem mul_succ : ∀ n m : Nat, n * (succ m) = (n * m) + n := by
+  solution!
+    ...
+```
+
+:::gradeTheorem "0.5" mul_zero mul_succ
+:::
+::::
+````
+
+In the grading Lean variant, autograding specifications are extracted to
+`attribute [autogradedProof <number>] <identifier>...`.
+
+### Exercise solution mechanisms
+
+#### `solution!`, `workinclass!`, `suggested!`
+
+There are several tacticals that replace a term or a sequence of tactics
+depending on the variant. A solution term is placed within parentheses.
+
+````
+```lean
+def nandb (b1 : Bool) (b2 : Bool) : Bool
   := solution!(match b1 with
   | .true  => notb b2
   | .false => .true)
 
-example : nandb .true .false = .true := solution!(by rfl)
 ```
+````
 
-For tactic proofs, write `solution! <tacticSeq>` inside a `by` block.
+A solution proof is placed in an indented block of tactics.
 
-**`-- SOLUTION … -- END SOLUTION`** — Textual block for answers that
-span multiple lines and cannot be wrapped in a single expression: the
-constructors of an inductive type, a multi-line proof, etc.  In the
-student variant the whole region (markers included) is replaced with a
-single `-- FILL IN HERE` comment at the same indentation.  In the
-teacher variant the marker lines are stripped and the body is kept.
+````
+```lean
+theorem false_or (b : Bool) : (.false || b) = b := by
+  solution!
+    rfl
+```
+````
 
+The tactical and its term or proof is replaced either by `sorry` or by
+the term or proof itself. For proofs, they are preceded by `all_goals`,
+since the tactics are indented. The replacements are summarized below.
+
+| Tactical       | `solutions` | `student` | `terse`     | Usage |
+| -------------- | ----------- | --------- | ----------- | ----- |
+| `solution!`    | `all_goals` | `sorry`   | `sorry`     | For homework exercises |
+| `workinclass!` | `all_goals` | `sorry`   | `all_goals` | For work in class |
+| `suggested!`   | `all_goals` | `sorry` with proof in comment | `all_goals` | For exercises with a suggested proof to modify |
+
+#### `-- SOLUTION`
+
+Entire lines of code can also be replaced by beginning with a `-- SOLUTION`
+comment and ending with a `-- END SOLUTION` comment. The comments are stripped
+in the solutions variant, while all lines are replaced by a `-- FILL IN HERE`
+comment in the student and terse variants. Use this only when omitting the lines entirely still compiles, such as for the constructors of an inductive type.
+
+````
 ```lean
 inductive Bin : Type where
 -- SOLUTION
@@ -702,86 +703,144 @@ inductive Bin : Type where
   | b1 : Bin → Bin
 -- END SOLUTION
 ```
+````
 
-**Convention:** prefer `solution!(…)` for a single term or tactic sequence.
-Use `-- SOLUTION … -- END SOLUTION` only where the elided region stays *valid as
-a comment* — the constructors of an `inductive`, or a whole top-level
-declaration (the student sees `-- FILL IN HERE` in its place).
+### Quiz and solution directives
 
-**Do not use `-- SOLUTION` for a `def` body or a proof body.**  Eliding those to
-`-- FILL IN HERE` leaves an incomplete `def … :=` or an empty `by` block, which
-fails to compile — and a stubbed `def` must keep its *name* defined so later code
-still elaborates.  Wrap those in `solution!(…)` instead, so the student variant
-becomes `:= sorry` / `by sorry`.  (Use `-- END SOLUTION` as the closer, not
-`-- /SOLUTION`; `to_verso` rewrites the code-forward `-- /SOLUTION` to it, but
-hand-authored Verso must use `-- END SOLUTION`.)
+#### `:::quiz`, `:::quizSolution`
 
-### Author-only annotations
+_Rendered in all variants._
 
-These directives are invisible in rendered outputs (HTML, TeX, and generated
-`.lean` files) — with one exception: an *actionable* `:::dev` note (urgency
-`NOW`, `TODO`, or none — see below) is passed through, brightly highlighted in
-the HTML and as a labelled comment in the generated `.lean` files.
+A multiple-choice quiz block, which _may_ contain a nested solution block.
+The solutions are hidden behind a "Show solution" button in the HTML,
+and not rendered in the extracted Lean files.
+Quizzes are formatted as follows.
 
-Write author-facing notes as `:::` **directives**.  (The old ` ```dev ` /
-` ```instructors ` code-block forms were removed 2026-07-15.)  A directive's
-body is parsed as markdown, so backtick code identifiers (`foo_bar`, `[x]`) and
-escape markdown-special text just as you would in `::::full` prose; reach for
-an inner ` ``` ` fence only when the body is code-dense or embeds a Lean
-snippet that must not elaborate.  NB: a `:::dev` body *elaborates* (its blocks
-are kept so shown notes can render), so an inner ` ```lean ` fence there runs
-the Lean code — use a plain ` ``` ` fence for code that must stay inert.
-(`to_verso` generates these directives with the body verbatim-fenced, which is
-always safe; a hand pass can un-fence and inline the markdown.)
+````
+::::quiz
+How do you prove this?
 
-Pick the tag by intent — `:::instructors` (instructor notes), `:::dev` (author
-TODOs / review threads), `:::answer` (a quiz's answer — see **Quizzes**),
-`:::hide` (genuinely hidden content).  Apart from shown `:::dev` notes, all are
-noops today (dropped from every build), so the choice is *semantic*: the name
-reserves each for a future build that could treat it differently (reveal
-`:::answer`, show `:::instructors` to instructors).
+```display
+example : 1 = 1
+```
 
-**`:::instructors … :::`** — Notes for instructors: pacing advice,
-classroom caveats, which sections to skip for a short course, etc.
+(A) You can't
+(B) I don't know how
+(C) {tactic}`rfl`
+
+:::quizSolution
+```lean
+example : 1 = 1 := by rfl
+```
+:::
+::::
+````
+
+### Internal commentary directives
+
+#### `:::dev`
+
+A developer note that may take the following options:
+
+* `<string>`: the author of the note
+* `NOW` | `BeforeNextRelease` | `PotentialImprovement`: an urgency level
+* `(year := <number>)`: the year of authorship
+
+Authors should be in the form `Full Name (github-handle)`.
+Notes marked as `PotentialImprovement` are not rendered;
+unmarked notes or those marked as `NOW` or `BeforeNextRelease` are rendered
+in all variants, appearing as yellow boxes labelled with "Note to developers
+(Author)" in the HTML and as comments in the extracted Lean.
+
+#### `:::instructors`
+
+_Not rendered._
+
+An instructor note for pacing advice, classroom caveats,
+which sections to skip for a short course, etc.
+
+### Structural and presentation directives
+
+#### `:::hide`
+
+_Not rendered._
+
+Prefer to use `:::dev` or `:::instructor` with an explanation of why
+this content is hidden.
+
+#### `:::ignore`
+
+_Rendered in all variants but **not** in the extracted Lean._
+
+Used to wrap prose, diagrams, or declarations that make sense in the
+book context but would be confusing or redundant in the extracted Lean.
+
+#### `:::slidebreak`
+
+_Rendered (invisibly) in terse variant only._
+
+In the HTML, this renders as `<div class="slide-break"></div>`
+as a hook for CSS-based slide tooling.
+This directive is always written as a self-closing empty block.
 
 ```
-:::instructors
-This file takes about two hours in a not-too-rushed lecture.
-Assign Basics + Induction together as the first week's homework.
+:::slidebreak
 :::
 ```
 
-**`:::dev … :::`** — Internal author commentary: unresolved design
-questions, inline review threads, TODO items.  Use freely.  It takes optional
-arguments, so the note's provenance can be typeset uniformly: a positional
-author (always a *string*, conventionally `"Full Name (github-handle)"`), a
-positional urgency keyword (always a *bare identifier*, conventionally `NOW`,
-`SOONER`, `LATER`, `TODO`, or `TOFIX`), and a named `year` (a number, from
-`BCP'20`-style tags).  The string/identifier split is what tells the two
-positionals apart, so don't quote urgencies or unquote authors.  Prefer the
-arguments over leading `BCP:` / `SOONER:` tags in the body; `to_verso` promotes
-such leading tags to arguments automatically (see `_AUTHOR_NAMES` in
-`scripts/to_verso.py` for the initials-to-name mapping).
+#### `:::details (summary := <string>)`
 
-The urgency controls whether the note is *shown* (`devNoteShown` in
-`SFLMeta/Comment.lean`): a note tagged `NOW` or `TODO` — or carrying no
-urgency at all — passes through into the rendered outputs, brightly
-highlighted (with a `Note to developers (…)` provenance label) in the HTML and as a
-labelled comment block in the generated `.lean` files.  `SOONER`, `LATER`,
-and `TOFIX` notes are suppressed from every build as before.
+_Rendered in all variants._
+
+In the HTML, this is rendered as a collapsible `<details>` element
+with the given `<summary>` text.
+In the extracted Lean, this is rendered preceded by a
+`-- THESE DETAILS CAN BE SKIPPED: <summary>_` comment and succeeded by a
+`-- END DETAILS` comment.
+Good for encoding details, macro plumbing, or helper notation that is correct
+but not central to the main narrative.
+
+#### `:::diagramWithAlt`
+
+_Rendered in all variants._
+
+A diagram with two required blocks:
+a `diagram` code block containing Lean code for an Illuminate diagram,
+rendered in the HTML, and a verbatim code block containing the ASCII fallback,
+rendered as a comment in the extracted Lean.
+
+The `diagram` code block takes two options:
+
+* `(cssWidth := <length>)` | `(cssScale := <number>)`:
+  an explicit CSS length or scaling factor for HTML rendering;
+  defaults to `(cssScale := 1)`
+* `(texWidth := <length>)`:
+  an explicit TeX length for PDF rendering;
+  defaults to `(texWidth := "\textwidth")`
+
+The following is an example from `TS.Stlc.lean`:
+
+````
+:::diagramWithAlt
+```diagram (cssWidth := "28em") (texWidth := "20em")
+SFLMeta.Diagrams.lambdaCubeDiagram
+```
 
 ```
-:::dev "Benjamin Pierce (bcpierce00)" SOONER
-Still not happy with this explanation — the namespace story
-feels rushed.  See GitHub discussion #42.
+                         Calculus of Constructions
+ type operators +--------+
+               /|       /|
+              / |      / |
+polymorphism +--------+  |
+             |  |     |  |
+             |  +-----|--+
+             | /      | /
+             |/       |/
+             +--------+ dependent types
+          STLC
+```
 :::
-```
-
-**`:::hide … :::`** — Marks a region hidden from all rendered outputs.
-In native Verso chapters, prefer `:::dev` or `:::instructors` for
-author notes.  The `:::hide` directive exists primarily for
-code-forward source files where `-- HIDE … -- /HIDE` comments are
-translated to `:::hide` blocks by the conversion script.
+````
 
 ### Code-forward comments → Verso directives (`to_verso`)
 
@@ -807,95 +866,9 @@ routes their comments to the directives above:
 Full authoring rules are in CLAUDE.md ("Checking to_verso outputs" /
 "Writing comments that survive to_verso").
 
-### Structural and presentation blocks
+## Writing Conventions
 
-**`:::details (summary := "…") … :::`** — A collapsible disclosure
-block.  The `summary` string appears as a clickable one-line teaser;
-the body is hidden until the reader expands it.  Implemented with
-native HTML `<details>/<summary>` (no JavaScript required).  Good for
-encoding details, macro plumbing, or helper notation that is correct
-but not central to the main narrative.  In generated `.lean` files the
-body is emitted inlined, preceded by a short `_Details: …` comment.
-
-**`:::ignore … :::`** — Content that appears in HTML and TeX but is
-**omitted** from the generated `.lean` files.  Use it to wrap prose,
-diagrams, or declarations that make sense in the book context but
-would be confusing or redundant in the standalone extracted source.
-Unlike the author-annotation directives, `:::ignore` content _is_
-visible to students reading the HTML book.
-
-**`:::slidebreak … :::`** — A slide-break marker with no body. In the
-terse build it renders as `<div class="slide-break">` (a hook for
-CSS-based slide tooling).  In full builds and in all generated `.lean`
-files it emits nothing.  Written as a self-closing empty block:
-
-```
-:::slidebreak
-:::
-```
-
-### BNF grammars
-
-Use fenced `` ```bnf `` blocks to typeset object-language grammars.
-Productions end with `;`; alternatives are separated by `|`.
-A plain identifier is a non-terminal; a double-quoted string is a
-terminal; an identifier with a **leading underscore** is a schematic
-meta-variable, rendered in italics (`_x` → *x*).
-
-```
-t ::= "true" | "false" | "if" t "then" t "else" t | _x ;
-T ::= "Bool" | T "->" T ;
-```
-
-HTML renders BNF as a styled table.  The saver emits the raw source
-text as a `--`-comment in generated `.lean` files, so the grammar
-survives in the extracted source.
-
-The `bnf%` term-mode syntax provides the same grammar inline in a Lean
-expression, for cases where the grammar is computed programmatically.
-
-### Diagrams with ASCII fallback
-
-For diagrams that need a text fallback in the extracted `.lean` files,
-use `:::diagramWithAlt` with two children: a code block containing the
-diagram (e.g., SVG), and a plain code block containing the ASCII art.
-HTML renders only the diagram child; the saver emits only the ASCII
-fallback wrapped in a `/-! … -/` module-doc comment.
-
-### Verso markup for nicer HTML
-
-Beyond the structural directives above, the Manual genre offers **inline roles**
-that enrich expository prose in the HTML.  Use them where they add value (and
-don't over-link — link the first substantive mention in a passage, not every
-occurrence):
-
-* `` {name}`Foo.bar` `` — a clickable identifier that hovers to show its
-  type/signature and links to its definition.  Use for references to real
-  declarations (defs, theorems, constructors, types) in prose.  **Caveat:** the
-  name must resolve *in scope at that point in the document* — defined earlier
-  and reachable (mind namespaces and forward references), or the build fails.  So
-  this is a targeted, build-verified pass, not a global `` `x` ``→`` {name}`x` ``
-  replace; and it applies only in visible prose (not inside `lean` blocks, quiz
-  options, or dropped author notes).
-* `` {lean}`expr` `` — an inline *elaborated expression* (any term or type, with
-  hover types).  Use when a whole expression — not just a single name — belongs
-  in prose, e.g. `` {lean}`Aexp → Nat` `` or `` {lean}`Coe Ident Aexp` ``.
-* `{ref "tag"}[link text]` — a cross-reference link to a section.  Tag the target
-  by putting a `%%% tag := "the-tag" %%%` block right under its heading, then
-  reference it with `{ref "the-tag"}[…]`.  Use for "see the X section
-  above/below" phrasings.
-* `` {tactic}`simp` `` — links a tactic name to its documentation; good for prose
-  that mentions tactics.
-* `` {deftech}`term` `` / `` {tech}`term` `` — define a technical term (glossary
-  entry + anchor) and link its later uses.  Good for a chapter's recurring
-  defined terms.
-* Also available: `{option}` (Lean options), `` {module}`Foo` `` (module links),
-  `{margin}[…]` (sidebar notes), `{index}` / `{see}` / `{seeAlso}` (book index),
-  `{citep}` / `{citet}` (bibliography).
-
-## Writing conventions
-
-We use American spelling.
+We use American English spelling.
 
 For general matters of grammar, punctuation, and usage, we follow
 the [Chicago Manual of Style](https://www.chicagomanualofstyle.org/).
