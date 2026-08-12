@@ -741,7 +741,9 @@ partial def delabComInner : DelabM (TSyntax `imp_com) := do
   let e ← getExpr
   let stx ←
     match_expr e with
-    | Com.skip => `(imp_com| skip;)
+    -- `mkIdent` rather than a quotation-literal `skip`, which would pick up
+    -- macro hygiene scopes and print as `skip✝`.
+    | Com.skip => `(imp_com| $(mkIdent `skip):ident ;)
     | Com.asgn _ _ =>
       match ← withAppFn <| withAppArg getExpr with
       | .const nm _ =>
