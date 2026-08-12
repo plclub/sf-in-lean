@@ -228,7 +228,7 @@ output print as `<{ … }>` rather than as a pile of constructors.  (Setting
 prints as `Bool` or `Nat`.
 ::::
 
-::::details (summary := "Notation encoding: printing terms back")
+::::details "Notation encoding: printing terms back"
 ```lean
 open Lean PrettyPrinter Delaborator SubExpr Parenthesizer in
 /-- Re-inserts parentheses in `tm` output according to the grammar's precedences. -/

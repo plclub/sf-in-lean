@@ -18,6 +18,8 @@ import SFLMeta.SlideBreak
 import SFLMeta.Solution
 import SFLMeta.Terse
 import SFLMeta.Theme
+import SFLMeta.Version
+import SFLMeta.Volume
 
 namespace SFLMeta
 
