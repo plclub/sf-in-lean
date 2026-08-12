@@ -2068,13 +2068,13 @@ In view of this theorem, we can say that the boolean computation {lean}`Nat.even
 is _reflected_ in the truth of the proposition {lean}`∃ k, n = Nat.double k`.
 
 ::::hide
-```
-/- Similarly, we can state what it means for a number to be nonzero
-    in two different ways: -/
+Similarly, we can state what it means for a number to be nonzero
+in two different ways:
 
-abbrev Nonzero (n : Nat) : Prop := ∃ m, n = succ m
+```lean
+def Nonzero (n : Nat) : Prop := ∃ m, n = Nat.succ m
 
-abbrev nonzero (n : Nat) := not (n == 0)
+def nonzero (n : Nat) := not (n == 0)
 
 theorem nonzero_bool_prop (n : Nat) :
     nonzero n = true ↔ Nonzero n := by
@@ -2730,7 +2730,7 @@ theorem revAppend_nil {α : Type} {xs : List α} : revAppend [] xs = xs := rfl
 theorem revAppend_cons {α : Type} {x : α} {xs ys : List α} :
     revAppend (x :: xs) ys = revAppend xs (x :: ys) := rfl
 
-abbrev trRev {α} (xs : List α) : List α := revAppend xs []
+def trRev {α} (xs : List α) : List α := revAppend xs []
 ```
 
 This version of {lean}`List.rev` is said to be _tail recursive_, because the recursive
@@ -2775,7 +2775,7 @@ The following reasoning principle is _not_ derivable with the tools we've seen s
 ::::
 
 ```lean
-abbrev excluded_middle := ∀ a : Prop, a ∨ ¬ a
+def excluded_middle := ∀ a : Prop, a ∨ ¬ a
 ```
 
 ::::full
@@ -2993,15 +2993,15 @@ why do the solutions not do this?
 :::
 
 ```lean
-abbrev peirce := ∀ a b : Prop, ((a → b) → a) → a
+def peirce := ∀ a b : Prop, ((a → b) → a) → a
 
-abbrev not_not := ∀ a : Prop, ¬ ¬ a → a
+def not_not := ∀ a : Prop, ¬ ¬ a → a
 
-abbrev de_morgan_not_and_not := ∀ a b : Prop, ¬ (¬ a ∧ ¬ b) → a ∨ b
+def de_morgan_not_and_not := ∀ a b : Prop, ¬ (¬ a ∧ ¬ b) → a ∨ b
 
-abbrev imp_or := ∀ a b : Prop, (a → b) → (¬ a ∨ b)
+def imp_or := ∀ a b : Prop, (a → b) → (¬ a ∨ b)
 
-abbrev consequentia_mirabilis := ∀ a : Prop, (¬ a → a) → a
+def consequentia_mirabilis := ∀ a : Prop, (¬ a → a) → a
 
 -- SOLUTION
 theorem imp_or_em : imp_or → excluded_middle := by
