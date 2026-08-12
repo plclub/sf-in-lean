@@ -129,6 +129,17 @@ def winskel1993 : Article where
   number  := inlines!""
   url     := "https://tinyurl.com/j2k6ev7"
 
+def halpern2001: Article where
+  title := inlines!"On the unusual effectiveness of logic in computer science"
+  authors := #[inlines!"Joseph Y Halpern", inlines!"Robert Harper", inlines!"Neil Immerman",
+                inlines!"Phokion G Kolaitis", inlines!"Moshe Y Vardi", inlines!"Victor Vianu"]
+  journal := inlines!"Bulletin of Symbolic Logic"
+  volume := inlines!"7"
+  number := inlines!"2"
+  year := 2001
+  month   := none
+
+
 end Bib
 
 end SFLMeta

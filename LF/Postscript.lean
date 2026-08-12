@@ -115,18 +115,18 @@ Here are some other good places to learn more...
 
 - Here are some great books on functional programming
      - Learn You a Haskell for Great Good, by Miran Lipovaca
-       Lipovaca 2011.
+       Lipovaca 2011 {citet Bib.lipovaca2011}[].
      - Real World Haskell, by Bryan O'Sullivan, John Goerzen,
-       and Don Stewart O'Sullivan 2008
+       and Don Stewart O'Sullivan 2008 {citet Bib.osullivan2008}[]
      - ...and many other excellent books on Haskell, OCaml,
        Scheme, Racket, Scala, F sharp, etc., etc.
 
 - And some further resources for Rocq:
     - Certified Programming with Dependent Types, by Adam
-      Chlipala Chlipala 2013.
+      Chlipala Chlipala 2013 {citet Bib.chlipala2013}[].
     - Interactive Theorem Proving and Program Development:
       Coq'Art: The Calculus of Inductive Constructions, by Yves
-      Bertot and Pierre Casteran Bertot 2004.
+      Bertot and Pierre Casteran Bertot 2004 {citet Bib.bertot2004}[].
 
 - If you're interested in real-world applications of formal
   verification to critical software, see the Postscript chapter

@@ -74,7 +74,7 @@ unassailable arguments for the truth of particular propositions.
 Volumes have been written about the central role of logic in
 computer science.  Manna and Waldinger called it "the calculus of
 computer science," while Halpern et al.'s paper _On the Unusual
-Effectiveness of Logic in Computer Science_ catalogs scores of
+Effectiveness of Logic in Computer Science_{citet Bib.halpern2001}[] catalogs scores of
 ways in which logic offers critical tools and insights.  Indeed,
 they observe that, "As a matter of fact, logic has turned out to
 be significantly more effective in computer science than it has
