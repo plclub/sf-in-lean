@@ -236,15 +236,37 @@ suggestions for further reading in the {ref "Postscript"}[Postscript] chapter.
 Lean runs on Windows, Linux, and MacOS.  The files in this book
 have been tested with Lean version {leanVersion}[].
 
-### Recommended Installation Method: VSCode
+## Installation
 
 The Visual Studio Code IDE is the recommended platform for using Lean.
 
-- Clone the [SF-in-Lean git repo](https://github.com/plclub/sf-in-lean)
 - Install VS Code if needed
-- From the Extensions tab of VSCode, install the Lean 4 Extension
-- Wait for Lean to build the project
-- XXXXXX more needed
+- From the Extensions tab of VS Code, install the Lean 4 extension
+- Clone the [SF-in-Lean](https://github.com/plclub/sf-in-lean) git repo and open
+  it in VS Code
+- The first time you open a Lean file, the extension will offer to install Lean
+  itself; accept, and it will fetch the version this book needs
+- Wait for Lean to build the project (it takes a few minutes)
+
+:::dev "Claude (AI assistant)" BeforeNextRelease
+These steps send the reader to the *sources* repo, but the files a reader is
+meant to work in are the ones the build generates: `make lf-student` writes a
+standalone Lake project (its own `lakefile.toml` and `lean-toolchain`) to
+`_out/lf/student/lean`, and that is where the exercises with `sorry`s live.  The
+`LF/*.lean` files in the repo are Verso documents — prose plus code blocks — and
+building the repo builds Verso and all three volumes, which is a good deal more
+than "a few minutes".
+
+There is also a chicken-and-egg problem in the ordering: running `make` at all
+needs `elan`/`lake` already installed, but the step above gets Lean via the VS
+Code extension, which only offers it once a Lean project is open.
+
+Both go away once there is a released archive of the student `.lean` files: the
+steps become "download and unpack, open the folder in VS Code, accept the
+install prompt".  Until that exists, this section should probably say plainly
+that readers get the files from their instructor or by following
+`ALPHATESTERS.md`.
+:::
 
 ## Exercises
 

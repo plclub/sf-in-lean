@@ -26,7 +26,8 @@ To build everything and preview the HTML locally:
 
 (This builds all volumes in all three variants — student / solutions / terse —
 into `_out/`, then serves that directory on port 8000.)  
-Then open `http://localhost:8000` in a web browser.
+
+    Then open `http://localhost:8000` in a web browser.
 
 To rebuild just one volume, use its make target and then serve `_out/`:
 
