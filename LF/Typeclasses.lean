@@ -816,6 +816,7 @@ On the other hand, if we update a map `m` at a key `a₁` and then look up a _di
 
 ::::exercise (rating := 2) (name := "update_neq")
 ```lean
+@[simp]
 theorem update_neq {m : TotalMap α β} {a₁ a₂ : α} (h : a₁ ≠ a₂) (b : β) :
     (a₁ →ₜ b ; m)[a₂] = m[a₂] := by
   solution!

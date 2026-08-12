@@ -2424,7 +2424,6 @@ arithmetic with `lia`. -/
 macro "assertion_auto" : tactic =>
   `(tactic| (intros
              <;> try (simp [assertImplies_def, ValidHoareTriple, Assertion.sub,
-                            TotalMap.update, TotalMap.getElem_def,
                             W, X, Y, Z] at *)
              <;> try lia))
 ```
@@ -2874,18 +2873,9 @@ theorem if_example :
         Y := X + 1;
       }
     {{X ≤ Y}} := by
-  apply hoare_if
-  · -- Then
-    apply hoare_consequence_pre
-    · apply hoare_asgn
-    · -- `assertion_auto` makes no progress here
-      unfold AssertImplies Assertion.sub
-      intro st ⟨_, h⟩
-      simp only [Bexp.eval_eq, Aexp.eval_id, Aexp.eval_num, beq_iff_eq] at h
-      rw [TotalMap.update_neq (by decide), TotalMap.update_eq, h]
-      simp
-  · -- Else
-    apply hoare_consequence_pre
+  -- the proof is the same for both the true and false branches
+  apply hoare_if <;>
+  · apply hoare_consequence_pre
     · apply hoare_asgn
     · assertion_auto
 ```
@@ -2907,17 +2897,6 @@ HIDE: MRC'20: There's probably a better way to engineer this.
 I don't know Ltac very well though.
 :::
 
-```lean
-/-- Like `assertion_auto`, but also unfolds `bassertion`, so that facts
-about the boolean guards of conditionals and loops become available. -/
-macro "assertion_auto'" : tactic =>
-  `(tactic| (intros
-             <;> try (simp [assertImplies_def, ValidHoareTriple, Assertion.sub,
-                            TotalMap.update, TotalMap.getElem_def,
-                            W, X, Y, Z] at *)
-             <;> try lia))
-```
-
 :::slidebreak
 :::
 
@@ -2935,10 +2914,10 @@ theorem if_example'' :
   apply hoare_if
   · apply hoare_consequence_pre
     · apply hoare_asgn
-    · assertion_auto'
+    · assertion_auto
   · apply hoare_consequence_pre
     · apply hoare_asgn
-    · assertion_auto'
+    · assertion_auto
 ```
 
 :::slidebreak
@@ -2956,24 +2935,13 @@ theorem if_example''' :
       }
     {{X ≤ Y}} := by
   apply hoare_if <;> apply hoare_consequence_pre <;>
-    (try apply hoare_asgn) <;> try assertion_auto'
+    (try apply hoare_asgn) <;> try assertion_auto
 ```
-
-:::dev "Claude"
-At this point the Rocq source defines a further refinement
-`assertion_auto''` that also rewrites with `leb_le`, "for inequalities".
-In Lean the boolean comparisons produced by `Bexp.eval` are already
-reduced by `simp`'s standard `decide`/`==` lemmas, so `assertion_auto'`
-handles inequalities as it stands and no `assertion_auto''` is needed
-(nor the later `assertion_auto'''`, whose extra `negb`/`not_false` rewrites
-`simp` also covers); occurrences of both in the Rocq text are rendered as
-`assertion_auto'`.
-:::
 
 ::::::full
 :::::exercise (rating := 2) (name := "if_minus_plus")
 Prove the theorem below using `hoare_if`.  Do not use `unfold
-ValidHoareTriple`.  The `assertion_auto'` tactic we just
+ValidHoareTriple`.  The `assertion_auto` tactic we just
 defined may be useful.
 
 ```lean
@@ -2987,7 +2955,7 @@ theorem if_minus_plus :
     {{Y = X + Z}} := by
   solution!
     apply hoare_if <;> apply hoare_consequence_pre <;>
-      (try apply hoare_asgn) <;> try assertion_auto'
+      (try apply hoare_asgn) <;> try assertion_auto
 ```
 :::::
 
@@ -3237,7 +3205,7 @@ theorem hoare_asgn (Q : Assertion) (x : Ident) (a : Aexp) :
 :::::exercise (rating := 2) (name := "hoare_if1_good")
 Use your `if1` rule to prove the following (valid) Hoare triple.
 
-Hint: `assertion_auto'` will once again get you most but not all
+Hint: `assertion_auto` will once again get you most but not all
 the way to a completely automated proof.  You can finish manually,
 or tweak the tactic further.
 
@@ -3263,8 +3231,8 @@ theorem hoare_if1_good :
     apply hoare_if1
     · apply hoare_consequence_pre
       · apply hoare_asgn
-      · assertion_auto'
-    · assertion_auto'
+      · assertion_auto
+    · assertion_auto
 ```
 :::::
 
@@ -3699,8 +3667,8 @@ theorem while_example :
   · apply hoare_while
     apply hoare_consequence_pre
     · apply hoare_asgn
-    · assertion_auto'
-  · assertion_auto'
+    · assertion_auto
+  · assertion_auto
 ```
 ::::
 
@@ -4249,11 +4217,11 @@ theorem ex2_repeat_hoare_repeat :
       · apply hoare_asgn
       · apply hoare_consequence_pre
         · apply hoare_asgn
-        · assertion_auto'
+        · assertion_auto
   · -- body of repeat if exiting right away
-    assertion_auto'
+    assertion_auto
   · -- final postcondition
-    assertion_auto'
+    assertion_auto
 
 /- A sound but less precise variant of the `hoare_repeat` rule looks
 like this: -/
@@ -4341,7 +4309,7 @@ example :
     exact hy
     -- this only works with an additional Y > 0 precondition
   · -- final postcondition
-    assertion_auto'
+    assertion_auto
 
 /- Here is a second failed attempt trying stronger loop invariant, but
 it is too strong. -/
@@ -4367,7 +4335,7 @@ example :
     intro st hp
     exact hp
   · -- final postcondition
-    assertion_auto'
+    assertion_auto
 
 -- END SOLUTION
 end RepeatExercise
@@ -5098,7 +5066,7 @@ theorem assert_assume_example :
         · apply hoare_assert
         · apply hoare_asgn
       · apply hoare_assume
-    · assertion_auto'
+    · assertion_auto
 ```
 
 :::gradeTheorem 4 assert_assume_example
