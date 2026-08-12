@@ -24,9 +24,9 @@
 
 - In a terminal, at the top level of your clone:
 
-```
-make lf-student
-```
+  ```
+  make lf-student
+  ```
 
   This builds the _Logical Foundations_ volume in its student form —
   full prose, with solutions elided — and writes two things to
@@ -90,17 +90,17 @@ code _out/lf/student/lean
 
 - If you want to leave a comment, add it to the `.lean` file like this:
 
-```
+  ```
     :::dev "Your Real Name (@your_github_handle)"
     ... Your suggestions ...
     :::
-```
+  ```
 
 - Before you submit, check that the chapter you edited still builds:
 
-```
-lake build LF.Basics
-```
+  ```
+  lake build LF.Basics
+  ```
 
 ## Submitting your changes
 
@@ -119,7 +119,7 @@ lake build LF.Basics
   often. Note that a plain `git pull` only gets you your *own* fork,
   which never updates itself — you have to ask for ours by name:
 
-```
-git fetch upstream
-git merge upstream/main
-```
+  ```
+  git fetch upstream
+  git merge upstream/main
+  ```
