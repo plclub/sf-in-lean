@@ -1555,7 +1555,7 @@ end NatToBin
 end NatPlayground.Nat
 ```
 
-::::hide
+::::instructors
 ```
   There is MUCH more that we could say about this topic.  We
   could do a similar example (and pair of exercises) involving
