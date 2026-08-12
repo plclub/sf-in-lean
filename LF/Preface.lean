@@ -73,17 +73,14 @@ Logic is the field of study whose subject matter is _proofs_ --
 unassailable arguments for the truth of particular propositions.
 Volumes have been written about the central role of logic in
 computer science.  Manna and Waldinger called it "the calculus of
-computer science," while Halpern et al.'s paper _On the Unusual
-Effectiveness of Logic in Computer Science_ catalogs scores of
+computer science,"{citet Bib.manna1971}[] while Halpern et al.'s paper _On the Unusual
+Effectiveness of Logic in Computer Science_{citet Bib.halpern2001}[] catalogs scores of
 ways in which logic offers critical tools and insights.  Indeed,
 they observe that, "As a matter of fact, logic has turned out to
 be significantly more effective in computer science than it has
-been in mathematics.  This is quite remarkable, especially since
+been in mathematics. This is quite remarkable, especially since
 much of the impetus for the development of logic during the past
 one hundred years came from mathematics."
-:::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement
-add real citations
-:::
 
 In particular, the fundamental tools of _inductive proof_ are
 ubiquitous across computer science.  You have surely seen them before,
@@ -119,17 +116,21 @@ community of users in both research and at companies like DeepMind,
 OpenAI, Anthropic, MSR, and AWS.
 
 Lean provides a rich environment for interactive development of
-machine-checked formal reasoning.  The kernel of the Lean system is a
+machine-checked formal reasoning. The kernel of the Lean system is a
 simple proof-checker, which guarantees that only correct deduction
-steps are ever performed.  On top of this kernel, the Lean environment
+steps are ever performed. On top of this kernel, the Lean environment
 provides high-level facilities for proof development, including a
 large library of common definitions and lemmas, powerful tactics for
 constructing complex proofs semi-automatically, and a highly
 extensible system for defining new proof-automation tactics and
 notations for specific situations.
 
-Lean and its relatives have become critical enablers for a huge
-variety of work across computer science and mathematics:
+Lean and its relatives have become critical enablers for a [huge
+variety of work](https://leanprover-community.github.io/papers.html) across computer science and mathematics:
+- formalizing the proof of [Fermat's last theorem](https://github.com/ImperialCollegeLondon/FLT)
+- formalizing the [Sphere packing problem](https://github.com/thefundamentaltheor3m/Sphere-Packing-Lean)
+- Deepmind's AI model for IMO problems: [Alphaproof](https://deepmind.google/blog/ai-solves-imo-problems-at-silver-medal-level/)
+
 :::dev "Benjamin Pierce (bcpierce00)"
 Need more examples, including specifically things accomplished in Lean.
 
@@ -138,9 +139,10 @@ lists some big Lean projects -- some of them should be mentioned here.
 And there are probably things here to trim.
 :::
 
-- As a _platform for modeling programming languages_, they have
+
+- As a _platform for modeling programming languages_, proof assistans have
   become standard tools for researchers who need to describe and
-  reason about complex language definitions.  They have been used,
+  reason about complex language definitions. They have been used,
   for example, to check the security of the JavaCard platform,
   obtaining the highest level of common criteria certification,
   and for formal specifications of the x86 and LLVM instruction
@@ -148,8 +150,8 @@ And there are probably things here to trim.
 
 - As _environments for developing formally certified software
   and hardware_, they have been used, for example, to build
-  CompCert, a fully-verified optimizing compiler for C, and
-  CertiKOS, a fully verified hypervisor, for proving the
+  CompCert{citet Bib.leroy2016}[], a fully-verified optimizing compiler for C, and
+  CertiKOS{citet Bib.gu2016certikos}[], a fully verified hypervisor, for proving the
   correctness of subtle algorithms involving floating point
   numbers, and as the basis for CertiCrypt, FCF, and SSProve,
   which are frameworks for proving cryptographic algorithms secure.
@@ -176,7 +178,7 @@ Erlang, F\*, and Lean itself.
 
 Functional programming has been developed over many decades — indeed,
 its roots go back to Church's lambda-calculus from the 1930s, well
-_before_ the first electronic computers!  But since the early '90s it
+_before_ the first electronic computers! But since the early '90s it
 has enjoyed a surge of interest among both software engineers and
 language designers.
 
@@ -191,11 +193,11 @@ function would take the original list and return a fresh list
 containing the same numbers in sorted order.
 
 A significant benefit of this style of programming is that it makes
-programs easier to understand and reason about.  If every operation on
+programs easier to understand and reason about. If every operation on
 a data structure yields a new data structure, leaving the old one
 intact, then there is no need to worry about how that structure is
 being shared and whether a change by one part of the program might
-break an invariant relied on by another part of the program.  These
+break an invariant relied on by another part of the program. These
 considerations are particularly critical in concurrent systems, where
 every piece of mutable state shared between threads is a potential
 source of pernicious bugs.
@@ -204,16 +206,16 @@ Another reason for the popularity of functional programming is related
 to the first: functional programs are often much easier to parallelize
 and physically distribute than their imperative counterparts.  If
 running a computation has no effect other than producing a result,
-then it does not matter _where_ it is run.  Similarly, if a data
+then it does not matter _where_ it is run. Similarly, if a data
 structure is never modified destructively, it can be copied freely,
-across cores or across the network.  Indeed, the "Map-Reduce" idiom,
+across cores or across the network. Indeed, the "Map-Reduce" idiom,
 which lies at the heart of massively distributed query processors like
 Hadoop and is used by Google to index the entire web, is a classic
 example of functional programming.
 
 For purposes of these books, functional programming has yet another
 significant attraction: it serves as a bridge between logic and
-computer science.  Indeed, Lean itself can be viewed as a combination
+computer science. Indeed, Lean itself can be viewed as a combination
 of a small but extremely expressive functional programming language
 and a set of tools for stating and proving logical assertions.
 Moreover, when we come to look more closely, we find that these two
@@ -221,6 +223,8 @@ sides of Lean are actually aspects of the very same underlying
 machinery -- i.e., _proofs are programs_.
 :::dev "Benjamin Pierce (bcpierce00)"
 Is this an accurate description of Lean?
+Luisa Cicolini (luisacicolini)
+That looks fair to me, I suppose it's too early to cite curry howard?
 :::
 
 ## Further Reading

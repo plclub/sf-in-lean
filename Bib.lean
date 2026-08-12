@@ -129,6 +129,44 @@ def winskel1993 : Article where
   number  := inlines!""
   url     := "https://tinyurl.com/j2k6ev7"
 
+def halpern2001: Article where
+  title := inlines!"On the unusual effectiveness of logic in computer science"
+  authors := #[inlines!"Joseph Y Halpern", inlines!"Robert Harper", inlines!"Neil Immerman",
+                inlines!"Phokion G Kolaitis", inlines!"Moshe Y Vardi", inlines!"Victor Vianu"]
+  journal := inlines!"Bulletin of Symbolic Logic"
+  volume := inlines!"7"
+  number := inlines!"2"
+  year := 2001
+  month   := none
+
+def manna1971: Article where
+  title := inlines!"Toward automatic program synthesis"
+  authors := #[inlines!"Zohar Manna", inlines!"Richard J Waldinger"]
+  journal := inlines!"Communications of the ACM"
+  volume := inlines!"14"
+  number  := inlines!"3"
+  year := 1971
+  month := none
+
+def leroy2016: Article where
+  title := inlines!"CompCert-a formally verified optimizing compiler"
+  authors := #[inlines!"Xavier Leroy", inlines!"Sandrine Blazy", inlines!"Daniel Kaestner", inlines!"Bernhard Schommer", inlines!"Markus Pister", inlines!"Christian Ferdinand"]
+  journal := inlines!"ERTS 2016: Embedded Real Time Software and Systems, 8th European Congress"
+  year := 2016
+  month := none
+  volume := inlines!""
+  number := inlines!""
+
+def gu2016certikos: Article where
+  title := inlines!"CertiKOS: An extensible architecture for building certified concurrent OS kernels"
+  authors :=#[inlines!"Ronghui Gu", inlines!" Zhong Shao", inlines!"Hao Chen",
+      inlines!"Xiongnan Newman Wu" , inlines!"Jieung Kim", inlines!"Vilhelm Sjoeberg", inlines!"David Costanzo"]
+  journal := inlines!"12th USENIX Symposium on Operating Systems Design and Implementation (OSDI 16)"
+  year := 2016
+  month := none
+  volume := inlines!""
+  number := inlines!""
+
 end Bib
 
 end SFLMeta
