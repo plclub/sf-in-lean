@@ -12,7 +12,8 @@ picture of who is touching what:
     (linked to its PR) over its author and last-activity time on a second line
     in small type; a Status cell of glyph badges (✅ ready, 👍 approved with open
     threads, 🔴 changes requested, 💬N open threads, ✏️ draft, ❗ auto-merge held,
-    🔗 fixes issue, ⚠️ main = no longer merges cleanly against `main`); an
+    🔗 fixes issue, ⚠️ main = no longer merges cleanly against `main`, plus
+    "based on X" when the PR is stacked on a branch other than `main`); an
     Overlaps cell naming
     which *other* PR branches it shares files with (plain = clean co-edit,
     ⚠️ = a real conflict from an in-memory merge not a filename guess, ⊃/⊂ = one
@@ -24,9 +25,9 @@ picture of who is touching what:
     an open PR appear in the table, and only they are weighed when marking its
     overlaps and conflicts;
   * a "Branches without PRs:" line just below the table — a compact list of
-    every active branch *without* a PR: name (linked to its GitHub page), its author
-    (same style as the table), how long since it was created and last active,
-    and a ⚠️ when it would conflict with any open PR;
+    every active branch *without* a PR: name (linked to its GitHub page)
+    followed by a parenthesised gloss — its author (same style as the table),
+    then how long since it was created and last active — and a ⚠️ when it would conflict with any open PR;
   * a "hot files" view — files edited on more than one PR branch, conflicting
     files first;
   * an always-on list of merged / inactive branches (0 commits ahead of main).
@@ -323,6 +324,7 @@ query($owner:String!, $name:String!, $cursor:String) {
         url
         isDraft
         headRefName
+        baseRefName
         reviewDecision
         autoMergeRequest { enabledAt }
         mergeQueueEntry { state }
@@ -339,7 +341,8 @@ query($owner:String!, $name:String!, $cursor:String) {
 def fetch_prs(slug, token):
     """Map branch short-name -> per-PR dict for open PRs.
 
-    Each value carries `num`, `url`, `draft`, `review_decision`
+    Each value carries `num`, `url`, `draft`, the `base` branch it targets
+    (interesting only when it is not `main` — a stacked PR), `review_decision`
     (`REVIEW_REQUIRED`/`APPROVED`/`CHANGES_REQUESTED`/None), the count of
     `unresolved` review threads, the `auto_merge` / `in_queue` booleans that
     together reveal an auto-merge that is stuck outside the merge queue, and the
@@ -369,6 +372,7 @@ def fetch_prs(slug, token):
                 "num": pr["number"],
                 "url": pr["url"],
                 "draft": pr["isDraft"],
+                "base": pr["baseRefName"],
                 "review_decision": pr["reviewDecision"],
                 "unresolved": unresolved,
                 "auto_merge": pr["autoMergeRequest"] is not None,
@@ -520,13 +524,15 @@ def notes_cell(pr):
 def files_cell(files, churn):
     """A <details> expander for the "Changes" column: its summary reads
     `N files, XX lines` (XX = total insertions + deletions), expanding to the
-    file names.  The names flow middot-separated (not one `<br>` per line) so
-    the expanded list stays compact."""
+    file names.  Each count is glued to its noun with a non-breaking space, so
+    the summary never wraps between a number and what it counts.  The names flow
+    middot-separated (not one `<br>` per line) so the expanded list stays
+    compact."""
     n = len(files)
     if n == 0:
-        return "0 files, 0 lines"
+        return "0&nbsp;files, 0&nbsp;lines"
     inner = " · ".join(f"`{f}`" for f in sorted(files))
-    return (f"<details><summary>{n} files, {churn} lines</summary>"
+    return (f"<details><summary>{n}&nbsp;files, {churn}&nbsp;lines</summary>"
             f"{inner}</details>")
 
 
@@ -636,6 +642,12 @@ def render(branches, conf, prs, have_token, slug):
         # The old "→ main" column is folded into the Status cell: flag a branch
         # that no longer merges cleanly right there, as a ⚠️ main badge.
         status = pr_cell(b["short"], prs)
+        # A PR stacked on another branch rather than `main` merges into *that*
+        # branch, so say which one — the reader otherwise reads its diff and
+        # readiness as if they were against `main`.
+        if pr and pr.get("base") and pr["base"] != "main":
+            status += (" <sub>based&nbsp;on "
+                       f"{branch_link(pr['base'], slug, maxlen=40)}</sub>")
         if not b["clean_to_main"]:
             status += " " + tip("⚠️&nbsp;main", "No longer merges cleanly with main")
         # `#Note`s flow middot-separated (see notes_cell); `<sub>` is used purely
@@ -682,8 +694,9 @@ def render(branches, conf, prs, have_token, slug):
             clash = any(o in active for o in conf[r])
             any_clash = any_clash or clash
             items.append(
-                f"{branch_link(b['short'], slug)} {author_cell(b)} "
-                f"(created {nbsp(b['created'])}, active {nbsp(b['when'])}"
+                f"{branch_link(b['short'], slug)} "
+                f"({author_cell(b)}, created {nbsp(b['created'])}, "
+                f"active {nbsp(b['when'])}"
                 f"){'&nbsp;' + tip('⚠️', 'Conflicts with an open PR') if clash else ''}"
             )
         legend = (" &nbsp;_(⚠️&nbsp;= conflicts with an open PR)_" if any_clash else "")
