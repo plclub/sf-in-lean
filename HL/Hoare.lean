@@ -1327,7 +1327,7 @@ Here are some valid instances of the assignment rule:
 
 To formalize the rule, we must first formalize the idea of
 "substituting an expression for an Imp variable in an assertion",
-which we refer to as assertion substitution, or `Assertion.sub`.
+which we refer to as assertion substitution, or `Assertion.subst`.
 
 Intuitively, given a proposition `P`, a variable `X`, and an
 arithmetic expression `a`, we want to derive another proposition
@@ -1366,22 +1366,34 @@ a quick go at implementing it, but did not succeed yet.
 Introduce a notation typeclass for this (e.g. HasSubst)
 :::
 
+:::dev "Niklas Halonen (xhalo32)" PotentialImprovement
+A lot of the substitutions use `[x ↦ ~a]`. Could we have syntax support for `[x ↦ a]`. A naive approach that adds `" [" ident " ↦ " term "]" ` leads to ambiguity.
+:::
+
+:::dev "Niklas Halonen (xhalo32)" NOW
+We need to add an unexpander for the substitution notation which is another argument for HasSubst typeclass.
+:::
+
+:::dev "Niklas Halonen (xhalo32)"
+Is it possible to move the substitution syntax inside the braces like in the original Rocq material?
+I.e. `{{ (X ≤ 10) [X ↦ 2 * X] }}` vs. `{{ X ≤ 10 }} [X ↦ 2 * X]`
+
+Currently in triples we need to write `{{ {{ X < 5 }} [X ↦ X + 1] }}` which looks ugly.
+:::
+
 ```lean
 namespace Assertion
 
 /-- Assertion substitution: `P [X ↦ a]` -/
 scoped syntax:max term:arg " [" ident " ↦ " imp_aexp "]" : term
--- scoped syntax:max term:arg " [" ident " ↦ " term "]" : term -- TODO can we get this to work
 
 macro_rules
   | `($P [$x ↦ $a:imp_aexp]) => `(Assertion.subst $x (aexp { $a }) $P)
-  -- | `($P [$x ↦ $a:term]) => `(Assertion.subst $x $a $P) -- TODO
-
--- TODO unexpander!!!
 
 theorem subst_def {x : Ident} {a : Aexp} {P : Assertion} :
     P [x ↦ ~a] = fun (st : State) => P (x →ₜ a.eval st ; st) := by rfl
 
+@[simp]
 theorem subst_apply {x : Ident} {a : Aexp} {P : Assertion} {st : State} :
     P [x ↦ ~a] st ↔ P (x →ₜ a.eval st ; st) := by rfl
 
@@ -1478,18 +1490,23 @@ namespace ExampleAssertionSub
 example :
     {{ (X ≤ 5) }} [X ↦ 3] <<->> {{ 3 ≤ 5 }} := by
   rw [assertIff_def]
-  constructor <;>
-  · rw [assertImplies_def]
-    intro st
-    rw [Assertion.subst_apply]
+  rw [assertImplies_def]
+  constructor
+  · intro st _
+    simp
+  · intro st h
+    simp [TotalMap.update_def, TotalMap.getElem_def] -- This should use TotalMap.update_apply which is @[simp]
 
 example :
     {{ (X ≤ 5) }} [X ↦ X + 1] <<->> {{ (X + 1) ≤ 5 }} := by
   rw [assertIff_def]
-  constructor <;>
+  constructor
   · rw [assertImplies_def]
     intro st
-    rw [Assertion.subst_apply]
+    simp [TotalMap.update_def, TotalMap.getElem_def]
+  · rw [assertImplies_def]
+    intro st
+    simp [TotalMap.update_def, TotalMap.getElem_def]
 
 end ExampleAssertionSub
 ```
@@ -1498,6 +1515,12 @@ end ExampleAssertionSub
 %%%
 tag := "assn-delaborators"
 %%%
+
+:::dev "Niklas Halonen (xhalo32)" NOW
+To One:
+1. Add delaborator for plain assertions, also for `<<->>`
+2. Move the delab stuff near where the syntax is first introduced for assertions and then add small delaborators when new syntax like triples are introduced.
+:::
 
 ::::full
 As in the {ref "imp-delaborators"}[Imp chapter], the assertion notations
@@ -1608,9 +1631,9 @@ def delabAssertImplies : Delab := whenPPOption getPPNotation do
   guard <| (← getExpr).isAppOfArity ``AssertImplies 2
   `($(← delabAssnArg 0) ->> $(← delabAssnArg 1))
 
-@[delab app.Assertion.sub]
+@[delab app.Assertion.subst]
 def delabSub : Delab := whenPPOption getPPNotation do
-  guard <| (← getExpr).isAppOfArity ``Assertion.sub 3
+  guard <| (← getExpr).isAppOfArity ``Assertion.subst 3
   let `($x:ident) ← withNaryArg 0 delab | failure
   let a ← withNaryArg 1 delabAexpInner
   let P ← withNaryArg 2 delabAssn
@@ -1625,9 +1648,9 @@ end Assertion.Delab
 
 :::ignore
 ```lean -show
-/-- info: {{X ≤ 5}} X := X + 1; {{X ≤ 7}} : Prop -/
+/-- info: {{X ≤ 5}} X := X + 1 {{X ≤ 7}} : Prop -/
 #guard_msgs in
-#check {{ X ≤ 5 }} X := X + 1; {{ X ≤ 7 }}
+#check {{ X ≤ 5 }} X := X + 1 {{ X ≤ 7 }}
 
 /-- info: {{X < 4}} ->> {{X < 5}} : Prop -/
 #guard_msgs in
@@ -1652,13 +1675,18 @@ give the precise proof rule for assignment:
 
 We can prove formally that this rule is indeed valid.
 
+:::dev "Niklas Halonen (xhalo32)" NOW
+The delaboration for `x := ~a` seems to be broken now that I made sequencing use semicolons.
+:::
+
 ```lean
 theorem hoare_asgn (Q : Assertion) (x : Ident) (a : Aexp) :
-    {{ Q [x ↦ ~a] }}  x := ~a; {{ Q }} := by
+    {{ Q [x ↦ ~a] }} x := ~a {{ Q }} := by
   intro st st' hE hQ
   inversion hE with
   | asgn n h =>
     subst h
+    rw [Assertion.subst_def] at hQ
     exact hQ
 ```
 
@@ -1670,7 +1698,7 @@ Here's a first formal proof of a Hoare triple using this rule.
 ```lean
 theorem assertion_sub_example :
     {{ {{ X < 5 }} [X ↦ X + 1] }}
-      X := X + 1;
+      X := X + 1
     {{ X < 5 }} := by
   apply hoare_asgn
 ```
@@ -1702,7 +1730,7 @@ that you have completed the triple properly.
 theorem hoare_asgn_examples1 :
     ∃ P : Assertion,
       {{ P }}
-        X := 2 * X;
+        X := 2 * X
       {{ X ≤ 10 }} := by
   solution!
     exists {{ X ≤ 10 }} [X ↦ 2 * X]
@@ -1715,7 +1743,7 @@ theorem hoare_asgn_examples1 :
 theorem hoare_asgn_examples2 :
     ∃ P : Assertion,
       {{ P }}
-        X := 3;
+        X := 3
       {{ 0 ≤ X ∧ X ≤ 5 }} := by
   solution!
     exists {{ 0 ≤ X ∧ X ≤ 5 }} [X ↦ 3]
@@ -1740,15 +1768,23 @@ counterexample.  (Hint: The rule universally quantifies over the
 arithmetic expression `a`, so your counterexample needs to
 exhibit an `a` for which the rule doesn't work.)
 
+:::dev "Niklas Halonen (xhalo32)"
+The following exercise provides explicit state arguments to a hypothesis:
+```
+apply hc (st := ∅) (st' := X →ₜ 1 ; ∅)
+```
+Should we demonstrate this with an example before this exercise?
+:::
+
 ```lean
 theorem hoare_asgn_wrong : ∃ a : Aexp,
-    ¬ {{ True }} X := ~a; {{ X = a }} := by
+    ¬ {{ True }} X := ~a {{ X = a }} := by
   solution!
     exists aexp { X + 1 }
     intro hc
     rw [validHoareTriple_def] at hc
     have h2 : (X →ₜ 1 ; ∅)[X] = (aexp { X + 1 }).eval (X →ₜ 1 ; ∅) := by
-      apply hc ∅ (X →ₜ 1 ; ∅)
+      apply hc (st := ∅) (st' := X →ₜ 1 ; ∅)
       · apply Com.EvalR.asgn; rfl
       · exact True.intro
     simp [TotalMap.update_eq] at h2
