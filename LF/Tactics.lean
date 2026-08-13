@@ -13,21 +13,6 @@ htmlSplit := .never
 file := some "Tactics"
 %%%
 
-:::dev "Daniel Sainati (dsainati1)"
-\[BCP: Old comment -- might be out of date?\]
-There is a section here on unfolding definitions that should probably move earlier,
-to `Basics` or `Induction`, once those chapters are rewritten to not use arithmetic. This will
-also require changing the examples.
-:::
-
-:::dev "Benjamin Pierce (bcpierce00)"
-(Old and possibly out of date -- check!)
-Many exercises in this chapter are
-based on defining and proving properties about Nat.ble and BEq.eq, which are not
-idiomatic in Lean. We should consider replacing these with a different set of exercises.
-:::
-
-
 :::instructors
 This material is a bit too much to cover in detail in
 one 80-minute lecture.  90-100 minutes is more reasonable, but that
@@ -1447,20 +1432,20 @@ theorem nth?_after_last {α : Type}
 
 :::::exercise (rating := 3) (name := "length_append_cons")
 
-Prove this by induction on `l1`, without using {name}`List.length_append`.
+Prove this by induction on `l₁`, without using {name}`List.length_append`.
 
 ```lean
-theorem length_append_cons {α : Type} {l1 l2 : List α} {x : α} {n : Nat}
-    (h : (l1 ++ (x :: l2)).length = n) :
-    ((l1 ++ l2).length) + 1 = n := by
+theorem length_append_cons {α : Type} {l₁ l₂ : List α} {x : α} {n : Nat}
+    (h : (l₁ ++ (x :: l₂)).length = n) :
+    ((l₁ ++ l₂).length) + 1 = n := by
   solution!
-    induction l1 generalizing n with
+    induction l₁ generalizing n with
     | nil => assumption
     | cons y ys ih =>
       rw [List.cons_append, List.length_cons] at *
-      /- Trick: by saying `(ys ++ x :: l2).length = n`
-         can be closed by `rfl`, we effectively choose `n` to be
-        `(ys ++ x :: l2).length`  -/
+      /- A trick here: by using `rfl` to close `(ys ++ x :: l₂).length = n`
+         we effectively choose `n` to be `(ys ++ x :: l₂).length`
+      -/
       rw [ih (by rfl)]
       assumption
 ```
@@ -1471,7 +1456,7 @@ theorem length_append_cons {α : Type} {l1 l2 : List α} {x : α} {n : Nat}
 
 :::::exercise (rating := 3) (name := "length_append_self")
 
-Prove this by induction on `l1`, without using {name}`List.length_append`.
+Prove this by induction on `l₁`, without using {name}`List.length_append`.
 Hint: you might need to use {name}`length_append_cons` you just proved.
 
 ```lean
@@ -1527,7 +1512,7 @@ theorem diagonal_induction (p : Nat → Nat → Prop)
 :::
 :::::
 
-# Using `cases` on Compound Expressions
+# Using {tactic}`cases` on Expressions
 
 ::::full
 We have seen many examples where {tactic}`cases` is used to
@@ -1583,7 +1568,7 @@ let ⟨a, β⟩ := v
 ```
 
 :::::exercise (rating := 3) (name := "zip_unzip")
-Here is an implementation of the `unzip` function mentioned in
+Here is an implementation of the {name}`unzip` function mentioned in
 chapter {ref "Poly"}[Poly]:
 
 ```display
@@ -1599,11 +1584,11 @@ Prove that {name}`unzip` and {name}`zip` are inverses in the following sense:
 
 ```lean
 theorem zip_unzip {α β : Type} (l : List (α × β))
-    (l1 : List α) (l2 : List β)
-    (h : unzip l = (l1, l2)) :
-    zip l1 l2 = l := by
+    (l₁ : List α) (l₂ : List β)
+    (h : unzip l = (l₁, l₂)) :
+    zip l₁ l₂ = l := by
   solution!
-    induction l generalizing l1 l2 with
+    induction l generalizing l₁ l₂ with
     | nil =>
       rw [unzip_nil] at h
       injections h₁ h₂
@@ -1814,326 +1799,206 @@ Induction:
     giving a more general induction hypothesis
 ::::
 
-::::::full
-Additional Exercises
+## Additional Exercises
 
-:::dev "Benjamin Pierce (bcpierce00)"
-There seems to be nothing left for the student to fill in!
-:::
-
-:::::exercise (rating := 3) (name := "beq_symm")
+:::::exercise (rating := 2) (name := "append_left_cancel")
 ```lean
-theorem beq_symm (n m : Nat) :
-    (n == m) = (m == n) := by
-  induction n generalizing m
-  case zero =>
-    cases m
-    case zero => rfl
-    case succ => rfl
-  case succ n' ih =>
-    cases m
-    case zero => rfl
-    case succ =>
-      rw [beq_succ, beq_succ]
-      exact ih _
-```
-
-:::gradeTheorem 3 beq_symm
-:::
-:::::
-
-:::::exercise (rating := 3) (name := "beq_symm_informal")
-Give an informal proof of this lemma that corresponds to your
-formal proof above:
-
-Theorem: For any `Nat`s `n` `m`, `(n == m) = (m == n)`.
-
-Proof:
-
-:::solution
-```
-   Let an arbitrary Nat `n` be given.  Proceed by induction
-   on `n`.
-
-   - For the base case, we have `n = 0`.  Let `m` be given.
-     We must show that
-[[
-       0 == m = m == 0
-]]
-     Either `m = 0` or not.
-
-     - If `m = 0`, we must show `0 == 0 = 0 == 0`
-       which is true by reflexivity.
-
-     - Otherwise, `m = .succ m'` for some `m'`, and we must show
-       `0 == (.succ m') = (.succ m') == 0`. By the definition
-       of `beq`, both sides are `false`.
-
-   - In the inductive case, we have `n = .succ n'` for some
-     `n'` such that, for any `m`,
-[[
-       n' == m = m == n'
-]]
-     Let `m` be given.  Again, `m` is either zero or nonzero.
-
-     - Suppose first `m = 0`.  It's
-       enough to show `(.succ n') == 0 = 0 == (.succ n')`.
-       By the definition of `beq`, both sides are `false`.
-
-     - Otherwise, `m = .succ m'` for some `m'`.  By the
-       assumption, it's enough to show:
-[[
-         (.succ n') == (.succ m') = (.succ m') == (.succ n')
-]]
-       And, by the definition of `beq`, this reduces to
-       showing:
-[[
-         m' == n' = n' == m'.
-]]
-       which is exactly the induction hypothesis.
-```
-:::
-:::::
-
-::::::
-
-::::::full
-:::::exercise (rating := 3) (name := "beq_trans")
-```lean
-theorem beq_trans (n m p : Nat) :
-    (n == m) = true →
-    (m == p) = true →
-    (n == p) = true := by
+theorem append_left_cancel {α : Type} (l₁ l₂ l₃ : List α)
+    (h : l₁ ++ l₂ = l₁ ++ l₃) :
+    l₂ = l₃ := by
   solution!
-    intros hnm hmp
-    apply beq_eq at hnm
-    rw [hnm, hmp]
+    induction l₁ with
+    | nil => assumption
+    | cons x xs ih =>
+      injections
+      apply ih
+      assumption
 ```
+:::gradeTheorem 2 append_left_cancel
+:::
 :::::
 
-::::::
+:::::exercise (rating := 3) (name := "map_injective_of_injective")
 
-::::::full
-:::::exercise (rating := 3) (name := "split_combine") (level := Advanced) (manual := true)
-We proved, in an exercise above, that `combine` is the inverse of
-`split`.  Complete the definition of `split_combine_statement`
-below with a property that states that `split` is the inverse of
-`combine`. Then, prove that the property holds.
+Recall the {name}`map` we've defined in {ref "Poly"}[Poly]:
 
-Hint: Take a look at the definition of `combine` in {ref "Poly"}[Poly].
-Your property will need to account for the behavior of `combine`
+```display
+def map {α : Type} {β : Type} (f : α → β) (l : List α) : List β :=
+  match l with
+  | [] => []
+  | head :: tail => f head :: map f tail
+```
+
+Prove that {name}`map` is injective whenever the function is injective.
+
+```lean
+theorem map_injective_of_injective {α β : Type}
+    (f : α → β)
+    (hf : ∀ x y, f x = f y → x = y)
+    (l₁ l₂ : List α)
+    (h : map f l₁ = map f l₂) :
+    l₁ = l₂ := by
+  solution!
+    induction l₁ generalizing l₂ with
+    | nil =>
+      cases l₂ with
+      | nil => rfl
+      | cons y ys =>
+        dsimp [map] at h
+        contradiction
+    | cons x xs ih =>
+      cases l₂ with
+      | nil =>
+        dsimp [map] at h
+        contradiction
+      | cons y ys =>
+        dsimp [map] at h
+        injection h with hxy hxs
+        rw [hf x y hxy, ih ys hxs]
+```
+:::gradeTheorem 3 map_injective_of_injective
+:::
+:::::
+
+
+:::::exercise (rating := 3) (name := "unzip_zip") (level := Advanced) (manual := true)
+We proved {name}`zip_unzip` that {name}`zip`ping the result of {name}`unzip` recovers the original list. What about the other direction?  Complete and prove the following `unzip_zip`:
+
+```display
+theorem unzip_zip {α β : Type}
+    {l₁ : List α} {l₂ : List β}
+    /- add appropriate parameters and hypotheses here -/ :
+    unzip (zip l₁ l₂) = (l₁, l₂) := sorry
+```
+
+Hint: Take a look at the definition of {name}`zip` in {ref "Poly"}[Poly].
+Your definition will need to account for the behavior of {name}`zip`
 in its base cases, which possibly drop some list elements.
 
 ```lean
-def split_combine_statement : Prop :=
-  /- ("`: Prop`" means that we are giving a name to a
-     logical proposition here.) -/
-  ∀ (α β : Type) (l1 : List α) (l2 : List β),
-    l1.length = l2.length →
-    split (zip l1 l2) = (l1, l2)
-
-theorem split_combine : split_combine_statement := by
-  solution!
-    intros α β l1 l2 h
-    induction l1 generalizing l2
-    case nil =>
-      cases l2
-      case nil => rfl
-      case cons => contradiction
-    case cons hd tl ih =>
-      cases l2
-      case nil => contradiction
-      case cons hd' tl' =>
-        dsimp [split, zip]
-        rw [ih]
-        injections
 -- SOLUTION
+theorem unzip_zip {α β : Type}
+    {l₁ : List α} {l₂ : List β}
+    (h : l₁.length = l₂.length) :
+    unzip (zip l₁ l₂) = (l₁, l₂) := by
+  induction l₁ generalizing l₂ with
+  | nil =>
+    cases l₂ with
+    | nil => rfl
+    | cons => contradiction
+  | cons x xs ih =>
+    cases l₂ with
+    | nil => contradiction
+    | cons y ys =>
+      dsimp [unzip, zip]
+      rw [ih]
+      injections
 
-/- Here are more approaches -/
-theorem split_combine' (α β :Type) l (l1 : List α) (l2 : List β) :
-    (l1, l2) = split l → split (zip l1 l2) = (l1, l2) := by
-  intro h
-  induction l generalizing l1 l2
-  case nil =>
-    dsimp [split] at h
-    injections h1 h2
-    rw [h1, h2]
+/- Here is one more approach -/
+theorem unzip_zip' {α β : Type}
+    {l₁ : List α} {l₂ : List β}
+    {l : List (α × β)} (h : (l₁, l₂) = unzip l) :
+    unzip (zip l₁ l₂) = (l₁, l₂) := by
+  induction l generalizing l₁ l₂ with
+  | nil =>
+    dsimp [unzip] at h
+    injections h₁ h₂
+    rw [h₁, h₂]
     rfl
-  case cons hd tl ih =>
-    let ⟨a, b⟩ := hd
-    dsimp [split] at h
-    injections h1 h2
-    rw [h1, h2]
-    dsimp [zip, split]
+  | cons x xs ih =>
+    let ⟨a, b⟩ := x
+    dsimp [unzip] at h
+    injections h₁ h₂
+    rw [h₁, h₂]
+    dsimp [zip, unzip]
     rw [ih]
     rfl
-
--- HIDE
-/- Theorem split_combine''_equiv :
-    ∀ (X Y:Type) l (l1 : list X) (l2 : list Y),
-    (split l = (l1, l2) → split (combine l1 l2) = (l1, l2))
-    ↔ (split l = (l1, l2) → combine l1 l2 = l).
-Proof.
-  intros X Y.
-  induction l; intros; split; intros;
-    try solve [inversion H0; auto].
-  - inversion H0. destruct x.
-    destruct (split l). inversion H2; subst. simpl.
-    f_equal. apply IHl; auto. apply H in H0.
-    inversion H0. destruct (split (combine x0 y0)).
-    inversion H3; subst; auto.
-  - pose proof H0. apply H in H0. rewrite H0; auto.
-Qed.
-
-Theorem combine_split' : ∀ X Y (l : list (X * Y)) l1 l2,
-  split l = (l1, l2) → combine l1 l2 = l.
-Proof.
-  induction l as [| [x y] l' IHl'].
-  - (* l = [] *) intros l1 l2 Heq.
-    simpl in Heq. injection Heq as l2mt l1mt.
-    rewrite <- l2mt. rewrite <- l1mt. reflexivity.
-  - (* l = (x,y) :: l' *) intros l1 l2 Heq.
-    simpl in Heq. destruct (split l') as [l1' l2'].
-    injection Heq as l2in l1in.
-    rewrite <- l2in. rewrite <- l1in. simpl. rewrite IHl'.
-    reflexivity. reflexivity.  Qed. -/
--- /HIDE
 -- END SOLUTION
 ```
 
-:::grade
-`GRADE_MANUAL 3: split_combine`
-:::
 :::::
 
-::::::
-
-::::::full
-:::::exercise (rating := 3) (name := "filter_exercise") (level := Advanced)
+:::::exercise (rating := 3) (name := "test_pos_of_filter_cons") (level := Advanced)
 ```lean
-theorem filter_exercise {α : Type} (test : α → Bool) (a : α) (l lf : List α) :
-    filter test l = a :: lf →
-    test a = true := by
+theorem test_pos_of_filter_cons {α : Type}
+    (test : α → Bool) (x : α) (l l' : List α)
+    (h : filter test l = x :: l') :
+    test x = true := by
   solution!
-    intro h
-    induction l generalizing a lf test
-    case nil => contradiction
-    case cons hd tl ih =>
+    induction l generalizing x l' test with
+    | nil => contradiction
+    | cons y ys ih =>
       dsimp [filter] at h
-      cases h' : (test hd)
-      case false =>
-        rw [h'] at h
-        dsimp at h
-        exact ih _ _ _ h
-      case true =>
-        rw [h'] at h
-        dsimp at h
+      cases hy : (test y)
+      · rw [hy] at h
+        apply ih
+        assumption
+      · rw [hy] at h
         injections h1 h2
         rw [← h1]
         assumption
 ```
 
-:::gradeTheorem 3 filter_exercise
+:::gradeTheorem 3 test_pos_of_filter_cons
 :::
 :::::
 
 :::::exercise (rating := 4) (name := "forall_exists_challenge") (level := Advanced)
-Define two recursive `Fixpoints`, `forallb` and `existsb`.  The
-first checks whether every element in a list satisfies a given
-predicate:
+Define two recursive functions, `allTrue` and `anyTrue`.
 
-```display
-forallb Nat.odd [1,3,5,7,9] = true
-forallb negb [false,false] = true
-forallb Nat.even [0,2,4,5] = false
-forallb (beq 5) [] = true
-```
-
-The second checks whether there exists an element in the list that
-satisfies a given predicate:
-
-```display
-existsb (beq 5) [0,2,3,6] = false
-existsb (andb true) [true,true,false] = true
-existsb Nat.odd [1,0,0,0,0,3] = true
-existsb even [] = false
-```
-
-Next, define a _nonrecursive_ version of `existsb` -- call it
-`existsb'` -- using `forallb` and `negb`.
-
-Finally, prove a theorem `existsb_existsb'` stating that
-`existsb'` and `existsb` have the same behavior.
+The first checks whether the given Boolean test returns {name}`true` for every element of the list.
 
 ```lean
-def forallb {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
+def allTrue {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
   match l with
   | [] => true
-  | x :: l' => (test x) && (forallb test l'))
+  | x :: xs => (test x) && (allTrue test xs))
 
-example : forallb (Nat.odd) [1,3,5,7,9] = true := solution!(by rfl)
-example : forallb not [false,false] = true := solution!(by rfl)
-example : forallb (Nat.even) [0,2,4,5] = false := solution!(by rfl)
-example : forallb (· == 5) [] = true := solution!(by rfl)
+example : allTrue Nat.odd [1, 3, 5, 7, 9] = true := solution!(by rfl)
+example : allTrue not [false, false] = true := solution!(by rfl)
+example : allTrue Nat.even [0, 2, 4, 5] = false := solution!(by rfl)
+example : allTrue Nat.even [] = true := solution!(by rfl)
+```
 
-def existsb {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
+The second checks whether it returns {name}`true` for at least one element.
+
+```lean
+def anyTrue {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
   match l with
   | [] => false
-  | x :: l' => (test x) || (existsb test l'))
+  | x :: xs => (test x) || (anyTrue test xs))
 
-example : existsb (· == 5) [0,2,3,6] = false := solution!(by rfl)
-example : existsb (· && true) [true,true,false] = true := solution!(by rfl)
-example : existsb (Nat.odd) [1,0,0,0,0,3] = true := solution!(by rfl)
-example : existsb (Nat.even) ([] : List Nat) = false := solution!(by rfl)
+example : anyTrue Nat.even [1, 3, 4, 7] = true := solution!(by rfl)
+example : anyTrue Nat.odd [0, 2, 4, 6] = false := solution!(by rfl)
+example : anyTrue not [true, true, false] = true := solution!(by rfl)
+example : anyTrue Nat.even [] = false := solution!(by rfl)
+```
 
-def existsb' {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
-  !(forallb (fun x => !(test x)) l))
+Next, define a _nonrecursive_ version of {name}`anyTrue` — call it
+`anyTrue'` — using {name}`allTrue` and {name}`not`.
 
-theorem existsb_existsb' (α : Type) (test : α → Bool) (l : List α) :
-    existsb test l = existsb' test l := by
+```lean
+def anyTrue' {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
+  !(allTrue (fun x => !(test x)) l))
+```
+
+Finally, prove a theorem `anyTrue_eq_anyTrue` stating that
+`anyTrue'` and `anyTrue` have the same behavior.
+
+```lean
+theorem anyTrue_eq_anyTrue (α : Type) (test : α → Bool) (l : List α) :
+    anyTrue test l = anyTrue' test l := by
   solution!
-    induction l generalizing test
-    case nil => rfl
-    case cons hd tl ih =>
-      dsimp [existsb]
+    induction l generalizing test with
+    | nil => rfl
+    | cons x xs ih =>
+      dsimp [anyTrue]
       rw [ih]
-      dsimp [existsb', forallb]
+      dsimp [anyTrue', allTrue]
       rw [Bool.not_and, Bool.not_not]
 ```
 
-:::gradeTheorem 6 existsb_existsb'
+:::gradeTheorem 6 anyTrue_eq_anyTrue
 :::
 :::::
 
-:::dev PotentialImprovement
-```
-Another nice exercise would be to show how to
-define forallb in terms of fold, as in...
-   Complete the following definition of `every` as a recursive function:
-      Definition forallb' (X:Type) (p:X → Bool) (l:list X) : Bool :=
-        fold _ _
-          (fun x acc => both_yes _________  __________) ________  _________.
-```
-:::
-::::::
-
-::::hide
-```
--- Solutions to the above.
-
-def forallbF {X : Type} (test : X → Bool) (l : List X) : Bool :=
-  fold (fun x b => (test x) && b) l true
-
-def existsbF {X : Type} (test : X → Bool) (l : List X) : Bool :=
-  fold (fun x b => (test x) || b) l false
-
-theorem existsbF_existsb {α : Type} (test : α → Bool) (l : List α) :
-    existsbF test l = existsb test l := by
-  unfold existsbF
-  induction l
-  case nil => rfl
-  case cons hd tl ih =>
-    dsimp [existsb, fold]
-    rw [ih]
-```
-::::
