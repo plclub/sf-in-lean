@@ -130,18 +130,14 @@ variety of work](https://leanprover-community.github.io/papers.html) across comp
 - formalizing the proof of [Fermat's last theorem](https://github.com/ImperialCollegeLondon/FLT)
 - formalizing the [Sphere packing problem](https://github.com/thefundamentaltheor3m/Sphere-Packing-Lean)
 - Deepmind's AI model for IMO problems: [Alphaproof](https://deepmind.google/blog/ai-solves-imo-problems-at-silver-medal-level/)
-- formal specification for the [cedar polucy language](https://github.com/cedar-policy/cedar-spec)
+- formal specification for the [cedar policy language](https://github.com/cedar-policy/cedar-spec)
 
 :::dev "Benjamin Pierce (bcpierce00)"
-Need more examples, including specifically things accomplished in Lean.
-
-`lean-software-foundations-contributors > Main Achievements of Lean`
-lists some big Lean projects -- some of them should be mentioned here.
-And there are probably things here to trim.
+The individual references above should be merged into the categories below...
 :::
 
 
-- As a _platform for modeling programming languages_, proof assistans have
+- As a _platform for modeling programming languages_, proof assistants have
   become standard tools for researchers who need to describe and
   reason about complex language definitions. They have been used,
   for example, to check the security of the JavaCard platform,
@@ -222,16 +218,12 @@ and a set of tools for stating and proving logical assertions.
 Moreover, when we come to look more closely, we find that these two
 sides of Lean are actually aspects of the very same underlying
 machinery -- i.e., _proofs are programs_.
-:::dev "Benjamin Pierce (bcpierce00)"
-Is this an accurate description of Lean?
-Luisa Cicolini (luisacicolini)
-That looks fair to me, I suppose it's too early to cite curry howard?
-:::
+
 
 ## Further Reading
 
 This text is intended to be self contained, but readers looking
-for a deeper treatment of particular topics will find some
+for follow-on textbooks or deeper treatments of particular topics will find some
 suggestions for further reading in the {ref "Postscript"}[Postscript] chapter.
 
 # Practicalities
