@@ -18,6 +18,18 @@ meta section
 namespace Lean.Parser
 open Tactic
 
+
+/- n Lean, "Inversion" on `h: f n ≤ 0`, where `f : nat -> nat`,
+requires `generalizing e : f n = m`, since Lean does not perform the
+dependent case analysis automatically. `cases h` will fail here. We
+want to keep the style of reasoning familiar to PL: "I know h, what
+must have been true for h to be true." We feel that the technicality
+of needing to generalize hinders teaching and learning this style of
+reasoning for new audiences to proof assistants and logic. To solve
+this, we introduce and use the `inversion` tactic, which automatically
+generalizes varaibles, performs case analysis, and eliminates
+impossible subcases. -/
+
 /-- Internal syntactic representation of a single inversion alternative. -/
 declare_syntax_cat invAlt
 syntax " | " caseArg " => " tacticSeq : invAlt
