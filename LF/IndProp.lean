@@ -682,7 +682,7 @@ HIDE: CH: A simple exercise could be nice here?
 
 ::::full
 Computing the transitive closure can be undecidable even for
-a relation R that is decidable (e.g., the `Cms` relation below), so in
+a relation R that is decidable (e.g., the `CMS` relation below), so in
 general we can't expect to define transitive closure as a boolean
 function. Fortunately, Lean allows us to define transitive closure
 as an inductive relation.
@@ -734,37 +734,37 @@ conjecture.  First we define a binary relation corresponding to
 the "Collatz step function" `csf`:
 
 ```lean
-def Cs (n m : Nat) : Prop := csf n = m
+def CS (n m : Nat) : Prop := csf n = m
 ```
 
 This Collatz step relation can be used in conjunction with the
 reflexive and transitive closure operation to define a _Collatz
-multi-step_ (`Cms`) relation, expressing that a number `n`
+multi-step_ (`CMS`) relation, expressing that a number `n`
 reaches another number `m` in zero or more Collatz steps:
 
 ```lean
-def Cms (n m : Nat) : Prop := ClosReflTrans Cs n m
-def Collatz' : Prop := ∀ (n : Nat), n ≠ 0 → Cms n 1
+def CMS (n m : Nat) : Prop := ClosReflTrans CS n m
+def Collatz' : Prop := ∀ (n : Nat), n ≠ 0 → CMS n 1
 ```
 
 ::::full
-This `Cms` relation defined in terms of
+This `CMS` relation defined in terms of
 `ClosReflTrans` allows for more interesting derivations than the
 linear ones of the directly-defined `CollatzHoldsFor` relation:
 
 ```display
 csf 16 = 8           csf 8 = 4           csf 4 = 2           csf 2 = 1
 ——————————(rt_step)  —————————(rt_step)  —————————(rt_step)  —————————(rt_step)
-Cms 16 8           Cms 8 4           Cms 4 2           Cms 2 1
+CMS 16 8           CMS 8 4           CMS 4 2           CMS 2 1
 ——————————————————————————(rt_trans)  —————————————————————————(rt_trans)
-    Cms 16 4                              Cms 4 1
+    CMS 16 4                              CMS 4 1
     —————————————————————————————————————————————(rt_trans)
-                       Cms 16 1
+                       CMS 16 1
 ```
 ::::
 
 :::dev
-HIDE: CH: Would it be helpful to add an exercise later proving Cms
+HIDE: CH: Would it be helpful to add an exercise later proving CMS
 equivalent to CollatzHoldsFor
 :::
 
