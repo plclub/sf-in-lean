@@ -957,6 +957,8 @@ By the definition of `+`, `n + (m' + 1) = (n + m') + 1`, so our new goal is to s
 By {name}`succ_add`, `(m' + 1) + n = (m' + n) + 1`, so it remains to show
 `(n + m') + 1 = (m' + n) + 1`.  This follows from the induction hypothesis
 `n + m' = m' + n`.
+
+_Qed_.
 :::
 
 :::grade
@@ -985,6 +987,8 @@ follows directly from the definition of {name}`beq`.
 must show `(n' + 1 == n' + 1) = true`. This
 follows directly from the induction hypothesis and the
 definition of `beq`.
+
+_Qed_.
 :::
 
 :::grade
@@ -1551,7 +1555,7 @@ end NatToBin
 end NatPlayground.Nat
 ```
 
-::::hide
+::::instructors
 ```
   There is MUCH more that we could say about this topic.  We
   could do a similar example (and pair of exercises) involving
