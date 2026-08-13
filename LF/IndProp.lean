@@ -245,8 +245,10 @@ narrative though.
 ```
 :::
 
-IMPORTBLOCK import LF.Logic
-IMPORTBLOCK import LF.CustomTactics
+```importBlock
+import LF.Logic
+import LF.CustomTactics
+```
 
 # Inductively Defined Propositions
 
@@ -309,6 +311,10 @@ this definition in a standard programming language, but it is
 rejected by Lean's termination checker, since the argument to
 the recursive call, `csf n`, is not "obviously smaller" than `n`.
 
+:::dev "Kihong Heo (KihongHeo)" NOW
+Probably `reaches1In` according to STYLE.md?
+:::
+
 ```lean
 /--
 error: fail to show termination for
@@ -355,6 +361,10 @@ while we could in principle convince Lean that `div2 n` is
 smaller than `n`, we certainly can't convince it that
 `(3 * n) + 1` is smaller than `n`!
 
+:::dev "Kihong Heo (KihongHeo)" NOW
+Probably `CollatzHoldsFor` according to STYLE.md?
+:::
+
 ```lean
 /--
 error: fail to show termination for
@@ -382,6 +392,11 @@ def collatz_holds_for (n : Nat) : Prop :=
   | _ => if n.even then collatz_holds_for (div2 n)
                    else collatz_holds_for ((3 * n) + 1)
 ```
+
+:::dev "Kihong Heo (KihongHeo)" NOW
+I feel that this paragraph does not match the error message below.
+The Lean error msg refers to `div 2`.
+:::
 
 This recursive function is also rejected by the termination
 checker, since, while we could in principle convince Lean that
@@ -801,7 +816,7 @@ inductive ClosReflTransSym {α: Type} (R: α→α→Prop) : α→α→Prop where
 
 ::::::
 
-Example: Permutations
+## Example: Permutations
 
 The familiar mathematical concept of _permutation_ also has an
 elegant formulation as an inductive relation.  For simplicity,
@@ -860,7 +875,7 @@ inductive Perm3 {α : Type} : List α → List α → Prop where
 
 ::::::full
 :::::exercise (rating := 1) (name := "perm") (manual := true)
-According to this definition, is `\[1;2;3`\] a permutation of
+According to this definition, is `[1, 2, 3]` a permutation of
 itself?
 
 :::solution
@@ -1509,7 +1524,6 @@ theorem ev_4_ev_n : ∀ n,
 :::gradeTheorem 1 ev_4_ev_n
 :::
 
-- \[\]
 :::::
 
 :::::exercise (rating := 1) (name := "ev5_nonsense")
@@ -1527,7 +1541,6 @@ theorem ev5_nonsense : Ev 5 → 2 + 2 = 9 := by
       inversion h''
 ```
 
-- \[\]
 :::::
 
 ::::::
@@ -2774,7 +2787,7 @@ but it is _not_ a subsequence of any of the lists
 [5,6,2,1,7,3,8].
 ```
 
-- Define an inductive proposition `subseq` on `list Nat` that
+- Define an inductive proposition `subseq` on `List Nat` that
   captures what it means to be a subsequence.  There are a number
   of correct ways to do this. You should make sure that your
   definition behaves correctly on all the positive and negative
@@ -3248,7 +3261,7 @@ and
 [4, 3].
 ```
 
-Now, suppose we have a set `α`, a function `test: α→bool`, and a
+Now, suppose we have a type `α`, a function `test : α → Bool`, and a
 list `l` of type `List α`.  Suppose further that `l` is an
 in-order merge of two lists, `l₁` and `l₂`, such that every item
 in `l₁` satisfies `test` and no item in `l₂` satisfies test.  Then
@@ -3531,25 +3544,25 @@ forwards.
 
 - Define an inductive proposition `Pal` on `List α` that
   captures what it means to be a palindrome. (Hint: You'll need
-  three cases.
+  three cases.)
 
-- Prove (`pal_app_reverse`) that
+- Prove `pal_app_reverse`, which states that
 
 ```display
-∀ l, pal (l ++ l.reverse).
+∀ l, Pal (l ++ l.reverse).
 ```
 
-- Prove (`pal_reverse` that)
+- Prove `pal_reverse`, which states that
 
 ```display
-∀ l, pal l → l = l.reverse.
+∀ l, Pal l → l = l.reverse.
 ```
 
 For extra credit, try proving the same theorems with an alternate
 definition with a _single_ constructor of this type:
 
 ```display
-∀ l, l = l.reverse → pal l
+∀ l, l = l.reverse → Pal l
 ```
 
 :::dev
@@ -3831,9 +3844,9 @@ previous exercise, prove that
 :::::
 
 :::::exercise (rating := 4) (name := "NoDup") (level := Advanced)
-Use the `∈` property to define a proposition `disjoint α l₁ l₂`,
+Use the `∈` property to define a proposition `disjoint l₁ l₂`,
 which should be provable exactly when `l₁` and `l₂` are
-lists (with elements of type α) that have no elements in
+lists (with elements of type `α`) that have no elements in
 common.
 
 ```lean
@@ -3843,12 +3856,13 @@ def disjoint {α:Type} (l₁ l₂: List α) :=
 -- END SOLUTION
 ```
 
-Next, use `∈` to define an inductive proposition \[NoDup α
-l\], which should be provable exactly when `l` is a list (with
+Next, use `∈` to define an inductive proposition `NoDup l`,
+which should be provable exactly when `l` is a list (with
 elements of type `α`) where every member is different from every
-other.  For example, `NoDup Nat [1, 2, 3,  4]` and `NoDup Bool []`
-should be provable, while `NoDup Nat \[1, 2, 1`\] and
-`NoDup Bool [true, true]` should not be.
+other.  For example, `NoDup ([1, 2, 3, 4] : List Nat)` and
+`NoDup ([] : List Bool)` should be provable, while
+`NoDup ([1, 2, 1] : List Nat)` and
+`NoDup ([true, true] : List Bool)` should not be.
 
 ```lean
 -- SOLUTION

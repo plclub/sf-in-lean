@@ -75,7 +75,7 @@ example (n m : Nat) (h : n = m) : n = m := by
 
 ::::full
 The {tactic}`apply` tactic also works with hypotheses
-and lemmas whose types are implementations.
+and lemmas whose types are implications.
 If the conclusion of the implication matches the current goal,
 its premises become new subgoals to be proved.
 ::::
@@ -2001,4 +2001,3 @@ theorem anyTrue_eq_anyTrue (α : Type) (test : α → Bool) (l : List α) :
 :::gradeTheorem 6 anyTrue_eq_anyTrue
 :::
 :::::
-
