@@ -1,5 +1,5 @@
 import SFLMeta
-import Acknowledgements
+import Credits
 
 open Verso.Genre Manual
 open SFLMeta
@@ -10,6 +10,24 @@ tag := "Preface"
 htmlSplit := .never
 file := some "Preface"
 %%%
+
+
+
+
+
+:::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement (year := 2025)
+The SF course at Penn (CIS 5000) sometimes attracts
+students who don't have enough math background and begin really
+flailing around the middle of the semester. I wonder if we could
+help these people weed themselves out by offering some kind of more
+detailed self-assessment near the beginning, maybe in this
+chapter.
+
+Some concepts that I would hope people have seen before:
+  - recursive, polymorphic functional programming over lists
+  - abstract definitions involving relations (e.g., reflexive,
+    symmetric, transitive closure of a relation)
+:::
 
 # Welcome
 
@@ -328,23 +346,4 @@ Foundations") at the University of Pennsylvania can be found at
 problems are still relevant.
 
 
-{include 2 Acknowledgements}
-
-
-
-
-
-
-:::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement (year := 2025)
-The SF course at Penn (CIS 5000) sometimes attracts
-students who don't have enough math background and begin really
-flailing around the middle of the semester. I wonder if we could
-help these people weed themselves out by offering some kind of more
-detailed self-assessment near the beginning, maybe in this
-chapter.
-
-Some concepts that I would hope people have seen before:
-  - recursive, polymorphic functional programming over lists
-  - abstract definitions involving relations (e.g., reflexive,
-    symmetric, transitive closure of a relation)
-:::
+{include 2 Credits}

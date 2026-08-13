@@ -4,12 +4,12 @@ open Verso.Genre Manual
 open SFLMeta
 
 /-!
-Single shared source for the Acknowledgements section that appears in the
+Single shared source for the Credits section that appears in the
 front matter of every volume.  Each volume's Preface includes it with
-`{include 2 Acknowledgements}`, so edits here propagate to all volumes.
+`{include 2 Credits}`, so edits here propagate to all volumes.
 -/
 
-#doc (Manual) "Acknowledgements" =>
+#doc (Manual) "Credits" =>
 
 *Leadership:* Mike Hicks and Benjamin C. Pierce lead the SF-in-Lean project.
 

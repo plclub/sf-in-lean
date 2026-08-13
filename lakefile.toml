@@ -38,11 +38,11 @@ rev = "bump-4-32-0"
 [[lean_lib]]
 name = "Bib"
 
-# Single shared source for the Acknowledgements section included in each
+# Single shared source for the Credits section included in each
 # volume's Preface.  Its own library because globs are disabled below, so a
 # module is only built when it is a declared library root.
 [[lean_lib]]
-name = "Acknowledgements"
+name = "Credits"
 
 [[lean_lib]]
 name = "SFLMeta"
