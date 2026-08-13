@@ -512,6 +512,9 @@ The {ref "Lists"}[Lists] chapter introduced a partial map abstraction, `PartialM
 `find` function for lookup, based on lists of key-value pairs.
 Here, we are going to build a map abstraction using functions instead. The advantage of this representation is that it offers a more _extensional_ view of maps, as we saw with functions in the {ref "Logic"}[Logic] chapter: two maps that respond to every query in the same way will be represented as exactly the same function, rather than just as "equivalent" list structures. This simplifies proofs that use maps.
 
+Instead of using functions directly, we encapsulate them inside a `structure` which we call `TotalMap`.
+Intuitively, a total map just contains a function `inner` from a key of type `α` to a value of type `β`.
+
 :::dev "Claude"
 This paragraph previously wrote `{tech}_extensional_`, but that failed to build
 here with `No term def with key "extensional"`. The `{tech}` role emits a
@@ -530,8 +533,6 @@ structure TotalMap (α : Type) (β : Type) where
 
 namespace TotalMap
 ```
-
-Intuitively, a total map over an element type `β` just contains a function `inner` from a key of type `α` to a value of type `β`.
 
 In order to declare a default value of `β` we will use the {name}`Inhabited` typeclass, which is the standard library's implementation of our {name}`DefaultValue` example from above:
 
@@ -616,7 +617,7 @@ which has many instances such as {name}`Array`, {name}`List`, and {name}`Vector`
 We develop it to illustrate the notation-as-typeclass approach.
 
 :::dev "Niklas Halonen (xhalo32)"
-A reason I can come up with why we use a notation typeclass (in library code) over a plain notation is that it makes it possible (for a downstream consumer) to write `open scoped MyGetElem` instead of writing `open scoped TotalMap` and `open scoped TotalMap` individually.
+A reason I can come up with why we use a notation typeclass (in library code) over a plain notation is that it makes it possible (for a downstream consumer) to write `open scoped MyGetElem` instead of writing `open scoped TotalMap` and `open scoped PartialMap` individually.
 This wouldn't be a good sell if `→ₜ` and `→ₚ` are scoped notations, but they're currently global.
 :::
 
@@ -1049,6 +1050,10 @@ instance : MyGetElem (PartialMap α β) α (Option β) where
 
 theorem getElem_def (m : PartialMap α β) (a : α) : m[a] = m.toTotal[a] := rfl
 ```
+
+:::dev "Niklas Halonen (xhalo32)" NOW
+The following few paragrahps are out-of-date because `TotalMap` is also a structure.
+:::
 
 Remember that we discussed earlier with total maps that using function application exposes the implementation, and that's why we introduced a new notation {name}`MyGetElem`?
 Here we take that concept to a new level, and instead of using a `def` for partial maps, like this...
