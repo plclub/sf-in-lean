@@ -8,15 +8,16 @@ namespace SFLMeta
 
 /-! ## `:::details` directive
 
-A collapsible disclosure block: the `summary` argument is shown by default
-as a one-line teaser; the contents are revealed only when the reader expands
-the block. Useful for tucking away encoding details (macro plumbing, helper
-notation) that aren't part of the main narrative.
+A collapsible disclosure block: the optional positional `summary` string is
+shown by default as a one-line teaser; the contents are revealed only when the
+reader expands the block. When omitted, the summary defaults to `"Details"`.
+Useful for tucking away encoding details (macro plumbing, helper notation) that
+aren't part of the main narrative.
 
 Author syntax:
 
 ````markdown
-:::details (summary := "Lean encoding")
+:::details "Lean encoding"
 The macros below set up the `<{ … }>` notation for STLC terms.
 
 ```lean
@@ -32,15 +33,16 @@ concern, not part of the source. -/
 
 /-- Configuration for `:::details`. -/
 structure DetailsConfig where
-  /-- The clickable teaser shown when the block is collapsed. -/
-  summary : String
+  /-- The clickable teaser shown when the block is collapsed. Defaults to
+  `"Details"` when omitted. -/
+  summary : Option String
 deriving Repr
 
 section
 variable [Monad m] [MonadError m]
 
 def DetailsConfig.parse : ArgParse m DetailsConfig :=
-  DetailsConfig.mk <$> .named `summary .string false
+  DetailsConfig.mk <$> ((some <$> .positional `summary .string) <|> pure none)
 
 instance : FromArgs DetailsConfig m := ⟨DetailsConfig.parse⟩
 
@@ -106,14 +108,14 @@ details.sf-details[open] {
 "##
   ]
 
-/-- A `:::details(summary := "…")` directive wraps its contents in a
-collapsible disclosure block. -/
+/-- A `:::details "…"` directive wraps its contents in a collapsible
+disclosure block. The summary string is optional (defaults to `"Details"`). -/
 @[directive]
 def details : DirectiveExpanderOf DetailsConfig
   | cfg, contents => do
     let blocks ← contents.mapM elabBlock
     ``(Verso.Doc.Block.other
-        (SFLMeta.Block.details $(quote cfg.summary))
+        (SFLMeta.Block.details $(quote (cfg.summary.getD "Details")))
         #[$blocks,*])
 
 end SFLMeta
