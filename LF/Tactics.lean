@@ -1230,8 +1230,8 @@ more idiomatic way is to use `induction ... generalizing ...`.
 We can bring this trick back if we later find it useful though, and at that time we should introduce
 {tactic}`revert` as well.
 
-```lean
-theorem double_injective' : ∀ (n m : Nat),
+```display
+theorem double_injective : ∀ (n m : Nat),
     n.double = m.double →
     n = m := by
   intro n
@@ -1380,340 +1380,154 @@ _Proof_: We prove by induction on {lean}`n` that for _every_ natrual number {lea
 
 # Rewriting with Conditional Statements
 
-We'll use a boolean "less or equal" test on numbers, written `n ≤? m`
-(the library function `Nat.ble`), together with the fact that it
-commutes with successor on both sides.
+:::full
 
-:::dev "Benjamin Pierce (bcpierce00)"
-Added, to make the file compile, on Claude's suggestion. But is this the right way?
-Answer: No, just replaces uses of it by Nat.ble!
+Suppose that we know two numbers have the same double, and we want to
+use this fact to rewrite one of them into the other. Recall the theorem
+{name}`double_injective` from the previous section:
+
+```lean (name := double_injective)
+#check double_injective
+```
+
+```leanOutput double_injective
+double_injective (n m : Nat) (h : double n = double m) : n = m
+```
+
+For example, we can prove:
+
 :::
 
 ```lean
-infix:52 " ≤? " => Nat.ble
-
-theorem zero_ble (m : Nat) : (0 ≤? m) = true := rfl
-theorem succ_ble_succ (n m : Nat) : ((n + 1) ≤? (m + 1)) = (n ≤? m) := rfl
+example (n m p q : Nat)
+    (h : double n = double m)
+    (hm : m + p = q) :
+    n + p = q := by
+  rw [double_injective n m]
+  · assumption
+  · assumption
 ```
 
-:::dev "Claude" BeforeNextRelease
-Claude-generated note.
-(BCP: Whoever reviews this part of the chapter next should read and delete it.)
-
-The `leb_*` → `ble_*` rename is now applied across
-`Lists`, `Tactics`, and `Logic`, matching the `ble_complete` / `ble_correct` /
-`ble_iff` names already used in `IndProp`: every one of these is stated over
-`≤?`, which is notation for `Nat.ble` (declared just above), so the name now
-tracks the function. Statements keep the `≤?` notation rather than spelling out
-`Nat.ble`, following `IndProp`.
-
-One thing to think about:
-`beq_succ` (above, and used in `Logic`) is a separate `BEq` question: it could
-likewise be restated via `Nat.beq_eq_true_eq` / `BEq.comm`, which would let the
-`beq_symm` exercise below drop its induction. Worth a decision, but it changes
-an exercise's shape, not just a name.
+:::full
+The use of `rw` here is a little different from the examples we have seen so far.
+The theorem {name}`double_injective` says {lean}`n = m`
+*provided that* {lean}`double n = double m`, no just {lean}`n = m`.
+When we write `rw [double_injective n m]`, Lean uses the conclusion {lean}`n = m` to rewrite
+the goal, and then asks us to prove the hypothesis needed by {name}`double_injective`.
+Thus we get two goals: the updated main goal, `m + p = q`, which follows from `hm`, and the
+condition from {name}`double_injective`, {lean}`double n = double m`, whicch follows from `h`.
 :::
 
-Suppose that we want to show that `add` is the inverse of
-`sub`.  Since we are working with natural numbers, we need an
-assumption to prevent `sub` from truncating its result. With
-this assumption, the induction hypothesis becomes
-`forall m, n' ≤? m = true → (m - n') + n' = m`.  The beginning of the proof
-uses techniques we have already seen -- in particular, notice how
-we induct on `n` before introducing `m`, so that the induction
-hypothesis becomes sufficiently general.
-
-```lean
-theorem sub_add_ble : ∀ (n m : Nat),
-    n ≤? m = true → (m - n) + n = m := by
-  intro n
-  induction n
-  case zero =>
-    intro m h; rw [add_zero]; cases m
-    case zero => rfl
-    case succ => rfl
-  case succ n' ih =>
-    intro m h; cases m
-    case zero => contradiction
-    case succ m' =>
-      rw [succ_ble_succ] at h
-      rw [succ_sub_succ, add_succ]
-    -- At this point, we need to show `(m' - n') + n' + 1 = m' + 1`
-    -- from the assumption `(n' <= m') = true`.  We could use the
-    -- `have` tactic to prove `(m' - n') + n' = m'` from the IH.
-    -- However, we can also just use `rw` directly...
-      rw [ih]
-      assumption
-```
-
-::::full
-if we rewrite with a conditional statement of the form
+If we rewrite with a conditional statement of the form
 `P → a = b`, then Lean tries to rewrite with `a = b`, and then
 asks us to prove `P` in a new subgoal.  If the statement has more
 than one assumption, then we get one subgoal for each assumption.
-::::
 
-::::::full
-:::::exercise (rating := 3) (name := "gen_dep_practice")
+:::::exercise (rating := 3) (name := "nth?_after_last")
 Prove this by induction on `l`.
 
 ```lean
-theorem nth_error_after_last {α : Type} (n : Nat) (l : List α) :
-    l.length = n →
+theorem nth?_after_last {α : Type}
+    {n : Nat} {l : List α} (h : l.length = n) :
     nth? l n = none := by
   solution!
-    intros hlen
-    induction l generalizing n
-    case nil => rfl
-    case cons hd tl ih =>
-      rw [List.length_cons] at hlen
-      rw [← hlen]
-      dsimp [nth?]; apply ih _; rfl
+    induction l generalizing n with
+    | nil => rfl
+    | cons x xs ih =>
+      rw [List.length_cons] at h
+      rw [← h]
+      dsimp [nth?]
+      apply ih
+      rfl
 ```
 
-:::gradeTheorem 3 nth_error_after_last
+:::gradeTheorem 3 nth?_after_last
 :::
 :::::
 
-::::::
+:::::exercise (rating := 3) (name := "length_append_cons")
 
-::::hide
-```
-/- LATER: BCP 9/16: Hiding the following three exercises, which
-   need some fixing or moving elsewhere... -/
--- EX3? (app_length_cons)
-/- Prove this by induction on `l1`, without using `app_length`
-    from `Lists`. -/
+Prove this by induction on `l1`, without using {name}`List.length_append`.
 
-theorem app_length_cons {α : Type} (l1 l2 : List α) (x : α) (n : Nat) :
-    (l1 ++ (x :: l2)).length = n →
+```lean
+theorem length_append_cons {α : Type} {l1 l2 : List α} {x : α} {n : Nat}
+    (h : (l1 ++ (x :: l2)).length = n) :
     ((l1 ++ l2).length) + 1 = n := by
   solution!
-    intro heq
-    induction l1 generalizing n
-    case nil =>
-      assumption
-    case cons hd tl ih =>
+    induction l1 generalizing n with
+    | nil => assumption
+    | cons y ys ih =>
       rw [List.cons_append, List.length_cons] at *
-      rw [← heq]
-      have h : (tl ++ l2).length + 1 = (tl ++ x :: l2).length := by apply ih _; rfl
-      rw [h]
--- []
+      /- Trick: by saying `(ys ++ x :: l2).length = n`
+         can be closed by `rfl`, we effectively choose `n` to be
+        `(ys ++ x :: l2).length`  -/
+      rw [ih (by rfl)]
+      assumption
+```
 
--- EX4? (app_length_twice)
-/- Prove this by induction on `l`, without using `app_length` from `Lists`. -/
-/- LATER: This might be a little bit hard??
-   There are a couple of tricky little points!
-   APT: Yes: the nested induction is a first, I think. And it would
-     be good to have seen rewrite with an applied term; otherwise
-     a kludgy forward `assert` or `pose proof` seems needed. -/
-/- LATER: no need for a _nested_ induction per se -- side lemmas will
-   do the trick, too, and students have been exposed to that
-   already. -/
-/- LATER: APT: Yes, but the lemma above is terribly ad-hoc, as well
-   as ill-suited for its use here!
-   I realize that the pedagogical point here has nothing to do with
-   developing sensible lemmas for lists, but these seem pretty distorted. -/
+:::gradeTheorem 3 length_append_cons
+:::
+:::::
 
-theorem app_length_twice {α : Type} (n : Nat) (l : List α) :
-    l.length = n →
+:::::exercise (rating := 3) (name := "length_append_self")
+
+Prove this by induction on `l1`, without using {name}`List.length_append`.
+Hint: you might need to use {name}`length_append_cons` you just proved.
+
+```lean
+theorem length_append_self {α : Type} {n : Nat} {l : List α}
+    (h : l.length = n) :
     (l ++ l).length = n + n := by
-  solution!
-    intros heq
-    induction l generalizing n
-    case nil => rw [List.append_nil, List.length_nil, ← heq]; rfl
-    case cons hd tl ih =>
-      rw [List.cons_append]
-      rw [List.length_cons] at *
-      have h : (tl ++ tl).length + 1 = (tl ++ hd :: tl).length := by
-        apply app_length_cons _ _ hd _; rfl
-      rw [← heq, ← h, ih tl.length, ← add_assoc]
-      congr 1
-      rw [add_assoc, add_assoc]
-      congr 1
-      rw [add_comm]
-      rfl
--- []
-
--- EX3? (diagonal_induction)
-/- LATER: Uses `Prop`, which has not been introduced.  This
-   exercise should be moved to another chapter. -/
--- Prove the following principle of induction over two naturals.
-
-theorem diagonal_induction : ∀ (P : Nat → Nat → Prop),
-    P 0 0 →
-    (∀ m, P m 0 → P (m + 1) 0) →
-    (∀ n, P 0 n → P 0 (n + 1)) →
-    (∀ m n, P m n → P (m + 1) (n + 1)) →
-    ∀ m n, P m n := by
-  intro P H00 HS0 H0S HSS m n
-  induction m generalizing n
-  case zero =>
-    induction n
-    case zero => exact H00
-    case succ _ ih => exact H0S _ ih
-  case succ _ ih =>
-    cases n
-    case zero => exact HS0 _ (ih _)
-    case succ => exact HSS _ _ (ih _ )
-
--- /ADMITTED
--- []
+  induction l generalizing n with
+  | nil =>
+    rw [List.append_nil,  List.length_nil] at *
+    rw [← h]
+  | cons x xs ih =>
+    rw [List.cons_append, List.length_cons] at *
+    rw [← length_append_cons (x := x) rfl]
+    rw [ih (by rfl), ← h]
+    rw [Nat.add_add_add_comm]
 ```
-::::
 
-::::hide
+:::gradeTheorem 3 length_append_self
+:::
+:::::
+
+:::::exercise (rating := 3) (name := "diagonal_induction")
+
+Prove the following principle of induction over two naturals.
+
+```lean
+
+theorem diagonal_induction (p : Nat → Nat → Prop)
+    (hzz : p 0 0)
+    (hsz : ∀ m, p m 0 → p (m + 1) 0)
+    (hzs : ∀ n, p 0 n → p 0 (n + 1))
+    (hss : ∀ m n, p m n → p (m + 1) (n + 1)) :
+    ∀ m n, p m n := by
+  intro m n
+  induction m generalizing n with
+  | zero =>
+    induction n with
+    | zero => apply hzz
+    | succ n' ih =>
+      apply hzs
+      apply ih
+  | succ m' ih =>
+    induction n with
+    | zero =>
+      apply hsz
+      apply ih
+    | succ n' ih' =>
+      apply hss
+      apply ih
 ```
- TODO: (DHS) This should all move to Induction.lean, probably, but that
-   means we will need to redo the examples here. Keeping the original
-   Rocq here for posterity
 
-(* ###################################################### *)
-(** * Unfolding Definitions *)
-
-(** It sometimes happens that we need to manually unfold a name that
-    has been introduced by a `Definition` so that we can manipulate
-    the expression it stands for.
-
-    For example, if we define... *)
-
-Definition square n := n * n.
-
-(** ...and try to prove a simple fact about `square`... *)
-
-Lemma square_mult : forall n m, square (n * m) = square n * square m.
-Proof.
-  intros n m.
-  simpl.
-
-(** ...we appear to be stuck: `simpl` doesn't simplify anything, and
-    since we haven't proved any other facts about `square`, there is
-    nothing we can `apply` or `rewrite` with. *)
-
-(** TERSE: *** *)
-(** To make progress, we can manually `unfold` the definition of
-    `square`: *)
-
-  unfold square.
-
-(** Now we have plenty to work with: both sides of the equality are
-    expressions involving multiplication, and we have lots of facts
-    about multiplication at our disposal.  In particular, we know that
-    it is commutative and associative, and from these it is not hard
-    to finish the proof. *)
-
-  rewrite mult_assoc.
-  assert (H : n * m * n = n * n * m).
-    { rewrite mul_comm. apply mult_assoc. }
-  rewrite H. rewrite mult_assoc. reflexivity.
-Qed.
-
-(** TERSE: *** *)
-(** At this point, a bit deeper discussion of unfolding and
-    simplification is in order.
-
-    We already have observed that tactics like `simpl`, `reflexivity`,
-    and `apply` will often unfold the definitions of functions
-    automatically when this allows them to make progress.  For
-    example, if we define `foo m` to be the constant `5`... *)
-
-Definition foo (x: Nat) := 5.
-
-(** .... then the `simpl` in the following proof (or the
-    `reflexivity`, if we omit the `simpl`) will unfold `foo m` to
-    `(fun x => 5) m` and further simplify this expression to just
-    `5`. *)
-
-Fact silly_fact_1 : forall m, foo m + 1 = foo (m + 1) + 1.
-Proof.
-  intros m.
-  simpl.
-  reflexivity.
-Qed.
-
-(** TERSE: *** *)
-(** But this automatic unfolding is somewhat conservative.  For
-    example, if we define a slightly more complicated function
-    involving a pattern match... *)
-
-Definition bar x :=
-  match x with
-  | 0 => 5
-  | .succ _ => 5
-  end.
-
-(** ...then the analogous proof will get stuck: *)
-
-Fact silly_fact_2_FAILED : forall m, bar m + 1 = bar (m + 1) + 1.
-Proof.
-  intros m.
-  simpl. (* Does nothing! *)
-Abort.
-
-(** FULL: The reason that `simpl` doesn't make progress here is that it
-    notices that, after tentatively unfolding `bar m`, it is left with
-    a match whose scrutinee, `m`, is a variable, so the `match` cannot
-    be simplified further.  It is not smart enough to notice that the
-    two branches of the `match` are identical, so it gives up on
-    unfolding `bar m` and leaves it alone.
-
-    Similarly, tentatively unfolding `bar (m+1)` leaves a `match`
-    whose scrutinee is a function application (that cannot itself be
-    simplified, even after unfolding the definition of `+`), so
-    `simpl` leaves it alone. *)
-
-(** TERSE: *** *)
-(** FULL: At this point, there are two ways to make progress.  One is to use
-    `destruct m` to break the proof into two cases, each focusing on a
-    more concrete choice of `m` (`O` vs `.succ _`).  In each case, the
-    `match` inside of `bar` can now make progress, and the proof is
-    easy to complete. *)
-(** TERSE: There are now two ways make progress.
-
-    First, we can use `destruct m` to break the proof into two cases: *)
-
-Fact silly_fact_2 : forall m, bar m + 1 = bar (m + 1) + 1.
-Proof.
-  intros m.
-  destruct m eqn:E.
-  - simpl. reflexivity.
-  - simpl. reflexivity.
-Qed.
-
-(** This approach works, but it depends on our recognizing that the
-    `match` hidden inside `bar` is what was preventing us from making
-    progress. *)
-
-(** TERSE: *** *)
-(** A more straightforward way forward is to explicitly tell Rocq to
-    unfold `bar`. *)
-
-Fact silly_fact_2' : forall m, bar m + 1 = bar (m + 1) + 1.
-Proof.
-  intros m.
-  unfold bar.
-
-(** Now it is apparent that we are stuck on the `match` expressions on
-    both sides of the `=`, and we can use `destruct` to finish the
-    proof without thinking so hard. *)
-
-  destruct m eqn:E.
-  - reflexivity.
-  - reflexivity.
-Qed.
-```
-::::
+:::gradeTheorem 3 diagonal_induction
+:::
+:::::
 
 # Using `cases` on Compound Expressions
-
-:::dev
-HIDE: CH: If eqn is only useful for compound expressions and those
-are only discussed here, why has eqn been introduced before this
-point? It seems that so far its only use was for documentation, and
-while one might argue that it's good practice to always use eqn,
-that's not the case, as illustrated by its disappearance in Logics.
-BCP '19: Fixed Logic.v -- I do think it's good documentation!
-:::
 
 ::::full
 We have seen many examples where `cases` is used to
