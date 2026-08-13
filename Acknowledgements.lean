@@ -11,14 +11,53 @@ front matter of every volume.  Each volume's Preface includes it with
 
 #doc (Manual) "Acknowledgements" =>
 
-**Leadership:** Mike Hicks and Benjamin C. Pierce are the SF-in-Lean project leads.
+*Leadership:* Mike Hicks and Benjamin C. Pierce are the SF-in-Lean project leads.
 
-**Contributors:**
+*Contributors:*
+The Lean adaptation of _Software Foundations_ was created by
+
 :::dev "Benjamin Pierce (bcpierce00)"
-Fill in!
+This needs to be sorted and formatted...
 :::
 
-**SF in Rocq:**
+Benjamin Pierce
+
+Chris Henson
+
+Daniel Sainati
+
+Harry Goldstein
+
+Jonathan Chan
+
+Kihong Heo
+
+Luisa Cicolini
+
+Michael Clarkson
+
+Mike Hicks
+
+Niklas Halonen
+
+One An
+
+Robert Joseph
+
+Roger Burtonpatel
+
+Sati
+
+Shriya Thakur
+
+Yipeng Liu
+
+
+David Thrane Christiansen helped us understand the intricacies of Lean's Verso document preparation system.
+
+
+
+*SF in Rocq:*
 The first three volumes of _Software Foundations in Lean_ (_Logical Foundations_, _Type Systems_, and _Hoare Logic_) are adapted from the _Logical Foundations_ and _Programming Language Foundations_ volumes of the original _Software Foundations_ series, developed from 2008 to 2026 by a large team of authors and contributors led by Benjamin C. Pierce.
 
 The original _Logical Foundations_ was written by
@@ -91,7 +130,7 @@ with contributions from
     and
     Steve Zdancewic.
 
-**Funding:**
+*Funding:*
 Development of the original _Software Foundations_ series in Rocq was supported, in
 part, by the National Science Foundation under the NSF Expeditions grant
 1521523, _The Science of Deep Specification_.
