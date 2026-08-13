@@ -15,9 +15,8 @@ front matter of every volume.  Each volume's Preface includes it with
 
 *Authors:*
 The Lean adaptation of _Software Foundations_ was created by
-:::dev "Benjamin Pierce (bcpierce00)"
-Alphabetize:
-:::
+Mike Hicks,
+Benjamin C. Pierce,
 One An,
 Roger Burtonpatel,
 Jonathan Chan,
@@ -26,18 +25,16 @@ Harry Goldstein,
 Niklas Halonen,
 Chris Henson,
 Kihong Heo,
-Mike Hicks,
-Robert Joseph,
 Yipeng Liu,
-Benjamin C. Pierce,
 and
-Daniel Sainati
+Daniel Sainati,
 
 *... with contributions from*
 Michael Clarkson,
+Robert Joseph,
 Sati,
 and
-Shriya Thakur
+Shriya Thakur,
 
 *... and gratitude to*
 David Thrane Christiansen, for helping us understand the intricacies of Lean's Verso document preparation system.
