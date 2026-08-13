@@ -153,11 +153,12 @@ work:
 ::::
 
 ```lean
-example(n m : Nat) (h : n = m) : m = n := by
+example (n m : Nat) (h : n = m) : m = n := by
   -- Here we cannot use `apply` directly...
   /- ...but we can use the `symm` tactic, which switches the left
       and right sides of an equality in the goal. -/
-  symm; apply h
+  symm
+  apply h
 ```
 
 :::::exercise (rating := 2) (name := "apply_exercise1")
@@ -571,6 +572,15 @@ These examples are instances of a logical principle known as the
 _principle of explosion_, which asserts that a contradictory
 hypothesis entails anything (even manifestly false things!).
 
+Notice that due to the way addition on naturals is defined, deriving a contradiction from `1 + n = 0` is not as trivial as it seems.
+
+```lean +error -keep
+example (n : Nat)
+    (h : 1 + n = 0) :
+    2 + 2 = 5 := by
+  contradiction -- doesn't work because `1 + n` doesn't reduce to `n.succ`.
+```
+
 ::::full
 If you find the principle of explosion confusing, remember
 that these proofs are _not_ simply showing that the conclusion of the
@@ -640,7 +650,8 @@ and we apply the tactic `injection h with hxy`.  What will happen?
 ```lean
 example (x y : RGB)
     (h : Color.primary x = Color.primary y) :
-    x = y := by injection h
+    x = y := by
+  injection h with hxy
 ```
 
 :::
@@ -740,7 +751,7 @@ and we apply the tactic `injection h with hxy`.  What will happen?
 :::quizSolution
 
 ```lean +error (name := qz4)
-theorem quiz3 (x y : Nat) (h : 1 + x = 1 + y) : y = x := by
+example (x y : Nat) (h : 1 + x = 1 + y) : y = x := by
   injection h with hxy
 ```
 
@@ -751,6 +762,9 @@ x y : Nat
 h : 1 + x = 1 + y
 ⊢ y = x
 ```
+
+The addition in `1 + x` (and `1 + y`) is blocked by the variable in the second argument.
+Therefore it doesn't reduce to `x.succ`, so injectivity of constructors can't be used directly.
 :::
 ::::
 
@@ -851,6 +865,16 @@ example (a b c d : Nat) (hab : a = b) (hcd : c = d) :
   rw [Nat.add_comm]
   congr
 ```
+
+:::dev "Niklas Halonen (xhalo32)"
+The above proof can be made simpler by just rewriting before the `congr`, so arguably it doesn't require limiting the depth.
+```lean
+example (a b c d : Nat) (hab : a = b) (hcd : c = d) :
+    (a, c + 1) = (b, 1 + d) := by
+  rw [Nat.add_comm]
+  congr
+```
+:::
 
 # Using {tactic}`apply` on Hypotheses
 
