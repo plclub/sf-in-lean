@@ -11,7 +11,7 @@ front matter of every volume.  Each volume's Preface includes it with
 
 #doc (Manual) "Acknowledgements" =>
 
-*Leadership:* Mike Hicks and Benjamin C. Pierce are the SF-in-Lean project leads.
+*Leadership:* Mike Hicks and Benjamin C. Pierce lead the SF-in-Lean project.
 
 *Authors:*
 The Lean adaptation of _Software Foundations_ was created by
