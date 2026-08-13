@@ -2469,7 +2469,7 @@ theorem plus_lt : ∀ (n₁ n₂ m : Nat),
 :::::exercise (rating := 4) (name := "ble_le")
 ```lean
 theorem ble_complete : ∀ (n m : Nat),
-  n ≤? m = true → n ≤ m := by
+  Nat.ble n m = true → n ≤ m := by
   solution!
     intro n m h; induction n generalizing m
     case zero => apply zero_le_n
@@ -2489,7 +2489,7 @@ theorem ble_complete : ∀ (n m : Nat),
 ```lean
 theorem ble_correct : ∀ n m,
   n ≤ m →
-  n ≤? m = true := by
+  Nat.ble n m = true := by
   solution!
     intro n m h
     induction n generalizing m
@@ -2517,7 +2517,7 @@ be carried out in a single induction.
 
 ```lean
 theorem ble_iff : ∀ n m,
-  n ≤? m = true ↔ n ≤ m := by
+  Nat.ble n m = true ↔ n ≤ m := by
   solution!
     intro n m; apply Iff.intro
     . apply ble_complete
@@ -2529,7 +2529,7 @@ theorem ble_iff : ∀ n m,
 
 ```lean
 theorem ble_true_trans : ∀ n m o,
-  n ≤? m = true → m ≤? o = true → n ≤? o = true := by
+  Nat.ble n m = true → Nat.ble m o = true → Nat.ble n o = true := by
   solution!
     intros n m o
     rw [ble_iff, ble_iff, ble_iff]

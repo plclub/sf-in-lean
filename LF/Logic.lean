@@ -1334,7 +1334,12 @@ theorem dist_exists_or (α : Type) (p q : α → Prop) :
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "ble_plus_exists")
+:::::hide
+:::dev "Yipeng Liu (berberman)"
+
+TODO: Convert to prop version and move to IndProp chapter.
+
+-- exercise (rating := 3) (name := "ble_plus_exists")
 ```lean
 theorem ble_plus_exists (n m : Nat) : (Nat.ble n m = true) → ∃ x, m = x + n := by
   solution!
@@ -1365,8 +1370,6 @@ theorem add_exists_ble (n m : Nat) (h : ∃ x, m = x + n) : Nat.ble n m = true :
     rw [hx]
     apply ble_plus
 ```
-
-::::hide
 ```
 /- A direct proof without a lemma. -/
 theorem add_exists_ble' : ∀ n m, (∃ x, m = x + n) → Nat.ble n m = true := by
@@ -1378,7 +1381,7 @@ theorem add_exists_ble' : ∀ n m, (∃ x, m = x + n) → Nat.ble n m = true := 
     rw [hx, Nat.add_succ x, succ_ble_succ]
     apply ih; exists x
 ```
-::::
+:::
 :::::
 
 ::::::
@@ -2105,7 +2108,9 @@ reflexive.)
 theorem beq_eq_true (n m : Nat) :
     (n == m) = true ↔ n = m := by
   constructor
-  · apply beq_eq
+  · rw [Nat.beq_eq_true_eq]
+    intro h
+    exact h
   · intro h
     rw [h]
     apply BEq.rfl
@@ -2615,8 +2620,8 @@ theorem In_append_iff (α : Type) (l l' : List α) (x : α) :
 ```
 :::::
 
-:::::exercise (rating := 1) (name := "beq_neq")
-The following theorem is an alternative "negative" formulation of {lean}`beq_eq`
+:::::exercise (rating := 1) (name := "beq_neq_false")
+The following theorem is an alternative "negative" formulation of {lean}`beq_eq_true`
 that is more convenient in certain situations.
 (We'll see examples in later chapters.) Hint: {lean}`not_true_iff_false`.
 
