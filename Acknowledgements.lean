@@ -20,7 +20,6 @@ Benjamin C. Pierce,
 One An,
 Roger Burtonpatel,
 Jonathan Chan,
-Luisa Cicolini,
 Harry Goldstein,
 Niklas Halonen,
 Chris Henson,
@@ -30,6 +29,7 @@ and
 Daniel Sainati,
 
 *... with contributions from*
+Luisa Cicolini,
 Michael Clarkson,
 Robert Joseph,
 Sati,
