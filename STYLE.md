@@ -893,6 +893,15 @@ occurrence):
   `{margin}[…]` (sidebar notes), `{index}` / `{see}` / `{seeAlso}` (book index),
   `{citep}` / `{citet}` (bibliography).
 
+### Prefer italic over boldface
+
+**For ordinary emphasis, write `_word_`, not `*word*`.** A bare `*word*` comes
+  out bold, which is heavier than intended in running prose (it makes displayed pages look blotchy in HTML or PDF).
+
+Verso's markup dialect is **not** CommonMark here: a single `*…*` renders as
+**boldface**, and `_…_` renders as *italic emphasis* (doubled stars `**…**`
+trip Verso's markup linter, so `to_verso` rewrites them to single `*…*`).
+
 ## Writing conventions
 
 We use American spelling.
