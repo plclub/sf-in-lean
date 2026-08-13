@@ -539,7 +539,7 @@ theorem injection_ex3 {α : Type} (x y z : α) (l j : List α)
 So much for injectivity of constructors.  What about disjointness?
 
 ::::full
- he principle of disjointness says that two terms beginning
+The principle of disjointness says that two terms beginning
 with different constructors (like `0` and {name}`Nat.succ`, or {name}`true` and {name}`false`)
 can never be equal. This means that, any time we find ourselves
 in a context where we've _assumed_ that two such terms are equal,
@@ -586,7 +586,7 @@ _then_ the nonsensical conclusion would hold too (because we'd be
 living in an inconsistent universe where every statement is true).
 
 We'll explore the principle of explosion in more detail in the
-{ref "Logics"}[next chapter].
+{ref "Logic"}[next chapter].
 ::::
 
 :::::exercise (rating := 1) (name := "disjoint_ex3")
@@ -870,10 +870,10 @@ against `a` and, if successful, replaces `h` with a hypothesis of type `b`.
 In other words, `apply t at h` gives us a form of "forward
 reasoning": given `t : a → b` and `h : a`, it replaces `h` with a proof of `b`.
 
-By contrast, ordinart `apply t` is "backward reasoning": given `t : a → b`
+By contrast, ordinary `apply t` is "backward reasoning": given `t : a → b`
 and a goal `⊢ b`, it replaces the goal with `⊢ a`.
 
-Here is a variant of the proof that uses forward reasoning rather than backward reasoning:
+Here is a proof that uses forward reasoning rather than backward reasoning:
 ::::
 
 :::slidebreak
@@ -1008,7 +1008,6 @@ example (a b c d e f : Nat)
 :::ignore
 ```lean -show
 variable (m n m' n' : Nat)
-open Nat (double)
 ```
 :::
 
@@ -1016,14 +1015,14 @@ Recall this function for doubling a natural number from the
 {ref "Induction"}[Induction] chapter:
 
 ```display
-def double (n : Nat) : Nat :=
+def Nat.double (n : Nat) : Nat :=
   match n with
   | 0 => 0
-  | n' + 1 => (double n') + 2
+  | n' + 1 => (n'.double) + 2
 ```
 
 ::::terse
-Suppose we want to show that {name}`double` is injective (i.e.,
+Suppose we want to show that {name}`Nat.double` is injective (i.e.,
 it maps different arguments to different results).
 ::::
 
@@ -1033,11 +1032,11 @@ This can happen when another varaible in the theorem is fixed during the inducti
 even though the induction step might need to use it with different values of that
 variables.
 
-For example, suppose we want to show that {name}`double` is injective —
+For example, suppose we want to show that {name}`Nat.double` is injective —
 i.e., that it maps different arguments to different results:
 
 ```lean -keep
-theorem double_injective (n m : Nat) (h : double n = double m) : n = m := sorry
+theorem double_injective (n m : Nat) (h : n.double = m.double) : n = m := sorry
 ```
 
 If we begin it with
@@ -1046,14 +1045,14 @@ If we begin it with
 
 :::dev "Yipeng Liu (berberman)"
 A single {tactic}`contradiction` can close `zero.succ` case without any rewrite as shown below —
-`h : double 0 = double (m' + 1)` gets unfolded to `0 = ((double m').add 1).succ`,
-and then `noConfusion` kicks in. The unfold can happen because {name}`double` is not marked as
+`h : double 0 = (m' + 1).double` gets unfolded to `0 = ((m'.double).add 1).succ`,
+and then `noConfusion` kicks in. The unfold can happen because {name}`Nat.double` is not marked as
 `irreducible`. Similarly it can close `succ.zero` case. I think this is fine, and I removed the
 {name}`Nat.double_zero`/{name}`Nat.double_succ` rewrites.
 :::
 
 ```lean -keep  +error (name := gen1)
-theorem double_injective (n m : Nat) (h : double n = double m) : n = m := by
+theorem double_injective (n m : Nat) (h : n.double = m.double) : n = m := by
   induction n with
   | zero =>
     cases m with
@@ -1070,8 +1069,8 @@ theorem double_injective (n m : Nat) (h : double n = double m) : n = m := by
 unsolved goals
 case succ.succ.e_a
 n' m' : Nat
-ih : double n' = double (m' + 1) → n' = m' + 1
-h : double (n' + 1) = double (m' + 1)
+ih : Nat.double n' = Nat.double (m' + 1) → n' = m' + 1
+h : Nat.double (n' + 1) = Nat.double (m' + 1)
 ⊢ n' = m'
 ```
 
@@ -1085,20 +1084,20 @@ so in the successor case the induction hypothesis `ih` is specialized to the cur
 After the case split, that value is {lean}`m' + 1`, and the induction hypothesis has the form:
 
 ```display
-ih : double n' = double (m' + 1) → n' = m' + 1
+ih : n'.double = (m' + 1).double → n' = m' + 1
 ```
 
-From `h`, using the definition of {name}`double` we can obtain
+From `h`, using the definition of {name}`Nat.double` we can obtain
 
 ```leanTerm
-double n' = double m'
+n'.double = m'.double
 ```
 
 and to prove the goal we would like to apply an induction hypothesis at `m'`.
 Nevertheless, `ih` is specialized to {lean}`m' + 1` — it would require
 
 ```leanTerm
-double n' = double (m' + 1)
+n'.double = (m' + 1).double
 ```
 
 and would conclude
@@ -1110,7 +1109,7 @@ n' = m' + 1
 which is not what we need. Instead, we need an induction hypothesis that is general in `m`:
 
 ```display
-ih : ∀ m, double n' = double m → n' = m
+ih : ∀ m, n'.double = m.double → n' = m
 ```
 
 Then in this branch we can instantiate it with {lean}`m'`.
@@ -1131,48 +1130,48 @@ What went wrong?
 The problem is that {lean}`m` is already in the context when we invoke
 `induction n`. Since {lean}`m` is an ordinary argument of the theorem,
 this is exactly what we normally want — we are considering some particular
-{lean}`n` and {lean}`m`, together with the hypothesis {lean}`double n = double m` and trying
+{lean}`n` and {lean}`m`, together with the hypothesis {lean}`n.double = m.double` and trying
 to prove `n = m`.
 
 The claim itself makes perfect sense, but for the induction, however, keeping {lean}`m` fixed
 causes the trouble: we are proving, for _all_ {lean}`n`, the proposition
 
-  - `P n` = "if {lean}`double n = double m`, then {lean}`n = m`"
+  - `P n` = "if {lean}`n.double = m.double`, then {lean}`n = m`"
 
 by showing
 
   - `P 0`
 
-     (i.e., "if {lean}`double 0 = double m` then {lean}`0 = m`") and
+     (i.e., "if {lean}`Nat.double 0 = m.double` then {lean}`0 = m`") and
 
   - `P n → P (n + 1)`
 
-    (i.e., "if {lean}`double n = double m` then {lean}`n = m`" implies "if
-    {lean}`double (n + 1) = double m` then {lean}`n + 1 = m`").
+    (i.e., "if {lean}`n.double = m.double` then {lean}`n = m`" implies "if
+    {lean}`(n + 1).double = m.double` then {lean}`n + 1 = m`").
 
 If we look closely at the inductive step, it is saying something
 rather strange: that, for a _particular_ {lean}`m`, if we know
 
-  - "if {lean}`double n = double m` then {lean}`n = m`"
+  - "if {lean}`n.double = m.double` then {lean}`n = m`"
 
 then we can prove
 
-   - "if {lean}`double (n + 1) = double m` then {lean}`n + 1 = m`".
+   - "if {lean}`(n + 1).double = m.double` then {lean}`n + 1 = m`".
 
 To see why this is strange, let's choose of a particular {lean}`m` —
 say, `5`.  The statement is then saying that, if we know
 
-  - `Q` = "if {lean}`double n = 10` then {lean}`n = 5`"
+  - `Q` = "if {lean}`n.double = 10` then {lean}`n = 5`"
 
 then we can prove
 
-  - `R` = "if {lean}`double (n + 1) = 10` then {lean}`n + 1 = 5`".
+  - `R` = "if {lean}`(n + 1).double = 10` then {lean}`n + 1 = 5`".
 
 But knowing `Q` doesn't give us any help at all with proving `R`.
 If we tried to prove `R` from `Q`, we would start with something
-like "Suppose {lean}`double (n + 1) = 10`..." but then we would be stuck:
-the induction hypothesis `Q` only tells us what happens if {lean}`double n = 10`,
-whereas our assumption says {lean}`double (n + 1) = 10`, so `Q` is useless here.
+like "Suppose {lean}`(n + 1).double = 10`..." but then we would be stuck:
+the induction hypothesis `Q` only tells us what happens if {lean}`n.double = 10`,
+whereas our assumption says {lean}`(n + 1).double = 10`, so `Q` is useless here.
 
 This is exactly what we saw in the proof state.
 ::::
@@ -1190,7 +1189,7 @@ so that the induction hypothesis holds for every {lean}`m`,
 rather than for just the particular {lean}`m` in the context.
 
 ```lean
-theorem double_injective (n m : Nat) (h : double n = double m) : n = m := by
+theorem double_injective (n m : Nat) (h : n.double = m.double) : n = m := by
   induction n generalizing m with
   | zero =>
     cases m with
@@ -1206,58 +1205,6 @@ theorem double_injective (n m : Nat) (h : double n = double m) : n = m := by
       injections
 ```
 
-:::dev "Yipeng Liu (berberman)"
-
-I decided not to cover this "delayed {tactic}`intro`" trick at all, given that we are sticking
-to the declaration-header style (i.e. theorem arguments are already in the context), and the
-more idiomatic way is to use `induction ... generalizing ...`.
-
-We can bring this trick back if we later find it useful though, and at that time we should introduce
-{tactic}`revert` as well.
-
-```display
-theorem double_injective : ∀ (n m : Nat),
-    n.double = m.double →
-    n = m := by
-  intro n
-  induction n with
-  | zero =>
-    rw [Nat.double_zero]
-    intro m eq
-    cases m
-    case zero => rfl
-    case succ _ =>
-      rw [Nat.double_succ] at eq
-      contradiction
-  | succ n' ih =>
-  -- Notice that both the goal and the induction hypothesis are
-  -- different this time: the goal asks us to prove something more
-  -- general (i.e., we must prove the statement for _every_ `m`), but
-  -- the induction hypothesis `ih` is correspondingly more flexible,
-  -- allowing us to choose any `m` we like when we apply it.
-  intro m eq
-  -- Now we've introduced the assumption that `double n = double m`.
-  -- Since we are doing a case analysis on `n`, we also need a case
-  -- analysis on `m` to keep the two in sync.
-  cases m with
-  | zero =>
-    -- The 0 case is trivial:
-    rw [Nat.double_zero, Nat.double_succ] at eq
-    contradiction
-  | succ m' =>
-    congr
-    -- Since we are now in the second branch of the `cases m`, the
-    -- `m'` mentioned in the context is the predecessor of the `m` we
-    -- started out talking about.  Since we are also in the `succ` branch of
-    -- the induction, this is perfect: if we instantiate the generic `m`
-    -- in the IH with the current `m'` (this instantiation is performed
-    -- automatically by the `apply` in the next step), then `ih` gives
-    -- us exactly what we need to finish the proof.
-    apply ih; rw [Nat.double_succ, Nat.double_succ] at eq; injections
-```
-
-:::
-
 :::slidebreak
 :::
 
@@ -1266,33 +1213,34 @@ Let's look at an informal proof of this theorem.  Notice that
 the induction hypothesis is generalized over {lean}`m`, corresponding to
 the use of `generalizing m`.
 
-_Theorem_: For any natural numbers {lean}`n` and {lean}`m`, if {lean}`double n = double m`, then
+_Theorem_: For any natural numbers {lean}`n` and {lean}`m`, if {lean}`n.double = m.double`, then
   {lean}`n = m`.
 
 _Proof_: We prove by induction on {lean}`n` that, for _any_ {lean}`m`,
-  if {lean}`double n = double m` then {lean}`n = m`.
+  if {lean}`n.double = m.double` then {lean}`n = m`.
 
   - First, suppose {lean}`n = 0`. We must show that, for any {lean}`m`, if
-    {lean}`double 0 = double m`, then {lean}`0 = m`.
+    {lean}`Nat.double 0 = m.double`, then {lean}`0 = m`.
 
-    There are two cases to consier for {lean}`m`:
+    There are two cases to consider for {lean}`m`:
     1. If {lean}`m = 0`, we are done.
-    2. Otherwise if {lean}`m = m' + 1` for some {lean}`m'`, then by definition of {name}`double`
-       we have `double 0 = 0` and `double (m' + 1) = double m' + 2`.
-       Clearly {lean}`0` cannot equal {lean}`double m' + 2`, so this case is impossible.
+    2. Otherwise if {lean}`m = m' + 1` for some {lean}`m'`, then by definition of {name}`Nat.double`
+       we have `Nat.double 0 = 0` and `(m' + 1).double = m'.double + 2`.
+       Clearly {lean}`0` cannot equal {lean}`m'.double + 2`, so this case is impossible.
 
   - Second, suppose {lean}`n = n' + 1`. The induction hypothesis says that, for every {lean}`m`,
-    if {lean}`double (n' + 1) = double m` then {lean}`n' + 1 = m`. Again there are two cases
+    if {lean}`(n' + 1).double = m.double` then {lean}`n' + 1 = m`. Again there are two cases
     to consider for {lean}`m`:
-    1. If {lean}`m = 0`, then by the definition of {name}`double` our assumption says
-       {lean}`double n' + 2 = 0`, which is impossible.
+    1. If {lean}`m = 0`, then by the definition of {name}`Nat.double` our assumption says
+       {lean}`n'.double + 2 = 0`, which is impossible.
     2. Otherwise suppose {lean}`m = m' + 1`.
-       Our assumption is then {lean}`double (n' + 1) = double (m' + 1)`.
-       By the definition of {name}`double`, this gives `double n' + 2 = double m' + 2`.
-       By injectivity of {name}`Nat.succ`, we obtain {lean}`double n' = double m'`.
+       Our assumption is then that {lean}`(n' + 1).double = (m' + 1).double`.
+       By the definition of {name}`Nat.double`, this gives `n'.double + 2 = m'.double + 2`.
+       By injectivity of {name}`Nat.succ`, we obtain {lean}`n'.double = m'.double`.
        We can now instantiate the induction hypothesis with {lean}`m'`, obtaining `n' = m'`.
-       Now we can conclude `n' + 1 = m' + 1`, which is exacltly wat we wanted to show.
+       Now we can conclude `n' + 1 = m' + 1`, which is exactly what we wanted to show.
 
+_Qed_.
 ::::
 
 The thing to take away from all this is that you need to be
@@ -1358,6 +1306,8 @@ _Proof_: We prove by induction on {lean}`n` that for _every_ natrual number {lea
     Cancelling one successor from each side of the equality and rearranging the additions gives
     {lean}`n' + n' = m' + m'`. We can now apply the induction hypothesis with {lean}`m'` to obtain {lean}`n' = m'`.
     Then it follows that {lean}`n' + 1 = m' + 1`, which is our final goal.
+
+_Qed_.
 :::
 
 ::::
@@ -1376,7 +1326,7 @@ use this fact to rewrite one of them into the other. Recall the theorem
 ```
 
 ```leanOutput double_injective
-double_injective (n m : Nat) (h : double n = double m) : n = m
+double_injective (n m : Nat) (h : Nat.double n = Nat.double m) : n = m
 ```
 
 For example, we can prove:
@@ -1385,7 +1335,7 @@ For example, we can prove:
 
 ```lean
 example (n m p q : Nat)
-    (h : double n = double m)
+    (h : n.double = m.double)
     (hm : m + p = q) :
     n + p = q := by
   rw [double_injective n m]
@@ -1396,11 +1346,11 @@ example (n m p q : Nat)
 :::full
 The use of `rw` here is a little different from the examples we have seen so far.
 The theorem {name}`double_injective` says {lean}`n = m`
-*provided that* {lean}`double n = double m`, no just {lean}`n = m`.
+_provided that_ {lean}`n.double = m.double`, no just {lean}`n = m`.
 When we write `rw [double_injective n m]`, Lean uses the conclusion {lean}`n = m` to rewrite
 the goal, and then asks us to prove the hypothesis needed by {name}`double_injective`.
 Thus we get two goals: the updated main goal, `m + p = q`, which follows from `hm`, and the
-condition from {name}`double_injective`, {lean}`double n = double m`, whicch follows from `h`.
+condition from {name}`double_injective`, {lean}`n.double = m.double`, whicch follows from `h`.
 :::
 
 If we rewrite with a conditional statement of the form
@@ -1446,7 +1396,7 @@ theorem length_append_cons {α : Type} {l₁ l₂ : List α} {x : α} {n : Nat}
       /- A trick here: by using `rfl` to close `(ys ++ x :: l₂).length = n`
          we effectively choose `n` to be `(ys ++ x :: l₂).length`
       -/
-      rw [ih (by rfl)]
+      rw [ih rfl]
       assumption
 ```
 
