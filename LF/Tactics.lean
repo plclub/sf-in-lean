@@ -1530,42 +1530,36 @@ theorem diagonal_induction (p : Nat → Nat → Prop)
 # Using `cases` on Compound Expressions
 
 ::::full
-We have seen many examples where `cases` is used to
+We have seen many examples where {tactic}`cases` is used to
 perform case analysis of the value of some variable.  Sometimes we
 need to reason by cases on the result of some _expression_.  We
-can also do this with `cases`.
+can also do this with {tactic}`cases`.
 
 Here are some examples:
 ::::
 
 ::::terse
-The `cases` tactic can be used on expressions as well as
+The {tactic}`cases` tactic can be used on expressions as well as
 variables:
 ::::
 
 ```lean
-def sillyfun (n : Nat) : Bool :=
-  if n == 3 then false
-  else if n == 5 then false
-  else false
+def chooseIf {α : Type} (test : α → Bool) (x y : α) : α :=
+  if test x then x else y
 
-theorem sillyfun_false (n : Nat) :
-    sillyfun n = false := by
-  unfold sillyfun
-  cases (n == 3)
-  case false =>
-    dsimp; cases (n == 5)
-    case false => rfl
-    case true => rfl
-  case true => rfl
+theorem chooseIf_self {α : Type} (test : α → Bool) (x : α) :
+    chooseIf test x x = x := by
+  unfold chooseIf
+  cases test x <;> rfl
 ```
 
 ::::full
-After unfolding `sillyfun` in the above proof, we find that
-we are stuck on `if (n == 3) then ... else ...`.  But either
-`n` is equal to `3` or it isn't, so we can use `cases (n == 3)` to let us reason about the two cases.
+After _unfolding_ {name}`chooseIf` in the above proof, we find that
+we are stuck on `(if test x = true then x else x) = x`.  But either
+`test x` is `true` or it isn't,
+so we can use `cases (test x)` to let us reason about the two cases.
 
-In general, the `cases` tactic can be used to perform case
+In general, the {tactic}`cases` tactic can be used to perform case
 analysis of the results of arbitrary computations.  If `e` is an
 expression whose type is some inductively defined type `T`, then,
 for each constructor `c` of `T`, `cases e` generates a subgoal
@@ -1575,9 +1569,9 @@ are replaced by `c`.
 
 ## Destructing Tuples
 
-`cases` is useful when we are dealing with inductively defined types
-that can be one thing or another; a `Bool` is either a `false` or a `true`,
-and a `Nat` is either `0` or `succ n`. When we want more information about
+{tactic}`cases` is useful when we are dealing with inductively defined types
+that can be one thing or another; a {name}`Bool` is either a {name}`false` or a {name}`true`,
+and a {name}`Nat` is either `0` or `succ n`. When we want more information about
 inductively defined types that are products of multiple things, we instead
 want a way to get the pieces of that value out from it.
 
@@ -1588,157 +1582,153 @@ get the first and second projections of `v` using this tactic:
 let ⟨a, β⟩ := v
 ```
 
-::::::full
-:::::exercise (rating := 3) (name := "combine_split")
+:::::exercise (rating := 3) (name := "zip_unzip")
 Here is an implementation of the `unzip` function mentioned in
-chapter {ref "Poly"}[Poly]. We'll call it `split` so as not to
-confuse Lean.
+chapter {ref "Poly"}[Poly]:
 
-```lean
-def split {α β : Type} (l : List (α × β)) : (List α) × (List β) :=
+```display
+def unzip {α : Type} {β : Type} (l : List (α × β)) : List α × List β := solution!(
   match l with
   | [] => ([], [])
   | (x, y) :: t =>
-    match split t with
-    | (lx, ly) => (x :: lx, y :: ly)
+    let (lx, ly) := unzip t
+    (x :: lx, y :: ly))
 ```
 
-Prove that `split` and `zip` are inverses in the following sense:
+Prove that {name}`unzip` and {name}`zip` are inverses in the following sense:
 
 ```lean
-theorem split_zip {α β : Type} (l : List (α × β)) l1 l2 :
-    split l = (l1, l2) →
+theorem zip_unzip {α β : Type} (l : List (α × β))
+    (l1 : List α) (l2 : List β)
+    (h : unzip l = (l1, l2)) :
     zip l1 l2 = l := by
   solution!
-    intro h
-    induction l generalizing l1 l2
-    case nil =>
-      injections h1 h2
-      rw [← h1, ← h2]
+    induction l generalizing l1 l2 with
+    | nil =>
+      rw [unzip_nil] at h
+      injections h₁ h₂
+      rw [← h₁, ← h₂]
       rfl
-    case cons hd tl ih =>
-      let ⟨a, b⟩ := hd
-      dsimp [split] at h
-      injections h1 h2
-      rw [← h1, ← h2]
+    | cons x xs ih =>
+      let ⟨a, b⟩ := x
+      dsimp [unzip] at h
+      injections h₁ h₂
+      rw [← h₁, ← h₂]
       dsimp [zip]
       rw [ih]
       rfl
 ```
+
+:::gradeTheorem 3 zip_unzip
+:::
+
 :::::
 
-::::::
 
 ::::terse
-When using `cases`, we can specify to Lean that it should
+When using {tactic}`cases`, we can specify to Lean that it should
 remember an equality between a compound expression and what we are
-decomposing it into, using `cases h: ...` syntax. This information
+decomposing it into, using `cases h : ...` syntax. This information
 can actually be critical, and, if we leave it out, we might lack
 information we need to complete a proof.
 ::::
 
 ::::full
-For example, suppose we define a function `sillyfun1` like this:
+For example, suppose we define a function `keepIf` like this:
 ::::
 
 ```lean
-def sillyfun1 (n : Nat) : Bool :=
-  if n == 3 then true
-  else if n == 5 then true
-  else false
+def keepIf {α : Type} (test : α → Bool) (x : α) : Option α :=
+  if test x then some x else none
 ```
 
 ::::full
-Now suppose that we want to convince Lean that `sillyfun1 n`
-yields `true` only when `n` is odd.  If we start the proof like
-this (with no `h:` on the `cases`)...
+Now suppose that we want to prove `keepIf_some`. If we start the proof like
+this (with no `h : ⋯` on the `cases`)...
 ::::
 
-```lean
-/-- warning: declaration uses `sorry` -/
-#guard_msgs(warning) in
-example (n : Nat) :
-    sillyfun1 n = true →
-    n.odd = true := by
-  intro eq
-  unfold sillyfun1 at eq
-  cases (n == 3)
-  case false => sorry
-  case true => sorry
+```lean +error -keep (name := keepIf_some_e)
+theorem keepIf_some {α : Type} (test : α → Bool) (x y : α)
+    (h : keepIf test x = some y) :
+    x = y := by
+  unfold keepIf at h
+  cases (test x)
+```
+
+```leanOutput keepIf_some_e
+unsolved goals
+case false
+α : Type
+test : α → Bool
+x y : α
+h : (if test x = true then some x else none) = some y
+⊢ x = y
+
+case true
+α : Type
+test : α → Bool
+x y : α
+h : (if test x = true then some x else none) = some y
+⊢ x = y
 ```
 
 ::::full
 ... then we are stuck at this point because the context does
-not contain enough information to prove the goal!
-Because `n == 3` appears in our hypothesis, rather than in our
-goal, `cases (n == 3)` does not automatically replace the expression
-with `false` or `true` like it did during the proof of `sillyfun_false`.
+not contain enough information to prove the goal.
+Because `test x` appears in our hypothesis, rather than in our
+goal, `cases (test x)` does not automatically replace the expression
+with {name}`false` or {name}`true` like it did during the proof of {name}`chooseIf`.
 We want to add an equation to the context that records which case we are in.
 This is precisely what the
-`h:` qualifier does.
+`h : ⋯` qualifier does.
 ::::
 
 :::slidebreak
 :::
 
 :::terse
-Adding the `h:` qualifier saves this information so we can use it.
+Adding the `h : ⋯ ` qualifier saves this information so we can use it.
 :::
 
 ```lean
-theorem sillyfun1_odd (n : Nat) :
-    sillyfun1 n = true →
-    n.odd = true := by
-  intro eq
-  unfold sillyfun1 at eq
-  cases h : (n == 3)
-  case false =>
-    -- Now we have the same state as at the point where we got stuck
-    -- above, except that the context contains an extra equality
-    -- assumption, which is exactly what we need to make progress.
-    rw [h] at eq; dsimp at eq
-    cases h': (n == 5)
-    case false =>
-      rw [h'] at eq; dsimp at eq
-      contradiction
-    case true =>
-      apply beq_eq at h'
-      rw [h']; rfl
-      -- When we come to the second equality test in the body
-      -- of the function we are reasoning about, we can use
-      -- `h:` again in the same way, allowing us to finish the
-      -- proof.
-  case true =>
-    apply beq_eq at h
-    rw [h]; rfl
+theorem keepIf_some {α : Type} (test : α → Bool) (x y : α)
+    (h : keepIf test x = some y) :
+    x = y := by
+  unfold keepIf at h
+  cases hTest : test x
+  -- Now we have the same state as at the point where we got stuck
+  -- above, except that the context contains an extra equality
+  -- assumption, which is exactly what we need to make progress.
+  · rw [hTest] at h
+    contradiction
+  · rw [hTest] at h
+    injections
 ```
 
 ::::::full
-:::::exercise (rating := 2) (name := "destruct_eqn_practice")
+:::::exercise (rating := 2) (name := "bool_fn_iterate_three_eq_one")
 ```lean
-theorem bool_fn_applied_thrice (f : Bool → Bool) (b : Bool) :
+theorem bool_fn_iterate_three_eq_one (f : Bool → Bool) (b : Bool) :
     f (f (f b)) = f b := by
   solution!
-    cases b
-    case false =>
-      cases heqffalse : (f false)
-      case false =>
-        rw [heqffalse, heqffalse]
-      case true =>
-        cases heqftrue : (f true)
-        case false => assumption
-        case true => assumption
-    case true =>
-      cases heqftrue : (f true)
-      case false =>
-        cases heqffalse : (f false)
-        case false => assumption
-        case true => assumption
-      case true =>
-          rw [heqftrue, heqftrue]
+    cases b with
+    | false =>
+      cases h₁ : f false with
+      | false => rw [h₁]; assumption
+      | true =>
+        cases h₂ : f true with
+        | false => assumption
+        | true => assumption
+    | true =>
+      cases h₁ : f true with
+      | false =>
+        cases h₂ : f false with
+        | false => assumption
+        | true => assumption
+      | true => rw [h₁]; assumption
 ```
 
-:::gradeTheorem 2 bool_fn_applied_thrice
+:::gradeTheorem 2 bool_fn_iterate_three_eq_one
 :::
 :::::
 
@@ -1749,12 +1739,6 @@ theorem bool_fn_applied_thrice (f : Bool → Bool) (b : Bool) :
 :::suppressPreviousHeaderWhenTerse
 :::
 
-:::dev "Noé De Santo (Ef55)" PotentialImprovement (year := 2025)
-This list is getting pretty long; maybe it should be
-further divided into catgories (I'd suggest: Basic hypotheses/goal
-manipulation, equality, indutive types, others)
-:::
-
 ::::full
 We've now talked about many of Lean's most fundamental tactics.
 We'll introduce a few more in the coming chapters, and later on
@@ -1762,72 +1746,72 @@ we'll see some more powerful _automation_ tactics that make Lean
 help us with low-level details.  But basically we've got what we
 need to get work done.
 
-Here are the ones we've seen:
+Here are the ones we've seen so far.
 
-  - `intro`: move hypotheses/variables from goal to context
+Managing goals and hypotheses:
 
-  - `rfl`: finish the proof (when the goal looks like \[e =
-    e\])
+  - `intro h`: move an assumption/quantified variable from the goal into the local context
 
-  - `apply`: prove goal using a hypothesis, lemma, or constructor
+  - `apply thm`: use a theorem, hypothesis, or constructor whose conclusion matches the goal;
+     its premises become new goals
 
-  - `apply... at H`: apply a hypothesis, lemma, or constructor to
-    a hypothesis in the context (forward reasoning)
+  - `apply thm at h`: use a theorem on a hypothesis in the context, replacing `h` by the resulting
 
-  - `apply... with...`: explicitly specify values for variables
-    that cannot be determined by pattern matching
+    fact (forward reasoning)
 
-  - `replace h (x:= ...)`: refine a hypothesis by fixing some of
-    its variables
+  - `specialize h ...`: instantiate quantified variables in a hypothesis, modifying `h` in place
 
-  - `dsimp`: simplify computations in the goal
+  - `replace h := ...`: replace a hypothesis with a newly proved fact
 
-  - `dsimp at H`: ... or a hypothesis
+  - `have h : P := ...`: prove a local fact `P` and add it to the context with the name `h`
 
-  - `rw`: use an equality hypothesis (or lemma) to rewrite the goal
+  -  `contradiction`: close the current goal when the context contains contradictory assumptions
 
-  - `rw ... at H`: ... or a hypothesis
+Equality and rewriting:
 
-  - `symm`: changes a goal of the form `t=u` into `u=t`
+  - `rfl`: close an equality that holds by reflexivity (possibly after computation)
 
-  - `symm at H`: changes a hypothesis of the form `t=u` into
-    `u=t`
+  - `rw [h]`: rewrite the goal using an equality hypothesis or theorem
 
-  - `calc`: prove a goal about a transitive relation via a number of intermediate steps
+  - `rw [h] at h'`: rewrite a hypothesis using an equality hypothesis or theorem
 
-  - `unfold`: replace a defined constant by its right-hand side in
-    the goal
+  - `symm`: reverse an equality goal, changing `t = u` to `u = t`
 
-  - `unfold... at H`: ... or a hypothesis
+  - `symm at h`: reverse an equality hypothesis
 
-  - `cases ...`: case analysis on values of inductively defined types
+  - `calc`: prove a goal about equality or another transitive relation by
+    giving a sequence of intermediate steps
 
-  - `cases h:...`: specify the name of an equation to be
-    added to the context, recording the result of the case
-    analysis
+  - `congr`: use congruence to reduce an equality between expressions with the same outer form;
+    for example, a goal `f x = f y` may be reduced to `x = y`
 
-  - `induction ...`: induction on values of inductively
-    defined types
+  - `injection h with ...`: use injectivity of constructors to extract equalities from constructor applications equations
 
-  - `induction ... generalizing ...`: hold some variables general while doing induction
+  - `injections`: repeatedly use constructor injectivity on suitable equalities in the context
 
-  - `injection ... with ...`: reason by injectivity on an equality between values of inductively defined types
+Simplifying and unfolding definitions:
 
-  - `injections ... `: reason by injectivity on all the equalities in the context
+  - `dsimp`: simplify definitional computations in the goal
 
-  - `contradiction`: conclude a proof when there's a false hypothesis in the context
+  - `dsimp at h`: simplify definitional computations in a hypothesis
 
-  - `have h : e := ... ` : introduce a "local lemma" `e` and call it `h`
+  - `unfold f`: replace occurrences of a defined constant f in the goal by its definition
 
-  - `congr`: change a goal of the form `f x = f y` into `x = y`
-::::
+  - `unfold f at h`: unfold a definition in a hypothesis
 
-::::terse
-Micro Sermon
+Case analysis:
 
-Mindless proof-hacking is a terrible temptation...
+  - `cases x`: reason separately about the possible constructors of an inductively defined value
 
-Try to resist!
+  - `cases h : e`: perform case analysis on an expression `e` and add an equation named `h`
+    recording the result of the case analysis
+
+Induction:
+
+  - `induction x`: prove the goal by induction on an inductively defined value
+
+  - `induction x generalizing y`: induction on `x` while generalizing the listed local variables,
+    giving a more general induction hypothesis
 ::::
 
 ::::::full
