@@ -1,24 +1,9 @@
-import VersoManual
-import VersoManual.InlineLean
-import Illuminate
-import SFLMeta.Bnf
-import SFLMeta.Ignore
-import SFLMeta.Save
-import SFLMeta.Comment
-import SFLMeta.Exercise
-import SFLMeta.Grade
-import SFLMeta.Hide
-import SFLMeta.Instructors
-import SFLMeta.SlideBreak
-import SFLMeta.Solution
-import SFLMeta.Terse
+import SFLMeta
 
-set_option autoImplicit false
+import LF.IndProp
 
 open Verso.Genre Manual
 open SFLMeta
-
-open InlineLean hiding lean
 
 #doc (Manual) "Typeclasses" =>
 %%%
@@ -446,35 +431,42 @@ instance : HasThree Nat where
 ::::
 
 ```lean
-namespace Monoid
+namespace Algebra
 ```
 
 This facility is very powerful, and is used extensively in Lean to define mathematical structures
 that carry both operators and laws about how those operators interact. As a simple example,
 let's use a typeclass to define a _monoid_, a simple algebraic structure that includes four things:
 * an underlying set of data, represented by a type `α`,
-* an operator (which we'll write `+`) that combines two elements of type `α` into one,
+* an operator (which we'll write `⊗`, typed \otimes) that combines two elements of type `α` into one,
 * a particular element `id` of type `α`, which we call the "identity element", and
-* some laws about the interaction of `+` and `id`, namely that:
-    * `∀ x, id + x = x = x + id`, and
-    * `∀ x y z, x + (y + z) = (x + y) + z` (i.e., that `+` is associative)
+* some laws about the interaction of `·` and `id`, namely that:
+    * `∀ x, id ⊗ x = x = x · id`, and
+    * `∀ x y z, x ⊗ (y ⊗ z) = (x ⊗ y) ⊗ z` (i.e., that `⊗` is associative)
 
 We can express these requirements in the form of a typeclass:
 
-:::dev "Daniel Sainati @dsainati1"
-Is there a way to use infix `+` notation for `op` in the definition of the typeclass?
-:::
-
 ```lean
-class Monoid (α : Type) where
+-- first we define a notation typeclass for our operator ·
+class OpSet (α : Type) where
   op : α → α → α
+
+infixr:70 " ⊗ " => OpSet.op
+
+class Monoid (α : Type) extends (OpSet α) where
   id : α
-  left_identity : ∀ x, op id x = x
-  right_identity : ∀ x, op x id = x
-  associativity : ∀ x y z, op x (op y z) = op (op x y) z
+  left_identity : ∀ (x : α), id ⊗ x = x
+  right_identity : ∀ (x : α), x ⊗ id = x
+  associativity : ∀ (x y z : α), x ⊗ (y ⊗ z) = (x ⊗ y) ⊗ z
 ```
 
-As one might expect, the `+` operator over `Nat`s forms a monoid, where `0` is the identity element:
+The `extends` keyword indicates that the {name}`Monoid` typeclass extends the {name}`OpSet` typeclass,
+which just defines a set with an operator and some notation for it. The {name}`Monoid` typeclass
+"inherits" the fields of {name}`OpSet`, similar to how a class would in an object-oriented language.
+
+As one might expect, the `+` operator over {name}`Nat`s forms a monoid, where `0` is the identity element.
+Note that we don't have to define {name}`Nat`'s {name}`OpSet` instance separately, we can define a
+single instance that implements both classes.
 
 ```lean
 instance : Monoid Nat where
@@ -484,6 +476,15 @@ instance : Monoid Nat where
   right_identity := by lia
   associativity := by lia
 ```
+
+:::dev "Daniel Sainati @dsainati" PotentialImprovement
+
+Chris notes on GH: we're breaking a rule here about having diamonds on data carrying typeclasses,
+something we do explain above. The way this works in Mathlib is that there are additive and m
+ultiplicative variants of the classes, e.g. Monoid versus AddMonoid.
+
+This is an isolated problem for now, not sure if/how we want to talk about this.
+:::
 
 ::::exercise (rating := 1) (name := "NatMonoidMul")
 However, multiplication on `Nat`s _also_ forms a monoid. What is its identity element?
@@ -516,8 +517,79 @@ instance {α : Type} : Monoid (List α) where
 ```
 ::::
 
+In addition to defining instances of {name}`Monoid`, we can also prove some properties about
+monoids in general, just based on the laws defined on the typeclass. One simple theorem
+about monoids is that the identity element of a monoid is unique. That is,
+if we have two monoids over the same set with the same operator, their identity elements must also
+be the same:
+
+:::dev "Daniel Sainati @dsainati1"
+I don't know why but the infoview for this proof is extremely confusing. How to set
+things up to be clearer?
+:::
+
 ```lean
-end Monoid
+theorem id_unique {α : Type} {m₁ m₂ : Monoid α} (h : m₁.op = m₂.op) : m₁.id = m₂.id := by
+  rw [←m₁.left_identity m₂.id, h, m₂.right_identity]
+```
+
+A _group_ is a special kind of monoid with an _inverse_ operation `inv`, which has the property that
+`∀ x, inv x ⊗ x = id = x ⊗ inv x`. We can extend the definition of a {name}`Monoid` to capture this
+new feature:
+
+```lean
+class Group (α : Type) extends (Monoid α) where
+  inv : α → α
+  left_inverse : ∀ (x : α), inv x ⊗ x = id
+  right_inverse: ∀ (x : α), x ⊗ inv x = id
+```
+
+Now, the monoids we described earlier are not groups: there is no inverse operation on the
+natural numbers such that `∀ x, x + inv x = 0 = inv x + x`, for example. However,
+addition does form a group over the integers:
+
+::::exercise (rating := 1) (name := "IntGroupAdd")
+```lean
+instance : Group Int where
+  op := Int.add
+  -- SOLUTION
+  id := 0
+  inv := Int.neg
+  left_identity := by lia
+  right_identity := by lia
+  associativity := by lia
+  left_inverse := by lia
+  right_inverse := by lia
+  -- END SOLUTION
+```
+::::
+
+The study of groups is called _group theory_ and is a rich area of mathematics. Here, we
+will only prove a handful of its simplest results:
+
+:::dev "Daniel Sainati @dsainati1"
+This also prints weird.
+:::
+
+
+::::exercise (rating := 1) (name := "InverseUnique")
+Two groups defined with the same operation over the same set must have the same inverse as well.
+
+```lean
+theorem inv_unique {α : Type} {m₁ m₂ : Group α} (h : m₁.op = m₂.op) : m₁.inv = m₂.inv := by
+  solution!
+    ext a
+    rw [←m₁.right_identity (Group.inv a), ←m₁.right_inverse a]
+    rw [m₁.associativity, h, m₂.left_inverse a, m₂.left_identity]
+```
+::::
+
+:::dev "Daniel Sainati @dsainati1"
+Taking suggestions for additional simple group theory theorems to prove here.
+:::
+
+```lean
+end Algebra
 ```
 
 # Maps
