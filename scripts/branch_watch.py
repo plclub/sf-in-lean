@@ -11,11 +11,13 @@ picture of who is touching what:
     recent activity orders it within its group — five columns: the branch
     (linked to its PR) over its author and last-activity time on a second line
     in small type; a Status cell of glyph badges (✅ ready, 👍 approved with open
-    threads, 🔴 changes requested, 💬N open threads, ✏️ draft, ❗ auto-merge held,
+    threads, 🔴 changes requested, 🟠 ready for review, 💬N open threads,
+    ✏️ draft, ❗ auto-merge held,
     🔗 fixes issue, ⚠️ main = no longer merges cleanly against `main`, plus
     "based on X" when the PR is stacked on a branch other than `main`); an
     Overlaps cell naming
-    which *other* PR branches it shares files with (plain = clean co-edit,
+    which *other* PRs it shares files with — as `#N` links to those PRs, each
+    hovering to reveal its branch name and PR title (plain = clean co-edit,
     ⚠️ = a real conflict from an in-memory merge not a filename guess, ⊃/⊂ = one
     branch's commits contain the other's), a Changes count — files touched and
     total lines changed — (expander), and a `#Note` cell carrying a dark-red
@@ -340,6 +342,7 @@ query($owner:String!, $name:String!, $cursor:String) {
       pageInfo { hasNextPage endCursor }
       nodes {
         number
+        title
         url
         isDraft
         createdAt
@@ -363,7 +366,8 @@ query($owner:String!, $name:String!, $cursor:String) {
 def fetch_prs(slug, token):
     """Map branch short-name -> per-PR dict for open PRs.
 
-    Each value carries `num`, `url`, `draft`, the `base` branch it targets
+    Each value carries `num`, its `title` (hover text for the `#N` references in
+    the Overlaps column), `url`, `draft`, the `base` branch it targets
     (interesting only when it is not `main` — a stacked PR), `review_decision`
     (`REVIEW_REQUIRED`/`APPROVED`/`CHANGES_REQUESTED`/None), the count of
     `unresolved` review threads, the `auto_merge` / `in_queue` booleans that
@@ -403,6 +407,7 @@ def fetch_prs(slug, token):
             notes = list(dict.fromkeys(n.strip() for n in notes if n.strip()))
             prs[pr["headRefName"]] = {
                 "num": pr["number"],
+                "title": pr["title"],
                 "url": pr["url"],
                 "draft": pr["isDraft"],
                 "created": parse_ts(pr["createdAt"]),
@@ -463,8 +468,11 @@ def status_badges(pr):
     space, so an icon never wraps away from the word it labels.
 
     * 📝 draft.
-    * 🔴 changes requested · ✅ ready to merge (approved, nothing unresolved) ·
-      👍 approved but with open threads.
+    * 🔴 changes requested · 🟠 ready for review (out of draft, nobody has
+      reviewed it yet) · ✅ ready to merge (approved, nothing unresolved) ·
+      👍 approved but with open threads.  A coloured disc for the
+      awaiting-review state so it reads down the column alongside the red and
+      green ones, rather than as an empty cell.
     * 💬N — N review threads still open.
     * ❗ auto-merge enabled but held (a failing check, missing approval, or
       conflict is stalling it).  A PR sitting in the merge queue is a transient
@@ -477,7 +485,9 @@ def status_badges(pr):
         dec = pr["review_decision"]
         if dec == "CHANGES_REQUESTED":
             badges.append(tip("🔴", "Changes requested"))
-        elif dec != "REVIEW_REQUIRED":  # APPROVED, or None (no required review — rare here)
+        elif dec == "REVIEW_REQUIRED":
+            badges.append(tip("🟠", "Ready for review — nobody has reviewed it yet"))
+        else:  # APPROVED, or None (no required review — rare here)
             badges.append(tip("✅", "Ready to merge — approved, nothing unresolved")
                           if pr["unresolved"] == 0
                           else tip("👍", "Approved, but with open review threads"))
@@ -541,6 +551,25 @@ def branch_link(short, slug, maxlen=None, href=None):
         quoted = urllib.parse.quote(short, safe="/")
         href = f"https://github.com/{slug}/tree/{quoted}"
     return f"[`{display}`]({href}{title})"
+
+
+def pr_ref(short, prs, slug):
+    """A compact `#N` reference to the open PR on branch `short`, linked to the
+    **PR** (not the branch) and carrying `branch — PR title` as its hover text.
+
+    This is what the Overlaps column names its neighbours with: the numbers keep
+    a cell listing several overlaps narrow, the tooltip still says which branch
+    and what the PR is about, and a click lands on the conversation the reader
+    actually wants.  Falls back to the branch link for a branch with no open PR
+    (which the table's overlap sets never contain today, but the file tables
+    could grow to)."""
+    pr = prs.get(short)
+    if not pr:
+        return branch_link(short, slug)
+    # Markdown link titles are double-quoted, so a quote in a PR title would end
+    # it early; swap in a single quote.
+    hover = f"{short} — {pr['title']}".replace('"', "'")
+    return f'[#{pr["num"]}]({pr["url"]} "{hover}")'
 
 
 def notes_cell(pr):
@@ -676,9 +705,11 @@ def render(branches, conf, prs, have_token, slug):
         # ⚠️, not several.  `A ⊂ B` names the superseded branches A first, then
         # the container B whose commits already include them; the ⚠️ (real merge
         # conflict) is shown once, on the container.
-        # Each overlap icon carries a tooltip and is glued to its branch link
-        # with a non-breaking space, so the symbol never wraps away from the
-        # name it qualifies.
+        # Overlaps are named by PR number (`#N`, linked to the PR, hovering to
+        # its branch name and title) rather than by branch name: a row that
+        # touches three others stays one short cell.  Each overlap icon carries
+        # a tooltip and is glued to its reference with a non-breaking space, so
+        # the symbol never wraps away from the number it qualifies.
         warn = tip("⚠️", "Real merge conflict")
         sup = tip("⊃", "Contains that branch's commits")
         sub = tip("⊂", "Contained in that branch")
@@ -687,17 +718,17 @@ def render(branches, conf, prs, have_token, slug):
         for h in heads:
             subs = sorted(o for o in rest if o != h and contains(h, o))
             prefix = f"{warn}&nbsp;" if h in conf[r] else ""
-            h_link = branch_link(active[h]["short"], slug)
+            h_link = pr_ref(active[h]["short"], prs, slug)
             if subs:
                 sub_links = ", ".join(
-                    branch_link(active[o]["short"], slug) for o in subs)
+                    pr_ref(active[o]["short"], prs, slug) for o in subs)
                 piece = f"{prefix}{sub_links}&nbsp;{sub}&nbsp;{h_link}"
             else:
                 piece = prefix + h_link
             pieces.append(piece)
-        pieces += [f"{sup}&nbsp;" + branch_link(active[o]["short"], slug)
+        pieces += [f"{sup}&nbsp;" + pr_ref(active[o]["short"], prs, slug)
                    for o in contains_o]
-        pieces += [f"{sub}&nbsp;" + branch_link(active[o]["short"], slug)
+        pieces += [f"{sub}&nbsp;" + pr_ref(active[o]["short"], prs, slug)
                    for o in contained_by]
         ov = ", ".join(pieces)
         pr = prs.get(b["short"])
@@ -780,10 +811,12 @@ def render(branches, conf, prs, have_token, slug):
     if active:
         out.append(
             "<sub>**Status** ✅&nbsp;ready · 👍&nbsp;approved, threads open · "
-            "🔴&nbsp;changes requested · 💬&nbsp;open threads · "
+            "🔴&nbsp;changes requested · 🟠&nbsp;ready for review · "
+            "💬&nbsp;open threads · "
             "✏️&nbsp;draft · ❗&nbsp;auto-merge "
             "held · 🔗&nbsp;fixes issue · ⚠️&nbsp;main conflicts with `main`. "
-            "&nbsp; **Overlaps** plain = clean co-edit · ⚠️&nbsp;real conflict "
+            "&nbsp; **Overlaps** PRs sharing files (hover for the branch and "
+            "title) · plain = clean co-edit · ⚠️&nbsp;real conflict "
             "· ⊃&nbsp;contains · ⊂&nbsp;contained in. "
             f"&nbsp; **`#Note`s** Stale&nbsp;=&nbsp;open more than "
             f"{STALE_HOURS}&nbsp;hours; notes come from PR comments and "
