@@ -44,8 +44,37 @@ takes a while; later builds are incremental.
 
 ## Orientation
 
-For everything else — repo layout, conventions, PR workflow — see
-[CONTRIBUTING.md](CONTRIBUTING.md).
+Each volume has its own top-level directory - `LF`, `HL`, and `TS` - each
+of which is paired with a top-level `.lean` file.
+Within each directory there are multiple `.lean` files, one per chapter,
+written in [Verso](https://verso.lean-lang.org/) format.
+
+Running `make` at the top level produces, for each volume, four
+different ready-for-distribution outputs in a temporary top-level
+`_out` directory, each with both `.lean` and `.html` variants.
+
+- **student**   (full prose, solutions elided)
+- **solutions** (full prose, solutions shown)
+- **terse**     (little prose, no solutions, workinclass elided;
+                 for lecturing)
+- **grading**   (solutions variant with automated grading support,
+                 for instructors)
+
+Students are expected to work through the student `.lean` versions,
+filling in the exercises, or to go through the HTML and switch
+to the Lean just for exercises. See [ALPHATESTERS.md](AlPHATESTERS.md)
+for additional instructions. Instructors are expected to work through
+the terse version in class, and use the grading version for grading
+homework exercises done by students. We do not keep the solutions
+private because GenAI makes this pointless: Anyone can now generate
+solutions to any exercise. The solutions aim to show well engineered
+proofs.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for much more about the
+Software Foundations in Lean project — philosophy, conventions,
+repo layout, PR workflow, etc.
 
 ## License
 
