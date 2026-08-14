@@ -1434,22 +1434,23 @@ theorem diagonal_induction (p : Nat → Nat → Prop)
     (hzs : ∀ n, p 0 n → p 0 (n + 1))
     (hss : ∀ m n, p m n → p (m + 1) (n + 1)) :
     ∀ m n, p m n := by
-  intro m n
-  induction m generalizing n with
-  | zero =>
-    induction n with
-    | zero => apply hzz
-    | succ n' ih =>
-      apply hzs
-      apply ih
-  | succ m' ih =>
-    induction n with
+  solution!
+    intro m n
+    induction m generalizing n with
     | zero =>
-      apply hsz
-      apply ih
-    | succ n' ih' =>
-      apply hss
-      apply ih
+      induction n with
+      | zero => apply hzz
+      | succ n' ih =>
+        apply hzs
+        apply ih
+    | succ m' ih =>
+      induction n with
+      | zero =>
+        apply hsz
+        apply ih
+      | succ n' ih' =>
+        apply hss
+        apply ih
 ```
 
 :::gradeTheorem 3 diagonal_induction
@@ -1553,14 +1554,13 @@ theorem zip_unzip {α β : Type} (l : List (α × β))
 
 :::::
 
+## Splitting with Equations
 
-::::terse
 When using {tactic}`cases`, we can specify to Lean that it should
 remember an equality between a compound expression and what we are
 decomposing it into, using `cases h : ...` syntax. This information
 can actually be critical, and, if we leave it out, we might lack
 information we need to complete a proof.
-::::
 
 ::::full
 For example, suppose we define a function `keepIf` like this:
@@ -1574,7 +1574,6 @@ def keepIf {α : Type} (test : α → Bool) (x : α) : Option α :=
 ::::full
 Now suppose that we want to prove `keepIf_some`. If we start the proof like
 this (with no `h : ⋯` on the `cases`)...
-::::
 
 ```lean +error -keep (name := keepIf_some_e)
 theorem keepIf_some {α : Type} (test : α → Bool) (x y : α)
@@ -1601,7 +1600,6 @@ h : (if test x = true then some x else none) = some y
 ⊢ x = y
 ```
 
-::::full
 ... then we are stuck at this point because the context does
 not contain enough information to prove the goal.
 Because `test x` appears in our hypothesis, rather than in our
