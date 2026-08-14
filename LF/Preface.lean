@@ -130,7 +130,7 @@ variety of work](https://leanprover-community.github.io/papers.html) across comp
 - Formalizing the proof of [Fermat's Last Theorem](https://github.com/ImperialCollegeLondon/FLT)
 - Formalizing the [Sphere Packing Problem](https://github.com/thefundamentaltheor3m/Sphere-Packing-Lean)
 - DeepMind's AI model for IMO problems: [AlphaProof](https://deepmind.google/blog/ai-solves-imo-problems-at-silver-medal-level/)
-- Formal specification for the [Cedar polucy language](https://github.com/cedar-policy/cedar-spec)
+- Formal specification for the [Cedar policy language](https://github.com/cedar-policy/cedar-spec)
 
 :::dev "Benjamin Pierce (bcpierce00)"
 The individual references above should be merged into the categories below...
