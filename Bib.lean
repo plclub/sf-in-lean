@@ -148,24 +148,26 @@ def manna1971: Article where
   year := 1971
   month := none
 
-def leroy2016: Article where
+def leroy2016 : InProceedings where
   title := inlines!"CompCert-a formally verified optimizing compiler"
-  authors := #[inlines!"Xavier Leroy", inlines!"Sandrine Blazy", inlines!"Daniel Kaestner", inlines!"Bernhard Schommer", inlines!"Markus Pister", inlines!"Christian Ferdinand"]
-  journal := inlines!"ERTS 2016: Embedded Real Time Software and Systems, 8th European Congress"
+  authors := #[inlines!"Xavier Leroy", inlines!"Sandrine Blazy", inlines!"Daniel Kästner", inlines!"Bernhard Schommer", inlines!"Markus Pister", inlines!"Christian Ferdinand"]
+  booktitle := inlines!"ERTS 2016: Embedded Real Time Software and Systems, 8th European Congress"
   year := 2016
-  month := none
-  volume := inlines!""
-  number := inlines!""
 
-def gu2016certikos: Article where
+def gu2016certikos: InProceedings where
   title := inlines!"CertiKOS: An extensible architecture for building certified concurrent OS kernels"
-  authors :=#[inlines!"Ronghui Gu", inlines!" Zhong Shao", inlines!"Hao Chen",
-      inlines!"Xiongnan Newman Wu" , inlines!"Jieung Kim", inlines!"Vilhelm Sjoeberg", inlines!"David Costanzo"]
-  journal := inlines!"12th USENIX Symposium on Operating Systems Design and Implementation (OSDI 16)"
+  authors :=#[inlines!"Ronghui Gu", inlines!"Zhong Shao", inlines!"Hao Chen",
+      inlines!"Xiongnan Newman Wu" , inlines!"Jieung Kim", inlines!"Vilhelm Sjöberg", inlines!"David Costanzo"]
+  booktitle := inlines!"12th USENIX Symposium on Operating Systems Design and Implementation (OSDI 16)"
   year := 2016
-  month := none
-  volume := inlines!""
-  number := inlines!""
+
+def disselkoen2024: InProceedings where
+  title := inlines!"How we built cedar: A verification-guided approach"
+  authors :=#[inlines!"Craig Disselkoen", inlines!"Aaron Eline", inlines!"Shaobo He",
+      inlines!"Kyle Headley" , inlines!"Michael Hicks", inlines!"Kesha Hietala", inlines!"John Kaster",
+      inlines!"Anwar Mamat",  inlines!"Matt McCutchen", inlines!"Neha Rungta", inlines!"others"]
+  booktitle := inlines!"Companion Proceedings of the 32nd ACM International Conference on the Foundations of Software Engineering"
+  year := 2024
 
 end Bib
 
