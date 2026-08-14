@@ -1019,12 +1019,21 @@ def ValidHoareTriple
     P st →
     Q st'
 
-theorem validHoareTriple_def (P : Assertion) (c : Com) (Q : Assertion) :
+theorem validHoareTriple_def {P : Assertion} {c : Com} {Q : Assertion} :
     ValidHoareTriple P c Q ↔ ∀ {st st' : State},
       (st =[ c ]=> st') →
       P st →
       Q st' := by rfl
+
+attribute [irreducible] ValidHoareTriple
 ```
+
+:::dev "Niklas Halonen (xhalo32)"
+Somethings strange is going on in `theorem if_example`, using `apply hoare_consequence_pre` followed by `· exact hoare_asgn` works, but `refine hoare_consequence_pre hoare_asgn ?_` or `apply hoare_consequence_pre hoare_asgn` don't.
+The only solution I found was to mark `ValidHoareTriple` irreducible.
+
+It has to do something with `apply` and `refine` looking inside the implication in `∀ {st st'}, ...`
+:::
 
 Notation for Hoare triples.  The command between the two assertions is
 parsed with the same grammar as the `imp { … }` notation, so a command
@@ -1059,7 +1068,7 @@ Prove that if `Q` holds in every state, then any triple with `Q`
 as its postcondition is valid.
 
 ```lean
-theorem hoare_post_true (P Q : Assertion) (c : Com) (h : ∀ st, Q st) :
+theorem hoare_post_true {P Q : Assertion} {c : Com} (h : ∀ st, Q st) :
     {{ P }} ~c {{ Q }} := by
   solution!
     rw [validHoareTriple_def]
@@ -1073,7 +1082,7 @@ Prove that if `P` holds in no state, then any triple with `P` as
 its precondition is valid.
 
 ```lean
-theorem hoare_pre_false (P Q : Assertion) (c : Com) (h : ∀ st, ¬ (P st)) :
+theorem hoare_pre_false {P Q : Assertion} {c : Com} (h : ∀ st, ¬ (P st)) :
     {{ P }} ~c {{ Q }} := by
   solution!
     rw [validHoareTriple_def]
@@ -1122,7 +1131,7 @@ assertion `P`:
 ```
 
 ```lean
-theorem hoare_skip (P : Assertion) :
+theorem hoare_skip {P : Assertion} :
     {{ P }} skip {{ P }} := by
   rw [validHoareTriple_def]
   intro st st' h hst
@@ -1145,7 +1154,7 @@ state where `P` holds to one where `R` holds:
 ```
 
 ```lean
-theorem hoare_seq (P Q R : Assertion) (c1 c2 : Com)
+theorem hoare_seq {P Q R : Assertion} {c1 c2 : Com}
     (h1 : {{ Q }} ~c2 {{ R }}) (h2 : {{ P }} ~c1 {{ Q }}) :
     {{ P }} ~c1; ~c2 {{ R }} := by
   rw [validHoareTriple_def]
@@ -1495,7 +1504,7 @@ example :
   · intro st _
     simp
   · intro st h
-    simp [TotalMap.update_def, TotalMap.getElem_def] -- This should use TotalMap.update_apply which is @[simp]
+    simp
 
 example :
     {{ (X ≤ 5) }} [X ↦ X + 1] <<->> {{ (X + 1) ≤ 5 }} := by
@@ -1503,13 +1512,15 @@ example :
   constructor
   · rw [assertImplies_def]
     intro st
-    simp [TotalMap.update_def, TotalMap.getElem_def]
+    simp
   · rw [assertImplies_def]
     intro st
-    simp [TotalMap.update_def, TotalMap.getElem_def]
+    simp
 
 end ExampleAssertionSub
 ```
+
+Most of the `simp` calls rely on {name}`Assertion.subst_apply`, {name}`TotalMap.update_eq` plus some `Aexp` characterizing lemmas like {name}`Aexp.eval_num`.
 
 ## Printing Assertions
 %%%
@@ -1680,8 +1691,9 @@ The delaboration for `x := ~a` seems to be broken now that I made sequencing use
 :::
 
 ```lean
-theorem hoare_asgn (Q : Assertion) (x : Ident) (a : Aexp) :
+theorem hoare_asgn {Q : Assertion} {x : Ident} {a : Aexp} :
     {{ Q [x ↦ ~a] }} x := ~a {{ Q }} := by
+  rw [validHoareTriple_def]
   intro st st' hE hQ
   inversion hE with
   | asgn n h =>
@@ -1700,7 +1712,7 @@ theorem assertion_sub_example :
     {{ {{ X < 5 }} [X ↦ X + 1] }}
       X := X + 1
     {{ X < 5 }} := by
-  apply hoare_asgn
+  exact hoare_asgn
 ```
 
 :::slidebreak
@@ -1734,7 +1746,7 @@ theorem hoare_asgn_examples1 :
       {{ X ≤ 10 }} := by
   solution!
     exists {{ X ≤ 10 }} [X ↦ 2 * X]
-    apply hoare_asgn
+    exact hoare_asgn
 ```
 :::::
 
@@ -1747,7 +1759,7 @@ theorem hoare_asgn_examples2 :
       {{ 0 ≤ X ∧ X ≤ 5 }} := by
   solution!
     exists {{ 0 ≤ X ∧ X ≤ 5 }} [X ↦ 3]
-    apply hoare_asgn
+    exact hoare_asgn
 ```
 :::::
 
@@ -1771,7 +1783,7 @@ exhibit an `a` for which the rule doesn't work.)
 :::dev "Niklas Halonen (xhalo32)"
 The following exercise provides explicit state arguments to a hypothesis:
 ```
-apply hc (st := ∅) (st' := X →ₜ 1 ; ∅)
+apply hc (st := ∅) (st' := X →ₜ 1)
 ```
 Should we demonstrate this with an example before this exercise?
 :::
@@ -1783,11 +1795,11 @@ theorem hoare_asgn_wrong : ∃ a : Aexp,
     exists aexp { X + 1 }
     intro hc
     rw [validHoareTriple_def] at hc
-    have h2 : (X →ₜ 1 ; ∅)[X] = (aexp { X + 1 }).eval (X →ₜ 1 ; ∅) := by
-      apply hc (st := ∅) (st' := X →ₜ 1 ; ∅)
+    have h2 : (X →ₜ 1)[X] = (aexp { X + 1 }).eval (X →ₜ 1) := by
+      apply hc (st := ∅) (st' := X →ₜ 1)
       · apply Com.EvalR.asgn; rfl
       · exact True.intro
-    simp [TotalMap.update_eq] at h2
+    simp at h2
 ```
 
 :::solution
@@ -1850,21 +1862,18 @@ the postcondition.
 :::
 
 ```lean
-theorem hoare_asgn_fwd (m : Nat) (a : Aexp) (P : Assertion) :
+theorem hoare_asgn_fwd {m : Nat} {a : Aexp} {P : Assertion} :
     {{ P ∧ X = m }}
-      X := ~a;
+      X := ~a
     {{ fun st => P (X →ₜ m ; st)
          ∧ st[X] = a.eval (X →ₜ m ; st) }} := by
   solution!
     rw [validHoareTriple_def]
-    intro st st' heval hpre
+    intro st st' heval ⟨hp, hx⟩
     inversion heval with
     | asgn n h =>
-      obtain ⟨hp, hx⟩ := hpre
-      subst h
-      have hx' : st[X] = m := hx
-      rw [← hx', TotalMap.update_eq, TotalMap.update_shadow,
-          TotalMap.update_same]
+      subst h hx
+      rw [TotalMap.update_eq, TotalMap.update_shadow, TotalMap.update_same]
       exact ⟨hp, rfl⟩
 ```
 :::::
@@ -1893,7 +1902,7 @@ https://www.cl.cam.ac.uk/archive/mjcg/HL/Notes/Notes.pdf
 ```lean
 theorem hoare_asgn_fwd_exists (a : Aexp) (P : Assertion) :
     {{ P }}
-      X := ~a;
+      X := ~a
     {{ fun st => ∃ m, P (X →ₜ m ; st) ∧
          st[X] = a.eval (X →ₜ m ; st) }} := by
   solution!
@@ -2085,25 +2094,23 @@ observation is captured by two _Rules of Consequence_.
 Here are the formal versions:
 
 ```lean
-theorem hoare_consequence_pre (P P' Q : Assertion) (c : Com)
+theorem hoare_consequence_pre {P P' Q : Assertion} {c : Com}
     (hhoare : {{ P' }} ~c {{ Q }}) (himp : P ->> P') :
     {{ P }} ~c {{ Q }} := by
-  rw [validHoareTriple_def]
+  rw [validHoareTriple_def] at hhoare ⊢
   intro st st' heval hpre
-  apply hhoare st st'
-  · assumption
-  · apply himp
-    assumption
+  apply hhoare heval
+  rw [assertImplies_def] at himp
+  exact himp _ hpre
 
-theorem hoare_consequence_post (P Q Q' : Assertion) (c : Com)
+theorem hoare_consequence_post {P Q Q' : Assertion} {c : Com}
     (hhoare : {{ P }} ~c {{ Q' }}) (himp : Q' ->> Q) :
     {{ P }} ~c {{ Q }} := by
-  rw [validHoareTriple_def]
+  rw [validHoareTriple_def] at hhoare ⊢
   intro st st' heval hpre
+  rw [assertImplies_def] at himp
   apply himp
-  apply hhoare st st'
-  · assumption
-  · assumption
+  exact hhoare heval hpre
 ```
 
 :::slidebreak
@@ -2127,13 +2134,13 @@ tried it in class.
 
 ```lean
 theorem hoare_asgn_example1 :
-    {{True}} X := 1; {{X = 1}} := by
+    {{True}} X := 1 {{X = 1}} := by
   workinclass!
-    apply hoare_consequence_pre
-    · apply hoare_asgn
-    · unfold AssertImplies Assertion.sub
+    apply hoare_consequence_pre (P' := {{X = 1}} [X ↦ 1])
+    · exact hoare_asgn
+    · rw [assertImplies_def]
       intro st _
-      rfl
+      simp
 ```
 
 :::slidebreak
@@ -2150,17 +2157,21 @@ We can also use it to prove the example mentioned earlier.
 
 Or, formally ...
 
+:::instructors
+This proof uses `simp` followed by `lia` which is a flexible tactic, so the `simp` is considered terminal.
+:::
+
 ```lean
 theorem assertion_sub_example2 :
     {{X < 4}}
-      X := X + 1;
+      X := X + 1
     {{X < 5}} := by
   workinclass!
-    apply hoare_consequence_pre
-    · apply hoare_asgn
-    · unfold AssertImplies Assertion.sub
+    apply hoare_consequence_pre (P' := {{X < 5}} [X ↦ X + 1])
+    · exact hoare_asgn
+    · rw [assertImplies_def]
       intro st h
-      simp [TotalMap.update_eq] at *
+      simp
       lia
 ```
 
@@ -2178,15 +2189,18 @@ vary both the precondition and the postcondition.
        {{P}} c {{Q}}
 ```
 
+:::dev "Niklas Halonen (xhalo32)"
+In the following proof, `(P' := P')` is not necessary, however it avoids having a metavariable in the first goal.
+Another option is to just write `exact hoare_consequence_pre (hoare_consequence_post htriple hpost) hpre`.
+:::
+
 ```lean
-theorem hoare_consequence (P P' Q Q' : Assertion) (c : Com)
+theorem hoare_consequence {P P' Q Q' : Assertion} {c : Com}
     (htriple : {{ P' }} ~c {{ Q' }}) (hpre : P ->> P') (hpost : Q' ->> Q) :
     {{ P }} ~c {{ Q }} := by
   apply hoare_consequence_pre (P' := P')
-  · apply hoare_consequence_post (Q' := Q')
-    · assumption
-    · assumption
-  · assumption
+  · exact hoare_consequence_post htriple hpost
+  · exact hpre
 ```
 
 ## Automation
@@ -2194,6 +2208,11 @@ theorem hoare_consequence (P P' Q Q' : Assertion) (c : Com)
 Many of the proofs we have done so far with Hoare triples can be
 streamlined using the automation techniques that we introduced in
 the _Automation_ chapter of _Logical Foundations_.
+
+:::dev "Niklas Halonen (xhalo32)" NOW
+The following paragraph is outdated.
+We already have characterizing lemmas like `validHoareTriple_def`, but rarely do we need to use them with `simp`.
+:::
 
 Recall that the `simp` tactic can be told to unfold definitions as
 part of its simplifications.  The definitions we keep needing to
@@ -2212,6 +2231,10 @@ counterpart is the `assertion_auto` tactic's simp list below -- not global
 meaning in goals the way `->>` and `Assertion.sub` do.
 :::
 
+:::dev "Niklas Halonen (xhalo32)" NOW
+The following paragraph is outdated.
+:::
+
 ::::full
 The proof of `hoare_consequence_pre`, repeated below, looks
 like an opportune place for automation, because all it does
@@ -2226,102 +2249,76 @@ but that's just application of a hypothesis.)
 Here's a good candidate for automation:
 ::::
 
+```display
+theorem hoare_consequence_pre (P P' Q : Assertion) (c : Com)
+    (hhoare : {{ P' }} ~c {{ Q }}) (himp : P ->> P') :
+    {{ P }} ~c {{ Q }} := by
+  rw [validHoareTriple_def] at hhoare ⊢
+  intro st st' heval hpre
+  apply hhoare heval
+  rw [assertImplies_def] at himp
+  exact himp _ hpre
+```
+
+:::slidebreak
+:::
+
+Since `AssertImplies` is not marked `irreducible`, and `assertImplies_def` is a proof by definitional equality, we can skip the `rw [assertImplies_def] at himp` and use `P ->> P'` like an implication directly.
+
+:::dev "Niklas Halonen (xhalo32)"
+This needs a better explanation of when it's okay to use definitions without using their characterizing lemmas.
+:::
+
 ```lean
 theorem hoare_consequence_pre' (P P' Q : Assertion) (c : Com)
     (hhoare : {{ P' }} ~c {{ Q }}) (himp : P ->> P') :
     {{ P }} ~c {{ Q }} := by
-  rw [validHoareTriple_def]
+  rw [validHoareTriple_def] at hhoare ⊢
   intro st st' heval hpre
-  apply hhoare st st'
-  · assumption
-  · apply himp
-    assumption
+  apply hhoare heval
+  exact himp _ hpre
 ```
 
-::::full
-Notice that this proof passes the states `st` and `st'` to `apply
-hhoare` explicitly.  We didn't actually need to: when an argument
-of the applied theorem is not determined by the goal, `apply`
-introduces a _metavariable_ `?st` as a placeholder and lets a later
-step of the proof determine it.  Here, `assumption` instantiates
-`?st` with `st` when it discovers `st` in the assumption `heval`.
-Using `apply` this way is like telling Lean, "Be patient: The
-missing part is going to be filled in later in the proof."
-::::
-
-:::slidebreak
-:::
-
-::::terse
-`apply` will find `st` for us, using a metavariable.
-::::
+Since, after the `rw` and `intro`, the remaining steps just apply hypotheses to the goal (and each other), the
+remaining proof can be compressed into a single tactic: {tactic}`apply_rules`.
 
 ```lean
-theorem hoare_consequence_pre''' (P P' Q : Assertion) (c : Com)
+theorem hoare_consequence_pre'' (P P' Q : Assertion) (c : Com)
     (hhoare : {{ P' }} ~c {{ Q }}) (himp : P ->> P') :
     {{ P }} ~c {{ Q }} := by
-  rw [validHoareTriple_def]
+  rw [validHoareTriple_def] at hhoare ⊢
   intro st st' heval hpre
-  apply hhoare
-  · assumption
-  · apply himp
-    assumption
+  apply_rules
 ```
 
 :::slidebreak
 :::
 
-Since the remaining steps just apply hypotheses to each other, the
-entire proof can actually be compressed into a single line, by writing
-the term that `exact`ly proves the conclusion.
-
-```lean
-theorem hoare_consequence_pre'''' (P P' Q : Assertion) (c : Com)
-    (hhoare : {{ P' }} ~c {{ Q }}) (himp : P ->> P') :
-    {{ P }} ~c {{ Q }} := by
-  intro st st' heval hpre
-  exact hhoare st st' heval (himp st hpre)
-```
-
-::::full
-Of course, it's hard to write such a one-liner without having gone
-through the original proof of `hoare_consequence_pre` to see the
-steps it used. But now that we know the shape of the argument, it's
-a good bet that the same trick will also work for
-`hoare_consequence_post`.
-::::
-
-:::slidebreak
-:::
-
-::::terse
-...as can the proof for the postcondition consequence
-rule.
-::::
+The same trick works for `hoare_consequence_post`.
 
 ```lean
 theorem hoare_consequence_post' (P Q Q' : Assertion) (c : Com)
     (hhoare : {{ P }} ~c {{ Q' }}) (himp : Q' ->> Q) :
     {{ P }} ~c {{ Q }} := by
+  rw [validHoareTriple_def] at hhoare ⊢
   intro st st' heval hpre
-  exact himp st' (hhoare st st' heval hpre)
+  apply_rules
 ```
 
 :::slidebreak
 :::
 
-We can also use a metavariable to streamline a proof
-(`hoare_asgn_example1`), that we did earlier as an example of
-using the consequence rule:
+We can also leave a metavariable for `P'` in `hoare_asgn_example1`, that we did earlier as an example of using the consequence rule:
 
 ```lean
 theorem hoare_asgn_example1' :
-    {{True}} X := 1; {{X = 1}} := by
-  apply hoare_consequence_pre  -- no need to state an assertion
-  · apply hoare_asgn
-  · unfold AssertImplies Assertion.sub
+    {{True}} X := 1 {{X = 1}} := by
+  apply hoare_consequence_pre -- not specifying `(P' := ...)` leaves a "hole" `?P'`
+  · -- The goal is `{{?P'}} X := 1 {{X = 1}}`
+    exact hoare_asgn -- Assigns `?P'` to `{{X = 1}} [X ↦ 1]` (automatically closing the `case P'`)
+  · rw [assertImplies_def]
     intro st _
-    rfl
+    simp
 ```
 
 :::slidebreak
@@ -2332,10 +2329,10 @@ automation.
 
 ```lean
 theorem hoare_asgn_example1'' :
-    {{True}} X := 1; {{X = 1}} := by
+    {{True}} X := 1 {{X = 1}} := by
   apply hoare_consequence_pre
-  · apply hoare_asgn
-  · simp [AssertImplies, Assertion.sub, TotalMap.update_eq]
+  · exact hoare_asgn
+  · simp [assertImplies_def]
 ```
 
 Now we have quite a nice proof script: it simply identifies the
@@ -2363,11 +2360,11 @@ but cannot finish it: the leftover goal is arithmetic, so it needs
 ```lean
 theorem assertion_sub_example2' :
     {{X < 4}}
-      X := X + 1;
+      X := X + 1
     {{X < 5}} := by
   apply hoare_consequence_pre
-  · apply hoare_asgn
-  · simp [AssertImplies, Assertion.sub, TotalMap.update_eq]  -- an arithmetic goal remains
+  · exact hoare_asgn
+  · simp [assertImplies_def] -- an arithmetic goal remains
     lia
 ```
 
@@ -2378,15 +2375,22 @@ Let's introduce our own tactic to handle both that bullet and the
 bullet from example 1.  A `macro` declaration gives a name to a
 canned sequence of tactics:
 
+:::dev "Niklas Halonen (xhalo32)"
+It's unfortunate that we need to unfold `X, Y, Z, W` in `assertion_auto` as `simp` wouldn't otherwise reduce `X == Y` to `false`.
+Note that `Ident` is an `abbrev`.
+Making it an `implicit_reducible` def breaks `lia` for some reason and doesn't resolve the issue.
+```
+@[implicit_reducible]
+def Ident := String
+deriving BEq, ReflBEq, LawfulBEq, DecidableEq
+```
+:::
+
 ```lean
-/-- Prove routine facts about assertions: unfold the Hoare-logic
-definitions and lifting functions, simplify, and finish any leftover
-arithmetic with `lia`. -/
 macro "assertion_auto" : tactic =>
-  `(tactic| (intros
-             <;> try (simp [assertImplies_def, ValidHoareTriple, Assertion.sub,
-                            W, X, Y, Z] at *)
-             <;> try lia))
+  `(tactic| focus (simp [assertImplies_def, assertIff_def, validHoareTriple_def,
+                         Assertion.subst_def, X, Y, Z, W] at *
+                  <;> try lia))
 ```
 
 :::slidebreak
@@ -2395,10 +2399,10 @@ macro "assertion_auto" : tactic =>
 ```lean
 theorem assertion_sub_example2'' :
     {{X < 4}}
-      X := X + 1;
+      X := X + 1
     {{X < 5}} := by
   apply hoare_consequence_pre
-  · apply hoare_asgn
+  · exact hoare_asgn
   · assertion_auto
 ```
 
@@ -2407,9 +2411,9 @@ theorem assertion_sub_example2'' :
 
 ```lean
 theorem hoare_asgn_example1''' :
-    {{True}} X := 1; {{X = 1}} := by
+    {{True}} X := 1 {{X = 1}} := by
   apply hoare_consequence_pre
-  · apply hoare_asgn
+  · exact hoare_asgn
   · assertion_auto
 ```
 
@@ -2430,20 +2434,20 @@ automated by following the examples above.
 ```lean
 theorem assertion_sub_ex1' :
     {{ X ≤ 5 }}
-      X := 2 * X;
+      X := 2 * X
     {{ X ≤ 10 }} := by
   solution!
     apply hoare_consequence_pre
-    · apply hoare_asgn
+    · exact hoare_asgn
     · assertion_auto
 
 theorem assertion_sub_ex2' :
     {{ 0 ≤ 3 ∧ 3 ≤ 5 }}
-      X := 3;
+      X := 3
     {{ 0 ≤ X ∧ X ≤ 5 }} := by
   solution!
     apply hoare_consequence_pre
-    · apply hoare_asgn
+    · exact hoare_asgn
     · assertion_auto
 ```
 
@@ -2478,14 +2482,14 @@ assignment.  Note the use of `hoare_seq` in conjunction with
 theorem hoare_asgn_example3 (a : Aexp) (n : Nat) :
     {{a = n}}
       X := ~a;
-      skip;
+      skip
     {{X = n}} := by
   apply hoare_seq
   · -- right part of seq
-    apply hoare_skip
+    exact hoare_skip
   · -- left part of seq
     apply hoare_consequence_pre
-    · apply hoare_asgn
+    · exact hoare_asgn
     · assertion_auto
 ```
 
@@ -2531,18 +2535,18 @@ explicitly identifies `X = 1` as the intermediate assertion.
 theorem hoare_asgn_example4 :
     {{ True }}
       X := 1;
-      Y := 2;
+      Y := 2
     {{ X = 1 ∧ Y = 2 }} := by
   apply hoare_seq (Q := {{ X = 1 }})
   · -- right part of seq
     solution!
       apply hoare_consequence_pre
-      · apply hoare_asgn
+      · exact hoare_asgn
       · assertion_auto
   · -- left part of seq
     solution!
       apply hoare_consequence_pre
-      · apply hoare_asgn
+      · exact hoare_asgn
       · assertion_auto
 ```
 :::::
@@ -2592,21 +2596,20 @@ HIDE: CH: Here goes:
 :::
 
 ```lean
-def swap_program : Com :=
-  solution!(imp { Z := X; X := Y; Y := Z; })
+def swap_program : Com := solution!(imp { Z := X; X := Y; Y := Z })
 
 theorem swap_exercise :
     {{X ≤ Y}}
       ~swap_program
     {{Y ≤ X}} := by
   solution!
-    unfold swap_program
+    rw [swap_program]
     apply hoare_seq
     · apply hoare_seq
-      · apply hoare_asgn
-      · apply hoare_asgn
+      · exact hoare_asgn
+      · exact hoare_asgn
     · apply hoare_consequence_pre
-      · apply hoare_asgn
+      · exact hoare_asgn
       · assertion_auto
 ```
 :::::
@@ -2657,20 +2660,16 @@ Having chosen your `a` and `n`, proceed as follows:
 ```lean
 theorem invalid_triple : ¬ ∀ (a : Aexp) (n : Nat),
     {{ a = n }}
-      X := 3; Y := ~a;
+      X := 3; Y := ~a
     {{ Y = n }} := by
-  rw [validHoareTriple_def]
   intro h
+  simp only [validHoareTriple_def] at h
   solution!
-    specialize h (aexp { X }) 2 (X →ₜ 2 ; ∅) (Y →ₜ 3 ; X →ₜ 3 ; X →ₜ 2 ; ∅)
-    have heval : (X →ₜ 2 ; ∅) =[ X := 3; Y := X; ]=>
-        (Y →ₜ 3 ; X →ₜ 3 ; X →ₜ 2 ; ∅) := by
-      apply Com.EvalR.seq
+    specialize h (aexp { X }) 2 (st := X →ₜ 2) (st' := Y →ₜ 3 ; X →ₜ 3 ; X →ₜ 2) ?_
+    · apply Com.EvalR.seq
       · apply Com.EvalR.asgn; rfl
       · apply Com.EvalR.asgn; rfl
-    apply h at heval
-    have hcontra := heval rfl
-    simp [TotalMap.update_eq] at hcontra
+    simp at h
 ```
 :::::
 
@@ -2737,51 +2736,21 @@ Better:
 :::slidebreak
 :::
 
-::::full
-Strictly speaking, `P ∧ b` combines an assertion with a boolean
-expression.  The assertion notation handles this by evaluating `b` in
-the current state.  We'll write `bassertion b` for the resulting assertion:
-"the boolean expression `b` evaluates to `true` in the given state."
-::::
+:::dev "Niklas Halonen (xhalo32)"
+I have removed `bassertion` as it's an unnecessary abstraction and only adds overhead for the reader.
 
-::::terse
-We'll write `bassertion b` for the assertion "the boolean expression
-`b` evaluates to `true` in the given state."
-::::
-
-```lean
-def bassertion (b : Bexp) : Assertion := {{ b }}
-
-@[simp] theorem bassertion_apply (b : Bexp) (st : State) :
-    bassertion b st = (b.eval st = true) := rfl
-
-instance : Coe Bexp Assertion := ⟨bassertion⟩
-```
-
-A useful fact about `bassertion`:
-
-:::dev BeforeNextRelease
-```
-Robert Rand: This isn't an identity but that's because
-we're using [~(bassertion b st)] in our triples, instead of a more
-direct/intuitive predicate.
-
-Some alternatives: 1) P_True b and P_False b (defined directly as
-desired) 1) bassertion b false (adds relevant argument to bassertion)
-2) ((bassertion (!b)) st) (clearer, but less direct).
-```
+The following theorem is now unnecessary.
 :::
 
 ```lean
 theorem bexp_eval_false (b : Bexp) (st : State) (h : b.eval st = false) :
     ¬ ({{ b }}) st := by
+  dsimp
   simp [h]
 ```
 
 ::::full
-Here `simp` is able to find that `b.eval st` is assumed to be
-`false` (by rewriting with `h`), notice that the goal claims it is
-`true`, and use the resulting contradiction to complete the proof.
+Here, we first reduce the expression to `¬Bexp.eval st b = true` with {tactic}`dsimp`, which is trivial after we instruct `simp` to rewrite `b.eval st` to `false`.
 ::::
 
 :::dev "One An (meluge)"
@@ -2799,23 +2768,18 @@ The statement of the rule reads: given `htrue : {{ P ∧ b }} ~c1 {{Q}}`
 and `hfalse : {{ P ∧ ¬b }} ~c2 {{Q}}`, we can conclude
 `{{P}} if (~b) { ~c1 } else { ~c2 } {{Q}}`.
 
-That is (unwrapping the notations):
-
-```display
-theorem hoare_if (P Q : Assertion) (b : Bexp) (c1 c2 : Com)
-    (htrue : ValidHoareTriple (fun st => P st ∧ bassertion b st) c1 Q)
-    (hfalse : ValidHoareTriple (fun st => P st ∧ ¬ (bassertion b st)) c2 Q) :
-    ValidHoareTriple P (Com.cond b c1 c2) Q
-```
-
 ```lean
-theorem hoare_if (P Q : Assertion) (b : Bexp) (c1 c2 : Com)
+theorem hoare_if {P Q : Assertion} {b : Bexp} {c1 c2 : Com}
     (htrue : {{ P ∧ b }} ~c1 {{ Q }}) (hfalse : {{ P ∧ ¬ b }} ~c2 {{ Q }}) :
     {{ P }} if (~b) { ~c1 } else { ~c2 } {{ Q }} := by
-  intro st st' hE hP
+  rw [validHoareTriple_def] at htrue hfalse ⊢
+  intro st st' hE hpre
   inversion hE with
-  | ifTrue hb hc => exact htrue _ _ hc ⟨hP, hb⟩
-  | ifFalse hb hc => exact hfalse _ _ hc ⟨hP, bexp_eval_false b st hb⟩
+  | ifTrue hb hc1 =>
+    exact htrue hc1 ⟨hpre, hb⟩
+  | ifFalse hb hc =>
+    rw [← Bool.not_eq_true] at hb
+    exact hfalse hc ⟨hpre, hb⟩
 ```
 
 ### Example
@@ -2829,19 +2793,27 @@ the rule satisfies the specification we wanted.
 theorem if_example :
     {{True}}
       if (X = 0) {
-        Y := 2;
+        Y := 2
       } else {
-        Y := X + 1;
+        Y := X + 1
       }
     {{X ≤ Y}} := by
-  -- the proof is the same for both the true and false branches
-  apply hoare_if <;>
-  · apply hoare_consequence_pre
-    · apply hoare_asgn
+  apply hoare_if
+  · -- Then
+    apply hoare_consequence_pre
+    · exact hoare_asgn
+    · assertion_auto
+  · -- Else
+    apply hoare_consequence_pre
+    · exact hoare_asgn
     · assertion_auto
 ```
 
 :::slidebreak
+:::
+
+:::dev "Niklas Halonen (xhalo32)"
+The following paragraph is outdated (talks about old `bassertion`).
 :::
 
 As we did earlier, it would be nice to eliminate all the low-level
@@ -2874,10 +2846,10 @@ theorem if_example'' :
     {{X ≤ Y}} := by
   apply hoare_if
   · apply hoare_consequence_pre
-    · apply hoare_asgn
+    · exact hoare_asgn
     · assertion_auto
   · apply hoare_consequence_pre
-    · apply hoare_asgn
+    · exact hoare_asgn
     · assertion_auto
 ```
 
@@ -2890,13 +2862,12 @@ We can even shorten it a little bit more.
 theorem if_example''' :
     {{True}}
       if (X = 0) {
-        Y := 2;
+        Y := 2
       } else {
-        Y := X + 1;
+        Y := X + 1
       }
     {{X ≤ Y}} := by
-  apply hoare_if <;> apply hoare_consequence_pre <;>
-    (try apply hoare_asgn) <;> try assertion_auto
+  apply hoare_if <;> apply hoare_consequence_pre hoare_asgn (by assertion_auto)
 ```
 
 ::::::full
@@ -2916,7 +2887,7 @@ theorem if_minus_plus :
     {{Y = X + Z}} := by
   solution!
     apply hoare_if <;> apply hoare_consequence_pre <;>
-      (try apply hoare_asgn) <;> try assertion_auto
+      (try exact hoare_asgn) <;> try assertion_auto
 ```
 :::::
 
@@ -3054,14 +3025,14 @@ defined them correctly.
 
 ```lean
 theorem if1true_test :
-    ∅ =[ if1 (X = 0) { X := 1; } ]=> (X →ₜ 1 ; ∅) := by
+    ∅ =[ if1 (X = 0) { X := 1; } ]=> (X →ₜ 1) := by
   solution!
     apply Com.EvalR.if1True
     · rfl
     · apply Com.EvalR.asgn; rfl
 
 theorem if1false_test :
-    (X →ₜ 2 ; ∅) =[ if1 (X = 0) { X := 1; } ]=> (X →ₜ 2 ; ∅) := by
+    (X →ₜ 2) =[ if1 (X = 0) { X := 1; } ]=> (X →ₜ 2) := by
   solution!
     apply Com.EvalR.if1False
     rfl
@@ -3191,7 +3162,7 @@ theorem hoare_if1_good :
   solution!
     apply hoare_if1
     · apply hoare_consequence_pre
-      · apply hoare_asgn
+      · exact hoare_asgn
       · assertion_auto
     · assertion_auto
 ```
@@ -3627,7 +3598,7 @@ theorem while_example :
   apply hoare_consequence_post
   · apply hoare_while
     apply hoare_consequence_pre
-    · apply hoare_asgn
+    · exact hoare_asgn
     · assertion_auto
   · assertion_auto
 ```
@@ -4020,7 +3991,7 @@ def ex1_repeat : Com :=
   }
 
 theorem ex1_repeat_works :
-    ∅ =[ ex1_repeat ]=> (Y →ₜ 1 ; X →ₜ 1 ; ∅) := by
+    ∅ =[ ex1_repeat ]=> (Y →ₜ 1 ; X →ₜ 1) := by
   solution!
     apply Com.EvalR.repeatEnd
     · apply Com.EvalR.seq
@@ -4173,11 +4144,11 @@ theorem ex2_repeat_hoare_repeat :
   unfold ex2_repeat
   apply hoare_consequence
   · apply hoare_repeat (Q := {{ Y > 0 }})
-    · apply hoare_seq <;> apply hoare_asgn
+    · apply hoare_seq <;> exact hoare_asgn
     · apply hoare_seq
-      · apply hoare_asgn
+      · exact hoare_asgn
       · apply hoare_consequence_pre
-        · apply hoare_asgn
+        · exact hoare_asgn
         · assertion_auto
   · -- body of repeat if exiting right away
     assertion_auto
@@ -4256,9 +4227,9 @@ example :
   apply hoare_consequence
   · apply hoare_repeat' (P := {{ Y > 0 }})
     apply hoare_seq
-    · apply hoare_asgn
+    · exact hoare_asgn
     · apply hoare_consequence_pre
-      · apply hoare_asgn
+      · exact hoare_asgn
       · -- body of repeat if looping
         unfold AssertImplies Assertion.sub
         intro st hy
@@ -4284,9 +4255,9 @@ example :
   apply hoare_consequence
   · apply hoare_repeat' (P := {{ X > 0 ∧ Y > 0 }})
     apply hoare_seq
-    · apply hoare_asgn
+    · exact hoare_asgn
     · apply hoare_consequence_pre
-      · apply hoare_asgn
+      · exact hoare_asgn
       · -- body of repeat if looping
         unfold AssertImplies Assertion.sub
         intro st ⟨hx, hy⟩
@@ -5025,7 +4996,7 @@ theorem assert_assume_example :
     · apply hoare_seq
       · apply hoare_seq
         · apply hoare_assert
-        · apply hoare_asgn
+        · exact hoare_asgn
       · apply hoare_assume
     · assertion_auto
 ```
