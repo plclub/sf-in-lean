@@ -73,7 +73,7 @@ Logic is the field of study whose subject matter is _proofs_ --
 unassailable arguments for the truth of particular propositions.
 Volumes have been written about the central role of logic in
 computer science. {citet Bib.manna1971}[] called it "the calculus of
-computer science," while {citet Bib.halpern2001}[] et al.'s paper _On the Unusual
+computer science," while {citet Bib.halpern2001}[]'s paper _On the Unusual
 Effectiveness of Logic in Computer Science_ catalogs scores of
 ways in which logic offers critical tools and insights. Indeed,
 they observe that, "As a matter of fact, logic has turned out to
