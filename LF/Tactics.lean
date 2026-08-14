@@ -121,7 +121,6 @@ example (n m : Nat) (h₁ : (n, n) = (m, m))
   apply h₁
 ```
 
-::::::full
 :::::exercise (rating := 2) (name := "apply_exercise")
 Complete the following proof using only {tactic}`apply`.
 
@@ -137,8 +136,6 @@ theorem apply_exercise (m : Nat)
     apply hEven
 ```
 :::::
-
-::::::
 
 ::::full
 To use the {tactic}`apply` tactic, the (conclusion of the) fact
@@ -163,7 +160,6 @@ example(n m : Nat) (h : n = m) : m = n := by
   symm; apply h
 ```
 
-::::::full
 :::::exercise (rating := 2) (name := "apply_exercise1")
 You can use {tactic}`apply` with previously defined theorems, not
 just hypotheses in the context.  Use a
@@ -205,8 +201,6 @@ either tactic can be used.  (We will see below that each tactic
 can also be used to modify a hypothesis rather than the goal.)
 :::
 :::::
-
-::::::
 
 ## Supplying arguments to {tactic}`apply`
 
@@ -994,7 +988,7 @@ example (a b c d e f : Nat)
     (h₁ : [a, b] = [c, d])
     (h₂ : [c, d] = [e, f]) :
     [a, b] = [e, f] := by
-  have h := trans_eq (y:= [c, d])
+  have h := trans_eq (y := [c, d])
   apply h
   /- This tactic closes a goal if it appears anywhere in the context.
      In this case we could also write `exact h₁` ... -/
@@ -1484,7 +1478,7 @@ def chooseIf {α : Type} (test : α → Bool) (x y : α) : α :=
 
 theorem chooseIf_self {α : Type} (test : α → Bool) (x : α) :
     chooseIf test x x = x := by
-  unfold chooseIf
+  dsimp [chooseIf]
   cases test x <;> rfl
 ```
 
@@ -1586,7 +1580,7 @@ this (with no `h : ⋯` on the `cases`)...
 theorem keepIf_some {α : Type} (test : α → Bool) (x y : α)
     (h : keepIf test x = some y) :
     x = y := by
-  unfold keepIf at h
+  dsimp [keepIf] at h
   cases (test x)
 ```
 
@@ -1629,7 +1623,7 @@ Adding the `h : ⋯ ` qualifier saves this information so we can use it.
 theorem keepIf_some {α : Type} (test : α → Bool) (x y : α)
     (h : keepIf test x = some y) :
     x = y := by
-  unfold keepIf at h
+  dsimp [keepIf] at h
   cases hTest : test x
   -- Now we have the same state as at the point where we got stuck
   -- above, except that the context contains an extra equality
@@ -1729,10 +1723,6 @@ Simplifying and unfolding definitions:
   - `dsimp`: simplify definitional computations in the goal
 
   - `dsimp at h`: simplify definitional computations in a hypothesis
-
-  - `unfold f`: replace occurrences of a defined constant f in the goal by its definition
-
-  - `unfold f at h`: unfold a definition in a hypothesis
 
 Case analysis:
 

@@ -828,7 +828,6 @@ theorem zip_cons_cons {α β : Type} {lx : List α} {ly : List β} {x : α} {y :
    zip (x :: lx) (y :: ly) = (x, y) :: zip lx ly := by rfl
 ```
 
-::::::full
 :::::exercise (rating := 1) (name := "zip_checks")
 Try answering the following questions on paper and
 checking your answers in Lean:
@@ -872,8 +871,6 @@ theorem unzip_test1 : unzip [(1, false), (2, false)] = ([1, 2], [false, false]) 
 :::gradeTheorem "0.25" unzip_nil unzip_cons_fst unzip_cons_snd unzip_test1
 :::
 :::::
-
-::::::
 
 ## Polymorphic Options
 
