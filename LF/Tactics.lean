@@ -1437,8 +1437,8 @@ theorem length_append_self {α : Type} {n : Nat} {l : List α}
     rw [← h]
   | cons x xs ih =>
     rw [List.cons_append, List.length_cons] at *
-    rw [← length_append_cons (x := x) rfl]
-    rw [ih (by rfl), ← h]
+    rw [← length_append_cons rfl]
+    rw [ih rfl, ← h]
     rw [Nat.add_add_add_comm]
 ```
 
@@ -1463,7 +1463,7 @@ theorem diagonal_induction (p : Nat → Nat → Prop)
     induction m generalizing n with
     | zero =>
       induction n with
-      | zero => apply hzz
+      | zero => exact hzz
       | succ n' ih =>
         apply hzs
         apply ih
@@ -1764,6 +1764,10 @@ Induction:
 ## Additional Exercises
 
 :::::exercise (rating := 2) (name := "append_left_cancel")
+:::dev "Niklas Halonen (xhalo32)"
+After `injections _ eq`, `eq`'s type uses `.append` rather than `++` which is a bit confusing.
+Not sure why that happens.
+:::
 ```lean
 theorem append_left_cancel {α : Type} (l₁ l₂ l₃ : List α)
     (h : l₁ ++ l₂ = l₁ ++ l₃) :
@@ -1772,9 +1776,8 @@ theorem append_left_cancel {α : Type} (l₁ l₂ l₃ : List α)
     induction l₁ with
     | nil => assumption
     | cons x xs ih =>
-      injections
-      apply ih
-      assumption
+      injections _ eq
+      exact ih eq
 ```
 :::gradeTheorem 2 append_left_cancel
 :::
@@ -1806,15 +1809,15 @@ theorem map_injective_of_injective {α β : Type}
       cases l₂ with
       | nil => rfl
       | cons y ys =>
-        dsimp [map] at h
+        rw [map_cons, map_nil] at h
         contradiction
     | cons x xs ih =>
       cases l₂ with
       | nil =>
-        dsimp [map] at h
+        rw [map_cons, map_nil] at h
         contradiction
       | cons y ys =>
-        dsimp [map] at h
+        rw [map_cons, map_cons] at h
         injection h with hxy hxs
         rw [hf x y hxy, ih ys hxs]
 ```
@@ -1852,9 +1855,11 @@ theorem unzip_zip {α β : Type}
     cases l₂ with
     | nil => contradiction
     | cons y ys =>
-      dsimp [unzip, zip]
-      rw [ih]
-      injections
+      rw [zip_cons_cons]
+      dsimp [unzip]
+      rewrite [ih]
+      · rfl
+      · injections
 
 /- Here is one more approach -/
 theorem unzip_zip' {α β : Type}
@@ -1863,7 +1868,7 @@ theorem unzip_zip' {α β : Type}
     unzip (zip l₁ l₂) = (l₁, l₂) := by
   induction l generalizing l₁ l₂ with
   | nil =>
-    dsimp [unzip] at h
+    rw [unzip_nil] at h
     injections h₁ h₂
     rw [h₁, h₂]
     rfl
@@ -1873,8 +1878,9 @@ theorem unzip_zip' {α β : Type}
     injections h₁ h₂
     rw [h₁, h₂]
     dsimp [zip, unzip]
-    rw [ih]
-    rfl
+    rewrite [ih]
+    · rfl
+    · rfl
 -- END SOLUTION
 ```
 
@@ -1893,12 +1899,13 @@ theorem test_pos_of_filter_cons {α : Type}
       dsimp [filter] at h
       cases hy : (test y)
       · rw [hy] at h
-        apply ih
-        assumption
+        dsimp at h
+        exact ih _ _ _ h
       · rw [hy] at h
+        dsimp at h
         injections h1 h2
         rw [← h1]
-        assumption
+        exact hy
 ```
 
 :::gradeTheorem 3 test_pos_of_filter_cons
