@@ -24,8 +24,8 @@ To build everything and preview the HTML locally:
 
     make serve
 
-(This builds all volumes in all three variants — student / solutions / terse —
-into `_out/`, then serves that directory on port 8000.)  
+This builds all volumes in four variants — student / solutions / terse / grading —
+into `_out/`, then serves that directory on port 8000.
 
     Then open `http://localhost:8000` in a web browser.
 
@@ -62,7 +62,7 @@ different ready-for-distribution outputs in a temporary top-level
 
 Students are expected to work through the student `.lean` versions,
 filling in the exercises, or to go through the HTML and switch
-to the Lean just for exercises. See [ALPHATESTERS.md](AlPHATESTERS.md)
+to the Lean just for exercises. See [ALPHATESTERS.md](ALPHATESTERS.md)
 for additional instructions. Instructors are expected to work through
 the terse version in class, and use the grading version for grading
 homework exercises done by students. We do not keep the solutions
