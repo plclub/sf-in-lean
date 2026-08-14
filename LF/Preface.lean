@@ -127,10 +127,6 @@ notations for specific situations.
 
 Lean and its relatives have become critical enablers for a [huge
 variety of work](https://leanprover-community.github.io/papers.html) across computer science and mathematics:
-- Formalizing the proof of [Fermat's Last Theorem](https://github.com/ImperialCollegeLondon/FLT)
-- Formalizing the [Sphere Packing Problem](https://github.com/thefundamentaltheor3m/Sphere-Packing-Lean)
-- DeepMind's AI model for IMO problems: [AlphaProof](https://deepmind.google/blog/ai-solves-imo-problems-at-silver-medal-level/)
-- Formal specification for the [Cedar policy language](https://github.com/cedar-policy/cedar-spec)
 
 :::dev "Benjamin Pierce (bcpierce00)"
 The individual references above should be merged into the categories below...
@@ -148,7 +144,7 @@ The individual references above should be merged into the categories below...
 - As _environments for developing formally certified software
   and hardware_, they have been used, for example, to build
   CompCert{citep Bib.leroy2016}[], a fully-verified optimizing compiler for C,
-  Cedar{citep Bib.disselkoen2024}[] and
+  [Cedar](https://github.com/cedar-policy/cedar-spec){citep Bib.disselkoen2024}[], a formally-specified policy language, and
   CertiKOS{citep Bib.gu2016certikos}[], a fully verified hypervisor, for proving the
   correctness of subtle algorithms involving floating point
   numbers, and as the basis for CertiCrypt, FCF, and SSProve,
@@ -165,6 +161,10 @@ The individual references above should be merged into the categories below...
   configurations using a program. More recently, an even more massive
   effort led to a formalization of the Feit-Thompson Theorem, the
   first major step in the classification of finite simple groups.
+  Specifically, Lean is currently at the core of various formalization efforts in
+  mathematics, such as the proof of [Fermat's Last Theorem](https://github.com/ImperialCollegeLondon/FLT),
+  the [Sphere Packing Problem](https://github.com/thefundamentaltheor3m/Sphere-Packing-Lean).
+  and even DeepMind's AI model for IMO problems [AlphaProof](https://deepmind.google/blog/ai-solves-imo-problems-at-silver-medal-level/).
 
 ## Functional Programming
 
