@@ -746,13 +746,13 @@ partial def delabComInner : DelabM (TSyntax `imp_com) := do
     | Com.skip => `(imp_com| $(mkIdent `skip):ident)
     | Com.asgn _ _ =>
       match ← withAppFn <| withAppArg getExpr with
-      | .const nm _ =>
-        let a ← withAppArg delabAexpInner
-        `(imp_com| $(mkIdent nm):ident := $a)
       | .lit (.strVal s) =>
         let a ← withAppArg delabAexpInner
         `(imp_com| $(mkIdent (.mkSimple s)):ident := $a)
-      | _ => `(imp_com| ~$(← delab))
+      | _ =>
+        let `($x:ident) ← withAppFn <| withAppArg delab | failure
+        let a ← withAppArg delabAexpInner
+        `(imp_com| $x:ident := $a)
     | Com.seq _ _ =>
       let s1 ← withAppFn <| withAppArg delabComInner
       let s2 ← withAppArg delabComInner
@@ -786,6 +786,19 @@ partial def delabCom : Delab := whenPPOption getPPNotation do
 end Imp.Delab
 ```
 ::::
+
+:::ignore
+```lean -show
+section
+variable (x : Ident) (a : Aexp)
+/-- info: imp {
+  x := ~a
+} : Com -/
+#guard_msgs in
+#check imp { x := ~a }
+end
+```
+:::
 
 ::::full
 As an example, here is the factorial function again, written as a formal
