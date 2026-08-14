@@ -558,17 +558,6 @@ A raw Lean assertion can also be written directly inside {{ }}.
 ```
 :::
 
-:::dev "Claude"
-Delaborators for this grammar are defined in the _Printing Assertions_ section below (after
-assertion substitution, the last notation they need to recognize).  They
-cover the base chapter's forms -- triples, `->>`, substitution, and lifted
-`Prop`s; not covered are the extension modules' shadowed triples (each
-module defines its own `Com` and `ValidHoareTriple`) and the `bassertion`
-coercion, which fall back to raw display.  An assertion applied to a state
-(after `intro st`) also prints raw -- the same thing that happens in the
-Rocq development as soon as `simpl` unfolds the notation.
-:::
-
 ```lean
 namespace Assertion
 
@@ -740,6 +729,133 @@ fun st => st[Z] * st[Z] ≤ st[X] ∧ ¬st[Z].succ * st[Z].succ ≤ st[X]
 end ExamplePrettyAssertions
 ```
 
+## Printing Assertions
+%%%
+tag := "assn-delaborators"
+%%%
+
+::::full
+As in the {ref "imp-delaborators"}[Imp chapter], the assertion notation
+above is _input_ only: Lean reads `{{ X ≤ 5 }}` but still prints the
+underlying function, as `#print assertion8` just showed.  The delaborators
+below close the loop for plain assertions: a state lambda whose body Lean
+can rebuild is printed back in `{{ … }}` notation, and an assertion Lean
+cannot rebuild falls back to the raw `fun st => …` form, which is exactly
+this notation's escape syntax, so what you see is always valid input.  Each
+time a new notation involving assertions appears below (implication, Hoare
+triples, substitution), a small delaborator defined next to it will extend
+this printing to cover it.  As before, there is no need to understand the
+details.
+::::
+
+::::details "Notation encoding: printing assertions back"
+```lean
+namespace Assertion.Delab
+open Lean PrettyPrinter Delaborator SubExpr Imp.Delab
+
+/-- Rebuild the surface form of an assertion body, undoing the state
+threading the `assn` elaborator performs: `st[X]` prints as `X`,
+`Aexp.eval st a` as `a`, `Bexp.eval st b = true` as `b`, an applied
+assertion `P st` as `P`, and a subterm that does not mention the state
+prints as itself. -/
+partial def delabBody (stId : FVarId) : DelabM Term := do
+  let e ← getExpr
+  if !e.containsFVar stId then
+    delab
+  else
+    match_expr e with
+    | MyGetElem.getElem _ _ _ _ st _ =>
+      guard (st == .fvar stId)
+      withNaryArg 5 delab
+    | Aexp.eval st _ =>
+      guard (st == .fvar stId)
+      withAppArg delab
+    | HAdd.hAdd _ _ _ _ _ _ =>
+      `($(← withNaryArg 4 (delabBody stId)) + $(← withNaryArg 5 (delabBody stId)))
+    | HSub.hSub _ _ _ _ _ _ =>
+      `($(← withNaryArg 4 (delabBody stId)) - $(← withNaryArg 5 (delabBody stId)))
+    | HMul.hMul _ _ _ _ _ _ =>
+      `($(← withNaryArg 4 (delabBody stId)) * $(← withNaryArg 5 (delabBody stId)))
+    | Eq _ l r =>
+      -- `Bexp.eval st b = true` is the threaded form of a bare boolean `b`
+      if r.isConstOf ``Bool.true && l.isAppOfArity ``Bexp.eval 2
+          && l.appFn!.appArg! == .fvar stId then
+        withNaryArg 1 <| withAppArg delab
+      else
+        `($(← withNaryArg 1 (delabBody stId)) = $(← withNaryArg 2 (delabBody stId)))
+    | Ne _ _ _ =>
+      `($(← withNaryArg 1 (delabBody stId)) ≠ $(← withNaryArg 2 (delabBody stId)))
+    | LE.le _ _ _ _ =>
+      `($(← withNaryArg 2 (delabBody stId)) ≤ $(← withNaryArg 3 (delabBody stId)))
+    | LT.lt _ _ _ _ =>
+      `($(← withNaryArg 2 (delabBody stId)) < $(← withNaryArg 3 (delabBody stId)))
+    | GE.ge _ _ _ _ =>
+      `($(← withNaryArg 2 (delabBody stId)) ≥ $(← withNaryArg 3 (delabBody stId)))
+    | GT.gt _ _ _ _ =>
+      `($(← withNaryArg 2 (delabBody stId)) > $(← withNaryArg 3 (delabBody stId)))
+    | And _ _ =>
+      `($(← withNaryArg 0 (delabBody stId)) ∧ $(← withNaryArg 1 (delabBody stId)))
+    | Or _ _ =>
+      `($(← withNaryArg 0 (delabBody stId)) ∨ $(← withNaryArg 1 (delabBody stId)))
+    | Iff _ _ =>
+      `($(← withNaryArg 0 (delabBody stId)) ↔ $(← withNaryArg 1 (delabBody stId)))
+    | Not _ =>
+      `(¬ $(← withAppArg (delabBody stId)))
+    | _ =>
+      if e.isArrow then
+        `($(← withBindingDomain (delabBody stId)) →
+          $(← withBindingBody `h (delabBody stId)))
+      else if let .app f v := e then
+        -- an applied assertion `P st` (or an applied escape lambda)
+        guard (v == .fvar stId)
+        guard !(f.containsFVar stId)
+        withAppFn delab
+      else
+        failure
+
+/-- Print an `Assertion`-valued term as it appears inside `{{ … }}`: a
+state lambda is un-threaded; a term the printer cannot rebuild falls back
+to the raw lambda, which is exactly this notation's escape form. -/
+partial def delabAssn : DelabM Term := do
+  if (← getExpr).isLambda then
+    (withBindingBody' `st (pure ·.fvarId!) fun stId => delabBody stId)
+      <|> Delaborator.delab
+  else
+    delab
+
+/-- Print an assertion-position argument: a state lambda gets the
+`{{ … }}` notation; any other term (a named assertion, a substitution)
+already reads well bare. -/
+def delabAssnArg (i : Nat) : DelabM Term := do
+  if (← withNaryArg i getExpr).isLambda then
+    `({{ $(← withNaryArg i delabAssn) }})
+  else
+    withNaryArg i Delaborator.delab
+
+/-- Print a bare assertion lambda in `{{ … }}` notation.  Keyed on lambdas
+at large, so the guards bail out cheaply unless the binder is a `State`
+and the body is a proposition the printer can rebuild. -/
+@[delab lam]
+def delabAssertion : Delab := whenPPOption getPPNotation do
+  let e ← getExpr
+  guard <| e.isLambda && e.bindingDomain!.isConstOf ``_root_.State
+  let P ← withBindingBody' `st (pure ·.fvarId!) fun stId => do
+    guard (← Meta.inferType (← getExpr)).isProp
+    delabBody stId
+  `({{ $P }})
+
+end Assertion.Delab
+```
+::::
+
+:::ignore
+```lean -show
+/-- info: {{X = 3 ∨ X ≤ Y}} : State → Prop -/
+#guard_msgs in
+#check {{ X = 3 ∨ X ≤ Y }}
+```
+:::
+
 ## Assertion Implication
 
 Given two assertions `P` and `Q`, we say that `P` _implies_ `Q`,
@@ -769,6 +885,50 @@ notation:26 P:27 " <<->> " Q:27 => AssertImplies P Q ∧ AssertImplies Q P
 theorem assertIff_def {P Q : Assertion} : P <<->> Q ↔ AssertImplies P Q ∧ AssertImplies Q P
     := by rfl
 ```
+
+::::full
+The matching delaborators print implications and equivalences between
+assertions back in `->>` and `<<->>` notation.
+::::
+
+::::details "Notation encoding: printing implications back"
+```lean
+namespace Assertion.Delab
+open Lean PrettyPrinter Delaborator SubExpr
+
+@[delab app.AssertImplies]
+def delabAssertImplies : Delab := whenPPOption getPPNotation do
+  guard <| (← getExpr).isAppOfArity ``AssertImplies 2
+  `($(← delabAssnArg 0) ->> $(← delabAssnArg 1))
+
+/-- `<<->>` abbreviates a conjunction of two `AssertImplies`, so its
+delaborator is keyed on `∧` and bails out unless the two conjuncts mirror
+each other. -/
+@[delab app.And]
+def delabAssertIff : Delab := whenPPOption getPPNotation do
+  let e ← getExpr
+  guard <| e.isAppOfArity ``And 2
+  let l := e.appFn!.appArg!
+  let r := e.appArg!
+  guard <| l.isAppOfArity ``AssertImplies 2 && r.isAppOfArity ``AssertImplies 2
+  guard <| l.appFn!.appArg! == r.appArg! && l.appArg! == r.appFn!.appArg!
+  `($(← withNaryArg 0 <| delabAssnArg 0) <<->> $(← withNaryArg 0 <| delabAssnArg 1))
+
+end Assertion.Delab
+```
+::::
+
+:::ignore
+```lean -show
+/-- info: {{X < 4}} ->> {{X < 5}} : Prop -/
+#guard_msgs in
+#check ({{ X < 4 }} ->> {{ X < 5 }})
+
+/-- info: {{X < 4}} <<->> {{X < 5}} : Prop -/
+#guard_msgs in
+#check ({{ X < 4 }} <<->> {{ X < 5 }})
+```
+:::
 
 # Hoare Triples, Informally
 
@@ -1062,6 +1222,32 @@ open scoped ValidHoareTriple
 #check ({{ True }} X := 0 {{ False }})
 ```
 ::::
+
+::::details "Notation encoding: printing triples back"
+```lean
+namespace Assertion.Delab
+open Lean PrettyPrinter Delaborator SubExpr Imp.Delab
+
+/-- Print a `ValidHoareTriple` back in `{{ P }} c {{ Q }}` notation. -/
+@[delab app.ValidHoareTriple]
+def delabTriple : Delab := whenPPOption getPPNotation do
+  guard <| (← getExpr).isAppOfArity ``ValidHoareTriple 3
+  let P ← withNaryArg 0 delabAssn
+  let c ← withNaryArg 1 delabComInner
+  let Q ← withNaryArg 2 delabAssn
+  `({{ $P }} $c:imp_com {{ $Q }})
+
+end Assertion.Delab
+```
+::::
+
+:::ignore
+```lean -show
+/-- info: {{X ≤ 5}} X := X + 1 {{X ≤ 7}} : Prop -/
+#guard_msgs in
+#check {{ X ≤ 5 }} X := X + 1 {{ X ≤ 7 }}
+```
+:::
 
 :::::exercise (rating := 1) (name := "hoare_post_true")
 Prove that if `Q` holds in every state, then any triple with `Q`
@@ -1393,18 +1579,24 @@ Currently in triples we need to write `{{ {{ X < 5 }} [X ↦ X + 1] }}` which lo
 ```lean
 namespace Assertion
 
-/-- Assertion substitution: `P [X ↦ a]` -/
+/-- Assertion substitution, written inside the braces: `{{ (P) [X ↦ a] }}`.
+The substituted assertion is re-read with the same notation, so Imp
+variables in it mean state lookups as usual; a named assertion is passed
+through directly. -/
 scoped syntax:max term:arg " [" ident " ↦ " imp_aexp "]" : term
 
 macro_rules
-  | `($P [$x ↦ $a:imp_aexp]) => `(Assertion.subst $x (aexp { $a }) $P)
+  | `(assn($st; $P [$x ↦ $a:imp_aexp])) =>
+    match P with
+    | `($_:ident) => ``(Assertion.subst $x (aexp { $a }) $P $st)
+    | _ => ``(Assertion.subst $x (aexp { $a }) {{ $P }} $st)
 
 theorem subst_def {x : Ident} {a : Aexp} {P : Assertion} :
-    P [x ↦ ~a] = fun (st : State) => P (x →ₜ a.eval st ; st) := by rfl
+    Assertion.subst x a P = fun (st : State) => P (x →ₜ a.eval st ; st) := by rfl
 
 @[simp]
 theorem subst_apply {x : Ident} {a : Aexp} {P : Assertion} {st : State} :
-    P [x ↦ ~a] st ↔ P (x →ₜ a.eval st ; st) := by rfl
+    Assertion.subst x a P st ↔ P (x →ₜ a.eval st ; st) := by rfl
 
 end Assertion
 ```
@@ -1417,9 +1609,30 @@ P [ X ↦ a ]
 
 ```lean
 #check (fun st => Assertion.subst X (aexp { 2 * X }) ({{ X ≤ 10 }}) st)
-#check {{ X ≤ 10 }} [X ↦ 2 * X]
-#check (∀ st, {{ X ≤ 10 }} [X ↦ 2 * X] st)
+#check {{ (X ≤ 10) [X ↦ 2 * X] }}
+#check (∀ st, ({{ (X ≤ 10) [X ↦ 2 * X] }}) st)
 ```
+
+::::details "Notation encoding: printing substitutions back"
+```lean
+namespace Assertion.Delab
+open Lean PrettyPrinter Delaborator SubExpr Imp.Delab
+
+/-- Print an `Assertion.subst` back in `P [x ↦ a]` notation. -/
+@[delab app.Assertion.subst]
+def delabSub : Delab := whenPPOption getPPNotation do
+  guard <| (← getExpr).isAppOfArity ``Assertion.subst 3
+  let `($x:ident) ← withNaryArg 0 delab | failure
+  let a ← withNaryArg 1 delabAexpInner
+  let P ← withNaryArg 2 delabAssn
+  if (← withNaryArg 2 getExpr).isLambda then
+    `({{ $P }} [$x:ident ↦ $a:imp_aexp])
+  else
+    `($P [$x:ident ↦ $a:imp_aexp])
+
+end Assertion.Delab
+```
+::::
 
 That is, `P [X ↦ a]` stands for an assertion -- let's call it
 `P'` -- that behaves just like `P` except that, wherever `P` looks up
@@ -1497,7 +1710,7 @@ We can demonstrate formally that we have captured intuitive meaning of
 ```lean
 namespace ExampleAssertionSub
 example :
-    {{ (X ≤ 5) }} [X ↦ 3] <<->> {{ 3 ≤ 5 }} := by
+    {{ (X ≤ 5) [X ↦ 3] }} <<->> {{ 3 ≤ 5 }} := by
   rw [assertIff_def]
   rw [assertImplies_def]
   constructor
@@ -1507,7 +1720,7 @@ example :
     simp
 
 example :
-    {{ (X ≤ 5) }} [X ↦ X + 1] <<->> {{ (X + 1) ≤ 5 }} := by
+    {{ (X ≤ 5) [X ↦ X + 1] }} <<->> {{ (X + 1) ≤ 5 }} := by
   rw [assertIff_def]
   constructor
   · rw [assertImplies_def]
@@ -1521,158 +1734,6 @@ end ExampleAssertionSub
 ```
 
 Most of the `simp` calls rely on {name}`Assertion.subst_apply`, {name}`TotalMap.update_eq` plus some `Aexp` characterizing lemmas like {name}`Aexp.eval_num`.
-
-## Printing Assertions
-%%%
-tag := "assn-delaborators"
-%%%
-
-:::dev "Niklas Halonen (xhalo32)" NOW
-To One:
-1. Add delaborator for plain assertions, also for `<<->>`
-2. Move the delab stuff near where the syntax is first introduced for assertions and then add small delaborators when new syntax like triples are introduced.
-:::
-
-::::full
-As in the {ref "imp-delaborators"}[Imp chapter], the assertion notations
-above are _input_ only: Lean reads `{{ X ≤ 5 }}` but still prints the
-underlying function.  The delaborators below close the loop for the common
-cases: Hoare triples, `->>` implications, and assertion substitutions are
-printed back in their concrete notation, and an assertion Lean cannot
-rebuild falls back to the raw `fun st => …` form -- which is exactly this
-notation's escape syntax, so what you see is always valid input.  As
-before, there is no need to understand the details, and everything can be
-switched off with `set_option pp.notation false`.
-::::
-
-::::details "Notation encoding: printing assertions back"
-```lean
-namespace Assertion.Delab
-open Lean PrettyPrinter Delaborator SubExpr Imp.Delab
-
-/-- Rebuild the surface form of an assertion body, undoing the state
-threading the `assn` elaborator performs: `st[X]` prints as `X`,
-`Aexp.eval st a` as `a`, `Bexp.eval st b = true` as `b`, an applied
-assertion `P st` as `P`, and a subterm that does not mention the state
-prints as itself. -/
-partial def delabBody (stId : FVarId) : DelabM Term := do
-  let e ← getExpr
-  if !e.containsFVar stId then
-    delab
-  else
-    match_expr e with
-    | MyGetElem.getElem _ _ _ _ st _ =>
-      guard (st == .fvar stId)
-      withNaryArg 5 delab
-    | Aexp.eval st _ =>
-      guard (st == .fvar stId)
-      withAppArg delab
-    | HAdd.hAdd _ _ _ _ _ _ =>
-      `($(← withNaryArg 4 (delabBody stId)) + $(← withNaryArg 5 (delabBody stId)))
-    | HSub.hSub _ _ _ _ _ _ =>
-      `($(← withNaryArg 4 (delabBody stId)) - $(← withNaryArg 5 (delabBody stId)))
-    | HMul.hMul _ _ _ _ _ _ =>
-      `($(← withNaryArg 4 (delabBody stId)) * $(← withNaryArg 5 (delabBody stId)))
-    | Eq _ l r =>
-      -- `Bexp.eval st b = true` is the threaded form of a bare boolean `b`
-      if r.isConstOf ``Bool.true && l.isAppOfArity ``Bexp.eval 2
-          && l.appFn!.appArg! == .fvar stId then
-        withNaryArg 1 <| withAppArg delab
-      else
-        `($(← withNaryArg 1 (delabBody stId)) = $(← withNaryArg 2 (delabBody stId)))
-    | Ne _ _ _ =>
-      `($(← withNaryArg 1 (delabBody stId)) ≠ $(← withNaryArg 2 (delabBody stId)))
-    | LE.le _ _ _ _ =>
-      `($(← withNaryArg 2 (delabBody stId)) ≤ $(← withNaryArg 3 (delabBody stId)))
-    | LT.lt _ _ _ _ =>
-      `($(← withNaryArg 2 (delabBody stId)) < $(← withNaryArg 3 (delabBody stId)))
-    | GE.ge _ _ _ _ =>
-      `($(← withNaryArg 2 (delabBody stId)) ≥ $(← withNaryArg 3 (delabBody stId)))
-    | GT.gt _ _ _ _ =>
-      `($(← withNaryArg 2 (delabBody stId)) > $(← withNaryArg 3 (delabBody stId)))
-    | And _ _ =>
-      `($(← withNaryArg 0 (delabBody stId)) ∧ $(← withNaryArg 1 (delabBody stId)))
-    | Or _ _ =>
-      `($(← withNaryArg 0 (delabBody stId)) ∨ $(← withNaryArg 1 (delabBody stId)))
-    | Iff _ _ =>
-      `($(← withNaryArg 0 (delabBody stId)) ↔ $(← withNaryArg 1 (delabBody stId)))
-    | Not _ =>
-      `(¬ $(← withAppArg (delabBody stId)))
-    | _ =>
-      if e.isArrow then
-        `($(← withBindingDomain (delabBody stId)) →
-          $(← withBindingBody `h (delabBody stId)))
-      else if let .app f v := e then
-        -- an applied assertion `P st` (or an applied escape lambda)
-        guard (v == .fvar stId)
-        guard !(f.containsFVar stId)
-        withAppFn delab
-      else
-        failure
-
-/-- Print an `Assertion`-valued term as it appears inside `{{ … }}`: a
-state lambda is un-threaded; a term the printer cannot rebuild falls back
-to the raw lambda, which is exactly this notation's escape form. -/
-partial def delabAssn : DelabM Term := do
-  if (← getExpr).isLambda then
-    (withBindingBody' `st (pure ·.fvarId!) fun stId => delabBody stId)
-      <|> Delaborator.delab
-  else
-    delab
-
-@[delab app.ValidHoareTriple]
-def delabTriple : Delab := whenPPOption getPPNotation do
-  guard <| (← getExpr).isAppOfArity ``ValidHoareTriple 3
-  let P ← withNaryArg 0 delabAssn
-  let c ← withNaryArg 1 delabComInner
-  let Q ← withNaryArg 2 delabAssn
-  `({{ $P }} $c:imp_com {{ $Q }})
-
-/-- Print an assertion-position argument: a state lambda gets the
-`{{ … }}` notation; any other term (a named assertion, a substitution)
-already reads well bare. -/
-def delabAssnArg (i : Nat) : DelabM Term := do
-  if (← withNaryArg i getExpr).isLambda then
-    `({{ $(← withNaryArg i delabAssn) }})
-  else
-    withNaryArg i Delaborator.delab
-
-@[delab app.AssertImplies]
-def delabAssertImplies : Delab := whenPPOption getPPNotation do
-  guard <| (← getExpr).isAppOfArity ``AssertImplies 2
-  `($(← delabAssnArg 0) ->> $(← delabAssnArg 1))
-
-@[delab app.Assertion.subst]
-def delabSub : Delab := whenPPOption getPPNotation do
-  guard <| (← getExpr).isAppOfArity ``Assertion.subst 3
-  let `($x:ident) ← withNaryArg 0 delab | failure
-  let a ← withNaryArg 1 delabAexpInner
-  let P ← withNaryArg 2 delabAssn
-  if (← withNaryArg 2 getExpr).isLambda then
-    `({{ $P }} [$x:ident ↦ $a:imp_aexp])
-  else
-    `($P [$x:ident ↦ $a:imp_aexp])
-
-end Assertion.Delab
-```
-::::
-
-:::ignore
-```lean -show
-/-- info: {{X ≤ 5}} X := X + 1 {{X ≤ 7}} : Prop -/
-#guard_msgs in
-#check {{ X ≤ 5 }} X := X + 1 {{ X ≤ 7 }}
-
-/-- info: {{X < 4}} ->> {{X < 5}} : Prop -/
-#guard_msgs in
-#check ({{ X < 4 }} ->> {{ X < 5 }})
-
-/-- info: {{X ≤ 10}} [X ↦ 2 * X] : Assertion -/
-#guard_msgs in
-#check {{ X ≤ 10 }} [X ↦ 2 * X]
-```
-:::
-
 :::slidebreak
 :::
 
@@ -1709,7 +1770,7 @@ Here's a first formal proof of a Hoare triple using this rule.
 
 ```lean
 theorem assertion_sub_example :
-    {{ {{ X < 5 }} [X ↦ X + 1] }}
+    {{ (X < 5) [X ↦ X + 1] }}
       X := X + 1
     {{ X < 5 }} := by
   exact hoare_asgn
@@ -1745,7 +1806,7 @@ theorem hoare_asgn_examples1 :
         X := 2 * X
       {{ X ≤ 10 }} := by
   solution!
-    exists {{ X ≤ 10 }} [X ↦ 2 * X]
+    exists ({{ (X ≤ 10) [X ↦ 2 * X] }})
     exact hoare_asgn
 ```
 :::::
@@ -1758,7 +1819,7 @@ theorem hoare_asgn_examples2 :
         X := 3
       {{ 0 ≤ X ∧ X ≤ 5 }} := by
   solution!
-    exists {{ 0 ≤ X ∧ X ≤ 5 }} [X ↦ 3]
+    exists ({{ (0 ≤ X ∧ X ≤ 5) [X ↦ 3] }})
     exact hoare_asgn
 ```
 :::::
@@ -2136,7 +2197,7 @@ tried it in class.
 theorem hoare_asgn_example1 :
     {{True}} X := 1 {{X = 1}} := by
   workinclass!
-    apply hoare_consequence_pre (P' := {{X = 1}} [X ↦ 1])
+    apply hoare_consequence_pre (P' := {{ (X = 1) [X ↦ 1] }})
     · exact hoare_asgn
     · rw [assertImplies_def]
       intro st _
@@ -2167,7 +2228,7 @@ theorem assertion_sub_example2 :
       X := X + 1
     {{X < 5}} := by
   workinclass!
-    apply hoare_consequence_pre (P' := {{X < 5}} [X ↦ X + 1])
+    apply hoare_consequence_pre (P' := {{ (X < 5) [X ↦ X + 1] }})
     · exact hoare_asgn
     · rw [assertImplies_def]
       intro st h
@@ -2315,7 +2376,7 @@ theorem hoare_asgn_example1' :
     {{True}} X := 1 {{X = 1}} := by
   apply hoare_consequence_pre -- not specifying `(P' := ...)` leaves a "hole" `?P'`
   · -- The goal is `{{?P'}} X := 1 {{X = 1}}`
-    exact hoare_asgn -- Assigns `?P'` to `{{X = 1}} [X ↦ 1]` (automatically closing the `case P'`)
+    exact hoare_asgn -- Assigns `?P'` to `{{ (X = 1) [X ↦ 1] }}` (automatically closing the `case P'`)
   · rw [assertImplies_def]
     intro st _
     simp
