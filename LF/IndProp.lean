@@ -252,7 +252,7 @@ import LF.CustomTactics
 
 # Inductively Defined Propositions
 
-In the Logic chapter, we looked at several ways of writing
+In the {ref "Logic"}[Logic] chapter, we looked at several ways of writing
 propositions, including conjunction, disjunction, and existential
 quantification.
 
@@ -311,19 +311,20 @@ this definition in a standard programming language, but it is
 rejected by Lean's termination checker, since the argument to
 the recursive call, `csf n`, is not "obviously smaller" than `n`.
 
-:::dev "Kihong Heo (KihongHeo)" NOW
-Probably `reaches1In` according to STYLE.md?
-:::
+```lean -keep +error (name := reaches1In)
+def reaches1In (n : Nat) : Nat :=
+  if n == 1 then 0
+  else 1 + reaches1In (csf n)
+```
 
-```lean
-/--
-error: fail to show termination for
-  reaches1_in
+```leanOutput reaches1In
+fail to show termination for
+  reaches1In
 with errors
 failed to infer structural recursion:
 Cannot use parameter n:
   failed to eliminate recursive application
-    reaches1_in (csf n)
+    reaches1In (csf n)
 
 
 failed to prove termination, possible solutions:
@@ -333,17 +334,8 @@ failed to prove termination, possible solutions:
 n : Nat
 h✝ : ¬(n == 1) = true
 ⊢ csf n < n
--/
-#guard_msgs in
-def reaches1_in (n : Nat) : Nat :=
-  if n == 1 then 0
-  else 1 + reaches1_in (csf n)
 ```
 
-You can write this definition in a standard programming language.
-This definition is, however, rejected by Lean's termination
-checker, since the argument to the recursive call, `csf n`, is not
-"obviously smaller" than `n`.
 Indeed, this isn't just a pointless limitation: functions in Lean
 are required to be total, to ensure logical consistency.
 
@@ -356,24 +348,28 @@ would be equivalent to settling the Collatz conjecture!
 
 Another idea could be to express the concept "eventually reaches
 `1` in the Collatz sequence" as a _recursively defined property_
-of numbers `CollatzHoldsFor : Nat → Prop`.  This is also rejected:
-while we could in principle convince Lean that `div2 n` is
-smaller than `n`, we certainly can't convince it that
-`(3 * n) + 1` is smaller than `n`!
+of numbers `CollatzHoldsFor : Nat → Prop`. This is also rejected
+by the termination checker. In principle, we could convince Lean
+that `div2 n` is smaller than `n` by supplying an appropriate proof.
+However, we still can't convince it that `(3 * n) + 1` is smaller than `n`!
 
-:::dev "Kihong Heo (KihongHeo)" NOW
-Probably `CollatzHoldsFor` according to STYLE.md?
-:::
+```lean -keep +error (name := CollatzHoldsFor)
+def CollatzHoldsFor (n : Nat) : Prop :=
+  match n with
+  | 0 => False
+  | 1 => True
+  | _ => if n.even then CollatzHoldsFor (div2 n)
+                   else CollatzHoldsFor ((3 * n) + 1)
+```
 
-```lean
-/--
-error: fail to show termination for
-  collatz_holds_for
+```leanOutput CollatzHoldsFor
+fail to show termination for
+  CollatzHoldsFor
 with errors
 failed to infer structural recursion:
 Cannot use parameter n:
   failed to eliminate recursive application
-    collatz_holds_for (div2 n)
+    CollatzHoldsFor (div2 n)
 
 
 failed to prove termination, possible solutions:
@@ -383,25 +379,7 @@ failed to prove termination, possible solutions:
 n x✝ : Nat
 h✝ : n.even = true
 ⊢ div2 n < x✝
--/
-#guard_msgs in
-def collatz_holds_for (n : Nat) : Prop :=
-  match n with
-  | 0 => False
-  | 1 => True
-  | _ => if n.even then collatz_holds_for (div2 n)
-                   else collatz_holds_for ((3 * n) + 1)
 ```
-
-:::dev "Kihong Heo (KihongHeo)" NOW
-I feel that this paragraph does not match the error message below.
-The Lean error msg refers to `div 2`.
-:::
-
-This recursive function is also rejected by the termination
-checker, since, while we could in principle convince Lean that
-`div2 n` is smaller than `n`, we certainly can't convince it that
-`(3 * n) + 1` is smaller than `n`!
 
 :::slidebreak
 :::
@@ -413,7 +391,7 @@ property is defined by a set of rules:
 
 ```display
               ─────────────────── (chf_one)
-              CollatzHoldsFor 1
+               CollatzHoldsFor 1
 
 even n = true     CollatzHoldsFor (div2 n)
 ─────────────────────────────────────────── (chf_even)
@@ -440,25 +418,25 @@ evenness/oddness premises):
 
 ```display
 ─────────────────────── (chf_one)
-CollatzHoldsFor 1
+  CollatzHoldsFor 1
 ─────────────────────── (chf_even)
-CollatzHoldsFor 2
+  CollatzHoldsFor 2
 ─────────────────────── (chf_even)
-CollatzHoldsFor 4
+  CollatzHoldsFor 4
 ─────────────────────── (chf_even)
-CollatzHoldsFor 8
+  CollatzHoldsFor 8
 ─────────────────────── (chf_even)
-CollatzHoldsFor 16
+  CollatzHoldsFor 16
 ─────────────────────── (chf_odd)
-CollatzHoldsFor 5
+  CollatzHoldsFor 5
 ─────────────────────── (chf_even)
-CollatzHoldsFor 10
+  CollatzHoldsFor 10
 ─────────────────────── (chf_odd)
-CollatzHoldsFor 3
+  CollatzHoldsFor 3
 ─────────────────────── (chf_even)
-CollatzHoldsFor 6
+  CollatzHoldsFor 6
 ─────────────────────── (chf_even)
-CollatzHoldsFor 12
+  CollatzHoldsFor 12
 ```
 
 :::slidebreak
@@ -543,7 +521,7 @@ inductive ChfIn : Nat → Nat → Prop where
    that the sequence beginning at `n` reaches `1` in `k` total
    steps. -/
 
-def CollatzHoldsFor' (n : Nat) : Prop := ∃ k, ChfIn n k
+def CollatzHoldsFor (n : Nat) : Prop := ∃ k, ChfIn n k
 ```
 ::::
 
@@ -554,7 +532,7 @@ The Collatz conjecture then states that the sequence beginning
 from _any_ positive number reaches `1`:
 
 ```lean
-def collatz := ∀ n, n ≠ 0 → CollatzHoldsFor n
+def Collatz := ∀ n, n ≠ 0 → CollatzHoldsFor n
 ```
 
 If you succeed in proving this conjecture, you've got a bright
@@ -599,7 +577,7 @@ they are the same number, or, if the second has the form
 namespace LePlayground
 
 inductive Le : Nat → Nat → Prop where
-  | refl (n : Nat)              : Le n n
+  | refl (n : Nat)   : Le n n
   | step (n m : Nat) : Le n m → Le n (m + 1)
 
 scoped infix:50 (priority := high) " ≤ " => Le
@@ -628,18 +606,18 @@ two rules:
 
 ```display
               R x y
-         ---------------- (t_step)
+         ─────────────── (t_step)
          ClosTrans R x y
 
 ClosTrans R x y    ClosTrans R y z
------------------------------------- (t_trans)
+──────────────────────────────────── (t_trans)
          ClosTrans R x z
 ```
 
 In Lean this looks as follows:
 
 ```lean
-inductive ClosTrans {α: Type} (R: α→α→Prop) : α → α → Prop where
+inductive ClosTrans {α : Type} (R : α → α → Prop) : α → α → Prop where
   | t_step (x y : α) :
       R x y →
       ClosTrans R x y
@@ -704,7 +682,7 @@ HIDE: CH: A simple exercise could be nice here?
 
 ::::full
 Computing the transitive closure can be undecidable even for
-a relation R that is decidable (e.g., the `cms` relation below), so in
+a relation R that is decidable (e.g., the `CMS` relation below), so in
 general we can't expect to define transitive closure as a boolean
 function. Fortunately, Lean allows us to define transitive closure
 as an inductive relation.
@@ -724,19 +702,19 @@ transitive. This can be defined by the following three rules
 
 ```display
                    R x y
-           --------------------- (rt_step)
+         ——————————————————————— (rt_step)
            ClosReflTrans R x y
 
-           --------------------- (rt_refl)
+         ——————————————————————— (rt_refl)
            ClosReflTrans R x x
 
    ClosReflTrans R x y    ClosReflTrans R y z
----------------------------------------------- (rt_trans)
+—————————————————————————————————————————————— (rt_trans)
            ClosReflTrans R x z
 ```
 
 ```lean
-inductive ClosReflTrans {α: Type} (R: α → α → Prop) : α → α → Prop where
+inductive ClosReflTrans {α : Type} (R : α → α → Prop) : α → α → Prop where
   | rt_step (x y : α) :
       R x y →
       ClosReflTrans R x y
@@ -756,37 +734,37 @@ conjecture.  First we define a binary relation corresponding to
 the "Collatz step function" `csf`:
 
 ```lean
-def cs (n m : Nat) : Prop := csf n = m
+def CS (n m : Nat) : Prop := csf n = m
 ```
 
 This Collatz step relation can be used in conjunction with the
 reflexive and transitive closure operation to define a _Collatz
-multi-step_ (`cms`) relation, expressing that a number `n`
+multi-step_ (`CMS`) relation, expressing that a number `n`
 reaches another number `m` in zero or more Collatz steps:
 
 ```lean
-def cms (n m : Nat) : Prop := ClosReflTrans cs n m
-def collatz' : Prop := ∀ (n : Nat), n ≠ 0 → cms n 1
+def CMS (n m : Nat) : Prop := ClosReflTrans CS n m
+def Collatz' : Prop := ∀ (n : Nat), n ≠ 0 → CMS n 1
 ```
 
 ::::full
-This `cms` relation defined in terms of
+This `CMS` relation defined in terms of
 `ClosReflTrans` allows for more interesting derivations than the
 linear ones of the directly-defined `CollatzHoldsFor` relation:
 
 ```display
-csf 16 = 8         csf 8 = 4         csf 4 = 2         csf 2 = 1
-————————(rt_step)  ———————(rt_step)  ———————(rt_step)  ———————(rt_step)
-cms 16 8           cms 8 4           cms 4 2           cms 2 1
-—————————————————————————(rt_trans)  ————————————————————————(rt_trans)
-    cms 16 4                              cms 4 1
+csf 16 = 8           csf 8 = 4           csf 4 = 2           csf 2 = 1
+——————————(rt_step)  —————————(rt_step)  —————————(rt_step)  —————————(rt_step)
+CMS 16 8           CMS 8 4           CMS 4 2           CMS 2 1
+——————————————————————————(rt_trans)  —————————————————————————(rt_trans)
+    CMS 16 4                              CMS 4 1
     —————————————————————————————————————————————(rt_trans)
-                       cms 16 1
+                       CMS 16 1
 ```
 ::::
 
 :::dev
-HIDE: CH: Would it be helpful to add an exercise later proving cms
+HIDE: CH: Would it be helpful to add an exercise later proving CMS
 equivalent to CollatzHoldsFor
 :::
 
@@ -797,7 +775,7 @@ to define the reflexive, symmetric, and transitive closure?
 
 ```lean
 -- SOLUTION
-inductive ClosReflTransSym {α: Type} (R: α→α→Prop) : α→α→Prop where
+inductive ClosReflTransSym {α : Type} (R : α → α → Prop) : α → α → Prop where
   | srt_refl (x : α) :
       ClosReflTransSym R x x
   | srt_step (x y : α) :
@@ -826,14 +804,14 @@ elements.
 We can define such permutations by the following rules:
 
 ```display
-   ------------------------- (perm3_swap12)
+   ───────────────────────── (perm3_swap12)
    Perm3 [a, b, c] [b, a, c]
 
-   ------------------------- (perm3_swap23)
+   ───────────────────────── (perm3_swap23)
    Perm3 [a, b, c] [a, c, b]
 
 Perm3 l₁ l₂       Perm3 l₂ l₃
------------------------------ (perm3_trans)
+───────────────────────────── (perm3_trans)
          Perm3 l₁ l₃
 ```
 
@@ -902,12 +880,12 @@ in this chapter, is to say that a number is even if we can
 _establish_ its evenness from the following two rules:
 
 ```display
-    ---- (ev_0)
+    ———— (ev_0)
     Ev 0
 
     Ev n
------------- (ev_succ_succ)
-Ev (n + 2)
+—————————————— (ev_succ_succ)
+  Ev (n + 2)
 ```
 
 ::::full
@@ -928,9 +906,9 @@ imagine using it to show that `4` is even:
 ```display
         ———— (ev_0)
         Ev 0
-    ———————————— (`ev_succ_succ`)
+    ———————————— (ev_succ_succ)
     Ev (S (S 0))
-———————————————————— (`ev_succ_succ`)
+———————————————————— (ev_succ_succ)
 Ev (S (S (S (S 0))))
 ```
 
@@ -950,8 +928,8 @@ number can be even" corresponds to a separate constructor:
 
 ```lean
 inductive Ev : Nat → Prop where
-  | ev_0                       : Ev 0
-  | ev_succ_succ (n : Nat) (H : Ev n) : Ev (n + 2)
+  | ev_0                              : Ev 0
+  | ev_succ_succ (n : Nat) (h : Ev n) : Ev (n + 2)
 ```
 
 ::::terse
@@ -960,7 +938,7 @@ inductive _properties_ like `Ev` and the inductive _types_ like
 `Nat` or `List` that we have been using throughout the course:
 
 ```display
-inductive List (α:Type) : Type where
+inductive List (α : Type) : Type where
   | nil                       : List α
   | cons (x : α) (l : List α) : List α.
 ```
@@ -986,16 +964,16 @@ the form `Ev n` for some natural number `n`.
 
 In contrast, recall the definition of `List`:
 
-```display
-inductive List (α:Type) : Type where
+```lean -keep +error
+inductive List (α : Type) : Type where
   | nil
   | cons (x : α) (l : List α)
 ```
 
 or (equivalently but more explicitly):
 
-```display
-inductive List (α:Type) : Type where
+```lean -keep +error
+inductive List (α : Type) : Type where
   | nil                       : List α
   | cons (x : α) (l : List α) : List α
 ```
@@ -1006,9 +984,14 @@ the same type (i.e., `List α`).  But if we had tried to bring `Nat`
 to the left of the colon in defining `Ev`, we would have seen an
 error:
 
-```lean
-/--
-error: Mismatched inductive type parameter in
+```lean -keep +error (name := WrongEv)
+inductive WrongEv (n : Nat) : Prop where
+  | wrong_ev_0 : WrongEv 0
+  | wrong_ev_succ_succ (h: WrongEv n) : WrongEv (n + 2)
+```
+
+```leanOutput WrongEv
+Mismatched inductive type parameter in
   WrongEv 0
 The provided argument
   0
@@ -1016,11 +999,6 @@ is not definitionally equal to the expected parameter
   n
 
 Note: The value of parameter `n` must be fixed throughout the inductive declaration. Consider making this parameter an index if it must vary.
--/
-#guard_msgs in
-inductive WrongEv (n : Nat) : Prop where
-  | wrong_ev_0 : WrongEv 0
-  | wrong_ev_succ_succ (H: WrongEv n) : WrongEv (n + 2)
 ```
 
 In an `inductive` definition, an argument to the type constructor
@@ -1041,7 +1019,7 @@ constructors":
 
 ```lean
 #check (Ev.ev_0) -- Ev 0
-#check Ev.ev_succ_succ -- ∀ (n : Nat) (H : Ev n) : Ev (n + 2)
+#check Ev.ev_succ_succ -- ∀ (n : Nat) (h : Ev n) : Ev (n + 2)
 ```
 
 ::::full
@@ -1105,8 +1083,8 @@ theorem ev_double (n : Nat) : Ev n.double := by
     induction n
     case zero =>
       rw [Nat.double_zero]; exact Ev.ev_0
-    case succ n IH =>
-      rw [Nat.double_succ]; exact Ev.ev_succ_succ _ IH
+    case succ n ih =>
+      rw [Nat.double_succ]; exact Ev.ev_succ_succ _ ih
 ```
 :::::
 
@@ -1231,11 +1209,11 @@ using `cases`.
 theorem ev_inversion : ∀ (n : Nat),
     Ev n →
     (n = 0) ∨ ∃ n', n = n' + 2 ∧ Ev n' := by
-    intro n H
-    cases H
+    intro n h
+    cases h
     case ev_0 =>
       left; rfl
-    case ev_succ_succ n H =>
+    case ev_succ_succ n h =>
       right; exists n
 ```
 
@@ -1258,10 +1236,10 @@ theorem le_inversion : ∀ (n m : Nat),
   Le n m →
   (n = m) ∨ (∃ m', m = m' + 1 ∧ Le n m') := by
   solution!
-    intros n m E
-    cases E
+    intros n m h
+    cases h
     case refl => left; rfl
-    case step m H => right; exists m
+    case step m h => right; exists m
 ```
 :::::
 
@@ -1901,7 +1879,7 @@ relation:
 ```lean
 namespace ClosReflTransRemainder
 
-inductive ClosReflTrans {α: Type} (R: α → α → Prop) : α → α → Prop where
+inductive ClosReflTrans {α : Type} (R : α → α → Prop) : α → α → Prop where
   | rt_step (x y : α) :
       R x y →
       ClosReflTrans R x y
@@ -1992,7 +1970,7 @@ alternative definition for `Ev`:
 inductive Ev' : Nat → Prop where
   | ev'_0 : Ev' 0
   | ev'_2 : Ev' 2
-  | ev'_sum n m (Hn : Ev' n) (Hm : Ev' m) : Ev' (n + m)
+  | ev'_sum n m (h₁ : Ev' n) (h₂ : Ev' m) : Ev' (n + m)
 ```
 
 Prove that this definition is logically equivalent to the old one.
@@ -2233,7 +2211,7 @@ will generate two cases. In the first case, `e1 = e2`, and it
 will replace instances of `e2` with `e1` in the goal and context.
 In the second case, `e2 = n' + 1` for some `n'` for which `le e1 n'`
 holds, and it will replace instances of `e2` with `n' + 1`.
-Doing `inversion H` will remove impossible cases and add generated
+Doing `inversion h` will remove impossible cases and add generated
 equalities to the context for further use. Doing `induction h`
 will, in the second case, add the induction hypothesis that the
 goal holds when `e2` is replaced with `n'`.

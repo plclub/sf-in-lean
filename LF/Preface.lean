@@ -1,4 +1,6 @@
 import SFLMeta
+import Credits
+
 open Verso.Genre Manual
 open SFLMeta
 
@@ -9,10 +11,27 @@ htmlSplit := .never
 file := some "Preface"
 %%%
 
+
+
+
+
+:::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement (year := 2025)
+The SF course at Penn (CIS 5000) sometimes attracts
+students who don't have enough math background and begin really
+flailing around the middle of the semester. I wonder if we could
+help these people weed themselves out by offering some kind of more
+detailed self-assessment near the beginning, maybe in this
+chapter.
+
+Some concepts that I would hope people have seen before:
+  - recursive, polymorphic functional programming over lists
+  - abstract definitions involving relations (e.g., reflexive,
+    symmetric, transitive closure of a relation)
+:::
+
 # Welcome
 
-This is the entry point to a series of electronic textbooks on various
-aspects of _Software Foundations_, the mathematical underpinnings of
+This is the starting point for a series of electronic textbooks on _Software Foundations_, the mathematical underpinnings of
 reliable software.  Topics in the series include basic concepts of
 logic, functional programming, computer-assisted theorem proving,
 operational semantics, logics and techniques for reasoning about
@@ -327,24 +346,5 @@ Foundations") at the University of Pennsylvania can be found at
 2026, the course was offered in Rocq, but the ideas behind the
 problems are still relevant.
 
-# Acknowledgements
 
-See `ACKNOWLEDGEMENTS.md` in the [SF-in-Lean git repo](https://github.com/plclub/sf-in-lean).
-
-
-
-
-
-:::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement (year := 2025)
-The SF course at Penn (CIS 5000) sometimes attracts
-students who don't have enough math background and begin really
-flailing around the middle of the semester. I wonder if we could
-help these people weed themselves out by offering some kind of more
-detailed self-assessment near the beginning, maybe in this
-chapter.
-
-Some concepts that I would hope people have seen before:
-  - recursive, polymorphic functional programming over lists
-  - abstract definitions involving relations (e.g., reflexive,
-    symmetric, transitive closure of a relation)
-:::
+{include 2 Credits}
