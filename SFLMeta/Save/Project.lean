@@ -115,9 +115,16 @@ too, and the generated `lakefile.toml` gains a matching `[[require]]` pinned to
 the revision in the book's `lake-manifest.json`. -/
 
 /-- Module top-namespaces belonging to the authoring framework: their imports
-build the book but must never appear in an extracted `.lean` file. -/
+build the book but must never appear in an extracted `.lean` file.
+
+`Credits` is a shared, include-only prose module (a Verso `#doc` whose
+text is spliced into each volume's Preface via `{include 2 Credits}`).
+Its prose is inlined by the walker at include time, so the extracted chapter
+already contains it; the module itself is a build-only artifact that would drag
+in `import SFLMeta`, so it is dropped and never bundled — exactly like the
+framework modules. -/
 private def frameworkPrefixes : List String :=
-  ["VersoManual", "Verso", "Illuminate", "SFLMeta", "SubVerso"]
+  ["VersoManual", "Verso", "Illuminate", "SFLMeta", "SubVerso", "Credits"]
 
 /-- Toolchain-provided top-namespaces: always available in any Lake project, so
 they stay as `import` lines but are never bundled as source. -/

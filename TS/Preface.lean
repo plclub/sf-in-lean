@@ -1,4 +1,5 @@
 import SFLMeta
+import Credits
 
 open Verso.Genre Manual
 open SFLMeta
@@ -21,3 +22,5 @@ do so as follows:
 
 :::citation
 :::
+
+{include 2 Credits}

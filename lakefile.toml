@@ -38,6 +38,12 @@ rev = "comparator-4.33.0"
 [[lean_lib]]
 name = "Bib"
 
+# Single shared source for the Credits section included in each
+# volume's Preface.  Its own library because globs are disabled below, so a
+# module is only built when it is a declared library root.
+[[lean_lib]]
+name = "Credits"
+
 [[lean_lib]]
 name = "SFLMeta"
 
