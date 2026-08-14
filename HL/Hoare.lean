@@ -1565,17 +1565,6 @@ Introduce a notation typeclass for this (e.g. HasSubst)
 A lot of the substitutions use `[x ↦ ~a]`. Could we have syntax support for `[x ↦ a]`. A naive approach that adds `" [" ident " ↦ " term "]" ` leads to ambiguity.
 :::
 
-:::dev "Niklas Halonen (xhalo32)" NOW
-We need to add an unexpander for the substitution notation which is another argument for HasSubst typeclass.
-:::
-
-:::dev "Niklas Halonen (xhalo32)"
-Is it possible to move the substitution syntax inside the braces like in the original Rocq material?
-I.e. `{{ (X ≤ 10) [X ↦ 2 * X] }}` vs. `{{ X ≤ 10 }} [X ↦ 2 * X]`
-
-Currently in triples we need to write `{{ {{ X < 5 }} [X ↦ X + 1] }}` which looks ugly.
-:::
-
 ```lean
 namespace Assertion
 
@@ -1618,21 +1607,37 @@ P [ X ↦ a ]
 namespace Assertion.Delab
 open Lean PrettyPrinter Delaborator SubExpr Imp.Delab
 
-/-- Print an `Assertion.subst` back in `P [x ↦ a]` notation. -/
+/-- Print an `Assertion.subst` back in `P [x ↦ a]` notation.  Emits the
+bare inside-the-braces form: the generic application case of `delabBody`
+picks it up inside an assertion body, and the enclosing printer supplies
+the single pair of braces. -/
 @[delab app.Assertion.subst]
 def delabSub : Delab := whenPPOption getPPNotation do
   guard <| (← getExpr).isAppOfArity ``Assertion.subst 3
   let `($x:ident) ← withNaryArg 0 delab | failure
   let a ← withNaryArg 1 delabAexpInner
-  let P ← withNaryArg 2 delabAssn
   if (← withNaryArg 2 getExpr).isLambda then
-    `({{ $P }} [$x:ident ↦ $a:imp_aexp])
+    `(($(← withNaryArg 2 delabAssn)) [$x:ident ↦ $a:imp_aexp])
   else
-    `($P [$x:ident ↦ $a:imp_aexp])
+    match ← withNaryArg 2 delab with
+    | `($P:ident) => `($P:ident [$x:ident ↦ $a:imp_aexp])
+    | P => `(($P) [$x:ident ↦ $a:imp_aexp])
 
 end Assertion.Delab
 ```
 ::::
+
+:::ignore
+```lean -show
+/-- info: {{(X ≤ 10) [X ↦ 2 * X]}} : State → Prop -/
+#guard_msgs in
+#check {{ (X ≤ 10) [X ↦ 2 * X] }}
+
+/-- info: (X ≤ 10) [X ↦ 2 * X] : Assertion -/
+#guard_msgs in
+#check (Assertion.subst X (aexp { 2 * X }) {{ X ≤ 10 }})
+```
+:::
 
 That is, `P [X ↦ a]` stands for an assertion -- let's call it
 `P'` -- that behaves just like `P` except that, wherever `P` looks up
@@ -1747,10 +1752,6 @@ give the precise proof rule for assignment:
 
 We can prove formally that this rule is indeed valid.
 
-:::dev "Niklas Halonen (xhalo32)" NOW
-The delaboration for `x := ~a` seems to be broken now that I made sequencing use semicolons.
-:::
-
 ```lean
 theorem hoare_asgn {Q : Assertion} {x : Ident} {a : Aexp} :
     {{ Q [x ↦ ~a] }} x := ~a {{ Q }} := by
@@ -1762,6 +1763,16 @@ theorem hoare_asgn {Q : Assertion} {x : Ident} {a : Aexp} :
     rw [Assertion.subst_def] at hQ
     exact hQ
 ```
+
+:::ignore
+```lean -show
+/--
+info: @hoare_asgn : ∀ {Q : Assertion} {x : Ident} {a : Aexp}, {{Q [x ↦ ~a]}} x := ~a {{Q}}
+-/
+#guard_msgs in
+#check @hoare_asgn
+```
+:::
 
 :::slidebreak
 :::
@@ -2270,18 +2281,15 @@ Many of the proofs we have done so far with Hoare triples can be
 streamlined using the automation techniques that we introduced in
 the _Automation_ chapter of _Logical Foundations_.
 
-:::dev "Niklas Halonen (xhalo32)" NOW
-The following paragraph is outdated.
-We already have characterizing lemmas like `validHoareTriple_def`, but rarely do we need to use them with `simp`.
-:::
-
-Recall that the `simp` tactic can be told to unfold definitions as
-part of its simplifications.  The definitions we keep needing to
-unfold in this chapter are `ValidHoareTriple`, `AssertImplies`,
-`Assertion.sub`, the lifting functions `Assertion.ofProp`,
-`Aexp'.ofNat`, and `Aexp'.ofAexp`, and the total-map operations.
-We'll pass these to `simp` explicitly below (and shortly package the
-recipe up as a tactic of our own).
+Recall that `simp` rewrites with any lemmas we pass it.  The
+definitions whose meaning we keep needing to expose in this chapter --
+`ValidHoareTriple`, `AssertImplies`, and `Assertion.subst` -- each
+come with a characterizing lemma (`validHoareTriple_def`,
+`assertImplies_def`, `Assertion.subst_def`) restating the definition
+as an equation.  Passing these lemmas to `simp` replaces the defined
+notions by their meanings wherever they appear.  We'll do that
+explicitly below (and shortly package the recipe up as a tactic of
+our own).
 
 :::dev "Claude"
 The Rocq source here registers `Hint Unfold assert_implies assertion_sub
@@ -2289,7 +2297,7 @@ t_update : core` for `auto`.  That only widens `auto`'s search (unlike the
 `Arguments /.` commands, it does not affect `simpl`), so its Lean
 counterpart is the `assertion_auto` tactic's simp list below -- not global
 `@[simp]` lemmas as for the notation wrappers, whose folded names carry no
-meaning in goals the way `->>` and `Assertion.sub` do.
+meaning in goals the way `->>` and `Assertion.subst` do.
 :::
 
 :::dev "Niklas Halonen (xhalo32)" NOW
