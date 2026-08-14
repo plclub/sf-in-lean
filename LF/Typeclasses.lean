@@ -492,12 +492,10 @@ However, multiplication on `Nat`s _also_ forms a monoid. What is its identity el
 ```lean
 instance : Monoid Nat where
   op := Nat.mul
-  -- SOLUTION
-  id := 1
-  left_identity := by lia
-  right_identity := by lia
-  associativity := by lia
-  -- END SOLUTION
+  id := solution!(1)
+  left_identity := solution!(by lia)
+  right_identity := solution!(by lia)
+  associativity := solution!(by lia)
 ```
 ::::
 
@@ -508,12 +506,10 @@ lists of any type also form a monoid, with {name}`List.append` as the operator i
 ```lean
 instance {α : Type} : Monoid (List α) where
   op := List.append
-  -- SOLUTION
-  id := []
-  left_identity := by simp
-  right_identity := by simp
-  associativity := by simp
-  -- END SOLUTION
+  id := solution!([])
+  left_identity := solution!(by simp)
+  right_identity := solution!(by simp)
+  associativity := solution!(by simp)
 ```
 ::::
 
@@ -552,15 +548,13 @@ addition does form a group over the integers:
 ```lean
 instance : Group Int where
   op := Int.add
-  -- SOLUTION
-  id := 0
-  inv := Int.neg
-  left_identity := by lia
-  right_identity := by lia
-  associativity := by lia
-  left_inverse := by lia
-  right_inverse := by lia
-  -- END SOLUTION
+  id := solution!(0)
+  inv := solution!(Int.neg)
+  left_identity := solution!(by lia)
+  right_identity := solution!(by lia)
+  associativity := solution!(by lia)
+  left_inverse := solution!(by lia)
+  right_inverse := solution!(by lia)
 ```
 ::::
 
