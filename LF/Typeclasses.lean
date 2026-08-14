@@ -77,15 +77,22 @@ theorem List.elem_nat_cons (a b : Nat) (xs : List Nat) :
 #eval [0, 1].elem_nat 2
 ```
 
-What if we want this to work for lists of _any_ element type, not just `Nat`? Parametric
-polymorphism suggests simply replacing `Nat` with a type variable `α`, but that produces a puzzling
+What if we want this to work for lists of _any_ element type, not just {name}`Nat`? Parametric
+polymorphism suggests simply replacing {name}`Nat` with a type variable `α`, but that produces a puzzling
 error:
 
-```lean -keep +error
+```lean -keep +error (name := elem_poly_error)
 def List.elem_poly {α : Type} (a : α) (xs : List α) : Bool :=
   match xs with
   | [] => false
   | b :: tl => bif a == b then true else elem_poly a tl
+```
+
+```leanOutput elem_poly_error
+failed to synthesize instance of type class
+  BEq α
+
+Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
 ```
 
 Lean is trying to use typeclasses to work out how `==` should behave on a value of type `α`.
@@ -107,8 +114,8 @@ function.
 Typeclasses automate this — instead of the programmer passing the function
 explicitly, Lean searches for one and provides it on its own. We specify something we want
 Lean to search for by declaring a `class` with the needed function as a field; a `class` is like
-an interface in Java or a trait in Rust. Particular implementations of that class,
-different ones for different types, are called _instances_. For functions that would
+an interface in Java or a trait in Rust. Particular implementations of that class
+are called _instance_; each type can have its own instance of a class. For functions that would
 use such instances, we specify
 the name of the class in a _instance implicit_ on the polymorphic variable that the
 instance's function applies to. This directs Lean to rely on the class inside the function, and to
@@ -129,25 +136,25 @@ theorem List.elem_poly_cons [BEq α] (a b : α) (xs : List α) :
 #eval [0, 1].elem_poly 0
 ```
 Comparing {name}`List.elem_poly_eq` with {name}`List.elem_poly`, we see three differences.
-First, `List.elem_poly_eq` takes an _explicit_ parameter `eq`,
-whereas `List.elem_poly` specifies an instance implicit `[BEq α]`. The instance implicit
+First, {name}`List.elem_poly_eq` takes an _explicit_ parameter `eq`,
+whereas {name}`List.elem_poly` specifies an instance implicit `[BEq α]`. The instance implicit
 indicates that an instance of {name}`BEq` must be provided at
 call sites for the particular type `α` that is used.
-Second, whereas `List.elem_poly_eq` invokes parameter `eq` to test equality,
-`List.elem_poly` uses `==` instead. As {ref "Lists"}[Lists] noted when we first used it,
-`==` on `Nat` comes from the `BEq` typeclass.
+Second, whereas {name}`List.elem_poly_eq` invokes parameter `eq` to test equality,
+{name}`List.elem_poly` uses `==` instead. As {ref "Lists"}[Lists] noted when we first used it,
+`==` on {name}`Nat` comes from the {name}`BEq` typeclass.
 Finally, whereas {lean}`[0, 1].elem_poly_eq Nat.beq 0` passes the equality
 function {name}`Nat.beq` explicitly, in {lean}`[0, 1].elem_poly 0` Lean fills it in
-automatically based on the type `Nat` of the `List`.
+automatically based on the type {name}`Nat` of the {name}`List`.
 
 :::dev "xhalo32"
 This is technically incorrect, the instance `BEq Nat`, which comes from `DecidableEq`, does not contain `Nat.beq`. You can see in proofs of `List.elem_nat` versus `List.elem_poly_eq` versus `List.elem_poly` and how `Nat.beq` and `==` play different roles.
 :::
 
-Going back to the earlier version of `List.elem_poly`, without the instance implicit, we
+Going back to the earlier version of {name}`List.elem_poly`, without the instance implicit, we
 can now understand the error message: `α` was fully generic
 — so the `==` in its body would have needed to work for _every_ type `α`, and no
-single `BEq` instance can do that. So Lean's search failed.
+single {name}`BEq` instance can do that. So Lean's search failed.
 
 Now it is time to dig into the details of what we have seen so far.
 We'll see exactly how `[BEq α]` gets filled in below, starting with how
@@ -172,26 +179,21 @@ def List.headOr_ex {α : Type} (defaultValue : α) (xs : List α) : α :=
 #eval ([] : List Nat).headOr_ex 0
 ```
 
-This works, but again it's tedious: every caller has to supply an element of `α` to default to, even when there's an obvious choice based on the type of the things in the list, like `0` for `Nat`.
+This works, but again it's tedious: every caller has to supply an element of `α` to default to, even when there's an obvious choice based on the type of the things in the list, like {lean}`0` for {name}`Nat`.
 
 Getting Lean to fill in `defaultValue` automatically takes two things. One is marking the parameter as
 "searchable," rather than something the caller always supplies explicitly. The other is giving Lean
 some information about what it should search _for_.
 
-Considering the second problem first: The way to provide this information is to _name_ the type-level concept we're
- after — the *default value* of a type. In particular, a `structure` (chapter {ref "Lists"}[Lists]) is a
-good way to give a type-level concept a name; structures can also bundle together more than one
+Considering the second problem first: the way to provide this information is to _name_ the data we're
+after — the *default value* of a type. In particular, a `structure` (chapter {ref "Lists"}[Lists]) is a
+good way to give this information a name; structures can also bundle together more than one
 piece of data, which will come in handy later, though we only need a single field here.
-:::dev "Benjamin Pierce (bcpierce00)"
-"type-level concept" doesn't say much to me here, and structures are _not_ type-level things.
-(Well, `structure`s are, but _a_ structure satisfying some `structure` declaration is not,
-if you see what I mean...)
-:::
 
-Considering the first problem: we need to mark this particular structure as one Lean should search
+To address the first problem, we need to mark this particular structure as one Lean should search
 for automatically — not every `structure`-typed argument should be.
 
-Let's build up to what wewant in two steps: first the naming, as a plain `structure`; then the marking, by
+Let's build up to what we want in two steps: first the naming, as a plain `structure`; then the marking, by
 upgrading it to a `class`. Here's the structure — we'll put it in its own namespace so we can reuse
 the name `DefaultValue` for the class version below:
 
@@ -202,21 +204,15 @@ structure DefaultValue (α : Type) where
   value : α
 ```
 
-A value of type {lean}`DefaultValue Nat` picks out a particular `Nat` to serve as the type's default:
-it's built the same way any structure is, by supplying a `Nat` for the `value` field:
+A value of type {lean}`DefaultValue Nat` picks out a particular {name}`Nat` to serve as the type's default:
+it's built the same way any structure is, by supplying a {name}`Nat` for the `value` field:
 
 ```lean
 def natDefault : DefaultValue Nat where
   value := 0
 
-example : natDefault.value = 0 := rfl
-
 end DefaultValueScratch
 ```
-:::dev "Benjamin Pierce (bcpierce00)"
-Maybe the example is not needed?
-:::
-
 
 Now for the marking: we need to tell Lean that `DefaultValue` is the sort of structure it should
 search for automatically, the way it needs to for {name}`List.headOr_ex`'s `defaultValue` argument.
@@ -234,11 +230,8 @@ instance instDefaultValueNat : DefaultValue Nat where
   value := 0
 ```
 
-:::dev "Benjamin Pierce (bcpierce00)"
-Boldface, or italic?  The rule is now in STYLE.md ("Emphasis vs. boldface"): use `_…_` for ordinary emphasis, reserve `*…*` (bold) for rare strong emphasis.
-:::
-Lean can now find this instance on its own, via *typeclass synthesis* (or *typeclass inference*) —
-the same process that found `BEq Nat` earlier. That means we can rewrite {name}`List.headOr_ex`
+Lean can now find this instance on its own, via _typeclass synthesis_ (or _typeclass inference_) —
+the same process that found {lean}`BEq Nat` earlier. That means we can rewrite {name}`List.headOr_ex`
 the same way we rewrote {name}`List.elem_poly_eq` into {name}`List.elem_poly` above, replacing the
 explicit `defaultValue` parameter with an instance implicit:
 
@@ -253,14 +246,14 @@ def List.headOr {α : Type} [DefaultValue α] (xs : List α) : α :=
 ```
 
 ```lean
-example : DefaultValue.value = (0 : Nat) := rfl
+example : DefaultValue.value = (0 : Nat) := by rfl
 ```
 
 Notice that we refer to {name}`DefaultValue.value` alone, with no instance named. Because the
-expression equates `DefaultValue.value` with the `Nat` `0`, Lean selects {name}`instDefaultValueNat`,
+expression equates `DefaultValue.value` with the {name}`Nat` {lean}`0`, Lean selects {name}`instDefaultValueNat`,
 the instance for
-`DefaultValue Nat`. We know this because we are able to
-prove that `DefaultValue.value` is equal to `0`.
+{lean}`DefaultValue Nat`. We know this because we are able to
+prove that {name}`DefaultValue.value` is equal to {lean}`0`.
 
 Let's declare a second instance, for {name}`Int`, the type of integers `... -2, -1, 0, 1, 2, ...`:
 
@@ -269,20 +262,33 @@ instance instDefaultValueInt : DefaultValue Int where
   value := -1
 ```
 
-Now, Lean can infer instances for both types, including inside {name}`List.headOr`:
+We can also create instances for polymorphic types, like `Option α`, whose default is `none`,
+by giving the instance declaration a parameter:
 
 ```lean
-example : DefaultValue.value = (0 : Nat) := rfl
-example : DefaultValue.value = (-1 : Int) := rfl
-example : ([] : List Nat).headOr = 0 := rfl
-example : ([] : List Int).headOr = -1 := rfl
+instance instDefaultValueOption {α : Type} : DefaultValue (Option α) where
+  value := none
+```
+
+Now, Lean can infer instances for all these types, including inside {name}`List.headOr`:
+
+```lean
+example : DefaultValue.value = (0 : Nat) := by rfl
+example : DefaultValue.value = (-1 : Int) := by rfl
+example : DefaultValue.value = (none : Option Bool) := by rfl
+example : DefaultValue.value = (none : Option (List Nat)) := by rfl
+example : ([] : List Nat).headOr = 0 := by rfl
+example : ([] : List Int).headOr = -1 := by rfl
+example : ([] : List (Option Bool)).headOr = none := by rfl
+example : ([] : List (Option Bool)).headOr = none := by rfl
 ```
 
 Synthesis infers instances we could have specified explicitly:
 
 ```lean
-example : instDefaultValueNat.value = (0 : Nat) := rfl
-example : instDefaultValueInt.value = (-1 : Int) := rfl
+example : instDefaultValueNat.value = (0 : Nat) := by rfl
+example : instDefaultValueInt.value = (-1 : Int) := by rfl
+example : instDefaultValueOption.value = (none : Option Nat) := by rfl
 ```
 
 The option `pp.all` shows which instance Lean picked:
@@ -316,26 +322,25 @@ picked. The `#synth` command runs the same search directly:
 instDefaultValueNat
 ```
 
-For a typeclass like {name}`DefaultValue` that carries data — a term, such as the `1` above,
+For a typeclass like {name}`DefaultValue` that carries data — a term, such as the {lean}`1` above,
 rather than only proofs (which we will see below) — we expect at most one instance per type, so this search has a unique
 answer.
 
-We'll put `DefaultValue`'s standard-library cousin, {name}`Inhabited`, to work later in this
+We'll put `DefaultValue`'s standard-library equivalent, {name}`Inhabited`, to work later in this
 chapter, when we define maps that need a default value for a generic type. First, though, let's go
 back to {name}`List.elem_poly` and see how its `[BEq α]` argument actually gets resolved.
-:::dev "Benjamin Pierce (bcpierce00)"
-Is it a cousin, or a duplicate?
-:::
 
 # Using Typeclasses
 
-Let's check what `==` meant for `List.elem_nat`, with notation display turned off:
+Let's check what `==` meant for {name}`List.elem_nat`, with notation display turned off:
 
-```lean
-/-- info: BEq.beq 1 2 : Bool -/
-#guard_msgs in
+```lean (name := ppBeq)
 set_option pp.notation false in
 #check 1 == 2
+```
+
+```leanOutput ppBeq
+BEq.beq 1 2 : Bool
 ```
 
 Rather than {name}`Nat.beq`, `==` turns out to be notation for {name}`BEq.beq`, a field of exactly
@@ -347,7 +352,7 @@ class BEq (α : Type u) where
   beq : α → α → Bool
 ```
 
-Writing `a == b` makes Lean search for an *instance* of `BEq` for the type of `a` and `b`, the same
+Writing `a == b` makes Lean search for an *instance* of {name}`BEq` for the type of `a` and `b`, the same
 way it searched for a {name}`DefaultValue` instance above. For `Nat`, that instance is:
 
 ```lean
@@ -439,6 +444,81 @@ instance : HasThree Nat where
   -- END SOLUTION
 ```
 ::::
+
+```lean
+namespace Monoid
+```
+
+This facility is very powerful, and is used extensively in Lean to define mathematical structures
+that carry both operators and laws about how those operators interact. As a simple example,
+let's use a typeclass to define a _monoid_, a simple algebraic structure that includes four things:
+* an underlying set of data, represented by a type `α`,
+* an operator (which we'll write `+`) that combines two elements of type `α` into one,
+* a particular element `id` of type `α`, which we call the "identity element", and
+* some laws about the interaction of `+` and `id`, namely that:
+    * `∀ x, id + x = x = x + id`, and
+    * `∀ x y z, x + (y + z) = (x + y) + z` (i.e., that `+` is associative)
+
+We can express these requirements in the form of a typeclass:
+
+:::dev "Daniel Sainati @dsainati1"
+Is there a way to use infix `+` notation for `op` in the definition of the typeclass?
+:::
+
+```lean
+class Monoid (α : Type) where
+  op : α → α → α
+  id : α
+  left_identity : ∀ x, op id x = x
+  right_identity : ∀ x, op x id = x
+  associativity : ∀ x y z, op x (op y z) = op (op x y) z
+```
+
+As one might expect, the `+` operator over `Nat`s forms a monoid, where `0` is the identity element:
+
+```lean
+instance : Monoid Nat where
+  op := Nat.add
+  id := 0
+  left_identity := by lia
+  right_identity := by lia
+  associativity := by lia
+```
+
+::::exercise (rating := 1) (name := "NatMonoidMul")
+However, multiplication on `Nat`s _also_ forms a monoid. What is its identity element?
+
+```lean
+instance : Monoid Nat where
+  op := Nat.mul
+  -- SOLUTION
+  id := 1
+  left_identity := by lia
+  right_identity := by lia
+  associativity := by lia
+  -- END SOLUTION
+```
+::::
+
+::::exercise (rating := 1) (name := "ListMonoidAppend")
+There are also many monoids over other types. Most usefully in computer science,
+lists of any type also form a monoid, with {name}`List.append` as the operator in question:
+
+```lean
+instance {α : Type} : Monoid (List α) where
+  op := List.append
+  -- SOLUTION
+  id := []
+  left_identity := by simp
+  right_identity := by simp
+  associativity := by simp
+  -- END SOLUTION
+```
+::::
+
+```lean
+end Monoid
+```
 
 # Maps
 
