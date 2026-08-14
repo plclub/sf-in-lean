@@ -1340,7 +1340,7 @@ example (n m p q : Nat)
 :::full
 The use of `rw` here is a little different from the examples we have seen so far.
 The theorem {name}`double_injective` says {lean}`n = m`
-_provided that_ {lean}`n.double = m.double`, no just {lean}`n = m`.
+_provided that_ {lean}`n.double = m.double`, not just {lean}`n = m`.
 When we write `rw [double_injective n m]`, Lean uses the conclusion {lean}`n = m` to rewrite
 the goal, and then asks us to prove the hypothesis needed by {name}`double_injective`.
 Thus we get two goals: the updated main goal, `m + p = q`, which follows from `hm`, and the
