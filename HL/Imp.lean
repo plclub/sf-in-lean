@@ -1106,17 +1106,39 @@ inductive Com.EvalR : Com → State → State → Prop where
   | whileTrue (st st' st'' : State) (b : Bexp) (c : Com) (hb : b.eval st = true)
       (hc : EvalR c st st') (hloop : Com.EvalR (imp {while (~b) {~c}}) st' st'') :
       EvalR (imp {while (~b) {~c}}) st st''
+```
 
-notation:40 st0:41 " =[ " c " ]=> " st1:41 => Com.EvalR c st0 st1
+:::instructors
+We define evaluation notation using a typeclass to make extending it easier in the Hoare chapter.
+:::
+
+```lean
+class HasEval (Com : Type) (St : Type) where
+  Eval : Com → St → St → Prop
+
+namespace HasEval
+scoped notation:40 st0:41 " =[ " c " ]=> " st1:41 => Eval c st0 st1
+
 -- Also accept a bare Imp command between the brackets, so concrete programs can
 -- be written without the `imp { … }` wrapper. Bare `Com` terms still work via the
 -- notation above; splice a Lean term into the command with `~`.
-syntax:40 term:41 " =[ " imp_com " ]=> " term:41 : term
-macro_rules
-  | `($st0 =[ $c:imp_com ]=> $st1) => `($st0 =[ imp { $c } ]=> $st1)
+scoped syntax:40 term:41 " =[ " imp_com " ]=> " term:41 : term
+scoped macro_rules
+  | `($st0 =[ $c:imp_com ]=> $st1) => ``($st0 =[ imp { $c } ]=> $st1)
+end HasEval
+
+instance : HasEval Com State where
+  Eval := Com.EvalR
+
+open scoped HasEval
+
+@[app_unexpander Com.EvalR]
+def Com.unexpandEvalR : Lean.PrettyPrinter.Unexpander
+  | `($_ $c $st0 $st1) => ``($st0 =[ ~$c ]=> $st1)
+  | _ => throw ()
 ```
 
-:::dev "Niklas Halonen"
+:::dev "Niklas Halonen (xhalo32)"
 Currently in Hoare.lean the info view in
 ```
 theorem hoare_skip (P : Assertion) :
