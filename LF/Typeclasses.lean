@@ -532,15 +532,26 @@ about monoids is that the identity element of a monoid is unique. That is,
 if we have two monoids over the same set with the same operator, their identity elements must also
 be the same:
 
-:::dev "Daniel Sainati @dsainati1"
-I don't know why but the infoview for this proof is extremely confusing. How to set
-things up to be clearer?
-:::
-
 ```lean
 theorem id_unique {α : Type} {m₁ m₂ : Monoid α} (h : m₁.op = m₂.op) : m₁.id = m₂.id := by
-  rw [←m₁.left_id m₂.id, h, m₂.right_id]
+  obtain @⟨op₁, id₁, left_id₁, right_id₁, assoc₁⟩ := m₁
+  obtain @⟨op₂, id₂, left_id₂, right_id₂, assoc₂⟩ := m₂
+  have h' : id₁ = id₂ := by
+    -- this introduces a use of m₁'s operator
+    rw [← left_id₁ id₂]
+    -- we use our hypothesis to rewrite m₁'s operator into m₂'s
+    rw [h]
+    -- then, we can use m₂'s right id
+    rw [right_id₂]
+  exact h'
 ```
+
+In the above proof, we can destructure the monoid instances `m₁` and `m₂` with the `obtain` tactic
+we saw in the {ref "Logic"}[Logic] chapter. When we do so however, because these are
+class instances instead of normal structures, we preface our tuple with the `@` symbol.
+When stepping through the above proof, if the notation is confusing to you,
+remember that you can set `set_option pp.all true` or `set_option pp.explicit true`
+to make Lean show you more clearly what is going on.
 
 A _group_ is a special kind of monoid with an _inverse_ operation `inv`, which has the property that
 `∀ x, inv x ⊗ x = id = x ⊗ inv x`. We can extend the definition of a {name}`Monoid` to capture this
@@ -583,11 +594,11 @@ This also prints weird.
 Two groups defined with the same operation over the same set must have the same inverse as well.
 
 ```lean
-theorem inv_unique {α : Type} {m₁ m₂ : Group α} (h : m₁.op = m₂.op) : m₁.inv = m₂.inv := by
+theorem inv_unique {α : Type} {g₁ g₂ : Group α} (h : g₁.op = g₂.op) : g₁.inv = g₂.inv := by
   solution!
     ext a
-    rw [←m₁.right_id (Group.inv a), ←m₁.right_inv a]
-    rw [m₁.assoc, h, m₂.left_inv a, m₂.left_id]
+    rw [←g₁.right_id (Group.inv a), ←g₁.right_inv a]
+    rw [g₁.assoc, h, g₂.left_inv a, g₂.left_id]
 ```
 ::::
 
