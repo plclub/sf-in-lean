@@ -192,6 +192,8 @@ def W : Ident := "W"
 def X : Ident := "X"
 def Y : Ident := "Y"
 def Z : Ident := "Z"
+
+attribute [simp] X Y Z W -- this helps `simp` reduce some total map terms
 ```
 
 ::::full
@@ -1154,7 +1156,7 @@ h : st =[
     skip
   } ]=>
   st'
-hp : P st
+hst : P st
 ⊢ P st'
 ```
 but we would like it to display `h : st =[ skip ]=> st'`.
