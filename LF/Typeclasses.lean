@@ -13,6 +13,8 @@ import SFLMeta.SlideBreak
 import SFLMeta.Solution
 import SFLMeta.Terse
 
+import LF.Automation
+
 set_option autoImplicit false
 
 open Verso.Genre Manual
@@ -1339,64 +1341,10 @@ end PartialMap
 
 This property is quite useful for reasoning about languages with variable binding — e.g., the Simply Typed Lambda Calculus, which we will see in _Type Systems_, where maps are used to keep track of which program variables are defined in a given scope.
 
-:::dev
-`namespace TotalMap` is reopened here only because the `Reflection` section below
-happens to sit inside it (its `Nat.isEven`/`Nat.double` are really
-`TotalMap.Nat.*`, and moving them to the root `Nat` namespace would collide with
-`UsingLean`'s `Nat.double`). Drop the reopen when that section is given a home of
-its own.
-:::
-
-```lean
-namespace TotalMap
-```
-
 # Reflection
 
-:::dev
-I think this will still exist in previous chapters, just not have the reflection explanations until
-here? Since I can't import these yet, just placing here at the top of this section — CGH
-Burtonpatel: These definitions of even as boolean computation and Prop should go below, after the table where we explain the difference.
-:::
-
 ```lean
-namespace Nat
-
-@[irreducible]
-def isEven : Nat → Bool
-| 0 => true
-| 1 => false
-| n + 2 => isEven n
-
-@[irreducible]
-def double : Nat → Nat
-| 0 => 0
-| n + 1 => double n + 2
-
-section
-
-unseal isEven
-unseal double
-
-theorem isEven_zero : isEven 0 = true := rfl
-theorem isEven_one : isEven 1 = false := rfl
-theorem isEven_succ_succ (n : Nat) : isEven (n + 2) = isEven n := rfl
-
-theorem double_zero : double 0 = 0 := by rfl
-theorem double_succ (n : Nat) : double (n + 1) = double n + 2 := rfl
-
-end
-
-def Even (n : Nat) := ∃ m, n = double m
-
-theorem isEven_succ (n : Nat) : isEven (n + 1) = ! isEven n := by
-  induction n with
-  | zero =>
-    rewrite [Nat.zero_add, isEven_zero, isEven_one]
-    rfl
-  | succ n ih =>
-    rewrite [isEven_succ_succ, ih, Bool.not_not]
-    rfl
+namespace Reflection
 ```
 
 We've seen two different ways of expressing logical claims in Lean: with booleans (of type
@@ -1450,15 +1398,13 @@ we can express it either as a boolean computation or as a function into Prop.
 As an example, we can write
 
 ```lean
-unseal isEven in
-example : isEven 42 := rfl
+example : Nat.even 42 := rfl
 ```
 
 or that there exists some `k` such that `42 = double k`.
 
 ```lean
-unseal double in
-example : Even 42 := by exists 21
+example : Nat.Even 42 := by exists 21
 ```
 
 Of course, it would be deeply strange if these two characterizations of evenness did not describe
@@ -1467,32 +1413,28 @@ the same set of natural numbers!
 Fortunately, they do! To prove this, we first need two helper lemmas.
 
 ```lean
-theorem even_double (k : Nat) : isEven (double k) = true := by
+theorem even_double (k : Nat) : (k.double).even = true := by
   induction k with
   | zero =>
-    rewrite [double_zero, isEven_zero]
+    rewrite [Nat.double_zero, Nat.even_zero]
     rfl
   | succ n ih =>
-    rewrite [double_succ, isEven_succ_succ]
+    rewrite [Nat.double_succ, Nat.even_succ, Nat.even_succ, Bool.not_not]
     exact ih
 ```
 
-::::exercise (rating := 3) (name := "isEven_double_exists")
+::::exercise (rating := 3) (name := "even_double_exists")
 
 ```lean
-theorem isEven_double_exists (n : Nat) :
-    ∃ k, n = bif isEven n then double k else double k + 1 := by solution!(
+theorem even_double_exists (n : Nat) :
+    ∃ (k : Nat), n = bif n.even then k.double else k.double + 1 := by solution!(
   induction n with
   | zero =>
     exists 0
-    rewrite [isEven_zero]
-    dsimp only [cond_true]
-    symm
-    exact double_zero
   | succ n ih =>
     obtain ⟨k, ih⟩ := ih
-    rewrite [isEven_succ]
-    by_cases h : isEven n
+    rewrite [Nat.even_succ]
+    by_cases h : n.even
     · exists k
       rewrite [h] at ih ⊢
       subst ih
@@ -1501,7 +1443,7 @@ theorem isEven_double_exists (n : Nat) :
       rewrite [Bool.not_eq_true] at h
       rewrite [h] at ih ⊢
       subst ih
-      rewrite [cond_false, Bool.not_false, cond_true, double_succ]
+      rewrite [cond_false, Bool.not_false, cond_true]
       rfl)
 ```
 ::::
@@ -1509,9 +1451,9 @@ theorem isEven_double_exists (n : Nat) :
 Now the main theorem:
 
 ```lean
-theorem isEven_iff_Even {n : Nat} : isEven n = true ↔ Even n where
+theorem even_iff_Even {n : Nat} : n.even = true ↔ Nat.Even n where
   mp h := by
-    have ⟨k, hk⟩ := isEven_double_exists n
+    have ⟨k, hk⟩ := even_double_exists n
     rewrite [h, cond_true] at hk
     subst hk
     exists k
@@ -1521,8 +1463,8 @@ theorem isEven_iff_Even {n : Nat} : isEven n = true ↔ Even n where
     exact even_double k
 ```
 
-In view of this theorem, we can say that the boolean computation `isEven n` is reflected in the truth of
-the proposition `∃ k, n = double k`.
+In view of this theorem, we can say that the boolean computation `n.even` is reflected in the truth of
+the proposition `∃ (k : Nat), n = k.double`.
 
  Similarly, to state that two numbers n and m are equal, we can say either
  * that `n == m` returns `true`, or
@@ -1572,10 +1514,6 @@ def eq {α : Type} (a₁ a₂ : α) : Bool := if a₁ = a₂ then true else fals
 
 Lean will complain here that it cannot find an instance of {name}`Decidable`. This typeclass
 
-:::dev
-@dsainati - commenting this out because the -keep doesn't work during extraction;
-this causes Lean to get the two instances (the real one and this one) confused
-
 ```lean -keep
 class inductive Decidable (p : Prop) where
   /-- Proves that `p` is decidable by supplying a proof of `¬p` -/
@@ -1583,31 +1521,26 @@ class inductive Decidable (p : Prop) where
   /-- Proves that `p` is decidable by supplying a proof of `p` -/
   | isTrue (h : p) : Decidable p
 ```
-:::
 
 is the way that we express in Lean that a given proposition is decidable. This is the generalization
-of our observation that {name}`isEven_iff_Even` was reflecting a proof between boolean and
+of our observation that {name}`even_iff_Even` was reflecting a proof between boolean and
 propositional equality. In fact, we can use this theorem to directly construct a {name}`Decidable`
 instance
 
 ```lean
-instance (n : Nat) : Decidable (Even n) := decidable_of_decidable_of_iff isEven_iff_Even
+instance (n : Nat) : Decidable (Nat.Even n) := decidable_of_decidable_of_iff even_iff_Even
 ```
 
 Now we are able to complete such proofs by computation using the {tactic}`decide` tactic:
 
 ```lean
-section
-unseal isEven
-
-example : Even 2 := by decide
-example : Even 4 := by decide
-example : Even 6 := by decide
-example : Even 100 := by decide
-example : ¬ Even 101 := by decide
-example : ∀ n < 10, Even (2 * n) := by decide
-example : ∀ n < 10, Even (2 * n) ∧ ¬ Even (2 * n + 1) := by decide
-end
+example : Nat.Even 2 := by decide
+example : Nat.Even 4 := by decide
+example : Nat.Even 6 := by decide
+example : Nat.Even 100 := by decide
+example : ¬ Nat.Even 101 := by decide
+example : ∀ n < 10, Nat.Even (2 * n) := by decide
+example : ∀ n < 10, Nat.Even (2 * n) ∧ ¬ Nat.Even (2 * n + 1) := by decide
 ```
 
 In general, Lean will try to use typeclass synthesis with {name}`Decidable` in order to determine
@@ -1685,10 +1618,14 @@ I'm not sure what part of the signature here is important to translate. Is the p
 :::
 
 ```lean
-example (a : α) [BEq α] [LawfulBEq α] (xs : List α) (neq : xs.filter (a == ·) ≠ []) : a ∈ xs := by
+example {α β : Type} (a : α) [BEq α] [LawfulBEq α] (xs : List α) (neq : xs.filter (a == ·) ≠ []) : a ∈ xs := by
   sorry
 ```
 
 :::dev
 Burtonpatel: Some more examples would be good. It might be good to start with Nat and then move to the Indprop ones. This is a short chapter, so 5-6 well-chosen, informative exercises could easily fit.
 :::
+
+```lean
+end Reflection
+```
