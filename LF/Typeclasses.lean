@@ -462,17 +462,39 @@ let's use a typeclass to define a _monoid_, a simple algebraic structure that in
 We can express these requirements in the form of a typeclass:
 
 ```lean
--- first we define a notation typeclass for our operator ·
-class OpSet (α : Type) where
+structure Monoid (α : Type) where
   op : α → α → α
-
-infixr:70 " ⊗ " => OpSet.op
-
-class Monoid (α : Type) extends (OpSet α) where
   id : α
-  left_identity : ∀ (x : α), id ⊗ x = x
-  right_identity : ∀ (x : α), x ⊗ id = x
-  associativity : ∀ (x y z : α), x ⊗ (y ⊗ z) = (x ⊗ y) ⊗ z
+
+namespace Monoid
+scoped notation:70 x:71 " ⊗_[" m "] " y:70 => Monoid.op m x y
+scoped notation:70 x:71 " ⊗ " y:70 => Monoid.op _ x y
+
+@[app_unexpander op]
+def unexpandOp : Lean.PrettyPrinter.Unexpander
+  | `($_ $m $x $y) => ``($x ⊗_[$m] $y)
+  | _ => throw ()
+end Monoid
+open scoped Monoid
+
+class LawfulMonoid {α : Type} (m : Monoid α) where
+  left_identity' : ∀ (x : α), m.id ⊗_[m] x = x
+  right_identity' : ∀ (x : α), x ⊗_[m] m.id = x
+  associativity' : ∀ (x y z : α), x ⊗_[m] (y ⊗_[m] z) = (x ⊗_[m] y) ⊗_[m] z
+
+namespace Monoid
+variable {α : Type} (m : Monoid α) [LawfulMonoid m]
+
+-- These make it easier to refer to the theorems using dot notation.
+@[simp]
+theorem left_identity :
+    ∀ (x : α), m.id ⊗_[m] x = x := LawfulMonoid.left_identity'
+@[simp]
+theorem right_identity :
+    ∀ (x : α), x ⊗_[m] m.id = x := LawfulMonoid.right_identity'
+theorem associativity :
+    ∀ (x y z : α), x ⊗_[m] (y ⊗_[m] z) = (x ⊗_[m] y) ⊗_[m] z := LawfulMonoid.associativity'
+end Monoid
 ```
 
 The `extends` keyword indicates that the {name}`Monoid` typeclass extends the {name}`OpSet` typeclass,
@@ -484,12 +506,20 @@ Note that we don't have to define {name}`Nat`'s {name}`OpSet` instance separatel
 single instance that implements both classes.
 
 ```lean
-instance : Monoid Nat where
+def NatAddMonoid : Monoid Nat where
   op := Nat.add
   id := 0
-  left_identity := by lia
-  right_identity := by lia
-  associativity := by lia
+
+@[simp]
+theorem NatAddMonoid.id_def : NatAddMonoid.id = 0 := by rfl
+
+@[simp]
+theorem NatAddMonoid.op_def {x y : Nat} : x ⊗_[NatAddMonoid] y = x + y := by rfl
+
+instance : LawfulMonoid NatAddMonoid where
+  left_identity' := by simp
+  right_identity' := by simp
+  associativity' := by simp; lia
 ```
 
 :::dev "Daniel Sainati @dsainati" PotentialImprovement
@@ -505,12 +535,22 @@ This is an isolated problem for now, not sure if/how we want to talk about this.
 However, multiplication on `Nat`s _also_ forms a monoid. What is its identity element?
 
 ```lean
-instance : Monoid Nat where
+def NatMulMonoid : Monoid Nat where
   op := Nat.mul
   id := solution!(1)
-  left_identity := solution!(by lia)
-  right_identity := solution!(by lia)
-  associativity := solution!(by lia)
+
+--- SOLUTION
+@[simp]
+theorem NatMulMonoid.id_def : NatMulMonoid.id = 1 := by rfl
+
+@[simp]
+theorem NatMulMonoid.op_def {x y : Nat} : x ⊗_[NatMulMonoid] y = x * y := by rfl
+--- END SOLUTION
+
+instance : LawfulMonoid NatMulMonoid where
+  left_identity' := solution!(by simp)
+  right_identity' := solution!(by simp)
+  associativity' := solution!(by simp; lia)
 ```
 ::::
 
@@ -519,12 +559,23 @@ There are also many monoids over other types. Most usefully in computer science,
 lists of any type also form a monoid, with {name}`List.append` as the operator in question:
 
 ```lean
-instance {α : Type} : Monoid (List α) where
+def ListAppendMonoid {α : Type} : Monoid (List α) where
   op := List.append
   id := solution!([])
-  left_identity := solution!(by simp)
-  right_identity := solution!(by simp)
-  associativity := solution!(by simp)
+
+--- SOLUTION
+@[simp]
+theorem ListAppendMonoid.id_def {α : Type} : (ListAppendMonoid (α := α)).id = [] := by rfl
+
+@[simp]
+theorem ListAppendMonoid.op_def {α : Type} {x y : List α}
+    : x ⊗_[ListAppendMonoid] y = x ++ y := by rfl
+--- END SOLUTION
+
+instance {α : Type} : LawfulMonoid (ListAppendMonoid (α := α)) where
+  left_identity' := solution!(by simp)
+  right_identity' := solution!(by simp)
+  associativity' := solution!(by simp)
 ```
 ::::
 
@@ -534,14 +585,24 @@ about monoids is that the identity element of a monoid is unique. That is,
 if we have two monoids over the same set with the same operator, their identity elements must also
 be the same:
 
-:::dev "Daniel Sainati @dsainati1"
-I don't know why but the infoview for this proof is extremely confusing. How to set
-things up to be clearer?
-:::
+```lean
+theorem id_unique {α : Type} {m₁ : Monoid α} {m₂ : Monoid α} [LawfulMonoid m₁] [LawfulMonoid m₂]
+    (h : m₁.op = m₂.op) : m₁.id = m₂.id := by
+  rw [←m₁.left_identity m₂.id, h, m₂.right_identity]
+```
+
+TODO Do we want the following as an exercise?
 
 ```lean
-theorem id_unique {α : Type} {m₁ m₂ : Monoid α} (h : m₁.op = m₂.op) : m₁.id = m₂.id := by
-  rw [←m₁.left_identity m₂.id, h, m₂.right_identity]
+theorem op_eq_of_id_eq {α : Type} {m₁ : Monoid α} {m₂ : Monoid α} [LawfulMonoid m₁] [LawfulMonoid m₂]
+    (h : m₁.id = m₂.id) (h2 : ∀ x y z, x ⊗_[m₁] y ⊗_[m₂] z = x ⊗_[m₂] y ⊗_[m₁] z)
+    : m₁.op = m₂.op := by
+  solution!
+    ext x y
+    have := h2 x m₁.id y
+    simp at this
+    simp [h] at this
+    exact this
 ```
 
 A _group_ is a special kind of monoid with an _inverse_ operation `inv`, which has the property that
