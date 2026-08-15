@@ -467,13 +467,7 @@ structure Monoid (α : Type) where
   id : α
 
 namespace Monoid
-scoped notation:70 x:71 " ⊗_[" m "] " y:70 => Monoid.op m x y
-scoped notation:70 x:71 " ⊗ " y:70 => Monoid.op _ x y
-
-@[app_unexpander op]
-def unexpandOp : Lean.PrettyPrinter.Unexpander
-  | `($_ $m $x $y) => ``($x ⊗_[$m] $y)
-  | _ => throw ()
+scoped notation:70 x:71 " ⊗_[" m "] " y:70 => op m x y
 end Monoid
 open scoped Monoid
 
