@@ -1114,9 +1114,13 @@ inductive Com.EvalR : Com → State → State → Prop where
 We define evaluation notation using a typeclass to make extending it easier in the Hoare chapter.
 :::
 
+:::dev "Niklas Halonen (xhalo32)"
+Setting `In` and `Out` as `outParam`s is a hack to resolve various typeclass synthesis problems or at least I can't explain why it works.
+:::
+
 ```lean
-class HasEval (Com : Type) (St : Type) where
-  Eval : Com → St → St → Prop
+class HasEval (Com : Type) (In : outParam <| Type) (Out : outParam <| Type) where
+  Eval : Com → In → Out → Prop
 
 namespace HasEval
 scoped notation:40 st0:41 " =[ " c " ]=> " st1:41 => Eval c st0 st1
@@ -1129,7 +1133,7 @@ scoped macro_rules
   | `($st0 =[ $c:imp_com ]=> $st1) => ``($st0 =[ imp { $c } ]=> $st1)
 end HasEval
 
-instance : HasEval Com State where
+instance : HasEval Com State State where
   Eval := Com.EvalR
 
 open scoped HasEval
