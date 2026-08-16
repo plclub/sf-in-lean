@@ -14,6 +14,9 @@ htmlSplit := .never
 file := some "Equiv"
 %%%
 
+```lean
+open scoped MyGetElem
+```
 
 :::dev "Sati (satiscugcat)"
   At this point, the Rocq file provides instructions about using a new directory,
@@ -132,17 +135,17 @@ theorem skip_left: ∀ c,
     (imp { skip; ~c })
     c := by
   workinclass!
-  intros c st st'
-  constructor <;> intro h
-  case mp =>
-    cases h with
-    | seq _ _ _ _ _ h1 h2 =>
-      cases h1 with
-      | skip => assumption
-  case mpr =>
-    apply Com.EvalR.seq _ _ _ st
-    · apply Com.EvalR.skip
-    · assumption
+    intros c st st'
+    constructor <;> intro h
+    case mp =>
+      cases h with
+      | seq _ _ _ _ _ h1 h2 =>
+        cases h1 with
+        | skip => assumption
+    case mpr =>
+      apply Com.EvalR.seq _ _ _ st
+      · apply Com.EvalR.skip
+      · assumption
 ```
 
 :::dev "Sati (satiscugcat)"
@@ -406,22 +409,22 @@ theorem while_true_nonterm : ∀ b c st st',
   Bexp.equiv b (bexp {true}) ->
   ¬ (st =[ while (~b) {~c} ]=> st') := by
   workinclass!
-  intro b c st st' hb contra
-  have key : ∀ (c': Com) (s s': State), (s =[ c' ]=> s') -> c' = (imp {while (~b) {~c}}) -> False :=
-    by
-      intro c' s s' hce
-      induction hce with
-      | whileFalse b' s0 c0 hb' => 
-        intro heq; injection heq with beq ceq
-        subst beq; rw [hb] at hb'
-        simp at hb'
-      | whileTrue s0 s0' s0'' b' c0 hb hc' hwhile ih1 ih2 => exact ih2
-      | skip => simp
-      | asgn => simp
-      | seq => simp
-      | ifTrue => simp
-      | ifFalse => simp
-  exact key (imp {while (~b) {~c}}) st st' contra (by rfl)
+    intro b c st st' hb contra
+    have key : ∀ (c': Com) (s s': State), (s =[ c' ]=> s') -> c' = (imp {while (~b) {~c}}) -> False :=
+      by
+        intro c' s s' hce
+        induction hce with
+        | whileFalse b' s0 c0 hb' =>
+          intro heq; injection heq with beq ceq
+          subst beq; rw [hb] at hb'
+          simp at hb'
+        | whileTrue s0 s0' s0'' b' c0 hb hc' hwhile ih1 ih2 => exact ih2
+        | skip => simp
+        | asgn => simp
+        | seq => simp
+        | ifTrue => simp
+        | ifFalse => simp
+    exact key (imp {while (~b) {~c}}) st st' contra (by rfl)
 ```
 :::::exercise (rating := 2) (name := "while_true_nonterm_informal") (manual:= true)
 Explain what the lemma `while_true_nonterm` means in English.
@@ -430,7 +433,7 @@ Explain what the lemma `while_true_nonterm` means in English.
 Prove the following theorem. _Hint_: You'll want to use
 `while_true_nonterm` here.
 
-```lean 
+```lean
 theorem while_true : ∀ b c,
   Bexp.equiv b (bexp {true}) ->
   Com.equiv
@@ -439,11 +442,11 @@ theorem while_true : ∀ b c,
   solution!(
     intro b c beq st st'
     constructor
-    case mp => 
+    case mp =>
       intro h
       apply False.elim
       exact while_true_nonterm b c st st' beq h
-    case mpr => 
+    case mpr =>
       intro h
       apply False.elim
       have bexp_equiv_refl : ∀ (b: Bexp), b.equiv b :=
@@ -473,28 +476,28 @@ theorem loop_unrolling : ∀ b c,
       while (~b) {~c}
     }) := by
   workinclass!
-  intro b c st st'
-  constructor <;> intro hce
-  case mp => 
-    cases hce with
-    | whileFalse _ _ _ hb => 
-      apply Com.EvalR.seq _ _ _ st
-      · apply Com.EvalR.ifFalse <;> try assumption
-        apply Com.EvalR.skip
-      · apply Com.EvalR.whileFalse <;> try assumption
-    | whileTrue _ st'' _ _ _ hb hc hloop => 
-      apply Com.EvalR.seq _ _ _ st''
-      · apply Com.EvalR.ifTrue <;> try assumption
-      · assumption
-  case mpr =>
-    cases hce with
-    | seq _ _ _ st'' _ h1 h2 => 
-      cases h1 with
-      | ifTrue _ _ _ _ _ hb hc => 
-        apply Com.EvalR.whileTrue _ st'' <;> try assumption
-      | ifFalse _ _ _ _ _ hb hc =>
-        cases hc with
-        | skip => assumption
+    intro b c st st'
+    constructor <;> intro hce
+    case mp =>
+      cases hce with
+      | whileFalse _ _ _ hb =>
+        apply Com.EvalR.seq _ _ _ st
+        · apply Com.EvalR.ifFalse <;> try assumption
+          apply Com.EvalR.skip
+        · apply Com.EvalR.whileFalse <;> try assumption
+      | whileTrue _ st'' _ _ _ hb hc hloop =>
+        apply Com.EvalR.seq _ _ _ st''
+        · apply Com.EvalR.ifTrue <;> try assumption
+        · assumption
+    case mpr =>
+      cases hce with
+      | seq _ _ _ st'' _ h1 h2 =>
+        cases h1 with
+        | ifTrue _ _ _ _ _ hb hc =>
+          apply Com.EvalR.whileTrue _ st'' <;> try assumption
+        | ifFalse _ _ _ _ _ hb hc =>
+          cases hc with
+          | skip => assumption
 ```
 :::dev "Sati (satiscugcat)"
 Leaving out optional exercise `seq_assoc` for now.
@@ -518,43 +521,43 @@ theorem identity_assignment : ∀ X,
     (imp {skip;}) := by
   intro X st st'
   constructor <;> intro hce
-  case mp => 
+  case mp =>
     cases hce with
     | asgn _ _ n _ h =>
       dsimp at h
       rw [← h, TotalMap.update_same]
       apply Com.EvalR.skip
 
-  case mpr => 
+  case mpr =>
     cases hce with
     | skip =>
-      have intermediate : st =[ X := X; ]=> X →ₜ st X ; st := by
-        apply Com.EvalR.asgn
-        simp [TotalMap.getElem_def]
-      rw [<- TotalMap.getElem_def st X, TotalMap.update_same] at intermediate
-      exact intermediate
+      suffices st =[ X := X; ]=> X →ₜ st[X] ; st by
+        simp only [TotalMap.update_same] at this
+        exact this
+      apply Com.EvalR.asgn
+      simp
 ```
 
 :::::exercise (rating := 2) (name := "assign_equiv")
 ```lean
 theorem assign_equiv : ∀ (X : Ident) (a : Aexp),
   Aexp.equiv (aexp {X}) a ->
-  Com.equiv 
-    (imp {skip;}) 
+  Com.equiv
+    (imp {skip;})
     (imp {X := ~a;}) := by
   solution!(
     intro X a aeq st st'
     constructor <;> intro hce
-    case mp => 
+    case mp =>
       cases hce with
-      | skip => 
+      | skip =>
         unfold Aexp.equiv at aeq
         dsimp at aeq
-        have intermediate : st =[ X:= ~a; ]=> X →ₜ st X; st := by
-          apply Com.EvalR.asgn
-          rw [<- TotalMap.getElem_def st X, aeq]
-        rw [<- TotalMap.getElem_def st X, TotalMap.update_same] at intermediate
-        exact intermediate
+        suffices st =[ X:= ~a; ]=> X →ₜ st[X]; st by
+          simp only [TotalMap.update_same] at this
+          exact this
+        apply Com.EvalR.asgn
+        simp [aeq]
     case mpr =>
       cases hce with
       | asgn _ _ n _ h =>
@@ -591,7 +594,7 @@ theorem Aexp.equiv.refl : ∀ (a : Aexp),
   rfl
 ```
 
-```lean 
+```lean
 theorem Aexp.equiv.sym : ∀ (a₁ a₂ : Aexp),
   a₁.equiv a₂ → a₂.equiv a₁ := by
   intro a₁ a₂ h st
@@ -613,7 +616,7 @@ theorem Bexp.equiv.refl : ∀ (b : Bexp),
   rfl
 ```
 
-```lean 
+```lean
 theorem Bexp.equiv.sym : ∀ (b₁ b₂ : Bexp),
   b₁.equiv b₂ → b₂.equiv b₁ := by
   intro b₁ b₂ h st
@@ -635,7 +638,7 @@ theorem Com.equiv.refl : ∀ (c : Com),
   rfl
 ```
 
-```lean 
+```lean
 theorem Com.equiv.sym : ∀ (c₁ c₂ : Com),
   c₁.equiv c₂ → c₂.equiv c₁ := by
   intro c₁ c₂ h st st'
@@ -684,4 +687,3 @@ change -- i.e., the "proof burden" of a small change to a large
 program is proportional to the size of the change, not the
 program!
 ::::
-
