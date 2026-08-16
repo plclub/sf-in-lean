@@ -26,13 +26,16 @@ bare `LF/Maps.lean` that Imp depends on).  `pkgRequires` lists external package
 dependencies `(name, git url, rev)` needed by some emitted chapter's imports
 (e.g. batteries for `import Batteries.CodeAction`), each pinned to the same
 revision the book itself builds with. -/
-private def lakefileTemplate (vol : String) (extraLibs : Array String)
+private def lakefileTemplate (vol : String) (v : Variant) (extraLibs : Array String)
     (pkgRequires : Array (String × String × String)) : String :=
   -- A bundled prerequisite may live in the volume's own namespace (e.g. the
   -- bare `LF/CustomTactics.lean` bundled into the LF project): the volume's
   -- `lean_lib` already covers it, and Lake rejects a duplicate target.
   let extra := (extraLibs.filter (· != vol)).foldl (init := "") fun acc l =>
     acc ++ "\n[[lean_lib]]\nname = \"" ++ l ++ "\"\n"
+  let pkgRequires := if v.isGrading
+    then pkgRequires.push ("autograder", "https://github.com/plclub/lean4-autograder-main", "bump-4-32-0")
+    else pkgRequires
   let reqs := pkgRequires.foldl (init := "") fun acc (name, url, rev) =>
     acc ++ "\n[[require]]\nname = \"" ++ name ++ "\"\ngit = \"" ++ url ++
       "\"\nrev = \"" ++ rev ++ "\"\n"
@@ -67,7 +70,7 @@ private def writeProject (dest : System.FilePath) (toolchain : String)
   let manifest := dest / "lake-manifest.json"
   if ← manifest.pathExists then
     IO.FS.removeFile manifest
-  IO.FS.writeFile (dest / "lakefile.toml") (lakefileTemplate vol extraLibs pkgRequires)
+  IO.FS.writeFile (dest / "lakefile.toml") (lakefileTemplate vol v extraLibs pkgRequires)
   IO.FS.writeFile (dest / "lean-toolchain") toolchain
   IO.FS.writeFile (dest / "README.md")
     s!"# {vol} — {v} version\n\nGenerated from the Verso source.\n"
@@ -112,9 +115,16 @@ too, and the generated `lakefile.toml` gains a matching `[[require]]` pinned to
 the revision in the book's `lake-manifest.json`. -/
 
 /-- Module top-namespaces belonging to the authoring framework: their imports
-build the book but must never appear in an extracted `.lean` file. -/
+build the book but must never appear in an extracted `.lean` file.
+
+`Credits` is a shared, include-only prose module (a Verso `#doc` whose
+text is spliced into each volume's Preface via `{include 2 Credits}`).
+Its prose is inlined by the walker at include time, so the extracted chapter
+already contains it; the module itself is a build-only artifact that would drag
+in `import SFLMeta`, so it is dropped and never bundled — exactly like the
+framework modules. -/
 private def frameworkPrefixes : List String :=
-  ["VersoManual", "Verso", "Illuminate", "SFLMeta", "SubVerso"]
+  ["VersoManual", "Verso", "Illuminate", "SFLMeta", "SubVerso", "Credits"]
 
 /-- Toolchain-provided top-namespaces: always available in any Lake project, so
 they stay as `import` lines but are never bundled as source. -/
@@ -229,7 +239,8 @@ private def emitSavedImpl (config : ExtractConfig)
     -- verbatim bundle; its prefix becomes an extra `lean_lib` (see `extraLibs`).
     for (pre, part) in crossVol do
       let chFile := chapterPath pre part
-      buf := buf.appendBoth chFile s!"import {supportModuleName config.modPrefix}\n\n"
+      buf := buf.appendOnly chFile .grading "import AutograderLib\n"
+      buf := buf.appendAll chFile s!"import {supportModuleName config.modPrefix}\n\n"
       buf := walkSection width 1 chFile part buf
     let toolchain ← (IO.FS.readFile "lean-toolchain").toBaseIO >>= fun
       | .ok s => pure s
@@ -306,6 +317,9 @@ def emitSavedSolutions (vol : String) (crossVol : List (String × Part Manual) :
 proofs stubbed to `sorry`. -/
 def emitSavedTerse (vol : String) (crossVol : List (String × Part Manual) := []) :=
   emitSavedImpl (ExtractConfig.fromVolume vol .terse true) crossVol
+
+def emitSavedGrading (vol : String) (crossVol : List (String × Part Manual) := []) :=
+  emitSavedImpl (ExtractConfig.fromVolume vol .grading true) crossVol
 
 
 end SFLMeta.Save

@@ -245,12 +245,14 @@ narrative though.
 ```
 :::
 
-IMPORTBLOCK import LF.Logic
-IMPORTBLOCK import LF.CustomTactics
+```importBlock
+import LF.Logic
+import LF.CustomTactics
+```
 
 # Inductively Defined Propositions
 
-In the Logic chapter, we looked at several ways of writing
+In the {ref "Logic"}[Logic] chapter, we looked at several ways of writing
 propositions, including conjunction, disjunction, and existential
 quantification.
 
@@ -309,15 +311,20 @@ this definition in a standard programming language, but it is
 rejected by Lean's termination checker, since the argument to
 the recursive call, `csf n`, is not "obviously smaller" than `n`.
 
-```lean
-/--
-error: fail to show termination for
-  reaches1_in
+```lean -keep +error (name := reaches1In)
+def reaches1In (n : Nat) : Nat :=
+  if n == 1 then 0
+  else 1 + reaches1In (csf n)
+```
+
+```leanOutput reaches1In
+fail to show termination for
+  reaches1In
 with errors
 failed to infer structural recursion:
 Cannot use parameter n:
   failed to eliminate recursive application
-    reaches1_in (csf n)
+    reaches1In (csf n)
 
 
 failed to prove termination, possible solutions:
@@ -327,17 +334,8 @@ failed to prove termination, possible solutions:
 n : Nat
 h✝ : ¬(n == 1) = true
 ⊢ csf n < n
--/
-#guard_msgs in
-def reaches1_in (n : Nat) : Nat :=
-  if n == 1 then 0
-  else 1 + reaches1_in (csf n)
 ```
 
-You can write this definition in a standard programming language.
-This definition is, however, rejected by Lean's termination
-checker, since the argument to the recursive call, `csf n`, is not
-"obviously smaller" than `n`.
 Indeed, this isn't just a pointless limitation: functions in Lean
 are required to be total, to ensure logical consistency.
 
@@ -350,20 +348,28 @@ would be equivalent to settling the Collatz conjecture!
 
 Another idea could be to express the concept "eventually reaches
 `1` in the Collatz sequence" as a _recursively defined property_
-of numbers `CollatzHoldsFor : Nat → Prop`.  This is also rejected:
-while we could in principle convince Lean that `div2 n` is
-smaller than `n`, we certainly can't convince it that
-`(3 * n) + 1` is smaller than `n`!
+of numbers `CollatzHoldsFor : Nat → Prop`. This is also rejected
+by the termination checker. In principle, we could convince Lean
+that `div2 n` is smaller than `n` by supplying an appropriate proof.
+However, we still can't convince it that `(3 * n) + 1` is smaller than `n`!
 
-```lean
-/--
-error: fail to show termination for
-  collatz_holds_for
+```lean -keep +error (name := CollatzHoldsFor)
+def CollatzHoldsFor (n : Nat) : Prop :=
+  match n with
+  | 0 => False
+  | 1 => True
+  | _ => if n.even then CollatzHoldsFor (div2 n)
+                   else CollatzHoldsFor ((3 * n) + 1)
+```
+
+```leanOutput CollatzHoldsFor
+fail to show termination for
+  CollatzHoldsFor
 with errors
 failed to infer structural recursion:
 Cannot use parameter n:
   failed to eliminate recursive application
-    collatz_holds_for (div2 n)
+    CollatzHoldsFor (div2 n)
 
 
 failed to prove termination, possible solutions:
@@ -373,20 +379,7 @@ failed to prove termination, possible solutions:
 n x✝ : Nat
 h✝ : n.even = true
 ⊢ div2 n < x✝
--/
-#guard_msgs in
-def collatz_holds_for (n : Nat) : Prop :=
-  match n with
-  | 0 => False
-  | 1 => True
-  | _ => if n.even then collatz_holds_for (div2 n)
-                   else collatz_holds_for ((3 * n) + 1)
 ```
-
-This recursive function is also rejected by the termination
-checker, since, while we could in principle convince Lean that
-`div2 n` is smaller than `n`, we certainly can't convince it that
-`(3 * n) + 1` is smaller than `n`!
 
 :::slidebreak
 :::
@@ -398,7 +391,7 @@ property is defined by a set of rules:
 
 ```display
               ─────────────────── (chf_one)
-              CollatzHoldsFor 1
+               CollatzHoldsFor 1
 
 even n = true     CollatzHoldsFor (div2 n)
 ─────────────────────────────────────────── (chf_even)
@@ -425,25 +418,25 @@ evenness/oddness premises):
 
 ```display
 ─────────────────────── (chf_one)
-CollatzHoldsFor 1
+  CollatzHoldsFor 1
 ─────────────────────── (chf_even)
-CollatzHoldsFor 2
+  CollatzHoldsFor 2
 ─────────────────────── (chf_even)
-CollatzHoldsFor 4
+  CollatzHoldsFor 4
 ─────────────────────── (chf_even)
-CollatzHoldsFor 8
+  CollatzHoldsFor 8
 ─────────────────────── (chf_even)
-CollatzHoldsFor 16
+  CollatzHoldsFor 16
 ─────────────────────── (chf_odd)
-CollatzHoldsFor 5
+  CollatzHoldsFor 5
 ─────────────────────── (chf_even)
-CollatzHoldsFor 10
+  CollatzHoldsFor 10
 ─────────────────────── (chf_odd)
-CollatzHoldsFor 3
+  CollatzHoldsFor 3
 ─────────────────────── (chf_even)
-CollatzHoldsFor 6
+  CollatzHoldsFor 6
 ─────────────────────── (chf_even)
-CollatzHoldsFor 12
+  CollatzHoldsFor 12
 ```
 
 :::slidebreak
@@ -528,7 +521,7 @@ inductive ChfIn : Nat → Nat → Prop where
    that the sequence beginning at `n` reaches `1` in `k` total
    steps. -/
 
-def CollatzHoldsFor' (n : Nat) : Prop := ∃ k, ChfIn n k
+def CollatzHoldsFor (n : Nat) : Prop := ∃ k, ChfIn n k
 ```
 ::::
 
@@ -539,7 +532,7 @@ The Collatz conjecture then states that the sequence beginning
 from _any_ positive number reaches `1`:
 
 ```lean
-def collatz := ∀ n, n ≠ 0 → CollatzHoldsFor n
+def Collatz := ∀ n, n ≠ 0 → CollatzHoldsFor n
 ```
 
 If you succeed in proving this conjecture, you've got a bright
@@ -584,7 +577,7 @@ they are the same number, or, if the second has the form
 namespace LePlayground
 
 inductive Le : Nat → Nat → Prop where
-  | refl (n : Nat)              : Le n n
+  | refl (n : Nat)   : Le n n
   | step (n m : Nat) : Le n m → Le n (m + 1)
 
 scoped infix:50 (priority := high) " ≤ " => Le
@@ -613,18 +606,18 @@ two rules:
 
 ```display
               R x y
-         ---------------- (t_step)
+         ─────────────── (t_step)
          ClosTrans R x y
 
 ClosTrans R x y    ClosTrans R y z
------------------------------------- (t_trans)
+──────────────────────────────────── (t_trans)
          ClosTrans R x z
 ```
 
 In Lean this looks as follows:
 
 ```lean
-inductive ClosTrans {α: Type} (R: α→α→Prop) : α → α → Prop where
+inductive ClosTrans {α : Type} (R : α → α → Prop) : α → α → Prop where
   | t_step (x y : α) :
       R x y →
       ClosTrans R x y
@@ -689,7 +682,7 @@ HIDE: CH: A simple exercise could be nice here?
 
 ::::full
 Computing the transitive closure can be undecidable even for
-a relation R that is decidable (e.g., the `cms` relation below), so in
+a relation R that is decidable (e.g., the `CMS` relation below), so in
 general we can't expect to define transitive closure as a boolean
 function. Fortunately, Lean allows us to define transitive closure
 as an inductive relation.
@@ -709,19 +702,19 @@ transitive. This can be defined by the following three rules
 
 ```display
                    R x y
-           --------------------- (rt_step)
+         ——————————————————————— (rt_step)
            ClosReflTrans R x y
 
-           --------------------- (rt_refl)
+         ——————————————————————— (rt_refl)
            ClosReflTrans R x x
 
    ClosReflTrans R x y    ClosReflTrans R y z
----------------------------------------------- (rt_trans)
+—————————————————————————————————————————————— (rt_trans)
            ClosReflTrans R x z
 ```
 
 ```lean
-inductive ClosReflTrans {α: Type} (R: α → α → Prop) : α → α → Prop where
+inductive ClosReflTrans {α : Type} (R : α → α → Prop) : α → α → Prop where
   | rt_step (x y : α) :
       R x y →
       ClosReflTrans R x y
@@ -741,37 +734,37 @@ conjecture.  First we define a binary relation corresponding to
 the "Collatz step function" `csf`:
 
 ```lean
-def cs (n m : Nat) : Prop := csf n = m
+def CS (n m : Nat) : Prop := csf n = m
 ```
 
 This Collatz step relation can be used in conjunction with the
 reflexive and transitive closure operation to define a _Collatz
-multi-step_ (`cms`) relation, expressing that a number `n`
+multi-step_ (`CMS`) relation, expressing that a number `n`
 reaches another number `m` in zero or more Collatz steps:
 
 ```lean
-def cms (n m : Nat) : Prop := ClosReflTrans cs n m
-def collatz' : Prop := ∀ (n : Nat), n ≠ 0 → cms n 1
+def CMS (n m : Nat) : Prop := ClosReflTrans CS n m
+def Collatz' : Prop := ∀ (n : Nat), n ≠ 0 → CMS n 1
 ```
 
 ::::full
-This `cms` relation defined in terms of
+This `CMS` relation defined in terms of
 `ClosReflTrans` allows for more interesting derivations than the
 linear ones of the directly-defined `CollatzHoldsFor` relation:
 
 ```display
-csf 16 = 8         csf 8 = 4         csf 4 = 2         csf 2 = 1
-————————(rt_step)  ———————(rt_step)  ———————(rt_step)  ———————(rt_step)
-cms 16 8           cms 8 4           cms 4 2           cms 2 1
-—————————————————————————(rt_trans)  ————————————————————————(rt_trans)
-    cms 16 4                              cms 4 1
+csf 16 = 8           csf 8 = 4           csf 4 = 2           csf 2 = 1
+——————————(rt_step)  —————————(rt_step)  —————————(rt_step)  —————————(rt_step)
+CMS 16 8           CMS 8 4           CMS 4 2           CMS 2 1
+——————————————————————————(rt_trans)  —————————————————————————(rt_trans)
+    CMS 16 4                              CMS 4 1
     —————————————————————————————————————————————(rt_trans)
-                       cms 16 1
+                       CMS 16 1
 ```
 ::::
 
 :::dev
-HIDE: CH: Would it be helpful to add an exercise later proving cms
+HIDE: CH: Would it be helpful to add an exercise later proving CMS
 equivalent to CollatzHoldsFor
 :::
 
@@ -782,7 +775,7 @@ to define the reflexive, symmetric, and transitive closure?
 
 ```lean
 -- SOLUTION
-inductive ClosReflTransSym {α: Type} (R: α→α→Prop) : α→α→Prop where
+inductive ClosReflTransSym {α : Type} (R : α → α → Prop) : α → α → Prop where
   | srt_refl (x : α) :
       ClosReflTransSym R x x
   | srt_step (x y : α) :
@@ -801,7 +794,7 @@ inductive ClosReflTransSym {α: Type} (R: α→α→Prop) : α→α→Prop where
 
 ::::::
 
-Example: Permutations
+## Example: Permutations
 
 The familiar mathematical concept of _permutation_ also has an
 elegant formulation as an inductive relation.  For simplicity,
@@ -811,14 +804,14 @@ elements.
 We can define such permutations by the following rules:
 
 ```display
-   ------------------------- (perm3_swap12)
+   ───────────────────────── (perm3_swap12)
    Perm3 [a, b, c] [b, a, c]
 
-   ------------------------- (perm3_swap23)
+   ───────────────────────── (perm3_swap23)
    Perm3 [a, b, c] [a, c, b]
 
 Perm3 l₁ l₂       Perm3 l₂ l₃
------------------------------ (perm3_trans)
+───────────────────────────── (perm3_trans)
          Perm3 l₁ l₃
 ```
 
@@ -860,7 +853,7 @@ inductive Perm3 {α : Type} : List α → List α → Prop where
 
 ::::::full
 :::::exercise (rating := 1) (name := "perm") (manual := true)
-According to this definition, is `\[1;2;3`\] a permutation of
+According to this definition, is `[1, 2, 3]` a permutation of
 itself?
 
 :::solution
@@ -887,12 +880,12 @@ in this chapter, is to say that a number is even if we can
 _establish_ its evenness from the following two rules:
 
 ```display
-    ---- (ev_0)
+    ———— (ev_0)
     Ev 0
 
     Ev n
------------- (ev_succ_succ)
-Ev (n + 2)
+—————————————— (ev_succ_succ)
+  Ev (n + 2)
 ```
 
 ::::full
@@ -913,9 +906,9 @@ imagine using it to show that `4` is even:
 ```display
         ———— (ev_0)
         Ev 0
-    ———————————— (`ev_succ_succ`)
+    ———————————— (ev_succ_succ)
     Ev (S (S 0))
-———————————————————— (`ev_succ_succ`)
+———————————————————— (ev_succ_succ)
 Ev (S (S (S (S 0))))
 ```
 
@@ -935,8 +928,8 @@ number can be even" corresponds to a separate constructor:
 
 ```lean
 inductive Ev : Nat → Prop where
-  | ev_0                       : Ev 0
-  | ev_succ_succ (n : Nat) (H : Ev n) : Ev (n + 2)
+  | ev_0                              : Ev 0
+  | ev_succ_succ (n : Nat) (h : Ev n) : Ev (n + 2)
 ```
 
 ::::terse
@@ -945,7 +938,7 @@ inductive _properties_ like `Ev` and the inductive _types_ like
 `Nat` or `List` that we have been using throughout the course:
 
 ```display
-inductive List (α:Type) : Type where
+inductive List (α : Type) : Type where
   | nil                       : List α
   | cons (x : α) (l : List α) : List α.
 ```
@@ -971,16 +964,16 @@ the form `Ev n` for some natural number `n`.
 
 In contrast, recall the definition of `List`:
 
-```display
-inductive List (α:Type) : Type where
+```lean -keep +error
+inductive List (α : Type) : Type where
   | nil
   | cons (x : α) (l : List α)
 ```
 
 or (equivalently but more explicitly):
 
-```display
-inductive List (α:Type) : Type where
+```lean -keep +error
+inductive List (α : Type) : Type where
   | nil                       : List α
   | cons (x : α) (l : List α) : List α
 ```
@@ -991,9 +984,14 @@ the same type (i.e., `List α`).  But if we had tried to bring `Nat`
 to the left of the colon in defining `Ev`, we would have seen an
 error:
 
-```lean
-/--
-error: Mismatched inductive type parameter in
+```lean -keep +error (name := WrongEv)
+inductive WrongEv (n : Nat) : Prop where
+  | wrong_ev_0 : WrongEv 0
+  | wrong_ev_succ_succ (h: WrongEv n) : WrongEv (n + 2)
+```
+
+```leanOutput WrongEv
+Mismatched inductive type parameter in
   WrongEv 0
 The provided argument
   0
@@ -1001,11 +999,6 @@ is not definitionally equal to the expected parameter
   n
 
 Note: The value of parameter `n` must be fixed throughout the inductive declaration. Consider making this parameter an index if it must vary.
--/
-#guard_msgs in
-inductive WrongEv (n : Nat) : Prop where
-  | wrong_ev_0 : WrongEv 0
-  | wrong_ev_succ_succ (H: WrongEv n) : WrongEv (n + 2)
 ```
 
 In an `inductive` definition, an argument to the type constructor
@@ -1026,7 +1019,7 @@ constructors":
 
 ```lean
 #check (Ev.ev_0) -- Ev 0
-#check Ev.ev_succ_succ -- ∀ (n : Nat) (H : Ev n) : Ev (n + 2)
+#check Ev.ev_succ_succ -- ∀ (n : Nat) (h : Ev n) : Ev (n + 2)
 ```
 
 ::::full
@@ -1089,9 +1082,9 @@ theorem ev_double (n : Nat) : Ev n.double := by
   solution!
     induction n
     case zero =>
-      rw [double_zero]; exact Ev.ev_0
-    case succ n IH =>
-      rw [double_succ]; exact Ev.ev_succ_succ _ IH
+      rw [Nat.double_zero]; exact Ev.ev_0
+    case succ n ih =>
+      rw [Nat.double_succ]; exact Ev.ev_succ_succ _ ih
 ```
 :::::
 
@@ -1151,10 +1144,7 @@ theorem Perm3_refl : ∀ (α : Type) (a b c : α ), Perm3 [a, b, c] [a, b, c] :=
     . apply Perm3.perm3_swap12
 ```
 
-:::gradeTheorem "0.5" "Perm3_ex1"
-:::
-
-:::gradeTheorem "0.5" "Perm3_refl"
+:::gradeTheorem "0.5" Perm3_ex1 Perm3_refl
 :::
 :::::
 
@@ -1219,11 +1209,11 @@ using `cases`.
 theorem ev_inversion : ∀ (n : Nat),
     Ev n →
     (n = 0) ∨ ∃ n', n = n' + 2 ∧ Ev n' := by
-    intro n H
-    cases H
+    intro n h
+    cases h
     case ev_0 =>
       left; rfl
-    case ev_succ_succ n H =>
+    case ev_succ_succ n h =>
       right; exists n
 ```
 
@@ -1246,10 +1236,10 @@ theorem le_inversion : ∀ (n m : Nat),
   Le n m →
   (n = m) ∨ (∃ m', m = m' + 1 ∧ Le n m') := by
   solution!
-    intros n m E
-    cases E
+    intros n m h
+    cases h
     case refl => left; rfl
-    case step m H => right; exists m
+    case step m h => right; exists m
 ```
 :::::
 
@@ -1509,10 +1499,9 @@ theorem ev_4_ev_n : ∀ n,
   case ev_succ_succ h' => apply ev_succ_succ_ev; exact h'
 ```
 
-:::gradeTheorem 1 "ev_4_ev_n"
+:::gradeTheorem 1 ev_4_ev_n
 :::
 
-- \[\]
 :::::
 
 :::::exercise (rating := 1) (name := "ev5_nonsense")
@@ -1530,7 +1519,6 @@ theorem ev5_nonsense : Ev 5 → 2 + 2 = 9 := by
       inversion h''
 ```
 
-- \[\]
 :::::
 
 ::::::
@@ -1657,7 +1645,7 @@ This whole part of the section is a mess!!
 ```lean
 /-- warning: declaration uses `sorry` -/
 #guard_msgs in
-example (n : Nat) : Ev n → Even n := by
+example (n : Nat) : Ev n → Nat.Even n := by
   /- We could try to proceed by case analysis or induction on `n`.  But
       since `Ev` is mentioned in a premise, this strategy seems
       unpromising, because (as we've noted before) the induction
@@ -1689,7 +1677,7 @@ example (n : Nat) : Ev n → Even n := by
     of `n`.  Indeed, it is not difficult to convince Lean that this
     intermediate result would suffice. -/
     have he : (∃ (k' : Nat), n' = k'.double) → (∃ (n₀ : Nat), n' + 2 = n₀.double) := by
-      intro ⟨k, hk⟩; exists (k + 1); rw [double_succ, hk]
+      intro ⟨k, hk⟩; exists (k + 1); rw [Nat.double_succ, hk]
     apply he
     /- Unfortunately, now we are stuck: we are trying to prove another instance
         of the same theorem we set out to prove -- only here we are
@@ -1746,7 +1734,7 @@ that the property we are trying to prove holds for `n'`.
 Let's try proving that lemma again:
 
 ```lean
-theorem ev_Even : ∀ n, Ev n → Even n := by
+theorem Nat.ev_Even : ∀ n, Ev n → Even n := by
   intro n h
   induction h
   /- h = ev_0 -/
@@ -1769,9 +1757,9 @@ The equivalence between the second and third definitions of
 evenness now follows.
 
 ```lean
-theorem ev_Even_iff : ∀ n, Ev n ↔ Even n := by
+theorem Nat.ev_Even_iff : ∀ n, Ev n ↔ Even n := by
   intro n; apply Iff.intro
-  . intro h; exact ev_Even _ h
+  . intro h; exact Nat.ev_Even _ h
   . intro ⟨k, hk⟩; rw [hk]; exact ev_double k
 ```
 
@@ -1829,7 +1817,7 @@ theorem ev_plus_plus : ∀ n m p,
       apply ev_sum
       . assumption
       . assumption
-    . rw [←double_add]; exact ev_double n
+    . rw [←Nat.double_add]; exact ev_double n
 ```
 :::::
 
@@ -1860,19 +1848,19 @@ evidence is to prove the equivalence of these definitions:
 
 :::::exercise (rating := 2) (name := "in_mem")
 ```lean
-theorem in_mem α (x : α) (l : List α) : In x l ↔ x ∈ l := by
+theorem in_mem α (x : α) (l : List α) : List.In x l ↔ x ∈ l := by
   solution!
     constructor
     . intro h; induction l with
-      | nil => rw [In_nil] at h; contradiction
+      | nil => apply List.In_nil at h; contradiction
       | cons hd tl ih =>
-        rw [In_cons] at h
+        rw [List.In_cons] at h
         obtain h | h := h
         . subst h; constructor
         . constructor; exact ih h
     . intro h; induction h with
-      | head l' => rw [In_cons]; left; rfl
-      | tail y h ih => rw [In_cons]; right; assumption
+      | head l' => rw [List.In_cons]; left; rfl
+      | tail y h ih => rw [List.In_cons]; right; assumption
 ```
 :::::
 
@@ -1891,7 +1879,7 @@ relation:
 ```lean
 namespace ClosReflTransRemainder
 
-inductive ClosReflTrans {α: Type} (R: α → α → Prop) : α → α → Prop where
+inductive ClosReflTrans {α : Type} (R : α → α → Prop) : α → α → Prop where
   | rt_step (x y : α) :
       R x y →
       ClosReflTrans R x y
@@ -1982,7 +1970,7 @@ alternative definition for `Ev`:
 inductive Ev' : Nat → Prop where
   | ev'_0 : Ev' 0
   | ev'_2 : Ev' 2
-  | ev'_sum n m (Hn : Ev' n) (Hm : Ev' m) : Ev' (n + m)
+  | ev'_sum n m (h₁ : Ev' n) (h₂ : Ev' m) : Ev' (n + m)
 ```
 
 Prove that this definition is logically equivalent to the old one.
@@ -2223,7 +2211,7 @@ will generate two cases. In the first case, `e1 = e2`, and it
 will replace instances of `e2` with `e1` in the goal and context.
 In the second case, `e2 = n' + 1` for some `n'` for which `le e1 n'`
 holds, and it will replace instances of `e2` with `n' + 1`.
-Doing `inversion H` will remove impossible cases and add generated
+Doing `inversion h` will remove impossible cases and add generated
 equalities to the context for further use. Doing `induction h`
 will, in the second case, add the induction hypothesis that the
 goal holds when `e2` is replaced with `n'`.
@@ -2242,7 +2230,7 @@ theorem le_trans : ∀ (m n o : Nat), m ≤ n → n ≤ o → m ≤ o := by
     case step m' h' ih => constructor; exact ih
 ```
 
-:::gradeTheorem "0.5" "le_trans"
+:::gradeTheorem "0.5" le_trans
 :::
 
 ```lean
@@ -2253,7 +2241,7 @@ theorem zero_le_n : ∀ n, 0 ≤ n := by
     case succ n ih => constructor; assumption
 ```
 
-:::gradeTheorem "0.5" "zero_le_n"
+:::gradeTheorem "0.5" zero_le_n
 :::
 
 ```lean
@@ -2269,7 +2257,7 @@ theorem n_le_m__succ_n_le_succ_m : ∀ n m,
       assumption
 ```
 
-:::gradeTheorem "0.5" "n_le_m__Sn_le_Sm"
+:::gradeTheorem "0.5" n_le_m__succ_n_le_succ_m
 :::
 
 ```lean
@@ -2285,7 +2273,7 @@ theorem succ_n_le_succ_m__n_le_m : ∀ n m,
       . assumption
 ```
 
-:::gradeTheorem 1 "Sn_le_Sm__n_le_m"
+:::gradeTheorem 1 succ_n_le_succ_m__n_le_m
 :::
 
 ```lean
@@ -2298,9 +2286,10 @@ theorem le_add_l : ∀ (a b : Nat), a ≤ a + b := by
       rw [Nat.succ_add]
       apply n_le_m__succ_n_le_succ_m
       assumption
-  -- GRADE_THEOREM 0.5: le_add_l
-  -- []
 ```
+
+:::gradeTheorem "0.5" le_add_l
+:::
 :::::
 
 :::::exercise (rating := 2) (name := "plus_le_facts1")
@@ -2326,7 +2315,7 @@ theorem le_add_l : ∀ (a b : Nat), a ≤ a + b := by
         . apply Nat.le.step; assumption
 ```
 
-:::gradeTheorem 1 "add_le"
+:::gradeTheorem 1 add_le
 :::
 
 ```lean
@@ -2351,7 +2340,7 @@ theorem add_le_cases : ∀ (n m p q : Nat),
         . right; assumption
 ```
 
-:::gradeTheorem 1 "add_le_cases"
+:::gradeTheorem 1 add_le_cases
 :::
 :::::
 
@@ -2371,7 +2360,7 @@ theorem add_le_compat_l : ∀ (n m p : Nat),
       assumption
 ```
 
-:::gradeTheorem "0.5" "add_le_compat_l"
+:::gradeTheorem "0.5" add_le_compat_l
 :::
 
 ```lean
@@ -2385,7 +2374,7 @@ theorem plus_le_compat_r : ∀ (n m p : Nat),
     assumption
 ```
 
-:::gradeTheorem "0.5" "plus_le_compat_r"
+:::gradeTheorem "0.5" plus_le_compat_r
 :::
 
 ```lean
@@ -2400,7 +2389,7 @@ theorem le_plus_trans : ∀ (n m p : Nat),
       rw [←Nat.add_assoc]; constructor; assumption
 ```
 
-:::gradeTheorem 1 "le_plus_trans"
+:::gradeTheorem 1 le_plus_trans
 :::
 :::::
 
@@ -2432,7 +2421,7 @@ theorem lt_ge_cases : ∀ (n m : Nat),
           exact ih
 ```
 
-:::gradeTheorem "1.5" "lt_ge_cases"
+:::gradeTheorem "1.5" lt_ge_cases
 :::
 
 ```lean
@@ -2444,7 +2433,7 @@ theorem n_lt_m__n_le_m : ∀ (n m : Nat),
     apply succ_n_le_succ_m__n_le_m; constructor; assumption
 ```
 
-:::gradeTheorem "0.5" "n_lt_m__n_le_m"
+:::gradeTheorem "0.5" n_lt_m__n_le_m
 :::
 
 ```lean
@@ -2464,7 +2453,7 @@ theorem plus_lt : ∀ (n₁ n₂ m : Nat),
       . rw [Nat.add_comm n₂]; assumption
 ```
 
-:::gradeTheorem 1 "plus_lt"
+:::gradeTheorem 1 plus_lt
 :::
 :::::
 
@@ -2485,7 +2474,7 @@ theorem ble_complete : ∀ (n m : Nat),
         apply ih; apply h
 ```
 
-:::gradeTheorem 2 "ble_complete"
+:::gradeTheorem 2 ble_complete
 :::
 
 ```lean
@@ -2506,7 +2495,7 @@ theorem ble_correct : ∀ n m,
         assumption
 ```
 
-:::gradeTheorem 2 "ble_correct"
+:::gradeTheorem 2 ble_correct
 :::
 
 Hint: The next two can easily be proved without using `induction`.
@@ -2526,7 +2515,7 @@ theorem ble_iff : ∀ n m,
     . apply ble_correct
 ```
 
-:::gradeTheorem 1 "ble_iff"
+:::gradeTheorem 1 ble_iff
 :::
 
 ```lean
@@ -2539,7 +2528,7 @@ theorem ble_true_trans : ∀ n m o,
 -- /HIDE
 ```
 
-:::gradeTheorem 1 "ble_true_trans"
+:::gradeTheorem 1 ble_true_trans
 :::
 :::::
 
@@ -2776,7 +2765,7 @@ but it is _not_ a subsequence of any of the lists
 [5,6,2,1,7,3,8].
 ```
 
-- Define an inductive proposition `subseq` on `list Nat` that
+- Define an inductive proposition `subseq` on `List Nat` that
   captures what it means to be a subsequence.  There are a number
   of correct ways to do this. You should make sure that your
   definition behaves correctly on all the positive and negative
@@ -2906,13 +2895,13 @@ theorem subseq_trans : ∀ (l₁ l₂ l₃ : List Nat),
       constructor; apply ih; assumption;
 ```
 
-:::gradeTheorem 1 "subseq_refl"
+:::gradeTheorem 1 subseq_refl
 :::
 
-:::gradeTheorem 2 "subseq_app"
+:::gradeTheorem 2 subseq_app
 :::
 
-:::gradeTheorem 3 "subseq_trans"
+:::gradeTheorem 3 subseq_trans
 :::
 :::::
 
@@ -3073,14 +3062,14 @@ between every pair of natural numbers.
 inductive TotalRelation : Nat → Nat → Prop where
   -- SOLUTION
   | tot n m : TotalRelation n m
--- /SOLUTION
+  -- END SOLUTION
 
 theorem total_relation_is_total : ∀ n m, TotalRelation n m := by
   solution!
     intro _ _; constructor
 ```
 
-:::gradeTheorem 2 "total_relation_is_total"
+:::gradeTheorem 2 total_relation_is_total
 :::
 :::::
 
@@ -3127,7 +3116,7 @@ theorem empty_relation_is_empty : ∀ n m, ¬ EmptyRelation n m := by
     intros n m contra; cases contra
 ```
 
-:::gradeTheorem 2 "empty_relation_is_empty"
+:::gradeTheorem 2 empty_relation_is_empty
 :::
 :::::
 
@@ -3250,7 +3239,7 @@ and
 [4, 3].
 ```
 
-Now, suppose we have a set `α`, a function `test: α→bool`, and a
+Now, suppose we have a type `α`, a function `test : α → Bool`, and a
 list `l` of type `List α`.  Suppose further that `l` is an
 in-order merge of two lists, `l₁` and `l₂`, such that every item
 in `l₁` satisfies `test` and no item in `l₂` satisfies test.  Then
@@ -3310,11 +3299,11 @@ theorem merge_filter : ∀ (α : Type) (test: α→ Bool) (l l₁ l₂ : List α
          | (x1::rest1,x2::rest2) =>
               (map (fun l => cons x1 l) (all_merges rest1 l₂))
            ++ (map (fun l => cons x2 l) (all_merges l₁ rest2))
-         end. 
+         end.
 ```
 ::::
 
-:::gradeTheorem 6 "merge_filter"
+:::gradeTheorem 6 merge_filter
 :::
 :::::
 
@@ -3533,25 +3522,25 @@ forwards.
 
 - Define an inductive proposition `Pal` on `List α` that
   captures what it means to be a palindrome. (Hint: You'll need
-  three cases.
+  three cases.)
 
-- Prove (`pal_app_reverse`) that
+- Prove `pal_app_reverse`, which states that
 
 ```display
-∀ l, pal (l ++ l.reverse).
+∀ l, Pal (l ++ l.reverse).
 ```
 
-- Prove (`pal_reverse` that)
+- Prove `pal_reverse`, which states that
 
 ```display
-∀ l, pal l → l = l.reverse.
+∀ l, Pal l → l = l.reverse.
 ```
 
 For extra credit, try proving the same theorems with an alternate
 definition with a _single_ constructor of this type:
 
 ```display
-∀ l, l = l.reverse → pal l
+∀ l, l = l.reverse → Pal l
 ```
 
 :::dev
@@ -3619,7 +3608,7 @@ theorem pal_app_reverse : ∀ (α:Type) (l : List α),
       constructor; assumption
 ```
 
-:::gradeTheorem 3 "pal_app_reverse"
+:::gradeTheorem 3 pal_app_reverse
 :::
 
 :::dev PotentialImprovement
@@ -3638,9 +3627,10 @@ theorem pal_reverse : ∀ (α:Type) (l: List α) , Pal l → l = l.reverse := by
     case pal_consnoc x l hp ih =>
       rw [List.reverse_cons, List.reverse_append, ←List.cons_append, ←ih]
       congr
-  -- GRADE_THEOREM 3: pal_reverse
-  -- []
 ```
+
+:::gradeTheorem 3 pal_reverse
+:::
 
 :::dev "Daniel Sainati (dsainati1)" NOW
 This one is super annoying without simp.
@@ -3832,9 +3822,9 @@ previous exercise, prove that
 :::::
 
 :::::exercise (rating := 4) (name := "NoDup") (level := Advanced)
-Use the `∈` property to define a proposition `disjoint α l₁ l₂`,
+Use the `∈` property to define a proposition `disjoint l₁ l₂`,
 which should be provable exactly when `l₁` and `l₂` are
-lists (with elements of type α) that have no elements in
+lists (with elements of type `α`) that have no elements in
 common.
 
 ```lean
@@ -3844,12 +3834,13 @@ def disjoint {α:Type} (l₁ l₂: List α) :=
 -- END SOLUTION
 ```
 
-Next, use `∈` to define an inductive proposition \[NoDup α
-l\], which should be provable exactly when `l` is a list (with
+Next, use `∈` to define an inductive proposition `NoDup l`,
+which should be provable exactly when `l` is a list (with
 elements of type `α`) where every member is different from every
-other.  For example, `NoDup Nat [1, 2, 3,  4]` and `NoDup Bool []`
-should be provable, while `NoDup Nat \[1, 2, 1`\] and
-`NoDup Bool [true, true]` should not be.
+other.  For example, `NoDup ([1, 2, 3, 4] : List Nat)` and
+`NoDup ([] : List Bool)` should be provable, while
+`NoDup ([1, 2, 1] : List Nat)` and
+`NoDup ([true, true] : List Bool)` should not be.
 
 ```lean
 -- SOLUTION
@@ -3954,12 +3945,6 @@ theorem NoDup_disjoint_app : ∀ {α:Type} (l₁ l₂: List α),
 :::::
 
 :::::exercise (rating := 5) (name := "pigeonhole_principle") (level := Advanced)
-:::gradeTheorem 2 "in_split"
-:::
-
-:::gradeTheorem 6 "pigeonhole_principle"
-:::
-
 The _pigeonhole principle_ states a basic fact about counting: if
 we distribute more than `n` items into `n` pigeonholes, some
 pigeonhole must contain at least two items.  As often happens, this
@@ -3983,6 +3968,8 @@ theorem mem_split : ∀ (α:Type) (x:α) (l:List α),
         subst ih
         exists hd :: l₁'; exists l₂'
 ```
+:::gradeTheorem 2 mem_split
+:::
 
 Now define a property `repeats` such that `repeats α l` asserts
 that `l` contains at least one repeated element (of type `α`).
@@ -4087,6 +4074,9 @@ theorem pigeonhole_principle:
           apply (IHl1' l2' IN2 LEN2).
   Qed. -/
 ```
+
+:::gradeTheorem 6 pigeonhole_principle
+:::
 
 :::dev PotentialImprovement
 ```
@@ -4524,4 +4514,3 @@ End Pigeon.
 ```
 :::
 ::::::
-
