@@ -13,8 +13,6 @@ import SFLMeta.SlideBreak
 import SFLMeta.Solution
 import SFLMeta.Terse
 
-import LF.Automation
-
 set_option autoImplicit false
 
 open Verso.Genre Manual
@@ -1340,6 +1338,44 @@ This property is quite useful for reasoning about languages with variable bindin
 namespace Reflection
 ```
 
+In this section, we will make use of some definitions and theorems
+about natural numbers that we discussed and proved in previous chapters;
+copy your solutions to those problems here:
+
+```lean
+namespace Nat
+
+def even (n : Nat) :=
+  match n with
+  | 0     => true
+  | 1     => false
+  | n + 2 => even n
+
+theorem even_zero : even 0 = true := by rfl
+
+theorem even_succ (n : Nat) :
+    even (n + 1) = !(even n) := by
+  solution!
+    induction n with
+    | zero =>
+      rfl
+    | succ n' ih =>
+      rw [even, ih, Bool.not_not]
+
+def double (n : Nat) : Nat :=
+  match n with
+  | 0    => 0
+  | n' + 1 => double n' + 2
+
+theorem double_zero : double 0 = 0 := by rfl
+
+theorem double_succ (n : Nat) : double (n + 1) = double n + 2 := by rfl
+
+def Even x := ∃ n : Nat, x = Nat.double n
+
+end Nat
+```
+
 We've seen two different ways of expressing logical claims in Lean: with booleans (of type
 {name}`Bool`), and with propositions (of type {lean}`Prop`).
 
@@ -1406,7 +1442,7 @@ the same set of natural numbers!
 Fortunately, they do! To prove this, we first need two helper lemmas.
 
 ```lean
-theorem even_double (k : Nat) : (k.double).even = true := by
+theorem even_double (k : Nat) : Nat.even (Nat.double k) = true := by
   induction k with
   | zero =>
     rewrite [Nat.double_zero, Nat.even_zero]
@@ -1420,14 +1456,14 @@ theorem even_double (k : Nat) : (k.double).even = true := by
 
 ```lean
 theorem even_double_exists (n : Nat) :
-    ∃ (k : Nat), n = bif n.even then k.double else k.double + 1 := by solution!(
+    ∃ (k : Nat), n = bif Nat.even n then Nat.double k else Nat.double k + 1 := by solution!(
   induction n with
   | zero =>
     exists 0
   | succ n ih =>
     obtain ⟨k, ih⟩ := ih
     rewrite [Nat.even_succ]
-    by_cases h : n.even
+    by_cases h : Nat.even n
     · exists k
       rewrite [h] at ih ⊢
       subst ih
@@ -1444,7 +1480,7 @@ theorem even_double_exists (n : Nat) :
 Now the main theorem:
 
 ```lean
-theorem even_iff_Even {n : Nat} : n.even = true ↔ Nat.Even n where
+theorem even_iff_Even {n : Nat} : Nat.even n = true ↔ Nat.Even n where
   mp h := by
     have ⟨k, hk⟩ := even_double_exists n
     rewrite [h, cond_true] at hk
