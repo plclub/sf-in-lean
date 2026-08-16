@@ -543,6 +543,7 @@ theorem id_unique {α : Type} {m₁ m₂ : Monoid α} (h : m₁.op = m₂.op) : 
     rw [h]
     -- then, we can use m₂'s right id
     rw [right_id₂]
+  -- the goal `m₁.id = m₂.id` is equivalent with `id₁ = id₂` even though it displays `Monoid.id = Monoid.id`
   exact h'
 ```
 
