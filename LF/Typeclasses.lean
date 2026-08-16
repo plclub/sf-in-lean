@@ -1180,37 +1180,17 @@ instance  {α β : Type} : MyGetElem (PartialMap α β) α (Option β) where
 theorem getElem_def  {α β : Type} (m : PartialMap α β) (a : α) : m[a] = m.toTotal[a] := rfl
 ```
 
-:::dev "Niklas Halonen (xhalo32)" NOW
-The following few paragrahps are out-of-date because `TotalMap` is also a structure.
-:::
-
 Remember that we discussed earlier with total maps that using accessing the `inner` field
 and performing function application application exposes the implementation,
 and that's why we introduced a new notation {name}`MyGetElem`?
-Here we take extend that concept, and instead of using a `def` for partial maps, like this...
+Here we extend that concept, and instead of using a `def` for partial maps, like this...
 
 ```display
 def PartialMap (α : Type) (β : Type) := TotalMap α (Option β)`
 ```
 
 ...we define partial maps as a structure containing a total map.
-This more strongly hides the fact that it's a total map.
-
-Now, the type system doesn't consider `PartialMap α β` to be definitionally equal to `TotalMap α (Option β)`,
-so the following equality doesn't type check:
-
-```lean -keep +error (name := empty_eq)
-example  {α β : Type} : (∅ : PartialMap α β) = (∅ : TotalMap α (Option β)) := by rfl
-```
-
-```leanOutput empty_eq
-Type mismatch
-  ∅
-has type
-  TotalMap α (Option β)
-but is expected to have type
-  PartialMap α β
-```
+This more strongly hides the fact that it's implemented using a total map.
 
 Updating a partial map at a key means storing a {name}`some` value there.
 To update, we create a new partial map from `a →ₜ some b ; m.toTotal` by wrapping it in angle brackets, i.e. using the anonymous constructor syntax.
