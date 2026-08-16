@@ -553,6 +553,7 @@ class instances instead of normal structures, we preface our tuple with the `@` 
 When stepping through the above proof, if the notation is confusing to you,
 remember that you can set `set_option pp.all true` or `set_option pp.explicit true`
 to make Lean show you more clearly what is going on.
+For example, the goal is displayed as `Monoid.id = Monoid.id` since the instances `m₁` and `m₂` are implicit arguments to `Monoid.id`. Setting `pp.explicit true` displays the goal as `@Eq α (@Monoid.id α m₁) (@Monoid.id α m₂)`.
 
 A _group_ is a special kind of monoid with an _inverse_ operation `inv`, which has the property that
 `∀ x, inv x ⊗ x = id = x ⊗ inv x`. We can extend the definition of a {name}`Monoid` to capture this
