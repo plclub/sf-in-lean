@@ -3387,10 +3387,10 @@ theorem hoare_while {P : Assertion} {b : Bexp} {c : Com}
   `while` are dismissed because their equations are contradictory. -/
   generalize heq : (imp { while (~b) { ~c } }) = cmd at heval
   induction heval with
-  | whileFalse b0 s0 c0 hb =>
+  | @whileFalse b0 s0 c0 hb =>
     injection heq with hbeq hceq
     simp_all
-  | whileTrue s0 s0' s0'' b0 c0 hb hc hloop ih1 ih2 =>
+  | @whileTrue s0 s0' s0'' b0 c0 hb hc hloop ih1 ih2 =>
     injection heq with hbeq hceq
     subst hbeq hceq
     exact ih2 (hhoare hc ⟨hpre, hb⟩) rfl
