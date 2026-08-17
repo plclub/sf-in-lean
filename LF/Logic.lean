@@ -906,7 +906,7 @@ answer, even if it's a perfectly sensible one.
 
 :::dev "Benjamin Pierce (bcpierce00)"
 ```
-INCOMING BOCHUM MATERIAL (old/bochum-lf-updates/Logic.v): the five
+INCOMING BOCHUM MATERIAL summarized by Claude (old/bochum-lf-updates/Logic.v): the five
    quizzes below were reworked in the Bochum LF updates -- addressing
    the concern in the dev note above.  Every option list was replaced
    by the following uniform one (with `discriminate` in place of

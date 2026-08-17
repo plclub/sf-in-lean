@@ -2459,7 +2459,7 @@ theorem plus_lt : ∀ (n₁ n₂ m : Nat),
 
 :::dev "Benjamin Pierce (bcpierce00)"
 ```
-INCOMING BOCHUM MATERIAL (old/bochum-lf-updates/IndProp.v): the
+INCOMING BOCHUM MATERIAL summarized by Claude (old/bochum-lf-updates/IndProp.v): the
    Bochum LF updates rename the two halves of this exercise to match
    standard soundness/completeness terminology:
 
