@@ -14,7 +14,7 @@
 
 - Install VSCode if you don't already have it.
 
-- Install the **Lean 4** extension from its Extensions tab.
+- Install the Lean 4 extension from its Extensions tab.
 
 - Open your clone in VSCode and open any `.lean` file in the `LF`
   directory. The first time you do this, the extension will offer to
