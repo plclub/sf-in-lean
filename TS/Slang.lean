@@ -17,6 +17,9 @@ chosen page width, and for terse mode it will be worse.
 :::
 
 ::::full
+In *Logical Foundations* (LF) we went through the basics of how to use Lean to
+prove theorems and write functional programs. Now, we begin to shift gears
+to using it to reason about properties of programs and programming languages.
 We begin by looking at a language we call *Slang* (for _simple
 language_). Despite its simplicity, Slang lets us introduce key concepts for
 specifying the _syntax_ and _semantics_ of programming languages and show how
@@ -88,7 +91,7 @@ inductive Bexp where
 In this chapter, we'll ignore the translation from the _concrete
 syntax_ that a programmer would actually write to these abstract syntax
 trees -- the process that, for example, would translate the string
-`"1 + 2 * 3"` to the AST `.plus (.num 1) (.mult (.num 2) (.num 3))`.
+{lean}`"1 + 2 * 3"` to the AST `.plus (.num 1) (.mult (.num 2) (.num 3))`.
 
 For comparison, here's a conventional BNF (Backus-Naur Form) grammar
 defining the same abstract syntax:
@@ -140,36 +143,28 @@ implementations and proofs.
 _Evaluating_ an arithmetic expression produces a number.
 
 ```lean
-def Aexp.eval (a : Aexp) : Nat :=
+namespace Aexp
+def eval (a : Aexp) : Nat :=
   match a with
   | num   n     =>  n
   | plus  a1 a2 =>  a1.eval + a2.eval
   | minus a1 a2 =>  a1.eval - a2.eval
   | mult  a1 a2 =>  a1.eval * a2.eval
+
+@[simp] theorem eval_num (n : Nat) : (num n).eval = n := rfl
+@[simp] theorem eval_plus (a1 a2 : Aexp) : (plus a1 a2).eval = a1.eval + a2.eval := rfl
+@[simp] theorem eval_minus (a1 a2 : Aexp) : (minus a1 a2).eval = a1.eval - a2.eval := rfl
+@[simp] theorem eval_mult (a1 a2 : Aexp) : (mult a1 a2).eval = a1.eval * a2.eval := rfl
+
+example : eval (.plus (.num 2) (.num 2)) = 4 := by simp
+end Aexp
 ```
 
-::::full
-By convention, we pair the definition with one _simplification lemma_ per constructor,
-specifying
-how `eval` behaves on that constructor. Proofs then rewrite by these lemmas rather
-than peeking through the definition of `eval`.  We tag each lemma `@[simp]`, so `simp`
-applies them automatically.
-::::
+Similarly, evaluating a boolean expression yields a boolean.
 
 ```lean
-@[simp] theorem Aexp.eval_num (n : Nat) : (num n).eval = n := rfl
-@[simp] theorem Aexp.eval_plus (a1 a2 : Aexp) : (plus a1 a2).eval = a1.eval + a2.eval := rfl
-@[simp] theorem Aexp.eval_minus (a1 a2 : Aexp) : (minus a1 a2).eval = a1.eval - a2.eval := rfl
-@[simp] theorem Aexp.eval_mult (a1 a2 : Aexp) : (mult a1 a2).eval = a1.eval * a2.eval := rfl
-
-example : Aexp.eval (.plus (.num 2) (.num 2)) = 4 := by simp
-```
-
-Similarly, evaluating a boolean expression yields a boolean, and we give it
-the same treatment.
-
-```lean
-def Bexp.eval (b : Bexp) : Bool :=
+namespace Bexp
+def eval (b : Bexp) : Bool :=
   match b with
   | bool b     =>  b
   | eq   a1 a2 =>  a1.eval == a2.eval
@@ -179,16 +174,18 @@ def Bexp.eval (b : Bexp) : Bool :=
   | not  b1    =>  !eval b1
   | and  b1 b2 =>  eval b1 && eval b2
 
-@[simp] theorem Bexp.eval_bool (b : Bool) : (bool b).eval = b := rfl
-@[simp] theorem Bexp.eval_eq (a1 a2 : Aexp) : (eq a1 a2).eval = (a1.eval == a2.eval) := rfl
-@[simp] theorem Bexp.eval_neq (a1 a2 : Aexp) : (neq a1 a2).eval = (a1.eval != a2.eval) := rfl
-@[simp] theorem Bexp.eval_le (a1 a2 : Aexp) : (le a1 a2).eval = (a1.eval ≤ a2.eval : Bool) := rfl
-@[simp] theorem Bexp.eval_gt (a1 a2 : Aexp) : (gt a1 a2).eval = (a1.eval > a2.eval : Bool) := rfl
-@[simp] theorem Bexp.eval_not (b : Bexp) : (not b).eval = !b.eval := rfl
-@[simp] theorem Bexp.eval_and (b1 b2 : Bexp) : (and b1 b2).eval = (b1.eval && b2.eval) := rfl
+@[simp] theorem eval_bool (b : Bool) : (bool b).eval = b := rfl
+@[simp] theorem eval_eq (a1 a2 : Aexp) : (eq a1 a2).eval = (a1.eval == a2.eval) := rfl
+@[simp] theorem eval_neq (a1 a2 : Aexp) : (neq a1 a2).eval = (a1.eval != a2.eval) := rfl
+@[simp] theorem eval_le (a1 a2 : Aexp) : (le a1 a2).eval = (a1.eval ≤ a2.eval : Bool) := rfl
+@[simp] theorem eval_gt (a1 a2 : Aexp) : (gt a1 a2).eval = (a1.eval > a2.eval : Bool) := rfl
+@[simp] theorem eval_not (b : Bexp) : (not b).eval = !b.eval := rfl
+@[simp] theorem eval_and (b1 b2 : Bexp) : (and b1 b2).eval = (b1.eval && b2.eval) := rfl
+end Bexp
 ```
 
-It's worth noting that `≤` and `>` are `Prop`-valued, i.e. `a1.eval st ≤ a2.eval st` is a proposition, but {name}`Bexp.eval` returns a {name}`Bool` so Lean implicitly inserts a {name}`decide` coercion.
+It's worth noting that `≤` and `>` are {lean}`Prop`-valued, i.e. `a1.eval st ≤ a2.eval st` is a proposition,
+but {name}`Bexp.eval` returns a {name}`Bool`, so Lean implicitly inserts a {name}`decide` coercion.
 You can observe the call to {name}`decide` by hovering over {name}`Bexp.eval_le` and {name}`Bexp.eval_gt`.
 
 ::::quiz
@@ -224,7 +221,7 @@ def Aexp.optimize0plus (a : Aexp) : Aexp :=
 ```
 
 ::::full
-To gain confidence that our optimization is doing the right thing we
+To gain confidence that our optimization is doing the right thing, we
 can test it on some examples and see if the output looks OK.
 ::::
 
@@ -242,11 +239,11 @@ evaluating an optimized expression _always_ gives the same result as
 the original -- we should prove it!
 
 Here is a first, deliberately explicit, proof, by induction on `a`. The
-interesting case is `plus`: because `optimize0plus` treats `plus (num 0) e`
+interesting case is {name}`Aexp.plus`: because {name}`Aexp.optimize0plus` treats `plus (num 0) e`
 specially, we case-split on the left operand `a1` -- and, when it is a numeral,
 on whether that numeral is `0` -- to line the proof up with the function's own
 branches. Once the constructors are exposed, each case is discharged by
-essentially the same incantation: unfold `optimize0plus`, rewrite `eval` by its
+essentially the same incantation: unfold {name}`Aexp.optimize0plus`, rewrite {name}`Aexp.eval` by its
 characterizing lemmas, then finish with the induction hypotheses. Notice how
 repetitive that makes the proof.
 ::::
@@ -286,17 +283,50 @@ theorem optimize0plus_sound (a : Aexp) :
 ::::full
 We can do much better. The case analysis we performed by hand -- peeling
 `plus` apart to reach the `plus (num 0) e` branch -- is exactly the case
-analysis that `optimize0plus` itself performs. The `fun_induction` tactic
+analysis that {name}`Aexp.optimize0plus` itself performs.
+
+The {tactic}`fun_induction` tactic
 inducts along a function's *own* recursion structure: `fun_induction
 Aexp.optimize0plus a` hands us one goal per branch of `optimize0plus` -- the
-special `plus (num 0) e` branch included -- so the nested `cases` disappear.
+special `plus (num 0) e` branch included -- so the nested {tactic}`cases` disappear.
 
-Every remaining goal now has the same shape, so we can attack them uniformly
-with the `<;>` combinator, which runs a single tactic on *all* the goals
-produced by the induction.  That single tactic is `simp_all`: it rewrites
-`eval` by the `@[simp]` characterizing lemmas and uses the induction hypotheses
--- which `simp_all` picks up from the local context automatically -- to close
+Before applying `fun_induction` to a function as complex as {name}`Aexp.optimize0plus`,
+let's see how it works on somthing simpler. Recall the definition of `Nat.even` and `Nat.odd`:
+
+```lean
+def Nat.even (n : Nat) :=
+  match n with
+  | 0 => true
+  | 1 => false
+  | n' + 2 => even n'
+
+def Nat.odd (n : Nat) := Nat.even (n + 1)
+```
+
+Normally, if we perform induction on `n`, we get two cases - `0` and `n' + 1` -
+one for each of the cases in the inductive definition of natural numbers.
+Functional induction on {name}`Nat.even`, however, gives us three cases - `0`, `1`, and `n' + 2` -
+corresponding to each of the cases of its definition.
+
+```lean
+example (n : Nat) (h : Nat.even n = true) : Nat.odd n = false := by
+  fun_induction Nat.even n
+  . rfl
+  . contradiction
+  . simp [Nat.odd, Nat.even] at *
+    lia
+```
+
+Now let's try using {tactic}`fun_induction` on {name}`Aexp.optimize0plus`. When we do this,
+every goal has the same shape, so we can attack them uniformly
+with the {tactic}`<;>` combinator and a single tactic, {tactic}`simp_all`, which rewrites
+{name}`Aexp.eval` by the `@[simp]` characterizing lemmas and uses the induction hypotheses
+-- which it picks up from the local context automatically -- to close
 each goal. The whole proof collapses to two lines.
+::::
+
+::::terse
+We can use {tactic}`fun_induction` to achieve a much shorter proof.
 ::::
 
 ```lean
@@ -305,20 +335,11 @@ theorem optimize0plus_sound' (a : Aexp) :
   fun_induction Aexp.optimize0plus a <;> simp_all
 ```
 
-:::dev PotentialImprovement
-Following a suggestion from berberman:
-`fun_induction` (and `simp_all`) are used here but not yet introduced to the
-reader: neither appears in the CONTRIBUTING.md tactic-introduction table, and
-`fun_induction` is not (yet) used in `Automation`. To be decided: introduce
-`fun_induction` in `Automation` (its natural home, since TS follows it) or
-locally here, and add it to the tactic table either way.
-:::
-
 :::::exercise (rating := 3) (name := "optimize0plusB_sound")
 Since the {name}`Aexp.optimize0plus` transformation doesn't change the value of an
-`Aexp`, we should be able to apply it to all the `Aexp`s that appear in a
-`Bexp` without changing the `Bexp`'s value.  Write a function that
-performs this transformation on `Bexp`s and prove it sound. Use the
+{name}`Aexp`, we should be able to apply it to all the {name}`Aexp`s that appear in a
+{name}`Bexp` without changing the {name}`Bexp`'s value.  Write a function that
+performs this transformation on {name}`Bexp`s and prove it sound. Use the
 combinators we've just seen to make the proof as short and elegant as
 possible.
 
@@ -416,25 +437,17 @@ the hypotheses during proofs involving the relation. For this reason we adopt th
 
 It will be convenient to have an infix notation for {name}`Aexp.EvalR`. We'll
 write `e ⇓ n` to mean that arithmetic expression `e` evaluates to
-value `n`.
+value `n`. The `⇓` symbol is typed `\Downarrow`.
 
 ```lean
 scoped notation:55 e:56 " ⇓ " n:56 => Aexp.EvalR e n
 ```
 
 ::::full
-In Lean the `notation` is declared right after the inductive.
+The `notation` is declared right after the inductive.
 The `scoped` keyword allows us to scope the notation to the present namespace so it doesn't
 collide with other evaluation relations later.
 ::::
-
-
-
-:::dev "Michael Hicks (mwhicks1)" BeforeNextRelease
-The Rocq version here says "As we saw in our case study of regular expressions
-in chapter IndProp, Rocq provides a way to use this notation in the definition of aevalR itself."
-It then re-shows the definition with Downarrow. We need to resolve how we want to do this.
-:::
 
 ## Inference Rule Notation
 
@@ -474,7 +487,7 @@ the moment, our arithmetic expressions don't include variables, but we'll
 soon be adding them.) The whole collection of rules is understood as being
 wrapped, implicitly, in an inductive declaration.
 In informal prose, this is sometimes
-indicated by saying something like "Let `Aexp.EvalR` be the smallest relation
+indicated by saying something like "Let {name}`Aexp.EvalR` be the smallest relation
 closed under the following rules...".
 
 To summarize: a group of inference rules corresponds to a single inductive
@@ -505,7 +518,7 @@ them:
 ```
 ::::
 
-:::dev "Benjamin Pierce (bcpierce00)"
+:::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement
 The first two quizzes here seem kind of boring.
 :::
 
@@ -558,7 +571,7 @@ alternative, assuming there are no namespace issues..
 :::::exercise (rating := 1) (name := "beval_rules")
 Here, again, is the definition of the {name}`Bexp.eval` function:
 
-```
+```display
 def Bexp.eval (b : Bexp) : Bool :=
   match b with
   | bool b     => b
@@ -571,47 +584,44 @@ def Bexp.eval (b : Bexp) : Bool :=
 ```
 
 Write out a corresponding definition of boolean evaluation as a relation
-(in inference rule notation).
+in inference rule notation.
 
 ::::solution
-:::dev "Benjamin Pierce (bcpierce00)"
-Don't understand the parenthetical comment here.
-:::
 
 ```
-Answer (`⇓b` is defined below):
+Answer (`⇓` is defined below):
 
                         -----------              (bool)
-                        bool b ⇓b b
+                        bool b ⇓ b
 
                         e1 ⇓ n1
                         e2 ⇓ n2
-                   ----------------------        (eq)
-                   eq e1 e2 ⇓b (n1 =? n2)
+                   ---------------------         (eq)
+                   eq e1 e2 ⇓ (n1 == n2)
 
                         e1 ⇓ n1
                         e2 ⇓ n2
-                 ----------------------------    (neq)
-                 neq e1 e2 ⇓b negb (n1 =? n2)
+                 -----------------------         (neq)
+                  neq e1 e2 ⇓ n1 != n2
 
                         e1 ⇓ n1
                         e2 ⇓ n2
-                   -----------------------       (le)
-                   le e1 e2 ⇓b (n1 <=? n2)
+                   --------------------------     (le)
+                   le e1 e2 ⇓ (Nat.ble n1 n2)
 
                         e1 ⇓ n1
                         e2 ⇓ n2
-                ----------------------------     (gt)
-                gt e1 e2 ⇓b negb (n1 <=? n2)
+                ------------------------------   (gt)
+                gt e1 e2 ⇓ negb (Nat.ble n1 n2)
 
-                          e ⇓b b
+                          e ⇓ b
                       ---------------            (not)
-                      not e ⇓b negb b
+                      not e ⇓ !b
 
-                        e1 ⇓b b1
-                        e2 ⇓b b2
+                        e1 ⇓ b1
+                        e2 ⇓ b2
                   -----------------------        (and)
-                  and e1 e2 ⇓b andb b1 b2
+                  and e1 e2 ⇓ b1 && b2
 ```
 ::::
 
@@ -659,9 +669,9 @@ the `all_goals` tactic, which we don't need.
 theorem Aexp.evalR_iff_eval' (a : Aexp) (n : Nat) :
     a ⇓ n ↔ a.eval = n := by
   workinclass!
-    constructor
-    · intro h; induction h <;> simp_all
-    · intro h; subst h; induction a <;> constructor <;> assumption
+    constructor <;> intro h
+    · induction h <;> simp_all
+    · subst h; induction a <;> constructor <;> assumption
 ```
 
 :::::exercise (rating := 3) (name := "bevalR")
@@ -681,23 +691,16 @@ inductive Bexp.EvalR : Bexp → Bool → Prop where
       EvalR (.and b1 b2) (tv1 && tv2)
   -- END SOLUTION
 
-scoped notation:55 e:56 " ⇓b " b:56 => Bexp.EvalR e b
+scoped notation:55 e:56 " ⇓ " b:56 => Bexp.EvalR e b
 ```
-
-:::dev "Michael Hicks (mwhicks1)"
-There is no keyboard shortcut for a subscript b, nor is there one for c
-(to use used with cevalR below). There are numbers, x, y, z, l, m, n, etc.
-:::
 
 ```lean
 theorem Bexp.evalR_iff_eval (b : Bexp) (bv : Bool) :
-    b ⇓b bv ↔ b.eval = bv := by
+    b ⇓ bv ↔ b.eval = bv := by
   solution!
-    constructor
-    · intro h
-      induction h <;> simp_all [Aexp.evalR_iff_eval]
-    · intro h
-      subst h
+    constructor <;> intro h
+    · induction h <;> simp_all [Aexp.evalR_iff_eval]
+    · subst h
       induction b <;> constructor <;> simp_all [Aexp.evalR_iff_eval]
 ```
 

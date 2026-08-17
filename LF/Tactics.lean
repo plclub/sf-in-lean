@@ -998,8 +998,8 @@ By default, most tactics work on the goal formula and leave
 the context unchanged.  However, most tactics also have a variant
 that performs a similar operation on a statement in the context.
 
-For example, the tactic "`dsimp at H`" performs simplification on
-the hypothesis `H` in the context.
+For example, the tactic "`dsimp at h`" performs simplification on
+the hypothesis `h` in the context.
 ::::
 
 ::::terse
@@ -1102,10 +1102,24 @@ so we won't import the whole thing here, but we have
 provided you `apply ... at ...` because it is quite useful.
 ::::
 
-:::dev "Daniel Sainati (dsainati1)" NOW
-this part has been changed
-from the original Rocq, let me know what you think
-:::
+::::full
+To apply a tactic in multiple places at the same time, you can list multiple hypotheses
+in a row after the `at`. You can also explicitly use a tactic on the goal (usually
+because you are applying the tactic to both a hypothesis and the goal) by including
+it after the `at` with the `⊢` symbol, written `\goal` or `\vdash`.
+::::
+
+::::terse
+You can apply tactics in multiple places at the same time, including the goal:
+::::
+
+```lean
+example (a b : Nat) (h₁ : a = 1 + 1) (h₂ : b = 1 + 2) :
+  Nat.ble (a, b).1 (a, b).2 := by
+  dsimp at h₁ h₂ ⊢
+  rw [h₁, h₂]
+  rfl
+```
 
 # Specializing Hypotheses
 
