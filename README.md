@@ -64,7 +64,7 @@ respectively).
 
 Students are expected to work through the student `.lean` versions,
 filling in the exercises, or to go through the HTML and switch
-to the Lean just for exercises. See [ALPHATESTERS.md](ALPHATESTERS.md)
+to the Lean just for exercises. See [ALPHA-TESTERS.md](ALPHA-TESTERS.md)
 for additional instructions. Instructors are expected to work through
 the terse version in class, and use the grading version for grading
 homework exercises done by students. We do not keep the solutions
