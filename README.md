@@ -42,7 +42,7 @@ per-chapter build target: a whole volume is the smallest unit.)
 The first build compiles the whole Lean toolchain's dependencies and
 takes a while; later builds are incremental.
 
-## Orientation
+## Repository organization
 
 Each volume has its own top-level directory - `LF`, `HL`, and `TS` - each
 of which is paired with a top-level `.lean` file.
@@ -51,7 +51,9 @@ written in [Verso](https://verso.lean-lang.org/) format.
 
 Running `make` at the top level produces, for each volume, four
 different ready-for-distribution outputs in a temporary top-level
-`_out` directory, each with both `.lean` and `.html` variants.
+`_out` directory, each with both `.lean` and `.html` variants (in
+`_out/<vol>/<variant>/lean/` and `_out/<vol>/<variant>/html-multi/`
+respectively).
 
 - **student**   (full prose, solutions elided)
 - **solutions** (full prose, solutions shown)

@@ -74,29 +74,6 @@ For discussions, we use a combination of tools.
 These conventions are still developing, so feel free to suggest better ways of
 working!
 
-## Repository organization and Makefile targets
-
-Each volume has its own top-level directory (LF, HL, etc.).
-
-Within that directory, each chapter has a `.lean` file, in Verso format.
-
-Running `make` at the top level produces, for each volume, four
-different ready-for-distribution outputs in a temporary top-level
-`_out` directory, each with both `.lean` and `.html` variants.
-
-- **student**   (full prose, solutions elided)
-- **solutions** (full prose, solutions shown)
-- **terse**     (little prose, no solutions, workinclass elided;
-                 for lecturing)
-- **grading**   (solutions variant with automated grading support,
-                 for instructors)
-
-There are also more specific `make` targets that build faster: see the `Makefile`.
-
-To build everything and preview it locally, do `make serve`,
-then visit http://localhost:8000
-(`make serve` builds stuff then serves `_out/` on port 8000).
-
 ## Git branches and CI
 
 We use Git and GitHub, with some simple conventions:
