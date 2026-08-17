@@ -1,5 +1,6 @@
 import SFLMeta
 
+import LF.CustomTactics
 import LF.Typeclasses
 import HL.Imp
 
@@ -14,9 +15,6 @@ htmlSplit := .never
 file := some "Equiv"
 %%%
 
-```lean
-open scoped MyGetElem
-```
 
 :::dev "Sati (satiscugcat)"
   At this point, the Rocq file provides instructions about using a new directory,
@@ -25,19 +23,15 @@ open scoped MyGetElem
   I am excluding them for now.
 :::
 
-
-:::dev "Sati (satiscugcat)"
-
+```lean
+open scoped HasEval MyGetElem
 ```
-namespace Equiv
 
-```
-:::
 # Behavioral Equivaleence
 ::::full
 
   In an earlier chapter, we investigated the correctness of a very
-  simple program transformation: the `optimize_0plus` function.  The
+  simple program transformation: the `optimize0plus` function.  The
   programming language we were considering was the first version of
   the language of arithmetic expressions -- with no variables -- so
   in that setting it was very easy to define what it means for a
@@ -67,15 +61,21 @@ they evaluate to the same result in every state.
 ::::
 
 ```lean
-def Aexp.equiv (a₁ a₂ : Aexp) : Prop :=
-  ∀ (st: State),
+def Aexp.Equiv (a₁ a₂ : Aexp) : Prop :=
+  ∀ (st : State),
     a₁.eval st = a₂.eval st
+
+theorem Aexp.equiv_def {a₁ a₂ : Aexp} :
+    a₁.Equiv a₂ ↔ ∀ (st : State), a₁.eval st = a₂.eval st := by rfl
 ```
 
 ```lean
-def Bexp.equiv (b₁ b₂ : Bexp) : Prop :=
-  ∀ (st: State),
+def Bexp.Equiv (b₁ b₂ : Bexp) : Prop :=
+  ∀ (st : State),
     b₁.eval st = b₂.eval st
+
+theorem Bexp.equiv_def {b₁ b₂ : Bexp} :
+    b₁.Equiv b₂ ↔ ∀ (st : State), b₁.eval st = b₂.eval st := by rfl
 ```
 
 -- ::::full
@@ -84,22 +84,22 @@ def Bexp.equiv (b₁ b₂ : Bexp) : Prop :=
 -- ::::
 
 ```lean
-example : Aexp.equiv
-          (aexp { X - X })
-          (aexp { 0 }) :=
-  by
-    intros st
-    simp
+example : Aexp.Equiv
+    (aexp { X - X })
+    (aexp { 0 }) := by
+  rw [Aexp.equiv_def]
+  intro st
+  simp
 ```
 
 
 ```lean
-example : Bexp.equiv
-          (bexp { X - X = 0 })
-          (bexp { true }) :=
-  by
-    intros st
-    simp
+example : Bexp.Equiv
+    (bexp { X - X = 0 })
+    (bexp { true }) := by
+  rw [Bexp.equiv_def]
+  intro st
+  simp
 ```
 
 ::::full
@@ -117,12 +117,19 @@ example : Bexp.equiv
 ::::
 
 ```lean
-def Com.equiv (c₁ c₂: Com) : Prop :=
-    ∀ (st st': State),
+def Com.Equiv (c₁ c₂ : Com) : Prop :=
+    ∀ {st st' : State},
       (st =[ c₁ ]=> st') ↔ (st =[ c₂ ]=> st')
+
+theorem Com.equiv_def {c₁ c₂ : Com} : c₁.Equiv c₂ ↔
+    ∀ {st st' : State}, (st =[ c₁ ]=> st') ↔ (st =[ c₂ ]=> st') := by rfl
 ```
 
 ## Simple Examples
+
+```lean
+namespace Com
+```
 
 ::::full
   For examples of command equivalence, let's start by looking at
@@ -130,49 +137,37 @@ def Com.equiv (c₁ c₂: Com) : Prop :=
 ::::
 
 ```lean
-theorem skip_left: ∀ c,
-  Com.equiv
-    (imp { skip; ~c })
-    c := by
+theorem skip_left {c : Com} : (imp { skip; ~c }).Equiv c := by
   workinclass!
-    intros c st st'
-    constructor <;> intro h
-    case mp =>
-      cases h with
-      | seq _ _ _ _ _ h1 h2 =>
-        cases h1 with
-        | skip => assumption
-    case mpr =>
-      apply Com.EvalR.seq _ _ _ st
-      · apply Com.EvalR.skip
-      · assumption
+    rw [equiv_def]
+    intro st st''
+    constructor
+    · intro h
+      inversion h with
+      | seq st' h1 h2 =>
+        inversion h1
+        exact h2
+    · intro h
+      exact EvalR.seq EvalR.skip h
 ```
 
-:::dev "Sati (satiscugcat)"
-Is the syntax of Imp settled? I find this really unintuitive.
-:::
 :::::exercise (rating := 2) (name:= "skip_right")
 Prove that adding a `skip` _after_ a command also results in an
 equivalent program.
 
 ```lean
-theorem skip_right : ∀ c,
-  Com.equiv
-    (imp { ~c  skip; })
-    c := by
-  solution!(
-    intros c st st'
-    constructor <;> intro h
-    case mp =>
-      cases h with
-      | seq _ _ _ _ _ h1 h2 =>
-        cases h2 with
-        | skip => assumption
-    case mpr =>
-      apply Com.EvalR.seq _ _ _ st'
-      · assumption
-      · apply Com.EvalR.skip
-  )
+theorem skip_right {c : Com} : (imp { ~c; skip }).Equiv c := by
+  solution!
+    rw [equiv_def]
+    intro st st''
+    constructor
+    · intro h
+      inversion h with
+      | seq st' h1 h2 =>
+        inversion h2
+        exact h1
+    · intro h
+      exact EvalR.seq h EvalR.skip
 ```
 :::::
 
@@ -182,20 +177,17 @@ commands.
 ::::
 
 ```lean
-theorem if_true_simple: ∀ c₁ c₂,
-  Com.equiv
-    (imp {if (true) {~c₁} else {~c₂}})
-    c₁ := by
-  intro c₁ c₂ st st'
-  constructor <;> intro h
-  case mp =>
-    cases h with
-    | ifTrue => assumption
-    | ifFalse => contradiction
-  case mpr =>
-    apply Com.EvalR.ifTrue
-    · rfl
-    · assumption
+theorem if_true_simple {c₁ c₂ : Com} : (imp {if (true) {~c₁} else {~c₂}}).Equiv c₁ := by
+  rw [equiv_def]
+  intro st st'
+  constructor
+  · intro h
+    inversion h with
+    | ifTrue hb hc => exact hc
+    | ifFalse hb hc => simp at hb
+  · intro h
+    apply EvalR.ifTrue _ h
+    simp
 ```
 
 ::::full
@@ -252,53 +244,46 @@ _Proof_:
 Here is the formal version of this proof:
 ::::
 
-:::dev "Sati (satiscugcat)"
-`if_true` causes a naming conflict, I don't know with what.
-:::
 ```lean
-theorem if_true_equiv: ∀ b c₁ c₂,
-  Bexp.equiv b (bexp {true}) ->
-  Com.equiv
-    (imp {if (~b) {~c₁} else {~c₂}})
-    c₁ := by
-  intro b c₁ c₂ hb st st'
-  constructor <;> intro h
-  case mp =>
-    cases h with
-    | ifTrue => assumption
-    | ifFalse _ _ _ _ _ hb' hc =>
-      unfold Bexp.equiv at hb; simp at hb
+theorem if_true {b : Bexp} {c₁ c₂ : Com} (hb : b.Equiv (bexp {true})) :
+    (imp {if (~b) {~c₁} else {~c₂}}).Equiv c₁ := by
+  rw [equiv_def]
+  rw [Bexp.equiv_def] at hb
+  intro st st'
+  constructor
+  · intro h
+    inversion h with
+    | ifTrue hb' hc =>
+      exact hc
+    | ifFalse hb' hc =>
       rw [hb] at hb'
-      contradiction
-  case mpr =>
-    apply Com.EvalR.ifTrue <;> try assumption
-    unfold Bexp.equiv at hb; dsimp at hb
-    apply hb
+      simp at hb'
+  · intro h
+    apply EvalR.ifTrue _ h
+    rw [hb]
+    simp
 ```
-
 
 :::::exercise (rating := 2) (name := "if_false_equiv")
 ```lean
-theorem if_false_equiv: ∀ b c₁ c₂,
-  Bexp.equiv b (bexp {false}) ->
-  Com.equiv
-    (imp {if (~b) {~c₁} else {~c₂}})
-    c₂ := by
-  solution!(
-    intro b c₁ c₂ hb st st'
-    constructor <;> intro h
-    case mp =>
-      cases h with
-      | ifTrue _ _ _ _ _ hb' hc =>
-        unfold Bexp.equiv at hb; dsimp at hb
+theorem if_false {b : Bexp} {c₁ c₂ : Com} (hb : b.Equiv (bexp {false})) :
+    (imp {if (~b) {~c₁} else {~c₂}}).Equiv c₂ := by
+  solution!
+    rw [equiv_def]
+    rw [Bexp.equiv_def] at hb
+    intro st st'
+    constructor
+    · intro h
+      inversion h with
+      | ifTrue hb' hc =>
         rw [hb] at hb'
-        contradiction
-      | ifFalse => assumption
-    case mpr =>
-      apply Com.EvalR.ifFalse <;> try assumption
-      unfold Bexp.equiv at hb; dsimp at hb
-      apply hb
-  )
+        simp at hb'
+      | ifFalse hb' hc =>
+        exact hc
+    · intro h
+      apply EvalR.ifFalse _ h
+      rw [hb]
+      simp
 ```
 :::::
 
@@ -308,30 +293,29 @@ Show that we can swap the branches of an `if` if we also negate its
 condition.
 
 ```lean
-theorem swap_if_branches : ∀ b c₁ c₂,
-  Com.equiv
-    (imp {if (~b) {~c₁} else {~c₂}})
+theorem swap_if_branches {b : Bexp} {c₁ c₂ : Com} :
+    (imp {if (~b) {~c₁} else {~c₂}}).Equiv
     (imp {if (¬ ~b) {~c₂} else {~c₁}}) := by
-  solution!(
-    intro b c₁ c₂ st st'
-    constructor <;> intro h
-    case mp =>
-      cases h with
-      | ifTrue _ _ _ _ _ hb hc =>
-        apply Com.EvalR.ifFalse <;> try assumption
+  solution!
+    rw [equiv_def]
+    intro st st'
+    constructor
+    · intro h
+      inversion h with
+      | ifTrue hb hc =>
+        apply EvalR.ifFalse _ hc
+        simp [hb]
+      | ifFalse hb hc =>
+        apply EvalR.ifTrue _ hc
+        simp [hb]
+    · intro h
+      inversion h with
+      | ifTrue hb hc =>
+        apply EvalR.ifFalse _ hc
         simp_all
-      | ifFalse _ _ _ _ _ hb hc =>
-        apply Com.EvalR.ifTrue <;> try assumption
+      | ifFalse hb hc =>
+        apply EvalR.ifTrue _ hc
         simp_all
-    case mpr =>
-      cases h with
-      | ifTrue _ _ _ _ _ hb hc =>
-        apply Com.EvalR.ifFalse <;> try assumption
-        simp_all
-      | ifFalse _ _ _ _ _ hb hc =>
-        apply Com.EvalR.ifTrue <;> try assumption
-        simp_all
-  )
 ```
 :::::
 
@@ -347,24 +331,22 @@ The first of these facts is easy.
 ::::
 
 ```lean
-theorem while_false_equiv : ∀ b c,
-  Bexp.equiv b (bexp {false}) ->
-  Com.equiv
-    (imp {while (~b) {~c}})
-    (imp {skip;}) := by
-  intro b c hb st st'
-  constructor <;> intro h
-  case mp =>
-    cases h with
-    | whileFalse => apply Com.EvalR.skip
-    | whileTrue _ _ _ _ _ hb' hc hloop =>
-      rw [hb] at hb'
-      simp at hb'
-  case mpr =>
-    cases h with
-    | skip =>
-      apply Com.EvalR.whileFalse
-      apply hb
+theorem while_false_equiv {b : Bexp} {c : Com} (hb : b.Equiv (bexp {false})) :
+    (imp {while (~b) {~c}}).Equiv
+    (imp {skip}) := by
+  rw [equiv_def]
+  rw [Bexp.equiv_def] at hb
+  intro st st''
+  constructor
+  · intro h
+    inversion h with
+    | whileFalse => exact EvalR.skip
+    | whileTrue st' hb' hc hloop =>
+      simp [hb] at hb'
+  · intro h
+    inversion h
+    apply EvalR.whileFalse
+    simp [hb]
 ```
 
 :::::exercise (rating := 2) (name := "while_false_informal") (level:= Advanced) (manual:= true)
@@ -405,26 +387,21 @@ are contradictory.
 ::::
 
 ```lean
-theorem while_true_nonterm : ∀ b c st st',
-  Bexp.equiv b (bexp {true}) ->
-  ¬ (st =[ while (~b) {~c} ]=> st') := by
+theorem while_true_nonterm {b : Bexp} {c : Com} {st st' : State} (hb : b.Equiv (bexp {true})) :
+    ¬ st =[ while (~b) {~c} ]=> st' := by
   workinclass!
-    intro b c st st' hb contra
-    have key : ∀ (c': Com) (s s': State), (s =[ c' ]=> s') -> c' = (imp {while (~b) {~c}}) -> False :=
-      by
-        intro c' s s' hce
-        induction hce with
-        | whileFalse b' s0 c0 hb' =>
-          intro heq; injection heq with beq ceq
-          subst beq; rw [hb] at hb'
-          simp at hb'
-        | whileTrue s0 s0' s0'' b' c0 hb hc' hwhile ih1 ih2 => exact ih2
-        | skip => simp
-        | asgn => simp
-        | seq => simp
-        | ifTrue => simp
-        | ifFalse => simp
-    exact key (imp {while (~b) {~c}}) st st' contra (by rfl)
+    intro contra
+    generalize heq : (imp {while (~b) {~c}}) = com at contra
+    induction contra with
+    | @whileFalse b' s0 c0 hb' =>
+      injection heq with hbeq hceq
+      subst hbeq
+      rw [Bexp.equiv_def] at hb
+      simp [hb] at hb'
+    | @whileTrue s0 s0' s0'' b' c0 hb' hc' hwhile ih1 ih2 =>
+      exact ih2 heq
+    | skip | asgn | seq | ifTrue | ifFalse =>
+      contradiction -- heq says that different commands are equal
 ```
 :::::exercise (rating := 2) (name := "while_true_nonterm_informal") (manual:= true)
 Explain what the lemma `while_true_nonterm` means in English.
@@ -434,27 +411,22 @@ Prove the following theorem. _Hint_: You'll want to use
 `while_true_nonterm` here.
 
 ```lean
-theorem while_true : ∀ b c,
-  Bexp.equiv b (bexp {true}) ->
-  Com.equiv
-    (imp {while (~b) {~c}})
-    (imp {while (true) {skip;}}) := by
-  solution!(
-    intro b c beq st st'
+theorem while_true {b : Bexp} {c : Com} (hb : b.Equiv (bexp {true})) :
+    (imp {while (~b) {~c}}).Equiv
+    (imp {while (true) {skip}}) := by
+  solution!
+    rw [equiv_def]
+    intro st st'
     constructor
-    case mp =>
-      intro h
-      apply False.elim
-      exact while_true_nonterm b c st st' beq h
-    case mpr =>
-      intro h
-      apply False.elim
-      have bexp_equiv_refl : ∀ (b: Bexp), b.equiv b :=
-        by
-          intro b st
-          rfl
-      exact while_true_nonterm (bexp {true}) (imp {skip;}) st st' (bexp_equiv_refl (bexp {true})) h
-  )
+    · intro h
+      exfalso
+      exact while_true_nonterm hb h
+    · intro h
+      exfalso
+      apply while_true_nonterm _ h
+      rw [Bexp.equiv_def]
+      intro
+      rfl
 ```
 :::::
 
@@ -468,36 +440,34 @@ interest!
 ::::
 
 ```lean
-theorem loop_unrolling : ∀ b c,
-  Com.equiv
-    (imp {while (~b) {~c}})
+theorem loop_unrolling {b : Bexp} {c : Com} :
+    (imp {while (~b) {~c}}).Equiv
     (imp {
-      if (~b) {~c} else {skip;}
+      if (~b) {~c} else {skip};
       while (~b) {~c}
     }) := by
   workinclass!
-    intro b c st st'
-    constructor <;> intro hce
-    case mp =>
-      cases hce with
-      | whileFalse _ _ _ hb =>
-        apply Com.EvalR.seq _ _ _ st
-        · apply Com.EvalR.ifFalse <;> try assumption
-          apply Com.EvalR.skip
-        · apply Com.EvalR.whileFalse <;> try assumption
-      | whileTrue _ st'' _ _ _ hb hc hloop =>
-        apply Com.EvalR.seq _ _ _ st''
-        · apply Com.EvalR.ifTrue <;> try assumption
-        · assumption
-    case mpr =>
-      cases hce with
-      | seq _ _ _ st'' _ h1 h2 =>
-        cases h1 with
-        | ifTrue _ _ _ _ _ hb hc =>
-          apply Com.EvalR.whileTrue _ st'' <;> try assumption
-        | ifFalse _ _ _ _ _ hb hc =>
-          cases hc with
-          | skip => assumption
+    rw [equiv_def]
+    intro st st'
+    constructor
+    · intro h
+      inversion h with
+      | whileFalse hb =>
+        apply EvalR.seq (st' := st)
+        · exact EvalR.ifFalse hb EvalR.skip
+        · exact EvalR.whileFalse hb
+      | whileTrue stmid hb hc hloop =>
+        apply EvalR.seq _ hloop
+        exact EvalR.ifTrue hb hc
+    · intro h
+      inversion h with
+      | seq stmid h1 h2 =>
+        inversion h1 with
+        | ifTrue hb hc =>
+          exact EvalR.whileTrue hb hc h2
+        | ifFalse hb hc =>
+          inversion hc
+          exact h2
 ```
 :::dev "Sati (satiscugcat)"
 Leaving out optional exercise `seq_assoc` for now.
@@ -510,62 +480,51 @@ extensionally (e.g., `x →ₜ m[x] ; m` and `m` are equal maps) comes
 in handy.
 ::::
 
-:::dev "Sati (satiscugcat)"
-I am not able to use `m[x]` syntax here for some reason? I have to use function application and then do some weird manipulation.
-syntax.
-:::
 ```lean
-theorem identity_assignment : ∀ X,
-  Com.equiv
-    (imp {X := X;})
-    (imp {skip;}) := by
-  intro X st st'
-  constructor <;> intro hce
-  case mp =>
-    cases hce with
-    | asgn _ _ n _ h =>
-      dsimp at h
-      rw [← h, TotalMap.update_same]
-      apply Com.EvalR.skip
-
-  case mpr =>
-    cases hce with
-    | skip =>
-      suffices st =[ X := X; ]=> X →ₜ st[X] ; st by
-        simp only [TotalMap.update_same] at this
-        exact this
-      apply Com.EvalR.asgn
-      simp
+theorem identity_assignment {X : Ident} :
+    (imp {X := X}).Equiv
+    (imp {skip}) := by
+  rw [equiv_def]
+  intro st st'
+  constructor
+  · intro h
+    inversion h with
+    | asgn n h =>
+      subst h
+      simp only [Aexp.eval_id, TotalMap.update_same]
+      exact Com.EvalR.skip
+  · intro h
+    inversion h
+    suffices st =[ X := X ]=> X →ₜ st[X] ; st by
+      simp only [TotalMap.update_same] at this
+      exact this
+    apply Com.EvalR.asgn
+    simp
 ```
 
 :::::exercise (rating := 2) (name := "assign_equiv")
 ```lean
-theorem assign_equiv : ∀ (X : Ident) (a : Aexp),
-  Aexp.equiv (aexp {X}) a ->
-  Com.equiv
-    (imp {skip;})
-    (imp {X := ~a;}) := by
-  solution!(
-    intro X a aeq st st'
-    constructor <;> intro hce
-    case mp =>
-      cases hce with
-      | skip =>
-        unfold Aexp.equiv at aeq
-        dsimp at aeq
-        suffices st =[ X:= ~a; ]=> X →ₜ st[X]; st by
-          simp only [TotalMap.update_same] at this
-          exact this
-        apply Com.EvalR.asgn
-        simp [aeq]
-    case mpr =>
-      cases hce with
-      | asgn _ _ n _ h =>
-        unfold Aexp.equiv at aeq
-        dsimp at aeq
-        rw [← h, ← aeq, TotalMap.update_same]
-        apply Com.EvalR.skip
-  )
+theorem assign_equiv {X : Ident} {a : Aexp} (ha : Aexp.Equiv (aexp {X}) a) :
+    (imp {skip}).Equiv
+    (imp {X := ~a}) := by
+  solution!
+    rw [equiv_def]
+    rw [Aexp.equiv_def] at ha
+    intro st st'
+    constructor
+    · intro h
+      inversion h
+      suffices st =[ X := ~a ]=> X →ₜ st[X]; st by
+        simp only [TotalMap.update_same] at this
+        exact this
+      apply Com.EvalR.asgn
+      simp [← ha]
+    · intro h
+      inversion h with
+      | asgn n h =>
+        subst h
+        simp only [← ha, Aexp.eval_id, TotalMap.update_same]
+        exact Com.EvalR.skip
 ```
 :::::
 
@@ -588,69 +547,75 @@ symmetric, and transitive. These proofs are all easy.
 ::::
 
 ```lean
-theorem Aexp.equiv.refl : ∀ (a : Aexp),
-  a.equiv a := by
-  intros a st
+end Com
+
+theorem Aexp.equiv_refl (a : Aexp) : a.Equiv a := by
+  rw [equiv_def]
+  intro st
   rfl
 ```
 
 ```lean
-theorem Aexp.equiv.sym : ∀ (a₁ a₂ : Aexp),
-  a₁.equiv a₂ → a₂.equiv a₁ := by
-  intro a₁ a₂ h st
+theorem Aexp.equiv_symm {a₁ a₂ : Aexp} (h : a₁.Equiv a₂) : a₂.Equiv a₁ := by
+  rw [equiv_def] at h ⊢
+  intro st
   rw [h]
 ```
 
 ```lean
-theorem Aexp.equiv.trans : ∀ (a₁ a₂ a₂ : Aexp),
-  a₁.equiv a₂ → a₂.equiv a₃ → a₁.equiv a₃ := by
-  intro a₁ a₂ a₃ h₁ h₂ st
+theorem Aexp.equiv_trans {a₁ a₂ a₃ : Aexp} (h₁ : a₁.Equiv a₂) (h₂ : a₂.Equiv a₃) :
+    a₁.Equiv a₃ := by
+  rw [equiv_def] at h₁ h₂ ⊢
+  intro st
   rw [h₁, h₂]
 ```
 
 
 ```lean
-theorem Bexp.equiv.refl : ∀ (b : Bexp),
-  b.equiv b := by
-  intros b st
+theorem Bexp.equiv_refl {b : Bexp} : b.Equiv b := by
+  rw [equiv_def]
+  intro st
   rfl
 ```
 
 ```lean
-theorem Bexp.equiv.sym : ∀ (b₁ b₂ : Bexp),
-  b₁.equiv b₂ → b₂.equiv b₁ := by
-  intro b₁ b₂ h st
+theorem Bexp.equiv_symm {b₁ b₂ : Bexp} (h : b₁.Equiv b₂) : b₂.Equiv b₁ := by
+  rw [equiv_def]
+  intro st
   rw [h]
 ```
 
 ```lean
-theorem Bexp.equiv.trans : ∀ (b₁ b₂ b₂ : Bexp),
-  b₁.equiv b₂ → b₂.equiv b₃ → b₁.equiv b₃ := by
-  intro b₁ b₂ b₃ h₁ h₂ st
+theorem Bexp.equiv_trans {b₁ b₂ b₃ : Bexp} (h₁ : b₁.Equiv b₂) (h₂ : b₂.Equiv b₃) :
+    b₁.Equiv b₃ := by
+  rw [equiv_def]
+  intro st
   rw [h₁, h₂]
 ```
 
 
 ```lean
-theorem Com.equiv.refl : ∀ (c : Com),
-  c.equiv c := by
-  intros c st st'
+theorem Com.equiv_refl {c : Com} : c.Equiv c := by
+  rewrite [equiv_def]
+  intro st st'
   rfl
 ```
 
 ```lean
-theorem Com.equiv.sym : ∀ (c₁ c₂ : Com),
-  c₁.equiv c₂ → c₂.equiv c₁ := by
-  intro c₁ c₂ h st st'
+theorem Com.equiv_symm {c₁ c₂ : Com} (h : c₁.Equiv c₂) : c₂.Equiv c₁ := by
+  rw [equiv_def] at h ⊢
+  intro st st'
   rw [h]
 ```
 
 ```lean
-theorem Com.equiv.trans : ∀ (c₁ c₂ c₂ : Com),
-  c₁.equiv c₂ → c₂.equiv c₃ → c₁.equiv c₃ := by
-  intro c₁ c₂ c₃ h₁ h₂ st st'
+theorem Com.equiv_trans {c₁ c₂ c₃ : Com} (h₁ : c₁.Equiv c₂) (h₂ : c₂.Equiv c₃) :
+    c₁.Equiv c₃ := by
+  rw [equiv_def] at h₁ h₂ ⊢
+  intro st st'
   rw [h₁, h₂]
 ```
+
 ## Behavioral Equivalence is a Congruence
 
 ::::full

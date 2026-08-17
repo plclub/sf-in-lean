@@ -1,5 +1,6 @@
 import SFLMeta
 
+import LF.CustomTactics
 import LF.Typeclasses
 
 import Lean.PrettyPrinter.Delaborator
@@ -129,6 +130,8 @@ We give the type of variable identifiers a name, `Ident`. For now it is just
    `String`; naming it makes the intent clearer.
 
 ```lean
+open scoped MyGetElem
+
 abbrev Ident := String
 abbrev State := TotalMap Ident Nat
 ```
@@ -194,12 +197,20 @@ def Y : Ident := "Y"
 def Z : Ident := "Z"
 ```
 
-::::full
-(This convention for naming program variables (`X`, `Y`, `Z`) clashes a
-bit with our earlier use of uppercase letters for types. Since we're not
-using polymorphism heavily in the chapters developed to Imp, this
-overloading should not cause confusion.)
-::::
+:::instructors
+Making `X Y Z W` `@[simp] def`s has the unwanted side effect that sometimes `X` and `"X"` get mixed up in the proof state.
+We opt to use `simp +decide` instead (e.g. in `assertion_auto` in Hoare).
+:::
+
+:::ignore
+```lean -show
+example : X ≠ Y := by
+  simp +decide
+
+example : (Y →ₜ 1 ; X →ₜ 2)[X] = 2 := by
+  simp +decide
+```
+:::
 
 ## Notations
 %%%
@@ -207,8 +218,7 @@ tag := "imp-notations"
 %%%
 
 ::::full
-To make Imp programs easier to read and write, we introduce some notations and implicit
-coercions.
+To make Imp programs easier to read and write, we introduce some notations.
 
 You do not need to understand exactly what these declarations do. Briefly, though,
 here is how the two blocks below fit together:
@@ -334,40 +344,9 @@ macro_rules
 ```
 ::::
 
-::::full
-We make it a little easier to write Imp programs using normal constructors (i.e.,
-without notation), by using _implicit coercions_.
-In Lean, a `Coe` instance tells the elaborator how to turn a
-value of one type into another automatically:
- - `Coe Ident Aexp` lets us write a bare variable (an `Ident`) where an
-   `Aexp` is expected; the identifier is implicitly wrapped with `id`.
- - `OfNat Aexp n` lets us write a numeric literal where an `Aexp` is
-   expected; it is implicitly wrapped with `num`.
- - `Coe Bool Bexp` lets us write a boolean literal (`true`/`false`) where a
-   `Bexp` is expected; it is implicitly wrapped with `bool`.
-::::
-
 ```lean
-instance : Coe Ident Aexp where
-  coe := .id
-
-instance (n : Nat) : OfNat Aexp n where
-  ofNat := .num n
-
-instance : Coe Bool Bexp where
-  coe := .bool
-```
-
-::::full
-With these coercions we can write `.plus 3 (.mult X 2)` instead of the fully
-   explicit `.plus (.num 3) (.mult (.id "X") (.num 2))`, and `.and true (.not …)`
-   instead of `.and (.bool true) (.not …)`. More readably still, the concrete
-   syntax from the {ref "imp-notations"}[Notations section] lets us write these examples directly:
-::::
-
-```lean
-def example_aexp : Aexp := aexp { 3 + (X * 2) }
-def example_bexp : Bexp := bexp { true ∧ ¬(X ≤ 4) }
+#check aexp { 3 + (X * 2) }
+#check bexp { true ∧ ¬(X ≤ 4) }
 ```
 
 ## Delaborators
@@ -568,7 +547,7 @@ The arithmetic and boolean evaluators must now be extended to handle
 variables, taking a state `st` as an extra argument.  A variable is
 looked up in the state with the map-indexing notation `st[x]` from the
 `Typeclasses` chapter.
-For the notation to work, we need to `open scoped MyGetElem`, which opens only the scoped items like notation from the module.
+For the notation to work, we used `open scoped MyGetElem` earlier, which opens only the scoped items like notation from the module.
 ::::
 
 :::terse
@@ -576,8 +555,6 @@ Now we need to add an `st` parameter to both evaluation functions:
 :::
 
 ```lean
-open scoped MyGetElem
-
 def Aexp.eval (st : State) (a : Aexp) : Nat :=
   match a with
   | num   n     =>  n
@@ -664,36 +641,19 @@ inductive Com where
 ```
 
 :::instructors
-Concrete syntax for commands, in the style of the `ssft24` Imp `Stmt`
-   grammar: an `imp_com` category with an `imp { … }` hook. Assignments and
-   `skip` end in `;`, and sequencing is written by juxtaposition. Conditions use
-   the `imp_bexp` grammar; the branch/loop bodies use the `imp_com` grammar. As
-   with expressions, `~c` escapes back to an ordinary Lean term of type `Com`.
-:::
-
-::::details "Notation encoding: commands"
-```lean
-/-- Imp commands -/
-declare_syntax_cat imp_com
-```
-::::
-
-:::instructors
-`skip` is *not* a reserved keyword: it is accepted through a bare
-   identifier-terminated command (`syntax ident ";" : imp_com`) and recognised
-   in the macro below, which rejects any other identifier. This keeps `skip`
-   usable as the bare constructor name {name}`Com.skip` in `match`/`induction`
-   elsewhere in the file, and avoids reserving `skip` globally.
+We don't make `skip` a reserved keyword on purpose because otherwise `skip` couldn't be used as a name and {name}`Com.skip` would not work.
 :::
 
 ::::details "Notation encoding: commands, macro rules"
 ```lean
-/-- The command that does nothing (`skip;`) -/
-syntax ident ";" : imp_com
+/-- Imp commands -/
+declare_syntax_cat imp_com
+/-- The command that does nothing (`skip`) -/
+syntax ident : imp_com
 /-- Sequencing: one command after another -/
-syntax imp_com ppDedent(ppLine imp_com) : imp_com
+syntax imp_com ";" ppDedent(ppLine imp_com) : imp_com
 /-- Assignment -/
-syntax ident " := " imp_aexp ";" : imp_com
+syntax ident " := " imp_aexp : imp_com
 /-- Conditional -/
 syntax "if " "(" imp_bexp ")" ppHardSpace "{" ppLine imp_com ppDedent(ppLine "}" ppHardSpace "else" ppHardSpace "{") ppLine imp_com ppDedent(ppLine "}") : imp_com
 /-- Loop -/
@@ -704,14 +664,16 @@ syntax:max "~" term:max : imp_com
 /-- Include an Imp command in Lean code -/
 syntax:min "imp" ppHardSpace "{" ppLine imp_com ppDedent(ppLine "}") : term
 
+namespace Com
+
 open Lean in
-macro_rules
-  | `(imp { $x:ident ; }) =>
+scoped macro_rules
+  | `(imp { $x:ident }) =>
     if x.getId == `skip then `(Com.skip)
     else Macro.throwErrorAt x s!"expected 'skip', got '{x.getId}'"
-  | `(imp { $c1 $c2 }) =>
+  | `(imp { $c1 ; $c2 }) =>
     `(Com.seq (imp {$c1}) (imp {$c2}))
-  | `(imp { $x:ident := $a; }) =>
+  | `(imp { $x:ident := $a }) =>
     `(Com.asgn $x (aexp {$a}))
   | `(imp { if ($b) {$c1} else {$c2} }) =>
     `(Com.cond (bexp {$b}) (imp {$c1}) (imp {$c2}))
@@ -719,6 +681,10 @@ macro_rules
     `(Com.whileDo (bexp {$b}) (imp {$c}))
   | `(imp { ~$c }) =>
     pure c
+
+end Com
+
+open scoped Com
 ```
 ::::
 
@@ -736,38 +702,42 @@ unrecognized subcommand with the `~` escape.
 namespace Imp.Delab
 open Lean PrettyPrinter Delaborator SubExpr
 
-/-- Rebuild `imp_com` concrete syntax from a `Com` term. -/
-partial def delabComInner : DelabM (TSyntax `imp_com) := do
+partial def delabComInnerFor (ns : Name) (extra : DelabM (TSyntax `imp_com)) :
+    DelabM (TSyntax `imp_com) := do
   let e ← getExpr
   let stx ←
-    match_expr e with
-    -- `mkIdent` rather than a quotation-literal `skip`, which would pick up
-    -- macro hygiene scopes and print as `skip✝`.
-    | Com.skip => `(imp_com| $(mkIdent `skip):ident ;)
-    | Com.asgn _ _ =>
+    -- Using `(imp_com| skip)` would delaborate as `skip✝`. `mkIdent` fixes this.
+    if e.isConstOf (ns ++ `skip) then
+      `(imp_com| $(mkIdent `skip):ident)
+    else if e.isAppOfArity (ns ++ `asgn) 2 then
       match ← withAppFn <| withAppArg getExpr with
-      | .const nm _ =>
-        let a ← withAppArg delabAexpInner
-        `(imp_com| $(mkIdent nm):ident := $a;)
       | .lit (.strVal s) =>
         let a ← withAppArg delabAexpInner
-        `(imp_com| $(mkIdent (.mkSimple s)):ident := $a;)
-      | _ => `(imp_com| ~$(← delab))
-    | Com.seq _ _ =>
-      let s1 ← withAppFn <| withAppArg delabComInner
-      let s2 ← withAppArg delabComInner
-      `(imp_com| $s1 $s2)
-    | Com.cond _ _ _ =>
+        `(imp_com| $(mkIdent (.mkSimple s)):ident := $a)
+      | _ =>
+        let `($x:ident) ← withAppFn <| withAppArg delab | failure
+        let a ← withAppArg delabAexpInner
+        `(imp_com| $x:ident := $a)
+    else if e.isAppOfArity (ns ++ `seq) 2 then
+      let s1 ← withAppFn <| withAppArg (delabComInnerFor ns extra)
+      let s2 ← withAppArg (delabComInnerFor ns extra)
+      `(imp_com| $s1; $s2)
+    else if e.isAppOfArity (ns ++ `cond) 3 then
       let b  ← withAppFn <| withAppFn <| withAppArg delabBexpInner
-      let c1 ← withAppFn <| withAppArg delabComInner
-      let c2 ← withAppArg delabComInner
+      let c1 ← withAppFn <| withAppArg (delabComInnerFor ns extra)
+      let c2 ← withAppArg (delabComInnerFor ns extra)
       `(imp_com| if ($b) {$c1} else {$c2})
-    | Com.whileDo _ _ =>
+    else if e.isAppOfArity (ns ++ `whileDo) 2 then
       let b ← withAppFn <| withAppArg delabBexpInner
-      let c ← withAppArg delabComInner
+      let c ← withAppArg (delabComInnerFor ns extra)
       `(imp_com| while ($b) {$c})
-    | _ => `(imp_com| ~$(← delab))
+    else
+      extra <|> `(imp_com| ~$(← delab))
   annAsTerm stx
+
+/-- Rebuild `imp_com` concrete syntax from a `Com` term. -/
+partial def delabComInner : DelabM (TSyntax `imp_com) :=
+  delabComInnerFor ``Com failure
 
 @[delab app.Com.skip, delab app.Com.asgn, delab app.Com.seq,
   delab app.Com.cond, delab app.Com.whileDo]
@@ -787,6 +757,27 @@ end Imp.Delab
 ```
 ::::
 
+:::ignore
+```lean -show
+section
+/--
+info: imp {
+  skip
+} : Com
+-/
+#guard_msgs in
+#check imp { skip }
+
+variable (x : Ident) (a : Aexp)
+/-- info: imp {
+  x := ~a
+} : Com -/
+#guard_msgs in
+#check imp { x := ~a }
+end
+```
+:::
+
 ::::full
 As an example, here is the factorial function again, written as a formal
 definition. When this command terminates, the variable `Y` will
@@ -800,7 +791,7 @@ def fact_in_lean : Com := imp {
   Y := 1;
   while (Z ≠ 0) {
     Y := Y * Z;
-    Z := Z - 1;
+    Z := Z - 1
   }
 }
 ```
@@ -818,7 +809,7 @@ imp {
   Y := 1;
   while (Z ≠ 0) {
     Y := Y * Z;
-    Z := Z - 1;
+    Z := Z - 1
   }
 }
 -/
@@ -847,15 +838,15 @@ is *displayed*. Nevertheless, seeing the raw constructors is sometimes very help
 
 ```lean
 /-- info: imp {
-  X := X + 1;
+  X := X + 1
 } : Com -/
 #guard_msgs in
-#check imp { X := X + 1; }
+#check imp { X := X + 1 }
 
 /-- info: Com.asgn X ((Aexp.id X).plus (Aexp.num 1)) : Com -/
 #guard_msgs in
 set_option pp.notation false in
-#check imp { X := X + 1; }
+#check imp { X := X + 1 }
 ```
 
 ## More Examples
@@ -868,8 +859,8 @@ A few more examples.
 Assignment:
 
 ```lean
-def plus2 : Com := imp { X := X + 2; }
-def XtimesYinZ : Com := imp { Z := X * Y; }
+def plus2 : Com := imp { X := X + 2 }
+def XtimesYinZ : Com := imp { Z := X * Y }
 ```
 
 :::slidebreak
@@ -880,7 +871,7 @@ Loops:
 ```lean
 def subtract_slowly_body : Com := imp {
   Z := Z - 1;
-  X := X - 1;
+  X := X - 1
 }
 
 def subtract_slowly : Com := imp {
@@ -902,24 +893,24 @@ def subtract_3_from_5_slowly : Com := imp {
 An infinite loop:
 
 ```lean
-def loop : Com := imp { while (true) { skip; } }
+def loop : Com := imp { while (true) { skip } }
 ```
 
-::::hide
+:::hide
 ```
 /- Exponentiation: -/
 def exp_body : Com := imp {
   Z := Z * X;
-  Y := Y - 1;
+  Y := Y - 1
 }
 def pexp : Com := imp {
-  while (Y <> 0) {
+  while (Y ≠ 0) {
     ~exp_body
   }
 }
 /- (Note that `pexp` should be run in a state where `Z` is `1`.) -/
 ```
-::::
+:::
 
 # Evaluating Commands
 
@@ -945,9 +936,9 @@ In SmallStep we need to package the state and command into a pair,
 ```lean
 def Com.ceval_fun_no_while (st : State) (c : Com) : State :=
   match c with
-  | imp {skip;} => st
-  | imp {x := ~a;} => (x →ₜ a.eval st ; st)
-  | imp {~c1 ~c2} =>
+  | imp {skip} => st
+  | imp {x := ~a} => (x →ₜ a.eval st ; st)
+  | imp {~c1; ~c2} =>
       let st' := ceval_fun_no_while st c1
       ceval_fun_no_while st' c2
   | imp {if (~b) {~c1} else {~c2}} =>
@@ -1077,31 +1068,81 @@ TODO Propose you use inline notation such as `Com.EvalR (imp {skip;}) st st`
 
 ```lean
 inductive Com.EvalR : Com → State → State → Prop where
-  | skip (st : State) : EvalR (imp {skip;}) st st
-  | asgn (st : State) (a : Aexp) (n : Nat) (x : Ident) (h : a.eval st = n) :
-      EvalR (imp {x := ~a;}) st (x →ₜ n ; st)
-  | seq (c1 c2 : Com) (st st' st'' : State) (h1 : EvalR c1 st st') (h2 : EvalR c2 st' st'') :
-      EvalR (imp {~c1 ~c2}) st st''
-  | ifTrue (st st' : State) (b : Bexp) (c1 c2 : Com) (hb : b.eval st = true)
+  | skip {st : State} : EvalR (imp {skip}) st st
+  | asgn {st : State} {a : Aexp} {n : Nat} {x : Ident} (h : a.eval st = n) :
+      EvalR (imp {x := ~a}) st (x →ₜ n ; st)
+  | seq {c1 c2 : Com} {st st' st'' : State} (h1 : EvalR c1 st st') (h2 : EvalR c2 st' st'') :
+      EvalR (imp {~c1; ~c2}) st st''
+  | ifTrue {st st' : State} {b : Bexp} {c1 c2 : Com} (hb : b.eval st = true)
       (hc : EvalR c1 st st') :
       EvalR (imp {if (~b) {~c1} else {~c2}}) st st'
-  | ifFalse (st st' : State) (b : Bexp) (c1 c2 : Com) (hb : b.eval st = false)
+  | ifFalse {st st' : State} {b : Bexp} {c1 c2 : Com} (hb : b.eval st = false)
       (hc : EvalR c2 st st') :
       EvalR (imp {if (~b) {~c1} else {~c2}}) st st'
-  | whileFalse (b : Bexp) (st : State) (c : Com) (hb : b.eval st = false) :
+  | whileFalse {b : Bexp} {st : State} {c : Com} (hb : b.eval st = false) :
       EvalR (imp {while (~b) {~c}}) st st
-  | whileTrue (st st' st'' : State) (b : Bexp) (c : Com) (hb : b.eval st = true)
+  | whileTrue {st st' st'' : State} {b : Bexp} {c : Com} (hb : b.eval st = true)
       (hc : EvalR c st st') (hloop : Com.EvalR (imp {while (~b) {~c}}) st' st'') :
       EvalR (imp {while (~b) {~c}}) st st''
+```
 
-notation:40 st0:41 " =[ " c " ]=> " st1:41 => Com.EvalR c st0 st1
+:::instructors
+We define evaluation notation using a typeclass to make extending it easier in the Hoare chapter.
+:::
+
+:::dev "Niklas Halonen (xhalo32)"
+Setting `In` and `Out` as `outParam`s is a hack to resolve various typeclass synthesis problems or at least I can't explain why it works.
+:::
+
+```lean
+class HasEval (Com : Type) (In : outParam <| Type) (Out : outParam <| Type) where
+  Eval : Com → In → Out → Prop
+
+namespace HasEval
+scoped notation:40 st0:41 " =[ " c " ]=> " st1:41 => Eval c st0 st1
+
 -- Also accept a bare Imp command between the brackets, so concrete programs can
 -- be written without the `imp { … }` wrapper. Bare `Com` terms still work via the
 -- notation above; splice a Lean term into the command with `~`.
-syntax:40 term:41 " =[ " imp_com " ]=> " term:41 : term
-macro_rules
-  | `($st0 =[ $c:imp_com ]=> $st1) => `($st0 =[ imp { $c } ]=> $st1)
+scoped syntax:40 term:41 " =[ " imp_com " ]=> " term:41 : term
+scoped macro_rules
+  | `($st0 =[ $c:imp_com ]=> $st1) => ``($st0 =[ imp { $c } ]=> $st1)
+end HasEval
+
+instance : HasEval Com State State where
+  Eval := Com.EvalR
+
+open scoped HasEval
+
+@[app_unexpander Com.EvalR]
+def Com.unexpandEvalR : Lean.PrettyPrinter.Unexpander
+  | `($_ $c $st0 $st1) => ``($st0 =[ ~$c ]=> $st1)
+  | _ => throw ()
 ```
+
+:::dev "Niklas Halonen (xhalo32)"
+Currently in Hoare.lean the info view in
+```
+theorem hoare_skip (P : Assertion) :
+    {{ P }} skip {{ P }} := by
+  intro st st' h hp
+```
+displays
+```
+P : Assertion
+st st' : State
+h : st =[
+  imp {
+    skip
+  } ]=>
+  st'
+hst : P st
+⊢ P st'
+```
+but we would like it to display `h : st =[ skip ]=> st'`.
+
+This issue is also relevant for other `EvalR` present in Hoare.lean.
+:::
 
 The cost of defining evaluation as a relation instead of a function is
 that we now need to construct a _proof_ that some program evaluates to
@@ -1113,9 +1154,9 @@ example :
     ∅ =[
       X := 2;
       if (X ≤ 1) {
-        Y := 3;
+        Y := 3
       } else {
-        Z := 4;
+        Z := 4
       }
     ]=> (Z →ₜ 4 ; X →ₜ 2 ; ∅) := by
   -- We must supply the intermediate state.
@@ -1132,7 +1173,7 @@ example :
     ∅ =[
       X := 0;
       Y := 1;
-      Z := 2;
+      Z := 2
     ]=> (Z →ₜ 2 ; Y →ₜ 1 ; X →ₜ 0 ; ∅) := by
   solution!
     apply Com.EvalR.seq (st' := (X →ₜ 0 ; ∅))
@@ -1171,10 +1212,10 @@ Is the following proposition provable?
 ```lean
 theorem quiz1_answer (c : Com) (st st' : State)
     (h : st =[ skip; ~c ]=> st') : st =[ c ]=> st' := by
-  cases h with
-  | seq _ _ _ smid _ h1 h2 =>
-      cases h1 with
-      | skip _ => exact h2
+  inversion h with
+  | seq smid h1 h2 =>
+    inversion h1
+    exact h2
 ```
 :::
 ::::
@@ -1211,9 +1252,9 @@ Is the following proposition provable?
 ```lean
 theorem quiz3_answer (b : Bexp) (c : Com) (st st' : State)
     (h : st =[ if (~b) { ~c } else { ~c } ]=> st') : st =[ c ]=> st' := by
-  cases h with
-  | ifTrue _ _ _ _ _ hb hc => exact hc
-  | ifFalse _ _ _ _ _ hb hc => exact hc
+  inversion h with
+  | ifTrue hb hc => exact hc
+  | ifFalse hb hc => exact hc
 ```
 :::
 ::::
@@ -1240,16 +1281,16 @@ theorem quiz4_answer (b : Bexp) (hbtrue : ∀ st, b.eval st = true)
       (s =[ cmd ]=> s') → cmd = (imp { while (~b) { ~c } }) → False := by
     intro cmd s s' hce
     induction hce with
-    | whileFalse b0 s0 c0 hbf =>
+    | @whileFalse b0 s0 c0 hbf =>
         intro heq; injection heq with e1 _; subst e1
         rw [hbtrue s0] at hbf; simp at hbf
-    | whileTrue s0 s0' s0'' b0 c0 hbt hc0 hloop ih1 ih2 =>
+    | @whileTrue s0 s0' s0'' b0 c0 hbt hc0 hloop ih1 ih2 =>
         intro heq; exact ih2 heq
-    | skip s0 => intro heq; simp at heq
-    | asgn s0 a n x h => intro heq; simp at heq
-    | seq d1 d2 s0 s0' s0'' hh1 hh2 ih1 ih2 => intro heq; simp at heq
-    | ifTrue s0 s0' b0 d1 d2 hb0 hc0 ih => intro heq; simp at heq
-    | ifFalse s0 s0' b0 d1 d2 hb0 hc0 ih => intro heq; simp at heq
+    | @skip s0 => intro heq; simp at heq
+    | @asgn s0 a n x h => intro heq; simp at heq
+    | @seq d1 d2 s0 s0' s0'' hh1 hh2 ih1 ih2 => intro heq; simp at heq
+    | @ifTrue s0 s0' b0 d1 d2 hb0 hc0 ih => intro heq; simp at heq
+    | @ifFalse s0 s0' b0 d1 d2 hb0 hc0 ih => intro heq; simp at heq
   exact key _ st st' hev rfl
 ```
 :::
@@ -1309,34 +1350,34 @@ Informal proof needed! (And one can surely be found in some past
 theorem ceval_deterministic (c : Com) (st st1 st2 : State)
     (e1 : st =[ c ]=> st1) (e2 : st =[ c ]=> st2) : st1 = st2 := by
   induction e1 generalizing st2 with
-  | skip st =>
-      cases e2 with
-      | skip => rfl
-  | asgn st a n x h =>
-      cases e2 with
-      | asgn _ _ n' _ h' => subst h; subst h'; rfl
-  | seq c1 c2 st st' st'' h1 h2 ih1 ih2 =>
-      cases e2 with
-      | seq _ _ _ st2' _ h1' h2' =>
+  | @skip st =>
+      inversion e2
+      rfl
+  | @asgn st a n x h =>
+      inversion e2 with
+      | asgn h' => subst h; subst h'; rfl
+  | @seq c1 c2 st st' st'' h1 h2 ih1 ih2 =>
+      inversion e2 with
+      | seq st2' h1' h2' =>
           have hst : st' = st2' := ih1 _ h1'
           subst hst
           exact ih2 _ h2'
-  | ifTrue st st' b c1 c2 hb hc ih =>
-      cases e2 with
-      | ifTrue _ _ _ _ _ hb' hc' => exact ih _ hc'
-      | ifFalse _ _ _ _ _ hb' hc' => simp_all
-  | ifFalse st st' b c1 c2 hb hc ih =>
-      cases e2 with
-      | ifTrue _ _ _ _ _ hb' hc' => simp_all
-      | ifFalse _ _ _ _ _ hb' hc' => exact ih _ hc'
-  | whileFalse b st c hb =>
-      cases e2 with
-      | whileFalse _ _ _ hb' => rfl
-      | whileTrue _ _ _ _ _ hb' hc' hl' => simp_all
-  | whileTrue st st' st'' b c hb hc hloop ih1 ih2 =>
-      cases e2 with
-      | whileFalse _ _ _ hb' => simp_all
-      | whileTrue _ st2' _ _ _ hb' hc' hl' =>
+  | @ifTrue st st' b c1 c2 hb hc ih =>
+      inversion e2 with
+      | ifTrue hb' hc' => exact ih _ hc'
+      | ifFalse hb' hc' => simp_all
+  | @ifFalse st st' b c1 c2 hb hc ih =>
+      inversion e2 with
+      | ifTrue hb' hc' => simp_all
+      | ifFalse hb' hc' => exact ih _ hc'
+  | @whileFalse b st c hb =>
+      inversion e2 with
+      | whileFalse hb' => rfl
+      | whileTrue hb' hc' hl' => simp_all
+  | @whileTrue st st' st'' b c hb hc hloop ih1 ih2 =>
+      inversion e2 with
+      | whileFalse hb' => simp_all
+      | whileTrue st2' _ hc' hl' =>
           have hst : st' = st2' := ih1 _ hc'
           subst hst
           exact ih2 _ hl'
@@ -1368,7 +1409,7 @@ def pup_to_n : Com := solution!(
     Y := 0;
     while (1 ≤ X) {
       Y := Y + X;
-      X := X - 1;
+      X := X - 1
     }
   })
 ```
@@ -1436,8 +1477,8 @@ theorem plus2_spec (st : State) (n : Nat) (st' : State)
   -- Inverting `heval` forces one step of the `ceval` computation: since
   -- `plus2` is an assignment, `st'` must be `st` extended at `X`.
   unfold plus2 at heval
-  cases heval with
-  | asgn _ _ m _ h =>
+  inversion heval with
+  | asgn m h =>
       simp only [Aexp.eval_plus, Aexp.eval_id, Aexp.eval_num] at h
       rw [TotalMap.update_eq]
       lia
@@ -1457,8 +1498,8 @@ theorem XtimesYinZ_spec1 (st : State) (nx ny : Nat) (st' : State)
     (hx : st[X] = nx) (hy : st[Y] = ny) (heval : st =[ XtimesYinZ ]=> st') :
     st'[Z] = nx * ny := by
   unfold XtimesYinZ at heval
-  cases heval with
-  | asgn _ _ n _ h =>
+  inversion heval with
+  | asgn n h =>
       simp only [Aexp.eval_mult, Aexp.eval_id] at h
       subst hx hy
       rw [TotalMap.update_eq]
@@ -1484,6 +1525,11 @@ GRADE_MANUAL 3: XtimesYinZ_spec
 :::
 :::::
 
+:::dev "Niklas Halonen (xhalo32)"
+We should use the `generalize` tactic here instead of `have key`.
+I've changed some Hoare proofs from `have key` to `generalize` but the tactic hasn't been explained yet.
+:::
+
 :::::exercise (rating := 3) (name := "loop_never_stops")
 Hint: proceed by induction on the assumed derivation showing that `loop`
 terminates.  Most of the cases are immediately contradictory and so can be
@@ -1498,16 +1544,16 @@ theorem loop_never_stops (st st' : State) : ¬ (st =[ loop ]=> st') := by
     have key : ∀ (c : Com) (s s' : State), (s =[ c ]=> s') → c = loop → False := by
       intro c s s' hce
       induction hce with
-      | whileFalse b s0 c0 hb =>
+      | @whileFalse b s0 c0 hb =>
           intro heq; unfold loop at heq; injection heq with e1 _
           subst e1; simp at hb
-      | whileTrue s0 s0' s0'' b c0 hb hc hloop ih1 ih2 =>
+      | @whileTrue s0 s0' s0'' b c0 hb hc hloop ih1 ih2 =>
           intro heq; exact ih2 heq
-      | skip s0 => intro heq; simp [loop] at heq
-      | asgn s0 a n x h => intro heq; simp [loop] at heq
-      | seq c1 c2 s0 s0' s0'' h1 h2 ih1 ih2 => intro heq; simp [loop] at heq
-      | ifTrue s0 s0' b c1 c2 hb hc ih => intro heq; simp [loop] at heq
-      | ifFalse s0 s0' b c1 c2 hb hc ih => intro heq; simp [loop] at heq
+      | @skip s0 => intro heq; simp [loop] at heq
+      | @asgn s0 a n x h => intro heq; simp [loop] at heq
+      | @seq c1 c2 s0 s0' s0'' h1 h2 ih1 ih2 => intro heq; simp [loop] at heq
+      | @ifTrue s0 s0' b c1 c2 hb hc ih => intro heq; simp [loop] at heq
+      | @ifFalse s0 s0' b c1 c2 hb hc ih => intro heq; simp [loop] at heq
     exact key loop st st' contra rfl
 ```
 :::::
@@ -1541,18 +1587,18 @@ exactly when `c` is while-free, then prove it equivalent to `Com.no_whiles`.
 ```lean
 def Com.no_whiles (c : Com) : Bool :=
   match c with
-  | imp {skip;} => true
-  | imp {_x := ~_a;} => true
-  | imp {~c1 ~c2} => no_whiles c1 && no_whiles c2
+  | imp {skip} => true
+  | imp {_x := ~_a} => true
+  | imp {~c1; ~c2} => no_whiles c1 && no_whiles c2
   | imp {if (~_) {~ct} else {~cf}} => no_whiles ct && no_whiles cf
   | imp {while (~_) {~_}} => false
 
 inductive Com.NoWhilesR : Com → Prop where
   -- SOLUTION
-  | skip : Com.NoWhilesR (imp { skip; })
-  | asgn (x : Ident) (a : Aexp) : Com.NoWhilesR (imp { x := ~a; })
+  | skip : Com.NoWhilesR (imp { skip })
+  | asgn (x : Ident) (a : Aexp) : Com.NoWhilesR (imp { x := ~a })
   | seq (c1 c2 : Com) (h1 : Com.NoWhilesR c1) (h2 : Com.NoWhilesR c2) :
-      Com.NoWhilesR (imp { ~c1 ~c2 })
+      Com.NoWhilesR (imp { ~c1; ~c2 })
   | cond (b : Bexp) (c1 c2 : Com) (h1 : Com.NoWhilesR c1) (h2 : Com.NoWhilesR c2) :
       Com.NoWhilesR (imp { if (~b) { ~c1 } else { ~c2 } })
   -- END SOLUTION
@@ -1589,20 +1635,20 @@ theorem no_whiles_terminating (c : Com) (st : State) (h : Com.NoWhilesR c) :
     ∃ st', st =[ c ]=> st' := by
   solution!
     induction h generalizing st with
-    | skip => exact ⟨st, .skip st⟩
-    | asgn x a => exact ⟨(x →ₜ a.eval st ; st), .asgn st a (a.eval st) x rfl⟩
-    | seq c1 c2 h1 h2 ih1 ih2 =>
+    | @skip => exact ⟨st, .skip⟩
+    | @asgn x a => exact ⟨(x →ₜ a.eval st ; st), .asgn rfl⟩
+    | @seq c1 c2 h1 h2 ih1 ih2 =>
         obtain ⟨st', hc1⟩ := ih1 st
         obtain ⟨st'', hc2⟩ := ih2 st'
-        exact ⟨st'', .seq c1 c2 st st' st'' hc1 hc2⟩
-    | cond b c1 c2 h1 h2 ih1 ih2 =>
+        exact ⟨st'', .seq hc1 hc2⟩
+    | @cond b c1 c2 h1 h2 ih1 ih2 =>
         cases hb : b.eval st with
         | true =>
             obtain ⟨st', hc1⟩ := ih1 st
-            exact ⟨st', .ifTrue st st' b c1 c2 hb hc1⟩
+            exact ⟨st', .ifTrue hb hc1⟩
         | false =>
             obtain ⟨st', hc2⟩ := ih2 st
-            exact ⟨st', .ifFalse st st' b c1 c2 hb hc2⟩
+            exact ⟨st', .ifFalse hb hc2⟩
 ```
 
 And here is an alternative solution by induction on `c` (using
@@ -1613,23 +1659,23 @@ And here is an alternative solution by induction on `c` (using
 theorem no_whiles_terminating' (c : Com) (st1 : State)
     (hb : c.no_whiles = true) : ∃ st2, st1 =[ c ]=> st2 := by
   induction c generalizing st1 with
-  | skip => exact ⟨st1, .skip st1⟩
-  | asgn x a => exact ⟨(x →ₜ a.eval st1 ; st1), .asgn st1 a (a.eval st1) x rfl⟩
-  | seq c1 c2 ih1 ih2 =>
+  | @skip => exact ⟨st1, .skip⟩
+  | @asgn x a => exact ⟨(x →ₜ a.eval st1 ; st1), .asgn rfl⟩
+  | @seq c1 c2 ih1 ih2 =>
       simp only [Com.no_whiles, Bool.and_eq_true] at hb
       obtain ⟨st1', hc1⟩ := ih1 st1 hb.1
       obtain ⟨st1'', hc2⟩ := ih2 st1' hb.2
-      exact ⟨st1'', .seq c1 c2 st1 st1' st1'' hc1 hc2⟩
-  | cond b ct cf ih1 ih2 =>
+      exact ⟨st1'', .seq hc1 hc2⟩
+  | @cond b ct cf ih1 ih2 =>
       simp only [Com.no_whiles, Bool.and_eq_true] at hb
       cases hbev : b.eval st1 with
       | true =>
           obtain ⟨st2, h⟩ := ih1 st1 hb.1
-          exact ⟨st2, .ifTrue st1 st2 b ct cf hbev h⟩
+          exact ⟨st2, .ifTrue hbev h⟩
       | false =>
           obtain ⟨st2, h⟩ := ih2 st1 hb.2
-          exact ⟨st2, .ifFalse st1 st2 b ct cf hbev h⟩
-  | whileDo b c ih => simp [Com.no_whiles] at hb
+          exact ⟨st2, .ifFalse hbev h⟩
+  | @whileDo b c ih => simp [Com.no_whiles] at hb
 -- END SOLUTION
 ```
 :::::
