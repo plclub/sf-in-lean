@@ -11,10 +11,6 @@ htmlSplit := .never
 file := some "Preface"
 %%%
 
-
-
-
-
 :::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement (year := 2025)
 The SF course at Penn (CIS 5000) sometimes attracts
 students who don't have enough math background and begin really
@@ -147,14 +143,6 @@ notations for specific situations.
 Lean and its relatives have become critical enablers for a [huge
 variety of work](https://leanprover-community.github.io/papers.html) across computer science and mathematics:
 
-:::dev "Benjamin Pierce (bcpierce00)"
-The individual references above should be merged into the categories below.
-In particular, the first three should go in the bullet about math, and the last one should go in the bullet about 
-modeling programming languages.  (I see that that first bullet could also use
-citations for some of the points it already makes, but we can leave that for later...)
-:::
-
-
 - As a _platform for modeling programming languages_, proof assistants have
   become standard tools for researchers who need to describe and
   reason about complex language definitions. They have been used,
@@ -162,6 +150,9 @@ citations for some of the points it already makes, but we can leave that for lat
   obtaining the highest level of common criteria certification,
   and for formal specifications of the x86 and LLVM instruction
   sets and programming languages such as C.
+:::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement
+Citations for these would be nice.
+:::
 
 - As _environments for developing formally certified software
   and hardware_, they have been used, for example, to build
