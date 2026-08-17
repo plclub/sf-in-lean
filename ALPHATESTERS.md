@@ -50,11 +50,6 @@ python3 -m http.server 8000 -d _out/lf/student/html-multi
 
 - Visit <http://localhost:8000> and start reading.
 
-  (Do *not* open `index.html` from your file manager: the chapter
-  links are directory-style (`Basics/`) and the search box fetches an
-  index, neither of which a browser will do over a `file://` URL.  You
-  would get the title page and then a dead end.)
-
 ## Working the exercises in VS Code
 
 - To work on exercises, open the generated Lean project as its **own
