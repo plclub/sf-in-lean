@@ -2457,6 +2457,34 @@ theorem plus_lt : ∀ (n₁ n₂ m : Nat),
 :::
 :::::
 
+:::dev "Benjamin Pierce (bcpierce00)"
+```
+INCOMING BOCHUM MATERIAL (old/bochum-lf-updates/IndProp.v): the
+   Bochum LF updates rename the two halves of this exercise to match
+   standard soundness/completeness terminology:
+
+     leb_complete  (here ble_complete)  becomes  leb_sound
+     leb_correct   (here ble_correct)   becomes  leb_complete
+
+   so that "sound" is the direction  n <=? m = true -> n <= m  and
+   "complete" is the direction  n <= m -> n <=? m = true.  The
+   GRADE_THEOREM markers are renamed accordingly, the leb_iff proof
+   lists the sound direction first:
+
+     split.
+     - apply leb_sound.
+     - apply leb_complete.
+
+   and an old commented-out variant of the leb_true_trans proof
+   (kept in a HIDE block after the exercise) is deleted.
+
+   To incorporate: rename ble_complete -> ble_sound and
+   ble_correct -> ble_complete here (and at any use sites in later
+   chapters), swap the two branches of ble_iff to match, and drop
+   the stray `-- /HIDE` leftover in ble_true_trans below.
+```
+:::
+
 :::::exercise (rating := 4) (name := "ble_le")
 ```lean
 theorem ble_complete : ∀ (n m : Nat),

@@ -153,6 +153,57 @@ little energy, but it lets us scale up to more complex definitions and
 more interesting properties without drowning in boring, repetitive detail.
 ::::
 
+:::dev "Benjamin Pierce (bcpierce00)"
+```
+INCOMING BOCHUM MATERIAL (old/bochum-lf-updates/AltAuto.v): the
+   Bochum LF updates extend AltAuto's discussion of the sequencing
+   tactical with new material on Rocq's "local form with `..`":
+
+     T; [T1 .. | Tn]
+
+   which applies T1 to the first goal, Tn to the last, and T1 to all
+   goals in between (variants: T; [T1 | .. | Tn] applies nothing in
+   between; the `..` may also appear first, last, or alone).  The new
+   material illustrates this by revisiting star_app from IndProp:
+
+     Lemma star_app'': forall T (s1 s2 : list T) (re : reg_exp T),
+       s1 =~ Star re ->
+       s2 =~ Star re ->
+       s1 ++ s2 =~ Star re.
+     Proof.
+       intros T s1 s2 re H1.
+       remember (Star re) as re' eqn:Eq.
+       induction H1
+         as [|x'|s1 re1 s2' re2 Hmatch1 IH1 Hmatch2 IH2
+             |s1 re1 re2 Hmatch IH|re1 s2' re2 Hmatch IH
+             |re''|s1 s2' re'' Hmatch1 IH1 Hmatch2 IH2];
+         [discriminate .. | intros H; apply H | idtac]. (* <=== *)
+       (* MStarApp *)
+       intros H1. rewrite <- app_assoc.
+       apply MStarApp.
+       + apply Hmatch1.
+       + apply IH2.
+         * apply Eq.
+         * apply H1.
+     Qed.
+
+   (first shown in its long form with all seven cases spelled out, then
+   shortened as above).  Bochum also adds a QUIETSOLUTION alternate
+   solution to AltAuto's re_opt exercise that uses nested `..` lists
+   instead of `try`, and rewords the introduction of `T; T'` to say
+   simply that it is "equivalent to locally performing T' on all the
+   subgoals".
+
+   To incorporate: Lean has no direct analogue of the positional
+   `[T1 .. | Tn]` goal-selector list; the closest idioms are
+   case-labelled alternatives (`case ... =>`/`next`), `all_goals`,
+   and `first`.  A future pass should decide whether to add a
+   parallel discussion here (e.g. using `star_app` below, proving the
+   six non-MStarApp cases uniformly) or to record the Rocq material
+   as intentionally unported.
+```
+:::
+
 ## The `try` combinator
 
 ::::full
