@@ -335,10 +335,16 @@ def parse_ts(iso):
 # review decision, unresolved-thread count, auto-merge flag, and merge-queue
 # membership in one request per page — the REST API exposes none of these
 # directly.
+#
+# The page size is bounded by GitHub's 500,000-node budget, which is charged on
+# *possible* nodes, not returned ones: each PR may carry 100 threads × 100
+# comments plus 100 conversation comments, so 25 PRs/page ≈ 255k possible nodes
+# — comfortably under the cap, where 50/page was over it and the whole query was
+# rejected.  Grow the per-PR `first:` limits and this multiplies.
 _PR_QUERY = """
 query($owner:String!, $name:String!, $cursor:String) {
   repository(owner:$owner, name:$name) {
-    pullRequests(states:OPEN, first:50, after:$cursor) {
+    pullRequests(states:OPEN, first:25, after:$cursor) {
       pageInfo { hasNextPage endCursor }
       nodes {
         number
@@ -382,7 +388,12 @@ def fetch_prs(slug, token):
         data = graphql(_PR_QUERY, {"owner": owner, "name": name, "cursor": cursor}, token)
         repo = (data or {}).get("repository")
         if not repo:
-            break
+            # Fail loudly rather than return what we have: a partial (or empty)
+            # map would silently publish a table missing its PR rows, which is
+            # exactly how a MAX_NODE_LIMIT_EXCEEDED rejection once emptied the
+            # dashboard.  graphql() has already written the error to stderr.
+            sys.exit("branch_watch: PR query failed; aborting rather than "
+                     "publishing an incomplete table (see error above)")
         conn = repo["pullRequests"]
         for pr in conn["nodes"]:
             threads = pr["reviewThreads"]["nodes"]
