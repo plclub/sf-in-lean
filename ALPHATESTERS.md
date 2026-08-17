@@ -6,19 +6,20 @@
 
 - Clone your copy onto your local machine.
 
-- Tell your clone where the original repo lives, so you can pick up our changes
-  later:
+- Tell your clone where the original repo lives, so you can pick up our changes later:
   ```
   git remote add upstream https://github.com/plclub/sf-in-lean.git
   ```
 
-- Install VS Code if you don't already have it, and install the **Lean 4**
-  extension from its Extensions tab.
+- Install VS Code if you don't already have it
 
-- Open your clone in VS Code and open any `.lean` file in the `LF` directory.
-  The first time you do this, the extension will offer to install Lean itself;
-  accept, and it will fetch the version this book needs.  (Open a fresh terminal
-  afterwards, so that `elan` and `lake` are on your `PATH`.)
+- Install the **Lean 4** extension from its Extensions tab.
+
+- Open your clone in VS Code and open any `.lean` file in the `LF`
+  directory. The first time you do this, the extension will offer to
+  install Lean itself; accept, and it will fetch the version this book
+  needs.  (Open a fresh terminal afterwards, so that `elan` and `lake`
+  are on your `PATH`.)
 
 ## Building the book
 
@@ -30,12 +31,9 @@
 
   This builds the _Logical Foundations_ volume in its student form —
   full prose, with solutions elided — and writes two things to
-  `_out/lf/student/`:
-
-| | |
-| --- | --- |
-| `html-multi/` | the book to read, one page per chapter |
-| `lean/` | a standalone Lean project holding the same chapters as `.lean` files, with a `sorry` wherever an exercise expects your proof |
+  `_out/lf/student/`: `html-multi/`, an HTML-formatted version of the
+  whole book, and `lean/`, a standalone Lean project holding the same
+  chapters as `.lean` files, with solutions to exercises omitted.
 
 - Use `make student` instead if you also want _Type Systems_ (`ts`)
   and _Hoare Logic_ (`hl`).  The first build compiles the whole
@@ -45,38 +43,33 @@
 
 - Start a local HTTP server for the generated HTML files:
 
-```
-python3 -m http.server 8000 -d _out/lf/student/html-multi
-```
+  ```
+  python3 -m http.server 8000 -d _out/lf/student/html-multi
+  ```
 
 - Visit <http://localhost:8000> and start reading.
-
-  (Do *not* open `index.html` from your file manager: the chapter
-  links are directory-style (`Basics/`) and the search box fetches an
-  index, neither of which a browser will do over a `file://` URL.  You
-  would get the title page and then a dead end.)
 
 ## Working the exercises in VS Code
 
 - To work on exercises, open the generated Lean project as its **own
   folder** — not as a file inside your clone:
 
-```
-code _out/lf/student/lean
-```
+  ```
+  code _out/lf/student/lean
+  ```
+
+  or
+
+  ```
+  cd _out/lf/student/lean
+  code .
+  ```
 
   You can also use File → Open Folder.  
 
-  (It is a standalone Lake package with its own `lean-toolchain`, and
-  the Lean 4 extension keys off the folder it opens, so opening it any
-  other way will leave you without a working Lean session.  The
-  chapters are `LF/Basics.lean`, `LF/Induction.lean`, and so on,
-  matching the chapters in the HTML.)
-
-  Treat this copy as a scratch copy: **every `make` regenerates it
-  from the Verso sources, overwriting whatever is there.**  Work on
-  your proofs here, but keep anything you want to survive somewhere
-  else.
+  Treat this as a scratch copy: *every `make` regenerates it from the
+  Verso sources, overwriting whatever is there.*  Work on your proofs
+  here, but keep anything you want to survive somewhere else.
 
 ## Making fixes and leaving comments
 
@@ -115,9 +108,8 @@ code _out/lf/student/lean
   which will get your contributions merged faster.
 
 - We are actively working on all the chapters, so if you're reading a
-  chapter over a long period, make sure to pull from the source repo
-  often. Note that a plain `git pull` only gets you your *own* fork,
-  which never updates itself — you have to ask for ours by name:
+  chapter over a long period, make sure to merge in changes from the
+  source repo often. 
 
   ```
   git fetch upstream
