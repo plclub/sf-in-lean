@@ -6,8 +6,7 @@
 
 - Clone your copy onto your local machine.
 
-- Tell your clone where the original repo lives, so you can pick up our changes
-  later:
+- Tell your clone where the original repo lives, so you can pick up our changes later:
   ```
   git remote add upstream https://github.com/plclub/sf-in-lean.git
   ```
@@ -61,16 +60,16 @@ python3 -m http.server 8000 -d _out/lf/student/html-multi
 - To work on exercises, open the generated Lean project as its **own
   folder** — not as a file inside your clone:
 
-```
-code _out/lf/student/lean
-```
+  ```
+  code _out/lf/student/lean
+  ```
 
   or
 
-```
-cd _out/lf/student/lean
-code .
-```
+  ```
+  cd _out/lf/student/lean
+  code .
+  ```
 
   You can also use File → Open Folder.  
 
