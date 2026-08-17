@@ -752,7 +752,10 @@ partial def delabComInner : DelabM (TSyntax `imp_com) := do
       | .lit (.strVal s) =>
         let a ← withAppArg delabAexpInner
         `(imp_com| $(mkIdent (.mkSimple s)):ident := $a;)
-      | _ => `(imp_com| ~$(← delab))
+      | _ =>
+        let x ← withAppFn <| withAppArg delab
+        let a ← withAppArg delab
+        `(imp_com| ~($(mkIdent ``Com.asgn) $x $a))
     | Com.seq _ _ =>
       let s1 ← withAppFn <| withAppArg delabComInner
       let s2 ← withAppArg delabComInner
