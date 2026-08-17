@@ -6,14 +6,18 @@ import LF.Induction
 open Verso.Genre Manual
 open SFLMeta
 
-set_option pp.fieldNotation false
-
-#doc (Manual) "UsingLean: Using the full power of a proof assistant" =>
+#doc (Manual) "UsingLean: Using the Full Power of a Proof Assistant" =>
 %%%
 tag := "UsingLean"
 htmlSplit := .never
 file := some "UsingLean"
 %%%
+
+:::ignore
+```lean -show
+variable (n : Nat)
+```
+:::
 
 :::instructors
 This chapter is the bridge to Lean's natural numbers,
@@ -77,11 +81,8 @@ and {tactic}`simp` annotations, which enable more powerful and concise proofs.
 
 In fact, from now on, we will use the built-in {name}`Nat` type and its powerful
 features, writing `Nat.<theorem>` to reference Lean's version
-of `<theorem>`.
-
-:::dev "Benjamin Pierce (bcpierce00)"
-Why can't we just write <theorem>?
-:::
+of `<theorem>`. (By convention, theorems about a type live in the namespace of
+that type, hence the need for the `Nat.` prefix.)
 
 ## {tactic}`rfl` and Computation with {name}`Nat`
 
@@ -150,7 +151,7 @@ Try this:
 If you are using the Lean extension in VS Code, the InfoView will
 have a blue `[apply]` button that shows the suggested theorem to
 close the goal. Alternatively, VS Code may show an inline suggestion
-(light bulb) button above the {tactic}`exact?`. You can click either of
+(lightbulb) button above the {tactic}`exact?`. You can click either of
 these buttons to replace the occurrence of {tactic}`exact?` with the tactic
 it found to complete the proof; idiomatic Lean does not leave
 {tactic}`exact?` tactics (or any other `?` tactics, as we will see shortly)
@@ -167,7 +168,7 @@ that you could use to rewrite the current goal.
 ::::
 
 ::::terse
-You can also use {tactic}`rw?` to look for theorems to rewrite by
+You can also use {tactic}`rw?` to look for theorems to rewrite by.
 ::::
 
 ```lean (name := rw?_add_comm)
@@ -175,10 +176,9 @@ example (n m : Nat) : n + m = m + n := by
   rw?
 ```
 
-```leanOutput rw?_add_comm
+```leanOutput rw?_add_comm (allowDiff := 1)
 Try this:
   [apply] rw [Nat.add_comm]
-  -- no goals
 ```
 
 ::::full
@@ -195,6 +195,12 @@ conceptually, and then using {tactic}`rw?` to search for a theorem
 that implements it. If no such theorem exists, that may be a sign
 that you need to prove it yourself.
 ::::
+
+:::terse
+However, just because {tactic}`rw?` suggests a theorem to you does
+not automatically imply that it will be useful; you will need to
+carefully look through its suggestions to see which ones seem useful.
+:::
 
 ```lean +error
 example (n m k : Nat) :
@@ -228,7 +234,7 @@ theorem mul_three_beq (n : Nat) :
 :::gradeTheorem 1 mul_three_beq
 :::
 
-# Structuring Proofs with `calc`
+# Structuring Proofs with {tactic}`calc`
 
 In Lean proofs, long {tactic}`rw` chains are useful, but they are sometimes
 hard to read because the intermediate goals are invisible. Furthermore,
@@ -262,7 +268,7 @@ example (n m k : Nat) : n + (m + k) = m + (n + k) := by
   rw [← Nat.add_assoc, Nat.add_comm n m, Nat.add_assoc]
 ```
 
-Here we present the same theorem, written with `calc`.
+Here we present the same theorem, written with {tactic}`calc`.
 Note how each intermediate goal is visible in the source.
 
 ```lean
@@ -286,10 +292,10 @@ example (n m k : Nat) : n + (m + k) = m + (n + k) := by
     _ = m + (n + k) := by rw [Nat.add_assoc]
 ```
 
-Whereas before, the left-hand side of each equality in the `calc`
-tactic was repeated from the right-hand side of the previous one,
-we can replace the left-hand side entirely with an `_`. Now our
-Lean proof looks quite a bit like the textbook one we saw earlier!
+Whereas before, the left-hand side of each equality in the
+{tactic}`calc` tactic was repeated from the right-hand side of the
+previous one, we can replace the left-hand side entirely with an `_`.
+Now our Lean proof looks quite a bit like the textbook one we saw earlier!
 
 :::::exercise (rating := 1) (name := "succ_mul_succ")
 ```lean
@@ -315,18 +321,16 @@ theorem succ_mul_succ' (n m : Nat) :
 
 If you prefer {tactic}`rw` to {tactic}`calc`, that's fine! Each has particular
 uses, and both will be tools in your ever-growing toolbox of tactics.
+:::::
 
 :::dev "Benjamin Pierce (bcpierce00)"
 Needs some exercises!!
 :::
-:::::
 
-# Definitional Simplification: `dsimp`
+# Definitional Simplification: {tactic}`dsimp`
 
 Often, rather than rewriting by a known equation like
-
 `n + succ m = succ (n + m)` using `rw [add_succ]`,
-
 we just want to simplify the function (here {name}`Nat.add`) automatically when we can.
 
 The {tactic}`dsimp` tactic ("definitionally simplify") unfolds definitions
@@ -403,33 +407,25 @@ Like {tactic}`rw` and {tactic}`exact`, {tactic}`dsimp` also has a `?` version
 that searches for functions to simplify by. Many Lean tactics have `?`
 versions; try it out if you are unsure.
 
-:::dev "Roger Burtonpatel (rogerburtonpatel)" NOW
-Hard pointer (ionathanch: from where?) needed to this section once we
-versify. Also, we may want a pointer to where we introduce `simp`
-(and _maybe_ `grind` in the next volume).
-:::
-
 ## A New Step Towards Automation
 
 :::suppressPreviousHeaderWhenTerse
 :::
 
-:::dev "Benjamin Pierce (bcpierce00)"
-This section reference should be a live pointer, at least in the HTML.
-:::
-
 ::::full
-In the section on `Irreducibility, Rewriting, and Proof
-Engineering` of `Basics.lean`, we hinted at introducing more
-automated tactics than `rewrite` for writing proofs. The
-first of these is `dsimp`: by using `dsimp`, we allow Lean to introduce a
-small amount of its own automatic reasoning using other basic
-tactics like `rfl`. If you're ever confused by what `dsimp` is
-doing, don't be afraid to switch back to `rewrite` to examine
-what's going on.
+In the section on
+{ref "Logical-Foundations--Basics___-Functional-Programming-in-Lean--Proof-by-Rewriting--Irreducibility___-Rewriting___-and-Proof-Engineering"}[Irreducibility, Rewriting, and Proof Engineering]
+in {ref "Basics"}[Basics], we hinted at introducing more automated
+tactics than {tactic}`rewrite` for writing proofs. The first of these
+is {tactic}`dsimp`: by using {tactic}`dsimp`, we allow Lean to
+introduce a small amount of its own automatic reasoning using other
+basic tactics like {tactic}`rfl`. If you're ever confused by what
+{tactic}`dsimp` is doing, don't be afraid to switch back to
+{tactic}`rewrite` to examine what's going on.
 
-Later in this volume, we will introduce the more powerful automated
-tactic `simp`, which can sometimes solve complex goals by itself and is
+Later in the {ref "Automation"}[Automation] chapter, we will
+introduce the more powerful automated tactic {tactic}`simp`,
+which can sometimes solve complex goals by itself and is
 accordingly extremely common in real-world Lean developments.
 
 But, using this tactic now does not help (in fact, it hurts!) the
@@ -437,25 +433,26 @@ process of learning logical reasoning, formal theorem proving, and
 Lean. Additionally, real Lean programmers are careful when using
 automation: it can hurt the readability of a proof, and real-world
 Lean is often used to _communicate_ a result as much as to prove
-it. We will continue to use only simple tactics, like `dsimp` and
-`rw`, for most of this volume so that you have a firm grasp of both the
-logic behind the proofs you are writing and the ways to structure
-those proofs to make your logic clear.
+it. We will continue to use only simple tactics, like {tactic}`dsimp`
+and {tactic}`rw`, for most of this volume so that you have a firm
+grasp of both the logic behind the proofs you are writing and the
+ways to structure those proofs to make your logic clear.
 ::::
 
 # Redefining Functions and Lemmas over Nats
 
 ::::full
 Now that we've switched over to using Lean's standard library, we can
-redefine some of the functions from the last few chapters on `Nat`s.
-Note that, for the built-in {name}`Nat` type, the patterns `0` and `n + 1` correspond to
-`zero` and `succ n`. Likewise, the pattern `n + 2` is equivalent to `n + 1 + 1`.
+redefine some of the functions from the last few chapters on {name}`Nat`s.
+Note that, for the built-in {name}`Nat` type, the patterns {lean}`0` and
+{lean}`n + 1` correspond to {name}`Nat.zero` and {lean}`Nat.succ n`.
+Likewise, the pattern {lean}`n + 2` is equivalent to {lean}`n + 1 + 1`.
 
 Prove some of these theorems using the techniques we've discussed this chapter.
 ::::
 
 ::::terse
-Let's redefine some functions on Lean's `Nat`s and prove some theorems about them.
+Let's redefine some functions on Lean's {name}`Nat`s and prove some theorems about them.
 ::::
 
 ```lean
@@ -471,28 +468,28 @@ theorem Nat.odd_def (n : Nat) : n.odd = !(n.even) := rfl
 
 def Nat.minustwo (n : Nat) : Nat :=
   match n with
-  | 0    => 0
-  | 1    => 0
+  | 0      => 0
+  | 1      => 0
   | n' + 2 => n'
 
 def Nat.double (n : Nat) : Nat :=
   match n with
-  | 0    => 0
+  | 0      => 0
   | n' + 1 => double n' + 2
 ```
 
 ::::full
-Note that we defined these functions in the `Nat` namespace;
+Note that we defined these functions in the {name}`Nat` namespace;
 Lean's naming conventions advise that functions on a type should be defined in that type's
-namepsace in almost all circumstnaces.
+namespace in almost all circumstances.
 
 When we define functions this way,
 something interesting happens to the way Lean's InfoView prints them. Take a look at
-the info view inside the proof of this thoerem (i.e., before the `rfl` tactic):
+the InfoView inside the proof of this theorem before the {tactic}`rfl` tactic:
 ::::
 
 ::::terse
-Defining functions in the `Nat` namespace changes how they print:
+Defining functions in the {name}`Nat` namespace changes how they print:
 ::::
 
 ```lean
@@ -502,39 +499,36 @@ theorem Nat.even_add_three (n : Nat) : even (n + 3) = even (n + 1) := by
 
 ::::full
 Instead of printing the goal the way we wrote it in the theorem statement, Lean
-prints `(n + 3).even = (n + 1).even`! This is an example of Lean's _field notation_,
+prints {lean}`(n + 3).even = (n + 1).even`! This is an example of Lean's _field notation_,
 whereby Lean prints functions inside the namespace of a type _after_ their first argument,
 separated by a `.`. At first glance, this may appear similar to how object-oriented methods work,
-but it's really just a syntactic variation on the normal fu8nction-application style
-we've seen so far. That is, `Nat.even n` and `n.even` are just different ways to write the exact
-same term.
+but it's really just a syntactic variation on the normal function-application style
+we've seen so far. That is, {lean}`Nat.even n` and {lean}`n.even` are just different ways to write
+the exact same term.
 
 In previous chapters we disabled this notation by putting `set_option pp.fieldNotation false`
-at the top of each file, but from now on we will leave it enabled, since  field notation
+at the top of each file, but from now on we will leave it enabled, since field notation
 is recommended in idiomatic Lean developments.
-
-:::dev "Benjamin Pierce (bcpierce00)"
-Cut this: "It can also be disabled just for a specific function
-or constructor by writing `attribute [pp_nodot] <Name>`."  Do they need to know it in SFL?
-:::
 
 As an example, observe the difference in how Lean prints the goal in the following two examples:
 ::::
 
 ::::terse
-This printing style is called _field notation_ and can be disabled with the `pp_nodot` attribute.
+This printing style is called _field notation_ and can be enabled or disabled with the
+`pp.fieldNotation` option.
 ::::
 
 ```lean
+set_option pp.fieldNotation false
+
 example (n : Nat) : Nat.double (n + 0) = Nat.double n := by
   rfl
 
-attribute [pp_nodot] Nat.double
+set_option pp.fieldNotation true
 
 example (n : Nat) : Nat.double (n + 0) = Nat.double n := by
   rfl
 ```
-
 
 :::::exercise (rating := 2) (name := "even_succ")
 ```lean
@@ -552,18 +546,13 @@ theorem Nat.even_succ (n : Nat) :
 :::
 :::::
 
-:::dev NOW
-talk about using `Nat.add_zero` and friends from now on.
-:::
-
-(OA) : added lemmas proved for our Nat for Lean's Nat to prevent
-       later files from breaking.
+We reprove here for Lean's {name}`Nat` some theorems about
+{name}`Nat.even` and {name}`Nat.double`, which we had previously
+proven for our custom {name}`NatPlayground.Nat`.
 
 ```lean
 theorem Nat.even_zero : even 0 = true := by rfl
-
 theorem Nat.double_zero : double 0 = 0 := by rfl
-
 theorem Nat.double_succ (n : Nat) : (n + 1).double = n.double + 2 := by rfl
 ```
 
@@ -597,25 +586,24 @@ theorem Nat.double_mul (n : Nat) : n.double = 2 * n := by
 
 Lean's language server can suggest _code actions_, which are
 small editor commands that modify the source code.
-In VS Code, a light-bulb icon appears on the left
+In VS Code, a lightbulb icon appears on the left
 when a code action is available at your cursor.
 You can click the icon or open the code action menu with `Ctrl + .`
 on Windows/Linux or `Command + .` on macOS.
-
-
-For more information, see \[Lean 4 VS Code extension manual\](https://github.com/leanprover/vscode-lean4/blob/master/vscode-lean4/manual/manual.md#code-actions).
+For more information, see the
+[Lean 4 VSCode extension manual](https://github.com/leanprover/vscode-lean4/blob/master/vscode-lean4/manual/manual.md#code-actions).
 
 Some code actions can generate the explicit branches needed for pattern
 matching. This is especially useful when working with `match` expressions,
-or with tactics such as `cases` and `induction`, which we saw in previous chapters.
-
-Let's look at an example using `induction`.
+or with tactics such as {tactic}`cases` and {tactic}`induction`,
+which we saw in previous chapters.
 
 ::::full
+Let's look at an example using {tactic}`induction`.
 For example, suppose we start with the following incomplete proof:
 
-```lean -keep +error
-theorem foo (n : Nat) : Nat.beq n n := by
+```lean +error
+example (n : Nat) : Nat.beq n n := by
   induction n
 ```
 
@@ -640,13 +628,13 @@ One possible proof is:
 ```lean
 example (n : Nat) : Nat.beq n n := by
   induction n with
-  | zero      => rfl
+  | zero => rfl
   | succ n ih => rw [Nat.beq, ih]
 ```
 
-Note that Lean used `_` for the induction hypothesis in the generated `.succ` branch.
-At that point, Lean didn't know the unfinished proof would need to refer to the hypothesis.
-Since we use it in `rw`, we replace `_` with the name `ih`.
+Note that Lean used `_` for the induction hypothesis in the generated `succ` branch.
+At that point, Lean didn't know whether the unfinished proof would need to refer to the hypothesis.
+Since we use it in {tactic}`rw`, we replace `_` with the name `ih`.
 
 In later chapters, we will see some tactics that can make such
 inaccessible names available again.
