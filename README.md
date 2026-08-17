@@ -5,7 +5,7 @@ This repository contains the sources for the _Software Foundations in Lean_ text
 ## Status and how to contribute
 
 SF-in-Lean is ready for adventurous alpha-testers!  See
-[ALPHATESTERS.md](AlPHATESTERS.md) for instructions on how to get started.
+[ALPHA-TESTERS.md](AlPHA-TESTERS.md) for instructions on how to get started.
 
 The SF-in-Lean team is also looking for contributors who have time and
 interest to make a bigger commitment to the project.  
@@ -64,7 +64,7 @@ respectively).
 
 Students are expected to work through the student `.lean` versions,
 filling in the exercises, or to go through the HTML and switch
-to the Lean just for exercises. See [ALPHATESTERS.md](ALPHATESTERS.md)
+to the Lean just for exercises. See [ALPHA-TESTERS.md](ALPHA-TESTERS.md)
 for additional instructions. Instructors are expected to work through
 the terse version in class, and use the grading version for grading
 homework exercises done by students. We do not keep the solutions

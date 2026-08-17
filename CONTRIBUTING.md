@@ -169,7 +169,7 @@ git push --force-with-lease
 
 These recipes assume `origin` is the shared repo, which is the case if you have
 write access and cloned it directly.  If you are working from a fork (the setup
-in `ALPHATESTERS.md`), your `origin` is your fork and the shared repo is
+in `ALPHA-TESTERS.md`), your `origin` is your fork and the shared repo is
 `upstream`, so read `upstream/main` for `origin/main` throughout — rebasing onto
 your fork's `main` would replant your work on a stale base.
 
