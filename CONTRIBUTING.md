@@ -308,35 +308,58 @@ clear error from the role telling it which option to set.
 ## AI policy
 
 SFL contributors may use AI tools to help create, validate, and
-maintain content in this repo.  AI-generated content, especially
-public-facing content such as words and proofs in book chapters,
-should be carefully vetted.
+maintain content in this repo. However, our AI policy differs 
+depending on whether the content is "user-facing" or not.
 
-For PRs with public-facing content, we follow the [Mathlib AI
-policy][mathlib-ai-policy], which mandates summarizing how AI is used
-in the PR description. PR descriptions should be written (or at least
-carefully rewritten) by hand.
+### User-facing content
 
-Here is the part of the [Mathlib AI policy][mathlib-ai-policy] that
-should be applied when AI tools are adding or changing public-facing content:
+As a rule, we do not use AI to generate any prose that appears in any volume of SFL. 
+Contributors may ask AI for feedback on text they have written or use it to check for
+spelling or grammar mistakes, but they should apply any AI suggestions manually after 
+vetting their quality, rather than having an agent edit their text autonomously. Contributors 
+also should not ask AI to produce text and manually edit it afterward. 
+
+For proofs, contributors may use AI to produce a "first draft" of the proof. However, 
+AI proofs should be carefully vetted and edited to ensure that they only use
+tactics to which readers have been introduced (see the table in [STYLE-CODE.md](STYLE-CODE.md))
+and generally follow good Lean style.
+
+AI generated text may appear inside `:::dev` blocks; often we will use these to keep track of  
+feedback from agents that we have not yet incorporated into the text, for example. 
+In such cases, the contents of these blocks should be marked as AI-generated. 
+
+For PRs, we follow the [Mathlib AI policy][mathlib-ai-policy], 
+which mandates summarizing how AI is used
+in the PR description. PR descriptions should be written by hand.
+
+In particular, here is the part of the [Mathlib AI policy][mathlib-ai-policy] that
+should be applied when AI tools are adding or changing user-facing content:
 
 > Explain which tool(s) you used and how you used it. This provides
 > useful context for reviewers: tools make different mistakes than humans,
 > so knowing this makes it easier to spot common errors.
 
-Scripts and other infrastructure in the repository that are used to
-help create public-facing content are excluded, i.e., AI usage here
-doesn't need to be explained in the PR description.
+### Non-user-facing content
+
+Scripts and other infrastructure in the repository (e.g., the contents of the `SFLMeta` folder) 
+that are used to help create user-facing content are not subject 
+to restrictions above. AI may be used here to generate code and documentation, and usage
+doesn't need to be explained in the PR description. 
+
+However, scripts and code that are mostly or wholly AI generated should be marked as
+such: these will typically be lower quality than human-created or
+heavily vetted code, and people looking at them should understand that.
+
+### Other general guidelines
 
 Instructions for Claude live in [CLAUDE.md](CLAUDE.md) (which also
-asks Claude to pay attention to the conventions in this file).
+asks Claude to pay attention to the conventions in this file and the style guides).
 
 Raw AI output should not be posted to GitHub or Zulip without an
 indication that that's what it is.
 
-Scripts that are mostly or wholly AI generated should be marked as
-such: these will typically be lower quality than human-created or
-heavily vetted code, and people looking at them should understand
-that.
+When in doubt: we use AI agents as tools, not collaborators. Avoid any usage 
+of an AI agent that, were it a human, would obligate us to credit it as an author of
+or contributor to SFL.
 
 [mathlib-ai-policy]: https://leanprover-community.github.io/contribute/index.html#use-of-ai
