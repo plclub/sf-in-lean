@@ -11,7 +11,9 @@
   git remote add upstream https://github.com/plclub/sf-in-lean.git
   ```
 
-- Install VS Code if you don't already have it, and install the **Lean 4**
+- Install VS Code if you don't already have it
+
+- Install the **Lean 4**
   extension from its Extensions tab.
 
 - Open your clone in VS Code and open any `.lean` file in the `LF` directory.
@@ -29,12 +31,9 @@
 
   This builds the _Logical Foundations_ volume in its student form —
   full prose, with solutions elided — and writes two things to
-  `_out/lf/student/`:
-
-| | |
-| --- | --- |
-| `html-multi/` | the book to read, one page per chapter |
-| `lean/` | a standalone Lean project holding the same chapters as `.lean` files, with a `sorry` wherever an exercise expects your proof |
+  `_out/lf/student/`: `html-multi/`, an HTML-formatted version of the whole 
+  book, and `lean/`, a standalone Lean project holding the same chapters 
+  as `.lean` files, with solutions to exercises omitted.
 
 - Use `make student` instead if you also want _Type Systems_ (`ts`)
   and _Hoare Logic_ (`hl`).  The first build compiles the whole
@@ -44,9 +43,9 @@
 
 - Start a local HTTP server for the generated HTML files:
 
-```
-python3 -m http.server 8000 -d _out/lf/student/html-multi
-```
+  ```
+  python3 -m http.server 8000 -d _out/lf/student/html-multi
+  ```
 
 - Visit <http://localhost:8000> and start reading.
 
