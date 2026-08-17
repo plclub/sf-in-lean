@@ -63,7 +63,7 @@ terse: lf-terse hl-terse ts-terse
 grading: lf-grading hl-grading ts-grading
 
 grading-check:
-	python3 scripts/grading_check.py --lf --hl --ts
+	python3 scripts/grading_check.py --volumes LF HL TS --variants student solutions --stats
 
 # Mechanical conformance checks for the style guides — STYLE-CODE.md and
 # STYLE-WRITING.md (auto checks fail the run; assisted ones are advisory).

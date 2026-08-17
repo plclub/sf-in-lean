@@ -1,12 +1,14 @@
 # Automated Grading
 
+TODO this is outdated!
+
 SF-in-Lean comes with automated grading infrastructure that's built on top of [robertylewis/lean4-autograder-main](https://github.com/robertylewis/lean4-autograder-main) (which we have a fork of in [plclub/lean4-autograder-main](https://github.com/plclub/lean4-autograder-main) containing updates and fixes).
 We refer to "lean4-autograder-main" with just "the autograder".
 
 The autograder has the following features:
 - It can grade a submission against a solution file which contains grading attributes that look like `attribute [autogradedProof points] name1 name2 ...`, see [running locally](#running-locally)
 
-## Autograding directive
+## Autograding Directive
 
 To add automated grading to an exercise, use the `:::gradeTheorem <POINTS> <NAME1> ...` directive to instruct the autograder to grade any number of theorems.
 Use double quotes around `<POINTS>` if you use a decimal separator.
@@ -36,7 +38,7 @@ theorem nand_test4 : nand MyBool.true  MyBool.true  = MyBool.false := solution!(
 Instead of using the autograder's `autogradedDef` attributes, we use `autogradedTheorem`s on some of the examples (or characterizing lemmas) that follow the definition.
 These need to be named so they are `theorem`s rather than `example`s.
 
-## Running locally (example)
+## Running Locally (example)
 
 After building all the variants (including `grading`) for LF (with `make lf`), change directory to `_out/lf/grading/lean`.
 To test the generated student lean file for Basics, run
@@ -51,7 +53,7 @@ Likewise, to test the generated solutions, from the same directory run
 lake exe autograder --local ../../solutions/lean/LF/Basics.lean LF/Basics.lean
 ```
 
-## Implementation details
+## Implementation Details
 
 Our integration with the autograder happens in multiple places
 
