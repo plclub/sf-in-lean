@@ -13,13 +13,13 @@
 
 - Install VS Code if you don't already have it
 
-- Install the **Lean 4**
-  extension from its Extensions tab.
+- Install the **Lean 4** extension from its Extensions tab.
 
-- Open your clone in VS Code and open any `.lean` file in the `LF` directory.
-  The first time you do this, the extension will offer to install Lean itself;
-  accept, and it will fetch the version this book needs.  (Open a fresh terminal
-  afterwards, so that `elan` and `lake` are on your `PATH`.)
+- Open your clone in VS Code and open any `.lean` file in the `LF`
+  directory. The first time you do this, the extension will offer to
+  install Lean itself; accept, and it will fetch the version this book
+  needs.  (Open a fresh terminal afterwards, so that `elan` and `lake`
+  are on your `PATH`.)
 
 ## Building the book
 
@@ -31,9 +31,9 @@
 
   This builds the _Logical Foundations_ volume in its student form —
   full prose, with solutions elided — and writes two things to
-  `_out/lf/student/`: `html-multi/`, an HTML-formatted version of the whole 
-  book, and `lean/`, a standalone Lean project holding the same chapters 
-  as `.lean` files, with solutions to exercises omitted.
+  `_out/lf/student/`: `html-multi/`, an HTML-formatted version of the
+  whole book, and `lean/`, a standalone Lean project holding the same
+  chapters as `.lean` files, with solutions to exercises omitted.
 
 - Use `make student` instead if you also want _Type Systems_ (`ts`)
   and _Hoare Logic_ (`hl`).  The first build compiles the whole
@@ -67,16 +67,9 @@
 
   You can also use File → Open Folder.  
 
-  (This directory is a standalone Lake package with its own
-  `lean-toolchain`, and the Lean 4 extension keys off the folder it
-  opens, so opening it any other way will leave you without a working
-  Lean session.  The chapters are `LF/Basics.lean`,
-  `LF/Induction.lean`, and so on, matching the chapters in the HTML.)
-
-  Treat this copy as a scratch copy: *every `make` regenerates it
-  from the Verso sources, overwriting whatever is there.*  Work on
-  your proofs here, but keep anything you want to survive somewhere
-  else.
+  Treat this as a scratch copy: *every `make` regenerates it from the
+  Verso sources, overwriting whatever is there.*  Work on your proofs
+  here, but keep anything you want to survive somewhere else.
 
 ## Making fixes and leaving comments
 
@@ -115,9 +108,8 @@
   which will get your contributions merged faster.
 
 - We are actively working on all the chapters, so if you're reading a
-  chapter over a long period, make sure to pull from the source repo
-  often. Note that a plain `git pull` only gets you your *own* fork,
-  which never updates itself — you have to ask for ours by name:
+  chapter over a long period, make sure to merge in changes from the
+  source repo often. 
 
   ```
   git fetch upstream
