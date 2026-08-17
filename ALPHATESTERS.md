@@ -65,16 +65,23 @@ python3 -m http.server 8000 -d _out/lf/student/html-multi
 code _out/lf/student/lean
 ```
 
+  or
+
+```
+cd _out/lf/student/lean
+code .
+```
+
   You can also use File → Open Folder.  
 
-  (It is a standalone Lake package with its own `lean-toolchain`, and
-  the Lean 4 extension keys off the folder it opens, so opening it any
-  other way will leave you without a working Lean session.  The
-  chapters are `LF/Basics.lean`, `LF/Induction.lean`, and so on,
-  matching the chapters in the HTML.)
+  (This directory is a standalone Lake package with its own
+  `lean-toolchain`, and the Lean 4 extension keys off the folder it
+  opens, so opening it any other way will leave you without a working
+  Lean session.  The chapters are `LF/Basics.lean`,
+  `LF/Induction.lean`, and so on, matching the chapters in the HTML.)
 
-  Treat this copy as a scratch copy: **every `make` regenerates it
-  from the Verso sources, overwriting whatever is there.**  Work on
+  Treat this copy as a scratch copy: *every `make` regenerates it
+  from the Verso sources, overwriting whatever is there.*  Work on
   your proofs here, but keep anything you want to survive somewhere
   else.
 
