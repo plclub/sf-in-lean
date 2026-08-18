@@ -97,9 +97,8 @@ example (m n p : Nat) :
     m + (n + p) = m + n + p := by
   lia
 
-example (A B C D : Prop) :
-  (A → B) → (B → C) → (C → D) → (A → D)
-     := by
+example (a b c d : Prop) :
+    (a → b) → (b → c) → (c → d) → (a → d) := by
   lia
 ```
 
@@ -112,18 +111,18 @@ theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α)
   | perm3_swap12 =>
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
     obtain h | h | h | h := hIn
-    -- In addition to basic arithmetic, `lia` can also discharge goals
-    -- that are simple facts about logic.
-    . lia /- was right; left; assumption -/
+    /- In addition to basic arithmetic, `lia` can also discharge goals
+      that are simple facts about logic. -/
+    . lia -- was right; left; assumption
     . lia
     . lia
     . lia
   | perm3_swap23 =>
-  -- Here, we solve _all_ goals- and eschew the `obtain` - with
-  -- the <;> tactic combinator, which we saw in the `Induction` chapter.
+  /- Here, we solve _all_ goals ─ and eschew the `obtain` ─ with
+    the <;> tactic combinator, which we saw in the `Induction` chapter. -/
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
   | perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
-    lia /- was apply ih₂3; apply ih₁2; apply hIn -/
+    lia -- was apply ih₂3; apply ih₁2; apply hIn
 ```
 
 # Tactic Combinators
@@ -202,7 +201,7 @@ INCOMING BOCHUM MATERIAL summarized by Claude (old/bochum-lf-updates/AltAuto.v):
 ```
 :::
 
-## The `try` combinator
+## The {tactic}`try` Combinator
 
 ::::full
 The first such combinator we'll discuss is {tactic}`try`. If `t` is a tactic,
@@ -216,7 +215,7 @@ The {tactic}`try` combinator allows tactics to fail.
 ::::
 
 ```lean
-example (a : Prop) (h : a) : a := by
+example {a : Prop} (h : a) : a := by
   try rfl -- `rfl` would fail here, but `try` swallows the failure...
   exact h -- ...so we can still finish some other way.
 
@@ -233,13 +232,13 @@ these, but it is very useful together with the {tactic}`<;>` combinator.
 inductive silly : Nat → Prop where
 | mk1 n (h : n > 1) : silly n
 | mk2 n (h : 1 ∈ []) : silly n
-| mk3 n (h : exists m, n = m + 2) : silly n
+| mk3 n (h : ∃ m, n = m + 2) : silly n
 
-example n (h : silly n) : n ≠ 1 := by
-  inversion h
-  . lia
-  . contradiction
-  . lia
+example {n} (h : silly n) : n ≠ 1 := by
+  inversion h with
+  | mk1 => lia
+  | mk2 => contradiction
+  | mk3 => lia
 ```
 
 ::::full
@@ -253,7 +252,7 @@ but not all, goals...
 ::::
 
 ```lean
-example n (h : silly n) : n ≠ 1 := by
+example {n} (h : silly n) : n ≠ 1 := by
   cases h <;> try lia
   -- `lia` doesn't know that `1 ∈ []` is impossible, but we can use `contradiction`
   contradiction
@@ -276,7 +275,7 @@ sequence will stop executing.
 example (α : Type) (x : α) (l₁ l₂ : List α)
     (hPerm : Perm3 l₁ l₂) (hIn : x ∈ l₁) : x ∈ l₂ := by
   induction hPerm <;> try lia <;>
-  try rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
+    try rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
 ```
 
 ```leanOutput Perm3_try
@@ -298,7 +297,7 @@ hIn : x ∈ [a✝, b✝, c✝]
 ⊢ x ∈ [a✝, c✝, b✝]
 ```
 
-## The {tactic}`repeat` combinator
+## The {tactic}`repeat` Combinator
 
 The {tactic}`repeat` combinator takes another tactic or parenthesized sequence of tactics
 and keeps applying it until it fails.
@@ -310,7 +309,7 @@ example : 10 ∈ [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] := by
   repeat
     rw [List.mem_cons]
     try left; rfl
-    -- try makes this optional, which is necessary for the last repetition where left; rfl succeeds
+    -- `try` makes this optional, which is necessary for the last repetition where `left; rfl` succeeds
     try right
 ```
 
@@ -321,7 +320,7 @@ goal at all (i.e., it repeats zero times).
 
 ```lean
 example : 10 ∈ [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] := by
-  -- This is a no-op
+  -- this is a no-op
   repeat lia
   repeat
     rw [List.mem_cons]
@@ -342,8 +341,7 @@ forever.
 ::::
 
 ```lean +error
-example (m n : Nat) :
-  m + n = n + m := by
+example (m n : Nat) : m + n = n + m := by
   /- Uncomment the next line to see the infinite loop occur.  You will
      then need to recomment it make Lean listen to you again. -/
   -- repeat rewrite [Nat.add_comm]
@@ -363,7 +361,7 @@ simply means that we have failed to construct a proof at all, not
 that we have constructed a bad proof.
 ::::
 
-## The {tactic}`first` combinator
+## The {tactic}`first` Combinator
 
 ::::full
 The {tactic}`first` combinator takes a sequence of tactics and tries them in order,
@@ -375,7 +373,7 @@ The {tactic}`first` combinator applies the first successful tactic in a list:
 ::::
 
 ```lean
-example n m : n * (m + 1) = n * m + n := by
+example (n m : Nat) : n * (m + 1) = n * m + n := by
   first | rfl | left | lia | induction n
 ```
 
@@ -412,9 +410,9 @@ example : 10 ∈ [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] := by
   -- unprovable state!
 ```
 
-Here, when we reach the goal `10 ∈ [10]`, instead of closing the goal with {name}`List.mem_cons_self`
+Here, when we reach the goal {lean}`10 ∈ [10]`, instead of closing the goal with {name}`List.mem_cons_self`
 like before, we would instead first try `apply List.mem_cons_of_mem`, which would also succeed.
-This leaves us with the goal `10 ∈ []`, which is of course false.
+This leaves us with the goal {lean}`10 ∈ []`, which is of course false.
 ::::
 
 With {tactic}`first`, we can solve the earlier issue with {tactic}`try` where it would stop executing
@@ -521,9 +519,9 @@ heavily in real Lean developments. We can use {tactic}`simp` to further simplify
 theorem Perm3_In_almost_shortest (α : Type) (x : α) (l₁ l₂ : List α)
     (hPerm : Perm3 l₁ l₂) (hIn : x ∈ l₁) : x ∈ l₂ := by
   induction hPerm <;>
-  first
-  | simp at * <;> lia
-  | lia
+    first
+    | simp at * <;> lia
+    | lia
 ```
 
 ::::full
@@ -676,7 +674,7 @@ lemmas such that they respect this left-to-right simplification behavior.
 Appropriately defined {tactic}`simp` lemmas simplify left to right.
 ::::
 
-# The {tactic}`trivial` tactic
+# The {tactic}`trivial` Tactic
 
 A final automated tactic to have in your toolkit is {tactic}`trivial`,
 which tries a number of different simple tactics
@@ -733,7 +731,7 @@ difference is not significant for present purposes.)
 ::::
 
 ::::dev "Daniel Sainati (@dsainati1)"
-CH: Do you mean here that this is different because the inductive type doesn't specify α is finite? In Lean the convention is for inductives not to carry Prop-valued typeclasss assumptions, enforcing this only at the theorems that use them. So this could give off a slightly wrong impression.
+CH: Do you mean here that this is different because the inductive type doesn't specify α is finite? In Lean the convention is for inductives not to carry Prop-valued typeclass assumptions, enforcing this only at the theorems that use them. So this could give off a slightly wrong impression.
 DHS: @bcpierce00 What was the purpose of this aside in the original Rocq text? Does it make sense to keep here?
 ::::
 
@@ -845,7 +843,7 @@ need to add something?
 
 :::quizSolution
 ```lean
-example α (s: List α) : ¬(s =~ EmptySet) := by
+example α (s: List α) : ¬ (s =~ EmptySet) := by
   intro contra; inversion contra
 ```
 :::
@@ -945,10 +943,6 @@ is also matched by {lean}`Star re`.
 Something more interesting:
 ::::
 
-
-:::dev "Daniel Sainati (@dsainati1)"
-How to make this a WORKINCLASS in verso?
-:::
 ```lean
 theorem MStar1 α s (re : RegExp α) (h : s =~ re) : s =~ Star re := by
   workinclass!
@@ -1005,15 +999,15 @@ concatenating them all together.
 theorem MStar' α (ss : List (List α)) (re : RegExp α)
     (h : ∀ s, s ∈ ss → s =~ re) :
     ss.foldr (· ++ ·) [] =~ Star re := by
-  -- ADMITTED
-  induction ss with
-  | nil => constructor
-  | cons s ss' ih =>
-    simp only [List.foldr_cons]
-    constructor
-    · apply h; simp
-    · apply ih; intro s' hs'
-      apply h; right; assumption
+  solution!
+    induction ss with
+    | nil => constructor
+    | cons s ss' ih =>
+      simp only [List.foldr_cons]
+      constructor
+      · apply h; simp
+      · apply ih; intro s' hs'
+        apply h; right; assumption
 ```
 :::gradeTheorem 2 MStar'
 :::
@@ -1033,7 +1027,7 @@ the same strings as the {name}`EmptyStr` constructor.
 
 :::solution
 ```lean
-theorem empty_equiv {α:Type} (s:List α) :
+theorem empty_equiv {α : Type} (s : List α) :
     s =~ EmptyStr ↔ s =~ EmptyStr' := by
   constructor <;> intro h
   . inversion h; constructor
@@ -1168,7 +1162,6 @@ theorem reNotEmpty_correct {α : Type} (re : RegExp α) :
 ```
 :::
 ::::
-
 
 ## The {tactic}`generalize` Tactic
 
