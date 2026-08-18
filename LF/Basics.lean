@@ -32,7 +32,7 @@ If you don't have Lean installed yet:
 * Install Lean 4 through the VS Code extension.
 * Start a new terminal session to pick up environment changes.
 * Run `make`.
-* Run `make serve`. Navigate to "http://localhost:8000/lf/student/html-multi/" to start reading.
+* Run `make serve`. Navigate to "http://localhost:8000/lf/student/html/" to start reading.
 * Make a copy of "\_out/lf/student/lean" to start solving as if I were a student.
 :::
 
@@ -367,18 +367,16 @@ example :
 example : (!MyBool.false) = MyBool.true := by rfl
 ```
 
-The technical details of how symbolic notation works are not important right now,
-so we won't spend time explaining them here.
-Instead, we'll mark them with `THESE DETAILS CAN BE SKIPPED` comments in `.lean` files and
-hide them in a collapsed text segment in the HTML presentation. Click on the triangle in the HTML if you want to have a look.
+The technical details of how these symbolic notations work are not something you need to understand until quite a bit later in your Lean journey.  We'll mark these details -- and similar material later on -- with `THESE DETAILS CAN BE SKIPPED` comments in `.lean` files and collapsed text segments in the HTML presentation. Click on the triangle in the HTML if you want to have a peek, or just move on to the following material, as you like.
 
 :::details
 Lean has a very flexible notation system. Operators like `||` and `&&`
-are defined with specified precedence and associativity. For example, use of the `infixl` directive above states that
+are defined with specified precedence and associativity. For example, the `infixl` directive above states that
 `&&` is an infix operator, has precedence 35, and is left-associative, while `||` is also infix and left-associative and has precedence 30. This means that `MyBool.true || MyBool.false && MyBool.false` is parsed as `MyBool.true || (MyBool.false && MyBool.false)`.
 
-You can define custom notation using the `notation`, `infixl`,
-`infixr`, `prefix`, and `postfix` commands, some of which we will see later on.
+Custom notations are defined using the `notation`, `infixl`,
+`infixr`, `prefix`, and `postfix` commands, some of which we will see
+(again, in skippable sections) later on.
 :::
 
 :::slidebreak
@@ -2322,7 +2320,7 @@ instead of needing to prove them ourselves is an  advantage of using Lean's buil
 {name}`Bool` type instead of defining our own.
 
 In the {ref "UsingLean"}[UsingLean] chapter we will discuss how to search through the standard library
-for theorems like these. For now, note that if you hover over the name of these theorems
+for theorems like these. For now, note that, if you hover over the name of these theorems
 in VS Code, the Lean 4 extension will show you their type, i.e., what the theorem proves.
 ::::
 
