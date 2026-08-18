@@ -185,9 +185,9 @@ example (a b : Nat) : a + b = b + a := by
 ```
 
 ::::full
-If you are using the Lean 4 extension in VSCode, the InfoView will
+If you are using the Lean 4 extension in VS Code, the InfoView will
 have a blue `[apply]` button that shows the suggested theorem to
-close the goal. Alternatively, VSCode may show an inline suggestion
+close the goal. Alternatively, VS Code may show an inline suggestion
 (light bulb) button above the `exact?`. You can click either of
 these buttons to replace the occurrence of `exact?` with the tactic
 it found to complete the proof; idiomatic Lean does not leave
@@ -637,7 +637,7 @@ theorem Nat.double_mul (n : Nat) : n.double = 2 * n := by
 
 Lean's language server can suggest _code actions_, which are
 small editor commands that modify the source code.
-In VSCode, a light-bulb icon appears on the left
+In VS Code, a light-bulb icon appears on the left
 when a code action is available at your cursor.
 You can click the icon or open the code action menu with `Ctrl + .`
 on Windows/Linux or `Command + .` on macOS.

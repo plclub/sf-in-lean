@@ -2321,7 +2321,7 @@ instead of needing to prove them ourselves is an  advantage of using Lean's buil
 
 In the {ref "UsingLean"}[UsingLean] chapter we will discuss how to search through the standard library
 for theorems like these. For now, note that, if you hover over the name of these theorems
-in VSCode, the Lean 4 extension will show you their type, i.e., what the theorem proves.
+in VS Code, the Lean 4 extension will show you their type, i.e., what the theorem proves.
 ::::
 
 ::::terse

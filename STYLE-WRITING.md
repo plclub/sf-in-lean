@@ -190,13 +190,14 @@ interpret its arrows.
 ## Writing Conventions
 
 We use American English spelling.
-
 For general matters of grammar, punctuation, and usage, we follow
 the [Chicago Manual of Style](https://www.chicagomanualofstyle.org/).
 
-Except in the Preface, we use just "Lean", not "Lean 4".
-
-Use _italics_ for emphasis, not *boldface*.
+| Use this               | Not that                     |
+| ---------------------- | ---------------------------- |
+| _italics_ for emphasis | **boldface**                 |
+| "Lean"                 | "Lean 4" (except in Preface) |
+| "VS Code"              | "VSCode"                     |
 
 ### Informal Proofs
 
