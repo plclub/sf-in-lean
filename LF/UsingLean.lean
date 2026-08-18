@@ -197,9 +197,8 @@ that you need to prove it yourself.
 ::::
 
 :::terse
-However, just because {tactic}`rw?` suggests a theorem to you does
-not automatically imply that it will be useful; you will need to
-carefully look through its suggestions to see which ones seem useful.
+Just because {tactic}`rw?` suggests a theorem does not mean that it will be useful; 
+choose carefully from its suggestions (if at all).
 :::
 
 ```lean +error
