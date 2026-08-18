@@ -32,7 +32,7 @@ If you don't have Lean installed yet:
 * Install Lean 4 through the VS Code extension.
 * Start a new terminal session to pick up environment changes.
 * Run `make`.
-* Run `make serve`. Navigate to "http://localhost:8000/lf/student/html-multi/" to start reading.
+* Run `make serve`. Navigate to "http://localhost:8000/lf/student/html/" to start reading.
 * Make a copy of "\_out/lf/student/lean" to start solving as if I were a student.
 :::
 

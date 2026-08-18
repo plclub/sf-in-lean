@@ -63,7 +63,7 @@ For discussions, we use a combination of tools.
 - **In-text:** If you have a local comment that you want someone to think about
   at some point when they have that section of the material paged in, put it
   directly in the appropriate Lean file inside a `:::dev` block; see the
-  [style guide](STYLE.md#internal-commentary-directives) for its usage.
+  [style guide](STYLE-CODE.md#internal-commentary-directives) for its usage.
 
 - **On PRs:** We prefer _not_ holding longer discussions in annotations on PRs,
   because they tend to either get lost when the PR is merged or else delay merging.
