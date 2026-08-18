@@ -577,6 +577,13 @@ example (n : Nat) : Nat.double (n + 0) = Nat.double n := by
 
 
 :::::exercise (rating := 2) (name := "even_succ")
+One inconvenient aspect of our definition of `even n` is the
+recursive call on `n'` when `n = n' + 2`. This makes proofs about `even n`
+harder when done by induction on `n`, since we may need an
+induction hypothesis about `n' + 2`, while induction just gives us one about `n' + 1`. The following lemma proves `even (n + 1)` flips the parity, which gives an
+alternative characterization that works better with induction. We'll see uses of
+this theorem in {ref "Lists"}[Lists].
+
 ```lean
 theorem Nat.even_succ (n : Nat) :
     (n + 1).even = !(n.even) := by

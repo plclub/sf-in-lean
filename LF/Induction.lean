@@ -591,42 +591,6 @@ theorem double_add (n : Nat) : double n = n + n := by
 :::
 :::::
 
-::::::full
-:::::exercise (rating := 2) (name := "even_succ")
-One inconvenient aspect of our definition of `even n` is the
-recursive call on `n'` when `n = succ (succ n')`. This makes proofs about `even n`
-harder when done by induction on `n`, since we may need an
-induction hypothesis about `succ (succ n')`, while induction just gives us one about `succ n'`. The following lemma proves `even (n + 1)` flips the parity, which gives an
-alternative characterization of `even (succ n)` that works better
-with induction.
-
-(Tip: To expand the body of {name}`even` in a proof, use `rewrite [even]` or
-`rw [even]`.)
-
-:::dev "Mike Hicks @mwhicks1" NOW
-I don't understand why this lemma is helping us with induction. Might it be better
-to just offer the lemma as an exercise, and then refer back to it when you might actually
-use it (in an exercise), to illustrate?
-:::
-
-```lean
-theorem even_succ (n : Nat) :
-    even (succ n) = !even n := by
-  solution!
-    induction n with
-    | zero =>
-      rw [even_zero, even_one]
-      rfl
-    | succ n' ih =>
-      rw [even, ih, not_involutive]
-```
-
-:::gradeTheorem 1 even_succ
-:::
-:::::
-
-::::::
-
 :::dev "Yipeng Liu (berberman)" PotentialImprovement
 
 This is an interesting question...
