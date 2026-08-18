@@ -36,7 +36,7 @@ To rebuild just one volume, use its make target and then serve `_out/`:
     python3 -m http.server 8000 -d _out/
 
 The HTML for a given volume and variant lands in
-`_out/<vol>/<variant>/html-multi/`, one page per chapter.  (There is no
+`_out/<vol>/<variant>/html/`, one page per chapter.  (There is no
 per-chapter build target: a whole volume is the smallest unit.)
 
 The first build compiles the whole Lean toolchain's dependencies and
@@ -52,7 +52,7 @@ written in [Verso](https://verso.lean-lang.org/) format.
 Running `make` at the top level produces, for each volume, four
 different ready-for-distribution outputs in a temporary top-level
 `_out` directory, each with both `.lean` and `.html` variants (in
-`_out/<vol>/<variant>/lean/` and `_out/<vol>/<variant>/html-multi/`
+`_out/<vol>/<variant>/lean/` and `_out/<vol>/<variant>/html/`
 respectively).
 
 - **student**   (full prose, solutions elided)

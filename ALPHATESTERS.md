@@ -31,7 +31,7 @@
 
   This builds the _Logical Foundations_ volume in its student form —
   full prose, with solutions elided — and writes two things to
-  `_out/lf/student/`: `html-multi/`, an HTML-formatted version of the
+  `_out/lf/student/`: `html/`, an HTML-formatted version of the
   whole book, and `lean/`, a standalone Lean project holding the same
   chapters as `.lean` files, with solutions to exercises omitted.
 
@@ -44,7 +44,7 @@
 - Start a local HTTP server for the generated HTML files:
 
   ```
-  python3 -m http.server 8000 -d _out/lf/student/html-multi
+  python3 -m http.server 8000 -d _out/lf/student/html
   ```
 
 - Visit <http://localhost:8000> and start reading.

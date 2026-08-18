@@ -1,10 +1,10 @@
 # Makefile for sf-in-lean
 #
 # Each volume is built in three symmetric variants:
-#   student    full prose, solutions elided   → _out/<vol>/student/{html-multi,lean}
-#   solutions  full prose, solutions shown    → _out/<vol>/solutions/{html-multi,lean}
-#   terse      lecture prose, solutions elided → _out/<vol>/terse/{html-multi,lean}
-#   grading    full prose, solutions show (with grading attributes) → _out/<vol>/grading/{html-multi,lean}
+#   student    full prose, solutions elided   → _out/<vol>/student/{html,lean}
+#   solutions  full prose, solutions shown    → _out/<vol>/solutions/{html,lean}
+#   terse      lecture prose, solutions elided → _out/<vol>/terse/{html,lean}
+#   grading    full prose, solutions show (with grading attributes) → _out/<vol>/grading/{html,lean}
 #
 # To add a new volume (e.g., plf), define its targets with:
 #   $(eval $(call VOLUME_template,plf))
