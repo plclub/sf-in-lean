@@ -129,6 +129,46 @@ def winskel1993 : Article where
   number  := inlines!""
   url     := "https://tinyurl.com/j2k6ev7"
 
+def halpern2001: Article where
+  title := inlines!"On the unusual effectiveness of logic in computer science"
+  authors := #[inlines!"Joseph Y Halpern", inlines!"Robert Harper", inlines!"Neil Immerman",
+                inlines!"Phokion G Kolaitis", inlines!"Moshe Y Vardi", inlines!"Victor Vianu"]
+  journal := inlines!"Bulletin of Symbolic Logic"
+  volume := inlines!"7"
+  number := inlines!"2"
+  year := 2001
+  month   := none
+
+def manna1971: Article where
+  title := inlines!"Toward automatic program synthesis"
+  authors := #[inlines!"Zohar Manna", inlines!"Richard J Waldinger"]
+  journal := inlines!"Communications of the ACM"
+  volume := inlines!"14"
+  number  := inlines!"3"
+  year := 1971
+  month := none
+
+def leroy2016 : InProceedings where
+  title := inlines!"CompCert-a formally verified optimizing compiler"
+  authors := #[inlines!"Xavier Leroy", inlines!"Sandrine Blazy", inlines!"Daniel Kästner", inlines!"Bernhard Schommer", inlines!"Markus Pister", inlines!"Christian Ferdinand"]
+  booktitle := inlines!"ERTS 2016: Embedded Real Time Software and Systems, 8th European Congress"
+  year := 2016
+
+def gu2016certikos: InProceedings where
+  title := inlines!"CertiKOS: An extensible architecture for building certified concurrent OS kernels"
+  authors :=#[inlines!"Ronghui Gu", inlines!"Zhong Shao", inlines!"Hao Chen",
+      inlines!"Xiongnan Newman Wu" , inlines!"Jieung Kim", inlines!"Vilhelm Sjöberg", inlines!"David Costanzo"]
+  booktitle := inlines!"12th USENIX Symposium on Operating Systems Design and Implementation (OSDI 16)"
+  year := 2016
+
+def disselkoen2024: InProceedings where
+  title := inlines!"How we built cedar: A verification-guided approach"
+  authors :=#[inlines!"Craig Disselkoen", inlines!"Aaron Eline", inlines!"Shaobo He",
+      inlines!"Kyle Headley" , inlines!"Michael Hicks", inlines!"Kesha Hietala", inlines!"John Kaster",
+      inlines!"Anwar Mamat",  inlines!"Matt McCutchen", inlines!"Neha Rungta", inlines!"others"]
+  booktitle := inlines!"Companion Proceedings of the 32nd ACM International Conference on the Foundations of Software Engineering"
+  year := 2024
+
 end Bib
 
 end SFLMeta

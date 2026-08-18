@@ -6,7 +6,6 @@ import HL.Hoare
 
 open Verso.Genre Manual
 open SFLMeta
-open scoped Assertion ValidHoareTriple
 
 #doc (Manual) "Hoare2: Hoare Logic, Part II" =>
 %%%
@@ -16,7 +15,7 @@ file := some "Hoare2"
 %%%
 
 ```lean -show
-open scoped Assertion ValidHoareTriple
+open scoped Com MyGetElem Assertion HasTriple
 ```
 
 :::dev BeforeNextRelease
@@ -756,7 +755,7 @@ For example...
 def reduceToZero : Com :=
   imp {
     while (X ≠ 0) {
-      X := X - 1;
+      X := X - 1
     }
   }
 ```
@@ -801,7 +800,7 @@ Explain any other bits of it?
 
 ```lean
 macro "verify_assertion" : tactic =>
-  `(tactic| assertion_auto')
+  `(tactic| assertion_auto)
 ```
 
 :::slidebreak
@@ -1115,11 +1114,11 @@ terse version. :-(
 
 ```lean
 example : DCom :=
-  .skip {{ True }}
+  .skip ({{ True }})
 
 example : DCom :=
-  .whileDo (bexp {true}) {{ True }}
-    (.skip {{ True }}) {{ True }}
+  .whileDo (bexp {true}) ({{ True }})
+    (.skip ({{ True }})) ({{ True }})
 ```
 
 To inspect the fully elaborated term behind this notation, put
@@ -1187,7 +1186,7 @@ example :
     decWhile.erase =
       (imp {
         while (X ≠ 0) {
-          X := X - 1;
+          X := X - 1
         }
       }) := by
   rfl
@@ -1259,14 +1258,11 @@ For example:
 ```lean
 example :
     decWhile.OuterTripleValid =
-      ValidHoareTriple
-        {{ True }}
-        (imp {
-          while (X ≠ 0) {
-            X := X - 1;
-          }
-        })
-        {{ X = 0 }} := by
+      {{ True }}
+        while (X ≠ 0) {
+          X := X - 1
+        }
+      {{ X = 0 }} := by
   rfl
 ```
 
@@ -1449,7 +1445,7 @@ def DCom.VerificationConditions
       d1.VerificationConditions P ∧
       d2.VerificationConditions d1.postcondition
   | .asgn x a Q =>
-      P ->> Q [x ↦ ~a]
+      P ->> {{ Q [x ↦ ~a] }}
   | .cond b P1 d1 P2 d2 Q =>
       ({{ P ∧ b }} ->> P1) ∧
       ({{ P ∧ ¬ b }} ->> P2) ∧
@@ -2088,17 +2084,17 @@ def parityDec (m : Nat) : Decorated where
   pre := ({{ X = m }})
   body :=
     let inv : Assertion :=
-      solution!(fun st => parity (st X) = parity m)
+      solution!(fun st => parity st[X] = parity m)
     let guardedInv : Assertion :=
       solution!(fun st =>
-        parity (st X) = parity m ∧ 2 ≤ st X)
+        parity st[X] = parity m ∧ 2 ≤ st[X])
     let bodyPre : Assertion :=
-      solution!(fun st => parity (st X - 2) = parity m)
+      solution!(fun st => parity (st[X] - 2) = parity m)
     let exit : Assertion :=
       solution!(fun st =>
-        parity (st X) = parity m ∧ ¬ 2 ≤ st X)
+        parity st[X] = parity m ∧ ¬ 2 ≤ st[X])
     let post : Assertion :=
-      fun st => st X = parity m
+      fun st => st[X] = parity m
     dcom {
     ->> {{ inv }}
     while (2 ≤ X) do
@@ -2142,14 +2138,14 @@ def findParityDec (m : Nat) : Decorated where
   pre := ({{ X = m }})
   body :=
     let inv : Assertion :=
-      fun st => st X ≤ m ∧ Even (m - st X)
+      fun st => st[X] ≤ m ∧ Even (m - st[X])
     let guardedInv : Assertion :=
-      fun st => (st X ≤ m ∧ Even (m - st X)) ∧ 2 ≤ st X
+      fun st => (st[X] ≤ m ∧ Even (m - st[X])) ∧ 2 ≤ st[X]
     let bodyPre : Assertion :=
-      fun st => st X - 2 ≤ m ∧ Even (m - (st X - 2))
+      fun st => st[X] - 2 ≤ m ∧ Even (m - (st[X] - 2))
     let exit : Assertion :=
-      fun st => (st X ≤ m ∧ Even (m - st X)) ∧ st X < 2
-    let post : Assertion := fun st => st X = 0 ↔ Even m
+      fun st => (st[X] ≤ m ∧ Even (m - st[X])) ∧ st[X] < 2
+    let post : Assertion := fun st => st[X] = 0 ↔ Even m
     dcom {
     ->> {{ inv }}
     while (2 ≤ X) do
@@ -2173,14 +2169,14 @@ invariant. -/
 def findParityDec' (m : Nat) : Decorated where
   pre := ({{ X = m }})
   body :=
-    let inv : Assertion := fun st => Even (st X) ↔ Even m
+    let inv : Assertion := fun st => Even st[X] ↔ Even m
     let guardedInv : Assertion :=
-      fun st => (Even (st X) ↔ Even m) ∧ 2 ≤ st X
+      fun st => (Even st[X] ↔ Even m) ∧ 2 ≤ st[X]
     let bodyPre : Assertion :=
-      fun st => Even (st X - 2) ↔ Even m
+      fun st => Even (st[X] - 2) ↔ Even m
     let exit : Assertion :=
-      fun st => (Even (st X) ↔ Even m) ∧ ¬ 2 ≤ st X
-    let post : Assertion := fun st => st X = 0 ↔ Even m
+      fun st => (Even st[X] ↔ Even m) ∧ ¬ 2 ≤ st[X]
+    let post : Assertion := fun st => st[X] = 0 ↔ Even m
     dcom {
     ->> {{ inv }}
     while (2 ≤ X) do
@@ -2202,13 +2198,11 @@ theorem find_parity_correct' (m : Nat) :
 /- Finally, just for fun, here is an old-style
 non-decorated-program proof. -/
 theorem parity_correct (m : Nat) :
-    ValidHoareTriple ({{ X = m }})
-      (imp {
+    {{ X = m }}
         while (2 ≤ X) {
-          X := X - 2;
+          X := X - 2
         }
-      })
-      (fun st => st X = parity m) := by
+    {{ fun st => st[X] = parity m }} := by
   sorry
 -- END SOLUTION
 ```
@@ -3400,40 +3394,40 @@ def dfib (n : Nat) : Decorated where
         1 = fib 0 ∧ 1 = fib (Nat.pred 0) ∧ 1 > 0)
     let afterX : Assertion :=
       solution!(fun st =>
-        1 = fib (st X) ∧
-        1 = fib (Nat.pred (st X)) ∧ st X > 0)
+        1 = fib st[X] ∧
+        1 = fib (Nat.pred st[X]) ∧ st[X] > 0)
     let afterY : Assertion :=
       solution!(fun st =>
-        1 = fib (st X) ∧
-        st Y = fib (Nat.pred (st X)) ∧ st X > 0)
+        1 = fib st[X] ∧
+        st[Y] = fib (Nat.pred st[X]) ∧ st[X] > 0)
     let inv : Assertion :=
       solution!(fun st =>
-        st Z = fib (st X) ∧
-        st Y = fib (Nat.pred (st X)) ∧ st X > 0)
+        st[Z] = fib st[X] ∧
+        st[Y] = fib (Nat.pred st[X]) ∧ st[X] > 0)
     let guardedInv : Assertion :=
       solution!(fun st =>
-        st Z = fib (st X) ∧ st Y = fib (Nat.pred (st X)) ∧
-        st X > 0 ∧ st X ≠ 1 + n)
+        st[Z] = fib st[X] ∧ st[Y] = fib (Nat.pred st[X]) ∧
+        st[X] > 0 ∧ st[X] ≠ 1 + n)
     let bodyPre : Assertion :=
       solution!(fun st =>
-        st Z + st Y = fib (1 + st X) ∧
-        st Z = fib (Nat.pred (1 + st X)) ∧ 1 + st X > 0)
+        st[Z] + st[Y] = fib (1 + st[X]) ∧
+        st[Z] = fib (Nat.pred (1 + st[X])) ∧ 1 + st[X] > 0)
     let afterT : Assertion :=
       solution!(fun st =>
-        st Z + st Y = fib (1 + st X) ∧
-        st T = fib (Nat.pred (1 + st X)) ∧ 1 + st X > 0)
+        st[Z] + st[Y] = fib (1 + st[X]) ∧
+        st[T] = fib (Nat.pred (1 + st[X])) ∧ 1 + st[X] > 0)
     let afterZ : Assertion :=
       solution!(fun st =>
-        st Z = fib (1 + st X) ∧
-        st T = fib (Nat.pred (1 + st X)) ∧ 1 + st X > 0)
+        st[Z] = fib (1 + st[X]) ∧
+        st[T] = fib (Nat.pred (1 + st[X])) ∧ 1 + st[X] > 0)
     let afterYBody : Assertion :=
       solution!(fun st =>
-        st Z = fib (1 + st X) ∧
-        st Y = fib (Nat.pred (1 + st X)) ∧ 1 + st X > 0)
+        st[Z] = fib (1 + st[X]) ∧
+        st[Y] = fib (Nat.pred (1 + st[X])) ∧ 1 + st[X] > 0)
     let exit : Assertion :=
       solution!(fun st =>
-        st Z = fib (st X) ∧ st Y = fib (Nat.pred (st X)) ∧
-        st X > 0 ∧ st X = 1 + n)
+        st[Z] = fib st[X] ∧ st[Y] = fib (Nat.pred st[X]) ∧
+        st[X] > 0 ∧ st[X] = 1 + n)
     dcom {
       ->> {{ init }}
       X := 1 {{ afterX }};
@@ -3814,7 +3808,7 @@ def DCom.awp (post : Assertion) (d : DCom) : Assertion :=
   match d with
   | .skip => post
   | .seq d1 d2 => d1.awp (d2.awp post)
-  | .asgn x a => Assertion.sub x a post
+  | .asgn x a => {{ post [x ↦ ~a] }}
   | .cond b d1 d2 =>
       fun st =>
         (b.eval st = true ∧ d1.awp post st) ∨
@@ -4294,7 +4288,7 @@ carry over.
 
 ```lean
 theorem is_wp_example :
-    IsWp ({{ Y ≤ 4 }}) (imp {X := Y + 1;})
+    IsWp ({{ Y ≤ 4 }}) (imp {X := Y + 1})
       ({{ X ≤ 5 }}) := by
   solution!
     sorry
@@ -4308,7 +4302,7 @@ weakest precondition.
 ```lean
 theorem hoare_asgn_weakest
     (Q : Assertion) (x : Ident) (a : Aexp) :
-    IsWp (Assertion.sub x a Q) (imp {x := ~a;}) Q := by
+    IsWp ({{ Q [x ↦ ~a] }}) (imp {x := ~a}) Q := by
   solution!
     sorry
 ```
