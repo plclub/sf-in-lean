@@ -330,13 +330,9 @@ have found validating AI text to be challenging; one only sees the final product
 and not all the other choices in presentation and content that could have been made. 
 This tends to obscure many subtle points that would be better discussed explicitly. 
 
-For definitions and theorem statements, we apply the same principles and restrictions 
-as prose, since getting these exactly right is important to a coherent text. 
-
-For proofs, contributors may use AI to produce a "first draft" of the proof. However, 
-AI proofs should be carefully vetted and edited to ensure that they only use
-tactics to which readers have been introduced (see the table in [STYLE-CODE.md](STYLE-CODE.md))
-and generally follow good Lean style.
+For user-facing Lean code, such as definitions, theorem statements, and proofs,
+we apply the same principles and restrictions as prose, since getting these exactly 
+right is important to a coherent text. 
 
 Since teaching Lean's syntax and metaprogramming is not an explicit goal of the course, 
 syntax definitions and macros, including elaborators, delaborators, and unexpanders, are
