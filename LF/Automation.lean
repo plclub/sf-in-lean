@@ -1632,7 +1632,7 @@ solution but it's lower priority.
 
 ::::exercise (rating := 10) (name := "weak_pumping")
 Now here is the usual version of the pumping lemma. In addition to
-requiring that `s₂ <> []`, it also strengthens the result to
+requiring that {lean}`s₂ ≠ []`, it also strengthens the result to
 include the claim that {lean}`s₁.length + s₂.length ≤ pumpingConstant re`.
 
 ```lean
