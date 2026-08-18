@@ -208,8 +208,9 @@ private def mergeAdjacentModuleDocs (s : String) : String :=
 
 /--
 Shared implementation. Writes the extracted Lean project to
-`_out/<destSlug>/<variant>/lean/`, next to that variant's `html-multi/`
-(which `manualMain` writes via `cfg.destination := "_out/<destSlug>/<variant>"`).
+`_out/<destSlug>/<variant>/lean/`, next to that variant's `html/`
+(which `manualMain` writes via `cfg.destination := "_out/<destSlug>/<variant>"`,
+as `html-multi/`, renamed to `html/` by `SFLMeta.renameHtmlDir`).
 `modPrefix` is the uppercase module prefix used for the generated chapters'
 module names and paths (e.g. `"LF"`, `"HL"`, `"TS"`); it is normally the same
 as `destSlug` uppercased, but the draft executable passes `modPrefix := "LF"`
