@@ -2493,8 +2493,9 @@ termination.
 
 ```lean +error
 def factorial_bad (n : Nat) : Nat :=
-  if n == 0 then 1
-  else n * factorial_bad (pred n)
+  match n with
+  | zero => (succ zero)
+  | succ _ => n * factorial_bad (pred n)
 ```
 
 This fails because Lean can't see that `pred n` is structurally smaller.
