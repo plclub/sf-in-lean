@@ -197,7 +197,7 @@ that you need to prove it yourself.
 ::::
 
 :::terse
-Just because {tactic}`rw?` suggests a theorem does not mean that it will be useful; 
+Just because {tactic}`rw?` suggests a theorem does not mean that it will be useful;
 choose carefully from its suggestions (if at all).
 :::
 
@@ -242,12 +242,8 @@ don't want to have the tactics like {name}`Nat.add_comm` and
 {name}`Nat.add_assoc` "guess" which subterms to rewrite.
 
 The {tactic}`calc` tactic writes down the intermediate goals of a proof, and
-allows us to specify exactly which rewrite rules to apply at each step. It is a
-powerful tool for structuring proofs, and is often more readable than long
-{tactic}`rw` chains.
-
-{tactic}`calc` is designed to mimic the style of proofs in mathematics
-textbooks, which will often look something like this:
+allows us to specify exactly which rewrite rules to apply at each step. It is designed
+to mimic the style of proofs in mathematics textbooks, which will often look something like this:
 
 ```display
 n + (m + k)
