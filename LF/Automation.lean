@@ -1309,7 +1309,7 @@ proving the pumping lemma below.
 theorem pumping_constant_ge_1 {α : Type} (re : RegExp α) :
     pumpingConstant re ≥ 1 := by
   induction re with
-  | EmptySet => simp[pumpingConstant]
+  | EmptySet => simp [pumpingConstant]
   | EmptyStr => simp [pumpingConstant]
   | Char _ => simp [pumpingConstant]
   | App re₁ _ ih1 _ => simp only [pumpingConstant]; lia
@@ -1350,7 +1350,7 @@ theorem napp_plus {α : Type} (n m : Nat) (l : List α) :
   | succ n ih => rw [Nat.succ_add]; simp [ih]
 
 theorem napp_star {α : Type} (m : Nat) (s₁ s₂ : List α) (re : RegExp α)
-    (hs1 : s₁ =~ re) (hs₂ : s₂ =~ Star re) :
+    (hs₁ : s₁ =~ re) (hs₂ : s₂ =~ Star re) :
     napp m s₁ ++ s₂ =~ Star re := by
   induction m with
   | zero => simp only [napp_zero, List.nil_append]; trivial
@@ -1560,11 +1560,11 @@ theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α)
       ∨ pumpingConstant re ≤ s₁.length) := by
     cases s₁ with
     | nil => solution!(left; rfl)
-    | cons h s1' =>
+    | cons h s₁' =>
       solution!
         right
-        have hcases : (List.length (h :: s1') < pumpingConstant re
-                      ∨ pumpingConstant re ≤ List.length (h :: s1')) := by
+        have hcases : (List.length (h :: s₁') < pumpingConstant re
+                      ∨ pumpingConstant re ≤ List.length (h :: s₁')) := by
           apply lt_ge_cases
         cases hcases with
         | inl =>
@@ -1573,9 +1573,9 @@ theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α)
           case right => assumption
         | inr => right; assumption
   . solution!
-      have hs1nil : s₁ = [] := by
+      have hs₁nil : s₁ = [] := by
         cases s₁; rfl; contradiction
-      subst hs1nil
+      subst hs₁nil
       simp only [List.length_nil, Nat.zero_add] at hLen
       apply ih₂; apply hLen
   . solution!
