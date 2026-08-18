@@ -20,11 +20,19 @@ variable (n : Nat)
 :::
 
 :::instructors
-This chapter is the bridge to Lean's natural numbers,
-{tactic}`dsimp`, {tactic}`calc`, maybe, {tactic}`simp` annotations,
-and maybe typeclasses. It is relatively short — should take about 30
-minutes to cover.
+This chapter introduces more idiomatic design patterns in Lean via
+the standard library's natural numbers, and what Lean in the wild
+might more resemble. Notable new tactics are {tactic}`calc` and
+{tactic}`dsimp`; while the latter is not used so much in real-world
+Lean, it provides a on-ramp to {tactic}`simp` later on.
+It is relatively short, and should take about 30 minutes to cover.
 :::
+
+In this chapter, we will learn to write more idiomatic Lean using its more
+powerful tools. This includes the natural numbers from its standard library,
+tactics which can search for lemmas from the standard library, namespaces for
+organizing lemmas, and two new tactics, {tactic}`calc` and {tactic}`dsimp`,
+which enable more readable and concise proofs.
 
 # More Powerful Natural Numbers
 
@@ -73,12 +81,6 @@ example : (3 * 3 : Nat) = 9 := by rfl
 ```
 
 The annotation `: Nat` tells Lean that we are using its built-in {name}`Nat` type.
-
-In this chapter we will learn how to use the built-in {name}`Nat` and some
-powerful features for computing with and proving properties about natural
-numbers. Specifically, we will learn about {tactic}`dsimp`, {tactic}`calc`,
-and {tactic}`simp` annotations, which enable more powerful and concise proofs.
-
 In fact, from now on, we will use the built-in {name}`Nat` type and its powerful
 features, writing `Nat.<theorem>` to reference Lean's version
 of `<theorem>`. (By convention, theorems about a type live in the namespace of
