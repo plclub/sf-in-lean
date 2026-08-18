@@ -31,19 +31,6 @@ Manifestations:
 
 (But don't waste too much time on this while we are still building out the core content.)
 
-Chapters already reach for the same idea informally with `(Optional)` and `Aside:` section headers — e.g. "More on Notation (Optional)" and "Structural Recursion (Optional)" in `LF/Basics.lean` — which are good candidates to convert once `:::details` sees wider adoption.
-
-> [!WARNING]
-> Benjamin Pierce (bcpierce00):
-> 
-> The `:::details` functionality is implemented and ready to use!
-> 
-> However, we should talk about whether it should be used for
-> material currently marked optional — that has not been my expectation. (I thought `:::details` was for details that most readers really _should_ skip, like gnarly technicalities of sophisticated notations.)
-> 
-> IMO, optional sections work fine just the way they are, especially at the ends of chapters.
-> 
-> Asides are another thing — not quite the same as material that should be skipped — and perhaps deserve their own tag.
 
 ## Examples
 
@@ -203,13 +190,14 @@ interpret its arrows.
 ## Writing Conventions
 
 We use American English spelling.
-
 For general matters of grammar, punctuation, and usage, we follow
 the [Chicago Manual of Style](https://www.chicagomanualofstyle.org/).
 
-Except in the Preface, we use just "Lean", not "Lean 4".
-
-We generally use _italics_ for emphasis, not **boldface**.
+| Use this               | Not that                     |
+| ---------------------- | ---------------------------- |
+| _italics_ for emphasis | **boldface**                 |
+| "Lean"                 | "Lean 4" (except in Preface) |
+| "VS Code"              | "VSCode"                     |
 
 ### Informal Proofs
 

@@ -245,14 +245,20 @@ set_option autoImplicit false
 set_option pp.proofs true
 set_option pp.fieldNotation false
 
-inductive IsZero : Nat → Prop where
-  | iszero : IsZero 0
+/-! # `inversion` tests -/
 
-example (n : Nat) (isz : IsZero n) : n = 0 := by
-  inversion isz; rfl
-
+/-- In Lean, "inversion" on `leq : f n ≤ 0`, where `f : Nat → Nat`,
+  requires `generalizing e : f n = m`, since Lean does not perform
+  the dependent case analysis automatically. `cases leq` will fail here.
+  We want to keep the style of reasoning familiar to PL:
+  "I know `h`; what must have been true for `h` to be true?"
+  The technicality of needing to generalize hinders teaching and learning
+  this style of reasoning for audiences new to proof assistants and logic.
+  To solve this, we introduce and use the `inversion` tactic,
+  which automatically generalizes varaibles, performs case analysis,
+  and eliminates impossible subcases. -/
 example (f : Nat → Nat) (n : Nat) (leq : f n ≤ 0) : 0 = f n := by
-  -- cases le /- Dependent elimination failed: Failed to solve equation 0 = f n -/
+  -- cases leq /- Dependent elimination failed: Failed to solve equation 0 = f n -/
   inversion leq; assumption
 
 example (f : Nat → Nat) (n : Nat) (leq : f n ≤ 0) : 0 = f n := by
@@ -296,6 +302,14 @@ example (f : Nat → Nat) (n m : Nat) (leq : f n ≤ f m) : f n = 0 := by
     try rw [← e]
     sorry
 
+inductive The : ∀ {α}, α → Prop where
+  | mk : The zero
+
+/-- sfl#40: Case names should be the constructors' names -/
+example {x : Nat} (h : The x) : x = zero := by
+  inversion h with
+  | mk => rfl
+
 example (n m o : Nat) : [n, m] = [o, o] → [n] = [m] := by
   intro h
   inversion h; rfl
@@ -305,6 +319,7 @@ inductive NoStutter {α : Type} : List α → Prop where
   | nostutter1 n : NoStutter (n::[])
   | nostutter2 a b r (hneq : a ≠ b) (h : NoStutter (b::r)) : NoStutter (a::b::r)
 
+/-- The last (only) case name need not be provided -/
 example : ¬ (NoStutter [3, 1, 1, 4]) := by
   intro contra
   inversion contra with | _ contra =>
@@ -316,6 +331,7 @@ inductive Vec α : Nat → Type where
   | nil : Vec α 0
   | cons {n} : α → Vec α n → Vec α (n + 1)
 
+/-- Inversion should work on indexed `Type`s as well -/
 example {α} (n : Nat) (v : Vec α (n + 1)) : ∃ hd tl, v = Vec.cons hd tl := by
   inversion v with
   | cons hd tl => exists hd, tl
@@ -334,35 +350,37 @@ example {α} (n : Nat) (v : Wec α (succ n)) :
     guard_hyp heq : v ≍ Wec.cons f hd tl
     sorry
 
-example (H : Bool → Nat → False) (n : Nat) : False := by
-  apply H at n; apply n; exact true
-
 inductive EmptyRelation : Nat → Nat → Prop where
 
+/-- sfl#52: Inversion should still work on nonindexed `Prop`s -/
 example n m : ¬ EmptyRelation n m := by
   intro contra; inversion contra
 
-example (n : Nat) : Nat := by
-  inversion n with
-  | zero => exact zero
-  | succ n' => exact n'
-
+/-- With `inductive.autoPromoteIndices` true (the default),
+  this is also a nonindexed `Prop`... -/
 inductive silly : Nat → Prop where
 | silly1 n (h : n > 1) : silly n
 | silly2 n (h : exists m, m * 2 = n) : silly n
 | silly3 n (h : exists m, n = m + 2) : silly n
 
+/-- ...and inversion should continue to work -/
 example {n} (h : silly n) : n ≠ 1 := by
   inversion h <;> omega
 
-inductive The : ∀ {α}, α → Prop where
-  | mk : The zero
+/-- Inversion should also work on nonindexed `Type`s -/
+example (n : Nat) : Nat := by
+  inversion n with
+  | zero => exact zero
+  | succ n' => exact n'
 
-example (h : The 0) : True := by
-  inversion h with
-  | mk => exact ⟨⟩
+/-! # `lemma` tests -/
 
 lemma doubleNegation : ∀ P, P → ¬ ¬ P := by
   intro P p np; exact (np p)
+
+/-! # `apply` tests -/
+
+example (H : Bool → Nat → False) (n : Nat) : False := by
+  apply H at n; apply n; exact true
 
 end Tests

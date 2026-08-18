@@ -63,7 +63,7 @@ For discussions, we use a combination of tools.
 - **In-text:** If you have a local comment that you want someone to think about
   at some point when they have that section of the material paged in, put it
   directly in the appropriate Lean file inside a `:::dev` block; see the
-  [style guide](STYLE.md#internal-commentary-directives) for its usage.
+  [style guide](STYLE-CODE.md#internal-commentary-directives) for its usage.
 
 - **On PRs:** We prefer _not_ holding longer discussions in annotations on PRs,
   because they tend to either get lost when the PR is merged or else delay merging.
@@ -73,29 +73,6 @@ For discussions, we use a combination of tools.
 
 These conventions are still developing, so feel free to suggest better ways of
 working!
-
-## Repository organization and Makefile targets
-
-Each volume has its own top-level directory (LF, HL, etc.).
-
-Within that directory, each chapter has a `.lean` file, in Verso format.
-
-Running `make` at the top level produces, for each volume, four
-different ready-for-distribution outputs in a temporary top-level
-`_out` directory, each with both `.lean` and `.html` variants.
-
-- **student**   (full prose, solutions elided)
-- **solutions** (full prose, solutions shown)
-- **terse**     (little prose, no solutions, workinclass elided;
-                 for lecturing)
-- **grading**   (solutions variant with automated grading support,
-                 for instructors)
-
-There are also more specific `make` targets that build faster: see the `Makefile`.
-
-To build everything and preview it locally, do `make serve`,
-then visit http://localhost:8000
-(`make serve` builds stuff then serves `_out/` on port 8000).
 
 ## Git branches and CI
 
@@ -192,7 +169,7 @@ git push --force-with-lease
 
 These recipes assume `origin` is the shared repo, which is the case if you have
 write access and cloned it directly.  If you are working from a fork (the setup
-in `ALPHATESTERS.md`), your `origin` is your fork and the shared repo is
+in `ALPHA-TESTERS.md`), your `origin` is your fork and the shared repo is
 `upstream`, so read `upstream/main` for `origin/main` throughout — rebasing onto
 your fork's `main` would replant your work on a stale base.
 
@@ -331,35 +308,76 @@ clear error from the role telling it which option to set.
 ## AI policy
 
 SFL contributors may use AI tools to help create, validate, and
-maintain content in this repo.  AI-generated content, especially
-public-facing content such as words and proofs in book chapters,
-should be carefully vetted.
+maintain content in this repo. However, our AI policy differs 
+depending on whether the content is "user-facing" or not.
 
-For PRs with public-facing content, we follow the [Mathlib AI
-policy][mathlib-ai-policy], which mandates summarizing how AI is used
-in the PR description. PR descriptions should be written (or at least
-carefully rewritten) by hand.
+### User-facing content
 
-Here is the part of the [Mathlib AI policy][mathlib-ai-policy] that
-should be applied when AI tools are adding or changing public-facing content:
+As a rule, we do not use AI to generate any prose that appears in any volume of SFL. 
+Contributors may ask AI for feedback on text they have written or use it to check for
+spelling or grammar mistakes, but they should apply any AI suggestions manually after 
+vetting their quality, rather than having an agent edit their text autonomously. Contributors 
+also should not ask AI to produce text and manually edit it afterward. 
+
+This is a strict policy, but we enforce it for a few reasons:
+1. It guarantees that all text that enters SFL has been carefully considered and allows us to 
+promise our readers that human intent and effort exists behind everything they read. 
+2. It ensures that when reviewing text contributions, we do not need to worry about AI 
+hallucinations or inaccuracies; we can review for pedagogical thoroughness and style 
+without also needing to check accuracy.
+3. Over the course of translating this book from the original Software Foundations, we 
+have found validating AI text to be challenging; one only sees the final product, so to speak, 
+and not all the other choices in presentation and content that could have been made. 
+This tends to obscure many subtle points that would be better discussed explicitly. 
+
+For user-facing Lean code, such as definitions, theorem statements, and proofs,
+we apply the same principles and restrictions as prose, since getting these exactly 
+right is important to a coherent text. 
+
+Since teaching Lean's syntax and metaprogramming is not an explicit goal of this textbook, 
+syntax definitions and macros, including elaborators, delaborators, and unexpanders, are
+not considered "user-facing" and are instead subject to the non-user-facing content policy
+outlined below. However, any prose associated with them that either explains or justifies 
+their existence to readers is subject to the same standards as any other prose.
+
+AI generated text may appear inside `:::dev` blocks; often we will use these to keep track of  
+feedback from agents that we have not yet incorporated into the text, for example. 
+In such cases, the contents of these blocks should be marked as AI-generated. 
+
+We follow the [Mathlib AI policy][mathlib-ai-policy] that
+should be applied when AI tools are adding or changing user-facing content:
 
 > Explain which tool(s) you used and how you used it. This provides
 > useful context for reviewers: tools make different mistakes than humans,
 > so knowing this makes it easier to spot common errors.
 
-Scripts and other infrastructure in the repository that are used to
-help create public-facing content are excluded, i.e., AI usage here
-doesn't need to be explained in the PR description.
+In PRs, we summarize how AI is used for that PR
+in the PR description. These descriptions should be written by hand
+or should include a disclaimer that the description was generated by AI.
+
+### Non-user-facing content
+
+Scripts and other infrastructure in the repository (e.g., the contents of the `SFLMeta` folder) 
+that are used to help create user-facing content are not subject 
+to the restrictions above. AI may be used here to generate code, and usage
+doesn't need to be explained in the PR description. 
+
+However, scripts and code that are mostly or wholly AI generated should be marked as
+such: these will typically be lower quality than human-created or
+heavily vetted code, and people looking at them should understand that.
+
+Documentation, however, should be human written. This ensures we understand 
+the AI-generated code well enough to document it along with a high level 
+of quality for our contributors. The same applies to the `.md` 
+files outlining project guidelines, such as this one, `STYLE-CODE.md`, `STYLE-WRITING.md`, 
+and `ALPHATESTERS.md`. 
+
+### Other general guidelines
 
 Instructions for Claude live in [CLAUDE.md](CLAUDE.md) (which also
-asks Claude to pay attention to the conventions in this file).
+asks Claude to pay attention to the conventions in this file and the style guides).
 
 Raw AI output should not be posted to GitHub or Zulip without an
 indication that that's what it is.
-
-Scripts that are mostly or wholly AI generated should be marked as
-such: these will typically be lower quality than human-created or
-heavily vetted code, and people looking at them should understand
-that.
 
 [mathlib-ai-policy]: https://leanprover-community.github.io/contribute/index.html#use-of-ai

@@ -35,7 +35,7 @@ and do not use tactics not in this table; in particular,
 | `Automation`      | `lia`, `try`, `repeat`, `trivial`, `simp`, `generalize` |
 | `Typeclasses`     | `decide` |
 | `HL` chapters     | *(none new)* |
-| `HL/Hoare`        | `show` (in a solution only) |
+| `HL/Hoare`        | `show` (in a solution only), `apply_rules` |
 
 Additional notation beyond the `Basics` is also introduced gradually alongside
 the tactics. The table below similarly lists new notation, which should also be

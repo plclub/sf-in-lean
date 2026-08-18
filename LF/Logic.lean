@@ -676,7 +676,7 @@ Not (a : Prop) : Prop
 ```
 
 ```leanOutput not
-def Not : Prop → Prop :=
+@[implicit_reducible] def Not : Prop → Prop :=
 fun a => a → False
 ```
 
@@ -902,6 +902,49 @@ quizzes were devised when intro patterns were not taught in the
 course and an update would be helpful now? Since I don't see the
 gain in tricking a majority of students in giving the "wrong"
 answer, even if it's a perfectly sensible one.
+:::
+
+:::dev "Benjamin Pierce (bcpierce00)"
+```
+INCOMING BOCHUM MATERIAL summarized by Claude (old/bochum-lf-updates/Logic.v): the five
+   quizzes below were reworked in the Bochum LF updates -- addressing
+   the concern in the dev note above.  Every option list was replaced
+   by the following uniform one (with `discriminate` in place of
+   `destruct` in the last quiz):
+
+     (A) intros and apply suffice
+     (B) destruct
+     (C) left and/or right
+     (D) destruct, left and right
+     (E) none of the above
+
+   and the answer proofs for quizzes 1 and 4 were changed to use an
+   explicit destruct instead of destructing via an intro pattern:
+
+     Lemma quiz1: forall X, forall a b : X, (a=b) /\ (a<>b) -> False.
+     Proof.
+       intros X a b H.
+       destruct H as [Hab Hnab]. apply Hnab. apply Hab.
+     Qed.
+
+     Lemma quiz4 : forall P Q: Prop,  P \/ Q -> ~~P \/ ~~Q.
+     Proof.
+       intros P Q H.
+       destruct H as [HP | HQ].
+       - (* left *)
+         left. intros HnP. apply HnP in HP. apply HP.
+       - (* right *)
+         right. intros HnQ. apply HnQ in HQ. apply HQ.
+     Qed.
+
+   To incorporate: rewrite the option lists of the five quizzes below
+   in the same uniform style (in Lean terms, e.g. "(A) intro and
+   apply suffice / (B) cases / (C) left and/or right / (D) cases,
+   left and right / (E) none of the above", with contradiction
+   replacing cases in the last quiz) and make the solutions for
+   quizzes 1 and 4 use an explicit cases rather than an intro
+   pattern.
+```
 :::
 
 ::::quiz
