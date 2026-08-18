@@ -305,7 +305,7 @@ theorem succ_mul_succ (n m : Nat) :
 ```
 
 Given this proof with {tactic}`rw`, rewrite it with {tactic}`calc`.
-Reminder that you can use {tactic}`rw?` to find appropriate rules to rewrite by.
+Recall that you can use {tactic}`rw?` to find appropriate rules to rewrite by.
 
 ```lean
 theorem succ_mul_succ' (n m : Nat) :
