@@ -49,7 +49,7 @@ $(eval $(call VOLUME_template,ts))
 
 # ── Top-level targets ─────────────────────────────────────────────────────────
 
-.PHONY: all student solutions terse grading serve clean ensure-build-symlink style-check style-checklist
+.PHONY: all student solutions terse grading serve clean ensure-build-symlink style style-check style-checklist
 
 all: lf hl ts
 
@@ -62,11 +62,15 @@ terse: lf-terse hl-terse ts-terse
 
 grading: lf-grading hl-grading ts-grading
 
-# Mechanical conformance checks for STYLE.md (auto checks fail the run; assisted
-# ones are advisory). `style-checklist` prints the audit checklist for the
-# judgement-based conventions. See scripts/style_check.py.
-style-check:
+# Mechanical conformance checks for the style guides — STYLE-CODE.md and
+# STYLE-WRITING.md (auto checks fail the run; assisted ones are advisory).
+# `style-checklist` prints the audit checklist for the judgement-based
+# conventions. See scripts/style_check.py.
+style:
 	python3 scripts/style_check.py
+
+# Kept as the older name for `style`.
+style-check: style
 
 style-checklist:
 	@python3 scripts/style_check.py --checklist
