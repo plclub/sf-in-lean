@@ -12,11 +12,11 @@
   git remote add upstream https://github.com/plclub/sf-in-lean.git
   ```
 
-- Install VSCode if you don't already have it.
+- Install VS Code if you don't already have it.
 
 - Install the Lean 4 extension from its Extensions tab.
 
-- Open your clone in VSCode and open any `.lean` file in the `LF`
+- Open your clone in VS Code and open any `.lean` file in the `LF`
   directory. The first time you do this, the extension will offer to
   install Lean itself; accept, and it will fetch the version this book
   needs. (Open a fresh terminal afterwards, so that `elan` and `lake`
@@ -52,7 +52,7 @@
 
 - Visit <http://localhost:8000> and start reading.
 
-## Working the exercises in VSCode
+## Working the exercises in VS Code
 
 - To work on exercises, open the generated Lean project as a folder:
 
