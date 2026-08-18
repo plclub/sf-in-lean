@@ -1,33 +1,34 @@
 #!/usr/bin/env python3
 # This file is maintained by Claude (AI-generated).
 """
-style_check.py  —  Semi-automatic conformance checks for STYLE.md.
+style_check.py  —  Semi-automatic conformance checks for the style guides.
 
-STYLE.md is the single source of truth: every normative convention there has a
-stable ID (LEAN-*, PED-*, WRITE-*). This script keeps the material honest to it
-in two ways.
+The style guides — STYLE-CODE.md (Lean and Verso markup) and STYLE-WRITING.md
+(prose) — are the single source of truth: a normative convention there may
+carry a stable ID (LEAN-*, PED-*, WRITE-*). This script keeps the material
+honest to them in two ways.
 
-  1. `--checklist`  — regenerate the audit checklist straight from STYLE.md
-     (all IDs + their one-line titles, grouped by section). This is the
-     checklist a periodic human/LLM audit works through for the *manual*
-     conventions, so it can never drift from the doc.
+  1. `--checklist`  — regenerate the audit checklist straight from the guides
+     (all IDs + their one-line titles, grouped by guide and section). This is
+     the checklist a periodic human/LLM audit works through for the *manual*
+     conventions, so it can never drift from the docs.
 
   2. (default)      — run the mechanical checks over tracked files and print
      any violations, grouped by convention ID. Checks are one of two classes:
 
        * auto     — mechanically decidable; a violation FAILS the run
-                    (exit 1), so CI/`make style-check` can gate on it.
+                    (exit 1), so CI/`make style` can gate on it.
        * assisted — a heuristic that surfaces *candidates*; printed as advice,
                     never fails the run (too noisy to gate).
 
-Add a check by appending a Check(...) to CHECKS below; tag it with the STYLE.md
-ID it enforces so its output threads back to the doc. Nothing here understands
-Lean or English deeply — these are cheap guards, with the judgement-heavy
-conventions left to the audit checklist.
+Add a check by appending a Check(...) to CHECKS below; tag it with the style
+guide ID it enforces so its output threads back to the doc. Nothing here
+understands Lean or English deeply — these are cheap guards, with the
+judgement-heavy conventions left to the audit checklist.
 
 USAGE
   python3 scripts/style_check.py            # run checks, exit 1 on auto failures
-  python3 scripts/style_check.py --checklist  # print the STYLE.md audit checklist
+  python3 scripts/style_check.py --checklist  # print the style audit checklist
   python3 scripts/style_check.py --strict   # also fail on assisted candidates
 """
 
@@ -38,17 +39,19 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-STYLE = os.path.join(ROOT, "STYLE.md")
+# The style rulebook, split by subject: code (Lean + Verso markup) and prose.
+_STYLE_DOCS = ("STYLE-CODE.md", "STYLE-WRITING.md")
+STYLE_PATHS = [os.path.join(ROOT, d) for d in _STYLE_DOCS]
 
 # Files worth scanning: tracked chapter/prose sources, not build output or deps.
 _SCAN_EXT = (".lean", ".md")
 _SCAN_SKIP = ("_out/", ".lake/", "old/")
-# The style rulebook/plan quote the phrases and markers the checks look for.
-_META_DOCS = {"STYLE.md", "STYLE-CHECKING.md"}
+# The style rulebooks quote the phrases and markers the checks look for.
+_META_DOCS = set(_STYLE_DOCS)
 
 
 # --------------------------------------------------------------------------
-# STYLE.md parsing
+# style guide parsing
 # --------------------------------------------------------------------------
 # A convention bullet looks like:  - **LEAN-1 — Mathlib alignment.** Follow …
 _ID_RE = re.compile(r"\*\*([A-Z]{2,6}-\d+)\s*—\s*(.+?)\*\*")
@@ -57,21 +60,26 @@ _ID_TOKEN_RE = re.compile(r"\b([A-Z]{2,6}-\d+)\b")
 
 def parse_style():
     """Return (ids, sections): the set of defined IDs, and an ordered list of
-    (section-title, [(id, title), …]) for every `##` section that defines any."""
+    (section-title, [(id, title), …]) for every `##` section that defines any.
+    Every style guide is parsed; a section title is qualified by its guide, so
+    the checklist stays unambiguous when two guides share a heading."""
     ids = {}
     sections = []
-    current = None
-    with open(STYLE, encoding="utf-8") as f:
-        for line in f:
-            if line.startswith("## "):
-                current = (line[3:].strip(), [])
-                sections.append(current)
-                continue
-            m = _ID_RE.search(line)
-            if m and current is not None:
-                cid, title = m.group(1), m.group(2).strip().rstrip(".")
-                ids[cid] = title
-                current[1].append((cid, title))
+    for doc, path in zip(_STYLE_DOCS, STYLE_PATHS):
+        if not os.path.exists(path):
+            continue
+        current = None
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("## "):
+                    current = (f"{doc} — {line[3:].strip()}", [])
+                    sections.append(current)
+                    continue
+                m = _ID_RE.search(line)
+                if m and current is not None:
+                    cid, title = m.group(1), m.group(2).strip().rstrip(".")
+                    ids[cid] = title
+                    current[1].append((cid, title))
     sections = [s for s in sections if s[1]]
     return ids, sections
 
@@ -136,7 +144,7 @@ def prose_lines(path):
 # --------------------------------------------------------------------------
 class Check:
     def __init__(self, cid, klass, desc, fn):
-        self.cid = cid          # STYLE.md convention id this enforces
+        self.cid = cid          # style guide convention id this enforces
         self.klass = klass      # "auto" | "assisted"
         self.desc = desc
         self.fn = fn
@@ -146,7 +154,7 @@ _MARKER_RE = re.compile(r"\bstyle:\s*([A-Z]{2,6}-\d+)")
 
 
 def check_markers(valid_ids):
-    """auto — a deviation marker `style: <ID>` must name a real STYLE.md ID."""
+    """auto — a deviation marker `style: <ID>` must name a real guide ID."""
     def run():
         for path in tracked_files():
             for ln, text in prose_lines(path):
@@ -184,7 +192,7 @@ def check_filler():
 def build_checks(valid_ids):
     return [
         Check("STYLE-markers", "auto",
-              "deviation markers reference a real STYLE.md id",
+              "deviation markers reference a real style guide id",
               check_markers(valid_ids)),
         Check("WRITE-7", "assisted",
               "throat-clearing / wordy phrases",
@@ -196,9 +204,10 @@ def build_checks(valid_ids):
 # checklist generation
 # --------------------------------------------------------------------------
 def print_checklist(sections):
-    print("# STYLE.md audit checklist")
+    print("# Style audit checklist")
     print()
-    print("_Generated from STYLE.md — work through each item for the material "
+    guides = " and ".join(_STYLE_DOCS)
+    print(f"_Generated from {guides} — work through each item for the material "
           "under review and note conforms / deviates (with reason) / N/A._")
     print()
     for title, items in sections:
@@ -214,14 +223,18 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--checklist", action="store_true",
-                    help="print the STYLE.md audit checklist and exit")
+                    help="print the style audit checklist and exit")
     ap.add_argument("--strict", action="store_true",
                     help="also fail (exit 1) on assisted candidates")
     args = ap.parse_args()
 
-    if not os.path.exists(STYLE):
-        sys.stderr.write(f"STYLE.md not found at {STYLE}\n")
+    missing = [p for p in STYLE_PATHS if not os.path.exists(p)]
+    if len(missing) == len(STYLE_PATHS):
+        sys.stderr.write("no style guide found; looked for "
+                         + ", ".join(STYLE_PATHS) + "\n")
         raise SystemExit(2)
+    for p in missing:
+        sys.stderr.write(f"warning: style guide not found at {p}\n")
 
     valid_ids, sections = parse_style()
 
@@ -245,7 +258,7 @@ def main():
         else:
             assisted_hits += len(findings)
 
-    print(f"Checked against {len(valid_ids)} STYLE.md conventions: "
+    print(f"Checked against {len(valid_ids)} style guide conventions: "
           f"{auto_hits} auto failure(s), {assisted_hits} assisted note(s).")
     if auto_hits or (args.strict and assisted_hits):
         raise SystemExit(1)

@@ -12,11 +12,11 @@
   git remote add upstream https://github.com/plclub/sf-in-lean.git
   ```
 
-- Install VSCode if you don't already have it.
+- Install VS Code if you don't already have it.
 
 - Install the Lean 4 extension from its Extensions tab.
 
-- Open your clone in VSCode and open any `.lean` file in the `LF`
+- Open your clone in VS Code and open any `.lean` file in the `LF`
   directory. The first time you do this, the extension will offer to
   install Lean itself; accept, and it will fetch the version this book
   needs. (Open a fresh terminal afterwards, so that `elan` and `lake`
@@ -34,7 +34,7 @@
   (full prose, with solutions elided) and writes two things to
   `_out/lf/student/`:
 
-  + `html-multi/`, an HTML-formatted version of the whole book; and
+  + `html/`, an HTML-formatted version of the whole book; and
   + `lean/`, a standalone Lean project holding the same
     chapters as `.lean` files, with solutions to exercises omitted.
 
@@ -47,14 +47,15 @@
 - Start a local HTTP server for the generated HTML files:
 
   ```sh
-  python3 -m http.server 8000 -d _out/lf/student/html-multi
+  python3 -m http.server 8000 -d _out/lf/student/html
   ```
 
 - Visit <http://localhost:8000> and start reading.
 
-## Working the exercises in VSCode
+## Working the exercises in VS Code
 
-- To work on exercises, open the generated Lean project as a folder:
+- To work on exercises, open the generated Lean project as its own
+  folder — not as a file inside your clone:
 
   ```sh
   code _out/lf/student/lean
@@ -104,8 +105,9 @@
 
 - When you open the PR, leave the "Allow edits by maintainers" box
   checked (it is checked by default). It lets anyone with write
-  access to the SF-in-Lean repo push directly to your branch,
-  which will get your contributions merged faster.
+  access to the SF-in-Lean repo push a small fixup directly to your
+  branch — a typo, a build fix — instead of asking you to round-trip
+  it, which will get your contributions merged faster.
 
 - We are actively working on all the chapters, so if you're reading a
   chapter over a long period, make sure to merge in changes from the
