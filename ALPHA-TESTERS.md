@@ -54,7 +54,8 @@
 
 ## Working the exercises in VSCode
 
-- To work on exercises, open the generated Lean project as a folder:
+- To work on exercises, open the generated Lean project as its own
+  folder — not as a file inside your clone:
 
   ```sh
   code _out/lf/student/lean
@@ -104,8 +105,9 @@
 
 - When you open the PR, leave the "Allow edits by maintainers" box
   checked (it is checked by default). It lets anyone with write
-  access to the SF-in-Lean repo push directly to your branch,
-  which will get your contributions merged faster.
+  access to the SF-in-Lean repo push a small fixup directly to your
+  branch — a typo, a build fix — instead of asking you to round-trip
+  it, which will get your contributions merged faster.
 
 - We are actively working on all the chapters, so if you're reading a
   chapter over a long period, make sure to merge in changes from the
