@@ -63,7 +63,7 @@ For discussions, we use a combination of tools.
 - **In-text:** If you have a local comment that you want someone to think about
   at some point when they have that section of the material paged in, put it
   directly in the appropriate Lean file inside a `:::dev` block; see the
-  [style guide](STYLE.md#internal-commentary-directives) for its usage.
+  [style guide](STYLE-CODE.md#internal-commentary-directives) for its usage.
 
 - **On PRs:** We prefer _not_ holding longer discussions in annotations on PRs,
   because they tend to either get lost when the PR is merged or else delay merging.
@@ -169,7 +169,7 @@ git push --force-with-lease
 
 These recipes assume `origin` is the shared repo, which is the case if you have
 write access and cloned it directly.  If you are working from a fork (the setup
-in `ALPHATESTERS.md`), your `origin` is your fork and the shared repo is
+in `ALPHA-TESTERS.md`), your `origin` is your fork and the shared repo is
 `upstream`, so read `upstream/main` for `origin/main` throughout — rebasing onto
 your fork's `main` would replant your work on a stale base.
 
