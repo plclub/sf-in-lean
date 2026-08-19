@@ -5,7 +5,7 @@ This repository contains the sources for the _Software Foundations in Lean_ text
 ## Status and how to contribute
 
 SF-in-Lean is ready for adventurous alpha-testers!  See
-[ALPHA-TESTERS.md](AlPHA-TESTERS.md) for instructions on how to get started.
+[ALPHA-TESTERS.md](ALPHA-TESTERS.md) for instructions on how to get started.
 
 The SF-in-Lean team is also looking for contributors who have time and
 interest to make a bigger commitment to the project.  
@@ -36,7 +36,7 @@ To rebuild just one volume, use its make target and then serve `_out/`:
     python3 -m http.server 8000 -d _out/
 
 The HTML for a given volume and variant lands in
-`_out/<vol>/<variant>/html-multi/`, one page per chapter.  (There is no
+`_out/<vol>/<variant>/html/`, one page per chapter.  (There is no
 per-chapter build target: a whole volume is the smallest unit.)
 
 The first build compiles the whole Lean toolchain's dependencies and

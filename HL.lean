@@ -6,6 +6,7 @@ import HL.Preface
 import HL.Slang
 import HL.Imp
 import HL.Hoare
+import HL.Hoare2
 
 import VersoManual
 
@@ -16,3 +17,4 @@ open Verso Genre Manual
 {include HL.Slang}
 {include HL.Imp}
 {include HL.Hoare}
+{include HL.Hoare2}

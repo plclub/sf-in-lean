@@ -32,7 +32,7 @@ If you don't have Lean installed yet:
 * Install Lean 4 through the VS Code extension.
 * Start a new terminal session to pick up environment changes.
 * Run `make`.
-* Run `make serve`. Navigate to "http://localhost:8000/lf/student/html-multi/" to start reading.
+* Run `make serve`. Navigate to "http://localhost:8000/lf/student/html/" to start reading.
 * Make a copy of "\_out/lf/student/lean" to start solving as if I were a student.
 :::
 
@@ -352,14 +352,7 @@ example : or MyBool.false MyBool.true  = MyBool.true  := by rfl
 example : or MyBool.true  MyBool.true  = MyBool.true  := by rfl
 ```
 
-:::dev "mwhicks"
-TODO: Seems wrong to not say anything about this notation here.
-Our rule is to mention simple notations like this, but not `macro_rules`
-etc. Do we actually introduce this later?
-:::
-
-We can define new symbolic notations for existing definitions.
-Don't worry for now about how the notation is defined.
+Lean allows us to define symbolic notation for our definitions.
 
 ```lean
 local prefix:40 (priority := high) "!" => not
@@ -373,6 +366,18 @@ example :
 
 example : (!MyBool.false) = MyBool.true := by rfl
 ```
+
+The technical details of how these symbolic notations work are not something you need to understand until quite a bit later in your Lean journey.  We'll mark these details -- and similar material later on -- with `THESE DETAILS CAN BE SKIPPED` comments in `.lean` files and collapsed text segments in the HTML presentation. Click on the triangle in the HTML if you want to have a peek, or just move on to the following material, as you like.
+
+:::details
+Lean has a very flexible notation system. Operators like `||` and `&&`
+are defined with specified precedence and associativity. For example, the `infixl` directive above states that
+`&&` is an infix operator, has precedence 35, and is left-associative, while `||` is also infix and left-associative and has precedence 30. This means that `MyBool.true || MyBool.false && MyBool.false` is parsed as `MyBool.true || (MyBool.false && MyBool.false)`.
+
+Custom notations are defined using the `notation`, `infixl`,
+`infixr`, `prefix`, and `postfix` commands, some of which we will see
+(again, in skippable sections) later on.
+:::
 
 :::slidebreak
 :::
@@ -1387,11 +1392,7 @@ inductive Nat : Type where
 With a little Lean magic, we can also arrange that
 ordinary numerals such as 0, 1, and 2 will be interpreted as values of our new {name}`Nat` type
 whenever this is sensible in context.
-
-The technical details of how this is done are not important for present purposes,
-so we won't spend time explaining them here.
-Instead, we'll mark them with `THESE DETAILS CAN BE SKIPPED` comments in `.lean` files and
-hide them in a collapsed text segment in the HTML presentation. Click on the triangle in the HTML if you want to have a look.
+The technical details of how this is done are not important for present purposes.
 
 :::details "Library Nat to SFL Nat coercion"
 ```lean
@@ -1400,6 +1401,7 @@ def ofNat : _root_.Nat → Nat
   | .succ n => .succ (ofNat n)
 
 instance (n : _root_.Nat) : OfNat Nat n := ⟨ofNat n⟩
+attribute [pp_nodot] Nat.succ
 ```
 :::
 
@@ -1533,10 +1535,6 @@ NatPlayground.Nat.succ (NatPlayground.Nat.succ (NatPlayground.Nat.succ (NatPlayg
 ```
 
 We can also define infix notation for our {name}`add` functions.
-:::full
-Don't worry too much about how this is defined; we will return to it
-in more detail later.
-:::
 
 ```lean
 scoped infixl:65 " + " => add
@@ -2107,13 +2105,26 @@ one for each of the four cases of control flow through the function.
 ::::
 
 ```lean
-theorem zero_zero_beq_true : (zero == zero) = true := by rfl
-theorem zero_succ_beq_false (n : Nat) : (zero == (succ n)) = false := by rfl
-theorem succ_zero_beq_false (n : Nat) : ((succ n) == zero) = false := by rfl
-theorem succ_succ_beq (n m : Nat) : ((succ n) == (succ m)) = (n == m) := by rfl
+theorem zero_beq_zero : (zero == zero) = true := by rfl
+theorem zero_beq_succ (n : Nat) : (zero == (succ n)) = false := by rfl
+theorem succ_beq_zero (n : Nat) : ((succ n) == zero) = false := by rfl
+theorem succ_beq_succ (n m : Nat) : ((succ n) == (succ m)) = (n == m) := by rfl
 
 attribute [irreducible] beq
 ```
+
+:::full
+As an aside, we point out that we have been following a naming convention
+for simplification rules which aims to convey their meaning.
+For `add_zero` and `add_succ` notice that `zero` and
+`succ` are after the `add` — this is because they depend on `add`'s _second_ argument
+and do not care about its first.
+In the `beq` rules above, we write `zero_beq_zero` and `zero_beq_succ`
+because the rules apply to both the first and second arguments of `beq`. We put
+`beq` in between the arguments because it usually written in infix.
+There are not strict style conventions for naming theorems like this in Lean, but many
+follow this approach.
+:::
 
 ## General Proofs about Natural Numbers
 
@@ -2253,9 +2264,10 @@ Sometimes simple calculation and rewriting are not enough...
 
 
 ```lean +error
-example (n : Nat) : (succ n == zero) = false := by
+example (n : Nat) : (succ zero + n == zero) = false := by
   /-
-    We can't rewrite by any lemmas here because `n` is unknown!
+    We can't rewrite by any lemmas here: `add`'s definition matches on its
+    *second* argument, and here that argument is the unknown `n`!
   -/
 ```
 
@@ -2268,13 +2280,13 @@ We can use `cases` to perform case analysis:
 :::
 
 ```lean
-theorem add_one_neb_zero (n : Nat) : (succ n == zero) = false := by
+theorem add_one_neb_zero (n : Nat) : (succ zero + n == zero) = false := by
   cases n with
   | zero =>
-    rewrite [succ_zero_beq_false]
+    rewrite [add_zero, succ_beq_zero]
     rfl
   | succ n' =>
-    rewrite [succ_zero_beq_false]
+    rewrite [add_succ, succ_beq_zero]
     rfl
 ```
 
@@ -2311,15 +2323,15 @@ theorem not_involutive (b : Bool) : (!!b) = b := by
 ```
 
 ::::full
-You may also notice that in the above proof we have used some rewrite rules that we didn't
-previously prove in this file! These proofs come from Lean's standard library, in particular
+In the proof above we have used some rewrite rules that we didn't
+previously prove in this file. These rules come from Lean's standard library, in particular
 from the section about booleans. Having access to these already-proved theorems about booleans
-instead of needing them to prove them ourselves is a big advantage of using Lean's built-in
+instead of needing to prove them ourselves is an  advantage of using Lean's built-in
 {name}`Bool` type instead of defining our own.
 
-In a few chapters we will discuss how to search through the standard library
-for theorems like these. For now, note that if you hover over the name of these theorems
-in VSCode, the Lean 4 extension will show you their type, i.e., what the theorem proves.
+In the {ref "UsingLean"}[UsingLean] chapter we will discuss how to search through the standard library
+for theorems like these. For now, note that, if you hover over the name of these theorems
+in VS Code, the Lean 4 extension will show you their type, i.e., what the theorem proves.
 ::::
 
 ::::terse
@@ -2396,7 +2408,7 @@ theorem and3_exchange (b c d : Bool) :
 
 As you can see, proofs by cases can become very verbose.
 We will introduce some tactics for writing shorter proofs
-by case analysis in {ref "Tactics"}[Tactics] chapter.
+by case analysis in the {ref "Tactics"}[Tactics] chapter.
 
 ## New Tactics: `rewrite ... at` and {tactic}`exact`
 
@@ -2432,10 +2444,9 @@ Prove the following claim.
 Tip: the rewrite rule to simplify `(b || false)` is called {name}`Bool.or_false`.
 
 ```lean
-theorem or_false_true (b : Bool) :
-    (b || false) = true → b = true := by
+theorem or_false_true (b : Bool) (h: (b || false) = true) :
+  b = true := by
   solution!
-    intro h
     rewrite [Bool.or_false] at h
     exact h
 ```
@@ -2447,55 +2458,15 @@ theorem or_false_true (b : Bool) :
 ::::exercise (rating := 1) (name := "zero_neb_add_one")
 ```lean
 theorem zero_neb_add_one (n : Nat) :
-  (zero == succ n) = false := by
+  (zero == (succ zero + n)) = false := by
   solution!
     cases n with
-    | zero => rewrite [zero_succ_beq_false]; rfl
-    | succ n' => rewrite [zero_succ_beq_false]; rfl
+    | zero => rewrite [add_zero, zero_beq_succ]; rfl
+    | succ n' => rewrite [add_succ, zero_beq_succ]; rfl
 ```
 
 :::gradeTheorem 1 zero_neb_add_one
 :::
-::::
-
-:::dev "Daniel Sainati (dsainati1)"
-I move that we just cut this section entirely and come back to it when
-we've presented enough of the requisite material that we can actually explain
-:::
-
-:::dev "Michael Hicks (mwhicks1)" BeforeNextRelease
-I'm going to leave this here for now, but perhaps make a note to
-fix later on — when you've fixed it, come back and delete this, rather than
-delete it now.
-:::
-
-:::dev "Yipeng Liu (berberman)" BeforeNextRelease
-I feel we could split this section and push the typeclass stuff to `Typeclasses` chapter
-and complex notation syntax definitions to TS/HL.
-:::
-
-## More on Notation (Optional)
-
-::::full
-Lean has a very flexible notation system.  Operators like `+` and `*`
-are defined with specified precedence and associativity.  For example,
-`+` has precedence 65 and is left-associative, while `*` has
-precedence 70 and is also left-associative.  This means that `1 + 2 * 3 * 4`
-is parsed as `1 + ((2 * 3) * 4)`.
-
-You can define custom notation using the `notation`, `infixl`,
-`infixr`, `prefix`, and `postfix` commands.
-
-Lean handles notation scoping through namespaces and _type classes_.
-The numeric literal `3` can be interpreted as {name}`Nat`, {name}`Int`, {name}`Float`, etc.,
-depending on the expected type, thanks to Lean's {name}`OfNat` type class.
-We will explain type classes in more detail in the {ref "Typeclasses"}[Typeclasses] chapter.
-
-::::
-
-::::terse
-Lean has commands like `notation`, `infixl`, `infixr`, `prefix`, and `postfix` for defining new
-notation.
 ::::
 
 ## Structural Recursion (Optional)
@@ -2539,8 +2510,9 @@ termination.
 
 ```lean +error
 def factorial_bad (n : Nat) : Nat :=
-  if n == 0 then 1
-  else n * factorial_bad (pred n)
+  match n with
+  | zero => (succ zero)
+  | succ _ => n * factorial_bad (pred n)
 ```
 
 This fails because Lean can't see that `pred n` is structurally smaller.
