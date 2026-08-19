@@ -66,6 +66,14 @@ to two arguments of type {name}`Nat`."
 :::slidebreak
 :::
 
+:::dev "Mike Hicks (@mwhicks1)"
+I would have expected us to have `namespace NatProd` here when defining
+the following functions, so we don't need qualifiers. We've already
+full explained namespaces back in Basics. Some of the text below
+mentions using the `NatProd` prefix specifically, but I think you can
+drop it and it will stick work.
+:::
+
 Functions for extracting the first and second components of a pair
 can then be defined by pattern matching.
 
@@ -168,26 +176,12 @@ Invalid `⟨...⟩` notation: The expected type `Nat` has more than one construc
 Note: This notation can only be used when the expected type is an inductive type with a single constructor
 ```
 
-These extensions to pattern matching also mean that the rewrite laws
-we define for each function may not always match one-to-one with the cases of our match
-constructs.
+As with the multi-argument `match n, m with` style used above in `sub`,
+matching jointly on several values can combine what would otherwise be
+several separate cases into a single match arm. This means the
+simplification rules we define for such a function may not always match
+one-to-one with the cases of its match construct.
 ::::
-
-Lean also provides a convenient way to define `inductive` structures like pairs
-that have a single constructor but multiple ways to access their data,
-using the `structure` keyword. The definition of `NatProd'` below is equivalent
-to the {name}`NatProd` definition from earlier, except that Lean automatically
-generates the `fst` and `snd` accessors.
-
-```lean
-structure NatProd' where
-  fst : Nat
-  snd : Nat
-
-#check (NatProd'.mk 3 5)
-example : (NatProd'.mk 3 5).fst = 3 := by rfl
-example : (⟨3, 5⟩ : NatProd').fst = 3 := by rfl
-```
 
 :::slidebreak
 :::
@@ -246,6 +240,34 @@ theorem fst_swap_is_snd (p : NatProd) :
 
 ::::::
 
+:::slidebreak
+:::
+
+# Structures
+
+:::full
+Lean also provides a convenient way to define `inductive` structures like pairs
+that have a single constructor but multiple ways to access their data,
+using the `structure` keyword. The definition of `NatProd'` below is equivalent
+to the {name}`NatProd` definition from earlier, except that Lean automatically
+generates the `fst` and `snd` accessors.
+:::
+
+:::terse
+Lean's `structure` is shorthand for a single-constructor
+`inductive` with the accessors auto-generated.
+:::
+
+```lean
+structure NatProd' where
+  fst : Nat
+  snd : Nat
+
+#check (NatProd'.mk 3 5)
+example : (NatProd'.mk 3 5).fst = 3 := by rfl
+example : (⟨3, 5⟩ : NatProd').fst = 3 := by rfl
+```
+
 # Lists of Numbers
 
 ::::full
@@ -285,7 +307,14 @@ for constructing lists.
 Some notation for lists to make our lives easier:
 :::
 
-Don't worry too much about what this is doing:
+Don't worry too much about how this works.
+
+:::details "List syntax"
+We first define `::` as right-associative notation for {name}`cons`,
+and then define list notation as a _macro_,
+allowing us to write {lean}`[1, 2]` instead of {lean}`1 :: 2 :: []`.
+The _unexpander_ reverses the macro, translating list syntax back to
+cons syntax.
 
 ```lean
 scoped infixr:65 (priority := high) " :: " => cons
@@ -302,10 +331,7 @@ def unexpandCons : Lean.PrettyPrinter.Unexpander
   | `($_ $x [$xs,*]) => `([$x, $xs,*])
   | _ => throw ()
 ```
-
-We first define `::` as right-associative _notation_ for {name}`cons`,
-and then define list notation _macro_ with _unexpander_,
-allowing us to write {lean}`[1, 2]` instead of {lean}`1 :: 2 :: []`.
+:::
 
 Now these all mean exactly the same thing:
 
@@ -335,6 +361,14 @@ def myRepeat (n count : Nat) : NatList :=
 ```
 
 Some simple facts about repetition:
+
+:::dev "Mike Hicks (@mwhicks1)"
+This is the first time we've seen implicit arguments like `{n : Nat}`, and
+they're used pervasively from here on (`cons_append`, `head_cons`, `count_nil`,
+etc.). We should either introduce implicit
+arguments explicitly here (or earlier, e.g., an exercise in UsingLean) or restructure so their proper explanation —
+currently in Poly — comes before this chapter.
+:::
 
 ```lean
 theorem repeat_zero {n : Nat} : myRepeat n 0 = [] := rfl
