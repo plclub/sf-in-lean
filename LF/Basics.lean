@@ -557,6 +557,15 @@ theorem true_and_wrong : ∀ (b : MyBool), (MyBool.true && b) = b := by
 Lean complains because the {tactic}`rfl` is not at the same level of indentation as the `{tactic}intro b`,
 so Lean does not recognize these two tactics as being sequential in the way they should be.
 
+:::dev "David Walker (@princedpw)"
+Given the description, I expected Lean complain *noisily* when I clicked
+through true_and_wrong, but it simply fails to discharge the goal.  The
+non-proof is suppressed by sf_expect_failure.  Perhaps write:
+
+  To see the error message, comment out "sf_expect_failure" temporarily.
+  You should see the following message.
+:::
+
 ```leanOutput indent
 Tactic `introN` failed: There are no additional binders or `let` bindings in the goal to introduce
 
@@ -2415,6 +2424,15 @@ example, if `hp : p` is in the context and the goal is `p`, then `exact hp`
 closes the goal. You can also transform `hp` slightly when using `exact`, and we will
 explain how when we get to an example that needs it.
 ::::
+
+:::dev "David Walker (princedpw)"
+The description of `rewrite ... at` appears wrong.  It should say something like the following.
+(I suggest changing the letter associated with the rule from h to something else -- perhaps r.
+I found that easier to read.)
+
+For example, if `hp : p` is in the context and we have a rule `r : p = q`,
+then `rewrite [r] at hp` changes the hypothesis to `hp : q`.
+:::
 
 ::::terse
 You will need the `rewrite ... at` and {tactic}`exact` tactics to complete the following exercises.
