@@ -210,6 +210,32 @@ example (n m k : Nat) :
   rw?
 ```
 
+:::dev "Claude (AI assistant)" BeforeNextRelease
+Claude-generated note, from a user report verified against this toolchain.
+
+The text frames `exact?`/`rw?` as searching the standard library, but later
+exercises also rely on them to recall theorems proved in this book (e.g.
+`mul_three_beq` needs `mul_three`). The search does index book theorems —
+imported chapters and earlier declarations in the same file, even ones still
+proved by `sorry` in the student build — and when a book theorem closes the
+goal outright, it is suggested first (`exact mul_three n`, `rw [mul_three]`).
+However, when a book lemma merely *advances* the goal, the `rw?` suggestion
+list (capped near 20) is dominated by syntactic standard-library matches and
+the book lemma is buried or absent. Verified: on
+`Nat.double (n + m) = Nat.double n + Nat.double m`, `rw?` returns 20
+suggestions (`Nat.eq_iff_testBit_eq`, `BitVec`, `Std.PRange`, `Rat`, `Int`
+lemmas, ...) and `Nat.double_add` is not among them; on
+`Nat.double (n + 1) = n + n + 2` it appears only as `← Nat.double_add`,
+fourteenth of twenty. Ideas for a future pass: (1) warn here that `?`-tactics
+are far better at finding a single finishing theorem than a mid-proof step,
+and that this book's simplification rules are best recalled by name (or from
+the chapter text) rather than rediscovered through `rw?`; (2) consider a
+custom search tactic in `SFLMeta` that filters or boosts lemmas from this
+book's own modules. A related hazard worth a caveat: in the student build,
+`exact?` happily suggests earlier-chapter theorems whose proofs are still
+`sorry`, so a student can close a goal with a result they never proved.
+:::
+
 Prove the following theorems about {name}`Nat`s.
 You should not need induction for any of these;
 you can find the theorems you need using {tactic}`rw?` and {tactic}`exact?`.
