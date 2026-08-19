@@ -52,7 +52,7 @@ written in [Verso](https://verso.lean-lang.org/) format.
 Running `make` at the top level produces, for each volume, four
 different ready-for-distribution outputs in a temporary top-level
 `_out` directory, each with both `.lean` and `.html` variants (in
-`_out/<vol>/<variant>/lean/` and `_out/<vol>/<variant>/html/`
+`_out/<vol>/<variant>/lean/` and `_out/<vol>/<variant>/html-multi/`
 respectively).
 
 - **student**   (full prose, solutions elided)
