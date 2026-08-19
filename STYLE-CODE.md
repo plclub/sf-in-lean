@@ -680,14 +680,14 @@ theorem false_or (b : Bool) : (.false || b) = b := by
 ````
 
 The tactical and its term or proof is replaced either by `sorry` or by
-the term or proof itself. For proofs, they are preceded by `all_goals`,
-since the tactics are indented. The replacements are summarized below.
+the term or proof itself, dedented to sit at the tactical's own column. The
+replacements are summarized below.
 
 | Tactical       | `solutions` | `student` | `terse`     | Usage |
 | -------------- | ----------- | --------- | ----------- | ----- |
-| `solution!`    | `all_goals` | `sorry`   | `sorry`     | For homework exercises |
-| `workinclass!` | `all_goals` | `sorry`   | `all_goals` | For work in class |
-| `suggested!`   | `all_goals` | `sorry` with proof in comment | `all_goals` | For exercises with a suggested proof to modify |
+| `solution!`    | shown       | `sorry`   | `sorry`     | For homework exercises |
+| `workinclass!` | shown       | shown     | `sorry`     | For work in class |
+| `suggested!`   | shown       | `sorry` with proof in comment | shown | For exercises with a suggested proof to modify |
 
 #### `-- SOLUTION`
 
