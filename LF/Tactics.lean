@@ -140,7 +140,7 @@ theorem apply_exercise (m : Nat)
 ::::full
 To use the {tactic}`apply` tactic, the (conclusion of the) fact
 being applied must match the goal exactly (perhaps after
-simplification) —bodies for example, {tactic}`apply` will not work if the left
+simplification) — for example, {tactic}`apply` will not work if the left
 and right sides of the equality are swapped.
 ::::
 
@@ -442,7 +442,7 @@ example (n m : Nat)
   have : n = Nat.pred (n + 1) := by rfl
   /- The hypothesis name defaults to `this` when unspecified. -/
   rewrite [this, h]
-  rfl
+  rw [Nat.pred_succ]
 ```
 
 ::::full
@@ -1061,24 +1061,20 @@ If we begin it with
 
 ::::
 
-:::dev "Yipeng Liu (berberman)"
-A single {tactic}`contradiction` can close `zero.succ` case without any rewrite as shown below —
-`h : double 0 = (m' + 1).double` gets unfolded to `0 = ((m'.double).add 1).succ`,
-and then `noConfusion` kicks in. The unfold can happen because {name}`Nat.double` is not marked as
-`irreducible`. Similarly it can close `succ.zero` case. I think this is fine, and I removed the
-{name}`Nat.double_zero`/{name}`Nat.double_succ` rewrites.
-:::
-
-```lean -keep  +error (name := gen1)
+```lean -keep +error (name := gen1)
 theorem double_injective (n m : Nat) (h : n.double = m.double) : n = m := by
   induction n with
   | zero =>
     cases m with
     | zero => rfl
-    | succ m' => contradiction
+    | succ m' =>
+      rw [Nat.double_zero, Nat.double_succ] at h
+      contradiction
   | succ n' ih =>
     cases m with
-    | zero => contradiction
+    | zero =>
+      rw [Nat.double_zero, Nat.double_succ] at h
+      contradiction
     | succ m' =>
       congr
 ```
@@ -1087,8 +1083,8 @@ theorem double_injective (n m : Nat) (h : n.double = m.double) : n = m := by
 unsolved goals
 case succ.succ.e_a
 n' m' : Nat
-ih : Nat.double n' = Nat.double (m' + 1) → n' = m' + 1
-h : Nat.double (n' + 1) = Nat.double (m' + 1)
+ih : n'.double = (m' + 1).double → n' = m' + 1
+h : (n' + 1).double = (m' + 1).double
 ⊢ n' = m'
 ```
 
@@ -1344,7 +1340,7 @@ use this fact to rewrite one of them into the other. Recall the theorem
 ```
 
 ```leanOutput double_injective
-double_injective (n m : Nat) (h : Nat.double n = Nat.double m) : n = m
+double_injective (n m : Nat) (h : n.double = m.double) : n = m
 ```
 
 For example, we can prove:
