@@ -34,6 +34,7 @@ and do not use tactics not in this table; in particular,
 | `IndProp`         | `rcases`, `subst` |
 | `Automation`      | `lia`, `try`, `repeat`, `specialize`, `trivial`, `simp`, `generalize` |
 | `Typeclasses`     | `decide` |
+| `Slang`           | `fun_induction`, `simp_all` |
 | `HL` chapters     | *(none new)* |
 | `HL/Hoare`        | `show` (in a solution only), `apply_rules` |
 
