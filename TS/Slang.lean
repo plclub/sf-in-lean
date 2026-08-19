@@ -790,9 +790,9 @@ inductive Aexp.EvalR : Aexp → Nat → Prop where
       EvalR (.minus a₁ a₂) (n₁ - n₂)
   | mult (a₁ a₂ : Aexp) (n₁ n₂ : Nat) (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :
       EvalR (.mult a₁ a₂) (n₁ * n₂)
-  | div (a₁ a₂ : Aexp) (n₁ n₂ n3 : Nat)             -- NEW
-      (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) (hpos : n₂ > 0) (hdiv : n₂ * n3 = n₁) :
-      EvalR (.div a₁ a₂) n3
+  | div (a₁ a₂ : Aexp) (n₁ n₂ n₃ : Nat)             -- NEW
+      (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) (hpos : n₂ > 0) (hdiv : n₂ * n₃ = n₁) :
+      EvalR (.div a₁ a₂) n₃
 ```
 
 Notice that there are some inputs (those with a divisor of 0) for which this relation
