@@ -1767,7 +1767,6 @@ def s_execute (st : State) (stack : List Nat) (prog : List Sinstr) : List Nat :=
     | sMult   :: prog',  n::m::stack' => s_execute st ((m * n) :: stack') prog'
     | _       :: prog',  _            => s_execute st stack prog')
                                         -- Bad state: skip
--- END SOLUTION
 
 example : s_execute ∅ [] [sPush 5, sPush 3, sPush 1, sMinus] = [2, 5] := by
   solution!
@@ -1862,9 +1861,8 @@ evaluating an expression might diverge, the short-circuiting `and`
 would _not_ be equivalent to the original, since it would make more
 programs terminate.)
 
--- SOLUTION
 ```lean
-def Bexp.eval_sc (st : State) (b : Bexp) : Bool :=
+def Bexp.eval_sc (st : State) (b : Bexp) : Bool := solution!(
   match b with
   | .bool b      =>  b
   | .eq   a₁ a₂  =>  a₁.eval st == a₂.eval st
@@ -1874,14 +1872,14 @@ def Bexp.eval_sc (st : State) (b : Bexp) : Bool :=
   | .not  b₁     =>  !b₁.eval_sc st
   | .and  b₁ b₂  =>  match (b₁.eval_sc st) with
                     | false => false
-                    | true => b₂.eval_sc st
+                    | true => b₂.eval_sc st)
 
 -- This exercise turned out to be easier than we intended!
 theorem beval__beval_sc (st : State) (b : Bexp) :
   b.eval st = b.eval_sc st := by
-  induction b <;> simp_all [Bexp.eval_sc] <;> lia
+  solution!
+    induction b <;> simp_all [Bexp.eval_sc] <;> lia
 ```
--- END SOLUTION
 ::::
 
 ::::exercise  (rating := 3) (name := "break_imp")
