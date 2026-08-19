@@ -1758,16 +1758,15 @@ offending instruction and continue with the next one.
 
 ```lean
 def s_execute (st : State) (stack : List Nat) (prog : List Sinstr) : List Nat :=
-  -- SOLUTION
-  match prog, stack with
-  | [],                _           => stack
-  | sPush n :: prog',  _            => s_execute st (n       :: stack)  prog'
-  | sLoad x :: prog',  _            => s_execute st (st[x]   :: stack)  prog'
-  | sPlus   :: prog',  n::m::stack' => s_execute st ((m + n) :: stack') prog'
-  | sMinus  :: prog',  n::m::stack' => s_execute st ((m - n) :: stack') prog'
-  | sMult   :: prog',  n::m::stack' => s_execute st ((m * n) :: stack') prog'
-  | _       :: prog',  _            => s_execute st stack prog'
-                                       -- Bad state: skip
+  solution!(match prog, stack with
+    | [],                _           => stack
+    | sPush n :: prog',  _            => s_execute st (n       :: stack)  prog'
+    | sLoad x :: prog',  _            => s_execute st (st[x]   :: stack)  prog'
+    | sPlus   :: prog',  n::m::stack' => s_execute st ((m + n) :: stack') prog'
+    | sMinus  :: prog',  n::m::stack' => s_execute st ((m - n) :: stack') prog'
+    | sMult   :: prog',  n::m::stack' => s_execute st ((m * n) :: stack') prog'
+    | _       :: prog',  _            => s_execute st stack prog')
+                                        -- Bad state: skip
 -- END SOLUTION
 
 example : s_execute ∅ [] [sPush 5, sPush 3, sPush 1, sMinus] = [2, 5] := by
@@ -1785,14 +1784,12 @@ same as pushing the value of the expression on the stack.
 
 ```lean
 def s_compile (a : Aexp) : List Sinstr :=
-  -- SOLUTION
-  match a with
+  solution!(match a with
   | .num n        => [sPush n]
   | .id x         => [sLoad x]
   | .plus a₁ a₂   => s_compile a₁ ++ s_compile a₂ ++ [sPlus]
   | .minus a₁ a₂  => s_compile a₁ ++ s_compile a₂ ++ [sMinus]
-  | .mult a₁ a₂   => s_compile a₁ ++ s_compile a₂ ++ [sMult]
--- END SOLUTION
+  | .mult a₁ a₂   => s_compile a₁ ++ s_compile a₂ ++ [sMult])
 ```
 
 
