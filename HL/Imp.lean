@@ -1683,6 +1683,611 @@ theorem no_whiles_terminating' (c : Com) (st1 : State)
 ```
 :::::
 
+## Additional Exercises
+
+::::exercise  (rating := 3) (name := "stack_compiler")
+Old HP Calculators, programming languages like Forth and Postscript,
+and abstract machines like the Java Virtual Machine all evaluate
+arithmetic expressions using a _stack_. For instance, the expression
+
+```display
+(2*3)+(3*(4-2))
+```
+
+would be written as
+
+```display
+      2 3 * 3 4 2 - * +
+```
+
+and evaluated like this (where we show the program being evaluated
+on the right and the contents of the stack on the left):
+
+```
+      [ ]           |    2 3 * 3 4 2 - * +
+      [2]           |    3 * 3 4 2 - * +
+      [3, 2]        |    * 3 4 2 - * +
+      [6]           |    3 4 2 - * +
+      [3, 6]        |    4 2 - * +
+      [4, 3, 6]     |    2 - * +
+      [2, 4, 3, 6]  |    - * +
+      [2, 3, 6]     |    * +
+      [6, 6]        |    +
+      [12]          |
+```
+
+The goal of this exercise is to write a small compiler that
+translates `aexp`s into stack machine instructions.
+
+The instruction set for our stack language will consist of the
+following instructions:
+    - `sPush n`: Push the number `n` on the stack.
+    - `sLoad x`: Load the identifier `x` from the store and push it
+                on the stack
+    - `sPlus`:   Pop the two top numbers from the stack, add them, and
+                push the result onto the stack.
+    - `sMinus`:  Similar, but subtract the first number from the second.
+    - `sMult`:   Similar, but multiply.
+
+```lean
+namespace StackCompiler
+
+inductive Sinstr : Type where
+| sPush (n : Nat)
+| sLoad (x : String)
+| sPlus
+| sMinus
+| sMult
+
+open Sinstr
+```
+
+Write a function to evaluate programs in the stack language. It
+should take as input a state, a stack represented as a list of
+numbers (top stack item is the head of the list), and a program
+represented as a list of instructions, and it should return the
+stack after executing the program.  Test your function on the
+examples below.
+
+Note that it is unspecified what to do when encountering an
+{name}`sPlus`, {name}`sMinus`, or {name}`sMult` instruction if the stack contains
+fewer than two elements.  In a sense, it is immaterial what we do,
+since a correct compiler will never emit such a malformed program.
+But for sake of later exercises, it would be best to skip the
+offending instruction and continue with the next one.
+
+```lean
+def s_execute (st : State) (stack : List Nat) (prog : List Sinstr) : List Nat :=
+  -- SOLUTION
+  match prog, stack with
+  | [],                _           => stack
+  | sPush n :: prog',  _            => s_execute st (n       :: stack)  prog'
+  | sLoad x :: prog',  _            => s_execute st (st[x]   :: stack)  prog'
+  | sPlus   :: prog',  n::m::stack' => s_execute st ((m + n) :: stack') prog'
+  | sMinus  :: prog',  n::m::stack' => s_execute st ((m - n) :: stack') prog'
+  | sMult   :: prog',  n::m::stack' => s_execute st ((m * n) :: stack') prog'
+  | _       :: prog',  _            => s_execute st stack prog'
+                                       -- Bad state: skip
+-- END SOLUTION
+
+example : s_execute ∅ [] [sPush 5, sPush 3, sPush 1, sMinus] = [2, 5] := by
+  solution!
+    rfl
+
+example : s_execute (X →ₜ 3) [3, 4] [sPush 4, sLoad X, sMult, sPlus] = [15, 4] := by
+  solution!
+    rfl
+```
+
+Next, write a function that compiles an {name}`Aexp` into a stack
+machine program. The effect of running the program should be the
+same as pushing the value of the expression on the stack.
+
+```lean
+def s_compile (a : Aexp) : List Sinstr :=
+  -- SOLUTION
+  match a with
+  | .num n        => [sPush n]
+  | .id x         => [sLoad x]
+  | .plus a₁ a₂   => s_compile a₁ ++ s_compile a₂ ++ [sPlus]
+  | .minus a₁ a₂  => s_compile a₁ ++ s_compile a₂ ++ [sMinus]
+  | .mult a₁ a₂   => s_compile a₁ ++ s_compile a₂ ++ [sMult]
+-- END SOLUTION
+```
+
+
+After you've defined `s_compile`, prove the following to test that it works.
+
+```lean
+example : s_compile (aexp { X - (2 * Y) }) = [sLoad X, sPush 2, sLoad Y, sMult, sMinus] := by
+  solution!
+    rfl
+```
+::::
+
+::::exercise  (rating := 3) (name := "execute_app")
+Execution can be decomposed in the following sense: executing
+stack program `p₁ ++ p₂` is the same as executing `p₁`, taking
+the resulting stack, and executing `p₂` from that stack. Prove
+that fact.
+
+```lean
+theorem execute_app (st : State) (p₁ p₂ : List Sinstr) (stack : List Nat) :
+  s_execute st stack (p₁ ++ p₂) = s_execute st (s_execute st stack p₁) p₂ := by
+  solution!
+    induction p₁ generalizing p₂ stack with
+    | nil => rfl
+    | cons a p' ih => cases a <;> rcases stack with _ | ⟨_, _ | ⟨_, _⟩⟩ <;> simp_all [s_execute]
+```
+::::
+
+::::exercise  (rating := 3) (name := "compiler_correct")
+Now we'll prove the correctness of the compiler implemented in the
+previous exercise.  Begin by proving the following lemma. If it
+becomes difficult, consider whether your implementation of
+`s_execute` or `s_compile` could be simplified.
+
+```lean
+theorem s_compile_correct_aux (st : State) (a : Aexp) (stack : List Nat) :
+  s_execute st stack (s_compile a) = Aexp.eval st a :: stack := by
+  solution!
+    induction a generalizing st stack <;>
+      simp_all [s_compile, List.append_assoc, execute_app] <;>
+      rfl
+
+```
+
+The main theorem should be a very easy corollary of that lemma.
+
+```lean
+theorem s_compile_correct (st : State) (a : Aexp) :
+  s_execute st [] (s_compile a) = [ Aexp.eval st a ] := by
+  solution!
+    apply s_compile_correct_aux
+
+end StackCompiler
+```
+::::
+
+::::exercise  (rating := 3) (name := "compiler_correct")
+Most modern programming languages use a "short-circuit" evaluation
+rule for boolean `and`: to evaluate `BExp.and b₁ b₂`, first evaluate
+`b₁`.  If it evaluates to {name}`false`, then the entire `and`
+expression evaluates to {name}`false` immediately, without evaluating
+`b₂`.  Otherwise, `b₂` is evaluated to determine the result of the
+`and` expression.
+
+Write an alternate version of `BExp.eval` that performs short-circuit
+evaluation of `BAnd` in this manner, and prove that it is
+equivalent to `BExp.eval`.  (N.b. This is only true because expression
+evaluation in Imp is rather simple.  In a bigger language where
+evaluating an expression might diverge, the short-circuiting `and`
+would _not_ be equivalent to the original, since it would make more
+programs terminate.)
+
+-- SOLUTION
+```lean
+def Bexp.eval_sc (st : State) (b : Bexp) : Bool :=
+  match b with
+  | .bool b      =>  b
+  | .eq   a₁ a₂  =>  a₁.eval st == a₂.eval st
+  | .neq  a₁ a₂  =>  a₁.eval st != a₂.eval st
+  | .le   a₁ a₂  =>  a₁.eval st ≤  a₂.eval st
+  | .gt   a₁ a₂  =>  a₁.eval st >  a₂.eval st
+  | .not  b₁     =>  !b₁.eval_sc st
+  | .and  b₁ b₂  =>  match (b₁.eval_sc st) with
+                    | false => false
+                    | true => b₂.eval_sc st
+
+-- This exercise turned out to be easier than we intended!
+theorem beval__beval_sc (st : State) (b : Bexp) :
+  b.eval st = b.eval_sc st := by
+  induction b <;> simp_all [Bexp.eval_sc] <;> lia
+```
+-- END SOLUTION
+::::
+
+::::exercise  (rating := 3) (name := "break_imp")
+Imperative languages like C and Java often include a `break` or
+similar statement for interrupting the execution of loops. In this
+exercise we consider how to add `break` to Imp.  First, we need to
+enrich the language of commands with an additional case. Because `break`
+is a reserved keyword in Lean, we will abbreviate it as `brk`.
+
+```lean
+namespace BreakImp
+
+inductive Com where
+  | skip
+  | brk                          -- <--- NEW
+  | asgn (x : Ident) (a : Aexp)
+  | seq (c₁ c₂ : Com)
+  | cond (b : Bexp) (c₁ c₂ : Com)
+  | whileDo (b : Bexp) (c : Com)
+```
+
+:::details "Notation encoding: commands, macro rules"
+```lean
+/-- Imp commands -/
+declare_syntax_cat break_imp_com
+/-- Commands like `skip` or `brk` -/
+syntax ident : break_imp_com
+/-- Sequencing: one command after another -/
+syntax break_imp_com ";" ppDedent(ppLine break_imp_com) : break_imp_com
+/-- Assignment -/
+syntax ident " := " imp_aexp : break_imp_com
+/-- Conditional -/
+syntax "if " "(" imp_bexp ")" ppHardSpace "{" ppLine break_imp_com ppDedent(ppLine "}" ppHardSpace "else" ppHardSpace "{") ppLine break_imp_com ppDedent(ppLine "}") : break_imp_com
+/-- Loop -/
+syntax "while " "(" imp_bexp ")" ppHardSpace "{" ppLine break_imp_com ppDedent(ppLine "}") : break_imp_com
+/-- Escape to Lean -/
+syntax:max "~" term:max : break_imp_com
+
+/-- Include an Imp command in Lean code -/
+syntax:min "break_imp" ppHardSpace "{" ppLine break_imp_com ppDedent(ppLine "}") : term
+
+namespace Com
+
+open Lean in
+scoped macro_rules
+  | `(break_imp { $x:ident }) =>
+    if x.getId == `skip then `(Com.skip)
+    else if x.getId == `brk then `(Com.brk)
+    else Macro.throwErrorAt x s!"expected 'skip' or 'break', got '{x.getId}'"
+  | `(break_imp { $c₁ ; $c₂ }) =>
+    `(Com.seq (break_imp {$c₁}) (break_imp {$c₂}))
+  | `(break_imp { $x:ident := $a }) =>
+    `(Com.asgn $x (aexp {$a}))
+  | `(break_imp { if ($b) {$c₁} else {$c₂} }) =>
+    `(Com.cond (bexp {$b}) (break_imp {$c₁}) (break_imp {$c₂}))
+  | `(break_imp { while ($b) {$c} }) =>
+    `(Com.whileDo (bexp {$b}) (break_imp {$c}))
+  | `(break_imp { ~$c }) =>
+    pure c
+
+end Com
+
+open scoped BreakImp.Com
+
+namespace Imp.Delab
+open Lean PrettyPrinter Delaborator SubExpr
+
+partial def delabComInnerFor (ns : Name) (extra : DelabM (TSyntax `break_imp_com)) :
+    DelabM (TSyntax `break_imp_com) := do
+  let e ← getExpr
+  let stx ←
+    -- Using `(break_imp_com| skip)` would delaborate as `skip✝`. `mkIdent` fixes this.
+    if e.isConstOf (ns ++ `skip) then
+      `(break_imp_com| $(mkIdent `skip):ident)
+    else if e.isConstOf (ns ++ `brk) then
+      `(break_imp_com| $(mkIdent `brk):ident)
+    else if e.isAppOfArity (ns ++ `asgn) 2 then
+      match ← withAppFn <| withAppArg getExpr with
+      | .lit (.strVal s) =>
+        let a ← withAppArg Imp.Delab.delabAexpInner
+        `(break_imp_com| $(mkIdent (.mkSimple s)):ident := $a)
+      | _ =>
+        let `($x:ident) ← withAppFn <| withAppArg delab | failure
+        let a ← withAppArg Imp.Delab.delabAexpInner
+        `(break_imp_com| $x:ident := $a)
+    else if e.isAppOfArity (ns ++ `seq) 2 then
+      let s₁ ← withAppFn <| withAppArg (delabComInnerFor ns extra)
+      let s₂ ← withAppArg (delabComInnerFor ns extra)
+      `(break_imp_com| $s₁; $s₂)
+    else if e.isAppOfArity (ns ++ `cond) 3 then
+      let b  ← withAppFn <| withAppFn <| withAppArg Imp.Delab.delabBexpInner
+      let c₁ ← withAppFn <| withAppArg (delabComInnerFor ns extra)
+      let c₂ ← withAppArg (delabComInnerFor ns extra)
+      `(break_imp_com| if ($b) {$c₁} else {$c₂})
+    else if e.isAppOfArity (ns ++ `whileDo) 2 then
+      let b ← withAppFn <| withAppArg Imp.Delab.delabBexpInner
+      let c ← withAppArg (delabComInnerFor ns extra)
+      `(break_imp_com| while ($b) {$c})
+    else
+      extra <|> `(break_imp_com| ~$(← delab))
+  Imp.Delab.annAsTerm stx
+
+/-- Rebuild `break_imp_com` concrete syntax from a `Com` term. -/
+partial def delabComInner : DelabM (TSyntax `break_imp_com) :=
+  delabComInnerFor ``Com failure
+
+@[delab app.BreakImp.Com.skip, delab app.BreakImp.Com.asgn, delab app.BreakImp.Com.seq,
+  delab app.BreakImp.Com.cond, delab app.BreakImp.Com.whileDo, delab app.BreakImp.Com.brk]
+partial def delabCom : Delab := whenPPOption getPPNotation do
+  guard <| match_expr ← getExpr with
+    | Com.skip => true
+    | Com.brk => true
+    | Com.asgn _ _ => true
+    | Com.seq _ _ => true
+    | Com.cond _ _ _ => true
+    | Com.whileDo _ _ => true
+    | _ => false
+  match ← delabComInner with
+  | `(break_imp_com| ~$e) => pure e
+  | e => `(term| break_imp { $e })
+end Imp.Delab
+```
+
+
+```lean
+#check break_imp {brk}
+```
+
+:::
+
+Next, we need to define the behavior of `brk`.  Informally,
+whenever `brk` is executed in a sequence of commands, it stops
+the execution of that sequence and signals that the innermost
+enclosing loop should terminate.  (If there aren't any
+enclosing loops, then the whole program simply terminates.)  The
+final state should be the same as the one in which the `brk`
+statement was executed.
+
+One important point is what to do when there are multiple loops
+enclosing a given `brk`. In those cases, `brk` should only
+terminate the _innermost_ loop. Thus, after executing the
+following...
+
+```display
+    X := 0;
+    Y := 1;
+    while (0 <> Y) {
+      while (true) {
+        break
+      };
+      X := 1;
+      Y := Y - 1
+    }
+```
+
+... the value of `X` should be {lean}`1`, and not {lean}`0`.
+
+One way of expressing this behavior is to add another parameter to
+the evaluation relation that specifies whether evaluation of a
+command executes a `brk` statement:
+
+```lean
+inductive Result : Type where
+  | sContinue
+  | sBreak
+
+open Result
+```
+
+We will use the syntax `st =[ c ]=> st' // s` to mean that, if `c` is started in
+state `st`, then it terminates in state `st'` and either signals
+that the innermost surrounding loop (or the whole program) should
+exit immediately (`s = sBreak`) or that execution should continue
+normally (`s = sContinue`).
+
+The definition of the `st =[ c ]=> st' // s` relation is very
+similar to the one we gave above for the regular evaluation
+relation (`st =[ c ]=> st'`) -- we just need to handle the
+termination signals appropriately:
+
+- If the command is `skip`, then the state doesn't change and
+  execution of any enclosing loop can continue normally.
+
+- If the command is `brk`, the state stays unchanged but we
+  signal a `sBreak`.
+
+- If the command is an assignment, then we update the binding for
+  that variable in the state accordingly and signal that execution
+  can continue normally.
+
+- If the command is of the form `if (b) {c₁} {c₂}`, then
+  the state is updated as in the original semantics of Imp, except
+  that we also propagate the signal from the execution of
+  whichever branch was taken.
+
+- If the command is a sequence `c₁ ; c₂`, we first execute
+  `c₁`.  If this yields a `sBreak`, we skip the execution of `c₂`
+  and propagate the `sBreak` signal to the surrounding context;
+  the resulting state is the same as the one obtained by
+  executing `c₁` alone. Otherwise, we execute `c₂` on the state
+  obtained after executing `c₁`, and propagate the signal
+  generated there.
+
+- Finally, for a loop of the form `while (b) {c}`, the
+  semantics is almost the same as before. The only difference is
+  that, when `b` evaluates to {name}`true`, we execute `c` and check the
+  signal that it raises.  If that signal is `sContinue`, then the
+  execution proceeds as in the original semantics. Otherwise, we
+  stop the execution of the loop, and the resulting state is the
+  same as the one resulting from the execution of the current
+  iteration.  In either case, since `break` only terminates the
+  innermost loop, `while` signals `sContinue`.
+
+Based on the above description, complete the definition of the
+`Com.EvalR` relation:
+
+```lean
+inductive Com.EvalR : Com → State → State → Result → Prop where
+  | skip {st : State} : EvalR (break_imp {skip}) st st sContinue
+  -- SOLUTION
+  | brk {st : State}  : EvalR (break_imp {brk}) st st sBreak
+  | asgn {st : State} {a : Aexp} {n : Nat} {x : Ident} (h : a.eval st = n) :
+      EvalR (break_imp {x := ~a}) st (x →ₜ n ; st) sContinue
+  | seqContinue {c₁ c₂ : Com} {st st' st'' : State} {s : Result}
+      (h₁ : EvalR c₁ st st' sContinue)
+      (h₂ : EvalR c₂ st' st'' s) :
+      EvalR (break_imp {~c₁; ~c₂}) st st'' s
+  | seqBreak {c₁ c₂ : Com} {st st' : State} (h : EvalR c₁ st st' sBreak) :
+      EvalR (break_imp {~c₁; ~c₂}) st st' sBreak
+  | ifTrue {st st' : State} {b : Bexp} {c₁ c₂ : Com} {s : Result} (hb : b.eval st = true)
+      (hc : EvalR c₁ st st' s) :
+      EvalR (break_imp {if (~b) {~c₁} else {~c₂}}) st st' s
+  | ifFalse {st st' : State} {b : Bexp} {c₁ c₂ : Com} {s : Result} (hb : b.eval st = false)
+      (hc : EvalR c₂ st st' s) :
+      EvalR (break_imp {if (~b) {~c₁} else {~c₂}}) st st' s
+  | whileFalse {b : Bexp} {st : State} {c : Com} (hb : b.eval st = false) :
+      EvalR (break_imp {while (~b) {~c}}) st st sContinue
+  | whileContinue {st st' st'' : State} {b : Bexp} {c : Com} (hb : b.eval st = true)
+      (hc : EvalR c st st' sContinue)
+      (hloop : EvalR (break_imp {while (~b) {~c}}) st' st'' sContinue) :
+      EvalR (break_imp {while (~b) {~c}}) st st'' sContinue
+  | whileBreak {st st' : State} {b : Bexp} {c : Com} (hb : b.eval st = true)
+      (hc : EvalR c st st' sBreak) :
+      EvalR (break_imp {while (~b) {~c}}) st st' sContinue
+  -- END SOLUTION
+```
+
+:::details "Notation encoding: printing commands back"
+```lean
+class HasEvalResult (Com : Type) (In : outParam <| Type)
+    (Out1 : outParam <| Type) (Out2 : outParam <| Type) where
+  Eval : Com → In → Out1 → Out2 → Prop
+
+namespace HasEvalResult
+scoped notation:40 (priority := high) st0:41 " =[ " c " ]=> " st1:41 " // " s:41 => Eval c st0 st1 s
+
+-- Also accept a bare Imp command between the brackets, so concrete programs can
+-- be written without the `break_imp { … }` wrapper. Bare `Com` terms still work via the
+-- notation above; splice a Lean term into the command with `~`.
+scoped syntax:40 term:41 " =[ " break_imp_com " ]=> " term:41 " // " term:41 : term
+scoped macro_rules
+  | `($st0 =[ $c:break_imp_com ]=> $st1 // $s) => ``($st0 =[ break_imp { $c } ]=> $st1 // $s)
+end HasEvalResult
+
+instance : HasEvalResult Com State State Result where
+  Eval := Com.EvalR
+
+open scoped HasEvalResult
+
+@[app_unexpander Com.EvalR]
+def Com.unexpandEvalR : Lean.PrettyPrinter.Unexpander
+  | `($_ $c $st0 $st1 $s) => ``($st0 =[ ~$c ]=> $st1 // $s)
+  | _ => throw ()
+```
+:::
+
+Now prove the following properties of your definition:
+
+```lean
+theorem break_ignore (c : Com) (st st' : State) (s : Result) (h : st =[ brk ; ~c ]=> st' // s) :
+  st = st' := by
+  solution!
+    inversion h with
+    | seqContinue st'' h₁ h₂ =>
+        inversion h₁
+    | seqBreak h =>
+        inversion h; rfl
+```
+
+```lean
+theorem while_continue (b : Bexp) (c : Com) (st st' : State) (s : Result)
+  (h : st =[ while (~b) {~c} ]=> st' // s) :
+  s = sContinue := by
+  solution!
+    inversion h <;> rfl
+```
+
+```lean
+theorem while_stops_on_break (b : Bexp) (c : Com) (st st' : State)
+  (h₁ : b.eval st = true)
+  (h₂ : st =[ c ]=> st' // sBreak) :
+  st =[ while (~b) {~c} ]=> st' // sContinue := by
+  solution!
+    apply Com.EvalR.whileBreak <;> assumption
+```
+
+```lean
+theorem seq_continue (c₁ c₂ : Com) (st st' st'' : State)
+  (h₁ : st =[ c₁ ]=> st' // sContinue)
+  (h₂ : st' =[ c₂ ]=> st'' // sContinue) :
+  st =[ ~c₁ ; ~c₂ ]=> st'' // sContinue := by
+  solution!
+    apply Com.EvalR.seqContinue (st' := st') <;> assumption
+```
+
+```lean
+theorem seq_stops_on_break (c₁ c₂ : Com) (st st' : State)
+  (h : st =[ c₁ ]=> st' // sBreak) :
+  st =[ ~c₁ ; ~c₂ ]=> st' // sBreak := by
+  solution!
+    apply Com.EvalR.seqBreak <;> assumption
+```
+::::
+
+::::exercise (rating := 3) (name := "while_break_true")
+```lean
+theorem while_break_true (b : Bexp) (c : Com) (st st' : State)
+  (h₁ : st =[ while (~b) {~c} ]=> st' // sContinue)
+  (h₂ : b.eval st' = true) :
+  ∃ st'', st'' =[ ~c ]=> st' // sBreak := by
+  solution!
+    generalize heq : (break_imp {while (~b) {~c}}) = c' at h₁ ⊢
+    generalize hr : sContinue = s at h₁ ⊢
+    induction h₁ with (inversion heq; try lia)
+    | whileContinue _ _ _ _ ih₂ =>
+        apply ih₂ <;> try lia
+    | @whileBreak st =>
+        exists st
+```
+::::
+
+::::exercise (rating := 4) (name := "ceval_deterministic")
+```lean
+theorem ceval_deterministic (c : Com) (st st₁ st₂ : State) (s₁ s₂ : Result)
+  (h₁ : st =[ ~c ]=> st₁ // s₁)
+  (h₂ : st =[ ~c ]=> st₂ // s₂) :
+  st₁ = st₂ ∧ s₁ = s₂ := by
+  solution!
+    induction h₁ generalizing st₂ s₂ with (try (inversion h₂ <;> lia))
+    | seqContinue h₁' h₂' ih₁ ih₂ =>
+      inversion h₂ with
+      | seqContinue h₁ h₂ =>
+        obtain ⟨eq₁, _⟩ := ih₁ _ _ h₁
+        inversion eq₁
+        apply ih₂
+        assumption
+      | seqBreak h =>
+        specialize ih₁ _ _ h
+        lia
+    | seqBreak _ ih =>
+      inversion h₂ with
+      | seqContinue h₁ _ =>
+        specialize ih _ _ h₁
+        lia
+      | seqBreak =>
+        apply ih
+        assumption
+    | ifTrue _ _ ih =>
+      inversion h₂
+      . apply ih; assumption
+      . lia
+    | ifFalse _ _ ih =>
+      inversion h₂
+      . lia
+      . apply ih; assumption
+    | whileContinue hb hc hloop ihc ihloop =>
+      inversion h₂ with
+      | whileFalse => lia
+      | whileBreak hb' hc' =>
+        specialize ihc _ _ hc'
+        lia
+      | whileContinue hb' hc' hloop' =>
+        obtain ⟨eq₁, _⟩ := ihc _ _ hc'
+        inversion eq₁
+        apply ihloop
+        assumption
+    | whileBreak hb hc ih =>
+      inversion h₂ with
+      | whileFalse => lia
+      | whileBreak hb' hc' =>
+        obtain ⟨eq₁, _⟩ := ih _ _ hc'
+        inversion eq₁
+        lia
+      | whileContinue hb' hc' hloop' =>
+        specialize ih _ _ hc'
+        lia
+```
+::::
+
+```lean
+end BreakImp
+```
+
 :::dev "Michael Hicks (mwhicks1)"
 ```
 NOT PORTED YET — remaining sections of sfdev/lf/Imp.v to port:
@@ -1690,14 +2295,6 @@ NOT PORTED YET — remaining sections of sfdev/lf/Imp.v to port:
       * subtract_slowly_spec (EX4?, Imp.v:2919): loop-invariant style proof
         about `subtract_slowly`.
   - Additional Exercises, Imp.v:2986
-      * stack_compiler (EX3, Imp.v:2988): define `s_execute` (stack machine)
-        and `s_compile : aexp -> list sinstr`; needs a `SInstr` inductive
-        (SPush/SLoad/SPlus/SMinus/SMult) and a list-based stack.
-      * execute_app (EX3, Imp.v:3114)
-      * stack_compiler_correct (EX3, Imp.v:3134): the correctness theorem;
-        the standard proof needs a strengthened lemma over an arbitrary
-        initial stack (generalize the stack before inducting).
-      * short_circuit (EX3?, Imp.v:3184): short-circuiting `Bexp.eval`.
       * break_imp (EX4?, Imp.v:3227): extends Com with `CBreak`; new
         relational semantics `ceval` carrying a `result` (SContinue/SBreak).
         Large. See verso-book branch (lf/Imp.lean ~line 1141, CEvalBreak) for
@@ -1723,8 +2320,6 @@ CONTRIBUTING.md, "Verso markup for nicer HTML"):
   `%%% tag := "…" %%%` block under a heading to make it a target. Done for the
   Notations and Delaborators sections; more internal "above/below" phrasings
   could get the same treatment.
-* {tactic}`simp` — link tactic names in the automation/tactics prose (`try`,
-  `repeat`, `<;>`, `simp`, `lia`, `cases`, `induction`).
 * {deftech}/{tech} — a small glossary: define Imp's core terms once with
   {deftech} (abstract syntax, state, big-step, relation, partial function, …)
   and link later uses with {tech}.
