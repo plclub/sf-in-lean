@@ -998,8 +998,8 @@ By default, most tactics work on the goal formula and leave
 the context unchanged.  However, most tactics also have a variant
 that performs a similar operation on a statement in the context.
 
-For example, the tactic "`dsimp at h`" performs simplification on
-the hypothesis `h` in the context.
+For example, the tactic "`dsimp at H`" performs simplification on
+the hypothesis `H` in the context.
 ::::
 
 ::::terse
