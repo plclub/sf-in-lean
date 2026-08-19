@@ -554,7 +554,7 @@ theorem true_and_wrong : ∀ (b : MyBool), (MyBool.true && b) = b := by
     rfl
 ```
 
-To see the error message, comment out "sf_expect_failure" temporarily.
+To see the error message, comment out `sf_expect_failure` temporarily.
 You should see the following message.
 
 ```leanOutput indent
