@@ -214,10 +214,10 @@ every occurrence of `0 + e` (i.e., `.plus (.num 0) e`) into just `e`.
 def Aexp.optimize0plus (a : Aexp) : Aexp :=
   match a with
   | num   n          => num n
-  | plus  (num 0) e2 => optimize0plus e2
-  | plus  e1      e2 => plus  (optimize0plus e1) (optimize0plus e2)
-  | minus e1      e2 => minus (optimize0plus e1) (optimize0plus e2)
-  | mult  e1      e2 => mult  (optimize0plus e1) (optimize0plus e2)
+  | plus  (num 0) e₂ => optimize0plus e₂
+  | plus  e₁      e₂ => plus  (optimize0plus e₁) (optimize0plus e₂)
+  | minus e₁      e₂ => minus (optimize0plus e₁) (optimize0plus e₂)
+  | mult  e₁      e₂ => mult  (optimize0plus e₁) (optimize0plus e₂)
 ```
 
 ::::full
@@ -406,11 +406,11 @@ following.
 ```lean
 inductive Aexp.EvalR : Aexp → Nat → Prop where
   | num (n : Nat) : EvalR (.num n) n
-  | plus (a₁ a₂ : Aexp) (n₁ n₂ : Nat) (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :
+  | plus {a₁ a₂ : Aexp} {n₁ n₂ : Nat} (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :
       EvalR (.plus a₁ a₂) (n₁ + n₂)
-  | minus (a₁ a₂ : Aexp) (n₁ n₂ : Nat) (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :
+  | minus {a₁ a₂ : Aexp} {n₁ n₂ : Nat} (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :
       EvalR (.minus a₁ a₂) (n₁ - n₂)
-  | mult (a₁ a₂ : Aexp) (n₁ n₂ : Nat) (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :
+  | mult {a₁ a₂ : Aexp} {n₁ n₂ : Nat} (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :
       EvalR (.mult a₁ a₂) (n₁ * n₂)
 ```
 
@@ -423,9 +423,9 @@ namespace ArithUnnamed
 
 inductive Aexp.EvalR : Aexp → Nat → Prop where
   | num (n : Nat) : EvalR (.num n) n
-  | plus (e1 e2 : Aexp) (n₁ n₂ : Nat) : EvalR e1 n₁ → EvalR e2 n₂ → EvalR (.plus e1 e2) (n₁ + n₂)
-  | minus (e1 e2 : Aexp) (n₁ n₂ : Nat) : EvalR e1 n₁ → EvalR e2 n₂ → EvalR (.minus e1 e2) (n₁ - n₂)
-  | mult (e1 e2 : Aexp) (n₁ n₂ : Nat) : EvalR e1 n₁ → EvalR e2 n₂ → EvalR (.mult e1 e2) (n₁ * n₂)
+  | plus {a₁ a₂ : Aexp} {n₁ n₂ : Nat} : EvalR a₁ n₁ → EvalR a₂ n₂ → EvalR (.plus a₁ a₂) (n₁ + n₂)
+  | minus {a₁ a₂ : Aexp} {n₁ n₂ : Nat} : EvalR a₁ n₁ → EvalR a₂ n₂ → EvalR (.minus a₁ a₂) (n₁ - n₂)
+  | mult {a₁ a₂ : Aexp} {n₁ n₂ : Nat} : EvalR a₁ n₁ → EvalR a₂ n₂ → EvalR (.mult a₁ a₂) (n₁ * n₂)
 
 end ArithUnnamed
 ```
@@ -459,10 +459,10 @@ conclusion below the line. For example, the constructor `plus`
 can be written like this as an inference rule:
 
 ```
-                         e1 ⇓ n₁
-                         e2 ⇓ n₂
+                         a₁ ⇓ n₁
+                         a₂ ⇓ n₂
                     ------------------          (plus)
-                    plus e1 e2 ⇓ n₁+n₂
+                    plus a₁ a₂ ⇓ n₁ + n₂
 ```
 
 Notice the structural correspondence between this rule and our version of the inductive
@@ -480,7 +480,7 @@ an informal notation for implications.
 You can read the rule name on the right as the name of the
 constructor and read each of the linebreaks between the premises above the
 line (as well as the line itself) as `→`.  All the variables mentioned in
-the rule (`e1`, `n₁`, etc.) are implicitly bound by universal quantifiers
+the rule (`a₁`, `n₁`, etc.) are implicitly bound by universal quantifiers
 at the beginning. (Such variables are often called _metavariables_ to
 distinguish them from the variables of whatever language we are defining. At
 the moment, our arithmetic expressions don't include variables, but we'll
@@ -493,7 +493,7 @@ closed under the following rules...".
 To summarize: a group of inference rules corresponds to a single inductive
 definition; each rule's name corresponds to a constructor name; above the
 line are the premises, below the line the conclusion; metavariables
-like `e1` and `n₁` are implicitly universally quantified. The whole
+like `a₁` and `n₁` are implicitly universally quantified. The whole
 collection of rules defines `⇓` as the smallest relation closed under
 them:
 
@@ -501,20 +501,20 @@ them:
                         ---------                (num)
                         num n ⇓ n
 
-                         e1 ⇓ n₁
-                         e2 ⇓ n₂
+                         a₁ ⇓ n₁
+                         a₂ ⇓ n₂
                     ------------------           (plus)
-                    plus e1 e2 ⇓ n₁+n₂
+                    plus a₁ a₂ ⇓ n₁ + n₂
 
-                         e1 ⇓ n₁
-                         e2 ⇓ n₂
+                         a₁ ⇓ n₁
+                         a₂ ⇓ n₂
                    -------------------           (minus)
-                   minus e1 e2 ⇓ n₁-n₂
+                   minus a₁ a₂ ⇓ n₁ - n₂
 
-                         e1 ⇓ n₁
-                         e2 ⇓ n₂
+                         a₁ ⇓ n₁
+                         a₂ ⇓ n₂
                     ------------------           (mult)
-                    mult e1 e2 ⇓ n₁*n₂
+                    mult a₁ a₂ ⇓ n₁*n₂
 ```
 ::::
 
@@ -591,37 +591,37 @@ in inference rule notation.
 ```
 Answer (`⇓` is defined below):
 
-                        -----------              (bool)
-                        bool b ⇓ b
+                  -------------                (bool)
+                   bool bv ⇓ bv
 
-                        e1 ⇓ n₁
-                        e2 ⇓ n₂
-                   ---------------------         (eq)
-                   eq e1 e2 ⇓ (n₁ == n₂)
+                        a₁ ⇓ n₁
+                        a₂ ⇓ n₂
+                  ---------------------        (eq)
+                  eq a₁ a₂ ⇓ (n₁ == n₂)
 
-                        e1 ⇓ n₁
-                        e2 ⇓ n₂
-                 -----------------------         (neq)
-                  neq e1 e2 ⇓ n₁ != n₂
+                        a₁ ⇓ n₁
+                        a₂ ⇓ n₂
+                ---------------------          (neq)
+                 neq a₁ a₂ ⇓ n₁ != n₂
 
-                        e1 ⇓ n₁
-                        e2 ⇓ n₂
-                   --------------------------     (le)
-                   le e1 e2 ⇓ (Nat.ble n₁ n₂)
+                        a₁ ⇓ n₁
+                        a₂ ⇓ n₂
+                  --------------------------   (le)
+                  le a₁ a₂ ⇓ (Nat.ble n₁ n₂)
 
-                        e1 ⇓ n₁
-                        e2 ⇓ n₂
-                ------------------------------   (gt)
-                gt e1 e2 ⇓ negb (Nat.ble n₁ n₂)
+                        a₁ ⇓ n₁
+                        a₂ ⇓ n₂
+                  ---------------------------  (gt)
+                  gt a₁ a₂ ⇓ !(Nat.ble n₁ n₂)
 
-                          e ⇓ b
-                      ---------------            (not)
-                      not e ⇓ !b
+                         b ⇓ bv
+                     -----------               (not)
+                     not b ⇓ !bv
 
-                        e1 ⇓ b₁
-                        e2 ⇓ b₂
-                  -----------------------        (and)
-                  and e1 e2 ⇓ b₁ && b₂
+                        b₁ ⇓ bv₁
+                        b₂ ⇓ bv₂
+                 ----------------------        (and)
+                 and b₁ b₂ ⇓ bv₁ && bv₂
 ```
 ::::
 
@@ -644,16 +644,16 @@ theorem Aexp.evalR_iff_eval (a : Aexp) (n : Nat) :
   · intro h
     induction h with
     | num n => rfl
-    | plus a₁ a₂ n₁ n₂ h₁ h₂ ih₁ ih₂ => simp only [Aexp.eval_plus]; rw [ih₁, ih₂]
-    | minus a₁ a₂ n₁ n₂ h₁ h₂ ih₁ ih₂ => simp only [Aexp.eval_minus]; rw [ih₁, ih₂]
-    | mult a₁ a₂ n₁ n₂ h₁ h₂ ih₁ ih₂ => simp only [Aexp.eval_mult]; rw [ih₁, ih₂]
+    | plus h₁ h₂ ih₁ ih₂ => simp only [Aexp.eval_plus]; rw [ih₁, ih₂]
+    | minus h₁ h₂ ih₁ ih₂ => simp only [Aexp.eval_minus]; rw [ih₁, ih₂]
+    | mult h₁ h₂ ih₁ ih₂ => simp only [Aexp.eval_mult]; rw [ih₁, ih₂]
   · intro h
     subst h
     induction a with
     | num n => exact .num n
-    | plus a₁ a₂ ih₁ ih₂ => exact .plus a₁ a₂ _ _ ih₁ ih₂
-    | minus a₁ a₂ ih₁ ih₂ => exact .minus a₁ a₂ _ _ ih₁ ih₂
-    | mult a₁ a₂ ih₁ ih₂ => exact .mult a₁ a₂ _ _ ih₁ ih₂
+    | plus a₁ a₂ ih₁ ih₂ => exact .plus ih₁ ih₂
+    | minus a₁ a₂ ih₁ ih₂ => exact .minus ih₁ ih₂
+    | mult a₁ a₂ ih₁ ih₂ => exact .mult ih₁ ih₂
 ```
 
 We can make the proof quite a bit shorter using more automation like we did in
@@ -682,13 +682,13 @@ it is equivalent to {name}`Bexp.eval`.
 inductive Bexp.EvalR : Bexp → Bool → Prop where
   -- SOLUTION
   | bool (b : Bool) : EvalR (.bool b) b
-  | eq (a₁ a₂ : Aexp) (n₁ n₂ : Nat) (h₁ : a₁ ⇓ n₁) (h₂ : a₂ ⇓ n₂) : EvalR (.eq a₁ a₂) (n₁ == n₂)
-  | neq (a₁ a₂ : Aexp) (n₁ n₂ : Nat) (h₁ : a₁ ⇓ n₁) (h₂ : a₂ ⇓ n₂) : EvalR (.neq a₁ a₂) (n₁ != n₂)
-  | le (a₁ a₂ : Aexp) (n₁ n₂ : Nat) (h₁ : a₁ ⇓ n₁) (h₂ : a₂ ⇓ n₂) : EvalR (.le a₁ a₂) (n₁ ≤ n₂)
-  | gt (a₁ a₂ : Aexp) (n₁ n₂ : Nat) (h₁ : a₁ ⇓ n₁) (h₂ : a₂ ⇓ n₂) : EvalR (.gt a₁ a₂) (n₁ > n₂)
-  | not (b : Bexp) (bv : Bool) (h : EvalR b bv) : EvalR (.not b) (!bv)
-  | and (b₁ b₂ : Bexp) (tv1 tv2 : Bool) (h₁ : EvalR b₁ tv1) (h₂ : EvalR b₂ tv2) :
-      EvalR (.and b₁ b₂) (tv1 && tv2)
+  | eq {a₁ a₂ : Aexp} {n₁ n₂ : Nat} (h₁ : a₁ ⇓ n₁) (h₂ : a₂ ⇓ n₂) : EvalR (.eq a₁ a₂) (n₁ == n₂)
+  | neq {a₁ a₂ : Aexp} {n₁ n₂ : Nat} (h₁ : a₁ ⇓ n₁) (h₂ : a₂ ⇓ n₂) : EvalR (.neq a₁ a₂) (n₁ != n₂)
+  | le {a₁ a₂ : Aexp} {n₁ n₂ : Nat} (h₁ : a₁ ⇓ n₁) (h₂ : a₂ ⇓ n₂) : EvalR (.le a₁ a₂) (n₁ ≤ n₂)
+  | gt {a₁ a₂ : Aexp} {n₁ n₂ : Nat} (h₁ : a₁ ⇓ n₁) (h₂ : a₂ ⇓ n₂) : EvalR (.gt a₁ a₂) (n₁ > n₂)
+  | not {b : Bexp} {bv : Bool} (h : EvalR b bv) : EvalR (.not b) (!bv)
+  | and {b₁ b₂ : Bexp} {bv₁ bv₂ : Bool} (h₁ : EvalR b₁ bv₁) (h₂ : EvalR b₂ bv₂) :
+      EvalR (.and b₁ b₂) (bv₁ && bv₂)
   -- END SOLUTION
 
 scoped notation:55 e:56 " ⇓ " b:56 => Bexp.EvalR e b
