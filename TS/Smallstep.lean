@@ -677,6 +677,11 @@ theorem nf_same_as_value (t : Tm) : IsNormalForm Step t ↔ IsValue t :=
 :::dev "Kihong Heo (KihongHeo)"
 Tactic `absurd` is first introduced here. Do we want to explain it?
 :::
+:::dev "Daniel Sainati (dsainati1)"
+I think some of these proofs were originally Claude-generated, so we
+probably want to redo them from scratch, in which case introducing
+absurd is likely not necessary.
+:::
 
 Why is this interesting? Because `IsValue` is a _syntactic_ concept — it is
 defined by looking at the way a term is written — while `IsNormalForm` is a
