@@ -549,7 +549,7 @@ they are redundant -- which the parenthesizer knows.
 The arithmetic and boolean evaluators must now be extended to handle
 variables, taking a state `st` as an extra argument.  A variable is
 looked up in the state with the map-indexing notation `st[x]` from the
-{ref "Typeclasses"}[Typeclasses] chapter.
+Typeclasses chapter in the Logical Foundations book.
 For the notation to work, we used `open scoped MyGetElem` earlier, which opens only the scoped items like notation from the module.
 ::::
 
