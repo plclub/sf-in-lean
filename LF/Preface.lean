@@ -11,10 +11,6 @@ htmlSplit := .never
 file := some "Preface"
 %%%
 
-
-
-
-
 :::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement (year := 2025)
 The SF course at Penn (CIS 5000) sometimes attracts
 students who don't have enough math background and begin really
@@ -149,7 +145,7 @@ variety of work](https://leanprover-community.github.io/papers.html) across comp
 
 :::dev "Benjamin Pierce (bcpierce00)"
 The individual references above should be merged into the categories below.
-In particular, the first three should go in the bullet about math, and the last one should go in the bullet about 
+In particular, the first three should go in the bullet about math, and the last one should go in the bullet about
 modeling programming languages.  (I see that that first bullet could also use
 citations for some of the points it already makes, but we can leave that for later...)
 :::
@@ -162,6 +158,9 @@ citations for some of the points it already makes, but we can leave that for lat
   obtaining the highest level of common criteria certification,
   and for formal specifications of the x86 and LLVM instruction
   sets and programming languages such as C.
+:::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement
+Citations for these would be nice.
+:::
 
 - As _environments for developing formally certified software
   and hardware_, they have been used, for example, to build
@@ -285,7 +284,7 @@ Both go away once there is a released archive of the student `.lean` files: the
 steps become "download and unpack, open the folder in VS Code, accept the
 install prompt".  Until that exists, this section should probably say plainly
 that readers get the files from their instructor or by following
-`ALPHATESTERS.md`.
+`ALPHA-TESTERS.md`.
 :::
 
 ## Exercises
@@ -336,7 +335,7 @@ do so as follows:
 If you find things you'd like to help add or improve, your
 contributions are welcome!  To get started, clone the
 [SF-in-Lean git repo](https://github.com/plclub/sf-in-lean) and
-have a look at `ALPHATESTERS.md`.
+have a look at `ALPHA-TESTERS.md`.
 
 # For Instructors
 

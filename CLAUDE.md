@@ -6,11 +6,12 @@ maintaining SF-in-Lean materials.
 The file `CONTRIBUTING.md` details the rules and conventions to be 
 followed by (human and AI) contributions to this project. It should be read in addition to this file. In case of conflict, `CONTRIBUTING.md` wins.
 
-The file `STYLE.md` records the **normative** style conventions for SFL — Lean
-coding style, pedagogical and presentational conventions, and writing style.
-**Read `STYLE.md` in full and pay careful attention to everything it says**;
-every file you create or edit must conform to it. Like `CONTRIBUTING.md`, it is
-to be read in addition to this file.
+The files `STYLE-CODE.md` and `STYLE-WRITING.md` record the **normative** style
+conventions for SFL — the first covers Lean coding style and Verso markup, the
+second pedagogical, presentational, and writing conventions.
+**Read both in full and pay careful attention to everything they say**;
+every file you create or edit must conform to them. Like `CONTRIBUTING.md`, they
+are to be read in addition to this file.
 
 ## Conventions
 - Naming, proof style, and chapter structure follow existing chapters.
