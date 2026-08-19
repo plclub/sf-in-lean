@@ -554,17 +554,8 @@ theorem true_and_wrong : ∀ (b : MyBool), (MyBool.true && b) = b := by
     rfl
 ```
 
-Lean complains because the {tactic}`rfl` is not at the same level of indentation as the `{tactic}intro b`,
-so Lean does not recognize these two tactics as being sequential in the way they should be.
-
-:::dev "David Walker (@princedpw)"
-Given the description, I expected Lean complain *noisily* when I clicked
-through true_and_wrong, but it simply fails to discharge the goal.  The
-non-proof is suppressed by sf_expect_failure.  Perhaps write:
-
-  To see the error message, comment out "sf_expect_failure" temporarily.
-  You should see the following message.
-:::
+To see the error message, comment out "sf_expect_failure" temporarily.
+You should see the following message.
 
 ```leanOutput indent
 Tactic `introN` failed: There are no additional binders or `let` bindings in the goal to introduce
@@ -572,6 +563,9 @@ Tactic `introN` failed: There are no additional binders or `let` bindings in the
 b : MyBool
 ⊢ (true && b) = b
 ```
+
+Lean complains because the {tactic}`rfl` is not at the same level of indentation as the `{tactic}intro b`,
+so Lean does not recognize these two tactics as being sequential in the way they should be.
 
 In general, sequential tactics applied to the same goal must be on subsequent lines at the same
 level of indentation or separated on the same line by a `;` like so:
@@ -2416,23 +2410,14 @@ by case analysis in the {ref "Tactics"}[Tactics] chapter.
 Some new tactics will be useful for the exercises ahead.
 
 The `rewrite ... at` tactic can be used to rewrite in a hypothesis instead of the
-goal. For example, if `hp : p` is in the context and we have a rule `h : p = q`,
-then `rewrite [hp] at h` changes the hypothesis to `h : q`.
+goal. For example, if `hp : p` is in the context and we have a rule `r : p = q`,
+then `rewrite [r] at hp` changes the hypothesis to `hp : q`.
 
 The {tactic}`exact` tactic closes a goal by providing the exact proof of the goal.  For
 example, if `hp : p` is in the context and the goal is `p`, then `exact hp`
 closes the goal. You can also transform `hp` slightly when using `exact`, and we will
 explain how when we get to an example that needs it.
 ::::
-
-:::dev "David Walker (princedpw)"
-The description of `rewrite ... at` appears wrong.  It should say something like the following.
-(I suggest changing the letter associated with the rule from h to something else -- perhaps r.
-I found that easier to read.)
-
-For example, if `hp : p` is in the context and we have a rule `r : p = q`,
-then `rewrite [r] at hp` changes the hypothesis to `hp : q`.
-:::
 
 ::::terse
 You will need the `rewrite ... at` and {tactic}`exact` tactics to complete the following exercises.
