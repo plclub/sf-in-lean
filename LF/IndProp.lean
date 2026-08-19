@@ -1804,7 +1804,7 @@ We can also write this definition inductively like so:
 
 ```lean
 inductive In_Inductive {α : Type} (a : α) : List α → Prop
-  | head (as : List α) : In_Inductive a (a::as)
+  | head (as : List α) : In_Inductive a (a :: as)
   | tail (b : α) {as : List α} : In_Inductive a as → In_Inductive a (b :: as)
 ```
 
@@ -3815,7 +3815,7 @@ theorem NoDup_right (α : Type) (l₁ l₂ : List α)
 /- This theorem combines the various lemmas to give a complete
    characterization -/
 theorem NoDup_disjoint_app {α : Type} (l₁ l₂ : List α) :
-    NoDup (l₁++l₂) ↔
+    NoDup (l₁ ++ l₂) ↔
     (NoDup l₁ ∧ NoDup l₂ ∧ disjoint l₁ l₂) := by
   apply Iff.intro
   . intro hdup
@@ -3865,8 +3865,8 @@ that `l` contains at least one repeated element (of type `α`).
 ```lean
 inductive Repeats {α : Type} : List α → Prop where
   -- SOLUTION
-  | rep_here  (a : α) (l : List α) : a ∈ l → Repeats (a::l)
-  | rep_later (a : α) (l : List α) : Repeats l → Repeats (a::l)
+  | rep_here  x l : x ∈ l → Repeats (x :: l)
+  | rep_later x l : Repeats l → Repeats (x :: l)
 -- /SOLUTION
 ```
 
