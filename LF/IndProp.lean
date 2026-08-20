@@ -454,7 +454,7 @@ inductive CollatzHoldsFor : Nat → Prop where
   | chf_one  : CollatzHoldsFor 1
   | chf_even {n : Nat} (h₁ : n.even = true)
     (h₂ : CollatzHoldsFor (div2 n)) : CollatzHoldsFor n
-  | chf_odd  (n : Nat) (h₁ : n.even = false)
+  | chf_odd  {n : Nat} (h₁ : n.even = false)
     (h₂ : CollatzHoldsFor ((3 * n) + 1)) : CollatzHoldsFor n
 ```
 
