@@ -247,8 +247,7 @@ and `#guard_msgs` for internal checks that are not student-facing.
 
 Use `sorry` when an unfinished declaration must remain available to later code,
 as with an exercise scaffold or a theorem used below. Do _not_ normally wrap it
-in `#guard_msgs`: the generic warning is not what we are testing, and the guard
-is stripped from the HTML and extracted projects.
+in `#guard_msgs`, as the generic warning is not what we are testing.
 
 ````lean
 ```lean

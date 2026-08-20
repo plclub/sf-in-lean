@@ -34,8 +34,8 @@ namespace LeanElab
 /--
   Go through the lines of `hls` and drop the line that is not appear in lines of `src`.
 
-  This is for reusing highlighting results from elbaoration for solution (teacher) variant: removing `-- SOLUTION`/`-- END SOLUTION` and `#guard_msgs` should not
-  cause elaboration again.
+  This is for reusing highlighting results from elbaoration for solution (teacher) variant:
+  removing `-- SOLUTION`/`-- END SOLUTION` should not cause elaboration again.
 -/
 defmethod Highlighted.filterBySource (hls : Highlighted) (src : String) : Highlighted := Id.run do
   let expected := (src.splitOn "\n").toArray
@@ -289,14 +289,14 @@ def lean : CodeBlockExpanderOf LeanSaved.Config
       let studentEdited := applyEdits src <| relativize studentEdits
       let terseEdited := applyEdits src <| relativize terseEdits
 
-      let teacher := stripGuardMsgs ∘ stripFillInMarkers <| teacherEdited
-      let student := stripGuardMsgs ∘ applyFillInForStudent <| studentEdited
-      let terse := stripGuardMsgs <| applyFillInForStudent <| terseEdited
+      let teacher := stripFillInMarkers <| teacherEdited
+      let student := applyFillInForStudent <| studentEdited
+      let terse := applyFillInForStudent <| terseEdited
 
       -- Note: this is different from `teacher`.
       -- `teacher` is for extracted projects which includes `teacherEdits`,
       -- while `teacherDisplay` is the string that will be shown in HTML.
-      let teacherDisplay := stripGuardMsgs ∘ stripFillInMarkers <| src
+      let teacherDisplay := stripFillInMarkers <| src
 
       -- Always reuse orignal elaboration for teacher
       let teacherHls :=
