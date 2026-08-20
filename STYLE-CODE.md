@@ -31,7 +31,7 @@ and do not use tactics not in this table; in particular,
 | `Poly`            | *(none new)* |
 | `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `induction ... generalizing ...`, `unfold`, `cases ... : ...`, `split` |
 | `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
-| `IndProp`         | `rcases`, `subst` |
+| `IndProp`         | `subst` |
 | `Automation`      | `lia`, `try`, `repeat`, `specialize`, `trivial`, `simp`, `generalize` |
 | `Typeclasses`     | `decide` |
 | `Slang`           | `fun_induction`, `simp_all` |
