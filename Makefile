@@ -49,7 +49,7 @@ $(eval $(call VOLUME_template,ts))
 
 # ── Top-level targets ─────────────────────────────────────────────────────────
 
-.PHONY: all student solutions terse grading serve clean ensure-build-symlink style style-check style-checklist
+.PHONY: all student solutions terse grading serve clean ensure-build-symlink style style-check style-checklist release
 
 all: lf hl ts
 
@@ -87,6 +87,13 @@ ensure-build-symlink:
 
 serve: all
 	python3 -m http.server 8000 -d _out/
+
+# Package a local release (student html/ + lean/ per volume) for the course
+# webpage. Which chapters are included per volume is controlled by
+# scripts/release_chapters.json. Pass extra flags via ARGS, e.g.:
+#   make release ARGS="--volumes lf"
+release:
+	python3 scripts/package_release.py $(ARGS)
 
 clean:
 	lake clean
