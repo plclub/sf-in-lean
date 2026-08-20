@@ -1089,12 +1089,14 @@ theorem double (n : Nat) : Ev n.double := by
       rw [Nat.double_zero]; exact ev_0
     | succ n ih =>
       rw [Nat.double_succ]; exact ev_succ_succ ih
-
-end Ev
 ```
 :::::
 
 ::::::
+
+```lean
+end Ev
+```
 
 ## Constructing Evidence for Permutations
 
@@ -1147,8 +1149,6 @@ theorem refl (α : Type) (a b c : α) : Perm3 [a, b, c] [a, b, c] := by
     apply perm3_trans (l₂ := [b, a, c])
     . apply perm3_swap12
     . apply perm3_swap12
-
-end Perm3
 ```
 
 :::gradeTheorem "0.5" Perm3.ex1 Perm3.refl
@@ -1156,6 +1156,10 @@ end Perm3
 :::::
 
 ::::::
+
+```lean
+end Perm3
+```
 
 # Using Evidence in Proofs
 
