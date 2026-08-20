@@ -50,8 +50,8 @@ theorem Perm3_In_old (α : Type) (x : α) (l₁ l₂ : List α)
     . right; right; left; assumption
     . right; left; assumption
     . contradiction
-  | perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
-    apply ih₂3; apply ih₁2; apply hIn
+  | perm3_trans _ _ ih₁₂ ih₂₃ =>
+    apply ih₂₃; apply ih₁₂; apply hIn
 ```
 
 In this file, we will introduce tactics that will shrink this proof from
@@ -102,7 +102,7 @@ example (a b c d : Prop) :
   lia
 ```
 
-{tactic}`lia` can solve many of the cases of our old {name}`Perm3_In` example.
+{tactic}`lia` can solve many of the cases of our old {name}`Perm3.In` example.
 
 ```lean
 theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α)
@@ -121,8 +121,8 @@ theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α)
   /- Here, we solve _all_ goals ─ and eschew the `obtain` ─ with
     the <;> tactic combinator, which we saw in the `Induction` chapter. -/
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
-  | perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
-    lia -- was apply ih₂3; apply ih₁2; apply hIn
+  | perm3_trans _ _ ih₁₂ ih₂₃ =>
+    lia -- was apply ih₂₃; apply ih₁₂; apply hIn
 ```
 
 # Tactic Combinators
@@ -258,7 +258,7 @@ example {n} (h : silly n) : n ≠ 1 := by
   contradiction
 ```
 
-We can further simplify our {name}`Perm3_In` example with {tactic}`try`.
+We can further simplify our {name}`Perm3.In` example with {tactic}`try`.
 
 ```lean
 theorem Perm3_In_better_with_try (α : Type) (x : α) (l₁ l₂ : List α)
@@ -284,17 +284,17 @@ case perm3_swap12
 α : Type
 x : α
 l₁ l₂ : List α
-a✝ b✝ c✝ : α
-hIn : x ∈ [a✝, b✝, c✝]
-⊢ x ∈ [b✝, a✝, c✝]
+x✝ y✝ z✝ : α
+hIn : x ∈ [x✝, y✝, z✝]
+⊢ x ∈ [y✝, x✝, z✝]
 
 case perm3_swap23
 α : Type
 x : α
 l₁ l₂ : List α
-a✝ b✝ c✝ : α
-hIn : x ∈ [a✝, b✝, c✝]
-⊢ x ∈ [a✝, c✝, b✝]
+x✝ y✝ z✝ : α
+hIn : x ∈ [x✝, y✝, z✝]
+⊢ x ∈ [x✝, z✝, y✝]
 ```
 
 ## The {tactic}`repeat` Combinator
@@ -427,7 +427,7 @@ theorem Perm3_In_better_with_first (α : Type) (x : α) (l₁ l₂ : List α)
     | lia
 ```
 
-Our {name}`Perm3_In` example is getting quite short! But can we do better?
+Our {name}`Perm3.In` example is getting quite short! But can we do better?
 
 # The {tactic}`simp` Tactic
 
@@ -508,7 +508,7 @@ a proof, but it should not show up in the final script.
 
 {tactic}`simp` is quite a powerful automated tactic, and is used
 heavily in real Lean developments. We can use {tactic}`simp` to further simplify our
-{name}`Perm3_In` proof.
+{name}`Perm3.In` proof.
 ::::
 
 ::::terse
