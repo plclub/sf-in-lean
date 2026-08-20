@@ -60,17 +60,19 @@ _exactly_ the same as some hypothesis in the context or some
 previously proved lemma.
 ::::
 
-::::terse
-The {tactic}`apply` tactic is useful when some hypothesis or an
-earlier lemma exactly matches the goal:
-::::
+The {tactic}`apply` tactic is useful when the goal is instead the
+conclusion of an implication.
+
+:::full
+For example, suppose we have a hypothesis
+`h : p → q` and our goal is `q`. We can use `apply h` to replace the
+goal `q` with the premise `p`:
+:::
 
 ```lean
-example (n m : Nat) (h : n = m) : n = m := by
-  /- Here, we could finish with `rw [h]` as we
-    have done several times before.  Or we can finish
-    by using `apply`: -/
+example (p q : Prop) (h : p → q) (hp : p) : q := by
   apply h
+  exact hp
 ```
 
 ::::full
@@ -91,17 +93,17 @@ its premises become new subgoals to be proved.
 example (n m o p : Nat) (hnm : n = m) (h : n = m → [n, o] = [m, p]) :
     [n, o] = [m, p] := by
   apply h
-  apply hnm
+  exact hnm
 ```
 
 ::::full
 When we use `apply h`, Lean tries to match the conclusion of the type
 of `h` with the current goal. Here `h : n = m → [n, o] = [m, p]` has conclusion
 `[n, o] = [m, p]`, which matches the current goal. Lean then replaces the goal
-with the premise that is still need, `n = m`. Then we close the goal with `apply hnm`.
+with the premise that is still needed, `n = m`. Then we close the goal with `exact hnm`.
 
 More generally, the type of a theorem or hypothesis used with {tactic}`apply` may have
-universally quantified variables and premises. Lean tries to unify its conclusion with
+universally quantified variables and premises. Lean tries to match its conclusion with
 the current goal to determine appropriate values for the quantified variables.
 ::::
 
@@ -118,7 +120,7 @@ example (n m : Nat) (h₁ : (n, n) = (m, m))
     (h₂ : ∀ (q r : Nat), (q, q) = (r, r) → [q] = [r]) :
     [n] = [m] := by
   apply h₂
-  apply h₁
+  exact h₁
 ```
 
 :::::exercise (rating := 2) (name := "apply_exercise")
@@ -133,14 +135,13 @@ theorem apply_exercise (m : Nat)
   solution!
     apply h₂
     apply h₁
-    apply hEven
+    exact hEven
 ```
 :::::
 
 ::::full
-To use the {tactic}`apply` tactic, the (conclusion of the) fact
-being applied must match the goal exactly (perhaps after
-simplification) — for example, {tactic}`apply` will not work if the left
+To use the {tactic}`apply` tactic, the conclusion of the fact
+being applied must match the goal. For example, {tactic}`apply` will not work if the left
 and right sides of the equality are swapped.
 ::::
 
@@ -148,17 +149,18 @@ and right sides of the equality are swapped.
 :::
 
 ::::terse
-The goal must match the hypothesis _exactly_ for {tactic}`apply` to
+The goal must match the hypothesis for {tactic}`apply` to
 work:
 ::::
 
 ```lean
-example (n m : Nat) (h : n = m) : m = n := by
-  -- Here we cannot use `apply` directly...
-  /- ...but we can use the `symm` tactic, which switches the left
-      and right sides of an equality in the goal. -/
+example (n m : Nat) (h : n = 0 → n = m) (hn : n = 0) : m = n := by
+  /- Here we cannot use `apply` directly...
+    ...but we can use the `symm` tactic, which switches the left
+    and right sides of an equality in the goal. -/
   symm
   apply h
+  exact hn
 ```
 
 :::::exercise (rating := 2) (name := "apply_exercise1")
@@ -192,14 +194,11 @@ hypothesis from the context or a previously proved lemma) to
 modify the goal, replacing all occurrences of one side by the
 other.
 
-The {tactic}`apply` tactic uses a known *implication* (a hypothesis from the
-context, a previously proved lemma, or a constructor) to replace a
-goal that matches the conclusion of the implication with subgoals,
-one for each premise of the implication.
-
-If the known fact is itself an equality (with no premises), then
-either tactic can be used.  (We will see below that each tactic
-can also be used to modify a hypothesis rather than the goal.)
+The {tactic}`apply` tactic works backward from a known fact.
+It takes a hypothesis, theorem, or constructor whose conclusion
+can be matched with the current goal. Lean uses the goal to infer
+as many of its arguments as possible, and any remaining premises
+that still need to be proved become new subgoals.
 :::
 :::::
 
@@ -320,8 +319,10 @@ example (a b c d e f : Nat)
     [a, b] = [e, f] := by
   apply trans_eq _ _ _ h₁ h₂
 ```
+
 If we know the name of the argument we are supplying (in this case `y`), we can
-just name it directly, and avoid typing any `_`s.
+name it directly and avoid typing any `_`s. This feature is called _named arguments_.
+Named arguments can be used in function applications generally, not just with {tactic}`apply`.
 
 ```lean
 example (a b c d e f : Nat)
@@ -572,13 +573,26 @@ These examples are instances of a logical principle known as the
 _principle of explosion_, which asserts that a contradictory
 hypothesis entails anything (even manifestly false things!).
 
-Notice that due to the way addition on naturals is defined, deriving a contradiction from `1 + n = 0` is not as trivial as it seems.
+Notice that due to the way addition on naturals is defined,
+deriving a contradiction from `1 + n = 0` is not as trivial as it seems.
 
-```lean +error -keep
+```lean +error
 example (n : Nat)
     (h : 1 + n = 0) :
     2 + 2 = 5 := by
   contradiction -- doesn't work because `1 + n` doesn't reduce to `n.succ`.
+```
+
+To fix it, rewriting with {lean}`Nat.one_add` changes the
+hypothesis from `1 + n = 0` to `n.succ = 0`.
+Then Lean can immediately recognize this as impossible.
+
+```lean
+example (n : Nat)
+    (h : 1 + n = 0) :
+    2 + 2 = 5 := by
+  rw [Nat.one_add] at h
+  contradiction
 ```
 
 ::::full
@@ -925,7 +939,7 @@ it, until remaining goals are facts that are already known.
 
 The informal proofs in mathematics and computer science often
 use forward reasoning.  In Lean, however, backward reasoning is often more
-idiomatic, though forward reas can sometimes be easier to follow or more natural for
+idiomatic, though forward reasoning can sometimes be easier to follow or more natural for
 particular proofs.
 
 You may be interested to know that the `apply ... at ...` tactic
@@ -967,27 +981,27 @@ we already have.
 
 If `h` is a quantified hypothesis in the current context — i.e.,
 `h : ∀ (x : α), P x` — then we can use {tactic}`have` to obtain a special
-case of `h` by supplying a value for `x`. For example, `have h := h (x := e)`
+case of `h` by supplying a value for `x`. For example, `have h := h e`
 introduces a new `h` which `x` has been instantiated with `e`.
 
 For example:
 
 ```lean
 example (m : Nat) (h : ∀ n, m * n = 0) : m = 0 := by
-  have h := h (n := 1)
+  have h := h 1
   rw [Nat.mul_one] at h
   exact h
 ```
 
 You may notice that, in the above proof, the original `h` is still
-present in the contenxt, although it is shadowed by the new `h`.
+present in the context, although it is shadowed by the new `h`.
 Often we don't care to keep this old hypothesis around, and so we can use the {tactic}`replace`
 tactic instead. It behaves like {tactic}`have`, except that
 it gets rid of the old hypothesis afterwards when possible:
 
 ```lean
 example (m : Nat) (h : ∀ n, m * n = 0) : m = 0 := by
-  replace h := h (n := 1)
+  replace h := h 1
   rw [Nat.mul_one] at h
   exact h
 ```
@@ -1014,7 +1028,7 @@ theorem nth?_always_none (l : List Nat) (h : ∀ i, nth? l i = none) :
     cases l with
     | nil => rfl
     | cons x xs =>
-      have h := h (i := 0)
+      have h := h 0
       dsimp [nth?] at h
       contradiction
 ```
@@ -1076,7 +1090,7 @@ i.e., that it maps different arguments to different results:
 theorem double_injective (n m : Nat) (h : n.double = m.double) : n = m := sorry
 ```
 
-If we begin it with
+The way we start this proof is a bit delicate: if we begin it with
 
 ::::
 
