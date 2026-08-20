@@ -452,12 +452,10 @@ _inductively defined_:
 ```lean
 inductive CollatzHoldsFor : Nat → Prop where
   | chf_one  : CollatzHoldsFor 1
-  | chf_even (n : Nat) : n.even = true →
-                         CollatzHoldsFor (div2 n) →
-                         CollatzHoldsFor n
-  | chf_odd  (n : Nat) : n.even = false →
-                         CollatzHoldsFor ((3 * n) + 1) →
-                         CollatzHoldsFor n
+  | chf_even {n : Nat} (h₁ : n.even = true)
+    (h₂ : CollatzHoldsFor (div2 n)) : CollatzHoldsFor n
+  | chf_odd  (n : Nat) (h₁ : n.even = false)
+    (h₂ : CollatzHoldsFor ((3 * n) + 1)) : CollatzHoldsFor n
 ```
 
 ::::full
@@ -512,13 +510,13 @@ example : CollatzHoldsFor 12 := by
    and any number {lean}`n` reaches {lean}`1` if {lean}`csf n` does." -/
 inductive Reaches1 : Nat → Prop where
   | reach_done : Reaches1 1
-  | reach_more (n : Nat) : Reaches1 (csf n) → Reaches1 n
+  | reach_more {n : Nat} (h : Reaches1 (csf n)) : Reaches1 n
 
 /-- Alternatively, we can define the partial function
    `ChfIn` as a two-argument inductive relation... -/
 inductive ChfIn : Nat → Nat → Prop where
   | tst_done : ChfIn 1 0
-  | tst_more (n k : Nat) : ChfIn (csf n) k → ChfIn n (k + 1)
+  | tst_more {n k : Nat} (h : ChfIn (csf n) k) : ChfIn n (k + 1)
 
 /-- ... and then say that {lean}`n` reaches {lean}`1` if there is some
    {lean}`k` such that the sequence beginning at {lean}`n` reaches
@@ -589,8 +587,8 @@ equal to {lean}`m`.
 namespace LePlayground
 
 inductive Le : Nat → Nat → Prop where
-  | refl (n : Nat)   : Le n n
-  | step (n m : Nat) : Le n m → Le n (m + 1)
+  | refl {n : Nat}                : Le n n
+  | step {n m : Nat} (h : Le n m) : Le n (m + 1)
 
 scoped infix:50 (priority := high) " ≤ " => Le
 ```
@@ -604,7 +602,7 @@ an exercise about that later.
 
 ```lean
 example : 3 ≤ 5 := by
-  apply Le.step; apply Le.step; exact Le.refl 3
+  apply Le.step; apply Le.step; exact Le.refl
 
 end LePlayground
 ```
@@ -629,12 +627,10 @@ In Lean this looks as follows:
 
 ```lean
 inductive ClosTrans {α : Type} (R : α → α → Prop) : α → α → Prop where
-  | t_step (x y : α) :
-    R x y →
-    ClosTrans R x y
-  | t_trans (x y z : α) :
-    ClosTrans R x y →
-    ClosTrans R y z →
+  | t_step {x y : α} (h : R x y) : ClosTrans R x y
+  | t_trans {x y z : α}
+    (h₁ : ClosTrans R x y)
+    (h₂ : ClosTrans R y z) :
     ClosTrans R x z
 ```
 
@@ -725,14 +721,11 @@ rules (where we added a reflexivity rule to {name}`ClosTrans`):
 
 ```lean
 inductive ClosReflTrans {α : Type} (R : α → α → Prop) : α → α → Prop where
-  | rt_step (x y : α) :
-    R x y →
-    ClosReflTrans R x y
-  | rt_refl (x : α) :
-    ClosReflTrans R x x
-  | rt_trans (x y z : α) :
-    ClosReflTrans R x y →
-    ClosReflTrans R y z →
+  | rt_step {x y : α} (h : R x y) : ClosReflTrans R x y
+  | rt_refl {x : α} : ClosReflTrans R x x
+  | rt_trans {x y z : α}
+    (h₁ : ClosReflTrans R x y)
+    (h₂ : ClosReflTrans R y z) :
     ClosReflTrans R x z
 ```
 
@@ -786,18 +779,15 @@ to define the reflexive, symmetric, and transitive closure?
 ```lean
 -- SOLUTION
 inductive ClosReflTransSym {α : Type} (R : α → α → Prop) : α → α → Prop where
-  | srt_refl (x : α) :
-      ClosReflTransSym R x x
-  | srt_step (x y : α) :
-      R x y →
-      ClosReflTransSym R x y
-  | srt_sym (x y : α) :
-      ClosReflTransSym R y x →
-      ClosReflTransSym R x y
-  | srt_trans (x y z : α) :
-      ClosReflTransSym R x y →
-      ClosReflTransSym R y z →
-      ClosReflTransSym R x z
+  | srt_refl {x : α} : ClosReflTransSym R x x
+  | srt_step {x y : α} (h : R x y) : ClosReflTransSym R x y
+  | srt_sym {x y : α}
+    (h : ClosReflTransSym R y x) :
+    ClosReflTransSym R x y
+  | srt_trans {x y z : α}
+    (h₁ : ClosReflTransSym R x y)
+    (h₂ : ClosReflTransSym R y z) :
+    ClosReflTransSym R x z
 -- END SOLUTION
 ```
 :::::
@@ -853,12 +843,12 @@ In Lean, we can define `Perm3` as follows:
 
 ```lean
 inductive Perm3 {α : Type} : List α → List α → Prop where
-  | perm3_swap12 (x y z : α) :
-    Perm3 [x, y, z] [y, x, z]
-  | perm3_swap23 (x y z : α) :
-    Perm3 [x, y, z] [x, z, y]
-  | perm3_trans (l₁ l₂ l₃ : List α) :
-    Perm3 l₁ l₂ → Perm3 l₂ l₃ → Perm3 l₁ l₃
+  | perm3_swap12 {x y z : α} : Perm3 [x, y, z] [y, x, z]
+  | perm3_swap23 {x y z : α} : Perm3 [x, y, z] [x, z, y]
+  | perm3_trans {l₁ l₂ l₃ : List α}
+    (h₁₂ : Perm3 l₁ l₂)
+    (h₂₃ : Perm3 l₂ l₃) :
+    Perm3 l₁ l₃
 ```
 
 ::::::full
@@ -939,7 +929,7 @@ number can be even" corresponds to a separate constructor:
 ```lean
 inductive Ev : Nat → Prop where
   | ev_0                              : Ev 0
-  | ev_succ_succ (n : Nat) (h : Ev n) : Ev (n + 2)
+  | ev_succ_succ {n : Nat} (h : Ev n) : Ev (n + 2)
 ```
 
 ::::terse
@@ -999,7 +989,7 @@ defining {name}`Ev`, we would have seen an error:
 ```lean -keep +error (name := WrongEv)
 inductive WrongEv (n : Nat) : Prop where
   | wrong_ev_0 : WrongEv 0
-  | wrong_ev_succ_succ (h: WrongEv n) : WrongEv (n + 2)
+  | wrong_ev_succ_succ (h : WrongEv n) : WrongEv (n + 2)
 ```
 
 ```leanOutput WrongEv
@@ -1042,7 +1032,7 @@ namespace EvPlayground
 
 inductive Ev : Nat → Prop where
   | ev_0 : Ev 0
-  | ev_succ_succ (n : Nat) : Ev n → Ev (n + 2)
+  | ev_succ_succ {n : Nat} (h : Ev n) : Ev (n + 2)
 
 end EvPlayground
 ```
@@ -1058,23 +1048,25 @@ tactics with the constructor names to obtain evidence for `Ev` of
 particular numbers...
 
 ```lean
-theorem ev_4 : Ev 4 := by
-  apply Ev.ev_succ_succ; apply Ev.ev_succ_succ; exact Ev.ev_0
+namespace Ev
+
+example : Ev 4 := by
+  apply ev_succ_succ; apply ev_succ_succ; exact ev_0
 ```
 
 ... or we can use function application syntax to combine several
 constructors:
 
 ```lean
-theorem ev_4' : Ev 4 := by
-  exact Ev.ev_succ_succ 2 (Ev.ev_succ_succ 0 Ev.ev_0)
+example : Ev 4 := by
+  exact ev_succ_succ (ev_succ_succ ev_0)
 ```
 
 ... or we can also use the {tactic}`constructor` tactic we saw
 earlier to select the appropriate inductive constructor:
 
 ```lean
-theorem ev_4'' : Ev 4 := by
+example : Ev 4 := by
   constructor; constructor; constructor
 ```
 
@@ -1082,21 +1074,23 @@ In this way, we can also prove theorems that have hypotheses
 involving {name}`Ev`.
 
 ```lean
-theorem ev_plus4 (n : Nat) (h : Ev n) : Ev (4 + n) := by
+theorem plus4 (n : Nat) (h : Ev n) : Ev (4 + n) := by
   rw [Nat.add_comm]
-  exact (Ev.ev_succ_succ _ (Ev.ev_succ_succ _ h))
+  exact (ev_succ_succ (ev_succ_succ h))
 ```
 
 ::::::full
 :::::exercise (rating := 1) (name := "ev_double")
 ```lean
-theorem ev_double (n : Nat) : Ev n.double := by
+theorem double (n : Nat) : Ev n.double := by
   solution!
     induction n with
     | zero =>
-      rw [Nat.double_zero]; exact Ev.ev_0
+      rw [Nat.double_zero]; exact ev_0
     | succ n ih =>
-      rw [Nat.double_succ]; exact Ev.ev_succ_succ _ ih
+      rw [Nat.double_succ]; exact ev_succ_succ ih
+
+end Ev
 ```
 :::::
 
@@ -1108,12 +1102,14 @@ Similarly we can apply the evidence constructors to obtain
 evidence of {lean}`Perm3 [1, 2, 3] [3, 2, 1]`:
 
 ```lean
-theorem Perm3_rev : Perm3 [1, 2, 3] [3, 2, 1] := by
-  apply Perm3.perm3_trans (l₂:= [2, 3, 1])
-  . apply Perm3.perm3_trans (l₂:=[2, 1, 3])
-    . apply Perm3.perm3_swap12
-    . apply Perm3.perm3_swap23
-  . apply Perm3.perm3_swap12
+namespace Perm3
+
+theorem rev : Perm3 [1, 2, 3] [3, 2, 1] := by
+  apply perm3_trans (l₂:= [2, 3, 1])
+  . apply perm3_trans (l₂ := [2, 1, 3])
+    . apply perm3_swap12
+    . apply perm3_swap23
+  . apply perm3_swap12
 ```
 
 :::slidebreak
@@ -1125,12 +1121,10 @@ infer not only types, but also {name}`Nat`s and {name}`List`s,
 when they are clear from the context.)
 
 ```lean
-theorem Perm3_rev' : Perm3 [1, 2, 3] [3, 2, 1] := by
-  exact (Perm3.perm3_trans _ [2, 3, 1] _
-          (Perm3.perm3_trans _ [2, 1, 3] _
-            (Perm3.perm3_swap12 _ _ _)
-            (Perm3.perm3_swap23 _ _ _))
-          (Perm3.perm3_swap12 _ _ _))
+theorem rev' : Perm3 [1, 2, 3] [3, 2, 1] := by
+  exact (perm3_trans
+          (perm3_trans perm3_swap12 perm3_swap23)
+          perm3_swap12)
 ```
 
 So the informal derivation trees we drew above are not too far
@@ -1142,20 +1136,22 @@ built using the constructors of data types such as {name}`Nat`,
 ::::::full
 :::::exercise (rating := 1) (name := "Perm3")
 ```lean
-theorem Perm3_ex1 : Perm3 [1, 2, 3] [2, 3, 1] := by
+theorem ex1 : Perm3 [1, 2, 3] [2, 3, 1] := by
   solution!
-    apply Perm3.perm3_trans (l₂ := [2, 1, 3])
-    . apply Perm3.perm3_swap12
-    . apply Perm3.perm3_swap23
+    apply perm3_trans (l₂ := [2, 1, 3])
+    . apply perm3_swap12
+    . apply perm3_swap23
 
-theorem Perm3_refl (α : Type) (a b c : α) : Perm3 [a, b, c] [a, b, c] := by
+theorem refl (α : Type) (a b c : α) : Perm3 [a, b, c] [a, b, c] := by
   solution!
-    apply Perm3.perm3_trans (l₂ := [b, a, c])
-    . apply Perm3.perm3_swap12
-    . apply Perm3.perm3_swap12
+    apply perm3_trans (l₂ := [b, a, c])
+    . apply perm3_swap12
+    . apply perm3_swap12
+
+end Perm3
 ```
 
-:::gradeTheorem "0.5" Perm3_ex1 Perm3_refl
+:::gradeTheorem "0.5" Perm3.ex1 Perm3.refl
 :::
 :::::
 
@@ -1222,7 +1218,7 @@ theorem ev_inversion (n : Nat) (h : Ev n) :
     (n = 0) ∨ ∃ n', n = n' + 2 ∧ Ev n' := by
   cases h with
   | ev_0 => left; rfl
-  | ev_succ_succ n h => right; exists n
+  | @ev_succ_succ n h => right; exists n
 ```
 
 Facts like this are often called "inversion lemmas" because they
@@ -1245,7 +1241,7 @@ theorem le_inversion (n m : Nat) (h : Le n m) :
   solution!
     cases h with
     | refl => left; rfl
-    | step m h => right; exists m
+    | @step m h => right; exists m
 ```
 :::::
 
@@ -1596,7 +1592,7 @@ example (n : Nat) (h : Ev (2 + n)) : Ev n := by
 :::
 
 ::::full
-The {name}`ev_double` exercise above allows us to easily show that
+The {name}`Ev.double` exercise above allows us to easily show that
 our new notion of evenness is implied by the two earlier ones
 (since, by {name}`Nat.even_bool_prop` in the {ref "Logic"}[Logic] chapter,
 we already know that those are equivalent to each other). To show that all
@@ -1707,7 +1703,7 @@ theorem Nat.ev_Even (n : Nat) (h : Ev n) : Even n := by
   -- h = ev_0
   | ev_0 => exists 0 -- (`0 = double 0` is closed by `exists`'s final `rfl`)
   -- h = ev_succ_succ n' h', with ih : Even n'
-  | ev_succ_succ n' h' ih =>
+  | ev_succ_succ h' ih =>
     let ⟨k, hk⟩ := ih
     exists k + 1; rw [double_succ, hk]
 ```
@@ -1727,7 +1723,7 @@ evenness now follows.
 theorem Nat.ev_Even_iff (n : Nat) : Ev n ↔ Even n := by
   apply Iff.intro
   . intro h; exact Nat.ev_Even _ h
-  . intro ⟨k, hk⟩; rw [hk]; exact ev_double k
+  . intro ⟨k, hk⟩; rw [hk]; exact Ev.double k
 ```
 
 As we will see in later chapters, induction on evidence is a
@@ -1743,7 +1739,7 @@ theorem ev_sum (n m : Nat) (hₙ : Ev n) (hₘ : Ev m) : Ev (n + m) := by
   solution!
     induction hₙ with
     | ev_0 => rw [Nat.zero_add]; exact hₘ
-    | ev_succ_succ n' h' ih =>
+    | ev_succ_succ h' ih =>
       rw [Nat.add_comm, ← Nat.add_assoc, Nat.add_comm m]
       apply Ev.ev_succ_succ; exact ih
 ```
@@ -1757,7 +1753,7 @@ theorem ev_ev__ev (n m : Nat) (hₙₘ : Ev (n + m)) (hₙ : Ev n) : Ev m := by
   solution!
     induction hₙ generalizing m with
     | ev_0 => rw [Nat.zero_add] at hₙₘ; exact hₙₘ
-    | ev_succ_succ n' h' ih =>
+    | ev_succ_succ h' ih =>
       apply ih; rw [Nat.add_comm, ←Nat.add_assoc, Nat.add_comm m] at hₙₘ
       inversion hₙₘ; assumption
 ```
@@ -1783,7 +1779,7 @@ theorem ev_plus_plus (n m k : Nat)
       apply ev_sum
       . assumption
       . assumption
-    . rw [← Nat.double_add]; exact ev_double n
+    . rw [← Nat.double_add]; exact Ev.double n
 ```
 :::::
 
@@ -1807,9 +1803,9 @@ def In {α : Type} (x : α) (xs : List α) : Prop :=
 We can also write this definition inductively like so:
 
 ```lean
-inductive In_Inductive {α : Type} (a : α) : List α → Prop
-  | head (as : List α) : In_Inductive a (a :: as)
-  | tail (b : α) {as : List α} : In_Inductive a as → In_Inductive a (b :: as)
+inductive In_Inductive {α : Type} (x : α) : List α → Prop
+  | head {l : List α} : In_Inductive x (x :: l)
+  | tail {y : α} {l : List α} : In_Inductive x l → In_Inductive x (y :: l)
 ```
 
 In fact, this is exactly how Lean defines this proposition,
@@ -1853,15 +1849,12 @@ Recall the definition of the reflexive, transitive, closure of a relation:
 namespace ClosReflTransRemainder
 
 inductive ClosReflTrans {α : Type} (R : α → α → Prop) : α → α → Prop where
-  | rt_step (x y : α) :
-      R x y →
-      ClosReflTrans R x y
-  | rt_refl (x : α) :
-      ClosReflTrans R x x
-  | rt_trans (x y z : α) :
-      ClosReflTrans R x y →
-      ClosReflTrans R y z →
-      ClosReflTrans R x z
+  | rt_step {x y : α} (h : R x y) : ClosReflTrans R x y
+  | rt_refl {x : α} : ClosReflTrans R x x
+  | rt_trans {x y z : α}
+    (h₁ : ClosReflTrans R x y)
+    (h₂ : ClosReflTrans R y z) :
+    ClosReflTrans R x z
 end ClosReflTransRemainder
 ```
 
@@ -1877,20 +1870,20 @@ BCP 25: This one seems good.
 :::
 
 ```lean
-def isDiagonal {α : Type} (R : α → α → Prop) := ∀ x y, R x y → x = y
+def Diagonal {α : Type} (R : α → α → Prop) := ∀ {x y}, R x y → x = y
 ```
 
 Now consider the following lemma about diagonal relations:
 
 ```lean
 theorem closure_of_diagonal_is_diagonal {α} (R : α → α → Prop)
-    (hDiag : isDiagonal R) :
-    isDiagonal (ClosReflTrans R) := by
+    (hDiag : Diagonal R) :
+    Diagonal (ClosReflTrans R) := by
   intro x y h
   induction h with
   /- The two first cases go as you'd expect... -/
-  | rt_step x' y' hr =>
-    rw [hDiag x' y' hr]
+  | rt_step hr =>
+    rw [hDiag hr]
   | rt_refl => rfl
   /- ...  but something interesting happens here: there are two
        induction hypotheses, `ih` and `ih'`! If you think about it, it
@@ -1901,8 +1894,7 @@ theorem closure_of_diagonal_is_diagonal {α} (R : α → α → Prop)
        called `ihxy` and `ihyz` here. In general, Lean will always
        generate one induction hypothesis per recursive constructor of
        the type being inducted over. -/
-  | rt_trans x' y' z' hxy hyz ihxy ihyz =>
-    rw [ihxy, ihyz]
+  | rt_trans _ _ ihxy ihyz => rw [ihxy, ihyz]
 ```
 
 :::dev
@@ -1943,7 +1935,7 @@ alternative definition for `Ev`:
 inductive Ev' : Nat → Prop where
   | ev'_0 : Ev' 0
   | ev'_2 : Ev' 2
-  | ev'_sum n m (h₁ : Ev' n) (h₂ : Ev' m) : Ev' (n + m)
+  | ev'_sum {n m : Nat} (h₁ : Ev' n) (h₂ : Ev' m) : Ev' (n + m)
 ```
 
 Prove that this definition is logically equivalent to the old one.
@@ -1975,22 +1967,24 @@ which we defined earlier as follows:
 namespace Perm3Reminder
 
 inductive Perm3 {α : Type} : List α → List α → Prop where
-  | perm3_swap12 (a b c : α) :
-      Perm3 [a, b, c] [b, a, c]
-  | perm3_swap23 (a b c : α) :
-      Perm3 [a, b, c] [a, c, b]
-  | perm3_trans (l₁ l₂ l₃ : List α) :
-      Perm3 l₁ l₂ → Perm3 l₂ l₃ → Perm3 l₁ l₃
+  | perm3_swap12 {x y z : α} : Perm3 [x, y, z] [y, x, z]
+  | perm3_swap23 {x y z : α} : Perm3 [x, y, z] [x, z, y]
+  | perm3_trans {l₁ l₂ l₃ : List α}
+    (h₁₂ : Perm3 l₁ l₂)
+    (h₂₃ : Perm3 l₂ l₃) :
+    Perm3 l₁ l₃
 
 end Perm3Reminder
 
-theorem Perm3_symm {α} (l₁ l₂ : List α)
+namespace Perm3
+
+theorem symm {α} (l₁ l₂ : List α)
     (h : Perm3 l₁ l₂) : Perm3 l₂ l₁ := by
   induction h with
   | perm3_swap12 => constructor
   | perm3_swap23 => constructor
-  | perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
-    exact Perm3.perm3_trans _ _ _ ih₂3 ih₁2
+  | perm3_trans _ _ ih₁₂ ih₂₃ =>
+    exact perm3_trans ih₂₃ ih₁₂
 ```
 
 :::::exercise (rating := 2) (name := "Perm3_In")
@@ -1999,49 +1993,49 @@ this proof, think back to {ref "Logic"}[Logic] where you learned
 about the {tactic}`obtain` tactic.
 
 ```lean
-theorem Perm3_In {α} (x : α) (l₁ l₂ : List α)
+theorem In {α} (x : α) (l₁ l₂ : List α)
     (hPerm : Perm3 l₁ l₂) (hIn : x ∈ l₁) : x ∈ l₂ := by
   solution!
     induction hPerm with
-    | perm3_swap12 a b c =>
+    | perm3_swap12 =>
       rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
       obtain h | h | h | h := hIn
       . right; left; assumption
       . left; assumption
       . right; right; left; assumption
       . contradiction
-    | perm3_swap23 a b c =>
+    | perm3_swap23 =>
       rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
       obtain h | h | h | h := hIn
       . left; assumption
       . right; right; left; assumption
       . right; left; assumption
       . contradiction
-    | perm3_trans _ _ _ _ _ ih₁2 ih₂3 =>
-      apply ih₂3; apply ih₁2; apply hIn
+    | perm3_trans _ _  ih₁₂ ih₂₃ =>
+      apply ih₂₃; apply ih₁₂; apply hIn
 ```
 :::::
 
 :::::exercise (rating := 1) (name := "Perm3_NotIn")
 ```lean
-theorem Perm3_NotIn {α} (x : α) (l₁ l₂ : List α)
+theorem NotIn {α} (x : α) (l₁ l₂ : List α)
     (hPerm : Perm3 l₁ l₂) (hIn : x ∉ l₁) : x ∉ l₂ := by
   solution!
     intro hContra
-    apply hIn; apply Perm3_In
-    . apply Perm3_symm; exact hPerm
+    apply hIn; apply In
+    . apply symm; exact hPerm
     . exact hContra
 ```
 :::::
 
 :::::exercise (rating := 2) (name := "NotPerm3")
 Proving that something is NOT a permutation is quite tricky. Some
-of the lemmas above, like {name}`Perm3_In` can be useful for this.
+of the lemmas above, like {name}`Perm3.In` can be useful for this.
 
 ```lean
 example : ¬ Perm3 [1, 2, 3] [1, 2, 4] := by
   solution!
-    intro h; apply (Perm3_In 3) at h
+    intro h; apply (Perm3.In 3) at h
     have h4 : 3 ∉ [1, 2, 4] := by
       rw [List.mem_cons, List.mem_cons, List.mem_cons]; intro h4
       obtain h | h | h | h := h4
@@ -2052,6 +2046,8 @@ example : ¬ Perm3 [1, 2, 3] [1, 2, 4] := by
     apply h4; apply h
     rw [List.mem_cons, List.mem_cons, List.mem_cons]
     right; right; left; rfl
+
+end Perm3
 ```
 :::::
 
@@ -2100,8 +2096,8 @@ that we briefly saw above.
 
 ```lean
 inductive Le : Nat → Nat → Prop where
-  | refl (n : Nat)                : Le n n
-  | succ (n m : Nat) (H : Le n m) : Le n (m + 1)
+  | refl {n : Nat}                : Le n n
+  | succ {n m : Nat} (h : Le n m) : Le n (m + 1)
 ```
 
 (We've written the definition a bit differently this time,
@@ -2475,10 +2471,6 @@ Another potential exercise:  m ≤ n → n = m + (n - m).
 See p. 188 in CoqArt.
 :::
 
-```lean
-namespace R
-```
-
 :::::exercise (rating := 3) (name := "R_provability") (manual := true)
 We can define three-place relations, four-place relations,
 etc., in just the same way as binary relations.  For example,
@@ -2486,11 +2478,11 @@ consider the following three-place relation on numbers:
 
 ```lean
 inductive R : Nat → Nat → Nat → Prop where
-  | c1                                       : R  0      0       0
-  | c2 m n o (h : R  m       n       o)      : R (m + 1) n      (o + 1)
-  | c3 m n o (h : R  m       n       o)      : R  m     (n + 1) (o + 1)
-  | c4 m n o (h : R (m + 1) (n + 1) (o + 2)) : R  m      n       o
-  | c5 m n o (h : R  m       n       o)      : R  n      m       o
+  | c1                                               : R  0      0       0
+  | c2 {m n k : Nat} (h : R  m       n       k)      : R (m + 1) n      (k + 1)
+  | c3 {m n k : Nat} (h : R  m       n       k)      : R  m     (n + 1) (k + 1)
+  | c4 {m n k : Nat} (h : R (m + 1) (n + 1) (k + 2)) : R  m      n       k
+  | c5 {m n k : Nat} (h : R  m       n       k)      : R  n      m       k
 ```
 
 :::dev
@@ -2622,26 +2614,28 @@ in Lean.
 def fR : Nat → Nat → Nat
   := solution!((· + ·))
 
-theorem R_equiv_fR m n o : R m n o ↔ fR m n = o := by
+namespace R
+
+theorem R.equiv_fR m n k : R m n k ↔ fR m n = k := by
   solution!
     unfold fR
     apply Iff.intro
     . intro h; induction h with
       | c1 => rfl
-      | c2 m n o _ ih => rw [Nat.succ_add, ih]
-      | c3 m n o _ ih => rw [Nat.add_succ, ih]
-      | c4 m n o _ ih =>
+      | c2 _ ih => rw [Nat.succ_add, ih]
+      | c3 _ ih => rw [Nat.add_succ, ih]
+      | c4 _ ih =>
         rw [Nat.succ_add, Nat.add_succ] at ih
         injections
-      | c5 m n o _ ih => rw [Nat.add_comm]; exact ih
+      | c5 _ ih => rw [Nat.add_comm]; exact ih
     . intro h; subst h
       have R0 : ∀ k, R 0 k k := by
         intro k; induction k with
-        | zero => exact .c1
-        | succ k ih => exact .c3 _ _ _ ih
+        | zero => exact c1
+        | succ k ih => exact c3 ih
       induction m with
       | zero => rw [Nat.zero_add]; exact R0 n
-      | succ m ih => rw [Nat.succ_add]; exact .c2 _ _ _ ih
+      | succ m ih => rw [Nat.succ_add]; exact c2 ih
 ```
 :::hide
 And here's a somewhat nicer version using some automation,
@@ -2650,12 +2644,12 @@ And here's a somewhat nicer version using some automation,
 ```display
 From Stdlib Require Import Lia.
 
-theorem R_plus: forall m n o, R m n o ↔ m + n = o.
+theorem R_plus: forall m n k, R m n k ↔ m + n = k.
 Proof.
-  intros m n o; split; intros.
+  intros m n k; split; intros.
   - induction H; try reflexivity; try lia.
   - generalize dependent n. generalize dependent m.
-    induction o as [|o']; intros m n H.
+    induction k as [|k']; intros m n H.
     + destruct m; try inversion H.
       destruct n; try inversion H0.
       apply c1.
@@ -2667,10 +2661,6 @@ Qed.
 ```
 :::
 :::::
-
-```lean
-end R
-```
 
 :::::exercise (rating := 4) (name := "subsequence") (level := Advanced)
 A list is a _subsequence_ of another list if all of the elements
@@ -2721,16 +2711,15 @@ but it is _not_ a subsequence of any of the lists
    that there is another definition that is intuitively perhaps just
    as reasonable and that makes these properties either easy or
    trivial: -/
-inductive subseq' : List Nat → List Nat → Prop where
-  | subseq'_0 (l : List Nat) :
-    subseq' l l
-  | subseq'_inductive1 (l l₁ l₂ lx ly lz: List Nat)
-    (h : subseq' l (l₁ ++ l₂)) :
-    subseq' l (lx ++ l₁ ++ ly ++ l₂ ++ lz)
-  | subseq'_inductive2 (l₁ l₂ l₃ : List Nat)
-    (h₁ : subseq' l₁ l₂)
-    (h₂ : subseq' l₂ l₃) :
-    subseq' l₁ l₃
+inductive Subseq' : List Nat → List Nat → Prop where
+  | subseq'_0 {l : List Nat} : Subseq' l l
+  | subseq'_inductive1 {l l₁ l₂ lx ly lz: List Nat}
+    (h : Subseq' l (l₁ ++ l₂)) :
+    Subseq' l (lx ++ l₁ ++ ly ++ l₂ ++ lz)
+  | subseq'_inductive2 {l₁ l₂ l₃ : List Nat}}
+    (h₁ : Subseq' l₁ l₂)
+    (h₂ : Subseq' l₂ l₃) :
+    Subseq' l₁ l₃
 
 /- SOONER: MRC 3/22: It's MUCH worse than that! a total relation
    suffices! (BCP 25: Really? It gets all the positive examples above,
@@ -2742,12 +2731,11 @@ inductive subseq' : List Nat → List Nat → Prop where
    lemma mirroring subseq_app that allows prepending an excess List.
    Notably, this only has two cases, in spite of the hint above.
    (BCP 25: Removed the hint.) -/
-inductive subseq'' : List Nat → List Nat → Prop where
-  | sub_nil'' (l: List Nat) :
-    subseq'' [] l
-  | sub_cons'' (l l' l₀ : List Nat) (x : Nat)
-    (h : subseq'' l l') :
-    subseq'' (x :: l) (l₀ ++ (x :: l'))
+inductive Subseq'' : List Nat → List Nat → Prop where
+  | sub_nil'' {l : List Nat} : Subseq'' [] l
+  | sub_cons'' {l l' l₀ : List Nat} {x : Nat}
+    (h : Subseq'' l l') :
+    Subseq'' (x :: l) (l₀ ++ (x :: l'))
 ```
 ::::
 
@@ -2774,22 +2762,28 @@ easier (and maybe prove them equivalent).
 :::
 
 ```lean
-inductive subseq : List Nat → List Nat → Prop where
+inductive Subseq : List Nat → List Nat → Prop where
 -- SOLUTION
-  | sub_nil l : subseq [] l
-  | sub_take x l₁ l₂ (h : subseq l₁ l₂) : subseq (x :: l₁) (x :: l₂)
-  | sub_skip x l₁ l₂ (h : subseq l₁ l₂) : subseq l₁ (x :: l₂)
+  | sub_nil {l : List Nat} : Subseq [] l
+  | sub_take {x : Nat} {l₁ l₂ : List Nat}
+    (h : Subseq l₁ l₂) :
+    Subseq (x :: l₁) (x :: l₂)
+  | sub_skip {x : Nat} {l₁ l₂ : List Nat}
+    (h : Subseq l₁ l₂) :
+    Subseq l₁ (x :: l₂)
 -- END SOLUTION
 
-theorem subseq_refl (l : List Nat) : subseq l l := by
+namespace Subseq
+
+theorem refl (l : List Nat) : Subseq l l := by
   solution!
     induction l with
     | nil => constructor
     | cons hd tl ih =>
       constructor; assumption
 
-theorem subseq_app (l₁ l₂ l₃ : List Nat)
-    (h : subseq l₁ l₂) : subseq l₁ (l₂ ++ l₃) := by
+theorem app (l₁ l₂ l₃ : List Nat)
+    (h : Subseq l₁ l₂) : Subseq l₁ (l₂ ++ l₃) := by
   solution!
     induction h with
     | sub_nil  => constructor
@@ -2807,30 +2801,32 @@ choices here and the hint doesn't help with that.
 :::
 
 ```lean
-theorem subseq_trans (l₁ l₂ l₃ : List Nat)
-    (h₁₂ : subseq l₁ l₂)
-    (h₂₃ : subseq l₂ l₃) :
-    subseq l₁ l₃ := by
+theorem trans (l₁ l₂ l₃ : List Nat)
+    (h₁₂ : Subseq l₁ l₂)
+    (h₂₃ : Subseq l₂ l₃) :
+    Subseq l₁ l₃ := by
   /- Hint: be careful about what you are doing induction on and which
      other things need to be generalized... -/
   solution!
     induction h₂₃ generalizing l₁ with
     | sub_nil => inversion h₁₂; constructor
-    | sub_take _ _ _ _ ih =>
+    | sub_take _ ih =>
       inversion h₁₂; constructor
       . constructor; apply ih; assumption
       . constructor; apply ih; assumption
-    | sub_skip _ _ _ _ ih =>
-      constructor; apply ih; assumption;
+    | sub_skip _ ih =>
+      constructor; apply ih; assumption
+
+end Subseq
 ```
 
-:::gradeTheorem 1 subseq_refl
+:::gradeTheorem 1 Subseq.refl
 :::
 
-:::gradeTheorem 2 subseq_app
+:::gradeTheorem 2 Subseq.app
 :::
 
-:::gradeTheorem 3 subseq_trans
+:::gradeTheorem 3 Subseq.trans
 :::
 :::::
 
@@ -2839,9 +2835,9 @@ Suppose we give Lean the following definition:
 
 ```display
 inductive R : Nat → List Nat → Prop where
-  | c1                    : R 0     []
-  | c2 n l (H: R n     l) : R (n + 1) (n :: l)
-  | c3 n l (H: R (n + 1) l) : R n     l
+  | c1                                            : R  0      []
+  | c2 {n : Nat} {l : List Nat} (h : R  n      l) : R (n + 1) (n :: l)
+  | c3 {n : Nat} {l : List Nat} (h : R (n + 1) l) : R  n      l
 ```
 
 Which of the following propositions are provable?
@@ -3081,8 +3077,10 @@ not stutter. Formulate an inductive definition for `NoStutter`.
 inductive NoStutter {α : Type} : List α → Prop where
  -- SOLUTION
   | nostutter0: NoStutter []
-  | nostutter1 n : NoStutter (n :: [])
-  | nostutter2 a b r (hneq : a ≠ b) (h : NoStutter (b :: r)) : NoStutter (a :: b :: r)
+  | nostutter1 {x : α} : NoStutter (x :: [])
+  | nostutter2 {x y : α} {l : List α}
+    (hneq : x ≠ y) (h : NoStutter (y :: l)) :
+    NoStutter (x :: y :: l)
  -- /SOLUTION
 ```
 
@@ -3173,14 +3171,13 @@ others.  Do this with an `inductive` relation, not a `def`.
 ```lean
 inductive Merge {α:Type} : List α → List α → List α → Prop where
 -- SOLUTION
-  | merge_empty :
-      Merge [] [] []
-  | merge_left l₁ l₂ l₃ x :
-      Merge l₁ l₂ l₃ →
-      Merge (x :: l₁) l₂ (x :: l₃)
-  | merge_right l₁ l₂ l₃ x :
-      Merge l₁ l₂ l₃ →
-      Merge l₁ (x :: l₂) (x :: l₃)
+  | merge_empty : Merge [] [] []
+  | merge_left {x : α} {l₁ l₂ l₃ : List α}
+    (h : Merge l₁ l₂ l₃) :
+    Merge (x :: l₁) l₂ (x :: l₃)
+  | merge_right {x : α} {l₁ l₂ l₃ : List α}
+    (h : Merge l₁ l₂ l₃) :
+    Merge l₁ (x :: l₂) (x :: l₃)
 -- END SOLUTION
 
 theorem merge_filter (α : Type) (test : α → Bool) (l l₁ l₂ : List α)
@@ -3191,14 +3188,14 @@ theorem merge_filter (α : Type) (test : α → Bool) (l l₁ l₂ : List α)
   solution!
     induction hmerge with
     | merge_empty => rfl
-    | merge_left l₁' l₂' l₃ x h' ih =>
+    | merge_left h' ih =>
       rw [List.all_cons, Bool.and_eq_true] at h₁
       obtain ⟨htest, h₁⟩ := h₁
       rw [List.filter_cons, htest]; dsimp
       congr 1; apply ih
       . assumption
       . assumption
-    | merge_right l₁' l₂' l₃ x h' ih =>
+    | merge_right h' ih =>
       rw [List.all_cons, Bool.and_eq_true,
         Bool.not_eq_eq_eq_not, Bool.not_true] at h₂
       obtain ⟨htest, h₂⟩ := h₂
@@ -3241,12 +3238,18 @@ namespace Sol
     so it doesn't conflict. -/
 
 inductive Subseq {α : Type} : List α → List α → Prop where
-  | sub_nil  l : Subseq [] l
-  | sub_take x l₁ l₂ : Subseq l₁ l₂ → Subseq (x :: l₁) (x :: l₂)
-  | sub_skip x l₁ l₂ : Subseq l₁ l₂ → Subseq l₁ (x :: l₂)
+  | sub_nil {l : List α} : Subseq [] l
+  | sub_take {x : α} {l₁ l₂ : List α}
+    (h : Subseq l₁ l₂) :
+    Subseq (x :: l₁) (x :: l₂)
+  | sub_skip {x : α} {l₁ l₂ : List α}
+    (h : Subseq l₁ l₂) :
+    Subseq l₁ (x :: l₂)
 
 /- A few lemmas about subseq. -/
-theorem subseq_drop_l (α : Type) (x : α) (l₁ l₂ : List α)
+namespace Subseq
+
+theorem drop_l {α} (x : α) (l₁ l₂ : List α)
     (h : Subseq (x :: l₁) l₂) : Subseq l₁ l₂ := by
   induction l₂ generalizing l₁ with
   | nil => inversion h
@@ -3257,28 +3260,30 @@ theorem subseq_drop_l (α : Type) (x : α) (l₁ l₂ : List α)
     | sub_skip hs =>
       constructor; apply ih; assumption
 
-theorem subseq_drop (α : Type) (x : α) (l₁ l₂ : List α)
+theorem drop {α} (x : α) (l₁ l₂ : List α)
     (h : Subseq (x :: l₁) (x :: l₂)) : Subseq l₁ l₂ := by
   inversion h with
   | sub_take => assumption
-  | sub_skip => apply subseq_drop_l; assumption
+  | sub_skip => apply drop_l; assumption
+
+end Subseq
 
 /-- A list is _maximal_ with property `P` if it has the property, and
     every other list with the property is at most as long as it is. -/
-def maximal {α : Type} (lmax : List α) (P : List α → Prop) :=
+def Maximal {α : Type} (lmax : List α) (P : List α → Prop) : Prop :=
   P lmax ∧ ∀ l', P l' → l'.length ≤ lmax.length
 
 /-- A "good subsequence" for a given list `l` and a `test` is a
     subsequence of `l` all of whose members evaluate to `true` under
     the `test`. -/
-def good_subseq {α : Type} (test : α → Bool) (l lsub : List α) :=
+def GoodSubseq {α : Type} (test : α → Bool) (l lsub : List α) :=
   Subseq lsub l ∧ List.all lsub test
 
 /-- Good subsequences can be extended with good elements. -/
 theorem good_subseq_extend (α : Type) (x : α)
     (l lsub : List α) (test : α → Bool) (hx : test x) :
-    good_subseq test l lsub →
-    good_subseq test (x :: l) (x :: lsub) := by
+    GoodSubseq test l lsub →
+    GoodSubseq test (x :: l) (x :: lsub) := by
   intro ⟨hsub, hall⟩; constructor
   . constructor; assumption
   . rw [List.all_cons, Bool.and_eq_true]; constructor
@@ -3289,8 +3294,8 @@ theorem good_subseq_extend (α : Type) (x : α)
     then `lmax` is also a maximal good subsequence of `l`. -/
 theorem maximal_strengthening (α : Type) (x : α)
     (lmax l : List α) (test : α → Bool) (hx : !test x) :
-    maximal lmax (good_subseq test (x :: l)) →
-    maximal lmax (good_subseq test l) := by
+    Maximal lmax (GoodSubseq test (x :: l)) →
+    Maximal lmax (GoodSubseq test l) := by
   intro ⟨⟨hsub, hall⟩, hlen⟩; constructor; constructor
   . inversion hsub with
     | sub_nil => constructor
@@ -3333,7 +3338,7 @@ theorem filter_all (α : Type) (l : List α) (test : α → Bool) :
     of `l` if and only if `filter test l = lsub` -/
 /- LATER: This could use a lot of cleanup... -/
 theorem filter_spec2 (α : Type) (l lsub : List α) (test : α → Bool) :
-    maximal lsub (good_subseq test l) ↔ List.filter test l = lsub := by
+    Maximal lsub (GoodSubseq test l) ↔ List.filter test l = lsub := by
   apply Iff.intro
   . induction l generalizing lsub with
     | nil =>
@@ -3376,14 +3381,14 @@ theorem filter_spec2 (α : Type) (l lsub : List α) (test : α → Bool) :
               apply Nat.not_add_one_le_self at contra
               contradiction
           subst heq; congr; apply ih; constructor; constructor
-          . exact subseq_drop _ hd _ _ hsub
+          . exact hsub.drop hd _ _
           . rw [List.all_cons, Bool.and_eq_true] at hall
             obtain ⟨_, _⟩ := hall; assumption
           . intro l' hgood; rw [List.length_cons] at hlen
             apply succ_n_le_succ_m__n_le_m
             apply hlen (hd :: l')
             exact good_subseq_extend _ _ _ _ _ htest hgood
-  . intro hfilter; constructor; rw [←hfilter]; constructor
+  . intro hfilter; constructor; rw [← hfilter]; constructor
     . apply filter_subseq
     . apply filter_all
     . intro l' ⟨hsub, hall⟩
@@ -3491,8 +3496,8 @@ BCP 25: Took away the "will not work very well" wording.
 inductive Pal {α : Type} : List α → Prop where
 -- SOLUTION
   | pal_nil : Pal []
-  | pal_one x : Pal [x]
-  | pal_consnoc x l : Pal l → Pal (x::(l++[x]))
+  | pal_one {x : α} : Pal [x]
+  | pal_consnoc {x : α} {l : List α} (h : Pal l) : Pal (x :: (l ++ [x]))
 -- END SOLUTION
 ```
 
@@ -3511,7 +3516,7 @@ theorem pal_app_reverse (α : Type) (l : List α) :
     induction l with
     | nil => rw [List.reverse_nil, List.append_nil]; constructor
     | cons hd tl ih =>
-      rw [List.reverse_cons, List.cons_append, ←List.append_assoc]
+      rw [List.reverse_cons, List.cons_append, ← List.append_assoc]
       constructor; assumption
 ```
 
@@ -3528,10 +3533,10 @@ theorem pal_reverse (α : Type) (l : List α) (hp : Pal l) : l = l.reverse := by
   solution!
     induction hp with
     | pal_nil => rw [List.reverse_nil]
-    | pal_one x =>
+    | pal_one =>
       rw [List.reverse_cons, List.reverse_nil, List.nil_append]
-    | pal_consnoc x l hp ih =>
-      rw [List.reverse_cons, List.reverse_append, ←List.cons_append, ←ih]
+    | pal_consnoc h ih =>
+      rw [List.reverse_cons, List.reverse_append, ← List.cons_append, ← ih]
       congr
 ```
 
@@ -3722,14 +3727,14 @@ theorem palindrome_converse {α : Type} (l : List α) (h : l = l.reverse) : Pal 
 :::::
 
 :::::exercise (rating := 4) (name := "NoDup") (level := Advanced)
-Use the `∈` property to define a proposition `disjoint l₁ l₂`,
+Use the `∈` property to define a proposition `Disjoint l₁ l₂`,
 which should be provable exactly when `l₁` and `l₂` are
 lists (with elements of type `α`) that have no elements in
 common.
 
 ```lean
 -- SOLUTION
-def disjoint {α : Type} (l₁ l₂ : List α) :=
+def Disjoint {α : Type} (l₁ l₂ : List α) : Prop :=
   ∀ (x : α), x ∈ l₁ → ¬ x ∈ l₂
 -- END SOLUTION
 ```
@@ -3746,20 +3751,20 @@ other.  For example, `NoDup ([1, 2, 3, 4] : List Nat)` and
 -- SOLUTION
 inductive NoDup {α : Type} : List α → Prop where
   | NoDup_nil : NoDup []
-  | NoDup_cons (x : α) (l : List α) :
-    ¬ x ∈ l → NoDup l → NoDup (x :: l)
+  | NoDup_cons {x : α} {l : List α}
+    (hnin : ¬ x ∈ l) (h : NoDup l) : NoDup (x :: l)
 -- END SOLUTION
 ```
 
 Finally, state and prove one or more interesting theorems relating
-`disjoint`, `NoDup` and `++` (list append).
+`Disjoint`, `NoDup` and `++` (list append).
 
 ```lean
 -- SOLUTION
 /- Here are some possible answers: -/
 
 theorem NoDup_append (α : Type) (l₁ l₂: List α)
-    (h₁ : NoDup l₁) (h₂ : NoDup l₂) (hdis : disjoint l₁ l₂) :
+    (h₁ : NoDup l₁) (h₂ : NoDup l₂) (hdis : Disjoint l₁ l₂) :
     NoDup (l₁ ++ l₂) := by
   induction l₁ generalizing l₂ with
   | nil => rw [List.nil_append]; assumption
@@ -3779,18 +3784,18 @@ theorem NoDup_append (α : Type) (l₁ l₂: List α)
         apply hdis; rw [List.mem_cons]
         right; assumption
 
-theorem NoDup_disjoint (α : Type) (l₁ l₂: List α)
-    (h : NoDup (l₁++l₂)) : disjoint l₁ l₂ := by
+theorem NoDup_Disjoint (α : Type) (l₁ l₂: List α)
+    (h : NoDup (l₁++l₂)) : Disjoint l₁ l₂ := by
   intro x hin contra
   induction l₁ generalizing l₂ x with
   | nil => rw [List.mem_nil_iff] at hin; contradiction
   | cons hd tl ih =>
     rw [List.mem_cons] at hin
     inversion h with
-    | NoDup_cons hdup hnotin =>
+    | NoDup_cons hdup hnin =>
       cases hin with
       | inl hin =>
-        subst hin; apply hnotin
+        subst hin; apply hnin
         rw [List.append_eq, List.mem_append]; right; assumption
       | inr hin => exact ih _ hdup _ hin contra
 
@@ -3818,21 +3823,23 @@ theorem NoDup_right (α : Type) (l₁ l₂ : List α)
 
 /- This theorem combines the various lemmas to give a complete
    characterization -/
-theorem NoDup_disjoint_app {α : Type} (l₁ l₂ : List α) :
+theorem NoDup_Disjoint_app {α : Type} (l₁ l₂ : List α) :
     NoDup (l₁ ++ l₂) ↔
-    (NoDup l₁ ∧ NoDup l₂ ∧ disjoint l₁ l₂) := by
+    (NoDup l₁ ∧ NoDup l₂ ∧ Disjoint l₁ l₂) := by
   apply Iff.intro
   . intro hdup
     constructor; exact NoDup_left _ _ _ hdup
     constructor; exact NoDup_right _ _ _ hdup
-    exact NoDup_disjoint _ _ _ hdup
+    exact NoDup_Disjoint _ _ _ hdup
   . intro ⟨h₁, ⟨h₂, h₃⟩⟩
     exact NoDup_append _ _ _ h₁ h₂ h₃
 -- END SOLUTION
 ```
 
 :::grade
-`GRADE_MANUAL 6: NoDup_disjoint_etc`
+```
+GRADE_MANUAL 6: NoDup
+```
 :::
 :::::
 
@@ -3863,19 +3870,21 @@ theorem mem_split (α : Type) (x : α) (l : List α) (hin : x ∈ l) :
 :::gradeTheorem 2 mem_split
 :::
 
-Now define a property `repeats` such that `repeats α l` asserts
-that `l` contains at least one repeated element (of type `α`).
+Now define a property `Repeats` such that `Repeats l` asserts
+that `l` contains at least one repeated element.
 
 ```lean
 inductive Repeats {α : Type} : List α → Prop where
   -- SOLUTION
-  | rep_here  x l : x ∈ l → Repeats (x :: l)
-  | rep_later x l : Repeats l → Repeats (x :: l)
+  | rep_here  {x : α} {l : List α} (h : x ∈ l)     : Repeats (x :: l)
+  | rep_later {x : α} {l : List α} (h : Repeats l) : Repeats (x :: l)
 -- /SOLUTION
 ```
 
 :::grade
-`GRADE_MANUAL 2: check_repeats`
+```
+GRADE_MANUAL 2: Repeats
+```
 :::
 
 Now, here's a way to formalize the pigeonhole principle.  Suppose
