@@ -52,8 +52,10 @@ for basic properties of natural numbers by hand.
 
 Previously, we did computation like this...
 
+
 ```lean
-open NatPlayground.Nat in
+section OldNats
+open NatPlayground.Nat
 example : (two * two : NatPlayground.Nat) = four := by
   rewrite [two_eq_succ_one, one_eq_succ_zero]
   rewrite [mul_succ, mul_succ, mul_zero]
@@ -62,11 +64,11 @@ example : (two * two : NatPlayground.Nat) = four := by
   rfl
 ```
 
-:::dev "Benjamin Pierce (bcpierce00)" NOW
-The info viewed in the InfoView during this proof is kind of
-mysterious (to me) here.  Have we already given people enough help
-to understand it here?
-:::
+We wrote Lean that enforced this pedagogical style using the `@irreducible`
+attribute on definitions like {name}`mul`
+and {name}`add`. This ensured that definitions be
+fully simplified using {tactic}`rw` with simplification rules like
+{name}`two_eq_succ_one`.
 
 This approach is useful in a textbook for understanding the structure of
 natural numbers and for providing early practice with writing proofs. But it
@@ -77,6 +79,8 @@ Instead of doing this, programmers and mathematicians use the built-in
 properties about natural numbers and to compute with them.
 
 ```lean
+end OldNats
+-- Now, we are using Lean's built-in natural numbers.
 example : (3 * 3 : Nat) = 9 := by rfl
 ```
 
@@ -85,6 +89,11 @@ In fact, from now on, we will use the built-in {name}`Nat` type and its powerful
 features, writing `Nat.<theorem>` to reference Lean's version
 of `<theorem>`. (By convention, theorems about a type live in the namespace of
 that type, hence the need for the `Nat.` prefix.)
+
+Definitions in {name}`Nat` are not marked `@irreducible`. This lets us use
+more powerful _automatic simplification_ of functions on natural numbers,
+which is appropriate when their low-level behaviors are not the primary focus of proofs.
+This will be the case going forward.
 
 ## {tactic}`rfl` and Computation with {name}`Nat`
 
@@ -320,15 +329,13 @@ If you prefer {tactic}`rw` to {tactic}`calc`, that's fine! Each has particular
 uses, and both will be tools in your ever-growing toolbox of tactics.
 :::::
 
-:::dev "Benjamin Pierce (bcpierce00)"
-Needs some exercises!!
-:::
 
 # Definitional Simplification: {tactic}`dsimp`
 
-Often, rather than rewriting by a known equation like
-`n + succ m = succ (n + m)` using `rw [add_succ]`,
-we just want to simplify the function (here {name}`Nat.add`) automatically when we can.
+Often, rather than repeatedly rewriting by a known equation like
+`rw [Nat.mul_zero, Nat.mul_zero]` to solve a goal like
+`n * (m * 0) = 0`,
+we just want to simplify the function (here {name}`Nat.mul`) automatically when we can.
 
 The {tactic}`dsimp` tactic ("definitionally simplify") unfolds definitions
 and performs definitional simplifications. You can give it hints in
@@ -389,6 +396,27 @@ Aside: `rw [...] at h` also works on hypotheses too, as does `rw? at h`
 ```lean
 example (n m : Nat) (h : 2 * n = m * 2) : n + n = m + m := by
   rw [Nat.mul_comm, Nat.mul_two, Nat.mul_two] at h
+  exact h
+```
+
+But {tactic}`rw` rewrites only one instance of a _definition_ at a time.
+When a hypothesis mentions the same function at several different
+arguments, each one needs its own rewrite.
+
+```lean
+example (n m k : Nat) (h : square n + square m + square k = 0) :
+    n * n + m * m + k * k = 0 := by
+  rw [square, square, square] at h
+  exact h
+```
+
+{tactic}`dsimp` unfolds _every_ instance at once, so one hint suffices no
+matter how many times the definition appears.
+
+```lean
+example (n m k : Nat) (h : square n + square m + square k = 0) :
+    n * n + m * m + k * k = 0 := by
+  dsimp [square] at h
   exact h
 ```
 
@@ -586,77 +614,9 @@ theorem Nat.double_mul (n : Nat) : n.double = 2 * n := by
 :::gradeTheorem 1 Nat.double_mul
 :::
 
-# Using Code Actions to Generate Match Skeletons
-
-Lean's language server can suggest _code actions_, which are
-small editor commands that modify the source code.
-In VS Code, a lightbulb icon appears on the left
-when a code action is available at your cursor.
-You can click the icon or open the code action menu with `Ctrl + .`
-on Windows/Linux or `Command + .` on macOS.
-For more information, see the
-[Lean 4 VSCode extension manual](https://github.com/leanprover/vscode-lean4/blob/master/vscode-lean4/manual/manual.md#code-actions).
-
-Some code actions can generate the explicit branches needed for pattern
-matching. This is especially useful when working with `match` expressions,
-or with tactics such as {tactic}`cases` and {tactic}`induction`,
-which we saw in previous chapters.
-
-::::full
-Let's look at an example using {tactic}`induction`.
-For example, suppose we start with the following incomplete proof:
-
-```lean +error
-example (n : Nat) : Nat.beq n n := by
-  induction n
-```
-
-Put your cursor on `induction n` and open the code action menu.
-You should see
-"Generate an explicit pattern match for 'induction'." in the list.
-If you choose this action,
-Lean adds an explicit branch for each constructor:
-
-```lean
-example (n : Nat) : Nat.beq n n := by
-  induction n with
-  | zero => sorry
-  | succ n _ => sorry
-```
-
-This gives us basic structure of the proof without requiring us to write each
-branch by hand. We can then focus on proving each case.
-
-One possible proof is:
-
-```lean
-example (n : Nat) : Nat.beq n n := by
-  induction n with
-  | zero => rfl
-  | succ n ih => rw [Nat.beq, ih]
-```
-
-Note that Lean used `_` for the induction hypothesis in the generated `succ` branch.
-At that point, Lean didn't know whether the unfinished proof would need to refer to the hypothesis.
-Since we use it in {tactic}`rw`, we replace `_` with the name `ih`.
-
-In later chapters, we will see some tactics that can make such
-inaccessible names available again.
-
-The same trick also works for `match` expressions.
-For example, suppose we start with
-
-```lean -keep +error
-def isZero (n : Nat) : Bool :=
-  match n
-```
-
-Lean can generate the missing branches:
-
-```lean -keep +error
-def isZero (n : Nat) : Bool :=
-  match n with
-  | 0 => _
-  | n + 1 => _
-```
-::::
+For the remainder of the book, we will use Lean's built-in natural numbers everywhere.
+We will use `dsimp`, `calc`, and in examples and solutions, and encourage their use.
+We encourage the use of `rw?` and `exact?` to search for lemmas
+(though they should not appear in finished proofs). With these tools in hand, we
+can begin to prove properties about more sophisticated forms of data, beginning with
+{ref "Lists"}`Lists`.
