@@ -1903,23 +1903,21 @@ inductive Com where
 
 :::details "Notation encoding: commands, macro rules"
 ```lean
-/-- Imp commands -/
-declare_syntax_cat break_imp_com
 /-- Commands like `skip` or `brk` -/
-syntax ident : break_imp_com
+local syntax ident : imp_com
 /-- Sequencing: one command after another -/
-syntax break_imp_com ";" ppDedent(ppLine break_imp_com) : break_imp_com
+local syntax imp_com ";" ppDedent(ppLine imp_com) : imp_com
 /-- Assignment -/
-syntax ident " := " imp_aexp : break_imp_com
+local syntax ident " := " imp_aexp : imp_com
 /-- Conditional -/
-syntax "if " "(" imp_bexp ")" ppHardSpace "{" ppLine break_imp_com ppDedent(ppLine "}" ppHardSpace "else" ppHardSpace "{") ppLine break_imp_com ppDedent(ppLine "}") : break_imp_com
+local syntax "if " "(" imp_bexp ")" ppHardSpace "{" ppLine imp_com ppDedent(ppLine "}" ppHardSpace "else" ppHardSpace "{") ppLine imp_com ppDedent(ppLine "}") : imp_com
 /-- Loop -/
-syntax "while " "(" imp_bexp ")" ppHardSpace "{" ppLine break_imp_com ppDedent(ppLine "}") : break_imp_com
+local syntax "while " "(" imp_bexp ")" ppHardSpace "{" ppLine imp_com ppDedent(ppLine "}") : imp_com
 /-- Escape to Lean -/
-syntax:max "~" term:max : break_imp_com
+local syntax:max "~" term:max : imp_com
 
 /-- Include an Imp command in Lean code -/
-syntax:min "break_imp" ppHardSpace "{" ppLine break_imp_com ppDedent(ppLine "}") : term
+local syntax:min "break_imp" ppHardSpace "{" ppLine imp_com ppDedent(ppLine "}") : term
 
 namespace Com
 
@@ -1947,43 +1945,43 @@ open scoped BreakImp.Com
 namespace Imp.Delab
 open Lean PrettyPrinter Delaborator SubExpr
 
-partial def delabComInnerFor (ns : Name) (extra : DelabM (TSyntax `break_imp_com)) :
-    DelabM (TSyntax `break_imp_com) := do
+partial def delabComInnerFor (ns : Name) (extra : DelabM (TSyntax `imp_com)) :
+    DelabM (TSyntax `imp_com) := do
   let e ← getExpr
   let stx ←
-    -- Using `(break_imp_com| skip)` would delaborate as `skip✝`. `mkIdent` fixes this.
+    -- Using `(imp_com| skip)` would delaborate as `skip✝`. `mkIdent` fixes this.
     if e.isConstOf (ns ++ `skip) then
-      `(break_imp_com| $(mkIdent `skip):ident)
+      `(imp_com| $(mkIdent `skip):ident)
     else if e.isConstOf (ns ++ `brk) then
-      `(break_imp_com| $(mkIdent `brk):ident)
+      `(imp_com| $(mkIdent `brk):ident)
     else if e.isAppOfArity (ns ++ `asgn) 2 then
       match ← withAppFn <| withAppArg getExpr with
       | .lit (.strVal s) =>
         let a ← withAppArg Imp.Delab.delabAexpInner
-        `(break_imp_com| $(mkIdent (.mkSimple s)):ident := $a)
+        `(imp_com| $(mkIdent (.mkSimple s)):ident := $a)
       | _ =>
         let `($x:ident) ← withAppFn <| withAppArg delab | failure
         let a ← withAppArg Imp.Delab.delabAexpInner
-        `(break_imp_com| $x:ident := $a)
+        `(imp_com| $x:ident := $a)
     else if e.isAppOfArity (ns ++ `seq) 2 then
       let s₁ ← withAppFn <| withAppArg (delabComInnerFor ns extra)
       let s₂ ← withAppArg (delabComInnerFor ns extra)
-      `(break_imp_com| $s₁; $s₂)
+      `(imp_com| $s₁; $s₂)
     else if e.isAppOfArity (ns ++ `cond) 3 then
       let b  ← withAppFn <| withAppFn <| withAppArg Imp.Delab.delabBexpInner
       let c₁ ← withAppFn <| withAppArg (delabComInnerFor ns extra)
       let c₂ ← withAppArg (delabComInnerFor ns extra)
-      `(break_imp_com| if ($b) {$c₁} else {$c₂})
+      `(imp_com| if ($b) {$c₁} else {$c₂})
     else if e.isAppOfArity (ns ++ `whileDo) 2 then
       let b ← withAppFn <| withAppArg Imp.Delab.delabBexpInner
       let c ← withAppArg (delabComInnerFor ns extra)
-      `(break_imp_com| while ($b) {$c})
+      `(imp_com| while ($b) {$c})
     else
-      extra <|> `(break_imp_com| ~$(← delab))
+      extra <|> `(imp_com| ~$(← delab))
   Imp.Delab.annAsTerm stx
 
-/-- Rebuild `break_imp_com` concrete syntax from a `Com` term. -/
-partial def delabComInner : DelabM (TSyntax `break_imp_com) :=
+/-- Rebuild `imp_com` concrete syntax from a `Com` term. -/
+partial def delabComInner : DelabM (TSyntax `imp_com) :=
   delabComInnerFor ``Com failure
 
 @[delab app.BreakImp.Com.skip, delab app.BreakImp.Com.asgn, delab app.BreakImp.Com.seq,
@@ -1998,7 +1996,7 @@ partial def delabCom : Delab := whenPPOption getPPNotation do
     | Com.whileDo _ _ => true
     | _ => false
   match ← delabComInner with
-  | `(break_imp_com| ~$e) => pure e
+  | `(imp_com| ~$e) => pure e
   | e => `(term| break_imp { $e })
 end Imp.Delab
 ```
@@ -2139,9 +2137,9 @@ scoped notation:40 (priority := high) st0:41 " =[ " c " ]=> " st1:41 " // " s:41
 -- Also accept a bare Imp command between the brackets, so concrete programs can
 -- be written without the `break_imp { … }` wrapper. Bare `Com` terms still work via the
 -- notation above; splice a Lean term into the command with `~`.
-scoped syntax:40 term:41 " =[ " break_imp_com " ]=> " term:41 " // " term:41 : term
+scoped syntax:40 term:41 " =[ " imp_com " ]=> " term:41 " // " term:41 : term
 scoped macro_rules
-  | `($st0 =[ $c:break_imp_com ]=> $st1 // $s) => ``($st0 =[ break_imp { $c } ]=> $st1 // $s)
+  | `($st0 =[ $c:imp_com ]=> $st1 // $s) => ``($st0 =[ break_imp { $c } ]=> $st1 // $s)
 end HasEvalResult
 
 instance : HasEvalResult Com State State Result where
