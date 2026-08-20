@@ -1829,7 +1829,7 @@ theorem in_mem {α} (x : α) (l : List α) : List.In x l ↔ x ∈ l := by
         . constructor; exact ih h
     . intro h; induction h with
       | head l' => rw [List.In_cons]; left; rfl
-      | tail y h ih => rw [List.In_cons]; right; assumption
+      | tail h ih => rw [List.In_cons]; right; assumption
 ```
 :::::
 
