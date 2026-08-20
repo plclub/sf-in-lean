@@ -344,6 +344,13 @@ example {α x y} {l : List α} (h : NoStutter l) (hl : l = x :: y :: []) : x ≠
     try subst_vars
   | nostutter2 => assumption
 
+example {x y} {l : List Nat} (h : NoStutter l) (hl : l = x :: y :: []) : x ≠ y := by
+  inversion h with
+    injections
+    try cases x
+  | nostutter2.zero => subst_vars; assumption
+  | nostutter2.succ => subst_vars; assumption
+
 inductive Vec α : Nat → Type where
   | nil : Vec α 0
   | cons {n} : α → Vec α n → Vec α (n + 1)
