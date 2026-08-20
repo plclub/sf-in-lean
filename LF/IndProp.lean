@@ -1805,7 +1805,7 @@ We can also write this definition inductively like so:
 ```lean
 inductive In_Inductive {α : Type} (x : α) : List α → Prop
   | head {l : List α} : In_Inductive x (x :: l)
-  | tail {y : α} {l : List α} : In_Inductive x l → In_Inductive x (y :: l)
+  | tail {y : α} {l : List α} (h : In_Inductive x l) : In_Inductive x (y :: l)
 ```
 
 In fact, this is exactly how Lean defines this proposition,
