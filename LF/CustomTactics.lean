@@ -30,7 +30,7 @@ syntax (" | " caseArg)+ " => " tacticSeq : invAlts
     is supported, similar to that of `cases` and `inversion`.
 -/
 syntax (name := inversion)
-  "inversion " optConfig ident (" with " (tacticSeq)? (colGe invAlts)+)? : tactic
+  "inversion " optConfig ident (" with " (tacticSeq)? (colGe invAlts)*)? : tactic
 
 end Lean.Parser
 
@@ -343,6 +343,12 @@ example {α x y} {l : List α} (h : NoStutter l) (hl : l = x :: y :: []) : x ≠
     injections
     try subst_vars
   | nostutter2 => assumption
+
+/-- `with` acts similarly to `<;>` on the optional sequence of tactics -/
+example {α x y} {l : List α} (h : NoStutter l) (hl : l = x :: y :: []) : x ≠ y := by
+  inversion h with
+    injections
+    try (subst_vars; assumption)
 
 example {x y} {l : List Nat} (h : NoStutter l) (hl : l = x :: y :: []) : x ≠ y := by
   inversion h with
