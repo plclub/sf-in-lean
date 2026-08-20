@@ -950,12 +950,6 @@ GRADE_MANUAL 2: beq_refl_informal
 
 # More Exercises
 
-Tip: By default, {tactic}`rewrite` and {tactic}`rw` rewrite left to right, i.e.,
-they transform the hypothesis or goal being rewritten from the form on
-the left side of the equality to the right side. To rewrite from
-right to left, use `rewrite [← h]` or `rw [← h]`, where `←` is entered
-as `\l` or `\<-`.
-
 ::::exercise (rating := 1) (name := "mul_one")
 ```lean
 theorem mul_one (p : Nat) :
@@ -970,7 +964,92 @@ theorem mul_one (p : Nat) :
 :::
 ::::
 
+## Aside: Using Code Actions to Generate Match Skeletons
+
+Lean's language server can suggest _code actions_, which are
+small editor commands that modify the source code.
+In VS Code, a lightbulb icon appears on the left
+when a code action is available at your cursor.
+You can click the icon or open the code action menu with `Ctrl + .`
+on Windows/Linux or `Command + .` on macOS.
+For more information, see the
+[Lean 4 VSCode extension manual](https://github.com/leanprover/vscode-lean4/blob/master/vscode-lean4/manual/manual.md#code-actions).
+
+Some code actions can generate the explicit branches needed for pattern
+matching. This is especially useful when working with `match` expressions,
+or with tactics such as {tactic}`cases` and {tactic}`induction`,
+which we saw in previous chapters.
+
+::::full
+Let's look at an example using {tactic}`induction`.
+For example, suppose we start with the following incomplete proof:
+
+```lean +error
+example (n : Nat) : Nat.beq n n := by
+  induction n
+```
+
+Put your cursor on `induction n` and open the code action menu.
+You should see
+"Generate an explicit pattern match for 'induction'." in the list.
+If you choose this action,
+Lean adds an explicit branch for each constructor:
+
+```lean
+example (n : Nat) : Nat.beq n n := by
+  induction n with
+  | zero => sorry
+  | succ n _ => sorry
+```
+
+This gives us basic structure of the proof without requiring us to write each
+branch by hand. We can then focus on proving each case.
+
+One possible proof is:
+
+```lean
+example (n : Nat) : Nat.beq n n := by
+  induction n with
+  | zero => exact (beq_self zero)
+  | succ n ih => rw [Nat.beq, ih]
+```
+
+Note that Lean used `_` for the induction hypothesis in the generated `succ` branch.
+At that point, Lean didn't know whether the unfinished proof would need to refer to the hypothesis.
+Since we use it in {tactic}`rw`, we replace `_` with the name `ih`.
+
+In later chapters, we will see some tactics that can make such
+inaccessible names available again.
+
+The same trick also works for `match` expressions.
+For example, suppose we start with
+
+```lean -keep +error
+def isZero (n : Nat) : Bool :=
+  match n
+```
+
+Lean can generate the missing branches:
+
+```lean -keep +error
+def isZero (n : Nat) : Bool :=
+  match n with
+  | 0 => _
+  | n + 1 => _
+```
+::::
+
+You can use code actions freely to fill out {tactic}`induction`,
+{tactic}`case`, and `match` branches in this book.
+
+
+
 ::::exercise (rating := 2) (name := "mul_two")
+Tip: By default, {tactic}`rewrite` and {tactic}`rw` rewrite left to right, i.e.,
+they transform the hypothesis or goal being rewritten from the form on
+the left side of the equality to the right side. To rewrite from
+right to left, use `rewrite [← h]` or `rw [← h]`, where `←` is entered
+as `\l` or `\<-`.
 ```lean
 theorem mul_two (p : Nat) :
     two * p = p + p := by
