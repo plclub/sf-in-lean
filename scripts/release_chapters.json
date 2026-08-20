@@ -1,0 +1,4 @@
+{
+  "_comment": "Per-volume chapter allow-list for scripts/package_release.py. A volume listed here is trimmed to exactly these chapters (in the volume's own file order); an omitted volume builds every chapter currently in <VOL>.lean. Chapter names are the bare identifiers after 'LF.'/'HL.'/'TS.' in that file's import/include lines.",
+  "lf": ["Preface", "Basics", "Postscript"]
+}

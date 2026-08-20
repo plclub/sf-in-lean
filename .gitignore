@@ -1,6 +1,7 @@
 .lake
 .DS_Store
 _out/
+release/
 __pycache__/
 # Rough-draft intermediates from a one-off `to_verso.py` port of a .v/.lean
 # chapter (see CLAUDE.md); the hand-maintained chapter is the plain <Ch>.lean.
