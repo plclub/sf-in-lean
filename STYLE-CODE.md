@@ -31,7 +31,7 @@ and do not use tactics not in this table; in particular,
 | `Poly`            | *(none new)* |
 | `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `induction ... generalizing ...`, `unfold`, `cases ... : ...`, `split` |
 | `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
-| `IndProp`         | `rcases`, `subst` |
+| `IndProp`         | `subst` |
 | `Automation`      | `lia`, `try`, `repeat`, `specialize`, `trivial`, `simp`, `generalize` |
 | `Typeclasses`     | `decide` |
 | `Slang`           | `fun_induction`, `simp_all` |
@@ -247,8 +247,7 @@ and `#guard_msgs` for internal checks that are not student-facing.
 
 Use `sorry` when an unfinished declaration must remain available to later code,
 as with an exercise scaffold or a theorem used below. Do _not_ normally wrap it
-in `#guard_msgs`: the generic warning is not what we are testing, and the guard
-is stripped from the HTML and extracted projects.
+in `#guard_msgs`, as the generic warning is not what we are testing.
 
 ````lean
 ```lean

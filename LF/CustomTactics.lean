@@ -1,16 +1,8 @@
 module
 
 public meta import Lean.Elab.ConfigEval
-public meta import Lean.Elab.Tactic.ElabTerm
 public meta import Lean.Elab.Tactic.RenameInaccessibles
 public meta import Lean.Elab.Tactic.Induction
-public meta import Lean.Elab.Tactic.BuiltinTactic
-meta import all Lean.Elab.Tactic.BuiltinTactic
-
-public meta import Lean.Meta.Tactic.Generalize
-public meta import Lean.Meta.Tactic.Injection
-public meta import Lean.Meta.Tactic.Contradiction
-public meta import Lean.Meta.Tactic.Cases
 meta import all Lean.Meta.Tactic.Cases
 
 meta section
@@ -34,15 +26,26 @@ syntax (" | " caseArg)+ " => " tacticSeq : invAlts
   if trying to generalize the indices produces an ill-typed result.
   * If `inversion +clear t` is set, then `heq` will be `clear`ed from the context if present,
     along with `t` if there are no dependencies on it.
-  * The form `inversion t with | tag₁ x ... => tac ... | ... | tagₙ z ... => tac ...` is supported,
-    similar to that of `cases` and `inversion`.
+  * The form `inversion t with (tac ...) | tag₁ x ... => tac ... | ... | tagₙ z ... => tac ...`
+    is supported, similar to that of `cases` and `inversion`.
 -/
 syntax (name := inversion)
-  "inversion " optConfig ident (" with " (colGe invAlts)+)? : tactic
+  "inversion " optConfig ident (" with " (tacticSeq)? (colGe invAlts)*)? : tactic
 
 end Lean.Parser
 
 namespace Lean.Meta
+
+/-- Get the user-facing name for the given metavariable. -/
+def _root_.Lean.MVarId.getUserName (mvarId : MVarId) : MetaM Name := do
+  let decl ← mvarId.getDecl
+  return decl.userName
+
+/-- Get the string suffix of a name as a name -/
+def _root_.Lean.Name.getSuffix : Name → Name
+| .anonymous => .anonymous
+| .str _ s => .str .anonymous s
+| .num n _ => n.getSuffix
 
 /--
   This function is similar to `forallMetaTelescopeReducing`: Given `e` of the
@@ -76,11 +79,6 @@ def forallMetaTelescopeReducingUntilDefEq
     bis := bis ++ bs
     out := tp
   return (mvs, bis, out)
-
-/-- Get the user-facing name for the given metavariable. -/
-def _root_.Lean.MVarId.getUserName (mvarId : MVarId) : MetaM Name := do
-  let decl ← mvarId.getDecl
-  return decl.userName
 
 /-- Given equations `eqs` in the local context of `mvarId`,
   unify them using [Lean.Meta.unifyEq?],
@@ -161,7 +159,7 @@ structure InversionConfig where
 declare_config_elab elabInversionConfig InversionConfig
 
 open Cases in
-def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (List CasesSubgoal) := withMainContext do
+def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (List MVarId) := withMainContext do
   let goal ← getMainGoal
   goal.withContext do
     let some ctx ← mkCasesContext? h
@@ -172,7 +170,7 @@ def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (List CasesS
       let subgoals ← if config.clear
         then casesClearMany subgoals #[h]
         else pure subgoals
-      return subgoals.toList
+      subgoals.toList.mapM setUserName
     -- Otherwise, use custom [unifyEqs] to not fail on unifying HEqs
     else
       let gis@⟨newGoal, _, newTarget, numEqs⟩ ← generalizeIndices goal h
@@ -185,20 +183,25 @@ def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (List CasesS
       let subgoals ← if config.clear
         then casesClearMany subgoals #[h, targetEq]
         else pure subgoals
-      return subgoals.toList
+      subgoals.toList.mapM setUserName
+  where
+    setUserName (subgoal : CasesSubgoal) : TacticM MVarId := do
+      if let some name := subgoal.ctorName then
+        subgoal.mvarId.setUserName name.getSuffix
+      return subgoal.mvarId
 
 /-- Given an inversion alternative and a list of goals,
   solve the tagged goal with the provided tactics,
   throwing an error if the goal cannot be found or solved. -/
-def evalInvAlt (goals : List CasesSubgoal) (alt : TSyntax `invAlt) : TacticM (List MVarId) :=
+def evalInvAlt (goals : List MVarId) (alt : TSyntax `invAlt) : TacticM (List MVarId) :=
   match alt with
   | `(invAlt| | $tag:ident $vars:binderIdent* => $tactics:tacticSeq) => do
-    if let some goal := goals.find? (matchTag tag.getId $ ·.ctorName.getD default) then
-      return [← trySolveGoal vars tactics goal.mvarId]
+    if let some goal ← goals.findM? (matchTag tag.getId <$> ·.getUserName) then
+      return [← trySolveGoal vars tactics goal]
     else throwError m!"Invalid alternative name `{tag.getId}`: {← errorMsg}"
   | `(invAlt| | _ $vars:binderIdent* => $tactics:tacticSeq) => do
     if !goals.isEmpty then
-      goals.mapM (trySolveGoal vars tactics ·.mvarId)
+      goals.mapM (trySolveGoal vars tactics)
     else throwErrorAt alt m!"Invalid wildcard alternative: {← errorMsg}"
   | _ => throwErrorAt alt "Could not parse inversion alternative"
 where
@@ -210,24 +213,27 @@ where
       reportUnsolvedGoals goals
     return goal
   errorMsg : TacticM MessageData := do
-    let goalMsgs := goals.filterMap (.ofName <$> ·.ctorName)
+    let goalMsgs ← goals.mapM (.ofName <$> ·.getUserName)
     return if goals.isEmpty
       then m!"There are no unhandled alternatives"
       else m!"Expected {.orList goalMsgs}"
 
 @[tactic Lean.Parser.inversion, inherit_doc Lean.Parser.inversion]
 public meta def evalInversion : Tactic
-  | `(tactic| inversion $config $h:ident $[with $[$alts?:invAlts]*]?) => do
+  | `(tactic| inversion $config $h:ident $[with $[$tactics?:tacticSeq]? $[$alts?:invAlts]*]?) => do
     let config ← elabInversionConfig config
     let mut goals ← inversionCore (← getFVarId h) config
+    if let some tactics := tactics?.join then
+      let subgoals ← goals.mapM (evalTacticAt tactics)
+      goals ← subgoals.flatten.filterM (not <$> ·.isAssignedOrDelayedAssigned)
     if let some alts := alts? then
       let expandedAlts ← Array.flatten <$> alts.mapM expandInvAlts
       for alt in expandedAlts do
         let solvedGoals ← evalInvAlt goals alt
-        goals := goals.filter (!solvedGoals.contains ·.mvarId)
+        goals := goals.filter (!solvedGoals.contains ·)
       unless goals.isEmpty do
-        reportUnsolvedGoals $ goals.map (·.mvarId)
-    replaceMainGoal $ goals.map (·.mvarId)
+        reportUnsolvedGoals goals
+    replaceMainGoal goals
   | stx => throwErrorAt stx "Could not parse inversion tactic"
 where expandInvAlts
   | `(invAlts| $[| $args:caseArg]* => $tactics:tacticSeq) =>
@@ -282,7 +288,7 @@ example (f : Nat → Nat) (n : Nat) (leq : f n ≤ 0) : 0 = f n := by
 example (f : Nat → Nat) (n m : Nat) (leq : f n ≤ f m) : f n = 0 := by
   inversion leq with
   | refl e _ | step k _ e _ =>
-    try rw [← eq]
+    try rw [← e]
     sorry
 
 /-- error: Invalid wildcard alternative: There are no unhandled alternatives -/
@@ -310,14 +316,18 @@ example {x : Nat} (h : The x) : x = zero := by
   inversion h with
   | mk => rfl
 
-example (n m o : Nat) : [n, m] = [o, o] → [n] = [m] := by
+example {α} {n m k : α} : [n, m] = [k, k] → [n] = [m] := by
   intro h
   inversion h; rfl
 
+example {n : Nat} : n + 1 = 1 + n := by
+  induction n with try rfl
+  | succ => lia
+
 inductive NoStutter {α : Type} : List α → Prop where
   | nostutter0: NoStutter []
-  | nostutter1 n : NoStutter (n::[])
-  | nostutter2 a b r (hneq : a ≠ b) (h : NoStutter (b::r)) : NoStutter (a::b::r)
+  | nostutter1 {n} : NoStutter (n :: [])
+  | nostutter2 {x y l} (hneq : x ≠ y) (h : NoStutter (y :: l)) : NoStutter (x :: y :: l)
 
 /-- The last (only) case name need not be provided -/
 example : ¬ (NoStutter [3, 1, 1, 4]) := by
@@ -326,6 +336,26 @@ example : ¬ (NoStutter [3, 1, 1, 4]) := by
   inversion contra with | _ h _ =>
   apply h
   rfl
+
+/-- Inversion may optionally take a sequence of tactics on all goals -/
+example {α x y} {l : List α} (h : NoStutter l) (hl : l = x :: y :: []) : x ≠ y := by
+  inversion h with
+    injections
+    try subst_vars
+  | nostutter2 => assumption
+
+/-- `with` acts similarly to `<;>` on the optional sequence of tactics -/
+example {α x y} {l : List α} (h : NoStutter l) (hl : l = x :: y :: []) : x ≠ y := by
+  inversion h with
+    injections
+    try (subst_vars; assumption)
+
+example {x y} {l : List Nat} (h : NoStutter l) (hl : l = x :: y :: []) : x ≠ y := by
+  inversion h with
+    injections
+    try cases x
+  | nostutter2.zero => subst_vars; assumption
+  | nostutter2.succ => subst_vars; assumption
 
 inductive Vec α : Nat → Type where
   | nil : Vec α 0
