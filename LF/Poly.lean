@@ -693,10 +693,10 @@ theorem append_nil {α : Type} {l : List α} :
     | nil => rw [List.nil_append]
     | cons _ _ ih => rw [List.cons_append, ih]
 
-theorem append_assoc {α : Type} {l m n : List α} :
-    l ++ m ++ n = l ++ (m ++ n) := by
+theorem append_assoc {α : Type} {l₁ l₂ l₃ : List α} :
+    l₁ ++ l₂ ++ l₃ = l₁ ++ (l₂ ++ l₃) := by
   solution!
-    induction l with
+    induction l₁ with
     | nil => rw [List.nil_append, List.nil_append]
     | cons _ _ ih =>
       dsimp [List.cons_append]
@@ -1004,11 +1004,11 @@ doIt3Times {α : Type} (f : α → α) (x : α) : α
 
 ## Filter
 
-::::instructors
+:::instructors
 We've tried to be careful with terminology in the rest
 of the notes: "(boolean) predicate" for boolean functions and
 "property" for propositions indexed by one parameter.
-::::
+:::
 
 ::::full
 Here is a more useful higher-order function, taking a list
