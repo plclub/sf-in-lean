@@ -504,13 +504,6 @@ is recommended in idiomatic Lean developments.
 As an example, observe the difference in how Lean prints the goal in the following two examples:
 ::::
 
-:::dev "Mike Hicks (@mwhicks1)" NOW
-I'm _pretty_ sure that we have seen field notation before now, but not called attention to it.
-We did set disable field notation in some cases (`Nat.succ`) but not in general. Either fix this
-so field notation never comes up, or mention it when it first appears (in the Info View
-probably), by moving this text there.
-:::
-
 ::::terse
 This printing style is called _field notation_ and can be enabled or disabled with the
 `pp.fieldNotation` option.
