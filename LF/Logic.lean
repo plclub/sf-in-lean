@@ -1377,7 +1377,12 @@ theorem dist_exists_or (α : Type) (p q : α → Prop) :
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "ble_plus_exists")
+:::::hide
+:::dev "Yipeng Liu (berberman)"
+
+TODO: Convert to prop version and move to IndProp chapter.
+
+-- exercise (rating := 3) (name := "ble_plus_exists")
 ```lean
 theorem ble_plus_exists (n m : Nat) : (Nat.ble n m = true) → ∃ x, m = x + n := by
   solution!
@@ -1408,8 +1413,6 @@ theorem add_exists_ble (n m : Nat) (h : ∃ x, m = x + n) : Nat.ble n m = true :
     rw [hx]
     apply ble_plus
 ```
-
-::::hide
 ```
 /- A direct proof without a lemma. -/
 theorem add_exists_ble' : ∀ n m, (∃ x, m = x + n) → Nat.ble n m = true := by
@@ -1421,7 +1424,7 @@ theorem add_exists_ble' : ∀ n m, (∃ x, m = x + n) → Nat.ble n m = true := 
     rw [hx, Nat.add_succ x, succ_ble_succ]
     apply ih; exists x
 ```
-::::
+:::
 :::::
 
 ::::::
@@ -2144,14 +2147,19 @@ Again, these two notions are equivalent:
 (For the reverse direction we need the simple fact that `==` is
 reflexive.)
 
+:::dev "Yipeng Liu (berberman)"
+Either get rid of the development of `beq` story
+or use our own `beq` on `Nat`.
+:::
+
+Don't worry too much about {name}`Nat.beq_eq_true_eq` yet,
+we need this from Lean because `n == m` is a wrapper of {inst}`DecidableEq Nat`.
+We will go over this in the {ref "Typeclasses"}[Typeclasses] chapter.
+
 ```lean
 theorem beq_eq_true (n m : Nat) :
     (n == m) = true ↔ n = m := by
-  constructor
-  · apply beq_eq
-  · intro h
-    rw [h]
-    apply BEq.rfl
+  rw [Nat.beq_eq_true_eq]
 ```
 
 So what should we do in situations where some claim could be formalized
@@ -2658,8 +2666,8 @@ theorem In_append_iff (α : Type) (l l' : List α) (x : α) :
 ```
 :::::
 
-:::::exercise (rating := 1) (name := "beq_neq")
-The following theorem is an alternative "negative" formulation of {lean}`beq_eq`
+:::::exercise (rating := 1) (name := "beq_neq_false")
+The following theorem is an alternative "negative" formulation of {lean}`beq_eq_true`
 that is more convenient in certain situations.
 (We'll see examples in later chapters.) Hint: {lean}`not_true_iff_false`.
 
