@@ -184,7 +184,7 @@ What is the full type of {name}`MyList.nil`? We can read off the
 result type {lean}`MyList α` from the definition,
 but to state the full type we must also bind `α`.
 Since the type argument to the constructor is implicit,
-Lean writes its type as {lean}`{α : Type} → MyList α`.
+Lean writes its type as (the equivalent of) {lean}`{α : Type} → MyList α`.
 ::::
 
 ```lean (name := nil)
@@ -236,7 +236,8 @@ def myRepeat (α : Type) (x : α) (count : Nat) : MyList α :=
 Some simple facts about {name}`myRepeat`:
 
 ```lean
-theorem myRepeat_zero (α : Type) (v : α) : myRepeat α v 0 = MyList.nil := rfl
+theorem myRepeat_zero (α : Type) (v : α) :
+    myRepeat α v 0 = MyList.nil := rfl
 
 theorem myRepeat_succ (α : Type) (v : α) (count : Nat) :
     myRepeat α v (count + 1) = MyList.cons v (myRepeat α v count) := rfl
@@ -335,11 +336,7 @@ def myRepeat' α (x : α) (count : Nat) : List α :=
   | count' + 1 => .cons x (myRepeat' α x count')
 ```
 
-Indeed it will. Lean infers that `α` is a type. The generated
-`u_1` is part of Lean's bookkeeping for treating types more generally.
-We will not need to interpret names like this for now —
-you can ignore them when they appear in Lean's output unless we explicitly
-call attention to them.
+Indeed it will. Lean infers that `α` is a type.
 
 ```lean (name := myRepeat')
 #check myRepeat'
@@ -348,6 +345,12 @@ call attention to them.
 ```leanOutput myRepeat'
 myRepeat'.{u_1} (α : Type u_1) (x : α) (count : Nat) : List α
 ```
+
+The generated
+`u_1` is part of Lean's bookkeeping for treating types more generally.
+We will not need to interpret names like this for now —
+you can ignore them when they appear in Lean's output unless we explicitly
+call attention to them.
 
 ::::terse
 Lean has used _type inference_ to deduce a type for {lean}`α`.
@@ -383,7 +386,7 @@ function being applied, the types of the other arguments, and the
 type expected by the context in which the application appears —
 to determine what concrete type should replace the `_`.
 
-Using holes, the {name}`myRepeat'` function can be written like this:
+Using holes, the {name}`myRepeat'` function can be rewritten like this:
 ::::
 
 ::::terse
@@ -417,9 +420,11 @@ def myRepeat''' {α : Type} (x : α) (count : Nat) : List α :=
 ```
 
 ::::full
-(Note that we didn't even have to provide a type argument to the
-recursive call to {name}`myRepeat'''`. Indeed, it would be invalid to
-provide one, because Lean is not expecting it.)
+By making the type argument implicit, we no longer need to provide it
+to the recursive call to {name}`myRepeat'''`. Indeed, it
+would be invalid to provide one, because Lean is not expecting it.
+For each implicit parameter, Lean automatically inserts a hidden
+hole `_` argument for us, which is then inferred as usual.
 ::::
 
 ### Supplying Type Arguments Explicitly
@@ -1037,6 +1042,8 @@ example : filter Nat.even [1, 2, 3, 4] = [2, 4] := by rfl
 :::slidebreak
 :::
 
+Here are some further examples and properties of {name}`filter`.
+
 ```lean
 def isLength1 {α : Type} (l : List α) : Bool :=
   l.length == 1
@@ -1061,6 +1068,33 @@ theorem filter_cons_of_neg {α : Type} {test : α → Bool} {head : α}
    rw [h]
    dsimp
 ```
+
+::::full
+You might have noticed that {name}`filter_cons_of_pos` and {name}`filter_cons_of_neg`
+have implicit parameters, such as `head` and `tail`, that do not have type {lean}`Type` like `α` does.
+As it turns out, Lean allows _any_ parameter to be implicit, not just those of type {lean}`Type`.
+This is a standard Lean convention for lemmas that are likely to be used by {tactic}`rw`
+or {tactic}`dsimp` when their values can be inferred by unification.
+
+For example, suppose you were using this theorem to rewrite `filter Nat.even (3 :: rest)`.
+Matching that expression against the theorem's left-hand side `filter test (head :: tail)`
+establishes that `test = Nat.even`, `head = 3`, `tail = rest`, and
+{lean}`α = Nat`. By making these arguments implicit, Lean automatically inserts
+a hole `_` for each of them when you apply the theorem, just as with implicit parameters
+of type {lean}`Type`, so they can be inferred from the context.
+
+Note that `h : test head` is not implicit, it's explicit. That's because it cannot be
+solved by unification, i.e., Lean can't prove that `Nat.even 3 = true` that way.
+It's a general proof obligation.
+
+We'll follow the Lean standard convention from now on.
+::::
+
+::::terse
+Note that `head` and `tail` are implicit too, following a general convention: any
+argument an equation's shape determines when applied is made implicit, so using {tactic}`rw`
+and {tactic}`simp` lemmas requires no extra `_` arguments.
+::::
 
 :::slidebreak
 :::
