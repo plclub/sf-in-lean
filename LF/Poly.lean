@@ -1037,6 +1037,8 @@ example : filter Nat.even [1, 2, 3, 4] = [2, 4] := by rfl
 :::slidebreak
 :::
 
+Here are some further examples and properties of {name}`filter`.
+
 ```lean
 def isLength1 {α : Type} (l : List α) : Bool :=
   l.length == 1
@@ -1061,6 +1063,32 @@ theorem filter_cons_of_neg {α : Type} {test : α → Bool} {head : α}
    rw [h]
    dsimp
 ```
+
+::::full
+You might have noticed that {name}`filter_cons_of_pos` and {name}`filter_cons_of_neg`
+have implicit parameters, such as `head` and `tail`, that do not have type `Type` like `α` does.
+This is a standard Lean convention for lemmas that are likely to be used by {tactic}`rw`
+or {tactic}`dsimp` when their values can be inferred by unification.
+
+For example, suppose you were using this theorem to rewrite {lean}`filter Nat.even (3 :: rest)`.
+Matching that expression against the theorem's left-hand side {lean}`filter test (head :: tail)`
+establishes that {lean}`test = Nat.even`, {lean}`head = 3`, {lean}`tail = rest`, and
+{lean}`α = Nat`. By making these arguments implicit, Lean automatically inserts
+a blank `_` for each of them when you apply the theorem — you don't have to add the `_`
+yourself.
+
+Note that {lean}`h : test head` is not implicit, it's explicit. That's because it cannot be
+solved by unification, i.e., Lean can't prove that `Nat.even 3 = true` that way.
+It's a general proof obligation.
+
+We'll follow the Lean standard convention from now on.
+::::
+
+::::terse
+Note that `head` and `tail` are implicit too, following a general convention: any
+argument an equation's shape determines when applied is made implicit, so using {tactic}`rw`
+and {tactic}`simp` lemmas requires no extra `_` arguments.
+::::
 
 :::slidebreak
 :::
