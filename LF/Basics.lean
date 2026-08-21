@@ -11,7 +11,7 @@ htmlSplit := .never
 file := "Basics"
 %%%
 
-```lean
+```lean -show
 set_option pp.fieldNotation false
 ```
 
