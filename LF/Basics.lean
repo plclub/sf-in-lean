@@ -4,14 +4,16 @@ import SFLMeta
 open Verso.Genre Manual
 open SFLMeta
 
-set_option pp.fieldNotation false
-
 #doc (Manual) "Basics: Functional Programming in Lean" =>
 %%%
 tag := "Basics"
 htmlSplit := .never
 file := "Basics"
 %%%
+
+```lean
+set_option pp.fieldNotation false
+```
 
 :::instructors
 This file and Induction.lean each take about an hour to
