@@ -1070,14 +1070,14 @@ have implicit parameters, such as `head` and `tail`, that do not have type `Type
 This is a standard Lean convention for lemmas that are likely to be used by {tactic}`rw`
 or {tactic}`dsimp` when their values can be inferred by unification.
 
-For example, suppose you were using this theorem to rewrite {lean}`filter Nat.even (3 :: rest)`.
-Matching that expression against the theorem's left-hand side {lean}`filter test (head :: tail)`
-establishes that {lean}`test = Nat.even`, {lean}`head = 3`, {lean}`tail = rest`, and
+For example, suppose you were using this theorem to rewrite `filter Nat.even (3 :: rest)`.
+Matching that expression against the theorem's left-hand side `filter test (head :: tail)`
+establishes that `test = Nat.even`, `head = 3`, `tail = rest`, and
 {lean}`α = Nat`. By making these arguments implicit, Lean automatically inserts
 a blank `_` for each of them when you apply the theorem — you don't have to add the `_`
 yourself.
 
-Note that {lean}`h : test head` is not implicit, it's explicit. That's because it cannot be
+Note that `h : test head` is not implicit, it's explicit. That's because it cannot be
 solved by unification, i.e., Lean can't prove that `Nat.even 3 = true` that way.
 It's a general proof obligation.
 
