@@ -13,7 +13,7 @@ htmlSplit := .never
 file := some "Induction"
 %%%
 
-```lean
+```lean -show
 set_option pp.fieldNotation false
 ```
 
