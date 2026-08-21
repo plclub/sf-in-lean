@@ -69,6 +69,7 @@ def elabAndHighlightStudent
       scopes }
   let mut pstate : Parser.ModuleParserState := {}
   let mut cmds : Array Syntax := #[]
+  let mut cmdTrees : Array (Option InfoTree) := #[]
   repeat
     let scope := cmdState.scopes.head!
     let pmctx : Parser.ParserModuleContext :=
@@ -81,15 +82,23 @@ def elabAndHighlightStudent
     cmds := cmds.push cmd
     pstate := ps'
     cmdState := { cmdState with messages }
-    -- `elabCommandTopLevel` resets `messages` and `infoState` per command;
-    -- snapshot and re-prepend so the highlighter sees the cumulative trees.
+    -- `elabCommandTopLevel` resets `messages` and `infoState` per command.
+    -- We save the tree for each command so they can be batch-highlighted,
+    -- which shares more caches.
     let savedMsgs := cmdState.messages
     let savedTrees := cmdState.infoState.trees
     let runRes ← liftM (m := IO) <| IO.FS.withIsolatedStreams <| EIO.toIO' <|
       ((Command.elabCommandTopLevel cmd).run cctx).run cmdState
     match runRes with
-    | (_, .error _) => break
+    | (_, .error _) =>
+      cmdTrees := cmdTrees.push none
+      break
     | (_, .ok ((), cs)) => cmdState := cs
+    cmdTrees := cmdTrees.push <|
+      match cmdState.infoState.trees.toArray with
+      | #[t] => some t
+      | #[] => none
+      | ts => some (.node (.ofCommandInfo {elaborator := `SFLMeta.lean, stx := cmd}) ts.toPArray')
     cmdState := { cmdState with
       messages := savedMsgs ++ cmdState.messages
       infoState :=
@@ -98,13 +107,9 @@ def elabAndHighlightStudent
     if Parser.isTerminalCommand cmd then break
   DocElabM.withFileMap fileMap do
     let nonSilent := cmdState.messages.toArray.filter (!·.isSilent)
-    let mut hls : Highlighted := .empty
-    let mut lastPos : String.Pos.Raw := 0
-    for cmd in cmds do
-      hls := hls ++ (← highlightIncludingUnparsed
-        cmd nonSilent cmdState.infoState.trees (startPos? := lastPos))
-      lastPos := (cmd.getTrailingTailPos?).getD lastPos
-    return hls
+    let hlArr ← highlightMany cmds nonSilent cmdTrees (includeUnparsed := true)
+      (startPos? := some 0) (endPos? := some src.rawEndPos)
+    return hlArr.foldl (· ++ ·) .empty
 
 end LeanElab
 

@@ -23,7 +23,7 @@ weak.sfl.year = 2026
 [[require]]
 name = "verso"
 git = "https://github.com/leanprover/verso"
-rev = "v4.33.0"
+rev = "sfl-local"
 
 [[require]] # Should come after autograder to override it's transitive dependency on batteries (TODO)
 name = "batteries"
@@ -46,6 +46,7 @@ name = "Credits"
 
 [[lean_lib]]
 name = "SFLMeta"
+precompileModules = true
 
 # Each volume library tells its chapters which volume they belong to; the
 # `volumes` table in `SFLMeta/Volume.lean` turns the slug into a number and a
