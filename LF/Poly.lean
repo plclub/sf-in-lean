@@ -20,7 +20,7 @@ variable (α β γ : Type) (x : α) (y : β)
 :::
 
 :::instructors
-To get through this plus Tactics.lean in two 80-minute
+To get through this plus {ref "Tactics"}[Tactics] in two 80-minute
 lectures is a bit tight — if that's your plan, don't dawdle on
 this chapter.
 
@@ -34,9 +34,6 @@ import LF.UsingLean
 ```
 
 # Polymorphism
-
-:::suppressPreviousHeaderWhenTerse
-:::
 
 ::::full
 In this chapter we continue our development of basic
@@ -144,7 +141,7 @@ MyList : Type → Type
 :::
 
 ::::full
-The `α` in the definition of {name}`MyList` automatically becomes a
+The {lean}`α` in the definition of {name}`MyList` automatically becomes a
 parameter to the constructors `nil` and `cons` — that is, `nil`
 and `cons` are now polymorphic constructors. In Lean, the type
 parameter is _implicit_ by default: Lean will infer it from context.
@@ -153,7 +150,7 @@ the element type from how it is used.
 ::::
 
 ::::terse
-The `α` in the definition of {name}`MyList` becomes an implicit
+The {lean}`α` in the definition of {name}`MyList` becomes an implicit
 parameter to the list constructors `nil` and `cons`.
 ::::
 
@@ -168,7 +165,7 @@ MyList.nil {α : Type} : MyList α
 ::::full
 Similarly, {name}`MyList.cons` adds an element of type {name}`Nat` to a
 list of type {lean}`MyList Nat`. Here is an example of forming a list
-containing just the natural number 3.
+containing just the natural number {lean}`3`.
 ::::
 
 ```lean (name := cons3)
@@ -182,7 +179,7 @@ MyList.cons 3 MyList.nil : MyList Nat
 ::::full
 What is the full type of {name}`MyList.nil`? We can read off the
 result type {lean}`MyList α` from the definition,
-but to state the full type we must also bind `α`.
+but to state the full type we must also bind {lean}`α`.
 Since the type argument to the constructor is implicit,
 Lean writes its type as (the equivalent of) {lean}`{α : Type} → MyList α`.
 ::::
@@ -273,6 +270,10 @@ What is the type of `MyList.cons true (MyList.cons 3 MyList.nil)`?
 (D) {lean}`MyList (Nat × Bool)`
 
 (E) Ill-typed
+
+:::quizSolution
+(E)
+:::
 ::::
 
 ::::quiz
@@ -285,6 +286,10 @@ What is the type of {name}`myRepeat`?
 (C) {lean}`(α : Type) → {β : Type} → α → Nat → MyList β`
 
 (D) Ill-typed
+
+:::quizSolution
+(B)
+:::
 ::::
 
 ::::quiz
@@ -297,6 +302,10 @@ What is the type of `myRepeat 1 2`?
 (C) {lean}`MyList Bool`
 
 (D) Ill-typed
+
+:::quizSolution
+(D)
+:::
 ::::
 
 ::::full
@@ -321,7 +330,7 @@ in the natural way:
 ::::
 
 ```lean
-def list123 : List Nat := [1, 2, 3]
+example : List Nat := [1, 2, 3]
 ```
 
 ### Type Annotation Inference
@@ -614,20 +623,20 @@ inductive Mumble : Type where
   | b (x : Mumble) (y : Nat) : Mumble
   | c : Mumble
 
-inductive Grumble (X: Type) : Type where
-  | d (m : Mumble) : Grumble X
-  | e (x : X) : Grumble X
+inductive Grumble (α : Type) : Type where
+  | d (m : Mumble) : Grumble α
+  | e (x : α) : Grumble α
 ```
 
-Which of the following are well-typed elements of `Grumble X` for
-some type `X`?  (Add YES or NO to each line.)
-  - `Grumble.d (Mumble.b Mumble.a 5)`
-  - `@Grumble.d Mumble (Mumble.b Mumble.a 5)`
-  - `@Grumble.d Bool (Mumble.b Mumble.a 5)`
-  - `@Grumble.e Bool true`
-  - `@Grumble.e Mumble (Mumble.b Mumble.c 0)`
-  - `@Grumble.e Bool (Mumble.b Mumble.c 0)`
-  - `Mumble.c`
+Which of the following are well-typed elements of {lean}`Grumble α` for
+some type {lean}`α`?  (Add YES or NO to each line.)
+- `Grumble.d (Mumble.b Mumble.a 5)`
+- `@Grumble.d Mumble (Mumble.b Mumble.a 5)`
+- `@Grumble.d Bool (Mumble.b Mumble.a 5)`
+- `@Grumble.e Bool true`
+- `@Grumble.e Mumble (Mumble.b Mumble.c 0)`
+- `@Grumble.e Bool (Mumble.b Mumble.c 0)`
+- `Mumble.c`
 
 :::solution
 - YES — {lean}`Grumble.d (Mumble.b Mumble.a 5)`
@@ -653,8 +662,8 @@ def List.rev {α : Type} (l : List α) : List α :=
 
 theorem rev_nil {α : Type} : ([] : List α).rev = [] := by rfl
 
-theorem rev_cons {α : Type} (head : α) (tail : List α) :
-    (head :: tail).rev = tail.rev ++ [head] := by rfl
+theorem rev_cons {α : Type} {x : α} {l : List α} :
+    (x :: l).rev = l.rev ++ [x] := by rfl
 ```
 
 :::::exercise (rating := 2) (name := "poly_exercises")
@@ -677,19 +686,19 @@ List.nil_append.{u} {α : Type u} (as : List α) : [] ++ as = as
 ```
 
 ```lean
-theorem append_nil {α : Type} (l : List α) :
+theorem append_nil {α : Type} {l : List α} :
     l ++ [] = l := by
   solution!
     induction l with
     | nil => rw [List.nil_append]
-    | cons h t ih => rw [List.cons_append, ih]
+    | cons _ _ ih => rw [List.cons_append, ih]
 
-theorem append_assoc {α : Type} (l m n : List α) :
+theorem append_assoc {α : Type} {l m n : List α} :
     l ++ m ++ n = l ++ (m ++ n) := by
   solution!
     induction l with
     | nil => rw [List.nil_append, List.nil_append]
-    | cons h t ih =>
+    | cons _ _ ih =>
       dsimp [List.cons_append]
       rw [ih]
 
@@ -700,7 +709,7 @@ theorem append_length {α : Type} {l₁ l₂ : List α} :
     | nil =>
       dsimp [List.nil_append, append_nil]
       rw [Nat.zero_add]
-    | cons h t ih =>
+    | cons _ _ ih =>
       dsimp [List.cons_append, List.length_cons]
       rw [Nat.succ_add, ih]
 ```
@@ -726,7 +735,7 @@ theorem reverse_append {α : Type} {l₁ l₂ : List α} :
     | nil =>
       dsimp [List.nil_append]
       rw [rev_nil, append_nil]
-    | cons h t ih =>
+    | cons _ _ ih =>
       dsimp [List.cons_append]
       rw [rev_cons, rev_cons, ih, append_assoc]
 
@@ -735,7 +744,7 @@ theorem reverse_reverse {α : Type} (l : List α) :
   solution!
     induction l with
     | nil => rw [rev_nil, rev_nil]
-    | cons h t ih =>
+    | cons _ _ ih =>
       rw [rev_cons, reverse_append, ih, rev_cons, rev_nil]
       dsimp [List.nil_append, List.cons_append]
 ```
@@ -759,9 +768,9 @@ structure MyProd (α β : Type) where
   snd : β
 ```
 
-Lean's built-in product type `Prod` provides a `Prod.mk` constructor,
-and `fst` and `snd` functions for accessing the first and second components
-of the pair. It also has special syntax for creating products:
+Lean's built-in product type {name}`Prod` provides a {name}`Prod.mk` constructor,
+and {name}`Prod.fst` and {lean}`Prod.snd` functions for accessing the first and
+second components of the pair. It also has special syntax for creating products:
 
 ```lean (name := pair)
 #check (1, true)
@@ -781,7 +790,7 @@ of the pair. It also has special syntax for creating products:
 true
 ```
 
-You can also use `.1` instead of `.fst` and `.2` instead of `.snd`
+You can also use `.1` instead of `.fst` and `.2` instead of `.snd`:
 
 ```lean
 example : (3, 5).1 = 3 := by rfl
@@ -819,55 +828,52 @@ What does this function do?
 ::::
 
 ```lean
-def zip {α β : Type} (lx : List α) (ly : List β) : List (α × β) :=
-  match lx, ly with
+def zip {α β : Type} (l₁ : List α) (l₂ : List β) : List (α × β) :=
+  match l₁, l₂ with
   | [], _ => []
   | _, [] => []
-  | x :: tx, y :: ty => (x, y) :: zip tx ty
+  | x :: l₁', y :: l₂' => (x, y) :: zip l₁' l₂'
 
-theorem zip_nil_right {α β : Type} (ly : List β) : zip [] ly = ([] : List (α × β)) := by rfl
+theorem zip_nil_right {α β : Type} (l₂ : List β) : zip [] l₂ = ([] : List (α × β)) := by rfl
 
-theorem zip_nil_left {α β : Type} (lx : List α) : zip lx [] = ([] : List (α × β)) := by
-   cases lx <;> rfl
-theorem zip_cons_cons {α β : Type} {lx : List α} {ly : List β} {x : α} {y : β} :
-   zip (x :: lx) (y :: ly) = (x, y) :: zip lx ly := by rfl
+theorem zip_nil_left {α β : Type} (l₁ : List α) : zip l₁ [] = ([] : List (α × β)) := by
+   cases l₁ <;> rfl
+theorem zip_cons_cons {α β : Type} {x : α} {y : β} {l₁ : List α} {l₂ : List β} :
+   zip (x :: l₁) (y :: l₂) = (x, y) :: zip l₁ l₂ := by rfl
 ```
 
 :::::exercise (rating := 1) (name := "zip_checks")
 Try answering the following questions on paper and
 checking your answers in Lean:
-- What is the type of `zip` (i.e., what does `#check @zip`
-  print?)
+- What is the type of `zip` (i.e., what does `#check @zip` print?)
 - What does
-
-```display
-#eval zip [1, 2] [false, false, true, true]
-```
-
-print?
+  ```display
+  #eval zip [1, 2] [false, false, true, true]
+  ```
+  print?
 :::::
 
 :::::exercise (rating := 2) (name := "unzip")
 The function `unzip` goes in the other direction from {name}`zip`: it takes a
  list of pairs and returns a pair of lists.
 
-Fill in the definition of `unzip` below. Make sure it passes the
-given unit test, and you can prove the simplification rules about it
+Fill in the definition of `unzip` below. Make sure it that passes the
+given unit test, and that you can prove the simplification rules about it.
 
 ```lean
 def unzip {α : Type} {β : Type} (l : List (α × β)) : List α × List β := solution!(
   match l with
   | [] => ([], [])
-  | (x, y) :: t =>
-    let (lx, ly) := unzip t
-    (x :: lx, y :: ly))
+  | (x, y) :: l' =>
+    let (l₁, l₂) := unzip l'
+    (x :: l₁, y :: l₂))
 
 theorem unzip_nil {α β : Type} : unzip [] = (([], []) : List α × List β) := solution!(by rfl)
 
-theorem unzip_cons_fst {α β : Type} {l : List (α × β)} {x : α} {y : β} :
+theorem unzip_cons_fst {α β : Type} {x : α} {y : β} {l : List (α × β)} :
    (unzip ((x, y) :: l)).fst = x :: (unzip l).fst := solution!(by rfl)
 
-theorem unzip_cons_snd {α β : Type} {l : List (α × β)} {x : α} {y : β} :
+theorem unzip_cons_snd {α β : Type} {x : α} {y : β} {l : List (α × β)} :
    (unzip ((x, y) :: l)).snd = y :: (unzip l).snd := solution!(by rfl)
 
 theorem unzip_test1 : unzip [(1, false), (2, false)] = ([1, 2], [false, false]) := solution!(by rfl)
@@ -908,8 +914,8 @@ with any type of list.
 def nth? {α : Type} (l : List α) (n : Nat) : Option α :=
   match l with
   | [] => none
-  | a :: l' => match n with
-    | 0 => some a
+  | x :: l' => match n with
+    | 0 => some x
     | n' + 1 => nth? l' n'
 ```
 
@@ -929,7 +935,7 @@ passes the unit tests below.
 def head? {α : Type} (l : List α) : Option α := solution!(
   match l with
   | [] => none
-  | a :: _ => some a)
+  | x :: _ => some x)
 
 theorem head?_nil {α : Type} : head? ([] : List α) = none := solution!(by rfl)
 
@@ -975,14 +981,13 @@ as results are called higher-order functions.
 ::::
 
 ```lean
-def doIt3Times {α : Type} (f : α → α) (n : α) : α :=
-  f (f (f n))
+def doIt3Times {α : Type} (f : α → α) (x : α) : α :=
+  f (f (f x))
 ```
 
 ::::full
-The argument `f` here is itself a function (from {lean}`α` to
-`α`); the body of {name}`doIt3Times` applies `f` three times to some
-value `n`.
+The argument `f` here is itself a function (from {lean}`α` to {lean}`α`);
+the body of {name}`doIt3Times` applies `f` three times to some value `x`.
 ::::
 
 ```lean (name := doIt3Times)
@@ -994,16 +999,16 @@ example : doIt3Times not true = false := by rfl
 ```
 
 ```leanOutput doIt3Times
-doIt3Times {α : Type} (f : α → α) (n : α) : α
+doIt3Times {α : Type} (f : α → α) (x : α) : α
 ```
 
 ## Filter
 
-:::instructors
+::::instructors
 We've tried to be careful with terminology in the rest
 of the notes: "(boolean) predicate" for boolean functions and
 "property" for propositions indexed by one parameter.
-:::
+::::
 
 ::::full
 Here is a more useful higher-order function, taking a list
@@ -1021,9 +1026,9 @@ argument. For example, `filter` takes a test and a list.
 def filter {α : Type} (test : α → Bool) (l : List α) : List α :=
   match l with
   | [] => []
-  | head :: tail =>
-    bif test head then head :: filter test tail
-    else filter test tail
+  | x :: l' =>
+    bif test x then x :: filter test l'
+    else filter test l'
 ```
 
 ::::full
@@ -1051,16 +1056,16 @@ example : filter isLength1
 
 theorem filter_nil {α : Type} {test : α → Bool} : filter test [] = [] := by rfl
 
-theorem filter_cons_of_pos {α : Type} {test : α → Bool} {head : α}
-    {tail : List α} (h : test head) :
-    filter test (head :: tail) = head :: filter test tail := by
+theorem filter_cons_of_pos {α : Type} {test : α → Bool} {x : α}
+    {l : List α} (h : test x = true) :
+    filter test (x :: l) = x :: filter test l := by
   dsimp [filter]
   rw [h]
   dsimp
 
-theorem filter_cons_of_neg {α : Type} {test : α → Bool} {head : α}
-    {tail : List α} (h : test head = false) :
-    filter test (head :: tail) = filter test tail := by
+theorem filter_cons_of_neg {α : Type} {test : α → Bool} {x : α}
+    {l : List α} (h : test x = false) :
+    filter test (x :: l) = filter test l := by
    dsimp [filter]
    rw [h]
    dsimp
@@ -1184,9 +1189,9 @@ example : filter (·.length == 1)
 
 ::::::full
 :::::exercise (rating := 2) (name := "filter_even_gt7")
-Use `filter` (instead of a recursive `def`) to write a Lean function
+Use {name}`filter` (instead of a recursive `def`) to write a Lean function
 `filterEvenGt7` that takes a list of natural numbers as input
-and returns a list of just those that are even and greater than 7.
+and returns a list of just those that are even and greater than {lean}`7`.
 
 ```lean
 def filterEvenGt7 (l : List Nat) : List Nat := solution!(
@@ -1298,13 +1303,13 @@ As usual, we define the following simplification rules for {name}`map`:
 ```lean
 theorem map_nil {α : Type} {β : Type} {f : α → β} : map f [] = [] := by rfl
 
-theorem map_cons {α : Type} {β : Type} {f : α → β} {head : α} {tail : List α} :
-    map f (head :: tail) = f head :: map f tail := by rfl
+theorem map_cons {α : Type} {β : Type} {f : α → β} {x : α} {l : List α} :
+    map f (x :: l) = f x :: map f l := by rfl
 ```
 
 ::::::full
 :::::exercise (rating := 3) (name := "map_rev")
-Show that {name}`map` and `rev` commute. (Hint: You may need to
+Show that {name}`map` and {name}`List.rev` commute. (Hint: You may need to
 define an auxiliary lemma.)
 
 ```lean
@@ -1313,17 +1318,16 @@ theorem map_append {α β : Type} {f : α → β} {l l' : List α} :
     map f (l ++ l') = map f l ++ map f l' := by
   induction l with
   | nil => rw [map_nil, List.nil_append, List.nil_append]
-  | cons h t ih => rw [List.cons_append, map_cons, map_cons, ih, List.cons_append]
+  | cons _ _ ih => rw [List.cons_append, map_cons, map_cons, ih, List.cons_append]
 -- END SOLUTION
 
-theorem map_rev {α : Type} {β : Type} : ∀ (f : α → β) (l : List α),
+theorem map_rev {α : Type} {β : Type} {f : α → β} {l : List α} :
     map f l.rev = (map f l).rev := by
   solution!
-    intro f l
     induction l
     case nil =>
      rw [rev_nil, map_nil, rev_nil]
-    case cons h t ih =>
+    case cons _ _ ih =>
      rw [rev_cons, map_cons, map_append, rev_cons, ih, map_cons, map_nil]
 ```
 
@@ -1344,7 +1348,7 @@ flatMap (fun n => [n, n + 1, n + 2]) [1, 5, 10]
 ```
 
 ```lean
-def flatMap {α : Type} {β : Type} (f : α → List β) (l : List α) : List β := solution!(
+def flatMap {α β : Type} (f : α → List β) (l : List α) : List β := solution!(
   match l with
   | [] => []
   | h :: t => f h ++ flatMap f t)
@@ -1366,8 +1370,8 @@ theorem flatMap_cons {α : Type} {β : Type} (f : α → List β) h t :
 ```
 ::::::
 
-Lists are not the only inductive type for which `map` makes sense.
-Here is a `map` for the `Option` type:
+Lists are not the only inductive type for which {name}`map` makes sense.
+Here is a {name}`map` for the {name}`Option` type:
 
 ```lean
 def optionMap {α : Type} {β : Type} (f : α → β) (x? : Option α) : Option β :=
@@ -1378,7 +1382,7 @@ def optionMap {α : Type} {β : Type} (f : α → β) (x? : Option α) : Option 
 
 ::::::full
 :::::exercise (rating := 2) (name := "implicit_args")
-The definitions and uses of `filter` and `map` use implicit
+The definitions and uses of {name}`filter` and {name}`map` use implicit
 arguments in many places. Replace the curly braces around the
 implicit arguments with explicit parentheses, and then fill in
 explicit type parameters where necessary and use Lean to check that
@@ -1402,7 +1406,7 @@ distributed programming framework.
 def fold {α : Type} {β : Type} (f : α → β → β) (l : List α) (b : β) : β :=
   match l with
   | [] => b
-  | head :: tail => f head (fold f tail b)
+  | a :: l => f a (fold f l b)
 ```
 
 ::::terse
@@ -1413,7 +1417,7 @@ This is the "reduce" in map/reduce...
 :::
 
 ::::full
-Intuitively, the behavior of the `fold` operation is to
+Intuitively, the behavior of the {name}`fold` operation is to
 insert a given binary operator `f` between every pair of elements
 in a given list. For example, `fold (· + ·) [1, 2, 3, 4]`
 intuitively means `1 + 2 + 3 + 4`. To make this precise, we also
@@ -1442,18 +1446,18 @@ example : fold (fun l n => l.length + n) [[1], [], [2, 3, 2], [4]] 0 = 5 := by r
 
 theorem fold_nil {α : Type} {β : Type} {f : α → β → β} {b : β} : fold f [] b = b := by rfl
 
-theorem fold_cons {α : Type} {β : Type} {f : α → β → β} {head : α} {tail : List α} {b : β} :
-    fold f (head :: tail) b = f head (fold f tail b) := by rfl
+theorem fold_cons {α : Type} {β : Type} {f : α → β → β} {a : α} {l : List α} {b : β} :
+    fold f (a :: l) b = f a (fold f l b) := by rfl
 ```
 
 ::::quiz
 Here is the definition of `fold` again:
 
 ```display
-def fold {α : Type} {β : Type} (f : α → β → β) (l : List α) (b : β) : β :=
+def fold {α β : Type} (f : α → β → β) (l : List α) (b : β) : β :=
   match l with
   | [] => b
-  | head :: tail => f head (fold f tail b)
+  | a :: l => f a (fold f l b)
 ```
 
 What is the type of `@fold`?
@@ -1465,6 +1469,10 @@ What is the type of `@fold`?
 (C) `{α β : Type} → α → β → β → List α → β → β`
 
 (D) `α → β → α → β → β → List α → β → β`
+
+:::quizSolution
+(A)
+:::
 ::::
 
 ::::quiz
@@ -1477,6 +1485,10 @@ What does `fold (· + ·) [1, 2, 3, 4] 0` simplify to?
 (C) `10`
 
 (D) `[3, 7, 0]`
+
+:::quizSolution
+(C)
+:::
 ::::
 
 ::::::full
@@ -1504,7 +1516,7 @@ far take functions as arguments. Let's look at some examples that
 involve _returning_ functions as the results of other functions.
 To begin, here is a function that takes a value `x` (drawn from
 some type {lean}`α`) and returns a function from {name}`Nat` to {lean}`α` that
-yields `x` whenever it is called, ignoring its {name}`Nat` argument.
+yields {lean}`x` whenever it is called, ignoring its {name}`Nat` argument.
 ::::
 
 ::::terse
@@ -1597,7 +1609,7 @@ two more arguments: a list and a starting value.
 
 :::::exercise (rating := 2) (name := "fold_length")
 Many common functions on lists can be implemented in terms of
-`fold`. For example, here is an alternative definition of `length`:
+{name}`fold`. For example, here is an alternative definition of {name}`List.length`:
 
 ```lean
 def foldLength {α : Type} (l : List α) : Nat :=
@@ -1606,20 +1618,20 @@ def foldLength {α : Type} (l : List α) : Nat :=
 example : foldLength [4, 7, 0] = 3 := by rfl
 ```
 
-Prove the correctness of `foldLength`.
+Prove the correctness of {name}`foldLength`.
 
 Hint: It may help to use `dsimp [foldLength, fold]` to unfold
 the definition.
 
 ```lean
-theorem fold_length_correct {α : Type} (l : List α) :
+theorem fold_length_correct {α : Type} {l : List α} :
     foldLength l = l.length := by
   solution!
     induction l with
     | nil =>
       dsimp only [foldLength]
       rw [fold_nil, List.length_nil]
-    | cons head tail ih =>
+    | cons _ _ ih =>
       dsimp only [foldLength] at *
       rw [List.length_cons, fold_cons, ih]
 ```
@@ -1629,26 +1641,26 @@ theorem fold_length_correct {α : Type} (l : List α) :
 :::::
 
 :::::exercise (rating := 3) (name := "fold_map") (manual := true)
-We can also define `map` in terms of `fold`. Finish `foldMap`
-below.
+We can also define {name}`map` in terms of {name}`fold`.
+Finish `foldMap` below.
 
 ```lean
-def foldMap {α : Type} {β : Type} (f : α → β) (l : List α) : List β := solution!(
+def foldMap {α β : Type} (f : α → β) (l : List α) : List β := solution!(
   fold (fun x l' => f x :: l') l [])
 ```
 
-Write down a theorem `fold_map_correct` stating that `foldMap` is
+Write down a theorem `fold_map_correct` stating that {lean}`foldMap` is
 correct, and prove it in Lean.
 
 ```lean
 -- SOLUTION
-theorem fold_map_correct {α : Type} {β : Type} (f : α → β) (l : List α) :
+theorem fold_map_correct {α : Type} {β : Type} {f : α → β} {l : List α} :
     foldMap f l = map f l := by
   induction l with
   | nil =>
     dsimp only [foldMap]
     rw [fold_nil, map_nil]
-  | cons head tail ih =>
+  | cons _ _ ih =>
     dsimp only [foldMap] at *
     rw [fold_cons, map_cons, ih]
 -- END SOLUTION
@@ -1703,8 +1715,8 @@ to shorten one of the examples that we saw above:
 example : map (Nat.add 3) [2, 0, 2] = [5, 3, 5] := by rfl
 ```
 
-Thought exercise: before running the following commands, can you
-calculate the types of {name}`prodCurry` and {name}`prodUncurry`?
+Thought exercise: before looking at the output of the following commands,
+can you calculate the types of {name}`prodCurry` and {name}`prodUncurry`?
 
 ```lean (name := c_uc)
 #check @prodCurry
@@ -1720,12 +1732,12 @@ calculate the types of {name}`prodCurry` and {name}`prodUncurry`?
 ```
 
 ```lean
-theorem uncurry_curry {α β γ : Type} (f : α → β → γ) (x : α) (y : β) :
+theorem uncurry_curry {α β γ : Type} {x : α} {y : β} {f : α → β → γ} :
     prodCurry (prodUncurry f) x y = f x y := by
   solution!
     rfl
 
-theorem curry_uncurry {α β γ : Type} (f : α × β → γ) {p : α × β} :
+theorem curry_uncurry {α β γ : Type} {p : α × β} {f : α × β → γ} :
     prodUncurry (prodCurry f) p = f p := by
   solution!
     rfl
@@ -1742,8 +1754,8 @@ Recall the definition of the {name}`nth?` function:
 def nth? (l : List α) (n : Nat) : Option α :=
   match l with
   | [] => none
-  | a :: l' => match n with
-    | 0 => some a
+  | x :: l' => match n with
+    | 0 => some x
     | n' + 1 => nth? l' n'
 ```
 
@@ -1799,7 +1811,7 @@ parameter and returns `f` iterated `n` times.
 ```lean
 namespace Church
 
-def CNat := (α : Type) → (α → α) → α → α
+def CNat := ∀ (α : Type), (α → α) → α → α
 ```
 
 Let's see how to write some numbers with this notation. Iterating
@@ -1807,14 +1819,14 @@ a function once should be the same as just applying it. Thus:
 
 ```lean
 def one : CNat :=
-  fun (X : Type) (f : X → X) (x : X) => f x
+  fun (α : Type) (f : α → α) (x : α) => f x
 ```
 
 Similarly, `two` should apply `f` twice to its argument:
 
 ```lean
 def two : CNat :=
-  fun (X : Type) (f : X → X) (x : X) => f (f x)
+  fun (α : Type) (f : α → α) (x : α) => f (f x)
 ```
 
 Defining `zero` is somewhat trickier: how can we "apply a function
@@ -1823,12 +1835,12 @@ argument untouched.
 
 ```lean
 def zero : CNat :=
-  fun (X : Type) (_ : X → X) (x : X) => x
+  fun (α : Type) (_ : α → α) (x : α) => x
 ```
 
 More generally, a number `n` can be written as
-`fun X f x => f (f ... (f x) ...)`, with `n` occurrences of `f`.
-Let's informally notate that as `fun X f x => f^n x`, with the
+`fun α f x => f (f ... (f x) ...)`, with `n` occurrences of `f`.
+Let's informally notate that as `fun α f x => f^n x`, with the
 convention that `f^0 x` is just `x`. Note how the {name}`doIt3Times`
 function we've defined previously is actually just the Church
 representation of 3.
@@ -1837,21 +1849,21 @@ representation of 3.
 def three : CNat := @doIt3Times
 ```
 
-So `n X f x` represents "do it `n` times", where `n` is a Church
+So `n α f x` represents "do it `n` times", where `n` is a Church
 numeral and "it" means applying `f` starting with `x`.
 
 Another way to think about the Church representation is that
-function `f` represents the successor operation on `α`, and value
-`x` represents the zero element of `α`. We could even rewrite
+function `f` represents the successor operation on {lean}`α`, and value
+`x` represents the zero element of {lean}`α`. We could even rewrite
 with those names to make it clearer:
 
 ```lean
 def zero' : CNat :=
-  fun (X : Type) (_ : X → X) (zero : X) => zero
+  fun (α : Type) (_ : α → α) (zero : α) => zero
 def one' : CNat :=
-  fun (X : Type) (succ : X → X) (zero : X) => succ zero
+  fun (α : Type) (succ : α → α) (zero : α) => succ zero
 def two' : CNat :=
-  fun (X : Type) (succ : X → X) (zero : X) => succ (succ zero)
+  fun (α : Type) (succ : α → α) (zero : α) => succ (succ zero)
 ```
 
 If we passed in `Nat.succ` as `succ` and `0` as `zero`, we'd
@@ -1859,8 +1871,8 @@ even get the Peano naturals as a result:
 
 ```lean
 example : zero Nat Nat.succ 0 = 0 := by rfl
-example : one Nat Nat.succ 0 = 1 := by rfl
-example : two Nat Nat.succ 0 = 2 := by rfl
+example : one  Nat Nat.succ 0 = 1 := by rfl
+example : two  Nat Nat.succ 0 = 2 := by rfl
 ```
 
 One very interesting implication of the Church numerals is that we
@@ -1885,7 +1897,7 @@ In other words, do it `n` times, then do it once more.
 
 ```lean
 def scc (n : CNat) : CNat := solution!(
-  fun (X : Type) (f : X → X) (x : X) => f (n X f x))
+  fun (α : Type) (f : α → α) (x : α) => f (n α f x))
 
 example : scc zero = one := solution!(by rfl)
 theorem scc_2 : scc one = two := solution!(by rfl)
@@ -1906,7 +1918,7 @@ Hint: the "zero" argument to a Church numeral need not be just `x`.
 
 ```lean
 def plus (n m : CNat) : CNat := solution!(
-  fun (X : Type) (f : X → X) (x : X) => n X f (m X f x))
+  fun (α : Type) (f : α → α) (x : α) => n α f (m α f x))
 
 theorem plus_1 : plus zero one = one := solution!(by rfl)
 theorem plus_2 : plus two three = plus three two := solution!(by rfl)
@@ -1924,17 +1936,17 @@ numerals.
 Hint: the "successor" argument to a Church numeral need not be
 just `f`.
 
-Warning: Lean will not let you pass {name}`CNat` itself as the type `X`
- argument to a Church numeral; you will get a "sort mismatch"
- error between {lean}`Type 1` and {lean}`Type 2`. Don't worry too much
- about what this means right now, but know that
- this is Lean's way of preventing a paradox in
- which a type contains itself. So leave the type argument
- unchanged.
+Warning: Lean will not let you pass {name}`CNat` itself as the type `α`
+argument to a Church numeral; you will get a "sort mismatch"
+error between {lean}`Type 1` and {lean}`Type 2`. Don't worry too much
+about what this means right now, but know that
+this is Lean's way of preventing a paradox in
+which a type contains itself. So leave the type argument
+unchanged.
 
 ```lean
 def mult (n m : CNat) : CNat := solution!(
-  fun (X : Type) (f : X → X) (x : X) => n X (m X f) x)
+  fun (α : Type) (f : α → α) (x : α) => n α (m α f) x)
 
 theorem mult_1 : mult one one = one := solution!(by rfl)
 theorem mult_2 : mult zero (plus three three) = zero := solution!(by rfl)
@@ -1956,7 +1968,7 @@ Finding the right type can be tricky.
 
 ```lean
 def exp (n m : CNat) : CNat := solution!(
-  fun (X : Type) (f : X → X) (x : X) => m (X → X) (n X) f x)
+  fun (α : Type) (f : α → α) (x : α) => m (α → α) (n α) f x)
 
 theorem exp_1 : exp two two = plus two two := solution!(by rfl)
 theorem exp_2 : exp three zero = one := solution!(by rfl)
