@@ -1179,6 +1179,9 @@ def incr (m : Bin) : Bin
   | .b1 m' => .b0 (incr m'))
 ```
 
+:::autogradedHole incr
+:::
+
 ```lean
 theorem incr_z : incr .z = .b1 .z := solution!(by rfl)
 theorem incr_b0 m : incr (.b0 m) = .b1 m := solution!(by rfl)
@@ -1198,6 +1201,9 @@ theorem binToNat_b1 m : binToNat (.b1 m) = add (mul (binToNat m) two) one := sol
 
 attribute [pp_nodot] Bin.b0 Bin.b1
 ```
+
+:::autogradedHole binToNat
+:::
 
 In Basics, we did some unit testing of {name}`binToNat`, but we
 didn't prove its correctness. Now we'll do so.
@@ -1251,6 +1257,9 @@ def natToBin (n : Nat) : Bin := solution!(
   | zero    => .z
   | succ n' => incr (natToBin n'))
 ```
+
+:::autogradedHole natToBin
+:::
 
 ```lean
 -- SOLUTION
@@ -1321,6 +1330,9 @@ def doubleBin (b : Bin) : Bin := solution!(
   | .z => .z
   | _  => .b0 b)
 ```
+
+:::autogradedHole doubleBin
+:::
 
 Fill in the characterizing lemmas for this definition below:
 
@@ -1406,6 +1418,9 @@ def normalize (b : Bin) : Bin := solution!(
   | .b0 b' => doubleBin (normalize b')
   | .b1 b' => incr (doubleBin (normalize b')))
 ```
+
+:::autogradedHole normalize
+:::
 
 Also specify the characterizing lemmas for this definition:
 

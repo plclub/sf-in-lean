@@ -407,11 +407,10 @@ theorem nand_test3 : nand MyBool.false MyBool.true  = MyBool.true  := solution!(
 theorem nand_test4 : nand MyBool.true  MyBool.true  = MyBool.false := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.25" nand_test1 nand_test2 nand_test3 nand_test4
+:::autogradedHole nand
 :::
 
-:::dev
-TODO: `nand` needs `@[autogradedHole]`
+:::gradeTheorem "0.25" nand_test1 nand_test2 nand_test3 nand_test4
 :::
 ::::
 
@@ -429,6 +428,9 @@ theorem and3_test2 : and3 MyBool.false MyBool.true  MyBool.true  = MyBool.false 
 theorem and3_test3 : and3 MyBool.true  MyBool.false MyBool.true  = MyBool.false := solution!(by rfl)
 theorem and3_test4 : and3 MyBool.true  MyBool.true  MyBool.false = MyBool.false := solution!(by rfl)
 ```
+
+:::autogradedHole and3
+:::
 
 :::gradeTheorem "0.25" and3_test1 and3_test2 and3_test3 and3_test4
 :::
@@ -863,6 +865,9 @@ theorem is_weekend_test1 : is_weekend Day.sunday = true := solution!(by rfl)
 theorem is_weekend_test2 : is_weekend Day.friday = false := solution!(by rfl)
 ```
 
+:::autogradedHole is_weekend
+:::
+
 :::gradeTheorem "0.5" is_weekend_test1 is_weekend_test2
 :::
 ::::
@@ -898,6 +903,9 @@ theorem isInversion_test3 : isInversion (Color.primary RGB.red) (Color.primary R
 theorem isInversion_test4 : isInversion (Color.primary RGB.green) (Color.primary RGB.red) = Bool.false :=
   solution!(by rfl)
 ```
+
+:::autogradedHole isInversion
+:::
 
 :::gradeTheorem "0.25" isInversion_test1 isInversion_test2 isInversion_test3 isInversion_test4
 :::
@@ -2072,6 +2080,9 @@ theorem blt_test3 : blt four two = false := solution!(by rfl)
 attribute [irreducible] blt ble
 ```
 
+:::autogradedHole blt
+:::
+
 :::gradeTheorem 1 blt_test3
 :::
 ::::
@@ -2572,6 +2583,9 @@ theorem binToNat_z : binToNat .z = zero := solution!(by rfl)
 theorem binToNat_b0 (m : Bin) : binToNat (.b0 m) = binToNat m * two := solution!(by rfl)
 theorem binToNat_b1 (m : Bin) : binToNat (.b1 m) = binToNat m * two + one := solution!(by rfl)
 ```
+
+:::autogradedHole incr binToNat
+:::
 
 You may find your previous proofs of {name}`zero_add_one`, {name}`one_add_one`, {name}`zero_mul_two`,
 {name}`one_mul_two`, and {name}`two_mul_two` useful here.

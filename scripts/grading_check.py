@@ -93,7 +93,7 @@ def runtest(comparator_autograder, lean4export, landrun, root_path, variant, vol
             # We grade the top-level volume file that imports each chapter
             "AUTOGRADER_CHALLENGE": f"Challenge.{volume}",
             "AUTOGRADER_SOLUTION": f"Solution.{volume}",
-            "AUTOGRADER_SKIP_IMPORTS": "false",
+            "AUTOGRADER_SKIP_IMPORTS": "false" if module is None else "true", # skip imports only when testing a specific module
             "AUTOGRADER_EXPORT_PATH": f"/proc/self/fd/{format_pipe_w}",
             "AUTOGRADER_EXPORT_FORMAT": "json",
             "COMPARATOR_LEAN4EXPORT": lean4export,
@@ -141,10 +141,10 @@ def assert_results(aggregate_results):
     for vol in aggregate_results:
         if "student" in aggregate_results[vol]:
             for r in aggregate_results[vol]["student"]["theoremReports"]:
-                assert r["error"] != None and next(iter(r["error"])) == "illegalAxiom"
+                assert r["error"] is not None and next(iter(r["error"])) == "illegalAxiom"
         if "solutions" in aggregate_results[vol]:
             for r in aggregate_results[vol]["solutions"]["theoremReports"]:
-                assert r["error"] == None
+                assert r["error"] is None
 
 def main():
     parser = argparse.ArgumentParser(description='Test automated grading in SF-in-lean')
@@ -158,7 +158,7 @@ def main():
     parser.add_argument('--no-build', action='store_true', help="Don't build lean4export and comparatorautograder")
 
     args = parser.parse_args()
-    if not (len(args.volumes) == 1) ** (args.module != None):
+    if not (len(args.volumes) == 1) ** (args.module is not None):
         print("only one volume can be selected when using --module")
         return
 
