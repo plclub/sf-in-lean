@@ -1090,6 +1090,9 @@ theorem double (n : Nat) : Ev n.double := by
     | succ n ih =>
       rw [Nat.double_succ]; exact ev_succ_succ ih
 ```
+
+:::gradeTheorem 1 double
+:::
 :::::
 
 ::::::
@@ -1247,6 +1250,9 @@ theorem le_inversion (n m : Nat) (h : Le n m) :
     | refl => left; rfl
     | @step m h => right; exists m
 ```
+
+:::gradeTheorem 1 le_inversion
+:::
 :::::
 
 ```lean
@@ -1505,6 +1511,8 @@ theorem ev5_nonsense (h : Ev 5) : 2 + 2 = 9 := by
         inversion h''
 ```
 
+:::gradeTheorem 1 ev5_nonsense
+:::
 :::::
 
 ::::::
@@ -1747,6 +1755,9 @@ theorem ev_sum (n m : Nat) (hₙ : Ev n) (hₘ : Ev m) : Ev (n + m) := by
       rw [Nat.add_comm, ← Nat.add_assoc, Nat.add_comm m]
       apply Ev.ev_succ_succ; exact ih
 ```
+
+:::gradeTheorem 2 ev_sum
+:::
 :::::
 
 :::::exercise (rating := 3) (name := "ev_ev__ev") (level := Advanced)
@@ -1761,6 +1772,9 @@ theorem ev_ev__ev (n m : Nat) (hₙₘ : Ev (n + m)) (hₙ : Ev n) : Ev m := by
       apply ih; rw [Nat.add_comm, ←Nat.add_assoc, Nat.add_comm m] at hₙₘ
       inversion hₙₘ; assumption
 ```
+
+:::gradeTheorem 3 ev_ev__ev
+:::
 :::::
 
 :::::exercise (rating := 3) (name := "ev_plus_plus")
@@ -1785,6 +1799,9 @@ theorem ev_plus_plus (n m k : Nat)
       . assumption
     . rw [← Nat.double_add]; exact Ev.double n
 ```
+
+:::gradeTheorem 3 ev_plus_plus
+:::
 :::::
 
 :::full
@@ -1835,6 +1852,9 @@ theorem in_mem {α} (x : α) (l : List α) : List.In x l ↔ x ∈ l := by
       | head l' => rw [List.In_cons]; left; rfl
       | tail h ih => rw [List.In_cons]; right; assumption
 ```
+
+:::gradeTheorem 3 in_mem
+:::
 :::::
 
 The characterizing lemmas for `∈` are called
@@ -1962,6 +1982,9 @@ theorem ev'_ev n : Ev' n ↔ Ev n := by
       . constructor
       . constructor; assumption; constructor
 ```
+
+:::gradeTheorem 4 ev'_ev
+:::
 :::::
 
 We can do similar inductive proofs on the {name}`Perm3` relation,
@@ -2018,6 +2041,9 @@ theorem In {α} (x : α) (l₁ l₂ : List α)
     | perm3_trans _ _  ih₁₂ ih₂₃ =>
       apply ih₂₃; apply ih₁₂; apply hIn
 ```
+
+:::gradeTheorem 2 In
+:::
 :::::
 
 :::::exercise (rating := 1) (name := "Perm3_NotIn")
@@ -2030,6 +2056,9 @@ theorem NotIn {α} (x : α) (l₁ l₂ : List α)
     . apply symm; exact hPerm
     . exact hContra
 ```
+
+:::gradeTheorem 1 NotIn
+:::
 :::::
 
 :::::exercise (rating := 2) (name := "NotPerm3")
@@ -2037,7 +2066,7 @@ Proving that something is NOT a permutation is quite tricky. Some
 of the lemmas above, like {name}`Perm3.In` can be useful for this.
 
 ```lean
-example : ¬ Perm3 [1, 2, 3] [1, 2, 4] := by
+theorem Not : ¬ Perm3 [1, 2, 3] [1, 2, 4] := by
   solution!
     intro h; apply (Perm3.In 3) at h
     have h4 : 3 ∉ [1, 2, 4] := by
@@ -2050,7 +2079,12 @@ example : ¬ Perm3 [1, 2, 3] [1, 2, 4] := by
     apply h4; apply h
     rw [List.mem_cons, List.mem_cons, List.mem_cons]
     right; right; left; rfl
+```
 
+:::gradeTheorem 2 Not
+:::
+
+```lean
 end Perm3
 ```
 :::::
@@ -2641,6 +2675,13 @@ theorem R.equiv_fR m n k : R m n k ↔ fR m n = k := by
       | zero => rw [Nat.zero_add]; exact R0 n
       | succ m ih => rw [Nat.succ_add]; exact c2 ih
 ```
+
+:::autogradedHole fR
+:::
+
+:::gradeTheorem 3 R.equiv_fR
+:::
+
 :::hide
 And here's a somewhat nicer version using some automation,
    but we haven't covered that yet...
@@ -2794,6 +2835,9 @@ theorem app (l₁ l₂ l₃ : List Nat)
     | sub_take => constructor; assumption
     | sub_skip => constructor; assumption
 ```
+
+:::autogradedHole Subseq
+:::
 
 :::dev
 HIDE: AC'21: this exercise should probably be marked as more
@@ -2996,6 +3040,9 @@ theorem total_relation_is_total (n m : Nat) : TotalRelation n m := by
     constructor
 ```
 
+:::autogradedHole TotalRelation
+:::
+
 :::gradeTheorem 2 total_relation_is_total
 :::
 :::::
@@ -3032,6 +3079,9 @@ inductive EmptyRelation : Nat → Nat → Prop where
   -- SOLUTION
 -- /SOLUTION
 ```
+
+:::autogradedHole EmptyRelation
+:::
 
 ```lean
 theorem empty_relation_is_empty (n m : Nat) : ¬ EmptyRelation n m := by
@@ -3087,6 +3137,9 @@ inductive NoStutter {α : Type} : List α → Prop where
     NoStutter (x :: y :: l)
  -- /SOLUTION
 ```
+
+:::autogradedHole NoStutter
+:::
 
 Make sure each of these tests succeeds, but feel free to change
 the suggested proof (in comments) if the given one doesn't work
@@ -3208,6 +3261,9 @@ theorem merge_filter (α : Type) (test : α → Bool) (l l₁ l₂ : List α)
       . assumption
       . assumption
 ```
+
+:::autogradedHole Merge
+:::
 
 ::::hide
 ```
@@ -3504,6 +3560,9 @@ inductive Pal {α : Type} : List α → Prop where
   | pal_consnoc {x : α} {l : List α} (h : Pal l) : Pal (x :: (l ++ [x]))
 -- END SOLUTION
 ```
+
+:::autogradedHole Pal
+:::
 
 :::dev PotentialImprovement
 ```
@@ -3884,6 +3943,9 @@ inductive Repeats {α : Type} : List α → Prop where
   | rep_later {x : α} {l : List α} (h : Repeats l) : Repeats (x :: l)
 -- /SOLUTION
 ```
+
+:::autogradedHole Repeats
+:::
 
 :::grade
 ```

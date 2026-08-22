@@ -1958,6 +1958,9 @@ example : allTrue Nat.even [0, 2, 4, 5] = false := solution!(by rfl)
 example : allTrue Nat.even [] = true := solution!(by rfl)
 ```
 
+:::autogradedHole allTrue
+:::
+
 The second checks whether it returns {name}`true` for at least one element.
 
 ```lean
@@ -1972,6 +1975,9 @@ example : anyTrue not [true, true, false] = true := solution!(by rfl)
 example : anyTrue Nat.even [] = false := solution!(by rfl)
 ```
 
+:::autogradedHole anyTrue
+:::
+
 Next, define a _nonrecursive_ version of {name}`anyTrue` — call it
 `anyTrue'` — using {name}`allTrue` and {name}`not`.
 
@@ -1979,6 +1985,9 @@ Next, define a _nonrecursive_ version of {name}`anyTrue` — call it
 def anyTrue' {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
   !(allTrue (fun x => !(test x)) l))
 ```
+
+:::autogradedHole anyTrue'
+:::
 
 Finally, prove a theorem `anyTrue_eq_anyTrue` stating that
 `anyTrue'` and `anyTrue` have the same behavior.

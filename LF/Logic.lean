@@ -1581,7 +1581,6 @@ def List.All {α : Type} (p : α → Prop) (l : List α) : Prop := solution!(
   match l with
   | [] => True
   | x :: l' => p x ∧ List.All p l')
-
 theorem List.All_nil {α : Type} {a : α → Prop} : List.All a [] := solution!(by constructor)
 
 theorem List.All_cons {α : Type} {p : α → Prop} {x : α} {l : List α} :
@@ -1613,9 +1612,27 @@ theorem List.All_In {α : Type} {p : α → Prop} {l : List α} :
         · apply ih₂; apply hp; exact h₂
 ```
 
+:::autogradedHole List.All
+:::
 :::gradeTheorem 3 List.All_In
 :::
 :::::
+
+:::dev "Niklas Halonen (xhalo32)"
+The `List.All_In` solution does not currently pass autograder because `List.All` has a hidden dependency on `List.IsNil`, which is not emitted to the grading variant (because it's in a solution block):
+```lean
+/--
+info: @[reducible] def List.All._f : {α : Type} → (α → Prop) → (l : List α) → @List.below α (fun l => Prop) l → Prop :=
+fun {α} p l f =>
+  @List.IsNil.match_1 α (fun l => @List.below α (fun l => Prop) l → Prop) l (fun _ x => True)
+    (fun x l' x_1 => And (p x) x_1.1) f
+-/
+#guard_msgs in
+set_option pp.explicit true in
+#print List.All._f
+```
+By commenting out the `List.IsNil` exercise, the above uses `List.In.match_1` instead of `List.IsNil.match_1`.
+:::
 
 :::dev "Yipeng Liu (berberman)" NOW
 I found this exercise combining too many awkward details for too little conceptual payoff:
@@ -2389,6 +2406,8 @@ theorem beqList_true_iff α (beq : α → α → Bool)
           exact ⟨hy hxy, ih₂ hxsys⟩
 ```
 
+:::autogradedHole beqList
+:::
 :::gradeTheorem 3 beqList_true_iff
 :::
 :::::
@@ -2442,6 +2461,8 @@ This theorem exactly captures the input-output behavior of {lean}`List.allb`.
 However, it does not say anything about the running time.
 :::
 
+:::autogradedHole List.allb
+:::
 :::gradeTheorem 2 List.allb_true_iff
 :::
 :::::

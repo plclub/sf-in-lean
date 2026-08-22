@@ -46,7 +46,7 @@ private def projectRequires
   let batteries ← manifestRequire manifest "batteries"
 
   if v.isGrading then
-    let autograder ← manifestRequire manifest "autograder"
+    let autograder ← manifestRequire manifest "comparator-autograder-lib"
     return #[autograder, batteries]
   else
     return #[batteries]
@@ -182,7 +182,7 @@ private def emitSavedImpl (config : ExtractConfig)
 
     for (vol, part) in crossVol do
       let file := chapterPath vol part
-      buf := buf.appendOnly file .grading "import AutograderLib\n"
+      buf := buf.appendOnly file .grading "import ComparatorAutograderLib\n"
       buf := buf.appendAll file s!"import {supportModuleName config.modPrefix}\n\n"
       buf := walkSection width 1 file part buf
 
