@@ -1261,6 +1261,8 @@ theorem MStar'' α (s : List α) (re : RegExp α) (h : s =~ Star re) :
         trivial
       intro s h; apply hall; trivial
 ```
+:::gradeTheorem 2 MStar''
+:::
 ::::
 
 ## The "Weak" Pumping Lemma
@@ -1379,6 +1381,8 @@ theorem weak_pumping_char {α : Type} (x : α)
   solution!
     simp [pumpingConstant] at h
 ```
+:::gradeTheorem 2 weak_pumping_char
+:::
 ::::
 
 ::::exercise (rating := 4) (name := "weak_pumping_app")
@@ -1438,6 +1442,8 @@ theorem weak_pumping_app {α : Type} (s₁ s₂ : List α) (re₁ re₂ : RegExp
           simp only [List.append_assoc] at *
           constructor <;> assumption
 ```
+:::gradeTheorem 4 weak_pumping_app
+:::
 ::::
 
 ::::exercise (rating := 3) (name := "weak_pumping_union_l")
@@ -1471,6 +1477,8 @@ theorem weak_pumping_union_l  {α : Type} (s₁ : List α) (re₁ re₂ : RegExp
         apply mUnionL
         assumption
 ```
+:::gradeTheorem 4 weak_pumping_union_l
+:::
 ::::
 
 ::::exercise (rating := 3) (name := "weak_pumping_union_r")
@@ -1505,6 +1513,8 @@ theorem weak_pumping_union_r {α : Type} (s₂ : List α) (re₁ re₂ : RegExp 
         apply mUnionR
         assumption
 ```
+:::gradeTheorem 3 weak_pumping_union_r
+:::
 ::::
 
 ::::exercise (rating := 2) (name := "weak_pumping_star_zero") (optional := true)
@@ -1522,6 +1532,8 @@ theorem weak_pumping_star_zero {α : Type} (re : RegExp α)
       have h₂ := pumping_constant_ge_1 re
       rw [← h₁] at h₂; inversion h₂
 ```
+:::gradeTheorem 2 weak_pumping_star_zero
+:::
 ::::
 
 ::::exercise (rating := 5) (name := "weak_pumping_star_app") (optional := true)
@@ -1593,6 +1605,8 @@ theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α)
           rw [← List.append_assoc]
           apply mStarApp <;> assumption
 ```
+:::gradeTheorem 5 weak_pumping_star_app
+:::
 ::::
 
 ::::exercise (rating := 3) (name := "weak_pumping")
@@ -1612,6 +1626,8 @@ theorem weak_pumping {α : Type} {re : RegExp α} {s : List α}
     case mStar0   => apply weak_pumping_star_zero <;> assumption
     case mStarApp => apply weak_pumping_star_app <;> assumption
 ```
+:::gradeTheorem 3 weak_pumping
+:::
 ::::
 
 ## The (Strong) Pumping Lemma
@@ -1638,6 +1654,9 @@ theorem pumping {α : Type} {re : RegExp α} {s : List α}
       ∀ m, s₁ ++ napp m s₂ ++ s₃ =~ re := by
   sorry
 ```
+-- TODO: Uncomment once the proof is done
+-- :::gradeTheorem 10 pumping
+-- :::
 ::::
 
 ```lean

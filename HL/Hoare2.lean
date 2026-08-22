@@ -4188,7 +4188,7 @@ equivalent; that is, `P <<->> P'`.
 ```lean
 def IsWp (P : Assertion) (c : Com) (Q : Assertion) : Prop :=
   ValidHoareTriple P c Q ∧
-  ∀ P' : Assertion, ValidHoareTriple P' c Q → P' ->> P
+  ∀ P' : Assertion, {{ P' }} ~c {{ Q }} → P' ->> P
 ```
 
 :::slidebreak
@@ -4304,8 +4304,20 @@ theorem hoare_asgn_weakest
     (Q : Assertion) (x : Ident) (a : Aexp) :
     IsWp ({{ Q [x ↦ ~a] }}) (imp {x := ~a}) Q := by
   solution!
-    sorry
+    refine ⟨hoare_asgn, ?_⟩
+    intro P hP
+    rw [validHoareTriple_def] at hP
+    intro st hst
+    rw [Assertion.subst_apply]
+    apply hP _ hst
+    exact Com.EvalR.asgn rfl
 ```
+
+:::dev "Niklas Halonen (xhalo32)"
+I had to fill in the above proof for the autograder to pass.
+If the proof is bad or unidiomatic, feel free to completely replace it.
+Please note that I have no idea what I'm doing -- I've never worked with weakest preconditions before.
+:::
 
 :::gradeTheorem 2 hoare_asgn_weakest
 :::

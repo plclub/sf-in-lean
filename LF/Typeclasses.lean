@@ -373,6 +373,8 @@ theorem List.elem_poly_eq_elem_nat (xs : List Nat) (n : Nat) : xs.elem_poly n = 
     rewrite [List.elem_poly_cons, List.elem_nat_cons, ih]
     rfl)
 ```
+:::gradeTheorem 1 List.elem_poly_eq_elem_nat
+:::
 ::::
 
 # Proof-Carrying Typeclasses
@@ -410,6 +412,10 @@ instance : HasTwo Nat where
 In most languages that support typeclasses (or traits) it is not possible to formally enforce
 laws such as `one_neq_two`. Thus it falls to the author to check, informally, that any required invariants are
 satisfied, which can lead to bugs.
+
+:::dev "Niklas Halonen (xhalo32)"
+HasThree needs either grading attributes or manual grading
+:::
 
 ::::exercise (rating := 1) (name := "HasThree")
 Following the pattern of {name}`DefaultValue` and {name}`HasTwo`, define a class `HasThree` that
@@ -493,6 +499,11 @@ something we do explain above. The way this works in Mathlib is that there are a
 ultiplicative variants of the classes, e.g. Monoid versus AddMonoid.
 
 This is an isolated problem for now, not sure if/how we want to talk about this.
+:::
+
+:::dev "Niklas Halonen (xhalo32)"
+Need to come up with a way to grade the data-carrying instances.
+What makes this more complicated is that the `op` is fixed but the `id` is not.
 :::
 
 ::::exercise (rating := 1) (name := "NatMonoidMul")
@@ -598,6 +609,8 @@ theorem inv_unique {α : Type} {g₁ g₂ : Group α} (h : g₁.op = g₂.op) : 
     rw [←g₁.right_id (Group.inv a), ←g₁.right_inv a]
     rw [g₁.assoc, h, g₂.left_inv a, g₂.left_id]
 ```
+:::gradeTheorem 1 inv_unique
+:::
 ::::
 
 :::dev "Daniel Sainati @dsainati1"
@@ -953,6 +966,8 @@ theorem update_neq {α β : Type} [BEq α] [LawfulBEq α] {m : TotalMap α β} {
     dsimp only
     rw [beq_false_of_ne h, cond_false]
 ```
+:::gradeTheorem 2 update_neq
+:::
 ::::
 
 The two remaining facts are equalities _between maps_, so we first need to say when two maps are equal. Since a total map is implemented as a function, this is effectively the functional extensionality principle ({name}`funext`) from the {ref "Logic"}[Logic] chapter: two maps are equal when they agree at every key. Recording it once, for maps, and tagging it `@[ext]` lets the {tactic}`ext` tactic reduce a goal `m₁ = m₂` to the pointwise one in the proofs below.
@@ -998,6 +1013,8 @@ theorem update_same {α β : Type} [BEq α] [LawfulBEq α] (m : TotalMap α β) 
       simp
     · simp [update_neq h]
 ```
+:::gradeTheorem 2 update_same
+:::
 ::::
 
 Similarly, if we update a map `m` at a key `a` with a value `b₁` and then update again with the same key `a` and another value `b₂`, the resulting map behaves the same (gives the same result when applied to any key) as the simpler map obtained by performing just the second {name}`update` on `m`:
@@ -1014,6 +1031,8 @@ theorem update_shadow {α β : Type} [BEq α] [LawfulBEq α] (m : TotalMap α β
       simp
     · simp [update_neq h]
 ```
+:::gradeTheorem 2 update_shadow
+:::
 ::::
 
 :::dev "mwhicks1" NOW
@@ -1503,6 +1522,8 @@ theorem even_double_exists (n : Nat) :
       rewrite [cond_false, Bool.not_false, cond_true]
       rfl)
 ```
+:::gradeTheorem 3 even_double_exists
+:::
 ::::
 
 Now the main theorem:
