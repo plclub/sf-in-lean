@@ -746,51 +746,7 @@ equivalent to `c'`.  We must show, for every `st` and `st'`, that
   - (`<-`) Similar.
 ::::
 -- Extremely annoying proof that I was trying to get done.
--- ```lean
--- theorem Com.congruence.while : ∀ (b b': Bexp) (c c': Com),
---   b.equiv b' -> c.equiv c' ->
---   Com.equiv (imp {while (~b) {~c}}) (imp {while (~b') {~c'}}) := by
- 
---   workinclass!
---   have A : ∀ (b b': Bexp) (c c': Com) (st st': State),
---              b.equiv b' -> c.equiv c' ->
---              st =[ while (~b) {~c} ]=> st' ->
---              st =[ while (~b') {~c'} ]=> st' := by
-            
---              unfold Bexp.equiv; unfold Com.equiv
-            
---              intro b b' c c' st st' hbe hce
-            
---              have key: ∀ c0 st0 st0', c0 = (imp {while (~b) {~c}}) ->
---                        st0 =[ c0 ]=> st0' ->
---                        ∀ c'0, c'0 = (imp {while (~b') {~c'}}) ->
---                        c0.equiv c'0 ->
---                        st0 =[ c'0 ]=> st0' := by
-                 
---                   intro c0 st0 st0' c0eq hc0
---                   induction hc0 with
---                   | whileFalse b0 st0 c00 hb0 =>
---                     intro c'0 c'0eq ceq        
---                     injection c0eq with beq ceq; subst beq ceq
---                     rw [c'0eq]
---                     apply Com.EvalR.whileFalse; rw [<- hbe, hb0]
---                   | whileTrue s0 s0' s0'' b0 c00 hb0 hc00 hwhile ih1 ih2 =>
---                     -- apply ih2; assumption
---                     injection c0eq with beq ceq; subst beq ceq
---                     apply Com.EvalR.whileTrue _ s0'
---                     · sorry
---                     · sorry
---                     · apply ih2; rfl
---                   | skip => simp at c0eq
---                   | ifTrue => simp at c0eq
---                   | ifFalse => simp at c0eq
---                   | asgn => simp at c0eq
-                 
---                   | _ => sorry
-              
---              sorry
---   sorry
--- ```
+
 :::dev "Sati (satiscugcat)"
 ```
 NOT PORTED YET - remaining portions of Equiv.v left (apart from the portions explicitly stated so far).
