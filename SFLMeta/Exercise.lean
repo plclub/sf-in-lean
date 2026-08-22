@@ -224,6 +224,55 @@ private def recordStudentRepls (repls : Array Replacement) : IO Unit := do
     if h : repls.size > 0 then
       studentEditRef.modify (·.push ⟨repls, h⟩)
 
+/-- Drop up to `n` leading space characters from a list of characters. -/
+private def dropLeadingSpaces : Nat → List Char → List Char
+  | 0, cs => cs
+  | _+1, [] => []
+  | n+1, c :: cs => if c = ' ' then dropLeadingSpaces n cs else c :: cs
+
+private def dedentLine (delta : Nat) (line : String) : String :=
+  (dropLeadingSpaces delta line.toList).foldl String.push ""
+
+private def leadingSpaceCount (line : String) : Nat :=
+  (line.takeWhile (· = ' ')).toString.length
+
+/-- The literal source text of tactic block `t`, for splicing in place of the
+`solution!`/`workinclass!`/`suggested!` keyword at `tk` in a build where the
+wrapped proof should be shown verbatim rather than stubbed. `t` is usually an
+indented block starting on the line after `tk` (required by
+`tacticSeqIndentGt`), one indent level deeper — in which case every line but
+the first is dedented by that level, so the spliced text parses as a sibling
+of whatever precedes/follows the marker in its enclosing tactic sequence
+rather than staying orphaned at `t`'s original, deeper column. But `t` can
+also be a single parenthesized tactic group starting right after `tk` on the
+same line (the `solution!( … )` idiom borrowed from the term form); there the
+column gap from `tk` reflects nothing about the body's own indentation, so
+dedenting by it would flatten the group's internal structure. To cover both,
+the dedent amount is derived from the body's own minimum indentation among
+its continuation lines relative to `tk`'s column, not from `t`'s start
+column — which comes out to the same "one indent level" in the first case,
+and to zero (no rewrite) in the second, since a parenthesized group's own
+lines are already indented well past `tk`. -/
+private def dedentSpliceText (tk t : Syntax) : CoreM String := do
+  let fileMap ← getFileMap
+  match tk.getRange?, t.getRange? with
+  | some tkR, some tR =>
+    if h : tR.start.IsValid fileMap.source ∧ tR.stop.IsValid fileMap.source then
+      let text := (fileMap.source.slice! ⟨tR.start, h.1⟩ ⟨tR.stop, h.2⟩).toString
+      match text.splitOn "\n" with
+      | [] => pure text
+      | first :: rest =>
+        let tkCol := (fileMap.toPosition tkR.start).column
+        let nonBlank := rest.filter fun l => !l.trimAscii.toString.isEmpty
+        let delta := match nonBlank with
+          | [] => 0
+          | l :: ls =>
+            (ls.foldl (fun acc l => min acc (leadingSpaceCount l)) (leadingSpaceCount l)) - tkCol
+        pure <| "\n".intercalate (first :: rest.map (dedentLine delta))
+    else
+      throwError "dedentSpliceText: invalid source range"
+  | _, _ => throwError "dedentSpliceText: missing source range"
+
 syntax (name := solutionTerm) "solution!" "(" term ")" : term
 
 @[term_elab solutionTerm]
@@ -246,7 +295,7 @@ def evalSolutionTac : Tactic := fun stx => do
   | `(tactic| solution!%$tk $t:tacticSeq ) =>
     recordStudentEdit #[(stx, "sorry")]
     recordTerseEdit #[(stx, "sorry")]
-    recordTeacherEdit #[(tk, "all_goals")]
+    recordTeacherEdit #[(stx, ← dedentSpliceText tk t.raw)]
     evalTactic t
   | _ => throwUnsupportedSyntax
 
@@ -264,8 +313,9 @@ def evalWorkinclassTac : Tactic := fun stx => do
   match stx with
   | `(tactic| workinclass!%$tk $t:tacticSeq ) =>
     recordTerseEdit #[(stx, "sorry")]
-    recordStudentEdit #[(tk, "all_goals")]
-    recordTeacherEdit #[(tk, "all_goals")]
+    let shown ← dedentSpliceText tk t.raw
+    recordStudentEdit #[(stx, shown)]
+    recordTeacherEdit #[(stx, shown)]
     evalTactic t
   | _ => throwUnsupportedSyntax
 
@@ -286,8 +336,9 @@ def evalSuggestedTac : Tactic := fun stx => do
   match stx with
   | `(tactic| suggested!%$tk $t:tacticSeq ) =>
     -- Teacher and terse builds keep the suggested proof live and shown.
-    recordTeacherEdit #[(tk, "all_goals")]
-    recordTerseEdit #[(tk, "all_goals")]
+    let shown ← dedentSpliceText tk t.raw
+    recordTeacherEdit #[(stx, shown)]
+    recordTerseEdit #[(stx, shown)]
     -- Student build: close the goal with `sorry`, then wrap the suggested proof
     -- in a block comment so it survives verbatim for the student to uncomment.
     -- The opening `/-` replaces the `suggested!` keyword (indented to its
