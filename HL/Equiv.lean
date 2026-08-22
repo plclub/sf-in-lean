@@ -15,7 +15,7 @@ file := some "Equiv"
 %%%
 
 ```lean
-open scoped MyGetElem
+open scoped HasEval MyGetElem Com
 ```
 
 :::dev "Sati (satiscugcat)"
@@ -139,11 +139,11 @@ theorem skip_left: ∀ c,
     constructor <;> intro h
     case mp =>
       cases h with
-      | seq _ _ _ _ _ h1 h2 =>
+      | seq  h1 h2 =>
         cases h1 with
         | skip => assumption
     case mpr =>
-      apply Com.EvalR.seq _ _ _ st
+      apply Com.EvalR.seq
       · apply Com.EvalR.skip
       · assumption
 ```
@@ -158,18 +158,18 @@ equivalent program.
 ```lean
 theorem skip_right : ∀ c,
   Com.equiv
-    (imp { ~c  skip; })
+    (imp { ~c; skip })
     c := by
   solution!(
     intros c st st'
     constructor <;> intro h
     case mp =>
       cases h with
-      | seq _ _ _ _ _ h1 h2 =>
+      | seq h1 h2 =>
         cases h2 with
         | skip => assumption
     case mpr =>
-      apply Com.EvalR.seq _ _ _ st'
+      apply Com.EvalR.seq
       · assumption
       · apply Com.EvalR.skip
   )
@@ -266,7 +266,7 @@ theorem if_true_equiv: ∀ b c₁ c₂,
   case mp =>
     cases h with
     | ifTrue => assumption
-    | ifFalse _ _ _ _ _ hb' hc =>
+    | ifFalse hb' hc =>
       unfold Bexp.equiv at hb; simp at hb
       rw [hb] at hb'
       contradiction
@@ -289,7 +289,7 @@ theorem if_false_equiv: ∀ b c₁ c₂,
     constructor <;> intro h
     case mp =>
       cases h with
-      | ifTrue _ _ _ _ _ hb' hc =>
+      | ifTrue hb' hc =>
         unfold Bexp.equiv at hb; dsimp at hb
         rw [hb] at hb'
         contradiction
@@ -317,18 +317,18 @@ theorem swap_if_branches : ∀ b c₁ c₂,
     constructor <;> intro h
     case mp =>
       cases h with
-      | ifTrue _ _ _ _ _ hb hc =>
+      | ifTrue hb hc =>
         apply Com.EvalR.ifFalse <;> try assumption
         simp_all
-      | ifFalse _ _ _ _ _ hb hc =>
+      | ifFalse hb hc =>
         apply Com.EvalR.ifTrue <;> try assumption
         simp_all
     case mpr =>
       cases h with
-      | ifTrue _ _ _ _ _ hb hc =>
+      | ifTrue hb hc =>
         apply Com.EvalR.ifFalse <;> try assumption
         simp_all
-      | ifFalse _ _ _ _ _ hb hc =>
+      | ifFalse hb hc =>
         apply Com.EvalR.ifTrue <;> try assumption
         simp_all
   )
@@ -351,13 +351,13 @@ theorem while_false_equiv : ∀ b c,
   Bexp.equiv b (bexp {false}) ->
   Com.equiv
     (imp {while (~b) {~c}})
-    (imp {skip;}) := by
+    (imp {skip}) := by
   intro b c hb st st'
   constructor <;> intro h
   case mp =>
     cases h with
     | whileFalse => apply Com.EvalR.skip
-    | whileTrue _ _ _ _ _ hb' hc hloop =>
+    | whileTrue hb' hc hloop =>
       rw [hb] at hb'
       simp at hb'
   case mpr =>
@@ -414,11 +414,11 @@ theorem while_true_nonterm : ∀ b c st st',
       by
         intro c' s s' hce
         induction hce with
-        | whileFalse b' s0 c0 hb' =>
+        | whileFalse hb' =>
           intro heq; injection heq with beq ceq
           subst beq; rw [hb] at hb'
           simp at hb'
-        | whileTrue s0 s0' s0'' b' c0 hb hc' hwhile ih1 ih2 => exact ih2
+        | whileTrue hb hc' hwhile ih1 ih2 => exact ih2
         | skip => simp
         | asgn => simp
         | seq => simp
@@ -438,7 +438,7 @@ theorem while_true : ∀ b c,
   Bexp.equiv b (bexp {true}) ->
   Com.equiv
     (imp {while (~b) {~c}})
-    (imp {while (true) {skip;}}) := by
+    (imp {while (true) {skip}}) := by
   solution!(
     intro b c beq st st'
     constructor
@@ -453,7 +453,7 @@ theorem while_true : ∀ b c,
         by
           intro b st
           rfl
-      exact while_true_nonterm (bexp {true}) (imp {skip;}) st st' (bexp_equiv_refl (bexp {true})) h
+      exact while_true_nonterm (bexp {true}) (imp {skip}) st st' (bexp_equiv_refl (bexp {true})) h
   )
 ```
 :::::
@@ -472,7 +472,7 @@ theorem loop_unrolling : ∀ b c,
   Com.equiv
     (imp {while (~b) {~c}})
     (imp {
-      if (~b) {~c} else {skip;}
+      if (~b) {~c} else {skip};
       while (~b) {~c}
     }) := by
   workinclass!
@@ -480,22 +480,22 @@ theorem loop_unrolling : ∀ b c,
     constructor <;> intro hce
     case mp =>
       cases hce with
-      | whileFalse _ _ _ hb =>
-        apply Com.EvalR.seq _ _ _ st
+      | whileFalse hb =>
+        apply Com.EvalR.seq
         · apply Com.EvalR.ifFalse <;> try assumption
           apply Com.EvalR.skip
         · apply Com.EvalR.whileFalse <;> try assumption
-      | whileTrue _ st'' _ _ _ hb hc hloop =>
-        apply Com.EvalR.seq _ _ _ st''
+      | whileTrue  hb hc hloop =>
+        apply Com.EvalR.seq
         · apply Com.EvalR.ifTrue <;> try assumption
         · assumption
     case mpr =>
       cases hce with
-      | seq _ _ _ st'' _ h1 h2 =>
+      | seq h1 h2 =>
         cases h1 with
-        | ifTrue _ _ _ _ _ hb hc =>
-          apply Com.EvalR.whileTrue _ st'' <;> try assumption
-        | ifFalse _ _ _ _ _ hb hc =>
+        | ifTrue hb hc =>
+          apply Com.EvalR.whileTrue <;> try assumption
+        | ifFalse hb hc =>
           cases hc with
           | skip => assumption
 ```
@@ -517,13 +517,13 @@ syntax.
 ```lean
 theorem identity_assignment : ∀ X,
   Com.equiv
-    (imp {X := X;})
-    (imp {skip;}) := by
+    (imp {X := X})
+    (imp {skip}) := by
   intro X st st'
   constructor <;> intro hce
   case mp =>
     cases hce with
-    | asgn _ _ n _ h =>
+    | asgn  h =>
       dsimp at h
       rw [← h, TotalMap.update_same]
       apply Com.EvalR.skip
@@ -531,7 +531,7 @@ theorem identity_assignment : ∀ X,
   case mpr =>
     cases hce with
     | skip =>
-      suffices st =[ X := X; ]=> X →ₜ st[X] ; st by
+      suffices st =[ X := X ]=> X →ₜ st[X] ; st by
         simp only [TotalMap.update_same] at this
         exact this
       apply Com.EvalR.asgn
@@ -543,8 +543,8 @@ theorem identity_assignment : ∀ X,
 theorem assign_equiv : ∀ (X : Ident) (a : Aexp),
   Aexp.equiv (aexp {X}) a ->
   Com.equiv
-    (imp {skip;})
-    (imp {X := ~a;}) := by
+    (imp {skip})
+    (imp {X := ~a}) := by
   solution!(
     intro X a aeq st st'
     constructor <;> intro hce
@@ -553,14 +553,14 @@ theorem assign_equiv : ∀ (X : Ident) (a : Aexp),
       | skip =>
         unfold Aexp.equiv at aeq
         dsimp at aeq
-        suffices st =[ X:= ~a; ]=> X →ₜ st[X]; st by
+        suffices st =[ X:= ~a ]=> X →ₜ st[X]; st by
           simp only [TotalMap.update_same] at this
           exact this
         apply Com.EvalR.asgn
         simp [aeq]
     case mpr =>
       cases hce with
-      | asgn _ _ n _ h =>
+      | asgn h =>
         unfold Aexp.equiv at aeq
         dsimp at aeq
         rw [← h, ← aeq, TotalMap.update_same]
@@ -692,17 +692,17 @@ program!
 ```lean
 theorem Com.congruence.asgn : ∀ x a a',
   Aexp.equiv a a' ->
-  Com.equiv (imp {x := ~a;}) (imp {x := ~a';}) := by
+  Com.equiv (imp {x := ~a}) (imp {x := ~a'}) := by
   intro x a a' heqv st st'
   constructor <;> intro hce
   case mp =>
     cases hce with
-    | asgn _  _ n _ h =>
+    | asgn  h =>
       subst h; apply Com.EvalR.asgn
       rw [heqv]
-  case mpr => 
+  case mpr =>
     cases hce with
-    | asgn _ _ n _ h =>
+    | asgn  h =>
       subst h; apply Com.EvalR.asgn
       rw [heqv]
 ```
@@ -728,11 +728,11 @@ equivalent to `c'`.  We must show, for every `st` and `st'`, that
 
       - `Com.EvalR.whileFalse`: In this case, the form of the rule gives us
         `beval st b = false` and `st = st'`.  But then, since
-        `b` and `b'` are equivalent, we have `beval st b' =false`, 
+        `b` and `b'` are equivalent, we have `beval st b' =false`,
         and `Com.EvalR.whileFalse` applies, giving us
         `st =[ while (~b') {~c'} ]=> st'`, as required.
 
-      - `Com.EvalR.whileTrue`: The form of the rule now gives us `beval st b = true`, 
+      - `Com.EvalR.whileTrue`: The form of the rule now gives us `beval st b = true`,
         with `st =[ c ]=> st'0` and `st'0 =[ while {~b} {~c} ]=> st'`
         for some state `st'0`, with the
         induction hypothesis `st'0 =[ while (~b') {~c'} ]=> st'`.
@@ -743,34 +743,34 @@ equivalent to `c'`.  We must show, for every `st` and `st'`, that
         giving us `st =[ while (~b') {~c'} ]=> st'`, as
         required.
 
-  - (`<-`) Similar. 
+  - (`<-`) Similar.
 ::::
 -- Extremely annoying proof that I was trying to get done.
 -- ```lean
 -- theorem Com.congruence.while : ∀ (b b': Bexp) (c c': Com),
 --   b.equiv b' -> c.equiv c' ->
 --   Com.equiv (imp {while (~b) {~c}}) (imp {while (~b') {~c'}}) := by
-  
+ 
 --   workinclass!
 --   have A : ∀ (b b': Bexp) (c c': Com) (st st': State),
 --              b.equiv b' -> c.equiv c' ->
 --              st =[ while (~b) {~c} ]=> st' ->
 --              st =[ while (~b') {~c'} ]=> st' := by
-             
+            
 --              unfold Bexp.equiv; unfold Com.equiv
-             
+            
 --              intro b b' c c' st st' hbe hce
-             
+            
 --              have key: ∀ c0 st0 st0', c0 = (imp {while (~b) {~c}}) ->
 --                        st0 =[ c0 ]=> st0' ->
 --                        ∀ c'0, c'0 = (imp {while (~b') {~c'}}) ->
---                        c0.equiv c'0 -> 
+--                        c0.equiv c'0 ->
 --                        st0 =[ c'0 ]=> st0' := by
-                  
+                 
 --                   intro c0 st0 st0' c0eq hc0
 --                   induction hc0 with
 --                   | whileFalse b0 st0 c00 hb0 =>
---                     intro c'0 c'0eq ceq         
+--                     intro c'0 c'0eq ceq        
 --                     injection c0eq with beq ceq; subst beq ceq
 --                     rw [c'0eq]
 --                     apply Com.EvalR.whileFalse; rw [<- hbe, hb0]
@@ -785,9 +785,9 @@ equivalent to `c'`.  We must show, for every `st` and `st'`, that
 --                   | ifTrue => simp at c0eq
 --                   | ifFalse => simp at c0eq
 --                   | asgn => simp at c0eq
-                  
+                 
 --                   | _ => sorry
-               
+              
 --              sorry
 --   sorry
 -- ```
