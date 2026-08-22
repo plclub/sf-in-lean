@@ -78,10 +78,10 @@ def Bexp.equiv (b₁ b₂ : Bexp) : Prop :=
     b₁.eval st = b₂.eval st
 ```
 
--- ::::full
--- Here are some simple examples of equivalences of arithmetic
--- and boolean expressions.
--- ::::
+::::full
+Here are some simple examples of equivalences of arithmetic
+and boolean expressions.
+::::
 
 ```lean
 example : Aexp.equiv
