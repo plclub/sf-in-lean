@@ -745,8 +745,6 @@ equivalent to `c'`.  We must show, for every `st` and `st'`, that
 
   - (`<-`) Similar.
 ::::
--- Extremely annoying proof that I was trying to get done.
-
 :::dev "Sati (satiscugcat)"
 ```
 NOT PORTED YET - remaining portions of Equiv.v left (apart from the portions explicitly stated so far).
