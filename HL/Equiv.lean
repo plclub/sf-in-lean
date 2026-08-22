@@ -687,3 +687,117 @@ change -- i.e., the "proof burden" of a small change to a large
 program is proportional to the size of the change, not the
 program!
 ::::
+
+
+```lean
+theorem Com.congruence.asgn : ∀ x a a',
+  Aexp.equiv a a' ->
+  Com.equiv (imp {x := ~a;}) (imp {x := ~a';}) := by
+  intro x a a' heqv st st'
+  constructor <;> intro hce
+  case mp =>
+    cases hce with
+    | asgn _  _ n _ h =>
+      subst h; apply Com.EvalR.asgn
+      rw [heqv]
+  case mpr => 
+    cases hce with
+    | asgn _ _ n _ h =>
+      subst h; apply Com.EvalR.asgn
+      rw [heqv]
+```
+
+::::full
+The congruence property for loops is a little more interesting,
+since it requires induction.
+
+_Theorem_: Equivalence is a congruence for `while` -- that is, if
+`b` is equivalent to `b'` and `c` is equivalent to `c'`, then
+`while (~b) {~c}` is equivalent to `while (~b') {~c'}`.
+
+_Proof_: Suppose `b` is equivalent to `b'` and `c` is
+equivalent to `c'`.  We must show, for every `st` and `st'`, that
+`st =[ while (~b) {~c} ]=> st'` iff `st = while (~b') {~c'}
+]=> st'`.  We consider the two directions separately.
+
+  - (`->`) We show that `st =[ while (~b) {~c} ]=> st'` implies
+    `st =[ while (~b') {~c'} ]=> st'`, by induction on a
+    derivation of `st =[ while (~b) {~c} ]=> st'`.  The only
+    nontrivial cases are when the final rule in the derivation is
+    `Com.EvalR.whileFalse` or `Com.EvalR.whileTrue`.
+
+      - `Com.EvalR.whileFalse`: In this case, the form of the rule gives us
+        `beval st b = false` and `st = st'`.  But then, since
+        `b` and `b'` are equivalent, we have `beval st b' =false`, 
+        and `Com.EvalR.whileFalse` applies, giving us
+        `st =[ while (~b') {~c'} ]=> st'`, as required.
+
+      - `Com.EvalR.whileTrue`: The form of the rule now gives us `beval st b = true`, 
+        with `st =[ c ]=> st'0` and `st'0 =[ while {~b} {~c} ]=> st'`
+        for some state `st'0`, with the
+        induction hypothesis `st'0 =[ while (~b') {~c'} ]=> st'`.
+
+        Since `c` and `c'` are equivalent, we know that `st =[ c']=> st'0`.
+        And since `b` and `b'` are equivalent,
+        we have `beval st b' = true`.  Now `Com.EvalR.whileTrue` applies,
+        giving us `st =[ while (~b') {~c'} ]=> st'`, as
+        required.
+
+  - (`<-`) Similar. 
+::::
+-- Extremely annoying proof that I was trying to get done.
+-- ```lean
+-- theorem Com.congruence.while : ∀ (b b': Bexp) (c c': Com),
+--   b.equiv b' -> c.equiv c' ->
+--   Com.equiv (imp {while (~b) {~c}}) (imp {while (~b') {~c'}}) := by
+  
+--   workinclass!
+--   have A : ∀ (b b': Bexp) (c c': Com) (st st': State),
+--              b.equiv b' -> c.equiv c' ->
+--              st =[ while (~b) {~c} ]=> st' ->
+--              st =[ while (~b') {~c'} ]=> st' := by
+             
+--              unfold Bexp.equiv; unfold Com.equiv
+             
+--              intro b b' c c' st st' hbe hce
+             
+--              have key: ∀ c0 st0 st0', c0 = (imp {while (~b) {~c}}) ->
+--                        st0 =[ c0 ]=> st0' ->
+--                        ∀ c'0, c'0 = (imp {while (~b') {~c'}}) ->
+--                        c0.equiv c'0 -> 
+--                        st0 =[ c'0 ]=> st0' := by
+                  
+--                   intro c0 st0 st0' c0eq hc0
+--                   induction hc0 with
+--                   | whileFalse b0 st0 c00 hb0 =>
+--                     intro c'0 c'0eq ceq         
+--                     injection c0eq with beq ceq; subst beq ceq
+--                     rw [c'0eq]
+--                     apply Com.EvalR.whileFalse; rw [<- hbe, hb0]
+--                   | whileTrue s0 s0' s0'' b0 c00 hb0 hc00 hwhile ih1 ih2 =>
+--                     -- apply ih2; assumption
+--                     injection c0eq with beq ceq; subst beq ceq
+--                     apply Com.EvalR.whileTrue _ s0'
+--                     · sorry
+--                     · sorry
+--                     · apply ih2; rfl
+--                   | skip => simp at c0eq
+--                   | ifTrue => simp at c0eq
+--                   | ifFalse => simp at c0eq
+--                   | asgn => simp at c0eq
+                  
+--                   | _ => sorry
+               
+--              sorry
+--   sorry
+-- ```
+:::dev "Sati (satiscugcat)"
+```
+NOT PORTED YET - remaining portions of Equiv.v left (apart from the portions explicitly stated so far).
+  - The rest of "Behavioural Equivalence is a Congruence"
+  - The section on "Program Transformation"
+  - Soundness of (0 + n) Elimination
+  - Extended Exercise: Nondeterministic Imp
+  - Additional Exercises
+```
+:::
