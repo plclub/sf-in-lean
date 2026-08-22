@@ -59,3 +59,27 @@ Our integration with the autograder happens in multiple places
 
 - [SFLMeta/Grade.lean](SFLMeta/Grade.lean) contains the definition for the `:::gradeTheorem` directive.
 - `walkBlock` in [SFLMeta/Save/Extract.lean](SFLMeta/Save/Extract.lean) saves the grading attributes to the extracted Lean files.
+
+## Match Deduplication
+
+Due to Lean's elaborate match deduplication system, we need to avoid using structural recursion in solution blocks that are followed by non-solution definition that uses a match with the same data type.
+
+For example (adapted from `Logic.lean`):
+
+```lean
+-- SOLUTION
+def List.IsNil {α : Type} (l : List α) : Prop :=
+  match l with
+  | [] => True
+  | _ :: _ => False
+-- END SOLUTION
+
+def List.In {α : Type} (x : α) (xs : List α) : Prop :=
+  match xs with
+  | [] => False
+  | x' :: xs' => x = x' ∨ In x xs'
+```
+
+Here `List.In` has a hidden dependency on `List.IsNil` because of the similar `match` expressions.
+
+The issue that this causes is that once the solution is removed in the grading variant, `List.In` generates its own matcher `List.In.match_1`, which is not the same name as `List.IsNil.match_1` and therefore comparator gives a "constant does not match" failure.

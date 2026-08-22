@@ -1,6 +1,25 @@
 #!/usr/bin/env python3
 # Authors: Niklas Halonen (xhalo32)
 # NOTE: This is fully human-written code (unlike many other scripts in this directory)
+#
+# This script tests the autograder for a subset of volumes and variants.
+# Normally, it tests autograding of the entire volume at once, but the `--module` argument can be used to pick a specific module to grade, e.g. `LF.Logic`.
+
+# The script exiting successfully is determined by variant-specific assertions:
+# - student variant: all exercises fail with `illegalAxiom`
+# - solutions variant: all exercises pass
+
+# There are two output formats:
+# - stats: prints a tableau with statistics about passing and failing tests
+# - json: prints an aggregated structure with detailed information about each autograded theorem
+
+# Examples:
+# - `python scripts/grading_check.py --no-make --volumes LF --variants solutions --stats --json`
+#   checks all solutions in LF, doesn't run 'make', prints out statistics and the detailed json
+# - `python scripts/grading_check.py --no-make --volumes LF --module LF.Lists --variants student --stats --json`
+#   only checks `LF.Lists`, doesn't run 'make', prints out statistics and the detailed json
+# - `python scripts/grading_check.py --no-make --volumes LF HL TS --variants student solutions --stats --json`
+#   checks all solutions in LF, doesn't run 'make', prints out statistics and the detailed json
 
 from subprocess import check_output, Popen, STDOUT
 from pathlib import Path
@@ -10,19 +29,6 @@ import os, sys, tempfile, shutil, json, argparse
 def runshell(cmd):
     p = Popen(cmd, shell=True)
     os.waitpid(p.pid, 0)
-
-def is_autograded_file(path):
-    with path.open() as f:
-        src = f.read()
-        return "import ComparatorAutograderLib" in src and "attribute [autogradedProof" in src
-
-def find_autograded_files(grading_lean_dir, volume):
-    for root, dirs, files in (grading_lean_dir / volume).walk():
-        root_path = Path(root)
-        for file in files:
-            path = root_path / file
-            if is_autograded_file(root_path / file):
-                yield file
 
 ignore_lake_pattern = shutil.ignore_patterns(".lake", "lakefile.toml", "lake-manifest.json", "lean-toolchain")
 
@@ -70,11 +76,9 @@ name = "Solution"
 globs = ["Solution.+"]
 """
 
-lean_toolchain = "leanprover/lean4:v4.33.0"
-
 all_volumes = ["LF", "HL", "TS"]
 
-def runtest(comparator_autograder, lean4export, landrun, root_path, variant, volume, module):
+def runtest(toolchain, comparator_autograder, lean4export, landrun, root_path, variant, volume, module):
     with tempfile.TemporaryDirectory(delete=True) as tmpdir:
         print(f"[grading_check.py]: using temporary directory '{tmpdir}'")
         with open("lake-manifest.json") as f:
@@ -82,7 +86,7 @@ def runtest(comparator_autograder, lean4export, landrun, root_path, variant, vol
         with (Path(tmpdir) / "lakefile.toml").open("w+") as f:
             f.write(lakefile)
         with (Path(tmpdir) / "lean-toolchain").open("w+") as f:
-            f.write(lean_toolchain)
+            f.write(toolchain)
         shutil.copytree(root_path / "_out" / volume.lower() / "grading" / "lean", Path(tmpdir) / "Challenge", ignore=ignore_lake_pattern)
         shutil.copytree(root_path / "_out" / volume.lower() / variant / "lean", Path(tmpdir) / "Solution", ignore=ignore_lake_pattern)
         for vol in all_volumes:
@@ -93,7 +97,7 @@ def runtest(comparator_autograder, lean4export, landrun, root_path, variant, vol
             # We grade the top-level volume file that imports each chapter
             "AUTOGRADER_CHALLENGE": f"Challenge.{volume}",
             "AUTOGRADER_SOLUTION": f"Solution.{volume}",
-            "AUTOGRADER_SKIP_IMPORTS": "false",
+            "AUTOGRADER_SKIP_IMPORTS": "false" if module is None else "true", # skip imports only when testing a specific module
             "AUTOGRADER_EXPORT_PATH": f"/proc/self/fd/{format_pipe_w}",
             "AUTOGRADER_EXPORT_FORMAT": "json",
             "COMPARATOR_LEAN4EXPORT": lean4export,
@@ -141,13 +145,13 @@ def assert_results(aggregate_results):
     for vol in aggregate_results:
         if "student" in aggregate_results[vol]:
             for r in aggregate_results[vol]["student"]["theoremReports"]:
-                assert r["error"] != None and next(iter(r["error"])) == "illegalAxiom"
+                assert r["error"] is not None and next(iter(r["error"])) == "illegalAxiom"
         if "solutions" in aggregate_results[vol]:
             for r in aggregate_results[vol]["solutions"]["theoremReports"]:
-                assert r["error"] == None
+                assert r["error"] is None
 
 def main():
-    parser = argparse.ArgumentParser(description='Test automated grading in SF-in-lean')
+    parser = argparse.ArgumentParser(description='Test automated grading in SF-in-lean.')
 
     parser.add_argument('--module', help="Specify the module to test (skips imports). Select only one volume.")
     parser.add_argument('--volumes', nargs="+", default=[all_volumes[0]], choices=all_volumes)
@@ -158,7 +162,7 @@ def main():
     parser.add_argument('--no-build', action='store_true', help="Don't build lean4export and comparatorautograder")
 
     args = parser.parse_args()
-    if not (len(args.volumes) == 1) ** (args.module != None):
+    if not (len(args.volumes) == 1) ** (args.module is not None):
         print("only one volume can be selected when using --module")
         return
 
@@ -173,12 +177,15 @@ def main():
     lean4export = cwd / ".lake/packages/lean4export/.lake/build/bin/lean4export"
     landrun = cwd / ".lake/packages/comparator/scripts/fake-landrun.sh"
 
+    with open("lean-toolchain") as f:
+        toolchain = f.read()
+
     aggregate_results = {}
     for vol in args.volumes:
         vol_dir = cwd / "_out" / vol.lower()
         for variant in args.variants:
             print(f"[grading_check.py]: checking volume {vol} variant {variant}")
-            results = runtest(comparator_autograder, lean4export, landrun, cwd, variant, vol, args.module)
+            results = runtest(toolchain, comparator_autograder, lean4export, landrun, cwd, variant, vol, args.module)
 
             aggregate_results[vol] = aggregate_results.get(vol) or {}
             aggregate_results[vol][variant] = results
