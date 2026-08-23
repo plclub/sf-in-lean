@@ -123,7 +123,7 @@ example (n m : Nat) (h₁ : (n, n) = (m, m))
   exact h₁
 ```
 
-:::::exercise (rating := 2) (name := "apply_exercise")
+:::::exercise (rating := 2) (name := "apply_exercise") (optional := true)
 Complete the following proof using only {tactic}`apply`.
 
 ```lean
@@ -183,7 +183,7 @@ theorem rev_exercise1 {α : Type} (l l' : List α) (h : l = l'.rev) :
 :::
 :::::
 
-:::::exercise (rating := 1) (name := "apply_rewrite") (manual := true)
+:::::exercise (rating := 1) (name := "apply_rewrite") (optional := true) (manual := true)
 Briefly explain the difference between the tactics {tactic}`apply` and
 {tactic}`rw`.  What are the situations where both can usefully be
 applied?
@@ -377,7 +377,7 @@ example (a b c d e f : Nat)
   [c, d] = [e, f] := by rw [h₂]
 ```
 
-:::::exercise (rating := 3) (name := "trans_eq_exercise")
+:::::exercise (rating := 3) (name := "trans_eq_exercise") (optional := true)
 ```lean
 theorem trans_eq_exercise (n m o p : Nat)
     (h₁ : m = o.minusTwo)
@@ -1427,7 +1427,7 @@ theorem nth?_after_last {α : Type}
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "length_append_cons")
+:::::exercise (rating := 3) (name := "length_append_cons") (optional := true)
 
 Prove this by induction on `l₁`, without using {name}`List.length_append`.
 
@@ -1451,7 +1451,7 @@ theorem length_append_cons {α : Type} {l₁ l₂ : List α} {x : α} {n : Nat}
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "length_append_self")
+:::::exercise (rating := 3) (name := "length_append_self") (optional := true)
 
 Prove this by induction on `l₁`, without using {name}`List.length_append`.
 Hint: you might need to use {name}`length_append_cons` you just proved.
@@ -1475,7 +1475,7 @@ theorem length_append_self {α : Type} {n : Nat} {l : List α}
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "diagonal_induction")
+:::::exercise (rating := 3) (name := "diagonal_induction") (optional := true)
 
 Prove the following principle of induction over two naturals.
 

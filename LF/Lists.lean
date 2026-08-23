@@ -229,7 +229,7 @@ theorem snd_fst_is_swap (p : NatProd) :
 ```
 :::::
 
-:::::exercise (rating := 1) (name := "fst_swap_is_snd")
+:::::exercise (rating := 1) (name := "fst_swap_is_snd") (optional := true)
 ```lean
 theorem fst_swap_is_snd (p : NatProd) :
     p.swap.fst = p.snd := by
@@ -794,7 +794,7 @@ theorem test_member2 : member 2 [1, 4, 1] = false := solution!(by rfl)
 
 ## Removing
 
-:::::exercise (rating := 3) (name := "removing")
+:::::exercise (rating := 3) (name := "removing") (optional := true)
 Here are some more {name}`NatList` functions for you to practice with.
 
 When `removeOne` is applied to a list without the number to
@@ -900,7 +900,7 @@ def included (l₁ l₂ : NatList) : Bool :=
 ```
 :::
 
-:::::exercise (rating := 3) (name := "included")
+:::::exercise (rating := 3) (name := "included") (optional := true)
 ```lean
 def included (l₁ l₂ : NatList) : Bool := solution!(
   match l₁ with
@@ -1685,7 +1685,7 @@ theorem remove_does_not_increase_count (l : NatList) :
 ```
 :::::
 
-:::::exercise (rating := 3) (name := "count_append") (manual := true)
+:::::exercise (rating := 3) (name := "count_append") (optional := true) (manual := true)
 Write down an interesting theorem `count_append` about lists
 involving the functions {name}`count` and {name}`append`, and prove it.
 (You may find that the difficulty of the proof depends on how you defined `count`!)
@@ -1893,7 +1893,7 @@ theorem head?_cons (h : Nat) (t : NatList) : head? (h :: t) = .some h := solutio
 :::
 :::::
 
-:::::exercise (rating := 1) (name := "option_elim_head?")
+:::::exercise (rating := 1) (name := "option_elim_head?") (optional := true)
 This exercise relates your new `head?` to the old `head`.
 
 ```lean
