@@ -4,14 +4,16 @@ import SFLMeta
 open Verso.Genre Manual
 open SFLMeta
 
-set_option pp.fieldNotation false
-
 #doc (Manual) "Basics: Functional Programming in Lean" =>
 %%%
 tag := "Basics"
 htmlSplit := .never
 file := "Basics"
 %%%
+
+```lean -show
+set_option pp.fieldNotation false
+```
 
 :::instructors
 This file and Induction.lean each take about an hour to
@@ -554,7 +556,8 @@ theorem true_and_wrong : ∀ (b : MyBool), (MyBool.true && b) = b := by
     rfl
 ```
 
-To see the error message, comment out `sf_expect_failure` temporarily.
+To see the error message in the Lean file,
+change `sf_expect_failure` to `sf_expect_failure?` temporarily.
 You should see the following message.
 
 ```leanOutput indent
