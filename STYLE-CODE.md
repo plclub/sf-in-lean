@@ -541,7 +541,7 @@ Every chapter is compiled once but rendered in four variants:
 
 - **student**: full prose, solutions elided
 - **solutions**: full prose, solutions shown
-- **grading**: full prose, solutions shown, with grading attributes, documented in [AUTOMATED-GRADING.md](AUTOMATED-GRADING.md)
+- **grading**: full prose, solutions elided, with grading attributes, documented in [AUTOMATED-GRADING.md](AUTOMATED-GRADING.md)
 - **terse**: abridged prose for live-coding / lecturing
 
 A number of directives control what prose appears in which variants.

@@ -21,14 +21,13 @@
 # - `python scripts/grading_check.py --no-make --volumes LF HL TS --variants student solutions --stats --json`
 #   checks all solutions in LF, doesn't run 'make', prints out statistics and the detailed json
 
-from subprocess import check_output, Popen, STDOUT
+from subprocess import Popen, run, STDOUT
 from pathlib import Path
 from fractions import Fraction
 import os, sys, tempfile, shutil, json, argparse
 
 def runshell(cmd):
-    p = Popen(cmd, shell=True)
-    os.waitpid(p.pid, 0)
+    run(cmd, shell=True, check=True)
 
 ignore_lake_pattern = shutil.ignore_patterns(".lake", "lakefile.toml", "lake-manifest.json", "lean-toolchain")
 
