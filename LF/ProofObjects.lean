@@ -172,10 +172,80 @@ need a new explanation for `by` and `:=` versus Rocq
 :::
 
 ```lean
-example : Ev 4 := Ev.ev_succ_succ 2 (Ev.ev_succ_succ 0 Ev.ev_0)
+theorem ev_four' : Ev 4 := Ev.ev_succ_succ 2 (Ev.ev_succ_succ 0 Ev.ev_0)
 ```
 
 # Proof Scripts
+
+The proof objects we've been discussing lie at the core of how Lean operates.
+When Lean is following a proof script, what is happening internally is that it
+is gradually constructing a proof object -- a term whose type is the
+proposition being proved. The tactics within a `by` block tell it how to build
+up a term of the required type. To see this process in action, let's use the
+{tactic}`show_term` tactic to display the current state of the proof tree at
+various points in the following tactic proof. 
+
+```lean
+theorem ev_four'' : Ev 4 := by
+  show_term
+  show_term apply Ev.ev_succ_succ
+  show_term apply Ev.ev_succ_succ
+  exact Ev.ev_0
+```
+
+At any given moment, Lean has constructed a term with a "hole" (indicated by
+`?_` here, and so on), and it knows what type of evidence is needed to fill
+this hole.
+
+Each hole corresponds to a subgoal, and the proof is finished when there are no
+more subgoals. At this point, the evidence we've built is stored in the
+environment under the name given in the `theorem` command.
+
+Tactic proofs are convenient, but they are not essential in Lean: in principle,
+we can always just construct the required evidence by hand.
+
+```lean
+theorem ev_four''' : Ev 4 := Ev.ev_succ_succ 2 (Ev.ev_succ_succ 0 Ev.ev_0)
+```
+
+All these different ways of building the proof lead to exactly the same
+evidence being saved in the environment
+
+```lean (name := print_ev_four)
+#print ev_four
+```
+
+```leanOutput print_ev_four
+theorem ev_four : Ev 4 :=
+Ev.ev_succ_succ 2 (Ev.ev_succ_succ 0 Ev.ev_0)
+```
+
+```lean (name := print_ev_four')
+#print ev_four'
+```
+
+```leanOutput print_ev_four'
+theorem ev_four' : Ev 4 :=
+Ev.ev_succ_succ 2 (Ev.ev_succ_succ 0 Ev.ev_0)
+```
+
+```lean (name := print_ev_four'')
+#print ev_four''
+```
+
+```leanOutput print_ev_four''
+theorem ev_four'' : Ev 4 :=
+Ev.ev_succ_succ 2 (Ev.ev_succ_succ 0 Ev.ev_0)
+```
+
+```lean (name := print_ev_four''')
+#print ev_four'''
+```
+
+```leanOutput print_ev_four'''
+theorem ev_four''' : Ev 4 :=
+Ev.ev_succ_succ 2 (Ev.ev_succ_succ 0 Ev.ev_0)
+```
 
 # Quantifiers, Implications, Functions
 
