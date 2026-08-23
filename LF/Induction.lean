@@ -968,6 +968,13 @@ theorem mul_one (p : Nat) :
 
 Lean's language server can suggest _code actions_, which are
 small editor commands that modify the source code.
+
+:::dev "Benjamin Pierce (bcpierce00)"
+I put the intro text into a `full` block, but I think some of the following material should come _out_ of the full block that it's in, since the instructor will want to go through it in the lecture.
+:::
+
+
+:::full
 In VS Code, a lightbulb icon appears on the left
 when a code action is available at your cursor.
 You can click the icon or open the code action menu with `Ctrl + .`
@@ -975,10 +982,11 @@ on Windows/Linux or `Command + .` on macOS.
 For more information, see the
 [Lean 4 VSCode extension manual](https://github.com/leanprover/vscode-lean4/blob/master/vscode-lean4/manual/manual.md#code-actions).
 
-Some code actions can generate the explicit branches needed for pattern
-matching. This is especially useful when working with `match` expressions,
+For example, code actions can generate the explicit branches needed for pattern
+matching. This can be especially useful when working with `match` expressions
 or with tactics such as {tactic}`cases` and {tactic}`induction`,
 which we saw in previous chapters.
+:::
 
 ::::full
 Let's look at an example using {tactic}`induction`.
@@ -1040,13 +1048,16 @@ def isZero (n : Nat) : Bool :=
 ::::
 
 You can use code actions freely to fill out {tactic}`induction`,
-{tactic}`case`, and `match` branches in this book.
+{tactic}`case`, and `match` branches while working with this book.
 
+:::dev "Benjamin Pierce (bcpierce00)"
+If this exercise is not needed in the lecture or later in the book, maybe it belongs in a terse block?
+:::
 
 
 ::::exercise (rating := 2) (name := "mul_two")
 Tip: By default, {tactic}`rewrite` and {tactic}`rw` rewrite left to right, i.e.,
-they transform the hypothesis or goal being rewritten from the form on
+they transform the goal (or a hypothesis) from the form on
 the left side of the equality to the right side. To rewrite from
 right to left, use `rewrite [← h]` or `rw [← h]`, where `←` is entered
 as `\l` or `\<-`.

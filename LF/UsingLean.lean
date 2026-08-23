@@ -52,7 +52,6 @@ for basic properties of natural numbers by hand.
 
 Previously, we did computation like this...
 
-
 ```lean
 section OldNats
 open NatPlayground.Nat
@@ -64,11 +63,16 @@ example : (two * two : NatPlayground.Nat) = four := by
   rfl
 ```
 
-We wrote Lean that enforced this pedagogical style using the `@irreducible`
+We made Lean enforce this pedagogical style using the `@irreducible`
 attribute on definitions like {name}`mul`
-and {name}`add`. This ensured that definitions be
+and {name}`add`. This ensured that definitions  be
 fully simplified using {tactic}`rw` with simplification rules like
 {name}`two_eq_succ_one`.
+:::dev "Benjamin Pierce (bcpierce00)"
+That last sentence is not very clear.  "that definitions be
+fully simplified" does not parse, but I'm not sure whether to add "will" or "can" or something else...
+:::
+
 
 This approach is useful in a textbook for understanding the structure of
 natural numbers and for providing early practice with writing proofs. But it
@@ -90,12 +94,12 @@ features, writing `Nat.<theorem>` to reference Lean's version
 of `<theorem>`. (By convention, theorems about a type live in the namespace of
 that type, hence the need for the `Nat.` prefix.)
 
-Definitions in {name}`Nat` are not marked `@irreducible`. This lets us use
+Definitions in the built-in {name}`Nat` library are _not_ marked `@irreducible`. This lets us use
 more powerful _automatic simplification_ of functions on natural numbers,
 which is appropriate when their low-level behaviors are not the primary focus of proofs.
 This will be the case going forward.
 
-## {tactic}`rfl` and Computation with {name}`Nat`
+## The {tactic}`rfl` Tactic and Computation with {name}`Nat`
 
 With Lean's {name}`Nat`, much of the computation happens automatically,
 and {tactic}`rfl` suffices to close any equality of computation on literals.
@@ -337,7 +341,7 @@ Often, rather than repeatedly rewriting by a known equation like
 `n * (m * 0) = 0`,
 we just want to simplify the function (here {name}`Nat.mul`) automatically when we can.
 
-The {tactic}`dsimp` tactic ("definitionally simplify") unfolds definitions
+The {tactic}`dsimp` ("definitionally simplify") tactic unfolds definitions
 and performs definitional simplifications. You can give it hints in
 square brackets: `dsimp [f]` tells it to unfold the definition of `f`.
 You can also simplify a hypothesis `h` in the context by writing
@@ -614,9 +618,15 @@ theorem Nat.double_mul (n : Nat) : n.double = 2 * n := by
 :::gradeTheorem 1 Nat.double_mul
 :::
 
-For the remainder of the book, we will use Lean's built-in natural numbers everywhere.
-We will use `dsimp`, `calc`, and in examples and solutions, and encourage their use.
-We encourage the use of `rw?` and `exact?` to search for lemmas
-(though they should not appear in finished proofs). With these tools in hand, we
+In the remainder of the book, we use Lean's built-in natural numbers everywhere.
+We use `dsimp`, `calc`, and in examples and solutions, and encourage their use.
+We also recommend using `rw?` and `exact?` to search for lemmas
+(though these should not appear in finished proofs). 
+:::dev "Benjamin Pierce (bcpierce00)"
+Is there a word missing in "We use `dsimp`, `calc`, and in examples"
+:::
+
+With these tools in hand, we
 can begin to prove properties about more sophisticated forms of data, beginning with
 {ref "Lists"}`Lists`.
+
