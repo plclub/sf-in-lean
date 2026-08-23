@@ -1,5 +1,7 @@
 module
 
+-- This will let the code actions spread to extracted projects
+public import Batteries.CodeAction
 public meta import Lean.Elab.BuiltinCommand
 
 namespace SLFCommand

@@ -6,14 +6,16 @@ import LF.Basics
 open Verso.Genre Manual
 open SFLMeta
 
-set_option pp.fieldNotation false
-
 #doc (Manual) "Induction: Proof by Induction" =>
 %%%
 tag := "Induction"
 htmlSplit := .never
 file := some "Induction"
 %%%
+
+```lean -show
+set_option pp.fieldNotation false
+```
 
 :::dev BeforeNextRelease
 ```
@@ -38,12 +40,6 @@ harder?
 :::
 
 # Separate Compilation
-
-:::dev "Benjamin Pierce (bcpierce00)"
-```
-This section will need some tidying and rewriting...
-```
-:::
 
 :::terse
 Lean will first need to compile `Basics.lean` so it can
@@ -315,14 +311,6 @@ And reasoning by cases using {tactic}`cases` on `n` doesn't get us much
 further: the branch of the case analysis where we assume `n = zero`
 goes through just fine, but in the branch where `n = n' + 1` for
 some `n'` we get stuck in exactly the same way.
-:::dev "Benjamin Pierce (bcpierce00)"
-```
-This is not high priority, but at some point we should make a decision between
-/* ... */ comments and -- comments in lean code and try to be consistent.  Here
-we're inconsistent in the very same code block!  Are there standard Lean conventions
-we should just follow?
-```
-:::
 
 
 ```lean +error (name := cases_ex)
@@ -356,9 +344,6 @@ there if we just go on like this.
 To prove interesting facts about numbers, lists, and other
 inductively defined sets, we often need a more powerful reasoning
 principle: _induction_.
-:::dev "Benjamin Pierce (bcpierce00)"
-I changed boldface back to italic here, but I'm happy to discuss using boldface in a principled and consistent (and sparing) way...
-:::
 
 Recall (from a discrete math course, probably) the _principle of
 induction over natural numbers_: If `P(n)` is some proposition
@@ -445,10 +430,10 @@ theorem beq_self (n : Nat) : (n == n) = true := by
   workinclass!
     induction n with
     | zero =>
-      rewrite [zero_zero_beq_true]
+      rewrite [zero_beq_zero]
       rfl
     | succ n' ih =>
-      rewrite [succ_succ_beq]
+      rewrite [succ_beq_succ]
       exact ih
 ```
 
@@ -608,39 +593,6 @@ theorem double_add (n : Nat) : double n = n + n := by
 :::
 :::::
 
-::::::full
-:::::exercise (rating := 2) (name := "even_succ")
-Here's a useful theorem that proves `even (n + 1)` flips
-the parity.  This will facilitate proofs by induction on `n`:
-
-```lean
-theorem even_succ (n : Nat) :
-    even (succ n) = !even n := by
-  solution!
-    induction n with
-    | zero =>
-      rw [even_zero, even_one]
-      rfl
-    | succ n' ih =>
-      rw [even, ih, not_involutive]
-```
-
-One inconvenient aspect of our definition of `even n` is the
-recursive call on `n'` when `n = succ (succ n')`. This makes proofs about `even n`
-harder when done by induction on `n`, since we may need an
-induction hypothesis about `succ (succ n')`, while induction just gives us one about `succ n'`). The following lemma gives an
-alternative characterization of `even (succ n)` that works better
-with induction:
-
-(Tip: To expand the body of {name}`even` in a proof, use `rewrite [even]` or
-`rw [even]`.)
-
-:::gradeTheorem 1 even_succ
-:::
-:::::
-
-::::::
-
 :::dev "Yipeng Liu (berberman)" PotentialImprovement
 
 This is an interesting question...
@@ -737,9 +689,9 @@ for the rest of the proof.
 :::
 
 ::::full
-As another example, suppose we want to prove that `(n + m)
-+ (p + q) = (m + n) + (p + q)`. The only difference between the
-two sides of the `=` is that the arguments `m` and `n` to the
+As another example, suppose we want to prove that
+`(n + m) + (p + q) = (m + n) + (p + q)`. The only difference between
+the two sides of the `=` is that the arguments `m` and `n` to the
 first inner `+` are swapped, so it seems we should be able to use
 the commutativity of addition ({name}`add_comm`) to rewrite one into the
 other.  However, the {tactic}`rw` tactic is not very smart about _where_

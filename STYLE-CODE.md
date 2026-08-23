@@ -29,11 +29,12 @@ and do not use tactics not in this table; in particular,
 | `UsingLean`       | `dsimp`, `calc`, `exact?`, `rw?` |
 | `Lists`           | *(none new)* |
 | `Poly`            | *(none new)* |
-| `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `induction ... generalizing ...`, `unfold`, `cases ... : ...`, `split` |
+| `Tactics`         | `apply` (and `apply ... at`), `replace`, `specialize`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `induction ... generalizing ...`, `unfold`, `cases ... : ...`, `split` |
 | `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
-| `IndProp`         | `rcases`, `subst` |
+| `IndProp`         | `subst` |
 | `Automation`      | `lia`, `try`, `repeat`, `specialize`, `trivial`, `simp`, `generalize` |
 | `Typeclasses`     | `decide` |
+| `Slang`           | `fun_induction`, `simp_all` |
 | `HL` chapters     | *(none new)* |
 | `HL/Hoare`        | `show` (in a solution only), `apply_rules` |
 
@@ -246,8 +247,7 @@ and `#guard_msgs` for internal checks that are not student-facing.
 
 Use `sorry` when an unfinished declaration must remain available to later code,
 as with an exercise scaffold or a theorem used below. Do _not_ normally wrap it
-in `#guard_msgs`: the generic warning is not what we are testing, and the guard
-is stripped from the HTML and extracted projects.
+in `#guard_msgs`, as the generic warning is not what we are testing.
 
 ````lean
 ```lean
@@ -680,14 +680,14 @@ theorem false_or (b : Bool) : (.false || b) = b := by
 ````
 
 The tactical and its term or proof is replaced either by `sorry` or by
-the term or proof itself. For proofs, they are preceded by `all_goals`,
-since the tactics are indented. The replacements are summarized below.
+the term or proof itself, dedented to sit at the tactical's own column. The
+replacements are summarized below.
 
 | Tactical       | `solutions` | `student` | `terse`     | Usage |
 | -------------- | ----------- | --------- | ----------- | ----- |
-| `solution!`    | `all_goals` | `sorry`   | `sorry`     | For homework exercises |
-| `workinclass!` | `all_goals` | `sorry`   | `all_goals` | For work in class |
-| `suggested!`   | `all_goals` | `sorry` with proof in comment | `all_goals` | For exercises with a suggested proof to modify |
+| `solution!`    | shown       | `sorry`   | `sorry`     | For homework exercises |
+| `workinclass!` | shown       | shown     | `sorry`     | For work in class |
+| `suggested!`   | shown       | `sorry` with proof in comment | shown | For exercises with a suggested proof to modify |
 
 #### `-- SOLUTION`
 

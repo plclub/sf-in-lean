@@ -1,6 +1,4 @@
 -- Shared Verso infrastructure for all SF-in-Lean volumes.
-import Batteries.CodeAction
-
 import Bib
 import SFLMeta.Bnf
 import SFLMeta.Comment
@@ -23,6 +21,6 @@ import SFLMeta.Volume
 
 namespace SFLMeta
 
-export Verso.Genre.Manual.InlineLean (name leanCommand leanTerm module leanSection leanOutput)
+export Verso.Genre.Manual.InlineLean (name leanCommand leanTerm module leanSection leanOutput inst)
 
 end SFLMeta

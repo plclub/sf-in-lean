@@ -15,6 +15,9 @@ htmlSplit := .never
 file := some "Equiv"
 %%%
 
+```lean
+open scoped HasEval MyGetElem Com
+```
 
 :::dev "Sati (satiscugcat)"
   At this point, the Rocq file provides instructions about using a new directory,
@@ -78,10 +81,10 @@ theorem Bexp.equiv_def {b₁ b₂ : Bexp} :
     b₁.Equiv b₂ ↔ ∀ (st : State), b₁.eval st = b₂.eval st := by rfl
 ```
 
--- ::::full
--- Here are some simple examples of equivalences of arithmetic
--- and boolean expressions.
--- ::::
+::::full
+Here are some simple examples of equivalences of arithmetic
+and boolean expressions.
+::::
 
 ```lean
 example : Aexp.Equiv
@@ -652,3 +655,69 @@ change -- i.e., the "proof burden" of a small change to a large
 program is proportional to the size of the change, not the
 program!
 ::::
+
+
+```lean
+theorem Com.congruence.asgn {x : Ident} {a a' : Aexp} (ha : a.Equiv a') :
+    (imp {x := ~a}).Equiv
+    (imp {x := ~a'}) := by
+  rw [equiv_def]
+  intro st st'
+  constructor <;>
+  · intro h
+    inversion h with
+    | asgn n h =>
+      subst h
+      apply Com.EvalR.asgn
+      rw [Aexp.equiv_def] at ha
+      rw [ha]
+```
+
+::::full
+The congruence property for loops is a little more interesting,
+since it requires induction.
+
+_Theorem_: Equivalence is a congruence for `while` -- that is, if
+`b` is equivalent to `b'` and `c` is equivalent to `c'`, then
+`while (~b) {~c}` is equivalent to `while (~b') {~c'}`.
+
+_Proof_: Suppose `b` is equivalent to `b'` and `c` is
+equivalent to `c'`.  We must show, for every `st` and `st'`, that
+`st =[ while (~b) {~c} ]=> st'` iff `st = while (~b') {~c'}
+]=> st'`.  We consider the two directions separately.
+
+  - (`->`) We show that `st =[ while (~b) {~c} ]=> st'` implies
+    `st =[ while (~b') {~c'} ]=> st'`, by induction on a
+    derivation of `st =[ while (~b) {~c} ]=> st'`.  The only
+    nontrivial cases are when the final rule in the derivation is
+    `Com.EvalR.whileFalse` or `Com.EvalR.whileTrue`.
+
+      - `Com.EvalR.whileFalse`: In this case, the form of the rule gives us
+        `beval st b = false` and `st = st'`.  But then, since
+        `b` and `b'` are equivalent, we have `beval st b' =false`,
+        and `Com.EvalR.whileFalse` applies, giving us
+        `st =[ while (~b') {~c'} ]=> st'`, as required.
+
+      - `Com.EvalR.whileTrue`: The form of the rule now gives us `beval st b = true`,
+        with `st =[ c ]=> st'0` and `st'0 =[ while {~b} {~c} ]=> st'`
+        for some state `st'0`, with the
+        induction hypothesis `st'0 =[ while (~b') {~c'} ]=> st'`.
+
+        Since `c` and `c'` are equivalent, we know that `st =[ c']=> st'0`.
+        And since `b` and `b'` are equivalent,
+        we have `beval st b' = true`.  Now `Com.EvalR.whileTrue` applies,
+        giving us `st =[ while (~b') {~c'} ]=> st'`, as
+        required.
+
+  - (`<-`) Similar.
+::::
+:::dev "Sati (satiscugcat)"
+```
+NOT PORTED YET - remaining portions of Equiv.v left (apart from the portions explicitly stated so far).
+  - The rest of "Behavioural Equivalence is a Congruence"
+  - The section on "Program Transformation"
+  - Soundness of (0 + n) Elimination
+  - Extended Exercise: Nondeterministic Imp
+  - Additional Exercises
+```
+:::

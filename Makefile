@@ -1,10 +1,10 @@
 # Makefile for sf-in-lean
 #
 # Each volume is built in three symmetric variants:
-#   student    full prose, solutions elided   → _out/<vol>/student/{html-multi,lean}
-#   solutions  full prose, solutions shown    → _out/<vol>/solutions/{html-multi,lean}
-#   terse      lecture prose, solutions elided → _out/<vol>/terse/{html-multi,lean}
-#   grading    full prose, solutions show (with grading attributes) → _out/<vol>/grading/{html-multi,lean}
+#   student    full prose, solutions elided   → _out/<vol>/student/{html,lean}
+#   solutions  full prose, solutions shown    → _out/<vol>/solutions/{html,lean}
+#   terse      lecture prose, solutions elided → _out/<vol>/terse/{html,lean}
+#   grading    full prose, solutions show (with grading attributes) → _out/<vol>/grading/{html,lean}
 #
 # To add a new volume (e.g., plf), define its targets with:
 #   $(eval $(call VOLUME_template,plf))
@@ -49,7 +49,7 @@ $(eval $(call VOLUME_template,ts))
 
 # ── Top-level targets ─────────────────────────────────────────────────────────
 
-.PHONY: all student solutions terse grading serve clean ensure-build-symlink style-check style-checklist
+.PHONY: all student solutions terse grading serve clean ensure-build-symlink style style-check style-checklist release
 
 all: lf hl ts
 
@@ -62,11 +62,15 @@ terse: lf-terse hl-terse ts-terse
 
 grading: lf-grading hl-grading ts-grading
 
-# Mechanical conformance checks for STYLE.md (auto checks fail the run; assisted
-# ones are advisory). `style-checklist` prints the audit checklist for the
-# judgement-based conventions. See scripts/style_check.py.
-style-check:
+# Mechanical conformance checks for the style guides — STYLE-CODE.md and
+# STYLE-WRITING.md (auto checks fail the run; assisted ones are advisory).
+# `style-checklist` prints the audit checklist for the judgement-based
+# conventions. See scripts/style_check.py.
+style:
 	python3 scripts/style_check.py
+
+# Kept as the older name for `style`.
+style-check: style
 
 style-checklist:
 	@python3 scripts/style_check.py --checklist
@@ -83,6 +87,13 @@ ensure-build-symlink:
 
 serve: all
 	python3 -m http.server 8000 -d _out/
+
+# Package a local release (student html/ + lean/ per volume) for the course
+# webpage. Which chapters are included per volume is controlled by
+# scripts/release_chapters.json. Pass extra flags via ARGS, e.g.:
+#   make release ARGS="--volumes lf"
+release:
+	python3 scripts/package_release.py $(ARGS)
 
 clean:
 	lake clean
