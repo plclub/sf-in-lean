@@ -18,7 +18,7 @@ def aydemir2008 : InProceedings where
                inlines!"Stephanie Weirich"]
   year    := 2008
   booktitle := inlines!"ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages (POPL)"
-  url     := "https://www.cis.upenn.edu/~bcpierce/papers/binders.pdf"
+  url     := "https://doi.org/10.1145/1328438.1328443"
 
 def bertot2004 : Article where
   title   := inlines!"Interactive Theorem Proving and Program Development: Coq'Art: The Calculus of Inductive Constructions"
@@ -106,7 +106,7 @@ def pugh1991 : InProceedings where
   authors := #[inlines!"William Pugh"]
   year    := 1991
   booktitle := inlines!"Proceedings of the 1991 ACM/IEEE Conference on Supercomputing"
-  url     := "https://dl.acm.org/citation.cfm?id=125848"
+  url     := "https://doi.org/10.1145/2699407"
 
 def wadler2015 : Article where
   title   := inlines!"Propositions as Types"
@@ -127,7 +127,7 @@ def winskel1993 : Article where
   month   := none
   volume  := inlines!""
   number  := inlines!""
-  url     := "https://tinyurl.com/j2k6ev7"
+  url     := "https://mitpress.mit.edu/9780262731034/the-formal-semantics-of-programming-languages/"
 
 def halpern2001: Article where
   title := inlines!"On the unusual effectiveness of logic in computer science"
@@ -138,6 +138,7 @@ def halpern2001: Article where
   number := inlines!"2"
   year := 2001
   month   := none
+  url := "https://doi.org/10.2307/2687775"
 
 def manna1971: Article where
   title := inlines!"Toward automatic program synthesis"
@@ -147,12 +148,14 @@ def manna1971: Article where
   number  := inlines!"3"
   year := 1971
   month := none
+  url := "https://doi.org/10.1145/362566.362568"
 
 def leroy2016 : InProceedings where
-  title := inlines!"CompCert-a formally verified optimizing compiler"
+  title := inlines!"CompCert - A Formally Verified Optimizing Compiler"
   authors := #[inlines!"Xavier Leroy", inlines!"Sandrine Blazy", inlines!"Daniel Kästner", inlines!"Bernhard Schommer", inlines!"Markus Pister", inlines!"Christian Ferdinand"]
   booktitle := inlines!"ERTS 2016: Embedded Real Time Software and Systems, 8th European Congress"
   year := 2016
+  url := "https://hal.science/hal-01238879"
 
 def gu2016certikos: InProceedings where
   title := inlines!"CertiKOS: An extensible architecture for building certified concurrent OS kernels"
@@ -160,14 +163,17 @@ def gu2016certikos: InProceedings where
       inlines!"Xiongnan Newman Wu" , inlines!"Jieung Kim", inlines!"Vilhelm Sjöberg", inlines!"David Costanzo"]
   booktitle := inlines!"12th USENIX Symposium on Operating Systems Design and Implementation (OSDI 16)"
   year := 2016
+  url := "https://www.usenix.org/conference/osdi16/technical-sessions/presentation/gu"
+
 
 def disselkoen2024: InProceedings where
-  title := inlines!"How we built cedar: A verification-guided approach"
+  title := inlines!"How We Built Cedar: A Verification-Guided Approach"
   authors :=#[inlines!"Craig Disselkoen", inlines!"Aaron Eline", inlines!"Shaobo He",
       inlines!"Kyle Headley" , inlines!"Michael Hicks", inlines!"Kesha Hietala", inlines!"John Kaster",
       inlines!"Anwar Mamat",  inlines!"Matt McCutchen", inlines!"Neha Rungta", inlines!"others"]
   booktitle := inlines!"Companion Proceedings of the 32nd ACM International Conference on the Foundations of Software Engineering"
   year := 2024
+  url := "https://doi.org/10.1145/3663529.3663854"
 
 end Bib
 
