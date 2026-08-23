@@ -869,7 +869,7 @@ implicit, whereas the informal proof reminds the reader several
 times where things stand).
 ::::::
 
-:::::exercise (rating := 2) (name := "add_comm_informal") (level := Advanced) (manual := true)
+:::::exercise (rating := 2) (name := "add_comm_informal") (level := Advanced) (optional := Yes) (manual := true)
 Translate your solution for {name}`add_comm` into an informal proof:
 
 Theorem: Addition is commutative.
@@ -920,7 +920,7 @@ GRADE_MANUAL 2: add_comm_informal
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "beq_refl_informal")
+:::::exercise (rating := 2) (name := "beq_refl_informal") (optional := Yes)
 Write an informal proof of the following theorem, using the
 informal proof of {name}`add_assoc` as a model.  Don't just
 paraphrase the Lean tactics into English!
@@ -1037,7 +1037,7 @@ theorem mul_comm (m n : Nat) :
 :::
 ::::
 
-::::exercise (rating := 3) (name := "more_exercises")
+::::exercise (rating := 3) (name := "more_exercises") (optional := Yes)
 Take a piece of paper.  For each of the following theorems, first
 _think_ about whether (a) it can be proved using only
 simplification and rewriting, (b) it also requires case

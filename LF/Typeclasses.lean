@@ -943,7 +943,7 @@ theorem update_eq {α β : Type} [BEq α] [ReflBEq α] (m : TotalMap α β) (a :
 
 On the other hand, if we update a map `m` at a key `a₁` and then look up a _different_ key `a₂` in the resulting map, we get the same result that `m` would have given:
 
-::::exercise (rating := 2) (name := "update_neq")
+::::exercise (rating := 2) (name := "update_neq") (optional := Yes)
 ```lean
 @[simp]
 theorem update_neq {α β : Type} [BEq α] [LawfulBEq α] {m : TotalMap α β} {a₁ a₂ : α} (h : a₁ ≠ a₂) (b : β) :
@@ -1002,7 +1002,7 @@ theorem update_same {α β : Type} [BEq α] [LawfulBEq α] (m : TotalMap α β) 
 
 Similarly, if we update a map `m` at a key `a` with a value `b₁` and then update again with the same key `a` and another value `b₂`, the resulting map behaves the same (gives the same result when applied to any key) as the simpler map obtained by performing just the second {name}`update` on `m`:
 
-::::exercise (rating := 2) (name := "update_shadow")
+::::exercise (rating := 2) (name := "update_shadow") (optional := Yes)
 ```lean
 @[simp]
 theorem update_shadow {α β : Type} [BEq α] [LawfulBEq α] (m : TotalMap α β) (a : α) (b₁ b₂ : β) :

@@ -521,7 +521,7 @@ example (n : Nat) : Nat.double (n + 0) = Nat.double n := by
   rfl
 ```
 
-:::::exercise (rating := 2) (name := "even_succ")
+:::::exercise (rating := 2) (name := "even_succ") (optional := Yes)
 One inconvenient aspect of our definition of `even n` is the
 recursive call on `n'` when `n = n' + 2`. This makes proofs about `even n`
 harder when done by induction on `n`, since we may need an

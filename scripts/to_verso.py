@@ -11,6 +11,8 @@ Each /- ... -/ block comment becomes Verso prose.  Code is wrapped in
   -- TERSE: /- txt -/ → :::terse blocks
   -- INSTRUCTORS:     → stripped
   -- EX1 (name)       → :::exercise (rating := N) (name := "name")
+                        (an `A`/`?`/`M` flag adds (level := Advanced) /
+                         (optional := Yes) / (manual := true))
   -- []               → closes :::exercise
   -- GRADE_THEOREM    → stripped
   -- BCP:/JC:/etc.    → :::dev blocks
@@ -1711,11 +1713,15 @@ class Renderer:
         self.in_exercise = True
         # SF difficulty/grading flags follow the rating digits: `A` (advanced),
         # `M` (manually graded), plus `!`/`?` (recommended/optional).  Preserve
-        # the two that survive to the Verso directive: `A` -> (level := Advanced)
-        # and `M` -> (manual := true).  (`!`/`?` have no directive analogue yet.)
+        # the three that survive to the Verso directive: `A` -> (level :=
+        # Advanced), `?` -> (optional := Yes), and `M` -> (manual := true).
+        # (`!`, recommended, has no directive analogue yet; `No` is the
+        # directive's default, so an exercise without `?` needs no `optional`.)
         header = f'exercise (rating := {rating}) (name := "{name}")'
         if 'A' in flags:
             header += ' (level := Advanced)'
+        if '?' in flags:
+            header += ' (optional := Yes)'
         if 'M' in flags:
             header += ' (manual := true)'
         self._append(_c_open(header) + '\n\n')

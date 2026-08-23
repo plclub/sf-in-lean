@@ -605,9 +605,12 @@ An exercise block rendered as `Exercise ★ (foo)` in the HTML
 and as a comment `-- ### Exercise (1 star): foo ⭐` in the extracted Lean files.
 It takes the following options:
 
-* `(rating := <number>)` (required): difficulty from 1 (easy) to 5 (hard)
+* `(rating := <number>)` (required): difficulty from 1 (easy) to 5 (hard); a
+  rating outside that range is a build error
 * `(name := <identifier>)` (required): name used in headings and cross-references
 * `(level := <identifier>)` (optional): additional difficulty warning (currently only `Advanced`)
+* `(optional := <identifier>)` (optional): `Yes` marks an exercise the reader
+  may skip; the default is `No`
 * `(manual := <boolean>)` (optional): marks the exercise for manual grading
 
 #### `:::gradeTheorem <number> <identifier>...`, `:::grade`

@@ -753,7 +753,7 @@ Two: `.p (.c 3) (.p (.c 3) (.c 4))` via `plusLeft` and
 :::
 ::::
 
-:::::exercise (rating := 3) (name := "value_not_same_as_normal_form1")
+:::::exercise (rating := 3) (name := "value_not_same_as_normal_form1") (optional := Yes)
 ```lean
 theorem value_not_same_as_normal_form :
     ∃ v, IsValue v ∧ ¬ IsNormalForm Step v := by
@@ -769,7 +769,7 @@ theorem value_not_same_as_normal_form :
 end Temp1
 ```
 
-:::::exercise (rating := 2) (name := "value_not_same_as_normal_form2")
+:::::exercise (rating := 2) (name := "value_not_same_as_normal_form2") (optional := Yes)
 Or we might (again, wrongly) define `Step` so that it permits something
 designated as a value to reduce further.  We again lose the property that
 values are the same as normal forms.
@@ -817,7 +817,7 @@ end Temp2
 ```
 :::::
 
-:::::exercise (rating := 3) (name := "value_not_same_as_normal_form3")
+:::::exercise (rating := 3) (name := "value_not_same_as_normal_form3") (optional := Yes)
 Finally, we might define `IsValue` and `Step` so that there is some term that
 is _not_ a value but that _also_ cannot take a step.  Such terms are said to
 be _stuck_.  In this case, this is caused by a mistake in the semantics, but
@@ -1002,13 +1002,13 @@ example :
   · exact multi_single _ _ _ (.plus (0 + 3) (2 + 4))
 ```
 
-:::::exercise (rating := 1) (name := "test_multistep_2")
+:::::exercise (rating := 1) (name := "test_multistep_2") (optional := Yes)
 ```lean
 example : (.c 3 : Tm) ⟶* .c 3 := solution!(.refl _)
 ```
 :::::
 
-:::::exercise (rating := 1) (name := "test_multistep_3")
+:::::exercise (rating := 1) (name := "test_multistep_3") (optional := Yes)
 ```lean
 example : (.p (.c 0) (.c 3)) ⟶* .p (.c 0) (.c 3) := solution!(.refl _)
 ```
@@ -1071,7 +1071,7 @@ YOTAM: The proof can be given for the general case, i.e. that
    induced counterpart.  BCP 23: That would be a nice improvement.
 :::
 
-:::::exercise (rating := 3) (name := "normal_forms_unique")
+:::::exercise (rating := 3) (name := "normal_forms_unique") (optional := Yes)
 ```lean
 theorem normal_forms_unique : Deterministic (IsNormalFormOf Step) := by
   -- We recommend using this initial setup as-is!
@@ -1226,7 +1226,7 @@ plus some basic properties of `⟶*` (that it is reflexive, transitive, and
 includes `⟶`).
 :::::
 
-:::::exercise (rating := 3) (name := "multistep_of_eval_inf")
+:::::exercise (rating := 3) (name := "multistep_of_eval_inf") (optional := Yes)
 Write a detailed informal version of the proof of `multistep_of_eval`.  (A
 paper exercise — there is no Lean proof to fill in here.)
 
@@ -1327,7 +1327,7 @@ earlier (`nf_is_value`), but that point seems too subtle to make for this
 course.
 :::
 
-:::::exercise (rating := 3) (name := "interp_tm")
+:::::exercise (rating := 3) (name := "interp_tm") (optional := Yes)
 Remember that we also defined big-step evaluation of terms as a function
 `evalF`.  Prove that it is equivalent to the relational semantics.  (Hint: we
 just proved that `Eval` and `multistep` are equivalent, so logically it

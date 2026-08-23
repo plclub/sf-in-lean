@@ -210,11 +210,13 @@ def decodeBnfSource? (data : Json) : Option String :=
     | .error _      => some src
   | _ => none
 
-/-- Decode a `Block.exercise` payload `(rating, name, level, manual)`, tolerating
-the older 2-element `(rating, name)` form.  (See `SFLMeta.decodeExerciseData`.) -/
-def decodeExercise? (data : Json) : Option (Nat × String × Option String × Bool) :=
+/-- Decode a `Block.exercise` payload `(rating, name, level, optional, manual)`,
+tolerating the older 4- and 2-element forms.  (See
+`SFLMeta.decodeExerciseData`.) -/
+def decodeExercise? (data : Json) : Option (Nat × String × Option String × String × Bool) :=
   match data with
-  | .arr #[.num _, .str _, _, _] | .arr #[.num _, .str _] => some (decodeExerciseData data)
+  | .arr #[.num _, .str _, _, _, _] | .arr #[.num _, .str _, _, _]
+  | .arr #[.num _, .str _] => some (decodeExerciseData data)
   | _ => none
 
 /-- Does one of `blocks` contain a `Block.suppressPreviousHeaderWhenTerse`
@@ -346,9 +348,9 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     if name == ``Block.exercise then
       -- Emit a `### Exercise (N⭐): name` heading; the contained `lean`
       -- blocks render normally via recursion below.
-      if let some (rating, exName, level, manual) := decodeExercise? which.data then
+      if let some (rating, exName, level, optional, manual) := decodeExercise? which.data then
         let stars := String.ofList (List.replicate rating '⭐')
-        let desig := exerciseDesignation level manual
+        let desig := exerciseDesignation level optional manual
         let header := s!"### Exercise ({rating} star{if rating == 1 then "" else "s"}): {exName}{desig} {stars}"
         let mut buf := buf.appendAll file (asModuleDoc header)
         buf := walkBlocks width file contents buf
