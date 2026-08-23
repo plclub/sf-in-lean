@@ -2487,7 +2487,7 @@ automatically, it is sometimes necessary to provide hints or
 write functions in slightly different ways.
 ::::
 
-::::exercise (rating := 2) (name := "decreasing") (optional := Yes)
+::::exercise (rating := 2) (name := "decreasing") (optional := true)
 To get a concrete sense of how termination checking works in Lean,
 find a way to write a sensible recursive definition (of a simple
 function on numbers, say) that does actually terminate on all inputs,
@@ -2657,7 +2657,7 @@ GRADE_MANUAL 1: negation_fn_applied_twice
 :::
 ::::
 
-::::exercise (rating := 3) (name := "and_eq_or") (optional := Yes)
+::::exercise (rating := 3) (name := "and_eq_or") (optional := true)
 Prove the following theorem.
 
 ```lean

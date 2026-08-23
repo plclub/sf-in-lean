@@ -499,7 +499,7 @@ theorem left (a b : Prop) (h : a ∧ b) : a := by
   exact h.left
 ```
 
-:::::exercise (rating := 1) (name := "proj2") (optional := Yes)
+:::::exercise (rating := 1) (name := "proj2") (optional := true)
 ```lean
 theorem right (a b : Prop) (h : a ∧ b) : b := by
   solution!
@@ -696,7 +696,7 @@ principle of explosion.
 ::::
 
 ::::::full
-:::::exercise (rating := 2) (name := "not_implies_other_not") (optional := Yes)
+:::::exercise (rating := 2) (name := "not_implies_other_not") (optional := true)
 ```lean
 theorem not_implies_other_not (a : Prop) (h : ¬ a) :
     (∀ c : Prop, a → c) := by
@@ -758,7 +758,7 @@ theorem double_neg (a : Prop) (ha : a) : ¬ ¬ a := by
 ```
 
 ::::::full
-:::::exercise (rating := 2) (name := "double_neg_informal") (level := Advanced) (optional := Yes) (manual := true)
+:::::exercise (rating := 2) (name := "double_neg_informal") (level := Advanced) (optional := true) (manual := true)
 Write an _informal_ proof of  {name}`double_neg`:
 _Theorem_: {lean}`a` implies {lean}`¬ ¬ a`, for any proposition  {lean}`a`.
 
@@ -824,7 +824,7 @@ theorem de_morgan_not_or {a b : Prop} (h : ¬ (a ∨ b)) : ¬ a ∧ ¬ b := by
 ```
 :::::
 
-:::::exercise (rating := 1) (name := "not_succ_inverse_pred") (optional := Yes)
+:::::exercise (rating := 1) (name := "not_succ_inverse_pred") (optional := true)
 Since we are working with natural numbers, we can disprove that
 {lean}`Nat.succ` and {lean}`Nat.pred` are inverses of each other. This proof
 will require you to come up with a specific _counterexample_ to the
@@ -1113,7 +1113,7 @@ an appropriate variant of {lean}`DiscrFun`. To generalize it to other
 conclusions, we can use {tactic}`exfalso` to replace them with {lean}`False`.
 The {tactic}`contradiction` tactic takes care of all of this for us.
 
-:::::exercise (rating := 2) (name := "nil_is_not_cons") (level := Advanced) (optional := Yes) (manual := true)
+:::::exercise (rating := 2) (name := "nil_is_not_cons") (level := Advanced) (optional := true) (manual := true)
 Use the same technique as above to show that `[] ≠ x :: xs`.
 Do not use the {tactic}`contradiction` tactic.
 
@@ -1207,7 +1207,7 @@ theorem not_true_iff_false (b : Bool) : b ≠ true ↔ b = false := by
   · intro h; rw [h]; intro h'; contradiction
 ```
 
-:::::exercise (rating := 1) (name := "iff_properties") (optional := Yes)
+:::::exercise (rating := 1) (name := "iff_properties") (optional := true)
 Using the above proof that `↔` is symmetric ({lean}`iff_sym`) as a guide,
 prove that it is also reflexive and transitive.
 
@@ -1624,7 +1624,7 @@ I found this exercise combining too many awkward details for too little conceptu
 3. I don't know how to nicely avoid `cases h : ...` syntax which IIRC we didn't mention before
 :::
 
-:::::exercise (rating := 2) (name := "CombineOddEven") (optional := Yes)
+:::::exercise (rating := 2) (name := "CombineOddEven") (optional := true)
 Complete the definition of `CombineOddEven` below. It takes as arguments
 two properties of numbers, `Odd` and `Even`, and it should return
 a predicate `p` such that `p n` is equivalent to `Odd n` when `n` is odd
@@ -3021,7 +3021,7 @@ theorem not_exists_dist (α : Type) (p : α → Prop) :
 ```
 :::::
 
-:::::exercise (rating := 5) (name := "classical_axioms") (optional := Yes)
+:::::exercise (rating := 5) (name := "classical_axioms") (optional := true)
 For those who like a challenge, here is an exercise adapted from the Coq'Art
 book by Bertot and Casteran (p. 123). Each of the following five statements,
 together with {lean}`ExcludedMiddle`, can be considered as characterizing

@@ -213,7 +213,7 @@ def decodeBnfSource? (data : Json) : Option String :=
 /-- Decode a `Block.exercise` payload `(rating, name, level, optional, manual)`,
 tolerating the older 4- and 2-element forms.  (See
 `SFLMeta.decodeExerciseData`.) -/
-def decodeExercise? (data : Json) : Option (Nat × String × Option String × String × Bool) :=
+def decodeExercise? (data : Json) : Option (Nat × String × Option String × Bool × Bool) :=
   match data with
   | .arr #[.num _, .str _, _, _, _] | .arr #[.num _, .str _, _, _]
   | .arr #[.num _, .str _] => some (decodeExerciseData data)

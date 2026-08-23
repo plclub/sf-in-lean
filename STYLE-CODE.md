@@ -609,8 +609,7 @@ It takes the following options:
   rating outside that range is a build error
 * `(name := <identifier>)` (required): name used in headings and cross-references
 * `(level := <identifier>)` (optional): additional difficulty warning (currently only `Advanced`)
-* `(optional := <identifier>)` (optional): `Yes` marks an exercise the reader
-  may skip; the default is `No`
+* `(optional := <boolean>)` (optional): marks an exercise the reader may skip
 * `(manual := <boolean>)` (optional): marks the exercise for manual grading
 
 #### `:::gradeTheorem <number> <identifier>...`, `:::grade`

@@ -772,7 +772,7 @@ equivalent to CollatzHoldsFor?
 :::
 
 ::::::full
-:::::exercise (rating := 1) (name := "clos_refl_trans_sym") (optional := Yes) (manual := true)
+:::::exercise (rating := 1) (name := "clos_refl_trans_sym") (optional := true) (manual := true)
 How would you modify the {name}`ClosReflTrans` definition above so as
 to define the reflexive, symmetric, and transitive closure?
 
@@ -852,7 +852,7 @@ inductive Perm3 {α : Type} : List α → List α → Prop where
 ```
 
 ::::::full
-:::::exercise (rating := 1) (name := "perm") (optional := Yes) (manual := true)
+:::::exercise (rating := 1) (name := "perm") (optional := true) (manual := true)
 According to this definition, is `[1, 2, 3]` a permutation of
 itself?
 
@@ -1763,7 +1763,7 @@ theorem ev_ev__ev (n m : Nat) (hₙₘ : Ev (n + m)) (hₙ : Ev n) : Ev m := by
 ```
 :::::
 
-:::::exercise (rating := 3) (name := "ev_plus_plus") (optional := Yes)
+:::::exercise (rating := 3) (name := "ev_plus_plus") (optional := true)
 This exercise can be completed without induction or case analysis.
 But, you will need a clever `have` and some tedious rewriting.
 Hint: Is {lean}`(n + m) + (n + k)` even?
@@ -1924,7 +1924,7 @@ on paper differs a bit from the mechanized proof.  BCP 25: Yes.
 ::::
 
 ::::::full
-:::::exercise (rating := 4) (name := "ev'_ev") (level := Advanced) (optional := Yes)
+:::::exercise (rating := 4) (name := "ev'_ev") (level := Advanced) (optional := true)
 :::instructors
 This is pretty hard, unless you know the trick that
 the sample proof uses!!  But at least it's marked as
@@ -2020,7 +2020,7 @@ theorem In {α} (x : α) (l₁ l₂ : List α)
 ```
 :::::
 
-:::::exercise (rating := 1) (name := "Perm3_NotIn") (optional := Yes)
+:::::exercise (rating := 1) (name := "Perm3_NotIn") (optional := true)
 ```lean
 theorem NotIn {α} (x : α) (l₁ l₂ : List α)
     (hPerm : Perm3 l₁ l₂) (hIn : x ∉ l₁) : x ∉ l₂ := by
@@ -2032,7 +2032,7 @@ theorem NotIn {α} (x : α) (l₁ l₂ : List α)
 ```
 :::::
 
-:::::exercise (rating := 2) (name := "NotPerm3") (optional := Yes)
+:::::exercise (rating := 2) (name := "NotPerm3") (optional := true)
 Proving that something is NOT a permutation is quite tricky. Some
 of the lemmas above, like {name}`Perm3.In` can be useful for this.
 
@@ -2340,7 +2340,7 @@ theorem le_plus_trans (n m p : Nat) (h : n ≤ m) : n ≤ m + p := by
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "lt_facts") (optional := Yes)
+:::::exercise (rating := 3) (name := "lt_facts") (optional := true)
 ```lean
 theorem lt_ge_cases (n m : Nat) : n < m ∨ n ≥ m := by
   solution!
@@ -2400,7 +2400,7 @@ theorem plus_lt (n₁ n₂ m : Nat) (h : n₁ + n₂ < m) : n₁ < m ∧ n₂ < 
 :::
 :::::
 
-:::::exercise (rating := 4) (name := "ble_le") (optional := Yes)
+:::::exercise (rating := 4) (name := "ble_le") (optional := true)
 ```lean
 theorem ble_sound (n m : Nat) (h : Nat.ble n m = true) : n ≤ m := by
   solution!
@@ -2609,7 +2609,7 @@ sentence) explain your answer.
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "R_fact") (optional := Yes)
+:::::exercise (rating := 3) (name := "R_fact") (optional := true)
 The relation `R` above actually encodes a familiar function.
 Figure out which function; then state and prove this equivalence
 in Lean.
@@ -2834,7 +2834,7 @@ end Subseq
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "R_provability2") (optional := Yes) (manual := true)
+:::::exercise (rating := 2) (name := "R_provability2") (optional := true) (manual := true)
 Suppose we give Lean the following definition:
 
 ```display
@@ -2981,7 +2981,7 @@ emerging.
 ::::
 
 ::::::full
-:::::exercise (rating := 2) (name := "total_relation") (optional := Yes)
+:::::exercise (rating := 2) (name := "total_relation") (optional := true)
 Define an inductive binary relation `total_relation` that holds
 between every pair of natural numbers.
 
@@ -3000,7 +3000,7 @@ theorem total_relation_is_total (n m : Nat) : TotalRelation n m := by
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "empty_relation") (optional := Yes)
+:::::exercise (rating := 2) (name := "empty_relation") (optional := true)
 Define an inductive binary relation `empty_relation` (on numbers)
 that never holds.
 
@@ -3229,7 +3229,7 @@ theorem merge_filter (α : Type) (test : α → Bool) (l l₁ l₂ : List α)
 :::
 :::::
 
-:::::exercise (rating := 5) (name := "filter_challenge_2") (level := Advanced) (optional := Yes)
+:::::exercise (rating := 5) (name := "filter_challenge_2") (level := Advanced) (optional := true)
 A different way to characterize the behavior of `filter` goes like
 this: Among all subsequences of `l` with the property that `test`
 evaluates to `true` on all their members, `filter test l` is the
@@ -3432,7 +3432,7 @@ end Sol
 ```
 :::::
 
-:::::exercise (rating := 4) (name := "palindromes") (optional := Yes)
+:::::exercise (rating := 4) (name := "palindromes") (optional := true)
 A palindrome is a sequence that reads the same backwards as
 forwards.
 
@@ -3553,7 +3553,7 @@ I propose we move it to the simp chapter
 :::
 :::::
 
-:::::exercise (rating := 5) (name := "palindrome_converse") (optional := Yes)
+:::::exercise (rating := 5) (name := "palindrome_converse") (optional := true)
 Again, the converse direction is significantly more difficult, due
 to the lack of evidence.  Using your definition of `Pal` from the
 previous exercise, prove that
@@ -3730,7 +3730,7 @@ theorem palindrome_converse {α : Type} (l : List α) (h : l = l.reverse) : Pal 
 ```
 :::::
 
-:::::exercise (rating := 4) (name := "NoDup") (level := Advanced) (optional := Yes)
+:::::exercise (rating := 4) (name := "NoDup") (level := Advanced) (optional := true)
 Use the `∈` property to define a proposition `Disjoint l₁ l₂`,
 which should be provable exactly when `l₁` and `l₂` are
 lists (with elements of type `α`) that have no elements in
@@ -3847,7 +3847,7 @@ GRADE_MANUAL 6: NoDup
 :::
 :::::
 
-:::::exercise (rating := 5) (name := "pigeonhole_principle") (level := Advanced) (optional := Yes)
+:::::exercise (rating := 5) (name := "pigeonhole_principle") (level := Advanced) (optional := true)
 The _pigeonhole principle_ states a basic fact about counting: if
 we distribute more than `n` items into `n` pigeonholes, some
 pigeonhole must contain at least two items.  As often happens, this

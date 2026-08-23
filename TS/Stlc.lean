@@ -1811,7 +1811,7 @@ example :
 ```
 
 ::::::full
-:::::exercise (rating := 2) (name := "typing_example_2_full") (optional := Yes)
+:::::exercise (rating := 2) (name := "typing_example_2_full") (optional := true)
 Prove the same result in tactic mode, applying one rule at a time and
 naming the argument type of each application explicitly.
 

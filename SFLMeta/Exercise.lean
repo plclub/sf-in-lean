@@ -18,9 +18,9 @@ structure ExerciseConfig where
   /-- Difficulty level, written as a bare identifier: `Advanced` marks an
   advanced exercise (SF's `A` flag).  Absent means a standard exercise. -/
   level : Option String
-  /-- Whether the exercise is optional (SF's `?` flag).  Written as a bare
-  identifier, `(optional := Yes)`; absent means `No`. -/
-  optional : String
+  /-- Whether the exercise is optional (SF's `?` flag).  Written
+  `(optional := true)`; absent means `false`. -/
+  optional : Bool
   /-- Whether the exercise is graded manually rather than automatically (SF's
   `M` flag).  Written `(manual := true)`. -/
   manual : Bool
@@ -57,38 +57,16 @@ def ValDesc.exerciseRating : ValDesc m Nat where
       else Pure.pure r
     | other => throwError "Expected a number, got {toMessageData other}"
 
-/-- Canonicalize an exercise `optional` keyword, recognized case-insensitively:
-`Yes` and `No` map to their canonical spelling and every other keyword yields
-`none` (an error at parse time). -/
-def canonExerciseOptional? (s : String) : Option String :=
-  match s.toUpper with
-  | "YES" => some "Yes"
-  | "NO" => some "No"
-  | _ => none
-
-/-- The `optional` argument: a bare identifier, `Yes` or `No` (recognized in
-any case), stored canonicalized.  Unlike `:::dev`'s urgency — a *positional*
-argument whose `get`-time errors would be swallowed by the `<|>` that makes it
-optional — `optional` is named, so validating here gives a precise error. -/
-def ValDesc.exerciseOptional : ValDesc m String where
-  description := doc!"`Yes` or `No`"
-  signature := CanMatch.Ident
-  get
-    | .name x =>
-      match canonExerciseOptional? x.getId.toString with
-      | some s => Pure.pure s
-      | none => throwError "Expected `Yes` or `No`, got `{x.getId}`"
-    | other => throwError "Expected identifier, got {toMessageData other}"
-
 /-- Argument parser for `ExerciseConfig`.  `rating` (1 to 5) and `name` are
-required; the `level` (`Advanced`), `optional` (`Yes`/`No`, defaulting to `No`),
-and `manual` (`true`/`false`) designations are optional. -/
+required; the `level` (`Advanced`), `optional` (`true`/`false`), and `manual`
+(`true`/`false`) designations are optional, the two flags defaulting to
+`false`. -/
 def ExerciseConfig.parse : ArgParse m ExerciseConfig :=
   ExerciseConfig.mk
     <$> .named `rating ValDesc.exerciseRating false
     <*> .named `name .string false
     <*> .named `level ValDesc.identText true
-    <*> namedD `optional ValDesc.exerciseOptional "No"
+    <*> namedD `optional .bool false
     <*> namedD `manual .bool false
 
 instance : FromArgs ExerciseConfig m := ⟨ExerciseConfig.parse⟩
@@ -100,10 +78,9 @@ grading flags, e.g. `" (Advanced)"`, `" (Optional, manually graded)"`, or `""`
 when the exercise is standard, required, and auto-graded.  Shared by the HTML,
 TeX, and `.lean` renderings so they mark advanced/optional/manual exercises
 identically. -/
-def exerciseDesignation (level : Option String) (optional : String)
-    (manual : Bool) : String :=
+def exerciseDesignation (level : Option String) (optional manual : Bool) : String :=
   let parts := (if level == some "Advanced" then ["Advanced"] else []) ++
-               (if optional == "Yes" then ["Optional"] else []) ++
+               (if optional then ["Optional"] else []) ++
                (if manual then ["manually graded"] else [])
   match parts with
   | [] => ""
@@ -115,22 +92,22 @@ a `### Exercise (rating⭐): name` module-doc heading before the contents. -/
 
 /-- Decode a `Block.exercise` payload `(rating, name, level, optional, manual)`,
 tolerating the older 4-element `(rating, name, level, manual)` and 2-element
-`(rating, name)` forms.  The two longer forms are told apart by their fourth
-element: the optional-flag string in the current form, the manual flag in the
-older one. -/
-def decodeExerciseData (data : Json) : Nat × String × Option String × String × Bool :=
+`(rating, name)` forms.  The two flags are both booleans, so it is the array's
+arity — not its element types — that tells the current form from the older
+one. -/
+def decodeExerciseData (data : Json) : Nat × String × Option String × Bool × Bool :=
   let level? (j : Json) : Option String := match j with | .str s => some s | _ => none
   match data with
-  | .arr #[.num jr, .str n, lvl, .str opt, .bool man] =>
+  | .arr #[.num jr, .str n, lvl, .bool opt, .bool man] =>
     (jr.toFloat.toUInt32.toNat, n, level? lvl, opt, man)
   | .arr #[.num jr, .str n, lvl, .bool man] =>
-    (jr.toFloat.toUInt32.toNat, n, level? lvl, "No", man)
-  | .arr #[.num jr, .str n] => (jr.toFloat.toUInt32.toNat, n, none, "No", false)
-  | _ => (0, "", none, "No", false)
+    (jr.toFloat.toUInt32.toNat, n, level? lvl, false, man)
+  | .arr #[.num jr, .str n] => (jr.toFloat.toUInt32.toNat, n, none, false, false)
+  | _ => (0, "", none, false, false)
 
 block_extension Block.exercise (rating : Nat) (name : String)
-    (level : Option String) (optional : String) (manual : Bool) where
-  data := Json.arr #[.num (.fromNat rating), .str name, toJson level, .str optional,
+    (level : Option String) (optional : Bool) (manual : Bool) where
+  data := Json.arr #[.num (.fromNat rating), .str name, toJson level, .bool optional,
                      .bool manual]
   traverse _ _ _ := pure none
   toHtml :=
