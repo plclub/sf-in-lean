@@ -1831,7 +1831,7 @@ end StackCompiler
 ```
 ::::
 
-::::exercise  (rating := 3) (name := "compiler_correct")
+::::exercise  (rating := 3) (name := "short_circuit") (optional := true)
 Most modern programming languages use a "short-circuit" evaluation
 rule for boolean `and`: to evaluate `BExp.and b₁ b₂`, first evaluate
 `b₁`.  If it evaluates to {name}`false`, then the entire `and`
@@ -1868,7 +1868,7 @@ theorem beval__beval_sc (st : State) (b : Bexp) :
 ```
 ::::
 
-::::exercise  (rating := 3) (name := "break_imp")
+::::exercise  (rating := 3) (name := "break_imp") (optional := true)
 Imperative languages like C and Java often include a `break` or
 similar statement for interrupting the execution of loops. In this
 exercise we consider how to add `break` to Imp.  First, we need to
@@ -2108,7 +2108,7 @@ theorem seq_stops_on_break (c₁ c₂ : Com) (st st' : State)
 ```
 ::::
 
-::::exercise (rating := 3) (name := "while_break_true")
+::::exercise (rating := 3) (name := "while_break_true") (optional := true)
 ```lean
 theorem while_break_true (b : Bexp) (c : Com) (st st' : State)
   (h₁ : st =[ imp { while (~b) {~c} } ]=> st' // sContinue)
@@ -2125,7 +2125,7 @@ theorem while_break_true (b : Bexp) (c : Com) (st st' : State)
 ```
 ::::
 
-::::exercise (rating := 4) (name := "ceval_deterministic")
+::::exercise (rating := 4) (name := "ceval_deterministic") (optional := true)
 ```lean
 theorem ceval_deterministic (c : Com) (st st₁ st₂ : State) (s₁ s₂ : Result)
   (h₁ : st =[ imp { ~c } ]=> st₁ // s₁)
@@ -2187,6 +2187,21 @@ theorem ceval_deterministic (c : Com) (st st₁ st₂ : State) (s₁ s₂ : Resu
 end BreakImp
 ```
 
+::::exercise (rating := 4) (name := "add_for_loop") (optional := true)
+Add C-style `for` loops to the language of commands, update the
+`ceval` definition to define the semantics of `for` loops, and add
+cases for `for` loops as needed so that all the proofs in this
+file are accepted by Rocq.
+
+A `for` loop should be parameterized by (a) a statement executed
+initially, (b) a test that is run on each iteration of the loop to
+determine whether the loop should continue, (c) a statement
+executed at the end of each loop iteration, and (d) a statement
+that makes up the body of the loop.  (You don't need to worry
+about making up a concrete Notation for `for` loops, but feel free
+to play with this too if you like.)
+::::
+
 :::dev "Michael Hicks (mwhicks1)"
 ```
 NOT PORTED YET — remaining sections of sfdev/lf/Imp.v to port:
@@ -2194,15 +2209,7 @@ NOT PORTED YET — remaining sections of sfdev/lf/Imp.v to port:
       * subtract_slowly_spec (EX4?, Imp.v:2919): loop-invariant style proof
         about `subtract_slowly`.
   - Additional Exercises, Imp.v:2986
-      * break_imp (EX4?, Imp.v:3227): extends Com with `CBreak`; new
-        relational semantics `ceval` carrying a `result` (SContinue/SBreak).
-        Large. See verso-book branch (lf/Imp.lean ~line 1141, CEvalBreak) for
-        a prior take on the signal type.
-      * while_break_true (EX3A?, Imp.v:3454)
-      * ceval_deterministic for break (EX4A?, Imp.v:3477)
       * exn_imp (EX4A?, Imp.v:3524): exceptions variant. Large.
-      * add_for_loop (EX4?, Imp.v:3728): add a C-style `for` loop to Com,
-        its notation, and extend ceval.
 ```
 :::
 
