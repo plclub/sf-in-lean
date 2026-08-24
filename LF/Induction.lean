@@ -15,7 +15,7 @@ htmlSplit := .never
 file := some "Induction"
 %%%
 
-:::dev BeforeNextRelease
+:::dev
 ```
 SOONER: We should also consider adding more examples to clarify
 the concepts introduced in this chapter. This could help in
@@ -969,14 +969,8 @@ theorem mul_one (p : Nat) :
 Lean's language server can suggest _code actions_, which are
 small editor commands that modify the source code.
 
-:::dev "Benjamin Pierce (bcpierce00)"
-I put the intro text into a `full` block, but I think some of the following material should come _out_ of the full block that it's in, since the instructor will want to go through it in the lecture.
-:::
-
-
+In VS Code, a lightbulb icon appears on the left when a code action is available at your cursor.
 :::full
-In VS Code, a lightbulb icon appears on the left
-when a code action is available at your cursor.
 You can click the icon or open the code action menu with `Ctrl + .`
 on Windows/Linux or `Command + .` on macOS.
 For more information, see the
@@ -988,8 +982,7 @@ or with tactics such as {tactic}`cases` and {tactic}`induction`,
 which we saw in previous chapters.
 :::
 
-::::full
-Let's look at an example using {tactic}`induction`.
+Let's look at an example code action using {tactic}`induction`.
 For example, suppose we start with the following incomplete proof:
 
 ```lean +error
@@ -1007,7 +1000,7 @@ Lean adds an explicit branch for each constructor:
 example (n : Nat) : Nat.beq n n := by
   induction n with
   | zero => sorry
-  | succ n _ => sorry
+  | succ n ih => sorry
 ```
 
 This gives us basic structure of the proof without requiring us to write each
@@ -1022,15 +1015,7 @@ example (n : Nat) : Nat.beq n n := by
   | succ n ih => rw [Nat.beq, ih]
 ```
 
-Note that Lean used `_` for the induction hypothesis in the generated `succ` branch.
-At that point, Lean didn't know whether the unfinished proof would need to refer to the hypothesis.
-Since we use it in {tactic}`rw`, we replace `_` with the name `ih`.
-
-In later chapters, we will see some tactics that can make such
-inaccessible names available again.
-
-The same trick also works for `match` expressions.
-For example, suppose we start with
+The same trick also works for `match` expressions. For example, suppose we start with
 
 ```lean -keep +error
 def isZero (n : Nat) : Bool :=
@@ -1042,25 +1027,22 @@ Lean can generate the missing branches:
 ```lean -keep +error
 def isZero (n : Nat) : Bool :=
   match n with
-  | 0 => _
-  | n + 1 => _
+  | .zero => _
+  | .succ n => _
 ```
-::::
 
+Now you just have to replace the holes `_` with your definition.
 You can use code actions freely to fill out {tactic}`induction`,
 {tactic}`case`, and `match` branches while working with this book.
 
-:::dev "Benjamin Pierce (bcpierce00)"
-If this exercise is not needed in the lecture or later in the book, maybe it belongs in a terse block?
-:::
-
-
-::::exercise (rating := 2) (name := "mul_two")
-Tip: By default, {tactic}`rewrite` and {tactic}`rw` rewrite left to right, i.e.,
+By default, {tactic}`rewrite` and {tactic}`rw` rewrite left to right, i.e.,
 they transform the goal (or a hypothesis) from the form on
 the left side of the equality to the right side. To rewrite from
 right to left, use `rewrite [← h]` or `rw [← h]`, where `←` is entered
 as `\l` or `\<-`.
+
+:::::full
+::::exercise (rating := 2) (name := "mul_two")
 ```lean
 theorem mul_two (p : Nat) :
     two * p = p + p := by
@@ -1076,6 +1058,7 @@ theorem mul_two (p : Nat) :
 :::gradeTheorem 1 mul_two
 :::
 ::::
+:::::
 
 ::::terse
 These exercises state facts that will be used later.

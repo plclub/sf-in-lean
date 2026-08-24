@@ -94,7 +94,7 @@ features, writing `Nat.<theorem>` to reference Lean's version
 of `<theorem>`. (By convention, theorems about a type live in the namespace of
 that type, hence the need for the `Nat.` prefix.)
 
-Definitions in the built-in {name}`Nat` library are _not_ marked `@irreducible`. This lets us use
+Definitions in the built-in {name}`Nat` library are _not_ marked `@[irreducible]`. This lets us use
 more powerful _automatic simplification_ of functions on natural numbers,
 which is appropriate when their low-level behaviors are not the primary focus of proofs.
 This will be the case going forward.
@@ -403,7 +403,7 @@ example (n m : Nat) (h : 2 * n = m * 2) : n + n = m + m := by
   exact h
 ```
 
-But {tactic}`rw` rewrites only one instance of a _definition_ at a time.
+But {tactic}`rw` rewrites only one instance of a definition at a time.
 When a hypothesis mentions the same function at several different
 arguments, each one needs its own rewrite.
 
@@ -435,6 +435,33 @@ example (n : Nat) : square n + 0 = n * n := by
 Like {tactic}`rw` and {tactic}`exact`, {tactic}`dsimp` also has a `?` version
 that searches for functions to simplify by. Many Lean tactics have `?`
 versions; try it out if you are unsure.
+
+:::dev "Mike Hicks (@mwhicks1)"
+Yipeng said we can pass a theorem, e.g. `dsimp [Nat.mul_zero]`, which would rewrite `Nat.mul_zero`
+many times and then perform reductions, just like simp `[Nat.mul_zero]`. Also `@[defeq] lemmas`
+in the `simp` set are always used implicitly.
+
+Should `dsimp [Nat.mul_zero]` be preferred over `dsimp [Nat.mul]`? An example:
+```lean
+example (n : Nat) : n * (n * (n * 0)) = 0 := by
+  rw [Nat.mul_zero, Nat.mul_zero, Nat.mul_zero]
+
+example (n : Nat) : n * (n * (n * 0)) = 0 := by
+  dsimp [Nat.mul]
+
+example (n : Nat) : n * (n * (n * 0)) = 0 := by
+  dsimp [Nat.mul_zero]
+```
+This could be confusing though, because rewriting by `dsimp` only works for _definitional_
+equalities. The following doesn't work
+```lean +error
+example (n : Nat) : (((0 * n) * n) * n) = 0 := by
+  dsimp [Nat.zero_mul]
+```
+This is because `Nat.zero_mul` is true by induction, not reduction. This is a bit confusing
+to explain, and also unfortunate since one may not know why an equality holds. Thus I'd
+prefer not to include this use here.
+:::
 
 ## A New Step Towards Automation
 
@@ -619,14 +646,10 @@ theorem Nat.double_mul (n : Nat) : n.double = 2 * n := by
 :::
 
 In the remainder of the book, we use Lean's built-in natural numbers everywhere.
-We use `dsimp`, `calc`, and in examples and solutions, and encourage their use.
+We use `dsimp` and `calc` in examples and solutions, and encourage their use.
 We also recommend using `rw?` and `exact?` to search for lemmas
-(though these should not appear in finished proofs). 
-:::dev "Benjamin Pierce (bcpierce00)"
-Is there a word missing in "We use `dsimp`, `calc`, and in examples"
-:::
+(though these should not appear in finished proofs).
 
 With these tools in hand, we
 can begin to prove properties about more sophisticated forms of data, beginning with
 {ref "Lists"}`Lists`.
-
