@@ -1,10 +1,8 @@
 module
 
--- This will let the code actions spread to extracted projects
-public import Batteries.CodeAction
 public meta import Lean.Elab.BuiltinCommand
 
-namespace SLFCommand
+namespace SFLCompat.Experiement
 
 open Lean Elab Command
 
@@ -210,7 +208,7 @@ sf_expect_failure?
 #check Nat
 
 /--
-info: SLFCommand.Tests.x : Nat
+info: SFLCompat.Experiement.Tests.x : Nat
 ---
 info: 3
 -/
@@ -251,4 +249,4 @@ sf_experiment
 
 end Tests
 
-end SLFCommand
+end SFLCompat.Experiement

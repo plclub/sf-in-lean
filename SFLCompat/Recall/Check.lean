@@ -1,10 +1,13 @@
-import Lean
-import SFLMeta.RecallSource
+module
+
+-- For testing cases in this file
+meta import all Init.Prelude
+public meta import SFLCompat.Recall.Common
 
 /-!
 # Recall, checked by elaboration
 
-`recall` lets a chapter restate a definition from earlier in the
+`sf_recall` lets a chapter restate a definition from earlier in the
 development while the build checks that the restatement means the same
 thing. The restated declaration is elaborated for real, inside a hidden
 namespace, and compared with the original up to definitional equality; the
@@ -13,55 +16,57 @@ temporary declaration is then rolled back.
 Two forms:
 
 ```
-recall
+sf_recall
   def twice (f : Nat → Nat) (n : Nat) : Nat := f <| f n
 
-recall statement twice_id : twice id 3 = 3
+sf_recall statement twice_id : twice id 3 = 3
 ```
 
 What is compared:
 
 * types, always;
-* a `def`'s value;
+* a `def`'s value, safety, and abbreviation status;
 * an inductive's constructors, one by one (names, parameter and index
   counts, and each constructor's type);
+* a structure's fields, field defaults, and type-class registration;
 * a theorem's statement, never its proof.
 
 So a recalled definition may be reformatted or rephrased into something
 definitionally equal, and a theorem may be reproved differently or, with
-the `statement` form, restated without any proof. The syntax is scoped:
-the command is available inside `RecallCheck` and wherever it is opened,
-and `recall` is not a keyword elsewhere.
+the `statement` form, restated without any proof. The command is global and
+available wherever this module is imported.
 -/
+
+
+namespace SFLCompat.Recall.Check
 
 open Lean Elab Command Meta
 
-namespace RecallCheck
+meta section
 
-/-- All `declId` nodes in a command, in source order. -/
-partial def declIds (stx : Syntax) : Array Syntax :=
-  let inner := stx.getArgs.flatMap declIds
-  if stx.isOfKind ``Lean.Parser.Command.declId then #[stx] ++ inner else inner
+structure DeclId where
+  /-- This could be a private name. -/
+  actual : Name
+  display : Name
 
-/--
-The `declId` node of a declaration command, together with the name written
-in it. A command that declares several names (a `mutual` block) or none (an
-anonymous `instance`, an `example`) is rejected.
--/
-def declaredName (cmd : Syntax) : CommandElabM (Syntax × Name) := do
-  let defined := declIds cmd
-  match h : defined.size with
-  | 0 =>
-    throwErrorAt cmd "the restated command does not declare a name"
-  | 1 =>
-    let declId := defined[0]
-    return (declId, declId[0].getId)
-  | n + 2 =>
-    for h : i in 0...(n + 1) do
-      logErrorAt defined[i]
-        "the restated command declares several names; recall one declaration at a time"
-    throwErrorAt defined[n + 1]
-      "the restated command declares several names; recall one declaration at a time"
+def DeclId.ofActual (actual : Name) : DeclId :=
+  { actual, display := privateToUserName actual }
+
+/-- Look up the actual name in temp elaboration namespace -/
+def tempDeclId (userName : Name) : CommandElabM DeclId := do
+  let env ← getEnv
+  let privateName := mkPrivateName env userName
+  let actual ←
+    if env.contains privateName then pure privateName
+    else if env.contains userName then pure userName
+    else throwError "the re-elaborated declaration '{userName}' was not found"
+  return .ofActual actual
+
+def renameBackName (chk orig n : Name) : Name :=
+  if chk.isPrefixOf n then n.replacePrefix chk orig
+  else
+    let chk := privateToUserName chk
+    if chk.isPrefixOf n then n.replacePrefix chk orig else n
 
 /--
 Replaces the name prefix `chk` with `orig` in every constant that `e`
@@ -71,10 +76,11 @@ hidden inductive type's name in argument and resulting positions, so this
 rewrite is what makes a re-elaborated declaration comparable with the
 original.
 -/
-def renameBack (chk orig : Name) (e : Expr) : Expr :=
+def renameBack (chk orig : DeclId) (e : Expr) : Expr :=
   e.replace fun
     | .const n us =>
-      if chk.isPrefixOf n then some (.const (n.replacePrefix chk orig) us) else none
+      let n' := renameBackName chk.actual orig.actual n
+      if n == n' then none else some (.const n' us)
     | _ => none
 
 /--
@@ -84,8 +90,11 @@ so hovers over a recalled declaration would otherwise display the hidden
 names; rewriting before the trees are stored makes them display the
 originals, which also exist after the hidden copy is rolled back.
 -/
-partial def renameBackInfoTree (chk orig : Name) (t : InfoTree) : InfoTree :=
+partial def renameBackInfoTree (chk orig : DeclId) (t : InfoTree) : InfoTree :=
   match t with
+  | .context (.parentDeclCtx n) t' =>
+    .context (.parentDeclCtx (renameBackName chk.actual orig.actual n))
+      (renameBackInfoTree chk orig t')
   | .context ctx t' => .context ctx (renameBackInfoTree chk orig t')
   | .node i children =>
     let i := match i with
@@ -109,18 +118,18 @@ overrides them with the enclosing inductive types, whose names the
 constructor types mention. The restatement's universe parameters are
 instantiated with the original's.
 -/
-def checkTypesMatch (x chk : Name) (ref : Syntax)
-    (renChk : Name := chk) (renOrig : Name := x) (hint : MessageData := .nil) :
+def checkTypesMatch (x chk : DeclId) (ref : Syntax)
+    (renChk : DeclId := chk) (renOrig : DeclId := x) (hint : MessageData := .nil) :
     TermElabM Unit := do
-  let origInfo ← getConstInfo x
-  let chkInfo ← getConstInfo chk
+  let origInfo ← getConstInfo x.actual
+  let chkInfo ← getConstInfo chk.actual
   unless origInfo.levelParams.length == chkInfo.levelParams.length do
-    throwErrorAt ref (m!"universe parameters of '{x}' do not match" ++ hint)
+    throwErrorAt ref (m!"universe parameters of '{x.display}' do not match" ++ hint)
   let chkType := (renameBack renChk renOrig chkInfo.type).instantiateLevelParams
     chkInfo.levelParams (origInfo.levelParams.map .param)
   unless ← isDefEq chkType origInfo.type do
     throwErrorAt ref
-      (m!"the statement of '{x}' does not match.\n\
+      (m!"the statement of '{x.display}' does not match.\n\
           Original:{indentD origInfo.type}\nRestated:{indentD chkType}" ++ hint)
 
 /--
@@ -150,17 +159,17 @@ def ctorHints (ctorRef : Syntax) (origCtor origShort : Name) (outer : MessageDat
     TermElabM (MessageData × MessageData) := do
   try
     if ctorRef.isOfKind ``Lean.Parser.Command.ctor then
-      let origSrc := RecallSource.dedent (← RecallSource.sourceOf origCtor)
+      let origSrc := dedent (← sourceOf origCtor)
       -- A restatement without a doc comment gets a suggestion without one;
       -- the meaning check does not compare documentation.
       let origSrc := if hasDocComment ctorRef then origSrc
-        else RecallSource.stripLeadingComments origSrc
-      let restatedSrc ← RecallSource.sourceOfSyntax ctorRef
-      let h ← RecallSource.replaceWithOriginalHint ctorRef origSrc restatedSrc
+        else stripLeadingComments origSrc
+      let restatedSrc ← sourceOfSyntax ctorRef
+      let h ← replaceWithOriginalHint ctorRef origSrc restatedSrc
       return (h, h)
     if ctorRef.isOfKind ``Lean.Parser.Command.structCtor then
-      let restatedSrc ← RecallSource.sourceOfSyntax ctorRef
-      let h ← RecallSource.replaceWithOriginalHint ctorRef s!"{origShort} ::" restatedSrc
+      let restatedSrc ← sourceOfSyntax ctorRef
+      let h ← replaceWithOriginalHint ctorRef s!"{origShort} ::" restatedSrc
       return (h, outer)
     return (outer, outer)
   catch _ => return (outer, outer)
@@ -170,53 +179,64 @@ Checks a re-elaborated declaration against the original, definitionally.
 Errors point at `ref`, the restated command, except for constructor
 mismatches, which point at the offending constructor within it.
 -/
-def checkMatch (x chk : Name) (ref : Syntax) (hint : MessageData := .nil) :
+def checkMatch (x chk : DeclId) (ref : Syntax) (hint : MessageData := .nil) :
     TermElabM Unit := do
   checkTypesMatch x chk ref (hint := hint)
-  let origInfo ← getConstInfo x
-  let chkInfo ← getConstInfo chk
+  let origInfo ← getConstInfo x.actual
+  let chkInfo ← getConstInfo chk.actual
   match origInfo, chkInfo with
   | .defnInfo orig, .defnInfo restated =>
     let chkVal := (renameBack chk x restated.value).instantiateLevelParams
       restated.levelParams (orig.levelParams.map .param)
     unless ← isDefEq chkVal orig.value do
       throwErrorAt ref
-        (m!"the value of '{x}' does not match.\n\
+        (m!"the value of '{x.display}' does not match.\n\
             Original:{indentD orig.value}\nRestated:{indentD chkVal}" ++ hint)
   | .inductInfo orig, .inductInfo restated =>
     unless orig.numParams == restated.numParams && orig.numIndices == restated.numIndices do
-      throwErrorAt ref (m!"parameters or indices of '{x}' do not match" ++ hint)
+      throwErrorAt ref (m!"parameters or indices of '{x.display}' do not match" ++ hint)
     unless orig.ctors.length == restated.ctors.length do
       throwErrorAt ref
-        (m!"'{x}' has {orig.ctors.length} constructors, \
+        (m!"'{x.display}' has {orig.ctors.length} constructors, \
             the restatement has {restated.ctors.length}" ++ hint)
     -- A `structure` that writes no `name ::` header has a constructor
     -- without syntax; the whole command remains the fallback position.
     let ctorRefs := ctorStxs ref
     let mut i := 0
-    for origCtor in orig.ctors, chkCtor in restated.ctors do
+    for origCtorActual in orig.ctors, chkCtorActual in restated.ctors do
+      let origCtor := DeclId.ofActual origCtorActual
+      let chkCtor := DeclId.ofActual chkCtorActual
       let ctorRef := ctorRefs[i]?.getD ref
-      let origShort := origCtor.replacePrefix x .anonymous
-      let (nameHint, typeHint) ← ctorHints ctorRef origCtor origShort hint
-      unless origCtor == chkCtor.replacePrefix chk x do
+      let origShort := origCtor.actual.replacePrefix x.actual .anonymous
+      let (nameHint, typeHint) ← ctorHints ctorRef origCtor.actual origShort hint
+      let renamedChkCtor := DeclId.ofActual <|
+        chkCtor.actual.replacePrefix chk.actual x.actual
+      unless origCtor.actual == renamedChkCtor.actual do
         throwErrorAt ctorRef
-          (m!"constructor '{chkCtor.replacePrefix chk x}' does not match '{origCtor}'" ++ nameHint)
+          (m!"constructor '{renamedChkCtor.display}' does not match \
+              '{origCtor.display}'" ++ nameHint)
       checkTypesMatch origCtor chkCtor ctorRef (renChk := chk) (renOrig := x) (hint := typeHint)
       i := i + 1
     -- A structure's field names are part of its interface, and the
     -- constructor's type does not record them, so they are compared
     -- through the environment's structure information.
-    match getStructureInfo? (← getEnv) x, getStructureInfo? (← getEnv) chk with
+    let env ← getEnv
+    match getStructureInfo? env x.actual, getStructureInfo? env chk.actual with
     | some origSi, some chkSi =>
-      unless origSi.fieldNames == chkSi.fieldNames do
+      let origFields := origSi.fieldNames.map DeclId.ofActual
+      let chkFields := chkSi.fieldNames.map DeclId.ofActual
+      unless origFields.map (·.actual) == chkFields.map (·.actual) do
         throwErrorAt ref
-          (m!"the fields of '{x}' do not match.\n\
-              Original:{indentD (toMessageData origSi.fieldNames.toList)}\n\
-              Restated:{indentD (toMessageData chkSi.fieldNames.toList)}" ++ hint)
+          (m!"the fields of '{x.display}' do not match.\n\
+              Original:{indentD (toMessageData (origFields.map (·.display)).toList)}\n\
+              Restated:{indentD (toMessageData (chkFields.map (·.display)).toList)}" ++ hint)
+      unless getOutParamPositions? env x.actual == getOutParamPositions? env chk.actual
+          && getOutLevelParamPositions? env x.actual == getOutLevelParamPositions? env chk.actual do
+        throwErrorAt ref (m!"the type-class metadata of '{x.display}' does not match" ++ hint)
     | some _, none =>
-      throwErrorAt ref (m!"'{x}' is a structure, but the restatement is not" ++ hint)
+      throwErrorAt ref (m!"'{x.display}' is a structure, but the restatement is not" ++ hint)
     | none, some _ =>
-      throwErrorAt ref (m!"'{x}' is not a structure, but the restatement is one" ++ hint)
+      throwErrorAt ref (m!"'{x.display}' is not a structure, but the restatement is one" ++ hint)
     | none, none => pure ()
   -- A theorem's proof is not compared; restating it as a `def` is also
   -- accepted, since only the statement matters.
@@ -225,22 +245,25 @@ def checkMatch (x chk : Name) (ref : Syntax) (hint : MessageData := .nil) :
   | .axiomInfo _, .axiomInfo _ => pure ()
   | .opaqueInfo _, .opaqueInfo _ => pure ()
   | _, _ =>
-    throwErrorAt ref (m!"'{x}' and its restatement are different kinds of declaration" ++ hint)
+    throwErrorAt ref
+      (m!"'{x.display}' and its restatement are different kinds of declaration" ++ hint)
 
 /--
-`recall` restates a definition from earlier in the development and checks
-that the restatement means the same thing. `recall statement x : T` checks
+`sf_recall` restates a definition from earlier in the development and checks
+that the restatement means the same thing. `sf_recall statement x : T` checks
 that `T` matches the statement of the theorem `x`.
 -/
-scoped syntax (name := recallChk) "recall " command : command
+syntax (name := recallChk) "sf_recall " command : command
 
 @[inherit_doc recallChk]
-scoped syntax (name := recallChkStmt) "recall " &"statement " ident " : " term : command
+syntax (name := recallChkStmt) "sf_recall " &"statement " ident " : " term : command
 
 elab_rules : command
-  | `(recall $cmd:command) => do
-    let (declId, written) ← declaredName cmd
-    let x ← liftCoreM <| realizeGlobalConstNoOverload (mkIdentFrom declId written)
+  | `(sf_recall $cmd:command) => do
+    let decl ← declaredName cmd
+    let xActual ← liftCoreM <| withoutExporting <|
+      realizeGlobalConstNoOverloadWithInfo decl.ident
+    let x := DeclId.ofActual xActual
     -- The restatement elaborates unchanged inside a fresh hidden namespace:
     -- self-references (an inductive's own name in its constructor types, in
     -- resulting-type position included) resolve to the hidden copy, and
@@ -251,7 +274,6 @@ elab_rules : command
     -- prefix structure that `renameBack` and the constructor comparison
     -- rely on.
     let ns ← liftCoreM (mkFreshId : CoreM Name)
-    let chk := (← getScope).currNamespace ++ ns ++ written
     -- Any mismatch gets a clickable fix: replace the restatement with the
     -- original's source text, indented like the restatement. The helpers
     -- for recovering and re-indenting source are shared with the
@@ -260,32 +282,38 @@ elab_rules : command
     -- declaration range or sources on the search path.
     let hint ←
       try
-        let original := RecallSource.dedent (← RecallSource.sourceOf x)
+        let original := dedent (← sourceOf x.actual)
         let original := if hasDocComment cmd then original
-          else RecallSource.stripLeadingComments original
-        let restated ← RecallSource.sourceOfSyntax cmd
-        liftCoreM <| RecallSource.replaceWithOriginalHint cmd original restated
+          else stripLeadingComments original
+        let restated ← sourceOfSyntax cmd
+        liftCoreM <| replaceWithOriginalHint cmd original restated
       catch _ => pure .nil
     let envBefore ← getEnv
     try
-      withScope (fun sc => { sc with currNamespace := sc.currNamespace ++ ns }) do
+      let chk ← withScope (fun sc => { sc with currNamespace := sc.currNamespace ++ ns }) do
         let saved ← getResetInfoTrees
         try
           elabCommand cmd
-        finally
+          -- this could be a private name
+          let userName := (← getScope).currNamespace ++ decl.written
+          let chk ← tempDeclId userName
           let inner ← getResetInfoTrees
-          modifyInfoState fun s =>
-            { s with trees := saved ++ inner.map (renameBackInfoTree chk x) }
-      unless (← getEnv).contains chk do
-        throwErrorAt cmd (m!"the restatement of '{x}' failed to elaborate" ++ hint)
+          modifyInfoState fun s => { s with trees := saved ++ inner.map (renameBackInfoTree chk x) }
+          return chk
+        catch e =>
+          let inner ← getResetInfoTrees
+          modifyInfoState fun s => { s with trees := saved ++ inner }
+          throw e
       runTermElabM fun _ => checkMatch x chk cmd (hint := hint)
     finally
       setEnv envBefore
-  | `(recall statement $x:ident : $stmt:term) => do
-    let xName ← liftCoreM <| realizeGlobalConstNoOverload x
-    addConstInfo x xName
-    let region := mkNullNode #[x.raw, stmt.raw]
-    let restated ← RecallSource.sourceOfSyntax region
+  | `(sf_recall statement $ident:ident : $stmt:term) => do
+    let xActual ← liftCoreM <| withoutExporting <|
+      realizeGlobalConstNoOverloadWithInfo ident
+    let x := DeclId.ofActual xActual
+    addConstInfo ident x.actual
+    let region := mkNullNode #[ident.raw, stmt.raw]
+    let restated ← sourceOfSyntax region
     runTermElabM fun _ => do
       -- The suggestion restates the original's type as the pretty-printer
       -- renders it. The statement cannot be carved out of the original's
@@ -293,10 +321,10 @@ elab_rules : command
       -- source in the elaboration context of its declaration site.
       let hint ←
         try
-          let origInfo ← getConstInfo xName
+          let origInfo ← getConstInfo x.actual
           let printed ← ppExpr origInfo.type
-          RecallSource.replaceWithOriginalHint region
-            s!"{x.getId} : {printed}" restated
+          replaceWithOriginalHint region
+            s!"{ident.getId} : {printed}" restated
         catch _ => pure .nil
       let t ← Term.elabType stmt
       Term.synthesizeSyntheticMVarsNoPostponing
@@ -305,25 +333,22 @@ elab_rules : command
       -- against fresh level metavariables instead would let a fixed
       -- universe pass for a polymorphic original.
       let t ← instantiateMVars (← Term.levelMVarToParam t)
-      let origInfo ← getConstInfo xName
+      let origInfo ← getConstInfo x.actual
       let stParams := (collectLevelParams {} t).params
       unless stParams.size == origInfo.levelParams.length do
         throwErrorAt stmt
-          (m!"universe parameters of '{xName}' do not match" ++ hint)
+          (m!"universe parameters of '{x.display}' do not match" ++ hint)
       let t := t.instantiateLevelParams stParams.toList
         (origInfo.levelParams.map .param)
       unless ← isDefEq t origInfo.type do
         throwErrorAt stmt
-          (m!"the restated statement of '{xName}' does not match.\n\
+          (m!"the restated statement of '{x.display}' does not match.\n\
               Original:{indentD origInfo.type}\nRestated:{indentD t}" ++ hint)
 
-end RecallCheck
+end
+namespace Tests
 
-/-! ## Tests -/
-
-namespace RecallCheck.Test
-
-recall
+sf_recall
   inductive Nat where
   | zero
   | succ (n : Nat) : Nat
@@ -342,7 +367,7 @@ Hint: Replace the restatement with the original:
   | succ (̲n̲ ̲: N̲a̲t̲)̲ ̲:̲ ̲Nat ̵→̵ ̵N̵a̵t̵ ̵→̵ ̵N̵a̵t̵
 -/
 #guard_msgs (positions := true) in
-recall
+sf_recall
   inductive Nat where
   | zero
   | succ : Nat → Nat → Nat
@@ -354,55 +379,55 @@ def twice (f : Nat → Nat) (n : Nat) : Nat := f (f n)
 
 theorem twice_id : twice id 3 = 3 := rfl
 
-recall
+sf_recall
   inductive Palette where
     | red | green | blue
 
 -- A misnamed constructor's suggestion replaces just that constructor.
 /--
 @ +3:18...24
-error: constructor 'RecallCheck.Test.Palette.blau' does not match 'RecallCheck.Test.Palette.blue'
+error: constructor 'SFLCompat.Recall.Check.Tests.Palette.blau' does not match 'SFLCompat.Recall.Check.Tests.Palette.blue'
 
 Hint: Replace the restatement with the original:
   | b̵l̵a̵u̵b̲l̲u̲e̲
 -/
 #guard_msgs (positions := true) in
-recall
+sf_recall
   inductive Palette where
     | red | green | blau
 
 -- Definitionally equal reformulations are accepted.
-recall
+sf_recall
   def twice (f : Nat → Nat) (n : Nat) : Nat := f <| f n
 
-recall statement twice_id : twice id 3 = 3
+sf_recall statement twice_id : twice id 3 = 3
 
 -- Imported names can be recalled too.
-recall statement Nat.add_comm : ∀ (n m : Nat), n + m = m + n
+sf_recall statement Nat.add_comm : ∀ (n m : Nat), n + m = m + n
 
 -- The statement form counts universe parameters: a placeholder universe
 -- becomes a parameter and matches, and a fixed universe is rejected.
 theorem poly_refl.{u} : ∀ {α : Sort u} (a : α), a = a := fun _ => rfl
 
-recall statement poly_refl : ∀ {α : Sort _} (a : α), a = a
+sf_recall statement poly_refl : ∀ {α : Sort _} (a : α), a = a
 
 /--
-error: universe parameters of 'RecallCheck.Test.poly_refl' do not match
+error: universe parameters of 'SFLCompat.Recall.Check.Tests.poly_refl' do not match
 
 Hint: Replace the restatement with the original:
   poly_refl : ∀ {α : T̵y̵p̵e̵}̵S̲o̲r̲t̲ ̲u̲}̲ (a : α), a = a
 -/
 #guard_msgs in
-recall statement poly_refl : ∀ {α : Type} (a : α), a = a
+sf_recall statement poly_refl : ∀ {α : Type} (a : α), a = a
 
 -- A standard library structure with the default constructor name.
-recall
+sf_recall
   structure Prod (α : Type u) (β : Type v) where
     fst : α
     snd : β
 
 -- A standard library structure with a custom constructor name.
-recall
+sf_recall
   structure ULift.{r, s} (α : Type s) : Type (max s r) where
     up ::
     down : α
@@ -417,7 +442,7 @@ Hint: Replace the restatement with the original:
   u̵u̵u̵p̵p̵p̵u̲p̲ ::
 -/
 #guard_msgs (positions := true) in
-recall
+sf_recall
   structure ULift.{r, s} (α : Type s) : Type (max s r) where
     uuuppp ::
     down : α
@@ -445,7 +470,7 @@ Hint: Replace the restatement with the original:
   ̲ ̲ ̲ ̲ ̲ ̲ ̲s̲n̲d̲ ̲:̲ ̲β̲
 -/
 #guard_msgs in
-recall
+sf_recall
   structure Prod (α : Type u) (β : Type v) where
     fst : α
     other : β
@@ -464,12 +489,12 @@ Hint: Replace the restatement with the original:
   ̲ ̲ ̲ ̲ ̲ ̲ ̲d̲o̲w̲n̲ ̲:̲ ̲α̲
 -/
 #guard_msgs in
-recall
+sf_recall
   structure ULift.{r, s} (α : Type s) : Type (max s r) where
     down : α
 
 /--
-error: the value of 'RecallCheck.Test.twice' does not match.
+error: the value of 'SFLCompat.Recall.Check.Tests.twice' does not match.
 Original:
   fun f n => f (f n)
 Restated:
@@ -479,7 +504,7 @@ Hint: Replace the restatement with the original:
   def twice (f : Nat → Nat) (n : Nat) : Nat := f (̲f̲ ̲n)̲
 -/
 #guard_msgs in
-recall
+sf_recall
   def twice (f : Nat → Nat) (n : Nat) : Nat := f n
 
 /--
@@ -488,15 +513,18 @@ error: the restated command declares several names; recall one declaration at a 
 error: the restated command declares several names; recall one declaration at a time
 -/
 #guard_msgs in
-recall
+sf_recall
   mutual
     def one : Nat := 1
     def two : Nat := 2
   end
 
 open List in
-recall
+sf_recall
   def List.map (f : α → β) : (l : List α) → List β
     | [] => []
     | x :: xs => f x :: map f xs
-end RecallCheck.Test
+
+end Tests
+
+end  SFLCompat.Recall.Check
