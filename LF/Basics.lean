@@ -2110,7 +2110,7 @@ theorem succ_beq_succ (n m : Nat) : ((succ n) == (succ m)) = (n == m) := by rfl
 attribute [irreducible] beq
 ```
 
-:::full
+::::full
 Aside: Our naming convention
 for simplification rules encodes their meaning.
 For `add_zero` and `add_succ`, notice that the `zero` and
@@ -2124,7 +2124,7 @@ because the rules apply to both the first and second arguments of `beq`. We put
 `beq` between the arguments because it usually written in infix.
 There are no strict style conventions for naming theorems like this in Lean, but many developers
 follow this approach.
-:::
+::::
 :::dev "Benjamin Pierce (bcpierce00)"
 We haven't really articulated an "approach" -- just given a couple of miscellaneous examples...
 :::
