@@ -1963,8 +1963,8 @@ partial def delabComInner : DelabM (TSyntax `imp_com) :=
     guard <| e.isConstOf ``Com.brk
     annAsTerm (← `(imp_com| $(mkIdent `brk):ident))
 
-@[delab app.BreakImp.Com.skip, delab app.BreakImp.Com.asgn, delab app.BreakImp.Com.seq,
-  delab app.BreakImp.Com.cond, delab app.BreakImp.Com.whileDo]
+@[delab app.BreakImp.Com.skip, delab app.BreakImp.Com.brk, delab app.BreakImp.Com.asgn,
+  delab app.BreakImp.Com.seq, delab app.BreakImp.Com.cond, delab app.BreakImp.Com.whileDo]
 partial def delabCom : Delab := whenPPOption getPPNotation do
   match ← delabComInner with
   | `(imp_com| ~$e) => pure e
@@ -1974,6 +1974,12 @@ end Delab
 ```
 
 ```lean
+/--
+info: imp {
+  brk
+} : Com
+-/
+#guard_msgs in
 #check imp {brk}
 ```
 :::
