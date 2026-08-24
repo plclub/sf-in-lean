@@ -395,8 +395,8 @@ theorem trans_eq_exercise (n m o p : Nat)
 ::::full
 Recall the definition of natural numbers:
 
-```display
-inductive Nat : Type :=
+```recall
+inductive Nat : Type where
   | zero
   | succ (n : Nat)
 ```
@@ -626,12 +626,15 @@ theorem disjoint_ex3 {α : Type} (x y z : α) (l : List α)
 ## Quizzes
 
 Recall our {name}`RGB` and {name}`Color` types:
-```display
+
+```recall
 inductive RGB : Type where
   | red
   | green
   | blue
+```
 
+```recall
 inductive Color : Type where
   | black
   | white
@@ -1065,11 +1068,11 @@ variable (m n m' n' : Nat)
 Recall this function for doubling a natural number from the
 {ref "Induction"}[Induction] chapter:
 
-```display
+```recall
 def Nat.double (n : Nat) : Nat :=
   match n with
   | 0 => 0
-  | n' + 1 => (n'.double) + 2
+  | n' + 1 => double n' + 2
 ```
 
 ::::terse
@@ -1569,7 +1572,7 @@ let ⟨a, β⟩ := v
 Here is an implementation of the {name}`unzip` function mentioned in
 chapter {ref "Poly"}[Poly]:
 
-```display
+```recall
 def unzip {α : Type} {β : Type} (l : List (α × β)) : List α × List β := solution!(
   match l with
   | [] => ([], [])
@@ -1816,7 +1819,7 @@ theorem append_left_cancel {α : Type} (l₁ l₂ l₃ : List α)
 
 Recall the {name}`map` we've defined in {ref "Poly"}[Poly]:
 
-```display
+```recall
 def map {α : Type} {β : Type} (f : α → β) (l : List α) : List β :=
   match l with
   | [] => []
