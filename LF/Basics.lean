@@ -2127,6 +2127,7 @@ follow this approach.
 ::::
 :::dev "Benjamin Pierce (bcpierce00)"
 We haven't really articulated an "approach" -- just given a couple of miscellaneous examples...
+TO DO: Let's move this to UsingLean and broaden it.
 :::
 
 ## General Proofs about Natural Numbers
