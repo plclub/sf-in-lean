@@ -11,6 +11,9 @@ TS/*Verso.lean
 .claude/settings.json
 .claude/settings.local.json
 *.tmp
+
+#EMACS autobackup artifacts
+*~
 # Personal keybinding cheat sheet and its generator (see .vscode/KEYBINDINGS-SETUP.md).
 .vscode/KEYBINDINGS*.md
 .vscode/keybindings-ref.*

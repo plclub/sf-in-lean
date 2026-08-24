@@ -5,6 +5,7 @@ import SFLMeta.Save
 import HL.Preface
 import HL.Slang
 import HL.Imp
+import HL.Equiv
 import HL.Hoare
 import HL.Hoare2
 
@@ -16,5 +17,6 @@ open Verso Genre Manual
 {include HL.Preface}
 {include HL.Slang}
 {include HL.Imp}
+{include HL.Equiv}
 {include HL.Hoare}
 {include HL.Hoare2}

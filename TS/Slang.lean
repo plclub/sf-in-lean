@@ -385,7 +385,7 @@ theorem optimize0plusB_sound (b : Bexp) :
 :::
 :::::
 
-:::::exercise (rating := 4) (name := "optimize")
+:::::exercise (rating := 4) (name := "optimize") (optional := true)
 The optimization implemented by our {name}`Aexp.optimize0plus` is only one of
 many possible optimizations on arithmetic and boolean expressions. Write a more
 sophisticated optimizer and prove it correct. (You will probably find it easiest
@@ -568,7 +568,7 @@ having to write them out manually like this. I think a simple `#print` may work 
 alternative, assuming there are no namespace issues..
 :::
 
-:::::exercise (rating := 1) (name := "beval_rules")
+:::::exercise (rating := 1) (name := "beval_rules") (optional := true)
 Here, again, is the definition of the {name}`Bexp.eval` function:
 
 ```display
