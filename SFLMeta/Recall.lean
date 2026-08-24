@@ -1,19 +1,9 @@
 import VersoManual
-import SFLMeta.RecallSource
-import SFLMeta.RecallCheck
 
-/-!
-# Recall as a code block
+import SFLCompat.Recall.Check
+import SFLCompat.Recall.Source
 
-In a rendered book, a recalled definition should look like any other code
-block. The `recall` and `recallSource` code blocks parse their contents as
-a plain declaration, wrap it in the corresponding checking command, and
-elaborate that in the document's Lean environment. The rendered block shows
-only the declaration, so the checking is invisible in the output, and the
-source needs no marker beyond the code block's own name. The wrapped node
-is built directly, so the commands' scoped syntax never needs to be in
-scope in a document.
--/
+import SubVerso.Highlighting
 
 open Lean Elab
 open Verso Doc Elab ArgParse
@@ -23,17 +13,44 @@ open Verso.Genre.Manual.InlineLean.Scopes (getScopes)
 open Verso.SyntaxUtils (parseStrLitAsCategory)
 open SubVerso.Highlighting
 
+namespace SFLMeta
+
+namespace Recall
+
+inductive Kind where
+  | semantic
+  | source
+  deriving BEq, ToJson, FromJson, Quote
+
+structure Data where
+  kind : Kind
+  statement : Bool
+  expectedError : Bool
+  source : String
+  outputName : Option Name
+  deriving ToJson, FromJson, Quote
+
+def decode? (data : Json) : Option Data :=
+  match fromJson? data with
+  | .ok recall => some recall
+  | .error _ => none
+
+end Recall
+
+block_extension Block.recall (saved : Recall.Data) where
+  data := toJson saved
+  traverse _ _ _ := pure none
+  toHtml := some fun _ goB _ _ contents => contents.mapM goB
+  toTeX := some fun _ goB _ _ contents => contents.mapM goB
+
 /--
-Configuration for the recall code blocks: `+error` expects the check to
-fail, `+statement` restates only a theorem statement, and `name` saves the
-block's messages for a `leanOutput` block.
+Configuration shared by `recall` and `recallSource`: `+error` expects the
+check to fail, `+statement` restates only a theorem statement, and `name`
+saves the block's messages for `leanOutput`.
 -/
 structure RecallBlockConfig where
-  /-- Whether the check is expected to fail. -/
   error : Bool := false
-  /-- Whether the contents restate only a theorem statement. -/
   statement : Bool := false
-  /-- A name under which the block's messages are saved for `leanOutput`. -/
   name : Option Name := none
 
 def RecallBlockConfig.parse [Monad m] [MonadInfoTree m] [MonadLiftT CoreM m] [MonadEnv m]
@@ -44,8 +61,7 @@ def RecallBlockConfig.parse [Monad m] [MonadInfoTree m] [MonadLiftT CoreM m] [Mo
 instance [Monad m] [MonadInfoTree m] [MonadLiftT CoreM m] [MonadEnv m] [MonadError m] :
     FromArgs RecallBlockConfig m := ⟨RecallBlockConfig.parse⟩
 
-/-- The contents of a statement-mode recall block: a theorem name and its
-restated statement. -/
+/-- The contents of a statement-mode recall block. -/
 declare_syntax_cat recallStmtSpec
 
 syntax ident " : " term : recallStmtSpec
@@ -64,20 +80,12 @@ private partial def disableUnusedVarLinter : InfoTree → InfoTree
   | .hole id => .hole id
 
 /--
-Elaborates a code block's contents wrapped in a recall command, in the
-document's Lean environment, then renders the block as the plain contents.
-The contents are a declaration wrapped by the command of kind `cmdKind`,
-or, in statement mode, a theorem name and statement wrapped by the command
-of kind `stmtKind`; a block without a statement form passes `none` and
-rejects `+statement`. When `highlighted` is `true`, the rendered block
-carries the elaboration's highlighting; the byte-for-byte block passes
-`false`, since its contents are never elaborated and the only recorded
-information is the block-wide reference to the recalled constant, which
-would give every token the same hover.
+Elaborate a recall block synchronously in the document environment, render its
+plain contents, and preserve explicit recall metadata for later extraction.
 -/
-def recallBlock (config : RecallBlockConfig) (str : StrLit)
-    (cmdKind : SyntaxNodeKind) (stmtKind : Option SyntaxNodeKind)
-    (highlighted : Bool := true) : DocElabM Term := withoutAsync do
+def recallBlock (config : RecallBlockConfig) (str : StrLit) (kind : Recall.Kind)
+    (cmdKind : SyntaxNodeKind) (stmtKind : Option SyntaxNodeKind) (highlighted : Bool := true) :
+    DocElabM Term := withoutAsync do
   let col? := (← getRef).getPos? |>.map (← getFileMap).utf8PosToLspPos |>.map (·.character)
   let (cmdStx, wrapped) ←
     if config.statement then
@@ -85,13 +93,10 @@ def recallBlock (config : RecallBlockConfig) (str : StrLit)
         | throwError "this block has no statement form"
       let spec ← parseStrLitAsCategory `recallStmtSpec str
       pure (spec,
-        (mkNode stmtKind #[mkAtom "recall", mkAtom "statement", spec[0], mkAtom ":", spec[2]]).raw)
+        (mkNode stmtKind #[mkAtom "sf_recall", mkAtom "statement", spec[0], mkAtom ":", spec[2]]).raw)
     else
       let cmdStx ← parseStrLitAsCategory `command str
-      pure (cmdStx, (mkNode cmdKind #[mkAtom "recall", cmdStx]).raw)
-  -- The same adjustments the `lean` code block makes: synchronous
-  -- elaboration so info trees are available for highlighting, and public
-  -- names so the document sees what it declares.
+      pure (cmdStx, (mkNode cmdKind #[mkAtom (if kind == .semantic then "sf_recall" else "sf_recall_source"), cmdStx]).raw)
   let scopes := (← getScopes).modifyHead fun sc =>
     { sc with opts := pp.tagAppFns.set (Elab.async.set sc.opts false) true, isPublic := true }
   let cctx : Command.Context :=
@@ -111,35 +116,44 @@ def recallBlock (config : RecallBlockConfig) (str : StrLit)
       pure { msg with contents := .append #[.text head, msg.contents] }
     saveOutputs name outMsgs
   reportMessages (if config.error then some true else none) str st.messages
-  unless highlighted do
-    return ← ``(Verso.Doc.Block.code $(quote str.getString))
+  let saved : Recall.Data := {
+      kind
+      statement := config.statement
+      expectedError := config.error
+      source := str.getString
+      outputName := config.name
+    }
+  if !highlighted then
+    return ← ``(Verso.Doc.Block.other (SFLMeta.Block.recall $(quote saved))
+      #[Verso.Doc.Block.code $(quote str.getString)])
   let hls ← highlight cmdStx (st.messages.toArray.filter (!·.isSilent)) st.infoState.trees
   let hls := match col? with
     | none => hls
     | some col => hls.deIndent col
   let range := (Syntax.getRange? str).map (← getFileMap).utf8RangeToLspRange
-  ``(Verso.Doc.Block.other
-      (Verso.Genre.Manual.InlineLean.Block.lean $(quote hls)
-        (some $(quote (← getFileName))) $(quote range))
-      #[Verso.Doc.Block.code $(quote str.getString)])
+  let child ← ``(Verso.Doc.Block.other
+    (Verso.Genre.Manual.InlineLean.Block.lean $(quote hls)
+      (some $(quote (← getFileName))) $(quote range))
+    #[Verso.Doc.Block.code $(quote str.getString)])
+  ``(Verso.Doc.Block.other (SFLMeta.Block.recall $(quote saved)) #[$child])
 
 /--
-A code block whose contents restate an earlier definition, checked up to
-definitional equality by the `recall` command. With `+statement`, the
-contents restate only a theorem statement.
+A `recall` code block checks a declaration up to definitional equality. With
+`+statement`, it checks only a theorem statement.
 -/
 @[code_block]
 def recall : CodeBlockExpanderOf RecallBlockConfig
   | config, str =>
-    recallBlock config str ``RecallCheck.recallChk (some ``RecallCheck.recallChkStmt)
+    recallBlock config str .semantic ``SFLCompat.Recall.Check.recallChk
+      (some ``SFLCompat.Recall.Check.recallChkStmt)
 
 /--
-A code block whose contents restate an earlier definition, checked byte for
-byte by the `recall_source` command, which compares whole declarations
-only. The block renders as plain code: the contents are never elaborated,
-so there is no per-token information to show.
+A `recallSource` code block checks a whole declaration byte for byte. Its
+contents are not elaborated, so it renders without per-token highlighting.
 -/
 @[code_block]
 def recallSource : CodeBlockExpanderOf RecallBlockConfig
   | config, str =>
-    recallBlock config str ``RecallSource.recallSrc none (highlighted := false)
+    recallBlock config str .source ``SFLCompat.Recall.Source.recallSrc none (highlighted := false)
+
+end SFLMeta
