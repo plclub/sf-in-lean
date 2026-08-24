@@ -1568,36 +1568,36 @@ get the first and second projections of `v` using this tactic:
 let ⟨a, β⟩ := v
 ```
 
-:::::exercise (rating := 3) (name := "zip_unzip")
+:::::exercise (rating := 3) (name := "zip_unzip'")
 Here is an implementation of the {name}`unzip` function mentioned in
 chapter {ref "Poly"}[Poly]:
 
-```recall
-def unzip {α β : Type} (l : List (α × β)) : List α × List β := solution!(
+```lean
+def unzip' {α β : Type} (l : List (α × β)) : List α × List β := solution!(
   match l with
   | [] => ([], [])
   | (x, y) :: t =>
-    let (lx, ly) := unzip t
+    let (lx, ly) := unzip' t
     (x :: lx, y :: ly))
 ```
 
-Prove that {name}`unzip` and {name}`zip` are inverses in the following sense:
+Prove that {name}`unzip'` and {name}`zip` are inverses in the following sense:
 
 ```lean
-theorem zip_unzip {α β : Type} (l : List (α × β))
+theorem zip_unzip' {α β : Type} (l : List (α × β))
     (l₁ : List α) (l₂ : List β)
-    (h : unzip l = (l₁, l₂)) :
+    (h : unzip' l = (l₁, l₂)) :
     zip l₁ l₂ = l := by
   solution!
     induction l generalizing l₁ l₂ with
     | nil =>
-      rw [unzip_nil] at h
+      dsimp [unzip'] at h
       injections h₁ h₂
       rw [← h₁, ← h₂]
       rfl
     | cons x xs ih =>
       let ⟨a, b⟩ := x
-      dsimp [unzip] at h
+      dsimp [unzip'] at h
       injections h₁ h₂
       rw [← h₁, ← h₂]
       dsimp [zip]
@@ -1605,7 +1605,7 @@ theorem zip_unzip {α β : Type} (l : List (α × β))
       rfl
 ```
 
-:::gradeTheorem 3 zip_unzip
+:::gradeTheorem 3 zip_unzip'
 :::
 
 :::::
@@ -1859,7 +1859,8 @@ theorem map_injective_of_injective {α β : Type}
 
 
 :::::exercise (rating := 3) (name := "unzip_zip") (level := Advanced) (manual := true)
-We proved {name}`zip_unzip` that {name}`zip`ping the result of {name}`unzip` recovers the original list. What about the other direction?  Complete and prove the following `unzip_zip`:
+We proved {name}`zip_unzip'` that {name}`zip`ping the result of {name}`unzip` recovers the original list.
+What about the other direction?  Complete and prove the following `unzip_zip`:
 
 ```display
 theorem unzip_zip {α β : Type}

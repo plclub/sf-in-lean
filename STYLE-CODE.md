@@ -516,6 +516,10 @@ sf_recall_source
     f (f n)
 ```
 
+> Do not `recall` a previous definition that is wrapped in `solution!`: 
+> since the definition body is replaced to `sorry` in student projects,
+> doing so would cause a mismatch.
+
 ### BNF grammar blocks
 
 Fenced `bnf` blocks render as typeset object-language grammars.
