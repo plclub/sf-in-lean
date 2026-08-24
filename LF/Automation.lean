@@ -812,15 +812,15 @@ This directly corresponds to the following inductive definition:
 inductive ExpMatch {α : Type} : List α → RegExp α → Prop where
   | mEmpty : ExpMatch [] EmptyStr
   | mChar (c : α) : ExpMatch [c] (Char c)
-  | mApp (s₁ : List α) (re₁ : RegExp α) (s₂ : List α) (re₂ : RegExp α)
+  | mApp (s₁ s₂ : List α) {re₁ re₂ : RegExp α}
          (h₁ : ExpMatch s₁ re₁) (h₂ : ExpMatch s₂ re₂)
        : ExpMatch (s₁ ++ s₂) (App re₁ re₂)
-  | mUnionL (s₁ : List α) (re₁ : RegExp α) (re₂ : RegExp α)
+  | mUnionL (s₁ : List α) {re₁ re₂ : RegExp α}
             (h₁ : ExpMatch s₁ re₁) : ExpMatch s₁ (Union re₁ re₂)
-  | mUnionR (s₂ : List α) (re₁ : RegExp α) (re₂ : RegExp α)
+  | mUnionR (s₂ : List α) {re₁ re₂ : RegExp α}
             (h₂ : ExpMatch s₂ re₂) : ExpMatch s₂ (Union re₁ re₂)
   | mStar0 (re : RegExp α) : ExpMatch [] (Star re)
-  | mStarApp (s₁ s₂ : List α) (re : RegExp α)
+  | mStarApp (s₁ s₂ : List α) {re : RegExp α}
              (h₁ : ExpMatch s₁ re) (h₂ : ExpMatch s₂ (Star re))
            : ExpMatch (s₁ ++ s₂) (Star re)
 open ExpMatch
@@ -1075,7 +1075,7 @@ theorem in_re_match {α : Type} {s : List α} {re : RegExp α} {x : α}
   induction hmatch with
   | mEmpty => simp at hin
   | mChar c => simp only [reChars]; assumption
-  | mApp _ _ _ _ _ _ ih₁ ih₂ =>
+  | mApp _ _ _ _ ih₁ ih₂ =>
 
   /- Something interesting happens in the `mApp` case.  We obtain
     _two_ induction hypotheses: One that applies when `x` occurs in
@@ -1086,12 +1086,12 @@ theorem in_re_match {α : Type} {s : List α} {re : RegExp α} {x : α}
       cases hin with
       | inl hin₁ => left; exact ih₁ hin₁
       | inr hin₂ => right; exact ih₂ hin₂
-  | mUnionL _ _ _ _ ih =>
+  | mUnionL _ _ ih =>
     simp only [reChars, List.mem_append]; left; exact ih hin
-  | mUnionR _ _ _ h₂ ih =>
+  | mUnionR _ _ ih =>
     simp only [reChars, List.mem_append]; right; exact ih hin
   | mStar0 => simp at hin
-  | mStarApp _ _ _ _ _ ih₁ ih₂ =>
+  | mStarApp _ _ _ _ ih₁ ih₂ =>
 
   /- Here again we get two induction hypotheses, and they illustrate
     why we need induction on evidence for `ExpMatch`, rather than
