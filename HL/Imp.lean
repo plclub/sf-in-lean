@@ -654,18 +654,18 @@ declare_syntax_cat imp_com
 /-- The command that does nothing (`skip`) -/
 syntax ident : imp_com
 /-- Sequencing: one command after another -/
-syntax imp_com ";" ppDedent(ppLine imp_com) : imp_com
+syntax imp_com Lean.Parser.semicolonOrLinebreak ppHardSpace imp_com : imp_com
 /-- Assignment -/
 syntax ident " := " imp_aexp : imp_com
 /-- Conditional -/
-syntax "if " "(" imp_bexp ")" ppHardSpace "{" ppLine imp_com ppDedent(ppLine "}" ppHardSpace "else" ppHardSpace "{") ppLine imp_com ppDedent(ppLine "}") : imp_com
+syntax "if " "(" imp_bexp ")" ppHardSpace "{" imp_com "}" ppHardSpace "else" ppHardSpace "{" imp_com "}" : imp_com
 /-- Loop -/
-syntax "while " "(" imp_bexp ")" ppHardSpace "{" ppLine imp_com ppDedent(ppLine "}") : imp_com
+syntax "while " "(" imp_bexp ")" ppHardSpace "{" imp_com "}" : imp_com
 /-- Escape to Lean -/
 syntax:max "~" term:max : imp_com
 
 /-- Include an Imp command in Lean code -/
-syntax:min "imp" ppHardSpace "{" ppLine imp_com ppDedent(ppLine "}") : term
+syntax:min "imp" ppHardSpace "{" imp_com "}" : term
 
 namespace Com
 
@@ -674,7 +674,7 @@ scoped macro_rules
   | `(imp { $x:ident }) =>
     if x.getId == `skip then `(Com.skip)
     else Macro.throwErrorAt x s!"expected 'skip', got '{x.getId}'"
-  | `(imp { $c₁ ; $c₂ }) =>
+  | `(imp { $c₁; $c₂ }) =>
     `(Com.seq (imp {$c₁}) (imp {$c₂}))
   | `(imp { $x:ident := $a }) =>
     `(Com.asgn $x (aexp {$a}))
@@ -763,18 +763,12 @@ end Imp.Delab
 :::ignore
 ```lean -show
 section
-/--
-info: imp {
-  skip
-} : Com
--/
+/-- info: imp {skip} : Com -/
 #guard_msgs in
 #check imp { skip }
 
 variable (x : Ident) (a : Aexp)
-/-- info: imp {
-  x := ~a
-} : Com -/
+/-- info: imp {x := ~a} : Com -/
 #guard_msgs in
 #check imp { x := ~a }
 end
@@ -790,10 +784,10 @@ the concrete Imp program at the very start of the chapter.)
 
 ```lean
 def fact_in_lean : Com := imp {
-  Z := X;
-  Y := 1;
+  Z := X
+  Y := 1
   while (Z ≠ 0) {
-    Y := Y * Z;
+    Y := Y * Z
     Z := Z - 1
   }
 }
@@ -804,52 +798,35 @@ Because we registered a delaborator, we can inspect a defined program with
 `#print`, which pretty prints the stored definition using the same syntax:
 ::::
 
-```lean
-/--
-info: def fact_in_lean : Com :=
-imp {
-  Z := X;
-  Y := 1;
-  while (Z ≠ 0) {
-    Y := Y * Z;
-    Z := Z - 1
-  }
-}
--/
-#guard_msgs in
+```lean (name := fact_in_lean)
 #print fact_in_lean
+```
+
+```leanOutput fact_in_lean
+def fact_in_lean : Com :=
+imp {Z := X; Y := 1; while (Z ≠ 0) {Y := Y * Z; Z := Z - 1}}
 ```
 
 ## Desugaring Notations
 
-::::full
-The `imp { … }` notation, together with the delaborators, is purely a
-convenience for reading and writing programs. Occasionally, such as when debugging
-a definition or a stuck proof, the concrete syntax `hide`s the underlying structure
-we want to see. For those moments we can switch the Imp notation off in Lean's
-output with `set_option pp.notation false`, which our delaborators honor.
+Even though the notations are useful for getting the high-level picture, it's sometimes helpful to turn off the notation to see the parsed structure as a plain term.
+This can be done with `set_option pp.notation false` (which we briefly mentioned in {ref "Typeclasses"}[Typeclasses] chapter) as follows:
 
-Note that unlike a `def`, `imp { … }` is a `macro` which is expanded during elaboration,
-*before* the resulting term is type-checked. So `fact_in_lean` is not a
-program hidden behind a layer of notation that a proof must first peel back;
-it simply *is* the underlying tree of {name}`Com`, {name}`Aexp`, and {name}`Bexp` constructors.
-Consequently, when a proof goal mentions an Imp program, tactics such as
-{tactic}`cases`, {tactic}`injection`, and {tactic}`simp` already act on those constructors directly
--- there is nothing to "unfold". The delaborators affect only how that tree
-is *displayed*. Nevertheless, seeing the raw constructors is sometimes very helpful!
-::::
-
-```lean
-/-- info: imp {
-  X := X + 1
-} : Com -/
-#guard_msgs in
+```lean (name := imp1)
 #check imp { X := X + 1 }
+```
 
-/-- info: Com.asgn X ((Aexp.id X).plus (Aexp.num 1)) : Com -/
-#guard_msgs in
+```leanOutput imp1
+imp {X := X + 1} : Com
+```
+
+```lean (name := imp2)
 set_option pp.notation false in
 #check imp { X := X + 1 }
+```
+
+```leanOutput imp2
+Com.asgn X ((Aexp.id X).plus (Aexp.num 1)) : Com
 ```
 
 ## More Examples
@@ -2016,11 +1993,7 @@ end Delab
 ```
 
 ```lean
-/--
-info: imp {
-  brk
-} : Com
--/
+/-- info: imp {brk} : Com -/
 #guard_msgs in
 #check imp {brk}
 ```
