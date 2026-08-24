@@ -1163,7 +1163,7 @@ theorem nil_is_not_cons {α : Type} (x : α) (xs : List α) :
 
 :::instructors
 In `List.IsNil` changing the `_ =>` arm to `_ :: _ =>` would introduce a hidden dependency to `List.All` (and `List.In`) which is not emitted to the grading variant because it's in a solution block.
-This would lead to the solution of `List.All_In` (and `List.in_mem` in IndProp) to not pass comparator because the defini.
+This would lead to the solution of `List.All_In` (and `List.in_mem` in IndProp) to not pass comparator because the underlying terms are different.
 TLDR: Don't change `List.IsNil` to use `_ :: _ =>`.
 :::
 

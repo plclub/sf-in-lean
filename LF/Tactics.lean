@@ -1591,6 +1591,9 @@ def unzip' {α β : Type} (l : List (α × β)) : List α × List β := solution
     (x :: lx, y :: ly))
 ```
 
+:::autogradedHole unzip'
+:::
+
 Prove that {name}`unzip'` and {name}`zip` are inverses in the following sense:
 
 ```lean

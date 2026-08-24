@@ -4312,13 +4312,6 @@ theorem hoare_asgn_weakest
     apply hP _ hst
     exact Com.EvalR.asgn rfl
 ```
-
-:::dev "Niklas Halonen (xhalo32)"
-I had to fill in the above proof for the autograder to pass.
-If the proof is bad or unidiomatic, feel free to completely replace it.
-Please note that I have no idea what I'm doing -- I've never worked with weakest preconditions before.
-:::
-
 :::gradeTheorem 2 hoare_asgn_weakest
 :::
 :::::
