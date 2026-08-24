@@ -2,7 +2,7 @@ module
 
 public meta import Lean.Elab.BuiltinCommand
 
-namespace SFLCompat.Experiement
+namespace SFLCompat.Experiment
 
 open Lean Elab Command
 
@@ -208,7 +208,7 @@ sf_expect_failure?
 #check Nat
 
 /--
-info: SFLCompat.Experiement.Tests.x : Nat
+info: SFLCompat.Experiment.Tests.x : Nat
 ---
 info: 3
 -/
@@ -249,4 +249,4 @@ sf_experiment
 
 end Tests
 
-end SFLCompat.Experiement
+end SFLCompat.Experiment
