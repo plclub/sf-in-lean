@@ -1277,7 +1277,7 @@ example : map (fun n => [n.even, n.odd]) [2, 1, 2, 5]
 ::::quiz
 Recall the definition of {name}`map`:
 
-```display
+```recall
 def map (f : α → β) (l : List α) : List β :=
   match l with
   | [] => []
@@ -1453,7 +1453,7 @@ theorem fold_cons {α : Type} {β : Type} {f : α → β → β} {a : α} {l : L
 ::::quiz
 Here is the definition of `fold` again:
 
-```display
+```recall
 def fold {α β : Type} (f : α → β → β) (l : List α) (b : β) : β :=
   match l with
   | [] => b
@@ -1750,7 +1750,7 @@ theorem curry_uncurry {α β γ : Type} {p : α × β} {f : α × β → γ} :
 :::::exercise (rating := 2) (name := "nth_error_informal") (level := Advanced) (optional := true) (manual := true)
 Recall the definition of the {name}`nth?` function:
 
-```display
+```recall
 def nth? (l : List α) (n : Nat) : Option α :=
   match l with
   | [] => none
