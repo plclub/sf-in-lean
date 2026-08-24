@@ -502,7 +502,7 @@ theorem value_is_nf' : ∀ t, Tm.IsValue t → Tm.IsNormalForm t := by
 ```
 :::::
 
-:::::exercise (rating := 3) (name := "step_deterministic")
+:::::exercise (rating := 3) (name := "step_deterministic") (optional := true)
 Use `value_is_nf` (here, `nvalue_is_nf`) to show that the `Tm.Step` relation
 is also deterministic.
 
@@ -878,7 +878,7 @@ example :
   intro hc; cases hc with | ite _ _ _ _ h1 h2 h3 => cases h2
 ```
 
-:::::exercise (rating := 1) (name := "succ_hastype_nat__hastype_nat")
+:::::exercise (rating := 1) (name := "succ_hastype_nat__hastype_nat") (optional := true)
 ```lean
 example (t : Tm) (h : <{ ⊢ succ t ⦂ Nat }>) : <{ ⊢ t ⦂ Nat }> := by
   solution!
@@ -981,7 +981,7 @@ _strong progress_ from the {ref "Smallstep"}[Smallstep] chapter?
 (C) Strong progress implies progress
 :::
 
-:::::exercise (rating := 3) (name := "finish_progress_informal")
+:::::exercise (rating := 3) (name := "finish_progress_informal") (optional := true)
 Complete the corresponding informal proof.
 
 :::dev "Benjamin Pierce (bcpierce00)"
@@ -1156,7 +1156,7 @@ theorem preservation (t t' : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) (he : t ⟶ t
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "finish_preservation_informal")
+:::::exercise (rating := 3) (name := "finish_preservation_informal") (optional := true)
 Complete the following informal proof.
 
 _Theorem_: If `⊢ t ⦂ T` and `t ⟶ t'`, then `⊢ t' ⦂ T`.
@@ -1427,7 +1427,7 @@ GRADE_MANUAL 2: variation2
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "variation3")
+:::::exercise (rating := 2) (name := "variation3") (optional := true)
 Suppose instead that we add this rule:
 ```
 funny2 : t2 ⟶ t2' → if t1 then t2 else t3 ⟶ if t1 then t2' else t3
@@ -1444,7 +1444,7 @@ preservation remain true.
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "variation4")
+:::::exercise (rating := 2) (name := "variation4") (optional := true)
 Suppose instead that we add this rule:
 ```
 funny3 : pred false ⟶ pred (pred false)
@@ -1459,7 +1459,7 @@ All three properties remain true.
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "variation5")
+:::::exercise (rating := 2) (name := "variation5") (optional := true)
 Suppose instead that we add this rule:
 ```
 funny4 : ⊢ 0 ⦂ Bool
@@ -1475,7 +1475,7 @@ Progress becomes false: `if 0 then true else true` has type `Bool`, is a
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "variation6")
+:::::exercise (rating := 2) (name := "variation6") (optional := true)
 Suppose instead that we add this rule:
 ```
 funny5 : ⊢ pred 0 ⦂ Bool
@@ -1491,7 +1491,7 @@ Preservation becomes false: `pred 0` has type `Bool` and steps to `0`,
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "more_variations")
+:::::exercise (rating := 3) (name := "more_variations") (optional := true)
 Make up some exercises of your own along the same lines as the ones
 above.  Try to find ways of selectively breaking properties — i.e., ways
 of changing the definitions that break just one of the properties and

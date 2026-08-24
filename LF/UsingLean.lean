@@ -43,8 +43,7 @@ However, Lean has a built-in type of natural numbers, which is more powerful
 and comes with many useful features. They are very slightly different from our
 custom `Nat`, but these differences are mostly superficial. The built-in
 natural numbers are defined in the `Init` module, which is automatically
-imported by Lean. We will refer to them as {name}`Nat` as well, but they are
-not the same as the `Nat` we defined in {ref "Basics"}[Basics].
+imported by Lean. We will refer to them as {name}`Nat` as well.
 
 In Lean, programmers and mathematicians don't re-prove the basic properties of
 natural numbers from scratch, nor do they tend to write out {tactic}`rewrite` steps
@@ -72,7 +71,6 @@ fully simplified using {tactic}`rw` with simplification rules like
 That last sentence is not very clear.  "that definitions be
 fully simplified" does not parse, but I'm not sure whether to add "will" or "can" or something else...
 :::
-
 
 This approach is useful in a textbook for understanding the structure of
 natural numbers and for providing early practice with writing proofs. But it
@@ -105,8 +103,7 @@ With Lean's {name}`Nat`, much of the computation happens automatically,
 and {tactic}`rfl` suffices to close any equality of computation on literals.
 
 ```lean
-example : (2 * 3 + 4 * 5 : Nat) * 6 = 156 := by
-  rfl
+example : (2 * 3 + 4 * 5 : Nat) * 6 = 156 := by rfl
 ```
 
 This quickly becomes necessary, as natural numbers quickly get large!
@@ -118,15 +115,6 @@ of the terms are unknown.
 example (n m : Nat) (h : n = m) : n = m := by
   -- `rfl` will not work here!
   -- First rewrite the goal with `h`; then the two sides are identical.
-  rewrite [h]
-  rfl
-```
-
-The same proof can be written more compactly with {tactic}`rw`. In this example,
-`rw [h]` rewrites with `h` and then closes the resulting reflexive goal.
-
-```lean
-example (n m : Nat) (h : n = m) : n = m := by
   rw [h]
 ```
 
@@ -139,11 +127,11 @@ solved with {tactic}`rfl`.
 ::::full
 As part of using Lean's standard {name}`Nat` type, we will also begin
 using theorems about {name}`Nat`s from the standard library. Because we
-did not write or prove these theorems ourselves, however, we may not
-know all the available theorems off the top of our heads.
+did not write or prove these theorems ourselves, we may not
+know (or remember) all the available theorems.
 
 Lean provides a few ways to search through the standard library to find theorems
-that may be useful during a particular proof. The first such way is the {tactic}`exact?`
+that may be useful during a particular proof. The first way is the {tactic}`exact?`
 tactic. This tactic searches the standard library for a theorem that can be applied,
 along with the hypotheses in the context, to exactly close the current goal.
 ::::
@@ -168,15 +156,14 @@ have a blue `[apply]` button that shows the suggested theorem to
 close the goal. Alternatively, VS Code may show an inline suggestion
 (lightbulb) button above the {tactic}`exact?`. You can click either of
 these buttons to replace the occurrence of {tactic}`exact?` with the tactic
-it found to complete the proof; idiomatic Lean does not leave
-{tactic}`exact?` tactics (or any other `?` tactics, as we will see shortly)
-in the finished versions of proofs and instead replaces them with
-the tactics they found during search.
+it found to complete the proof; idiomatic Lean should not contain
+{tactic}`exact?` tactics (or any other `?` tactics) in the finished
+versions of proofs.
 
 The {tactic}`exact?` tactic is useful when we just need a single library theorem to get us over
 the finish line of a proof, but it is not so helpful when we are deep in the middle of a proof
-or are wondering how to get started on one. Luckily, there are other tactics that will help us
-with this.
+or are wondering how to get started on one. Fortunately, there are other tactics
+that can help in these cases.
 
 The {tactic}`rw?` tactic works like {tactic}`exact?`, except that it searches for any theorems
 that you could use to rewrite the current goal.
@@ -315,7 +302,6 @@ theorem succ_mul_succ (n m : Nat) :
 ```
 
 Given this proof with {tactic}`rw`, rewrite it with {tactic}`calc`.
-Recall that you can use {tactic}`rw?` to find appropriate rules to rewrite by.
 
 ```lean
 theorem succ_mul_succ' (n m : Nat) :
@@ -432,6 +418,19 @@ example (n : Nat) : square n + 0 = n * n := by
   dsimp [square]
 ```
 
+In the above example, using {tactic}`rw` would not have closed the proof:
+
+```lean +error (name := rwNotDone)
+example (n : Nat) : square n + 0 = n * n := by
+  rw [square]
+```
+
+```leanOutput rwNotDone
+unsolved goals
+n✝ n : Nat
+⊢ n * n + 0 = n * n
+```
+
 Like {tactic}`rw` and {tactic}`exact`, {tactic}`dsimp` also has a `?` version
 that searches for functions to simplify by. Many Lean tactics have `?`
 versions; try it out if you are unsure.
@@ -522,7 +521,7 @@ def Nat.odd (n : Nat) := !(even n)
 
 theorem Nat.odd_def (n : Nat) : n.odd = !(n.even) := rfl
 
-def Nat.minustwo (n : Nat) : Nat :=
+def Nat.minusTwo (n : Nat) : Nat :=
   match n with
   | 0      => 0
   | 1      => 0
@@ -586,7 +585,7 @@ example (n : Nat) : Nat.double (n + 0) = Nat.double n := by
   rfl
 ```
 
-:::::exercise (rating := 2) (name := "even_succ")
+:::::exercise (rating := 2) (name := "even_succ") (optional := true)
 One inconvenient aspect of our definition of `even n` is the
 recursive call on `n'` when `n = n' + 2`. This makes proofs about `even n`
 harder when done by induction on `n`, since we may need an

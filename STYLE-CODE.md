@@ -29,9 +29,9 @@ and do not use tactics not in this table; in particular,
 | `UsingLean`       | `dsimp`, `calc`, `exact?`, `rw?` |
 | `Lists`           | *(none new)* |
 | `Poly`            | *(none new)* |
-| `Tactics`         | `intros`, `apply` (and `apply … at`), `replace`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `induction ... generalizing ...`, `unfold`, `cases ... : ...`, `split` |
+| `Tactics`         | `apply` (and `apply ... at`), `replace`, `specialize`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `induction ... generalizing ...`, `unfold`, `cases ... : ...`, `split` |
 | `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
-| `IndProp`         | `rcases`, `subst` |
+| `IndProp`         | `subst` |
 | `Automation`      | `lia`, `try`, `repeat`, `specialize`, `trivial`, `simp`, `generalize` |
 | `Typeclasses`     | `decide` |
 | `Slang`           | `fun_induction`, `simp_all` |
@@ -247,8 +247,7 @@ and `#guard_msgs` for internal checks that are not student-facing.
 
 Use `sorry` when an unfinished declaration must remain available to later code,
 as with an exercise scaffold or a theorem used below. Do _not_ normally wrap it
-in `#guard_msgs`: the generic warning is not what we are testing, and the guard
-is stripped from the HTML and extracted projects.
+in `#guard_msgs`, as the generic warning is not what we are testing.
 
 ````lean
 ```lean
@@ -606,9 +605,11 @@ An exercise block rendered as `Exercise ★ (foo)` in the HTML
 and as a comment `-- ### Exercise (1 star): foo ⭐` in the extracted Lean files.
 It takes the following options:
 
-* `(rating := <number>)` (required): difficulty from 1 (easy) to 5 (hard)
+* `(rating := <number>)` (required): difficulty from 1 (easy) to 5 (hard); a
+  rating outside that range is a build error
 * `(name := <identifier>)` (required): name used in headings and cross-references
 * `(level := <identifier>)` (optional): additional difficulty warning (currently only `Advanced`)
+* `(optional := <boolean>)` (optional): marks an exercise the reader may skip
 * `(manual := <boolean>)` (optional): marks the exercise for manual grading
 
 #### `:::gradeTheorem <number> <identifier>...`, `:::grade`
