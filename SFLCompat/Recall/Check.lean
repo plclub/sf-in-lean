@@ -530,7 +530,7 @@ sf_recall
 
 /-- warning: declaration uses `sorry` -/
 #guard_msgs in
-def Foo : Nat := sorry
+noncomputable def Foo : Nat := by sorry
 /--
 error: the value of 'SFLCompat.Recall.Check.Tests.Foo' does not match.
 Original:
@@ -539,13 +539,13 @@ Restated:
   sorry
 
 Hint: Replace the restatement with the original:
-  def Foo : Nat := sorry
+  noncomputable def Foo : Nat := by sorry
 ---
 warning: declaration uses `sorry`
 -/
 #guard_msgs in
 sf_recall
-  def Foo : Nat := sorry
+  noncomputable def Foo : Nat := by sorry
 
 -- field visibility is not checked
 
