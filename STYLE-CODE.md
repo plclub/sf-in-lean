@@ -351,6 +351,39 @@ For example, `Imp` checks its custom delaborator this way:
 ```
 ````
 
+### Recall earlier definitions
+
+Use a ` ```recall ` or ` ```recall_srouce ` code block instead of ` ```lean ` block
+if a chapter needs to repeat a definition introduced earlier.
+
+`recall` accepts the repeated declaration in a definitional equal way,
+and it elaborates the declaration and compares it with the original definition.
+
+````lean
+```recall
+def twice (f : Nat → Nat) (n : Nat) : Nat := f (f n)
+```
+````
+
+Use ` ```recall +statement ` only when the theorem statement should be repeated:
+
+
+````lean
+```recall +statement
+twice_id : twice id 3 = 3
+```
+````
+
+Use ` ```reallSrouce ` only when a byte for byte source matching except the
+block's indentation is required. This can be useful for showing the exact syntax of the definition.
+
+Prefer ` ```recall ` by default. Both blocks accept `+error` flag when the check itself
+is expected to fail. They also accept `name := ...` like the `lean` block. 
+
+Extraction emits `sf_recall`, `sf_recall statement`, or `sf_recall_srouce`;
+and block marked with `+error` is wrapped in `sf_expect_failure`.
+
+
 ### Notation and simplification
 
 When notation is implemented via typeclass instances, `dsimp [add]` does *not*
