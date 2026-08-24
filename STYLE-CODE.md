@@ -457,6 +457,60 @@ Combine `+error` and `(name := <identifier>)` to produce a block whose error
 message gets checked by ` ```leanOutput <identifier> `.
 See the previous sections for more detailed usage guidelines.
 
+### Recall blocks
+
+Fenced `recall` and `recallSource` blocks are type checked Lean blocks
+consisting of a single declaration that must match an earlier declaration,
+which allows restating the declaration for pedagogical purposes,
+while ensuring correctness of the restatement. `recall` blocks are syntax
+highlighted in the HTML, while `recallSource` blocks are plain code blocks.
+
+In a `recall` block, type signatures and definitions must be definitionally
+equal, inductive types must have the same constructors, and records must have
+the same fields. With the `+statement` option, only the type signature is
+restated and not the declaration body. In a `recallSource` block, the restated
+declaration must be equal verbatim, down to indentation and line breaks.
+Both may take `(name := <identifier>)` and `+error` just as for `lean` blocks.
+
+These blocks extract to Lean commands `recall`, `recall statement`, and
+`recall_source`. For example, given the original declaration
+
+````
+```lean
+def twice (f : Nat → Nat) (n : Nat) : Nat :=
+  f (f n)
+```
+````
+
+the following three recall blocks
+
+````
+```recall
+def twice (f : Nat → Nat) (n : Nat) : Nat := f <| f n
+```
+
+```recall +statement
+def twice (f : Nat → Nat) (n : Nat) : Nat
+```
+
+```recallSource
+def twice (f : Nat → Nat) (n : Nat) : Nat :=
+  f (f n)
+```
+````
+
+successfully type check and are extracted to the following three commands.
+
+```lean
+recall def twice (f : Nat → Nat) (n : Nat) : Nat := f <| f n
+
+recall statement def twice (f : Nat → Nat) (n : Nat) : Nat
+
+recall_source
+  def twice (f : Nat → Nat) (n : Nat) : Nat :=
+    f (f n)
+```
+
 ### BNF grammar blocks
 
 Fenced `bnf` blocks render as typeset object-language grammars.
