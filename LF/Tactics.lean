@@ -1573,7 +1573,7 @@ Here is an implementation of the {name}`unzip` function mentioned in
 chapter {ref "Poly"}[Poly]:
 
 ```recall
-def unzip {α : Type} {β : Type} (l : List (α × β)) : List α × List β := solution!(
+def unzip {α β : Type} (l : List (α × β)) : List α × List β := solution!(
   match l with
   | [] => ([], [])
   | (x, y) :: t =>
@@ -1820,7 +1820,7 @@ theorem append_left_cancel {α : Type} (l₁ l₂ l₃ : List α)
 Recall the {name}`map` we've defined in {ref "Poly"}[Poly]:
 
 ```recall
-def map {α : Type} {β : Type} (f : α → β) (l : List α) : List β :=
+def map {α β : Type} (f : α → β) (l : List α) : List β :=
   match l with
   | [] => []
   | head :: tail => f head :: map f tail

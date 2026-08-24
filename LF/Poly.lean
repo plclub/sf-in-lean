@@ -1236,7 +1236,7 @@ Another handy higher-order function is called `map`.
 ::::
 
 ```lean
-def map {α : Type} {β : Type} (f : α → β) (l : List α) : List β :=
+def map {α β : Type} (f : α → β) (l : List α) : List β :=
   match l with
   | [] => []
   | head :: tail => f head :: map f tail
@@ -1278,7 +1278,7 @@ example : map (fun n => [n.even, n.odd]) [2, 1, 2, 5]
 Recall the definition of {name}`map`:
 
 ```recall
-def map (f : α → β) (l : List α) : List β :=
+def map {α β : Type} (f : α → β) (l : List α) : List β :=
   match l with
   | [] => []
   | head :: tail => f head :: map f tail
@@ -1751,7 +1751,7 @@ theorem curry_uncurry {α β γ : Type} {p : α × β} {f : α × β → γ} :
 Recall the definition of the {name}`nth?` function:
 
 ```recall
-def nth? (l : List α) (n : Nat) : Option α :=
+def nth? {α : Type} (l : List α) (n : Nat) : Option α :=
   match l with
   | [] => none
   | x :: l' => match n with
