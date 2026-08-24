@@ -568,7 +568,7 @@ b : MyBool
 ```
 
 Lean complains because the {tactic}`rfl` is not at the same level of indentation as the `{tactic}intro b`,
-so Lean does not recognize these two tactics as being sequential in the way they should be.
+so it does not recognize these two tactics as being sequential in the way they should be.
 
 In general, sequential tactics applied to the same goal must be on subsequent lines at the same
 level of indentation or separated on the same line by a `;` like so:
