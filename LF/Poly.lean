@@ -862,7 +862,8 @@ checking your answers in Lean:
   print?
 :::::
 
-While working with pairs, the following situation often crops up: how to prove that two pairs are equal?
+::::full
+When working with pairs, we often wish to prove them equal.
 When they compute to the same value, we can use `rfl` as usual:
 
 ```lean
@@ -891,16 +892,17 @@ n : Nat
 ⊢ (n + 1, 0) = (1 + n, 0)
 ```
 
-A simple way to prove it is to use the {name}`Nat.add_comm` theorem to rewrite inside the pair:
+One way to prove this would be to rewrite by {name}`Nat.add_comm` inside the pair:
 
 ```lean
 example {n : Nat} : (n + 1, 0) = (1 + n, 0) := by
   rw [Nat.add_comm]
 ```
 
-Next, let's look at a more involved example.
+But this won't always work in general. Let's look at a more involved example.
 Remember `surjective_pairing` from {ref "Lists"}[Lists]?
-{name}`Prod.eta` is the standard library version of it, and we can use it to rewrite `p` into `(p.fst, p.snd)` like this:
+In Lean's standard library, this lemma is called {name}`Prod.eta`,
+and we can use it to rewrite `p` into `(p.fst, p.snd)` like this:
 
 ```lean
 example {n : Nat} {p : Nat × Nat} (hx_fst : p.fst = n + 1) (hx_snd : p.snd = 0) :
@@ -909,9 +911,17 @@ example {n : Nat} {p : Nat × Nat} (hx_fst : p.fst = n + 1) (hx_snd : p.snd = 0)
   rw [hx_fst, hx_snd]
 ```
 
-However, {name}`Prod.eta` is rarely used, since the theorem {name}`Prod.ext`, the _extesionality principle_ for products, is often easier to use.
-When applied, {name}`Prod.ext` splits the proof into two goals: 1. show that the first elements are equal, and 2. show that the second elements are equal.
+However, {name}`Prod.eta` is rarely used directly, since the theorem {name}`Prod.ext`,
+the _extensionality principle_ for products, is often easier to work with.
+{name}`Prod.ext` splits the proof into two goals:
+first, to show that the `fst` elements are equal, and second, to show that the `snd`
+elements are equal.
 Here's an example:
+::::
+
+::::terse
+We can use {name}`Prod.ext` to prove equality of pairs by showing equality of their components:
+::::
 
 ```lean
 example {n : Nat} {p : Nat × Nat} (hx_fst : p.fst = n + 1) (hx_snd : p.snd = 0) :
@@ -921,8 +931,9 @@ example {n : Nat} {p : Nat × Nat} (hx_fst : p.fst = n + 1) (hx_snd : p.snd = 0)
   · rw [hx_snd]
 ```
 
+::::exercise (rating := 2) (name := "prod_ext_example")
 Now, use {name}`Prod.ext` to prove the following.
-Remember that `dsimp` simplifies projections like `(a, b).fst` to `a`.
+Remember that {tactic}`dsimp` simplifies projections like `(a, b).fst` to `a`.
 
 ```lean
 example {m : Nat} {p : Nat × Nat} (hp_snd : p.snd = 4) (hp_fst : p.fst = m) :
@@ -941,6 +952,7 @@ example {m : Nat} {p : Nat × Nat} (hp_snd : p.snd = 4) (hp_fst : p.fst = m) :
       · dsimp
         rw [hp_snd]
 ```
+::::
 
 :::::exercise (rating := 3) (name := "unzip") (manual := true)
 The function `unzip` goes in the other direction from {name}`zip`: it takes a list of pairs and returns a pair of lists.
