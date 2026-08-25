@@ -178,13 +178,14 @@ private def emitSavedImpl (config : ExtractConfig)
     Mode → Config → TraverseState → Part Manual → BuildLogT IO Unit :=
   fun _mode _cfg _state text => do
     let width := Text.fillWidthFor config.variant
-    let mut buf : SaveBuffers := walkOuter width config.modPrefix text {}
+    let isTerse := config.variant.isTerse
+    let mut buf : SaveBuffers := walkOuter width isTerse config.modPrefix text {}
 
     for (vol, part) in crossVol do
       let file := chapterPath vol part
       buf := buf.appendOnly file .grading "import ComparatorAutograderLib\n"
       buf := buf.appendAll file s!"import SFLCompat\n\n"
-      buf := walkSection width 1 file part buf
+      buf := walkSection width isTerse 1 file part buf
 
     let toolchain ← IO.FS.readFile "lean-toolchain"
     let requires ← projectRequires config.variant

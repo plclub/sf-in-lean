@@ -277,8 +277,8 @@ open Text
 Walk a list of blocks, batching consecutive `.para`, `.ul`, and `.ol` blocks
 into a single `/-! … -/` comment instead of emitting one per block, so a list
 stays in the same comment as its lead-in paragraph. -/
-partial def walkBlocks (width : Nat) (file : String) (bs : Array (Verso.Doc.Block Manual))
-    (buf : SaveBuffers) : SaveBuffers := Id.run do
+partial def walkBlocks (width : Nat) (isTerse : Bool) (file : String)
+    (bs : Array (Verso.Doc.Block Manual)) (buf : SaveBuffers) : SaveBuffers := Id.run do
   let mut buf := buf
   let mut pending : Array String := #[]
   for b in bs do
@@ -289,7 +289,7 @@ partial def walkBlocks (width : Nat) (file : String) (bs : Array (Verso.Doc.Bloc
       if !pending.isEmpty then
         buf := buf.appendAll file (asModuleDoc (String.intercalate "\n\n" pending.toList))
         pending := #[]
-      buf := walkBlock width file b buf
+      buf := walkBlock width isTerse file b buf
   if !pending.isEmpty then
     buf := buf.appendAll file (asModuleDoc (String.intercalate "\n\n" pending.toList))
   return buf
@@ -298,7 +298,7 @@ partial def walkBlocks (width : Nat) (file : String) (bs : Array (Verso.Doc.Bloc
 Walk a single block, accumulating content for the student, solutions, and terse
 variants in `buf` for `file`. The bulk of the extraction walker's block-specific
 logic lives here. -/
-partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
+partial def walkBlock (width : Nat) (isTerse : Bool) (file : String) (b : Verso.Doc.Block Manual)
     (buf : SaveBuffers) : SaveBuffers := Id.run do
   match b with
   | .other which contents =>
@@ -349,7 +349,7 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
         let desig := exerciseDesignation level optional manual
         let header := s!"### Exercise ({rating} star{if rating == 1 then "" else "s"}): {exName}{desig} {stars}"
         let mut buf := buf.appendAll file (asModuleDoc header)
-        buf := walkBlocks width file contents buf
+        buf := walkBlocks width isTerse file contents buf
         return buf
       return buf
     if name == ``Block.bnf then
@@ -399,14 +399,14 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
         then "THESE DETAILS CAN BE SKIPPED:"
         else s!"THESE DETAILS CAN BE SKIPPED: {summary}"
       let mut buf := buf.appendAll file (asModuleDoc opener)
-      buf := walkBlocks width file contents buf
+      buf := walkBlocks width isTerse file contents buf
       buf := buf.appendAll file (asModuleDoc "END DETAILS")
       return buf
     if name == ``Block.quiz then
       -- A quiz is shown in every build product; label it so the reader of the
       -- generated `.lean` can tell the question apart from surrounding prose.
       let mut buf := buf.appendAll file (asModuleDoc "_Quiz:_")
-      buf := walkBlocks width file contents buf
+      buf := walkBlocks width isTerse file contents buf
       return buf
     if name == ``Block.quizSolution then
       -- A quiz answer is elided from every generated `.lean` build product — it
@@ -417,10 +417,10 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     if name == ``Block.terse then
       -- Terse content kept in the tree only in terse builds (full builds replace
       -- with concat #[] during traverse). Recurse into children.
-      return walkBlocks width file contents buf
+      return walkBlocks width isTerse file contents buf
     if name == ``Block.full then
       -- Full content kept in the tree only in full builds. Recurse into children.
-      return walkBlocks width file contents buf
+      return walkBlocks width isTerse file contents buf
     if name == ``Block.slidebreak then
       -- Slide-break marker: emit nothing in all generated .lean files.
       return buf
@@ -434,12 +434,15 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
       -- otherwise nothing is emitted. `devNoteComment` sets the note off from
       -- surrounding prose (indented body, contiguous comment block); the body is
       -- filled 4 columns narrower to compensate for that indentation.
-      if let some (author, urgency, year) := decodeDevData? which.data then
-        if devNoteShown urgency then
-          let body := String.intercalate "\n\n"
-            (contents.toList.map (blockToText (width - 4)))
-          return buf.appendAll file
-            (devNoteComment (devNoteLabel author urgency year) body)
+      -- Dev notes are developer-facing, never reader-facing, so the terse
+      -- build's generated `.lean` never gets one regardless of urgency.
+      if !isTerse then
+        if let some (author, urgency, year) := decodeDevData? which.data then
+          if devNoteShown urgency then
+            let body := String.intercalate "\n\n"
+              (contents.toList.map (blockToText (width - 4)))
+            return buf.appendAll file
+              (devNoteComment (devNoteLabel author urgency year) body)
       return buf
     if name == ``Block.gradeTheorem then
       let ⟨points, names⟩ := decodeGradeTheoremData which.data
@@ -452,10 +455,10 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     -- Unknown extension block: recurse into children as a best-effort.
     -- NB: :::instructors blocks carry no children (their bodies are dropped at
     -- elaboration), so this recursion is a no-op for them.
-    walkBlocks width file contents buf
+    walkBlocks width isTerse file contents buf
   | .para inls => return buf.appendAll file (asModuleDoc (paraToText width inls))
   | .code s => return buf.appendAll file (asModuleDoc s.trimAscii.toString)
-  | .concat bs | .blockquote bs => walkBlocks width file bs buf
+  | .concat bs | .blockquote bs => walkBlocks width isTerse file bs buf
   | .ul _ | .ol _ _ =>
     -- Normally batched with adjacent paragraphs in `walkBlocks`; this case is
     -- only reached for a list arriving outside that batching.
@@ -466,7 +469,7 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
     let mut buf := buf
     for di in dis do
       buf := buf.appendAll file (asModuleDoc (inlinesToText di.term))
-      buf := walkBlocks width file di.desc buf
+      buf := walkBlocks width isTerse file di.desc buf
     return buf
 
 
@@ -476,8 +479,8 @@ end
 Walk a section (a Part at depth ≥ 1, inside a chapter). The section's title is
 emitted as a `#`-prefixed module-doc heading whose level equals `depth`; all
 content goes into the chapter's `file`. -/
-partial def walkSection (width : Nat) (depth : Nat) (file : String) (part : Part Manual)
-    (buf : SaveBuffers) : SaveBuffers := Id.run do
+partial def walkSection (width : Nat) (isTerse : Bool) (depth : Nat) (file : String)
+    (part : Part Manual) (buf : SaveBuffers) : SaveBuffers := Id.run do
   let .mk titleInlines _ _ intro subParts := part
   let mut buf := buf
   let hashes := String.ofList (List.replicate depth '#')
@@ -489,9 +492,9 @@ partial def walkSection (width : Nat) (depth : Nat) (file : String) (part : Part
   -- content still flows).
   if !hasSuppressHeaderMarker intro then
     buf := buf.appendAll file (asModuleDoc s!"{hashes} {titleText}")
-  buf := walkBlocks width file intro buf
+  buf := walkBlocks width isTerse file intro buf
   for p in subParts do
-    buf := walkSection width (depth + 1) file p buf
+    buf := walkSection width isTerse (depth + 1) file p buf
   return buf
 
 /--
@@ -499,8 +502,8 @@ The root of the walker. Each top-level sub-Part of the root document is
 treated as a chapter and written to its own file (using the `file :=` metadata
 key each chapter sets in its `%%%` block). The root file (`{vol}.lean`) gets one
 `import` line per chapter. -/
-def walkOuter (width : Nat) (vol : String) (text : Part Manual) (buf : SaveBuffers) :
-    SaveBuffers := Id.run do
+def walkOuter (width : Nat) (isTerse : Bool) (vol : String) (text : Part Manual)
+    (buf : SaveBuffers) : SaveBuffers := Id.run do
   let rootFile := vol ++ ".lean"
   let .mk _ _ _ _ subParts := text
   let mut buf := buf
@@ -510,5 +513,5 @@ def walkOuter (width : Nat) (vol : String) (text : Part Manual) (buf : SaveBuffe
     let chapterFile := chapterPath vol p
     buf := buf.appendOnly chapterFile .grading s!"import ComparatorAutograderLib\n"
     buf := buf.appendAll chapterFile s!"import SFLCompat\n\n"
-    buf := walkSection width 1 chapterFile p buf
+    buf := walkSection width isTerse 1 chapterFile p buf
   return buf

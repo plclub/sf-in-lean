@@ -140,7 +140,10 @@ rest are dropped. All notes survive traversal in the solutions, terse, and
 grading variants. Among the surviving blocks, a note is rendered only when its
 urgency passes `devNoteShown` (`NOW`, `BeforeNextRelease`, or none): brightly
 highlighted in the HTML book, and passed through as a labelled comment in
-generated `.lean` files by `SFLMeta.Save.Extract.walkBlock`.
+generated `.lean` files by `SFLMeta.Save.Extract.walkBlock` — except in the
+terse build, where `walkBlock` drops every dev note unconditionally (dev notes
+are never reader-facing, and terse's readers are students in a live-coding
+session, not developers).
 `PotentialImprovement` notes render nothing. -/
 block_extension Block.devcomment (author : Option String)
     (urgency : Option String) (year : Option Nat) where
