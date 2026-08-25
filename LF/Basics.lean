@@ -1987,13 +1987,11 @@ with multiple rules.
 
 ::::exercise (rating := 2) (name := "test_mul_add")
 ```lean
-
 theorem one_add_one : (one + one : Nat) = two := by
   rewrite [one_eq_succ_zero]
   solution!
     rewrite [add_succ, add_zero]
     rfl
-
 
 theorem zero_mul_two : (zero * two : Nat) = zero := by
   rewrite [two_eq_succ_one, one_eq_succ_zero]
@@ -2018,7 +2016,7 @@ theorem two_mul_two : (two * two : Nat) = four := by
     rfl
 ```
 
-:::gradeTheorem "0.4" zero_add_one one_add_one zero_mul_two one_mul_two two_mul_two
+:::gradeTheorem "0.5" one_add_one zero_mul_two one_mul_two two_mul_two
 :::
 ::::
 :::::
