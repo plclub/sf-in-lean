@@ -1486,6 +1486,41 @@ theorem length_append_self {α : Type} {n : Nat} {l : List α}
 :::
 :::::
 
+:::::exercise (rating := 3) (name := "list_ext")
+Prove the _extensionality principle_ for lists.
+{name}`nth?_always_none` should be useful.
+
+```lean
+theorem list_ext {l₁ l₂ : List α} (h : ∀ n, nth? l₁ n = nth? l₂ n) : l₁ = l₂ := by
+  solution!
+    induction l₂ generalizing l₁ with
+    | nil =>
+      apply nth?_always_none
+      intro n
+      rw [h, nth?_nil]
+    | cons x l₂' ih =>
+      cases l₁ with
+      | nil =>
+        rw [nth?_always_none (l := x :: l₂')]
+        intro n
+        specialize h n
+        rw [nth?_nil] at h
+        rw [h]
+      | cons y l₁' =>
+        have hyx := h 0
+        rw [nth?_cons_zero, nth?_cons_zero] at hyx
+        injection hyx with hyx
+        subst hyx
+        have h' (n) : nth? l₁' n = nth? l₂' n := by
+          specialize h (n + 1)
+          rw [nth?_cons_succ, nth?_cons_succ] at h
+          exact h
+        rw [ih h']
+```
+:::gradeTheorem 3 length_append_self
+:::
+:::::
+
 :::::exercise (rating := 3) (name := "diagonal_induction") (optional := true)
 
 Prove the following principle of induction over two naturals.
@@ -1610,10 +1645,7 @@ theorem zip_unzip' {α β : Type} (l : List (α × β))
       let ⟨a, b⟩ := x
       dsimp [unzip'] at h
       injections h₁ h₂
-      rw [← h₁, ← h₂]
-      dsimp [zip]
-      rw [ih]
-      rfl
+      rw [← h₁, ← h₂, zip_cons_cons, ih _ _ rfl]
 ```
 
 :::gradeTheorem 3 zip_unzip'
@@ -1900,10 +1932,11 @@ theorem unzip_zip {α β : Type}
     | nil => contradiction
     | cons y ys =>
       rw [zip_cons_cons]
-      dsimp [unzip]
-      rewrite [ih]
-      · rfl
-      · injections
+      injections h -- uses `.add` which we have to rewrite to `+` to use `Nat.add_zero`
+      rw [Nat.add_eq, Nat.add_zero] at h
+      apply Prod.ext
+      · rw [unzip_cons_fst, ih h]
+      · rw [unzip_cons_snd, ih h]
 
 /- Here is one more approach -/
 theorem unzip_zip' {α β : Type}
@@ -1918,13 +1951,21 @@ theorem unzip_zip' {α β : Type}
     rfl
   | cons x xs ih =>
     let ⟨a, b⟩ := x
-    dsimp [unzip] at h
-    injections h₁ h₂
+    rw [Prod.ext_iff] at h
+    obtain ⟨h₁, h₂⟩ := h
+    rw [unzip_cons_fst] at h₁
+    rw [unzip_cons_snd] at h₂
+    dsimp at h₁ h₂
     rw [h₁, h₂]
-    dsimp [zip, unzip]
-    rewrite [ih]
-    · rfl
-    · rfl
+    apply Prod.ext
+    · rw [zip_cons_cons, unzip_cons_fst]
+      dsimp
+      rw [ih]
+      rfl
+    · rw [zip_cons_cons, unzip_cons_snd]
+      dsimp
+      rw [ih]
+      rfl
 -- END SOLUTION
 ```
 
