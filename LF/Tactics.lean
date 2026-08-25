@@ -395,8 +395,8 @@ theorem trans_eq_exercise (n m o p : Nat)
 ::::full
 Recall the definition of natural numbers:
 
-```display
-inductive Nat : Type :=
+```recall
+inductive Nat : Type where
   | zero
   | succ (n : Nat)
 ```
@@ -626,12 +626,15 @@ theorem disjoint_ex3 {α : Type} (x y z : α) (l : List α)
 ## Quizzes
 
 Recall our {name}`RGB` and {name}`Color` types:
-```display
+
+```recall
 inductive RGB : Type where
   | red
   | green
   | blue
+```
 
+```recall
 inductive Color : Type where
   | black
   | white
@@ -1065,11 +1068,11 @@ variable (m n m' n' : Nat)
 Recall this function for doubling a natural number from the
 {ref "Induction"}[Induction] chapter:
 
-```display
+```recall
 def Nat.double (n : Nat) : Nat :=
   match n with
   | 0 => 0
-  | n' + 1 => (n'.double) + 2
+  | n' + 1 => double n' + 2
 ```
 
 ::::terse
@@ -1565,36 +1568,36 @@ get the first and second projections of `v` using this tactic:
 let ⟨a, β⟩ := v
 ```
 
-:::::exercise (rating := 3) (name := "zip_unzip")
+:::::exercise (rating := 3) (name := "zip_unzip'")
 Here is an implementation of the {name}`unzip` function mentioned in
 chapter {ref "Poly"}[Poly]:
 
-```display
-def unzip {α : Type} {β : Type} (l : List (α × β)) : List α × List β := solution!(
+```lean
+def unzip' {α β : Type} (l : List (α × β)) : List α × List β := solution!(
   match l with
   | [] => ([], [])
   | (x, y) :: t =>
-    let (lx, ly) := unzip t
+    let (lx, ly) := unzip' t
     (x :: lx, y :: ly))
 ```
 
-Prove that {name}`unzip` and {name}`zip` are inverses in the following sense:
+Prove that {name}`unzip'` and {name}`zip` are inverses in the following sense:
 
 ```lean
-theorem zip_unzip {α β : Type} (l : List (α × β))
+theorem zip_unzip' {α β : Type} (l : List (α × β))
     (l₁ : List α) (l₂ : List β)
-    (h : unzip l = (l₁, l₂)) :
+    (h : unzip' l = (l₁, l₂)) :
     zip l₁ l₂ = l := by
   solution!
     induction l generalizing l₁ l₂ with
     | nil =>
-      rw [unzip_nil] at h
+      dsimp [unzip'] at h
       injections h₁ h₂
       rw [← h₁, ← h₂]
       rfl
     | cons x xs ih =>
       let ⟨a, b⟩ := x
-      dsimp [unzip] at h
+      dsimp [unzip'] at h
       injections h₁ h₂
       rw [← h₁, ← h₂]
       dsimp [zip]
@@ -1602,7 +1605,7 @@ theorem zip_unzip {α β : Type} (l : List (α × β))
       rfl
 ```
 
-:::gradeTheorem 3 zip_unzip
+:::gradeTheorem 3 zip_unzip'
 :::
 
 :::::
@@ -1816,8 +1819,8 @@ theorem append_left_cancel {α : Type} (l₁ l₂ l₃ : List α)
 
 Recall the {name}`map` we've defined in {ref "Poly"}[Poly]:
 
-```display
-def map {α : Type} {β : Type} (f : α → β) (l : List α) : List β :=
+```recall
+def map {α β : Type} (f : α → β) (l : List α) : List β :=
   match l with
   | [] => []
   | head :: tail => f head :: map f tail
@@ -1856,7 +1859,8 @@ theorem map_injective_of_injective {α β : Type}
 
 
 :::::exercise (rating := 3) (name := "unzip_zip") (level := Advanced) (manual := true)
-We proved {name}`zip_unzip` that {name}`zip`ping the result of {name}`unzip` recovers the original list. What about the other direction?  Complete and prove the following `unzip_zip`:
+We proved {name}`zip_unzip'` that {name}`zip`ping the result of {name}`unzip` recovers the original list.
+What about the other direction?  Complete and prove the following `unzip_zip`:
 
 ```display
 theorem unzip_zip {α β : Type}

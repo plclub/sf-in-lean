@@ -8,6 +8,7 @@ import SFLMeta.Quiz
 import SFLMeta.Terse
 import SFLMeta.SlideBreak
 import SFLMeta.Grade
+import SFLMeta.Recall
 
 import SFLMeta.Save.SourceRewrite
 import SFLMeta.Save.Lean
@@ -236,7 +237,7 @@ def findAlt? (contents : Array (Verso.Doc.Block Manual)) : Option String :=
     | .code s => some s
     | _ => none
 
-/-- For wrapping code in `sf_experiment` and `sf_expect_failure` -/
+/-- For wrapping code in our commands -/
 def wrapIndented (startText body : String) : String :=
   let body := body.trimAscii.toString.splitOn "\n" |>.map ("  " ++ ·) |> String.intercalate "\n"
   startText ++ "\n" ++ body ++ "\n\n"
@@ -265,22 +266,6 @@ def chapterModule (vol : String) (p : Part Manual) : String :=
   let base := chapterFileBase p
   if base.all (fun c => c.isAlphanum || c == '_') then vol ++ "." ++ base
   else vol ++ ".«" ++ base ++ "»"
-
-end
-
-/-! ## Support module template
-  Create `SFLCompat.lean` with custom commands used in generated projects.
--/
-
-section
-
-def supportModuleName (vol : String) : String :=
-  vol ++ ".SFLCompat"
-
-def supportModulePath (vol : String) : String :=
-  vol ++ "/SFLCompat.lean"
-
-def readSFLCompat : IO String := IO.FS.readFile "SFLMeta/SFLCompat.lean"
 
 end
 
@@ -339,6 +324,17 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
         | .expectFailure =>
           return buf.append file <| saved.variants.map (wrapIndented "sf_expect_failure")
       return buf
+    if name == ``SFLMeta.Block.recall then
+      if let some saved := SFLMeta.Recall.decode? which.data then
+        let {kind, statement, expectedError, source, ..} := saved
+        let command := match kind with
+          | .semantic =>
+            if statement then "sf_recall statement " ++ source.trimAscii.toString
+            else wrapIndented "sf_recall" source
+          | .source => wrapIndented "sf_recall_source" source
+        if expectedError then
+          return buf.appendAll file <| wrapIndented "sf_expect_failure" command
+        return buf.appendAll file <| command.trimAscii.toString ++ "\n\n"
     if name == ``Block.importBlock then
       -- Cross-chapter `import` lines shown to the reader.  The extracted
       -- files get their import lines from the chapter source's header
@@ -509,6 +505,6 @@ def walkOuter (width : Nat) (vol : String) (text : Part Manual) (buf : SaveBuffe
   for p in subParts do
     let chapterFile := chapterPath vol p
     buf := buf.appendOnly chapterFile .grading s!"import AutograderLib\n"
-    buf := buf.appendAll chapterFile s!"import {supportModuleName vol}\n\n"
+    buf := buf.appendAll chapterFile s!"import SFLCompat\n\n"
     buf := walkSection width 1 chapterFile p buf
   return buf

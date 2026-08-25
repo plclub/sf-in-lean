@@ -1236,7 +1236,7 @@ Another handy higher-order function is called `map`.
 ::::
 
 ```lean
-def map {α : Type} {β : Type} (f : α → β) (l : List α) : List β :=
+def map {α β : Type} (f : α → β) (l : List α) : List β :=
   match l with
   | [] => []
   | head :: tail => f head :: map f tail
@@ -1277,8 +1277,8 @@ example : map (fun n => [n.even, n.odd]) [2, 1, 2, 5]
 ::::quiz
 Recall the definition of {name}`map`:
 
-```display
-def map (f : α → β) (l : List α) : List β :=
+```recall
+def map {α β : Type} (f : α → β) (l : List α) : List β :=
   match l with
   | [] => []
   | head :: tail => f head :: map f tail
@@ -1453,7 +1453,7 @@ theorem fold_cons {α : Type} {β : Type} {f : α → β → β} {a : α} {l : L
 ::::quiz
 Here is the definition of `fold` again:
 
-```display
+```recall
 def fold {α β : Type} (f : α → β → β) (l : List α) (b : β) : β :=
   match l with
   | [] => b
@@ -1750,8 +1750,8 @@ theorem curry_uncurry {α β γ : Type} {p : α × β} {f : α × β → γ} :
 :::::exercise (rating := 2) (name := "nth_error_informal") (level := Advanced) (optional := true) (manual := true)
 Recall the definition of the {name}`nth?` function:
 
-```display
-def nth? (l : List α) (n : Nat) : Option α :=
+```recall
+def nth? {α : Type} (l : List α) (n : Nat) : Option α :=
   match l with
   | [] => none
   | x :: l' => match n with
