@@ -11,6 +11,9 @@ htmlSplit := .never
 file := "Basics"
 %%%
 
+:::dev "Benjamin Pierce (bcpierce00)"
+Could this directive live somewhere else?  And doesn't it belong in a `:::details` block?
+:::
 ```lean -show
 set_option pp.fieldNotation false
 ```
@@ -38,14 +41,18 @@ If you don't have Lean installed yet:
 * Make a copy of "\_out/lf/student/lean" to start solving as if I were a student.
 :::
 
+This chapter introduces some of Lean's most essential features for writing functional programs
+and proving things about how they behave.
+
+# Introduction
 ::::full
 The _functional style_ of programming is founded on simple
 mathematical intuitions: A program is essentially a concrete
 means for computing a mathematical function, which just maps
-inputs to outputs. Even when programs have side effects, such
-as reading or writing files or network packets, these side
-effects can be given a mathematical characterization (such as
-through the use of monads). This connection between programs and
+inputs to outputs. (Even programs with side effects like
+reading and writing files or network packets can
+be presented in this way, using ideas like
+_monads_.) This connection between programs and
 mathematical functions makes it possible to reason both precisely
 and formally about a program's behavior, i.e., to _prove
 properties_ about programs.
@@ -64,9 +71,9 @@ construct and manipulate rich data structures, and _polymorphic
 types_ supporting abstraction and code reuse.  Lean offers
 all of these features, and we will see them often in this book.
 
-The first half of this chapter introduces some key elements of
-Lean's functional programming language.  The second half introduces
-how you can use Lean _tactics_ to prove properties about programs.
+The first part of this chapter introduces some key elements of
+Lean's functional programming language.  The second part shows
+how to use _tactics_ to prove properties about programs.
 ::::
 
 # Data and Functions
@@ -77,24 +84,23 @@ using _inductive definitions_.
 :::
 
 ::::full
-Lean's set of built-in features is extremely small.
-For example, instead of providing the usual palette of atomic
-_datatypes_ — types whose values are data, such as booleans,
-integers, and strings — as primitives, Lean's extensive standard
-library _defines_ them, along with many common data structures
-besides, like lists and hash tables. It does so with a single
-powerful and general mechanism: the _inductive definition_.
-A type introduced this way is called an _inductive type_; the
+Lean's set of primitives is extremely small.
+For example, instead of providing the usual palette of _atomic
+datatypes_ — booleans,
+integers, strings, and so on — Lean's standard
+library _defines_ them, along with an extensive collection of other common data structures —
+lists, hash tables, etc., etc. It does so with a single
+powerful and general mechanism: _inductive definitions_.
+A type introduced with an inductive definition is called an _inductive type_, and the
 word "inductive" hints at the use of mathematical induction
-to prove statements about its values (which is the subject of the
+to reason about its values (as we will see in the
 {ref "Induction"}[next chapter]).
 
-To demonstrate how inductive definitions work, and illustrate their
-expressive power, we will recapitulate most of the datatype definitions we
-need in this course, rather than immediately referring
-to those in the standard library. We take care to harmonize
-the definitions we present with the actual definitions in the standard library, which
-we gradually introduce throughout the course.
+To demonstrate how inductive definitions work and illustrate their
+expressive power, we will start by defining most of the datatypes we
+use in this course from scratch, rather than importing
+the ones in the standard library. (We will later switch over to the library
+versions, to take advantage of all the properties that have already been proved about them.)
 ::::
 
 ## Days of the Week (Enumerated Types)
@@ -105,7 +111,7 @@ An inductive definition for an _enumerated type_:
 
 ::::full
 Let's start with a very simple example.  The following declaration tells
-Lean that we are defining a set of data values, i.e. a _type_.
+Lean to give a name to a set of data values, i.e., to define a _type_.
 ::::
 
 ```lean
@@ -121,10 +127,10 @@ inductive Day : Type where
 
 ::::full
 The new type is called {name}`Day`, and its members are `monday`,
-`tuesday`, etc. These members are also called the _constructors_
-of the {name}`Day` type, since they can be use to construct elements of that type.
+`tuesday`, etc. These are also called the _constructors_
+of the {name}`Day` type.
 We often call this sort of inductive type an _enumerated type_
-since all values that have the type are enumerated in its definition.
+since the values belonging to the type are explicitly enumerated in its definition.
 
 Having defined {name}`Day`, we can write Lean functions that operate on
 days.
@@ -150,31 +156,30 @@ def nextWorkingDay (d : Day) : Day :=
 ```
 
 ::::full
-Note that the argument and return types of this function are
-explicitly declared on the first line. Like most functional
+Note that the argument and result types of this function are
+explicitly declared on its first line. As in most functional
 programming languages, Lean can often figure out these types for
 itself when they are not given explicitly — i.e., it can do _type
 inference_ — but we'll generally include them to make reading
 easier.
 
-The `match` keyword is Lean's keyword for _pattern matching_: the functional
-programming way of examining and making decisions on data. When evaluating
+The `match` on the second line is Lean's keyword for _pattern matching_, the functional
+programming way of examining and making decisions on data. To evaluate
 `match d with...`, Lean will examine the structure of `d` to see which
 case to execute; if `d` is `Day.monday`, for example, it will
 evaluate the first case of the `match` statement; if `d` is
 `Day.friday` it will evaluate the fifth case. (There is much more
-to say about pattern matching — we'll introduce more of its features
+to say about pattern matching! We'll introduce more of its features
 as the need arises.)
 
 You may notice that we _qualified_ `Day`'s constructors when using them,
 writing {name}`Day.monday` instead of just `monday`, for example.
 Lean places all constructors into a _namespace_ associated with their type,
-and generally requires those constructors to be prefixed with their namespace when they are used.
-Later, we shall see a few circumstances in which this requirement can be relaxed.
+and generally requires those constructors to be prefixed with their namespace when they are used, though
+we will see later that this requirement can sometimes be relaxed.
 
-If you ever need to know the type of *any* pattern, object, or function,
-you can hover over it with your mouse in any editor that supports Lean,
-like VS Code or the web version we provide.
+If you ever need to know the type of _any_ pattern, object, or function,
+you can hover over it with your mouse, either in VS Code or in the HTML version of the chapter.
 ::::
 
 :::slidebreak
@@ -191,6 +196,12 @@ Lean.  One is to use the `#eval` command to evaluate a compound
 expression involving `nextWorkingDay`.  (Lean's responses are shown
 just below.)
 ::::
+
+:::dev "Benjamin Pierce (bcpierce00)"
+There is probably not time to fix this, but the way responses are displayed is confusing.  They
+should be marked as responses in some more explicit way.
+:::
+
 
 ```lean (name := nextWDay)
 #eval nextWorkingDay Day.friday
@@ -215,6 +226,10 @@ We can also record what we _expect_ the result of calling a function to be in th
 example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
   rfl
 ```
+:::dev "Benjamin Pierce (bcpierce00)"
+Do we really *have* to follow the Lean convention of putting the `:= by` on the same line
+as the theorem statement?  It's awful.,
+:::
 
 ::::full
 This declaration asserts that the second working day after `saturday` is `tuesday`.
@@ -223,7 +238,7 @@ The `by rfl` can be read as "The assertion we've just made can be
 proved by observing that both sides of the equality evaluate to
 the same term."
 
-{tactic}`rfl` stands for "reflexivity," which is the principle that any value is
+Here, {tactic}`rfl` is pronounced "reflexivity," the principle that any value is
 equal to itself. After evaluation, both sides of the equality are the same
 value, so the assertion is true by reflexivity.
 If we had made a different assertion, such as
@@ -234,6 +249,9 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.monday := by rfl
 
 then Lean would not be able to verify it and would instead signal an
 error.
+
+(The `expect_failure_in` annotation tells Lean that there is intended to be an error in
+the following expression and it should not mark the whole file as broken.)
 ::::
 
 ::::terse
@@ -247,20 +265,26 @@ The {tactic}`rfl` tactic is used to observe that both sides of an equal sign eva
 
 ::::full
 If you have not already done so, this would be an excellent moment
-to fire up VS Code with the [Lean Extension](https://marketplace.visualstudio.com/items?itemName=leanprover.lean4) and load this file, `Basics.lean`
-from the book's Lean sources. Then find the above example.
+to fire up VS Code with the
+[Lean Extension](https://marketplace.visualstudio.com/items?itemName=leanprover.lean4)
+and load this file, `Basics.lean`,
+from the book's Lean sources.
+Locate the above example and observe its result in the Lean InfoView panel.
 
-Observe the result in the Lean InfoView panel.
 This panel displays the results of commands like `#eval` (click on a particular `#eval` to see),
 as well as the current goal state when working on proofs.
 The InfoView content always follows your cursor.
 
 You can command-click on a type or variable name to navigate to its definition.
 Try this with the mention of `nextWorkingDay` in the above `#eval`.
+:::dev "Benjamin Pierce (bcpierce00)"
+Is it called command-click on Linux and Windows?
+:::
 
 You can also hover over expressions in the source code to see their types.
 Try this with mentions of {name}`nextWorkingDay` and `Day.saturday` in the above `#eval`.
-If you hover over the `#eval` command itself, you will see the popup that contains its output (at the top).
+If you hover over the `#eval` command itself,
+you will see the popup that contains its output (at the top).
 Sometimes we show Lean's responses to commands in the text below them; by hovering over
 the command you can check against that text.
 
@@ -279,6 +303,11 @@ We define our own `MyBool` to teach the concept of building booleans from
 scratch. Our definition `MyBool` is equivalent to Lean's built-in {name}`Bool`,
 which we'll switch to later.
 ::::
+
+:::dev "Benjamin Pierce (bcpierce00)"
+Why are our custom booleans called `MyBool` but our custom nats are called `Nat`?
+:::
+
 
 ::::terse
 Another familiar enumerated type; we'll switch to Lean's built-in `Bool` later:
@@ -342,7 +371,7 @@ def or (b1 : MyBool) (b2 : MyBool) : MyBool :=
 
 ::::full
 The `and` and `or` definitions illustrate Lean's syntax for multi-argument
-functions.  The corresponding multi-argument _application_ syntax is
+functions.  The corresponding multi-argument function-application syntax is
 illustrated by the following tests, which effectively constitute a
 complete specification — a truth table — for the `or` function:
 ::::
@@ -358,7 +387,7 @@ example : or MyBool.false MyBool.true  = MyBool.true  := by rfl
 example : or MyBool.true  MyBool.true  = MyBool.true  := by rfl
 ```
 
-Lean allows us to define symbolic notation for our definitions.
+Lean also allows us to define symbolic notations for these functions.
 
 ```lean
 local prefix:40 (priority := high) "!" => not
@@ -396,7 +425,7 @@ definition.  We use it in exercises to indicate the parts that we're
 leaving for you — i.e., your job is to replace {tactic}`sorry` with real
 definitions and proofs.
 
-Remove {tactic}`sorry` below and complete the definition of the following
+Remove {tactic}`sorry` below and complete the definition of the
 function.  The function should return {name}`MyBool.true` if either or both of
 its inputs are {name}`MyBool.false`. Make sure that the `example` assertions
 below can be verified by Lean.
@@ -451,7 +480,7 @@ theorem and3_test4 : and3 MyBool.true  MyBool.true  MyBool.false = MyBool.false 
 :::slidebreak
 :::
 
-## Basic Proofs
+# A First Taste of Proofs
 
 ::::full
 Now that we've defined some basic functions on booleans, let's see how to
@@ -460,25 +489,26 @@ about `&&`:
 
 - for any boolean value {lean}`b`, {lean}`(MyBool.true && b) = b`
 
-This is an example of a _proposition_, a logical _claim_ that we can try to prove.
+This is an example of a _proposition_, a logical claim that we can try to prove.
 It says that {lean}`MyBool.true && b` is equal to {lean}`b` for every {name}`MyBool` `b`.
 
-How might we write this proposition in Lean?
+How do we write this proposition in Lean?  Like this:
 
 - `theorem true_and : ∀ (b : MyBool), (MyBool.true && b) = b`
 
 The keyword `theorem` indicates that we are stating (and eventually proving)
 a proposition; the text after the first `:` is the proposition we want to prove.
+
 You'll notice that this proposition looks a lot like the one we wrote above,
 but with some additional symbols in front.
-The `∀` symbol, pronounced "forall", is
-called a _universal quantifier_ because it _quantifies_ the variable {lean}`b` that appears
+The `∀` symbol, pronounced "forall",
+is a _universal quantifier_: it "quantifies" the variable {lean}`b` that appears
 in the proposition. Quantifying a variable with a `∀` means that the proposition
-applies to all possible values of its type; here, we annotate {lean}`b`
+applies to all possible values of its type; we annotate {lean}`b`
 with the type {lean}`MyBool` to signify that
 the proposition holds for all {lean}`b`s of type {lean}`MyBool`.
 
-Now that we've stated the theorem we'd like to prove, let's set about proving it.
+Now that we've stated the theorem we'd like to prove, let's see the proof.
 ::::
 
 ::::terse
@@ -494,8 +524,8 @@ theorem true_and : ∀ (b : MyBool), (MyBool.true && b) = b := by
 ::::full
 What does this mean?
 
-First we have the `by` keyword, which signals
-to Lean that we are beginning a sequence of _tactics_.
+First the `by` keyword signals
+to Lean that what follows is a sequence of _tactics_.
 The `intro b` and {tactic}`rfl` that you see after the `by`
 are examples of tactics. If you hover over a tactic's name, Lean shows
 its documentation, explaining what the tactic does and how to use it.
@@ -572,7 +602,7 @@ theorem true_and_wrong : ∀ (b : MyBool), (MyBool.true && b) = b := by
 ```
 
 To see the error message in the Lean file,
-change `sf_expect_failure` to `sf_expect_failure?` temporarily.
+change `expect_failure_in` to `expect_failure_in?` temporarily.
 You should see the following message.
 
 ```leanOutput indent

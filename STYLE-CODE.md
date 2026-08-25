@@ -448,7 +448,7 @@ These blocks may take a `(name := <identifier>)` option for use by a later
 | Option | HTML book | Extracted Lean | Usage |
 | ------ | --------- | -------------- | ----- |
 | `-show` | not rendered | normal code | For hiding unexplained technical code from the book narrative |
-| `+error` | rendered as code block with error | code in `sf_expect_failure` block | For demonstrating expected errors while supressing error diagnostics |
+| `+error` | rendered as code block with error | code in `expect_failure_in` block | For demonstrating expected errors while supressing error diagnostics |
 | `-keep` | rendered as code block | code in `sf_experiment` block | For successfully checking code without affecting later blocks |
 
 Combine `+error` and `-keep` to produce a block that is expected to fail,

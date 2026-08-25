@@ -39,14 +39,14 @@ languages is assumed, though a degree of mathematical maturity will be
 helpful.
 
 The principal novelty of the series is that it is one hundred percent
-formalized and machine-checked: each text is literally a script for
-Lean.  The books are intended to be read alongside (or inside) an
-interactive session with Lean.  All the details in the text are fully
-formalized in Lean, and almost all of the exercises are designed to be
+formalized and machine-checked: each chapter of each book is literally a script for
+the Lean prover, and the books are intended to be read alongside (or inside) an
+interactive session with Lean.  All the details are fully
+formalized, and almost all of the exercises are designed to be
 worked using Lean.
 
 This book, _Logical Foundations in Lean_, lays groundwork for the
-others, introducing the reader to the basic ideas of functional
+others in the series, introducing the reader to the basic ideas of functional
 programming, formal logic, and Lean itself.
 
 # Overview
@@ -106,7 +106,7 @@ so far.
 ## Proof Assistants
 
 The flow of ideas between logic and computer science over the years
-has run in both directions, with CS also making contributions to
+has run in both directions, with CS also making key contributions to
 logic. One of these has been the development of software tools for
 helping construct and validate proofs of logical statements.  These
 tools fall into two broad categories:
@@ -125,8 +125,8 @@ tools fall into two broad categories:
      used proof assistants include Isabelle, Agda, Twelf, ACL2, PVS,
      F\*, HOL4, Rocq, and Lean, among many others.
 
-This course is based around Lean, a proof assistant that has been
-under development since 2013 and has attracted a large and active
+This course is based around Lean, a prover that has been
+under development since 2013 and that has attracted a large and active
 community of users in both research and at companies like DeepMind,
 OpenAI, Anthropic, MSR, and AWS.
 
@@ -166,7 +166,8 @@ Citations for these would be nice.
   and hardware_, they have been used, for example, to build
   CompCert{citep Bib.leroy2016}[], a fully-verified optimizing compiler for C,
   [Cedar](https://github.com/cedar-policy/cedar-spec){citep Bib.disselkoen2024}[], a formally-specified policy language, and
-  CertiKOS{citep Bib.gu2016certikos}[], a fully verified hypervisor, for proving the
+  CertiKOS{citep Bib.gu2016certikos}[], a fully verified hypervisor,
+  and for proving the
   correctness of subtle algorithms involving floating point
   numbers, and as the basis for CertiCrypt, FCF, and SSProve,
   which are frameworks for proving cryptographic algorithms secure.
@@ -177,19 +178,21 @@ Citations for these would be nice.
   validate and help develop a number of important results.  For
   example, the ability to include complex computations inside proofs
   made it possible to develop the first formally verified proof of the
-  4-color theorem.  This proof had previously been controversial among
-  mathematicians because it required checking a large number of
+  4-color theorem, which had previously been controversial among
+  mathematicians because the argument required checking a large number of
   configurations using a program. More recently, an even more massive
   effort led to a formalization of the Feit-Thompson Theorem, the
   first major step in the classification of finite simple groups.
-  Specifically, Lean is currently at the core of various formalization efforts in
+
+  Lean, in particular, is now at the core of various formalization efforts in
   mathematics, such as the proof of [Fermat's Last Theorem](https://github.com/ImperialCollegeLondon/FLT),
   the [Sphere Packing Problem](https://github.com/thefundamentaltheor3m/Sphere-Packing-Lean).
-  and even DeepMind's AI model for IMO problems [AlphaProof](https://deepmind.google/blog/ai-solves-imo-problems-at-silver-medal-level/).
+  and even DeepMind's AI model for International Math Olympiad
+  problems, [AlphaProof](https://deepmind.google/blog/ai-solves-imo-problems-at-silver-medal-level/).
 
 ## Functional Programming
 
-_Functional programming_ refers both to a collection of idioms that
+_Functional programming_ refers both to a collection of powerful coding idioms that
 can be used in almost any programming language and to a family of
 languages designed to foreground these idioms, including Haskell,
 OCaml, Standard ML, F\#, Scala, Scheme, Racket, Common Lisp, Clojure,
@@ -201,9 +204,9 @@ _before_ the first electronic computers! But since the early '90s it
 has enjoyed a surge of interest among both software engineers and
 language designers.
 
-The most basic tenet of functional programming is that, whenever
+The basic tenet of functional programming is that, whenever
 possible, computation should be _pure_, in the sense that the only
-effect of execution should be to produce a result: it should be
+effect of execution should be to produce a result. That is, it should be
 free from _side effects_ such as I/O, assignments to mutable
 variables, redirecting pointers, etc.  For example, whereas an
 _imperative_ sorting function might take a list of numbers and
@@ -213,26 +216,26 @@ containing the same numbers in sorted order.
 
 A significant benefit of this style of programming is that it makes
 programs easier to understand and reason about. If every operation on
-a data structure yields a new data structure, leaving the old one
+a data structure yields a new data structure and leaves the old one
 intact, then there is no need to worry about how that structure is
 being shared and whether a change by one part of the program might
-break an invariant relied on by another part of the program. These
-considerations are particularly critical in concurrent systems, where
+break an invariant relied on by another part of the program.
+This is particularly important when reasoning about concurrent systems, where
 every piece of mutable state shared between threads is a potential
 source of pernicious bugs.
 
-Another reason for the popularity of functional programming is related
-to the first: functional programs are often much easier to parallelize
+Another reason for the popularity of functional programming, related
+to the first, is that functional programs are often much easier to parallelize
 and physically distribute than their imperative counterparts.  If
 running a computation has no effect other than producing a result,
-then it does not matter _where_ it is run. Similarly, if a data
+then it does not matter _where_ it is run. Likewise, if a data
 structure is never modified destructively, it can be copied freely,
 across cores or across the network. Indeed, the "Map-Reduce" idiom,
 which lies at the heart of massively distributed query processors like
 Hadoop and is used by Google to index the entire web, is a classic
 example of functional programming.
 
-For purposes of these books, functional programming has yet another
+For these books, functional programming has yet another
 significant attraction: it serves as a bridge between logic and
 computer science. Indeed, Lean itself can be viewed as a combination
 of a small but extremely expressive functional programming language
@@ -252,20 +255,21 @@ suggestions for further reading in the {ref "Postscript"}[Postscript] chapter.
 
 ## System Requirements
 
-Lean runs on Windows, Linux, and MacOS.  The files in this book
+Lean runs on Linux, MacOS, and Windows.  The files in this book
 have been tested with Lean version {leanVersion}[].
 
 ## Installation
 
-The Visual Studio Code IDE is the recommended platform for using Lean.
+The Visual Studio Code IDE is the recommended platform for using Lean. To get set up,
+follow these steps:
 
-- Install VS Code if needed
-- From the Extensions tab of VS Code, install the Lean 4 extension
+- Install VS Code if needed.
+- From the Extensions tab of VS Code, install the Lean 4 extension.
 - Clone the [SF-in-Lean](https://github.com/plclub/sf-in-lean) git repo and open
-  it in VS Code
-- The first time you open a Lean file, the extension will offer to install Lean
-  itself; accept, and it will fetch the version this book needs
-- Wait for Lean to build the project (it takes a few minutes)
+  it in VS Code.
+- Open a Lean file; the extension will offer to install Lean; accept, and it will fetch
+  the version this book needs.
+- Wait for Lean to build the project (it takes a few minutes).
 
 :::dev "Claude (AI assistant)" BeforeNextRelease
 These steps send the reader to the *sources* repo, but the files a reader is
@@ -316,11 +320,12 @@ assigns extra points to harder exercises:
 ```
 
 Some exercises are marked "advanced," and some are marked "optional."
-Doing just the non-optional, non-advanced exercises should provide
-good coverage of the core material.  Optional exercises provide a bit
+Optional exercises provide a bit
 of extra practice with key concepts and introduce secondary themes
 that may be of interest to some readers.  Advanced exercises offer an
 extra challenge and a deeper cut at the ideas.
+Doing just the non-optional, non-advanced exercises should provide
+good coverage of the core material.
 
 ## Citation Format
 
