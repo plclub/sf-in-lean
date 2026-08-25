@@ -137,6 +137,9 @@ theorem apply_exercise (m : Nat)
     apply h₁
     exact hEven
 ```
+
+:::gradeTheorem 2 apply_exercise
+:::
 :::::
 
 ::::full
@@ -388,6 +391,9 @@ theorem trans_eq_exercise (n m o p : Nat)
     _ = m := by rw [h₂]
     _ = o.minusTwo := by rw [h₁]
 ```
+
+:::gradeTheorem 3 trans_eq_exercise
+:::
 :::::
 
 # The {tactic}`injection` and {tactic}`contradiction` Tactics
@@ -522,10 +528,11 @@ theorem injection_ex3 {α : Type} (x y z : α) (l j : List α)
     (h₁ : x :: y :: l = z :: j)
     (h₂ : j = z :: l) :
     x = y := by
-  injections hxz hyl_j
-  rw [h₂] at hyl_j
-  injection hyl_j with hyz
-  rw [hyz, hxz]
+  solution!
+    injections hxz hyl_j
+    rw [h₂] at hyl_j
+    injection hyl_j with hyz
+    rw [hyz, hxz]
 ```
 
 :::gradeTheorem 3 injection_ex3
@@ -1035,6 +1042,9 @@ theorem nth?_always_none (l : List Nat) (h : ∀ i, nth? l i = none) :
       dsimp [nth?] at h
       contradiction
 ```
+
+:::gradeTheorem 3 nth?_always_none
+:::
 :::::
 
 
@@ -1581,6 +1591,9 @@ def unzip' {α β : Type} (l : List (α × β)) : List α × List β := solution
     (x :: lx, y :: ly))
 ```
 
+:::autogradedHole unzip'
+:::
+
 Prove that {name}`unzip'` and {name}`zip` are inverses in the following sense:
 
 ```lean
@@ -1962,6 +1975,9 @@ example : allTrue Nat.even [0, 2, 4, 5] = false := solution!(by rfl)
 example : allTrue Nat.even [] = true := solution!(by rfl)
 ```
 
+:::autogradedHole allTrue
+:::
+
 The second checks whether it returns {name}`true` for at least one element.
 
 ```lean
@@ -1976,6 +1992,9 @@ example : anyTrue not [true, true, false] = true := solution!(by rfl)
 example : anyTrue Nat.even [] = false := solution!(by rfl)
 ```
 
+:::autogradedHole anyTrue
+:::
+
 Next, define a _nonrecursive_ version of {name}`anyTrue` — call it
 `anyTrue'` — using {name}`allTrue` and {name}`not`.
 
@@ -1983,6 +2002,9 @@ Next, define a _nonrecursive_ version of {name}`anyTrue` — call it
 def anyTrue' {α : Type} (test : α → Bool) (l : List α) : Bool := solution!(
   !(allTrue (fun x => !(test x)) l))
 ```
+
+:::autogradedHole anyTrue'
+:::
 
 Finally, prove a theorem `anyTrue_eq_anyTrue` stating that
 `anyTrue'` and `anyTrue` have the same behavior.
