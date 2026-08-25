@@ -72,7 +72,8 @@ how you can use Lean _tactics_ to prove properties about programs.
 # Data and Functions
 
 :::terse
-In Lean, we can build practically everything from first principles...
+In Lean, we can build practically everything from first principles
+using _inductive definitions_.
 :::
 
 ::::full
@@ -99,7 +100,7 @@ we gradually introduce throughout the course.
 ## Days of the Week (Enumerated Types)
 
 :::terse
-A datatype definition:
+An inductive definition for an _enumerated type_:
 :::
 
 ::::full
@@ -290,8 +291,8 @@ inductive MyBool : Type where
 ```
 
 :::ignore
--- This is included to be able to format expressions involving these variables later
 ```lean -show
+-- This is included to be able to format expressions involving these variables later
 variable (b : MyBool) (n m : Nat)
 ```
 :::
@@ -369,6 +370,7 @@ example :
 example : (!MyBool.false) = MyBool.true := by rfl
 ```
 
+::::full
 The technical details of how these symbolic notations work are not something you need to understand until quite a bit later in your Lean journey.  We'll mark these details -- and similar material later on -- with `THESE DETAILS CAN BE SKIPPED` comments in `.lean` files and with collapsed text segments in the HTML presentation. Click on the triangle in the HTML if you want to have a peek, or just move on to the following material.
 
 :::details
@@ -380,6 +382,7 @@ Custom notations are defined using the `notation`, `infixl`,
 `infixr`, `prefix`, and `postfix` commands, some of which we will see
 (again, in skippable sections) later on.
 :::
+::::
 
 :::slidebreak
 :::
@@ -409,8 +412,19 @@ theorem nand_test4 : nand MyBool.true  MyBool.true  = MyBool.false := solution!(
 
 :::gradeTheorem "0.25" nand_test1 nand_test2 nand_test3 nand_test4
 :::
+
+:::dev
+TODO: `nand` needs `@[autogradedHole]`
+:::
 ::::
 
+:::::terse
+Going forward, most exercises will be omitted from the "terse" version of the notes used
+in lecture. The "full" version (used on-line and for homeworks) contains both longer
+explanations and all the exercises.
+:::::
+
+:::::full
 ::::exercise (rating := 1) (name := "and3")
 Do the same for the `and3` function below. This function should
 return `true` when all of its inputs are `true`, and `false`
@@ -429,6 +443,7 @@ theorem and3_test4 : and3 MyBool.true  MyBool.true  MyBool.false = MyBool.false 
 :::gradeTheorem "0.25" and3_test1 and3_test2 and3_test3 and3_test4
 :::
 ::::
+:::::
 
 :::slidebreak
 :::
@@ -495,9 +510,6 @@ _close_ (solve) the current goal, finishing its proof.
 
 Let's walk through the example above with this terminology in mind.
 ::::
-:::dev "Benjamin Pierce (bcpierce00)"
-The typesetting here is bad -- most of the text has to come out of the inline comments...
-:::
 
 ::::terse
 And now let's see it in a bit more detail:
@@ -579,6 +591,7 @@ theorem true_and' : ∀ (b : MyBool), (MyBool.true && b) = b := by
 ```
 ::::
 
+:::::full
 ::::exercise (rating := 1) (name := "false_or_exercise")
 Here's a simple proof for you to try.
 Remove {tactic}`sorry` and fill in the proof.
@@ -594,7 +607,6 @@ theorem false_or : ∀ (b : MyBool), (MyBool.false || b) = b := by
 :::
 ::::
 
-::::full
 While in this book we often use {tactic}`sorry` as a placeholder for you to
 replace with an actual proof, in general, {tactic}`sorry` tells Lean that we want to skip trying
 to prove a theorem and just accept it as a given.  This can be useful for developing longer proofs.
@@ -603,16 +615,10 @@ Be careful, though: every time you say {tactic}`sorry` you are leaving
 a door open for total nonsense to enter Lean's safe, formally
 checked world!
 
-:::dev "Harrison Goldstein (hgoldstein95)"
-In the terse .lean output this ends up looking like an exercise.
-:::
-
 ```lean -keep
 theorem really_bad : MyBool.true = MyBool.false := by sorry
 ```
-::::
 
-::::full
 The facts we've seen so far about booleans are quite simple, so the tactics we need to
 prove them are also quite simple. Over the course of this book we are going to
 introduce new tactics and proof techniques gradually, enriching the propositions we can prove along the way.
@@ -620,7 +626,7 @@ introduce new tactics and proof techniques gradually, enriching the propositions
 Now that we've seen how to define our own booleans and prove some basic
 properties about them, let's switch to Lean's built-in {name}`Bool` type, which has the same structure
 but comes with a lot of useful functions and lemmas.
-::::
+:::::
 
 ::::terse
 Now we'll switch to Lean's definition of booleans.
@@ -706,12 +712,6 @@ each of type {name}`Bool`, this function produces an output of type
 ::::
 
 ## New Types from Old
-
-:::dev "Harrison Goldstein (hgoldstein95)"
-I feel like this section has too much content in terse, but I don't want to unilaterally make
-that call.
-TODO
-:::
 
 ::::full
 The enumerated types we have seen so far are so-named because
@@ -827,13 +827,13 @@ def isRed' (c : Color) : Bool :=
     | _ => Bool.false
 ```
 
-:::full
 This {name}`isRed'` function produces the same result as
-{name}`isRed` but illustrates the _use_ of a pattern matching variable: the
-{lean}`Color.primary r` pattern stores the {name}`RGB` argument into variable {lean}`r`,
+{name}`isRed` but illustrates the _use_ of a pattern matching variable.
+
+:::::full
+The {lean}`Color.primary r` pattern stores the {name}`RGB` argument into variable {lean}`r`,
 and then pattern matches on that argument to produce the final
 result.
-:::
 
 ::::exercise (rating := 1) (name := "is_weekend")
 Define a function that takes a `Day` and returns true if the day is
@@ -899,6 +899,7 @@ theorem isInversion_test4 : isInversion (Color.primary RGB.green) (Color.primary
 :::gradeTheorem "0.25" isInversion_test1 isInversion_test2 isInversion_test3 isInversion_test4
 :::
 ::::
+:::::
 
 ## Namespaces
 
@@ -1136,6 +1137,11 @@ to be {name}`Day`s. When we use the `.monday` style in the function body, Lean c
 out that we must mean `Day.monday`. However, in the example below, Lean can't figure out
 which version of `.true` we mean, since it could either be {name}`Bool.true` or {name}`MyBool.true`.
 In this case, it will raise an error:
+::::
+
+::::terse
+Here, Lean can't figure out which version of `.true` we mean.
+::::
 
 ```lean +error (name := am)
 #check .true
@@ -1164,7 +1170,7 @@ Here, though, because {name}`not` is a function that takes a {name}`Bool` argume
 !true : Bool
 ```
 
-::::
+:::::full
 
 ::::exercise (rating := 1) (name := "custom_namespace_checks")
 Predict the output of each of the statements below.
@@ -1187,6 +1193,7 @@ an active section of the book to evaluate them.
 GRADE_MANUAL 1: custom_namespace_checks
 ```
 :::
+:::::
 
 ## Constructors with Multiple Parameters (Tuple Types)
 
@@ -1386,10 +1393,12 @@ inductive Nat : Type where
   | succ (n : Nat)
 ```
 
+:::full
 With a little Lean magic, we can also arrange that
 ordinary numerals such as 0, 1, and 2 will be interpreted as values of our new {name}`Nat` type
 whenever this is sensible in context.
 The technical details are not important.
+:::
 
 :::details "Library Nat to SFL Nat coercion"
 ```lean
@@ -1591,10 +1600,14 @@ theorem add_zero_zero : ∀ n : Nat, n + zero + zero = n := by
   rewrite [add_zero]
   rfl
 ```
-
+::::full
 We'll walk through this proof in the next section.
+::::
 
 ## Proof state and tactics
+
+:::suppressPreviousHeaderWhenTerse
+:::
 
 ::::full
 The {tactic}`rewrite` tactic in the proof of {name}`add_zero_zero` is used
@@ -1634,7 +1647,7 @@ Give this proof a try (it's similar):
 
 ```lean
 theorem add_zero_zero_zero : ∀ n : Nat, n + zero + zero + zero = n := by
-  solution!
+  workinclass!
     intro n
     rewrite [add_zero]
     rewrite [add_zero]
@@ -1861,7 +1874,6 @@ theorem four_eq_succ_three : four = succ three := by rfl
 We can rewrite with these rules to expand numerals into their definitions,
 which allows us to use our {name}`add` rules.
 Here's an example of how to start a proof this way.
-::::
 
 :::exercise (rating := 1) (name := "mul_simpl_rules")
 
@@ -1888,6 +1900,7 @@ theorem two_plus_two_eq_four : two + two = four := by
 ```
 
 :::
+::::
 
 ### Multiplication
 
@@ -1938,9 +1951,17 @@ attribute [irreducible] mul
 :::
 ::::
 
-Prove these thoerems using rewriting with the simplification rules for addition and multiplication.
+Prove this theorem using rewriting with the simplification rules.
 
-::::full
+```lean
+theorem zero_add_one : (zero + one : Nat) = one := by
+  rewrite [one_eq_succ_zero]
+  workinclass!
+    rewrite [add_succ, add_zero]
+    rfl
+```
+
+:::::full
 Notice how {tactic}`rewrite`
 can take any number of arguments. You can rewrite with all of the
 simplification rules at once, for example.
@@ -1949,15 +1970,9 @@ After each rewrite, check the proof state by placing the cursor immediately
 after a rule to see how the goal is changing. This happens naturally
 as you write the proof, which makes it convenient to use {tactic}`rewrite` blocks
 with multiple rules.
-::::
 
 ::::exercise (rating := 2) (name := "test_mul_add")
 ```lean
-theorem zero_add_one : (zero + one : Nat) = one := by
-  rewrite [one_eq_succ_zero]
-  solution!
-    rewrite [add_succ, add_zero]
-    rfl
 
 theorem one_add_one : (one + one : Nat) = two := by
   rewrite [one_eq_succ_zero]
@@ -1992,6 +2007,7 @@ theorem two_mul_two : (two * two : Nat) = four := by
 :::gradeTheorem "0.4" zero_add_one one_add_one zero_mul_two one_mul_two two_mul_two
 :::
 ::::
+:::::
 
 :::slidebreak
 :::
@@ -2056,6 +2072,7 @@ example : ble four two = false := by rfl
 
 ```
 
+:::::full
 ::::exercise (rating := 1) (name := "blt")
 Define a less-than function in terms of {name}`ble`.
 
@@ -2072,6 +2089,7 @@ attribute [irreducible] blt ble
 :::gradeTheorem 1 blt_test3
 :::
 ::::
+:::::
 
 :::slidebreak
 :::
@@ -2093,7 +2111,7 @@ prove, while `x == y` is a boolean _expression_ whose value (either
 
 ::::terse
 Note that `==` and `=` are different; the former means {name}`beq` whereas the latter is a logical
-claim.
+claim. Here are our simplification rules.
 ::::
 
 ::::full
@@ -2124,11 +2142,11 @@ because the rules apply to both the first and second arguments of `beq`. We put
 `beq` between the arguments because it usually written in infix.
 There are no strict style conventions for naming theorems like this in Lean, but many developers
 follow this approach.
-::::
 :::dev "Benjamin Pierce (bcpierce00)"
 We haven't really articulated an "approach" -- just given a couple of miscellaneous examples...
 TO DO: Let's move this to UsingLean and broaden it.
 :::
+::::
 
 ## General Proofs about Natural Numbers
 
@@ -2167,6 +2185,7 @@ theorem add_id_example : ∀ n m : Nat,
   rfl
 ```
 
+:::::full
 ::::exercise (rating := 1) (name := "add_id_exercise")
 
 Remove {tactic}`sorry` and fill in the proof.
@@ -2183,6 +2202,7 @@ theorem add_id_exercise : ∀ n m o : Nat,
 :::gradeTheorem 1 add_id_exercise
 :::
 ::::
+:::::
 
 :::slidebreak
 :::
@@ -2193,8 +2213,8 @@ The `#check` command can also be used to examine the statements of
 previously declared lemmas and theorems.
 
 ```lean (name := mul_l)
-#check mul_zero  -- ∀ (n : Nat), n * 0 = 0
-#check mul_succ  -- ∀ (n m : Nat), n * Nat.succ m = n + n * m
+#check mul_zero
+#check mul_succ
 ```
 
 ```leanOutput mul_l
@@ -2230,25 +2250,8 @@ The declaration-header style is conventional in Lean, and we will generally use 
 ::::
 
 ::::terse
-
-Lean may:
-
-- print a fully qualified name, such as {name}`NatPlayground.Nat.mul_zero`;
-- display universally quantified variables as binders before the colon.
-
-Thus,
-
-```display
-mul_zero : ∀ (n : Nat), n * zero = zero
-```
-
-may be displayed as:
-
-```display
-mul_zero (n : Nat) : n * zero = zero
-```
-
-The second form is the conventional _declaration-header style_ in Lean.
+Lean displays universally quantified variables as binders before the colon, which is
+the preferred _declaration-header style_ in Lean.
 ::::
 
 :::slidebreak
@@ -2413,6 +2416,9 @@ by case analysis in the {ref "Tactics"}[Tactics] chapter.
 
 ## New Tactics: `rewrite ... at` and {tactic}`exact`
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
 ::::full
 Some new tactics will be useful for the exercises ahead.
 
@@ -2427,9 +2433,10 @@ explain how when we get to an example that needs it.
 ::::
 
 ::::terse
-You will need the `rewrite ... at` and {tactic}`exact` tactics to complete the following exercises.
+You will need the `rewrite ... at` and {tactic}`exact` tactics to complete some exercises.
 ::::
 
+:::::full
 ::::exercise (rating := 2) (name := "or_false_true")
 Prove the following claim.
 
@@ -2460,10 +2467,14 @@ theorem zero_neb_add_one (n : Nat) :
 :::gradeTheorem 1 zero_neb_add_one
 :::
 ::::
+:::::
 
 ## Structural Recursion (Optional)
 
-::::full
+:::suppressPreviousHeaderWhenTerse
+:::
+
+:::::full
 Here is a copy of the definition of `even`:
 
 ```lean
@@ -2489,7 +2500,6 @@ in Lean will terminate on all inputs.  However, because Lean's
 termination analysis is not always able to figure things out
 automatically, it is sometimes necessary to provide hints or
 write functions in slightly different ways.
-::::
 
 ::::exercise (rating := 2) (name := "decreasing") (optional := true)
 To get a concrete sense of how termination checking works in Lean,
@@ -2511,9 +2521,14 @@ This fails because Lean can't see that `pred n` is structurally smaller.
 
 :::
 ::::
+:::::
 
 ## Binary Numerals
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
+:::::full
 ::::exercise (rating := 3) (name := "binary")
 We can generalize our unary representation of natural numbers to
 the more efficient binary representation by treating a binary
@@ -2605,6 +2620,7 @@ attribute [irreducible] incr binToNat
 :::gradeTheorem "0.5" incr_test1 incr_test2 incr_test3 binToNat_test1 binToNat_test2 binToNat_test3
 :::
 ::::
+:::::
 
 ```lean
 end Nat
@@ -2612,8 +2628,15 @@ end Nat
 
 # More Exercises
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
 ## Warmups
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
+:::::full
 ::::exercise (rating := 1) (name := "identity_fn_applied_twice")
 You now have a small but rather powerful suite of tactics at your disposal.
 As a warmup for the last section of the chapter, use the tactics you have
@@ -2688,6 +2711,7 @@ theorem and_eq_or (b c : Bool) : (b && c) = (b || c) → b = c := by
 :::gradeTheorem 3 and_eq_or
 :::
 ::::
+:::::
 
 ## Airport Exercise
 
