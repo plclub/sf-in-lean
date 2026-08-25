@@ -20,14 +20,24 @@ declare_syntax_cat invAlts
 syntax (" | " caseArg)+ " => " tacticSeq : invAlts
 
 /--
-  `inversion t` generalizes nonvariable indices of the type of `t` before invoking `cases t`,
-  then solves away contradictory generated goals.
-  `t` itself will also be generalized with a heterogeneous equality `heq`
-  if trying to generalize the indices produces an ill-typed result.
-  * If `inversion +clear t` is set, then `heq` will be `clear`ed from the context if present,
-    along with `t` if there are no dependencies on it.
+  `inversion h` behaves like `cases h` except that where `cases` would fail with
+  > "Dependent elimination failed: Failed to solve equation ...",
+
+  `inversion` instead leaves behind those unsolveable equations in the context.
+  These equations arise from generalizing the indices of `h`'s type.
+  In such cases, `h` itself is generalized with a heterogenenous equality `heq`
+  to the corresponding constructor in each branch.
+
+  For instance, given a hypothesis `h : f n ≤ 0`,
+  `inversion h` will produce one goal for the case `Nat.le.refl {n} : n ≤ n`
+  with the equations `eq : f n = 0` and `heq : h ≍ Nat.le.refl`,
+  rather than failing to solve `f n = 0`.
+
+  * If `inversion +clear h` is set, then `heq` will be `clear`ed from the context if present,
+    along with `h` if there are no dependencies on it.
+    This is the usual behavior of `cases`.
   * The form `inversion t with (tac ...) | tag₁ x ... => tac ... | ... | tagₙ z ... => tac ...`
-    is supported, similar to that of `cases` and `inversion`.
+    is supported, similar to that of `cases` and `induction`.
 -/
 syntax (name := inversion)
   "inversion " optConfig ident (" with " (tacticSeq)? (colGe invAlts)*)? : tactic
@@ -159,36 +169,38 @@ structure InversionConfig where
 declare_config_elab elabInversionConfig InversionConfig
 
 open Cases in
-def inversionCore (h : FVarId) (config : InversionConfig) : TacticM (List MVarId) := withMainContext do
+/-- Perform inversion on the given variable in the context of the given goal.
+  Behaves like [Lean.Meta.Cases.cases] and generalizes indices if they aren't independent,
+  except instead of calling [Lean.Meta.Cases.unifyEqs], which may fail
+  if the generalizing equations can't all be destructed and substituted away,
+  it calls our [unifyCasesEqs] above, which keeps unsolvable equations in the context. -/
+def _root_.Lean.MVarId.inversion (mvarId : MVarId) (h : FVarId) (config : InversionConfig)
+    (givenNames : Array AltVarNames := #[]) (interestingCtors? : Option (Array Name) := none) :
+    TacticM (Array CasesSubgoal) := mvarId.withContext do
   let goal ← getMainGoal
   goal.withContext do
     let some ctx ← mkCasesContext? h
     | throwTacticEx `inversion goal "Target {Expr.fvar h} does not belong to an inductive type"
     -- If the target's type isn't a predicate with indices, behave like `cases`
     if ← hasIndepIndices ctx then
-      let subgoals ← inductionCasesOn goal h default ctx
+      let subgoals ← inductionCasesOn goal h givenNames ctx (interestingCtors? := interestingCtors?)
       let subgoals ← if config.clear
         then casesClearMany subgoals #[h]
         else pure subgoals
-      subgoals.toList.mapM setUserName
+      return subgoals
     -- Otherwise, use custom [unifyEqs] to not fail on unifying HEqs
     else
       let gis@⟨newGoal, _, newTarget, numEqs⟩ ← generalizeIndices goal h
       let (newEqs, newGoal) ← newGoal.introN numEqs
       let some targetEq := newEqs.back?
       | throwTacticEx `inversion newGoal "Failed to generalize target"
-      let subgoals ← inductionCasesOn newGoal newTarget default ctx
+      let subgoals ← inductionCasesOn newGoal newTarget givenNames ctx (interestingCtors? := interestingCtors?)
       let subgoals ← elimAuxIndices gis subgoals
       let subgoals ← unifyCasesEqs newEqs.toList subgoals
       let subgoals ← if config.clear
         then casesClearMany subgoals #[h, targetEq]
         else pure subgoals
-      subgoals.toList.mapM setUserName
-  where
-    setUserName (subgoal : CasesSubgoal) : TacticM MVarId := do
-      if let some name := subgoal.ctorName then
-        subgoal.mvarId.setUserName name.getSuffix
-      return subgoal.mvarId
+      return subgoals
 
 /-- Given an inversion alternative and a list of goals,
   solve the tagged goal with the provided tactics,
@@ -221,8 +233,8 @@ where
 @[tactic Lean.Parser.inversion, inherit_doc Lean.Parser.inversion]
 public meta def evalInversion : Tactic
   | `(tactic| inversion $config $h:ident $[with $[$tactics?:tacticSeq]? $[$alts?:invAlts]*]?) => do
-    let config ← elabInversionConfig config
-    let mut goals ← inversionCore (← getFVarId h) config
+    let casesSubgoals ← (← getMainGoal).inversion (← getFVarId h) (← elabInversionConfig config)
+    let mut goals ← casesSubgoals.toList.mapM setUserName
     if let some tactics := tactics?.join then
       let subgoals ← goals.mapM (evalTacticAt tactics)
       goals ← subgoals.flatten.filterM (not <$> ·.isAssignedOrDelayedAssigned)
@@ -230,15 +242,20 @@ public meta def evalInversion : Tactic
       let expandedAlts ← Array.flatten <$> alts.mapM expandInvAlts
       for alt in expandedAlts do
         let solvedGoals ← evalInvAlt goals alt
-        goals := goals.filter (!solvedGoals.contains ·)
+        goals := goals.removeAll solvedGoals
       unless goals.isEmpty do
         reportUnsolvedGoals goals
     replaceMainGoal goals
   | stx => throwErrorAt stx "Could not parse inversion tactic"
-where expandInvAlts
-  | `(invAlts| $[| $args:caseArg]* => $tactics:tacticSeq) =>
-    args.mapM (`(invAlt| | $(·) => $tactics))
-  | stx => throwErrorAt stx "Could not parse inversion alternatives"
+where
+  setUserName subgoal : TacticM MVarId := do
+    if let some name := subgoal.ctorName then
+      subgoal.mvarId.setUserName name.getSuffix
+    return subgoal.mvarId
+  expandInvAlts
+    | `(invAlts| $[| $args:caseArg]* => $tactics:tacticSeq) =>
+      args.mapM (`(invAlt| | $(·) => $tactics))
+    | stx => throwErrorAt stx "Could not parse inversion alternatives"
 
 end Lean.Elab.Tactic
 

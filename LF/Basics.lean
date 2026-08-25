@@ -442,6 +442,9 @@ theorem nand_test3 : nand MyBool.false MyBool.true  = MyBool.true  := solution!(
 theorem nand_test4 : nand MyBool.true  MyBool.true  = MyBool.false := solution!(by rfl)
 ```
 
+:::autogradedHole nand
+:::
+
 :::gradeTheorem "0.25" nand_test1 nand_test2 nand_test3 nand_test4
 :::
 
@@ -471,6 +474,9 @@ theorem and3_test2 : and3 MyBool.false MyBool.true  MyBool.true  = MyBool.false 
 theorem and3_test3 : and3 MyBool.true  MyBool.false MyBool.true  = MyBool.false := solution!(by rfl)
 theorem and3_test4 : and3 MyBool.true  MyBool.true  MyBool.false = MyBool.false := solution!(by rfl)
 ```
+
+:::autogradedHole and3
+:::
 
 :::gradeTheorem "0.25" and3_test1 and3_test2 and3_test3 and3_test4
 :::
@@ -896,6 +902,9 @@ theorem is_weekend_test1 : is_weekend Day.sunday = true := solution!(by rfl)
 theorem is_weekend_test2 : is_weekend Day.friday = false := solution!(by rfl)
 ```
 
+:::autogradedHole is_weekend
+:::
+
 :::gradeTheorem "0.5" is_weekend_test1 is_weekend_test2
 :::
 ::::
@@ -931,6 +940,9 @@ theorem isInversion_test3 : isInversion (Color.primary RGB.red) (Color.primary R
 theorem isInversion_test4 : isInversion (Color.primary RGB.green) (Color.primary RGB.red) = Bool.false :=
   solution!(by rfl)
 ```
+
+:::autogradedHole isInversion
+:::
 
 :::gradeTheorem "0.25" isInversion_test1 isInversion_test2 isInversion_test3 isInversion_test4
 :::
@@ -1906,12 +1918,12 @@ theorem three_eq_succ_two : three = succ two := by rfl
 theorem four_eq_succ_three : four = succ three := by rfl
 ```
 
-::::full
+:::::full
 We can rewrite with these rules to expand numerals into their definitions,
 which allows us to use our {name}`add` rules.
 Here's an example of how to start a proof this way.
 
-:::exercise (rating := 1) (name := "mul_simpl_rules")
+::::exercise (rating := 1) (name := "mul_simpl_rules")
 
 Finish the proof using the {name}`add` rules:
 
@@ -1935,8 +1947,10 @@ theorem two_plus_two_eq_four : two + two = four := by
     rfl
 ```
 
+:::gradeTheorem "0.5" one_plus_one_eq_two two_plus_two_eq_four
 :::
 ::::
+:::::
 
 ### Multiplication
 
@@ -2009,13 +2023,11 @@ with multiple rules.
 
 ::::exercise (rating := 2) (name := "test_mul_add")
 ```lean
-
 theorem one_add_one : (one + one : Nat) = two := by
   rewrite [one_eq_succ_zero]
   solution!
     rewrite [add_succ, add_zero]
     rfl
-
 
 theorem zero_mul_two : (zero * two : Nat) = zero := by
   rewrite [two_eq_succ_one, one_eq_succ_zero]
@@ -2040,7 +2052,7 @@ theorem two_mul_two : (two * two : Nat) = four := by
     rfl
 ```
 
-:::gradeTheorem "0.4" zero_add_one one_add_one zero_mul_two one_mul_two two_mul_two
+:::gradeTheorem "0.5" one_add_one zero_mul_two one_mul_two two_mul_two
 :::
 ::::
 :::::
@@ -2121,6 +2133,9 @@ theorem blt_test3 : blt four two = false := solution!(by rfl)
 
 attribute [irreducible] blt ble
 ```
+
+:::autogradedHole blt
+:::
 
 :::gradeTheorem 1 blt_test3
 :::
@@ -2537,7 +2552,7 @@ termination analysis is not always able to figure things out
 automatically, it is sometimes necessary to provide hints or
 write functions in slightly different ways.
 
-::::exercise (rating := 2) (name := "decreasing") (optional := true)
+::::exercise (rating := 2) (name := "decreasing") (optional := true) (manual := true)
 To get a concrete sense of how termination checking works in Lean,
 find a way to write a sensible recursive definition (of a simple
 function on numbers, say) that does actually terminate on all inputs,
@@ -2554,7 +2569,6 @@ def factorial_bad (n : Nat) : Nat :=
 ```
 
 This fails because Lean can't see that `pred n` is structurally smaller.
-
 :::
 ::::
 :::::
@@ -2624,6 +2638,9 @@ theorem binToNat_z : binToNat .z = zero := solution!(by rfl)
 theorem binToNat_b0 (m : Bin) : binToNat (.b0 m) = binToNat m * two := solution!(by rfl)
 theorem binToNat_b1 (m : Bin) : binToNat (.b1 m) = binToNat m * two + one := solution!(by rfl)
 ```
+
+:::autogradedHole incr binToNat
+:::
 
 You may find your previous proofs of {name}`zero_add_one`, {name}`one_add_one`, {name}`zero_mul_two`,
 {name}`one_mul_two`, and {name}`two_mul_two` useful here.
@@ -2695,7 +2712,7 @@ theorem identity_fn_applied_twice (f : Bool → Bool) :
 :::
 ::::
 
-::::exercise (rating := 1) (name := "negation_fn_applied_twice")
+::::exercise (rating := 1) (name := "negation_fn_applied_twice") (manual := true)
 Now state and prove a theorem `negation_fn_applied_twice` similar
 to the previous one but where the hypothesis says that the
 function `f` has the property that `f x = !x`.
@@ -2814,17 +2831,21 @@ inductive Traveler : Type where
 Buying a ticket changes a traveler with no ticket into a ticketed traveler.
 If the traveler already has a ticket or has already checked in, nothing changes.
 
-:::exercise (rating := 1) (name := "buyTicket")
+::::exercise (rating := 1) (name := "buyTicket")
 ```lean
 def buyTicket (t : Traveler) : Traveler := solution!(
   match t with
   | .noTicket bagContent => .ticketed bagContent
   | _ => t
 )
-example : buyTicket (.noTicket .ordinary) = .ticketed .ordinary := solution!(by rfl)
-example : buyTicket (.checkedIn .prohibited .blocked) = .checkedIn .prohibited .blocked := solution!(by rfl)
+theorem buyTicket_test1 : buyTicket (.noTicket .ordinary) = .ticketed .ordinary := solution!(by rfl)
+theorem buyTicket_test2 : buyTicket (.checkedIn .prohibited .blocked) = .checkedIn .prohibited .blocked := solution!(by rfl)
 ```
+:::autogradedHole buyTicket
 :::
+:::gradeTheorem "0.5" buyTicket_test1 buyTicket_test2
+:::
+::::
 
 Here are the simplification rules for {name}`buyTicket`:
 
@@ -2846,7 +2867,7 @@ The first property we will prove about our system is that
 purchasing a ticket is an _idempotent_ operation
 (i.e., performing it twice has the same effect as performing it once).
 
-:::exercise (rating := 2) (name := "buy_ticket_idempotent")
+::::exercise (rating := 2) (name := "buy_ticket_idempotent")
 ```lean
 theorem buyTicket_idempotent (t : Traveler) :
     buyTicket (buyTicket t) = buyTicket t := by
@@ -2865,13 +2886,15 @@ theorem buyTicket_idempotent (t : Traveler) :
         rewrite [buyTicket_checkedIn]
         rfl
 ```
+:::gradeTheorem 2 buyTicket_idempotent
 :::
+::::
 
 A traveler can check in only after buying a ticket.
 Checking in records that their carry-on bag still needs to be inspected.
 Calling `checkIn` before buying a ticket or after already checking in does nothing.
 
-:::exercise (rating := 1) (name := "checkIn")
+::::exercise (rating := 1) (name := "checkIn")
 
 ```lean
 def checkIn (t : Traveler) : Traveler := solution!(
@@ -2880,11 +2903,15 @@ def checkIn (t : Traveler) : Traveler := solution!(
   | _ => t
 )
 
-example : checkIn (.noTicket .ordinary) = .noTicket .ordinary := solution!(by rfl)
-example : checkIn (.ticketed .prohibited) = .checkedIn .prohibited .notScreened := solution!(by rfl)
-example : checkIn (.checkedIn .ordinary .cleared) = .checkedIn .ordinary .cleared := solution!(by rfl)
+theorem checkIn_test1 : checkIn (.noTicket .ordinary) = .noTicket .ordinary := solution!(by rfl)
+theorem checkIn_test2 : checkIn (.ticketed .prohibited) = .checkedIn .prohibited .notScreened := solution!(by rfl)
+theorem checkIn_test3 : checkIn (.checkedIn .ordinary .cleared) = .checkedIn .ordinary .cleared := solution!(by rfl)
 ```
+:::autogradedHole checkIn
 :::
+:::gradeTheorem "1/3" checkIn_test1 checkIn_test2 checkIn_test3
+:::
+::::
 
 Again, we record one rewrite rule for each case:
 
@@ -2905,7 +2932,7 @@ attribute [irreducible] checkIn
 A traveler who does not yet have a ticket can buy one and then check in.
 After this, the traveler is checked in and their carry-on ba bag needs to be screened.
 
-:::exercise (rating := 1) (name := "buy_ticket_then_check_in")
+::::exercise (rating := 1) (name := "buy_ticket_then_check_in")
 ```lean
 theorem buyTicket_then_checkIn (bagContent : BagContent) :
     checkIn (buyTicket (.noTicket bagContent)) = .checkedIn bagContent .notScreened := by
@@ -2914,14 +2941,16 @@ theorem buyTicket_then_checkIn (bagContent : BagContent) :
     rewrite [checkIn_ticketed]
     rfl
 ```
+:::gradeTheorem 1 buyTicket_then_checkIn
 :::
+::::
 
 Carry-on inspection happens only after check-in.
 A bag containing only ordinary items is cleared,
 while a bag containing a prohibited item is blocked.
 If the traveler has not checked in, `inspectBag` does nothing.
 
-:::exercise (rating := 1) (name := "inspectBag")
+::::exercise (rating := 1) (name := "inspectBag")
 Define `inspectBag`.
 
 ```lean
@@ -2932,11 +2961,15 @@ def inspectBag (t : Traveler) : Traveler := solution!(
   | _ => t
 )
 
-example : inspectBag (.ticketed .prohibited) = .ticketed .prohibited := solution!(by rfl)
-example : inspectBag (.checkedIn .ordinary .notScreened) = .checkedIn .ordinary .cleared := solution!(by rfl)
-example : inspectBag (.checkedIn .prohibited .notScreened) = .checkedIn .prohibited .blocked := solution!(by rfl)
+theorem inspectBag_test1 : inspectBag (.ticketed .prohibited) = .ticketed .prohibited := solution!(by rfl)
+theorem inspectBag_test2 : inspectBag (.checkedIn .ordinary .notScreened) = .checkedIn .ordinary .cleared := solution!(by rfl)
+theorem inspectBag_test3 : inspectBag (.checkedIn .prohibited .notScreened) = .checkedIn .prohibited .blocked := solution!(by rfl)
 ```
+:::autogradedHole inspectBag
 :::
+:::gradeTheorem "1/3" inspectBag_test1 inspectBag_test2 inspectBag_test3
+:::
+::::
 
 Again, we record one characterization lemma for each case.
 
@@ -2956,7 +2989,7 @@ theorem inspectBag_prohibited (screeningStatus : ScreeningStatus) :
 attribute [irreducible] inspectBag
 ```
 
-:::exercise (rating := 2) (name := "inspect_bag_idempotent")
+::::exercise (rating := 2) (name := "inspect_bag_idempotent")
 Show that inspecting same unchanged carry-on bag twice has the same effect as inspecting it once.
 
 ```lean
@@ -2982,13 +3015,15 @@ theorem inspectBag_idempotent (t : Traveler) : inspectBag (inspectBag t) = inspe
         rewrite [inspectBag_ordinary]
         rfl
 ```
+:::gradeTheorem 2 inspectBag_idempotent
 :::
+::::
 
 A traveler may leave the screened area and return with a different carry-on bag.
 Since the previous screening result applied to the old bag,
 a new carry-on must be screened again before the traveler can re-enter.
 
-:::exercise (rating := 1) (name := "changeBag")
+::::exercise (rating := 1) (name := "changeBag")
 Define `changeBag`.
 ```lean
 def changeBag (newContent : BagContent) (t : Traveler) : Traveler := solution!(
@@ -2998,10 +3033,14 @@ def changeBag (newContent : BagContent) (t : Traveler) : Traveler := solution!(
   | .noTicket _ => .noTicket newContent
 )
 
-example : changeBag .prohibited (.ticketed .ordinary) = .ticketed .prohibited := solution!(by rfl)
-example : changeBag .prohibited (.checkedIn .ordinary .cleared) = .checkedIn .prohibited .notScreened := solution!(by rfl)
+theorem changeBag_test1 : changeBag .prohibited (.ticketed .ordinary) = .ticketed .prohibited := solution!(by rfl)
+theorem changeBag_test2 : changeBag .prohibited (.checkedIn .ordinary .cleared) = .checkedIn .prohibited .notScreened := solution!(by rfl)
 ```
+:::autogradedHole changeBag
 :::
+:::gradeTheorem "0.5" changeBag_test1 changeBag_test2
+:::
+::::
 
 As before, we record the behavior of each case as a rewrite rule.
 
@@ -3029,7 +3068,7 @@ so changing and inspecting the carry-on can be performed in either order.
 There are two such cases: the traveler may not yet have a ticket,
 or may have a ticket but not yet be checked in.
 
-:::exercise (rating := 2) (name := "inspect_changeBag_commute")
+::::exercise (rating := 2) (name := "inspect_changeBag_commute")
 ```lean
 theorem inspectBag_changeBag_comm_noTicket
     (oldContent newContent : BagContent) :
@@ -3053,7 +3092,9 @@ theorem inspectBag_changeBag_comm_ticketed
     rewrite [changeBag_ticketed]
     rfl
 ```
+:::gradeTheorem 1 inspectBag_changeBag_comm_noTicket inspectBag_changeBag_comm_ticketed
 :::
+::::
 
 ```lean
 end Airport
