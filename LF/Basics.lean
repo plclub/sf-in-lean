@@ -409,6 +409,10 @@ theorem nand_test4 : nand MyBool.true  MyBool.true  = MyBool.false := solution!(
 
 :::gradeTheorem "0.25" nand_test1 nand_test2 nand_test3 nand_test4
 :::
+
+:::dev
+TODO: `nand` needs `@[autogradedHole]`
+:::
 ::::
 
 ::::exercise (rating := 1) (name := "and3")

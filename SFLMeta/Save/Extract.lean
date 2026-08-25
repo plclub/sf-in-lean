@@ -445,6 +445,10 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
       let ⟨points, names⟩ := decodeGradeTheoremData which.data
       let names := " ".intercalate (names.map Name.toString).toList
       return buf.appendOnly file .grading s!"attribute [autogradedProof {points}] {names}\n\n"
+    if name == ``Block.autogradedHole then
+      let names := decodeAutogradedHoleData which.data
+      let names := " ".intercalate (names.map Name.toString).toList
+      return buf.appendOnly file .grading s!"attribute [autogradedHole] {names}\n\n"
     -- Unknown extension block: recurse into children as a best-effort.
     -- NB: :::instructors blocks carry no children (their bodies are dropped at
     -- elaboration), so this recursion is a no-op for them.
@@ -504,7 +508,7 @@ def walkOuter (width : Nat) (vol : String) (text : Part Manual) (buf : SaveBuffe
     buf := buf.appendAll rootFile s!"import {chapterModule vol p}\n"
   for p in subParts do
     let chapterFile := chapterPath vol p
-    buf := buf.appendOnly chapterFile .grading s!"import AutograderLib\n"
+    buf := buf.appendOnly chapterFile .grading s!"import ComparatorAutograderLib\n"
     buf := buf.appendAll chapterFile s!"import SFLCompat\n\n"
     buf := walkSection width 1 chapterFile p buf
   return buf
