@@ -495,12 +495,15 @@ It says that {lean}`MyBool.true && b` is equal to {lean}`b` for every {name}`MyB
 How do we write this proposition in Lean?  Like this:
 
 - `theorem true_and : ∀ (b : MyBool), (MyBool.true && b) = b`
+:::dev "Benjamin Pierce (bcpierce00)"
+Could it (and the one above) be displayed instead of bulleted?
+:::
 
 The keyword `theorem` indicates that we are stating (and eventually proving)
 a proposition; the text after the first `:` is the proposition we want to prove.
 
-You'll notice that this proposition looks a lot like the one we wrote above,
-but with some additional symbols in front.
+You'll notice that this proposition looks a lot like the informal one we began with,
+with some additional symbols in front.
 The `∀` symbol, pronounced "forall",
 is a _universal quantifier_: it "quantifies" the variable {lean}`b` that appears
 in the proposition. Quantifying a variable with a `∀` means that the proposition
@@ -525,20 +528,20 @@ theorem true_and : ∀ (b : MyBool), (MyBool.true && b) = b := by
 What does this mean?
 
 First the `by` keyword signals
-to Lean that what follows is a sequence of _tactics_.
-The `intro b` and {tactic}`rfl` that you see after the `by`
+that what follows is a sequence of _tactics_.
+The `intro b` and {tactic}`rfl` after the `by`
 are examples of tactics. If you hover over a tactic's name, Lean shows
-its documentation, explaining what the tactic does and how to use it.
+its documentation.
 
-Tactics manipulate the _proof state_, as you can see the in the Lean InfoView panel.
-The proof state is divided by the symbol ⊢, called the _turnstile_. The part
-before it is called the _context_, and the part after it is called
+Tactics manipulate the _proof state_, which you can see the in the Lean InfoView panel.
+The proof state is divided by the symbol ⊢, pronounced _turnstile_. The part
+before it is the _context_, and the part after it is
 the _goal_. The context records what we know
-at some point in the proof; the goal is what we are trying to prove
+at some given point in the proof; the goal is what we are trying to prove
 at that point.
 
-A tactic manipulates both the goal and the context, to get the goal
-into a shape that is closer to the one we want. A tactic can also
+Each tactic manipulates the goal, the context, or both, to get things
+into a configuration that is closer to being "solved". A tactic can also
 _close_ (solve) the current goal, finishing its proof.
 
 Let's walk through the example above with this terminology in mind.
