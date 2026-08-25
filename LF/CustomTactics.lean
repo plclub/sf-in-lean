@@ -37,7 +37,7 @@ syntax (" | " caseArg)+ " => " tacticSeq : invAlts
     along with `h` if there are no dependencies on it.
     This is the usual behavior of `cases`.
   * The form `inversion t with (tac ...) | tag₁ x ... => tac ... | ... | tagₙ z ... => tac ...`
-    is supported, similar to that of `cases` and `inversion`.
+    is supported, similar to that of `cases` and `induction`.
 -/
 syntax (name := inversion)
   "inversion " optConfig ident (" with " (tacticSeq)? (colGe invAlts)*)? : tactic
