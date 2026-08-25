@@ -992,7 +992,8 @@ theorem unzip_cons_snd {α β : Type} {x : α} {y : β} {l : List (α × β)} :
 
 ```lean
 theorem unzip_test1 : unzip [(1, false), (2, true)] = ([1, 2], [false, true]) := by
-  rfl
+  solution!
+    rfl
 
 theorem unzip_test_fst : (unzip [(1, false), (2, true)]).fst = [1, 2] := by
   solution!
