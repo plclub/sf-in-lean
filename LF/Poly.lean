@@ -920,6 +920,12 @@ def nth? {α : Type} (l : List α) (n : Nat) : Option α :=
   | x :: l' => match n with
     | 0 => some x
     | n' + 1 => nth? l' n'
+
+theorem nth?_nil {α : Type} {n : Nat} : nth? ([] : List α) n = none := by rfl
+
+theorem nth?_cons_zero {α : Type} {x : α} {l' : List α} : nth? (x :: l') 0 = some x := by rfl
+
+theorem nth?_cons_succ {α : Type} {x : α} {l' : List α} {n : Nat} : nth? (x :: l') (n + 1) = nth? l' n := by rfl
 ```
 
 ```lean
@@ -958,7 +964,6 @@ theorem test_head?2 : head? [[1], [2]] = some [1] := solution!(by rfl)
 :::gradeTheorem "0.5" test_head?1 test_head?2
 :::
 :::::
-
 ::::::
 
 # Functions as Data

@@ -1027,26 +1027,25 @@ example (m : Nat) (h : ∀ n, m * n = 0) : m = 0 := by
   exact h
 ```
 
-:::::exercise (rating := 3) (name := "nth?_always_none")
+:::::exercise (rating := 2) (name := "nth?_always_none")
 Use {tactic}`have`, {tactic}`replace`, or {tactic}`specialize` to prove the the following lemma,
 following the model of the examples above. Do not use {tactic}`induction`.
 
 ```lean
-theorem nth?_always_none (l : List Nat) (h : ∀ i, nth? l i = none) :
+theorem nth?_always_none {l : List α} (h : ∀ i, nth? l i = none) :
     l = [] := by
   solution!
     cases l with
     | nil => rfl
     | cons x xs =>
       have h := h 0
-      dsimp [nth?] at h
+      rw [nth?_cons_zero] at h
       contradiction
 ```
 
 :::gradeTheorem 3 nth?_always_none
 :::
 :::::
-
 
 Tactics like {tactic}`have` and {tactic}`replace` can also be used with lemmas and
 theorems we've already proven, not just things in our context.
@@ -1430,8 +1429,7 @@ theorem nth?_after_last {α : Type}
     | nil => rfl
     | cons x xs ih =>
       rw [List.length_cons] at h
-      rw [← h]
-      dsimp [nth?]
+      rw [← h, nth?_cons_succ]
       apply ih
       rfl
 ```
