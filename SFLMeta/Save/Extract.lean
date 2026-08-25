@@ -45,11 +45,17 @@ end SaveBuffers
 
 namespace Text
 
+open Verso.Genre.Manual.Bibliography in
 /--
 Render a piece of Verso inline content to a plain-text fragment suitable for
 inclusion in a `/-! … -/` Lean module-doc comment. Markdown-like delimiters
 (`*…*` for emphasis, `**…**` for bold, backticks for code, `[text](url)` for
-links) are preserved so the resulting comment still reads naturally. -/
+links) are preserved so the resulting comment still reads naturally.
+
+Citations (`{citet}`/`{citep}`) carry their bibliographic data in the node's
+JSON payload, not in its (usually empty) inline content, so they get a
+dedicated rendering mirroring `Citable.inlineHtml`; every other `.other` node
+renders as its content. -/
 partial def inlineToText : Verso.Doc.Inline Manual → String
   | .text s => s
   | .linebreak _ => "\n"
@@ -62,7 +68,39 @@ partial def inlineToText : Verso.Doc.Inline Manual → String
   | .footnote name _ => s!"[^{name}]"
   | .image alt url => s!"![{alt}]({url})"
   | .concat content => String.join (content.toList.map inlineToText)
-  | .other _ content => String.join (content.toList.map inlineToText)
+  | .other which content =>
+    if which.name == ``Verso.Genre.Manual.Bibliography.Inline.cite then
+      citationText which.data
+    else
+      String.join (content.toList.map inlineToText)
+where
+  andListText (xs : Array String) : String :=
+    if xs.size = 0 then ""
+    else if xs.size = 1 then xs[0]!
+    else if xs.size = 2 then xs[0]! ++ " and " ++ xs[1]!
+    else String.intercalate ", " xs.pop.toList ++ ", and " ++ xs.back!
+  citedAuthors (p : Citable) : String :=
+    let as := p.authors
+    if as.size = 0 then ""
+    else if as.size = 1 then inlineToText (Bibliography.lastName as[0]!)
+    else if as.size > 3 then inlineToText (Bibliography.lastName as[0]!) ++ " *et al.*"
+    else andListText (as.map fun a => inlineToText (Bibliography.lastName a))
+  citationText (data : Lean.Json) : String :=
+    let parsed : Option (List Citable × Style) := do
+      let (js, style) ← (FromJson.fromJson? data : Except String (Lean.Json × Style)).toOption
+      let cs ← (FromJson.fromJson? js : Except String (List Citable)).toOption
+      pure (cs, style)
+    match parsed with
+    | .none => ""
+    | .some (cs, style) =>
+      match style with
+      | .textual =>
+        andListText <| cs.toArray.map fun p => s!"{citedAuthors p} ({p.year})"
+      | .parenthetical =>
+        " " ++ andListText (cs.toArray.map fun p => s!"({citedAuthors p}, {p.year})")
+      | .here =>
+        andListText <| cs.toArray.map fun p =>
+          s!"{citedAuthors p} ({p.year}), \"{inlineToText p.title}\""
 
 /-- Pretty-print an array of inlines to plain text. -/
 def inlinesToText (inls : Array (Verso.Doc.Inline Manual)) : String :=
