@@ -290,6 +290,9 @@ inductive MyBool : Type where
   | false
 ```
 
+:::dev "Benjamin Pierce (bcpierce00)"
+Maybe this next bit belongs in a :::details block?  The explanation is a bit lacking...
+:::
 :::ignore
 ```lean -show
 -- This is included to be able to format expressions involving these variables later
@@ -828,7 +831,7 @@ def isRed' (c : Color) : Bool :=
 ```
 
 This {name}`isRed'` function produces the same result as
-{name}`isRed` but illustrates the _use_ of a pattern matching variable.
+{name}`isRed` but illustrates the _use_ of a pattern variable.
 
 :::::full
 The {lean}`Color.primary r` pattern stores the {name}`RGB` argument into variable {lean}`r`,
