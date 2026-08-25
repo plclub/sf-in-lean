@@ -1754,6 +1754,36 @@ def sExecute (st : State) (stack : List Nat) (prog : List Sinstr) : List Nat :=
     | _       :: prog',  _            => sExecute st stack prog')
                                         -- Bad state: skip
 
+-- SOLUTION
+@[simp] theorem sExecute_nil {st : State} {stack : List Nat}
+  : sExecute st stack [] = stack := rfl
+@[simp] theorem sExecute_push {n : Nat} {st : State} {stack : List Nat} {prog' : List Sinstr} :
+  sExecute st stack (sPush n :: prog') = sExecute st (n :: stack) prog' := rfl
+@[simp] theorem sExecute_load {x : String} {st : State} {stack : List Nat} {prog' : List Sinstr} :
+  sExecute st stack (sLoad x :: prog') = sExecute st (st[x] :: stack) prog' := rfl
+@[simp] theorem sExecute_plus {n m : Nat} {st : State} {stack' : List Nat}
+  {prog' : List Sinstr} :
+  sExecute st (n :: m :: stack') (sPlus :: prog') = sExecute st ((m + n) :: stack') prog' := rfl
+@[simp] theorem sExecute_minus {n m : Nat} {st : State} {stack' : List Nat}
+  {prog' : List Sinstr} :
+  sExecute st (n :: m :: stack') (sMinus :: prog') = sExecute st ((m - n) :: stack') prog' := rfl
+@[simp] theorem sExecute_mult {n m : Nat}  {st : State} {stack' : List Nat}
+  {prog' : List Sinstr} :
+   sExecute st (n :: m :: stack') (sMult :: prog') = sExecute st ((m * n) :: stack') prog' := rfl
+@[simp] theorem sExecute_plus_bad {st : State} {stack : List Nat} {prog' : List Sinstr}
+  (hs : stack.length < 2) :
+  sExecute st stack (sPlus :: prog') = sExecute st stack prog' := by
+  rcases stack with _ | ⟨_, _ | ⟨_, _⟩⟩ <;> trivial
+@[simp] theorem sExecute_minus_bad {st : State} {stack : List Nat} {prog' : List Sinstr}
+  (hs : stack.length < 2)  :
+  sExecute st stack (sMinus :: prog') = sExecute st stack prog' := by
+  rcases stack with _ | ⟨_, _ | ⟨_, _⟩⟩ <;> trivial
+@[simp] theorem sExecute_mult_bad {st : State} {stack : List Nat} {prog' : List Sinstr}
+  (hs : stack.length < 2)  :
+  sExecute st stack (sMult :: prog') = sExecute st stack prog' := by
+  rcases stack with _ | ⟨_, _ | ⟨_, _⟩⟩ <;> trivial
+-- END SOLUTION
+
 example : sExecute ∅ [] [sPush 5, sPush 3, sPush 1, sMinus] = [2, 5] := by
   solution!
     rfl
@@ -1811,11 +1841,18 @@ that fact.
 
 ```lean
 theorem execute_app (st : State) (p₁ p₂ : List Sinstr) (stack : List Nat) :
-  sExecute st stack (p₁ ++ p₂) = sExecute st (sExecute st stack p₁) p₂ := by
+    sExecute st stack (p₁ ++ p₂) = sExecute st (sExecute st stack p₁) p₂ := by
   solution!
     induction p₁ generalizing p₂ stack with
     | nil => rfl
-    | cons a p' ih => cases a <;> rcases stack with _ | ⟨_, _ | ⟨_, _⟩⟩ <;> simp_all [sExecute]
+    | cons a p' ih =>
+      cases a with
+      | sPush | sLoad => simp_all
+      | sPlus | sMinus | sMult =>
+        if hs : stack.length < 2 then
+          simp [hs, ih]
+        else
+          rcases stack with _ | ⟨_, _ | ⟨_, _⟩⟩ <;> simp_all
 ```
 ::::
 
