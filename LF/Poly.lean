@@ -614,7 +614,7 @@ This one?
 :::
 
 ::::::full
-:::::exercise (rating := 2) (name := "mumble_grumble") (manual := true)
+:::::exercise (rating := 2) (name := "mumble_grumble") (optional := true) (manual := true)
 Consider the following two inductively defined types.
 
 ```lean
@@ -842,7 +842,7 @@ theorem zip_cons_cons {α β : Type} {x : α} {y : β} {l₁ : List α} {l₂ : 
    zip (x :: l₁) (y :: l₂) = (x, y) :: zip l₁ l₂ := by rfl
 ```
 
-:::::exercise (rating := 1) (name := "zip_checks")
+:::::exercise (rating := 1) (name := "zip_checks") (optional := true)
 Try answering the following questions on paper and
 checking your answers in Lean:
 - What is the type of `zip` (i.e., what does `#check @zip` print?)
@@ -926,7 +926,7 @@ example : nth? [true] 2 = none := by rfl
 ```
 
 ::::::full
-:::::exercise (rating := 1) (name := "head?_poly")
+:::::exercise (rating := 1) (name := "head?_poly") (optional := true)
 Complete the definition of a polymorphic version of the
 `head?` function from the {ref "Lists"}[last chapter]. Be sure that it
 passes the unit tests below.
@@ -1236,7 +1236,7 @@ Another handy higher-order function is called `map`.
 ::::
 
 ```lean
-def map {α : Type} {β : Type} (f : α → β) (l : List α) : List β :=
+def map {α β : Type} (f : α → β) (l : List α) : List β :=
   match l with
   | [] => []
   | head :: tail => f head :: map f tail
@@ -1277,8 +1277,8 @@ example : map (fun n => [n.even, n.odd]) [2, 1, 2, 5]
 ::::quiz
 Recall the definition of {name}`map`:
 
-```display
-def map (f : α → β) (l : List α) : List β :=
+```recall
+def map {α β : Type} (f : α → β) (l : List α) : List β :=
   match l with
   | [] => []
   | head :: tail => f head :: map f tail
@@ -1381,7 +1381,7 @@ def optionMap {α : Type} {β : Type} (f : α → β) (x? : Option α) : Option 
 ```
 
 ::::::full
-:::::exercise (rating := 2) (name := "implicit_args")
+:::::exercise (rating := 2) (name := "implicit_args") (optional := true)
 The definitions and uses of {name}`filter` and {name}`map` use implicit
 arguments in many places. Replace the curly braces around the
 implicit arguments with explicit parentheses, and then fill in
@@ -1453,7 +1453,7 @@ theorem fold_cons {α : Type} {β : Type} {f : α → β → β} {a : α} {l : L
 ::::quiz
 Here is the definition of `fold` again:
 
-```display
+```recall
 def fold {α β : Type} (f : α → β → β) (l : List α) (b : β) : β :=
   match l with
   | [] => b
@@ -1492,7 +1492,7 @@ What does `fold (· + ·) [1, 2, 3, 4] 0` simplify to?
 ::::
 
 ::::::full
-:::::exercise (rating := 1) (name := "fold_types_different") (manual := true)
+:::::exercise (rating := 1) (name := "fold_types_different") (optional := true) (manual := true)
 Observe that the type of {name}`fold` is parameterized by _two_ type
 variables, {lean}`α` and {lean}`β`, and the parameter `f` is a binary operator
 that takes an {lean}`α` and a {lean}`β` and returns a {lean}`β`.
@@ -1747,11 +1747,11 @@ theorem curry_uncurry {α β γ : Type} {p : α × β} {f : α × β → γ} :
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "nth_error_informal") (level := Advanced) (manual := true)
+:::::exercise (rating := 2) (name := "nth_error_informal") (level := Advanced) (optional := true) (manual := true)
 Recall the definition of the {name}`nth?` function:
 
-```display
-def nth? (l : List α) (n : Nat) : Option α :=
+```recall
+def nth? {α : Type} (l : List α) (n : Nat) : Option α :=
   match l with
   | [] => none
   | x :: l' => match n with

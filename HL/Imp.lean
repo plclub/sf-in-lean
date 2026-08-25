@@ -1397,7 +1397,7 @@ theorem quiz2_answer (c1 c2 : Com) (st st' : State)
 ```
 ::::
 
-:::::exercise (rating := 3) (name := "pup_to_n")
+:::::exercise (rating := 3) (name := "pup_to_n") (optional := true)
 Write an Imp program that sums the numbers from `1` to `X` (inclusive)
 in the variable `Y`.  Your program should update the state as shown in
 `pup_to_2_ceval`, which you can reverse-engineer to discover the program
@@ -1488,7 +1488,7 @@ theorem plus2_spec (st : State) (n : Nat) (st' : State)
 This used to be recommended.  Should it be reinstated?
 :::
 
-:::::exercise (rating := 3) (name := "XtimesYinZ_spec")
+:::::exercise (rating := 3) (name := "XtimesYinZ_spec") (optional := true)
 State and prove a specification of `XtimesYinZ`.
 
 ```lean

@@ -527,7 +527,7 @@ all the unicode hacks in the generated HTML...?
 :::
 
 ::::::full
-:::::exercise (rating := 2) (name := "if_minus_plus_reloaded") (manual := true)
+:::::exercise (rating := 2) (name := "if_minus_plus_reloaded") (optional := true) (manual := true)
 N.b.: Although this exercise is marked optional, it is an
 excellent warm-up for the (non-optional) `if_minus_plus_correct`
 exercise below!
@@ -1641,7 +1641,7 @@ theorem if_minus_plus_correct :
 ```
 :::::
 
-:::::exercise (rating := 2) (name := "div_mod_outer_triple_valid")
+:::::exercise (rating := 2) (name := "div_mod_outer_triple_valid") (optional := true)
 Fill in appropriate assertions for the division program from above.
 
 ```lean
@@ -2050,7 +2050,7 @@ end
 ```
 :::
 
-:::::exercise (rating := 3) (name := "parity")
+:::::exercise (rating := 3) (name := "parity") (optional := true)
 Translate the above informal decorated program into a formal one
 and prove it correct.
 
@@ -2292,7 +2292,7 @@ fashion (i.e., it is referred to by the program or by the
 specification, and it is not changed by the loop), it is necessary
 to record the _fact_ that it doesn't change in the loop invariant.
 
-:::::exercise (rating := 3) (name := "sqrt")
+:::::exercise (rating := 3) (name := "sqrt") (optional := true)
 Translate the above informal decorated program into a formal one
 and prove it correct.
 
@@ -3161,7 +3161,7 @@ This is again a program schema rather than a program.  Why not...
 :::
 
 ::::::full
-:::::exercise (rating := 4) (name := "dpow2")
+:::::exercise (rating := 4) (name := "dpow2") (optional := true)
 Here is a program that computes the series:
 `1 + 2 + 2^2 + ... + 2^m = 2^(m+1) - 1`
 
@@ -3328,7 +3328,7 @@ postcondition for the given command and precondition.
 ```
 :::
 
-:::::exercise (rating := 2) (name := "fib_eqn") (level := Advanced)
+:::::exercise (rating := 2) (name := "fib_eqn") (level := Advanced) (optional := true)
 The Fibonacci function is characterized by the equations
 
 ```display
@@ -3357,7 +3357,7 @@ theorem fib_eqn (n : Nat) (h : n > 0) :
 ```
 :::::
 
-:::::exercise (rating := 4) (name := "fib") (level := Advanced)
+:::::exercise (rating := 4) (name := "fib") (level := Advanced) (optional := true)
 The following Imp program leaves the value of `fib n` in the
 variable `Y` when it terminates:
 
@@ -3686,7 +3686,7 @@ present chapter.  All three should be aligned.
 :::
 
 ::::::full
-:::::exercise (rating := 5) (name := "improve_dcom") (level := Advanced)
+:::::exercise (rating := 5) (name := "improve_dcom") (level := Advanced) (optional := true)
 The formal decorated programs defined above are intended
 to look as similar as possible to the informal ones defined
 earlier.  If we drop this requirement, we can eliminate almost all
@@ -4198,7 +4198,7 @@ def IsWp (P : Assertion) (c : Com) (Q : Assertion) : Prop :=
 Make a quiz based on this!
 :::
 
-:::::exercise (rating := 1) (name := "wp")
+:::::exercise (rating := 1) (name := "wp") (optional := true)
 What are weakest preconditions of the following commands
 for the following postconditions?
 
@@ -4274,7 +4274,7 @@ Y := Y - 1 end
 :::
 
 ::::::full
-:::::exercise (rating := 3) (name := "is_wp") (level := Advanced)
+:::::exercise (rating := 3) (name := "is_wp") (level := Advanced) (optional := true)
 Prove formally, using the definition of `ValidHoareTriple`, that `Y <= 4`
 is indeed a weakest precondition of `X := Y + 1` with respect to
 postcondition `X <= 5`.
@@ -4295,7 +4295,7 @@ theorem is_wp_example :
 ```
 :::::
 
-:::::exercise (rating := 2) (name := "hoare_asgn_weakest") (level := Advanced)
+:::::exercise (rating := 2) (name := "hoare_asgn_weakest") (level := Advanced) (optional := true)
 Show that the precondition in the rule `hoare_asgn` is in fact the
 weakest precondition.
 
@@ -4311,7 +4311,7 @@ theorem hoare_asgn_weakest
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "hoare_havoc_weakest") (level := Advanced)
+:::::exercise (rating := 2) (name := "hoare_havoc_weakest") (level := Advanced) (optional := true)
 Show that your `havoc_pre` function from the `himp_hoare` exercise
 in the {ref "Hoare"}[Hoare] chapter returns a weakest precondition.
 

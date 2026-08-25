@@ -341,7 +341,7 @@ have a look at `ALPHA-TESTERS.md`.
 
 A large compendium of exams from many offerings of CIS5000 ("Software
 Foundations") at the University of Pennsylvania can be found at
-<https://www.seas.upenn.edu/~cis5000/current/exams/index.html>. Until
+[https://www.seas.upenn.edu/~cis5000/current/exams/index.html](https://www.seas.upenn.edu/~cis5000/current/exams/index.html). Until
 2026, the course was offered in Rocq, but the ideas behind the
 problems are still relevant.
 

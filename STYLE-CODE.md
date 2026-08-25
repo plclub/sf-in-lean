@@ -457,6 +457,69 @@ Combine `+error` and `(name := <identifier>)` to produce a block whose error
 message gets checked by ` ```leanOutput <identifier> `.
 See the previous sections for more detailed usage guidelines.
 
+### Recall blocks
+
+Fenced `recall` and `recallSource` blocks are type checked Lean blocks
+consisting of a single declaration that must match an earlier declaration,
+which allows restating the declaration for pedagogical purposes,
+while ensuring correctness of the restatement. `recall` blocks are syntax
+highlighted in the HTML, while `recallSource` blocks are plain code blocks.
+
+In a `recall` block, type signatures and definitions must be definitionally
+equal, inductive types must have the same constructors, and records must have
+the same fields. With the `+statement` option, only the type signature is
+restated and not the declaration body.
+
+In a `recallSource` block, the restated
+declaration must be equal verbatim, down to indentation and line breaks;
+this is useful for showing the exact syntax of the declaration.
+
+Both may take `(name := <identifier>)` and `+error` just as for `lean` blocks,
+rendered in the HTML and extracted to Lean similarly.
+By default, prefer `recall` over `recallSource`.
+These blocks extract to Lean commands `sf_recall`, `sf_recall statement`, and
+`sf_recall_source`. For example, given the original declaration
+
+````
+```lean
+def twice (f : Nat → Nat) (n : Nat) : Nat :=
+  f (f n)
+```
+````
+
+the following three recall blocks
+
+````
+```recall
+def twice (f : Nat → Nat) (n : Nat) : Nat := f <| f n
+```
+
+```recall +statement
+def twice (f : Nat → Nat) (n : Nat) : Nat
+```
+
+```recallSource
+def twice (f : Nat → Nat) (n : Nat) : Nat :=
+  f (f n)
+```
+````
+
+successfully type check and are extracted to the following three commands.
+
+```lean
+sf_recall def twice (f : Nat → Nat) (n : Nat) : Nat := f <| f n
+
+sf_recall statement def twice (f : Nat → Nat) (n : Nat) : Nat
+
+sf_recall_source
+  def twice (f : Nat → Nat) (n : Nat) : Nat :=
+    f (f n)
+```
+
+> Do not `recall` a previous definition that is wrapped in `solution!`: 
+> since the definition body is replaced to `sorry` in student projects,
+> doing so would cause a mismatch.
+
 ### BNF grammar blocks
 
 Fenced `bnf` blocks render as typeset object-language grammars.
@@ -605,9 +668,11 @@ An exercise block rendered as `Exercise ★ (foo)` in the HTML
 and as a comment `-- ### Exercise (1 star): foo ⭐` in the extracted Lean files.
 It takes the following options:
 
-* `(rating := <number>)` (required): difficulty from 1 (easy) to 5 (hard)
+* `(rating := <number>)` (required): difficulty from 1 (easy) to 5 (hard); a
+  rating outside that range is a build error
 * `(name := <identifier>)` (required): name used in headings and cross-references
 * `(level := <identifier>)` (optional): additional difficulty warning (currently only `Advanced`)
+* `(optional := <boolean>)` (optional): marks an exercise the reader may skip
 * `(manual := <boolean>)` (optional): marks the exercise for manual grading
 
 #### `:::gradeTheorem <number> <identifier>...`, `:::grade`

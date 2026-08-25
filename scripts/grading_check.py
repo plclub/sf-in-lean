@@ -29,7 +29,7 @@ import os, sys, tempfile, shutil, json, argparse
 def runshell(cmd):
     run(cmd, shell=True, check=True)
 
-ignore_lake_pattern = shutil.ignore_patterns(".lake", "lakefile.toml", "lake-manifest.json", "lean-toolchain")
+ingore_pattern = shutil.ignore_patterns(".lake", "lakefile.toml", "lake-manifest.json", "lean-toolchain", "SFLCompat.lean", "SFLCompat")
 
 def replace_everywhere(directory, find, replace):
     # https://stackoverflow.com/questions/4205854/recursively-find-and-replace-string-in-text-files
@@ -73,6 +73,9 @@ globs = ["Challenge.+"]
 [[lean_lib]]
 name = "Solution"
 globs = ["Solution.+"]
+
+[[lean_lib]]
+name = "SFLCompat"
 """
 
 all_volumes = ["LF", "HL", "TS"]
@@ -86,8 +89,11 @@ def runtest(toolchain, comparator_autograder, lean4export, landrun, root_path, v
             f.write(lakefile)
         with (Path(tmpdir) / "lean-toolchain").open("w+") as f:
             f.write(toolchain)
-        shutil.copytree(root_path / "_out" / volume.lower() / "grading" / "lean", Path(tmpdir) / "Challenge", ignore=ignore_lake_pattern)
-        shutil.copytree(root_path / "_out" / volume.lower() / variant / "lean", Path(tmpdir) / "Solution", ignore=ignore_lake_pattern)
+        shutil.copy(root_path / "_out" / volume.lower() / "grading" / "lean" / "SFLCompat.lean", Path(tmpdir))
+        shutil.copytree(root_path / "_out" / volume.lower() / "grading" / "lean" / "SFLCompat", Path(tmpdir) / "SFLCompat")
+        
+        shutil.copytree(root_path / "_out" / volume.lower() / "grading" / "lean", Path(tmpdir) / "Challenge", ignore=ingore_pattern)
+        shutil.copytree(root_path / "_out" / volume.lower() / variant / "lean", Path(tmpdir) / "Solution", ignore=ingore_pattern)
         for vol in all_volumes:
             replace_everywhere(Path(tmpdir) / "Challenge", f"import {vol}", f"import Challenge.{vol}")
             replace_everywhere(Path(tmpdir) / "Solution", f"import {vol}", f"import Solution.{vol}")

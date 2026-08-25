@@ -1,17 +1,4 @@
-import VersoManual
-import VersoManual.InlineLean
-import Illuminate
-import SFLMeta.Bnf
-import SFLMeta.Ignore
-import SFLMeta.Save
-import SFLMeta.Comment
-import SFLMeta.Exercise
-import SFLMeta.Grade
-import SFLMeta.Hide
-import SFLMeta.Instructors
-import SFLMeta.SlideBreak
-import SFLMeta.Solution
-import SFLMeta.Terse
+import SFLMeta
 
 set_option autoImplicit false
 
@@ -342,10 +329,21 @@ BEq.beq 1 2 : Bool
 Rather than {name}`Nat.beq`, `==` turns out to be notation for {name}`BEq.beq`, a field of exactly
 the kind of typeclass we just learned to define:
 
-```
-class BEq (α : Type u) where
-  /-- Boolean equality, notated as `a == b`. -/
-  beq : α → α → Bool
+```recallSource
+/--
+  `BEq α` is a typeclass for supplying a boolean-valued equality relation on
+  `α`, notated as `a == b`. Unlike `DecidableEq α` (which uses `a = b`), this
+  is `Bool` valued instead of `Prop` valued, and it also does not have any
+  axioms like being reflexive or agreeing with `=`. It is mainly intended for
+  programming applications. See `LawfulBEq` for a version that requires that
+  `==` and `=` coincide.
+
+  Typically we prefer to put the "more variable" term on the left,
+  and the "more constant" term on the right.
+  -/
+  class BEq (α : Type u) where
+    /-- Boolean equality, notated as `a == b`. -/
+    beq : α → α → Bool
 ```
 
 Writing `a == b` makes Lean search for an *instance* of {name}`BEq` for the type of `a` and `b`, the same
@@ -624,22 +622,24 @@ In this section, we'll use the type variable `α` for the type of keys and `β` 
 In addition to {name}`BEq`, which we have already seen, our key type `α` requires instances of the
 {name}`ReflBEq` and {name}`LawfulBEq` typeclasses:
 
-```
+```recallSource
 /-- `ReflBEq α` says that the `BEq` implementation is reflexive. -/
-class ReflBEq (α : Type) [BEq α] : Prop where
-  /-- `==` is reflexive, that is, `(a == a) = true`. -/
-  protected rfl {a : α} : a == a
+  class ReflBEq (α) [BEq α] : Prop where
+    /-- `==` is reflexive, that is, `(a == a) = true`. -/
+    protected rfl {a : α} : a == a
+```
 
+```recallSource
 /--
-A Boolean equality test coincides with propositional equality.
+  A Boolean equality test coincides with propositional equality.
 
-In other words:
- * `a == b` implies `a = b`.
- * `a == a` is true.
--/
-class LawfulBEq (α : Type) [BEq α] : Prop extends ReflBEq α where
-  /-- If `a == b` evaluates to `true`, then `a` and `b` are equal in the logic. -/
-  eq_of_beq : {a b : α} → a == b → a = b
+  In other words:
+   * `a == b` implies `a = b`.
+   * `a == a` is true.
+  -/
+  class LawfulBEq (α : Type u) [BEq α] : Prop extends ReflBEq α where
+    /-- If `a == b` evaluates to `true`, then `a` and `b` are equal in the logic. -/
+    eq_of_beq : {a b : α} → a == b → a = b
 ```
 
 These classes refine `BEq`, specifying that (`==`) is reflexive and coincides with
@@ -943,7 +943,7 @@ theorem update_eq {α β : Type} [BEq α] [ReflBEq α] (m : TotalMap α β) (a :
 
 On the other hand, if we update a map `m` at a key `a₁` and then look up a _different_ key `a₂` in the resulting map, we get the same result that `m` would have given:
 
-::::exercise (rating := 2) (name := "update_neq")
+::::exercise (rating := 2) (name := "update_neq") (optional := true)
 ```lean
 @[simp]
 theorem update_neq {α β : Type} [BEq α] [LawfulBEq α] {m : TotalMap α β} {a₁ a₂ : α} (h : a₁ ≠ a₂) (b : β) :
@@ -1002,7 +1002,7 @@ theorem update_same {α β : Type} [BEq α] [LawfulBEq α] (m : TotalMap α β) 
 
 Similarly, if we update a map `m` at a key `a` with a value `b₁` and then update again with the same key `a` and another value `b₂`, the resulting map behaves the same (gives the same result when applied to any key) as the simpler map obtained by performing just the second {name}`update` on `m`:
 
-::::exercise (rating := 2) (name := "update_shadow")
+::::exercise (rating := 2) (name := "update_shadow") (optional := true)
 ```lean
 @[simp]
 theorem update_shadow {α β : Type} [BEq α] [LawfulBEq α] (m : TotalMap α β) (a : α) (b₁ b₂ : β) :
