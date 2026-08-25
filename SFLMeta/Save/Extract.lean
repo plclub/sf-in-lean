@@ -45,11 +45,17 @@ end SaveBuffers
 
 namespace Text
 
+open Verso.Genre.Manual.Bibliography in
 /--
 Render a piece of Verso inline content to a plain-text fragment suitable for
 inclusion in a `/-! … -/` Lean module-doc comment. Markdown-like delimiters
 (`*…*` for emphasis, `**…**` for bold, backticks for code, `[text](url)` for
-links) are preserved so the resulting comment still reads naturally. -/
+links) are preserved so the resulting comment still reads naturally.
+
+Citations (`{citet}`/`{citep}`) carry their bibliographic data in the node's
+JSON payload, not in its (usually empty) inline content, so they get a
+dedicated rendering mirroring `Citable.inlineHtml`; every other `.other` node
+renders as its content. -/
 partial def inlineToText : Verso.Doc.Inline Manual → String
   | .text s => s
   | .linebreak _ => "\n"
@@ -62,24 +68,63 @@ partial def inlineToText : Verso.Doc.Inline Manual → String
   | .footnote name _ => s!"[^{name}]"
   | .image alt url => s!"![{alt}]({url})"
   | .concat content => String.join (content.toList.map inlineToText)
-  | .other _ content => String.join (content.toList.map inlineToText)
+  | .other which content =>
+    if which.name == ``Verso.Genre.Manual.Bibliography.Inline.cite then
+      citationText which.data
+    else
+      String.join (content.toList.map inlineToText)
+where
+  andListText (xs : Array String) : String :=
+    if xs.size = 0 then ""
+    else if xs.size = 1 then xs[0]!
+    else if xs.size = 2 then xs[0]! ++ " and " ++ xs[1]!
+    else String.intercalate ", " xs.pop.toList ++ ", and " ++ xs.back!
+  citedAuthors (p : Citable) : String :=
+    let as := p.authors
+    if as.size = 0 then ""
+    else if as.size = 1 then inlineToText (Bibliography.lastName as[0]!)
+    else if as.size > 3 then inlineToText (Bibliography.lastName as[0]!) ++ " *et al.*"
+    else andListText (as.map fun a => inlineToText (Bibliography.lastName a))
+  citationText (data : Lean.Json) : String :=
+    let parsed : Option (List Citable × Style) := do
+      let (js, style) ← (FromJson.fromJson? data : Except String (Lean.Json × Style)).toOption
+      let cs ← (FromJson.fromJson? js : Except String (List Citable)).toOption
+      pure (cs, style)
+    match parsed with
+    | .none => ""
+    | .some (cs, style) =>
+      match style with
+      | .textual =>
+        andListText <| cs.toArray.map fun p => s!"{citedAuthors p} ({p.year})"
+      | .parenthetical =>
+        " " ++ andListText (cs.toArray.map fun p => s!"({citedAuthors p}, {p.year})")
+      | .here =>
+        andListText <| cs.toArray.map fun p =>
+          s!"{citedAuthors p} ({p.year}), \"{inlineToText p.title}\""
 
 /-- Pretty-print an array of inlines to plain text. -/
 def inlinesToText (inls : Array (Verso.Doc.Inline Manual)) : String :=
   String.join (inls.toList.map inlineToText)
 
-/-- Right margin used when filling prose paragraphs in the terse build's
-generated `.lean` files. -/
+/-- The line-comment prefix carried by every prose line in generated `.lean`
+files. -/
+def commentPrefix : String := "--  "
+
+/-- Right margin (total line width, comment prefix included) for prose
+paragraphs in the terse build's generated `.lean` files. -/
 def terseFillWidth : Nat := 60
 
-/-- Right margin used when filling prose paragraphs in the student and
-solutions builds' generated `.lean` files. -/
+/-- Right margin (total line width, comment prefix included) for prose
+paragraphs in the student and solutions builds' generated `.lean` files. -/
 def proseFillWidth : Nat := 75
 
-/-- The prose fill width for a build variant. -/
-def fillWidthFor : Variant → Nat
-  | .terse => terseFillWidth
-  | .student | .solutions | .grading => proseFillWidth
+/-- The prose fill width for a build variant: the right margin less the
+`commentPrefix` each prose line carries. -/
+def fillWidthFor (v : Variant) : Nat :=
+  (match v with
+    | .terse => terseFillWidth
+    | .student | .solutions | .grading => proseFillWidth)
+  - commentPrefix.length
 /--
 Split `s` into whitespace-separated words, keeping each `` `code span` `` intact
 as a single token even when it contains spaces (so wrapping never splits one
@@ -145,7 +190,8 @@ defmethod String.stripBlankEdgeLines (s : String) : String :=
 /--
 Render a Verso block to a Markdown-like string for inclusion in a `/-! … -/`
 comment, filling prose to `width` columns.  List items are prefixed with `- ` /
-`N. `; continuation lines are indented to align under the item text. -/
+`N. `; continuation lines are indented to align under the item text, and item
+bodies are filled narrower so the marker/indent still fits within `width`. -/
 partial def blockToText (width : Nat) : Verso.Doc.Block Manual → String
   | .para inlines => paraToText width inlines
   | .code s => "`" ++ s.trimAscii.toString ++ "`"
@@ -153,7 +199,7 @@ partial def blockToText (width : Nat) : Verso.Doc.Block Manual → String
     String.intercalate "\n\n" (bs.toList.map (blockToText width))
   | .ul lis =>
     let items := lis.toList.map fun li =>
-      let body := String.intercalate "\n\n" (li.contents.toList.map (blockToText width))
+      let body := String.intercalate "\n\n" (li.contents.toList.map (blockToText (width - 2)))
       "- " ++ body.replace "\n" "\n  "
     -- Blank lines between items only when some item is itself multi-line.
     let sep := if items.any (·.contains '\n') then "\n\n" else "\n"
@@ -162,14 +208,15 @@ partial def blockToText (width : Nat) : Verso.Doc.Block Manual → String
     let items := lis.toList.mapIdx fun i li =>
       let pfx := s!"{start + i}. "
       let indent := String.ofList (List.replicate pfx.length ' ')
-      let body := String.intercalate "\n\n" (li.contents.toList.map (blockToText width))
+      let body := String.intercalate "\n\n"
+        (li.contents.toList.map (blockToText (width - pfx.length)))
       pfx ++ body.replace "\n" s!"\n{indent}"
     let sep := if items.any (·.contains '\n') then "\n\n" else "\n"
     String.intercalate sep items
   | .dl dis =>
     String.intercalate "\n" (dis.toList.map fun di =>
       inlinesToText di.term ++ "\n:   " ++
-      String.intercalate "\n    " (di.desc.toList.map (blockToText width)))
+      String.intercalate "\n    " (di.desc.toList.map (blockToText (width - 4))))
   | .other _ bs => String.intercalate "\n\n" (bs.toList.map (blockToText width))
 
 end Text
@@ -183,7 +230,7 @@ private def asModuleDoc (s : String) : String :=
   let t := s.trimAscii.toString
   let commented := String.intercalate "\n"
     ((t.splitOn "\n").map fun line =>
-      if line.all (·.isWhitespace) then "" else "-- " ++ line)
+      if line.all (·.isWhitespace) then "" else Text.commentPrefix ++ line)
   commented ++ "\n\n"
 
 section
@@ -195,8 +242,8 @@ note reads as a single unit. -/
 def devNoteComment (label body : String) : String :=
   let indented := String.intercalate "\n"
     ((body.trimAscii.toString.splitOn "\n").map fun l =>
-      if l.all (·.isWhitespace) then "--" else "--     " ++ l)
-  "-- " ++ label ++ ":\n" ++ indented ++ "\n\n"
+      if l.all (·.isWhitespace) then "--" else Text.commentPrefix ++ "    " ++ l)
+  Text.commentPrefix ++ label ++ ":\n" ++ indented ++ "\n\n"
 
 /-- Decode a `Block.bnf` payload and render the grammar as an aligned plain-text
 display (`Bnf.toTextImpl`), which is what an extracted `.lean` file wants: the
@@ -311,7 +358,7 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
       -- The wrapper carries pre-computed student, solutions, and terse source
       -- variants plus the extraction-relevant `lean` block flags. Verso still
       -- checks and renders the selected child normally; the generated project
-      -- gets code, `sf_experiment`, or `sf_expect_failure` according to
+      -- gets code, `sf_experiment`, or `sf_expect_failure_in` according to
       -- `LeanSaved.Data.extractionMode`.
       if let some saved := LeanSaved.decode? which.data then
         match saved.extractionMode with
@@ -322,7 +369,7 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
         | .experiment =>
           return buf.append file <| saved.variants.map (wrapIndented "sf_experiment")
         | .expectFailure =>
-          return buf.append file <| saved.variants.map (wrapIndented "sf_expect_failure")
+          return buf.append file <| saved.variants.map (wrapIndented "sf_expect_failure_in")
       return buf
     if name == ``SFLMeta.Block.recall then
       if let some saved := SFLMeta.Recall.decode? which.data then
@@ -333,7 +380,7 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
             else wrapIndented "sf_recall" source
           | .source => wrapIndented "sf_recall_source" source
         if expectedError then
-          return buf.appendAll file <| wrapIndented "sf_expect_failure" command
+          return buf.appendAll file <| wrapIndented "sf_expect_failure_in" command
         return buf.appendAll file <| command.trimAscii.toString ++ "\n\n"
     if name == ``Block.importBlock then
       -- Cross-chapter `import` lines shown to the reader.  The extracted
@@ -373,7 +420,7 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
             | .para inls => some (inlinesToText inls)
             | _ => none)
       -- Emit as its own comment, built by hand rather than via `asModuleDoc`:
-      -- each source line kept on its own line and indented under `-- ` to set the
+      -- each source line kept on its own line and indented under `--  ` to set the
       -- display off, and NEVER reflowed/filled the way prose is.  Only leading and
       -- trailing *blank lines* are dropped — a line's own leading whitespace is
       -- preserved verbatim, so ASCII diagrams and hand-aligned displays keep their
@@ -381,7 +428,7 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
       -- and so drop the first line's indentation.)
       let commented := String.intercalate "\n"
         ((src.stripBlankEdgeLines.splitOn "\n").map fun l =>
-          if l.all (·.isWhitespace) then "" else "--   " ++ l)
+          if l.all (·.isWhitespace) then "" else Text.commentPrefix ++ "  " ++ l)
       return buf.appendAll file (commented ++ "\n\n")
     if name == ``Block.diagramWithAlt then
       match findAlt? contents with
