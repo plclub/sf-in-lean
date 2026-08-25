@@ -178,7 +178,7 @@ def decode? (data : Json) : Option Data :=
 /--
   * persistent, non-error blocks become executable Lean;
   * non-persistent blocks (`-keep`) become indented `sf_experiment` blocks;
-  * expected-error blocks (`+error`) become indented `expect_failure_in` blocks
+  * expected-error blocks (`+error`) become indented `sf_expect_failure_in` blocks
 -/
 def Data.extractionMode (saved : Data) : ExtractionMode :=
   let {persistent, expectedError, ..} := saved.config
@@ -203,7 +203,7 @@ solutions-, student-, and terse-rendered forms of the block; traversal keeps the
 one selected by the build's typed `Variant`, so the same compiled document serves
 all three builds. HTML/TeX rendering passes through to the surviving child; the
 saver checks the stored metadata to decide whether to emit the saved source into
-extracted `.lean` files as raw code, `sf_experiment`, or `expect_failure_in`.
+extracted `.lean` files as raw code, `sf_experiment`, or `sf_expect_failure_in`.
 -/
 open Save in
 block_extension Block.leanSaved (saved : Save.LeanSaved.Data) where
@@ -255,7 +255,7 @@ Wraps each ` ```lean … ``` ` code block. The pipeline is:
    (teacher-rendered) block and `Block.lean`s wrapping the student and terse
    `Highlighted`s. Traversal later keeps one of the three according to the
    build's typed `Variant`, while the saver uses the recorded block config to
-   decide whether to wrap extracted output Lean code in `expect_failure_in` or
+   decide whether to wrap extracted output Lean code in `sf_expect_failure_in` or
    `sf_experiment`.
 -/
 

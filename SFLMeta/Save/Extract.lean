@@ -358,7 +358,7 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
       -- The wrapper carries pre-computed student, solutions, and terse source
       -- variants plus the extraction-relevant `lean` block flags. Verso still
       -- checks and renders the selected child normally; the generated project
-      -- gets code, `sf_experiment`, or `expect_failure_in` according to
+      -- gets code, `sf_experiment`, or `sf_expect_failure_in` according to
       -- `LeanSaved.Data.extractionMode`.
       if let some saved := LeanSaved.decode? which.data then
         match saved.extractionMode with
@@ -369,7 +369,7 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
         | .experiment =>
           return buf.append file <| saved.variants.map (wrapIndented "sf_experiment")
         | .expectFailure =>
-          return buf.append file <| saved.variants.map (wrapIndented "expect_failure_in")
+          return buf.append file <| saved.variants.map (wrapIndented "sf_expect_failure_in")
       return buf
     if name == ``SFLMeta.Block.recall then
       if let some saved := SFLMeta.Recall.decode? which.data then
@@ -380,7 +380,7 @@ partial def walkBlock (width : Nat) (file : String) (b : Verso.Doc.Block Manual)
             else wrapIndented "sf_recall" source
           | .source => wrapIndented "sf_recall_source" source
         if expectedError then
-          return buf.appendAll file <| wrapIndented "expect_failure_in" command
+          return buf.appendAll file <| wrapIndented "sf_expect_failure_in" command
         return buf.appendAll file <| command.trimAscii.toString ++ "\n\n"
     if name == ``Block.importBlock then
       -- Cross-chapter `import` lines shown to the reader.  The extracted

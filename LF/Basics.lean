@@ -250,7 +250,7 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.monday := by rfl
 then Lean would not be able to verify it and would instead signal an
 error.
 
-(The `expect_failure_in` annotation tells Lean that there is intended to be an error in
+(The `sf_expect_failure_in` annotation tells Lean that there is intended to be an error in
 the following expression and it should not mark the whole file as broken.)
 ::::
 
@@ -605,7 +605,7 @@ theorem true_and_wrong : ∀ (b : MyBool), (MyBool.true && b) = b := by
 ```
 
 To see the error message in the Lean file,
-change `expect_failure_in` to `expect_failure_in?` temporarily.
+change `sf_expect_failure_in` to `sf_expect_failure_in?` temporarily.
 You should see the following message.
 
 ```leanOutput indent
