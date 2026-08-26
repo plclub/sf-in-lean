@@ -739,9 +739,27 @@ theorem Com.congruence.while {b b' : Bexp} {c c' : Com} (hb : b.Equiv b') (hc : 
           exact hc.mp hc'
       | skip | asgn | seq | ifTrue | ifFalse =>
         contradiction
-    · sorry
+    · intro h
+      generalize heq : (imp {while (~b') {~c'}}) = com at h
+      induction h with
+      | whileFalse hb' =>
+        injection heq with hbeq hceq
+        subst hbeq
+        apply Com.EvalR.whileFalse
+        rw [hb]
+        exact hb'
+      | @whileTrue st₁ st₂ st₃ b₂ c₂ hb' hc' hwhile _ ih2 =>
+        injection heq with beq ceq
+        subst beq ceq
+        rw [← hb] at hb'
+        specialize ih2 rfl
+        apply Com.EvalR.whileTrue hb' _ ih2
+        · rw [equiv_def] at hc
+          exact hc.mpr hc'
+      | skip | asgn | seq | ifTrue | ifFalse =>
+        contradiction
 ```
-:::::exercise (rating := 3) (name := "Com.congruence.seq")
+:::::exercise (rating := 3) (name := "Com.congruence.seq") (optional := true)
 ```lean
 theorem Com.congruence.seq {c1 c1' c2 c2' : Com} (hc1 : c1.Equiv c1') (hc2 : c2.Equiv c2') :
     (imp {~c1 ; ~c2}).Equiv (imp {~c1' ; ~c2'}) := by
@@ -750,10 +768,16 @@ theorem Com.congruence.seq {c1 c1' c2 c2' : Com} (hc1 : c1.Equiv c1') (hc2 : c2.
     constructor
     · intro h
       inversion h with
-      | seq hc1' hc2' => 
-        -- rw [hc1] at hc1'
-        sorry 
-    · sorry
+      | seq hc1' hc2' =>
+        rw [equiv_def] at hc1
+        rw [equiv_def] at hc2
+        exact Com.EvalR.seq (hc1.mp hc1') (hc2.mp hc2')
+    · intro h
+      inversion h with
+      | seq hc1' hc2' =>
+        rw [equiv_def] at hc1
+        rw [equiv_def] at hc2
+        exact Com.EvalR.seq (hc1.mpr hc1') (hc2.mpr hc2')
   )
 ```
 :::::
