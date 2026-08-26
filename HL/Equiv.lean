@@ -818,6 +818,24 @@ theorem Com.congruence.if {b b' : Bexp} {c1 c1' c2 c2' : Com} (hb : b.Equiv b') 
 ```
 :::::
 
+::::full 
+For example, here are two programs and a proof of their equivalence using their congruence theorems.
+::::
+
+```lean
+example :
+    (imp {X := 0; if (X = 0) {Y := 0} else {Y := 42}}).Equiv
+    (imp {X := 0; if (X = 0) {Y := X - X} else {Y := 42}}) := by
+  apply Com.congruence.seq
+  · apply Com.equiv_refl
+  · apply Com.congruence.if
+    · apply Bexp.equiv_refl
+    · apply Com.congruence.asgn
+      rw [Aexp.equiv_def]
+      simp
+    · apply Com.equiv_refl
+```
+
 :::dev "Sati (satiscugcat)"
 ```
 NOT PORTED YET - remaining portions of Equiv.v left (apart from the portions explicitly stated so far).
