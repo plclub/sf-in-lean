@@ -974,19 +974,29 @@ def unzip {α : Type} {β : Type} (l : List (α × β)) : List α × List β := 
 ```lean
 -- This is a must have. One has to explicitly specify the types of the empty lists, which
 -- can be done in two equivalent ways
-theorem unzip_nil {α β : Type} : unzip [] = (([], []) : List α × List β) := by rfl
-theorem unzip_nil' {α β : Type} : unzip ([] : List (α × β)) = ([], []) := by rfl
+theorem unzip_nil {α β : Type} : unzip [] = (([], []) : List α × List β) := by
+  solution!
+      rfl
+theorem unzip_nil' {α β : Type} : unzip ([] : List (α × β)) = ([], []) := by
+  solution!
+      rfl
 
 -- To characterize the cons branch, we can introduce a single `unzip_cons`...
 theorem unzip_cons {α β : Type} {x : α} {y : β} {l : List (α × β)} :
-    (unzip ((x, y) :: l)) = (x :: (unzip l).fst, y :: (unzip l).snd) := by rfl
+    (unzip ((x, y) :: l)) = (x :: (unzip l).fst, y :: (unzip l).snd) := by
+    solution!
+      rfl
 
 -- ... or introduce lemmas `unzip_cons_fst/snd` which individually give both sides of `unzip_cons`
 theorem unzip_cons_fst {α β : Type} {x : α} {y : β} {l : List (α × β)} :
-    (unzip ((x, y) :: l)).fst = x :: (unzip l).fst := by rfl
+    (unzip ((x, y) :: l)).fst = x :: (unzip l).fst := by
+    solution!
+      rfl
 
 theorem unzip_cons_snd {α β : Type} {x : α} {y : β} {l : List (α × β)} :
-    (unzip ((x, y) :: l)).snd = y :: (unzip l).snd := by rfl
+    (unzip ((x, y) :: l)).snd = y :: (unzip l).snd := by
+    solution!
+      rfl
 ```
 :::
 
