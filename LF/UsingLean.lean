@@ -396,7 +396,7 @@ We can do this by rewriting by those definitions:
 
 ```lean
 example (n : Nat) : addThrice n = n + addTwice n := by
-  -- `rw addThrice]` unfolds `addThrice`, replacing it with its definition
+  -- `rw [addThrice]` unfolds `addThrice`, replacing it with its definition
   rw [addThrice]
   -- this likewise unfolds `addTwice`
   rw [addTwice]
