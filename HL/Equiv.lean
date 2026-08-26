@@ -884,15 +884,23 @@ def Aexp.fold_constants (a: Aexp) : Aexp :=
   | aexp { ~a1 + ~a2 } => 
     match a1.fold_constants, a2.fold_constants with
     | .num n1, .num n2 => .num (n1 + n2)
-    | a1', a2' => aexp { ~a1' + ~a2'}
+    | a1', a2' => aexp { ~a1' + ~a2' }
   | aexp { ~a1 - ~a2 } => 
     match a1.fold_constants, a2.fold_constants with
     | .num n1, .num n2 => .num (n1 - n2)
-    | a1', a2' => aexp { ~a1' - ~a2'}
+    | a1', a2' => aexp { ~a1' - ~a2' }
   | aexp { ~a1 * ~a2 } => 
     match a1.fold_constants, a2.fold_constants with
     | .num n1, .num n2 => .num (n1 * n2)
-    | a1', a2' => aexp { ~a1' * ~a2'}
+    | a1', a2' => aexp { ~a1' * ~a2' }
+
+theorem Aexp.fold_constants_num (n: Nat) : (Aexp.num n).fold_constants = .num n := rfl
+theorem Aexp.fold_constants_id (x : Ident) : (Aexp.id x).fold_constants = .id x := rfl
+theorem Aexp.fold_constants_plus (a1 a2 : Aexp) : 
+  (aexp {~a1 + ~a2}).fold_constants =
+  match a1.fold_constants, a2.fold_constants with
+  | .num n1, .num n2 => .num (n1 + n2)
+  | a1', a2' => aexp { ~a1' + ~a2' } := rfl
 ```
 
 ```lean
@@ -995,6 +1003,28 @@ example :
     Y := 0;
     while (Y = 0) {X := X+1}
   }) := by rfl
+```
+## Soundness of Constant Folding
+::::full
+Now we need to show that what we've done is correct.
+::::
+
+::::full
+Here's the proof for arithmetic expressions.
+::::
+```lean
+theorem Aexp.fold_constants_sound :
+    Aexp.trans_sound Aexp.fold_constants := by
+  intro a st
+  induction a with
+  | num n | id x => rfl
+  | plus a1 a2 ih1 ih2  =>
+    rw [Aexp.fold_constants_plus]
+    split
+    case h_1 n1 n2 heq heq' => sorry
+    case h_2 h => sorry
+    
+  | _ => sorry
 ```
 :::dev "Sati (satiscugcat)"
 ```
