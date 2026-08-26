@@ -481,13 +481,11 @@ more elegant.
 ## Definitional Simplification
 
 ::::full
-When dealing with unfold definitions, you may often encounter situations in which
-your goal or a hypothesis grows to become complex or hard to understand. In such cases,
-you may often want to simplify it, doing the little bit of computation on it that `rfl`
-does to understand that, for example, `(fun x => 0) 1 = 0` by applying the function to its argument.
-
-In such cases, you can use the `dsimp only` or `dsimp only at h` tactic in order to simplify a goal
-or hypothesis:
+Sometimes when you unfold a definition your hypothesis or goal may become hard to understand.
+When that happens, it can be useful to simplify it.
+To apply simplifications similar to those that {tactic}`rfl` does,
+but without also trying to close an equality goal,
+you can use the tactic `dsimp only` or `dsimp only at h`.
 ::::
 
 ::::terse
