@@ -741,6 +741,22 @@ theorem Com.congruence.while {b b' : Bexp} {c c' : Com} (hb : b.Equiv b') (hc : 
         contradiction
     · sorry
 ```
+:::::exercise (rating := 3) (name := "Com.congruence.seq")
+```lean
+theorem Com.congruence.seq {c1 c1' c2 c2' : Com} (hc1 : c1.Equiv c1') (hc2 : c2.Equiv c2') :
+    (imp {~c1 ; ~c2}).Equiv (imp {~c1' ; ~c2'}) := by
+  solution!(
+    intro st st'
+    constructor
+    · intro h
+      inversion h with
+      | seq hc1' hc2' => 
+        -- rw [hc1] at hc1'
+        sorry 
+    · sorry
+  )
+```
+:::::
 
 
 :::dev "Sati (satiscugcat)"
