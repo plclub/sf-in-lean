@@ -316,11 +316,7 @@ inductive MyBool : Type where
 We next invoke a couple of Lean directives to help control formatting.  Exactly what these directives mean is not important for present purposes -- you can understand everything in the rest of the book without knowing -- so we will mark these commands -- and similar bits later on -- with `THESE DETAILS CAN BE SKIPPED` comments in `.lean` files, and with folded-up segments in the HTML presentation. Feel free to have a peek if you want (click on the triangle in the HTML to unfold it), or just jump down to the following material and keep going.
 :::
 :::details
-:::dev "Benjamin Pierce (bcpierce00)"
-Why is the explanation inside the lean block?  And can it include a sentence about the set_option?
-:::
 ```lean -show
--- This is included to be able to format expressions involving these variables later
 variable (b : MyBool) (n m : Nat)
 set_option pp.fieldNotation false
 ```
