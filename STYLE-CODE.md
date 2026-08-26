@@ -26,7 +26,7 @@ and do not use tactics not in this table; in particular,
 | ----------------- | ------------------------ |
 | `Basics`          | `rfl`, `intro`, `rewrite`, `cases`, `exact` |
 | `Induction`       | `induction`, `have`, `rw`, `<;>` |
-| `UsingLean`       | `dsimp`, `calc`, `exact?`, `rw?` |
+| `UsingLean`       | `calc`, `exact?`, `rw?` |
 | `Lists`           | *(none new)* |
 | `Poly`            | *(none new)* |
 | `Tactics`         | `apply` (and `apply ... at`), `replace`, `specialize`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `induction ... generalizing ...`, `unfold`, `cases ... : ...`, `split` |
