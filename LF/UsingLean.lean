@@ -390,8 +390,9 @@ n✝ n : Nat
 
 But again we encounter an error! The expression in which we are trying to rewrite
 {name}`Nat.add_assoc` isn't of the form `n + m + k`, so we can't proceed. What then, should we do?
-To proceed here, we need to reveal to Lean the underlying structure of `addThrice` and `addTwice`,
-which we can do by rewriting by those definitions:
+To proceed here, we need to reveal to Lean the underlying definitions of `addThrice` and `addTwice`,
+so that {tactic}`rw`, which only operates on syntax, can see the addition.
+We can do this by rewriting by those definitions:
 
 ```lean
 example (n : Nat) : addThrice n = n + addTwice n := by
@@ -419,7 +420,7 @@ theorem rwUnfold (n m : Nat) (h : m = n) : addThrice m = n + (n + n) := by
 :::
 :::::
 
-Rewriting by definitions also works in hypotheses, which {tactic}`rfl` can't touch.
+Rewriting can also be used in places where {tactic}`rfl` can't, like hypotheses.
 
 ```lean
 def square (n : Nat) : Nat := n * n
@@ -438,7 +439,7 @@ example (n m : Nat) (h : 2 * n = m * 2) : n + n = m + m := by
 ```
 
 But {tactic}`rw` rewrites only one instance of a definition at a time.
-When a hypothesis or goal mentions the same function at several different
+When a hypothesis or goal mentions the same function applied to different
 arguments, each one needs its own rewrite.
 
 ```lean
@@ -448,10 +449,16 @@ example (n m k : Nat) (h : square n + square m + square k = 0) :
   exact h
 ```
 
+::::full
 We have previously seen the same issue with lemmas, leading to situations
 in which we have to rewrite multiple times in a row by lemmas like `add_zero`.
 To make this situation a bit better, we can use the {tactic}`repeat` tactic combinator,
-which repeats the same tactic as many time as it can:
+which takes a tactic as its argument and repeats it as many times as it can:
+::::
+
+::::terse
+Use {tactic}`repeat` to repeat a tactic multiple times:
+::::
 
 ```lean
 example (n m k : Nat) (h : square n + square m + square k = 0) :
@@ -459,6 +466,53 @@ example (n m k : Nat) (h : square n + square m + square k = 0) :
   repeat rw [square] at h
   exact h
 ```
+
+::::full
+With the ability to unfold definitions via rewriting, one may wonder why we need
+characterizing lemmas anymore. Despite the power of unfolding, we encourage you to stick
+to use characterizing lemmas wherever possible: it's better engineering practice and
+help proofs stay robust against changes to definitions. This is
+particularly important when dealing with definitions in Lean's standard library,
+which are often implemented in ways that are more efficient, but less friendly to proofs.
+Sticking to characterizing lemmas for these definitions will make your proofs simpler and
+more elegant.
+::::
+
+## Definitional Simplification
+
+::::full
+When dealing with unfold definitions, you may often encounter situations in which
+your goal or a hypothesis grows to become complex or hard to understand. In such cases,
+you may often want to simplify it, doing the little bit of computation on it that `rfl`
+does to understand that, for example, `(fun x => 0) 1 = 0` by applying the function to its argument.
+
+In such cases, you can use the `dsimp only` or `dsimp only at h` tactic in order to simplify a goal
+or hypothesis:
+::::
+
+::::terse
+`dsimp only` can perform basic simplification:
+::::
+
+```lean
+example (n : Nat) : n + (fun x => 0) 1 = n := by
+  dsimp only
+  rw [Nat.add_zero]
+```
+
+::::full
+However, it's important to understand that `dsimp only` is not actually _necessary_ for this proof.
+The following also works:
+
+```lean
+example (n : Nat) : n + (fun x => 0) 1 = n := by
+  rw [Nat.add_zero]
+```
+
+The benefit that `dsimp only` provides is to help you understand the proof; Lean doesn't
+actually need it, because tactics like {tactic}`rw` do this automatically on the goal
+or on a hypothesis when you use them.
+::::
 
 ## A First Step Towards Automation
 

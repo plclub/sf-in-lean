@@ -796,6 +796,8 @@ example : (3, 5).2 = 5 := by rfl
 Lean writes the product type {lean}`Prod α β` as {lean}`α × β`.
 In VS Code you can type `\times` or `\x` to enter the `×` symbol.
 
+The `dsimp only` tactic can be used to simplify `(x, y).fst` into `x` and
+`(x, y).snd` into `y`.
 
 ::::full
 It is easy at first to get {lean}`(x, y)` and {lean}`α × β` confused.
