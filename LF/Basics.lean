@@ -396,7 +396,7 @@ example : (!MyBool.false) = MyBool.true := by rfl
 ```
 
 ::::full
-The technical details of how these symbolic notations work are not something you need to understand until quite a bit later in your Lean journey.  
+The technical details of how these symbolic notations work are not something you need to understand until quite a bit later in your Lean journey.
 
 :::details
 Lean has a very flexible notation system. Operators like `||` and `&&`
@@ -1784,7 +1784,8 @@ that aren't syntactically identical. If you take a look at the proofs of
 {name}`add_zero` and {name}`add_succ` above, you will notice this is exactly what we did
 when we used the {tactic}`rfl` tactic.
 :::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement
-Readers might wonder why there isn't a tactic that's just like `rfl` but insists on syntactic identity, if that's what is considered good style...
+Readers might wonder why there isn't a tactic that's just like `rfl` but insists on
+syntactic identity, if that's what is considered good style...
 :::
 
 
@@ -2179,7 +2180,8 @@ For `add_zero` and `add_succ`, notice that the `zero` and
 `succ` come after the `add`; this is because they depend on `add`'s _second_ argument
 and do not care about its first.
 :::dev "Benjamin Pierce (bcpierce00)"
-So they would be called `zero_add` and `succ_add` if they depended on the first argument?? This explanation isn't making complete sense to me...
+So they would be called `zero_add` and `succ_add` if they depended on the first argument??
+This explanation isn't making complete sense to me...
 :::
 Also, in the `beq` rules above, we write `zero_beq_zero` and `zero_beq_succ`
 because the rules apply to both the first and second arguments of `beq`. We put
