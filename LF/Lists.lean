@@ -587,9 +587,6 @@ theorem cond_true {α} (x y : α) : (bif true then x else y) = x := by rfl
 theorem cond_false {α} (x y : α) : (bif false then x else y) = y := by rfl
 ```
 
-We can use the {name}`cond_true` and {name}`cond_false` lemmas to simplify
-cases where we have expressions of the form `bif true ...` and `bif false ...`, respectively.
-
 ```lean
 def oddMembers (l : NatList) : NatList := solution!(
   match l with
