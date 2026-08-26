@@ -495,24 +495,27 @@ or hypothesis:
 ::::
 
 ```lean
-example (n : Nat) : n + (fun x => 0) 1 = n := by
-  dsimp only
+example : (fun x => x + 0) n = n := by
+  dsimp only -- applies the function to its argument
   rw [Nat.add_zero]
 ```
 
-::::full
-However, it's important to understand that `dsimp only` is not actually _necessary_ for this proof.
-The following also works:
+If we did not simplify here before attempting to rewrite, we would get an error:
 
-```lean
-example (n : Nat) : n + (fun x => 0) 1 = n := by
+```lean +error (name := dsimp_error)
+example : (fun x => x + 0) n = n := by
   rw [Nat.add_zero]
 ```
 
-The benefit that `dsimp only` provides is to help you understand the proof; Lean doesn't
-actually need it, because tactics like {tactic}`rw` do this automatically on the goal
-or on a hypothesis when you use them.
-::::
+```leanOutput dsimp_error
+Tactic `rewrite` failed: Did not find an occurrence of the pattern
+  ?n + 0
+in the target expression
+  (fun x => x + 0) n = n
+
+n : Nat
+⊢ (fun x => x + 0) n = n
+```
 
 ## A First Step Towards Automation
 
