@@ -21,6 +21,17 @@ def mkConfig (vol mode : String) : RenderConfig where
   extraCss := {SFLMeta.sfTheme}
   destination := s!"_out/{vol}/{mode}"
 
+/-- Verso hardwires the multi-page HTML output directory to `html-multi/`.  SFL
+only ever emits the multi-page form, so the qualifier buys nothing and the
+directory is renamed to plain `html/` once the build has finished. -/
+def renameHtmlDir (dest : System.FilePath) : IO Unit := do
+  let multi := dest.join "html-multi"
+  let html := dest.join "html"
+  if ← multi.pathExists then
+    if ← html.pathExists then
+      IO.FS.removeDirAll html
+    IO.FS.rename multi html
+
 /-- Build one volume in one mode.  Each per-volume executable (`sfl-lf`,
 `sfl-hl`, `sfl-ts`) calls this with its own `%doc` so that no single module ever
 imports two volume roots — that keeps chapters shared across volumes (a symlinked
@@ -45,10 +56,14 @@ def runVolume (vol : String) (doc : Verso.Doc.Part Manual)
       | .student => Save.emitSavedStudent vol.toUpper crossVol
       | .solutions => Save.emitSavedSolutions vol.toUpper crossVol
       | .terse => Save.emitSavedTerse vol.toUpper crossVol
+      | .grading => Save.emitSavedGrading vol.toUpper crossVol
     let config := mkConfig vol mode
-    manualMain doc (options := rest) (config := config) (extraSteps := [extraStep])
+    let rc ← manualMain doc (options := rest) (config := config) (extraSteps := [extraStep])
+    if rc == 0 then
+      renameHtmlDir config.destination
+    return rc
   | _ =>
-    IO.eprintln "usage: sfl-<vol> <mode>  (mode: student | solutions | terse)"
+    IO.eprintln "usage: sfl-<vol> <mode>  (mode: student | solutions | terse | grading)"
     return 1
 
 end SFLMeta

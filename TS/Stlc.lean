@@ -340,6 +340,8 @@ We next formalize the syntax of the STLC.
 
 ```lean
 namespace Stlc
+
+open scoped MyGetElem
 ```
 
 ## Types
@@ -393,7 +395,7 @@ If anything ever changes here, make sure to do the same
 adjustment in all the other grammars for Stlc-like languages...
 :::
 
-::::details (summary := "Notation encoding: types")
+::::details "Notation encoding: types"
 The `stlcTy` grammar covers `Bool`, arrows (written `→` or `->`, associating to
 the right), parentheses, and `~e`.  A bare identifier other than `Bool` is
 spliced in as a Lean term, so a local `T` — or any Lean expression of type
@@ -431,7 +433,7 @@ We'll write types inside of `<{ ... }>` brackets:
 #check <{ (Bool -> Bool) -> Bool }>
 ```
 
-::::details (summary := "Notation encoding: terms")
+::::details "Notation encoding: terms"
 Terms are built from variables, application (associating to the left),
 abstraction, the two boolean constants, and conditionals.  A binding
 occurrence — the `x` in `λ x : T . t` — has a small grammar of its own,
@@ -490,7 +492,7 @@ macro_rules (kind := tmBracket)
 ```
 ::::
 
-::::details (summary := "Notation encoding: printing it back")
+::::details "Notation encoding: printing it back"
 A _delaborator_ runs the grammar backwards: it rebuilds the concrete syntax
 from a {name}`Ty` or {name}`Tm` value, so that types and terms appearing in
 goals and in `#check` output print as `<{ λ x : Bool . x }>` rather than as a
@@ -938,7 +940,7 @@ variable with this name", because naming a variable is what a bare identifier
 already does, and a bare identifier is a literal rather than a splice.
 ::::
 
-::::details (summary := "Notation encoding: substitution")
+::::details "Notation encoding: substitution"
 One more line registers substitutions with the printer, so that a goal
 mentioning one reads as `[x := s] t` rather than as a `subst` application.
 
@@ -1617,7 +1619,7 @@ with the turnstile and colon of the {ref "Types"}[Types] chapter:
 `<{ Γ ⊢ t ⦂ T }>`.
 ::::
 
-::::details (summary := "Notation encoding: contexts and judgments")
+::::details "Notation encoding: contexts and judgments"
 Contexts get a grammar of their own, `stlcCtx`.  The *meaning* is the map update
 we already have — `x ↦ T ; Γ` expands to exactly the `Typeclasses` chapter's
 partial-map update on `Γ` — but its surface syntax has to be our own, because
@@ -1679,7 +1681,7 @@ inductive HasType : Context → Tm → Ty → Prop where
       <{ ~Γ ⊢ if ~t₁ then ~t₂ else ~t₃ ⦂ ~T₁ }>
 ```
 
-::::details (summary := "Notation encoding: the judgment, for real")
+::::details "Notation encoding: the judgment, for real"
 Closing the `section` retires the hygiene-free rule; the same rule is then
 declared again, hygienically, for every later use.
 
@@ -1692,7 +1694,7 @@ macro_rules (kind := judgeBracket)
 ```
 ::::
 
-::::details (summary := "Notation encoding: printing judgments back")
+::::details "Notation encoding: printing judgments back"
 As with terms, a judgment prints back in its own notation, so that a goal reads
 as `<{ x ↦ Bool ; ∅ ⊢ x ⦂ Bool }>` rather than as a `HasType` applied to a chain
 of map updates.
@@ -1809,7 +1811,7 @@ example :
 ```
 
 ::::::full
-:::::exercise (rating := 2) (name := "typing_example_2_full")
+:::::exercise (rating := 2) (name := "typing_example_2_full") (optional := true)
 Prove the same result in tactic mode, applying one rule at a time and
 naming the argument type of each application explicitly.
 

@@ -2,6 +2,7 @@ import SFLMeta.Bnf
 import SFLMeta.Ignore
 import SFLMeta.Save
 
+import LF.Preface
 import LF.Basics
 import LF.Induction
 import LF.UsingLean
@@ -12,6 +13,7 @@ import LF.Logic
 import LF.IndProp
 import LF.Automation
 import LF.Typeclasses
+import LF.Postscript
 
 import VersoManual
 
@@ -21,6 +23,7 @@ open Verso Genre Manual
 -- line below in book order.  (The `#doc` body has no comment syntax, so don't
 -- put comments after the includes.)
 #doc (Manual) "Logical Foundations" =>
+{include LF.Preface}
 {include LF.Basics}
 {include LF.Induction}
 {include LF.UsingLean}
@@ -31,3 +34,4 @@ open Verso Genre Manual
 {include LF.IndProp}
 {include LF.Automation}
 {include LF.Typeclasses}
+{include LF.Postscript}

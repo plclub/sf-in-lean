@@ -6,11 +6,12 @@ maintaining SF-in-Lean materials.
 The file `CONTRIBUTING.md` details the rules and conventions to be 
 followed by (human and AI) contributions to this project. It should be read in addition to this file. In case of conflict, `CONTRIBUTING.md` wins.
 
-The file `STYLE.md` records the **normative** style conventions for SFL — Lean
-coding style, pedagogical and presentational conventions, and writing style.
-**Read `STYLE.md` in full and pay careful attention to everything it says**;
-every file you create or edit must conform to it. Like `CONTRIBUTING.md`, it is
-to be read in addition to this file.
+The files `STYLE-CODE.md` and `STYLE-WRITING.md` record the **normative** style
+conventions for SFL — the first covers Lean coding style and Verso markup, the
+second pedagogical, presentational, and writing conventions.
+**Read both in full and pay careful attention to everything they say**;
+every file you create or edit must conform to them. Like `CONTRIBUTING.md`, they
+are to be read in addition to this file.
 
 ## Conventions
 - Naming, proof style, and chapter structure follow existing chapters.
@@ -143,12 +144,16 @@ the build) while appearing in no build product, wrap a ` ```lean -show ` block
 in `:::ignore`: `-show` keeps it out of the rendered book, `:::ignore` keeps it
 out of the extracted `.lean`.  Neither flag alone does both.
 
-Two related directives are **not** noops. `:::gradeTheorem <pts> "<name>"` is
+Two related directives are **not** noops. `:::gradeTheorem <pts> <name>...` is
 the structured successor to a `:::grade` block wrapping a `GRADE_THEOREM <pts>:
 <name>` spec — `to_verso` emits it for every `GRADE_THEOREM` marker (points bare
 for integers, quoted for fractions like `"0.5"`); other `GRADE_` specs
-(`GRADE_MANUAL`) keep the older `:::grade` body form. It renders nothing for now
-but records `(points, name)` for later autograding (`SFLMeta/Grade.lean`).
+(`GRADE_MANUAL`) keep the older `:::grade` body form. The theorem name is a
+**bare identifier** (not a quoted string), and the directive accepts *one or
+more* of them (`:::gradeTheorem "0.25" nand_test1 nand_test2`); each is resolved
+as a real Lean constant (`.inlineLeanResolvedName`), so a quoted name no longer
+parses. It renders nothing for now but records `(points, names)` for later
+autograding (`SFLMeta/Grade.lean`).
 `:::quizSolution` is the uniform quiz-answer block (superseding the old
 quiz-answer conventions `:::answer` and a bare-`(X)` `:::instructors`): in the
 HTML book it renders as a click-to-reveal disclosure button, and it is *elided
@@ -251,11 +256,13 @@ notes (`/- MWH: … -/`, `/- BCP: … -/`, `/- NDS'25: … -/`, `/- NOTATION: �
 Only the *marker keyword* is consumed; the note **body** is always kept.
 
 An exercise's SF difficulty/grading flags are preserved on the directive: the
-`A` (advanced) flag becomes `(level := Advanced)` and the `M` (manually graded)
-flag becomes `(manual := true)` on the generated `::::exercise` (rendered
-`(Advanced)` / `(manually graded)` in the HTML and generated `.lean` headings;
-`SFLMeta/Exercise.lean`). `!`/`?` (recommended/optional) have no directive
-analogue yet.
+`A` (advanced) flag becomes `(level := Advanced)`, the `?` (optional) flag
+becomes `(optional := true)`, and the `M` (manually graded) flag becomes
+`(manual := true)` on the generated `::::exercise` (rendered `(Advanced)` /
+`(Optional)` / `(manually graded)` in the HTML and generated `.lean` headings;
+`SFLMeta/Exercise.lean`). `optional` defaults to `false`, so an exercise
+without `?` gets no `optional` argument. `!` (recommended) has no directive analogue
+yet.
 
 A section heading inside a `-- FULL` region (the SF idiom scoping book
 headings to the reading builds) emits the heading at document level — headings

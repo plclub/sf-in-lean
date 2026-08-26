@@ -71,49 +71,4 @@ def stripFillInMarkers (src : String) : String :=
   let kept := lines.filter fun line => !isSolutionStart line && !isSolutionEnd line
   String.intercalate "\n" kept
 
-/-! ## `#guard_msgs` stripping
-
-`#guard_msgs(…) in <cmd>` modifiers (with their preceding `/-- … -/` expected-
-message docstring) verify Lean's output to catch bitrot. They run during the
-Verso build — this only removes them from the *rendered* (`.html`) and
-*extracted* (`.lean`) forms, leaving the wrapped command in place. -/
-
-/-- Remove `#guard_msgs … in` command-modifier lines and the `/-- … -/`
-expected-message docstring immediately preceding them. -/
-def stripGuardMsgs (src : String) : String := Id.run do
-  let lines := (src.splitOn "\n").toArray
-  let n := lines.size
-  let mut out : Array String := #[]
-  let mut i := 0
-  while i < n do
-    let line := lines[i]!
-    let t := line.trimAscii.toString
-    if t.startsWith "/--" then
-      -- A docstring: scan to the line that closes it (`… -/`).
-      let mut j := i
-      while j < n && !(lines[j]!.trimAscii.toString.endsWith "-/") do
-        j := j + 1
-      if j + 1 < n && (lines[j + 1]!.trimAscii.toString.startsWith "#guard_msgs") then
-        -- Expected-message docstring for a `#guard_msgs`.  Strip the pair only
-        -- when the expectation is benign (a `warning:`/`info:` message, e.g.
-        -- `declaration uses sorry`): without the guard the command still
-        -- compiles.  An expected *error* (`error:`, `Tactic … failed`, …)
-        -- means the wrapped command deliberately fails — the guard must stay
-        -- in the extracted file or it would not build.
-        let body := ((lines[i]!.trimAscii.toString.drop 3).trimAscii).toString
-        if body.startsWith "warning" || body.startsWith "info" then
-          i := j + 2
-        else
-          for k in [i:j+2] do out := out.push lines[k]!
-          i := j + 2
-      else
-        for k in [i:j+1] do out := out.push lines[k]!
-        i := j + 1
-    else if t.startsWith "#guard_msgs" then
-      i := i + 1   -- a `#guard_msgs … in` with no docstring: drop the modifier line
-    else
-      out := out.push line
-      i := i + 1
-  return String.intercalate "\n" out.toList
-
 end SourceRewrite

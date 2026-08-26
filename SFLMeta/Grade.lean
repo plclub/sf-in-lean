@@ -7,13 +7,8 @@ open Verso.Output.Html
 
 namespace SFLMeta
 
-/-!
-`Block.grade` records a `-- GRADE_THEOREM <pts>: <name>` grading directive from
-the code-forward source.  For now it is a pure noop — rendered empty, body
-discarded at elaboration, exactly like `:::dev` (it shares `noopDirectiveFor`).
-The grading spec survives verbatim in the generated `…Verso.lean` source, so the
-grading infrastructure can later parse `:::grade` blocks (or this block can be
-given real behaviour) to drive autograding scripts. -/
+variable [Monad m] [MonadError m] [MonadLiftT TermElabM m]
+
 block_extension Block.grade where
   data := Json.null
   traverse _ _ _ := pure none
@@ -24,31 +19,13 @@ block_extension Block.grade where
 def grade : DirectiveExpanderOf Unit
   | args, contents => noopDirectiveFor ``Block.grade args contents
 
-/-! ## `:::gradeTheorem` directive
-
-The structured successor to a `:::grade` block wrapping a `GRADE_THEOREM <pts>:
-<name>` spec.  Rather than carry the spec as opaque body text, `:::gradeTheorem
-<pts> "<name>"` records the point value and theorem name as directive arguments,
-so a future autograding build can consume them directly.  Like `:::grade` it is
-a noop for now: it renders nothing and emits nothing to the generated `.lean`
-files, while the arguments survive in the Verso source. -/
-
-/-- Author-facing configuration for `:::gradeTheorem`: a point value and the
-name of the theorem to grade, both positional (`:::gradeTheorem 1 "double_add"`).
-Points are kept as a *string* so fractional values (`0.5`, `0.25`) survive
-exactly; write an integer bare (`1`) and a fraction quoted (`"0.5"`). -/
 structure GradeTheoremConfig where
-  /-- Points awarded for the theorem, as written (`"1"`, `"0.5"`). -/
+  /-- Points awarded for the theorem, as written (`1`, `"0.5"`). -/
   points : String
-  /-- The name of the graded theorem. -/
-  name : String
-deriving Repr
+  /-- The names of the graded theorems. Each is graded as specified by `points`. -/
+  names : List Name
+  deriving Repr
 
-section
-variable [Monad m] [MonadError m]
-
-/-- A point value written either bare as a natural-number literal (`1`) or, for
-a fractional value, as a quoted string (`"0.5"`); yields the value's text. -/
 def ValDesc.pointsText : ValDesc m String where
   description := doc!"a point value (a number, or a quoted decimal)"
   signature := CanMatch.Num ∪ CanMatch.String
@@ -57,29 +34,74 @@ def ValDesc.pointsText : ValDesc m String where
     | .str s => Pure.pure s.getString
     | other => throwError "Expected a point value, got {toMessageData other}"
 
-/-- Argument parser for `GradeTheoremConfig`: `points` then `name`, positional. -/
+/-- Resolve a name using `InlineLean`'s scope (stored in an environment extension). -/
+defmethod ValDesc.inlineLeanResolvedName : ValDesc m Name where
+  description := doc!"a name resolved in the current inline Lean scope"
+  signature := .Ident
+  get
+    | .name x => InlineLean.Scopes.runWithOpenDecls <| realizeGlobalConstNoOverloadWithInfo x
+    | other => throwError "Expected identifier, got {other}"
+
+/-- Argument parser for `GradeTheoremConfig` -/
 def GradeTheoremConfig.parse : ArgParse m GradeTheoremConfig :=
   GradeTheoremConfig.mk
-    <$> .positional `points ValDesc.pointsText <*> .positional `name .string
+    <$> .positional `points ValDesc.pointsText <*> many1 (.positional `name .inlineLeanResolvedName)
+where
+  many1 p := (· :: ·) <$> p <*> .many p
 
 instance : FromArgs GradeTheoremConfig m := ⟨GradeTheoremConfig.parse⟩
 
-end
-
-/-! `Block.gradeTheorem` records a `GRADE_THEOREM <pts>: <name>` grading
-directive as structured `(points, name)` data.  A noop like `Block.grade`:
-rendered empty and dropped at elaboration; the spec survives verbatim in the
-`…Verso.lean` source for later autograding. -/
-block_extension Block.gradeTheorem (points : String) (name : String) where
-  data := Json.arr #[.str points, .str name]
+block_extension Block.gradeTheorem (points : String) (names : List Name) where
+  data := Json.arr #[.str points, .arr <| (names.map (Json.str ∘ Name.toString)).toArray]
   traverse _ _ _ := pure none
   toHtml := some fun _ _ _ _ _ => pure .empty
   toTeX := none
 
 @[directive]
 def gradeTheorem : DirectiveExpanderOf GradeTheoremConfig
-  | cfg, _contents => do
+  | cfg, _contents =>
     ``(Verso.Doc.Block.other
-        (SFLMeta.Block.gradeTheorem $(quote cfg.points) $(quote cfg.name)) #[])
+        (SFLMeta.Block.gradeTheorem $(quote cfg.points) $(quote cfg.names)) #[])
+
+def decodeGradeTheoremData (data : Json) : String × Array Name :=
+  match data with
+  | .arr #[Json.str points, Json.arr names] => (
+      points,
+      names.map fun
+        | .str s => s.toName
+        | _ => unreachable!
+    )
+  | _ => unreachable!
+
+block_extension Block.autogradedHole (names : List Name) where
+  data := Json.arr #[.arr <| (names.map (Json.str ∘ Name.toString)).toArray]
+  traverse _ _ _ := pure none
+  toHtml := some fun _ _ _ _ _ => pure .empty
+  toTeX := none
+
+structure AutogradedHoleConfig where
+  /-- The names of definitions to treat as holes. -/
+  names : List Name
+  deriving Repr
+
+def AutogradedHoleConfig.parse : ArgParse m AutogradedHoleConfig :=
+  AutogradedHoleConfig.mk
+    <$> many1 (.positional `name .inlineLeanResolvedName)
+where
+  many1 p := (· :: ·) <$> p <*> .many p
+
+instance : FromArgs AutogradedHoleConfig m := ⟨AutogradedHoleConfig.parse⟩
+
+@[directive]
+def autogradedHole : DirectiveExpanderOf AutogradedHoleConfig
+  | cfg, _contents => ``(Verso.Doc.Block.other (SFLMeta.Block.autogradedHole $(quote cfg.names)) #[])
+
+def decodeAutogradedHoleData (data : Json) : Array Name :=
+  match data with
+  | .arr #[Json.arr names] =>
+    names.map fun
+      | .str s => s.toName
+      | _ => unreachable!
+  | _ => unreachable!
 
 end SFLMeta

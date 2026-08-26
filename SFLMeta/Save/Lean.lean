@@ -34,8 +34,8 @@ namespace LeanElab
 /--
   Go through the lines of `hls` and drop the line that is not appear in lines of `src`.
 
-  This is for reusing highlighting results from elbaoration for solution (teacher) variant: removing `-- SOLUTION`/`-- END SOLUTION` and `#guard_msgs` should not
-  cause elaboration again.
+  This is for reusing highlighting results from elbaoration for solution (teacher) variant:
+  removing `-- SOLUTION`/`-- END SOLUTION` should not cause elaboration again.
 -/
 defmethod Highlighted.filterBySource (hls : Highlighted) (src : String) : Highlighted := Id.run do
   let expected := (src.splitOn "\n").toArray
@@ -178,7 +178,7 @@ def decode? (data : Json) : Option Data :=
 /--
   * persistent, non-error blocks become executable Lean;
   * non-persistent blocks (`-keep`) become indented `sf_experiment` blocks;
-  * expected-error blocks (`+error`) become indented `sf_expect_failure` blocks
+  * expected-error blocks (`+error`) become indented `sf_expect_failure_in` blocks
 -/
 def Data.extractionMode (saved : Data) : ExtractionMode :=
   let {persistent, expectedError, ..} := saved.config
@@ -203,7 +203,7 @@ solutions-, student-, and terse-rendered forms of the block; traversal keeps the
 one selected by the build's typed `Variant`, so the same compiled document serves
 all three builds. HTML/TeX rendering passes through to the surviving child; the
 saver checks the stored metadata to decide whether to emit the saved source into
-extracted `.lean` files as raw code, `sf_experiment`, or `sf_expect_failure`.
+extracted `.lean` files as raw code, `sf_experiment`, or `sf_expect_failure_in`.
 -/
 open Save in
 block_extension Block.leanSaved (saved : Save.LeanSaved.Data) where
@@ -218,7 +218,7 @@ block_extension Block.leanSaved (saved : Save.LeanSaved.Data) where
       let chosen ←
         if variant.isSolution then pure contents[0]
         else if variant.isTerse then pure contents[2]
-        else pure contents[1]
+        else pure contents[1] -- grading variant is based on student with sorrys etc.
       return some (.other (Block.leanSaved saved) #[chosen])
     else
       return none
@@ -255,7 +255,7 @@ Wraps each ` ```lean … ``` ` code block. The pipeline is:
    (teacher-rendered) block and `Block.lean`s wrapping the student and terse
    `Highlighted`s. Traversal later keeps one of the three according to the
    build's typed `Variant`, while the saver uses the recorded block config to
-   decide whether to wrap extracted output Lean code in `sf_expect_failure` or
+   decide whether to wrap extracted output Lean code in `sf_expect_failure_in` or
    `sf_experiment`.
 -/
 
@@ -289,14 +289,14 @@ def lean : CodeBlockExpanderOf LeanSaved.Config
       let studentEdited := applyEdits src <| relativize studentEdits
       let terseEdited := applyEdits src <| relativize terseEdits
 
-      let teacher := stripGuardMsgs ∘ stripFillInMarkers <| teacherEdited
-      let student := stripGuardMsgs ∘ applyFillInForStudent <| studentEdited
-      let terse := stripGuardMsgs <| applyFillInForStudent <| terseEdited
+      let teacher := stripFillInMarkers <| teacherEdited
+      let student := applyFillInForStudent <| studentEdited
+      let terse := applyFillInForStudent <| terseEdited
 
       -- Note: this is different from `teacher`.
       -- `teacher` is for extracted projects which includes `teacherEdits`,
       -- while `teacherDisplay` is the string that will be shown in HTML.
-      let teacherDisplay := stripGuardMsgs ∘ stripFillInMarkers <| src
+      let teacherDisplay := stripFillInMarkers <| src
 
       -- Always reuse orignal elaboration for teacher
       let teacherHls :=
@@ -334,7 +334,7 @@ def lean : CodeBlockExpanderOf LeanSaved.Config
       let teacherChild ← mkChild teacherDisplay teacherHls
       let studentChild ← mkChild student studentHls
       let terseChild ← mkChild terse terseHls
-      let variants := {student, solutions := teacher, terse : Variants String}
+      let variants := {student, solutions := teacher, terse, grading := student : Variants String}
       let saved := { variants, config : Data }
       ``(Verso.Doc.Block.other
           (SFLMeta.Block.leanSaved $(quote saved))
