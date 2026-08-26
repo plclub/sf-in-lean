@@ -614,7 +614,7 @@ This one?
 :::
 
 ::::::full
-:::::exercise (rating := 2) (name := "mumble_grumble") (manual := true)
+:::::exercise (rating := 2) (name := "mumble_grumble") (optional := true) (manual := true)
 Consider the following two inductively defined types.
 
 ```lean
@@ -842,7 +842,7 @@ theorem zip_cons_cons {α β : Type} {x : α} {y : β} {l₁ : List α} {l₂ : 
    zip (x :: l₁) (y :: l₂) = (x, y) :: zip l₁ l₂ := by rfl
 ```
 
-:::::exercise (rating := 1) (name := "zip_checks")
+:::::exercise (rating := 1) (name := "zip_checks") (optional := true)
 Try answering the following questions on paper and
 checking your answers in Lean:
 - What is the type of `zip` (i.e., what does `#check @zip` print?)
@@ -878,6 +878,9 @@ theorem unzip_cons_snd {α β : Type} {x : α} {y : β} {l : List (α × β)} :
 
 theorem unzip_test1 : unzip [(1, false), (2, false)] = ([1, 2], [false, false]) := solution!(by rfl)
 ```
+
+:::autogradedHole unzip
+:::
 
 :::gradeTheorem "0.25" unzip_nil unzip_cons_fst unzip_cons_snd unzip_test1
 :::
@@ -926,7 +929,7 @@ example : nth? [true] 2 = none := by rfl
 ```
 
 ::::::full
-:::::exercise (rating := 1) (name := "head?_poly")
+:::::exercise (rating := 1) (name := "head?_poly") (optional := true)
 Complete the definition of a polymorphic version of the
 `head?` function from the {ref "Lists"}[last chapter]. Be sure that it
 passes the unit tests below.
@@ -941,18 +944,18 @@ theorem head?_nil {α : Type} : head? ([] : List α) = none := solution!(by rfl)
 
 theorem head?_cons {α : Type} {head : α} {tail : List α} : head? (head :: tail) = some head :=
   solution!(by rfl)
-
-theorem test_head?1 : head? [1, 2] = some 1 := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" test_head?1
+:::autogradedHole head?
 :::
 
 ```lean
+theorem test_head?1 : head? [1, 2] = some 1 := solution!(by rfl)
+
 theorem test_head?2 : head? [[1], [2]] = some [1] := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" test_head?2
+:::gradeTheorem "0.5" test_head?1 test_head?2
 :::
 :::::
 
@@ -1202,6 +1205,9 @@ theorem test_filterEvenGt7_1 : filterEvenGt7 [1, 2, 6, 9, 10, 3, 12, 8] = [10, 1
 theorem test_filterEvenGt7_2 : filterEvenGt7 [5, 2, 6, 19, 129] = [] := solution!(by rfl)
 ```
 
+:::autogradedHole filterEvenGt7
+:::
+
 :::gradeTheorem 1 test_filterEvenGt7_1 test_filterEvenGt7_2
 :::
 :::::
@@ -1223,6 +1229,9 @@ theorem test_partition1 : partition (· % 2 != 0) [1, 2, 3, 4, 5] = ([1, 3, 5], 
 theorem test_partition2 : partition (fun _ => false) [5, 9, 0] = ([], [5, 9, 0]) := solution!(by rfl)
 ```
 
+:::autogradedHole partition
+:::
+
 :::gradeTheorem "1.5" test_partition1 test_partition2
 :::
 :::::
@@ -1236,7 +1245,7 @@ Another handy higher-order function is called `map`.
 ::::
 
 ```lean
-def map {α : Type} {β : Type} (f : α → β) (l : List α) : List β :=
+def map {α β : Type} (f : α → β) (l : List α) : List β :=
   match l with
   | [] => []
   | head :: tail => f head :: map f tail
@@ -1277,8 +1286,8 @@ example : map (fun n => [n.even, n.odd]) [2, 1, 2, 5]
 ::::quiz
 Recall the definition of {name}`map`:
 
-```display
-def map (f : α → β) (l : List α) : List β :=
+```recall
+def map {α β : Type} (f : α → β) (l : List α) : List β :=
   match l with
   | [] => []
   | head :: tail => f head :: map f tail
@@ -1357,6 +1366,9 @@ theorem test_flatMap : flatMap (fun n => [n, n, n]) [1, 5, 4]
   = [1, 1, 1, 5, 5, 5, 4, 4, 4] := solution!(by rfl)
 ```
 
+:::autogradedHole flatMap
+:::
+
 :::gradeTheorem 2 test_flatMap
 :::
 :::::
@@ -1381,7 +1393,7 @@ def optionMap {α : Type} {β : Type} (f : α → β) (x? : Option α) : Option 
 ```
 
 ::::::full
-:::::exercise (rating := 2) (name := "implicit_args")
+:::::exercise (rating := 2) (name := "implicit_args") (optional := true)
 The definitions and uses of {name}`filter` and {name}`map` use implicit
 arguments in many places. Replace the curly braces around the
 implicit arguments with explicit parentheses, and then fill in
@@ -1453,7 +1465,7 @@ theorem fold_cons {α : Type} {β : Type} {f : α → β → β} {a : α} {l : L
 ::::quiz
 Here is the definition of `fold` again:
 
-```display
+```recall
 def fold {α β : Type} (f : α → β → β) (l : List α) (b : β) : β :=
   match l with
   | [] => b
@@ -1492,7 +1504,7 @@ What does `fold (· + ·) [1, 2, 3, 4] 0` simplify to?
 ::::
 
 ::::::full
-:::::exercise (rating := 1) (name := "fold_types_different") (manual := true)
+:::::exercise (rating := 1) (name := "fold_types_different") (optional := true) (manual := true)
 Observe that the type of {name}`fold` is parameterized by _two_ type
 variables, {lean}`α` and {lean}`β`, and the parameter `f` is a binary operator
 that takes an {lean}`α` and a {lean}`β` and returns a {lean}`β`.
@@ -1649,6 +1661,13 @@ def foldMap {α β : Type} (f : α → β) (l : List α) : List β := solution!(
   fold (fun x l' => f x :: l') l [])
 ```
 
+:::dev "Niklas Halonen (xhalo32)"
+Even though `foldMap` is not autograded, we mark it as a hole just in case in the future something depended on it.
+:::
+
+:::autogradedHole foldMap
+:::
+
 Write down a theorem `fold_map_correct` stating that {lean}`foldMap` is
 correct, and prove it in Lean.
 
@@ -1708,6 +1727,9 @@ def prodUncurry {α β γ : Type} (f : α → β → γ) (p : α × β) : γ := 
   f p.fst p.snd)
 ```
 
+:::autogradedHole prodUncurry
+:::
+
 As a (trivial) example of the usefulness of currying, we can use it
 to shorten one of the examples that we saw above:
 
@@ -1747,11 +1769,11 @@ theorem curry_uncurry {α β γ : Type} {p : α × β} {f : α × β → γ} :
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "nth_error_informal") (level := Advanced) (manual := true)
+:::::exercise (rating := 2) (name := "nth_error_informal") (level := Advanced) (optional := true) (manual := true)
 Recall the definition of the {name}`nth?` function:
 
-```display
-def nth? (l : List α) (n : Nat) : Option α :=
+```recall
+def nth? {α : Type} (l : List α) (n : Nat) : Option α :=
   match l with
   | [] => none
   | x :: l' => match n with
@@ -1904,6 +1926,9 @@ theorem scc_2 : scc one = two := solution!(by rfl)
 theorem scc_3 : scc two = three := solution!(by rfl)
 ```
 
+:::autogradedHole scc
+:::
+
 :::gradeTheorem 1 scc_2 scc_3
 :::
 :::::
@@ -1924,6 +1949,9 @@ theorem plus_1 : plus zero one = one := solution!(by rfl)
 theorem plus_2 : plus two three = plus three two := solution!(by rfl)
 theorem plus_3 : plus (plus two two) three = plus one (plus three three) := solution!(by rfl)
 ```
+
+:::autogradedHole plus
+:::
 
 :::gradeTheorem 1 plus_1 plus_2 plus_3
 :::
@@ -1948,10 +1976,14 @@ unchanged.
 def mult (n m : CNat) : CNat := solution!(
   fun (α : Type) (f : α → α) (x : α) => n α (m α f) x)
 
+
 theorem mult_1 : mult one one = one := solution!(by rfl)
 theorem mult_2 : mult zero (plus three three) = zero := solution!(by rfl)
 theorem mult_3 : mult two three = plus three three := solution!(by rfl)
 ```
+
+:::autogradedHole mult
+:::
 
 :::gradeTheorem 1 mult_1 mult_2 mult_3
 :::
@@ -1974,6 +2006,9 @@ theorem exp_1 : exp two two = plus two two := solution!(by rfl)
 theorem exp_2 : exp three zero = one := solution!(by rfl)
 theorem exp_3 : exp three two = plus (mult two (mult two two)) one := solution!(by rfl)
 ```
+
+:::autogradedHole exp
+:::
 
 :::gradeTheorem 1 exp_1 exp_3 exp_2
 :::

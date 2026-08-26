@@ -52,7 +52,8 @@ for basic properties of natural numbers by hand.
 Previously, we did computation like this...
 
 ```lean
-open NatPlayground.Nat in
+section OldNats
+open NatPlayground.Nat
 example : (two * two : NatPlayground.Nat) = four := by
   rewrite [two_eq_succ_one, one_eq_succ_zero]
   rewrite [mul_succ, mul_succ, mul_zero]
@@ -60,6 +61,16 @@ example : (two * two : NatPlayground.Nat) = four := by
   rewrite [add_succ, add_succ, add_zero]
   rfl
 ```
+
+We made Lean enforce this pedagogical style using the `@irreducible`
+attribute on definitions like {name}`mul`
+and {name}`add`. This ensured that definitions  be
+fully simplified using {tactic}`rw` with simplification rules like
+{name}`two_eq_succ_one`.
+:::dev "Benjamin Pierce (bcpierce00)"
+That last sentence is not very clear.  "that definitions be
+fully simplified" does not parse, but I'm not sure whether to add "will" or "can" or something else...
+:::
 
 This approach is useful in a textbook for understanding the structure of
 natural numbers and for providing early practice with writing proofs. But it
@@ -70,6 +81,8 @@ Instead of doing this, programmers and mathematicians use the built-in
 properties about natural numbers and to compute with them.
 
 ```lean
+end OldNats
+-- Now, we are using Lean's built-in natural numbers.
 example : (3 * 3 : Nat) = 9 := by rfl
 ```
 
@@ -79,7 +92,12 @@ features, writing `Nat.<theorem>` to reference Lean's version
 of `<theorem>`. (By convention, theorems about a type live in the namespace of
 that type, hence the need for the `Nat.` prefix.)
 
-## {tactic}`rfl` and Computation with {name}`Nat`
+Definitions in the built-in {name}`Nat` library are _not_ marked `@[irreducible]`. This lets us use
+more powerful _automatic simplification_ of functions on natural numbers,
+which is appropriate when their low-level behaviors are not the primary focus of proofs.
+This will be the case going forward.
+
+## The {tactic}`rfl` Tactic and Computation with {name}`Nat`
 
 With Lean's {name}`Nat`, much of the computation happens automatically,
 and {tactic}`rfl` suffices to close any equality of computation on literals.
@@ -276,6 +294,10 @@ Whereas before, the left-hand side of each equality in the
 previous one, we can replace the left-hand side entirely with an `_`.
 Now our Lean proof looks quite a bit like the textbook one we saw earlier!
 
+:::dev "Niklas Halonen (xhalo32)"
+How to grade that `succ_mul_succ'` uses `calc` without cheating?
+:::
+
 :::::exercise (rating := 1) (name := "succ_mul_succ")
 ```lean
 theorem succ_mul_succ (n m : Nat) :
@@ -301,17 +323,15 @@ If you prefer {tactic}`rw` to {tactic}`calc`, that's fine! Each has particular
 uses, and both will be tools in your ever-growing toolbox of tactics.
 :::::
 
-:::dev "Benjamin Pierce (bcpierce00)"
-Needs some exercises!!
-:::
 
 # Definitional Simplification: {tactic}`dsimp`
 
-Often, rather than rewriting by a known equation like
-`n + succ m = succ (n + m)` using `rw [add_succ]`,
-we just want to simplify the function (here {name}`Nat.add`) automatically when we can.
+Often, rather than repeatedly rewriting by a known equation like
+`rw [Nat.mul_zero, Nat.mul_zero]` to solve a goal like
+`n * (m * 0) = 0`,
+we just want to simplify the function (here {name}`Nat.mul`) automatically when we can.
 
-The {tactic}`dsimp` tactic ("definitionally simplify") unfolds definitions
+The {tactic}`dsimp` ("definitionally simplify") tactic unfolds definitions
 and performs definitional simplifications. You can give it hints in
 square brackets: `dsimp [f]` tells it to unfold the definition of `f`.
 You can also simplify a hypothesis `h` in the context by writing
@@ -349,12 +369,15 @@ example (n m : Nat) (h : n + n = m) : triple n = m + n := by
 Complete this proof, using {tactic}`dsimp` or {tactic}`rw` as appropriate.
 
 ```lean
-example (n m : Nat) (h : m = n) : triple m = n + (n + n) := by
+theorem dsimp1 (n m : Nat) (h : m = n) : triple m = n + (n + n) := by
   solution!
     rw [h]
     dsimp [triple]
     rw [Nat.add_assoc]
 ```
+
+:::gradeTheorem 2 dsimp1
+:::
 :::::
 
 `dsimp at h` also works on hypotheses, which {tactic}`rfl` can't touch.
@@ -370,6 +393,27 @@ Aside: `rw [...] at h` also works on hypotheses too, as does `rw? at h`
 ```lean
 example (n m : Nat) (h : 2 * n = m * 2) : n + n = m + m := by
   rw [Nat.mul_comm, Nat.mul_two, Nat.mul_two] at h
+  exact h
+```
+
+But {tactic}`rw` rewrites only one instance of a definition at a time.
+When a hypothesis mentions the same function at several different
+arguments, each one needs its own rewrite.
+
+```lean
+example (n m k : Nat) (h : square n + square m + square k = 0) :
+    n * n + m * m + k * k = 0 := by
+  rw [square, square, square] at h
+  exact h
+```
+
+{tactic}`dsimp` unfolds _every_ instance at once, so one hint suffices no
+matter how many times the definition appears.
+
+```lean
+example (n m k : Nat) (h : square n + square m + square k = 0) :
+    n * n + m * m + k * k = 0 := by
+  dsimp [square] at h
   exact h
 ```
 
@@ -397,6 +441,33 @@ n✝ n : Nat
 Like {tactic}`rw` and {tactic}`exact`, {tactic}`dsimp` also has a `?` version
 that searches for functions to simplify by. Many Lean tactics have `?`
 versions; try it out if you are unsure.
+
+:::dev "Mike Hicks (@mwhicks1)"
+Yipeng said we can pass a theorem, e.g. `dsimp [Nat.mul_zero]`, which would rewrite `Nat.mul_zero`
+many times and then perform reductions, just like simp `[Nat.mul_zero]`. Also `@[defeq] lemmas`
+in the `simp` set are always used implicitly.
+
+Should `dsimp [Nat.mul_zero]` be preferred over `dsimp [Nat.mul]`? An example:
+```lean
+example (n : Nat) : n * (n * (n * 0)) = 0 := by
+  rw [Nat.mul_zero, Nat.mul_zero, Nat.mul_zero]
+
+example (n : Nat) : n * (n * (n * 0)) = 0 := by
+  dsimp [Nat.mul]
+
+example (n : Nat) : n * (n * (n * 0)) = 0 := by
+  dsimp [Nat.mul_zero]
+```
+This could be confusing though, because rewriting by `dsimp` only works for _definitional_
+equalities. The following doesn't work
+```lean +error
+example (n : Nat) : (((0 * n) * n) * n) = 0 := by
+  dsimp [Nat.zero_mul]
+```
+This is because `Nat.zero_mul` is true by induction, not reduction. This is a bit confusing
+to explain, and also unfortunate since one may not know why an equality holds. Thus I'd
+prefer not to include this use here.
+:::
 
 ## A New Step Towards Automation
 
@@ -521,7 +592,7 @@ example (n : Nat) : Nat.double (n + 0) = Nat.double n := by
   rfl
 ```
 
-:::::exercise (rating := 2) (name := "even_succ")
+:::::exercise (rating := 2) (name := "even_succ") (optional := true)
 One inconvenient aspect of our definition of `even n` is the
 recursive call on `n'` when `n = n' + 2`. This makes proofs about `even n`
 harder when done by induction on `n`, since we may need an
@@ -540,7 +611,7 @@ theorem Nat.even_succ (n : Nat) :
       rw [even, ih, Bool.not_not]
 ```
 
-:::gradeTheorem 1 Nat.even_succ
+:::gradeTheorem 2 Nat.even_succ
 :::
 :::::
 
@@ -565,7 +636,7 @@ theorem Nat.double_add (n : Nat) : n.double = n + n := by
       rw [double_succ, ih, succ_add n' (n' + 1), add_succ n' n']
 ```
 
-:::gradeTheorem 1 Nat.double_add
+:::gradeTheorem 2 Nat.double_add
 :::
 :::::
 
@@ -577,86 +648,14 @@ theorem Nat.double_mul (n : Nat) : n.double = 2 * n := by
 ```
 :::::
 
-:::gradeTheorem 1 Nat.double_mul
+:::gradeTheorem 2 Nat.double_mul
 :::
 
-# Using Code Actions to Generate Match Skeletons
+In the remainder of the book, we use Lean's built-in natural numbers everywhere.
+We use `dsimp` and `calc` in examples and solutions, and encourage their use.
+We also recommend using `rw?` and `exact?` to search for lemmas
+(though these should not appear in finished proofs).
 
-Lean's language server can suggest _code actions_, which are
-small editor commands that modify the source code.
-In VS Code, a lightbulb icon appears on the left
-when a code action is available at your cursor.
-You can click the icon or open the code action menu with `Ctrl + .`
-on Windows/Linux or `Command + .` on macOS.
-For more information, see the
-[Lean 4 VSCode extension manual](https://github.com/leanprover/vscode-lean4/blob/master/vscode-lean4/manual/manual.md#code-actions).
-
-Some code actions can generate the explicit branches needed for pattern
-matching. This is especially useful when working with `match` expressions,
-or with tactics such as {tactic}`cases` and {tactic}`induction`,
-which we saw in previous chapters.
-
-:::::full
-Let's look at an example using {tactic}`induction`.
-For example, suppose we start with the following incomplete proof:
-
-```lean +error
-example (n : Nat) : Nat.beq n n := by
-  induction n
-```
-
-::::dev "Mike Hicks (@mwhicks1)" NOW
-When I follow the instructions below in the student `.lean` files in `_out` I
-do not get a lightbulb to do this code action. Instead I get a couple of stars
-which if I click suggests a "quick fix".
-::::
-
-Put your cursor on `induction n` and open the code action menu.
-You should see
-"Generate an explicit pattern match for 'induction'." in the list.
-If you choose this action,
-Lean adds an explicit branch for each constructor:
-
-```lean
-example (n : Nat) : Nat.beq n n := by
-  induction n with
-  | zero => sorry
-  | succ n _ => sorry
-```
-
-This gives us basic structure of the proof without requiring us to write each
-branch by hand. We can then focus on proving each case.
-
-One possible proof is:
-
-```lean
-example (n : Nat) : Nat.beq n n := by
-  induction n with
-  | zero => rfl
-  | succ n ih => rw [Nat.beq, ih]
-```
-
-Note that Lean used `_` for the induction hypothesis in the generated `succ` branch.
-At that point, Lean didn't know whether the unfinished proof would need to refer to the hypothesis.
-Since we use it in {tactic}`rw`, we replace `_` with the name `ih`.
-
-In later chapters, we will see some tactics that can make such
-inaccessible names available again.
-
-The same trick also works for `match` expressions.
-For example, suppose we start with
-
-```lean -keep +error
-def isZero (n : Nat) : Bool :=
-  match n
-```
-
-Lean can generate the missing branches:
-
-```lean -keep +error
-def isZero (n : Nat) : Bool :=
-  match n with
-  | 0 => _
-  | n + 1 => _
-```
-:::::
+With these tools in hand, we
+can begin to prove properties about more sophisticated forms of data, beginning with
+{ref "Lists"}`Lists`.

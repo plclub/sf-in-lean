@@ -320,7 +320,7 @@ which states satisfy them)
 ::::
 
 ::::::full
-:::::exercise (rating := 1) (name := "assertions")
+:::::exercise (rating := 1) (name := "assertions") (optional := true)
 Paraphrase the following assertions in English (or your favorite
 natural language).
 
@@ -1141,7 +1141,7 @@ SOLUTION: All are valid except the 5th.
 :::
 
 ::::::full
-:::::exercise (rating := 1) (name := "valid_triples")
+:::::exercise (rating := 1) (name := "valid_triples") (optional := true)
 Which of the following Hoare triples are _valid_ -- i.e., the
 claimed relation between `P`, `c`, and `Q` is true?
 
@@ -1304,7 +1304,7 @@ theorem hoare_post_true {P Q : Assertion} {c : Com} (h : ∀ st, Q st) :
 ```
 :::::
 
-:::::exercise (rating := 1) (name := "hoare_pre_false")
+:::::exercise (rating := 1) (name := "hoare_pre_false") (optional := true)
 Prove that if `P` holds in no state, then any triple with `P` as
 its precondition is valid.
 
@@ -1850,7 +1850,7 @@ precondition using `exists`, then prove then with `apply
 hoare_asgn`. If you find that tactic doesn't suffice, double check
 that you have completed the triple properly.
 
-:::::exercise (rating := 2) (name := "hoare_asgn_examples1")
+:::::exercise (rating := 2) (name := "hoare_asgn_examples1") (optional := true)
 ```lean
 theorem hoare_asgn_examples1 :
     ∃ P : Assertion,
@@ -1863,7 +1863,7 @@ theorem hoare_asgn_examples1 :
 ```
 :::::
 
-:::::exercise (rating := 2) (name := "hoare_asgn_examples2")
+:::::exercise (rating := 2) (name := "hoare_asgn_examples2") (optional := true)
 ```lean
 theorem hoare_asgn_examples2 :
     ∃ P : Assertion,
@@ -1944,7 +1944,7 @@ issue as MRC'20.
 :::
 
 
-:::::exercise (rating := 3) (name := "hoare_asgn_fwd") (level := Advanced)
+:::::exercise (rating := 3) (name := "hoare_asgn_fwd") (level := Advanced) (optional := true)
 By using a _parameter_ `m` (a Lean number) to remember the
 original value of `X` we can define a Hoare rule for assignment
 that does, intuitively, "work forwards" rather than backwards.
@@ -1991,7 +1991,7 @@ theorem hoare_asgn_fwd {m : Nat} {a : Aexp} {P : Assertion} :
 ```
 :::::
 
-:::::exercise (rating := 2) (name := "hoare_asgn_fwd_exists") (level := Advanced)
+:::::exercise (rating := 2) (name := "hoare_asgn_fwd_exists") (level := Advanced) (optional := true)
 Another way to define a forward rule for assignment is to
 existentially quantify over the previous value of the assigned
 variable.  Prove that it is correct.
@@ -3115,6 +3115,9 @@ def Com.unexpandEvalR : Lean.PrettyPrinter.Unexpander
   | _ => throw ()
 ```
 
+:::autogradedHole Com.EvalR
+:::
+
 The following unit tests should be provable simply by applying your
 new rules (plus `rfl` for the boolean side conditions) if you have
 defined them correctly.
@@ -3281,6 +3284,8 @@ theorem hoare_if1_good :
       · assertion_auto
     · assertion_auto
 ```
+:::gradeTheorem 2 hoare_if1_good
+:::
 :::::
 
 ```lean
@@ -3993,7 +3998,7 @@ scoped macro_rules
 ::::::
 
 ::::::full
-:::::exercise (rating := 4) (name := "hoare_repeat") (level := Advanced) (manual := true)
+:::::exercise (rating := 4) (name := "hoare_repeat") (level := Advanced) (optional := true) (manual := true)
 Add new rules for `repeat` to `Com.EvalR` below.  You can use the rules
 for `while` as a guide, but remember that the body of a `repeat`
 should always execute at least once, and that the loop ends when
@@ -4038,6 +4043,9 @@ def Com.unexpandEvalR : Lean.PrettyPrinter.Unexpander
   | `($_ $c $st0 $st1) => ``($st0 =[ ~$c ]=> $st1)
   | _ => throw ()
 ```
+
+:::autogradedHole Com.EvalR
+:::
 
 A couple of definitions from above, copied here so they use the
 new `Com.EvalR`.
@@ -4563,6 +4571,11 @@ theorem hoare_havoc {Q : Assertion} {x : Ident} :
       simp only [Assertion.subst_apply, Aexp.eval_num] at hpre
       exact hpre
 ```
+
+:::autogradedHole havoc_pre
+:::
+:::gradeTheorem 3 hoare_havoc
+:::
 :::::
 
 :::::exercise (rating := 3) (name := "havoc_post") (level := Advanced)
@@ -4610,6 +4623,8 @@ theorem havoc_post {P : Assertion} {x : Ident} :
       rw [TotalMap.update_same]
       exact hpre
 ```
+:::gradeTheorem 3 havoc_post
+:::
 :::::
 
 ```lean

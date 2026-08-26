@@ -1,10 +1,8 @@
 module
 
--- This will let the code actions spread to extracted projects
-public import Batteries.CodeAction
 public meta import Lean.Elab.BuiltinCommand
 
-namespace SLFCommand
+namespace SFLCompat.Experiment
 
 open Lean Elab Command
 
@@ -43,9 +41,9 @@ namespace IndentedCommands
 
 /-! # Block Commands Parser
   Parse an indented command block. Commands are separated by new lines.
-  Since we want to capture parsing errors in `sf_expect_failure`,
+  Since we want to capture parsing errors in `sf_expect_failure_in`,
   we can't use Lean command parser directly in our command's syntax,
-  because any parsing error occurred would fail `sf_expect_failure` itself.
+  because any parsing error occurred would fail `sf_expect_failure_in` itself.
   One possible solution is to first parse the whole indented body as raw syntax,
   and then run Lean's command parser followed by command elaboration.
 -/
@@ -147,18 +145,18 @@ Diagnostics from the expected failure are suppressed.
 
 Example:
 ```lean
-sf_expect_failure
+sf_expect_failure_in
   example : 1 = 2 := rfl
 ```
 -/
 def expectFailureTk := leading_parser
-  "sf_expect_failure"
+  "sf_expect_failure_in"
 
 /-
-  Like `sf_expect_failure` but reports the diagnostics.
+  Like `sf_expect_failure_in` but reports the diagnostics.
 -/
 def expectFailureInfoTk := leading_parser
-  "sf_expect_failure?"
+  "sf_expect_failure_in?"
 
 @[command_parser] def expectFailureCmd := leading_parser
   expectFailureTk >> checkLinebreakBefore "indented command sequence" >>
@@ -200,7 +198,7 @@ _
 info: 1 : Nat
 -/
 #guard_msgs (positions := true) in
-sf_expect_failure?
+sf_expect_failure_in?
   def f (n : Nat) : Nat :=
     match n
   #check 1
@@ -210,7 +208,7 @@ sf_expect_failure?
 #check Nat
 
 /--
-info: SLFCommand.Tests.x : Nat
+info: SFLCompat.Experiment.Tests.x : Nat
 ---
 info: 3
 -/
@@ -241,7 +239,7 @@ sf_experiment
 
 /-- info: invalid 'import' command, it must be used in the beginning of the file -/
 #guard_msgs in
-sf_expect_failure?
+sf_expect_failure_in?
   import Lean
 
 /-- warning: using 'exit' to interrupt Lean -/
@@ -251,4 +249,4 @@ sf_experiment
 
 end Tests
 
-end SLFCommand
+end SFLCompat.Experiment

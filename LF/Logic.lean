@@ -419,6 +419,9 @@ theorem Nat.add_is_zero (n m : Nat) : n + m = 0 → n = 0 ∧ m = 0 := by
       rw [add_succ]
       contradiction
 ```
+
+:::gradeTheorem 2 Nat.add_is_zero
+:::
 :::::
 
 ::::::
@@ -499,12 +502,14 @@ theorem left (a b : Prop) (h : a ∧ b) : a := by
   exact h.left
 ```
 
-:::::exercise (rating := 1) (name := "proj2")
+:::::exercise (rating := 1) (name := "proj2") (optional := true)
 ```lean
 theorem right (a b : Prop) (h : a ∧ b) : b := by
   solution!
     exact h.right
 ```
+:::gradeTheorem 1 right
+:::
 :::::
 
 Finally, we sometimes need to rearrange the order of conjunctions
@@ -540,6 +545,8 @@ theorem and_associate (a b c : Prop) (h : a ∧ (b ∧ c)) : (a ∧ b) ∧ c := 
       · exact h.right.left
   · exact h.right.right
 ```
+:::gradeTheorem 1 and_associate
+:::
 :::::
 
 ::::::
@@ -559,7 +566,7 @@ And (a b : Prop) : Prop
 ## Disjunction
 
 Another important connective is the _disjunction_, or _logical or_,
-of two propositions: {lean}`a ∨ b` is true when either {lean}`a` or lean`b` is.
+of two propositions: {lean}`a ∨ b` is true when either {lean}`a` or {lean}`b` is.
 This infix notation stands for {lean}`Or a b`, where
 `Or : Prop -> Prop -> Prop`.
 
@@ -632,6 +639,8 @@ theorem Nat.mul_is_zero (n m : Nat) (h : n * m = 0) : n = 0 ∨ m = 0 := by
         rw [mul_succ, add_succ] at h
         contradiction
 ```
+:::gradeTheorem 2 Nat.mul_is_zero
+:::
 :::::
 
 :::::exercise (rating := 1) (name := "or_commute")
@@ -642,6 +651,8 @@ theorem or_commute (a b : Prop) (h : a ∨ b) : b ∨ a := by
     · right; exact ha
     · left; exact hb
 ```
+:::gradeTheorem 1 or_commute
+:::
 :::::
 
 ## Falsehood and Negation
@@ -651,7 +662,7 @@ Up to this point, we have mostly been concerned with proving
 is associative, etc.  We are sometimes also interested in negative
 results, demonstrating that some proposition is _not_ true. Such
 statements are expressed with the logical negation operator `¬`,
-which a prefix notation for {lean}`Not`.
+which is a prefix notation for {lean}`Not`.
 
 To see how negation works, recall the _principle of explosion_
 from the `Tactics` chapter, which asserts that, if we assume a
@@ -696,7 +707,7 @@ principle of explosion.
 ::::
 
 ::::::full
-:::::exercise (rating := 2) (name := "not_implies_other_not")
+:::::exercise (rating := 2) (name := "not_implies_other_not") (optional := true)
 ```lean
 theorem not_implies_other_not (a : Prop) (h : ¬ a) :
     (∀ c : Prop, a → c) := by
@@ -706,6 +717,8 @@ theorem not_implies_other_not (a : Prop) (h : ¬ a) :
     apply h
     exact ha
 ```
+:::gradeTheorem 2 not_implies_other_not
+:::
 :::::
 
 ::::::
@@ -758,7 +771,7 @@ theorem double_neg (a : Prop) (ha : a) : ¬ ¬ a := by
 ```
 
 ::::::full
-:::::exercise (rating := 2) (name := "double_neg_informal") (level := Advanced) (manual := true)
+:::::exercise (rating := 2) (name := "double_neg_informal") (level := Advanced) (optional := true) (manual := true)
 Write an _informal_ proof of  {name}`double_neg`:
 _Theorem_: {lean}`a` implies {lean}`¬ ¬ a`, for any proposition  {lean}`a`.
 
@@ -783,6 +796,8 @@ theorem contrapositive (a b : Prop) (h : a → b) : (¬ b → ¬ a) := by
     apply h
     exact ha
 ```
+:::gradeTheorem 1 contrapositive
+:::
 :::::
 
 :::::exercise (rating := 1) (name := "not_PNP_informal") (level := Advanced) (manual := true)
@@ -822,9 +837,11 @@ theorem de_morgan_not_or {a b : Prop} (h : ¬ (a ∨ b)) : ¬ a ∧ ¬ b := by
       right
       exact hb
 ```
+:::gradeTheorem 2 de_morgan_not_or
+:::
 :::::
 
-:::::exercise (rating := 1) (name := "not_succ_inverse_pred")
+:::::exercise (rating := 1) (name := "not_succ_inverse_pred") (optional := true)
 Since we are working with natural numbers, we can disprove that
 {lean}`Nat.succ` and {lean}`Nat.pred` are inverses of each other. This proof
 will require you to come up with a specific _counterexample_ to the
@@ -838,6 +855,8 @@ theorem not_succ_pred_n : ¬ (∀ n : Nat, n.pred + 1 = n) := by
     rw [Nat.pred_zero] at h0
     contradiction
 ```
+:::gradeTheorem 1 not_succ_pred_n
+:::
 :::::
 
 ::::::
@@ -1113,7 +1132,7 @@ an appropriate variant of {lean}`DiscrFun`. To generalize it to other
 conclusions, we can use {tactic}`exfalso` to replace them with {lean}`False`.
 The {tactic}`contradiction` tactic takes care of all of this for us.
 
-:::::exercise (rating := 2) (name := "nil_is_not_cons") (level := Advanced) (manual := true)
+:::::exercise (rating := 2) (name := "nil_is_not_cons") (level := Advanced) (optional := true) (manual := true)
 Use the same technique as above to show that `[] ≠ x :: xs`.
 Do not use the {tactic}`contradiction` tactic.
 
@@ -1122,10 +1141,9 @@ Do not use the {tactic}`contradiction` tactic.
 def List.IsNil {α : Type} (l : List α) : Prop :=
   match l with
   | [] => True
-  | _ :: _ => False
+  | _ => False
 
 theorem isNil_nil {α : Type} : List.IsNil ([] : List α) := by constructor
-
 
 theorem isNil_cons {α} (x : α) (l : List α) : ¬ List.IsNil (x :: l) := by
   dsimp [List.IsNil, Not]
@@ -1142,6 +1160,12 @@ theorem nil_is_not_cons {α : Type} (x : α) (xs : List α) :
     exact hn
 ```
 :::::
+
+:::instructors
+In `List.IsNil` changing the `_ =>` arm to `_ :: _ =>` would introduce a hidden dependency to `List.All` (and `List.In`) which is not emitted to the grading variant because it's in a solution block.
+This would lead to the solution of `List.All_In` (and `List.in_mem` in IndProp) to not pass comparator because the underlying terms are different.
+TLDR: Don't change `List.IsNil` to use `_ :: _ =>`.
+:::
 
 ::::::
 
@@ -1207,7 +1231,7 @@ theorem not_true_iff_false (b : Bool) : b ≠ true ↔ b = false := by
   · intro h; rw [h]; intro h'; contradiction
 ```
 
-:::::exercise (rating := 1) (name := "iff_properties")
+:::::exercise (rating := 1) (name := "iff_properties") (optional := true)
 Using the above proof that `↔` is symmetric ({lean}`iff_sym`) as a guide,
 prove that it is also reflexive and transitive.
 
@@ -1224,6 +1248,8 @@ theorem iff_trans (a b c : Prop) (h₁ : a ↔ b) (h₂ : b ↔ c) : a ↔ c := 
     · intro ha; apply h₂.mp; apply h₁.mp; exact ha
     · intro hb; apply h₁.mpr; apply h₂.mpr; exact hb
 ```
+:::gradeTheorem "0.5" iff_refl iff_trans
+:::
 :::::
 
 ::::exercise (rating := 3) (name := "iff_practice")
@@ -1274,6 +1300,9 @@ theorem or_distributes_over_and (a b c : Prop) :
       · left; exact ha
       · right; exact ⟨hb, hc⟩
 ```
+
+:::gradeTheorem 1 or_associate mul_eq_0 or_distributes_over_and
+:::
 ::::
 
 ## Existential Quantification
@@ -1329,7 +1358,7 @@ example : Even 4 := by exists 2
 ```
 
 Conversely, if we have an existential hypothesis {lean}`∃ x, a` in the context,
-can destrucure it to obtain a witness {lean}`x` and a hypothesis stating that {lean}`a`
+we can destructure it to obtain a witness {lean}`x` and a hypothesis stating that {lean}`a`
 holds of {lean}`x`.
 
 ```lean
@@ -1340,8 +1369,8 @@ example n : (∃ m, n = m + 4) → (∃ o, n = o + 2) := by
 
 ::::::full
 :::::exercise (rating := 1) (name := "dist_not_exists")
-Prove that "{lean}`a` holds for all {lean}`x` implies "there is no {lean}`x` for which
-{lean}`a` does not hold." (Hint: `cases` and `obtain` work on existential assumptions!)
+Prove that if {lean}`a` holds for all {lean}`x`, then there is no {lean}`x` for which
+{lean}`a` does not hold. (Hint: `cases` and `obtain` work on existential assumptions!)
 
 ```lean
 theorem dist_not_exists (α : Type) (p : α → Prop) (h : ∀ x, p x) :
@@ -1477,7 +1506,7 @@ What does it mean to say that
 ::::
 
 We can translate this directly into a straightforward recursive function
-taken an element and a list and returning... a proposition!
+taking an element and a list and returning... a proposition!
 
 ```lean
 def List.In {α : Type} (x : α) (xs : List α) : Prop :=
@@ -1491,7 +1520,7 @@ theorem List.In_nil {α : Type} {x : α} : ¬ (List.In x []) := by
 theorem List.In_cons {α : Type} {x x' : α} {xs : List α} : List.In x (x' :: xs) = (x = x' ∨ List.In x xs) := rfl
 ```
 
-When {lean}`List.In` is applied to a concrete list, it exapnds into a concrete sequence
+When {lean}`List.In` is applied to a concrete list, it expands into a concrete sequence
 of nested disjunctions.
 
 ```lean
@@ -1560,6 +1589,8 @@ theorem List.In_map_iff {α β : Type} {f : α → β} {xs : List α} {y : β} :
       intro ⟨x, h₁, h₂⟩
       rw [← h₁]; apply In_map; exact h₂
 ```
+:::gradeTheorem 2 List.In_map_iff
+:::
 :::::
 
 ::::::
@@ -1581,7 +1612,6 @@ def List.All {α : Type} (p : α → Prop) (l : List α) : Prop := solution!(
   match l with
   | [] => True
   | x :: l' => p x ∧ List.All p l')
-
 theorem List.All_nil {α : Type} {a : α → Prop} : List.All a [] := solution!(by constructor)
 
 theorem List.All_cons {α : Type} {p : α → Prop} {x : α} {l : List α} :
@@ -1613,6 +1643,8 @@ theorem List.All_In {α : Type} {p : α → Prop} {l : List α} :
         · apply ih₂; apply hp; exact h₂
 ```
 
+:::autogradedHole List.All
+:::
 :::gradeTheorem 3 List.All_In
 :::
 :::::
@@ -1624,7 +1656,7 @@ I found this exercise combining too many awkward details for too little conceptu
 3. I don't know how to nicely avoid `cases h : ...` syntax which IIRC we didn't mention before
 :::
 
-:::::exercise (rating := 2) (name := "CombineOddEven")
+:::::exercise (rating := 2) (name := "CombineOddEven") (optional := true)
 Complete the definition of `CombineOddEven` below. It takes as arguments
 two properties of numbers, `Odd` and `Even`, and it should return
 a predicate `p` such that `p n` is equivalent to `Odd n` when `n` is odd
@@ -1634,6 +1666,9 @@ and equivalent to `Even n` otherwise.
 def CombineOddEven (Odd Even : Nat → Prop) : Nat → Prop := solution!(
   fun n => bif Nat.odd n then Odd n else Even n)
 ```
+
+:::autogradedHole CombineOddEven
+:::
 
 To test your definition, prove the following facts:
 
@@ -1676,6 +1711,9 @@ theorem combineOddEven_elim_even
     rw [hOdd] at h
     dsimp at h; exact h
 ```
+
+:::gradeTheorem "2/3" combineOddEven_intro combineOddEven_elim_odd combineOddEven_elim_even
+:::
 :::::
 
 ::::::
@@ -1739,8 +1777,8 @@ The type of an ordinary function tells us what we can do with it.
     two {lean}`Nat`s as arguments and get a {lean}`Nat` back.
 Similarly, the statement of a theorem tells us what we can use
 that theorem for.
-  - If we have a term of type {lean}`∀ n m : Nat, n = m → n + n = m + n`,
-    and we provide it two numbers {lean}`n` and {lean}`m` and a third "arugment"
+  - If we have a term of type {lean}`∀ n m : Nat, n = m → n + n = m + m`,
+    and we provide it two numbers {lean}`n` and {lean}`m` and a third "argument"
     of type {lean}`n = m`, we get back a proof object of type {lean}`n + n = m + m`.
 
 ::::full
@@ -1748,7 +1786,7 @@ Operationally, this analogy goes even further: by applying a theorem
 as if it were a function, i.e., applying it to values and hypotheses
 with matching types, we can specialize its result without having to
 resort to intermediate assertions. For example, suppose we wanted
-to prove the follwing result:
+to prove the following result:
 ::::
 
 ::::terse
@@ -1786,7 +1824,7 @@ x y z : Nat
 ```
 
 It appears at first sight that we ought to be able to prove this
-be rewriting with {lean}`Nat.add_comm` twice to make the two sides match.
+by rewriting with {lean}`Nat.add_comm` twice to make the two sides match.
 The problem is that the second rewrite undoes the effect
 of the first, leaving us back where we started...
 
@@ -1831,7 +1869,7 @@ Suppose we have
 ```display
 n m : Nat
 h₁ : n = m
-h₂ : b = 42
+h₂ : m = 42
 trans_eq : ∀ {α : Type} {x y z : α}, x = y → y = z → x = z
 ```
 
@@ -1849,9 +1887,8 @@ What is the type of this "proof object"?
 :::quizSolution
 ```lean
 example (n m : Nat) (h₁ : n = m) (h₂ : m = 42)
-   (trans_eq : ∀ {α : Type} {x y z : α}, x = y → y = z → x = z) : True := by
-  have : n = 42 := @trans_eq Nat n m 42 h₁ h₂
-  sorry
+    (trans_eq : ∀ {α : Type} {x y z : α}, x = y → y = z → x = z) : n = 42 :=
+  @trans_eq Nat n m 42 h₁ h₂
 ```
 :::
 ::::
@@ -1862,7 +1899,7 @@ Suppose, again, we have
 ```display
 n m : Nat
 h₁ : n = m
-h₂ : b = 42
+h₂ : m = 42
 trans_eq : ∀ {α : Type} {x y z : α}, x = y → y = z → x = z
 ```
 
@@ -1880,9 +1917,8 @@ trans_eq h₁ h₂
 :::quizSolution
 ```lean
 example (n m : Nat) (h₁ : n = m) (h₂ : m = 42)
-   (trans_eq : ∀ {α : Type} {x y z : α}, x = y → y = z → x = z) : True := by
-    have : n = 42 := trans_eq h₁ h₂
-    sorry
+    (trans_eq : ∀ {α : Type} {x y z : α}, x = y → y = z → x = z) : n = 42 :=
+  trans_eq h₁ h₂
 ```
 :::
 ::::
@@ -1893,7 +1929,7 @@ Suppose, again, we have
 ```display
 n m : Nat
 h₁ : n = m
-h₂ : b = 42
+h₂ : m = 42
 trans_eq : ∀ {α : Type} {x y z : α}, x = y → y = z → x = z
 ```
 
@@ -1911,9 +1947,9 @@ What is the type of this proof object?
 :::quizSolution
 ```lean
 example (n m : Nat) (h₁ : n = m) (h₂ : m = 42)
-   (trans_eq : ∀ {α : Type} {x y z : α}, x = y → y = z → x = z) : True := by
-   have : 42 = n → m = n := @trans_eq Nat m 42 n h₂
-   sorry
+    (trans_eq : ∀ {α : Type} {x y z : α}, x = y → y = z → x = z) :
+    42 = n → m = n :=
+  @trans_eq Nat m 42 n h₂
 ```
 :::
 ::::
@@ -1924,7 +1960,7 @@ Suppose, again, we have
 ```display
 n m : Nat
 h₁ : n = m
-h₂ : b = 42
+h₂ : m = 42
 trans_eq : ∀ {α : Type} {x y z : α}, x = y → y = z → x = z
 ```
 
@@ -1942,9 +1978,9 @@ What is the type of this proof object?
 :::quizSolution
 ```lean
 example (n m : Nat) (h₁ : n = m) (h₂ : m = 42)
-   (trans_eq : ∀ {α : Type} {x y z : α}, x = y → y = z → x = z) : True := by
-    have : 42 = n → n = m → 42 = m := @trans_eq _ 42 n m
-    sorry
+    (trans_eq : ∀ {α : Type} {x y z : α}, x = y → y = z → x = z) :
+    42 = n → n = m → 42 = m :=
+  @trans_eq _ 42 n m
 ```
 :::
 ::::
@@ -1955,7 +1991,7 @@ Suppose, again, we have
 ```display
 n m : Nat
 h₁ : n = m
-h₂ : b = 42
+h₂ : m = 42
 trans_eq : ∀ {α : Type} {x y z : α}, x = y → y = z → x = z
 ```
 
@@ -1965,16 +2001,16 @@ What is the type of this proof object?
 trans_eq h₂ h₁
 ```
 
-1. `b = a`
-2. `42 = a`
-3. `a = 42`
+1. `m = n`
+2. `42 = n`
+3. `n = 42`
 4. Does not typecheck
 
 :::quizSolution
 ```lean +error (name := qe)
 example (n m : Nat) (h₁ : n = m) (h₂ : m = 42)
-   (trans_eq : ∀ {α : Type} {x y z : α}, x = y → y = z → x = z) : True := by
-    have := trans_eq h₂ h₁
+    (trans_eq : ∀ {α : Type} {x y z : α}, x = y → y = z → x = z) : True := by
+  have := trans_eq h₂ h₁
 ```
 
 ```leanOutput qe
@@ -2206,12 +2242,12 @@ because we don't have to invent the witness {lean}`50`:
 computation does it for us!
 
 ```lean
-example : Nat.even 100 := rfl
+example : Nat.even 100 = true := rfl
 ```
 
 Now, the useful observation is that, since the two notions are equivalent,
 we can use the boolean formulation to prove the other one
-without mentioning the value 500 explicitly:
+without mentioning the value 50 explicitly:
 
 ```lean
 example : Nat.Even 100 := by
@@ -2224,12 +2260,12 @@ in this case, larger proofs can often be made considerably simpler
 by the use of reflection.
 
 As an extreme example, a famous mechanized proof of the even more famous
-_four colour theorem_ uses reflection ot reduce the analysis of hundreds
+_four colour theorem_ uses reflection to reduce the analysis of hundreds
 of different cases to a boolean computation.
 
 Another advantage of booleans is that the _negation_ of a claim about
 booleans is straightforward to state and (when true) to prove:
-simply slip the expected boolean result.
+simply flip the expected boolean result.
 
 ```lean
 example : Nat.even 101 = false := rfl
@@ -2322,7 +2358,7 @@ theorem orb_true_iff (b1 b2 : Bool) :
 Given a boolean operator `beq` for testing equality of elements
 of some type {lean}`α`, we can define a function `beqList` for testing
 equality of lists with elements in {lean}`α`. Complete the definition
-of the `beqList` function below. to make sure that your definition
+of the `beqList` function below. To make sure that your definition
 is correct, prove the lemma `beqList_true_iff`.
 
 ```lean
@@ -2389,6 +2425,8 @@ theorem beqList_true_iff α (beq : α → α → Bool)
           exact ⟨hy hxy, ih₂ hxsys⟩
 ```
 
+:::autogradedHole beqList
+:::
 :::gradeTheorem 3 beqList_true_iff
 :::
 :::::
@@ -2434,7 +2472,7 @@ theorem List.allb_true_iff α {test : α → Bool} {l : List α} :
       · intro ⟨h₁', h₂'⟩; exact h₂ ⟨h₁', ih₂ h₂'⟩
 ```
 
-(Ungraded thought question) Are there any important properties often
+(Ungraded thought question) Are there any important properties of
 the function {lean}`List.allb` which are not captured by this specification?
 
 :::solution
@@ -2442,6 +2480,8 @@ This theorem exactly captures the input-output behavior of {lean}`List.allb`.
 However, it does not say anything about the running time.
 :::
 
+:::autogradedHole List.allb
+:::
 :::gradeTheorem 2 List.allb_true_iff
 :::
 :::::
@@ -2471,7 +2511,7 @@ but a few points are useful to understand.
 
 ## Propositional Extensionality
 
-Lean's logic is quite minimalistic. This means that on occasionally
+Lean's logic is quite minimalistic. This means that one occasionally
 encounters cases where translating standard mathematical reasoning
 into Lean is cumbersome - or even impossible - unless we enrich
 its core logic with additional axioms.
@@ -2602,8 +2642,8 @@ theorem and_assoc_eq (a b c : Prop) : ((a ∧ b) ∧ c) = (a ∧ (b ∧ c)) := b
 Here is an example of where using `=` instead of `↔` is more convenient:
 we show that it's possible to "flip" three conjoined propositions.
 
-This can be proven by constructing the `↔`, then destructing the `↔`
-in {lean}`Nat.add_comm` and {lean}`Nat.add_assoc`, then applying them a few times.
+One way to prove this is to construct the `↔`, destruct the `↔`s provided by
+{lean}`and_comm` and {lean}`and_assoc`, and apply the resulting implications a few times.
 But this is a lot of hassle, when the proof is conceptually simple:
 we flip {lean}`b` and {lean}`c`, then we flip that conjunction with {lean}`a`, and we
 finish by associativity. By using {lean}`and_comm_eq`, this is easily done
@@ -2650,6 +2690,8 @@ theorem mul_eq_0_ternary (n m p : Nat) :
   solution!
     rw [mul_eq_0, mul_eq_0, or_associate]
 ```
+:::gradeTheorem 1 mul_eq_0_ternary
+:::
 :::::
 
 :::::exercise (rating := 2) (name := "In_append_iff")
@@ -2664,6 +2706,8 @@ theorem In_append_iff (α : Type) (l l' : List α) (x : α) :
       · intro h; obtain ⟨⟨⟩⟩ | h := h; exact h
     | cons y ys ih => rw [List.cons_append, List.In_cons, List.In_cons, ih, or_assoc]
 ```
+:::gradeTheorem 2 In_append_iff
+:::
 :::::
 
 :::::exercise (rating := 1) (name := "beq_neq_false")
@@ -2678,6 +2722,8 @@ theorem beq_neq_false (n m : Nat) : (n == m) = false ↔ n ≠ m := by
     dsimp [Ne]
     rw [beq_eq_true n m]
 ```
+:::gradeTheorem 1 beq_neq_false
+:::
 :::::
 
 ## Functional Extensionality
@@ -2807,6 +2853,9 @@ theorem trRev_correct {α : Type} : @trRev α = @List.rev α := by
     ext1 xs; dsimp [trRev]
     rw [revAppend_rev, List.append_nil]
 ```
+
+:::gradeTheorem 4 trRev_correct
+:::
 :::::
 
 ::::::
@@ -2837,7 +2886,7 @@ holds. But the universally quantified {lean}`a` in {lean}`ExcludedMiddle` is an
 _arbitrary_ proposition, which we know nothing about. We don't have enough
 information to choose which of {tactic}`left` or {tactic}`right` to apply.
 
-However, in the special case where we happen to know that{lean}`a` is reflected
+However, in the special case where we happen to know that {lean}`a` is reflected
 in some boolean term {lean}`b`, knowing whether it holds or not is trivial:
 we just have to check the value of {lean}`b`.
 
@@ -2849,7 +2898,7 @@ theorem restricted_excluded_middle (a : Prop) (b : Bool) (h : a ↔ b = true) :
   | true => left; rw [h]
 ```
 
-In partiuclar, the excluded middle is valid for equations {lean}`n = m` between
+In particular, the excluded middle is valid for equations {lean}`n = m` between
 natural numbers {lean}`n` and {lean}`m`.
 
 ```lean
@@ -2982,10 +3031,10 @@ Classical.not_not {a : Prop} : ¬¬a ↔ a
 ```
 
 :::::exercise (rating := 3) (name := "excluded_middle_irrefutable")
-The following theorem implies that it is always save to assume
+The following theorem implies that it is always safe to assume
 a decidability axiom (i.e., an instance of excluded middle) for any
 _particular_ proposition {lean}`a`. Why? Because the negation of such an axiom
-leands to a contradiction. If {lean}`¬ (a ∨ ¬ a)` were provable, then by
+leads to a contradiction. If {lean}`¬ (a ∨ ¬ a)` were provable, then by
 {lean}`de_morgan_not_or` as proven above, {lean}`a ∧ ¬ a` would be provable,
 which would be a contradiction. So, it is safe to add {lean}`a ∨ ¬ a` as an axiom
 for any particular {lean}`a`.
@@ -2997,6 +3046,8 @@ theorem excluded_middle_irrefutable (a : Prop) : ¬ ¬ (a ∨ ¬ a) := by
     obtain ⟨hna, hnna⟩ := de_morgan_not_or h
     exact hnna hna
 ```
+:::gradeTheorem 3 excluded_middle_irrefutable
+:::
 :::::
 
 :::::exercise (rating := 3) (name := "not_exists_dist") (level := Advanced)
@@ -3021,9 +3072,15 @@ theorem not_exists_dist (α : Type) (p : α → Prop) :
     · exact hx
     · exfalso; apply h; exists x
 ```
+:::gradeTheorem 3 not_exists_dist
+:::
 :::::
 
-:::::exercise (rating := 5) (name := "classical_axioms")
+:::::exercise (rating := 5) (name := "classical_axioms") (optional := true)
+:::dev "Niklas Halonen (xhalo32)"
+The following exercise needs grading attributes or manual grading.
+:::
+
 For those who like a challenge, here is an exercise adapted from the Coq'Art
 book by Bertot and Casteran (p. 123). Each of the following five statements,
 together with {lean}`ExcludedMiddle`, can be considered as characterizing

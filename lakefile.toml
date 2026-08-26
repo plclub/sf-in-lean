@@ -25,15 +25,15 @@ name = "verso"
 git = "https://github.com/leanprover/verso"
 rev = "v4.33.0"
 
-[[require]] # Should come after autograder to override it's transitive dependency on batteries (TODO)
+[[require]]
 name = "batteries"
 git = "https://github.com/leanprover-community/batteries"
 rev = "v4.33.0"
 
 [[require]]
-name = "autograder"
-git = "https://github.com/plclub/lean4-autograder-main"
-rev = "comparator-4.33.0"
+name = "comparator-autograder"
+git = "https://github.com/plclub/comparator-autograder"
+rev = "main"
 
 [[lean_lib]]
 name = "Bib"
@@ -46,6 +46,9 @@ name = "Credits"
 
 [[lean_lib]]
 name = "SFLMeta"
+
+[[lean_lib]]
+name = "SFLCompat"
 
 # Each volume library tells its chapters which volume they belong to; the
 # `volumes` table in `SFLMeta/Volume.lean` turns the slug into a number and a
