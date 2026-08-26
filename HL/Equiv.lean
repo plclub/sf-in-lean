@@ -836,10 +836,18 @@ example :
     · apply Com.equiv_refl
 ```
 
+:::::exercise (rating := 3) (name := "not_congr") (level := Advanced) (manual := true)
+We've shown that the `Com.Equiv` relation is both an equivalence and
+a congruence on commands.  Can you think of a relation on commands
+that is an equivalence but _not_ a congruence?  Write down the
+relation (formally), together with an informal sketch of a proof
+that it is an equivalence and a counterexample showing it is not a
+congruence.
+:::::
+
 :::dev "Sati (satiscugcat)"
 ```
 NOT PORTED YET - remaining portions of Equiv.v left (apart from the portions explicitly stated so far).
-  - The rest of "Behavioural Equivalence is a Congruence"
   - The section on "Program Transformation"
   - Soundness of (0 + n) Elimination
   - Extended Exercise: Nondeterministic Imp
