@@ -470,6 +470,13 @@ equal, inductive types must have the same constructors, and records must have
 the same fields. With the `+statement` option, only the type signature is
 restated and not the declaration body.
 
+`recall` can restate a universe-polymorphic declaration without universe parameters when the
+restatement is a valid specialization.
+To enforce the restatement has the exact universe-parameters,
+use `+strictUniverse` to disable the specialization check.
+`+statement` option cannot be combined with `+strictUniverse`,
+and  `+strictUniverse` does not apply to `recallSource`.
+
 In a `recallSource` block, the restated
 declaration must be equal verbatim, down to indentation and line breaks;
 this is useful for showing the exact syntax of the declaration.
