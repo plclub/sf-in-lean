@@ -122,10 +122,10 @@ example : Bexp.Equiv
 ```lean
 def Com.Equiv (c₁ c₂ : Com) : Prop :=
     ∀ {st st' : State},
-      (st =[ c₁ ]=> st') ↔ (st =[ c₂ ]=> st')
+      (st =[ ~c₁ ]=> st') ↔ (st =[ ~c₂ ]=> st')
 
 theorem Com.equiv_def {c₁ c₂ : Com} : c₁.Equiv c₂ ↔
-    ∀ {st st' : State}, (st =[ c₁ ]=> st') ↔ (st =[ c₂ ]=> st') := by rfl
+    ∀ {st st' : State}, (st =[ ~c₁ ]=> st') ↔ (st =[ ~c₂ ]=> st') := by rfl
 ```
 
 ## Simple Examples
