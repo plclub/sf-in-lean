@@ -658,7 +658,7 @@ program!
 
 
 ```lean
-theorem Com.congruence.asgn {x : Ident} {a a' : Aexp} (ha : a.Equiv a') :
+theorem Com.congruence_asgn {x : Ident} {a a' : Aexp} (ha : a.Equiv a') :
     (imp {x := ~a}).Equiv
     (imp {x := ~a'}) := by
   rw [equiv_def]
@@ -713,7 +713,7 @@ equivalent to `c'`.  We must show, for every `st` and `st'`, that
 ::::
 
 ```lean
-theorem Com.congruence.while {b b' : Bexp} {c c' : Com} (hb : b.Equiv b') (hc : c.Equiv c') :
+theorem Com.congruence_while {b b' : Bexp} {c c' : Com} (hb : b.Equiv b') (hc : c.Equiv c') :
     (imp {while (~b) {~c}}).Equiv
     (imp {while (~b') {~c'}}) := by
   workinclass!
@@ -759,9 +759,9 @@ theorem Com.congruence.while {b b' : Bexp} {c c' : Com} (hb : b.Equiv b') (hc : 
       | skip | asgn | seq | ifTrue | ifFalse =>
         contradiction
 ```
-:::::exercise (rating := 3) (name := "Com.congruence.seq") (optional := true)
+:::::exercise (rating := 3) (name := "Com.congruence_seq") (optional := true)
 ```lean
-theorem Com.congruence.seq {c1 c1' c2 c2' : Com} (hc1 : c1.Equiv c1') (hc2 : c2.Equiv c2') :
+theorem Com.congruence_seq {c1 c1' c2 c2' : Com} (hc1 : c1.Equiv c1') (hc2 : c2.Equiv c2') :
     (imp {~c1 ; ~c2}).Equiv (imp {~c1' ; ~c2'}) := by
   solution!(
     intro st st'
@@ -782,9 +782,9 @@ theorem Com.congruence.seq {c1 c1' c2 c2' : Com} (hc1 : c1.Equiv c1') (hc2 : c2.
 ```
 :::::
 
-:::::exercise (rating := 3) (name := "Com.congruence.if") 
+:::::exercise (rating := 3) (name := "Com.congruence_if") 
 ```lean
-theorem Com.congruence.if {b b' : Bexp} {c1 c1' c2 c2' : Com} (hb : b.Equiv b') (hc1 : c1.Equiv c1') (hc2 : c2.Equiv c2') :
+theorem Com.congruence_if {b b' : Bexp} {c1 c1' c2 c2' : Com} (hb : b.Equiv b') (hc1 : c1.Equiv c1') (hc2 : c2.Equiv c2') :
     (imp {if (~b) {~c1} else {~c2}}).Equiv
     (imp {if (~b') {~c1'} else {~c2'}}) := by
   solution!(
@@ -826,11 +826,11 @@ For example, here are two programs and a proof of their equivalence using their 
 example :
     (imp {X := 0; if (X = 0) {Y := 0} else {Y := 42}}).Equiv
     (imp {X := 0; if (X = 0) {Y := X - X} else {Y := 42}}) := by
-  apply Com.congruence.seq
+  apply Com.congruence_seq
   · apply Com.equiv_refl
-  · apply Com.congruence.if
+  · apply Com.congruence_if
     · apply Bexp.equiv_refl
-    · apply Com.congruence.asgn
+    · apply Com.congruence_asgn
       rw [Aexp.equiv_def]
       simp
     · apply Com.equiv_refl
