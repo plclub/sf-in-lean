@@ -62,15 +62,10 @@ example : (two * two : NatPlayground.Nat) = four := by
   rfl
 ```
 
-We made Lean enforce this pedagogical style using the `@irreducible`
-attribute on definitions like {name}`mul`
-and {name}`add`. This ensured that definitions  be
-fully simplified using {tactic}`rw` with simplification rules like
-{name}`two_eq_succ_one`.
-:::dev "Benjamin Pierce (bcpierce00)"
-That last sentence is not very clear.  "that definitions be
-fully simplified" does not parse, but I'm not sure whether to add "will" or "can" or something else...
-:::
+We made Lean enforce this pedagogical style using `attribute [irreducible]`
+on definitions like {name}`mul`
+and {name}`add`. This forced us to write proofs using tactics like {tactic}`rw`
+rather than simplifying definitions.
 
 This approach is useful in a textbook for understanding the structure of
 natural numbers and for providing early practice with writing proofs. But it
@@ -237,6 +232,10 @@ theorem mul_three_beq (n : Nat) :
 
 # Structuring Proofs with {tactic}`calc`
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
+::::full
 In Lean proofs, long {tactic}`rw` chains are useful, but they are sometimes
 hard to read because the intermediate goals are invisible. Furthermore,
 sometimes we _know_ exactly how we want to manipulate the terms of a proof, but
@@ -259,6 +258,11 @@ look at it this way. Let's look at how we might prove this theorem
 (i.e., that `n + (m + k) = m + (n + k)`) in Lean.
 
 First, a proof in the style we already know.
+::::
+
+::::terse
+The {tactic}`calc` can be used to make long chains of rewrites easier to follow:
+::::
 
 ```lean
 example (n m k : Nat) : n + (m + k) = m + (n + k) := by
@@ -324,71 +328,110 @@ uses, and both will be tools in your ever-growing toolbox of tactics.
 :::::
 
 
-# Definitional Simplification: {tactic}`dsimp`
+# Unfolding definitions with {tactic}`rw`
 
-Often, rather than repeatedly rewriting by a known equation like
-`rw [Nat.mul_zero, Nat.mul_zero]` to solve a goal like
-`n * (m * 0) = 0`,
-we just want to simplify the function (here {name}`Nat.mul`) automatically when we can.
+Here are some definitions about {name}`Nat`s:
 
-The {tactic}`dsimp` ("definitionally simplify") tactic unfolds definitions
-and performs definitional simplifications. You can give it hints in
-square brackets: `dsimp [f]` tells it to unfold the definition of `f`.
-You can also simplify a hypothesis `h` in the context by writing
-`dsimp [...] at h`. {tactic}`dsimp` will also close goals by {tactic}`rfl` when possible.
+```lean
+def addTwice (n : Nat) : Nat := n + n
+def addThrice (n : Nat) : Nat := n + n + n
+```
+
+A simple example of something we might wish to prove about these two things
+is that adding `n` to `addTwice n` is the same as `addThrice n`. One might
+hope to proceed by {tactic}`rfl`, but this doesn't quite work:
+
+```lean +error (name := triple_error)
+example (n : Nat) : addThrice n = n + addTwice n := by
+  rfl
+```
+
+```leanOutput triple_error
+Tactic `rfl` failed: The left-hand side
+  addThrice n
+is not definitionally equal to the right-hand side
+  n + addTwice n
+
+n✝ n : Nat
+⊢ addThrice n = n + addTwice n
+```
+
+What happened here? If we are careful with our parentheses here,
+we can write the goal we'd like to prove as `(addThrice n) = n + (addTwice n)`.
+Unfolding definitions, we can see that this is equivalent to:
+
+```display
+n + n + n = n + (n + n)
+```
+
+which, when we are more explicit about parenthesization, is equivalent to:
+
+```display
+(n + n) + n = n + (n + n)
+```
+
+These two things are not definitionally equal, so we cannot use {tactic}`rfl` here, hence
+our error from earlier. The next thing we might want to try is rewriting by {name}`Nat.add_assoc`;
+which would give us a syntactically equal equality as our goal:
+
+
+```lean +error (name := triple_comm_error)
+example (n : Nat) : addThrice n = n + addTwice n := by
+  rw [Nat.add_assoc]
+```
+
+```leanOutput triple_comm_error
+Tactic `rewrite` failed: Did not find an occurrence of the pattern
+  ?n + ?m + ?k
+in the target expression
+  addThrice n = n + addTwice n
+
+n✝ n : Nat
+⊢ addThrice n = n + addTwice n
+```
+
+But again we encounter an error! The expression in which we are trying to rewrite
+{name}`Nat.add_assoc` isn't of the form `n + m + k`, so we can't proceed. What then, should we do?
+To proceed here, we need to reveal to Lean the underlying structure of `addThrice` and `addTwice`,
+which we can do by rewriting by those definitions:
+
+```lean
+example (n : Nat) : addThrice n = n + addTwice n := by
+  -- `rw addThrice]` unfolds `addThrice`, replacing it with its definition
+  rw [addThrice]
+  -- this likewise unfolds `addTwice`
+  rw [addTwice]
+  -- Now, proving our goal only requires associativity of additions
+  rw [Nat.add_assoc]
+```
+
+Unfolding definitions in goals and hypotheses like this let us guide Lean into
+simplifying expressions and allowing it to rewrite by more theorems in more places.
+
+:::::exercise (rating := 2) (name := "rwUnfold")
+Complete this proof, using {tactic}`rw` to unfold the definition of `addThrice` as appropriate.
+
+```lean
+theorem rwUnfold (n m : Nat) (h : m = n) : addThrice m = n + (n + n) := by
+  solution!
+    rw [h, addThrice, Nat.add_assoc]
+```
+
+:::gradeTheorem 2 rwUnfold
+:::
+:::::
+
+Rewriting by definitions also works in hypotheses, which {tactic}`rfl` can't touch.
 
 ```lean
 def square (n : Nat) : Nat := n * n
 
-def triple (n : Nat) : Nat := n + n + n
-```
-
-When the goal depends on a fact about an unknown value, {tactic}`rfl` fails.
-Here, {tactic}`dsimp` makes progress, exposing a goal the fact can close.
-
-```lean
-example (n m : Nat) (h : n + n = m) : triple n = m + n := by
-  -- rfl will not work here!
-  dsimp [triple]
-  -- The goal can now be rewritten by `h`.
-  rw [h]
-```
-
-As we have seen, {tactic}`rw` can also unfold definitions. In this example,
-either style is fine: use `dsimp [triple]` when you want to emphasize
-definitional simplification, or `rw [triple, h]` when the proof is just
-a sequence of rewrites.
-
-```lean
-example (n m : Nat) (h : n + n = m) : triple n = m + n := by
-  -- `rw [triple]` unfolds `triple n`.
-  rw [triple, h]
-```
-
-:::::exercise (rating := 2) (name := "dsimp1")
-Complete this proof, using {tactic}`dsimp` or {tactic}`rw` as appropriate.
-
-```lean
-theorem dsimp1 (n m : Nat) (h : m = n) : triple m = n + (n + n) := by
-  solution!
-    rw [h]
-    dsimp [triple]
-    rw [Nat.add_assoc]
-```
-
-:::gradeTheorem 2 dsimp1
-:::
-:::::
-
-`dsimp at h` also works on hypotheses, which {tactic}`rfl` can't touch.
-
-```lean
 example (n : Nat) (h : square n = 16) : n * n = 16 := by
-  dsimp [square] at h
+  rw [square] at h
   exact h
 ```
 
-Aside: `rw [...] at h` also works on hypotheses too, as does `rw? at h`
+Aside: `rw? at h` also works on hypotheses:
 
 ```lean
 example (n m : Nat) (h : 2 * n = m * 2) : n + n = m + m := by
@@ -397,7 +440,7 @@ example (n m : Nat) (h : 2 * n = m * 2) : n + n = m + m := by
 ```
 
 But {tactic}`rw` rewrites only one instance of a definition at a time.
-When a hypothesis mentions the same function at several different
+When a hypothesis or goal mentions the same function at several different
 arguments, each one needs its own rewrite.
 
 ```lean
@@ -407,69 +450,19 @@ example (n m k : Nat) (h : square n + square m + square k = 0) :
   exact h
 ```
 
-{tactic}`dsimp` unfolds _every_ instance at once, so one hint suffices no
-matter how many times the definition appears.
+We have previously seen the same issue with lemmas, leading to situations
+in which we have to rewrite multiple times in a row by lemmas like `add_zero`.
+To make this situation a bit better, we can use the {tactic}`repeat` tactic combinator,
+which repeats the same tactic as many time as it can:
 
 ```lean
 example (n m k : Nat) (h : square n + square m + square k = 0) :
     n * n + m * m + k * k = 0 := by
-  dsimp [square] at h
+  repeat rw [square] at h
   exact h
 ```
 
-{tactic}`dsimp` also takes definitional steps such as `+ 0`,
-so it can finish goals that {tactic}`rfl` would close.
-
-```lean
-example (n : Nat) : square n + 0 = n * n := by
-  dsimp [square]
-```
-
-In the above example, using {tactic}`rw` would not have closed the proof:
-
-```lean +error (name := rwNotDone)
-example (n : Nat) : square n + 0 = n * n := by
-  rw [square]
-```
-
-```leanOutput rwNotDone
-unsolved goals
-n✝ n : Nat
-⊢ n * n + 0 = n * n
-```
-
-Like {tactic}`rw` and {tactic}`exact`, {tactic}`dsimp` also has a `?` version
-that searches for functions to simplify by. Many Lean tactics have `?`
-versions; try it out if you are unsure.
-
-:::dev "Mike Hicks (@mwhicks1)"
-Yipeng said we can pass a theorem, e.g. `dsimp [Nat.mul_zero]`, which would rewrite `Nat.mul_zero`
-many times and then perform reductions, just like simp `[Nat.mul_zero]`. Also `@[defeq] lemmas`
-in the `simp` set are always used implicitly.
-
-Should `dsimp [Nat.mul_zero]` be preferred over `dsimp [Nat.mul]`? An example:
-```lean
-example (n : Nat) : n * (n * (n * 0)) = 0 := by
-  rw [Nat.mul_zero, Nat.mul_zero, Nat.mul_zero]
-
-example (n : Nat) : n * (n * (n * 0)) = 0 := by
-  dsimp [Nat.mul]
-
-example (n : Nat) : n * (n * (n * 0)) = 0 := by
-  dsimp [Nat.mul_zero]
-```
-This could be confusing though, because rewriting by `dsimp` only works for _definitional_
-equalities. The following doesn't work
-```lean +error
-example (n : Nat) : (((0 * n) * n) * n) = 0 := by
-  dsimp [Nat.zero_mul]
-```
-This is because `Nat.zero_mul` is true by induction, not reduction. This is a bit confusing
-to explain, and also unfortunate since one may not know why an equality holds. Thus I'd
-prefer not to include this use here.
-:::
-
-## A New Step Towards Automation
+## A First Step Towards Automation
 
 :::suppressPreviousHeaderWhenTerse
 :::
@@ -478,25 +471,24 @@ prefer not to include this use here.
 In the section on
 {ref "Logical-Foundations--Basics___-Functional-Programming-in-Lean--Proof-by-Rewriting--Irreducibility___-Rewriting___-and-Proof-Engineering"}[Irreducibility, Rewriting, and Proof Engineering]
 in {ref "Basics"}[Basics], we hinted at introducing more automated
-tactics than {tactic}`rewrite` for writing proofs. The first of these
-is {tactic}`dsimp`: by using {tactic}`dsimp`, we allow Lean to
-introduce a small amount of its own automatic reasoning using other
-basic tactics like {tactic}`rfl`. If you're ever confused by what
-{tactic}`dsimp` is doing, don't be afraid to switch back to
-{tactic}`rewrite` to examine what's going on.
+tactics than {tactic}`rw` for writing proofs. By using Lean's
+computation engine to automatically simplify terms
+when using tactics like {tactic}`rfl` or after unfolding via {tactic}`rw`,
+we allow Lean to introduce a small amount of its own automatic reasoning.
 
 Later in the {ref "Automation"}[Automation] chapter, we will
 introduce the more powerful automated tactic {tactic}`simp`,
 which can sometimes solve complex goals by itself and is
 accordingly extremely common in real-world Lean developments.
+We'll also talk more about tactic combinators like {tactic}`repeat`.
 
-But, using this tactic now does not help (in fact, it hurts!) the
+But, using these tools now does not help (in fact, it hurts!) the
 process of learning logical reasoning, formal theorem proving, and
 Lean. Additionally, real Lean programmers are careful when using
 automation: it can hurt the readability of a proof, and real-world
 Lean is often used to _communicate_ a result as much as to prove
-it. We will continue to use only simple tactics, like {tactic}`dsimp`
-and {tactic}`rw`, for most of this volume so that you have a firm
+it. We will continue to use only simple tactics and {tactic}`rw`,
+for most of this volume so that you have a firm
 grasp of both the logic behind the proofs you are writing and the
 ways to structure those proofs to make your logic clear.
 ::::
