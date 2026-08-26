@@ -73,7 +73,7 @@ def div2 (n : Nat) : Nat :=
   | n' + 2 => div2 n' + 1
 
 def collatzStep (n : Nat) : Nat :=
-  if n.even then div2 n
+  bif n.even then div2 n
   else (3 * n) + 1
 ```
 
@@ -102,7 +102,7 @@ the recursive call, {lean}`collatzStep n`, is not "obviously smaller" than {lean
 
 ```lean -keep +error (name := reaches1In)
 def reaches1In (n : Nat) : Nat :=
-  if n == 1 then 0
+  bif n == 1 then 0
   else 1 + reaches1In (collatzStep n)
 ```
 
@@ -121,7 +121,6 @@ failed to prove termination, possible solutions:
   - Use `termination_by` to specify a different well-founded relation
   - Use `decreasing_by` to specify your own tactic for discharging this kind of goal
 n : Nat
-h✝ : ¬(n == 1) = true
 ⊢ collatzStep n < n
 ```
 
@@ -1187,7 +1186,7 @@ Here's how {tactic}`inversion` works in general.
   to establish the original goal. For those, {tactic}`inversion` adds
   to the proof context all equations that must hold of the
   arguments given to `p` ─ e.g., {lean}`n' = n` in the proof of
-  {name}`ev_succ_succ_ev`.
+  {name}`Even.succ_succ_even`.
 ::::
 
 ::::quiz
@@ -1201,7 +1200,7 @@ Which tactics are needed to prove this goal, in addition to
 {tactic}`apply` or {tactic}`exact`?
 
 ```display
-∀ n, Ev (2 + n) → Ev n
+∀ n, Even (2 + n) → Even n
 ```
 
 (A) {tactic}`inversion`
@@ -1211,7 +1210,7 @@ Which tactics are needed to prove this goal, in addition to
 
 :::quizSolution
 ```lean
-example (n : Nat) (h : Ev (2 + n)) : Ev n := by
+example (n : Nat) (h : Even (2 + n)) : Even n := by
   rw [Nat.add_comm] at h
   inversion h with | _ h => exact h
 ```
@@ -1222,7 +1221,7 @@ example (n : Nat) (h : Ev (2 + n)) : Ev n := by
 :::
 
 ::::full
-The {name}`Ev.double` exercise above allows us to easily show that
+The {name}`Even.double` exercise above allows us to easily show that
 our new notion of evenness is implied by the two earlier ones
 (since, by {name}`Nat.even_bool_prop` in the {ref "Logic"}[Logic] chapter,
 we already know that those are equivalent to each other). To show that all
@@ -1239,7 +1238,7 @@ This whole part of the section is a mess!!
 :::
 
 ````lean +error
-example (n : Nat) : Ev n → Nat.Even n := by
+example (n : Nat) : Even n → Nat.Even n := by
   /- We could try to proceed by case analysis or induction on `n`.  But
       since `Ev` is mentioned in a premise, this strategy seems
       unpromising, because (as we've noted before) the induction
@@ -1314,33 +1313,33 @@ providing an induction hypothesis for each recursive occurrence of
 the property in question.
 
 To prove that a property of {lean}`n` holds for all even numbers
-(i.e., those for which {lean}`Ev n` holds), we can use induction on
-{lean}`Ev n`. This requires us to prove two things, corresponding to
-the two ways in which {lean}`Ev n` could have been constructed. If it
-was constructed by {lean}`Ev.ev_0`, then {lean}`n = 0` and the
+(i.e., those for which {lean}`Even n` holds), we can use induction on
+{lean}`Even n`. This requires us to prove two things, corresponding to
+the two ways in which {lean}`Even n` could have been constructed. If it
+was constructed by {lean}`Even.zero`, then {lean}`n = 0` and the
 property must hold of {lean}`0`. If it was constructed by
-{lean}`Ev.ev_succ_succ`, then the evidence of {lean}`Ev n`
+{lean}`Even.succ_succ`, then the evidence of {lean}`Even n`
 is of the form `Ev.ev_succ_succ n' h'`, where {lean}`n = n' + 2` and
-`h'` is evidence for {lean}`Ev n'`. In this case, the inductive hypothesis
+`h'` is evidence for {lean}`Even n'`. In this case, the inductive hypothesis
 says that the property we are trying to prove holds for {lean}`n'`.
 ::::
 
 Let's try proving that lemma again:
 
 ```lean
-theorem Nat.ev_Even (n : Nat) (h : Ev n) : Even n := by
+theorem even_even (n : Nat) (h : Even n) : Nat.Even n := by
   induction h with
   -- h = ev_0
-  | ev_0 => exists 0 -- (`0 = double 0` is closed by `exists`'s final `rfl`)
+  | zero => exists 0 -- (`0 = double 0` is closed by `exists`'s final `rfl`)
   -- h = ev_succ_succ n' h', with ih : Even n'
-  | ev_succ_succ h' ih =>
+  | succ_succ h' ih =>
     let ⟨k, hk⟩ := ih
-    exists k + 1; rw [double_succ, hk]
+    exists k + 1; rw [Nat.double_succ, hk]
 ```
 
 ::::full
 Here, we can see that Lean produced an `ih` that corresponds
-to `h`, the single recursive occurrence of {name}`Ev` in its own
+to `h`, the single recursive occurrence of {name}`Even` in its own
 definition.  Since `h'` mentions {lean}`n'`, the induction hypothesis
 talks about {lean}`n'`, as opposed to {lean}`n` or some other number.
 ::::
@@ -1350,10 +1349,10 @@ The equivalence between the second and third definitions of
 evenness now follows.
 
 ```lean
-theorem Nat.ev_Even_iff (n : Nat) : Ev n ↔ Even n := by
+theorem even_even_iff (n : Nat) : Even n ↔ Nat.Even n := by
   apply Iff.intro
-  . intro h; exact Nat.ev_Even _ h
-  . intro ⟨k, hk⟩; rw [hk]; exact Ev.double k
+  . intro h; exact even_even _ h
+  . intro ⟨k, hk⟩; rw [hk]; exact Even.double k
 ```
 
 As we will see in later chapters, induction on evidence is a
@@ -1365,27 +1364,27 @@ technique, to help you familiarize yourself with it.
 
 :::::exercise (rating := 2) (name := "ev_sum")
 ```lean
-theorem ev_sum (n m : Nat) (hₙ : Ev n) (hₘ : Ev m) : Ev (n + m) := by
+theorem even_add (n m : Nat) (hₙ : Even n) (hₘ : Even m) : Even (n + m) := by
   solution!
     induction hₙ with
-    | ev_0 => rw [Nat.zero_add]; exact hₘ
-    | ev_succ_succ h' ih =>
-      rw [Nat.add_comm, ← Nat.add_assoc, Nat.add_comm m]
-      apply Ev.ev_succ_succ; exact ih
+    | zero => rw [Nat.zero_add]; exact hₘ
+    | succ_succ h' ih =>
+      rw [Nat.add_comm, Nat.add_succ, Nat.add_succ, Nat.add_comm]
+      apply Even.succ_succ; exact ih
 ```
 :::::
 
 :::::exercise (rating := 3) (name := "ev_ev__ev") (level := Advanced)
 ```lean
-theorem ev_ev__ev (n m : Nat) (hₙₘ : Ev (n + m)) (hₙ : Ev n) : Ev m := by
+theorem even_add_even (n m : Nat) (hₙₘ : Even (n + m)) (hₙ : Even n) : Even m := by
   /- Hint: There are two pieces of evidence you could attempt to induct upon
       here. If one doesn't work, try the other. -/
   solution!
     induction hₙ generalizing m with
-    | ev_0 => rw [Nat.zero_add] at hₙₘ; exact hₙₘ
-    | ev_succ_succ h' ih =>
-      apply ih; rw [Nat.add_comm, ←Nat.add_assoc, Nat.add_comm m] at hₙₘ
-      inversion hₙₘ; assumption
+    | zero => rw [Nat.zero_add] at hₙₘ; exact hₙₘ
+    | succ_succ h' ih =>
+      rw [Nat.add_comm, Nat.add_succ, Nat.add_succ, Nat.add_comm] at hₙₘ
+      inversion hₙₘ; apply ih; assumption
 ```
 :::::
 
@@ -1396,20 +1395,20 @@ Hint: Is {lean}`(n + m) + (n + k)` even?
 
 ```lean
 theorem ev_plus_plus (n m k : Nat)
-    (hₙₘ : Ev (n + m))
-    (hₙₚ : Ev (n + k)) :
-    Ev (m + k) := by
+    (hₙₘ : Even (n + m))
+    (hₙₚ : Even (n + k)) :
+    Even (m + k) := by
   solution!
-    apply (ev_ev__ev (n + n))
+    apply (even_add_even (n + n))
     . have h : n + n + (m + k) = n + m + (n + k) := by
         rw [Nat.add_assoc, Nat.add_assoc]
         congr 1
         exact Nat.add_left_comm _ _ _
       rw [h]
-      apply ev_sum
+      apply even_add
       . assumption
       . assumption
-    . rw [← Nat.double_add]; exact Ev.double n
+    . rw [← Nat.double_add]; exact Even.double n
 ```
 :::::
 
@@ -1475,17 +1474,14 @@ The characterizing lemmas for `∈` are called
 ::::full
 Recall the definition of the reflexive, transitive, closure of a relation:
 
-```lean
-namespace ClosReflTransRemainder
-
-inductive ClosReflTrans {α : Type} (R : α → α → Prop) : α → α → Prop where
-  | rt_step {x y : α} (h : R x y) : ClosReflTrans R x y
-  | rt_refl {x : α} : ClosReflTrans R x x
-  | rt_trans {x y z : α}
-    (h₁ : ClosReflTrans R x y)
-    (h₂ : ClosReflTrans R y z) :
-    ClosReflTrans R x z
-end ClosReflTransRemainder
+```recall
+inductive ReflTransGen {α : Type} (r : α → α → Prop) : α → α → Prop where
+  | step {x y : α} (h : r x y) : ReflTransGen r x y
+  | refl {x : α} : ReflTransGen r x x
+  | trans {x y z : α}
+    (h₁ : ReflTransGen r x y)
+    (h₂ : ReflTransGen r y z) :
+    ReflTransGen r x z
 ```
 
 Let's say that a relation on a type {lean}`α` is _diagonal_ if it
@@ -1508,13 +1504,13 @@ Now consider the following lemma about diagonal relations:
 ```lean
 theorem closure_of_diagonal_is_diagonal {α} (R : α → α → Prop)
     (hDiag : Diagonal R) :
-    Diagonal (ClosReflTrans R) := by
+    Diagonal (ReflTransGen R) := by
   intro x y h
   induction h with
   /- The two first cases go as you'd expect... -/
-  | rt_step hr =>
+  | step hr =>
     rw [hDiag hr]
-  | rt_refl => rfl
+  | refl => rfl
   /- ...  but something interesting happens here: there are two
        induction hypotheses, `ih` and `ih'`! If you think about it, it
        is not that weird: we are in the case `rt_trans`, which has
@@ -1524,7 +1520,7 @@ theorem closure_of_diagonal_is_diagonal {α} (R : α → α → Prop)
        called `ihxy` and `ihyz` here. In general, Lean will always
        generate one induction hypothesis per recursive constructor of
        the type being inducted over. -/
-  | rt_trans _ _ ihxy ihyz => rw [ihxy, ihyz]
+  | trans _ _ ihxy ihyz => rw [ihxy, ihyz]
 ```
 
 :::dev
@@ -1575,18 +1571,20 @@ technique works with constructors of inductively defined
 propositions.
 
 ```lean
-theorem ev'_ev n : Ev' n ↔ Ev n := by
+theorem ev'_ev n : Ev' n ↔ Even n := by
   solution!
     apply Iff.intro
     . /- → -/
       intro h; induction h
       . constructor
       . constructor; constructor
-      . apply ev_sum; assumption; assumption
-    . /- <- -/
-      intro h; induction h
-      . constructor
-      . constructor; assumption; constructor
+      . apply even_add; assumption; assumption
+    . /- ← -/
+      intro h; induction h with
+      | zero => constructor
+      | @succ_succ n _ _ =>
+        rw [← Nat.add_zero n, ← Nat.add_succ]
+        constructor; assumption; constructor
 ```
 :::::
 
@@ -1611,10 +1609,10 @@ namespace Perm3
 theorem symm {α} (l₁ l₂ : List α)
     (h : Perm3 l₁ l₂) : Perm3 l₂ l₁ := by
   induction h with
-  | perm3_swap12 => constructor
-  | perm3_swap23 => constructor
-  | perm3_trans _ _ ih₁₂ ih₂₃ =>
-    exact perm3_trans ih₂₃ ih₁₂
+  | swap12 => constructor
+  | swap23 => constructor
+  | trans _ _ ih₁₂ ih₂₃ =>
+    exact trans ih₂₃ ih₁₂
 ```
 
 :::::exercise (rating := 2) (name := "Perm3_In")
@@ -1627,21 +1625,21 @@ theorem In {α} (x : α) (l₁ l₂ : List α)
     (hPerm : Perm3 l₁ l₂) (hIn : x ∈ l₁) : x ∈ l₂ := by
   solution!
     induction hPerm with
-    | perm3_swap12 =>
+    | swap12 =>
       rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
       obtain h | h | h | h := hIn
       . right; left; assumption
       . left; assumption
       . right; right; left; assumption
       . contradiction
-    | perm3_swap23 =>
+    | swap23 =>
       rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
       obtain h | h | h | h := hIn
       . left; assumption
       . right; right; left; assumption
       . right; left; assumption
       . contradiction
-    | perm3_trans _ _  ih₁₂ ih₂₃ =>
+    | trans _ _  ih₁₂ ih₂₃ =>
       apply ih₂₃; apply ih₁₂; apply hIn
 ```
 :::::
@@ -1709,7 +1707,7 @@ For now FULLED the whole thing, but better fix seems needed.
 Just as a single-argument proposition defines a _property_,
 a two-argument proposition defines a _relation_.
 
-A proposition parameterized by a number (such as {name}`Ev`)
+A proposition parameterized by a number (such as {name}`Even`)
 can be thought of as a _property_ — i.e., it defines
 a subset of {name}`Nat`, namely those numbers for which the proposition
 is provable.  In the same way, a two-argument proposition can be
@@ -1736,7 +1734,7 @@ moving them to the left of the colons.)
 
 Proofs of facts about `≤` using the constructors {name}`Nat.le.refl` and
 {name}`Nat.le.step` follow the same patterns as proofs about properties, like
-{name}`Ev` above. We can {tactic}`apply` the constructors to prove `≤`
+{name}`Even` above. We can {tactic}`apply` the constructors to prove `≤`
 goals (e.g., to show that {lean}`3 ≤ 3` or {lean}`3 ≤ 6`), and we can use
 tactics like {tactic}`inversion` to extract information from `≤`
 hypotheses in the context (e.g., to prove that {lean}`(2 ≤ 1) → 2 + 2 = 5`.)
