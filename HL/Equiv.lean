@@ -717,7 +717,29 @@ theorem Com.congruence.while {b b' : Bexp} {c c' : Com} (hb : b.Equiv b') (hc : 
     (imp {while (~b) {~c}}).Equiv
     (imp {while (~b') {~c'}}) := by
   workinclass!
-    sorry
+    intro st st'
+    constructor
+    · intro h
+      generalize heq : (imp {while (~b) {~c}}) = com at h
+      induction h with
+      | whileFalse hb' =>
+        injection heq with hbeq hceq
+        subst hbeq
+        apply Com.EvalR.whileFalse
+        rw [← hb]
+        exact hb'
+      | whileTrue hb' hc' hwhile _ ih2 =>
+        injection heq with beq ceq
+        subst beq ceq
+        rw [hb] at hb'
+        specialize ih2 (by rfl)
+        apply Com.EvalR.whileTrue <;> try assumption
+        · 
+          --- rw [← hc]
+          sorry
+      | skip | asgn | seq | ifTrue | ifFalse =>
+        contradiction
+    · sorry
 ```
 
 
