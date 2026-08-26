@@ -953,7 +953,49 @@ def Bexp.fold_constants (b : Bexp) : Bexp :=
     | bexp { false }, bexp { false } => bexp { false }
     | b1', b2' => bexp { ~b1' ∧ ~b2' }
 ```
+```lean
+example : (bexp { true ∧ ¬( false ∧ true) }).fold_constants = (bexp { true }) := by rfl
+example : (bexp { (X = Y) ∧ ( 0 = (2 - (1 + 1))) }).fold_constants = (bexp { (X = Y) ∧ true }) := by rfl
+```
 
+::::full
+To fold constants in a command, we simply apply the
+appropriate folding functions on all embedded expressions.
+::::
+```lean
+def Com.fold_constants (c : Com) : Com :=
+  match c with
+  | imp { skip } => imp { skip }
+  | imp { x := ~a } => imp { x := ~a.fold_constants }
+  | imp { ~c1 ; ~c2 } =>  imp { ~c1.fold_constants ; ~c2.fold_constants }
+  | imp { if (~b) {~c1} else {~c2}} =>
+    match b.fold_constants with
+    | bexp { true } => c1.fold_constants
+    | bexp { false } => c2.fold_constants
+    | b' => imp { if (~b') {~c1.fold_constants} else {~c2.fold_constants}}
+  | imp { while (~b) {~c}} =>
+    match b.fold_constants with
+    | bexp { true } => imp { while (true) { skip }}
+    | bexp { false } => imp { skip }
+    | b' => imp { while (~b') {~c.fold_constants}}
+```
+```lean
+example :
+  (imp {
+    X := 4 + 5;
+    Y := X - 3;
+    if ((X - Y) = (2 + 4)) {skip} else {Y := 0};
+    if (0 ≤ (4 - (2 - 1))) {Y := 0} else {skip};
+    while (Y = 0) {X := X+1}
+  }).fold_constants =
+  (imp {
+    X := 9;
+    Y := X - 3;
+    if ((X - Y) = 6) {skip} else {Y := 0};
+    Y := 0;
+    while (Y = 0) {X := X+1}
+  }) := by rfl
+```
 :::dev "Sati (satiscugcat)"
 ```
 NOT PORTED YET - remaining portions of Equiv.v left (apart from the portions explicitly stated so far).
