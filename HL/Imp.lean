@@ -1122,10 +1122,15 @@ def delabTriple : Delab := whenPPOption getPPNotation do
 end Delab
 end HasEval
 
+open scoped HasEval
+
 instance : HasEval Com State State where
   Eval := Com.EvalR
 
-open scoped HasEval
+@[app_unexpander Com.EvalR]
+def Com.unexpandEvalR : Lean.PrettyPrinter.Unexpander
+  | `($_ $c $st0 $st1) => ``($st0 =[ ~$c ]=> $st1)
+  | _ => throw ()
 ```
 ::::
 
