@@ -905,7 +905,7 @@ theorem not_true_is_false' (b : Bool) (h : b ≠ true) : b = false := by
   | false => rfl
   | true =>
     exfalso
-    dsimp [Ne, Not] at h
+    rw [Ne, Not] at h
     apply h
     rfl
 ```
@@ -1117,7 +1117,7 @@ def DiscrFun (n : Nat) : Prop :=
 theorem discrFun_zero : DiscrFun 0 := by constructor
 
 theorem discrFun_succ (n : Nat) : ¬ DiscrFun (n + 1) := by
-  dsimp [DiscrFun]; intro h; assumption
+  rw [DiscrFun]; intro h; assumption
 
 theorem discr_example (n : Nat) : ¬ (0 = n + 1) := by
   intro h
@@ -1146,8 +1146,9 @@ def List.IsNil {α : Type} (l : List α) : Prop :=
 theorem isNil_nil {α : Type} : List.IsNil ([] : List α) := by constructor
 
 theorem isNil_cons {α} (x : α) (l : List α) : ¬ List.IsNil (x :: l) := by
-  dsimp [List.IsNil, Not]
-  intro h; assumption
+  rw [List.IsNil, Not]
+  . intro h; assumption
+  . intro h; contradiction
 -- END SOLUTION
 
 theorem nil_is_not_cons {α : Type} (x : α) (xs : List α) :
@@ -1515,7 +1516,7 @@ def List.In {α : Type} (x : α) (xs : List α) : Prop :=
   | x' :: xs' => x = x' ∨ In x xs'
 
 theorem List.In_nil {α : Type} {x : α} : ¬ (List.In x []) := by
-  dsimp [List.In]; intro h; assumption
+  rw [List.In]; intro h; assumption
 
 theorem List.In_cons {α : Type} {x x' : α} {xs : List α} : List.In x (x' :: xs) = (x = x' ∨ List.In x xs) := rfl
 ```
@@ -1526,11 +1527,11 @@ of nested disjunctions.
 ```lean
 example : List.In 4 [1, 2, 3, 4, 5] := by
   workinclass!
-    dsimp [List.In]; right; right; right; left; rfl
+    rw [List.In]; right; right; right; left; rfl
 
 example (n : Nat) (h : List.In n [2, 4]) : ∃ n' : Nat, n = 2 * n' := by
   workinclass!
-    dsimp [List.In] at h
+    rw [List.In] at h
     obtain h | h | ⟨⟨⟩⟩ := h
     · exists 1
     · exists 2
@@ -1652,7 +1653,7 @@ theorem List.All_In {α : Type} {p : α → Prop} {l : List α} :
 :::dev "Yipeng Liu (berberman)" NOW
 I found this exercise combining too many awkward details for too little conceptual payoff:
 1. the construction is artificial
-2. before `simp` is introduced, `bif` requires noisy `dsimp`, `rw`, and Boolean case equations
+2. before `simp` is introduced, `bif` requires noisy `rw` and Boolean case equations
 3. I don't know how to nicely avoid `cases h : ...` syntax which IIRC we didn't mention before
 :::
 
@@ -1679,7 +1680,7 @@ theorem combineOddEven_intro (Odd Even : Nat → Prop)
     (hEven : Nat.odd n = false → Even n) :
     CombineOddEven Odd Even n := by
   solution!
-    dsimp [CombineOddEven]
+    rw [CombineOddEven]
     /- `cases h : Nat.odd n` splits on `Nat.odd n` and records
       the corresponding equation as `h`. -/
     cases h : Nat.odd n with
@@ -1687,7 +1688,6 @@ theorem combineOddEven_intro (Odd Even : Nat → Prop)
       apply hEven
       rw [h]
     | true =>
-      dsimp
       apply hOdd
       exact h
 
@@ -1697,9 +1697,8 @@ theorem combineOddEven_elim_odd
     (h : CombineOddEven Odd Even n)
     (hOdd : Nat.odd n = true) : Odd n := by
   solution!
-    dsimp [CombineOddEven] at h
-    rw [hOdd] at h
-    dsimp at h; exact h
+    rw [CombineOddEven, hOdd, cond_true] at h
+    exact h
 
 theorem combineOddEven_elim_even
     (Odd Even : Nat → Prop)
@@ -1707,9 +1706,8 @@ theorem combineOddEven_elim_even
     (h : CombineOddEven Odd Even n)
     (hOdd : Nat.odd n = false) : Even n := by
   solution!
-    dsimp [CombineOddEven] at h
-    rw [hOdd] at h
-    dsimp at h; exact h
+    rw [CombineOddEven, hOdd, cond_false] at h
+    exact h
 ```
 
 :::gradeTheorem "2/3" combineOddEven_intro combineOddEven_elim_odd combineOddEven_elim_even
@@ -2094,7 +2092,7 @@ example : Nat.even 42 = true := rfl
 ... or that there exists some `k` such that `n = double k`.
 
 ```lean
-example : Nat.Even 42 := by dsimp [Nat.Even]; exists 21
+example : Nat.Even 42 := by rw [Nat.Even]; exists 21
 ```
 
 Of course, it would be deeply strange if these two characterizations
@@ -2121,17 +2119,17 @@ theorem even_double_conv (n : Nat) : ∃ k : Nat,
   solution!
     induction n with
     | zero =>
-      rw [Nat.even_zero]; dsimp
+      rw [Nat.even_zero]
       exists 0  -- (`0 = Nat.double 0` is closed by `exists`'s final `rfl`)
     | succ n' ihn =>
       obtain ⟨k', ihk⟩ := ihn
       rw [Nat.even_succ]
       cases h : Nat.even n' with
       | false =>
-        rw [h] at ihk; rw [not] at *; dsimp at *
-        exists (k' + 1); rw [ihk, Nat.double_succ]
+        rw [h] at ihk; rw [not] at *; rw [cond_false] at ihk
+        exists (k' + 1); rw [ihk, cond_true, Nat.double_succ]
       | true =>
-        rw [h] at ihk; rw [not] at *; dsimp at *
+        rw [h] at ihk; rw [not] at *; rw [cond_true] at ihk
         exists k'; congr
 ```
 
@@ -2142,7 +2140,7 @@ theorem Nat.even_bool_prop (n : Nat) : Nat.even n = true ↔ Even n := by
   constructor
   · intro h
     obtain ⟨k, hk⟩ := even_double_conv n
-    rw [h] at hk; dsimp at hk; dsimp [Even]; exists k
+    rw [h] at hk; rw [cond_true] at hk; rw [Even]; exists k
   · intro ⟨k, hk⟩; rw [hk]; apply even_double
 ```
 
@@ -2165,9 +2163,8 @@ theorem nonzero_bool_prop (n : Nat) :
     · intro h
       cases n with
       | zero =>
-        dsimp [nonzero] at h;
-        rw [not] at h; contradiction
-      | succ n' => dsimp [Nonzero]; exists n'
+        rw [nonzero, not] at h; contradiction
+      | succ n' => rw [Nonzero]; exists n'
     · intro ⟨m, hm⟩; rw [hm]; rfl
 ```
 ::::
@@ -2285,7 +2282,7 @@ we can let Lean do the work for us.
 example : ¬ Nat.Even 101 := by
   workinclass!
     intro h; apply (Nat.even_bool_prop 101).mpr at h
-    dsimp [Nat.even] at h; contradiction
+    rw [Nat.even] at h; contradiction
 ```
 
 Conversely, there are situations where it can be easier to work with
@@ -2718,9 +2715,7 @@ that is more convenient in certain situations.
 ```lean
 theorem beq_neq_false (n m : Nat) : (n == m) = false ↔ n ≠ m := by
   solution!
-    rw [← not_true_iff_false]
-    dsimp [Ne]
-    rw [beq_eq_true n m]
+    rw [← not_true_iff_false, Ne, beq_eq_true n m]
 ```
 :::gradeTheorem 1 beq_neq_false
 :::
@@ -2821,10 +2816,34 @@ We can use {tactic}`ext` on pairs as:
 ```lean
 example {n : Nat} {p : Nat × Nat} (hx_fst : p.fst = n + 1) (hx_snd : p.snd = 0) :
     (n + 1, 0) = p := by
-  ext
+  ext -- uses the `Prod.ext` lemma
   · rw [hx_fst]
   · rw [hx_snd]
 ```
+
+::::exercise (rating := 2) (name := "prod_ext_example")
+Now, use {tactic}`ext1` to prove the following.
+Remember that `dsimp only` simplifies projections like `(a, b).fst` to `a`.
+
+```lean
+example {m : Nat} {p : Nat × Nat} (hp_snd : p.snd = 4) (hp_fst : p.fst = m) :
+    ((p.fst + 1, 2), (p.fst, 4)) = ((m + 1, p.snd - 2), p) := by
+  solution!
+    ext1
+    · dsimp only
+      ext1
+      · dsimp only
+        rw [hp_fst]
+      · dsimp only
+        rw [hp_snd]
+    · dsimp only
+      ext1
+      · rfl
+      · dsimp only
+        rw [hp_snd]
+```
+::::
+
 
 ::::::full
 :::::exercise (rating := 4) (name := "trRev_correct")
