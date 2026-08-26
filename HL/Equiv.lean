@@ -845,6 +845,115 @@ that it is an equivalence and a counterexample showing it is not a
 congruence.
 :::::
 
+# Program Transformation
+
+::::full
+A _program transformation_ is a function that takes a program as input
+and produces a modified program as output.  Compiler
+optimizations such as constant folding are canonical examples,
+but there are many others.
+::::
+
+```lean
+def Aexp.trans_sound (trans : Aexp → Aexp) : Prop :=
+  ∀ (a : Aexp),
+    a.Equiv (trans a)
+
+def Bexp.trans_sound (trans : Bexp → Bexp) : Prop :=
+  ∀ (b : Bexp),
+    b.Equiv (trans b)
+
+def Com.trans_sound (trans : Com → Com) : Prop :=
+  ∀ (c : Com),
+    c.Equiv (trans c)
+```
+## The Constant-Folding Transformation
+
+::::full
+An expression is _constant_ if it contains no variable references.
+
+Constant folding is an optimization that finds constant
+expressions and replaces them by their values.
+::::
+
+```lean
+def Aexp.fold_constants (a: Aexp) : Aexp :=
+  match a with
+  | .num n => .num n
+  | .id x => .id x
+  | aexp { ~a1 + ~a2 } => 
+    match a1.fold_constants, a2.fold_constants with
+    | .num n1, .num n2 => .num (n1 + n2)
+    | a1', a2' => aexp { ~a1' + ~a2'}
+  | aexp { ~a1 - ~a2 } => 
+    match a1.fold_constants, a2.fold_constants with
+    | .num n1, .num n2 => .num (n1 - n2)
+    | a1', a2' => aexp { ~a1' - ~a2'}
+  | aexp { ~a1 * ~a2 } => 
+    match a1.fold_constants, a2.fold_constants with
+    | .num n1, .num n2 => .num (n1 * n2)
+    | a1', a2' => aexp { ~a1' * ~a2'}
+```
+
+```lean
+example : (aexp { (1 + 2) * X}).fold_constants = (aexp { 3 * X }) := by rfl
+```
+
+::::full
+ Note that this version of constant folding doesn't do other
+"obvious" things like eliminating trivial additions (e.g.,
+rewriting `0 + X` to just  `X`).: we are focusing on a single
+optimization for the sake of simplicity.
+
+It is not hard to incorporate other ways of simplifying
+expressions -- the definitions and proofs just get longer.  We'll
+consider some in the exercises.
+::::
+
+```lean
+example : (aexp { X - ((0 * 6) + Y) }).fold_constants = (aexp { X - (0 + Y) }) := by rfl
+```
+
+::::full
+Not only can we lift `Aexp.fold_constants` to `Bexp` in the `Bexp.eq`, `Bexp.neq`, and
+`Bexp.le` cases, we can also look for constant _boolean_ expressions and evaluate them 
+in place as well.
+::::
+```lean
+def Bexp.fold_constants (b : Bexp) : Bexp :=
+  match b with
+  | bexp { true } => bexp { true }
+  | bexp { false } => bexp { false }
+  | bexp { ~a1 = ~a2 } => 
+    match a1.fold_constants, a2.fold_constants with
+    | .num n1, .num n2 => if n1 = n2 then bexp { true } else bexp {false}
+    | a1', a2' => bexp { ~a1' = ~a2' }
+  | bexp { ~a1 ≠ ~a2 } => 
+    match a1.fold_constants, a2.fold_constants with
+    | .num n1, .num n2 => if n1 ≠ n2 then bexp { true } else bexp {false}
+    | a1', a2' => bexp { ~a1' ≠ ~a2' }
+  | bexp { ~a1 ≤ ~a2 } => 
+    match a1.fold_constants, a2.fold_constants with
+    | .num n1, .num n2 => if n1 ≤ n2 then bexp { true } else bexp {false}
+    | a1', a2' => bexp { ~a1' ≤ ~a2' }
+  | bexp { ~a1 > ~a2 } => 
+    match a1.fold_constants, a2.fold_constants with
+    | .num n1, .num n2 => if n1 > n2 then bexp { true } else bexp {false}
+    | a1', a2' => bexp { ~a1' > ~a2' }
+  | bexp { ¬~b1 } =>
+    match b1.fold_constants with
+    | bexp { true } => bexp { false }
+    | bexp { false } => bexp { true }
+    | b1' => bexp { ¬~b1' }
+  | bexp { ~b1 ∧ ~b2 } =>
+    match b1.fold_constants, b2.fold_constants with
+    | bexp { true }, bexp { true } => bexp { true }
+    | bexp { true }, bexp { false } => bexp { false }
+    | bexp { false }, bexp { true } => bexp { false }
+    | bexp { false }, bexp { false } => bexp { false }
+    | b1', b2' => bexp { ~b1' ∧ ~b2' }
+```
+
 :::dev "Sati (satiscugcat)"
 ```
 NOT PORTED YET - remaining portions of Equiv.v left (apart from the portions explicitly stated so far).
