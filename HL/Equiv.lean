@@ -712,11 +712,12 @@ equivalent to `c'`.  We must show, for every `st` and `st'`, that
   - (`<-`) Similar.
 ::::
 
-```lean 
+```lean
 theorem Com.congruence.while {b b' : Bexp} {c c' : Com} (hb : b.Equiv b') (hc : c.Equiv c') :
     (imp {while (~b) {~c}}).Equiv
     (imp {while (~b') {~c'}}) := by
   workinclass!
+    rw [equiv_def]
     intro st st'
     constructor
     · intro h
@@ -728,15 +729,14 @@ theorem Com.congruence.while {b b' : Bexp} {c c' : Com} (hb : b.Equiv b') (hc : 
         apply Com.EvalR.whileFalse
         rw [← hb]
         exact hb'
-      | whileTrue hb' hc' hwhile _ ih2 =>
+      | @whileTrue st₁ st₂ st₃ b₂ c₂ hb' hc' hwhile _ ih2 =>
         injection heq with beq ceq
         subst beq ceq
         rw [hb] at hb'
-        specialize ih2 (by rfl)
-        apply Com.EvalR.whileTrue <;> try assumption
-        · 
-          --- rw [← hc]
-          sorry
+        specialize ih2 rfl
+        apply Com.EvalR.whileTrue hb' _ ih2
+        · rw [equiv_def] at hc
+          exact hc.mp hc'
       | skip | asgn | seq | ifTrue | ifFalse =>
         contradiction
     · sorry
