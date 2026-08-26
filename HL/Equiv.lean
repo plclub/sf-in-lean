@@ -1021,8 +1021,11 @@ theorem Aexp.fold_constants_sound :
   | plus a1 a2 ih1 ih2  =>
     rw [Aexp.fold_constants_plus]
     split
-    case h_1 n1 n2 heq heq' => sorry
-    case h_2 h => sorry
+    case h_1 n1 n2 heq1 heq2 =>
+      rw [Aexp.eval_plus, ih1, ih2, heq1, heq2]
+      simp
+    case h_2 h =>
+      rw [Aexp.eval_plus, Aexp.eval_plus, ih1, ih2]
     
   | _ => sorry
 ```
