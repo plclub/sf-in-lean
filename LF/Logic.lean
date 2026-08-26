@@ -419,6 +419,9 @@ theorem Nat.add_is_zero (n m : Nat) : n + m = 0 → n = 0 ∧ m = 0 := by
       rw [add_succ]
       contradiction
 ```
+
+:::gradeTheorem 2 Nat.add_is_zero
+:::
 :::::
 
 ::::::
@@ -505,6 +508,8 @@ theorem right (a b : Prop) (h : a ∧ b) : b := by
   solution!
     exact h.right
 ```
+:::gradeTheorem 1 right
+:::
 :::::
 
 Finally, we sometimes need to rearrange the order of conjunctions
@@ -540,6 +545,8 @@ theorem and_associate (a b c : Prop) (h : a ∧ (b ∧ c)) : (a ∧ b) ∧ c := 
       · exact h.right.left
   · exact h.right.right
 ```
+:::gradeTheorem 1 and_associate
+:::
 :::::
 
 ::::::
@@ -632,6 +639,8 @@ theorem Nat.mul_is_zero (n m : Nat) (h : n * m = 0) : n = 0 ∨ m = 0 := by
         rw [mul_succ, add_succ] at h
         contradiction
 ```
+:::gradeTheorem 2 Nat.mul_is_zero
+:::
 :::::
 
 :::::exercise (rating := 1) (name := "or_commute")
@@ -642,6 +651,8 @@ theorem or_commute (a b : Prop) (h : a ∨ b) : b ∨ a := by
     · right; exact ha
     · left; exact hb
 ```
+:::gradeTheorem 1 or_commute
+:::
 :::::
 
 ## Falsehood and Negation
@@ -706,6 +717,8 @@ theorem not_implies_other_not (a : Prop) (h : ¬ a) :
     apply h
     exact ha
 ```
+:::gradeTheorem 2 not_implies_other_not
+:::
 :::::
 
 ::::::
@@ -783,6 +796,8 @@ theorem contrapositive (a b : Prop) (h : a → b) : (¬ b → ¬ a) := by
     apply h
     exact ha
 ```
+:::gradeTheorem 1 contrapositive
+:::
 :::::
 
 :::::exercise (rating := 1) (name := "not_PNP_informal") (level := Advanced) (manual := true)
@@ -822,6 +837,8 @@ theorem de_morgan_not_or {a b : Prop} (h : ¬ (a ∨ b)) : ¬ a ∧ ¬ b := by
       right
       exact hb
 ```
+:::gradeTheorem 2 de_morgan_not_or
+:::
 :::::
 
 :::::exercise (rating := 1) (name := "not_succ_inverse_pred") (optional := true)
@@ -838,6 +855,8 @@ theorem not_succ_pred_n : ¬ (∀ n : Nat, n.pred + 1 = n) := by
     rw [Nat.pred_zero] at h0
     contradiction
 ```
+:::gradeTheorem 1 not_succ_pred_n
+:::
 :::::
 
 ::::::
@@ -1122,10 +1141,9 @@ Do not use the {tactic}`contradiction` tactic.
 def List.IsNil {α : Type} (l : List α) : Prop :=
   match l with
   | [] => True
-  | _ :: _ => False
+  | _ => False
 
 theorem isNil_nil {α : Type} : List.IsNil ([] : List α) := by constructor
-
 
 theorem isNil_cons {α} (x : α) (l : List α) : ¬ List.IsNil (x :: l) := by
   dsimp [List.IsNil, Not]
@@ -1142,6 +1160,12 @@ theorem nil_is_not_cons {α : Type} (x : α) (xs : List α) :
     exact hn
 ```
 :::::
+
+:::instructors
+In `List.IsNil` changing the `_ =>` arm to `_ :: _ =>` would introduce a hidden dependency to `List.All` (and `List.In`) which is not emitted to the grading variant because it's in a solution block.
+This would lead to the solution of `List.All_In` (and `List.in_mem` in IndProp) to not pass comparator because the underlying terms are different.
+TLDR: Don't change `List.IsNil` to use `_ :: _ =>`.
+:::
 
 ::::::
 
@@ -1224,6 +1248,8 @@ theorem iff_trans (a b c : Prop) (h₁ : a ↔ b) (h₂ : b ↔ c) : a ↔ c := 
     · intro ha; apply h₂.mp; apply h₁.mp; exact ha
     · intro hb; apply h₁.mpr; apply h₂.mpr; exact hb
 ```
+:::gradeTheorem "0.5" iff_refl iff_trans
+:::
 :::::
 
 ::::exercise (rating := 3) (name := "iff_practice")
@@ -1274,6 +1300,9 @@ theorem or_distributes_over_and (a b c : Prop) :
       · left; exact ha
       · right; exact ⟨hb, hc⟩
 ```
+
+:::gradeTheorem 1 or_associate mul_eq_0 or_distributes_over_and
+:::
 ::::
 
 ## Existential Quantification
@@ -1560,6 +1589,8 @@ theorem List.In_map_iff {α β : Type} {f : α → β} {xs : List α} {y : β} :
       intro ⟨x, h₁, h₂⟩
       rw [← h₁]; apply In_map; exact h₂
 ```
+:::gradeTheorem 2 List.In_map_iff
+:::
 :::::
 
 ::::::
@@ -1581,7 +1612,6 @@ def List.All {α : Type} (p : α → Prop) (l : List α) : Prop := solution!(
   match l with
   | [] => True
   | x :: l' => p x ∧ List.All p l')
-
 theorem List.All_nil {α : Type} {a : α → Prop} : List.All a [] := solution!(by constructor)
 
 theorem List.All_cons {α : Type} {p : α → Prop} {x : α} {l : List α} :
@@ -1613,6 +1643,8 @@ theorem List.All_In {α : Type} {p : α → Prop} {l : List α} :
         · apply ih₂; apply hp; exact h₂
 ```
 
+:::autogradedHole List.All
+:::
 :::gradeTheorem 3 List.All_In
 :::
 :::::
@@ -1634,6 +1666,9 @@ and equivalent to `Even n` otherwise.
 def CombineOddEven (Odd Even : Nat → Prop) : Nat → Prop := solution!(
   fun n => bif Nat.odd n then Odd n else Even n)
 ```
+
+:::autogradedHole CombineOddEven
+:::
 
 To test your definition, prove the following facts:
 
@@ -1676,6 +1711,9 @@ theorem combineOddEven_elim_even
     rw [hOdd] at h
     dsimp at h; exact h
 ```
+
+:::gradeTheorem "2/3" combineOddEven_intro combineOddEven_elim_odd combineOddEven_elim_even
+:::
 :::::
 
 ::::::
@@ -2387,6 +2425,8 @@ theorem beqList_true_iff α (beq : α → α → Bool)
           exact ⟨hy hxy, ih₂ hxsys⟩
 ```
 
+:::autogradedHole beqList
+:::
 :::gradeTheorem 3 beqList_true_iff
 :::
 :::::
@@ -2440,6 +2480,8 @@ This theorem exactly captures the input-output behavior of {lean}`List.allb`.
 However, it does not say anything about the running time.
 :::
 
+:::autogradedHole List.allb
+:::
 :::gradeTheorem 2 List.allb_true_iff
 :::
 :::::
@@ -2648,6 +2690,8 @@ theorem mul_eq_0_ternary (n m p : Nat) :
   solution!
     rw [mul_eq_0, mul_eq_0, or_associate]
 ```
+:::gradeTheorem 1 mul_eq_0_ternary
+:::
 :::::
 
 :::::exercise (rating := 2) (name := "In_append_iff")
@@ -2662,6 +2706,8 @@ theorem In_append_iff (α : Type) (l l' : List α) (x : α) :
       · intro h; obtain ⟨⟨⟩⟩ | h := h; exact h
     | cons y ys ih => rw [List.cons_append, List.In_cons, List.In_cons, ih, or_assoc]
 ```
+:::gradeTheorem 2 In_append_iff
+:::
 :::::
 
 :::::exercise (rating := 1) (name := "beq_neq_false")
@@ -2676,6 +2722,8 @@ theorem beq_neq_false (n m : Nat) : (n == m) = false ↔ n ≠ m := by
     dsimp [Ne]
     rw [beq_eq_true n m]
 ```
+:::gradeTheorem 1 beq_neq_false
+:::
 :::::
 
 ## Functional Extensionality
@@ -2805,6 +2853,9 @@ theorem trRev_correct {α : Type} : @trRev α = @List.rev α := by
     ext1 xs; dsimp [trRev]
     rw [revAppend_rev, List.append_nil]
 ```
+
+:::gradeTheorem 4 trRev_correct
+:::
 :::::
 
 ::::::
@@ -2995,6 +3046,8 @@ theorem excluded_middle_irrefutable (a : Prop) : ¬ ¬ (a ∨ ¬ a) := by
     obtain ⟨hna, hnna⟩ := de_morgan_not_or h
     exact hnna hna
 ```
+:::gradeTheorem 3 excluded_middle_irrefutable
+:::
 :::::
 
 :::::exercise (rating := 3) (name := "not_exists_dist") (level := Advanced)
@@ -3019,9 +3072,15 @@ theorem not_exists_dist (α : Type) (p : α → Prop) :
     · exact hx
     · exfalso; apply h; exists x
 ```
+:::gradeTheorem 3 not_exists_dist
+:::
 :::::
 
 :::::exercise (rating := 5) (name := "classical_axioms") (optional := true)
+:::dev "Niklas Halonen (xhalo32)"
+The following exercise needs grading attributes or manual grading.
+:::
+
 For those who like a challenge, here is an exercise adapted from the Coq'Art
 book by Bertot and Casteran (p. 123). Each of the following five statements,
 together with {lean}`ExcludedMiddle`, can be considered as characterizing

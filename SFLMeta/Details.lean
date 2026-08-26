@@ -10,7 +10,7 @@ namespace SFLMeta
 
 A collapsible disclosure block: the optional positional `summary` string is
 shown by default as a one-line teaser; the contents are revealed only when the
-reader expands the block. When omitted, the summary defaults to `"Details"`.
+reader expands the block. When omitted, the summary is empty.
 Useful for tucking away encoding details (macro plumbing, helper notation) that
 aren't part of the main narrative.
 
@@ -33,8 +33,8 @@ concern, not part of the source. -/
 
 /-- Configuration for `:::details`. -/
 structure DetailsConfig where
-  /-- The clickable teaser shown when the block is collapsed. Defaults to
-  `"Details"` when omitted. -/
+  /-- The clickable teaser shown when the block is collapsed. Empty when
+  omitted. -/
   summary : Option String
 deriving Repr
 
@@ -75,7 +75,10 @@ block_extension Block.details (summary : String) where
         | _ => ""
       let body : Verso.Output.TeX ← contents.foldlM (init := .empty) fun acc b =>
         return acc ++ (← goB b)
-      pure <| .seq #[.raw s!"\\textit\{{summary}.} ", body]
+      if summary.isEmpty then
+        pure body
+      else
+        pure <| .seq #[.raw s!"\\textit\{{summary}.} ", body]
   extraCss := [
 r##"
 details.sf-details {
@@ -109,13 +112,14 @@ details.sf-details[open] {
   ]
 
 /-- A `:::details "…"` directive wraps its contents in a collapsible
-disclosure block. The summary string is optional (defaults to `"Details"`). -/
+disclosure block. The summary string is optional (defaults to the empty
+string, in which case no teaser text is shown). -/
 @[directive]
 def details : DirectiveExpanderOf DetailsConfig
   | cfg, contents => do
     let blocks ← contents.mapM elabBlock
     ``(Verso.Doc.Block.other
-        (SFLMeta.Block.details $(quote (cfg.summary.getD "Details")))
+        (SFLMeta.Block.details $(quote (cfg.summary.getD "")))
         #[$blocks,*])
 
 end SFLMeta

@@ -1089,18 +1089,18 @@ theorem head?_nil {α : Type} : head? ([] : List α) = none := solution!(by rfl)
 
 theorem head?_cons {α : Type} {head : α} {tail : List α} : head? (head :: tail) = some head :=
   solution!(by rfl)
-
-theorem test_head?1 : head? [1, 2] = some 1 := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" test_head?1
+:::autogradedHole head?
 :::
 
 ```lean
+theorem test_head?1 : head? [1, 2] = some 1 := solution!(by rfl)
+
 theorem test_head?2 : head? [[1], [2]] = some [1] := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" test_head?2
+:::gradeTheorem "0.5" test_head?1 test_head?2
 :::
 :::::
 
@@ -1350,6 +1350,9 @@ theorem test_filterEvenGt7_1 : filterEvenGt7 [1, 2, 6, 9, 10, 3, 12, 8] = [10, 1
 theorem test_filterEvenGt7_2 : filterEvenGt7 [5, 2, 6, 19, 129] = [] := solution!(by rfl)
 ```
 
+:::autogradedHole filterEvenGt7
+:::
+
 :::gradeTheorem 1 test_filterEvenGt7_1 test_filterEvenGt7_2
 :::
 :::::
@@ -1370,6 +1373,9 @@ def partition {α : Type} (test : α → Bool) (l : List α) : List α × List �
 theorem test_partition1 : partition (· % 2 != 0) [1, 2, 3, 4, 5] = ([1, 3, 5], [2, 4]) := solution!(by rfl)
 theorem test_partition2 : partition (fun _ => false) [5, 9, 0] = ([], [5, 9, 0]) := solution!(by rfl)
 ```
+
+:::autogradedHole partition
+:::
 
 :::gradeTheorem "1.5" test_partition1 test_partition2
 :::
@@ -1504,6 +1510,9 @@ def flatMap {α β : Type} (f : α → List β) (l : List α) : List β := solut
 theorem test_flatMap : flatMap (fun n => [n, n, n]) [1, 5, 4]
   = [1, 1, 1, 5, 5, 5, 4, 4, 4] := solution!(by rfl)
 ```
+
+:::autogradedHole flatMap
+:::
 
 :::gradeTheorem 2 test_flatMap
 :::
@@ -1797,6 +1806,13 @@ def foldMap {α β : Type} (f : α → β) (l : List α) : List β := solution!(
   fold (fun x l' => f x :: l') l [])
 ```
 
+:::dev "Niklas Halonen (xhalo32)"
+Even though `foldMap` is not autograded, we mark it as a hole just in case in the future something depended on it.
+:::
+
+:::autogradedHole foldMap
+:::
+
 Write down a theorem `fold_map_correct` stating that {lean}`foldMap` is
 correct, and prove it in Lean.
 
@@ -1855,6 +1871,9 @@ the theorems below to show that the two are really inverses.
 def prodUncurry {α β γ : Type} (f : α → β → γ) (p : α × β) : γ := solution!(
   f p.fst p.snd)
 ```
+
+:::autogradedHole prodUncurry
+:::
 
 As a (trivial) example of the usefulness of currying, we can use it
 to shorten one of the examples that we saw above:
@@ -2052,6 +2071,9 @@ theorem scc_2 : scc one = two := solution!(by rfl)
 theorem scc_3 : scc two = three := solution!(by rfl)
 ```
 
+:::autogradedHole scc
+:::
+
 :::gradeTheorem 1 scc_2 scc_3
 :::
 :::::
@@ -2072,6 +2094,9 @@ theorem plus_1 : plus zero one = one := solution!(by rfl)
 theorem plus_2 : plus two three = plus three two := solution!(by rfl)
 theorem plus_3 : plus (plus two two) three = plus one (plus three three) := solution!(by rfl)
 ```
+
+:::autogradedHole plus
+:::
 
 :::gradeTheorem 1 plus_1 plus_2 plus_3
 :::
@@ -2096,10 +2121,14 @@ unchanged.
 def mult (n m : CNat) : CNat := solution!(
   fun (α : Type) (f : α → α) (x : α) => n α (m α f) x)
 
+
 theorem mult_1 : mult one one = one := solution!(by rfl)
 theorem mult_2 : mult zero (plus three three) = zero := solution!(by rfl)
 theorem mult_3 : mult two three = plus three three := solution!(by rfl)
 ```
+
+:::autogradedHole mult
+:::
 
 :::gradeTheorem 1 mult_1 mult_2 mult_3
 :::
@@ -2122,6 +2151,9 @@ theorem exp_1 : exp two two = plus two two := solution!(by rfl)
 theorem exp_2 : exp three zero = one := solution!(by rfl)
 theorem exp_3 : exp three two = plus (mult two (mult two two)) one := solution!(by rfl)
 ```
+
+:::autogradedHole exp
+:::
 
 :::gradeTheorem 1 exp_1 exp_3 exp_2
 :::

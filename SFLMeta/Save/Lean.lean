@@ -178,7 +178,7 @@ def decode? (data : Json) : Option Data :=
 /--
   * persistent, non-error blocks become executable Lean;
   * non-persistent blocks (`-keep`) become indented `sf_experiment` blocks;
-  * expected-error blocks (`+error`) become indented `sf_expect_failure` blocks
+  * expected-error blocks (`+error`) become indented `sf_expect_failure_in` blocks
 -/
 def Data.extractionMode (saved : Data) : ExtractionMode :=
   let {persistent, expectedError, ..} := saved.config
@@ -203,7 +203,7 @@ solutions-, student-, and terse-rendered forms of the block; traversal keeps the
 one selected by the build's typed `Variant`, so the same compiled document serves
 all three builds. HTML/TeX rendering passes through to the surviving child; the
 saver checks the stored metadata to decide whether to emit the saved source into
-extracted `.lean` files as raw code, `sf_experiment`, or `sf_expect_failure`.
+extracted `.lean` files as raw code, `sf_experiment`, or `sf_expect_failure_in`.
 -/
 open Save in
 block_extension Block.leanSaved (saved : Save.LeanSaved.Data) where
@@ -216,12 +216,12 @@ block_extension Block.leanSaved (saved : Save.LeanSaved.Data) where
       let some saved := LeanSaved.decode? data | return none
       let variant ← getCurrVariant
       let chosen ←
-        if variant.isSolution ∨ variant.isGrading then pure contents[0]
+        if variant.isSolution then pure contents[0]
         else if variant.isTerse then pure contents[2]
-        else pure contents[1]
+        else pure contents[1] -- grading variant is based on student with sorrys etc.
       return some (.other (Block.leanSaved saved) #[chosen])
     else
-      return none -- xhalo32: shouldn't this be `unreachable!`?
+      return none
   toHtml := some fun _ goB _ data contents => do
     let some saved := Save.LeanSaved.decode? data
       | return .empty
@@ -255,7 +255,7 @@ Wraps each ` ```lean … ``` ` code block. The pipeline is:
    (teacher-rendered) block and `Block.lean`s wrapping the student and terse
    `Highlighted`s. Traversal later keeps one of the three according to the
    build's typed `Variant`, while the saver uses the recorded block config to
-   decide whether to wrap extracted output Lean code in `sf_expect_failure` or
+   decide whether to wrap extracted output Lean code in `sf_expect_failure_in` or
    `sf_experiment`.
 -/
 
@@ -334,7 +334,7 @@ def lean : CodeBlockExpanderOf LeanSaved.Config
       let teacherChild ← mkChild teacherDisplay teacherHls
       let studentChild ← mkChild student studentHls
       let terseChild ← mkChild terse terseHls
-      let variants := {student, solutions := teacher, terse, grading := teacher : Variants String}
+      let variants := {student, solutions := teacher, terse, grading := student : Variants String}
       let saved := { variants, config : Data }
       ``(Verso.Doc.Block.other
           (SFLMeta.Block.leanSaved $(quote saved))
