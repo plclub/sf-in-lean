@@ -443,8 +443,8 @@ partial def walkBlock (width : Nat) (isTerse : Bool) (file : String) (b : Verso.
         | .str s => s
         | _ => ""
       let opener := if summary.isEmpty
-        then "THESE DETAILS CAN BE SKIPPED:"
-        else s!"THESE DETAILS CAN BE SKIPPED: {summary}"
+        then "THESE DETAILS CAN BE SKIPPED"
+        else s!"THESE DETAILS CAN BE SKIPPED ({summary})"
       let mut buf := buf.appendAll file (asModuleDoc opener)
       buf := walkBlocks width isTerse file contents buf
       buf := buf.appendAll file (asModuleDoc "END DETAILS")
