@@ -711,6 +711,16 @@ equivalent to `c'`.  We must show, for every `st` and `st'`, that
 
   - (`<-`) Similar.
 ::::
+
+```lean 
+theorem Com.congruence.while {b b' : Bexp} {c c' : Com} (hb : b.Equiv b') (hc : c.Equiv c') :
+    (imp {while (~b) {~c}}).Equiv
+    (imp {while (~b') {~c'}}) := by
+  workinclass!
+    sorry
+```
+
+
 :::dev "Sati (satiscugcat)"
 ```
 NOT PORTED YET - remaining portions of Equiv.v left (apart from the portions explicitly stated so far).
