@@ -785,14 +785,12 @@ theorem member_nil (n : Nat) : member n [] = false := solution!(by rfl)
 theorem member_cons_same (n₁ n₂ : Nat) (t : NatList) (h : (n₁ == n₂) = true) :
     member n₁ (n₂ :: t) = true := by
   solution!
-    dsimp [member]
-    rw [h, cond_true]
+    rw [member, h, cond_true]
 
 theorem member_cons_diff (n₁ n₂ : Nat) (t : NatList) (h : (n₁ == n₂) = false) :
     member n₁ (n₂ :: t) = member n₁ t := by
   solution!
-    dsimp [member]
-    rw [h, cond_false]
+    rw [member, h, cond_false]
 
 example : member 1 [1] = true := by
   rw [member_cons_same _ _ _ rfl]
@@ -832,14 +830,12 @@ theorem removeOne_nil (n : Nat) : removeOne n nil = nil := solution!(by rfl)
 theorem removeOne_cons_same (n₁ n₂ : Nat) (t : NatList) (h : (n₁ == n₂) = true) :
     removeOne n₁ (n₂ :: t) = t := by
   solution!
-    dsimp [removeOne]
-    rw [h, cond_true]
+    rw [removeOne, h, cond_true]
 
 theorem removeOne_cons_diff (n₁ n₂ : Nat) (t : NatList) (h : (n₁ == n₂) = false) :
     removeOne n₁ (n₂ :: t) = n₂ :: removeOne n₁ t := by
   solution!
-    dsimp [removeOne]
-    rw [h, cond_false]
+    rw [removeOne, h, cond_false]
 ```
 
 :::autogradedHole removeOne
@@ -872,14 +868,12 @@ theorem removeAll_nil (n : Nat) : removeAll n [] = [] := solution!(by rfl)
 theorem removeAll_cons_same (n₁ n₂ : Nat) (t : NatList) (h : (n₁ == n₂) = true) :
     removeAll n₁ (n₂ :: t) = removeAll n₁ t := by
   solution!
-    dsimp [removeAll]
-    rw [h, cond_true]
+    rw [removeAll, h, cond_true]
 
 theorem removeAll_cons_diff (n₁ n₂ : Nat) (t : NatList) (h : (n₁ == n₂) = false) :
     removeAll n₁ (n₂ :: t) = n₂ :: removeAll n₁ t := by
   solution!
-    dsimp [removeAll]
-    rw [h, cond_false]
+    rw [removeAll, h, cond_false]
 ```
 
 :::autogradedHole removeAll
@@ -936,14 +930,12 @@ theorem included_nil (l₂ : NatList) : included nil l₂ = true := solution!(by
 theorem included_cons_member (n : Nat) (l₁ l₂ : NatList) (h : member n l₂ = true) :
     included (cons n l₁) l₂ = included l₁ (removeOne n l₂) := by
   solution!
-    dsimp [included]
-    rw [h, Bool.true_and]
+    rw [included, h, Bool.true_and]
 
 theorem included_cons_nonmember (n : Nat) (l₁ l₂ : NatList) (h : member n l₂ = false) :
     included (cons n l₁) l₂ = false := by
   solution!
-    dsimp [included]
-    rw [h, Bool.false_and]
+    rw [included, h, Bool.false_and]
 ```
 
 ```lean
@@ -1307,7 +1299,7 @@ theorem length_append (l₁ l₂ : NatList) :
 :::::terse
 ::::quiz
 To prove the following theorem, which tactics will we need besides
-{tactic}`intro`, {tactic}`dsimp`, {tactic}`rw`, and {tactic}`rfl`?
+{tactic}`intro`, {tactic}`rw`, and {tactic}`rfl`?
 
 (A) none
 
@@ -1342,7 +1334,7 @@ example (n m : Nat) : (myRepeat n m).length = m
 ```
 
 To prove the following theorem, which tactics will we need besides
-{tactic}`intro`, {tactic}`dsimp`, {tactic}`rw`, and {tactic}`rfl`?
+{tactic}`intro`, {tactic}`rw`, and {tactic}`rfl`?
 
 (A) none
 
@@ -1563,14 +1555,12 @@ theorem beq_nil : beq [] [] = true := solution!(by rfl)
 theorem beq_cons_same (h₁ h₂ : Nat) (t₁ t₂ : NatList) (h : (h₁ == h₂) = true) :
     beq (h₁ :: t₁) (h₂ :: t₂) = beq t₁ t₂ := by
   solution!
-    dsimp [beq]
-    rw [h, Bool.true_and]
+    rw [beq, h, Bool.true_and]
 
 theorem beq_cons_diff (h₁ h₂ : Nat) (t₁ t₂ : NatList) (h : (h₁ == h₂) = false) :
     beq (h₁ :: t₁) (h₂ :: t₂) = false := by
   solution!
-    dsimp [beq]
-    rw [h, Bool.false_and]
+    rw [beq, h, Bool.false_and]
 
 example : beq [] [] = true := solution!(by rfl)
 example : beq [1, 2, 3] [1, 2, 3] = true := solution!(by rfl)
@@ -1652,7 +1642,7 @@ theorem ble_self_succ (n : Nat) :
     Nat.ble n (n + 1) = true := by
   induction n with
   | zero       => rfl
-  | succ n' ih => dsimp [Nat.ble]; exact ih
+  | succ n' ih => rw [Nat.ble]; exact ih
 ```
 
 Before doing the next exercise, make sure you've filled in the
@@ -1970,10 +1960,9 @@ def mirror(t: BinTree): BinTree :=
 theorem mirror_involutive : ∀ t, t = mirror (mirror t) := by
   intro t
   induction t with
-  | leaf => dsimp [mirror]
+  | leaf => rw [mirror]
   | fork l r ihl ihr =>
-    dsimp [mirror]
-    rw [←ihl, ←ihr]
+    rw [mirror, ←ihl, ←ihr]
 
 def size (t: BinTree): Nat :=
   match t with
@@ -1982,10 +1971,9 @@ def size (t: BinTree): Nat :=
 
 theorem mirror_size t : size t = size (mirror t) := by
   induction t with
-  | leaf => dsimp [size, mirror]
+  | leaf => rw [size, mirror]
   | fork l r ihl ihr =>
-    dsimp [size, mirror]
-    rw [←ihl, ←ihr]
+    rw [size, mirror, ←ihl, ←ihr]
     have h: size l + size r = size r + size l := by
       rw [Nat.add_comm]
     rw [Nat.add_assoc, Nat.add_assoc, h]
@@ -2025,8 +2013,7 @@ def MyId.beq (x₁ x₂ : MyId) : Bool :=
 ```lean
 theorem MyId.beq_refl (x : MyId) : MyId.beq x x = true := by
   solution!
-    dsimp [beq]
-    rw [BEq.refl]
+    rw [beq, BEq.refl]
 ```
 
 :::gradeTheorem 1 MyId.beq_refl
@@ -2097,9 +2084,7 @@ Is the following claim true or false?
 ```lean
 theorem quiz1 (d : PartialMap) (x : MyId) (n : Nat) :
     find x (update d x n) = .some n := by
-  dsimp [update, find]
-  rw [MyId.beq_refl]
-  dsimp
+  rw [update, find, MyId.beq_refl, cond_true]
 ```
 
 (A) True
@@ -2115,9 +2100,7 @@ theorem quiz2  (d : PartialMap) (x y : MyId) (o : Nat) :
     MyId.beq x y = false →
     find x (update d y o) = find x d := by
   intro h
-  dsimp [update, find]
-  rw [h]
-  dsimp
+  rw [update, find, h, cond_false]
 ```
 
 (A) True
@@ -2131,9 +2114,7 @@ theorem quiz2  (d : PartialMap) (x y : MyId) (o : Nat) :
 theorem update_eq (d : PartialMap) (x : MyId) (n : Nat) :
     find x (update d x n) = .some n := by
   solution!
-    dsimp [update, find]
-    rw [MyId.beq_refl]
-    dsimp
+    rw [update, find, MyId.beq_refl, cond_true]
 ```
 
 :::gradeTheorem 1 update_eq
@@ -2146,9 +2127,7 @@ theorem update_neq (d : PartialMap) (x y : MyId) (o : Nat) :
     MyId.beq x y = false → find x (update d y o) = find x d := by
   solution!
     intro h
-    dsimp [update, find]
-    rw [h]
-    dsimp
+    rw [update, find, h, cond_false]
 ```
 
 :::gradeTheorem 1 update_neq
