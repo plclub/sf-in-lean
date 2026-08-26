@@ -889,7 +889,7 @@ theorem not_true_is_false (b : Bool) (h : b ≠ true) : b = false := by
   cases b with
   | false => rfl
   | true =>
-    dsimp [Ne, Not] at h
+    rw [Ne, Not] at h
     apply ex_falso_quodlibet
     apply h
     rfl
@@ -2807,6 +2807,25 @@ example : (fun xs => 1 :: xs) = (fun xs => [1] ++ xs) := rfl
 :::
 ::::
 
+### Other Extensionality Principles
+
+::::full
+Functions and propositions are not the only things that have extensionality principles.
+Many structures like pairs also have them:
+::::
+
+::::terse
+We can use {tactic}`ext` on pairs as:
+::::
+
+```lean
+example {n : Nat} {p : Nat × Nat} (hx_fst : p.fst = n + 1) (hx_snd : p.snd = 0) :
+    (n + 1, 0) = p := by
+  ext
+  · rw [hx_fst]
+  · rw [hx_snd]
+```
+
 ::::::full
 :::::exercise (rating := 4) (name := "trRev_correct")
 One problem with the definition of the list-reversing function {lean}`List.rev`
@@ -2850,8 +2869,7 @@ theorem revAppend_rev {α : Type} {xs ys : List α} :
 
 theorem trRev_correct {α : Type} : @trRev α = @List.rev α := by
   solution!
-    ext1 xs; dsimp [trRev]
-    rw [revAppend_rev, List.append_nil]
+    ext1 xs; rw [trRev, revAppend_rev, List.append_nil]
 ```
 
 :::gradeTheorem 4 trRev_correct

@@ -22,17 +22,15 @@ variable (n : Nat)
 :::instructors
 This chapter introduces more idiomatic design patterns in Lean via
 the standard library's natural numbers, and what Lean in the wild
-might more resemble. Notable new tactics are {tactic}`calc` and
-{tactic}`dsimp`; while the latter is not used so much in real-world
-Lean, it provides a on-ramp to {tactic}`simp` later on.
+might more resemble. Notable new tactics are {tactic}`calc`.
 It is relatively short, and should take about 30 minutes to cover.
 :::
 
 In this chapter, we will learn to write more idiomatic Lean using its more
 powerful tools. This includes the natural numbers from its standard library,
 tactics which can search for lemmas from the standard library, namespaces for
-organizing lemmas, and two new tactics, {tactic}`calc` and {tactic}`dsimp`,
-which enable more readable and concise proofs.
+organizing lemmas, and a new tactic, {tactic}`calc`,
+which enables more readable and concise proofs.
 
 # More Powerful Natural Numbers
 
@@ -644,7 +642,6 @@ theorem Nat.double_mul (n : Nat) : n.double = 2 * n := by
 :::
 
 In the remainder of the book, we use Lean's built-in natural numbers everywhere.
-We use `dsimp` and `calc` in examples and solutions, and encourage their use.
 We also recommend using `rw?` and `exact?` to search for lemmas
 (though these should not appear in finished proofs).
 
