@@ -782,6 +782,41 @@ theorem Com.congruence.seq {c1 c1' c2 c2' : Com} (hc1 : c1.Equiv c1') (hc2 : c2.
 ```
 :::::
 
+:::::exercise (rating := 3) (name := "Com.congruence.if") 
+```lean
+theorem Com.congruence.if {b b' : Bexp} {c1 c1' c2 c2' : Com} (hb : b.Equiv b') (hc1 : c1.Equiv c1') (hc2 : c2.Equiv c2') :
+    (imp {if (~b) {~c1} else {~c2}}).Equiv
+    (imp {if (~b') {~c1'} else {~c2'}}) := by
+  solution!(
+    intro st st'
+    constructor
+    · intro h
+      inversion h with
+      | ifTrue hb' hc1' => 
+        rw [hb] at hb'
+        apply Com.EvalR.ifTrue <;> try assumption
+        · rw [equiv_def] at hc1
+          exact (hc1.mp hc1')    
+      | ifFalse hb' hc2' =>
+        rw [hb] at hb'
+        apply Com.EvalR.ifFalse <;> try assumption
+        · rw [equiv_def] at hc2
+          exact (hc2.mp hc2')
+    · intro h
+      inversion h with
+      | ifTrue hb' hc1' => 
+        rw [← hb] at hb'
+        apply Com.EvalR.ifTrue <;> try assumption
+        · rw [equiv_def] at hc1
+          exact (hc1.mpr hc1')    
+      | ifFalse hb' hc2' =>
+        rw [← hb] at hb'
+        apply Com.EvalR.ifFalse <;> try assumption
+        · rw [equiv_def] at hc2
+          exact (hc2.mpr hc2')
+  )
+```
+:::::
 
 :::dev "Sati (satiscugcat)"
 ```
