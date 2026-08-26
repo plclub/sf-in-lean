@@ -11,12 +11,6 @@ htmlSplit := .never
 file := "Basics"
 %%%
 
-:::dev "Benjamin Pierce (bcpierce00)"
-Could this directive live somewhere else?  And doesn't it belong in a `:::details` block?
-:::
-```lean -show
-set_option pp.fieldNotation false
-```
 
 :::instructors
 This file and Induction.lean each take about an hour to
@@ -319,13 +313,11 @@ inductive MyBool : Type where
   | false
 ```
 
-:::dev "Benjamin Pierce (bcpierce00)"
-Maybe this next bit belongs in a :::details block?  The explanation is a bit lacking...
-:::
-:::ignore
+:::details
 ```lean -show
 -- This is included to be able to format expressions involving these variables later
 variable (b : MyBool) (n m : Nat)
+set_option pp.fieldNotation false
 ```
 :::
 
