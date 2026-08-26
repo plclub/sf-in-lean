@@ -363,6 +363,13 @@ theorem Bexp.optimize0plus_test1 :
         (.not (.gt (.plus (.num 0) (.num 4)) (.num 8)))
       = (.not (.gt (.num 4) (.num 8))) := solution!(by rfl)
 
+:::autogradedHole Bexp.optimize0plusB
+:::
+
+:::gradeTheorem "0.5" optimize0plusB_test1
+:::
+
+```lean
 theorem Bexp.optimize0plus_test2 :
     Bexp.optimize0plus
         (.and (.le (.plus (.num 0) (.num 4)) (.num 5)) (.bool true))
@@ -383,7 +390,7 @@ theorem Bexp.optimize0plus_sound (b : Bexp) :
 :::
 :::::
 
-:::::exercise (rating := 4) (name := "optimize")
+:::::exercise (rating := 4) (name := "optimize") (optional := true)
 The optimization implemented by our {name}`Aexp.optimize0plus` is only one of
 many possible optimizations on arithmetic and boolean expressions. Write a more
 sophisticated optimizer and prove it correct. (You will probably find it easiest
@@ -567,7 +574,7 @@ having to write them out manually like this. I think a simple `#print` may work 
 alternative, assuming there are no namespace issues..
 :::
 
-:::::exercise (rating := 1) (name := "beval_rules") (manual := true)
+:::::exercise (rating := 1) (name := "beval_rules") (manual := true) (optional := true)
 Here, again, is the definition of the {name}`Bexp.eval` function:
 
 ```display
@@ -691,6 +698,9 @@ inductive EvalR : Bexp → Bool → Prop where
 
 scoped notation:55 e:56 " ⇓ " b:56 => EvalR e b
 ```
+
+:::autogradedHole Bexp.EvalR
+:::
 
 ```lean
 theorem evalR_iff_eval (b : Bexp) (bv : Bool) :

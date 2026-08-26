@@ -11,9 +11,6 @@ htmlSplit := .never
 file := "Basics"
 %%%
 
-```lean -show
-set_option pp.fieldNotation false
-```
 
 :::instructors
 This file and Induction.lean each take about an hour to
@@ -38,14 +35,18 @@ If you don't have Lean installed yet:
 * Make a copy of "\_out/lf/student/lean" to start solving as if I were a student.
 :::
 
+This chapter introduces some of Lean's most essential features for writing functional programs
+and proving things about how they behave.
+
+# Introduction
 ::::full
 The _functional style_ of programming is founded on simple
 mathematical intuitions: A program is essentially a concrete
 means for computing a mathematical function, which just maps
-inputs to outputs. Even when programs have side effects, such
-as reading or writing files or network packets, these side
-effects can be given a mathematical characterization (such as
-through the use of monads). This connection between programs and
+inputs to outputs. (Even programs with side effects like
+reading and writing files or network packets can
+be presented in this way, using ideas like
+_monads_.) This connection between programs and
 mathematical functions makes it possible to reason both precisely
 and formally about a program's behavior, i.e., to _prove
 properties_ about programs.
@@ -64,47 +65,47 @@ construct and manipulate rich data structures, and _polymorphic
 types_ supporting abstraction and code reuse.  Lean offers
 all of these features, and we will see them often in this book.
 
-The first half of this chapter introduces some key elements of
-Lean's functional programming language.  The second half introduces
-how you can use Lean _tactics_ to prove properties about programs.
+The first part of this chapter introduces some key elements of
+Lean's functional programming language.  The second part shows
+how to use _tactics_ to prove properties about programs.
 ::::
 
 # Data and Functions
 
 :::terse
-In Lean, we can build practically everything from first principles...
+In Lean, we can build practically everything from first principles
+using _inductive definitions_.
 :::
 
 ::::full
-Lean's set of built-in features is extremely small.
-For example, instead of providing the usual palette of atomic
-_datatypes_ — types whose values are data, such as booleans,
-integers, and strings — as primitives, Lean's extensive standard
-library _defines_ them, along with many common data structures
-besides, like lists and hash tables. It does so with a single
-powerful and general mechanism: the _inductive definition_.
-A type introduced this way is called an _inductive type_; the
+Lean's set of primitives is extremely small.
+For example, instead of providing the usual palette of _atomic
+datatypes_ — booleans,
+integers, strings, and so on — Lean's standard
+library _defines_ them, along with an extensive collection of other common data structures —
+lists, hash tables, etc., etc. It does so with a single
+powerful and general mechanism: _inductive definitions_.
+A type introduced with an inductive definition is called an _inductive type_, and the
 word "inductive" hints at the use of mathematical induction
-to prove statements about its values (which is the subject of the
+to reason about its values (as we will see in the
 {ref "Induction"}[next chapter]).
 
-To demonstrate how inductive definitions work, and illustrate their
-expressive power, we will recapitulate most of the datatype definitions we
-need in this course, rather than immediately referring
-to those in the standard library. We take care to harmonize
-the definitions we present with the actual definitions in the standard library, which
-we gradually introduce throughout the course.
+To demonstrate how inductive definitions work and illustrate their
+expressive power, we will start by defining most of the datatypes we
+use in this course from scratch, rather than importing
+the ones in the standard library. (We will later switch over to the library
+versions, to take advantage of all the properties that have already been proved about them.)
 ::::
 
 ## Days of the Week (Enumerated Types)
 
 :::terse
-A datatype definition:
+An inductive definition for an _enumerated type_:
 :::
 
 ::::full
 Let's start with a very simple example.  The following declaration tells
-Lean that we are defining a set of data values, i.e. a _type_.
+Lean to give a name to a set of data values, i.e., to define a _type_.
 ::::
 
 ```lean
@@ -120,10 +121,10 @@ inductive Day : Type where
 
 ::::full
 The new type is called {name}`Day`, and its members are `monday`,
-`tuesday`, etc. These members are also called the _constructors_
-of the {name}`Day` type, since they can be use to construct elements of that type.
+`tuesday`, etc. These are also called the _constructors_
+of the {name}`Day` type.
 We often call this sort of inductive type an _enumerated type_
-since all values that have the type are enumerated in its definition.
+since the values belonging to the type are explicitly enumerated in its definition.
 
 Having defined {name}`Day`, we can write Lean functions that operate on
 days.
@@ -149,31 +150,30 @@ def nextWorkingDay (d : Day) : Day :=
 ```
 
 ::::full
-Note that the argument and return types of this function are
-explicitly declared on the first line. Like most functional
+Note that the argument and result types of this function are
+explicitly declared on its first line. As in most functional
 programming languages, Lean can often figure out these types for
 itself when they are not given explicitly — i.e., it can do _type
 inference_ — but we'll generally include them to make reading
 easier.
 
-The `match` keyword is Lean's keyword for _pattern matching_: the functional
-programming way of examining and making decisions on data. When evaluating
+The `match` on the second line is Lean's keyword for _pattern matching_, the functional
+programming way of examining and making decisions on data. To evaluate
 `match d with...`, Lean will examine the structure of `d` to see which
 case to execute; if `d` is `Day.monday`, for example, it will
 evaluate the first case of the `match` statement; if `d` is
 `Day.friday` it will evaluate the fifth case. (There is much more
-to say about pattern matching — we'll introduce more of its features
+to say about pattern matching! We'll introduce more of its features
 as the need arises.)
 
 You may notice that we _qualified_ `Day`'s constructors when using them,
 writing {name}`Day.monday` instead of just `monday`, for example.
 Lean places all constructors into a _namespace_ associated with their type,
-and generally requires those constructors to be prefixed with their namespace when they are used.
-Later, we shall see a few circumstances in which this requirement can be relaxed.
+and generally requires those constructors to be prefixed with their namespace when they are used, though
+we will see later that this requirement can sometimes be relaxed.
 
-If you ever need to know the type of *any* pattern, object, or function,
-you can hover over it with your mouse in any editor that supports Lean,
-like VS Code or the web version we provide.
+If you ever need to know the type of _any_ pattern, object, or function,
+you can hover over it with your mouse, either in VS Code or in the HTML version of the chapter.
 ::::
 
 :::slidebreak
@@ -190,6 +190,12 @@ Lean.  One is to use the `#eval` command to evaluate a compound
 expression involving `nextWorkingDay`.  (Lean's responses are shown
 just below.)
 ::::
+
+:::dev "Benjamin Pierce (bcpierce00)"
+There is probably not time to fix this, but the way responses are displayed is confusing.  They
+should be marked as responses in some more explicit way.
+:::
+
 
 ```lean (name := nextWDay)
 #eval nextWorkingDay Day.friday
@@ -214,6 +220,10 @@ We can also record what we _expect_ the result of calling a function to be in th
 example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
   rfl
 ```
+:::dev "Benjamin Pierce (bcpierce00)"
+Do we really *have* to follow the Lean convention of putting the `:= by` on the same line
+as the theorem statement?  It's awful.,
+:::
 
 ::::full
 This declaration asserts that the second working day after `saturday` is `tuesday`.
@@ -222,7 +232,7 @@ The `by rfl` can be read as "The assertion we've just made can be
 proved by observing that both sides of the equality evaluate to
 the same term."
 
-{tactic}`rfl` stands for "reflexivity," which is the principle that any value is
+Here, {tactic}`rfl` is pronounced "reflexivity," the principle that any value is
 equal to itself. After evaluation, both sides of the equality are the same
 value, so the assertion is true by reflexivity.
 If we had made a different assertion, such as
@@ -233,6 +243,9 @@ example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.monday := by rfl
 
 then Lean would not be able to verify it and would instead signal an
 error.
+
+(The `sf_expect_failure_in` annotation tells Lean that there is intended to be an error in
+the following expression and it should not mark the whole file as broken.)
 ::::
 
 ::::terse
@@ -246,20 +259,26 @@ The {tactic}`rfl` tactic is used to observe that both sides of an equal sign eva
 
 ::::full
 If you have not already done so, this would be an excellent moment
-to fire up VS Code with the [Lean Extension](https://marketplace.visualstudio.com/items?itemName=leanprover.lean4) and load this file, `Basics.lean`
-from the book's Lean sources. Then find the above example.
+to fire up VS Code with the
+[Lean Extension](https://marketplace.visualstudio.com/items?itemName=leanprover.lean4)
+and load this file, `Basics.lean`,
+from the book's Lean sources.
+Locate the above example and observe its result in the Lean InfoView panel.
 
-Observe the result in the Lean InfoView panel.
 This panel displays the results of commands like `#eval` (click on a particular `#eval` to see),
 as well as the current goal state when working on proofs.
 The InfoView content always follows your cursor.
 
 You can command-click on a type or variable name to navigate to its definition.
 Try this with the mention of `nextWorkingDay` in the above `#eval`.
+:::dev "Benjamin Pierce (bcpierce00)"
+Is it called command-click on Linux and Windows?
+:::
 
 You can also hover over expressions in the source code to see their types.
 Try this with mentions of {name}`nextWorkingDay` and `Day.saturday` in the above `#eval`.
-If you hover over the `#eval` command itself, you will see the popup that contains its output (at the top).
+If you hover over the `#eval` command itself,
+you will see the popup that contains its output (at the top).
 Sometimes we show Lean's responses to commands in the text below them; by hovering over
 the command you can check against that text.
 
@@ -279,6 +298,11 @@ scratch. Our definition `MyBool` is equivalent to Lean's built-in {name}`Bool`,
 which we'll switch to later.
 ::::
 
+:::dev "Benjamin Pierce (bcpierce00)"
+Why are our custom booleans called `MyBool` but our custom nats are called `Nat`?
+:::
+
+
 ::::terse
 Another familiar enumerated type; we'll switch to Lean's built-in `Bool` later:
 ::::
@@ -288,11 +312,13 @@ inductive MyBool : Type where
   | true
   | false
 ```
-
-:::ignore
--- This is included to be able to format expressions involving these variables later
+:::full
+We next invoke a couple of Lean directives to help control formatting.  Exactly what these directives mean is not important for present purposes -- you can understand everything in the rest of the book without knowing -- so we will mark these commands -- and similar bits later on -- with `THESE DETAILS CAN BE SKIPPED` comments in `.lean` files, and with folded-up segments in the HTML presentation. Feel free to have a peek if you want (click on the triangle in the HTML to unfold it), or just jump down to the following material and keep going.
+:::
+:::details
 ```lean -show
 variable (b : MyBool) (n m : Nat)
+set_option pp.fieldNotation false
 ```
 :::
 
@@ -338,7 +364,7 @@ def or (b1 : MyBool) (b2 : MyBool) : MyBool :=
 
 ::::full
 The `and` and `or` definitions illustrate Lean's syntax for multi-argument
-functions.  The corresponding multi-argument _application_ syntax is
+functions.  The corresponding multi-argument function-application syntax is
 illustrated by the following tests, which effectively constitute a
 complete specification — a truth table — for the `or` function:
 ::::
@@ -354,7 +380,7 @@ example : or MyBool.false MyBool.true  = MyBool.true  := by rfl
 example : or MyBool.true  MyBool.true  = MyBool.true  := by rfl
 ```
 
-Lean allows us to define symbolic notation for our definitions.
+Lean also allows us to define symbolic notations for these functions.
 
 ```lean
 local prefix:40 (priority := high) "!" => not
@@ -369,7 +395,8 @@ example :
 example : (!MyBool.false) = MyBool.true := by rfl
 ```
 
-The technical details of how these symbolic notations work are not something you need to understand until quite a bit later in your Lean journey.  We'll mark these details -- and similar material later on -- with `THESE DETAILS CAN BE SKIPPED` comments in `.lean` files and collapsed text segments in the HTML presentation. Click on the triangle in the HTML if you want to have a peek, or just move on to the following material, as you like.
+::::full
+The technical details of how these symbolic notations work are not something you need to understand until quite a bit later in your Lean journey.  
 
 :::details
 Lean has a very flexible notation system. Operators like `||` and `&&`
@@ -380,6 +407,7 @@ Custom notations are defined using the `notation`, `infixl`,
 `infixr`, `prefix`, and `postfix` commands, some of which we will see
 (again, in skippable sections) later on.
 :::
+::::
 
 :::slidebreak
 :::
@@ -390,7 +418,7 @@ definition.  We use it in exercises to indicate the parts that we're
 leaving for you — i.e., your job is to replace {tactic}`sorry` with real
 definitions and proofs.
 
-Remove {tactic}`sorry` below and complete the definition of the following
+Remove {tactic}`sorry` below and complete the definition of the
 function.  The function should return {name}`MyBool.true` if either or both of
 its inputs are {name}`MyBool.false`. Make sure that the `example` assertions
 below can be verified by Lean.
@@ -407,10 +435,24 @@ theorem nand_test3 : nand MyBool.false MyBool.true  = MyBool.true  := solution!(
 theorem nand_test4 : nand MyBool.true  MyBool.true  = MyBool.false := solution!(by rfl)
 ```
 
+:::autogradedHole nand
+:::
+
 :::gradeTheorem "0.25" nand_test1 nand_test2 nand_test3 nand_test4
+:::
+
+:::dev
+TODO: `nand` needs `@[autogradedHole]`
 :::
 ::::
 
+:::::terse
+Going forward, most exercises will be omitted from the "terse" version of the notes used
+in lecture. The "full" version (used on-line and for homeworks) contains both longer
+explanations and all the exercises.
+:::::
+
+:::::full
 ::::exercise (rating := 1) (name := "and3")
 Do the same for the `and3` function below. This function should
 return `true` when all of its inputs are `true`, and `false`
@@ -426,14 +468,18 @@ theorem and3_test3 : and3 MyBool.true  MyBool.false MyBool.true  = MyBool.false 
 theorem and3_test4 : and3 MyBool.true  MyBool.true  MyBool.false = MyBool.false := solution!(by rfl)
 ```
 
+:::autogradedHole and3
+:::
+
 :::gradeTheorem "0.25" and3_test1 and3_test2 and3_test3 and3_test4
 :::
 ::::
+:::::
 
 :::slidebreak
 :::
 
-## Basic Proofs
+# A First Taste of Proofs
 
 ::::full
 Now that we've defined some basic functions on booleans, let's see how to
@@ -442,25 +488,29 @@ about `&&`:
 
 - for any boolean value {lean}`b`, {lean}`(MyBool.true && b) = b`
 
-This is an example of a _proposition_, a logical _claim_ that we can try to prove.
+This is an example of a _proposition_, a logical claim that we can try to prove.
 It says that {lean}`MyBool.true && b` is equal to {lean}`b` for every {name}`MyBool` `b`.
 
-How might we write this proposition in Lean?
+How do we write this proposition in Lean?  Like this:
 
 - `theorem true_and : ∀ (b : MyBool), (MyBool.true && b) = b`
+:::dev "Benjamin Pierce (bcpierce00)"
+Could it (and the one above) be displayed instead of bulleted?
+:::
 
 The keyword `theorem` indicates that we are stating (and eventually proving)
 a proposition; the text after the first `:` is the proposition we want to prove.
-You'll notice that this proposition looks a lot like the one we wrote above,
-but with some additional symbols in front.
-The `∀` symbol, pronounced "forall", is
-called a _universal quantifier_ because it _quantifies_ the variable {lean}`b` that appears
+
+You'll notice that this proposition looks a lot like the informal one we began with,
+with some additional symbols in front.
+The `∀` symbol, pronounced "forall",
+is a _universal quantifier_: it "quantifies" the variable {lean}`b` that appears
 in the proposition. Quantifying a variable with a `∀` means that the proposition
-applies to all possible values of its type; here, we annotate {lean}`b`
+applies to all possible values of its type; we annotate {lean}`b`
 with the type {lean}`MyBool` to signify that
 the proposition holds for all {lean}`b`s of type {lean}`MyBool`.
 
-Now that we've stated the theorem we'd like to prove, let's set about proving it.
+Now that we've stated the theorem we'd like to prove, let's see the proof.
 ::::
 
 ::::terse
@@ -476,28 +526,25 @@ theorem true_and : ∀ (b : MyBool), (MyBool.true && b) = b := by
 ::::full
 What does this mean?
 
-First we have the `by` keyword, which signals
-to Lean that we are beginning a sequence of _tactics_.
-The `intro b` and {tactic}`rfl` that you see after the `by`
+First the `by` keyword signals
+that what follows is a sequence of _tactics_.
+The `intro b` and {tactic}`rfl` after the `by`
 are examples of tactics. If you hover over a tactic's name, Lean shows
-its documentation, explaining what the tactic does and how to use it.
+its documentation.
 
-Tactics manipulate the _proof state_, as you can see the in the Lean InfoView panel.
-The proof state is divided by the symbol ⊢, called the _turnstile_. The part
-before it is called the _context_, and the part after it is called
+Tactics manipulate the _proof state_, which you can see the in the Lean InfoView panel.
+The proof state is divided by the symbol ⊢, pronounced _turnstile_. The part
+before it is the _context_, and the part after it is
 the _goal_. The context records what we know
-at some point in the proof; the goal is what we are trying to prove
+at some given point in the proof; the goal is what we are trying to prove
 at that point.
 
-A tactic manipulates both the goal and the context, to get the goal
-into a shape that is closer to the one we want. A tactic can also
+Each tactic manipulates the goal, the context, or both, to get things
+into a configuration that is closer to being "solved". A tactic can also
 _close_ (solve) the current goal, finishing its proof.
 
 Let's walk through the example above with this terminology in mind.
 ::::
-:::dev "Benjamin Pierce (bcpierce00)"
-The typesetting here is bad -- most of the text has to come out of the inline comments...
-:::
 
 ::::terse
 And now let's see it in a bit more detail:
@@ -557,7 +604,7 @@ theorem true_and_wrong : ∀ (b : MyBool), (MyBool.true && b) = b := by
 ```
 
 To see the error message in the Lean file,
-change `sf_expect_failure` to `sf_expect_failure?` temporarily.
+change `sf_expect_failure_in` to `sf_expect_failure_in?` temporarily.
 You should see the following message.
 
 ```leanOutput indent
@@ -568,7 +615,7 @@ b : MyBool
 ```
 
 Lean complains because the {tactic}`rfl` is not at the same level of indentation as the `{tactic}intro b`,
-so Lean does not recognize these two tactics as being sequential in the way they should be.
+so it does not recognize these two tactics as being sequential in the way they should be.
 
 In general, sequential tactics applied to the same goal must be on subsequent lines at the same
 level of indentation or separated on the same line by a `;` like so:
@@ -579,6 +626,7 @@ theorem true_and' : ∀ (b : MyBool), (MyBool.true && b) = b := by
 ```
 ::::
 
+:::::full
 ::::exercise (rating := 1) (name := "false_or_exercise")
 Here's a simple proof for you to try.
 Remove {tactic}`sorry` and fill in the proof.
@@ -594,7 +642,6 @@ theorem false_or : ∀ (b : MyBool), (MyBool.false || b) = b := by
 :::
 ::::
 
-::::full
 While in this book we often use {tactic}`sorry` as a placeholder for you to
 replace with an actual proof, in general, {tactic}`sorry` tells Lean that we want to skip trying
 to prove a theorem and just accept it as a given.  This can be useful for developing longer proofs.
@@ -603,16 +650,10 @@ Be careful, though: every time you say {tactic}`sorry` you are leaving
 a door open for total nonsense to enter Lean's safe, formally
 checked world!
 
-:::dev "Harrison Goldstein (hgoldstein95)"
-In the terse .lean output this ends up looking like an exercise.
-:::
-
 ```lean -keep
 theorem really_bad : MyBool.true = MyBool.false := by sorry
 ```
-::::
 
-::::full
 The facts we've seen so far about booleans are quite simple, so the tactics we need to
 prove them are also quite simple. Over the course of this book we are going to
 introduce new tactics and proof techniques gradually, enriching the propositions we can prove along the way.
@@ -620,7 +661,7 @@ introduce new tactics and proof techniques gradually, enriching the propositions
 Now that we've seen how to define our own booleans and prove some basic
 properties about them, let's switch to Lean's built-in {name}`Bool` type, which has the same structure
 but comes with a lot of useful functions and lemmas.
-::::
+:::::
 
 ::::terse
 Now we'll switch to Lean's definition of booleans.
@@ -706,12 +747,6 @@ each of type {name}`Bool`, this function produces an output of type
 ::::
 
 ## New Types from Old
-
-:::dev "Harrison Goldstein (hgoldstein95)"
-I feel like this section has too much content in terse, but I don't want to unilaterally make
-that call.
-TODO
-:::
 
 ::::full
 The enumerated types we have seen so far are so-named because
@@ -827,13 +862,13 @@ def isRed' (c : Color) : Bool :=
     | _ => Bool.false
 ```
 
-:::full
 This {name}`isRed'` function produces the same result as
-{name}`isRed` but illustrates the _use_ of a pattern matching variable: the
-{lean}`Color.primary r` pattern stores the {name}`RGB` argument into variable {lean}`r`,
+{name}`isRed` but illustrates the _use_ of a pattern variable.
+
+:::::full
+The {lean}`Color.primary r` pattern stores the {name}`RGB` argument into variable {lean}`r`,
 and then pattern matches on that argument to produce the final
 result.
-:::
 
 ::::exercise (rating := 1) (name := "is_weekend")
 Define a function that takes a `Day` and returns true if the day is
@@ -859,6 +894,9 @@ def is_weekend (d : Day) : Bool
 theorem is_weekend_test1 : is_weekend Day.sunday = true := solution!(by rfl)
 theorem is_weekend_test2 : is_weekend Day.friday = false := solution!(by rfl)
 ```
+
+:::autogradedHole is_weekend
+:::
 
 :::gradeTheorem "0.5" is_weekend_test1 is_weekend_test2
 :::
@@ -896,9 +934,13 @@ theorem isInversion_test4 : isInversion (Color.primary RGB.green) (Color.primary
   solution!(by rfl)
 ```
 
+:::autogradedHole isInversion
+:::
+
 :::gradeTheorem "0.25" isInversion_test1 isInversion_test2 isInversion_test3 isInversion_test4
 :::
 ::::
+:::::
 
 ## Namespaces
 
@@ -1136,6 +1178,11 @@ to be {name}`Day`s. When we use the `.monday` style in the function body, Lean c
 out that we must mean `Day.monday`. However, in the example below, Lean can't figure out
 which version of `.true` we mean, since it could either be {name}`Bool.true` or {name}`MyBool.true`.
 In this case, it will raise an error:
+::::
+
+::::terse
+Here, Lean can't figure out which version of `.true` we mean.
+::::
 
 ```lean +error (name := am)
 #check .true
@@ -1164,9 +1211,9 @@ Here, though, because {name}`not` is a function that takes a {name}`Bool` argume
 !true : Bool
 ```
 
-::::
+:::::full
 
-::::exercise(rating:=0) (name := "custom_namespace_checks")
+::::exercise (rating := 1) (name := "custom_namespace_checks")
 Predict the output of each of the statements below.
 Do you think their results would change depending on which namespace
 the statements appear in? How?
@@ -1187,6 +1234,7 @@ an active section of the book to evaluate them.
 GRADE_MANUAL 1: custom_namespace_checks
 ```
 :::
+:::::
 
 ## Constructors with Multiple Parameters (Tuple Types)
 
@@ -1386,10 +1434,12 @@ inductive Nat : Type where
   | succ (n : Nat)
 ```
 
+:::full
 With a little Lean magic, we can also arrange that
 ordinary numerals such as 0, 1, and 2 will be interpreted as values of our new {name}`Nat` type
 whenever this is sensible in context.
-The technical details of how this is done are not important for present purposes.
+The technical details are not important.
+:::
 
 :::details "Library Nat to SFL Nat coercion"
 ```lean
@@ -1591,10 +1641,14 @@ theorem add_zero_zero : ∀ n : Nat, n + zero + zero = n := by
   rewrite [add_zero]
   rfl
 ```
-
+::::full
 We'll walk through this proof in the next section.
+::::
 
 ## Proof state and tactics
+
+:::suppressPreviousHeaderWhenTerse
+:::
 
 ::::full
 The {tactic}`rewrite` tactic in the proof of {name}`add_zero_zero` is used
@@ -1634,7 +1688,7 @@ Give this proof a try (it's similar):
 
 ```lean
 theorem add_zero_zero_zero : ∀ n : Nat, n + zero + zero + zero = n := by
-  solution!
+  workinclass!
     intro n
     rewrite [add_zero]
     rewrite [add_zero]
@@ -1857,13 +1911,12 @@ theorem three_eq_succ_two : three = succ two := by rfl
 theorem four_eq_succ_three : four = succ three := by rfl
 ```
 
-::::full
+:::::full
 We can rewrite with these rules to expand numerals into their definitions,
 which allows us to use our {name}`add` rules.
 Here's an example of how to start a proof this way.
-::::
 
-:::exercise (rating := 1) (name := "mul_simpl_rules")
+::::exercise (rating := 1) (name := "mul_simpl_rules")
 
 Finish the proof using the {name}`add` rules:
 
@@ -1887,7 +1940,10 @@ theorem two_plus_two_eq_four : two + two = four := by
     rfl
 ```
 
+:::gradeTheorem "0.5" one_plus_one_eq_two two_plus_two_eq_four
 :::
+::::
+:::::
 
 ### Multiplication
 
@@ -1938,9 +1994,17 @@ attribute [irreducible] mul
 :::
 ::::
 
-Prove these thoerems using rewriting with the simplification rules for addition and multiplication.
+Prove this theorem using rewriting with the simplification rules.
 
-::::full
+```lean
+theorem zero_add_one : (zero + one : Nat) = one := by
+  rewrite [one_eq_succ_zero]
+  workinclass!
+    rewrite [add_succ, add_zero]
+    rfl
+```
+
+:::::full
 Notice how {tactic}`rewrite`
 can take any number of arguments. You can rewrite with all of the
 simplification rules at once, for example.
@@ -1949,22 +2013,14 @@ After each rewrite, check the proof state by placing the cursor immediately
 after a rule to see how the goal is changing. This happens naturally
 as you write the proof, which makes it convenient to use {tactic}`rewrite` blocks
 with multiple rules.
-::::
 
 ::::exercise (rating := 2) (name := "test_mul_add")
 ```lean
-theorem zero_add_one : (zero + one : Nat) = one := by
-  rewrite [one_eq_succ_zero]
-  solution!
-    rewrite [add_succ, add_zero]
-    rfl
-
 theorem one_add_one : (one + one : Nat) = two := by
   rewrite [one_eq_succ_zero]
   solution!
     rewrite [add_succ, add_zero]
     rfl
-
 
 theorem zero_mul_two : (zero * two : Nat) = zero := by
   rewrite [two_eq_succ_one, one_eq_succ_zero]
@@ -1989,9 +2045,10 @@ theorem two_mul_two : (two * two : Nat) = four := by
     rfl
 ```
 
-:::gradeTheorem "0.4" zero_add_one one_add_one zero_mul_two one_mul_two two_mul_two
+:::gradeTheorem "0.5" one_add_one zero_mul_two one_mul_two two_mul_two
 :::
 ::::
+:::::
 
 :::slidebreak
 :::
@@ -2056,6 +2113,7 @@ example : ble four two = false := by rfl
 
 ```
 
+:::::full
 ::::exercise (rating := 1) (name := "blt")
 Define a less-than function in terms of {name}`ble`.
 
@@ -2069,9 +2127,13 @@ theorem blt_test3 : blt four two = false := solution!(by rfl)
 attribute [irreducible] blt ble
 ```
 
+:::autogradedHole blt
+:::
+
 :::gradeTheorem 1 blt_test3
 :::
 ::::
+:::::
 
 :::slidebreak
 :::
@@ -2093,7 +2155,7 @@ prove, while `x == y` is a boolean _expression_ whose value (either
 
 ::::terse
 Note that `==` and `=` are different; the former means {name}`beq` whereas the latter is a logical
-claim.
+claim. Here are our simplification rules.
 ::::
 
 ::::full
@@ -2110,18 +2172,25 @@ theorem succ_beq_succ (n m : Nat) : ((succ n) == (succ m)) = (n == m) := by rfl
 attribute [irreducible] beq
 ```
 
-:::full
-As an aside, we point out that we have been following a naming convention
-for simplification rules which aims to convey their meaning.
-For `add_zero` and `add_succ` notice that `zero` and
-`succ` are after the `add` — this is because they depend on `add`'s _second_ argument
+::::full
+Aside: Our naming convention
+for simplification rules encodes their meaning.
+For `add_zero` and `add_succ`, notice that the `zero` and
+`succ` come after the `add`; this is because they depend on `add`'s _second_ argument
 and do not care about its first.
-In the `beq` rules above, we write `zero_beq_zero` and `zero_beq_succ`
-because the rules apply to both the first and second arguments of `beq`. We put
-`beq` in between the arguments because it usually written in infix.
-There are not strict style conventions for naming theorems like this in Lean, but many
-follow this approach.
+:::dev "Benjamin Pierce (bcpierce00)"
+So they would be called `zero_add` and `succ_add` if they depended on the first argument?? This explanation isn't making complete sense to me...
 :::
+Also, in the `beq` rules above, we write `zero_beq_zero` and `zero_beq_succ`
+because the rules apply to both the first and second arguments of `beq`. We put
+`beq` between the arguments because it usually written in infix.
+There are no strict style conventions for naming theorems like this in Lean, but many developers
+follow this approach.
+:::dev "Benjamin Pierce (bcpierce00)"
+We haven't really articulated an "approach" -- just given a couple of miscellaneous examples...
+TO DO: Let's move this to UsingLean and broaden it.
+:::
+::::
 
 ## General Proofs about Natural Numbers
 
@@ -2160,6 +2229,7 @@ theorem add_id_example : ∀ n m : Nat,
   rfl
 ```
 
+:::::full
 ::::exercise (rating := 1) (name := "add_id_exercise")
 
 Remove {tactic}`sorry` and fill in the proof.
@@ -2176,6 +2246,7 @@ theorem add_id_exercise : ∀ n m o : Nat,
 :::gradeTheorem 1 add_id_exercise
 :::
 ::::
+:::::
 
 :::slidebreak
 :::
@@ -2186,8 +2257,8 @@ The `#check` command can also be used to examine the statements of
 previously declared lemmas and theorems.
 
 ```lean (name := mul_l)
-#check mul_zero  -- ∀ (n : Nat), n * 0 = 0
-#check mul_succ  -- ∀ (n m : Nat), n * Nat.succ m = n + n * m
+#check mul_zero
+#check mul_succ
 ```
 
 ```leanOutput mul_l
@@ -2223,25 +2294,8 @@ The declaration-header style is conventional in Lean, and we will generally use 
 ::::
 
 ::::terse
-
-Lean may:
-
-- print a fully qualified name, such as {name}`NatPlayground.Nat.mul_zero`;
-- display universally quantified variables as binders before the colon.
-
-Thus,
-
-```display
-mul_zero : ∀ (n : Nat), n * zero = zero
-```
-
-may be displayed as:
-
-```display
-mul_zero (n : Nat) : n * zero = zero
-```
-
-The second form is the conventional _declaration-header style_ in Lean.
+Lean displays universally quantified variables as binders before the colon, which is
+the preferred _declaration-header style_ in Lean.
 ::::
 
 :::slidebreak
@@ -2320,15 +2374,12 @@ theorem not_involutive (b : Bool) : (!!b) = b := by
 ```
 
 ::::full
-In the proof above we have used some rewrite rules that we didn't
-previously prove in this file. These rules come from Lean's standard library, in particular
-from the section about booleans. Having access to these already-proved theorems about booleans
-instead of needing to prove them ourselves is an  advantage of using Lean's built-in
-{name}`Bool` type instead of defining our own.
-
+The proof above uses some rewrite rules that we didn't
+prove previously. These come from Lean's standard library, in particular
+from the section about booleans.
 In the {ref "UsingLean"}[UsingLean] chapter we will discuss how to search through the standard library
 for theorems like these. For now, note that, if you hover over the name of these theorems
-in VS Code, the Lean 4 extension will show you their type, i.e., what the theorem proves.
+in VS Code, the Lean extension will show you what the theorem proves.
 ::::
 
 ::::terse
@@ -2409,6 +2460,9 @@ by case analysis in the {ref "Tactics"}[Tactics] chapter.
 
 ## New Tactics: `rewrite ... at` and {tactic}`exact`
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
 ::::full
 Some new tactics will be useful for the exercises ahead.
 
@@ -2423,9 +2477,10 @@ explain how when we get to an example that needs it.
 ::::
 
 ::::terse
-You will need the `rewrite ... at` and {tactic}`exact` tactics to complete the following exercises.
+You will need the `rewrite ... at` and {tactic}`exact` tactics to complete some exercises.
 ::::
 
+:::::full
 ::::exercise (rating := 2) (name := "or_false_true")
 Prove the following claim.
 
@@ -2456,10 +2511,14 @@ theorem zero_neb_add_one (n : Nat) :
 :::gradeTheorem 1 zero_neb_add_one
 :::
 ::::
+:::::
 
 ## Structural Recursion (Optional)
 
-::::full
+:::suppressPreviousHeaderWhenTerse
+:::
+
+:::::full
 Here is a copy of the definition of `even`:
 
 ```lean
@@ -2485,9 +2544,8 @@ in Lean will terminate on all inputs.  However, because Lean's
 termination analysis is not always able to figure things out
 automatically, it is sometimes necessary to provide hints or
 write functions in slightly different ways.
-::::
 
-::::exercise (rating := 2) (name := "decreasing")
+::::exercise (rating := 2) (name := "decreasing") (optional := true) (manual := true)
 To get a concrete sense of how termination checking works in Lean,
 find a way to write a sensible recursive definition (of a simple
 function on numbers, say) that does actually terminate on all inputs,
@@ -2504,12 +2562,16 @@ def factorial_bad (n : Nat) : Nat :=
 ```
 
 This fails because Lean can't see that `pred n` is structurally smaller.
-
 :::
 ::::
+:::::
 
 ## Binary Numerals
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
+:::::full
 ::::exercise (rating := 3) (name := "binary")
 We can generalize our unary representation of natural numbers to
 the more efficient binary representation by treating a binary
@@ -2570,6 +2632,9 @@ theorem binToNat_b0 (m : Bin) : binToNat (.b0 m) = binToNat m * two := solution!
 theorem binToNat_b1 (m : Bin) : binToNat (.b1 m) = binToNat m * two + one := solution!(by rfl)
 ```
 
+:::autogradedHole incr binToNat
+:::
+
 You may find your previous proofs of {name}`zero_add_one`, {name}`one_add_one`, {name}`zero_mul_two`,
 {name}`one_mul_two`, and {name}`two_mul_two` useful here.
 
@@ -2601,6 +2666,7 @@ attribute [irreducible] incr binToNat
 :::gradeTheorem "0.5" incr_test1 incr_test2 incr_test3 binToNat_test1 binToNat_test2 binToNat_test3
 :::
 ::::
+:::::
 
 ```lean
 end Nat
@@ -2608,8 +2674,15 @@ end Nat
 
 # More Exercises
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
 ## Warmups
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
+:::::full
 ::::exercise (rating := 1) (name := "identity_fn_applied_twice")
 You now have a small but rather powerful suite of tactics at your disposal.
 As a warmup for the last section of the chapter, use the tactics you have
@@ -2632,7 +2705,7 @@ theorem identity_fn_applied_twice (f : Bool → Bool) :
 :::
 ::::
 
-::::exercise (rating := 1) (name := "negation_fn_applied_twice")
+::::exercise (rating := 1) (name := "negation_fn_applied_twice") (manual := true)
 Now state and prove a theorem `negation_fn_applied_twice` similar
 to the previous one but where the hypothesis says that the
 function `f` has the property that `f x = !x`.
@@ -2657,7 +2730,7 @@ GRADE_MANUAL 1: negation_fn_applied_twice
 :::
 ::::
 
-::::exercise (rating := 3) (name := "and_eq_or")
+::::exercise (rating := 3) (name := "and_eq_or") (optional := true)
 Prove the following theorem.
 
 ```lean
@@ -2684,6 +2757,7 @@ theorem and_eq_or (b c : Bool) : (b && c) = (b || c) → b = c := by
 :::gradeTheorem 3 and_eq_or
 :::
 ::::
+:::::
 
 ## Airport Exercise
 
@@ -2750,17 +2824,21 @@ inductive Traveler : Type where
 Buying a ticket changes a traveler with no ticket into a ticketed traveler.
 If the traveler already has a ticket or has already checked in, nothing changes.
 
-:::exercise (rating := 1) (name := "buyTicket")
+::::exercise (rating := 1) (name := "buyTicket")
 ```lean
 def buyTicket (t : Traveler) : Traveler := solution!(
   match t with
   | .noTicket bagContent => .ticketed bagContent
   | _ => t
 )
-example : buyTicket (.noTicket .ordinary) = .ticketed .ordinary := solution!(by rfl)
-example : buyTicket (.checkedIn .prohibited .blocked) = .checkedIn .prohibited .blocked := solution!(by rfl)
+theorem buyTicket_test1 : buyTicket (.noTicket .ordinary) = .ticketed .ordinary := solution!(by rfl)
+theorem buyTicket_test2 : buyTicket (.checkedIn .prohibited .blocked) = .checkedIn .prohibited .blocked := solution!(by rfl)
 ```
+:::autogradedHole buyTicket
 :::
+:::gradeTheorem "0.5" buyTicket_test1 buyTicket_test2
+:::
+::::
 
 Here are the simplification rules for {name}`buyTicket`:
 
@@ -2782,7 +2860,7 @@ The first property we will prove about our system is that
 purchasing a ticket is an _idempotent_ operation
 (i.e., performing it twice has the same effect as performing it once).
 
-:::exercise (rating := 2) (name := "buy_ticket_idempotent")
+::::exercise (rating := 2) (name := "buy_ticket_idempotent")
 ```lean
 theorem buyTicket_idempotent (t : Traveler) :
     buyTicket (buyTicket t) = buyTicket t := by
@@ -2801,13 +2879,15 @@ theorem buyTicket_idempotent (t : Traveler) :
         rewrite [buyTicket_checkedIn]
         rfl
 ```
+:::gradeTheorem 2 buyTicket_idempotent
 :::
+::::
 
 A traveler can check in only after buying a ticket.
 Checking in records that their carry-on bag still needs to be inspected.
 Calling `checkIn` before buying a ticket or after already checking in does nothing.
 
-:::exercise (rating := 1) (name := "checkIn")
+::::exercise (rating := 1) (name := "checkIn")
 
 ```lean
 def checkIn (t : Traveler) : Traveler := solution!(
@@ -2816,11 +2896,15 @@ def checkIn (t : Traveler) : Traveler := solution!(
   | _ => t
 )
 
-example : checkIn (.noTicket .ordinary) = .noTicket .ordinary := solution!(by rfl)
-example : checkIn (.ticketed .prohibited) = .checkedIn .prohibited .notScreened := solution!(by rfl)
-example : checkIn (.checkedIn .ordinary .cleared) = .checkedIn .ordinary .cleared := solution!(by rfl)
+theorem checkIn_test1 : checkIn (.noTicket .ordinary) = .noTicket .ordinary := solution!(by rfl)
+theorem checkIn_test2 : checkIn (.ticketed .prohibited) = .checkedIn .prohibited .notScreened := solution!(by rfl)
+theorem checkIn_test3 : checkIn (.checkedIn .ordinary .cleared) = .checkedIn .ordinary .cleared := solution!(by rfl)
 ```
+:::autogradedHole checkIn
 :::
+:::gradeTheorem "1/3" checkIn_test1 checkIn_test2 checkIn_test3
+:::
+::::
 
 Again, we record one rewrite rule for each case:
 
@@ -2841,7 +2925,7 @@ attribute [irreducible] checkIn
 A traveler who does not yet have a ticket can buy one and then check in.
 After this, the traveler is checked in and their carry-on ba bag needs to be screened.
 
-:::exercise (rating := 1) (name := "buy_ticket_then_check_in")
+::::exercise (rating := 1) (name := "buy_ticket_then_check_in")
 ```lean
 theorem buyTicket_then_checkIn (bagContent : BagContent) :
     checkIn (buyTicket (.noTicket bagContent)) = .checkedIn bagContent .notScreened := by
@@ -2850,14 +2934,16 @@ theorem buyTicket_then_checkIn (bagContent : BagContent) :
     rewrite [checkIn_ticketed]
     rfl
 ```
+:::gradeTheorem 1 buyTicket_then_checkIn
 :::
+::::
 
 Carry-on inspection happens only after check-in.
 A bag containing only ordinary items is cleared,
 while a bag containing a prohibited item is blocked.
 If the traveler has not checked in, `inspectBag` does nothing.
 
-:::exercise (rating := 1) (name := "inspectBag")
+::::exercise (rating := 1) (name := "inspectBag")
 Define `inspectBag`.
 
 ```lean
@@ -2868,11 +2954,15 @@ def inspectBag (t : Traveler) : Traveler := solution!(
   | _ => t
 )
 
-example : inspectBag (.ticketed .prohibited) = .ticketed .prohibited := solution!(by rfl)
-example : inspectBag (.checkedIn .ordinary .notScreened) = .checkedIn .ordinary .cleared := solution!(by rfl)
-example : inspectBag (.checkedIn .prohibited .notScreened) = .checkedIn .prohibited .blocked := solution!(by rfl)
+theorem inspectBag_test1 : inspectBag (.ticketed .prohibited) = .ticketed .prohibited := solution!(by rfl)
+theorem inspectBag_test2 : inspectBag (.checkedIn .ordinary .notScreened) = .checkedIn .ordinary .cleared := solution!(by rfl)
+theorem inspectBag_test3 : inspectBag (.checkedIn .prohibited .notScreened) = .checkedIn .prohibited .blocked := solution!(by rfl)
 ```
+:::autogradedHole inspectBag
 :::
+:::gradeTheorem "1/3" inspectBag_test1 inspectBag_test2 inspectBag_test3
+:::
+::::
 
 Again, we record one characterization lemma for each case.
 
@@ -2892,7 +2982,7 @@ theorem inspectBag_prohibited (screeningStatus : ScreeningStatus) :
 attribute [irreducible] inspectBag
 ```
 
-:::exercise (rating := 2) (name := "inspect_bag_idempotent")
+::::exercise (rating := 2) (name := "inspect_bag_idempotent")
 Show that inspecting same unchanged carry-on bag twice has the same effect as inspecting it once.
 
 ```lean
@@ -2918,13 +3008,15 @@ theorem inspectBag_idempotent (t : Traveler) : inspectBag (inspectBag t) = inspe
         rewrite [inspectBag_ordinary]
         rfl
 ```
+:::gradeTheorem 2 inspectBag_idempotent
 :::
+::::
 
 A traveler may leave the screened area and return with a different carry-on bag.
 Since the previous screening result applied to the old bag,
 a new carry-on must be screened again before the traveler can re-enter.
 
-:::exercise (rating := 1) (name := "changeBag")
+::::exercise (rating := 1) (name := "changeBag")
 Define `changeBag`.
 ```lean
 def changeBag (newContent : BagContent) (t : Traveler) : Traveler := solution!(
@@ -2934,10 +3026,14 @@ def changeBag (newContent : BagContent) (t : Traveler) : Traveler := solution!(
   | .noTicket _ => .noTicket newContent
 )
 
-example : changeBag .prohibited (.ticketed .ordinary) = .ticketed .prohibited := solution!(by rfl)
-example : changeBag .prohibited (.checkedIn .ordinary .cleared) = .checkedIn .prohibited .notScreened := solution!(by rfl)
+theorem changeBag_test1 : changeBag .prohibited (.ticketed .ordinary) = .ticketed .prohibited := solution!(by rfl)
+theorem changeBag_test2 : changeBag .prohibited (.checkedIn .ordinary .cleared) = .checkedIn .prohibited .notScreened := solution!(by rfl)
 ```
+:::autogradedHole changeBag
 :::
+:::gradeTheorem "0.5" changeBag_test1 changeBag_test2
+:::
+::::
 
 As before, we record the behavior of each case as a rewrite rule.
 
@@ -2965,7 +3061,7 @@ so changing and inspecting the carry-on can be performed in either order.
 There are two such cases: the traveler may not yet have a ticket,
 or may have a ticket but not yet be checked in.
 
-:::exercise (rating := 2) (name := "inspect_changeBag_commute")
+::::exercise (rating := 2) (name := "inspect_changeBag_commute")
 ```lean
 theorem inspectBag_changeBag_comm_noTicket
     (oldContent newContent : BagContent) :
@@ -2989,7 +3085,9 @@ theorem inspectBag_changeBag_comm_ticketed
     rewrite [changeBag_ticketed]
     rfl
 ```
+:::gradeTheorem 1 inspectBag_changeBag_comm_noTicket inspectBag_changeBag_comm_ticketed
 :::
+::::
 
 ```lean
 end Airport

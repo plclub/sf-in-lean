@@ -13,11 +13,7 @@ htmlSplit := .never
 file := some "Induction"
 %%%
 
-```lean -show
-set_option pp.fieldNotation false
-```
-
-:::dev BeforeNextRelease
+:::dev
 ```
 SOONER: We should also consider adding more examples to clarify
 the concepts introduced in this chapter. This could help in
@@ -564,6 +560,12 @@ after it.
 Let's get some practice with using {tactic}`rw`.
 ::::
 
+:::details
+```lean
+set_option pp.fieldNotation false
+```
+:::
+
 :::::exercise (rating := 2) (name := "double_add")
 Consider the following function, which doubles its argument:
 
@@ -869,7 +871,7 @@ implicit, whereas the informal proof reminds the reader several
 times where things stand).
 ::::::
 
-:::::exercise (rating := 2) (name := "add_comm_informal") (level := Advanced) (manual := true)
+:::::exercise (rating := 2) (name := "add_comm_informal") (level := Advanced) (optional := true) (manual := true)
 Translate your solution for {name}`add_comm` into an informal proof:
 
 Theorem: Addition is commutative.
@@ -920,7 +922,7 @@ GRADE_MANUAL 2: add_comm_informal
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "beq_refl_informal")
+:::::exercise (rating := 2) (name := "beq_refl_informal") (optional := true)
 Write an informal proof of the following theorem, using the
 informal proof of {name}`add_assoc` as a model.  Don't just
 paraphrase the Lean tactics into English!
@@ -952,12 +954,6 @@ GRADE_MANUAL 2: beq_refl_informal
 
 # More Exercises
 
-Tip: By default, {tactic}`rewrite` and {tactic}`rw` rewrite left to right, i.e.,
-they transform the hypothesis or goal being rewritten from the form on
-the left side of the equality to the right side. To rewrite from
-right to left, use `rewrite [← h]` or `rw [← h]`, where `←` is entered
-as `\l` or `\<-`.
-
 ::::exercise (rating := 1) (name := "mul_one")
 ```lean
 theorem mul_one (p : Nat) :
@@ -972,6 +968,84 @@ theorem mul_one (p : Nat) :
 :::
 ::::
 
+## Aside: Using Code Actions to Generate Match Skeletons
+
+Lean's language server can suggest _code actions_, which are
+small editor commands that modify the source code.
+
+In VS Code, a lightbulb icon appears on the left when a code action is available at your cursor.
+:::full
+You can click the icon or open the code action menu with `Ctrl + .`
+on Windows/Linux or `Command + .` on macOS.
+For more information, see the
+[Lean 4 VSCode extension manual](https://github.com/leanprover/vscode-lean4/blob/master/vscode-lean4/manual/manual.md#code-actions).
+
+For example, code actions can generate the explicit branches needed for pattern
+matching. This can be especially useful when working with `match` expressions
+or with tactics such as {tactic}`cases` and {tactic}`induction`,
+which we saw in previous chapters.
+:::
+
+Let's look at an example code action using {tactic}`induction`.
+For example, suppose we start with the following incomplete proof:
+
+```lean +error
+example (n : Nat) : Nat.beq n n := by
+  induction n
+```
+
+Put your cursor on `induction n` and open the code action menu.
+You should see
+"Generate an explicit pattern match for 'induction'." in the list.
+If you choose this action,
+Lean adds an explicit branch for each constructor:
+
+```lean
+example (n : Nat) : Nat.beq n n := by
+  induction n with
+  | zero => sorry
+  | succ n ih => sorry
+```
+
+This gives us basic structure of the proof without requiring us to write each
+branch by hand. We can then focus on proving each case.
+
+One possible proof is:
+
+```lean
+example (n : Nat) : Nat.beq n n := by
+  induction n with
+  | zero => exact (beq_self zero)
+  | succ n ih => rw [Nat.beq, ih]
+```
+
+The same trick also works for `match` expressions. For example, suppose we start with
+
+```lean -keep +error
+def isZero (n : Nat) : Bool :=
+  match n
+```
+
+Lean can generate the missing branches:
+
+```lean -keep +error
+def isZero (n : Nat) : Bool :=
+  match n with
+  | .zero => _
+  | .succ n => _
+```
+
+Now you just have to replace the holes `_` with your definition.
+You can use code actions freely to fill out {tactic}`induction`,
+{tactic}`case`, and `match` branches while working with this book.
+
+By default, {tactic}`rewrite` and {tactic}`rw` rewrite left to right, i.e.,
+they transform the goal (or a hypothesis) from the form on
+the left side of the equality to the right side. To rewrite from
+right to left, use `rewrite [← h]` or `rw [← h]`, where `←` is entered
+as `\l` or `\<-`.
+
+:::::full
 ::::exercise (rating := 2) (name := "mul_two")
 ```lean
 theorem mul_two (p : Nat) :
@@ -988,6 +1062,7 @@ theorem mul_two (p : Nat) :
 :::gradeTheorem 1 mul_two
 :::
 ::::
+:::::
 
 ::::terse
 These exercises state facts that will be used later.
@@ -1037,7 +1112,7 @@ theorem mul_comm (m n : Nat) :
 :::
 ::::
 
-::::exercise (rating := 3) (name := "more_exercises")
+::::exercise (rating := 3) (name := "more_exercises") (optional := true)
 Take a piece of paper.  For each of the following theorems, first
 _think_ about whether (a) it can be proved using only
 simplification and rewriting, (b) it also requires case
@@ -1179,6 +1254,9 @@ def incr (m : Bin) : Bin
   | .b1 m' => .b0 (incr m'))
 ```
 
+:::autogradedHole incr
+:::
+
 ```lean
 theorem incr_z : incr .z = .b1 .z := solution!(by rfl)
 theorem incr_b0 m : incr (.b0 m) = .b1 m := solution!(by rfl)
@@ -1198,6 +1276,9 @@ theorem binToNat_b1 m : binToNat (.b1 m) = add (mul (binToNat m) two) one := sol
 
 attribute [pp_nodot] Bin.b0 Bin.b1
 ```
+
+:::autogradedHole binToNat
+:::
 
 In Basics, we did some unit testing of {name}`binToNat`, but we
 didn't prove its correctness. Now we'll do so.
@@ -1251,6 +1332,9 @@ def natToBin (n : Nat) : Bin := solution!(
   | zero    => .z
   | succ n' => incr (natToBin n'))
 ```
+
+:::autogradedHole natToBin
+:::
 
 ```lean
 -- SOLUTION
@@ -1321,6 +1405,9 @@ def doubleBin (b : Bin) : Bin := solution!(
   | .z => .z
   | _  => .b0 b)
 ```
+
+:::autogradedHole doubleBin
+:::
 
 Fill in the characterizing lemmas for this definition below:
 
@@ -1406,6 +1493,9 @@ def normalize (b : Bin) : Bin := solution!(
   | .b0 b' => doubleBin (normalize b')
   | .b1 b' => incr (doubleBin (normalize b')))
 ```
+
+:::autogradedHole normalize
+:::
 
 Also specify the characterizing lemmas for this definition:
 

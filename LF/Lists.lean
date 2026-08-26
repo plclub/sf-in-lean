@@ -227,15 +227,19 @@ theorem snd_fst_is_swap (p : NatProd) :
   solution!
     cases p; rfl
 ```
+:::gradeTheorem 1 snd_fst_is_swap
+:::
 :::::
 
-:::::exercise (rating := 1) (name := "fst_swap_is_snd")
+:::::exercise (rating := 1) (name := "fst_swap_is_snd") (optional := true)
 ```lean
 theorem fst_swap_is_snd (p : NatProd) :
     p.swap.fst = p.snd := by
   solution!
     cases p; rfl
 ```
+:::gradeTheorem 1 fst_swap_is_snd
+:::
 :::::
 
 ::::::
@@ -544,6 +548,9 @@ def nonZeros (l : NatList) : NatList := solution!(
 )
 ```
 
+:::autogradedHole nonZeros
+:::
+
 The following lemmas should hold about your definition
 
 ```lean
@@ -570,6 +577,15 @@ theorem test_nonZeros : nonZeros [0, 1, 0] = [1] := by
 The next definition uses `bif`, Lean's conditional for Boolean tests.
 The expression `bif b then x else y` evaluates to `x` when `b` is
 {name}`true` and to `y` when `b` is {name}`false`.
+Its characterizing lemmas are `cond_true` and `cond_false`.
+
+```recall
+theorem cond_true {α} (x y : α) : (bif true then x else y) = x := by rfl
+```
+
+```recall
+theorem cond_false {α} (x y : α) : (bif false then x else y) = y := by rfl
+```
 
 ```lean
 def oddMembers (l : NatList) : NatList := solution!(
@@ -597,6 +613,9 @@ theorem oddMembers_cons_not_odd (n : Nat) (l : NatList)
   solution!
     rw [oddMembers_cons, h, cond_false]
 ```
+
+:::autogradedHole oddMembers
+:::
 
 Now, we can prove that {lean}`oddMembers [1, 2]` returns {lean}`[1]` using the lemmas:
 
@@ -647,6 +666,9 @@ theorem test_countOddMembers1 : countOddMembers [0, 2, 4] = 0 := solution!(by rf
 theorem test_countOddMembers2 : countOddMembers [] = 0 := solution!(by rfl)
 ```
 
+:::autogradedHole countOddMembers
+:::
+
 :::gradeTheorem "0.5" test_countOddMembers1 test_countOddMembers2
 :::
 :::::
@@ -668,22 +690,18 @@ def alternate (l₁ l₂ : NatList) : NatList := solution!(
   | _, [] => l₁
   | h₁ :: t₁, h₂ :: t₂ => h₁ :: h₂ :: alternate t₁ t₂)
 
+```
+
+:::autogradedHole alternate
+:::
+
+```lean
 theorem test_alternate1 :
     alternate [1, 2, 3] [4, 5, 6] = [1, 4, 2, 5, 3, 6] := solution!(by rfl)
-```
 
-:::gradeTheorem 1 test_alternate1
-:::
-
-```lean
 theorem test_alternate2 :
     alternate [1] [4, 5, 6] = [1, 4, 5, 6] := solution!(by rfl)
-```
 
-:::gradeTheorem 1 test_alternate2
-:::
-
-```lean
 theorem test_alternate3 :
     alternate [1, 2, 3] [4] = [1, 4, 2, 3] := solution!(by rfl)
 
@@ -691,7 +709,7 @@ theorem test_alternate4 :
     alternate [] [20, 30] = [20, 30] := solution!(by rfl)
 ```
 
-:::gradeTheorem 1 test_alternate4
+:::gradeTheorem "3/4" test_alternate1 test_alternate2 test_alternate3 test_alternate4
 :::
 :::::
 
@@ -706,8 +724,11 @@ Define a `count` function for {name}`NatList`s that counts the number of times a
 def count (n : Nat) (l : NatList) : Nat := solution!(
   match l with
   | [] => 0
-  | h :: t => bif n == h then (count n t) + 1 else count n t)
+  | h :: t => bif n == h then count n t + 1 else count n t)
 ```
+
+:::autogradedHole count
+:::
 
 Now, prove these lemmas which should hold about your definition.
 
@@ -715,7 +736,7 @@ Now, prove these lemmas which should hold about your definition.
 theorem count_nil (n : Nat) : count n [] = 0 := solution!(by rfl)
 
 theorem count_cons_def (n h : Nat) (t : NatList) :
-    count n (h :: t) = bif n == h then (count n t) + 1 else count n t := solution!(by rfl)
+    count n (h :: t) = bif n == h then count n t + 1 else count n t := solution!(by rfl)
 
 theorem count_cons_same (n₁ n₂ : Nat) (t : NatList) (h : (n₁ == n₂) = true) :
     count n₁ (n₂ :: t) = count n₁ t + 1 := by
@@ -764,37 +785,35 @@ theorem member_nil (n : Nat) : member n [] = false := solution!(by rfl)
 theorem member_cons_same (n₁ n₂ : Nat) (t : NatList) (h : (n₁ == n₂) = true) :
     member n₁ (n₂ :: t) = true := by
   solution!
-    dsimp [member]
-    rw [h, cond_true]
+    rw [member, h, cond_true]
 
 theorem member_cons_diff (n₁ n₂ : Nat) (t : NatList) (h : (n₁ == n₂) = false) :
     member n₁ (n₂ :: t) = member n₁ t := by
   solution!
-    dsimp [member]
-    rw [h, cond_false]
+    rw [member, h, cond_false]
 
 example : member 1 [1] = true := by
   rw [member_cons_same _ _ _ rfl]
 
-example : member 2 [1] = false := solution!(by rfl) -- rfl
-
-theorem test_member1 : member 1 [1, 4, 1] = true := solution!(by rfl)
+example : member 2 [1] = false := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" test_member1
+:::autogradedHole member
 :::
 
 ```lean
+theorem test_member1 : member 1 [1, 4, 1] = true := solution!(by rfl)
+
 theorem test_member2 : member 2 [1, 4, 1] = false := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" test_member2
+:::gradeTheorem "0.5" test_member1 test_member2
 :::
 :::::
 
 ## Removing
 
-:::::exercise (rating := 3) (name := "removing")
+:::::exercise (rating := 3) (name := "removing") (optional := true)
 Here are some more {name}`NatList` functions for you to practice with.
 
 When `removeOne` is applied to a list without the number to
@@ -811,15 +830,16 @@ theorem removeOne_nil (n : Nat) : removeOne n nil = nil := solution!(by rfl)
 theorem removeOne_cons_same (n₁ n₂ : Nat) (t : NatList) (h : (n₁ == n₂) = true) :
     removeOne n₁ (n₂ :: t) = t := by
   solution!
-    dsimp [removeOne]
-    rw [h, cond_true]
+    rw [removeOne, h, cond_true]
 
 theorem removeOne_cons_diff (n₁ n₂ : Nat) (t : NatList) (h : (n₁ == n₂) = false) :
     removeOne n₁ (n₂ :: t) = n₂ :: removeOne n₁ t := by
   solution!
-    dsimp [removeOne]
-    rw [h, cond_false]
+    rw [removeOne, h, cond_false]
 ```
+
+:::autogradedHole removeOne
+:::
 
 ```lean
 example : removeOne 5 [1, 5, 4] = [1, 4] := by
@@ -829,16 +849,11 @@ example : removeOne 5 [1, 5, 4] = [1, 4] := by
 example : count 5 (removeOne 5 [1, 5, 4]) = 0 := solution!(by rfl)
 
 theorem test_removeOne1 : count 4 (removeOne 5 [4, 5, 1, 4]) = 2 := solution!(by rfl)
-```
 
-:::gradeTheorem "0.5" test_removeOne1
-:::
-
-```lean
 theorem test_removeOne2 : count 5 (removeOne 5 [1, 5, 5, 4]) = 1 := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" test_removeOne2
+:::gradeTheorem "0.5" test_removeOne1 test_removeOne2
 :::
 
 
@@ -853,15 +868,16 @@ theorem removeAll_nil (n : Nat) : removeAll n [] = [] := solution!(by rfl)
 theorem removeAll_cons_same (n₁ n₂ : Nat) (t : NatList) (h : (n₁ == n₂) = true) :
     removeAll n₁ (n₂ :: t) = removeAll n₁ t := by
   solution!
-    dsimp [removeAll]
-    rw [h, cond_true]
+    rw [removeAll, h, cond_true]
 
 theorem removeAll_cons_diff (n₁ n₂ : Nat) (t : NatList) (h : (n₁ == n₂) = false) :
     removeAll n₁ (n₂ :: t) = n₂ :: removeAll n₁ t := by
   solution!
-    dsimp [removeAll]
-    rw [h, cond_false]
+    rw [removeAll, h, cond_false]
 ```
+
+:::autogradedHole removeAll
+:::
 
 ```lean
 example : count 5 (removeAll 5 [5, 1]) = 0 := by
@@ -873,17 +889,12 @@ example : count 5 (removeAll 5 [5, 1]) = 0 := by
 
 example : count 5 (removeAll 5 [5, 5]) = 0 := solution!(by rfl)
 
-theorem test_removeAll₁ : count 4 (removeAll 5 [4, 5, 4]) = 2 := solution!(by rfl)
-```
+theorem test_removeAll1 : count 4 (removeAll 5 [4, 5, 4]) = 2 := solution!(by rfl)
 
-:::gradeTheorem "0.5" test_removeAll₁
-:::
-
-```lean
 theorem test_removeAll2 : count 5 (removeAll 5 [2, 5, 5, 5, 1]) = 0 := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" test_removeAll2
+:::gradeTheorem "0.5" test_removeAll1 test_removeAll2
 :::
 
 :::::
@@ -900,13 +911,16 @@ def included (l₁ l₂ : NatList) : Bool :=
 ```
 :::
 
-:::::exercise (rating := 3) (name := "included")
+:::::exercise (rating := 3) (name := "included") (optional := true)
 ```lean
 def included (l₁ l₂ : NatList) : Bool := solution!(
   match l₁ with
   | [] => true
   | h :: t => member h l₂ && included t (removeOne h l₂))
 ```
+
+:::autogradedHole included
+:::
 
 ```lean
 theorem included_nil (l₂ : NatList) : included nil l₂ = true := solution!(by rfl)
@@ -916,14 +930,12 @@ theorem included_nil (l₂ : NatList) : included nil l₂ = true := solution!(by
 theorem included_cons_member (n : Nat) (l₁ l₂ : NatList) (h : member n l₂ = true) :
     included (cons n l₁) l₂ = included l₁ (removeOne n l₂) := by
   solution!
-    dsimp [included]
-    rw [h, Bool.true_and]
+    rw [included, h, Bool.true_and]
 
 theorem included_cons_nonmember (n : Nat) (l₁ l₂ : NatList) (h : member n l₂ = false) :
     included (cons n l₁) l₂ = false := by
   solution!
-    dsimp [included]
-    rw [h, Bool.false_and]
+    rw [included, h, Bool.false_and]
 ```
 
 ```lean
@@ -938,16 +950,11 @@ example : included [1, 1] [2, 1, 4, 1] = true := solution!(by rfl)
 
 ```lean
 theorem test_included1 : included [1, 2] [2, 1, 4, 1] = true := solution!(by rfl)
-```
 
-:::gradeTheorem "0.5" test_included1
-:::
-
-```lean
 theorem test_included2 : included [1, 2, 2] [2, 1, 4, 1] = false := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" test_included2
+:::gradeTheorem "0.5" test_included1 test_included2
 :::
 :::::
 
@@ -1292,7 +1299,7 @@ theorem length_append (l₁ l₂ : NatList) :
 :::::terse
 ::::quiz
 To prove the following theorem, which tactics will we need besides
-{tactic}`intro`, {tactic}`dsimp`, {tactic}`rw`, and {tactic}`rfl`?
+{tactic}`intro`, {tactic}`rw`, and {tactic}`rfl`?
 
 (A) none
 
@@ -1327,7 +1334,7 @@ example (n m : Nat) : (myRepeat n m).length = m
 ```
 
 To prove the following theorem, which tactics will we need besides
-{tactic}`intro`, {tactic}`dsimp`, {tactic}`rw`, and {tactic}`rfl`?
+{tactic}`intro`, {tactic}`rw`, and {tactic}`rfl`?
 
 (A) none
 
@@ -1548,14 +1555,12 @@ theorem beq_nil : beq [] [] = true := solution!(by rfl)
 theorem beq_cons_same (h₁ h₂ : Nat) (t₁ t₂ : NatList) (h : (h₁ == h₂) = true) :
     beq (h₁ :: t₁) (h₂ :: t₂) = beq t₁ t₂ := by
   solution!
-    dsimp [beq]
-    rw [h, Bool.true_and]
+    rw [beq, h, Bool.true_and]
 
 theorem beq_cons_diff (h₁ h₂ : Nat) (t₁ t₂ : NatList) (h : (h₁ == h₂) = false) :
     beq (h₁ :: t₁) (h₂ :: t₂) = false := by
   solution!
-    dsimp [beq]
-    rw [h, Bool.false_and]
+    rw [beq, h, Bool.false_and]
 
 example : beq [] [] = true := solution!(by rfl)
 example : beq [1, 2, 3] [1, 2, 3] = true := solution!(by rfl)
@@ -1574,6 +1579,9 @@ theorem beq_refl (l : NatList) :
       rw [beq_cons_same _ _ _ _ (BEq.refl n)]
       exact ih
 ```
+
+:::autogradedHole beq
+:::
 
 :::gradeTheorem 2 beq_refl
 :::
@@ -1622,6 +1630,8 @@ theorem count_member_nonZero (l : NatList) :
   solution!
     rw [count_cons_same] <;> rfl
 ```
+:::gradeTheorem 1 count_member_nonZero
+:::
 :::::
 
 The following lemma about `Nat.ble` might help you in the next
@@ -1632,7 +1642,7 @@ theorem ble_self_succ (n : Nat) :
     Nat.ble n (n + 1) = true := by
   induction n with
   | zero       => rfl
-  | succ n' ih => dsimp [Nat.ble]; exact ih
+  | succ n' ih => rw [Nat.ble]; exact ih
 ```
 
 Before doing the next exercise, make sure you've filled in the
@@ -1683,9 +1693,11 @@ theorem remove_does_not_increase_count (l : NatList) :
         rw [removeOne_cons_diff _ _ _ rfl, count_cons_diff _ _ _ rfl, count_cons_diff _ _ _ rfl]
         exact ih
 ```
+:::gradeTheorem 3 remove_does_not_increase_count
+:::
 :::::
 
-:::::exercise (rating := 3) (name := "count_append") (manual := true)
+:::::exercise (rating := 3) (name := "count_append") (optional := true) (manual := true)
 Write down an interesting theorem `count_append` about lists
 involving the functions {name}`count` and {name}`append`, and prove it.
 (You may find that the difficulty of the proof depends on how you defined `count`!)
@@ -1758,6 +1770,9 @@ theorem involutive_injective (f : Nat → Nat) (hInv : ∀ n : Nat, n = f (f n))
     intro n₁ n₂ h
     rw [hInv n₁, hInv n₂, h]
 ```
+
+:::gradeTheorem 3 involutive_injective
+:::
 :::::
 
 :::::exercise (rating := 2) (name := "reverse_injective") (level := Advanced)
@@ -1772,8 +1787,10 @@ theorem reverse_injective (l₁ l₂ : NatList)
   solution!
     rw [← reverse_involutive l₁, ← reverse_involutive l₂, h]
 ```
-:::::
 
+:::gradeTheorem 2 reverse_injective
+:::
+:::::
 ::::::
 
 # Options
@@ -1881,6 +1898,9 @@ theorem test_head?1 : head? [1] = .some 1 := solution!(by rfl)
 theorem test_head?2 : head? [5, 6] = .some 5 := solution!(by rfl)
 ```
 
+:::autogradedHole head?
+:::
+
 :::solution
 ```lean
 theorem head?_nil : head? [] = .none := solution!(by rfl)
@@ -1893,7 +1913,7 @@ theorem head?_cons (h : Nat) (t : NatList) : head? (h :: t) = .some h := solutio
 :::
 :::::
 
-:::::exercise (rating := 1) (name := "option_elim_head?")
+:::::exercise (rating := 1) (name := "option_elim_head?") (optional := true)
 This exercise relates your new `head?` to the old `head`.
 
 ```lean
@@ -1940,10 +1960,9 @@ def mirror(t: BinTree): BinTree :=
 theorem mirror_involutive : ∀ t, t = mirror (mirror t) := by
   intro t
   induction t with
-  | leaf => dsimp [mirror]
+  | leaf => rw [mirror]
   | fork l r ihl ihr =>
-    dsimp [mirror]
-    rw [←ihl, ←ihr]
+    rw [mirror, ←ihl, ←ihr]
 
 def size (t: BinTree): Nat :=
   match t with
@@ -1952,10 +1971,9 @@ def size (t: BinTree): Nat :=
 
 theorem mirror_size t : size t = size (mirror t) := by
   induction t with
-  | leaf => dsimp [size, mirror]
+  | leaf => rw [size, mirror]
   | fork l r ihl ihr =>
-    dsimp [size, mirror]
-    rw [←ihl, ←ihr]
+    rw [size, mirror, ←ihl, ←ihr]
     have h: size l + size r = size r + size l := by
       rw [Nat.add_comm]
     rw [Nat.add_assoc, Nat.add_assoc, h]
@@ -1995,8 +2013,7 @@ def MyId.beq (x₁ x₂ : MyId) : Bool :=
 ```lean
 theorem MyId.beq_refl (x : MyId) : MyId.beq x x = true := by
   solution!
-    dsimp [beq]
-    rw [BEq.refl]
+    rw [beq, BEq.refl]
 ```
 
 :::gradeTheorem 1 MyId.beq_refl
@@ -2067,9 +2084,7 @@ Is the following claim true or false?
 ```lean
 theorem quiz1 (d : PartialMap) (x : MyId) (n : Nat) :
     find x (update d x n) = .some n := by
-  dsimp [update, find]
-  rw [MyId.beq_refl]
-  dsimp
+  rw [update, find, MyId.beq_refl, cond_true]
 ```
 
 (A) True
@@ -2085,9 +2100,7 @@ theorem quiz2  (d : PartialMap) (x y : MyId) (o : Nat) :
     MyId.beq x y = false →
     find x (update d y o) = find x d := by
   intro h
-  dsimp [update, find]
-  rw [h]
-  dsimp
+  rw [update, find, h, cond_false]
 ```
 
 (A) True
@@ -2101,9 +2114,7 @@ theorem quiz2  (d : PartialMap) (x y : MyId) (o : Nat) :
 theorem update_eq (d : PartialMap) (x : MyId) (n : Nat) :
     find x (update d x n) = .some n := by
   solution!
-    dsimp [update, find]
-    rw [MyId.beq_refl]
-    dsimp
+    rw [update, find, MyId.beq_refl, cond_true]
 ```
 
 :::gradeTheorem 1 update_eq
@@ -2116,9 +2127,7 @@ theorem update_neq (d : PartialMap) (x y : MyId) (o : Nat) :
     MyId.beq x y = false → find x (update d y o) = find x d := by
   solution!
     intro h
-    dsimp [update, find]
-    rw [h]
-    dsimp
+    rw [update, find, h, cond_false]
 ```
 
 :::gradeTheorem 1 update_neq

@@ -256,11 +256,13 @@ notes (`/- MWH: … -/`, `/- BCP: … -/`, `/- NDS'25: … -/`, `/- NOTATION: �
 Only the *marker keyword* is consumed; the note **body** is always kept.
 
 An exercise's SF difficulty/grading flags are preserved on the directive: the
-`A` (advanced) flag becomes `(level := Advanced)` and the `M` (manually graded)
-flag becomes `(manual := true)` on the generated `::::exercise` (rendered
-`(Advanced)` / `(manually graded)` in the HTML and generated `.lean` headings;
-`SFLMeta/Exercise.lean`). `!`/`?` (recommended/optional) have no directive
-analogue yet.
+`A` (advanced) flag becomes `(level := Advanced)`, the `?` (optional) flag
+becomes `(optional := true)`, and the `M` (manually graded) flag becomes
+`(manual := true)` on the generated `::::exercise` (rendered `(Advanced)` /
+`(Optional)` / `(manually graded)` in the HTML and generated `.lean` headings;
+`SFLMeta/Exercise.lean`). `optional` defaults to `false`, so an exercise
+without `?` gets no `optional` argument. `!` (recommended) has no directive analogue
+yet.
 
 A section heading inside a `-- FULL` region (the SF idiom scoping book
 headings to the reading builds) emits the heading at document level — headings

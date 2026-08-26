@@ -37,6 +37,8 @@ jobs:
       # extracted Lean sources and then `lake build` them; a compile failure in
       # any variant turns the executable's exit code (and so this step) red.
       - run: make
+      # Test that autograding solutions passes and that autograding student results only in "illegal axiom" failures
+      - run: make grading-check
       # Upload the build artifact to CI
       - name: Upload generated outputs
         uses: actions/upload-artifact@v7

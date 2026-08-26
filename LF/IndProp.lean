@@ -287,7 +287,7 @@ def div2 (n : Nat) : Nat :=
   | n' + 2 => div2 n' + 1
 
 def csf (n : Nat) : Nat :=
-  if n.even then div2 n
+  bif n.even then div2 n
   else (3 * n) + 1
 ```
 
@@ -316,7 +316,7 @@ the recursive call, {lean}`csf n`, is not "obviously smaller" than {lean}`n`.
 
 ```lean -keep +error (name := reaches1In)
 def reaches1In (n : Nat) : Nat :=
-  if n == 1 then 0
+  bif n == 1 then 0
   else 1 + reaches1In (csf n)
 ```
 
@@ -335,7 +335,6 @@ failed to prove termination, possible solutions:
   - Use `termination_by` to specify a different well-founded relation
   - Use `decreasing_by` to specify your own tactic for discharging this kind of goal
 n : Nat
-h✝ : ¬(n == 1) = true
 ⊢ csf n < n
 ```
 
@@ -362,7 +361,7 @@ def CollatzHoldsFor (n : Nat) : Prop :=
   match n with
   | 0 => False
   | 1 => True
-  | _ => if n.even then CollatzHoldsFor (div2 n)
+  | _ => bif n.even then CollatzHoldsFor (div2 n)
                    else CollatzHoldsFor ((3 * n) + 1)
 ```
 
@@ -381,7 +380,6 @@ failed to prove termination, possible solutions:
   - Use `termination_by` to specify a different well-founded relation
   - Use `decreasing_by` to specify your own tactic for discharging this kind of goal
 n x✝ : Nat
-h✝ : n.even = true
 ⊢ div2 n < x✝
 ```
 
@@ -772,7 +770,7 @@ equivalent to CollatzHoldsFor?
 :::
 
 ::::::full
-:::::exercise (rating := 1) (name := "clos_refl_trans_sym") (manual := true)
+:::::exercise (rating := 1) (name := "clos_refl_trans_sym") (optional := true) (manual := true)
 How would you modify the {name}`ClosReflTrans` definition above so as
 to define the reflexive, symmetric, and transitive closure?
 
@@ -852,7 +850,7 @@ inductive Perm3 {α : Type} : List α → List α → Prop where
 ```
 
 ::::::full
-:::::exercise (rating := 1) (name := "perm") (manual := true)
+:::::exercise (rating := 1) (name := "perm") (optional := true) (manual := true)
 According to this definition, is `[1, 2, 3]` a permutation of
 itself?
 
@@ -1090,6 +1088,9 @@ theorem double (n : Nat) : Ev n.double := by
     | succ n ih =>
       rw [Nat.double_succ]; exact ev_succ_succ ih
 ```
+
+:::gradeTheorem 1 double
+:::
 :::::
 
 ::::::
@@ -1247,6 +1248,9 @@ theorem le_inversion (n m : Nat) (h : Le n m) :
     | refl => left; rfl
     | @step m h => right; exists m
 ```
+
+:::gradeTheorem 1 le_inversion
+:::
 :::::
 
 ```lean
@@ -1505,6 +1509,8 @@ theorem ev5_nonsense (h : Ev 5) : 2 + 2 = 9 := by
         inversion h''
 ```
 
+:::gradeTheorem 1 ev5_nonsense
+:::
 :::::
 
 ::::::
@@ -1747,6 +1753,9 @@ theorem ev_sum (n m : Nat) (hₙ : Ev n) (hₘ : Ev m) : Ev (n + m) := by
       rw [Nat.add_comm, ← Nat.add_assoc, Nat.add_comm m]
       apply Ev.ev_succ_succ; exact ih
 ```
+
+:::gradeTheorem 2 ev_sum
+:::
 :::::
 
 :::::exercise (rating := 3) (name := "ev_ev__ev") (level := Advanced)
@@ -1761,9 +1770,12 @@ theorem ev_ev__ev (n m : Nat) (hₙₘ : Ev (n + m)) (hₙ : Ev n) : Ev m := by
       apply ih; rw [Nat.add_comm, ←Nat.add_assoc, Nat.add_comm m] at hₙₘ
       inversion hₙₘ; assumption
 ```
+
+:::gradeTheorem 3 ev_ev__ev
+:::
 :::::
 
-:::::exercise (rating := 3) (name := "ev_plus_plus")
+:::::exercise (rating := 3) (name := "ev_plus_plus") (optional := true)
 This exercise can be completed without induction or case analysis.
 But, you will need a clever `have` and some tedious rewriting.
 Hint: Is {lean}`(n + m) + (n + k)` even?
@@ -1785,6 +1797,9 @@ theorem ev_plus_plus (n m k : Nat)
       . assumption
     . rw [← Nat.double_add]; exact Ev.double n
 ```
+
+:::gradeTheorem 3 ev_plus_plus
+:::
 :::::
 
 :::full
@@ -1835,6 +1850,9 @@ theorem in_mem {α} (x : α) (l : List α) : List.In x l ↔ x ∈ l := by
       | head l' => rw [List.In_cons]; left; rfl
       | tail h ih => rw [List.In_cons]; right; assumption
 ```
+
+:::gradeTheorem 3 in_mem
+:::
 :::::
 
 The characterizing lemmas for `∈` are called
@@ -1924,7 +1942,7 @@ on paper differs a bit from the mechanized proof.  BCP 25: Yes.
 ::::
 
 ::::::full
-:::::exercise (rating := 4) (name := "ev'_ev") (level := Advanced)
+:::::exercise (rating := 4) (name := "ev'_ev") (level := Advanced) (optional := true)
 :::instructors
 This is pretty hard, unless you know the trick that
 the sample proof uses!!  But at least it's marked as
@@ -1962,6 +1980,9 @@ theorem ev'_ev n : Ev' n ↔ Ev n := by
       . constructor
       . constructor; assumption; constructor
 ```
+
+:::gradeTheorem 4 ev'_ev
+:::
 :::::
 
 We can do similar inductive proofs on the {name}`Perm3` relation,
@@ -2018,9 +2039,12 @@ theorem In {α} (x : α) (l₁ l₂ : List α)
     | perm3_trans _ _  ih₁₂ ih₂₃ =>
       apply ih₂₃; apply ih₁₂; apply hIn
 ```
+
+:::gradeTheorem 2 In
+:::
 :::::
 
-:::::exercise (rating := 1) (name := "Perm3_NotIn")
+:::::exercise (rating := 1) (name := "Perm3_NotIn") (optional := true)
 ```lean
 theorem NotIn {α} (x : α) (l₁ l₂ : List α)
     (hPerm : Perm3 l₁ l₂) (hIn : x ∉ l₁) : x ∉ l₂ := by
@@ -2030,14 +2054,17 @@ theorem NotIn {α} (x : α) (l₁ l₂ : List α)
     . apply symm; exact hPerm
     . exact hContra
 ```
+
+:::gradeTheorem 1 NotIn
+:::
 :::::
 
-:::::exercise (rating := 2) (name := "NotPerm3")
+:::::exercise (rating := 2) (name := "NotPerm3") (optional := true)
 Proving that something is NOT a permutation is quite tricky. Some
 of the lemmas above, like {name}`Perm3.In` can be useful for this.
 
 ```lean
-example : ¬ Perm3 [1, 2, 3] [1, 2, 4] := by
+theorem Not : ¬ Perm3 [1, 2, 3] [1, 2, 4] := by
   solution!
     intro h; apply (Perm3.In 3) at h
     have h4 : 3 ∉ [1, 2, 4] := by
@@ -2050,7 +2077,12 @@ example : ¬ Perm3 [1, 2, 3] [1, 2, 4] := by
     apply h4; apply h
     rw [List.mem_cons, List.mem_cons, List.mem_cons]
     right; right; left; rfl
+```
 
+:::gradeTheorem 2 Not
+:::
+
+```lean
 end Perm3
 ```
 :::::
@@ -2121,9 +2153,8 @@ hypotheses in the context (e.g., to prove that {lean}`(2 ≤ 1) → 2 + 2 = 5`.)
 Here are some sanity checks on the definition.  (Notice that,
 although these are the same kind of simple "unit tests" as we gave
 for the testing functions we wrote in the first few lectures, we
-must construct their proofs explicitly ─ {tactic}`rw`, {tactic}`dsimp`,
-and {tactic}`rfl` don't do the job, because the proofs aren't just a
-matter of simplifying computations.)
+must construct their proofs explicitly ─ {tactic}`rw` and {tactic}`rfl` don't do the job,
+because the proofs aren't just a matter of simplifying computations.)
 
 Some sanity checks...
 
@@ -2340,7 +2371,7 @@ theorem le_plus_trans (n m p : Nat) (h : n ≤ m) : n ≤ m + p := by
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "lt_facts")
+:::::exercise (rating := 3) (name := "lt_facts") (optional := true)
 ```lean
 theorem lt_ge_cases (n m : Nat) : n < m ∨ n ≥ m := by
   solution!
@@ -2400,7 +2431,7 @@ theorem plus_lt (n₁ n₂ m : Nat) (h : n₁ + n₂ < m) : n₁ < m ∧ n₂ < 
 :::
 :::::
 
-:::::exercise (rating := 4) (name := "ble_le")
+:::::exercise (rating := 4) (name := "ble_le") (optional := true)
 ```lean
 theorem ble_sound (n m : Nat) (h : Nat.ble n m = true) : n ≤ m := by
   solution!
@@ -2411,7 +2442,7 @@ theorem ble_sound (n m : Nat) (h : Nat.ble n m = true) : n ≤ m := by
       | zero =>
         contradiction
       | succ m' =>
-        dsimp [Nat.ble] at h
+        rw [Nat.ble] at h
         apply n_le_m__succ_n_le_succ_m
         apply ih; apply h
 ```
@@ -2423,12 +2454,12 @@ theorem ble_sound (n m : Nat) (h : Nat.ble n m = true) : n ≤ m := by
 theorem ble_complete n m (h : n ≤ m) : Nat.ble n m = true := by
   solution!
     induction n generalizing m with
-    | zero => dsimp [Nat.ble]
+    | zero => rw [Nat.ble]
     | succ n' ih =>
       cases m with
       | zero => contradiction
       | succ m' =>
-        dsimp [Nat.ble]
+        rw [Nat.ble]
         apply succ_n_le_succ_m__n_le_m at h
         apply ih at h
         assumption
@@ -2609,7 +2640,7 @@ sentence) explain your answer.
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "R_fact")
+:::::exercise (rating := 3) (name := "R_fact") (optional := true)
 The relation `R` above actually encodes a familiar function.
 Figure out which function; then state and prove this equivalence
 in Lean.
@@ -2641,6 +2672,13 @@ theorem R.equiv_fR m n k : R m n k ↔ fR m n = k := by
       | zero => rw [Nat.zero_add]; exact R0 n
       | succ m ih => rw [Nat.succ_add]; exact c2 ih
 ```
+
+:::autogradedHole fR
+:::
+
+:::gradeTheorem 3 R.equiv_fR
+:::
+
 :::hide
 And here's a somewhat nicer version using some automation,
    but we haven't covered that yet...
@@ -2795,6 +2833,9 @@ theorem app (l₁ l₂ l₃ : List Nat)
     | sub_skip => constructor; assumption
 ```
 
+:::autogradedHole Subseq
+:::
+
 :::dev
 HIDE: AC'21: this exercise should probably be marked as more
 challenging.  In particular, it's not necessarily obvious at first
@@ -2834,7 +2875,7 @@ end Subseq
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "R_provability2") (manual := true)
+:::::exercise (rating := 2) (name := "R_provability2") (optional := true) (manual := true)
 Suppose we give Lean the following definition:
 
 ```display
@@ -2981,7 +3022,7 @@ emerging.
 ::::
 
 ::::::full
-:::::exercise (rating := 2) (name := "total_relation")
+:::::exercise (rating := 2) (name := "total_relation") (optional := true)
 Define an inductive binary relation `total_relation` that holds
 between every pair of natural numbers.
 
@@ -2996,11 +3037,14 @@ theorem total_relation_is_total (n m : Nat) : TotalRelation n m := by
     constructor
 ```
 
+:::autogradedHole TotalRelation
+:::
+
 :::gradeTheorem 2 total_relation_is_total
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "empty_relation")
+:::::exercise (rating := 2) (name := "empty_relation") (optional := true)
 Define an inductive binary relation `empty_relation` (on numbers)
 that never holds.
 
@@ -3032,6 +3076,9 @@ inductive EmptyRelation : Nat → Nat → Prop where
   -- SOLUTION
 -- /SOLUTION
 ```
+
+:::autogradedHole EmptyRelation
+:::
 
 ```lean
 theorem empty_relation_is_empty (n m : Nat) : ¬ EmptyRelation n m := by
@@ -3087,6 +3134,9 @@ inductive NoStutter {α : Type} : List α → Prop where
     NoStutter (x :: y :: l)
  -- /SOLUTION
 ```
+
+:::autogradedHole NoStutter
+:::
 
 Make sure each of these tests succeeds, but feel free to change
 the suggested proof (in comments) if the given one doesn't work
@@ -3195,7 +3245,7 @@ theorem merge_filter (α : Type) (test : α → Bool) (l l₁ l₂ : List α)
     | merge_left h' ih =>
       rw [List.all_cons, Bool.and_eq_true] at h₁
       obtain ⟨htest, h₁⟩ := h₁
-      rw [List.filter_cons, htest]; dsimp
+      rw [List.filter_cons_of_pos htest];
       congr 1; apply ih
       . assumption
       . assumption
@@ -3203,11 +3253,14 @@ theorem merge_filter (α : Type) (test : α → Bool) (l l₁ l₂ : List α)
       rw [List.all_cons, Bool.and_eq_true,
         Bool.not_eq_eq_eq_not, Bool.not_true] at h₂
       obtain ⟨htest, h₂⟩ := h₂
-      rw [List.filter_cons, htest]; dsimp
+      rw [List.filter_cons_of_neg (ne_true_of_eq_false htest)]
       congr 1; apply ih
       . assumption
       . assumption
 ```
+
+:::autogradedHole Merge
+:::
 
 ::::hide
 ```
@@ -3229,7 +3282,7 @@ theorem merge_filter (α : Type) (test : α → Bool) (l l₁ l₂ : List α)
 :::
 :::::
 
-:::::exercise (rating := 5) (name := "filter_challenge_2") (level := Advanced)
+:::::exercise (rating := 5) (name := "filter_challenge_2") (level := Advanced) (optional := true)
 A different way to characterize the behavior of `filter` goes like
 this: Among all subsequences of `l` with the property that `test`
 evaluates to `true` on all their members, `filter test l` is the
@@ -3322,19 +3375,18 @@ theorem filter_subseq (α : Type) (l : List α) (test : α → Bool) :
   induction l with
   | nil => rw [List.filter_nil]; constructor
   | cons hd tl ih =>
-    rw [List.filter_cons]; cases (test hd)
-    . dsimp [Bool.false_eq_true]
-      constructor; assumption
-    . dsimp; constructor; assumption
+    cases h : (test hd)
+    . rw [List.filter_cons_of_neg (ne_true_of_eq_false h)]; constructor; assumption
+    . rw [List.filter_cons_of_pos h]; constructor; assumption
 
 theorem filter_all (α : Type) (l : List α) (test : α → Bool) :
     List.all (List.filter test l) test := by
   induction l with
   | nil => rfl
   | cons hd tl ih =>
-    rw [List.filter_cons]; cases h : (test hd)
-    . dsimp [Bool.false_eq_true]; assumption
-    . dsimp; rw [Bool.and_eq_true]; constructor
+    cases h : (test hd)
+    . rw [List.filter_cons_of_neg (ne_true_of_eq_false h)]; assumption
+    . rw [List.filter_cons_of_pos h, List.all_cons, Bool.and_eq_true]; constructor
       . assumption
       . assumption
 
@@ -3350,16 +3402,17 @@ theorem filter_spec2 (α : Type) (l lsub : List α) (test : α → Bool) :
       inversion hsub
       rw [List.filter_nil]
     | cons hd tl ih =>
-      rw [List.filter_cons]
       cases htest : test hd with
       | false =>
-        dsimp [Bool.false_eq_true]
-        intro hmax; apply ih
-        apply maximal_strengthening _ _ _ _ _ _ hmax
-        rw [Bool.not_eq_eq_eq_not, Bool.not_true]
-        assumption
+        rw [List.filter_cons_of_neg]
+        . intro hmax; apply ih
+          apply maximal_strengthening _ _ _ _ _ _ hmax
+          rw [Bool.not_eq_eq_eq_not, Bool.not_true]
+          assumption
+        . exact ne_true_of_eq_false htest
       | true =>
-        intro ⟨⟨hsub, hall⟩, hlen⟩; dsimp
+        intro ⟨⟨hsub, hall⟩, hlen⟩
+        rw [List.filter_cons_of_pos htest]
         /- in this case, lsub must begin with hd, since otherwise it
         wouldn't be maximal. -/
         cases lsub with
@@ -3398,26 +3451,27 @@ theorem filter_spec2 (α : Type) (l lsub : List α) (test : α → Bool) :
     . intro l' ⟨hsub, hall⟩
       induction l generalizing l' lsub with
       | nil =>
-        inversion hsub; dsimp
+        inversion hsub; rw [List.length_nil]
         apply zero_le_n
       | cons hd tl ih =>
-        rw [List.filter_cons] at hfilter
         cases htest : test hd with
         | false =>
-          rw [htest] at hfilter; dsimp [Bool.false_eq_true] at hfilter
-          apply ih _ hfilter _ _ hall
-          inversion hsub with
-          | sub_nil => constructor
-          | sub_take l hsub =>
-            rw [List.all_cons, Bool.and_eq_true] at hall
-            obtain ⟨ht, _⟩ := hall
-            rw [ht] at htest
-            contradiction
-          | sub_skip hsub => assumption
+          rw [List.filter_cons_of_neg] at hfilter
+          . apply ih _ hfilter _ _ hall
+            inversion hsub with
+            | sub_nil => constructor
+            | sub_take l hsub =>
+              rw [List.all_cons, Bool.and_eq_true] at hall
+              obtain ⟨ht, _⟩ := hall
+              rw [ht] at htest
+              contradiction
+            | sub_skip hsub => assumption
+          . exact ne_true_of_eq_false htest
         | true =>
-          rw [← hfilter, htest]; dsimp
+          rw [List.filter_cons_of_pos htest] at hfilter
+          rw [← hfilter, List.length_cons]
           inversion hsub with
-          | sub_nil => dsimp; apply zero_le_n
+          | sub_nil => rw [List.length_nil]; apply zero_le_n
           | sub_take l hsub =>
             rw [List.length_cons]; apply n_le_m__succ_n_le_succ_m
             apply ih _ rfl _ hsub
@@ -3432,7 +3486,7 @@ end Sol
 ```
 :::::
 
-:::::exercise (rating := 4) (name := "palindromes")
+:::::exercise (rating := 4) (name := "palindromes") (optional := true)
 A palindrome is a sequence that reads the same backwards as
 forwards.
 
@@ -3505,6 +3559,9 @@ inductive Pal {α : Type} : List α → Prop where
 -- END SOLUTION
 ```
 
+:::autogradedHole Pal
+:::
+
 :::dev PotentialImprovement
 ```
 APT21: a student noted that the pal_one case is easy to
@@ -3553,7 +3610,7 @@ I propose we move it to the simp chapter
 :::
 :::::
 
-:::::exercise (rating := 5) (name := "palindrome_converse")
+:::::exercise (rating := 5) (name := "palindrome_converse") (optional := true)
 Again, the converse direction is significantly more difficult, due
 to the lack of evidence.  Using your definition of `Pal` from the
 previous exercise, prove that
@@ -3730,7 +3787,7 @@ theorem palindrome_converse {α : Type} (l : List α) (h : l = l.reverse) : Pal 
 ```
 :::::
 
-:::::exercise (rating := 4) (name := "NoDup") (level := Advanced)
+:::::exercise (rating := 4) (name := "NoDup") (level := Advanced) (optional := true)
 Use the `∈` property to define a proposition `Disjoint l₁ l₂`,
 which should be provable exactly when `l₁` and `l₂` are
 lists (with elements of type `α`) that have no elements in
@@ -3847,7 +3904,7 @@ GRADE_MANUAL 6: NoDup
 :::
 :::::
 
-:::::exercise (rating := 5) (name := "pigeonhole_principle") (level := Advanced)
+:::::exercise (rating := 5) (name := "pigeonhole_principle") (level := Advanced) (optional := true)
 The _pigeonhole principle_ states a basic fact about counting: if
 we distribute more than `n` items into `n` pigeonholes, some
 pigeonhole must contain at least two items.  As often happens, this
@@ -3884,6 +3941,9 @@ inductive Repeats {α : Type} : List α → Prop where
   | rep_later {x : α} {l : List α} (h : Repeats l) : Repeats (x :: l)
 -- /SOLUTION
 ```
+
+:::autogradedHole Repeats
+:::
 
 :::grade
 ```

@@ -26,7 +26,7 @@ and do not use tactics not in this table; in particular,
 | ----------------- | ------------------------ |
 | `Basics`          | `rfl`, `intro`, `rewrite`, `cases`, `exact` |
 | `Induction`       | `induction`, `have`, `rw`, `<;>` |
-| `UsingLean`       | `dsimp`, `calc`, `exact?`, `rw?` |
+| `UsingLean`       | `calc`, `exact?`, `rw?` |
 | `Lists`           | *(none new)* |
 | `Poly`            | *(none new)* |
 | `Tactics`         | `apply` (and `apply ... at`), `replace`, `specialize`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `induction ... generalizing ...`, `unfold`, `cases ... : ...`, `split` |
@@ -448,7 +448,7 @@ These blocks may take a `(name := <identifier>)` option for use by a later
 | Option | HTML book | Extracted Lean | Usage |
 | ------ | --------- | -------------- | ----- |
 | `-show` | not rendered | normal code | For hiding unexplained technical code from the book narrative |
-| `+error` | rendered as code block with error | code in `sf_expect_failure` block | For demonstrating expected errors while supressing error diagnostics |
+| `+error` | rendered as code block with error | code in `sf_expect_failure_in` block | For demonstrating expected errors while supressing error diagnostics |
 | `-keep` | rendered as code block | code in `sf_experiment` block | For successfully checking code without affecting later blocks |
 
 Combine `+error` and `-keep` to produce a block that is expected to fail,
@@ -456,6 +456,76 @@ and whose declarations don't affect later blocks.
 Combine `+error` and `(name := <identifier>)` to produce a block whose error
 message gets checked by ` ```leanOutput <identifier> `.
 See the previous sections for more detailed usage guidelines.
+
+### Recall blocks
+
+Fenced `recall` and `recallSource` blocks are type checked Lean blocks
+consisting of a single declaration that must match an earlier declaration,
+which allows restating the declaration for pedagogical purposes,
+while ensuring correctness of the restatement. `recall` blocks are syntax
+highlighted in the HTML, while `recallSource` blocks are plain code blocks.
+
+In a `recall` block, type signatures and definitions must be definitionally
+equal, inductive types must have the same constructors, and records must have
+the same fields. With the `+statement` option, only the type signature is
+restated and not the declaration body.
+
+`recall` can restate a universe-polymorphic declaration without universe parameters when the
+restatement is a valid specialization.
+To enforce the restatement has the exact universe-parameters,
+use `+strictUniverse` to disable the specialization check.
+`+statement` option cannot be combined with `+strictUniverse`,
+and  `+strictUniverse` does not apply to `recallSource`.
+
+In a `recallSource` block, the restated
+declaration must be equal verbatim, down to indentation and line breaks;
+this is useful for showing the exact syntax of the declaration.
+
+Both may take `(name := <identifier>)` and `+error` just as for `lean` blocks,
+rendered in the HTML and extracted to Lean similarly.
+By default, prefer `recall` over `recallSource`.
+These blocks extract to Lean commands `sf_recall`, `sf_recall statement`, and
+`sf_recall_source`. For example, given the original declaration
+
+````
+```lean
+def twice (f : Nat → Nat) (n : Nat) : Nat :=
+  f (f n)
+```
+````
+
+the following three recall blocks
+
+````
+```recall
+def twice (f : Nat → Nat) (n : Nat) : Nat := f <| f n
+```
+
+```recall +statement
+def twice (f : Nat → Nat) (n : Nat) : Nat
+```
+
+```recallSource
+def twice (f : Nat → Nat) (n : Nat) : Nat :=
+  f (f n)
+```
+````
+
+successfully type check and are extracted to the following three commands.
+
+```lean
+sf_recall def twice (f : Nat → Nat) (n : Nat) : Nat := f <| f n
+
+sf_recall statement def twice (f : Nat → Nat) (n : Nat) : Nat
+
+sf_recall_source
+  def twice (f : Nat → Nat) (n : Nat) : Nat :=
+    f (f n)
+```
+
+> Do not `recall` a previous definition that is wrapped in `solution!`: 
+> since the definition body is replaced to `sorry` in student projects,
+> doing so would cause a mismatch.
 
 ### BNF grammar blocks
 
@@ -541,7 +611,7 @@ Every chapter is compiled once but rendered in four variants:
 
 - **student**: full prose, solutions elided
 - **solutions**: full prose, solutions shown
-- **grading**: full prose, solutions shown, with grading attributes
+- **grading**: full prose, solutions elided, with grading attributes, documented in [AUTOMATED-GRADING.md](AUTOMATED-GRADING.md)
 - **terse**: abridged prose for live-coding / lecturing
 
 A number of directives control what prose appears in which variants.
@@ -605,9 +675,11 @@ An exercise block rendered as `Exercise ★ (foo)` in the HTML
 and as a comment `-- ### Exercise (1 star): foo ⭐` in the extracted Lean files.
 It takes the following options:
 
-* `(rating := <number>)` (required): difficulty from 1 (easy) to 5 (hard)
+* `(rating := <number>)` (required): difficulty from 1 (easy) to 5 (hard); a
+  rating outside that range is a build error
 * `(name := <identifier>)` (required): name used in headings and cross-references
 * `(level := <identifier>)` (optional): additional difficulty warning (currently only `Advanced`)
+* `(optional := <boolean>)` (optional): marks an exercise the reader may skip
 * `(manual := <boolean>)` (optional): marks the exercise for manual grading
 
 #### `:::gradeTheorem <number> <identifier>...`, `:::grade`
