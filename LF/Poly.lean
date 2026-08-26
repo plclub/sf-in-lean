@@ -865,7 +865,8 @@ The function `unzip` goes in the other direction from {name}`zip`: it takes a li
 
 Fill in the definition of `unzip` below and write simplification rules that characterize it.
 Make sure it that passes the given unit test.
-Prove `unzip_test_fst` and `unzip_test_snd` by rewriting with your simplification lemmas instead of using `rfl` directly.
+Prove `unzip_test_fst` and `unzip_test_snd` by rewriting with your simplification lemmas instead of using `rfl` directly. Remember that you can use `dsimp only` to simplify expressions accessing the `fst`
+or `snd` elements of a pair.
 
 ```lean
 def unzip {α : Type} {β : Type} (l : List (α × β)) : List α × List β := solution!(

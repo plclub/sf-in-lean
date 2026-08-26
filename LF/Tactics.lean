@@ -1592,7 +1592,9 @@ def unzip' {α β : Type} (l : List (α × β)) : List α × List β := solution
 :::autogradedHole unzip'
 :::
 
-Prove that {name}`unzip'` and {name}`zip` are inverses in the following sense:
+Prove that {name}`unzip'` and {name}`zip` are inverses in the following sense.
+Remember that you can use `dsimp only` to simplify expressions involving
+pairs and `fst` and `snd`.
 
 ```lean
 theorem zip_unzip' {α β : Type} (l : List (α × β))
@@ -1610,7 +1612,7 @@ theorem zip_unzip' {α β : Type} (l : List (α × β))
       rw [unzip'] at h
       injections h₁ h₂
       rw [← h₁, ← h₂, zip, ih]
-      rfl
+      dsimp only
 ```
 
 :::gradeTheorem 3 zip_unzip'
