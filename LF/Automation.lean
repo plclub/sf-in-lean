@@ -929,7 +929,7 @@ theorem regexp_match_of_list α (l : List α) : l =~ reg_exp_of_list l := by
       rw [h]
       constructor; constructor; assumption
 ```
-:::gradeTheorem 2 regexp_match_of_list
+:::gradeTheorem 1 regexp_match_of_list
 :::
 ::::
 
@@ -969,7 +969,7 @@ theorem EmptySet_is_empty α (s : List α) : ¬(s =~ EmptySet) := by
     intro h
     inversion h
 ```
-:::gradeTheorem "0.5" EmptySet_is_empty
+:::gradeTheorem 1 EmptySet_is_empty
 :::
 ::::
 
@@ -984,7 +984,7 @@ theorem MUnion' α (s : List α) (re₁ re₂ : RegExp α) :
     case inl => apply mUnionL; assumption
     case inr => apply mUnionR; assumption
 ```
-:::gradeTheorem "0.5" MUnion'
+:::gradeTheorem 1 MUnion'
 :::
 ::::
 
@@ -1013,7 +1013,7 @@ theorem MStar' α (ss : List (List α)) (re : RegExp α)
 :::
 ::::
 
-::::exercise (rating := 1) (name := "EmptyStr_not_needed") (optional := true)
+::::exercise (rating := 1) (name := "EmptyStr_not_needed") (optional := true) (manual := true)
 It turns out that the {name}`EmptyStr` constructor is actually not
 needed, since the regular expression matching the empty string can
 also be defined from {name}`Star` and {name}`EmptySet`:
@@ -1106,7 +1106,7 @@ theorem in_re_match {α : Type} {s : List α} {re : RegExp α} {x : α}
 ```
 
 
-::::exercise (rating := 1) (name := "reNotEmpty")
+::::exercise (rating := 1) (name := "reNotEmpty") (manual := true)
 Write a recursive function `reNotEmpty` that tests whether a
 regular expression matches some string. Prove that your function
 is correct.
@@ -1261,6 +1261,8 @@ theorem MStar'' α (s : List α) (re : RegExp α) (h : s =~ Star re) :
         trivial
       intro s h; apply hall; trivial
 ```
+:::gradeTheorem 1 MStar''
+:::
 ::::
 
 ## The "Weak" Pumping Lemma
@@ -1379,6 +1381,8 @@ theorem weak_pumping_char {α : Type} (x : α)
   solution!
     simp [pumpingConstant] at h
 ```
+:::gradeTheorem 2 weak_pumping_char
+:::
 ::::
 
 ::::exercise (rating := 4) (name := "weak_pumping_app")
@@ -1438,6 +1442,8 @@ theorem weak_pumping_app {α : Type} (s₁ s₂ : List α) (re₁ re₂ : RegExp
           simp only [List.append_assoc] at *
           constructor <;> assumption
 ```
+:::gradeTheorem 4 weak_pumping_app
+:::
 ::::
 
 ::::exercise (rating := 3) (name := "weak_pumping_union_l")
@@ -1471,6 +1477,8 @@ theorem weak_pumping_union_l  {α : Type} (s₁ : List α) (re₁ re₂ : RegExp
         apply mUnionL
         assumption
 ```
+:::gradeTheorem 3 weak_pumping_union_l
+:::
 ::::
 
 ::::exercise (rating := 3) (name := "weak_pumping_union_r")
@@ -1505,6 +1513,8 @@ theorem weak_pumping_union_r {α : Type} (s₂ : List α) (re₁ re₂ : RegExp 
         apply mUnionR
         assumption
 ```
+:::gradeTheorem 3 weak_pumping_union_r
+:::
 ::::
 
 ::::exercise (rating := 2) (name := "weak_pumping_star_zero") (optional := true)
@@ -1522,6 +1532,8 @@ theorem weak_pumping_star_zero {α : Type} (re : RegExp α)
       have h₂ := pumping_constant_ge_1 re
       rw [← h₁] at h₂; inversion h₂
 ```
+:::gradeTheorem 2 weak_pumping_star_zero
+:::
 ::::
 
 ::::exercise (rating := 5) (name := "weak_pumping_star_app") (optional := true)
@@ -1593,6 +1605,8 @@ theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α)
           rw [← List.append_assoc]
           apply mStarApp <;> assumption
 ```
+:::gradeTheorem 5 weak_pumping_star_app
+:::
 ::::
 
 ::::exercise (rating := 3) (name := "weak_pumping")
@@ -1612,6 +1626,8 @@ theorem weak_pumping {α : Type} {re : RegExp α} {s : List α}
     case mStar0   => apply weak_pumping_star_zero <;> assumption
     case mStarApp => apply weak_pumping_star_app <;> assumption
 ```
+:::gradeTheorem 3 weak_pumping
+:::
 ::::
 
 ## The (Strong) Pumping Lemma
@@ -1638,6 +1654,9 @@ theorem pumping {α : Type} {re : RegExp α} {s : List α}
       ∀ m, s₁ ++ napp m s₂ ++ s₃ =~ re := by
   sorry
 ```
+:::dev "Niklas Halonen (xhalo32)"
+Add `gradeTheorem 10 pumping` once the proof is filled in.
+:::
 ::::
 
 ```lean

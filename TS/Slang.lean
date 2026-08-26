@@ -360,6 +360,9 @@ theorem optimize0plusB_test1 :
       = (.not (.gt (.num 4) (.num 8))) := solution!(by rfl)
 ```
 
+:::autogradedHole Bexp.optimize0plusB
+:::
+
 :::gradeTheorem "0.5" optimize0plusB_test1
 :::
 
@@ -687,6 +690,9 @@ inductive Bexp.EvalR : Bexp → Bool → Prop where
 
 scoped notation:55 e:56 " ⇓ " b:56 => Bexp.EvalR e b
 ```
+
+:::autogradedHole Bexp.EvalR
+:::
 
 ```lean
 theorem Bexp.evalR_iff_eval (b : Bexp) (bv : Bool) :

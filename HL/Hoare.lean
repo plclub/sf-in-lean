@@ -3115,6 +3115,9 @@ def Com.unexpandEvalR : Lean.PrettyPrinter.Unexpander
   | _ => throw ()
 ```
 
+:::autogradedHole Com.EvalR
+:::
+
 The following unit tests should be provable simply by applying your
 new rules (plus `rfl` for the boolean side conditions) if you have
 defined them correctly.
@@ -3281,6 +3284,8 @@ theorem hoare_if1_good :
       · assertion_auto
     · assertion_auto
 ```
+:::gradeTheorem 2 hoare_if1_good
+:::
 :::::
 
 ```lean
@@ -4039,6 +4044,9 @@ def Com.unexpandEvalR : Lean.PrettyPrinter.Unexpander
   | _ => throw ()
 ```
 
+:::autogradedHole Com.EvalR
+:::
+
 A couple of definitions from above, copied here so they use the
 new `Com.EvalR`.
 
@@ -4563,6 +4571,11 @@ theorem hoare_havoc {Q : Assertion} {x : Ident} :
       simp only [Assertion.subst_apply, Aexp.eval_num] at hpre
       exact hpre
 ```
+
+:::autogradedHole havoc_pre
+:::
+:::gradeTheorem 3 hoare_havoc
+:::
 :::::
 
 :::::exercise (rating := 3) (name := "havoc_post") (level := Advanced)
@@ -4610,6 +4623,8 @@ theorem havoc_post {P : Assertion} {x : Ident} :
       rw [TotalMap.update_same]
       exact hpre
 ```
+:::gradeTheorem 3 havoc_post
+:::
 :::::
 
 ```lean

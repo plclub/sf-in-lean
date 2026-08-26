@@ -4188,7 +4188,7 @@ equivalent; that is, `P <<->> P'`.
 ```lean
 def IsWp (P : Assertion) (c : Com) (Q : Assertion) : Prop :=
   ValidHoareTriple P c Q ∧
-  ∀ P' : Assertion, ValidHoareTriple P' c Q → P' ->> P
+  ∀ P' : Assertion, {{ P' }} ~c {{ Q }} → P' ->> P
 ```
 
 :::slidebreak
@@ -4304,9 +4304,14 @@ theorem hoare_asgn_weakest
     (Q : Assertion) (x : Ident) (a : Aexp) :
     IsWp ({{ Q [x ↦ ~a] }}) (imp {x := ~a}) Q := by
   solution!
-    sorry
+    refine ⟨hoare_asgn, ?_⟩
+    intro P hP
+    rw [validHoareTriple_def] at hP
+    intro st hst
+    rw [Assertion.subst_apply]
+    apply hP _ hst
+    exact Com.EvalR.asgn rfl
 ```
-
 :::gradeTheorem 2 hoare_asgn_weakest
 :::
 :::::

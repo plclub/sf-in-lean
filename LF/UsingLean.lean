@@ -294,6 +294,10 @@ Whereas before, the left-hand side of each equality in the
 previous one, we can replace the left-hand side entirely with an `_`.
 Now our Lean proof looks quite a bit like the textbook one we saw earlier!
 
+:::dev "Niklas Halonen (xhalo32)"
+How to grade that `succ_mul_succ'` uses `calc` without cheating?
+:::
+
 :::::exercise (rating := 1) (name := "succ_mul_succ")
 ```lean
 theorem succ_mul_succ (n m : Nat) :
@@ -365,12 +369,15 @@ example (n m : Nat) (h : n + n = m) : triple n = m + n := by
 Complete this proof, using {tactic}`dsimp` or {tactic}`rw` as appropriate.
 
 ```lean
-example (n m : Nat) (h : m = n) : triple m = n + (n + n) := by
+theorem dsimp1 (n m : Nat) (h : m = n) : triple m = n + (n + n) := by
   solution!
     rw [h]
     dsimp [triple]
     rw [Nat.add_assoc]
 ```
+
+:::gradeTheorem 2 dsimp1
+:::
 :::::
 
 `dsimp at h` also works on hypotheses, which {tactic}`rfl` can't touch.
@@ -604,7 +611,7 @@ theorem Nat.even_succ (n : Nat) :
       rw [even, ih, Bool.not_not]
 ```
 
-:::gradeTheorem 1 Nat.even_succ
+:::gradeTheorem 2 Nat.even_succ
 :::
 :::::
 
@@ -629,7 +636,7 @@ theorem Nat.double_add (n : Nat) : n.double = n + n := by
       rw [double_succ, ih, succ_add n' (n' + 1), add_succ n' n']
 ```
 
-:::gradeTheorem 1 Nat.double_add
+:::gradeTheorem 2 Nat.double_add
 :::
 :::::
 
@@ -641,7 +648,7 @@ theorem Nat.double_mul (n : Nat) : n.double = 2 * n := by
 ```
 :::::
 
-:::gradeTheorem 1 Nat.double_mul
+:::gradeTheorem 2 Nat.double_mul
 :::
 
 In the remainder of the book, we use Lean's built-in natural numbers everywhere.
