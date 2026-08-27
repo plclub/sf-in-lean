@@ -983,6 +983,49 @@ def Bexp.foldConstants (b : Bexp) : Bexp :=
     | bexp { false }, bexp { true } => bexp { false }
     | bexp { false }, bexp { false } => bexp { false }
     | b₁', b₂' => bexp { ~b₁' ∧ ~b₂' }
+
+@[simp]
+theorem Bexp.foldConstants_true : (bexp { true }).foldConstants = (bexp { true }) := rfl
+@[simp]
+theorem Bexp.foldConstants_false : (bexp { false }).foldConstants = (bexp { false }) := rfl
+
+theorem Bexp.foldConstants_comp (a₁ a₂ : Aexp) :
+    (∃ n₁ n₂, a₁.foldConstants = .num n₁ ∧ a₂.foldConstants = .num n₂) ∨
+    (bexp {~a₁ = ~a₂}).foldConstants = (bexp {~a₁.foldConstants = ~a₂.foldConstants}) ∧
+    (bexp {~a₁ ≠ ~a₂}).foldConstants = (bexp {~a₁.foldConstants ≠ ~a₂.foldConstants}) ∧
+    (bexp {~a₁ ≤ ~a₂}).foldConstants = (bexp {~a₁.foldConstants ≤ ~a₂.foldConstants}) ∧
+    (bexp {~a₁ > ~a₂}).foldConstants = (bexp {~a₁.foldConstants > ~a₂.foldConstants}) := by
+  cases ha₁ : a₁.foldConstants with
+  | num n₁ =>
+    cases ha₂ : a₂.foldConstants with
+    | num n₂ =>
+      left
+      exists n₁, n₂
+    | _ =>
+      simp [foldConstants, ha₁, ha₂]
+  | _ => simp [foldConstants, ha₁]
+
+theorem Bexp.foldConstants_unary (b : Bexp) :
+    (b.foldConstants = (bexp { true }) ∨ b.foldConstants = (bexp { false })) ∨
+    (bexp { ¬~b }).foldConstants = (bexp { ¬(~b.foldConstants)}) := by
+  cases hb : b.foldConstants with
+  | bool b' =>
+    simp_all
+  | _ =>
+    simp [foldConstants, hb]
+
+theorem Bexp.foldConstants_binary (b₁ : Bexp) (b₂ : Bexp) :
+    ((b₁.foldConstants = (bexp { true }) ∨ b₁.foldConstants = (bexp { false })) ∧
+     (b₂.foldConstants = (bexp { true }) ∨ b₂.foldConstants = (bexp { false }))) ∨
+    (bexp {~b₁ ∧ ~b₂}).foldConstants = (bexp {~b₁.foldConstants ∧ ~b₂.foldConstants}) := by
+  cases hb₁ : b₁.foldConstants with
+  | bool b₁' =>
+    cases hb₂ : b₂.foldConstants with
+    | bool b₂' => simp_all
+    | _ => simp [foldConstants, hb₁, hb₂]
+  | _ => simp [foldConstants, hb₁]
+
+  
 ```
 ```lean
 example : (bexp { true ∧ ¬( false ∧ true) }).foldConstants = (bexp { true }) := by rfl
