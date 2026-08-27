@@ -362,11 +362,12 @@ theorem Bexp.optimize0plus_test1 :
     Bexp.optimize0plus
         (.not (.gt (.plus (.num 0) (.num 4)) (.num 8)))
       = (.not (.gt (.num 4) (.num 8))) := solution!(by rfl)
+```
 
 :::autogradedHole Bexp.optimize0plus
 :::
 
-:::gradeTheorem "0.5" optimize0plus_test1
+:::gradeTheorem "0.5" Bexp.optimize0plus_test1
 :::
 
 ```lean
@@ -376,7 +377,7 @@ theorem Bexp.optimize0plus_test2 :
       = (.and (.le (.num 4) (.num 5)) (.bool true)) := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" Bexp.optimize0plus_test1 Bexp.optimize0plus_test2
+:::gradeTheorem "0.5" Bexp.optimize0plus_test2
 :::
 
 ```lean
