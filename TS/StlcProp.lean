@@ -168,14 +168,15 @@ theorem canonical_forms_bool (t : Tm) (hT : <{ ∅ ⊢ ~t ⦂ Bool }>) (hv : t.I
     t = <{ true }> ∨ t = <{ false }> := by
   cases hv with
   | abs x T t₁ => cases hT
-  | tru => exact .inl rfl
-  | fls => exact .inr rfl
+  | tru => left; rfl
+  | fls => right; rfl
 
 theorem canonical_forms_fun (t : Tm) (T₁ T₂ : Ty)
     (hT : <{ ∅ ⊢ ~t ⦂ ~T₁ → ~T₂ }>) (hv : t.IsValue) :
     ∃ x u, t = <{ λ ~x : ~T₁ . ~u }> := by
   cases hv with
-  | abs x T t₁ => cases hT with | abs _ _ _ _ _ _ => exact ⟨x, t₁, rfl⟩
+  | abs x T t₁ => cases hT with | abs _ _ _ _ _ _ =>
+    exists x, t₁
   | tru => cases hT
   | fls => cases hT
 ```
@@ -206,9 +207,9 @@ theorem progress (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
     -- Contradictory: variables cannot be typed in an empty context.
     rw [PartialMap.getElem_empty] at h
     cases h
-  | abs => exact .inl (.abs ..)
-  | tru => exact .inl .tru
-  | fls => exact .inl .fls
+  | abs => left; constructor
+  | tru => left; constructor
+  | fls => left; constructor
   | app Γ T₁ T₂ t₁ t₂ h₁ h₂ ih₁ ih₂ =>
     -- `t = t₁ t₂`.  Proceed by cases on whether `t₁` is a value or steps.
     right
@@ -217,19 +218,35 @@ theorem progress (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
       cases ih₂ hΓ with
       | inl hv₂ =>
         obtain ⟨x, u, rfl⟩ := canonical_forms_fun t₁ _ _ (hΓ ▸ h₁) hv₁
-        exact ⟨<{ [~x := ~t₂] ~u }>, .appAbs x T₂ u t₂ hv₂⟩
-      | inr hs₂ => obtain ⟨t₂', h⟩ := hs₂; exact ⟨<{ ~t₁ ~t₂' }>, .app2 t₁ t₂ t₂' hv₁ h⟩
-    | inr hs₁ => obtain ⟨t₁', h⟩ := hs₁; exact ⟨<{ ~t₁' ~t₂ }>, .app1 t₁ t₁' t₂ h⟩
+        exists <{ [~x := ~t₂] ~u }>
+        constructor
+        assumption
+      | inr hs₂ =>
+        obtain ⟨t₂', h⟩ := hs₂
+        exists <{ ~t₁ ~t₂' }>
+        constructor <;> assumption
+    | inr hs₁ =>
+      obtain ⟨t₁', h⟩ := hs₁
+      exists <{ ~t₁' ~t₂ }>
+      constructor <;> assumption
   | ite Γ t₁ t₂ t₃ T₁ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
     right
     cases ih₁ hΓ with
     | inl hv₁ =>
       cases canonical_forms_bool t₁ (hΓ ▸ h₁) hv₁ with
-      | inl he => subst he; exact ⟨t₂, .ifTrue t₂ t₃⟩
-      | inr he => subst he; exact ⟨t₃, .ifFalse t₂ t₃⟩
+      | inl he =>
+        subst he
+        exists t₂
+        constructor
+      | inr he =>
+        subst he
+        exists t₃
+        constructor
     | inr hs₁ =>
       obtain ⟨t₁', h⟩ := hs₁
-      exact ⟨<{ if ~t₁' then ~t₂ else ~t₃ }>, .ifStep t₁ t₁' t₂ t₃ h⟩
+      exists <{ if ~t₁' then ~t₂ else ~t₃ }>
+      constructor
+      assumption
 ```
 
 ::::full
@@ -277,6 +294,7 @@ Show that progress can also be proved by induction on terms
 instead of induction on typing derivations.
 
 ```lean
+-- IN PROGRESS
 theorem progress' (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
     t.IsValue ∨ ∃ t', t ⟶ t' := by
   solution!
@@ -409,6 +427,7 @@ First, we show that typing is preserved under "extensions" to the
 context `Γ`.  (Recall map inclusion, `Γ ⊆ Γ'`, from the `Typeclasses` chapter.)
 
 ```lean
+-- IN PROGRESS
 theorem weakening (Γ Γ' : Context) (t : Tm) (T : Ty)
     (hi : Γ ⊆ Γ') (hT : <{ ~Γ ⊢ ~t ⦂ ~T }>) : <{ ~Γ' ⊢ ~t ⦂ ~T }> := by
   induction hT generalizing Γ' with
@@ -469,6 +488,7 @@ The _substitution lemma_ says:
 :::
 
 ```lean
+-- IN PROGRESS
 theorem substitution_preserves_typing (Γ : Context) (x : String) (U : Ty)
     (t v : Tm) (T : Ty)
     (hT : <{ ~x ↦ ~U ; ~Γ ⊢ ~t ⦂ ~T }>) (hv : <{ ∅ ⊢ ~v ⦂ ~U }>) :
@@ -578,6 +598,7 @@ proved by induction on typing derivations instead
 of induction on terms.
 
 ```lean
+-- IN PROGRESS
 theorem substitution_preserves_typing_from_typing_ind (Γ : Context) (x : String) (U : Ty)
     (t v : Tm) (T : Ty)
     (hT : <{ ~x ↦ ~U ; ~Γ ⊢ ~t ⦂ ~T }>) (hv : <{ ∅ ⊢ ~v ⦂ ~U }>) :
@@ -632,6 +653,7 @@ then `t'` is also a closed term with type `T`.  In other words,
 the small-step reduction relation preserves types.
 
 ```lean
+-- IN PROGRESS
 theorem preservation (t t' : Tm) (T : Ty)
     (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) (hs : t ⟶ t') : <{ ∅ ⊢ ~t' ⦂ ~T }> := by
   generalize hΓ : (∅ : Context) = Γ at hT
@@ -799,6 +821,7 @@ Another nice property of the STLC is that types are unique: a
 given term (in a given context) has at most one type.
 
 ```lean
+-- AI
 theorem unique_types (Γ : Context) (e : Tm) (T T' : Ty)
     (h : <{ ~Γ ⊢ ~e ⦂ ~T }>) (h' : <{ ~Γ ⊢ ~e ⦂ ~T' }>) : T = T' := by
   solution!
@@ -909,6 +932,7 @@ and if we know `t` is well typed in context `Γ`, then it
 must be the case that `Γ` assigns a type to `x`.
 
 ```lean
+-- IN PROGRESS
 theorem free_in_context (x : String) (t : Tm) (T : Ty) (Γ : Context)
     (ha : x ∈ᶠ t) (hT : <{ ~Γ ⊢ ~t ⦂ ~T }>) : ∃ T', Γ[x] = some T' := by
   solution!
@@ -984,6 +1008,7 @@ variables that appear free in `t`. In fact, this is the only
 condition that is needed.
 
 ```lean
+-- IN PROGRESS
 theorem context_invariance (Γ Γ' : Context) (t : Tm) (T : Ty)
     (hT : <{ ~Γ ⊢ ~t ⦂ ~T }>) (hf : ∀ x, x ∈ᶠ t → Γ[x] = Γ'[x]) :
     <{ ~Γ' ⊢ ~t ⦂ ~T }> := by
@@ -1896,6 +1921,7 @@ scoped notation:40 t:41 " ⟶* " t':41 => Multi Step t t'
 An example:
 
 ```lean
+-- AI
 theorem Nat_step_example : ∃ t, <{ (λ x : Nat . λ y : Nat . x * y) 3 2 }> ⟶* t := by
   solution!
     refine ⟨<{ 6 }>, ?_⟩
@@ -2028,6 +2054,7 @@ def HasType.unexpand : Unexpander
 An example:
 
 ```lean
+-- AI
 theorem Nat_typing_example : <{ ∅ ⊢ (λ x : Nat . λ y : Nat . x * y) 3 2 ⦂ Nat }> :=
   solution!(
     .app _ _ Ty.nat _ _
@@ -2056,6 +2083,7 @@ The next lemmas are proved _exactly_ as before.
 
 :::::exercise (rating := 4) (name := "StlcArith.weakening")
 ```lean
+-- AI
 theorem weakening (Γ Γ' : Context) (t : Tm) (T : Ty)
     (hi : Γ ⊆ Γ') (hT : <{ ~Γ ⊢ ~t ⦂ ~T }>) : <{ ~Γ' ⊢ ~t ⦂ ~T }> := by
   solution!
@@ -2081,12 +2109,13 @@ The two helper lemmas that weakening is for are also proved just as they were
 for the STLC.
 
 ```lean
+-- AI
 theorem weakening_empty (Γ : Context) (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
     <{ ~Γ ⊢ ~t ⦂ ~T }> :=
   solution!(
     weakening _ _ _ _
       (fun h => by rw [PartialMap.getElem_empty] at h; cases h) hT)
-
+-- AI
 theorem substitution_preserves_typing (Γ : Context) (x : String) (U : Ty)
     (t v : Tm) (T : Ty)
     (hT : <{ ~x ↦ ~U ; ~Γ ⊢ ~t ⦂ ~T }>) (hv : <{ ∅ ⊢ ~v ⦂ ~U }>) :
@@ -2149,6 +2178,7 @@ before.
 
 ```lean
 theorem preservation (t t' : Tm) (T : Ty)
+-- AI
     (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) (hs : t ⟶ t') : <{ ∅ ⊢ ~t' ⦂ ~T }> := by
   solution!
     generalize hΓ : (∅ : Context) = Γ at hT
@@ -2206,6 +2236,7 @@ theorem preservation (t t' : Tm) (T : Ty)
 
 :::::exercise (rating := 4) (name := "StlcArith.progress")
 ```lean
+-- AI
 theorem progress (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
     t.IsValue ∨ ∃ t', t ⟶ t' := by
   solution!
