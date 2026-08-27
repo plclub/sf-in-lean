@@ -974,11 +974,9 @@ You can apply tactics in multiple places at the same time, including the goal:
 ::::
 
 ```lean
-example (n m : Nat) (h₁ : n = 1 + 1) (h₂ : m = 1 + 2) :
-  Nat.ble (n, m).1 (n, m).2 := by
-  dsimp at h₁ h₂ ⊢
-  rw [h₁, h₂]
-  rfl
+example (n m : Nat) (h : n + 0 = m) : n = m + 0 := by
+  rw [Nat.add_zero] at h ⊢
+  assumption
 ```
 
 # Specializing Hypotheses
@@ -1039,7 +1037,7 @@ theorem nth?_always_none (l : List Nat) (h : ∀ i, nth? l i = none) :
     | nil => rfl
     | cons x xs =>
       have h := h 0
-      dsimp [nth?] at h
+      rw [nth?] at h
       contradiction
 ```
 
@@ -1324,10 +1322,10 @@ theorem add_self_injective (n m : Nat)
     | zero =>
       cases m with
       | zero => rfl
-      | succ m' => dsimp at h; contradiction
+      | succ m' => rw [Nat.add_zero] at h; contradiction
     | succ n' ih =>
       cases m with
-      | zero => dsimp at h; contradiction
+      | zero => rw [Nat.add_zero, Nat.add_zero 0] at h; contradiction
       | succ m' =>
         congr
         apply ih
@@ -1431,7 +1429,7 @@ theorem nth?_after_last {α : Type}
     | cons x xs ih =>
       rw [List.length_cons] at h
       rw [← h]
-      dsimp [nth?]
+      rw [nth?]
       apply ih
       rfl
 ```
@@ -1545,7 +1543,7 @@ def chooseIf {α : Type} (test : α → Bool) (x y : α) : α :=
 
 theorem chooseIf_self {α : Type} (test : α → Bool) (x : α) :
     chooseIf test x x = x := by
-  dsimp [chooseIf]
+  rw [chooseIf]
   cases test x <;> rfl
 ```
 
@@ -1594,7 +1592,9 @@ def unzip' {α β : Type} (l : List (α × β)) : List α × List β := solution
 :::autogradedHole unzip'
 :::
 
-Prove that {name}`unzip'` and {name}`zip` are inverses in the following sense:
+Prove that {name}`unzip'` and {name}`zip` are inverses in the following sense.
+Remember that you can use `dsimp only` to simplify expressions involving
+pairs and `fst` and `snd`.
 
 ```lean
 theorem zip_unzip' {α β : Type} (l : List (α × β))
@@ -1604,18 +1604,15 @@ theorem zip_unzip' {α β : Type} (l : List (α × β))
   solution!
     induction l generalizing l₁ l₂ with
     | nil =>
-      dsimp [unzip'] at h
+      rw [unzip'] at h
       injections h₁ h₂
-      rw [← h₁, ← h₂]
-      rfl
+      rw [← h₁, ← h₂, zip]
     | cons x xs ih =>
       let ⟨a, b⟩ := x
-      dsimp [unzip'] at h
+      rw [unzip'] at h
       injections h₁ h₂
-      rw [← h₁, ← h₂]
-      dsimp [zip]
-      rw [ih]
-      rfl
+      rw [← h₁, ← h₂, zip, ih]
+      dsimp only
 ```
 
 :::gradeTheorem 3 zip_unzip'
@@ -1648,7 +1645,7 @@ this (with no `h : ⋯` on the `cases`)...
 theorem keepIf_some {α : Type} (test : α → Bool) (x y : α)
     (h : keepIf test x = some y) :
     x = y := by
-  dsimp [keepIf] at h
+  rw [keepIf] at h
   cases (test x)
 ```
 
@@ -1690,7 +1687,7 @@ Adding the `h : ⋯ ` qualifier saves this information so we can use it.
 theorem keepIf_some {α : Type} (test : α → Bool) (x y : α)
     (h : keepIf test x = some y) :
     x = y := by
-  dsimp [keepIf] at h
+  rw [keepIf] at h
   cases hTest : test x
   -- Now we have the same state as at the point where we got stuck
   -- above, except that the context contains an extra equality
@@ -1763,13 +1760,17 @@ Managing goals and hypotheses:
 
   -  `contradiction`: close the current goal when the context contains contradictory assumptions
 
-Equality and rewriting:
+Equality, rewriting, and unfolding:
 
   - `rfl`: close an equality that holds by reflexivity (possibly after computation)
 
   - `rw [h]`: rewrite the goal using an equality hypothesis or theorem
 
+  - `rw [d]`: unfold a definition in the goal
+
   - `rw [h] at h'`: rewrite a hypothesis using an equality hypothesis or theorem
+
+  - `rw [d] at h'`: unfold a definition in a hypothesis
 
   - `symm`: reverse an equality goal, changing `t = u` to `u = t`
 
@@ -1784,12 +1785,6 @@ Equality and rewriting:
   - `injection h with ...`: use injectivity of constructors to extract equalities from constructor applications equations
 
   - `injections`: repeatedly use constructor injectivity on suitable equalities in the context
-
-Simplifying and unfolding definitions:
-
-  - `dsimp`: simplify definitional computations in the goal
-
-  - `dsimp at h`: simplify definitional computations in a hypothesis
 
 Case analysis:
 
@@ -1901,8 +1896,7 @@ theorem unzip_zip {α β : Type}
     cases l₂ with
     | nil => contradiction
     | cons y ys =>
-      rw [zip_cons_cons]
-      dsimp [unzip]
+      rw [zip_cons_cons, unzip]
       rewrite [ih]
       · rfl
       · injections
@@ -1916,15 +1910,12 @@ theorem unzip_zip' {α β : Type}
   | nil =>
     rw [unzip_nil] at h
     injections h₁ h₂
-    rw [h₁, h₂]
-    rfl
+    rw [h₁, h₂, zip, unzip]
   | cons x xs ih =>
     let ⟨a, b⟩ := x
-    dsimp [unzip] at h
+    rw [unzip] at h
     injections h₁ h₂
-    rw [h₁, h₂]
-    dsimp [zip, unzip]
-    rewrite [ih]
+    rewrite [h₁, h₂, zip, unzip, ih]
     · rfl
     · rfl
 -- END SOLUTION
@@ -1942,13 +1933,13 @@ theorem test_pos_of_filter_cons {α : Type}
     induction l generalizing x l' test with
     | nil => contradiction
     | cons y ys ih =>
-      dsimp [filter] at h
+      rw [filter] at h
       cases hy : (test y)
       · rw [hy] at h
-        dsimp at h
+        rw [cond_false] at h
         exact ih _ _ _ h
       · rw [hy] at h
-        dsimp at h
+        rw [cond_true] at h
         injections h1 h2
         rw [← h1]
         exact hy
@@ -2016,9 +2007,7 @@ theorem anyTrue_eq_anyTrue (α : Type) (test : α → Bool) (l : List α) :
     induction l generalizing test with
     | nil => rfl
     | cons x xs ih =>
-      dsimp [anyTrue]
-      rw [ih]
-      dsimp [anyTrue', allTrue]
+      rw [anyTrue, ih, anyTrue', anyTrue', allTrue]
       rw [Bool.not_and, Bool.not_not]
 ```
 
