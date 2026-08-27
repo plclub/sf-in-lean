@@ -658,7 +658,7 @@ program!
 
 
 ```lean
-theorem Com.congruence.asgn {x : Ident} {a a' : Aexp} (ha : a.Equiv a') :
+theorem Com.congruence_asgn {x : Ident} {a a' : Aexp} (ha : a.Equiv a') :
     (imp {x := ~a}).Equiv
     (imp {x := ~a'}) := by
   rw [equiv_def]
@@ -711,10 +711,327 @@ equivalent to `c'`.  We must show, for every `st` and `st'`, that
 
   - (`<-`) Similar.
 ::::
+
+```lean
+theorem Com.congruence_while {b b' : Bexp} {c c' : Com} (hb : b.Equiv b') (hc : c.Equiv c') :
+    (imp {while (~b) {~c}}).Equiv
+    (imp {while (~b') {~c'}}) := by
+  workinclass!
+    rw [equiv_def]
+    intro st st'
+    constructor
+    · intro h
+      generalize heq : (imp {while (~b) {~c}}) = com at h
+      induction h with
+      | whileFalse hb' =>
+        injection heq with hbeq hceq
+        subst hbeq
+        apply Com.EvalR.whileFalse
+        rw [← hb]
+        exact hb'
+      | @whileTrue st₁ st₂ st₃ b₂ c₂ hb' hc' hwhile _ ih2 =>
+        injection heq with beq ceq
+        subst beq ceq
+        rw [hb] at hb'
+        specialize ih2 rfl
+        apply Com.EvalR.whileTrue hb' _ ih2
+        · rw [equiv_def] at hc
+          exact hc.mp hc'
+      | skip | asgn | seq | ifTrue | ifFalse =>
+        contradiction
+    · intro h
+      generalize heq : (imp {while (~b') {~c'}}) = com at h
+      induction h with
+      | whileFalse hb' =>
+        injection heq with hbeq hceq
+        subst hbeq
+        apply Com.EvalR.whileFalse
+        rw [hb]
+        exact hb'
+      | @whileTrue st₁ st₂ st₃ b₂ c₂ hb' hc' hwhile _ ih2 =>
+        injection heq with beq ceq
+        subst beq ceq
+        rw [← hb] at hb'
+        specialize ih2 rfl
+        apply Com.EvalR.whileTrue hb' _ ih2
+        · rw [equiv_def] at hc
+          exact hc.mpr hc'
+      | skip | asgn | seq | ifTrue | ifFalse =>
+        contradiction
+```
+:::::exercise (rating := 3) (name := "Com.congruence_seq") (optional := true)
+```lean
+theorem Com.congruence_seq {c1 c1' c2 c2' : Com} (hc1 : c1.Equiv c1') (hc2 : c2.Equiv c2') :
+    (imp {~c1 ; ~c2}).Equiv (imp {~c1' ; ~c2'}) := by
+  solution!(
+    intro st st'
+    constructor
+    · intro h
+      inversion h with
+      | seq hc1' hc2' =>
+        rw [equiv_def] at hc1
+        rw [equiv_def] at hc2
+        exact Com.EvalR.seq (hc1.mp hc1') (hc2.mp hc2')
+    · intro h
+      inversion h with
+      | seq hc1' hc2' =>
+        rw [equiv_def] at hc1
+        rw [equiv_def] at hc2
+        exact Com.EvalR.seq (hc1.mpr hc1') (hc2.mpr hc2')
+  )
+```
+:::::
+
+:::::exercise (rating := 3) (name := "Com.congruence_if") 
+```lean
+theorem Com.congruence_if {b b' : Bexp} {c1 c1' c2 c2' : Com} (hb : b.Equiv b') (hc1 : c1.Equiv c1') (hc2 : c2.Equiv c2') :
+    (imp {if (~b) {~c1} else {~c2}}).Equiv
+    (imp {if (~b') {~c1'} else {~c2'}}) := by
+  solution!(
+    intro st st'
+    constructor
+    · intro h
+      inversion h with
+      | ifTrue hb' hc1' => 
+        rw [hb] at hb'
+        apply Com.EvalR.ifTrue <;> try assumption
+        · rw [equiv_def] at hc1
+          exact (hc1.mp hc1')    
+      | ifFalse hb' hc2' =>
+        rw [hb] at hb'
+        apply Com.EvalR.ifFalse <;> try assumption
+        · rw [equiv_def] at hc2
+          exact (hc2.mp hc2')
+    · intro h
+      inversion h with
+      | ifTrue hb' hc1' => 
+        rw [← hb] at hb'
+        apply Com.EvalR.ifTrue <;> try assumption
+        · rw [equiv_def] at hc1
+          exact (hc1.mpr hc1')    
+      | ifFalse hb' hc2' =>
+        rw [← hb] at hb'
+        apply Com.EvalR.ifFalse <;> try assumption
+        · rw [equiv_def] at hc2
+          exact (hc2.mpr hc2')
+  )
+```
+:::::
+
+::::full 
+For example, here are two programs and a proof of their equivalence using their congruence theorems.
+::::
+
+```lean
+example :
+    (imp {X := 0; if (X = 0) {Y := 0} else {Y := 42}}).Equiv
+    (imp {X := 0; if (X = 0) {Y := X - X} else {Y := 42}}) := by
+  apply Com.congruence_seq
+  · apply Com.equiv_refl
+  · apply Com.congruence_if
+    · apply Bexp.equiv_refl
+    · apply Com.congruence_asgn
+      rw [Aexp.equiv_def]
+      simp
+    · apply Com.equiv_refl
+```
+
+:::::exercise (rating := 3) (name := "not_congr") (level := Advanced) (manual := true)
+We've shown that the `Com.Equiv` relation is both an equivalence and
+a congruence on commands.  Can you think of a relation on commands
+that is an equivalence but _not_ a congruence?  Write down the
+relation (formally), together with an informal sketch of a proof
+that it is an equivalence and a counterexample showing it is not a
+congruence.
+:::::
+
+# Program Transformation
+
+::::full
+A _program transformation_ is a function that takes a program as input
+and produces a modified program as output.  Compiler
+optimizations such as constant folding are canonical examples,
+but there are many others.
+::::
+
+```lean
+def Aexp.trans_sound (trans : Aexp → Aexp) : Prop :=
+  ∀ (a : Aexp),
+    a.Equiv (trans a)
+
+def Bexp.trans_sound (trans : Bexp → Bexp) : Prop :=
+  ∀ (b : Bexp),
+    b.Equiv (trans b)
+
+def Com.trans_sound (trans : Com → Com) : Prop :=
+  ∀ (c : Com),
+    c.Equiv (trans c)
+```
+## The Constant-Folding Transformation
+
+::::full
+An expression is _constant_ if it contains no variable references.
+
+Constant folding is an optimization that finds constant
+expressions and replaces them by their values.
+::::
+
+```lean
+def Aexp.fold_constants (a: Aexp) : Aexp :=
+  match a with
+  | .num n => .num n
+  | .id x => .id x
+  | aexp { ~a1 + ~a2 } => 
+    match a1.fold_constants, a2.fold_constants with
+    | .num n1, .num n2 => .num (n1 + n2)
+    | a1', a2' => aexp { ~a1' + ~a2' }
+  | aexp { ~a1 - ~a2 } => 
+    match a1.fold_constants, a2.fold_constants with
+    | .num n1, .num n2 => .num (n1 - n2)
+    | a1', a2' => aexp { ~a1' - ~a2' }
+  | aexp { ~a1 * ~a2 } => 
+    match a1.fold_constants, a2.fold_constants with
+    | .num n1, .num n2 => .num (n1 * n2)
+    | a1', a2' => aexp { ~a1' * ~a2' }
+
+theorem Aexp.fold_constants_num (n: Nat) : (Aexp.num n).fold_constants = .num n := rfl
+theorem Aexp.fold_constants_id (x : Ident) : (Aexp.id x).fold_constants = .id x := rfl
+theorem Aexp.fold_constants_plus (a1 a2 : Aexp) : 
+  (aexp {~a1 + ~a2}).fold_constants =
+  match a1.fold_constants, a2.fold_constants with
+  | .num n1, .num n2 => .num (n1 + n2)
+  | a1', a2' => aexp { ~a1' + ~a2' } := rfl
+```
+
+```lean
+example : (aexp { (1 + 2) * X}).fold_constants = (aexp { 3 * X }) := by rfl
+```
+
+::::full
+ Note that this version of constant folding doesn't do other
+"obvious" things like eliminating trivial additions (e.g.,
+rewriting `0 + X` to just  `X`).: we are focusing on a single
+optimization for the sake of simplicity.
+
+It is not hard to incorporate other ways of simplifying
+expressions -- the definitions and proofs just get longer.  We'll
+consider some in the exercises.
+::::
+
+```lean
+example : (aexp { X - ((0 * 6) + Y) }).fold_constants = (aexp { X - (0 + Y) }) := by rfl
+```
+
+::::full
+Not only can we lift `Aexp.fold_constants` to `Bexp` in the `Bexp.eq`, `Bexp.neq`, and
+`Bexp.le` cases, we can also look for constant _boolean_ expressions and evaluate them 
+in place as well.
+::::
+```lean
+def Bexp.fold_constants (b : Bexp) : Bexp :=
+  match b with
+  | bexp { true } => bexp { true }
+  | bexp { false } => bexp { false }
+  | bexp { ~a1 = ~a2 } => 
+    match a1.fold_constants, a2.fold_constants with
+    | .num n1, .num n2 => if n1 = n2 then bexp { true } else bexp {false}
+    | a1', a2' => bexp { ~a1' = ~a2' }
+  | bexp { ~a1 ≠ ~a2 } => 
+    match a1.fold_constants, a2.fold_constants with
+    | .num n1, .num n2 => if n1 ≠ n2 then bexp { true } else bexp {false}
+    | a1', a2' => bexp { ~a1' ≠ ~a2' }
+  | bexp { ~a1 ≤ ~a2 } => 
+    match a1.fold_constants, a2.fold_constants with
+    | .num n1, .num n2 => if n1 ≤ n2 then bexp { true } else bexp {false}
+    | a1', a2' => bexp { ~a1' ≤ ~a2' }
+  | bexp { ~a1 > ~a2 } => 
+    match a1.fold_constants, a2.fold_constants with
+    | .num n1, .num n2 => if n1 > n2 then bexp { true } else bexp {false}
+    | a1', a2' => bexp { ~a1' > ~a2' }
+  | bexp { ¬~b1 } =>
+    match b1.fold_constants with
+    | bexp { true } => bexp { false }
+    | bexp { false } => bexp { true }
+    | b1' => bexp { ¬~b1' }
+  | bexp { ~b1 ∧ ~b2 } =>
+    match b1.fold_constants, b2.fold_constants with
+    | bexp { true }, bexp { true } => bexp { true }
+    | bexp { true }, bexp { false } => bexp { false }
+    | bexp { false }, bexp { true } => bexp { false }
+    | bexp { false }, bexp { false } => bexp { false }
+    | b1', b2' => bexp { ~b1' ∧ ~b2' }
+```
+```lean
+example : (bexp { true ∧ ¬( false ∧ true) }).fold_constants = (bexp { true }) := by rfl
+example : (bexp { (X = Y) ∧ ( 0 = (2 - (1 + 1))) }).fold_constants = (bexp { (X = Y) ∧ true }) := by rfl
+```
+
+::::full
+To fold constants in a command, we simply apply the
+appropriate folding functions on all embedded expressions.
+::::
+```lean
+def Com.fold_constants (c : Com) : Com :=
+  match c with
+  | imp { skip } => imp { skip }
+  | imp { x := ~a } => imp { x := ~a.fold_constants }
+  | imp { ~c1 ; ~c2 } =>  imp { ~c1.fold_constants ; ~c2.fold_constants }
+  | imp { if (~b) {~c1} else {~c2}} =>
+    match b.fold_constants with
+    | bexp { true } => c1.fold_constants
+    | bexp { false } => c2.fold_constants
+    | b' => imp { if (~b') {~c1.fold_constants} else {~c2.fold_constants}}
+  | imp { while (~b) {~c}} =>
+    match b.fold_constants with
+    | bexp { true } => imp { while (true) { skip }}
+    | bexp { false } => imp { skip }
+    | b' => imp { while (~b') {~c.fold_constants}}
+```
+```lean
+example :
+  (imp {
+    X := 4 + 5;
+    Y := X - 3;
+    if ((X - Y) = (2 + 4)) {skip} else {Y := 0};
+    if (0 ≤ (4 - (2 - 1))) {Y := 0} else {skip};
+    while (Y = 0) {X := X+1}
+  }).fold_constants =
+  (imp {
+    X := 9;
+    Y := X - 3;
+    if ((X - Y) = 6) {skip} else {Y := 0};
+    Y := 0;
+    while (Y = 0) {X := X+1}
+  }) := by rfl
+```
+## Soundness of Constant Folding
+::::full
+Now we need to show that what we've done is correct.
+::::
+
+::::full
+Here's the proof for arithmetic expressions.
+::::
+```lean
+theorem Aexp.fold_constants_sound :
+    Aexp.trans_sound Aexp.fold_constants := by
+  intro a st
+  induction a with
+  | num n | id x => rfl
+  | plus a1 a2 ih1 ih2  =>
+    rw [Aexp.fold_constants_plus]
+    split
+    case h_1 n1 n2 heq1 heq2 =>
+      rw [Aexp.eval_plus, ih1, ih2, heq1, heq2]
+      simp
+    case h_2 h =>
+      rw [Aexp.eval_plus, Aexp.eval_plus, ih1, ih2]
+    
+  | _ => sorry
+```
 :::dev "Sati (satiscugcat)"
 ```
 NOT PORTED YET - remaining portions of Equiv.v left (apart from the portions explicitly stated so far).
-  - The rest of "Behavioural Equivalence is a Congruence"
   - The section on "Program Transformation"
   - Soundness of (0 + n) Elimination
   - Extended Exercise: Nondeterministic Imp
