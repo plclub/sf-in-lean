@@ -687,7 +687,7 @@ number can be even" corresponds to a separate constructor:
 ```lean
 inductive Even : Nat → Prop where
   | zero : Even 0
-  | succ_succ {n : Nat} (h : Even n) : Even (.succ (.succ n))
+  | succ_succ {n : Nat} (h : Even n) : Even (n + 2)
 ```
 
 ::::terse
@@ -792,7 +792,7 @@ Even.zero : Even 0
 ```
 
 ```leanOutput Evens
-Even.succ_succ {n : Nat} (h : Even n) : Even n.succ.succ
+Even.succ_succ {n : Nat} (h : Even n) : Even (n + 2)
 ```
 
 :::slidebreak
@@ -1042,7 +1042,7 @@ We can use the inversion lemma that we proved above to help
 structure proofs:
 
 ```lean
-theorem Even.succ_succ_even (n : Nat) (h : Even (.succ (.succ n))) : Even n := by
+theorem Even.succ_succ_even (n : Nat) (h : Even (n + 2)) : Even n := by
   apply even_inversion at h
   obtain ⟨⟨⟩⟩ | ⟨n', ⟨h₁,  h₂⟩⟩ := h
   injections h₁ heq
@@ -1268,7 +1268,7 @@ when trying to use case analysis to prove results that required
 induction.  And once again the solution is... induction!
 
 ::::full
-The behavior of `induction` on evidence is the same as its
+The behavior of {tactic}`induction` on evidence is the same as its
 behavior on data: It causes Lean to generate one subgoal for each
 constructor that could have been used to build that evidence, while
 providing an induction hypothesis for each recursive occurrence of
@@ -1291,9 +1291,7 @@ Let's try proving that lemma again:
 ```lean
 theorem even_even (n : Nat) (h : Even n) : Nat.Even n := by
   induction h with
-  -- h = ev_0
   | zero => exists 0 -- (`0 = double 0` is closed by `exists`'s final `rfl`)
-  -- h = ev_succ_succ n' h', with ih : Even n'
   | succ_succ h' ih =>
     let ⟨k, hk⟩ := ih
     exists k + 1; rw [Nat.double_succ, hk]
@@ -1557,7 +1555,7 @@ theorem ev'_ev n : Ev' n ↔ Even n := by
       intro h; induction h with
       | zero => constructor
       | @succ_succ n _ _ =>
-        rw [← Nat.add_zero n, ← Nat.add_succ]
+        rw [← Nat.add_zero n]
         constructor; assumption; constructor
 ```
 
