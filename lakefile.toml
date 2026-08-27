@@ -41,7 +41,7 @@ rev = "v4.34.0-rc2"
 [[require]]
 name = "comparator-autograder"
 git = "https://github.com/plclub/comparator-autograder"
-rev = "main"
+rev = "v4.34.0-rc2"
 
 [[lean_lib]]
 name = "Bib"
