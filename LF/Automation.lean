@@ -36,21 +36,21 @@ Consider the proof below. Notice all the repetition and near-repetition...
 theorem Perm3_In_old (α : Type) (x : α) (l₁ l₂ : List α)
     (hPerm : Perm3 l₁ l₂) (hIn : x ∈ l₁) : x ∈ l₂ := by
   induction hPerm with
-  | perm3_swap12 =>
+  | swap12 =>
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
     obtain h | h | h | h := hIn
     . right; left; assumption
     . left; assumption
     . right; right; left; assumption
     . contradiction
-  | perm3_swap23 =>
+  | swap23 =>
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
     obtain h | h | h | h := hIn
     . left; assumption
     . right; right; left; assumption
     . right; left; assumption
     . contradiction
-  | perm3_trans _ _ ih₁₂ ih₂₃ =>
+  | trans _ _ ih₁₂ ih₂₃ =>
     apply ih₂₃; apply ih₁₂; apply hIn
 ```
 
@@ -108,7 +108,7 @@ example (a b c d : Prop) :
 theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α)
     (hPerm : Perm3 l₁ l₂) (hIn : x ∈ l₁) : x ∈ l₂ := by
   induction hPerm with
-  | perm3_swap12 =>
+  | swap12 =>
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
     obtain h | h | h | h := hIn
     /- In addition to basic arithmetic, `lia` can also discharge goals
@@ -117,11 +117,11 @@ theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α)
     . lia
     . lia
     . lia
-  | perm3_swap23 =>
+  | swap23 =>
   /- Here, we solve _all_ goals ─ and eschew the `obtain` ─ with
     the <;> tactic combinator, which we saw in the `Induction` chapter. -/
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
-  | perm3_trans _ _ ih₁₂ ih₂₃ =>
+  | trans _ _ ih₁₂ ih₂₃ =>
     lia -- was apply ih₂₃; apply ih₁₂; apply hIn
 ```
 
@@ -264,7 +264,7 @@ We can further simplify our {name}`Perm3.In` example with {tactic}`try`.
 theorem Perm3_In_better_with_try (α : Type) (x : α) (l₁ l₂ : List α)
     (hPerm : Perm3 l₁ l₂) (hIn : x ∈ l₁) : x ∈ l₂ := by
   induction hPerm with (try rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia)
-  | perm3_trans => lia
+  | trans => lia
 ```
 
 Note that `try lia <;> try rw [...] <;> lia` _doesn't_ work, because
@@ -280,7 +280,7 @@ example (α : Type) (x : α) (l₁ l₂ : List α)
 
 ```leanOutput Perm3_try
 unsolved goals
-case perm3_swap12
+case swap12
 α : Type
 x : α
 l₁ l₂ : List α
@@ -288,7 +288,7 @@ x✝ y✝ z✝ : α
 hIn : x ∈ [x✝, y✝, z✝]
 ⊢ x ∈ [y✝, x✝, z✝]
 
-case perm3_swap23
+case swap23
 α : Type
 x : α
 l₁ l₂ : List α
