@@ -1,6 +1,6 @@
 import SFLMeta
 import TS.Stlc
-
+import LF.CustomTactics
 open Verso.Genre Manual
 open SFLMeta
 
@@ -144,6 +144,8 @@ lives in the same namespace as the definitions it is about.
 
 ```lean
 namespace Stlc
+
+open scoped MyGetElem
 ```
 
 # Canonical Forms
@@ -202,7 +204,7 @@ theorem progress (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
   | var Γ x T₁ h =>
     subst hΓ
     -- Contradictory: variables cannot be typed in an empty context.
-    rw [PartialMap.apply_empty] at h
+    rw [PartialMap.getElem_empty] at h
     cases h
   | abs => exact .inl (.abs ..)
   | tru => exact .inl .tru
@@ -270,8 +272,6 @@ _Proof_: By induction on the derivation of `⊢ t ⦂ T`.
 
 ::::::full
 :::::exercise (rating := 3) (name := "progress_from_term_ind") (level := Advanced)
-:::gradeTheorem 3 "progress'"
-:::
 
 Show that progress can also be proved by induction on terms
 instead of induction on typing derivations.
@@ -283,7 +283,7 @@ theorem progress' (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
     induction t generalizing T with
     | var x =>
       cases hT with
-      | var _ _ _ h => rw [PartialMap.apply_empty] at h; cases h
+      | var _ _ _ h => rw [PartialMap.getElem_empty] at h; cases h
     | abs x T₂ t₁ _ => exact .inl (.abs ..)
     | tru => exact .inl .tru
     | fls => exact .inl .fls
@@ -310,7 +310,11 @@ theorem progress' (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
         | inr hs₁ => obtain ⟨t₁', h⟩ := hs₁; exact ⟨_, .ifStep t₁ t₁' t₂ t₃ h⟩
 ```
 :::::
+:::autogradedHole progress'
+:::
 
+:::gradeTheorem "3" progress'
+:::
 ::::::
 
 # Preservation
@@ -336,7 +340,7 @@ interesting proofs), the story goes like this:
     well-typed) term `s` for a variable `x` in a term `t`
     preserves the type of `t`.  The proof goes by induction on the
     form of `t` and requires looking at all the different cases in
-    the definition of substitition.  This time, for the variables
+    the definition of substitution.  This time, for the variables
     case, we discover that we need to deduce from the fact that a
     term `s` has type S in the empty context the fact that `s` has
     type S in every context. For this we prove a...
@@ -372,7 +376,7 @@ preserves the type of `t`.
 
 The proof goes by induction on the form of `t` and requires
 looking at all the different cases in the definition of
-substitition.
+substitution.
 
 Tricky case: variables.
 
@@ -408,7 +412,7 @@ context `Γ`.  (Recall map inclusion, `Γ ⊆ Γ'`, from the `Typeclasses` chapt
 theorem weakening (Γ Γ' : Context) (t : Tm) (T : Ty)
     (hi : Γ ⊆ Γ') (hT : <{ ~Γ ⊢ ~t ⦂ ~T }>) : <{ ~Γ' ⊢ ~t ⦂ ~T }> := by
   induction hT generalizing Γ' with
-  | var _ x _ h => exact .var _ x _ (hi x _ h)
+  | var _ x _ h => exact .var _ x _ (hi h)
   | abs _ x _ _ _ _ ih => exact .abs _ x _ _ _ (ih _ (PartialMap.update_subset _ _ _ _ hi))
   | app _ _ _ _ _ _ _ ih₁ ih₂ => exact .app _ _ _ _ _ (ih₁ _ hi) (ih₂ _ hi)
   | tru => exact .tru _
@@ -425,7 +429,9 @@ The following simple corollary is what we actually need below.
 theorem weakening_empty (Γ : Context) (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
     <{ ~Γ ⊢ ~t ⦂ ~T }> :=
   weakening _ _ _ _
-    (fun x T h => by rw [PartialMap.apply_empty] at h; cases h) hT
+    (fun h => by
+      rw [PartialMap.getElem_empty] at h
+      cases h) hT
 ```
 
 ## The Substitution Lemma
@@ -479,7 +485,7 @@ theorem substitution_preserves_typing (Γ : Context) (x : String) (U : Ty)
         have hUT : U = T := Option.some.inj h
         subst hUT
         exact weakening_empty _ _ _ hv
-      · rw [PartialMap.update_neq _ _ _ hxy] at h
+      · rw [PartialMap.update_neq hxy] at h
         rw [subst_var_ne _ _ _ hxy]
         exact .var _ y _ h
   | app t₁ t₂ ih₁ ih₂ =>
@@ -494,7 +500,7 @@ theorem substitution_preserves_typing (Γ : Context) (x : String) (U : Ty)
         rw [PartialMap.update_shadow] at h
         exact .abs _ _ _ _ _ h
       · rw [subst_abs_ne _ _ _ _ _ hxy]
-        rw [PartialMap.update_permute _ _ _ _ _ (Ne.symm hxy)] at h
+        rw [PartialMap.update_permute (Ne.symm hxy)] at h
         exact .abs _ _ _ _ _ (ih _ _ h)
   | tru => cases hT with | tru => rw [subst_tru]; exact .tru _
   | fls => cases hT with | fls => rw [subst_fls]; exact .fls _
@@ -559,15 +565,13 @@ _Proof_: We show, by induction on `t`, that for all `T` and
 One technical subtlety in the statement of the above lemma is that
 we assume `v` has type `U` in the _empty_ context — in other
 words, we assume `v` is closed.  (Since we are using a simple
-definition of substition that is not capture-avoiding, it doesn't
+definition of substitution that is not capture-avoiding, it doesn't
 make sense to substitute non-closed terms into other terms.
 Fortunately, closed terms are all we need!)
 ::::
 
 ::::::full
 :::::exercise (rating := 3) (name := "substitution_preserves_typing_from_typing_ind") (level := Advanced)
-:::gradeTheorem 3 "substitution_preserves_typing_from_typing_ind"
-:::
 
 Show that substitution_preserves_typing can also be
 proved by induction on typing derivations instead
@@ -590,7 +594,7 @@ theorem substitution_preserves_typing_from_typing_ind (Γ : Context) (x : String
         have hUT : U = T₁ := Option.some.inj h
         subst hUT
         exact weakening_empty _ _ _ hv
-      · rw [PartialMap.update_neq _ _ _ hxy] at h
+      · rw [PartialMap.update_neq hxy] at h
         rw [subst_var_ne _ _ _ hxy]
         exact .var _ y _ h
     | abs _ y _ _ _ hb ih =>
@@ -601,15 +605,22 @@ theorem substitution_preserves_typing_from_typing_ind (Γ : Context) (x : String
         rw [PartialMap.update_shadow] at hb
         exact .abs _ _ _ _ _ hb
       · rw [subst_abs_ne _ _ _ _ _ hxy]
-        exact .abs _ _ _ _ _ (ih _ (PartialMap.update_permute _ _ _ _ _ hxy))
+        exact .abs _ _ _ _ _ (ih _ (PartialMap.update_permute hxy))
     | app _ _ _ _ _ _ _ ih₁ ih₂ =>
       rw [subst_app]; exact .app _ _ _ _ _ (ih₁ _ hΓ) (ih₂ _ hΓ)
     | tru => rw [subst_tru]; exact .tru _
     | fls => rw [subst_fls]; exact .fls _
     | ite _ _ _ _ _ _ _ _ ih₁ ih₂ ih₃ =>
-      rw [subst_ite]; exact .ite _ _ _ _ _ (ih₁ _ hΓ) (ih₂ _ hΓ) (ih₃ _ hΓ)
+      rw [subst_ite];
+      constructor <;> simp_all
 ```
+:::autogradedHole substitution_preserves_typing_from_typing_ind
+:::
+
+:::gradeTheorem "3" substitution_preserves_typing_from_typing_ind
+:::
 :::::
+
 
 ::::::
 
@@ -696,30 +707,35 @@ Show this by giving a counter-example that does _not involve
 conditionals_.
 
 :::solution
-COMMENT: `untagged (* .. *) comment at prose position in the Rocq source — probably an error there; decide whether it is book prose or an author note`
 For example,
 `((\a:Bool→Bool, λy:Bool. y) true)` is ill typed, but it evaluates
 to the well-typed term `λy:Bool. y`,
 :::
-
+:::dev
+RAB: This solution has to be rewritten; it is unreadable.
+:::
 ```lean
 theorem not_subject_expansion :
     ∃ (t t' : Tm) (T : Ty), t ⟶ t' ∧ <{ ∅ ⊢ ~t' ⦂ ~T }> ∧ ¬ <{ ∅ ⊢ ~t ⦂ ~T }> := by
-  solution!
-    refine ⟨<{ (λ x : Bool → Bool . λ y : Bool . y) true }>, <{ λ y : Bool . y }>,
-            <{ Bool → Bool }>, ?_, ?_, ?_⟩
-    · exact .appAbs "x" _ _ _ .tru
-    · exact .abs _ _ _ _ _ (.var _ "y" _ rfl)
-    · intro hc
-      cases hc with
-      | app _ _ _ _ _ hf ha => cases ha with | tru => cases hf
+    solution!(
+      exists <{ (λ x : Bool → Bool . true) true }>, <{true}>, <{Bool}>
+      constructor
+      . constructor; constructor
+      . constructor
+        . constructor
+        . intro contra
+          inversion contra with
+          | app T h₁ h₂ =>
+            inversion h₂
+            . inversion h₁
+      )
 ```
 
 ::::hide
 ```
 /- Alternative formulation. -/
 Theorem not_subject_expansion_alt:
-  ~ (forall t t' T, t --> t' /\ <{ empty ⊢ t' ⦂ T }> -> <{ empty ⊢ t ⦂ T }>).
+  ~ (forall t t' T, t ⟶ t' /\ <{ empty ⊢ t' ⦂ T }> -> <{ empty ⊢ t ⦂ T }>).
 Proof.
   solution!
     intro HSE.
@@ -879,9 +895,8 @@ crucial to understanding substitution and its properties, which
 are really the crux of the lambda-calculus.
 
 :::solution
-COMMENT: `untagged (* .. *) comment at prose position in the Rocq source — probably an error there; decide whether it is book prose or an author note`
-(no solution yet) -/
-/- LATER: Fill in an official solution
+LATER: Fill in an official solution
+(no solution yet)
 :::
 
 :::grade
@@ -905,7 +920,7 @@ theorem free_in_context (x : String) (t : Tm) (T : Ty) (Γ : Context)
       cases hT with
       | abs _ _ _ _ _ hb =>
         obtain ⟨T', h⟩ := ih _ _ hb
-        rw [PartialMap.update_neq _ _ _ hne] at h
+        rw [PartialMap.update_neq hne] at h
         exact ⟨T', h⟩
     | ite1 _ _ _ _ ih => cases hT with | ite _ _ _ _ _ h₁ _ _ => exact ih _ _ h₁
     | ite2 _ _ _ _ ih => cases hT with | ite _ _ _ _ _ _ h₂ _ => exact ih _ _ h₂
@@ -955,7 +970,7 @@ theorem typable_empty_closed (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) : 
   solution!
     intro x ha
     obtain ⟨T', hc⟩ := free_in_context x t T ∅ ha hT
-    rw [PartialMap.apply_empty] at hc
+    rw [PartialMap.getElem_empty] at hc
     cases hc
 ```
 :::::
@@ -981,7 +996,7 @@ theorem context_invariance (Γ Γ' : Context) (t : Tm) (T : Ty)
       by_cases hyz : y = z
       · subst hyz; rw [PartialMap.update_eq, PartialMap.update_eq]
       -- The only tricky step.
-      · rw [PartialMap.update_neq _ _ _ hyz, PartialMap.update_neq _ _ _ hyz]
+      · rw [PartialMap.update_neq hyz, PartialMap.update_neq hyz]
         exact hf z (.abs y _ _ hyz hz)
     | app _ _ _ t₁ t₂ _ _ ih₁ ih₂ =>
       exact .app _ _ _ _ _ (ih₁ _ (fun z hz => hf z (.app1 t₁ t₂ hz)))
@@ -1444,6 +1459,8 @@ some primitive operators.
 
 ```lean
 namespace StlcArith
+
+open scoped MyGetElem
 ```
 
 To types, we add a base type of natural numbers (and remove
@@ -1490,7 +1507,7 @@ brackets.  If anything changes in one of these grammars, make the same
 adjustment in all the others.
 :::
 
-::::details (summary := "Notation encoding: types")
+::::details "Notation encoding: types"
 The type grammar needs no new productions: `Nat` is a bare identifier, which
 the template already accepts, and arrows and parentheses are unchanged.  Only
 the `macro_rules` are new, and they differ from the STLC's in just two places
@@ -1510,7 +1527,7 @@ scoped macro_rules (kind := Stlc.tyBracket)
 ```
 ::::
 
-::::details (summary := "Notation encoding: terms")
+::::details "Notation encoding: terms"
 Terms do need new productions: a numeral, an infix `*`, and the zero test.
 Multiplication binds looser than application and tighter than `λ`, so `x * y z`
 multiplies `x` by the application `y z`; it associates to the right, so
@@ -1557,13 +1574,18 @@ scoped macro_rules (kind := Stlc.tmBracket)
 ```
 ::::
 
-::::details (summary := "Notation encoding: printing it back")
+::::details "Notation encoding: printing it back"
 As in the {ref "Stlc"}[Stlc] chapter, a delaborator runs the grammar backwards,
 so that goals mentioning these terms and types read in the concrete syntax.
 The parenthesizers registered there are for the whole syntax category, so they
 serve this language too and are not repeated.
 
 ```lean
+open Lean in
+/-- Is `s` usable as a bare variable in `stlcTm` rather than as reserved syntax? -/
+def isPlainTmVarName (s : String) : Bool :=
+  Stlc.isPlainName s && s != "Nat" && s != "succ" && s != "pred"
+
 open Lean PrettyPrinter Delaborator SubExpr in
 /-- Rebuild `stlcTy` concrete syntax from a `Ty` value. -/
 partial def delabTyInner : DelabM (TSyntax `stlcTy) := do
@@ -1586,16 +1608,24 @@ partial def delabTmInner : DelabM (TSyntax `stlcTm) := do
   let stx ←
     match_expr ← getExpr with
     | Tm.var _ => do
-        match ← withAppArg delab with
+        let x ← withAppArg delab
+        match x with
         | `($s:str) =>
-            if Stlc.isPlainName s.getString then
+            if isPlainTmVarName s.getString then
               `(stlcTm| $(mkIdent (Name.mkSimple s.getString)):ident)
-            else `(stlcTm| ~($(⟨← delab⟩)))
-        | _ => `(stlcTm| ~($(⟨← delab⟩)))
+            else
+              let var : Term := mkIdent ``StlcArith.Tm.var
+              `(stlcTm| ~($var $x))
+        | _ =>
+            let var : Term := mkIdent ``StlcArith.Tm.var
+            `(stlcTm| ~($var $x))
     | Tm.const _ => do
-        match ← withAppArg delab with
+        let n ← withAppArg delab
+        match n with
         | `($n:num) => `(stlcTm| $n:num)
-        | _ => `(stlcTm| ~($(⟨← delab⟩)))
+        | _ =>
+            let const : Term := mkIdent ``StlcArith.Tm.const
+            `(stlcTm| ~($const $n))
     | Tm.app _ _ => do
         let f ← withAppFn <| withAppArg delabTmInner
         let a ← withAppArg delabTmInner
@@ -1655,6 +1685,7 @@ def delabTm : Delab := whenPPOption getPPNotation do
     | Tm.mult _ _ => true | Tm.ite0 _ _ _ => true
     | _ => false
   match ← delabTmInner with
+  | `(stlcTm| ~($e)) => pure e
   | `(stlcTm| ~$e) => pure e
   | e => `(<{ $e:stlcTm }>)
 ```
@@ -1707,7 +1738,7 @@ Make sure Lean accepts the whole file before submitting.
 Substitution is defined exactly as it was for the STLC, with one clause per new
 constructor.
 
-::::details (summary := "Why the definition is wrapped in a section")
+::::details "Why the definition is wrapped in a section"
 Substitution is written using its own `[x := s] t` notation, which is being
 defined at the same time, so — as in the {ref "Stlc"}[Stlc] chapter — the rule
 is first declared `local`, with hygiene off so that the `subst` in its expansion
@@ -1748,7 +1779,7 @@ macro_rules (kind := Stlc.tmBracket)
       `(subst $(← Stlc.varStr x) <{ $s:stlcTm }> <{ $t:stlcTm }>)
 ```
 
-::::details (summary := "Notation encoding: substitution")
+::::details "Notation encoding: substitution"
 One more line registers substitutions with the printer, so that a goal
 mentioning one reads as `[x := s] t` rather than as a `subst` application.
 
@@ -1877,7 +1908,10 @@ theorem Nat_step_example : ∃ t, <{ (λ x : Nat . λ y : Nat . x * y) 3 2 }> �
     · rfl
 ```
 
-:::gradeTheorem 5 "StlcArith.Nat_step_example"
+:::autogradedHole StlcArith.Nat_step_example
+:::
+
+:::gradeTheorem "5" StlcArith.Nat_step_example
 :::
 
 :::dev BeforeNextRelease
@@ -1891,7 +1925,7 @@ A typing context is a partial map from variables to types, exactly as before.
 abbrev Context := PartialMap String Ty
 ```
 
-::::details (summary := "Notation encoding: contexts and judgments")
+::::details "Notation encoding: contexts and judgments"
 The context grammar `stlcCtx` is reused as well; only the map it denotes is new,
 since the types it stores are this language's.  As with `subst`, the judgment
 rule is introduced twice: `local` and hygiene-free while the relation is being
@@ -1908,7 +1942,7 @@ partial def ctxTerm (G : TSyntax `stlcCtx) : MacroM Term :=
       `(PartialMap.update $(← ctxTerm G) $(← Stlc.varStr x) <{ $T:stlcTy }>)
   | _ => Macro.throwUnsupported
 
-section
+section StlcArith
 set_option hygiene false in
 local macro_rules (kind := Stlc.judgeBracket)
   | `(<{ $G:stlcCtx ⊢ $t:stlcTm ⦂ $T:stlcTy }>) => do
@@ -1946,13 +1980,13 @@ inductive HasType : Context → Tm → Ty → Prop where
 -- END SOLUTION
 ```
 
-::::details (summary := "Notation encoding: the judgment, for real")
+::::details "Notation encoding: the judgment, for real"
 Closing the section retires the hygiene-free rule; the same rule is then
 declared again, hygienically, for every later use, and a pair of unexpanders
 prints judgments back in their own notation.
 
 ```lean
-end
+end StlcArith
 
 scoped macro_rules (kind := Stlc.judgeBracket)
   | `(<{ $G:stlcCtx ⊢ $t:stlcTm ⦂ $T:stlcTy }>) => do
@@ -1963,6 +1997,8 @@ open Lean PrettyPrinter in
 context prints as `x ↦ Nat ; Γ` rather than as a chain of map updates. -/
 partial def unexpandCtx : Term → UnexpandM (TSyntax `stlcCtx)
   | `(∅) => `(stlcCtx| ∅)
+  | `($x:str →ₚ $T) => do
+      unexpandCtx (← `($x →ₚ $T ; ∅))
   | `($x:str →ₚ $T ; $G) => do
       let G' ← unexpandCtx G
       let x' : TSyntax `stlcVar ←
@@ -2001,7 +2037,10 @@ theorem Nat_typing_example : <{ ∅ ⊢ (λ x : Nat . λ y : Nat . x * y) 3 2 �
       (.const _ 2))
 ```
 
-:::gradeTheorem 5 "StlcArith.Nat_typing_example"
+:::autogradedHole StlcArith.Nat_typing_example
+:::
+
+:::gradeTheorem "5" StlcArith.Nat_typing_example
 :::
 :::::
 
@@ -2021,7 +2060,7 @@ theorem weakening (Γ Γ' : Context) (t : Tm) (T : Ty)
     (hi : Γ ⊆ Γ') (hT : <{ ~Γ ⊢ ~t ⦂ ~T }>) : <{ ~Γ' ⊢ ~t ⦂ ~T }> := by
   solution!
     induction hT generalizing Γ' with
-    | var _ x _ h => exact .var _ x _ (hi x _ h)
+    | var _ x _ h => exact .var _ x _ (hi h)
     | abs _ x _ _ _ _ ih => exact .abs _ x _ _ _ (ih _ (PartialMap.update_subset _ _ _ _ hi))
     | app _ _ _ _ _ _ _ ih₁ ih₂ => exact .app _ _ _ _ _ (ih₁ _ hi) (ih₂ _ hi)
     | const _ n => exact .const _ n
@@ -2032,7 +2071,10 @@ theorem weakening (Γ Γ' : Context) (t : Tm) (T : Ty)
       exact .ite0 _ _ _ _ _ (ih₁ _ hi) (ih₂ _ hi) (ih₃ _ hi)
 ```
 
-:::gradeTheorem 6 "StlcArith.weakening"
+:::autogradedHole StlcArith.weakening
+:::
+
+:::gradeTheorem "6" StlcArith.weakening
 :::
 
 The two helper lemmas that weakening is for are also proved just as they were
@@ -2043,7 +2085,7 @@ theorem weakening_empty (Γ : Context) (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂
     <{ ~Γ ⊢ ~t ⦂ ~T }> :=
   solution!(
     weakening _ _ _ _
-      (fun x T h => by rw [PartialMap.apply_empty] at h; cases h) hT)
+      (fun h => by rw [PartialMap.getElem_empty] at h; cases h) hT)
 
 theorem substitution_preserves_typing (Γ : Context) (x : String) (U : Ty)
     (t v : Tm) (T : Ty)
@@ -2061,7 +2103,7 @@ theorem substitution_preserves_typing (Γ : Context) (x : String) (U : Ty)
           have hUT : U = T := Option.some.inj h
           subst hUT
           exact weakening_empty _ _ _ hv
-        · rw [PartialMap.update_neq _ _ _ hxy] at h
+        · rw [PartialMap.update_neq hxy] at h
           rw [subst_var_ne _ _ _ hxy]
           exact .var _ y _ h
     | app t₁ t₂ ih₁ ih₂ =>
@@ -2077,7 +2119,7 @@ theorem substitution_preserves_typing (Γ : Context) (x : String) (U : Ty)
           rw [PartialMap.update_shadow] at h
           exact .abs _ _ _ _ _ h
         · rw [subst_abs_ne _ _ _ _ _ hxy]
-          rw [PartialMap.update_permute _ _ _ _ _ (Ne.symm hxy)] at h
+          rw [PartialMap.update_permute (Ne.symm hxy)] at h
           exact .abs _ _ _ _ _ (ih _ _ h)
     | const n => cases hT with | const => rw [subst_const]; exact .const _ n
     | succ t₁ ih => cases hT with | succ _ _ h => rw [subst_succ]; exact .succ _ _ (ih _ _ h)
@@ -2146,8 +2188,10 @@ theorem preservation (t t' : Tm) (T : Ty)
       | if0Zero => exact h₂
       | if0Nonzero => exact h₃
 ```
+:::autogradedHole StlcArith.preservation
+:::
 
-:::gradeTheorem 6 "StlcArith.preservation"
+:::gradeTheorem "6" StlcArith.preservation
 :::
 :::::
 
@@ -2170,7 +2214,7 @@ theorem progress (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
     | var Γ x T₁ h =>
       subst hΓ
       -- Contradictory: variables cannot be typed in an empty context.
-      rw [PartialMap.apply_empty] at h
+      rw [PartialMap.getElem_empty] at h
       cases h
     | abs => exact .inl (.abs ..)
     | const _ n => exact .inl (.const n)
@@ -2240,8 +2284,10 @@ theorem progress (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
         obtain ⟨t₁', hst⟩ := hs₁
         exact ⟨<{ if0 ~t₁' then ~t₂ else ~t₃ }>, .if0Step t₁ t₁' t₂ t₃ hst⟩
 ```
+:::autogradedHole StlcArith.progress
+:::
 
-:::gradeTheorem 6 "StlcArith.progress"
+:::gradeTheorem "6" StlcArith.progress
 :::
 :::::
 
