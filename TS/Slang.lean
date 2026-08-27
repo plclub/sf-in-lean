@@ -339,7 +339,7 @@ theorem optimize0plus_sound' (a : Aexp) :
 end Aexp
 ```
 
-:::::exercise (rating := 3) (name := "optimize0plusB_sound")
+:::::exercise (rating := 3) (name := "optimize0plus_sound")
 Since the {name}`Aexp.optimize0plus` transformation doesn't change the value of an
 {name}`Aexp`, we should be able to apply it to all the {name}`Aexp`s that appear in a
 {name}`Bexp` without changing the {name}`Bexp`'s value.  Write a function that
@@ -363,10 +363,10 @@ theorem Bexp.optimize0plus_test1 :
         (.not (.gt (.plus (.num 0) (.num 4)) (.num 8)))
       = (.not (.gt (.num 4) (.num 8))) := solution!(by rfl)
 
-:::autogradedHole Bexp.optimize0plusB
+:::autogradedHole Bexp.optimize0plus
 :::
 
-:::gradeTheorem "0.5" optimize0plusB_test1
+:::gradeTheorem "0.5" optimize0plus_test1
 :::
 
 ```lean
