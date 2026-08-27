@@ -475,7 +475,7 @@ theorem add_succ_nested (n m : Nat) :
 ::::full
 If you know what theorems you want {tactic}`simp` to use for your goal proof, you can write
 `simp [<theorems>]`. If you want {tactic}`simp` to _only_ use those,
-you can use `simp only [<theorems>]`. Like with {tactic}`dsimp`, you can also supply a
+you can use `simp only [<theorems>]`. Like with {tactic}`rw`, you can also supply a
 definition to {tactic}`simp` to simplify using that definition.
 ::::
 
@@ -812,15 +812,15 @@ This directly corresponds to the following inductive definition:
 inductive ExpMatch {α : Type} : List α → RegExp α → Prop where
   | mEmpty : ExpMatch [] EmptyStr
   | mChar (c : α) : ExpMatch [c] (Char c)
-  | mApp (s₁ : List α) (re₁ : RegExp α) (s₂ : List α) (re₂ : RegExp α)
+  | mApp (s₁ s₂ : List α) {re₁ re₂ : RegExp α}
          (h₁ : ExpMatch s₁ re₁) (h₂ : ExpMatch s₂ re₂)
        : ExpMatch (s₁ ++ s₂) (App re₁ re₂)
-  | mUnionL (s₁ : List α) (re₁ : RegExp α) (re₂ : RegExp α)
+  | mUnionL (s₁ : List α) {re₁ re₂ : RegExp α}
             (h₁ : ExpMatch s₁ re₁) : ExpMatch s₁ (Union re₁ re₂)
-  | mUnionR (s₂ : List α) (re₁ : RegExp α) (re₂ : RegExp α)
+  | mUnionR (s₂ : List α) {re₁ re₂ : RegExp α}
             (h₂ : ExpMatch s₂ re₂) : ExpMatch s₂ (Union re₁ re₂)
   | mStar0 (re : RegExp α) : ExpMatch [] (Star re)
-  | mStarApp (s₁ s₂ : List α) (re : RegExp α)
+  | mStarApp (s₁ s₂ : List α) {re : RegExp α}
              (h₁ : ExpMatch s₁ re) (h₂ : ExpMatch s₂ (Star re))
            : ExpMatch (s₁ ++ s₂) (Star re)
 open ExpMatch
@@ -929,7 +929,7 @@ theorem regexp_match_of_list α (l : List α) : l =~ reg_exp_of_list l := by
       rw [h]
       constructor; constructor; assumption
 ```
-:::gradeTheorem 2 regexp_match_of_list
+:::gradeTheorem 1 regexp_match_of_list
 :::
 ::::
 
@@ -969,7 +969,7 @@ theorem EmptySet_is_empty α (s : List α) : ¬(s =~ EmptySet) := by
     intro h
     inversion h
 ```
-:::gradeTheorem "0.5" EmptySet_is_empty
+:::gradeTheorem 1 EmptySet_is_empty
 :::
 ::::
 
@@ -984,7 +984,7 @@ theorem MUnion' α (s : List α) (re₁ re₂ : RegExp α) :
     case inl => apply mUnionL; assumption
     case inr => apply mUnionR; assumption
 ```
-:::gradeTheorem "0.5" MUnion'
+:::gradeTheorem 1 MUnion'
 :::
 ::::
 
@@ -1013,7 +1013,7 @@ theorem MStar' α (ss : List (List α)) (re : RegExp α)
 :::
 ::::
 
-::::exercise (rating := 1) (name := "EmptyStr_not_needed") (optional := true)
+::::exercise (rating := 1) (name := "EmptyStr_not_needed") (optional := true) (manual := true)
 It turns out that the {name}`EmptyStr` constructor is actually not
 needed, since the regular expression matching the empty string can
 also be defined from {name}`Star` and {name}`EmptySet`:
@@ -1075,7 +1075,7 @@ theorem in_re_match {α : Type} {s : List α} {re : RegExp α} {x : α}
   induction hmatch with
   | mEmpty => simp at hin
   | mChar c => simp only [reChars]; assumption
-  | mApp _ _ _ _ _ _ ih₁ ih₂ =>
+  | mApp _ _ _ _ ih₁ ih₂ =>
 
   /- Something interesting happens in the `mApp` case.  We obtain
     _two_ induction hypotheses: One that applies when `x` occurs in
@@ -1086,12 +1086,12 @@ theorem in_re_match {α : Type} {s : List α} {re : RegExp α} {x : α}
       cases hin with
       | inl hin₁ => left; exact ih₁ hin₁
       | inr hin₂ => right; exact ih₂ hin₂
-  | mUnionL _ _ _ _ ih =>
+  | mUnionL _ _ ih =>
     simp only [reChars, List.mem_append]; left; exact ih hin
-  | mUnionR _ _ _ h₂ ih =>
+  | mUnionR _ _ ih =>
     simp only [reChars, List.mem_append]; right; exact ih hin
   | mStar0 => simp at hin
-  | mStarApp _ _ _ _ _ ih₁ ih₂ =>
+  | mStarApp _ _ _ _ ih₁ ih₂ =>
 
   /- Here again we get two induction hypotheses, and they illustrate
     why we need induction on evidence for `ExpMatch`, rather than
@@ -1106,7 +1106,7 @@ theorem in_re_match {α : Type} {s : List α} {re : RegExp α} {x : α}
 ```
 
 
-::::exercise (rating := 1) (name := "reNotEmpty")
+::::exercise (rating := 1) (name := "reNotEmpty") (manual := true)
 Write a recursive function `reNotEmpty` that tests whether a
 regular expression matches some string. Prove that your function
 is correct.
@@ -1261,6 +1261,8 @@ theorem MStar'' α (s : List α) (re : RegExp α) (h : s =~ Star re) :
         trivial
       intro s h; apply hall; trivial
 ```
+:::gradeTheorem 1 MStar''
+:::
 ::::
 
 ## The "Weak" Pumping Lemma
@@ -1379,6 +1381,8 @@ theorem weak_pumping_char {α : Type} (x : α)
   solution!
     simp [pumpingConstant] at h
 ```
+:::gradeTheorem 2 weak_pumping_char
+:::
 ::::
 
 ::::exercise (rating := 4) (name := "weak_pumping_app")
@@ -1438,6 +1442,8 @@ theorem weak_pumping_app {α : Type} (s₁ s₂ : List α) (re₁ re₂ : RegExp
           simp only [List.append_assoc] at *
           constructor <;> assumption
 ```
+:::gradeTheorem 4 weak_pumping_app
+:::
 ::::
 
 ::::exercise (rating := 3) (name := "weak_pumping_union_l")
@@ -1471,6 +1477,8 @@ theorem weak_pumping_union_l  {α : Type} (s₁ : List α) (re₁ re₂ : RegExp
         apply mUnionL
         assumption
 ```
+:::gradeTheorem 3 weak_pumping_union_l
+:::
 ::::
 
 ::::exercise (rating := 3) (name := "weak_pumping_union_r")
@@ -1505,6 +1513,8 @@ theorem weak_pumping_union_r {α : Type} (s₂ : List α) (re₁ re₂ : RegExp 
         apply mUnionR
         assumption
 ```
+:::gradeTheorem 3 weak_pumping_union_r
+:::
 ::::
 
 ::::exercise (rating := 2) (name := "weak_pumping_star_zero") (optional := true)
@@ -1522,6 +1532,8 @@ theorem weak_pumping_star_zero {α : Type} (re : RegExp α)
       have h₂ := pumping_constant_ge_1 re
       rw [← h₁] at h₂; inversion h₂
 ```
+:::gradeTheorem 2 weak_pumping_star_zero
+:::
 ::::
 
 ::::exercise (rating := 5) (name := "weak_pumping_star_app") (optional := true)
@@ -1593,6 +1605,8 @@ theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α)
           rw [← List.append_assoc]
           apply mStarApp <;> assumption
 ```
+:::gradeTheorem 5 weak_pumping_star_app
+:::
 ::::
 
 ::::exercise (rating := 3) (name := "weak_pumping")
@@ -1612,6 +1626,8 @@ theorem weak_pumping {α : Type} {re : RegExp α} {s : List α}
     case mStar0   => apply weak_pumping_star_zero <;> assumption
     case mStarApp => apply weak_pumping_star_app <;> assumption
 ```
+:::gradeTheorem 3 weak_pumping
+:::
 ::::
 
 ## The (Strong) Pumping Lemma
@@ -1638,6 +1654,9 @@ theorem pumping {α : Type} {re : RegExp α} {s : List α}
       ∀ m, s₁ ++ napp m s₂ ++ s₃ =~ re := by
   sorry
 ```
+:::dev "Niklas Halonen (xhalo32)"
+Add `gradeTheorem 10 pumping` once the proof is filled in.
+:::
 ::::
 
 ```lean
