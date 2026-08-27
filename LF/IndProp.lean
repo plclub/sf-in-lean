@@ -1135,7 +1135,7 @@ theorem Even.even5_nonsense (h : Even 5) : 2 + 2 = 9 := by
         inversion h''
 ```
 
-:::gradeTheorem 1 ev5_nonsense
+:::gradeTheorem 1 Even.even5_nonsense
 :::
 :::::
 
@@ -1380,7 +1380,7 @@ theorem even_add (n m : Nat) (hₙ : Even n) (hₘ : Even m) : Even (n + m) := b
       apply Even.succ_succ; exact ih
 ```
 
-:::gradeTheorem 2 ev_sum
+:::gradeTheorem 2 even_add
 :::
 :::::
 
@@ -1397,7 +1397,7 @@ theorem even_add_even (n m : Nat) (hₙₘ : Even (n + m)) (hₙ : Even n) : Eve
       inversion hₙₘ; apply ih; assumption
 ```
 
-:::gradeTheorem 3 ev_ev__ev
+:::gradeTheorem 3 even_add_even
 :::
 :::::
 
