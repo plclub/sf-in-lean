@@ -333,15 +333,6 @@ def decodeBnfSource? (data : Json) : Option String :=
     | .error _      => some src
   | _ => none
 
-/-- Decode a `Block.exercise` payload `(rating, name, level, optional, manual)`,
-tolerating the older 4- and 2-element forms.  (See
-`SFLMeta.decodeExerciseData`.) -/
-def decodeExercise? (data : Json) : Option (Nat × String × Option String × Bool × Bool) :=
-  match data with
-  | .arr #[.num _, .str _, _, _, _] | .arr #[.num _, .str _, _, _]
-  | .arr #[.num _, .str _] => some (decodeExerciseData data)
-  | _ => none
-
 /-- Does one of `blocks` contain a `Block.suppressPreviousHeaderWhenTerse`
 marker?  The marker is emitted at a section's top level, but elaboration wraps
 each source block in `.concat` layers, so look through those (only — the marker
@@ -485,14 +476,15 @@ partial def walkBlock (width : Nat) (isTerse : Bool) (file : String) (b : Verso.
     if name == ``Block.exercise then
       -- Emit a `### Exercise (N⭐): name` heading; the contained `lean`
       -- blocks render normally via recursion below.
-      if let some (rating, exName, level, optional, manual) := decodeExercise? which.data then
+      if let .ok (exercise : ExerciseData) := fromJson? which.data then
+        let {rating, name := exName, level, optional, manual, ..} := exercise
         let stars := String.ofList (List.replicate rating '⭐')
         let desig := exerciseDesignation level optional manual
         let header := s!"### Exercise ({rating} star{if rating == 1 then "" else "s"}): {exName}{desig} {stars}"
         let mut buf := buf.appendAll file (asModuleDoc header)
         buf := walkBlocks width isTerse file contents buf
         return buf
-      return buf
+      return walkBlocks width isTerse file contents buf
     if name == ``Block.bnf then
       if let some src := decodeBnfSource? which.data then
         return buf.appendAll file (asModuleDoc src.trimAscii.toString)

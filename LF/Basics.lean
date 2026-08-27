@@ -400,7 +400,7 @@ Custom notations are defined using the `notation`, `infixl`,
 :::slidebreak
 :::
 
-::::exercise (rating := 1) (name := "nand")
+::::exercise (rating := 1) (name := "nand") (checkVisibility := false)
 The {tactic}`sorry` keyword is a placeholder for an incomplete proof or
 definition.  We use it in exercises to indicate the parts that we're
 leaving for you — i.e., your job is to replace {tactic}`sorry` with real
@@ -1949,7 +1949,7 @@ def mul (n m : Nat) : Nat :=
 scoped infixl:70 " * " => mul
 ```
 
-::::exercise (rating := 1) (name := "mul_simpl_rules")
+::::exercise (rating := 1) (name := "mul_simpl_rules") (checkVisibility := false)
 Multiplication, like any function we will prove properties about,
 also has simplification rules.
 
