@@ -837,7 +837,7 @@ theorem plus4 (n : Nat) (h : Even n) : Even (4 + n) := by
 ```
 
 ::::::full
-:::::exercise (rating := 1) (name := "ev_double")
+:::::exercise (rating := 1) (name := "double")
 ```lean
 theorem double (n : Nat) : Even n.double := by
   solution!
@@ -976,7 +976,7 @@ using {tactic}`cases`.
 ::::
 
 ```lean
-theorem even_inversion (n : Nat) (h : Even n) :
+theorem Even.even_inversion (n : Nat) (h : Even n) :
     (n = 0) ∨ ∃ n', n = n' + 2 ∧ Even n' := by
   cases h with
   | zero => left; rfl
@@ -1095,7 +1095,7 @@ inversion lemma. Compare:
 
 ```lean
 example : ¬ Even 1 := by
-  intro h; apply even_inversion at h
+  intro h; apply Even.even_inversion at h
   obtain ⟨⟨⟩⟩ | ⟨n', ⟨h₁,  h₂⟩⟩ := h
   injections
 
@@ -1141,10 +1141,17 @@ theorem Even.even5_nonsense (h : Even 5) : 2 + 2 = 9 := by
 
 ::::::
 
+:::dev "Yipeng Liu (berberman)" NOW
+Explain how `cases` works on equalities in Tactics or Logic!
+
+(The following text assums we've alrady done that.)
+:::
+
+Recall that equality ({name}`Eq`) is itself an inductively defined proposition,
+so {tactic}`inversion` can also be used on equality propositions.
+
 We can use {tactic}`inversion` to re-prove some theorems from
 {ref "Tactics"}[Tactics].
-
-Note that {tactic}`inversion` also works on equality propositions.
 
 ```lean
 example (n m o : Nat) (h : [n, m] = [o, o]) : [n] = [m] := by
@@ -1154,54 +1161,48 @@ example (n : Nat) (h : n + 1 = 0) : 2 + 2 = 5 := by
   inversion h
 ```
 
-::::terse
-The {tactic}`inversion` tactic works on any `h : p` where
-`p` is defined inductively:
-  - For each constructor of `p`, make a subgoal where `h` is
-    constrained by the form of this constructor.
-  - Discard contradictory subgoals (such as {name}`Even.zero` above).
-  - Generate auxiliary equalities (as with {name}`Even.succ_succ` above).
-::::
+For the inductively defined propositions we use,
+{tactic}`inversion` behaves much like {tactic}`cases`:
+it performs case analysis on the constructors of the hypothesis's inductive type.
+However, when the case analysis on an indexed proposition gives _unsolvable_ equations
+between its indices, {tactic}`cases` itself fails, whereas {tactic}`inversion` leaves
+such equations in the context.
 
-:::dev BeforeNextRelease
-The wording there is totally awkward!
-:::
+For example, {tactic}`cases` would immediately fail on `h`:
 
-:::dev PotentialImprovement
+```lean +error (name := elim_failed)
+example (n : Nat) (h : Even (n * n)) :
+  n * n = 0 ∨ ∃ m, n * n = m + 2 := by
+  cases h
 ```
-Is this too dense??  Since equality is defined in the next
-lecture [BCP: for some paths through the material -- they might
-also not see it at all!], it might actually be better to postpone
-the conversation here and do it all at once there. [PR: It is
-dense, but I don't think seeing the definition of equality helps,
-so I'm not sure postponing it would make a difference.]
-```
-:::
 
-::::full
-Here's how {tactic}`inversion` works in general.
-- Suppose the name `h` refers to an assumption `p` in the
-  current context, where `p` has been defined by an `inductive`
-  declaration.
-- Then, for each of the constructors of `p`, `inversion h`
-  generates a subgoal in which `h` has been replaced by the
-  specific conditions under which this constructor could have
-  been used to prove `p`.
-- Some of these subgoals will be self-contradictory;
-  {tactic}`inversion` throws these away.
-- The ones that are left represent the cases that must be proved
-  to establish the original goal. For those, {tactic}`inversion` adds
-  to the proof context all equations that must hold of the
-  arguments given to `p` ─ e.g., {lean}`n' = n` in the proof of
-  {name}`Even.succ_succ_even`.
-::::
+```leanOutput elim_failed
+Dependent elimination failed: Failed to solve equation
+  n.mul n = 0
+```
+
+{tactic}`inversion` instead leaves the equations in the context,
+where we can use them directly:
+
+```lean
+example (n : Nat) (h : Even (n * n)) :
+  n * n = 0 ∨ ∃ m, n * n = m + 2 := by
+  inversion h with
+  | zero => left; assumption
+  | succ_succ _ m' _ _ _ => right; exists m'
+```
+
+:::full
+Here is useful way to think about {tactic}`inversion`.
+For an inductively defined hypothesis `h`, `inversion h`
+starts with one case for each constructor, then uses the indices of the type of `h`
+to eliminate impossible cases, and simplifies the remaining ones.
+In the remaining cases, it solves these equations to foce some expressions or substeitue some variables.
+If an equation cannot be solved, {tactic}`inversion` leaves it in the context and we can
+use tie in the rest of the proof.
+:::
 
 ::::quiz
-:::dev
-LY: Not quite a fair question because this is the first
-time they are facing a situation where the index does not start
-with a constructor.
-:::
 
 Which tactics are needed to prove this goal, in addition to
 {tactic}`apply` or {tactic}`exact`?
@@ -1229,10 +1230,10 @@ example (n : Nat) (h : Even (2 + n)) : Even n := by
 
 ::::full
 The {name}`Even.double` exercise above allows us to easily show that
-our new notion of evenness is implied by the two earlier ones
-(since, by {name}`Nat.even_bool_prop` in the {ref "Logic"}[Logic] chapter,
-we already know that those are equivalent to each other). To show that all
-three coincide, we just need the following lemma.
+our new notion of evenness is implied by the two earlier ones.
+In fact, by {name}`Nat.even_bool_prop` in the {ref "Logic"}[Logic] chapter,
+we already know that those are equivalent to each other. To show that
+`Nat.Even`, `Even`, and `Nat.even` coincide, we just need the following lemma.
 ::::
 
 ::::terse
@@ -1240,70 +1241,24 @@ Let's try to show that our new notion of evenness implies
 our earlier notion (the one based on {name}`Nat.double`).
 ::::
 
-:::dev BeforeNextRelease
-This whole part of the section is a mess!!
-:::
-
-````lean +error
-example (n : Nat) : Even n → Nat.Even n := by
+```lean +error
+example (n : Nat) (h : Even n) : Nat.Even n := by
   /- We could try to proceed by case analysis or induction on `n`.  But
-      since `Ev` is mentioned in a premise, this strategy seems
+      since `Even` is mentioned in a premise, this strategy seems
       unpromising, because (as we've noted before) the induction
       hypothesis will talk about `n-1` (which is _not_ even!).  Thus, it
-      seems better to first try `inversion` on the evidence for `Ev`.
+      seems better to first try `inversion` on the evidence for `Even`.
       Indeed, the first case can be solved trivially. -/
-  intro h
   inversion h with
-  /- h = ev_0 -/
-  | ev_0 => exists 0  -- (`0 = double 0` is closed by `exists`'s final `rfl`)
-  /- h = ev_succ_succ n' h' -/
-  | ev_succ_succ n' h' =>
-  /- Unfortunately, the second case is harder.  We need to show
+  | zero => exists 0
+  | succ_succ n' h' =>
+    /- Unfortunately, the second case is harder.  We need to show
     `∃ n₀, n' + 2 = double n₀`, but the only available assumption is
-    `h'`, which states that `Ev n'` holds.  Since this isn't directly
-    useful, it seems that we are stuck and that performing case
-    analysis on `h` was a waste of time.
-
-    If we look more closely at our second goal, however, we can see
-    that something interesting happened: By performing case analysis
-    on `h`, we were able to reduce the original result to a similar
-    one that involves a _different_ piece of evidence for `Ev`: namely
-    `h'`.  More formally, we could finish our proof if we could show
-    that
-    ```
-    ∃ k', n' = double k',
-    ```
-    which is the same as the original statement, but with `n'` instead
-    of `n`.  Indeed, it is not difficult to convince Lean that this
-    intermediate result would suffice. -/
-    have he : (∃ (k' : Nat), n' = k'.double) → (∃ (n₀ : Nat), n' + 2 = n₀.double) := by
-      intro ⟨k, hk⟩; exists (k + 1); rw [Nat.double_succ, hk]
-    apply he
-    /- Unfortunately, now we are stuck: we are trying to prove another instance
-        of the same theorem we set out to prove -- only here we are
-        talking about `n'` instead of `n`. -/
-````
-
-:::dev "Andrew Tolmach (AndrewTolmach)" PotentialImprovement
-Added the explicit assert to "convince Lean" but the
-flow of the preceding discussion seems confusing to me.
-:::
-
-:::dev "Benjamin Pierce (bcpierce00)" BeforeNextRelease (year := 2021)
-I agree that it's all pretty chewy. Wonder if we
-really need any of it or if the point could be made just as well
-with less detail...  When I explained it in class this time, I just
-observed that the destruct was giving us a hypothesis about 2 being
-even, which just can't be what we want, and skipped all the rest...
-After thinking about it for a bit, though, I do think the full
-story here is useful (at least for the FULL version -- the TERSE
-could still be streamlined). So I'm going to leave it for now.
-:::
-
-:::dev "Benjamin Pierce (bcpierce00)" BeforeNextRelease (year := 2025)
-I think best just to shorten it! And maybe make it
-not a WORKINCLASS.
-:::
+    `h'`, which states that `Even n'` holds.
+    In other words, what we need here is precisely the result we
+    are trying to prove, but applied to the smaller evidence `h'`.
+    -/
+```
 
 ## Induction on Evidence
 
