@@ -23,7 +23,15 @@ weak.sfl.year = 2026
 [[require]]
 name = "verso"
 git = "https://github.com/leanprover/verso"
-rev = "v4.33.0"
+# This Verso revision targets 4.34.0-rc2 but is also backwards-compatible with
+# 4.33. It pushes the SubVerso dependency to a version with performance
+# improvements, and it uses some improved APIs.
+#
+# When updating to Lean v4.34.0, replace this string with "v4.34.0" to get its
+# tagged Verso release, which will also include all of these improvements.
+# In the meantime, instead of `lake update`, use `lake update --keep-toolchain`
+# so it doesn't attempt to update your toolchain pin to match Verso's.
+rev = "17c820e9726faeea24cbe6e6532b6b6e8452cc52"
 
 [[require]]
 name = "batteries"
