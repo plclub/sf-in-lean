@@ -609,6 +609,35 @@ Taking suggestions for additional simple group theory theorems to prove here.
 end Algebra
 ```
 
+# API and Encapsulation
+
+:::dev "Niklas Halonen (xhalo32)"
+Here, we should tie back the story from early chapters about characterizing lemmas and definition unfolding.
+When unfolding a definition directly without characterizing lemmas, the implementation details are exposed.
+When downstream code can depend on implementation details of upstream library code, it makes it more difficult for the upstream library to evolve.
+
+Explain the following items:
+- What is API and how does it relate to typeclasses
+- What is encapsulation: public and private API
+  - Function definitions and one-field structures are encapsulation boundaries
+  - Definitions and structures are usually private, characterizing lemmas are public
+  - Constructors of inductives are public
+  - Mention `public`, `private` keywords and that we don't use them on the course?
+  - One can mostly ignore proof terms due to proof irrelevance
+
+Here is an example where the proof term is blocking a rewrite.
+The solution is to simplify it away.
+
+```lean +error
+-- set_option pp.proofs true in
+example {n m : Nat} {a : Fin n} {b : Fin m} (h₁ : n = m) (h₂ : a.val = b.val) :
+    a = ⟨b.val, h₁ ▸ b.isLt⟩ := by
+  -- ext
+  -- dsimp only
+  rw [← h₂]
+```
+:::
+
 # Maps
 
 _Maps_ (or "dictionaries") are ubiquitous data structures both in ordinary programming and in the theory of programming languages; we're going to need them in many places in later volumes.

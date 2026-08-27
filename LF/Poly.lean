@@ -849,6 +849,7 @@ Notice that the simplification lemmas {name}`zip_nil_left` and {name}`zip_nil_ri
 The reason is that `l₁` and `l₂` are variables, and matching on a variable usually gets stuck, like we have seen before in {ref "Induction"}[Induction] when proving the `zero_add` theorem.
 To overcome this, we destruct the list so that the `match` knows which branch to take during the computation done by the `rfl` tactic.
 
+::::::full
 :::::exercise (rating := 1) (name := "zip_checks") (optional := true) (manual := true)
 Try answering the following questions on paper and
 checking your answers in Lean:
@@ -859,6 +860,7 @@ checking your answers in Lean:
   ```
   print?
 :::::
+::::::
 
 :::::exercise (rating := 3) (name := "unzip") (manual := true)
 The function `unzip` goes in the other direction from {name}`zip`: it takes a list of pairs and returns a pair of lists.
