@@ -288,9 +288,13 @@ We define our own `MyBool` to teach the concept of building booleans from
 scratch. Our definition `MyBool` is equivalent to Lean's built-in {name}`Bool`,
 which we'll switch to later.
 We call it `MyBool` to avoid clashing with the built-in name.
-Later, we place our custom natural numbers in the `NatPlayground` namespace,
+Later in the chapter, will show a different way of avoiding such clashes: we will place our custom natural numbers in a fresh `NatPlayground` namespace,
 where they can be called `Nat` without clashing with Lean's built-in {name}`Nat`.
 ::::
+:::dev "Benjamin Pierce (bcpierce00)"
+This still doesn't explain WHY we are doing things two different ways.  And I don't understand why myself, so I can't explain it. :-)
+:::
+
 
 
 ::::terse
@@ -386,7 +390,7 @@ example : (!MyBool.false) = MyBool.true := by rfl
 ```
 
 ::::full
-The technical details of how these symbolic notations work are not something you need to understand until quite a bit later in your Lean journey.  
+The technical details of how these symbolic notations work are not something you need to understand until quite a bit later in your Lean journey.
 
 :::details
 Lean has a very flexible notation system. Operators like `||` and `&&`
@@ -1766,13 +1770,12 @@ In simple examples such conventions may seem trivial or even silly; in complex c
 it is the only way to maintain crucial invariants that prevent a system from becoming unmaintainable.
 
 The same principle applies to programs and proofs in Lean. In this chapter,
-we practice proving facts about functions through their simplification rules,
+we will be proving facts about functions entirely through their simplification rules,
 rather than using {tactic}`rfl` to unfold their implementations invisibly.
 This makes every computation step visible and lets a proof rely on a
 function's interface rather than its definition.
 
-
-Fortunately, the foundational theorems {name}`add_zero` and {name}`add_succ` provide a
+We can do this because the foundational theorems {name}`add_zero` and {name}`add_succ` provide a
 characterization of the behavior of {name}`add` that makes using {tactic}`rfl` to simplify
 expressions unnecessary; instead, we can rewrite by these theorems anywhere we want to describe
 how {name}`add` evaluates.
