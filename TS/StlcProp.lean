@@ -4,7 +4,6 @@ import LF.CustomTactics
 open Verso.Genre Manual
 open SFLMeta
 
-set_option maxHeartbeats 1000000
 
 #doc (Manual) "StlcProp: Properties of STLC" =>
 %%%
@@ -13,23 +12,6 @@ htmlSplit := .never
 file := some "StlcProp"
 %%%
 
-:::dev "Claude" NOW
-The document-level `set_option maxHeartbeats 1000000` above is needed by
-`substitution_preserves_typing`, and it has to be *document-level*: the cost is
-not in the proof itself (the same proof elaborates well inside budget as plain
-Lean) but in Verso's InlineLean highlighting pass, which re-drives elaboration
-to attach type and hover information. That pass honors only document-level
-options — a `set_option maxHeartbeats ... in` on the theorem was verified not
-to help here, and neither does splitting the code block, since the budget is
-per-declaration. `LF/IndPropRegexpVerso.lean` carries the same override and
-documents the mechanism at length.
-
-The way to remove this would be to break the substitution lemma's variable and
-abstraction cases out as named helper lemmas, so each is highlighted against
-its own fresh budget — the pattern `IndPropRegexp` uses for `star_app_aux`.
-That is a pedagogy call (it changes how the central proof of the chapter
-reads), so it is left for review rather than done here.
-:::
 
 :::instructors
 This is a good lecture to do mostly at the board (and
@@ -197,6 +179,46 @@ The _progress_ theorem tells us that closed, well-typed
 terms are not stuck.
 ::::
 
+
+::::full
+_Proof_: By induction on the derivation of `⊢ t ⦂ T`.
+
+- The last rule of the derivation cannot be `HasType.var`, since a
+  variable is never well typed in an empty context.
+
+- The `HasType.tru`, `HasType.fls`, and `HasType.abs` cases are trivial, since in
+  each of these cases we can see by inspecting the rule that `t`
+  is a value.
+
+- If the last rule of the derivation is `HasType.app`, then `t` has the
+  form `t₁ t₂` for some `t₁` and `t₂`, where `⊢ t₁ ⦂ T₂ → T`
+  and `⊢ t₂ ⦂ T₂` for some type `T₂`.  The induction hypothesis
+  for the first subderivation says that either `t₁` is a value or
+  else it can take a reduction step.
+
+    - If `t₁` is a value, then consider `t₂`, which by the
+      induction hypothesis for the second subderivation must also
+      either be a value or take a step.
+
+        - Suppose `t₂` is a value.  Since `t₁` is a value with an
+          arrow type, it must be a lambda abstraction; hence `t₁ t₂` can take a step by `Step.appAbs`.
+
+        - Otherwise, `t₂` can take a step, and hence so can `t₁ t₂` by `Step.app2`.
+
+    - If `t₁` can take a step, then so can `t₁ t₂` by `Step.app1`.
+
+- If the last rule of the derivation is `HasType.ite`, then `t = if t₁ then t₂ else t₃`, where `t₁` has type `Bool`.  The first IH
+  says that `t₁` either is a value or takes a step.
+
+    - If `t₁` is a value, then since it has type `Bool` it must be
+      either `true` or `false`.  If it is `true`, then `t` steps to
+      `t₂`; otherwise it steps to `t₃`.
+
+    - Otherwise, `t₁` takes a step, and therefore so does `t` (by
+      `Step.ifStep`).
+::::
+
+
 ```lean
 theorem progress (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
     t.IsValue ∨ ∃ t', t ⟶ t' := by
@@ -248,44 +270,6 @@ theorem progress (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
       constructor
       assumption
 ```
-
-::::full
-_Proof_: By induction on the derivation of `⊢ t ⦂ T`.
-
-- The last rule of the derivation cannot be `HasType.var`, since a
-  variable is never well typed in an empty context.
-
-- The `HasType.tru`, `HasType.fls`, and `HasType.abs` cases are trivial, since in
-  each of these cases we can see by inspecting the rule that `t`
-  is a value.
-
-- If the last rule of the derivation is `HasType.app`, then `t` has the
-  form `t₁ t₂` for some `t₁` and `t₂`, where `⊢ t₁ ⦂ T₂ → T`
-  and `⊢ t₂ ⦂ T₂` for some type `T₂`.  The induction hypothesis
-  for the first subderivation says that either `t₁` is a value or
-  else it can take a reduction step.
-
-    - If `t₁` is a value, then consider `t₂`, which by the
-      induction hypothesis for the second subderivation must also
-      either be a value or take a step.
-
-        - Suppose `t₂` is a value.  Since `t₁` is a value with an
-          arrow type, it must be a lambda abstraction; hence `t₁ t₂` can take a step by `Step.appAbs`.
-
-        - Otherwise, `t₂` can take a step, and hence so can `t₁ t₂` by `Step.app2`.
-
-    - If `t₁` can take a step, then so can `t₁ t₂` by `Step.app1`.
-
-- If the last rule of the derivation is `HasType.ite`, then `t = if t₁ then t₂ else t₃`, where `t₁` has type `Bool`.  The first IH
-  says that `t₁` either is a value or takes a step.
-
-    - If `t₁` is a value, then since it has type `Bool` it must be
-      either `true` or `false`.  If it is `true`, then `t` steps to
-      `t₂`; otherwise it steps to `t₃`.
-
-    - Otherwise, `t₁` takes a step, and therefore so does `t` (by
-      `Step.ifStep`).
-::::
 
 ::::::full
 :::::exercise (rating := 3) (name := "progress_from_term_ind") (level := Advanced)
@@ -537,7 +521,7 @@ property."  Intuitively, it says that substitution and typing can
 be done in either order: we can either assign types to the terms
 `t` and `v` separately (under suitable contexts) and then combine
 them using substitution, or we can substitute first and then
-assign a type to ` `x:=v` t`; the result is the same either
+assign a type to `[x:=v] t`; the result is the same either
 way.
 
 _Proof_: We show, by induction on `t`, that for all `T` and
@@ -1107,11 +1091,6 @@ following template.  BCP 21: Yes, do this!!
 Proof. apply progress. Qed.
 ```
 ::::
-
-:::solution
-COMMENT: `untagged (* .. *) comment at prose position in the Rocq source — probably an error there; decide whether it is book prose or an author note`
-See progress and preservation from before.
-:::
 
 :::grade
 `GRADE_MANUAL 1: progress_preservation_statement`
