@@ -1783,6 +1783,9 @@ macro_rules (kind := Stlc.tmBracket)
       `(subst $(← Stlc.varStr x) <{ $s:stlcTm }> <{ $t:stlcTm }>)
 ```
 
+:::autogradedHole subst
+:::
+
 ::::details "Notation encoding: substitution"
 One more line registers substitutions with the printer, so that a goal
 mentioning one reads as `[x := s] t` rather than as a `subst` application.
@@ -1853,6 +1856,9 @@ inductive Tm.IsValue : Tm → Prop where
 -- END SOLUTION
 ```
 
+:::autogradedHole Tm.IsValue
+:::
+
 Now the reduction relation.  The three rules for application are the STLC's;
 the rest say how the arithmetic operators evaluate their arguments and what
 they compute once those arguments are numbers.
@@ -1896,6 +1902,9 @@ end
 scoped notation:40 t:41 " ⟶ " t':41 => Step t t'
 scoped notation:40 t:41 " ⟶* " t':41 => Multi Step t t'
 ```
+
+:::autogradedHole Step
+:::
 
 An example:
 
@@ -1984,6 +1993,9 @@ inductive HasType : Context → Tm → Ty → Prop where
       <{ ~Γ ⊢ if0 ~t₁ then ~t₂ else ~t₃ ⦂ ~T₀ }>
 -- END SOLUTION
 ```
+
+:::autogradedHole HasType
+:::
 
 ::::details "Notation encoding: the judgment, for real"
 Closing the section retires the hygiene-free rule; the same rule is then
