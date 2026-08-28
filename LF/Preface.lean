@@ -265,7 +265,7 @@ follow these steps:
 
 - Install VS Code if needed.
 - From the Extensions tab of VS Code, install the Lean 4 extension.
-- Separately: Download the book, build it (if necessary) — more below.
+- Download the book, build it if necessary — more below.
 - Open the built book directory in a VS Code window.
 - Open a Lean file; the extension will offer to install Lean; accept, and it will fetch
   the version this book needs.
@@ -280,14 +280,14 @@ and then open the resulting directory in VS Code. Open any `.lean` file (e.g., `
 If you would like to read the HTML version of the book, it should be hosted on your
 course website (you may be reading it now!).
 
-Note that as the book is changing while you are taking your class, you should download
+Note that, as the book is changing while you are taking your class, you should download
 a fresh `.zip` for each homework you do, opening it in a fresh directory. This way
 you will have access to prior solutions, and you will automatically get any Lean
 updates. More on exercises below.
 
 ### Downloading and building the book from Git, for self study
 
-If you are *going through Software Foundations on your own*, you can get the most
+If you are *reading Software Foundations on your own*, you can get the most
 up-to-date version from the [SF-in-Lean](https://github.com/plclub/sf-in-lean) GitHub
 repository. Clone that repository and then build it by typing `make` from the root
 directory. This will construct various versions of the book.
