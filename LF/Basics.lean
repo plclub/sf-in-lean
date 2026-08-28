@@ -11,12 +11,6 @@ htmlSplit := .never
 file := "Basics"
 %%%
 
-:::dev "Benjamin Pierce (bcpierce00)"
-Could this directive live somewhere else?  And doesn't it belong in a `:::details` block?
-:::
-```lean -show
-set_option pp.fieldNotation false
-```
 
 :::instructors
 This file and Induction.lean each take about an hour to
@@ -318,14 +312,13 @@ inductive MyBool : Type where
   | true
   | false
 ```
-
-:::dev "Benjamin Pierce (bcpierce00)"
-Maybe this next bit belongs in a :::details block?  The explanation is a bit lacking...
+:::full
+We next invoke a couple of Lean directives to help control formatting.  Exactly what these directives mean is not important for present purposes -- you can understand everything in the rest of the book without knowing -- so we will mark these commands -- and similar bits later on -- with `THESE DETAILS CAN BE SKIPPED` comments in `.lean` files, and with folded-up segments in the HTML presentation. Feel free to have a peek if you want (click on the triangle in the HTML to unfold it), or just jump down to the following material and keep going.
 :::
-:::ignore
+:::details
 ```lean -show
--- This is included to be able to format expressions involving these variables later
 variable (b : MyBool) (n m : Nat)
+set_option pp.fieldNotation false
 ```
 :::
 
@@ -403,7 +396,7 @@ example : (!MyBool.false) = MyBool.true := by rfl
 ```
 
 ::::full
-The technical details of how these symbolic notations work are not something you need to understand until quite a bit later in your Lean journey.  We'll mark these details -- and similar material later on -- with `THESE DETAILS CAN BE SKIPPED` comments in `.lean` files and with collapsed text segments in the HTML presentation. Click on the triangle in the HTML if you want to have a peek, or just move on to the following material.
+The technical details of how these symbolic notations work are not something you need to understand until quite a bit later in your Lean journey.
 
 :::details
 Lean has a very flexible notation system. Operators like `||` and `&&`
@@ -1318,7 +1311,6 @@ end Playground
 :::suppressPreviousHeaderWhenTerse
 :::
 
-:::full
 When defining an inductive type with just one constructor, we can instead use a `structure`:
 
 ```lean
@@ -1329,7 +1321,9 @@ structure NibbleStruct : Type where
   x3 : Playground.Bit
 ```
 
+:::full
 Rather than construct this as `.bits .b0 .b0 .b0 .b0`, we construct it as:
+:::
 
 ```lean (name := nbs)
 #check NibbleStruct.mk .b0 .b0 .b0 .b0
@@ -1340,9 +1334,11 @@ Rather than construct this as `.bits .b0 .b0 .b0 .b0`, we construct it as:
 ```
 
 The `.mk` constructor is created for us.
+
+:::full
 Structures are more commonly constructed by assigning values to their _fields_.
 Each field name is paired with its value using `:=`:
-
+:::
 
 ```lean
 def zeroNibble : NibbleStruct := {
@@ -1353,6 +1349,7 @@ def zeroNibble : NibbleStruct := {
   }
 ```
 
+:::full
 Since the result type is declared to be {name}`NibbleStruct`, Lean knows
 which structure and fields we mean. Unlike {name}`NibbleStruct.mk`,
 this construction syntax doesn't depend on the order of fields.
@@ -1360,6 +1357,11 @@ this construction syntax doesn't depend on the order of fields.
 Now that we have seen how to construct a structure from scratch —
 how do we "update" an existing structure, or in other words, construct a new structure
 while reusing some old fields?
+:::
+
+:::terse
+How can we "update" a structure?
+:::
 
 ```lean
 def setFirstTwoBits (old : NibbleStruct)
@@ -1368,21 +1370,27 @@ def setFirstTwoBits (old : NibbleStruct)
   { old with x0 := newX0, x1 := newX1 }
 ```
 
+:::full
 The expression `{ old with ... }` constructs a new {name}`NibbleStruct` whose `x0` and `x1`
 have the given value and whose other fields are copied from `old`.
 Keep in mind that `old` was not modified — we constructed a new structure
 starting from the old one.
+:::
+
+:::terse
+When variables and field names match, construction is easier.
+:::
 
 ```lean
 def makeNibbleStruct (x0 x1 x2 x3 : Playground.Bit) : NibbleStruct :=
   { x0, x1, x2, x3 }
 ```
 
+:::full
 When a field and the variable supplying its value have the same name,
 Lean lets us write just the name.
 Thus `{ x0, x1, x2, x3 }` is a shorthand for `{ x0 := x0, x1 := x1, x2 := x2, x3 := x3 }`.
 This is called _field abbreviation_.
-
 :::
 
 ## Natural Numbers
@@ -1494,7 +1502,6 @@ def minusTwo (n : Nat) : Nat :=
 #eval minusTwo four
 ```
 
-::::full
 Look the types of {name}`succ`, {name}`pred`, and {name}`minusTwo`:
 
 ```lean (name := nat1)
@@ -1516,8 +1523,10 @@ minusTwo : Nat → Nat
 ```
 
 These are all things that can be applied to a number to yield a
-number. However, there is a fundamental difference between
-{name}`succ` and the other two: functions like {name}`pred` and
+number.
+But there is a difference between {name}`succ` and the other two.
+::::full
+Functions like {name}`pred` and
 {name}`minusTwo` are defined by giving _computation rules_ — e.g.,
 the definition of {name}`pred` says that {lean}`pred (succ (succ zero))`
 can be simplified to {lean}`succ zero` — while the definition of
@@ -1923,7 +1932,7 @@ We can rewrite with these rules to expand numerals into their definitions,
 which allows us to use our {name}`add` rules.
 Here's an example of how to start a proof this way.
 
-::::exercise (rating := 1) (name := "mul_simpl_rules")
+::::exercise (rating := 1) (name := "nat_eq_rules")
 
 Finish the proof using the {name}`add` rules:
 

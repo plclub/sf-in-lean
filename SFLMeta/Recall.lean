@@ -26,6 +26,7 @@ structure Data where
   kind : Kind
   statement : Bool
   expectedError : Bool
+  strictUniverse : Bool
   source : String
   outputName : Option Name
   deriving ToJson, FromJson, Quote
@@ -45,18 +46,20 @@ block_extension Block.recall (saved : Recall.Data) where
 
 /--
 Configuration shared by `recall` and `recallSource`: `+error` expects the
-check to fail, `+statement` restates only a theorem statement, and `name`
-saves the block's messages for `leanOutput`.
+check to fail, `+statement` restates only a theorem statement,
+`+strictUniverse` requires exact universe parameters for recall,
+and `name` saves the block's messages for `leanOutput`.
 -/
 structure RecallBlockConfig where
   error : Bool := false
   statement : Bool := false
+  strictUniverse : Bool := false
   name : Option Name := none
 
 def RecallBlockConfig.parse [Monad m] [MonadInfoTree m] [MonadLiftT CoreM m] [MonadEnv m]
     [MonadError m] : ArgParse m RecallBlockConfig :=
   RecallBlockConfig.mk <$> .flag `error false <*> .flag `statement false <*>
-    .named `name .name true
+    .flag `strictUniverse false <*> .named `name .name true
 
 instance [Monad m] [MonadInfoTree m] [MonadLiftT CoreM m] [MonadEnv m] [MonadError m] :
     FromArgs RecallBlockConfig m := ⟨RecallBlockConfig.parse⟩
@@ -84,19 +87,30 @@ Elaborate a recall block synchronously in the document environment, render its
 plain contents, and preserve explicit recall metadata for later extraction.
 -/
 def recallBlock (config : RecallBlockConfig) (str : StrLit) (kind : Recall.Kind)
-    (cmdKind : SyntaxNodeKind) (stmtKind : Option SyntaxNodeKind) (highlighted : Bool := true) :
+    (cmdKind : SyntaxNodeKind) (highlighted : Bool := true) :
     DocElabM Term := withoutAsync do
+  if config.strictUniverse then
+    if kind != .semantic then
+      throwError "`+strictUniverse` is supported only by `recall`"
+    if config.statement then
+      throwError "`+strictUniverse` cannot be combined with `+statement`"
+  if config.statement && kind == .source then
+    throwError "`+statement` is supported only by semantic `recall`"
   let col? := (← getRef).getPos? |>.map (← getFileMap).utf8PosToLspPos |>.map (·.character)
   let (cmdStx, wrapped) ←
-    if config.statement then
-      let some stmtKind := stmtKind
-        | throwError "this block has no statement form"
+    if config.«statement» then
       let spec ← parseStrLitAsCategory `recallStmtSpec str
       pure (spec,
-        (mkNode stmtKind #[mkAtom "sf_recall", mkAtom "statement", spec[0], mkAtom ":", spec[2]]).raw)
+        (mkNode ``SFLCompat.Recall.Check.recallChkStmt
+          #[mkAtom "sf_recall", mkAtom "statement", spec[0], mkAtom ":", spec[2]]).raw)
     else
       let cmdStx ← parseStrLitAsCategory `command str
-      pure (cmdStx, (mkNode cmdKind #[mkAtom (if kind == .semantic then "sf_recall" else "sf_recall_source"), cmdStx]).raw)
+      let cmdKind :=
+        if config.strictUniverse then ``SFLCompat.Recall.Check.recallChkStrict else cmdKind
+      let strictArgs :=
+        if config.strictUniverse then #[mkAtom "+", mkAtom "strictUniverse"] else #[]
+      pure (cmdStx, (mkNode cmdKind
+        (#[mkAtom (if kind == .semantic then "sf_recall" else "sf_recall_source")] ++ strictArgs ++ #[cmdStx])).raw)
   let scopes := (← getScopes).modifyHead fun sc =>
     { sc with opts := pp.tagAppFns.set (Elab.async.set sc.opts false) true, isPublic := true }
   let cctx : Command.Context :=
@@ -120,6 +134,7 @@ def recallBlock (config : RecallBlockConfig) (str : StrLit) (kind : Recall.Kind)
       kind
       statement := config.statement
       expectedError := config.error
+      strictUniverse := config.strictUniverse
       source := str.getString
       outputName := config.name
     }
@@ -145,7 +160,6 @@ A `recall` code block checks a declaration up to definitional equality. With
 def recall : CodeBlockExpanderOf RecallBlockConfig
   | config, str =>
     recallBlock config str .semantic ``SFLCompat.Recall.Check.recallChk
-      (some ``SFLCompat.Recall.Check.recallChkStmt)
 
 /--
 A `recallSource` code block checks a whole declaration byte for byte. Its
@@ -154,6 +168,6 @@ contents are not elaborated, so it renders without per-token highlighting.
 @[code_block]
 def recallSource : CodeBlockExpanderOf RecallBlockConfig
   | config, str =>
-    recallBlock config str .source ``SFLCompat.Recall.Source.recallSrc none (highlighted := false)
+    recallBlock config str .source ``SFLCompat.Recall.Source.recallSrc (highlighted := false)
 
 end SFLMeta

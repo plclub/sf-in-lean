@@ -13,10 +13,6 @@ htmlSplit := .never
 file := some "Induction"
 %%%
 
-```lean -show
-set_option pp.fieldNotation false
-```
-
 :::dev
 ```
 SOONER: We should also consider adding more examples to clarify
@@ -563,6 +559,12 @@ after it.
 ::::full
 Let's get some practice with using {tactic}`rw`.
 ::::
+
+:::details
+```lean
+set_option pp.fieldNotation false
+```
+:::
 
 :::::exercise (rating := 2) (name := "double_add")
 Consider the following function, which doubles its argument:

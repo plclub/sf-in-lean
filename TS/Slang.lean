@@ -211,7 +211,9 @@ every occurrence of `0 + e` (i.e., `.plus (.num 0) e`) into just `e`.
 ::::
 
 ```lean
-def Aexp.optimize0plus (a : Aexp) : Aexp :=
+namespace Aexp
+
+def optimize0plus (a : Aexp) : Aexp :=
   match a with
   | num   n          => num n
   | plus  (num 0) e₂ => optimize0plus e₂
@@ -258,25 +260,25 @@ theorem optimize0plus_sound (a : Aexp) :
     | num n =>
       cases n with
       | zero =>
-        simp only [Aexp.optimize0plus, Aexp.eval_plus, Aexp.eval_num, Nat.zero_add]
+        simp only [optimize0plus, eval_plus, eval_num, Nat.zero_add]
         exact ih₂
       | succ n =>
-        simp only [Aexp.optimize0plus, Aexp.eval_plus, Aexp.eval_num]
+        simp only [optimize0plus, eval_plus, eval_num]
         rw [ih₂]
     | plus b₁ b₂ =>
-      simp only [Aexp.optimize0plus, Aexp.eval_plus] at ih₁ ⊢
+      simp only [optimize0plus, eval_plus] at ih₁ ⊢
       rw [ih₁, ih₂]
     | minus b₁ b₂ =>
-      simp only [Aexp.optimize0plus, Aexp.eval_plus] at ih₁ ⊢
+      simp only [optimize0plus, eval_plus] at ih₁ ⊢
       rw [ih₁, ih₂]
     | mult b₁ b₂ =>
-      simp only [Aexp.optimize0plus, Aexp.eval_plus] at ih₁ ⊢
+      simp only [optimize0plus, eval_plus] at ih₁ ⊢
       rw [ih₁, ih₂]
   | minus a₁ a₂ ih₁ ih₂ =>
-    simp only [Aexp.optimize0plus, Aexp.eval_minus]
+    simp only [optimize0plus, eval_minus]
     rw [ih₁, ih₂]
   | mult a₁ a₂ ih₁ ih₂ =>
-    simp only [Aexp.optimize0plus, Aexp.eval_mult]
+    simp only [optimize0plus, eval_mult]
     rw [ih₁, ih₂]
 ```
 
@@ -333,9 +335,11 @@ We can use {tactic}`fun_induction` to achieve a much shorter proof.
 theorem optimize0plus_sound' (a : Aexp) :
     a.optimize0plus.eval = a.eval := by
   fun_induction Aexp.optimize0plus a <;> simp_all
+
+end Aexp
 ```
 
-:::::exercise (rating := 3) (name := "optimize0plusB_sound")
+:::::exercise (rating := 3) (name := "optimize0plus_sound")
 Since the {name}`Aexp.optimize0plus` transformation doesn't change the value of an
 {name}`Aexp`, we should be able to apply it to all the {name}`Aexp`s that appear in a
 {name}`Bexp` without changing the {name}`Bexp`'s value.  Write a function that
@@ -344,47 +348,46 @@ combinators we've just seen to make the proof as short and elegant as
 possible.
 
 ```lean
-def Bexp.optimize0plusB (b : Bexp) : Bexp := solution!(
+def Bexp.optimize0plus (b : Bexp) : Bexp := solution!(
   match b with
   | bool b    =>  bool b
   | eq a₁ a₂  =>  eq a₁.optimize0plus a₂.optimize0plus
   | neq a₁ a₂ =>  neq a₁.optimize0plus a₂.optimize0plus
   | le a₁ a₂  =>  le a₁.optimize0plus a₂.optimize0plus
   | gt a₁ a₂  =>  gt a₁.optimize0plus a₂.optimize0plus
-  | not b₁    =>  not (optimize0plusB b₁)
-  | and b₁ b₂ =>  and (optimize0plusB b₁) (optimize0plusB b₂))
+  | not b₁    =>  not (optimize0plus b₁)
+  | and b₁ b₂ =>  and (optimize0plus b₁) (optimize0plus b₂))
 
-theorem optimize0plusB_test1 :
-    Bexp.optimize0plusB
+theorem Bexp.optimize0plus_test1 :
+    Bexp.optimize0plus
         (.not (.gt (.plus (.num 0) (.num 4)) (.num 8)))
       = (.not (.gt (.num 4) (.num 8))) := solution!(by rfl)
 ```
 
-:::autogradedHole Bexp.optimize0plusB
+:::autogradedHole Bexp.optimize0plus
 :::
 
-:::gradeTheorem "0.5" optimize0plusB_test1
+:::gradeTheorem "0.5" Bexp.optimize0plus_test1
 :::
 
 ```lean
-theorem optimize0plusB_test2 :
-    Bexp.optimize0plusB
+theorem Bexp.optimize0plus_test2 :
+    Bexp.optimize0plus
         (.and (.le (.plus (.num 0) (.num 4)) (.num 5)) (.bool true))
       = (.and (.le (.num 4) (.num 5)) (.bool true)) := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" optimize0plusB_test2
+:::gradeTheorem "0.5" Bexp.optimize0plus_test2
 :::
 
 ```lean
-theorem optimize0plusB_sound (b : Bexp) :
-    b.optimize0plusB.eval = b.eval := by
+theorem Bexp.optimize0plus_sound (b : Bexp) :
+    b.optimize0plus.eval = b.eval := by
   solution!
-    induction b <;>
-      simp_all [Bexp.optimize0plusB, optimize0plus_sound]
+    fun_induction Bexp.optimize0plus b <;> simp_all [Aexp.optimize0plus_sound]
 ```
 
-:::gradeTheorem 2 optimize0plusB_sound
+:::gradeTheorem 2 Bexp.optimize0plus_sound
 :::
 :::::
 
@@ -443,13 +446,14 @@ write `e ⇓ n` to mean that arithmetic expression `e` evaluates to
 value `n`. The `⇓` symbol is typed `\Downarrow`.
 
 ```lean
-scoped notation:55 e:56 " ⇓ " n:56 => Aexp.EvalR e n
+namespace Aexp
+scoped notation:55 e:56 " ⇓ " n:56 => EvalR e n
 ```
 
 ::::full
 The `notation` is declared right after the inductive.
-The `scoped` keyword allows us to scope the notation to the present namespace so it doesn't
-collide with other evaluation relations later.
+The `scoped` keyword allows us to scope the notation to the `Aexp` namespace so it doesn't
+collide with other notations we use for different evaluation relations later.
 ::::
 
 ## Inference Rule Notation
@@ -571,7 +575,7 @@ having to write them out manually like this. I think a simple `#print` may work 
 alternative, assuming there are no namespace issues..
 :::
 
-:::::exercise (rating := 1) (name := "beval_rules") (optional := true)
+:::::exercise (rating := 1) (name := "beval_rules") (manual := true) (optional := true)
 Here, again, is the definition of the {name}`Bexp.eval` function:
 
 ```display
@@ -590,7 +594,6 @@ Write out a corresponding definition of boolean evaluation as a relation
 in inference rule notation.
 
 ::::solution
-
 ```
 Answer (`⇓` is defined below):
 
@@ -641,15 +644,15 @@ It is straightforward to prove that the relational and functional
 definitions of evaluation agree.
 
 ```lean
-theorem Aexp.evalR_iff_eval (a : Aexp) (n : Nat) :
+theorem evalR_iff_eval (a : Aexp) (n : Nat) :
     a ⇓ n ↔ a.eval = n := by
   constructor
   · intro h
     induction h with
     | num n => rfl
-    | plus h₁ h₂ ih₁ ih₂ => simp only [Aexp.eval_plus]; rw [ih₁, ih₂]
-    | minus h₁ h₂ ih₁ ih₂ => simp only [Aexp.eval_minus]; rw [ih₁, ih₂]
-    | mult h₁ h₂ ih₁ ih₂ => simp only [Aexp.eval_mult]; rw [ih₁, ih₂]
+    | plus h₁ h₂ ih₁ ih₂ => simp only [eval_plus]; rw [ih₁, ih₂]
+    | minus h₁ h₂ ih₁ ih₂ => simp only [eval_minus]; rw [ih₁, ih₂]
+    | mult h₁ h₂ ih₁ ih₂ => simp only [eval_mult]; rw [ih₁, ih₂]
   · intro h
     subst h
     induction a with
@@ -663,12 +666,15 @@ We can make the proof quite a bit shorter using more automation like we did in
 the previous section.
 
 ```lean
-theorem Aexp.evalR_iff_eval' (a : Aexp) (n : Nat) :
+theorem evalR_iff_eval' (a : Aexp) (n : Nat) :
     a ⇓ n ↔ a.eval = n := by
   workinclass!
     constructor <;> intro h
     · induction h <;> simp_all
-    · subst h; induction a <;> constructor <;> assumption
+    · subst h
+      induction a <;> constructor <;> assumption
+
+end Aexp
 ```
 
 :::::exercise (rating := 3) (name := "bevalR")
@@ -676,7 +682,10 @@ Write a relation `Bexp.EvalR` in the same style as {name}`Aexp.EvalR`, and prove
 it is equivalent to {name}`Bexp.eval`.
 
 ```lean
-inductive Bexp.EvalR : Bexp → Bool → Prop where
+namespace Bexp
+open scoped Aexp -- opens the ⇓ notation for Aexp.EvalR
+
+inductive EvalR : Bexp → Bool → Prop where
   -- SOLUTION
   | bool (b : Bool) : EvalR (.bool b) b
   | eq {a₁ a₂ : Aexp} {n₁ n₂ : Nat} (h₁ : a₁ ⇓ n₁) (h₂ : a₂ ⇓ n₂) : EvalR (.eq a₁ a₂) (n₁ == n₂)
@@ -688,14 +697,14 @@ inductive Bexp.EvalR : Bexp → Bool → Prop where
       EvalR (.and b₁ b₂) (bv₁ && bv₂)
   -- END SOLUTION
 
-scoped notation:55 e:56 " ⇓ " b:56 => Bexp.EvalR e b
+scoped notation:55 e:56 " ⇓ " b:56 => EvalR e b
 ```
 
 :::autogradedHole Bexp.EvalR
 :::
 
 ```lean
-theorem Bexp.evalR_iff_eval (b : Bexp) (bv : Bool) :
+theorem evalR_iff_eval (b : Bexp) (bv : Bool) :
     b ⇓ bv ↔ b.eval = bv := by
   solution!
     constructor <;> intro h
@@ -704,11 +713,12 @@ theorem Bexp.evalR_iff_eval (b : Bexp) (bv : Bool) :
       induction b <;> constructor <;> simp_all [Aexp.evalR_iff_eval]
 ```
 
-:::gradeTheorem 3 Bexp.evalR_iff_eval
+:::gradeTheorem 3 evalR_iff_eval
 :::
 :::::
 
 ```lean
+end Bexp
 end Slang
 ```
 
@@ -764,10 +774,31 @@ def eval (a : Aexp) : Option Nat :=
                     | _, _ => none
   | div   a₁ a₂ =>  match a₁.eval, a₂.eval with
                     | _, some 0 => none
-                    | some n₁, some n₂ => some (n₁ * n₂)
+                    | some n₁, some n₂ => if n₂ ∣ n₁ then some (n₁ / n₂) else none
                     | _, _ => none
 end Aexp
 ```
+
+:::hide
+Here are some tests to demonstrate that this matches the relational definition.
+```lean
+/-- info: some 3 -/
+#guard_msgs in
+#eval Aexp.eval (.div (.num 6) (.num 2))
+/-- info: none -/
+#guard_msgs in
+#eval Aexp.eval (.div (.num 6) (.num 4))
+/-- info: none -/
+#guard_msgs in
+#eval Aexp.eval (.div (.num 6) (.num 0))
+/-- info: none -/
+#guard_msgs in
+#eval Aexp.eval (.div (.num 0) (.num 0))
+/-- info: some 0 -/
+#guard_msgs in
+#eval Aexp.eval (.div (.num 0) (.num 1))
+```
+:::
 
 This definition is a lot wordier than the earlier version. There are tools
 to reduce this overhead, namely monads, but we will not discuss these in
@@ -829,7 +860,7 @@ relation is no problem.
 :::terse
 What should `Aexp.eval` do with nondeterminism??
 :::
-h₂
+
 ```lean
 inductive Aexp.EvalR : Aexp → Nat → Prop where
   | any (n : Nat) : EvalR .any n                   -- NEW

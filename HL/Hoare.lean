@@ -285,7 +285,7 @@ MRC'20: this is the former terse intro.
 # Assertions
 
 An _assertion_ is a logical claim about the state of a program's
-memory -- formally, a predicate of `State`s.
+memory -- formally, a predicate of {name}`State`s.
 
 ```lean
 open scoped Com MyGetElem
@@ -398,7 +398,7 @@ This example also illustrates a convention that we'll use
 throughout the Hoare Logic chapters: in informal assertions,
 capital letters like `X`, `Y`, and `Z` are Imp variables, while
 lowercase letters like `x`, `y`, `m`, and `n` are ordinary Lean
-variables (of type `Nat`).  This is why, when translating from
+variables (of type {name}`Nat`).  This is why, when translating from
 informal to formal, we replace `X` with `st[X]` but leave `m`
 alone.
 ::::
@@ -563,6 +563,7 @@ The `{{ }}` syntax has `lead` precedence since otherwise it leads to some confli
 This has the downside that assertions need to be wrapped in `()` parentheses when passed as arguments.
 :::
 
+::::details "Notation: Assertions"
 ```lean
 namespace Assertion
 
@@ -673,6 +674,7 @@ variable (f : Nat → Nat → Nat → Nat)
 end Assertion
 open scoped Assertion
 ```
+::::
 
 ::::terse
 Function applications inside assertions automatically interpret their
@@ -1186,22 +1188,10 @@ open scoped HasEval
 def ValidHoareTriple
     (P : Assertion) (c : Com) (Q : Assertion) : Prop :=
   ∀ {st st' : State},
-    (st =[ c ]=> st') →
+    (st =[ ~c ]=> st') →
     P st →
     Q st'
 ```
-
-:::dev "Niklas Halonen (xhalo32)"
-Somethings strange is going on in `theorem if_example`, using `apply hoare_consequence_pre` followed by `· exact hoare_asgn` works, but `refine hoare_consequence_pre hoare_asgn ?_` or `apply hoare_consequence_pre hoare_asgn` don't.
-The only solution I found was to mark `ValidHoareTriple` irreducible.
-
-It has to do something with `apply` and `refine` looking inside the implication in `∀ {st st'}, ...`
-:::
-
-Notation for Hoare triples.  The command between the two assertions is
-parsed with the same grammar as the `imp { … }` notation, so a command
-that is a Lean variable (rather than concrete syntax) is spliced in with
-`~c`, just as in the `st =[ c ]=> st'` notation.
 
 :::instructors
 This pattern of a generic notation with a notation typeclass plus a category-specific variant is from {name}`HasEval` in Imp.
@@ -1216,11 +1206,8 @@ class HasTriple (Com : Type) where
 
 namespace HasTriple
 
-/-- Hoare triple: `{{ P }} c {{ Q }}` -/
-scoped notation:lead "{{" P "}} " c:lead " {{" Q "}}" => Triple ({{ P }}) c ({{ Q }})
-
-/-- Hoare triple with `imp_com` command syntax -/
-scoped syntax:lead (priority := high) "{{" term "}} " imp_com:lead " {{" term "}}" : term
+/-- Hoare triple: `{{ P }} c {{ Q }}` with `imp_com` command syntax -/
+scoped syntax:lead "{{" term "}} " imp_com:lead " {{" term "}}" : term
 scoped macro_rules
   | `({{ $P }} $c:imp_com {{ $Q }}) =>
       ``(HasTriple.Triple ({{ $P }}) (imp { $c }) ({{ $Q }}))
@@ -1228,34 +1215,49 @@ end HasTriple
 
 instance : HasTriple Com where
   Triple := ValidHoareTriple
+```
 
+:::dev "Niklas Halonen (xhalo32)"
+Something strange is going on in `theorem if_example`, using `apply hoare_consequence_pre` followed by `· exact hoare_asgn` works, but `refine hoare_consequence_pre hoare_asgn ?_` or `apply hoare_consequence_pre hoare_asgn` don't.
+The only solution I found was to mark `ValidHoareTriple` irreducible.
+
+It has to do something with `apply` and `refine` looking inside the implication in `∀ {st st'}, ...`
+:::
+
+We make {name}`ValidHoareTriple` irreducible for "technical reasons", and use it only via `validHoareTriple_def` in proofs.
+
+```lean
 open scoped HasTriple
 
 theorem validHoareTriple_def {P : Assertion} {c : Com} {Q : Assertion} :
     {{ P }} ~c {{ Q }} ↔ ∀ {st st' : State},
-      (st =[ c ]=> st') →
+      (st =[ ~c ]=> st') →
       P st →
       Q st' := by rfl
 
 attribute [irreducible] ValidHoareTriple
 ```
 
-::::hide
-```lean
-#check ({{ True }} skip {{ False }})
-#check ({{ True }} X := 0 {{ False }})
-#check ∀ c : Com, ({{ True }} ~c {{ False }})
-```
-::::
-
 ::::details "Notation encoding: printing triples back"
 The delaborator is agnostic to the command type: it prints the command with
 whatever printer is registered for its constructors and splices the result
 into the triple, so a language-extension chapter only has to register a
 printer for its own `Com`.
+
+:::dev "Niklas Halonen (xhalo32)"
+Can we use an unexpander for this? Something like
+```
+@[app_unexpander HasTriple.Triple]
+def unexpandTriple : Lean.PrettyPrinter.Unexpander
+  | `($_ ({{ $P }}) (imp { $c }) ({{ $Q }})) => ``({{ $P }} $c {{ $Q }})
+  | _ => throw ()
+```
+:::
+
 ```lean
-namespace Assertion.Delab
-open Lean PrettyPrinter Delaborator SubExpr Imp.Delab
+namespace HasTriple.Delab
+
+open Lean PrettyPrinter Delaborator SubExpr Assertion.Delab Imp.Delab
 @[delab app.HasTriple.Triple]
 def delabTriple : Delab := whenPPOption getPPNotation do
   guard <| (← getExpr).isAppOfArity ``HasTriple.Triple 5
@@ -1266,12 +1268,16 @@ def delabTriple : Delab := whenPPOption getPPNotation do
   | `(imp { $c:imp_com }) => ``({{ $P }} $c:imp_com {{ $Q }})
   | c => ``({{ $P }} ~$c {{ $Q }})
 
-end Assertion.Delab
+end HasTriple.Delab
 ```
 ::::
 
 :::ignore
 ```lean -show
+#check ({{ True }} skip {{ False }})
+#check ({{ True }} X := 0 {{ False }})
+#check ∀ c : Com, ({{ True }} ~c {{ False }})
+
 /-- info: {{X ≤ 5}} X := X + 1 {{X ≤ 7}} : Prop -/
 #guard_msgs in
 #check {{ X ≤ 5 }} X := X + 1 {{ X ≤ 7 }}
@@ -1331,7 +1337,7 @@ the different syntactic forms of commands in Imp -- one for
 assignment, one for sequencing, one for conditionals, etc. -- plus
 a couple of "structural" rules for gluing things together.  We
 will then be able to prove programs correct using these proof
-rules, without ever unfolding the definition of `ValidHoareTriple`.
+rules, without ever unfolding the definition of {name}`ValidHoareTriple`.
 ::::
 
 ::::terse
@@ -1841,8 +1847,8 @@ We will see how to do so in the next section.
 
 Several proofs below use the facts about total-map updates
 proved in the _Typeclasses_ chapter -- `TotalMap.update_eq`,
-`TotalMap.update_neq`, `TotalMap.update_shadow`, `TotalMap.update_same`,
-and `TotalMap.update_permute`.  Make sure you understand their statements.
+{name}`TotalMap.update_neq`, {name}`TotalMap.update_shadow`, {name}`TotalMap.update_same`,
+and {name}`TotalMap.update_permute`.  Make sure you understand their statements.
 
 ::::::full
 Complete these Hoare triples by providing an appropriate
@@ -1960,7 +1966,7 @@ Note that we need to write out the postcondition in "desugared"
 form, because it needs to talk about two different states: we use
 the original value of `X` to reconstruct the state `st'` before the
 assignment took place.  (Also note that this rule is more complicated
-than `hoare_asgn`!)
+than {name}`hoare_asgn`!)
 
 Prove that this rule is correct.
 
@@ -2271,7 +2277,8 @@ We can also use it to prove the example mentioned earlier.
 Or, formally ...
 
 :::instructors
-This proof uses `simp` followed by `lia` which is a flexible tactic, so the `simp` is considered terminal.
+This proof uses {tactic}`simp` followed by  {tactic}`lia` which is a flexible tactic,
+so the  {tactic}`simp` is considered terminal.
 :::
 
 ```lean
@@ -2326,12 +2333,12 @@ Many of the proofs we have done so far with Hoare triples can be
 streamlined using the automation techniques that we introduced in
 the _Automation_ chapter of _Logical Foundations_.
 
-Recall that `simp` rewrites with any lemmas we pass it.  The
+Recall that  {tactic}`simp` rewrites with any lemmas we pass it.  The
 definitions whose meaning we keep needing to expose in this chapter --
-`ValidHoareTriple`, `AssertImplies`, and `Assertion.subst` -- each
-come with a characterizing lemma (`validHoareTriple_def`,
-`assertImplies_def`, `Assertion.subst_def`) restating the definition
-as an equation.  Passing these lemmas to `simp` replaces the defined
+{name}`ValidHoareTriple`, {name}`AssertImplies`, and {name}`Assertion.subst` -- each
+come with a characterizing lemma ({name}`validHoareTriple_def`,
+{name}`assertImplies_def`, {name}`Assertion.subst_def`) restating the definition
+as an equation.  Passing these lemmas to {tactic}`simp` replaces the defined
 notions by their meanings wherever they appear.  We'll do that
 explicitly below (and shortly package the recipe up as a tactic of
 our own).
@@ -2350,9 +2357,9 @@ The following paragraph is outdated.
 :::
 
 ::::full
-The proof of `hoare_consequence_pre`, repeated below, looks
+The proof of {name}`hoare_consequence_pre`, repeated below, looks
 like an opportune place for automation, because all it does
-is `unfold`, `intro`, and `apply`.  (It uses `assumption`, too,
+is {tactic}`unfold`, {tactic}`intro`, and {tactic}`apply`.  (It uses {tactic}`assumption`, too,
 but that's just application of a hypothesis.)
 ::::
 
@@ -2377,7 +2384,7 @@ theorem hoare_consequence_pre (P P' Q : Assertion) (c : Com)
 :::slidebreak
 :::
 
-Since `AssertImplies` is not marked `irreducible`, and `assertImplies_def` is a proof by definitional equality, we can skip the `rw [assertImplies_def] at himp` and use `P ->> P'` like an implication directly.
+Since {name}`AssertImplies` is not marked `irreducible`, and {name}`assertImplies_def` is a proof by definitional equality, we can skip the `rw [assertImplies_def] at himp` and use `P ->> P'` like an implication directly.
 
 :::dev "Niklas Halonen (xhalo32)"
 This needs a better explanation of when it's okay to use definitions without using their characterizing lemmas.
@@ -2393,10 +2400,10 @@ theorem hoare_consequence_pre' (P P' Q : Assertion) (c : Com)
   exact himp _ hpre
 ```
 
-From now on, we will not usually rewrite `assertImplies_def` explicitly.
+From now on, we will not usually rewrite {name}`assertImplies_def` explicitly.
 
-Since, after the `rw` and `intro`, the remaining steps just apply hypotheses to the goal (and each other), the
-remaining proof can be compressed into a single tactic: {tactic}`apply_rules`.
+Since, after the {tactic}`rw` and {tactic}`intro`, the remaining steps just apply hypotheses to the
+goal (and each other), the remaining proof can be compressed into a single tactic: {tactic}`apply_rules`.
 
 ```lean
 theorem hoare_consequence_pre'' (P P' Q : Assertion) (c : Com)
@@ -2410,7 +2417,7 @@ theorem hoare_consequence_pre'' (P P' Q : Assertion) (c : Com)
 :::slidebreak
 :::
 
-The same trick works for `hoare_consequence_post`.
+The same trick works for {name}`hoare_consequence_post`.
 
 ```lean
 theorem hoare_consequence_post' (P Q Q' : Assertion) (c : Com)
@@ -2424,7 +2431,7 @@ theorem hoare_consequence_post' (P Q Q' : Assertion) (c : Com)
 :::slidebreak
 :::
 
-We can also leave a metavariable for `P'` in `hoare_asgn_example1`, that we did earlier as an example of using the consequence rule:
+We can also leave a metavariable for `P'` in {name}`hoare_asgn_example1`, that we did earlier as an example of using the consequence rule:
 
 ```lean
 theorem hoare_asgn_example1' :
@@ -2468,9 +2475,9 @@ automating entire proofs of Hoare triples.
 
 The other example of using consequence that we did earlier,
 `hoare_asgn_example2`, requires a little more work to automate.
-`simp` simplifies the assertion implication in the final bullet,
+{tactic}`simp` simplifies the assertion implication in the final bullet,
 but cannot finish it: the leftover goal is arithmetic, so it needs
-`lia`.
+{tactic}`lia`.
 
 ```lean
 theorem assertion_sub_example2' :
@@ -2537,7 +2544,7 @@ theorem hoare_asgn_example1''' :
 
 Again, we have quite a nice proof script.  All the low-level
 details of proofs about assertions have been taken care of
-automatically. Of course, `assertion_auto` isn't able to prove
+automatically. Of course, {tactic}`assertion_auto` isn't able to prove
 everything we could possibly want to know about assertions --
 there's no magic here! But it's pretty good.
 
@@ -2587,8 +2594,8 @@ Note here about equivalent preconditions
 ## Sequencing + Assignment
 
 Here's an example of a program involving both sequencing and
-assignment.  Note the use of `hoare_seq` in conjunction with
-`hoare_consequence_pre` and `apply`'s metavariables.
+assignment.  Note the use of {name}`hoare_seq` in conjunction with
+{name}`hoare_consequence_pre` and {tactic}`apply`'s metavariables.
 
 ```lean
 theorem hoare_asgn_example3 (a : Aexp) (n : Nat) :
@@ -2638,9 +2645,9 @@ Y := 2
 ```
 
 Note the use of "`->>`" decorations, each marking a use of
-`hoare_consequence_pre`.
+{name}`hoare_consequence_pre`.
 
-We've started you off by providing a use of `hoare_seq` that
+We've started you off by providing a use of {name}`hoare_seq` that
 explicitly identifies `X = 1` as the intermediate assertion.
 
 ```lean
@@ -2680,7 +2687,7 @@ Hints:
      applied "back to front," from the postcondition to the
      precondition.  So your proof will want to start at the end
      and work back to the beginning of your program.
-   - Remember that `apply` is your friend.)
+   - Remember that {tactic}`apply` is your friend.)
 
 :::dev PotentialImprovement
 One of the OPLSS students noticed that it is quite
@@ -2750,9 +2757,9 @@ triple in invalid, then use those to complete the proof.
 
 Technical hint: Hypothesis `h` below begins `∀ a n, ...`.
 You'll want to instantiate that with the particular `a` and `n`
-you've invented.  You can do that with `have` and `apply`, but
+you've invented.  You can do that with {tactic}`have` and {tactic}`apply`, but
 you may remember (from the _Automation_ chapter of Logical Foundations)
-that Lean offers an even easier tactic: `specialize`.  If you write
+that Lean offers an even easier tactic: {tactic}`specialize`.  If you write
 
 ```display
 specialize h your_a your_n
@@ -2824,7 +2831,7 @@ assignments take place in the "then" and "else" branches.
 ::::full
 Fortunately, we can say something more precise.  In the
 "then" branch, we know that the boolean expression `b` evaluates to
-`true`, and in the "else" branch, we know it evaluates to `false`.
+{name}`true`, and in the "else" branch, we know it evaluates to {name}`false`.
 Making this information available in the premises of the rule gives
 us more information to work with when reasoning about the behavior
 of `c1` and `c2` (i.e., the reasons why they establish the
@@ -2862,7 +2869,7 @@ theorem bexp_eval_false (b : Bexp) (st : State) (h : b.eval st = false) :
 ```
 
 ::::full
-Here, we first reduce the expression to `¬Bexp.eval st b = true` with {tactic}`dsimp`, which is trivial after we instruct `simp` to rewrite `b.eval st` to `false`.
+Here, we first reduce the expression to `¬Bexp.eval st b = true` with {tactic}`dsimp`, which is trivial after we instruct {tactic}`simp` to rewrite `b.eval st` to {name}`false`.
 ::::
 
 :::dev "One An (meluge)"
@@ -2940,7 +2947,8 @@ theorem if_example' :
 
 ::::::full
 :::::exercise (rating := 2) (name := "if_minus_plus")
-Prove the theorem below using `hoare_if`.  Do not use unfold `ValidHoareTriple`.  The `assertion_auto` tactic we just
+Prove the theorem below using {name}`hoare_if`.
+Do not use unfold {name}`ValidHoareTriple`.  The {tactic}`assertion_auto` tactic we just
 defined may be useful.
 
 ```lean
@@ -3045,14 +3053,6 @@ partial def delabComInner : DelabM (TSyntax `imp_com) :=
 @[delab app.If1.Com.skip, delab app.If1.Com.asgn, delab app.If1.Com.seq,
   delab app.If1.Com.cond, delab app.If1.Com.whileDo, delab app.If1.Com.if1]
 partial def delabCom : Delab := whenPPOption getPPNotation do
-  guard <| match_expr ← getExpr with
-    | Com.skip => true
-    | Com.asgn _ _ => true
-    | Com.seq _ _ => true
-    | Com.cond _ _ _ => true
-    | Com.whileDo _ _ => true
-    | Com.if1 _ _ => true
-    | _ => false
   match ← delabComInner with
   | `(imp_com| ~$e) => pure e
   | e => `(term| imp { $e })
@@ -3146,13 +3146,13 @@ This is outdated. It should explain `HasTriple`
 :::
 
 Now we have to repeat the definition and notation of Hoare triples,
-so that they will use the updated `Com` type.
+so that they will use the updated {name}`Com` type.
 
 ```lean
 def ValidHoareTriple
     (P : Assertion) (c : Com) (Q : Assertion) : Prop :=
   ∀ {st st' : State},
-    (st =[ c ]=> st') →
+    (st =[ ~c ]=> st') →
     P st →
     Q st'
 
@@ -3161,7 +3161,7 @@ instance : HasTriple Com where
 
 theorem validHoareTriple_def {P : Assertion} {c : Com} {Q : Assertion} :
     {{ P }} ~c {{ Q }} ↔ ∀ {st st' : State},
-      (st =[ c ]=> st') →
+      (st =[ ~c ]=> st') →
       P st →
       Q st' := by rfl
 
@@ -3230,7 +3230,7 @@ if1 (Y ≠ 0) {
 :::::
 
 Before the next exercise, we need to restate the Hoare rules of
-consequence (for preconditions) and assignment for the new `Com`
+consequence (for preconditions) and assignment for the new {name}`Com`
 type.
 
 ```lean
@@ -3255,13 +3255,13 @@ theorem hoare_asgn {Q : Assertion} {x : Ident} {a : Aexp} :
 :::::exercise (rating := 2) (name := "hoare_if1_good")
 Use your `if1` rule to prove the following (valid) Hoare triple.
 
-Hint: `assertion_auto` will once again get you most but not all
+Hint: {tactic}`assertion_auto` will once again get you most but not all
 the way to a completely automated proof.  You can finish manually,
 or tweak the tactic further.
 
 Hint: If you see a message about failing to unify commands from the
-top-level `Com` with commands from this namespace, it probably means
-you are using a definition or theorem (e.g., `hoare_skip`) from
+top-level {name}`Com` with commands from this namespace, it probably means
+you are using a definition or theorem (e.g., {name}`hoare_skip`) from
 above this exercise without re-proving it for the new version of
 Imp with `if1`.
 
@@ -3904,7 +3904,7 @@ theorem always_loop_hoare'' (P Q : Assertion) :
 
 ::::full
 Of course, this result is not surprising if we remember that
-the definition of `ValidHoareTriple` asserts that the postcondition
+the definition of {name}`ValidHoareTriple` asserts that the postcondition
 must hold _only_ when the command terminates.  If the command
 doesn't terminate, we can prove anything we like about the
 post-condition.
@@ -3999,7 +3999,7 @@ scoped macro_rules
 
 ::::::full
 :::::exercise (rating := 4) (name := "hoare_repeat") (level := Advanced) (optional := true) (manual := true)
-Add new rules for `repeat` to `Com.EvalR` below.  You can use the rules
+Add new rules for `repeat` to {name}`Com.EvalR` below.  You can use the rules
 for `while` as a guide, but remember that the body of a `repeat`
 should always execute at least once, and that the loop ends when
 the guard becomes true.
@@ -4054,7 +4054,7 @@ new `Com.EvalR`.
 def ValidHoareTriple
     (P : Assertion) (c : Com) (Q : Assertion) : Prop :=
   ∀ {st st' : State},
-    (st =[ c ]=> st') →
+    (st =[ ~c ]=> st') →
     P st →
     Q st'
 
@@ -4063,7 +4063,7 @@ instance : HasTriple Com where
 
 theorem validHoareTriple_def {P : Assertion} {c : Com} {Q : Assertion} :
     {{ P }} ~c {{ Q }} ↔ ∀ {st st' : State},
-      (st =[ c ]=> st') →
+      (st =[ ~c ]=> st') →
       P st →
       Q st' := by rfl
 
@@ -4083,7 +4083,7 @@ def ex1_repeat : Com :=
   }
 
 theorem ex1_repeat_works :
-    ∅ =[ ex1_repeat ]=> (Y →ₜ 1 ; X →ₜ 1) := by
+    ∅ =[ ~ex1_repeat ]=> (Y →ₜ 1 ; X →ₜ 1) := by
   solution!
     apply Com.EvalR.repeatEnd
     · apply Com.EvalR.seq
@@ -4097,7 +4097,7 @@ Do we want to `open Com.EvalR` to make the previous proof easier to write?
 :::
 
 Now state and prove a theorem, `hoare_repeat`, that expresses an
-appropriate proof rule for `repeat` commands.  Use `hoare_while`
+appropriate proof rule for `repeat` commands.  Use {name}`hoare_while`
 as a model, and try to make your rule as precise as possible.
 
 ```lean
@@ -4246,7 +4246,7 @@ theorem hoare_repeat' (P : Assertion) (b : Bexp) (c : Com)
     {{ P }} repeat { ~c } until (~b) {{ P ∧ b }} := by
   rw [validHoareTriple_def]
   intro st st' he hP
-  have key : ∀ (cmd : Com) (s s' : State), (s =[ cmd ]=> s') →
+  have key : ∀ (cmd : Com) (s s' : State), (s =[ ~cmd ]=> s') →
       cmd = (imp { repeat { ~c } until (~b) }) → P s →
       P s' ∧ b.eval s' := by
     intro cmd s s' hev
@@ -4518,7 +4518,7 @@ The definition of Hoare triples is exactly as before.
 def ValidHoareTriple
     (P : Assertion) (c : Com) (Q : Assertion) : Prop :=
   ∀ {st st' : State},
-    (st =[ c ]=> st') →
+    (st =[ ~c ]=> st') →
     P st →
     Q st'
 
@@ -4527,7 +4527,7 @@ instance : HasTriple Com where
 
 theorem validHoareTriple_def {P : Assertion} {c : Com} {Q : Assertion} :
     {{ P }} ~c {{ Q }} ↔ ∀ {st st' : State},
-      (st =[ c ]=> st') →
+      (st =[ ~c ]=> st') →
       P st →
       Q st' := by rfl
 
@@ -4584,7 +4584,7 @@ commands. If you find that it can't be completed, your definition of
 `havoc_pre` is probably too strong. Find a way to relax it so that
 `havoc_post` can be proved.
 
-Hint: the `assertion_auto` tactics we've built won't help you here.
+Hint: the {tactic}`assertion_auto` tactics we've built won't help you here.
 You need to proceed manually.
 
 :::instructors
@@ -4707,7 +4707,7 @@ scoped macro_rules
 ::::::full
 To define the behavior of `assert` and `assume`, we need to add
 notation for an error, which indicates that an assertion has
-failed. We modify the `Com.EvalR` relation, therefore, so that
+failed. We modify the {name}`Com.EvalR` relation, therefore, so that
 it relates a start state to either an end state or to `error`.
 The `Result` type indicates the end value of a program,
 either a state or an error:
@@ -4774,7 +4774,7 @@ satisfies `Q`.
 def ValidHoareTriple
     (P : Assertion) (c : Com) (Q : Assertion) : Prop :=
   ∀ {st : State} {r : Result},
-    (st =[ c ]=> r) → P st →
+    (st =[ ~c ]=> r) → P st →
     ∃ st', r = Result.normal st' ∧ Q st'
 
 instance : HasTriple Com where
@@ -4782,7 +4782,7 @@ instance : HasTriple Com where
 
 theorem validHoareTriple_def {P : Assertion} {c : Com} {Q : Assertion} :
     {{ P }} ~c {{ Q }} ↔ ∀ {st : State} {r : Result},
-      (st =[ c ]=> r) → P st →
+      (st =[ ~c ]=> r) → P st →
       ∃ st', r = Result.normal st' ∧ Q st' := by rfl
 
 attribute [irreducible] ValidHoareTriple
