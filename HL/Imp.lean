@@ -674,7 +674,7 @@ scoped macro_rules
   | `(imp { $x:ident }) =>
     if x.getId == `skip then `(Com.skip)
     else Macro.throwErrorAt x s!"expected 'skip', got '{x.getId}'"
-  | `(imp { $c₁; $c₂ }) =>
+  | `(imp { $c₁ ; $c₂ }) =>
     `(Com.seq (imp {$c₁}) (imp {$c₂}))
   | `(imp { $x:ident := $a }) =>
     `(Com.asgn $x (aexp {$a}))
