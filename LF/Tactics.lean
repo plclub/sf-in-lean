@@ -122,7 +122,7 @@ example (n m : Nat) (h₁ : (n, n) = (m, m))
   apply h₂
   exact h₁
 ```
-
+::::::full
 :::::exercise (rating := 2) (name := "apply_exercise") (optional := true)
 Complete the following proof using only {tactic}`apply`.
 
@@ -141,6 +141,7 @@ theorem apply_exercise (m : Nat)
 :::gradeTheorem 2 apply_exercise
 :::
 :::::
+::::::
 
 ::::full
 To use the {tactic}`apply` tactic, the conclusion of the fact
@@ -166,6 +167,7 @@ example (n m : Nat) (h : n = 0 → n = m) (hn : n = 0) : m = n := by
   exact hn
 ```
 
+::::::full
 :::::exercise (rating := 2) (name := "apply_exercise1")
 You can use {tactic}`apply` with previously defined theorems, not
 just hypotheses in the context.  Use a
@@ -204,6 +206,7 @@ as many of its arguments as possible, and any remaining premises
 that still need to be proved become new subgoals.
 :::
 :::::
+::::::
 
 ## Supplying arguments to {tactic}`apply`
 
@@ -614,6 +617,7 @@ We'll explore the principle of explosion in more detail in the
 {ref "Logic"}[next chapter].
 ::::
 
+::::::full
 :::::exercise (rating := 1) (name := "disjoint_ex3")
 ```lean
 theorem disjoint_ex3 {α : Type} (x y z : α) (l : List α)
@@ -626,6 +630,7 @@ theorem disjoint_ex3 {α : Type} (x y z : α) (l : List α)
 :::gradeTheorem 1 disjoint_ex3
 :::
 :::::
+::::::
 
 :::slidebreak
 :::
@@ -1025,6 +1030,7 @@ example (m : Nat) (h : ∀ n, m * n = 0) : m = 0 := by
   exact h
 ```
 
+::::::full
 :::::exercise (rating := 3) (name := "nth?_always_none")
 Use {tactic}`have`, {tactic}`replace`, or {tactic}`specialize` to prove the the following lemma,
 following the model of the examples above. Do not use {tactic}`induction`.
@@ -1044,7 +1050,7 @@ theorem nth?_always_none (l : List Nat) (h : ∀ i, nth? l i = none) :
 :::gradeTheorem 3 nth?_always_none
 :::
 :::::
-
+::::::
 
 Tactics like {tactic}`have` and {tactic}`replace` can also be used with lemmas and
 theorems we've already proven, not just things in our context.
@@ -1416,6 +1422,7 @@ If we rewrite with a conditional statement of the form
 asks us to prove `P` in a new subgoal.  If the statement has more
 than one assumption, then we get one subgoal for each assumption.
 
+::::::full
 :::::exercise (rating := 3) (name := "nth?_after_last")
 Prove this by induction on `l`.
 
@@ -1437,6 +1444,7 @@ theorem nth?_after_last {α : Type}
 :::gradeTheorem 3 nth?_after_last
 :::
 :::::
+::::::
 
 :::::exercise (rating := 3) (name := "length_append_cons") (optional := true)
 
@@ -1576,6 +1584,7 @@ get the first and second projections of `v` using this tactic:
 let ⟨a, β⟩ := v
 ```
 
+::::::full
 :::::exercise (rating := 3) (name := "zip_unzip'")
 Here is an implementation of the {name}`unzip` function mentioned in
 chapter {ref "Poly"}[Poly]:
@@ -1619,6 +1628,7 @@ theorem zip_unzip' {α β : Type} (l : List (α × β))
 :::
 
 :::::
+::::::
 
 ## Splitting with Equations
 
@@ -1803,6 +1813,10 @@ Induction:
 
 ## Additional Exercises
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
+::::::full
 :::::exercise (rating := 2) (name := "append_left_cancel")
 :::dev "Niklas Halonen (xhalo32)"
 After `injections _ eq`, `eq`'s type uses `.append` rather than `++` which is a bit confusing.
@@ -2014,3 +2028,5 @@ theorem anyTrue_eq_anyTrue (α : Type) (test : α → Bool) (l : List α) :
 :::gradeTheorem 6 anyTrue_eq_anyTrue
 :::
 :::::
+
+::::::

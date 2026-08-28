@@ -9,8 +9,10 @@ picture of who is touching what:
   * a per-PR table with Ready-to-merge PRs grouped first, then in-progress PRs,
     and draft PRs collected in their own section at the bottom; each row's most
     recent activity orders it within its group — five columns: the branch
-    (linked to its PR) over its author and last-activity time on a second line
-    in small type; a Status cell of glyph badges (✅ ready, 👍 approved with open
+    (linked to its PR) over its people — whoever created it, plus a
+    `Last edit:` name when someone else pushed the most recent commit — and its
+    last-activity time on a second line in small type; a Status cell of glyph
+    badges (✅ ready, 👍 approved with open
     threads, 🔴 changes requested, 🟠 ready for review, 💬N open threads,
     ✏️ draft, ❗ auto-merge held,
     🔗 fixes issue, ⚠️ main = no longer merges cleanly against `main`, plus
@@ -21,13 +23,17 @@ picture of who is touching what:
     ⚠️ = a real conflict from an in-memory merge not a filename guess, ⊃/⊂ = one
     branch's commits contain the other's), a Changes count — files touched and
     total lines changed — (expander), and a `#Note` cell carrying a dark-red
-    **Stale** badge once the PR has been open more than 48 hours, followed by any
-    `#Note: …` lines reviewers left on the PR — both in the conversation and in
+    **Stale** badge once the PR has been open more than 48 hours *with no
+    commits in that window* (an equally old PR that is still being worked on
+    gets a plain "Created N days ago" instead), followed by any `#Note: …`
+    lines reviewers left on the PR — both in the conversation and in
     still-unresolved review threads on the files.  Every icon carries a hover
-    tooltip (via `<abbr>`) and is glued to its text with a non-breaking space,
-    and a legend below the table spells the glyphs out too.  Only branches with
-    an open PR appear in the table, and only they are weighed when marking its
-    overlaps and conflicts;
+    tooltip (via `<abbr>`) and is glued to its text with a non-breaking space
+    fenced by word joiners (see `glue` — an `&nbsp;` alone does not stop a
+    renderer breaking the line right after an emoji), and a legend below the
+    table spells the glyphs out too.  Only branches with an open PR appear in
+    the table, and only they are weighed when marking its overlaps and
+    conflicts;
   * a "Branches without PRs:" line just below the table — a compact list of
     every active branch *without* a PR: name (linked to its GitHub page)
     followed by a parenthesised gloss — its author (same style as the table),
@@ -71,7 +77,9 @@ from datetime import datetime, timezone
 ISSUE_MARKER = "<!-- branch-watch:auto -->"
 REMOTE = "origin"
 
-# A PR open longer than this is flagged "Stale" in the `#Note`s column.
+# A PR older than this with no commits in that window is flagged "Stale" in
+# the `#Note`s column; one that is old but still moving gets a plain
+# "Created N days ago" note there instead.
 STALE_HOURS = 48
 
 
@@ -186,7 +194,13 @@ def collect_branches():
             if created.endswith(" ago"):
                 created = created[:-4]
         else:
+            first_sha = sha
             created = when
+        # Whoever wrote that first divergent commit is the branch's *creator* —
+        # not always the person who last pushed to it, which is why the table's
+        # first cell names both when they differ.
+        creator, creator_email = git(
+            "log", "-1", "--format=%an%x00%ae", first_sha).split("\0")
         clean_to_main = merges_clean(main, ref) if ahead else True
         branches[ref] = {
             "short": short,
@@ -196,6 +210,10 @@ def collect_branches():
             "author": author,
             "email": email,
             "sha": sha,
+            "creator": creator,
+            "creator_email": creator_email,
+            "creator_sha": first_sha,
+            "creator_login": None,
             "login": None,  # GitHub username, filled in later when a token is set
             "when": when,
             "created": created,
@@ -378,7 +396,7 @@ def fetch_prs(slug, token):
     (`REVIEW_REQUIRED`/`APPROVED`/`CHANGES_REQUESTED`/None), the count of
     `unresolved` review threads, the `auto_merge` / `in_queue` booleans that
     together reveal an auto-merge that is stuck outside the merge queue, the
-    `created` timestamp behind the "Stale" badge, and the list of `#Note: …`
+    `created` timestamp behind the age note, and the list of `#Note: …`
     `notes` reviewers left — in the PR conversation *and* in unresolved review
     threads on the files."""
     owner, _, name = slug.partition("/")
@@ -440,22 +458,51 @@ def fetch_prs(slug, token):
 # --------------------------------------------------------------------------
 # markdown rendering
 # --------------------------------------------------------------------------
-def author_cell(b):
-    """Author identity for a branch: the person's name (their GitHub real name
-    when known, else the commit-author name) shown as the visible text, linked
-    to their profile, with the `@handle` (and the commit alias when it differs
-    from the real name) tucked into the link's hover `title` — e.g.
+def person_cell(author, login, real):
+    """One person's identity: their name (their GitHub real name when known,
+    else the commit-author name) shown as the visible text, linked to their
+    profile, with the `@handle` (and the commit alias when it differs from the
+    real name) tucked into the link's hover `title` — e.g.
     `[Yipeng Liu](… "@berberman, Potato Hatsue")`. Without a resolved handle
     (no token, or unmatched) we fall back to the bare commit-author name."""
-    author = b["author"]
-    login = b.get("login")
-    real = b.get("realname")
     if login:
         visible = real if (real and real != author) else author
         alias = f", {author}" if real and real != author else ""
         title = f"@{login}{alias}".replace('"', "'")
         return f'[{visible}](https://github.com/{login} "{title}")'
     return author
+
+
+def author_cell(b):
+    """Identity of whoever last committed to a branch (see `person_cell`)."""
+    return person_cell(b["author"], b.get("login"), b.get("realname"))
+
+
+def creator_cell(b):
+    """Identity of whoever opened the branch — the author of its oldest commit
+    not yet in `main` (see `person_cell`)."""
+    return person_cell(b["creator"], b.get("creator_login"),
+                       b.get("creator_realname"))
+
+
+def same_person(b):
+    """True if the branch's creator and its last committer are the same person.
+    Handles are compared when both are known (they survive a renamed
+    `user.name`); otherwise the commit-author names are."""
+    c_login, a_login = b.get("creator_login"), b.get("login")
+    if c_login and a_login:
+        return c_login == a_login
+    return b["creator"] == b["author"]
+
+
+def people_cell(b):
+    """The branch's people for the table's first cell: its creator unlabelled,
+    followed by `Last edit: …` when someone else pushed the most recent
+    commit."""
+    who = creator_cell(b)
+    if not same_person(b):
+        who += f" · Last&nbsp;edit: {author_cell(b)}"
+    return who
 
 
 def tip(glyph, title):
@@ -472,11 +519,27 @@ def nbsp(text):
     return text.replace(" ", "&nbsp;")
 
 
+# Between an emoji and the word it labels, a non-breaking space alone is not
+# enough: browsers offer a break opportunity right after an emoji-presentation
+# sequence (the pictograph plus its U+FE0F selector), and in a narrow table cell
+# they take it — which is how "⚠️ main" ended up split across two lines.  A word
+# joiner (U+2060) on each side of the space closes that opportunity: it forbids
+# a break both before and after itself, whatever the neighbouring characters'
+# line-break classes are.
+GLUE = "&#8288;&nbsp;&#8288;"
+
+
+def glue(*parts):
+    """Join `parts` with a space no renderer may break — for a glyph and the
+    text (or link) it labels."""
+    return GLUE.join(p for p in parts if p)
+
+
 def status_badges(pr):
     """Review / merge readiness of an open PR as compact glyph badges (each
     carrying a hover tooltip, and spelled out in the table legend).  Badges are
-    space-joined and each icon is glued to its own text with a non-breaking
-    space, so an icon never wraps away from the word it labels.
+    space-joined and each icon is glued to its own text (see `glue`), so an
+    icon never wraps away from the word it labels.
 
     * 📝 draft.
     * 🔴 changes requested · 🟠 ready for review (out of draft, nobody has
@@ -504,7 +567,8 @@ def status_badges(pr):
                           else tip("👍", "Approved, but with open review threads"))
     if pr["unresolved"]:
         n = pr["unresolved"]
-        badges.append(tip(f"💬&nbsp;{n}", f"{n} open review thread{'' if n == 1 else 's'}"))
+        badges.append(tip(glue("💬", str(n)),
+                          f"{n} open review thread{'' if n == 1 else 's'}"))
     # An auto-merge that's actually *held* (enabled but not yet in the queue) is
     # worth flagging; a PR that has reached the merge queue is a transient state
     # on its way in, so it gets no badge.
@@ -512,7 +576,7 @@ def status_badges(pr):
         badges.append(tip("❗", "Auto-merge enabled but held"))
     if pr["closes"]:
         links = ", ".join(f"[#{i['num']}]({i['url']})" for i in pr["closes"])
-        badges.append(tip("🔗", "Issues this PR closes") + "&nbsp;" + links)
+        badges.append(glue(tip("🔗", "Issues this PR closes"), links))
     return " ".join(badges)
 
 
@@ -605,11 +669,21 @@ def age_phrase(delta):
     return f"{hours // 24} days"
 
 
-def stale_badge(pr, now):
-    """A dark-red **Stale** badge for a PR open longer than `STALE_HOURS`, else
-    an empty string.
+def age_note(pr, b, now):
+    """The age half of the `#Note`s cell — what it says depends on whether an
+    old PR is still moving:
 
-    Rendered as a shields.io image rather than coloured text because neither
+      * open longer than `STALE_HOURS` *and* untouched for that whole window —
+        a dark-red **Stale** badge; nobody is working on it;
+      * open longer than `STALE_HOURS` but with a commit inside that window —
+        a plain, unformatted `Created N days ago`; it is old but alive, so the
+        age is worth stating without crying wolf;
+      * anything younger — nothing at all.
+
+    "Activity" is the branch's most recent commit — the same signal the row's
+    subline shows as its last-activity time.
+
+    The badge is a shields.io image rather than coloured text because neither
     route to colour survives a GitHub table cell: inline CSS is stripped and
     `$\\color{…}$` math is dropped there (the same limitation the group dividers
     work around).  The badge is an image, so it comes through — and its alt text
@@ -620,8 +694,14 @@ def stale_badge(pr, now):
     age = now - created
     if age.total_seconds() < STALE_HOURS * 3600:
         return ""
+    ts = (b or {}).get("ts")
+    if ts and (now - datetime.fromtimestamp(ts, timezone.utc)).total_seconds() \
+            < STALE_HOURS * 3600:
+        days = age.days
+        return f"Created {days} day{'' if days == 1 else 's'} ago"
     return (f'![Stale](https://img.shields.io/badge/Stale-8B0000 '
-            f'"Open {age_phrase(age)} — more than {STALE_HOURS} hours")')
+            f'"Open {age_phrase(age)}, no commits in the last '
+            f'{STALE_HOURS} hours")')
 
 
 def files_cell(files, churn):
@@ -688,7 +768,8 @@ def render(branches, conf, prs, have_token, slug):
                f"`GITHUB_TOKEN`) to refresh manually._")
     out = [ISSUE_MARKER, "", "## Current Activity", ""]
     if not have_token:
-        out.append("> ⚠️&nbsp;No `GITHUB_TOKEN` available — PRs cannot be read, so "
+        out.append(f"> {glue('⚠️', 'No')} `GITHUB_TOKEN` available — PRs "
+                   "cannot be read, so "
                    "this report is empty.")
         out.append("")
 
@@ -719,8 +800,8 @@ def render(branches, conf, prs, have_token, slug):
         # Overlaps are named by PR number (`#N`, linked to the PR, hovering to
         # its branch name and title) rather than by branch name: a row that
         # touches three others stays one short cell.  Each overlap icon carries
-        # a tooltip and is glued to its reference with a non-breaking space, so
-        # the symbol never wraps away from the number it qualifies.
+        # a tooltip and is glued to its reference (see `glue`), so the symbol
+        # never wraps away from the number it qualifies.
         warn = tip("⚠️", "Real merge conflict")
         sup = tip("⊃", "Contains that branch's commits")
         sub = tip("⊂", "Contained in that branch")
@@ -728,27 +809,29 @@ def render(branches, conf, prs, have_token, slug):
         pieces = []
         for h in heads:
             subs = sorted(o for o in rest if o != h and contains(h, o))
-            prefix = f"{warn}&nbsp;" if h in conf[r] else ""
+            prefix = warn + GLUE if h in conf[r] else ""
             h_link = pr_ref(active[h]["short"], prs, slug)
             if subs:
                 sub_links = ", ".join(
                     pr_ref(active[o]["short"], prs, slug) for o in subs)
-                piece = f"{prefix}{sub_links}&nbsp;{sub}&nbsp;{h_link}"
+                piece = prefix + glue(sub_links, sub, h_link)
             else:
                 piece = prefix + h_link
             pieces.append(piece)
-        pieces += [f"{sup}&nbsp;" + pr_ref(active[o]["short"], prs, slug)
+        pieces += [glue(sup, pr_ref(active[o]["short"], prs, slug))
                    for o in contains_o]
-        pieces += [f"{sub}&nbsp;" + pr_ref(active[o]["short"], prs, slug)
+        pieces += [glue(sub, pr_ref(active[o]["short"], prs, slug))
                    for o in contained_by]
         ov = ", ".join(pieces)
         pr = prs.get(b["short"])
-        # First cell: the branch (linked to its PR) with its author and
-        # last-activity time on a second line in small type — three former
-        # columns folded into one.  A wider branch label keeps it readable.
+        # First cell: the branch (linked to its PR) with its people — the
+        # creator, plus a labelled `Last edit:` when someone else pushed last —
+        # and its last-activity time on a second line in small type; three
+        # former columns folded into one.  A wider branch label keeps it
+        # readable.
         branch = branch_link(b["short"], slug, maxlen=40,
                              href=pr["url"] if pr else None)
-        first = f"{branch}<br><sub>{author_cell(b)} · {nbsp(b['when'] + ' ago')}</sub>"
+        first = f"{branch}<br><sub>{people_cell(b)} · {nbsp(b['when'] + ' ago')}</sub>"
         # The old "→ main" column is folded into the Status cell: flag a branch
         # that no longer merges cleanly right there, as a ⚠️ main badge.
         status = pr_cell(b["short"], prs)
@@ -759,14 +842,16 @@ def render(branches, conf, prs, have_token, slug):
             status += (" <sub>based&nbsp;on "
                        f"{branch_link(pr['base'], slug, maxlen=40)}</sub>")
         if not b["clean_to_main"]:
-            status += " " + tip("⚠️&nbsp;main", "No longer merges cleanly with main")
+            status += " " + tip(glue("⚠️", "main"),
+                                "No longer merges cleanly with main")
         # `#Note`s flow middot-separated (see notes_cell); `<sub>` is used purely
         # for smaller glyphs — the block line-height fixes the leading regardless.
-        # The Stale badge leads the cell at full size, outside that `<sub>`, so
-        # ageing PRs stay visible at a glance down the column.
+        # The age note (Stale badge, or a plain "Created N days ago") leads the
+        # cell at full size, outside that `<sub>`, so ageing PRs stay visible at
+        # a glance down the column.
         notes = notes_cell(pr)
         notes = f"<sub>{notes}</sub>" if notes else ""
-        notes = " ".join(x for x in (stale_badge(pr, now_dt), notes) if x)
+        notes = " ".join(x for x in (age_note(pr, b, now_dt), notes) if x)
         row = (f"| {first} | {status} | {ov} | "
                f"{files_cell(b['files'], b['churn'])} | {notes} |")
         # Drafts are their own section at the bottom; among the rest, ready-to-
@@ -780,21 +865,23 @@ def render(branches, conf, prs, have_token, slug):
     # Each non-empty group gets a labelled divider so the eye lands on what's
     # actionable — ready first, then in progress, then drafts last.  When only
     # one group has rows, skip the labels (the table needs no signposting).
-    groups = [("✅ Ready to merge", ready_rows),
-              ("🛠️ Under review", other_rows),
-              ("✏️ Drafts", draft_rows)]
-    present = [(label, rows) for label, rows in groups if rows]
+    # Glyph and words are kept apart here because the label is upper-cased
+    # below, which would mangle the character references `glue` inserts.
+    groups = [("✅", "Ready to merge", ready_rows),
+              ("🛠️", "Under review", other_rows),
+              ("✏️", "Drafts", draft_rows)]
+    present = [(icon, label, rows) for icon, label, rows in groups if rows]
     if len(present) > 1:
-        for label, rows in present:
+        for icon, label, rows in present:
             # GitHub applies its own zebra striping to table rows and an issue
             # body can't override it — and it strips CSS and drops inline math
             # from table cells — so each group divider is set off simply with a
             # bold, upper-cased label, which reads as a header next to the
             # mixed-case data rows.
-            out.append(f"| **{label.upper()}** | | | | |")
+            out.append(f"| **{glue(icon, label.upper())}** | | | | |")
             out += rows
     else:
-        for _, rows in present:
+        for _, _, rows in present:
             out += rows
     out.append("")
 
@@ -810,9 +897,10 @@ def render(branches, conf, prs, have_token, slug):
                 f"{branch_link(b['short'], slug)} "
                 f"({author_cell(b)}, created {nbsp(b['created'])}, "
                 f"active {nbsp(b['when'])}"
-                f"){'&nbsp;' + tip('⚠️', 'Conflicts with an open PR') if clash else ''}"
+                f"){GLUE + tip('⚠️', 'Conflicts with an open PR') if clash else ''}"
             )
-        legend = (" &nbsp;_(⚠️&nbsp;= conflicts with an open PR)_" if any_clash else "")
+        legend = (f" &nbsp;_({glue('⚠️', '=')} conflicts with an open PR)_"
+                  if any_clash else "")
         # Set at normal body size (no `<sub>` wrapper) so it reads as a proper
         # paragraph rather than fine print.
         out.append("**Branches without PRs:** " + ", ".join(items) + "." + legend)
@@ -821,17 +909,21 @@ def render(branches, conf, prs, have_token, slug):
     # ---- the table's Status / Overlaps legend ----
     if active:
         out.append(
-            "<sub>**Status** ✅&nbsp;ready · 👍&nbsp;approved, threads open · "
-            "🔴&nbsp;changes requested · 🟠&nbsp;ready for review · "
-            "💬&nbsp;open threads · "
-            "✏️&nbsp;draft · ❗&nbsp;auto-merge "
-            "held · 🔗&nbsp;fixes issue · ⚠️&nbsp;main conflicts with `main`. "
+            f"<sub>**Status** {glue('✅', 'ready')} · "
+            f"{glue('👍', 'approved,')} threads open · "
+            f"{glue('🔴', 'changes')} requested · "
+            f"{glue('🟠', 'ready')} for review · "
+            f"{glue('💬', 'open')} threads · "
+            f"{glue('✏️', 'draft')} · {glue('❗', 'auto-merge')} "
+            f"held · {glue('🔗', 'fixes')} issue · {glue('⚠️', 'main')} "
+            "conflicts with `main`. "
             "&nbsp; **Overlaps** PRs sharing files (hover for the branch and "
-            "title) · plain = clean co-edit · ⚠️&nbsp;real conflict "
-            "· ⊃&nbsp;contains · ⊂&nbsp;contained in. "
+            f"title) · plain = clean co-edit · {glue('⚠️', 'real')} conflict "
+            f"· {glue('⊃', 'contains')} · {glue('⊂', 'contained')} in. "
             f"&nbsp; **`#Note`s** Stale&nbsp;=&nbsp;open more than "
-            f"{STALE_HOURS}&nbsp;hours; notes come from PR comments and "
-            "unresolved review threads.</sub>")
+            f"{STALE_HOURS}&nbsp;hours with no commits since; an equally old "
+            "PR that is still moving just says when it was created; other "
+            "notes come from PR comments and unresolved review threads.</sub>")
         out.append("")
 
     # ---- files: conflicting first, then clean co-edits, then single-branch ----
@@ -844,7 +936,7 @@ def render(branches, conf, prs, have_token, slug):
             labels = []
             for o in sorted(refs):
                 clash = any(o in conf[p] for p in refs if p != o)
-                mark = tip("⚠️", "Real merge conflict") + "&nbsp;" if clash else ""
+                mark = (tip("⚠️", "Real merge conflict") + GLUE) if clash else ""
                 labels.append(mark + branch_link(active[o]["short"], slug))
             rows.append(f"| `{f}` | {len(refs)} | {', '.join(labels)} |")
         return rows
@@ -961,6 +1053,17 @@ def main():
         b["login"] = (commit_login(slug, b["sha"], token) if token else None) \
             or login_from_email(b["email"])
         b["realname"] = user_realname(b["login"], token)
+        # The creator (author of the branch's first divergent commit) is
+        # resolved the same way, but only when that is a different commit —
+        # otherwise the tip's identity already answers it, and a second commits
+        # API call would buy nothing.
+        if b["creator_sha"] == b["sha"]:
+            b["creator_login"], b["creator_realname"] = b["login"], b["realname"]
+        else:
+            b["creator_login"] = (
+                commit_login(slug, b["creator_sha"], token) if token else None
+            ) or login_from_email(b["creator_email"])
+            b["creator_realname"] = user_realname(b["creator_login"], token)
 
     body = render(branches, conf, prs, have_token=bool(token), slug=slug)
 
