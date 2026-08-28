@@ -810,7 +810,7 @@ imp {Z := X; Y := 1; while (Z ≠ 0) {Y := Y * Z; Z := Z - 1}}
 ## Desugaring Notations
 
 Even though the notations are useful for getting the high-level picture, it's sometimes helpful to turn off the notation to see the parsed structure as a plain term.
-This can be done with `set_option pp.notation false` (which we briefly mentioned in {ref "Typeclasses"}[Typeclasses] chapter) as follows:
+This can be done with `set_option pp.notation false` (which we briefly mentioned in the Typeclasses chapter) as follows:
 
 ```lean (name := imp1)
 #check imp { X := X + 1 }
