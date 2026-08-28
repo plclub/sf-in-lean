@@ -289,12 +289,18 @@ updates. More on exercises below.
 
 If you are *reading Software Foundations on your own*, you can get the most
 up-to-date version from the [SF-in-Lean](https://github.com/plclub/sf-in-lean) GitHub
-repository. Clone that repository and then build it by typing `make` from the root
-directory. This will construct various versions of the book.
+repository. Clone that repository and then build it by typing `make lf-student` from
+the root directory. Doing so will construct the student version (full prose, with solutions elided) of the _Logical Foundations_ book.
 
-Assuming you want to start from the beginning, we recommend typing `make lf-student`
-instead. This builds the _Logical Foundations_ volume in its student form
-(full prose, with solutions elided) and writes two things to `_out/lf/student/`:
+Building the book requires that you have Lean installed. If you do not, follow the
+instructions [here](https://lean-lang.org/install/manual/) to install the Lean toolchain
+manager `elan` which will then manage your Lean installation. Alternatively, once you
+have added the Lean 4 extension to VS Code, you can open a Lean file in the repository
+(for example, `LF.lean` from the top level directory) and it will install `elan`
+and Lean automatically. Both installation methods have the same effect, putting the
+Lean toolchain in the same place on your filesystem.
+
+With Lean installed, `make lf-student` writes two things to `_out/lf/student/`:
 
 - `html/`, an HTML-formatted version of the whole book; and
 - `lean/`, a standalone Lean project holding the same chapters as `.lean` files, with solutions to exercises omitted.
@@ -331,6 +337,8 @@ at the generated HTML files:
   ```
 
 Then visit `http://localhost:8000` and start reading.
+
+If you want to build everything — student version, "terse" instructor version, solutions, and grading versions — type `make`, `make lf`, etc.
 
 ## Exercises
 
