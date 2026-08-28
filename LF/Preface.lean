@@ -265,31 +265,72 @@ follow these steps:
 
 - Install VS Code if needed.
 - From the Extensions tab of VS Code, install the Lean 4 extension.
-- Clone the [SF-in-Lean](https://github.com/plclub/sf-in-lean) git repo and open
-  it in VS Code.
+- Separately: Download the book, build it (if necessary) — more below.
+- Open the built book directory in a VS Code window.
 - Open a Lean file; the extension will offer to install Lean; accept, and it will fetch
   the version this book needs.
 - Wait for Lean to build the project (it takes a few minutes).
 
-:::dev "Claude (AI assistant)" BeforeNextRelease
-These steps send the reader to the *sources* repo, but the files a reader is
-meant to work in are the ones the build generates: `make lf-student` writes a
-standalone Lake project (its own `lakefile.toml` and `lean-toolchain`) to
-`_out/lf/student/lean`, and that is where the exercises with `sorry`s live.  The
-`LF/*.lean` files in the repo are Verso documents — prose plus code blocks — and
-building the repo builds Verso and all three volumes, which is a good deal more
-than "a few minutes".
+### Downloading and using the book for a class
 
-There is also a chicken-and-egg problem in the ordering: running `make` at all
-needs `elan`/`lake` already installed, but the step above gets Lean via the VS
-Code extension, which only offers it once a Lean project is open.
+If you are using this book as part of a class, your instructor will have created
+a "student" release for you. Download the `.zip` file for that release, unzip it,
+and then open the resulting directory in VS Code. Open any `.lean` file (e.g., `LF/Basics.lean`) to get started.
 
-Both go away once there is a released archive of the student `.lean` files: the
-steps become "download and unpack, open the folder in VS Code, accept the
-install prompt".  Until that exists, this section should probably say plainly
-that readers get the files from their instructor or by following
-`ALPHA-TESTERS.md`.
-:::
+If you would like to read the HTML version of the book, it should be hosted no your
+course website (you may be reading it now!).
+
+Note that as the book is changing while you are taking your class, you should download
+a fresh `.zip` for each homework you do, opening it in a fresh directory. This way
+you will have access to prior solutions, and you will automatically get any Lean
+updates. More on exercises below.
+
+### Downloading and building the book from Git, for self study
+
+If you are *going through Software Foundations on your own*, you can get the most
+up-to-date version from the [SF-in-Lean](https://github.com/plclub/sf-in-lean) GitHub
+repository. Clone that repository and then build it by typing `make` from the root
+directory. This will construct various versions of the book.
+
+Assuming you want to start from the beginning, we recommend typing `make lf-student`
+instead. This builds the _Logical Foundations_ volume in its student form
+(full prose, with solutions elided) and writes two things to `_out/lf/student/`:
+
+- `html/`, an HTML-formatted version of the whole book; and
+- `lean/`, a standalone Lean project holding the same chapters as `.lean` files, with solutions to exercises omitted.
+
+Use `make student` instead if you also want _Type Systems_ (`ts`) and
+_Hoare Logic_ (`hl`). The first build compiles the whole dependency tree and
+takes a while; later builds are incremental.
+
+Now you can open the generated Lean project as its own folder — not as a file
+inside your clone:
+
+  ```display
+  code _out/lf/student/lean
+  ```
+
+  or
+
+  ```display
+  cd _out/lf/student/lean
+  code .
+  ```
+
+You can also use File → Open Folder.
+
+Treat this as a scratch copy: *every `make` regenerates it from the
+Verso sources, overwriting whatever is there.*  Work on your proofs
+here, but keep anything you want to survive somewhere else.
+
+If you would like to read the book HTML, start a local HTTP server and point it
+at the generated HTML files:
+
+  ```display
+  python3 -m http.server 8000 -d _out/lf/student/html
+  ```
+
+Then visit `http://localhost:8000` and start reading.
 
 ## Exercises
 
