@@ -395,5 +395,6 @@
    "new": "of the first, and `false` otherwise.",
    "why": "Matches the `true` in the same sentence."
   }
- ]
+ ],
+ "completed": true
 }

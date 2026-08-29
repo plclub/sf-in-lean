@@ -194,8 +194,6 @@ expression involving `nextWorkingDay`.
 #eval nextWorkingDay Day.friday
 ```
 
-Lean prints:
-
 ```leanOutput nextWDay
 Day.monday
 ```
@@ -203,8 +201,6 @@ Day.monday
 ```lean (name := nextNextWDay)
 #eval nextWorkingDay (nextWorkingDay Day.saturday)
 ```
-
-Lean prints:
 
 ```leanOutput nextNextWDay
 Day.tuesday
@@ -446,8 +442,8 @@ explanations and all the exercises.
 :::::full
 ::::exercise (rating := 1) (name := "and3")
 Do the same for the `and3` function below. This function should
-return `true` when all of its inputs are `true`, and `false`
-otherwise.
+return {name}`MyBool.true` when all of its inputs are {name}`MyBool.true`,
+and {name}`MyBool.false` otherwise.
 
 ```lean
 def and3 (b1 : MyBool) (b2 : MyBool) (b3 : MyBool) : MyBool
@@ -587,7 +583,7 @@ theorem true_and_explained : ∀ (b : MyBool), (MyBool.true && b) = b := by
 ::::full
 Like some other well-known languages (Python, Haskell, etc.),
 Lean is _whitespace-sensitive_. That is, the indentation in proofs is important, and changing
-it can change the meaning of the proof, usually causing it to break. 
+it can change the meaning of the proof, usually causing it to break.
 
 If we had written the following, we'd see an error:
 
@@ -598,8 +594,7 @@ theorem true_and_wrong : ∀ (b : MyBool), (MyBool.true && b) = b := by
 ```
 
 To see the error message in the Lean file,
-change `sf_expect_failure_in` to `sf_expect_failure_in?` temporarily.
-You should see the following message.
+change `sf_expect_failure_in` to `sf_expect_failure_in?` temporarily. You should see the following message.
 
 ```leanOutput indent
 Tactic `introN` failed: There are no additional binders or `let` bindings in the goal to introduce
@@ -697,7 +692,6 @@ We can use `#check` to check the type of an expression:
 #check Bool.true
 ```
 
-This prints:
 ```leanOutput true
 Bool.true : Bool
 ```
@@ -713,7 +707,6 @@ matches the given type and signal an error if not.
 #check (Bool.not Bool.true : Bool)
 ```
 
-This prints:
 ```leanOutput true2
 true : Bool
 ```
@@ -858,20 +851,19 @@ def isRed' (c : Color) : Bool :=
 ```
 
 This {name}`isRed'` function produces the same result as
-{name}`isRed` but illustrates the _use_ of a pattern variable.
-
+{name}`isRed`. It also illustrates the _use_ of a pattern variable in the corresponding branch.
 :::::full
 The {lean}`Color.primary r` pattern stores the {name}`RGB` argument into variable {lean}`r`,
 and then pattern matches on that argument to produce the final
 result.
 
 ::::exercise (rating := 1) (name := "is_weekend")
-Define a function that takes a `Day` and returns `true` if the day is
-a weekend, and `false` otherwise.
+Define a function that takes a `Day` and returns `true` iff the day is
+a weekend.
 
-Then, fill in the right-hand sides of the `example` blocks below.
+Then fill in the right-hand sides of the `example` blocks below.
 If you've done both correctly, the blocks will produce no errors
-and contain no {tactic}`sorry`.
+and contain no uses of {tactic}`sorry`.
 
 Hint: You could write this function by pattern matching on
 each possible day of the week, or you could try to
@@ -902,8 +894,8 @@ Define a function that takes two colors and returns `true` if
 the second color is an _inversion_ of the first, and `false` otherwise.
 
 Inversion is defined by cases:
-Black is an inversion of white, and vice versa.
-Red is an inversion of blue, and vice versa.
+Black is an inversion of white and vice versa.
+Red is an inversion of blue and vice versa.
 Green is not an inversion of anything.
 
 As before, write the right-hand sides of the `example` blocks
@@ -919,7 +911,6 @@ def isInversion (c1 c2 : Color) : Bool
     | Color.primary RGB.blue, Color.primary RGB.red => Bool.true
     | _, _ => false
     )
-
 
 theorem isInversion_test1 : isInversion Color.black Color.white = true := solution!(by rfl)
 theorem isInversion_test2 : isInversion Color.white Color.black = Bool.true := solution!(by rfl)
@@ -940,15 +931,15 @@ theorem isInversion_test4 : isInversion (Color.primary RGB.green) (Color.primary
 ## Namespaces
 
 ::::full
-We have been using Lean's system of _namespaces_ for managing potentially
-conflicting names. Now we have seen enough that we can look more closely at
+This chapter has already used Lean's system of _namespaces_ for managing potentially
+conflicting names in a few places. Now we have seen enough that we can look more closely at
 how it works.
 
 When we enclose a collection of declarations in `namespace X ... end X`,
 references from outside this collection to names declared within
 it are referred to with prefix `X.`, like `X.foo` instead of just `foo`.
 In large Lean developments, namespaces are
-used to organize definitions and theorems the same way
+used to organize definitions and theorems similarly to how
 modules are used in other programming languages.
 ::::
 
@@ -975,14 +966,13 @@ Playground.myFoo : RGB
 ```
 
 :::full
-Namespaces can be reopened as often as you like to add new definitions and access old ones.
+Namespaces can be closed and later reopened, as often as you like, to add new definitions and access old ones more conveniently.
 When inside a `namespace`, definitions from that namespace can be referenced
 without prefixes.
 :::
 
 ```lean (name := ns2)
 namespace Playground
--- this refers to the `myFoo` we defined in the `Playground` namespace previously
 def myBar : RGB := myFoo
 end Playground
 
@@ -994,16 +984,15 @@ Playground.myBar : RGB
 ```
 
 ::::full
-When a type is created, a `namespace` with the same name as that type is implicitly created as well;
-definitions on that type are available inside that `namespace` without a prefix. In the example
-below, we can use the `blue` constructor without qualification because
-we are inside the {name}`RGB` `namespace`, which is the same as `blue`'s type.
+When a new type is declared, a `namespace` with the same name is implicitly created as well;
+definitions on that type are available inside the `namespace` without a prefix. For example,
+we can use the `blue` constructor without qualification below because
+we are inside the {name}`RGB` `namespace`.
 ::::
 
 ::::terse
 Type definitions implicitly create namespaces.
 ::::
-
 
 ```lean
 namespace RGB
@@ -1015,7 +1004,7 @@ Top-level definitions can also be prefixed by a namespace,
 which opens the namespace temporarily for the body of the definition.
 
 ```lean (name := rgb_1)
---- this works, because the definition is qualified by `RGB.`
+--- The following works because the definition is qualified by `RGB.`
 def RGB.myOtherBlue : RGB := myBlue
 
 #check RGB.myBlue
@@ -1031,7 +1020,7 @@ RGB.myOtherBlue : RGB
 ```
 
 ```lean +error (name := rgb_2)
--- this doesn't work; the identifier is undefined
+-- This doesn't work: the identifier is undefined
 #check myBlue
 ```
 
@@ -1041,7 +1030,7 @@ Unknown identifier `myBlue`
 
 ::::full
 Similarly, we could rewrite the definition of `nextWorkingDay`
-from above inside the `Day` namespace like so:
+inside the `Day` namespace like so:
 ::::
 
 ```lean
@@ -1099,8 +1088,7 @@ open MyOtherNamespace (myVisibleDef)
 MyOtherNamespace.myVisibleDef : Bool
 ```
 
-But `myHiddenDef`, which we did not `open`, still needs its full name;
-using it unqualified is an error:
+But `myHiddenDef`, which we did not include in the `open`, still needs to be qualified:
 
 ```lean +error (name := ns_3)
 #check myHiddenDef
@@ -1112,9 +1100,9 @@ Unknown identifier `myHiddenDef`
 
 ::::full
 In fact, this is exactly what Lean does with the standard {name}`Bool` type by default.
-Since it is such an important
+Since it is an important
 part of many proofs and programs, Lean implicitly `open`s many of `Bool`'s functions and
-constructors. Accordingly, we can use constructors like {name}`true` and {name}`false` and functions
+constructors. This means we can use constructors like {name}`true` and {name}`false` and functions
 like {name}`not` without qualifying them with {name}`Bool`.
 ::::
 
@@ -1142,13 +1130,16 @@ saving us the need to explicitly specify it every time we use the name. Instead 
 the fully qualified style (e.g., {name}`Day.monday`), we can opt for an implicitly qualified style,
 writing just `.monday`.
 
-When we do this, Lean tries to resolve the `.monday` name by seeing what its expected type is
-and inferring which namespace it must be from based on that type. If there is only one such
+Lean tries to resolve `.monday` by checking what type is expected by the context in which this expression appears
+and inferring the namespace from that type. If there is only one such
 namespace (i.e., if it is unambiguous which constructor we're referring to), then it will
 automatically resolve to the expected value.
+:::dev "Benjamin Pierce (bcpierce00)"
+The wording is potentially confusing: From what we've said, readers might infer that every type has an associated namespace, so if we know the expected type then the namespace will always be unambiguous...
+:::
 
-So, for example, we can also write {name}`nextWorkingDay` as follows, using the shorter
-style for both the value being matched upon and the value being returned:
+So, for example, we can also write {name}`nextWorkingDay` like this, using the shorter
+style for both the value being matched and the value being returned:
 ::::
 
 ::::terse
@@ -1168,10 +1159,10 @@ def nextWorkingDay' (d : Day) : Day :=
 ```
 
 ::::full
-In the function above, both the type of `d` and the return type of the function are declared
+Here, both the type of `d` and the return type of the function are declared
 to be {name}`Day`s. When we use the `.monday` style in the function body, Lean can figure
 out that we must mean `Day.monday`. However, in the example below, Lean can't figure out
-which version of `.true` we mean, since it could either be {name}`Bool.true` or {name}`MyBool.true`.
+which version of `.true` we mean, since both  {name}`Bool.true` and {name}`MyBool.true` are in scope and the context doesn't tell us which one we want.
 In this case, it will raise an error:
 ::::
 
@@ -1195,7 +1186,7 @@ Hint: Using one of these would be unambiguous:
   [apply] `Lean.Meta.Grind.Filter.true`
 ```
 
-Here, though, because {name}`not` is a function that takes a {name}`Bool` argument, Lean knows that
+But in the following example, because {name}`Bool.not` takes a {name}`Bool` argument, Lean knows that
 `.true` must here be a {name}`Bool`:
 
 ```lean (name := bt)
@@ -1210,13 +1201,13 @@ Here, though, because {name}`not` is a function that takes a {name}`Bool` argume
 
 ::::exercise (rating := 1) (name := "custom_namespace_checks")
 Predict the output of each of the statements below.
-Do you think their results would change depending on which namespace
+Would their results change depending on which namespace
 the statements appear in? How?
 
 ```
-#check .black -- Write your prediction here.
-#check Color.black -- Write your prediction here.
-#check RGB -- Write your prediction here.
+#check .black           -- Write your prediction here.
+#check Color.black      -- Write your prediction here.
+#check RGB              -- Write your prediction here.
 #check Playground.myFoo -- Write your prediction here.
 ```
 
@@ -1238,10 +1229,11 @@ namespace Playground
 ```
 
 ::::full
-A single constructor of an inductive type can have multiple parameters,
-not just zero or one. This feature is one way to define _tuple types_ in Lean,
-which are like record/struct types except that their fields are accessed by their _position_
-in patterns rather than by a specific (field) _name_.
+A given constructor of an inductive type can have multiple parameters,
+not just zero or one. This feature is one way to define _tuple types_ in Lean.
+:::dev "Benjamin Pierce (bcpierce00)"
+Is there another way to define tuple types?  (The discussion below is about an analog of record types, not tuples.)
+:::
 
 As an example, consider representing the four bits in
 a nibble (half a byte). We first define a datatype `Bit` that
@@ -1270,7 +1262,7 @@ Nibble.bits Bit.b1 Bit.b0 Bit.b1 Bit.b0 : Nibble
 ```
 
 ::::full
-The `bits` constructor illustrates a feature of multi-parameter
+The `bits` constructor illustrates a convenience feature of multi-parameter
 declarations, both for constructors and for functions: instead
 of writing `(x0 : Bit) (x1 : Bit) ...`, we write `(x0 x1 ... : Bit)`
 since all of the variables have the same type. We could have done
@@ -1278,7 +1270,7 @@ the same with the function definition {name}`MyBool.or` above, writing
 `or (b1 b2 : MyBool)` rather than `or (b1 : MyBool) (b2 : MyBool)`.
 
 The `bits` constructor acts as a wrapper for its contents.
-Unwrapping is done by pattern matching, as in the `allZero` function
+Unwrapping happens during pattern matching, as in the `allZero` function
 below, which tests a Nibble to see if all its bits are `b0`.
 ::::
 
@@ -1306,7 +1298,7 @@ end Playground
 :::suppressPreviousHeaderWhenTerse
 :::
 
-When defining an inductive type with just one constructor, we can instead use a `structure`:
+An inductive type with just one constructor can alternatively be defined as a `structure`, an analog of a record type in other programming languages.
 
 ```lean
 structure NibbleStruct : Type where
@@ -1317,7 +1309,7 @@ structure NibbleStruct : Type where
 ```
 
 :::full
-Rather than construct this as `.bits .b0 .b0 .b0 .b0`, we construct it as:
+Rather than construct an instance of this type as `.bits .b0 .b0 .b0 .b0`, we write it like this:
 :::
 
 ```lean (name := nbs)
@@ -1331,8 +1323,8 @@ Rather than construct this as `.bits .b0 .b0 .b0 .b0`, we construct it as:
 The `.mk` constructor is created for us.
 
 :::full
-Structures are more commonly constructed by assigning values to their _fields_.
-Each field name is paired with its value using `:=`:
+A nicer way to build structure values is to
+assign values to their fields by name.
 :::
 
 ```lean
@@ -1349,13 +1341,12 @@ Since the result type is declared to be {name}`NibbleStruct`, Lean knows
 which structure and fields we mean. Unlike {name}`NibbleStruct.mk`,
 this construction syntax doesn't depend on the order of fields.
 
-Now that we have seen how to construct a structure from scratch,
-how do we "update" an existing structure, or in other words, construct a new structure
-while reusing some old fields?
+Besides constructing structures from scratch,
+we can also "update" an existing structure — i.e., construct a new structure while reusing some of the old fields.
 :::
 
 :::terse
-How can we "update" a structure?
+We can "update" a structure like this:
 :::
 
 ```lean
@@ -2859,7 +2850,7 @@ The first property we will prove about our system is that
 purchasing a ticket is an _idempotent_ operation
 (i.e., performing it twice has the same effect as performing it once).
 
-::::exercise (rating := 2) (name := "buy_ticket_idempotent")
+::::exercise (rating := 2) (name := "buyTicket_idempotent")
 ```lean
 theorem buyTicket_idempotent (t : Traveler) :
     buyTicket (buyTicket t) = buyTicket t := by
@@ -2924,7 +2915,7 @@ attribute [irreducible] checkIn
 A traveler who does not yet have a ticket can buy one and then check in.
 After this, the traveler is checked in and their carry-on bag needs to be screened.
 
-::::exercise (rating := 1) (name := "buy_ticket_then_check_in")
+::::exercise (rating := 1) (name := "buyTicket_then_checkIn")
 ```lean
 theorem buyTicket_then_checkIn (bagContent : BagContent) :
     checkIn (buyTicket (.noTicket bagContent)) = .checkedIn bagContent .notScreened := by
@@ -2981,7 +2972,7 @@ theorem inspectBag_prohibited (screeningStatus : ScreeningStatus) :
 attribute [irreducible] inspectBag
 ```
 
-::::exercise (rating := 2) (name := "inspect_bag_idempotent")
+::::exercise (rating := 2) (name := "inspectBag_idempotent")
 Show that inspecting the same unchanged carry-on bag twice has the same effect as inspecting it once.
 
 ```lean
@@ -3060,7 +3051,7 @@ so changing and inspecting the carry-on can be performed in either order.
 There are two such cases: the traveler may not yet have a ticket,
 or may have a ticket but not yet be checked in.
 
-::::exercise (rating := 2) (name := "inspect_changeBag_commute")
+::::exercise (rating := 2) (name := "inspectBag_changeBag_comm")
 ```lean
 theorem inspectBag_changeBag_comm_noTicket
     (oldContent newContent : BagContent) :

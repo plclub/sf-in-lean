@@ -1,0 +1,175 @@
+{
+  "file": "LF/Basics.lean",
+  "chapter": "Basics",
+  "round": 2,
+  "proposals": [
+    {
+      "id": "basics-r02-001",
+      "cat": "typo/missing-word",
+      "old": "Our definition `MyBool` is equivalent",
+      "new": "Our definition of `MyBool` is equivalent",
+      "why": "\"Our definition `MyBool`\" is missing the preposition; the noun phrase needs \"of\"."
+    },
+    {
+      "id": "basics-r02-002",
+      "cat": "formatting/blank-lines",
+      "old": "This still doesn't explain WHY we are doing things two different ways.  And I don't understand why myself, so I can't explain it. :-)\n:::\n\n\n\n::::terse",
+      "new": "This still doesn't explain WHY we are doing things two different ways.  And I don't understand why myself, so I can't explain it. :-)\n:::\n\n::::terse",
+      "why": "A run of three blank lines; the chapter uses at most one."
+    },
+    {
+      "id": "basics-r02-003",
+      "cat": "quotes/american-style",
+      "old": "pronounced \"forall\",",
+      "new": "pronounced \"forall,\"",
+      "why": "CMOS 6.9: in American style the comma goes inside the closing quotation mark, as the chapter already does at \"reflexivity,\" and \"successor.\""
+    },
+    {
+      "id": "basics-r02-004",
+      "cat": "parallelism/gerund",
+      "old": "`b` and prove\n    the property holds",
+      "new": "`b` and proving\n    the property holds",
+      "why": "Parallel to \"by introducing\": both objects of \"by\" should be gerunds."
+    },
+    {
+      "id": "basics-r02-005",
+      "cat": "typo/misspelling",
+      "old": "sides of the equality are not textually indentical.",
+      "new": "sides of the equality are not textually identical.",
+      "why": "Misspelling of \"identical\"."
+    },
+    {
+      "id": "basics-r02-006",
+      "cat": "formatting/blank-lines",
+      "old": "## Aside: Unicode in Lean\n:::suppressPreviousHeaderWhenTerse",
+      "new": "## Aside: Unicode in Lean\n\n:::suppressPreviousHeaderWhenTerse",
+      "why": "Every other `:::suppressPreviousHeaderWhenTerse` in the chapter is separated from its heading by a blank line; this one and the Airport Exercise one are the exceptions."
+    },
+    {
+      "id": "basics-r02-007",
+      "cat": "formatting/blank-lines",
+      "old": "of a pattern variable in the corresponding branch.\n:::::full",
+      "new": "of a pattern variable in the corresponding branch.\n\n:::::full",
+      "why": "An opening directive elsewhere in the chapter is always preceded by a blank line."
+    },
+    {
+      "id": "basics-r02-008",
+      "cat": "formatting/blank-lines",
+      "old": "```\n\n\n::::full\nFinally, Lean can often automatically figure out",
+      "new": "```\n\n::::full\nFinally, Lean can often automatically figure out",
+      "why": "Two blank lines in a row; the chapter uses at most one."
+    },
+    {
+      "id": "basics-r02-009",
+      "cat": "markup/comment-marker",
+      "old": "```lean (name := rgb_1)\n--- The following works",
+      "new": "```lean (name := rgb_1)\n-- The following works",
+      "why": "Three dashes where every other Lean line comment in the chapter uses two."
+    },
+    {
+      "id": "basics-r02-010",
+      "cat": "markup/code-font",
+      "old": "A Nibble is half a byte",
+      "new": "A `Nibble` is half a byte",
+      "why": "`Nibble` is the name of the type just defined, so it should be in code font as it is elsewhere in the section."
+    },
+    {
+      "id": "basics-r02-011",
+      "cat": "markup/code-font",
+      "old": "which tests a Nibble to see if all its bits",
+      "new": "which tests a `Nibble` to see if all its bits",
+      "why": "`Nibble` is a type name; code font, as in \"the datatype `Nibble`\" a few lines above."
+    },
+    {
+      "id": "basics-r02-012",
+      "cat": "hyphenation/compound-noun",
+      "old": "deconstruct a Nibble by pattern-matching.",
+      "new": "deconstruct a Nibble by pattern matching.",
+      "why": "The chapter writes the noun open everywhere else (\"by pattern matching on both `n` and `m`\"); CMOS 7.89 leaves such a compound noun open."
+    },
+    {
+      "id": "basics-r02-013",
+      "cat": "formatting/blank-lines",
+      "old": "But there is a difference between {name}`succ` and the other two.\n::::full",
+      "new": "But there is a difference between {name}`succ` and the other two.\n\n::::full",
+      "why": "An opening directive elsewhere in the chapter is always preceded by a blank line."
+    },
+    {
+      "id": "basics-r02-014",
+      "cat": "formatting/spacing",
+      "old": "```lean (name :=  three_1)",
+      "new": "```lean (name := three_1)",
+      "why": "Doubled space inside the block header; every other header has one."
+    },
+    {
+      "id": "basics-r02-015",
+      "cat": "capitalization/heading-case",
+      "old": "## Proving properties about functions in Lean",
+      "new": "## Proving Properties about Functions in Lean",
+      "why": "Every other heading in the chapter is headline-style (CMOS 8.159); this one and \"Proof state and tactics\" are the only sentence-case exceptions."
+    },
+    {
+      "id": "basics-r02-016",
+      "cat": "capitalization/heading-case",
+      "old": "## Proof state and tactics",
+      "new": "## Proof State and Tactics",
+      "why": "Headline-style capitalization, to match every other heading in the chapter."
+    },
+    {
+      "id": "basics-r02-017",
+      "cat": "formatting/spacing",
+      "old": "add_zero_zero_explained : ∀  n : Nat",
+      "new": "add_zero_zero_explained : ∀ n : Nat",
+      "why": "Doubled space after `∀`; the other statements use one."
+    },
+    {
+      "id": "basics-r02-018",
+      "cat": "formatting/blank-lines",
+      "old": "example : ble four two = false := by rfl\n\n```",
+      "new": "example : ble four two = false := by rfl\n```",
+      "why": "Stray blank line before the closing fence; no other code block in the chapter ends with one."
+    },
+    {
+      "id": "basics-r02-019",
+      "cat": "formatting/blank-lines",
+      "old": "A (slightly) more interesting theorem:\n:::\n\n\n::::full",
+      "new": "A (slightly) more interesting theorem:\n:::\n\n::::full",
+      "why": "Two blank lines in a row; the chapter uses at most one."
+    },
+    {
+      "id": "basics-r02-020",
+      "cat": "formatting/blank-lines",
+      "old": "n * succ m = n * m + n\n```\n\n\n::::full",
+      "new": "n * succ m = n * m + n\n```\n\n::::full",
+      "why": "Two blank lines in a row; the chapter uses at most one."
+    },
+    {
+      "id": "basics-r02-021",
+      "cat": "formatting/blank-lines",
+      "old": "Sometimes simple calculation and rewriting are not enough...\n:::\n\n\n```lean +error",
+      "new": "Sometimes simple calculation and rewriting are not enough...\n:::\n\n```lean +error",
+      "why": "Two blank lines in a row; the chapter uses at most one."
+    },
+    {
+      "id": "basics-r02-022",
+      "cat": "formatting/spacing",
+      "old": "(b : Bool) (h: (b || false) = true)",
+      "new": "(b : Bool) (h : (b || false) = true)",
+      "why": "Missing space before the colon in the binder; every other binder in the chapter is spaced."
+    },
+    {
+      "id": "basics-r02-023",
+      "cat": "formatting/blank-lines",
+      "old": "## Airport Exercise\n:::suppressPreviousHeaderWhenTerse",
+      "new": "## Airport Exercise\n\n:::suppressPreviousHeaderWhenTerse",
+      "why": "Blank line after the heading, as elsewhere in the chapter."
+    },
+    {
+      "id": "basics-r02-024",
+      "cat": "formatting/blank-lines",
+      "old": "behavior, and prove that the implementation satisfies them.\n\n\n```lean",
+      "new": "behavior, and prove that the implementation satisfies them.\n\n```lean",
+      "why": "Two blank lines in a row; the chapter uses at most one."
+    }
+  ]
+}
