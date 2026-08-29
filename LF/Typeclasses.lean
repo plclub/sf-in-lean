@@ -52,21 +52,21 @@ other languages, such as traits in Rust.
 Consider the following function, which checks whether a natural number occurs in a list:
 
 ```lean
-def List.elem_nat (n : Nat) (l : List Nat) : Bool :=
+def List.elemNat (n : Nat) (l : List Nat) : Bool :=
   match l with
   | [] => false
-  | m :: l' => bif n == m then true else elem_nat n l'
+  | m :: l' => bif n == m then true else elemNat n l'
 
-theorem List.elem_nat_nil (n : Nat) : [].elem_nat n = false := rfl
+theorem List.elem_nat_nil (n : Nat) : [].elemNat n = false := rfl
 
 theorem List.elem_nat_cons (n m : Nat) (l : List Nat) :
-    (m :: l).elem_nat n = bif n == m then true else elem_nat n l := rfl
+    (m :: l).elemNat n = bif n == m then true else elemNat n l := rfl
 ```
 
 ```lean
-#eval [0, 1].elem_nat 0
-#eval [0, 1].elem_nat 1
-#eval [0, 1].elem_nat 2
+#eval [0, 1].elemNat 0
+#eval [0, 1].elemNat 1
+#eval [0, 1].elemNat 2
 ```
 
 What if we want this to work for lists of _any_ element type, not just {name}`Nat`? Parametric
@@ -74,10 +74,10 @@ polymorphism suggests simply replacing {name}`Nat` with a type variable {lean}`�
 but that produces a puzzling error:
 
 ```lean -keep +error (name := elem_poly_error)
-def List.elem_poly {α : Type} (x : α) (l : List α) : Bool :=
+def List.elemPoly {α : Type} (x : α) (l : List α) : Bool :=
   match l with
   | [] => false
-  | y :: l' => bif x == y then true else elem_poly x l'
+  | y :: l' => bif x == y then true else elemPoly x l'
 ```
 
 ```leanOutput elem_poly_error
@@ -92,12 +92,12 @@ We'll see exactly why shortly; for now, here's one way to sidestep the problem:
 have the caller supply the equality test to use.
 
 ```lean
-def List.elem_poly_eq {α : Type} (eq : α → α → Bool) (x : α) (l : List α) : Bool :=
+def List.elemPolyEq {α : Type} (eq : α → α → Bool) (x : α) (l : List α) : Bool :=
   match l with
   | [] => false
-  | y :: l' => bif eq x y then true else elem_poly_eq eq x l'
+  | y :: l' => bif eq x y then true else elemPolyEq eq x l'
 
-#eval [0, 1].elem_poly_eq Nat.beq 0
+#eval [0, 1].elemPolyEq Nat.beq 0
 ```
 
 This works, but it's tedious: every caller has to know, and remember to supply, the right equality
@@ -113,31 +113,31 @@ the name of the class in an _instance implicit_ on the polymorphic variable that
 instance's function applies to. This directs Lean to rely on the class inside the function, and to
 find and fill in the appropriate instance when the function is called.
 
-Here is what this looks like for `List.elem_poly`:
+Here is what this looks like for `List.elemPoly`:
 
 ```lean
-def List.elem_poly {α : Type} [BEq α] (x : α) (l : List α) : Bool :=
+def List.elemPoly {α : Type} [BEq α] (x : α) (l : List α) : Bool :=
   match l with
   | [] => false
-  | y :: l' => bif x == y then true else elem_poly x l'
+  | y :: l' => bif x == y then true else elemPoly x l'
 
-theorem List.elem_poly_nil {α : Type} [BEq α] (x : α) : [].elem_poly x = false := rfl
+theorem List.elemPoly_nil {α : Type} [BEq α] (x : α) : [].elemPoly x = false := rfl
 
-theorem List.elem_poly_cons {α : Type} [BEq α] (x y : α) (l : List α) :
-    (y :: l).elem_poly x = bif x == y then true else elem_poly x l := rfl
+theorem List.elemPoly_cons {α : Type} [BEq α] (x y : α) (l : List α) :
+    (y :: l).elemPoly x = bif x == y then true else elemPoly x l := rfl
 
-#eval [0, 1].elem_poly 0
+#eval [0, 1].elemPoly 0
 ```
-Comparing {name}`List.elem_poly_eq` with {name}`List.elem_poly`, we see three differences.
-First, {name}`List.elem_poly_eq` takes an _explicit_ parameter `eq`,
-whereas {name}`List.elem_poly` specifies an instance implicit `[BEq α]`. The instance implicit
+Comparing {name}`List.elemPolyEq` with {name}`List.elemPoly`, we see three differences.
+First, {name}`List.elemPolyEq` takes an _explicit_ parameter `eq`,
+whereas {name}`List.elemPoly` specifies an instance implicit `[BEq α]`. The instance implicit
 indicates that an instance of {name}`BEq` must be provided at
 call sites for the particular type `α` that is used.
-Second, whereas {name}`List.elem_poly_eq` invokes parameter `eq` to test equality,
-{name}`List.elem_poly` uses `==` instead. As {ref "Lists"}[Lists] noted when we first used it,
+Second, whereas {name}`List.elemPolyEq` invokes parameter `eq` to test equality,
+{name}`List.elemPoly` uses `==` instead. As {ref "Lists"}[Lists] noted when we first used it,
 `==` on {name}`Nat` comes from the {name}`BEq` typeclass.
-Finally, whereas {lean}`[0, 1].elem_poly_eq Nat.beq 0` passes the equality
-function {name}`Nat.beq` explicitly, in {lean}`[0, 1].elem_poly 0` Lean fills it in
+Finally, whereas {lean}`[0, 1].elemPolyEq Nat.beq 0` passes the equality
+function {name}`Nat.beq` explicitly, in {lean}`[0, 1].elemPoly 0` Lean fills it in
 automatically based on the type {name}`Nat` of the {name}`List`.
 
 :::dev "xhalo32"
@@ -146,7 +146,7 @@ You can see in proofs of `List.elem_nat` versus `List.elem_poly_eq` versus `List
 and how `Nat.beq` and `==` play different roles.
 :::
 
-Going back to the earlier version of {name}`List.elem_poly`, without the instance implicit, we
+Going back to the earlier version of {name}`List.elemPoly`, without the instance implicit, we
 can now understand the error message: {lean}`α` was fully generic,
 so the `==` in its body would have needed to work for _every_ type {lean}`α`, and no
 single {name}`BEq` instance can do that. So Lean's search failed.
@@ -161,17 +161,17 @@ to define a typeclass in the first place.
 mechanism — classes, instances, and synthesis — that made `==` resolve automatically above.
 
 Suppose we want a function that returns the first element of a list, defaulting to a
-given value if the list is empty. As with {name}`List.elem_poly_eq` above, here is a version
+given value if the list is empty. As with {name}`List.elemPolyEq` above, here is a version
 that makes the default value an explicit parameter:
 
 ```lean
-def List.headOr_ex {α : Type} (defaultValue : α) (l : List α) : α :=
+def List.headOrEx {α : Type} (defaultValue : α) (l : List α) : α :=
   match l with
   | [] => defaultValue
   | x :: _ => x
 
-#eval [1, 2, 3].headOr_ex 0
-#eval ([] : List Nat).headOr_ex 0
+#eval [1, 2, 3].headOrEx 0
+#eval ([] : List Nat).headOrEx 0
 ```
 
 This works, but again it's tedious: every caller has to supply an element of `α` to default to,
@@ -212,7 +212,7 @@ end DefaultValueScratch
 ```
 
 Now for the marking: we need to tell Lean that `DefaultValue` is the sort of structure it should
-search for automatically, the way it needs to for {name}`List.headOr_ex`'s `defaultValue` argument.
+search for automatically, the way it needs to for {name}`List.headOrEx`'s `defaultValue` argument.
 We do this by writing `class` in place of `structure`:
 
 ```lean
@@ -228,8 +228,8 @@ instance instDefaultValueNat : DefaultValue Nat where
 ```
 
 Lean can now find this instance on its own, via _typeclass synthesis_ (or _typeclass inference_) —
-the same process that found {lean}`BEq Nat` earlier. That means we can rewrite {name}`List.headOr_ex`
-the same way we rewrote {name}`List.elem_poly_eq` into {name}`List.elem_poly` above, replacing the
+the same process that found {lean}`BEq Nat` earlier. That means we can rewrite {name}`List.headOrEx`
+the same way we rewrote {name}`List.elemPolyEq` into {name}`List.elemPoly` above, replacing the
 explicit {lean}`defaultValue` parameter with an instance implicit:
 
 ```lean
@@ -324,11 +324,11 @@ so this search has a unique answer.
 
 We'll put {name}`DefaultValue`'s standard-library equivalent, {name}`Inhabited`, to work later in this
 chapter, when we define maps that need a default value for a generic type. First, though, let's go
-back to {name}`List.elem_poly` and see how its `[BEq α]` argument actually gets resolved.
+back to {name}`List.elemPoly` and see how its `[BEq α]` argument actually gets resolved.
 
 # Using Typeclasses
 
-Let's check what `==` meant for {name}`List.elem_nat`, with notation display turned off:
+Let's check what `==` meant for {name}`List.elemNat`, with notation display turned off:
 
 ```lean (name := ppBeq)
 set_option pp.notation false in
@@ -371,26 +371,26 @@ instance (priority := low) : BEq Nat where
   beq := Nat.beq
 ```
 
-This is the instance Lean supplies for `[BEq α]` when {name}`List.elem_poly` is called on a
+This is the instance Lean supplies for `[BEq α]` when {name}`List.elemPoly` is called on a
 {lean}`List Nat` — no different from Lean choosing {name}`instDefaultValueNat` for
 {name}`DefaultValue.value` earlier when it was equated with {lean}`(1 : Nat)`.
 
 ::::exercise (rating := 1) (name := "List.elem_poly_eq_elem_nat")
-Prove that {name}`List.elem_poly` agrees with {name}`List.elem_nat` when specialized to
+Prove that {name}`List.elemPoly` agrees with {name}`List.elemNat` when specialized to
 natural numbers.
 
 ```lean
-theorem List.elem_poly_eq_elem_nat (xs : List Nat) (n : Nat) : xs.elem_poly n = xs.elem_nat n := by
+theorem List.elemPoly_eq_elemNat (xs : List Nat) (n : Nat) : xs.elemPoly n = xs.elemNat n := by
   solution!(
   induction xs with
   | nil =>
-    rewrite [List.elem_poly_nil, List.elem_nat_nil]
+    rewrite [List.elemPoly_nil, List.elem_nat_nil]
     rfl
   | cons hd tl ih =>
-    rewrite [List.elem_poly_cons, List.elem_nat_cons, ih]
+    rewrite [List.elemPoly_cons, List.elem_nat_cons, ih]
     rfl)
 ```
-:::gradeTheorem 1 List.elem_poly_eq_elem_nat
+:::gradeTheorem 1 List.elemPoly_eq_elemNat
 :::
 ::::
 
@@ -1345,7 +1345,7 @@ Next, we provide some fundamental properties about {name}`toTotal`:
 theorem toTotal_empty {α β : Type} : (∅ : PartialMap α β).toTotal = (∅ : TotalMap α (Option β)) := rfl
 
 @[simp]
-theorem toTotal_update{α β : Type} [BEq α] (m : PartialMap α β) (a : α) (b : β) :
+theorem toTotal_update {α β : Type} [BEq α] (m : PartialMap α β) (a : α) (b : β) :
     (a →ₚ b ; m).toTotal = a →ₜ some b ; m.toTotal := rfl
 ```
 
