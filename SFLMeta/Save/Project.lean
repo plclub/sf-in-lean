@@ -52,19 +52,19 @@ private def projectRequires
     return #[batteries]
 
 private def lakefileToml (vol : String) (extraLibs : Array String)
-    (requires : Array Lake.Toml.Table) : Lake.Toml.Table :=
+    (reqs : Array Lake.Toml.Table) : Lake.Toml.Table :=
   let libs := (#[vol] ++ extraLibs.filter (· != vol)).map fun name =>
     Lake.Toml.Table.empty.insert `name name
   Lake.Toml.Table.empty
     |>.insert `name (vol.toLower ++ "-extracted")
     |>.insert `version "0.1.0"
     |>.insert `defaultTargets #[vol]
-    |>.insert `require requires
+    |>.insert `require reqs
     |>.insert `lean_lib libs
 
 private def writeProject (dest : System.FilePath) (toolchain : String)
     (vol : String) (v : Variant) (files : Array (String × String))
-    (extraLibs : Array String) (requires : Array Lake.Toml.Table) : IO Unit := do
+    (extraLibs : Array String) (reqs : Array Lake.Toml.Table) : IO Unit := do
   IO.FS.createDirAll dest
 
   -- Remove existing generated files
@@ -80,7 +80,7 @@ private def writeProject (dest : System.FilePath) (toolchain : String)
 
   IO.FS.writeFile (dest / "lakefile.toml")
     <| Lake.Toml.ppTable
-    <| lakefileToml vol extraLibs requires
+    <| lakefileToml vol extraLibs reqs
   IO.FS.writeFile (dest / "lean-toolchain") toolchain
   IO.FS.writeFile (dest / "README.md")
     s!"# {vol} — {v} version\n\nGenerated from the Verso source.\n"
