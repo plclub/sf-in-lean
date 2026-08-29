@@ -2755,7 +2755,7 @@ theorem and_eq_or (b c : Bool) : (b && c) = (b || c) → b = c := by
 :::
 
 :::dev "Benjamin Pierce (bcpierce00)"
-In this section, the same artifact is called a simplification rule, a rewrite rule, and a characterization lemma...
+In this section, the same artifact is called a simplification rule, a rewrite rule, and a characterization lemma.  I think we're using "simplification rule" here.
 :::
 
 :::::full
