@@ -11,12 +11,11 @@ htmlSplit := .never
 file := "Basics"
 %%%
 
-
 :::instructors
-This file and Induction.lean each take about an hour to
+TIMING:
+In Rocq, this file and Induction.lean each used to take about an hour to
 get through in a not-too-rushed fashion (with questions, etc.).
-
-(N.b. This estimate may need to be revised now that the chapter has been converted to Lean! Please edit this note to reflect your own experience teaching it.)
+This may need to be revised now that the chapter has been converted to Lean! Please edit this note to reflect your own experience teaching it.
 
 You may want to assign both files together as the homework for the
 first week, depending on the level of the class.  Just Basics is
@@ -39,6 +38,7 @@ This chapter introduces some of Lean's most essential features for writing funct
 and proving things about how they behave.
 
 # Introduction
+
 ::::full
 The _functional style_ of programming is founded on simple
 mathematical intuitions: A program is essentially a concrete
