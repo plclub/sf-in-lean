@@ -307,7 +307,7 @@ inductive MyBool : Type where
   | false
 ```
 :::full
-We next invoke a couple of Lean directives to help control formatting.  Exactly what these directives mean is not important for present purposes — you can understand everything in the rest of the book without knowing — so we will mark these commands — and similar bits later on — with `THESE DETAILS CAN BE SKIPPED` comments in `.lean` files, and with folded-up segments in the HTML presentation. Feel free to have a peek if you want (click on the triangle in the HTML to unfold it), or just jump down to the following material and keep going.
+We next invoke a couple of Lean directives to help control formatting.  Exactly what these directives mean is not important for present purposes — you can understand everything in the rest of the book without knowing — so we will mark these commands — and similar bits later on — with `THE FOLLOWING DETAILS CAN BE SKIPPED` comments in `.lean` files, and with folded-up segments in the HTML presentation. Feel free to have a peek if you want (click on the triangle in the HTML to unfold it), or just jump down to the following material and keep going.
 :::
 :::details
 ```lean -show
@@ -526,13 +526,13 @@ its documentation.
 
 Tactics manipulate the _proof state_, which you can see in the Lean InfoView panel.
 The proof state is divided by the symbol ⊢, pronounced _turnstile_. The part
-before it is the _context_, and the part after it is
-the _goal_. The context records what we know
+before the turnstile is the _context_; the part after it is
+the _goal_. The context records what we know — the current assumptions —
 at some given point in the proof; the goal is what we are trying to prove
 at that point.
 
-Each tactic manipulates the goal, the context, or both to get things
-into a configuration that is closer to being "solved." A tactic can also
+Each tactic manipulates the goal, the context, or both to move things
+toward a configuration that is closer to being "solved." A tactic can also
 _close_ (solve) the current goal, finishing its proof.
 
 Let's walk through the example above with this terminology in mind.
@@ -697,6 +697,7 @@ We can use `#check` to check the type of an expression:
 #check Bool.true
 ```
 
+This prints:
 ```leanOutput true
 Bool.true : Bool
 ```
@@ -712,6 +713,7 @@ matches the given type and signal an error if not.
 #check (Bool.not Bool.true : Bool)
 ```
 
+This prints:
 ```leanOutput true2
 true : Bool
 ```
@@ -2758,8 +2760,11 @@ theorem and_eq_or (b c : Bool) : (b && c) = (b || c) → b = c := by
 :::::
 
 ## Airport Exercise
-
 :::suppressPreviousHeaderWhenTerse
+:::
+
+:::dev "Benjamin Pierce (bcpierce00)"
+In this section, the same artifact is called a simplification rule, a rewrite rule, and a characterization lemma...
 :::
 
 :::::full

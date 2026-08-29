@@ -32,6 +32,12 @@ def appendAll (buf : SaveBuffers) (file : String) (s : String) : SaveBuffers :=
   let vs := buf.getD file default
   buf.insert file <| vs.map (· ++ s)
 
+/-- Collapse the blank line a just-appended block left behind, so the next
+appended comment line lands directly under it rather than after a gap. -/
+def dropBlankLine (buf : SaveBuffers) (file : String) : SaveBuffers :=
+  let vs := buf.getD file default
+  buf.insert file <| vs.map fun s => if s.endsWith "\n\n" then (s.dropEnd 1).toString else s
+
 def appendOnly (buf : SaveBuffers) (file : String) (variant : Variant) (s : String) : SaveBuffers :=
   let vs := buf.getD file default |>.mapV fun v x => if v == variant then x ++ s else x
   buf.insert file vs
@@ -445,11 +451,14 @@ partial def walkBlock (width : Nat) (isTerse : Bool) (file : String) (b : Verso.
         | .str s => s
         | _ => ""
       let opener := if summary.isEmpty
-        then "THESE DETAILS CAN BE SKIPPED"
-        else s!"THESE DETAILS CAN BE SKIPPED ({summary})"
-      let mut buf := buf.appendAll file (asModuleDoc opener)
+        then "THE FOLLOWING DETAILS CAN BE SKIPPED"
+        else s!"THE FOLLOWING DETAILS CAN BE SKIPPED ({summary})"
+      -- Both markers hug the content they bracket: the opener drops the blank
+      -- line `asModuleDoc` would leave after it, and the closer collapses the
+      -- one the last content block left behind.
+      let mut buf := buf.appendAll file ((asModuleDoc opener).dropEnd 1).toString
       buf := walkBlocks width isTerse file contents buf
-      buf := buf.appendAll file (asModuleDoc "END DETAILS")
+      buf := (buf.dropBlankLine file).appendAll file (asModuleDoc "END DETAILS")
       return buf
     if name == ``Block.quiz then
       -- A quiz is shown in every build product; label it so the reader of the
