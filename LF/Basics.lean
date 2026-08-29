@@ -187,19 +187,14 @@ Evaluation:
 Having defined a function, we should check that it works on some
 examples.  There are a few different ways to do this in
 Lean.  One is to use the `#eval` command to evaluate a compound
-expression involving `nextWorkingDay`.  (Lean's responses are shown
-just below.)
+expression involving `nextWorkingDay`.
 ::::
-
-:::dev "Benjamin Pierce (bcpierce00)"
-There is probably not time to fix this, but the way responses are displayed is confusing.  They
-should be marked as responses in some more explicit way.
-:::
-
 
 ```lean (name := nextWDay)
 #eval nextWorkingDay Day.friday
 ```
+
+Lean prints:
 
 ```leanOutput nextWDay
 Day.monday
@@ -208,6 +203,8 @@ Day.monday
 ```lean (name := nextNextWDay)
 #eval nextWorkingDay (nextWorkingDay Day.saturday)
 ```
+
+Lean prints:
 
 ```leanOutput nextNextWDay
 Day.tuesday
@@ -220,10 +217,6 @@ We can also record what we _expect_ the result of calling a function to be in th
 example : nextWorkingDay (nextWorkingDay Day.saturday) = Day.tuesday := by
   rfl
 ```
-:::dev "Benjamin Pierce (bcpierce00)"
-Do we really *have* to follow the Lean convention of putting the `:= by` on the same line
-as the theorem statement?  It's awful.,
-:::
 
 ::::full
 This declaration asserts that the second working day after `saturday` is `tuesday`.
@@ -269,11 +262,9 @@ This panel displays the results of commands like `#eval` (click on a particular 
 as well as the current goal state when working on proofs.
 The InfoView content always follows your cursor.
 
-You can command-click on a type or variable name to navigate to its definition.
+On Windows and Linux, Ctrl-click a type or variable name to navigate to its definition.
+On macOS, Command-click instead.
 Try this with the mention of `nextWorkingDay` in the above `#eval`.
-:::dev "Benjamin Pierce (bcpierce00)"
-Is it called command-click on Linux and Windows?
-:::
 
 You can also hover over expressions in the source code to see their types.
 Try this with mentions of {name}`nextWorkingDay` and `Day.saturday` in the above `#eval`.
@@ -296,11 +287,14 @@ and `false`.
 We define our own `MyBool` to teach the concept of building booleans from
 scratch. Our definition `MyBool` is equivalent to Lean's built-in {name}`Bool`,
 which we'll switch to later.
+We call it `MyBool` to avoid clashing with the built-in name.
+Later in the chapter, will show a different way of avoiding such clashes: we will place our custom natural numbers in a fresh `NatPlayground` namespace,
+where they can be called `Nat` without clashing with Lean's built-in {name}`Nat`.
 ::::
-
 :::dev "Benjamin Pierce (bcpierce00)"
-Why are our custom booleans called `MyBool` but our custom nats are called `Nat`?
+This still doesn't explain WHY we are doing things two different ways.  And I don't understand why myself, so I can't explain it. :-)
 :::
+
 
 
 ::::terse
@@ -441,9 +435,6 @@ theorem nand_test4 : nand MyBool.true  MyBool.true  = MyBool.false := solution!(
 :::gradeTheorem "0.25" nand_test1 nand_test2 nand_test3 nand_test4
 :::
 
-:::dev
-TODO: `nand` needs `@[autogradedHole]`
-:::
 ::::
 
 :::::terse
@@ -486,17 +477,18 @@ Now that we've defined some basic functions on booleans, let's see how to
 _prove_ some simple properties of those functions. Here is a simple rule
 about `&&`:
 
-- for any boolean value {lean}`b`, {lean}`(MyBool.true && b) = b`
+```display
+For any boolean value b, (MyBool.true && b) = b
+```
 
 This is an example of a _proposition_, a logical claim that we can try to prove.
 It says that {lean}`MyBool.true && b` is equal to {lean}`b` for every {name}`MyBool` `b`.
 
 How do we write this proposition in Lean?  Like this:
 
-- `theorem true_and : ∀ (b : MyBool), (MyBool.true && b) = b`
-:::dev "Benjamin Pierce (bcpierce00)"
-Could it (and the one above) be displayed instead of bulleted?
-:::
+```display
+theorem true_and : ∀ (b : MyBool), (MyBool.true && b) = b
+```
 
 The keyword `theorem` indicates that we are stating (and eventually proving)
 a proposition; the text after the first `:` is the proposition we want to prove.
@@ -1793,29 +1785,23 @@ ever change, the interface it exposes to the outside world remains the same.
 In simple examples such conventions may seem trivial or even silly; in complex codebases,
 it is the only way to maintain crucial invariants that prevent a system from becoming unmaintainable.
 
-The same principle applies to programs and proofs in Lean.
-In idiomatic Lean, it is considered poor style to _unfold_ — that is, "peek
-through" — definitions by using {tactic}`rfl` to implicitly simplify expressions
-that aren't syntactically identical. If you take a look at the proofs of
-{name}`add_zero` and {name}`add_succ` above, you will notice this is exactly what we did
-when we used the {tactic}`rfl` tactic.
-:::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement
-Readers might wonder why there isn't a tactic that's just like `rfl` but insists on syntactic identity, if that's what is considered good style...
-:::
+The same principle applies to programs and proofs in Lean. In this chapter,
+we will be proving facts about functions entirely through their simplification rules,
+rather than using {tactic}`rfl` to unfold their implementations invisibly.
+This makes every computation step visible and lets a proof rely on a
+function's interface rather than its definition.
 
-
-Fortunately, the foundational theorems {name}`add_zero` and {name}`add_succ` provide a
+We can do this because the foundational theorems {name}`add_zero` and {name}`add_succ` provide a
 characterization of the behavior of {name}`add` that makes using {tactic}`rfl` to simplify
 expressions unnecessary; instead, we can rewrite by these theorems anywhere we want to describe
 how {name}`add` evaluates.
 In real-world Lean developments, the style of writing proofs using
 simplification rules is both standard and expected.
 
-For the next few chapters, we mark definitions with `attribute [irreducible]` to prevent this peeking,
-also called *definitional equality abuse* (*defeq abuse*, for short).
-We place this attribute after the proofs of {name}`add_zero` and {name}`add_succ`,
-and can then rewrite by these theorems anywhere we want to describe
-how {name}`add` evaluates.
+For the next few chapters, we mark definitions with `attribute [irreducible]`
+to prevent this kind of unfolding. This means that {tactic}`rfl` cannot unfold
+these definitions behind the scenes: after rewriting by their simplification
+rules, it closes only the remaining straightforward equality.
 We use `attribute [irreducible]` for now to enforce the style of
 using simplification rules, so that it is natural to you moving forward.
 We will relax this discipline in later chapters.
@@ -1986,11 +1972,6 @@ also has simplification rules.
 Remove {tactic}`sorry` and prove the simplification rules for {name}`mul` below.
 You will likely find the proofs of the simplification rules for {name}`add`
 to be helpful as a model.
-
-:::dev
-@rogerburtonpatel: it would be nice if we could get the
-theorem _statements_ inside a `solution!` block as well.
-:::
 
 ```lean
 theorem mul_zero : ∀ n : Nat, n * zero = zero := by
@@ -2781,10 +2762,6 @@ theorem and_eq_or (b c : Bool) : (b && c) = (b || c) → b = c := by
 :::
 
 :::::full
-:::dev "Yipeng Liu (berberman)" BeforeNextRelease
-Add grading attributes.
-:::
-
 Now that we have learned some basic features of Lean, let's close the chapter
 with an exercise that brings them together.
 
