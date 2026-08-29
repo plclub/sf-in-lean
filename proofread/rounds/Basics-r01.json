@@ -1,0 +1,399 @@
+{
+ "file": "LF/Basics.lean",
+ "chapter": "Basics",
+ "round": 1,
+ "proposals": [
+  {
+   "id": "basics-r01-001",
+   "cat": "colon/capitalization",
+   "old": "mathematical intuitions: A program is essentially",
+   "new": "mathematical intuitions: a program is essentially",
+   "why": "CMOS 6.61: lowercase after a colon that introduces a single sentence."
+  },
+  {
+   "id": "basics-r01-002",
+   "cat": "colon/capitalization",
+   "old": "both for constructors and for functions: Instead",
+   "new": "both for constructors and for functions: instead",
+   "why": "CMOS 6.61: lowercase after a colon introducing a single sentence."
+  },
+  {
+   "id": "basics-r01-003",
+   "cat": "colon/capitalization",
+   "old": "rewriting: In general, the presence",
+   "new": "rewriting: in general, the presence",
+   "why": "CMOS 6.61: lowercase after a colon introducing a single sentence."
+  },
+  {
+   "id": "basics-r01-004",
+   "cat": "colon/capitalization",
+   "old": "fundamental feature of Lean's design: In",
+   "new": "fundamental feature of Lean's design: in",
+   "why": "CMOS 6.61: lowercase after a colon introducing a single sentence."
+  },
+  {
+   "id": "basics-r01-005",
+   "cat": "typo/missing-word",
+   "old": "Later in the chapter, will show a different way",
+   "new": "Later in the chapter, we will show a different way",
+   "why": "Sentence has no subject."
+  },
+  {
+   "id": "basics-r01-006",
+   "cat": "typo/stray-word",
+   "old": "which you can see the in the Lean InfoView panel",
+   "new": "which you can see in the Lean InfoView panel",
+   "why": "Stray 'the'."
+  },
+  {
+   "id": "basics-r01-007",
+   "cat": "typo/missing-word",
+   "old": "Look the types of",
+   "new": "Look at the types of",
+   "why": "Missing preposition."
+  },
+  {
+   "id": "basics-r01-008",
+   "cat": "typo/missing-word",
+   "old": "The {tactic}`rfl` closes a goal that looks like",
+   "new": "The {tactic}`rfl` tactic closes a goal that looks like",
+   "why": "Missing 'tactic', as in the parallel sentence in the full version above."
+  },
+  {
+   "id": "basics-r01-009",
+   "cat": "typo/missing-word",
+   "old": "because it usually written in infix.",
+   "new": "because it is usually written in infix notation.",
+   "why": "Missing 'is'; 'in infix' needs a noun."
+  },
+  {
+   "id": "basics-r01-010",
+   "cat": "typo/duplicated-word",
+   "old": "their carry-on ba bag needs to be screened.",
+   "new": "their carry-on bag needs to be screened.",
+   "why": "Duplicated fragment 'ba'."
+  },
+  {
+   "id": "basics-r01-011",
+   "cat": "typo/missing-article",
+   "old": "Then, fill in right-hand sides of the `example` blocks below.",
+   "new": "Then, fill in the right-hand sides of the `example` blocks below.",
+   "why": "Missing article."
+  },
+  {
+   "id": "basics-r01-012",
+   "cat": "typo/missing-article",
+   "old": "are referred to with prefix `X.`",
+   "new": "are referred to with the prefix `X.`",
+   "why": "Missing article."
+  },
+  {
+   "id": "basics-r01-013",
+   "cat": "typo/missing-article",
+   "old": "and returning {name}`Nat` as well,",
+   "new": "and returning a {name}`Nat` as well,",
+   "why": "Missing article."
+  },
+  {
+   "id": "basics-r01-014",
+   "cat": "typo/missing-article",
+   "old": "In {name}`even'` example above",
+   "new": "In the {name}`even'` example above",
+   "why": "Missing article."
+  },
+  {
+   "id": "basics-r01-015",
+   "cat": "typo/missing-article",
+   "old": "Show that inspecting same unchanged carry-on bag twice",
+   "new": "Show that inspecting the same unchanged carry-on bag twice",
+   "why": "Missing article."
+  },
+  {
+   "id": "basics-r01-016",
+   "cat": "typo/apostrophe",
+   "old": "Lean implicitly `open`s many of `Bool`s functions and",
+   "new": "Lean implicitly `open`s many of `Bool`'s functions and",
+   "why": "Possessive needs an apostrophe."
+  },
+  {
+   "id": "basics-r01-017",
+   "cat": "comma/introductory",
+   "old": "`Day.friday` it will evaluate the fifth case.",
+   "new": "`Day.friday`, it will evaluate the fifth case.",
+   "why": "Comma after the introductory 'if' clause, matching the parallel clause before it."
+  },
+  {
+   "id": "basics-r01-018",
+   "cat": "comma/introductory",
+   "old": "the command you can check against that text.",
+   "new": "the command, you can check against that text.",
+   "why": "Comma after the introductory 'by hovering...' phrase."
+  },
+  {
+   "id": "basics-r01-019",
+   "cat": "comma/introductory",
+   "old": "First the `by` keyword signals",
+   "new": "First, the `by` keyword signals",
+   "why": "Comma after the introductory adverb."
+  },
+  {
+   "id": "basics-r01-020",
+   "cat": "comma/introductory",
+   "old": "Over the course of this book we are going to",
+   "new": "Over the course of this book, we are going to",
+   "why": "Comma after a long introductory phrase."
+  },
+  {
+   "id": "basics-r01-021",
+   "cat": "comma/introductory",
+   "old": "`(x0 : Bit) (x1 : Bit) ...` we write",
+   "new": "`(x0 : Bit) (x1 : Bit) ...`, we write",
+   "why": "Comma after the introductory 'Instead of writing...' phrase."
+  },
+  {
+   "id": "basics-r01-022",
+   "cat": "comma/introductory",
+   "old": "In simple examples such conventions may seem",
+   "new": "In simple examples, such conventions may seem",
+   "why": "Comma after the introductory phrase, matching 'in complex codebases,' in the same sentence."
+  },
+  {
+   "id": "basics-r01-023",
+   "cat": "comma/introductory",
+   "old": "For the moment it is important that you work",
+   "new": "For the moment, it is important that you work",
+   "why": "Comma after the introductory phrase."
+  },
+  {
+   "id": "basics-r01-024",
+   "cat": "comma/after-parenthetical",
+   "old": "(Python, Haskell, etc.)\nLean is _whitespace-sensitive_",
+   "new": "(Python, Haskell, etc.),\nLean is _whitespace-sensitive_",
+   "why": "The 'like...' phrase needs a closing comma before the main clause."
+  },
+  {
+   "id": "basics-r01-025",
+   "cat": "comma/purpose-infinitive",
+   "old": "versions, to take advantage of all the properties",
+   "new": "versions to take advantage of all the properties",
+   "why": "No comma before a restrictive purpose infinitive."
+  },
+  {
+   "id": "basics-r01-026",
+   "cat": "comma/purpose-infinitive",
+   "old": "or both, to get things",
+   "new": "or both to get things",
+   "why": "No comma before a restrictive purpose infinitive."
+  },
+  {
+   "id": "basics-r01-027",
+   "cat": "comma/purpose-infinitive",
+   "old": "we can mark it `irreducible`, to enforce rewriting",
+   "new": "we can mark it `irreducible` to enforce rewriting",
+   "why": "No comma before a restrictive purpose infinitive."
+  },
+  {
+   "id": "basics-r01-028",
+   "cat": "comma/unnecessary-pair",
+   "old": "which we must\nprove, separately, in order to get",
+   "new": "which we must\nprove separately in order to get",
+   "why": "'separately' is restrictive here; the commas over-punctuate."
+  },
+  {
+   "id": "basics-r01-029",
+   "cat": "comma/compound-sentence",
+   "old": "will produce `∀`\nand `\\->` or `\\to` will produce",
+   "new": "will produce `∀`,\nand `\\->` or `\\to` will produce",
+   "why": "Comma before 'and' joining two independent clauses."
+  },
+  {
+   "id": "basics-r01-030",
+   "cat": "comma/list-clarity",
+   "old": "and {name}`Playground.Bit` and tuple types such as",
+   "new": "and {name}`Playground.Bit`, and tuple types such as",
+   "why": "Comma separates the two 'such as' lists in the 'both ... and ...' pair."
+  },
+  {
+   "id": "basics-r01-031",
+   "cat": "comma/appositive",
+   "old": "more sophisticated recursive function `add`.",
+   "new": "more sophisticated recursive function, `add`.",
+   "why": "Appositive comma, matching 'a simple recursive function, `even`,' earlier in the sentence."
+  },
+  {
+   "id": "basics-r01-032",
+   "cat": "punctuation/em-dash",
+   "old": "not important for present purposes -- you can understand everything in the rest of the book without knowing -- so we will mark these commands -- and similar bits later on -- with",
+   "new": "not important for present purposes — you can understand everything in the rest of the book without knowing — so we will mark these commands — and similar bits later on — with",
+   "why": "ASCII '--' where the rest of the chapter uses a real em dash."
+  },
+  {
+   "id": "basics-r01-033",
+   "cat": "punctuation/dash-for-comma",
+   "old": "how to construct a structure from scratch —\nhow do we",
+   "new": "how to construct a structure from scratch,\nhow do we",
+   "why": "A dash cannot separate an introductory clause from its main clause."
+  },
+  {
+   "id": "basics-r01-034",
+   "cat": "punctuation/introducing-example",
+   "old": "arguments before the colon `mul_zero (n : Nat) : n * zero = zero`.",
+   "new": "arguments before the colon, as in `mul_zero (n : Nat) : n * zero = zero`.",
+   "why": "The example needs to be introduced; as written it reads as a noun phrase."
+  },
+  {
+   "id": "basics-r01-035",
+   "cat": "quotes/american-style",
+   "old": "closer to being \"solved\". A tactic",
+   "new": "closer to being \"solved.\" A tactic",
+   "why": "American style puts the period inside the quotes (as with 'reflexivity,' earlier)."
+  },
+  {
+   "id": "basics-r01-036",
+   "cat": "agreement/number",
+   "old": "have the given value and whose other fields",
+   "new": "have the given values and whose other fields",
+   "why": "Two fields, two values."
+  },
+  {
+   "id": "basics-r01-037",
+   "cat": "agreement/number",
+   "old": "infix notation for our {name}`add` functions.",
+   "new": "infix notation for our {name}`add` function.",
+   "why": "There is only one `add`."
+  },
+  {
+   "id": "basics-r01-038",
+   "cat": "agreement/number",
+   "old": "if you hover over the name of these theorems",
+   "new": "if you hover over the names of these theorems",
+   "why": "Plural theorems, plural names."
+  },
+  {
+   "id": "basics-r01-039",
+   "cat": "agreement/subject-verb",
+   "old": "correspond to one branch of the `match`\nstatement defining {name}`add` and describe how",
+   "new": "corresponds to one branch of the `match`\nstatement defining {name}`add` and describes how",
+   "why": "'Each of X and Y' takes a singular verb."
+  },
+  {
+   "id": "basics-r01-040",
+   "cat": "agreement/pronoun",
+   "old": "it is the only way to maintain crucial invariants",
+   "new": "they are the only way to maintain crucial invariants",
+   "why": "The antecedent is 'such conventions'."
+  },
+  {
+   "id": "basics-r01-041",
+   "cat": "parallelism/that-clause",
+   "old": "the following expression and it should not mark",
+   "new": "the following expression and that it should not mark",
+   "why": "Second 'that' clause needs its own 'that' to parse in parallel."
+  },
+  {
+   "id": "basics-r01-042",
+   "cat": "parallelism/relative-clause",
+   "old": "which are like record/struct types but their fields are accessed",
+   "new": "which are like record/struct types but whose fields are accessed",
+   "why": "Keeps the relative clause parallel instead of switching to a main clause."
+  },
+  {
+   "id": "basics-r01-043",
+   "cat": "usage/either-with-three",
+   "old": "should include either a variable, a constant",
+   "new": "should include a variable, a constant",
+   "why": "'either' takes two alternatives; there are three here."
+  },
+  {
+   "id": "basics-r01-044",
+   "cat": "usage/misplaced-only",
+   "old": "those fields should only be\naccessible by an object's methods",
+   "new": "those fields should be accessible only by an object's methods",
+   "why": "'only' should sit next to what it limits."
+  },
+  {
+   "id": "basics-r01-045",
+   "cat": "usage/pronoun",
+   "old": "later on we will discuss how to search for\nthose yourself.",
+   "new": "later on we will discuss how to search for\nthem yourself.",
+   "why": "'those' has no antecedent to stand on; 'them' refers to the lemmas."
+  },
+  {
+   "id": "basics-r01-046",
+   "cat": "modifier/dangling",
+   "old": "as well as the current goal state when working on proofs.",
+   "new": "as well as the current goal state when you are working on proofs.",
+   "why": "As written, the panel is doing the proving."
+  },
+  {
+   "id": "basics-r01-047",
+   "cat": "hyphenation/ly-adverb",
+   "old": "there are many recursively-defined",
+   "new": "there are many recursively defined",
+   "why": "CMOS 7.86: no hyphen after an -ly adverb."
+  },
+  {
+   "id": "basics-r01-048",
+   "cat": "hyphenation/so-named",
+   "old": "are so-named because",
+   "new": "are so named because",
+   "why": "Predicate position takes no hyphen."
+  },
+  {
+   "id": "basics-r01-049",
+   "cat": "hyphenation/re-prefix",
+   "old": "Namespaces can be re-opened",
+   "new": "Namespaces can be reopened",
+   "why": "CMOS/Webster prefer the closed form."
+  },
+  {
+   "id": "basics-r01-050",
+   "cat": "hyphenation/re-prefix",
+   "old": "an ordinary function that we could re-implement",
+   "new": "an ordinary function that we could reimplement",
+   "why": "CMOS/Webster prefer the closed form."
+  },
+  {
+   "id": "basics-r01-051",
+   "cat": "spelling/closed-compound",
+   "old": "(used on-line and for homeworks)",
+   "new": "(used online and for homeworks)",
+   "why": "'online' is closed in current American usage."
+  },
+  {
+   "id": "basics-r01-052",
+   "cat": "capitalization/proper-noun",
+   "old": "`∀` and `⊢` are unicode symbols",
+   "new": "`∀` and `⊢` are Unicode symbols",
+   "why": "Unicode is a proper noun, capitalized elsewhere in this same paragraph."
+  },
+  {
+   "id": "basics-r01-053",
+   "cat": "capitalization/proper-noun",
+   "old": "produces a unicode symbol that you can see",
+   "new": "produces a Unicode symbol that you can see",
+   "why": "Unicode is a proper noun, capitalized elsewhere in this same paragraph."
+  },
+  {
+   "id": "basics-r01-054",
+   "cat": "markup/role-syntax",
+   "old": "as the `{tactic}intro b`,",
+   "new": "as the `intro b`,",
+   "why": "The role name leaked inside the code span and renders literally."
+  },
+  {
+   "id": "basics-r01-055",
+   "cat": "markup/code-font",
+   "old": "returns true if the day is\na weekend, and false otherwise.",
+   "new": "returns `true` if the day is\na weekend, and `false` otherwise.",
+   "why": "Constructor names are set in code font elsewhere in the same exercise set."
+  },
+  {
+   "id": "basics-r01-056",
+   "cat": "markup/code-font",
+   "old": "of the first, and false otherwise.",
+   "new": "of the first, and `false` otherwise.",
+   "why": "Matches the `true` in the same sentence."
+  }
+ ]
+}
