@@ -475,7 +475,7 @@ theorem add_succ_nested (n m : Nat) :
 ::::full
 If you know what theorems you want {tactic}`simp` to use for your goal proof, you can write
 `simp [<theorems>]`. If you want {tactic}`simp` to _only_ use those,
-you can use `simp only [<theorems>]`. Like with {tactic}`dsimp`, you can also supply a
+you can use `simp only [<theorems>]`. Like with {tactic}`rw`, you can also supply a
 definition to {tactic}`simp` to simplify using that definition.
 ::::
 

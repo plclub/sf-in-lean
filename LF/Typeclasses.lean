@@ -342,20 +342,8 @@ BEq.beq 1 2 : Bool
 Rather than {name}`Nat.beq`, `==` turns out to be notation for {name}`BEq.beq`, a field of exactly
 the kind of typeclass we just learned to define:
 
-```recallSource
-/--
-  `BEq α` is a typeclass for supplying a boolean-valued equality relation on
-  `α`, notated as `a == b`. Unlike `DecidableEq α` (which uses `a = b`), this
-  is `Bool` valued instead of `Prop` valued, and it also does not have any
-  axioms like being reflexive or agreeing with `=`. It is mainly intended for
-  programming applications. See `LawfulBEq` for a version that requires that
-  `==` and `=` coincide.
-
-  Typically we prefer to put the "more variable" term on the left,
-  and the "more constant" term on the right.
-  -/
-  class BEq (α : Type u) where
-    /-- Boolean equality, notated as `a == b`. -/
+```recall
+  class BEq (α : Type) where
     beq : α → α → Bool
 ```
 
@@ -679,6 +667,35 @@ theorem inv_inv {α : Type} {g : Group α} (x : α) : g.inv (g.inv x) = x := by
 end Algebra
 ```
 
+# API and Encapsulation
+
+:::dev "Niklas Halonen (xhalo32)"
+Here, we should tie back the story from early chapters about characterizing lemmas and definition unfolding.
+When unfolding a definition directly without characterizing lemmas, the implementation details are exposed.
+When downstream code can depend on implementation details of upstream library code, it makes it more difficult for the upstream library to evolve.
+
+Explain the following items:
+- What is API and how does it relate to typeclasses
+- What is encapsulation: public and private API
+  - Function definitions and one-field structures are encapsulation boundaries
+  - Definitions and structures are usually private, characterizing lemmas are public
+  - Constructors of inductives are public
+  - Mention `public`, `private` keywords and that we don't use them on the course?
+  - One can mostly ignore proof terms due to proof irrelevance
+
+Here is an example where the proof term is blocking a rewrite.
+The solution is to simplify it away.
+
+```lean +error
+-- set_option pp.proofs true in
+example {n m : Nat} {a : Fin n} {b : Fin m} (h₁ : n = m) (h₂ : a.val = b.val) :
+    a = ⟨b.val, h₁ ▸ b.isLt⟩ := by
+  -- ext
+  -- dsimp only
+  rw [← h₂]
+```
+:::
+
 # Maps
 
 _Maps_ (or "dictionaries") are ubiquitous data structures both in ordinary programming and in the theory of programming languages; we're going to need them in many places in later volumes.
@@ -693,23 +710,13 @@ In this section, we'll use the type variable {lean}`α` for the type of keys and
 In addition to {name}`BEq`, which we have already seen, our key type {lean}`α` requires instances of the
 {name}`ReflBEq` and {name}`LawfulBEq` typeclasses:
 
-```recallSource
-/-- `ReflBEq α` says that the `BEq` implementation is reflexive. -/
-  class ReflBEq (α) [BEq α] : Prop where
-    /-- `==` is reflexive, that is, `(a == a) = true`. -/
-    protected rfl {a : α} : a == a
+```recall
+  class ReflBEq (α : Type) [BEq α] : Prop where
+    rfl {a : α} : a == a
 ```
 
-```recallSource
-/--
-  A Boolean equality test coincides with propositional equality.
-
-  In other words:
-   * `a == b` implies `a = b`.
-   * `a == a` is true.
-  -/
-  class LawfulBEq (α : Type u) [BEq α] : Prop extends ReflBEq α where
-    /-- If `a == b` evaluates to `true`, then `a` and `b` are equal in the logic. -/
+```recall
+  class LawfulBEq (α : Type) [BEq α] : Prop extends ReflBEq α where
     eq_of_beq : {a b : α} → a == b → a = b
 ```
 

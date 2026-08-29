@@ -373,11 +373,13 @@ partial def walkBlock (width : Nat) (isTerse : Bool) (file : String) (b : Verso.
       return buf
     if name == ``SFLMeta.Block.recall then
       if let some saved := SFLMeta.Recall.decode? which.data then
-        let {kind, statement, expectedError, source, ..} := saved
+        let {kind, statement, strictUniverse, expectedError, source, ..} := saved
         let command := match kind with
           | .semantic =>
             if statement then "sf_recall statement " ++ source.trimAscii.toString
-            else wrapIndented "sf_recall" source
+            else
+              let cmd := if strictUniverse then "sf_recall +strictUniverse" else "sf_recall"
+              wrapIndented cmd source
           | .source => wrapIndented "sf_recall_source" source
         if expectedError then
           return buf.appendAll file <| wrapIndented "sf_expect_failure_in" command

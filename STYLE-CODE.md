@@ -26,7 +26,7 @@ and do not use tactics not in this table; in particular,
 | ----------------- | ------------------------ |
 | `Basics`          | `rfl`, `intro`, `rewrite`, `cases`, `exact` |
 | `Induction`       | `induction`, `have`, `rw`, `<;>` |
-| `UsingLean`       | `dsimp`, `calc`, `exact?`, `rw?` |
+| `UsingLean`       | `calc`, `exact?`, `rw?` |
 | `Lists`           | *(none new)* |
 | `Poly`            | *(none new)* |
 | `Tactics`         | `apply` (and `apply ... at`), `replace`, `specialize`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `induction ... generalizing ...`, `unfold`, `cases ... : ...`, `split` |
@@ -469,6 +469,13 @@ In a `recall` block, type signatures and definitions must be definitionally
 equal, inductive types must have the same constructors, and records must have
 the same fields. With the `+statement` option, only the type signature is
 restated and not the declaration body.
+
+`recall` can restate a universe-polymorphic declaration without universe parameters when the
+restatement is a valid specialization.
+To enforce the restatement has the exact universe-parameters,
+use `+strictUniverse` to disable the specialization check.
+`+statement` option cannot be combined with `+strictUniverse`,
+and  `+strictUniverse` does not apply to `recallSource`.
 
 In a `recallSource` block, the restated
 declaration must be equal verbatim, down to indentation and line breaks;
