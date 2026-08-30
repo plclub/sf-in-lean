@@ -573,11 +573,11 @@ theorem double_add (n : Nat) : double n = n + n := by
 
 ::::full
 In Lean, as in informal mathematics, large proofs are often
-broken into a sequence of theorems, with later proofs referring to
+broken into sequences of theorems, with later proofs referring to
 earlier theorems.  But sometimes a proof will involve some
 miscellaneous fact that is too trivial and of too little general
 interest to bother giving it its own top-level name.  In such
-cases, it is convenient to be able to simply state and prove the
+cases, it is convenient to simply state and prove the
 required fact "in place".  The {tactic}`have` tactic allows us to do this.
 ::::
 
@@ -610,7 +610,7 @@ first inner `+` are swapped, so it seems we should be able to use
 the commutativity of addition ({name}`add_comm`) to rewrite one into the
 other.  However, the {tactic}`rw` tactic is not very smart about _where_
 it applies the rewrite.  There are three uses of `+` here, and
-`rw [add_comm]` may affect the wrong one...
+`rw [add_comm]` may choose the wrong one...
 ::::
 
 ```lean +error (name := comm_ex)
@@ -660,7 +660,7 @@ reader the certainty that `P` is true.
 That is, a proof is an act of _communication_.
 
 Acts of communication may involve different sorts of readers.  On
-one hand, the "reader" can be a program like Lean, in which case
+one hand, the reader can be a program like Lean, in which case
 the "belief" that is instilled is that `P` can be mechanically
 derived from a certain set of formal logical rules, and the proof
 is a recipe that guides the program in checking this fact.  Such
@@ -675,7 +675,7 @@ be read by many different readers, some of whom may be convinced
 by a particular way of phrasing the argument, while others may not
 be. Some readers may be unfamiliar with the area and need the
 argument spelled out in detail.  Other readers, more
-familiar in the area, may find all this detail so overwhelming
+familiar in the area, may find too much detail so overwhelming
 that they lose the overall thread; all they want is to be told the
 main ideas, since it is easier for them to fill in the details for
 themselves than to wade through a written presentation of them.
@@ -683,21 +683,21 @@ Ultimately, there is no universal standard, because there is no
 single way of writing an informal proof that will convince every
 conceivable reader.
 
-In practice, however, mathematicians have developed a rich set of
+In practice, mathematicians have developed a rich set of
 conventions and idioms for writing about complex mathematical
 objects that — at least within a certain community — make
-communication fairly reliable.  The conventions of this stylized
+communication pretty reliable.  The conventions of this stylized
 form of communication give a reasonably clear standard for judging
 proofs good or bad.
 
 Because we are using Lean in this course, we will be working
 heavily with formal proofs.  But this doesn't mean we can
 completely forget about informal ones!  Formal proofs are useful
-in many ways, but they are _not_ very efficient ways of
+in many ways, but they are typically _not_ the most efficient ways of
 communicating ideas between human beings.
 
 For example, here is a proof that addition is associative
-   (you might have written it yourself, earlier in this chapter!):
+   (you might have written something like it yourself, recently...):
 
 ```lean
 theorem add_assoc' (n m p : Nat) :
@@ -723,11 +723,11 @@ theorem add_assoc'' (n m p : Nat) :
 
 ... and if you're used to Lean you might be able to step
 through the tactics one after the other in your mind and imagine
-the state of the context and goal stack at each point, but if the
-proof were even a little bit more complicated this would be next
+the state of the context and goal stack at each point, but, if the
+proof were even a little bit more complicated, this would be next
 to impossible.
 
-A (pedantic) mathematician might write the proof something like
+On paper, a (somewhat pedantic) mathematician might write the proof something like
 this:
 
 - _Theorem_: For any `n`, `m` and `p`,
@@ -770,16 +770,16 @@ _QED_.
 ::::
 
 ::::::full
-The overall form of the proof is basically similar, and of
+The overall form of the formal and informal proofs is basically similar, and of
 course this is no accident: Lean has been designed so that its
 {tactic}`induction` tactic generates the same sub-goals, in the same
 order, as the bullet points that a mathematician would usually
 write.  But there are significant differences of detail: the
 formal proof is much more explicit in some ways (e.g., the sequence
-of rewrites) but much less explicit in others (in particular, the
+of rewrites) and less explicit in others. In particular, the
 "proof state" at any given point in the Lean proof is completely
 implicit, whereas the informal proof reminds the reader several
-times where things stand).
+times where things stand.
 ::::::
 
 :::::exercise (rating := 2) (name := "add_comm_informal") (level := Advanced) (optional := true) (manual := true)
@@ -787,7 +787,7 @@ Translate your solution for {name}`add_comm` into an informal proof:
 
 Theorem: Addition is commutative.
 
-Proof:
+Proof: ...
 
 :::solution
 Let natural numbers `n` and `m` be given.  We show `n + m = m +
@@ -1089,11 +1089,11 @@ Before moving on to the next batch of exercises, let's introduce a
 simple _tactic combinator_. A tactic combinator combines tactics to form
 a larger tactic.
 
-If `t₁` and `t₂` are tactics, then `t₁ <;> t₂` means: run `t₁`, then
+If `t₁` and `t₂` are tactics, then `t₁ <;> t₂` means: first run `t₁`, then
 run `t₂` on every subgoal produced by `t₁`.
 
-This is useful when one tactic splits the goal into several subgoals
-and all of them can be finished in the same way.
+This is useful when the first tactic splits the goal into several subgoals
+and all of them can be finished by the second.
 ::::
 
 ::::terse
@@ -1131,13 +1131,13 @@ example (b c : Bool) : (b && c) = (c && b) := by
 ```
 
 ::::full
-Use `<;>` when the generated subgoals really do have the same proof.
+For the moment, you should reach for `<;>` only when the generated subgoals really do have the same proof.
 If different branches need different arguments, it is usually clearer
 to write the cases explicitly. We'll discuss some other tactic combinators
 in the {ref "Automation"}[Automation] chapter.
 ::::
 
-# Nat to Bin and Back to Nat
+# Nat to Bin and Back
 
 ```lean
 namespace NatToBin
@@ -1154,7 +1154,7 @@ inductive Bin : Type where
 
 Before you start working on the next exercise, replace the stub
 definitions of {name}`incr` and {name}`binToNat`, below, with your solution
-from Basics.  That will make it possible for this file to be graded
+from {ref "Basics"}[Basics], so that this file can be graded
 on its own.
 
 ```lean
@@ -1187,6 +1187,10 @@ theorem binToNat_b1 m : binToNat (.b1 m) = add (mul (binToNat m) two) one := sol
 
 attribute [pp_nodot] Bin.b0 Bin.b1
 ```
+:::dev "Benjamin Pierce (bcpierce00)"
+Should the `attribute` declaration be in a :::details block?
+:::
+
 
 :::autogradedHole binToNat
 :::
@@ -1197,7 +1201,7 @@ didn't prove its correctness. Now we'll do so.
 :::::exercise (rating := 3) (name := "binary_commute")
 
   Prove that the following diagram commutes — that is, incrementing a binary number and
-  then converting it to a (unary) natural number yields the same result as first converting
+  then converting it to a (standard, unary) natural number yields the same result as first converting
   it to a natural number and then incrementing:
 
 ```display
@@ -1255,14 +1259,14 @@ theorem natToBin_succ (m : Nat) : natToBin (succ m) = incr (natToBin m) := by rf
 ```
 
 Prove that, if we start with any {name}`Nat`, convert it to {name}`Bin`, and
-convert it back, we get the same {name}`Nat` which we started with.
+convert it back, we get the {name}`Nat` that we started with.
 
 Hint: This proof should go through smoothly using the previous
 exercise about {name}`incr` as a lemma. If not, revisit your definitions
 of the functions involved and consider whether they are more
 complicated than necessary: the shape of a proof by induction will
 match the recursive structure of the program being verified, so
-make the recursions as simple as possible.
+make the recursion as simple as possible.
 
 ```lean
 theorem nat_bin_nat (n : Nat) :
@@ -1279,17 +1283,16 @@ theorem nat_bin_nat (n : Nat) :
 :::
 :::::
 
-# Bin to Nat and Back to Bin (Advanced)
+# Bin to Nat and Back (Advanced)
 
 The opposite direction — starting with a {name}`Bin`, converting to {name}`Nat`,
-then converting back to {name}`Bin` — turns out to be problematic. That
-is, the following "theorem" does not hold.
+then converting back to {name}`Bin` — turns out to be problematic: the expected "theorem" does not hold.
 
 ```lean +error
 example (b : Bin) : natToBin (binToNat b) = b := by
 ```
 
-Let's explore why this theorem fails and how to prove a modified
+Let's explore why it fails and how to prove a modified
 version of it. We'll start with some lemmas that might seem
 unrelated but will turn out to be relevant.
 
@@ -1361,10 +1364,10 @@ Let's return to our desired theorem:
 example (b : Bin) : natToBin (binToNat b) = b := by
 ```
 
-The theorem fails because there are some {name}`Bin` such that we won't
+The theorem fails because there are some {name}`Bin`s for which we won't
 necessarily get back to the _original_ {name}`Bin`, but instead to an
-"equivalent" {name}`Bin`.  (We deliberately leave that notion undefined
-here for you to think about.)
+"equivalent" {name}`Bin`.  (We deliberately leave this notion informal
+here so that you can think about it.)
 
 Explain in a comment, below, why this failure occurs. Your
 explanation will not be graded, but it's important that you get it
@@ -1383,19 +1386,19 @@ Any other number also has many representations, after applying
 constructors to the multiple representations of zero.
 :::
 
-To solve that problem, we can introduce a _normalization_ function
+To solve this problem, we can introduce a _normalization_ function
 that selects the simplest {name}`Bin` out of all the equivalent
 {name}`Bin`. Then we can prove that the conversion from {name}`Bin` to {name}`Nat` and
 back again produces that normalized, simplest {name}`Bin`.
 
 :::::exercise (rating := 4) (name := "bin_nat_bin") (level := Advanced)
-Define `normalize`. You will need to keep its definition as simple
-as possible for later proofs to go smoothly. Do not use
+Define `normalize`. Keep its definition as simple
+as possible so that later proofs go through smoothly. Do not use
 {name}`binToNat` or {name}`natToBin`, but do use {name}`doubleBin`.
 
 Hint: Structure the recursion such that it _always_ reaches the
 end of the `Bin` and _only_ processes each bit once. Do not
-try to "look ahead" at future bits.
+try to "look ahead" at future bits, as this will complicate the proof.
 
 ```lean
 def normalize (b : Bin) : Bin := solution!(
@@ -1418,7 +1421,7 @@ theorem normalize_b1 (m : Bin) : normalize (.b1 m) = incr (doubleBin (normalize 
 -- END SOLUTION
 ```
 
-It would be wise to do some `example` proofs to check that your
+Next, it would be a good idea to do some `example` proofs to check that your
 definition of {name}`normalize` works the way you intend before you
 proceed. They won't be graded, but do fill in a few below.
 
@@ -1437,9 +1440,9 @@ example : normalize (.b1 (.b0 .z)) = .b1 .z := by rfl
 -- END SOLUTION
 ```
 
-Now that we have defined all of our functions and their relevant characterizing lemmas,
-we mark them irreducible as usual. From here on out, our proofs about these definitions
-should use {tactic}`rewrite` or {tactic}`rw`.
+Now that we have defined all of our functions and their characterizing lemmas,
+we mark the definitions irreducible as usual. From here on, proofs about these definitions
+should use {tactic}`rewrite` or {tactic}`rw`, not {tactic}`rfl`.
 
 ```lean
 attribute [irreducible] normalize doubleBin natToBin incr binToNat
@@ -1517,6 +1520,6 @@ end NatPlayground.Nat
   about how to lay out corresponding informal proofs...  But the
   current direction is to minimize the role of informal proofs (at
   least, the degree to which we try to get people to write them) in
-  SF.
+  SFL.
 ```
 ::::
