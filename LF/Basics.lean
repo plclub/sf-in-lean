@@ -31,7 +31,7 @@ If you don't have Lean installed yet:
 * Start a new terminal session to pick up environment changes.
 * Run `make`.
 * Run `make serve`. Navigate to "http://localhost:8000/lf/student/html/" to start reading.
-* Make a copy of "\_out/lf/student/lean" to start solving as if I were a student.
+* Make a copy of "\_out/lf/student/lean" to start solving as if you were a student.
 :::
 
 This chapter introduces some of Lean's most essential features for writing functional programs
@@ -780,7 +780,7 @@ E.g., these are valid constructor expressions...
 :::
 
 We can define functions on colors using pattern matching, just as
-we did for {name}`Day` and {name}`Bool`.
+we did for {name}`Day` and {name}`MyBool`.
 
 ```lean
 def monochrome (c : Color) : Bool :=
@@ -984,14 +984,14 @@ Playground.myBar : RGB
 ```
 
 ::::full
-When a new type is declared, a `namespace` with the same name is implicitly created as well;
-definitions on that type are available inside the `namespace` without a prefix. For example,
-we can use the `blue` constructor without qualification below because
+The constructors of an inductive type are placed in the `namespace` named after the type.
+When we enter that `namespace`, we can use those constructors without a prefix.
+For example, we can use the `blue` constructor without qualification below because
 we are inside the {name}`RGB` `namespace`.
 ::::
 
 ::::terse
-Type definitions implicitly create namespaces.
+An inductive type's constructors are placed in the `namespace` named after the type.
 ::::
 
 ```lean
@@ -1099,15 +1099,13 @@ Unknown identifier `myHiddenDef`
 ```
 
 ::::full
-In fact, this is exactly what Lean does with the standard {name}`Bool` type by default.
-Since it is an important
-part of many proofs and programs, Lean implicitly `open`s many of `Bool`'s functions and
-constructors. This means we can use constructors like {name}`true` and {name}`false` and functions
-like {name}`not` without qualifying them with {name}`Bool`.
+In fact, Lean's prelude explicitly exports commonly used names from the standard
+{name}`Bool` `namespace`. This means we can use constructors like {name}`true` and
+{name}`false` and functions like {name}`not` without qualifying them with {name}`Bool`.
 ::::
 
 ::::terse
-Names from the `Bool` `namespace` are `open`ed and thus available without qualification.
+Common names from the `Bool` `namespace` are exported and available without qualification.
 ::::
 
 ```lean (name := tt)
@@ -1124,25 +1122,20 @@ Bool.true : Bool
 ```
 
 ::::full
-Finally, Lean can often automatically figure out which namespace a qualified name lives in,
-saving us the need to explicitly specify it every time we use the name. Instead of
-the fully qualified style (e.g., {name}`Day.monday`), we can opt for an implicitly qualified style,
-writing just `.monday`.
+Finally, Lean can often use an expression's expected type to fill in the missing prefix
+of a name that begins with `.`. Instead of the fully qualified style
+(e.g., {name}`Day.monday`), we can write just `.monday`.
 
-Lean tries to resolve `.monday` by checking what type is expected by the context in which this expression appears
-and inferring the namespace from that type. If there is only one such
-namespace (i.e., if it is unambiguous which constructor we're referring to), then it will
-automatically resolve to the expected value.
-:::dev "Benjamin Pierce (bcpierce00)"
-The wording is potentially confusing: From what we've said, readers might infer that every type has an associated namespace, so if we know the expected type then the namespace will always be unambiguous...
-:::
+For example, when the expected type is {name}`Day`, Lean resolves `.monday` as
+{name}`Day.monday`. If the context does not determine an expected type, dotted notation
+may be ambiguous.
 
 So, for example, we can also write {name}`nextWorkingDay` like this, using the shorter
 style for both the value being matched and the value being returned:
 ::::
 
 ::::terse
-Lean can often guess which qualified name we mean if we don't supply it explicitly:
+Lean can often use the expected type to resolve a name beginning with `.`:
 ::::
 
 ```lean
@@ -1221,24 +1214,21 @@ GRADE_MANUAL 1: custom_namespace_checks
 :::
 :::::
 
-## Constructors with Multiple Parameters (Tuple Types)
+## Constructors with Multiple Arguments
 
 ```lean
 namespace Playground
 ```
 
 ::::full
-A given constructor of an inductive type can have multiple parameters,
-not just zero or one. This feature is one way to define _tuple types_ in Lean.
-:::dev "Benjamin Pierce (bcpierce00)"
-Is there another way to define tuple types?  (The discussion below is about an analog of record types, not tuples.)
-:::
+A constructor of an inductive type can take multiple arguments,
+not just zero or one.
 
 As an example, consider representing the four bits in
 a nibble (half a byte). We first define a datatype `Bit` that
 resembles {name}`Bool` (using the constructors `b1` and `b0` for the two
-possible bit values) and then define the datatype `Nibble`, which is
-a tuple of four bits.
+possible bit values) and then define the datatype `Nibble`, whose constructor
+packages four bits.
 ::::
 
 :::terse
@@ -1391,10 +1381,10 @@ namespace NatPlayground
 ```
 
 ::::full
-All the types we have defined so far — both enumerated types
-such as {name}`Day`, {name}`MyBool`, and {name}`Playground.Bit`, and tuple types such as
-{name}`Playground.Nibble` built from them — are finite. The natural numbers, on
-the other hand, are an infinite set, so we'll need to use a
+All the types we have defined so far — both enumerated types such as {name}`Day`,
+{name}`MyBool`, and {name}`Playground.Bit`, and types carrying a fixed amount of data
+such as {name}`Playground.Nibble` — are finite. The natural numbers, on the other hand,
+are an infinite set, so we'll need to use a
 slightly richer form of inductive type declaration to represent
 them: _recursive_ inductive types.
 
@@ -1838,10 +1828,9 @@ statement defining {name}`add` and describes how the evaluation of {name}`add` p
 in that case. The {name}`add_zero` theorem describes how {lean}`add n zero` evaluates,
 while {name}`add_succ` describes (symbolically) how {lean}`add n (succ m)` evaluates.
 
-These are instances of a general pattern: each definition
-operating over enumerated types like {name}`Nat`, {name}`Bool`, {name}`Day`, or {name}`Color`
-needs a simplification rule for each branch of control flow through
-the function.
+These are instances of a general pattern: for each definition that pattern matches on an
+inductive type, we will provide one simplification rule for each branch of control flow
+through the function.
 
 So, for example, we need two simplification rules for the definition of `pred`:
 ::::
@@ -1853,7 +1842,7 @@ Each branch of a definition's control flow gets one simplification rule. Here ar
 
 ```lean
 theorem pred_zero : pred zero = zero := by rfl
-theorem pred_succ n : pred (succ n) = n := by rfl
+theorem pred_succ (n : Nat) : pred (succ n) = n := by rfl
 ```
 
 Now that we have defined and proved {name}`pred`'s simplification rules,
@@ -1869,7 +1858,7 @@ we need one simplification rule:
 ```lean
 theorem even_zero : even zero = true := rfl
 theorem even_one : even (succ zero) = false := rfl
-theorem even_succ_succ n : even (succ (succ n)) = even n := rfl
+theorem even_succ_succ (n : Nat) : even (succ (succ n)) = even n := rfl
 
 attribute [irreducible] even odd
 ```
@@ -2046,9 +2035,9 @@ theorem two_mul_two : (two * two : Nat) = four := by
 ### Equality and Ordering
 
 ::::full
-When we say that Lean relies on almost nothing that's truly built-in, we really mean it: even
-testing equality is not a primitive operation, but an ordinary function that we could reimplement
-ourselves as users.
+When we say that Lean relies on almost nothing that's truly built-in, we really mean it:
+even a Boolean equality test is not a primitive operation, but an ordinary function that
+we could reimplement ourselves as users.
 ::::
 
 Here is a function `beq` that tests natural numbers for
@@ -2516,21 +2505,20 @@ def even' (n : Nat) : Bool :=
   | succ (succ n') => even' n'
 ```
 
-When Lean checks this definition, it verifies that the recursion
-terminates.  Specifically, it checks that one of the parameters
-is _structurally decreasing_ — each recursive call made in the body of the
-definition is made on an argument that is smaller than the original input.
+When Lean checks this definition, it verifies that the recursion terminates.
+For this definition, it does so by checking that the recursive argument is
+_structurally decreasing_ — each recursive call made in the body of the definition
+is made on an argument that is smaller than the original input.
 In the {name}`even'` example above, the argument to the recursive call to {name}`even'` is the variable `n'`.
 Because of our pattern match, we know that `n` is equal to `succ (succ n')`, and therefore
 that `n'` is smaller than `n`. This makes `n'` an acceptable argument to {name}`even'` for Lean's
 termination checker, and so this recursive definition is accepted.
 
-This requirement is a fundamental feature of Lean's design: in
-particular, it guarantees that every function that can be defined
-in Lean will terminate on all inputs.  However, because Lean's
-termination analysis is not always able to figure things out
-automatically, it is sometimes necessary to provide hints or
-write functions in slightly different ways.
+This requirement is a fundamental feature of Lean's design: it guarantees that every
+ordinary recursive definition accepted into Lean's logic terminates on all inputs.
+However, because Lean's termination analysis is not always able to figure things out
+automatically, it is sometimes necessary to provide hints or write functions in slightly
+different ways.
 
 ::::exercise (rating := 2) (name := "decreasing") (optional := true) (manual := true)
 To get a concrete sense of how termination checking works in Lean,
@@ -2727,14 +2715,14 @@ theorem and_eq_or (b c : Bool) : (b && c) = (b || c) → b = c := by
     cases c with
     | true =>
       /-
-        h : (true && c) = true || c, i.e., h : c = true
+        h : (b && true) = (b || true), i.e., h : b = true
       -/
       rewrite [Bool.and_true, Bool.or_true] at h
       rewrite [h]
       rfl
     | false =>
       /-
-        h : (false && c) = false || c, i.e., h : false = c
+        h : (b && false) = (b || false), i.e., h : b = false
       -/
       rewrite [Bool.and_false, Bool.or_false] at h
       rewrite [h]
@@ -2749,10 +2737,6 @@ theorem and_eq_or (b c : Bool) : (b && c) = (b || c) → b = c := by
 ## Airport Exercise
 
 :::suppressPreviousHeaderWhenTerse
-:::
-
-:::dev "Benjamin Pierce (bcpierce00)"
-In this section, the same artifact is called a simplification rule, a rewrite rule, and a characterization lemma.  I think we're using "simplification rule" here.
 :::
 
 :::::full
@@ -2892,7 +2876,7 @@ theorem checkIn_test3 : checkIn (.checkedIn .ordinary .cleared) = .checkedIn .or
 :::
 ::::
 
-Again, we record one rewrite rule for each case:
+Again, we record one simplification rule for each case:
 
 ```lean
 theorem checkIn_noTicket (bagContent : BagContent) :
@@ -2950,7 +2934,7 @@ theorem inspectBag_test3 : inspectBag (.checkedIn .prohibited .notScreened) = .c
 :::
 ::::
 
-Again, we record one characterization lemma for each case.
+Again, we record one simplification rule for each case.
 
 ```lean
 theorem inspectBag_noTicket (bagContent : BagContent) :
@@ -3021,7 +3005,7 @@ theorem changeBag_test2 : changeBag .prohibited (.checkedIn .ordinary .cleared) 
 :::
 ::::
 
-As before, we record the behavior of each case as a rewrite rule.
+As before, we record one simplification rule for each case.
 
 ```lean
 theorem changeBag_noTicket (newContent oldContent : BagContent) :
