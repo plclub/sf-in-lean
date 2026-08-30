@@ -32,6 +32,12 @@ def appendAll (buf : SaveBuffers) (file : String) (s : String) : SaveBuffers :=
   let vs := buf.getD file default
   buf.insert file <| vs.map (· ++ s)
 
+/-- Collapse the blank line a just-appended block left behind, so the next
+appended comment line lands directly under it rather than after a gap. -/
+def dropBlankLine (buf : SaveBuffers) (file : String) : SaveBuffers :=
+  let vs := buf.getD file default
+  buf.insert file <| vs.map fun s => if s.endsWith "\n\n" then (s.dropEnd 1).toString else s
+
 def appendOnly (buf : SaveBuffers) (file : String) (variant : Variant) (s : String) : SaveBuffers :=
   let vs := buf.getD file default |>.mapV fun v x => if v == variant then x ++ s else x
   buf.insert file vs
@@ -260,6 +266,18 @@ def devNoteComment (label body : String) : String :=
       if l.all (·.isWhitespace) then "--" else Text.commentPrefix ++ "    " ++ l)
   Text.commentPrefix ++ label ++ ":\n" ++ indented ++ "\n\n"
 
+/-- Render a ` ```leanOutput ` block's message as a labelled `--` comment block:
+an `Output:` label line, the message indented under it, and interior blank lines
+kept as bare `--` so the whole thing reads as one unit.  The message's line
+structure is significant (a printed goal, a multi-line error), so it is emitted
+verbatim and NEVER reflowed; only leading and trailing blank lines are dropped,
+each remaining line keeping its own leading whitespace. -/
+def outputComment (src : String) : String :=
+  let commented := String.intercalate "\n"
+    ((src.stripBlankEdgeLines.splitOn "\n").map fun l =>
+      if l.all (·.isWhitespace) then "--" else Text.commentPrefix ++ "  " ++ l)
+  Text.commentPrefix ++ "Output:\n" ++ commented ++ "\n\n"
+
 /-- Decode a `Block.bnf` payload and render the grammar as an aligned plain-text
 display (`Bnf.toTextImpl`), which is what an extracted `.lean` file wants: the
 authoring source spells terminals as string literals and metavariables with a
@@ -386,6 +404,17 @@ partial def walkBlock (width : Nat) (isTerse : Bool) (file : String) (b : Verso.
         | .expectFailure =>
           return buf.append file <| saved.variants.map (wrapIndented "sf_expect_failure_in")
       return buf
+    if name == ``Verso.Genre.Manual.InlineLean.Block.leanOutput then
+      -- A ` ```leanOutput ` block holds the checked output of the preceding
+      -- `lean` block.  Commented into the generated `.lean` it would be
+      -- indistinguishable from prose, so label it `Output:` (see
+      -- `outputComment`).
+      let src : String := String.intercalate "\n" (contents.toList.filterMap
+        fun (b : Verso.Doc.Block Manual) =>
+          match b with
+          | .code s => some s
+          | _ => none)
+      return buf.appendAll file (outputComment src)
     if name == ``SFLMeta.Block.recall then
       if let some saved := SFLMeta.Recall.decode? which.data then
         let {kind, statement, strictUniverse, expectedError, source, ..} := saved
@@ -460,11 +489,14 @@ partial def walkBlock (width : Nat) (isTerse : Bool) (file : String) (b : Verso.
         | .str s => s
         | _ => ""
       let opener := if summary.isEmpty
-        then "THESE DETAILS CAN BE SKIPPED"
-        else s!"THESE DETAILS CAN BE SKIPPED ({summary})"
-      let mut buf := buf.appendAll file (asModuleDoc opener)
+        then "THE FOLLOWING DETAILS CAN BE SKIPPED"
+        else s!"THE FOLLOWING DETAILS CAN BE SKIPPED ({summary})"
+      -- Both markers hug the content they bracket: the opener drops the blank
+      -- line `asModuleDoc` would leave after it, and the closer collapses the
+      -- one the last content block left behind.
+      let mut buf := buf.appendAll file ((asModuleDoc opener).dropEnd 1).toString
       buf := walkBlocks width isTerse file contents buf
-      buf := buf.appendAll file (asModuleDoc "END DETAILS")
+      buf := (buf.dropBlankLine file).appendAll file (asModuleDoc "END DETAILS")
       return buf
     if name == ``Block.quiz then
       -- A quiz is shown in every build product; label it, and fence it with

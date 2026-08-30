@@ -7,6 +7,8 @@
     },
     // Lean input abbreviation for the type-colon glyph ⦂ (U+2982) used in the
     // typing judgment `⊢ t ⦂ T` (see TS/Types.lean): type `\tc` then space.
+    // Mirrored into every generated student project by `vscodeSettingsJson`
+    // in SFLMeta/Save/Project.lean — keep the two in step.
     "lean4.input.customTranslations": {
         "tc": "⦂"
     },

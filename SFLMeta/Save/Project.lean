@@ -62,6 +62,107 @@ private def lakefileToml (vol : String) (extraLibs : Array String)
     |>.insert `require reqs
     |>.insert `lean_lib libs
 
+/--
+The `.vscode/settings.json` shipped inside every extracted project.
+
+Students open the generated `lean/` directory directly (`code .`), so the
+repository's own `.vscode/settings.json` is not in scope for them. This is the
+student-facing subset of it, plus settings that only make sense for the
+*generated* files: the editor settings that make the chapters readable and
+typable, without the authoring-only entries (rulers, rewrap width, icon theme)
+or any setting that would demand an extension they have no reason to install.
+
+In an extracted chapter the book's prose arrives as `--` comments wrapping the
+code, so comments are recoloured to a blue-grey that reads as narration rather
+than as code.  These files are read as a book, so the prose is tuned to be
+comfortably legible rather than de-emphasised: both tones sit above the stock
+comment colour of the theme they replace (5.1:1 for Light+'s green, 5.0:1 for
+Dark+'s).
+
+A theme-scoped key selects on the theme's *name* — VS Code matches the
+`settingsId` with `*` allowed at either end, and appends theme-scoped rules
+after the unscoped ones, so the last match wins.  Name matching is not the same
+as knowing a theme is light or dark: `Monokai`, `Abyss` and `Red` say neither.
+So the unscoped rule carries a mid-tone that works on either background and the
+two scoped rules sharpen it wherever the name does tell us:
+
+* unscoped `#6B7C8C` — 4.3:1 on Light+, 3.9:1 on Dark+
+* `[*Light*]` `#4A5A6A` — 7.1:1 on white
+* `[*Dark*]`  `#89A0B3` — 6.2:1 on `#1E1E1E`
+
+`[*Light*]` also captures `Default High Contrast Light`, where a reader may
+prefer the theme's own maximum-contrast comment colour; there is no way to opt
+a scope back out of a customisation, so that is a known rough edge.
+
+The rules name the three `lean4` comment scopes rather than the bare `comment`
+scope, which would also recolour the Markdown, JSON and TOML files sitting
+beside the chapters.
+
+Keep the `lean4.input.customTranslations` entries in step with the repository's
+`.vscode/settings.json`.
+-/
+private def vscodeSettingsJson : String :=
+  r##"{
+    // Chapter prose is set in wide comment blocks; wrap it rather than
+    // scrolling sideways.
+    "[lean4]": {
+        "editor.wordWrap": "on"
+    },
+    // Lean input abbreviation for the type-colon glyph ⦂ (U+2982) used in the
+    // typing judgment `⊢ t ⦂ T`: type `\tc` then space.
+    "lean4.input.customTranslations": {
+        "tc": "⦂"
+    },
+    // The book's prose reaches these files as `--` comments; tint them so the
+    // narration reads as distinct from the code it surrounds.  The unscoped
+    // rule is a mid-tone that works on either background, for themes whose
+    // name says neither "Light" nor "Dark"; the scoped rules sharpen it where
+    // the name does tell us.  Theme-scoped rules are applied last and win.
+    "editor.tokenColorCustomizations": {
+        "textMateRules": [
+            {
+                "scope": [
+                    "comment.line.double-dash.lean4",
+                    "comment.block.lean4",
+                    "comment.block.documentation.lean4"
+                ],
+                "settings": {
+                    "foreground": "#6B7C8C"
+                }
+            }
+        ],
+        "[*Light*]": {
+            "textMateRules": [
+                {
+                    "scope": [
+                        "comment.line.double-dash.lean4",
+                        "comment.block.lean4",
+                        "comment.block.documentation.lean4"
+                    ],
+                    "settings": {
+                        "foreground": "#4A5A6A"
+                    }
+                }
+            ]
+        },
+        "[*Dark*]": {
+            "textMateRules": [
+                {
+                    "scope": [
+                        "comment.line.double-dash.lean4",
+                        "comment.block.lean4",
+                        "comment.block.documentation.lean4"
+                    ],
+                    "settings": {
+                        "foreground": "#89A0B3"
+                    }
+                }
+            ]
+        }
+    }
+}
+"##
+
 private def writeProject (dest : System.FilePath) (toolchain : String)
     (vol : String) (v : Variant) (files : Array (String × String))
     (extraLibs : Array String) (reqs : Array Lake.Toml.Table) : IO Unit := do
@@ -84,6 +185,9 @@ private def writeProject (dest : System.FilePath) (toolchain : String)
   IO.FS.writeFile (dest / "lean-toolchain") toolchain
   IO.FS.writeFile (dest / "README.md")
     s!"# {vol} — {v} version\n\nGenerated from the Verso source.\n"
+
+  IO.FS.createDirAll (dest / ".vscode")
+  IO.FS.writeFile (dest / ".vscode" / "settings.json") vscodeSettingsJson
 
   for (relPath, body) in files do
     let target := dest / relPath
