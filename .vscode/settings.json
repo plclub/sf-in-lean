@@ -23,10 +23,10 @@
     // last and win. The second rule of each tier tints markdown
     // emphasis (`*stuff*`, `_stuff_`) inside a comment: the lean4
     // grammar includes `source.lean4.markdown` in its comment rules,
-    // so emphasis really is scoped there. It steps further in the
-    // tier's own direction -- darker on light themes, lighter on
-    // dark ones -- while the unscoped tier, which has no direction,
-    // keeps its lightness and gains saturation instead.
+    // so emphasis really is scoped there. Emphasis keeps its tier's
+    // hue and lightness exactly and multiplies saturation by 1.6, so
+    // it reads as the same brown intensified rather than as a
+    // different weight of text.
     "editor.tokenColorCustomizations": {
         "textMateRules": [
             {
@@ -47,7 +47,7 @@
                     "comment punctuation.definition.bold.markdown"
                 ],
                 "settings": {
-                    "foreground": "#9E7A45"
+                    "foreground": "#A57A49"
                 }
             }
         ],
@@ -71,7 +71,7 @@
                         "comment punctuation.definition.bold.markdown"
                     ],
                     "settings": {
-                        "foreground": "#3A2916"
+                        "foreground": "#573513"
                     }
                 }
             ]
@@ -96,7 +96,7 @@
                         "comment punctuation.definition.bold.markdown"
                     ],
                     "settings": {
-                        "foreground": "#EBD8B8"
+                        "foreground": "#F1C98D"
                     }
                 }
             ]
