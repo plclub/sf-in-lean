@@ -7,18 +7,20 @@
     },
     // Lean input abbreviation for the type-colon glyph ⦂ (U+2982) used in the
     // typing judgment `⊢ t ⦂ T` (see TS/Types.lean): type `\tc` then space.
-    // Mirrored into every generated student project by `vscodeSettingsJson`
-    // in SFLMeta/Save/Project.lean — keep the two in step.
+    // Exported to every generated student project (see `studentSettingKeys`
+    // in SFLMeta/Save/Project.lean); this file is the source of truth.
     "lean4.input.customTranslations": {
         "tc": "⦂"
     },
-    // Tint Lean comments a blue-grey, mirroring what generated student
-    // projects ship (`vscodeSettingsJson` in SFLMeta/Save/Project.lean).
-    // NB the effect here is smaller than in an extracted chapter: in a Verso
-    // source the book's prose is document text, not a comment, so only
-    // genuine code comments change colour.
-    // The unscoped rule is a mid-tone for themes whose name says neither
-    // "Light" nor "Dark"; theme-scoped rules are applied last and win.
+    // Tint Lean comments brown. This file is the source: generated
+    // student projects are given these rules verbatim (see
+    // `studentSettingKeys` in SFLMeta/Save/Project.lean). NB the
+    // effect in the git repo is smaller than in an extracted
+    // chapter: in a Verso source the book's prose is document text,
+    // not a comment, so only genuine code comments change colour.
+    // The unscoped rule is a mid-tone for themes whose name says
+    // neither "Light" nor "Dark"; theme-scoped rules are applied
+    // last and win.
     "editor.tokenColorCustomizations": {
         "textMateRules": [
             {
@@ -28,7 +30,7 @@
                     "comment.block.documentation.lean4"
                 ],
                 "settings": {
-                    "foreground": "#6B7C8C"
+                    "foreground": "#94795A"
                 }
             }
         ],
@@ -41,7 +43,7 @@
                         "comment.block.documentation.lean4"
                     ],
                     "settings": {
-                        "foreground": "#4A5A6A"
+                        "foreground": "#4A3520"
                     }
                 }
             ]
@@ -55,7 +57,7 @@
                         "comment.block.documentation.lean4"
                     ],
                     "settings": {
-                        "foreground": "#89A0B3"
+                        "foreground": "#DEC5A0"
                     }
                 }
             ]

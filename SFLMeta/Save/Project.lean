@@ -4,6 +4,7 @@ import Lake.Load.Manifest
 import Lake.Toml
 import Lean.Elab.Import
 
+import SFLMeta.BuildStamp
 import SFLMeta.Variant
 import SFLMeta.Save.Extract
 
@@ -62,106 +63,88 @@ private def lakefileToml (vol : String) (extraLibs : Array String)
     |>.insert `require reqs
     |>.insert `lean_lib libs
 
-/--
-The `.vscode/settings.json` shipped inside every extracted project.
+/-- Settings from the repository's own `.vscode/settings.json` that are also
+wanted by a reader of the *generated* chapters.
 
-Students open the generated `lean/` directory directly (`code .`), so the
-repository's own `.vscode/settings.json` is not in scope for them. This is the
-student-facing subset of it, plus settings that only make sense for the
-*generated* files: the editor settings that make the chapters readable and
-typable, without the authoring-only entries (rulers, rewrap width, icon theme)
-or any setting that would demand an extension they have no reason to install.
+Everything else there is authoring-only (rulers, rewrap width, the icon theme
+and its folder clones, `explorer.excludeGitIgnore`) or would demand an
+extension a reader has no cause to install.  Naming what to keep, rather than
+what to drop, means a new authoring setting stays out of the student projects
+until someone deliberately adds it here. -/
+private def studentSettingKeys : List String :=
+  ["[lean4]", "lean4.input.customTranslations", "editor.tokenColorCustomizations"]
 
-In an extracted chapter the book's prose arrives as `--` comments wrapping the
-code, so comments are recoloured to a blue-grey that reads as narration rather
-than as code.  These files are read as a book, so the prose is tuned to be
-comfortably legible rather than de-emphasised: both tones sit above the stock
-comment colour of the theme they replace (5.1:1 for Light+'s green, 5.0:1 for
-Dark+'s).
+/-- Drop a `//` line comment from one line of JSONC, leaving any `//` that
+falls inside a string literal alone.  A JSON string cannot contain a raw
+newline, so string state never carries across lines and each line can be
+scanned on its own. -/
+private def stripLineComment (line : String) : String := Id.run do
+  let mut out := ""
+  let mut inString := false
+  let mut escaped := false
+  -- A '/' outside a string is withheld until the next character says whether
+  -- it opened a comment or was just a slash.
+  let mut pendingSlash := false
+  for c in line.toList do
+    if inString then
+      out := out.push c
+      if escaped then escaped := false
+      else if c == '\\' then escaped := true
+      else if c == '"' then inString := false
+    else if pendingSlash then
+      if c == '/' then
+        return out
+      pendingSlash := false
+      out := out.push '/'
+      if c == '"' then inString := true
+      out := out.push c
+    else if c == '/' then
+      pendingSlash := true
+    else
+      if c == '"' then inString := true
+      out := out.push c
+  if pendingSlash then
+    out := out.push '/'
+  return out
 
-A theme-scoped key selects on the theme's *name* — VS Code matches the
-`settingsId` with `*` allowed at either end, and appends theme-scoped rules
-after the unscoped ones, so the last match wins.  Name matching is not the same
-as knowing a theme is light or dark: `Monokai`, `Abyss` and `Red` say neither.
-So the unscoped rule carries a mid-tone that works on either background and the
-two scoped rules sharpen it wherever the name does tell us:
+/-- The `.vscode/settings.json` to ship inside an extracted project.
 
-* unscoped `#6B7C8C` — 4.3:1 on Light+, 3.9:1 on Dark+
-* `[*Light*]` `#4A5A6A` — 7.1:1 on white
-* `[*Dark*]`  `#89A0B3` — 6.2:1 on `#1E1E1E`
+The repository's own `.vscode/settings.json` is the single source of truth:
+this reads it, keeps `studentSettingKeys`, and re-emits them.  Nothing is
+duplicated, so a colour or abbreviation retuned while authoring reaches the
+next generated project for free.
 
-`[*Light*]` also captures `Default High Contrast Light`, where a reader may
-prefer the theme's own maximum-contrast comment colour; there is no way to opt
-a scope back out of a customisation, so that is a known rough edge.
-
-The rules name the three `lean4` comment scopes rather than the bare `comment`
-scope, which would also recolour the Markdown, JSON and TOML files sitting
-beside the chapters.
-
-Keep the `lean4.input.customTranslations` entries in step with the repository's
-`.vscode/settings.json`.
--/
-private def vscodeSettingsJson : String :=
-  r##"{
-    // Chapter prose is set in wide comment blocks; wrap it rather than
-    // scrolling sideways.
-    "[lean4]": {
-        "editor.wordWrap": "on"
-    },
-    // Lean input abbreviation for the type-colon glyph ⦂ (U+2982) used in the
-    // typing judgment `⊢ t ⦂ T`: type `\tc` then space.
-    "lean4.input.customTranslations": {
-        "tc": "⦂"
-    },
-    // The book's prose reaches these files as `--` comments; tint them so the
-    // narration reads as distinct from the code it surrounds.  The unscoped
-    // rule is a mid-tone that works on either background, for themes whose
-    // name says neither "Light" nor "Dark"; the scoped rules sharpen it where
-    // the name does tell us.  Theme-scoped rules are applied last and win.
-    "editor.tokenColorCustomizations": {
-        "textMateRules": [
-            {
-                "scope": [
-                    "comment.line.double-dash.lean4",
-                    "comment.block.lean4",
-                    "comment.block.documentation.lean4"
-                ],
-                "settings": {
-                    "foreground": "#6B7C8C"
-                }
-            }
-        ],
-        "[*Light*]": {
-            "textMateRules": [
-                {
-                    "scope": [
-                        "comment.line.double-dash.lean4",
-                        "comment.block.lean4",
-                        "comment.block.documentation.lean4"
-                    ],
-                    "settings": {
-                        "foreground": "#4A5A6A"
-                    }
-                }
-            ]
-        },
-        "[*Dark*]": {
-            "textMateRules": [
-                {
-                    "scope": [
-                        "comment.line.double-dash.lean4",
-                        "comment.block.lean4",
-                        "comment.block.documentation.lean4"
-                    ],
-                    "settings": {
-                        "foreground": "#89A0B3"
-                    }
-                }
-            ]
-        }
-    }
-}
-"##
+Read relative to the working directory, which is the repository root when the
+volume executable runs (as it is for `lean-toolchain` and
+`lake-manifest.json`).  A missing or malformed file, or a missing key, is an
+error rather than a silent omission: each would mean students quietly lose a
+setting the authors thought they had. -/
+private def vscodeSettingsJson : IO String := do
+  let path : System.FilePath := ".vscode" / "settings.json"
+  unless ← path.pathExists do
+    throw <| IO.userError
+      s!"{path} is missing; it is the source of the settings shipped to readers"
+  let raw ← IO.FS.readFile path
+  let stripped := String.intercalate "\n" <| (raw.splitOn "\n").map stripLineComment
+  let json ←
+    match Lean.Json.parse stripped with
+    | .ok j => pure j
+    | .error e => throw <| IO.userError s!"could not parse {path}: {e}"
+  match json.getObj? with
+  | .ok _ => pure ()
+  | .error e => throw <| IO.userError s!"{path} is not a JSON object: {e}"
+  let mut kept : List (String × Lean.Json) := []
+  for key in studentSettingKeys.reverse do
+    match json.getObjVal? key with
+    | .ok v => kept := (key, v) :: kept
+    | .error _ =>
+      let msg := s!"{path} has no '{key}'; it is shipped to readers, so "
+        ++ "removing it should be deliberate (update studentSettingKeys)"
+      throw <| IO.userError msg
+  let banner :=
+    "// Generated from the repository's own .vscode/settings.json -- edit it there,\n"
+      ++ "// not here (see `studentSettingKeys` in SFLMeta/Save/Project.lean).\n"
+  return banner ++ (Lean.Json.mkObj kept).pretty ++ "\n"
 
 private def writeProject (dest : System.FilePath) (toolchain : String)
     (vol : String) (v : Variant) (files : Array (String × String))
@@ -187,7 +170,7 @@ private def writeProject (dest : System.FilePath) (toolchain : String)
     s!"# {vol} — {v} version\n\nGenerated from the Verso source.\n"
 
   IO.FS.createDirAll (dest / ".vscode")
-  IO.FS.writeFile (dest / ".vscode" / "settings.json") vscodeSettingsJson
+  IO.FS.writeFile (dest / ".vscode" / "settings.json") (← vscodeSettingsJson)
 
   for (relPath, body) in files do
     let target := dest / relPath
@@ -282,9 +265,13 @@ private def dedupQuizSeparators (s : String) : String :=
 /--
 Write one extracted project to `_out/<destSlug>/<variant>/lean/`.
 
+`stamp`: this build's stamp (`SFLMeta.buildStamp`), appended as a trailing
+comment to every file generated from Verso -- the same sentence the HTML page of
+that chapter ends with
+
 `crossVol`: earlier-volume Verso chapters needed by this volume
 -/
-private def emitSavedImpl (config : ExtractConfig)
+private def emitSavedImpl (config : ExtractConfig) (stamp : String)
     (crossVol : List (String × Part Manual) := []) :
     Mode → Config → TraverseState → Part Manual → BuildLogT IO Unit :=
   fun _mode _cfg _state text => do
@@ -317,7 +304,7 @@ private def emitSavedImpl (config : ExtractConfig)
     for (file, variants) in entries do
       let chosen := dedupQuizSeparators <| mergeAdjacentModuleDocs <| variants.get config.variant
       if file == rootFile then
-        files := files.push (file, chosen)
+        files := files.push (file, withBuildStamp stamp chosen)
       else
         let source ← IO.FS.readFile file
         let imports :=
@@ -327,8 +314,8 @@ private def emitSavedImpl (config : ExtractConfig)
         let preamble :=
           String.join <| imports.map fun imp =>
             s!"import {imp}\n"
-        files := files.push
-          (file, if preamble.isEmpty then chosen else preamble ++ "\n" ++ chosen)
+        let body := if preamble.isEmpty then chosen else preamble ++ "\n" ++ chosen
+        files := files.push (file, withBuildStamp stamp body)
 
     let bundleFiles ← bundleLoop generatedModules seeds [] #[]
 
@@ -356,16 +343,16 @@ private def emitSavedImpl (config : ExtractConfig)
       buildProject dest config.variant
 
 
-def emitSavedStudent (vol : String) (crossVol : List (String × Part Manual) := []) :=
-  emitSavedImpl (ExtractConfig.fromVolume vol .student true) crossVol
+def emitSavedStudent (vol stamp : String) (crossVol : List (String × Part Manual) := []) :=
+  emitSavedImpl (ExtractConfig.fromVolume vol .student true) stamp crossVol
 
-def emitSavedSolutions (vol : String) (crossVol : List (String × Part Manual) := []) :=
-  emitSavedImpl (ExtractConfig.fromVolume vol .solutions true) crossVol
+def emitSavedSolutions (vol stamp : String) (crossVol : List (String × Part Manual) := []) :=
+  emitSavedImpl (ExtractConfig.fromVolume vol .solutions true) stamp crossVol
 
-def emitSavedTerse (vol : String) (crossVol : List (String × Part Manual) := []) :=
-  emitSavedImpl (ExtractConfig.fromVolume vol .terse true) crossVol
+def emitSavedTerse (vol stamp : String) (crossVol : List (String × Part Manual) := []) :=
+  emitSavedImpl (ExtractConfig.fromVolume vol .terse true) stamp crossVol
 
-def emitSavedGrading (vol : String) (crossVol : List (String × Part Manual) := []) :=
-  emitSavedImpl (ExtractConfig.fromVolume vol .grading true) crossVol
+def emitSavedGrading (vol stamp : String) (crossVol : List (String × Part Manual) := []) :=
+  emitSavedImpl (ExtractConfig.fromVolume vol .grading true) stamp crossVol
 
 end SFLMeta.Save

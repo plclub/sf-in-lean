@@ -15,6 +15,11 @@ file := some "Induction"
 
 This chapter shows how to carry out _proofs by induction_, one of the most fundamental reasoning tools in computer science and mathematics, in Lean.
 
+:::dev "Benjamin Pierce (bcpierce00)"
+Somebody needs to scan through the generated .html for this chapter (and Basics) before it's
+marked 100% finished.
+:::
+
 # Separate Compilation
 
 :::terse
@@ -583,7 +588,7 @@ required fact "in place."  The {tactic}`have` tactic allows us to do this.
 New tactic: {tactic}`have`.
 ::::
 
-:::dev "Claude" BeforeNextRelease
+:::dev "Claude"
 Naming: `mult_zero_add'` is the only `mult_`-prefixed name in the chapter;
 everything else (and Basics) uses the `mul_` prefix. — Claude
 :::
@@ -677,8 +682,9 @@ be read by many different readers, some of whom may be convinced
 by a particular way of phrasing the argument, while others may not
 be. Some readers may be unfamiliar with the area and need the
 argument spelled out in detail.  Other readers, more
-familiar with the area, may find too much detail so overwhelming
-that they lose the overall thread; all they want is to be told the
+familiar with the area,
+may find that extra detail makes it _harder_ to follow the
+argument; all they want is to be told the
 main ideas, since it is easier for them to fill in the details for
 themselves than to wade through a written presentation of them.
 Ultimately, there is no universal standard, because there is no
@@ -957,7 +963,7 @@ they transform the goal (or a hypothesis) from the form on
 the left side of the equality to the right side. To rewrite from
 right to left, use `rewrite [← h]` or `rw [← h]`, where `←` is entered
 as `\l` or `\<-`.
-:::dev "Claude" BeforeNextRelease
+:::dev "Claude" 
 This paragraph on rewrite direction sits at the tail of the "Using Code Actions"
 aside, with no connection to code actions. It probably belongs with the
 "Tip: the rw tactic" section, or as a lead-in to the `mul_two` exercise just
