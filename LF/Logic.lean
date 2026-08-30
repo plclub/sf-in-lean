@@ -1011,15 +1011,15 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 ```
 
 1. {tactic}`intro`, {tactic}`apply`, and {tactic}`exact` suffice
-2. {tactic}`cases`
+2. {tactic}`contradiction`
 3. {tactic}`left` and/or {tactic}`right`
-4. {tactic}`cases` and {tactic}`left` and/or {tactic}`right`
+4. {tactic}`contradiction` and {tactic}`left` and/or {tactic}`right`
 5. none of the above
 
 :::quizSolution
 ```lean
 example (a : Prop) (h : 1 = 0) : (a ∨ ¬ a) := by
-  cases h
+  contradiction
 ```
 :::
 ::::
