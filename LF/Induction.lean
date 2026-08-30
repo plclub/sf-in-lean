@@ -13,6 +13,8 @@ htmlSplit := .never
 file := some "Induction"
 %%%
 
+This chapter shows how to carry out _proofs by induction_, one of the most fundamental reasoning tools in computer science and mathematics, in Lean.
+
 # Separate Compilation
 
 :::terse
@@ -37,18 +39,18 @@ compiled version, called `Basics.olean`, is analogous to the
 `.class` files compiled from `.java` source files and the `.o`
 files compiled from `.c` files.
 
-When using Lake (Lean's build system), the `lakefile.lean` file
+When using Lake (Lean's build system), the file `lakefile.lean`
 specifies dependencies and build configuration.  Running `lake build`
 will compile all necessary files in the correct order.
 
 If you are using VS Code with the Lean 4 extension, compilation
 happens automatically in the background.  When you open a file, the
-extension will compile its dependencies as needed.
+extension compiles its dependencies as needed.
 
 Troubleshooting:
 
  - If you get complaints about missing imports, make sure you have
-   run `lake build` from the project root directory at least once.
+   run `lake build` from the project root directory in a terminal, at least once.
 
  - If you modify `Basics.lean`, VS Code will automatically
    recompile it when you save.  You may need to reopen this file
@@ -58,13 +60,16 @@ Troubleshooting:
    running `lake clean` followed by `lake build` to recompile
    everything from scratch.
 
- - If you are using the Lean 4 extension for VS Code,
+   (If you are using the Lean 4 extension for VS Code,
    you can also restart the extension on the current file
    via the `Restart File` button in the InfoView. The extension
-   will often prompt you do this if you change things upstream
-   in the dependency tree.
+   should prompt you do this if you change things upstream
+   in the dependency tree.)
 ::::
 
+:::dev "Benjamin Pierce (bcpierce00)"
+This next comment doesn't belong in the Separate Compilation section...
+:::
 We reopen the namespace from the previous chapter to group this chapter's
 definitions and theorems with the custom natural-number development and keep
 their names distinct from the standard library.
@@ -487,24 +492,28 @@ theorem add_assoc (n m p : Nat) :
 ## Tip: the {tactic}`rw` tactic
 
 As you've probably noticed, a common pattern in Lean proofs is `rewrite [...]`
-followed by {tactic}`rfl`. There is a tactic that combines these two steps: `rw [...]`
+followed by {tactic}`rfl`. Lean also provides a tactic that combines these two steps: `rw [...]`
 will automatically close the goal if the rewrite makes the goal true by
-definition. For example, instead of writing
+definition. For example, instead of
 
 ```display
 rewrite [double_zero]; rfl
 ```
 
-We could write this:
+we could write this:
 
 ```display
 rw [double_zero]
 ```
 
 ::::full
-A small caveat: `rw [...]` only performs a quick reflexivity check
+One small caveat: `rw [...]` only performs a quick reflexivity check
 after rewriting; it does not unfold every definition. So, in rare
-cases, {tactic}`rw` may leave a goal that is solved immediately by {tactic}`rfl`.
+cases, {tactic}`rw` may leave a goal that can actually be solved immediately by {tactic}`rfl`.
+
+:::dev "Benjamin Pierce (bcpierce00)"
+Missing transition / introduction of the next bit.
+:::
 
 ```lean
 def aliasOfTwo := two

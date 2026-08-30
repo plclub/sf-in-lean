@@ -224,14 +224,29 @@ end Text
 
 /-! ## ExtraStep walker -/
 
-/-- Render a string as a block of `--` line comments, one per line (blank lines
-stay completely blank), normalising trailing whitespace. -/
+/-- Render a string as a block of `--` line comments, one per line, normalising
+trailing whitespace.  A blank line *inside* the block becomes a bare `--` rather
+than a truly empty line, so everything emitted from one block of the source (a
+paragraph and the list that follows it, the several paragraphs of a quiz, the
+lines of a `leanOutput` message) reads as a single unit; the blank line that
+follows every emitted block is what separates one unit from the next. -/
 private def asModuleDoc (s : String) : String :=
   let t := s.trimAscii.toString
   let commented := String.intercalate "\n"
     ((t.splitOn "\n").map fun line =>
-      if line.all (·.isWhitespace) then "" else Text.commentPrefix ++ line)
+      if line.all (·.isWhitespace) then "--" else Text.commentPrefix ++ line)
   commented ++ "\n\n"
+
+/-- The rule that sets a quiz off from the surrounding prose in the generated
+`.lean` files.  One is emitted before and after *every* quiz, so a run of
+consecutive quizzes is introduced, separated, and terminated by rules; the
+doubled rule between two neighbours is collapsed by `dedupQuizSeparators` when
+the file is emitted. -/
+def quizSeparatorLine : String :=
+  Text.commentPrefix ++ " " ++ String.ofList (List.replicate 40 '-')
+
+/-- `quizSeparatorLine` as an emitted block: the rule, then a blank line. -/
+def quizSeparator : String := quizSeparatorLine ++ "\n\n"
 
 section
 
@@ -407,7 +422,7 @@ partial def walkBlock (width : Nat) (isTerse : Bool) (file : String) (b : Verso.
     if name == ``Block.display || name == ``Block.displaymath then
       -- A ` ```display ` / ` ```displaymath ` block is a *display*: its line
       -- structure is significant, so it is emitted verbatim as a comment — each
-      -- source line kept on its own line and indented a couple of spaces to set
+      -- source line kept on its own line and indented four spaces to set
       -- it off — and is NEVER reflowed/filled into a paragraph the way ordinary
       -- prose is.  `display` stores its source string directly; `displaymath`
       -- carries no data, so recover the text from its `Block.para`/math children.
@@ -422,15 +437,15 @@ partial def walkBlock (width : Nat) (isTerse : Bool) (file : String) (b : Verso.
             | .para inls => some (inlinesToText inls)
             | _ => none)
       -- Emit as its own comment, built by hand rather than via `asModuleDoc`:
-      -- each source line kept on its own line and indented under `--  ` to set the
-      -- display off, and NEVER reflowed/filled the way prose is.  Only leading and
-      -- trailing *blank lines* are dropped — a line's own leading whitespace is
+      -- each source line kept on its own line and indented four spaces under
+      -- `--  ` to set the display off, and NEVER reflowed/filled the way prose
+      -- is.  Only leading and trailing *blank lines* are dropped — a line's own leading whitespace is
       -- preserved verbatim, so ASCII diagrams and hand-aligned displays keep their
       -- column alignment.  (`asModuleDoc`/`trimAscii` would trim the whole block
       -- and so drop the first line's indentation.)
       let commented := String.intercalate "\n"
         ((src.stripBlankEdgeLines.splitOn "\n").map fun l =>
-          if l.all (·.isWhitespace) then "" else Text.commentPrefix ++ "  " ++ l)
+          if l.all (·.isWhitespace) then "--" else Text.commentPrefix ++ "    " ++ l)
       return buf.appendAll file (commented ++ "\n\n")
     if name == ``Block.diagramWithAlt then
       match findAlt? contents with
@@ -452,10 +467,13 @@ partial def walkBlock (width : Nat) (isTerse : Bool) (file : String) (b : Verso.
       buf := buf.appendAll file (asModuleDoc "END DETAILS")
       return buf
     if name == ``Block.quiz then
-      -- A quiz is shown in every build product; label it so the reader of the
-      -- generated `.lean` can tell the question apart from surrounding prose.
-      let mut buf := buf.appendAll file (asModuleDoc "_Quiz:_")
+      -- A quiz is shown in every build product; label it, and fence it with
+      -- rules, so the reader of the generated `.lean` can tell the question
+      -- apart from surrounding prose and see where a run of quizzes ends.
+      let mut buf := buf.appendAll file quizSeparator
+      buf := buf.appendAll file (asModuleDoc "_Quiz:_")
       buf := walkBlocks width isTerse file contents buf
+      buf := buf.appendAll file quizSeparator
       return buf
     if name == ``Block.quizSolution then
       -- A quiz answer is elided from every generated `.lean` build product — it

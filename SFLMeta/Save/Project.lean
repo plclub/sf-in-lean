@@ -166,6 +166,13 @@ private partial def bundleLoop
 private def mergeAdjacentModuleDocs (s : String) : String :=
   s.replace "\n-/\n\n/-!\n" "\n\n"
 
+/-- Every quiz is emitted between two `quizSeparator` rules, so a run of
+consecutive quizzes ends up with a doubled rule at each interior boundary.
+Collapse each doubled rule to one: a run of quizzes is then introduced,
+separated, and terminated by a single rule. -/
+private def dedupQuizSeparators (s : String) : String :=
+  s.replace (quizSeparator ++ quizSeparator) quizSeparator
+
 /-! ## Extraction -/
 
 /--
@@ -204,7 +211,7 @@ private def emitSavedImpl (config : ExtractConfig)
     let mut seeds : List String := ["SFLCompat"]
 
     for (file, variants) in entries do
-      let chosen := mergeAdjacentModuleDocs <| variants.get config.variant
+      let chosen := dedupQuizSeparators <| mergeAdjacentModuleDocs <| variants.get config.variant
       if file == rootFile then
         files := files.push (file, chosen)
       else
