@@ -26,18 +26,6 @@ variable
 Chapter {ref "Poly"}[Poly] introduced *parametric polymorphism*, declaring a type variable with no
 constraint on it.
 
-:::dev "Michael Hicks (mwhicks1)"
-Students will run across universes, though. When looking at List lemmas, for example, they will see things like:
-```
-List.reverse.{u} {α : Type u} (as : List α) : List α
-```
-Are we explaining these things somewhere, maybe in Poly ?
-:::
-:::dev "Benjamin Pierce (bcpierce00)"
-Yes, in Poly!
-:::
-
-
 This lets us work with a type like `List α`, writing functions like
 {name}`List.reverse` and {name}`List.length` and proofs like {name}`List.length_reverse`, which use
 only the list's structure and never inspect any particular `a : α`.
@@ -52,15 +40,15 @@ other languages, such as traits in Rust.
 Consider the following function, which checks whether a natural number occurs in a list:
 
 ```lean
-def List.elemNat (n : Nat) (l : List Nat) : Bool :=
-  match l with
+def List.elemNat (n : Nat) (ms : List Nat) : Bool :=
+  match ms with
   | [] => false
-  | m :: l' => bif n == m then true else elemNat n l'
+  | m :: ms' => bif n == m then true else elemNat n ms'
 
 theorem List.elem_nat_nil (n : Nat) : [].elemNat n = false := rfl
 
-theorem List.elem_nat_cons (n m : Nat) (l : List Nat) :
-    (m :: l).elemNat n = bif n == m then true else elemNat n l := rfl
+theorem List.elem_nat_cons (n m : Nat) (ms : List Nat) :
+    (m :: ms).elemNat n = bif n == m then true else elemNat n ms := rfl
 ```
 
 ```lean
@@ -74,10 +62,10 @@ polymorphism suggests simply replacing {name}`Nat` with a type variable {lean}`�
 but that produces a puzzling error:
 
 ```lean -keep +error (name := elem_poly_error)
-def List.elemPoly {α : Type} (x : α) (l : List α) : Bool :=
-  match l with
+def List.elemPoly {α : Type} (x : α) (ys : List α) : Bool :=
+  match ys with
   | [] => false
-  | y :: l' => bif x == y then true else elemPoly x l'
+  | y :: ys' => bif x == y then true else elemPoly x ys'
 ```
 
 ```leanOutput elem_poly_error
@@ -92,10 +80,10 @@ We'll see exactly why shortly; for now, here's one way to sidestep the problem:
 have the caller supply the equality test to use.
 
 ```lean
-def List.elemPolyEq {α : Type} (eq : α → α → Bool) (x : α) (l : List α) : Bool :=
-  match l with
+def List.elemPolyEq {α : Type} (eq : α → α → Bool) (x : α) (ys : List α) : Bool :=
+  match ys with
   | [] => false
-  | y :: l' => bif eq x y then true else elemPolyEq eq x l'
+  | y :: ys' => bif eq x y then true else elemPolyEq eq x ys'
 
 #eval [0, 1].elemPolyEq Nat.beq 0
 ```
@@ -116,15 +104,15 @@ find and fill in the appropriate instance when the function is called.
 Here is what this looks like for `List.elemPoly`:
 
 ```lean
-def List.elemPoly {α : Type} [BEq α] (x : α) (l : List α) : Bool :=
-  match l with
+def List.elemPoly {α : Type} [BEq α] (x : α) (ys : List α) : Bool :=
+  match ys with
   | [] => false
-  | y :: l' => bif x == y then true else elemPoly x l'
+  | y :: ys' => bif x == y then true else elemPoly x ys'
 
 theorem List.elemPoly_nil {α : Type} [BEq α] (x : α) : [].elemPoly x = false := rfl
 
-theorem List.elemPoly_cons {α : Type} [BEq α] (x y : α) (l : List α) :
-    (y :: l).elemPoly x = bif x == y then true else elemPoly x l := rfl
+theorem List.elemPoly_cons {α : Type} [BEq α] (x y : α) (ys : List α) :
+    (y :: ys).elemPoly x = bif x == y then true else elemPoly x ys := rfl
 
 #eval [0, 1].elemPoly 0
 ```
@@ -165,8 +153,8 @@ given value if the list is empty. As with {name}`List.elemPolyEq` above, here is
 that makes the default value an explicit parameter:
 
 ```lean
-def List.headOrEx {α : Type} (defaultValue : α) (l : List α) : α :=
-  match l with
+def List.headOrEx {α : Type} (defaultValue : α) (xs : List α) : α :=
+  match xs with
   | [] => defaultValue
   | x :: _ => x
 
@@ -233,8 +221,8 @@ the same way we rewrote {name}`List.elemPolyEq` into {name}`List.elemPoly` above
 explicit {lean}`defaultValue` parameter with an instance implicit:
 
 ```lean
-def List.headOr {α : Type} [DefaultValue α] (l : List α) : α :=
-  match l with
+def List.headOr {α : Type} [DefaultValue α] (xs : List α) : α :=
+  match xs with
   | [] => DefaultValue.value
   | x :: _ => x
 
@@ -368,9 +356,9 @@ Prove that {name}`List.elemPoly` agrees with {name}`List.elemNat` when specializ
 natural numbers.
 
 ```lean
-theorem List.elemPoly_eq_elemNat (xs : List Nat) (n : Nat) : xs.elemPoly n = xs.elemNat n := by
+theorem List.elemPoly_eq_elemNat (ms : List Nat) (n : Nat) : ms.elemPoly n = ms.elemNat n := by
   solution!(
-  induction xs with
+  induction ms with
   | nil =>
     rewrite [List.elemPoly_nil, List.elem_nat_nil]
     rfl
@@ -1823,8 +1811,8 @@ I'm not sure what part of the signature here is important to translate. Is the p
 :::
 
 ```lean
-example {α : Type} (x : α) [BEq α] [LawfulBEq α] (l : List α)
-    (neq : l.filter (x == ·) ≠ []) : x ∈ l := by
+example {α : Type} (x : α) [BEq α] [LawfulBEq α] (xs : List α)
+    (neq : xs.filter (x == ·) ≠ []) : x ∈ xs := by
   sorry
 ```
 
