@@ -293,7 +293,7 @@ two builds of the same tag must agree, and a citation should name the year the
 edition was published, not the year someone happened to rebuild it.
 
 **Build stamps.**  Every build product records when it was made: each generated
-`.lean` file ends with a `-- Generated <date> <time> UTC` comment, and each HTML
+`.lean` file ends with a `-- Built on <date> <time> UTC` comment, and each HTML
 page ends with the same sentence set small and gray below a rule.  The clock is
 read once per `SFLMeta.runVolume` call and the one string is handed to both
 emitters (`SFLMeta/BuildStamp.lean`), so a chapter's `.lean` and its HTML page

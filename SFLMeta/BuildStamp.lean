@@ -31,7 +31,7 @@ def buildStamp : IO String := do
   let utc :=
     Std.Time.DateTime.ofTimestamp now
       (Std.Time.TimeZone.ZoneRules.ofTimeZone Std.Time.TimeZone.UTC)
-  return s!"Generated {utc.format "yyyy-MM-dd HH:mm"} UTC"
+  return s!"Built on {utc.format "yyyy-MM-dd HH:mm"} UTC"
 
 /-- `body`, with `stamp` appended as a trailing comment.  Trailing whitespace is
 trimmed first so the stamp always sits one blank line below the last line of
