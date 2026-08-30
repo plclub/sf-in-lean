@@ -1189,7 +1189,7 @@ example (n : Nat) (h : Even (n * n)) :
   n * n = 0 ∨ ∃ m, n * n = m + 2 := by
   inversion h with
   | zero => left; assumption
-  | succ_succ _ m' _ _ _ => right; exists m'
+  | succ_succ m' _ _ _ => right; exists m'
 ```
 
 :::full
