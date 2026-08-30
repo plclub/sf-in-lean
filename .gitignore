@@ -17,3 +17,8 @@ TS/*Verso.lean
 # Personal keybinding cheat sheet and its generator (see .vscode/KEYBINDINGS-SETUP.md).
 .vscode/KEYBINDINGS*.md
 .vscode/keybindings-ref.*
+
+# Gradescope autograder build output (gradescope/package.py).
+gradescope/*.zip
+gradescope/autograder/
+gradescope/context/
