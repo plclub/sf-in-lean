@@ -150,5 +150,6 @@
    "new": "```display\n                      incr\n          Bin ------------------------> Bin\n           |                             |\nbinToNat   |                             |  binToNat\n           |                             |\n           v                             v\n          Nat ------------------------> Nat\n                      succ\n```",
    "why": "The arrow label sits inside the top-left node (\"incr Bin\") instead of above the arrow, and the top row is two columns off from the bottom row; this matches the `succ` label below."
   }
- ]
+ ],
+ "completed": true
 }

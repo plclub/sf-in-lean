@@ -63,7 +63,7 @@ Troubleshooting:
    (If you are using the Lean 4 extension for VS Code,
    you can also restart the extension on the current file
    via the `Restart File` button in the InfoView. The extension
-   should prompt you do this if you change things upstream
+   should prompt you to do this if you change things upstream
    in the dependency tree.)
 ::::
 
@@ -113,7 +113,7 @@ What about the next one?
 theorem review₂ (b : Bool) : (true || b) = true
 ```
 
-Which tactics do we need besides `rfl`?
+Which tactics do we need besides {tactic}`rfl`?
 
 (A) none
 
@@ -139,7 +139,7 @@ What if we change the order of the arguments of `||`?
 theorem review₃ (b : Bool) : (b || true) = true
 ```
 
-Which tactics do we need besides `rfl`?
+Which tactics do we need besides {tactic}`rfl`?
 
 (A) none
 
@@ -227,7 +227,6 @@ theorem succ_eq_add_one (n : Nat) : succ n = n + one := by
 :::
 ::::
 
-
 # Proof by Induction
 
 ::::full
@@ -284,7 +283,6 @@ further: the branch of the case analysis where we assume `n = zero`
 goes through just fine, but in the branch where `n = n' + 1` for
 some `n'` we get stuck in exactly the same way.
 
-
 ```lean +error (name := cases_ex)
 example (n : Nat) : zero + n = n := by
   cases n with
@@ -335,9 +333,9 @@ the theorem at hand...
 
 ::::terse
 We need a bigger hammer: the _principle of induction_ over
-natural numbers...
+natural numbers:
 
-- If `P(n)` is some proposition involving a natural number `n`,
+If `P(n)` is some proposition involving a natural number `n`,
 and we want to show that `P` holds for _all_ numbers, we can
 reason like this:
 
@@ -489,7 +487,7 @@ theorem add_assoc (n m p : Nat) :
 :::gradeTheorem "0.5" add_assoc
 :::
 
-## Tip: the {tactic}`rw` tactic
+## Tip: The {tactic}`rw` Tactic
 
 As you've probably noticed, a common pattern in Lean proofs is `rewrite [...]`
 followed by {tactic}`rfl`. Lean also provides a tactic that combines these two steps: `rw [...]`
@@ -578,7 +576,7 @@ earlier theorems.  But sometimes a proof will involve some
 miscellaneous fact that is too trivial and of too little general
 interest to bother giving it its own top-level name.  In such
 cases, it is convenient to simply state and prove the
-required fact "in place".  The {tactic}`have` tactic allows us to do this.
+required fact "in place."  The {tactic}`have` tactic allows us to do this.
 ::::
 
 ::::terse
@@ -675,7 +673,7 @@ be read by many different readers, some of whom may be convinced
 by a particular way of phrasing the argument, while others may not
 be. Some readers may be unfamiliar with the area and need the
 argument spelled out in detail.  Other readers, more
-familiar in the area, may find too much detail so overwhelming
+familiar with the area, may find too much detail so overwhelming
 that they lose the overall thread; all they want is to be told the
 main ideas, since it is easier for them to fill in the details for
 themselves than to wade through a written presentation of them.
@@ -697,7 +695,7 @@ in many ways, but they are typically _not_ the most efficient ways of
 communicating ideas between human beings.
 
 For example, here is a proof that addition is associative
-   (you might have written something like it yourself, recently...):
+(you might have written something like it yourself, recently...):
 
 ```lean
 theorem add_assoc' (n m p : Nat) :
@@ -709,7 +707,7 @@ theorem add_assoc' (n m p : Nat) :
 
 Lean is perfectly happy with this.  For a human, however, it
 is difficult to make much sense of it.  We can
-pass arguments to the {name}`add_succ` theorems to show the structure more clearly...
+pass arguments to the {name}`add_succ` theorem to show the structure more clearly...
 
 ```lean
 theorem add_assoc'' (n m p : Nat) :
@@ -730,7 +728,7 @@ to impossible.
 On paper, a (somewhat pedantic) mathematician might write the proof something like
 this:
 
-- _Theorem_: For any `n`, `m` and `p`,
+- _Theorem_: For any `n`, `m`, and `p`,
 
 ```display
   n + (m + p) = (n + m) + p.
@@ -790,8 +788,8 @@ Theorem: Addition is commutative.
 Proof: ...
 
 :::solution
-Let natural numbers `n` and `m` be given.  We show `n + m = m +
-n` by induction on `m`.
+Let natural numbers `n` and `m` be given.  We show `n + m = m + n`
+by induction on `m`.
 
 - First, suppose `m = zero`.  We must show
 
@@ -802,7 +800,7 @@ n + zero = zero + n.
 By the definition of `+`, `n + zero = n`, so we now must show
 
 ```display
-n = zero + n
+n = zero + n.
 ```
 
 We have already shown (lemma {name}`zero_add`) that `zero + n = n`.  Thus both sides equal `n`.
@@ -851,7 +849,7 @@ follows directly from the definition of {name}`beq`.
 - Next, suppose `n = n' + 1`, where `(n' == n') = true`.  We
 must show `(n' + 1 == n' + 1) = true`. This
 follows directly from the induction hypothesis and the
-definition of `beq`.
+definition of {name}`beq`.
 
 _QED_.
 :::
@@ -1143,7 +1141,7 @@ in the {ref "Automation"}[Automation] chapter.
 namespace NatToBin
 ```
 
-Recall the {name}`Bin` type we defined in Basics:
+Recall the {name}`Bin` type we defined in {ref "Basics"}[Basics]:
 
 ```lean
 inductive Bin : Type where
@@ -1191,7 +1189,6 @@ attribute [pp_nodot] Bin.b0 Bin.b1
 Should the `attribute` declaration be in a :::details block?
 :::
 
-
 :::autogradedHole binToNat
 :::
 
@@ -1205,7 +1202,8 @@ didn't prove its correctness. Now we'll do so.
   it to a natural number and then incrementing:
 
 ```display
-       incr Bin ----------------------> Bin
+                      incr
+          Bin ------------------------> Bin
            |                             |
 binToNat   |                             |  binToNat
            |                             |
@@ -1239,7 +1237,7 @@ theorem bin_to_nat_pres_incr (b : Bin) :
 
 :::::exercise (rating := 3) (name := "nat_bin_nat")
 Write a function to convert natural numbers to binary numbers.
-  Also write some simplification lemmas for it.
+Also write some simplification lemmas for it.
 
 ```lean
 def natToBin (n : Nat) : Bin := solution!(
@@ -1388,7 +1386,7 @@ constructors to the multiple representations of zero.
 
 To solve this problem, we can introduce a _normalization_ function
 that selects the simplest {name}`Bin` out of all the equivalent
-{name}`Bin`. Then we can prove that the conversion from {name}`Bin` to {name}`Nat` and
+{name}`Bin`s. Then we can prove that the conversion from {name}`Bin` to {name}`Nat` and
 back again produces that normalized, simplest {name}`Bin`.
 
 :::::exercise (rating := 4) (name := "bin_nat_bin") (level := Advanced)
