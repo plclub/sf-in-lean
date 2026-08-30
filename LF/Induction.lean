@@ -39,7 +39,7 @@ compiled version, called `Basics.olean`, is analogous to the
 `.class` files compiled from `.java` source files and the `.o`
 files compiled from `.c` files.
 
-When using Lake (Lean's build system), the file `lakefile.lean`
+When using Lake (Lean's build system), the file `lakefile.toml`
 specifies dependencies and build configuration.  Running `lake build`
 will compile all necessary files in the correct order.
 
@@ -583,6 +583,10 @@ required fact "in place."  The {tactic}`have` tactic allows us to do this.
 New tactic: {tactic}`have`.
 ::::
 
+:::dev "Claude" BeforeNextRelease
+Naming: `mult_zero_add'` is the only `mult_`-prefixed name in the chapter;
+everything else (and Basics) uses the `mul_` prefix. — Claude
+:::
 ```lean
 theorem mult_zero_add' (n m : Nat) :
     ((zero + n) + zero) * m = n * m := by
@@ -953,6 +957,12 @@ they transform the goal (or a hypothesis) from the form on
 the left side of the equality to the right side. To rewrite from
 right to left, use `rewrite [← h]` or `rw [← h]`, where `←` is entered
 as `\l` or `\<-`.
+:::dev "Claude" BeforeNextRelease
+This paragraph on rewrite direction sits at the tail of the "Using Code Actions"
+aside, with no connection to code actions. It probably belongs with the
+"Tip: the rw tactic" section, or as a lead-in to the `mul_two` exercise just
+below, which is the first place the left-arrow is used. — Claude
+:::
 
 :::::full
 ::::exercise (rating := 2) (name := "mul_two")

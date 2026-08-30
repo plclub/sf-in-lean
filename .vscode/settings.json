@@ -12,6 +12,55 @@
     "lean4.input.customTranslations": {
         "tc": "⦂"
     },
+    // Tint Lean comments a blue-grey, mirroring what generated student
+    // projects ship (`vscodeSettingsJson` in SFLMeta/Save/Project.lean).
+    // NB the effect here is smaller than in an extracted chapter: in a Verso
+    // source the book's prose is document text, not a comment, so only
+    // genuine code comments change colour.
+    // The unscoped rule is a mid-tone for themes whose name says neither
+    // "Light" nor "Dark"; theme-scoped rules are applied last and win.
+    "editor.tokenColorCustomizations": {
+        "textMateRules": [
+            {
+                "scope": [
+                    "comment.line.double-dash.lean4",
+                    "comment.block.lean4",
+                    "comment.block.documentation.lean4"
+                ],
+                "settings": {
+                    "foreground": "#6B7C8C"
+                }
+            }
+        ],
+        "[*Light*]": {
+            "textMateRules": [
+                {
+                    "scope": [
+                        "comment.line.double-dash.lean4",
+                        "comment.block.lean4",
+                        "comment.block.documentation.lean4"
+                    ],
+                    "settings": {
+                        "foreground": "#4A5A6A"
+                    }
+                }
+            ]
+        },
+        "[*Dark*]": {
+            "textMateRules": [
+                {
+                    "scope": [
+                        "comment.line.double-dash.lean4",
+                        "comment.block.lean4",
+                        "comment.block.documentation.lean4"
+                    ],
+                    "settings": {
+                        "foreground": "#89A0B3"
+                    }
+                }
+            ]
+        }
+    },
     "workbench.iconTheme": "material-icon-theme",
     "material-icon-theme.folders.customClones": [
         {
