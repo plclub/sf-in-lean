@@ -13,28 +13,6 @@ htmlSplit := .never
 file := some "Induction"
 %%%
 
-:::dev
-```
-SOONER: We should also consider adding more examples to clarify
-the concepts introduced in this chapter. This could help in
-reinforcing the understanding of induction principles.
-
-LATER: In 3/22, MRC and BCP discussed "inlining" IndPrinciples
-into earlier chapters, thus eliminating it as a chapter. This
-chapter, Induction, is the first place a change would occur.  We
-would present [nat_ind] here. Then in Lists/Poly we'd present
-[list_ind], and the rest would go in IndProp and ProofObjects. The
-main wrinkle is that we'd need to introduce [apply] here instead of
-in Tactics if we want to preserve the presentation. The discussion
-is preserved here: https://github.com/DeepSpec/sfdev/pull/471.
-
-LATER: Now that we've added Steve's nice late-policy exercise in
-Basics.v, the assignment for that chapter is probably hard enough.  Now
-what about this chapter?  Can/should we make it a notch or two
-harder?
-```
-:::
-
 # Separate Compilation
 
 :::terse
@@ -96,13 +74,6 @@ namespace NatPlayground.Nat
 ```
 
 # Review
-
-:::dev "Daniel Sainati @dsainati1" PotentialImprovement
-From GitHub discussion, the display blocks below don't have nice syntax
-highlighting, but using full Lean blocks with +error would also not be nice
-because they would show error messages that aren't relevant to the questions.
-We should try to figure out a nicer way to format these
-:::
 
 ::::quiz
 To prove the following theorem, which tactics will we need besides
@@ -186,9 +157,9 @@ theorem review₃ (b : Bool) : (b || true) = true := by
 ::::
 
 ::::quiz
-What about this one?  (Recall that in Lean, `Nat.add` recurses on the _second_
-argument: `n + zero = n` by definition, and `n + (m + 1) = (n + m) + 1` by
-definition.)
+What about this one?  (Recall that our {name}`add` function recurses on its
+_second_ argument. Its simplification rules include `n + zero = n` and
+`n + (m + 1) = (n + m) + 1`.)
 
 ```display
 theorem review₄ (n : Nat) : n + zero = n
@@ -513,12 +484,6 @@ theorem add_assoc (n m p : Nat) :
 :::gradeTheorem "0.5" add_assoc
 :::
 
-:::dev "Benjamin Pierce (bcpierce00)"
-```
-We need better typesetting for displays like the following ones:
-```
-:::
-
 ## Tip: the {tactic}`rw` tactic
 
 As you've probably noticed, a common pattern in Lean proofs is `rewrite [...]`
@@ -594,68 +559,6 @@ theorem double_add (n : Nat) : double n = n + n := by
 :::gradeTheorem "0.5" double_add
 :::
 :::::
-
-:::dev "Yipeng Liu (berberman)" PotentialImprovement
-
-This is an interesting question...
-
-Logically, induction subsumes case analysis —
-you can simply ignore those inductive hypotheses
-so anything provable by case analysis is also provable
-using the induction principle.
-
-However, Lean's `cases` has specialized machinery for indexed inductive families.
-Here are some examples that `cases` can solve while `induction` can't:
-
-```lean
--- substitution
-example (x : Nat) (h : x = 0) : Nat.succ x = 1 := by
-  -- induction h
-  cases h
-  rfl
-```
-
-```lean
--- disjointness
-example (h : (0 : Nat) = 1) : False := by
-  -- induction h
-  cases h
-```
-
-```lean
--- injectivity
-example {m n : Nat} (h : Nat.succ m = Nat.succ n) : m = n := by
-  -- induction h
-  cases h
-  rfl
-```
-
-```lean
--- acyclicity
-example (n : Nat) (h : n = Nat.succ n) : False := by
-  -- induction h
-  cases h
-```
-
-... and there are more!
-
-:::
-
-::::hide
-```
--- QUIZ
-/- We've seen that there are goals that `cases` can't solve but
-    `induction` can. What about the other way around? Are there steps
-    in a proof that can be solved by pure case analysis `cases`
-    but not using `induction`?
-
-    (A) No
-
-    (B) Yes
--/
--- /QUIZ
-```
-::::
 
 # Proofs Within Proofs
 
@@ -761,9 +664,8 @@ criteria for success are less clearly specified.  A "valid" proof
 is one that makes the reader believe `P`.  But the same proof may
 be read by many different readers, some of whom may be convinced
 by a particular way of phrasing the argument, while others may not
-be. Some readers may be particularly inexperienced or
-just plain thick-headed; the only way to convince them will be to
-make the argument in painstaking detail.  Other readers, more
+be. Some readers may be unfamiliar with the area and need the
+argument spelled out in detail.  Other readers, more
 familiar in the area, may find all this detail so overwhelming
 that they lose the overall thread; all they want is to be told the
 main ideas, since it is easier for them to fill in the details for
@@ -855,7 +757,7 @@ By the definition of `+`, both sides reduce to
 ```
 
 respectively, which are equal by the induction hypothesis.
-_Qed_.
+_QED_.
 ::::
 
 ::::::full
@@ -912,7 +814,7 @@ By {name}`succ_add`, `(m' + 1) + n = (m' + n) + 1`, so it remains to show
 `(n + m') + 1 = (m' + n) + 1`.  This follows from the induction hypothesis
 `n + m' = m' + n`.
 
-_Qed_.
+_QED_.
 :::
 
 :::grade
@@ -942,7 +844,7 @@ must show `(n' + 1 == n' + 1) = true`. This
 follows directly from the induction hypothesis and the
 definition of `beq`.
 
-_Qed_.
+_QED_.
 :::
 
 :::grade
@@ -983,11 +885,11 @@ For more information, see the
 For example, code actions can generate the explicit branches needed for pattern
 matching. This can be especially useful when working with `match` expressions
 or with tactics such as {tactic}`cases` and {tactic}`induction`,
-which we saw in previous chapters.
+which we saw earlier in the book.
 :::
 
-Let's look at an example code action using {tactic}`induction`.
-For example, suppose we start with the following incomplete proof:
+Let's look at a code action for {tactic}`induction`.
+Suppose we start with the following incomplete proof:
 
 ```lean +error
 example (n : Nat) : Nat.beq n n := by
@@ -1007,7 +909,7 @@ example (n : Nat) : Nat.beq n n := by
   | succ n ih => sorry
 ```
 
-This gives us basic structure of the proof without requiring us to write each
+This gives us the basic structure of the proof without requiring us to write each
 branch by hand. We can then focus on proving each case.
 
 One possible proof is:
