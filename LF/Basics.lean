@@ -2591,9 +2591,13 @@ inductive Bin : Type where
   | z
   | b0 (n : Bin)
   | b1 (n : Bin)
-
+```
+:::details
+```lean
 attribute [pp_nodot] Bin.b1 Bin.b0
-
+```
+:::
+```lean
 def incr (m : Bin) : Bin
   := solution!(match m with
   | .z => .b1 .z
@@ -3077,5 +3081,6 @@ theorem inspectBag_changeBag_comm_ticketed
 
 ```lean
 end Airport
+end NatPlayground
 ```
 :::::

@@ -13,12 +13,8 @@ htmlSplit := .never
 file := some "Induction"
 %%%
 
-This chapter shows how to carry out _proofs by induction_, one of the most fundamental reasoning tools in computer science and mathematics, in Lean.
-
-:::dev "Benjamin Pierce (bcpierce00)"
-Somebody needs to scan through the generated .html for this chapter (and Basics) before it's
-marked 100% finished.
-:::
+This chapter shows how to carry out _proofs by induction_, one of the most fundamental reasoning
+tools in computer science and mathematics, in Lean.
 
 # Separate Compilation
 
@@ -72,18 +68,18 @@ Troubleshooting:
    in the dependency tree.)
 ::::
 
-:::dev "Benjamin Pierce (bcpierce00)"
-This next comment doesn't belong in the Separate Compilation section...
-:::
+# Review
+
 We reopen the namespace from the previous chapter to group this chapter's
 definitions and theorems with the custom natural-number development and keep
 their names distinct from the standard library.
 
+Now let's review what we learned in {ref "Basics"}[Basics] using some
+quiz questions and an exercise.
+
 ```lean
 namespace NatPlayground.Nat
 ```
-
-# Review
 
 ::::quiz
 To prove the following theorem, which tactics will we need besides
@@ -234,17 +230,21 @@ theorem succ_eq_add_one (n : Nat) : succ n = n + one := by
 
 # Proof by Induction
 
+We will introduce proofs by induction on natural numbers, first motivating
+why induction is needed, and then explaining what it is and how you do it
+in Lean.
+
+## Motivation
+
 ::::full
 We defined {name}`add` to recurse on its _second_ argument:
 
-```display
+```recall
 def add (n : Nat) (m : Nat) : Nat :=
   match m with
   | zero => n
   | succ m' => succ (add n m')
 ```
-
-This means `n + zero` reduces to `n` by definition, but `zero + n` does _not_.
 
 For the {name}`add_zero` simplification rule, we were able to prove that {lean}`zero` is a
 neutral element for `+` on the _right_ using just {tactic}`rfl`:
@@ -255,6 +255,7 @@ theorem add_zero : ∀ (n : Nat), n + zero = n := by
   rfl
 ```
 
+This worked because `n + zero` reduces to `n` by definition.
 What if we wanted to prove a rule that {lean}`zero` is also a neutral element
 on the _left_? Just applying {tactic}`rfl` doesn't
 work, since the `n` in `zero + n` is an arbitrary unknown number, so
@@ -314,6 +315,8 @@ there if we just go on like this.
 
 :::slidebreak
 :::
+
+## Induction: In Principle and in Lean
 
 ::::full
 To prove interesting facts about numbers, lists, and other
@@ -511,12 +514,10 @@ rw [double_zero]
 
 ::::full
 One small caveat: `rw [...]` only performs a quick reflexivity check
-after rewriting; it does not unfold every definition. So, in rare
+after rewriting; it does not unfold every definition. So, in some
 cases, {tactic}`rw` may leave a goal that can actually be solved immediately by {tactic}`rfl`.
-
-:::dev "Benjamin Pierce (bcpierce00)"
-Missing transition / introduction of the next bit.
-:::
+For example, `rw` does not unfold the definition of `aliasOfTwo` in the following
+example, and thus needs an explicit `rfl`.
 
 ```lean
 def aliasOfTwo := two
@@ -588,12 +589,8 @@ required fact "in place."  The {tactic}`have` tactic allows us to do this.
 New tactic: {tactic}`have`.
 ::::
 
-:::dev "Claude"
-Naming: `mult_zero_add'` is the only `mult_`-prefixed name in the chapter;
-everything else (and Basics) uses the `mul_` prefix. — Claude
-:::
 ```lean
-theorem mult_zero_add' (n m : Nat) :
+theorem mul_zero_add' (n m : Nat) :
     ((zero + n) + zero) * m = n * m := by
   have h : (zero + n) + zero = n := by
     rw [zero_add, add_zero]
@@ -735,7 +732,7 @@ the state of the context and goal stack at each point, but, if the
 proof were even a little bit more complicated, this would be next
 to impossible.
 
-On paper, a (somewhat pedantic) mathematician might write the proof something like
+On paper, a (somewhat pedantic) mathematician might write the proof like
 this:
 
 - _Theorem_: For any `n`, `m`, and `p`,
@@ -871,23 +868,7 @@ GRADE_MANUAL 2: beq_refl_informal
 :::
 :::::
 
-# More Exercises
-
-::::exercise (rating := 1) (name := "mul_one")
-```lean
-theorem mul_one (p : Nat) :
-    one * p = p := by
-  solution!
-    induction p with
-    | zero       => rw [mul_zero]
-    | succ p' ih => rw [mul_succ, ih, succ_eq_add_one]
-```
-
-:::gradeTheorem 1 mul_one
-:::
-::::
-
-## Aside: Using Code Actions to Generate Match Skeletons
+# Aside: Using Code Actions to Generate Match Skeletons
 
 Lean's language server can suggest _code actions_, which are
 small editor commands that modify the source code.
@@ -958,17 +939,27 @@ Now you just have to replace the holes `_` with your definition.
 You can use code actions freely to fill out {tactic}`induction`,
 {tactic}`case`, and `match` branches while working with this book.
 
+# More Exercises
+
+::::exercise (rating := 1) (name := "mul_one")
+```lean
+theorem mul_one (p : Nat) :
+    one * p = p := by
+  solution!
+    induction p with
+    | zero       => rw [mul_zero]
+    | succ p' ih => rw [mul_succ, ih, succ_eq_add_one]
+```
+
+:::gradeTheorem 1 mul_one
+:::
+::::
+
 By default, {tactic}`rewrite` and {tactic}`rw` rewrite left to right, i.e.,
 they transform the goal (or a hypothesis) from the form on
 the left side of the equality to the right side. To rewrite from
 right to left, use `rewrite [← h]` or `rw [← h]`, where `←` is entered
 as `\l` or `\<-`.
-:::dev "Claude" 
-This paragraph on rewrite direction sits at the tail of the "Using Code Actions"
-aside, with no connection to code actions. It probably belongs with the
-"Tip: the rw tactic" section, or as a lead-in to the `mul_two` exercise just
-below, which is the first place the left-arrow is used. — Claude
-:::
 
 :::::full
 ::::exercise (rating := 2) (name := "mul_two")
@@ -1096,7 +1087,7 @@ theorem mul_assoc (n m p : Nat) :
 ```
 ::::
 
-## A New Tactic Combinator
+# A New Tactic Combinator: `<;>`
 
 ::::full
 Before moving on to the next batch of exercises, let's introduce a
@@ -1145,7 +1136,7 @@ example (b c : Bool) : (b && c) = (c && b) := by
 ```
 
 ::::full
-For the moment, you should reach for `<;>` only when the generated subgoals really do have the same proof.
+For the moment, you should use `<;>` only when the generated subgoals really do have the same proof.
 If different branches need different arguments, it is usually clearer
 to write the cases explicitly. We'll discuss some other tactic combinators
 in the {ref "Automation"}[Automation] chapter.
@@ -1198,11 +1189,12 @@ def binToNat (m : Bin) : Nat
 theorem binToNat_z : binToNat .z = zero := solution!(by rfl)
 theorem binToNat_b0 m : binToNat (.b0 m) = mul (binToNat m) two := solution!(by rfl)
 theorem binToNat_b1 m : binToNat (.b1 m) = add (mul (binToNat m) two) one := solution!(by rfl)
+```
 
+:::details
+```lean
 attribute [pp_nodot] Bin.b0 Bin.b1
 ```
-:::dev "Benjamin Pierce (bcpierce00)"
-Should the `attribute` declaration be in a :::details block?
 :::
 
 :::autogradedHole binToNat
