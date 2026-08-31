@@ -1665,7 +1665,6 @@ def delabTm : Delab := whenPPOption getPPNotation do
   | e => `(<{ $e:stlcTm }>)
 ```
 ::::
-:::::
 
 :::dev "Daniel Sainati @dsainati1" BeforeNextRelease
 These all parse to the right thing, but the delaboration in the InfoView is not happening
@@ -1705,8 +1704,6 @@ Need to fix them before a real release:
 * Delaborator isn't actually printing the above examples in STLC syntax, idk why
 * Some terms don't work in pattern matches for some reason
 :::
-
-## Substitution
 
 ::::exercise (rating := 3) (name := "STLCExtended.subst") (manual := true)
 
@@ -1815,8 +1812,6 @@ example : <{  [z := 0] (let y = succ 0 in z) }> = <{ let y = succ 0 in 0 }> := b
     rfl
 ```
 ::::
-
-## Reduction
 
 Next we define the values of our language.
 
@@ -1975,8 +1970,6 @@ scoped notation:40 t:41 " ⟶ " t':41 => Step t t'
 scoped notation:40 t:41 " ⟶* " t':41 => Multi Step t t'
 ```
 ::::
-
-## Typing
 
 ::::exercise (rating := 3) (name := "STLCExtended.HasType") (manual := true)
 
@@ -2142,9 +2135,7 @@ def HasType.unexpand : Unexpander
 ```
 ::::
 
-## Examples
-
-:::::exercise (rating := 5) (name := "STLCExtended.examples") (optional := true)
+::::exercise (rating := 5) (name := "STLCExtended.examples") (optional := true)
 
 This section presents formalized versions of the examples from
 above (plus several more).
@@ -2472,9 +2463,7 @@ Can't get this one to parse for some reason
 end Fix4
 end Examples
 ```
-:::::
-
-# Properties of Typing
+::::
 
 The proofs of progress and preservation for this enriched system
 are essentially the same (though of course longer) as for the pure
@@ -2485,8 +2474,6 @@ These need to be graded manually, because if
 the relevant definitions aren't implemented above and below, then
 the missing cases don't appear in the proofs.
 :::
-
-## Progress
 
 ::::exercise (rating := 3) (name := "STLCExtended.progress")
 
@@ -2505,8 +2492,6 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ ~t ⦂ ~τ }>) :
       sorry
 ```
 ::::
-
-## Weakening
 
 The weakening claim is exactly the same as for the original STLC.
 
@@ -2528,8 +2513,6 @@ theorem weakening_empty (Γ : Context) (t : Tm) (τ: Ty)
   contradiction
 ```
 
-## Substitution
-
 ::::exercise (rating := 2) (name := "STLCExtended.substitution_preserves_typing")
 Complete the proof of `substitution_preserves_typing`
 
@@ -2542,9 +2525,6 @@ theorem substitution_preserves_typing (Γ : Context) (x : String) (τ₁ : Ty) (
     sorry
 ```
 ::::
-
-## Preservation
-
 
 ::::exercise (rating := 3) (name := "STLCExtended.preservation")
 Complete the proof of `preservation`:
@@ -2562,3 +2542,4 @@ theorem preservation (t t' : Tm) (τ : Ty)
 ```lean
 end STLCExtended
 ```
+:::::
