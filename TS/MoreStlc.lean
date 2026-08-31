@@ -1378,17 +1378,11 @@ we'll write this:
 
 ::::details "Notation"
 ```lean
-syntax:max "~" term:max : stlcTy
-syntax:max "(" stlcTy ")" : stlcTy
-syntax:max ident : stlcTy
-syntax:50 "List" stlcTy:50 : stlcTy
-syntax:50 stlcTy:51 " → " stlcTy:50 : stlcTy
 syntax:50 stlcTy:51 " × " stlcTy:50 : stlcTy
 syntax:50 stlcTy:51 " + " stlcTy:50 : stlcTy
-syntax:50 stlcTy:51 " -> " stlcTy:50 : stlcTy
-syntax:max (name := tyBracket) "<{ " stlcTy " }>" : term
+syntax:51 " [ " stlcTy:50  " ] " : stlcTy
 
-scoped macro_rules (kind := tyBracket)
+scoped macro_rules (kind := Stlc.tyBracket)
   | `(<{ ~$τ:term }>)    => pure τ
   | `(<{ ($τ:stlcTy) }>) => `(<{ $τ:stlcTy }>)
   | `(<{ $x:ident }>) =>
@@ -1396,8 +1390,8 @@ scoped macro_rules (kind := tyBracket)
       | "Nat" => `(Ty.nat)
       | "Unit" => `(Ty.unit)
       | _ => `(($x : Ty))
+  | `(<{ [ $τ₁:stlcTy ] }>) => `(Ty.list <{ $τ₁:stlcTy }>)
   | `(<{ $τ₁:stlcTy → $τ₂:stlcTy }>)  => `(Ty.arrow <{ $τ₁:stlcTy }> <{ $τ₂:stlcTy }>)
-  | `(<{ List $τ₁:stlcTy  }>)  => `(Ty.list <{ $τ₁:stlcTy }>)
   | `(<{ $τ₁:stlcTy × $τ₂:stlcTy }>)  => `(Ty.prod <{ $τ₁:stlcTy }> <{ $τ₂:stlcTy }>)
   | `(<{ $τ₁:stlcTy + $τ₂:stlcTy }>)  => `(Ty.sum <{ $τ₁:stlcTy }> <{ $τ₂:stlcTy }>)
   | `(<{ $τ₁:stlcTy -> $τ₂:stlcTy }>) => `(Ty.arrow <{ $τ₁:stlcTy }> <{ $τ₂:stlcTy }>)
@@ -1520,7 +1514,7 @@ partial def delabTyInner : DelabM (TSyntax `stlcTy) := do
         `(stlcTy| $a + $b)
     | Ty.list _ => do
         let b ← withAppArg delabTyInner
-        `(stlcTy| List $b)
+        `(stlcTy| [$b] )
     | _ => do
         match ← delab with
         | `($i:ident) => `(stlcTy| $i:ident)
@@ -1673,6 +1667,10 @@ def delabTm : Delab := whenPPOption getPPNotation do
 ::::
 :::::
 
+:::dev "Daniel Sainati @dsainati1" BeforeNextRelease
+These all parse to the right thing, but the delaboration in the InfoView is not happening
+:::
+
 :::ignore
 Checks that the extended grammar parses the way it should.
 
@@ -1690,8 +1688,7 @@ Checks that the extended grammar parses the way it should.
 #check <{ 3 :: nil Nat }>
 #check <{ (x , y) }>
 #check <{ fst x }>
--- why does this one not work
--- #check <{ fst (x , y) }>
+#check <{ fst (x , y) }>
 #check <{ inl Nat 3 }>
 #check <{ x (succ y) }>
 #check <{ x * y z }>
@@ -2051,15 +2048,15 @@ inductive HasType : Context → Tm → Ty → Prop where
       <{ ~Γ ⊢ case ~t of inl ~x₁ => ~t₁ | inr ~x₂ => ~t₂ ⦂ ~τ₃ }>
   -- lists
   | nil (Γ : Context) (τ₁ : Ty) :
-      <{ ~Γ ⊢ nil ~τ₁ ⦂ List ~τ₁ }>
+      <{ ~Γ ⊢ nil ~τ₁ ⦂ [~τ₁] }>
   | cons (Γ : Context) (t₁ t₂ : Tm) (τ₁ : Ty) :
       <{ ~Γ ⊢ ~t₁ ⦂ ~τ₁ }> →
-      <{ ~Γ ⊢ ~t₂ ⦂ List ~τ₁ }> →
-      <{ ~Γ ⊢ ~t₁ :: ~t₂ ⦂ List ~τ₁ }>
+      <{ ~Γ ⊢ ~t₂ ⦂ [~τ₁] }> →
+      <{ ~Γ ⊢ ~t₁ :: ~t₂ ⦂ [~τ₁] }>
   | listCase (Γ : Context) (t₁ t₂ t₃ : Tm) (x₁ x₂ : String) (τ₁ τ₂ : Ty) :
-      <{ ~Γ ⊢ ~t₁ ⦂ List τ₁ }> →
+      <{ ~Γ ⊢ ~t₁ ⦂ [τ₁] }> →
       <{ ~Γ ⊢ ~t₂ ⦂ ~τ₂ }> →
-      <{ ~x₁ ↦ τ₁ ; ~x₂ ↦ List ~τ₁ ; ~Γ ⊢ ~t₃ ⦂ ~τ₂ }> →
+      <{ ~x₁ ↦ τ₁ ; ~x₂ ↦ [~τ₁] ; ~Γ ⊢ ~t₃ ⦂ ~τ₂ }> →
       <{ ~Γ ⊢ case ~t₁ of nil => ~t₂ | ~x₁ :: ~x₂ => ~t₃ ⦂ ~τ₂ }>
   -- unit
   | unit (Γ : Context) :
@@ -2378,15 +2375,15 @@ namespace Fix2
 def map :=
   <{ λg:Nat→Nat.
        fix
-         (λf:(List Nat)→(List Nat).
-            λl:List Nat.
+         (λf: [Nat] → [Nat].
+            λl: [Nat].
                case l of
                  nil => nil Nat
                | x::l => ((g x)::(f l))) }>
 
 theorem typechecks :
   <{ ∅ ⊢ ~map ⦂
-     (Nat → Nat) → (List Nat) → (List Nat) }> := by solution!(sorry)
+     (Nat → Nat) → [Nat] → [Nat] }> := by solution!(sorry)
 ```
 
 :::gradeTheorem "0.5" typechecks
