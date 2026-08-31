@@ -304,18 +304,18 @@ Here is the single-step relation, informally.
 
 ```
                    -----------------------------                 (ifTrue)
-                   if true then t1 else t2 ⟶ t1
+                   if true then t₁ else t₂ ⟶ t₁
 
                    ------------------------------                (ifFalse)
-                   if false then t1 else t2 ⟶ t2
+                   if false then t₁ else t₂ ⟶ t₂
 
-                              t1 ⟶ t1'
+                              t₁ ⟶ t₁'
             -----------------------------------------------      (ifStep)
-            if t1 then t2 else t3 ⟶ if t1' then t2 else t3
+            if t₁ then t₂ else t₃ ⟶ if t₁' then t₂ else t₃
 
-                              t1 ⟶ t1'
+                              t₁ ⟶ t₁'
                          -------------------                     (succStep)
-                         succ t1 ⟶ succ t1'
+                         succ t₁ ⟶ succ t₁'
 
                            -----------                           (predZero)
                            pred 0 ⟶ 0
@@ -324,9 +324,9 @@ Here is the single-step relation, informally.
                         ------------------                       (predSucc)
                         pred (succ v) ⟶ v
 
-                              t1 ⟶ t1'
+                              t₁ ⟶ t₁'
                          -------------------                     (predStep)
-                         pred t1 ⟶ pred t1'
+                         pred t₁ ⟶ pred t₁'
 
                           ----------------                       (isZeroZero)
                           iszero 0 ⟶ true
@@ -335,9 +335,9 @@ Here is the single-step relation, informally.
                       ------------------------                   (isZeroSucc)
                       iszero (succ v) ⟶ false
 
-                              t1 ⟶ t1'
+                              t₁ ⟶ t₁'
                        -----------------------                   (isZeroStep)
-                       iszero t1 ⟶ iszero t1'
+                       iszero t₁ ⟶ iszero t₁'
 ```
 
 ::::full
@@ -357,17 +357,17 @@ section
 set_option hygiene false in
 local notation:40 t:41 " ⟶ " t':41 => Tm.Step t t'
 inductive Tm.Step : Tm → Tm → Prop where
-  | ifTrue (t1 t2 : Tm) : <{ if true then t1 else t2 }> ⟶ t1
-  | ifFalse (t1 t2 : Tm) : <{ if false then t1 else t2 }> ⟶ t2
-  | ifStep (c c' t2 t3 : Tm) (h : c ⟶ c') :
-      <{ if c then t2 else t3 }> ⟶ <{ if c' then t2 else t3 }>
-  | succStep (t1 t1' : Tm) (h : t1 ⟶ t1') : <{ succ t1 }> ⟶ <{ succ t1' }>
+  | ifTrue (t₁ t₂ : Tm) : <{ if true then t₁ else t₂ }> ⟶ t₁
+  | ifFalse (t₁ t₂ : Tm) : <{ if false then t₁ else t₂ }> ⟶ t₂
+  | ifStep (c c' t₂ t₃ : Tm) (h : c ⟶ c') :
+      <{ if c then t₂ else t₃ }> ⟶ <{ if c' then t₂ else t₃ }>
+  | succStep (t₁ t₁' : Tm) (h : t₁ ⟶ t₁') : <{ succ t₁ }> ⟶ <{ succ t₁' }>
   | predZero : <{ pred 0 }> ⟶ <{ 0 }>
   | predSucc (v : Tm) (hv : Tm.IsNValue v) : <{ pred (succ v) }> ⟶ v
-  | predStep (t1 t1' : Tm) (h : t1 ⟶ t1') : <{ pred t1 }> ⟶ <{ pred t1' }>
+  | predStep (t₁ t₁' : Tm) (h : t₁ ⟶ t₁') : <{ pred t₁ }> ⟶ <{ pred t₁' }>
   | isZeroZero : <{ iszero 0 }> ⟶ <{ true }>
   | isZeroSucc (v : Tm) (hv : Tm.IsNValue v) : <{ iszero (succ v) }> ⟶ <{ false }>
-  | isZeroStep (t1 t1' : Tm) (h : t1 ⟶ t1') : <{ iszero t1 }> ⟶ <{ iszero t1' }>
+  | isZeroStep (t₁ t₁' : Tm) (h : t₁ ⟶ t₁') : <{ iszero t₁ }> ⟶ <{ iszero t₁' }>
 end
 
 scoped notation:40 t:41 " ⟶ " t':41 => Tm.Step t t'
@@ -439,10 +439,10 @@ students.
 theorem nvalue_is_nf (t : Tm) (h : Tm.IsNValue t) : Tm.IsNormalForm t := by
   induction h with
   | zero => intro hc; obtain ⟨t', hstp⟩ := hc; cases hstp
-  | succ t0 hn0 ih =>
+  | succ t₀ hn₀ ih =>
       intro hc; obtain ⟨t', hstp⟩ := hc
       cases hstp with
-      | succStep _ t1' h => exact ih ⟨t1', h⟩
+      | succStep _ t₁' h => exact ih ⟨t₁', h⟩
 ```
 
 :::::exercise (rating := 3) (name := "value_is_nf")
@@ -467,36 +467,35 @@ the term itself rather than on the evidence that it is a numeric value.  It
 goes through, but is a bit longer than the `nvalue_is_nf` route above.
 
 ```lean
-theorem value_is_nf' : ∀ t, Tm.IsValue t → Tm.IsNormalForm t := by
+theorem value_is_nf' (t : Tm) (h : Tm.IsValue t) : Tm.IsNormalForm t := by
   solution!
-    intro t
     induction t with
-    | tru => intro _ hc; obtain ⟨t', hstp⟩ := hc; cases hstp
-    | fls => intro _ hc; obtain ⟨t', hstp⟩ := hc; cases hstp
-    | ite c t0 e _ _ _ =>
-        intro h; cases h with
+    | tru => intro hc; obtain ⟨t', hstp⟩ := hc; cases hstp
+    | fls => intro hc; obtain ⟨t', hstp⟩ := hc; cases hstp
+    | ite c t₀ e _ _ _ =>
+        cases h with
         | inl hb => cases hb
         | inr hn => cases hn
-    | zero => intro _ hc; obtain ⟨t', hstp⟩ := hc; cases hstp
-    | succ t0 ih =>
+    | zero => intro hc; obtain ⟨t', hstp⟩ := hc; cases hstp
+    | succ t₀ ih =>
         -- The `succ` case is the only one that doesn't immediately present a
         -- contradiction.  Considering how a `succ` term can be a value, it is
         -- syntactically not a boolean value, but the numeric value case
         -- requires a bit more work.
-        intro h hc; obtain ⟨t', hstp⟩ := hc
+        intro hc; obtain ⟨t', hstp⟩ := hc
         cases hstp with
-        | succStep _ t1' hstp' =>
+        | succStep _ t₁' hstp' =>
             cases h with
             | inl hb => cases hb
-            -- By the IH, if `t0` is a numeric value, then it can not step.
+            -- By the IH, if `t₀` is a numeric value, then it can not step.
             | inr hn => cases hn with
-              | succ _ hn0 => exact ih (.inr hn0) ⟨t1', hstp'⟩
-    | pred t0 _ =>
-        intro h; cases h with
+              | succ _ hn₀ => exact ih (.inr hn₀) ⟨t₁', hstp'⟩
+    | pred t₀ _ =>
+        cases h with
         | inl hb => cases hb
         | inr hn => cases hn
-    | isZero t0 _ =>
-        intro h; cases h with
+    | isZero t₀ _ =>
+        cases h with
         | inl hb => cases hb
         | inr hn => cases hn
 ```
@@ -509,50 +508,50 @@ is also deterministic.
 ```lean
 theorem step_deterministic : Deterministic Tm.Step := by
   solution!
-    intro x y1 y2 h1
-    induction h1 generalizing y2 with
-    | ifTrue t1 t2 =>
-        intro h2; cases h2 with
+    intro x y₁ y₂ h₁
+    induction h₁ generalizing y₂ with
+    | ifTrue t₁ t₂ =>
+        intro h₂; cases h₂ with
         | ifTrue => rfl
         | ifStep _ _ _ _ hc => cases hc
-    | ifFalse t1 t2 =>
-        intro h2; cases h2 with
+    | ifFalse t₁ t₂ =>
+        intro h₂; cases h₂ with
         | ifFalse => rfl
         | ifStep _ _ _ _ hc => cases hc
-    | ifStep c c' t2 t3 hc ih =>
-        intro h2; cases h2 with
+    | ifStep c c' t₂ t₃ hc ih =>
+        intro h₂; cases h₂ with
         | ifTrue => cases hc
         | ifFalse => cases hc
-        | ifStep _ c'' _ _ hc2 => rw [ih _ hc2]
-    | succStep t1 t1' hs ih =>
-        intro h2; cases h2 with
-        | succStep _ _ hs2 => rw [ih _ hs2]
+        | ifStep _ c'' _ _ hc₂ => rw [ih _ hc₂]
+    | succStep t₁ t₁' hs ih =>
+        intro h₂; cases h₂ with
+        | succStep _ _ hs₂ => rw [ih _ hs₂]
     | predZero =>
-        intro h2; cases h2 with
+        intro h₂; cases h₂ with
         | predZero => rfl
         | predStep _ _ hs => cases hs
     | predSucc v hv =>
-        intro h2; cases h2 with
+        intro h₂; cases h₂ with
         | predSucc => rfl
         | predStep _ _ hs => exact absurd ⟨_, hs⟩ (nvalue_is_nf _ (.succ v hv))
-    | predStep t1 t1' hs ih =>
-        intro h2; cases h2 with
+    | predStep t₁ t₁' hs ih =>
+        intro h₂; cases h₂ with
         | predZero => cases hs
         | predSucc _ hv => exact absurd ⟨_, hs⟩ (nvalue_is_nf _ (.succ _ hv))
-        | predStep _ _ hs2 => rw [ih _ hs2]
+        | predStep _ _ hs₂ => rw [ih _ hs₂]
     | isZeroZero =>
-        intro h2; cases h2 with
+        intro h₂; cases h₂ with
         | isZeroZero => rfl
         | isZeroStep _ _ hs => cases hs
     | isZeroSucc v hv =>
-        intro h2; cases h2 with
+        intro h₂; cases h₂ with
         | isZeroSucc => rfl
         | isZeroStep _ _ hs => exact absurd ⟨_, hs⟩ (nvalue_is_nf _ (.succ v hv))
-    | isZeroStep t1 t1' hs ih =>
-        intro h2; cases h2 with
+    | isZeroStep t₁ t₁' hs ih =>
+        intro h₂; cases h₂ with
         | isZeroZero => cases hs
         | isZeroSucc _ hv => exact absurd ⟨_, hs⟩ (nvalue_is_nf _ (.succ _ hv))
-        | isZeroStep _ _ hs2 => rw [ih _ hs2]
+        | isZeroStep _ _ hs₂ => rw [ih _ hs₂]
 ```
 :::::
 
@@ -634,17 +633,17 @@ section
 set_option hygiene false in
 local notation:40 t:41 " ⇢ " t':41 => Tm.AltStep t t'
 inductive Tm.AltStep : Tm → Tm → Prop where
-  | ifTrue (t1 t2 : Tm) : <{ if true then t1 else t2 }> ⇢ t1
-  | ifFalse (t1 t2 : Tm) : <{ if false then t1 else t2 }> ⇢ t2
-  | ifStep (t1 t1' t2 t3 : Tm) : t1 ⇢ t1' →
-      <{ if t1 then t2 else t3 }> ⇢ <{ if t1' then t2 else t3 }>
-  | succStep (t1 t1' : Tm) : t1 ⇢ t1' → <{ succ t1 }> ⇢ <{ succ t1' }>
+  | ifTrue (t₁ t₂ : Tm) : <{ if true then t₁ else t₂ }> ⇢ t₁
+  | ifFalse (t₁ t₂ : Tm) : <{ if false then t₁ else t₂ }> ⇢ t₂
+  | ifStep (t₁ t₁' t₂ t₃ : Tm) : t₁ ⇢ t₁' →
+      <{ if t₁ then t₂ else t₃ }> ⇢ <{ if t₁' then t₂ else t₃ }>
+  | succStep (t₁ t₁' : Tm) : t₁ ⇢ t₁' → <{ succ t₁ }> ⇢ <{ succ t₁' }>
   | predZero : <{ pred 0 }> ⇢ <{ 0 }>
-  | predSucc (t1 : Tm) : <{ pred (succ t1) }> ⇢ t1
-  | predStep (t1 t1' : Tm) : t1 ⇢ t1' → <{ pred t1 }> ⇢ <{ pred t1' }>
+  | predSucc (t₁ : Tm) : <{ pred (succ t₁) }> ⇢ t₁
+  | predStep (t₁ t₁' : Tm) : t₁ ⇢ t₁' → <{ pred t₁ }> ⇢ <{ pred t₁' }>
   | isZeroZero : <{ iszero 0 }> ⇢ <{ true }>
-  | isZeroSucc (t1 : Tm) : <{ iszero (succ t1) }> ⇢ <{ false }>
-  | isZeroStep (t1 t1' : Tm) : t1 ⇢ t1' → <{ iszero t1 }> ⇢ <{ iszero t1' }>
+  | isZeroSucc (t₁ : Tm) : <{ iszero (succ t₁) }> ⇢ <{ false }>
+  | isZeroStep (t₁ t₁' : Tm) : t₁ ⇢ t₁' → <{ iszero t₁ }> ⇢ <{ iszero t₁' }>
 end
 
 scoped notation:40 t:41 " ⇢ " t':41 => Tm.AltStep t t'
@@ -676,33 +675,33 @@ step _function_, which the chapter otherwise gives only as a relation:
 ```lean
 def alt_simplify_step (t : Tm) : Option Tm :=
   match t with
-  | <{ if t1 then t2 else t3 }> =>
-      match alt_simplify_step t1 with
-      | some t1' => some <{ if t1' then t2 else t3 }>
+  | <{ if t₁ then t₂ else t₃ }> =>
+      match alt_simplify_step t₁ with
+      | some t₁' => some <{ if t₁' then t₂ else t₃ }>
       | none =>
-        match t1 with
-        | <{ true }>  => some t2
-        | <{ false }> => some t3
+        match t₁ with
+        | <{ true }>  => some t₂
+        | <{ false }> => some t₃
         | _           => none
-  | <{ succ t1 }> =>
-      match alt_simplify_step t1 with
-      | some t1' => some <{ succ t1' }>
+  | <{ succ t₁ }> =>
+      match alt_simplify_step t₁ with
+      | some t₁' => some <{ succ t₁' }>
       | none     => none
-  | <{ pred t1 }> =>
-      match alt_simplify_step t1 with
-      | some t1' => some <{ pred t1' }>
+  | <{ pred t₁ }> =>
+      match alt_simplify_step t₁ with
+      | some t₁' => some <{ pred t₁' }>
       | none =>
-        match t1 with
+        match t₁ with
         | <{ 0 }>       => some <{ 0 }>
-        | <{ succ t2 }> => some t2
+        | <{ succ t₂ }> => some t₂
         | _             => none
-  | <{ iszero t1 }> =>
-      match alt_simplify_step t1 with
-      | some t1' => some <{ iszero t1' }>
+  | <{ iszero t₁ }> =>
+      match alt_simplify_step t₁ with
+      | some t₁' => some <{ iszero t₁' }>
       | none =>
-        match t1 with
+        match t₁ with
         | <{ 0 }>       => some <{ true }>
-        | <{ succ t2 }> => some <{ false }>
+        | <{ succ t₂ }> => some <{ false }>
         | _             => none
   | _ => none
 
@@ -745,24 +744,24 @@ For the moment, the context is always empty.
                      --------------               (fls)
                      ⊢ false ⦂ Bool
 
-          ⊢ t1 ⦂ Bool    ⊢ t2 ⦂ T    ⊢ t3 ⦂ T
+          ⊢ t₁ ⦂ Bool    ⊢ t₂ ⦂ T    ⊢ t₃ ⦂ T
           -----------------------------------     (ite)
-              ⊢ if t1 then t2 else t3 ⦂ T
+              ⊢ if t₁ then t₂ else t₃ ⦂ T
 
                        ---------                  (zero)
                        ⊢ 0 ⦂ Nat
 
-                      ⊢ t1 ⦂ Nat
+                      ⊢ t₁ ⦂ Nat
                     ---------------               (succ)
-                    ⊢ succ t1 ⦂ Nat
+                    ⊢ succ t₁ ⦂ Nat
 
-                      ⊢ t1 ⦂ Nat
+                      ⊢ t₁ ⦂ Nat
                     ---------------               (pred)
-                    ⊢ pred t1 ⦂ Nat
+                    ⊢ pred t₁ ⦂ Nat
 
-                      ⊢ t1 ⦂ Nat
+                      ⊢ t₁ ⦂ Nat
                    ------------------             (isZero)
-                   ⊢ iszero t1 ⦂ Bool
+                   ⊢ iszero t₁ ⦂ Bool
 ```
 ::::
 
@@ -784,12 +783,7 @@ The typing judgment is written `<{ ⊢ t ⦂ T }>`: the whole judgment is wrappe
 in `<{ … }>`, the term is in the object grammar (bare variables, no inner
 `<{ }>`) and the type as `Bool`/`Nat` (a type variable is spliced, `~T` escapes
 to a Lean `Ty`).  As with `Tm.Step`, we define the relation using its own
-notation, inside a `section` with `set_option hygiene false` so the bare name
-`Tm.HasType` in the expansion resolves to the relation being defined; after the
-`section` we re-declare the same rules hygienically for real use.  Unlike `⟶`,
-the judgment builds on the custom `tm` syntactic category, so it must use
-`syntax`/`macro_rules` rather than `notation` — which is why it still needs the
-`app_unexpander` to print the judgment back.
+notation. The detailed definition of the notation is folded into the box below.
 ::::
 
 ```lean
@@ -799,7 +793,16 @@ inductive Ty where
 
 syntax:max "<{ " "⊢ " tm " ⦂ " ident " }>" : term
 syntax:max "<{ " "⊢ " tm " ⦂ " "~" term:max " }>" : term
+```
+::::details "Notation encoding: typing relation"
+The notation is defined inside a `section` with `set_option hygiene false` so the bare name
+`Tm.HasType` in the expansion resolves to the relation being defined; after the
+`section` we re-declare the same rules hygienically for real use.  Unlike `⟶`,
+the judgment builds on the custom `tm` syntactic category, so it must use
+`syntax`/`macro_rules` rather than `notation` — which is why it still needs the
+`app_unexpander` to print the judgment back.
 
+```lean
 section
 set_option hygiene false in
 local macro_rules
@@ -809,20 +812,26 @@ local macro_rules
       | "Nat"  => `(Tm.HasType <{ $t }> Ty.nat)
       | _      => `(Tm.HasType <{ $t }> $T)
   | `(<{ ⊢ $t ⦂ ~$T }>) => `(Tm.HasType <{ $t }> $T)
+```
+::::
 
+```lean
 -- The actual definition, written in the notation above.
 inductive Tm.HasType : Tm → Ty → Prop where
   | tru : <{ ⊢ true ⦂ Bool }>
   | fls : <{ ⊢ false ⦂ Bool }>
-  | ite (t1 t2 t3 : Tm) (T : Ty)
-      (h1 : <{ ⊢ t1 ⦂ Bool }>) (h2 : <{ ⊢ t2 ⦂ T }>) (h3 : <{ ⊢ t3 ⦂ T }>) :
-      <{ ⊢ if t1 then t2 else t3 ⦂ T }>
+  | ite (t₁ t₂ t₃ : Tm) (T : Ty)
+      (h₁ : <{ ⊢ t₁ ⦂ Bool }>) (h₂ : <{ ⊢ t₂ ⦂ T }>) (h₃ : <{ ⊢ t₃ ⦂ T }>) :
+      <{ ⊢ if t₁ then t₂ else t₃ ⦂ T }>
   | zero : <{ ⊢ 0 ⦂ Nat }>
-  | succ (t1 : Tm) (h : <{ ⊢ t1 ⦂ Nat }>) : <{ ⊢ succ t1 ⦂ Nat }>
-  | pred (t1 : Tm) (h : <{ ⊢ t1 ⦂ Nat }>) : <{ ⊢ pred t1 ⦂ Nat }>
-  | isZero (t1 : Tm) (h : <{ ⊢ t1 ⦂ Nat }>) : <{ ⊢ iszero t1 ⦂ Bool }>
+  | succ (t₁ : Tm) (h : <{ ⊢ t₁ ⦂ Nat }>) : <{ ⊢ succ t₁ ⦂ Nat }>
+  | pred (t₁ : Tm) (h : <{ ⊢ t₁ ⦂ Nat }>) : <{ ⊢ pred t₁ ⦂ Nat }>
+  | isZero (t₁ : Tm) (h : <{ ⊢ t₁ ⦂ Nat }>) : <{ ⊢ iszero t₁ ⦂ Bool }>
 end
+```
 
+::::details "Notation encoding: typing relation"
+```lean
 -- The same rules repeated with hygiene enabled, for use after the section.
 macro_rules
   | `(<{ ⊢ $t ⦂ $T:ident }>) =>
@@ -847,7 +856,10 @@ def Tm.HasType.unexpand : Lean.PrettyPrinter.Unexpander
   | `($_ $t:ident $T:ident)  => `(<{ ⊢ $(⟨t.raw⟩) ⦂ $T }>)
   | `($_ $t $T)              => `(<{ ⊢ ~$t ⦂ ~$T }>)
   | _ => throw ()
+```
+::::
 
+```lean
 example : <{ ⊢ if false then 0 else succ 0 ⦂ Nat }> :=
   .ite _ _ _ _ .fls .zero (.succ _ .zero)
 ```
@@ -871,11 +883,11 @@ well typed.
 
 ```lean
 example : ¬ <{ ⊢ if false then 0 else true ⦂ Bool }> := by
-  intro hc; cases hc with | ite _ _ _ _ h1 h2 h3 => cases h2
+  intro hc; cases hc with | ite _ _ _ _ h₁ h₂ h₃ => cases h₂
 
 example :
     ¬ <{ ⊢ if iszero (succ 0) then succ false else true ⦂ Bool }> := by
-  intro hc; cases hc with | ite _ _ _ _ h1 h2 h3 => cases h2
+  intro hc; cases hc with | ite _ _ _ _ h₁ h₂ h₃ => cases h₂
 ```
 
 :::::exercise (rating := 1) (name := "succ_hastype_nat__hastype_nat") (optional := true)
@@ -899,7 +911,7 @@ theorem bool_canonical (t : Tm) (hT : <{ ⊢ t ⦂ Bool }>) (hv : Tm.IsValue t) 
   | inl hb => exact hb
   | inr hn => cases hn with
     | zero => cases hT
-    | succ t0 h => cases hT
+    | succ t₀ h => cases hT
 
 theorem nat_canonical (t : Tm) (hT : <{ ⊢ t ⦂ Nat }>) (hv : Tm.IsValue t) : Tm.IsNValue t := by
   cases hv with
@@ -927,35 +939,35 @@ theorem progress (t : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) : Tm.IsValue t ∨ �
     | tru => exact .inl (.inl .tru)
     | fls => exact .inl (.inl .fls)
     | zero => exact .inl (.inr .zero)
-    | ite t1 t2 t3 T h1 h2 h3 ih1 ih2 ih3 =>
+    | ite t₁ t₂ t₃ T h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
         right
-        cases ih1 with
-        | inl hv1 =>
-            cases bool_canonical t1 h1 hv1 with
-            | tru => exact ⟨t2, .ifTrue t2 t3⟩
-            | fls => exact ⟨t3, .ifFalse t2 t3⟩
-        | inr hs1 => obtain ⟨t1', h⟩ := hs1
-                     exact ⟨<{ if t1' then t2 else t3 }>, .ifStep t1 t1' t2 t3 h⟩
-    | succ t1 h ih =>
+        cases ih₁ with
+        | inl hv₁ =>
+            cases bool_canonical t₁ h₁ hv₁ with
+            | tru => exact ⟨t₂, .ifTrue t₂ t₃⟩
+            | fls => exact ⟨t₃, .ifFalse t₂ t₃⟩
+        | inr hs₁ => obtain ⟨t₁', h⟩ := hs₁
+                     exact ⟨<{ if t₁' then t₂ else t₃ }>, .ifStep t₁ t₁' t₂ t₃ h⟩
+    | succ t₁ h ih =>
         cases ih with
-        | inl hv => exact .inl (.inr (.succ t1 (nat_canonical t1 h hv)))
-        | inr hs => obtain ⟨t', h'⟩ := hs; exact .inr ⟨<{ succ t' }>, .succStep t1 t' h'⟩
-    | pred t1 h ih =>
+        | inl hv => exact .inl (.inr (.succ t₁ (nat_canonical t₁ h hv)))
+        | inr hs => obtain ⟨t', h'⟩ := hs; exact .inr ⟨<{ succ t' }>, .succStep t₁ t' h'⟩
+    | pred t₁ h ih =>
         right
         cases ih with
         | inl hv =>
-            cases nat_canonical t1 h hv with
+            cases nat_canonical t₁ h hv with
             | zero => exact ⟨<{ 0 }>, .predZero⟩
-            | succ t0 hn0 => exact ⟨t0, .predSucc t0 hn0⟩
-        | inr hs => obtain ⟨t', h'⟩ := hs; exact ⟨<{ pred t' }>, .predStep t1 t' h'⟩
-    | isZero t1 h ih =>
+            | succ t₀ hn₀ => exact ⟨t₀, .predSucc t₀ hn₀⟩
+        | inr hs => obtain ⟨t', h'⟩ := hs; exact ⟨<{ pred t' }>, .predStep t₁ t' h'⟩
+    | isZero t₁ h ih =>
         right
         cases ih with
         | inl hv =>
-            cases nat_canonical t1 h hv with
+            cases nat_canonical t₁ h hv with
             | zero => exact ⟨<{ true }>, .isZeroZero⟩
-            | succ t0 hn0 => exact ⟨<{ false }>, .isZeroSucc t0 hn0⟩
-        | inr hs => obtain ⟨t', h'⟩ := hs; exact ⟨<{ iszero t' }>, .isZeroStep t1 t' h'⟩
+            | succ t₀ hn₀ => exact ⟨<{ false }>, .isZeroSucc t₀ hn₀⟩
+        | inr hs => obtain ⟨t', h'⟩ := hs; exact ⟨<{ iszero t' }>, .isZeroStep t₁ t' h'⟩
 ```
 
 :::gradeTheorem 3 progress
@@ -993,18 +1005,18 @@ some `t'`.
 
 _Proof_: By induction on a derivation of `⊢ t ⦂ T`.
 
-  - If the last rule in the derivation is `ite`, then `t = if t1 then t2
-    else t3`, with `⊢ t1 ⦂ Bool`, `⊢ t2 ⦂ T` and `⊢ t3 ⦂ T`.  By the IH,
-    either `t1` is a value or else `t1` can step to some `t1'`.
+  - If the last rule in the derivation is `ite`, then `t = if t₁ then t₂
+    else t₃`, with `⊢ t₁ ⦂ Bool`, `⊢ t₂ ⦂ T` and `⊢ t₃ ⦂ T`.  By the IH,
+    either `t₁` is a value or else `t₁` can step to some `t₁'`.
 
-    - If `t1` is a value, then by the canonical forms lemmas and the fact
-      that `⊢ t1 ⦂ Bool` we have that `t1` is a boolean value
-      (`Tm.IsBValue`) — i.e., it is either `true` or `false`.  If `t1 = true`, then `t` steps to `t2` by
-      `ifTrue`, while if `t1 = false`, then `t` steps to `t3` by
+    - If `t₁` is a value, then by the canonical forms lemmas and the fact
+      that `⊢ t₁ ⦂ Bool` we have that `t₁` is a boolean value
+      (`Tm.IsBValue`) — i.e., it is either `true` or `false`.  If `t₁ = true`, then `t` steps to `t₂` by
+      `ifTrue`, while if `t₁ = false`, then `t` steps to `t₃` by
       `ifFalse`.  Either way, `t` can step, which is what we wanted to
       show.
 
-    - If `t1` itself can take a step, then, by `ifStep`, so can `t`.
+    - If `t₁` itself can take a step, then, by `ifStep`, so can `t`.
 
 :::solution
 ```
@@ -1012,44 +1024,44 @@ _Proof_: By induction on a derivation of `⊢ t ⦂ T`.
   is a boolean value and hence a value.  The cases for `fls` and `zero`
   are similar.
 
-- If the last rule in the derivation is `succ`, then `t = succ t1`, with
-  `⊢ t1 ⦂ Nat`.  By the IH, either `t1` is a value or else `t1` can step
-  to some `t1'`.
+- If the last rule in the derivation is `succ`, then `t = succ t₁`, with
+  `⊢ t₁ ⦂ Nat`.  By the IH, either `t₁` is a value or else `t₁` can step
+  to some `t₁'`.
 
-  - If `t1` is a value, then by the canonical forms lemma `t1` is an
+  - If `t₁` is a value, then by the canonical forms lemma `t₁` is an
     `nvalue`, and hence `t` is also an `nvalue` (and hence a value) by
     `succ`.
 
-  - If `t1` can take a step, then by `succStep`, so can `t`.
+  - If `t₁` can take a step, then by `succStep`, so can `t`.
 
-- If the last rule in the derivation is `pred`, then `t = pred t1`, with
-  `⊢ t1 ⦂ Nat`.  By the IH, either `t1` is a value or else `t1` can step
-  to some `t1'`.
+- If the last rule in the derivation is `pred`, then `t = pred t₁`, with
+  `⊢ t₁ ⦂ Nat`.  By the IH, either `t₁` is a value or else `t₁` can step
+  to some `t₁'`.
 
-  - If `t1` is a value, then (by the same argument as in the previous
+  - If `t₁` is a value, then (by the same argument as in the previous
     case) it must be an `nvalue`.  By case analysis on the `nvalue`
     judgement, there are two cases:
 
-    - If `t1 = 0`, then `t` can take a step by `predZero`.
+    - If `t₁ = 0`, then `t` can take a step by `predZero`.
 
-    - Otherwise, `t1 = succ t1'`, with `t1'` an `nvalue`.  Hence `t` can
+    - Otherwise, `t₁ = succ t₁'`, with `t₁'` an `nvalue`.  Hence `t` can
       again take a step, this time by `predSucc`.
 
-  - Finally, if `t1` can take a step, then by `predStep`, so can `t`.
+  - Finally, if `t₁` can take a step, then by `predStep`, so can `t`.
 
-- If the last rule in the derivation is `isZero`, then `t = iszero t1`,
-  with `⊢ t1 ⦂ Nat`.  By the IH, either `t1` is a value or else `t1` steps
-  to some `t1'`.
+- If the last rule in the derivation is `isZero`, then `t = iszero t₁`,
+  with `⊢ t₁ ⦂ Nat`.  By the IH, either `t₁` is a value or else `t₁` steps
+  to some `t₁'`.
 
-  - If `t1` is a value, it must be an `nvalue`, and there are two cases to
+  - If `t₁` is a value, it must be an `nvalue`, and there are two cases to
     consider:
 
-    - If `t1 = 0`, then `t` can take a step by `isZeroZero`.
+    - If `t₁ = 0`, then `t` can take a step by `isZeroZero`.
 
-    - Otherwise, `t1 = succ t1'` where `t1'` is an `nvalue`.  Hence `t` can
+    - Otherwise, `t₁ = succ t₁'` where `t₁'` is an `nvalue`.  Hence `t` can
       take a step by `isZeroSucc`.
 
-  - If `t1` can take a step, then so can `t`, by `isZeroStep`.
+  - If `t₁` can take a step, then so can `t`, by `isZeroStep`.
 ```
 :::
 
@@ -1132,24 +1144,24 @@ theorem preservation (t t' : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) (he : t ⟶ t
     | tru => cases he
     | fls => cases he
     | zero => cases he
-    | ite t1 t2 t3 T h1 h2 h3 ih1 ih2 ih3 =>
+    | ite t₁ t₂ t₃ T h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
         cases he with
-        | ifTrue => exact h2
-        | ifFalse => exact h3
-        | ifStep _ c' _ _ hc => exact .ite c' t2 t3 T (ih1 c' hc) h2 h3
-    | succ t1 h ih =>
+        | ifTrue => exact h₂
+        | ifFalse => exact h₃
+        | ifStep _ c' _ _ hc => exact .ite c' t₂ t₃ T (ih₁ c' hc) h₂ h₃
+    | succ t₁ h ih =>
         cases he with
-        | succStep _ t1' hs => exact .succ t1' (ih t1' hs)
-    | pred t1 h ih =>
+        | succStep _ t₁' hs => exact .succ t₁' (ih t₁' hs)
+    | pred t₁ h ih =>
         cases he with
         | predZero => exact .zero
         | predSucc v hv => cases h with | succ _ hh => exact hh
-        | predStep _ t1' hs => exact .pred t1' (ih t1' hs)
-    | isZero t1 h ih =>
+        | predStep _ t₁' hs => exact .pred t₁' (ih t₁' hs)
+    | isZero t₁ h ih =>
         cases he with
         | isZeroZero => exact .tru
         | isZeroSucc v hv => exact .fls
-        | isZeroStep _ t1' hs => exact .isZero t1' (ih t1' hs)
+        | isZeroStep _ t₁' hs => exact .isZero t₁' (ih t₁' hs)
 ```
 
 :::gradeTheorem 2 preservation
@@ -1163,23 +1175,23 @@ _Theorem_: If `⊢ t ⦂ T` and `t ⟶ t'`, then `⊢ t' ⦂ T`.
 
 _Proof_: By induction on a derivation of `⊢ t ⦂ T`.
 
-  - If the last rule in the derivation is `ite`, then `t = if t1 then t2
-    else t3`, with `⊢ t1 ⦂ Bool`, `⊢ t2 ⦂ T` and `⊢ t3 ⦂ T`.
+  - If the last rule in the derivation is `ite`, then `t = if t₁ then t₂
+    else t₃`, with `⊢ t₁ ⦂ Bool`, `⊢ t₂ ⦂ T` and `⊢ t₃ ⦂ T`.
 
     Inspecting the rules for the small-step reduction relation and
     remembering that `t` has the form `if ...`, we see that the only ones
     that could have been used to prove `t ⟶ t'` are `ifTrue`,
     `ifFalse`, or `ifStep`.
 
-    - If the last rule was `ifTrue`, then `t' = t2`.  But we know that
-      `⊢ t2 ⦂ T`, so we are done.
+    - If the last rule was `ifTrue`, then `t' = t₂`.  But we know that
+      `⊢ t₂ ⦂ T`, so we are done.
 
-    - If the last rule was `ifFalse`, then `t' = t3`.  But we know that
-      `⊢ t3 ⦂ T`, so we are done.
+    - If the last rule was `ifFalse`, then `t' = t₃`.  But we know that
+      `⊢ t₃ ⦂ T`, so we are done.
 
-    - If the last rule was `ifStep`, then `t' = if t1' then t2 else t3`,
-      where `t1 ⟶ t1'`.  We know `⊢ t1 ⦂ Bool` so, by the IH, `⊢ t1' ⦂
-      Bool`.  The `ite` rule then gives us `⊢ if t1' then t2 else t3 ⦂ T`,
+    - If the last rule was `ifStep`, then `t' = if t₁' then t₂ else t₃`,
+      where `t₁ ⟶ t₁'`.  We know `⊢ t₁ ⦂ Bool` so, by the IH, `⊢ t₁' ⦂
+      Bool`.  The `ite` rule then gives us `⊢ if t₁' then t₂ else t₃ ⦂ T`,
       as required.
 
 :::solution
@@ -1191,28 +1203,28 @@ _Proof_: By induction on a derivation of `⊢ t ⦂ T`.
 - Similarly, neither `fls` nor `zero` could be the final rule in the
   derivation.
 
-- If the last rule in the derivation is `succ`, then `t = succ t1` with
-  `⊢ t1 ⦂ Nat` and `T = Nat`.  The only rule which could have been used to
-  show that `t` steps is `succStep`, in which case `t1` steps to some
-  `t1'`.  So, by the IH, `⊢ t1' ⦂ Nat`, and hence `t' = succ t1'` also has
+- If the last rule in the derivation is `succ`, then `t = succ t₁` with
+  `⊢ t₁ ⦂ Nat` and `T = Nat`.  The only rule which could have been used to
+  show that `t` steps is `succStep`, in which case `t₁` steps to some
+  `t₁'`.  So, by the IH, `⊢ t₁' ⦂ Nat`, and hence `t' = succ t₁'` also has
   type `Nat` by `succ`.
 
-- If the last rule in the derivation is `pred`, then `t = pred t1` with
-  `⊢ t1 ⦂ Nat`.  There are only three rules which could have been the last
-  rule in the derivation of `pred t1 ⟶ t'`.
+- If the last rule in the derivation is `pred`, then `t = pred t₁` with
+  `⊢ t₁ ⦂ Nat`.  There are only three rules which could have been the last
+  rule in the derivation of `pred t₁ ⟶ t'`.
 
   - If the last rule was `predZero`, then `t' = 0` which has type `Nat`.
 
-  - If the last rule was `predSucc`, then `t1 = succ t'`; by inversion
-    on the fact that `⊢ t1 ⦂ Nat` it follows that `⊢ t' ⦂ Nat` as well.
+  - If the last rule was `predSucc`, then `t₁ = succ t'`; by inversion
+    on the fact that `⊢ t₁ ⦂ Nat` it follows that `⊢ t' ⦂ Nat` as well.
 
-  - If the last rule was `predStep`, then `t1` steps to some `t1'`; by the
-    IH `⊢ t1' ⦂ Nat`, and so `pred t1'` has type `Nat` as well by
+  - If the last rule was `predStep`, then `t₁` steps to some `t₁'`; by the
+    IH `⊢ t₁' ⦂ Nat`, and so `pred t₁'` has type `Nat` as well by
     `pred`.
 
-- If the last rule in the derivation is `isZero`, then `t = iszero t1`
-  with `⊢ t1 ⦂ Nat` and `T = Bool`.  There are only three rules which
-  could have been the last rule in the derivation of `iszero t1 ⟶ t'`.
+- If the last rule in the derivation is `isZero`, then `t = iszero t₁`
+  with `⊢ t₁ ⦂ Nat` and `T = Bool`.  There are only three rules which
+  could have been the last rule in the derivation of `iszero t₁ ⟶ t'`.
 
   - If the last rule was `isZeroZero`, then `t' = true` which has type
     `Bool`.
@@ -1220,8 +1232,8 @@ _Proof_: By induction on a derivation of `⊢ t ⦂ T`.
   - If the last rule was `isZeroSucc`, then `t' = false` which has type
     `Bool`.
 
-  - If the last rule was `isZeroStep`, then `t1` steps to some `t1'`.  By
-    the IH, `⊢ t1' ⦂ Nat` as well, and hence `t' = iszero t1'` has type
+  - If the last rule was `isZeroStep`, then `t₁` steps to some `t₁'`.  By
+    the IH, `⊢ t₁' ⦂ Nat` as well, and hence `t' = iszero t₁'` has type
     `Bool` by `isZero`.
 ```
 :::
@@ -1244,17 +1256,17 @@ proof is similar, but not exactly the same.
 theorem preservation' (t t' : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) (he : t ⟶ t') : <{ ⊢ t' ⦂ T }> := by
   solution!
     induction he generalizing T with
-    | ifTrue t1 t2 => cases hT with | ite _ _ _ _ h1 h2 h3 => exact h2
-    | ifFalse t1 t2 => cases hT with | ite _ _ _ _ h1 h2 h3 => exact h3
-    | ifStep c c' t2 t3 hc ih =>
-        cases hT with | ite _ _ _ _ h1 h2 h3 => exact .ite c' t2 t3 T (ih .bool h1) h2 h3
-    | succStep t1 t1' hs ih => cases hT with | succ _ h => exact .succ t1' (ih .nat h)
+    | ifTrue t₁ t₂ => cases hT with | ite _ _ _ _ h₁ h₂ h₃ => exact h₂
+    | ifFalse t₁ t₂ => cases hT with | ite _ _ _ _ h₁ h₂ h₃ => exact h₃
+    | ifStep c c' t₂ t₃ hc ih =>
+        cases hT with | ite _ _ _ _ h₁ h₂ h₃ => exact .ite c' t₂ t₃ T (ih .bool h₁) h₂ h₃
+    | succStep t₁ t₁' hs ih => cases hT with | succ _ h => exact .succ t₁' (ih .nat h)
     | predZero => cases hT with | pred _ h => exact .zero
     | predSucc v hv => cases hT with | pred _ h => cases h with | succ _ hh => exact hh
-    | predStep t1 t1' hs ih => cases hT with | pred _ h => exact .pred t1' (ih .nat h)
+    | predStep t₁ t₁' hs ih => cases hT with | pred _ h => exact .pred t₁' (ih .nat h)
     | isZeroZero => cases hT with | isZero _ h => exact .tru
     | isZeroSucc v hv => cases hT with | isZero _ h => exact .fls
-    | isZeroStep t1 t1' hs ih => cases hT with | isZero _ h => exact .isZero t1' (ih .nat h)
+    | isZeroStep t₁ t₁' hs ih => cases hT with | isZero _ h => exact .isZero t₁' (ih .nat h)
 ```
 
 :::gradeTheorem 3 preservation'
@@ -1274,9 +1286,9 @@ Putting progress and preservation together, we see that a well-typed term
 can never reach a stuck state.
 
 ```lean
-def Tm.MultiStep (t1 t2 : Tm) : Prop := Multi Tm.Step t1 t2
+def Tm.MultiStep (t₁ t₂ : Tm) : Prop := Multi Tm.Step t₁ t₂
 
-scoped notation:40 t1:41 " ⟶* " t2:41 => Tm.MultiStep t1 t2
+scoped notation:40 t₁:41 " ⟶* " t₂:41 => Tm.MultiStep t₁ t₂
 
 theorem soundness (t t' : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) (hm : t ⟶* t') : ¬ Tm.IsStuck t' := by
   induction hm generalizing T with
@@ -1285,7 +1297,7 @@ theorem soundness (t t' : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) (hm : t ⟶* t')
       cases progress a T hT with
       | inl hv => exact hnv hv
       | inr hs => exact hnf hs
-  | step a b c h1 h2 ih => exact ih T (preservation a b T hT h1)
+  | step a b c h₁ h₂ ih => exact ih T (preservation a b T hT h₁)
 ```
 
 ::::quiz
@@ -1309,7 +1321,7 @@ All three remain true.
 ::::quiz
 Suppose, instead, that we add this new rule to the typing relation:
 ```
-| ifFunny : ⊢ t2 ⦂ Nat → ⊢ if true then t2 else t3 ⦂ Nat
+| ifFunny : ⊢ t₂ ⦂ Nat → ⊢ if true then t₂ else t₃ ⦂ Nat
 ```
 Which of the following properties remain true in the presence of this
 rule?
@@ -1348,7 +1360,7 @@ theorem subject_expansion :
     intro hse
     have hT : <{ ⊢ if false then true else 0 ⦂ Nat }> :=
       hse <{ if false then true else 0 }> <{ 0 }> .nat ⟨.ifFalse <{ true }> <{ 0 }>, .zero⟩
-    cases hT with | ite _ _ _ _ h1 h2 h3 => cases h2
+    cases hT with | ite _ _ _ _ h₁ h₂ h₃ => cases h₂
 
 end TM
 ```
@@ -1370,7 +1382,7 @@ variation1a (EX2M?): add the two step rules
 -- Determinism, Progress, and Preservation all remain true.
 
 variation1b (EX2M?): add the typing rule
-  ifFunny : ⊢ t2 ⦂ Nat → ⊢ if true then t2 else t3 ⦂ Nat
+  ifFunny : ⊢ t₂ ⦂ Nat → ⊢ if true then t₂ else t₃ ⦂ Nat
 -- Determinism, Progress, and Preservation all remain true.
 ```
 :::
@@ -1407,7 +1419,7 @@ GRADE_MANUAL 2: variation1
 :::::exercise (rating := 2) (name := "variation2") (manual := true)
 Suppose, instead, that we add this new rule to the `Tm.Step` relation:
 ```
-funny1 : if true then t2 else t3 ⟶ t3
+funny1 : if true then t₂ else t₃ ⟶ t₃
 ```
 Which of the above properties become false in the presence of this rule?
 For each one that does, give a counter-example.
@@ -1430,7 +1442,7 @@ GRADE_MANUAL 2: variation2
 :::::exercise (rating := 2) (name := "variation3") (optional := true)
 Suppose instead that we add this rule:
 ```
-funny2 : t2 ⟶ t2' → if t1 then t2 else t3 ⟶ if t1 then t2' else t3
+funny2 : t₂ ⟶ t₂' → if t₁ then t₂ else t₃ ⟶ if t₁ then t₂' else t₃
 ```
 Which of the above properties become false in the presence of this rule?
 For each one that does, give a counter-example.
