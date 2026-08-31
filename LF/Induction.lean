@@ -901,7 +901,7 @@ Let's look at a code action for {tactic}`induction`.
 Suppose we start with the following incomplete proof:
 
 ```lean +error
-example (n : Nat) : Nat.beq n n := by
+example (n : Nat) : Nat.beq n n = true := by
   induction n
 ```
 
@@ -917,7 +917,7 @@ If you choose this action,
 Lean adds an explicit branch for each constructor:
 
 ```lean
-example (n : Nat) : Nat.beq n n := by
+example (n : Nat) : Nat.beq n n= true := by
   induction n with
   | zero => sorry
   | succ n ih => sorry
@@ -934,7 +934,7 @@ Let's do the proof!
 One possible proof is the following.
 ::::
 ```lean
-example (n : Nat) : Nat.beq n n := by
+example (n : Nat) : Nat.beq n n = true := by
   workinclass!
     induction n with
     | zero => exact (beq_self zero)
