@@ -722,7 +722,7 @@ theorem add_assoc'' (n m p : Nat) :
   induction p with
   | zero => /- p = zero -/
     rw [add_zero, add_zero]
-  | succ p' ih => /- p = p' + 1 -/
+  | succ p' ih => /- p = succ p', in other words p = p' + 1 -/
     rw [add_succ m p', add_succ n (m + p'), add_succ (n + m) p', ih]
 ```
 
@@ -752,7 +752,7 @@ _Proof_: By induction on `p`.
 This follows directly from the definition of `+`
 (since `x + zero = x` for any `x`).
 
-- Next, suppose `p = p' + 1`, where
+- Next, suppose `p = p' + 1` (i.e., `p = succ p'`), where
 
 ```display
   n + (m + p') = (n + m) + p'.
@@ -764,7 +764,7 @@ We must now show that
   n + (m + (p' + 1)) = (n + m) + (p' + 1).
 ```
 
-By the definition of `+`, both sides reduce to
+By definition of `+`, both sides rewrite (via {name}`add_succ`) to
 
 ```display
   (n + (m + p')) + 1   and   ((n + m) + p') + 1
@@ -938,6 +938,21 @@ def isZero (n : Nat) : Bool :=
 Now you just have to replace the holes `_` with your definition.
 You can use code actions freely to fill out {tactic}`induction`,
 {tactic}`case`, and `match` branches while working with this book.
+
+One note: Sometimes the variables the code action chooses are not ideal,
+so you might want to change them. For example, here is what we get
+from the code action for `add_comm`
+
+```lean
+theorem add_comm' (n m : Nat) : n + m = m + n := by
+  induction m with
+  | zero => sorry
+  | succ n ih => sorry -- bad choice of variable `n`, want `m` or `m'` !
+```
+
+Notice that the action chose `n` for the `succ` case, even though we are
+inducting on `m`. Manually updating this variable to either `m` or `m'`
+will make your proof easier to read.
 
 # More Exercises
 
