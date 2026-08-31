@@ -3097,10 +3097,8 @@ inductive Com.EvalR : Com → State → State → Prop where
 instance : HasEval Com State State where
   Eval := Com.EvalR
 
-@[app_unexpander Com.EvalR]
-def Com.unexpandEvalR : Lean.PrettyPrinter.Unexpander
-  | `($_ $c $st0 $st1) => ``($st0 =[ ~$c ]=> $st1)
-  | _ => throw ()
+@[simp]
+theorem Com.evalR_eq {c : Com} {st st' : State} : EvalR c st st' ↔ st =[ ~c ]=> st' := by rfl
 ```
 
 :::autogradedHole Com.EvalR
@@ -3355,10 +3353,6 @@ aspects of `skip` and conditionals:
 :::dev
 HIDE: The big comment will not display nicely.  But I guess it's
 folded...
-:::
-
-:::dev "Niklas Halonen (xhalo32)"
-We need to explain the `generalize` tactic.
 :::
 
 ```lean
@@ -4021,10 +4015,9 @@ inductive Com.EvalR : Com → State → State → Prop where
 instance : HasEval Com State State where
   Eval := Com.EvalR
 
-@[app_unexpander Com.EvalR]
-def Com.unexpandEvalR : Lean.PrettyPrinter.Unexpander
-  | `($_ $c $st0 $st1) => ``($st0 =[ ~$c ]=> $st1)
-  | _ => throw ()
+@[simp]
+theorem Com.evalR_eq {c : Com} {st st' : State} :
+    EvalR c st st' ↔ st =[ ~c ]=> st' := by rfl
 ```
 
 :::autogradedHole Com.EvalR
@@ -4489,10 +4482,9 @@ inductive Com.EvalR : Com → State → State → Prop where
 instance : HasEval Com State State where
   Eval := Com.EvalR
 
-@[app_unexpander Com.EvalR]
-def Com.unexpandEvalR : Lean.PrettyPrinter.Unexpander
-  | `($_ $c $st0 $st1) => ``($st0 =[ ~$c ]=> $st1)
-  | _ => throw ()
+@[simp]
+theorem Com.evalR_eq {c : Com} {st st' : State} :
+    EvalR c st st' ↔ st =[ ~c ]=> st' := by rfl
 ```
 
 The definition of Hoare triples is exactly as before.
@@ -4742,10 +4734,9 @@ inductive Com.EvalR : Com → State → Result → Prop where
 instance : HasEval Com State Result where
   Eval := Com.EvalR
 
-@[app_unexpander Com.EvalR]
-def Com.unexpandEvalR : Lean.PrettyPrinter.Unexpander
-  | `($_ $c $st0 $st1) => ``($st0 =[ ~$c ]=> $st1)
-  | _ => throw ()
+@[simp]
+theorem Com.evalR_eq {c : Com} {st : State} {res : Result} :
+    EvalR c st res ↔ st =[ ~c ]=> res := by rfl
 ```
 
 We redefine hoare triples: Now, `{{ P }} c {{ Q }}` means that,
