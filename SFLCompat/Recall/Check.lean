@@ -341,11 +341,20 @@ def elabRecallCommand (cmd : Syntax) (strictUniverse : Bool) : CommandElabM Unit
   -- resulting-type position included) resolve to the hidden copy, and
   -- every other name resolves as it would at the recall site. The
   -- namespace comes from the name generator: `_uniq` names cannot be
-  -- written in source, so it is collision-free, and unlike a macro-scoped
-  -- name it is an ordinary component, so declarations under it keep the
-  -- prefix structure that `renameBack` and the constructor comparison
-  -- rely on.
-  let ns ← liftCoreM (mkFreshId : CoreM Name)
+  -- written in source, so it is collision-free. `mkFreshId` itself returns
+  -- a name whose last component is a `Name.num`, not a `Name.str`; appended
+  -- onto `currNamespace` as-is, that trailing numeral breaks
+  -- `Lean.ResolveName.resolveUsingNamespace`, which only walks up an
+  -- enclosing-namespace chain built of `Name.str` components. The symptom
+  -- is silent: an unqualified name inside the restatement that should
+  -- resolve through the enclosing namespace instead falls through to a
+  -- same-named root declaration, if one exists (e.g. `Nat` resolving to
+  -- `_root_.Nat` instead of the local shadowing type). Converting the
+  -- fresh id to a single `Name.str` component keeps it collision-free
+  -- (its rendered form still can't be written in source) while keeping the
+  -- namespace chain walkable, and `renameBack`/the constructor comparison
+  -- only rely on structural prefix matching, which is unaffected.
+  let ns := Name.mkStr1 (← liftCoreM (mkFreshId : CoreM Name)).toString
   -- Any mismatch gets a clickable fix: replace the restatement with the
   -- original's source text, indented like the restatement. The helpers
   -- for recovering and re-indenting source are shared with the
