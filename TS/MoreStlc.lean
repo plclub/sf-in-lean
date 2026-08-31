@@ -1425,7 +1425,7 @@ scoped syntax:60 stlcTm:61 " :: " stlcTm:60 : stlcTm
 scoped syntax:50 "case " stlcTm:50 " of " "nil" " => " stlcTm:50 " | "
   stlcVar " :: " stlcVar " => " stlcTm:50 : stlcTm
 
-scoped syntax:60 " ( " stlcTm:60 " , " stlcTm:60 " ) " : stlcTm
+scoped syntax:max " ( " stlcTm:60 " , " stlcTm:60 " ) " : stlcTm
 
 scoped syntax:50 "let " stlcVar " = " stlcTm:50 " in " stlcTm:50 : stlcTm
 
