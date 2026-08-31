@@ -911,61 +911,6 @@ theorem not_true_is_false' (b : Bool) (h : b ≠ true) : b = false := by
 ```
 ::::
 
-:::dev
-HIDE: CH: I don't think this was the original intention, but some
-of these quizzes got unnecessarily tricky and pedantic. For
-instance, the first quiz below makes a big distinction between
-using the destruct tactic and destructing using an intro pattern,
-even if conceptually there is no difference. Could it be that these
-quizzes were devised when intro patterns were not taught in the
-course and an update would be helpful now? Since I don't see the
-gain in tricking a majority of students in giving the "wrong"
-answer, even if it's a perfectly sensible one.
-:::
-
-:::dev "Benjamin Pierce (bcpierce00)"
-```
-INCOMING BOCHUM MATERIAL summarized by Claude (old/bochum-lf-updates/Logic.v): the five
-   quizzes below were reworked in the Bochum LF updates -- addressing
-   the concern in the dev note above.  Every option list was replaced
-   by the following uniform one (with `discriminate` in place of
-   `destruct` in the last quiz):
-
-     (A) intros and apply suffice
-     (B) destruct
-     (C) left and/or right
-     (D) destruct, left and right
-     (E) none of the above
-
-   and the answer proofs for quizzes 1 and 4 were changed to use an
-   explicit destruct instead of destructing via an intro pattern:
-
-     Lemma quiz1: forall X, forall a b : X, (a=b) /\ (a<>b) -> False.
-     Proof.
-       intros X a b H.
-       destruct H as [Hab Hnab]. apply Hnab. apply Hab.
-     Qed.
-
-     Lemma quiz4 : forall P Q: Prop,  P \/ Q -> ~~P \/ ~~Q.
-     Proof.
-       intros P Q H.
-       destruct H as [HP | HQ].
-       - (* left *)
-         left. intros HnP. apply HnP in HP. apply HP.
-       - (* right *)
-         right. intros HnQ. apply HnQ in HQ. apply HQ.
-     Qed.
-
-   To incorporate: rewrite the option lists of the five quizzes below
-   in the same uniform style (in Lean terms, e.g. "(A) intro and
-   apply suffice / (B) cases / (C) left and/or right / (D) cases,
-   left and right / (E) none of the above", with contradiction
-   replacing cases in the last quiz) and make the solutions for
-   quizzes 1 and 4 use an explicit cases rather than an intro
-   pattern.
-```
-:::
-
 ::::quiz
 To prove the following proposition, which tactics will we need
 besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
@@ -974,15 +919,17 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 ∀ α : Type, ∀ x y : α, x = y ∧ x ≠ y → False
 ```
 
-1. {tactic}`cases`, {tactic}`left`, and {tactic}`right`
-2. only {tactic}`cases`
+1. {tactic}`intro`, {tactic}`apply`, and {tactic}`exact` suffice
+2. {tactic}`cases`
 3. {tactic}`left` and/or {tactic}`right`
-4. none of the above
+4. {tactic}`cases` and {tactic}`left` and/or {tactic}`right`
+5. none of the above
 
 :::quizSolution
 ```lean
 example (α : Type) (x y : α) : x = y ∧ x ≠ y → False := by
-  intro ⟨h, hn⟩; apply hn; exact h
+  intro h; cases h with
+  | _ h₁ h₂ => apply h₂; exact h₁
 ```
 :::
 ::::
@@ -995,10 +942,11 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 ∀ a b : Prop, a ∨ b → ¬ ¬ (a ∨ b)
 ```
 
-1. {tactic}`cases`, {tactic}`left`, and {tactic}`right`
-2. only {tactic}`cases`
+1. {tactic}`intro`, {tactic}`apply`, and {tactic}`exact` suffice
+2. {tactic}`cases`
 3. {tactic}`left` and/or {tactic}`right`
-4. none of the above
+4. {tactic}`cases` and {tactic}`left` and/or {tactic}`right`
+5. none of the above
 
 :::quizSolution
 ```lean
@@ -1016,10 +964,11 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 ∀ a b : Prop, a → (a ∨ ¬ ¬ b)
 ```
 
-1. {tactic}`cases`, {tactic}`left`, and {tactic}`right`
-2. only {tactic}`cases`
+1. {tactic}`intro`, {tactic}`apply`, and {tactic}`exact` suffice
+2. {tactic}`cases`
 3. {tactic}`left` and/or {tactic}`right`
-4. none of the above
+4. {tactic}`cases` and {tactic}`left` and/or {tactic}`right`
+5. none of the above
 
 :::quizSolution
 ```lean
@@ -1037,10 +986,11 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 ∀ a b : Prop, a ∨ b → (¬ ¬ a) ∨ (¬ ¬ b)
 ```
 
-1. {tactic}`cases`, {tactic}`left`, and {tactic}`right`
-2. only {tactic}`cases`
+1. {tactic}`intro`, {tactic}`apply`, and {tactic}`exact` suffice
+2. {tactic}`cases`
 3. {tactic}`left` and/or {tactic}`right`
-4. none of the above
+4. {tactic}`cases` and {tactic}`left` and/or {tactic}`right`
+5. none of the above
 
 :::quizSolution
 ```lean
@@ -1060,10 +1010,11 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 ∀ a : Prop, 1 = 0 → (a ∨ ¬ a)
 ```
 
-1. {tactic}`contradiction` {tactic}`left`, and {tactic}`right`
-2. only {tactic}`contradiction`
+1. {tactic}`intro`, {tactic}`apply`, and {tactic}`exact` suffice
+2. {tactic}`contradiction`
 3. {tactic}`left` and/or {tactic}`right`
-4. none of the above
+4. {tactic}`contradiction` and {tactic}`left` and/or {tactic}`right`
+5. none of the above
 
 :::quizSolution
 ```lean
