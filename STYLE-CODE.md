@@ -772,7 +772,7 @@ replacements are summarized below.
 
 Entire lines of code can also be replaced by beginning with a `-- SOLUTION`
 comment and ending with a `-- END SOLUTION` comment. The comments are stripped
-in the solutions variant, while all lines are replaced by a `-- FILL IN HERE`
+in the solutions variant, while all lines are replaced by a `--  FILL IN HERE`
 comment in the student and terse variants. Use this only when omitting the lines entirely still compiles, such as for the constructors of an inductive type.
 
 ````
