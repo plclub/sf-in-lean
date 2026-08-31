@@ -984,14 +984,13 @@ Playground.myBar : RGB
 ```
 
 ::::full
-The constructors of an inductive type are placed in the `namespace` named after the type.
-When we enter that `namespace`, we can use those constructors without a prefix.
-For example, we can use the `blue` constructor without qualification below because
-we are inside the {name}`RGB` `namespace`.
+Lean gives each constructor of an inductive type a name prefixed by the type's name,
+such as {name}`RGB.blue`. When we enter the {name}`RGB` `namespace`, we can use its
+constructors without the `RGB` prefix. For example, we can write just `blue` below.
 ::::
 
 ::::terse
-An inductive type's constructors are placed in the `namespace` named after the type.
+The names of an inductive type's constructors are prefixed by the type's name.
 ::::
 
 ```lean
@@ -1099,13 +1098,16 @@ Unknown identifier `myHiddenDef`
 ```
 
 ::::full
-In fact, Lean's prelude explicitly exports commonly used names from the standard
-{name}`Bool` `namespace`. This means we can use constructors like {name}`true` and
-{name}`false` and functions like {name}`not` without qualifying them with {name}`Bool`.
+You might be wondering why we can use constructors like {name}`true` and {name}`false`
+and functions like {name}`not` without qualifying them with {name}`Bool`, and without
+explicitly `open`ing the `Bool` `namespace`. Lean provides a way to _export_ unprefixed
+names from a `namespace`, with the same effect as selectively `open`ing that `namespace`
+downstream, and the Lean prelude does that for commonly used names from the standard
+library. We don't explain this mechanism here because it's rarely used.
 ::::
 
 ::::terse
-Common names from the `Bool` `namespace` are exported and available without qualification.
+Lean's prelude exports common names from the `Bool` `namespace`.
 ::::
 
 ```lean (name := tt)
@@ -1123,12 +1125,12 @@ Bool.true : Bool
 
 ::::full
 Finally, Lean can often use an expression's expected type to fill in the missing prefix
-of a name that begins with `.`. Instead of the fully qualified style
-(e.g., {name}`Day.monday`), we can write just `.monday`.
+of a name that begins with `.`. So, instead of the fully qualified style
+{name}`Day.monday`, we can write just `.monday`.
 
-For example, when the expected type is {name}`Day`, Lean resolves `.monday` as
-{name}`Day.monday`. If the context does not determine an expected type, dotted notation
-may be ambiguous.
+For example, when the expected type is {name}`Day`, Lean interprets `.monday` as
+{name}`Day.monday`. If the context does not determine an expected type, Lean reports
+an error.
 
 So, for example, we can also write {name}`nextWorkingDay` like this, using the shorter
 style for both the value being matched and the value being returned:
@@ -1153,9 +1155,9 @@ def nextWorkingDay' (d : Day) : Day :=
 ::::full
 Here, both the type of `d` and the return type of the function are declared
 to be {name}`Day`s. When we use the `.monday` style in the function body, Lean can figure
-out that we must mean `Day.monday`. However, in the example below, Lean can't figure out
-which version of `.true` we mean, since both  {name}`Bool.true` and {name}`MyBool.true` are in scope and the context doesn't tell us which one we want.
-In this case, it will raise an error:
+out that we must mean `Day.monday`. However, in the example below, there is no expected
+type, so Lean cannot determine which declaration named `.true` is intended.
+In this case, it raises an error:
 ::::
 
 ::::terse
@@ -1214,21 +1216,21 @@ GRADE_MANUAL 1: custom_namespace_checks
 :::
 :::::
 
-## Constructors with Multiple Arguments
+## Constructors with Multiple Parameters (Tuple Types)
 
 ```lean
 namespace Playground
 ```
 
 ::::full
-A constructor of an inductive type can take multiple arguments,
-not just zero or one.
+A constructor of an inductive type can have multiple parameters,
+not just zero or one. This feature lets us define _tuple types_ in Lean.
 
 As an example, consider representing the four bits in
 a nibble (half a byte). We first define a datatype `Bit` that
 resembles {name}`Bool` (using the constructors `b1` and `b0` for the two
-possible bit values) and then define the datatype `Nibble`, whose constructor
-packages four bits.
+possible bit values) and then define the datatype `Nibble`, which is
+a tuple of four bits.
 ::::
 
 :::terse
@@ -1381,10 +1383,10 @@ namespace NatPlayground
 ```
 
 ::::full
-All the types we have defined so far — both enumerated types such as {name}`Day`,
-{name}`MyBool`, and {name}`Playground.Bit`, and types carrying a fixed amount of data
-such as {name}`Playground.Nibble` — are finite. The natural numbers, on the other hand,
-are an infinite set, so we'll need to use a
+All the types we have defined so far — both enumerated types
+such as {name}`Day`, {name}`MyBool`, and {name}`Playground.Bit`, and tuple types such as
+{name}`Playground.Nibble` built from them — are finite. The natural numbers, on
+the other hand, are an infinite set, so we'll need to use a
 slightly richer form of inductive type declaration to represent
 them: _recursive_ inductive types.
 
@@ -1661,7 +1663,7 @@ theorem add_zero_zero_explained : ∀ n : Nat, n + zero + zero = n := by
      What can we do to simplify this expression? If you hover
      your cursor over the `add_zero` in the rewrite below, you
      can see its type: `n + zero = n`. So, we can use that
-     rewrite rule to transform an appearance of `n + zero`
+     simplification rule to transform an appearance of `n + zero`
      in the goal to `n`. -/
   rewrite [add_zero]
   /- Now click here to see the new proof state that results
@@ -2036,8 +2038,8 @@ theorem two_mul_two : (two * two : Nat) = four := by
 
 ::::full
 When we say that Lean relies on almost nothing that's truly built-in, we really mean it:
-even a Boolean equality test is not a primitive operation, but an ordinary function that
-we could reimplement ourselves as users.
+even testing equality is not a primitive operation, but an ordinary function that we
+could reimplement ourselves as users.
 ::::
 
 Here is a function `beq` that tests natural numbers for
@@ -2350,7 +2352,7 @@ theorem not_involutive (b : Bool) : (!!b) = b := by
 ```
 
 ::::full
-The proof above uses some rewrite rules that we didn't
+The proof above uses some simplification rules that we didn't
 prove previously. These come from Lean's standard library, in particular
 from the section about booleans.
 In the {ref "UsingLean"}[UsingLean] chapter we will discuss how to search through the standard library
@@ -2460,7 +2462,7 @@ You will need the `rewrite ... at` and {tactic}`exact` tactics to complete some 
 ::::exercise (rating := 2) (name := "or_false_true")
 Prove the following claim.
 
-Tip: the rewrite rule to simplify `(b || false)` is called {name}`Bool.or_false`.
+Tip: the simplification rule for `(b || false)` is called {name}`Bool.or_false`.
 
 ```lean
 theorem or_false_true (b : Bool) (h : (b || false) = true) :
@@ -2506,7 +2508,7 @@ def even' (n : Nat) : Bool :=
 ```
 
 When Lean checks this definition, it verifies that the recursion terminates.
-For this definition, it does so by checking that the recursive argument is
+Specifically, it checks that the recursive argument is
 _structurally decreasing_ — each recursive call made in the body of the definition
 is made on an argument that is smaller than the original input.
 In the {name}`even'` example above, the argument to the recursive call to {name}`even'` is the variable `n'`.
@@ -2934,7 +2936,7 @@ theorem inspectBag_test3 : inspectBag (.checkedIn .prohibited .notScreened) = .c
 :::
 ::::
 
-Again, we record one simplification rule for each case.
+Again, we record one characterization lemma for each case.
 
 ```lean
 theorem inspectBag_noTicket (bagContent : BagContent) :
