@@ -245,10 +245,12 @@ def add (n : Nat) (m : Nat) : Nat :=
   | zero => n
   | succ m' => succ (add n m')
 ```
+::::
 
 For the {name}`add_zero` simplification rule, we were able to prove that {lean}`zero` is a
-neutral element for `+` on the _right_ using just {tactic}`rfl`:
+neutral element for `+` on the _right_ using just {tactic}`rfl`.
 
+::::full
 ```display
 theorem add_zero : ∀ (n : Nat), n + zero = n := by
   intro n
@@ -415,11 +417,13 @@ theorem beq_self (n : Nat) : (n == n) = true := by
       exact ih
 ```
 
-::::::full
 :::::exercise (rating := 2) (name := "basic_induction")
+::::full
 Prove the following using induction. You might need previously
 proven results.
+::::
 
+::::full
 ```lean
 theorem zero_mul (n : Nat) :
     zero * n = zero := by
@@ -435,7 +439,9 @@ theorem zero_mul (n : Nat) :
 
 :::gradeTheorem "0.5" zero_mul
 :::
+::::
 
+::::full
 ```lean
 theorem succ_add (n m : Nat) :
     (succ n) + m = succ (n + m) := by
@@ -451,9 +457,7 @@ theorem succ_add (n m : Nat) :
 
 :::gradeTheorem "0.5" succ_add
 :::
-:::::
-
-::::::
+::::
 
 :::slidebreak
 :::
@@ -479,6 +483,7 @@ theorem add_comm (n m : Nat) :
 :::gradeTheorem "0.5" add_comm
 :::
 
+::::full
 ```lean
 theorem add_assoc (n m p : Nat) :
     n + (m + p) = (n + m) + p := by
@@ -494,6 +499,8 @@ theorem add_assoc (n m p : Nat) :
 
 :::gradeTheorem "0.5" add_assoc
 :::
+::::
+:::::
 
 ## Tip: The {tactic}`rw` Tactic
 
@@ -544,6 +551,7 @@ set_option pp.fieldNotation false
 ```
 :::
 
+::::::full
 :::::exercise (rating := 2) (name := "double_add")
 Consider the following function, which doubles its argument:
 
@@ -572,6 +580,7 @@ theorem double_add (n : Nat) : double n = n + n := by
 :::gradeTheorem "0.5" double_add
 :::
 :::::
+::::::
 
 # Proofs Within Proofs
 
@@ -787,6 +796,7 @@ implicit, whereas the informal proof reminds the reader several
 times where things stand.
 ::::::
 
+::::::full
 :::::exercise (rating := 2) (name := "add_comm_informal") (level := Advanced) (optional := true) (manual := true)
 Translate your solution for {name}`add_comm` into an informal proof:
 
@@ -867,6 +877,7 @@ GRADE_MANUAL 2: beq_refl_informal
 ```
 :::
 :::::
+::::::
 
 # Aside: Using Code Actions to Generate Match Skeletons
 
@@ -895,6 +906,11 @@ example (n : Nat) : Nat.beq n n := by
 ```
 
 Put your cursor on `induction n` and open the code action menu.
+::::terse
+Click the lightbulb.
+::::
+::::full
+
 You should see
 "Generate an explicit pattern match for 'induction'." in the list.
 If you choose this action,
@@ -906,17 +922,23 @@ example (n : Nat) : Nat.beq n n := by
   | zero => sorry
   | succ n ih => sorry
 ```
+::::
 
 This gives us the basic structure of the proof without requiring us to write each
 branch by hand. We can then focus on proving each case.
 
-One possible proof is:
-
+::::terse
+Let's do the proof!
+::::
+::::full
+One possible proof is the following.
+::::
 ```lean
 example (n : Nat) : Nat.beq n n := by
-  induction n with
-  | zero => exact (beq_self zero)
-  | succ n ih => rw [Nat.beq, ih]
+  workinclass!
+    induction n with
+    | zero => exact (beq_self zero)
+    | succ n ih => rw [Nat.beq, ih]
 ```
 
 The same trick also works for `match` expressions. For example, suppose we start with
@@ -935,12 +957,17 @@ def isZero (n : Nat) : Bool :=
   | .succ n => _
 ```
 
+::::full
 Now you just have to replace the holes `_` with your definition.
 You can use code actions freely to fill out {tactic}`induction`,
 {tactic}`case`, and `match` branches while working with this book.
+::::
 
 One note: Sometimes the variables the code action chooses are not ideal,
-so you might want to change them. For example, here is what we get
+so you might want to change them.
+
+::::full
+For example, here is what we get
 from the code action for `add_comm`
 
 ```lean
@@ -953,6 +980,7 @@ theorem add_comm' (n m : Nat) : n + m = m + n := by
 Notice that the action chose `n` for the `succ` case, even though we are
 inducting on `m`. Manually updating this variable to either `m` or `m'`
 will make your proof easier to read.
+::::
 
 # More Exercises
 
@@ -1158,6 +1186,10 @@ in the {ref "Automation"}[Automation] chapter.
 
 # Nat to Bin and Back
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
+:::::::full
 ```lean
 namespace NatToBin
 ```
@@ -1302,9 +1334,14 @@ theorem nat_bin_nat (n : Nat) :
 :::gradeTheorem 3 nat_bin_nat
 :::
 :::::
+:::::::
 
 # Bin to Nat and Back (Advanced)
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
+:::::::full
 The opposite direction — starting with a {name}`Bin`, converting to {name}`Nat`,
 then converting back to {name}`Bin` — turns out to be problematic: the expected "theorem" does not hold.
 
@@ -1530,6 +1567,7 @@ theorem bin_nat_bin (b : Bin) :
 end NatToBin
 end NatPlayground.Nat
 ```
+:::::::
 
 ::::instructors
 ```
