@@ -1777,6 +1777,9 @@ macro_rules (kind := Stlc.tmBracket)
       `(subst $(← Stlc.varStr x) <{ $s:stlcTm }> <{ $t:stlcTm }>)
 ```
 
+:::autogradedHole subst
+:::
+
 :::dev PotentialImprovement
 We need to add a test case somewhere that exercises the
 situation `[x:=s] (let x = foo in bar)`
@@ -1969,6 +1972,10 @@ end
 scoped notation:40 t:41 " ⟶ " t':41 => Step t t'
 scoped notation:40 t:41 " ⟶* " t':41 => Multi Step t t'
 ```
+
+:::autogradedHole Step
+:::
+
 ::::
 
 ::::exercise (rating := 3) (name := "STLCExtended.HasType") (manual := true)
@@ -2491,6 +2498,13 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ ~t ⦂ ~τ }>) :
     solution!
       sorry
 ```
+
+:::autogradedHole progress
+:::
+
+:::gradeTheorem "3" progress
+:::
+
 ::::
 
 The weakening claim is exactly the same as for the original STLC.
@@ -2524,6 +2538,13 @@ theorem substitution_preserves_typing (Γ : Context) (x : String) (τ₁ : Ty) (
   solution!
     sorry
 ```
+
+:::autogradedHole substitution_preserves_typing
+:::
+
+:::gradeTheorem "2" substitution_preserves_typing
+:::
+
 ::::
 
 ::::exercise (rating := 3) (name := "STLCExtended.preservation")
@@ -2537,6 +2558,13 @@ theorem preservation (t t' : Tm) (τ : Ty)
   solution!
     sorry
 ```
+
+:::autogradedHole preservation
+:::
+
+:::gradeTheorem "3" preservation
+:::
+
 ::::
 
 ```lean
