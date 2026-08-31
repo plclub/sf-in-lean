@@ -284,8 +284,8 @@ def lean : CodeBlockExpanderOf LeanSaved.Config
       -- `strLitInputContext` parses starting at `str.getPos?`, so the byte
       -- indices recorded by the elaborator are absolute file offsets. The
       -- string-literal contents begin one byte past the opening quote.
-      let relativize (edits : Array SolutionEditRaw) : Array Replacement :=
-        edits.flatMap (·.edits) |>.map fun r =>
+      let relativize (edits : Array Replacement) : Array Replacement :=
+        edits |>.map fun r =>
           { r with
             range.start.byteIdx := r.range.start.byteIdx - str.raw.getPos!.byteIdx
             range.stop.byteIdx := r.range.stop.byteIdx - str.raw.getPos!.byteIdx
