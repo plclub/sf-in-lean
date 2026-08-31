@@ -1006,8 +1006,7 @@ Use {tactic}`have` (or {tactic}`rw` with explicit arguments) to help prove
 `add_shuffle3`. You don't need to use induction.
 
 ```lean
-theorem add_shuffle3 (n m p : Nat) :
-    add (add n m) p = add (add n p) m := by
+theorem add_shuffle3 (n m p : Nat) : n + m + p = n + p + m := by
   solution!
     rw [← add_assoc, add_comm m p, add_assoc]
 ```
