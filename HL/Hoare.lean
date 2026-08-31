@@ -760,6 +760,13 @@ details.
 namespace Assertion.Delab
 open Lean PrettyPrinter Delaborator SubExpr Imp.Delab
 
+/-- Strip the braces from a printed `{{ … }}` assertion, for
+a printer that is itself inside a pair of braces and will
+supply its own. -/
+def unbrace : Term → Term
+  | `({{ $P }}) => P
+  | t => t
+
 /-- Rebuild the surface form of an assertion body, undoing the state
 threading the `assn` elaborator performs: `st[X]` prints as `X`,
 `Aexp.eval st a` as `a`, `Bexp.eval st b = true` as `b`, an applied
@@ -816,7 +823,7 @@ partial def delabBody (stId : FVarId) : DelabM Term := do
         -- an applied assertion `P st` (or an applied escape lambda)
         guard (v == .fvar stId)
         guard !(f.containsFVar stId)
-        withAppFn delab
+        return unbrace (← withAppFn delab)
       else
         failure
 
@@ -828,11 +835,12 @@ partial def delabAssn : DelabM Term := do
     (withBindingBody' `st (pure ·.fvarId!) fun stId => delabBody stId)
       <|> Delaborator.delab
   else
-    delab
+    return unbrace (← delab)
 
-/-- Print an assertion-position argument: a state lambda gets the
-`{{ … }}` notation; any other term (a named assertion, a substitution)
-already reads well bare. -/
+/-- Print an assertion-position argument: a state lambda
+gets the `{{ … }}` notation. Any other term reads well as
+printed (a named assertion bare, a substitution with the
+braces it prints itself). -/
 def delabAssnArg (i : Nat) : DelabM Term := do
   if (← withNaryArg i getExpr).isLambda then
     `({{ $(← withNaryArg i delabAssn) }})
@@ -1654,21 +1662,25 @@ P [ X ↦ a ]
 namespace Assertion.Delab
 open Lean PrettyPrinter Delaborator SubExpr Imp.Delab
 
-/-- Print an `Assertion.subst` back in `P [x ↦ a]` notation.  Emits the
-bare inside-the-braces form: the generic application case of `delabBody`
-picks it up inside an assertion body, and the enclosing printer supplies
-the single pair of braces. -/
+/-- Print an `Assertion.subst` back in `{{P [x ↦ a]}}` notation. -/
 @[delab app.Assertion.subst]
 def delabSub : Delab := whenPPOption getPPNotation do
-  guard <| (← getExpr).isAppOfArity ``Assertion.subst 3
+  let e ← getExpr
+  if e.isAppOfArity ``Assertion.subst 4 then
+    let P ← withAppFn delab
+    return ← `(($P) $(← withAppArg delab))
+  guard <| e.isAppOfArity ``Assertion.subst 3
   let `($x:ident) ← withNaryArg 0 delab | failure
   let a ← withNaryArg 1 delabAexpInner
-  if (← withNaryArg 2 getExpr).isLambda then
-    `(($(← withNaryArg 2 delabAssn)) [$x:ident ↦ $a:imp_aexp])
-  else
-    match ← withNaryArg 2 delab with
-    | `($P:ident) => `($P:ident [$x:ident ↦ $a:imp_aexp])
-    | P => `(($P) [$x:ident ↦ $a:imp_aexp])
+  let body ←
+    if (← withNaryArg 2 getExpr).isLambda then
+      let P ← withNaryArg 2 delabAssn
+      `(($P) [$x:ident ↦ $a:imp_aexp])
+    else
+      match unbrace (← withNaryArg 2 delab) with
+      | `($P:ident) => `($P:ident [$x:ident ↦ $a:imp_aexp])
+      | P => `(($P) [$x:ident ↦ $a:imp_aexp])
+  `({{ $body }})
 
 end Assertion.Delab
 ```
@@ -1680,7 +1692,7 @@ end Assertion.Delab
 #guard_msgs in
 #check {{ (X ≤ 10) [X ↦ 2 * X] }}
 
-/-- info: (X ≤ 10) [X ↦ 2 * X] : Assertion -/
+/-- info: {{(X ≤ 10) [X ↦ 2 * X]}} : Assertion -/
 #guard_msgs in
 #check (Assertion.subst X (aexp { 2 * X }) ({{ X ≤ 10 }}))
 ```
