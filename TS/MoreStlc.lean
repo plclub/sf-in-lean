@@ -1751,7 +1751,7 @@ def subst (x : String) (s : Tm) (t : Tm) : Tm :=
       let t₃ := if x = x₁ || x = x₂ then t₃ else <{ [~x := ~s] ~t₃ }>
       <{case ( [~x := ~s] ~t₁ ) of
           nil => [~x := ~s] ~t₂
-        | x₁ :: x₂ =>  ~t₃ }>
+        | ~x₁ :: ~x₂ =>  ~t₃ }>
   -- unit
   | .unit => <{ unit }>
 
@@ -1844,6 +1844,9 @@ inductive Tm.IsValue : Tm → Prop where
       IsValue v₁ →
       IsValue v₂ →
       IsValue <{(~v₁, ~v₂)}>
+
+attribute [ExtStlcEval] Tm.IsValue.abs Tm.IsValue.nat Tm.IsValue.inl Tm.IsValue.inr
+    Tm.IsValue.nil Tm.IsValue.cons Tm.IsValue.unit Tm.IsValue.pair
 ```
 
 ::::exercise (rating := 3) (name := "STLCExtended.step") (manual := true)
@@ -1870,15 +1873,15 @@ inductive Step : Tm → Tm → Prop where
          <{succ ~t₁}> ⟶ <{succ ~t₁'}>
   | succNat (n : Nat) :
       <{ succ ~(Tm.const n) }> ⟶ Tm.const (n + 1)
-    | pred (t₁ t₁' : Tm) (h : t₁ ⟶ t₁') :
+  | pred (t₁ t₁' : Tm) (h : t₁ ⟶ t₁') :
       <{ pred ~t₁ }> ⟶ <{ pred ~t₁' }>
   | predConst (n : Nat) :
       <{ pred ~(Tm.const n) }> ⟶ Tm.const (n - 1)
   | multConst (n₁ n₂ : Nat) :
       <{ ~(Tm.const n₁) * ~(Tm.const n₂) }> ⟶ Tm.const (n₁ * n₂)
-  | mult1 (t₁ t₁' t₂ : Tm) (h : t₁ ⟶ t₁') :
+  | mult₁ (t₁ t₁' t₂ : Tm) (h : t₁ ⟶ t₁') :
       <{ ~t₁ * ~t₂ }> ⟶ <{ ~t₁' * ~t₂ }>
-  | mult2 (v₁ t₂ t₂' : Tm) (hv : v₁.IsValue) (h : t₂ ⟶ t₂') :
+  | mult₂ (v₁ t₂ t₂' : Tm) (hv : v₁.IsValue) (h : t₂ ⟶ t₂') :
       <{ ~v₁ * ~t₂ }> ⟶ <{ ~v₁ * ~t₂' }>
   | if0Step (t₁ t₁' t₂ t₃ : Tm) (h : t₁ ⟶ t₁') :
       <{ if0 ~t₁ then ~t₂ else ~t₃ }> ⟶ <{ if0 ~t₁' then ~t₂ else ~t₃ }>
@@ -1896,13 +1899,13 @@ inductive Step : Tm → Tm → Prop where
   | case (t t' : Tm) (x₁ : String) (t₁ : Tm) (x₂ : String) (t₂ : Tm) :
         t ⟶ t' →
         <{case ~t of inl ~x₁ => ~t₁ | inr ~x₂ => ~t₂}> ⟶
-        <{case ~t' of inl ~x₁ =>~ t₁ | inr ~x₂ => ~t₂}>
+        <{case ~t' of inl ~x₁ => ~t₁ | inr ~x₂ => ~t₂}>
   | caseInl (v : Tm) (x₁:String) (t₁ : Tm) (x₂ : String) (t₂ : Tm) (τ₂ : Ty) :
         v.IsValue →
         <{case inl ~τ₂ ~v of inl ~x₁ => ~t₁ | inr ~x₂ => ~t₂}> ⟶ <{ [~x₁ := ~v] ~t₁ }>
   | caseInr (v : Tm) (x₁:String) (t₁ : Tm) (x₂ : String) (t₂ : Tm) (τ₁ : Ty) :
         v.IsValue →
-        <{case inr ~τ₁ v of inl ~x₁ => ~t₁ | inr ~x₂ => ~t₂}> ⟶ <{ [~x₂ := ~v] ~t₂ }>
+        <{case inr ~τ₁ ~v of inl ~x₁ => ~t₁ | inr ~x₂ => ~t₂}> ⟶ <{ [~x₂ := ~v] ~t₂ }>
   -- lists
   | cons₁ (t₁ t₁' t₂ : Tm) :
        t₁ ⟶ t₁' →
@@ -1971,6 +1974,20 @@ end
 
 scoped notation:40 t:41 " ⟶ " t':41 => Step t t'
 scoped notation:40 t:41 " ⟶* " t':41 => Multi Step t t'
+
+-- Be sure to add your constructors to this list!
+attribute [ExtStlcEval] Step.appAbs Step.app₁ Step.app₂
+    Step.succ Step.succNat Step.pred Step.predConst
+    Step.multConst Step.mult₁ Step.mult₂
+    Step.if0Step Step.if0Zero Step.if0Nonzero
+    Step.inl Step.inr Step.case Step.caseInl Step.caseInr
+    Step.cons₁ Step.cons₂ Step.listCase₁ Step.listCaseNil
+    Step.listCaseCons
+-- SOLUTION
+    Step.pair₁ Step.pair₂ Step.fst₁ Step.fstPair
+    Step.snd₁ Step.sndPair Step.let₁ Step.letValue
+    Step.fix₁ Step.fixAbs
+-- END SOLUTION
 ```
 
 :::autogradedHole Step
@@ -2071,7 +2088,7 @@ inductive HasType : Context → Tm → Ty → Prop where
       <{ ~Γ ⊢ ~t₂ ⦂ ~τ₂ }> →
       <{ ~Γ ⊢ (~t₁, ~t₂) ⦂ ~τ₁ × ~τ₂ }>
   | fst (Γ : Context) (t : Tm) (τ₁ τ₂ : Ty) :
-      <{ ~Γ ⊢ t ⦂ ~τ₁ × ~τ₂ }> →
+      <{ ~Γ ⊢ ~t ⦂ ~τ₁ × ~τ₂ }> →
       <{ ~Γ ⊢ fst ~t ⦂ ~τ₁ }>
   | snd (Γ : Context) (t : Tm) (τ₁ τ₂ : Ty) :
       <{ ~Γ ⊢ ~t ⦂ ~τ₁ × ~τ₂ }> →
@@ -2090,6 +2107,15 @@ inductive HasType : Context → Tm → Ty → Prop where
       <{ ~Γ ⊢ ~t₁ ⦂ ~τ₁ → ~τ₁ }> →
       <{ ~Γ ⊢ fix ~t₁ ⦂ ~τ₁ }>
   -- END SOLUTION
+
+-- Make sure to add your constructors here
+attribute [ExtStlcTyping] HasType.var HasType.abs HasType.app
+    HasType.const HasType.succ HasType.pred HasType.mult
+    HasType.ite0 HasType.inl HasType.inr HasType.case
+    HasType.nil HasType.cons HasType.listCase HasType.unit
+-- SOLUTION
+    HasType.pair HasType.fst HasType.snd HasType.let HasType.fix
+-- END SOLUTION
 ```
 
 :::autogradedHole HasType
@@ -2148,7 +2174,13 @@ This section presents formalized versions of the examples from
 above (plus several more).
 
 For each example, replace `sorry` once you've implemented enough of
-the definitions for the tests to pass.
+the definitions for the tests to pass. If you've defined
+`Step` and `HasType` correctly, these should
+all be solvable with `apply_rules using ExtStlcTyping` or
+`normalize using ExtStlcEval`. Make sure to give your new
+constructors the right attributes so that Lean can find them.
+If these don't work, try working the proofs by applying constructors
+manually to see where they go wrong.
 
 The examples at the beginning focus on specific features; you can
 use these to make sure your definition of a given feature is
@@ -2169,18 +2201,14 @@ def tm_test := <{if0 (pred (succ (pred (2 * 0)))) then 5 else 6}>
 
 theorem typechecks : <{ ∅ ⊢ ~tm_test ⦂ Nat }> := by
   solution!
-    apply_rules [HasType.succ, HasType.pred, HasType.ite0, HasType.const, HasType.mult]
+    apply_rules using ExtStlcTyping
 ```
-
-:::gradeTheorem "0.5" typechecks
-:::
 
 ```lean
-theorem reduces : tm_test ⟶* (Tm.const 5) := by solution!(sorry)
+theorem reduces : tm_test ⟶* (Tm.const 5) := by
+  solution!
+    normalize using ExtStlcEval
 ```
-
-:::gradeTheorem "0.5" reduces
-:::
 
 ```lean
 end Numbers
@@ -2189,21 +2217,18 @@ end Numbers
 ```lean
 namespace Prod
 
--- snd (fst ((5, 6), 7))
-def tm_test := Tm.snd (.fst (.pair (.pair (.const 5) (.const 6)) (.const 7)))
+def tm_test := <{ snd (fst ((5, 6), 7)) }>
 
-theorem typechecks : <{ ∅ ⊢ ~tm_test ⦂ Nat }> := by solution!(sorry)
+theorem typechecks : <{ ∅ ⊢ ~tm_test ⦂ Nat }> := by
+  solution!
+    apply_rules using ExtStlcTyping
 ```
-
-:::gradeTheorem "0.5" typechecks
-:::
 
 ```lean
-theorem reduces : tm_test ⟶* Tm.const 6 := by solution!(sorry)
+theorem reduces : tm_test ⟶* Tm.const 6 := by
+  solution!
+    normalize using ExtStlcEval
 ```
-
-:::gradeTheorem "0.5" reduces
-:::
 
 ```lean
 end Prod
@@ -2214,18 +2239,18 @@ namespace Let
 
 def tm_test := <{let x = (pred 6) in (succ x)}>
 
-theorem typechecks : <{ ∅ ⊢ ~tm_test ⦂ Nat }> := by solution!(sorry)
+theorem typechecks : <{ ∅ ⊢ ~tm_test ⦂ Nat }> := by
+  solution!
+    apply_rules using ExtStlcTyping
 ```
 
-:::gradeTheorem "0.5" typechecks
-:::
 
 ```lean
 theorem reduces :
-  tm_test ⟶* Tm.const 6 := by solution!(sorry)
+  tm_test ⟶* Tm.const 6 := by
+    solution!
+        normalize using ExtStlcEval
 ```
-:::gradeTheorem "0.5" reduces
-:::
 
 ```lean
 end Let
@@ -2239,19 +2264,20 @@ def tm_test :=
      (succ z) }>
 
 theorem typechecks :
-  <{ ∅ ⊢ ~tm_test ⦂ Nat }> := by solution!(sorry)
+  <{ ∅ ⊢ ~tm_test ⦂ Nat }> := by
+  solution!
+    apply_rules using ExtStlcTyping
 ```
 
-:::gradeTheorem "0.5" typechecks
-:::
 
 ```lean
 theorem reduces :
-  tm_test ⟶* Tm.const 6 := by solution!(sorry)
+  tm_test ⟶* Tm.const 6 := by
+    solution!
+        normalize using ExtStlcEval
 ```
 
-:::gradeTheorem "0.5" reduces
-:::
+
 
 ```lean
 end Let1
@@ -2266,19 +2292,17 @@ def tm_test :=
      | inr y => y }>
 
 theorem typechecks :
-  <{ ∅ ⊢ ~tm_test ⦂ Nat }> := by solution!(sorry)
+  <{ ∅ ⊢ ~tm_test ⦂ Nat }> := by
+  solution!
+    apply_rules using ExtStlcTyping
 ```
-
-:::gradeTheorem "0.5" typechecks
-:::
 
 ```lean
 theorem reduces :
-  tm_test ⟶* Tm.const 5 := by solution!(sorry)
+  tm_test ⟶* Tm.const 5 := by
+    solution!
+        normalize using ExtStlcEval
 ```
-
-:::gradeTheorem "0.5" reduces
-:::
 
 ```lean
 end Sums1
@@ -2294,19 +2318,17 @@ def tm_test :=
      (processSum (inl Nat 5), processSum (inr Nat 5)) }>
 
 theorem typechecks :
-  <{ ∅ ⊢ ~tm_test ⦂ Nat × Nat }> := by solution!(sorry)
+  <{ ∅ ⊢ ~tm_test ⦂ Nat × Nat }> := by
+  solution!
+    apply_rules using ExtStlcTyping
 ```
-
-:::gradeTheorem "0.5" typechecks
-:::
 
 ```lean
 theorem reduces :
-  tm_test ⟶* <{ (5, Tm.const 0) }> := by solution!(sorry)
+  tm_test ⟶* <{ (5, ~(Tm.const 0)) }> := by
+    solution!
+        normalize using ExtStlcEval
 ```
-
-:::gradeTheorem "0.5" reduces
-:::
 
 ```lean
 end Sums2
@@ -2322,18 +2344,18 @@ def tm_test :=
      | x :: y => (x * x) }>
 
 theorem typechecks :
-  <{ ∅ ⊢ ~tm_test ⦂ Nat }> := by solution!(sorry)
+  <{ ∅ ⊢ ~tm_test ⦂ Nat }> := by
+  solution!
+    apply_rules using ExtStlcTyping
 ```
-
-:::gradeTheorem "0.5" typechecks
-:::
 
 ```lean
 theorem reduces :
-  tm_test ⟶* Tm.const 25 := by solution!(sorry)
+  tm_test ⟶* Tm.const 25 := by
+    solution!
+        normalize using ExtStlcEval
 ```
-:::gradeTheorem "0.5" reduces
-:::
+
 
 ```lean
 end Lists
@@ -2351,19 +2373,17 @@ def fact :=
 -- (Warning: you may be able to typecheck `fact` but still have some rules wrong!) *)
 
 theorem typechecks :
-  <{ ∅ ⊢ ~fact ⦂ Nat → Nat }> := by solution!(sorry)
+  <{ ∅ ⊢ ~fact ⦂ Nat → Nat }> := by
+  solution!
+    apply_rules using ExtStlcTyping
 ```
-
-:::gradeTheorem "0.5" typechecks
-:::
 
 ```lean
 theorem reduces :
-  <{ ~fact 4 }> ⟶* Tm.const 24 := by solution!(sorry)
+  <{ ~fact 4 }> ⟶* Tm.const 24 := by
+    solution!
+        normalize using ExtStlcEval
 ```
-
-:::gradeTheorem "0.5" reduces
-:::
 
 ```lean
 end Fix1
@@ -2381,20 +2401,20 @@ def map :=
 
 theorem typechecks :
   <{ ∅ ⊢ ~map ⦂
-     (Nat → Nat) → [Nat] → [Nat] }> := by solution!(sorry)
+     (Nat → Nat) → [Nat] → [Nat] }> := by
+  solution!
+    apply_rules using ExtStlcTyping
 ```
 
-:::gradeTheorem "0.5" typechecks
-:::
 
 ```lean
 theorem reduces :
   <{ ~map (λa:Nat. succ a) (1 :: 2 :: (nil Nat)) }>
-  ⟶* <{ 2 :: 3 :: (nil Nat) }> := by solution!(sorry)
+  ⟶* <{ 2 :: 3 :: (nil Nat) }> := by
+    solution!
+        normalize using ExtStlcEval
 ```
 
-:::gradeTheorem "0.5" reduces
-:::
 
 ```lean
 end Fix2
@@ -2411,60 +2431,52 @@ def equal :=
                    else (eq (pred m) (pred n)))) }>
 
 theorem typechecks :
- <{ ∅ ⊢ ~equal ⦂ Nat → Nat → Nat }> := by solution!(sorry)
+ <{ ∅ ⊢ ~equal ⦂ Nat → Nat → Nat }> := by
+  solution!
+    apply_rules using ExtStlcTyping
 ```
 
-:::gradeTheorem "0.5" typechecks
-:::
 
 ```lean
 theorem reduces :
-  <{ ~equal 4 4 }> ⟶* Tm.const 1 := by solution!(sorry)
+  <{ ~equal 4 4 }> ⟶* Tm.const 1 := by
+  solution!
+    normalize using ExtStlcEval
 ```
-
-:::gradeTheorem "0.5" reduces
-:::
 
 ```lean
 theorem reduces2 :
-  <{ ~equal 4 5 }> ⟶* Tm.const 0 := by solution!(sorry)
+  <{ ~equal 4 5 }> ⟶* Tm.const 0 := by
+  solution!
+    normalize using ExtStlcEval
 ```
 
-:::gradeTheorem "0.5" reduces2
-:::
 
 ```lean
 end Fix3
 
 namespace Fix4
 
-/- def eotest :=
+def eotest :=
   <{ let evenodd =
            fix
            (λeo: (Nat → Nat) × (Nat → Nat).
-              (λn:Nat. if0 n then 1 else (snd eo (pred n)) ,
-               λn:Nat. if0 n then 0 else (fst eo (pred n)))) in
+              ((λn:Nat. if0 n then 1 else (snd eo (pred n))),
+               (λn:Nat. if0 n then 0 else (fst eo (pred n))))) in
      let even = fst evenodd in
      let odd  = snd evenodd in
      (even 3, even 4) }>
 
 theorem typechecks :
-  <{ ∅ ⊢ ~eotest ⦂ Nat × Nat }> := by solution!(sorry)
-
-:::gradeTheorem "0.5" typechecks
-:::
+  <{ ∅ ⊢ ~eotest ⦂ Nat × Nat }> := by
+  solution!
+    apply_rules using ExtStlcTyping
 
 theorem reduces :
-  eotest ⟶* <{ (0, 1) }> := by solution!(sorry)
-
-:::gradeTheorem "0.5" reduces
-:::
-  -/
+  eotest ⟶* <{ (0, 1) }> := by
+  solution!
+    normalize using ExtStlcEval
 ```
-
-:::dev "Daniel Sainati (@dsainati1)" BeforeNextRelease
-Can't get this one to parse for some reason
-:::
 
 ```lean
 end Fix4
