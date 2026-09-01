@@ -410,7 +410,7 @@ def Tm.IsStuck (t : Tm) : Prop := Tm.IsNormalForm t ∧ ¬ Tm.IsValue t
 ```lean
 theorem some_term_is_stuck : ∃ t, Tm.IsStuck t := by
   solution!
-    refine ⟨<{ succ false }>, ?_, ?_⟩
+    exists <{ succ false }>; constructor
     · intro hc; obtain ⟨t', hstp⟩ := hc
       cases hstp with
       | succStep _ _ h => cases h
