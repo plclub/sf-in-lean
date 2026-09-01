@@ -2169,7 +2169,7 @@ def tm_test := <{if0 (pred (succ (pred (2 * 0)))) then 5 else 6}>
 
 theorem typechecks : <{ ∅ ⊢ ~tm_test ⦂ Nat }> := by
   solution!
-    sorry
+    apply_rules [HasType.succ, HasType.pred, HasType.ite0, HasType.const, HasType.mult]
 ```
 
 :::gradeTheorem "0.5" typechecks
