@@ -664,6 +664,7 @@ theorem Nat.even_succ (n : Nat) :
 :::gradeTheorem 2 Nat.even_succ
 :::
 ::::
+:::::
 
 We reprove here for Lean's {name}`Nat` some theorems about
 {name}`Nat.even` and {name}`Nat.double`, which we had previously
@@ -675,6 +676,7 @@ theorem Nat.double_zero : double 0 = 0 := by rfl
 theorem Nat.double_succ (n : Nat) : (n + 1).double = n.double + 2 := by rfl
 ```
 
+:::::full
 ::::exercise (rating := 2) (name := "double_add")
 ```lean
 theorem Nat.double_add (n : Nat) : n.double = n + n := by
@@ -696,10 +698,10 @@ theorem Nat.double_mul (n : Nat) : n.double = 2 * n := by
   solution!
     rw [double_add, Nat.two_mul]
 ```
-::::
 
 :::gradeTheorem 2 Nat.double_mul
 :::
+::::
 
 In the remainder of the book, we use Lean's built-in natural numbers everywhere.
 We also recommend using `rw?` and `exact?` to search for lemmas
