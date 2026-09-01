@@ -1339,7 +1339,7 @@ inductive Tm : Type where
   -- sums
   | inl : Ty → Tm → Tm
   | inr : Ty → Tm → Tm
-  | case : Tm → String → Tm → String → Tm → Tm
+  | sumCase : Tm → String → Tm → String → Tm → Tm
           -- i.e., `case t of inl x₁ => t₁ | inr x₂ => t₂`
   -- lists
   | nil : Ty → Tm
@@ -1356,7 +1356,7 @@ inductive Tm : Type where
   | fst : Tm → Tm
   | snd : Tm → Tm
   -- let
-  | let : String → Tm → Tm → Tm
+  | letIn : String → Tm → Tm → Tm
          -- i.e., [let x = t₁ in t₂]
   -- fix
   | fix  : Tm → Tm
@@ -1465,7 +1465,7 @@ scoped macro_rules (kind := Stlc.tmBracket)
   | `(<{ inl $τ $t}>) => `(Tm.inl <{ $τ:stlcTy }> <{ $t:stlcTm }>)
   | `(<{ inr $τ $t}>) => `(Tm.inr <{ $τ:stlcTy }> <{ $t:stlcTm }>)
   | `(<{ case $t of inl $x₁ => $t₁ | inr $x₂ => $t₂}>) => do
-      `(Tm.case <{ $t:stlcTm }> $(← Stlc.varStr x₁) <{ $t₁:stlcTm }>
+      `(Tm.sumCase <{ $t:stlcTm }> $(← Stlc.varStr x₁) <{ $t₁:stlcTm }>
           $(← Stlc.varStr x₂) <{ $t₂:stlcTm }>)
 
   | `(<{ nil $τ }>) => `(Tm.nil <{ $τ:stlcTy }>)
@@ -1477,7 +1477,7 @@ scoped macro_rules (kind := Stlc.tmBracket)
   | `(<{ ( $t₁:stlcTm , $t₂:stlcTm ) }>) => `(Tm.pair <{ $t₁:stlcTm }> <{ $t₂:stlcTm }>)
 
   | `(<{ let $x = $t₁ in $t₂ }>) => do
-    `(Tm.let $(← Stlc.varStr x) <{ $t₁:stlcTm }> <{ $t₂:stlcTm }>)
+    `(Tm.letIn $(← Stlc.varStr x) <{ $t₁:stlcTm }> <{ $t₂:stlcTm }>)
 ```
 
 ```lean
@@ -1554,7 +1554,7 @@ partial def delabTmInner : DelabM (TSyntax `stlcTm) := do
         let τ ← withAppFn <| withAppArg delabTyInner
         let t ← withAppArg delabTmInner
         `(stlcTm| λ $x : $τ . $t)
-    | Tm.let _ _ _ => do
+    | Tm.letIn _ _ _ => do
         let x ← withAppFn <| withAppFn <| withAppArg Stlc.delabVarInner
         let t₁ ← withAppFn <| withAppArg delabTmInner
         let t₂ ← withAppArg delabTmInner
@@ -1582,7 +1582,7 @@ partial def delabTmInner : DelabM (TSyntax `stlcTm) := do
         let τ ← withAppFn <| withAppArg delabTyInner
         let t ← withAppArg delabTmInner
         `(stlcTm| inr $τ $t)
-    | Tm.case _ _ _ _ _ => do
+    | Tm.sumCase _ _ _ _ _ => do
         let c  ← withAppFn <| withAppFn <| withAppFn <| withAppFn <| withAppArg delabTmInner
         let x₁ ← withAppFn <| withAppFn <| withAppFn <| withAppArg Stlc.delabVarInner
         let t₁ ← withAppFn <| withAppFn <| withAppArg delabTmInner
@@ -1646,16 +1646,16 @@ open Lean PrettyPrinter Delaborator SubExpr in
   delab app.StlcExtended.Tm.const, delab app.StlcExtended.Tm.succ, delab app.StlcExtended.Tm.pred,
   delab app.StlcExtended.Tm.mult, delab app.StlcExtended.Tm.ite0, delab app.StlcExtended.Tm.nil,
   delab app.StlcExtended.Tm.cons, delab app.StlcExtended.Tm.listCase, delab app.StlcExtended.Tm.inl,
-  delab app.StlcExtended.Tm.inr, delab app.StlcExtended.Tm.case, delab app.StlcExtended.Tm.pair,
+  delab app.StlcExtended.Tm.inr, delab app.StlcExtended.Tm.sumCase, delab app.StlcExtended.Tm.pair,
   delab app.StlcExtended.Tm.fst, delab app.StlcExtended.Tm.snd, delab app.StlcExtended.Tm.unit,
-  delab app.StlcExtended.Tm.let, delab app.StlcExtended.Tm.fix ]
+  delab app.StlcExtended.Tm.letIn, delab app.StlcExtended.Tm.fix ]
 def delabTm : Delab := whenPPOption getPPNotation do
   guard <| match_expr ← getExpr with
     | Tm.var _ => true | Tm.app _ _ => true | Tm.abs _ _ _ => true
     | Tm.const _ => true | Tm.succ _ => true | Tm.pred _ => true
     | Tm.mult _ _ => true | Tm.ite0 _ _ _ => true
-    | Tm.unit => true | Tm.fix _ => true | Tm.let _ _ _ => true
-    | Tm.inl _ _ => true | Tm.inr _ _ => true | Tm.case _ _ _ _ _ => true
+    | Tm.unit => true | Tm.fix _ => true | Tm.letIn _ _ _ => true
+    | Tm.inl _ _ => true | Tm.inr _ _ => true | Tm.sumCase _ _ _ _ _ => true
     | Tm.nil _ => true | Tm.cons _ _ => true | Tm.listCase _ _ _ _ _ => true
     | Tm.pair _ _ => true | Tm.fst _ => true | Tm.snd _ => true
     | _ => false
@@ -1896,14 +1896,14 @@ inductive Step : Tm → Tm → Prop where
   | inr (t₂ t₂' : Tm) (τ₁ : Ty) :
         t₂ ⟶ t₂' →
         <{inr ~τ₁ ~t₂}> ⟶ <{inr ~τ₁ ~t₂'}>
-  | case (t t' : Tm) (x₁ : String) (t₁ : Tm) (x₂ : String) (t₂ : Tm) :
+  | sumCase (t t' : Tm) (x₁ : String) (t₁ : Tm) (x₂ : String) (t₂ : Tm) :
         t ⟶ t' →
         <{case ~t of inl ~x₁ => ~t₁ | inr ~x₂ => ~t₂}> ⟶
         <{case ~t' of inl ~x₁ => ~t₁ | inr ~x₂ => ~t₂}>
-  | caseInl (v : Tm) (x₁:String) (t₁ : Tm) (x₂ : String) (t₂ : Tm) (τ₂ : Ty) :
+  | sumCaseInl (v : Tm) (x₁:String) (t₁ : Tm) (x₂ : String) (t₂ : Tm) (τ₂ : Ty) :
         v.IsValue →
         <{case inl ~τ₂ ~v of inl ~x₁ => ~t₁ | inr ~x₂ => ~t₂}> ⟶ <{ [~x₁ := ~v] ~t₁ }>
-  | caseInr (v : Tm) (x₁:String) (t₁ : Tm) (x₂ : String) (t₂ : Tm) (τ₁ : Ty) :
+  | sumCaseInr (v : Tm) (x₁:String) (t₁ : Tm) (x₂ : String) (t₂ : Tm) (τ₁ : Ty) :
         v.IsValue →
         <{case inr ~τ₁ ~v of inl ~x₁ => ~t₁ | inr ~x₂ => ~t₂}> ⟶ <{ [~x₂ := ~v] ~t₂ }>
   -- lists
@@ -1980,7 +1980,7 @@ attribute [ExtStlcEval] Step.appAbs Step.app₁ Step.app₂
     Step.succ Step.succNat Step.pred Step.predConst
     Step.multConst Step.mult₁ Step.mult₂
     Step.if0Step Step.if0Zero Step.if0Nonzero
-    Step.inl Step.inr Step.case Step.caseInl Step.caseInr
+    Step.inl Step.inr Step.sumCase Step.sumCaseInl Step.sumCaseInr
     Step.cons₁ Step.cons₂ Step.listCase₁ Step.listCaseNil
     Step.listCaseCons
 -- SOLUTION
@@ -2058,7 +2058,7 @@ inductive HasType : Context → Tm → Ty → Prop where
   | inr (Γ : Context) (t₂ : Tm) (τ₁ τ₂ : Ty) :
       <{ ~Γ ⊢ ~t₂ ⦂ ~τ₂ }> →
       <{ ~Γ ⊢ (inr ~τ₁ ~t₂) ⦂ ~τ₁ + ~τ₂ }>
-  | case (Γ : Context) (x₁ x₂ : String) (τ₁ τ₂ τ₃: Ty) (t t₁ t₂ : Tm) :
+  | sumCase (Γ : Context) (x₁ x₂ : String) (τ₁ τ₂ τ₃: Ty) (t t₁ t₂ : Tm) :
       <{ ~Γ ⊢ ~t ⦂ ~τ₁ + ~τ₂ }> →
       <{ ~x₁ ↦ τ₁ ; ~Γ ⊢ ~t₁ ⦂ ~τ₃ }> →
       <{ ~x₂ ↦ τ₂ ; ~Γ ⊢ ~t₂ ⦂ ~τ₃ }> →
@@ -2096,7 +2096,7 @@ inductive HasType : Context → Tm → Ty → Prop where
   -- END SOLUTION
   -- let
   -- SOLUTION
-  | let (Γ : Context) (x : String) (t₁ t₂ : Tm) (τ₁ τ₂ : Ty) :
+  | letIn (Γ : Context) (x : String) (t₁ t₂ : Tm) (τ₁ τ₂ : Ty) :
       <{ ~Γ ⊢ ~t₁ ⦂ τ₁ }> →
       <{ ~x ↦ ~τ₁ ; ~Γ ⊢ ~t₂ ⦂ ~τ₂ }> →
       <{ ~Γ ⊢ let ~x = ~t₁ in ~t₂ ⦂ ~τ₂ }>
@@ -2111,10 +2111,10 @@ inductive HasType : Context → Tm → Ty → Prop where
 -- Make sure to add your constructors here
 attribute [ExtStlcTyping] HasType.var HasType.abs HasType.app
     HasType.const HasType.succ HasType.pred HasType.mult
-    HasType.ite0 HasType.inl HasType.inr HasType.case
+    HasType.ite0 HasType.inl HasType.inr HasType.sumCase
     HasType.nil HasType.cons HasType.listCase HasType.unit
 -- SOLUTION
-    HasType.pair HasType.fst HasType.snd HasType.let HasType.fix
+    HasType.pair HasType.fst HasType.snd HasType.letIn HasType.fix
 -- END SOLUTION
 ```
 
@@ -2526,7 +2526,15 @@ theorem weakening {Γ Γ' : Context} {t : Tm} {τ: Ty}
     (hi : Γ ⊆ Γ')
     (ht : <{ ~Γ ⊢ ~t ⦂ ~τ }>) :
      <{ ~Γ' ⊢ ~t ⦂ ~τ }> := by
-  sorry
+  induction ht generalizing Γ' with (try (apply_rules using ExtStlcTyping; done))
+  | abs Γ x τ₁ τ₂ t₁ h ih =>
+    constructor <;> apply_rules [PartialMap.update_subset]
+  | sumCase Γ x₁ x₂ τ₁ τ₂ τ₃ t t₁ t₂ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
+    constructor <;> apply_rules [PartialMap.update_subset]
+  | listCase Γ t₁ t₂ t₃ x₁ x₂ τ₁ τ₂ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
+    constructor <;> apply_rules [PartialMap.update_subset]
+  | letIn Γ x t₁ t₂ τ₁ τ₂ h₁ h₂ ih₁ ih₂ =>
+    constructor <;> apply_rules [PartialMap.update_subset]
 ```
 
 ```lean
