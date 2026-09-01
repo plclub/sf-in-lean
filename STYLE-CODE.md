@@ -291,7 +291,7 @@ Likewise, leave a one-off stuck proof unfinished instead of closing it with `sor
 ````lean
 ```lean +error
 example (n m : Nat) :
-    myRepeat n m ++ myRepeat n m = myRepeat n (m + m) := by
+    replicate n m ++ replicate n m = replicate n (m + m) := by
   induction m with
   ...
   | succ m' ih =>
