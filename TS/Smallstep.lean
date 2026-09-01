@@ -1,6 +1,7 @@
 import SFLMeta
 
 import TS.Slang
+import TS.AttributeDecls
 
 open Verso.Genre Manual
 open SFLMeta
@@ -1861,3 +1862,126 @@ theorem compiler_is_correct (a : Aexp) :
 ```lean
 end Slang
 ```
+
+## Automation with {tactic}`solve_by_elim`
+
+::::full
+When experimenting with definitions of programming languages
+in Lean, we often want to see what a particular term steps
+to - i.e., we want to find proofs for goals of the form `t ⟶* t'`.
+Consider, for example, reducing an arithmetic expression using the small-step
+relation `AStep`.
+::::
+
+::::terse
+Proofs that one expression multisteps to another can be tedious...
+::::
+
+```lean
+example : (.p (.c 3) (.p (.c 3) (.c 4))) ⟶* (.c 10) := by
+  apply Multi.step (y := .p (.c 3) (.c 7))
+  . apply Step.plusRight
+    . apply IsValue.const
+    . apply Step.plus
+  . apply Multi.step (y := .c 10)
+    . apply Step.plus
+    . apply Multi.refl
+```
+
+::::full
+Proofs that one term normalizes to another must repeatedly apply
+`Multi.step` until the term reaches a normal form, with some very simple
+intermediate steps along the way. Thankfully, we can automate this process
+with a new tactic: {tactic}`solve_by_elim`. When supplied with a list of
+constructors, `solve_by_elim [c₁, c₂, c₃, ...]` will attempt to apply
+these constructors repeatedly to a goal. It will also automatically
+attempt to use simple tactics like {tactic}`rfl`, {tactic}`trivial`, {tactic}`congr` and hypotheses
+from the context in order to solve simple goals. So, for example,
+the proof above also be written:
+::::
+
+::::terse
+We can automate such tedious proofs with {tactic}`solve_by_elim`:
+::::
+
+```lean
+example : (.p (.c 3) (.p (.c 3) (.c 4))) ⟶* (.c 10) := by
+  repeat apply Multi.step <;>
+    try solve_by_elim [Step.plusRight, Step.plusLeft, Step.plus, IsValue.const]
+```
+
+This one script would suffice to prove most concrete reduction sequences
+for this simple language. To make it work for others, we would need to supply
+constructors for those other languages to {tactic}`solve_by_elim`. The languages we
+will study in this book can grow to a large number of constructors for their `Step`
+relations, so we'd like a way to supply all of them to {tactic}`solve_by_elim` more easily.
+Luckily, Lean supports this. We can register a constructor (or lemma) for use with
+{tactic}`solve_by_elim` with an `attribute` command:
+
+:::instructors
+It is deeply unfortunate that Lean does not allow you to create an attribute and then
+register a constructor with it in the same file. What I have done instead
+is create an `AttributeDecls` file that we can import (similarly to how we import a `CustomTactics`
+file in LF) that pre-declares all the attribute names we care about. This is apparently what
+Mathlib does.
+:::
+
+:::details "Attributes"
+The command below tags all of these constructors with the `SimpleArith` attribute,
+which we can then use to automatically pull all of these constructors in when we use
+{tactic}`solve_by_elim`. However, due to a limitation of Lean, this attribute needs to be
+pre-declared in a different file; we can't create it here and then immediately use it.
+
+For this book, we've predeclared all the attributes we'll use in a file called
+`AttributeDecls.lean`, following the typical pattern from libraries like Mathlib.
+:::
+
+```lean
+attribute [SimpleArith] Step.plusRight Step.plusLeft Step.plus IsValue.const
+```
+
+This `using` option then tells {tactic}`solve_by_elim` to try to use every constructor
+we've registered with the supplied attribute:
+
+```lean
+example : (.p (.c 3) (.p (.c 3) (.c 4))) ⟶* (.c 10) := by
+  repeat apply Multi.step <;>
+    try solve_by_elim using SimpleArith
+```
+
+We can package all this up into a dedicated tactic for solving reduction sequences,
+which we'll call `normalize`:
+
+```lean
+syntax "normalize" " using " ident,+ : tactic
+
+macro_rules
+  | `(tactic| normalize using $xs,*) =>
+    `(tactic| repeat apply Multi.step <;> try solve_by_elim using $xs,*)
+```
+
+And voilà:
+
+```lean
+example : (.p (.c 3) (.p (.c 3) (.c 4))) ⟶* (.c 10) := by
+  normalize using SimpleArith
+```
+
+:::::full
+::::exercise (rating := 1) (name := "normalize_ex")
+Use the `normalize` tactic to prove the following. You will need to supply the
+term `e'` yourself.
+
+```lean
+theorem normalize_ex : exists e', (.p (.c 3) (.p (.c 2) (.c 1))) ⟶* e' ∧ IsValue e' := by
+  solution!
+    exists (.c 6); constructor
+    . normalize using SimpleArith
+    . constructor
+```
+
+:::gradeTheorem 3 normalize_ex
+:::
+
+::::
+:::::
