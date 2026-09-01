@@ -2761,16 +2761,14 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ ~t ⦂ ~τ }>) :
 
 ::::
 
-The weakening claim is exactly the same as for the original STLC.
+Through the power of automation, the weakening proof is exactly the same as for the original STLC.
 
 ```lean
 theorem weakening {Γ Γ' : Context} {t : Tm} {τ: Ty}
     (hi : Γ ⊆ Γ')
     (ht : <{ ~Γ ⊢ ~t ⦂ ~τ }>) :
      <{ ~Γ' ⊢ ~t ⦂ ~τ }> := by
-  induction ht generalizing Γ' with (first
-    | apply_rules using ExtStlcTyping; done
-    | constructor <;> apply_rules [PartialMap.update_subset])
+  induction ht generalizing Γ' with (apply_rules [PartialMap.update_subset] using ExtStlcTyping)
 ```
 
 ```lean
