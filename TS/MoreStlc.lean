@@ -1337,13 +1337,13 @@ inductive Tm : Type where
   | mult : Tm → Tm → Tm
   | ite0  : Tm → Tm → Tm → Tm
   -- sums
-  | inl : Ty → Tm → Tm
-  | inr : Ty → Tm → Tm
+  | sumInl : Ty → Tm → Tm
+  | sumInr : Ty → Tm → Tm
   | sumCase : Tm → String → Tm → String → Tm → Tm
           -- i.e., `case t of inl x₁ => t₁ | inr x₂ => t₂`
   -- lists
-  | nil : Ty → Tm
-  | cons : Tm → Tm → Tm
+  | listNil : Ty → Tm
+  | listCons : Tm → Tm → Tm
   | listCase : Tm → Tm → String → String → Tm → Tm
           -- i.e., [case t₁ of | nil => t₂ | x::y => t₃]
   -- unit
@@ -1462,14 +1462,14 @@ scoped macro_rules (kind := Stlc.tmBracket)
   | `(<{ if0 $c then $t else $e }>) =>
       `(Tm.ite0 <{ $c:stlcTm }> <{ $t:stlcTm }> <{ $e:stlcTm }>)
 
-  | `(<{ inl $τ $t}>) => `(Tm.inl <{ $τ:stlcTy }> <{ $t:stlcTm }>)
-  | `(<{ inr $τ $t}>) => `(Tm.inr <{ $τ:stlcTy }> <{ $t:stlcTm }>)
+  | `(<{ inl $τ $t}>) => `(Tm.sumInl <{ $τ:stlcTy }> <{ $t:stlcTm }>)
+  | `(<{ inr $τ $t}>) => `(Tm.sumInr <{ $τ:stlcTy }> <{ $t:stlcTm }>)
   | `(<{ case $t of inl $x₁ => $t₁ | inr $x₂ => $t₂}>) => do
       `(Tm.sumCase <{ $t:stlcTm }> $(← Stlc.varStr x₁) <{ $t₁:stlcTm }>
           $(← Stlc.varStr x₂) <{ $t₂:stlcTm }>)
 
-  | `(<{ nil $τ }>) => `(Tm.nil <{ $τ:stlcTy }>)
-  | `(<{ $t₁:stlcTm :: $t₂:stlcTm }>) => `(Tm.cons <{ $t₁:stlcTm }> <{ $t₂:stlcTm }>)
+  | `(<{ nil $τ }>) => `(Tm.listNil <{ $τ:stlcTy }>)
+  | `(<{ $t₁:stlcTm :: $t₂:stlcTm }>) => `(Tm.listCons <{ $t₁:stlcTm }> <{ $t₂:stlcTm }>)
   | `(<{ case $t of nil => $t₁ | $x₁ :: $x₂ => $t₂}>) => do
       `(Tm.listCase <{ $t:stlcTm }> <{ $t₁:stlcTm }>
           $(← Stlc.varStr x₁) $(← Stlc.varStr x₂) <{ $t₂:stlcTm }>)
@@ -1574,11 +1574,11 @@ partial def delabTmInner : DelabM (TSyntax `stlcTm) := do
         let t ← withAppFn <| withAppArg delabTmInner
         let e ← withAppArg delabTmInner
         `(stlcTm| if0 $c then $t else $e)
-    | Tm.inl _ _ => do
+    | Tm.sumInl _ _ => do
         let τ ← withAppFn <| withAppArg delabTyInner
         let t ← withAppArg delabTmInner
         `(stlcTm| inl $τ $t)
-    | Tm.inr _ _ => do
+    | Tm.sumInr _ _ => do
         let τ ← withAppFn <| withAppArg delabTyInner
         let t ← withAppArg delabTmInner
         `(stlcTm| inr $τ $t)
@@ -1589,9 +1589,13 @@ partial def delabTmInner : DelabM (TSyntax `stlcTm) := do
         let x₂ ← withAppFn <| withAppArg Stlc.delabVarInner
         let t₂ ← withAppArg delabTmInner
         `(stlcTm| case $c of inl $x₁ => $t₁ | inr $x₂ => $t₂)
-    | Tm.nil _ => do
+    | Tm.listNil _ => do
         let t ← withAppArg delabTyInner
         `(stlcTm| nil $t)
+    | Tm.listCons _ _ => do
+        let a ← withAppFn <| withAppArg delabTmInner
+        let b ← withAppArg delabTmInner
+        `(stlcTm| $a :: $b)
     | Tm.pair _ _ => do
         let a ← withAppFn <| withAppArg delabTmInner
         let b ← withAppArg delabTmInner
@@ -1644,9 +1648,10 @@ def delabTy : Delab := whenPPOption getPPNotation do
 open Lean PrettyPrinter Delaborator SubExpr in
 @[delab app.StlcExtended.Tm.var, delab app.StlcExtended.Tm.app, delab app.StlcExtended.Tm.abs,
   delab app.StlcExtended.Tm.const, delab app.StlcExtended.Tm.succ, delab app.StlcExtended.Tm.pred,
-  delab app.StlcExtended.Tm.mult, delab app.StlcExtended.Tm.ite0, delab app.StlcExtended.Tm.nil,
-  delab app.StlcExtended.Tm.cons, delab app.StlcExtended.Tm.listCase, delab app.StlcExtended.Tm.inl,
-  delab app.StlcExtended.Tm.inr, delab app.StlcExtended.Tm.sumCase, delab app.StlcExtended.Tm.pair,
+  delab app.StlcExtended.Tm.mult, delab app.StlcExtended.Tm.ite0, delab app.StlcExtended.Tm.listNil,
+  delab app.StlcExtended.Tm.listCons, delab app.StlcExtended.Tm.listCase,
+  delab app.StlcExtended.Tm.sumInl, delab app.StlcExtended.Tm.sumInr,
+  delab app.StlcExtended.Tm.sumCase, delab app.StlcExtended.Tm.pair,
   delab app.StlcExtended.Tm.fst, delab app.StlcExtended.Tm.snd, delab app.StlcExtended.Tm.unit,
   delab app.StlcExtended.Tm.letIn, delab app.StlcExtended.Tm.fix ]
 def delabTm : Delab := whenPPOption getPPNotation do
@@ -1655,8 +1660,8 @@ def delabTm : Delab := whenPPOption getPPNotation do
     | Tm.const _ => true | Tm.succ _ => true | Tm.pred _ => true
     | Tm.mult _ _ => true | Tm.ite0 _ _ _ => true
     | Tm.unit => true | Tm.fix _ => true | Tm.letIn _ _ _ => true
-    | Tm.inl _ _ => true | Tm.inr _ _ => true | Tm.sumCase _ _ _ _ _ => true
-    | Tm.nil _ => true | Tm.cons _ _ => true | Tm.listCase _ _ _ _ _ => true
+    | Tm.sumInl _ _ => true | Tm.sumInr _ _ => true | Tm.sumCase _ _ _ _ _ => true
+    | Tm.listNil _ => true | Tm.listCons _ _ => true | Tm.listCase _ _ _ _ _ => true
     | Tm.pair _ _ => true | Tm.fst _ => true | Tm.snd _ => true
     | _ => false
   match ← delabTmInner with
@@ -1735,16 +1740,16 @@ def subst (x : String) (s : Tm) (t : Tm) : Tm :=
   | <{ if0 ~t₁ then ~t₂ else ~t₃ }> =>
       <{ if0 [~x := ~s] ~t₁ then [~x := ~s] ~t₂ else [~x := ~s] ~t₃ }>
   -- sums
-  | .inl τ₂ t₁ =>
+  | .sumInl τ₂ t₁ =>
       <{inl ~τ₂ ( [~x:= ~s] ~t₁) }>
-  | .inr τ₂ t₁ =>
+  | .sumInr τ₂ t₁ =>
       <{inr ~τ₂ ( [~x:= ~s] ~t₁) }>
   | <{case ~t of inl ~x₁ => ~t₁ | inr ~x₂ => ~t₂}> =>
       let t₁ := if x = x₁ then t₁ else <{ [~x := ~s] ~t₁ }>
       let t₂ := if x = x₂ then t₂ else <{ [~x := ~s] ~t₂ }>
       <{case ([~x := ~s] ~t) of inl ~x₁ => ~t₁ | inr ~x₂ => ~t₂ }>
   -- lists
-  | .nil _ => t
+  | .listNil _ => t
   | <{~t₁ :: ~t₂}> =>
       <{ ([~x := ~s] ~t₁) :: [~x := ~s] ~t₂ }>
   | <{case ~t₁ of nil => ~t₂ | ~x₁ :: ~x₂ => ~t₃}> =>
@@ -1825,15 +1830,15 @@ inductive Tm.IsValue : Tm → Prop where
   -- Numbers are values:
   | nat (n : Nat) : IsValue (.const n)
   -- A tagged value is a value:
-  | inl (v : Tm) (τ₁ : Ty) :
+  | sumInl (v : Tm) (τ₁ : Ty) :
       IsValue v →
       IsValue <{inl ~τ₁ ~v}>
-  | inr  (v : Tm) (τ₁ : Ty) :
+  | sumInr  (v : Tm) (τ₁ : Ty) :
       IsValue v →
       IsValue <{inr ~τ₁ ~v}>
   -- A list is a value iff its head and tail are values:
-  | nil (τ₁ : Ty) : IsValue <{nil ~τ₁}>
-  | cons (v₁ v₂ : Tm) :
+  | listNil (τ₁ : Ty) : IsValue <{nil ~τ₁}>
+  | listCons (v₁ v₂ : Tm) :
       IsValue v₁ →
       IsValue v₂ →
       IsValue <{~v₁ :: ~v₂}>
@@ -1845,8 +1850,8 @@ inductive Tm.IsValue : Tm → Prop where
       IsValue v₂ →
       IsValue <{(~v₁, ~v₂)}>
 
-attribute [ExtStlcEval] Tm.IsValue.abs Tm.IsValue.nat Tm.IsValue.inl Tm.IsValue.inr
-    Tm.IsValue.nil Tm.IsValue.cons Tm.IsValue.unit Tm.IsValue.pair
+attribute [ExtStlcEval] Tm.IsValue.abs Tm.IsValue.nat Tm.IsValue.sumInl Tm.IsValue.sumInr
+    Tm.IsValue.listNil Tm.IsValue.listCons Tm.IsValue.unit Tm.IsValue.pair
 ```
 
 ::::exercise (rating := 3) (name := "STLCExtended.step") (manual := true)
@@ -1890,10 +1895,10 @@ inductive Step : Tm → Tm → Prop where
   | if0Nonzero (n : Nat) (t₂ t₃ : Tm) :
       <{ if0 ~(Tm.const (n + 1)) then ~t₂ else ~t₃ }> ⟶ t₃
   -- sums
-  | inl (t₁ t₁' : Tm) (τ₂ : Ty) :
+  | sumInl (t₁ t₁' : Tm) (τ₂ : Ty) :
         t₁ ⟶ t₁' →
         <{inl ~τ₂ ~t₁}> ⟶ <{inl ~τ₂ ~t₁'}>
-  | inr (t₂ t₂' : Tm) (τ₁ : Ty) :
+  | sumInr (t₂ t₂' : Tm) (τ₁ : Ty) :
         t₂ ⟶ t₂' →
         <{inr ~τ₁ ~t₂}> ⟶ <{inr ~τ₁ ~t₂'}>
   | sumCase (t t' : Tm) (x₁ : String) (t₁ : Tm) (x₂ : String) (t₂ : Tm) :
@@ -1980,7 +1985,7 @@ attribute [ExtStlcEval] Step.appAbs Step.app₁ Step.app₂
     Step.succ Step.succNat Step.pred Step.predConst
     Step.multConst Step.mult₁ Step.mult₂
     Step.if0Step Step.if0Zero Step.if0Nonzero
-    Step.inl Step.inr Step.sumCase Step.sumCaseInl Step.sumCaseInr
+    Step.sumInl Step.sumInr Step.sumCase Step.sumCaseInl Step.sumCaseInr
     Step.cons₁ Step.cons₂ Step.listCase₁ Step.listCaseNil
     Step.listCaseCons
 -- SOLUTION
@@ -2052,10 +2057,10 @@ inductive HasType : Context → Tm → Ty → Prop where
       (h₃ : <{ ~Γ ⊢ ~t₃ ⦂ ~τ }>) :
       <{ ~Γ ⊢ if0 ~t₁ then ~t₂ else ~t₃ ⦂ ~τ }>
   -- sums
-  | inl (Γ : Context) (t₁ : Tm) (τ₁ τ₂ : Ty) :
+  | sumInl (Γ : Context) (t₁ : Tm) (τ₁ τ₂ : Ty) :
       <{ ~Γ ⊢ ~t₁ ⦂ ~τ₁ }> →
       <{ ~Γ ⊢ (inl ~τ₂ ~t₁) ⦂ ~τ₁ + ~τ₂ }>
-  | inr (Γ : Context) (t₂ : Tm) (τ₁ τ₂ : Ty) :
+  | sumInr (Γ : Context) (t₂ : Tm) (τ₁ τ₂ : Ty) :
       <{ ~Γ ⊢ ~t₂ ⦂ ~τ₂ }> →
       <{ ~Γ ⊢ (inr ~τ₁ ~t₂) ⦂ ~τ₁ + ~τ₂ }>
   | sumCase (Γ : Context) (x₁ x₂ : String) (τ₁ τ₂ τ₃: Ty) (t t₁ t₂ : Tm) :
@@ -2064,9 +2069,9 @@ inductive HasType : Context → Tm → Ty → Prop where
       <{ ~x₂ ↦ τ₂ ; ~Γ ⊢ ~t₂ ⦂ ~τ₃ }> →
       <{ ~Γ ⊢ case ~t of inl ~x₁ => ~t₁ | inr ~x₂ => ~t₂ ⦂ ~τ₃ }>
   -- lists
-  | nil (Γ : Context) (τ₁ : Ty) :
+  | listNil (Γ : Context) (τ₁ : Ty) :
       <{ ~Γ ⊢ nil ~τ₁ ⦂ [~τ₁] }>
-  | cons (Γ : Context) (t₁ t₂ : Tm) (τ₁ : Ty) :
+  | listCons (Γ : Context) (t₁ t₂ : Tm) (τ₁ : Ty) :
       <{ ~Γ ⊢ ~t₁ ⦂ ~τ₁ }> →
       <{ ~Γ ⊢ ~t₂ ⦂ [~τ₁] }> →
       <{ ~Γ ⊢ ~t₁ :: ~t₂ ⦂ [~τ₁] }>
@@ -2111,8 +2116,8 @@ inductive HasType : Context → Tm → Ty → Prop where
 -- Make sure to add your constructors here
 attribute [ExtStlcTyping] HasType.var HasType.abs HasType.app
     HasType.const HasType.succ HasType.pred HasType.mult
-    HasType.ite0 HasType.inl HasType.inr HasType.sumCase
-    HasType.nil HasType.cons HasType.listCase HasType.unit
+    HasType.ite0 HasType.sumInl HasType.sumInr HasType.sumCase
+    HasType.listNil HasType.listCons HasType.listCase HasType.unit
 -- SOLUTION
     HasType.pair HasType.fst HasType.snd HasType.letIn HasType.fix
 -- END SOLUTION
@@ -2505,10 +2510,247 @@ Theorem: Suppose `∅ ⊢ t ⦂ τ`.  Then either
 Proof: By induction on the given typing derivation.
 
 ```lean
+theorem canonical_forms_fun (t : Tm) (τ₁ τ₂ : Ty)
+    (ht : <{ ∅ ⊢ ~t ⦂ ~τ₁ → ~τ₂ }>) (hv : t.IsValue) :
+    ∃ x u, t = <{ λ ~x : ~τ₁ . ~u }> := by
+  inversion ht with (inversion hv)
+  | abs x t h => exists x, t
+
+theorem canonical_forms_nat (t : Tm)
+    (ht : <{ ∅ ⊢ ~t ⦂ Nat }>) (hv : t.IsValue) :
+    ∃ n, t = Tm.const n := by
+  inversion ht with (inversion hv)
+  | nat n => exists n
+
+theorem canonical_forms_sum {t : Tm} {τ₁ τ₂ : Ty}
+    (ht : <{ ∅ ⊢ ~t ⦂ ~τ₁ + ~τ₂ }>) (hv : t.IsValue) :
+    ∃ v, v.IsValue ∧ (t = <{inl ~τ₂ ~v}> ∨ t = <{inr ~τ₁ ~v}>) := by
+  inversion ht with (inversion hv)
+  | sumInl v ht hv =>
+    exists v; constructor; assumption; left; rfl
+  | sumInr v ht hv =>
+    exists v; constructor; assumption; right; rfl
+
+theorem canonical_forms_list {t : Tm} {τ : Ty}
+    (ht : <{ ∅ ⊢ ~t ⦂ [~τ] }>) (hv : t.IsValue) :
+    t = <{ nil τ }> ∨ ∃ v₁ v₂, (v₁.IsValue ∧ v₂.IsValue ∧ t = <{~v₁ :: ~v₂}>) := by
+  inversion ht with (inversion hv)
+  | listNil _ => left; rfl
+  | listCons v₁ v₂ _ _ _ _ => right; exists v₁, v₂
+
+-- Add your own canonical forms lemmas here as needed
+
+-- SOLUTION
+theorem canonical_forms_prod {t : Tm} {τ₁ τ₂ : Ty}
+    (ht : <{ ∅ ⊢ ~t ⦂ ~τ₁ × ~τ₂ }>) (hv : t.IsValue) :
+    ∃ v₁ v₂, v₁.IsValue ∧ v₂.IsValue ∧ t = <{(~v₁, ~v₂)}> := by
+  inversion ht with (inversion hv)
+  | pair v₁ v₂ _ _ _ _ => exists v₁, v₂
+
+-- END SOLUTION
+
 theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ ~t ⦂ ~τ }>) :
     t.IsValue ∨ exists t', t ⟶ t' := by
-    solution!
-      sorry
+
+    generalize heq : (∅ : Context) = Γ at ht
+    induction ht with (subst_vars; first
+      -- discharge cases where `t` is obviously a value
+      | try (left; constructor; done)
+    )
+    | var => contradiction
+    | app Γ τ₁ τ₂ t₁ t₂ h₁ h₂ ih₁ ih₂ =>
+      right; cases ih₁ rfl
+      -- t₁ is a value
+      case _ ht₁ =>
+        cases ih₂ rfl
+        -- t₂ is a value
+        case _ ht₂ =>
+          apply canonical_forms_fun at h₁
+          let ⟨x, v, hv⟩ := h₁ ht₁
+          exists <{ [~x := ~t₂] ~v }>; simp [hv]
+          apply_rules using ExtStlcEval
+        -- t₂ is not a value
+        case _ ht₂ =>
+          obtain ⟨t₂', ht₂⟩ := ht₂
+          exists <{~t₁ ~t₂'}>; apply_rules using ExtStlcEval
+      -- t₁ is not a value
+      case _ ht₁ =>
+        obtain ⟨t₁', ht₁⟩ := ht₁
+        exists <{~t₁' ~t₂}>; apply_rules using ExtStlcEval
+    | succ Γ t₁ h ih =>
+      right; cases ih rfl
+      -- t₁ is a value
+      case _ ht₁ =>
+        apply canonical_forms_nat at h
+        obtain ⟨n, h⟩ := h ht₁; rw [h]
+        exists (Tm.const (n + 1)); apply_rules using ExtStlcEval
+      -- t₁ is not a value
+      case _ ht₁ =>
+        obtain ⟨t₁', ht₁⟩ := ht₁
+        exists <{succ ~t₁'}>; apply_rules using ExtStlcEval
+    | pred Γ t₁ h ih =>
+      right; cases ih rfl
+       -- t₁ is a value
+      case _ ht₁ =>
+        apply canonical_forms_nat at h
+        obtain ⟨n, h⟩ := h ht₁; rw [h]
+        exists (Tm.const (n - 1)); apply_rules using ExtStlcEval
+      case _ ht₁ =>
+        obtain ⟨t₁', ht₁⟩ := ht₁
+        exists <{pred ~t₁'}>; apply_rules using ExtStlcEval
+    | mult Γ t₁ t₂ h₁ h₂ ih₁ ih₂ =>
+      right; cases ih₁ rfl
+      -- t₁ is a value
+      case _ ht₁ =>
+        cases ih₂ rfl
+        -- t₂ is a value
+        case _ ht₂ =>
+          apply canonical_forms_nat at h₁
+          apply canonical_forms_nat at h₂
+          let ⟨n₁, h₁⟩ := h₁ ht₁
+          let ⟨n₂, h₂⟩ := h₂ ht₂
+          exists (Tm.const (n₁ * n₂)); simp [h₁, h₂]
+          apply_rules using ExtStlcEval
+        -- t₂ is not a value
+        case _ ht₂ =>
+          obtain ⟨t₂', ht₂⟩ := ht₂
+          exists <{~t₁ * ~t₂'}>; apply_rules using ExtStlcEval
+      -- t₁ is not a value
+      case _ ht₁ =>
+        obtain ⟨t₁', ht₁⟩ := ht₁
+        exists <{~t₁' * ~t₂}>; apply_rules using ExtStlcEval
+    | ite0 Γ t₁ t₂ t₃ τ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
+      right; cases ih₁ rfl
+      -- t₁ is a value
+      case _ ht₁ =>
+        apply canonical_forms_nat at h₁
+        let ⟨n₁, h₁⟩ := h₁ ht₁
+        rw [h₁]; cases n₁
+        . exists t₂; apply_rules using ExtStlcEval
+        . exists t₃; apply_rules using ExtStlcEval
+      -- t₁ is not a value
+      case _ ht₁ =>
+        obtain ⟨t₁', ht₁⟩ := ht₁
+        exists <{if0 ~t₁' then ~t₂ else ~t₃}>; apply_rules using ExtStlcEval
+    | sumInl Γ t₁ τ₁ τ₂ h ih =>
+      cases ih rfl
+      -- t₁ is a value
+      case _ ht₁ =>
+        left; apply_rules using ExtStlcEval
+      -- t₁ is not a value
+      case _ ht₁ =>
+        obtain ⟨t₁', ht₁⟩ := ht₁
+        right; exists <{inl ~τ₂ ~t₁'}>; apply_rules using ExtStlcEval
+    | sumInr Γ t₂ τ₁ τ₂ h ih =>
+      cases ih rfl
+      -- t₁ is a value
+      case _ ht₁ =>
+        left; apply_rules using ExtStlcEval
+      -- t₁ is not a value
+      case _ ht₁ =>
+        obtain ⟨t₂', ht₁⟩ := ht₁
+        right; exists <{inr ~τ₁ ~t₂'}>; apply_rules using ExtStlcEval
+    | sumCase Γ x₁ x₂ τ₁ τ₂ τ₃ t t₁ t₂ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
+      right; cases ih₁ rfl
+      -- t₁ is a value
+      case _ ht =>
+        apply canonical_forms_sum at h₁
+        obtain ⟨v, hv, hl | hr⟩ := h₁ ht
+        . rw [hl]; exists <{ [~x₁ := ~v] ~t₁ }>; apply_rules using ExtStlcEval
+        . rw [hr]; exists <{ [~x₂ := ~v] ~t₂ }>; apply_rules using ExtStlcEval
+      -- t₁ is not a value
+      case _ ht =>
+        obtain ⟨t', ht⟩ := ht
+        exists <{case ~t' of inl ~x₁ => ~t₁ | inr ~x₂ => ~t₂}>; apply_rules using ExtStlcEval
+    | listCons Γ t₁ t₂ τ₁ h₁ h₂ ih₁ ih₂ =>
+      cases ih₁ rfl
+      -- t₁ is a value
+      case _ ht₁ =>
+        cases ih₂ rfl
+        -- t₂ is a value
+        case _ ht₂ =>
+          left; apply_rules using ExtStlcEval
+        -- t₂ is not a value
+        case _ ht₂ =>
+          obtain ⟨t₂', ht₂⟩ := ht₂
+          right; exists <{~t₁ :: ~t₂'}>; apply_rules using ExtStlcEval
+      -- t₁ is not a value
+      case _ ht₁ =>
+        obtain ⟨t₁', ht₁⟩ := ht₁
+        right; exists <{~t₁' :: ~t₂}>; apply_rules using ExtStlcEval
+    | listCase Γ t₁ t₂ t₃ x₁ x₂ τ₁ τ₂ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
+        right; cases ih₁ rfl
+        -- t₁ is a value
+        case _ ht =>
+          apply canonical_forms_list at h₁
+          obtain hnil | ⟨v₁, v₂, hv₁, hv₂, h⟩ := h₁ ht
+          . rw [hnil]; exists t₂; apply_rules using ExtStlcEval
+          . rw [h]; exists <{ [~x₂ := ~v₂] [~x₁ := ~v₁] ~t₃ }>; apply_rules using ExtStlcEval
+        -- t₁ is not a value
+        case _ ht =>
+          obtain ⟨t', ht⟩ := ht
+          exists <{case ~t' of nil => ~t₂ | ~x₁ :: ~x₂ => ~t₃}>; apply_rules using ExtStlcEval
+    -- complete the proof
+    -- SOLUTION
+    | pair Γ t₁ t₂ τ₁ τ₂ h₁ h₂ ih₁ ih₂ =>
+      cases ih₁ rfl
+      -- t₁ is a value
+      case _ ht₁ =>
+        cases ih₂ rfl
+        -- t₂ is a value
+        case _ ht₂ =>
+          left; apply_rules using ExtStlcEval
+        -- t₂ is not a value
+        case _ ht₂ =>
+          obtain ⟨t₂', ht₂⟩ := ht₂
+          right; exists <{(~t₁, ~t₂')}>; apply_rules using ExtStlcEval
+      -- t₁ is not a value
+      case _ ht₁ =>
+        obtain ⟨t₁', ht₁⟩ := ht₁
+        right; exists <{(~t₁', ~t₂)}>; apply_rules using ExtStlcEval
+    | fst Γ t τ₁ τ₂ h ih =>
+      right; cases ih rfl
+      -- t₁ is a value
+      case _ ht₁ =>
+        apply canonical_forms_prod at h
+        obtain ⟨v₁, v₂, hv₁, hv₂, ht⟩ := h ht₁; rw [ht]
+        exists v₁; apply_rules using ExtStlcEval
+      -- t₁ is not a value
+      case _ ht₁ =>
+        obtain ⟨t₁', ht₁⟩ := ht₁
+        exists <{fst ~t₁'}>; apply_rules using ExtStlcEval
+    | snd Γ t τ₁ τ₂ h ih =>
+      right; cases ih rfl
+      -- t₁ is a value
+      case _ ht₁ =>
+        apply canonical_forms_prod at h
+        obtain ⟨v₁, v₂, hv₁, hv₂, ht⟩ := h ht₁; rw [ht]
+        exists v₂; apply_rules using ExtStlcEval
+      -- t₁ is not a value
+      case _ ht₁ =>
+        obtain ⟨t₁', ht₁⟩ := ht₁
+        exists <{snd ~t₁'}>; apply_rules using ExtStlcEval
+    | letIn Γ x t₁ t₂ τ₁ τ₂ h₁ h₂ ih₁ ih₂ =>
+      right; cases ih₁ rfl
+      -- t₁ is a value
+      case _ ht₁ =>
+        exists <{ [~x := ~t₁] ~t₂ }>; apply_rules using ExtStlcEval
+      -- t₁ is not a value
+      case _ ht₁ =>
+        obtain ⟨t₁', ht₁⟩ := ht₁
+        exists <{let ~x = ~t₁' in ~t₂}>; apply_rules using ExtStlcEval
+    | fix Γ t₁ τ₁ h ih =>
+        right; cases ih rfl
+        -- t₁ is a value
+        case _ ht₁ =>
+          apply canonical_forms_fun at h
+          obtain ⟨x, v, ht⟩ := h ht₁; rw [ht]
+          exists <{ [~x := fix (λ ~x : ~τ₁ . ~v) ] ~v }>; apply_rules using ExtStlcEval
+        -- t₁ is not a value
+        case _ ht₁ =>
+          obtain ⟨t₁', ht₁⟩ := ht₁
+          exists <{fix ~t₁'}>; apply_rules using ExtStlcEval
+    -- END SOLUTION
 ```
 
 :::autogradedHole progress
@@ -2526,19 +2768,13 @@ theorem weakening {Γ Γ' : Context} {t : Tm} {τ: Ty}
     (hi : Γ ⊆ Γ')
     (ht : <{ ~Γ ⊢ ~t ⦂ ~τ }>) :
      <{ ~Γ' ⊢ ~t ⦂ ~τ }> := by
-  induction ht generalizing Γ' with (try (apply_rules using ExtStlcTyping; done))
-  | abs Γ x τ₁ τ₂ t₁ h ih =>
-    constructor <;> apply_rules [PartialMap.update_subset]
-  | sumCase Γ x₁ x₂ τ₁ τ₂ τ₃ t t₁ t₂ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
-    constructor <;> apply_rules [PartialMap.update_subset]
-  | listCase Γ t₁ t₂ t₃ x₁ x₂ τ₁ τ₂ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
-    constructor <;> apply_rules [PartialMap.update_subset]
-  | letIn Γ x t₁ t₂ τ₁ τ₂ h₁ h₂ ih₁ ih₂ =>
-    constructor <;> apply_rules [PartialMap.update_subset]
+  induction ht generalizing Γ' with (first
+    | apply_rules using ExtStlcTyping; done
+    | constructor <;> apply_rules [PartialMap.update_subset])
 ```
 
 ```lean
-theorem weakening_empty (Γ : Context) (t : Tm) (τ: Ty)
+theorem weakening_empty {Γ : Context} {t : Tm} {τ: Ty}
     (ht :<{ ∅ ⊢ ~t ⦂ ~τ }>) :
     <{ ~Γ ⊢ ~t ⦂ ~τ }> := by
   apply weakening _ ht
@@ -2556,7 +2792,39 @@ theorem substitution_preserves_typing (Γ : Context) (x : String) (τ₁ : Ty) (
     (hv : <{ ∅ ⊢ ~v ⦂ ~τ₁ }>) :
     <{ ~Γ ⊢ [~x := ~v] ~t ⦂ ~τ }> := by
   solution!
-    sorry
+    induction t generalizing Γ τ with (
+        rw [subst]; try (inversion ht; apply_rules using ExtStlcTyping; done))
+    | var y =>
+        inversion ht with | _ h =>
+        by_cases h₁ : x = y
+        . subst h₁; simp at h; subst h;
+          apply weakening_empty at hv
+          simp; assumption
+        . rw [PartialMap.update_neq] at h <;> simp_all
+          apply_rules using ExtStlcTyping
+    | abs y _ _ ih =>
+        inversion ht with | _ h =>
+        by_cases h₁ : x = y
+        . simp_all [PartialMap.update_shadow]; apply_rules using ExtStlcTyping
+        . rw [PartialMap.update_permute] at h
+          . simp_all; apply_rules using ExtStlcTyping
+          . lia
+    | sumCase _ y₁ _ y₂ _ ih ih₁ ih₂ =>
+        inversion ht with | _ h₁ h₂ h₃ =>
+        by_cases x = y₁ <;> by_cases x = y₂ <;> constructor <;> first
+            | apply ih; assumption
+            | simp_all [PartialMap.update_shadow, PartialMap.update_permute]
+        apply ih₁; rw [PartialMap.update_permute]; assumption; lia
+    | listCase _ _ y₁ y₂ _ ih ih₁ ih₂ =>
+        inversion ht with | _ h₁ h₂ h₃ =>
+        by_cases x = y₁ <;> by_cases x = y₂ <;> constructor <;> first
+            | apply ih; assumption
+            | simp_all [PartialMap.update_shadow, PartialMap.update_permute]
+    | letIn y _ _ ih ih₁ =>
+        inversion ht with | _ h₁ h₂ =>
+        by_cases x = y <;> constructor <;> first
+            | apply ih; assumption
+            | simp_all [PartialMap.update_shadow, PartialMap.update_permute]
 ```
 
 :::autogradedHole substitution_preserves_typing
@@ -2575,8 +2843,68 @@ theorem preservation (t t' : Tm) (τ : Ty)
     (ht : <{ ∅ ⊢ ~t ⦂ ~τ }>)
     (he : t ⟶ t') :
     <{ ∅ ⊢ ~t' ⦂ ~τ }> := by
-  solution!
-    sorry
+
+    generalize heq : (∅ : Context) = Γ at ht
+    induction ht generalizing t' with (subst_vars; first
+      -- discharge the goals where `t` doesn't step
+      | inversion he <;> constructor <;> simp_all; done
+      | try (inversion he; apply_rules using ExtStlcTyping; done))
+    | app Γ τ₁ τ₂ t₁ t₂ h₁ h₂ ih₁ ih₂ =>
+      inversion he with (try (constructor <;> apply_rules; done))
+      | appAbs _ h =>
+          apply substitution_preserves_typing (τ₁:=τ₂)
+          . inversion h₁; assumption
+          . simp_all
+    | ite0 Γ t₁ t₂ t₃ τ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
+      inversion he <;> first
+      | constructor <;> simp_all
+      | simp_all
+    | sumCase Γ x₁ x₂ τ₁ τ₂ τ₃ t t₁ t₂ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
+      inversion he with
+      | sumCase => constructor <;> apply_rules
+      | sumCaseInl =>
+        apply substitution_preserves_typing (τ₁:=τ₁)
+        assumption
+        inversion h₁; trivial
+      | sumCaseInr =>
+        apply substitution_preserves_typing (τ₁:=τ₂)
+        assumption
+        inversion h₁; trivial
+    | listCase Γ t₁ t₂ t₃ x₁ x₂ τ₁ τ₂ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
+      inversion he with
+      | listCase₁ => constructor <;> apply_rules
+      | listCaseNil => trivial
+      | listCaseCons =>
+        apply substitution_preserves_typing (τ₁:= <{[ ~τ₁ ]}>)
+        apply substitution_preserves_typing (τ₁:=τ₁)
+        assumption
+        inversion h₁; trivial
+        inversion h₁; trivial
+    -- Complete the proof...
+    -- SOLUTION
+    | fst Γ t τ₁ τ₂ h _ =>
+      inversion he; apply_rules using ExtStlcTyping
+      inversion h; assumption
+    | snd Γ t τ₁ τ₂ h _ =>
+      inversion he; apply_rules using ExtStlcTyping
+      inversion h; assumption
+    | letIn Γ x t₁ t₂ τ₁ τ₂ h₁ h₂ ih₁ ih₂ =>
+      inversion he with
+      | let₁ =>
+        constructor
+        . apply ih₁ <;> trivial
+        . assumption
+      | letValue =>
+        apply substitution_preserves_typing (τ₁:=τ₁) <;> trivial
+    | fix Γ t₁ τ₁ h ih =>
+      inversion he with
+      | fix₁ =>
+        constructor; apply ih <;> trivial
+      | fixAbs =>
+        apply substitution_preserves_typing (τ₁:=τ₁)
+        . inversion h; trivial
+        . constructor; trivial
+    -- END SOLUTION
 ```
 
 :::autogradedHole preservation
