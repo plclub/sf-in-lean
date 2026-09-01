@@ -36,6 +36,13 @@ namespace Lists
 
 # Pairs of Numbers
 
+::::dev "Mike Hicks (mwhicks1)"
+This content is a redundant with what's in Basics, which introduces the idea of
+tuple types and structures as shorthand for them. I suspect we can drop most
+of the Basics content and rely on what's here instead. If we do that, we can
+introduce the term "Tuple" here.
+::::
+
 ::::full
 In an `inductive` type definition, each constructor can take
 any number of arguments -- none (as with {name}`true` and  {lean}`0`),
@@ -150,7 +157,6 @@ are not the same. For instance, the following definitions are
 ill-formed:
 
 ```lean +error (name := bad_fst)
--- Can't match on a pair with multiple patterns:
 def bad_fst (p : NatProd) : Nat :=
   match p with
   | x, y => x
@@ -162,7 +168,6 @@ Too many patterns in match alternative: Expected 1, but found 2:
 ```
 
 ```lean +error (name := bad_sub)
--- Can't match on multiple values with pair patterns:
 def bad_sub (n m : Nat) : Nat :=
   match n, m with
   | ⟨0,        _⟩        => 0
@@ -213,7 +218,7 @@ theorem surjective_pairing_cases (p : NatProd) :
 ```
 
 ::::full
-Notice that, by contrast with the behavior of {tactic}`cases` on
+Notice that, unlike the behavior of {tactic}`cases` on
 {name}`Nat`s, where it generates two subgoals, {tactic}`cases` generates just
 one subgoal here.  That's because {name}`NatProd`s can only be
 constructed in one way.
@@ -247,7 +252,7 @@ theorem fst_swap_is_snd (p : NatProd) :
 :::slidebreak
 :::
 
-# Structures
+## Structures
 
 :::full
 Lean also provides a convenient way to define `inductive` structures like pairs
@@ -301,17 +306,16 @@ namespace NatList
 :::
 
 ::::full
-As with pairs, it is convenient to write lists in familiar
+As with pairs, it is useful to give lists a symbolic
 notation.  The following declarations allow us to use `::` as an
 infix `cons` operator and square brackets as an "outfix" notation
 for constructing lists.
 ::::
 
 :::terse
-Some notation for lists to make our lives easier:
+Some notation for lists to make our lives easier: `::` as an
+infix `cons` operator and square brackets as an "outfix" notation.
 :::
-
-Don't worry too much about how this works.
 
 :::details "List syntax"
 We first define `::` as right-associative notation for {name}`cons`,
@@ -349,27 +353,26 @@ def mylist3 : NatList := [1, 2, 3]
 Some useful list-manipulation functions...
 :::
 
-## Repeat
+## Replicate
 
 ::::full
-First is the `myRepeat` function, which takes a number `n`
+First is the `replicate` function, which takes a number `n`
 and a `count` and returns a list of length `count` in which every element is `n`.
-(We use `myRepeat` because `repeat` is a reserved keyword in Lean.)
 ::::
 
 ```lean
-def myRepeat (n count : Nat) : NatList :=
+def replicate (n count : Nat) : NatList :=
   match count with
   | 0 => []
-  | count' + 1 => n :: myRepeat n count'
+  | count' + 1 => n :: replicate n count'
 ```
 
 Some simple facts about repetition:
 
 ```lean
-theorem repeat_zero (n : Nat) : myRepeat n 0 = [] := rfl
+theorem replicate_zero (n : Nat) : replicate n 0 = [] := rfl
 
-theorem repeat_succ (n count : Nat) : myRepeat n (count + 1) = n :: myRepeat n count := rfl
+theorem replicate_succ (n count : Nat) : replicate n (count + 1) = n :: replicate n count := rfl
 ```
 
 ::::full
@@ -451,7 +454,14 @@ from the {name}`BEq` ("boolean equality") type class. One small but handy
 fact about it, which several proofs below will need, is that `==` is
 reflexive:
 
-  `BEq.refl : (a == a) = true`
+```lean (name := Beqrefl)
+#check (BEq.refl (α := Nat))
+```
+
+```leanOutput Beqrefl
+BEq.refl : ∀ (a : Nat), (a == a) = true
+```
+
 ::::
 
 ::::terse
@@ -1116,12 +1126,12 @@ by induction:
 ::::
 
 ```lean +error (name := st)
-theorem myRepeat_append_fail (c n : Nat) :
-    myRepeat n c ++ myRepeat n c = myRepeat n (c + c) := by
+theorem replicate_append_fail (c n : Nat) :
+    replicate n c ++ replicate n c = replicate n (c + c) := by
   induction c with
-  | zero => rw [repeat_zero, nil_append]
+  | zero => rw [replicate_zero, nil_append]
   | succ c' ih =>
-    rw [repeat_succ]
+    rw [replicate_succ]
     -- Now we seem to be stuck.
     -- The `ih` only works for `c' + c'`,
     -- but we need `c' + 1 + (c' + 1)`.
@@ -1131,8 +1141,8 @@ theorem myRepeat_append_fail (c n : Nat) :
 unsolved goals
 case succ
 n c' : Nat
-ih : myRepeat n c' ++ myRepeat n c' = myRepeat n (c' + c')
-⊢ (n :: myRepeat n c') ++ (n :: myRepeat n c') = myRepeat n (c' + 1 + (c' + 1))
+ih : replicate n c' ++ replicate n c' = replicate n (c' + c')
+⊢ (n :: replicate n c') ++ (n :: replicate n c') = replicate n (c' + 1 + (c' + 1))
 ```
 
 ::::full
@@ -1144,21 +1154,21 @@ A generalization that gives a stronger inductive hypothesis:
 :::
 
 ```lean
-theorem myRepeat_append_general (c₁ c₂ n : Nat) :
-    myRepeat n c₁ ++ myRepeat n c₂ = myRepeat n (c₁ + c₂) := by
+theorem replicate_append_general (c₁ c₂ n : Nat) :
+    replicate n c₁ ++ replicate n c₂ = replicate n (c₁ + c₂) := by
   induction c₁ with
   | zero =>
-    rw [repeat_zero, Nat.zero_add, nil_append]
+    rw [replicate_zero, Nat.zero_add, nil_append]
   | succ c1' ih =>
-    rw [Nat.succ_add, repeat_succ, repeat_succ, cons_append, ih]
+    rw [Nat.succ_add, replicate_succ, replicate_succ, cons_append, ih]
 ```
 
 Then, we can use this more general theorem to prove the original goal:
 
 ```lean
-theorem myRepeat_append (c n : Nat) :
-    myRepeat n c ++ myRepeat n c = myRepeat n (c + c) := by
-  exact myRepeat_append_general c c n
+theorem replicate_append (c n : Nat) :
+    replicate n c ++ replicate n c = replicate n (c + c) := by
+  exact replicate_append_general c c n
 ```
 
 ### Reversing a List
@@ -1313,15 +1323,15 @@ To prove the following theorem, which tactics will we need besides
 
 ```display
 example (n : Nat) (l : NatList) :
-    myRepeat n 0 = l → l.length = 0
+    replicate n 0 = l → l.length = 0
 ```
 
 :::quizSolution
 ```lean
 theorem foo1 (n : Nat) (l : NatList) :
-    myRepeat n 0 = l → l.length = 0 := by
+    replicate n 0 = l → l.length = 0 := by
   intro h
-  rw [← h, repeat_zero, length_nil]
+  rw [← h, replicate_zero, length_nil]
 ```
 :::
 ::::
@@ -1330,7 +1340,7 @@ theorem foo1 (n : Nat) (l : NatList) :
 What about the next one?
 
 ```display
-example (n m : Nat) : (myRepeat n m).length = m
+example (n m : Nat) : (replicate n m).length = m
 ```
 
 To prove the following theorem, which tactics will we need besides
@@ -1349,10 +1359,10 @@ To prove the following theorem, which tactics will we need besides
 
 :::quizSolution
 ```lean
-example (n m : Nat) : (myRepeat n m).length = m := by
+example (n m : Nat) : (replicate n m).length = m := by
   induction m with
-  | zero       => rw [repeat_zero, length_nil]
-  | succ m' ih => rw [repeat_succ, length_cons, ih]
+  | zero       => rw [replicate_zero, length_nil]
+  | succ m' ih => rw [replicate_succ, length_cons, ih]
 ```
 :::
 ::::
