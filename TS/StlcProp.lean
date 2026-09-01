@@ -409,18 +409,38 @@ order...
 
 First, we show that typing is preserved under "extensions" to the
 context `Γ`.  (Recall map inclusion, `Γ ⊆ Γ'`, from the `Typeclasses` chapter.)
-Through judicious use of `apply_rules`, we can heavily automate this proof.
-The tactic after `with` is applied to every case of the {tactic}`induction`,
-and has two options. The first one attempts to solve the goal with repeated
-applications of `HasType` constuctors, while the latter deals with
-goals where variables are added to the context using `PartialMap.update_subset`.
 
 ```lean
 theorem weakening {Γ Γ' : Context} {t : Tm} {τ : Ty}
     (hi : Γ ⊆ Γ') (ht : <{ ~Γ ⊢ ~t ⦂ ~τ }>) : <{ ~Γ' ⊢ ~t ⦂ ~τ }> := by
-  induction ht generalizing Γ' with (first
-    | apply_rules using StlcTyping; done
-    | constructor <;> apply_rules [PartialMap.update_subset])
+  induction ht generalizing Γ' with
+  | var =>
+      constructor; apply hi; assumption
+  | abs _ _ _ _ _ _ ih =>
+      constructor; apply ih; apply PartialMap.update_subset; assumption
+  | app _ _ _ _ _ _ _ ih₁ ih₂ =>
+      constructor
+      . exact ih₁ hi
+      . exact ih₂ hi
+  | tru => constructor
+  | fls => constructor
+  | ite _ _ _ _ _ _ _ _ ih₁ ih₂ ih₃ =>
+      constructor
+      . exact ih₁ hi
+      . exact ih₂ hi
+      . exact ih₃ hi
+```
+
+Through judicious use of `apply_rules`, we can heavily automate this proof.
+The tactic after `with` is applied to every case of the {tactic}`induction`
+and handles all the cases using {tactic}`apply_rules`'s automation.
+We must give the tactic access to all the `HasType` constructors and the
+{name}`PartialMap.update_subset` lemma for this to work:
+
+```lean
+theorem weakening' {Γ Γ' : Context} {t : Tm} {τ : Ty}
+    (hi : Γ ⊆ Γ') (ht : <{ ~Γ ⊢ ~t ⦂ ~τ }>) : <{ ~Γ' ⊢ ~t ⦂ ~τ }> := by
+  induction ht generalizing Γ' with (apply_rules [PartialMap.update_subset] using StlcTyping)
 ```
 
 :::slidebreak
