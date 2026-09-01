@@ -207,7 +207,7 @@ this to be a slow and frustrating way to write proofs. Instead, we
 suggest figuring out what you would like your next step to be,
 conceptually, and then using {tactic}`rw?` to search for a theorem
 that implements it. If no such theorem exists, you may need to prove it
-yourself, or you may want to rethink your approach.
+yourself.
 
 ::::exercise (rating := 1) (name := "mul_three_beq")
 Prove the following theorems about {name}`Nat`s.
@@ -392,8 +392,9 @@ The reason is that the expression in which we are trying to rewrite
 {name}`Nat.add_assoc` isn't of the form `n + m + k` precisely; it is {lean}`addThrice n`.
 ::::
 We need to unfold the underlying definitions of
-{lean}`addThrice` and {lean}`addTwice`, since Lean is not doing that for us automatically.
-We can do this using the familiar {tactic}`rw` tactic.
+{lean}`addThrice` and {lean}`addTwice` so that {tactic}`rw`, which only operates on syntax,
+can see the addition.
+We can do this using the {tactic}`rw` tactic.
 
 ```lean
 example (n : Nat) : addThrice n = n + addTwice n := by
