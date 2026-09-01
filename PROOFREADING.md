@@ -94,6 +94,7 @@ before reporting a content problem.
 | Looks wrong | Why it isn't |
 | ----------- | ------------ |
 | Prose describing an `sf_expect_failure_in` / `sf_expect_failure_in?` annotation where the Verso block actually says `+error` (e.g. `LF/Basics.lean`). | The prose is written for the *generated* `.lean`, which is what the reader has in front of them. `+error` blocks are extracted as indented `sf_expect_failure_in` blocks — see `SFLMeta/Save/Lean.lean`. |
+| The opening sentence of `LF/Induction.lean` — "how to carry out _proofs by induction_, one of the most fundamental reasoning tools in computer science and mathematics, in Lean" — strands "in Lean" at the end. | Deliberate; the author decided on 2026-08-30 to keep the sentence as it stands. Do not propose reordering it. |
 
 ## Writing a round
 

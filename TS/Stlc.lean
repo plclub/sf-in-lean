@@ -1247,6 +1247,9 @@ end
 
 scoped notation:40 t:41 " ⟶ " t':41 => Step t t'
 scoped notation:40 t:41 " ⟶* " t':41 => Multi Step t t'
+
+-- for later use with `normalize`
+attribute [StlcEval] Step.appAbs Step.app1 Step.app2 Step.ifTrue Step.ifFalse Step.ifStep
 ```
 
 ::::full
@@ -1442,6 +1445,23 @@ example : <{ ~idBB (~notB true) }> ⟶* <{ false }> := by
   · rfl
 ```
 
+As in the {ref "Smallstep"}[Smallstep] chapter, we can use the `normalize` tactic to simplify
+these proofs:
+
+```lean
+example : <{ ~idBB ~idB }> ⟶* idB := by
+  normalize using StlcEval
+
+example : <{ ~idBB (~idBB ~idB) }> ⟶* idB := by
+  normalize using StlcEval
+
+example : <{ ~idBB ~notB true }> ⟶* <{ false }> := by
+  normalize using StlcEval
+
+example : <{ ~idBB (~notB true) }> ⟶* <{ false }> := by
+  normalize using StlcEval
+```
+
 ::::quiz
 Do values and normal forms coincide in the language presented so far?
 
@@ -1456,20 +1476,11 @@ E.g., `true true` is a normal form but not a value.
 :::
 
 ::::::full
-:::dev
-The Rocq source repeats the four examples above using the `normalize` tactic
-defined in its `Smallstep` chapter, and the exercise below asks for
-`step_example5` both with and without it.  We have no such tactic: the
-{ref "Smallstep"}[Smallstep] chapter here does not define one, so the repeats
-are dropped and the exercise is stated once, proved by hand.  Writing a
-`normalize` tactic — repeatedly applying {name}`Multi.step` with the unique
-available reduction, then closing with reflexivity — is the natural follow-up,
-and it belongs in the Smallstep chapter, not here.
-:::
-
 :::::exercise (rating := 2) (name := "step_example5")
+Try to do this one both with and without normalize.
+
 ```lean
-example : <{ ~idBBBB ~idBB ~idB }> ⟶* idB := by
+theorem stepExample5 : <{ ~idBBBB ~idBB ~idB }> ⟶* idB := by
   solution!
     apply Multi.step (y := <{ ~idBB ~idB }>)
     · exact .app1 <{ ~idBBBB ~idBB }> idBB idB
@@ -1478,6 +1489,19 @@ example : <{ ~idBBBB ~idBB ~idB }> ⟶* idB := by
     · exact .appAbs "x" <{ Bool → Bool }> <{ x }> idB idB_value
     · rfl
 ```
+
+:::gradeTheorem "1.5" stepExample5
+:::
+
+```lean
+theorem stepExample5' : <{ ~idBBBB ~idBB ~idB }> ⟶* idB := by
+  solution!
+    normalize using StlcEval
+```
+
+:::gradeTheorem "0.5" stepExample5'
+:::
+
 :::::
 
 ::::::
@@ -1679,6 +1703,8 @@ inductive HasType : Context → Tm → Ty → Prop where
       (h₁ : <{ ~Γ ⊢ ~t₁ ⦂ Bool }>) (h₂ : <{ ~Γ ⊢ ~t₂ ⦂ ~T₁ }>)
       (h₃ : <{ ~Γ ⊢ ~t₃ ⦂ ~T₁ }>) :
       <{ ~Γ ⊢ if ~t₁ then ~t₂ else ~t₃ ⦂ ~T₁ }>
+
+attribute [StlcTyping] HasType.var HasType.abs HasType.app HasType.tru HasType.fls HasType.ite
 ```
 
 ::::details "Notation encoding: the judgment, for real"
@@ -1776,25 +1802,24 @@ variable (x : String)
 ## Examples
 
 ```lean
-example : <{ ∅ ⊢ λ x : Bool . x ⦂ Bool → Bool }> :=
-  .abs _ "x" _ _ _ (.var _ "x" _ rfl)
+example : <{ ∅ ⊢ λ x : Bool . x ⦂ Bool → Bool }> := by
+  apply HasType.abs
+  apply HasType.var; rfl
 ```
 
 The derivation is small enough to write out directly: an abstraction rule
 whose premise is the variable rule, and the variable rule's premise — that the
 extended context maps `x` to `Bool` — holds by computation, hence `rfl`.
 
-:::dev
-The Rocq source proves this one, and the next, by `eauto`, having registered
-the `has_type` constructors in the `core` hint database; it also observes that
-plain `auto` suffices here because the term contains no application nodes.  We
-have no hint database, so both derivations are given explicitly.
-:::
-
 :::slidebreak
 :::
 
-More examples:
+Much like reduction sequences, long derivations of typing rules can grow
+quite tedious to prove. Luckily, we can have Lean automate proofs of this sort,
+using another tactic: {tactic}`apply_rules`. This tactic works much like
+{tactic}`normalize`, but is more efficient and will make progress even if it cannot
+solve the goal outright. Like {tactic}`normalize`, {tactic}`apply_rules` also
+takes a `using` argument which tells Lean which set of constructors to draw from.
 
 ```display
 ∅ ⊢ λx:Bool. λy:Bool → Bool. y (y x)
@@ -1804,15 +1829,23 @@ More examples:
 ```lean
 example :
     <{ ∅ ⊢ λ x : Bool . λ y : Bool → Bool . y (y x) ⦂
-       Bool → (Bool → Bool) → Bool }> :=
-  .abs _ _ _ _ _ (.abs _ _ _ _ _
-    (.app _ _ Ty.bool _ _ (.var _ "y" _ rfl)
-      (.app _ _ Ty.bool _ _ (.var _ "y" _ rfl) (.var _ "x" _ rfl))))
+       Bool → (Bool → Bool) → Bool }> := by
+  apply_rules using StlcTyping
 ```
+
+It's worth noting that  {tactic}`apply_rules` relies on an important property
+of our typing rules - namely, that they are _syntax directed_. A syntax directed
+judgment is one where the syntax of a term completely determines which rule
+can be applied at any given time; only one rule can be applied to each term.
+This is important because {tactic}`apply_rules` just applies the first rule in
+its set of constructors or lemmas that it can - it doesn't backtrack if that rule
+isn't correct. So, making sure that only one rule can apply to any given term
+is important to ensure that {tactic}`apply_rules` always discovers a valid
+derivation, if one exists.
 
 ::::::full
 :::::exercise (rating := 2) (name := "typing_example_2_full") (optional := true)
-Prove the same result in tactic mode, applying one rule at a time and
+Prove the same result, applying one rule at a time and
 naming the argument type of each application explicitly.
 
 ```lean
@@ -1846,12 +1879,10 @@ Formally prove the following typing derivation holds:
 ```lean
 example :
     ∃ T, <{ ∅ ⊢ λ x : Bool → Bool . λ y : Bool → Bool . λ z : Bool . y (x z)
-            ⦂ ~T }> :=
-  solution!(
-    ⟨<{ (Bool → Bool) → (Bool → Bool) → (Bool → Bool) }>,
-     .abs _ _ _ _ _ (.abs _ _ _ _ _ (.abs _ _ _ _ _
-       (.app _ _ Ty.bool _ _ (.var _ "y" _ rfl)
-         (.app _ _ Ty.bool _ _ (.var _ "x" _ rfl) (.var _ "z" _ rfl)))))⟩)
+            ⦂ ~T }> := by
+  solution!
+    exists <{ (Bool → Bool) → (Bool → Bool) → (Bool → Bool) }>
+    apply_rules using StlcTyping
 ```
 :::::
 

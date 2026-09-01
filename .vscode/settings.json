@@ -7,10 +7,100 @@
     },
     // Lean input abbreviation for the type-colon glyph ⦂ (U+2982) used in the
     // typing judgment `⊢ t ⦂ T` (see TS/Types.lean): type `\tc` then space.
-    // Mirrored into every generated student project by `vscodeSettingsJson`
-    // in SFLMeta/Save/Project.lean — keep the two in step.
+    // Exported to every generated student project (see `studentSettingKeys`
+    // in SFLMeta/Save/Project.lean); this file is the source of truth.
     "lean4.input.customTranslations": {
         "tc": "⦂"
+    },
+    // Tint Lean comments brown. This file is the source: generated
+    // student projects are given these rules verbatim (see
+    // `studentSettingKeys` in SFLMeta/Save/Project.lean). NB the
+    // effect in the git repo is smaller than in an extracted
+    // chapter: in a Verso source the book's prose is document text,
+    // not a comment, so only genuine code comments change colour.
+    // The unscoped rule is a mid-tone for themes whose name says
+    // neither "Light" nor "Dark"; theme-scoped rules are applied
+    // last and win. The second rule of each tier tints markdown
+    // emphasis (`*stuff*`, `_stuff_`) inside a comment: the lean4
+    // grammar includes `source.lean4.markdown` in its comment rules,
+    // so emphasis really is scoped there. Emphasis keeps its tier's
+    // hue and lightness exactly and multiplies saturation by 1.6, so
+    // it reads as the same brown intensified rather than as a
+    // different weight of text.
+    "editor.tokenColorCustomizations": {
+        "textMateRules": [
+            {
+                "scope": [
+                    "comment.line.double-dash.lean4",
+                    "comment.block.lean4",
+                    "comment.block.documentation.lean4"
+                ],
+                "settings": {
+                    "foreground": "#94795A"
+                }
+            },
+            {
+                "scope": [
+                    "comment markup.italic.markdown",
+                    "comment markup.bold.markdown",
+                    "comment punctuation.definition.italic.markdown",
+                    "comment punctuation.definition.bold.markdown"
+                ],
+                "settings": {
+                    "foreground": "#A57A49"
+                }
+            }
+        ],
+        "[*Light*]": {
+            "textMateRules": [
+                {
+                    "scope": [
+                        "comment.line.double-dash.lean4",
+                        "comment.block.lean4",
+                        "comment.block.documentation.lean4"
+                    ],
+                    "settings": {
+                        "foreground": "#4A3520"
+                    }
+                },
+                {
+                    "scope": [
+                        "comment markup.italic.markdown",
+                        "comment markup.bold.markdown",
+                        "comment punctuation.definition.italic.markdown",
+                        "comment punctuation.definition.bold.markdown"
+                    ],
+                    "settings": {
+                        "foreground": "#573513"
+                    }
+                }
+            ]
+        },
+        "[*Dark*]": {
+            "textMateRules": [
+                {
+                    "scope": [
+                        "comment.line.double-dash.lean4",
+                        "comment.block.lean4",
+                        "comment.block.documentation.lean4"
+                    ],
+                    "settings": {
+                        "foreground": "#DEC5A0"
+                    }
+                },
+                {
+                    "scope": [
+                        "comment markup.italic.markdown",
+                        "comment markup.bold.markdown",
+                        "comment punctuation.definition.italic.markdown",
+                        "comment punctuation.definition.bold.markdown"
+                    ],
+                    "settings": {
+                        "foreground": "#F1C98D"
+                    }
+                }
+            ]
+        }
     },
     "workbench.iconTheme": "material-icon-theme",
     "material-icon-theme.folders.customClones": [
