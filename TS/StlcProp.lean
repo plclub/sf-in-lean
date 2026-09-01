@@ -409,18 +409,18 @@ order...
 
 First, we show that typing is preserved under "extensions" to the
 context `Γ`.  (Recall map inclusion, `Γ ⊆ Γ'`, from the `Typeclasses` chapter.)
+Through judicious use of `apply_rules`, we can heavily automate this proof.
+The tactic after `with` is applied to every case of the {tactic}`induction`,
+and has two options. The first one attempts to solve the goal with repeated
+applications of `HasType` constuctors, while the latter deals with
+goals where variables are added to the context using `PartialMap.update_subset`.
 
 ```lean
--- IN PROGRESS
-theorem weakening (Γ Γ' : Context) (t : Tm) (T : Ty)
-    (hi : Γ ⊆ Γ') (hT : <{ ~Γ ⊢ ~t ⦂ ~T }>) : <{ ~Γ' ⊢ ~t ⦂ ~T }> := by
-  induction hT generalizing Γ' with
-  | var _ x _ h => exact .var _ x _ (hi h)
-  | abs _ x _ _ _ _ ih => exact .abs _ x _ _ _ (ih _ (PartialMap.update_subset _ _ _ _ hi))
-  | app _ _ _ _ _ _ _ ih₁ ih₂ => exact .app _ _ _ _ _ (ih₁ _ hi) (ih₂ _ hi)
-  | tru => exact .tru _
-  | fls => exact .fls _
-  | ite _ _ _ _ _ _ _ _ ih₁ ih₂ ih₃ => exact .ite _ _ _ _ _ (ih₁ _ hi) (ih₂ _ hi) (ih₃ _ hi)
+theorem weakening {Γ Γ' : Context} {t : Tm} {τ : Ty}
+    (hi : Γ ⊆ Γ') (ht : <{ ~Γ ⊢ ~t ⦂ ~τ }>) : <{ ~Γ' ⊢ ~t ⦂ ~τ }> := by
+  induction ht generalizing Γ' with (first
+    | apply_rules using StlcTyping; done
+    | constructor <;> apply_rules [PartialMap.update_subset])
 ```
 
 :::slidebreak
@@ -429,12 +429,12 @@ theorem weakening (Γ Γ' : Context) (t : Tm) (T : Ty)
 The following simple corollary is what we actually need below.
 
 ```lean
-theorem weakening_empty (Γ : Context) (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
-    <{ ~Γ ⊢ ~t ⦂ ~T }> :=
-  weakening _ _ _ _
-    (fun h => by
-      rw [PartialMap.getElem_empty] at h
-      cases h) hT
+theorem weakening_empty {Γ : Context} {t : Tm} {τ : Ty} (ht : <{ ∅ ⊢ ~t ⦂ ~τ }>) :
+    <{ ~Γ ⊢ ~t ⦂ ~τ }> := by
+  apply weakening _ ht
+  intro _ _ h
+  rw [PartialMap.getElem_empty] at h
+  contradiction
 ```
 
 ## The Substitution Lemma
@@ -488,7 +488,7 @@ theorem substitution_preserves_typing (Γ : Context) (x : String) (U : Ty)
         rw [subst_var_eq]
         have hUT : U = T := Option.some.inj h
         subst hUT
-        exact weakening_empty _ _ _ hv
+        exact weakening_empty hv
       · rw [PartialMap.update_neq hxy] at h
         rw [subst_var_ne _ _ _ hxy]
         exact .var _ y _ h
@@ -598,7 +598,7 @@ theorem substitution_preserves_typing_from_typing_ind (Γ : Context) (x : String
         rw [subst_var_eq]
         have hUT : U = T₁ := Option.some.inj h
         subst hUT
-        exact weakening_empty _ _ _ hv
+        exact weakening_empty hv
       · rw [PartialMap.update_neq hxy] at h
         rw [subst_var_ne _ _ _ hxy]
         exact .var _ y _ h
