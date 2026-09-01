@@ -820,9 +820,9 @@ local macro_rules
 inductive Tm.HasType : Tm → Ty → Prop where
   | tru : <{ ⊢ true ⦂ Bool }>
   | fls : <{ ⊢ false ⦂ Bool }>
-  | ite (t₁ t₂ t₃ : Tm) (T : Ty)
-      (h₁ : <{ ⊢ t₁ ⦂ Bool }>) (h₂ : <{ ⊢ t₂ ⦂ T }>) (h₃ : <{ ⊢ t₃ ⦂ T }>) :
-      <{ ⊢ if t₁ then t₂ else t₃ ⦂ T }>
+  | ite (t₁ t₂ t₃ : Tm) (τ : Ty)
+      (h₁ : <{ ⊢ t₁ ⦂ Bool }>) (h₂ : <{ ⊢ t₂ ⦂ τ }>) (h₃ : <{ ⊢ t₃ ⦂ τ }>) :
+      <{ ⊢ if t₁ then t₂ else t₃ ⦂ τ }>
   | zero : <{ ⊢ 0 ⦂ Nat }>
   | succ (t₁ : Tm) (h : <{ ⊢ t₁ ⦂ Nat }>) : <{ ⊢ succ t₁ ⦂ Nat }>
   | pred (t₁ : Tm) (h : <{ ⊢ t₁ ⦂ Nat }>) : <{ ⊢ pred t₁ ⦂ Nat }>
@@ -933,7 +933,7 @@ understand the parts we've given of the informal proof in the following
 exercise before starting — this will save you a lot of time.)
 
 ```lean
-theorem progress (t : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) : Tm.IsValue t ∨ ∃ t', t ⟶ t' := by
+theorem progress (t : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ T }>) : Tm.IsValue t ∨ ∃ t', t ⟶ t' := by
   solution!
     induction hT with
     | tru => exact .inl (.inl .tru)
@@ -1138,7 +1138,7 @@ sure you understand the informal proof fragment in the following exercise
 first.)
 
 ```lean
-theorem preservation (t t' : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) (he : t ⟶ t') : <{ ⊢ t' ⦂ T }> := by
+theorem preservation (t t' : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ T }>) (he : t ⟶ t') : <{ ⊢ t' ⦂ T }> := by
   solution!
     induction hT generalizing t' with
     | tru => cases he
@@ -1253,13 +1253,13 @@ make sure you understand what each one is doing.  The set-up for this
 proof is similar, but not exactly the same.
 
 ```lean
-theorem preservation' (t t' : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) (he : t ⟶ t') : <{ ⊢ t' ⦂ T }> := by
+theorem preservation' (t t' : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>) (he : t ⟶ t') : <{ ⊢ t' ⦂ τ }> := by
   solution!
-    induction he generalizing T with
+    induction he generalizing τ with
     | ifTrue t₁ t₂ => cases hT with | ite _ _ _ _ h₁ h₂ h₃ => exact h₂
     | ifFalse t₁ t₂ => cases hT with | ite _ _ _ _ h₁ h₂ h₃ => exact h₃
     | ifStep c c' t₂ t₃ hc ih =>
-        cases hT with | ite _ _ _ _ h₁ h₂ h₃ => exact .ite c' t₂ t₃ T (ih .bool h₁) h₂ h₃
+        cases hT with | ite _ _ _ _ h₁ h₂ h₃ => exact .ite c' t₂ t₃ τ (ih .bool h₁) h₂ h₃
     | succStep t₁ t₁' hs ih => cases hT with | succ _ h => exact .succ t₁' (ih .nat h)
     | predZero => cases hT with | pred _ h => exact .zero
     | predSucc v hv => cases hT with | pred _ h => cases h with | succ _ hh => exact hh
@@ -1290,14 +1290,14 @@ def Tm.MultiStep (t₁ t₂ : Tm) : Prop := Multi Tm.Step t₁ t₂
 
 scoped notation:40 t₁:41 " ⟶* " t₂:41 => Tm.MultiStep t₁ t₂
 
-theorem soundness (t t' : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) (hm : t ⟶* t') : ¬ Tm.IsStuck t' := by
-  induction hm generalizing T with
+theorem soundness (t t' : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>) (hm : t ⟶* t') : ¬ Tm.IsStuck t' := by
+  induction hm generalizing τ with
   | refl a =>
       intro hst; obtain ⟨hnf, hnv⟩ := hst
-      cases progress a T hT with
+      cases progress a τ hT with
       | inl hv => exact hnv hv
       | inr hs => exact hnf hs
-  | step a b c h₁ h₂ ih => exact ih T (preservation a b T hT h₁)
+  | step a b c h₁ h₂ ih => exact ih τ (preservation a b τ hT h₁)
 ```
 
 ::::quiz
@@ -1353,8 +1353,8 @@ it reduces to the well-typed term `0`.
 
 ```lean
 theorem subject_expansion :
-    (∀ (t t' : Tm) (T : Ty), t ⟶ t' ∧ <{ ⊢ t' ⦂ T }> → <{ ⊢ t ⦂ T }>)
-    ∨ ¬ (∀ (t t' : Tm) (T : Ty), t ⟶ t' ∧ <{ ⊢ t' ⦂ T }> → <{ ⊢ t ⦂ T }>) := by
+    (∀ (t t' : Tm) (τ : Ty), t ⟶ t' ∧ <{ ⊢ t' ⦂ τ }> → <{ ⊢ t ⦂ τ }>)
+    ∨ ¬ (∀ (t t' : Tm) (τ : Ty), t ⟶ t' ∧ <{ ⊢ t' ⦂ τ }> → <{ ⊢ t ⦂ τ }>) := by
   solution!
     right
     intro hse
