@@ -82,9 +82,16 @@ namespace NatPlayground.Nat
 ```
 
 ::::quiz
+Recall the definition of `or`, which has notation `||` and is _not_
+marked `@[irreducible]`:
+```display
+def or (b1 : Bool) (b2 : Bool) : Bool :=
+  match b1 with
+  | true => true
+  | false => b2
+```
 To prove the following theorem, which tactics will we need besides
-{tactic}`rfl`?  (Recall that `||` recurses on its _first_ argument:
-`true || b = true` and `false || b = b`, by definition.)
+{tactic}`rfl`?
 
 ```display
 theorem review₁ : (true || false) = true
@@ -162,10 +169,24 @@ theorem review₃ (b : Bool) : (b || true) = true := by
 :::
 ::::
 
+```recall
+def add (n : Nat) (m : Nat) : Nat :=
+  match m with
+  | zero => n
+  | succ m' => succ (add n m')
+```
+
+```recall +statement
+add_zero : ∀ n : Nat, n + zero = n
+```
+
+```recall +statement
+add_succ : ∀ n m : Nat, n + (succ m) = succ (n + m)
+```
+
 ::::quiz
-What about this one?  (Recall that our {name}`add` function recurses on its
-_second_ argument. Its simplification rules include `n + zero = n` and
-`n + (m + 1) = (n + m) + 1`.)
+What about this one? Recall that our {name}`add` function has notation `+`
+and _is_ marked `@[irreducible]`.
 
 ```display
 theorem review₄ (n : Nat) : n + zero = n
