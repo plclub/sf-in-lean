@@ -1957,7 +1957,12 @@ syntax "normalize" " using " ident,+ : tactic
 
 macro_rules
   | `(tactic| normalize using $xs,*) =>
-    `(tactic| repeat apply Multi.step <;> try solve_by_elim (maxDepth:=15) using $xs,*)
+    `(tactic|
+      first
+      | apply Multi.refl
+      | (apply Multi.step
+         · solve_by_elim (maxDepth := 15) (constructor := false) only using $xs,*
+         · normalize using $xs,*))
 ```
 
 And voilà:
@@ -1976,8 +1981,8 @@ term `e'` yourself.
 theorem normalize_ex : exists e', (.p (.c 3) (.p (.c 2) (.c 1))) ⟶* e' ∧ IsValue e' := by
   solution!
     exists (.c 6); constructor
-    . normalize using SimpleArith
-    . constructor
+    · normalize using SimpleArith
+    · constructor
 ```
 
 :::gradeTheorem 3 normalize_ex

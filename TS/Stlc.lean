@@ -763,6 +763,8 @@ inductive Tm.IsValue : Tm → Prop where
   | abs (x : String) (T₂ : Ty) (t₁ : Tm) : Tm.IsValue <{ λ ~x : ~T₂ . ~t₁ }>
   | tru : Tm.IsValue <{ true }>
   | fls : Tm.IsValue <{ false }>
+
+attribute [StlcEval] Tm.IsValue.abs Tm.IsValue.tru Tm.IsValue.fls
 ```
 
 ::::full
