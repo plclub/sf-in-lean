@@ -1313,7 +1313,7 @@ mechanics.
 Syntax:
 
 ```lean
-namespace STLCExtended
+namespace StlcExtended
 
 open scoped MyGetElem
 
@@ -1409,8 +1409,8 @@ scoped syntax:max num : stlcTm
 scoped syntax:60 stlcTm:61 " * " stlcTm:60 : stlcTm
 scoped syntax:50 "if0 " stlcTm:51 " then " stlcTm:50 " else " stlcTm:50 : stlcTm
 
-scoped syntax:60 " inr " stlcTy:60 stlcTm:60 : stlcTm
-scoped syntax:60 " inl " stlcTy:60 stlcTm:60 : stlcTm
+scoped syntax:60 " inr " stlcTy:60 ppSpace stlcTm:60 : stlcTm
+scoped syntax:60 " inl " stlcTy:60 ppSpace stlcTm:60 : stlcTm
 scoped syntax:50 "case " stlcTm:50 " of " "inl" stlcVar " => " stlcTm:50 " | "
   "inr" stlcVar " => " stlcTm:50 : stlcTm
 
@@ -1561,10 +1561,10 @@ partial def delabTmInner : DelabM (TSyntax `stlcTm) := do
         `(stlcTm| let $x = $t₁ in $t₂)
     | Tm.succ _ => do
         let t ← withAppArg delabTmInner
-        `(stlcTm| succ $t)
+        `(stlcTm| $(mkIdent `succ):ident $t)
     | Tm.pred _ => do
         let t ← withAppArg delabTmInner
-        `(stlcTm| pred $t)
+        `(stlcTm| $(mkIdent `pred):ident $t)
     | Tm.mult _ _ => do
         let a ← withAppFn <| withAppArg delabTmInner
         let b ← withAppArg delabTmInner
@@ -1602,10 +1602,10 @@ partial def delabTmInner : DelabM (TSyntax `stlcTm) := do
         `(stlcTm| ( $a , $b ) )
     | Tm.fst _ => do
         let b ← withAppArg delabTmInner
-        `(stlcTm| fst $b )
+        `(stlcTm| $(mkIdent `fst):ident $b )
     | Tm.snd _ => do
         let b ← withAppArg delabTmInner
-        `(stlcTm| snd $b )
+        `(stlcTm| $(mkIdent `snd):ident $b )
     | Tm.listCase _ _ _ _ _ => do
         let c ←  withAppFn <| withAppFn <| withAppFn <| withAppFn <| withAppArg delabTmInner
         let t₁ ← withAppFn <| withAppFn <| withAppFn <| withAppArg delabTmInner
@@ -1671,10 +1671,6 @@ def delabTm : Delab := whenPPOption getPPNotation do
 ```
 ::::
 
-:::dev "Daniel Sainati @dsainati1" BeforeNextRelease
-These all parse to the right thing, but the delaboration in the InfoView is not happening
-:::
-
 :::ignore
 Checks that the extended grammar parses the way it should.
 
@@ -1703,13 +1699,6 @@ Checks that the extended grammar parses the way it should.
 ```
 :::
 
-:::dev "Daniel Sainati (@dsainati1)" BeforeNextRelease
-This notation is mostly there but there were a couple issues I didn't know how to fix.
-Need to fix them before a real release:
-* Delaborator isn't actually printing the above examples in STLC syntax, idk why
-* Some terms don't work in pattern matches for some reason
-:::
-
 ::::exercise (rating := 3) (name := "STLCExtended.subst") (manual := true)
 
 ```lean
@@ -1724,7 +1713,7 @@ def subst (x : String) (s : Tm) (t : Tm) : Tm :=
   -- pure STLC
   | .var y =>
       if x = y then s else t
-  | .abs y τ t₁ =>
+  | <{ λ ~y : ~τ . ~t₁}> =>
       if x = y then t else <{ λ ~y : ~τ . [~x := ~s] ~t₁ }>
   | <{ ~t₁ ~t₂ }> =>
       <{ ([~x := ~s] ~t₁) ([~x := ~s] ~t₂) }>
@@ -2914,6 +2903,6 @@ theorem preservation (t t' : Tm) (τ : Ty)
 ::::
 
 ```lean
-end STLCExtended
+end StlcExtended
 ```
 :::::
