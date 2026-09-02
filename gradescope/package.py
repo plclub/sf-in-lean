@@ -87,21 +87,28 @@ def manual_exercises(vol, chapters):
 
     Keyed on the `GRADE_MANUAL` spec, which is the grading instruction and
     carries the points; `(manual := true)` only labels the heading. An exercise
-    with `GRADE_MANUAL` but not `(manual := true)` is a bug in the chapter. 
-    A `:::grade` body is written either fenced or in backticks, so match both."""
+    with `GRADE_MANUAL` but not `(manual := true)` is a bug in the chapter.
+    A `:::grade` body is written either fenced or in backticks, so match both.
+
+    A spec names the *declaration* graded, which is often not the exercise's
+    own name (`GRADE_MANUAL 2: Repeats` sits in exercise `pigeonhole_principle`).
+    Optionality therefore has to come from whichever exercise encloses the spec,
+    found by scanning in order -- matching the spec name against exercise names
+    would let an optional exercise through whenever the two differ."""
     found = []
     for c in chapters:
         src = REPO / vol / f"{c}.lean"
         if not src.is_file():
             continue
-        text = src.read_text(encoding="utf-8")
-        optional = set()
-        for args in re.findall(r"(?m)^:{3,}exercise(.*)$", text):
-            name = re.search(r'name := "([^"]+)"', args)
-            if name and "optional := true" in args:
-                optional.add(name.group(1))
-        for names in re.findall(r"(?m)^`?GRADE_MANUAL\s+[0-9./]+\s*:\s*([^`\n]+)", text):
-            found += [n for n in names.split() if n not in optional]
+        optional = False
+        for line in src.read_text(encoding="utf-8").splitlines():
+            ex = re.match(r"^:{3,}exercise(.*)$", line)
+            if ex:
+                optional = "optional := true" in ex.group(1)
+                continue
+            spec = re.match(r"^`?GRADE_MANUAL\s+[0-9./]+\s*:\s*([^`\n]+)", line)
+            if spec and not optional:
+                found += spec.group(1).split()
     return found
 
 
