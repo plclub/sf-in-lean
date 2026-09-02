@@ -552,6 +552,9 @@ def foo (n : Nat) : NatList :=
 
 ## Exercises
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
 :::dev "Michael Hicks (mwhicks1)"
 The exercises below are kind of massive, with many parts. Is that really what we want,
 rather than separating out the graded parts into separate exercises?
@@ -753,6 +756,10 @@ theorem test_alternate4 :
 
 ## Counting
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
+::::::full
 :::::exercise (rating := 1) (name := "counting")
 Define a `count` function for {name}`NatList`s that counts the number of times an element `n` appears in the list.
 
@@ -808,9 +815,14 @@ Again, all these proofs could be completed with just `rfl`, because the proof is
 example : count 1 [1, 2, 3, 1, 4, 1] = 3 := solution!(by rfl)
 example : count 6 [1, 2, 3, 1, 4, 1] = 0 := solution!(by rfl)
 ```
+::::::
 
 ## Membership
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
+::::::full
 :::::exercise (rating := 1) (name := "membership")
 
 ```lean
@@ -851,9 +863,14 @@ theorem test_member2 : member 2 [1, 4, 1] = false := solution!(by rfl)
 :::gradeTheorem "0.5" test_member1 test_member2
 :::
 :::::
+::::::
 
 ## Removal
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
+::::::full
 :::::exercise (rating := 3) (name := "removing") (optional := true)
 Here are some more {name}`NatList` functions for you to practice with.
 
@@ -943,8 +960,12 @@ theorem test_removeAll2 : count 5 (removeAll 5 [2, 5, 5, 5, 1]) = 0 := solution!
 :::
 
 :::::
+::::::
 
 ## Included
+
+:::suppressPreviousHeaderWhenTerse
+:::
 
 :::instructors
 The following is also a valid definition because we don't provide `included_cons_def` in the student handout:
@@ -956,6 +977,7 @@ def included (l₁ l₂ : NatList) : Bool :=
 ```
 :::
 
+::::::full
 :::::exercise (rating := 3) (name := "included") (optional := true)
 ```lean
 def included (l₁ l₂ : NatList) : Bool := solution!(
@@ -1004,6 +1026,7 @@ theorem test_included2 : included [1, 2, 2] [2, 1, 4, 1] = false := solution!(by
 :::gradeTheorem "0.5" test_included1 test_included2
 :::
 :::::
+::::::
 
 # Reasoning About Lists
 
@@ -1505,6 +1528,9 @@ because we're trying to be ultra-clear about the details.
 
 ## List Exercises, Part 1
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
 ::::::full
 :::::exercise (rating := 3) (name := "list_exercises")
 More practice with lists:
@@ -1639,6 +1665,9 @@ theorem beq_refl (l : NatList) :
 ::::::
 
 ## List Exercises, Part 2
+
+:::suppressPreviousHeaderWhenTerse
+:::
 
 ```lean
 open NatList
@@ -2061,7 +2090,7 @@ def MyId.beq (x₁ x₂ : MyId) : Bool :=
   x₁.val == x₂.val
 ```
 
-:::::exercise (rating := 1) (name := "MyId.beq_refl")
+:::::exercise (rating := 1) (name := "MyId.beq_refl") (checkVisibility := false)
 ```lean
 theorem MyId.beq_refl (x : MyId) : MyId.beq x x = true := by
   solution!
