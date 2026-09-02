@@ -449,6 +449,11 @@ Lean's built-in `List` already has such an instance (using
 we can register it as the `++` operator within our namespace:
 ::::
 
+:::terse
+Lean overloads notation like `++` via _type classes_: registering an
+`HAppend` instance lets `++` mean `append` for `NatList`.
+:::
+
 ```lean
 instance : HAppend NatList NatList NatList where
   hAppend := append
