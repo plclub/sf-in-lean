@@ -1880,12 +1880,12 @@ Proofs that one expression multisteps to another can be tedious...
 ```lean
 example : (.p (.c 3) (.p (.c 3) (.c 4))) ⟶* (.c 10) := by
   apply Multi.step (y := .p (.c 3) (.c 7))
-  . apply Step.plusRight
-    . apply IsValue.const
-    . apply Step.plus
-  . apply Multi.step (y := .c 10)
-    . apply Step.plus
-    . apply Multi.refl
+  · apply Step.plusRight
+    · apply IsValue.const
+    · apply Step.plus
+  · apply Multi.step (y := .c 10)
+    · apply Step.plus
+    · apply Multi.refl
 ```
 
 ::::full
