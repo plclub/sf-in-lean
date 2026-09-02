@@ -8,3 +8,7 @@ register_label_attr SimpleArith
 -- Stlc.lean
 register_label_attr StlcEval
 register_label_attr StlcTyping
+
+-- Sub.lean
+register_label_attr StlcSubEval
+register_label_attr StlcSubTyping
