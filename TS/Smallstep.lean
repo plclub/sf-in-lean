@@ -1957,7 +1957,12 @@ syntax "normalize" " using " ident,+ : tactic
 
 macro_rules
   | `(tactic| normalize using $xs,*) =>
-    `(tactic| repeat apply Multi.step <;> try solve_by_elim (maxDepth:=10) using $xs,*)
+    `(tactic|
+      first
+      | apply Multi.refl
+      | (apply Multi.step
+         . solve_by_elim (maxDepth := 15) (constructor := false) only using $xs,*
+         . normalize using $xs,*))
 ```
 
 And voilà:
