@@ -1880,12 +1880,12 @@ Proofs that one expression multisteps to another can be tedious...
 ```lean
 example : (.p (.c 3) (.p (.c 3) (.c 4))) ⟶* (.c 10) := by
   apply Multi.step (y := .p (.c 3) (.c 7))
-  . apply Step.plusRight
-    . apply IsValue.const
-    . apply Step.plus
-  . apply Multi.step (y := .c 10)
-    . apply Step.plus
-    . apply Multi.refl
+  · apply Step.plusRight
+    · apply IsValue.const
+    · apply Step.plus
+  · apply Multi.step (y := .c 10)
+    · apply Step.plus
+    · apply Multi.refl
 ```
 
 ::::full
@@ -1961,8 +1961,8 @@ macro_rules
       first
       | apply Multi.refl
       | (apply Multi.step
-         . solve_by_elim (maxDepth := 15) (constructor := false) only using $xs,*
-         . normalize using $xs,*))
+         · solve_by_elim (maxDepth := 15) (constructor := false) only using $xs,*
+         · normalize using $xs,*))
 ```
 
 And voilà:
@@ -1981,8 +1981,8 @@ term `e'` yourself.
 theorem normalize_ex : exists e', (.p (.c 3) (.p (.c 2) (.c 1))) ⟶* e' ∧ IsValue e' := by
   solution!
     exists (.c 6); constructor
-    . normalize using SimpleArith
-    . constructor
+    · normalize using SimpleArith
+    · constructor
 ```
 
 :::gradeTheorem 3 normalize_ex
