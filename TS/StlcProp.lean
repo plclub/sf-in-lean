@@ -411,16 +411,36 @@ First, we show that typing is preserved under "extensions" to the
 context `Γ`.  (Recall map inclusion, `Γ ⊆ Γ'`, from the `Typeclasses` chapter.)
 
 ```lean
--- IN PROGRESS
-theorem weakening (Γ Γ' : Context) (t : Tm) (T : Ty)
-    (hi : Γ ⊆ Γ') (hT : <{ ~Γ ⊢ ~t ⦂ ~T }>) : <{ ~Γ' ⊢ ~t ⦂ ~T }> := by
-  induction hT generalizing Γ' with
-  | var _ x _ h => exact .var _ x _ (hi h)
-  | abs _ x _ _ _ _ ih => exact .abs _ x _ _ _ (ih _ (PartialMap.update_subset _ _ _ _ hi))
-  | app _ _ _ _ _ _ _ ih₁ ih₂ => exact .app _ _ _ _ _ (ih₁ _ hi) (ih₂ _ hi)
-  | tru => exact .tru _
-  | fls => exact .fls _
-  | ite _ _ _ _ _ _ _ _ ih₁ ih₂ ih₃ => exact .ite _ _ _ _ _ (ih₁ _ hi) (ih₂ _ hi) (ih₃ _ hi)
+theorem weakening {Γ Γ' : Context} {t : Tm} {τ : Ty}
+    (hi : Γ ⊆ Γ') (ht : <{ ~Γ ⊢ ~t ⦂ ~τ }>) : <{ ~Γ' ⊢ ~t ⦂ ~τ }> := by
+  induction ht generalizing Γ' with
+  | var =>
+      constructor; apply hi; assumption
+  | abs _ _ _ _ _ _ ih =>
+      constructor; apply ih; apply PartialMap.update_subset; assumption
+  | app _ _ _ _ _ _ _ ih₁ ih₂ =>
+      constructor
+      . exact ih₁ hi
+      . exact ih₂ hi
+  | tru => constructor
+  | fls => constructor
+  | ite _ _ _ _ _ _ _ _ ih₁ ih₂ ih₃ =>
+      constructor
+      . exact ih₁ hi
+      . exact ih₂ hi
+      . exact ih₃ hi
+```
+
+Through judicious use of `apply_rules`, we can heavily automate this proof.
+The tactic after `with` is applied to every case of the {tactic}`induction`
+and handles all the cases using {tactic}`apply_rules`'s automation.
+We must give the tactic access to all the `HasType` constructors and the
+{name}`PartialMap.update_subset` lemma for this to work:
+
+```lean
+theorem weakening' {Γ Γ' : Context} {t : Tm} {τ : Ty}
+    (hi : Γ ⊆ Γ') (ht : <{ ~Γ ⊢ ~t ⦂ ~τ }>) : <{ ~Γ' ⊢ ~t ⦂ ~τ }> := by
+  induction ht generalizing Γ' with (apply_rules [PartialMap.update_subset] using StlcTyping)
 ```
 
 :::slidebreak
@@ -429,12 +449,12 @@ theorem weakening (Γ Γ' : Context) (t : Tm) (T : Ty)
 The following simple corollary is what we actually need below.
 
 ```lean
-theorem weakening_empty (Γ : Context) (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
-    <{ ~Γ ⊢ ~t ⦂ ~T }> :=
-  weakening _ _ _ _
-    (fun h => by
-      rw [PartialMap.getElem_empty] at h
-      cases h) hT
+theorem weakening_empty {Γ : Context} {t : Tm} {τ : Ty} (ht : <{ ∅ ⊢ ~t ⦂ ~τ }>) :
+    <{ ~Γ ⊢ ~t ⦂ ~τ }> := by
+  apply weakening _ ht
+  intro _ _ h
+  rw [PartialMap.getElem_empty] at h
+  contradiction
 ```
 
 ## The Substitution Lemma
@@ -488,7 +508,7 @@ theorem substitution_preserves_typing (Γ : Context) (x : String) (U : Ty)
         rw [subst_var_eq]
         have hUT : U = T := Option.some.inj h
         subst hUT
-        exact weakening_empty _ _ _ hv
+        exact weakening_empty hv
       · rw [PartialMap.update_neq hxy] at h
         rw [subst_var_ne _ _ _ hxy]
         exact .var _ y _ h
@@ -598,7 +618,7 @@ theorem substitution_preserves_typing_from_typing_ind (Γ : Context) (x : String
         rw [subst_var_eq]
         have hUT : U = T₁ := Option.some.inj h
         subst hUT
-        exact weakening_empty _ _ _ hv
+        exact weakening_empty hv
       · rw [PartialMap.update_neq hxy] at h
         rw [subst_var_ne _ _ _ hxy]
         exact .var _ y _ h
