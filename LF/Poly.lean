@@ -936,6 +936,12 @@ theorem unzip_test_snd' : (unzip [(1, false), (2, true)]).snd = [false, true] :=
   rw [unzip_cons, unzip_cons, unzip_nil]
 ```
 :::
+
+:::grade
+```
+GRADE_MANUAL 3: unzip
+```
+:::
 :::::
 ::::::
 

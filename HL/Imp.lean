@@ -1639,7 +1639,7 @@ theorem plus2_spec (st : State) (n : Nat) (st' : State)
 This used to be recommended.  Should it be reinstated?
 :::
 
-:::::exercise (rating := 3) (name := "XtimesYinZ_spec") (optional := true)
+:::::exercise (rating := 3) (name := "XtimesYinZ_spec") (optional := true) (manual := true)
 State and prove a specification of `XtimesYinZ`.
 
 ```lean

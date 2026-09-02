@@ -911,7 +911,7 @@ variables.  (I.e., every term is an open term; the closed terms
 are a subset of the open ones.  "Open" precisely means "possibly
 containing free variables.")
 
-:::::exercise (rating := 1) (name := "afi")
+:::::exercise (rating := 1) (name := "afi") (manual := true)
 (Officially optional, but strongly recommended!) In the space
 below, write out the rules of the `∈ᶠ` relation in
 informal inference-rule notation.  (Use whatever notational
@@ -1089,7 +1089,7 @@ earlier.
 :::
 
 ::::::full
-:::::exercise (rating := 1) (name := "progress_preservation_statement")
+:::::exercise (rating := 1) (name := "progress_preservation_statement") (manual := true)
 (Officially optional, but strongly recommended!) Without peeking
 at their statements above, write down the progress and
 preservation theorems for the simply typed lambda-calculus (as Lean

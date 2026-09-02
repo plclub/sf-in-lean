@@ -981,7 +981,7 @@ _strong progress_ from the {ref "Smallstep"}[Smallstep] chapter?
 (C) Strong progress implies progress
 :::
 
-:::::exercise (rating := 3) (name := "finish_progress_informal") (optional := true)
+:::::exercise (rating := 3) (name := "finish_progress_informal") (optional := true) (manual := true)
 Complete the corresponding informal proof.
 
 :::dev "Benjamin Pierce (bcpierce00)"
@@ -1156,7 +1156,7 @@ theorem preservation (t t' : Tm) (T : Ty) (hT : <{ ⊢ t ⦂ T }>) (he : t ⟶ t
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "finish_preservation_informal") (optional := true)
+:::::exercise (rating := 3) (name := "finish_preservation_informal") (optional := true) (manual := true)
 Complete the following informal proof.
 
 _Theorem_: If `⊢ t ⦂ T` and `t ⟶ t'`, then `⊢ t' ⦂ T`.
