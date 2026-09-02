@@ -355,11 +355,13 @@ Indeed it will. Lean infers that `α` is a type.
 replicate'.{u_1} (α : Type u_1) (x : α) (count : Nat) : List α
 ```
 
+::::full
 The generated
 `u_1` is part of Lean's bookkeeping for treating types more generally.
 We will not need to interpret names like this for now —
 you can ignore them when they appear in Lean's output unless we explicitly
 call attention to them.
+::::
 
 ::::terse
 Lean has used _type inference_ to deduce a type for {lean}`α`.
@@ -666,7 +668,7 @@ theorem rev_cons {α : Type} {x : α} {l : List α} :
     (x :: l).rev = l.rev ++ [x] := by rfl
 ```
 
-:::::exercise (rating := 2) (name := "poly_exercises")
+:::::exercise (rating := 2) (name := "poly_exercises") (checkVisibility := false)
 Here are a few simple exercises, just like ones in the {ref "Lists"}[Lists] chapter,
 for practice with polymorphism. Complete the proofs below.
 You will likely find useful the following
@@ -722,7 +724,7 @@ theorem append_length {α : Type} {l₁ l₂ : List α} :
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "more_poly_exercises")
+:::::exercise (rating := 2) (name := "more_poly_exercises") (checkVisibility := false)
 Here are some slightly more interesting ones...
 
 ```lean
@@ -862,6 +864,7 @@ checking your answers in Lean:
 :::::
 ::::::
 
+::::::full
 :::::exercise (rating := 3) (name := "unzip") (manual := true)
 The function `unzip` goes in the other direction from {name}`zip`: it takes a list of pairs and returns a pair of lists.
 
@@ -934,6 +937,7 @@ theorem unzip_test_snd' : (unzip [(1, false), (2, true)]).snd = [false, true] :=
 ```
 :::
 :::::
+::::::
 
 ## Polymorphic Options
 
