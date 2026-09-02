@@ -1309,7 +1309,6 @@ for high-level intuitions and the embedded comments for detailed
 mechanics.
 ::::
 
-:::::full
 Syntax:
 
 ```lean
@@ -1699,6 +1698,7 @@ Checks that the extended grammar parses the way it should.
 ```
 :::
 
+:::::full
 ::::exercise (rating := 3) (name := "STLCExtended.subst") (manual := true)
 
 ```lean
@@ -1809,6 +1809,7 @@ example : <{  [z := 0] (let y = succ 0 in z) }> = <{ let y = succ 0 in 0 }> := b
     rfl
 ```
 ::::
+:::::
 
 Next we define the values of our language.
 
@@ -1843,6 +1844,7 @@ attribute [ExtStlcEval] Tm.IsValue.abs Tm.IsValue.nat Tm.IsValue.sumInl Tm.IsVal
     Tm.IsValue.listNil Tm.IsValue.listCons Tm.IsValue.unit Tm.IsValue.pair
 ```
 
+:::::full
 ::::exercise (rating := 3) (name := "STLCExtended.step") (manual := true)
 ```lean
 section
@@ -1988,7 +1990,9 @@ attribute [ExtStlcEval] Step.appAbs Step.app₁ Step.app₂
 :::
 
 ::::
+:::::
 
+:::::full
 ::::exercise (rating := 3) (name := "STLCExtended.HasType") (manual := true)
 
 ```lean
@@ -2115,8 +2119,9 @@ attribute [ExtStlcTyping] HasType.var HasType.abs HasType.app
 :::autogradedHole HasType
 :::
 ::::
+:::::
 
-
+:::::full
 ::::details "Notation encoding: the judgment, for real"
 Closing the section retires the hygiene-free rule; the same rule is then
 declared again, hygienically, for every later use, and a pair of unexpanders
@@ -2161,7 +2166,9 @@ def HasType.unexpand : Unexpander
   | _ => throw ()
 ```
 ::::
+:::::
 
+:::::full
 ::::exercise (rating := 5) (name := "STLCExtended.examples") (optional := true)
 
 This section presents formalized versions of the examples from
@@ -2477,6 +2484,7 @@ end Fix4
 end Examples
 ```
 ::::
+:::::
 
 The proofs of progress and preservation for this enriched system
 are essentially the same (though of course longer) as for the pure
@@ -2488,6 +2496,7 @@ the relevant definitions aren't implemented above and below, then
 the missing cases don't appear in the proofs.
 :::
 
+:::::full
 ::::exercise (rating := 3) (name := "STLCExtended.progress")
 
 Complete the proof of `progress`
@@ -2749,7 +2758,9 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ ~t ⦂ ~τ }>) :
 :::
 
 ::::
+:::::
 
+:::::full
 Through the power of automation, the weakening proof is exactly the same as for the original STLC.
 
 ```lean
@@ -2769,7 +2780,9 @@ theorem weakening_empty {Γ : Context} {t : Tm} {τ: Ty}
   rw [PartialMap.getElem_empty] at h
   contradiction
 ```
+:::::
 
+:::::full
 ::::exercise (rating := 2) (name := "STLCExtended.substitution_preserves_typing")
 Complete the proof of `substitution_preserves_typing`
 
@@ -2821,7 +2834,9 @@ theorem substitution_preserves_typing (Γ : Context) (x : String) (τ₁ : Ty) (
 :::
 
 ::::
+:::::
 
+:::::full
 ::::exercise (rating := 3) (name := "STLCExtended.preservation")
 Complete the proof of `preservation`:
 
@@ -2901,8 +2916,8 @@ theorem preservation (t t' : Tm) (τ : Ty)
 :::
 
 ::::
+:::::
 
 ```lean
 end StlcExtended
 ```
-:::::
