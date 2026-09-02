@@ -4,6 +4,10 @@
 package_release.py — Package a "local release" of SF-in-Lean for the course
 webpage: the student-facing html/ and lean/ for each volume, nothing else.
 
+Which volumes get built is driven entirely by scripts/release_chapters.json:
+only the volumes mentioned there are released, each trimmed to its listed
+chapters. An omitted volume is skipped entirely.
+
 For each requested volume (lf / hl / ts):
 
   1. Optionally restrict the volume to an allow-listed subset of chapters
@@ -32,7 +36,7 @@ For each requested volume (lf / hl / ts):
      the lean directory up as <out>/<vol>/sf-<vol>-lean.zip.
 
 Usage:
-  python3 scripts/package_release.py [--volumes lf,hl,ts] [--out release]
+  python3 scripts/package_release.py [--out release]
       [--config scripts/release_chapters.json] [--allow-dev-notes] [--keep-lake]
 """
 
@@ -180,8 +184,6 @@ def load_config(config_path):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--volumes", default=",".join(ALL_VOLUMES),
-                     help="comma-separated subset of lf,hl,ts (default: all)")
     ap.add_argument("--out", default="release", help="release output directory (default: release/)")
     ap.add_argument("--config", default="scripts/release_chapters.json",
                      help="chapter allow-list config (default: scripts/release_chapters.json)")
@@ -191,13 +193,13 @@ def main():
                      help="keep the .lake build cache in the packaged lean/ directory")
     args = ap.parse_args()
 
-    volumes = [v.strip() for v in args.volumes.split(",") if v.strip()]
-    for v in volumes:
-        if v not in ALL_VOLUMES:
-            raise SystemExit(f"unknown volume '{v}'; expected one of {ALL_VOLUMES}")
-
     config_path = REPO_ROOT / args.config
     config = load_config(config_path) if config_path.exists() else {}
+
+    volumes = [v for v in ALL_VOLUMES if v in config]
+    if not volumes:
+        raise SystemExit(f"no volumes listed in {args.config}; nothing to release")
+
     out_dir = REPO_ROOT / args.out
     out_dir.mkdir(parents=True, exist_ok=True)
 
