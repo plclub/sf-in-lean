@@ -195,7 +195,7 @@ what we know about a term.
 
 ::::full
 For example, we may know that `t₁` is a record with two
-fields (e.g., `τ₁ = {x:α→α, y:β→β}]`, but choose to forget about
+fields (e.g., `τ₁ = {x:α→α, y:β→β}`, but choose to forget about
 one of the fields (`τ₂ = {y:β→β}`) so that we can pass `t₁` to a
 function that requires just a single-field record.
 ::::
@@ -1904,280 +1904,276 @@ look like to tell us something further about the shapes of `σ` and
 Formally:
 :::
 
-(* FULL: EX2? (sub_inversion_Bool)
-Lemma sub_inversion_Bool : ∀ υ,
-     υ <: <{ Bool }> →
-     υ = <{ Bool }>.
-(* FOLD
-Proof with auto.
-  intros υ Hs.
-  remember <{ Bool }> as δ.
-  (* ADMITTED
-  induction Hs; try solve_by_invert...
-  - (* trans
-  replace τ with υ in *; auto.
-Qed.
-(* /ADMITTED
-(* /FOLD
- FULL: []
-
-(* FULL: EX3 (sub_inversion_arrow)
-Lemma sub_inversion_arrow : ∀ υ V1 V2,
-     υ <: <{ V1→V2 }> →
-     exists U1 U2,
-     υ = <{ U1→U2 }> ∧ V1 <: U1 ∧ U2 <: V2.
-(* FOLD
-Proof with eauto.
-  intros υ V1 V2 Hs.
-  remember <{ V1→V2 }> as δ.
-  generalize dependent V2. generalize dependent V1.
-  (* ADMITTED
-  induction Hs; subst; intros; try solve_by_invert.
-    - (* refl
-      exists V1, V2. subst...
-    - (* trans
-      apply IHHs2 in HeqV. destruct HeqV as [U1 [U2 [HeqS [HU1 HU2```].
-      apply IHHs1 in HeqS. destruct HeqS as [σ₁ [σ₂ [HeqS1 [HS1 HS2```].
-      exists σ₁, σ₂. subst...
-    - (* arrow
-      exists σ₁, σ₂. injection HeqV as HeqV; subst...  Qed.
-(* /ADMITTED
-(* /FOLD
- FULL: []
-
- FULL: There are additional _inversion lemmas_ for the other types:
-       - `Unit] is the only subtype of [Unit`, and
-       - `Base n] is the only subtype of [Base n`, and
-       - `⊤` is the only supertype of `⊤`.
-
-(* FULL
-::::exercise (rating := 2) (name := "sub_inversion_Unit") (optional := true)
-Lemma sub_inversion_Unit : ∀ υ,
-     υ <: <{ Unit }> →
-     υ = <{ Unit }>.
-(* FOLD
-Proof with auto.
-  intros υ Hs.
-  remember <{ Unit }> as δ.
-  (* ADMITTED
-  induction Hs; try solve_by_invert...
-  - (* trans  subst. assert (υ = <{ Unit }>); subst...
-Qed.
-(* /ADMITTED
-(* /FOLD
+:::::full
+::::exercise (rating := 2) (name := "sub_inversion_bool") (optional := true)
+```lean
+theorem sub_inversion_bool (τ : Ty)
+    (h : τ <: <{ Bool }>) :
+    τ = Ty.bool := by
+  solution!
+    generalize heq : Ty.bool = σ at h
+    induction h with (subst_vars; try contradiction)
+    | refl => rfl
+    | trans h₁ h₂ ih₁ ih₂ =>
+        rw [ih₁]; apply ih₂ rfl
+        symm; apply ih₂ rfl
+```
 ::::
+:::::
 
-::::exercise (rating := 2) (name := "sub_inversion_Base") (optional := true)
-Lemma sub_inversion_Base : ∀ υ s,
-     υ <: <{ Base s }> →
-     υ = <{ Base s }>.
-(* FOLD
-Proof with auto.
-  intros υ s Hs.
-  remember <{ Base s }> as δ.
-  (* ADMITTED
-  induction Hs; try solve_by_invert...
-  - (* trans  subst. assert (υ = <{ Base s }>); subst...
-Qed.
-(* /ADMITTED
-(* /FOLD
-::::
+:::::full
+::::exercise (rating := 3) (name := "sub_inversion_arrow")
+```lean
+theorem sub_inversion_arrow {σ τ₁ τ₂ : Ty}
+     (h : σ <: <{ ~τ₁ → ~τ₂ }>) :
+     ∃ σ₁ σ₂,
+     σ = <{ ~σ₁ → ~σ₂ }> ∧ τ₁ <: σ₁ ∧ σ₂ <: τ₂ := by
+  solution!
+    generalize heq : <{ ~τ₁ → ~τ₂ }> = τ at h
+    induction h generalizing τ₁ τ₂ with (subst_vars; try contradiction)
+    | refl =>
+        exists τ₁, τ₂; constructor; rfl
+        constructor <;> constructor
+    | @arrow σ₁ σ₂ _ _ h₁ h₂ ih₁ ih₂ =>
+        inversion heq; exists σ₁, σ₂
+    | trans h₁ h₂ ih₁ ih₂ =>
+        obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := ih₂ rfl; clear ih₂; subst_vars
+        obtain ⟨σ₁', σ₂', _, hs₁', hs₂'⟩ := ih₁ rfl; subst_vars; clear ih₁
+        exists σ₁', σ₂'; constructor; rfl; constructor
+        · exact Subtype.trans hs₁ hs₁'
+        · exact Subtype.trans hs₂' hs₂
+```
 
-::::exercise (rating := 2) (name := "sub_inversion_⊤") (optional := true)
-Lemma sub_inversion_⊤ : ∀ υ,
-     <{ ⊤ }> <: υ →
-     υ = <{ ⊤ }>.
-(* FOLD
-Proof with auto.
-  intros υ Hs.
-  remember <{ ⊤ }> as δ.
-  (* ADMITTED
-  induction Hs; try solve_by_invert...
-  - (* trans  subst. assert (υ = <{ ⊤ }>); subst...
-Qed.
-(* /ADMITTED
-(* /FOLD
-::::
-(* /FULL
-
-:::solution
-
-Lemma sub_inversion_prod : ∀ σ τ₁ τ₂,
-     σ <: <{ τ₁ × τ₂ }> →
-     exists σ₁ σ₂,
-       σ = <{ σ₁ × σ₂ }> ∧ σ₁ <: τ₁ ∧ σ₂ <: τ₂.
-Proof with eauto.
-  intros σ τ₁ τ₂ Hsub. remember <{ τ₁ × τ₂ }> as Prod.
-  generalize dependent τ₂. generalize dependent τ₁.
-  induction Hsub; intros;
-    try solve_by_invert.
-  - (* refl
-    subst. subst. exists τ₁, τ₂...
-  - (* trans
-    destruct (IHHsub2 τ₁ τ₂) as [σ₁ [σ₂ [HeqUprod [S1subT1 S2subT2```]...
-    destruct (IHHsub1 σ₁ σ₂) as [U1 [U2 [HeqSprod [U1subS1 U2subS2```]...
-    exists U1, U2...
-  - (* prod
-    injection HeqProd as HeqProd. subst.
-    exists σ₁, σ₂...
-Qed.
-
+:::gradeTheorem 3 sub_inversion_arrow
 :::
-(* ##########################################
- ** Canonical Forms
 
- FULL: The proof of the progress theorem -- that a well-typed
-    non-value can always take a step -- doesn't need to change too
-    much: we just need one small refinement.  When we're considering
-    the case where the term in question is an application [t₁ t₂]
-    where both `t₁` and [t₂] are values, we need to know that `t₁` has
-    the _form_ of a lambda-abstraction, so that we can apply the
-    [ST_AppAbs] reduction rule.  In the ordinary STLC, this is
-    obvious: we know that `t₁` has a function type [T11→T12], and
-    there is only one rule that can be used to give a function type to
-    a value -- rule [T_Abs] -- and the form of the conclusion of this
-    rule forces `t₁` to be an abstraction.
+::::
+:::::
 
-    In the STLC with subtyping, this reasoning doesn't quite work
-    because there's another rule that can be used to show that a value
-    has a function type: subsumption.  Fortunately, this possibility
-    doesn't change things much: if the last rule used to show [Γ
-    ⊢ t₁ ⦂ T11→T12] is subsumption, then there is some
-    _sub_-derivation whose subject is also `t₁`, and we can reason by
-    induction until we finally bottom out at a use of [T_Abs].
+::::full
+There are additional _inversion lemmas_ for the other types:
+- `Unit` is the only subtype of `Unit`, and
+- `Base n` is the only subtype of `Base n`, and
+- `⊤` is the only supertype of `⊤`.
+::::
 
-    This bit of reasoning is packaged up in the following lemma, which
-    tells us the possible "canonical forms" (i.e., values) of function
-    type.
- TERSE: The proof of progress uses facts of the form "every value
-    belonging to an arrow type is an abstraction."
+:::::full
+::::exercise (rating := 2) (name := "sub_inversion_unit") (optional := true)
+```lean
+theorem sub_inversion_unit {τ : Ty} (h : τ <: <{ Unit }>) : τ = Ty.unit := by
+  solution!
+    generalize heq : Ty.unit = σ at h
+    induction h with (subst_vars; try contradiction)
+    | refl => rfl
+    | trans h₁ h₂ ih₁ ih₂ =>
+        rw [ih₁]; apply ih₂ rfl
+        symm; apply ih₂ rfl
+```
+::::
 
-    In the pure STLC, such facts are "immediate from the
-    definition" (formally, they follow directly by [inversion]).
+::::exercise (rating := 2) (name := "sub_inversion_base") (optional := true)
+```lean
+theorem sub_inversion_base {τ : Ty} {s : String} (h : τ <: Ty.base s) : τ = Ty.base s := by
+  solution!
+    generalize heq : Ty.base s = σ at h
+    induction h with (subst_vars; try contradiction)
+    | refl => rfl
+    | trans h₁ h₂ ih₁ ih₂ =>
+        rw [ih₁]; apply ih₂ rfl
+        symm; apply ih₂ rfl
+```
+::::
 
-    With subtyping, they require real proofs by induction...
+::::exercise (rating := 2) (name := "sub_inversion_top") (optional := true)
+```lean
+theorem sub_inversion_top {τ : Ty} (h : Ty.top <: τ) : τ = Ty.top := by
+  solution!
+    generalize heq : Ty.top = σ at h
+    induction h with (subst_vars; try contradiction)
+    | refl => rfl
+    | top => rfl
+    | trans h₁ h₂ ih₁ ih₂ =>
+        rw [ih₂]; apply ih₁ rfl
+        symm; apply ih₁ rfl
+```
+::::
+:::::
 
-(* FULL: EX3? (canonical_forms_of_arrow_types)
-Lemma canonical_forms_of_arrow_types : ∀ Γ s τ₁ τ₂,
-  <{ Γ ⊢ s ⦂ τ₁→τ₂ }> →
-  value s →
-  exists x σ₁ t₂,
-     s = <{\x:σ₁,t₂}>.
-(* FOLD
-Proof with eauto.
-  (* ADMITTED
-  intros Γ s τ₁ τ₂ Hty Hv.
-  remember <{ τ₁→τ₂ }> as τ.
-  generalize dependent τ₂. generalize dependent τ₁.
-  induction Hty; intros; try solve_by_invert.
-  - (* T_Abs
-    exists x, τ₂, t₁...
-  - (* sub
-    subst.
-    destruct (sub_inversion_arrow _ _ _ H) as
-      [σ₁ [σ₂ [HeqS [Hsub1 Hsub2```]...  Qed.
-(* /ADMITTED
-(* /FOLD
- FULL: []
+::::full
+When you do the `products` exercise, add your inversion lemma for products here:
+```lean
+--- SOLUTION
+theorem sub_inversion_prod {σ τ₁ τ₂ : Ty} (h : σ <: <{ ~τ₁ × ~τ₂ }>) :
+     ∃ σ₁ σ₂, σ = <{ ~σ₁ × ~σ₂ }> ∧ σ₁ <: τ₁ ∧ σ₂ <: τ₂ := by
+  solution!
+    generalize heq : <{ ~τ₁ × ~τ₂ }> = V at h
+    induction h generalizing τ₁ τ₂ with (subst_vars; try contradiction)
+    | refl =>
+        exists τ₁, τ₂; constructor; rfl
+        constructor <;> constructor
+    | @prod σ₁ σ₂ _ _ h₁ h₂ ih₁ ih₂ =>
+        inversion heq; exists σ₁, σ₂
+    | trans h₁ h₂ ih₁ ih₂ =>
+        obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := ih₂ rfl; clear ih₂; subst_vars
+        obtain ⟨σ₁', σ₂', _, hs₁', hs₂'⟩ := ih₁ rfl; subst_vars; clear ih₁
+        exists σ₁', σ₂'; constructor; rfl; constructor
+        · exact Subtype.trans hs₁' hs₁
+        · exact Subtype.trans hs₂' hs₂
+--- END SOLUTION
+```
+::::
 
- Similarly, the canonical forms of type `Bool` are the constants
-    [tru] and [fls].
+## Canonical Forms
 
-Lemma canonical_forms_of_Bool : ∀ Γ s,
-  <{ Γ ⊢ s ⦂ Bool }> →
-  value s →
-  s = tru \/ s = fls.
-(* FOLD
-Proof with eauto.
-  intros Γ s Hty Hv.
-  remember <{ Bool }> as τ.
-  induction Hty; try solve_by_invert...
-  - (* sub
-    subst. apply sub_inversion_Bool in H. subst...
-Qed.
-(* /FOLD
-:::solution
+:::full
+The proof of the progress theorem -- that a well-typed
+non-value can always take a step -- doesn't need to change too
+much: we just need one small refinement.  When we're considering
+the case where the term in question is an application `t₁ t₂`
+where both `t₁` and `t₂` are values, we need to know that `t₁` has
+the _form_ of a lambda-abstraction, so that we can apply the
+`abs` reduction rule.  In the ordinary STLC, this is
+obvious: we know that `t₁` has a function type `τ₁₁→τ₁₂`, and
+there is only one rule that can be used to give a function type to
+a value - rule `abs` - and the form of the conclusion of this
+rule forces `t₁` to be an abstraction.
 
-Lemma canonical_forms_of_product_types : ∀ Γ t τ₁ τ₂,
-     <{ Γ ⊢ t ⦂ τ₁ × τ₂ }> →
-     value t →
-     exists t₁ t₂,
-       t = <{ (t₁, t₂) }>.
-Proof with eauto.
-  intros Γ t τ₁ τ₂ Htyp Hval.
-  remember <{ τ₁ × τ₂ }> as Prod.
-  generalize dependent τ₁. generalize dependent τ₂.
-  induction Htyp; intros; try solve_by_invert.
-  - (* T_Pair
-    exists t₁, t₂...
-  - (* sub
-    rewrite HeqProd in H. apply sub_inversion_prod in H.
-    destruct H as [σ₁ [σ₂ [HeqSprod [_ _```]...
-Qed.
+In the STLC with subtyping, this reasoning doesn't quite work
+because there's another rule that can be used to show that a value
+has a function type: subsumption.  Fortunately, this possibility
+doesn't change things much: if the last rule used to show `Γ ⊢ t₁ ⦂ τ₁₁→τ₁₂` is subsumption,
+then there is some _sub_-derivation whose subject is also `t₁`, and we can reason by
+induction until we finally bottom out at a use of `abs`.
 
+This bit of reasoning is packaged up in the following lemma, which
+tells us the possible "canonical forms" (i.e., values) of function
+type.
 :::
-(* ##########################################
- ** Progress
 
- FULL: The proof of progress now proceeds just like the one for the
-    pure STLC, except that in several places we invoke canonical forms
-    lemmas...
- _Theorem_ (Progress): For any term [t] and type `τ`, if [∅ ⊢
-    t ⦂ τ] then [t] is a value or [t ⟶ t'] for some term [t'].
+:::terse
+The proof of progress uses facts of the form "every value
+belonging to an arrow type is an abstraction."
 
-    _Proof_: Let [t] and `τ` be given, with [∅ ⊢ t ⦂ τ].
-    Proceed by induction on the typing derivation.
+In the pure STLC, such facts are "immediate from the
+definition" (formally, they follow directly by {tactic}`inversion`).
 
-    The cases for [T_Abs], [T_Unit], [T_True] and [T_False] are
-    immediate because abstractions, `unit`, [true], and
-    [false] are already values.  The [T_Var] case is vacuous
-    because variables cannot be typed in the empty context.  The
-    remaining cases are more interesting:
+With subtyping, they require real proofs by induction...
+:::
 
-    - If the last step in the typing derivation uses rule `app`,
-      then there are terms `t₁` [t₂] and types `τ₁` and `τ₂` such that
-      [t = t₁ t₂], [τ = τ₂], [∅ ⊢ t₁ ⦂ τ₁ → τ₂], and [empty
-      ⊢ t₂ ⦂ τ₁].  Moreover, by the induction hypothesis, either
-      `t₁` is a value or it steps, and either [t₂] is a value or it
-      steps.  There are three possibilities to consider:
+:::::full
+::::exercise (rating := 3) (name := "canonical_forms_of_arrow_types") (optional := true)
+```lean
+theorem canonical_forms_of_arrow_types {Γ : Context} {t : Tm} {τ₁ τ₂ : Ty}
+  (ht : <{ ~Γ ⊢ ~t ⦂ ~τ₁ → ~τ₂ }>)
+  (hv : t.IsValue) :
+  ∃ x σ₁ t₂, t = <{λ ~x : ~σ₁ . ~t₂}> := by
+  solution!
+    generalize heq : <{ ~τ₁ → ~τ₂ }> = τ at ht
+    induction ht generalizing τ₁ τ₂ with (subst_vars; try contradiction)
+    | abs Γ x τ₁ τ₂ t₁ h ih => inversion heq; exists x, τ₂, t₁
+    | sub Γ t₁ τ₁ τ₂ ht hs ih =>
+        obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := sub_inversion_arrow hs; subst_vars
+        exact ih hv rfl
+```
+::::
 
-      - First, suppose [t₁ ⟶ t1'] for some term [t1'].  Then [t₁
-        t₂ ⟶ t1' t₂] by [ST_App1].
 
-      - Second, suppose `t₁` is a value and [t₂ ⟶ t2'] for some term
-        [t2'].  Then [t₁ t₂ ⟶ t₁ t2'] by rule [ST_App2] because `t₁`
-        is a value.
+Similarly, the canonical forms of type `Bool` are the constants
+`tru` and `fls`
 
-      - Third, suppose `t₁` and [t₂] are both values.  By the
-        canonical forms lemma for arrow types, we know that `t₁` has
-        the form [\x:σ₁,t₂] for some `x`, `σ₁`, and [t₂].  But then
-        [(\x:σ₁,t₂) t₂ ⟶ [x:=t₂]t₂] by [ST_AppAbs], since [t₂] is a
-        value.
+```lean
+theorem canonical_forms_of_bool {Γ : Context} {t : Tm}
+  (ht : <{ ~Γ ⊢ ~t ⦂ Bool }>)
+  (hv : t.IsValue) :
+  t = Tm.tru ∨ t = Tm.fls := by
 
-    - If the final step of the derivation uses rule [T_If], then
-      there are terms `t₁`, [t₂], and [t3] such that [t = if t₁
-      then t₂ else t3], with [∅ ⊢ t₁ ⦂ Bool] and with [empty
-      ⊢ t₂ ⦂ τ] and [∅ ⊢ t3 ⦂ τ].  Moreover, by the
-      induction hypothesis, either `t₁` is a value or it steps.
+  generalize heq : Ty.bool = τ at ht
+  induction ht with (subst_vars; first | trivial | try lia)
+  | sub Γ t₁ τ₁ τ₂ ht hs ih =>
+    apply sub_inversion_bool at hs; subst_vars
+    exact ih hv rfl
+```
 
-       - If `t₁` is a value, then by the canonical forms lemma for
-         booleans, either [t₁ = true] or [t₁ = false].  In
-         either case, [t] can step, using rule [ST_IfTrue] or
-         [ST_IfFalse].
 
-       - If `t₁` can step, then so can [t], by rule [ST_If].
+When you do the `products` exercise, add your canonical forms lemma for products here:
 
-    - If the final step of the derivation is by [sub], then there is
-      a type `τ₂` such that [τ₁ <: τ₂] and [∅ ⊢ t₁ ⦂ τ₁].  The
-      desired result is exactly the induction hypothesis for the
-      typing subderivation.
+```lean
+--- SOLUTION
+theorem canonical_forms_of_product_types {Γ : Context} {t : Tm} {τ₁ τ₂ : Ty}
+  (ht : <{ ~Γ ⊢ ~t ⦂ ~τ₁ × ~τ₂ }>)
+  (hv : t.IsValue) :
+  ∃ t₁ t₂, t = <{ (~t₁, ~t₂) }> := by
+    generalize heq : <{ ~τ₁ × ~τ₂ }> = τ at ht
+    induction ht generalizing τ₁ τ₂ with (subst_vars; try contradiction)
+    | pair Γ t₁ t₂ τ₁ τ₂ h ih => inversion heq; exists t₁, t₂
+    | sub Γ t₁ τ₁ τ₂ ht hs ih =>
+        obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := sub_inversion_prod hs; subst_vars
+        exact ih hv rfl
+--- END SOLUTION
+```
+:::::
 
- TERSE: ***
- Formally:
+## Progress
+
+:::::full
+The proof of progress now proceeds just like the one for the
+pure STLC, except that in several places we invoke canonical forms
+lemmas...
+
+_Theorem_ (Progress): For any term `t` and type `τ`, if `∅ ⊢ t ⦂ τ` then `t` is a value or
+  `t ⟶ t'` for some term `t'`.
+
+_Proof_: Let `t` and `τ` be given, with `∅ ⊢ t ⦂ τ`.
+Proceed by induction on the typing derivation.
+
+The cases for `abs`, `unit`, `tru` and `fls` are
+immediate because abstractions, `unit`, `true`, and
+`false` are already values.  The `var` case is vacuous
+because variables cannot be typed in the empty context.  The
+remaining cases are more interesting:
+
+- If the last step in the typing derivation uses rule `app`,
+  then there are terms `t₁` `t₂` and types `τ₁` and `τ₂` such that
+  `t = t₁ t₂`, `τ = τ₂`, `∅ ⊢ t₁ ⦂ τ₁ → τ₂`, and `∅ ⊢ t₂ ⦂ τ₁`.
+  Moreover, by the induction hypothesis, either
+  `t₁` is a value or it steps, and either `t₂` is a value or it
+  steps.  There are three possibilities to consider:
+
+  - First, suppose `t₁ ⟶ t₁'` for some term `t₁'`.  Then `t₁ t₂ ⟶ t₁' t₂` by `app₁'`.
+
+  - Second, suppose `t₁` is a value and `t₂ ⟶ t₂'` for some term
+    `t₂'`.  Then `t₁ t₂ ⟶ t₁ t₂'` by rule `app₂` because `t₁`
+    is a value.
+
+  - Third, suppose `t₁` and `t₂` are both values.  By the
+    canonical forms lemma for arrow types, we know that `t₁` has
+    the form `λ x : σ₁ . t₂` for some `x`, `σ₁`, and `s₂`.  But then
+    `(λ x : σ₁ . s₂) t₂ ⟶ [x := t₂] s₂` by `appAbs`, since `t₂` is a
+    value.
+
+- If the final step of the derivation uses rule `if`, then
+  there are terms `t₁`, `t₂`, and `t₃` such that `t = if t₁ then t₂ else t₃`,
+  with `∅ ⊢ t₁ ⦂ Bool` and with `∅ ⊢ t₂ ⦂ τ` and `∅ ⊢ t₃ ⦂ τ`.  Moreover, by the
+  induction hypothesis, either `t₁` is a value or it steps.
+
+    - If `t₁` is a value, then by the canonical forms lemma for
+      booleans, either `t₁ = true` or `t₁ = false`.  In
+      either case, `t` can step, using rule `ifTrue` or
+      `ifFalse`.
+
+    - If `t₁` can step, then so can `t`, by rule `if`.
+
+- If the final step of the derivation is by `sub`, then there is
+  a type `τ₂` such that `τ₁ <: τ₂` and `∅ ⊢ t₁ ⦂ τ₁`.  The
+  desired result is exactly the induction hypothesis for the
+  typing subderivation.
+:::::
+
+Formally:
 
 Theorem progress : ∀ t τ,
      <{ ∅ ⊢ t ⦂ τ }> →
-     value t \/ exists t', t ⟶ t'.
+     value t ∨ exists t', t ⟶ t'.
 (* FOLD
 Proof with eauto.
   intros t τ Ht.
@@ -2195,26 +2191,26 @@ Proof with eauto.
         destruct Ht1 as [x [σ₁ [t₂ H1```. subst.
         exists (<{ [x:=t₂]t₂ }>)...
       × (* t₂ steps
-        destruct H0 as [t2' Hstp]. exists <{ t₁ t2' }>...
+        destruct H0 as [t₂' Hstp]. exists <{ t₁ t₂' }>...
     + (* t₁ steps
-      destruct H as [t1' Hstp]. exists <{ t1' t₂ }>...
+      destruct H as [t₁' Hstp]. exists <{ t₁' t₂ }>...
   - (* T_If
     right.
     destruct IHHt1.
     + (* t₁ is a value  eauto.
     + apply canonical_forms_of_Bool in Ht1; [|assumption].
       destruct Ht1; subst...
-    + destruct H. rename x into t1'. eauto. :::solution
+    + destruct H. rename x into t₁'. eauto. :::solution
   - (* T_Pair
     destruct IHHt1; subst...
     + (* t₁ is a value
       destruct IHHt2; subst...
       × (* t₂ steps
-        right. destruct H0 as [t2' Hstp].
-        exists <{(t₁, t2')}>...
+        right. destruct H0 as [t₂' Hstp].
+        exists <{(t₁, t₂')}>...
     + (* t₁ steps
-      right. destruct H as [t1' Hstp].
-      exists <{(t1', t₂)}>...
+      right. destruct H as [t₁' Hstp].
+      exists <{(t₁', t₂)}>...
   - (* T_Fst
     right. destruct IHHt...
     + (* t is a value
@@ -2250,7 +2246,7 @@ Qed.
     The following inversion lemma tells us that, if we have a
     derivation of some typing statement [Γ ⊢ \x:σ₁,t₂ ⦂ τ] whose
     subject is an abstraction, then there must be some subderivation
-    giving a type to the body [t₂].
+    giving a type to the body `t₂`.
  TERSE: We also need to prove an inversion lemma corresponding to a
     structural fact about the typing relation that is "obvious from
     the definition" in pure STLC.
@@ -2266,16 +2262,16 @@ Qed.
  TERSE: _Lemma_: If [Γ ⊢ \x:σ₁,t₂ ⦂ τ], then there is a type `σ₂`
     such that [x|→σ₁; Γ ⊢ t₂ ⦂ σ₂] and [σ₁ → σ₂ <: τ].
 
- _Proof_: Let [Γ], `x`, `σ₁`, [t₂] and `τ` be given as
+ _Proof_: Let [Γ], `x`, `σ₁`, `t₂` and `τ` be given as
      described.  Proceed by induction on the derivation of [Γ ⊢
-     \x:σ₁,t₂ ⦂ τ].  The cases for [T_Var] and `app` are vacuous
+     \x:σ₁,t₂ ⦂ τ].  The cases for `var` and `app` are vacuous
      as those rules cannot be used to give a type to a syntactic
      abstraction.
 
-     - If the last step of the derivation is a use of [T_Abs] then
-       there is a type [T12] such that [τ = σ₁ → T12] and [x:σ₁;
-       Γ ⊢ t₂ ⦂ T12].  Picking [T12] for `σ₂` gives us what we
-       need, since [σ₁ → T12 <: σ₁ → T12] follows from [refl].
+     - If the last step of the derivation is a use of `abs` then
+       there is a type [τ₁₂] such that [τ = σ₁ → τ₁₂] and [x:σ₁;
+       Γ ⊢ t₂ ⦂ τ₁₂].  Picking [τ₁₂] for `σ₂` gives us what we
+       need, since [σ₁ → τ₁₂ <: σ₁ → τ₁₂] follows from [refl].
 
 
      - If the last step of the derivation is a use of [sub] then
@@ -2308,7 +2304,8 @@ Proof with eauto.
 
  TERSE: ***
  TERSE: Similarly:
-(* FULL: EX3? (typing_inversion_var)
+:::::full
+::::exercise (rating := 3) (name := "typing_inversion_var") (optional := true)
 Lemma typing_inversion_var : ∀ Γ (x:string) τ,
   <{ Γ ⊢ x ⦂ τ }> →
   exists σ,
@@ -2325,10 +2322,12 @@ Proof with eauto.
   - (* sub
     destruct IHHty as [υ [Hctx HsubU```... Qed.
 (* /ADMITTED
- FULL: []
+::::
+:::::
 (* /FOLD
 
-(* FULL: EX3? (typing_inversion_app)
+:::::full
+::::exercise (rating := 3) (name := "typing_inversion_app") (optional := true)
 Lemma typing_inversion_app : ∀ Γ t₁ t₂ τ₂,
   <{ Γ ⊢ t₁ t₂ ⦂ τ₂ }> →
   exists τ₁,
@@ -2347,7 +2346,8 @@ Proof with eauto.
     destruct IHHty as [U1 [Hty1 Hty2```...
 Qed.
 (* /ADMITTED
- FULL: []
+::::
+:::::
 (* /FOLD
 
 Lemma typing_inversion_unit : ∀ Γ τ,
@@ -2373,8 +2373,8 @@ Proof with eauto.
   induction Htyp;
     inversion Heqpair; subst; intros...
   - (* sub
-    destruct IHHtyp as [T3 [T4 [Hsub [Htyp1 Htyp2```]...
-    exists T3, T4...
+    destruct IHHtyp as [t₃ [T4 [Hsub [Htyp1 Htyp2```]...
+    exists t₃, T4...
 Qed.
 
 Lemma typing_inversion_fst : ∀ Γ t τ,
@@ -2386,7 +2386,7 @@ Proof with eauto.
   induction Htyp;
     inversion Heqfst; subst; intros...
   - (* sub
-    destruct IHHtyp as [T3 [T4 [Hsub Htyp1```...
+    destruct IHHtyp as [t₃ [T4 [Hsub Htyp1```...
 Qed.
 
 Lemma typing_inversion_snd : ∀ Γ t τ,
@@ -2398,7 +2398,7 @@ Proof with eauto.
   induction Htyp;
     inversion Heqsnd; subst; intros...
   - (* sub
-    destruct IHHtyp as [T3 [T4 [Hsub Htyp1```...
+    destruct IHHtyp as [t₃ [T4 [Hsub Htyp1```...
 Qed.
 
 :::
@@ -2508,50 +2508,49 @@ Qed.
 
  TERSE: ***
 
- _Theorem_ (Preservation): If [t], [t'] are terms and `τ` is a type
-    such that [∅ ⊢ t ⦂ τ] and [t ⟶ t'], then [∅ ⊢ t'
-    ⦂ τ].
+_Theorem_ (Preservation): If `t`, `t'` are terms and `τ` is a type
+  such that `∅ ⊢ t ⦂ τ` and `t ⟶ t'`, then `∅ ⊢ t' ⦂ τ`.
 
-    _Proof_: Let [t] and `τ` be given such that [∅ ⊢ t ⦂ τ].
+    _Proof_: Let `t` and `τ` be given such that `∅ ⊢ t ⦂ τ`.
     We proceed by induction on the structure of this typing
-    derivation. The [T_Abs], [T_Unit], [T_True], and [T_False] cases
+    derivation. The `abs`, `unit`, `tru`, and `fls` cases
     are vacuous because abstractions and constants don't step.  Case
-    [T_Var] is vacuous as well, since the context is empty.
+    `var` is vacuous as well, since the context is empty.
 
      - If the final step of the derivation is by `app`, then there
-       are terms `t₁` and [t₂] and types `τ₁` and `τ₂` such that [t =
+       are terms `t₁` and `t₂` and types `τ₁` and `τ₂` such that [t =
        t₁ t₂], [τ = τ₂], [∅ ⊢ t₁ ⦂ τ₁ → τ₂], and [∅ ⊢
        t₂ ⦂ τ₁].
 
        By the definition of the step relation, there are three ways
-       [t₁ t₂] can step.  Cases [ST_App1] and [ST_App2] follow
+       `t₁ t₂` can step.  Cases `app₁'` and `app₂` follow
        immediately by the induction hypotheses for the typing
        subderivations and a use of `app`.
 
-       Suppose instead [t₁ t₂] steps by [ST_AppAbs].  Then [t₁ =
-       \x:σ,t12] for some type `σ` and term [t12], and [t' =
-       [x:=t₂]t12].
+       Suppose instead `t₁ t₂` steps by `appAbs`.  Then [t₁ =
+       \x:σ,τ₁₂] for some type `σ` and term [τ₁₂], and [t' =
+       [x:=t₂]τ₁₂].
 
        By lemma [abs_arrow], we have [τ₁ <: σ] and [x:σ₁ ⊢ t₂ ⦂
        τ₂].  It then follows by the substitution
        lemma ([substitution_preserves_typing]) that [∅ ⊢ [x:=t₂]
-       t12 ⦂ τ₂] as desired.
+       τ₁₂ ⦂ τ₂] as desired.
 
-     - If the final step of the derivation uses rule [T_If], then
-       there are terms `t₁`, [t₂], and [t3] such that [t = if t₁ then
-       t₂ else t3], with [∅ ⊢ t₁ ⦂ Bool] and with [∅ ⊢
-       t₂ ⦂ τ] and [∅ ⊢ t3 ⦂ τ].  Moreover, by the induction
-       hypothesis, if `t₁` steps to [t1'] then [∅ ⊢ t1' : Bool].
+     - If the final step of the derivation uses rule `if`, then
+       there are terms `t₁`, `t₂`, and `t₃` such that [t = if t₁ then
+       t₂ else t₃], with [∅ ⊢ t₁ ⦂ Bool] and with [∅ ⊢
+       t₂ ⦂ τ] and [∅ ⊢ t₃ ⦂ τ].  Moreover, by the induction
+       hypothesis, if `t₁` steps to `t₁'` then [∅ ⊢ t₁' : Bool].
        There are three cases to consider, depending on which rule was
-       used to show [t ⟶ t'].
+       used to show `t ⟶ t'`.
 
-          - If [t ⟶ t'] by rule [ST_If], then [t' = if t1' then t₂
-            else t3] with [t₁ ⟶ t1'].  By the induction hypothesis,
-            [∅ ⊢ t1' ⦂ Bool], and so [∅ ⊢ t' ⦂ τ] by
-            [T_If].
+          - If `t ⟶ t'` by rule `if`, then [t' = if t₁' then t₂
+            else t₃] with `t₁ ⟶ t₁'`.  By the induction hypothesis,
+            [∅ ⊢ t₁' ⦂ Bool], and so [∅ ⊢ t' ⦂ τ] by
+            `if`.
 
-          - If [t ⟶ t'] by rule [ST_IfTrue] or [ST_IfFalse], then
-            either [t' = t₂] or [t' = t3], and [∅ ⊢ t' ⦂ τ]
+          - If `t ⟶ t'` by rule `ifTrue` or `ifFalse`, then
+            either [t' = t₂] or [t' = t₃], and [∅ ⊢ t' ⦂ τ]
             follows by assumption.
 
      - If the final step of the derivation is by [sub], then there
@@ -2584,14 +2583,14 @@ Proof with eauto.
     destruct (typing_inversion_pair _ _ _ _ HT) as
       [σ₁ [σ₂ [HSub [HTyp1 HTyp2```].
     destruct (sub_inversion_prod _ _ _ HSub) as
-      [T1' [T2' [Heq [Hsub1 Hsub2```].
+      [t₁' [t₂' [Heq [Hsub1 Hsub2```].
     injection Heq as Heq. subst...
   - (* T_Snd
     inversion HE; subst...
     destruct (typing_inversion_pair _ _ _ _ HT) as
       [σ₁ [σ₂ [HSub [HTyp1 HTyp2```].
     destruct (sub_inversion_prod _ _ _ HSub) as
-      [T1' [T2' [Heq [Hsub1 Hsub2```].
+      [t₁' [t₂' [Heq [Hsub1 Hsub2```].
     injection Heq as Heq. subst...
 :::
 Qed.
@@ -2793,7 +2792,7 @@ Import Examples.
 Notation p := "p".
 Notation a := "a".
 
-Definition TF P := P \/ ~P.
+Definition TF P := P ∨ ~P.
 
 ::::exercise (rating := 1) (name := "formal_subtype_instances_tf_1a") (optional := true)
 Theorem formal_subtype_instances_tf_1a:
@@ -2866,7 +2865,7 @@ Proof.
     × apply ⊤. }
   destruct (sub_inversion_arrow _ _ _ H) as [U1 [U2 [H0 [H1 H2```].
   inversion H0; subst.
-  destruct (sub_inversion_arrow _ _ _ H1) as [V1 [V2 [H3 [H4 H5```].
+  destruct (sub_inversion_arrow _ _ _ H1) as [υ₁ [υ₂ [H3 [H4 H5```].
   inversion H3; subst.
   apply sub_inversion_Bool in H4. inversion H4.
 Qed. (* /ADMITTED
@@ -3010,10 +3009,10 @@ Proof.
   right. intros [τ₁ [τ₂ H```.
   destruct (sub_inversion_prod _ _ _ (H <{ Bool }> <{ Bool }>)) as [U1 [U2 [H1 [H2 H3```].
   inversion H1; subst.
-  destruct (sub_inversion_prod _ _ _ (H <{ Unit }> <{ Unit }>)) as [V1 [V2 [H4 [H5 H6```].
+  destruct (sub_inversion_prod _ _ _ (H <{ Unit }> <{ Unit }>)) as [υ₁ [υ₂ [H4 [H5 H6```].
   inversion H4; subst.
-  assert (V1 = <{ Bool }>) by (apply sub_inversion_Bool; auto).
-  assert (V1 = <{ Unit }>) by (apply sub_inversion_Unit; auto).
+  assert (υ₁ = <{ Bool }>) by (apply sub_inversion_Bool; auto).
+  assert (υ₁ = <{ Unit }>) by (apply sub_inversion_Unit; auto).
   congruence.
 Qed. (* /ADMITTED
 ::::
@@ -3026,7 +3025,7 @@ Proof.
   right. intros [τ₁ [τ₂ H```.
   destruct (sub_inversion_arrow _ _ _ (H <{ Bool }> <{ Bool }>)) as [U1 [U2 [H1 [H2 H3```].
   inversion H1; subst.
-  destruct (sub_inversion_arrow _ _ _ (H <{ Unit }> <{ Unit }>)) as [V1 [V2 [H4 [H5 H6```].
+  destruct (sub_inversion_arrow _ _ _ (H <{ Unit }> <{ Unit }>)) as [υ₁ [υ₂ [H4 [H5 H6```].
   inversion H4; subst.
   assert (τ₁ = <{ Bool }>) by (apply sub_inversion_Bool; auto).
   assert (τ₁ = <{ Unit }>) by (apply sub_inversion_Unit; auto).
@@ -3042,10 +3041,10 @@ Proof.
   right. intros [τ₁ [τ₂ H```.
   destruct (sub_inversion_arrow _ _ _ (H <{ Bool }> <{ Bool }>)) as [U1 [U2 [H1 [H2 H3```].
   inversion H1; subst.
-  destruct (sub_inversion_arrow _ _ _ (H <{ Unit }> <{ Unit }>)) as [V1 [V2 [H4 [H5 H6```].
+  destruct (sub_inversion_arrow _ _ _ (H <{ Unit }> <{ Unit }>)) as [υ₁ [υ₂ [H4 [H5 H6```].
   inversion H4; subst.
-  assert (V2 = <{ Bool }>) by (apply sub_inversion_Bool; auto).
-  assert (V2 = <{ Unit }>) by (apply sub_inversion_Unit; auto).
+  assert (υ₂ = <{ Bool }>) by (apply sub_inversion_Bool; auto).
+  assert (υ₂ = <{ Unit }>) by (apply sub_inversion_Unit; auto).
   congruence.
 Qed. (* /ADMITTED
 ::::
@@ -3099,7 +3098,7 @@ Qed. (* /ADMITTED
 ::::exercise (rating := 3) (name := "formal_proper_subtypes") (optional := true)
 Theorem formal_proper_subtypes:
   TF (∀ τ,
-         ~(τ = <{ Bool }> \/ (exists n, τ = <{ Base n }>) \/ τ = <{ Unit }>) →
+         ~(τ = <{ Bool }> ∨ (exists n, τ = <{ Base n }>) ∨ τ = <{ Unit }>) →
          exists σ,
            σ <: τ ∧ σ <> τ).
 Proof.
