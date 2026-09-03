@@ -13,10 +13,13 @@ picture of who is touching what:
     `Last edit:` name when someone else pushed the most recent commit — and its
     last-activity time on a second line in small type; a Status cell of glyph
     badges (✅ ready, 👍 approved with open
-    threads, 🔴 changes requested, 🟠 ready for review, 💬N open threads,
+    threads, 🔴 changes requested, 🟠 ready for review, ❌ CI failing,
+    🟡 CI running, 💬N open threads,
     ✏️ draft, ❗ auto-merge held,
     🔗 fixes issue, ⚠️ main = no longer merges cleanly against `main`, plus
-    "based on X" when the PR is stacked on a branch other than `main`); an
+    "based on X" when the PR is stacked on a branch other than `main`, and a
+    small ⏳ "waiting on …" line under the badges naming whose move the PR is
+    waiting for and what that move is); an
     Overlaps cell naming
     which *other* PRs it shares files with — as `#N` links to those PRs, each
     hovering to reveal its branch name and PR title (plain = clean co-edit,
@@ -27,7 +30,10 @@ picture of who is touching what:
     commits in that window* (an equally old PR that is still being worked on
     gets a plain "Created N days ago" instead), followed by any `#Note: …`
     lines reviewers left on the PR — both in the conversation and in
-    still-unresolved review threads on the files.  Every icon carries a hover
+    still-unresolved review threads on the files — plus a 💬 expander listing
+    each unresolved thread (the file, who opened it, and the first line of its
+    opening comment), so the open threads read as the PR's todo list without
+    anyone having to adopt the `#Note:` convention.  Every icon carries a hover
     tooltip (via `<abbr>`) and is glued to its text with a non-breaking space
     fenced by word joiners (see `glue` — an `&nbsp;` alone does not stop a
     renderer breaking the line right after an emoji), and a legend below the
@@ -54,7 +60,8 @@ USAGE
       #  issue given by --issue N; needs GITHUB_TOKEN in the environment)
 
 PR data is read via the GitHub GraphQL API (review decision, unresolved
-threads, auto-merge, merge-queue membership); issue updates use the REST API.
+threads, requested reviewers, latest reviews, the head commit's CI rollup,
+auto-merge, merge-queue membership); issue updates use the REST API.
 Both go over stdlib urllib — no `gh` or `jq` needed. Because the report now
 shows PR branches only, a run without a token (which cannot see PRs) produces
 an empty report.
@@ -356,9 +363,10 @@ def parse_ts(iso):
 #
 # The page size is bounded by GitHub's 500,000-node budget, which is charged on
 # *possible* nodes, not returned ones: each PR may carry 100 threads × 100
-# comments plus 100 conversation comments, so 25 PRs/page ≈ 255k possible nodes
-# — comfortably under the cap, where 50/page was over it and the whole query was
-# rejected.  Grow the per-PR `first:` limits and this multiplies.
+# comments plus 100 conversation comments (the review requests, latest reviews,
+# and head-commit rollup add only ~20 more), so 25 PRs/page ≈ 256k possible
+# nodes — comfortably under the cap, where 50/page was over it and the whole
+# query was rejected.  Grow the per-PR `first:` limits and this multiplies.
 _PR_QUERY = """
 query($owner:String!, $name:String!, $cursor:String) {
   repository(owner:$owner, name:$name) {
@@ -373,10 +381,22 @@ query($owner:String!, $name:String!, $cursor:String) {
         headRefName
         baseRefName
         reviewDecision
+        author { login }
         autoMergeRequest { enabledAt }
         mergeQueueEntry { state }
+        reviewRequests(first:10) {
+          nodes { requestedReviewer {
+            ... on User { login } ... on Team { name } } }
+        }
+        latestReviews(first:10) {
+          nodes { author { login } state submittedAt }
+        }
+        commits(last:1) {
+          nodes { commit { statusCheckRollup { state } } }
+        }
         reviewThreads(first:100) {
-          nodes { isResolved comments(first:100) { nodes { body } } }
+          nodes { isResolved path
+                  comments(first:100) { nodes { body author { login } } } }
         }
         closingIssuesReferences(first:10) { nodes { number url } }
         comments(first:100) { nodes { body } }
@@ -398,7 +418,15 @@ def fetch_prs(slug, token):
     together reveal an auto-merge that is stuck outside the merge queue, the
     `created` timestamp behind the age note, and the list of `#Note: …`
     `notes` reviewers left — in the PR conversation *and* in unresolved review
-    threads on the files."""
+    threads on the files.
+
+    For the "waiting on …" line and the open-thread expander it also carries:
+    `author` (the PR author's login), `ci` (the head commit's check-rollup
+    state — SUCCESS/FAILURE/ERROR/PENDING/EXPECTED, or None with no checks),
+    `requested` (logins/team names whose review is requested), `reviews` (the
+    latest review per reviewer: login, state, submitted time), and `threads`
+    (one entry per unresolved review thread: file path, who opened it, and the
+    opening comment's text)."""
     owner, _, name = slug.partition("/")
     prs = {}
     cursor = None
@@ -434,6 +462,35 @@ def fetch_prs(slug, token):
                     notes += _NOTE_RE.findall(c["body"] or "")
             # A note repeated across comments (a quoted reply, say) is one note.
             notes = list(dict.fromkeys(n.strip() for n in notes if n.strip()))
+            # One entry per unresolved thread: where it is, who opened it, and
+            # the opening comment — the raw material for the 💬 expander.
+            open_threads = []
+            for t in threads:
+                if t["isResolved"] or not t["comments"]["nodes"]:
+                    continue
+                first = t["comments"]["nodes"][0]
+                open_threads.append({
+                    "path": t.get("path"),
+                    "login": (first.get("author") or {}).get("login"),
+                    "body": first["body"] or "",
+                })
+            # A requested reviewer the token cannot read (a team request, say)
+            # comes back as a null node with a FORBIDDEN error; count the
+            # requests separately from the names we could resolve, so the
+            # "waiting on …" line can still say *someone* was asked.
+            requested = []
+            for rq in pr["reviewRequests"]["nodes"]:
+                rr = rq["requestedReviewer"] or {}
+                who = rr.get("login") or rr.get("name")
+                if who:
+                    requested.append(who)
+            requested_n = len(pr["reviewRequests"]["nodes"])
+            reviews = [{"login": (rv["author"] or {}).get("login"),
+                        "state": rv["state"],
+                        "at": parse_ts(rv["submittedAt"])}
+                       for rv in pr["latestReviews"]["nodes"]]
+            head = pr["commits"]["nodes"]
+            roll = head[0]["commit"]["statusCheckRollup"] if head else None
             prs[pr["headRefName"]] = {
                 "num": pr["number"],
                 "title": pr["title"],
@@ -447,6 +504,12 @@ def fetch_prs(slug, token):
                 "in_queue": pr["mergeQueueEntry"] is not None,
                 "closes": closes,
                 "notes": notes,
+                "author": (pr.get("author") or {}).get("login"),
+                "ci": roll["state"] if roll else None,
+                "requested": requested,
+                "requested_n": requested_n,
+                "reviews": reviews,
+                "threads": open_threads,
             }
         if conn["pageInfo"]["hasNextPage"]:
             cursor = conn["pageInfo"]["endCursor"]
@@ -547,6 +610,9 @@ def status_badges(pr):
       👍 approved but with open threads.  A coloured disc for the
       awaiting-review state so it reads down the column alongside the red and
       green ones, rather than as an empty cell.
+    * ❌ CI failing on the head commit · 🟡 CI still running.  A green run gets
+      no badge — down this column, no news is good news (a PR with no checks at
+      all also shows nothing).
     * 💬N — N review threads still open.
     * ❗ auto-merge enabled but held (a failing check, missing approval, or
       conflict is stalling it).  A PR sitting in the merge queue is a transient
@@ -565,6 +631,11 @@ def status_badges(pr):
             badges.append(tip("✅", "Ready to merge — approved, nothing unresolved")
                           if pr["unresolved"] == 0
                           else tip("👍", "Approved, but with open review threads"))
+    ci = pr.get("ci")
+    if ci in ("FAILURE", "ERROR"):
+        badges.append(tip("❌", "CI failing on the head commit"))
+    elif ci in ("PENDING", "EXPECTED"):
+        badges.append(tip("🟡", "CI still running"))
     if pr["unresolved"]:
         n = pr["unresolved"]
         badges.append(tip(glue("💬", str(n)),
@@ -582,10 +653,12 @@ def status_badges(pr):
 
 def pr_ready(pr, clean_to_main):
     """A PR that could merge right now: not a draft, a review actually recorded
-    with no changes requested, no unresolved threads, and still clean against
-    `main`.  Drives the "Ready to merge" grouping at the top of the table."""
+    with no changes requested, no unresolved threads, CI not failing (a run
+    still in flight doesn't disqualify it), and still clean against `main`.
+    Drives the "Ready to merge" grouping at the top of the table."""
     return bool(pr and not pr["draft"] and pr["unresolved"] == 0
                 and pr["review_decision"] not in ("CHANGES_REQUESTED", "REVIEW_REQUIRED")
+                and pr.get("ci") not in ("FAILURE", "ERROR")
                 and clean_to_main)
 
 
@@ -658,6 +731,104 @@ def notes_cell(pr):
     if not notes:
         return ""
     return " · ".join(notes)
+
+
+def _person_link(login, fallback):
+    """A login as a profile *link* — never a bare `@login`, which would ping
+    that person every time the dashboard issue is updated."""
+    return (f"[{login}](https://github.com/{login})" if login else fallback)
+
+
+def _people_links(logins, fallback):
+    links = [_person_link(l, "") for l in logins]
+    return ", ".join(x for x in links if x) or fallback
+
+
+def next_action(pr, b):
+    """Whose move the PR is waiting for, and what that move is — the "what is
+    left before this can merge?" line, derived from signals GitHub already has
+    (no `#Note` discipline required).  Empty for a draft (its own section says
+    it all) and for a PR with nothing standing in its way.  The rules, in
+    priority order:
+
+      * CI failing — the author has to fix it before anything else matters;
+      * changes requested — on the author to address them, *unless* every
+        change-requesting review predates the branch's last commit, in which
+        case the ball is back with those reviewers for a re-review;
+      * nobody has reviewed it yet — on the requested reviewers by name
+        (unnamed when the request is unreadable to the token, e.g. a team), or
+        on "a reviewer" when nobody has been asked;
+      * approved but threads still open — on the author to resolve them;
+      * approved and clean but conflicting with `main` — on the author to
+        rebase/merge.
+
+    People are named as profile links, not `@` mentions — a mention in the
+    issue body would notify them on every refresh."""
+    if not pr or pr["draft"]:
+        return ""
+    author = _person_link(pr.get("author"), "the author")
+    if pr.get("ci") in ("FAILURE", "ERROR"):
+        return f"{author} to fix the failing checks"
+    dec = pr["review_decision"]
+    if dec == "CHANGES_REQUESTED":
+        blockers = [rv for rv in pr.get("reviews", [])
+                    if rv["state"] == "CHANGES_REQUESTED"]
+        pushed = (datetime.fromtimestamp(b["ts"], timezone.utc)
+                  if b.get("ts") else None)
+        if blockers and pushed and all(rv["at"] and rv["at"] < pushed
+                                       for rv in blockers):
+            who = _people_links([rv["login"] for rv in blockers],
+                                "the reviewer")
+            return f"{who} to re-review the commits pushed since"
+        return f"{author} to address the requested changes"
+    if dec == "REVIEW_REQUIRED":
+        req = pr.get("requested") or []
+        if req:
+            return f"{_people_links(req, 'a reviewer')} to review"
+        if pr.get("requested_n"):
+            # Requests exist but none were readable (a team request, say).
+            return "the requested reviewer to review"
+        return "a reviewer to pick it up — nobody asked yet"
+    if pr["unresolved"]:
+        n = pr["unresolved"]
+        return f"{author} to resolve {n} open thread{'' if n == 1 else 's'}"
+    if not b["clean_to_main"]:
+        return f"{author} to resolve the conflicts with `main`"
+    return ""
+
+
+def _thread_excerpt(body, maxlen=90):
+    """The first non-blank line of a review comment, defused for use inside a
+    table cell: `|` would end the cell, a backtick could open an unterminated
+    code span, `<` could smuggle in HTML, and a live `@mention` would ping its
+    target on every dashboard refresh (a zero-width space after the `@` keeps
+    the text readable but inert)."""
+    line = next((ln.strip() for ln in body.splitlines() if ln.strip()), "")
+    line = (line.replace("|", "\\|").replace("`", "'")
+                .replace("<", "&lt;").replace("@", "@&#8203;"))
+    return line[: maxlen - 1] + "…" if len(line) > maxlen else line
+
+
+def threads_cell(pr):
+    """A `<details>` expander turning the PR's unresolved review threads into a
+    visible todo list: the summary counts them, and each expands to
+    `file — who: first line of the opening comment`.  Reviewers' ordinary
+    comments thus surface in the table without anyone adopting the `#Note:`
+    convention.  Small type throughout (inside `summary` and body), matching
+    the rest of the `#Note` column; empty when nothing is unresolved."""
+    items = pr.get("threads") if pr else None
+    if not items:
+        return ""
+    n = len(items)
+    lines = []
+    for t in items:
+        path = f"`{t['path']}`" if t.get("path") else ""
+        who = _person_link(t.get("login"), "")
+        head = " ".join(x for x in (path, f"{who}:" if who else "") if x)
+        lines.append(f"{head} {_thread_excerpt(t['body'])}".strip())
+    summary = glue("💬", f"{n} open thread{'' if n == 1 else 's'}")
+    return (f"<details><summary><sub>{summary}</sub></summary>"
+            f"<sub>{'<br>'.join(lines)}</sub></details>")
 
 
 def age_phrase(delta):
@@ -844,14 +1015,23 @@ def render(branches, conf, prs, have_token, slug):
         if not b["clean_to_main"]:
             status += " " + tip(glue("⚠️", "main"),
                                 "No longer merges cleanly with main")
+        # Under the badges, a small-type line saying whose move the PR waits
+        # for — the "what is left?" answer the badges only imply.
+        waiting = next_action(pr, b)
+        if waiting:
+            status += f"<br><sub>{glue('⏳', 'waiting')} on {waiting}</sub>"
         # `#Note`s flow middot-separated (see notes_cell); `<sub>` is used purely
         # for smaller glyphs — the block line-height fixes the leading regardless.
         # The age note (Stale badge, or a plain "Created N days ago") leads the
         # cell, inside the same `<sub>` so the whole column reads in one small
-        # type size (the Stale badge is an image and keeps its own size).
+        # type size (the Stale badge is an image and keeps its own size).  The
+        # 💬 expander of unresolved threads follows, outside the `<sub>` (it
+        # carries its own) — `<details>` is block-level and would end an open
+        # `<sub>` anyway.
         notes = " ".join(
             x for x in (age_note(pr, b, now_dt), notes_cell(pr)) if x)
         notes = f"<sub>{notes}</sub>" if notes else ""
+        notes = " ".join(x for x in (notes, threads_cell(pr)) if x)
         row = (f"| {first} | {status} | {ov} | "
                f"{files_cell(b['files'], b['churn'])} | {notes} |")
         # Drafts are their own section at the bottom; among the rest, ready-to-
@@ -913,17 +1093,21 @@ def render(branches, conf, prs, have_token, slug):
             f"{glue('👍', 'approved,')} threads open · "
             f"{glue('🔴', 'changes')} requested · "
             f"{glue('🟠', 'ready')} for review · "
+            f"{glue('❌', 'CI')} failing · {glue('🟡', 'CI')} running · "
             f"{glue('💬', 'open')} threads · "
             f"{glue('✏️', 'draft')} · {glue('❗', 'auto-merge')} "
             f"held · {glue('🔗', 'fixes')} issue · {glue('⚠️', 'main')} "
-            "conflicts with `main`. "
+            "conflicts with `main` · "
+            f"{glue('⏳', 'whose')} move the PR is waiting for. "
             "&nbsp; **Overlaps** PRs sharing files (hover for the branch and "
             f"title) · plain = clean co-edit · {glue('⚠️', 'real')} conflict "
             f"· {glue('⊃', 'contains')} · {glue('⊂', 'contained')} in. "
             f"&nbsp; **`#Note`s** Stale&nbsp;=&nbsp;open more than "
             f"{STALE_HOURS}&nbsp;hours with no commits since; an equally old "
             "PR that is still moving just says when it was created; other "
-            "notes come from PR comments and unresolved review threads.</sub>")
+            "notes come from PR comments and unresolved review threads, and "
+            f"the {glue('💬', 'expander')} lists each unresolved thread "
+            "(file, who opened it, first line).</sub>")
         out.append("")
 
     # ---- files: conflicting first, then clean co-edits, then single-branch ----
