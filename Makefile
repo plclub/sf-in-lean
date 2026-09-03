@@ -27,18 +27,30 @@ $(1)-build: ensure-build-symlink
 
 $(1)-student: $(1)-build
 	lake exe sfl-$(1) student
+	$$(call copy-devcontainer,_out/$(1)/student/lean)
 
 $(1)-solutions: $(1)-build
 	lake exe sfl-$(1) solutions
+	$$(call copy-devcontainer,_out/$(1)/solutions/lean)
 
 $(1)-terse: $(1)-build
 	lake exe sfl-$(1) terse
+	$$(call copy-devcontainer,_out/$(1)/terse/lean)
 
 $(1)-grading: $(1)-build
 	lake exe sfl-$(1) grading
+	$$(call copy-devcontainer,_out/$(1)/grading/lean)
 
 $(1): $(1)-student $(1)-solutions $(1)-terse $(1)-grading
 
+endef
+
+# Copy the repo's top-level .devcontainer into a generated lean/ output so it
+# can be opened on its own (e.g. as a Codespace) with the Lean toolchain
+# preconfigured. Re-copied on every run so it can't go stale.
+define copy-devcontainer
+	rm -rf $(1)/.devcontainer
+	cp -r .devcontainer $(1)/.devcontainer
 endef
 
 # ── Volume definitions ────────────────────────────────────────────────────────
