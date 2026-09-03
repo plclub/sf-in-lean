@@ -16,10 +16,7 @@ file := some "Lists"
 :::instructors
 This file takes about 60 minutes to get through.
 Putting it together with Induction.lean makes a reasonable
-second week's homework assignment.
-:::
-:::dev "Benjamin Pierce (bcpierce00)"
-And UsingLean??
+second week's homework assignment, along with UsingLean.
 :::
 
 ```importBlock
@@ -44,10 +41,8 @@ This content is redundant with what's in Basics, which introduces the idea of
 tuple types and structures as shorthand for them. I suspect we can drop most
 of the Basics content and rely on what's here instead. If we do that, we can
 introduce the term "Tuple" here.
+(We do not need structures in the airport exercise, either.)
 ::::
-:::dev "Benjamin Pierce (bcpierce00)"
-Don't we need structures there in the airport exercise at least?
-:::
 
 ::::full
 In an `inductive` type definition, each constructor can take
@@ -1037,17 +1032,9 @@ theorem test_included2 : included [1, 2, 2] [2, 1, 4, 1] = false := solution!(by
 
 ::::full
 As with numbers, simple facts about list-processing
-functions can sometimes be proved entirely by rewriting.
-For example, just rewriting the left-hand side of the following equality using the theorem
-{name}`nil_append` is enough for this theorem.
+functions can sometimes be proved entirely by cases and rewriting,
+as shown for the following theorem.
 ::::
-
-:::dev "Claude" BeforeNextRelease
-This paragraph promises "the following equality", but no such example follows —
-the next code block is `tail_length_pred`, which is proved by `cases`, not by
-rewriting with `nil_append`. An example seems to have gone missing; it should be
-restored (or the paragraph reworded).
-:::
 
 ::::terse
 As with numbers, some proofs about list functions need only
