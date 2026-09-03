@@ -530,7 +530,7 @@ CollatzStepMulti 16 8       CollatzStepMulti 8 4       CollatzStepMulti 4 2     
 ::::
 
 ::::::full
-:::::exercise (rating := 1) (name := "EquivGen") (optional := true) (manual := true)
+:::::exercise (rating := 1) (name := "EqvGen") (optional := true) (manual := true)
 How would you modify the {name}`ReflTransGen` definition above to define the reflexive,
 symmetric, and transitive closure—in other words, the equivalence closure?
 
@@ -976,7 +976,7 @@ using {tactic}`cases`.
 ::::
 
 ```lean
-theorem Even.even_inversion (n : Nat) (h : Even n) :
+theorem Even.inversion (n : Nat) (h : Even n) :
     (n = 0) ∨ ∃ n', n = n' + 2 ∧ Even n' := by
   cases h with
   | zero => left; rfl
@@ -1042,8 +1042,8 @@ We can use the inversion lemma that we proved above to help
 structure proofs:
 
 ```lean
-theorem Even.succ_succ_even (n : Nat) (h : Even (n + 2)) : Even n := by
-  apply even_inversion at h
+theorem Even.of_succ_succ (n : Nat) (h : Even (n + 2)) : Even n := by
+  apply inversion at h
   obtain ⟨⟨⟩⟩ | ⟨n', ⟨h₁,  h₂⟩⟩ := h
   injections h₁ heq
   subst heq
@@ -1095,7 +1095,7 @@ inversion lemma. Compare:
 
 ```lean
 example : ¬ Even 1 := by
-  intro h; apply Even.even_inversion at h
+  intro h; apply Even.inversion at h
   obtain ⟨⟨⟩⟩ | ⟨n', ⟨h₁,  h₂⟩⟩ := h
   injections
 
@@ -1110,18 +1110,18 @@ Prove the following result using {tactic}`inversion`.
 (For extra practice, you can also prove it using the inversion lemma.)
 
 ```lean
-theorem Even.even_add_four {n : Nat} (h : Even (n + 4)) : Even n := by
+theorem Even.of_add_four {n : Nat} (h : Even (n + 4)) : Even n := by
   solution!
     inversion h with
-    | succ_succ h' => apply succ_succ_even; exact h'
+    | succ_succ h' => apply of_succ_succ; exact h'
 ```
 
-:::gradeTheorem 1 Even.even_add_four
+:::gradeTheorem 1 Even.of_add_four
 :::
 
 :::::
 
-:::::exercise (rating := 1) (name := "ev5_nonsense")
+:::::exercise (rating := 1) (name := "even5_nonsense")
 Prove the following result using {tactic}`inversion`.
 
 ```lean
@@ -1241,24 +1241,26 @@ Let's try to show that our new notion of evenness implies
 our earlier notion (the one based on {name}`Nat.double`).
 ::::
 
+:::full
+We could try to proceed by case analysis or induction on `n`.  But
+since {name}`Even` is mentioned in a premise, this strategy seems
+unpromising, because (as we've noted before) the induction
+hypothesis will talk about `n - 1` (which is _not_ even!).  Thus, it
+seems better to first try {tactic}`inversion` on the evidence for {name}`Even`.
+:::
+
 ```lean +error
 example (n : Nat) (h : Even n) : Nat.Even n := by
-  /- We could try to proceed by case analysis or induction on `n`.  But
-      since `Even` is mentioned in a premise, this strategy seems
-      unpromising, because (as we've noted before) the induction
-      hypothesis will talk about `n-1` (which is _not_ even!).  Thus, it
-      seems better to first try `inversion` on the evidence for `Even`.
-      Indeed, the first case can be solved trivially. -/
   inversion h with
-  | zero => exists 0
+  | zero => exists 0 -- The first case can be solved triviall.
   | succ_succ n' h' =>
-    /- Unfortunately, the second case is harder.  We need to show
-    `∃ n₀, n' + 2 = double n₀`, but the only available assumption is
-    `h'`, which states that `Even n'` holds.
-    In other words, what we need here is precisely the result we
-    are trying to prove, but applied to the smaller evidence `h'`.
-    -/
 ```
+
+Unfortunately, the second case is harder.  We need to show
+`∃ n₀, n' + 2 = double n₀`, but the only available assumption is
+`h'`, which states that `Even n'` holds.
+In other words, what we need here is precisely the result we
+are trying to prove, but applied to the smaller evidence `h'`.
 
 ## Induction on Evidence
 
@@ -1281,7 +1283,7 @@ the two ways in which {lean}`Even n` could have been constructed. If it
 was constructed by {lean}`Even.zero`, then {lean}`n = 0` and the
 property must hold of {lean}`0`. If it was constructed by
 {lean}`Even.succ_succ`, then the evidence of {lean}`Even n`
-is of the form `Ev.ev_succ_succ n' h'`, where {lean}`n = n' + 2` and
+is of the form `Even.succ_succ n' h'`, where {lean}`n = n' + 2` and
 `h'` is evidence for {lean}`Even n'`. In this case, the inductive hypothesis
 says that the property we are trying to prove holds for {lean}`n'`.
 ::::
@@ -1289,7 +1291,7 @@ says that the property we are trying to prove holds for {lean}`n'`.
 Let's try proving that lemma again:
 
 ```lean
-theorem even_even (n : Nat) (h : Even n) : Nat.Even n := by
+theorem Even.nat_even (n : Nat) (h : Even n) : Nat.Even n := by
   induction h with
   | zero => exists 0 -- (`0 = double 0` is closed by `exists`'s final `rfl`)
   | succ_succ h' ih =>
@@ -1309,10 +1311,10 @@ The equivalence between the second and third definitions of
 evenness now follows.
 
 ```lean
-theorem even_even_iff (n : Nat) : Even n ↔ Nat.Even n := by
+theorem Even.iff_nat_even (n : Nat) : Even n ↔ Nat.Even n := by
   apply Iff.intro
-  . intro h; exact even_even _ h
-  . intro ⟨k, hk⟩; rw [hk]; exact Even.double k
+  · intro h; exact nat_even _ h
+  · intro ⟨k, hk⟩; rw [hk]; exact double k
 ```
 
 As we will see in later chapters, induction on evidence is a
@@ -1322,64 +1324,64 @@ formalizing the semantics of programming languages.
 The following exercises provide simpler examples of this
 technique, to help you familiarize yourself with it.
 
-:::::exercise (rating := 2) (name := "ev_sum")
+:::::exercise (rating := 2) (name := "Even.add")
 ```lean
-theorem even_add (n m : Nat) (hₙ : Even n) (hₘ : Even m) : Even (n + m) := by
+theorem Even.add (n m : Nat) (hn : Even n) (hm : Even m) : Even (n + m) := by
   solution!
-    induction hₙ with
-    | zero => rw [Nat.zero_add]; exact hₘ
+    induction hn with
+    | zero => rw [Nat.zero_add]; exact hm
     | succ_succ h' ih =>
       rw [Nat.add_comm, Nat.add_succ, Nat.add_succ, Nat.add_comm]
       apply Even.succ_succ; exact ih
 ```
 
-:::gradeTheorem 2 even_add
+:::gradeTheorem 2 Even.add
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "ev_ev__ev") (level := Advanced)
+:::::exercise (rating := 3) (name := "Even.of_add_left") (level := Advanced)
 ```lean
-theorem even_add_even (n m : Nat) (hₙₘ : Even (n + m)) (hₙ : Even n) : Even m := by
+theorem Even.of_add_left (n m : Nat) (h : Even (n + m)) (hn : Even n) : Even m := by
   /- Hint: There are two pieces of evidence you could attempt to induct upon
       here. If one doesn't work, try the other. -/
   solution!
-    induction hₙ generalizing m with
-    | zero => rw [Nat.zero_add] at hₙₘ; exact hₙₘ
+    induction hn generalizing m with
+    | zero => rw [Nat.zero_add] at h; exact h
     | succ_succ h' ih =>
-      rw [Nat.add_comm, Nat.add_succ, Nat.add_succ, Nat.add_comm] at hₙₘ
-      inversion hₙₘ; apply ih; assumption
+      rw [Nat.add_comm, Nat.add_succ, Nat.add_succ, Nat.add_comm] at h
+      inversion h; apply ih; assumption
 ```
 
-:::gradeTheorem 3 even_add_even
+:::gradeTheorem 3 Even.of_add_left
 :::
 :::::
 
-:::::exercise (rating := 3) (name := "ev_plus_plus") (optional := true)
+:::::exercise (rating := 3) (name := "add_of_add_left") (optional := true)
 This exercise can be completed without induction or case analysis.
 But, you will need a clever `have` and some tedious rewriting.
 Hint: Is {lean}`(n + m) + (n + k)` even?
 
 ```lean
-theorem ev_plus_plus (n m k : Nat)
+theorem Even.add_of_add_left (n m k : Nat)
     (hₙₘ : Even (n + m))
     (hₙₚ : Even (n + k)) :
     Even (m + k) := by
   solution!
-    apply (even_add_even (n + n))
-    . have h : n + n + (m + k) = n + m + (n + k) := by
+    apply of_add_left (n + n)
+    · have h : n + n + (m + k) = n + m + (n + k) := by
         rw [Nat.add_assoc, Nat.add_assoc]
         congr 1
-        exact Nat.add_left_comm _ _ _
+        apply Nat.add_left_comm
       rw [h]
-      apply even_add
-      . assumption
-      . assumption
-    . rw [← Nat.double_add]; exact Even.double n
+      apply add
+      · assumption
+      · assumption
+    · rw [← Nat.double_add]; exact Even.double n
 ```
 
-:::gradeTheorem 3 ev_plus_plus
-:::
 :::::
+
+::::::
 
 :::full
 Another example of a proposition that can be characterized both recursively and
@@ -1388,11 +1390,11 @@ As a reminder, the recursive definition we saw looked like this:
 :::
 
 :::terse
-Recall the definition of `List.In` from last chapter:
+Recall the definition of {name}`List.In` from last chapter:
 :::
 
-```lean
-def In {α : Type} (x : α) (xs : List α) : Prop :=
+```recall
+def List.In {α : Type} (x : α) (xs : List α) : Prop :=
   match xs with
   | [] => False
   | x' :: xs' => x = x' ∨ In x xs'
@@ -1401,42 +1403,43 @@ def In {α : Type} (x : α) (xs : List α) : Prop :=
 We can also write this definition inductively like so:
 
 ```lean
-inductive In_Inductive {α : Type} (x : α) : List α → Prop
-  | head {l : List α} : In_Inductive x (x :: l)
-  | tail {y : α} {l : List α} (h : In_Inductive x l) : In_Inductive x (y :: l)
+inductive List.In' {α : Type} (x : α) : List α → Prop
+  | head {l : List α} : In' x (x :: l)
+  | tail {y : α} {l : List α} (h : In' x l) : In' x (y :: l)
 ```
 
 In fact, this is exactly how Lean defines this proposition,
 which it calls {name}`Membership.mem` and which is written {lean}`x ∈ l`.
 Its negation {lean}`¬ x ∈ l` is also written as {lean}`x ∉ l`.
 
+:::::full
 A good exercise to test your understanding of induction on
 evidence is to prove the equivalence of these definitions:
 
-:::::exercise (rating := 2) (name := "in_mem")
+::::exercise (rating := 2) (name := "in_mem")
 ```lean
-theorem in_mem {α} (x : α) (l : List α) : List.In x l ↔ x ∈ l := by
+theorem List.in_iff_mem {α} (x : α) (l : List α) : List.In x l ↔ x ∈ l := by
   solution!
     constructor
-    . intro h; induction l with
+    · intro h; induction l with
       | nil => apply List.In_nil at h; contradiction
       | cons hd tl ih =>
         rw [List.In_cons] at h
         obtain h | h := h
-        . subst h; constructor
-        . constructor; exact ih h
-    . intro h; induction h with
+        · subst h; constructor
+        · constructor; exact ih h
+    · intro h; induction h with
       | head l' => rw [List.In_cons]; left; rfl
       | tail h ih => rw [List.In_cons]; right; assumption
 ```
 
-:::gradeTheorem 3 in_mem
+:::gradeTheorem 3 List.in_iff_mem
 :::
+::::
 :::::
 
 The characterizing lemmas for `∈` are called
 {name}`List.mem_nil_iff` and {name}`List.mem_cons`.
-::::::
 
 ## Multiple Induction Hypotheses
 
@@ -1457,7 +1460,7 @@ inductive ReflTransGen {α : Type} (r : α → α → Prop) : α → α → Prop
 ```
 
 Let's say that a relation on a type {lean}`α` is _diagonal_ if it
-refines the identity relation ─ i.e., if `R x y` implies {lean}`x = y`.
+refines the identity relation ─ i.e., if `r x y` implies {lean}`x = y`.
 
 :::dev
 NDS 25: I originally wanted to do this with the empty
@@ -1468,32 +1471,31 @@ BCP 25: This one seems good.
 :::
 
 ```lean
-def Diagonal {α : Type} (R : α → α → Prop) := ∀ {x y}, R x y → x = y
+def Diagonal {α : Type} (r : α → α → Prop) := ∀ {x y}, r x y → x = y
 ```
 
 Now consider the following lemma about diagonal relations:
 
 ```lean
-theorem closure_of_diagonal_is_diagonal {α} (R : α → α → Prop)
-    (hDiag : Diagonal R) :
-    Diagonal (ReflTransGen R) := by
+theorem closure_of_diagonal_is_diagonal {α : Type} (r : α → α → Prop)
+    (hDiag : Diagonal r) :
+    Diagonal (ReflTransGen r) := by
   intro x y h
   induction h with
-  /- The two first cases go as you'd expect... -/
-  | step hr =>
-    rw [hDiag hr]
+  | step hr => rw [hDiag hr]
   | refl => rfl
-  /- ...  but something interesting happens here: there are two
-       induction hypotheses, `ih` and `ih'`! If you think about it, it
-       is not that weird: we are in the case `rt_trans`, which has
-       two recursive components, `hxy`, relating `x` to `y` and `hyz`,
-       relating `y` to `z`. Hence we may want (and will actually need)
-       an induction hypothesis for `hxy` and one for `hyz` ─ they are
-       called `ihxy` and `ihyz` here. In general, Lean will always
-       generate one induction hypothesis per recursive constructor of
-       the type being inducted over. -/
   | trans _ _ ihxy ihyz => rw [ihxy, ihyz]
 ```
+
+Something interesting happens here: there are two
+induction hypotheses, `ihxy` and `ihyz`! If you think about it, it
+is not that weird: we are in the case `trans`, which has
+two recursive components, `hxy`, relating `x` to `y` and `hyz`,
+relating `y` to `z`. Hence we may want (and will actually need)
+an induction hypothesis for `hxy` and one for `hyz` ─ they are
+called `ihxy` and `ihyz` here. In general, Lean will always
+generate one induction hypothesis per recursive constructor of
+the type being inducted over.
 
 :::dev
 HIDE: NDS comparing the previous proof to the pen-and-paper version
@@ -1502,23 +1504,8 @@ on paper differs a bit from the mechanized proof.  BCP 25: Yes.
 :::
 ::::
 
-::::hide
-```
-    /- LATER: BCP 25: This bit feels potentially confusing and also not
-      needed -- people that are paying attention enough to wonder about
-      this will notice it when it happens later... -/
-    /- Note that having multiple induction hypotheses is not
-        specific to evidence: any constructor of any inductive type with
-        more than one recursive component will yield as many induction
-        hypotheses as it has recursive components. -/
-    /- HIDE: NDS we may want to either 1) link to IndPrinciples for such
-      examples or 2) add such an example here, even though it is kind of
-      out of the topic. -/
-```
-::::
-
 ::::::full
-:::::exercise (rating := 4) (name := "ev'_ev") (level := Advanced) (optional := true)
+:::::exercise (rating := 4) (name := "Even'") (level := Advanced) (optional := true)
 :::instructors
 This is pretty hard, unless you know the trick that
 the sample proof uses!!  But at least it's marked as
@@ -1527,13 +1514,13 @@ advanced and optional. :-)
 
 In general, there may be multiple ways of defining a
 property inductively.  For example, here's a (slightly contrived)
-alternative definition for `Ev`:
+alternative definition for {name}`Even`:
 
 ```lean
-inductive Ev' : Nat → Prop where
-  | ev'_0 : Ev' 0
-  | ev'_2 : Ev' 2
-  | ev'_sum {n m : Nat} (h₁ : Ev' n) (h₂ : Ev' m) : Ev' (n + m)
+inductive Even' : Nat → Prop where
+  | zero : Even' 0
+  | two : Even' 2
+  | add {n m : Nat} (h₁ : Even' n) (h₂ : Even' m) : Even' (n + m)
 ```
 
 Prove that this definition is logically equivalent to the old one.
@@ -1543,42 +1530,36 @@ technique works with constructors of inductively defined
 propositions.
 
 ```lean
-theorem ev'_ev n : Ev' n ↔ Even n := by
+theorem Even'.iff_Even n : Even' n ↔ Even n := by
   solution!
     apply Iff.intro
-    . /- → -/
-      intro h; induction h
-      . constructor
-      . constructor; constructor
-      . apply even_add; assumption; assumption
-    . /- ← -/
-      intro h; induction h with
+    · intro h; induction h
+      · constructor
+      · constructor; constructor
+      · apply Even.add; assumption; assumption
+    · intro h; induction h with
       | zero => constructor
       | @succ_succ n _ _ =>
         rw [← Nat.add_zero n]
         constructor; assumption; constructor
 ```
 
-:::gradeTheorem 4 ev'_ev
-:::
 :::::
 
 We can do similar inductive proofs on the {name}`Perm3` relation,
 which we defined earlier as follows:
 
-```lean
-namespace Perm3Reminder
-
+```recall
 inductive Perm3 {α : Type} : List α → List α → Prop where
-  | perm3_swap12 {x y z : α} : Perm3 [x, y, z] [y, x, z]
-  | perm3_swap23 {x y z : α} : Perm3 [x, y, z] [x, z, y]
-  | perm3_trans {l₁ l₂ l₃ : List α}
+  | swap12 {x y z : α} : Perm3 [x, y, z] [y, x, z]
+  | swap23 {x y z : α} : Perm3 [x, y, z] [x, z, y]
+  | trans {l₁ l₂ l₃ : List α}
     (h₁₂ : Perm3 l₁ l₂)
     (h₂₃ : Perm3 l₂ l₃) :
     Perm3 l₁ l₃
+```
 
-end Perm3Reminder
-
+```lean
 namespace Perm3
 
 theorem symm {α} (l₁ l₂ : List α)
@@ -1603,17 +1584,17 @@ theorem In {α} (x : α) (l₁ l₂ : List α)
     | swap12 =>
       rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
       obtain h | h | h | h := hIn
-      . right; left; assumption
-      . left; assumption
-      . right; right; left; assumption
-      . contradiction
+      · right; left; assumption
+      · left; assumption
+      · right; right; left; assumption
+      · contradiction
     | swap23 =>
       rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
       obtain h | h | h | h := hIn
-      . left; assumption
-      . right; right; left; assumption
-      . right; left; assumption
-      . contradiction
+      · left; assumption
+      · right; right; left; assumption
+      · right; left; assumption
+      · contradiction
     | trans _ _  ih₁₂ ih₂₃ =>
       apply ih₂₃; apply ih₁₂; apply hIn
 ```
@@ -1633,8 +1614,6 @@ theorem NotIn {α} (x : α) (l₁ l₂ : List α)
     . exact hContra
 ```
 
-:::gradeTheorem 1 NotIn
-:::
 :::::
 
 :::::exercise (rating := 2) (name := "NotPerm3") (optional := true)
@@ -1648,17 +1627,14 @@ theorem Not : ¬ Perm3 [1, 2, 3] [1, 2, 4] := by
     have h4 : 3 ∉ [1, 2, 4] := by
       rw [List.mem_cons, List.mem_cons, List.mem_cons]; intro h4
       obtain h | h | h | h := h4
-      . contradiction
-      . contradiction
-      . contradiction
-      . contradiction
+      · contradiction
+      · contradiction
+      · contradiction
+      · contradiction
     apply h4; apply h
     rw [List.mem_cons, List.mem_cons, List.mem_cons]
     right; right; left; rfl
 ```
-
-:::gradeTheorem 2 Not
-:::
 
 ```lean
 end Perm3
@@ -1690,36 +1666,20 @@ For now FULLED the whole thing, but better fix seems needed.
 :::
 
 ::::::full
-Just as a single-argument proposition defines a _property_,
-a two-argument proposition defines a _relation_.
-
-A proposition parameterized by a number (such as {name}`Even`)
-can be thought of as a _property_ — i.e., it defines
-a subset of {name}`Nat`, namely those numbers for which the proposition
-is provable.  In the same way, a two-argument proposition can be
-thought of as a _relation_ — i.e., it defines a set of pairs for
-which the proposition is provable.
-
 ```lean
-namespace Playground
+namespace LePlayground
 ```
 
-Just like properties, relations can be defined inductively.  One
-useful example is the "less than or equal to" relation on numbers
-that we briefly saw above.
+Recall the "less than or equal to" relation on numbers that we briefly saw above.
 
-```lean
+```recall
 inductive Le : Nat → Nat → Prop where
   | refl {n : Nat}                : Le n n
-  | succ {n m : Nat} (h : Le n m) : Le n (m + 1)
+  | step {n m : Nat} (h : Le n m) : Le n (m + 1)
 ```
 
-(We've written the definition a bit differently this time,
-giving explicit names to the arguments to the constructors and
-moving them to the left of the colons.)
-
-Proofs of facts about `≤` using the constructors {name}`Nat.le.refl` and
-{name}`Nat.le.step` follow the same patterns as proofs about properties, like
+Proofs of facts about `≤` using the constructors {name}`Le.refl` and
+{name}`Le.step` follow the same patterns as proofs about properties, like
 {name}`Even` above. We can {tactic}`apply` the constructors to prove `≤`
 goals (e.g., to show that {lean}`3 ≤ 3` or {lean}`3 ≤ 6`), and we can use
 tactics like {tactic}`inversion` to extract information from `≤`
@@ -1737,15 +1697,16 @@ because the proofs aren't just a matter of simplifying computations.)
 Some sanity checks...
 
 ```lean
-theorem test_le1 : 3 ≤ 3 := by
+example : 3 ≤ 3 := by
   workinclass!
-    apply Nat.le.refl
+    apply Le.refl
 
-theorem test_le2 : 3 ≤ 6 := by
+example : 3 ≤ 6 := by
   workinclass!
-    apply Nat.le.step; apply Nat.le.step; apply Nat.le.step; apply Nat.le.refl
+    apply Le.step; apply Le.step
+    apply Le.step; apply Le.refl
 
-theorem test_le3 (h : 2 ≤ 1) : 2 + 2 = 5 := by
+example (h : 2 ≤ 1) : 2 + 2 = 5 := by
   workinclass!
     inversion h with
     | step h' => inversion h'
@@ -1758,7 +1719,9 @@ The "strictly less than" relation {lean}`n < m` can now be defined
 in terms of {lean}`Nat.le`.
 
 ```lean
-def lt (n m : Nat) : Prop := Nat.le (n + 1) m
+def Lt (n m : Nat) : Prop := Le (n + 1) m
+
+scoped infix:50 (priority := high) " < " => Lt
 ```
 
 :::slidebreak
@@ -1768,20 +1731,16 @@ The `≥` operation is defined in terms of `≤`.
 Lean provides a theorem {name}`ge_iff_le` allowing us to rewrite between them.
 
 ```lean
-def ge (m n : Nat) : Prop := Nat.le n m
+def Ge (m n : Nat) : Prop := Le n m
+
+scoped infix:50 (priority := high) " ≥ " => Ge
 
 example (m n : Nat) (h : m ≥ n) : n ≤ m := by
-  rw [← ge_iff_le]; assumption
-
-end Playground
+  rw [Ge] at h
+  assumption
 ```
 
-:::dev
-HIDE: PR: Added the following paragraph to try to help reduce
-random walks over the following exercises.
-:::
-
-From the definition of {name}`Nat.le`, we can sketch the behaviors of
+From the definition of {name}`Le`, we can sketch the behaviors of
 {tactic}`cases` and {tactic}`induction` on a hypothesis `h`
 providing evidence of the form {lean}`n ≤ m`.  Doing `cases h`
 will generate two cases. In the first case, {lean}`n = m`, and it
@@ -1810,18 +1769,18 @@ theorem le_trans (m n k : Nat) (h₁ : m ≤ n) (h₂ : n ≤ k) : m ≤ k := by
 :::
 
 ```lean
-theorem zero_le_n (n : Nat) : 0 ≤ n := by
+theorem zero_le (n : Nat) : 0 ≤ n := by
   solution!
     induction n with
     | zero => constructor
     | succ n ih => constructor; exact ih
 ```
 
-:::gradeTheorem "0.5" zero_le_n
+:::gradeTheorem "0.5" zero_le
 :::
 
 ```lean
-theorem n_le_m__succ_n_le_succ_m (n m : Nat) (h : n ≤ m) : n + 1 ≤ m + 1 := by
+theorem succ_le_succ (n m : Nat) (h : n ≤ m) : n + 1 ≤ m + 1 := by
   solution!
     induction h with
     | refl => constructor
@@ -1830,114 +1789,114 @@ theorem n_le_m__succ_n_le_succ_m (n m : Nat) (h : n ≤ m) : n + 1 ≤ m + 1 := 
       constructor; exact ih
 ```
 
-:::gradeTheorem "0.5" n_le_m__succ_n_le_succ_m
+:::gradeTheorem "0.5" succ_le_succ
 :::
 
 ```lean
-theorem succ_n_le_succ_m__n_le_m (n m : Nat) (h : n + 1 ≤ m + 1) : n ≤ m := by
+theorem le_of_succ_le_succ (n m : Nat) (h : n + 1 ≤ m + 1) : n ≤ m := by
   solution!
     inversion h with
     | refl => constructor
     | step h' =>
       apply le_trans _ (n + 1) _
-      . constructor; constructor
-      . assumption
+      · constructor; constructor
+      · assumption
 ```
 
-:::gradeTheorem 1 succ_n_le_succ_m__n_le_m
+:::gradeTheorem 1 le_of_succ_le_succ
 :::
 
 ```lean
-theorem le_add_l (n m : Nat) : n ≤ n + m := by
+theorem le_add_right (n m : Nat) : n ≤ n + m := by
   solution!
     induction n with
-    | zero => rw [Nat.zero_add]; apply zero_le_n
+    | zero => rw [Nat.zero_add]; apply zero_le
     | succ n' ih =>
       rw [Nat.succ_add]
-      apply n_le_m__succ_n_le_succ_m
+      apply succ_le_succ
       assumption
 ```
 
-:::gradeTheorem "0.5" le_add_l
+:::gradeTheorem "0.5" le_add_right
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "plus_le_facts1")
+:::::exercise (rating := 2) (name := "le_facts1")
 ```lean
-theorem add_le (n₁ n₂ m : Nat) (h : n₁ + n₂ ≤ m) : n₁ ≤ m ∧ n₂ ≤ m := by
+theorem le_and_le_of_add_le (n₁ n₂ m : Nat) (h : n₁ + n₂ ≤ m) : n₁ ≤ m ∧ n₂ ≤ m := by
   solution!
     induction h with
     | refl =>
       constructor
-      . apply le_add_l
-      . rw [Nat.add_comm]; apply le_add_l
+      · apply le_add_right
+      · rw [Nat.add_comm]; apply le_add_right
     | step =>
       constructor
-      . apply le_trans (n := n₁ + n₂)
-        . apply le_add_l
-        . apply Nat.le.step; assumption
-      . apply le_trans (n := n₁ + n₂)
-        . rw [Nat.add_comm]; apply le_add_l
-        . apply Nat.le.step; assumption
+      · apply le_trans (n := n₁ + n₂)
+        · apply le_add_right
+        · apply Le.step; assumption
+      · apply le_trans (n := n₁ + n₂)
+        · rw [Nat.add_comm]; apply le_add_right
+        · apply Le.step; assumption
 ```
 
-:::gradeTheorem 1 add_le
+:::gradeTheorem 1 le_and_le_of_add_le
 :::
 
 ```lean
-theorem add_le_cases (n m p q : Nat) (h : n + m ≤ p + q) : n ≤ p ∨ m ≤ q := by
+theorem le_or_le_of_add_le_add (n m p q : Nat) (h : n + m ≤ p + q) : n ≤ p ∨ m ≤ q := by
   /- Hint: May be easiest to prove by induction on `n`. -/
   solution!
     induction n generalizing m p q with
-    | zero => left; apply zero_le_n
+    | zero => left; apply zero_le
     | succ n' ih =>
       cases p with
       | zero =>
-        right; apply add_le at h
-        let ⟨_, h⟩ := h
+        right; apply le_and_le_of_add_le at h
+        have ⟨_, h⟩ := h
         rw [Nat.zero_add] at h; assumption
       | succ p' =>
         rw [Nat.succ_add, Nat.succ_add] at h
-        apply succ_n_le_succ_m__n_le_m at h
+        apply le_of_succ_le_succ at h
         apply ih at h
         cases h with
-        | inl => left; apply n_le_m__succ_n_le_succ_m; assumption
+        | inl => left; apply succ_le_succ; assumption
         | inr => right; assumption
 ```
 
-:::gradeTheorem 1 add_le_cases
+:::gradeTheorem 1 le_or_le_of_add_le_add
 :::
 :::::
 
 :::::exercise (rating := 2) (name := "plus_le_facts2")
 ```lean
-theorem add_le_compat_l (n m p : Nat) (h : n ≤ m) : p + n ≤ p + m := by
+theorem add_le_add_left (n m p : Nat) (h : n ≤ m) : p + n ≤ p + m := by
   solution!
     induction p with
     | zero =>
       rw [Nat.zero_add, Nat.zero_add]; assumption
     | succ p' ih =>
       rw [Nat.succ_add, Nat.succ_add]
-      apply n_le_m__succ_n_le_succ_m
+      apply succ_le_succ
       assumption
 ```
 
-:::gradeTheorem "0.5" add_le_compat_l
+:::gradeTheorem "0.5" add_le_add_left
 :::
 
 ```lean
-theorem plus_le_compat_r (n m p : Nat) (h : n ≤ m) : n + p ≤ m + p := by
+theorem add_le_add_right (n m p : Nat) (h : n ≤ m) : n + p ≤ m + p := by
   solution!
     rw [Nat.add_comm, Nat.add_comm m]
-    apply add_le_compat_l
+    apply add_le_add_left
     assumption
 ```
 
-:::gradeTheorem "0.5" plus_le_compat_r
+:::gradeTheorem "0.5" add_le_add_right
 :::
 
 ```lean
-theorem le_plus_trans (n m p : Nat) (h : n ≤ m) : n ≤ m + p := by
+theorem le_add_right_of_le (n m p : Nat) (h : n ≤ m) : n ≤ m + p := by
   solution!
     induction p with
     | zero => rw [Nat.add_zero]; assumption
@@ -1945,13 +1904,13 @@ theorem le_plus_trans (n m p : Nat) (h : n ≤ m) : n ≤ m + p := by
       rw [← Nat.add_assoc]; constructor; assumption
 ```
 
-:::gradeTheorem 1 le_plus_trans
+:::gradeTheorem 1 le_add_right_of_le
 :::
 :::::
 
 :::::exercise (rating := 3) (name := "lt_facts") (optional := true)
 ```lean
-theorem lt_ge_cases (n m : Nat) : n < m ∨ n ≥ m := by
+theorem lt_or_ge (n m : Nat) : n < m ∨ n ≥ m := by
   solution!
     induction n generalizing m with
     | zero =>
@@ -1959,77 +1918,66 @@ theorem lt_ge_cases (n m : Nat) : n < m ∨ n ≥ m := by
       | zero => right; constructor
       | succ _ =>
         left;
-        apply n_le_m__succ_n_le_succ_m;
-        apply zero_le_n
+        apply succ_le_succ;
+        apply zero_le
     | succ n' ih =>
       cases m with
       | zero =>
-        rw [ge_iff_le]; right
-        apply zero_le_n
+        rw [Ge]; right
+        apply zero_le
       | succ m' =>
         cases ih m' with
         | inl ih =>
           left
-          apply n_le_m__succ_n_le_succ_m
+          apply succ_le_succ
           exact ih
         | inr ih =>
           right
-          apply n_le_m__succ_n_le_succ_m
+          apply succ_le_succ
           exact ih
 ```
 
-:::gradeTheorem "1.5" lt_ge_cases
-:::
-
 ```lean
-theorem n_lt_m__n_le_m (n m : Nat) (h : n < m) : n ≤ m := by
+theorem le_of_lt (n m : Nat) (h : n < m) : n ≤ m := by
   solution!
-    apply succ_n_le_succ_m__n_le_m
+    apply le_of_succ_le_succ
     constructor; assumption
 ```
 
-:::gradeTheorem "0.5" n_lt_m__n_le_m
-:::
-
 ```lean
-theorem plus_lt (n₁ n₂ m : Nat) (h : n₁ + n₂ < m) : n₁ < m ∧ n₂ < m := by
+theorem lt_and_lt_of_add_lt (n₁ n₂ m : Nat) (h : n₁ + n₂ < m) : n₁ < m ∧ n₂ < m := by
   solution!
     constructor
-    . apply le_trans (n := (n₁ + n₂) + 1)
-      . apply n_le_m__succ_n_le_succ_m
-        apply le_add_l
-      . exact h
-    . apply le_trans (n := (n₂ + n₁) + 1)
-      . apply n_le_m__succ_n_le_succ_m
-        apply le_add_l
-      . rw [Nat.add_comm n₂]; assumption
+    · apply le_trans (n := (n₁ + n₂) + 1)
+      · apply succ_le_succ
+        apply le_add_right
+      · exact h
+    · apply le_trans (n := (n₂ + n₁) + 1)
+      · apply succ_le_succ
+        apply le_add_right
+      · rw [Nat.add_comm n₂]; assumption
 ```
 
-:::gradeTheorem 1 plus_lt
-:::
 :::::
 
-:::::exercise (rating := 4) (name := "ble_le") (optional := true)
+:::::exercise (rating := 4) (name := "ble") (optional := true)
 ```lean
-theorem ble_sound (n m : Nat) (h : Nat.ble n m = true) : n ≤ m := by
+theorem le_of_ble_eq_true (n m : Nat) (h : Nat.ble n m = true) : n ≤ m := by
   solution!
     induction n generalizing m with
-    | zero => apply zero_le_n
+    | zero => apply zero_le
     | succ n' ih =>
       cases m with
       | zero =>
         contradiction
       | succ m' =>
         rw [Nat.ble] at h
-        apply n_le_m__succ_n_le_succ_m
+        apply succ_le_succ
         apply ih; apply h
 ```
 
-:::gradeTheorem 2 ble_sound
-:::
-
 ```lean
-theorem ble_complete n m (h : n ≤ m) : Nat.ble n m = true := by
+theorem ble_eq_true_of_le n m (h : n ≤ m) : Nat.ble n m = true := by
   solution!
     induction n generalizing m with
     | zero => rw [Nat.ble]
@@ -2038,51 +1986,40 @@ theorem ble_complete n m (h : n ≤ m) : Nat.ble n m = true := by
       | zero => contradiction
       | succ m' =>
         rw [Nat.ble]
-        apply succ_n_le_succ_m__n_le_m at h
+        apply le_of_succ_le_succ at h
         apply ih at h
         assumption
 ```
 
-:::gradeTheorem 2 ble_complete
-:::
-
 Hint: The next two can easily be proved without using `induction`.
 
-:::dev PotentialImprovement
-AC'21: To me what would be interesting for this last lemma `ble_iff`
-would be to show that the proofs of completeness and correctness can
-be carried out in a single induction.
-:::
-
 ```lean
-theorem ble_iff (n m : Nat) : Nat.ble n m = true ↔ n ≤ m := by
+theorem ble_eq (n m : Nat) : Nat.ble n m = true ↔ n ≤ m := by
   solution!
-    apply Iff.intro
-    . apply ble_sound
-    . apply ble_complete
+    constructor
+    · apply le_of_ble_eq_true
+    · apply ble_eq_true_of_le
 ```
 
-:::gradeTheorem 1 ble_iff
-:::
-
 ```lean
-theorem ble_true_trans (n m k : Nat) :
+theorem ble_trans (n m k : Nat) :
     Nat.ble n m = true →
     Nat.ble m k = true →
     Nat.ble n k = true := by
   solution!
-    rw [ble_iff, ble_iff, ble_iff]
+    rw [ble_eq, ble_eq, ble_eq]
     apply le_trans
 ```
-
-:::gradeTheorem 1 ble_true_trans
-:::
 :::::
 
 :::dev PotentialImprovement
 Another potential exercise:  m ≤ n → n = m + (n - m).
 See p. 188 in CoqArt.
 :::
+
+```lean
+end LePlayground
+```
 
 :::::exercise (rating := 3) (name := "R_provability") (manual := true)
 We can define three-place relations, four-place relations,
@@ -2098,118 +2035,121 @@ inductive R : Nat → Nat → Nat → Prop where
   | c5 {m n k : Nat} (h : R  m       n       k)      : R  n      m       k
 ```
 
-:::dev
-HIDE: APT 21: Reformatted the above after a student with dyslexia
-complained. But the effect is still lost in the HTML.  He also
-noted that the kind of question that follows doesn't really require
-a high-arity relation.
-
-MRC 3/22: I believe that violates the OCaml Community Guidelines on
-indentation.
-
-https://ocaml.org/learn/tutorials/guidelines.html#Bad-indentation-of-pattern-matching-constructs
-
-Whether those are applicable here is a matter of debate. But
-torquing the entire textbook into this mode of alignment does not
-seem any more desirable to me than torquing an OCaml codebase.
-
-BCP 25: No, but for this specific problem it seems OK. Let's leave
-it like this.
-:::
-
-- Which of the following propositions are provable?
+1. Which of the following propositions are provable?
 - `R 1 1 2`
 - `R 2 2 6`
 
-- If we dropped constructor `c5` from the definition of `R`,
+2. If we dropped constructor `c5` from the definition of `R`,
 would the set of provable propositions change?  Briefly (1
 sentence) explain your answer.
 
-- If we dropped constructor `c4` from the definition of `R`,
+3. If we dropped constructor `c4` from the definition of `R`,
 would the set of provable propositions change?  Briefly (1
 sentence) explain your answer.
 
-:::solution
-- The first proposition is provable and the second is not.
-  The proof term for the first is:
-  ```display
-  (c3 _ _ _ (c2 _ _ _ c1)).
-  ```
-- Dropping `c5` would not change the set of provable
-  propositions. `c4` and `c1` don't interact with `c5`, since
-  they're already symmetric in `m` and `n`; `c2` followed by
-  `c5` is equivalent to `c3`, and vice versa.
+::::solution
 
-- Dropping `c4` would not change the set of provable
-  propositions. This constructor just "undoes" one application
-  of `c2` and one application of `c3`. More precisely, the
-  only way we can construct evidence for `R (S m) (S n) (S (S o))`
-  is by applying `c2` and `c3` (in either order) to evidence for
-  `R m n o`, so the latter must already hold. (This can be proved
-  by induction, although the proof is surprisingly tedious.)
-:::
+The first proposition is provable and the second is not.
 
-::::hide
+```lean
+example : R 1 1 2 := by
+  apply R.c2
+  apply R.c3
+  apply R.c1
 ```
-    /- Here is such a proof for posterity. -/
 
-    /- inductive R' : Nat → Nat → Nat → Prop where
-      | c1' : R' 0 0 0
-      | c2' m n o (h : R' m n o) : R' (m + 1) n (o + 1)
-      | c3' m n o (h : R' m n o) : R' m (n + 1) (o + 1)
+The key invariant here is that whenever `R m n k` holds, we must have `k = m + n`.
+We can prove this invariant as the follows:
 
-    Ltac inv H := inversion H; subst; clear H.
+```lean
+theorem R.eq_add {m n k : Nat} (h : R m n k) : k = m + n := by
+  induction h with lia
+```
 
-    theorem c5_redundant: forall m n o, R' m n o → R' n m o.
-    Proof.
-      intros m n o H.
-      induction H.
-      - apply c1'.
-      - apply c3'; auto.
-      - apply c2'; auto.
-    Qed.
+{tactic}`lia` helps us solve linear arithmetic goals.
+We'll learn it in the {ref "Automation"}[Automation] chapter.
 
-    theorem c4_redundant: forall m n o, R' (S m) (S n) (S(S o)) → R' m n o.
-    Proof.
-      /- This one is nastier than one might expect. -/
-      assert (Q1: forall m n o, R' (S m) n (S o) → R' m n o).
-      { induction n; intros.
-        - inv H.  apply h₃.
-        - inv H.
-          + apply h₃.
-          + destruct o.
-            * inv h₃.
-            * apply c3'. apply IHn. apply h₃.
-      }
-      assert (Q2: forall m n o, R' m (S n) (S o) → R' m n o).
-      { induction m; intros.
-        - inv H. apply h₃.
-        - inv H.
-          + destruct o.
-            * inv h₃.
-            * apply c2'.  apply IHm. apply h₃.
-          + apply h₃.
-      }
-      intros.
-      inv H.
-      - apply Q2; apply h₃.
-      - apply Q1; apply h₃.
-    Qed.
+Now we can disprove the second proposition:
 
-    theorem R_R': forall m n o, R m n o↔  R' m n o.
-    Proof.
-      split; intros.
-      -  induction H.
-        + apply c1'.
-        + apply c2'; auto.
-        + apply c3'; auto.
-        + apply c4_redundant; auto.
-        + apply c5_redundant; auto.
-      - induction H.
-        + apply c1.
-        + apply c2; auto.
-        + apply c3; auto.
-    Qed. -/
+```lean
+example : ¬ R 2 2 6 := by
+  intro h
+  apply R.eq_add at h
+  contradiction
+```
+
+Dropping `c5` would not change the set of provable
+propositions. `c4` and `c1` don't interact with `c5`, since
+they're already symmetric in `m` and `n`; `c2` followed by
+`c5` is equivalent to `c3`, and vice versa.
+
+Dropping `c4` would not change the set of provable
+propositions. This constructor just "undoes" one application
+of `c2` and one application of `c3`. More precisely, the
+only way we can construct evidence for `R (S m) (S n) (S (S o))`
+is by applying `c2` and `c3` (in either order) to evidence for
+`R m n o`, so the latter must already hold. (This can be proved
+by induction, although the proof is surprisingly tedious.)
+
+We can prove `c4` and `c5` are redundant by re-defining `R'` with only `c1`, `c2`, and `c3`,
+and prove `R'` is equivalent to {name}`R`.
+
+Another useful fact is that the converse of the above invariant, {name}`R.eq_add`, is also true:
+
+```lean
+theorem R.of_eq_add {m n k : Nat} (h : k = m + n) : R m n k := by
+  subst h
+  induction n with
+  | zero => induction m with
+    | zero => apply c1
+    | succ n _ => apply c2; assumption
+  | succ n _ => apply c3; assumption
+```
+
+Now we are ready to define `R'`.
+
+```lean -keep
+inductive R' : Nat → Nat → Nat → Prop where
+  | c1 : R' 0 0 0
+  | c2 m n k (h : R' m n k) : R' (m + 1) n (k + 1)
+  | c3 m n k (h : R' m n k) : R' m (n + 1) (k + 1)
+
+theorem R'.c5 {m n k : Nat} (h : R' m n k) : R' n m k := by
+  induction h with
+  | c1 => apply c1
+  | c2 m n o h ih => apply c3; assumption
+  | c3 m n o h ih => apply c2; assumption
+
+theorem R'.eq_add {m n k : Nat} (h : R' m n k) : k = m + n := by
+  induction h with lia
+
+theorem R'.of_eq_add {m n : Nat} : R' m n (m + n) := by
+  induction n with
+  | zero => induction m with
+    | zero => apply c1
+    | succ n _ => apply c2; assumption
+  | succ n _ => apply c3; assumption
+
+theorem R'.c4 {m n k : Nat} (h : R' (m + 1) (n + 1) (k + 2)) : R' m n k := by
+  have := eq_add h
+  have hk : k = m + n := by lia
+  subst hk
+  exact of_eq_add
+
+theorem R'.iff_R {m n k : Nat} : R' m n k ↔ R m n k := by
+  constructor
+  · intro h
+    induction h with
+    | c1 => apply R.c1
+    | c2 m n k h ih => apply R.c2; assumption
+    | c3 m n k h ih => apply R.c3; assumption
+  · intro h
+    induction h with
+    | c1 => apply c1
+    | c2 h ih => apply c2; assumption
+    | c3 h ih => apply c3; assumption
+    | c4 h ih => apply c4; assumption
+    | c5 h ih => apply c5; assumption
 ```
 ::::
 
@@ -2219,67 +2159,26 @@ sentence) explain your answer.
 :::::
 
 :::::exercise (rating := 3) (name := "R_fact") (optional := true)
-The relation `R` above actually encodes a familiar function.
+The relation {name}`R` above actually encodes a familiar function.
 Figure out which function; then state and prove this equivalence
 in Lean.
 
 ```lean
-def fR : Nat → Nat → Nat
-  := solution!((· + ·))
+def funR : Nat → Nat → Nat
+  := solution!(fun m n => m + n)
 
-namespace R
-
-theorem R.equiv_fR m n k : R m n k ↔ fR m n = k := by
-  solution!
-    unfold fR
-    apply Iff.intro
-    . intro h; induction h with
-      | c1 => rfl
-      | c2 _ ih => rw [Nat.succ_add, ih]
-      | c3 _ ih => rw [Nat.add_succ, ih]
-      | c4 _ ih =>
-        rw [Nat.succ_add, Nat.add_succ] at ih
-        injections
-      | c5 _ ih => rw [Nat.add_comm]; exact ih
-    . intro h; subst h
-      have R0 : ∀ k, R 0 k k := by
-        intro k; induction k with
-        | zero => exact c1
-        | succ k ih => exact c3 ih
-      induction m with
-      | zero => rw [Nat.zero_add]; exact R0 n
-      | succ m ih => rw [Nat.succ_add]; exact c2 ih
+theorem funR_iff_R {m n k : Nat} : funR m n = k ↔ R m n k := by
+  constructor
+  · intro h
+    rw [funR] at h
+    subst h
+    apply R.of_eq_add
+    rfl
+  · intro h
+    have := R.eq_add h
+    rw [funR, this]
 ```
 
-:::autogradedHole fR
-:::
-
-:::gradeTheorem 3 R.equiv_fR
-:::
-
-:::hide
-And here's a somewhat nicer version using some automation,
-   but we haven't covered that yet...
-
-```display
-From Stdlib Require Import Lia.
-
-theorem R_plus: forall m n k, R m n k ↔ m + n = k.
-Proof.
-  intros m n k; split; intros.
-  - induction H; try reflexivity; try lia.
-  - generalize dependent n. generalize dependent m.
-    induction k as [|k']; intros m n H.
-    + destruct m; try inversion H.
-      destruct n; try inversion H0.
-      apply c1.
-    + destruct m as [|m'].
-      * destruct n; try inversion H. apply c3.
-        apply IHo'. reflexivity.
-      * apply c2. apply IHo'. lia.
-Qed.
-```
-:::
 :::::
 
 :::::exercise (rating := 4) (name := "subsequence") (level := Advanced)
@@ -2869,6 +2768,9 @@ longest. Formalize this claim and prove it.
 ```lean
 -- SOLUTION
 namespace Sol
+
+open LePlayground
+
 /- We reproduce the definition of subseq here, in a module
     so it doesn't conflict. -/
 
@@ -3020,7 +2922,7 @@ theorem filter_spec2 (α : Type) (l lsub : List α) (test : α → Bool) :
           . rw [List.all_cons, Bool.and_eq_true] at hall
             obtain ⟨_, _⟩ := hall; assumption
           . intro l' hgood; rw [List.length_cons] at hlen
-            apply succ_n_le_succ_m__n_le_m
+            apply le_of_succ_le_succ
             apply hlen (hd :: l')
             exact good_subseq_extend _ _ _ _ _ htest hgood
   . intro hfilter; constructor; rw [← hfilter]; constructor
@@ -3030,7 +2932,7 @@ theorem filter_spec2 (α : Type) (l lsub : List α) (test : α → Bool) :
       induction l generalizing l' lsub with
       | nil =>
         inversion hsub; rw [List.length_nil]
-        apply zero_le_n
+        apply zero_le
       | cons hd tl ih =>
         cases htest : test hd with
         | false =>
@@ -3049,9 +2951,9 @@ theorem filter_spec2 (α : Type) (l lsub : List α) (test : α → Bool) :
           rw [List.filter_cons_of_pos htest] at hfilter
           rw [← hfilter, List.length_cons]
           inversion hsub with
-          | sub_nil => rw [List.length_nil]; apply zero_le_n
+          | sub_nil => rw [List.length_nil]; apply zero_le
           | sub_take l hsub =>
-            rw [List.length_cons]; apply n_le_m__succ_n_le_succ_m
+            rw [List.length_cons]; apply le_of_lt
             apply ih _ rfl _ hsub
             rw [List.all_cons, Bool.and_eq_true] at hall
             obtain ⟨_, _⟩ := hall
