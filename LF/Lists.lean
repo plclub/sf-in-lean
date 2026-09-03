@@ -18,6 +18,10 @@ This file takes about 60 minutes to get through.
 Putting it together with Induction.lean makes a reasonable
 second week's homework assignment.
 :::
+:::dev "Benjamin Pierce (bcpierce00)"
+And UsingLean??
+:::
+
 
 ```importBlock
 import LF.Induction

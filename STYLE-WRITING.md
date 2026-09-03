@@ -200,6 +200,8 @@ records the house rules that override Chicago.
 | _italics_ for emphasis | **boldface**                 |
 | "Lean"                 | "Lean 4" (except in Preface) |
 | "VS Code"              | "VSCode"                     |
+| "IH"                   | "I.H."                       |
+| "type class"           | "typeclass"                  |
 
 ### Informal Proofs
 
