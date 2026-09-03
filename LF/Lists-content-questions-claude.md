@@ -6,10 +6,6 @@ Raised during the round-1 proofreading pass over **`LF/Lists.lean`**
 (2026-09-03, commit `2b085d6`). Deliberately kept out of the round: each
 needs an authorial decision, not a comma.
 
-Note on the filename: this file was requested as
-`Induction-content-questions-claude.md`, but everything below concerns
-`LF/Lists.lean`. Rename it if the `Induction-` prefix was not intended.
-
 ---
 
 ## 1. Informal-proof list structure (highest priority — renders wrong)
