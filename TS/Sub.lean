@@ -1865,7 +1865,7 @@ end Examples
 ```
 :::::
 
-## Properties
+# Properties
 
 ::::full
 The fundamental properties of the system that we want to
@@ -1883,7 +1883,7 @@ We want the same properties as always: progress + preservation.
   additional flexibility in the typing relation
 ::::
 
-### Inversion Lemmas for Subtyping
+## Inversion Lemmas for Subtyping
 
 Before we look at the properties of the typing relation, we need
 to establish a couple of critical structural properties of the
@@ -2534,8 +2534,8 @@ are vacuous because abstractions and constants don't step.  Case
     Suppose instead `t₁ t₂` steps by `appAbs`.  Then `t₁ = λ x:σ . τ₁₂`
     for some type `σ` and term `τ₁₂`, and `t' = [x:=t₂] τ₁₂`.
 
-    By lemma `abs_arrow`, we have `τ₁ <: σ` and `x:σ₁ ⊢ t₂ ⦂ τ₂`.  It then follows by the substitution
-    lemma ({name}`substitution_preserves_typing`) that `∅ ⊢ [x:=t₂] τ₁₂ ⦂ τ₂` as desired.
+    By lemma `abs_arrow`, we have `τ₁ <: σ` and `x:σ₁ ⊢ t₂ ⦂ τ₂`.  It then follows by the substitution lemma ({name}`substitution_preserves_typing`) that
+    `∅ ⊢ [x:=t₂] τ₁₂ ⦂ τ₂` as desired.
 
   - If the final step of the derivation uses rule `if`, then
     there are terms `t₁`, `t₂`, and `t₃` such that `t = if t₁ then t₂ else t₃`,
