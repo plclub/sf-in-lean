@@ -1820,7 +1820,8 @@ formal statement in Lean and prove it.
 :::solution
 ```lean
 example : <{ ∅ ⊢ ((λz : ~A . z), (λz : ~B . z)) ⦂ ((~A → ~A) × (~B → ~B)) }> := by
-  apply_rules using StlcSubTyping
+  solution!
+    apply_rules using StlcSubTyping
 ```
 :::
 ::::
@@ -1834,10 +1835,11 @@ example : <{ ∅ ⊢ ((λz : ~A . z), (λz : ~B . z)) ⦂ ((~A → ~A) × (~B �
 :::solution
 ```lean
 example : <{ ∅ ⊢ (λx: (⊤ × (~B → ~B)). snd x) (((λz: ~A . z), (λz: ~B . z))) ⦂ ( ~B → ~B) }> := by
-  apply_rules using StlcSubTyping
-  apply HasType.sub
-  · apply HasType.abs; apply HasType.var; rfl
-  · apply Subtype.top
+  solution!
+    apply_rules using StlcSubTyping
+    apply HasType.sub
+    · apply HasType.abs; apply HasType.var; rfl
+    · apply Subtype.top
 ```
 :::
 ::::
@@ -1852,6 +1854,7 @@ example : <{ ∅ ⊢ (λx: (⊤ × (~B → ~B)). snd x) (((λz: ~A . z), (λz: ~
 example :
   <{ ∅ ⊢(λz : (~C → ~C) → (⊤ × ~B → ~B) . snd (z (λx: ~C . x)))
           (λz: ~C → ~C . ((λ z : ~A . z), (λ z : ~B . z))) ⦂ (~B → ~B) }> := by
+  solution!
     apply_rules using StlcSubTyping
     apply HasType.sub
     · apply HasType.abs; apply HasType.var; rfl
@@ -1905,7 +1908,6 @@ look like to tell us something further about the shapes of `σ` and
 Formally:
 :::
 
-:::::full
 ::::exercise (rating := 2) (name := "sub_inversion_bool") (optional := true)
 ```lean
 theorem sub_inversion_bool (τ : Ty)
@@ -1920,9 +1922,7 @@ theorem sub_inversion_bool (τ : Ty)
         symm; apply ih₂ rfl
 ```
 ::::
-:::::
 
-:::::full
 ::::exercise (rating := 3) (name := "sub_inversion_arrow")
 ```lean
 theorem sub_inversion_arrow {σ τ₁ τ₂ : Ty}
@@ -1949,7 +1949,6 @@ theorem sub_inversion_arrow {σ τ₁ τ₂ : Ty}
 :::
 
 ::::
-:::::
 
 ::::full
 There are additional _inversion lemmas_ for the other types:
@@ -2061,7 +2060,6 @@ definition" (formally, they follow directly by {tactic}`inversion`).
 With subtyping, they require real proofs by induction...
 :::
 
-:::::full
 ::::exercise (rating := 3) (name := "canonical_forms_of_arrow_types") (optional := true)
 ```lean
 theorem canonical_forms_of_arrow_types {Γ : Context} {t : Tm} {τ₁ τ₂ : Ty}
@@ -2095,7 +2093,7 @@ theorem canonical_forms_of_bool {Γ : Context} {t : Tm}
     exact ih hv rfl
 ```
 
-
+:::::full
 When you do the `products` exercise, add your canonical forms lemma for products here:
 
 ```lean
