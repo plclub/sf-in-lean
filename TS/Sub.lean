@@ -1488,7 +1488,7 @@ inductive Step : Tm → Tm → Prop where
       <{ if ~t₁ then ~t₂ else ~t₃ }> ⟶ <{ if ~t₁' then ~t₂ else ~t₃ }>
   | ifTrue (t₂ t₃ : Tm) :
       <{ if true then ~t₂ else ~t₃ }> ⟶ t₂
-  | ifFalse (n : Nat) (t₂ t₃ : Tm) :
+  | ifFalse (t₂ t₃ : Tm) :
       <{ if false then ~t₂ else ~t₃ }> ⟶ t₃
 
   -- Fill in more rules when you do the `products` exercise later
@@ -1600,6 +1600,11 @@ Note that because the `Subtype` rules are not "syntax directed"
 (e.g., given a goal of the form `⊤ <: ⊤`, you could apply the `top` rule,
 the `refl` rule, the `trans` rule), we have to use {tactic}`solve_by_elim` here
 instead of {tactic}`apply_rules`.
+
+:::dev "Daniel Sainati (@dsainati)" PotentialImprovement
+Potentially we could introduce the syntax-directed version of the subtyping judgment
+here as a fix for this.
+:::
 
 ::::exercise (rating := 2) (name := "subtyping_judgements") (optional := true)
 Leave this exercise until after you have finished adding product
@@ -1731,15 +1736,15 @@ inductive HasType : Context → Tm → Ty → Prop where
 
   -- Fill in more rules when you do the `products` exercise later
   -- SOLUTION
-  | pair (Γ : Context) (t₁ t₂ : Tm) (τ₁ τ₂ : Ty) :
-      <{ ~Γ ⊢ ~t₁ ⦂ ~τ₁ }> →
-      <{ ~Γ ⊢ ~t₂ ⦂ ~τ₂ }> →
+  | pair (Γ : Context) (t₁ t₂ : Tm) (τ₁ τ₂ : Ty)
+      (h₁ : <{ ~Γ ⊢ ~t₁ ⦂ ~τ₁ }>)
+      (h₂ : <{ ~Γ ⊢ ~t₂ ⦂ ~τ₂ }>) :
       <{ ~Γ ⊢ (~t₁, ~t₂) ⦂ ~τ₁ × ~τ₂ }>
-  | fst (Γ : Context) (t : Tm) (τ₁ τ₂ : Ty) :
-      <{ ~Γ ⊢ ~t ⦂ ~τ₁ × ~τ₂ }> →
+  | fst (Γ : Context) (t : Tm) (τ₁ τ₂ : Ty)
+      (h : <{ ~Γ ⊢ ~t ⦂ ~τ₁ × ~τ₂ }>) :
       <{ ~Γ ⊢ fst ~t ⦂ ~τ₁ }>
-  | snd (Γ : Context) (t : Tm) (τ₁ τ₂ : Ty) :
-      <{ ~Γ ⊢ ~t ⦂ ~τ₁ × ~τ₂ }> →
+  | snd (Γ : Context) (t : Tm) (τ₁ τ₂ : Ty)
+      (h : <{ ~Γ ⊢ ~t ⦂ ~τ₁ × ~τ₂ }>) :
       <{ ~Γ ⊢ snd ~t ⦂ ~τ₂ }>
   -- END SOLUTION
 
@@ -2002,7 +2007,7 @@ theorem sub_inversion_top {τ : Ty} (h : Ty.top <: τ) : τ = Ty.top := by
 ::::full
 When you do the `products` exercise, add your inversion lemma for products here:
 ```lean
---- SOLUTION
+-- SOLUTION
 theorem sub_inversion_prod {σ τ₁ τ₂ : Ty} (h : σ <: <{ ~τ₁ × ~τ₂ }>) :
      ∃ σ₁ σ₂, σ = <{ ~σ₁ × ~σ₂ }> ∧ σ₁ <: τ₁ ∧ σ₂ <: τ₂ := by
   solution!
@@ -2019,7 +2024,7 @@ theorem sub_inversion_prod {σ τ₁ τ₂ : Ty} (h : σ <: <{ ~τ₁ × ~τ₂ 
         exists σ₁', σ₂'; constructor; rfl; constructor
         · exact Subtype.trans hs₁' hs₁
         · exact Subtype.trans hs₂' hs₂
---- END SOLUTION
+-- END SOLUTION
 ```
 ::::
 
@@ -2171,538 +2176,563 @@ remaining cases are more interesting:
 
 Formally:
 
-Theorem progress : ∀ t τ,
-     <{ ∅ ⊢ t ⦂ τ }> →
-     value t ∨ exists t', t ⟶ t'.
-(* FOLD
-Proof with eauto.
-  intros t τ Ht.
-  remember empty as Γ.
-  induction Ht; subst Γ; auto.
-  - (* T_Var
-    discriminate.
-  - (* app
-    right.
-    destruct IHHt1; subst...
-    + (* t₁ is a value
-      destruct IHHt2; subst...
-      × (* t₂ is a value
-        eapply canonical_forms_of_arrow_types in Ht1; [|assumption].
-        destruct Ht1 as [x [σ₁ [t₂ H1```. subst.
-        exists (<{ [x:=t₂]t₂ }>)...
-      × (* t₂ steps
-        destruct H0 as [t₂' Hstp]. exists <{ t₁ t₂' }>...
-    + (* t₁ steps
-      destruct H as [t₁' Hstp]. exists <{ t₁' t₂ }>...
-  - (* T_If
-    right.
-    destruct IHHt1.
-    + (* t₁ is a value  eauto.
-    + apply canonical_forms_of_Bool in Ht1; [|assumption].
-      destruct Ht1; subst...
-    + destruct H. rename x into t₁'. eauto. :::solution
-  - (* T_Pair
-    destruct IHHt1; subst...
-    + (* t₁ is a value
-      destruct IHHt2; subst...
-      × (* t₂ steps
-        right. destruct H0 as [t₂' Hstp].
-        exists <{(t₁, t₂')}>...
-    + (* t₁ steps
-      right. destruct H as [t₁' Hstp].
-      exists <{(t₁', t₂)}>...
-  - (* T_Fst
-    right. destruct IHHt...
-    + (* t is a value
-      apply canonical_forms_of_product_types in Ht...
-      destruct Ht as [t₁ [t₂ teq```. subst.
-      inversion H. subst. exists t₁...
-    + (* t steps
-      destruct H as [t' Hstp]. exists <{t'.fst}>...
-  - (* T_Snd
-    right. destruct IHHt...
-    + (* t is a value
-      apply canonical_forms_of_product_types in Ht...
-      destruct Ht as [t₁ [t₂ teq```. subst.
-      inversion H. subst. exists t₂...
-    + (* t steps
-      destruct H as [t' Hstp]. exists <{t'.snd}>...
+```lean
+theorem progress (t : Tm) (τ : Ty) (h : <{ ∅ ⊢ ~t ⦂ ~τ }>) :
+    t.IsValue ∨ ∃ t', t ⟶ t' := by
+  generalize heq : (∅ : Context) = Γ at h
+  induction h with (subst_vars; first
+    | contradiction
+    -- discharge cases where `t` is obviously a value
+    | try (left; constructor; done)
+  )
+  | app Γ τ₁ τ₂ t₁ t₂ h₁ h₂ ih₁ ih₂ =>
+      right; cases ih₁ rfl
+      -- t₁ is a value
+      case _ ht₁ =>
+        cases ih₂ rfl
+        -- t₂ is a value
+        case _ ht₂ =>
+          apply canonical_forms_of_arrow_types at h₁
+          let ⟨x, σ, v, hv⟩ := h₁ ht₁
+          exists <{ [~x := ~t₂] ~v }>; simp [hv]
+          apply_rules using StlcSubEval
+        -- t₂ is not a value
+        case _ ht₂ =>
+          obtain ⟨t₂', ht₂⟩ := ht₂
+          exists <{~t₁ ~t₂'}>; apply_rules using StlcSubEval
+      -- t₁ is not a value
+      case _ ht₁ =>
+        obtain ⟨t₁', ht₁⟩ := ht₁
+        exists <{~t₁' ~t₂}>; apply_rules using StlcSubEval
+  | ite Γ t₁ t₂ t₃ τ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
+    right; cases ih₁ rfl
+    -- t₁ is a value
+    case _ ht₁ =>
+      apply canonical_forms_of_bool at h₁
+      obtain h₁ | h₁ := h₁ ht₁ <;> subst_vars
+      · exists t₂; apply_rules using StlcSubEval
+      · exists t₃; apply_rules using StlcSubEval
+    -- t₁ is not a value
+    case _ ht₁ =>
+      obtain ⟨t₁', ht₁⟩ := ht₁
+      exists <{if ~t₁' then ~t₂ else ~t₃}>; apply_rules using StlcSubEval
+  | sub Γ t₁ τ₁ τ₂ ht hs ih => apply ih; rfl
+-- Fill in products here later
+-- SOLUTION
+  | pair Γ t₁ t₂ τ₁ τ₂ h₁ h₂ ih₁ ih₂ =>
+      cases ih₁ rfl
+      -- t₁ is a value
+      case _ ht₁ =>
+        cases ih₂ rfl
+        -- t₂ is a value
+        case _ ht₂ =>
+          left; apply_rules using StlcSubEval
+        -- t₂ is not a value
+        case _ ht₂ =>
+          obtain ⟨t₂', ht₂⟩ := ht₂
+          right; exists <{(~t₁, ~t₂')}>; apply_rules using StlcSubEval
+      -- t₁ is not a value
+      case _ ht₁ =>
+        obtain ⟨t₁', ht₁⟩ := ht₁
+        right; exists <{(~t₁', ~t₂)}>; apply_rules using StlcSubEval
+  | fst Γ t τ₁ τ₂ h ih =>
+      right; cases ih rfl
+      -- t₁ is a value
+      case _ ht₁ =>
+        apply canonical_forms_of_product_types at h
+        obtain ⟨v₁, v₂, hv⟩ := h ht₁; rw [hv]; subst_vars; inversion ht₁
+        exists v₁; apply_rules using StlcSubEval
+      -- t₁ is not a value
+      case _ ht₁ =>
+        obtain ⟨t₁', ht₁⟩ := ht₁
+        exists <{fst ~t₁'}>; apply_rules using StlcSubEval
+  | snd Γ t τ₁ τ₂ h ih =>
+      right; cases ih rfl
+      -- t₁ is a value
+      case _ ht₁ =>
+        apply canonical_forms_of_product_types at h
+        obtain ⟨v₁, v₂, hv⟩ := h ht₁; rw [hv]; subst_vars; inversion ht₁
+        exists v₂; apply_rules using StlcSubEval
+      -- t₁ is not a value
+      case _ ht₁ =>
+        obtain ⟨t₁', ht₁⟩ := ht₁
+        exists <{snd ~t₁'}>; apply_rules using StlcSubEval
+-- END SOLUTION
+```
+
+## Inversion Lemmas for Typing
+
+::::full
+The proof of the preservation theorem also becomes a little more
+complex with the addition of subtyping.  The reason is that, as
+with the "inversion lemmas for subtyping" above, there are a
+number of facts about the typing relation that are immediate from
+the definition in the pure STLC (formally: that can be obtained
+directly from the {tactic}`inversion` tactic) but that require real proofs
+in the presence of subtyping because there are multiple ways to
+derive the same `HasType` statement.
+
+The following inversion lemma tells us that, if we have a
+derivation of some typing statement `Γ ⊢ λ x : σ₁ . t₂ ⦂ τ` whose
+subject is an abstraction, then there must be some subderivation
+giving a type to the body `t₂`.
+::::
+
+::::terse
+We also need to prove an inversion lemma corresponding to a
+structural fact about the typing relation that is "obvious from
+the definition" in pure STLC.
+::::
+
+::::full
+_Lemma_: If `Γ ⊢ λ x : σ₁ . t₂ ⦂ τ`, then there is a type `σ₂`
+  such that `x ↦ σ₁ ;  Γ ⊢ t₂ ⦂ σ` and `σ₁ → σ₂ <: τ`.
+
+  Notice that the lemma does _not_ say, "then `τ` itself is an arrow
+  type" -- this is tempting, but false!  (Why?)
+::::
+
+::::terse
+_Lemma_: If `Γ ⊢ λ x : σ₁ . t₂ ⦂ τ`, then there is a type `σ₂`
+  such that `x ↦ σ₁ ;  Γ ⊢ t₂ ⦂ σ` and `σ₁ → σ₂ <: τ`.
+::::
+
+_Proof_: Let `Γ`, `x`, `σ₁`, `t₂` and `τ` be given as
+    described.  Proceed by induction on the derivation of `Γ ⊢ λ x : σ₁ . t₂ ⦂ τ`.
+     The cases for `var` and `app` are vacuous
+    as those rules cannot be used to give a type to a syntactic
+    abstraction.
+
+  - If the last step of the derivation is a use of `abs` then
+    there is a type `τ₁₂` such that `τ = σ₁ → τ₁₂` and `x ↦ σ₁; Γ ⊢ t₂ ⦂ τ₁₂`.
+    Picking `τ₁₂` for `σ₂` gives us what we
+    need, since `σ₁ → τ₁₂ <: σ₁ → τ₁₂` follows from {tactic}`rfl`.
+
+
+  - If the last step of the derivation is a use of `sub` then
+    there is a type `σ` such that `σ <: τ` and `Γ ⊢ λx : σ₁, t₂ ⦂ σ`.
+    The IH for the typing subderivation tells us that there
+    is some type `σ₂` with `σ₁ → σ₂ <: σ` and `x↦σ₁; Γ ⊢ t₂ ⦂ σ₂`.
+    Picking type `σ₂` gives us what we need, since `σ₁ → σ₂ <: τ` then follows by `trans`.
+
+
+Formally:
+
+```lean
+theorem typing_inversion_abs {Γ : Context} {x : String} {σ₁ : Ty} {t₂ : Tm} {τ : Ty}
+  (h : <{ ~Γ ⊢ λ ~x : ~σ₁ . ~t₂ ⦂ ~τ }>) :
+    ∃ σ₂, <{ ~σ₁ → ~σ₂ }> <: τ ∧ <{ ~x ↦ ~σ₁ ; ~Γ ⊢ ~t₂ ⦂ ~σ₂ }> := by
+
+  generalize heq : <{ λ ~x : ~σ₁ . ~t₂ }> = t at h
+  induction h with (subst_vars; try contradiction)
+  | abs Γ x τ₁ τ₂ t₁ h i =>
+      inversion heq; exists τ₁; solve_by_elim using StlcSubTyping
+  | sub Γ t₁ τ₁ τ₂ ht hs ih =>
+      obtain ⟨σ₂, hs', ht'⟩ := ih rfl
+      exists σ₂; solve_by_elim using StlcSubTyping
+```
+
+:::terse
+Similarly:
 :::
-Qed.
-(* /FOLD
 
-(* ##########################################
- ** Inversion Lemmas for Typing
-
- FULL: The proof of the preservation theorem also becomes a little more
-    complex with the addition of subtyping.  The reason is that, as
-    with the "inversion lemmas for subtyping" above, there are a
-    number of facts about the typing relation that are immediate from
-    the definition in the pure STLC (formally: that can be obtained
-    directly from the [inversion] tactic) but that require real proofs
-    in the presence of subtyping because there are multiple ways to
-    derive the same [has_type] statement.
-
-    The following inversion lemma tells us that, if we have a
-    derivation of some typing statement [Γ ⊢ \x:σ₁,t₂ ⦂ τ] whose
-    subject is an abstraction, then there must be some subderivation
-    giving a type to the body `t₂`.
- TERSE: We also need to prove an inversion lemma corresponding to a
-    structural fact about the typing relation that is "obvious from
-    the definition" in pure STLC.
-
- _Lemma_: If [Γ ⊢ \x:σ₁,t₂ ⦂ τ], then there is a type `σ₂`
-    such that [x|→σ₁; Γ ⊢ t₂ ⦂ σ₂] and [σ₁ → σ₂ <: τ].
-
-    Notice that the lemma does _not_ say, "then `τ` itself is an arrow
-    type" -- this is tempting, but false!  (Why?)
-
- TERSE: ***
-
- TERSE: _Lemma_: If [Γ ⊢ \x:σ₁,t₂ ⦂ τ], then there is a type `σ₂`
-    such that [x|→σ₁; Γ ⊢ t₂ ⦂ σ₂] and [σ₁ → σ₂ <: τ].
-
- _Proof_: Let [Γ], `x`, `σ₁`, `t₂` and `τ` be given as
-     described.  Proceed by induction on the derivation of [Γ ⊢
-     \x:σ₁,t₂ ⦂ τ].  The cases for `var` and `app` are vacuous
-     as those rules cannot be used to give a type to a syntactic
-     abstraction.
-
-     - If the last step of the derivation is a use of `abs` then
-       there is a type [τ₁₂] such that [τ = σ₁ → τ₁₂] and [x:σ₁;
-       Γ ⊢ t₂ ⦂ τ₁₂].  Picking [τ₁₂] for `σ₂` gives us what we
-       need, since [σ₁ → τ₁₂ <: σ₁ → τ₁₂] follows from [refl].
-
-
-     - If the last step of the derivation is a use of [sub] then
-       there is a type `σ` such that `σ <: τ` and [Γ ⊢ \x:σ₁,t₂
-       ⦂ σ].  The IH for the typing subderivation tells us that there
-       is some type `σ₂` with [σ₁ → σ₂ <: σ] and [x:σ₁; Γ ⊢ t₂
-       ⦂ σ₂].  Picking type `σ₂` gives us what we need, since [σ₁ →
-       σ₂ <: τ] then follows by [trans].
-
- TERSE: ***
- Formally:
-
-Lemma typing_inversion_abs : ∀ Γ x σ₁ t₂ τ,
-     <{ Γ ⊢ \x:σ₁,t₂ ⦂ τ }> →
-     exists σ₂,
-       <{ σ₁→σ₂ }> <: τ
-       ∧ <{ x |→ σ₁ ; Γ ⊢ t₂ ⦂ σ₂ }>.
-(* FOLD
-Proof with eauto.
-  intros Γ x σ₁ t₂ τ H.
-  remember <{\x:σ₁,t₂}> as t.
-  induction H;
-    inversion Heqt; subst; intros; try solve_by_invert.
-  - (* T_Abs
-    exists τ₁...
-  - (* sub
-    destruct IHhas_type as [σ₂ [Hsub Hty```...
-  Qed.
-(* /FOLD
-
- TERSE: ***
- TERSE: Similarly:
 :::::full
 ::::exercise (rating := 3) (name := "typing_inversion_var") (optional := true)
-Lemma typing_inversion_var : ∀ Γ (x:string) τ,
-  <{ Γ ⊢ x ⦂ τ }> →
-  exists σ,
-    Γ x = Some σ ∧ σ <: τ.
-(* FOLD
-Proof with eauto.
-  (* ADMITTED
-  intros Γ x τ Hty.
-  remember (var x) as t.
-  induction Hty; intros;
-    inversion Heqt; subst; try solve_by_invert.
-  - (* T_Var
-    exists τ₁...
-  - (* sub
-    destruct IHHty as [υ [Hctx HsubU```... Qed.
-(* /ADMITTED
+```lean
+theorem typing_inversion_var {Γ : Context} {x : String} {τ : Ty}
+  (h : <{ ~Γ ⊢ ~(.var x) ⦂ ~τ }>) :
+  ∃ σ, Γ[x] = some σ ∧ σ <: τ := by
+
+  solution!
+    generalize heq : Tm.var x = t at h
+    induction h with (subst_vars; try contradiction)
+    | var Γ y τ₁ h => inversion heq; solve_by_elim using StlcSubTyping
+    | sub Γ t₁ τ₁ τ₂ ht hs ih =>
+        obtain ⟨σ₂, hs', ht'⟩ := ih rfl
+        exists σ₂; solve_by_elim using StlcSubTyping
+```
 ::::
 :::::
-(* /FOLD
 
 :::::full
 ::::exercise (rating := 3) (name := "typing_inversion_app") (optional := true)
-Lemma typing_inversion_app : ∀ Γ t₁ t₂ τ₂,
-  <{ Γ ⊢ t₁ t₂ ⦂ τ₂ }> →
-  exists τ₁,
-    <{ Γ ⊢ t₁ ⦂ τ₁→τ₂ }> ∧
-    <{ Γ ⊢ t₂ ⦂ τ₁ }>.
-(* FOLD
-Proof with eauto.
-  (* ADMITTED
-  intros Γ t₁ t₂ τ₂ Hty.
-  remember (<{t₁ t₂}>) as t.
-  induction Hty; intros;
-    inversion Heqt; subst; try solve_by_invert.
-  - (* app
-    exists τ₂...
-  - (* sub
-    destruct IHHty as [U1 [Hty1 Hty2```...
-Qed.
-(* /ADMITTED
+```lean
+theorem typing_inversion_app {Γ : Context} {t₁ t₂ : Tm} {τ₂ : Ty}
+  (h : <{ ~Γ ⊢ ~t₁ ~t₂ ⦂ ~τ₂ }>) :
+  ∃ τ₁, <{ ~Γ ⊢ ~t₁ ⦂ ~τ₁ → ~τ₂ }> ∧ <{ ~Γ ⊢ ~t₂ ⦂ ~τ₁ }> := by
+  solution!
+    generalize heq : <{ ~t₁ ~t₂ }> = t at h
+    induction h with (subst_vars; try contradiction)
+    | app => inversion heq; solve_by_elim using StlcSubTyping
+    | sub Γ t₁ τ₁ τ₂ ht hs ih =>
+        obtain ⟨σ₂, hs', ht'⟩ := ih rfl
+        exists σ₂; constructor <;> try assumption
+        apply HasType.sub _ _ _ _ hs'
+        solve_by_elim using StlcSubTyping
+```
 ::::
 :::::
-(* /FOLD
 
-Lemma typing_inversion_unit : ∀ Γ τ,
-  <{ Γ ⊢ unit ⦂ τ }> →
-  <{ Unit }> <: τ.
-(* FOLD
-Proof with eauto.
-  intros Γ τ Htyp. remember <{ unit }> as tu.
-  induction Htyp;
-    inversion Heqtu; subst; intros...
-Qed.
-(* /FOLD
+```lean
+theorem typing_inversion_unit (Γ : Context) (τ : Ty)
+  (h : <{ ~Γ ⊢ unit ⦂ ~τ }>) :
+  <{ Unit }> <: τ := by
 
-:::solution
+  generalize heq : Tm.unit = t at h
+  induction h with (subst_vars; try contradiction)
+  | unit => inversion heq; solve_by_elim using StlcSubTyping
+  | sub Γ t₁ τ₁ τ₂ ht hs ih =>
+      specialize ih rfl
+      solve_by_elim using StlcSubTyping
+```
 
-Lemma typing_inversion_pair : ∀ Γ t₁ t₂ τ,
-  <{ Γ ⊢ (t₁, t₂) ⦂ τ }> →
-  exists τ₁ τ₂,
-    <{ τ₁ × τ₂ }> <: τ ∧
-    <{ Γ ⊢ t₁ ⦂ τ₁ }> ∧ <{ Γ ⊢ t₂ ⦂ τ₂ }>.
-Proof with eauto.
-  intros Γ t₁ t₂ τ Htyp.  remember <{ (t₁, t₂) }> as pair.
-  induction Htyp;
-    inversion Heqpair; subst; intros...
-  - (* sub
-    destruct IHHtyp as [t₃ [T4 [Hsub [Htyp1 Htyp2```]...
-    exists t₃, T4...
-Qed.
+-- Add your lemmas for products here when you get to that exercise
 
-Lemma typing_inversion_fst : ∀ Γ t τ,
-  <{ Γ ⊢ t.fst ⦂ τ }> →
-  exists τ₁ τ₂,
-    τ₁ <: τ ∧ <{ Γ ⊢ t ⦂ τ₁ × τ₂ }>.
-Proof with eauto.
-  intros Γ t τ Htyp. remember <{t.fst}> as fst.
-  induction Htyp;
-    inversion Heqfst; subst; intros...
-  - (* sub
-    destruct IHHtyp as [t₃ [T4 [Hsub Htyp1```...
-Qed.
+```lean
+-- SOLUTION
+theorem typing_inversion_pair {Γ : Context} {t₁ t₂ : Tm} {τ : Ty}
+  (h : <{ ~Γ ⊢ (~t₁, ~t₂) ⦂ ~τ }>) :
+  ∃ τ₁ τ₂, <{ ~τ₁ × ~τ₂ }> <: τ ∧ <{ ~Γ ⊢ ~t₁ ⦂ ~τ₁ }> ∧ <{ ~Γ ⊢ ~t₂ ⦂ ~τ₂ }> := by
 
-Lemma typing_inversion_snd : ∀ Γ t τ,
-  <{ Γ ⊢ t.snd ⦂ τ }> →
-  exists τ₁ τ₂,
-    τ₂ <: τ ∧ <{ Γ ⊢ t ⦂ τ₁ × τ₂ }>.
-Proof with eauto.
-  intros Γ t τ Htyp. remember <{t.snd}> as snd.
-  induction Htyp;
-    inversion Heqsnd; subst; intros...
-  - (* sub
-    destruct IHHtyp as [t₃ [T4 [Hsub Htyp1```...
-Qed.
+    generalize heq : <{ (~t₁, ~t₂) }> = t at h
+    induction h generalizing t₁ t₂ with (subst_vars; try contradiction)
+    | pair Γ t₁ t₂ τ₁ τ₂ h₁ h₂ ih₁ ih₂ =>
+        inversion heq; exists τ₁, τ₂; solve_by_elim using StlcSubTyping
+    | sub Γ t₁ τ₁ τ₂ ht hs ih =>
+      obtain ⟨σ₁, σ₂, hs', ht₁, ht₂⟩ := ih rfl
+      exists σ₁, σ₂; solve_by_elim (maxDepth := 10) using StlcSubTyping
 
+theorem typing_inversion_fst {Γ : Context} {t : Tm} {τ: Ty}
+  (h : <{ ~Γ ⊢ fst ~t ⦂ ~τ }>) :
+  ∃ τ₁ τ₂,
+    τ₁ <: τ ∧ <{ ~Γ ⊢ ~t ⦂ ~τ₁ × ~τ₂ }> := by
+
+  generalize heq : <{ fst ~t }> = t' at h
+  induction h generalizing t with (subst_vars; try contradiction)
+    | fst Γ t τ₁ τ₂ h ih =>
+        inversion heq; exists τ₁, τ₂; solve_by_elim using StlcSubTyping
+    | sub Γ t₁ τ₁ τ₂ ht hs ih =>
+      obtain ⟨σ₁, σ₂, hs', ht'⟩ := ih rfl
+      exists σ₁, σ₂; solve_by_elim using StlcSubTyping
+
+theorem typing_inversion_snd {Γ : Context} {t : Tm} {τ: Ty}
+  (h : <{ ~Γ ⊢ snd ~t ⦂ ~τ }>) :
+  ∃ τ₁ τ₂,
+    τ₂ <: τ ∧ <{ ~Γ ⊢ ~t ⦂ ~τ₁ × ~τ₂ }> := by
+
+  generalize heq : <{ snd ~t }> = t' at h
+  induction h generalizing t with (subst_vars; try contradiction)
+  | snd Γ t τ₁ τ₂ h ih =>
+      inversion heq; exists τ₁, τ₂; solve_by_elim using StlcSubTyping
+  | sub Γ t₁ τ₁ τ₂ ht hs ih =>
+    obtain ⟨σ₁, σ₂, hs', ht'⟩ := ih rfl
+    exists σ₁, σ₂; solve_by_elim using StlcSubTyping
+-- END SOLUTION
+```
+
+The inversion lemmas for typing and for subtyping between arrow
+types can be packaged up as a useful "combination lemma" telling
+us exactly what we'll actually require below.
+
+```lean
+theorem abs_arrow {x : String} {t₂ : Tm} {σ₁ τ₁ τ₂ : Ty}
+  (h : <{ ∅ ⊢ λ ~x : ~σ₁ . ~t₂ ⦂ ~τ₁ → ~τ₂ }> ) :
+  τ₁ <: σ₁ ∧ <{ ~x ↦ ~σ₁ ; ∅ ⊢ ~t₂ ⦂ ~τ₂ }> := by
+    obtain ⟨σ₂, hs, ht⟩ := typing_inversion_abs h; clear h
+    obtain ⟨_, _, heq, hs₁, hs₂⟩ := sub_inversion_arrow hs; clear hs
+    inversion heq; constructor
+    · solve_by_elim using StlcSubTyping
+    · apply HasType.sub <;> solve_by_elim using StlcSubTyping
+```
+
+## Weakening
+
+The weakening lemma is proved as in pure STLC, with the exception of the `sub` case,
+which requires a manual use of the `sub` rule.
+
+```lean
+theorem weakening {Γ Γ' : Context} {t : Tm} {τ: Ty}
+    (hi : Γ ⊆ Γ')
+    (ht : <{ ~Γ ⊢ ~t ⦂ ~τ }>) :
+     <{ ~Γ' ⊢ ~t ⦂ ~τ }> := by
+  induction ht generalizing Γ' with (try apply_rules [PartialMap.update_subset] using StlcSubTyping)
+  | sub Γ t₁ τ₁ τ₂ ht hs ih =>
+    apply HasType.sub <;> solve_by_elim using StlcSubTyping
+
+theorem weakening_empty {Γ : Context} {t : Tm} {τ: Ty}
+    (ht :<{ ∅ ⊢ ~t ⦂ ~τ }>) :
+    <{ ~Γ ⊢ ~t ⦂ ~τ }> := by
+  apply weakening _ ht
+  intro _ _ h
+  rw [PartialMap.getElem_empty] at h
+  contradiction
+```
+
+## Substitution
+
+:::full
+When subtyping is involved proofs are generally easier
+when done by induction on typing derivations, rather than on terms.
+The _substitution lemma_ is proved as for pure STLC, but using
+induction on the typing derivation this time (see Exercise
+`substitution_preserves_typing_from_typing_ind` in {ref "StlcProp"}[StlcProp]).
 :::
 
-(* TERSE: HIDEFROMHTML
- The inversion lemmas for typing and for subtyping between arrow
-    types can be packaged up as a useful "combination lemma" telling
-    us exactly what we'll actually require below.
 
-Lemma abs_arrow : ∀ x σ₁ t₂ τ₁ τ₂,
-  <{ ∅ ⊢ \x:σ₁,t₂ ⦂ τ₁→τ₂ }> →
-  τ₁ <: σ₁
-  ∧ <{ x |→ σ₁ ⊢ t₂ ⦂ τ₂ }>.
-(* FOLD
-Proof with eauto.
-  intros x σ₁ t₂ τ₁ τ₂ Hty.
-  apply typing_inversion_abs in Hty.
-  destruct Hty as [σ₂ [Hsub Hty1```.
-  apply sub_inversion_arrow in Hsub.
-  destruct Hsub as [U1 [U2 [Heq [Hsub1 Hsub2```].
-  injection Heq as Heq; subst...  Qed.
-(* /FOLD
-(* TERSE: /HIDEFROMHTML
+:::terse
+The _substitution lemma_ is stated exactly as in pure STLC.
 
-(* ##########################################
- ** Weakening
+The proof is also the same except that here it is easier to use
+induction on typing derivations rather than on terms.
+:::
 
- The weakening lemma is proved as in pure STLC.
+```lean
+theorem substitution_preserves_typing {Γ : Context} {x : String} {τ₁ : Ty} {t v : Tm} {τ : Ty}
+    (ht : <{ ~x ↦ ~τ₁ ; ~Γ ⊢ ~t ⦂ ~τ }>)
+    (hv : <{ ∅ ⊢ ~v ⦂ ~τ₁ }>) :
+    <{ ~Γ ⊢ [~x := ~v] ~t ⦂ ~τ }> := by
 
-Lemma weakening : ∀ Γ Gamma' t τ,
-     includedin Γ Gamma' →
-     <{ Γ  ⊢ t ⦂ τ }> →
-     <{ Gamma' ⊢ t ⦂ τ }>.
-(* FOLD
-Proof.
-  intros Γ Gamma' t τ H Ht.
-  generalize dependent Gamma'.
-  induction Ht; eauto using includedin_update.
-Qed.
-(* /FOLD
+  generalize heq : x →ₚ τ₁ ; Γ = Γ' at ht
+  induction ht generalizing x Γ with (
+    subst_vars; try rw [subst]; try (apply_rules using StlcSubTyping; done))
+  | var Γ y σ h =>
+      by_cases h₁ : x = y
+      · subst h₁; simp at h; subst h;
+        apply weakening_empty at hv
+        simp; assumption
+      · rw [PartialMap.update_neq] at h <;> simp_all
+        apply_rules using StlcSubTyping
+  | abs _ y _ _ _ h ih =>
+      by_cases h₁ : x = y
+      · simp_all [PartialMap.update_shadow]; apply_rules using StlcSubTyping
+      · simp_all; constructor; apply ih; rw [PartialMap.update_permute]; lia
+  | sub Γ t₁ τ₁ τ₂ ht hs ih =>
+      apply HasType.sub <;> solve_by_elim using StlcSubTyping
+```
 
-Corollary weakening_empty : ∀ Γ t τ,
-     <{ ∅ ⊢ t ⦂ τ }> →
-     <{ Γ ⊢ t ⦂ τ }>.
-(* FOLD
-Proof.
-  intros Γ t τ.
-  eapply weakening.
-  discriminate.
-Qed.
-(* /FOLD
+## Preservation
 
-(* ##########################################
- ** Substitution
-
- FULL: When subtyping is involved proofs are generally easier
-    when done by induction on typing derivations, rather than on terms.
-    The _substitution lemma_ is proved as for pure STLC, but using
-    induction on the typing derivation this time (see Exercise
-    substitution_preserves_typing_from_typing_ind in StlcProp.v).
- TERSE: The _substitution lemma_ is stated exactly as in pure STLC.
-
-    The proof is also the same except that here it is easier to use
-    induction on typing derivations rather than on terms.
-
-(* NOTATION: SOONER: why (x |→ υ ; Γ) and not x |→ υ ; Γ ?
-Lemma substitution_preserves_typing : ∀ Γ x υ t v τ,
-   <{ x |→ υ ; Γ ⊢ t ⦂ τ }> →
-   <{ ∅ ⊢ v ⦂ υ }>  →
-   <{ Γ ⊢ [x:=v]t ⦂ τ }>.
-(* FOLD
-Proof.
-  intros Γ x υ t v τ Ht Hv.
-  remember (x |→ υ; Γ) as Gamma'.
-  generalize dependent Γ.
-  induction Ht; intros Gamma' G; simpl; eauto.
- (* ADMITTED
-  - (* T_Var
-    rename x0 into y.
-    destruct (eqb_spec x y) as [Hxy|Hxy]; subst.
-    + (* x = y
-      rewrite update_eq in H.
-      injection H as H. subst.
-      apply weakening_empty. assumption.
-    + (* x<>y
-      apply T_Var.
-      rewrite update_neq in H; assumption.
-  - (* T_Abs
-    rename x0 into y. subst.
-    destruct (eqb_spec x y) as [Hxy|Hxy]; apply T_Abs.
-    + (* x=y
-      subst. rewrite update_shadow in Ht. assumption.
-    + (* x <> y
-      subst. apply IHHt.
-      rewrite update_permute; auto.
-Qed.
-(* /ADMITTED
-(* /FOLD
-
-(* ##########################################
- ** Preservation
-
- The proof of preservation now proceeds pretty much as in earlier
-    chapters, using the substitution lemma at the appropriate point
-    and the inversion lemma from above to extract structural
-    information from typing assumptions.
-
- TERSE: ***
+The proof of preservation now proceeds pretty much as in earlier
+chapters, using the substitution lemma at the appropriate point
+and the inversion lemma from above to extract structural
+information from typing assumptions.
 
 _Theorem_ (Preservation): If `t`, `t'` are terms and `τ` is a type
   such that `∅ ⊢ t ⦂ τ` and `t ⟶ t'`, then `∅ ⊢ t' ⦂ τ`.
 
-    _Proof_: Let `t` and `τ` be given such that `∅ ⊢ t ⦂ τ`.
-    We proceed by induction on the structure of this typing
-    derivation. The `abs`, `unit`, `tru`, and `fls` cases
-    are vacuous because abstractions and constants don't step.  Case
-    `var` is vacuous as well, since the context is empty.
+_Proof_: Let `t` and `τ` be given such that `∅ ⊢ t ⦂ τ`.
+We proceed by induction on the structure of this typing
+derivation. The `abs`, `unit`, `tru`, and `fls` cases
+are vacuous because abstractions and constants don't step.  Case
+`var` is vacuous as well, since the context is empty.
 
-     - If the final step of the derivation is by `app`, then there
-       are terms `t₁` and `t₂` and types `τ₁` and `τ₂` such that [t =
-       t₁ t₂], [τ = τ₂], [∅ ⊢ t₁ ⦂ τ₁ → τ₂], and [∅ ⊢
-       t₂ ⦂ τ₁].
+  - If the final step of the derivation is by `app`, then there
+    are terms `t₁` and `t₂` and types `τ₁` and `τ₂` such that `t = t₁ t₂`,
+    `τ = τ₂`, `∅ ⊢ t₁ ⦂ τ₁ → τ₂`, and `∅ ⊢ t₂ ⦂ τ₁`.
 
-       By the definition of the step relation, there are three ways
-       `t₁ t₂` can step.  Cases `app₁'` and `app₂` follow
-       immediately by the induction hypotheses for the typing
-       subderivations and a use of `app`.
+    By the definition of the step relation, there are three ways
+    `t₁ t₂` can step.  Cases `app₁'` and `app₂` follow
+    immediately by the induction hypotheses for the typing
+    subderivations and a use of `app`.
 
-       Suppose instead `t₁ t₂` steps by `appAbs`.  Then [t₁ =
-       \x:σ,τ₁₂] for some type `σ` and term [τ₁₂], and [t' =
-       [x:=t₂]τ₁₂].
+    Suppose instead `t₁ t₂` steps by `appAbs`.  Then `t₁ = λ x:σ . τ₁₂`
+    for some type `σ` and term `τ₁₂`, and `t' = [x:=t₂] τ₁₂`.
 
-       By lemma [abs_arrow], we have [τ₁ <: σ] and [x:σ₁ ⊢ t₂ ⦂
-       τ₂].  It then follows by the substitution
-       lemma ([substitution_preserves_typing]) that [∅ ⊢ [x:=t₂]
-       τ₁₂ ⦂ τ₂] as desired.
+    By lemma `abs_arrow`, we have `τ₁ <: σ` and `x:σ₁ ⊢ t₂ ⦂ τ₂`.  It then follows by the substitution
+    lemma ({name}`substitution_preserves_typing`) that `∅ ⊢ [x:=t₂] τ₁₂ ⦂ τ₂` as desired.
 
-     - If the final step of the derivation uses rule `if`, then
-       there are terms `t₁`, `t₂`, and `t₃` such that [t = if t₁ then
-       t₂ else t₃], with [∅ ⊢ t₁ ⦂ Bool] and with [∅ ⊢
-       t₂ ⦂ τ] and [∅ ⊢ t₃ ⦂ τ].  Moreover, by the induction
-       hypothesis, if `t₁` steps to `t₁'` then [∅ ⊢ t₁' : Bool].
-       There are three cases to consider, depending on which rule was
-       used to show `t ⟶ t'`.
+  - If the final step of the derivation uses rule `if`, then
+    there are terms `t₁`, `t₂`, and `t₃` such that `t = if t₁ then t₂ else t₃`,
+    with `∅ ⊢ t₁ ⦂ Bool` and with `∅ ⊢ t₂ ⦂ τ` and `∅ ⊢ t₃ ⦂ τ`.  Moreover, by the induction
+    hypothesis, if `t₁` steps to `t₁'` then `∅ ⊢ t₁' : Bool`.
+    There are three cases to consider, depending on which rule was
+    used to show `t ⟶ t'`.
 
-          - If `t ⟶ t'` by rule `if`, then [t' = if t₁' then t₂
-            else t₃] with `t₁ ⟶ t₁'`.  By the induction hypothesis,
-            [∅ ⊢ t₁' ⦂ Bool], and so [∅ ⊢ t' ⦂ τ] by
-            `if`.
+      - If `t ⟶ t'` by rule `if`, then `t' = if t₁' then t₂ else t₃` with
+       `t₁ ⟶ t₁'`.  By the induction hypothesis,
+        `∅ ⊢ t₁' ⦂ Bool`, and so `∅ ⊢ t' ⦂ τ` by
+        `if`.
 
-          - If `t ⟶ t'` by rule `ifTrue` or `ifFalse`, then
-            either [t' = t₂] or [t' = t₃], and [∅ ⊢ t' ⦂ τ]
-            follows by assumption.
+      - If `t ⟶ t'` by rule `ifTrue` or `ifFalse`, then
+        either `t' = t₂` or `t' = t₃`, and `∅ ⊢ t' ⦂ τ`
+        follows by assumption.
 
-     - If the final step of the derivation is by [sub], then there
-       is a type `σ` such that `σ <: τ` and [∅ ⊢ t ⦂ σ].  The
-       result is immediate by the induction hypothesis for the typing
-       subderivation and an application of [sub].  []
+  - If the final step of the derivation is by `sub`, then there
+    is a type `σ` such that `σ <: τ` and `∅ ⊢ t ⦂ σ`.  The
+    result is immediate by the induction hypothesis for the typing
+    subderivation and an application of `sub`.
 
- TERSE: ***
-
-Theorem preservation : ∀ t t' τ,
-     <{ ∅ ⊢ t ⦂ τ }> →
-     t ⟶ t'  →
-     <{ ∅ ⊢ t' ⦂ τ }>.
-(* FOLD
-Proof with eauto.
-  intros t t' τ HT. generalize dependent t'.
-  remember empty as Γ.
-  induction HT;
-       intros t' HE; subst;
-       try solve [inversion HE; subst; eauto].
-  - (* app
-    inversion HE; subst...
-    (* Most of the cases are immediate by induction,
-       and [eauto] takes care of them
-    + (* ST_AppAbs
-      destruct (abs_arrow _ _ _ _ _ HT1) as [HA1 HA2].
-      apply substitution_preserves_typing with T₀... :::solution
-  - (* T_Fst
-    inversion HE; subst...
-    destruct (typing_inversion_pair _ _ _ _ HT) as
-      [σ₁ [σ₂ [HSub [HTyp1 HTyp2```].
-    destruct (sub_inversion_prod _ _ _ HSub) as
-      [t₁' [t₂' [Heq [Hsub1 Hsub2```].
-    injection Heq as Heq. subst...
-  - (* T_Snd
-    inversion HE; subst...
-    destruct (typing_inversion_pair _ _ _ _ HT) as
-      [σ₁ [σ₂ [HSub [HTyp1 HTyp2```].
-    destruct (sub_inversion_prod _ _ _ HSub) as
-      [t₁' [t₂' [Heq [Hsub1 Hsub2```].
-    injection Heq as Heq. subst...
-:::
 Qed.
-(* /FOLD
 
-(* FULL
- ** Records, via Products and ⊤
+```lean
+theorem preservation {t t' : Tm} {τ : Ty}
+  (ht : <{ ∅ ⊢ ~t ⦂ ~τ }>)
+  (hs : t ⟶ t') :
+  <{ ∅ ⊢ ~t' ⦂ ~τ }> := by
 
- This formalization of the STLC with subtyping omits record
-    types for brevity.  If we want to deal with them more seriously,
-    we have two choices.
+  generalize heq : (∅ : Context) = Γ at ht
+  induction ht generalizing t' with (subst_vars; first
+    -- discharge the goals where `t` doesn't step
+    | inversion hs <;> constructor <;> simp_all; done
+    | try (inversion hs; apply_rules using StlcSubTyping; done))
+  | app Γ τ₁' τ₂' t₁' t₂ h₁ h₂ ih₁ ih₂ =>
+    inversion hs with (try (constructor <;> apply_rules; done))
+    | appAbs _ τ₂ t₁ h =>
+        obtain ⟨h₁, h₂⟩ := abs_arrow h₁
+        apply substitution_preserves_typing (τ₁:=τ₂)
+        · assumption
+        · apply HasType.sub <;> apply_rules using StlcSubTyping
+  | ite Γ t₁ t₂ t₃ τ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
+    inversion hs with (try (constructor <;> solve_by_elim using StlcSubEval))
+  | sub Γ t₁ τ₁ τ₂ ht hs ih =>
+      apply HasType.sub <;> solve_by_elim using StlcSubTyping
+-- SOLUTION
+  | fst Γ t τ₁ τ₂ h ih  =>
+      inversion hs with (try solve_by_elim using StlcSubTyping)
+      | fstPair =>
+          obtain ⟨σ₁, σ₂, hs', ht₁, ht₂⟩ := typing_inversion_pair h
+          obtain ⟨σ₁, σ₂, heq, hs₁, hs₂⟩ := sub_inversion_prod hs'
+          inversion heq; apply HasType.sub <;> assumption
+  | snd Γ t τ₁ τ₂ h ih  =>
+      inversion hs with (try solve_by_elim using StlcSubTyping)
+      | sndPair =>
+          obtain ⟨σ₁, σ₂, hs', ht₁, ht₂⟩ := typing_inversion_pair h
+          obtain ⟨σ₁, σ₂, heq, hs₁, hs₂⟩ := sub_inversion_prod hs'
+          inversion heq; apply HasType.sub <;> assumption
+  | pair Γ t₁ t₂ τ₁ τ₂ h₁ h₂ ih₁ ih₂ =>
+      inversion hs with solve_by_elim using StlcSubTyping
+-- END SOLUTION
+```
 
-    First, we can treat them as part of the core language, writing
-    down proper syntax, typing, and subtyping rules for them.  Chapter
-    [RecordSub] shows how this extension works.
 
-    On the other hand, if we are treating them as a derived form that
-    is desugared in the parser, then we shouldn't need any new rules:
-    we should just check that the existing rules for subtyping product
-    and `Unit` types give rise to reasonable rules for record
-    subtyping via this encoding. To do this, we just need to make one
-    small change to the encoding described earlier: instead of using
-    `Unit` as the base case in the encoding of tuples and the "don't
-    care" placeholder in the encoding of records, we use `⊤`.  So:
-<<
+::::full
+This formalization of the STLC with subtyping omits record
+types for brevity.  If we want to deal with them more seriously,
+we have two choices.
+
+First, we can treat them as part of the core language, writing
+down proper syntax, typing, and subtyping rules for them.
+
+On the other hand, if we are treating them as a derived form that
+is desugared in the parser, then we shouldn't need any new rules:
+we should just check that the existing rules for subtyping product
+and `Unit` types give rise to reasonable rules for record
+subtyping via this encoding. To do this, we just need to make one
+small change to the encoding described earlier: instead of using
+`Unit` as the base case in the encoding of tuples and the "don't
+care" placeholder in the encoding of records, we use `⊤`.  So:
+
+```display
     {a:Nat, b:Nat} --⟶ {Nat,Nat}       i.e., (Nat,(Nat,⊤))
     {c:Nat, a:Nat} --⟶ {Nat,⊤,Nat}   i.e., (Nat,(⊤,(Nat,⊤)))
->>
-    The encoding of record values doesn't change at all.  It is
-    easy (and instructive) to check that the subtyping rules above are
-    validated by the encoding.
-(* LATER: Perhaps it would be good to say something about subtyping
-   for other constructors, like lists, pairs, etc.  More ambitious
-   would be to say something about references, arrays, etc.
-(* /FULL
-
-(* FULL
-(* ######################################################
- ** Exercises
-
-::::exercise (rating := 2) (name := "variations") (manual := true)
- Each part of this problem suggests a different way of changing the
-    definition of the STLC with Unit and subtyping.  (These changes
-    are not cumulative: each part starts from the original language.)
-    In each part, list which properties (Progress, Preservation, both,
-    or neither) become false.  If a property becomes false, give a
-    counterexample.
-
-    - Suppose we add the following typing rule:
-```display
-                           <{ Γ ⊢ t ⦂ σ₁→σ₂
-                    σ₁ <: τ₁     τ₁ <: σ₁      σ₂ <: τ₂
-                    -----------------------------------     (T_Funny1)
-                           <{ Γ ⊢ t ⦂ τ₁→τ₂
 ```
-:::solution Answer: NONE
+
+The encoding of record values doesn't change at all.  It is
+easy (and instructive) to check that the subtyping rules above are
+validated by the encoding.
+
+:::dev PotentialImprovement
+Perhaps it would be good to say something about subtyping
+for other constructors, like lists, pairs, etc.  More ambitious
+would be to say something about references, arrays, etc.
 :::
-    - Suppose we add the following reduction rule:
+::::
+
+:::::full
+::::exercise (rating := 2) (name := "variations") (manual := true)
+Each part of this problem suggests a different way of changing the
+definition of the STLC with Unit and subtyping.  (These changes
+are not cumulative: each part starts from the original language.)
+In each part, list which properties (Progress, Preservation, both,
+or neither) become false.  If a property becomes false, give a
+counterexample.
+
+- Suppose we add the following typing rule:
+
 ```display
-                             --------------------          (ST_Funny2)
+                           <{ Γ ⊢ t ⦂ σ₁→σ₂ }>
+                    σ₁ <: τ₁     τ₁ <: σ₁      σ₂ <: τ₂
+                    -----------------------------------     (funny₁)
+                           <{ Γ ⊢ t ⦂ τ₁→τ₂ }>
+```
+:::solution
+Answer: NONE
+:::
+
+- Suppose we add the following reduction rule:
+```display
+                             --------------------          (funny₂)
                              unit ⟶ (\x:⊤. x)
 ```
-:::solution Answer: Preservation fails.  For example, `unit`
-      has type `Unit` but steps to [(\x:⊤. x)], which does not have
-      type `Unit`.
+:::solution
+Answer: Preservation fails.  For example, `unit`
+has type `Unit` but steps to `(\x:⊤. x)`, which does not have
+type `Unit`.
 :::
-    - Suppose we add the following subtyping rule:
+
+- Suppose we add the following subtyping rule:
+
 ```display
-                               ----------------            (S_Funny3)
+                              ----------------            (funny₃)
                                Unit <: ⊤→⊤
 ```
-:::solution Answer: Progress fails.  For example,
-      [unit (\x:⊤,⊤)] is well typed but stuck.
+
+:::solution
+Answer: Progress fails.  For example,
+`unit (\x:⊤,⊤)` is well typed but stuck.
 :::
-    - Suppose we add the following subtyping rule:
+
+- Suppose we add the following subtyping rule:
+
 ```display
-                               ----------------            (S_Funny4)
+                               ----------------            (funny₄)
                                ⊤→⊤ <: Unit
 ```
-:::solution Answer: NONE
+
+:::solution
+Answer: NONE
 :::
-    - Suppose we add the following reduction rule:
+
+- Suppose we add the following reduction rule:
+
 ```display
-                             ---------------------        (ST_Funny5)
+                             ---------------------        (funny₅)
                              (unit t) ⟶ (t unit)
 ```
-:::solution Answer: NONE
+:::solution
+Answer: NONE
 :::
-    - Suppose we add the same reduction rule _and_ a new typing rule:
+
+- Suppose we add the same reduction rule _and_ a new typing rule:
+
 ```display
-                             ---------------------        (ST_Funny5)
+                             ---------------------        (funny₅)
                              (unit t) ⟶ (t unit)
 
-                           ---------------------------     (T_Funny6)
+                           ---------------------------     (funny₆)
                            ∅ ⊢ unit ⦂ ⊤→⊤
 ```
-:::solution Answer: Preservation fails. For example,
-      [unit (\x:A,x)] has type `⊤`, but it steps to [(\x:A,x) unit],
-      which is ill typed,
+
+:::solution
+Answer: Preservation fails. For example,
+1unit (\x:A,x)1 has type `⊤`, but it steps to `(\x:A,x) unit`,
+which is ill typed,
 :::
-    - Suppose we _change_ the arrow subtyping rule to:
+
+- Suppose we _change_ the arrow subtyping rule to:
 ```display
                           σ₁ <: τ₁   σ₂ <: τ₂
-                          -------------------              (S_Arrow')
+                          -------------------              (arrow')
                           σ₁→σ₂ <: τ₁→τ₂
 ```
-:::solution Answer: Preservation fails.  For example,
-      [(\x:Unit*Unit, x.fst) unit] has type `Unit`, but steps to
-      [unit.fst] which is ill typed. (In order to type
-      [(\x:Unit*Unit, x.fst) unit] we use [sub] twice; once to give
-      `unit` the type `⊤`, and once to give [\x:Unit*Unit, x.fst]
-      the type [⊤ → Unit] using [S_Arrow']).
+
+:::solution
+Answer: Preservation fails.  For example,
+`(\x:Unit*Unit, x.fst) unit`has type `Unit`, but steps to
+`unit.fst` which is ill typed. (In order to type
+`(\x:Unit*Unit, x.fst) unit` we use `sub` twice; once to give
+`unit` the type `⊤`, and once to give `\x:Unit*Unit, x.fst`
+the type `⊤ → Unit` using `S_Arrow'`).
 :::
 
 
@@ -2710,6 +2740,7 @@ Qed.
 `GRADE_MANUAL 2: variations`
 :::
 ::::
+:::::
 
 ### Exercise: Adding Products
 
@@ -2720,7 +2751,7 @@ extension by modifying the definitions and proofs above:
 
 - Constructors for pairs, first and second projections, and
 product types have already been added to the definitions of
-[Ty] and [Tm].  Also, the definition of substitution has been
+`Ty` and `Tm`.  Also, the definition of substitution has been
 extended.
 
 - Extend the surrounding definitions accordingly (refer to chapter
