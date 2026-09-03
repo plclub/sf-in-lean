@@ -1220,7 +1220,7 @@ theorem replicate_append_general (c₁ c₂ n : Nat) :
   | zero =>
     rw [replicate_zero, Nat.zero_add, nil_append]
   | succ c1' ih =>
-    rw [Nat.succ_add, replicate_succ, replicate_succ, cons_append, ih]
+    rw [Nat.add_right_comm, replicate_succ, replicate_succ, cons_append, ih]
 ```
 
 Then, we can use this more general theorem to prove the original goal:
