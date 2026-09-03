@@ -22,3 +22,6 @@ TS/*Verso.lean
 gradescope/*.zip
 gradescope/autograder/
 gradescope/context/
+
+# The pre-round snapshot a proofreading review diffs against (scripts/proofread.py).
+proofread/rounds/*.before.*
