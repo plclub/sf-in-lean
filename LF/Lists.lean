@@ -45,6 +45,9 @@ tuple types and structures as shorthand for them. I suspect we can drop most
 of the Basics content and rely on what's here instead. If we do that, we can
 introduce the term "Tuple" here.
 ::::
+:::dev "Benjamin Pierce (bcpierce00)"
+Don't we need structures there in the airport exercise at least?
+:::
 
 ::::full
 In an `inductive` type definition, each constructor can take
