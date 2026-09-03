@@ -192,6 +192,8 @@ interpret its arrows.
 We use American English spelling.
 For general matters of grammar, punctuation, and usage, we follow
 the [Chicago Manual of Style](https://www.chicagomanualofstyle.org/).
+`PROOFREADING.md` describes the repeatable per-chapter proofreading pass and
+records the house rules that override Chicago.
 
 | Use this               | Not that                     |
 | ---------------------- | ---------------------------- |

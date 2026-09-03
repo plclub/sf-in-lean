@@ -211,7 +211,7 @@ list constructor would be rather burdensome. Fortunately, the type
 argument is implicit, so Lean will normally infer it from context.
 
 We can now go back and make polymorphic versions of all the
-list-processing functions that we wrote before. Here is `myRepeat`,
+list-processing functions that we wrote before. Here is `replicate`,
 for example:
 ::::
 
@@ -224,38 +224,38 @@ we've already seen...
 :::
 
 ```lean
-def myRepeat (α : Type) (x : α) (count : Nat) : MyList α :=
+def replicate (α : Type) (x : α) (count : Nat) : MyList α :=
   match count with
   | 0 => .nil
-  | count' + 1 => .cons x (myRepeat α x count')
+  | count' + 1 => .cons x (replicate α x count')
 ```
 
-Some simple facts about {name}`myRepeat`:
+Some simple facts about {name}`replicate`:
 
 ```lean
-theorem myRepeat_zero (α : Type) (v : α) :
-    myRepeat α v 0 = MyList.nil := rfl
+theorem replicate_zero (α : Type) (v : α) :
+    replicate α v 0 = MyList.nil := rfl
 
-theorem myRepeat_succ (α : Type) (v : α) (count : Nat) :
-    myRepeat α v (count + 1) = MyList.cons v (myRepeat α v count) := rfl
+theorem replicate_succ (α : Type) (v : α) (count : Nat) :
+    replicate α v (count + 1) = MyList.cons v (replicate α v count) := rfl
 ```
 
 ::::full
-We can use {name}`myRepeat` by applying it first to a type and then
+We can use {name}`replicate` by applying it first to a type and then
 to an element of this type (and a number):
 ::::
 
 ```lean
-example : myRepeat Nat 4 2 = .cons 4 (.cons 4 .nil) := by rfl
+example : replicate Nat 4 2 = .cons 4 (.cons 4 .nil) := by rfl
 ```
 
 ::::full
-To use {name}`myRepeat` to build other kinds of lists, we simply
+To use {name}`replicate` to build other kinds of lists, we simply
 pass a different type and an element of that type:
 ::::
 
 ```lean
-example : myRepeat Bool false 1 = .cons false .nil := by rfl
+example : replicate Bool false 1 = .cons false .nil := by rfl
 ```
 
 ::::quiz
@@ -277,7 +277,7 @@ What is the type of `MyList.cons true (MyList.cons 3 MyList.nil)`?
 ::::
 
 ::::quiz
-What is the type of {name}`myRepeat`?
+What is the type of {name}`replicate`?
 
 (A) {lean}`Nat → Nat → MyList Nat`
 
@@ -293,7 +293,7 @@ What is the type of {name}`myRepeat`?
 ::::
 
 ::::quiz
-What is the type of `myRepeat 1 2`?
+What is the type of `replicate 1 2`?
 
 (A) {lean}`MyList Nat`
 
@@ -335,31 +335,33 @@ example : List Nat := [1, 2, 3]
 
 ### Type Annotation Inference
 
-Let's write the definition of {name}`myRepeat` again, but this time we won't specify
+Let's write the definition of {name}`replicate` again, but this time we won't specify
 the type of the parameter {lean}`α`. Will Lean still accept it?
 
 ```lean
-def myRepeat' α (x : α) (count : Nat) : List α :=
+def replicate' α (x : α) (count : Nat) : List α :=
   match count with
   | 0 => .nil
-  | count' + 1 => .cons x (myRepeat' α x count')
+  | count' + 1 => .cons x (replicate' α x count')
 ```
 
 Indeed it will. Lean infers that `α` is a type.
 
-```lean (name := myRepeat')
-#check myRepeat'
+```lean (name := replicate')
+#check replicate'
 ```
 
-```leanOutput myRepeat'
-myRepeat'.{u_1} (α : Type u_1) (x : α) (count : Nat) : List α
+```leanOutput replicate'
+replicate'.{u_1} (α : Type u_1) (x : α) (count : Nat) : List α
 ```
 
+::::full
 The generated
 `u_1` is part of Lean's bookkeeping for treating types more generally.
 We will not need to interpret names like this for now —
 you can ignore them when they appear in Lean's output unless we explicitly
 call attention to them.
+::::
 
 ::::terse
 Lean has used _type inference_ to deduce a type for {lean}`α`.
@@ -380,9 +382,9 @@ as documentation, so we will continue to use them much of the time.
 ::::full
 To use a polymorphic function, we need to pass it one or
 more types in addition to its other arguments. For example, the
-recursive call in the body of the {name}`myRepeat` function above must
+recursive call in the body of the {name}`replicate` function above must
 pass along the type {lean}`α`. But since the second argument to
-{name}`myRepeat` is an element of {lean}`α`, it seems entirely obvious that the
+{name}`replicate` is an element of {lean}`α`, it seems entirely obvious that the
 first argument can only be {lean}`α` — why should we have to write it
 explicitly?
 
@@ -395,7 +397,7 @@ function being applied, the types of the other arguments, and the
 type expected by the context in which the application appears —
 to determine what concrete type should replace the `_`.
 
-Using holes, the {name}`myRepeat'` function can be rewritten like this:
+Using holes, the {name}`replicate'` function can be rewritten like this:
 ::::
 
 ::::terse
@@ -404,10 +406,10 @@ can usually infer them:
 ::::
 
 ```lean
-def myRepeat'' (α : Type) (x : α) (count : Nat) : List α :=
+def replicate'' (α : Type) (x : α) (count : Nat) : List α :=
   match count with
   | 0 => []
-  | count' + 1 => x :: myRepeat'' _ x count'
+  | count' + 1 => x :: replicate'' _ x count'
 ```
 
 ::::full
@@ -422,15 +424,15 @@ surrounding them with curly braces instead of parens:
 ::::
 
 ```lean
-def myRepeat''' {α : Type} (x : α) (count : Nat) : List α :=
+def replicate''' {α : Type} (x : α) (count : Nat) : List α :=
   match count with
   | 0 => []
-  | count' + 1 => x :: myRepeat''' x count'
+  | count' + 1 => x :: replicate''' x count'
 ```
 
 ::::full
 By making the type argument implicit, we no longer need to provide it
-to the recursive call to {name}`myRepeat'''`. Indeed, it
+to the recursive call to {name}`replicate'''`. Indeed, it
 would be invalid to provide one, because Lean is not expecting it.
 For each implicit parameter, Lean automatically inserts a hidden
 hole `_` argument for us, which is then inferred as usual.
@@ -666,7 +668,7 @@ theorem rev_cons {α : Type} {x : α} {l : List α} :
     (x :: l).rev = l.rev ++ [x] := by rfl
 ```
 
-:::::exercise (rating := 2) (name := "poly_exercises")
+:::::exercise (rating := 2) (name := "poly_exercises") (checkVisibility := false)
 Here are a few simple exercises, just like ones in the {ref "Lists"}[Lists] chapter,
 for practice with polymorphism. Complete the proofs below.
 You will likely find useful the following
@@ -722,7 +724,7 @@ theorem append_length {α : Type} {l₁ l₂ : List α} :
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "more_poly_exercises")
+:::::exercise (rating := 2) (name := "more_poly_exercises") (checkVisibility := false)
 Here are some slightly more interesting ones...
 
 ```lean
@@ -849,6 +851,7 @@ Notice that the simplification lemmas {name}`zip_nil_left` and {name}`zip_nil_ri
 The reason is that `l₁` and `l₂` are variables, and matching on a variable usually gets stuck, like we have seen before in {ref "Induction"}[Induction] when proving the `zero_add` theorem.
 To overcome this, we destruct the list so that the `match` knows which branch to take during the computation done by the `rfl` tactic.
 
+::::::full
 :::::exercise (rating := 1) (name := "zip_checks") (optional := true) (manual := true)
 Try answering the following questions on paper and
 checking your answers in Lean:
@@ -859,7 +862,9 @@ checking your answers in Lean:
   ```
   print?
 :::::
+::::::
 
+::::::full
 :::::exercise (rating := 3) (name := "unzip") (manual := true)
 The function `unzip` goes in the other direction from {name}`zip`: it takes a list of pairs and returns a pair of lists.
 
@@ -932,6 +937,7 @@ theorem unzip_test_snd' : (unzip [(1, false), (2, true)]).snd = [false, true] :=
 ```
 :::
 :::::
+::::::
 
 ## Polymorphic Options
 

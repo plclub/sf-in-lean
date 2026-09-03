@@ -108,20 +108,27 @@ cases b with
 Follow the Lean library's naming conventions:
 
 - Theorems and proof names use `snake_case`, e.g. `add_swap`, `rev_app_distr`
+  * The casing of the definitions that the theorems are about keep their casing,
+    e.g. `Option.isSome_map` and not `Option.is_some_map`
 - Types and propositions (including definitions returning `Prop`) use
   `PascalCase`, e.g. `Aexp`, `IsValue`
 - Other values and functions use `camelCase`, e.g. `isEven`, `doubleBin`
 
-Also follow Lean's variable naming conventions, using primes `'`, `''`, ...
-and numerical subscripts `₁`, `₂`, ... as needed:
+We generally follow Mathlib's variable naming conventions,
+using primes `'`, `''`, ... and numerical subscripts `₁`, `₂`, ... as needed:
 
 - `α`, `β`, `γ`, ... for type variables
-- `a`, `b`, `c`, ... for propositions
+- `a`, `b`, `c`, ... or `p`, `q`, `r`, ... for propositions
 - `p`, `q`, `r`, ... for predicates (functions into `Prop`)
-- `m`, `n`, `k`, ... for natural numbers
-- `h` for hypotheses
+- `m`, `n`, `p`, `k`, ... for natural numbers
+- `h` for hypotheses and `ih` for induction hypotheses
 - `f` and `g` for functions
-- `l` for lists
+- `b`, `c`, `d`, ... for booleans
+- `xs`, `ys`, `zs`, `as`, `bs`, `cs` ... or `l` for lists
+- `x`, `y`, `z`, `a`, `b`, `c`, ... for other variables
+
+Avoid clashing variable forms within the same scope that may cause confusion,
+e.g. do not declare `p : Nat` and `q : Prop` in a single function definition.
 
 Almost always, definitions and theorems relating to a type belong in a
 namespace with the same name as the type. Define the type first, then open its
@@ -175,8 +182,8 @@ indentation relative to the declaration body:
 
 ```lean
 theorem map_cons {α β : Type} {f : α → β}
-    {head : α} {tail : List α} :
-    map f (head :: tail) = f head :: map f tail := by
+    {x : α} {xs : List α} :
+    map f (x :: xs) = f x :: map f xs := by
   rfl
 ```
 
@@ -202,8 +209,8 @@ For example, `map_cons` can be used simply as `rw [map_cons]`:
 
 ```lean
 theorem map_cons {α β : Type} {f : α → β}
-    {head : α} {tail : List α} :
-    map f (head :: tail) = f head :: map f tail := by
+    {x : α} {xs : List α} :
+    map f (x :: xs) = f x :: map f xs := by
   ...
 ```
 
@@ -219,8 +226,8 @@ theorem foldMap_correct {α β : Type}
   ...
 
 theorem uncurry_curry {α β γ : Type}
-    (f : α → β → γ) (x : α) (y : β) :
-    prodCurry (prodUncurry f) x y = f x y := by
+    (f : α → β → γ) (a : α) (b : β) :
+    prodCurry (prodUncurry f) a b = f a b := by
   ...
 ```
 
@@ -266,7 +273,7 @@ than checking its diagnostic:
 
 ````lean
 ```lean +error
-example (a b : Nat) : a + b = b + a := by
+example (n m : Nat) : n + m = n + m := by
   -- `rfl` doesn't work here!
   rfl
 ```
@@ -276,11 +283,11 @@ Likewise, leave a one-off stuck proof unfinished instead of closing it with `sor
 
 ````lean
 ```lean +error
-example (c n : Nat) :
-    myRepeat n c ++ myRepeat n c = myRepeat n (c + c) := by
-  induction c with
+example (n m : Nat) :
+    replicate n m ++ replicate n m = replicate n (m + m) := by
+  induction m with
   ...
-  | succ c' ih =>
+  | succ m' ih =>
     ...
     -- Now we seem to be stuck.
 ```
@@ -303,11 +310,11 @@ its name:
 
 ````lean
 ```lean +error -keep
-def x : Nat := "str"
+def n : Nat := "str"
 ```
 ````
 
-Without `-keep`, `x` cannot be redefined later in the chapter.
+Without `-keep`, `n` cannot be redefined later in the chapter.
 
 #### ` ```leanOutput `
 
@@ -765,7 +772,7 @@ replacements are summarized below.
 
 Entire lines of code can also be replaced by beginning with a `-- SOLUTION`
 comment and ending with a `-- END SOLUTION` comment. The comments are stripped
-in the solutions variant, while all lines are replaced by a `-- FILL IN HERE`
+in the solutions variant, while all lines are replaced by a `--  FILL IN HERE`
 comment in the student and terse variants. Use this only when omitting the lines entirely still compiles, such as for the constructors of an inductive type.
 
 ````
@@ -869,7 +876,7 @@ _Rendered in all variants._
 In the HTML, this is rendered as a collapsible `<details>` element
 with the given `<summary>` text, or "Details" when it is omitted.
 In the extracted Lean, this is rendered preceded by a
-`-- THESE DETAILS CAN BE SKIPPED: <summary>` comment and followed by a
+`-- THE FOLLOWING DETAILS CAN BE SKIPPED: <summary>` comment and followed by a
 `-- END DETAILS` comment.
 Good for encoding details, macro plumbing, or helper notation that is correct
 but not central to the main narrative.

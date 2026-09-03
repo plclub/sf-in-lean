@@ -12,13 +12,17 @@ open Verso Genre Manual
 namespace SFLMeta
 
 /-- Render configuration for a single volume/mode build.  `vol` is the lowercase
-volume slug (`lf`/`hl`/`ts`); `mode` is `student`/`solutions`/`terse`. -/
-def mkConfig (vol mode : String) : RenderConfig where
+volume slug (`lf`/`hl`/`ts`); `mode` is `student`/`solutions`/`terse`; `stamp` is
+this build's stamp (`SFLMeta.buildStamp`), which `extraContents` puts at the foot
+of every page and the saver repeats as a comment at the end of every generated
+`.lean` file. -/
+def mkConfig (vol mode stamp : String) : RenderConfig where
   emitTeX := false
   emitHtmlSingle := .no
   emitHtmlMulti := .immediately
   htmlDepth := 2
   extraCss := {SFLMeta.sfTheme}
+  extraContents := #[buildStampHtml stamp]
   destination := s!"_out/{vol}/{mode}"
 
 /-- Verso hardwires the multi-page HTML output directory to `html-multi/`.  SFL
@@ -52,12 +56,16 @@ def runVolume (vol : String) (doc : Verso.Doc.Part Manual)
         IO.eprintln "mode must be student, solutions, or terse"
         return 1
     setCurrVariant variant
+    -- Read the clock once: the HTML pages and the extracted `.lean` files of a
+    -- single build must carry the same stamp, not two readings a few seconds
+    -- apart.
+    let stamp ← buildStamp
     let extraStep := match variant with
-      | .student => Save.emitSavedStudent vol.toUpper crossVol
-      | .solutions => Save.emitSavedSolutions vol.toUpper crossVol
-      | .terse => Save.emitSavedTerse vol.toUpper crossVol
-      | .grading => Save.emitSavedGrading vol.toUpper crossVol
-    let config := mkConfig vol mode
+      | .student => Save.emitSavedStudent vol.toUpper stamp crossVol
+      | .solutions => Save.emitSavedSolutions vol.toUpper stamp crossVol
+      | .terse => Save.emitSavedTerse vol.toUpper stamp crossVol
+      | .grading => Save.emitSavedGrading vol.toUpper stamp crossVol
+    let config := mkConfig vol mode stamp
     let rc ← manualMain doc (options := rest) (config := config) (extraSteps := [extraStep])
     if rc == 0 then
       renameHtmlDir config.destination

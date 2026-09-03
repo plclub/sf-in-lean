@@ -110,6 +110,20 @@ blockquote {
   color: #2b2b28;
 }
 
+/* Build stamp: when this page was generated, matching the trailing comment in
+   the generated .lean file of the same chapter (SFLMeta/BuildStamp.lean).  It
+   is a provenance note, not something to read, so it is small, gray, and set
+   off below a rule. */
+.sf-build-stamp {
+  margin-top: 2.5em;
+  padding-top: 0.5em;
+  border-top: 1px solid var(--sf-rule);
+  font-size: 0.8em;
+  font-style: italic;
+  text-align: right;
+  color: #8c8c88;
+}
+
 /* Tighten the exercise box to share the same palette */
 .exercise {
   background: var(--sf-surface);

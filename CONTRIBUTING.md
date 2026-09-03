@@ -292,6 +292,16 @@ release year is deliberately a recorded fact rather than the wall-clock year:
 two builds of the same tag must agree, and a citation should name the year the
 edition was published, not the year someone happened to rebuild it.
 
+**Build stamps.**  Every build product records when it was made: each generated
+`.lean` file ends with a `-- Built on <date> <time> UTC` comment, and each HTML
+page ends with the same sentence set small and gray below a rule.  The clock is
+read once per `SFLMeta.runVolume` call and the one string is handed to both
+emitters (`SFLMeta/BuildStamp.lean`), so a chapter's `.lean` and its HTML page
+always agree — which is what makes the pair recognizable as one build.  Unlike
+the release year, this *is* wall-clock time: it answers "how old is the copy in
+front of me", a question only the clock can answer.  It is in UTC so that it
+reads the same to everyone.
+
 **Adding a volume.**  Add a row to `volumes` in `SFLMeta/Volume.lean`, add the
 `[[lean_lib]]` with its `weak.sfl.volume` option, and add the `[[lean_exe]]`
 that calls `SFLMeta.runVolume` with the same slug.  The slug is the one name
