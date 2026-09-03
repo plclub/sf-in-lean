@@ -36,13 +36,14 @@ namespace Lists
 
 # Pairs of Numbers
 
-::::dev "Mike Hicks (mwhicks1)"
+:::dev "Mike Hicks (mwhicks1)" PotentialImprovement
 This content is redundant with what's in Basics, which introduces the idea of
 tuple types and structures as shorthand for them. I suspect we can drop most
 of the Basics content and rely on what's here instead. If we do that, we can
 introduce the term "Tuple" here.
 (We do not need structures in the airport exercise, either.)
-::::
+Also: introduce dsimp here to demo it for an interesting proof.
+:::
 
 ::::full
 In an `inductive` type definition, each constructor can take
