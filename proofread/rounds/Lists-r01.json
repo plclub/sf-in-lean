@@ -1,0 +1,176 @@
+{
+ "file": "LF/Lists.lean",
+ "chapter": "Lists",
+ "round": 1,
+ "proposals": [
+  {
+   "id": "p01",
+   "cat": "typo/article",
+   "old": "This content is a redundant with what's in Basics",
+   "new": "This content is redundant with what's in Basics",
+   "why": "Stray article before a predicate adjective."
+  },
+  {
+   "id": "p02",
+   "cat": "punctuation/em-dash",
+   "old": "any number of arguments -- none (as with",
+   "new": "any number of arguments — none (as with",
+   "why": "Chapter prose uses a real em dash; ASCII `--` is the shorthand reserved for note bodies."
+  },
+  {
+   "id": "p03",
+   "cat": "typo/word-slip",
+   "old": "the following functions, so we don't need qualifiers. We've already\nfull explained namespaces back in Basics. Some of the text below\nmentions using the `NatProd` prefix specifically, but I think you can\ndrop it and it will stick work.",
+   "new": "the following functions, so we don't need qualifiers. We've already\nfully explained namespaces back in Basics. Some of the text below\nmentions using the `NatProd` prefix specifically, but I think you can\ndrop it and it will still work.",
+   "why": "Two slips in one note: \"full\" for \"fully\" and \"stick\" for \"still\". They share a hunk, so they travel together."
+  },
+  {
+   "id": "p04",
+   "cat": "formatting/blank-lines",
+   "old": ":::\n\n\n::::full\nSince pairs will be used heavily",
+   "new": ":::\n\n::::full\nSince pairs will be used heavily",
+   "why": "Two blank lines in a row; the file uses at most one."
+  },
+  {
+   "id": "p05",
+   "cat": "parallelism/both-and",
+   "old": "used in both expressions and in pattern matches",
+   "new": "used both in expressions and in pattern matches",
+   "why": "`both ... and` must join parallel elements; as written `both` scopes over \"expressions and in pattern matches\"."
+  },
+  {
+   "id": "p06",
+   "cat": "typo/article",
+   "old": "a type class is like an Java-style interface",
+   "new": "a type class is like a Java-style interface",
+   "why": "\"Java\" begins with a consonant sound, so it takes \"a\"."
+  },
+  {
+   "id": "p07",
+   "cat": "formatting/blank-lines",
+   "old": "theorem tail_nil : [].tail = [] := by rfl\n```\n\n\n:::full",
+   "new": "theorem tail_nil : [].tail = [] := by rfl\n```\n\n:::full",
+   "why": "Two blank lines in a row; the file uses at most one."
+  },
+  {
+   "id": "p08",
+   "cat": "comma/coordinate-adjectives",
+   "old": "as it's the easiest, and most idiomatic solution",
+   "new": "as it's the easiest and most idiomatic solution",
+   "why": "No comma before \"and\" joining two adjectives modifying the same noun."
+  },
+  {
+   "id": "p09",
+   "cat": "punctuation/missing-period",
+   "old": "The following lemmas should hold about your definition\n\n```lean",
+   "new": "The following lemmas should hold about your definition.\n\n```lean",
+   "why": "Sentence ends without a period; the parallel line in the next exercise has one."
+  },
+  {
+   "id": "p10",
+   "cat": "punctuation/comma-splice",
+   "old": "This gets pretty verbose quite fast, however we can use",
+   "new": "This gets pretty verbose quite fast; however, we can use",
+   "why": "\"however\" is a conjunctive adverb, not a coordinating conjunction, so a comma alone splices the two clauses."
+  },
+  {
+   "id": "p11",
+   "cat": "punctuation/em-dash",
+   "old": "lists are concrete -- there are no variables involved",
+   "new": "lists are concrete — there are no variables involved",
+   "why": "Chapter prose uses a real em dash."
+  },
+  {
+   "id": "p12",
+   "cat": "punctuation/em-dash",
+   "old": "computationally straight-forward -- compute both sides",
+   "new": "computationally straightforward — compute both sides",
+   "why": "Em dash in chapter prose; and \"straightforward\" is one word."
+  },
+  {
+   "id": "p13",
+   "cat": "usage/that-which",
+   "old": "Now, prove these lemmas which should hold",
+   "new": "Now, prove these lemmas that should hold",
+   "why": "Restrictive relative clause: CMOS uses \"that\" and no comma."
+  },
+  {
+   "id": "p14",
+   "cat": "formatting/blank-lines",
+   "old": ":::gradeTheorem \"0.5\" test_removeOne1 test_removeOne2\n:::\n\n\n```lean",
+   "new": ":::gradeTheorem \"0.5\" test_removeOne1 test_removeOne2\n:::\n\n```lean",
+   "why": "Two blank lines in a row; the file uses at most one."
+  },
+  {
+   "id": "p15",
+   "cat": "formatting/blank-lines",
+   "old": "Now we can prove the main theorem.\n\n\n```lean",
+   "new": "Now we can prove the main theorem.\n\n```lean",
+   "why": "Two blank lines in a row; the file uses at most one."
+  },
+  {
+   "id": "p16",
+   "cat": "formatting/blank-lines",
+   "old": "(E) can't be done with the tactics we've seen.\n\n\n:::quizSolution",
+   "new": "(E) can't be done with the tactics we've seen.\n\n:::quizSolution",
+   "why": "Two blank lines in a row; the file uses at most one."
+  },
+  {
+   "id": "p17",
+   "cat": "markup/code-spacing",
+   "old": "  `++`, and `+`.\n\n- Next, suppose `l₁ = n::l₁'`, with",
+   "new": "  `++`, and `+`.\n\n- Next, suppose `l₁ = n :: l₁'`, with",
+   "why": "The parallel informal proof earlier in the chapter writes `n :: l₁'`, as does every Lean block."
+  },
+  {
+   "id": "p18",
+   "cat": "markup/code-spacing",
+   "old": "((n::l₁') ++ l₂).length = (n::l₁').length + l₂.length.",
+   "new": "((n :: l₁') ++ l₂).length = (n :: l₁').length + l₂.length.",
+   "why": "Spaces around `::` everywhere else in the chapter."
+  },
+  {
+   "id": "p19",
+   "cat": "markup/code-spacing",
+   "old": "- Next, suppose `l = n::l'`, with",
+   "new": "- Next, suppose `l = n :: l'`, with",
+   "why": "Spaces around `::` everywhere else in the chapter."
+  },
+  {
+   "id": "p20",
+   "cat": "hyphenation/compound",
+   "old": "rather longwinded and pedantic",
+   "new": "rather long-winded and pedantic",
+   "why": "Merriam-Webster and CMOS both hyphenate \"long-winded\"."
+  },
+  {
+   "id": "p21",
+   "cat": "punctuation/missing-period",
+   "old": " where `l = n'::l'`. _Qed_\n",
+   "new": " where `l = n' :: l'`. _Qed_.\n",
+   "why": "Every other informal proof in this section closes `_Qed_.`; also spaces the `::` to match the rest of the chapter."
+  },
+  {
+   "id": "p22",
+   "cat": "formatting/stray-indent",
+   "old": "Suppose we'd like a function to retrieve the `n`th element\n    of a list.  What to do if the list is too short?",
+   "new": "Suppose we'd like a function to retrieve the `n`th element\nof a list.  What to do if the list is too short?",
+   "why": "Continuation line of the paragraph is indented four spaces; no other terse block does this."
+  },
+  {
+   "id": "p23",
+   "cat": "capitalization/after-colon",
+   "old": "This solution is not so good: If `nthBad` returns 42",
+   "new": "This solution is not so good: if `nthBad` returns 42",
+   "why": "CMOS 6.61: lowercase after a colon when a single sentence follows."
+  },
+  {
+   "id": "p24",
+   "cat": "typo/doubled-word",
+   "old": "it ought to be solvable with\nwith the material introduced thus far",
+   "new": "it ought to be solvable with\nthe material introduced thus far",
+   "why": "\"with with\" across the line break."
+  }
+ ],
+ "completed": true
+}
