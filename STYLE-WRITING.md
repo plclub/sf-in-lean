@@ -202,6 +202,8 @@ records the house rules that override Chicago.
 | "VS Code"              | "VSCode"                     |
 | "IH"                   | "I.H."                       |
 | "type class"           | "typeclass"                  |
+| "boolean"              | "Boolean"                    |
+| "induction hypothesis" | "inductive hypothesis"       |
 
 ### Informal Proofs
 

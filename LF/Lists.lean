@@ -22,7 +22,6 @@ second week's homework assignment.
 And UsingLean??
 :::
 
-
 ```importBlock
 import LF.Induction
 import LF.UsingLean
@@ -49,8 +48,8 @@ introduce the term "Tuple" here.
 
 ::::full
 In an `inductive` type definition, each constructor can take
-any number of arguments — none (as with {name}`true` and  {lean}`0`),
-one (as with  {name}`Nat.succ`), or more than one (as with  {name}`Playground.Nibble` and
+any number of arguments — none (as with {name}`true` and {lean}`0`),
+one (as with {name}`Nat.succ`), or more than one (as with {name}`Playground.Nibble` and
 the following):
 ::::
 
@@ -77,7 +76,7 @@ to two arguments of type {name}`Nat`."
 :::slidebreak
 :::
 
-:::dev "Mike Hicks (@mwhicks1)"
+:::dev "Mike Hicks (mwhicks1)"
 I would have expected us to have `namespace NatProd` here when defining
 the following functions, so we don't need qualifiers. We've already
 fully explained namespaces back in Basics. Some of the text below
@@ -98,7 +97,7 @@ def NatProd.snd (p : NatProd) : Nat :=
   | .pair _ y => y
 ```
 
-Defining these functions with the {name}`NatProd` type name qualifying their name
+Defining these functions with the {name}`NatProd` type name qualifying their names
 allows us to use them with `.` notation:
 
 ```lean
@@ -110,7 +109,7 @@ example : (NatProd.pair 3 5).fst = 3 := by rfl
 
 ::::full
 Since pairs will be used heavily in what follows, it will be
-convenient to write them with angle bracket notation `⟨n, m⟩`
+convenient to write them with angle-bracket notation `⟨n, m⟩`
 instead of `NatProd.pair n m`.  This notation is built into Lean and is
 called "anonymous constructor syntax".  It is available for any inductive
 type with a single constructor, as long as the expected type is declared or
@@ -427,10 +426,6 @@ def append (l₁ l₂ : NatList) : NatList :=
 
 ## Type Classes and Overloading Notation
 
-:::dev "Benjamin Pierce (bcpierce00)"
-One word, or two?
-:::
-
 ::::full
 In Lean, notation like `++`, `==`, and `+` is not
 hardwired to particular definitions, which is the way we have
@@ -443,7 +438,7 @@ For now, the key idea is just this:
 a type class is like a Java-style interface, and an _instance_ is an
 implementation of that interface for a particular type.
 We associate notation with a particular type class member, and then
-instances of that typeclass inherit the notation.
+instances of that type class inherit the notation.
 
 For example, `++` is defined via the `HAppend` type class.
 Any type that provides an {name}`HAppend` instance gets to use `++`.
@@ -616,7 +611,7 @@ theorem test_nonZeros : nonZeros [0, 1, 0] = [1] := by
 :::gradeTheorem "0.5" test_nonZeros
 :::
 
-The next definition uses `bif`, Lean's conditional for Boolean tests.
+The next definition uses `bif`, Lean's conditional for boolean tests.
 The expression `bif b then x else y` evaluates to `x` when `b` is
 {name}`true` and to `y` when `b` is {name}`false`.
 Its characterizing lemmas are `cond_true` and `cond_false`.
@@ -816,7 +811,7 @@ theorem test_count2 : count 5 [1, 1, 4] = 0 := solution!(by rfl)
 :::
 :::::
 
-Again, all these proofs could be completed with just `rfl`, because the proof is computationally straightforward — compute both sides of the equality and check if they are the same.
+Again, all these proofs could be completed with just `rfl`, because the proof is computationally straightforward — compute both sides of the equality and check whether they are the same.
 
 ```lean
 example : count 1 [1, 2, 3, 1, 4, 1] = 3 := solution!(by rfl)
@@ -1043,6 +1038,13 @@ For example, just rewriting the left-hand side of the following equality using t
 {name}`nil_append` is enough for this theorem.
 ::::
 
+:::dev "Claude" BeforeNextRelease
+This paragraph promises "the following equality", but no such example follows —
+the next code block is `tail_length_pred`, which is proved by `cases`, not by
+rewriting with `nil_append`. An example seems to have gone missing; it should be
+restored (or the paragraph reworded).
+:::
+
 ::::terse
 As with numbers, some proofs about list functions need only
 rewriting.
@@ -1174,7 +1176,7 @@ By the definition of `append`, this follows from
 n :: ((l₁' ++ l₂) ++ l₃) = n :: (l₁' ++ (l₂ ++ l₃)),
 ```
 
-which is immediate from the induction hypothesis.  _Qed_.
+which is immediate from the induction hypothesis.  _QED_.
 
 ### Generalizing Statements
 
@@ -1182,7 +1184,7 @@ which is immediate from the induction hypothesis.  _Qed_.
 In some situations, it is necessary to generalize a
 statement in order to prove it by induction.  Intuitively, the
 reason is that a more general statement also yields a more general
-(stronger) inductive hypothesis. While the following
+(stronger) induction hypothesis. While the following
 statement is true, we cannot prove it directly:
 ::::
 
@@ -1212,11 +1214,11 @@ ih : replicate n c' ++ replicate n c' = replicate n (c' + c')
 ```
 
 ::::full
-To get a more general inductive hypothesis, we can generalize:
+To get a more general induction hypothesis, we can generalize:
 ::::
 
 :::terse
-A generalization that gives a stronger inductive hypothesis:
+A generalization that gives a stronger induction hypothesis:
 :::
 
 ```lean
@@ -1301,7 +1303,7 @@ ih : l'.reverse.length = l'.length
 ::::full
 A first attempt to make progress would be to prove exactly
 the statement that we are missing at this point.  But this attempt
-will fail because the inductive hypothesis is not general enough.
+will fail because the induction hypothesis is not general enough.
 ::::
 
 ```lean -keep +error (name := st3)
@@ -1466,13 +1468,13 @@ We must show
 ```
 
 This follows directly from the definitions of `length` and `++`
-together with the induction hypothesis.  _Qed_.
+together with the induction hypothesis.  _QED_.
 
-_Theorem_: For all lists `l`,  `l.reverse.length = l.length`.
+_Theorem_: For all lists `l`, `l.reverse.length = l.length`.
 
 _Proof_: By induction on `l`.
 
-  - First, suppose `l = []`.  We must show
+- First, suppose `l = []`.  We must show
 
 ```display
 [].reverse.length = [].length,
@@ -1506,7 +1508,7 @@ l'.reverse.length + [n].length = l'.length + 1.
 ```
 
 This follows directly from the induction hypothesis and the
-definition of `length`.  _Qed_.
+definition of `length`.  _QED_.
 
 The style of these proofs is rather long-winded and pedantic.
 After reading a couple like this, we might find it easier to
@@ -1518,10 +1520,18 @@ the above proof might look like this:
 _Theorem_: For all lists `l`, `l.reverse.length = l.length`.
 
 _Proof_: First observe, by a straightforward induction on `l`,
- that `(l ++ [n]).length = .succ l.length` for any `l`.  The main
- property then follows by another induction on `l`, using the
- observation together with the induction hypothesis in the case
- where `l = n' :: l'`. _Qed_.
+that `(l ++ [n]).length = .succ l.length` for any `l`.  The main
+property then follows by another induction on `l`, using the
+observation together with the induction hypothesis in the case
+where `l = n' :: l'`. _QED_.
+
+:::dev "Claude" BeforeNextRelease
+Two problems in this compressed proof. First, `.succ l.length` is Rocq-flavored;
+the chapter's Lean writes this as `l.length + 1`, and the lemma actually proved
+above is `append_length_succ`. Second, "by the previous lemma" points at
+`length_append`, which is not proved until later in the chapter — the step that
+is available here is `append_length_succ`.
+:::
 
 Which style is preferable in a given situation depends on
 the sophistication of the expected audience and how similar the
@@ -1733,7 +1743,7 @@ Before doing the next exercise, make sure you've filled in the
 definition of `removeOne` above.
 ::::::
 
-::::dev "Daniel Sainati @dsainati" PotentialImprovement
+::::dev "Daniel Sainati (dsainati)" PotentialImprovement
 
 There is a nicer solution to this exercise that doesn't require the contrived
 theorem statement that has 0s instead of arbitrary numbers. The only issue
@@ -1862,7 +1872,7 @@ theorem involutive_injective (f : Nat → Nat)
 
 :::::exercise (rating := 2) (name := "reverse_injective") (level := Advanced)
 Prove that {name}`reverse` is injective. Do not prove this by induction —
-that would be hard. Instead, re-use the same proof technique that
+that would be hard. Instead, reuse the same proof technique that
 you used for {name}`involutive_injective`. (But: Don't try to use that
 exercise directly as a lemma: the types are not the same!)
 
@@ -2181,7 +2191,7 @@ theorem quiz1 (d : PartialMap) (x : MyId) (n : Nat) :
 Is the following claim true or false?
 
 ```lean
-theorem quiz2  (d : PartialMap) (x y : MyId) (o : Nat) :
+theorem quiz2 (d : PartialMap) (x y : MyId) (o : Nat) :
     MyId.beq x y = false →
     find x (update d y o) = find x d := by
   intro h
