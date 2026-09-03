@@ -1880,6 +1880,12 @@ theorem reverse_injective (l₁ l₂ : NatList)
 
 # Options
 
+:::dev "Mike Hicks (mwhicks1)" PotentialImprovement
+The `nth` name is not idiomatic in Lean. A better choice would be `get`,
+which is what it was before `getElem` became the norm. Change here and
+in Poly, and then again in Tactics.
+:::
+
 ::::full
 Suppose we want to write a function that returns the `n`th
 element of some list.  If we give it type {lean}`NatList → Nat → Nat`,

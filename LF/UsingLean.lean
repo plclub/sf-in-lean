@@ -460,6 +460,11 @@ Unfolding should not be overused; simplification rules are (still) useful proof 
 
 # Definitional Simplification with {tactic}`dsimp`
 
+:::dev "Mike Hicks (mwhicks1)" PotentialImprovement
+We will drop dsimp from here and discuss it in Lists instead, using a `NatProd`
+example to motivate it. The use of the lambda term here is confusing.
+:::
+
 ::::full
 Sometimes when you unfold a definition your hypothesis or goal may become hard to understand.
 When that happens, it can be useful to simplify it.
