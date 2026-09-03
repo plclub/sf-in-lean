@@ -847,11 +847,11 @@ def render(branches, conf, prs, have_token, slug):
         # `#Note`s flow middot-separated (see notes_cell); `<sub>` is used purely
         # for smaller glyphs — the block line-height fixes the leading regardless.
         # The age note (Stale badge, or a plain "Created N days ago") leads the
-        # cell at full size, outside that `<sub>`, so ageing PRs stay visible at
-        # a glance down the column.
-        notes = notes_cell(pr)
+        # cell, inside the same `<sub>` so the whole column reads in one small
+        # type size (the Stale badge is an image and keeps its own size).
+        notes = " ".join(
+            x for x in (age_note(pr, b, now_dt), notes_cell(pr)) if x)
         notes = f"<sub>{notes}</sub>" if notes else ""
-        notes = " ".join(x for x in (age_note(pr, b, now_dt), notes) if x)
         row = (f"| {first} | {status} | {ov} | "
                f"{files_cell(b['files'], b['churn'])} | {notes} |")
         # Drafts are their own section at the bottom; among the rest, ready-to-
