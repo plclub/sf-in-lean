@@ -42,6 +42,71 @@ variable (a b c : Prop) (n m : Nat) (α : Type) (e1 e2 x y : α)
 ```
 :::
 
+:::dev "Yipeng Liu (berberman)" PotentialImprovement
+
+MWH: This was moved here from `Induction`. Work it in somewhere here, or
+maybe in IndProp or Tactics?
+
+This is an interesting question...
+
+Logically, induction subsumes case analysis —
+you can simply ignore those inductive hypotheses
+so anything provable by case analysis is also provable
+using the induction principle.
+
+However, Lean's `cases` has specialized machinery for indexed inductive families.
+Here are some examples that `cases` can solve while `induction` can't:
+
+```lean
+-- substitution
+example (x : Nat) (h : x = 0) : Nat.succ x = 1 := by
+  -- induction h
+  cases h
+  rfl
+```
+
+```lean
+-- disjointness
+example (h : (0 : Nat) = 1) : False := by
+  -- induction h
+  cases h
+```
+
+```lean
+-- injectivity
+example {m n : Nat} (h : Nat.succ m = Nat.succ n) : m = n := by
+  -- induction h
+  cases h
+  rfl
+```
+
+```lean
+-- acyclicity
+example (n : Nat) (h : n = Nat.succ n) : False := by
+  -- induction h
+  cases h
+```
+
+... and there are more!
+
+:::
+
+::::hide
+```
+-- QUIZ
+/- We've seen that there are goals that `cases` can't solve but
+    `induction` can. What about the other way around? Are there steps
+    in a proof that can be solved by pure case analysis `cases`
+    but not using `induction`?
+
+    (A) No
+
+    (B) Yes
+-/
+-- /QUIZ
+```
+::::
+
 ::::full
 We have now seen many examples of factual claims (i.e.,
 _propositions_) and ways of presenting evidence of their truth
@@ -889,7 +954,7 @@ theorem not_true_is_false (b : Bool) (h : b ≠ true) : b = false := by
   cases b with
   | false => rfl
   | true =>
-    dsimp [Ne, Not] at h
+    rw [Ne, Not] at h
     apply ex_falso_quodlibet
     apply h
     rfl
@@ -905,66 +970,11 @@ theorem not_true_is_false' (b : Bool) (h : b ≠ true) : b = false := by
   | false => rfl
   | true =>
     exfalso
-    dsimp [Ne, Not] at h
+    rw [Ne, Not] at h
     apply h
     rfl
 ```
 ::::
-
-:::dev
-HIDE: CH: I don't think this was the original intention, but some
-of these quizzes got unnecessarily tricky and pedantic. For
-instance, the first quiz below makes a big distinction between
-using the destruct tactic and destructing using an intro pattern,
-even if conceptually there is no difference. Could it be that these
-quizzes were devised when intro patterns were not taught in the
-course and an update would be helpful now? Since I don't see the
-gain in tricking a majority of students in giving the "wrong"
-answer, even if it's a perfectly sensible one.
-:::
-
-:::dev "Benjamin Pierce (bcpierce00)"
-```
-INCOMING BOCHUM MATERIAL summarized by Claude (old/bochum-lf-updates/Logic.v): the five
-   quizzes below were reworked in the Bochum LF updates -- addressing
-   the concern in the dev note above.  Every option list was replaced
-   by the following uniform one (with `discriminate` in place of
-   `destruct` in the last quiz):
-
-     (A) intros and apply suffice
-     (B) destruct
-     (C) left and/or right
-     (D) destruct, left and right
-     (E) none of the above
-
-   and the answer proofs for quizzes 1 and 4 were changed to use an
-   explicit destruct instead of destructing via an intro pattern:
-
-     Lemma quiz1: forall X, forall a b : X, (a=b) /\ (a<>b) -> False.
-     Proof.
-       intros X a b H.
-       destruct H as [Hab Hnab]. apply Hnab. apply Hab.
-     Qed.
-
-     Lemma quiz4 : forall P Q: Prop,  P \/ Q -> ~~P \/ ~~Q.
-     Proof.
-       intros P Q H.
-       destruct H as [HP | HQ].
-       - (* left *)
-         left. intros HnP. apply HnP in HP. apply HP.
-       - (* right *)
-         right. intros HnQ. apply HnQ in HQ. apply HQ.
-     Qed.
-
-   To incorporate: rewrite the option lists of the five quizzes below
-   in the same uniform style (in Lean terms, e.g. "(A) intro and
-   apply suffice / (B) cases / (C) left and/or right / (D) cases,
-   left and right / (E) none of the above", with contradiction
-   replacing cases in the last quiz) and make the solutions for
-   quizzes 1 and 4 use an explicit cases rather than an intro
-   pattern.
-```
-:::
 
 ::::quiz
 To prove the following proposition, which tactics will we need
@@ -974,15 +984,17 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 ∀ α : Type, ∀ x y : α, x = y ∧ x ≠ y → False
 ```
 
-1. {tactic}`cases`, {tactic}`left`, and {tactic}`right`
-2. only {tactic}`cases`
+1. {tactic}`intro`, {tactic}`apply`, and {tactic}`exact` suffice
+2. {tactic}`cases`
 3. {tactic}`left` and/or {tactic}`right`
-4. none of the above
+4. {tactic}`cases` and {tactic}`left` and/or {tactic}`right`
+5. none of the above
 
 :::quizSolution
 ```lean
 example (α : Type) (x y : α) : x = y ∧ x ≠ y → False := by
-  intro ⟨h, hn⟩; apply hn; exact h
+  intro h; cases h with
+  | _ h₁ h₂ => apply h₂; exact h₁
 ```
 :::
 ::::
@@ -995,10 +1007,11 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 ∀ a b : Prop, a ∨ b → ¬ ¬ (a ∨ b)
 ```
 
-1. {tactic}`cases`, {tactic}`left`, and {tactic}`right`
-2. only {tactic}`cases`
+1. {tactic}`intro`, {tactic}`apply`, and {tactic}`exact` suffice
+2. {tactic}`cases`
 3. {tactic}`left` and/or {tactic}`right`
-4. none of the above
+4. {tactic}`cases` and {tactic}`left` and/or {tactic}`right`
+5. none of the above
 
 :::quizSolution
 ```lean
@@ -1016,10 +1029,11 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 ∀ a b : Prop, a → (a ∨ ¬ ¬ b)
 ```
 
-1. {tactic}`cases`, {tactic}`left`, and {tactic}`right`
-2. only {tactic}`cases`
+1. {tactic}`intro`, {tactic}`apply`, and {tactic}`exact` suffice
+2. {tactic}`cases`
 3. {tactic}`left` and/or {tactic}`right`
-4. none of the above
+4. {tactic}`cases` and {tactic}`left` and/or {tactic}`right`
+5. none of the above
 
 :::quizSolution
 ```lean
@@ -1037,10 +1051,11 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 ∀ a b : Prop, a ∨ b → (¬ ¬ a) ∨ (¬ ¬ b)
 ```
 
-1. {tactic}`cases`, {tactic}`left`, and {tactic}`right`
-2. only {tactic}`cases`
+1. {tactic}`intro`, {tactic}`apply`, and {tactic}`exact` suffice
+2. {tactic}`cases`
 3. {tactic}`left` and/or {tactic}`right`
-4. none of the above
+4. {tactic}`cases` and {tactic}`left` and/or {tactic}`right`
+5. none of the above
 
 :::quizSolution
 ```lean
@@ -1060,10 +1075,11 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 ∀ a : Prop, 1 = 0 → (a ∨ ¬ a)
 ```
 
-1. {tactic}`contradiction` {tactic}`left`, and {tactic}`right`
-2. only {tactic}`contradiction`
+1. {tactic}`intro`, {tactic}`apply`, and {tactic}`exact` suffice
+2. {tactic}`contradiction`
 3. {tactic}`left` and/or {tactic}`right`
-4. none of the above
+4. {tactic}`contradiction` and {tactic}`left` and/or {tactic}`right`
+5. none of the above
 
 :::quizSolution
 ```lean
@@ -1117,7 +1133,7 @@ def DiscrFun (n : Nat) : Prop :=
 theorem discrFun_zero : DiscrFun 0 := by constructor
 
 theorem discrFun_succ (n : Nat) : ¬ DiscrFun (n + 1) := by
-  dsimp [DiscrFun]; intro h; assumption
+  rw [DiscrFun]; intro h; assumption
 
 theorem discr_example (n : Nat) : ¬ (0 = n + 1) := by
   intro h
@@ -1146,8 +1162,9 @@ def List.IsNil {α : Type} (l : List α) : Prop :=
 theorem isNil_nil {α : Type} : List.IsNil ([] : List α) := by constructor
 
 theorem isNil_cons {α} (x : α) (l : List α) : ¬ List.IsNil (x :: l) := by
-  dsimp [List.IsNil, Not]
-  intro h; assumption
+  rw [List.IsNil, Not]
+  . intro h; assumption
+  . intro h; contradiction
 -- END SOLUTION
 
 theorem nil_is_not_cons {α : Type} (x : α) (xs : List α) :
@@ -1515,7 +1532,7 @@ def List.In {α : Type} (x : α) (xs : List α) : Prop :=
   | x' :: xs' => x = x' ∨ In x xs'
 
 theorem List.In_nil {α : Type} {x : α} : ¬ (List.In x []) := by
-  dsimp [List.In]; intro h; assumption
+  rw [List.In]; intro h; assumption
 
 theorem List.In_cons {α : Type} {x x' : α} {xs : List α} : List.In x (x' :: xs) = (x = x' ∨ List.In x xs) := rfl
 ```
@@ -1526,11 +1543,11 @@ of nested disjunctions.
 ```lean
 example : List.In 4 [1, 2, 3, 4, 5] := by
   workinclass!
-    dsimp [List.In]; right; right; right; left; rfl
+    rw [List.In]; right; right; right; left; rfl
 
 example (n : Nat) (h : List.In n [2, 4]) : ∃ n' : Nat, n = 2 * n' := by
   workinclass!
-    dsimp [List.In] at h
+    rw [List.In] at h
     obtain h | h | ⟨⟨⟩⟩ := h
     · exists 1
     · exists 2
@@ -1652,7 +1669,7 @@ theorem List.All_In {α : Type} {p : α → Prop} {l : List α} :
 :::dev "Yipeng Liu (berberman)" NOW
 I found this exercise combining too many awkward details for too little conceptual payoff:
 1. the construction is artificial
-2. before `simp` is introduced, `bif` requires noisy `dsimp`, `rw`, and Boolean case equations
+2. before `simp` is introduced, `bif` requires noisy `rw` and Boolean case equations
 3. I don't know how to nicely avoid `cases h : ...` syntax which IIRC we didn't mention before
 :::
 
@@ -1679,7 +1696,7 @@ theorem combineOddEven_intro (Odd Even : Nat → Prop)
     (hEven : Nat.odd n = false → Even n) :
     CombineOddEven Odd Even n := by
   solution!
-    dsimp [CombineOddEven]
+    rw [CombineOddEven]
     /- `cases h : Nat.odd n` splits on `Nat.odd n` and records
       the corresponding equation as `h`. -/
     cases h : Nat.odd n with
@@ -1687,7 +1704,6 @@ theorem combineOddEven_intro (Odd Even : Nat → Prop)
       apply hEven
       rw [h]
     | true =>
-      dsimp
       apply hOdd
       exact h
 
@@ -1697,9 +1713,8 @@ theorem combineOddEven_elim_odd
     (h : CombineOddEven Odd Even n)
     (hOdd : Nat.odd n = true) : Odd n := by
   solution!
-    dsimp [CombineOddEven] at h
-    rw [hOdd] at h
-    dsimp at h; exact h
+    rw [CombineOddEven, hOdd, cond_true] at h
+    exact h
 
 theorem combineOddEven_elim_even
     (Odd Even : Nat → Prop)
@@ -1707,9 +1722,8 @@ theorem combineOddEven_elim_even
     (h : CombineOddEven Odd Even n)
     (hOdd : Nat.odd n = false) : Even n := by
   solution!
-    dsimp [CombineOddEven] at h
-    rw [hOdd] at h
-    dsimp at h; exact h
+    rw [CombineOddEven, hOdd, cond_false] at h
+    exact h
 ```
 
 :::gradeTheorem "2/3" combineOddEven_intro combineOddEven_elim_odd combineOddEven_elim_even
@@ -2094,7 +2108,7 @@ example : Nat.even 42 = true := rfl
 ... or that there exists some `k` such that `n = double k`.
 
 ```lean
-example : Nat.Even 42 := by dsimp [Nat.Even]; exists 21
+example : Nat.Even 42 := by rw [Nat.Even]; exists 21
 ```
 
 Of course, it would be deeply strange if these two characterizations
@@ -2121,17 +2135,17 @@ theorem even_double_conv (n : Nat) : ∃ k : Nat,
   solution!
     induction n with
     | zero =>
-      rw [Nat.even_zero]; dsimp
+      rw [Nat.even_zero]
       exists 0  -- (`0 = Nat.double 0` is closed by `exists`'s final `rfl`)
     | succ n' ihn =>
       obtain ⟨k', ihk⟩ := ihn
       rw [Nat.even_succ]
       cases h : Nat.even n' with
       | false =>
-        rw [h] at ihk; rw [not] at *; dsimp at *
-        exists (k' + 1); rw [ihk, Nat.double_succ]
+        rw [h] at ihk; rw [not] at *; rw [cond_false] at ihk
+        exists (k' + 1); rw [ihk, cond_true, Nat.double_succ]
       | true =>
-        rw [h] at ihk; rw [not] at *; dsimp at *
+        rw [h] at ihk; rw [not] at *; rw [cond_true] at ihk
         exists k'; congr
 ```
 
@@ -2142,7 +2156,7 @@ theorem Nat.even_bool_prop (n : Nat) : Nat.even n = true ↔ Even n := by
   constructor
   · intro h
     obtain ⟨k, hk⟩ := even_double_conv n
-    rw [h] at hk; dsimp at hk; dsimp [Even]; exists k
+    rw [h] at hk; rw [cond_true] at hk; rw [Even]; exists k
   · intro ⟨k, hk⟩; rw [hk]; apply even_double
 ```
 
@@ -2165,9 +2179,8 @@ theorem nonzero_bool_prop (n : Nat) :
     · intro h
       cases n with
       | zero =>
-        dsimp [nonzero] at h;
-        rw [not] at h; contradiction
-      | succ n' => dsimp [Nonzero]; exists n'
+        rw [nonzero, not] at h; contradiction
+      | succ n' => rw [Nonzero]; exists n'
     · intro ⟨m, hm⟩; rw [hm]; rfl
 ```
 ::::
@@ -2285,7 +2298,7 @@ we can let Lean do the work for us.
 example : ¬ Nat.Even 101 := by
   workinclass!
     intro h; apply (Nat.even_bool_prop 101).mpr at h
-    dsimp [Nat.even] at h; contradiction
+    rw [Nat.even] at h; contradiction
 ```
 
 Conversely, there are situations where it can be easier to work with
@@ -2718,9 +2731,7 @@ that is more convenient in certain situations.
 ```lean
 theorem beq_neq_false (n m : Nat) : (n == m) = false ↔ n ≠ m := by
   solution!
-    rw [← not_true_iff_false]
-    dsimp [Ne]
-    rw [beq_eq_true n m]
+    rw [← not_true_iff_false, Ne, beq_eq_true n m]
 ```
 :::gradeTheorem 1 beq_neq_false
 :::
@@ -2807,6 +2818,49 @@ example : (fun xs => 1 :: xs) = (fun xs => [1] ++ xs) := rfl
 :::
 ::::
 
+### Other Extensionality Principles
+
+::::full
+Functions and propositions are not the only things that have extensionality principles.
+Many structures like pairs also have them:
+::::
+
+::::terse
+We can use {tactic}`ext` on pairs as:
+::::
+
+```lean
+example {n : Nat} {p : Nat × Nat} (hx_fst : p.fst = n + 1) (hx_snd : p.snd = 0) :
+    (n + 1, 0) = p := by
+  ext -- uses the `Prod.ext` lemma
+  · rw [hx_fst]
+  · rw [hx_snd]
+```
+
+::::exercise (rating := 2) (name := "prod_ext_example")
+Now, use {tactic}`ext1` to prove the following.
+Remember that `dsimp only` simplifies projections like `(a, b).fst` to `a`.
+
+```lean
+example {m : Nat} {p : Nat × Nat} (hp_snd : p.snd = 4) (hp_fst : p.fst = m) :
+    ((p.fst + 1, 2), (p.fst, 4)) = ((m + 1, p.snd - 2), p) := by
+  solution!
+    ext1
+    · dsimp only
+      ext1
+      · dsimp only
+        rw [hp_fst]
+      · dsimp only
+        rw [hp_snd]
+    · dsimp only
+      ext1
+      · rfl
+      · dsimp only
+        rw [hp_snd]
+```
+::::
+
+
 ::::::full
 :::::exercise (rating := 4) (name := "trRev_correct")
 One problem with the definition of the list-reversing function {lean}`List.rev`
@@ -2850,8 +2904,7 @@ theorem revAppend_rev {α : Type} {xs ys : List α} :
 
 theorem trRev_correct {α : Type} : @trRev α = @List.rev α := by
   solution!
-    ext1 xs; dsimp [trRev]
-    rw [revAppend_rev, List.append_nil]
+    ext1 xs; rw [trRev, revAppend_rev, List.append_nil]
 ```
 
 :::gradeTheorem 4 trRev_correct
