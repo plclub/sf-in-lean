@@ -46,14 +46,15 @@ that the author's accept/decline is what the ledger records.
 python3 scripts/proofread.py apply
 ```
 
-This makes the edits, writes a diff of just this round, and opens both in VS
-Code. Anchor errors mean nothing was applied: fix the round file and run it
-again.
+This makes the edits and opens a side-by-side diff in VS Code — a snapshot of
+the chapter before the round on the left, the live chapter on the right.
+Anchor errors mean nothing was applied: fix the round file and run it again.
 
 Then **end your turn**. Tell the author what is in the round (the category
-counts the command printed, and any pair of edits it flagged as sharing a git
-hunk), and ask them to revert what they don't want — one click per hunk in the
-Source Control gutter — and say when they're done. Do not poll, do not watch
+counts the command printed, and any pair of edits it flagged as sharing one
+change block), and ask them to revert what they don't want — the arrow in the
+gutter between the panes, or editing the right-hand side directly — and to say
+when they're done. Do not poll, do not watch
 the file, do not run `record` on their behalf. They may answer in a minute or
 tomorrow; `proofread/state.json` remembers the round either way.
 

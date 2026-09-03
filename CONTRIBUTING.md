@@ -178,9 +178,10 @@ your fork's `main` would replant your work on a stale base.
 For the low-level pass — commas, agreement, articles, hyphenation, markup slips
 — say `/proofread <Chapter>` in a Claude session, on a branch with nothing
 uncommitted (it refuses otherwise). Claude proposes a round of small edits and
-applies them, then opens the chapter alongside a diff of just those edits and
-waits: revert the ones you don't want, one click per hunk in the Source Control
-gutter, and tell Claude you are done. Every edit that survives has been vetted
+applies them, then opens a side-by-side diff — the chapter before the round on
+the left, the live chapter on the right — and waits: revert the ones you don't
+want, with the arrow in the gutter between the panes or by editing the
+right-hand side, and tell Claude you are done. Every edit that survives has been vetted
 by hand, as the AI policy below requires; every edit you decline is recorded in
 `proofread/ledger.jsonl` and is never proposed again, in that chapter or any
 other, and a category you decline repeatedly becomes a house rule that stops it

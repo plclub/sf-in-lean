@@ -43,7 +43,6 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROUNDS = os.path.join(ROOT, "proofread", "rounds")
@@ -349,33 +348,54 @@ def diff_path(round_path):
     return re.sub(r"\.json$", "", round_path) + ".diff"
 
 
-def write_isolated_diff(round_path, round_, applied, after):
-    """A diff of just this round's edits, free of any other pending changes."""
+def before_path(round_path, round_):
+    """The chapter as it was before the round — the left pane of the review.
+    It keeps the chapter's extension so the diff is syntax-highlighted."""
+    ext = os.path.splitext(round_["file"])[1]
+    return re.sub(r"\.json$", "", round_path) + ".before" + ext
+
+
+def write_before(round_path, round_, applied, after):
+    """Reconstruct and keep the pre-round text; the review diffs against it."""
     before = after
     for p in applied:
         before = before.replace(p["new"], p["old"], 1)
+    dest = before_path(round_path, round_)
+    if os.path.exists(dest):
+        os.remove(dest)
+    with open(dest, "w") as f:
+        f.write(before)
+    os.chmod(dest, 0o444)        # read-only: only the right pane is the chapter
+    return dest
+
+
+def write_isolated_diff(round_path, round_, before):
+    """A unified diff of just this round's edits, as a record of what was
+    proposed — it stays readable after the author starts reverting hunks."""
     dest = diff_path(round_path)
-    with tempfile.NamedTemporaryFile("w", suffix=".before", delete=False) as tmp:
-        tmp.write(before)
-        tmp_name = tmp.name
-    try:
-        out = subprocess.run(
-            ["diff", "-u", "-U", "2",
-             "--label", round_["file"] + " (before this round)",
-             "--label", round_["file"],
-             tmp_name, os.path.join(ROOT, round_["file"])],
-            capture_output=True, text=True).stdout
-    finally:
-        os.remove(tmp_name)
+    out = subprocess.run(
+        ["diff", "-u", "-U", "2",
+         "--label", round_["file"] + " (before this round)",
+         "--label", round_["file"],
+         before, os.path.join(ROOT, round_["file"])],
+        capture_output=True, text=True).stdout
     with open(dest, "w") as f:
         f.write(out)
     return dest
 
 
-def open_in_editor(*paths):
-    """Open files in the surrounding VS Code window; report whether it worked."""
+def discard_before(round_path, round_):
+    """Drop the snapshot once the round is recorded or undone."""
+    path = before_path(round_path, round_)
+    if os.path.exists(path):
+        os.chmod(path, 0o644)
+        os.remove(path)
+
+
+def open_in_editor(*args):
+    """Run `code` in the surrounding window; report whether it worked."""
     try:
-        r = subprocess.run(["code", "--reuse-window", *paths],
+        r = subprocess.run(["code", "--reuse-window", *args],
                            capture_output=True, text=True, timeout=20)
         return r.returncode == 0
     except (FileNotFoundError, subprocess.SubprocessError):
@@ -410,7 +430,8 @@ def do_apply(round_path, round_):
     with open(path, "w") as f:
         f.write(text)
 
-    dest = write_isolated_diff(round_path, round_, applied, text)
+    before = write_before(round_path, round_, applied, text)
+    dest = write_isolated_diff(round_path, round_, before)
     save_state({"round": rel(round_path), "phase": "applied"})
 
     print(f"\n{C_GRN}{len(applied)} edit{'' if len(applied) == 1 else 's'} "
@@ -434,22 +455,44 @@ def do_apply(round_path, round_):
 # --------------------------------------------------------------------------
 # reviewing and reconciling
 # --------------------------------------------------------------------------
-def announce_review(round_, dest):
-    """Put the diff and the chapter in front of the author and say what to do."""
-    opened = open_in_editor(os.path.join(ROOT, round_["file"]), dest)
+def announce_review(round_path, round_, mode="diff"):
+    """Put the review in front of the author and say what to do with it.
+
+    Default is a real side-by-side diff editor — `code --diff` against the
+    snapshot — because that lands on the two versions in one step, with no
+    dependence on which source-control extension the author uses. `files`
+    opens the chapter and the unified diff as plain tabs instead."""
+    chapter = os.path.join(ROOT, round_["file"])
+    before, dest = before_path(round_path, round_), diff_path(round_path)
+    opened = False
+    if mode == "diff":
+        opened = open_in_editor("--diff", before, chapter)
+    elif mode == "files":
+        opened = open_in_editor(chapter, dest)
+
     print()
-    if opened:
-        print(f"Opened {C_BLD}{rel(dest)}{C_OFF} and {round_['file']} in VS Code.")
+    if opened and mode == "diff":
+        print(f"Opened a side-by-side diff in VS Code: "
+              f"{C_BLD}{os.path.basename(before)}{C_OFF} on the left — the "
+              f"chapter as it\nwas before the round — and the live "
+              f"{C_BLD}{round_['file']}{C_OFF} on the right.")
+    elif opened:
+        print(f"Opened {C_BLD}{round_['file']}{C_OFF} and {rel(dest)} in VS Code.")
     else:
-        print(f"Read {C_BLD}{rel(dest)}{C_OFF} — just this round's edits.\n"
-              f"  {C_DIM}code {rel(dest)} {round_['file']}{C_OFF}")
-    print(f"Revert the edits you don't want, in {round_['file']} — one click per "
-          f"hunk\nin the Source Control gutter.")
+        print(f"Open the review with:\n"
+              f"  {C_DIM}code --diff {rel(before)} {round_['file']}{C_OFF}")
+    print(f"\nRevert what you don't want in the {C_BLD}right-hand pane{C_OFF} — "
+          f"hover a change and click\nthe arrow in the gutter between the panes, "
+          f"or just edit the text. The left pane\nis a read-only snapshot; "
+          f"whatever you leave standing on the right is accepted.")
+    print(f"{C_DIM}Other ways in: the Source Control view — the tree was clean "
+          f"before the round, so\neverything it lists is this round — or "
+          f"{rel(dest)} for the proposals as a list.{C_OFF}")
 
 
-def wait_for_review(round_, dest):
+def wait_for_review(round_path, round_, mode="diff"):
     """Show the review, then block until the author is done."""
-    announce_review(round_, dest)
+    announce_review(round_path, round_, mode)
     try:
         input(f"\n{C_BLD}Press return when you're done{C_OFF} "
               f"{C_DIM}(Ctrl-C to stop and resume later){C_OFF} ")
@@ -483,6 +526,7 @@ def do_reconcile(round_path, round_):
     if rejected:
         record_rejections(rejected, round_)
     clear_state()
+    discard_before(round_path, round_)
     mark_completed(round_path)
 
     print(f"\n{C_BLD}{round_label(round_)}{C_OFF} — "
@@ -576,15 +620,15 @@ def cmd_apply(args):
         round_ = load_round(round_path)
         print(f"{C_BLD}{round_label(round_)}{C_OFF} is already applied to "
               f"{round_['file']} — nothing re-applied.")
-        announce_review(round_, diff_path(round_path))
+        announce_review(round_path, round_, getattr(args, "open", "diff"))
         return 0
     require_clean_tree(getattr(args, "allow_dirty", False))
     round_path = resolve_round(args.round)
     if round_path is None:
         return no_rounds()
     round_ = load_round(round_path)
-    dest = do_apply(round_path, round_)
-    announce_review(round_, dest)
+    do_apply(round_path, round_)
+    announce_review(round_path, round_, getattr(args, "open", "diff"))
     print(f"\nWhen the author is done reviewing: "
           f"{C_BLD}python3 scripts/proofread.py record{C_OFF}")
     return 0
@@ -628,7 +672,8 @@ def cmd_run(args):
         round_ = load_round(round_path)
         print(f"{C_BLD}{round_label(round_)}{C_OFF} — edits are already applied "
               f"to {round_['file']}")
-        if interactive() and not wait_for_review(round_, diff_path(round_path)):
+        if interactive() and not wait_for_review(round_path, round_,
+                                                 getattr(args, "open", "diff")):
             return 1
         return do_reconcile(round_path, round_)
 
@@ -636,10 +681,10 @@ def cmd_run(args):
     round_path = resolve_round()
     if round_path is None:
         return no_rounds()
-    return run_round(round_path)
+    return run_round(round_path, getattr(args, "open", "diff"))
 
 
-def run_round(round_path):
+def run_round(round_path, mode="diff"):
     """Apply a chosen round, hand it to the author, record what they kept."""
     round_ = load_round(round_path)
     dest = do_apply(round_path, round_)
@@ -650,7 +695,7 @@ def run_round(round_path):
               f"  2. Revert the edits you don't want, in {round_['file']}.\n"
               f"  3. Run `proofread.py record` to save your choices.")
         return 0
-    if not wait_for_review(round_, dest):
+    if not wait_for_review(round_path, round_, mode):
         return 1
     return do_reconcile(round_path, round_)
 
@@ -676,6 +721,7 @@ def cmd_undo(args):
     with open(path, "w") as f:
         f.write(text)
     clear_state()
+    discard_before(round_path, round_)
     print(f"reverted {n} edit{'' if n == 1 else 's'} in {round_['file']}; "
           f"{round_label(round_)} left for another day")
     print(f"{C_DIM}nothing was written to the ledger{C_OFF}")
@@ -761,6 +807,14 @@ def main():
     ap.add_argument("--allow-dirty", action="store_true",
                     default=argparse.SUPPRESS,
                     help="run even with uncommitted changes in the tree")
+    opener = argparse.ArgumentParser(add_help=False)
+    opener.add_argument("--open", choices=("diff", "files", "none"),
+                        default=argparse.SUPPRESS,
+                        help="how to show the review: a side-by-side diff "
+                             "editor (default), the chapter and the unified "
+                             "diff as plain tabs, or nothing")
+    ap.add_argument("--open", choices=("diff", "files", "none"),
+                    default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     sub = ap.add_subparsers(dest="cmd")
 
     p = sub.add_parser("start", parents=[dirty],
@@ -768,7 +822,7 @@ def main():
     p.add_argument("chapter", nargs="?", help="chapter source path or name")
     p.set_defaults(func=cmd_start)
 
-    p = sub.add_parser("apply", parents=[dirty],
+    p = sub.add_parser("apply", parents=[dirty, opener],
                        help="apply a written round and open its diff")
     p.add_argument("round", nargs="?", help="round file (default: the one waiting)")
     p.set_defaults(func=cmd_apply)

@@ -16,12 +16,13 @@ the whole category at the source.
 
 Say `/proofread <Chapter>` in a Claude session — that is the whole interface.
 Claude reads this file and the ledger, writes a *round* (a JSON file of
-anchored edits, under `proofread/rounds/`), applies it, and opens a diff of
-just those edits in VS Code alongside the chapter. Revert the edits you don't
-want — one click per hunk in the Source Control gutter — and tell Claude you're
-done; it records your rejections in `proofread/ledger.jsonl` and reports any
-category that has earned a house rule. Then `lake build <Vol>.<Ch>` and commit
-the chapter and the ledger together.
+anchored edits, under `proofread/rounds/`), applies it, and opens a side-by-side
+diff in VS Code: the chapter as it was before the round on the left, the live
+chapter on the right. Revert the edits you don't want — hover a change and
+click the arrow in the gutter between the panes, or just edit the right-hand
+side — and tell Claude you're done; it records your rejections in
+`proofread/ledger.jsonl` and reports any category that has earned a house rule.
+Then `lake build <Vol>.<Ch>` and commit the chapter and the ledger together.
 
 Two turns of conversation, then. The review in between can take a minute or a
 day, in that session or a later one: `proofread/state.json` holds the round in
@@ -60,15 +61,33 @@ separately available as `proofread.py apply` and `proofread.py record`, which
 is what Claude runs; `proofread.py start [<chapter>]` names the chapter source
 and the next round file. `proofread.py --help` lists the rest.
 
-The `.diff` file is the round as proposed: it stays next to the round file
-afterwards, and it still reads as one list of the proposals once you have begun
-reverting hunks in the chapter.
+The `.diff` file is a unified diff of the round as proposed. It stays next to
+the round file afterwards, and — unlike the live side-by-side view — it still
+reads as the complete list once you have begun reverting.
+
+### The review view
+
+`apply` runs `code --diff` on two real files: a snapshot of the chapter taken
+before the round, and the chapter itself. That is one step to the two versions
+side by side, and it depends on no source-control extension — the left pane is
+a plain file, not a git revision. It is also read-only (mode 444), so an edit
+made in the wrong pane cannot quietly look like a revert; the right pane *is*
+the chapter, and what you leave standing there is what you have accepted.
+
+The snapshot lives at `proofread/rounds/<Ch>-rNN.before.lean` for the life of
+the round and is deleted by `record` or `undo`. It is gitignored.
+
+Because a pass starts from a clean branch, the git UI shows exactly the same
+thing, if you prefer it: the Source Control view (or any extension's
+equivalent) lists just this round, and its per-change revert works as well as
+the diff editor's. `apply --open files` opens the chapter and the unified diff
+as plain tabs instead, and `--open none` opens nothing.
 
 ### Edits that share a hunk
 
-`apply` warns when two edits land within a few lines of each other. Those
-sit in one git hunk and cannot be reverted independently — fix that spot by
-hand instead. Such an edit is then reported as `unclear` and nothing is
+`apply` warns when two edits land within a few lines of each other. Those sit
+in one change block, so a single revert takes both — edit that spot by hand
+instead. Such an edit is then reported as `unclear` and nothing is
 recorded for it, so it will come back in a later round.
 
 ## The ledger
