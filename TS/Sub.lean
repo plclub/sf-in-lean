@@ -1576,6 +1576,9 @@ Subtype.prod
 -- END SOLUTION
 ```
 
+:::autogradedHole Subtype
+:::
+
 Note that we don't need any special rules for base types (`Bool`
 and `Base`): they are automatically subtypes of themselves (by
 `refl`) and `⊤` (by `top`), and that's all we want.
