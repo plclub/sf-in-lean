@@ -1596,7 +1596,7 @@ example : <{ ~C → Bool }> <: <{ ~C → ⊤ }> := by
   solve_by_elim using StlcSubTyping
 ```
 
-Note that because the `Subtype` rules are not "syntax directed"
+Note that, because the `Subtype` rules are not "syntax directed"
 (e.g., given a goal of the form `⊤ <: ⊤`, you could apply the `top` rule,
 the `refl` rule, the `trans` rule), we have to use {tactic}`solve_by_elim` here
 instead of {tactic}`apply_rules`.
@@ -1611,11 +1611,7 @@ Leave this exercise until after you have finished adding product
 types to the language - see exercise `products` - at least up to
 this point in the file.
 
-:::dev "Daniel Sainati (@dsainati)" BeforeNextRelease
-chapter reference
-:::
-
-Recall that, in chapter MoreStlc, the optional section
+Recall that, in chapter {ref "MoreStlc"}[MoreStlc], the optional section
 "Encoding Records" describes how records can be encoded as pairs.
 Using this encoding, define pair types representing the following
 record types:
@@ -2103,7 +2099,7 @@ theorem canonical_forms_of_bool {Γ : Context} {t : Tm}
 When you do the `products` exercise, add your canonical forms lemma for products here:
 
 ```lean
---- SOLUTION
+-- SOLUTION
 theorem canonical_forms_of_product_types {Γ : Context} {t : Tm} {τ₁ τ₂ : Ty}
   (ht : <{ ~Γ ⊢ ~t ⦂ ~τ₁ × ~τ₂ }>)
   (hv : t.IsValue) :
@@ -2114,7 +2110,7 @@ theorem canonical_forms_of_product_types {Γ : Context} {t : Tm} {τ₁ τ₂ : 
     | sub Γ t₁ τ₁ τ₂ ht hs ih =>
         obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := sub_inversion_prod hs; subst_vars
         exact ih hv rfl
---- END SOLUTION
+-- END SOLUTION
 ```
 :::::
 
@@ -2744,6 +2740,10 @@ the type `⊤ → Unit` using `S_Arrow'`).
 
 ### Exercise: Adding Products
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
+:::::full
 ::::exercise (rating := 5) (name := "products") (manual := true)
 Adding pairs, projections, and product types to the system we have
 defined is a relatively straightforward matter.  Carry out this
@@ -2754,43 +2754,43 @@ product types have already been added to the definitions of
 `Ty` and `Tm`.  Also, the definition of substitution has been
 extended.
 
-- Extend the surrounding definitions accordingly (refer to chapter
-\CHAP{MoreSTLC}):
-
+- Extend the surrounding definitions accordingly (refer to chapter {ref "MoreStlc"}[MoreStlc]):
 - value relation
 - operational semantics
 - typing relation
 
-    - Extend the subtyping relation with this rule:
+- Extend the subtyping relation with this rule:
 ```display
                         σ₁ <: τ₁    σ₂ <: τ₂
                         --------------------   (prod)
                          σ₁ × σ₂ <: τ₁ × τ₂
 ```
 
-    - Extend the proofs of progress, preservation, and all their
-      supporting lemmas to deal with the new constructs.  (You'll also
-      need to add a couple of completely new lemmas.)
+- Extend the proofs of progress, preservation, and all their
+  supporting lemmas to deal with the new constructs.  (You'll also
+  need to add a couple of completely new lemmas.)
 
- INSTRUCTORS: Summary of things to check:
+:::instructors
+Summary of things to check:
 
-    - `step` should have six new rules related to products.
+- `step` should have six new rules related to products.
 
-    - `subtype` should have the one more rule given above.
+- `subtype` should have the one more rule given above.
 
-    - `has_type] should have three more rules for [pair], [fst], [snd`.
+- `has_type` should have three more rules for `pair`, `fst`, `snd`.
 
-    - `progress] should be [Qed`. Also look for the
-      [canonical_forms_of_product_types] (or whatever the student named it)
-      in the proof.
+- `progress` should check. Also look for the
+  `canonical_forms_of_product_types` (or whatever the student named it)
+  in the proof.
 
-    - `preservation] should be [Qed`. Also look for inversion lemmas for the
-      new constructs.
+- `preservation` should check. Also look for inversion lemmas for the
+  new constructs.
+:::
 
 
-(* SOLUTION
-(* The solution can be found in-line earlier in this chapter.
-(* /SOLUTION
+:::solution
+The solution can be found in-line earlier in this chapter.
+:::
 
 :::grade
 `GRADE_MANUAL 2: products_value_step`
@@ -2805,348 +2805,347 @@ extended.
 `GRADE_MANUAL 3: products_preservation`
 :::
 ::::
-(* /FULL
+:::::
 
-(* LATER: Another great hard exercise (probably just for the advanced
-   track) is to get them to figure out how to add sums and case.  Note
-   that this gets into thinking about joins, if you extend it to the
-   algorithmic version.
+:::dev PotentialImprovement
+Another great hard exercise (probably just for the advanced
+track) is to get them to figure out how to add sums and case.  Note
+that this gets into thinking about joins, if you extend it to the
+algorithmic version.
+:::
 
-(* FULL
- ** Formalized "Thought Exercises"
+## Formalized "Thought Exercises"
 
- The following are formal exercises based on the previous "thought
-    exercises."
+:::suppressPreviousHeaderWhenTerse
+:::
 
-Module FormalThoughtExercises.
-Import Examples.
-Notation p := "p".
-Notation a := "a".
+:::::full
 
-Definition TF P := P ∨ ~P.
+The following are formal exercises based on the previous "thought exercises."
+
+```lean
+namespace FormalThoughtExercises
+open Examples
+abbrev p := "p"
+abbrev a := "a"
+
+abbrev tf p := p ∨ ¬p
+```
 
 ::::exercise (rating := 1) (name := "formal_subtype_instances_tf_1a") (optional := true)
-Theorem formal_subtype_instances_tf_1a:
-  TF (∀ σ τ υ δ, σ <: τ → υ <: δ →
-         <{ τ→σ }> <: <{ τ→σ }>).
-Proof.
-  (* ADMITTED
-  left. intros σ τ υ δ S_sub_T U_sub_V.
-  apply arrow.
-  × apply refl.
-  × apply refl.
-Qed. (* /ADMITTED
+```lean
+theorem formal_subtype_instances_tf_1a:
+  tf (∀ σ τ υ δ, σ <: τ → υ <: δ → <{ ~τ → ~σ }> <: <{ ~τ → ~σ }>) := by
+  solution!
+    left; intro σ τ υ δ h₁ h₂; solve_by_elim using StlcSubTyping
+```
 ::::
+
 
 ::::exercise (rating := 1) (name := "formal_subtype_instances_tf_1b") (optional := true)
-Theorem formal_subtype_instances_tf_1b:
-  TF (∀ σ τ υ δ, σ <: τ → υ <: δ →
-         <{ ⊤→υ }> <: <{ σ→⊤ }>).
-Proof.
-  (* ADMITTED
-  left. intros σ τ υ δ S_sub_T U_sub_V.
-  apply arrow.
-  × apply ⊤.
-  × apply ⊤.
-Qed. (* /ADMITTED
+```lean
+theorem formal_subtype_instances_tf_1b:
+  tf (∀ σ τ υ δ, σ <: τ → υ <: δ → <{ ⊤ → ~υ }> <: <{ ~σ → ⊤ }>) := by
+  solution!
+    left; intro σ τ υ δ h₁ h₂; solve_by_elim using StlcSubTyping
+```
 ::::
+
 
 ::::exercise (rating := 1) (name := "formal_subtype_instances_tf_1c") (optional := true)
-Theorem formal_subtype_instances_tf_1c:
-  TF (∀ σ τ υ δ, σ <: τ → υ <: δ →
-         <{ (C→C)→(A*B) }> <: <{ (C→C)→(⊤*B) }>).
-Proof.
-  (* ADMITTED
-  left. intros σ τ υ δ S_sub_T U_sub_V.
-  apply arrow.
-  × apply arrow.
-    ** apply refl.
-    ** apply refl.
-  × apply prod.
-    ** apply ⊤.
-    ** apply refl.
-Qed. (* /ADMITTED
+```lean
+theorem formal_subtype_instances_tf_1c:
+  tf (∀ σ τ υ δ, σ <: τ → υ <: δ →
+         <{ (~C → ~C)→(~A × ~B) }> <: <{ (~C → ~C)→(⊤ × ~B) }>) := by
+  solution!
+    left; intro σ τ υ δ h₁ h₂; solve_by_elim using StlcSubTyping
+```
 ::::
+:::::
 
+:::::full
 ::::exercise (rating := 1) (name := "formal_subtype_instances_tf_1d") (optional := true)
-Theorem formal_subtype_instances_tf_1d:
-  TF (∀ σ τ υ δ, σ <: τ → υ <: δ →
-         <{ τ→(τ→υ) }> <: <{ σ→(σ→δ) }>).
-Proof.
-  (* ADMITTED
-  left. intros σ τ υ δ S_sub_T U_sub_V.
-  apply arrow.
-  × apply S_sub_T.
-  × apply arrow.
-    ** apply S_sub_T.
-    ** apply U_sub_V.
-Qed. (* /ADMITTED
+```lean
+theorem formal_subtype_instances_tf_1d:
+  tf (∀ σ τ υ δ, σ <: τ → υ <: δ → <{ ~τ → (~τ → ~υ) }> <: <{ ~σ → (~σ → ~δ) }>) := by
+  solution!
+    left; intro σ τ υ δ h₁ h₂; solve_by_elim using StlcSubTyping
+```
 ::::
 
 ::::exercise (rating := 1) (name := "formal_subtype_instances_tf_1e") (optional := true)
-Theorem formal_subtype_instances_tf_1e:
-  TF (∀ σ τ υ δ, σ <: τ → υ <: δ →
-         <{ (τ→τ)→υ }> <: <{ (σ→σ)→V }>).
-Proof.
-  (* ADMITTED
-  right. intros C.
-  assert (H: <{ (⊤→⊤)→Bool }> <: <{ (Bool→Bool)→⊤ }>).
-  { apply C.
-    × apply ⊤.
-    × apply ⊤. }
-  destruct (sub_inversion_arrow _ _ _ H) as [U1 [U2 [H0 [H1 H2```].
-  inversion H0; subst.
-  destruct (sub_inversion_arrow _ _ _ H1) as [υ₁ [υ₂ [H3 [H4 H5```].
-  inversion H3; subst.
-  apply sub_inversion_Bool in H4. inversion H4.
-Qed. (* /ADMITTED
+```lean
+theorem formal_subtype_instances_tf_1e:
+  tf (∀ σ τ υ δ, σ <: τ → υ <: δ → <{ (~τ → ~τ) → ~υ }> <: <{ (~σ → ~σ)→ ~δ }>) := by
+  solution!
+    right; intro contra
+    have h : <{ (⊤ → ⊤) → Bool }> <: <{ (Bool → Bool) → ⊤ }> := by
+      solve_by_elim using StlcSubTyping
+    obtain ⟨_, _, h₁, h₂, _⟩ := sub_inversion_arrow h
+    inversion h₁
+    obtain ⟨_, _, h₁, h₂, _⟩ := sub_inversion_arrow h₂
+    inversion h₁
+    apply sub_inversion_bool at h₂; contradiction
+```
 ::::
+
 
 ::::exercise (rating := 1) (name := "formal_subtype_instances_tf_1f") (optional := true)
-Theorem formal_subtype_instances_tf_1f:
-  TF (∀ σ τ υ δ, σ <: τ → υ <: δ →
-         <{ ((τ→σ)→τ)→υ }> <: <{ ((σ→τ)→σ)→V }>).
-Proof.
-  (* ADMITTED
-  left. intros σ τ υ δ S_sub_T U_sub_V.
-  apply arrow.
-  × apply arrow.
-    ** apply arrow.
-       *** apply S_sub_T.
-       *** apply S_sub_T.
-    ** apply S_sub_T.
-  × apply U_sub_V.
-Qed. (* /ADMITTED
+```lean
+theorem formal_subtype_instances_tf_1f:
+  tf (∀ σ τ υ δ, σ <: τ → υ <: δ → <{ ((~τ → ~σ) → ~τ)→ ~υ }> <: <{ ((~σ → ~τ)→ ~σ) → ~δ }>) := by
+  solution!
+    left; intro σ τ υ δ h₁ h₂; solve_by_elim (maxDepth:=10) using StlcSubTyping
+```
+::::
+:::::
+
+:::::full
+::::exercise (rating := 1) (name := "formal_subtype_instances_tf_1g") (optional := true)
+```lean
+theorem formal_subtype_instances_tf_1g:
+  tf (∀ σ τ υ δ, σ <: τ → υ <: δ → <{ ~σ × ~δ }> <: <{ ~τ × ~υ }>) := by
+
+  solution!
+    right; intro contra
+    have h : <{ Bool × ⊤ }> <: <{ ⊤ × Bool }> := by solve_by_elim using StlcSubTyping
+    obtain ⟨_, _, h₁, _, h₃⟩ := sub_inversion_prod h
+    inversion h₁; apply sub_inversion_bool at h₃; contradiction
+```
 ::::
 
-::::exercise (rating := 1) (name := "formal_subtype_instances_tf_1g") (optional := true)
-Theorem formal_subtype_instances_tf_1g:
-  TF (∀ σ τ υ δ, σ <: τ → υ <: δ →
-         <{ σ*δ }> <: <{ τ*υ }>).
-Proof.
-  (* ADMITTED
-  right. intros C.
-  assert (H: <{ Bool*⊤ }> <: <{ ⊤*Bool }>).
-  { apply C.
-    × apply ⊤.
-    × apply ⊤. }
-  destruct (sub_inversion_prod _ _ _ H) as [U1 [U2 [H0 [H1 H2```].
-  inversion H0; subst.
-  apply sub_inversion_Bool in H2. inversion H2.
-Qed. (* /ADMITTED
-::::
+
 
 ::::exercise (rating := 2) (name := "formal_subtype_instances_tf_2a") (optional := true)
-Theorem formal_subtype_instances_tf_2a:
-  TF (∀ σ τ,
-         σ <: τ →
-         <{ σ→σ }> <: <{ τ→τ }>).
-Proof.
-  (* ADMITTED
-  right. intros C.
-  assert (H: <{ Bool→Bool }> <: <{ ⊤→⊤ }>).
-  { apply C. apply ⊤. }
-  destruct (sub_inversion_arrow _ _ _ H) as [U1 [U2 [H0 [H1 H2```].
-  inversion H0; subst.
-  apply sub_inversion_Bool in H1. inversion H1.
-Qed. (* /ADMITTED
+```lean
+theorem formal_subtype_instances_tf_2a:
+  tf (∀ σ τ, σ <: τ →  <{ ~σ → ~σ }> <: <{ ~τ → ~τ }>) := by
+
+  solution!
+    right; intro contra
+    have h : <{ Bool→Bool }> <: <{ ⊤→⊤ }> := by solve_by_elim using StlcSubTyping
+    obtain ⟨_, _, h₁, h₂, h₃⟩ := sub_inversion_arrow h
+    inversion h₁; apply sub_inversion_bool at h₂; contradiction
+```
 ::::
 
 ::::exercise (rating := 2) (name := "formal_subtype_instances_tf_2b") (optional := true)
-Theorem formal_subtype_instances_tf_2b:
-  TF (∀ σ,
-         σ <: <{ A→A }> →
-         exists τ,
-           σ = <{ τ→τ }> ∧ τ <: A).
-Proof.
-  (* ADMITTED
-  right. intros C.
-  destruct (C <{ ⊤→A }>) as [τ [H0 H1```.
-  { apply arrow; [ apply ⊤ | apply refl ]. }
-  inversion H0; subst. inversion H3.
-Qed. (* /ADMITTED
-::::
+```lean
+theorem formal_subtype_instances_tf_2b:
+  tf (∀ σ, σ <: <{ ~A → ~A }> → ∃ τ, σ = <{ ~τ → ~τ }> ∧ τ <: A) := by
 
+  solution!
+    right; intros contra
+    obtain ⟨τ, h₁, h₂⟩ := contra <{ ⊤→ ~A }> (by solve_by_elim using StlcSubTyping)
+    inversion h₁
+```
+::::
+:::::
+
+:::::full
 ::::exercise (rating := 2) (name := "formal_subtype_instances_tf_2d") (optional := true)
- Hint: Assert a generalization of the statement to be proved and
-    use induction on a type (rather than on a subtyping
-    derviation).
-Theorem formal_subtype_instances_tf_2d:
-  TF (exists σ,
-         σ <: <{ σ→σ }>).
-Proof.
-  (* ADMITTED
-  assert (G: ∀ σ τ, ~(σ <: <{ τ→σ }>)).
-  { unfold not. induction σ; intros τ H.
-    - destruct (sub_inversion_arrow _ _ _ H) as [? [? [? [? ?```]; discriminate.
-    - destruct (sub_inversion_arrow _ _ _ H) as [? [? [? [? ?```]; discriminate.
-    - destruct (sub_inversion_arrow _ _ _ H) as [? [? [? [? ?```]; discriminate.
-    - destruct (sub_inversion_arrow _ _ _ H) as [S1' [S2' [? [? ?```].
-      injection H0 as ? ?; subst.
-      eapply IHS2. apply H2.
-    - destruct (sub_inversion_arrow _ _ _ H) as [? [? [? [? ?```]; discriminate.
-    - destruct (sub_inversion_arrow _ _ _ H) as [? [? [? [? ?```]; discriminate. }
-  right. intros [σ H].
-  apply G in H. assumption.
-Qed. (* /ADMITTED
+Hint: Assert a generalization of the statement to be proved and
+use induction on a type (rather than on a subtyping derviation).
+
+```lean
+theorem formal_subtype_instances_tf_2d: tf (∃ σ, σ <: <{ ~σ → ~σ }>) := by
+
+  solution!
+    have h : ∀ σ τ, ¬ σ <: <{ ~τ → ~σ }> := by
+      intro σ τ contra
+      induction σ generalizing τ with (
+          obtain ⟨σ₁, σ₁, h₁, h₂, h₃⟩ := sub_inversion_arrow contra; try contradiction)
+      | arrow τ₁ τ₂ ih₁ ih₂ =>
+        inversion h₁; apply ih₂; apply h₃
+    right; intro contra
+    obtain ⟨σ, contra⟩ := contra
+    apply h at contra; assumption
+```
+::::
+:::::
+
+:::::full
+::::exercise (rating := 2) (name := "formal_subtype_instances_tf_2e") (optional := true)
+```lean
+theorem formal_subtype_instances_tf_2e: tf (∃ σ, <{ ~σ → ~σ }> <: σ) := by
+  solution!
+    left; exists Ty.top; solve_by_elim using StlcSubTyping
+```
 ::::
 
-::::exercise (rating := 2) (name := "formal_subtype_instances_tf_2e") (optional := true)
-Theorem formal_subtype_instances_tf_2e:
-  TF (exists σ,
-         <{ σ→σ }> <: σ).
-Proof.
-  (* ADMITTED
-  left. exists <{ ⊤ }>. apply ⊤.
-Qed. (* /ADMITTED
-::::
 
 ::::exercise (rating := 2) (name := "formal_subtype_concepts_tfa") (optional := true)
-Theorem formal_subtype_concepts_tfa:
-  TF (exists τ, ∀ σ, σ <: τ).
-Proof.
-  (* ADMITTED
-  left. exists <{ ⊤ }>. intros σ. apply ⊤.
-Qed. (* /ADMITTED
+```lean
+theorem formal_subtype_concepts_tfa: tf (∃ τ, ∀ σ, σ <: τ) := by
+  solution!
+    left; exists Ty.top; solve_by_elim using StlcSubTyping
+```
 ::::
 
 ::::exercise (rating := 2) (name := "formal_subtype_concepts_tfb") (optional := true)
-Theorem formal_subtype_concepts_tfb:
-  TF (exists τ, ∀ σ, τ <: σ).
-Proof.
-  (* ADMITTED
-  right. intros [τ H].
-  assert (τ = <{ Bool }>) by (apply sub_inversion_Bool; auto).
-  assert (τ = <{ Unit }>) by (apply sub_inversion_Unit; auto).
-  congruence.
-Qed. (* /ADMITTED
+```lean
+theorem formal_subtype_concepts_tfb: tf (∃ τ, ∀ σ, τ <: σ) := by
+  solution!
+    right; intro contra
+    obtain ⟨σ, contra⟩ := contra
+    have h : σ = Ty.bool := by
+      apply sub_inversion_bool; apply contra
+    have h₂ : σ = Ty.unit := by
+      apply sub_inversion_unit; apply contra
+    subst_vars; contradiction
+```
 ::::
+:::::
 
+:::::full
 ::::exercise (rating := 2) (name := "formal_subtype_concepts_tfc") (optional := true)
-Theorem formal_subtype_concepts_tfc:
-  TF (exists τ₁ τ₂, ∀ σ₁ σ₂, <{ σ₁*σ₂ }> <: <{ τ₁*τ₂ }>).
-Proof.
-  (* ADMITTED
-  left. exists <{ ⊤ }>. exists <{ ⊤ }>. intros σ₁ σ₂.
-  apply prod; apply ⊤.
-Qed. (* /ADMITTED
+```lean
+theorem formal_subtype_concepts_tfc:
+  tf (∃ τ₁ τ₂, ∀ σ₁ σ₂, <{ ~σ₁ ×  ~σ₂ }> <: <{ ~τ₁ × ~τ₂ }>) := by
+  solution!
+    left; exists Ty.top, Ty.top; solve_by_elim using StlcSubTyping
+```
 ::::
 
 ::::exercise (rating := 2) (name := "formal_subtype_concepts_tfd") (optional := true)
-Theorem formal_subtype_concepts_tfd:
-  TF (exists τ₁ τ₂, ∀ σ₁ σ₂, <{ τ₁*τ₂ }> <: <{ σ₁*σ₂ }>).
-Proof.
-  (* ADMITTED
-  right. intros [τ₁ [τ₂ H```.
-  destruct (sub_inversion_prod _ _ _ (H <{ Bool }> <{ Bool }>)) as [U1 [U2 [H1 [H2 H3```].
-  inversion H1; subst.
-  destruct (sub_inversion_prod _ _ _ (H <{ Unit }> <{ Unit }>)) as [υ₁ [υ₂ [H4 [H5 H6```].
-  inversion H4; subst.
-  assert (υ₁ = <{ Bool }>) by (apply sub_inversion_Bool; auto).
-  assert (υ₁ = <{ Unit }>) by (apply sub_inversion_Unit; auto).
-  congruence.
-Qed. (* /ADMITTED
+```lean
+theorem formal_subtype_concepts_tfd:
+  tf (∃ τ₁ τ₂, ∀ σ₁ σ₂, <{ ~τ₁ × ~τ₂ }> <: <{ ~σ₁ × ~σ₂ }>) := by
+  solution!
+    right; intro contra
+    obtain ⟨τ₁, τ₂, h⟩ := contra
+    obtain ⟨_, _, h₁, h₂, _⟩ := sub_inversion_prod (h <{ Bool }> <{ Bool }>)
+    inversion h₁
+    obtain ⟨_, _, h₃, h₄, _⟩ := sub_inversion_prod (h <{ Unit }> <{ Unit }>)
+    inversion h₃
+    apply sub_inversion_bool at h₂; apply sub_inversion_unit at h₄
+    subst_vars; contradiction
+```
 ::::
 
 ::::exercise (rating := 2) (name := "formal_subtype_concepts_tfe") (optional := true)
-Theorem formal_subtype_concepts_tfe:
-  TF (exists τ₁ τ₂, ∀ σ₁ σ₂, <{ σ₁→σ₂ }> <: <{ τ₁→τ₂ }>).
-Proof.
-  (* ADMITTED
-  right. intros [τ₁ [τ₂ H```.
-  destruct (sub_inversion_arrow _ _ _ (H <{ Bool }> <{ Bool }>)) as [U1 [U2 [H1 [H2 H3```].
-  inversion H1; subst.
-  destruct (sub_inversion_arrow _ _ _ (H <{ Unit }> <{ Unit }>)) as [υ₁ [υ₂ [H4 [H5 H6```].
-  inversion H4; subst.
-  assert (τ₁ = <{ Bool }>) by (apply sub_inversion_Bool; auto).
-  assert (τ₁ = <{ Unit }>) by (apply sub_inversion_Unit; auto).
-  congruence.
-Qed. (* /ADMITTED
-::::
+```lean
+theorem formal_subtype_concepts_tfe:
+  tf (∃ τ₁ τ₂, ∀ σ₁ σ₂, <{ ~σ₁ → ~σ₂ }> <: <{ ~τ₁→ ~τ₂ }>) := by
 
+  solution!
+    right; intro contra
+    obtain ⟨τ₁, τ₂, h⟩ := contra
+    obtain ⟨_, _, h₁, h₂, _⟩ := sub_inversion_arrow (h <{ Bool }> <{ Bool }>)
+    inversion h₁
+    obtain ⟨_, _, h₃, h₄, _⟩ := sub_inversion_arrow (h <{ Unit }> <{ Unit }>)
+    inversion h₃
+    apply sub_inversion_bool at h₂; apply sub_inversion_unit at h₄
+    subst_vars; contradiction
+```
+::::
+:::::
+
+:::::full
 ::::exercise (rating := 2) (name := "formal_subtype_concepts_tff") (optional := true)
-Theorem formal_subtype_concepts_tff:
-  TF (exists τ₁ τ₂, ∀ σ₁ σ₂, <{ τ₁→τ₂ }> <: <{ σ₁→σ₂ }>).
-Proof.
-  (* ADMITTED
-  right. intros [τ₁ [τ₂ H```.
-  destruct (sub_inversion_arrow _ _ _ (H <{ Bool }> <{ Bool }>)) as [U1 [U2 [H1 [H2 H3```].
-  inversion H1; subst.
-  destruct (sub_inversion_arrow _ _ _ (H <{ Unit }> <{ Unit }>)) as [υ₁ [υ₂ [H4 [H5 H6```].
-  inversion H4; subst.
-  assert (υ₂ = <{ Bool }>) by (apply sub_inversion_Bool; auto).
-  assert (υ₂ = <{ Unit }>) by (apply sub_inversion_Unit; auto).
-  congruence.
-Qed. (* /ADMITTED
+```lean
+theorem formal_subtype_concepts_tff :
+  tf (∃ τ₁ τ₂, ∀ σ₁ σ₂, <{ ~τ₁ → ~τ₂ }> <: <{ ~σ₁ → ~σ₂ }>) := by
+
+  solution!
+    right; intro contra
+    obtain ⟨τ₁, τ₂, h⟩ := contra
+    obtain ⟨_, _, h₁, h₂, h₃⟩ := sub_inversion_arrow (h <{ Bool }> <{ Bool }>)
+    inversion h₁
+    obtain ⟨_, _, h₄, h₅, h₆⟩ := sub_inversion_arrow (h <{ Unit }> <{ Unit }>)
+    inversion h₄
+    apply sub_inversion_bool at h₃; apply sub_inversion_unit at h₆
+    subst_vars; contradiction
+```
 ::::
 
 ::::exercise (rating := 2) (name := "formal_subtype_concepts_tfg") (optional := true)
 :::solution
-Fixpoint inf_desc_chain (n: nat) :=
+```lean
+def inf_desc_chain (n: Nat) : Ty :=
   match n with
-    | O => <{ ⊤ }>
-    | σ n => <{ ⊤→$(inf_desc_chain n) }>
-  end.
+    | 0 => <{ ⊤ }>
+    | n + 1 => <{ ⊤ → ~(inf_desc_chain n) }>
+```
 :::
-Theorem formal_subtype_concepts_tfg:
-  TF (exists f : nat → Ty,
-         (∀ i j, i <> j → f i <> f j) ∧
-         (∀ i, f (σ i) <: f i)).
-Proof.
-  (* ADMITTED
-  left. exists inf_desc_chain. split.
-  { induction i as [|i']; simpl; intros j H; intro C.
-    - destruct j as [|j']; simpl in C; try solve_by_invert; auto.
-    - destruct j as [|j']; simpl in C; try solve_by_invert.
-      assert (H': i' <> j') by auto.
-      apply IHi' in H'.
-      congruence. }
-  { induction i; simpl; auto. }
-Qed. (* /ADMITTED
-::::
 
+```lean
+theorem formal_subtype_concepts_tfg:
+  tf (∃ f : Nat → Ty,
+         (∀ i j, i ≠ j → f i ≠ f j) ∧
+         (∀ i, f (i + 1) <: f i)) := by
+  solution!
+    left; exists inf_desc_chain; constructor
+    · intro i j h; induction i generalizing j with (intro contra)
+      | zero =>
+          cases j; contradiction
+          simp only [inf_desc_chain] at contra; contradiction
+      | succ i' ih =>
+          cases j with
+          | zero => contradiction
+          | succ j' =>
+              have h' : i' ≠ j' := by lia
+              apply ih at h'
+              simp only [inf_desc_chain] at contra
+              inversion contra; lia
+    · intro i; induction i with solve_by_elim using StlcSubTyping
+```
+::::
+:::::
+
+:::::full
 ::::exercise (rating := 2) (name := "formal_subtype_concepts_tfh") (optional := true)
-Theorem formal_subtype_concepts_tfh:
-  TF (exists f : nat → Ty,
-         (∀ i j, i <> j → f i <> f j) ∧
-         (∀ i, f i <: f (σ i))).
-Proof.
-  (* ADMITTED
-  left. exists (fun n => <{ $(inf_desc_chain n)→⊤ }>). split.
-  { induction i as [|i']; simpl; intros j H; intro C.
-    - destruct j as [|j']; simpl in C; try solve_by_invert; auto.
-    - destruct j as [|j']; simpl in C; try solve_by_invert.
-      assert (H': i' <> j') by auto.
-      apply IHi' in H'.
-      congruence. }
-  { induction i; simpl in *.
-    { auto. }
-    { destruct (sub_inversion_arrow _ _ _ IHi) as [U1 [U2 [? [? ?```].
-      inversion H; subst; auto. } }
-Qed. (* /ADMITTED
+```lean
+theorem formal_subtype_concepts_tfh:
+  tf (∃ f : Nat → Ty, (∀ i j, i ≠ j → f i ≠ f j) ∧ (∀ i, f i <: f (i + 1))) := by
+  solution!
+    left; exists (fun n => <{ ~(inf_desc_chain n) → ⊤ }>); constructor
+    · intro i j h; induction i generalizing j with (intro contra)
+      | zero =>
+          cases j; contradiction
+          simp only [inf_desc_chain] at contra; inversion contra
+      | succ i' ih =>
+          cases j with
+          | zero => simp only [inf_desc_chain] at contra; inversion contra
+          | succ j' =>
+              have h' : i' ≠ j' := by lia
+              apply ih at h'
+              simp only [inf_desc_chain] at contra
+              inversion contra; lia
+    · intro i; induction i with
+      | zero => solve_by_elim using StlcSubTyping
+      | succ i' ih =>
+        obtain ⟨_, _, h₁, h₂, h₃⟩ := sub_inversion_arrow ih
+        inversion h₁; solve_by_elim using StlcSubTyping
+```
 ::::
 
 ::::exercise (rating := 3) (name := "formal_proper_subtypes") (optional := true)
-Theorem formal_proper_subtypes:
-  TF (∀ τ,
-         ~(τ = <{ Bool }> ∨ (exists n, τ = <{ Base n }>) ∨ τ = <{ Unit }>) →
-         exists σ,
-           σ <: τ ∧ σ <> τ).
-Proof.
-  (* ADMITTED
-  right. intros H.
-  assert (exists σ : Ty, σ <: <{ ⊤→Bool }> ∧ σ <> <{ ⊤→Bool }>) as [σ [? ?```.
-  { apply H. intros [C|```displayx C]|C```; inversion C. }
-  destruct (sub_inversion_arrow _ _ _ H0) as [U1 [U2 [? [? ?```].
-  apply sub_inversion_Bool in H4.
-  apply sub_inversion_⊤ in H3.
-  subst. apply H1. reflexivity.
-Qed. (* /ADMITTED
+```lean
+theorem formal_proper_subtypes:
+  tf (∀ τ,
+         ¬(τ = Ty.bool ∨ (∃ n, τ = Ty.base n) ∨ τ = Ty.unit) →
+         ∃ σ, σ <: τ ∧ σ ≠ τ) := by
+  solution!
+    right; intro contra
+    have h : ∃ σ : Ty, σ <: <{ ⊤ → Bool }> ∧ σ ≠ <{ ⊤ → Bool }> := by
+      apply contra; intro contra
+      obtain h | ⟨_, h⟩ | h := contra <;> contradiction
+    obtain ⟨σ, h₁, h₂⟩ := h
+    obtain ⟨_, _, h₁, h₂, h₃⟩ := sub_inversion_arrow h₁
+    apply sub_inversion_bool at h₃
+    apply sub_inversion_top at h₂
+    subst_vars; apply h₂; rfl
+```
 ::::
+:::::
 
-End FormalThoughtExercises.
-(* /FULL
+:::::full
+```lean
+end FormalThoughtExercises
+```
+:::::
 
-(* TERSE: HIDEFROMHTML
-End STLCSub.
-(* TERSE: /HIDEFROMHTML
+```lean
+end StlcSub
+```
