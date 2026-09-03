@@ -14,42 +14,59 @@ the whole category at the source.
 
 ## Doing a pass
 
-Ask Claude to proofread a chapter. It reads this file and the ledger, then
-writes a *round* — a JSON file of anchored edits — into `proofread/rounds/`.
-Everything after that is one command with no arguments:
+Say `/proofread <Chapter>` in a Claude session — that is the whole interface.
+Claude reads this file and the ledger, writes a *round* (a JSON file of
+anchored edits, under `proofread/rounds/`), applies it, and opens a diff of
+just those edits in VS Code alongside the chapter. Revert the edits you don't
+want — one click per hunk in the Source Control gutter — and tell Claude you're
+done; it records your rejections in `proofread/ledger.jsonl` and reports any
+category that has earned a house rule. Then `lake build <Vol>.<Ch>` and commit
+the chapter and the ledger together.
+
+Two turns of conversation, then. The review in between can take a minute or a
+day, in that session or a later one: `proofread/state.json` holds the round in
+flight, so "I'm done" is understood whenever it comes. The round file and the
+script are never things you have to open.
+
+**A pass starts from a clean branch.** The round's edits must be the only
+uncommitted thing in the chapter — otherwise a reverted hunk cannot be told
+from your own work, and neither reconciling nor `undo` is exact. So the pass
+refuses to start while `git status` is dirty (its own files under `proofread/`
+excepted); commit or stash first. `--allow-dirty` overrides it, at that cost.
+
+`proofread.py undo` reverses the whole round and leaves it for another day.
+`proofread.py status` says where you are.
+
+### Never commit a round mid-flight
+
+Committing while a round is applied but unrecorded bakes in your reverts and
+loses the rejections. A hook is provided; install it once per clone:
 
 ```
-python3 scripts/proofread.py
+git config core.hooksPath scripts/hooks
 ```
 
-It offers the chapters with a round waiting (and skips the question when there
-is only one), applies every proposed edit, opens a diff of just those edits in
-VS Code alongside the chapter, and waits. Revert the edits you don't want — one
-click per hunk in the Source Control gutter — press return, and it records your
-rejections in `proofread/ledger.jsonl` and reports any category that has earned
-a house rule. Then `lake build <Vol>.<Ch>` and commit the chapter and the
-ledger together.
+`scripts/hooks/pre-commit` then blocks such a commit (and `git commit
+--no-verify` gets past it). Without the hook nothing enforces this — the
+`/proofread` flow simply asks Claude to record before committing.
 
-You can also start from nothing: run that command with no round waiting and it
-asks which chapter (offering the one you edited most recently), starts Claude
-on it with the instructions below, and waits. Leave Claude — `/exit`, or
-Ctrl-D — once the round is written and the command picks it up and carries on
-into the review. `proofread.py propose [<chapter>]` does the same on demand,
-even when other rounds are waiting; `<chapter>` is a path or a bare chapter
-name, e.g. `Basics`.
+### Doing it by hand
 
-Ctrl-C at the prompt stops without recording anything; run the command again
-and it resumes mid-review. `proofread.py undo` reverses the whole round and
-leaves it for another day. `proofread.py status` says where you are. The round
-file is never something you open.
+`python3 scripts/proofread.py`, with no arguments and a round already written,
+runs the same pass in a terminal: it applies the round, opens the diff, waits
+at a prompt while you review, and records when you press return. Ctrl-C stops
+without recording; run it again and it resumes mid-review. The phases are
+separately available as `proofread.py apply` and `proofread.py record`, which
+is what Claude runs; `proofread.py start [<chapter>]` names the chapter source
+and the next round file. `proofread.py --help` lists the rest.
 
-The diff exists because the chapter usually has other uncommitted work in it —
-`git diff` would mix your own edits in with the round's. The `.diff` file has
-only the round.
+The `.diff` file is the round as proposed: it stays next to the round file
+afterwards, and it still reads as one list of the proposals once you have begun
+reverting hunks in the chapter.
 
 ### Edits that share a hunk
 
-The command warns when two edits land within a few lines of each other. Those
+`apply` warns when two edits land within a few lines of each other. Those
 sit in one git hunk and cannot be reverted independently — fix that spot by
 hand instead. Such an edit is then reported as `unclear` and nothing is
 recorded for it, so it will come back in a later round.
@@ -124,5 +141,10 @@ For whoever (or whatever) does the proposing:
   claim, an inconsistent term — report those separately in prose. They need a
   decision, not a comma.
 * Proofread the hand-maintained source, not a generated `<Ch>Verso.lean`.
-* Just write the round to `proofread/rounds/<Ch>-rNN.json` and tell the author
-  to run `python3 scripts/proofread.py`; it finds waiting rounds on its own.
+* Write the round to the path `proofread.py start` printed
+  (`proofread/rounds/<Ch>-rNN.json`) and do not edit the chapter yourself —
+  every edit reaches it through the round, so that what the author accepts and
+  declines is what the ledger records.
+
+The driving loop around these rules — which command to run when, and where to
+stop and wait for the author — is `.claude/skills/proofread/SKILL.md`.
