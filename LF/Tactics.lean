@@ -1345,7 +1345,7 @@ theorem add_self_injective (n m : Nat)
 :::
 :::::
 
-::::exercise (rating := 2) (name := "add_self_injective_informal")
+::::exercise (rating := 2) (name := "add_self_injective_informal") (manual := true)
 Give a careful informal proof of {name}`add_self_injective`, stating the induction
 hypothesis explicitly and being as explicit as possible about
 quantifiers, everywhere.
@@ -1374,6 +1374,12 @@ _Proof_: We prove by induction on {lean}`n` that for _every_ natrual number {lea
 _Qed_.
 :::
 
+
+:::grade
+```
+GRADE_MANUAL 2: add_self_injective_informal
+```
+:::
 ::::
 
 
@@ -1935,6 +1941,12 @@ theorem unzip_zip' {α β : Type}
 -- END SOLUTION
 ```
 
+
+:::grade
+```
+GRADE_MANUAL 3: unzip_zip
+```
+:::
 :::::
 
 :::::exercise (rating := 3) (name := "test_pos_of_filter_cons") (level := Advanced)

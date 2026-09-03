@@ -1227,7 +1227,7 @@ plus some basic properties of `⟶*` (that it is reflexive, transitive, and
 includes `⟶`).
 :::::
 
-:::::exercise (rating := 3) (name := "multistep_of_eval_inf") (optional := true)
+:::::exercise (rating := 3) (name := "multistep_of_eval_inf") (optional := true) (manual := true)
 Write a detailed informal version of the proof of `multistep_of_eval`.  (A
 paper exercise — there is no Lean proof to fill in here.)
 

@@ -1193,7 +1193,7 @@ But in the following example, because {name}`Bool.not` takes a {name}`Bool` argu
 
 :::::full
 
-::::exercise (rating := 1) (name := "custom_namespace_checks")
+::::exercise (rating := 1) (name := "custom_namespace_checks") (manual := true)
 Predict the output of each of the statements below.
 Would their results change depending on which namespace
 the statements appear in? How?
