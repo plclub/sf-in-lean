@@ -1218,6 +1218,13 @@ GRADE_MANUAL 1: custom_namespace_checks
 
 ## Constructors with Multiple Parameters (Tuple Types)
 
+:::dev "Mike Hicks (mwhicks1)" PotentialImprovement
+This content is not needed -- we introduce tuples in Lists as
+NatProd. However, a bunch of this text is interesting, so we should
+consider moving it (and perhaps examples too) to improve
+that section.
+:::
+
 ```lean
 namespace Playground
 ```

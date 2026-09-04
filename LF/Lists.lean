@@ -36,13 +36,14 @@ namespace Lists
 
 # Pairs of Numbers
 
-::::dev "Mike Hicks (mwhicks1)"
+:::dev "Mike Hicks (mwhicks1)" PotentialImprovement
 This content is redundant with what's in Basics, which introduces the idea of
 tuple types and structures as shorthand for them. I suspect we can drop most
 of the Basics content and rely on what's here instead. If we do that, we can
 introduce the term "Tuple" here.
 (We do not need structures in the airport exercise, either.)
-::::
+Also: introduce dsimp here to demo it for an interesting proof.
+:::
 
 ::::full
 In an `inductive` type definition, each constructor can take
@@ -1219,7 +1220,7 @@ theorem replicate_append_general (c₁ c₂ n : Nat) :
   | zero =>
     rw [replicate_zero, Nat.zero_add, nil_append]
   | succ c1' ih =>
-    rw [Nat.succ_add, replicate_succ, replicate_succ, cons_append, ih]
+    rw [Nat.add_right_comm, replicate_succ, replicate_succ, cons_append, ih]
 ```
 
 Then, we can use this more general theorem to prove the original goal:
@@ -1879,6 +1880,12 @@ theorem reverse_injective (l₁ l₂ : NatList)
 ::::::
 
 # Options
+
+:::dev "Mike Hicks (mwhicks1)" PotentialImprovement
+The `nth` name is not idiomatic in Lean. A better choice would be `get`,
+which is what it was before `getElem` became the norm. Change here and
+in Poly, and then again in Tactics.
+:::
 
 ::::full
 Suppose we want to write a function that returns the `n`th
