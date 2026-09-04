@@ -2160,13 +2160,15 @@ def find (x : MyId) (d : PartialMap) : NatOption :=
 Is the following claim true or false?
 
 ```leanTerm
-∀ (d : PartialMap) (x : MyId) (n : Nat), find x (update d x n) = .some n
+∀ (d : PartialMap) (x : MyId) (n : Nat),
+-----------------------------------------
+  find x (update d x n) = .some n
 ```
 
 (A) True
 (B) False
 (C) Not sure
-::::
+
 
 :::solution
 ```lean
@@ -2175,30 +2177,31 @@ example (d : PartialMap) (x : MyId) (n : Nat) :
   rw [update, find, MyId.beq_refl, Bool.cond_true]
 ```
 :::
+::::
 
 ::::quiz
 Is the following claim true or false?
 
 ```leanTerm
-∀ (d : PartialMap) (x y : MyId) (o : Nat),
-    MyId.beq x y = false →
-    find x (update d y o) = find x d
+∀ (d : PartialMap) (x y : MyId) (o : Nat)
+  (h : MyId.beq x y = false),
+-----------------------------------------
+  find x (update d y o) = find x d
 ```
 
 (A) True
 (B) False
 (C) Not sure
-::::
 
 :::solution
 ```lean
-example (d : PartialMap) (x y : MyId) (o : Nat) :
-    MyId.beq x y = false →
+example (d : PartialMap) (x y : MyId) (o : Nat)
+    (h : MyId.beq x y = false) :
     find x (update d y o) = find x d := by
-  intro h
   rw [update, find, h, Bool.cond_false]
 ```
 :::
+::::
 
 ::::::full
 :::::exercise (rating := 1) (name := "update_eq")
