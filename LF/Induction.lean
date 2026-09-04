@@ -869,7 +869,7 @@ GRADE_MANUAL 2: add_comm_informal
 :::
 :::::
 
-:::::exercise (rating := 2) (name := "beq_refl_informal") (optional := true)
+:::::exercise (rating := 2) (name := "beq_refl_informal") (optional := true) (manual := true)
 Write an informal proof of the following theorem, using the
 informal proof of {name}`add_assoc` as a model.  Don't just
 paraphrase the Lean tactics into English!

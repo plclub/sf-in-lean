@@ -300,7 +300,7 @@ Whereas before, the left-hand side of each equality in the
 previous one, we can replace the left-hand side entirely with an `_`.
 Now our Lean proof looks quite a bit like the textbook one we saw earlier!
 
-::::exercise (rating := 1) (name := "succ_mul_succ")
+::::exercise (rating := 1) (name := "succ_mul_succ") (manual := true)
 Consider this proof, which uses {tactic}`rw`.
 ```lean
 theorem succ_mul_succ (n m : Nat) :
@@ -320,6 +320,12 @@ theorem succ_mul_succ' (n m : Nat) :
       _ = (n * m + n) + (m + 1)     := by rw [Nat.mul_one]
       _ = n * m + n + m + 1         := by rw [← Nat.add_assoc]
 ```
+
+:::grade
+```
+GRADE_MANUAL 1: succ_mul_succ'
+```
+:::
 ::::
 If you prefer {tactic}`rw` to {tactic}`calc`, that's fine! Each has particular
 uses, and both will be tools in your ever-growing toolbox of tactics.
@@ -459,6 +465,11 @@ Unfolding should not be overused; simplification rules are (still) useful proof 
 ::::
 
 # Definitional Simplification with {tactic}`dsimp`
+
+:::dev "Mike Hicks (mwhicks1)" PotentialImprovement
+We will drop dsimp from here and discuss it in Lists instead, using a `NatProd`
+example to motivate it. The use of the lambda term here is confusing.
+:::
 
 ::::full
 Sometimes when you unfold a definition your hypothesis or goal may become hard to understand.
