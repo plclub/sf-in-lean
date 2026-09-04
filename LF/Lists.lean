@@ -1349,10 +1349,9 @@ theorem length_reverse (l : NatList) :
 :::slidebreak
 :::
 
-::::full
 We can also prove a more general form that gives the
-length of any two appended lists.
-::::
+length of _any_ two appended lists. We could use this theorem rather
+than {lean}`append_length_succ` to help prove {lean}`length_reverse`.
 
 ```lean
 theorem length_append (l₁ l₂ : NatList) :
@@ -1427,7 +1426,8 @@ example (n m : Nat) : (replicate n m).length = m := by
 :::::
 
 ::::full
-For comparison, here are informal proofs of these two theorems:
+For comparison, here are informal proofs of these two theorems,
+`length_append` and `length_reverse`.
 
 _Theorem_: For all lists `l₁` and `l₂`,
 
@@ -1510,19 +1510,11 @@ the above proof might look like this:
 
 _Theorem_: For all lists `l`, `l.reverse.length = l.length`.
 
-_Proof_: First observe, by a straightforward induction on `l`,
-that `(l ++ [n]).length = .succ l.length` for any `l`.  The main
-property then follows by another induction on `l`, using the
+_Proof_: First observe, by a straightforward induction on `l₁`,
+that `(l₁ ++ l₂).length = l₁.length + l₂.length` for any `l₁` and `l₂`. The main
+property then follows by induction on `l`, using the
 observation together with the induction hypothesis in the case
 where `l = n' :: l'`. _QED_.
-
-:::dev "Claude" BeforeNextRelease
-Two problems in this compressed proof. First, `.succ l.length` is Rocq-flavored;
-the chapter's Lean writes this as `l.length + 1`, and the lemma actually proved
-above is `append_length_succ`. Second, "by the previous lemma" points at
-`length_append`, which is not proved until later in the chapter — the step that
-is available here is `append_length_succ`.
-:::
 
 Which style is preferable in a given situation depends on
 the sophistication of the expected audience and how similar the
@@ -2174,31 +2166,48 @@ def find (x : MyId) (d : PartialMap) : NatOption :=
 ::::quiz
 Is the following claim true or false?
 
-```lean
-theorem quiz1 (d : PartialMap) (x : MyId) (n : Nat) :
-    find x (update d x n) = .some n := by
-  rw [update, find, MyId.beq_refl, cond_true]
+```leanTerm
+∀ (d : PartialMap) (x : MyId) (n : Nat),
+-----------------------------------------
+  find x (update d x n) = .some n
 ```
 
 (A) True
 (B) False
 (C) Not sure
+
+
+:::solution
+```lean
+example (d : PartialMap) (x : MyId) (n : Nat) :
+    find x (update d x n) = .some n := by
+  rw [update, find, MyId.beq_refl, Bool.cond_true]
+```
+:::
 ::::
 
 ::::quiz
 Is the following claim true or false?
 
-```lean
-theorem quiz2 (d : PartialMap) (x y : MyId) (o : Nat) :
-    MyId.beq x y = false →
-    find x (update d y o) = find x d := by
-  intro h
-  rw [update, find, h, cond_false]
+```leanTerm
+∀ (d : PartialMap) (x y : MyId) (o : Nat)
+  (h : MyId.beq x y = false),
+-----------------------------------------
+  find x (update d y o) = find x d
 ```
 
 (A) True
 (B) False
 (C) Not sure
+
+:::solution
+```lean
+example (d : PartialMap) (x y : MyId) (o : Nat)
+    (h : MyId.beq x y = false) :
+    find x (update d y o) = find x d := by
+  rw [update, find, h, Bool.cond_false]
+```
+:::
 ::::
 
 ::::::full
