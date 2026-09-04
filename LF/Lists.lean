@@ -2159,9 +2159,8 @@ def find (x : MyId) (d : PartialMap) : NatOption :=
 ::::quiz
 Is the following claim true or false?
 
-```lean
-example (d : PartialMap) (x : MyId) (n : Nat) :
-    find x (update d x n) = .some n := by sorry
+```leanTerm
+∀ (d : PartialMap) (x : MyId) (n : Nat), find x (update d x n) = .some n
 ```
 
 (A) True
@@ -2169,9 +2168,9 @@ example (d : PartialMap) (x : MyId) (n : Nat) :
 (C) Not sure
 ::::
 
-:::hide
+:::solution
 ```lean
-theorem quiz1 (d : PartialMap) (x : MyId) (n : Nat) :
+example (d : PartialMap) (x : MyId) (n : Nat) :
     find x (update d x n) = .some n := by
   rw [update, find, MyId.beq_refl, Bool.cond_true]
 ```
@@ -2180,10 +2179,10 @@ theorem quiz1 (d : PartialMap) (x : MyId) (n : Nat) :
 ::::quiz
 Is the following claim true or false?
 
-```lean
-example (d : PartialMap) (x y : MyId) (o : Nat) :
+```leanTerm
+∀ (d : PartialMap) (x y : MyId) (o : Nat),
     MyId.beq x y = false →
-    find x (update d y o) = find x d := by sorry
+    find x (update d y o) = find x d
 ```
 
 (A) True
@@ -2191,9 +2190,9 @@ example (d : PartialMap) (x y : MyId) (o : Nat) :
 (C) Not sure
 ::::
 
-:::hide
+:::solution
 ```lean
-theorem quiz2 (d : PartialMap) (x y : MyId) (o : Nat) :
+example (d : PartialMap) (x y : MyId) (o : Nat) :
     MyId.beq x y = false →
     find x (update d y o) = find x d := by
   intro h
