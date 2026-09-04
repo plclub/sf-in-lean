@@ -78,7 +78,9 @@ jobs:
         with:
           name: grading-inputs
           path: |
-            _out/*/{grading,student,solutions}/lean/**
+            _out/*/grading/lean/**
+            _out/*/student/lean/**
+            _out/*/solutions/lean/**
             !_out/**/.lake/**
           if-no-files-found: error
           retention-days: 1
