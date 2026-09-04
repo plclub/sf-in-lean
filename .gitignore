@@ -17,3 +17,6 @@ TS/*Verso.lean
 # Personal keybinding cheat sheet and its generator (see .vscode/KEYBINDINGS-SETUP.md).
 .vscode/KEYBINDINGS*.md
 .vscode/keybindings-ref.*
+
+# The pre-round snapshot a proofreading review diffs against (scripts/proofread.py).
+proofread/rounds/*.before.*
