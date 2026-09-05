@@ -1,37 +1,37 @@
 #!/usr/bin/env python3
 # This file is maintained by Claude (AI-generated).
 """
-proofread.py  —  Drives a low-level proofreading pass over a chapter.
+proofread.py  —  Mechanism for a low-level proofreading pass over a chapter.
 
-Claude writes a *round* — a JSON file of anchored edits under proofread/rounds/
-— and leaves it there. Doing the pass is one command with no arguments:
+The pass is driven from a Claude session — `/proofread <Chapter>` — and Claude
+issues these three commands in turn:
 
-    python3 scripts/proofread.py
+  start [CHAPTER]      name the chapter source and the round file to write
+  apply [ROUND]        apply a written round and open its diff for review
+  record [ROUND]       record what the author kept, after the review
 
-Run it with nothing waiting and it starts Claude on a chapter for you, then
-picks up the round Claude writes; leave Claude and the pass carries on.
+Between `apply` and `record` the author reverts the edits they don't want, in
+the chapter itself — one click per hunk in the Source Control gutter. That
+review is a human gesture nothing can observe, which is why the phases are
+separate commands. proofread/state.json remembers which round is in flight, so
+`record` can come minutes or days later, from a different session.
 
-It asks which chapter to proofread (skipping the question when only one round
-is waiting), makes every proposed edit, opens a diff of just those edits in VS
-Code, and waits. You revert the ones you don't want, press return, and it
-records your rejections and reports any pattern worth a house rule.
+You can also do a pass by hand: run with no arguments in a terminal and it
+applies the waiting round, waits at a prompt while you review, and records when
+you press return. Ctrl-C stops without recording; run it again to resume.
 
-Stop at any point with Ctrl-C; run it again and it picks up where it left off.
-The round file is never something you have to open. See PROOFREADING.md.
+OTHER COMMANDS
+  undo                 reverse the applied round and forget it
+  status               what is in flight
+  check                exit non-zero while a round is applied but unrecorded
+  ledger [--cat C]     list recorded rejections
+  patterns [--min N]   rejection categories that have earned a house rule
 
 Rejections land in proofread/ledger.jsonl, keyed by a whitespace-normalized
 hash of the (old, new) pair. A later round that proposes the same edit again —
 in this chapter or any other — is silently dropped before you ever see it.
 
-OTHER COMMANDS
-  propose [CHAPTER]    have Claude write a round now, then run it
-  undo                 reverse the applied round and forget it
-  status               what is in flight
-  ledger [--cat C]     list recorded rejections
-  patterns [--min N]   rejection categories that have earned a house rule
-
-Run non-interactively (a pipe, CI) and it falls back to two invocations: the
-first applies and writes the diff, the second reconciles.
+The round file is never something the author has to open. See PROOFREADING.md.
 """
 
 import argparse
@@ -43,7 +43,6 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROUNDS = os.path.join(ROOT, "proofread", "rounds")
@@ -195,7 +194,12 @@ def choose_round():
               f"edit{'' if live == 1 else 's'} to {round_['file']}")
         return path
     if not interactive():
-        sys.exit("several rounds are waiting; run this from a terminal to choose")
+        print("Several rounds are waiting — name the one to apply:")
+        for path, round_, live in rounds:
+            print(f"  proofread.py apply {os.path.basename(path)}"
+                  f"   {C_DIM}({round_['file']}, {live} edit"
+                  f"{'' if live == 1 else 's'}){C_OFF}")
+        sys.exit(1)
     print(f"{C_BLD}Which chapter?{C_OFF}")
     for i, (_, round_, live) in enumerate(rounds, 1):
         print(f"  {i}. {round_['file']}  {C_DIM}({round_label(round_)}, "
@@ -213,7 +217,50 @@ def choose_round():
 
 
 # --------------------------------------------------------------------------
-# asking Claude for a round
+# a clean tree
+# --------------------------------------------------------------------------
+def dirty_paths():
+    """Uncommitted changes, ignoring the proofreading machinery's own files —
+    a round is written into proofread/rounds/ before anything can be applied."""
+    r = subprocess.run(["git", "status", "--porcelain"], cwd=ROOT,
+                       capture_output=True, text=True)
+    if r.returncode != 0:
+        return []
+    paths = set()
+    for line in r.stdout.splitlines():
+        path = line[3:]
+        if " -> " in path:                      # a rename: the new name matters
+            path = path.split(" -> ", 1)[1]
+        path = path.strip().strip('"')
+        if path and not path.startswith("proofread/"):
+            paths.add(path)
+    return sorted(paths)
+
+
+def require_clean_tree(allow_dirty=False):
+    """A pass starts from a clean tree: the round's edits are then the only
+    thing in the chapter, so reverting a hunk is unambiguous and `undo` is
+    exact. Nothing else in the pass can tell the author's work from ours."""
+    paths = dirty_paths()
+    if not paths:
+        return
+    if allow_dirty:
+        print(f"{C_YEL}working tree is dirty ({len(paths)} path"
+              f"{'' if len(paths) == 1 else 's'}) — proceeding anyway{C_OFF}")
+        return
+    print(f"{C_RED}The working tree has uncommitted changes.{C_OFF} A "
+          f"proofreading pass starts from a\nclean branch, so that the round's "
+          f"edits are the only thing in the chapter:")
+    for path in paths[:10]:
+        print(f"  {path}")
+    if len(paths) > 10:
+        print(f"  {C_DIM}… and {len(paths) - 10} more{C_OFF}")
+    sys.exit(f"\nCommit or stash them and start again "
+             f"{C_DIM}(--allow-dirty overrides){C_OFF}")
+
+
+# --------------------------------------------------------------------------
+# chapters and round files
 # --------------------------------------------------------------------------
 def volumes():
     """Directories holding chapter sources — one per Targets<Vol>.lean."""
@@ -244,28 +291,6 @@ def find_chapter(name):
     return hits[0] if len(hits) == 1 else None
 
 
-def ask_chapter():
-    sources = chapter_sources()
-    if not sources:
-        return None
-    default = sources[0]
-    print(f"{C_BLD}Which chapter should Claude proofread?{C_OFF} "
-          f"{C_DIM}(return for {default}, Ctrl-C to stop){C_OFF}")
-    while True:
-        try:
-            answer = input("chapter: ").strip()
-        except (KeyboardInterrupt, EOFError):
-            print()
-            return None
-        if not answer:
-            return default
-        found = find_chapter(answer)
-        if found:
-            return found
-        print("no such chapter — give a path or a chapter name, e.g. "
-              f"{os.path.basename(default)[:-len('.lean')]}")
-
-
 def next_round_path(source):
     chapter = os.path.basename(source)[:-len(".lean")]
     used = [int(m.group(1))
@@ -273,53 +298,6 @@ def next_round_path(source):
                       for path in glob.glob(os.path.join(ROUNDS, f"{chapter}-r*.json")))
             if m]
     return os.path.join(ROUNDS, f"{chapter}-r{max(used, default=0) + 1:02d}.json")
-
-
-def proofread_prompt(source, dest):
-    return (
-        f"Proofread {source}.\n\n"
-        f"Read PROOFREADING.md in full first — its 'Writing a round' section, "
-        f"the house rules, and the known non-issues — and read the recorded "
-        f"rejections with `python3 scripts/proofread.py ledger`. Nothing already "
-        f"declined or covered by a house rule may be proposed again.\n\n"
-        f"Then write the round to {rel(dest)}: "
-        f'{{"file", "chapter", "round", "proposals": [{{"id", "cat", "old", '
-        f'"new", "why"}}]}}, anchored exactly as that section requires.\n\n'
-        f"Do not edit {source} yourself and do not run scripts/proofread.py "
-        f"other than its ledger and patterns commands — the author applies the "
-        f"round. Write the round file, say briefly what is in it, and stop.")
-
-
-def solicit_round(chapter=None):
-    """Nothing is waiting: start Claude on a chapter, then pick up what it writes."""
-    claude = shutil.which("claude")
-    if claude is None or not interactive():
-        print("No rounds are waiting. Ask Claude to proofread a chapter — it "
-              "writes one into proofread/rounds/ and this command picks it up.")
-        return None
-    source = chapter or ask_chapter()
-    if source is None:
-        return None
-    dest = next_round_path(source)
-    before = {path for path, _, _ in available_rounds()}
-    print(f"\nStarting Claude on {C_BLD}{source}{C_OFF} — it writes "
-          f"{rel(dest)}.\n{C_DIM}Leave Claude (/exit, or Ctrl-D) when the round "
-          f"is written and this command carries on with it.{C_OFF}\n")
-    try:
-        subprocess.run([claude, proofread_prompt(source, dest)], cwd=ROOT)
-    except (OSError, subprocess.SubprocessError) as e:
-        print(f"{C_RED}could not run claude: {e}{C_OFF}")
-        return None
-    fresh = [r for r in available_rounds() if r[0] not in before]
-    if not fresh:
-        print(f"\n{C_YEL}No new round in {rel(ROUNDS)} — nothing to apply.{C_OFF}")
-        return None
-    if len(fresh) == 1:
-        path, round_, live = fresh[0]
-        print(f"\n{C_BLD}{round_label(round_)}{C_OFF} — {live} proposed "
-              f"edit{'' if live == 1 else 's'} to {round_['file']}")
-        return path
-    return choose_round()
 
 
 # --------------------------------------------------------------------------
@@ -370,33 +348,54 @@ def diff_path(round_path):
     return re.sub(r"\.json$", "", round_path) + ".diff"
 
 
-def write_isolated_diff(round_path, round_, applied, after):
-    """A diff of just this round's edits, free of any other pending changes."""
+def before_path(round_path, round_):
+    """The chapter as it was before the round — the left pane of the review.
+    It keeps the chapter's extension so the diff is syntax-highlighted."""
+    ext = os.path.splitext(round_["file"])[1]
+    return re.sub(r"\.json$", "", round_path) + ".before" + ext
+
+
+def write_before(round_path, round_, applied, after):
+    """Reconstruct and keep the pre-round text; the review diffs against it."""
     before = after
     for p in applied:
         before = before.replace(p["new"], p["old"], 1)
+    dest = before_path(round_path, round_)
+    if os.path.exists(dest):
+        os.remove(dest)
+    with open(dest, "w") as f:
+        f.write(before)
+    os.chmod(dest, 0o444)        # read-only: only the right pane is the chapter
+    return dest
+
+
+def write_isolated_diff(round_path, round_, before):
+    """A unified diff of just this round's edits, as a record of what was
+    proposed — it stays readable after the author starts reverting hunks."""
     dest = diff_path(round_path)
-    with tempfile.NamedTemporaryFile("w", suffix=".before", delete=False) as tmp:
-        tmp.write(before)
-        tmp_name = tmp.name
-    try:
-        out = subprocess.run(
-            ["diff", "-u", "-U", "2",
-             "--label", round_["file"] + " (before this round)",
-             "--label", round_["file"],
-             tmp_name, os.path.join(ROOT, round_["file"])],
-            capture_output=True, text=True).stdout
-    finally:
-        os.remove(tmp_name)
+    out = subprocess.run(
+        ["diff", "-u", "-U", "2",
+         "--label", round_["file"] + " (before this round)",
+         "--label", round_["file"],
+         before, os.path.join(ROOT, round_["file"])],
+        capture_output=True, text=True).stdout
     with open(dest, "w") as f:
         f.write(out)
     return dest
 
 
-def open_in_editor(*paths):
-    """Open files in the surrounding VS Code window; report whether it worked."""
+def discard_before(round_path, round_):
+    """Drop the snapshot once the round is recorded or undone."""
+    path = before_path(round_path, round_)
+    if os.path.exists(path):
+        os.chmod(path, 0o644)
+        os.remove(path)
+
+
+def open_in_editor(*args):
+    """Run `code` in the surrounding window; report whether it worked."""
     try:
-        r = subprocess.run(["code", "--reuse-window", *paths],
+        r = subprocess.run(["code", "--reuse-window", *args],
                            capture_output=True, text=True, timeout=20)
         return r.returncode == 0
     except (FileNotFoundError, subprocess.SubprocessError):
@@ -431,7 +430,8 @@ def do_apply(round_path, round_):
     with open(path, "w") as f:
         f.write(text)
 
-    dest = write_isolated_diff(round_path, round_, applied, text)
+    before = write_before(round_path, round_, applied, text)
+    dest = write_isolated_diff(round_path, round_, before)
     save_state({"round": rel(round_path), "phase": "applied"})
 
     print(f"\n{C_GRN}{len(applied)} edit{'' if len(applied) == 1 else 's'} "
@@ -455,18 +455,44 @@ def do_apply(round_path, round_):
 # --------------------------------------------------------------------------
 # reviewing and reconciling
 # --------------------------------------------------------------------------
-def wait_for_review(round_, dest):
-    """Open the diff and the chapter, then block until the author is done."""
-    opened = open_in_editor(os.path.join(ROOT, round_["file"]), dest)
+def announce_review(round_path, round_, mode="diff"):
+    """Put the review in front of the author and say what to do with it.
+
+    Default is a real side-by-side diff editor — `code --diff` against the
+    snapshot — because that lands on the two versions in one step, with no
+    dependence on which source-control extension the author uses. `files`
+    opens the chapter and the unified diff as plain tabs instead."""
+    chapter = os.path.join(ROOT, round_["file"])
+    before, dest = before_path(round_path, round_), diff_path(round_path)
+    opened = False
+    if mode == "diff":
+        opened = open_in_editor("--diff", before, chapter)
+    elif mode == "files":
+        opened = open_in_editor(chapter, dest)
+
     print()
-    if opened:
-        print(f"Opened {C_BLD}{rel(dest)}{C_OFF} and {round_['file']} in VS Code.")
+    if opened and mode == "diff":
+        print(f"Opened a side-by-side diff in VS Code: "
+              f"{C_BLD}{os.path.basename(before)}{C_OFF} on the left — the "
+              f"chapter as it\nwas before the round — and the live "
+              f"{C_BLD}{round_['file']}{C_OFF} on the right.")
+    elif opened:
+        print(f"Opened {C_BLD}{round_['file']}{C_OFF} and {rel(dest)} in VS Code.")
     else:
-        print(f"Read {C_BLD}{rel(dest)}{C_OFF} — just this round's edits, "
-              f"nothing else pending.\n"
-              f"  {C_DIM}code {rel(dest)} {round_['file']}{C_OFF}")
-    print(f"Revert the edits you don't want, in {round_['file']} — one click per "
-          f"hunk\nin the Source Control gutter.")
+        print(f"Open the review with:\n"
+              f"  {C_DIM}code --diff {rel(before)} {round_['file']}{C_OFF}")
+    print(f"\nRevert what you don't want in the {C_BLD}right-hand pane{C_OFF} — "
+          f"hover a change and click\nthe arrow in the gutter between the panes, "
+          f"or just edit the text. The left pane\nis a read-only snapshot; "
+          f"whatever you leave standing on the right is accepted.")
+    print(f"{C_DIM}Other ways in: the Source Control view — the tree was clean "
+          f"before the round, so\neverything it lists is this round — or "
+          f"{rel(dest)} for the proposals as a list.{C_OFF}")
+
+
+def wait_for_review(round_path, round_, mode="diff"):
+    """Show the review, then block until the author is done."""
+    announce_review(round_path, round_, mode)
     try:
         input(f"\n{C_BLD}Press return when you're done{C_OFF} "
               f"{C_DIM}(Ctrl-C to stop and resume later){C_OFF} ")
@@ -500,6 +526,7 @@ def do_reconcile(round_path, round_):
     if rejected:
         record_rejections(rejected, round_)
     clear_state()
+    discard_before(round_path, round_)
     mark_completed(round_path)
 
     print(f"\n{C_BLD}{round_label(round_)}{C_OFF} — "
@@ -532,31 +559,132 @@ def do_reconcile(round_path, round_):
 
 
 # --------------------------------------------------------------------------
-# the bare command
+# the commands Claude drives
 # --------------------------------------------------------------------------
+def resolve_round(name=None):
+    """The round to act on: one named explicitly, the one in flight, or the
+    single one waiting."""
+    if name:
+        for cand in (name, os.path.join(ROOT, name), os.path.join(ROUNDS, name),
+                     os.path.join(ROUNDS, name + ".json")):
+            if os.path.isfile(cand):
+                return cand
+        sys.exit(f"no such round: {name}")
+    state = load_state()
+    if state is not None:
+        return os.path.join(ROOT, state["round"])
+    return choose_round()
+
+
+def no_rounds():
+    print("No rounds are waiting. Ask Claude for one — `/proofread <Chapter>` "
+          "in a Claude\nsession writes a round into proofread/rounds/ and "
+          "carries the pass through.")
+    return 1
+
+
+def cmd_start(args):
+    """Say which chapter to proofread and where its round file goes. Nothing
+    here reads or touches the chapter — the proofreading itself is Claude's."""
+    state = load_state()
+    if state is not None:
+        round_ = load_round(os.path.join(ROOT, state["round"]))
+        sys.exit(f"{round_label(round_)} is already in flight — finish it with "
+                 f"`proofread.py record`, or drop it with `proofread.py undo`")
+    require_clean_tree(getattr(args, "allow_dirty", False))
+    sources = chapter_sources()
+    if not sources:
+        sys.exit("no chapter sources found")
+    if args.chapter:
+        source = find_chapter(args.chapter)
+        if source is None:
+            sys.exit(f"no such chapter: {args.chapter}")
+    else:
+        source = sources[0]          # the one edited most recently
+    dest = next_round_path(source)
+    print(f"source: {source}")
+    print(f"round:  {rel(dest)}")
+    waiting = [round_ for _, round_, _ in available_rounds()]
+    if waiting:
+        print(f"{C_YEL}note{C_OFF}: unfinished round"
+              f"{'' if len(waiting) == 1 else 's'} already waiting — "
+              + ", ".join(round_label(r) for r in waiting))
+    return 0
+
+
+def cmd_apply(args):
+    """Phase one: make the proposed edits and put the diff in front of the author."""
+    state = load_state()
+    if state is not None and state.get("phase") == "applied":
+        round_path = os.path.join(ROOT, state["round"])
+        round_ = load_round(round_path)
+        print(f"{C_BLD}{round_label(round_)}{C_OFF} is already applied to "
+              f"{round_['file']} — nothing re-applied.")
+        announce_review(round_path, round_, getattr(args, "open", "diff"))
+        return 0
+    require_clean_tree(getattr(args, "allow_dirty", False))
+    round_path = resolve_round(args.round)
+    if round_path is None:
+        return no_rounds()
+    round_ = load_round(round_path)
+    do_apply(round_path, round_)
+    announce_review(round_path, round_, getattr(args, "open", "diff"))
+    print(f"\nWhen the author is done reviewing: "
+          f"{C_BLD}python3 scripts/proofread.py record{C_OFF}")
+    return 0
+
+
+def cmd_record(args):
+    """Phase two: read the chapter back and record what survived."""
+    state = load_state()
+    if state is None or state.get("phase") != "applied":
+        sys.exit("no round is applied — run `proofread.py apply` first")
+    round_path = os.path.join(ROOT, state["round"])
+    if args.round:
+        named = resolve_round(args.round)
+        if os.path.abspath(named) != os.path.abspath(round_path):
+            sys.exit(f"{rel(round_path)} is the round in flight, not {rel(named)}")
+    return do_reconcile(round_path, load_round(round_path))
+
+
+def cmd_check(args):
+    """Guard for a pre-commit hook: a round must not be committed unrecorded."""
+    state = load_state()
+    if state is None or state.get("phase") != "applied":
+        return 0
+    round_ = load_round(os.path.join(ROOT, state["round"]))
+    print(f"{C_RED}{round_label(round_)} is applied to {round_['file']} but not "
+          f"recorded.{C_OFF}\n"
+          f"  Committing now would lose the rejections from this round.\n"
+          f"  Finish the review, then: python3 scripts/proofread.py record\n"
+          f"  Or drop the round:       python3 scripts/proofread.py undo\n"
+          f"  {C_DIM}(git commit --no-verify commits anyway){C_OFF}")
+    return 1
+
+
 def cmd_run(args):
+    """The whole pass by hand, in a terminal, with no Claude session."""
     state = load_state()
 
     if state is not None and state.get("phase") == "applied":
-        # A pass was interrupted mid-review, or this is the second of two
-        # non-interactive invocations.
+        # A pass was interrupted mid-review, or Claude applied the round.
         round_path = os.path.join(ROOT, state["round"])
         round_ = load_round(round_path)
         print(f"{C_BLD}{round_label(round_)}{C_OFF} — edits are already applied "
               f"to {round_['file']}")
-        if interactive() and not wait_for_review(round_, diff_path(round_path)):
+        if interactive() and not wait_for_review(round_path, round_,
+                                                 getattr(args, "open", "diff")):
             return 1
         return do_reconcile(round_path, round_)
 
-    round_path = state and os.path.join(ROOT, state["round"]) or choose_round()
+    require_clean_tree(getattr(args, "allow_dirty", False))
+    round_path = resolve_round()
     if round_path is None:
-        round_path = solicit_round()
-    if round_path is None:
-        return 1
-    return run_round(round_path)
+        return no_rounds()
+    return run_round(round_path, getattr(args, "open", "diff"))
 
 
-def run_round(round_path):
+def run_round(round_path, mode="diff"):
     """Apply a chosen round, hand it to the author, record what they kept."""
     round_ = load_round(round_path)
     dest = do_apply(round_path, round_)
@@ -565,25 +693,11 @@ def run_round(round_path):
         print(f"\n{C_BLD}Next{C_OFF}\n"
               f"  1. Read {rel(dest)}.\n"
               f"  2. Revert the edits you don't want, in {round_['file']}.\n"
-              f"  3. Run this command again to save your choices.")
+              f"  3. Run `proofread.py record` to save your choices.")
         return 0
-    if not wait_for_review(round_, dest):
+    if not wait_for_review(round_path, round_, mode):
         return 1
     return do_reconcile(round_path, round_)
-
-
-def cmd_propose(args):
-    if load_state() is not None:
-        sys.exit("a round is already in flight; finish it or `proofread.py undo`")
-    source = None
-    if args.chapter:
-        source = find_chapter(args.chapter)
-        if source is None:
-            sys.exit(f"no such chapter: {args.chapter}")
-    round_path = solicit_round(source)
-    if round_path is None:
-        return 1
-    return run_round(round_path)
 
 
 def cmd_undo(args):
@@ -607,6 +721,7 @@ def cmd_undo(args):
     with open(path, "w") as f:
         f.write(text)
     clear_state()
+    discard_before(round_path, round_)
     print(f"reverted {n} edit{'' if n == 1 else 's'} in {round_['file']}; "
           f"{round_label(round_)} left for another day")
     print(f"{C_DIM}nothing was written to the ledger{C_OFF}")
@@ -633,7 +748,8 @@ def cmd_status(args):
         if phase == "applied":
             print(f"  edits are in {round_['file']}; "
                   f"diff at {rel(diff_path(round_path))}")
-        print("  run `python3 scripts/proofread.py` to carry on")
+        print("  the author reviews it; then `proofread.py record` saves their "
+              "choices")
     n = len(load_ledger())
     print(f"\n{n} declined edit{'' if n == 1 else 's'} on record")
     return 0
@@ -678,14 +794,45 @@ def cmd_patterns(args):
 
 def main():
     ap = argparse.ArgumentParser(
-        description="Proofread a chapter. With no arguments, runs the whole "
-                    "pass: pick a chapter, apply the proposed edits, review "
-                    "them, save your choices.")
+        description="Mechanism for a proofreading pass over a chapter, driven "
+                    "from a Claude session (`/proofread <Chapter>`). With no "
+                    "arguments, runs the whole pass by hand in a terminal: "
+                    "apply the proposed edits, review them, save your choices.")
+    # SUPPRESS so that a subcommand's copy of the flag does not overwrite the
+    # top-level one with its own default.
+    dirty = argparse.ArgumentParser(add_help=False)
+    dirty.add_argument("--allow-dirty", action="store_true",
+                       default=argparse.SUPPRESS,
+                       help="run even with uncommitted changes in the tree")
+    ap.add_argument("--allow-dirty", action="store_true",
+                    default=argparse.SUPPRESS,
+                    help="run even with uncommitted changes in the tree")
+    opener = argparse.ArgumentParser(add_help=False)
+    opener.add_argument("--open", choices=("diff", "files", "none"),
+                        default=argparse.SUPPRESS,
+                        help="how to show the review: a side-by-side diff "
+                             "editor (default), the chapter and the unified "
+                             "diff as plain tabs, or nothing")
+    ap.add_argument("--open", choices=("diff", "files", "none"),
+                    default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     sub = ap.add_subparsers(dest="cmd")
 
-    p = sub.add_parser("propose", help="have Claude write a round now, then run it")
+    p = sub.add_parser("start", parents=[dirty],
+                       help="name the chapter and the round file to write")
     p.add_argument("chapter", nargs="?", help="chapter source path or name")
-    p.set_defaults(func=cmd_propose)
+    p.set_defaults(func=cmd_start)
+
+    p = sub.add_parser("apply", parents=[dirty, opener],
+                       help="apply a written round and open its diff")
+    p.add_argument("round", nargs="?", help="round file (default: the one waiting)")
+    p.set_defaults(func=cmd_apply)
+
+    p = sub.add_parser("record", help="record what the author kept, after review")
+    p.add_argument("round", nargs="?", help="round file (default: the one in flight)")
+    p.set_defaults(func=cmd_record)
+
+    p = sub.add_parser("check", help="fail while a round is applied but unrecorded")
+    p.set_defaults(func=cmd_check)
 
     p = sub.add_parser("undo", help="revert the applied round and forget it")
     p.set_defaults(func=cmd_undo)

@@ -1159,6 +1159,12 @@ theorem reNotEmpty_correct {α : Type} (re : RegExp α) :
     simp only [iff_true]; exists []; constructor
 ```
 :::
+
+:::grade
+```
+GRADE_MANUAL 1: reNotEmpty
+```
+:::
 ::::
 
 ## The {tactic}`generalize` Tactic

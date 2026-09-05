@@ -15,27 +15,23 @@ default: all
 # ── Volume target template ────────────────────────────────────────────────────
 # Usage: $(eval $(call VOLUME_template,slug))
 #   slug   lowercase short name used in make targets and CLI args, e.g. lf
-#          Each volume has its own executable, called as: lake exe sfl-<slug> <mode>
+#          Each volume has its own executable, called as:
+#          lake env .lake/build/bin/sfl-<slug> <mode>
 define VOLUME_template
 
-.PHONY: $(1) $(1)-build $(1)-student $(1)-solutions $(1)-terse
+.PHONY: $(1) $(1)-student $(1)-solutions $(1)-terse $(1)-grading
 
-# Build this volume's executable before running any variant.  Lake detects
-# nothing changed on subsequent calls and skips quickly.
-$(1)-build: ensure-build-symlink
-	lake build sfl-$(1)
+$(1)-student: book-build
+	lake env .lake/build/bin/sfl-$(1) student
 
-$(1)-student: $(1)-build
-	lake exe sfl-$(1) student
+$(1)-solutions: book-build
+	lake env .lake/build/bin/sfl-$(1) solutions
 
-$(1)-solutions: $(1)-build
-	lake exe sfl-$(1) solutions
+$(1)-terse: book-build
+	lake env .lake/build/bin/sfl-$(1) terse
 
-$(1)-terse: $(1)-build
-	lake exe sfl-$(1) terse
-
-$(1)-grading: $(1)-build
-	lake exe sfl-$(1) grading
+$(1)-grading: book-build
+	lake env .lake/build/bin/sfl-$(1) grading
 
 $(1): $(1)-student $(1)-solutions $(1)-terse $(1)-grading
 
@@ -49,7 +45,12 @@ $(eval $(call VOLUME_template,ts))
 
 # ── Top-level targets ─────────────────────────────────────────────────────────
 
-.PHONY: all student solutions terse grading serve clean ensure-build-symlink style style-check style-checklist release
+.PHONY: all student solutions terse grading grading-tools grading-check-only grading-check serve clean ensure-build-symlink book-build style style-check style-checklist release
+
+# Compile all volume executables once before any generator starts.  A single
+# Lake frontend avoids races on the shared `.lake/build` directory.
+book-build: ensure-build-symlink
+	lake build sfl-lf sfl-hl sfl-ts
 
 all: lf hl ts
 
@@ -62,8 +63,18 @@ terse: lf-terse hl-terse ts-terse
 
 grading: lf-grading hl-grading ts-grading
 
+grading-tools:
+	lake build lean4export comparatorautograder
+
+# Check existing generated roots without generating books or building tools.
+grading-check-only:
+	python3 scripts/grading_check.py --volumes LF HL TS --variants student solutions --stats --no-make --no-build
+
+# Local convenience target. Run these documented targets separately in CI.
 grading-check:
-	python3 scripts/grading_check.py --volumes LF HL TS --variants student solutions --stats
+	$(MAKE) all
+	$(MAKE) grading-tools
+	$(MAKE) grading-check-only
 
 # Mechanical conformance checks for the style guides — STYLE-CODE.md and
 # STYLE-WRITING.md (auto checks fail the run; assisted ones are advisory).

@@ -1036,14 +1036,14 @@ Use {tactic}`have`, {tactic}`replace`, or {tactic}`specialize` to prove the the 
 following the model of the examples above. Do not use {tactic}`induction`.
 
 ```lean
-theorem nth?_always_none (l : List Nat) (h : ∀ i, nth? l i = none) :
+theorem nth?_always_none {l : List α} (h : ∀ i, nth? l i = none) :
     l = [] := by
   solution!
     cases l with
     | nil => rfl
     | cons x xs =>
       have h := h 0
-      rw [nth?] at h
+      rw [nth?_cons_zero] at h
       contradiction
 ```
 
@@ -1345,7 +1345,7 @@ theorem add_self_injective (n m : Nat)
 :::
 :::::
 
-::::exercise (rating := 2) (name := "add_self_injective_informal")
+::::exercise (rating := 2) (name := "add_self_injective_informal") (manual := true)
 Give a careful informal proof of {name}`add_self_injective`, stating the induction
 hypothesis explicitly and being as explicit as possible about
 quantifiers, everywhere.
@@ -1374,6 +1374,12 @@ _Proof_: We prove by induction on {lean}`n` that for _every_ natrual number {lea
 _Qed_.
 :::
 
+
+:::grade
+```
+GRADE_MANUAL 2: add_self_injective_informal
+```
+:::
 ::::
 
 
@@ -1435,8 +1441,7 @@ theorem nth?_after_last {α : Type}
     | nil => rfl
     | cons x xs ih =>
       rw [List.length_cons] at h
-      rw [← h]
-      rw [nth?]
+      rw [← h, nth?_cons_succ]
       apply ih
       rfl
 ```
@@ -1490,6 +1495,41 @@ theorem length_append_self {α : Type} {n : Nat} {l : List α}
     rw [Nat.add_add_add_comm]
 ```
 
+:::gradeTheorem 3 length_append_self
+:::
+:::::
+
+:::::exercise (rating := 3) (name := "list_ext")
+Prove the _extensionality principle_ for lists.
+{name}`nth?_always_none` should be useful.
+
+```lean
+theorem list_ext {l₁ l₂ : List α} (h : ∀ n, nth? l₁ n = nth? l₂ n) : l₁ = l₂ := by
+  solution!
+    induction l₂ generalizing l₁ with
+    | nil =>
+      apply nth?_always_none
+      intro n
+      rw [h, nth?_nil]
+    | cons x l₂' ih =>
+      cases l₁ with
+      | nil =>
+        rw [nth?_always_none (l := x :: l₂')]
+        intro n
+        specialize h n
+        rw [nth?_nil] at h
+        rw [h]
+      | cons y l₁' =>
+        have hyx := h 0
+        rw [nth?_cons_zero, nth?_cons_zero] at hyx
+        injection hyx with hyx
+        subst hyx
+        have h' (n) : nth? l₁' n = nth? l₂' n := by
+          specialize h (n + 1)
+          rw [nth?_cons_succ, nth?_cons_succ] at h
+          exact h
+        rw [ih h']
+```
 :::gradeTheorem 3 length_append_self
 :::
 :::::
@@ -1935,6 +1975,12 @@ theorem unzip_zip' {α β : Type}
 -- END SOLUTION
 ```
 
+
+:::grade
+```
+GRADE_MANUAL 3: unzip_zip
+```
+:::
 :::::
 
 :::::exercise (rating := 3) (name := "test_pos_of_filter_cons") (level := Advanced)

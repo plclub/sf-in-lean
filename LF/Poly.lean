@@ -95,12 +95,13 @@ inductive MyList (α : Type) : Type where
 
 ::::full
 This is exactly like the definition of `Natlist` from the
-previous chapter, except that the {name}`Nat` argument to the `cons`
-constructor has been replaced by an arbitrary type {lean}`α`, a type parameter
+{ref "Lists"}[Lists] chapter, except that a type parameter
 {lean}`α` has been added to the header on the first line,
+the {name}`Nat` argument to the `cons`
+constructor has been replaced by this arbitrary type {lean}`α`,
 and the occurrences of `Natlist` in the types of the constructors
 have been replaced by {lean}`MyList α`. We can now write {lean}`MyList Nat`
-instead of a dedicated nat-list type.
+instead of a dedicated `NatList` type.
 
 What sort of thing is {name}`MyList` itself?  A good way to think about it
 is as a _type constructor_ — that is, a function from {lean}`Type`s to
@@ -120,7 +121,7 @@ list-of-numbers type.
 ::::terse
 What is {name}`MyList` itself?
 
-It is a _type constructor_ — a function from types to types.
+It is a _type constructor_ — a function from {lean}`Type`s to {lean}`Type`s.
 ::::
 
 :::dev "Yipeng Liu (berberman)"
@@ -163,7 +164,10 @@ MyList.nil {α : Type} : MyList α
 ```
 
 ::::full
-Similarly, {name}`MyList.cons` adds an element of type {name}`Nat` to a
+Notice the use of curly braces in `{α : Type}`, rather than normal
+parentheses (as in `(α : Type)`); this is Lean telling us that `α` is an implicit parameter.
+
+The {name}`MyList.cons` constructor also adds an element of type {name}`Nat` to a
 list of type {lean}`MyList Nat`. Here is an example of forming a list
 containing just the natural number {lean}`3`.
 ::::
@@ -181,7 +185,7 @@ What is the full type of {name}`MyList.nil`? We can read off the
 result type {lean}`MyList α` from the definition,
 but to state the full type we must also bind {lean}`α`.
 Since the type argument to the constructor is implicit,
-Lean writes its type as (the equivalent of) {lean}`{α : Type} → MyList α`.
+it is presented with curly braces.
 ::::
 
 ```lean (name := nil)
@@ -193,7 +197,9 @@ MyList.nil {α : Type} : MyList α
 ```
 
 ::::full
-Similarly, the type of {name}`MyList.cons` includes the implicit
+Recall that this type is equivalent to {lean}`{α : Type} → MyList α`.
+
+The type of {name}`MyList.cons` also includes an implicit
 type parameter:
 ::::
 
@@ -207,8 +213,8 @@ MyList.cons {α : Type} (x : α) (l : MyList α) : MyList α
 
 ::::full
 Having to supply a type argument for every single use of a
-list constructor would be rather burdensome. Fortunately, the type
-argument is implicit, so Lean will normally infer it from context.
+list constructor would be rather burdensome. Fortunately, when a type
+argument is implicit, Lean will try to automatically infer it from context.
 
 We can now go back and make polymorphic versions of all the
 list-processing functions that we wrote before. Here is `replicate`,
@@ -233,11 +239,11 @@ def replicate (α : Type) (x : α) (count : Nat) : MyList α :=
 Some simple facts about {name}`replicate`:
 
 ```lean
-theorem replicate_zero (α : Type) (v : α) :
-    replicate α v 0 = MyList.nil := rfl
+theorem replicate_zero (α : Type) (a : α) :
+    replicate α a 0 = MyList.nil := rfl
 
-theorem replicate_succ (α : Type) (v : α) (count : Nat) :
-    replicate α v (count + 1) = MyList.cons v (replicate α v count) := rfl
+theorem replicate_succ (α : Type) (a : α) (count : Nat) :
+    replicate α a (count + 1) = MyList.cons a (replicate α a count) := rfl
 ```
 
 ::::full
@@ -310,7 +316,9 @@ What is the type of `replicate 1 2`?
 
 ::::full
 From now on, we'll use Lean's built-in {name}`List` type and its
-associated notation. The built-in {name}`List` is defined just like
+associated notation.
+
+The built-in {name}`List` is defined just like
 our {name}`MyList` above, but with notation {lean}`[]` for {name}`List.nil`,
 `::` for {name}`List.cons`, and {lean}`[1, 2, 3]` for list literals.
 The `++` operator is list append. The type arguments to the list constructors are implicit.
@@ -333,56 +341,12 @@ in the natural way:
 example : List Nat := [1, 2, 3]
 ```
 
-### Type Annotation Inference
-
-Let's write the definition of {name}`replicate` again, but this time we won't specify
-the type of the parameter {lean}`α`. Will Lean still accept it?
-
-```lean
-def replicate' α (x : α) (count : Nat) : List α :=
-  match count with
-  | 0 => .nil
-  | count' + 1 => .cons x (replicate' α x count')
-```
-
-Indeed it will. Lean infers that `α` is a type.
-
-```lean (name := replicate')
-#check replicate'
-```
-
-```leanOutput replicate'
-replicate'.{u_1} (α : Type u_1) (x : α) (count : Nat) : List α
-```
+### Implicit Type Arguments and Argument Synthesis
 
 ::::full
-The generated
-`u_1` is part of Lean's bookkeeping for treating types more generally.
-We will not need to interpret names like this for now —
-you can ignore them when they appear in Lean's output unless we explicitly
-call attention to them.
-::::
-
-::::terse
-Lean has used _type inference_ to deduce a type for {lean}`α`.
-::::
-
-::::full
-Lean was able to use _type inference_ to deduce what the type of {lean}`α`
-must be, based on how it is used. Since {lean}`α` is an argument to {name}`List`,
-it must be a {lean}`Type`, since {name}`List` expects a {lean}`Type` as its argument.
-
-This facility means we don't always have to write explicit type annotations
-everywhere, although explicit type annotations can still be quite useful
-as documentation, so we will continue to use them much of the time.
-::::
-
-### Type Argument Synthesis
-
-::::full
-To use a polymorphic function, we need to pass it one or
-more types in addition to its other arguments. For example, the
-recursive call in the body of the {name}`replicate` function above must
+In our {lean}`replicate` function above we wrote the type parameter `(α : Type)` explicitly, with normal parentheses.
+Doing so means that we need to pass in type argument explicitly, in addition to its other arguments.
+We see this in its own recursive call, which must
 pass along the type {lean}`α`. But since the second argument to
 {name}`replicate` is an element of {lean}`α`, it seems entirely obvious that the
 first argument can only be {lean}`α` — why should we have to write it
@@ -397,7 +361,7 @@ function being applied, the types of the other arguments, and the
 type expected by the context in which the application appears —
 to determine what concrete type should replace the `_`.
 
-Using holes, the {name}`replicate'` function can be rewritten like this:
+Using holes, the {name}`replicate` function can be rewritten like this:
 ::::
 
 ::::terse
@@ -406,16 +370,16 @@ can usually infer them:
 ::::
 
 ```lean
-def replicate'' (α : Type) (x : α) (count : Nat) : List α :=
+def replicate' (α : Type) (x : α) (count : Nat) : List α :=
   match count with
   | 0 => []
-  | count' + 1 => x :: replicate'' _ x count'
+  | count' + 1 => x :: replicate' _ x count'
 ```
 
 ::::full
-Alternatively, we can declare an argument to be implicit
+Alternatively, and more typically for Lean, we can declare an argument to be implicit
 when defining the function itself, by surrounding it in curly
-braces instead of parentheses. For example:
+braces instead of parentheses.
 ::::
 
 ::::terse
@@ -424,16 +388,15 @@ surrounding them with curly braces instead of parens:
 ::::
 
 ```lean
-def replicate''' {α : Type} (x : α) (count : Nat) : List α :=
+def replicate'' {α : Type} (x : α) (count : Nat) : List α :=
   match count with
   | 0 => []
-  | count' + 1 => x :: replicate''' x count'
+  | count' + 1 => x :: replicate'' x count'
 ```
 
 ::::full
-By making the type argument implicit, we no longer need to provide it
-to the recursive call to {name}`replicate'''`. Indeed, it
-would be invalid to provide one, because Lean is not expecting it.
+By making the type argument implicit, we no longer need to provide `α`
+to the recursive call to {name}`replicate''`.
 For each implicit parameter, Lean automatically inserts a hidden
 hole `_` argument for us, which is then inferred as usual.
 ::::
@@ -444,7 +407,8 @@ hole `_` argument for us, which is then inferred as usual.
 One small problem with implicit arguments is that, once in a
 while, Lean does not have enough local information to determine
 a type argument; in such cases, we need to tell Lean the type
-explicitly. For example:
+explicitly. For example, the following definition fails because
+Lean can't figure out the type of the empty list:
 ::::
 
 ::::terse
@@ -452,11 +416,17 @@ In general, it's fine to just let Lean infer all type
 arguments. But occasionally this can lead to problems:
 ::::
 
-This fails because Lean can't figure out the type of the empty list:
-`def mynil := []` — error: type not known
-We can fix this with an explicit type annotation:
+```lean +error (name := nil_type_error)
+def mynil := []
+```
 
-We can use the `@` prefix to supply the type
+```leanOutput nil_type_error
+Failed to infer type of definition `mynil`
+```
+
+We can fix this with an explicit type annotation.
+
+We use the `@` prefix when we want to supply the type
 argument explicitly. The `@` makes all implicit arguments
 of a function explicit:
 
@@ -671,8 +641,8 @@ theorem rev_cons {α : Type} {x : α} {l : List α} :
 :::::exercise (rating := 2) (name := "poly_exercises") (checkVisibility := false)
 Here are a few simple exercises, just like ones in the {ref "Lists"}[Lists] chapter,
 for practice with polymorphism. Complete the proofs below.
-You will likely find useful the following
-characterizing lemmas for {name}`List.append` in Lean standard library:
+You will find the following
+characterizing lemmas for {name}`List.append` in Lean standard library to be useful:
 
 ```lean (name := lemmas_append)
 #check List.nil_append
@@ -836,9 +806,7 @@ def zip {α β : Type} (l₁ : List α) (l₂ : List β) : List (α × β) :=
   | x :: l₁', y :: l₂' => (x, y) :: zip l₁' l₂'
 
 theorem zip_nil_left {α β : Type} (l₁ : List α) : zip l₁ [] = ([] : List (α × β)) := by
-  cases l₁ with
-  | nil => rfl
-  | cons h t => rfl
+  cases l₁ <;> rfl
 
 theorem zip_nil_right {α β : Type} (l₂ : List β) : zip [] l₂ = ([] : List (α × β)) := by
   cases l₂ <;> rfl
@@ -936,6 +904,12 @@ theorem unzip_test_snd' : (unzip [(1, false), (2, true)]).snd = [false, true] :=
   rw [unzip_cons, unzip_cons, unzip_nil]
 ```
 :::
+
+:::grade
+```
+GRADE_MANUAL 3: unzip
+```
+:::
 :::::
 ::::::
 
@@ -973,6 +947,12 @@ def nth? {α : Type} (l : List α) (n : Nat) : Option α :=
   | x :: l' => match n with
     | 0 => some x
     | n' + 1 => nth? l' n'
+
+theorem nth?_nil {α : Type} {n : Nat} : nth? ([] : List α) n = none := by rfl
+
+theorem nth?_cons_zero {α : Type} {x : α} {l' : List α} : nth? (x :: l') 0 = some x := by rfl
+
+theorem nth?_cons_succ {α : Type} {x : α} {l' : List α} {n : Nat} : nth? (x :: l') (n + 1) = nth? l' n := by rfl
 ```
 
 ```lean
@@ -1011,7 +991,6 @@ theorem test_head?2 : head? [[1], [2]] = some [1] := solution!(by rfl)
 :::gradeTheorem "0.5" test_head?1 test_head?2
 :::
 :::::
-
 ::::::
 
 # Functions as Data
@@ -1019,7 +998,7 @@ theorem test_head?2 : head? [[1], [2]] = some [1] := solution!(by rfl)
 ::::full
 Like most modern programming languages — especially other
 "functional" languages, including OCaml, Haskell, Racket, Scala,
-Clojure, etc. — Lean treats functions as first-class citizens,
+and Clojure, among others — Lean treats functions as first-class citizens,
 allowing them to be passed as arguments to other functions,
 returned as results, stored in data structures, etc.
 ::::
@@ -1110,7 +1089,8 @@ example : filter isLength1
     [[1, 2], [3], [4], [5, 6, 7], [], [8]]
   = [[3], [4], [8]] := by rfl
 
-theorem filter_nil {α : Type} {test : α → Bool} : filter test [] = [] := by rfl
+theorem filter_nil {α : Type} {test : α → Bool} :
+  filter test [] = [] := by rfl
 
 theorem filter_cons_of_pos {α : Type} {test : α → Bool} {x : α}
     {l : List α} (h : test x = true) :
@@ -1125,19 +1105,23 @@ theorem filter_cons_of_neg {α : Type} {test : α → Bool} {x : α}
 
 ::::full
 You might have noticed that {name}`filter_cons_of_pos` and {name}`filter_cons_of_neg`
-have implicit parameters, such as `head` and `tail`, that do not have type {lean}`Type` like `α` does.
+have implicit parameters, such as `x` and `l`, that do not have type {lean}`Type` like `α` does.
 As it turns out, Lean allows _any_ parameter to be implicit, not just those of type {lean}`Type`.
 This is a standard Lean convention for lemmas that are likely to be used by {tactic}`rw`
-when their values can be inferred by unification.
+when their values can be inferred from the context.
 
-For example, suppose you were using this theorem to rewrite `filter Nat.even (3 :: rest)`.
-Matching that expression against the theorem's left-hand side `filter test (head :: tail)`
-establishes that `test = Nat.even`, `head = 3`, `tail = rest`, and
-{lean}`α = Nat`. By making these arguments implicit, Lean automatically inserts
+For example, suppose you were using theorem {name}`filter_cons_of_pos` to rewrite `filter Nat.even (3 :: rest)`.
+Matching the latter expression against the theorem's left-hand side `filter test (x :: l)`
+establishes that `test = Nat.even`, `x = 3`, `l = rest`, and
+{lean}`α = Nat`.
+If arguments `α`, `test`, `x`, and `l` were _not_ implicit, you'd
+have to write `rewrite [filter_cons_of_pos Nat Nat.even 3 rest]` in your proof.
+Since the arguments are implicit, Lean automatically inserts
 a hole `_` for each of them when you apply the theorem, just as with implicit parameters
 of type {lean}`Type`, so they can be inferred from the context.
+Thus you can write `rewrite [filter_cons_of_pos]` instead.
 
-Note that `h : test head` is not implicit, it's explicit. That's because it cannot be
+Note that `h : test x` is not implicit, it's explicit. That's because it cannot be
 solved by unification, i.e., Lean can't prove that `Nat.even 3 = true` that way.
 It's a general proof obligation.
 
@@ -1145,9 +1129,9 @@ We'll follow the Lean standard convention from now on.
 ::::
 
 ::::terse
-Note that `head` and `tail` are implicit too, following a general convention: any
+Note that `x` and `l` are implicit too, following a general convention: any
 argument an equation's shape determines when applied is made implicit, so using {tactic}`rw`
-and {tactic}`simp` lemmas requires no extra `_` arguments.
+lemmas requires no extra `_` arguments.
 ::::
 
 :::slidebreak

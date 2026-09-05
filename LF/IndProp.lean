@@ -2590,7 +2590,7 @@ the induction principles for all of these.
 :::
 
 ::::::full
-:::::exercise (rating := 3) (name := "nostutter_defn")
+:::::exercise (rating := 3) (name := "nostutter_defn") (manual := true)
 Formulating inductive definitions of properties is an important
 skill you'll need in this course.  Try to solve this exercise
 without any help.
@@ -3267,7 +3267,7 @@ theorem palindrome_converse {α : Type} (l : List α) (h : l = l.reverse) : Pal 
 ```
 :::::
 
-:::::exercise (rating := 4) (name := "NoDup") (level := Advanced) (optional := true)
+:::::exercise (rating := 4) (name := "NoDup") (level := Advanced) (optional := true) (manual := true)
 Use the `∈` property to define a proposition `Disjoint l₁ l₂`,
 which should be provable exactly when `l₁` and `l₂` are
 lists (with elements of type `α`) that have no elements in
