@@ -2027,6 +2027,10 @@ etc., in just the same way as binary relations.  For example,
 consider the following three-place relation on numbers:
 
 ```lean
+namespace RProvability
+```
+
+```lean
 inductive R : Nat → Nat → Nat → Prop where
   | c1                                               : R  0      0       0
   | c2 {m n k : Nat} (h : R  m       n       k)      : R (m + 1) n      (k + 1)
@@ -2049,7 +2053,7 @@ sentence) explain your answer.
 
 ::::solution
 
-The first proposition is provable and the second is not.
+1. The first proposition is provable and the second is not.
 
 ```lean
 example : R 1 1 2 := by
@@ -2067,7 +2071,7 @@ theorem R.eq_add {m n k : Nat} (h : R m n k) : k = m + n := by
 ```
 
 {tactic}`lia` helps us solve linear arithmetic goals.
-We'll learn it in the {ref "Automation"}[Automation] chapter.
+We'll learn more about it in the {ref "Automation"}[Automation] chapter.
 
 Now we can disprove the second proposition:
 
@@ -2078,18 +2082,18 @@ example : ¬ R 2 2 6 := by
   contradiction
 ```
 
-Dropping `c5` would not change the set of provable
-propositions. `c4` and `c1` don't interact with `c5`, since
-they're already symmetric in `m` and `n`; `c2` followed by
-`c5` is equivalent to `c3`, and vice versa.
+2. Dropping `c5` would not change the set of provable
+  propositions. `c4` and `c1` don't interact with `c5`, since
+  they're already symmetric in `m` and `n`; `c2` followed by
+  `c5` is equivalent to `c3`, and vice versa.
 
-Dropping `c4` would not change the set of provable
-propositions. This constructor just "undoes" one application
-of `c2` and one application of `c3`. More precisely, the
-only way we can construct evidence for `R (S m) (S n) (S (S o))`
-is by applying `c2` and `c3` (in either order) to evidence for
-`R m n o`, so the latter must already hold. (This can be proved
-by induction, although the proof is surprisingly tedious.)
+3. Dropping `c4` would not change the set of provable
+  propositions. This constructor just "undoes" one application
+  of `c2` and one application of `c3`. More precisely, the
+  only way we can construct evidence for `R (S m) (S n) (S (S o))`
+  is by applying `c2` and `c3` (in either order) to evidence for
+  `R m n o`, so the latter must already hold. (This can be proved
+  by induction, although the proof is surprisingly tedious.)
 
 We can prove `c4` and `c5` are redundant by re-defining `R'` with only `c1`, `c2`, and `c3`,
 and prove `R'` is equivalent to {name}`R`.
@@ -2179,6 +2183,9 @@ theorem funR_iff_R {m n k : Nat} : funR m n = k ↔ R m n k := by
     rw [funR, this]
 ```
 
+```lean
+end RProvability
+```
 :::::
 
 :::::exercise (rating := 4) (name := "subsequence") (level := Advanced)
@@ -2207,20 +2214,20 @@ but it is _not_ a subsequence of any of the lists
 [5, 6, 2, 1, 7, 3, 8].
 ```
 
-- Define an inductive proposition `subseq` on {lean}`List Nat` that
+- Define an inductive proposition `Subseq` on {lean}`List Nat` that
   captures what it means to be a subsequence. There are a number
   of correct ways to do this. You should make sure that your
   definition behaves correctly on all the positive and negative
   examples above, but you do not need to prove this formally.
 
-- Prove `subseq_refl` that subsequence is reflexive, that is,
+- Prove `Subseq.refl` that subsequence is reflexive, that is,
   any list is a subsequence of itself.
 
-- Prove `subseq_app` that for any lists {lean}`l₁`, {lean}`l₂`, and {lean}`l₃`,
+- Prove `Subseq.append` that for any lists {lean}`l₁`, {lean}`l₂`, and {lean}`l₃`,
   if {lean}`l₁` is a subsequence of {lean}`l₂`, then {lean}`l₁` is also a subsequence
   of {lean}`l₂ ++ l₃`.
 
-- (Harder) Prove `subseq_trans` that subsequence is transitive ─
+- (Harder) Prove `Subseq.trans` that subsequence is transitive ─
   that is, if {lean}`l₁` is a subsequence of {lean}`l₂` and {lean}`l₂` is a
   subsequence of {lean}`l₃`, then {lean}`l₁` is a subsequence of {lean}`l₃`.
 
@@ -2283,13 +2290,13 @@ easier (and maybe prove them equivalent).
 ```lean
 inductive Subseq : List Nat → List Nat → Prop where
 -- SOLUTION
-  | sub_nil {l : List Nat} : Subseq [] l
-  | sub_take {x : Nat} {l₁ l₂ : List Nat}
-    (h : Subseq l₁ l₂) :
-    Subseq (x :: l₁) (x :: l₂)
-  | sub_skip {x : Nat} {l₁ l₂ : List Nat}
-    (h : Subseq l₁ l₂) :
-    Subseq l₁ (x :: l₂)
+  | nil {l : List Nat} : Subseq [] l
+  | take {x : Nat} {l₁ l₂ : List Nat}
+      (h : Subseq l₁ l₂) :
+      Subseq (x :: l₁) (x :: l₂)
+  | skip {x : Nat} {l₁ l₂ : List Nat}
+      (h : Subseq l₁ l₂) :
+      Subseq l₁ (x :: l₂)
 -- END SOLUTION
 
 namespace Subseq
@@ -2298,45 +2305,36 @@ theorem refl (l : List Nat) : Subseq l l := by
   solution!
     induction l with
     | nil => constructor
-    | cons hd tl ih =>
+    | cons x xs ih =>
       constructor; assumption
 
-theorem app (l₁ l₂ l₃ : List Nat)
+theorem append (l₁ l₂ l₃ : List Nat)
     (h : Subseq l₁ l₂) : Subseq l₁ (l₂ ++ l₃) := by
   solution!
     induction h with
-    | sub_nil  => constructor
-    | sub_take => constructor; assumption
-    | sub_skip => constructor; assumption
+    | nil  => constructor
+    | take => constructor; assumption
+    | skip => constructor; assumption
 ```
 
 :::autogradedHole Subseq
 :::
 
-:::dev
-HIDE: AC'21: this exercise should probably be marked as more
-challenging.  In particular, it's not necessarily obvious at first
-sight that the induction should go on the second hypothesis, and
-with `l₁` generalized.  BCP 21: Made it 3 points instead of 2, and
-included a hint. CH'23: Made it 4 points, since there are 5 different
-choices here and the hint doesn't help with that.
-:::
-
 ```lean
 theorem trans (l₁ l₂ l₃ : List Nat)
-    (h₁₂ : Subseq l₁ l₂)
-    (h₂₃ : Subseq l₂ l₃) :
+    (h12 : Subseq l₁ l₂)
+    (h23 : Subseq l₂ l₃) :
     Subseq l₁ l₃ := by
   /- Hint: be careful about what you are doing induction on and which
      other things need to be generalized... -/
   solution!
-    induction h₂₃ generalizing l₁ with
-    | sub_nil => inversion h₁₂; constructor
-    | sub_take _ ih =>
-      inversion h₁₂; constructor
-      . constructor; apply ih; assumption
-      . constructor; apply ih; assumption
-    | sub_skip _ ih =>
+    induction h23 generalizing l₁ with
+    | nil => inversion h12; constructor
+    | take _ ih =>
+      inversion h12; constructor
+      · constructor; apply ih; assumption
+      · constructor; apply ih; assumption
+    | skip _ ih =>
       constructor; apply ih; assumption
 
 end Subseq
@@ -2345,7 +2343,7 @@ end Subseq
 :::gradeTheorem 1 Subseq.refl
 :::
 
-:::gradeTheorem 2 Subseq.app
+:::gradeTheorem 2 Subseq.append
 :::
 
 :::gradeTheorem 3 Subseq.trans
@@ -2355,7 +2353,9 @@ end Subseq
 :::::exercise (rating := 2) (name := "R_provability2") (optional := true) (manual := true)
 Suppose we give Lean the following definition:
 
-```display
+```lean
+namespace RProvability2
+
 inductive R : Nat → List Nat → Prop where
   | c1                                            : R  0      []
   | c2 {n : Nat} {l : List Nat} (h : R  n      l) : R (n + 1) (n :: l)
@@ -2368,15 +2368,27 @@ Which of the following propositions are provable?
 - `R 1 [1, 2, 1, 0]`
 - `R 6 [3, 2, 1, 0]`
 
-:::dev "Andrew Tolmach (AndrewTolmach)" PotentialImprovement
-```
-As in R_provability, above, would be good
-to get this formatting into the HTML version.
-```
-:::
-
 :::solution
 The first two are provable, the third is not.
+
+```lean
+example : R 2 [1, 0] := by
+  apply R.c2
+  apply R.c2
+  apply R.c1
+```
+
+```lean
+example : R 1 [1, 2, 1, 0] := by
+  apply R.c3
+  apply R.c2
+  apply R.c3
+  apply R.c3
+  apply R.c2
+  apply R.c2
+  apply R.c2
+  apply R.c1
+```
 
 In case this question puzzled you, one good way to understand
 definitions like this is to explore their implications with
@@ -2395,108 +2407,15 @@ etc.
 If you do a few more of these yourself, you should see the pattern
 emerging.
 :::
+
+
+```lean
+end RProvability2
+```
+
 :::::
 
 ::::::
-
-::::hide
-```
-    /- Under construction... -/
-    /- Definition partition {α : Type} (test : α → Bool) (l : List α) :=
-      (filter test l, filter (fun x => negb (test x)) l) .
-
-    /- LATER: Adjust inductive syntax -/
-    inductive shuffle (α:Type) : List α → List α → List α → Prop :=
-      | shuffle_nil_l : forall (l₂:List α), shuffle _ [] l₂ l₂
-      | shuffle_nil_r : forall (l₁:List α), shuffle _ l₁ [] l₁
-      | shuffle_cons_l : forall (x:α) (l₁ l₂ l12 : List α),
-                          shuffle _ l₁ l₂ l12 →
-                          shuffle _ (x::l₁) l₂ (x::l12)
-      | shuffle_cons_r : forall (x:α) (l₁ l₂ l12: List α),
-                          shuffle _ l₁ l₂ l12 →
-                          shuffle _ l₁ (x::l₂) (x::l12).
-
-    Arguments shuffle `α` _ _ _.
-
-    /- HIDE: If they do this proof, they'll see some uses of [fix]... -/
-    /- HIDE: M: I don't understand the above remark. This proof, though
-      somewhat messy, can be done with everything they've seen so far.
-      In any case, I attempt a proof, which is arguably the same as the
-      old one. -/
-
-    theorem partition_correct_1 : forall (α:Type) (l l₁ l₂: List α) (test:α → Bool),
-      partition test l = (l₁,l₂) →
-      shuffle l₁ l₂ l.
-    Proof.
-      intros α l l₁ l₂ test H. generalize dependent l₂. generalize dependent l₁.
-      induction l as [| x l' ].
-      - /- l = [] -/
-        intros. inversion H. apply shuffle_nil_l.
-      - /- l = x :: l' -/
-        intros. destruct (test x) eqn:Heqb.
-          + /- true = test x -/
-            inversion H.
-            rewrite Heqb in h₁. rewrite Heqb in h₂. rewrite  Heqb.
-            simpl in h₂. simpl.
-            apply shuffle_cons_l. apply IHl'. reflexivity.
-          + /- false = test x -/
-            inversion H.
-            rewrite Heqb in h₁. rewrite Heqb in h₂. rewrite Heqb.
-            simpl in h₂. simpl.
-            apply shuffle_cons_r. apply IHl'. reflexivity.
-    Qed.
-
-    /- The old proof is longer (in number of lines), but I cheat.
-      And the old proof uses more [destruct]s.
-      Thus, the new proof above is better in at least two quantifiable
-      ways, but I'm afraid its not entirely clean yet. -/
-
-    /-  intros α l l₁ l₂ test H. generalize dependent l₂.
-      generalize dependent l₁.
-      induction l as [|x l'].
-      - /- l = [] -/
-        intros.
-        unfold partition in H.
-        unfold filter in H.
-        inversion H.
-        apply shuffle_nil_l.
-      - /- l = x::l' -/
-        intros.
-        unfold partition in H. unfold filter in H.
-        remember (test x) as h₁.
-        destruct h₁.
-          + /- true -/
-            simpl in H.
-            destruct l₁.
-            * /- nil -/
-              inversion H.
-            * /- cons -/
-              inversion H. subst.
-              apply shuffle_cons_l.
-              apply IHl'.
-              unfold partition.
-              unfold filter.
-              reflexivity.
-          + /- false -/
-            simpl in H.
-            destruct l₂.
-            * /- nil -/
-              inversion H.
-            * /- cons -/
-              inversion H. subst.
-              apply shuffle_cons_r.
-              apply IHl'.
-              unfold partition.
-              unfold filter.
-              reflexivity.
-    Qed. -/
-
-    /- LATER: The proof needs to be polished. -/
-    /- LATER: Also needs to talk about the two lists respecting the
-      partitioning condition.  We'd really like to say all three
-      parts of the spec together, but we don't have∧ yet! -/ -/
-```
-::::
 
 ::::::full
 :::::exercise (rating := 2) (name := "total_relation") (optional := true)
@@ -2514,11 +2433,6 @@ theorem total_relation_is_total (n m : Nat) : TotalRelation n m := by
     constructor
 ```
 
-:::autogradedHole TotalRelation
-:::
-
-:::gradeTheorem 2 total_relation_is_total
-:::
 :::::
 
 :::::exercise (rating := 2) (name := "empty_relation") (optional := true)
@@ -2551,20 +2465,14 @@ So, I do think that it is solvable given what students know.
 ```lean
 inductive EmptyRelation : Nat → Nat → Prop where
   -- SOLUTION
--- /SOLUTION
+  -- END SOLUTION
 ```
-
-:::autogradedHole EmptyRelation
-:::
 
 ```lean
 theorem empty_relation_is_empty (n m : Nat) : ¬ EmptyRelation n m := by
   solution!
     intro contra; inversion contra
 ```
-
-:::gradeTheorem 2 empty_relation_is_empty
-:::
 :::::
 
 :::dev PotentialImprovement
@@ -2604,16 +2512,13 @@ not stutter. Formulate an inductive definition for `NoStutter`.
 ```lean
 inductive NoStutter {α : Type} : List α → Prop where
  -- SOLUTION
-  | nostutter0: NoStutter []
-  | nostutter1 {x : α} : NoStutter (x :: [])
-  | nostutter2 {x y : α} {l : List α}
-    (hneq : x ≠ y) (h : NoStutter (y :: l)) :
-    NoStutter (x :: y :: l)
- -- /SOLUTION
+  | nil : NoStutter []
+  | singleton {x : α} : NoStutter (x :: [])
+  | cons {x y : α} {l : List α}
+      (hneq : x ≠ y) (h : NoStutter (y :: l)) :
+      NoStutter (x :: y :: l)
+ -- END SOLUTION
 ```
-
-:::autogradedHole NoStutter
-:::
 
 Make sure each of these tests succeeds, but feel free to change
 the suggested proof (in comments) if the given one doesn't work
@@ -2644,20 +2549,14 @@ example :  NoStutter [5] := by
     constructor
 ```
 
-:::dev "Arthur Azevedo de Amorim (arthuraa)" PotentialImprovement
-The script below seems too fragile, we should probably
-change it to make it more robust.
-:::
-
 ```lean
 example : ¬ (NoStutter [3, 1, 1, 4]) := by
   suggested!
-    intro contra; inversion contra with
-    | nostutter2 _ contra =>
+    intro contra
+    inversion contra with
+    | cons contra =>
       inversion contra with
-      | nostutter2 _ h _ =>
-        apply h
-        rfl
+      | cons _ h _ => contradiction
 ```
 
 :::grade
@@ -2665,8 +2564,15 @@ example : ¬ (NoStutter [3, 1, 1, 4]) := by
 :::
 :::::
 
+
+:::dev "Yipeng Liu (berberman)" PotentialImprovement
+The proofs in the following exercises are a bit awkward to me,
+because they require some "internal" `Bool` lemmas in core Lean to simplify the hypotheses.
+People would normally run `simp` tactic to access them.
+:::
+
 :::::exercise (rating := 4) (name := "filter_challenge") (level := Advanced)
-Let's prove that our definition of `filter` from the {ref "Poly"}[Poly]
+Let's prove that our definition of {name}`filter` from the {ref "Poly"}[Poly]
 chapter matches an abstract specification.  Here is the
 specification, written out informally in English:
 
@@ -2700,223 +2606,211 @@ First define what it means for one list to be a merge of two
 others.  Do this with an `inductive` relation, not a `def`.
 
 ```lean
-inductive Merge {α:Type} : List α → List α → List α → Prop where
+inductive Merge {α : Type} : List α → List α → List α → Prop where
 -- SOLUTION
-  | merge_empty : Merge [] [] []
-  | merge_left {x : α} {l₁ l₂ l₃ : List α}
-    (h : Merge l₁ l₂ l₃) :
-    Merge (x :: l₁) l₂ (x :: l₃)
-  | merge_right {x : α} {l₁ l₂ l₃ : List α}
-    (h : Merge l₁ l₂ l₃) :
-    Merge l₁ (x :: l₂) (x :: l₃)
+  | nil : Merge [] [] []
+  | left {x : α} {l₁ l₂ l₃ : List α}
+      (h : Merge l₁ l₂ l₃) :
+      Merge (x :: l₁) l₂ (x :: l₃)
+  | right {x : α} {l₁ l₂ l₃ : List α}
+      (h : Merge l₁ l₂ l₃) :
+      Merge l₁ (x :: l₂) (x :: l₃)
 -- END SOLUTION
 
 theorem merge_filter (α : Type) (test : α → Bool) (l l₁ l₂ : List α)
-  (hmerge : Merge l₁ l₂ l)
-  (h₁ : List.all l₁ test)
-  (h₂ : List.all l₂ (!test ·)) :
-  List.filter test l = l₁ := by
+  (h : Merge l₁ l₂ l)
+  (h₁ : l₁.allb test)
+  (h₂ : l₂.allb (fun x => !test x)) :
+  filter test l = l₁ := by
   solution!
-    induction hmerge with
-    | merge_empty => rfl
-    | merge_left h' ih =>
-      rw [List.all_cons, Bool.and_eq_true] at h₁
+    induction h with
+    | nil => rfl
+    | left h' ih =>
+      rw [List.allb_cons, Bool.and_eq_true] at h₁
       obtain ⟨htest, h₁⟩ := h₁
-      rw [List.filter_cons_of_pos htest];
+      rw [filter_cons_of_pos htest]
       congr 1; apply ih
-      . assumption
-      . assumption
-    | merge_right h' ih =>
-      rw [List.all_cons, Bool.and_eq_true,
+      · assumption
+      · assumption
+    | right h' ih =>
+      rw [List.allb_cons, Bool.and_eq_true,
         Bool.not_eq_eq_eq_not, Bool.not_true] at h₂
       obtain ⟨htest, h₂⟩ := h₂
-      rw [List.filter_cons_of_neg (ne_true_of_eq_false htest)]
+      rw [filter_cons_of_neg htest]
       congr 1; apply ih
-      . assumption
-      . assumption
+      · assumption
+      · assumption
 ```
 
 :::autogradedHole Merge
 :::
 
-::::hide
-```
- Another possible problem (perhaps for Basics.v): Write a Rocq function
-   that generates the list of all in-order merges of two lists... However, the
-   following isn't structurally recursive :-(
-       Fixpoint all_merges {α : Type} (l₁ l₂ : List α) :=
-         match (l₁,l₂) with
-         | (l₁,[]) => `l₁`
-         | ([],l₂) => `l₂`
-         | (x1::rest1,x2::rest2) =>
-              (map (fun l => cons x1 l) (all_merges rest1 l₂))
-           ++ (map (fun l => cons x2 l) (all_merges l₁ rest2))
-         end.
-```
-::::
 
 :::gradeTheorem 6 merge_filter
 :::
 :::::
 
 :::::exercise (rating := 5) (name := "filter_challenge_2") (level := Advanced) (optional := true)
-A different way to characterize the behavior of `filter` goes like
+A different way to characterize the behavior of {name}`filter` goes like
 this: Among all subsequences of `l` with the property that `test`
 evaluates to `true` on all their members, `filter test l` is the
 longest. Formalize this claim and prove it.
 
+:::solution
+
 ```lean
--- SOLUTION
-namespace Sol
+namespace FilterChallenge
 
 open LePlayground
 
-/- We reproduce the definition of subseq here, in a module
-    so it doesn't conflict. -/
-
+/- Here's a polymorphic version of `Subseq` we've seen above. -/
 inductive Subseq {α : Type} : List α → List α → Prop where
-  | sub_nil {l : List α} : Subseq [] l
-  | sub_take {x : α} {l₁ l₂ : List α}
-    (h : Subseq l₁ l₂) :
-    Subseq (x :: l₁) (x :: l₂)
-  | sub_skip {x : α} {l₁ l₂ : List α}
-    (h : Subseq l₁ l₂) :
-    Subseq l₁ (x :: l₂)
+  | nil {l : List α} : Subseq [] l
+  | take {x : α} {l₁ l₂ : List α}
+      (h : Subseq l₁ l₂) :
+      Subseq (x :: l₁) (x :: l₂)
+  | skip {x : α} {l₁ l₂ : List α}
+      (h : Subseq l₁ l₂) :
+      Subseq l₁ (x :: l₂)
 
 /- A few lemmas about subseq. -/
 namespace Subseq
 
-theorem drop_l {α} (x : α) (l₁ l₂ : List α)
+theorem drop_l {α : Type} {x : α} {l₁ l₂ : List α}
     (h : Subseq (x :: l₁) l₂) : Subseq l₁ l₂ := by
   induction l₂ generalizing l₁ with
   | nil => inversion h
   | cons _ _ ih =>
     inversion h with
-    | sub_take hs =>
+    | take hs =>
       constructor; assumption
-    | sub_skip hs =>
+    | skip hs =>
       constructor; apply ih; assumption
 
-theorem drop {α} (x : α) (l₁ l₂ : List α)
+theorem drop {α : Type} {x : α} {l₁ l₂ : List α}
     (h : Subseq (x :: l₁) (x :: l₂)) : Subseq l₁ l₂ := by
   inversion h with
-  | sub_take => assumption
-  | sub_skip => apply drop_l; assumption
+  | take => assumption
+  | skip => apply drop_l; assumption
 
 end Subseq
 
 /-- A list is _maximal_ with property `P` if it has the property, and
     every other list with the property is at most as long as it is. -/
-def Maximal {α : Type} (lmax : List α) (P : List α → Prop) : Prop :=
-  P lmax ∧ ∀ l', P l' → l'.length ≤ lmax.length
+def Maximal {α : Type} (maxList : List α) (P : List α → Prop) : Prop :=
+  P maxList ∧ ∀ (l : List α), P l → l.length ≤ maxList.length
 
 /-- A "good subsequence" for a given list `l` and a `test` is a
     subsequence of `l` all of whose members evaluate to `true` under
     the `test`. -/
 def GoodSubseq {α : Type} (test : α → Bool) (l lsub : List α) :=
-  Subseq lsub l ∧ List.all lsub test
+  Subseq lsub l ∧ lsub.allb test
 
 /-- Good subsequences can be extended with good elements. -/
-theorem good_subseq_extend (α : Type) (x : α)
-    (l lsub : List α) (test : α → Bool) (hx : test x) :
-    GoodSubseq test l lsub →
+theorem GoodSubseq.extend {α : Type} {x : α}
+    {l lsub : List α} {test : α → Bool} (hx : test x = true)
+    (h : GoodSubseq test l lsub) :
     GoodSubseq test (x :: l) (x :: lsub) := by
-  intro ⟨hsub, hall⟩; constructor
-  . constructor; assumption
-  . rw [List.all_cons, Bool.and_eq_true]; constructor
-    . assumption
-    . assumption
+  obtain ⟨hsub, hall⟩ := h
+  constructor
+  · constructor; assumption
+  · rw [List.allb_cons, Bool.and_eq_true]
+    constructor
+    · assumption
+    · assumption
 
-/-- If `lmax` is a maximal good subsequence of `x :: l` and `x` is not good,
-    then `lmax` is also a maximal good subsequence of `l`. -/
-theorem maximal_strengthening (α : Type) (x : α)
-    (lmax l : List α) (test : α → Bool) (hx : !test x) :
-    Maximal lmax (GoodSubseq test (x :: l)) →
-    Maximal lmax (GoodSubseq test l) := by
-  intro ⟨⟨hsub, hall⟩, hlen⟩; constructor; constructor
-  . inversion hsub with
-    | sub_nil => constructor
-    | sub_take l₁ hsub =>
-      rw [List.all_cons, Bool.and_eq_true] at hall
+/-- If `maxList` is a maximal good subsequence of `x :: l` and `x` is not good,
+    then `maxList` is also a maximal good subsequence of `l`. -/
+theorem maximal_strengthening {α : Type} {x : α}
+    {maxList l : List α} {test : α → Bool} (hx : test x = false)
+    (h : Maximal maxList (GoodSubseq test (x :: l))) :
+    Maximal maxList (GoodSubseq test l) := by
+  obtain ⟨⟨hsub, hall⟩, hlen⟩ := h
+  constructor
+  constructor
+  · inversion hsub with
+    | nil => constructor
+    | take l₁ hsub =>
+      rw [List.allb_cons, Bool.and_eq_true] at hall
       obtain ⟨ht, _⟩ := hall
-      rw [Bool.not_eq_eq_eq_not, Bool.not_true] at hx
       rw [hx] at ht; contradiction
-    | sub_skip => assumption
-  . assumption
-  . intro l ⟨hsub', hall'⟩; apply hlen; constructor
-    . constructor; assumption
-    . assumption
+    | skip => assumption
+  · assumption
+  · intro l ⟨hsub', hall'⟩; apply hlen; constructor
+    · constructor; assumption
+    · assumption
 
 /- Some easy lemmas about filter: its result is a good subsequence of
     the original list. -/
 
-theorem filter_subseq (α : Type) (l : List α) (test : α → Bool) :
-    Subseq (List.filter test l) l := by
+theorem filter_subseq {α : Type} (l : List α) (test : α → Bool) :
+    Subseq (filter test l) l := by
   induction l with
-  | nil => rw [List.filter_nil]; constructor
+  | nil => rw [filter_nil]; constructor
   | cons hd tl ih =>
     cases h : (test hd)
-    . rw [List.filter_cons_of_neg (ne_true_of_eq_false h)]; constructor; assumption
-    . rw [List.filter_cons_of_pos h]; constructor; assumption
+    · rw [filter_cons_of_neg h]
+      constructor; assumption
+    · rw [filter_cons_of_pos h]
+      constructor; assumption
 
-theorem filter_all (α : Type) (l : List α) (test : α → Bool) :
-    List.all (List.filter test l) test := by
+theorem filter_all {α : Type} (l : List α) (test : α → Bool) :
+    (filter test l).allb test := by
   induction l with
   | nil => rfl
-  | cons hd tl ih =>
-    cases h : (test hd)
-    . rw [List.filter_cons_of_neg (ne_true_of_eq_false h)]; assumption
-    . rw [List.filter_cons_of_pos h, List.all_cons, Bool.and_eq_true]; constructor
-      . assumption
-      . assumption
+  | cons x xs ih =>
+    cases h : (test x)
+    · rw [filter_cons_of_neg h]; assumption
+    · rw [filter_cons_of_pos h, List.allb_cons, Bool.and_eq_true]
+      constructor
+      · assumption
+      · assumption
 
 /- And now for the main theorem: `lsub` is a maximal good subsequence
     of `l` if and only if `filter test l = lsub` -/
-/- LATER: This could use a lot of cleanup... -/
-theorem filter_spec2 (α : Type) (l lsub : List α) (test : α → Bool) :
-    Maximal lsub (GoodSubseq test l) ↔ List.filter test l = lsub := by
-  apply Iff.intro
-  . induction l generalizing lsub with
+theorem filter_spec2 {α : Type} (l lsub : List α) (test : α → Bool) :
+    Maximal lsub (GoodSubseq test l) ↔ filter test l = lsub := by
+  constructor
+  · induction l generalizing lsub with
     | nil =>
       intro ⟨⟨hsub, hall⟩, hlen⟩
       inversion hsub
-      rw [List.filter_nil]
-    | cons hd tl ih =>
-      cases htest : test hd with
+      rw [filter_nil]
+    | cons x xs ih =>
+      cases htest : test x with
       | false =>
-        rw [List.filter_cons_of_neg]
-        . intro hmax; apply ih
-          apply maximal_strengthening _ _ _ _ _ _ hmax
-          rw [Bool.not_eq_eq_eq_not, Bool.not_true]
-          assumption
-        . exact ne_true_of_eq_false htest
+        rw [filter_cons_of_neg htest]
+        · intro hmax; apply ih
+          apply maximal_strengthening htest hmax
       | true =>
         intro ⟨⟨hsub, hall⟩, hlen⟩
-        rw [List.filter_cons_of_pos htest]
         /- in this case, lsub must begin with hd, since otherwise it
         wouldn't be maximal. -/
         cases lsub with
-        | nil => -- lsub = [] (impossible: contradicts maximality of lsub)
-          have contra : [hd].length ≤ ([] : List α).length := by
-            apply hlen; constructor
-            . constructor; constructor
-            . rw [List.all_cons, List.all_nil, Bool.and_true]; assumption
+        | nil =>
+          -- lsub = [] (impossible: contradicts maximality of lsub)
+          have contra : [x].length ≤ ([] : List α).length := by
+            apply hlen
+            constructor
+            · constructor; constructor
+            · rw [List.allb_cons, List.allb_nil, Bool.and_true]
+              assumption
           contradiction
-        | cons hd' tl' =>
-          have heq : hd = hd' := by -- because of maximality again
+        | cons x' xs' =>
+          have heq : x = x' := by -- because of maximality again
             inversion hsub with
-            | sub_take hsub => rfl
-            | sub_skip hsub =>
-            -- contradiction, since hd :: hd' :: tl' would be longer
-              have contra : (hd :: hd' :: tl').length ≤ (hd' :: tl').length := by
+            | take hsub => rfl
+            | skip hsub =>
+              -- contradiction, since x :: x' :: xs' would be longer
+              have contra : (x :: x' :: xs').length ≤ (x' :: xs').length := by
                 apply hlen; constructor
-                . constructor; assumption
-                . rw [List.all_cons, List.all_cons, Bool.and_eq_true, Bool.and_eq_true]
-                  rw [List.all_cons, Bool.and_eq_true] at hall
+                · constructor; assumption
+                · rw [List.allb_cons, List.allb_cons, Bool.and_eq_true, Bool.and_eq_true]
+                  rw [List.allb_cons, Bool.and_eq_true] at hall
                   constructor; assumption; assumption
-              rw [List.length_cons, List.length_cons, Nat.add_le_add_iff_right] at contra
-              apply Nat.not_add_one_le_self at contra
-              contradiction
+              rw [List.length_cons, List.length_cons] at contra
+              apply le_of_succ_le_succ at contra
+              -- TODO: need Nat.not_succ_le_self or so
           subst heq; congr; apply ih; constructor; constructor
           . exact hsub.drop hd _ _
           . rw [List.all_cons, Bool.and_eq_true] at hall
@@ -2961,9 +2855,9 @@ theorem filter_spec2 (α : Type) (l lsub : List α) (test : α → Bool) :
           | sub_skip hsub =>
             apply Nat.le_succ_of_le
             exact ih _ rfl _ hsub hall
-end Sol
--- END SOLUTION
+end FilterChallenge
 ```
+:::
 :::::
 
 :::::exercise (rating := 4) (name := "palindromes") (optional := true)
