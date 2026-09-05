@@ -2192,15 +2192,16 @@ def funR : Nat → Nat → Nat
   := solution!(fun m n => m + n)
 
 theorem funR_iff_R {m n k : Nat} : funR m n = k ↔ R m n k := by
-  constructor
-  · intro h
-    rw [funR] at h
-    subst h
-    apply R.of_eq_add
-    rfl
-  · intro h
-    have := R.eq_add h
-    rw [funR, this]
+  solution!
+    constructor
+    · intro h
+      rw [funR] at h
+      subst h
+      apply R.of_eq_add
+      rfl
+    · intro h
+      have := R.eq_add h
+      rw [funR, this]
 ```
 
 ```lean
