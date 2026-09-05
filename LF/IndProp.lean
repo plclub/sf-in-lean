@@ -999,8 +999,8 @@ Let's prove a similar inversion lemma for `le`.
 ```lean
 namespace LePlayground
 
-theorem le_inversion (n m : Nat) (h : Le n m) :
-    (n = m) ∨ (∃ m', m = m' + 1 ∧ Le n m') := by
+theorem le_inversion (n m : Nat) (h : n ≤ m) :
+    (n = m) ∨ (∃ m', m = m' + 1 ∧ n ≤ m') := by
   solution!
     cases h with
     | refl => left; rfl
@@ -1423,7 +1423,7 @@ theorem List.in_iff_mem {α} (x : α) (l : List α) : List.In x l ↔ x ∈ l :=
     constructor
     · intro h; induction l with
       | nil => apply List.In_nil at h; contradiction
-      | cons hd tl ih =>
+      | cons x xs ih =>
         rw [List.In_cons] at h
         obtain h | h := h
         · subst h; constructor
@@ -1807,6 +1807,18 @@ theorem le_of_succ_le_succ (n m : Nat) (h : n + 1 ≤ m + 1) : n ≤ m := by
 :::
 
 ```lean
+theorem le_not_succ_le_self (n : Nat) : ¬ (n + 1 ≤ n) := by
+  solution!
+    induction n with
+    | zero => intro h; contradiction
+    | succ n' ih =>
+      intro h
+      apply ih
+      apply le_of_succ_le_succ
+      assumption
+```
+
+```lean
 theorem le_add_right (n m : Nat) : n ≤ n + m := by
   solution!
     induction n with
@@ -1909,6 +1921,14 @@ theorem le_add_right_of_le (n m p : Nat) (h : n ≤ m) : n ≤ m + p := by
 :::::
 
 :::::exercise (rating := 3) (name := "lt_facts") (optional := true)
+
+
+```lean
+theorem lt_not_lt_zero (n : Nat) : ¬ n < 0 := by
+  intro h
+  inversion h
+```
+
 ```lean
 theorem lt_or_ge (n m : Nat) : n < m ∨ n ≥ m := by
   solution!
@@ -2494,6 +2514,13 @@ the induction principles for all of these.
 
 # Additional Exercises
 
+:::instructors
+The exercises build on `Le`, which is defined in this file,
+as well as `List.allb` and `List.filter`, which are defined in Logic.
+Other operations, such as `List.length`, `List.append`, `List.reverse`, and `Mem`
+are provided by Lean's core library.
+:::
+
 :::suppressPreviousHeaderWhenTerse
 :::
 
@@ -2747,8 +2774,8 @@ theorem filter_subseq {α : Type} (l : List α) (test : α → Bool) :
     Subseq (filter test l) l := by
   induction l with
   | nil => rw [filter_nil]; constructor
-  | cons hd tl ih =>
-    cases h : (test hd)
+  | cons x xs ih =>
+    cases h : (test x)
     · rw [filter_cons_of_neg h]
       constructor; assumption
     · rw [filter_cons_of_pos h]
@@ -2784,7 +2811,7 @@ theorem filter_spec2 {α : Type} (l lsub : List α) (test : α → Bool) :
           apply maximal_strengthening htest hmax
       | true =>
         intro ⟨⟨hsub, hall⟩, hlen⟩
-        /- in this case, lsub must begin with hd, since otherwise it
+        /- in this case, `lsub` must begin with `x`, since otherwise it
         wouldn't be maximal. -/
         cases lsub with
         | nil =>
@@ -2810,51 +2837,57 @@ theorem filter_spec2 {α : Type} (l lsub : List α) (test : α → Bool) :
                   constructor; assumption; assumption
               rw [List.length_cons, List.length_cons] at contra
               apply le_of_succ_le_succ at contra
-              -- TODO: need Nat.not_succ_le_self or so
-          subst heq; congr; apply ih; constructor; constructor
-          . exact hsub.drop hd _ _
-          . rw [List.all_cons, Bool.and_eq_true] at hall
+              apply le_not_succ_le_self at contra
+              contradiction
+          subst heq; rw [filter_cons_of_pos htest]
+          congr; apply ih; constructor; constructor
+          · exact hsub.drop
+          · rw [List.allb_cons, Bool.and_eq_true] at hall
             obtain ⟨_, _⟩ := hall; assumption
-          . intro l' hgood; rw [List.length_cons] at hlen
+          · intro l' hgood
+            rw [List.length_cons] at hlen
             apply le_of_succ_le_succ
-            apply hlen (hd :: l')
-            exact good_subseq_extend _ _ _ _ _ htest hgood
-  . intro hfilter; constructor; rw [← hfilter]; constructor
-    . apply filter_subseq
-    . apply filter_all
-    . intro l' ⟨hsub, hall⟩
+            apply hlen (x :: l')
+            exact hgood.extend htest
+  · intro hfilter
+    constructor; rw [← hfilter]
+    constructor
+    · apply filter_subseq
+    · apply filter_all
+    · intro l' ⟨hsub, hall⟩
       induction l generalizing l' lsub with
       | nil =>
         inversion hsub; rw [List.length_nil]
         apply zero_le
-      | cons hd tl ih =>
-        cases htest : test hd with
+      | cons x xs ih =>
+        cases htest : test x with
         | false =>
-          rw [List.filter_cons_of_neg] at hfilter
-          . apply ih _ hfilter _ _ hall
+          rw [filter_cons_of_neg htest] at hfilter
+          · apply ih _ hfilter _ _ hall
             inversion hsub with
-            | sub_nil => constructor
-            | sub_take l hsub =>
-              rw [List.all_cons, Bool.and_eq_true] at hall
+            | nil => constructor
+            | take l hsub =>
+              rw [List.allb_cons, Bool.and_eq_true] at hall
               obtain ⟨ht, _⟩ := hall
               rw [ht] at htest
               contradiction
-            | sub_skip hsub => assumption
-          . exact ne_true_of_eq_false htest
+            | skip hsub => assumption
         | true =>
-          rw [List.filter_cons_of_pos htest] at hfilter
+          rw [filter_cons_of_pos htest] at hfilter
           rw [← hfilter, List.length_cons]
           inversion hsub with
-          | sub_nil => rw [List.length_nil]; apply zero_le
-          | sub_take l hsub =>
-            rw [List.length_cons]; apply le_of_lt
+          | nil => rw [List.length_nil]; apply zero_le
+          | take l hsub =>
+            rw [List.length_cons]
+            apply succ_le_succ
             apply ih _ rfl _ hsub
-            rw [List.all_cons, Bool.and_eq_true] at hall
-            obtain ⟨_, _⟩ := hall
-            assumption
-          | sub_skip hsub =>
-            apply Nat.le_succ_of_le
+            rw [List.allb_cons, Bool.and_eq_true] at hall
+            obtain ⟨_, h⟩ := hall
+            exact h
+          | skip hsub =>
+            apply Le.step
             exact ih _ rfl _ hsub hall
+
 end FilterChallenge
 ```
 :::
@@ -2868,7 +2901,7 @@ forwards.
   captures what it means to be a palindrome. (Hint: You'll need
   three cases.)
 
-- Prove `pal_app_reverse`, which states that
+- Prove `pal_append_reverse`, which states that
 
 ```display
 ∀ l, Pal (l ++ l.reverse).
@@ -2887,76 +2920,46 @@ definition with a _single_ constructor of this type:
 ∀ l, l = l.reverse → Pal l
 ```
 
-:::dev
-```
-HIDE: MTF 6/22: It isn't exactly clear why the single constructor approach
-"will not work very well".  It seems to work extremely well:
-
- inductive pal {α : Type} : List α → Prop :=
-   | palc : forall l, l = rev l → pal l.
-
- theorem pal_app_reverse : forall (α:Type) (l : List α),
-   pal (l ++ (rev l)).
- Proof.
-   intros α l.
-   apply palc.
-   rewrite rev_app_distr.
-   rewrite rev_involutive.
-   reflexivity.
- Qed.
-
- theorem pal_reverse : forall (α:Type) (l: List α) , pal l → l = rev l.
- Proof.
-   intros α l H. destruct H. assumption.
- Qed.
-
- theorem palindrome_converse: forall {α: Type} (l: List α), l = rev l → pal l.
- Proof.
-   intros α l H. apply palc. assumption.
- Qed.
-
-   This seems to be yet another example of a property that can be expressed as a
-   non-inductive proposition being artificially formulated as an inductive
-   proposition.  Are there any other properties of the [palindrome] proposition
-   that would be difficult to prove from its specification?
-
-BCP 25: Took away the "will not work very well" wording.
-```
-:::
-
 ```lean
 inductive Pal {α : Type} : List α → Prop where
 -- SOLUTION
-  | pal_nil : Pal []
-  | pal_one {x : α} : Pal [x]
-  | pal_consnoc {x : α} {l : List α} (h : Pal l) : Pal (x :: (l ++ [x]))
+  | nil : Pal []
+  | singleton {x : α} : Pal [x]
+  | cons_snoc {x : α} {l : List α} (h : Pal l) : Pal (x :: (l ++ [x]))
 -- END SOLUTION
 ```
 
-:::autogradedHole Pal
-:::
+```lean
+example : Pal ([] : List Nat) := by
+  suggested!
+    constructor
 
-:::dev PotentialImprovement
+example : Pal [1] := by
+  suggested!
+    constructor
+
+example : Pal [1, 2, 1] := by
+  suggested!
+    apply Pal.cons_snoc (l := [2])
+    constructor
+
+example : Pal [1, 2, 3, 2, 1] := by
+  suggested!
+    apply Pal.cons_snoc (l := [2, 3, 2])
+    apply Pal.cons_snoc (l := [3])
+    constructor
 ```
-APT21: a student noted that the pal_one case is easy to
-miss, since the theorems don't require it! BCP 25: We could fix
-that by adding some examples, e.g. [], [1], and [1,1].
-```
-:::
 
 ```lean
-theorem pal_app_reverse (α : Type) (l : List α) :
+theorem pal_append_reverse (α : Type) (l : List α) :
     Pal (l ++ l.reverse) := by
   solution!
     induction l with
     | nil => rw [List.reverse_nil, List.append_nil]; constructor
-    | cons hd tl ih =>
+    | cons x xs ih =>
       rw [List.reverse_cons, List.cons_append, ← List.append_assoc]
       constructor; assumption
 ```
-
-:::gradeTheorem 3 pal_app_reverse
-:::
 
 :::dev PotentialImprovement
 Note that we're using some standard library stuff here...
@@ -2964,201 +2967,17 @@ We should at least explicitly qualify them...
 :::
 
 ```lean
-theorem pal_reverse (α : Type) (l : List α) (hp : Pal l) : l = l.reverse := by
+theorem pal_reverse {α : Type} {l : List α} (hp : Pal l) : l = l.reverse := by
   solution!
     induction hp with
-    | pal_nil => rw [List.reverse_nil]
-    | pal_one =>
+    | nil => rw [List.reverse_nil]
+    | singleton =>
       rw [List.reverse_cons, List.reverse_nil, List.nil_append]
-    | pal_consnoc h ih =>
+    | cons_snoc h ih =>
       rw [List.reverse_cons, List.reverse_append, ← List.cons_append, ← ih]
       congr
 ```
 
-:::gradeTheorem 3 pal_reverse
-:::
-
-:::dev "Daniel Sainati (dsainati1)" NOW
-This one is super annoying without simp.
-I propose we move it to the simp chapter
-:::
-:::::
-
-:::::exercise (rating := 5) (name := "palindrome_converse") (optional := true)
-Again, the converse direction is significantly more difficult, due
-to the lack of evidence.  Using your definition of `Pal` from the
-previous exercise, prove that
-
-```display
-∀ l, l = l.reverse → Pal l.
-```
-
-```lean
--- SOLUTION
-/- Proving the converse theorem is much harder, because a standard
-    induction over the list `l` doesn't work.  The trick to the
-    following proof, due to Nathan Collins, is to induct over _half
-    the length_ of `l`.  We make heavy use of destruct and inversion
-    to clear away the impossible cases. -/
-
-theorem reverse_pal {α : Type} (n : Nat) (l : List α)
-    (hlen : l.length / 2 = n) (hrev : l = l.reverse) : Pal l := by
-  induction n generalizing l with
-  /- (length l) / 2 = 0 || l has length 0 or 1 -/
-  | zero =>
-    cases l with
-    | nil => constructor
-    | cons _ l =>
-      cases l with
-      | nil => constructor
-      | cons _ l' =>
-        /- impossible : l has length > 1 -/
-        rw [List.length_cons, List.length_cons] at hlen
-        rw [Nat.div_eq_zero_iff] at hlen
-        cases hlen; contradiction; contradiction
-  /- (length l) / 2 >= 1  || l has length at least 2 -/
-  | succ n ih =>
-    cases l with
-    | nil => rw [List.length_nil, Nat.zero_div] at hlen; contradiction
-    | cons x l =>
-      rw [List.length_cons] at hlen
-      rw [List.reverse_cons] at hrev
-      cases heq : l.reverse with
-      | nil =>
-        have h : l = [] := by
-          cases l; rfl
-          simp only [List.reverse_cons, List.append_eq_nil_iff] at heq
-          obtain ⟨_, _⟩ := heq; contradiction
-        rw [h]; constructor
-      | cons y l' =>
-        rw [heq] at hrev
-        injections hrev heqtl; subst hrev
-        rw [heqtl, List.append_eq]
-        constructor; apply ih
-        . rw [heqtl] at hlen
-          rw [List.append_eq, List.length_append, List.length_cons,
-            List.length_nil, Nat.zero_add] at hlen
-          omega
-        . rw [heqtl, List.append_eq, List.reverse_append, List.reverse_cons, List.reverse_nil,
-            List.nil_append, List.cons_append, List.nil_append] at heq
-          injections _ _
-          symm
-          assumption
-
-
-  /- And here's another solution due (modulo some fixes by BCP/AAA to
-     replace snoc with app) to Michael Schulman. It uses a few tactics
-     that we haven't seen yet.
-
-  theorem eqrev_pal_gen (α : Type) : forall (l:List α) (p t:List α),
-    l = p ++ t → p = rev p → pal p.
-  Proof.
-   induction l as [| x l'].
-   - /- l = nil -/
-     destruct p.
-     + /- p = nil -/
-       destruct t as [| x t'].
-          * /- t = nil -/
-            intros; constructor.
-          * /- t = cons -/
-            intros H; inversion H.
-     + /- p = cons -/
-       intros t H.
-       inversion H.
-   - /- l = cons -/
-     destruct p as [| y p'].
-     + /- p = nil -/
-       intros. constructor.
-     + /- p = cons -/
-       intros t H K.
-       inversion H.
-       simpl in K.
-       destruct (rev p') as [| z p''] eqn:Heqrevp'.
-       * /- rev p' = nil -/
-         destruct p' as [| w q].
-         { /- p' = nil -/ constructor. }
-         { /- p' = cons -/
-           assert (L : [] = w :: q).
-           { rewrite <- rev_involutive. rewrite  Heqrevp'. reflexivity. }
-           inversion L. }
-       * /- rev p' = cons -/
-         assert (M : rev (rev p') = (rev p'') ++ [z]).
-         { rewrite Heqrevp'. reflexivity. }
-         rewrite rev_involutive in M.
-         rewrite M.
-         inversion K.
-         /- Now we finally get to do -/
-         constructor.
-         apply (IHl' _ (z :: t)).
-         { /- l' = rev p'' ++ z :: t -/
-           rewrite h₂. rewrite M. rewrite <- app_assoc. reflexivity. }
-         { /- rev p'' = rev (rev p'') -/
-           rewrite H4 in Heqrevp'. rewrite rev_app_distr in Heqrevp'.
-           inversion Heqrevp'.
-           rewrite rev_involutive.
-           symmetry. apply H5. } Qed.
-
-  theorem eqrev_pal (α : Type) (l:List α) : (l = rev l) → pal l.
-  Proof.
-    intros H.
-    apply (eqrev_pal_gen _ l l []).
-    rewrite app_nil_r. reflexivity.
-    apply H.
-  Qed.
-
-  /- A final possibility is adding a natural number n and a hypothesis
-     "length l ≤ n" and inducting on n.  The following solution by
-     Mihir Mehta follows this strategy... -/
-
-  theorem palindrome_converse_lemma_1:
-    forall {α: Type} (l: List α), length (rev l) = length l.
-  Proof. {
-    intros α. induction l.
-    { reflexivity. }
-    { simpl. rewrite → app_length. rewrite → IHl. simpl.
-      rewrite → add_comm. reflexivity. }
-  } Qed.
-
-  theorem palindrome_converse_lemma_2:
-    forall {α: Type} (n: nat) (l: List α), (length l ≤ n) → l = rev l → pal l.
-  Proof. {
-    intros α. induction n as [| n'].
-    { /- n = 0 -/
-      intros [| x l'] h₁ h₂.
-      { /- l = [] -/ apply pal_nil. }
-      { /- l = x :: l' -/ inversion h₁. }
-    }
-    { /- n = S n'-/
-      intros [| x l'] h₃ H4.
-      { /- l = [] -/ apply pal_nil. }
-      { /- l = x :: l' -/
-        simpl in H4.
-        destruct (rev l') as [| x' l''] eqn:H5.
-        { /- rev l = [] -/
-          rewrite <- (rev_involutive α l'). rewrite → H5. simpl.
-          apply pal_one. }
-        { /- rev l = x' :: l'' -/
-          inversion H4 as [[H6 H7]]. apply pal_consnoc. apply (IHn' l'').
-          { /- proving: length l'' ≤ n' -/
-            rewrite → H7 in h₃. simpl in h₃.
-            rewrite → app_length in h₃. simpl in h₃.
-            rewrite → add_comm in h₃. simpl in h₃.
-            apply Sn_le_Sm__n_le_m, Sn_le_Sm__n_le_m.
-            apply le_S. apply h₃.
-          }
-          { /- proving l'' = rev l'' -/
-            rewrite → H7 in H5. rewrite → rev_app_distr in H5. simpl in H5.
-            inversion H5 as [H8]. rewrite → H8, → H8. reflexivity.
-          }
-        }
-      }
-    }
-  } Qed. -/
-
-theorem palindrome_converse {α : Type} (l : List α) (h : l = l.reverse) : Pal l := by
-  exact reverse_pal _ _ rfl h
--- END SOLUTION
-```
 :::::
 
 :::::exercise (rating := 4) (name := "NoDup") (level := Advanced) (optional := true) (manual := true)
@@ -3168,10 +2987,8 @@ lists (with elements of type `α`) that have no elements in
 common.
 
 ```lean
--- SOLUTION
 def Disjoint {α : Type} (l₁ l₂ : List α) : Prop :=
-  ∀ (x : α), x ∈ l₁ → ¬ x ∈ l₂
--- END SOLUTION
+  solution!(∀ {x : α}, x ∈ l₁ → ¬ x ∈ l₂)
 ```
 
 Next, use `∈` to define an inductive proposition `NoDup l`,
@@ -3183,10 +3000,10 @@ other.  For example, `NoDup ([1, 2, 3, 4] : List Nat)` and
 `NoDup ([true, true] : List Bool)` should not be.
 
 ```lean
--- SOLUTION
 inductive NoDup {α : Type} : List α → Prop where
-  | NoDup_nil : NoDup []
-  | NoDup_cons {x : α} {l : List α}
+-- SOLUTION
+  | nil : NoDup []
+  | cons {x : α} {l : List α}
     (hnin : ¬ x ∈ l) (h : NoDup l) : NoDup (x :: l)
 -- END SOLUTION
 ```
@@ -3194,88 +3011,93 @@ inductive NoDup {α : Type} : List α → Prop where
 Finally, state and prove one or more interesting theorems relating
 `Disjoint`, `NoDup` and `++` (list append).
 
-```lean
--- SOLUTION
-/- Here are some possible answers: -/
+:::solution
 
-theorem NoDup_append (α : Type) (l₁ l₂: List α)
+Here are some possible answers:
+
+```lean
+
+theorem NoDup.append {α : Type} {l₁ l₂: List α}
     (h₁ : NoDup l₁) (h₂ : NoDup l₂) (hdis : Disjoint l₁ l₂) :
     NoDup (l₁ ++ l₂) := by
   induction l₁ generalizing l₂ with
   | nil => rw [List.nil_append]; assumption
-  | cons hd tl ih =>
+  | cons x xs ih =>
     constructor
-    . intro contra; rw [List.append_eq, List.mem_append] at contra
+    · intro contra
+      rw [List.append_eq, List.mem_append] at contra
       cases contra with
       | inl =>
         inversion h₁ with
         | _ hdup hin => apply hin; assumption
       | inr contra =>
-        apply hdis hd _ contra
+        apply hdis _ contra
         rw [List.mem_cons]; left; rfl
-    . apply ih _ _ h₂ _
-      . inversion h₁; assumption
-      . intros x hin
+    · apply ih _ h₂ _
+      · inversion h₁; assumption
+      · intros x hin
         apply hdis; rw [List.mem_cons]
         right; assumption
 
-theorem NoDup_Disjoint (α : Type) (l₁ l₂: List α)
-    (h : NoDup (l₁++l₂)) : Disjoint l₁ l₂ := by
+theorem NoDup.isDisjoint {α : Type} {l₁ l₂: List α}
+    (h : NoDup (l₁ ++ l₂)) : Disjoint l₁ l₂ := by
   intro x hin contra
   induction l₁ generalizing l₂ x with
   | nil => rw [List.mem_nil_iff] at hin; contradiction
-  | cons hd tl ih =>
+  | cons x xs ih =>
     rw [List.mem_cons] at hin
     inversion h with
-    | NoDup_cons hdup hnin =>
+    | cons hdup hnin =>
       cases hin with
       | inl hin =>
         subst hin; apply hnin
         rw [List.append_eq, List.mem_append]; right; assumption
-      | inr hin => exact ih _ hdup _ hin contra
+      | inr hin => exact ih hdup hin contra
 
-/- We can also show the following results about [NoDup] and [++]
+/- We can also show the following results about `NoDup` and `++`
    by themselves -/
-theorem NoDup_left (α : Type) (l₁ l₂: List α)
+theorem NoDup.left {α : Type} {l₁ l₂: List α}
     (hdup : NoDup (l₁ ++ l₂)) : NoDup l₁ := by
   induction l₁ generalizing l₂ with
   | nil => constructor
-  | cons hd tl ih =>
+  | cons x xs ih =>
     inversion hdup with
-    | _ hdup' hin =>
+    | cons hdup' hin =>
       constructor
-      . intro contra; apply hin
+      · intro contra; apply hin
         rw [List.append_eq, List.mem_append]; left; assumption
-      . exact ih _ hdup'
+      · exact ih hdup'
 
-theorem NoDup_right (α : Type) (l₁ l₂ : List α)
-    (hdup : NoDup (l₁ ++ l₂)) : NoDup l₂ := by
+theorem NoDup.right {α : Type} {l₁ l₂ : List α}
+    (h : NoDup (l₁ ++ l₂)) : NoDup l₂ := by
   induction l₁ generalizing l₂ with
-  | nil => rw [List.nil_append] at hdup; assumption
-  | cons hd tl ih =>
-    inversion hdup
+  | nil => rw [List.nil_append] at h; assumption
+  | cons x xs ih =>
+    inversion h
     apply ih; assumption
 
 /- This theorem combines the various lemmas to give a complete
    characterization -/
-theorem NoDup_Disjoint_app {α : Type} (l₁ l₂ : List α) :
+theorem NoDup.disjoint_app {α : Type} {l₁ l₂ : List α} :
     NoDup (l₁ ++ l₂) ↔
     (NoDup l₁ ∧ NoDup l₂ ∧ Disjoint l₁ l₂) := by
-  apply Iff.intro
-  . intro hdup
-    constructor; exact NoDup_left _ _ _ hdup
-    constructor; exact NoDup_right _ _ _ hdup
-    exact NoDup_Disjoint _ _ _ hdup
-  . intro ⟨h₁, ⟨h₂, h₃⟩⟩
-    exact NoDup_append _ _ _ h₁ h₂ h₃
--- END SOLUTION
+  constructor
+  · intro hdup
+    constructor; exact left hdup
+    constructor; exact right hdup
+    exact isDisjoint hdup
+  · intro ⟨h₁, ⟨h₂, h₃⟩⟩
+    exact append h₁ h₂ h₃
 ```
+
+:::
 
 :::grade
 ```
 GRADE_MANUAL 6: NoDup
 ```
 :::
+
 :::::
 
 :::::exercise (rating := 5) (name := "pigeonhole_principle") (level := Advanced) (optional := true)
@@ -3288,22 +3110,25 @@ machinery to prove, but we now have enough...
 First prove an easy and useful lemma.
 
 ```lean
-theorem mem_split (α : Type) (x : α) (l : List α) (hin : x ∈ l) :
+theorem List.mem_split {α : Type} {x : α} {l : List α} (hin : x ∈ l) :
     ∃ l₁ l₂, l = l₁ ++ x :: l₂ := by
   solution!
+    -- The exact lemma is called `List.append_of_mem` in Lean's core library
     induction l generalizing x with
     | nil => rw [List.mem_nil_iff] at hin; contradiction
-    | cons hd tl ih =>
+    | cons x' xs' ih =>
       rw [List.mem_cons] at hin
       cases hin with
-      | inl hin => subst hin; exists []; exists tl
+      | inl hin =>
+        subst hin
+        exists []
+        exists xs'
       | inr hin =>
-        have ⟨l₁', ⟨l₂', ih⟩⟩ := ih x hin
+        have ⟨l₁', ⟨l₂', ih⟩⟩ := ih hin
         subst ih
-        exists hd :: l₁'; exists l₂'
+        exists x' :: l₁'
+        exists l₂'
 ```
-:::gradeTheorem 2 mem_split
-:::
 
 Now define a property `Repeats` such that `Repeats l` asserts
 that `l` contains at least one repeated element.
@@ -3311,13 +3136,11 @@ that `l` contains at least one repeated element.
 ```lean
 inductive Repeats {α : Type} : List α → Prop where
   -- SOLUTION
-  | rep_here  {x : α} {l : List α} (h : x ∈ l)     : Repeats (x :: l)
-  | rep_later {x : α} {l : List α} (h : Repeats l) : Repeats (x :: l)
+  | head {x : α} {l : List α} (h : x ∈ l)     : Repeats (x :: l)
+  | tail {x : α} {l : List α} (h : Repeats l) : Repeats (x :: l)
 -- /SOLUTION
 ```
 
-:::autogradedHole Repeats
-:::
 
 :::grade
 ```
@@ -3340,8 +3163,16 @@ HIDE: APT21: Apparently, this is really quite hard; even the strongest
 students couldn't do it this year.
 :::
 
+:::dev "Yipeng Liu (berberman)"
+I reworked the proof and felt the list membership reasoning is too distracting.
+Maybe move to the Automation chapter for `simp`.
+:::
+
 ```lean
-theorem pigeonhole_principle (α : Type) (l₁ l₂ : List α)
+
+open LePlayground in
+
+theorem pigeonhole_principle {α : Type} {l₁ l₂ : List α}
     (hin : ∀ x, x ∈ l₁ → x ∈ l₂)
     (hlen : l₂.length < l₁.length) :
     Repeats l₁ := by
@@ -3349,71 +3180,41 @@ theorem pigeonhole_principle (α : Type) (l₁ l₂ : List α)
     induction l₁ generalizing l₂ with
     | nil =>
       rw [List.length_nil] at hlen
-      apply Nat.not_lt_zero at hlen
+      apply lt_not_lt_zero at hlen
       contradiction
-    | cons x l₁' ih =>
-      by_cases h : x ∈ l₁'
-      . constructor; assumption
-      . apply Repeats.rep_later
+    | cons x xs ih =>
+      by_cases h : x ∈ xs
+      · exact Repeats.head h
+      · apply Repeats.tail
         have h₂ : x ∈ l₂ := by
           apply hin; rw [List.mem_cons]; left; rfl
-        have ⟨l₂a, ⟨l₂b, heq⟩⟩ := mem_split _ _ _ h₂
-        have hin₂ : ∀ x' : α, x' ∈ l₁' -> x' ∈ (l₂a ++ l₂b) := by
-          intro x₀ hin₀
-          have hneq : x ≠ x₀ := by
-            intro heq; subst heq; apply h; assumption
-          have h₁ : x₀ ∈ l₂ := by
-            apply hin; rw [List.mem_cons]; right; assumption
-          rw [heq, List.mem_append] at h₁; rcases h₁ with h₁ | h₁
-          . rw [List.mem_append]; left; assumption
-          . rw [List.mem_append]; right;
-            rw [List.mem_cons] at h₁; rcases h₁ with h₁ | h₁
-            . subst h₁; contradiction
-            . assumption
-        have hlen₂ : (l₂a ++ l₂b).length < l₁'.length := by
-          have hlen' : l₂.length = (l₂a ++ l₂b).length + 1 := by
-            rw [heq, List.length_append, List.length_append, List.length_cons, Nat.add_assoc]
-          rw [hlen', List.length_append, List.length_cons] at hlen
+        obtain ⟨l₂a, l₂b, rfl⟩ := List.mem_split h₂
+        have hin₂ : ∀ y, y ∈ xs → y ∈ l₂a ++ l₂b := by
+          intro y hy
+          have hy₂ : y ∈ l₂a ++ x :: l₂b := by
+            apply hin
+            rw [List.mem_cons]
+            right
+            exact hy
+          rw [List.mem_append] at hy₂
+          obtain hya | hy₂ := hy₂
+          · rw [List.mem_append]
+            left
+            exact hya
+          · rw [List.mem_cons] at hy₂
+            obtain rfl | hyb := hy₂
+            · contradiction
+            · rw [List.mem_append]
+              right
+              exact hyb
+        have hlen₂ : (l₂a ++ l₂b).length < xs.length := by
+          rw [List.length_append, List.length_cons,
+              List.length_cons, ← Nat.add_assoc] at hlen
           rw [List.length_append]
-          apply succ_n_le_succ_m__n_le_m
+          apply le_of_succ_le_succ
           exact hlen
-        apply ih (l₂a ++ l₂b) hin₂ hlen₂
-    /-.
-        destruct (EM (In x l1')) as [H | H].
-        + /- In x l1' -/
-          apply rep_here. apply H.
-        + /- ~ In x l1' -/
-          apply rep_later.
-          assert (INX: In x l₂).
-          {  apply INC. left. reflexivity. }
-          destruct (in_split _ _ _ INX) as [l2a [l2b EQ]].
-          remember (l2a ++ l2b) as l2' eqn:Heql2'.
-          assert (IN2: forall x0 : α, In x0 l1' → In x0 l2').
-          { intros x0 AI.
-            assert (H0: x <> x0).
-            { intros Heq. apply H. rewrite  Heq. apply AI. }
-            assert (h₁: In x0 l₂).
-            { apply INC. simpl. right. apply AI. }
-            rewrite EQ in h₁. apply In_app_iff in h₁.
-            rewrite Heql2'. apply In_app_iff.
-            simpl in h₁. destruct h₁ as [h₁ | [h₁ | h₁]].
-            - left. apply h₁.
-            - exfalso. apply H0. apply h₁.
-            - right. apply h₁.  }
-          assert (LEN2: length l2' < length l1').
-          { assert (LS: length l₂ = S(length (l2a ++ l2b))).
-            { rewrite EQ.
-              rewrite app_length. rewrite app_length. rewrite add_comm.
-              simpl. rewrite add_comm. reflexivity. }
-            rewrite LS in NR. rewrite <- Heql2' in NR. simpl in NR.
-            apply Sn_le_Sm__n_le_m.  apply NR.
-          }
-          apply (IHl1' l2' IN2 LEN2).
-  Qed. -/
+        apply ih hin₂ hlen₂
 ```
-
-:::gradeTheorem 6 pigeonhole_principle
-:::
 
 :::dev PotentialImprovement
 ```
