@@ -36,21 +36,21 @@ Consider the proof below. Notice all the repetition and near-repetition...
 theorem Perm3_In_old (α : Type) (x : α) (l₁ l₂ : List α)
     (hPerm : Perm3 l₁ l₂) (hIn : x ∈ l₁) : x ∈ l₂ := by
   induction hPerm with
-  | perm3_swap12 =>
+  | swap12 =>
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
     obtain h | h | h | h := hIn
     . right; left; assumption
     . left; assumption
     . right; right; left; assumption
     . contradiction
-  | perm3_swap23 =>
+  | swap23 =>
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
     obtain h | h | h | h := hIn
     . left; assumption
     . right; right; left; assumption
     . right; left; assumption
     . contradiction
-  | perm3_trans _ _ ih₁₂ ih₂₃ =>
+  | trans _ _ ih₁₂ ih₂₃ =>
     apply ih₂₃; apply ih₁₂; apply hIn
 ```
 
@@ -108,7 +108,7 @@ example (a b c d : Prop) :
 theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α)
     (hPerm : Perm3 l₁ l₂) (hIn : x ∈ l₁) : x ∈ l₂ := by
   induction hPerm with
-  | perm3_swap12 =>
+  | swap12 =>
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
     obtain h | h | h | h := hIn
     /- In addition to basic arithmetic, `lia` can also discharge goals
@@ -117,11 +117,11 @@ theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α)
     . lia
     . lia
     . lia
-  | perm3_swap23 =>
+  | swap23 =>
   /- Here, we solve _all_ goals ─ and eschew the `obtain` ─ with
     the <;> tactic combinator, which we saw in the `Induction` chapter. -/
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
-  | perm3_trans _ _ ih₁₂ ih₂₃ =>
+  | trans _ _ ih₁₂ ih₂₃ =>
     lia -- was apply ih₂₃; apply ih₁₂; apply hIn
 ```
 
@@ -264,7 +264,7 @@ We can further simplify our {name}`Perm3.In` example with {tactic}`try`.
 theorem Perm3_In_better_with_try (α : Type) (x : α) (l₁ l₂ : List α)
     (hPerm : Perm3 l₁ l₂) (hIn : x ∈ l₁) : x ∈ l₂ := by
   induction hPerm with (try rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia)
-  | perm3_trans => lia
+  | trans => lia
 ```
 
 Note that `try lia <;> try rw [...] <;> lia` _doesn't_ work, because
@@ -280,7 +280,7 @@ example (α : Type) (x : α) (l₁ l₂ : List α)
 
 ```leanOutput Perm3_try
 unsolved goals
-case perm3_swap12
+case swap12
 α : Type
 x : α
 l₁ l₂ : List α
@@ -288,7 +288,7 @@ x✝ y✝ z✝ : α
 hIn : x ∈ [x✝, y✝, z✝]
 ⊢ x ∈ [y✝, x✝, z✝]
 
-case perm3_swap23
+case swap23
 α : Type
 x : α
 l₁ l₂ : List α
@@ -1373,9 +1373,7 @@ broken it up into a number of sub-proofs, which we then assemble
 to prove the main lemma.
 
 Your job is to complete the proofs of the helper lemmas; the main
-lemma relies on these. Several of the lemmas about {name}`Nat.ble` that were
-in an optional exercise earlier in the {ref "IndProp"}[IndProp] chapter may be
-useful here ─ in particular, {name}`lt_ge_cases` and {name}`add_le`.
+lemma relies on these.
 
 ::::exercise (rating := 2) (name := "weak_pumping_char")
 ```lean
@@ -1414,9 +1412,9 @@ theorem weak_pumping_app {α : Type} (s₁ s₂ : List α) (re₁ re₂ : RegExp
   obtain h | h :
     pumpingConstant re₁ ≤ s₁.length ∨ pumpingConstant re₂ ≤ s₂.length := by
     solution!
-      rw [append_length] at hLen
-      apply add_le_cases
-      apply hLen
+      rw [List.length_append] at hLen
+      simp [pumpingConstant] at hLen
+      lia
   case inl =>
     solution!
       specialize ih₁ h
@@ -1562,7 +1560,7 @@ theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α)
       s₁ ++ s₂ = s₀ ++ s₃ ++ s₄ ∧
       s₃  ≠ [ ] ∧
       (∀ m : Nat, s₀ ++ napp m s₃ ++ s₄ =~ .Star re)  := by
-  rw [append_length] at *
+  rw [List.length_append] at *
   obtain hs₁len0 | ⟨s₁len, hs₁re₁⟩ | hs₁re₁ :
     (s₁.length = 0
       ∨ (s₁.length ≠ 0 ∧ s₁.length < pumpingConstant re)
@@ -1574,7 +1572,7 @@ theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α)
         right
         have hcases : (List.length (h :: s₁') < pumpingConstant re
                       ∨ pumpingConstant re ≤ List.length (h :: s₁')) := by
-          apply lt_ge_cases
+          lia
         cases hcases with
         | inl =>
           left; constructor
@@ -1669,3 +1667,120 @@ Add `gradeTheorem 10 pumping` once the proof is filled in.
 end Pumping
 end RegExp
 ```
+
+## Palindrome Revisit
+
+:::::exercise (rating := 5) (name := "palindrome_converse") (optional := true)
+
+Here is one possible definition of the palindrome inductive predicate, {name}`Pal`,
+which we have seen in the last chapter.
+
+```lean
+namespace PalConv
+
+inductive Pal {α : Type} : List α → Prop where
+  | nil : Pal []
+  | singleton {x : α} : Pal [x]
+  | cons_snoc {x : α} {l : List α} (h : Pal l) : Pal (x :: (l ++ [x]))
+```
+
+We prove that `∀ l, Pal l → l = l.reverse`.
+The converse direction is also true, but significantly more difficult, due
+to the lack of evidence.  Using the of the `Pal` above the prove that
+
+```display
+∀ l, l = l.reverse → Pal l
+```
+
+:::dev "Yipeng Liu (berberman)"
+
+A similar proof using strong induction!
+(`Nat.strongRec` is available in Batteries.)
+
+```display
+theorem reverse_pal {α : Type} {l : List α}
+    (h : l = l.reverse) : Pal l := by
+  induction hlen : l.length using Nat.strongRec generalizing l with
+  | ind n ih =>
+    cases l with
+    | nil => constructor
+    | cons x xs =>
+      cases hxs : xs.reverse with
+      | nil =>
+        rw [← List.reverse_nil] at hxs
+        simp only [List.reverse_nil, List.reverse_eq_nil_iff] at hxs
+        subst xs
+        constructor
+      | cons y ys =>
+        rw [List.reverse_cons, hxs] at h
+        injection h with hxy htail
+        subst y
+        simp only [htail, List.append_eq, List.reverse_append, List.reverse_cons, List.reverse_nil,
+          List.nil_append, List.cons_append, List.cons.injEq, true_and] at hxs
+        rw [htail]
+        apply Pal.cons_snoc
+        apply ih ys.length _ hxs.symm rfl
+        rw [← hlen]
+        simp only [htail, List.append_eq, List.length_cons, List.length_append, List.length_nil,
+          Nat.zero_add]
+        lia
+```
+:::
+
+:::solution
+
+```lean
+/- Proving the converse theorem is much harder, because a standard
+    induction over the list `l` doesn't work.  The trick to the
+    following proof, due to Nathan Collins, is to induct over _half
+    the length_ of `l`. -/
+
+theorem reverse_pal {α : Type} {n : Nat} {l : List α}
+    (hlen : l.length / 2 = n) (hrev : l = l.reverse) : Pal l := by
+  induction n generalizing l with
+  /- (length l) / 2 = 0 || l has length 0 or 1 -/
+  | zero =>
+    cases l with
+    | nil => constructor
+    | cons x xs =>
+      cases xs with
+      | nil => constructor
+      | cons y ys =>
+        /- impossible : (x :: y :: ys) has length > 1 -/
+        simp only [List.length_cons, simp_lemmas_example.add_succ, Nat.add_zero,
+          Nat.div_eq_zero_iff, reduceCtorEq, false_or] at hlen
+        lia
+  /- (length l) / 2 >= 1  || l has length at least 2 -/
+  | succ n ih =>
+    cases l with
+    | nil => rw [List.length_nil, Nat.zero_div] at hlen; contradiction
+    | cons x xs =>
+      rw [List.length_cons] at hlen
+      rw [List.reverse_cons] at hrev
+      cases heq : xs.reverse with
+      | nil =>
+        simp only [List.reverse_eq_nil_iff] at heq
+        subst xs
+        constructor
+      | cons y ys =>
+        rw [heq] at hrev
+        injection hrev with hxy heq'
+        simp only [heq', List.append_eq, List.reverse_append, List.reverse_cons, List.reverse_nil,
+          List.nil_append, List.cons_append, List.cons.injEq] at heq
+        rw [heq']
+        constructor
+        apply ih
+        · simp only [heq', List.append_eq, List.length_append, List.length_cons, List.length_nil,
+          simp_lemmas_example.add_succ, Nat.add_zero] at hlen
+          lia
+        · exact heq.2.symm
+
+
+theorem palindrome_converse {α : Type} {l : List α} (h : l = l.reverse) : Pal l := by
+  exact reverse_pal rfl h
+
+end PalConv
+```
+:::
+
+:::::
