@@ -135,7 +135,7 @@ theorem apply_exercise (m : Nat)
   solution!
     apply h₂
     apply h₁
-    exact hEven
+    apply hEven
 ```
 
 :::gradeTheorem 2 apply_exercise
@@ -265,9 +265,9 @@ From the goal, Lean can infer the endpoints `x` and `z`,
 namely `[a, b]` and `[e, f]`. But it still needs an intermediate term `y`.
 
 We want to prove `[a, b] = [e, f]`.
-By transitivity, it's enough to prove `[a, b] = ?y` and `?y = [e, f]`, for some intermidiate list `?y`.
-Here `?y` is a _metavariable_: a place holder for a value Lean has not yet determined.
-Before we provide the hypothesis `h₂`, Lean doesn't know that this intermediate list shoud be `[c, d]`.
+By transitivity, it's enough to prove `[a, b] = ?y` and `?y = [e, f]`, for some intermediate list `?y`.
+Here `?y` is a _metavariable_: a placeholder for a value Lean has not yet determined.
+Before we provide the hypothesis `h₂`, Lean doesn't know that this intermediate list should be `[c, d]`.
 ::::
 
 ```lean +error (name := trans_err1)
@@ -299,7 +299,7 @@ h₂ : [c, d] = [e, f]
 ⊢ List Nat
 ```
 
-One way to resolve this is to supply all the arguments and hypotheses explicity:
+One way to resolve this is to supply all the arguments and hypotheses explicitly:
 
 ```lean
 example (a b c d e f : Nat)
@@ -311,7 +311,7 @@ example (a b c d e f : Nat)
 
 :::full
 In the previous example, we had to specify the `x` and `z` arguments
-to {name}`trans_eq` before we could supply `[c, d]` for `y` or `eq1` and `eq2` for
+to {name}`trans_eq` before we could supply `[c, d]` for `y` or `h₁` and `h₂` for
 the premises. However, we just said that Lean was able to infer these arguments, so it's
 a bit redundant (and wordy) for us to do it.
 :::
@@ -344,7 +344,7 @@ example (a b c d e f : Nat)
 Like any other kind of software, there are conventions and best practices associated
 with writing proofs in Lean. One of these conventions concerns the use of the {tactic}`exact`
 tactic. When fully applying another theorem like in the previous examples,
-it is considered good practice to use the {tactic}`exact` tactic instead of {tactic}`apply`.This signals to
+it is considered good practice to use the {tactic}`exact` tactic instead of {tactic}`apply`. This signals to
 a reader of the proof that the proof is "exactly" an instance of another lemma, and that nothing
 of particular interest is happening here. This achieves a similar goal as when
 a mathematician says that one result is "just" an instance of another.
@@ -555,17 +555,16 @@ assumption is nonsensical.
 
 ::::terse
 Two terms beginning with different constructors (like
-like `0` and {name}`Nat.succ`, or {name}`true` and {name}`false`) can never be equal.
+`0` and {name}`Nat.succ`, or {name}`true` and {name}`false`) can never be equal.
 ::::
 
 :::slidebreak
 :::
 
-The {tactic}`contradiction` tactic, which we've already seen for handling
-cases where we have assumed {name}`False`, also embodies this principle:
-if we have a a hypothesis involving an equality between different
-constructors (e.g., {lean}`false = true`), {tactic}`contradiction` solves the current
-goal immediately.  Some examples:
+The {tactic}`contradiction` tactic embodies this principle. If the context
+contains a contradictory hypothesis, such as an equality between different
+constructors (e.g., {lean}`false = true`), {tactic}`contradiction` solves the
+current goal immediately. Some examples:
 
 ```lean
 example (n m : Nat)
@@ -670,17 +669,21 @@ and we apply the tactic `injection h with hxy`.  What will happen?
 
 (2) The tactic fails.
 
-(3) Hypothesis `h` becomes `hxy : x = y`.
+(3) Lean adds a hypothesis `hxy : x = y`, while the goal remains `y = x`.
 
 (4) None of the above.
 
 :::quizSolution
 
+(3)
+
 ```lean
 example (x y : RGB)
     (h : Color.primary x = Color.primary y) :
-    x = y := by
+    y = x := by
   injection h with hxy
+  symm
+  assumption
 ```
 
 :::
@@ -911,7 +914,7 @@ example (a b c d : Nat) (hab : a = b) (hcd : c = d) :
 The tactic `apply t at h` matches an implication `t`
 (say, of the form `a → b`) against a hypothesis `h` in the local
 context. Unlike ordinary {tactic}`apply`, which matches the goal against `b`
-and replaces it with the subgoal `a`), `apply t at h` matches the type of `h`
+and replaces it with the subgoal `a`, `apply t at h` matches the type of `h`
 against `a` and, if successful, replaces `h` with a hypothesis of type `b`.
 
 In other words, `apply t at h` gives us a form of "forward
@@ -1032,7 +1035,7 @@ example (m : Nat) (h : ∀ n, m * n = 0) : m = 0 := by
 
 ::::::full
 :::::exercise (rating := 3) (name := "nth?_always_none")
-Use {tactic}`have`, {tactic}`replace`, or {tactic}`specialize` to prove the the following lemma,
+Use {tactic}`have`, {tactic}`replace`, or {tactic}`specialize` to prove the following lemma,
 following the model of the examples above. Do not use {tactic}`induction`.
 
 ```lean
@@ -1054,7 +1057,7 @@ theorem nth?_always_none {l : List α} (h : ∀ i, nth? l i = none) :
 
 Tactics like {tactic}`have` and {tactic}`replace` can also be used with lemmas and
 theorems we've already proven, not just things in our context.
-Using these tactis before {tactic}`apply` gives us yet another way to
+Using these tactics before {tactic}`apply` gives us yet another way to
 control where {tactic}`apply` does its work.
 
 ```lean
@@ -1095,10 +1098,9 @@ it maps different arguments to different results).
 ::::
 
 ::::full
-Sometimes {tactic}`induction` gives us an an induction hypothesis too specific to be useful.
-This can happen when another varaible in the theorem is fixed during the induction,
-even though the induction step might need to use it with different values of that
-variables.
+Sometimes {tactic}`induction` gives us an induction hypothesis too specific to be useful.
+This can happen when another variable in the theorem is fixed during the induction,
+even though the induction step might need to use that variable at different values.
 
 For example, suppose we want to show that {name}`Nat.double` is injective —
 i.e., that it maps different arguments to different results:
@@ -1197,8 +1199,8 @@ this is exactly what we normally want — we are considering some particular
 {lean}`n` and {lean}`m`, together with the hypothesis {lean}`n.double = m.double` and trying
 to prove `n = m`.
 
-The claim itself makes perfect sense, but for the induction, however, keeping {lean}`m` fixed
-causes the trouble: we are proving, for _all_ {lean}`n`, the proposition
+The claim itself makes perfect sense, but keeping {lean}`m` fixed during induction
+causes trouble: we are proving, for _all_ {lean}`n`, the proposition
 
   - `P n` = "if {lean}`n.double = m.double`, then {lean}`n = m`"
 
@@ -1222,7 +1224,7 @@ then we can prove
 
    - "if {lean}`(n + 1).double = m.double` then {lean}`n + 1 = m`".
 
-To see why this is strange, let's choose of a particular {lean}`m` —
+To see why this is strange, let's choose a particular {lean}`m` —
 say, `5`.  The statement is then saying that, if we know
 
   - `Q` = "if {lean}`n.double = 10` then {lean}`n = 5`"
@@ -1293,7 +1295,7 @@ _Proof_: We prove by induction on {lean}`n` that, for _any_ {lean}`m`,
        Clearly {lean}`0` cannot equal {lean}`m'.double + 2`, so this case is impossible.
 
   - Second, suppose {lean}`n = n' + 1`. The induction hypothesis says that, for every {lean}`m`,
-    if {lean}`(n' + 1).double = m.double` then {lean}`n' + 1 = m`. Again there are two cases
+    if {lean}`n'.double = m.double` then {lean}`n' = m`. Again there are two cases
     to consider for {lean}`m`:
     1. If {lean}`m = 0`, then by the definition of {name}`Nat.double` our assumption says
        {lean}`n'.double + 2 = 0`, which is impossible.
@@ -1353,7 +1355,7 @@ quantifiers, everywhere.
 :::solution
 _Theorem_: For any natural numbers {lean}`n` and {lean}`m`, if {lean}`n + n = m + m`, then
   {lean}`n = m`.
-_Proof_: We prove by induction on {lean}`n` that for _every_ natrual number {lean}`m`,
+_Proof_: We prove by induction on {lean}`n` that for _every_ natural number {lean}`m`,
   if {lean}`n + n = m + m`, then `n = m`.
 
   - First, suppose that {lean}`n = 0`. We must show that for every `m`, if {lean}`0 + 0 = m + m` then
@@ -1361,12 +1363,12 @@ _Proof_: We prove by induction on {lean}`n` that for _every_ natrual number {lea
     Otherwise {lean}`m = m' + 1` for some {lean}`m'`.
     Then {lean}`m + m` cannot equal {lean}`0 + 0`. Thus this case is impossible.
   - Now suppose that {lean}`n = n' + 1`.
-    The induction hypothesis says that, for every natrual number {lean}`m`,
+    The induction hypothesis says that, for every natural number {lean}`m`,
     {lean}`n' + n' = m + m` implies {lean}`n' = m`.
     We must show, for every {lean}`m`, that {lean}`(n' + 1) + (n' + 1) = m + m`
     implies {lean}`n' + 1 = m`. Again there are two cases for {lean}`m`.
     If {lean}`m = 0`, then the assumed equality is impossible — {lean}`(n' + 1) + (n' + 1)`
-    cannot equal to `0`. Otherwise {lean}`m = m' + 1` for some {lean}`m'`.
+    cannot equal `0`. Otherwise {lean}`m = m' + 1` for some {lean}`m'`.
     Cancelling one successor from each side of the equality and rearranging the additions gives
     {lean}`n' + n' = m' + m'`. We can now apply the induction hypothesis with {lean}`m'` to obtain {lean}`n' = m'`.
     Then it follows that {lean}`n' + 1 = m' + 1`, which is our final goal.
@@ -1420,7 +1422,7 @@ _provided that_ {lean}`n.double = m.double`, not just {lean}`n = m`.
 When we write `rw [double_injective n m]`, Lean uses the conclusion {lean}`n = m` to rewrite
 the goal, and then asks us to prove the hypothesis needed by {name}`double_injective`.
 Thus we get two goals: the updated main goal, `m + p = q`, which follows from `hm`, and the
-condition from {name}`double_injective`, {lean}`n.double = m.double`, whicch follows from `h`.
+condition from {name}`double_injective`, {lean}`n.double = m.double`, which follows from `h`.
 :::
 
 If we rewrite with a conditional statement of the form
@@ -1477,22 +1479,23 @@ theorem length_append_cons {α : Type} {l₁ l₂ : List α} {x : α} {n : Nat}
 
 :::::exercise (rating := 3) (name := "length_append_self") (optional := true)
 
-Prove this by induction on `l₁`, without using {name}`List.length_append`.
+Prove this by induction on `l`, without using {name}`List.length_append`.
 Hint: you might need to use {name}`length_append_cons` you just proved.
 
 ```lean
 theorem length_append_self {α : Type} {n : Nat} {l : List α}
     (h : l.length = n) :
     (l ++ l).length = n + n := by
-  induction l generalizing n with
-  | nil =>
-    rw [List.append_nil,  List.length_nil] at *
-    rw [← h]
-  | cons x xs ih =>
-    rw [List.cons_append, List.length_cons] at *
-    rw [← length_append_cons rfl]
-    rw [ih rfl, ← h]
-    rw [Nat.add_add_add_comm]
+  solution!
+    induction l generalizing n with
+    | nil =>
+      rw [List.append_nil, List.length_nil] at *
+      rw [← h]
+    | cons x xs ih =>
+      rw [List.cons_append, List.length_cons] at *
+      rw [← length_append_cons rfl]
+      rw [ih rfl, ← h]
+      rw [Nat.add_add_add_comm]
 ```
 
 :::gradeTheorem 3 length_append_self
@@ -1523,14 +1526,14 @@ theorem list_ext {l₁ l₂ : List α} (h : ∀ n, nth? l₁ n = nth? l₂ n) : 
         have hyx := h 0
         rw [nth?_cons_zero, nth?_cons_zero] at hyx
         injection hyx with hyx
-        subst hyx
+        rw [hyx]
         have h' (n) : nth? l₁' n = nth? l₂' n := by
           specialize h (n + 1)
           rw [nth?_cons_succ, nth?_cons_succ] at h
           exact h
         rw [ih h']
 ```
-:::gradeTheorem 3 length_append_self
+:::gradeTheorem 3 list_ext
 :::
 :::::
 
@@ -1556,11 +1559,11 @@ theorem diagonal_induction (p : Nat → Nat → Prop)
         apply hzs
         apply ih
     | succ m' ih =>
-      induction n with
+      cases n with
       | zero =>
         apply hsz
         apply ih
-      | succ n' ih' =>
+      | succ n' =>
         apply hss
         apply ih
 ```
@@ -1577,7 +1580,7 @@ perform case analysis of the value of some variable.  Sometimes we
 need to reason by cases on the result of some _expression_.  We
 can also do this with {tactic}`cases`.
 
-Here are some examples:
+Here is an example:
 ::::
 
 ::::terse
@@ -1601,12 +1604,12 @@ we are stuck on `(if test x = true then x else x) = x`.  But either
 `test x` is `true` or it isn't,
 so we can use `cases (test x)` to let us reason about the two cases.
 
-In general, the {tactic}`cases` tactic can be used to perform case
-analysis of the results of arbitrary computations.  If `e` is an
-expression whose type is some inductively defined type `T`, then,
-for each constructor `c` of `T`, `cases e` generates a subgoal
-in which all occurrences of `e` (in the goal and in the context)
-are replaced by `c`.
+In general, the {tactic}`cases` tactic can perform case analysis on
+the results of arbitrary computations. If `e` has an inductively
+defined type `T`, then `cases e` generates one subgoal for each
+constructor of `T`, specializing the goal to that case. It does not
+necessarily rewrite occurrences of `e` in hypotheses; when that
+information is needed, we can save an equation as described below.
 ::::
 
 ## Destructing Tuples
@@ -1621,7 +1624,7 @@ When we have a value `v : α × β` in our context, we can
 get the first and second projections of `v` using this tactic:
 
 ```display
-let ⟨a, β⟩ := v
+let ⟨a, b⟩ := v
 ```
 
 ::::::full
@@ -1799,7 +1802,6 @@ Managing goals and hypotheses:
      its premises become new goals
 
   - `apply thm at h`: use a theorem on a hypothesis in the context, replacing `h` by the resulting
-
     fact (forward reasoning)
 
   - `specialize h ...`: instantiate quantified variables in a hypothesis, modifying `h` in place
@@ -1808,7 +1810,7 @@ Managing goals and hypotheses:
 
   - `have h : P := ...`: prove a local fact `P` and add it to the context with the name `h`
 
-  -  `contradiction`: close the current goal when the context contains contradictory assumptions
+  - `contradiction`: close the current goal when the context contains contradictory assumptions
 
 Equality, rewriting, and unfolding:
 
@@ -1832,7 +1834,8 @@ Equality, rewriting, and unfolding:
   - `congr`: use congruence to reduce an equality between expressions with the same outer form;
     for example, a goal `f x = f y` may be reduced to `x = y`
 
-  - `injection h with ...`: use injectivity of constructors to extract equalities from constructor applications equations
+  - `injection h with ...`: use injectivity of constructors to extract equalities from equations
+    between constructor applications
 
   - `injections`: repeatedly use constructor injectivity on suitable equalities in the context
 
@@ -1858,10 +1861,6 @@ Induction:
 
 ::::::full
 :::::exercise (rating := 2) (name := "append_left_cancel")
-:::dev "Niklas Halonen (xhalo32)"
-After `injections _ eq`, `eq`'s type uses `.append` rather than `++` which is a bit confusing.
-Not sure why that happens.
-:::
 ```lean
 theorem append_left_cancel {α : Type} (l₁ l₂ l₃ : List α)
     (h : l₁ ++ l₂ = l₁ ++ l₃) :
@@ -1870,8 +1869,8 @@ theorem append_left_cancel {α : Type} (l₁ l₂ l₃ : List α)
     induction l₁ with
     | nil => assumption
     | cons x xs ih =>
-      injections _ eq
-      exact ih eq
+      apply ih
+      injection h
 ```
 :::gradeTheorem 2 append_left_cancel
 :::
@@ -1921,7 +1920,8 @@ theorem map_injective_of_injective {α β : Type}
 
 
 :::::exercise (rating := 3) (name := "unzip_zip") (level := Advanced) (manual := true)
-We proved {name}`zip_unzip'` that {name}`zip`ping the result of {name}`unzip` recovers the original list.
+We proved in {name}`zip_unzip'` that {name}`zip`ping the result of {name}`unzip'`
+recovers the original list.
 What about the other direction?  Complete and prove the following `unzip_zip`:
 
 ```display
