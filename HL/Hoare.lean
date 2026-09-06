@@ -1286,18 +1286,10 @@ end HasTriple.Delab
 #guard_msgs in
 #check {{ X ≤ 5 }} X := X + 1 {{ X ≤ 7 }}
 
-/--
-info: {{X ≤ 5}}
-  X := X;
-  Y := Y {{X ≤ 7}} : Prop
--/
+/-- info: {{X ≤ 5}} X := X; Y := Y {{X ≤ 7}} : Prop -/
 #guard_msgs in
 #check {{ X ≤ 5 }} X := X; Y := Y {{ X ≤ 7 }}
 ```
-:::
-
-:::dev "Niklas Halonen (xhalo32)"
-Is it possible to add a line break after the `Y := Y`?
 :::
 
 :::::exercise (rating := 1) (name := "hoare_post_true")
@@ -3009,7 +3001,7 @@ This means we need to redefine the `macro_rules` with the new `Com`.
 
 ```lean
 /-- One-sided conditional -/
-scoped syntax "if1 " "(" imp_bexp ")" ppHardSpace "{" ppLine imp_com ppDedent(ppLine "}") : imp_com
+scoped syntax "if1 " "(" imp_bexp ")" ppHardSpace "{" imp_com "}" : imp_com
 
 namespace Com
 
@@ -3066,11 +3058,7 @@ end Delab
 
 :::ignore
 ```lean -show
-/-- info: imp {
-  if1 (X = 0) {
-    X := 1
-  }
-} : Com -/
+/-- info: imp {if1 (X = 0) {X := 1} } : Com -/
 #guard_msgs in
 #check imp { if1 (X = 0) { X := 1 } }
 ```
@@ -3173,12 +3161,7 @@ attribute [irreducible] ValidHoareTriple
 
 :::ignore
 ```lean -show
-/--
-info: {{True}}
-  if1 (X = 0) {
-    skip
-  } {{True}} : Prop
--/
+/-- info: {{True}} if1 (X = 0) {skip} {{True}} : Prop -/
 #guard_msgs in
 #check ({{ True }} if1 (X = 0) { skip } {{ True }})
 ```
