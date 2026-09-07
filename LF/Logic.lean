@@ -42,55 +42,6 @@ variable (a b c : Prop) (n m : Nat) (α : Type) (e1 e2 x y : α)
 ```
 :::
 
-:::dev "Yipeng Liu (berberman)" PotentialImprovement
-
-MWH: This was moved here from `Induction`. Work it in somewhere here, or
-maybe in IndProp or Tactics?
-
-This is an interesting question...
-
-Logically, induction subsumes case analysis —
-you can simply ignore those inductive hypotheses
-so anything provable by case analysis is also provable
-using the induction principle.
-
-However, Lean's `cases` has specialized machinery for indexed inductive families.
-Here are some examples that `cases` can solve while `induction` can't:
-
-```lean
--- substitution
-example (x : Nat) (h : x = 0) : Nat.succ x = 1 := by
-  -- induction h
-  cases h
-  rfl
-```
-
-```lean
--- disjointness
-example (h : (0 : Nat) = 1) : False := by
-  -- induction h
-  cases h
-```
-
-```lean
--- injectivity
-example {m n : Nat} (h : Nat.succ m = Nat.succ n) : m = n := by
-  -- induction h
-  cases h
-  rfl
-```
-
-```lean
--- acyclicity
-example (n : Nat) (h : n = Nat.succ n) : False := by
-  -- induction h
-  cases h
-```
-
-... and there are more!
-
-:::
-
 ::::hide
 ```
 -- QUIZ

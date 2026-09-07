@@ -52,7 +52,7 @@ import LF.Poly
 import LF.CustomTactics
 ```
 
-# The `apply` Tactic
+# The {tactic}`apply` Tactic
 
 ::::full
 We often encounter situations where the goal to be proved is
@@ -410,11 +410,10 @@ inductive Nat : Type where
   | succ (n : Nat)
 ```
 
-It is obvious from this definition that every number has one of
+By this definition, every number has exactly one of
 two forms: either it is the constructor `0` or it is built by
-applying the constructor `.succ` to another number.  But there is more
-here than meets the eye: implicit in the definition are two
-additional facts:
+applying the constructor `.succ` to another number.
+There are two important consequences of this definition:
 
 - The constructor `.succ` is _injective_ (or _one-to-one_).
   That is, if `n + 1 = m + 1`, it must also be that `n = m`.
@@ -432,13 +431,11 @@ neither here nor there.)  And so on.
 ::::
 
 ::::terse
-The constructors of inductive types are _injective_ (or _one-to-one_) and _disjoint_.
-
+The constructors of inductive types are _injective_ (aka _one-to-one_) and _disjoint_.
 E.g., for {name}`Nat`:
 
 - if `n + 1 = m + 1` then it must be that `n = m`
 - `0` is not equal to `n + 1` for any `n`
-
 ::::
 
 ## Injectivity
@@ -475,32 +472,24 @@ exploit injectivity of any constructor (not just {name}`Nat.succ`).
 example (n m : Nat)
     (h : n + 1 = m + 1) :
     n = m := by
-  injection h with hmn
+  injection h
 ```
 
 ::::full
-By writing `injection h with hmn` at this point, we are asking Lean
-to generate all equations that it can infer from `h` using the
-injectivity of constructors (in the present example, the equation
-`n = m`). This equation is added as a hypothesis (called
-`hmn` in this case) into the context. Because this equation is exactly our goal,
-in this case the {tactic}`injection` tactic is able to automatically close the goal.
+Writing `injection h` asks Lean to generate all equations
+that it can infer from `h` using the injectivity of constructors,
+adding them to the context.
+In the present example, Lean can infer that `n = m` from `n + 1 = m + 1`.
+When a generated equation satisfies the goal, as is the case here,
+the {tactic}`injection` tactic automatically closes the goal.
 ::::
-
-`with ...` can be omitted if the generated equations are not used.
-
-```lean
-example (n m : Nat)
-    (h : n + 1 = m + 1) :
-    n = m := by
-  injection h
-```
 
 :::slidebreak
 :::
 
-Here's a more interesting example that shows how {tactic}`injection` can
-derive multiple equations at once.
+When generated equations do not immediately close the goal,
+we can add `with` to name the equations to be added to the context
+(otherwise Lean generates names for us).
 
 ```lean
 example (n m o : Nat)
@@ -513,8 +502,8 @@ example (n m o : Nat)
 ```
 
 There is also a related tactic, {tactic}`injections`, that applies the {tactic}`injection`
-tactic to all your hypotheses at once, as many times in a row as it can. Using this
-tactic can avoid needing to repeatedly use {tactic}`injection` on lists. For example:
+tactic to all hypotheses, repeatedly. Using it simplifies the proof
+of the above example.
 
 ```lean
 example (n m o : Nat)
@@ -547,7 +536,7 @@ So much for injectivity of constructors.  What about disjointness?
 ::::full
 The principle of disjointness says that two terms beginning
 with different constructors (like `0` and {name}`Nat.succ`, or {name}`true` and {name}`false`)
-can never be equal. This means that, any time we find ourselves
+can never be equal. Therefore, any time we find ourselves
 in a context where we've _assumed_ that two such terms are equal,
 we are justified in concluding anything we want, since the
 assumption is nonsensical.
@@ -562,9 +551,8 @@ Two terms beginning with different constructors (like
 :::
 
 The {tactic}`contradiction` tactic embodies this principle. If the context
-contains a contradictory hypothesis, such as an equality between different
-constructors (e.g., {lean}`false = true`), {tactic}`contradiction` solves the
-current goal immediately. Some examples:
+contains a contradictory hypothesis, such as {lean}`false = true`,
+{tactic}`contradiction` solves the current goal immediately. Some examples:
 
 ```lean
 example (n m : Nat)
@@ -582,8 +570,17 @@ These examples are instances of a logical principle known as the
 _principle of explosion_, which asserts that a contradictory
 hypothesis entails anything (even manifestly false things!).
 
-Notice that due to the way addition on naturals is defined,
-deriving a contradiction from `1 + n = 0` is not as trivial as it seems.
+:::dev "Mike Hicks (mwhicks1)"
+Is there a way to relate this to the interpretation of implication
+P -> Q where it is true when P is false and Q is true? It seems like
+maybe this is a computational interpretation so perhaps not.
+:::
+
+In the above example, `n + 1` is shorthand for a constructor application `Nat.succ n`
+so contradiction applies to it directly. Sometimes you
+need to do a little work to expose a contradictory hypothesis involving
+constructors. For example, recall that {name}`Nat.add` recurses on its
+second argument, so deriving a contradiction from `1 + n = 0` is not direct.
 
 ```lean +error
 example (n : Nat)
@@ -803,23 +800,34 @@ Therefore it doesn't reduce to `x.succ`, so injectivity of constructors can't be
 :::slidebreak
 :::
 
+## Tactic {tactic}`congr`
+
 The injectivity of constructors allows us to reason that
 {lean}`∀ (n m : Nat), n + 1 = m + 1 → n = m`.  The converse of this
-implication is an instance of a more general fact about both
-constructors and functions:
+implication is also true:
 
 ```lean
-example {α β : Type} (f : α → β) (x y : α)
-    (h : x = y) : f x = f y := by
-  rw [h]
-
 example (n m : Nat) (h : n = m) :
     n + 1 = m + 1 := by
   rw [h]
 ```
 
+::::dev "Mike Hicks (mwhicks1)"
+Is the general "fact" highlighted below a _principle_ of _congruence_ ?
+Let's say so if that's the case.
+::::
+
+This is an instance of a more general fact about both
+constructors _and_ functions:
+
+```lean
+example {α β : Type} (f : α → β) (x y : α)
+    (h : x = y) : f x = f y := by
+  rw [h]
+```
+
 ::::full
-Indeed, there is also a tactic named {tactic}`congr` that can
+There is a tactic named {tactic}`congr` that can
 prove such goals directly.  Given a goal of the form
 `f a₁ ... aₙ = g b₁ ... bₙ`, the tactic {tactic}`congr` will produce subgoals
 of the form `f = g`, `a₁ = b₁`, ..., `aₙ = bₙ`. At the same time,
@@ -909,6 +917,17 @@ example (a b c d : Nat) (hab : a = b) (hcd : c = d) :
 :::
 
 # Using {tactic}`apply` on Hypotheses
+
+::::dev "Mike Hicks (mwhicks1)"
+Should this section be part of the section that introduces `apply` in
+the first place? I could imagine that goes here only if it relies on
+injectivity, etc. that have just been presented, but come after the
+introduction of `apply`. If so, I wonder if you could move the `apply`
+introduction here instead.
+
+Separate point: If this section is really about forward reasoning
+(and we use more than `apply` to show that), we should rename it.
+::::
 
 ::::full
 The tactic `apply t at h` matches an implication `t`
@@ -1061,11 +1080,11 @@ Using these tactics before {tactic}`apply` gives us yet another way to
 control where {tactic}`apply` does its work.
 
 ```lean
-example (a b c d e f : Nat)
-    (h₁ : [a, b] = [c, d])
-    (h₂ : [c, d] = [e, f]) :
-    [a, b] = [e, f] := by
-  have h := trans_eq (y := [c, d])
+example (u v w x y z : Nat)
+    (h₁ : [u, v] = [w, x])
+    (h₂ : [w, x] = [y, z]) :
+    [u, v] = [y, z] := by
+  have h := trans_eq (b := [w, x])
   apply h
   /- This tactic closes a goal if it appears anywhere in the context.
      In this case we could also write `exact h₁` ... -/
@@ -1573,6 +1592,54 @@ theorem diagonal_induction (p : Nat → Nat → Prop)
 :::::
 
 # Using {tactic}`cases` on Expressions
+
+:::dev "Mike Hicks (mwhicks1))"
+
+Is this worth adding somewhere around here, given that we have
+just introduced injectivity and disjointness tactics, and that we are
+now talking about the generalized use of `cases` ?
+
+Logically, induction subsumes case analysis —
+you can simply ignore those inductive hypotheses
+so anything provable by case analysis is also provable
+using the induction principle.
+
+However, Lean's `cases` has specialized machinery for indexed inductive families.
+Here are some examples that `cases` can solve while `induction` can't:
+
+```lean
+-- substitution
+example (x : Nat) (h : x = 0) : Nat.succ x = 1 := by
+  -- induction h
+  cases h
+  rfl
+```
+
+```lean
+-- disjointness
+example (h : (0 : Nat) = 1) : False := by
+  -- induction h
+  cases h
+```
+
+```lean
+-- injectivity
+example {m n : Nat} (h : Nat.succ m = Nat.succ n) : m = n := by
+  -- induction h
+  cases h
+  rfl
+```
+
+```lean
+-- acyclicity
+example (n : Nat) (h : n = Nat.succ n) : False := by
+  -- induction h
+  cases h
+```
+
+... and there are more!
+
+:::
 
 ::::full
 We have seen many examples where {tactic}`cases` is used to
