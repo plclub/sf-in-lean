@@ -40,11 +40,11 @@ properties of functional programs.
 We will see:
 - how to reason about data constructors -- in particular, how to
   use the fact that they are injective and disjoint;
-- more details on how to reason by case analysis.
+- more details on how to reason by case analysis;
 - how to use auxiliary lemmas in both "forward-" and
-  "backward-style" proofs;
+  "backward-style" proofs; and
 - how to strengthen an induction hypothesis, and when such
-  strengthening is required; and
+  strengthening is required.
 ::::
 
 ```importBlock
@@ -84,7 +84,7 @@ neither here nor there.)  And so on.
 ::::
 
 ::::terse
-The constructors of inductive types are _injective_ (aka _one-to-one_) and _disjoint_.
+The constructors of inductive types are _injective_ (_one-to-one_) and _disjoint_.
 E.g., for {name}`Nat`:
 
 - if `n + 1 = m + 1` then it must be that `n = m`
