@@ -62,6 +62,8 @@ previously proved lemma.
 
 The {tactic}`apply` tactic is useful when the goal is instead the
 conclusion of an implication.
+If the conclusion of the implication matches the current goal,
+its premises become new subgoals to be proved.
 
 :::full
 For example, suppose we have a hypothesis
@@ -75,19 +77,7 @@ example (p q : Prop) (h : p → q) (hp : p) : q := by
   exact hp
 ```
 
-::::full
-The {tactic}`apply` tactic also works with hypotheses
-and lemmas whose types are implications.
-If the conclusion of the implication matches the current goal,
-its premises become new subgoals to be proved.
-::::
-
-:::slidebreak
-:::
-
-::::terse
-{tactic}`apply` also works with hypotheses whose types are implications:
-::::
+Here is another example:
 
 ```lean
 example (n m o p : Nat) (hnm : n = m) (h : n = m → [n, o] = [m, p]) :
@@ -167,6 +157,12 @@ example (n m : Nat) (h : n = 0 → n = m) (hn : n = 0) : m = n := by
   exact hn
 ```
 
+:::dev "Mike Hicks (mwhicks1)"
+The above example introduces the `symm` tactic as a sort of aside.
+It would be nice if this were made more evident in the TOC for the
+chapter, for easier searching.
+:::
+
 ::::::full
 :::::exercise (rating := 2) (name := "apply_exercise1")
 You can use {tactic}`apply` with previously defined theorems, not
@@ -201,8 +197,7 @@ other.
 
 The {tactic}`apply` tactic works backward from a known fact.
 It takes a hypothesis, theorem, or constructor whose conclusion
-can be matched with the current goal. Lean uses the goal to infer
-as many of its arguments as possible, and any remaining premises
+can be matched with the current goal, and any remaining premises
 that still need to be proved become new subgoals.
 :::
 :::::
@@ -211,13 +206,13 @@ that still need to be proved become new subgoals.
 ## Supplying arguments to {tactic}`apply`
 
 The following silly example uses two rewrites in a row to
-get from `[a, b]` to `[e, f]`.
+get from `[u, v]` to `[y, z]`.
 
 ```lean
-example (a b c d e f : Nat)
-    (h₁ : [a, b] = [c, d])
-    (h₂ : [c, d] = [e, f]) :
-    [a, b] = [e, f] := by
+example (u v w x y z : Nat)
+    (h₁ : [u, v] = [w, x])
+    (h₂ : [w, x] = [y, z]) :
+    [u, v] = [y, z] := by
   rw [h₁, h₂]
 ```
 
@@ -229,8 +224,8 @@ lemma that records, once and for all, the fact that equality is
 _transitive_.
 
 ```lean
-theorem trans_eq {α : Type} (x y z : α) :
-    x = y → y = z → x = z := by
+theorem trans_eq {α : Type} (a b c : α) :
+    a = b → b = c → a = c := by
   intro h₁ h₂
   rw [h₁, h₂]
 ```
@@ -245,73 +240,82 @@ Lean already provides exactly this theorem as {name}`Eq.trans`:
 Eq.trans.{u} {α : Sort u} {a b c : α} (h₁ : a = b) (h₂ : b = c) : a = c
 ```
 
-In Lean's version, the arguments corresponding to `x`, `y`, and `z` are implicit,
-since they can usually be inferred from the equality hypotheses and the goal.
+:::dev "Mike Hicks (mwhicks1)"
+The above `#check` shows Lean's use of _sorts_, which we have seen before and
+not explained. When is a good time to actually explain this? The `Logic`
+chapter, maybe?
+:::
+
+Notice that in Lean's version, the arguments `a`, `b`, and `c` are implicit.
+::::full
+This is because they can usually be inferred from the equality hypotheses and the goal.
 
 Now let's use our {name}`trans_eq` to prove the example above.
-
-
-::::full
-If we simply write `apply trans_eq`, Lean can infer some arguments from the goal,
-but not the intermediate list or the hypotheses needed for the lemma's premises.
-If you inspect the proof state after {tactic}`apply`, you will see that Lean has created three goals:
-
-1. `[a, b] = ?y`
-2. `?y = [e, f]`
-3. `List Nat`
-
-Recall that {name}`trans_eq` has five arguments.
-From the goal, Lean can infer the endpoints `x` and `z`,
-namely `[a, b]` and `[e, f]`. But it still needs an intermediate term `y`.
-
-We want to prove `[a, b] = [e, f]`.
-By transitivity, it's enough to prove `[a, b] = ?y` and `?y = [e, f]`, for some intermediate list `?y`.
-Here `?y` is a _metavariable_: a placeholder for a value Lean has not yet determined.
-Before we provide the hypothesis `h₂`, Lean doesn't know that this intermediate list should be `[c, d]`.
 ::::
 
-```lean +error (name := trans_err1)
-example (a b c d e f : Nat)
-    (h₁ : [a, b] = [c, d])
-    (h₂ : [c, d] = [e, f]) :
-    [a, b] = [e, f] := by
+If we simply write `apply trans_eq`, Lean can infer some arguments from the goal,
+but not the intermediate list or the hypotheses needed for the lemma's premises.
+```lean +error (name := trans_eq_one)
+example (u v w x y z : Nat)
+    (h₁ : [u, v] = [w, x])
+    (h₂ : [w, x] = [y, z]) :
+    [u, v] = [y, z] := by
   apply trans_eq
 ```
 
-```leanOutput trans_err1
+Here is the proof state after {tactic}`apply`:
+
+```leanOutput trans_eq_one
 unsolved goals
 case a
-a b c d e f : Nat
-h₁ : [a, b] = [c, d]
-h₂ : [c, d] = [e, f]
-⊢ [a, b] = ?y
+u v w x y z : Nat
+h₁ : [u, v] = [w, x]
+h₂ : [w, x] = [y, z]
+⊢ [u, v] = ?b
 
 case a
-a b c d e f : Nat
-h₁ : [a, b] = [c, d]
-h₂ : [c, d] = [e, f]
-⊢ ?y = [e, f]
+u v w x y z : Nat
+h₁ : [u, v] = [w, x]
+h₂ : [w, x] = [y, z]
+⊢ ?b = [y, z]
 
-case y
-a b c d e f : Nat
-h₁ : [a, b] = [c, d]
-h₂ : [c, d] = [e, f]
+case b
+u v w x y z : Nat
+h₁ : [u, v] = [w, x]
+h₂ : [w, x] = [y, z]
 ⊢ List Nat
 ```
 
-One way to resolve this is to supply all the arguments and hypotheses explicitly:
+::::full
+Notice that we have three goals:
+
+1. `[u, v] = ?b`
+2. `?b = [y, z]`
+3. `List Nat`
+
+Recall that {name}`trans_eq` has five arguments.
+From the goal, Lean can infer the endpoints `a` and `c`,
+namely `[u, v]` and `[y, z]`. But it still needs an intermediate term `b`.
+
+We want to prove `[u, v] = [y, z]`.
+By transitivity, it's enough to prove `[u, v] = ?b` and `?b = [y, z]`, for some intermediate list `?b`.
+Here `?b` is a _metavariable_: a placeholder for a value Lean has not yet determined.
+Before we provide the hypothesis `h₂`, Lean doesn't know that this intermediate list should be `[w, x]`.
+::::
+
+One way to resolve this is to supply the arguments and hypotheses explicitly:
 
 ```lean
-example (a b c d e f : Nat)
-    (h₁ : [a, b] = [c, d])
-    (h₂ : [c, d] = [e, f]) :
-    [a, b] = [e, f] := by
-  apply trans_eq [a, b] [c, d] [e, f] h₁ h₂
+example (u v w x y z : Nat)
+    (h₁ : [u, v] = [w, x])
+    (h₂ : [w, x] = [y, z]) :
+    [u, v] = [y, z] := by
+  apply trans_eq [u, v] [w, x] [y, z] h₁ h₂
 ```
 
 :::full
-In the previous example, we had to specify the `x` and `z` arguments
-to {name}`trans_eq` before we could supply `[c, d]` for `y` or `h₁` and `h₂` for
+In the previous example, we had to specify the `a` and `c` arguments
+to {name}`trans_eq` before we could supply `[w, x]` for `b` or `h₁` and `h₂` for
 the premises. However, we just said that Lean was able to infer these arguments, so it's
 a bit redundant (and wordy) for us to do it.
 :::
@@ -319,35 +323,31 @@ a bit redundant (and wordy) for us to do it.
 Thankfully, Lean allows us to use `_`s for positional arguments that it can infer.
 
 ```lean
-example (a b c d e f : Nat)
-    (h₁ : [a, b] = [c, d])
-    (h₂ : [c, d] = [e, f]) :
-    [a, b] = [e, f] := by
+example (u v w x y z : Nat)
+    (h₁ : [u, v] = [w, x])
+    (h₂ : [w, x] = [y, z]) :
+    [u, v] = [y, z] := by
   apply trans_eq _ _ _ h₁ h₂
 ```
 
-If we know the name of the argument we are supplying (in this case `y`), we can
+If we know the name of the argument we are supplying (in this case `b`), we can
 name it directly and avoid typing any `_`s. This feature is called _named arguments_.
 Named arguments can be used in function applications generally, not just with {tactic}`apply`.
 
 ```lean
-example (a b c d e f : Nat)
-    (h₁ : [a, b] = [c, d])
-    (h₂ : [c, d] = [e, f]) :
-    [a, b] = [e, f] := by
-  apply trans_eq (y := [c, d])
+example (u v w x y z : Nat)
+    (h₁ : [u, v] = [w, x])
+    (h₂ : [w, x] = [y, z]) :
+    [u, v] = [y, z] := by
+  apply trans_eq (b := [w, x])
   apply h₁
   apply h₂
 ```
 
 ::::full
-Like any other kind of software, there are conventions and best practices associated
-with writing proofs in Lean. One of these conventions concerns the use of the {tactic}`exact`
-tactic. When fully applying another theorem like in the previous examples,
-it is considered good practice to use the {tactic}`exact` tactic instead of {tactic}`apply`. This signals to
-a reader of the proof that the proof is "exactly" an instance of another lemma, and that nothing
-of particular interest is happening here. This achieves a similar goal as when
-a mathematician says that one result is "just" an instance of another.
+When fully applying another theorem or hypothesis to conclude a proof,
+it is good practice to use the {tactic}`exact` tactic instead of {tactic}`apply`. Doing so signals to
+a reader that the proof is solved _exactly_ by this fact, and nothing more.
 ::::
 
 ::::terse
@@ -356,15 +356,15 @@ with a single application.
 ::::
 
 ```lean
-example (a b c d e f : Nat)
-    (h₁ : [a, b] = [c, d])
-    (h₂ : [c, d] = [e, f]) :
-    [a, b] = [e, f] := by
+example (u v w x y z : Nat)
+    (h₁ : [u, v] = [w, x])
+    (h₂ : [w, x] = [y, z]) :
+    [u, v] = [y, z] := by
   exact trans_eq _ _ _ h₁ h₂
 ```
 
 ::::full
-Recall the {tactic}`calc` we have learned in the {ref "UsingLean"}[UsingLean] chapter.
+Recall the {tactic}`calc` we saw in the {ref "UsingLean"}[UsingLean] chapter.
 It works by chaining equalities together using transitivity,
 serving the same purpose here as applying {name}`trans_eq`.
 ::::
@@ -374,13 +374,13 @@ We can also use {tactic}`calc`.
 ::::
 
 ```lean
-example (a b c d e f : Nat)
-    (h₁ : [a, b] = [c, d])
-    (h₂ : [c, d] = [e, f]) :
-    [a, b] = [e, f] := by
+example (u v w x y z : Nat)
+    (h₁ : [u, v] = [w, x])
+    (h₂ : [w, x] = [y, z]) :
+    [u, v] = [y, z] := by
   calc
-  [a, b] = [c, d] := by rw [h₁]
-  [c, d] = [e, f] := by rw [h₂]
+  [u, v] = [w, x] := by rw [h₁]
+  _ = [y, z] := by rw [h₂]
 ```
 
 :::::exercise (rating := 3) (name := "trans_eq_exercise") (optional := true)
@@ -399,7 +399,7 @@ theorem trans_eq_exercise (n m o p : Nat)
 :::
 :::::
 
-# The {tactic}`injection` and {tactic}`contradiction` Tactics
+# Tactics {tactic}`injection` and {tactic}`contradiction`
 
 ::::full
 Recall the definition of natural numbers:
