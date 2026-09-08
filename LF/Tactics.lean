@@ -91,6 +91,8 @@ E.g., for {name}`Nat`:
 - `0` is not equal to `n + 1` for any `n`
 ::::
 
+## Injectivity
+
 We can _prove_ the injectivity of {name}`Nat.succ` by using the {name}`Nat.pred` function:
 
 ```lean
@@ -1467,6 +1469,8 @@ n' = m' + 1
 ```
 
 which is not what we need.
+::::
+
 :::slidebreak
 :::
 
