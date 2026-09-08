@@ -589,47 +589,14 @@ example (a b c d : Nat) (hab : a = b) (hcd : c = d) :
 ```
 :::
 
-# More about {tactic}`cases`
+# Using {tactic}`cases` on Expressions
 
+::::full
 We've seen many examples where the {tactic}`cases` tactic is
-used to perform case analysis of the value of some variable.
-The tactic offers more general-purpose functionality, too.
-
-::::full
-For example, it turns
-out that {tactic}`cases` builds in this same reasoning that the {tactic}`injection` and {tactic}`contradiction`
-tactics exploit about the injectivity and disjointness of constructors.
-Here are a few examples.
-::::
-
-::::terse
-The {tactic}`cases` tactic has specialized machinery that lets it solve some goals involving disjointness and injectivity, as well as substitution, of constructors:
-::::
-
-```lean
--- substitution
-example (x : Nat) (h : x = 0) : Nat.succ x = 1 := by
-  cases h
-  rfl
-```
-
-```lean
--- disjointness
-example (h : (0 : Nat) = 1) : 2 = 3 := by
-  cases h
-```
-
-```lean
--- injectivity
-example {m n : Nat} (h : Nat.succ m = Nat.succ n) : m = n := by
-  cases h
-  rfl
-```
-
-::::full
-Sometimes we
-need to reason by cases on the result of some _expression_.  We
-can do so with {tactic}`cases`, directly. Here is an example:
+used to perform case analysis of the value of some _variable_, such
+as one of type {name}`Bool` or {name}`Nat`.
+Sometimes we need to reason by cases on the result of some _expression_.
+We can do so with {tactic}`cases`, directly. Here is an example:
 ::::
 
 ::::terse
