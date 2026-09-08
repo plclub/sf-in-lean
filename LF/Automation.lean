@@ -1673,7 +1673,7 @@ end RegExp
 :::::exercise (rating := 5) (name := "palindrome_converse") (optional := true)
 
 Here is one possible definition of the palindrome inductive predicate, {name}`Pal`,
-which we saw in the {Ref "IndProp"}[last chapter].
+which we saw in the {ref "IndProp"}[last chapter].
 
 ```lean
 namespace PalConv

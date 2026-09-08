@@ -532,7 +532,10 @@ CollatzStepMulti 16 8       CollatzStepMulti 8 4       CollatzStepMulti 4 2     
 ::::::full
 :::::exercise (rating := 1) (name := "EqvGen") (optional := true) (manual := true)
 How would you modify the {name}`ReflTransGen` definition above to define the reflexive,
-symmetric, and transitive closure—in other words, the equivalence closure?
+symmetric, and transitive closure of `r`?
+
+N.B. The reflexive, symmetric, and transitive closure of a relation
+is also called its _equivalence closure_.
 
 ```lean
 -- SOLUTION
