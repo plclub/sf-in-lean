@@ -142,6 +142,11 @@ For whoever (or whatever) does the proposing:
 * **Low-level only.** Commas, agreement, articles, hyphenation, misused words,
   markup slips. Not restructuring, not word choice for its own sake, not
   pedagogy — those go through `STYLE-WRITING.md` and a normal editing pass.
+* **Every sentence must start with a capital letter.** If the first thing in
+  the sentence is a Lean expression, that expression must itself begin with a
+  capital letter (`Nat.add` may open a sentence; `omega` may not). Where the
+  opening expression is lowercase, propose rephrasing so the sentence starts
+  with a capitalized word, under the category `capitalization/sentence-start`.
 * **Two or more blank lines in a row are a slip.** A chapter source uses at
   most a single blank line anywhere — prose, code, note bodies alike — so scan
   for every run of two or more and propose collapsing it to one, under the

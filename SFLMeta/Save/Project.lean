@@ -253,6 +253,22 @@ private partial def bundleLoop
 private def mergeAdjacentModuleDocs (s : String) : String :=
   s.replace "\n-/\n\n/-!\n" "\n\n"
 
+/-- Resolve each `exerciseEndSentinelLine` the walker left after an exercise's
+content.  The sentinel is dropped when what follows is a heading comment
+(`--  #…` — the next exercise's heading or a section's) or the end of the
+file, both of which already show where the exercise ends; otherwise it becomes
+a visible `(End of exercise)` line, making the boundary between the exercise
+and the following prose or code explicit. -/
+private def resolveExerciseEnds (s : String) : String :=
+  match s.splitOn exerciseEndSentinel with
+  | [] => s
+  | first :: rest =>
+    rest.foldl (init := first) fun acc chunk =>
+      if chunk.startsWith "--  #" || chunk.all (·.isWhitespace) then
+        acc ++ chunk
+      else
+        acc ++ exerciseEndLine ++ "\n\n" ++ chunk
+
 /-- Every quiz is emitted between two `quizSeparator` rules, so a run of
 consecutive quizzes ends up with a doubled rule at each interior boundary.
 Collapse each doubled rule to one: a run of quizzes is then introduced,
@@ -302,7 +318,8 @@ private def emitSavedImpl (config : ExtractConfig) (stamp : String)
     let mut seeds : List String := ["SFLCompat"]
 
     for (file, variants) in entries do
-      let chosen := dedupQuizSeparators <| mergeAdjacentModuleDocs <| variants.get config.variant
+      let chosen := dedupQuizSeparators <| mergeAdjacentModuleDocs <| resolveExerciseEnds
+        <| variants.get config.variant
       if file == rootFile then
         files := files.push (file, withBuildStamp stamp chosen)
       else
