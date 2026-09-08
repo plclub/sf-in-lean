@@ -22,6 +22,26 @@ two 80-minute lectures, and the last couple of sections are quite
 meaty.  Pacing is key!
 :::
 
+:::::dev "Mike Hicks (mwhicks1)"
+See about working the following into this chapter.
+
+::::full
+Any tactic that accepts an `at`
+clause can target several locations at once, including the goal, by
+listing them together after `at`.
+::::
+
+::::terse
+More generally, `at` can list several locations at once, including the goal:
+::::
+
+```lean
+example (n m : Nat) (h : n + 0 = m) : n = m + 0 := by
+  rw [Nat.add_zero] at h ⊢
+  assumption
+```
+:::::
+
 :::dev BeforeNextRelease
 Unlike earlier chapters, there are probably too many
 WORKINCLASSes in this chapter.  BCP 20: But conversely some more
