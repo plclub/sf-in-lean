@@ -186,6 +186,8 @@ theorem injection_ex3 {α : Type} (x y z : α) (l j : List α)
 :::::
 ::::::
 
+## Disjointness
+
 ::::full
 So much for injectivity of constructors.  What about disjointness?
 
