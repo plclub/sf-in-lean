@@ -1450,13 +1450,17 @@ ih : n'.double = (m' + 1).double → n' = m' + 1
 ```
 
 From `h`, using the definition of {name}`Nat.double` we can obtain
+:::dev "Benjamin Pierce (bcpierce00)"
+Formatting: The displayed material in this section is inconsistent and rather ugly -- some of it is indented, some not, some is bulleted, some not.  I think this is mostly a hold-over from the Rocq formatting markup, which was rather problematic in similar ways. 
+:::
+
 
 ```leanTerm
 n'.double = m'.double
 ```
 
 and to prove the goal we would like to apply an induction hypothesis at `m'`.
-But `ih` is specialized to {lean}`m' + 1` — it wants to know
+But `ih` is specialized to {lean}`m' + 1` — it requires
 
 ```leanTerm
 n'.double = (m' + 1).double
