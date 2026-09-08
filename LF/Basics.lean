@@ -2742,8 +2742,6 @@ theorem and_eq_or (b c : Bool) : (b && c) = (b || c) → b = c := by
       rfl
 ```
 
-:::gradeTheorem 3 and_eq_or
-:::
 ::::
 :::::
 

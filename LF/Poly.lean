@@ -979,8 +979,6 @@ theorem head?_cons {α : Type} {head : α} {tail : List α} : head? (head :: tai
   solution!(by rfl)
 ```
 
-:::autogradedHole head?
-:::
 
 ```lean
 theorem test_head?1 : head? [1, 2] = some 1 := solution!(by rfl)
@@ -988,8 +986,6 @@ theorem test_head?1 : head? [1, 2] = some 1 := solution!(by rfl)
 theorem test_head?2 : head? [[1], [2]] = some [1] := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" test_head?1 test_head?2
-:::
 :::::
 ::::::
 
