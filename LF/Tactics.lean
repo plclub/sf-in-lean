@@ -34,13 +34,13 @@ better, somehow.
 
 ::::full
 This chapter introduces several additional proof strategies
-and tactics that allow us to begin proving more interesting
+and tactics that will allow us to begin proving more interesting
 properties of functional programs.
 
 We will see:
 - how to reason about data constructors -- in particular, how to
   use the fact that they are injective and disjoint;
-- more details on how to reason by case analysis;
+- more on how to reason by case analysis;
 - how to use auxiliary lemmas in both "forward-" and
   "backward-style" proofs; and
 - how to strengthen an induction hypothesis, and when such
@@ -106,12 +106,16 @@ example (n m : Nat)
 ```
 
 ::::full
-This technique for injectivity can be generalized to any constructor
-by writing the equivalent of `pred` — i.e., writing a function that
+This technique for proving injectivity can be generalized to any constructor
+by writing the equivalent of `Nat.pred` — i.e., writing a function that
 "undoes" one application of the constructor.
+:::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement
+Would be nice to explain that a little better. Students may not be sure what it is about Nat.pred that does what we want here.
+:::
 
-As a convenient alternative, Lean provides a tactic called
-{tactic}`injection` that allows us to exploit the injectivity of any
+
+As a more convenient alternative, Lean provides a tactic called
+{tactic}`injection` that allows us to directly exploit the injectivity of any
 constructor.  Here is an alternate proof of the above theorem
 using {tactic}`injection`:
 ::::
@@ -129,19 +133,19 @@ example (n m : Nat)
 ```
 
 ::::full
-Writing `injection h` asks Lean to generate all equations
-that it can infer from `h` using the injectivity of constructors,
+Writing `injection h` directs Lean to generate all equations
+that follow from `h` using the injectivity of constructors,
 adding them to the context.
 In the present example, Lean can infer that `n = m` from `n + 1 = m + 1`.
-When a generated equation satisfies the goal, as is the case here,
-the {tactic}`injection` tactic automatically closes the goal.
+
+When a generated equation matches the goal, as is the case here,
+ {tactic}`injection` automatically closes the goal.
 ::::
 
 :::slidebreak
 :::
 
-When generated equations do not immediately close the goal,
-we can add `with` to name the equations to be added to the context
+When the generated equations do _not_ immediately close the goal, the equations are added to the context instead; adding `with` allows us to explicitly name the equations
 (otherwise Lean generates names for us).
 
 ```lean
@@ -167,6 +171,12 @@ example (n m o : Nat)
     rw [h₁, h₃]
 ```
 
+:::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement
+How do I predict how many equations will be generated, and in what order?  (E.g., how did I know to write `_` in the above example?) I suspect the real answer is "try it without the `with`, see what happens, then go back and tidy." If so, it would be less puzzling just to say so.
+:::
+
+
+::::::full
 :::::exercise (rating := 3) (name := "injection_ex3")
 ```lean
 theorem injection_ex3 {α : Type} (x y z : α) (l j : List α)
@@ -183,10 +193,11 @@ theorem injection_ex3 {α : Type} (x y z : α) (l j : List α)
 :::gradeTheorem 3 injection_ex3
 :::
 :::::
-
-So much for injectivity of constructors.  What about disjointness?
+::::::
 
 ::::full
+So much for injectivity of constructors.  What about disjointness?
+
 The principle of disjointness says that two terms beginning
 with different constructors (like `0` and {name}`Nat.succ`, or {name}`true` and {name}`false`)
 can never be equal. Therefore, any time we find ourselves
@@ -221,7 +232,7 @@ example (n : Nat)
 
 These examples are instances of a logical principle known as the
 _principle of explosion_, which asserts that a contradictory
-hypothesis entails anything (even manifestly false things!).
+hypothesis entails anything — even manifestly false things!
 
 :::dev "Mike Hicks (mwhicks1)"
 Is there a way to relate this to the interpretation of implication
@@ -229,11 +240,17 @@ P -> Q where it is true when P is false and Q is true? It seems like
 maybe this is a computational interpretation so perhaps not.
 :::
 
+::::full
 In the above example, `n + 1` is shorthand for a constructor application `Nat.succ n`
-so contradiction applies to it directly. Sometimes you
+so contradiction applies to it directly.
+::::
+Sometimes you
 need to do a little work to expose a contradictory hypothesis involving
-constructors. For example, recall that {name}`Nat.add` recurses on its
+constructors.
+::::full
+For example, recall that {name}`Nat.add` recurses on its
 second argument, so deriving a contradiction from `1 + n = 0` is not direct.
+::::
 
 ```lean +error
 example (n : Nat)
@@ -457,7 +474,7 @@ Therefore it doesn't reduce to `x.succ`, so injectivity of constructors can't be
 
 The injectivity of constructors allows us to reason that
 {lean}`∀ (n m : Nat), n + 1 = m + 1 → n = m`.  The converse of this
-implication is also true:
+implication also holds:
 
 ```lean
 example (n m : Nat) (h : n = m) :
@@ -471,7 +488,11 @@ Let's say so if that's the case.
 ::::
 
 This is an instance of a more general fact about both
-constructors _and_ functions:
+constructors and functions:
+:::dev "Benjamin Pierce (bcpierce00)"
+The fact that the earlier conversation was only about constructors, not functions, was never explicitly called out. It would be good to do so.
+:::
+
 
 ```lean
 example {α β : Type} (f : α → β) (x y : α)
@@ -482,10 +503,10 @@ example {α β : Type} (f : α → β) (x y : α)
 ::::full
 There is a tactic named {tactic}`congr` that can
 prove such goals directly.  Given a goal of the form
-`f a₁ ... aₙ = g b₁ ... bₙ`, the tactic {tactic}`congr` will produce subgoals
-of the form `f = g`, `a₁ = b₁`, ..., `aₙ = bₙ`. At the same time,
-any of these subgoals that are simple enough (e.g., immediately
-provable by {tactic}`rfl`) will be automatically discharged.
+`f a₁ ... aₙ = g b₁ ... bₙ`, writing {tactic}`congr` will produce subgoals
+of the form `f = g`, `a₁ = b₁`, ..., `aₙ = bₙ`.
+If any of these subgoals that are simple enough to be discharged automatically (e.g., immediately
+provable by {tactic}`rfl`), they will disappear.
 ::::
 
 :::terse
@@ -499,20 +520,19 @@ example (n m : Nat) (h : n = m) :
 ```
 
 ::::full
-The `congr` tactic also accepts a numerical argument,
+The `congr` tactic accepts an optional numerical argument,
 which tells Lean how deeply to decompose the goal.
 So, given a goal like `((a, b), (c, d)) = ((e, f), (g, h))`,
-`congr 1` only applies {tactic}`congr` once to the goal, and would produce
-two subgoals: `(a, b) = (e, f)` and `(c, d) = (g, h)`.
-`congr 2`, meanwhile, would apply {tactic}`congr` again to
-both these subgoals, and produce four subgoals: `a = e`, `b = f`,
-`c = g` and `d = h`. Using {tactic}`congr` without an argument always
+`congr 1` only applies {tactic}`congr` just once to the goal to produce
+two subgoals: `(a, b) = (e, f)` and `(c, d) = (g, h)`, while
+`congr 2` would apply {tactic}`congr` again to
+both these subgoals and produce four subgoals: `a = e`, `b = f`,
+`c = g` and `d = h`. Using {tactic}`congr` without an argument
 decomposes the goal as deeply as possible.
 
-Why does Lean provide this level of flexibility? Depending
+Why might we want this level of control? Because, depending
 on what we are trying to prove, deeper applications
-of {tactic}`congr` may make our goal unprovable. Consider
-this example:
+of {tactic}`congr` may sometimes make our goal unprovable. Consider:
 ::::
 
 ::::terse
@@ -553,7 +573,7 @@ hcd : c = d
 ```lean
 example (a b c d : Nat) (hab : a = b) (hcd : c = d) :
     (a, c + 1) = (b, 1 + d) := by
-  /- Only shallowly using `congr` here allows us to complete the proof -/
+  /- Using `congr` shallowly allows us to complete the proof -/
   congr 1
   rw [Nat.add_comm]
   congr
@@ -569,47 +589,14 @@ example (a b c d : Nat) (hab : a = b) (hcd : c = d) :
 ```
 :::
 
-# More about {tactic}`cases`
+# Using {tactic}`cases` on Expressions
 
+::::full
 We've seen many examples where the {tactic}`cases` tactic is
-used to perform case analysis of the value of some variable.
-The tactic offers more general-purpose functionality, too.
-
-::::full
-For example, it turns
-out that {tactic}`cases` builds in this same reasoning that the {tactic}`injection` and {tactic}`contradiction`
-tactics exploit about the injectivity and disjointness of constructors.
-Here are a few examples.
-::::
-
-::::terse
-The {tactic}`cases` tactic has specialized machinery that lets it solve some goals involving disjointness and injectivity, as well as substitution, of constructors:
-::::
-
-```lean
--- substitution
-example (x : Nat) (h : x = 0) : Nat.succ x = 1 := by
-  cases h
-  rfl
-```
-
-```lean
--- disjointness
-example (h : (0 : Nat) = 1) : 2 = 3 := by
-  cases h
-```
-
-```lean
--- injectivity
-example {m n : Nat} (h : Nat.succ m = Nat.succ n) : m = n := by
-  cases h
-  rfl
-```
-
-::::full
-Sometimes we
-need to reason by cases on the result of some _expression_.  We
-can do so with {tactic}`cases`, directly. Here is an example:
+used to perform case analysis of the value of some _variable_, such
+as one of type {name}`Bool` or {name}`Nat`.
+Sometimes we need to reason by cases on the result of some _expression_.
+We can do so with {tactic}`cases`, directly. Here is an example:
 ::::
 
 ::::terse
@@ -628,7 +615,7 @@ theorem chooseIf_self {α : Type} (test : α → Bool) (x : α) :
 ```
 
 ::::full
-After _unfolding_ {name}`chooseIf` in the above proof, we find that
+After unfolding {name}`chooseIf` in the above proof, we find that
 we are stuck on `(if test x = true then x else x) = x`.  But either
 `test x` is `true` or it isn't,
 so we can use `cases (test x)` to let us reason about the two cases.
@@ -636,21 +623,21 @@ so we can use `cases (test x)` to let us reason about the two cases.
 In general, the {tactic}`cases` tactic can perform case analysis on
 the results of arbitrary computations. If `e` has an inductively
 defined type `T`, then `cases e` generates one subgoal for each
-constructor of `T`, specializing the goal to that case. It does not
+constructor of `T`, specializing the goal to that constructor. It does not
 necessarily rewrite occurrences of `e` in hypotheses; when that
 information is needed, we can save an equation as described below.
 ::::
 
 ## Destructing Tuples
 
-{tactic}`cases` is useful when we are dealing with inductively defined types
-that can be one thing or another; a {name}`Bool` is either a {name}`false` or a {name}`true`,
-and a {name}`Nat` is either `0` or `succ n`. When we want more information about
-inductively defined types that are products of multiple things, we instead
-want a way to get the pieces of that value out from it.
+The {tactic}`cases` tactic is useful when we are dealing with values
+that can be one of a list of things (a {name}`Bool` is either a {name}`false` or a {name}`true`,
+a {name}`Nat` is either `0` or `succ n`, etc.). When we want more information about a
+ value that is a tuple of _multiple_ things, we instead
+want a way to extract the pieces of that value.
 
-When we have a value `v : α × β` in our context, we can
-get the first and second projections of `v` using this tactic:
+If we have a value `v : α × β` in our context, we can
+extract the first and second components of `v` and give them names using this tactic:
 
 ```display
 let ⟨a, b⟩ := v
@@ -658,7 +645,7 @@ let ⟨a, b⟩ := v
 
 ::::::full
 :::::exercise (rating := 3) (name := "zip_unzip'")
-Here is an implementation of the {name}`unzip` function mentioned in
+Here is an implementation of the {name}`unzip` function from
 chapter {ref "Poly"}[Poly]:
 
 ```lean
@@ -706,9 +693,13 @@ theorem zip_unzip' {α β : Type} (l : List (α × β))
 
 When using {tactic}`cases`, we can specify to Lean that it should
 remember an equality between a compound expression and what we are
-decomposing it into, using `cases h : ...` syntax. This information
-can actually be critical, and, if we leave it out, we might lack
+decomposing it into, using `cases h : ...` syntax. This step can actually be critical: if we leave it out, we might lack
 information we need to complete a proof.
+
+:::dev "Benjamin Pierce (bcpierce00)"
+Students might then wonder why we are teaching them the non-`with` syntax at all...
+:::
+
 
 ::::full
 For example, suppose we define a function `keepIf` like this:
@@ -720,7 +711,7 @@ def keepIf {α : Type} (test : α → Bool) (x : α) : Option α :=
 ```
 
 ::::full
-Now suppose that we want to prove `keepIf_some`. If we start the proof like
+Now suppose that we want to prove that, if `keepIf` returns a result of the form `some y`, then `x = y`. If we start the proof like
 this (with no `h : ⋯` on the `cases`)...
 
 ```lean +error -keep (name := keepIf_some_e)
@@ -748,9 +739,9 @@ h : (if test x = true then some x else none) = some y
 ⊢ x = y
 ```
 
-... then we are stuck at this point because the context does
+... then we are stuck because the context does
 not contain enough information to prove the goal.
-Because `test x` appears in our hypothesis, rather than in our
+Because `test x` appears in the hypothesis rather than the
 goal, `cases (test x)` does not automatically replace the expression
 with {name}`false` or {name}`true` like it did during the proof of {name}`chooseIf`.
 We want to add an equation to the context that records which case we are in.
@@ -834,7 +825,7 @@ example (p q : Prop) (h : p → q) (hp : p) : q := by
   exact hp
 ```
 
-Here is another example:
+Another example:
 
 ```lean
 example (n m o p : Nat) (hnm : n = m) (h : n = m → [n, o] = [m, p]) :
@@ -843,13 +834,17 @@ example (n m o p : Nat) (hnm : n = m) (h : n = m → [n, o] = [m, p]) :
   exact hnm
 ```
 
+This process is called _backward reasoning_. We are trying to prove some
+goal `⊢ b` and we know some fact `h : a → b`. So we work backwards by
+applying that fact, which replaces the goal with `⊢ a`.
+
 ::::full
 When we use `apply h`, Lean tries to match the conclusion of the type
 of `h` with the current goal. Here `h : n = m → [n, o] = [m, p]` has conclusion
-`[n, o] = [m, p]`, which matches the current goal. Lean then replaces the goal
-with the premise that is still needed, `n = m`. Then we close the goal with `exact hnm`.
+`[n, o] = [m, p]`, which matches the current goal. Lean replaces the goal
+with the premise `n = m`. Then we close the goal with `exact hnm`.
 
-More generally, the type of a theorem or hypothesis used with {tactic}`apply` may have
+Even more generally, the type of a theorem or hypothesis used with {tactic}`apply` may also have
 universally quantified variables and premises. Lean tries to match its conclusion with
 the current goal to determine appropriate values for the quantified variables.
 ::::
@@ -891,7 +886,7 @@ theorem apply_exercise (m : Nat)
 ::::::
 
 ::::full
-To use the {tactic}`apply` tactic, the conclusion of the fact
+To use {tactic}`apply`, the conclusion of the fact
 being applied must match the goal. For example, {tactic}`apply` will not work if the left
 and right sides of the equality are swapped.
 ::::
@@ -922,11 +917,9 @@ chapter, for easier searching.
 
 ::::::full
 :::::exercise (rating := 2) (name := "apply_exercise1")
-You can use {tactic}`apply` with previously defined theorems, not
-just hypotheses in the context.  Use a
-previously-defined theorem about `rev` from {ref "Poly"}[Poly].  Use
-that theorem as part of your (relatively short) solution to this
-exercise. You do not need {tactic}`induction`.
+The {tactic}`apply` tactic can be used with previously defined theorems, not
+just hypotheses in the context.  For this exercise, use a
+previously-defined theorem about `rev` from chapter {ref "Poly"}[Poly] as part of your (fairly short) solution. You do not need {tactic}`induction`.
 
 ```lean
 theorem rev_exercise1 {α : Type} (l l' : List α) (h : l = l'.rev) :
@@ -1002,6 +995,10 @@ The above `#check` shows Lean's use of _sorts_, which we have seen before and
 not explained. When is a good time to actually explain this? The `Logic`
 chapter, maybe?
 :::
+:::dev "Benjamin Pierce (bcpierce00)"
+We should also certainly note it here!
+:::
+
 
 Notice that in Lean's version, the arguments `a`, `b`, and `c` are implicit.
 ::::full
@@ -1044,7 +1041,7 @@ h₂ : [w, x] = [y, z]
 ```
 
 ::::full
-Notice that we have three goals:
+Notice that there are three goals:
 
 1. `[u, v] = ?b`
 2. `?b = [y, z]`
@@ -1052,7 +1049,7 @@ Notice that we have three goals:
 
 Recall that {name}`trans_eq` has five arguments.
 From the goal, Lean can infer the endpoints `a` and `c`,
-namely `[u, v]` and `[y, z]`. But it still needs an intermediate term `b`.
+namely `[u, v]` and `[y, z]`. But it still needs the intermediate term `b`.
 
 We want to prove `[u, v] = [y, z]`.
 By transitivity, it's enough to prove `[u, v] = ?b` and `?b = [y, z]`, for some intermediate list `?b`.
@@ -1060,7 +1057,7 @@ Here `?b` is a _metavariable_: a placeholder for a value Lean has not yet determ
 Before we provide the hypothesis `h₂`, Lean doesn't know that this intermediate list should be `[w, x]`.
 ::::
 
-One way to resolve this is to supply the arguments and hypotheses explicitly:
+One way to make progress is to supply the arguments and hypotheses explicitly:
 
 ```lean
 example (u v w x y z : Nat)
@@ -1071,7 +1068,7 @@ example (u v w x y z : Nat)
 ```
 
 :::full
-In the previous example, we had to specify the `a` and `c` arguments
+Here, we had to specify the `a` and `c` arguments
 to {name}`trans_eq` before we could supply `[w, x]` for `b` or `h₁` and `h₂` for
 the premises. However, we just said that Lean was able to infer these arguments, so it's
 a bit redundant (and wordy) for us to do it.
@@ -1087,9 +1084,12 @@ example (u v w x y z : Nat)
   apply trans_eq _ _ _ h₁ h₂
 ```
 
-If we know the name of the argument we are supplying (in this case `b`), we can
-name it directly and avoid typing any `_`s. This feature is called _named arguments_.
-Named arguments can be used in function applications generally, not just with {tactic}`apply`.
+Alternatively, if we know the name of the argument we are supplying (in this case `b`), we can
+name it directly and avoid typing any `_`s. Such _named arguments_ can be used in function applications generally, not just with {tactic}`apply`.
+:::dev "Benjamin Pierce (bcpierce00)"
+Can we explain why using `apply` would not tell the reader this?
+:::
+
 
 ```lean
 example (u v w x y z : Nat)
@@ -1121,7 +1121,7 @@ example (u v w x y z : Nat)
 ```
 
 ::::full
-Recall the {tactic}`calc` we saw in the {ref "UsingLean"}[UsingLean] chapter.
+A final alternative for this situation is the {tactic}`calc` tactic we saw in the {ref "UsingLean"}[UsingLean] chapter.
 It works by chaining equalities together using transitivity,
 serving the same purpose here as applying {name}`trans_eq`.
 ::::
@@ -1139,7 +1139,12 @@ example (u v w x y z : Nat)
   [u, v] = [w, x] := by rw [h₁]
   _ = [y, z] := by rw [h₂]
 ```
+:::dev "Benjamin Pierce (bcpierce00)"
+The last line is a bit mysterious...
+:::
 
+
+::::::full
 :::::exercise (rating := 3) (name := "trans_eq_exercise") (optional := true)
 ```lean
 theorem trans_eq_exercise (n m o p : Nat)
@@ -1155,8 +1160,11 @@ theorem trans_eq_exercise (n m o p : Nat)
 :::gradeTheorem 3 trans_eq_exercise
 :::
 :::::
+::::::
 
-# Forward Reasoning with {tactic}`apply`
+## Forward Reasoning with {tactic}`apply`
+
+We can also use the {tactic}`apply` tactic to rewrite _hypotheses_.
 
 ::::full
 The tactic `apply t at h` matches an implication `t`
@@ -1164,6 +1172,8 @@ The tactic `apply t at h` matches an implication `t`
 context. Unlike ordinary {tactic}`apply`, which matches the goal against `b`
 and replaces it with the subgoal `a`, `apply t at h` matches the type of `h`
 against `a` and, if successful, replaces `h` with a hypothesis of type `b`.
+In other words, `apply t at h` is a form of "forward
+reasoning" from the hypotheses toward the goal.
 
 In other words, `apply t at h` gives us a form of "forward
 reasoning": given `t : a → b` and `h : a`, it replaces `h` with a proof of `b`.
@@ -1178,14 +1188,13 @@ Here is a proof that uses forward reasoning rather than backward reasoning:
 :::
 
 ::::terse
-The ordinary {tactic}`apply` tactic is a form of "backward
-reasoning." It says "We are trying to prove `a` and we know
+The ordinary {tactic}`apply` tactic is a form of backward
+reasoning. It says "We are trying to prove `a` and we know
 `b → a`, so if we can prove `b` we'll be done."
 
-By contrast, the variant `apply ... at ...` is "forward reasoning":
+By contrast, the variant `apply ... at ...` is _forward reasoning_:
 it says "We know `b` and we know `b → a`, so we also know `a`."
 ::::
-
 
 ```lean
 example (n m p q : Nat)
@@ -1200,40 +1209,26 @@ example (n m p q : Nat)
 Forward reasoning begins with what is already known — premises and
 previously proven theorems — and derives new facts from
 them until the goal is reached.  Backward reasoning begins with
-the _goal_ and works backward through implications that would prove
-it, until remaining goals are facts that are already known.
+the goal and works backward through implications that would prove
+it, until the remaining goals are facts that are already known or assumed.
 
-The informal proofs in mathematics and computer science often
-use forward reasoning.  In Lean, however, backward reasoning is often more
+Informal proofs in mathematics and computer science often
+use forward reasoning.  In Lean, backward reasoning is generally more
 idiomatic, though forward reasoning can sometimes be easier to follow or more natural for
 particular proofs.
 
+:::dev "Benjamin Pierce (bcpierce00)"
+Not certain the next paragraph is something readers need to be thinking about at this stage.  Could we say it later?  E.g., could we move it to wherever we show readers how to define their own custom tactics?
+:::
+
 You may be interested to know that the `apply ... at ...` tactic
-is not part of Lean's core set of tactics. However, Lean makes it
+is not part of Lean's core set of tactics. Lean makes it
 very easy for users to define new tactics that suit their
 particular proof style, and so the developers of the [Mathlib](https://github.com/leanprover-community/mathlib4) library
 defined the `apply ... at ...` tactic to
 better support forward reasoning. Mathlib is a very large development,
-so we will not import the whole thing here, but we have
-made `apply ... at ...` available because it is quite useful.
+so we do not import the whole thing in this book, but we do import `apply ... at ...` because it is particularly useful.
 ::::
-
-::::full
-To apply a tactic in multiple places at the same time, you can list multiple hypotheses
-in a row after the `at`. You can also explicitly use a tactic on the goal (usually
-because you are applying the tactic to both a hypothesis and the goal) by including
-it after the `at` with the turnstile symbol `⊢`, written `\|-`, `\goal` or `\vdash`.
-::::
-
-::::terse
-You can apply tactics in multiple places at the same time, including the goal:
-::::
-
-```lean
-example (n m : Nat) (h : n + 0 = m) : n = m + 0 := by
-  rw [Nat.add_zero] at h ⊢
-  assumption
-```
 
 # Specializing Hypotheses
 
@@ -1242,7 +1237,6 @@ forward reasoning, by letting us state and prove useful facts
 that get us closer to the main goal we're trying to prove. Often,
 though, these facts are just special cases of more general hypotheses
 we already have.
-
 If `h` is a quantified hypothesis in the current context — i.e.,
 `h : ∀ (x : α), P x` — then we can use {tactic}`have` to obtain a special
 case of `h` by supplying a value for `x`. For example, `have h := h e`
@@ -1257,10 +1251,10 @@ example (m : Nat) (h : ∀ n, m * n = 0) : m = 0 := by
   exact h
 ```
 
-You may notice that, in the above proof, the original `h` is still
+One thing to notice here is that the original `h` is still
 present in the context, although it is shadowed by the new `h`.
-Often we don't care to keep this old hypothesis around, and so we can use the {tactic}`replace`
-tactic instead. It behaves like {tactic}`have`, except that
+Often we don't care to keep this old hypothesis around, in which case we can use the {tactic}`replace`
+tactic instead. This behaves like {tactic}`have`, except that
 it gets rid of the old hypothesis afterwards when possible:
 
 ```lean
@@ -1270,7 +1264,7 @@ example (m : Nat) (h : ∀ n, m * n = 0) : m = 0 := by
   exact h
 ```
 
-Specializing a hypothesis in this way is common enough that Lean provides the
+Specializing a hypothesis in this way is common enough that Lean provides a separate
 {tactic}`specialize` tactic for it. For example,
 `specialize h 1` is a more concise way of writing `replace h := h 1`:
 
@@ -1304,7 +1298,7 @@ theorem nth?_always_none {l : List α} (h : ∀ i, nth? l i = none) :
 ::::::
 
 Tactics like {tactic}`have` and {tactic}`replace` can also be used with lemmas and
-theorems we've already proven, not just things in our context.
+theorems we've already proven, not just things in the immediate proof context.
 Using these tactics before {tactic}`apply` gives us yet another way to
 control where {tactic}`apply` does its work.
 
@@ -1321,6 +1315,10 @@ example (u v w x y z : Nat)
   /- .. and here we could also write `exact h₂` -/
   assumption
 ```
+
+:::dev "Benjamin Pierce (bcpierce00)"
+Is this the first place readers are seeing `assumption`?  If so, it should not be buried in a comment in the example.
+:::
 
 # Generalizing the Induction Hypothesis
 
@@ -1346,9 +1344,9 @@ it maps different arguments to different results).
 ::::
 
 ::::full
-Sometimes {tactic}`induction` gives us an induction hypothesis too specific to be useful.
-This can happen when another variable in the theorem is fixed during the induction,
-even though the induction step might need to use that variable at different values.
+Sometimes {tactic}`induction` gives us an induction hypothesis that is too specific to be useful.
+This can happen when another variable in the theorem is fixed during the induction but
+the induction step needs to use it at different values.
 
 For example, suppose we want to show that {name}`Nat.double` is injective —
 i.e., that it maps different arguments to different results:
@@ -1357,7 +1355,7 @@ i.e., that it maps different arguments to different results:
 theorem double_injective (n m : Nat) (h : n.double = m.double) : n = m := sorry
 ```
 
-The way we start this proof is a bit delicate: if we begin it with
+The way we start this proof is a bit delicate: if we begin it like this...
 
 ::::
 
@@ -1393,8 +1391,8 @@ We get stuck, because the induction hypothesis `ih` is too specific to be useful
 :::
 
 ::::full
-We get stuck — {lean}`m` is fixed during the induction,
-so in the successor case the induction hypothesis `ih` is specialized to the current value of {lean}`m`.
+...we get stuck: {lean}`m` is fixed during whole the induction because it was already in the context when we applied the {tactic}`induction` tactic.
+In the successor case, the induction hypothesis `ih` is specialized to the current value of {lean}`m`.
 After the case split, that value is {lean}`m' + 1`, and the induction hypothesis has the form:
 
 ```display
@@ -1402,38 +1400,30 @@ ih : n'.double = (m' + 1).double → n' = m' + 1
 ```
 
 From `h`, using the definition of {name}`Nat.double` we can obtain
+:::dev "Benjamin Pierce (bcpierce00)"
+Formatting: The displayed material in this section is inconsistent and rather ugly -- some of it is indented, some not, some is bulleted, some not.  I think this is mostly a hold-over from the Rocq formatting markup, which was rather problematic in similar ways. 
+:::
+
 
 ```leanTerm
 n'.double = m'.double
 ```
 
 and to prove the goal we would like to apply an induction hypothesis at `m'`.
-Nevertheless, `ih` is specialized to {lean}`m' + 1` — it would require
+But `ih` is specialized to {lean}`m' + 1` — it requires
 
 ```leanTerm
 n'.double = (m' + 1).double
 ```
 
-and would conclude
+and would allow us to conclude
 
 ```leanTerm
 n' = m' + 1
 ```
 
-which is not what we need. Instead, we need an induction hypothesis that is general in `m`:
-
-```display
-ih : ∀ m, n'.double = m.double → n' = m
-```
-
-Then in this branch we can instantiate it with {lean}`m'`.
+which is not what we need.
 ::::
-
-We can obtain a more generalized induction hypothesis by writing
-
-```display
-induction n generalizing m with
-```
 
 :::slidebreak
 :::
@@ -1498,9 +1488,21 @@ prove a statement involving _every_ {lean}`n` but just a _particular_
 :::slidebreak
 :::
 
-A successful proof of `double_injective` _generalizes_ {lean}`m` when carrying out the induction on {lean}`n`,
+A successful proof of `double_injective` needs to _generalize_ {lean}`m` when carrying out the induction on {lean}`n`,
 so that the induction hypothesis holds for every {lean}`m`,
 rather than for just the particular {lean}`m` in the context.
+That is, we want an induction hypothesis like this:
+
+```display
+ih : ∀ m, n'.double = m.double → n' = m
+```
+
+We can obtain this generalized induction hypothesis by writing
+
+```display
+induction n generalizing m with
+```
+
 
 ```lean
 theorem double_injective (n m : Nat) (h : n.double = m.double) : n = m := by
@@ -1565,6 +1567,7 @@ to _generalize_ `m`, so that the induction hypothesis applies to every `m`
 rather than just the particular `m` in the context.
 
 
+::::::full
 :::::exercise (rating := 3) (name := "add_self_injective")
 
 The following theorem follows the same pattern as {name}`double_injective`.
@@ -1594,7 +1597,9 @@ theorem add_self_injective (n m : Nat)
 :::gradeTheorem 3 add_self_injective
 :::
 :::::
+::::::
 
+:::::full
 ::::exercise (rating := 2) (name := "add_self_injective_informal") (manual := true)
 Give a careful informal proof of {name}`add_self_injective`, stating the induction
 hypothesis explicitly and being as explicit as possible about
@@ -1631,6 +1636,7 @@ GRADE_MANUAL 2: add_self_injective_informal
 ```
 :::
 ::::
+:::::
 
 # Rewriting with Conditional Statements
 
@@ -1676,14 +1682,91 @@ The theorem {name}`double_injective` says {lean}`n = m`
 _provided that_ {lean}`n.double = m.double`, not just {lean}`n = m`.
 When we write `rw [double_injective n m]`, Lean uses the conclusion {lean}`n = m` to rewrite
 the goal, and then asks us to prove the hypothesis needed by {name}`double_injective`.
-Thus we get two goals: the updated main goal, `m + p = q`, which follows from `hm`, and the
-condition from {name}`double_injective`, {lean}`n.double = m.double`, which follows from `h`.
+Thus we get two goals: the updated main goal, `m + p = q`, and the
+condition from {name}`double_injective`, {lean}`n.double = m.double`.
+These goals follow by assumption from `hm` and `h`, respectively.
 :::
 
 If we rewrite with a conditional statement of the form
 `P → a = b`, then Lean tries to rewrite with `a = b`, and then
 asks us to prove `P` in a new subgoal.  If the statement has more
 than one assumption, then we get one subgoal for each assumption.
+
+# Review
+
+::::full
+We've now talked about many of Lean's most fundamental tactics.
+We'll introduce a few more in the coming chapters, and later on
+we'll see some more powerful _automation_ tactics that make Lean
+help us with low-level details.  But basically we've got what we
+need to get work done.
+::::
+
+Here are the tactics we've seen so far.
+
+Managing goals and hypotheses:
+
+  - `intro h`: move an assumption/quantified variable from the goal into the local context
+
+  - `apply thm`: use a theorem, hypothesis, or constructor whose conclusion matches the goal;
+     its premises become new goals
+
+  - `apply thm at h`: use a theorem on a hypothesis in the context, replacing `h` by the resulting
+    fact (forward reasoning)
+
+  - `specialize h ...`: instantiate quantified variables in a hypothesis, modifying `h` in place
+
+  - `replace h := ...`: replace a hypothesis with a newly proved fact
+
+  - `have h : P := ...`: prove a local fact `P` and add it to the context with the name `h`
+
+  - `contradiction`: close the current goal when the context contains contradictory assumptions
+
+Equality, rewriting, and unfolding:
+
+  - `rfl`: close an equality that holds by reflexivity (possibly after computation)
+
+  - `rw [h]`: rewrite the goal using an equality hypothesis or theorem
+
+  - `rw [d]`: unfold a definition in the goal
+
+  - `rw [h] at h'`: rewrite a hypothesis using an equality hypothesis or theorem
+
+  - `rw [d] at h'`: unfold a definition in a hypothesis
+
+  - `symm`: reverse an equality goal, changing `t = u` to `u = t`
+
+  - `symm at h`: reverse an equality hypothesis
+
+  - `calc`: prove a goal about equality or another transitive relation by
+    giving a sequence of intermediate steps
+
+  - `congr`: use congruence to reduce an equality between expressions with the same outer form;
+    for example, a goal `f x = f y` may be reduced to `x = y`
+
+  - `injection h with ...`: use injectivity of constructors to extract equalities from equations
+    between constructor applications
+
+  - `injections`: repeatedly use constructor injectivity on suitable equalities in the context
+
+Case analysis:
+
+  - `cases x`: reason separately about the possible constructors of an inductively defined value
+
+  - `cases h : e`: perform case analysis on an expression `e` and add an equation named `h`
+    recording the result of the case analysis
+
+Induction:
+
+  - `induction x`: prove the goal by induction on an inductively defined value
+
+  - `induction x generalizing y`: induction on `x` while generalizing the listed local variables,
+    giving a more general induction hypothesis
+
+# Additional Exercises
+
+:::suppressPreviousHeaderWhenTerse
+:::
 
 ::::::full
 :::::exercise (rating := 3) (name := "nth?_after_last")
@@ -1708,6 +1791,7 @@ theorem nth?_after_last {α : Type}
 :::::
 ::::::
 
+::::::full
 :::::exercise (rating := 3) (name := "length_append_cons") (optional := true)
 
 Prove this by induction on `l₁`, without using {name}`List.length_append`.
@@ -1826,85 +1910,7 @@ theorem diagonal_induction (p : Nat → Nat → Prop)
 :::gradeTheorem 3 diagonal_induction
 :::
 :::::
-
-# Review
-
-:::suppressPreviousHeaderWhenTerse
-:::
-
-::::full
-We've now talked about many of Lean's most fundamental tactics.
-We'll introduce a few more in the coming chapters, and later on
-we'll see some more powerful _automation_ tactics that make Lean
-help us with low-level details.  But basically we've got what we
-need to get work done.
-
-Here are the ones we've seen so far.
-
-Managing goals and hypotheses:
-
-  - `intro h`: move an assumption/quantified variable from the goal into the local context
-
-  - `apply thm`: use a theorem, hypothesis, or constructor whose conclusion matches the goal;
-     its premises become new goals
-
-  - `apply thm at h`: use a theorem on a hypothesis in the context, replacing `h` by the resulting
-    fact (forward reasoning)
-
-  - `specialize h ...`: instantiate quantified variables in a hypothesis, modifying `h` in place
-
-  - `replace h := ...`: replace a hypothesis with a newly proved fact
-
-  - `have h : P := ...`: prove a local fact `P` and add it to the context with the name `h`
-
-  - `contradiction`: close the current goal when the context contains contradictory assumptions
-
-Equality, rewriting, and unfolding:
-
-  - `rfl`: close an equality that holds by reflexivity (possibly after computation)
-
-  - `rw [h]`: rewrite the goal using an equality hypothesis or theorem
-
-  - `rw [d]`: unfold a definition in the goal
-
-  - `rw [h] at h'`: rewrite a hypothesis using an equality hypothesis or theorem
-
-  - `rw [d] at h'`: unfold a definition in a hypothesis
-
-  - `symm`: reverse an equality goal, changing `t = u` to `u = t`
-
-  - `symm at h`: reverse an equality hypothesis
-
-  - `calc`: prove a goal about equality or another transitive relation by
-    giving a sequence of intermediate steps
-
-  - `congr`: use congruence to reduce an equality between expressions with the same outer form;
-    for example, a goal `f x = f y` may be reduced to `x = y`
-
-  - `injection h with ...`: use injectivity of constructors to extract equalities from equations
-    between constructor applications
-
-  - `injections`: repeatedly use constructor injectivity on suitable equalities in the context
-
-Case analysis:
-
-  - `cases x`: reason separately about the possible constructors of an inductively defined value
-
-  - `cases h : e`: perform case analysis on an expression `e` and add an equation named `h`
-    recording the result of the case analysis
-
-Induction:
-
-  - `induction x`: prove the goal by induction on an inductively defined value
-
-  - `induction x generalizing y`: induction on `x` while generalizing the listed local variables,
-    giving a more general induction hypothesis
-::::
-
-## Additional Exercises
-
-:::suppressPreviousHeaderWhenTerse
-:::
+::::::
 
 ::::::full
 :::::exercise (rating := 2) (name := "append_left_cancel")

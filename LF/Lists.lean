@@ -244,8 +244,6 @@ theorem fst_swap_is_snd (p : NatProd) :
   solution!
     cases p; rfl
 ```
-:::gradeTheorem 1 fst_swap_is_snd
-:::
 :::::
 
 ::::::
@@ -873,7 +871,7 @@ theorem test_member2 : member 2 [1, 4, 1] = false := solution!(by rfl)
 :::
 
 ::::::full
-:::::exercise (rating := 3) (name := "removing") (optional := true)
+:::::exercise (rating := 3) (name := "removeOne")
 Here are some more {name}`NatList` functions for you to practice with.
 
 When `removeOne` is applied to a list without the number to
@@ -917,6 +915,10 @@ theorem test_removeOne2 : count 5 (removeOne 5 [1, 5, 5, 4]) = 1 := solution!(by
 
 :::gradeTheorem "0.5" test_removeOne1 test_removeOne2
 :::
+:::::
+
+:::::exercise (rating := 3) (name := "removeAll") (optional := true)
+
 
 ```lean
 def removeAll (n : Nat) (l : NatList) : NatList := solution!(
@@ -939,8 +941,6 @@ theorem removeAll_cons_diff (n₁ n₂ : Nat) (t : NatList)
     rw [removeAll, h, cond_false]
 ```
 
-:::autogradedHole removeAll
-:::
 
 ```lean
 example : count 5 (removeAll 5 [5, 1]) = 0 := by
@@ -957,8 +957,6 @@ theorem test_removeAll1 : count 4 (removeAll 5 [4, 5, 4]) = 2 := solution!(by rf
 theorem test_removeAll2 : count 5 (removeAll 5 [2, 5, 5, 5, 1]) = 0 := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" test_removeAll1 test_removeAll2
-:::
 
 :::::
 ::::::
@@ -987,8 +985,6 @@ def included (l₁ l₂ : NatList) : Bool := solution!(
   | h :: t => member h l₂ && included t (removeOne h l₂))
 ```
 
-:::autogradedHole included
-:::
 
 ```lean
 theorem included_nil (l₂ : NatList) : included nil l₂ = true := solution!(by rfl)
@@ -1024,8 +1020,6 @@ theorem test_included1 : included [1, 2] [2, 1, 4, 1] = true := solution!(by rfl
 theorem test_included2 : included [1, 2, 2] [2, 1, 4, 1] = false := solution!(by rfl)
 ```
 
-:::gradeTheorem "0.5" test_included1 test_included2
-:::
 :::::
 ::::::
 
@@ -1722,8 +1716,6 @@ theorem ble_self_succ (n : Nat) :
   | succ n' ih => rw [Nat.ble]; exact ih
 ```
 
-Before doing the next exercise, make sure you've filled in the
-definition of `removeOne` above.
 ::::::
 
 ::::dev "Daniel Sainati (dsainati)" PotentialImprovement
@@ -2011,8 +2003,6 @@ theorem option_elim_head? (l : NatList) (default : Nat) :
       rw [head_cons, head?_cons, NatOption.elim_some]
 ```
 
-:::gradeTheorem 1 option_elim_head?
-:::
 :::::
 
 ::::::
