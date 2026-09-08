@@ -193,6 +193,13 @@ defmethod String.stripBlankEdgeLines (s : String) : String :=
   let ls := (((ls.dropWhile blank).reverse).dropWhile blank).reverse
   String.intercalate "\n" ls
 
+/-- `s` holds a paragraph break (a genuinely multi-paragraph rendering, as
+opposed to mere soft-wrap newlines). -/
+def hasParaBreak (s : String) : Bool :=
+  (s.splitOn "\n\n").length > 1
+
+mutual
+
 /--
 Render a Verso block to a Markdown-like string for inclusion in a `/-! … -/`
 comment, filling prose to `width` columns.  List items are prefixed with `- ` /
@@ -201,29 +208,43 @@ bodies are filled narrower so the marker/indent still fits within `width`. -/
 partial def blockToText (width : Nat) : Verso.Doc.Block Manual → String
   | .para inlines => paraToText width inlines
   | .code s => "`" ++ s.trimAscii.toString ++ "`"
-  | .concat bs | .blockquote bs =>
-    String.intercalate "\n\n" (bs.toList.map (blockToText width))
+  | .concat bs | .blockquote bs => blocksToText width bs
   | .ul lis =>
-    let items := lis.toList.map fun li =>
-      let body := String.intercalate "\n\n" (li.contents.toList.map (blockToText (width - 2)))
-      "- " ++ body.replace "\n" "\n  "
-    -- Blank lines between items only when some item is itself multi-line.
-    let sep := if items.any (·.contains '\n') then "\n\n" else "\n"
+    let bodies := lis.toList.map fun li => blocksToText (width - 2) li.contents
+    let items := bodies.map fun body => "- " ++ body.replace "\n" "\n  "
+    -- Blank lines between items only when some item is itself multi-paragraph
+    -- (soft-wrapped lines alone don't warrant them).
+    let sep := if bodies.any hasParaBreak then "\n\n" else "\n"
     String.intercalate sep items
   | .ol start lis =>
-    let items := lis.toList.mapIdx fun i li =>
-      let pfx := s!"{start + i}. "
+    let rendered := lis.toList.mapIdx fun i li =>
+      (s!"{start + i}. ", blocksToText (width - s!"{start + i}. ".length) li.contents)
+    let items := rendered.map fun (pfx, body) =>
       let indent := String.ofList (List.replicate pfx.length ' ')
-      let body := String.intercalate "\n\n"
-        (li.contents.toList.map (blockToText (width - pfx.length)))
       pfx ++ body.replace "\n" s!"\n{indent}"
-    let sep := if items.any (·.contains '\n') then "\n\n" else "\n"
+    let sep := if rendered.any (fun (_, body) => hasParaBreak body) then "\n\n" else "\n"
     String.intercalate sep items
   | .dl dis =>
     String.intercalate "\n" (dis.toList.map fun di =>
       inlinesToText di.term ++ "\n:   " ++
       String.intercalate "\n    " (di.desc.toList.map (blockToText (width - 4))))
-  | .other _ bs => String.intercalate "\n\n" (bs.toList.map (blockToText width))
+  | .other _ bs => blocksToText width bs
+
+/-- Render a run of sibling blocks, separated by blank lines — except a list
+directly after a paragraph, which attaches with a single newline (matching the
+source's tight `lead-in:`-then-list idiom). -/
+partial def blocksToText (width : Nat) (bs : Array (Verso.Doc.Block Manual)) : String := Id.run do
+  let mut out := ""
+  let mut prevIsPara := false
+  for b in bs do
+    let sep := match b with
+      | .ul _ | .ol _ _ => if prevIsPara then "\n" else "\n\n"
+      | _ => "\n\n"
+    out := if out.isEmpty then blockToText width b else out ++ sep ++ blockToText width b
+    prevIsPara := match b with | .para _ => true | _ => false
+  return out
+
+end
 
 end Text
 
@@ -248,12 +269,22 @@ wraps individual blocks in singleton `.concat`s as it traverses, which would
 otherwise hide neighbouring blocks from each other and defeat the batching in
 `walkBlocks` (a display or a quiz wrapped this way is not seen as a sibling of
 the prose around it).  Walking the flattened array is equivalent — `walkBlock`
-handles `.concat` by walking its children — but keeps siblings together. -/
+handles `.concat` by walking its children — but keeps siblings together.
+
+`::::full` / `::::terse` wrappers are spliced through in the same way: the
+variant not being built was already pruned to an empty `.concat` during
+traversal, and the kept wrapper contributes nothing but its children — so
+splicing keeps prose on either side of a full/terse boundary in one comment
+batch (joined by `--` lines) instead of splitting it with a blank line. -/
 partial def flattenConcats (bs : Array (Verso.Doc.Block Manual)) :
     Array (Verso.Doc.Block Manual) :=
   bs.foldl (init := #[]) fun acc b =>
     match b with
     | .concat inner => acc ++ flattenConcats inner
+    | .other which inner =>
+      if which.name == ``Block.full || which.name == ``Block.terse then
+        acc ++ flattenConcats inner
+      else acc.push b
     | _ => acc.push b
 
 /-- The source text of a ` ```display ` / ` ```displaymath ` block, or `none`
@@ -295,6 +326,22 @@ def quizSeparatorLine : String :=
 
 /-- `quizSeparatorLine` as an emitted block: the rule, then a blank line. -/
 def quizSeparator : String := quizSeparatorLine ++ "\n\n"
+
+/-- Sentinel emitted after every exercise's content.  Whether it surfaces as a
+visible `(End of exercise)` line is decided only once the whole file is
+assembled (`resolveExerciseEnds` in `Save/Project.lean`): the sentinel is kept
+when ordinary prose or code follows (where the exercise's end would otherwise
+be invisible) and dropped when the next line is a heading — another exercise's
+or a section's — which already delimits the exercise. -/
+def exerciseEndSentinelLine : String := "-- «end-of-exercise»"
+
+/-- `exerciseEndSentinelLine` as an emitted block: the line, then a blank
+line. -/
+def exerciseEndSentinel : String := exerciseEndSentinelLine ++ "\n\n"
+
+/-- The visible marker `resolveExerciseEnds` substitutes for a kept
+`exerciseEndSentinelLine`. -/
+def exerciseEndLine : String := Text.commentPrefix ++ "(End of exercise)"
 
 section
 
@@ -394,20 +441,32 @@ partial def walkBlocks (width : Nat) (isTerse : Bool) (file : String)
     (bs : Array (Verso.Doc.Block Manual)) (buf : SaveBuffers) : SaveBuffers := Id.run do
   let mut buf := buf
   let mut pending : Array String := #[]
+  let mut prevIsPara := false
   for b in flattenConcats bs do
     if let some src := displaySource? b then
       -- A display belongs with the prose around it: batch it into the same
       -- comment block as its lead-in paragraph and the text that follows, so
       -- they are joined by `--` lines rather than split apart by blank ones.
       pending := pending.push (displayText src)
+      prevIsPara := false
     else
       match b with
-      | .para inls => pending := pending.push (Text.paraToText width inls)
-      | .ul _ | .ol _ _ => pending := pending.push (Text.blockToText width b)
+      | .para inls =>
+        pending := pending.push (Text.paraToText width inls)
+        prevIsPara := true
+      | .ul _ | .ol _ _ =>
+        -- A list attaches to its lead-in paragraph with a single newline, not
+        -- a blank line (the source's tight `lead-in:`-then-list idiom).
+        let txt := Text.blockToText width b
+        pending :=
+          if prevIsPara then pending.pop.push (pending.back! ++ "\n" ++ txt)
+          else pending.push txt
+        prevIsPara := false
       | _ =>
         if !pending.isEmpty then
           buf := buf.appendAll file (asModuleDoc (String.intercalate "\n\n" pending.toList))
           pending := #[]
+        prevIsPara := false
         buf := walkBlock width isTerse file b buf
   if !pending.isEmpty then
     buf := buf.appendAll file (asModuleDoc (String.intercalate "\n\n" pending.toList))
@@ -483,6 +542,7 @@ partial def walkBlock (width : Nat) (isTerse : Bool) (file : String) (b : Verso.
         let header := s!"### Exercise ({rating} star{if rating == 1 then "" else "s"}): {exName}{desig} {stars}"
         let mut buf := buf.appendAll file (asModuleDoc header)
         buf := walkBlocks width isTerse file contents buf
+        buf := buf.appendAll file exerciseEndSentinel
         return buf
       return walkBlocks width isTerse file contents buf
     if name == ``Block.bnf then
@@ -558,8 +618,7 @@ partial def walkBlock (width : Nat) (isTerse : Bool) (file : String) (b : Verso.
       if !isTerse then
         if let some (author, urgency, year) := decodeDevData? which.data then
           if devNoteShown urgency then
-            let body := String.intercalate "\n\n"
-              (contents.toList.map (blockToText (width - 4)))
+            let body := blocksToText (width - 4) contents
             return buf.appendAll file
               (devNoteComment (devNoteLabel author urgency year) body)
       return buf

@@ -195,6 +195,11 @@ the [Chicago Manual of Style](https://www.chicagomanualofstyle.org/).
 `PROOFREADING.md` describes the repeatable per-chapter proofreading pass and
 records the house rules that override Chicago.
 
+Every sentence must start with a capital letter. If the first thing in the
+sentence is a Lean expression, that expression must itself begin with a
+capital letter (so `Nat.add` may open a sentence, but `omega` may not —
+rephrase the sentence instead).
+
 Word choices, one per line, as `use` / `not`:
 
 - _italics_ for emphasis / **boldface**
