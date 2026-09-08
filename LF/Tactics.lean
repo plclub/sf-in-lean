@@ -1760,7 +1760,7 @@ Induction:
   - `induction x generalizing y`: induction on `x` while generalizing the listed local variables,
     giving a more general induction hypothesis
 
-## Additional Exercises
+# Additional Exercises
 
 :::suppressPreviousHeaderWhenTerse
 :::
