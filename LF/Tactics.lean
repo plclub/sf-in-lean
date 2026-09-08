@@ -1230,23 +1230,6 @@ better support forward reasoning. Mathlib is a very large development,
 so we do not import the whole thing in this book, but we do import `apply ... at ...` because it is particularly useful.
 ::::
 
-::::full
-To apply a tactic in multiple places at the same time, you can list multiple hypotheses
-in a row after the `at`. You can also explicitly use a tactic on the goal (usually
-because you are applying the tactic to both a hypothesis and the goal) by including
-it after the `at` with the turnstile symbol `⊢`, written `\|-`, `\goal` or `\vdash`.
-::::
-
-::::terse
-You can apply tactics in multiple places at the same time, including the goal:
-::::
-
-```lean
-example (n m : Nat) (h : n + 0 = m) : n = m + 0 := by
-  rw [Nat.add_zero] at h ⊢
-  assumption
-```
-
 # Specializing Hypotheses
 
 We've already seen how we can use {tactic}`have` to do
