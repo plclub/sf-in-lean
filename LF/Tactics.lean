@@ -1368,7 +1368,6 @@ example (u v w x y z : Nat)
 Is this the first place readers are seeing `assumption`?  If so, it should not be buried in a comment in the example.
 :::
 
-
 # Generalizing the Induction Hypothesis
 
 :::ignore
@@ -1467,26 +1466,8 @@ and would allow us to conclude
 n' = m' + 1
 ```
 
-which is not what we need. Instead, we need an induction hypothesis that is general in `m`:
-
-```display
-ih : ∀ m, n'.double = m.double → n' = m
-```
-
-In this branch, we can then _instantiate_ the general hypothesis with {lean}`m'`.
-::::
-
-We can obtain a more generalized induction hypothesis by writing
-
-```display
-induction n generalizing m with
-```
-
+which is not what we need.
 :::slidebreak
-:::
-
-:::dev "Benjamin Pierce (bcpierce00)" Now
-There's a problem with the flow here: We were just in the middle of saying what we want -- nothing is "wrong"!  Some of what's below is duplicating some of what's above (IMO in a clearer way).
 :::
 
 What went wrong?
@@ -1549,9 +1530,21 @@ prove a statement involving _every_ {lean}`n` but just a _particular_
 :::slidebreak
 :::
 
-A successful proof of `double_injective` _generalizes_ {lean}`m` when carrying out the induction on {lean}`n`,
+A successful proof of `double_injective` needs to _generalize_ {lean}`m` when carrying out the induction on {lean}`n`,
 so that the induction hypothesis holds for every {lean}`m`,
 rather than for just the particular {lean}`m` in the context.
+That is, we want an induction hypothesis like this:
+
+```display
+ih : ∀ m, n'.double = m.double → n' = m
+```
+
+We can obtain this generalized induction hypothesis by writing
+
+```display
+induction n generalizing m with
+```
+
 
 ```lean
 theorem double_injective (n m : Nat) (h : n.double = m.double) : n = m := by
