@@ -9,7 +9,7 @@
 
 Run `make` first: both are assembled from the extracted chapters in _out/.
 """
-import argparse, json, os, re, shutil, subprocess, sys, tempfile, zipfile
+import argparse, json, os, re, shlex, shutil, subprocess, sys, tempfile, zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -186,6 +186,23 @@ def stage(vol, chapters, dest):
           f"{', '.join(sorted(graded))}; the rest from solutions")
 
 
+def verify_env(path, env):
+    """Read config.env back the way the shell will.
+
+    A value that does not survive the round trip breaks `setup.sh` and
+    `run_autograder`, which source this file -- and it breaks them on
+    Gradescope, minutes into an image build, not here."""
+    for line in path.read_text(encoding="utf-8").splitlines():
+        key, _, raw = line.partition("=")
+        try:
+            parsed = shlex.split(raw)
+        except ValueError as e:
+            sys.exit(f"config.env: {key} is not valid shell ({e}): {line}")
+        if parsed != [env[key]]:
+            sys.exit(f"config.env: {key} does not survive quoting: "
+                     f"wrote {env[key]!r}, reads back as {parsed!r}")
+
+
 def assemble(vol, chapters, dest, sandbox=True):
     """Everything the archive holds except its own version stamp."""
     toolchain = (REPO / "lean-toolchain").read_text().strip()
@@ -193,11 +210,18 @@ def assemble(vol, chapters, dest, sandbox=True):
     stage(vol, chapters, dest / "context")
     (dest / "context" / "lakefile.toml").write_text(lakefile())
     (dest / "context" / "lean-toolchain").write_text(toolchain)
-    (dest / "config.env").write_text(
-        f"VOLUME={vol}\nCHAPTER={','.join(chapters)}\nLEAN_TOOLCHAIN={toolchain}\n"
-        f"COMPARATOR_AUTOGRADER_URL={url}\nCOMPARATOR_AUTOGRADER_REV={rev}\n"
-        f"MANUAL={','.join(manual_exercises(vol, chapters))}\n"
-        + ("" if sandbox else "SFL_LANDRUN=/opt/grader/bin/fake-landrun.sh\n"))
+    # setup.sh and run_autograder source this file, so every value is quoted for
+    # the shell: Lean names may contain an apostrophe (`succ_mul_succ'`), which
+    # unquoted would open a string the file never closes.
+    env = {"VOLUME": vol, "CHAPTER": ",".join(chapters),
+           "LEAN_TOOLCHAIN": toolchain,
+           "COMPARATOR_AUTOGRADER_URL": url, "COMPARATOR_AUTOGRADER_REV": rev,
+           "MANUAL": ",".join(manual_exercises(vol, chapters))}
+    if not sandbox:
+        env["SFL_LANDRUN"] = "/opt/grader/bin/fake-landrun.sh"
+    config = dest / "config.env"
+    config.write_text("".join(f"{k}={shlex.quote(v)}\n" for k, v in env.items()))
+    verify_env(config, env)
     for f in ("setup.sh", "run_autograder", "grade.py"):
         shutil.copyfile(HERE / f, dest / f)
 
