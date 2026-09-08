@@ -948,11 +948,14 @@ def nth? {α : Type} (l : List α) (n : Nat) : Option α :=
     | 0 => some x
     | n' + 1 => nth? l' n'
 
-theorem nth?_nil {α : Type} {n : Nat} : nth? ([] : List α) n = none := by rfl
+theorem nth?_nil {α : Type} {n : Nat} :
+  nth? ([] : List α) n = none := by rfl
 
-theorem nth?_cons_zero {α : Type} {x : α} {l' : List α} : nth? (x :: l') 0 = some x := by rfl
+theorem nth?_cons_zero {α : Type} {x : α} {l' : List α} :
+  nth? (x :: l') 0 = some x := by rfl
 
-theorem nth?_cons_succ {α : Type} {x : α} {l' : List α} {n : Nat} : nth? (x :: l') (n + 1) = nth? l' n := by rfl
+theorem nth?_cons_succ {α : Type} {x : α} {l' : List α} {n : Nat} :
+  nth? (x :: l') (n + 1) = nth? l' n := by rfl
 ```
 
 ```lean
@@ -1095,12 +1098,12 @@ theorem filter_nil {α : Type} {test : α → Bool} :
 theorem filter_cons_of_pos {α : Type} {test : α → Bool} {x : α}
     {l : List α} (h : test x = true) :
     filter test (x :: l) = x :: filter test l := by
-  rw [filter, h, cond_true]
+  rw [filter, h, Bool.cond_true]
 
 theorem filter_cons_of_neg {α : Type} {test : α → Bool} {x : α}
     {l : List α} (h : test x = false) :
     filter test (x :: l) = filter test l := by
-   rw [filter, h, cond_false]
+   rw [filter, h, Bool.cond_false]
 ```
 
 ::::full
@@ -1489,10 +1492,11 @@ example : fold (· ++ ·) [[1], [], [2, 3], [4]] [] = [1, 2, 3, 4] := by rfl
 
 example : fold (fun l n => l.length + n) [[1], [], [2, 3, 2], [4]] 0 = 5 := by rfl
 
-theorem fold_nil {α : Type} {β : Type} {f : α → β → β} {b : β} : fold f [] b = b := by rfl
+theorem fold_nil {α β : Type} {f : α → β → β} {b : β} :
+  fold f [] b = b := by rfl
 
-theorem fold_cons {α : Type} {β : Type} {f : α → β → β} {a : α} {l : List α} {b : β} :
-    fold f (a :: l) b = f a (fold f l b) := by rfl
+theorem fold_cons {α β : Type} {f : α → β → β} {a : α} {l : List α} {b : β} :
+  fold f (a :: l) b = f a (fold f l b) := by rfl
 ```
 
 ::::quiz
