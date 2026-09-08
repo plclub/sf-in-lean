@@ -163,6 +163,13 @@ elab "apply " t:term " at " i:ident : tactic => withSynthesize <| withMainContex
   let mainGoal ← mainGoal.tryClear ldecl.fvarId
   replaceMainGoal <| [mainGoal] ++ mvs.pop.toList.map (·.mvarId!)
 
+/--
+  `apply t at ⊢` names the goal explicitly with the turnstile symbol `⊢`
+  and applies `t` to it. It is backward reasoning, behaving exactly like
+  ordinary `apply t`.
+-/
+elab "apply " t:term " at " "⊢" : tactic => do evalTactic (← `(tactic| apply $t))
+
 structure InversionConfig where
   clear : Bool := false
 
@@ -429,5 +436,9 @@ lemma doubleNegation : ∀ P, P → ¬ ¬ P := by
 
 example (H : Bool → Nat → False) (n : Nat) : False := by
   apply H at n; apply n; exact true
+
+example (p q : Prop) (h : p → q) (hp : p) : q := by
+  apply h at ⊢
+  exact hp
 
 end Tests
