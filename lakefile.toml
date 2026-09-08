@@ -95,6 +95,10 @@ root = "TargetsHL"
 name = "sfl-ts"
 root = "TargetsTS"
 
+[[lean_exe]]
+name = "sfl-build-stamp"
+root = "TargetsBuildStamp"
+
 # Temporary scaffolding: draft book + executable that emits solutions .lean for
 # generated LF/<Ch>Verso.lean chapters not yet in the real book, so they can be
 # diffed against the bare LF/<Ch>.lean sources.  See LFDraft.lean.

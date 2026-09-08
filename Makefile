@@ -12,6 +12,9 @@
 
 default: all
 
+# Expanded lazily after `book-build` has compiled the stamp executable and cached by Make
+BUILD_STAMP = $(eval BUILD_STAMP := $(shell lake env .lake/build/bin/sfl-build-stamp))$(BUILD_STAMP)
+
 # ── Volume target template ────────────────────────────────────────────────────
 # Usage: $(eval $(call VOLUME_template,slug))
 #   slug   lowercase short name used in make targets and CLI args, e.g. lf
@@ -22,16 +25,16 @@ define VOLUME_template
 .PHONY: $(1) $(1)-student $(1)-solutions $(1)-terse $(1)-grading
 
 $(1)-student: book-build
-	lake env .lake/build/bin/sfl-$(1) student
+	SFL_BUILD_STAMP="$$(BUILD_STAMP)" lake env .lake/build/bin/sfl-$(1) student
 
 $(1)-solutions: book-build
-	lake env .lake/build/bin/sfl-$(1) solutions
+	SFL_BUILD_STAMP="$$(BUILD_STAMP)" lake env .lake/build/bin/sfl-$(1) solutions
 
 $(1)-terse: book-build
-	lake env .lake/build/bin/sfl-$(1) terse
+	SFL_BUILD_STAMP="$$(BUILD_STAMP)" lake env .lake/build/bin/sfl-$(1) terse
 
 $(1)-grading: book-build
-	lake env .lake/build/bin/sfl-$(1) grading
+	SFL_BUILD_STAMP="$$(BUILD_STAMP)" lake env .lake/build/bin/sfl-$(1) grading
 
 $(1): $(1)-student $(1)-solutions $(1)-terse $(1)-grading
 
@@ -50,7 +53,7 @@ $(eval $(call VOLUME_template,ts))
 # Compile all volume executables once before any generator starts.  A single
 # Lake frontend avoids races on the shared `.lake/build` directory.
 book-build: ensure-build-symlink
-	lake build sfl-lf sfl-hl sfl-ts
+	lake build sfl-build-stamp sfl-lf sfl-hl sfl-ts
 
 all: lf hl ts
 
@@ -107,8 +110,9 @@ serve: all
 # get released (an omitted volume is skipped) and, per volume, which chapters
 # are included. Pass extra flags via ARGS to override, e.g.:
 #   make release ARGS="--keep-lake"
-release:
-	python3 scripts/package_release.py $(ARGS)
+release: ensure-build-symlink
+	@lake build sfl-build-stamp
+	SFL_BUILD_STAMP="$$(lake env .lake/build/bin/sfl-build-stamp)" python3 scripts/package_release.py $(ARGS)
 
 clean:
 	lake clean
