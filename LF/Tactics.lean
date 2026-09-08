@@ -1470,9 +1470,8 @@ induction n generalizing m with
 :::
 
 :::dev "Benjamin Pierce (bcpierce00)" Now
-There's a problem with the flow here: We were just in the middle of saying what we want -- nothing is "wrong"!  Some of what's below is duplicating some of what's above (IMO in a clearer way).  
+There's a problem with the flow here: We were just in the middle of saying what we want -- nothing is "wrong"!  Some of what's below is duplicating some of what's above (IMO in a clearer way).
 :::
-
 
 What went wrong?
 
