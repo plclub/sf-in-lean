@@ -12,11 +12,9 @@ picture of who is touching what:
     (linked to its PR) over its people — whoever created it, plus a
     `Last edit:` name when someone else pushed the most recent commit — and its
     last-activity time on a second line in small type; a Status cell of glyph
-    badges (✅ ready, 👍 approved with open
-    threads, 🔴 changes requested, 🟠 ready for review, ❌ CI failing,
-    🟡 CI running, 💬N open threads,
+    badges (✅ ready, 🔴 changes requested, ❌ CI failing, 💬N open threads,
     ✏️ draft, ❗ auto-merge held,
-    🔗 fixes issue, ⚠️ main = no longer merges cleanly against `main`, plus
+    🔗 fixes issue, ⚠️ conflicts with main = no longer merges cleanly, plus
     "based on X" when the PR is stacked on a branch other than `main`, and a
     small ⏳ "waiting for …" line under the badges naming whose move the PR is
     waiting for and what that move is); an
@@ -641,14 +639,13 @@ def status_badges(pr):
     icon never wraps away from the word it labels.
 
     * 📝 draft.
-    * 🔴 changes requested · 🟠 ready for review (out of draft, nobody has
-      reviewed it yet) · ✅ ready to merge (approved, nothing unresolved) ·
-      👍 approved but with open threads.  A coloured disc for the
-      awaiting-review state so it reads down the column alongside the red and
-      green ones, rather than as an empty cell.
-    * ❌ CI failing on the head commit · 🟡 CI still running.  A green run gets
-      no badge — down this column, no news is good news (a PR with no checks at
-      all also shows nothing).
+    * 🔴 changes requested · ✅ ready to merge (approved, nothing unresolved).
+      The other review states get no badge: awaiting-review is already what
+      the "Under review" grouping says, and approved-with-open-threads is
+      already told by the 💬 count.
+    * ❌ CI failing on the head commit.  A green or still-running check gets
+      no badge — down this column, no news is good news (a PR with no checks
+      at all also shows nothing).
     * 💬N — N review threads still open.
     * ❗ auto-merge enabled but held (a failing check, missing approval, or
       conflict is stalling it).  A PR sitting in the merge queue is a transient
@@ -661,17 +658,11 @@ def status_badges(pr):
         dec = pr["review_decision"]
         if dec == "CHANGES_REQUESTED":
             badges.append(tip("🔴", "Changes requested"))
-        elif dec == "REVIEW_REQUIRED":
-            badges.append(tip("🟠", "Ready for review — nobody has reviewed it yet"))
-        else:  # APPROVED, or None (no required review — rare here)
-            badges.append(tip("✅", "Ready to merge — approved, nothing unresolved")
-                          if pr["unresolved"] == 0
-                          else tip("👍", "Approved, but with open review threads"))
-    ci = pr.get("ci")
-    if ci in ("FAILURE", "ERROR"):
+        elif dec != "REVIEW_REQUIRED" and pr["unresolved"] == 0:
+            # APPROVED, or None (no required review — rare here).
+            badges.append(tip("✅", "Ready to merge — approved, nothing unresolved"))
+    if pr.get("ci") in ("FAILURE", "ERROR"):
         badges.append(tip("❌", "CI failing on the head commit"))
-    elif ci in ("PENDING", "EXPECTED"):
-        badges.append(tip("🟡", "CI still running"))
     if pr["unresolved"]:
         n = pr["unresolved"]
         badges.append(tip(glue("💬", str(n)),
@@ -1043,7 +1034,7 @@ def render(branches, conf, prs, external, have_token, slug):
                              href=pr["url"] if pr else None)
         first = f"{branch}<br><sub>{people_cell(b)} · {nbsp(b['when'] + ' ago')}</sub>"
         # The old "→ main" column is folded into the Status cell: flag a branch
-        # that no longer merges cleanly right there, as a ⚠️ main badge.
+        # that no longer merges cleanly right there, as a ⚠️ conflicts badge.
         status = pr_cell(b["short"], prs)
         # A PR stacked on another branch rather than `main` merges into *that*
         # branch, so say which one — the reader otherwise reads its diff and
@@ -1052,7 +1043,7 @@ def render(branches, conf, prs, external, have_token, slug):
             status += (" <sub>based&nbsp;on "
                        f"{branch_link(pr['base'], slug, maxlen=40)}</sub>")
         if not b["clean_to_main"]:
-            status += " " + tip(glue("⚠️", "main"),
+            status += " " + tip(glue("⚠️", nbsp("conflicts with main")),
                                 "No longer merges cleanly with main")
         # Under the badges, a small-type line saying whose move the PR waits
         # for — the "what is left?" answer the badges only imply.
@@ -1109,7 +1100,7 @@ def render(branches, conf, prs, external, have_token, slug):
             status += (" <sub>based&nbsp;on "
                        f"{branch_link(pr['base'], slug, maxlen=40)}</sub>")
         if not clean:
-            status += " " + tip(glue("⚠️", "main"),
+            status += " " + tip(glue("⚠️", nbsp("conflicts with main")),
                                 "No longer merges cleanly with main")
         waiting = next_action(pr, pb)
         if waiting:
@@ -1174,14 +1165,13 @@ def render(branches, conf, prs, external, have_token, slug):
     if active or external:
         out.append(
             f"<sub>**Status** {glue('✅', 'ready')} · "
-            f"{glue('👍', 'approved,')} threads open · "
             f"{glue('🔴', 'changes')} requested · "
-            f"{glue('🟠', 'ready')} for review · "
-            f"{glue('❌', 'CI')} failing · {glue('🟡', 'CI')} running · "
+            f"{glue('❌', 'CI')} failing · "
             f"{glue('💬', 'open')} threads · "
             f"{glue('✏️', 'draft')} · {glue('❗', 'auto-merge')} "
-            f"held · {glue('🔗', 'fixes')} issue · {glue('⚠️', 'main')} "
-            "conflicts with `main` · "
+            f"held · {glue('🔗', 'fixes')} issue · "
+            f"{glue('⚠️', 'conflicts')} with `main` = no longer merges "
+            "cleanly · "
             f"{glue('⏳', 'whose')} move the PR is waiting for. "
             "&nbsp; **External** opened from a fork (hover for which); no "
             "local branch, so its Overlaps cell stays empty. "
