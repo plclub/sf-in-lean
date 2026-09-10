@@ -127,6 +127,8 @@ example (n : Nat) (h : n = Nat.succ n) : False := by
 ```
 ::::
 
+# The {lean}`Prop` Type
+
 ::::full
 We have now seen many examples of factual claims (i.e.,
 _propositions_) and ways of presenting evidence of their truth
@@ -158,8 +160,6 @@ propositions and proofs.
 
 Like everything in Lean, well-formed propositions have a _type_:
 ::::
-
-# The {lean}`Prop` Type
 
 ```lean
 #check (∀ n m : Nat, n + m = m + n : Prop)
@@ -273,7 +273,7 @@ right at this moment, but they'll see {name}`Sort` when hovering.
 Eq.{u_1} {α : Sort u_1} : α → α → Prop
 ```
 
-As a convenience, Lean will cast booleans by equating them to {lean}`true`,
+As a convenience, Lean will cast booleans to propositions by equating them to {lean}`true`,
 which is why checking them against {lean}`Prop` succeeds.
 It also casts boolean equalities to propositions by equating to {lean}`true`,
 and boolean inequalities by equating to {lean}`false`.
@@ -1107,7 +1107,7 @@ example (a : Prop) (h : 1 = 0) : (a ∨ ¬ a) := by
 :::
 ::::
 
-# Truth
+## Truth
 
 Besides {lean}`False`, Lean's standard library also defines {lean}`True`,
 a proposition that is trivially true. To prove it, we use
@@ -1194,6 +1194,10 @@ theorem nil_is_not_cons {α : Type} (x : α) (xs : List α) :
     rw [←h]
     exact hn
 ```
+
+:::grade
+`GRADE_MANUAL 2: nil_is_not_cons`
+:::
 :::::
 
 :::instructors
@@ -1505,7 +1509,7 @@ Connectives introduced in this chapter:
   - eliminated with {tactic}`cases` or {tactic}`contradiction`
 - {lean}`¬ a` (negation):
   - defined as {lean}`a → False`
-- {lean}`True` (truthhood):
+- {lean}`True` (truth):
   - introduced as {lean}`True.intro` or with {tactic}`constructor`
 - {lean}`a ↔ b` (iff):
   - introduced with {tactic}`constructor`
@@ -1534,7 +1538,7 @@ What does it mean to say that
 "an element {lean}`x` occurs in a list {lean}`l`"?
 - If {lean}`l` is the empty list, then {lean}`x` cannot occur in it,
   so the property "{lean}`x` appears in {lean}`l`" is simply false.
-- Otherwise, {lean}`l` has the form {lean}`[x' :: l']`.
+- Otherwise, {lean}`l` has the form {lean}`x' :: l'`.
   In this case, {lean}`x` occurs in {lean}`l` if it is equal to {lean}`x'`
   or if it occurs in {lean}`l'`.
 ::::
@@ -2145,6 +2149,10 @@ theorem even_double (k : Nat) :
 Same issue as `CombineOddEven`.
 :::
 
+:::dev "Claude"
+This lemma is proved with `solution!` but is not wrapped in an `exercise` directive, so the student build gets a `sorry`ed helper with no exercise framing — and `Nat.even_bool_prop` just below depends on it. Consider making it a named, rated exercise or switching to `workinclass!`.
+:::
+
 ```lean
 theorem even_double_conv (n : Nat) : ∃ k : Nat,
     n = bif Nat.even n then Nat.double k else Nat.double k + 1 := by
@@ -2209,9 +2217,6 @@ we can say either
 
 Again, these two notions are equivalent:
 
-(For the reverse direction we need the simple fact that `==` is
-reflexive.)
-
 :::dev "Yipeng Liu (berberman)"
 Either get rid of the development of `beq` story
 or use our own `beq` on `Nat`.
@@ -2259,6 +2264,10 @@ technique known as _proof by reflection_.
 Consider the following statement:
 ::::
 
+```display
+Nat.Even 100
+```
+
 The most direct way to prove this is to give the value of `k` explicitly.
 
 ```lean
@@ -2303,6 +2312,10 @@ example : Nat.even 101 = false := rfl
 In contrast, propositional negation can be difficult to work with directly.
 For example, suppose we state the nonevenness of {lean}`101` propositionally:
 
+```display
+¬ Nat.Even 101
+```
+
 Proving this directly — by assuming that there is some {lean}`n` such that
 {lean}`101 = Nat.double n` and then somehow reasoning to a contradiction —
 would be rather complicated.
@@ -2334,7 +2347,7 @@ theorem add_beq_true (n m p : Nat) (h : (n == m) = true) :
 ::::full
 We'll come back to
 reflection and decidable propositions in a later chapter,
-but it serves as a good example showing the different strengths
+but the examples above already illustrate the different strengths
 of booleans and general propositions.
 Being able to cross back and forth between the boolean and propositional
 worlds will often be convenient in later chapters.
@@ -2853,6 +2866,10 @@ example {n : Nat} {p : Nat × Nat} (hx_fst : p.fst = n + 1) (hx_snd : p.snd = 0)
   · rw [hx_snd]
 ```
 
+:::dev "Claude"
+The `prod_ext_example` exercise is rated 2, but its content is an anonymous `example`, so there is no constant for a `gradeTheorem` directive to reference. Either name the theorem and add a grading directive, or mark the exercise as optional/ungraded.
+:::
+
 ::::exercise (rating := 2) (name := "prod_ext_example")
 Now, use {tactic}`ext1` to prove the following.
 Remember that `dsimp only` simplifies projections like `(a, b).fst` to `a`.
@@ -3045,8 +3062,8 @@ _Claim_: There exist irrational numbers `n` and `m` such that `n ^ m`
 _Proof_: It is not difficult to show that `sqrt 2` is irrational.
   So if `sqrt 2 ^ sqrt 2` is rational, it suffices to take `n = m = sqrt 2`
   and we are done. Otherwise, `sqrt 2 ^ sqrt 2` is irrational.
-  In this case, we can take `a = sqrt 2 ^ sqrt 2` and `b = sqrt 2`,
-  since `a ^ b = sqrt 2 ^ (sqrt 2 * sqrt 2) = sqrt 2 ^ 2 = 2`. QED.
+  In this case, we can take `n = sqrt 2 ^ sqrt 2` and `m = sqrt 2`,
+  since `n ^ m = sqrt 2 ^ (sqrt 2 * sqrt 2) = sqrt 2 ^ 2 = 2`. QED.
 
 Do you see what happened here?  We used the excluded middle to
 consider separately the cases where `sqrt 2 ^ sqrt 2` is rational and
@@ -3103,7 +3120,7 @@ The following theorem implies that it is always safe to assume
 a decidability axiom (i.e., an instance of excluded middle) for any
 _particular_ proposition {lean}`a`. Why? Because the negation of such an axiom
 leads to a contradiction. If {lean}`¬ (a ∨ ¬ a)` were provable, then by
-{lean}`de_morgan_not_or` as proven above, {lean}`a ∧ ¬ a` would be provable,
+{lean}`de_morgan_not_or` as proven above, {lean}`¬ a ∧ ¬ ¬ a` would be provable,
 which would be a contradiction. So, it is safe to add {lean}`a ∨ ¬ a` as an axiom
 for any particular {lean}`a`.
 
