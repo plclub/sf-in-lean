@@ -17,3 +17,11 @@ TS/*Verso.lean
 # Personal keybinding cheat sheet and its generator (see .vscode/KEYBINDINGS-SETUP.md).
 .vscode/KEYBINDINGS*.md
 .vscode/keybindings-ref.*
+
+# Gradescope autograder build output (gradescope/package.py).
+gradescope/*.zip
+gradescope/autograder/
+gradescope/context/
+
+# The pre-round snapshot a proofreading review diffs against (scripts/proofread.py).
+proofread/rounds/*.before.*

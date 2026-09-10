@@ -29,7 +29,7 @@ import os, sys, tempfile, shutil, json, argparse
 def runshell(cmd):
     run(cmd, shell=True, check=True)
 
-ingore_pattern = shutil.ignore_patterns(".lake", "lakefile.toml", "lake-manifest.json", "lean-toolchain", "SFLCompat.lean", "SFLCompat")
+ingore_pattern = shutil.ignore_patterns(".lake", ".vscode", "lakefile.toml", "lake-manifest.json", "lean-toolchain", "SFLCompat.lean", "SFLCompat")
 
 def replace_everywhere(directory, find, replace):
     # https://stackoverflow.com/questions/4205854/recursively-find-and-replace-string-in-text-files

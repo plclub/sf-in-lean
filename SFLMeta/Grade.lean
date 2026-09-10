@@ -24,7 +24,7 @@ structure GradeTheoremConfig where
   points : String
   /-- The names of the graded theorems. Each is graded as specified by `points`. -/
   names : List Name
-  deriving Repr
+  deriving Repr, TypeName
 
 def ValDesc.pointsText : ValDesc m String where
   description := doc!"a point value (a number, or a quoted decimal)"
@@ -59,7 +59,8 @@ block_extension Block.gradeTheorem (points : String) (names : List Name) where
 
 @[directive]
 def gradeTheorem : DirectiveExpanderOf GradeTheoremConfig
-  | cfg, _contents =>
+  | cfg, _contents => do
+    pushInfoLeaf <| .ofCustomInfo {stx := ← getRef, value := .mk cfg}
     ``(Verso.Doc.Block.other
         (SFLMeta.Block.gradeTheorem $(quote cfg.points) $(quote cfg.names)) #[])
 
@@ -82,7 +83,7 @@ block_extension Block.autogradedHole (names : List Name) where
 structure AutogradedHoleConfig where
   /-- The names of definitions to treat as holes. -/
   names : List Name
-  deriving Repr
+  deriving Repr, TypeName
 
 def AutogradedHoleConfig.parse : ArgParse m AutogradedHoleConfig :=
   AutogradedHoleConfig.mk
@@ -94,7 +95,9 @@ instance : FromArgs AutogradedHoleConfig m := ⟨AutogradedHoleConfig.parse⟩
 
 @[directive]
 def autogradedHole : DirectiveExpanderOf AutogradedHoleConfig
-  | cfg, _contents => ``(Verso.Doc.Block.other (SFLMeta.Block.autogradedHole $(quote cfg.names)) #[])
+  | cfg, _contents => do
+    pushInfoLeaf <| .ofCustomInfo {stx := ← getRef, value := .mk cfg}
+    ``(Verso.Doc.Block.other (SFLMeta.Block.autogradedHole $(quote cfg.names)) #[])
 
 def decodeAutogradedHoleData (data : Json) : Array Name :=
   match data with

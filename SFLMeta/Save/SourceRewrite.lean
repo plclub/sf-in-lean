@@ -27,7 +27,7 @@ A complementary mechanism to `solution!(…)` for places where the missing piece
 isn't a term or tactic but, for example, the constructors of an inductive
 declaration. The source uses `-- SOLUTION` and `-- END SOLUTION` line comments
 to delimit the region; in the student build the whole region (including the
-marker lines) is replaced with a single `-- FILL IN HERE` comment at the
+marker lines) is replaced with a single `--  FILL IN HERE` comment at the
 indentation of the opening marker. In the teacher build the marker lines are
 simply removed and the body is kept verbatim. If `-- END SOLUTION` is missing,
 the rewrite extends to the end of the block. -/
@@ -45,7 +45,9 @@ def lineIndent (line : String) : String :=
   (line.takeWhile (·.isWhitespace)).toString
 
 /-- Replace each `-- SOLUTION … -- END SOLUTION` block in `src` with a single
-`-- FILL IN HERE` line at the indentation of the opening marker. -/
+`--  FILL IN HERE` line at the indentation of the opening marker.  The two
+spaces after `--` match the `commentPrefix` of the prose comments the line sits
+among in the generated `.lean` files. -/
 partial def applyFillInForStudent (src : String) : String := Id.run do
   let lines := src.splitOn "\n"
   let mut out : Array String := #[]
@@ -54,7 +56,7 @@ partial def applyFillInForStudent (src : String) : String := Id.run do
   while i < n do
     let line := lines[i]!
     if isSolutionStart line then
-      out := out.push (lineIndent line ++ "-- FILL IN HERE")
+      out := out.push (lineIndent line ++ "--  FILL IN HERE")
       i := i + 1
       while i < n && !isSolutionEnd lines[i]! do
         i := i + 1

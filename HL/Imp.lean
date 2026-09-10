@@ -225,7 +225,7 @@ the pattern repeated, and skip them otherwise.
 declare_syntax_cat imp_aexp
 /-- Numeric literal -/
 syntax:max num : imp_aexp
-/-- Variable reference -/
+/-- `Ident` or Lean identifier -/
 syntax:max ident : imp_aexp
 /-- Addition -/
 syntax:65 imp_aexp:65 " + " imp_aexp:66 : imp_aexp
@@ -234,7 +234,7 @@ syntax:65 imp_aexp:65 " - " imp_aexp:66 : imp_aexp
 /-- Multiplication -/
 syntax:70 imp_aexp:70 " * " imp_aexp:71 : imp_aexp
 /-- Parentheses for grouping -/
-syntax "(" imp_aexp ")" : imp_aexp
+syntax:max "(" imp_aexp ")" : imp_aexp
 /-- Escape to Lean -/
 syntax:max "~" term:max : imp_aexp
 
@@ -243,23 +243,66 @@ syntax:min "aexp " "{" imp_aexp "}" : term
 ```
 ::::
 
+:::instructors
+A bare identifier is resolved by its type.
+An {name}`Ident` such as {name}`X` becomes {name}`Aexp.id`,
+while an {name}`Aexp` is inserted directly.
+A consequence is that object-language variables must
+be a declared {name}`Ident` constants — as {name}`W`/{name}`X`/{name}`Y`/{name}`Z` are,
+but Lean variables of type {name}`Aexp` can be referred without antiquotation.
+:::
+
 ```lean
-open Lean in
+namespace Imp.Elab
+
+open Lean Elab Term Meta
+
+def withSourceInfoOf {kind : Name} (ref : Syntax) (stx : TSyntax kind)
+    (canonical := true) : TSyntax kind :=
+  let info := SourceInfo.fromRef ref (canonical := canonical)
+  ⟨stx.raw.setInfo info⟩
+
 macro_rules
-  | `(aexp { $n:num }) => `(Aexp.num $(quote n.getNat))
-  | `(aexp { $x:ident }) => `(Aexp.id $x)
-  | `(aexp { ~$e }) => pure e
-  | `(aexp { $a + $b }) => `(Aexp.plus (aexp {$a}) (aexp {$b}))
-  | `(aexp { $a - $b }) => `(Aexp.minus (aexp {$a}) (aexp {$b}))
-  | `(aexp { $a * $b }) => `(Aexp.mult (aexp {$a}) (aexp {$b}))
-  | `(aexp { ($a) }) => `(aexp {$a})
+  | `(aexp { $exp:imp_aexp }) => do
+    let stx ← match exp with
+      | `(imp_aexp| $n:num) => ``(Aexp.num $n)
+      | `(imp_aexp| ~$e:term) => ``(($e : Aexp))
+      | `(imp_aexp| $a + $b) => ``(Aexp.plus (aexp {$a}) (aexp {$b}))
+      | `(imp_aexp| $a - $b) => ``(Aexp.minus (aexp {$a}) (aexp {$b}))
+      | `(imp_aexp| $a * $b) => ``(Aexp.mult (aexp {$a}) (aexp {$b}))
+      | `(imp_aexp| ($a)) => ``(aexp {$a})
+      | _ => Lean.Macro.throwUnsupported
+    return withSourceInfoOf exp stx
+
+elab_rules : term
+  | `(aexp { $x:ident }) => do
+    let some e ← resolveId? x (withInfo := true)
+      | throwErrorAt x "unknown identifier `{x.getId.eraseMacroScopes}`"
+    let type ← whnf (← inferType e)
+    tryPostponeIfMVar type
+    match_expr type with
+    | Aexp => pure e
+    | String => mkAppM ``Aexp.id #[e]
+    | _ => throwErrorAt x "expected an Imp identifier or arithmetic expression"
+
+end Imp.Elab
 ```
+
+:::instructors
+The literals `true`/`false` are accepted through the bare-identifier form
+(`syntax:max ident : imp_bexp`) and turned into {name}`Bexp.bool` by the macro
+below. Any other bare identifier is inserted as a Lean {name}`Bexp`.
+We take this route rather than
+declaring `true`/`false` as symbols: as reserved keywords they would break
+ordinary Lean uses of `true`/`false`, and as non-reserved symbols they would
+clash with the bare-identifier form of `imp_aexp`.
+:::
 
 ::::details "Notation encoding: boolean expressions"
 ```lean
 /-- Boolean expressions of Imp -/
 declare_syntax_cat imp_bexp
-/-- Boolean literal (`true` or `false`) -/
+/-- Boolean literal (`true` or `false`) and Lean identifier -/
 syntax:max ident : imp_bexp
 /-- Equality of arithmetic expressions -/
 syntax:50 imp_aexp:51 " = " imp_aexp:51 : imp_bexp
@@ -271,10 +314,10 @@ syntax:50 imp_aexp:51 " ≤ " imp_aexp:51 : imp_bexp
 syntax:50 imp_aexp:51 " > " imp_aexp:51 : imp_bexp
 /-- Boolean negation -/
 syntax:70 "¬ " imp_bexp:70 : imp_bexp
-/-- Boolean conjunction -/
+/-- Boolean conjunction (right associative) -/
 syntax:35 imp_bexp:36 " ∧ " imp_bexp:35 : imp_bexp
 /-- Parentheses for grouping -/
-syntax "(" imp_bexp ")" : imp_bexp
+syntax:max "(" imp_bexp ")" : imp_bexp
 /-- Escape to Lean -/
 syntax:max "~" term:max : imp_bexp
 
@@ -285,21 +328,28 @@ syntax:min "bexp " "{" imp_bexp "}" : term
 
 ::::details "Notation encoding: boolean expressions, macro rules"
 ```lean
-open Lean in
+namespace Imp.Elab
+
+open Lean
+
 macro_rules
-  | `(bexp { $x:ident }) =>
-    match x.getId with
-    | `true  => `(Bexp.bool true)
-    | `false => `(Bexp.bool false)
-    | _      => Macro.throwErrorAt x s!"expected 'true' or 'false', got '{x.getId}'"
-  | `(bexp { ~$e }) => pure e
-  | `(bexp { $a:imp_aexp = $b:imp_aexp }) => `(Bexp.eq (aexp {$a}) (aexp {$b}))
-  | `(bexp { $a:imp_aexp ≠ $b:imp_aexp }) => `(Bexp.neq (aexp {$a}) (aexp {$b}))
-  | `(bexp { $a:imp_aexp ≤ $b:imp_aexp }) => `(Bexp.le (aexp {$a}) (aexp {$b}))
-  | `(bexp { $a:imp_aexp > $b:imp_aexp }) => `(Bexp.gt (aexp {$a}) (aexp {$b}))
-  | `(bexp { ¬ $b:imp_bexp }) => `(Bexp.not (bexp {$b}))
-  | `(bexp { $b₁:imp_bexp ∧ $b₂:imp_bexp }) => `(Bexp.and (bexp {$b₁}) (bexp {$b₂}))
-  | `(bexp { ($b:imp_bexp) }) => `(bexp {$b})
+  | `(bexp { $exp:imp_bexp }) => do
+    let stx ← match exp with
+      | `(imp_bexp| true) => ``(Bexp.bool true)
+      | `(imp_bexp| false) => ``(Bexp.bool false)
+      | `(imp_bexp| $x:ident) => ``(($x : Bexp))
+      | `(imp_bexp| ~$e:term) => ``(($e : Bexp))
+      | `(imp_bexp| $a:imp_aexp = $b:imp_aexp) => ``(Bexp.eq (aexp {$a}) (aexp {$b}))
+      | `(imp_bexp| $a:imp_aexp ≠ $b:imp_aexp) => ``(Bexp.neq (aexp {$a}) (aexp {$b}))
+      | `(imp_bexp| $a:imp_aexp ≤ $b:imp_aexp) => ``(Bexp.le (aexp {$a}) (aexp {$b}))
+      | `(imp_bexp| $a:imp_aexp > $b:imp_aexp) => ``(Bexp.gt (aexp {$a}) (aexp {$b}))
+      | `(imp_bexp| ¬ $b:imp_bexp) => ``(Bexp.not (bexp {$b}))
+      | `(imp_bexp| $b₁:imp_bexp ∧ $b₂:imp_bexp) => ``(Bexp.and (bexp {$b₁}) (bexp {$b₂}))
+      | `(imp_bexp| ($b:imp_bexp)) => ``(bexp {$b})
+      | _ => Macro.throwUnsupported
+    return withSourceInfoOf exp stx
+
+end Imp.Elab
 ```
 ::::
 
@@ -321,138 +371,162 @@ Delaborators are like the opposite of `macro_rules` -- they are used to pretty p
 ::::details "Notation encoding: printing expressions back"
 ```lean
 namespace Imp.Delab
-open Lean PrettyPrinter Delaborator SubExpr Parenthesizer
 
-/-- Re-inserts parentheses in `imp_aexp` output according to the grammar's precedences. -/
+open Lean PrettyPrinter Delaborator SubExpr Parenthesizer Imp.Elab
+
 @[category_parenthesizer imp_aexp]
-def imp_aexp.parenthesizer : CategoryParenthesizer | prec => do
+def imp_aexp.parenthesizer : CategoryParenthesizer := fun prec => do
   maybeParenthesize `imp_aexp true wrapParens prec <|
     parenthesizeCategoryCore `imp_aexp prec
 where
   wrapParens (stx : Syntax) : Syntax := Unhygienic.run do
-    let pstx ← `(($(⟨stx⟩)))
-    return pstx.raw.setInfo (SourceInfo.fromRef stx)
+    let stxInfo := SourceInfo.fromRef stx
+    let stx := stx.setInfo .none
+    let pstx ← `(imp_aexp| ($(⟨stx⟩)))
+    return pstx.raw.setInfo stxInfo
 
-/-- Re-inserts parentheses in `imp_bexp` output according to the grammar's precedences. -/
 @[category_parenthesizer imp_bexp]
-def imp_bexp.parenthesizer : CategoryParenthesizer | prec => do
-  maybeParenthesize `imp_bexp true wrapParens prec <|
-    parenthesizeCategoryCore `imp_bexp prec
+def imp_bexp.parenthesizer : CategoryParenthesizer := fun prec => do
+  Parenthesizer.maybeParenthesize `imp_bexp true wrapParens prec <|
+    Parenthesizer.parenthesizeCategoryCore `imp_bexp prec
 where
   wrapParens (stx : Syntax) : Syntax := Unhygienic.run do
-    let pstx ← `(($(⟨stx⟩)))
-    return pstx.raw.setInfo (SourceInfo.fromRef stx)
-
-/-- Tag freshly built syntax with the term info that Lean's pretty printer expects. -/
-def annAsTerm {any} (stx : TSyntax any) : DelabM (TSyntax any) :=
-  (⟨·⟩) <$> annotateTermInfo ⟨stx.raw⟩
-
-/-- Rebuild `imp_aexp` concrete syntax from an `Aexp` term. -/
-partial def delabAexpInner : DelabM (TSyntax `imp_aexp) := do
-  let e ← getExpr
-  let stx ←
-    match_expr e with
-    | Aexp.num _ =>
-      match (← withAppArg getExpr).nat? with
-      | some v => pure ⟨Syntax.mkNumLit (toString v) |>.raw⟩
-      | none   => `(imp_aexp| ~$(← withAppArg delab))
-    | Aexp.id _ =>
-      -- A variable reference like aexp { X } elaborates to Aexp.id X where X is the
-      -- declared Ident constant, so the delaborators print the constant's name as a
-      -- bare identifier (and also handle the .id "X" string-literal form).
-      match ← withAppArg getExpr with
-      | .const nm _      => `(imp_aexp| $(mkIdent nm):ident)
-      | .lit (.strVal s) => `(imp_aexp| $(mkIdent (.mkSimple s)):ident)
-      | _                => `(imp_aexp| ~$(← withAppArg delab))
-    | Aexp.plus _ _ =>
-      let s₁ ← withAppFn <| withAppArg delabAexpInner
-      let s₂ ← withAppArg delabAexpInner
-      `(imp_aexp| $s₁ + $s₂)
-    | Aexp.minus _ _ =>
-      let s₁ ← withAppFn <| withAppArg delabAexpInner
-      let s₂ ← withAppArg delabAexpInner
-      `(imp_aexp| $s₁ - $s₂)
-    | Aexp.mult _ _ =>
-      let s₁ ← withAppFn <| withAppArg delabAexpInner
-      let s₂ ← withAppArg delabAexpInner
-      `(imp_aexp| $s₁ * $s₂)
-    | _ => `(imp_aexp| ~$(← delab))
-  annAsTerm stx
-
-/-- Rebuild `imp_bexp` concrete syntax from a `Bexp` term. -/
-partial def delabBexpInner : DelabM (TSyntax `imp_bexp) := do
-  let e ← getExpr
-  let stx ←
-    match_expr e with
-    | Bexp.bool _ =>
-      match ← withAppArg getExpr with
-      | .const ``Bool.true _  => `(imp_bexp| $(mkIdent `true):ident)
-      | .const ``Bool.false _ => `(imp_bexp| $(mkIdent `false):ident)
-      | _                     => `(imp_bexp| ~$(← withAppArg delab))
-    | Bexp.eq _ _ =>
-      let s₁ ← withAppFn <| withAppArg delabAexpInner
-      let s₂ ← withAppArg delabAexpInner
-      `(imp_bexp| $s₁:imp_aexp = $s₂:imp_aexp)
-    | Bexp.neq _ _ =>
-      let s₁ ← withAppFn <| withAppArg delabAexpInner
-      let s₂ ← withAppArg delabAexpInner
-      `(imp_bexp| $s₁:imp_aexp ≠ $s₂:imp_aexp)
-    | Bexp.le _ _ =>
-      let s₁ ← withAppFn <| withAppArg delabAexpInner
-      let s₂ ← withAppArg delabAexpInner
-      `(imp_bexp| $s₁:imp_aexp ≤ $s₂:imp_aexp)
-    | Bexp.gt _ _ =>
-      let s₁ ← withAppFn <| withAppArg delabAexpInner
-      let s₂ ← withAppArg delabAexpInner
-      `(imp_bexp| $s₁:imp_aexp > $s₂:imp_aexp)
-    | Bexp.not _ =>
-      let s ← withAppArg delabBexpInner
-      `(imp_bexp| ¬ $s)
-    | Bexp.and _ _ =>
-      let s₁ ← withAppFn <| withAppArg delabBexpInner
-      let s₂ ← withAppArg delabBexpInner
-      `(imp_bexp| $s₁ ∧ $s₂)
-    | _ => `(imp_bexp| ~$(← delab))
-  annAsTerm stx
+    let stxInfo := SourceInfo.fromRef stx
+    let stx := stx.setInfo .none
+    let pstx ← `(imp_bexp| ($(⟨stx⟩)))
+    return pstx.raw.setInfo stxInfo
 ```
 ::::
 
 ::::details "Notation encoding: registering the delaborators"
 ```lean
-@[delab app.Aexp.num, delab app.Aexp.id, delab app.Aexp.plus,
-  delab app.Aexp.minus, delab app.Aexp.mult]
-partial def delabAexp : Delab := whenPPOption getPPNotation do
-  -- This delaborator only understands `Aexp`'s constructors -- bail otherwise.
-  guard <| match_expr ← getExpr with
-    | Aexp.num _ => true
-    | Aexp.id _ => true
-    | Aexp.plus _ _ => true
-    | Aexp.minus _ _ => true
-    | Aexp.mult _ _ => true
-    | _ => false
-  match ← delabAexpInner with
-  | `(imp_aexp| ~$e) => pure e
-  | e => `(term| aexp { $e })
 
-@[delab app.Bexp.bool, delab app.Bexp.eq, delab app.Bexp.neq, delab app.Bexp.le,
-  delab app.Bexp.gt, delab app.Bexp.not, delab app.Bexp.and]
-partial def delabBexp : Delab := whenPPOption getPPNotation do
-  guard <| match_expr ← getExpr with
-    | Bexp.bool _ => true
-    | Bexp.eq _ _ => true
-    | Bexp.neq _ _ => true
-    | Bexp.le _ _ => true
-    | Bexp.gt _ _ => true
-    | Bexp.not _ => true
-    | Bexp.and _ _ => true
-    | _ => false
-  match ← delabBexpInner with
-  | `(imp_bexp| ~$e) => pure e
-  | e => `(term| bexp { $e })
+/--
+Recognizes a term as being an `aexp { ... }` expression.
+-/
+def getAexp (stx : Term) : TSyntax `imp_aexp :=
+  withSourceInfoOf (canonical := false) stx <| Unhygienic.run do
+    match stx with
+    | `(aexp { $e:imp_aexp }) => return e
+    | _ => `(imp_aexp| ~$stx)
+
+@[app_unexpander Aexp.num]
+private def Aexp.unexpandNum : Unexpander
+  | `($_ $n:num) => `(aexp { $n:num })
+  | _ => throw ()
+
+@[app_unexpander Aexp.id]
+private def Aexp.unexpandId : Unexpander
+  | `($_ $x:ident) => `(aexp { $x:ident })
+  | _ => throw ()
+
+@[app_unexpander Aexp.plus]
+private def Aexp.unexpandPlus : Unexpander
+  | `($_ $a $b) => `(aexp { $(getAexp a) + $(getAexp b) })
+  | _ => throw ()
+
+@[app_unexpander Aexp.minus]
+private def Aexp.unexpandMinus : Unexpander
+  | `($_ $a $b) => `(aexp { $(getAexp a) - $(getAexp b) })
+  | _ => throw ()
+
+@[app_unexpander Aexp.mult]
+private def Aexp.unexpandMult : Unexpander
+  | `($_ $a $b) => `(aexp { $(getAexp a) * $(getAexp b) })
+  | _ => throw ()
+
+/--
+Recognizes a term as being an `bexp { ... }` expression.
+-/
+def getBexp (stx : Term) : TSyntax `imp_bexp :=
+  withSourceInfoOf (canonical := false) stx <| Unhygienic.run do
+    match stx with
+    | `(bexp { $e:imp_bexp }) => return e
+    | _ => `(imp_bexp| ~$stx)
+
+/--
+Delaborator for `Bexp.bool`. This is needed since we want to be sure we are
+matching on the actual `true`/`false` expressions, rather than matching on the
+delaborated identifiers `true`/`false` (which might not be accurate).
+-/
+@[app_delab Bexp.bool]
+private def BExp.delabBool : Delab := whenPPOption getPPNotation do
+  let e ← getExpr
+  guard <| e.isAppOfArity ``Bexp.bool 1
+  match_expr e.appArg! with
+  | true => `(bexp { $(mkIdent `true):ident })
+  | false => `(bexp { $(mkIdent `false):ident })
+  | _ => failure
+
+
+@[app_unexpander Bexp.eq]
+private def Bexp.unexpandEq : Unexpander
+  | `($_ $a $b) => `(bexp { $(getAexp a):imp_aexp = $(getAexp b):imp_aexp })
+  | _ => throw ()
+
+@[app_unexpander Bexp.neq]
+private def Bexp.unexpandNeq : Unexpander
+  | `($_ $a $b) => `(bexp { $(getAexp a):imp_aexp ≠ $(getAexp b):imp_aexp })
+  | _ => throw ()
+
+@[app_unexpander Bexp.le]
+private def Bexp.unexpandLe : Unexpander
+  | `($_ $a $b) => `(bexp { $(getAexp a):imp_aexp ≤ $(getAexp b):imp_aexp })
+  | _ => throw ()
+
+@[app_unexpander Bexp.gt]
+private def Bexp.unexpandGt : Unexpander
+  | `($_ $a $b) => `(bexp { $(getAexp a):imp_aexp > $(getAexp b):imp_aexp })
+  | _ => throw ()
+
+@[app_unexpander Bexp.not]
+private def Bexp.unexpandNot : Unexpander
+  | `($_ $a) => `(bexp { ¬ $(getBexp a):imp_bexp })
+  | _ => throw ()
+
+@[app_unexpander Bexp.and]
+private def Bexp.unexpandAnd : Unexpander
+  | `($_ $a $b) => `(bexp { $(getBexp a):imp_bexp ∧ $(getBexp b):imp_bexp })
+  | _ => throw ()
 
 end Imp.Delab
 ```
 ::::
+
+:::ignore
+```lean -show -keep
+
+def a₁ : Aexp := aexp { X + 1 }
+def a₂ : Aexp := aexp { (a₁) * ~(.num 5) }
+
+/-- info: aexp {1 * (2 + 3)} : Aexp -/
+#guard_msgs in #check aexp { 1 * (2 + 3) }
+/-- info: aexp {(1 + 2) * 3} : Aexp -/
+#guard_msgs in #check aexp { (1 + 2) * 3 }
+/-- info: aexp {X + ~a₁} : Aexp -/
+#guard_msgs in #check aexp { X + a₁ }
+
+def b₁ := bexp { true ∧ ¬(X ≤ 4) }
+def b₂ := bexp { b₁ ∧ (¬ (X ≤ ~(.num <| 4 + 2))) }
+
+/-- info: bexp {1 = X} : Bexp -/
+#guard_msgs in #check bexp { 1 = X }
+/-- info: bexp {1 ≠ X} : Bexp -/
+#guard_msgs in #check bexp { 1 ≠ X }
+/-- info: bexp {1 ≤ X} : Bexp -/
+#guard_msgs in #check bexp { 1 ≤ X }
+/-- info: bexp {1 > X} : Bexp -/
+#guard_msgs in #check bexp { 1 > X }
+/-- info: bexp {¬ true} : Bexp -/
+#guard_msgs in #check bexp { ¬ true }
+/-- info: bexp {true ∧ false} : Bexp -/
+#guard_msgs in #check bexp { true ∧ false }
+
+/-- info: bexp {~b₁ ∧ ~b₂ ∧ ~a₁ + ~a₂ = ~a₂ + 1} : Bexp -/
+#guard_msgs in #check bexp { b₁ ∧ b₂ ∧ (a₁ + a₂) = (a₂ + 1) }
+
+```
+:::
 
 ::::full
 With these delaborators in place, Lean pretty-prints Imp expressions with the higher-level
@@ -576,15 +650,15 @@ We don't make `skip` a reserved keyword on purpose because otherwise `skip` coul
 /-- Imp commands -/
 declare_syntax_cat imp_com
 /-- The command that does nothing (`skip`) -/
-syntax ident : imp_com
-/-- Sequencing: one command after another -/
-syntax imp_com Lean.Parser.semicolonOrLinebreak ppHardSpace imp_com : imp_com
+syntax:max ident : imp_com
+/-- Sequencing: one command after another (right associative. min + 1 = 11) -/
+syntax:min imp_com:11 Lean.Parser.semicolonOrLinebreak ppHardSpace imp_com:min : imp_com
 /-- Assignment -/
-syntax ident " := " imp_aexp : imp_com
+syntax:max ident ppHardSpace ":=" ppHardSpace imp_aexp : imp_com
 /-- Conditional -/
-syntax "if " "(" imp_bexp ")" ppHardSpace "{" imp_com "}" ppHardSpace "else" ppHardSpace "{" imp_com "}" : imp_com
+syntax:max "if " "(" imp_bexp ")" ppHardSpace "{" imp_com "}" ppHardSpace "else" ppHardSpace "{" imp_com "}" : imp_com
 /-- Loop -/
-syntax "while " "(" imp_bexp ")" ppHardSpace "{" imp_com "}" : imp_com
+syntax:max "while " "(" imp_bexp ")" ppHardSpace "{" imp_com "}" : imp_com
 /-- Escape to Lean -/
 syntax:max "~" term:max : imp_com
 
@@ -593,21 +667,24 @@ syntax:min "imp" ppHardSpace "{" imp_com "}" : term
 
 namespace Com
 
-open Lean in
+open Lean Imp.Elab
+
 scoped macro_rules
-  | `(imp { $x:ident }) =>
-    if x.getId == `skip then `(Com.skip)
-    else Macro.throwErrorAt x s!"expected 'skip', got '{x.getId}'"
-  | `(imp { $c₁ ; $c₂ }) =>
-    `(Com.seq (imp {$c₁}) (imp {$c₂}))
-  | `(imp { $x:ident := $a }) =>
-    `(Com.asgn $x (aexp {$a}))
-  | `(imp { if ($b) {$c₁} else {$c₂} }) =>
-    `(Com.cond (bexp {$b}) (imp {$c₁}) (imp {$c₂}))
-  | `(imp { while ($b) {$c} }) =>
-    `(Com.whileDo (bexp {$b}) (imp {$c}))
-  | `(imp { ~$c }) =>
-    pure c
+  | `(imp { $s }) => do
+    let stx ← match s with
+      | `(imp_com| skip) => ``(Com.skip)
+      | `(imp_com| $x:ident) => ``(($x : Com))
+      | `(imp_com| $c₁ ; $c₂) =>
+        ``(Com.seq (imp {$c₁}) (imp {$c₂}))
+      | `(imp_com| $x:ident := $a) =>
+        ``(Com.asgn $x (aexp {$a}))
+      | `(imp_com| if ($b) {$c₁} else {$c₂}) =>
+        ``(Com.cond (bexp {$b}) (imp {$c₁}) (imp {$c₂}))
+      | `(imp_com| while ($b) {$c}) =>
+        ``(Com.whileDo (bexp {$b}) (imp {$c}))
+      | `(imp_com| ~$c) => `(($c : Com))
+      | _ => Macro.throwUnsupported
+    return withSourceInfoOf s stx
 
 end Com
 
@@ -618,58 +695,46 @@ open scoped Com
 ::::details "Notation encoding: printing commands back"
 ```lean
 namespace Imp.Delab
-open Lean PrettyPrinter Delaborator SubExpr
+open Lean PrettyPrinter Delaborator SubExpr Imp.Elab
 
-partial def delabComInnerFor (ns : Name) (extra : DelabM (TSyntax `imp_com)) :
-    DelabM (TSyntax `imp_com) := do
-  let e ← getExpr
-  let stx ←
-    -- Using `(imp_com| skip)` would delaborate as `skip✝`. `mkIdent` fixes this.
-    if e.isConstOf (ns ++ `skip) then
-      `(imp_com| $(mkIdent `skip):ident)
-    else if e.isAppOfArity (ns ++ `asgn) 2 then
-      match ← withAppFn <| withAppArg getExpr with
-      | .lit (.strVal s) =>
-        let a ← withAppArg delabAexpInner
-        `(imp_com| $(mkIdent (.mkSimple s)):ident := $a)
-      | _ =>
-        let `($x:ident) ← withAppFn <| withAppArg delab | failure
-        let a ← withAppArg delabAexpInner
-        `(imp_com| $x:ident := $a)
-    else if e.isAppOfArity (ns ++ `seq) 2 then
-      let s₁ ← withAppFn <| withAppArg (delabComInnerFor ns extra)
-      let s₂ ← withAppArg (delabComInnerFor ns extra)
-      `(imp_com| $s₁; $s₂)
-    else if e.isAppOfArity (ns ++ `cond) 3 then
-      let b  ← withAppFn <| withAppFn <| withAppArg delabBexpInner
-      let c₁ ← withAppFn <| withAppArg (delabComInnerFor ns extra)
-      let c₂ ← withAppArg (delabComInnerFor ns extra)
-      `(imp_com| if ($b) {$c₁} else {$c₂})
-    else if e.isAppOfArity (ns ++ `whileDo) 2 then
-      let b ← withAppFn <| withAppArg delabBexpInner
-      let c ← withAppArg (delabComInnerFor ns extra)
-      `(imp_com| while ($b) {$c})
-    else
-      extra <|> `(imp_com| ~$(← delab))
-  annAsTerm stx
+/--
+Recognizes a term as being an `imp { ... }` expression.
+-/
+def getImp (stx : Term) : TSyntax `imp_com :=
+  withSourceInfoOf (canonical := false) stx <| Unhygienic.run do
+    match stx with
+    | `(imp { $e:imp_com }) => return e
+    | _ => `(imp_com| ~$stx)
 
-/-- Rebuild `imp_com` concrete syntax from a `Com` term. -/
-partial def delabComInner : DelabM (TSyntax `imp_com) :=
-  delabComInnerFor ``Com failure
+@[app_unexpander Com.skip]
+def unexpandComSkip : Unexpander
+  | _ => `(imp { $(mkIdent `skip):ident })
 
-@[delab app.Com.skip, delab app.Com.asgn, delab app.Com.seq,
-  delab app.Com.cond, delab app.Com.whileDo]
-partial def delabCom : Delab := whenPPOption getPPNotation do
-  guard <| match_expr ← getExpr with
-    | Com.skip => true
-    | Com.asgn _ _ => true
-    | Com.seq _ _ => true
-    | Com.cond _ _ _ => true
-    | Com.whileDo _ _ => true
-    | _ => false
-  match ← delabComInner with
-  | `(imp_com| ~$e) => pure e
-  | e => `(term| imp { $e })
+@[app_unexpander Com.asgn]
+def unexpandComAsgn : Unexpander
+  | `($_ $x:ident $a) => `(imp { $x:ident := $(getAexp a) })
+  | _ => throw ()
+
+@[app_unexpander Com.seq]
+def unexpandComSeq : Unexpander
+  | `($_ $a $b) =>
+    match a with
+    | `(imp { $_ ; $_ }) =>
+      -- seq syntax is right associative, so need to quote `a`
+      `(imp { ~$a ; $(getImp b):imp_com })
+    | _ =>
+      `(imp { $(getImp a):imp_com ; $(getImp b):imp_com })
+  | _ => throw ()
+
+@[app_unexpander Com.cond]
+def unexpandComCond : Unexpander
+  | `($_ $b $c₁ $c₂) => `(imp { if ($(getBexp b)) { $(getImp c₁) } else { $(getImp c₂) } })
+  | _ => throw ()
+
+@[app_unexpander Com.whileDo]
+def unexpandComWhileDo : Unexpander
+  | `($_ $b $c) => `(imp { while ($(getBexp b)) { $(getImp c) } })
+  | _ => throw ()
 
 end Imp.Delab
 ```
@@ -682,10 +747,73 @@ section
 #guard_msgs in
 #check imp { skip }
 
+/-- info: imp {skip; if (true) {X := 1} else {X := 2}} : Com -/
+#guard_msgs in
+#check imp { skip; if (true) {X := 1} else {X:=2} }
+
+
 variable (x : Ident) (a : Aexp)
 /-- info: imp {x := ~a} : Com -/
 #guard_msgs in
 #check imp { x := ~a }
+
+/-- info: imp {x := ~a} : Com -/
+#guard_msgs in
+#check imp { ~(Com.asgn x a) }
+
+/-- info: Com.asgn (if true = true then x else x) a : Com -/
+#guard_msgs in
+#check imp { ~(Com.asgn (if true then x else x) a) }
+
+/-- info: imp {if (true) {skip} else {~(Com.asgn (if true = true then x else x) a)}} : Com -/
+#guard_msgs in
+#check imp { if (true) { skip } else{ ~(Com.asgn (if true then x else x) a)}}
+
+variable (b : Bexp) (c c₁ c₂ : Com)
+
+/-- info: imp {x := ~a} : Com -/
+#guard_msgs in
+#check imp { x := a }
+
+/-- info: imp {if (~b) {~c₁} else {~c₂}} : Com -/
+#guard_msgs in
+#check imp { if (b) {c₁} else {c₂} }
+
+/-- info: c : Com -/
+#guard_msgs in
+#check imp { c }
+
+/-- info: imp {~c₁; ~c₂} : Com -/
+#guard_msgs in
+#check imp {c₁;c₂}
+
+example : (
+  match imp { skip; c } with
+    | imp { skip; c' } => c' -- no need to write `~c'`
+    | _ => imp { skip }) = c := rfl
+
+
+example : (
+  match imp { X := X + 1 } with
+    | imp { x := ~a } => (x, a) -- still need `~`, because `a` itself is a valid aexp.
+                                -- here we want to bind the entire RHS.
+    | _ => (X, aexp {0})) = (X, aexp {X + 1}) := rfl
+
+variable (b : Bool) (y : Ident)
+
+/--
+info: imp {if
+    (~(Bexp.bool
+        b)) {if (true) {y := ~(Aexp.num (3 + 4))} else {~(Com.asgn (if b = true then x else y) a)}} else {skip}} : Com
+-/
+#guard_msgs in
+#check
+  Com.cond (Bexp.bool b)
+    (.cond (Bexp.bool true)
+      (.asgn y (.num <| 3 + 4))
+      (.asgn (if b then x else y) a)
+    ) (.skip)
+
 end
 ```
 :::
@@ -987,20 +1115,20 @@ Do we want to do that here (or more generally in HL)?
 inductive Com.EvalR : Com → State → State → Prop where
   | skip {st : State} : EvalR (imp {skip}) st st
   | asgn {st : State} {a : Aexp} {n : Nat} {x : Ident} (h : a.eval st = n) :
-      EvalR (imp {x := ~a}) st (x →ₜ n ; st)
+      EvalR (imp {x := a}) st (x →ₜ n ; st)
   | seq {c₁ c₂ : Com} {st st' st'' : State} (h₁ : EvalR c₁ st st') (h₂ : EvalR c₂ st' st'') :
-      EvalR (imp {~c₁; ~c₂}) st st''
+      EvalR (imp {c₁; c₂}) st st''
   | ifTrue {st st' : State} {b : Bexp} {c₁ c₂ : Com} (hb : b.eval st = true)
       (hc : EvalR c₁ st st') :
-      EvalR (imp {if (~b) {~c₁} else {~c₂}}) st st'
+      EvalR (imp {if (b) {c₁} else {c₂}}) st st'
   | ifFalse {st st' : State} {b : Bexp} {c₁ c₂ : Com} (hb : b.eval st = false)
       (hc : EvalR c₂ st st') :
-      EvalR (imp {if (~b) {~c₁} else {~c₂}}) st st'
+      EvalR (imp {if (b) {c₁} else {c₂}}) st st'
   | whileFalse {b : Bexp} {st : State} {c : Com} (hb : b.eval st = false) :
-      EvalR (imp {while (~b) {~c}}) st st
+      EvalR (imp {while (b) {c}}) st st
   | whileTrue {st st' st'' : State} {b : Bexp} {c : Com} (hb : b.eval st = true)
-      (hc : EvalR c st st') (hloop : Com.EvalR (imp {while (~b) {~c}}) st' st'') :
-      EvalR (imp {while (~b) {~c}}) st st''
+      (hc : EvalR c st st') (hloop : Com.EvalR (imp {while (b) {c}}) st' st'') :
+      EvalR (imp {while (b) {c}}) st st''
 ```
 
 :::instructors
@@ -1018,7 +1146,7 @@ class HasEval (Com : Type) (In : outParam <| Type) (Out : outParam <| Type) wher
 
 namespace HasEval
 /-- Evaluation: `st =[ c ]=> st'` with `imp_com` command syntax -/
-scoped syntax:lead term " =[ " imp_com:lead " ]=> " term : term
+scoped syntax:lead term " =[ " imp_com:min " ]=> " term : term
 scoped macro_rules
   | `($st =[ $c:imp_com ]=> $st') => ``(HasEval.Eval (imp { $c }) $st $st')
 
@@ -1172,7 +1300,7 @@ Is the following proposition provable?
 :::quizSolution
 ```lean
 theorem quiz1_answer (c : Com) (st st' : State)
-    (h : st =[ skip; ~c ]=> st') : st =[ ~c ]=> st' := by
+    (h : st =[ skip; c ]=> st') : st =[ c ]=> st' := by
   inversion h with
   | seq smid h₁ h₂ =>
     inversion h₁
@@ -1212,7 +1340,7 @@ Is the following proposition provable?
 :::quizSolution
 ```lean
 theorem quiz3_answer (b : Bexp) (c : Com) (st st' : State)
-    (h : st =[ if (~b) { ~c } else { ~c } ]=> st') : st =[ ~c ]=> st' := by
+    (h : st =[ if (b) { c } else { c } ]=> st') : st =[ c ]=> st' := by
   inversion h with
   | ifTrue hb hc => exact hc
   | ifFalse hb hc => exact hc
@@ -1227,7 +1355,7 @@ Is the following proposition provable?
 ∀ (b : Bexp),
   (∀ st, b.eval st = true) →
   ∀ (c : Com) (st : State),
-  ¬ ∃ st', st =[ while (~b) { ~c } ]=> st'
+  ¬ ∃ st', st =[ while (b) { c } ]=> st'
 ```
 
 (A) Yes    (B) No    (C) Not sure
@@ -1236,10 +1364,10 @@ Is the following proposition provable?
 ```lean
 -- This one is tricky!
 theorem quiz4_answer (b : Bexp) (hbtrue : ∀ st, b.eval st = true)
-    (c : Com) (st : State) : ¬ ∃ st', st =[ while (~b) { ~c } ]=> st' := by
+    (c : Com) (st : State) : ¬ ∃ st', st =[ while (b) { c } ]=> st' := by
   rintro ⟨st', hev⟩
   have key : ∀ (cmd : Com) (s s' : State),
-      (s =[ ~cmd ]=> s') → cmd = (imp { while (~b) { ~c } }) → False := by
+      (s =[ cmd ]=> s') → cmd = (imp { while (b) { c } }) → False := by
     intro cmd s s' hce
     induction hce with
     | @whileFalse b₀ s₀ c₀ hbf =>
@@ -1262,7 +1390,7 @@ Is the following proposition provable?
 
 ```display
 ∀ (b : Bexp) (c : Com) (st : State),
-  (¬ ∃ st', st =[ while (~b) { ~c } ]=> st') →
+  (¬ ∃ st', st =[ while (b) { c } ]=> st') →
   ∀ st'', b.eval st'' = true
 ```
 
@@ -1274,7 +1402,7 @@ stuck immediately:
 
 ```lean +error
 theorem quiz5_answer (b : Bexp) (c : Com) (st : State)
-    (H : ¬ ∃ st', st =[ while (~b) { ~c } ]=> st') :
+    (H : ¬ ∃ st', st =[ while (b) { c } ]=> st') :
     ∀ st'', b.eval st'' = true := by
   intro st''
   -- Can't make any progress -- the claim is false!
@@ -1386,7 +1514,7 @@ def pupToN : Com := solution!(
 theorem pup_to_2_ceval :
     {X ↦ 2} =[ ~pupToN ]=> {X ↦ 0, Y ↦ 3, X ↦ 1, Y ↦ 2, Y ↦ 0, X ↦ 2} := by
   solution!
-    rw [pupToN]
+    unfold pupToN
     apply EvalR.seq (st' := {Y ↦ 0, X ↦ 2}) (EvalR.asgn rfl)
     apply EvalR.whileTrue (st' := {X ↦ 1, Y ↦ 2, Y ↦ 0, X ↦ 2}) rfl
     · exact EvalR.seq
@@ -1498,7 +1626,7 @@ solved in one step (by {tactic}`simp`/{tactic}`contradiction` on the impossible 
 equation).
 
 ```lean
-theorem loop_never_stops (st st' : State) : ¬ (st =[ ~loop ]=> st') := by
+theorem loop_never_stops (st st' : State) : ¬ (st =[ loop ]=> st') := by
   solution!
     intro contra
     -- Generalize over the command so the induction remembers what `loop` is.
@@ -1551,8 +1679,8 @@ def Com.no_whiles (c : Com) : Bool :=
   match c with
   | imp {skip} => true
   | imp {_x := ~_a} => true
-  | imp {~c₁; ~c₂} => no_whiles c₁ && no_whiles c₂
-  | imp {if (~_) {~ct} else {~cf}} => no_whiles ct && no_whiles cf
+  | imp {c₁; c₂} => no_whiles c₁ && no_whiles c₂
+  | imp {if (~_) {ct} else {cf}} => no_whiles ct && no_whiles cf
   | imp {while (~_) {~_}} => false
 
 inductive Com.NoWhilesR : Com → Prop where
@@ -1602,7 +1730,7 @@ prove a theorem `no_whiles_terminating` that says this.  Use either
 
 ```lean
 theorem no_whiles_terminating (c : Com) (st : State) (h : Com.NoWhilesR c) :
-    ∃ st', st =[ ~c ]=> st' := by
+    ∃ st', st =[ c ]=> st' := by
   solution!
     induction h generalizing st with
     | @skip => exact ⟨st, .skip⟩
@@ -1627,7 +1755,7 @@ And here is an alternative solution by induction on `c` (using
 ```lean
 -- SOLUTION
 theorem no_whiles_terminating' (c : Com) (st1 : State)
-    (hb : c.no_whiles = true) : ∃ st2, st1 =[ ~c ]=> st2 := by
+    (hb : c.no_whiles = true) : ∃ st2, st1 =[ c ]=> st2 := by
   induction c generalizing st1 with
   | @skip => exact ⟨st1, .skip⟩
   | @asgn x a => exact ⟨(x →ₜ a.eval st1 ; st1), .asgn rfl⟩
@@ -1935,7 +2063,7 @@ enrich the language of commands with an additional case. Because `break`
 is a reserved keyword in Lean, we will abbreviate it as `brk`.
 
 ```lean
-namespace BreakImp
+namespace Imp.Break
 
 inductive Com where
   | skip
@@ -1950,43 +2078,42 @@ inductive Com where
 ```lean
 namespace Com
 
-open Lean in
+open Lean
+
 scoped macro_rules
-  | `(imp { $x:ident }) =>
-    if x.getId == `skip then `(Com.skip)
-    else if x.getId == `brk then `(Com.brk)
-    else Macro.throwErrorAt x s!"expected 'skip' or 'break', got '{x.getId}'"
-  | `(imp { $c₁; $c₂ }) =>
-    `(Com.seq (imp {$c₁}) (imp {$c₂}))
-  | `(imp { $x:ident := $a }) =>
-    `(Com.asgn $x (aexp {$a}))
-  | `(imp { if ($b) {$c₁} else {$c₂} }) =>
-    `(Com.cond (bexp {$b}) (imp {$c₁}) (imp {$c₂}))
-  | `(imp { while ($b) {$c} }) =>
-    `(Com.whileDo (bexp {$b}) (imp {$c}))
-  | `(imp { ~$c }) =>
-    pure c
+  | `(imp { $s }) => do
+    let stx ← match s with
+      | `(imp_com| skip) => ``(Com.skip)
+      | `(imp_com| brk) => ``(Com.brk)
+      | `(imp_com| $x:ident) => ``(($x : Com))
+      | `(imp_com| $c₁ ; $c₂) =>
+        ``(Com.seq (imp {$c₁}) (imp {$c₂}))
+      | `(imp_com| $x:ident := $a) =>
+        ``(Com.asgn $x (aexp {$a}))
+      | `(imp_com| if ($b) {$c₁} else {$c₂}) =>
+        ``(Com.cond (bexp {$b}) (imp {$c₁}) (imp {$c₂}))
+      | `(imp_com| while ($b) {$c}) =>
+        ``(Com.whileDo (bexp {$b}) (imp {$c}))
+      | `(imp_com| ~$c) => `(($c : Com))
+      | _ => Macro.throwUnsupported
+    return Imp.Elab.withSourceInfoOf s stx
 
 end Com
 
 open scoped Com
 
 namespace Delab
-open Lean PrettyPrinter Delaborator SubExpr Imp.Delab
+open Lean PrettyPrinter Imp.Delab
 
-/-- Rebuild `imp_com` syntax from a `BreakImp.Com` term. -/
-partial def delabComInner : DelabM (TSyntax `imp_com) :=
-  delabComInnerFor ``Com do
-    let e ← getExpr
-    guard <| e.isConstOf ``Com.brk
-    annAsTerm (← `(imp_com| $(mkIdent `brk):ident))
+@[app_unexpander Com.brk]
+private def unexpandComBrk : Unexpander
+  | _ => `(imp { $(mkIdent `brk):ident })
 
-@[delab app.BreakImp.Com.skip, delab app.BreakImp.Com.brk, delab app.BreakImp.Com.asgn,
-  delab app.BreakImp.Com.seq, delab app.BreakImp.Com.cond, delab app.BreakImp.Com.whileDo]
-partial def delabCom : Delab := whenPPOption getPPNotation do
-  match ← delabComInner with
-  | `(imp_com| ~$e) => pure e
-  | e => `(term| imp { $e })
+attribute [app_unexpander Com.skip] unexpandComSkip
+attribute [app_unexpander Com.asgn] unexpandComAsgn
+attribute [app_unexpander Com.seq] unexpandComSeq
+attribute [app_unexpander Com.cond] unexpandComCond
+attribute [app_unexpander Com.whileDo] unexpandComWhileDo
 
 end Delab
 ```
@@ -2090,28 +2217,28 @@ inductive Com.EvalR : Com → State → State → Result → Prop where
   -- SOLUTION
   | brk {st : State}  : EvalR (imp {brk}) st st sBreak
   | asgn {st : State} {a : Aexp} {n : Nat} {x : Ident} (h : a.eval st = n) :
-      EvalR (imp {x := ~a}) st (x →ₜ n ; st) sContinue
+      EvalR (imp {x := a}) st (x →ₜ n ; st) sContinue
   | seqContinue {c₁ c₂ : Com} {st st' st'' : State} {s : Result}
       (h₁ : EvalR c₁ st st' sContinue)
       (h₂ : EvalR c₂ st' st'' s) :
-      EvalR (imp {~c₁; ~c₂}) st st'' s
+      EvalR (imp {c₁; c₂}) st st'' s
   | seqBreak {c₁ c₂ : Com} {st st' : State} (h : EvalR c₁ st st' sBreak) :
-      EvalR (imp {~c₁; ~c₂}) st st' sBreak
+      EvalR (imp {c₁; c₂}) st st' sBreak
   | ifTrue {st st' : State} {b : Bexp} {c₁ c₂ : Com} {s : Result} (hb : b.eval st = true)
       (hc : EvalR c₁ st st' s) :
-      EvalR (imp {if (~b) {~c₁} else {~c₂}}) st st' s
+      EvalR (imp {if (b) {c₁} else {c₂}}) st st' s
   | ifFalse {st st' : State} {b : Bexp} {c₁ c₂ : Com} {s : Result} (hb : b.eval st = false)
       (hc : EvalR c₂ st st' s) :
-      EvalR (imp {if (~b) {~c₁} else {~c₂}}) st st' s
+      EvalR (imp {if (b) {c₁} else {c₂}}) st st' s
   | whileFalse {b : Bexp} {st : State} {c : Com} (hb : b.eval st = false) :
-      EvalR (imp {while (~b) {~c}}) st st sContinue
+      EvalR (imp {while (b) {c}}) st st sContinue
   | whileContinue {st st' st'' : State} {b : Bexp} {c : Com} (hb : b.eval st = true)
       (hc : EvalR c st st' sContinue)
-      (hloop : EvalR (imp {while (~b) {~c}}) st' st'' sContinue) :
-      EvalR (imp {while (~b) {~c}}) st st'' sContinue
+      (hloop : EvalR (imp {while (b) {c}}) st' st'' sContinue) :
+      EvalR (imp {while (b) {c}}) st st'' sContinue
   | whileBreak {st st' : State} {b : Bexp} {c : Com} (hb : b.eval st = true)
       (hc : EvalR c st st' sBreak) :
-      EvalR (imp {while (~b) {~c}}) st st' sContinue
+      EvalR (imp {while (b) {c}}) st st' sContinue
   -- END SOLUTION
 
 scoped notation:40 st0:41 " =[ " c " ]=> " st1:41 " // " s:41 => Com.EvalR c st0 st1 s
@@ -2145,8 +2272,8 @@ theorem while_continue {b : Bexp} {c : Com} {st st' : State} {s : Result}
 ```lean
 theorem while_stops_on_break {b : Bexp} {c : Com} {st st' : State}
   (h₁ : b.eval st = true)
-  (h₂ : st =[ imp { ~c } ]=> st' // sBreak) :
-  st =[ imp { while (~b) {~c} } ]=> st' // sContinue := by
+  (h₂ : st =[ imp { c } ]=> st' // sBreak) :
+  st =[ imp { while (b) {c} } ]=> st' // sContinue := by
   solution!
     apply Com.EvalR.whileBreak <;> assumption
 ```
@@ -2174,9 +2301,9 @@ theorem seq_stops_on_break {c₁ c₂ : Com} {st st' : State}
 theorem while_break_true {b : Bexp} {c : Com} {st st' : State}
   (h₁ : st =[ imp { while (~b) {~c} } ]=> st' // sContinue)
   (h₂ : b.eval st' = true) :
-  ∃ st'', st'' =[ imp { ~c } ]=> st' // sBreak := by
+  ∃ st'', st'' =[ imp { c } ]=> st' // sBreak := by
   solution!
-    generalize heq : (imp {while (~b) {~c}}) = c' at h₁
+    generalize heq : (imp {while (b) {c}}) = c' at h₁
     generalize hr : sContinue = s at h₁ ⊢
     induction h₁ with (inversion heq; try lia)
     | whileContinue _ _ _ _ ih₂ =>
@@ -2245,7 +2372,7 @@ theorem ceval_deterministic {c : Com} {st st₁ st₂ : State} {s₁ s₂ : Resu
 ::::
 
 ```lean
-end BreakImp
+end Imp.Break
 ```
 
 ::::exercise (rating := 4) (name := "add_for_loop") (optional := true)

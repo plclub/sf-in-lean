@@ -1,6 +1,7 @@
 -- Shared Verso infrastructure for all SF-in-Lean volumes.
 import Bib
 import SFLMeta.Bnf
+import SFLMeta.BuildStamp
 import SFLMeta.Comment
 import SFLMeta.Details
 import SFLMeta.DisplayMath
@@ -10,6 +11,7 @@ import SFLMeta.Grade
 import SFLMeta.Hide
 import SFLMeta.Ignore
 import SFLMeta.Instructors
+import SFLMeta.Linter
 import SFLMeta.Quiz
 import SFLMeta.Save
 import SFLMeta.SlideBreak
