@@ -1164,13 +1164,10 @@ The tactic `apply t at h` matches an implication `t`
 context. Unlike ordinary {tactic}`apply`, which matches the goal against `b`
 and replaces it with the subgoal `a`, `apply t at h` matches the type of `h`
 against `a` and, if successful, replaces `h` with a hypothesis of type `b`.
-In other words, `apply t at h` is a form of "forward
-reasoning" from the hypotheses toward the goal.
+In other words, `apply t at h` is a form of _forward
+reasoning_ from the hypotheses toward the goal.
 
-In other words, `apply t at h` gives us a form of "forward
-reasoning": given `t : a → b` and `h : a`, it replaces `h` with a proof of `b`.
-
-By contrast, ordinary `apply t` is "backward reasoning": given `t : a → b`
+By contrast, ordinary `apply t` is _backward reasoning_: given `t : a → b`
 and a goal `⊢ b`, it replaces the goal with `⊢ a`.
 
 Here is a proof that uses forward reasoning rather than backward reasoning:
@@ -1224,18 +1221,22 @@ so we do not import the whole thing in this book, but we do import `apply ... at
 
 # Specializing Hypotheses
 
+::::full
 We've already seen how we can use {tactic}`have` to do
 forward reasoning, by letting us state and prove useful facts
 that get us closer to the main goal we're trying to prove. Often,
 though, these facts are just special cases of more general hypotheses
 we already have.
+::::
 If `h` is a quantified hypothesis in the current context — i.e.,
 `h : ∀ (x : α), P x` — then we can use {tactic}`have` to obtain a special
-case of `h` by supplying a value for `x`. For example, `have h := h e`
+case of `h` by supplying a value for `x`.
+::::full
+In other words, `have h := h e`
 introduces a new `h` which `x` has been instantiated with `e`.
 
 For example:
-
+::::
 ```lean
 example (m : Nat) (h : ∀ n, m * n = 0) : m = 0 := by
   have h := h 1
@@ -1243,12 +1244,16 @@ example (m : Nat) (h : ∀ n, m * n = 0) : m = 0 := by
   exact h
 ```
 
+::::full
 One thing to notice here is that the original `h` is still
 present in the context, although it is shadowed by the new `h`.
-Often we don't care to keep this old hypothesis around, in which case we can use the {tactic}`replace`
-tactic instead. This behaves like {tactic}`have`, except that
+::::
+If we don't care to keep this old hypothesis around, we can use the {tactic}`replace`
+tactic instead.
+::::full
+This behaves like {tactic}`have`, except that
 it gets rid of the old hypothesis afterwards when possible:
-
+::::
 ```lean
 example (m : Nat) (h : ∀ n, m * n = 0) : m = 0 := by
   replace h := h 1
