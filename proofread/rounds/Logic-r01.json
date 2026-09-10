@@ -1,0 +1,225 @@
+{
+ "file": "LF/Logic.lean",
+ "chapter": "Logic",
+ "round": 1,
+ "proposals": [
+  {
+   "id": "logic-r01-001",
+   "cat": "formatting/blank-lines",
+   "old": "::::\n\n\n# The {lean}`Prop` Type",
+   "new": "::::\n\n# The {lean}`Prop` Type",
+   "why": "Two blank lines in a row; the source uses at most one."
+  },
+  {
+   "id": "logic-r01-002",
+   "cat": "formatting/blank-lines",
+   "old": "::::\n\n\n# Logical Connectives",
+   "new": "::::\n\n# Logical Connectives",
+   "why": "Two blank lines in a row; the source uses at most one."
+  },
+  {
+   "id": "logic-r01-003",
+   "cat": "formatting/blank-lines",
+   "old": "variable (α β : Type) (x x' y : α) (l l' : List α) (f g : α → β) (p : α → Prop)\n```\n:::\n\n\n::::full",
+   "new": "variable (α β : Type) (x x' y : α) (l l' : List α) (f g : α → β) (p : α → Prop)\n```\n:::\n\n::::full",
+   "why": "Two blank lines in a row; the source uses at most one."
+  },
+  {
+   "id": "logic-r01-004",
+   "cat": "formatting/blank-lines",
+   "old": "# Working with Decidable Properties\n\n\nWe've seen",
+   "new": "# Working with Decidable Properties\n\nWe've seen",
+   "why": "Two blank lines in a row; the source uses at most one."
+  },
+  {
+   "id": "logic-r01-005",
+   "cat": "formatting/blank-lines",
+   "old": "::::\n\n\n::::::full\n:::::exercise (rating := 4) (name := \"trRev_correct\")",
+   "new": "::::\n\n::::::full\n:::::exercise (rating := 4) (name := \"trRev_correct\")",
+   "why": "Two blank lines in a row; the source uses at most one."
+  },
+  {
+   "id": "logic-r01-006",
+   "cat": "punctuation/dash",
+   "old": "under a different assumption - {lean}`a` in the first subgoal",
+   "new": "under a different assumption — {lean}`a` in the first subgoal",
+   "why": "Hyphen used as a sentence dash; chapter prose uses a real em dash."
+  },
+  {
+   "id": "logic-r01-007",
+   "cat": "punctuation/dash",
+   "old": "We must show {lean}`¬ ¬ a` -\ni.e.,",
+   "new": "We must show {lean}`¬ ¬ a` —\ni.e.,",
+   "why": "Hyphen used as a sentence dash; chapter prose uses a real em dash."
+  },
+  {
+   "id": "logic-r01-008",
+   "cat": "punctuation/dash",
+   "old": "is cumbersome - or even impossible - unless we enrich",
+   "new": "is cumbersome — or even impossible — unless we enrich",
+   "why": "Hyphens used as sentence dashes; chapter prose uses real em dashes."
+  },
+  {
+   "id": "logic-r01-009",
+   "cat": "punctuation/dash",
+   "old": "we can use it at _any_ type\n- in particular, we can write",
+   "new": "we can use it at _any_ type —\nin particular, we can write",
+   "why": "Hyphen used as a sentence dash, and line-initial `- ` risks parsing as a markdown list item."
+  },
+  {
+   "id": "logic-r01-010",
+   "cat": "punctuation/dash",
+   "old": "definitions and proofs – in particular from Zermelo–Fraenkel",
+   "new": "definitions and proofs — in particular from Zermelo–Fraenkel",
+   "why": "Spaced en dash used as a sentence dash; chapter prose uses an em dash (the Zermelo–Fraenkel en dash is correct and kept)."
+  },
+  {
+   "id": "logic-r01-011",
+   "cat": "punctuation/dash",
+   "old": "and vice versa -- this is",
+   "new": "and vice versa — this is",
+   "why": "ASCII `--` in chapter prose; the house style reserves `--` for dev/instructor notes and uses a real em dash in prose."
+  },
+  {
+   "id": "logic-r01-012",
+   "cat": "punctuation/parenthesis",
+   "old": "whether the proposition holds. We can state this more explicitly:)",
+   "new": "whether the proposition holds.) We can state this more explicitly:",
+   "why": "The closing paren lands after the colon that introduces the code block; closing the parenthetical after \"holds.\" keeps the colon pointing at the code."
+  },
+  {
+   "id": "logic-r01-013",
+   "cat": "punctuation/comma-splice",
+   "old": "{name}`Nat.beq_eq_true_eq` yet,\nwe need this",
+   "new": "{name}`Nat.beq_eq_true_eq` yet;\nwe need this",
+   "why": "Comma splice: two independent clauses joined by a comma."
+  },
+  {
+   "id": "logic-r01-014",
+   "cat": "comma/restrictive",
+   "old": "a lot of hassle, when the proof is conceptually simple",
+   "new": "a lot of hassle when the proof is conceptually simple",
+   "why": "The when-clause is restrictive; no comma before it."
+  },
+  {
+   "id": "logic-r01-015",
+   "cat": "typo/missing-negation",
+   "old": "Beyond the fact that non-computable properties are possible\nin general to phrase as boolean computations",
+   "new": "Beyond the fact that non-computable properties are impossible\nin general to phrase as boolean computations",
+   "why": "The sentence needs \"impossible\": non-computable properties cannot be phrased as boolean computations — that is the point being conceded."
+  },
+  {
+   "id": "logic-r01-016",
+   "cat": "spelling/misspelling",
+   "old": "| useable with match? | yes    | no     |",
+   "new": "| usable with match? | yes    | no     |",
+   "why": "\"usable\" is the standard spelling."
+  },
+  {
+   "id": "logic-r01-017",
+   "cat": "spelling/us-english",
+   "old": "_four colour theorem_",
+   "new": "_four-color theorem_",
+   "why": "The book uses American spelling, and the compound modifier takes a hyphen."
+  },
+  {
+   "id": "logic-r01-018",
+   "cat": "spelling/proper-name",
+   "old": "by Bertot and Casteran (p. 123)",
+   "new": "by Bertot and Castéran (p. 123)",
+   "why": "Pierre Castéran spells his name with an acute accent."
+  },
+  {
+   "id": "logic-r01-019",
+   "cat": "grammar/dangling-modifier",
+   "old": "(e.g. {lean}`Nat.add`).\nLeaving off the colon and the type, Lean prints these types",
+   "new": "(e.g., {lean}`Nat.add`).\nIf we leave off the colon and the type, Lean prints these types",
+   "why": "\"Leaving off the colon\" dangles onto Lean (we, not Lean, leave it off); also \"e.g.\" takes a comma, as elsewhere in the chapter. (One spot, two small fixes, to keep them in a single change block.)"
+  },
+  {
+   "id": "logic-r01-020",
+   "cat": "grammar/that-which",
+   "old": "the function {lean}`List.allb` which are not captured",
+   "new": "the function {lean}`List.allb` that are not captured",
+   "why": "Restrictive relative clause: \"that\", not \"which\"."
+  },
+  {
+   "id": "logic-r01-021",
+   "cat": "usage/redundancy",
+   "old": "that would otherwise not be provable without {lean}`funext`",
+   "new": "that would not be provable without {lean}`funext`",
+   "why": "\"otherwise\" and \"without funext\" say the same thing twice."
+  },
+  {
+   "id": "logic-r01-022",
+   "cat": "usage/redundancy",
+   "old": "for instance, a proof of {lean}`∃ x, p x`\nis proven by providing",
+   "new": "for instance, {lean}`∃ x, p x`\nis proven by providing",
+   "why": "\"a proof ... is proven\" is circular; the proposition is what gets proven."
+  },
+  {
+   "id": "logic-r01-023",
+   "cat": "usage/redundancy",
+   "old": "Rather than considering all pairs of statements pairwise,",
+   "new": "Rather than considering all pairs of statements,",
+   "why": "\"all pairs ... pairwise\" doubles up; \"all pairs of statements\" already says it."
+  },
+  {
+   "id": "logic-r01-024",
+   "cat": "usage/backward",
+   "old": "to access the backwards direction",
+   "new": "to access the backward direction",
+   "why": "American usage prefers \"backward\" as the adjective (cf. \"reverse direction\" in the full text)."
+  },
+  {
+   "id": "logic-r01-025",
+   "cat": "usage/article-consistency",
+   "old": "which is a prefix notation for {lean}`Not`",
+   "new": "which is prefix notation for {lean}`Not`",
+   "why": "Parallel passages say \"is infix notation for\" (no article); this is the only \"a ... notation for\"."
+  },
+  {
+   "id": "logic-r01-026",
+   "cat": "typo/missing-word",
+   "old": "We can use {tactic}`ext` on pairs as:",
+   "new": "We can use {tactic}`ext` on pairs as follows:",
+   "why": "\"as:\" is truncated; \"as follows:\" completes the idiom."
+  },
+  {
+   "id": "logic-r01-027",
+   "cat": "capitalization/after-colon",
+   "old": "limitations:\nThere are many statements",
+   "new": "limitations:\nthere are many statements",
+   "why": "Only a single sentence follows the colon, so it stays lowercase (Chicago)."
+  },
+  {
+   "id": "logic-r01-028",
+   "cat": "style/spell-out-number",
+   "old": "mathematical statements, so far only of 3 kinds:",
+   "new": "mathematical statements, so far only of three kinds:",
+   "why": "Small round numbers are spelled out in prose."
+  },
+  {
+   "id": "logic-r01-029",
+   "cat": "markup/ascii-arrow",
+   "old": "  - implications ({lean}`a -> b`)",
+   "new": "  - implications ({lean}`a → b`)",
+   "why": "The full-text version of this list writes {lean}`a → b`; use the real arrow here too."
+  },
+  {
+   "id": "logic-r01-030",
+   "cat": "markup/ascii-arrow",
+   "old": "`Or : Prop -> Prop -> Prop`",
+   "new": "`Or : Prop → Prop → Prop`",
+   "why": "Types elsewhere in the chapter are shown with the real arrow (e.g. `Nat → Nat → Nat`)."
+  },
+  {
+   "id": "logic-r01-031",
+   "cat": "consistency/hypothesis-case",
+   "old": "eliminated with `intro ⟨x, Hx⟩` or `obtain ⟨x, Hx⟩ := H`",
+   "new": "eliminated with `intro ⟨x, hx⟩` or `obtain ⟨x, hx⟩ := h`",
+   "why": "Every other bullet in this recap uses lowercase hypothesis names (`ha`, `hb`, `h`)."
+  }
+ ],
+ "completed": true
+}
