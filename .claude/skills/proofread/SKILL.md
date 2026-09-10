@@ -54,9 +54,30 @@ Then **end your turn**. Tell the author what is in the round (the category
 counts the command printed, and any pair of edits it flagged as sharing one
 change block), and ask them to revert what they don't want — the arrow in the
 gutter between the panes, or editing the right-hand side directly — and to say
-when they're done. Do not poll, do not watch
+when they're done. Also offer to do a **high-level read** of the chapter (see
+below) while they work through the low-level fixes — it touches no files, so
+it can run in parallel with their review. Do not poll, do not watch
 the file, do not run `record` on their behalf. They may answer in a minute or
 tomorrow; `proofread/state.json` remembers the round either way.
+
+## The high-level read (optional, offered at phase 2)
+
+If the author takes the offer, re-read the chapter as a *reader*, not a
+copyeditor: narrative flow and pacing, ideas introduced out of order or used
+before they're explained, internal inconsistencies (terminology drift, a
+convention announced then broken, examples that don't match the surrounding
+prose), redundant or missing transitions, sections that run long or end
+abruptly, and exercises whose placement or difficulty labeling seems off.
+
+This is exactly the territory of "real content problems" below: **never** put
+these in the round and never edit the chapter — the round is still in flight
+and the author is editing the same file. Report findings in prose, ordered by
+position in the chapter, each anchored by section name (and a short quote so
+the author can search for the spot), with a one-line suggestion where you have
+one. Say explicitly when a chapter reads fine and the list is short or empty —
+a clean report is a result, not a failure. The findings need the author's
+judgment; anything they endorse can become ordinary edits in a follow-up
+conversation after `record`.
 
 ## Phase 3 — record
 
