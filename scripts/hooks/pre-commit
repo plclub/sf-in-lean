@@ -1,0 +1,11 @@
+#!/bin/sh
+# This file is maintained by Claude (AI-generated).
+#
+# Refuse a commit while a proofreading round is applied but not yet recorded:
+# committing then would bake in the author's reverts and lose the rejections
+# that should have gone to proofread/ledger.jsonl.  See PROOFREADING.md.
+#
+# Install (once, per clone):   git config core.hooksPath scripts/hooks
+# Bypass a single commit:      git commit --no-verify
+
+exec python3 "$(git rev-parse --show-toplevel)/scripts/proofread.py" check

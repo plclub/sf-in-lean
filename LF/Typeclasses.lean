@@ -622,6 +622,9 @@ theorem Monoid.id_unique_left {α : Type} [Monoid α] (x : α)
     rw [← right_id x]
     exact hₗ id
 ```
+
+:::gradeTheorem 1 Monoid.id_unique_left
+:::
 ::::
 
 :::dev "@ionathanch" PotentialImprovement
@@ -649,6 +652,9 @@ theorem inv_inv {α : Type} {g : Group α} (x : α) : g.inv (g.inv x) = x := by
   solution!
     symm; apply inv_inv' (y := g.inv x) <;> rfl
 ```
+
+:::gradeTheorem 1 inv_inv' inv_inv
+:::
 ::::
 
 ```lean

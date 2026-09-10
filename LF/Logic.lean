@@ -22,6 +22,26 @@ two 80-minute lectures, and the last couple of sections are quite
 meaty.  Pacing is key!
 :::
 
+:::::dev "Mike Hicks (mwhicks1)"
+See about working the following into this chapter.
+
+::::full
+Any tactic that accepts an `at`
+clause can target several locations at once, including the goal, by
+listing them together after `at`.
+::::
+
+::::terse
+More generally, `at` can list several locations at once, including the goal:
+::::
+
+```lean
+example (n m : Nat) (h : n + 0 = m) : n = m + 0 := by
+  rw [Nat.add_zero] at h ⊢
+  assumption
+```
+:::::
+
 :::dev BeforeNextRelease
 Unlike earlier chapters, there are probably too many
 WORKINCLASSes in this chapter.  BCP 20: But conversely some more
@@ -41,6 +61,71 @@ import LF.CustomTactics
 variable (a b c : Prop) (n m : Nat) (α : Type) (e1 e2 x y : α)
 ```
 :::
+
+:::dev "Yipeng Liu (berberman)" PotentialImprovement
+
+MWH: This was moved here from `Induction`. Work it in somewhere here, or
+maybe in IndProp or Tactics?
+
+This is an interesting question...
+
+Logically, induction subsumes case analysis —
+you can simply ignore those inductive hypotheses
+so anything provable by case analysis is also provable
+using the induction principle.
+
+However, Lean's `cases` has specialized machinery for indexed inductive families.
+Here are some examples that `cases` can solve while `induction` can't:
+
+```lean
+-- substitution
+example (x : Nat) (h : x = 0) : Nat.succ x = 1 := by
+  -- induction h
+  cases h
+  rfl
+```
+
+```lean
+-- disjointness
+example (h : (0 : Nat) = 1) : False := by
+  -- induction h
+  cases h
+```
+
+```lean
+-- injectivity
+example {m n : Nat} (h : Nat.succ m = Nat.succ n) : m = n := by
+  -- induction h
+  cases h
+  rfl
+```
+
+```lean
+-- acyclicity
+example (n : Nat) (h : n = Nat.succ n) : False := by
+  -- induction h
+  cases h
+```
+
+... and there are more!
+
+:::
+
+::::hide
+```
+-- QUIZ
+/- We've seen that there are goals that `cases` can't solve but
+    `induction` can. What about the other way around? Are there steps
+    in a proof that can be solved by pure case analysis `cases`
+    but not using `induction`?
+
+    (A) No
+
+    (B) Yes
+-/
+-- /QUIZ
+```
+::::
 
 ::::full
 We have now seen many examples of factual claims (i.e.,

@@ -195,11 +195,23 @@ the [Chicago Manual of Style](https://www.chicagomanualofstyle.org/).
 `PROOFREADING.md` describes the repeatable per-chapter proofreading pass and
 records the house rules that override Chicago.
 
-| Use this               | Not that                     |
-| ---------------------- | ---------------------------- |
-| _italics_ for emphasis | **boldface**                 |
-| "Lean"                 | "Lean 4" (except in Preface) |
-| "VS Code"              | "VSCode"                     |
+Every sentence must start with a capital letter. If the first thing in the
+sentence is a Lean expression, that expression must itself begin with a
+capital letter (so `Nat.add` may open a sentence, but `omega` may not —
+rephrase the sentence instead).
+
+Word choices, one per line, as `use` / `not`:
+
+- _italics_ for emphasis / **boldface**
+- "Lean" / "Lean 4" (except in the Preface)
+- "VS Code" / "VSCode"
+- "IH" / "I.H."
+- "type class" / "typeclass"
+- "boolean" / "Boolean"
+- "induction hypothesis" / "inductive hypothesis"
+
+To add one, append a line in the same shape: the preferred form, a slash, the
+form to avoid, and any qualifier in parentheses.
 
 ### Informal Proofs
 

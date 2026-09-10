@@ -1,0 +1,113 @@
+{
+ "file": "LF/Lists.lean",
+ "chapter": "Lists",
+ "round": 2,
+ "proposals": [
+  {
+   "id": "blank-run-importblock",
+   "cat": "formatting/blank-lines",
+   "old": "And UsingLean??\n:::\n\n\n```importBlock",
+   "new": "And UsingLean??\n:::\n\n```importBlock",
+   "why": "Two blank lines in a row; the source uses at most one anywhere."
+  },
+  {
+   "id": "double-space-constructor-args",
+   "cat": "formatting/double-space",
+   "old": "none (as with {name}`true` and  {lean}`0`),\none (as with  {name}`Nat.succ`), or more than one (as with  {name}`Playground.Nibble` and",
+   "new": "none (as with {name}`true` and {lean}`0`),\none (as with {name}`Nat.succ`), or more than one (as with {name}`Playground.Nibble` and",
+   "why": "Three stray double spaces mid-sentence (not after a period)."
+  },
+  {
+   "id": "mwhicks-author-at",
+   "cat": "markup/dev-author",
+   "old": ":::dev \"Mike Hicks (@mwhicks1)\"\nI would have expected",
+   "new": ":::dev \"Mike Hicks (mwhicks1)\"\nI would have expected",
+   "why": "Author strings are \"Full Name (github-handle)\"; the same author is written without the @ at the previous note."
+  },
+  {
+   "id": "their-names",
+   "cat": "agreement/number",
+   "old": "qualifying their name\nallows us",
+   "new": "qualifying their names\nallows us",
+   "why": "Plural subject (\"these functions\") takes a plural \"names\"."
+  },
+  {
+   "id": "angle-bracket-notation",
+   "cat": "hyphenation/compound-modifier",
+   "old": "with angle bracket notation",
+   "new": "with angle-bracket notation",
+   "why": "Compound modifier before a noun takes a hyphen."
+  },
+  {
+   "id": "type-class-two-words",
+   "cat": "usage/house-style",
+   "old": "instances of that typeclass inherit the notation.",
+   "new": "instances of that type class inherit the notation.",
+   "why": "House style is \"type class\" (STYLE-WRITING.md); the surrounding paragraph already writes it as two words."
+  },
+  {
+   "id": "check-whether",
+   "cat": "usage/whether-vs-if",
+   "old": "compute both sides of the equality and check if they are the same.",
+   "new": "compute both sides of the equality and check whether they are the same.",
+   "why": "\"Whether\" for an alternative; \"if\" reads as a condition."
+  },
+  {
+   "id": "qed-1",
+   "cat": "usage/qed-caps",
+   "old": "which is immediate from the induction hypothesis.  _Qed_.",
+   "new": "which is immediate from the induction hypothesis.  _QED_.",
+   "why": "STYLE-WRITING.md and the Induction chapter close informal proofs with _QED_."
+  },
+  {
+   "id": "qed-2",
+   "cat": "usage/qed-caps",
+   "old": "This follows directly from the definitions of `length` and `++`\ntogether with the induction hypothesis.  _Qed_.",
+   "new": "This follows directly from the definitions of `length` and `++`\ntogether with the induction hypothesis.  _QED_.",
+   "why": "STYLE-WRITING.md and the Induction chapter close informal proofs with _QED_."
+  },
+  {
+   "id": "theorem-spacing-and-bullet-indent",
+   "cat": "formatting/whitespace",
+   "old": "_Theorem_: For all lists `l`,  `l.reverse.length = l.length`.\n\n_Proof_: By induction on `l`.\n\n  - First, suppose `l = []`.",
+   "new": "_Theorem_: For all lists `l`, `l.reverse.length = l.length`.\n\n_Proof_: By induction on `l`.\n\n- First, suppose `l = []`.",
+   "why": "Stray double space after the comma, and this bullet is indented two spaces while its sibling \"- Next,\" is not."
+  },
+  {
+   "id": "qed-3",
+   "cat": "usage/qed-caps",
+   "old": "definition of `length`.  _Qed_.",
+   "new": "definition of `length`.  _QED_.",
+   "why": "STYLE-WRITING.md and the Induction chapter close informal proofs with _QED_."
+  },
+  {
+   "id": "compressed-proof-indent",
+   "cat": "formatting/indentation",
+   "old": "_Proof_: First observe, by a straightforward induction on `l`,\n that `(l ++ [n]).length = .succ l.length` for any `l`.  The main\n property then follows by another induction on `l`, using the\n observation together with the induction hypothesis in the case\n where `l = n' :: l'`. _Qed_.",
+   "new": "_Proof_: First observe, by a straightforward induction on `l`,\nthat `(l ++ [n]).length = .succ l.length` for any `l`.  The main\nproperty then follows by another induction on `l`, using the\nobservation together with the induction hypothesis in the case\nwhere `l = n' :: l'`. _QED_.",
+   "why": "Continuation lines carry a stray one-space indent; also the fourth _Qed_ (same block, so it rides along here)."
+  },
+  {
+   "id": "dsainati-author-parens",
+   "cat": "markup/dev-author",
+   "old": "::::dev \"Daniel Sainati @dsainati\" PotentialImprovement",
+   "new": "::::dev \"Daniel Sainati (dsainati)\" PotentialImprovement",
+   "why": "Author strings are \"Full Name (github-handle)\"; every other note in the chapter uses parentheses."
+  },
+  {
+   "id": "reuse-unhyphenated",
+   "cat": "hyphenation/re-prefix",
+   "old": "Instead, re-use the same proof technique",
+   "new": "Instead, reuse the same proof technique",
+   "why": "\"reuse\" is unhyphenated in Chicago and elsewhere in the book (Basics, Typeclasses)."
+  },
+  {
+   "id": "quiz2-double-space",
+   "cat": "formatting/code-spacing",
+   "old": "theorem quiz2  (d : PartialMap)",
+   "new": "theorem quiz2 (d : PartialMap)",
+   "why": "Stray double space between the theorem name and its first binder."
+  }
+ ],
+ "completed": true
+}

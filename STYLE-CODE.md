@@ -130,6 +130,13 @@ using primes `'`, `''`, ... and numerical subscripts `₁`, `₂`, ... as needed
 Avoid clashing variable forms within the same scope that may cause confusion,
 e.g. do not declare `p : Nat` and `q : Prop` in a single function definition.
 
+In later books, we adopt standard PL conventions for variables like:
+- `t` for lambda terms, `v` for values
+- `x`, `y`, and `z` for variables
+- In Imp, `a` for arithmetic expressions, `b` for boolean expressions, and `c` for commands
+- `τ` for types
+- `Γ` and `Δ` for typing contexts
+
 Almost always, definitions and theorems relating to a type belong in a
 namespace with the same name as the type. Define the type first, then open its
 companion namespace and use bare member names inside it:
@@ -284,7 +291,7 @@ Likewise, leave a one-off stuck proof unfinished instead of closing it with `sor
 ````lean
 ```lean +error
 example (n m : Nat) :
-    myRepeat n m ++ myRepeat n m = myRepeat n (m + m) := by
+    replicate n m ++ replicate n m = replicate n (m + m) := by
   induction m with
   ...
   | succ m' ih =>

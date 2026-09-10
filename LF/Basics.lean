@@ -1193,7 +1193,7 @@ But in the following example, because {name}`Bool.not` takes a {name}`Bool` argu
 
 :::::full
 
-::::exercise (rating := 1) (name := "custom_namespace_checks")
+::::exercise (rating := 1) (name := "custom_namespace_checks") (manual := true)
 Predict the output of each of the statements below.
 Would their results change depending on which namespace
 the statements appear in? How?
@@ -1217,6 +1217,13 @@ GRADE_MANUAL 1: custom_namespace_checks
 :::::
 
 ## Constructors with Multiple Parameters (Tuple Types)
+
+:::dev "Mike Hicks (mwhicks1)" PotentialImprovement
+This content is not needed -- we introduce tuples in Lists as
+NatProd. However, a bunch of this text is interesting, so we should
+consider moving it (and perhaps examples too) to improve
+that section.
+:::
 
 ```lean
 namespace Playground
@@ -2735,8 +2742,6 @@ theorem and_eq_or (b c : Bool) : (b && c) = (b || c) → b = c := by
       rfl
 ```
 
-:::gradeTheorem 3 and_eq_or
-:::
 ::::
 :::::
 

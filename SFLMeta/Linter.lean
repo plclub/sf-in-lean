@@ -42,22 +42,58 @@ private structure Occurrence where
   line : Nat
 
 /--
-The declaration a directive name refers to, as recorded in the info tree when the directive was
-elaborated. A name that resolved to several declarations, or to none, is not a directive.
+The resolved names and custom info nodes for each source position used by a linter.
+
+This is produced by a single traversal of the `InfoTree`, saving many re-traversals during linting.
 -/
-private def directiveName (name : Ident) : CommandElabM (Option Name) := do
-  let some pos := name.raw.getPos? | return none
-  let mut found : Option Name := none
+private structure InfoIndex where
+  /-- Declarations recorded at the position of each directive name. -/
+  resolved : Std.HashMap String.Pos.Raw (Array Name) := {}
+  /-- Custom info nodes, in traversal order, with their source ranges. -/
+  customs : Array (Syntax × Syntax.Range × Dynamic) := #[]
+
+/-- The positions of the directive names in `stx`. -/
+private partial def directiveNamePositions (stx : Syntax) (acc : Std.HashSet String.Pos.Raw := {}) :
+    Std.HashSet String.Pos.Raw :=
+  match stx with
+  | `(block|:::%$_ $name $_args* { $blocks* }%$_) =>
+    let acc := if let some pos := name.raw.getPos? then acc.insert pos else acc
+    blocks.foldl (fun acc block => directiveNamePositions block acc) acc
+  | _ => stx.getArgs.foldl (fun acc child => directiveNamePositions child acc) acc
+
+/-- Collects the info the linters need for the directives in `stx`. -/
+private def InfoIndex.build (stx : Syntax) : CommandElabM InfoIndex := do
+  let positions := directiveNamePositions stx
+  if positions.isEmpty then return {}
+  let mut index : InfoIndex := {}
   for tree in (← get).infoState.trees do
-    let names := tree.foldInfo (init := #[]) fun _ info acc =>
+    index := tree.foldInfo (init := index) fun _ info index =>
       match info with
-      | .ofTermInfo {stx, expr := .const n _, ..} =>
-        if stx.getPos? == some pos then acc.push n else acc
-      | _ => acc
-    for n in names do
-      if found.any (· != n) then return none
-      found := some n
-  return found
+      | .ofTermInfo { stx, expr := .const n _, .. } =>
+        match stx.getPos? with
+        | some pos =>
+          if positions.contains pos then
+            let names := index.resolved.getD pos #[]
+            { index with resolved := index.resolved.insert pos (names.push n) }
+          else
+            index
+        | none => index
+      | .ofCustomInfo { stx, value } =>
+        match stx.getRange? with
+        | some range => { index with customs := index.customs.push (stx, range, value) }
+        | none => index
+      | _ => index
+  return index
+
+/--
+Gets the constant name that a directive name was resolved to during elaboration.
+-/
+private def InfoIndex.directiveName (index : InfoIndex) (name : Ident) : Option Name := do
+  let pos ← name.raw.getPos?
+  let names : Array Name := index.resolved.getD pos #[]
+  let n ← names[0]?
+  guard (names.all (· == n))
+  return n
 
 /--
 Constructs `MessageData` that refers to a directive at a particular occurrence. Hovering the name
@@ -84,23 +120,20 @@ private def directiveAt (occ : Occurrence) : CommandElabM MessageData := do
 private partial def unwrapIn (stx : Syntax) : Syntax :=
   if stx.getKind == ``Lean.Parser.Command.in then unwrapIn stx[2] else stx
 
-/-- The custom info value of type `α` attached to the directive containing `name`, if any. -/
-private def directiveConfig? (α : Type) [TypeName α]
-    (name : Ident) : CommandElabM (Option (Syntax × α)) := do
-  let some pos := name.raw.getPos? | return none
-  for tree in (← get).infoState.trees do
-    let values := tree.foldInfo (init := #[]) fun _ info acc =>
-      match info with
-      | .ofCustomInfo {stx, value} =>
-        if stx.getRange?.any fun range => range.start ≤ pos && pos < range.stop then
-          match value.get? α with
-          | some config => acc.push (stx, config)
-          | none => acc
-        else
-          acc
-      | _ => acc
-    if let some value := values[0]? then return some value
-  return none
+/--
+The custom info value of type `α` attached to the innermost directive containing `name`, if any.
+-/
+private def InfoIndex.directiveConfig? (index : InfoIndex) (α : Type) [TypeName α]
+    (name : Ident) : Option (Syntax × α) := do
+  let pos ← name.raw.getPos?
+  let (stx, _, value) ← index.customs.foldl (init := (none : Option (Syntax × Syntax.Range × α)))
+    fun best (stx, range, value) =>
+      match value.get? α with
+      | some value =>
+        if range.contains pos && best.all (·.2.1.start < range.start) then some (stx, range, value)
+        else best
+      | none => best
+  return (stx, value)
 
 /-- An occurrence for `name`, including its source line. -/
 private def occurrence (name : Ident) (resolvedName : Name) : CommandElabM (Option Occurrence) := do
@@ -108,39 +141,39 @@ private def occurrence (name : Ident) (resolvedName : Name) : CommandElabM (Opti
   let line := (← getFileMap).toPosition pos |>.line
   return some {name := resolvedName, ident := name, line}
 
-private partial def checkExerciseVisibility
+private partial def checkExerciseVisibility (index : InfoIndex)
     (mode : Option Occurrence) : Syntax → CommandElabM Unit
   | `(block|:::%$_ $name $_args* { $blocks* }%$_) => do
     let mut mode := mode
-    if let some n ← directiveName name then
+    if let some n := index.directiveName name then
       if n == ``SFLMeta.full || n == ``SFLMeta.terse then
         mode := ← occurrence name n
       else if n == ``SFLMeta.exercise then
-        let exerciseData ← directiveConfig? ExerciseData name
+        let exerciseData := index.directiveConfig? ExerciseData name
         if mode.isNone && exerciseData.all fun (_, data) => data.checkVisibility then
           logLint linter.sf.exerciseVisibility name
             m!"`{.ofConstName n}` is not inside a \
               `{.ofConstName ``SFLMeta.full}` or `{.ofConstName ``SFLMeta.terse}`"
     for block in blocks do
-      checkExerciseVisibility mode block
+      checkExerciseVisibility index mode block
   | stx =>
     for child in stx.getArgs do
-      checkExerciseVisibility mode child
+      checkExerciseVisibility index mode child
 
 /-- Checks that exercises are inside `:::full` or `:::terse`. -/
 private def exerciseVisibility : Linter where
   run := withSetOptionIn fun stx => do
     unless (`Verso.Doc.Concrete).isPrefixOf (unwrapIn stx).getKind do return
     unless getLinterValue linter.sf.exerciseVisibility (← getLinterOptions) do return
-    checkExerciseVisibility none stx
+    checkExerciseVisibility (← InfoIndex.build stx) none stx
 
 initialize addLinter exerciseVisibility
 
-private partial def checkVariantNesting
+private partial def checkVariantNesting (index : InfoIndex)
     (mode : Option Occurrence) : Syntax → CommandElabM Unit
   | `(block|:::%$_ $name $_args* { $blocks* }%$_) => do
     let mut mode := mode
-    if let some n ← directiveName name then
+    if let some n := index.directiveName name then
       if n == ``SFLMeta.full || n == ``SFLMeta.terse then
         if let some outer := mode then
           if let some this ← occurrence name n then
@@ -149,17 +182,17 @@ private partial def checkVariantNesting
                 `{← directiveAt outer}` on line {outer.line}"
         mode := ← occurrence name n
     for block in blocks do
-      checkVariantNesting mode block
+      checkVariantNesting index mode block
   | stx =>
     for child in stx.getArgs do
-      checkVariantNesting mode child
+      checkVariantNesting index mode child
 
 /-- Checks that `:::full` and `:::terse` do not nest. -/
 private def variantNesting : Linter where
   run := withSetOptionIn fun stx => do
     unless (`Verso.Doc.Concrete).isPrefixOf (unwrapIn stx).getKind do return
     unless getLinterValue linter.sf.variantNesting (← getLinterOptions) do return
-    checkVariantNesting none stx
+    checkVariantNesting (← InfoIndex.build stx) none stx
 
 initialize addLinter variantNesting
 
@@ -168,57 +201,58 @@ private def declaredWithin (range : Syntax.Range) (declName : Name) : CommandEla
     | return false
   return range.includes declRange true true
 
-private def autogradingTargets? (directive : Name) (name : Ident) :
-    CommandElabM (Option (Array Name)) := do
+private def InfoIndex.autogradingTargets? (index : InfoIndex) (directive : Name) (name : Ident) :
+    Option (Array Name) :=
   if directive == ``SFLMeta.gradeTheorem then
-    return (← directiveConfig? GradeTheoremConfig name).map fun (_, cfg) => (cfg.names.toArray)
-  if directive == ``SFLMeta.autogradedHole then
-    return (← directiveConfig? AutogradedHoleConfig name).map fun (_, cfg) => (cfg.names.toArray)
-  return none
+    (index.directiveConfig? GradeTheoremConfig name).map fun (_, cfg) => cfg.names.toArray
+  else if directive == ``SFLMeta.autogradedHole then
+    (index.directiveConfig? AutogradedHoleConfig name).map fun (_, cfg) => cfg.names.toArray
+  else
+    none
 
-private partial def checkOptionalAutograding
+private partial def checkOptionalAutograding (index : InfoIndex)
     (optionalExercise : Option (Occurrence × Syntax.Range)) : Syntax → CommandElabM Unit
   | `(block|:::%$_ $name $_args* { $blocks* }%$_) => do
     let mut optionalExercise := optionalExercise
-    if let some n ← directiveName name then
+    if let some n := index.directiveName name then
       if n == ``SFLMeta.exercise then
-        optionalExercise := match ← occurrence name n, ← directiveConfig? ExerciseData name with
+        optionalExercise := match ← occurrence name n, index.directiveConfig? ExerciseData name with
           | some exercise, some (stx, data) =>
             if data.optional then stx.getRange?.map (exercise, ·) else none
           | _, _ => none
       else if let some (exercise, range) := optionalExercise then
-        if let some targets ← autogradingTargets? n name then
+        if let some targets := index.autogradingTargets? n name then
           for targetName in targets do
             if ← declaredWithin range targetName then
               logLint linter.sf.optionalAutograding name
                 m!"optional `{← directiveAt exercise}` autogrades \
                   declaration `{.ofConstName targetName}` from its body"
     for block in blocks do
-      checkOptionalAutograding optionalExercise block
+      checkOptionalAutograding index optionalExercise block
   | stx =>
     for child in stx.getArgs do
-      checkOptionalAutograding optionalExercise child
+      checkOptionalAutograding index optionalExercise child
 
 /-- Checks that optional exercises do not autograde declarations in their bodies. -/
 private def optionalAutograding : Linter where
   run := withSetOptionIn fun stx => do
     unless (`Verso.Doc.Concrete).isPrefixOf (unwrapIn stx).getKind do return
     unless getLinterValue linter.sf.optionalAutograding (← getLinterOptions) do return
-    checkOptionalAutograding none stx
+    checkOptionalAutograding (← InfoIndex.build stx) none stx
 
 initialize addLinter optionalAutograding
 
 /-- Checks that autograder directives and their targets belong to an exercise. -/
-private partial def checkAutogradingScope
+private partial def checkAutogradingScope (index : InfoIndex)
     (exercise : Option (Occurrence × Syntax.Range)) : Syntax → CommandElabM Unit
   | `(block|:::%$_ $name $_args* { $blocks* }%$_) => do
     let mut exercise := exercise
-    if let some n ← directiveName name then
+    if let some n := index.directiveName name then
       if n == ``SFLMeta.exercise then
-        exercise := match ← occurrence name n, ← directiveConfig? ExerciseData name with
+        exercise := match ← occurrence name n, index.directiveConfig? ExerciseData name with
           | some exercise, some (stx, _) => stx.getRange?.map (exercise, ·)
           | _, _ => none
-      else if let some targets ← autogradingTargets? n name then
+      else if let some targets := index.autogradingTargets? n name then
         match exercise with
         | none =>
           logLint linter.sf.autogradingScope name
@@ -231,17 +265,17 @@ private partial def checkAutogradingScope
                 m!"`{.ofConstName n}` target `{.ofConstName targetName}` was not declared \
                   inside `{← directiveAt exerciseOcc}`"
     for block in blocks do
-      checkAutogradingScope exercise block
+      checkAutogradingScope index exercise block
   | stx =>
     for child in stx.getArgs do
-      checkAutogradingScope exercise child
+      checkAutogradingScope index exercise child
 
 /-- Checks that autograder directives target declarations in their exercise. -/
 private def autogradingScope : Linter where
   run := withSetOptionIn fun stx => do
     unless (`Verso.Doc.Concrete).isPrefixOf (unwrapIn stx).getKind do return
     unless getLinterValue linter.sf.autogradingScope (← getLinterOptions) do return
-    checkAutogradingScope none stx
+    checkAutogradingScope (← InfoIndex.build stx) none stx
 
 initialize addLinter autogradingScope
 

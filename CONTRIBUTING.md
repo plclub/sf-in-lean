@@ -173,6 +173,25 @@ in `ALPHA-TESTERS.md`), your `origin` is your fork and the shared repo is
 `upstream`, so read `upstream/main` for `origin/main` throughout — rebasing onto
 your fork's `main` would replant your work on a stale base.
 
+### Proofreading a chapter
+
+For the low-level pass — commas, agreement, articles, hyphenation, markup slips
+— say `/proofread <Chapter>` in a Claude session, on a branch with nothing
+uncommitted (it refuses otherwise). Claude proposes a round of small edits and
+applies them, then opens a side-by-side diff — the chapter before the round on
+the left, the live chapter on the right — and waits: revert the ones you don't
+want, with the arrow in the gutter between the panes or by editing the
+right-hand side, and tell Claude you are done. Every edit that survives has been vetted
+by hand, as the AI policy below requires; every edit you decline is recorded in
+`proofread/ledger.jsonl` and is never proposed again, in that chapter or any
+other, and a category you decline repeatedly becomes a house rule that stops it
+being proposed at all.
+
+`PROOFREADING.md` has the rest: the house rules accumulated so far, the known
+non-issues, what belongs in a round and what doesn't, how to drive the pass
+from a terminal instead, and the one-time `git config core.hooksPath
+scripts/hooks` that stops a half-finished round from being committed.
+
 ## Tools for coordinating work
 
 ### Branch activity dashboard
