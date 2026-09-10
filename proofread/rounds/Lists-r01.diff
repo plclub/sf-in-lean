@@ -1,0 +1,216 @@
+--- LF/Lists.lean (before this round)
++++ LF/Lists.lean
+@@ -37,7 +37,7 @@
+ # Pairs of Numbers
+ 
+ ::::dev "Mike Hicks (mwhicks1)"
+-This content is a redundant with what's in Basics, which introduces the idea of
++This content is redundant with what's in Basics, which introduces the idea of
+ tuple types and structures as shorthand for them. I suspect we can drop most
+ of the Basics content and rely on what's here instead. If we do that, we can
+ introduce the term "Tuple" here.
+@@ -45,7 +45,7 @@
+ 
+ ::::full
+ In an `inductive` type definition, each constructor can take
+-any number of arguments -- none (as with {name}`true` and  {lean}`0`),
++any number of arguments — none (as with {name}`true` and  {lean}`0`),
+ one (as with  {name}`Nat.succ`), or more than one (as with  {name}`Playground.Nibble` and
+ the following):
+ ::::
+@@ -76,9 +76,9 @@
+ :::dev "Mike Hicks (@mwhicks1)"
+ I would have expected us to have `namespace NatProd` here when defining
+ the following functions, so we don't need qualifiers. We've already
+-full explained namespaces back in Basics. Some of the text below
++fully explained namespaces back in Basics. Some of the text below
+ mentions using the `NatProd` prefix specifically, but I think you can
+-drop it and it will stick work.
++drop it and it will still work.
+ :::
+ 
+ Functions for extracting the first and second components of a pair
+@@ -104,7 +104,6 @@
+ :::slidebreak
+ :::
+ 
+-
+ ::::full
+ Since pairs will be used heavily in what follows, it will be
+ convenient to write them with angle bracket notation `⟨n, m⟩`
+@@ -122,7 +121,7 @@
+ example : (⟨3, 5⟩ : NatProd).fst = 3 := by rfl
+ ```
+ 
+-The anonymous constructor can be used in both expressions and in pattern matches.
++The anonymous constructor can be used both in expressions and in pattern matches.
+ 
+ ```lean
+ def NatProd.fst' (p : NatProd) : Nat :=
+@@ -437,7 +436,7 @@
+ 
+ We'll learn more about type classes in chapter {ref "Typeclasses"}[Typeclasses].
+ For now, the key idea is just this:
+-a type class is like an Java-style interface, and an _instance_ is an
++a type class is like a Java-style interface, and an _instance_ is an
+ implementation of that interface for a particular type.
+ We associate notation with a particular type class member, and then
+ instances of that typeclass inherit the notation.
+@@ -534,7 +533,6 @@
+ theorem tail_nil : [].tail = [] := by rfl
+ ```
+ 
+-
+ :::full
+ And some examples:
+ ```
+@@ -570,7 +568,7 @@
+ We show how to rewrite with the lemmas explicitly in the first example and the fact that one can just use {tactic}`rfl` in the second (this is only visible in the solution because it would not type-check otherwise).
+ The point of the graded tests is nearly always to be an {tactic}`rfl` proof that relies on a correctly formulated definition.
+ The characterizing lemmas are provided (as statements) but not graded.
+-The student is expected to also use {tactic}`rfl` as it's the easiest, and most idiomatic solution.
++The student is expected to also use {tactic}`rfl` as it's the easiest and most idiomatic solution.
+ :::
+ 
+ ::::::full
+@@ -591,7 +589,7 @@
+ :::autogradedHole nonZeros
+ :::
+ 
+-The following lemmas should hold about your definition
++The following lemmas should hold about your definition.
+ 
+ ```lean
+ theorem nonZeros_cons_zero (t : NatList) :
+@@ -673,7 +671,7 @@
+     rw [Bool.not_true, Bool.not_false]
+ ```
+ 
+-This gets pretty verbose quite fast, however we can use {tactic}`rfl` to deal with subgoals such as {lean}`Nat.odd 2 = false`:
++This gets pretty verbose quite fast; however, we can use {tactic}`rfl` to deal with subgoals such as {lean}`Nat.odd 2 = false`:
+ 
+ ```lean
+ example : oddMembers [1, 2] = [1] := by
+@@ -685,7 +683,7 @@
+ ```
+ 
+ In fact, as the entire proof is just plain computation, it can be done with a single `rfl`.
+-This is possible because all of the elements and lists are concrete -- there are no variables involved.
++This is possible because all of the elements and lists are concrete — there are no variables involved.
+ 
+ ```lean
+ example : oddMembers [1, 2] = [1] := solution!(by rfl)
+@@ -778,7 +776,7 @@
+ :::autogradedHole count
+ :::
+ 
+-Now, prove these lemmas which should hold about your definition.
++Now, prove these lemmas that should hold about your definition.
+ 
+ ```lean
+ theorem count_nil (n : Nat) : count n [] = 0 := solution!(by rfl)
+@@ -814,7 +812,7 @@
+ :::
+ :::::
+ 
+-Again, all these proofs could be completed with just `rfl`, because the proof is computationally straight-forward -- compute both sides of the equality and check if they are the same.
++Again, all these proofs could be completed with just `rfl`, because the proof is computationally straightforward — compute both sides of the equality and check if they are the same.
+ 
+ ```lean
+ example : count 1 [1, 2, 3, 1, 4, 1] = 3 := solution!(by rfl)
+@@ -921,7 +919,6 @@
+ :::gradeTheorem "0.5" test_removeOne1 test_removeOne2
+ :::
+ 
+-
+ ```lean
+ def removeAll (n : Nat) (l : NatList) : NatList := solution!(
+   match l with
+@@ -1343,7 +1340,6 @@
+ 
+ Now we can prove the main theorem.
+ 
+-
+ ```lean
+ theorem length_reverse (l : NatList) :
+     l.reverse.length = l.length := by
+@@ -1421,7 +1417,6 @@
+ 
+ (E) can't be done with the tactics we've seen.
+ 
+-
+ :::quizSolution
+ ```lean
+ example (n m : Nat) : (replicate n m).length = m := by
+@@ -1454,7 +1449,7 @@
+   which follows directly from the definitions of `length`,
+   `++`, and `+`.
+ 
+-- Next, suppose `l₁ = n::l₁'`, with
++- Next, suppose `l₁ = n :: l₁'`, with
+ 
+ ```display
+ (l₁' ++ l₂).length = l₁'.length + l₂.length
+@@ -1463,7 +1458,7 @@
+ We must show
+ 
+ ```display
+-((n::l₁') ++ l₂).length = (n::l₁').length + l₂.length.
++((n :: l₁') ++ l₂).length = (n :: l₁').length + l₂.length.
+ ```
+ 
+ This follows directly from the definitions of `length` and `++`
+@@ -1482,7 +1477,7 @@
+   which follows directly from the definitions of `length`
+   and `reverse`.
+ 
+-- Next, suppose `l = n::l'`, with
++- Next, suppose `l = n :: l'`, with
+ 
+ ```display
+ l'.reverse.length = l'.length
+@@ -1509,7 +1504,7 @@
+ This follows directly from the induction hypothesis and the
+ definition of `length`.  _Qed_.
+ 
+-The style of these proofs is rather longwinded and pedantic.
++The style of these proofs is rather long-winded and pedantic.
+ After reading a couple like this, we might find it easier to
+ follow proofs that give fewer details (which we can easily work
+ out in our own minds or on scratch paper if necessary) and just
+@@ -1522,7 +1517,7 @@
+  that `(l ++ [n]).length = .succ l.length` for any `l`.  The main
+  property then follows by another induction on `l`, using the
+  observation together with the induction hypothesis in the case
+- where `l = n'::l'`. _Qed_
++ where `l = n' :: l'`. _Qed_.
+ 
+ Which style is preferable in a given situation depends on
+ the sophistication of the expected audience and how similar the
+@@ -1801,7 +1796,7 @@
+ on a term that is not merely an identifier. That usage has not
+ been introduced yet. APT 21: Added a hint about that. MRC 2/22:
+ Even if the exercise is optional, it ought to be solvable with
+-with the material introduced thus far. It is not. I note that BCP
++the material introduced thus far. It is not. I note that BCP
+ has rejected the proof in the exercise above for `count_removeOne`
+ because it uses `cases` on a term rather than identifier.
+ :::
+@@ -1890,7 +1885,7 @@
+ 
+ :::terse
+ Suppose we'd like a function to retrieve the `n`th element
+-    of a list.  What to do if the list is too short?
++of a list.  What to do if the list is too short?
+ :::
+ 
+ ```lean
+@@ -1906,7 +1901,7 @@
+ :::
+ 
+ ::::full
+-This solution is not so good: If `nthBad` returns 42, we
++This solution is not so good: if `nthBad` returns 42, we
+ don't know whether that value actually appears in the input or
+ whether we gave bad arguments.  A better alternative is to change
+ the return type to include an error value as a possible outcome.

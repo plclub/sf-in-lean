@@ -173,6 +173,25 @@ in `ALPHA-TESTERS.md`), your `origin` is your fork and the shared repo is
 `upstream`, so read `upstream/main` for `origin/main` throughout — rebasing onto
 your fork's `main` would replant your work on a stale base.
 
+### Proofreading a chapter
+
+For the low-level pass — commas, agreement, articles, hyphenation, markup slips
+— say `/proofread <Chapter>` in a Claude session, on a branch with nothing
+uncommitted (it refuses otherwise). Claude proposes a round of small edits and
+applies them, then opens a side-by-side diff — the chapter before the round on
+the left, the live chapter on the right — and waits: revert the ones you don't
+want, with the arrow in the gutter between the panes or by editing the
+right-hand side, and tell Claude you are done. Every edit that survives has been vetted
+by hand, as the AI policy below requires; every edit you decline is recorded in
+`proofread/ledger.jsonl` and is never proposed again, in that chapter or any
+other, and a category you decline repeatedly becomes a house rule that stops it
+being proposed at all.
+
+`PROOFREADING.md` has the rest: the house rules accumulated so far, the known
+non-issues, what belongs in a round and what doesn't, how to drive the pass
+from a terminal instead, and the one-time `git config core.hooksPath
+scripts/hooks` that stops a half-finished round from being committed.
+
 ## Tools for coordinating work
 
 ### Branch activity dashboard
@@ -291,6 +310,16 @@ tag the commit `v<version>` (Lake's convention, and what Reservoir reads).  The
 release year is deliberately a recorded fact rather than the wall-clock year:
 two builds of the same tag must agree, and a citation should name the year the
 edition was published, not the year someone happened to rebuild it.
+
+**Build stamps.**  Every build product records when it was made: each generated
+`.lean` file ends with a `-- Built on <date> <time> UTC` comment, and each HTML
+page ends with the same sentence set small and gray below a rule.  The clock is
+read once per `SFLMeta.runVolume` call and the one string is handed to both
+emitters (`SFLMeta/BuildStamp.lean`), so a chapter's `.lean` and its HTML page
+always agree — which is what makes the pair recognizable as one build.  Unlike
+the release year, this *is* wall-clock time: it answers "how old is the copy in
+front of me", a question only the clock can answer.  It is in UTC so that it
+reads the same to everyone.
 
 **Adding a volume.**  Add a row to `volumes` in `SFLMeta/Volume.lean`, add the
 `[[lean_lib]]` with its `weak.sfl.volume` option, and add the `[[lean_exe]]`

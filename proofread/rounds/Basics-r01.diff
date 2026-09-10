@@ -1,0 +1,459 @@
+--- /tmp/claude-1000/-workspaces-l/2220d5fb-0c2d-4982-87ae-1f746027d958/scratchpad/Basics.before.lean	2026-08-29 14:28:09.746937013 +0000
++++ LF/Basics.lean	2026-08-29 14:25:11.392853528 +0000
+@@ -41,7 +41,7 @@
+ 
+ ::::full
+ The _functional style_ of programming is founded on simple
+-mathematical intuitions: A program is essentially a concrete
++mathematical intuitions: a program is essentially a concrete
+ means for computing a mathematical function, which just maps
+ inputs to outputs. (Even programs with side effects like
+ reading and writing files or network packets can
+@@ -94,7 +94,7 @@
+ expressive power, we will start by defining most of the datatypes we
+ use in this course from scratch, rather than importing
+ the ones in the standard library. (We will later switch over to the library
+-versions, to take advantage of all the properties that have already been proved about them.)
++versions to take advantage of all the properties that have already been proved about them.)
+ ::::
+ 
+ ## Days of the Week (Enumerated Types)
+@@ -162,7 +162,7 @@
+ `match d with...`, Lean will examine the structure of `d` to see which
+ case to execute; if `d` is `Day.monday`, for example, it will
+ evaluate the first case of the `match` statement; if `d` is
+-`Day.friday` it will evaluate the fifth case. (There is much more
++`Day.friday`, it will evaluate the fifth case. (There is much more
+ to say about pattern matching! We'll introduce more of its features
+ as the need arises.)
+ 
+@@ -238,7 +238,7 @@
+ error.
+ 
+ (The `sf_expect_failure_in` annotation tells Lean that there is intended to be an error in
+-the following expression and it should not mark the whole file as broken.)
++the following expression and that it should not mark the whole file as broken.)
+ ::::
+ 
+ ::::terse
+@@ -259,7 +259,7 @@
+ Locate the above example and observe its result in the Lean InfoView panel.
+ 
+ This panel displays the results of commands like `#eval` (click on a particular `#eval` to see),
+-as well as the current goal state when working on proofs.
++as well as the current goal state when you are working on proofs.
+ The InfoView content always follows your cursor.
+ 
+ On Windows and Linux, Ctrl-click a type or variable name to navigate to its definition.
+@@ -271,7 +271,7 @@
+ If you hover over the `#eval` command itself,
+ you will see the popup that contains its output (at the top).
+ Sometimes we show Lean's responses to commands in the text below them; by hovering over
+-the command you can check against that text.
++the command, you can check against that text.
+ 
+ Experiment with adding your own `#eval` commands to test other inputs.
+ Lean typechecks the file as you
+@@ -288,7 +288,7 @@
+ scratch. Our definition `MyBool` is equivalent to Lean's built-in {name}`Bool`,
+ which we'll switch to later.
+ We call it `MyBool` to avoid clashing with the built-in name.
+-Later in the chapter, will show a different way of avoiding such clashes: we will place our custom natural numbers in a fresh `NatPlayground` namespace,
++Later in the chapter, we will show a different way of avoiding such clashes: we will place our custom natural numbers in a fresh `NatPlayground` namespace,
+ where they can be called `Nat` without clashing with Lean's built-in {name}`Nat`.
+ ::::
+ :::dev "Benjamin Pierce (bcpierce00)"
+@@ -307,7 +307,7 @@
+   | false
+ ```
+ :::full
+-We next invoke a couple of Lean directives to help control formatting.  Exactly what these directives mean is not important for present purposes -- you can understand everything in the rest of the book without knowing -- so we will mark these commands -- and similar bits later on -- with `THE FOLLOWING DETAILS CAN BE SKIPPED` comments in `.lean` files, and with folded-up segments in the HTML presentation. Feel free to have a peek if you want (click on the triangle in the HTML to unfold it), or just jump down to the following material and keep going.
++We next invoke a couple of Lean directives to help control formatting.  Exactly what these directives mean is not important for present purposes — you can understand everything in the rest of the book without knowing — so we will mark these commands — and similar bits later on — with `THE FOLLOWING DETAILS CAN BE SKIPPED` comments in `.lean` files, and with folded-up segments in the HTML presentation. Feel free to have a peek if you want (click on the triangle in the HTML to unfold it), or just jump down to the following material and keep going.
+ :::
+ :::details
+ ```lean -show
+@@ -439,7 +439,7 @@
+ 
+ :::::terse
+ Going forward, most exercises will be omitted from the "terse" version of the notes used
+-in lecture. The "full" version (used on-line and for homeworks) contains both longer
++in lecture. The "full" version (used online and for homeworks) contains both longer
+ explanations and all the exercises.
+ :::::
+ 
+@@ -518,21 +518,21 @@
+ ::::full
+ What does this mean?
+ 
+-First the `by` keyword signals
++First, the `by` keyword signals
+ that what follows is a sequence of _tactics_.
+ The `intro b` and {tactic}`rfl` after the `by`
+ are examples of tactics. If you hover over a tactic's name, Lean shows
+ its documentation.
+ 
+-Tactics manipulate the _proof state_, which you can see the in the Lean InfoView panel.
++Tactics manipulate the _proof state_, which you can see in the Lean InfoView panel.
+ The proof state is divided by the symbol ⊢, pronounced _turnstile_. The part
+ before it is the _context_, and the part after it is
+ the _goal_. The context records what we know
+ at some given point in the proof; the goal is what we are trying to prove
+ at that point.
+ 
+-Each tactic manipulates the goal, the context, or both, to get things
+-into a configuration that is closer to being "solved". A tactic can also
++Each tactic manipulates the goal, the context, or both to get things
++into a configuration that is closer to being "solved." A tactic can also
+ _close_ (solve) the current goal, finishing its proof.
+ 
+ Let's walk through the example above with this terminology in mind.
+@@ -585,7 +585,7 @@
+ ```
+ 
+ ::::full
+-Like some other well-known languages (Python, Haskell, etc.)
++Like some other well-known languages (Python, Haskell, etc.),
+ Lean is _whitespace-sensitive_. That is, the indentation in proofs is important, and changing
+ it can change the meaning of the proof, usually causing it to break. 
+ 
+@@ -608,7 +608,7 @@
+ ⊢ (true && b) = b
+ ```
+ 
+-Lean complains because the {tactic}`rfl` is not at the same level of indentation as the `{tactic}intro b`,
++Lean complains because the {tactic}`rfl` is not at the same level of indentation as the `intro b`,
+ so it does not recognize these two tactics as being sequential in the way they should be.
+ 
+ In general, sequential tactics applied to the same goal must either be on subsequent lines at the same
+@@ -649,7 +649,7 @@
+ ```
+ 
+ The facts we've seen so far about booleans are quite simple, so the tactics we need to
+-prove them are also quite simple. Over the course of this book we are going to
++prove them are also quite simple. Over the course of this book, we are going to
+ introduce new tactics and proof techniques gradually, enriching the propositions we can prove along the way.
+ 
+ Now that we've seen how to define our own booleans and prove some basic
+@@ -670,13 +670,13 @@
+ :::
+ 
+ ::::full
+-Note that `∀` and `⊢` are unicode symbols, not plain ASCII characters. The
++Note that `∀` and `⊢` are Unicode symbols, not plain ASCII characters. The
+ Lean Extension for VS Code provides convenient shortcuts for
+ entering such symbols. Simply type `\` (backslash) followed by the
+ name of the symbol (its "shortcode"), and the extension will automatically replace it
+-with the actual symbol. For example, typing either `\all` or `\forall` will produce `∀`
++with the actual symbol. For example, typing either `\all` or `\forall` will produce `∀`,
+ and `\->` or `\to` will produce `→`. To find out what backslash sequence
+-produces a unicode symbol that you can see on the screen, just hover
++produces a Unicode symbol that you can see on the screen, just hover
+ over it. To see a list of all of the Unicode shortcodes, open the Command Palette
+ (Ctrl+Shift+P on Windows/Linux or Cmd+Shift+P on macOS), type
+ "Lean 4: Show Unicode Input Abbreviations", and press Enter.
+@@ -742,7 +742,7 @@
+ ## New Types from Old
+ 
+ ::::full
+-The enumerated types we have seen so far are so-named because
++The enumerated types we have seen so far are so named because
+ their definitions explicitly enumerate a finite set of
+ elements: their constructors. Here is a more interesting
+ inductive type definition, `Color`, where one of the constructors
+@@ -798,7 +798,7 @@
+ 
+ :::full
+ Since the `primary` constructor takes an argument, a pattern
+-that matches `.primary` should include either a variable, a constant
++that matches `.primary` should include a variable, a constant
+ of appropriate type, or `_`. Lean's convention is to use a `_` (called a
+ _wildcard_) when the argument to a constructor doesn't matter. In
+ the definition of `monochrome`, we don't use the argument to `Color.primary`, so
+@@ -864,10 +864,10 @@
+ result.
+ 
+ ::::exercise (rating := 1) (name := "is_weekend")
+-Define a function that takes a `Day` and returns true if the day is
+-a weekend, and false otherwise.
++Define a function that takes a `Day` and returns `true` if the day is
++a weekend, and `false` otherwise.
+ 
+-Then, fill in right-hand sides of the `example` blocks below.
++Then, fill in the right-hand sides of the `example` blocks below.
+ If you've done both correctly, the blocks will produce no errors
+ and contain no {tactic}`sorry`.
+ 
+@@ -897,7 +897,7 @@
+ 
+ ::::exercise (rating := 1) (name := "isInversion")
+ Define a function that takes two colors and returns `true` if
+-the second color is an _inversion_ of the first, and false otherwise.
++the second color is an _inversion_ of the first, and `false` otherwise.
+ 
+ Inversion is defined by cases:
+ Black is an inversion of white, and vice versa.
+@@ -944,7 +944,7 @@
+ 
+ When we enclose a collection of declarations in `namespace X ... end X`,
+ references from outside this collection to names declared within
+-it are referred to with prefix `X.`, like `X.foo` instead of just `foo`.
++it are referred to with the prefix `X.`, like `X.foo` instead of just `foo`.
+ In large Lean developments, namespaces are
+ used to organize definitions and theorems the same way
+ modules are used in other programming languages.
+@@ -973,7 +973,7 @@
+ ```
+ 
+ :::full
+-Namespaces can be re-opened as often as you like to add new definitions and access old ones.
++Namespaces can be reopened as often as you like to add new definitions and access old ones.
+ When inside a `namespace`, definitions from that namespace can be referenced
+ without prefixes.
+ :::
+@@ -1111,7 +1111,7 @@
+ ::::full
+ In fact, this is exactly what Lean does with the standard {name}`Bool` type by default.
+ Since it is such an important
+-part of many proofs and programs, Lean implicitly `open`s many of `Bool`s functions and
++part of many proofs and programs, Lean implicitly `open`s many of `Bool`'s functions and
+ constructors. Accordingly, we can use constructors like {name}`true` and {name}`false` and functions
+ like {name}`not` without qualifying them with {name}`Bool`.
+ ::::
+@@ -1238,7 +1238,7 @@
+ ::::full
+ A single constructor of an inductive type can have multiple parameters,
+ not just zero or one. This feature is one way to define _tuple types_ in Lean,
+-which are like record/struct types but their fields are accessed by their _position_
++which are like record/struct types but whose fields are accessed by their _position_
+ in patterns rather than by a specific (field) _name_.
+ 
+ As an example, consider representing the four bits in
+@@ -1269,8 +1269,8 @@
+ 
+ ::::full
+ The `bits` constructor illustrates a feature of multi-parameter
+-declarations, both for constructors and for functions: Instead
+-of writing `(x0 : Bit) (x1 : Bit) ...` we write `(x0 x1 ... : Bit)`
++declarations, both for constructors and for functions: instead
++of writing `(x0 : Bit) (x1 : Bit) ...`, we write `(x0 x1 ... : Bit)`
+ since all of the variables have the same type. We could have done
+ the same with the function definition {name}`MyBool.or` above, writing
+ `or (b1 b2 : MyBool)` rather than `or (b1 : MyBool) (b2 : MyBool)`.
+@@ -1347,7 +1347,7 @@
+ which structure and fields we mean. Unlike {name}`NibbleStruct.mk`,
+ this construction syntax doesn't depend on the order of fields.
+ 
+-Now that we have seen how to construct a structure from scratch —
++Now that we have seen how to construct a structure from scratch,
+ how do we "update" an existing structure, or in other words, construct a new structure
+ while reusing some old fields?
+ :::
+@@ -1365,7 +1365,7 @@
+ 
+ :::full
+ The expression `{ old with ... }` constructs a new {name}`NibbleStruct` whose `x0` and `x1`
+-have the given value and whose other fields are copied from `old`.
++have the given values and whose other fields are copied from `old`.
+ Keep in mind that `old` was not modified — we constructed a new structure
+ starting from the old one.
+ :::
+@@ -1400,13 +1400,13 @@
+ 
+ ::::full
+ All the types we have defined so far — both enumerated types
+-such as {name}`Day`, {name}`MyBool`, and {name}`Playground.Bit` and tuple types such as
++such as {name}`Day`, {name}`MyBool`, and {name}`Playground.Bit`, and tuple types such as
+ {name}`Playground.Nibble` built from them — are finite. The natural numbers, on
+ the other hand, are an infinite set, so we'll need to use a
+ slightly richer form of inductive type declaration to represent
+ them: _recursive_ inductive types.
+ 
+-While the need for recursion is unequivocal, there are many recursively-defined
++While the need for recursion is unequivocal, there are many recursively defined
+ representations of numbers to choose from. You are
+ certainly familiar with decimal notation (base 10), using the digits
+ 0 through 9, for example, to form the number 123. You have likely
+@@ -1495,7 +1495,7 @@
+ #eval minusTwo four
+ ```
+ 
+-Look the types of {name}`succ`, {name}`pred`, and {name}`minusTwo`:
++Look at the types of {name}`succ`, {name}`pred`, and {name}`minusTwo`:
+ 
+ ```lean (name := nat1)
+ #check (succ)
+@@ -1538,7 +1538,7 @@
+ extensive use of recursive functions.
+ 
+ We first define a simple recursive function, `even`, then a slightly
+-more sophisticated recursive function `add`.
++more sophisticated recursive function, `add`.
+ ::::
+ 
+ :::terse
+@@ -1590,7 +1590,7 @@
+ NatPlayground.Nat.succ (NatPlayground.Nat.succ (NatPlayground.Nat.succ (NatPlayground.Nat.zero)))
+ ```
+ 
+-We can also define infix notation for our {name}`add` functions.
++We can also define infix notation for our {name}`add` function.
+ 
+ ```lean
+ scoped infixl:65 " + " => add
+@@ -1609,7 +1609,7 @@
+ ## Proving properties about functions in Lean
+ 
+ ::::full
+-Being recursive on a {name}`Nat` and returning {name}`Nat` as well,
++Being recursive on a {name}`Nat` and returning a {name}`Nat` as well,
+ {name}`add` is the first example of a more sophisticated class of functions.
+ In this chapter and beyond, we will _prove_ properties
+ about recursive functions like `add` over inductive datatypes
+@@ -1731,7 +1731,7 @@
+ ::::
+ 
+ ::::terse
+-The {tactic}`rfl` closes a goal that looks like `a = a`, reducing both sides of the equality in
++The {tactic}`rfl` tactic closes a goal that looks like `a = a`, reducing both sides of the equality in
+ the process.
+ ::::
+ 
+@@ -1779,12 +1779,11 @@
+ Lean, like any other programming language, has conventions and best practices
+ for writing good software. Lean takes inspiration from object-oriented programming
+ in favoring the use of _encapsulation_. In OOP, it is considered poor style to expose
+-the fields of an object in its interface; instead, those fields should only be
+-accessible by an object's methods (like getters and setters).
++the fields of an object in its interface; instead, those fields should be accessible only by an object's methods (like getters and setters).
+ Doing so hides the object's definition, so that, if its fields or implementation
+ ever change, the interface it exposes to the outside world remains the same.
+-In simple examples such conventions may seem trivial or even silly; in complex codebases,
+-it is the only way to maintain crucial invariants that prevent a system from becoming unmaintainable.
++In simple examples, such conventions may seem trivial or even silly; in complex codebases,
++they are the only way to maintain crucial invariants that prevent a system from becoming unmaintainable.
+ 
+ The same principle applies to programs and proofs in Lean. In this chapter,
+ we will be proving facts about functions entirely through their simplification rules,
+@@ -1841,8 +1840,8 @@
+ ```
+ 
+ ::::full
+-Each of {name}`add_zero` and {name}`add_succ` correspond to one branch of the `match`
+-statement defining {name}`add` and describe how the evaluation of {name}`add` proceeds
++Each of {name}`add_zero` and {name}`add_succ` corresponds to one branch of the `match`
++statement defining {name}`add` and describes how the evaluation of {name}`add` proceeds
+ in that case. The {name}`add_zero` theorem describes how {lean}`add n zero` evaluates,
+ while {name}`add_succ` describes (symbolically) how {lean}`add n (succ m)` evaluates.
+ 
+@@ -1865,7 +1864,7 @@
+ ```
+ 
+ Now that we have defined and proved {name}`pred`'s simplification rules,
+-we can mark it `irreducible`, to enforce rewriting by these lemmas.
++we can mark it `irreducible` to enforce rewriting by these lemmas.
+ 
+ ```lean
+ attribute [irreducible] pred
+@@ -1891,7 +1890,7 @@
+ Eventually, we will introduce a way to _automatically_ apply these simplification rules.
+ Real-world Lean developments use automation extensively, and you will learn to do so
+ gradually throughout this book.
+-For the moment it is important that you work through these early concepts
++For the moment, it is important that you work through these early concepts
+ by hand, without automation.
+ By the time the more powerful tools are introduced,
+ you will have the foundational understanding to use them with precision and skill.
+@@ -2055,7 +2054,7 @@
+ 
+ ::::full
+ When we say that Lean relies on almost nothing that's truly built-in, we really mean it: even
+-testing equality is not a primitive operation, but an ordinary function that we could re-implement
++testing equality is not a primitive operation, but an ordinary function that we could reimplement
+ ourselves as users.
+ ::::
+ 
+@@ -2182,7 +2181,7 @@
+ :::
+ Also, in the `beq` rules above, we write `zero_beq_zero` and `zero_beq_succ`
+ because the rules apply to both the first and second arguments of `beq`. We put
+-`beq` between the arguments because it usually written in infix.
++`beq` between the arguments because it is usually written in infix notation.
+ There are no strict style conventions for naming theorems like this in Lean, but many developers
+ follow this approach.
+ :::dev "Benjamin Pierce (bcpierce00)"
+@@ -2278,7 +2277,7 @@
+ the shorter name {name}`mul_zero` is usually sufficient when Lean can determine
+ which declaration we mean.
+ 
+-Second, Lean displays the theorem's arguments before the colon `mul_zero (n : Nat) : n * zero = zero`.
++Second, Lean displays the theorem's arguments before the colon, as in `mul_zero (n : Nat) : n * zero = zero`.
+ Writing arguments as binders before the colon is called _declaration-header style_.
+ The same statement can be written using an explicit universal quantifier, as we have seen before:
+ 
+@@ -2304,7 +2303,7 @@
+ 
+ ::::full
+ Of course, not everything can be proved by simple calculation and
+-rewriting: In general, the presence of unknown, hypothetical values
++rewriting: in general, the presence of unknown, hypothetical values
+ (arbitrary numbers, booleans, etc.) can block a proof.
+ ::::
+ 
+@@ -2342,7 +2341,7 @@
+ 
+ ::::full
+ The {tactic}`cases` tactic generates _two_ subgoals, which we must
+-prove, separately, in order to get Lean to accept the theorem.
++prove separately in order to get Lean to accept the theorem.
+ The generated subgoals are tagged by the names of the constructors.
+ `| zero =>` and `| succ n' =>` select which subgoal to work on next
+ and introduce variable names.
+@@ -2377,13 +2376,13 @@
+ prove previously. These come from Lean's standard library, in particular
+ from the section about booleans.
+ In the {ref "UsingLean"}[UsingLean] chapter we will discuss how to search through the standard library
+-for theorems like these. For now, note that, if you hover over the name of these theorems
++for theorems like these. For now, note that, if you hover over the names of these theorems
+ in VS Code, the Lean extension will show you what the theorem proves.
+ ::::
+ 
+ ::::terse
+ Some of the above proofs use standard library lemmas; later on we will discuss how to search for
+-those yourself.
++them yourself.
+ ::::
+ 
+ :::slidebreak
+@@ -2532,12 +2531,12 @@
+ terminates.  Specifically, it checks that one of the parameters
+ is _structurally decreasing_ — each recursive call made in the body of the
+ definition is made on an argument that is smaller than the original input.
+-In {name}`even'` example above, the argument to the recursive call to {name}`even'` is the variable `n'`.
++In the {name}`even'` example above, the argument to the recursive call to {name}`even'` is the variable `n'`.
+ Because of our pattern match, we know that `n` is equal to `succ (succ n')`, and therefore
+ that `n'` is smaller than `n`. This makes `n'` an acceptable argument to {name}`even'` for Lean's
+ termination checker, and so this recursive definition is accepted.
+ 
+-This requirement is a fundamental feature of Lean's design: In
++This requirement is a fundamental feature of Lean's design: in
+ particular, it guarantees that every function that can be defined
+ in Lean will terminate on all inputs.  However, because Lean's
+ termination analysis is not always able to figure things out
+@@ -2918,7 +2917,7 @@
+ ```
+ 
+ A traveler who does not yet have a ticket can buy one and then check in.
+-After this, the traveler is checked in and their carry-on ba bag needs to be screened.
++After this, the traveler is checked in and their carry-on bag needs to be screened.
+ 
+ ::::exercise (rating := 1) (name := "buy_ticket_then_check_in")
+ ```lean
+@@ -2978,7 +2977,7 @@
+ ```
+ 
+ ::::exercise (rating := 2) (name := "inspect_bag_idempotent")
+-Show that inspecting same unchanged carry-on bag twice has the same effect as inspecting it once.
++Show that inspecting the same unchanged carry-on bag twice has the same effect as inspecting it once.
+ 
+ ```lean
+ theorem inspectBag_idempotent (t : Traveler) : inspectBag (inspectBag t) = inspectBag t := by

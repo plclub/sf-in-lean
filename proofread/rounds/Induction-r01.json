@@ -1,0 +1,14 @@
+{
+ "file": "LF/Induction.lean",
+ "chapter": "Induction",
+ "round": 1,
+ "proposals": [
+  {
+   "id": "induction-r01-022",
+   "cat": "wording/redundancy",
+   "old": "may find too much detail so overwhelming",
+   "new": "may find so much detail overwhelming",
+   "why": "\"too much ... so overwhelming that\" doubles the intensifier; \"so much detail overwhelming that they lose the thread\" carries it once."
+  }
+ ]
+}

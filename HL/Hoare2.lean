@@ -765,7 +765,7 @@ def reduceToZero : Com :=
 
 ```lean
 theorem reduce_to_zero_correct' :
-    {{ True }} ~reduceToZero {{ X = 0 }} := by
+    {{ True }} reduceToZero {{ X = 0 }} := by
   -- First put the postcondition into the form expected by
   -- the while rule.
   sorry
@@ -810,7 +810,7 @@ This makes it pretty easy to verify `reduce_to_zero`:
 
 ```lean
 theorem reduce_to_zero_correct''' :
-    {{ True }} ~reduceToZero {{ X = 0 }} := by
+    {{ True }} reduceToZero {{ X = 0 }} := by
   sorry
 ```
 
@@ -1030,14 +1030,14 @@ declare_syntax_cat dcom
 syntax:max "(" dcom ")" : dcom
 syntax:max "skip" " {{" term "}}" : dcom
 syntax:max ident " := " imp_aexp " {{" term "}}" : dcom
-syntax:20 dcom:21 ";" ppLine dcom:20 : dcom
+syntax:20 dcom:21 ";" ppDedent(ppLine dcom:20) : dcom
 syntax:max "if " "(" imp_bexp ")" ppHardSpace "then" ppLine
-  "{{" term "}}" ppLine dcom ppLine
-  "else" ppLine "{{" term "}}" ppLine dcom ppLine
-  "end" ppLine "{{" term "}}" : dcom
+  "{{" term "}}" ppLine dcom ppDedent(ppLine "else") ppLine
+  "{{" term "}}" ppLine dcom ppDedent(ppLine "end") ppLine
+  "{{" term "}}" : dcom
 syntax:max "while " "(" imp_bexp ")" ppHardSpace "do" ppLine
-  "{{" term "}}" ppLine dcom ppLine
-  "end" ppLine "{{" term "}}" : dcom
+  "{{" term "}}" ppLine dcom ppDedent(ppLine "end") ppLine
+  "{{" term "}}" : dcom
 syntax:5 "->>" " {{" term "}}" ppLine dcom:0 : dcom
 syntax:5 dcom:6 ppLine "->>" " {{" term "}}" : dcom
 
@@ -1045,43 +1045,200 @@ syntax:min "dcom" ppHardSpace "{" ppLine dcom
   ppDedent(ppLine "}") : term
 
 macro_rules
-  | `(dcom { ($body:dcom) }) =>
-      `(dcom { $body })
-  | `(dcom { skip {{ $q }} }) =>
-      `(DCom.skip ({{ $q }}))
-  | `(dcom { $x:ident := $a:imp_aexp {{ $q }} }) =>
-      `(DCom.asgn $x (aexp { $a }) ({{ $q }}))
-  | `(dcom { $d1:dcom; $d2:dcom }) =>
-      `(DCom.seq (dcom { $d1 }) (dcom { $d2 }))
-  | `(dcom {
-        if ($b:imp_bexp) then
-          {{ $p1 }}
-          $d1:dcom
+  | `(dcom { $s }) => do
+    let stx ← match s with
+      | `(dcom| ($body:dcom)) => `(dcom { $body })
+      | `(dcom| skip {{ $q }}) => `(DCom.skip ({{ $q }}))
+      | `(dcom| $x:ident := $a:imp_aexp {{ $q }}) =>
+        `(DCom.asgn $x (aexp { $a }) ({{ $q }}))
+      | `(dcom| $d1:dcom; $d2:dcom) =>
+        `(DCom.seq (dcom { $d1 }) (dcom { $d2 }))
+      | `(dcom|
+          if ($b:imp_bexp) then
+            {{ $p1 }}
+            $d1:dcom
+          else
+            {{ $p2 }}
+            $d2:dcom
+          end
+            {{ $q }}) =>
+        `(DCom.cond (bexp { $b })
+          ({{ $p1 }}) (dcom { $d1 })
+          ({{ $p2 }}) (dcom { $d2 })
+          ({{ $q }}))
+      | `(dcom|
+          while ($b:imp_bexp) do
+            {{ $p }}
+            $body:dcom
+          end
+            {{ $q }}) =>
+        `(DCom.whileDo (bexp { $b }) ({{ $p }})
+          (dcom { $body }) ({{ $q }}))
+      | `(dcom| ->> {{ $p }} $body:dcom) =>
+        `(DCom.pre ({{ $p }}) (dcom { $body }))
+      | `(dcom| $body:dcom ->> {{ $q }}) =>
+        `(DCom.post (dcom { $body }) ({{ $q }}))
+      | _ => Lean.Macro.throwUnsupported
+    return Imp.Elab.withSourceInfoOf s stx
+
+namespace DCom.Delab
+
+open Lean PrettyPrinter Delaborator SubExpr Parenthesizer Imp.Elab Imp.Delab
+
+@[category_parenthesizer «dcom»]
+def dcom.parenthesizer : CategoryParenthesizer := fun prec => do
+  maybeParenthesize `dcom false wrapParens prec <|
+    parenthesizeCategoryCore `dcom prec
+where
+  wrapParens (stx : Syntax) : Syntax := Unhygienic.run do
+    let stxInfo := SourceInfo.fromRef stx
+    let stx := stx.setInfo .none
+    let pstx ← `(dcom| ($(⟨stx⟩)))
+    return pstx.raw.setInfo stxInfo
+
+def getAssnBody (stx : Term) : Term :=
+  withSourceInfoOf (canonical := false) stx <| Unhygienic.run do
+    match stx with
+    | `({{ $P }}) => return P
+    | _ => return stx
+
+private def getDCom? (stx : Term) : Option (TSyntax `dcom) :=
+  match stx with
+  | `(dcom { $d:dcom }) => some <| withSourceInfoOf (canonical := false) stx d
+  | _ => none
+
+@[app_unexpander DCom.skip]
+def unexpandSkip : Unexpander
+  | `($_ $q) => `(dcom { skip {{ $(getAssnBody q) }} })
+  | _ => throw ()
+
+@[app_unexpander DCom.asgn]
+def unexpandAsgn : Unexpander
+  | `($_ $x:ident $a $q) =>
+      `(dcom { $x:ident := $(getAexp a) {{ $(getAssnBody q) }} })
+  | _ => throw ()
+
+@[app_unexpander DCom.seq]
+def unexpandSeq : Unexpander
+  | `($_ $first $second) => do
+      let some first := getDCom? first | throw ()
+      let some second := getDCom? second | throw ()
+      `(dcom { $first; $second })
+  | _ => throw ()
+
+@[app_unexpander DCom.cond]
+def unexpandCond : Unexpander
+  | `($_ $b $thenPre $thenBranch $elsePre $elseBranch $post) => do
+      let some thenBranch := getDCom? thenBranch | throw ()
+      let some elseBranch := getDCom? elseBranch | throw ()
+      `(dcom {
+        if ($(getBexp b)) then
+          {{ $(getAssnBody thenPre) }}
+          $thenBranch
         else
-          {{ $p2 }}
-          $d2:dcom
+          {{ $(getAssnBody elsePre) }}
+          $elseBranch
         end
-          {{ $q }}
-      }) =>
-      `(DCom.cond (bexp { $b })
-        ({{ $p1 }}) (dcom { $d1 })
-        ({{ $p2 }}) (dcom { $d2 })
-        ({{ $q }}))
-  | `(dcom {
-        while ($b:imp_bexp) do
-          {{ $p }}
-          $body:dcom
+          {{ $(getAssnBody post) }}
+      })
+  | _ => throw ()
+
+@[app_unexpander DCom.whileDo]
+def unexpandWhileDo : Unexpander
+  | `($_ $b $bodyPre $body $post) => do
+      let some body := getDCom? body | throw ()
+      `(dcom {
+        while ($(getBexp b)) do
+          {{ $(getAssnBody bodyPre) }}
+          $body
         end
-          {{ $q }}
-      }) =>
-      `(DCom.whileDo (bexp { $b }) ({{ $p }})
-        (dcom { $body }) ({{ $q }}))
-  | `(dcom { ->> {{ $p }} $body:dcom }) =>
-      `(DCom.pre ({{ $p }}) (dcom { $body }))
-  | `(dcom { $body:dcom ->> {{ $q }} }) =>
-      `(DCom.post (dcom { $body }) ({{ $q }}))
+          {{ $(getAssnBody post) }}
+      })
+  | _ => throw ()
+
+@[app_unexpander DCom.pre]
+def unexpandPre : Unexpander
+  | `($_ $pre $body) => do
+      let some body := getDCom? body | throw ()
+      `(dcom { ->> {{ $(getAssnBody pre) }} $body })
+  | _ => throw ()
+
+@[app_unexpander DCom.post]
+def unexpandPost : Unexpander
+  | `($_ $body $post) => do
+      let some body := getDCom? body | throw ()
+      `(dcom { $body ->> {{ $(getAssnBody post) }} })
+  | _ => throw ()
+
+end DCom.Delab
 ```
 ::::
+
+:::ignore
+```lean -show
+/-- info: dcom {
+  ->> {{True}}
+    if (X ≤ Y) then
+          {{X ≤ Y}}
+          skip {{True}}
+        else
+          {{X > Y}}
+          X := Y + 1 {{True}}
+        end
+          {{True}};
+      while (X ≠ 0) do
+        {{True}}
+        X := X - 1 {{True}}
+      end
+        {{X = 0}}
+      ->> {{X = 0}}
+} : DCom -/
+#guard_msgs in
+#check DCom.pre ({{ True }}) <|
+  DCom.post
+    (DCom.seq
+      (DCom.cond (bexp {X ≤ Y}) ({{ X ≤ Y }})
+        (DCom.skip ({{ True }})) ({{ X > Y }})
+        (DCom.asgn X (aexp {Y + 1}) ({{ True }})) ({{ True }}))
+      (DCom.whileDo (bexp {X ≠ 0}) ({{ True }})
+        (DCom.asgn X (aexp {X - 1}) ({{ True }})) ({{ X = 0 }})))
+    ({{ X = 0 }})
+
+/-- info: dcom {
+  ((->> {{True}}
+            skip {{True}})
+        ->> {{False}});
+  (->> {{False}}
+      skip {{False}})
+} : DCom -/
+#guard_msgs in
+#check DCom.seq
+  (DCom.post (DCom.pre ({{ True }}) (DCom.skip ({{ True }}))) ({{ False }}))
+  (DCom.pre ({{ False }}) (DCom.skip ({{ False }})))
+
+/-- info: dcom {
+  skip {{True}};
+  skip {{False}}
+} : DCom -/
+#guard_msgs in
+#check DCom.seq (DCom.skip ({{ True }})) (DCom.skip ({{ False }}))
+
+/-- info: dcom {
+  if (X ≤ Y) then
+    {{True}}
+    skip {{True}}
+  else
+    {{False}}
+    skip {{False}}
+  end
+    {{True}}
+} : DCom -/
+#guard_msgs in
+#check DCom.cond (bexp {X ≤ Y}) ({{ True }})
+  (DCom.skip ({{ True }})) ({{ False }})
+  (DCom.skip ({{ False }})) ({{ True }})
+```
+:::
 
 ::::terse
 (We then need to redefine all our Notations to get nice
@@ -1353,7 +1510,7 @@ is locally consistent with respect to precondition `P` if
 
    (1) `P /\ b ->> P1`
 
-   (2) `P /\ ~b ->> P2`
+   (2) `P /\ b ->> P2`
 
    (3) `d1` is locally consistent with respect to `P1`
 
@@ -1378,7 +1535,7 @@ is locally consistent with respect to precondition `P` if:
 
    (2) `d.postcondition /\ b ->> Q`
 
-   (3) `d.postcondition /\ ~b ->> R`
+   (3) `d.postcondition /\ b ->> R`
 
    (4) `d` is locally consistent with respect to `Q`
 
@@ -1445,7 +1602,7 @@ def DCom.VerificationConditions
       d1.VerificationConditions P ∧
       d2.VerificationConditions d1.postcondition
   | .asgn x a Q =>
-      P ->> {{ Q [x ↦ ~a] }}
+      P ->> {{ Q [x ↦ a] }}
   | .cond b P1 d1 P2 d2 Q =>
       ({{ P ∧ b }} ->> P1) ∧
       ({{ P ∧ ¬ b }} ->> P2) ∧
@@ -3728,47 +3885,118 @@ declare_syntax_cat sparse_dcom
 syntax:max "(" sparse_dcom ")" : sparse_dcom
 syntax:max "skip" : sparse_dcom
 syntax:max ident " := " imp_aexp : sparse_dcom
-syntax:20 sparse_dcom:21 ";" ppLine
-  sparse_dcom:20 : sparse_dcom
-syntax:max "if " "(" imp_bexp ")" ppHardSpace "then" ppLine
-  sparse_dcom ppLine "else" ppLine sparse_dcom ppLine
-  "end" : sparse_dcom
-syntax:max "while " "(" imp_bexp ")" ppHardSpace "do" ppLine
-  "{{" term "}}" ppLine sparse_dcom ppLine
-  "end" : sparse_dcom
+syntax:20 sparse_dcom:21 ";" ppDedent(ppLine
+  sparse_dcom:20) : sparse_dcom
+syntax:max "if " "(" imp_bexp ")" ppHardSpace "then"
+  ppLine sparse_dcom ppDedent(ppLine ppDedent("else"))
+  ppLine sparse_dcom
+  ppDedent(ppLine ppDedent("end")) : sparse_dcom
+syntax:max "while " "(" imp_bexp ")" ppHardSpace "do"
+  ppLine "{{" term "}}" ppLine sparse_dcom
+  ppDedent(ppLine ppDedent("end")) : sparse_dcom
 syntax:max "assert" " {{" term "}}" : sparse_dcom
 
 syntax:min "sdcom" ppHardSpace "{" ppLine
   sparse_dcom ppDedent(ppLine "}") : term
 
 macro_rules
-  | `(sdcom { ($body:sparse_dcom) }) =>
-      `(sdcom { $body })
-  | `(sdcom { skip }) =>
-      `(DCom.skip)
-  | `(sdcom { $x:ident := $a:imp_aexp }) =>
-      `(DCom.asgn $x (aexp { $a }))
-  | `(sdcom { $d1:sparse_dcom; $d2:sparse_dcom }) =>
-      `(DCom.seq (sdcom { $d1 }) (sdcom { $d2 }))
-  | `(sdcom {
-        if ($b:imp_bexp) then
-          $d1:sparse_dcom
+  | `(sdcom { $s }) => do
+    let stx ← match s with
+      | `(sparse_dcom| ($body:sparse_dcom)) => `(sdcom { $body })
+      | `(sparse_dcom| skip) => `(DCom.skip)
+      | `(sparse_dcom| $x:ident := $a:imp_aexp) =>
+        `(DCom.asgn $x (aexp { $a }))
+      | `(sparse_dcom| $d1:sparse_dcom; $d2:sparse_dcom) =>
+        `(DCom.seq (sdcom { $d1 }) (sdcom { $d2 }))
+      | `(sparse_dcom|
+          if ($b:imp_bexp) then
+            $d1:sparse_dcom
+          else
+            $d2:sparse_dcom
+          end) =>
+        `(DCom.cond (bexp { $b })
+          (sdcom { $d1 }) (sdcom { $d2 }))
+      | `(sparse_dcom|
+          while ($b:imp_bexp) do
+            {{ $inv }}
+            $body:sparse_dcom
+          end) =>
+        `(DCom.whileDo (bexp { $b }) ({{ $inv }})
+          (sdcom { $body }))
+      | `(sparse_dcom| assert {{ $p }}) => `(DCom.assert ({{ $p }}))
+      | _ => Lean.Macro.throwUnsupported
+    return Imp.Elab.withSourceInfoOf s stx
+
+namespace DCom.Delab
+
+open Lean PrettyPrinter Delaborator SubExpr Parenthesizer Imp.Elab Imp.Delab
+
+@[category_parenthesizer «sparse_dcom»]
+def sparse_dcom.parenthesizer : CategoryParenthesizer := fun prec => do
+  maybeParenthesize `sparse_dcom false wrapParens prec <|
+    parenthesizeCategoryCore `sparse_dcom prec
+where
+  wrapParens (stx : Syntax) : Syntax := Unhygienic.run do
+    let stxInfo := SourceInfo.fromRef stx
+    let stx := stx.setInfo .none
+    let pstx ← `(sparse_dcom| ($(⟨stx⟩)))
+    return pstx.raw.setInfo stxInfo
+
+private def getDCom? (stx : Term) : Option (TSyntax `sparse_dcom) :=
+  match stx with
+  | `(sdcom { $d:sparse_dcom }) => some <| withSourceInfoOf (canonical := false) stx d
+  | _ => none
+
+@[app_delab SparseAnnotations.DCom.skip]
+def delabSkip : Delab := whenPPOption getPPNotation do
+  `(sdcom { skip })
+
+@[app_unexpander SparseAnnotations.DCom.asgn]
+def unexpandAsgn : Unexpander
+  | `($_ $x:ident $a) => `(sdcom { $x:ident := $(getAexp a) })
+  | _ => throw ()
+
+@[app_unexpander SparseAnnotations.DCom.seq]
+def unexpandSeq : Unexpander
+  | `($_ $first $second) => do
+      let some first := getDCom? first | throw ()
+      let some second := getDCom? second | throw ()
+      `(sdcom { $first; $second })
+  | _ => throw ()
+
+@[app_unexpander SparseAnnotations.DCom.cond]
+def unexpandCond : Unexpander
+  | `($_ $b $thenBranch $elseBranch) => do
+      let some thenBranch := getDCom? thenBranch | throw ()
+      let some elseBranch := getDCom? elseBranch | throw ()
+      `(sdcom {
+        if ($(getBexp b)) then
+          $thenBranch
         else
-          $d2:sparse_dcom
+          $elseBranch
         end
-      }) =>
-      `(DCom.cond (bexp { $b })
-        (sdcom { $d1 }) (sdcom { $d2 }))
-  | `(sdcom {
-        while ($b:imp_bexp) do
-          {{ $inv }}
-          $body:sparse_dcom
+      })
+  | _ => throw ()
+
+@[app_unexpander SparseAnnotations.DCom.whileDo]
+def unexpandWhileDo : Unexpander
+  | `($_ $b $invariant $body) => do
+      let some body := getDCom? body | throw ()
+      `(sdcom {
+        while ($(getBexp b)) do
+          {{ $(_root_.DCom.Delab.getAssnBody invariant) }}
+          $body
         end
-      }) =>
-      `(DCom.whileDo (bexp { $b }) ({{ $inv }})
-        (sdcom { $body }))
-  | `(sdcom { assert {{ $p }} }) =>
-      `(DCom.assert ({{ $p }}))
+      })
+  | _ => throw ()
+
+@[app_unexpander SparseAnnotations.DCom.assert]
+def unexpandAssert : Unexpander
+  | `($_ $assertion) =>
+      `(sdcom { assert {{ $(_root_.DCom.Delab.getAssnBody assertion) }} })
+  | _ => throw ()
+
+end DCom.Delab
 
 /- Here's how our decorated programs look now: -/
 
@@ -3808,7 +4036,7 @@ def DCom.awp (post : Assertion) (d : DCom) : Assertion :=
   match d with
   | .skip => post
   | .seq d1 d2 => d1.awp (d2.awp post)
-  | .asgn x a => {{ post [x ↦ ~a] }}
+  | .asgn x a => {{ post [x ↦ a] }}
   | .cond b d1 d2 =>
       fun st =>
         (b.eval st = true ∧ d1.awp post st) ∨
@@ -4093,6 +4321,64 @@ theorem dfib_correct (n : Nat) :
 
 end SparseAnnotations
 ```
+
+:::ignore
+```lean -show
+namespace SparseAnnotations
+
+/-- info: sdcom {
+  if (X ≤ Y) then
+      skip
+    else
+      X := Y + 1
+    end;
+  while (X ≠ 0) do
+      {{True}}
+      X := X - 1
+    end;
+  assert {{X = 0}}
+} : DCom -/
+#guard_msgs in
+#check DCom.seq
+  (DCom.cond (bexp {X ≤ Y}) DCom.skip (DCom.asgn X (aexp {Y + 1})))
+  (DCom.seq
+    (DCom.whileDo (bexp {X ≠ 0}) ({{ True }}) (DCom.asgn X (aexp {X - 1})))
+    (DCom.assert ({{ X = 0 }})))
+
+/-- info: sdcom {
+  (skip;
+      X := Y + 1);
+  skip
+} : DCom -/
+#guard_msgs in
+#check DCom.seq (DCom.seq DCom.skip (DCom.asgn X (aexp {Y + 1}))) DCom.skip
+
+/-- info: sdcom {
+  if (X ≤ Y) then
+      skip
+    else
+      X := Y + 1
+    end;
+  skip
+} : DCom -/
+#guard_msgs in
+#check DCom.seq
+  (DCom.cond (bexp {X ≤ Y}) DCom.skip (DCom.asgn X (aexp {Y + 1})))
+  DCom.skip
+
+/-- info: sdcom {
+  while (X ≠ 0) do
+    {{True}}
+    X := X - 1
+  end
+} : DCom -/
+#guard_msgs in
+#check DCom.whileDo (bexp {X ≠ 0}) ({{ True }})
+  (DCom.asgn X (aexp {X - 1}))
+
+end SparseAnnotations
+```
+:::
 :::::
 
 ::::::
@@ -4188,7 +4474,7 @@ equivalent; that is, `P <<->> P'`.
 ```lean
 def IsWp (P : Assertion) (c : Com) (Q : Assertion) : Prop :=
   ValidHoareTriple P c Q ∧
-  ∀ P' : Assertion, {{ P' }} ~c {{ Q }} → P' ->> P
+  ∀ P' : Assertion, {{ P' }} c {{ Q }} → P' ->> P
 ```
 
 :::slidebreak
@@ -4302,7 +4588,7 @@ weakest precondition.
 ```lean
 theorem hoare_asgn_weakest
     (Q : Assertion) (x : Ident) (a : Aexp) :
-    IsWp ({{ Q [x ↦ ~a] }}) (imp {x := ~a}) Q := by
+    IsWp ({{ Q [x ↦ a] }}) (imp {x := a}) Q := by
   solution!
     refine ⟨hoare_asgn, ?_⟩
     intro P hP
