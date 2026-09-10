@@ -12,10 +12,10 @@ open Verso Genre Manual
 namespace SFLMeta
 
 /-- Render configuration for a single volume/mode build.  `vol` is the lowercase
-volume slug (`lf`/`hl`/`ts`); `mode` is `student`/`solutions`/`terse`; `stamp` is
-this build's stamp (`SFLMeta.buildStamp`), which `extraContents` puts at the foot
-of every page and the saver repeats as a comment at the end of every generated
-`.lean` file. -/
+volume slug (`lf`/`hl`/`ts`); `mode` is
+`student`/`solutions`/`terse`/`grading`; `stamp` is the source-provenance stamp,
+which `extraContents` puts at the foot of every page and the saver repeats as a
+comment at the end of every generated `.lean` file. -/
 def mkConfig (vol mode stamp : String) : RenderConfig where
   emitTeX := false
   emitHtmlSingle := .no
@@ -53,12 +53,11 @@ def runVolume (vol : String) (doc : Verso.Doc.Part Manual)
   | mode :: rest => do
     let some variant := Variant.fromString? mode
       | IO.eprintln s!"invalid mode: {mode}"
-        IO.eprintln "mode must be student, solutions, or terse"
+        IO.eprintln "mode must be student, solutions, terse, or grading"
         return 1
     setCurrVariant variant
-    -- Read the clock once: the HTML pages and the extracted `.lean` files of a
-    -- single build must carry the same stamp, not two readings a few seconds
-    -- apart.
+    -- Use one inherited source snapshot for every output in a whole-book build;
+    -- direct executable invocations compute an equivalent snapshot here.
     let stamp ← buildStamp
     let extraStep := match variant with
       | .student => Save.emitSavedStudent vol.toUpper stamp crossVol
