@@ -70,7 +70,7 @@ inductive Ev : Nat → Prop where
 We can pronounce the ":" here as either "has type" or "is a proof of." For
 example, the second line in the definition of {name}`Ev` declares that
 {name}`Ev.ev_0` : {lean}`Ev 0`. Instead of "{name}`Ev.ev_0` has type {lean}`Ev
-0`," we can say that "{name}`Ev.ev_0` is a proof of {lean}`Ev 0`." 
+0`," we can say that "{name}`Ev.ev_0` is a proof of {lean}`Ev 0`."
 
 This pun between types and propositions — between : as "has type" and : as "is
 a proof of" or "is evidence for" — is called the Curry-Howard correspondence.
@@ -109,7 +109,7 @@ This can be read "{name}`Ev.ev_succ_succ` is a constructor that takes two
 arguments — a number {lean}`n` and evidence for the proposition {lean}`Ev n` — and yields
 evidence for the proposition {lean}`Ev (n + 2)`."
 
-Now let's look again at an earlier proof involving {name}`Ev`. 
+Now let's look again at an earlier proof involving {name}`Ev`.
 
 ```lean
 theorem ev_four : Ev 4 := by
@@ -163,6 +163,11 @@ expresses this functionality, in the same way that the polymorphic type `∀ X,
 list X` expresses the fact that the constructor nil can be thought of as a
 function from types to empty lists with elements of that type.
 
+:::dev "Mike Hicks (mwhicks1)"
+This explanation about the List `nil` type is puzzling. It comes from the Rocq, so
+the same issue is there, too.
+:::
+
 We saw in the Logic chapter that we can use function application syntax to
 instantiate universally quantified variables in lemmas, as well as to supply
 evidence for assumptions that these lemmas impose. For instance:
@@ -179,11 +184,11 @@ theorem ev_four' : Ev 4 := Ev.ev_succ_succ 2 (Ev.ev_succ_succ 0 Ev.ev_0)
 
 The proof objects we've been discussing lie at the core of how Lean operates.
 When Lean is following a proof script, what is happening internally is that it
-is gradually constructing a proof object -- a term whose type is the
+is gradually constructing a proof object — a term whose type is the
 proposition being proved. The tactics within a `by` block tell it how to build
 up a term of the required type. To see this process in action, let's use the
 {tactic}`show_term` tactic to display the current state of the proof tree at
-various points in the following tactic proof. 
+various points in the following tactic proof.
 
 ```lean
 theorem ev_four'' : Ev 4 := by
@@ -192,6 +197,10 @@ theorem ev_four'' : Ev 4 := by
   show_term apply Ev.ev_succ_succ
   exact Ev.ev_0
 ```
+
+:::dev "Mike Hicks (mwhicks1)"
+I can't tell what the `show_term`s are showing me, above. Could use some more explanation.
+:::
 
 At any given moment, Lean has constructed a term with a "hole" (indicated by
 `?_` here, and so on), and it knows what type of evidence is needed to fill
@@ -265,4 +274,4 @@ this section needs to be completely different for omitted
 
 # Proof Irrelevance (Advanced)
 
-# 
+#
