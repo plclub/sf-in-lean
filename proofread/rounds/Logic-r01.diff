@@ -1,0 +1,214 @@
+--- LF/Logic.lean (before this round)
++++ LF/Logic.lean
+@@ -147,7 +147,7 @@
+ ::::terse
+ So far, we have seen:
+-- _propositions_: mathematical statements, so far only of 3 kinds:
++- _propositions_: mathematical statements, so far only of three kinds:
+   - equality propositions ({lean}`e1 = e2`)
+-  - implications ({lean}`a -> b`)
++  - implications ({lean}`a → b`)
+   - quantified propositions ({lean}`∀ x, a`)
+ - _proofs_: ways of presenting evidence for the truth of a
+@@ -159,5 +159,4 @@
+ Like everything in Lean, well-formed propositions have a _type_:
+ ::::
+-
+ 
+ # The {lean}`Prop` Type
+@@ -435,5 +434,4 @@
+ :::
+ ::::
+-
+ 
+ # Logical Connectives
+@@ -654,5 +652,5 @@
+ of two propositions: {lean}`a ∨ b` is true when either {lean}`a` or {lean}`b` is.
+ This infix notation stands for {lean}`Or a b`, where
+-`Or : Prop -> Prop -> Prop`.
++`Or : Prop → Prop → Prop`.
+ 
+ To use a disjunctive hypothesis in a proof, we proceed by case
+@@ -675,5 +673,5 @@
+ analysis on a disjunction {lean}`a ∨ b`, we must separately discharge
+ two proof obligations, each showing that the conclusion holds
+-under a different assumption - {lean}`a` in the first subgoal and {lean}`b`
++under a different assumption — {lean}`a` in the first subgoal and {lean}`b`
+ in the second.
+ ::::
+@@ -748,5 +746,5 @@
+ results, demonstrating that some proposition is _not_ true. Such
+ statements are expressed with the logical negation operator `¬`,
+-which is a prefix notation for {lean}`Not`.
++which is prefix notation for {lean}`Not`.
+ 
+ To see how negation works, recall the _principle of explosion_
+@@ -862,5 +860,5 @@
+ 
+ :::solution
+-_Proof_: Suppose some proposition {lean}`a` holds. We must show {lean}`¬ ¬ a` -
++_Proof_: Suppose some proposition {lean}`a` holds. We must show {lean}`¬ ¬ a` —
+ i.e., {lean}`¬ a → False`, so suppose {lean}`¬ a` as well and try to derive {name}`False`.
+ Then we have both `a` and `¬ a` (i.e., {lean}`a → False`) from which
+@@ -1227,5 +1225,5 @@
+ ::::terse
+ You can use {lean}`Iff.mp` to access the forward direction of the iff,
+-{lean}`Iff.mpr` to access the backwards direction, and {lean}`Iff.intro` to convert a goal
++{lean}`Iff.mpr` to access the backward direction, and {lean}`Iff.intro` to convert a goal
+ of the form {lean}`a ↔ b` to two goals of the form {lean}`a → b` and {lean}`b → a`.
+ ::::
+@@ -1351,5 +1349,4 @@
+ :::
+ 
+-
+ ::::full
+ Another fundamental logical connective is _existential quantification_.
+@@ -1516,5 +1513,5 @@
+ - {lean}`∃ x : α, a` (existential):
+   - introduced with `exists y`
+-  - eliminated with `intro ⟨x, Hx⟩` or `obtain ⟨x, Hx⟩ := H`
++  - eliminated with `intro ⟨x, hx⟩` or `obtain ⟨x, hx⟩ := h`
+ 
+ Fundamental connectives we've been using since the beginning:
+@@ -1796,6 +1793,6 @@
+ 
+ Lean checks the _statements_ of the {lean}`Nat.add_comm` and {lean}`Nat.add_assoc` theorems
+-in the same way that it checks the _type_ of any term (e.g. {lean}`Nat.add`).
+-Leaving off the colon and the type, Lean prints these types
++in the same way that it checks the _type_ of any term (e.g., {lean}`Nat.add`).
++If we leave off the colon and the type, Lean prints these types
+ in the infoview for us.
+ 
+@@ -2070,5 +2067,4 @@
+ # Working with Decidable Properties
+ 
+-
+ We've seen two different ways of expressing logical claims in Lean:
+ with _booleans_ (of type {lean}`Bool`), and with _propositions_ (of type {lean}`Prop`).
+@@ -2079,5 +2075,5 @@
+ | ------------------- | ------ | ------ |
+ | decidable?          | yes    | no     |
+-| useable with match? | yes    | no     |
++| usable with match? | yes    | no     |
+ ```
+ 
+@@ -2222,5 +2218,5 @@
+ :::
+ 
+-Don't worry too much about {name}`Nat.beq_eq_true_eq` yet,
++Don't worry too much about {name}`Nat.beq_eq_true_eq` yet;
+ we need this from Lean because `n == m` is a wrapper of {inst}`DecidableEq Nat`.
+ We will go over this in the {ref "Typeclasses"}[Typeclasses] chapter.
+@@ -2246,5 +2242,5 @@
+ 
+ ::::full
+-Beyond the fact that non-computable properties are possible
++Beyond the fact that non-computable properties are impossible
+ in general to phrase as boolean computations, even many _computable_
+ properties are easier to express using {lean}`Prop` than {lean}`Bool`, since
+@@ -2294,5 +2290,5 @@
+ 
+ As an extreme example, a famous mechanized proof of the even more famous
+-_four colour theorem_ uses reflection to reduce the analysis of hundreds
++_four-color theorem_ uses reflection to reduce the analysis of hundreds
+ of different cases to a boolean computation.
+ 
+@@ -2507,5 +2503,5 @@
+ 
+ (Ungraded thought question) Are there any important properties of
+-the function {lean}`List.allb` which are not captured by this specification?
++the function {lean}`List.allb` that are not captured by this specification?
+ 
+ :::solution
+@@ -2527,5 +2523,5 @@
+ Lean's logical core differs in some important ways from other formal
+ systems that are used by mathematicians to write down precise and rigorous
+-definitions and proofs – in particular from Zermelo–Fraenkel Set Theory
++definitions and proofs — in particular from Zermelo–Fraenkel Set Theory
+ (ZFC), the most popular foundation for paper-and-pencil mathematics.
+ 
+@@ -2547,5 +2543,5 @@
+ Lean's logic is quite minimalistic. This means that one occasionally
+ encounters cases where translating standard mathematical reasoning
+-into Lean is cumbersome - or even impossible - unless we enrich
++into Lean is cumbersome — or even impossible — unless we enrich
+ its core logic with additional axioms.
+ 
+@@ -2553,6 +2549,6 @@
+ For example, the equality assertions that we have seen so far mostly
+ have concerned elements of inductive types ({name}`Nat`, {name}`Bool`, etc.).
+-But since the equality operator is polymorphic, we can use it at _any_ type
+-- in particular, we can write propositions claiming that two _propositions_
++But since the equality operator is polymorphic, we can use it at _any_ type —
++in particular, we can write propositions claiming that two _propositions_
+ are equal to each other:
+ ::::
+@@ -2620,5 +2616,5 @@
+ ```
+ 
+-However, we _can_ prove that {lean}`a ∧ b` implies {lean}`b ∧ a`, and vice versa -- this is
++However, we _can_ prove that {lean}`a ∧ b` implies {lean}`b ∧ a`, and vice versa — this is
+ the commutativity of conjunction that we have seen earlier.
+ 
+@@ -2647,5 +2643,5 @@
+ behavior. Thus, propositional extensionality means that a proposition's
+ identity is completely determined by what we can observe from it — i.e.,
+-whether the proposition holds. We can state this more explicitly:)
++whether the proposition holds.) We can state this more explicitly:
+ 
+ ```lean
+@@ -2678,5 +2674,5 @@
+ One way to prove this is to construct the `↔`, destruct the `↔`s provided by
+ {lean}`and_comm` and {lean}`and_assoc`, and apply the resulting implications a few times.
+-But this is a lot of hassle, when the proof is conceptually simple:
++But this is a lot of hassle when the proof is conceptually simple:
+ we flip {lean}`b` and {lean}`c`, then we flip that conjunction with {lean}`a`, and we
+ finish by associativity. By using {lean}`and_comm_eq`, this is easily done
+@@ -2805,5 +2801,5 @@
+ 
+ Now we can prove some intuitively obvious equalities about functions
+-that would otherwise not be provable without {lean}`funext`.
++that would not be provable without {lean}`funext`.
+ 
+ ```lean
+@@ -2847,5 +2843,5 @@
+ 
+ ::::terse
+-We can use {tactic}`ext` on pairs as:
++We can use {tactic}`ext` on pairs as follows:
+ ::::
+ 
+@@ -2881,5 +2877,4 @@
+ ::::
+ 
+-
+ ::::::full
+ :::::exercise (rating := 4) (name := "trRev_correct")
+@@ -2986,5 +2981,5 @@
+ Logical systems in which excluded middle does not hold are referred to as
+ _constructive logics_. They are so called because to prove a proposition,
+-we must give a construction for it; for instance, a proof of {lean}`∃ x, p x`
++we must give a construction for it; for instance, {lean}`∃ x, p x`
+ is proven by providing a particular value of `x`.
+ 
+@@ -3061,5 +3056,5 @@
+ 
+ As useful as constructive logic is, it does have its limitations:
+-There are many statements that can easily be proven in classical logic
++there are many statements that can easily be proven in classical logic
+ but that have only much more complicated constructive proofs,
+ and there are some that are known to have no constructive proof at all!
+@@ -3156,5 +3151,5 @@
+ 
+ For those who like a challenge, here is an exercise adapted from the Coq'Art
+-book by Bertot and Casteran (p. 123). Each of the following five statements,
++book by Bertot and Castéran (p. 123). Each of the following five statements,
+ together with {lean}`ExcludedMiddle`, can be considered as characterizing
+ classical logic. We can't prove any one of them in Lean without `Classical`,
+@@ -3164,5 +3159,5 @@
+ {lean}`ExcludedMiddle`) are equivalent.
+ 
+-Hint: Rather than considering all pairs of statements pairwise,
++Hint: Rather than considering all pairs of statements,
+ prove a single circular chain of implications that connects them all.
+ You should not use {tactic}`by_cases`, as this implicitly introduces

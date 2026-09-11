@@ -139,9 +139,10 @@ For whoever (or whatever) does the proposing:
 * **Read this whole file and `proofread.py ledger` first.** Anything already
   declined, covered by a house rule, or listed under known non-issues must not
   be raised again.
-* **Low-level only.** Commas, agreement, articles, hyphenation, misused words,
-  markup slips. Not restructuring, not word choice for its own sake, not
-  pedagogy — those go through `STYLE-WRITING.md` and a normal editing pass.
+* **Low-level only** (round 1). Commas, agreement, articles, hyphenation,
+  misused words, markup slips. Not restructuring, not word choice for its own
+  sake, not pedagogy — those belong to the high-level round below, or to a
+  normal editing pass through `STYLE-WRITING.md`.
 * **Every sentence must start with a capital letter.** If the first thing in
   the sentence is a Lean expression, that expression must itself begin with a
   capital letter (`Nat.add` may open a sentence; `omega` may not). Where the
@@ -169,6 +170,27 @@ For whoever (or whatever) does the proposing:
   (`proofread/rounds/<Ch>-rNN.json`) and do not edit the chapter yourself —
   every edit reaches it through the round, so that what the author accepts and
   declines is what the ledger records.
+
+## The high-level round
+
+A full pass is two rounds. After the low-level round is recorded and
+committed, a second round carries the findings of a high-level read of the
+chapter — flow, ordering, heading structure, internal consistency, prose that
+misstates what the adjacent proof does, missing displays or grading metadata.
+It runs through exactly the same machinery (anchored edits, side-by-side
+review, ledger), with two differences from round 1:
+
+* The "low-level only" rule does not apply; these edits may move headings,
+  reword sentences, insert display or grading blocks, and correct wrong
+  claims.
+* A finding that needs an *author decision* rather than a fix (a design
+  question, grading policy, exercise framing) becomes an edit that inserts a
+  `:::dev "Claude"` note at the spot — no urgency keyword, so it stays
+  visible — stating the problem and the options. Declining the note in review
+  declines the concern.
+
+Because this round can touch code, headings, and `{lean}` roles, `lake build`
+runs right after `apply`, not just at record time.
 
 The driving loop around these rules — which command to run when, and where to
 stop and wait for the author — is `.claude/skills/proofread/SKILL.md`.
