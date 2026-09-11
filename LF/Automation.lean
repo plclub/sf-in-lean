@@ -70,7 +70,7 @@ Should we explain first-order logic? do they know what this is?
 If the goal is a universally quantified formula made out of
 
   - numeric constants, addition (`+` and `succ`), subtraction (`-` and `pred`)
-    and multiplication by constants (this is what makes it Presburger arithmetic),
+    and multiplication by constants,
 
   - equality (`=` and `≠`) and ordering (`≤` and `<`), and
 
@@ -114,9 +114,9 @@ theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α)
     /- In addition to basic arithmetic, `lia` can also discharge goals
       that are simple facts about logic. -/
     . lia -- was right; left; assumption
-    . lia
-    . lia
-    . lia
+    . lia -- was left; assumption
+    . lia -- was right; right; left; assumption
+    . lia -- was contradiction
   | swap23 =>
   /- Here, we solve _all_ goals ─ and eschew the `obtain` ─ with
     the <;> tactic combinator, which we saw in the `Induction` chapter. -/
@@ -128,8 +128,8 @@ theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α)
 # Tactic Combinators
 
 ::::full
-In {ref "Induction"}[Induction], we saw how to use the {tactic}`<;>` combinator in order to apply the same
-tactic to every subgoal in a proof. As a reminder, consider this example,
+In {ref "Induction"}[Induction], we saw how to use the {tactic}`<;>` combinator in order to apply
+the same tactic to every subgoal in a proof. As a reminder, consider this example,
 where {tactic}`cases` on `b` and `c` each leaves two subgoals that are discharged identically:
 ::::
 
@@ -309,7 +309,8 @@ example : 10 ∈ [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] := by
   repeat
     rw [List.mem_cons]
     try left; rfl
-    -- `try` makes this optional, which is necessary for the last repetition where `left; rfl` succeeds
+    -- `try` makes this optional, which is necessary for the
+    -- last repetition where `left; rfl` succeeds
     try right
 ```
 
@@ -398,9 +399,10 @@ example : 10 ∈ [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] := by
 ```
 
 ::::full
-The {tactic}`first` tactic here will attempt to close the goal with an application of {name}`List.mem_cons_self`,
-if it can, and otherwise `apply List.mem_cons_of_mem` to proceed to checking the next element in the
-list. Note that the order here is important! If we had instead written:
+The {tactic}`first` tactic here will attempt to close the goal with an application of
+{name}`List.mem_cons_self`, if it can, and otherwise `apply List.mem_cons_of_mem` to proceed to
+checking the next element in the list. Note that the order here is important!
+If we had instead written:
 
 ```lean +error
 example : 10 ∈ [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] := by
@@ -410,13 +412,13 @@ example : 10 ∈ [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] := by
   -- unprovable state!
 ```
 
-Here, when we reach the goal {lean}`10 ∈ [10]`, instead of closing the goal with {name}`List.mem_cons_self`
-like before, we would instead first try `apply List.mem_cons_of_mem`, which would also succeed.
-This leaves us with the goal {lean}`10 ∈ []`, which is of course false.
+Here, when we reach the goal {lean}`10 ∈ [10]`, instead of closing the goal with
+{name}`List.mem_cons_self` like before, we would instead first try `apply List.mem_cons_of_mem`,
+which would also succeed. This leaves us with the goal {lean}`10 ∈ []`, which is of course false.
 ::::
 
-With {tactic}`first`, we can solve the earlier issue with {tactic}`try` where it would stop executing
-the sequence on the first failure.
+With {tactic}`first`, we can solve the earlier issue with {tactic}`try` where it would stop
+executing the sequence on the first failure.
 
 ```lean
 theorem Perm3_In_better_with_first (α : Type) (x : α) (l₁ l₂ : List α)
@@ -572,13 +574,14 @@ theorem Perm3_In_shortest (α : Type) (x : α) (l₁ l₂ : List α)
 
 ::::full
 Because {tactic}`simp` is such a powerful tactic, the Lean community has developed a number of
-conventions surrounding appropriate usage. One such convention is around _terminal_ {tactic}`simp` usage.
+conventions surrounding appropriate usage. One such convention is around
+_terminal_ {tactic}`simp` usage.
 
-A call to {tactic}`simp` is considered terminal either when it is the last tactic used to close a goal
-or when it is followed only by other automatic (also called "flexible") tactics like
-{tactic}`simp` or {tactic}`lia`. In idiomatic Lean, all non-terminal uses of {tactic}`simp` should use the `only`
-qualifier and specify exactly which lemmas are being used to simplify. Use of {tactic}`simp`
-without `only` should only occur in terminal positions.
+A call to {tactic}`simp` is considered terminal either when it is the last tactic used to close a
+goal or when it is followed only by other automatic (also called "flexible") tactics like
+{tactic}`simp` or {tactic}`lia`. In idiomatic Lean, all non-terminal uses of {tactic}`simp` should
+use the `only` qualifier and specify exactly which lemmas are being used to simplify.
+Use of {tactic}`simp` without `only` should only occur in terminal positions.
 
 In our example from before, the use of {tactic}`simp` is terminal (and therefore okay)
 because it is followed only by other {tactic}`simp`s and {tactic}`lia`:
@@ -596,8 +599,8 @@ this example uses {tactic}`simp` in a non-terminal position, and is considered p
 ::::
 
 ::::terse
-Don't use {tactic}`simp` without `only` unless you're closing a goal or following with a flexible tactic,
-like in this example below:
+Don't use {tactic}`simp` without `only` unless you're closing a goal or following with a flexible
+tactic, like in this example below:
 ::::
 
 ```lean
@@ -622,8 +625,8 @@ changes could cause the proof to break as the structure of the development evolv
 This usage of {tactic}`simp` is brittle and can break due to upstream changes.
 ::::
 
-We can fix the style of this proof by changing the {tactic}`simp`s to specify which theorems they are
-using to simplify:
+We can fix the style of this proof by changing the {tactic}`simp`s to specify which theorems
+they are using to simplify:
 
 ```lean
 example α x (l₁ l₂ l₃ : List α)
@@ -642,20 +645,16 @@ This usage of `simp only` is better because the addition of new {tactic}`simp` l
 cause this proof to change.
 ::::
 
-:::dev "Daniel Sainati (@dsainati1)"
-Chris suggested using Mathlib's `linter.flexible` option to enforce proper `simp` usage.
-How do we feel about adding a Mathlib dependency for this?
-:::
-
-Another rule around proper {tactic}`simp` usage applies to the appropriate definition of {tactic}`simp` lemmas.
+Another rule around proper {tactic}`simp` usage applies to the appropriate definition
+of {tactic}`simp` lemmas.
 
 ::::full
 All of the theorems marked with the `@[simp]` attribute in a Lean library compose the _simp set_
 for that library, and the result of simplifying an expression iteratively using all of the
 theorems in the simp set is the _simp normal form_ of that expression.
 
-It's important for the stability of proofs using {tactic}`simp` that all the theorems in the simp set
-progress towards this normal form. Accordingly, library designers often first consider
+It's important for the stability of proofs using {tactic}`simp` that all the theorems in the simp
+set progress towards this normal form. Accordingly, library designers often first consider
 what they want that normal form to look like, and then structure their theorem definitions
 accordingly. As a simple example, the simp normal form for lists prefers to use the `++`
 notation instead of {name}`List.append`, so there is a {tactic}`simp` theorem {name}`List.append_eq`
@@ -663,8 +662,8 @@ whose type is `List.append_eq {α : Type u} {as bs : List α} : as.append bs = a
 
 In this case, the {tactic}`simp` normal form appears on the right, while the expression in need of
 simplification appears on the left. We can thus think of this theorem as simplifying from left
-to right. Not every {tactic}`simp` lemma in the standard library has a {tactic}`simp` normal form on its right-hand
-side, but all make progress towards {tactic}`simp` normal form when applied.
+to right. Not every {tactic}`simp` lemma in the standard library has a {tactic}`simp` normal form
+on its right-hand side, but all make progress towards {tactic}`simp` normal form when applied.
 
 For our purposes, in this textbook and in later ones, we will take care to define our {tactic}`simp`
 lemmas such that they respect this left-to-right simplification behavior.
@@ -684,7 +683,7 @@ to try to close the current goal. Some examples:
 ```lean
 example : 1 = 1 := by trivial
 example : (1, 2).fst = 1 := by trivial
-example (A B : Prop) : ¬ A -> A -> B := by intro h₁ h₂; trivial
+example (a b : Prop) : ¬ a -> a -> b := by intro h₁ h₂; trivial
 ```
 
 # Case Study: Regular Expressions
@@ -980,7 +979,8 @@ theorem MUnion' α (s : List α) (re₁ re₂ : RegExp α) :
     s =~ re₁ ∨ s =~ re₂ →
     s =~ Union re₁ re₂ := by
   solution!
-    rintro (_ | _)
+    intro h
+    obtain h | h := h
     case inl => apply mUnionL; assumption
     case inr => apply mUnionR; assumption
 ```
@@ -1135,24 +1135,28 @@ theorem reNotEmpty_correct {α : Type} (re : RegExp α) :
   | App re₁ re₂ ih₁ ih₂ =>
     simp only [Bool.and_eq_true]
     constructor
-    · rintro ⟨s, h⟩
+    · intro h
+      obtain ⟨s, h⟩ := h
       inversion h with
       | mApp s₁ s₂ h₁ h₂ =>
         constructor
         case left  => apply ih₁.mp; exists s₁
         case right => apply ih₂.mp; exists s₂
-    · rintro ⟨h₁, h₂⟩
+    · intro h
+      obtain ⟨h₁, h₂⟩ := h
       obtain ⟨s₁, hs₁⟩ := ih₁.mpr h₁
       obtain ⟨s₂, hs₂⟩ := ih₂.mpr h₂
       exists (s₁ ++ s₂); constructor <;> assumption
   | Union re₁ re₂ ih₁ ih₂ =>
     simp only [Bool.or_eq_true]
     constructor
-    · rintro ⟨s, h⟩
+    · intro h
+      obtain ⟨s, h⟩ := h
       inversion h with
       | mUnionL h₁ => left; apply ih₁.mp; exists s
       | mUnionR h₂ => right; apply ih₂.mp; exists s
-    · rintro (h₁ | h₂)
+    · intro h
+      obtain h₁ | h₂ := h
       case inl => obtain ⟨s, hs⟩ := ih₁.mpr h₁; exists s; constructor; assumption
       case inr => obtain ⟨s, hs⟩ := ih₂.mpr h₂; exists s; apply mUnionR; assumption
   | Star re _ =>
@@ -1644,7 +1648,7 @@ solution but it's lower priority.
 I've made it optional, following the original, but we should think/talk about it.  I also reduced the rating from 10 to 5 (which I think is the maximum?).
 :::
 
-::::exercise (rating := 5) (name := "weak_pumping") (optional := true)
+::::exercise (rating := 5) (name := "strong_pumping") (optional := true)
 Now here is the usual version of the pumping lemma. In addition to
 requiring that {lean}`s₂ ≠ []`, it also strengthens the result to
 include the claim that {lean}`s₁.length + s₂.length ≤ pumpingConstant re`.
