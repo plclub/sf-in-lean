@@ -1507,7 +1507,7 @@ theorem pup_to_2_ceval :
     (X →ₜ 2 ; ∅) =[ pup_to_n ]=>
       (X →ₜ 0 ; Y →ₜ 3 ; X →ₜ 1 ; Y →ₜ 2 ; Y →ₜ 0 ; X →ₜ 2 ; ∅) := by
   solution!
-    unfold pup_to_n
+    rw [pup_to_n]
     apply Com.EvalR.seq (st' := (Y →ₜ 0 ; X →ₜ 2 ; ∅))
     · apply Com.EvalR.asgn; rfl
     · apply Com.EvalR.whileTrue (st' := (X →ₜ 1 ; Y →ₜ 2 ; Y →ₜ 0 ; X →ₜ 2 ; ∅))
@@ -1559,7 +1559,7 @@ theorem plus2_spec (st : State) (n : Nat) (st' : State)
     st'[X] = n + 2 := by
   -- Inverting `heval` forces one step of the `ceval` computation: since
   -- `plus2` is an assignment, `st'` must be `st` extended at `X`.
-  unfold plus2 at heval
+  rw [plus2] at heval
   inversion heval with
   | asgn m h =>
       simp [Aexp.eval_plus, Aexp.eval_id, Aexp.eval_num, TotalMap.update_eq] at h ⊢
@@ -1579,7 +1579,7 @@ State and prove a specification of `XtimesYinZ`.
 theorem XtimesYinZ_spec₁ (st : State) (nx ny : Nat) (st' : State)
     (hx : st[X] = nx) (hy : st[Y] = ny) (heval : st =[ XtimesYinZ ]=> st') :
     st'[Z] = nx * ny := by
-  unfold XtimesYinZ at heval
+  rw [XtimesYinZ] at heval
   inversion heval with
   | asgn n h =>
       simp only [Aexp.eval_mult, Aexp.eval_id, TotalMap.update_eq] at h ⊢
@@ -1589,13 +1589,13 @@ theorem XtimesYinZ_spec₁ (st : State) (nx ny : Nat) (st' : State)
 /- Though perhaps a cleaner specification would be: -/
 theorem XtimesYinZ_spec (st : State) :
     st =[ XtimesYinZ ]=> (Z →ₜ st[X] * st[Y] ; st) := by
-  unfold XtimesYinZ
+  rw [XtimesYinZ]
   apply Com.EvalR.asgn
   rfl
 
 /- A less informative specification would be ... -/
 theorem XtimesYinZ_spec₂ (st : State) : ∃ st', st =[ XtimesYinZ ]=> st' := by
-  exact ⟨(Z →ₜ st[X] * st[Y] ; st), by unfold XtimesYinZ; apply Com.EvalR.asgn; rfl⟩
+  exact ⟨(Z →ₜ st[X] * st[Y] ; st), by rw [XtimesYinZ]; apply Com.EvalR.asgn; rfl⟩
 -- END SOLUTION
 ```
 
@@ -1626,7 +1626,7 @@ theorem loop_never_stops (st st' : State) : ¬ (st =[ loop ]=> st') := by
       intro c s s' hce
       induction hce with
       | @whileFalse b s₀ c₀ hb =>
-          intro heq; unfold loop at heq; injection heq with e₁ _
+          intro heq; rw [loop] at heq; injection heq with e₁ _
           subst e₁; simp at hb
       | @whileTrue s₀ s0' s0'' b c₀ hb hc hloop ih₁ ih₂ =>
           intro heq; exact ih₂ heq
