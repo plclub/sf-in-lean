@@ -606,14 +606,13 @@ def progI : Com :=
 ```
 
 ```lean
-def equiv_classes : List (List Com) :=
--- SOLUTION
+def equiv_classes : List (List Com) := solution!(
   [ [progA, progD] ,
     [progB, progE] ,
     [progC, progH] ,
     [progF, progG] ,
     [progI] ]
--- END SOLUTION
+)
 ```
 ::::
 :::::
@@ -1408,19 +1407,17 @@ Com.optimize0plus
 ```
 
 ```lean
-def Aexp.optimize0plus (a : Aexp) : Aexp :=
--- SOLUTION
-match a with
-| Aexp.num n => Aexp.num n
-| Aexp.id x => Aexp.id x
-| (aexp { 0 + ~a₂ }) => Aexp.optimize0plus a₂
-| (aexp { ~a₁ + ~a₂ }) => (aexp { ~(Aexp.optimize0plus a₁) + ~(Aexp.optimize0plus a₂) })
-| (aexp { ~a₁ - ~a₂ }) => (aexp { ~(Aexp.optimize0plus a₁) - ~(Aexp.optimize0plus a₂) })
-| (aexp { ~a₁ * ~a₂ }) => (aexp { ~(Aexp.optimize0plus a₁) * ~(Aexp.optimize0plus a₂) })
--- END SOLUTION
+def Aexp.optimize0plus (a : Aexp) : Aexp := solution!(
+  match a with
+  | Aexp.num n => Aexp.num n
+  | Aexp.id x => Aexp.id x
+  | (aexp { 0 + ~a₂ }) => Aexp.optimize0plus a₂
+  | (aexp { ~a₁ + ~a₂ }) => (aexp { ~(Aexp.optimize0plus a₁) + ~(Aexp.optimize0plus a₂) })
+  | (aexp { ~a₁ - ~a₂ }) => (aexp { ~(Aexp.optimize0plus a₁) - ~(Aexp.optimize0plus a₂) })
+  | (aexp { ~a₁ * ~a₂ }) => (aexp { ~(Aexp.optimize0plus a₁) * ~(Aexp.optimize0plus a₂) })
+)
 
-def Bexp.optimize0plus (b : Bexp) : Bexp :=
--- SOLUTION
+def Bexp.optimize0plus (b : Bexp) : Bexp := solution!(
   match b with
   | (bexp { true })        => (bexp { true })
   | (bexp { false })       => (bexp { false })
@@ -1430,10 +1427,9 @@ def Bexp.optimize0plus (b : Bexp) : Bexp :=
   | (bexp { ~a₁ > ~a₂ })  => (bexp { ~(Aexp.optimize0plus a₁) >  ~(Aexp.optimize0plus a₂) })
   | (bexp { ¬ ~b₁ })     => (bexp { ¬ ~(Bexp.optimize0plus b₁) })
   | (bexp { ~b₁ ∧ ~b₂ }) => (bexp { ~(Bexp.optimize0plus b₁) ∧ ~(Bexp.optimize0plus b₂) })
--- END SOLUTION
+)
 
-def Com.optimize0plus (c : Com) : Com :=
--- SOLUTION
+def Com.optimize0plus (c : Com) : Com := solution!(
 match c with
 | (imp { skip })                     => (imp { skip })
 | (imp { x := ~a })                   => (imp { x := ~(Aexp.optimize0plus a) })
@@ -1442,7 +1438,7 @@ match c with
     imp { if (~(Bexp.optimize0plus b)) {~(Com.optimize0plus c₁)} else {~(Com.optimize0plus c₂)} }
 | (imp { while (b) {c₁} })         => imp { while (~(Bexp.optimize0plus b))
                                         {~(Com.optimize0plus c₁)} }
--- END SOLUTION
+)
 ```
 
 ```lean
@@ -1450,7 +1446,8 @@ example :
     Com.optimize0plus
        (imp { while (X ≠ 0) { X := 0 + X - 1 } }) =
     (imp { while (X ≠ 0) { X := X - 1 } }) := by
-  rfl
+  solution!
+    rfl
 ```
 
 Prove that these three functions are sound, as we did for
@@ -1969,12 +1966,14 @@ your definition:
 
 ```lean
 example : ∅ =[ havoc X ]=> (X →ₜ 0) := by
-  constructor
+  solution!
+    constructor
 ```
 
 ```lean
 example : ∅ =[ skip; havoc Z ]=> (Z →ₜ 42) := by
-  apply Com.EvalR.seq; constructor; constructor
+  solution!
+    apply Com.EvalR.seq; constructor; constructor
 ```
 
 Finally, we repeat the definition of command equivalence from above:
@@ -2462,14 +2461,8 @@ Find two programs `c₃` and `c₄` such that neither approximates
 the other.
 
 ```lean
-def c₃ : Com :=
--- SOLUTION
-  imp { X := 1 }
--- END SOLUTION
-def c₄ : Com :=
--- SOLUTION
-  imp { X := 2 }
--- END SOLUTION
+def c₃ : Com := solution!(imp { X := 1 })
+def c₄ : Com := solution!(imp { X := 2 })
 ```
 
 ```lean
@@ -2502,10 +2495,7 @@ theorem c₃_c₄_different : ¬ (Approx c₃ c₄) ∧ ¬ (Approx c₄ c₃) :=
 Find a program `cMin` that approximates every other program.
 
 ```lean
-def cMin : Com :=
--- SOLUTION
-  imp { while (true) { skip } }
--- END SOLUTION
+def cMin : Com := solution!(imp { while (true) { skip } })
 
 theorem cMin_minimal (c : Com) : Approx cMin c := by
   solution!
@@ -2521,10 +2511,7 @@ Finally, find a non-trivial property which is preserved by
 program approximation (when going from left to right).
 
 ```lean
-def zprop (c : Com) : Prop :=
--- SOLUTION
-  forall st, exists st', (st =[ c ]=> st')
--- END SOLUTION
+def zprop (c : Com) : Prop := solution!(forall st, exists st', (st =[ c ]=> st'))
 ```
 
 :::solution
