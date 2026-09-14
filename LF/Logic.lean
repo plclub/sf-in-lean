@@ -191,6 +191,8 @@ definition? Is it worth a word about that? Have students seen this
 happen to this point?
 :::
 
+## Equality Propositions
+
 The familiar equality operator `=` is a (binary) function that returns
 a {lean}`Prop`. The expression `n = m` is notation for `Eq n m`.
 Because {name}`Eq` can be used with elements of any type, it is also
@@ -210,9 +212,71 @@ right at this moment, but they'll see {name}`Sort` when hovering.
 Eq.{u_1} {α : Sort u_1} : α → α → Prop
 ```
 
+::::full
+Equality turns out to be an inductively defined proposition, with a single constructor,
+{name}`Eq.refl`, standing for the proof that anything is equal to itself.
+Recall from the {ref "Tactics"}[Tactics] chapter that the constructors
+of an inductive type are _injective_ and _disjoint_, and that
+{tactic}`injection` and {tactic}`contradiction` let us exploit those
+facts about hypotheses concerning {lean}`Nat`, {lean}`List`, and so on.
+The very same injectivity and disjointness reasoning applies to a hypothesis of the form
+{lean}`a = b`. In fact, {tactic}`cases` can carry out this reasoning
+directly on an equality hypothesis, without our having to name
+{tactic}`injection` or {tactic}`contradiction`. Here are a few
+examples.
+::::
+
+::::terse
+The injectivity/disjointness principles from the `Tactics` chapter
+apply to equality hypotheses too, and {tactic}`cases` can exploit them
+directly:
+::::
+
+```lean
+-- substitution
+example (x : Nat) (h : x = 0) : Nat.succ x = 1 := by
+  cases h
+  rfl
+```
+
+```lean
+-- injectivity
+example {m n : Nat} (h : Nat.succ m = Nat.succ n) : m = n := by
+  cases h
+  rfl
+```
+
+::::full
+(This is the same injectivity fact used above by the {tactic}`injection`
+tactic in {lean}`succ_inj'`; here {tactic}`cases` gets us the same
+conclusion in a single step.)
+::::
+
+```lean
+-- disjointness
+example (h : (0 : Nat) = 1) : False := by
+  cases h
+```
+
+```lean
+-- acyclicity
+example (n : Nat) (h : n = Nat.succ n) : False := by
+  cases h
+```
+
+::::full
+We'll see this same disjointness principle put to use again shortly,
+via {tactic}`contradiction`, to prove {lean}`0 ≠ 1` in the `Falsehood
+and Negation` section below.
+::::
+
+::::terse
+There are more examples of this kind of reasoning yet to come.
+::::
+
 As a convenience, Lean will cast booleans to propositions by equating them to {lean}`true`,
 which is why checking them against {lean}`Prop` succeeds.
-For clarity, we will avoid relying on these implicit casts.
+For clarity, we will generally avoid relying on these implicit casts.
 
 ```lean (name := false)
 #check (false : Prop)
@@ -229,6 +293,8 @@ false = true : Prop
 ```leanOutput true
 true = true : Prop
 ```
+
+## Quizzes
 
 ::::quiz
 What is the type of the following expression?
@@ -363,69 +429,6 @@ Which of the following is _not_ a proposition?
 ```
 :::
 ::::
-
-## Using Equality Propositions
-
-::::full
-Recall from the {ref "Tactics"}[Tactics] chapter that the constructors
-of an inductive type are _injective_ and _disjoint_, and that
-{tactic}`injection` and {tactic}`contradiction` let us exploit those
-facts about hypotheses concerning {lean}`Nat`, {lean}`List`, and so
-on. Equality turns out to be an inductively defined proposition
-itself, with a single constructor, {name}`Eq.refl`, standing for the
-proof that anything is equal to itself — so the very same injectivity
-and disjointness reasoning applies to a hypothesis of the form
-{lean}`a = b`. In fact, {tactic}`cases` can carry out this reasoning
-directly on an equality hypothesis, without our having to name
-{tactic}`injection` or {tactic}`contradiction`. Here are a few
-examples.
-::::
-
-::::terse
-The injectivity/disjointness principles from the `Tactics` chapter
-apply to equality hypotheses too, and {tactic}`cases` can exploit them
-directly:
-::::
-
-```lean
--- substitution
-example (x : Nat) (h : x = 0) : Nat.succ x = 1 := by
-  cases h
-  rfl
-```
-
-```lean
--- injectivity
-example {m n : Nat} (h : Nat.succ m = Nat.succ n) : m = n := by
-  cases h
-  rfl
-```
-
-::::full
-(This is the same injectivity fact used above by the {tactic}`injection`
-tactic in {lean}`succ_inj'`; here {tactic}`cases` gets us the same
-conclusion in a single step.)
-::::
-
-```lean
--- disjointness
-example (h : (0 : Nat) = 1) : False := by
-  cases h
-```
-
-```lean
--- acyclicity
-example (n : Nat) (h : n = Nat.succ n) : False := by
-  cases h
-```
-
-::::full
-We'll see this same disjointness principle put to use again shortly,
-via {tactic}`contradiction`, to prove {lean}`0 ≠ 1` in the `Falsehood
-and Negation` section below.
-::::
-
-There are more examples of this kind of reasoning yet to come.
 
 # Logical Connectives
 
@@ -1680,11 +1683,10 @@ theorem List.All_In {α : Type} {p : α → Prop} {l : List α} :
 :::
 :::::
 
-:::dev "Yipeng Liu (berberman)" NOW
+:::dev "Yipeng Liu (berberman)"
 I found this exercise combining too many awkward details for too little conceptual payoff:
 1. the construction is artificial
 2. before `simp` is introduced, `bif` requires noisy `rw` and Boolean case equations
-3. I don't know how to nicely avoid `cases h : ...` syntax which IIRC we didn't mention before
 :::
 
 :::::exercise (rating := 2) (name := "CombineOddEven") (optional := true)
