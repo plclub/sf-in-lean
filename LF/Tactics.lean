@@ -871,9 +871,6 @@ theorem apply_exercise (m : Nat)
     apply h₁
     apply hEven
 ```
-
-:::gradeTheorem 2 apply_exercise
-:::
 :::::
 ::::::
 
@@ -1148,9 +1145,6 @@ theorem trans_eq_exercise (n m o p : Nat)
     _ = m := by rw [h₂]
     _ = o.minusTwo := by rw [h₁]
 ```
-
-:::gradeTheorem 3 trans_eq_exercise
-:::
 :::::
 ::::::
 
@@ -1808,9 +1802,6 @@ theorem length_append_cons {α : Type} {l₁ l₂ : List α} {x : α} {n : Nat}
       rw [ih rfl]
       assumption
 ```
-
-:::gradeTheorem 3 length_append_cons
-:::
 :::::
 
 :::::exercise (rating := 3) (name := "length_append_self") (optional := true)
@@ -1833,9 +1824,6 @@ theorem length_append_self {α : Type} {n : Nat} {l : List α}
       rw [ih rfl, ← h]
       rw [Nat.add_add_add_comm]
 ```
-
-:::gradeTheorem 3 length_append_self
-:::
 :::::
 
 :::::exercise (rating := 3) (name := "list_ext")
@@ -1903,9 +1891,6 @@ theorem diagonal_induction (p : Nat → Nat → Prop)
         apply hss
         apply ih
 ```
-
-:::gradeTheorem 3 diagonal_induction
-:::
 :::::
 ::::::
 
@@ -1969,16 +1954,16 @@ theorem map_injective_of_injective {α β : Type}
 :::::
 
 
-:::::exercise (rating := 3) (name := "unzip_zip") (level := Advanced) (manual := true)
+:::::exercise (rating := 3) (name := "unzip'_zip") (level := Advanced) (manual := true)
 We proved in {name}`zip_unzip'` that {name}`zip`ping the result of {name}`unzip'`
 recovers the original list.
-What about the other direction?  Complete and prove the following `unzip_zip`:
+What about the other direction?  Complete and prove the following `unzip'_zip`:
 
 ```display
-theorem unzip_zip {α β : Type}
+theorem unzip'_zip {α β : Type}
     {l₁ : List α} {l₂ : List β}
     /- add appropriate parameters and hypotheses here -/ :
-    unzip (zip l₁ l₂) = (l₁, l₂) := sorry
+    unzip' (zip l₁ l₂) = (l₁, l₂) := sorry
 ```
 
 Hint: Take a look at the definition of {name}`zip` in {ref "Poly"}[Poly].
@@ -1987,10 +1972,10 @@ in its base cases, which possibly drop some list elements.
 
 ```lean
 -- SOLUTION
-theorem unzip_zip {α β : Type}
+theorem unzip'_zip {α β : Type}
     {l₁ : List α} {l₂ : List β}
     (h : l₁.length = l₂.length) :
-    unzip (zip l₁ l₂) = (l₁, l₂) := by
+    unzip' (zip l₁ l₂) = (l₁, l₂) := by
   induction l₁ generalizing l₂ with
   | nil =>
     cases l₂ with
@@ -2000,26 +1985,26 @@ theorem unzip_zip {α β : Type}
     cases l₂ with
     | nil => contradiction
     | cons y ys =>
-      rw [zip_cons_cons, unzip]
+      rw [zip_cons_cons, unzip']
       rewrite [ih]
       · rfl
       · injections
 
 /- Here is one more approach -/
-theorem unzip_zip' {α β : Type}
+theorem unzip'_zip' {α β : Type}
     {l₁ : List α} {l₂ : List β}
-    {l : List (α × β)} (h : (l₁, l₂) = unzip l) :
-    unzip (zip l₁ l₂) = (l₁, l₂) := by
+    {l : List (α × β)} (h : (l₁, l₂) = unzip' l) :
+    unzip' (zip l₁ l₂) = (l₁, l₂) := by
   induction l generalizing l₁ l₂ with
   | nil =>
-    rw [unzip_nil] at h
+    rw [unzip'] at h
     injections h₁ h₂
-    rw [h₁, h₂, zip, unzip]
+    rw [h₁, h₂, zip, unzip']
   | cons x xs ih =>
     let ⟨a, b⟩ := x
-    rw [unzip] at h
+    rw [unzip'] at h
     injections h₁ h₂
-    rewrite [h₁, h₂, zip, unzip, ih]
+    rewrite [h₁, h₂, zip, unzip', ih]
     · rfl
     · rfl
 -- END SOLUTION
@@ -2028,7 +2013,7 @@ theorem unzip_zip' {α β : Type}
 
 :::grade
 ```
-GRADE_MANUAL 3: unzip_zip
+GRADE_MANUAL 3: unzip'_zip
 ```
 :::
 :::::
