@@ -118,7 +118,7 @@ So far, we've seen one place where propositions can appear:
 in `theorem` declarations.
 
 ```lean
-theorem plus_2_2_is_4 : 2 + 2 = 4 := rfl
+theorem plus_2_2_is_4 : 2 + 2 = 4 := by rfl
 ```
 
 ::::full
@@ -148,7 +148,7 @@ expected — for example, as the claim in a `theorem` declaration.
 ::::
 
 ```lean
-theorem plusClaim_is_true : PlusClaim := rfl
+theorem plusClaim_is_true : PlusClaim := by rfl
 ```
 
 We can also write _parameterized_ propositions — that is,
@@ -776,8 +776,8 @@ unprovable proposition defined in the standard library.
 #check Not
 #print Not
 
-example (a : Prop) : Not a = (a → False) := rfl
-example (a : Prop) : (¬ a) = (a → False) := rfl
+example (a : Prop) : Not a = (a → False) := by rfl
+example (a : Prop) : (¬ a) = (a → False) := by rfl
 ```
 
 ```leanOutput not
@@ -1582,7 +1582,8 @@ def List.In {α : Type} (x : α) (xs : List α) : Prop :=
 theorem List.In_nil {α : Type} {x : α} : ¬ (List.In x []) := by
   rw [List.In]; intro h; assumption
 
-theorem List.In_cons {α : Type} {x x' : α} {xs : List α} : List.In x (x' :: xs) = (x = x' ∨ List.In x xs) := rfl
+theorem List.In_cons {α : Type} {x x' : α} {xs : List α} :
+  List.In x (x' :: xs) = (x = x' ∨ List.In x xs) := by rfl
 ```
 
 When {lean}`List.In` is applied to a concrete list, it expands into a concrete sequence
@@ -1593,20 +1594,21 @@ example : List.In 4 [1, 2, 3, 4, 5] := by
   workinclass!
     rw [List.In]; right; right; right; left; rfl
 
-example (n : Nat) (h : List.In n [2, 4]) : ∃ n' : Nat, n = 2 * n' := by
-  workinclass!
-    rw [List.In] at h
-    obtain h | h | ⟨⟨⟩⟩ := h
-    · exists 1
-    · exists 2
-    /- (Notice the use of the empty pattern to discharge the last case.) -/
+example (n : Nat) (h : List.In n [2, 4]) :
+  ∃ n' : Nat, n = 2 * n' := by
+    workinclass!
+      rw [List.In] at h
+      obtain h | h | ⟨⟨⟩⟩ := h
+      · exists 1
+      · exists 2
+      /- (Notice the use of the empty pattern to discharge the last case.) -/
 ```
 
 We can also reason about more generic statements involving {lean}`List.In`.
 
 ```lean
-theorem List.In_map {α β : Type} {f : α → β} {xs : List α} {x : α} (h : In x xs) :
-    In (f x) (map f xs) := by
+theorem List.In_map {α β : Type} {f : α → β} {xs : List α} {x : α}
+  (h : In x xs) : In (f x) (map f xs) := by
   induction xs with
   | nil =>
     exfalso; apply In_nil; assumption
@@ -2166,7 +2168,7 @@ For instance, to claim that a number {lean}`n` is even,
 we can say either that {lean}`Nat.even n` evaluates to `true`...
 
 ```lean
-example : Nat.even 42 = true := rfl
+example : Nat.even 42 = true := by rfl
 ```
 
 ... or that there exists some `k` such that `n = double k`.
@@ -2324,7 +2326,7 @@ because we don't have to invent the witness {lean}`50`:
 computation does it for us!
 
 ```lean
-example : Nat.even 100 = true := rfl
+example : Nat.even 100 = true := by rfl
 ```
 
 :::dev "Mike Hicks (mwhicks1)"
@@ -2354,7 +2356,7 @@ booleans is straightforward to state and (when true) to prove:
 simply flip the expected boolean result.
 
 ```lean
-example : Nat.even 101 = false := rfl
+example : Nat.even 101 = false := by rfl
 ```
 
 In contrast, propositional negation can be difficult to work with directly.
@@ -2821,7 +2823,7 @@ to each other. In some cases, we can also prove that two functions are
 equal by reflexivity when both reduce to the same expression:
 
 ```lean
-example : (fun x => x + 2) = (fun x => x + (Nat.pred 3)) := rfl
+example : (fun x => x + 2) = (fun x => x + (Nat.pred 3)) := by rfl
 ```
 
 In general, functions can be equal for more interesting reasons.
@@ -2864,10 +2866,11 @@ Now we can prove some intuitively obvious equalities about functions
 that would not be provable without {lean}`funext`.
 
 ```lean
-theorem add_comm_fun : (fun (n m : Nat) => n + m) = (fun (n m : Nat) => m + n) := by
-  apply funext; intro n
-  apply funext; intro m
-  exact Nat.add_comm n m
+theorem add_comm_fun :
+  (fun (n m : Nat) => n + m) = (fun (n m : Nat) => m + n) := by
+    apply funext; intro n
+    apply funext; intro m
+    exact Nat.add_comm n m
 ```
 
 The {tactic}`ext` tactic will also apply {lean}`funext` as many times as possible,
@@ -2875,8 +2878,9 @@ introducing all variables in one go.
 (The singular version of the tactic is {tactic}`ext1`.)
 
 ```lean
-theorem add_comm_fun' : (fun (n m : Nat) => n + m) = (fun (n m : Nat) => m + n) := by
-  ext n m; exact Nat.add_comm n m
+theorem add_comm_fun' :
+  (fun (n m : Nat) => n + m) = (fun (n m : Nat) => m + n) := by
+    ext n m; exact Nat.add_comm n m
 ```
 
 ::::quiz
@@ -2890,7 +2894,7 @@ Is the following statement provable by just {tactic}`rfl`, without {lean}`funext
 
 :::quizSolution
 ```lean
-example : (fun xs => 1 :: xs) = (fun xs => [1] ++ xs) := rfl
+example : (fun xs => 1 :: xs) = (fun xs => [1] ++ xs) := by rfl
 ```
 :::
 ::::
@@ -2907,23 +2911,20 @@ We can use {tactic}`ext` on pairs as follows:
 ::::
 
 ```lean
-example {n : Nat} {p : Nat × Nat} (hx_fst : p.fst = n + 1) (hx_snd : p.snd = 0) :
-    (n + 1, 0) = p := by
-  ext -- uses the `Prod.ext` lemma
-  · rw [hx_fst]
-  · rw [hx_snd]
+example {n : Nat} {p : Nat × Nat}
+  (hx_fst : p.fst = n + 1) (hx_snd : p.snd = 0) : (n + 1, 0) = p := by
+    ext -- uses the `Prod.ext` lemma
+    · rw [hx_fst]
+    · rw [hx_snd]
 ```
-
-:::dev "Claude"
-The `prod_ext_example` exercise is rated 2, but its content is an anonymous `example`, so there is no constant for a `gradeTheorem` directive to reference. Either name the theorem and add a grading directive, or mark the exercise as optional/ungraded.
-:::
 
 ::::exercise (rating := 2) (name := "prod_ext_example")
 Now, use {tactic}`ext1` to prove the following.
 Remember that `dsimp only` simplifies projections like `(a, b).fst` to `a`.
 
 ```lean
-example {m : Nat} {p : Nat × Nat} (hp_snd : p.snd = 4) (hp_fst : p.fst = m) :
+theorem prod_ext_example {m : Nat} {p : Nat × Nat}
+  (hp_snd : p.snd = 4) (hp_fst : p.fst = m) :
     ((p.fst + 1, 2), (p.fst, 4)) = ((m + 1, p.snd - 2), p) := by
   solution!
     ext1
@@ -2939,6 +2940,10 @@ example {m : Nat} {p : Nat × Nat} (hp_snd : p.snd = 4) (hp_fst : p.fst = m) :
       · dsimp only
         rw [hp_snd]
 ```
+
+:::gradeTheorem 2 prod_ext_example
+:::
+
 ::::
 
 ::::::full
@@ -2956,10 +2961,10 @@ def revAppend {α} (xs ys : List α) : List α :=
   | [] => ys
   | x :: xs => revAppend xs (x :: ys)
 
-theorem revAppend_nil {α : Type} {xs : List α} : revAppend [] xs = xs := rfl
+theorem revAppend_nil {α : Type} {xs : List α} : revAppend [] xs = xs := by rfl
 
 theorem revAppend_cons {α : Type} {x : α} {xs ys : List α} :
-    revAppend (x :: xs) ys = revAppend xs (x :: ys) := rfl
+    revAppend (x :: xs) ys = revAppend xs (x :: ys) := by rfl
 
 def trRev {α} (xs : List α) : List α := revAppend xs []
 ```
