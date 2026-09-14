@@ -125,6 +125,17 @@ def build_student(vol):
     subprocess.run(["scripts/relocate-lake-build.sh"], cwd=REPO_ROOT, check=True)
     subprocess.run(["lake", "build", f"sfl-{vol}"], cwd=REPO_ROOT, check=True)
     subprocess.run(["lake", "exe", f"sfl-{vol}", "student"], cwd=REPO_ROOT, check=True)
+    copy_devcontainer(REPO_ROOT / f"_out/{vol}/student/lean")
+
+
+def copy_devcontainer(lean_dir):
+    """Copy the repo's top-level .devcontainer into a generated lean/ output
+    (mirrors the Makefile's copy-devcontainer, for the `make release` path
+    which calls `lake` directly rather than through the volume targets)."""
+    dest = lean_dir / ".devcontainer"
+    if dest.exists():
+        shutil.rmtree(dest)
+    shutil.copytree(REPO_ROOT / ".devcontainer", dest)
 
 
 def strip_excluded_from_lean_output(vol, excluded):

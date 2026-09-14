@@ -1514,21 +1514,19 @@ def pupToN : Com := solution!(
 theorem pup_to_2_ceval :
     {X ↦ 2} =[ ~pupToN ]=> {X ↦ 0, Y ↦ 3, X ↦ 1, Y ↦ 2, Y ↦ 0, X ↦ 2} := by
   solution!
-    unfold pupToN
-    apply EvalR.seq (st' := {Y ↦ 0, X ↦ 2}) (EvalR.asgn rfl)
-    apply EvalR.whileTrue (st' := {X ↦ 1, Y ↦ 2, Y ↦ 0, X ↦ 2}) rfl
-    · exact EvalR.seq
-        (st' := {Y ↦ 2, Y ↦ 0, X ↦ 2})
-        (EvalR.asgn rfl)
-        (EvalR.asgn rfl)
-    · apply EvalR.whileTrue
-        (st' := {X ↦ 0, Y ↦ 3, X ↦ 1, Y ↦ 2, Y ↦ 0, X ↦ 2}) rfl
-      · apply EvalR.seq
-          (st' := {Y ↦ 3, X ↦ 1, Y ↦ 2, Y ↦ 0, X ↦ 2})
-          (EvalR.asgn rfl)
-          (EvalR.asgn rfl)
-      · apply EvalR.whileFalse
-        rfl
+    rw [pupToN]
+    apply Com.EvalR.seq (st' := (Y →ₜ 0 ; X →ₜ 2 ; ∅))
+    · apply Com.EvalR.asgn; rfl
+    · apply Com.EvalR.whileTrue (st' := (X →ₜ 1 ; Y →ₜ 2 ; Y →ₜ 0 ; X →ₜ 2 ; ∅))
+      · rfl
+      · apply Com.EvalR.seq (st' := (Y →ₜ 2 ; Y →ₜ 0 ; X →ₜ 2 ; ∅)) <;>
+          (apply Com.EvalR.asgn; rfl)
+      · apply Com.EvalR.whileTrue
+          (st' := (X →ₜ 0 ; Y →ₜ 3 ; X →ₜ 1 ; Y →ₜ 2 ; Y →ₜ 0 ; X →ₜ 2 ; ∅))
+        · rfl
+        · apply Com.EvalR.seq (st' := (Y →ₜ 3 ; X →ₜ 1 ; Y →ₜ 2 ; Y →ₜ 0 ; X →ₜ 2 ; ∅)) <;>
+            (apply Com.EvalR.asgn; rfl)
+        · apply Com.EvalR.whileFalse; rfl
 ```
 :::::
 
@@ -1632,18 +1630,18 @@ theorem loop_never_stops (st st' : State) : ¬ (st =[ loop ]=> st') := by
     -- Generalize over the command so the induction remembers what `loop` is.
     generalize heq : loop = c at contra
     induction contra with
-    | @whileFalse b s₀ c₀ hb =>
+    | whileFalse hb =>
       rw [loop] at heq
       injection heq with e₁ _
       subst e₁
       simp at hb
-    | @whileTrue s₀ s0' s0'' b c₀ hb hc hloop ih₁ ih₂ =>
+    | whileTrue hb hc hloop ih₁ ih₂ =>
       exact ih₂ heq
-    | @skip s₀
-    | @asgn s₀ a n x h
-    | @seq c₁ c₂ s₀ s0' s0'' h₁ h₂ ih₁ ih₂
-    | @ifTrue s₀ s0' b c₁ c₂ hb hc ih
-    | @ifFalse s₀ s0' b c₁ c₂ hb hc ih =>
+    | skip
+    | asgn h
+    | seq h₁ h₂ ih₁ ih₂
+    | ifTrue hb hc ih
+    | ifFalse hb hc ih =>
       simp [loop] at heq
 ```
 :::::
