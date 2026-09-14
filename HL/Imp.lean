@@ -80,7 +80,7 @@ _Hoare Logic_, a popular logic for reasoning about imperative programs.
 
 ::::full
 We build Imp in three layers.  The first — a core language of _arithmetic and
-boolean expressions_ — is developed in its own chapter, _Slang_;
+boolean expressions_ — is developed in its own chapter, {ref "Slang"}[_Slang_];
 read that one first.  There you meet the abstract syntax of arithmetic
 expressions (`Aexp`) and boolean expressions (`Bexp`), their evaluation both as
 a recursive _function_ and as an inductive _relation_ (proved equivalent), and a
@@ -127,7 +127,7 @@ state as a total map from strings (variable names) to {name}`Nat`, and will use
 ::::
 
 We give the type of variable identifiers a name, `Ident`. For now it is just
-   {name}`String`; naming it makes the intent clearer.
+{name}`String`; naming it makes the intent clearer.
 
 ```lean
 open scoped MyGetElem
@@ -140,12 +140,7 @@ abbrev State := TotalMap Ident Nat
 
 We can add variables to the arithmetic expressions we had before simply
 by including one more constructor.  (This is a fresh `Aexp`, replacing
-the variable-free one from the _Slang_ chapter.)
-
-:::dev "Benjamin Pierce (bcpierce00)"
-That should be a live chapter link.
-:::
-
+the variable-free one from the {ref "Slang"}[Slang] chapter.)
 
 ```lean
 inductive Aexp where
@@ -156,7 +151,7 @@ inductive Aexp where
   | mult (a₁ a₂ : Aexp)
 ```
 
-:::dev "Chris Henson (chenson2018)"
+:::dev "Chris Henson (chenson2018)" PotentialImprovement
 Rather than define identifiers as Ident, a more general approach is
 to use a *type variable* with `DecidableEq` (as the
 `Maps` chapter does), threaded through `Aexp`/`Bexp`/`Com`/`State`.  Stashed
@@ -175,7 +170,7 @@ inductive Aexp (V : Type) where
 ```
 :::
 
-The `Bexp` definition is unchanged, except that it now refers to the new `Aexp`.
+The `Bexp` definition is unchanged, except that it now refers to the new {name}`Aexp`.
 
 ```lean
 inductive Bexp where
@@ -586,7 +581,7 @@ notations rather than their raw constructors.
 The pretty-printed version of an expression might not exactly
 match its original form.
 For example, the parentheses around `X * 2` in `aexp { 3 + (X * 2) }` are not printed because
-they are redundant -- which the parenthesizer knows.
+they are redundant, which the parenthesizer knows.
 ::::
 
 ```lean
@@ -606,7 +601,8 @@ The arithmetic and boolean evaluators must now be extended to handle
 variables, taking a state `st` as an extra argument.  A variable is
 looked up in the state with the map-indexing notation `st[x]` from the
 Typeclasses chapter in the Logical Foundations book.
-For the notation to work, we used `open scoped MyGetElem` earlier, which opens only the scoped items like notation from the module.
+For the notation to work, we used `open scoped MyGetElem` earlier,
+which opens only the scoped items like notation from the module.
 ::::
 
 :::terse
@@ -665,10 +661,11 @@ example : aexp { Z + (X * Y) }.eval (X →ₜ 5 ; Y →ₜ 4 ; ∅) = 20 := by r
 example : bexp { true ∧ ¬(X ≤ 4) }.eval (X →ₜ 5 ; ∅) = true := by rfl
 ```
 
-:::dev
+:::dev PotentialImprovement
 dsainati: Bikeshedding: I'm not sure how I feel about this arrow subscript for maps.
-Easy to change later but just flagging to discuss. mwhicks1: This comes from the Maps
-chapter, which chenson2018 is working on.
+Easy to change later but just flagging to discuss.
+
+mwhicks1: This comes from the Maps chapter, which chenson2018 is working on.
 There is a keyboard shortcut for ↦ we could use (\mapsto).
 :::
 
@@ -919,8 +916,10 @@ imp {Z := X; Y := 1; while (Z ≠ 0) {Y := Y * Z; Z := Z - 1}}
 
 ## Desugaring Notations
 
-Even though the notations are useful for getting the high-level picture, it's sometimes helpful to turn off the notation to see the parsed structure as a plain term.
-This can be done with `set_option pp.notation false` (which we briefly mentioned in the Typeclasses chapter) as follows:
+Even though the notations are useful for getting the high-level picture,
+it's sometimes helpful to turn off the notation to see the parsed structure as a plain term.
+This can be done with `set_option pp.notation false`
+(which we briefly mentioned in the Typeclasses chapter) as follows:
 
 ```lean (name := imp1)
 #check imp { X := X + 1 }
@@ -1047,7 +1046,7 @@ could add the `while` case as follows:
     else st
 ```
 
-Lean doesn't accept such a definition ("fail to show termination")
+Lean doesn't accept such a definition
 because the function we want to define is not guaranteed to terminate.
 Indeed, it _doesn't_ always terminate: the full `ceval_fun` applied to
 the `loop` program above would run forever. Since Lean aims to be not
@@ -1081,7 +1080,7 @@ provable, so Lean rejects it.
 ## Evaluation as a Relation
 
 Here's a better way: define `ceval` as a _relation_ rather than a
-_function_ -- i.e., make its result a `Prop` rather than a {name}`State`,
+_function_ -- i.e., make its result a {lean}`Prop` rather than a {name}`State`,
 similar to what we did for `Aexp.EvalR` in the {ref "Slang"}[Slang] chapter.
 
 ::::full
@@ -1105,9 +1104,9 @@ state `st` to `st'`".
 :::slidebreak
 :::
 
-Operational Semantics
+## Operational Semantics
 
-:::dev BeforeNextRelease
+:::dev PotentialImprovement
 BCP 21: I wonder if `seq` would be easier to work with if st' and
    st'' were swapped...
 :::
@@ -1152,10 +1151,6 @@ for readability:
 Here is the formal definition.  Make sure you understand how it
 corresponds to the inference rules.
 
-:::dev "Chris Henson (chenson2018)"
-TODO Propose you use inline notation such as `Com.EvalR (imp {skip;}) st st`
-:::
-
 ```lean
 inductive Com.EvalR : Com → State → State → Prop where
   | skip {st : State} : EvalR (imp {skip}) st st
@@ -1180,8 +1175,9 @@ inductive Com.EvalR : Com → State → State → Prop where
 We define evaluation notation using a typeclass to make extending it easier in the Hoare chapter.
 :::
 
-:::dev "Niklas Halonen (xhalo32)"
-Setting `In` and `Out` as `outParam`s is a hack to resolve various typeclass synthesis problems or at least I can't explain why it works.
+:::instructors
+Setting `In` and `Out` as `outParam`s is a hack to resolve various typeclass synthesis
+problems, or at least I can't explain why it works.
 :::
 
 ::::details "Notation encoding: commands"
@@ -1242,7 +1238,7 @@ example :
         Z := 4
       }
     ]=> (Z →ₜ 4 ; X →ₜ 2 ; ∅) := by
-  -- We must supply the intermediate state.
+  -- For clarity, we supply the intermediate state to this constructor explicitly
   apply Com.EvalR.seq (st' := (X →ₜ 2 ; ∅))
   · apply Com.EvalR.asgn; rfl
   · apply Com.EvalR.ifFalse
@@ -1316,7 +1312,7 @@ Is the following proposition provable?
 (A) Yes    (B) No    (C) Not sure
 
 :::instructors
-Answer is given later (`quiz2_answer`) as it depends on `ceval_deterministic`.
+Yes, but answer is given later (`quiz2_answer`) as it depends on `ceval_deterministic`.
 :::
 ::::
 
@@ -1433,36 +1429,34 @@ Informal proof needed! (And one can surely be found in some past
 theorem ceval_deterministic (c : Com) (st st1 st2 : State)
     (e₁ : st =[ c ]=> st1) (e₂ : st =[ c ]=> st2) : st1 = st2 := by
   induction e₁ generalizing st2 with
-  | @skip st =>
+  | skip =>
       inversion e₂
       rfl
-  | @asgn st a n x h =>
+  | asgn =>
       inversion e₂ with
-      | asgn h' => subst h; subst h'; rfl
-  | @seq c₁ c₂ st st' st'' h₁ h₂ ih₁ ih₂ =>
+      | asgn h' => subst_vars; rfl
+  | seq h₁ h₂ ih₁ ih₂ =>
       inversion e₂ with
       | seq st2' h₁' h₂' =>
-          have hst : st' = st2' := ih₁ _ h₁'
-          subst hst
+          apply ih₁ at h₁'; subst h₁'
           exact ih₂ _ h₂'
-  | @ifTrue st st' b c₁ c₂ hb hc ih =>
+  | ifTrue hb hc ih =>
       inversion e₂ with
       | ifTrue hb' hc' => exact ih _ hc'
       | ifFalse hb' hc' => simp_all
-  | @ifFalse st st' b c₁ c₂ hb hc ih =>
+  | ifFalse hb hc ih =>
       inversion e₂ with
       | ifTrue hb' hc' => simp_all
       | ifFalse hb' hc' => exact ih _ hc'
-  | @whileFalse b st c hb =>
+  | whileFalse hb =>
       inversion e₂ with
       | whileFalse hb' => rfl
       | whileTrue hb' hc' hl' => simp_all
-  | @whileTrue st st' st'' b c hb hc hloop ih₁ ih₂ =>
+  | whileTrue hb hc hloop ih₁ ih₂ =>
       inversion e₂ with
       | whileFalse hb' => simp_all
       | whileTrue st2' _ hc' hl' =>
-          have hst : st' = st2' := ih₁ _ hc'
-          subst hst
+          apply ih₁ at hc'; subst hc'
           exact ih₂ _ hl'
 ```
 
@@ -1481,8 +1475,8 @@ theorem quiz2_answer (c₁ c₂ : Com) (st st' : State)
 ::::
 
 :::::exercise (rating := 3) (name := "pup_to_n") (optional := true)
-Write an Imp program that sums the numbers from `1` to `X` (inclusive)
-in the variable `Y`.  Your program should update the state as shown in
+Write an Imp program that sums the numbers from {lean}`1` to {lean}`X` (inclusive)
+in the variable {lean}`Y`.  Your program should update the state as shown in
 `pup_to_2_ceval`, which you can reverse-engineer to discover the program
 you should write.  The proof of that theorem will be somewhat lengthy.
 
@@ -1562,7 +1556,7 @@ theorem plus2_spec (st : State) (n : Nat) (st' : State)
   rw [plus2] at heval
   inversion heval with
   | asgn m h =>
-      simp [Aexp.eval_plus, Aexp.eval_id, Aexp.eval_num, TotalMap.update_eq] at h ⊢
+      simp at h ⊢
       lia
 ```
 
@@ -1571,7 +1565,7 @@ This used to be recommended.  Should it be reinstated?
 :::
 
 :::::exercise (rating := 3) (name := "XtimesYinZ_spec") (optional := true) (manual := true)
-State and prove a specification of `XtimesYinZ`.
+State and prove a specification of {name}`XtimesYinZ`.
 
 ```lean
 -- SOLUTION
@@ -1612,7 +1606,7 @@ I've changed some Hoare proofs from `have key` to `generalize` but the tactic ha
 :::
 
 :::::exercise (rating := 3) (name := "loop_never_stops")
-Hint: proceed by induction on the assumed derivation showing that `loop`
+Hint: proceed by induction on the assumed derivation showing that {name}`loop`
 terminates.  Most of the cases are immediately contradictory and so can be
 solved in one step (by {tactic}`simp`/{tactic}`contradiction` on the impossible command
 equation).
@@ -1623,18 +1617,11 @@ theorem loop_never_stops (st st' : State) : ¬ (st =[ loop ]=> st') := by
     intro contra
     -- Generalize over the command so the induction remembers what `loop` is.
     have key : ∀ (c : Com) (s s' : State), (s =[ c ]=> s') → c = loop → False := by
-      intro c s s' hce
-      induction hce with
-      | @whileFalse b s₀ c₀ hb =>
-          intro heq; rw [loop] at heq; injection heq with e₁ _
+      intro c s s' hce; simp only [loop] at *
+      induction hce with (intro heq; try contradiction)
+      | whileFalse hb =>
+          injection heq with e₁ _
           subst e₁; simp at hb
-      | @whileTrue s₀ s0' s0'' b c₀ hb hc hloop ih₁ ih₂ =>
-          intro heq; exact ih₂ heq
-      | @skip s₀ => intro heq; simp [loop] at heq
-      | @asgn s₀ a n x h => intro heq; simp [loop] at heq
-      | @seq c₁ c₂ s₀ s0' s0'' h₁ h₂ ih₁ ih₂ => intro heq; simp [loop] at heq
-      | @ifTrue s₀ s0' b c₁ c₂ hb hc ih => intro heq; simp [loop] at heq
-      | @ifFalse s₀ s0' b c₁ c₂ hb hc ih => intro heq; simp [loop] at heq
     exact key loop st st' contra rfl
 ```
 :::::
@@ -1661,7 +1648,7 @@ Marc Bezem 2022:
 :::
 
 :::::exercise (rating := 3) (name := "no_whiles_eqv")
-The following function yields `true` just on programs with no while
+The following function yields {name}`true` just on programs with no while
 loops. Using `inductive`, write a property `Com.NoWhilesR` that holds
 exactly when `c` is while-free, then prove it equivalent to `Com.no_whiles`.
 
@@ -1669,7 +1656,7 @@ exactly when `c` is while-free, then prove it equivalent to `Com.no_whiles`.
 def Com.no_whiles (c : Com) : Bool :=
   match c with
   | imp {skip} => true
-  | imp {_x := ~_a} => true
+  | imp {x := ~a} => true
   | imp {c₁; c₂} => no_whiles c₁ && no_whiles c₂
   | imp {if (~_) {ct} else {cf}} => no_whiles ct && no_whiles cf
   | imp {while (~_) {~_}} => false
@@ -1687,22 +1674,10 @@ inductive Com.NoWhilesR : Com → Prop where
 theorem no_whiles_eqv (c : Com) : c.no_whiles = true ↔ Com.NoWhilesR c := by
   solution!
     constructor
-    · induction c with
-      | skip => intro _; exact .skip
-      | asgn x a => intro _; exact .asgn x a
-      | seq c₁ c₂ ih₁ ih₂ =>
-          intro h; simp only [Com.no_whiles, Bool.and_eq_true] at h
-          exact .seq _ _ (ih₁ h.1) (ih₂ h.2)
-      | cond b c₁ c₂ ih₁ ih₂ =>
-          intro h; simp only [Com.no_whiles, Bool.and_eq_true] at h
-          exact .cond _ _ _ (ih₁ h.1) (ih₂ h.2)
-      | whileDo b c ih => intro h; simp [Com.no_whiles] at h
+    · induction c with (intro h <;> try constructor <;> simp_all [Com.no_whiles, Bool.and_eq_true])
+      | whileDo b c ih => simp [Com.no_whiles] at h
     · intro h
-      induction h with
-      | skip => rfl
-      | asgn x a => rfl
-      | seq c₁ c₂ h₁ h₂ ih₁ ih₂ => simp [Com.no_whiles, ih₁, ih₂]
-      | cond b c₁ c₂ h₁ h₂ ih₁ ih₂ => simp [Com.no_whiles, ih₁, ih₂]
+      induction h with simp_all [Com.no_whiles]
 ```
 :::::
 
@@ -1716,49 +1691,49 @@ theorem no_whiles_terminating (c : Com) (st : State) (h : Com.NoWhilesR c) :
     ∃ st', st =[ c ]=> st' := by
   solution!
     induction h generalizing st with
-    | @skip => exact ⟨st, .skip⟩
-    | @asgn x a => exact ⟨(x →ₜ a.eval st ; st), .asgn rfl⟩
-    | @seq c₁ c₂ h₁ h₂ ih₁ ih₂ =>
+    | skip => exists st; constructor
+    | asgn x a => exists (x →ₜ a.eval st ; st); constructor; rfl
+    | seq c₁ c₂ h₁ h₂ ih₁ ih₂ =>
         obtain ⟨st', hc₁⟩ := ih₁ st
         obtain ⟨st'', hc₂⟩ := ih₂ st'
-        exact ⟨st'', .seq hc₁ hc₂⟩
+        exists st''; constructor <;> assumption
     | @cond b c₁ c₂ h₁ h₂ ih₁ ih₂ =>
         cases hb : b.eval st with
         | true =>
             obtain ⟨st', hc₁⟩ := ih₁ st
-            exact ⟨st', .ifTrue hb hc₁⟩
+            exists st'; constructor <;> assumption
         | false =>
             obtain ⟨st', hc₂⟩ := ih₂ st
-            exact ⟨st', .ifFalse hb hc₂⟩
+            exists st'; apply Com.EvalR.ifFalse <;> assumption
 ```
 
+:::solution
 And here is an alternative solution by induction on `c` (using
-   {name}`Com.no_whiles` instead of {name}`Com.NoWhilesR`):
+{name}`Com.no_whiles` instead of {name}`Com.NoWhilesR`):
 
 ```lean
--- SOLUTION
 theorem no_whiles_terminating' (c : Com) (st1 : State)
     (hb : c.no_whiles = true) : ∃ st2, st1 =[ c ]=> st2 := by
   induction c generalizing st1 with
-  | @skip => exact ⟨st1, .skip⟩
-  | @asgn x a => exact ⟨(x →ₜ a.eval st1 ; st1), .asgn rfl⟩
-  | @seq c₁ c₂ ih₁ ih₂ =>
+  | skip => exists st1; constructor
+  | asgn x a => exists (x →ₜ a.eval st1 ; st1); constructor; rfl
+  | seq c₁ c₂ ih₁ ih₂ =>
       simp only [Com.no_whiles, Bool.and_eq_true] at hb
       obtain ⟨st1', hc₁⟩ := ih₁ st1 hb.1
       obtain ⟨st1'', hc₂⟩ := ih₂ st1' hb.2
-      exact ⟨st1'', .seq hc₁ hc₂⟩
-  | @cond b ct cf ih₁ ih₂ =>
+      exists st1''; constructor <;> assumption
+  | cond b ct cf ih₁ ih₂ =>
       simp only [Com.no_whiles, Bool.and_eq_true] at hb
       cases hbev : b.eval st1 with
       | true =>
           obtain ⟨st2, h⟩ := ih₁ st1 hb.1
-          exact ⟨st2, .ifTrue hbev h⟩
+          exists st2; constructor <;> assumption
       | false =>
           obtain ⟨st2, h⟩ := ih₂ st1 hb.2
-          exact ⟨st2, .ifFalse hbev h⟩
-  | @whileDo b c ih => simp [Com.no_whiles] at hb
--- END SOLUTION
+          exists st2; apply Com.EvalR.ifFalse <;> assumption
+  | whileDo b c ih => simp [Com.no_whiles] at hb
 ```
+:::
 :::::
 
 ## Additional Exercises
@@ -1958,9 +1933,7 @@ becomes difficult, consider whether your implementation of
 theorem sCompile_correct_aux (st : State) (a : Aexp) (stack : List Nat) :
   sExecute st stack (sCompile a) = Aexp.eval st a :: stack := by
   solution!
-    induction a generalizing st stack <;>
-      simp_all [List.append_assoc, execute_app] <;>
-      rfl
+    induction a generalizing st stack with (simp_all [List.append_assoc, execute_app] <;> rfl)
 
 ```
 
@@ -1991,6 +1964,10 @@ evaluation in Imp is rather simple.  In a bigger language where
 evaluating an expression might diverge, the short-circuiting `and`
 would _not_ be equivalent to the original, since it would make more
 programs terminate.)
+
+:::dev PotentialImprovement
+This exercise turned out to be easier than we intended!
+:::
 
 ```lean
 def Bexp.evalSC (st : State) (b : Bexp) : Bool := solution!(
@@ -2030,7 +2007,6 @@ theorem Bexp.evalSC_and (st : State) (b₁ b₂ : Bexp) :
                                 | true => b₂.evalSC st := rfl
 -- END SOLUTION
 
--- This exercise turned out to be easier than we intended!
 theorem Bexp.eval_eq_evalSc (st : State) (b : Bexp) :
   b.eval st = b.evalSC st := by
   solution!
@@ -2162,7 +2138,7 @@ termination signals appropriately:
   execution of any enclosing loop can continue normally.
 
 - If the command is `brk`, the state stays unchanged but we
-  signal a `sBreak`.
+  signal a {name}`sBreak`.
 
 - If the command is an assignment, then we update the binding for
   that variable in the state accordingly and signal that execution
@@ -2174,8 +2150,8 @@ termination signals appropriately:
   whichever branch was taken.
 
 - If the command is a sequence `c₁ ; c₂`, we first execute
-  `c₁`.  If this yields a `sBreak`, we skip the execution of `c₂`
-  and propagate the `sBreak` signal to the surrounding context;
+  `c₁`.  If this yields a  {name}`sBreak`, we skip the execution of `c₂`
+  and propagate the  {name}`sBreak` signal to the surrounding context;
   the resulting state is the same as the one obtained by
   executing `c₁` alone. Otherwise, we execute `c₂` on the state
   obtained after executing `c₁`, and propagate the signal
@@ -2184,12 +2160,12 @@ termination signals appropriately:
 - Finally, for a loop of the form `while (b) {c}`, the
   semantics is almost the same as before. The only difference is
   that, when `b` evaluates to {name}`true`, we execute `c` and check the
-  signal that it raises.  If that signal is `sContinue`, then the
+  signal that it raises.  If that signal is {name}`sContinue`, then the
   execution proceeds as in the original semantics. Otherwise, we
   stop the execution of the loop, and the resulting state is the
   same as the one resulting from the execution of the current
   iteration.  In either case, since `break` only terminates the
-  innermost loop, `while` signals `sContinue`.
+  innermost loop, `while` signals  {name}`sContinue`.
 
 Based on the above description, complete the definition of the
 `Com.EvalR` relation:
