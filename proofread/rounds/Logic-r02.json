@@ -1,0 +1,113 @@
+{
+ "file": "LF/Logic.lean",
+ "chapter": "Logic",
+ "round": 2,
+ "proposals": [
+  {
+   "id": "logic-r02-001",
+   "cat": "structure/section-level",
+   "old": "::::\n\n# Truth\n\nBesides {lean}`False`",
+   "new": "::::\n\n## Truth\n\nBesides {lean}`False`",
+   "why": "`# Truth` sits at the same level as `# Logical Connectives`, making Logical Equivalence and Existential Quantification subsections of Truth; the Recap lists True, Iff, and Exists as connectives, so all three belong as `##` under Logical Connectives."
+  },
+  {
+   "id": "logic-r02-002",
+   "cat": "structure/heading-placement",
+   "old": "::::\n\n# The {lean}`Prop` Type\n\n```lean\n#check (∀ n m : Nat, n + m = m + n : Prop)",
+   "new": "::::\n\n```lean\n#check (∀ n m : Nat, n + m = m + n : Prop)",
+   "why": "Both intros end with a colon promising the `#check` example, but this heading splits them; moved above the intro prose (paired with the next edit)."
+  },
+  {
+   "id": "logic-r02-003",
+   "cat": "structure/heading-placement",
+   "old": "::::\n\n::::full\nWe have now seen many examples",
+   "new": "::::\n\n# The {lean}`Prop` Type\n\n::::full\nWe have now seen many examples",
+   "why": "New home for the heading: above the full/terse intro blocks, so the intro and its `#check` example stay together inside the section."
+  },
+  {
+   "id": "logic-r02-004",
+   "cat": "clarity/missing-phrase",
+   "old": "Lean will cast booleans by equating them to {lean}`true`,",
+   "new": "Lean will cast booleans to propositions by equating them to {lean}`true`,",
+   "why": "The sentence never says what booleans are cast *to*."
+  },
+  {
+   "id": "logic-r02-005",
+   "cat": "content/notation",
+   "old": "has the form {lean}`[x' :: l']`.",
+   "new": "has the form {lean}`x' :: l'`.",
+   "why": "The brackets make this a singleton list containing a list; a nonempty list has the form `x' :: l'`."
+  },
+  {
+   "id": "logic-r02-006",
+   "cat": "usage/coinage",
+   "old": "- {lean}`True` (truthhood):",
+   "new": "- {lean}`True` (truth):",
+   "why": "\"truthhood\" is a coinage; \"truth\" is the standard counterpart of \"falsehood\"."
+  },
+  {
+   "id": "logic-r02-007",
+   "cat": "grading/missing-spec",
+   "old": "    exact hn\n```\n:::::\n\n:::instructors",
+   "new": "    exact hn\n```\n\n:::grade\n`GRADE_MANUAL 2: nil_is_not_cons`\n:::\n:::::\n\n:::instructors",
+   "why": "The exercise is marked (manual := true) but has no grade block; sibling manual exercises (double_neg_informal, not_PNP_informal) carry a GRADE_MANUAL spec."
+  },
+  {
+   "id": "logic-r02-008",
+   "cat": "devnote/exercise-framing",
+   "old": "Same issue as `CombineOddEven`.\n:::\n\n```lean\ntheorem even_double_conv",
+   "new": "Same issue as `CombineOddEven`.\n:::\n\n:::dev \"Claude\"\nThis lemma is proved with `solution!` but is not wrapped in an `exercise` directive, so the student build gets a `sorry`ed helper with no exercise framing — and `Nat.even_bool_prop` just below depends on it. Consider making it a named, rated exercise or switching to `workinclass!`.\n:::\n\n```lean\ntheorem even_double_conv",
+   "why": "Flagging a framing question that needs an author decision rather than a fix."
+  },
+  {
+   "id": "logic-r02-009",
+   "cat": "content/stale-remark",
+   "old": "Again, these two notions are equivalent:\n\n(For the reverse direction we need the simple fact that `==` is\nreflexive.)\n\n:::dev \"Yipeng Liu (berberman)\"\nEither get rid of",
+   "new": "Again, these two notions are equivalent:\n\n:::dev \"Yipeng Liu (berberman)\"\nEither get rid of",
+   "why": "The proof shown is just `rw [Nat.beq_eq_true_eq]`, which never uses reflexivity of `==`; the parenthetical describes an older proof."
+  },
+  {
+   "id": "logic-r02-010",
+   "cat": "content/missing-display",
+   "old": "Consider the following statement:\n::::\n\nThe most direct way to prove this",
+   "new": "Consider the following statement:\n::::\n\n```display\nNat.Even 100\n```\n\nThe most direct way to prove this",
+   "why": "\"Consider the following statement:\" and \"prove this\" had no statement in sight; display the claim the examples then prove."
+  },
+  {
+   "id": "logic-r02-011",
+   "cat": "content/missing-display",
+   "old": "the nonevenness of {lean}`101` propositionally:\n\nProving this directly",
+   "new": "the nonevenness of {lean}`101` propositionally:\n\n```display\n¬ Nat.Even 101\n```\n\nProving this directly",
+   "why": "Same gap: the colon and \"Proving this\" point at a statement that is never shown."
+  },
+  {
+   "id": "logic-r02-012",
+   "cat": "clarity/antecedent",
+   "old": "but it serves as a good example showing the different strengths\nof booleans and general propositions.",
+   "new": "but the examples above already illustrate the different strengths\nof booleans and general propositions.",
+   "why": "\"it\" has no clear antecedent (reflection? the last example?); point explicitly at the examples."
+  },
+  {
+   "id": "logic-r02-013",
+   "cat": "consistency/variable-names",
+   "old": "In this case, we can take `a = sqrt 2 ^ sqrt 2` and `b = sqrt 2`,\n  since `a ^ b = sqrt 2 ^ (sqrt 2 * sqrt 2) = sqrt 2 ^ 2 = 2`. QED.",
+   "new": "In this case, we can take `n = sqrt 2 ^ sqrt 2` and `m = sqrt 2`,\n  since `n ^ m = sqrt 2 ^ (sqrt 2 * sqrt 2) = sqrt 2 ^ 2 = 2`. QED.",
+   "why": "The claim and the first proof case use `n` and `m`; the second case silently switches to `a` and `b`."
+  },
+  {
+   "id": "logic-r02-014",
+   "cat": "content/wrong-claim",
+   "old": "{lean}`de_morgan_not_or` as proven above, {lean}`a ∧ ¬ a` would be provable,",
+   "new": "{lean}`de_morgan_not_or` as proven above, {lean}`¬ a ∧ ¬ ¬ a` would be provable,",
+   "why": "De Morgan applied to `¬ (a ∨ ¬ a)` yields `¬ a ∧ ¬ ¬ a` — exactly what the solution derives — not `a ∧ ¬ a`."
+  },
+  {
+   "id": "logic-r02-015",
+   "cat": "devnote/grading",
+   "old": "```\n\n::::exercise (rating := 2) (name := \"prod_ext_example\")",
+   "new": "```\n\n:::dev \"Claude\"\nThe `prod_ext_example` exercise is rated 2, but its content is an anonymous `example`, so there is no constant for a `gradeTheorem` directive to reference. Either name the theorem and add a grading directive, or mark the exercise as optional/ungraded.\n:::\n\n::::exercise (rating := 2) (name := \"prod_ext_example\")",
+   "why": "Flagging a grading gap that needs an author decision rather than a fix."
+  }
+ ],
+ "completed": true
+}
