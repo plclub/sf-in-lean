@@ -526,9 +526,18 @@ theorem Nat.add_is_zero (n m : Nat) : n + m = 0 → n = 0 ∧ m = 0 := by
 
 ::::::
 
-So much for proving conjunctive statements.  To go in the other
-direction — i.e., to _use_ a conjunctive hypothesis to help prove
-something else — we can use {tactic}`obtain` to obtain the components.
+The tactics we've just used — {tactic}`constructor`, applying
+{name}`And.intro`, and the anonymous constructor `⟨_, _⟩` — all conclude
+{lean}`a ∧ b` from proofs of {lean}`a` and {lean}`b`. We say that these
+tactics _introduce_ a conjunction: they derive it as a logical
+consequence of hypotheses we already have.
+
+We also sometimes want to go the other way: given a conjunctive
+hypothesis, use it to help prove something else, by extracting the two
+proofs it packages together. In Lean, this is done with
+{tactic}`obtain`. We say that {tactic}`obtain` _eliminates_ a
+conjunction: it takes the conjunction apart to expose the proofs
+inside.
 
 ```lean
 example (n m : Nat) : n = 0 ∧ m = 0 → n + m = 0 := by
@@ -658,11 +667,11 @@ of two propositions: {lean}`a ∨ b` is true when either {lean}`a` or {lean}`b` 
 This infix notation stands for {lean}`Or a b`, where
 `Or : Prop → Prop → Prop`.
 
-To use a disjunctive hypothesis in a proof, we proceed by case
-analysis — which, as with other data types like {name}`Nat`, is done
-using {tactic}`cases`. The two cases are `inl` (for "left injection",
-or "in the left case") and `inr` (for "right injection",
-or "in the right case").
+To eliminate a disjunctive hypothesis — i.e., to use it in a proof —
+we proceed by case analysis, which, as with other data types like
+{name}`Nat`, is done using {tactic}`cases`. The two cases are `inl`
+(for "left injection", or "in the left case") and `inr` (for "right
+injection", or "in the right case").
 
 ```lean
 theorem Nat.factor_is_zero (n m : Nat)
@@ -693,11 +702,11 @@ theorem and_is_false (b1 b2 : Bool) (h : (b1 = false) ∨ (b2 = false)) :
   · rw [hb2, Bool.and_false]
 ```
 
-Conversely, to show that a disjunction holds, it suffices to show
-that one of its sides holds. This can be done via the tactics
-{tactic}`left` and {tactic}`right`.  As their names imply, the first one requires
-proving the left side of the disjunction, while the second
-requires proving the right side.  Here is a trivial use...
+Conversely, to introduce a disjunction — i.e., to show that it holds —
+it suffices to show that one of its sides holds. This can be done via
+the tactics {tactic}`left` and {tactic}`right`.  As their names imply,
+the first one requires proving the left side of the disjunction, while
+the second requires proving the right side.  Here is a trivial use...
 
 ```lean
 theorem or_intro_l (a b : Prop) (h : a) : a ∨ b := by
@@ -780,9 +789,13 @@ Not (a : Prop) : Prop
 fun a => a → False
 ```
 
-Since {lean}`False` is a contradictory proposition, the principle of
-explosion also applies to it. If we can get {lean}`False` into the context,
-we can use {tactic}`cases` on it to complete any goal:
+Eliminating a {lean}`False` hypothesis
+works differently from eliminating the connectives above.
+Since {lean}`False` carries no information, there's nothing to
+extract. Rather, since {lean}`False` is a contradictory proposition,
+the principle of explosion applies to it:
+using {tactic}`cases` on a {lean}`False` in the context completes
+any goal:
 
 ```lean
 theorem ex_falso_quodlibet (a : Prop) (h : False) : a := by
@@ -1221,21 +1234,25 @@ propositions have the same truth value, is a structure containing
 the two implication directions. {lean}`a ↔ b` is notation for {lean}`Iff a b`.
 
 ::::full
-In Lean, {lean}`Iff` is a structure packaging two fields and a constructor, which allow
-you to access its component implications. Given an {lean}`Iff` hypothesis, you can
-access the "forward direction" implication via the {lean}`Iff.mp` (short for _modus ponens_,
-the Latin name for reasoning by implication) field, and the "reverse direction"
-via the {lean}`Iff.mpr` (_modus ponens reverse_) field.
+In Lean, {lean}`Iff` is a structure packaging two fields and a
+constructor. Given an {lean}`Iff` hypothesis, you eliminate it to
+access its component implications: the "forward direction" via the
+{lean}`Iff.mp` (short for _modus ponens_, the Latin name for reasoning
+by implication) field, and the "reverse direction" via the
+{lean}`Iff.mpr` (_modus ponens reverse_) field.
 
-If your goal is an {lean}`Iff`, you can convert it into two goals, one for each direction
-of the implication, via the {lean}`Iff.intro` constructor.
-Or you can just use the {tactic}`constructor` tactic.
+If your goal is an {lean}`Iff`, you introduce it by proving both
+implication directions: convert the goal into two subgoals, one for
+each direction, via the {lean}`Iff.intro` constructor, or just use the
+{tactic}`constructor` tactic.
 ::::
 
 ::::terse
-You can use {lean}`Iff.mp` to access the forward direction of the iff,
-{lean}`Iff.mpr` to access the backwards direction, and {lean}`Iff.intro` to convert a goal
-of the form {lean}`a ↔ b` to two goals of the form {lean}`a → b` and {lean}`b → a`.
+You can use {lean}`Iff.mp` to access the forward direction of the iff and
+{lean}`Iff.mpr` to access the backwards direction — these eliminate an
+iff — and {lean}`Iff.intro` to convert a goal of the form {lean}`a ↔ b`
+to two goals of the form {lean}`a → b` and {lean}`b → a`, which
+introduces an iff.
 ::::
 
 ```lean (name := iff)
@@ -1358,6 +1375,10 @@ variable (α β : Type) (x x' y : α) (l l' : List α) (f g : α → β) (p : α
 ```
 :::
 
+:::dev "Mike Hicks (mwhicks1)"
+Declaring the variables above adds all these variables to proof statements. For example, scroll down to the exam for `Even 4` below and you will see this in the InfoView (and the web-rendered student version).
+:::
+
 ::::full
 Another fundamental logical connective is _existential quantification_.
 To say that there is some {lean}`x` of type {lean}`α` such that some property {lean}`a`
@@ -1366,7 +1387,7 @@ connective, and is defined as {lean}`Exists (fun (x : α) => a)`.
 As with `∀ x : α`, the type annotation `: α` can be omitted if Lean
 is able to infer from the context what the type of {lean}`x` should be.
 
-To prove a statement of the form {lean}`∃ x, a`, we must show that {lean}`a`
+To introduce a statement of the form {lean}`∃ x, a`, we must show that {lean}`a`
 holds for some specific choice for {lean}`x`, known as the _witness_ of the
 existential.  This is done in two steps: First, we explicitly tell Lean
 which witness {lean}`y` we have in mind by invoking the tactic `exists y`.
@@ -1401,9 +1422,9 @@ example : Even 4 := by exists 2
   -- but is proven automatically by `exists`
 ```
 
-Conversely, if we have an existential hypothesis {lean}`∃ x, a` in the context,
-we can destructure it to obtain a witness {lean}`x` and a hypothesis stating that {lean}`a`
-holds of {lean}`x`.
+Conversely, to eliminate an existential hypothesis {lean}`∃ x, a` in
+the context, we destructure it to obtain a witness {lean}`x` and a
+hypothesis stating that {lean}`a` holds of {lean}`x`.
 
 ```lean
 example n : (∃ m, n = m + 4) → (∃ o, n = o + 2) := by
