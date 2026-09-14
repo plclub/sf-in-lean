@@ -2050,3 +2050,497 @@ theorem pXY_cequiv_pYX :
 ```
 ::::
 :::::
+
+:::::full
+::::exercise (rating := 4) (name := "havoc_copy") (optional := true)
+Are the following two programs equivalent?
+
+```lean
+def ptwice :=
+  (imp { havoc X; havoc Y })
+
+def pcopy :=
+  (imp { havoc X; Y := X })
+```
+
+If you think they are equivalent, then prove it. If you think they
+are not, then prove that.  (Hint: You may find the {tactic}`have` tactic
+useful.)
+
+```lean
+theorem ptwice_equiv_pcopy :
+  (ptwice ≃ pcopy) ∨ ¬(ptwice ≃ pcopy) := by sorry
+/- Proof. (* ADMITTED
+  right. intro Hc. unfold cequiv in Hc.
+  assert (empty_st =[ ptwice ]=> (Y →ₜ 1 ; X →ₜ 0)).
+  - apply E_Seq with (X →ₜ 0); constructor.
+  - rewrite Hc in H. inversion H. inversion H2. inversion H5. subst.
+    clear -H13.
+    simpl in H13. rewrite t_update_eq in H13.
+  (* LATER: This trick with [f_equal] is non-evident but highly
+     useful to process contradictory equalities on functions.
+     See [p₃_p₄_inequiv] for a more drastic reduction in code.
+    assert (H0 : n = 1).
+    { apply (f_equal (fun st => st Y)) in H13.
+      apply H13. }
+    assert (H1 : n = 0).
+    { apply (f_equal (fun st => st X)) in H13.
+      apply H13. }
+    rewrite H0 in H1. discriminate.
+Qed.
+(* /ADMITTED -/
+```
+::::
+:::::
+
+:::::full
+The definition of program equivalence we are using here has some
+subtle consequences on programs that may loop forever.  What
+`Equiv` says is that the set of possible _terminating_ outcomes
+of two equivalent programs is the same. However, in a language
+with nondeterminism, like Himp, some programs always terminate,
+some programs always diverge, and some programs can
+nondeterministically terminate in some runs and diverge in
+others. The final part of the following exercise illustrates this
+phenomenon.
+:::::
+
+:::::full
+::::exercise (rating := 4) (name := "p₁_p₂_term") (level := Advanced)
+Consider the following commands:
+
+```lean
+def p₁ : Com :=
+  imp {
+    while (X = 0) {
+       havoc Y;
+       X := X + 1
+    }
+  }
+
+def p₂ : Com :=
+  imp{
+    while (¬ (X = 0)) {
+       skip
+    }
+  }
+
+```
+
+Intuitively, `p₁` and `p₂` have the same termination behavior:
+either they loop forever, or they terminate in the same state they
+started in.  We can capture the termination behavior of `p₁` and
+`p₂` individually with these lemmas:
+
+```lean
+theorem p₁_may_diverge (st st' : State) (h : st[X] ≠ 0) :
+  ¬ (st =[ p₁ ]=> st') := by
+  solution!
+    sorry
+    /- Proof. (* ADMITTED
+      intros. intros Hcontra.
+      remember p₁ as p₁' eqn:Heqp₁'. remember st' as st'' eqn:Heqst''.
+      induction Hcontra; inversion Heqp₁'.
+      - (* E_WhileFalse  subst. simpl in H0.
+        apply negb_false_iff in H0. apply eqb_eq in H0.
+        apply H in H0. assumption.
+      - (* E_WhileTrue  subst. apply IHHcontra2; try reflexivity.
+        inversion Hcontra1. subst.
+        inversion H3; subst. inversion H6; subst.
+        rewrite t_update_eq. simpl. lia.
+    Qed. -/
+```
+
+:::gradeTheorem 3 p₁_may_diverge
+:::
+
+```lean
+theorem p₂_may_diverge (st st' : State) (h : st[X] ≠ 0) :
+  ¬ (st =[ p₂ ]=> st') := by
+  solution!
+    sorry
+/- (* ADMITTED
+  intros. intros Hcontra.
+  remember p₂ as p₂' eqn:Heqp₂'. remember st' as st'' eqn:Heqst''.
+  induction Hcontra; inversion Heqp₂'.
+  - (* E_WhileFalse  subst. simpl in H0.
+    apply negb_false_iff in H0. apply eqb_eq in H0.
+    apply H in H0. assumption.
+  - (* E_WhileTrue  subst. apply IHHcontra2; try reflexivity.
+    inversion Hcontra1. subst.
+    assumption.
+Qed. (* /ADMITTED -/
+```
+
+:::gradeTheorem 3 p₂_may_diverge
+:::
+::::
+:::::
+
+:::::full
+::::exercise (rating := 4) (name := "p₁_p₂_equiv") (level := Advanced)
+Use these two lemmas to prove that `p₁` and `p₂` are actually
+equivalent.
+
+```lean
+theorem p₁_p₂_equiv : p₁ ≃ p₂ := by
+  solution!
+    sorry
+    /- Proof. (* ADMITTED
+      split; intros.
+      - remember p₁ as p₁' eqn:Heqp₁'.
+        destruct H; inversion Heqp₁'; subst.
+        + (* E_WhileFalse  apply E_WhileFalse. assumption.
+        + (* E_WhileTrue  apply p₁_may_diverge in H1.
+          * inversion H1.
+          * simpl in H. apply negb_true_iff in H. apply eqb_neq in H.
+            inversion H0. subst. inversion H4. subst. inversion H7. subst.
+            rewrite t_update_eq. simpl. lia.
+      - remember p₂ as p₂' eqn:Heqp₂'.
+        destruct H; inversion Heqp₂'; subst.
+        + (* E_WhileFalse  apply E_WhileFalse. assumption.
+        + (* E_WhileTrue  apply p₂_may_diverge in H1.
+          * inversion H1.
+          * simpl in H. apply negb_true_iff in H. apply eqb_neq in H.
+            inversion H0. subst. assumption.
+    Qed. (* /ADMITTED -/
+```
+
+:::gradeTheorem 6 p₁_p₂_equiv
+:::
+
+::::
+:::::
+
+:::::full
+::::exercise (rating := 4) (name := "p₃_p₄_inequiv") (level := Advanced)
+Prove that the following programs are _not_ equivalent.  (Hint:
+What should the value of `Z` be when `p₃` terminates?  What about
+`p₄`?)
+
+```lean
+def p₃ : Com :=
+  imp {
+    Z := 1;
+    while (X ≠ 0) {
+      havoc X;
+      havoc Z
+    }
+  }
+
+def p₄ : Com :=
+  imp {
+    X := 0;
+    Z := 1
+  }
+```
+
+:::solution
+First, note that the programs `p₃` and `p₄` are not equivalent:
+when `p₃` terminates, even though `X` definitely has value `0`,
+`Z` might have any natural number as the value.
+:::
+
+```lean
+theorem p₃_p₄_inequiv : ¬ (p₃ ≃ p₄) := by
+  solution!
+    sorry
+   /- Proof. (* ADMITTED
+      intros Hcontra.
+      unfold cequiv in Hcontra.
+      remember (X →ₜ 1) as st.
+      assert (st =[ p₃ ]=> (Z →ₜ 0 ; X →ₜ 0 ; Z →ₜ 1 ; st)).
+      - eapply E_Seq.
+        + constructor. reflexivity.
+        + simpl. eapply E_WhileTrue.
+          * subst. reflexivity.
+          * eapply E_Seq; constructor.
+          * apply E_WhileFalse.
+            reflexivity.
+      - apply Hcontra in H.
+        inversion H. subst.
+        inversion H2. subst.
+        inversion H5. subst.
+        simpl in H6.
+        apply (f_equal (fun st => st Z)) in H6.
+        discriminate H6.
+    Qed. (* /ADMITTED -/
+```
+
+:::gradeTheorem 6 p₃_p₄_inequiv
+:::
+
+::::
+:::::
+
+
+
+:::::full
+::::exercise (rating := 5) (name := "p₅_p₆_equiv") (level := Advanced) (optional := true)
+Prove that the following commands are equivalent.  (Hint: As
+mentioned above, our definition of `Equiv` for Himp only takes
+into account the sets of possible terminating configurations: two
+programs are equivalent if and only if the set of possible terminating
+states is the same for both programs when given a same starting state
+`st`.  If `p₅` terminates, what should the final state be? Conversely,
+is it always possible to make `p₅` terminate?)
+
+```lean
+def p₅ : Com :=
+  imp {
+    while (X ≠ 1) {
+      havoc X
+    }
+  }
+
+def p₆ : Com := imp { X := 1 }
+```
+
+:::solution
+Programs `p₅` and `p₆` are equivalent although `p₅` may diverge,
+while `p₆` always terminates. The definition we took for `Equiv`
+cannot distinguish between these two scenarios. It accepts the two
+programs as equivalent on the basis that: if `p₅` terminates it
+produces the same final state as `p₆`, and there exists an
+execution in which `p₅` terminates and does exactly as `p₆`.
+
+There are two directions to the proof:
+
+`→`: Observe that whenever `p₅` terminates, it does so with `X`
+set to `1`, and no other variable changed. But this is exactly the
+behavior of `p₆`. Thus given a pair of states `st` and `st'` and
+that `st =[ p₅ ]=> st'`, the answer to the question
+"Does `st =[ p₆ ]=> st'`?"  is "Yes".
+
+`←` (and more controversially): Given that `st =[ p₆ ]=> st'` for
+some `st` and `st'`, can we show that `st =[ p₅ ]=> st'`? Observe
+that we can use the hypothesis to conclude that
+`st' = (X →ₜ 1 ; st)`.
+Is there some execution of `p₅` starting from `st` which also
+ends up in `st'`? Yes!
+
+Hence their equivalence.
+
+```lean
+theorem p₅_summary (st st' : State) (h : st =[ p₅ ]=> st') : st' = (X →ₜ 1 ; st) := by sorry
+/- Proof.
+  intros. remember p₅ as p₅' eqn:Heqp₅'.
+  induction H; inversion Heqp₅'; subst.
+  - (* E_WhileFalse
+    simpl in H. apply negb_false_iff in H. apply eqb_eq in H.
+    rewrite <- H. rewrite t_update_same. reflexivity.
+  - (* E_WhileTrue
+    apply IHceval₂ in Heqp₅'.
+    inversion H0; subst.
+    apply t_update_shadow. -/
+```
+:::
+
+```lean
+theorem p₅_p₆_equiv : p₅ ≃ p₆ := by
+  solution!
+    sorry
+    /- Proof. (* ADMITTED
+      split; intros.
+      - (* →
+        apply p₅_summary in H. subst. constructor. reflexivity.
+      - (* <-  inversion H. subst.
+        simpl. simpl in H.
+        destruct ((st X) = 1) eqn:Heqb.
+        + (* X = 1
+          apply eqb_eq in Heqb.
+          rewrite <- Heqb.
+          rewrite t_update_same.
+          apply E_WhileFalse. simpl. rewrite → Heqb.
+          reflexivity.
+        + (* X ≠ 1
+          apply E_WhileTrue with (st' := (X →ₜ 1 ; st)).
+          * simpl. rewrite Heqb. reflexivity.
+          * constructor.
+          * apply E_WhileFalse. reflexivity. -/
+```
+::::
+
+```lean
+end Himp
+```
+:::::
+
+# Additional Exercises
+
+:::suppressPreviousHeaderWhenTerse
+:::
+
+:::::full
+::::exercise (rating := 3) (name := "swap_noninterfering_assignments") (optional := true)
+(Hint: You may or may not - depending how you approach it - need
+to use `ext` explicitly for this one.)
+
+```lean
+theorem swap_noninterfering_assignments (l₁ l₂ : String) (a₁ a₂ : Aexp)
+  (hl : l₁ ≠ l₂)
+  (h₁ : VarNotUsedInAexp l₁ a₂)
+  (h₂ : VarNotUsedInAexp l₂ a₁) :
+  imp { l₁ := a₁; l₂ := a₂ } ≃ imp { l₂ := a₂; l₁ := a₁ } := by
+    solution!
+      sorry
+      /- Proof.
+      (* ADMITTED
+        assert (HS : forall l₁ l₂ a₁ a₂,
+          l₁ ≠ l₂ →
+          VarNotUsedInAexp l₁ a₂ →
+          VarNotUsedInAexp l₂ a₁ →
+          forall st st',
+            st =[ l₁ := a₁; l₂ := a₂ ]=> st' →
+            st =[ l₂ := a₂; l₁ := a₁ ]=> st').
+        { intros l₁ l₂ a₁ a₂ Hneq HNE1 HNE2 st st' H.
+          inversion H; subst. inversion H2; subst. inversion H5; subst.
+          eapply E_Seq.
+          - apply E_Asgn. reflexivity.
+          - rewrite → (t_update_permute _ _ _ _ _ _ Hneq).
+            replace (aeval (l₁ →ₜ a₁; st) a₂) with a₂.eval st..eval st
+            + apply E_Asgn. apply aeval_weakening. apply HNE2.
+            + symmetry. apply aeval_weakening. apply HNE1. }
+        split; eauto.
+      Qed. (* /ADMITTED -/
+```
+::::
+:::::
+
+:::::full
+::::exercise (rating := 4) (name := "for_while_equiv") (optional := true)
+This exercise extends the optional `add_for_loop` exercise from
+the {ref "Imp"}[Imp] chapter, where you were asked to extend the language
+of commands with C-style `for` loops.  Prove that the command:
+
+```
+for (c₁; b; c₂) {
+  c₃
+}
+```
+
+is equivalent to:
+
+```
+c₁;
+while (b) {
+  c₃;
+  c₂
+}
+```
+::::
+:::::
+
+:::::full
+::::exercise (rating := 4) (name := "cApprox") (level := Advanced) (optional := true)
+In this exercise we define an asymmetric variant of program
+equivalence we call _program approximation_. We say that a
+program `c₁` _approximates_ a program `c₂` when, for each of
+the initial states for which `c₁` terminates, `c₂` also terminates
+and produces the same final state. Formally, program approximation
+is defined as follows:
+
+```lean
+def Approx (c₁ c₂ : Com) : Prop := forall (st st' : State),
+  (st =[ c₁ ]=> st') → (st =[ c₂ ]=> st')
+```
+
+For example, the program `c₁`
+
+```
+while (X ≠ 1) {
+  X := X - 1
+}
+```
+
+approximates `c₂`: `X := 1`, but `c₂` does not approximate `c₁`
+since `c₁` does not terminate when `X = 0` but `c₂` does.  If two
+programs approximate each other in both directions, then they are
+equivalent.
+
+Find two programs `c₃` and `c₄` such that neither approximates
+the other.
+
+```lean
+def c₃ : Com :=
+-- SOLUTION
+  imp { X := 1 }
+-- END SOLUTION
+def c₄ : Com :=
+-- SOLUTION
+  imp { X := 2 }
+-- END SOLUTION
+```
+
+```lean
+theorem c₃_c₄_different : ¬ (Approx c₃ c₄) ∧ ¬ (Approx c₄ c₃) := by
+  solution!
+    sorry
+    /- Proof. (* ADMITTED
+      unfold not, capprox; split; intros.
+
+      - assert (empty_st =[ c₃ ]=> (X →ₜ 1)).
+        + constructor. reflexivity.
+        + apply H in H0. inversion H0; subst. simpl in H5.
+          assert ((X →ₜ 2) X = 2).
+          * reflexivity.
+          * assert ((X →ₜ 1) X = 1).
+            -- reflexivity.
+            -- rewrite → H5 in H1. rewrite → H2 in H1. inversion H1.
+
+      - assert (empty_st =[ c₄ ]=> (X →ₜ 2)).
+        + constructor. reflexivity.
+        + apply H in H0. inversion H0; subst. simpl in H5.
+          assert ((X →ₜ 2) X = 2).
+          * reflexivity.
+          * assert ((X →ₜ 1) X = 1).
+            -- reflexivity.
+            -- rewrite → H5 in H2. rewrite → H1 in H2. inversion H2.
+    Qed. (* /ADMITTED-/
+```
+
+Find a program `cMin` that approximates every other program.
+
+```lean
+def cMin : Com :=
+-- SOLUTION
+  imp { while (true) { skip } }
+-- END SOLUTION
+
+theorem cMin_minimal (c : Com) : Approx cMin c := by
+  solution!
+    sorry
+    /- Proof. (* ADMITTED
+      unfold capprox. intros.
+      apply loop_never_stops in H.
+      inversion H.
+    Qed. (* /ADMITTED -/
+```
+
+Finally, find a non-trivial property which is preserved by
+program approximation (when going from left to right).
+
+```lean
+def zprop (c : Com) : Prop :=
+-- SOLUTION
+  forall st, exists st', (st =[ c ]=> st')
+-- END SOLUTION
+```
+
+:::solution
+Intuitively, `zprop` holds of programs that terminate on all
+inputs.
+:::
+
+```lean
+theorem zprop_preserving (c c' : Com) (hc : zprop c) (ha : Approx c c') : zprop c' := by
+  solution!
+    sorry
+      /- Proof. (* ADMITTED
+        unfold zprop, capprox. intros.
+        specialize (H st). inversion H as `st'`.
+        apply H0 in H1. exists st'. assumption.
+      Qed. -/
+```
+::::
+:::::
