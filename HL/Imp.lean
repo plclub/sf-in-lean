@@ -239,7 +239,7 @@ syntax:max "(" imp_aexp ")" : imp_aexp
 syntax:max "~" term:max : imp_aexp
 
 /-- Embed an Imp arithmetic expression into a Lean term -/
-syntax:min "aexp " "{" imp_aexp "}" : term
+syntax:80 "aexp " "{" imp_aexp "}" : term
 ```
 ::::
 
@@ -322,7 +322,7 @@ syntax:max "(" imp_bexp ")" : imp_bexp
 syntax:max "~" term:max : imp_bexp
 
 /-- Embed an Imp boolean expression into a Lean term -/
-syntax:min "bexp " "{" imp_bexp "}" : term
+syntax:80 "bexp " "{" imp_bexp "}" : term
 ```
 ::::
 
@@ -652,7 +652,7 @@ declare_syntax_cat imp_com
 /-- The command that does nothing (`skip`) -/
 syntax:max ident : imp_com
 /-- Sequencing: one command after another (right associative. min + 1 = 11) -/
-syntax:min imp_com:11 Lean.Parser.semicolonOrLinebreak ppHardSpace imp_com:min : imp_com
+syntax:80 imp_com:11 Lean.Parser.semicolonOrLinebreak ppHardSpace imp_com:min : imp_com
 /-- Assignment -/
 syntax:max ident ppHardSpace ":=" ppHardSpace imp_aexp : imp_com
 /-- Conditional -/
@@ -663,7 +663,7 @@ syntax:max "while " "(" imp_bexp ")" ppHardSpace "{" imp_com "}" : imp_com
 syntax:max "~" term:max : imp_com
 
 /-- Include an Imp command in Lean code -/
-syntax:min "imp" ppHardSpace "{" imp_com "}" : term
+syntax:80 "imp" ppHardSpace "{" imp_com "}" : term
 
 namespace Com
 
