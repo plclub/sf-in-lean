@@ -3165,10 +3165,6 @@ theorem not_exists_dist (α : Type) (p : α → Prop) :
 :::::
 
 :::::exercise (rating := 5) (name := "classical_axioms") (optional := true)
-:::dev "Niklas Halonen (xhalo32)"
-The following exercise needs grading attributes or manual grading.
-:::
-
 For those who like a challenge, here is an exercise adapted from the Coq'Art
 book by Bertot and Castéran (p. 123). Each of the following five statements,
 together with {lean}`ExcludedMiddle`, can be considered as characterizing
@@ -3199,70 +3195,80 @@ def ImpOr := ∀ a b : Prop, (a → b) → (¬ a ∨ b)
 
 def ConsequentiaMirabilis := ∀ a : Prop, (¬ a → a) → a
 
--- SOLUTION
 theorem ImpOr_em : ImpOr → ExcludedMiddle := by
-  intro h a
-  obtain hna | ha := h a a (fun ha => ha)
-  · right; exact hna
-  · left; exact ha
+  solution!
+    intro h a
+    obtain hna | ha := h a a (fun ha => ha)
+    · right; exact hna
+    · left; exact ha
 
 theorem em_ImpOr : ExcludedMiddle → ImpOr := by
-  intro h a b hab
-  obtain ha | hna := h a
-  · right; exact hab ha
-  · left; exact hna
+  solution!
+    intro h a b hab
+    obtain ha | hna := h a
+    · right; exact hab ha
+    · left; exact hna
 
 theorem em_demorgan : ExcludedMiddle → DeMorganNotAndNot := by
-  intro h a b hnn
-  obtain ha | hna := h a
-  · left; exact ha
-  · obtain hb | hnb := h b
-    · right; exact hb
-    · exfalso; exact hnn ⟨hna, hnb⟩
+  solution!
+    intro h a b hnn
+    obtain ha | hna := h a
+    · left; exact ha
+    · obtain hb | hnb := h b
+      · right; exact hb
+      · exfalso; exact hnn ⟨hna, hnb⟩
 
 theorem demorgan_em : DeMorganNotAndNot → ExcludedMiddle := by
-  intro h a
-  apply h a (¬ a)
-  intro ⟨hna, hnna⟩
-  exact hnna hna
+  solution!
+    intro h a
+    apply h a (¬ a)
+    intro ⟨hna, hnna⟩
+    exact hnna hna
+
 theorem em_not_not : ExcludedMiddle → NotNot := by
-  intro h a hnna
-  obtain ha | hna := h a
-  · exact ha
-  · exfalso; exact hnna hna
+  solution!
+    intro h a hnna
+    obtain ha | hna := h a
+    · exact ha
+    · exfalso; exact hnna hna
 
 theorem not_not_em' : NotNot → ExcludedMiddle := by
-  intro h a; exact h _ (excluded_middle_irrefutable a)
+  solution!
+    intro h a; exact h _ (excluded_middle_irrefutable a)
 
 theorem em_cm : ExcludedMiddle → ConsequentiaMirabilis := by
-  intro h a hnaa
-  obtain ha | hna := h a
-  · exact ha
-  · exact (hnaa hna)
+  solution!
+    intro h a hnaa
+    obtain ha | hna := h a
+    · exact ha
+    · exact (hnaa hna)
 
 theorem cm_em : ConsequentiaMirabilis → ExcludedMiddle := by
-  intro hc a; apply hc
-  intro h; right
-  intro ha; apply h
-  left; exact ha
+  solution!
+    intro hc a; apply hc
+    intro h; right
+    intro ha; apply h
+    left; exact ha
 
 theorem cm_not_not : ConsequentiaMirabilis → NotNot := by
-  intro h a hnna; apply h
-  intro hna; exfalso; exact hnna hna
+  solution!
+    intro h a hnna; apply h
+    intro hna; exfalso; exact hnna hna
 
 theorem not_not_cm : NotNot → ConsequentiaMirabilis := by
-  intro h a hnaa; apply h
-  intro hna; exact hna (hnaa hna)
+  solution!
+    intro h a hnaa; apply h
+    intro hna; exact hna (hnaa hna)
 
 theorem cm_peirce : ConsequentiaMirabilis → Peirce := by
-  intro h a b haba; apply h
-  intro hna; apply haba
-  intro ha; contradiction
+  solution!
+    intro h a b haba; apply h
+    intro hna; apply haba
+    intro ha; contradiction
 
 theorem peirce_cm : Peirce → ConsequentiaMirabilis := by
-  intro h a; exact h a False
-
--- END SOLUTION
+  solution!
+    intro h a; exact h a False
 ```
 
 :::gradeTheorem 5 ImpOr_em em_ImpOr em_demorgan demorgan_em em_not_not not_not_em' em_cm cm_em cm_not_not not_not_cm cm_peirce peirce_cm
