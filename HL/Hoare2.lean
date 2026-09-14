@@ -1682,7 +1682,7 @@ changed things back.
 
 ```lean
 example : decWhile.VerificationConditions := by
-  unfold Decorated.VerificationConditions decWhile
+  rw [Decorated.VerificationConditions, decWhile]
   simp only [DCom.VerificationConditions,
     DCom.postcondition]
   sorry
