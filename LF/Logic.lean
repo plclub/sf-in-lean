@@ -22,26 +22,6 @@ two 80-minute lectures, and the last couple of sections are quite
 meaty.  Pacing is key!
 :::
 
-:::::dev "Mike Hicks (mwhicks1)"
-See about working the following into this chapter.
-
-::::full
-Any tactic that accepts an `at`
-clause can target several locations at once, including the goal, by
-listing them together after `at`.
-::::
-
-::::terse
-More generally, `at` can list several locations at once, including the goal:
-::::
-
-```lean
-example (n m : Nat) (h : n + 0 = m) : n = m + 0 := by
-  rw [Nat.add_zero] at h ⊢
-  assumption
-```
-:::::
-
 :::dev BeforeNextRelease
 Unlike earlier chapters, there are probably too many
 WORKINCLASSes in this chapter.  BCP 20: But conversely some more
@@ -60,55 +40,6 @@ import LF.CustomTactics
 ```lean -show
 variable (a b c : Prop) (n m : Nat) (α : Type) (e1 e2 x y : α)
 ```
-:::
-
-:::dev "Yipeng Liu (berberman)" PotentialImprovement
-
-MWH: This was moved here from `Induction`. Work it in somewhere here, or
-maybe in IndProp or Tactics?
-
-This is an interesting question...
-
-Logically, induction subsumes case analysis —
-you can simply ignore those inductive hypotheses
-so anything provable by case analysis is also provable
-using the induction principle.
-
-However, Lean's `cases` has specialized machinery for indexed inductive families.
-Here are some examples that `cases` can solve while `induction` can't:
-
-```lean
--- substitution
-example (x : Nat) (h : x = 0) : Nat.succ x = 1 := by
-  -- induction h
-  cases h
-  rfl
-```
-
-```lean
--- disjointness
-example (h : (0 : Nat) = 1) : False := by
-  -- induction h
-  cases h
-```
-
-```lean
--- injectivity
-example {m n : Nat} (h : Nat.succ m = Nat.succ n) : m = n := by
-  -- induction h
-  cases h
-  rfl
-```
-
-```lean
--- acyclicity
-example (n : Nat) (h : n = Nat.succ n) : False := by
-  -- induction h
-  cases h
-```
-
-... and there are more!
-
 :::
 
 ::::hide
@@ -260,6 +191,8 @@ definition? Is it worth a word about that? Have students seen this
 happen to this point?
 :::
 
+## Equality Propositions
+
 The familiar equality operator `=` is a (binary) function that returns
 a {lean}`Prop`. The expression `n = m` is notation for `Eq n m`.
 Because {name}`Eq` can be used with elements of any type, it is also
@@ -279,9 +212,71 @@ right at this moment, but they'll see {name}`Sort` when hovering.
 Eq.{u_1} {α : Sort u_1} : α → α → Prop
 ```
 
+::::full
+Equality turns out to be an inductively defined proposition, with a single constructor,
+{name}`Eq.refl`, standing for the proof that anything is equal to itself.
+Recall from the {ref "Tactics"}[Tactics] chapter that the constructors
+of an inductive type are _injective_ and _disjoint_, and that
+{tactic}`injection` and {tactic}`contradiction` let us exploit those
+facts about hypotheses concerning {lean}`Nat`, {lean}`List`, and so on.
+The very same injectivity and disjointness reasoning applies to a hypothesis of the form
+{lean}`a = b`. In fact, {tactic}`cases` can carry out this reasoning
+directly on an equality hypothesis, without our having to name
+{tactic}`injection` or {tactic}`contradiction`. Here are a few
+examples.
+::::
+
+::::terse
+The injectivity/disjointness principles from the `Tactics` chapter
+apply to equality hypotheses too, and {tactic}`cases` can exploit them
+directly:
+::::
+
+```lean
+-- substitution
+example (x : Nat) (h : x = 0) : Nat.succ x = 1 := by
+  cases h
+  rfl
+```
+
+```lean
+-- injectivity
+example {m n : Nat} (h : Nat.succ m = Nat.succ n) : m = n := by
+  cases h
+  rfl
+```
+
+::::full
+(This is the same injectivity fact used above by the {tactic}`injection`
+tactic in {lean}`succ_inj'`; here {tactic}`cases` gets us the same
+conclusion in a single step.)
+::::
+
+```lean
+-- disjointness
+example (h : (0 : Nat) = 1) : False := by
+  cases h
+```
+
+```lean
+-- acyclicity
+example (n : Nat) (h : n = Nat.succ n) : False := by
+  cases h
+```
+
+::::full
+We'll see this same disjointness principle put to use again shortly,
+via {tactic}`contradiction`, to prove {lean}`0 ≠ 1` in the `Falsehood
+and Negation` section below.
+::::
+
+::::terse
+There are more examples of this kind of reasoning yet to come.
+::::
+
 As a convenience, Lean will cast booleans to propositions by equating them to {lean}`true`,
 which is why checking them against {lean}`Prop` succeeds.
-For clarity, we will avoid relying on these implicit casts.
+For clarity, we will generally avoid relying on these implicit casts.
 
 ```lean (name := false)
 #check (false : Prop)
@@ -298,6 +293,8 @@ false = true : Prop
 ```leanOutput true
 true = true : Prop
 ```
+
+## Quizzes
 
 ::::quiz
 What is the type of the following expression?
@@ -441,16 +438,23 @@ The _conjunction_, or _logical and_, of propositions {lean}`a` and {lean}`b` is 
 {lean}`a ∧ b`; it represents the claim that both {lean}`a` and {lean}`b` are true.
 
 ```lean
-example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
-  /- A proof of a conjunction is a pair of proofs of the two components.
-      To prove a conjunction, we build a pair using `constructor`. -/
-  constructor
-  · rfl /- 3 + 4 = 7 -/
-  · rfl /- 2 * 2 = 4 -/
+example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by sorry -- proofs below
 ```
 
-The constructor for conjunction is {name}`And.intro`,
-which concludes that {lean}`a ∧ b` given that {lean}`a` and {lean}`b` hold individually.
+The infix notation `∧` is actually just syntactic sugar for
+{lean}`And a b`. That is, {lean}`And` is a Lean operator that takes two
+propositions as arguments and yields a proposition.
+
+```lean (name := and)
+#check And
+```
+
+```leanOutput and
+And (a b : Prop) : Prop
+```
+
+The sole constructor for conjunction is {name}`And.intro`,
+which concludes {lean}`a ∧ b` given that {lean}`a` and {lean}`b` hold individually.
 
 ```lean (name := and_intro)
 #check And.intro
@@ -460,7 +464,7 @@ which concludes that {lean}`a ∧ b` given that {lean}`a` and {lean}`b` hold ind
 And.intro {a b : Prop} (left : a) (right : b) : a ∧ b
 ```
 
-We can also apply the constructor for the conjunction explicitly.
+We can {tactic}`apply` {lean}`And.intro` to carry out proofs.
 
 ```lean
 example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
@@ -475,6 +479,20 @@ the arguments to the constructor as an {tactic}`exact` proof.
 ```lean
 example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
   exact And.intro rfl rfl
+```
+
+Lean can figure out which constructor to use just from the goal's type, so we
+don't have to name it ourselves. This is what the tactic {tactic}`constructor`
+does automatically: it applies whatever constructor builds a value of the
+goal's type, leaving one subgoal per argument of that constructor. Since
+{lean}`And` has just one constructor, {tactic}`constructor` always picks it
+here.
+
+```lean
+example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
+  constructor
+  · rfl
+  · rfl
 ```
 
 We can also use Lean's anonymous constructor notation `⟨..., ...⟩`,
@@ -606,7 +624,7 @@ theorem and_commute (a b : Prop) (h : a ∧ b) : b ∧ a := by
   · exact h.left
 ```
 
-The anonymous constructor allows us to write a much terser proof.
+The anonymous constructor allows us to write a much shorter proof.
 
 ```lean
 theorem and_commute' (a b : Prop) (h : a ∧ b) : b ∧ a := by
@@ -633,18 +651,6 @@ theorem and_associate (a b c : Prop) (h : a ∧ (b ∧ c)) : (a ∧ b) ∧ c := 
 
 ::::::
 
-The infix notation `∧` is actually just syntactic sugar for
-{lean}`And a b`. That is, {lean}`And` is a Lean operator that takes two
-propositions as arguments and yields a proposition.
-
-```lean (name := and)
-#check And
-```
-
-```leanOutput and
-And (a b : Prop) : Prop
-```
-
 ## Disjunction
 
 Another important connective is the _disjunction_, or _logical or_,
@@ -659,12 +665,13 @@ or "in the left case") and `inr` (for "right injection",
 or "in the right case").
 
 ```lean
-theorem Nat.factor_is_zero (n m : Nat) (h : n = 0 ∨ m = 0) : n * m = 0 := by
-  cases h with
-  /- `n = 0` -/
-  | inl hn => rw [hn, Nat.zero_mul]
-  /- `m = 0` -/
-  | inr hm => rw [hm, Nat.mul_zero]
+theorem Nat.factor_is_zero (n m : Nat)
+  (h : n = 0 ∨ m = 0) : n * m = 0 := by
+    cases h with
+    /- `n = 0` -/
+    | inl hn => rw [hn, Nat.zero_mul]
+    /- `m = 0` -/
+    | inr hm => rw [hm, Nat.mul_zero]
 ```
 
 ::::full
@@ -747,7 +754,7 @@ statements are expressed with the logical negation operator `¬`,
 which is prefix notation for {lean}`Not`.
 
 To see how negation works, recall the _principle of explosion_
-from the `Tactics` chapter, which asserts that, if we assume a
+from the {ref "Tactics"}[Tactics] chapter, which asserts that, if we assume a
 contradiction, then any other proposition can be derived.
 
 Following this intuition, we could define {lean}`¬ a` ("not {lean}`a`") as
@@ -1686,11 +1693,10 @@ theorem List.All_In {α : Type} {p : α → Prop} {l : List α} :
 :::
 :::::
 
-:::dev "Yipeng Liu (berberman)" NOW
+:::dev "Yipeng Liu (berberman)"
 I found this exercise combining too many awkward details for too little conceptual payoff:
 1. the construction is artificial
 2. before `simp` is introduced, `bif` requires noisy `rw` and Boolean case equations
-3. I don't know how to nicely avoid `cases h : ...` syntax which IIRC we didn't mention before
 :::
 
 :::::exercise (rating := 2) (name := "CombineOddEven") (optional := true)
@@ -1883,6 +1889,24 @@ example (x y z : Nat) : x + (y + z) = (z + y) + x := by
   rw [Nat.add_comm z y]
 ```
 ::::
+
+::::full
+As an aside, some tactics that accept an `at` clause can target
+several locations at once, including the goal, written using the `⊢` symbol, by listing them
+together after `at` — for instance, both {tactic}`rw` and
+{tactic}`dsimp` support this.
+::::
+
+::::terse
+Aside: some tactics, like {tactic}`rw` and {tactic}`dsimp`, can list
+several locations at once with `at`, including the goal:
+::::
+
+```lean
+example (n m : Nat) (h : n + 0 = m) : n = m + 0 := by
+  rw [Nat.add_zero] at h ⊢
+  assumption
+```
 
 The fact that implications are functions means we can prove them by
 explicitly providing a function.
@@ -2562,8 +2586,8 @@ into Lean is cumbersome — or even impossible — unless we enrich
 its core logic with additional axioms.
 
 ::::full
-For example, the equality assertions that we have seen so far mostly
-have concerned elements of inductive types ({name}`Nat`, {name}`Bool`, etc.).
+For example, the equality assertions that we have seen so far have
+mostly involved inductive types ({name}`Nat`, {name}`Bool`, etc.).
 But since the equality operator is polymorphic, we can use it at _any_ type —
 in particular, we can write propositions claiming that two _propositions_
 are equal to each other:
@@ -2850,7 +2874,7 @@ example : (fun xs => 1 :: xs) = (fun xs => [1] ++ xs) := rfl
 :::
 ::::
 
-### Other Extensionality Principles
+## Other Extensionality Principles
 
 ::::full
 Functions and propositions are not the only things that have extensionality principles.
