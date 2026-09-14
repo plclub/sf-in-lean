@@ -438,16 +438,23 @@ The _conjunction_, or _logical and_, of propositions {lean}`a` and {lean}`b` is 
 {lean}`a ∧ b`; it represents the claim that both {lean}`a` and {lean}`b` are true.
 
 ```lean
-example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
-  /- A proof of a conjunction is a pair of proofs of the two components.
-      To prove a conjunction, we build a pair using `constructor`. -/
-  constructor
-  · rfl /- 3 + 4 = 7 -/
-  · rfl /- 2 * 2 = 4 -/
+example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by sorry -- proofs below
 ```
 
-The constructor for conjunction is {name}`And.intro`,
-which concludes that {lean}`a ∧ b` given that {lean}`a` and {lean}`b` hold individually.
+The infix notation `∧` is actually just syntactic sugar for
+{lean}`And a b`. That is, {lean}`And` is a Lean operator that takes two
+propositions as arguments and yields a proposition.
+
+```lean (name := and)
+#check And
+```
+
+```leanOutput and
+And (a b : Prop) : Prop
+```
+
+The sole constructor for conjunction is {name}`And.intro`,
+which concludes {lean}`a ∧ b` given that {lean}`a` and {lean}`b` hold individually.
 
 ```lean (name := and_intro)
 #check And.intro
@@ -457,7 +464,7 @@ which concludes that {lean}`a ∧ b` given that {lean}`a` and {lean}`b` hold ind
 And.intro {a b : Prop} (left : a) (right : b) : a ∧ b
 ```
 
-We can also apply the constructor for the conjunction explicitly.
+We can {tactic}`apply` {lean}`And.intro` to carry out proofs.
 
 ```lean
 example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
@@ -472,6 +479,20 @@ the arguments to the constructor as an {tactic}`exact` proof.
 ```lean
 example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
   exact And.intro rfl rfl
+```
+
+Lean can figure out which constructor to use just from the goal's type, so we
+don't have to name it ourselves. This is what the tactic {tactic}`constructor`
+does automatically: it applies whatever constructor builds a value of the
+goal's type, leaving one subgoal per argument of that constructor. Since
+{lean}`And` has just one constructor, {tactic}`constructor` always picks it
+here.
+
+```lean
+example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
+  constructor
+  · rfl
+  · rfl
 ```
 
 We can also use Lean's anonymous constructor notation `⟨..., ...⟩`,
@@ -603,7 +624,7 @@ theorem and_commute (a b : Prop) (h : a ∧ b) : b ∧ a := by
   · exact h.left
 ```
 
-The anonymous constructor allows us to write a much terser proof.
+The anonymous constructor allows us to write a much shorter proof.
 
 ```lean
 theorem and_commute' (a b : Prop) (h : a ∧ b) : b ∧ a := by
@@ -630,18 +651,6 @@ theorem and_associate (a b c : Prop) (h : a ∧ (b ∧ c)) : (a ∧ b) ∧ c := 
 
 ::::::
 
-The infix notation `∧` is actually just syntactic sugar for
-{lean}`And a b`. That is, {lean}`And` is a Lean operator that takes two
-propositions as arguments and yields a proposition.
-
-```lean (name := and)
-#check And
-```
-
-```leanOutput and
-And (a b : Prop) : Prop
-```
-
 ## Disjunction
 
 Another important connective is the _disjunction_, or _logical or_,
@@ -656,12 +665,13 @@ or "in the left case") and `inr` (for "right injection",
 or "in the right case").
 
 ```lean
-theorem Nat.factor_is_zero (n m : Nat) (h : n = 0 ∨ m = 0) : n * m = 0 := by
-  cases h with
-  /- `n = 0` -/
-  | inl hn => rw [hn, Nat.zero_mul]
-  /- `m = 0` -/
-  | inr hm => rw [hm, Nat.mul_zero]
+theorem Nat.factor_is_zero (n m : Nat)
+  (h : n = 0 ∨ m = 0) : n * m = 0 := by
+    cases h with
+    /- `n = 0` -/
+    | inl hn => rw [hn, Nat.zero_mul]
+    /- `m = 0` -/
+    | inr hm => rw [hm, Nat.mul_zero]
 ```
 
 ::::full
@@ -744,7 +754,7 @@ statements are expressed with the logical negation operator `¬`,
 which is prefix notation for {lean}`Not`.
 
 To see how negation works, recall the _principle of explosion_
-from the `Tactics` chapter, which asserts that, if we assume a
+from the {ref "Tactics"}[Tactics] chapter, which asserts that, if we assume a
 contradiction, then any other proposition can be derived.
 
 Following this intuition, we could define {lean}`¬ a` ("not {lean}`a`") as
@@ -2576,8 +2586,8 @@ into Lean is cumbersome — or even impossible — unless we enrich
 its core logic with additional axioms.
 
 ::::full
-For example, the equality assertions that we have seen so far mostly
-have concerned elements of inductive types ({name}`Nat`, {name}`Bool`, etc.).
+For example, the equality assertions that we have seen so far have
+mostly involved inductive types ({name}`Nat`, {name}`Bool`, etc.).
 But since the equality operator is polymorphic, we can use it at _any_ type —
 in particular, we can write propositions claiming that two _propositions_
 are equal to each other:
@@ -2864,7 +2874,7 @@ example : (fun xs => 1 :: xs) = (fun xs => [1] ++ xs) := rfl
 :::
 ::::
 
-### Other Extensionality Principles
+## Other Extensionality Principles
 
 ::::full
 Functions and propositions are not the only things that have extensionality principles.
