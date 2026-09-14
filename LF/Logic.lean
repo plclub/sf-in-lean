@@ -1199,7 +1199,7 @@ theorem nil_is_not_cons {α : Type} (x : α) (xs : List α) :
 :::
 :::::
 
-:::dev "Niklas Halkonen"
+:::dev "Niklas Halonen (xhalo32)"
 In `List.IsNil` changing the `_ =>` arm to `_ :: _ =>` would introduce a hidden dependency to `List.All` (and `List.In`) which is not emitted to the grading variant because it's in a solution block.
 This would lead to the solution of `List.All_In` (and `List.in_mem` in IndProp) to not pass comparator because the underlying terms are different.
 TLDR: Don't change `List.IsNil` to use `_ :: _ =>`.
@@ -2148,10 +2148,7 @@ theorem even_double (k : Nat) :
 Same issue as `CombineOddEven`.
 :::
 
-:::dev "Claude"
-This lemma is proved with `solution!` but is not wrapped in an `exercise` directive, so the student build gets a `sorry`ed helper with no exercise framing — and `Nat.even_bool_prop` just below depends on it. Consider making it a named, rated exercise or switching to `workinclass!`.
-:::
-
+:::::exercise (rating := 3) (name := "even_double_conv")
 ```lean
 theorem even_double_conv (n : Nat) : ∃ k : Nat,
     n = bif Nat.even n then Nat.double k else Nat.double k + 1 := by
@@ -2171,6 +2168,9 @@ theorem even_double_conv (n : Nat) : ∃ k : Nat,
         rw [h] at ihk; rw [not] at *; rw [cond_true] at ihk
         exists k'; congr
 ```
+:::gradeTheorem 3 even_double_conv
+:::
+:::::
 
 Now the main theorem:
 
@@ -2214,7 +2214,7 @@ we can say either
 1. that {lean}`n == m` returns {lean}`true`, or
 2. that {lean}`n = m`.
 
-Again, these two notions are equivalent:
+Again, these two notions are equivalent.
 
 :::dev "Yipeng Liu (berberman)"
 Either get rid of the development of `beq` story
@@ -2281,6 +2281,10 @@ computation does it for us!
 ```lean
 example : Nat.even 100 = true := rfl
 ```
+
+:::dev "Mike Hicks (mwhicks1)"
+Basically this is saying that computation is a good proof tactic. But this is a little confusing to me because we seem to want to eschew computation in favor of "simplification rules", which imply a preference for the Prop version, despite the downside shown here.
+:::
 
 Now, the useful observation is that, since the two notions are equivalent,
 we can use the boolean formulation to prove the other one
