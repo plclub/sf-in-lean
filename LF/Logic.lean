@@ -36,10 +36,22 @@ import LF.Tactics
 import LF.CustomTactics
 ```
 
-:::ignore
-```lean -show
-variable (a b c : Prop) (n m : Nat) (α : Type) (e1 e2 x y : α)
+:::dev "Mike Hicks (mwhicks1)"
+It would be convenient to declare the variables below so that inline prose
+throughout this chapter can use `a`, `b`, `c`, `n`, `m`, `α`, `e1`, `e2`, `x`,
+and `y` without repeating their type annotations, but the same problem
+described elsewhere in this chapter applies: an unused `variable` is silently
+added to the local context in basically every proof from here on, even when the
+theorem never mentions it. Until we have a
+way to declare variables visible only for inline prose (rather than for every
+`lean` block), we leave this commented out:
+
 ```
+-- variable (a b c : Prop) (n m : Nat) (α : Type) (e1 e2 x y : α)
+```
+
+Yipeng Liu (berberman) said: Maybe we should implement a separate scope for
+declaring variables only visible to `lean` role instead of `lean` block.
 :::
 
 ::::hide
@@ -64,8 +76,8 @@ variable (a b c : Prop) (n m : Nat) (α : Type) (e1 e2 x y : α)
 We have now seen many examples of factual claims (i.e.,
 _propositions_) and ways of presenting evidence of their truth
 (_proofs_).  In particular, we have worked extensively with
-equality propositions ({lean}`e1 = e2`), implications ({lean}`a → b`), and
-quantified propositions ({lean}`∀ x, a`).  In this chapter, we will
+equality propositions (`e1 = e2`), implications (`a → b`), and
+quantified propositions (`∀ x, a`).  In this chapter, we will
 see how Lean can be used to carry out other familiar forms of
 logical reasoning.
 
@@ -80,9 +92,9 @@ _propositions_.  We can see this with the `#check` command:
 ::::terse
 So far, we have seen:
 - _propositions_: mathematical statements, so far only of three kinds:
-  - equality propositions ({lean}`e1 = e2`)
-  - implications ({lean}`a → b`)
-  - quantified propositions ({lean}`∀ x, a`)
+  - equality propositions (`e1 = e2`)
+  - implications (`a → b`)
+  - quantified propositions (`∀ x, a`)
 - _proofs_: ways of presenting evidence for the truth of a
    proposition
 
@@ -220,7 +232,7 @@ of an inductive type are _injective_ and _disjoint_, and that
 {tactic}`injection` and {tactic}`contradiction` let us exploit those
 facts about hypotheses concerning {lean}`Nat`, {lean}`List`, and so on.
 The very same injectivity and disjointness reasoning applies to a hypothesis of the form
-{lean}`a = b`. In fact, {tactic}`cases` can carry out this reasoning
+`a = b`. In fact, {tactic}`cases` can carry out this reasoning
 directly on an equality hypothesis, without our having to name
 {tactic}`injection` or {tactic}`contradiction`. Here are a few
 examples.
@@ -434,15 +446,15 @@ Which of the following is _not_ a proposition?
 
 ## Conjunction
 
-The _conjunction_, or _logical and_, of propositions {lean}`a` and {lean}`b` is written
-{lean}`a ∧ b`; it represents the claim that both {lean}`a` and {lean}`b` are true.
+The _conjunction_, or _logical and_, of propositions `a` and `b` is written
+`a ∧ b`; it represents the claim that both `a` and `b` are true.
 
 ```lean
 example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by sorry -- proofs below
 ```
 
 The infix notation `∧` is actually just syntactic sugar for
-{lean}`And a b`. That is, {lean}`And` is a Lean operator that takes two
+`And a b`. That is, {lean}`And` is a Lean operator that takes two
 propositions as arguments and yields a proposition.
 
 ```lean (name := and)
@@ -454,7 +466,7 @@ And (a b : Prop) : Prop
 ```
 
 The sole constructor for conjunction is {name}`And.intro`,
-which concludes {lean}`a ∧ b` given that {lean}`a` and {lean}`b` hold individually.
+which concludes `a ∧ b` given that `a` and `b` hold individually.
 
 ```lean (name := and_intro)
 #check And.intro
@@ -528,7 +540,7 @@ theorem Nat.add_is_zero (n m : Nat) : n + m = 0 → n = 0 ∧ m = 0 := by
 
 The tactics we've just used — {tactic}`constructor`, applying
 {name}`And.intro`, and the anonymous constructor `⟨_, _⟩` — all conclude
-{lean}`a ∧ b` from proofs of {lean}`a` and {lean}`b`. We say that these
+`a ∧ b` from proofs of `a` and `b`. We say that these
 tactics _introduce_ a conjunction: they derive it as a logical
 consequence of hypotheses we already have.
 
@@ -557,8 +569,8 @@ example (n m : Nat) : n = 0 ∧ m = 0 → n + m = 0 := by
 ```
 
 ::::full
-You may wonder why we bothered packing the two hypotheses {lean}`n = 0` and
-{lean}`m = 0` into a single conjunction, since we could also have stated the
+You may wonder why we bothered packing the two hypotheses `n = 0` and
+`m = 0` into a single conjunction, since we could also have stated the
 theorem with two separate premises:
 
 ```lean
@@ -592,8 +604,8 @@ example (n m : Nat) (h : n + m = 0) : n * m = 0 := by
 ```
 
 ::::::full
-Another common situation is that we know {lean}`a ∧ b` but in some
-context we need just {lean}`a` or just {lean}`b`.  In such cases we can use
+Another common situation is that we know `a ∧ b` but in some
+context we need just `a` or just `b`.  In such cases we can use
 an underscore pattern `_` to indicate that the unneeded conjunct
 should just be thrown away.
 
@@ -663,8 +675,8 @@ theorem and_associate (a b c : Prop) (h : a ∧ (b ∧ c)) : (a ∧ b) ∧ c := 
 ## Disjunction
 
 Another important connective is the _disjunction_, or _logical or_,
-of two propositions: {lean}`a ∨ b` is true when either {lean}`a` or {lean}`b` is.
-This infix notation stands for {lean}`Or a b`, where
+of two propositions: `a ∨ b` is true when either `a` or `b` is.
+This infix notation stands for `Or a b`, where
 `Or : Prop → Prop → Prop`.
 
 To eliminate a disjunctive hypothesis — i.e., to use it in a proof —
@@ -685,9 +697,9 @@ theorem Nat.factor_is_zero (n m : Nat)
 
 ::::full
 We can see in this example that, when we perform case
-analysis on a disjunction {lean}`a ∨ b`, we must separately discharge
+analysis on a disjunction `a ∨ b`, we must separately discharge
 two proof obligations, each showing that the conclusion holds
-under a different assumption — {lean}`a` in the first subgoal and {lean}`b`
+under a different assumption — `a` in the first subgoal and `b`
 in the second.
 ::::
 
@@ -766,10 +778,10 @@ To see how negation works, recall the _principle of explosion_
 from the {ref "Tactics"}[Tactics] chapter, which asserts that, if we assume a
 contradiction, then any other proposition can be derived.
 
-Following this intuition, we could define {lean}`¬ a` ("not {lean}`a`") as
-{lean}`∀ c, a → c`.
+Following this intuition, we could define `¬ a` ("not `a`") as
+`∀ c, a → c`.
 Lean makes an equivalent but slightly different choice,
-defining {lean}`¬ a` as {lean}`a → False`, where {lean}`False` is a specific
+defining `¬ a` as `a → False`, where {lean}`False` is a specific
 unprovable proposition defined in the standard library.
 
 ```lean (name := not)
@@ -875,13 +887,13 @@ theorem double_neg (a : Prop) (ha : a) : ¬ ¬ a := by
 ::::::full
 :::::exercise (rating := 2) (name := "double_neg_informal") (level := Advanced) (optional := true) (manual := true)
 Write an _informal_ proof of  {name}`double_neg`:
-_Theorem_: {lean}`a` implies {lean}`¬ ¬ a`, for any proposition  {lean}`a`.
+_Theorem_: `a` implies `¬ ¬ a`, for any proposition  `a`.
 
 :::solution
-_Proof_: Suppose some proposition {lean}`a` holds. We must show {lean}`¬ ¬ a` —
-i.e., {lean}`¬ a → False`, so suppose {lean}`¬ a` as well and try to derive {name}`False`.
-Then we have both `a` and `¬ a` (i.e., {lean}`a → False`) from which
-we can indeed derive `False`. So {lean}`¬ ¬ a` holds.
+_Proof_: Suppose some proposition `a` holds. We must show `¬ ¬ a` —
+i.e., `¬ a → False`, so suppose `¬ a` as well and try to derive {name}`False`.
+Then we have both `a` and `¬ a` (i.e., `a → False`) from which
+we can indeed derive `False`. So `¬ ¬ a` holds.
 :::
 
 :::grade
@@ -907,10 +919,10 @@ Write an informal proof of the proposition
 {lean}`∀ a : Prop, ¬ (a ∧ ¬ a)`.
 
 :::solution
-_Proof_: Suppose, for some {lean}`a`, that {lean}`a ∧ ¬ a` holds.
-Recall that {lean}`¬ a` is defined as {lean}`a → False`.
-Given {lean}`a` and {lean}`a → False`, we can prove {name}`False`,
-so {lean}`(a ∧ ¬ a) → False`, i.e. {lean}`¬ (a ∧ ¬ a)`.
+_Proof_: Suppose, for some `a`, that `a ∧ ¬ a` holds.
+Recall that `¬ a` is defined as `a → False`.
+Given `a` and `a → False`, we can prove {name}`False`,
+so `(a ∧ ¬ a) → False`, i.e. `¬ (a ∧ ¬ a)`.
 :::
 
 :::grade
@@ -969,8 +981,8 @@ with it also often requires a little practice.
 
 A useful trick: if you are trying to prove a nonsensical goal,
 apply {lean}`ex_falso_quodlibet` to change the goal to {lean}`False`. This
-makes it easier to use assumptions of the form {lean}`¬ a`, and in
-particular of the form {lean}`x ≠ y`.
+makes it easier to use assumptions of the form `¬ a`, and in
+particular of the form `x ≠ y`.
 ::::
 
 ::::full
@@ -981,7 +993,7 @@ If you are trying to prove a goal that is nonsensical (e.g., the
 goal state is {lean}`false = true`), apply {lean}`ex_falso_quodlibet` to
 change the goal to {lean}`False`.
 
-This makes it easier to use assumptions of the form {lean}`¬ a` that may
+This makes it easier to use assumptions of the form `¬ a` that may
 be available in the context — in particular, assumptions of the
 form `x ≠ y`.
 ::::
@@ -1231,7 +1243,7 @@ TLDR: Don't change `List.IsNil` to use `_ :: _ =>`.
 
 The handy "if and only if" connective, which asserts that two
 propositions have the same truth value, is a structure containing
-the two implication directions. {lean}`a ↔ b` is notation for {lean}`Iff a b`.
+the two implication directions. `a ↔ b` is notation for `Iff a b`.
 
 ::::full
 In Lean, {lean}`Iff` is a structure packaging two fields and a
@@ -1250,8 +1262,8 @@ each direction, via the {lean}`Iff.intro` constructor, or just use the
 ::::terse
 You can use {lean}`Iff.mp` to access the forward direction of the iff and
 {lean}`Iff.mpr` to access the backwards direction — these eliminate an
-iff — and {lean}`Iff.intro` to convert a goal of the form {lean}`a ↔ b`
-to two goals of the form {lean}`a → b` and {lean}`b → a`, which
+iff — and {lean}`Iff.intro` to convert a goal of the form `a ↔ b`
+to two goals of the form `a → b` and `b → a`, which
 introduces an iff.
 ::::
 
@@ -1369,32 +1381,33 @@ theorem or_distributes_over_and (a b c : Prop) :
 
 ## Existential Quantification
 
-:::ignore
-```lean -show
-variable (α β : Type) (x x' y : α) (l l' : List α) (f g : α → β) (p : α → Prop)
-```
-:::
-
 :::dev "Mike Hicks (mwhicks1)"
-Declaring the variables above adds all these variables to proof statements. For example, scroll down to the exam for `Even 4` below and you will see this in the InfoView (and the web-rendered student version).
+It would be convenient to declare the variables below so that later code
+blocks can use `α`, `β`, `x`, `y`, `l`, `f`, `g`, and `p` without repeating
+their type annotations, but doing so adds all of them to every proof
+context and leanOutput.
+
+```
+-- variable (α β : Type) (x x' y : α) (l l' : List α) (f g : α → β) (p : α → Prop)
+```
 :::
 
 ::::full
 Another fundamental logical connective is _existential quantification_.
-To say that there is some {lean}`x` of type {lean}`α` such that some property {lean}`a`
-holds of {lean}`x`, we write {lean}`∃ x : α, a`. This is notation for the {lean}`Exists`
-connective, and is defined as {lean}`Exists (fun (x : α) => a)`.
+To say that there is some `x` of type `α` such that some property `a`
+holds of `x`, we write `∃ x : α, a`. This is notation for the {lean}`Exists`
+connective, and is defined as `Exists (fun (x : α) => a)`.
 As with `∀ x : α`, the type annotation `: α` can be omitted if Lean
-is able to infer from the context what the type of {lean}`x` should be.
+is able to infer from the context what the type of `x` should be.
 
-To introduce a statement of the form {lean}`∃ x, a`, we must show that {lean}`a`
-holds for some specific choice for {lean}`x`, known as the _witness_ of the
+To introduce a statement of the form `∃ x, a`, we must show that `a`
+holds for some specific choice for `x`, known as the _witness_ of the
 existential.  This is done in two steps: First, we explicitly tell Lean
-which witness {lean}`y` we have in mind by invoking the tactic `exists y`.
-Then we prove that {lean}`a` holds after all occurrences of `x`
-are replaced by {lean}`y`. The {tactic}`exists` tactic tries to close the proof
+which witness `y` we have in mind by invoking the tactic `exists y`.
+Then we prove that `a` holds after all occurrences of `x`
+are replaced by `y`. The {tactic}`exists` tactic tries to close the proof
 with simple tactics such as {tactic}`rfl` or {tactic}`contradiction`, so we may not
-have to prove {lean}`a` explicitly.
+have to prove `a` explicitly.
 ::::
 
 ```lean (name := exists)
@@ -1422,20 +1435,20 @@ example : Even 4 := by exists 2
   -- but is proven automatically by `exists`
 ```
 
-Conversely, to eliminate an existential hypothesis {lean}`∃ x, a` in
-the context, we destructure it to obtain a witness {lean}`x` and a
-hypothesis stating that {lean}`a` holds of {lean}`x`.
+Conversely, to eliminate an existential hypothesis `∃ x, a` in
+the context, we destructure it to obtain a witness `x` and a
+hypothesis stating that `a` holds of `x`.
 
 ```lean
-example n : (∃ m, n = m + 4) → (∃ o, n = o + 2) := by
+example (n : Nat) : (∃ m, n = m + 4) → (∃ o, n = o + 2) := by
   intro ⟨m, hm⟩
   exists (m + 2)
 ```
 
 ::::::full
 :::::exercise (rating := 1) (name := "dist_not_exists")
-Prove that if {lean}`a` holds for all {lean}`x`, then there is no {lean}`x` for which
-{lean}`a` does not hold. (Hint: `cases` and `obtain` work on existential assumptions!)
+Prove that if `a` holds for all `x`, then there is no `x` for which
+`a` does not hold. (Hint: `cases` and `obtain` work on existential assumptions!)
 
 ```lean
 theorem dist_not_exists (α : Type) (p : α → Prop) (h : ∀ x, p x) :
@@ -1526,49 +1539,50 @@ theorem add_exists_ble' : ∀ n m, (∃ x, m = x + n) → Nat.ble n m = true := 
 # Recap: Logical Connectives in Lean
 
 Connectives introduced in this chapter:
-- {lean}`a ∧ b` (conjunction):
+- `a ∧ b` (conjunction):
   - introduced with {tactic}`constructor`
   - eliminated with `intro ⟨ha, hb⟩` or `obtain ⟨ha, hb⟩ := h`
-- {lean}`a ∨ b` (disjunction):
+- `a ∨ b` (disjunction):
   - introduced with {tactic}`left` and {tactic}`right`
   - eliminated with {tactic}`cases` or `obtain h | h := h`
 - {lean}`False` (falsehood):
   - eliminated with {tactic}`cases` or {tactic}`contradiction`
-- {lean}`¬ a` (negation):
-  - defined as {lean}`a → False`
+- `¬ a` (negation):
+  - defined as `a → False`
 - {lean}`True` (truth):
   - introduced as {lean}`True.intro` or with {tactic}`constructor`
-- {lean}`a ↔ b` (iff):
+- `a ↔ b` (iff):
   - introduced with {tactic}`constructor`
   - eliminated with `intro ⟨hab, hba⟩`, `obtain ⟨hab, hba⟩ := h`, or {name}`Iff.mp` and {lean}`Iff.mpr`
-- {lean}`∃ x : α, a` (existential):
+- `∃ x : α, a` (existential):
   - introduced with `exists y`
   - eliminated with `intro ⟨x, hx⟩` or `obtain ⟨x, hx⟩ := h`
 
 Fundamental connectives we've been using since the beginning:
-- equality ({lean}`x = y`)
-- implication ({lean}`a → b`)
-- universal quantification ({lean}`∀ x, a`)
+- equality (`x = y`)
+- implication (`a → b`)
+- universal quantification (`∀ x, a`)
 
 # Programming with Propositions
 
 ::::full
 The logical connectives that we have seen provide a rich vocabulary
 for defining complex propositions from simpler ones.
-To illustrate, let's look at how to express the claim that an element {lean}`x`
-occurs in a list {lean}`l`.
+To illustrate, let's look at how to express the claim that an element `x`
+occurs in a list `l`.
 Notice that this property has a simple recursive structure:
 ::::
 
 ::::terse
 What does it mean to say that
-"an element {lean}`x` occurs in a list {lean}`l`"?
-- If {lean}`l` is the empty list, then {lean}`x` cannot occur in it,
-  so the property "{lean}`x` appears in {lean}`l`" is simply false.
-- Otherwise, {lean}`l` has the form {lean}`x' :: l'`.
-  In this case, {lean}`x` occurs in {lean}`l` if it is equal to {lean}`x'`
-  or if it occurs in {lean}`l'`.
+"an element `x` occurs in a list `l`"?
 ::::
+
+- If `l` is the empty list, then `x` cannot occur in it,
+  so the property "`x` appears in `l`" is simply false.
+- Otherwise, `l` has the form `x' :: l'`.
+  In this case, `x` occurs in `l` if it is equal to `x'`
+  or if it occurs in `l'`.
 
 We can translate this directly into a straightforward recursive function
 taking an element and a list and returning... a proposition!
@@ -1666,7 +1680,7 @@ theorem List.In_map_iff {α β : Type} {f : α → β} {xs : List α} {y : β} :
 :::::exercise (rating := 3) (name := "All")
 We noted above that functions returning propositions can be seen as
 _properties_ of their arguments. For instance, if `p` has type
-{lean}`Nat → Prop`, then `p n` says that property `p` holds of {lean}`n`.
+{lean}`Nat → Prop`, then `p n` says that property `p` holds of `n`.
 
 Drawing inspiration from {lean}`List.In`, write a recursive function `All`
 stating that some property `p` holds of all elements of a list
@@ -1841,8 +1855,8 @@ The type of an ordinary function tells us what we can do with it.
 Similarly, the statement of a theorem tells us what we can use
 that theorem for.
   - If we have a term of type {lean}`∀ n m : Nat, n = m → n + n = m + m`,
-    and we provide it two numbers {lean}`n` and {lean}`m` and a third "argument"
-    of type {lean}`n = m`, we get back a proof object of type {lean}`n + n = m + m`.
+    and we provide it two numbers `n` and `m` and a third "argument"
+    of type `n = m`, we get back a proof object of type `n + n = m + m`.
 
 ::::full
 Operationally, this analogy goes even further: by applying a theorem
@@ -1864,24 +1878,8 @@ example (x y z : Nat) : x + (y + z) = (z + y) + x := by
   rw [Nat.add_comm]
 ```
 
-:::dev "Yipeng Liu (berberman)" BeforeNextRelease
-These hidden variables are only for inline prose,
-but they currently leak into `leanOutput` error contexts.
-Maybe we should implement a separate scope for declaring variables
-only visible to `lean` role instead of `lean` block.
-:::
-
 ```leanOutput comm
 unsolved goals
-a b c : Prop
-n m : Nat
-α✝ : Type
-e1 e2 x✝¹ y✝¹ : α✝
-α β : Type
-x✝ x' y✝ : α
-l l' : List α
-f g : α → β
-p : α → Prop
 x y z : Nat
 ⊢ x + (y + z) = z + y + x
 ```
@@ -2164,8 +2162,8 @@ we have two options when we want to formalize a property that happens
 to be decidable: we can express it either as a boolean computation,
 or as a function into {lean}`Prop`.
 
-For instance, to claim that a number {lean}`n` is even,
-we can say either that {lean}`Nat.even n` evaluates to `true`...
+For instance, to claim that a number `n` is even,
+we can say either that `Nat.even n` evaluates to `true`...
 
 ```lean
 example : Nat.even 42 = true := by rfl
@@ -2230,8 +2228,8 @@ theorem Nat.even_bool_prop (n : Nat) : Nat.even n = true ↔ Even n := by
   · intro ⟨k, hk⟩; rw [hk]; apply even_double
 ```
 
-In view of this theorem, we can say that the boolean computation {lean}`Nat.even n`
-is _reflected_ in the truth of the proposition {lean}`∃ k, n = Nat.double k`.
+In view of this theorem, we can say that the boolean computation `Nat.even n`
+is _reflected_ in the truth of the proposition `∃ k, n = Nat.double k`.
 
 ::::hide
 Similarly, we can state what it means for a number to be nonzero
@@ -2255,28 +2253,22 @@ theorem nonzero_bool_prop (n : Nat) :
 ```
 ::::
 
-Similarly, to state that two numbers {lean}`n` and {lean}`m` are equal,
+Similarly, to state that two numbers `n` and `m` are equal,
 we can say either
 
-1. that {lean}`n == m` returns {lean}`true`, or
-2. that {lean}`n = m`.
+1. that `n == m` returns {lean}`true`, or
+2. that `n = m`.
 
 Again, these two notions are equivalent.
-
-:::dev "Yipeng Liu (berberman)"
-Either get rid of the development of `beq` story
-or use our own `beq` on `Nat`.
-:::
-
-Don't worry too much about {name}`Nat.beq_eq_true_eq` yet;
-we need this from Lean because `n == m` is a wrapper of {inst}`DecidableEq Nat`.
-We will go over this in the {ref "Typeclasses"}[Typeclasses] chapter.
 
 ```lean
 theorem beq_eq_true (n m : Nat) :
     (n == m) = true ↔ n = m := by
   rw [Nat.beq_eq_true_eq]
 ```
+
+(We use {name}`Nat.beq_eq_true_eq` because `n == m` is a wrapper of {inst}`DecidableEq Nat`.
+We will go over this in the {ref "Typeclasses"}[Typeclasses] chapter.)
 
 So what should we do in situations where some claim could be formalized
 as either a proposition or a boolean computation?
@@ -2296,7 +2288,7 @@ Beyond the fact that non-computable properties are impossible
 in general to phrase as boolean computations, even many _computable_
 properties are easier to express using {lean}`Prop` than {lean}`Bool`, since
 recursive function definitions are subject to significant restrictions.
-For instance, the next chapter shows how to define the property that
+For instance, the {ref "Automation"}[Automation] chapter shows how to define the property that
 a regular expression matches a given string using {lean}`Prop`.
 Doing the same with {lean}`Bool` would amount to writing a regular expression
 matching algorithm, which would be more complicated, harder to understand,
@@ -2366,8 +2358,8 @@ For example, suppose we state the nonevenness of {lean}`101` propositionally:
 ¬ Nat.Even 101
 ```
 
-Proving this directly — by assuming that there is some {lean}`n` such that
-{lean}`101 = Nat.double n` and then somehow reasoning to a contradiction —
+Proving this directly — by assuming that there is some `n` such that
+`101 = Nat.double n` and then somehow reasoning to a contradiction —
 would be rather complicated.
 
 But if we convert it to a claim about the boolean {lean}`Nat.even` function,
@@ -2382,9 +2374,9 @@ example : ¬ Nat.Even 101 := by
 
 Conversely, there are situations where it can be easier to work with
 propositions rather than booleans. In particular, knowing that
-{lean}`(n == m) = true` is generally of little direct help in the middle of
-a proof involving {lean}`n` and {lean}`m`. But if we convert the statement to
-the equivalent form {lean}`n = m`, then we can easily rewrite with it.
+`(n == m) = true` is generally of little direct help in the middle of
+a proof involving `n` and `m`. But if we convert the statement to
+the equivalent form `n = m`, then we can easily rewrite with it.
 
 ```lean
 theorem add_beq_true (n m p : Nat) (h : (n == m) = true) :
@@ -2448,8 +2440,8 @@ theorem orb_true_iff (b1 b2 : Bool) :
 
 :::::exercise (rating := 3) (name := "beqList")
 Given a boolean operator `beq` for testing equality of elements
-of some type {lean}`α`, we can define a function `beqList` for testing
-equality of lists with elements in {lean}`α`. Complete the definition
+of some type `α`, we can define a function `beqList` for testing
+equality of lists with elements in `α`. Complete the definition
 of the `beqList` function below. To make sure that your definition
 is correct, prove the lemma `beqList_true_iff`.
 
@@ -2628,7 +2620,7 @@ This is an equality between two conjunctions, which itself is also
 a proposition. It states that commuted conjunctions are equal propositions.
 However, we cannot prove this equality by reflexivity, as the two sides
 don't compute to the same term, and we cannot proceed by cases on
-{lean}`a` or {lean}`b`, as they are not inductive.
+`a` or `b`, as they are not inductive.
 
 ```lean +error (name := e1)
 example (a b : Prop) : a ∧ b = b ∧ a := by rfl
@@ -2640,15 +2632,6 @@ Tactic `rfl` failed: The left-hand side
 is not definitionally equal to the right-hand side
   b = b ∧ a
 
-a✝ b✝ c : Prop
-n m : Nat
-α✝ : Type
-e1 e2 x✝ y✝ : α✝
-α β : Type
-x x' y : α
-l l' : List α
-f g : α → β
-p : α → Prop
 a b : Prop
 ⊢ a ∧ b = b ∧ a
 ```
@@ -2665,20 +2648,11 @@ Explanation: the `cases` tactic is for constructor-based reasoning as well as fo
 
 Consider using the 'by_cases' tactic, which does true/false reasoning for propositions.
 
-a✝ b✝ c : Prop
-n m : Nat
-α✝ : Type
-e1 e2 x✝ y✝ : α✝
-α β : Type
-x x' y : α
-l l' : List α
-f g : α → β
-p : α → Prop
 a b : Prop
 ⊢ a ∧ b = b ∧ a
 ```
 
-However, we _can_ prove that {lean}`a ∧ b` implies {lean}`b ∧ a`, and vice versa — this is
+However, we _can_ prove that `a ∧ b` implies `b ∧ a`, and vice versa — this is
 the commutativity of conjunction that we have seen earlier.
 
 ```lean (name := add_comm)
@@ -2737,7 +2711,7 @@ we show that it's possible to "flip" three conjoined propositions.
 One way to prove this is to construct the `↔`, destruct the `↔`s provided by
 {lean}`and_comm` and {lean}`and_assoc`, and apply the resulting implications a few times.
 But this is a lot of hassle when the proof is conceptually simple:
-we flip {lean}`b` and {lean}`c`, then we flip that conjunction with {lean}`a`, and we
+we flip `b` and `c`, then we flip that conjunction with `a`, and we
 finish by associativity. By using {lean}`and_comm_eq`, this is easily done
 by rewriting equal propositions.
 
@@ -2749,7 +2723,7 @@ theorem and_comm_flip (a b c : Prop) : (a ∧ b ∧ c) ↔ (c ∧ b ∧ a) := by
 The pattern of deriving an equality of propositions out of `↔`
 then rewriting by that equality is so common that Lean will implicitly
 cast `↔` to `=`, allowing you to rewrite on `↔` directly.
-Notice that {tactic}`rw` is also able to close goals of the form {lean}`a ↔ a` by reflexivity.
+Notice that {tactic}`rw` is also able to close goals of the form `a ↔ a` by reflexivity.
 
 ```lean
 theorem and_comm_flip' (a b c : Prop) : (a ∧ b ∧ c) ↔ (c ∧ b ∧ a) := by
@@ -2827,7 +2801,7 @@ example : (fun x => x + 2) = (fun x => x + (Nat.pred 3)) := by rfl
 ```
 
 In general, functions can be equal for more interesting reasons.
-In common mathematical practice, two functions {lean}`f` and {lean}`g` are considered
+In common mathematical practice, two functions `f` and `g` are considered
 equal if they produce the same output on every input:
 
 ```display
@@ -3002,7 +2976,7 @@ theorem trRev_correct {α : Type} : @trRev α = @List.rev α := by
 
 ::::full
 We have seen that it is not possible to test whether or not a
-proposition {lean}`a` holds while defining a Lean function. You may be
+proposition `a` holds while defining a Lean function. You may be
 surprised to learn that a similar restriction applies in _proofs_!
 In other words, the following intuitive reasoning principle is not
 derivable in Lean with the tools we've seen so far:
@@ -3018,15 +2992,15 @@ def ExcludedMiddle := ∀ a : Prop, a ∨ ¬ a
 
 ::::full
 To understand operationally why this is the case, recall that,
-to prove a statement of the form {lean}`a ∨ b`, we use the {tactic}`left` and {tactic}`right`
+to prove a statement of the form `a ∨ b`, we use the {tactic}`left` and {tactic}`right`
 tactics, which effectively require knowing which side of the disjunction
-holds. But the universally quantified {lean}`a` in {lean}`ExcludedMiddle` is an
+holds. But the universally quantified `a` in {lean}`ExcludedMiddle` is an
 _arbitrary_ proposition, which we know nothing about. We don't have enough
 information to choose which of {tactic}`left` or {tactic}`right` to apply.
 
-However, in the special case where we happen to know that {lean}`a` is reflected
-in some boolean term {lean}`b`, knowing whether it holds or not is trivial:
-we just have to check the value of {lean}`b`.
+However, in the special case where we happen to know that `a` is reflected
+in some boolean term `b`, knowing whether it holds or not is trivial:
+we just have to check the value of `b`.
 
 ```lean
 theorem restricted_excluded_middle (a : Prop) (b : Bool) (h : a ↔ b = true) :
@@ -3036,8 +3010,8 @@ theorem restricted_excluded_middle (a : Prop) (b : Bool) (h : a ↔ b = true) :
   | true => left; rw [h]
 ```
 
-In particular, the excluded middle is valid for equations {lean}`n = m` between
-natural numbers {lean}`n` and {lean}`m`.
+In particular, the excluded middle is valid for equations `n = m` between
+natural numbers `n` and `m`.
 
 ```lean
 theorem excluded_middle_nat_eq (n m : Nat) : n = m ∨ n ≠ m := by
@@ -3050,7 +3024,7 @@ Sadly, this trick only works for decidable propositions.
 
 Logical systems in which excluded middle does not hold are referred to as
 _constructive logics_. They are so called because to prove a proposition,
-we must give a construction for it; for instance, {lean}`∃ x, p x`
+we must give a construction for it; for instance, `∃ x, p x`
 is proven by providing a particular value of `x`.
 
 Logical systems in which excluded middle does hold,
@@ -3137,14 +3111,14 @@ It takes some practice to understand which proof techniques must be
 avoided in constructive reasoning, but arguments by contradiction,
 in particular, are infamous for leading to nonconstructive proofs.
 Here's a typical example: suppose that we want to show that there exists
-{lean}`x` with some property {lean}`p`, i.e., such that {lean}`p x`. We start by assuming
-that our conclusion is false; that is, {lean}`¬ ∃ x, p x`. From this premise,
-it is not hard to derive {lean}`∀ x, ¬ p x`. If we manage to show that this
+`x` with some property `p`, i.e., such that `p x`. We start by assuming
+that our conclusion is false; that is, `¬ ∃ x, p x`. From this premise,
+it is not hard to derive `∀ x, ¬ p x`. If we manage to show that this
 results in a contradiction, we arrive at an existence proof without ever
-exhibiting a value of {lean}`x` for which {lean}`p x` holds!
+exhibiting a value of `x` for which `p x` holds!
 
 The technical flaw here, from a constructive standpoint, is that we
-claimed to prove {lean}`∃ x, p x` using a proof of {lean}`¬ ¬ ∃ x, p x`.
+claimed to prove `∃ x, p x` using a proof of `¬ ¬ ∃ x, p x`.
 Allowing ourselves to remove double negations from arbitrary statements
 is equivalent to assuming the excluded middle law, as shown in one of the
 exercises below.
@@ -3171,11 +3145,11 @@ Classical.not_not {a : Prop} : ¬¬a ↔ a
 :::::exercise (rating := 3) (name := "excluded_middle_irrefutable")
 The following theorem implies that it is always safe to assume
 a decidability axiom (i.e., an instance of excluded middle) for any
-_particular_ proposition {lean}`a`. Why? Because the negation of such an axiom
-leads to a contradiction. If {lean}`¬ (a ∨ ¬ a)` were provable, then by
-{lean}`de_morgan_not_or` as proven above, {lean}`¬ a ∧ ¬ ¬ a` would be provable,
-which would be a contradiction. So, it is safe to add {lean}`a ∨ ¬ a` as an axiom
-for any particular {lean}`a`.
+_particular_ proposition `a`. Why? Because the negation of such an axiom
+leads to a contradiction. If `¬ (a ∨ ¬ a)` were provable, then by
+{lean}`de_morgan_not_or` as proven above, `¬ a ∧ ¬ ¬ a` would be provable,
+which would be a contradiction. So, it is safe to add `a ∨ ¬ a` as an axiom
+for any particular `a`.
 
 ```lean
 theorem excluded_middle_irrefutable (a : Prop) : ¬ ¬ (a ∨ ¬ a) := by
