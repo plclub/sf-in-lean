@@ -169,7 +169,7 @@ Note that _all_ syntactically well-formed propositions have type
 {lean}`Prop` in Lean, regardless of whether they are true or not.
 
 Simply _being_ a proposition is one thing; being _provable_ is
-a different thing!
+something else!
 
 ```lean
 #check (2 = 2 : Prop)
@@ -183,7 +183,7 @@ _first-class_ entities that can be manipulated in all the same ways as
 any of the other things in Lean's world.
 ::::
 
-So far, we've seen one primary place where propositions can appear:
+So far, we've seen one place where propositions can appear:
 in `theorem` declarations.
 
 ```lean
@@ -254,6 +254,12 @@ theorem succ_inj' : Injective Nat.succ := by
   injection h
 ```
 
+:::dev "Mike Hicks (mwhicks1)"
+Is it confusing that you can do `intro` _through_ the `Injective`
+definition? Is it worth a word about that? Have students seen this
+happen to this point?
+:::
+
 The familiar equality operator `=` is a (binary) function that returns
 a {lean}`Prop`. The expression `n = m` is notation for `Eq n m`.
 Because {name}`Eq` can be used with elements of any type, it is also
@@ -275,14 +281,7 @@ Eq.{u_1} {α : Sort u_1} : α → α → Prop
 
 As a convenience, Lean will cast booleans to propositions by equating them to {lean}`true`,
 which is why checking them against {lean}`Prop` succeeds.
-It also casts boolean equalities to propositions by equating to {lean}`true`,
-and boolean inequalities by equating to {lean}`false`.
 For clarity, we will avoid relying on these implicit casts.
-
-:::dev "Daniel Sainati (@dsainati)" PotentialImprovement
-  Is there a flag we can set or option we can enable to turn off implicit Bool to Prop casts?
-  Would we want to?
-:::
 
 ```lean (name := false)
 #check (false : Prop)
@@ -572,7 +571,7 @@ an underscore pattern `_` to indicate that the unneeded conjunct
 should just be thrown away.
 
 ```lean
-theorem proj1 (a b : Prop) (h : a ∧ b) : a := by
+example (a b : Prop) (h : a ∧ b) : a := by
   obtain ⟨hP, _⟩ := h
   exact hP
 ```
@@ -581,7 +580,7 @@ Conjunctions come with their own built-in projections, `.left` and `.right`,
 which we can use instead of pattern matching.
 
 ```lean
-theorem left (a b : Prop) (h : a ∧ b) : a := by
+example (a b : Prop) (h : a ∧ b) : a := by
   exact h.left
 ```
 
@@ -1200,7 +1199,7 @@ theorem nil_is_not_cons {α : Type} (x : α) (xs : List α) :
 :::
 :::::
 
-:::instructors
+:::dev "Niklas Halkonen"
 In `List.IsNil` changing the `_ =>` arm to `_ :: _ =>` would introduce a hidden dependency to `List.All` (and `List.In`) which is not emitted to the grading variant because it's in a solution block.
 This would lead to the solution of `List.All_In` (and `List.in_mem` in IndProp) to not pass comparator because the underlying terms are different.
 TLDR: Don't change `List.IsNil` to use `_ :: _ =>`.
@@ -2354,7 +2353,7 @@ worlds will often be convenient in later chapters.
 ::::
 
 ::::::full
-:::::exercise (rating := 2) (name := "logical connectives")
+:::::exercise (rating := 2) (name := "logical_connectives")
 The following theorems relate the propositional connectives studied
 in this chapter to the corresponding boolean operations.
 
@@ -3261,6 +3260,9 @@ theorem peirce_cm : Peirce → ConsequentiaMirabilis := by
 
 -- END SOLUTION
 ```
+
+:::gradeTheorem 5 ImpOr_em em_ImpOr em_demorgan demorgan_em em_not_not not_not_em' em_cm cm_em cm_not_not not_not_cm cm_peirce peirce_cm
+:::
 :::::
 
 ::::::

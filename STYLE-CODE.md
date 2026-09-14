@@ -26,11 +26,11 @@ and do not use tactics not in this table; in particular,
 | ----------------- | ------------------------ |
 | `Basics`          | `rfl`, `intro`, `rewrite`, `cases`, `exact` |
 | `Induction`       | `induction`, `have`, `rw`, `<;>` |
-| `UsingLean`       | `calc`, `exact?`, `rw?` |
+| `UsingLean`       | `calc`, `exact?`, `rw?`, `dsimp` |
 | `Lists`           | *(none new)* |
 | `Poly`            | *(none new)* |
 | `Tactics`         | `apply` (and `apply ... at`), `replace`, `specialize`, `symm`, `injection`, `injections`, `congr`, `assumption`, `contradiction`, `induction ... generalizing ...`, `unfold`, `cases ... : ...`, `split` |
-| `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso` |
+| `Logic`           | `constructor`, `obtain`, `left`, `right`, `ext`, `by_cases`, `exfalso`, `exists` |
 | `IndProp`         | `subst` |
 | `Automation`      | `lia`, `try`, `repeat`, `specialize`, `trivial`, `simp`, `generalize` |
 | `Typeclasses`     | `decide` |
@@ -436,6 +436,12 @@ end DefDemoGood
 Prefer `example : ...` over a named `theorem foo : ...` for throwaway
 illustrations (tactic demos, "silly" lemmas, etc.) that are never referenced
 later. Reserve names for results used elsewhere or for graded exercises.
+
+Exception: when the same statement is proved twice back-to-back to contrast
+proof styles (e.g., pattern-matching vs. the anonymous constructor, or a
+manual `exfalso` proof vs. the `exfalso` tactic), naming both makes the
+comparison easier to point to, and a distinguishing prime keeps the pair
+readable, e.g. `and_commute` / `and_commute'` in `LF/Logic.lean`.
 
 ## Verso Markup Conventions
 
