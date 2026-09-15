@@ -47,14 +47,11 @@ way to declare variables visible only for inline prose (rather than for every
 `lean` block), we leave this commented out:
 
 ```
-<<<<<<< HEAD
-=======
 -- variable (a b c : Prop) (n m : Nat) (α : Type) (e1 e2 x y : α)
 ```
 
 Yipeng Liu (berberman) said: Maybe we should implement a separate scope for
 declaring variables only visible to `lean` role instead of `lean` block.
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 :::
 
 ::::hide
@@ -95,15 +92,9 @@ _propositions_.  We can see this with the `#check` command:
 ::::terse
 So far, we have seen:
 - _propositions_: mathematical statements, so far only of three kinds:
-<<<<<<< HEAD
-  - equality propositions ({lean}`e1 = e2`)
-  - implications ({lean}`a → b`)
-  - quantified propositions ({lean}`∀ x, a`)
-=======
   - equality propositions (`e1 = e2`)
   - implications (`a → b`)
   - quantified propositions (`∀ x, a`)
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 - _proofs_: ways of presenting evidence for the truth of a
    proposition
 
@@ -241,11 +232,7 @@ of an inductive type are _injective_ and _disjoint_, and that
 {tactic}`injection` and {tactic}`contradiction` let us exploit those
 facts about hypotheses concerning {lean}`Nat`, {lean}`List`, and so on.
 The very same injectivity and disjointness reasoning applies to a hypothesis of the form
-<<<<<<< HEAD
-{lean}`a = b`. In fact, {tactic}`cases` can carry out this reasoning
-=======
 `a = b`. In fact, {tactic}`cases` can carry out this reasoning
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 directly on an equality hypothesis, without our having to name
 {tactic}`injection` or {tactic}`contradiction`. Here are a few
 examples.
@@ -467,11 +454,7 @@ example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by sorry -- proofs below
 ```
 
 The infix notation `∧` is actually just syntactic sugar for
-<<<<<<< HEAD
-{lean}`And a b`. That is, {lean}`And` is a Lean operator that takes two
-=======
 `And a b`. That is, {lean}`And` is a Lean operator that takes two
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 propositions as arguments and yields a proposition.
 
 ```lean (name := and)
@@ -483,11 +466,7 @@ And (a b : Prop) : Prop
 ```
 
 The sole constructor for conjunction is {name}`And.intro`,
-<<<<<<< HEAD
-which concludes {lean}`a ∧ b` given that {lean}`a` and {lean}`b` hold individually.
-=======
 which concludes `a ∧ b` given that `a` and `b` hold individually.
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 
 ```lean (name := and_intro)
 #check And.intro
@@ -694,13 +673,8 @@ theorem and_associate (a b c : Prop) (h : a ∧ (b ∧ c)) : (a ∧ b) ∧ c := 
 ## Disjunction
 
 Another important connective is the _disjunction_, or _logical or_,
-<<<<<<< HEAD
-of two propositions: {lean}`a ∨ b` is true when either {lean}`a` or {lean}`b` is.
-This infix notation stands for {lean}`Or a b`, where
-=======
 of two propositions: `a ∨ b` is true when either `a` or `b` is.
 This infix notation stands for `Or a b`, where
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 `Or : Prop → Prop → Prop`.
 
 To eliminate a disjunctive hypothesis — i.e., to use it in a proof —
@@ -723,11 +697,7 @@ theorem Nat.factor_is_zero (n m : Nat)
 We can see in this example that, when we perform case
 analysis on a disjunction `a ∨ b`, we must separately discharge
 two proof obligations, each showing that the conclusion holds
-<<<<<<< HEAD
-under a different assumption — {lean}`a` in the first subgoal and {lean}`b`
-=======
 under a different assumption — `a` in the first subgoal and `b`
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 in the second.
 ::::
 
@@ -916,17 +886,10 @@ Write an _informal_ proof of  {name}`double_neg`:
 _Theorem_: `a` implies `¬ ¬ a`, for any proposition  `a`.
 
 :::solution
-<<<<<<< HEAD
-_Proof_: Suppose some proposition {lean}`a` holds. We must show {lean}`¬ ¬ a` —
-i.e., {lean}`¬ a → False`, so suppose {lean}`¬ a` as well and try to derive {name}`False`.
-Then we have both `a` and `¬ a` (i.e., {lean}`a → False`) from which
-we can indeed derive `False`. So {lean}`¬ ¬ a` holds.
-=======
 _Proof_: Suppose some proposition `a` holds. We must show `¬ ¬ a` —
 i.e., `¬ a → False`, so suppose `¬ a` as well and try to derive {name}`False`.
 Then we have both `a` and `¬ a` (i.e., `a → False`) from which
 we can indeed derive `False`. So `¬ ¬ a` holds.
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 :::
 
 :::grade
@@ -1565,8 +1528,8 @@ Connectives introduced in this chapter:
   - eliminated with {tactic}`cases` or `obtain h | h := h`
 - {lean}`False` (falsehood):
   - eliminated with {tactic}`cases` or {tactic}`contradiction`
-- {lean}`¬ a` (negation):
-  - defined as {lean}`a → False`
+- `¬ a` (negation):
+  - defined as `a → False`
 - {lean}`True` (truth):
   - introduced as {lean}`True.intro` or with {tactic}`constructor`
 - `a ↔ b` (iff):
@@ -1593,16 +1556,7 @@ Notice that this property has a simple recursive structure:
 
 ::::terse
 What does it mean to say that
-<<<<<<< HEAD
-"an element {lean}`x` occurs in a list {lean}`l`"?
-- If {lean}`l` is the empty list, then {lean}`x` cannot occur in it,
-  so the property "{lean}`x` appears in {lean}`l`" is simply false.
-- Otherwise, {lean}`l` has the form {lean}`x' :: l'`.
-  In this case, {lean}`x` occurs in {lean}`l` if it is equal to {lean}`x'`
-  or if it occurs in {lean}`l'`.
-=======
 "an element `x` occurs in a list `l`"?
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 ::::
 
 - If `l` is the empty list, then `x` cannot occur in it,
@@ -1933,24 +1887,6 @@ example (x y z : Nat) : x + (y + z) = (z + y) + x := by
 ```
 ::::
 
-::::full
-As an aside, some tactics that accept an `at` clause can target
-several locations at once, including the goal, written using the `⊢` symbol, by listing them
-together after `at` — for instance, both {tactic}`rw` and
-{tactic}`dsimp` support this.
-::::
-
-::::terse
-Aside: some tactics, like {tactic}`rw` and {tactic}`dsimp`, can list
-several locations at once with `at`, including the goal:
-::::
-
-```lean
-example (n m : Nat) (h : n + 0 = m) : n = m + 0 := by
-  rw [Nat.add_zero] at h ⊢
-  assumption
-```
-
 The fact that implications are functions means we can prove them by
 explicitly providing a function.
 
@@ -2141,8 +2077,6 @@ together after `at` — for instance, both {tactic}`rw` and
 {tactic}`dsimp` support this.
 ::::
 
-<<<<<<< HEAD
-=======
 ::::terse
 Aside: some tactics, like {tactic}`rw` and {tactic}`dsimp`, can list
 several locations at once with `at`, including the goal:
@@ -2156,7 +2090,6 @@ example (n m : Nat) (h : n + 0 = m) : n = m + 0 := by
 
 # Working with Decidable Properties
 
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 We've seen two different ways of expressing logical claims in Lean:
 with _booleans_ (of type {lean}`Bool`), and with _propositions_ (of type {lean}`Prop`).
 Here are the key differences between {lean}`Bool` and {lean}`Prop`:
@@ -2236,11 +2169,7 @@ theorem even_double (k : Nat) :
 Same issue as `CombineOddEven`.
 :::
 
-<<<<<<< HEAD
-:::::exercise (rating := 3) (name := "even_double_conv")
-=======
 :::::exercise (rating := 3) (name := "even_double_conv") (checkVisibility := false)
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 ```lean
 theorem even_double_conv (n : Nat) : ∃ k : Nat,
     n = bif Nat.even n then Nat.double k else Nat.double k + 1 := by
@@ -2307,18 +2236,6 @@ we can say either
 2. that `n = m`.
 
 Again, these two notions are equivalent.
-<<<<<<< HEAD
-
-:::dev "Yipeng Liu (berberman)"
-Either get rid of the development of `beq` story
-or use our own `beq` on `Nat`.
-:::
-
-Don't worry too much about {name}`Nat.beq_eq_true_eq` yet;
-we need this from Lean because `n == m` is a wrapper of {inst}`DecidableEq Nat`.
-We will go over this in the {ref "Typeclasses"}[Typeclasses] chapter.
-=======
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 
 ```lean
 theorem beq_eq_true (n m : Nat) :
@@ -2417,13 +2334,8 @@ For example, suppose we state the nonevenness of {lean}`101` propositionally:
 ¬ Nat.Even 101
 ```
 
-<<<<<<< HEAD
-Proving this directly — by assuming that there is some {lean}`n` such that
-{lean}`101 = Nat.double n` and then somehow reasoning to a contradiction —
-=======
 Proving this directly — by assuming that there is some `n` such that
 `101 = Nat.double n` and then somehow reasoning to a contradiction —
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 would be rather complicated.
 
 But if we convert it to a claim about the boolean {lean}`Nat.even` function,
@@ -2716,11 +2628,7 @@ a b : Prop
 ⊢ a ∧ b = b ∧ a
 ```
 
-<<<<<<< HEAD
-However, we _can_ prove that {lean}`a ∧ b` implies {lean}`b ∧ a`, and vice versa — this is
-=======
 However, we _can_ prove that `a ∧ b` implies `b ∧ a`, and vice versa — this is
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 the commutativity of conjunction that we have seen earlier.
 
 ```lean (name := add_comm)
@@ -2779,11 +2687,7 @@ we show that it's possible to "flip" three conjoined propositions.
 One way to prove this is to construct the `↔`, destruct the `↔`s provided by
 {lean}`and_comm` and {lean}`and_assoc`, and apply the resulting implications a few times.
 But this is a lot of hassle when the proof is conceptually simple:
-<<<<<<< HEAD
-we flip {lean}`b` and {lean}`c`, then we flip that conjunction with {lean}`a`, and we
-=======
 we flip `b` and `c`, then we flip that conjunction with `a`, and we
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 finish by associativity. By using {lean}`and_comm_eq`, this is easily done
 by rewriting equal propositions.
 
@@ -2970,15 +2874,7 @@ example {n : Nat} {p : Nat × Nat}
     · rw [hx_snd]
 ```
 
-<<<<<<< HEAD
-:::dev "Claude"
-The `prod_ext_example` exercise is rated 2, but its content is an anonymous `example`, so there is no constant for a `gradeTheorem` directive to reference. Either name the theorem and add a grading directive, or mark the exercise as optional/ungraded.
-:::
-
-::::exercise (rating := 2) (name := "prod_ext_example")
-=======
 ::::exercise (rating := 2) (name := "prod_ext_example") (checkVisibility := false)
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 Now, use {tactic}`ext1` to prove the following.
 Remember that `dsimp only` simplifies projections like `(a, b).fst` to `a`.
 
@@ -3001,14 +2897,11 @@ theorem prod_ext_example {m : Nat} {p : Nat × Nat}
         rw [hp_snd]
 ```
 
-<<<<<<< HEAD
-=======
 :::gradeTheorem 2 prod_ext_example
 :::
 
 ::::
 
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 ::::::full
 :::::exercise (rating := 4) (name := "trRev_correct")
 One problem with the definition of the list-reversing function {lean}`List.rev`
@@ -3113,11 +3006,7 @@ Sadly, this trick only works for decidable propositions.
 
 Logical systems in which excluded middle does not hold are referred to as
 _constructive logics_. They are so called because to prove a proposition,
-<<<<<<< HEAD
-we must give a construction for it; for instance, {lean}`∃ x, p x`
-=======
 we must give a construction for it; for instance, `∃ x, p x`
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 is proven by providing a particular value of `x`.
 
 Logical systems in which excluded middle does hold,
@@ -3238,19 +3127,11 @@ Classical.not_not {a : Prop} : ¬¬a ↔ a
 :::::exercise (rating := 3) (name := "excluded_middle_irrefutable")
 The following theorem implies that it is always safe to assume
 a decidability axiom (i.e., an instance of excluded middle) for any
-<<<<<<< HEAD
-_particular_ proposition {lean}`a`. Why? Because the negation of such an axiom
-leads to a contradiction. If {lean}`¬ (a ∨ ¬ a)` were provable, then by
-{lean}`de_morgan_not_or` as proven above, {lean}`¬ a ∧ ¬ ¬ a` would be provable,
-which would be a contradiction. So, it is safe to add {lean}`a ∨ ¬ a` as an axiom
-for any particular {lean}`a`.
-=======
 _particular_ proposition `a`. Why? Because the negation of such an axiom
 leads to a contradiction. If `¬ (a ∨ ¬ a)` were provable, then by
 {lean}`de_morgan_not_or` as proven above, `¬ a ∧ ¬ ¬ a` would be provable,
 which would be a contradiction. So, it is safe to add `a ∨ ¬ a` as an axiom
 for any particular `a`.
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 
 ```lean
 theorem excluded_middle_irrefutable (a : Prop) : ¬ ¬ (a ∨ ¬ a) := by
@@ -3396,11 +3277,6 @@ theorem peirce_cm : Peirce → ConsequentiaMirabilis := by
     intro h a; exact h a False
 ```
 
-<<<<<<< HEAD
-:::gradeTheorem 5 ImpOr_em em_ImpOr em_demorgan demorgan_em em_not_not not_not_em' em_cm cm_em cm_not_not not_not_cm cm_peirce peirce_cm
-:::
-=======
->>>>>>> 71f031e6168dd52a45ce727e54efcdb60f9428ba
 :::::
 
 ::::::
