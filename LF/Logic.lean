@@ -515,8 +515,7 @@ example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
   exact ⟨rfl, rfl⟩
 ```
 
-::::::full
-:::::exercise (rating := 2) (name := "add_is_zero")
+:::::exercise (rating := 2) (name := "add_is_zero") (checkVisibility := false)
 ```lean
 theorem Nat.add_is_zero (n m : Nat) : n + m = 0 → n = 0 ∧ m = 0 := by
   solution!
@@ -535,8 +534,6 @@ theorem Nat.add_is_zero (n m : Nat) : n + m = 0 → n = 0 ∧ m = 0 := by
 :::gradeTheorem 2 Nat.add_is_zero
 :::
 :::::
-
-::::::
 
 The tactics we've just used — {tactic}`constructor`, applying
 {name}`And.intro`, and the anonymous constructor `⟨_, _⟩` — all conclude
