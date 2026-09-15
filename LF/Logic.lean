@@ -724,11 +724,11 @@ theorem or_intro_l (a b : Prop) (h : a) : a ∨ b := by
 {tactic}`left` and {tactic}`right`:
 
 ```lean
-theorem Nat.zero_or_succ (n : Nat) : n = 0 ∨ n = (n + 1).pred := by
+theorem Nat.zero_or_succ (n : Nat) : n = 0 ∨ n = (n - 1).succ := by
   workinclass!
     cases n with
     | zero => left; rfl
-    | succ n => right; rw [Nat.pred_succ]
+    | succ n => right; rfl
 ```
 
 :::::exercise (rating := 2) (name := "mul_is_zero") (checkVisibility := false)
