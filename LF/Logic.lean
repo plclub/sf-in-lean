@@ -2274,9 +2274,15 @@ of this property.
 Conversely, an important side benefit of stating facts using booleans
 is enabling some proof automation through computation with terms, a
 technique known as _proof by reflection_.
+::::
+
+::::terse
+An important benefit of stating facts using booleans
+is enabling some proof automation through computation with terms, a
+technique known as _proof by reflection_.
+::::
 
 Consider the following statement:
-::::
 
 ```display
 Nat.Even 100
@@ -2315,9 +2321,11 @@ Although we haven't gained much in terms of proof-script simplicity
 in this case, larger proofs can often be made considerably simpler
 by the use of reflection.
 
+::::full
 As an extreme example, a famous mechanized proof of the even more famous
 _four-color theorem_ uses reflection to reduce the analysis of hundreds
 of different cases to a boolean computation.
+::::
 
 Another advantage of booleans is that the _negation_ of a claim about
 booleans is straightforward to state and (when true) to prove:
@@ -2359,7 +2367,7 @@ theorem add_beq_true (n m p : Nat) (h : (n == m) = true) :
     (n + p == m + p) = true := by
   workinclass!
     apply (beq_eq_true n m).mp at h
-    rw [h, BEq.rfl]
+    rw [h, BEq.refl]
 ```
 
 ::::full
@@ -2631,11 +2639,11 @@ a b : Prop
 However, we _can_ prove that `a ∧ b` implies `b ∧ a`, and vice versa — this is
 the commutativity of conjunction that we have seen earlier.
 
-```lean (name := add_comm)
+```lean (name := and_comm)
 #check and_comm
 ```
 
-```leanOutput add_comm
+```leanOutput and_comm
 and_comm {a b : Prop} : a ∧ b ↔ b ∧ a
 ```
 
@@ -2670,13 +2678,24 @@ theorem prop_true (a : Prop) (h : a) : a = True := by
 
 Lean provides an {tactic}`ext` tactic that applies {lean}`propext` for us.
 We can use it to show that commuted conjoined propositions are equal.
-Similarly, we can use it to show that reassociated conjoined propositions
-are equal as well.
 
 ```lean
 theorem and_comm_eq (a b : Prop) : (a ∧ b) = (b ∧ a) := by
   ext; apply and_comm
+```
 
+Similarly, we can use it to show that reassociated conjoined propositions
+are equal as well.
+
+```lean (name := and_assoc)
+#check and_assoc
+```
+
+```leanOutput and_assoc
+and_assoc {a b c : Prop} : (a ∧ b) ∧ c ↔ a ∧ b ∧ c
+```
+
+```lean
 theorem and_assoc_eq (a b c : Prop) : ((a ∧ b) ∧ c) = (a ∧ (b ∧ c)) := by
   ext; apply and_assoc
 ```
@@ -2798,8 +2817,13 @@ which Lean provides as {lean}`funext`.
     ∀ {α β : Type} (f g : α → β), (∀ x, f x = g x) → f = g)
 ```
 
+::::terse
+Technically, `funext` is not an axiom, but its proof depends on one
+(which we will not explain).
+::::
+
 ::::full
-Here, functional extensionality means that a function's identity is
+Functional extensionality means that a function's identity is
 completely determined by what we can observe from it — i.e., the results
 we obtain after applying it.
 (Its full type is actually slightly more general,
@@ -2807,6 +2831,7 @@ and is defined in terms of a more fundamental concept called _quotients_
 rather than added directly as an axiom, but we will only discuss {lean}`funext`
 here. This is also why, when printing axioms for theorems using {lean}`funext`,
 it will instead display a {lean}`Quot.sound` axiom.)
+::::
 
 ```lean (name := a_funext)
 #print axioms funext
@@ -2815,8 +2840,6 @@ it will instead display a {lean}`Quot.sound` axiom.)
 ```leanOutput a_funext
 'funext' depends on axioms: [Quot.sound]
 ```
-
-::::
 
 Now we can prove some intuitively obvious equalities about functions
 that would not be provable without {lean}`funext`.
@@ -2831,7 +2854,7 @@ theorem add_comm_fun :
 
 The {tactic}`ext` tactic will also apply {lean}`funext` as many times as possible,
 introducing all variables in one go.
-(The singular version of the tactic is {tactic}`ext1`.)
+The singular version of the tactic is {tactic}`ext1`.
 
 ```lean
 theorem add_comm_fun' :
