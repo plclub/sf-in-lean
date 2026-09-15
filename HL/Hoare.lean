@@ -4424,7 +4424,7 @@ First, we enclose this work in a separate namespace, and recall the
 syntax and big-step semantics of Himp commands.
 
 ```lean
-namespace Himp
+namespace HimpHoare
 
 inductive Com : Type where
   | skip : Com
@@ -4606,7 +4606,7 @@ theorem havoc_post {P : Assertion} {x : Ident} :
 :::::
 
 ```lean
-end Himp
+end HimpHoare
 ```
 ::::::
 
