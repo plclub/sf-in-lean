@@ -1723,7 +1723,7 @@ theorem subst_equiv {x₁ x₂ : String} {a₁ a₂ : Aexp}
 :::::
 
 :::::full
-::::exercise (rating := 3) (name := "inequiv_exercise") (manual := true) (optional := true)
+::::exercise (rating := 3) (name := "inequiv_exercise") (optional := true)
 Prove that an infinite loop is not equivalent to `skip`.
 
 ```lean
@@ -1893,6 +1893,9 @@ inductive Com.EvalR : Com → State → State → Prop where
       EvalR (imp {havoc x}) st (x →ₜ n ; st)
 -- END SOLUTION
 ```
+
+:::autogradedHole Com.EvalR
+:::
 
 :::details "Notation encoding: commands"
 ```lean
