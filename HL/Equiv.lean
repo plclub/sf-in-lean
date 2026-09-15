@@ -872,7 +872,6 @@ theorem Com.congruence_if {b b' : Bexp} {c₁ c₁' c₂ c₂' : Com}
 
 ::::full
 For example, here are two programs and a proof of their equivalence using their congruence theorems.
-::::
 
 ```lean
 example :
@@ -886,6 +885,7 @@ example :
       simp
     · apply Com.equiv_refl
 ```
+::::
 
 ::::::full
 :::::exercise (rating := 3) (name := "not_congr") (level := Advanced) (manual := true)
