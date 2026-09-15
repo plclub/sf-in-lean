@@ -2817,8 +2817,13 @@ which Lean provides as {lean}`funext`.
     ∀ {α β : Type} (f g : α → β), (∀ x, f x = g x) → f = g)
 ```
 
+::::terse
+Technically, `funext` is not an axiom, but its proof depends on one
+(which we will not explain).
+::::
+
 ::::full
-Here, functional extensionality means that a function's identity is
+Functional extensionality means that a function's identity is
 completely determined by what we can observe from it — i.e., the results
 we obtain after applying it.
 (Its full type is actually slightly more general,
@@ -2826,6 +2831,7 @@ and is defined in terms of a more fundamental concept called _quotients_
 rather than added directly as an axiom, but we will only discuss {lean}`funext`
 here. This is also why, when printing axioms for theorems using {lean}`funext`,
 it will instead display a {lean}`Quot.sound` axiom.)
+::::
 
 ```lean (name := a_funext)
 #print axioms funext
@@ -2834,8 +2840,6 @@ it will instead display a {lean}`Quot.sound` axiom.)
 ```leanOutput a_funext
 'funext' depends on axioms: [Quot.sound]
 ```
-
-::::
 
 Now we can prove some intuitively obvious equalities about functions
 that would not be provable without {lean}`funext`.
@@ -2850,7 +2854,7 @@ theorem add_comm_fun :
 
 The {tactic}`ext` tactic will also apply {lean}`funext` as many times as possible,
 introducing all variables in one go.
-(The singular version of the tactic is {tactic}`ext1`.)
+The singular version of the tactic is {tactic}`ext1`.
 
 ```lean
 theorem add_comm_fun' :
