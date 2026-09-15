@@ -1080,8 +1080,8 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 
 :::quizSolution
 ```lean
-example (a b : Prop) (h : a) : a ∨ ¬ ¬ b := by
-  left; exact h
+example (a b : Prop) : a → (a ∨ ¬ ¬ b) := by
+  intro h; left; exact h
 ```
 :::
 ::::
@@ -1102,8 +1102,8 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 
 :::quizSolution
 ```lean
-example (a b : Prop) (h : a ∨ b) : (¬ ¬ a) ∨ (¬ ¬ b) := by
-  cases h with
+example (a b : Prop) : a ∨ b → (¬ ¬ a) ∨ (¬ ¬ b) := by
+  intro h; cases h with
   | inl ha => left; intro hna; apply hna; exact ha
   | inr hb => right; intro hnb; apply hnb; exact hb
 ```
@@ -1126,8 +1126,8 @@ besides {tactic}`intro`, {tactic}`apply`, and {tactic}`exact`?
 
 :::quizSolution
 ```lean
-example (a : Prop) (h : 1 = 0) : (a ∨ ¬ a) := by
-  contradiction
+example (a : Prop) : 1 = 0 → (a ∨ ¬ a) := by
+  intro h; contradiction
 ```
 :::
 ::::
@@ -1141,9 +1141,7 @@ constructor `⟨⟩`, or the {tactic}`constructor` tactic.
 
 ```lean
 example : True := by exact True.intro
-example : True := True.intro
 example : True := by exact ⟨⟩
-example : True := ⟨⟩
 example : True := by constructor
 ```
 
@@ -1262,28 +1260,17 @@ introduces an iff.
 ::::
 
 ```lean (name := iff)
-#check (fun α β : Prop => α ↔ β : Prop → Prop → Prop)
-
-#check Iff
-#check Iff.intro
-#check Iff.mp
-#check Iff.mpr
+#print Iff
 ```
 
 ```leanOutput iff
-Iff (a b : Prop) : Prop
-```
-
-```leanOutput iff
-Iff.intro {a b : Prop} (mp : a → b) (mpr : b → a) : a ↔ b
-```
-
-```leanOutput iff
-Iff.mp {a b : Prop} (self : a ↔ b) : a → b
-```
-
-```leanOutput iff
-Iff.mpr {a b : Prop} (self : a ↔ b) : b → a
+structure Iff (a b : Prop) : Prop
+number of parameters: 2
+fields:
+  Iff.mp : a → b
+  Iff.mpr : b → a
+constructor:
+  Iff.intro {a b : Prop} (mp : a → b) (mpr : b → a) : a ↔ b
 ```
 
 ```lean
@@ -1606,10 +1593,10 @@ example (n : Nat) (h : List.In n [2, 4]) :
   ∃ n' : Nat, n = 2 * n' := by
     workinclass!
       rw [List.In] at h
-      obtain h | h | ⟨⟨⟩⟩ := h
+      obtain h | h | h := h
       · exists 1
       · exists 2
-      /- (Notice the use of the empty pattern to discharge the last case.) -/
+      . contradiction
 ```
 
 We can also reason about more generic statements involving {lean}`List.In`.
@@ -1619,7 +1606,7 @@ theorem List.In_map {α β : Type} {f : α → β} {xs : List α} {x : α}
   (h : In x xs) : In (f x) (map f xs) := by
   induction xs with
   | nil =>
-    exfalso; apply In_nil; assumption
+    apply In_nil at h; contradiction
   | cons x' xs' ih =>
     rw [In_cons] at h
     obtain h | h := h
@@ -1900,24 +1887,6 @@ example (x y z : Nat) : x + (y + z) = (z + y) + x := by
 ```
 ::::
 
-::::full
-As an aside, some tactics that accept an `at` clause can target
-several locations at once, including the goal, written using the `⊢` symbol, by listing them
-together after `at` — for instance, both {tactic}`rw` and
-{tactic}`dsimp` support this.
-::::
-
-::::terse
-Aside: some tactics, like {tactic}`rw` and {tactic}`dsimp`, can list
-several locations at once with `at`, including the goal:
-::::
-
-```lean
-example (n m : Nat) (h : n + 0 = m) : n = m + 0 := by
-  rw [Nat.add_zero] at h ⊢
-  assumption
-```
-
 The fact that implications are functions means we can prove them by
 explicitly providing a function.
 
@@ -2100,6 +2069,24 @@ in the application
 end FunctionTheoremQuiz
 ```
 ::::
+
+::::full
+As an aside, some tactics that accept an `at` clause can target
+several locations at once, including the goal, written using the `⊢` symbol, by listing them
+together after `at` — for instance, both {tactic}`rw` and
+{tactic}`dsimp` support this.
+::::
+
+::::terse
+Aside: some tactics, like {tactic}`rw` and {tactic}`dsimp`, can list
+several locations at once with `at`, including the goal:
+::::
+
+```lean
+example (n m : Nat) (h : n + 0 = m) : n = m + 0 := by
+  rw [Nat.add_zero] at h ⊢
+  assumption
+```
 
 # Working with Decidable Properties
 
