@@ -629,8 +629,6 @@ theorem right (a b : Prop) (h : a ∧ b) : b := by
   solution!
     exact h.right
 ```
-:::gradeTheorem 1 right
-:::
 :::::
 
 Finally, we sometimes need to rearrange the order of conjunctions
@@ -736,7 +734,7 @@ theorem Nat.zero_or_succ (n : Nat) : n = 0 ∨ n = (n + 1).pred := by
     | succ n => right; rw [Nat.pred_succ]
 ```
 
-:::::exercise (rating := 2) (name := "mul_is_zero")
+:::::exercise (rating := 2) (name := "mul_is_zero") (checkVisibility := false)
 ```lean
 theorem Nat.mul_is_zero (n m : Nat) (h : n * m = 0) : n = 0 ∨ m = 0 := by
   solution!
@@ -753,7 +751,7 @@ theorem Nat.mul_is_zero (n m : Nat) (h : n * m = 0) : n = 0 ∨ m = 0 := by
 :::
 :::::
 
-:::::exercise (rating := 1) (name := "or_commute")
+:::::exercise (rating := 1) (name := "or_commute") (checkVisibility := false)
 ```lean
 theorem or_commute (a b : Prop) (h : a ∨ b) : b ∨ a := by
   solution!
@@ -831,8 +829,6 @@ theorem not_implies_other_not (a : Prop) (h : ¬ a) :
     apply h
     exact ha
 ```
-:::gradeTheorem 2 not_implies_other_not
-:::
 :::::
 
 ::::::
@@ -969,8 +965,6 @@ theorem not_succ_pred_n : ¬ (∀ n : Nat, n.pred + 1 = n) := by
     rw [Nat.pred_zero] at h0
     contradiction
 ```
-:::gradeTheorem 1 not_succ_pred_n
-:::
 :::::
 
 ::::::
@@ -1305,7 +1299,7 @@ theorem not_true_iff_false (b : Bool) : b ≠ true ↔ b = false := by
   · intro h; rw [h]; intro h'; contradiction
 ```
 
-:::::exercise (rating := 1) (name := "iff_properties") (optional := true)
+:::::exercise (rating := 1) (name := "iff_properties") (optional := true) (checkVisibility := false)
 Using the above proof that `↔` is symmetric ({lean}`iff_sym`) as a guide,
 prove that it is also reflexive and transitive.
 
@@ -1322,10 +1316,9 @@ theorem iff_trans (a b c : Prop) (h₁ : a ↔ b) (h₂ : b ↔ c) : a ↔ c := 
     · intro ha; apply h₂.mp; apply h₁.mp; exact ha
     · intro hb; apply h₁.mpr; apply h₂.mpr; exact hb
 ```
-:::gradeTheorem "0.5" iff_refl iff_trans
-:::
 :::::
 
+:::::full
 ::::exercise (rating := 3) (name := "iff_practice")
 Prove the following theorems about {lean}`Iff`:
 
@@ -1378,6 +1371,7 @@ theorem or_distributes_over_and (a b c : Prop) :
 :::gradeTheorem 1 or_associate mul_eq_0 or_distributes_over_and
 :::
 ::::
+:::::
 
 ## Existential Quantification
 
@@ -1747,9 +1741,6 @@ def CombineOddEven (Odd Even : Nat → Prop) : Nat → Prop := solution!(
   fun n => bif Nat.odd n then Odd n else Even n)
 ```
 
-:::autogradedHole CombineOddEven
-:::
-
 To test your definition, prove the following facts:
 
 ```lean
@@ -1776,7 +1767,7 @@ theorem combineOddEven_elim_odd
     (h : CombineOddEven Odd Even n)
     (hOdd : Nat.odd n = true) : Odd n := by
   solution!
-    rw [CombineOddEven, hOdd, cond_true] at h
+    rw [CombineOddEven, hOdd, Bool.cond_true] at h
     exact h
 
 theorem combineOddEven_elim_even
@@ -1785,12 +1776,10 @@ theorem combineOddEven_elim_even
     (h : CombineOddEven Odd Even n)
     (hOdd : Nat.odd n = false) : Even n := by
   solution!
-    rw [CombineOddEven, hOdd, cond_false] at h
+    rw [CombineOddEven, hOdd, Bool.cond_false] at h
     exact h
 ```
 
-:::gradeTheorem "2/3" combineOddEven_intro combineOddEven_elim_odd combineOddEven_elim_even
-:::
 :::::
 
 ::::::
@@ -2193,7 +2182,7 @@ theorem even_double (k : Nat) :
 Same issue as `CombineOddEven`.
 :::
 
-:::::exercise (rating := 3) (name := "even_double_conv")
+:::::exercise (rating := 3) (name := "even_double_conv") (checkVisibility := false)
 ```lean
 theorem even_double_conv (n : Nat) : ∃ k : Nat,
     n = bif Nat.even n then Nat.double k else Nat.double k + 1 := by
@@ -2207,10 +2196,10 @@ theorem even_double_conv (n : Nat) : ∃ k : Nat,
       rw [Nat.even_succ]
       cases h : Nat.even n' with
       | false =>
-        rw [h] at ihk; rw [not] at *; rw [cond_false] at ihk
-        exists (k' + 1); rw [ihk, cond_true, Nat.double_succ]
+        rw [h] at ihk; rw [not] at *; rw [Bool.cond_false] at ihk
+        exists (k' + 1); rw [ihk, Bool.cond_true, Nat.double_succ]
       | true =>
-        rw [h] at ihk; rw [not] at *; rw [cond_true] at ihk
+        rw [h] at ihk; rw [not] at *; rw [Bool.cond_true] at ihk
         exists k'; congr
 ```
 :::gradeTheorem 3 even_double_conv
@@ -2224,7 +2213,7 @@ theorem Nat.even_bool_prop (n : Nat) : Nat.even n = true ↔ Even n := by
   constructor
   · intro h
     obtain ⟨k, hk⟩ := even_double_conv n
-    rw [h] at hk; rw [cond_true] at hk; rw [Even]; exists k
+    rw [h] at hk; rw [Bool.cond_true] at hk; rw [Even]; exists k
   · intro ⟨k, hk⟩; rw [hk]; apply even_double
 ```
 
@@ -2749,7 +2738,7 @@ asking for all of the axioms used by a declaration.
 'and_comm_flip'' depends on axioms: [propext]
 ```
 
-:::::exercise (rating := 1) (name := "mul_eq_0_ternary")
+:::::exercise (rating := 1) (name := "mul_eq_0_ternary") (checkVisibility := false)
 ```lean
 theorem mul_eq_0_ternary (n m p : Nat) :
     n * m * p = 0 ↔ n = 0 ∨ m = 0 ∨ p = 0 := by
@@ -2760,6 +2749,7 @@ theorem mul_eq_0_ternary (n m p : Nat) :
 :::
 :::::
 
+::::::full
 :::::exercise (rating := 2) (name := "In_append_iff")
 ```lean
 theorem In_append_iff (α : Type) (l l' : List α) (x : α) :
@@ -2776,6 +2766,9 @@ theorem In_append_iff (α : Type) (l l' : List α) (x : α) :
 :::
 :::::
 
+::::::
+
+::::::full
 :::::exercise (rating := 1) (name := "beq_neq_false")
 The following theorem is an alternative "negative" formulation of {lean}`beq_eq_true`
 that is more convenient in certain situations.
@@ -2789,6 +2782,8 @@ theorem beq_neq_false (n m : Nat) : (n == m) = false ↔ n ≠ m := by
 :::gradeTheorem 1 beq_neq_false
 :::
 :::::
+
+::::::
 
 ## Functional Extensionality
 
@@ -2892,7 +2887,7 @@ example {n : Nat} {p : Nat × Nat}
     · rw [hx_snd]
 ```
 
-::::exercise (rating := 2) (name := "prod_ext_example")
+::::exercise (rating := 2) (name := "prod_ext_example") (checkVisibility := false)
 Now, use {tactic}`ext1` to prove the following.
 Remember that `dsimp only` simplifies projections like `(a, b).fst` to `a`.
 
@@ -3295,8 +3290,6 @@ theorem peirce_cm : Peirce → ConsequentiaMirabilis := by
     intro h a; exact h a False
 ```
 
-:::gradeTheorem 5 ImpOr_em em_ImpOr em_demorgan demorgan_em em_not_not not_not_em' em_cm cm_em cm_not_not not_not_cm cm_peirce peirce_cm
-:::
 :::::
 
 ::::::
