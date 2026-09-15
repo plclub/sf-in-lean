@@ -259,7 +259,8 @@ theorem if_true {b : Bexp} {c₁ c₂ : Com} (hb : b ≃ bexp {true}) :
     simp_all
 ```
 
-:::::exercise (rating := 2) (name := "if_false_equiv")
+:::::full
+::::exercise (rating := 2) (name := "if_false_equiv")
 ```lean
 theorem if_false {b : Bexp} {c₁ c₂ : Com} (hb : b ≃ bexp {false}) :
     imp {if (b) {c₁} else {c₂}} ≃ c₂ := by
@@ -273,10 +274,11 @@ theorem if_false {b : Bexp} {c₁ c₂ : Com} (hb : b ≃ bexp {false}) :
       apply EvalR.ifFalse _ h
       simp_all
 ```
+::::
 :::::
 
-
-:::::exercise (rating := 3) (name := "swap_if_branches")
+:::::full
+::::exercise (rating := 3) (name := "swap_if_branches")
 Show that we can swap the branches of an `if` if we also negate its
 condition.
 
@@ -305,6 +307,7 @@ theorem swap_if_branches {b : Bexp} {c₁ c₂ : Com} :
         apply EvalR.ifTrue _ hc
         simp_all
 ```
+::::
 :::::
 
 ::::full
@@ -319,7 +322,7 @@ The first of these facts is easy.
 ::::
 
 ```lean
-theorem while_false_equiv {b : Bexp} {c : Com} (hb : b ≃ bexp {false}) :
+theorem while_false {b : Bexp} {c : Com} (hb : b ≃ bexp {false}) :
     imp {while (b) {c}} ≃ imp {skip} := by
   rw [equiv_def]
   intro st st''
@@ -335,8 +338,10 @@ theorem while_false_equiv {b : Bexp} {c : Com} (hb : b ≃ bexp {false}) :
     simp_all
 ```
 
-:::::exercise (rating := 2) (name := "while_false_informal") (level:= Advanced) (manual:= true)
-Write an informal proof of `while_false_equiv`.
+:::::full
+::::exercise (rating := 2) (name := "while_false_informal") (level:= Advanced) (manual:= true)
+Write an informal proof of `while_false`.
+::::
 :::::
 
 ::::full
@@ -388,11 +393,13 @@ theorem while_true_nonterm {b : Bexp} {c : Com} {st st' : State} (hb : b ≃ bex
     | skip | asgn | seq | ifTrue | ifFalse =>
       contradiction -- `heq` says that different commands are equal
 ```
-:::::exercise (rating := 2) (name := "while_true_nonterm_informal") (manual:= true)
-Explain what the lemma `while_true_nonterm` means in English.
-:::::
 
-:::::exercise (rating := 2) (name := "while_true")
+:::::full
+::::exercise (rating := 2) (name := "while_true_nonterm_informal") (manual:= true)
+Explain what the lemma `while_true_nonterm` means in English.
+::::
+
+::::exercise (rating := 2) (name := "while_true")
 Prove the following theorem.
 _Hint_: You'll want to use `while_true_nonterm` here.
 
@@ -413,6 +420,7 @@ theorem while_true {b : Bexp} {c : Com} (hb : b ≃ bexp {true}) :
       intro
       rfl
 ```
+::::
 :::::
 
 ::::full
@@ -504,7 +512,8 @@ theorem identity_assignment {X : Ident} :
     simp_all [TotalMap.update_same]
 ```
 
-:::::exercise (rating := 2) (name := "assign_equiv")
+:::::full
+::::exercise (rating := 2) (name := "assign_equiv")
 ```lean
 theorem assign_equiv {X : Ident} {a : Aexp} (ha : aexp { X } ≃ a) :
     imp { skip } ≃ imp { X := a } := by
@@ -526,6 +535,7 @@ theorem assign_equiv {X : Ident} {a : Aexp} (ha : aexp { X } ≃ a) :
         simp only [← ha, Aexp.eval_id, TotalMap.update_same]
         exact Com.EvalR.skip
 ```
+::::
 :::::
 
 :::::full
@@ -797,7 +807,9 @@ theorem Com.congruence_while {b b' : Bexp} {c c' : Com} (hb : b ≃ b') (hc : c 
       | skip | asgn | seq | ifTrue | ifFalse =>
         contradiction
 ```
-:::::exercise (rating := 3) (name := "Com.congruence_seq") (optional := true)
+
+:::::full
+::::exercise (rating := 3) (name := "Com.congruence_seq") (optional := true)
 ```lean
 theorem Com.congruence_seq {c₁ c₁' c₂ c₂' : Com} (hc₁ : c₁ ≃ c₁') (hc₂ : c₂ ≃ c₂') :
     imp {c₁ ; ~c₂} ≃ imp {c₁' ; c₂'} := by
@@ -818,9 +830,9 @@ theorem Com.congruence_seq {c₁ c₁' c₂ c₂' : Com} (hc₁ : c₁ ≃ c₁'
         exact Com.EvalR.seq (hc₁.mpr hc₁') (hc₂.mpr hc₂')
   )
 ```
-:::::
+::::
 
-:::::exercise (rating := 3) (name := "Com.congruence_if")
+::::exercise (rating := 3) (name := "Com.congruence_if")
 ```lean
 theorem Com.congruence_if {b b' : Bexp} {c₁ c₁' c₂ c₂' : Com}
    (hb : b ≃ b') (hc₁ : c₁ ≃ c₁') (hc₂ : c₂ ≃ c₂') :
@@ -855,6 +867,7 @@ theorem Com.congruence_if {b b' : Bexp} {c₁ c₁' c₂ c₂' : Com}
           exact (hc₂.mpr hc₂')
   )
 ```
+::::
 :::::
 
 ::::full
@@ -874,6 +887,7 @@ example :
     · apply Com.equiv_refl
 ```
 
+::::::full
 :::::exercise (rating := 3) (name := "not_congr") (level := Advanced) (manual := true)
 We've shown that the {name}`Com.Equiv` relation is both an equivalence and
 a congruence on commands.  Can you think of a relation on commands
@@ -882,6 +896,7 @@ relation (formally), together with an informal sketch of a proof
 that it is an equivalence and a counterexample showing it is not a
 congruence.
 :::::
+::::::
 
 # Program Transformation
 
@@ -1072,8 +1087,10 @@ theorem Bexp.foldConstants_binary (b₁ : Bexp) (b₂ : Bexp) :
 
 ```
 ```lean
-example : (bexp { true ∧ ¬( false ∧ true) }).foldConstants = (bexp { true }) := by rfl
-example : (bexp { (X = Y) ∧ ( 0 = (2 - (1 + 1))) }).foldConstants = (bexp { (X = Y) ∧ true }) := by rfl
+example : (bexp { true ∧ ¬( false ∧ true) }).foldConstants = (bexp { true }) := by
+  rfl
+example : (bexp { (X = Y) ∧ ( 0 = (2 - (1 + 1))) }).foldConstants = (bexp { (X = Y) ∧ true }) := by
+  rfl
 ```
 
 ::::full
@@ -1126,12 +1143,12 @@ Here's the proof for arithmetic expressions.
 ::::
 
 ```lean
-theorem Aexp.foldConstants_sound : TransSound foldConstants := by
+theorem Aexp.foldConstants_sound : TransSound Aexp.foldConstants := by
   intro a st
   induction a with
   | num n | id x => rfl
   | _ a₁ a₂ _ _ =>
-    cases foldConstants_cases a₁ a₂ with
+    cases Aexp.foldConstants_cases a₁ a₂ with
     | inl h =>
       obtain ⟨n₁, n₂, h₁, h₂⟩ := h
       simp_all [foldConstants]
@@ -1141,13 +1158,13 @@ theorem Aexp.foldConstants_sound : TransSound foldConstants := by
 
 An equivalent version using the {tactic}`fun_induction` tactic would look simpler:
 ```lean
-theorem Aexp.foldConstants_sound' : TransSound foldConstants := by
+theorem Aexp.foldConstants_sound' : TransSound Aexp.foldConstants := by
   intro a st
-  fun_induction foldConstants a <;> simp_all
+  fun_induction Aexp.foldConstants <;> simp_all
 ```
 
 :::::full
-::::exercise (rating := 3) (manual := true) (optional := true) (name := "fold_bexp_Eq_informal")
+::::exercise (rating := 3) (manual := true) (optional := true) (name := "Bexp.fold_eq_informal")
 Here is an informal proof of the `eq` case of the soundness
 argument for boolean expression constant folding.  Read it
 carefully and compare it to the formal proof that follows.  Then
@@ -1155,41 +1172,41 @@ fill in the `le` case of the formal proof (without looking at the
 `eq` case, if possible).
 
 _Theorem_: The constant folding function for booleans,
-`fold_constants_bexp`, is sound.
+`Bexp.fold_constants`, is sound.
 
-_Proof_: We must show that `b` is equivalent to `fold_constants_bexp b`,
+_Proof_: We must show that `b` is equivalent to `Bexp.fold_constants b`,
 for all boolean expressions `b`.  Proceed by induction on `b`.  We
 show just the case where `b` has the form `a₁ = a₂`.
 
 In this case, we must show
 ```
-(imp { a₁ = a₂ }).eval st = (fold_constants_bexp (imp { a₁ = a₂ })).eval st
+  (bexp { a₁ = a₂ }).eval st = (bexp { a₁ = a₂ }).foldConstants.eval st
 ```
 
 There are two cases to consider:
 
-- First, suppose `fold_constants_aexp a₁ = imp { n₁ }` and
-  `fold_constants_aexp a₂ = imp { n₂ }` for some `n₁` and `n₂`.
+- First, suppose `a₁.foldConstants = aexp { n₁ }` and
+  `a₂.foldConstants = aexp { n₂ }` for some `n₁` and `n₂`.
 
   In this case, we have
 
 ```
-  fold_constants_bexp (imp { a₁ = a₂ }) = if (n₁ = n₂) then imp { true } else imp { false }
+  Bexp.fold_constants (bexp { a₁ = a₂ }) = if (n₁ = n₂) then bexp { true } else bexp { false }
 ```
 
   and
 
 ```
-(imp {a₁ = a₂}).eval st = a₁.eval st = a₂.eval st.
+  (bexp {a₁ = a₂}).eval st = a₁.eval st = a₂.eval st.
 ```
 
   By the soundness of constant folding for arithmetic
-  expressions (`fold_constants_aexp_sound`), we know
+  expressions (`Aexp.foldConstants_sound`), we know
 
 ```
            a₁.eval st
-         = (fold_constants_aexp a₁).eval st
-         = (imp { n₁ }).eval st
+         = (a₁.foldConstants).eval st
+         = (aexp { n₁ }).eval st
          = n₁
 ```
 
@@ -1197,179 +1214,162 @@ There are two cases to consider:
 
 ```
            a₂.eval st
-         = (fold_constants_aexp a₂).eval st
-         = (imp { n₂ }).eval st
+         = (a₂.foldConstants).eval st
+         = (aexp { n₂ }).eval st
          = n₂
 ```
 
   so
 
 ```
-          imp { a₁ = a₂ }.eval st
-         = (aeval a₁) = (aeval a₂)
+          bexp { a₁ = a₂ }.eval st
+         = a₁.eval st = a₂.aeval st
          = n₁ = n₂
 ```
 
       Also, it is easy to see (by considering the cases `n₁ = n₂` and
       `n₁ ≠ n₂` separately) that
 ```
-          (if n₁ = n₂ then (imp { true }) else (imp { false }) ).eval st
-         = if n₁ = n₂ then imp { true }.eval st else imp { false }.eval st
+          (if n₁ = n₂ then (bexp { true }) else (bexp { false }) ).eval st
+         = if n₁ = n₂ then bexp { true }.eval st else bexp { false }.eval st
          = if n₁ = n₂ then true else false
          = n₁ = n₂
 ```
       So
 ```
-           ((imp { a₁ = a₂ })).eval st
+          (bexp { a₁ = a₂ }).eval st
          = n₁ = n₂.
-         = (if n₁ = n₂ then (imp { true }) else (imp { false }) ).eval st,
+         = (if n₁ = n₂ then (bexp { true }) else (bexp { false }) ).eval st,
 ```
        as required.
 
-     - Otherwise, one of `fold_constants_aexp a₁` and
-       `fold_constants_aexp a₂` is not a constant.  In this case, we
+     - Otherwise, one of `a₁.foldConstants` and
+       `a₂.foldConstants` is not a constant.  In this case, we
        must show
 ```
-           imp { a₁ = a₂ }.eval st
-         = beval st (<{ (fold_constants_aexp a₁) =
-                         (fold_constants_aexp a₂) }>),
+           bexp { a₁ = a₂ }.eval st
+         = (bexp { (a₁.foldConstants = a₂.foldConstants) }).eval st,
 ```
        which, by the definition of {name}`Bexp.eval`, is the same as showing
 ```
            a₁.eval st = a₂.eval st
-         = ((fold_constants_aexp a₁)) =.eval st
-                   ((fold_constants_aexp a₂))..eval st
+        = (a₁.foldConstants).eval st = (a₂.foldConstants).eval st
 ```
        But the soundness of constant folding for arithmetic
-       expressions (`fold_constants_aexp_sound`) gives us
+       expressions (`Aexp.foldConstants_sound`) gives us
 ```
-         a₁ = (fold_constants_aexp a₁).eval st
-         a₂ = (fold_constants_aexp a₂),.eval st
+         a₁ = (a₁.foldConstants).eval st
+         a₂ = (a₂.foldConstants).eval st
 ```
        completing the case.
 
 ```lean
-theorem fold_constants_bexp_sound : Bexp.TransSound Bexp.foldConstants := by
-  sorry
-/- Proof.
-  unfold btrans_sound. intros b. unfold bequiv. intros st.
-  induction b;
-    (* true and false are immediate
-    try reflexivity.
-  - (* BEq
-    simpl.
-    remember (fold_constants_aexp a₁) as a1' eqn:Heqa1'.
-    remember (fold_constants_aexp a₂) as a₂' eqn:Heqa2'.
-    replace a₁.eval st with a1'.eval st by
-       (subst a1'; rewrite <- fold_constants_aexp_sound; reflexivity).
-    replace a₂.eval st with a₂'.eval st by
-       (subst a₂'; rewrite <- fold_constants_aexp_sound; reflexivity).
-    destruct a1'; destruct a₂'; try reflexivity.
-    (* The only interesting case is when both a₁ and a₂
-       become constants after folding
-      simpl. destruct (n = n0); reflexivity.
-  - (* BNeq
-    simpl.
-    remember (fold_constants_aexp a₁) as a1' eqn:Heqa1'.
-    remember (fold_constants_aexp a₂) as a₂' eqn:Heqa2'.
-    replace a₁.eval st with a1'.eval st by
-       (subst a1'; rewrite <- fold_constants_aexp_sound; reflexivity).
-    replace a₂.eval st with a₂'.eval st by
-       (subst a₂'; rewrite <- fold_constants_aexp_sound; reflexivity).
-    destruct a1'; destruct a₂'; try reflexivity.
-    (* The only interesting case is when both a₁ and a₂
-       become constants after folding
-      simpl. destruct (n = n0); reflexivity.
-  - (* BLe
-    (* ADMIT
-    simpl.
-    remember (fold_constants_aexp a₁) as a1' eqn:Heqa1'.
-    remember (fold_constants_aexp a₂) as a₂' eqn:Heqa2'.
-    (* a slightly alternative approach using asserts:
-    assert a₁ = a1'.eval st as H1. {.eval st
-      subst a1'. apply fold_constants_aexp_sound. }
-    assert a₂ = a₂'.eval st as H2. {.eval st
-      subst a₂'. apply fold_constants_aexp_sound. }
-    rewrite H1. rewrite H2.
-    destruct a1'; destruct a₂'; try reflexivity.
-      (* Again, the only interesting case is when both a₁ and a₂
-          become constants after folding
-      simpl. destruct (n ≤ n0); reflexivity.
-    (* /ADMIT
-  - (* BGt
-    (* ADMIT
-    simpl.
-    remember (fold_constants_aexp a₁) as a1' eqn:Heqa1'.
-    remember (fold_constants_aexp a₂) as a₂' eqn:Heqa2'.
-    (* a slightly alternative approach using asserts:
-    assert a₁ = a1'.eval st as H1. {.eval st
-      subst a1'. apply fold_constants_aexp_sound. }
-    assert a₂ = a₂'.eval st as H2. {.eval st
-      subst a₂'. apply fold_constants_aexp_sound. }
-    rewrite H1. rewrite H2.
-    destruct a1'; destruct a₂'; try reflexivity.
-      (* Again, the only interesting case is when both a₁ and a₂
-          become constants after folding
-      simpl. destruct (n ≤ n0); reflexivity.
-    (* /ADMIT
-  - (* BNot
-    simpl. remember (fold_constants_bexp b) as b' eqn:Heqb'.
-    rewrite IHb.
-    destruct b'; reflexivity.
-  - (* BAnd
-    simpl.
-    remember (fold_constants_bexp b₁) as b1' eqn:Heqb1'.
-    remember (fold_constants_bexp b₂) as b2' eqn:Heqb2'.
-    rewrite IHb1. rewrite IHb2.
-    destruct b1'; destruct b2'; reflexivity.
-(* ADMITTED
-Qed.
-(* /ADMITTED  -/
+theorem Bexp.foldConstants_sound : Bexp.TransSound Bexp.foldConstants := by
+    intro b st
+    induction b with
+    | bool b => cases b <;> simp
+    | eq a₁ a₂ =>
+        simp only [Bexp.eval_eq, Bexp.foldConstants]
+        have h₁ : a₁.eval st = a₁.foldConstants.eval st := by
+          rw [Aexp.foldConstants_sound]
+        have h₂ : a₂.eval st = a₂.foldConstants.eval st := by
+          rw [Aexp.foldConstants_sound]
+        rw [h₁, h₂]
+        cases a₁.foldConstants <;> cases a₂.foldConstants <;> (try simp_all; done)
+        · case num.num n₁ n₂ =>
+          -- The only interesting case is when both a₁ and a₂ become constants after folding
+          by_cases n₁ = n₂ <;> simp_all
+    | neq a₁ a₂ =>
+        simp only [Bexp.eval_neq, Bexp.foldConstants]
+        have h₁ : a₁.eval st = a₁.foldConstants.eval st := by
+          rw [Aexp.foldConstants_sound]
+        have h₂ : a₂.eval st = a₂.foldConstants.eval st := by
+          rw [Aexp.foldConstants_sound]
+        rw [h₁, h₂]
+        cases a₁.foldConstants <;> cases a₂.foldConstants <;> (try simp_all; done)
+        · case num.num n₁ n₂ =>
+          by_cases n₁ = n₂ <;> simp_all
+    | le a₁ a₂ =>
+      solution!
+        simp only [Bexp.eval_le, Bexp.foldConstants]
+        have h₁ : a₁.eval st = a₁.foldConstants.eval st := by
+          rw [Aexp.foldConstants_sound]
+        have h₂ : a₂.eval st = a₂.foldConstants.eval st := by
+          rw [Aexp.foldConstants_sound]
+        rw [h₁, h₂]
+        cases a₁.foldConstants <;> cases a₂.foldConstants <;> (try simp_all; done)
+        · case num.num n₁ n₂ =>
+          simp only [Aexp.eval]
+          by_cases (n₁ ≤ n₂) <;> simp_all [Nat.not_le_of_gt]
+    | gt a₁ a₂ =>
+      solution!
+        simp only [Bexp.eval_gt, Bexp.foldConstants]
+        have h₁ : a₁.eval st = a₁.foldConstants.eval st := by
+          rw [Aexp.foldConstants_sound]
+        have h₂ : a₂.eval st = a₂.foldConstants.eval st := by
+          rw [Aexp.foldConstants_sound]
+        rw [h₁, h₂]
+        cases a₁.foldConstants <;> cases a₂.foldConstants <;> (try simp_all; done)
+        · case num.num n₁ n₂ =>
+          by_cases n₂ < n₁ <;> simp_all [Nat.not_lt_of_le]
+    | not b ih =>
+        simp only [Bexp.eval_not, Bexp.foldConstants]
+        rw [ih]
+        cases b.foldConstants  <;> (try simp_all; done)
+        · case not.bool b => cases b <;> simp_all
+    | and b₁ b₂ ih₁ ih₂ =>
+        simp only [Bexp.eval_and, Bexp.foldConstants]
+        rw [ih₁, ih₂]
+        cases b₁.foldConstants <;> cases b₂.foldConstants <;> (try simp_all; done)
+        · case and.bool.bool b₁ b₂ =>
+          cases b₁ <;> cases b₂ <;> simp_all
 ```
 ::::
 :::::
 
 :::::full
-::::exercise (rating := 3) (name := "fold_constants_com_sound") (manual := true) (optional := true)
+::::exercise (rating := 3) (name := "Com.foldConstants_sound") (manual := true) (optional := true)
 Complete the `while` case of the following proof.
 
 ```lean
-theorem fold_constants_com_sound : Com.TransSound Com.foldConstants := by sorry
-/- Proof.
-  unfold ctrans_sound. intros c.
-  induction c; simpl.
-  - (* skip  apply refl_cequiv.
-  - (* :=  apply CAsgn_congruence.
-              apply fold_constants_aexp_sound.
-  - (* ;  apply CSeq_congruence; assumption.
-  - (* if
-    assert (bequiv b (fold_constants_bexp b)). {
-      apply fold_constants_bexp_sound. }
-    destruct (fold_constants_bexp b) eqn:Heqb;
-      try (apply CIf_congruence; assumption).
-      (* (If the optimization doesn't eliminate the if, then the
-          result is easy to prove from the IH and
-          [fold_constants_bexp_sound].)
-    + (* b always true
-      apply trans_cequiv with c₁; try assumption.
-      apply if_true; assumption.
-    + (* b always false
-      apply trans_cequiv with c₂; try assumption.
-      apply if_false; assumption.
-  - (* while
-    (* ADMITTED
-    assert (bequiv b (fold_constants_bexp b)).
-    { (* Pf of assertion  apply fold_constants_bexp_sound. }
-    destruct (fold_constants_bexp b) eqn:Heqb;
-      (* Again, the cases where [fold_constants_com] doesn't change
-          the test or don't change the loop body follow from the IH
-          and [fold_constants_bexp_sound]
-      try (apply CWhile_congruence; assumption).
-    + (* b always true
-      apply while_true; assumption.
-    + (* b always false
-      apply while_false; assumption.  Qed.
-(* /ADMITTED -/
+theorem Com.foldConstants_sound : Com.TransSound Com.foldConstants := by
+  intro c
+  induction c with
+  | skip =>
+      simp [Com.foldConstants]
+  | asgn x a =>
+      apply Com.congruence_asgn
+      apply Aexp.foldConstants_sound
+  | seq c₁ c₂ ih₁ ih₂ =>
+      apply Com.congruence_seq <;> assumption
+  | cond b c₁ c₂ ih₁ ih₂ =>
+      simp only [Com.foldConstants]
+      have hb : b ≃ b.foldConstants := by
+        apply Bexp.foldConstants_sound
+      -- If the optimization doesn't eliminate the `if`, then the
+      -- result is easy to prove from the `ih` and
+      -- `Bexp.foldConstants_sound`
+      cases heq : b.foldConstants <;> try (apply Com.congruence_if <;> simp_all)
+      · case cond.bool b =>
+          cases b with
+          | false =>
+              apply Com.equiv_trans <;> try assumption
+              apply Com.if_false; simp_all
+          | true =>
+              apply Com.equiv_trans <;> try assumption
+              apply Com.if_true; simp_all
+  | whileDo b c ih =>
+      solution!
+        simp only [Com.foldConstants]
+        have hb : b ≃ b.foldConstants := by
+          apply Bexp.foldConstants_sound
+        cases heq : b.foldConstants <;> try (apply Com.congruence_while <;> simp_all)
+        · case whileDo.bool b =>
+          cases b with
+          | false =>
+              apply Com.while_false; simp_all
+          | true =>
+              apply Com.while_true; simp_all
 ```
 ::::
 :::::
@@ -1455,71 +1455,42 @@ Prove that these three functions are sound, as we did for
 proof for {name}`Com.optimize0plus` - otherwise it will be _long_!
 
 ```lean
-theorem optimize0plus_aexp_sound: Aexp.TransSound Aexp.optimize0plus := by sorry
-/- Proof.
-  (* ADMITTED
-  unfold atrans_sound, aequiv.
-  intros a st.
-  induction a;
-    (* Aexp.num and Aexp.id are immediate by definition
-    try (reflexivity);
-    (* AMinus and AMult are immediate by IH
-    try (simpl; rewrite IHa1; rewrite IHa2; reflexivity).
-  - (* APlus
-    destruct a₁;
-    (* everything but Aexp.num and Aexp.id follow from the IH
-    try (simpl; simpl in IHa1; rewrite IHa1; rewrite IHa2; reflexivity).
-    + (* Aexp.num
-      simpl. rewrite IHa2.
-      destruct n as [| n'].
-      * (* n = 0
-        apply add_0_l.
-      * (* n = S n'
-        simpl. reflexivity.
-    + (* Aexp.id
-      simpl. rewrite IHa2. reflexivity.  Qed.
-(* /ADMITTED -/
+theorem Aexp.optimize0plus_sound: Aexp.TransSound Aexp.optimize0plus := by
+  solution!
+    intro a st
+    induction a with (simp only [Aexp.eval, Aexp.optimize0plus]; try rfl )
+    | plus a₁ a₂ ih₁ ih₂ =>
+      cases a₁ with (simp only [Aexp.eval, Aexp.optimize0plus] at *; try rw [←ih₁, ←ih₂])
+      | num n =>
+        cases n <;> simp only [Aexp.eval, Aexp.optimize0plus] <;> lia
+      | id _ => rw [ih₂]
+    | mult a₁ a₂ ih₁ ih₂
+    | minus a₁ a₂ ih₁ ih₂ => rw [←ih₁, ←ih₂]
 
-theorem optimize0plus_bexp_sound: Bexp.TransSound Bexp.optimize0plus := by sorry
-/-  (* ADMITTED
-  unfold btrans_sound, bequiv.
-  intros b st. induction b; simpl;
-               try reflexivity;
-               try (rewrite IHb1; rewrite IHb2; reflexivity);
-               try (rewrite <- optimize0plus_aexp_sound;
-                    rewrite <- optimize0plus_aexp_sound;
-                    reflexivity).
-  - (* BNot
-    rewrite IHb. reflexivity.  Qed.
-(* /ADMITTED -/
+theorem Bexp.optimize0plus_sound: Bexp.TransSound Bexp.optimize0plus := by
+  solution!
+    intro b st
+    induction b with (
+      simp only [Bexp.eval, Bexp.optimize0plus];
+      try rw [←Aexp.optimize0plus_sound, ←Aexp.optimize0plus_sound]
+    )
+    | bool b => cases b <;> simp [Bexp.optimize0plus]
+    | not b ih => rw [ih]
+    | and b₁ b₂ ih₁ ih₂ => rw [ih₁, ih₂]
 
-theorem optimize0plus_com_sound: Com.TransSound Com.optimize0plus := by sorry
-/-
-  (* ADMITTED
-  unfold ctrans_sound, cequiv.
-  intros c.
-  induction c;
-  intros st st'; simpl.
-  - (* skip
-    apply refl_cequiv.
-  - (* :=
-    apply CAsgn_congruence.
-    apply optimize0plus_aexp_sound.
-  - (* ;
-    apply CSeq_congruence; unfold cequiv.
-    + apply IHc1.
-    + apply IHc2.
-  - (* if
-    apply CIf_congruence; unfold cequiv.
-    + apply optimize0plus_bexp_sound.
-    + apply IHc1.
-    + apply IHc2.
-  - (* while
-    apply CWhile_congruence; unfold cequiv.
-    + apply optimize0plus_bexp_sound.
-    + apply IHc.  Qed.
-(* /ADMITTED
-(* GRADE_THEOREM 2: optimize0plus_com_sound -/
+theorem Com.optimize0plus_sound: Com.TransSound Com.optimize0plus := by
+  solution!
+    intro c
+    induction c with
+    | skip => apply Com.equiv_refl
+    | asgn x a => apply Com.congruence_asgn; apply Aexp.optimize0plus_sound
+    | seq c₁ c₂ ih₁ ih₂ => apply Com.congruence_seq <;> assumption
+    | cond b c₁ c₂ ih₁ ih₂ =>
+        apply Com.congruence_if <;> try assumption
+        apply Bexp.optimize0plus_sound
+    | whileDo b c ih =>
+        apply Com.congruence_while <;> try assumption
+        apply Bexp.optimize0plus_sound
 ```
 
 Finally, let's define a compound optimizer on commands that first
@@ -1533,12 +1504,11 @@ def optimizer (c : Com) := Com.optimize0plus (Com.foldConstants c)
 Prove that this optimizer is sound.
 
 ```lean
-theorem optimizer_sound : Com.TransSound optimizer := by sorry
- /- (* ADMITTED
-  unfold ctrans_sound. unfold optimizer.
-  intros c.
-  apply trans_cequiv with (fold_constants_com c).
-  - apply fold_constants_com_sound. -/
+theorem optimizer_sound : Com.TransSound optimizer := by
+  intro c
+  apply Com.equiv_trans
+  · apply Com.foldConstants_sound
+  · apply Com.optimize0plus_sound
 ```
 ::::
 :::::
@@ -1630,50 +1600,36 @@ If we perform the substitution, we get
 which clearly isn't equivalent.
 
 ```lean
-theorem subst_inequiv : ¬ SubstEquivProperty := by sorry
-/-
-Proof.
-  unfold subst_equiv_property.
-  intros Contra.
+theorem subst_inequiv : ¬ SubstEquivProperty := by
+  rw [SubstEquivProperty]
+  intro contra
 
-  (* Here is the counterexample: assuming that [subst_equiv_property]
+  /- Here is the counterexample: assuming that `SubstEquivProperty`
      holds allows us to prove that these two programs are
-     equivalent...
-  remember <{ X := X + 1;
-              Y := X }>
-      as c₁.
-  remember <{ X := X + 1;
-              Y := X + 1 }>
-      as c₂.
-  assert (cequiv c₁ c₂) by (subst; apply Contra).
-  clear Contra.
+     equivalent... -/
+  let c₁ := imp {X := X + 1; Y := X}
+  let c₂ := imp {X := X + 1; Y := X + 1}
+  have h : c₁ ≃ c₂ := by
+    apply contra
+  clear contra
 
-  (* ... allows us to show that the command `c₂` can terminate
+  /- ... allows us to show that the command `c₂` can terminate
      in two different final states:
-        st1 = (Y →ₜ 1 ; X →ₜ 1)
-        st2 = (Y →ₜ 2 ; X →ₜ 1).
-  remember (Y →ₜ 1 ; X →ₜ 1) as st1.
-  remember (Y →ₜ 2 ; X →ₜ 1) as st2.
-  assert (H1 : empty_st =[ c₁ ]=> st1);
-  assert (H2 : empty_st =[ c₂ ]=> st2);
-  try (subst;
-       apply E_Seq with (st' := (X →ₜ 1));
-       apply E_Asgn; reflexivity).
-  clear Heqc1 Heqc2.
+        st₁ = (Y →ₜ 1 ; X →ₜ 1)
+        st₂ = (Y →ₜ 2 ; X →ₜ 1). -/
+  let st₁ := Y →ₜ 1 ; X →ₜ 1
+  let st₂ := Y →ₜ 2 ; X →ₜ 1
+  have h₁ : ∅ =[ c₁ ]=> st₁ := by
+    constructor <;> constructor <;> rfl
+  have h₂ : ∅ =[ c₂ ]=> st₂ := by
+    constructor <;> constructor <;> rfl
 
-  apply H in H1.
-  clear H.
-
-  (* Finally, we use the fact that evaluation is deterministic
-     to obtain a contradiction.
-  assert (Hcontra : st1 = st2)
-    by (apply (ceval_deterministic c₂ empty_st); assumption).
-  clear H1 H2.
-
-  assert (Hcontra' : st1 Y = st2 Y)
-    by (rewrite Hcontra; reflexivity).
-  subst. discriminate. Qed.
--/
+  -- Finally, we use the fact that evaluation is deterministic to obtain a contradiction.
+  apply h.mp at h₁
+  apply ceval_deterministic h₁ at h₂
+  have contra : st₁[Y] = st₂[Y] := by rw [h₂]
+  rw [TotalMap.update_eq, TotalMap.update_eq] at contra
+  contradiction
 ```
 
 :::::full
@@ -1705,22 +1661,18 @@ inductive VarNotUsedInAexp (x : String) : Aexp → Prop where
 ```lean
 theorem Aexp.eval_weakening {x : String} {st : State} {a : Aexp} {ni : Nat}
   (h : VarNotUsedInAexp x a) :
-  a.eval (x →ₜ ni ; st) = a.eval st := by sorry
-/- Proof.
-  (* ADMITTED
-  intros x st a.
-  induction a; intros nx Hx;
-    (* the binary operators follow from the IH
-    try (simpl; inversion Hx; subst;
-         rewrite IHa1; try assumption;
-         rewrite IHa2; try assumption;
-         reflexivity).
-  - (* Aexp.num
-    reflexivity.
-  - (* Aexp.id
-    inversion Hx; subst. simpl.
-    apply t_update_neq. assumption. Qed.
-  (* /ADMITTED -/
+  a.eval (x →ₜ ni ; st) = a.eval st := by
+
+  induction a with
+  | num n => rfl
+  | id y =>
+      inversion h; simp only [Aexp.eval]
+      apply TotalMap.update_neq; assumption
+  | plus a₁ a₂ ih₁ ih₂
+  | minus a₁ a₂ ih₁ ih₂
+  | mult a₁ a₂ ih₁ ih₂ =>
+      simp only [Aexp.eval]; inversion h;
+      rw [ih₁, ih₂] <;> assumption
 ```
 
 Using `VarNotUsedInAexp`, formalize and prove a correct version
@@ -1730,45 +1682,41 @@ of `SubstEquivProperty`.
 ```lean
 theorem aeval_subst {x : String} {st : State} {a₁ a₂ : Aexp}
   (h : VarNotUsedInAexp x a₁) :
-  a₂.eval (x →ₜ a₁.eval st ; st) = (Aexp.subst x a₁ a₂).eval (x →ₜ a₁.eval st ; st) := by sorry
-/- Proof.
-  intros x st a₁ a₂ Hi.
-  generalize dependent st.
-  induction a₂ as [| x' | | | ]; intros st;
-    (* operator cases follow from the IH
-    try (simpl; rewrite → IHa2_1; rewrite → IHa2_2; reflexivity).
-  - (* Aexp.num
-    reflexivity.
-  - (* Aexp.id
-    unfold Aexp.subst.
-    destruct (String.eqb_spec x x') as [H | H].
-    + (* x = x'
-      subst x'.
-      rewrite aeval_weakening with (a := a₁); try assumption.
-      simpl. rewrite t_update_eq. reflexivity.
-    + (* x ≠ x'
-      reflexivity.  Qed. -/
+  a₂.eval (x →ₜ a₁.eval st ; st) = (Aexp.subst x a₁ a₂).eval (x →ₜ a₁.eval st ; st) := by
+
+  induction a₂ generalizing a₁ st with
+  | num n => rfl
+  | id y =>
+      simp only [Aexp.subst]
+      by_cases h : x = y
+      · subst_vars; symm;
+        simp only [Aexp.eval_id, TotalMap.update_eq]
+        apply Aexp.eval_weakening; assumption
+      · simp_all
+  | plus a₁ a₂ ih₁ ih₂
+  | minus a₁ a₂ ih₁ ih₂
+  | mult a₁ a₂ ih₁ ih₂ =>
+      simp only [Aexp.eval, Aexp.subst]
+      rw [ih₁, ih₂] <;> assumption
 
 theorem subst_equiv {x₁ x₂ : String} {a₁ a₂ : Aexp}
   (h : VarNotUsedInAexp x₁ a₁) :
   imp { x₁ := a₁; x₂ := a₂ } ≃
-  imp { x₁ := a₁; x₂ := ~(Aexp.subst x₁ a₁ a₂)} := by sorry
-/- Proof.
-  unfold cequiv. intros x₁ x₂ a₁ a₂ Hi.
-  split; intros Hce.
-  ·
-    inversion Hce; subst.
-    apply E_Seq with st'0; try assumption.
-    inversion H4; subst. apply E_Asgn.
-    inversion H1; subst. symmetry. apply aeval_subst.
-    assumption.
-  ·
-    inversion Hce; subst.
-    apply E_Seq with st'0.
-    + assumption.
-    + inversion H4; subst. apply E_Asgn.
-      inversion H1; subst. apply aeval_subst.
-      assumption.  Qed. -/
+  imp { x₁ := a₁; x₂ := ~(Aexp.subst x₁ a₁ a₂)} := by
+
+  intro st st'; constructor <;> intro heval
+  · inversion heval with
+    | seq h₁ h₂ =>
+      constructor; assumption
+      inversion h₂ <;> subst_vars; constructor
+      inversion h₁ <;> subst_vars; symm
+      apply aeval_subst h
+  · inversion heval with
+    | seq h₁ h₂ =>
+      constructor; assumption
+      inversion h₂ <;> subst_vars; constructor
+      inversion h₁ <;> subst_vars
+      apply aeval_subst h
 ```
 :::
 ::::
@@ -1780,16 +1728,15 @@ Prove that an infinite loop is not equivalent to `skip`.
 
 ```lean
 theorem inequiv_exercise:
-  ¬ (imp { while (true) {skip} } ≃ imp { skip }) := by sorry
-/- Proof.
-  (* ADMITTED
-  intros Contra.
-  assert (~(empty_st =[ while true do skip end ]=> empty_st)) as H.
-  { apply while_true_nonterm. apply refl_bequiv. }
-  apply H.
-  apply (Contra empty_st empty_st).
-  apply E_Skip. Qed.
-(* /ADMITTED -/
+  ¬ (imp { while (true) {skip} } ≃ imp { skip }) := by
+
+  solution!
+    intro contra
+    have h : ¬ (∅ =[ while (true) { skip } ]=> ∅) := by
+      apply Com.while_true_nonterm; apply Bexp.equiv_refl
+    apply h
+    rw [@contra ∅ ∅]
+    constructor
 ```
 ::::
 :::::
@@ -1942,7 +1889,7 @@ inductive Com.EvalR : Com → State → State → Prop where
       (hc : EvalR c st st') (hloop : Com.EvalR (imp {while (b) {c}}) st' st'') :
       EvalR (imp {while (b) {c}}) st st''
 -- SOLUTION
-  | havoc {st : State} {x : String} {n : Nat} :
+  | havoc {st : State} {x : String} (n : Nat) :
       EvalR (imp {havoc x}) st (x →ₜ n ; st)
 -- END SOLUTION
 ```
@@ -2018,21 +1965,16 @@ why the case distinction is needed.
 ```lean
 theorem pXY_approx_pYX {x y : String} {st st' : State}
   (h : st =[ havoc x; havoc y ]=> st') :
-  st =[ havoc y; havoc x ]=> st' := by sorry
-/-  intros x y st st' H.
-  destruct (String.eqb_spec x y) as [Hid | Hid].
-  - (* x = y
-    subst.  assumption.
-  - (* x ≠ y
-    inversion H; subst; clear H.
-    inversion H2; subst; clear H2.
-    inversion H5; subst; clear H5.
-    apply E_Seq with (st' := (y →ₜ n0 ; st)).
-    + constructor.
-    + rewrite t_update_permute.
-      * constructor.
-      * assumption.
-Qed. -/
+  st =[ havoc y; havoc x ]=> st' := by
+
+  by_cases hid : x = y
+  · subst_vars; assumption
+  · inversion h with
+    | seq h₁ h₂ =>
+      subst_vars
+      inversion h₁; inversion h₂
+      constructor; constructor; assumption
+      rw [TotalMap.update_permute]; constructor; lia
 ```
 :::
 
@@ -2043,9 +1985,8 @@ theorem pXY_cequiv_pYX :
      in which case you'll probably be left with `X ≠ Y` as a
      hypothesis. You can use `contradiction to discharge this. -/
   solution!
-    sorry
-    /- left. intros st st'.
-    split; apply pXY_approx_pYX; reflexivity. -/
+    left; intro st st'
+    constructor <;> apply pXY_approx_pYX
 ```
 ::::
 :::::
@@ -2068,26 +2009,23 @@ useful.)
 
 ```lean
 theorem ptwice_equiv_pcopy :
-  (ptwice ≃ pcopy) ∨ ¬(ptwice ≃ pcopy) := by sorry
-/- Proof. (* ADMITTED
-  right. intro Hc. unfold cequiv in Hc.
-  assert (empty_st =[ ptwice ]=> (Y →ₜ 1 ; X →ₜ 0)).
-  - apply E_Seq with (X →ₜ 0); constructor.
-  - rewrite Hc in H. inversion H. inversion H2. inversion H5. subst.
-    clear -H13.
-    simpl in H13. rewrite t_update_eq in H13.
-  (* LATER: This trick with [f_equal] is non-evident but highly
-     useful to process contradictory equalities on functions.
-     See [p₃_p₄_inequiv] for a more drastic reduction in code.
-    assert (H0 : n = 1).
-    { apply (f_equal (fun st => st Y)) in H13.
-      apply H13. }
-    assert (H1 : n = 0).
-    { apply (f_equal (fun st => st X)) in H13.
-      apply H13. }
-    rewrite H0 in H1. discriminate.
-Qed.
-(* /ADMITTED -/
+  (ptwice ≃ pcopy) ∨ ¬(ptwice ≃ pcopy) := by
+
+  solution!
+    right; intro contra
+    have h : ∅ =[ ptwice ]=> (Y →ₜ 1 ; X →ₜ 0) := by
+      apply @Com.EvalR.seq (st' := X →ₜ 0) <;> constructor
+    rw [contra] at h
+    inversion h with
+    | seq h₁ h₂ =>
+      inversion h₁; inversion h₂ with
+      | asgn n x h =>
+          subst_vars; simp only [cond_eq_ite, beq_iff_eq, Aexp.eval_id, TotalMap.update_eq] at h
+          have hy := congrFun h Y
+          have hx := congrFun h X
+          simp only [↓reduceIte] at hy
+          simp only [TotalMap.update_eq, ite_self] at hx; rw [←hy] at hx
+          contradiction
 ```
 ::::
 :::::
@@ -2111,7 +2049,7 @@ Consider the following commands:
 ```lean
 def p₁ : Com :=
   imp {
-    while (X = 0) {
+    while (¬ (X = 0)) {
        havoc Y;
        X := X + 1
     }
@@ -2135,19 +2073,16 @@ started in.  We can capture the termination behavior of `p₁` and
 theorem p₁_may_diverge (st st' : State) (h : st[X] ≠ 0) :
   ¬ (st =[ p₁ ]=> st') := by
   solution!
-    sorry
-    /- Proof. (* ADMITTED
-      intros. intros Hcontra.
-      remember p₁ as p₁' eqn:Heqp₁'. remember st' as st'' eqn:Heqst''.
-      induction Hcontra; inversion Heqp₁'.
-      - (* E_WhileFalse  subst. simpl in H0.
-        apply negb_false_iff in H0. apply eqb_eq in H0.
-        apply H in H0. assumption.
-      - (* E_WhileTrue  subst. apply IHHcontra2; try reflexivity.
-        inversion Hcontra1. subst.
-        inversion H3; subst. inversion H6; subst.
-        rewrite t_update_eq. simpl. lia.
-    Qed. -/
+    intro contra
+    generalize h : p₁ = p₁' at contra
+    induction contra with inversion h
+    | whileFalse h' => simp_all [Bexp.eval]
+    | whileTrue hb hc hloop ihc ihloop =>
+        apply ihloop <;> try rfl
+        inversion hc with
+        | seq h₁ h₂ =>
+          inversion h₁; inversion h₂
+          rw [TotalMap.update_eq]; simp_all; lia
 ```
 
 :::gradeTheorem 3 p₁_may_diverge
@@ -2157,18 +2092,12 @@ theorem p₁_may_diverge (st st' : State) (h : st[X] ≠ 0) :
 theorem p₂_may_diverge (st st' : State) (h : st[X] ≠ 0) :
   ¬ (st =[ p₂ ]=> st') := by
   solution!
-    sorry
-/- (* ADMITTED
-  intros. intros Hcontra.
-  remember p₂ as p₂' eqn:Heqp₂'. remember st' as st'' eqn:Heqst''.
-  induction Hcontra; inversion Heqp₂'.
-  - (* E_WhileFalse  subst. simpl in H0.
-    apply negb_false_iff in H0. apply eqb_eq in H0.
-    apply H in H0. assumption.
-  - (* E_WhileTrue  subst. apply IHHcontra2; try reflexivity.
-    inversion Hcontra1. subst.
-    assumption.
-Qed. (* /ADMITTED -/
+    intro contra
+    generalize h : p₂ = p₂' at contra
+    induction contra with inversion h
+    | whileFalse h' => simp_all [Bexp.eval]
+    | whileTrue hb hc hloop ihc ihloop =>
+        inversion hc; apply ihloop <;> trivial
 ```
 
 :::gradeTheorem 3 p₂_may_diverge
@@ -2184,25 +2113,24 @@ equivalent.
 ```lean
 theorem p₁_p₂_equiv : p₁ ≃ p₂ := by
   solution!
-    sorry
-    /- Proof. (* ADMITTED
-      split; intros.
-      - remember p₁ as p₁' eqn:Heqp₁'.
-        destruct H; inversion Heqp₁'; subst.
-        + (* E_WhileFalse  apply E_WhileFalse. assumption.
-        + (* E_WhileTrue  apply p₁_may_diverge in H1.
-          * inversion H1.
-          * simpl in H. apply negb_true_iff in H. apply eqb_neq in H.
-            inversion H0. subst. inversion H4. subst. inversion H7. subst.
-            rewrite t_update_eq. simpl. lia.
-      - remember p₂ as p₂' eqn:Heqp₂'.
-        destruct H; inversion Heqp₂'; subst.
-        + (* E_WhileFalse  apply E_WhileFalse. assumption.
-        + (* E_WhileTrue  apply p₂_may_diverge in H1.
-          * inversion H1.
-          * simpl in H. apply negb_true_iff in H. apply eqb_neq in H.
-            inversion H0. subst. assumption.
-    Qed. (* /ADMITTED -/
+    intro st st'; constructor <;> intro h
+    · cases h with
+      | whileFalse h' => constructor; assumption
+      | whileTrue hb hc hloop =>
+          apply p₁_may_diverge at hloop; contradiction
+          simp only [Bexp.eval, Aexp.eval,
+            Bool.not_eq_eq_eq_not, Bool.not_true, beq_eq_false_iff_ne, ne_eq] at hb
+          inversion hc with
+          | seq h₁ h₂ =>
+            inversion h₁; inversion h₂
+            rw [TotalMap.update_eq]; simp_all; lia
+    · cases h with
+          | whileFalse h' => constructor; assumption
+          | whileTrue hb hc hloop =>
+            apply p₂_may_diverge at hloop; contradiction
+            simp only [Bexp.eval, Aexp.eval,
+              Bool.not_eq_eq_eq_not, Bool.not_true, beq_eq_false_iff_ne, ne_eq] at hb
+            inversion hc; assumption
 ```
 
 :::gradeTheorem 6 p₁_p₂_equiv
@@ -2243,27 +2171,34 @@ when `p₃` terminates, even though `X` definitely has value `0`,
 ```lean
 theorem p₃_p₄_inequiv : ¬ (p₃ ≃ p₄) := by
   solution!
-    sorry
-   /- Proof. (* ADMITTED
-      intros Hcontra.
-      unfold cequiv in Hcontra.
-      remember (X →ₜ 1) as st.
-      assert (st =[ p₃ ]=> (Z →ₜ 0 ; X →ₜ 0 ; Z →ₜ 1 ; st)).
-      - eapply E_Seq.
-        + constructor. reflexivity.
-        + simpl. eapply E_WhileTrue.
-          * subst. reflexivity.
-          * eapply E_Seq; constructor.
-          * apply E_WhileFalse.
-            reflexivity.
-      - apply Hcontra in H.
-        inversion H. subst.
-        inversion H2. subst.
-        inversion H5. subst.
-        simpl in H6.
-        apply (f_equal (fun st => st Z)) in H6.
-        discriminate H6.
-    Qed. (* /ADMITTED -/
+    intro contra
+    let st := X →ₜ 1
+    have h : st =[ p₃ ]=> (Z →ₜ 0 ; X →ₜ 0 ; Z →ₜ 1 ; st) := by
+      constructor
+      · constructor; rfl
+      · simp only [Aexp.eval_num, Com.evalR_eq]
+        apply Com.EvalR.whileTrue
+        · simp only [Bexp.eval_neq, Aexp.eval_id, Aexp.eval_num, bne_iff_ne, ne_eq]
+          rw [TotalMap.update_neq, TotalMap.update_eq] <;> trivial
+        · constructor
+          apply Com.EvalR.havoc (n := 0)
+          apply Com.EvalR.havoc (n := 0)
+        · apply Com.EvalR.whileFalse
+          · simp only [Bexp.eval_neq, Aexp.eval_id, Aexp.eval_num, bne_eq_false_iff_eq]
+            rw [TotalMap.update_permute, TotalMap.update_eq]; trivial
+
+    simp only [Com.equiv_def] at contra
+    apply contra.mp at h
+    inversion h with
+    | seq h₁ h₂ =>
+        inversion h₁; simp_all only [Aexp.eval_num, Com.evalR_eq]; subst_vars
+        rw [TotalMap.update_shadow, TotalMap.update_permute,
+            TotalMap.update_shadow, TotalMap.update_permute] at h₂ <;> try trivial
+        inversion h₂ with
+        | asgn _ h _ h' =>
+          have hz := congrFun h' Z
+          simp only [Aexp.eval] at h; subst_vars
+          simp at hz
 ```
 
 :::gradeTheorem 6 p₃_p₄_inequiv
@@ -2321,42 +2256,36 @@ ends up in `st'`? Yes!
 Hence their equivalence.
 
 ```lean
-theorem p₅_summary (st st' : State) (h : st =[ p₅ ]=> st') : st' = (X →ₜ 1 ; st) := by sorry
-/- Proof.
-  intros. remember p₅ as p₅' eqn:Heqp₅'.
-  induction H; inversion Heqp₅'; subst.
-  - (* E_WhileFalse
-    simpl in H. apply negb_false_iff in H. apply eqb_eq in H.
-    rewrite <- H. rewrite t_update_same. reflexivity.
-  - (* E_WhileTrue
-    apply IHceval₂ in Heqp₅'.
-    inversion H0; subst.
-    apply t_update_shadow. -/
+theorem p₅_summary (st st' : State) (h : st =[ p₅ ]=> st') : st' = (X →ₜ 1 ; st) := by
+
+  generalize hp : p₅ = p₅' at h
+  induction h with inversion hp
+  | whileFalse h' =>
+    simp only [Bexp.eval_neq, Aexp.eval_id, Aexp.eval_num, bne_eq_false_iff_eq] at h'
+    rw [←h', TotalMap.update_same]
+  | whileTrue hb hc hloop ihc ihloop =>
+      specialize ihloop rfl; subst_vars
+      inversion hc
+      apply TotalMap.update_shadow
 ```
 :::
 
 ```lean
 theorem p₅_p₆_equiv : p₅ ≃ p₆ := by
   solution!
-    sorry
-    /- Proof. (* ADMITTED
-      split; intros.
-      - (* →
-        apply p₅_summary in H. subst. constructor. reflexivity.
-      - (* <-  inversion H. subst.
-        simpl. simpl in H.
-        destruct ((st X) = 1) eqn:Heqb.
-        + (* X = 1
-          apply eqb_eq in Heqb.
-          rewrite <- Heqb.
-          rewrite t_update_same.
-          apply E_WhileFalse. simpl. rewrite → Heqb.
-          reflexivity.
-        + (* X ≠ 1
-          apply E_WhileTrue with (st' := (X →ₜ 1 ; st)).
-          * simpl. rewrite Heqb. reflexivity.
-          * constructor.
-          * apply E_WhileFalse. reflexivity. -/
+    intro st st'; constructor <;> intro h
+    · apply p₅_summary at h; subst_vars
+      constructor; rfl
+    · inversion h with
+      | asgn n h =>
+        simp only [Aexp.eval_num] at h; rw [←h]
+        by_cases hx : st[X] = 1
+        · rw [←hx, TotalMap.update_same]
+          apply Com.EvalR.whileFalse; simp_all
+        · apply Com.EvalR.whileTrue (st' := X →ₜ 1 ; st)
+          · simp_all
+          · constructor
+          · apply Com.EvalR.whileFalse; simp_all
 ```
 ::::
 
@@ -2382,26 +2311,28 @@ theorem swap_noninterfering_assignments (l₁ l₂ : String) (a₁ a₂ : Aexp)
   (h₂ : VarNotUsedInAexp l₂ a₁) :
   imp { l₁ := a₁; l₂ := a₂ } ≃ imp { l₂ := a₂; l₁ := a₁ } := by
     solution!
-      sorry
-      /- Proof.
-      (* ADMITTED
-        assert (HS : forall l₁ l₂ a₁ a₂,
+
+      have hs : ∀ {l₁ l₂ : String} {a₁ a₂ : Aexp},
           l₁ ≠ l₂ →
           VarNotUsedInAexp l₁ a₂ →
           VarNotUsedInAexp l₂ a₁ →
-          forall st st',
-            st =[ l₁ := a₁; l₂ := a₂ ]=> st' →
-            st =[ l₂ := a₂; l₁ := a₁ ]=> st').
-        { intros l₁ l₂ a₁ a₂ Hneq HNE1 HNE2 st st' H.
-          inversion H; subst. inversion H2; subst. inversion H5; subst.
-          eapply E_Seq.
-          - apply E_Asgn. reflexivity.
-          - rewrite → (t_update_permute _ _ _ _ _ _ Hneq).
-            replace (aeval (l₁ →ₜ a₁; st) a₂) with a₂.eval st..eval st
-            + apply E_Asgn. apply aeval_weakening. apply HNE2.
-            + symmetry. apply aeval_weakening. apply HNE1. }
-        split; eauto.
-      Qed. (* /ADMITTED -/
+          ∀ {st st' : State},
+            (st =[ l₁ := a₁; l₂ := a₂ ]=> st') →
+            st =[ l₂ := a₂; l₁ := a₁ ]=> st' := by
+        intro l₁ l₂ a₁ a₂ hneq hne₁ hne₂ st st' h
+        inversion h with
+        | seq h₁ h₂ =>
+          inversion h₂; inversion h₁; subst_vars
+          constructor; constructor; rfl
+          simp only [Com.evalR_eq]
+          rw [TotalMap.update_permute]
+          have heq : a₂.eval (l₁ →ₜ Aexp.eval st a₁ ; st) = a₂.eval st := by
+            apply Aexp.eval_weakening; assumption
+          rw [heq]; constructor; apply Aexp.eval_weakening; assumption; lia
+
+      intro st st'; constructor <;> intro h
+      · apply hs hl h₁ h₂ h
+      · apply hs (by lia) h₂ h₁ h
 ```
 ::::
 :::::
@@ -2468,28 +2399,23 @@ def c₄ : Com := solution!(imp { X := 2 })
 ```lean
 theorem c₃_c₄_different : ¬ (Approx c₃ c₄) ∧ ¬ (Approx c₄ c₃) := by
   solution!
-    sorry
-    /- Proof. (* ADMITTED
-      unfold not, capprox; split; intros.
-
-      - assert (empty_st =[ c₃ ]=> (X →ₜ 1)).
-        + constructor. reflexivity.
-        + apply H in H0. inversion H0; subst. simpl in H5.
-          assert ((X →ₜ 2) X = 2).
-          * reflexivity.
-          * assert ((X →ₜ 1) X = 1).
-            -- reflexivity.
-            -- rewrite → H5 in H1. rewrite → H2 in H1. inversion H1.
-
-      - assert (empty_st =[ c₄ ]=> (X →ₜ 2)).
-        + constructor. reflexivity.
-        + apply H in H0. inversion H0; subst. simpl in H5.
-          assert ((X →ₜ 2) X = 2).
-          * reflexivity.
-          * assert ((X →ₜ 1) X = 1).
-            -- reflexivity.
-            -- rewrite → H5 in H2. rewrite → H1 in H2. inversion H2.
-    Qed. (* /ADMITTED-/
+    constructor <;> intro contra
+    · have h : ∅ =[ c₃ ]=> (X →ₜ 1) := by
+        constructor; simp
+      apply contra at h
+      inversion h with
+      | asgn n h _ h' =>
+        have hx := congrFun h' X
+        rw [←h] at hx
+        simp at hx
+    · have h : ∅ =[ c₄ ]=> (X →ₜ 2) := by
+        constructor; simp
+      apply contra at h
+      inversion h with
+      | asgn n h _ h' =>
+        have hx := congrFun h' X
+        rw [←h] at hx
+        simp at hx
 ```
 
 Find a program `cMin` that approximates every other program.
@@ -2499,12 +2425,9 @@ def cMin : Com := solution!(imp { while (true) { skip } })
 
 theorem cMin_minimal (c : Com) : Approx cMin c := by
   solution!
-    sorry
-    /- Proof. (* ADMITTED
-      unfold capprox. intros.
-      apply loop_never_stops in H.
-      inversion H.
-    Qed. (* /ADMITTED -/
+    intro st st' h
+    apply loop_never_stops at h
+    contradiction
 ```
 
 Finally, find a non-trivial property which is preserved by
@@ -2522,12 +2445,11 @@ inputs.
 ```lean
 theorem zprop_preserving (c c' : Com) (hc : zprop c) (ha : Approx c c') : zprop c' := by
   solution!
-    sorry
-      /- Proof. (* ADMITTED
-        unfold zprop, capprox. intros.
-        specialize (H st). inversion H as `st'`.
-        apply H0 in H1. exists st'. assumption.
-      Qed. -/
+    rw [zprop] at *
+    intro st
+    specialize hc st
+    obtain ⟨st', h⟩ := hc
+    apply ha at h; exists st'
 ```
 ::::
 :::::
