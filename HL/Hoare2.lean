@@ -1682,7 +1682,7 @@ changed things back.
 
 ```lean
 example : decWhile.VerificationConditions := by
-  unfold Decorated.VerificationConditions decWhile
+  rw [Decorated.VerificationConditions, decWhile]
   simp only [DCom.VerificationConditions,
     DCom.postcondition]
   sorry
@@ -4607,15 +4607,16 @@ Show that your `havoc_pre` function from the `himp_hoare` exercise
 in the {ref "Hoare"}[Hoare] chapter returns a weakest precondition.
 
 ```lean
-namespace Himp2
+namespace HimpHoare2
+open HimpHoare
 
 theorem hoare_havoc_weakest (P Q : Assertion) (x : Ident)
-    (h : Himp.ValidHoareTriple P (Himp.Com.havoc x) Q) :
-    P ->> Himp.havoc_pre x Q := by
+    (h : ValidHoareTriple P (Com.havoc x) Q) :
+    P ->> havoc_pre x Q := by
   solution!
     sorry
 
-end Himp2
+end HimpHoare2
 ```
 :::::
 

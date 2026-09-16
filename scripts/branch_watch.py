@@ -12,13 +12,11 @@ picture of who is touching what:
     (linked to its PR) over its people — whoever created it, plus a
     `Last edit:` name when someone else pushed the most recent commit — and its
     last-activity time on a second line in small type; a Status cell of glyph
-    badges (✅ ready, 👍 approved with open
-    threads, 🔴 changes requested, 🟠 ready for review, ❌ CI failing,
-    🟡 CI running, 💬N open threads,
+    badges (✅ ready, 🔴 changes requested, ❌ CI failing, 💬N open threads,
     ✏️ draft, ❗ auto-merge held,
-    🔗 fixes issue, ⚠️ main = no longer merges cleanly against `main`, plus
+    🔗 fixes issue, ⚠️ conflicts with main = no longer merges cleanly, plus
     "based on X" when the PR is stacked on a branch other than `main`, and a
-    small ⏳ "waiting on …" line under the badges naming whose move the PR is
+    small ⏳ "waiting for …" line under the badges naming whose move the PR is
     waiting for and what that move is); an
     Overlaps cell naming
     which *other* PRs it shares files with — as `#N` links to those PRs, each
@@ -39,7 +37,10 @@ picture of who is touching what:
     renderer breaking the line right after an emoji), and a legend below the
     table spells the glyphs out too.  Only branches with an open PR appear in
     the table, and only they are weighed when marking its overlaps and
-    conflicts;
+    conflicts — plus PRs opened from a *fork*, whose first cell is marked
+    "External" (hover names the fork); with no local branch to walk, their
+    rows are built from API data alone and take no part in the overlap /
+    hot-files analysis;
   * a "Branches without PRs:" line just below the table — a compact list of
     every active branch *without* a PR: name (linked to its GitHub page)
     followed by a parenthesised gloss — its author (same style as the table),
@@ -363,10 +364,11 @@ def parse_ts(iso):
 #
 # The page size is bounded by GitHub's 500,000-node budget, which is charged on
 # *possible* nodes, not returned ones: each PR may carry 100 threads × 100
-# comments plus 100 conversation comments (the review requests, latest reviews,
-# and head-commit rollup add only ~20 more), so 25 PRs/page ≈ 256k possible
-# nodes — comfortably under the cap, where 50/page was over it and the whole
-# query was rejected.  Grow the per-PR `first:` limits and this multiplies.
+# comments plus 100 conversation comments and 100 changed files (the review
+# requests, latest reviews, and head-commit rollup add only ~20 more), so
+# 25 PRs/page ≈ 259k possible nodes — comfortably under the cap, where 50/page
+# was over it and the whole query was rejected.  Grow the per-PR `first:`
+# limits and this multiplies.
 _PR_QUERY = """
 query($owner:String!, $name:String!, $cursor:String) {
   repository(owner:$owner, name:$name) {
@@ -380,6 +382,12 @@ query($owner:String!, $name:String!, $cursor:String) {
         createdAt
         headRefName
         baseRefName
+        isCrossRepository
+        headRepository { nameWithOwner }
+        mergeable
+        additions
+        deletions
+        files(first:100) { nodes { path } }
         reviewDecision
         author { login }
         autoMergeRequest { enabledAt }
@@ -392,7 +400,7 @@ query($owner:String!, $name:String!, $cursor:String) {
           nodes { author { login } state submittedAt }
         }
         commits(last:1) {
-          nodes { commit { statusCheckRollup { state } } }
+          nodes { commit { committedDate statusCheckRollup { state } } }
         }
         reviewThreads(first:100) {
           nodes { isResolved path
@@ -408,7 +416,12 @@ query($owner:String!, $name:String!, $cursor:String) {
 
 
 def fetch_prs(slug, token):
-    """Map branch short-name -> per-PR dict for open PRs.
+    """Open PRs, as `(prs, external)`: a map branch short-name -> per-PR dict
+    for PRs whose head branch lives in this repository, and a list of the same
+    dicts for *external* PRs — those opened from a fork, whose head branch
+    matches no branch here (keeping them out of the map also stops a fork
+    branch that happens to share a local branch's name from being mistaken for
+    it).
 
     Each value carries `num`, its `title` (hover text for the `#N` references in
     the Overlaps column), `url`, `draft`, the `base` branch it targets
@@ -420,15 +433,24 @@ def fetch_prs(slug, token):
     `notes` reviewers left — in the PR conversation *and* in unresolved review
     threads on the files.
 
-    For the "waiting on …" line and the open-thread expander it also carries:
+    For the "waiting for …" line and the open-thread expander it also carries:
     `author` (the PR author's login), `ci` (the head commit's check-rollup
     state — SUCCESS/FAILURE/ERROR/PENDING/EXPECTED, or None with no checks),
     `requested` (logins/team names whose review is requested), `reviews` (the
     latest review per reviewer: login, state, submitted time), and `threads`
     (one entry per unresolved review thread: file path, who opened it, and the
-    opening comment's text)."""
+    opening comment's text).
+
+    Because an external PR has no local branch to read git facts from, each
+    dict also carries what the table otherwise gets from `collect_branches`:
+    `external` (the fork flag itself), `head_repo` (the fork's `owner/name`),
+    `head_ref` (the branch name in the fork), `head_at` (the head commit's
+    committer time), `mergeable` (GitHub's MERGEABLE/CONFLICTING/UNKNOWN — the
+    stand-in for the in-memory merge against `main`), and `files`/`churn`
+    (changed paths, capped at 100 by the query, and insertions+deletions)."""
     owner, _, name = slug.partition("/")
     prs = {}
+    external = []
     cursor = None
     while True:
         data = graphql(_PR_QUERY, {"owner": owner, "name": name, "cursor": cursor}, token)
@@ -477,7 +499,7 @@ def fetch_prs(slug, token):
             # A requested reviewer the token cannot read (a team request, say)
             # comes back as a null node with a FORBIDDEN error; count the
             # requests separately from the names we could resolve, so the
-            # "waiting on …" line can still say *someone* was asked.
+            # "waiting for …" line can still say approval is what's missing.
             requested = []
             for rq in pr["reviewRequests"]["nodes"]:
                 rr = rq["requestedReviewer"] or {}
@@ -491,7 +513,7 @@ def fetch_prs(slug, token):
                        for rv in pr["latestReviews"]["nodes"]]
             head = pr["commits"]["nodes"]
             roll = head[0]["commit"]["statusCheckRollup"] if head else None
-            prs[pr["headRefName"]] = {
+            entry = {
                 "num": pr["number"],
                 "title": pr["title"],
                 "url": pr["url"],
@@ -510,12 +532,24 @@ def fetch_prs(slug, token):
                 "requested_n": requested_n,
                 "reviews": reviews,
                 "threads": open_threads,
+                "external": pr["isCrossRepository"],
+                "head_repo": (pr.get("headRepository") or {}).get("nameWithOwner"),
+                "head_ref": pr["headRefName"],
+                "head_at": (parse_ts(head[0]["commit"]["committedDate"])
+                            if head else None),
+                "mergeable": pr["mergeable"],
+                "files": {f["path"] for f in pr["files"]["nodes"]},
+                "churn": pr["additions"] + pr["deletions"],
             }
+            if entry["external"]:
+                external.append(entry)
+            else:
+                prs[pr["headRefName"]] = entry
         if conn["pageInfo"]["hasNextPage"]:
             cursor = conn["pageInfo"]["endCursor"]
         else:
             break
-    return prs
+    return prs, external
 
 
 # --------------------------------------------------------------------------
@@ -605,14 +639,13 @@ def status_badges(pr):
     icon never wraps away from the word it labels.
 
     * 📝 draft.
-    * 🔴 changes requested · 🟠 ready for review (out of draft, nobody has
-      reviewed it yet) · ✅ ready to merge (approved, nothing unresolved) ·
-      👍 approved but with open threads.  A coloured disc for the
-      awaiting-review state so it reads down the column alongside the red and
-      green ones, rather than as an empty cell.
-    * ❌ CI failing on the head commit · 🟡 CI still running.  A green run gets
-      no badge — down this column, no news is good news (a PR with no checks at
-      all also shows nothing).
+    * 🔴 changes requested · ✅ ready to merge (approved, nothing unresolved).
+      The other review states get no badge: awaiting-review is already what
+      the "Under review" grouping says, and approved-with-open-threads is
+      already told by the 💬 count.
+    * ❌ CI failing on the head commit.  A green or still-running check gets
+      no badge — down this column, no news is good news (a PR with no checks
+      at all also shows nothing).
     * 💬N — N review threads still open.
     * ❗ auto-merge enabled but held (a failing check, missing approval, or
       conflict is stalling it).  A PR sitting in the merge queue is a transient
@@ -625,17 +658,11 @@ def status_badges(pr):
         dec = pr["review_decision"]
         if dec == "CHANGES_REQUESTED":
             badges.append(tip("🔴", "Changes requested"))
-        elif dec == "REVIEW_REQUIRED":
-            badges.append(tip("🟠", "Ready for review — nobody has reviewed it yet"))
-        else:  # APPROVED, or None (no required review — rare here)
-            badges.append(tip("✅", "Ready to merge — approved, nothing unresolved")
-                          if pr["unresolved"] == 0
-                          else tip("👍", "Approved, but with open review threads"))
-    ci = pr.get("ci")
-    if ci in ("FAILURE", "ERROR"):
+        elif dec != "REVIEW_REQUIRED" and pr["unresolved"] == 0:
+            # APPROVED, or None (no required review — rare here).
+            badges.append(tip("✅", "Ready to merge — approved, nothing unresolved"))
+    if pr.get("ci") in ("FAILURE", "ERROR"):
         badges.append(tip("❌", "CI failing on the head commit"))
-    elif ci in ("PENDING", "EXPECTED"):
-        badges.append(tip("🟡", "CI still running"))
     if pr["unresolved"]:
         n = pr["unresolved"]
         badges.append(tip(glue("💬", str(n)),
@@ -756,8 +783,8 @@ def next_action(pr, b):
         change-requesting review predates the branch's last commit, in which
         case the ball is back with those reviewers for a re-review;
       * nobody has reviewed it yet — on the requested reviewers by name
-        (unnamed when the request is unreadable to the token, e.g. a team), or
-        on "a reviewer" when nobody has been asked;
+        (just "approval" when no request is readable to the token, e.g. a team
+        request), or on "a reviewer" when nobody has been asked;
       * approved but threads still open — on the author to resolve them;
       * approved and clean but conflicting with `main` — on the author to
         rebase/merge.
@@ -787,7 +814,7 @@ def next_action(pr, b):
             return f"{_people_links(req, 'a reviewer')} to review"
         if pr.get("requested_n"):
             # Requests exist but none were readable (a team request, say).
-            return "the requested reviewer to review"
+            return "approval"
         return "a reviewer to pick it up — nobody asked yet"
     if pr["unresolved"]:
         n = pr["unresolved"]
@@ -894,11 +921,14 @@ def files_cell(files, churn):
             f"</summary>{inner}</details>")
 
 
-def render(branches, conf, prs, have_token, slug):
+def render(branches, conf, prs, external, have_token, slug):
     # The PR table (and the file/overlap analysis beneath it) covers active
-    # branches that have an open PR; the "Merged / inactive" section covers PR
-    # branches with nothing ahead of main.  Active branches *without* a PR are
-    # summarised in the compact "Branches without PRs:" paragraph instead.
+    # branches that have an open PR, plus the external PRs — opened from a
+    # fork, so there is no local branch to walk; their rows are built from the
+    # API data alone and marked "External".  The "Merged / inactive" section
+    # covers PR branches with nothing ahead of main.  Active branches
+    # *without* a PR are summarised in the compact "Branches without PRs:"
+    # paragraph instead.
     active = {r: b for r, b in branches.items()
               if b["ahead"] > 0 and b["short"] in prs}
     non_pr = {r: b for r, b in branches.items()
@@ -1004,7 +1034,7 @@ def render(branches, conf, prs, have_token, slug):
                              href=pr["url"] if pr else None)
         first = f"{branch}<br><sub>{people_cell(b)} · {nbsp(b['when'] + ' ago')}</sub>"
         # The old "→ main" column is folded into the Status cell: flag a branch
-        # that no longer merges cleanly right there, as a ⚠️ main badge.
+        # that no longer merges cleanly right there, as a ⚠️ conflicts badge.
         status = pr_cell(b["short"], prs)
         # A PR stacked on another branch rather than `main` merges into *that*
         # branch, so say which one — the reader otherwise reads its diff and
@@ -1013,13 +1043,13 @@ def render(branches, conf, prs, have_token, slug):
             status += (" <sub>based&nbsp;on "
                        f"{branch_link(pr['base'], slug, maxlen=40)}</sub>")
         if not b["clean_to_main"]:
-            status += " " + tip(glue("⚠️", "main"),
+            status += " " + tip(glue("⚠️", nbsp("conflicts with main")),
                                 "No longer merges cleanly with main")
         # Under the badges, a small-type line saying whose move the PR waits
         # for — the "what is left?" answer the badges only imply.
         waiting = next_action(pr, b)
         if waiting:
-            status += f"<br><sub>{glue('⏳', 'waiting')} on {waiting}</sub>"
+            status += f"<br><sub>{glue('⏳', 'waiting')} for {waiting}</sub>"
         # `#Note`s flow middot-separated (see notes_cell); `<sub>` is used purely
         # for smaller glyphs — the block line-height fixes the leading regardless.
         # The age note (Stale badge, or a plain "Created N days ago") leads the
@@ -1036,12 +1066,57 @@ def render(branches, conf, prs, have_token, slug):
                f"{files_cell(b['files'], b['churn'])} | {notes} |")
         # Drafts are their own section at the bottom; among the rest, ready-to-
         # merge PRs float to the top, everything else lands in "In progress".
+        # Rows carry their activity timestamp so the external rows added below
+        # can be interleaved by recency before rendering.
         if pr and pr["draft"]:
-            draft_rows.append(row)
+            draft_rows.append((b["ts"], row))
         elif pr_ready(pr, b["clean_to_main"]):
-            ready_rows.append(row)
+            ready_rows.append((b["ts"], row))
         else:
-            other_rows.append(row)
+            other_rows.append((b["ts"], row))
+    # ---- external PRs: opened from a fork, so no local branch to read ----
+    # Everything git normally supplies comes from the API instead: the head
+    # commit's time stands in for branch activity, GitHub's `mergeable` for the
+    # in-memory merge against `main`, and the query's file list for the diff.
+    # The Overlaps cell stays empty — without the fork's commits there is no
+    # ref to merge-tree against — so an external PR is also invisible to the
+    # other rows' overlap analysis and the hot-files view.
+    for pr in external:
+        ts = int(pr["head_at"].timestamp()) if pr["head_at"] else 0
+        clean = pr["mergeable"] != "CONFLICTING"
+        pb = {"ts": ts, "clean_to_main": clean}
+        mark = tip("**External**",
+                   f"Opened from fork {pr['head_repo']}" if pr["head_repo"]
+                   else "Opened from a fork")
+        branch = branch_link(pr["head_ref"], slug, maxlen=40, href=pr["url"])
+        who = _person_link(pr.get("author"), "unknown")
+        when = (nbsp(age_phrase(now_dt - pr["head_at"]) + " ago")
+                if pr["head_at"] else "")
+        sub = " · ".join(x for x in (who, when) if x)
+        first = f"{mark} {branch}<br><sub>{sub}</sub>"
+        badges = status_badges(pr)
+        status = f"[#{pr['num']}]({pr['url']})" + (f" {badges}" if badges else "")
+        if pr.get("base") and pr["base"] != "main":
+            status += (" <sub>based&nbsp;on "
+                       f"{branch_link(pr['base'], slug, maxlen=40)}</sub>")
+        if not clean:
+            status += " " + tip(glue("⚠️", nbsp("conflicts with main")),
+                                "No longer merges cleanly with main")
+        waiting = next_action(pr, pb)
+        if waiting:
+            status += f"<br><sub>{glue('⏳', 'waiting')} for {waiting}</sub>"
+        notes = " ".join(
+            x for x in (age_note(pr, pb, now_dt), notes_cell(pr)) if x)
+        notes = f"<sub>{notes}</sub>" if notes else ""
+        notes = " ".join(x for x in (notes, threads_cell(pr)) if x)
+        row = (f"| {first} | {status} |  | "
+               f"{files_cell(pr['files'], pr['churn'])} | {notes} |")
+        if pr["draft"]:
+            draft_rows.append((ts, row))
+        elif pr_ready(pr, clean):
+            ready_rows.append((ts, row))
+        else:
+            other_rows.append((ts, row))
     # Each non-empty group gets a labelled divider so the eye lands on what's
     # actionable — ready first, then in progress, then drafts last.  When only
     # one group has rows, skip the labels (the table needs no signposting).
@@ -1059,10 +1134,10 @@ def render(branches, conf, prs, have_token, slug):
             # bold, upper-cased label, which reads as a header next to the
             # mixed-case data rows.
             out.append(f"| **{glue(icon, label.upper())}** | | | | |")
-            out += rows
+            out += [r for _, r in sorted(rows, key=lambda x: -x[0])]
     else:
         for _, _, rows in present:
-            out += rows
+            out += [r for _, r in sorted(rows, key=lambda x: -x[0])]
     out.append("")
 
     # ---- non-PR branches: one compact "Branches without PRs:" line ----
@@ -1087,18 +1162,19 @@ def render(branches, conf, prs, have_token, slug):
         out.append("")
 
     # ---- the table's Status / Overlaps legend ----
-    if active:
+    if active or external:
         out.append(
             f"<sub>**Status** {glue('✅', 'ready')} · "
-            f"{glue('👍', 'approved,')} threads open · "
             f"{glue('🔴', 'changes')} requested · "
-            f"{glue('🟠', 'ready')} for review · "
-            f"{glue('❌', 'CI')} failing · {glue('🟡', 'CI')} running · "
+            f"{glue('❌', 'CI')} failing · "
             f"{glue('💬', 'open')} threads · "
             f"{glue('✏️', 'draft')} · {glue('❗', 'auto-merge')} "
-            f"held · {glue('🔗', 'fixes')} issue · {glue('⚠️', 'main')} "
-            "conflicts with `main` · "
+            f"held · {glue('🔗', 'fixes')} issue · "
+            f"{glue('⚠️', 'conflicts')} with `main` = no longer merges "
+            "cleanly · "
             f"{glue('⏳', 'whose')} move the PR is waiting for. "
+            "&nbsp; **External** opened from a fork (hover for which); no "
+            "local branch, so its Overlaps cell stays empty. "
             "&nbsp; **Overlaps** PRs sharing files (hover for the branch and "
             f"title) · plain = clean co-edit · {glue('⚠️', 'real')} conflict "
             f"· {glue('⊃', 'contains')} · {glue('⊂', 'contained')} in. "
@@ -1216,9 +1292,9 @@ def main():
     slug = repo_slug()
     branches = collect_branches()
 
-    prs = {}
+    prs, external = {}, []
     if token:
-        prs = fetch_prs(slug, token)
+        prs, external = fetch_prs(slug, token)
 
     # Conflicts are computed over *all* active branches: PR branches populate the
     # main table's overlap column, and the non-PR "Branches without PRs:"
@@ -1249,7 +1325,8 @@ def main():
             ) or login_from_email(b["creator_email"])
             b["creator_realname"] = user_realname(b["creator_login"], token)
 
-    body = render(branches, conf, prs, have_token=bool(token), slug=slug)
+    body = render(branches, conf, prs, external, have_token=bool(token),
+                  slug=slug)
 
     if args.update_issue:
         if not token:

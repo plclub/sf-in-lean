@@ -102,6 +102,7 @@
             ]
         }
     },
+    
     "workbench.iconTheme": "material-icon-theme",
     "material-icon-theme.folders.customClones": [
         {
@@ -110,5 +111,12 @@
             "color": "blue-500",
             "folderNames": ["HL", "LF", "TS"]
         }
-    ]
+    ],
+
+    "workbench.colorCustomizations": {
+      "titleBar.activeForeground": "#000000",
+      "titleBar.activeBackground": "#d9d9d9",
+      "activityBar.background": "#d9d9d9"
+  }
+
 }

@@ -171,6 +171,16 @@ example (n m o : Nat)
     rw [h₁, h₃]
 ```
 
+Note that both {tactic}`injection` and {tactic}`injections` will simplify
+a hypothesis before applying injectivity. Thus we could also use them
+to solve the following example, which requires simplifying the `++` and {lean}`List.reverse` expressions:
+
+```lean
+example (n m o : Nat)
+    (h : [n] ++ [m] = List.reverse ([o] ++ [o])) :
+    n = m := by sorry
+```
+
 :::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement
 How do I predict how many equations will be generated, and in what order?  (E.g., how did I know to write `_` in the above example?) I suspect the real answer is "try it without the `with`, see what happens, then go back and tidy." If so, it would be less puzzling just to say so.
 :::
@@ -194,6 +204,8 @@ theorem injection_ex3 {α : Type} (x y z : α) (l j : List α)
 :::
 :::::
 ::::::
+
+## Disjointness
 
 ::::full
 So much for injectivity of constructors.  What about disjointness?
@@ -540,54 +552,37 @@ We can specify the recursion-depth with `congr n`.
 ::::
 
 ```lean +error (name := congr1)
-example (a b c d : Nat) (hab : a = b) (hcd : c = d) :
-    (a, c + 1) = (b, 1 + d) := by
+example (a b c d : Nat) (h1 : a = b + 1) (h2 : d = c + 1) :
+    (a + c, true) = (b + d, true) := by
   congr
 ```
 
-We now have three goals: `c = 1`, `1 = d`, and `1 = d`,
+We now have two goals: `a = b` and `c = d`,
 but these are not provable from our hypotheses! {tactic}`congr`
 has gone too deep.
 
 ```leanOutput congr1
 unsolved goals
-case e_snd.e_a
+case e_fst.e_a
 a b c d : Nat
-hab : a = b
-hcd : c = d
-⊢ c = 1
+h1 : a = b + 1
+h2 : d = c + 1
+⊢ a = b
 
-case e_snd.e_a.e_2
+case e_fst.e_a
 a b c d : Nat
-hab : a = b
-hcd : c = d
-⊢ 1 = d
-
-case e_snd.e_a.e_3
-a b c d : Nat
-hab : a = b
-hcd : c = d
-⊢ 1 = d
+h1 : a = b + 1
+h2 : d = c + 1
+⊢ c = d
 ```
 
 ```lean
-example (a b c d : Nat) (hab : a = b) (hcd : c = d) :
-    (a, c + 1) = (b, 1 + d) := by
+example (a b c d : Nat) (h1 : a = b + 1) (h2 : d = c + 1) :
+    (a + c, true) = (b + d, true) := by
   /- Using `congr` shallowly allows us to complete the proof -/
   congr 1
-  rw [Nat.add_comm]
-  congr
+  rw [h1, h2, Nat.add_assoc, Nat.add_comm 1 c]
 ```
-
-:::dev "Niklas Halonen (xhalo32)"
-The above proof can be made simpler by just rewriting before the `congr`, so arguably it doesn't require limiting the depth.
-```lean
-example (a b c d : Nat) (hab : a = b) (hcd : c = d) :
-    (a, c + 1) = (b, 1 + d) := by
-  rw [Nat.add_comm]
-  congr
-```
-:::
 
 # Using {tactic}`cases` on Expressions
 
@@ -606,7 +601,7 @@ variables:
 
 ```lean
 def chooseIf {α : Type} (test : α → Bool) (x y : α) : α :=
-  if test x then x else y
+  bif test x then x else y
 
 theorem chooseIf_self {α : Type} (test : α → Bool) (x : α) :
     chooseIf test x x = x := by
@@ -616,7 +611,7 @@ theorem chooseIf_self {α : Type} (test : α → Bool) (x : α) :
 
 ::::full
 After unfolding {name}`chooseIf` in the above proof, we find that
-we are stuck on `(if test x = true then x else x) = x`.  But either
+we are stuck on `(bif test x then x else x) = x`.  But either
 `test x` is `true` or it isn't,
 so we can use `cases (test x)` to let us reason about the two cases.
 
@@ -693,13 +688,8 @@ theorem zip_unzip' {α β : Type} (l : List (α × β))
 
 When using {tactic}`cases`, we can specify to Lean that it should
 remember an equality between a compound expression and what we are
-decomposing it into, using `cases h : ...` syntax. This step can actually be critical: if we leave it out, we might lack
+decomposing it into, using `cases h : ...` syntax. This step is sometimes critical: if we leave it out, we might lack
 information we need to complete a proof.
-
-:::dev "Benjamin Pierce (bcpierce00)"
-Students might then wonder why we are teaching them the non-`with` syntax at all...
-:::
-
 
 ::::full
 For example, suppose we define a function `keepIf` like this:
@@ -707,7 +697,7 @@ For example, suppose we define a function `keepIf` like this:
 
 ```lean
 def keepIf {α : Type} (test : α → Bool) (x : α) : Option α :=
-  if test x then some x else none
+  bif test x then some x else none
 ```
 
 ::::full
@@ -728,14 +718,14 @@ case false
 α : Type
 test : α → Bool
 x y : α
-h : (if test x = true then some x else none) = some y
+h : (bif test x then some x else none) = some y
 ⊢ x = y
 
 case true
 α : Type
 test : α → Bool
 x y : α
-h : (if test x = true then some x else none) = some y
+h : (bif test x then some x else none) = some y
 ⊢ x = y
 ```
 
@@ -761,13 +751,15 @@ theorem keepIf_some {α : Type} (test : α → Bool) (x y : α)
     (h : keepIf test x = some y) :
     x = y := by
   rw [keepIf] at h
-  cases hTest : test x
   -- Now we have the same state as at the point where we got stuck
   -- above, except that the context contains an extra equality
   -- assumption, which is exactly what we need to make progress.
-  · rw [hTest] at h
+  cases hTest : test x with
+  | false =>
+    rw [hTest] at h
     contradiction
-  · rw [hTest] at h
+  | true =>
+    rw [hTest] at h
     injections
 ```
 
@@ -879,9 +871,6 @@ theorem apply_exercise (m : Nat)
     apply h₁
     apply hEven
 ```
-
-:::gradeTheorem 2 apply_exercise
-:::
 :::::
 ::::::
 
@@ -1156,9 +1145,6 @@ theorem trans_eq_exercise (n m o p : Nat)
     _ = m := by rw [h₂]
     _ = o.minusTwo := by rw [h₁]
 ```
-
-:::gradeTheorem 3 trans_eq_exercise
-:::
 :::::
 ::::::
 
@@ -1172,13 +1158,10 @@ The tactic `apply t at h` matches an implication `t`
 context. Unlike ordinary {tactic}`apply`, which matches the goal against `b`
 and replaces it with the subgoal `a`, `apply t at h` matches the type of `h`
 against `a` and, if successful, replaces `h` with a hypothesis of type `b`.
-In other words, `apply t at h` is a form of "forward
-reasoning" from the hypotheses toward the goal.
+In other words, `apply t at h` is a form of _forward
+reasoning_ from the hypotheses toward the goal.
 
-In other words, `apply t at h` gives us a form of "forward
-reasoning": given `t : a → b` and `h : a`, it replaces `h` with a proof of `b`.
-
-By contrast, ordinary `apply t` is "backward reasoning": given `t : a → b`
+By contrast, ordinary `apply t` is _backward reasoning_: given `t : a → b`
 and a goal `⊢ b`, it replaces the goal with `⊢ a`.
 
 Here is a proof that uses forward reasoning rather than backward reasoning:
@@ -1232,18 +1215,22 @@ so we do not import the whole thing in this book, but we do import `apply ... at
 
 # Specializing Hypotheses
 
+::::full
 We've already seen how we can use {tactic}`have` to do
 forward reasoning, by letting us state and prove useful facts
 that get us closer to the main goal we're trying to prove. Often,
 though, these facts are just special cases of more general hypotheses
 we already have.
+::::
 If `h` is a quantified hypothesis in the current context — i.e.,
 `h : ∀ (x : α), P x` — then we can use {tactic}`have` to obtain a special
-case of `h` by supplying a value for `x`. For example, `have h := h e`
+case of `h` by supplying a value for `x`.
+::::full
+In other words, `have h := h e`
 introduces a new `h` which `x` has been instantiated with `e`.
 
 For example:
-
+::::
 ```lean
 example (m : Nat) (h : ∀ n, m * n = 0) : m = 0 := by
   have h := h 1
@@ -1251,12 +1238,16 @@ example (m : Nat) (h : ∀ n, m * n = 0) : m = 0 := by
   exact h
 ```
 
+::::full
 One thing to notice here is that the original `h` is still
 present in the context, although it is shadowed by the new `h`.
-Often we don't care to keep this old hypothesis around, in which case we can use the {tactic}`replace`
-tactic instead. This behaves like {tactic}`have`, except that
+::::
+If we don't care to keep this old hypothesis around, we can use the {tactic}`replace`
+tactic instead.
+::::full
+This behaves like {tactic}`have`, except that
 it gets rid of the old hypothesis afterwards when possible:
-
+::::
 ```lean
 example (m : Nat) (h : ∀ n, m * n = 0) : m = 0 := by
   replace h := h 1
@@ -1401,7 +1392,7 @@ ih : n'.double = (m' + 1).double → n' = m' + 1
 
 From `h`, using the definition of {name}`Nat.double` we can obtain
 :::dev "Benjamin Pierce (bcpierce00)"
-Formatting: The displayed material in this section is inconsistent and rather ugly -- some of it is indented, some not, some is bulleted, some not.  I think this is mostly a hold-over from the Rocq formatting markup, which was rather problematic in similar ways. 
+Formatting: The displayed material in this section is inconsistent and rather ugly -- some of it is indented, some not, some is bulleted, some not.  I think this is mostly a hold-over from the Rocq formatting markup, which was rather problematic in similar ways.
 :::
 
 
@@ -1811,9 +1802,6 @@ theorem length_append_cons {α : Type} {l₁ l₂ : List α} {x : α} {n : Nat}
       rw [ih rfl]
       assumption
 ```
-
-:::gradeTheorem 3 length_append_cons
-:::
 :::::
 
 :::::exercise (rating := 3) (name := "length_append_self") (optional := true)
@@ -1836,9 +1824,6 @@ theorem length_append_self {α : Type} {n : Nat} {l : List α}
       rw [ih rfl, ← h]
       rw [Nat.add_add_add_comm]
 ```
-
-:::gradeTheorem 3 length_append_self
-:::
 :::::
 
 :::::exercise (rating := 3) (name := "list_ext")
@@ -1906,9 +1891,6 @@ theorem diagonal_induction (p : Nat → Nat → Prop)
         apply hss
         apply ih
 ```
-
-:::gradeTheorem 3 diagonal_induction
-:::
 :::::
 ::::::
 
@@ -1972,16 +1954,16 @@ theorem map_injective_of_injective {α β : Type}
 :::::
 
 
-:::::exercise (rating := 3) (name := "unzip_zip") (level := Advanced) (manual := true)
+:::::exercise (rating := 3) (name := "unzip'_zip") (level := Advanced) (manual := true)
 We proved in {name}`zip_unzip'` that {name}`zip`ping the result of {name}`unzip'`
 recovers the original list.
-What about the other direction?  Complete and prove the following `unzip_zip`:
+What about the other direction?  Complete and prove the following `unzip'_zip`:
 
 ```display
-theorem unzip_zip {α β : Type}
+theorem unzip'_zip {α β : Type}
     {l₁ : List α} {l₂ : List β}
     /- add appropriate parameters and hypotheses here -/ :
-    unzip (zip l₁ l₂) = (l₁, l₂) := sorry
+    unzip' (zip l₁ l₂) = (l₁, l₂) := sorry
 ```
 
 Hint: Take a look at the definition of {name}`zip` in {ref "Poly"}[Poly].
@@ -1990,10 +1972,10 @@ in its base cases, which possibly drop some list elements.
 
 ```lean
 -- SOLUTION
-theorem unzip_zip {α β : Type}
+theorem unzip'_zip {α β : Type}
     {l₁ : List α} {l₂ : List β}
     (h : l₁.length = l₂.length) :
-    unzip (zip l₁ l₂) = (l₁, l₂) := by
+    unzip' (zip l₁ l₂) = (l₁, l₂) := by
   induction l₁ generalizing l₂ with
   | nil =>
     cases l₂ with
@@ -2003,26 +1985,26 @@ theorem unzip_zip {α β : Type}
     cases l₂ with
     | nil => contradiction
     | cons y ys =>
-      rw [zip_cons_cons, unzip]
+      rw [zip_cons_cons, unzip']
       rewrite [ih]
       · rfl
       · injections
 
 /- Here is one more approach -/
-theorem unzip_zip' {α β : Type}
+theorem unzip'_zip' {α β : Type}
     {l₁ : List α} {l₂ : List β}
-    {l : List (α × β)} (h : (l₁, l₂) = unzip l) :
-    unzip (zip l₁ l₂) = (l₁, l₂) := by
+    {l : List (α × β)} (h : (l₁, l₂) = unzip' l) :
+    unzip' (zip l₁ l₂) = (l₁, l₂) := by
   induction l generalizing l₁ l₂ with
   | nil =>
-    rw [unzip_nil] at h
+    rw [unzip'] at h
     injections h₁ h₂
-    rw [h₁, h₂, zip, unzip]
+    rw [h₁, h₂, zip, unzip']
   | cons x xs ih =>
     let ⟨a, b⟩ := x
-    rw [unzip] at h
+    rw [unzip'] at h
     injections h₁ h₂
-    rewrite [h₁, h₂, zip, unzip, ih]
+    rewrite [h₁, h₂, zip, unzip', ih]
     · rfl
     · rfl
 -- END SOLUTION
@@ -2031,7 +2013,7 @@ theorem unzip_zip' {α β : Type}
 
 :::grade
 ```
-GRADE_MANUAL 3: unzip_zip
+GRADE_MANUAL 3: unzip'_zip
 ```
 :::
 :::::
