@@ -515,7 +515,7 @@ end Imp.Delab
 ```lean -show -keep
 
 def a₁ : Aexp := aexp { X + 1 }
-def a₂ : Aexp := aexp { (a₁) * ~(.num 5) }
+def a₂ : Aexp := aexp { a₁ * 5 }
 
 /-- info: aexp {1 * (2 + 3)} : Aexp -/
 #guard_msgs in #check aexp { 1 * (2 + 3) }
@@ -525,7 +525,7 @@ def a₂ : Aexp := aexp { (a₁) * ~(.num 5) }
 #guard_msgs in #check aexp { X + a₁ }
 
 def b₁ := bexp { true ∧ ¬(X ≤ 4) }
-def b₂ := bexp { b₁ ∧ (¬ (X ≤ ~(.num <| 4 + 2))) }
+def b₂ := bexp { b₁ ∧ (¬ (X ≤ (4 + 2))) }
 
 /-- info: bexp {1 = X} : Bexp -/
 #guard_msgs in #check bexp { 1 = X }
@@ -774,7 +774,7 @@ section
 variable (x : Ident) (a : Aexp)
 /-- info: imp {x := ~a} : Com -/
 #guard_msgs in
-#check imp { x := ~a }
+#check imp { x := a }
 
 /-- info: imp {x := ~a} : Com -/
 #guard_msgs in
@@ -982,14 +982,14 @@ def Com.eval (st : State) (c : Com) : State :=
   match c with
   | imp {skip} => st
   | imp {x := ~a} => (x →ₜ a.eval st ; st)
-  | imp {~c₁; ~c₂} =>
+  | imp {c₁; c₂} =>
       let st' := eval st c₁
       eval st' c₂
-  | imp {if (~b) {~c₁} else {~c₂}} =>
+  | imp {if (b) {c₁} else {c₂}} =>
       if b.eval st then eval st c₁
       else eval st c₂
-  | imp {while (~b) {~c}} =>
-      if b.eval st then eval st (imp { ~c; while (~b) {~c}})
+  | imp {while (b) {c}} =>
+      if b.eval st then eval st (imp { c; while (b) {c}})
       --                ^-- recursive call without a decreasing argument
       else st
 ```
@@ -1185,7 +1185,7 @@ instance : HasEval Com State State where
 
 @[simp]
 theorem Com.evalR_eq {c : Com} {st st' : State} :
-    EvalR c st st' ↔ st =[ ~c ]=> st' := by rfl
+    EvalR c st st' ↔ st =[ c ]=> st' := by rfl
 ```
 ::::
 
@@ -1451,7 +1451,7 @@ Informal proof needed! (And one can surely be found in some past
 
 ```lean
 theorem ceval_deterministic {c : Com} {st st1 st2 : State}
-    (e₁ : st =[ ~c ]=> st1) (e₂ : st =[ ~c ]=> st2) : st1 = st2 := by
+    (e₁ : st =[ c ]=> st1) (e₂ : st =[ c ]=> st2) : st1 = st2 := by
   induction e₁ generalizing st2 with
   | skip =>
       inversion e₂
@@ -1489,7 +1489,7 @@ theorem ceval_deterministic {c : Com} {st st1 st2 : State}
 /- Answer to the second quiz above (deferred because it depends on
    `ceval_deterministic`). -/
 theorem quiz2_answer (c₁ c₂ : Com) (st st' : State)
-    (h₁ : st =[ ~c₁; ~c₂ ]=> st') (h₂ : st =[ ~c₁ ]=> st) : st =[ ~c₂ ]=> st' := by
+    (h₁ : st =[ c₁; c₂ ]=> st') (h₂ : st =[ c₁ ]=> st) : st =[ c₂ ]=> st' := by
   inversion h₁ with
   | seq smid hc₁ hc₂ =>
     have hmid : smid = st := ceval_deterministic hc₁ h₂
@@ -1522,7 +1522,7 @@ def pupToN : Com := solution!(
 
 ```lean
 theorem pup_to_2_ceval :
-    {X ↦ 2} =[ ~pupToN ]=> {X ↦ 0, Y ↦ 3, X ↦ 1, Y ↦ 2, Y ↦ 0, X ↦ 2} := by
+    {X ↦ 2} =[ pupToN ]=> {X ↦ 0, Y ↦ 3, X ↦ 1, Y ↦ 2, Y ↦ 0, X ↦ 2} := by
   solution!
     rw [pupToN]
     apply Com.EvalR.seq (st' := (Y →ₜ 0 ; X →ₜ 2 ; ∅))
@@ -1572,7 +1572,7 @@ working with the bare definitions. This section explores some examples.
 
 ```lean
 theorem plus2_spec {st : State} {n : Nat} {st' : State}
-    (hx : st[X] = n) (heval : st =[ ~plus2 ]=> st') :
+    (hx : st[X] = n) (heval : st =[ plus2 ]=> st') :
     st'[X] = n + 2 := by
   -- Inverting `heval` forces one step of the `ceval` computation: since
   -- `plus2` is an assignment, `st'` must be `st` extended at `X`.
@@ -1594,7 +1594,7 @@ State and prove a specification of {name}`XtimesYinZ`.
 -- SOLUTION
 /- Here is a specification in the style of `plus2_spec`: -/
 theorem XtimesYinZ_spec₁ {st : State} {nx ny : Nat} {st' : State}
-    (hx : st[X] = nx) (hy : st[Y] = ny) (heval : st =[ ~XtimesYinZ ]=> st') :
+    (hx : st[X] = nx) (hy : st[Y] = ny) (heval : st =[ XtimesYinZ ]=> st') :
     st'[Z] = nx * ny := by
   rw [XtimesYinZ] at heval
   inversion heval with
@@ -1603,13 +1603,13 @@ theorem XtimesYinZ_spec₁ {st : State} {nx ny : Nat} {st' : State}
 
 /- Though perhaps a cleaner specification would be: -/
 theorem XtimesYinZ_spec {st : State} :
-    st =[ ~XtimesYinZ ]=> (Z →ₜ st[X] * st[Y] ; st) := by
+    st =[ XtimesYinZ ]=> (Z →ₜ st[X] * st[Y] ; st) := by
   rw [XtimesYinZ]
   apply EvalR.asgn
   rfl
 
 /- A less informative specification would be ... -/
-theorem XtimesYinZ_spec₂ {st : State} : ∃ st', st =[ ~XtimesYinZ ]=> st' := by
+theorem XtimesYinZ_spec₂ {st : State} : ∃ st', st =[ XtimesYinZ ]=> st' := by
   exists (Z →ₜ st[X] * st[Y] ; st)
   exact XtimesYinZ_spec
 -- END SOLUTION
@@ -1680,17 +1680,17 @@ def Com.no_whiles (c : Com) : Bool :=
   | imp {skip} => true
   | imp {x := ~a} => true
   | imp {c₁; c₂} => no_whiles c₁ && no_whiles c₂
-  | imp {if (~_) {ct} else {cf}} => no_whiles ct && no_whiles cf
-  | imp {while (~_) {~_}} => false
+  | imp {if (b) {ct} else {cf}} => no_whiles ct && no_whiles cf
+  | imp {while (b) {c}} => false
 
 inductive Com.NoWhilesR : Com → Prop where
   -- SOLUTION
   | skip : Com.NoWhilesR (imp { skip })
   | asgn {x : Ident} {a : Aexp} : Com.NoWhilesR (imp { x := ~a })
   | seq {c₁ c₂ : Com} (h₁ : Com.NoWhilesR c₁) (h₂ : Com.NoWhilesR c₂) :
-      Com.NoWhilesR (imp { ~c₁; ~c₂ })
+      Com.NoWhilesR (imp { c₁; c₂ })
   | cond {b : Bexp} {c₁ c₂ : Com} (h₁ : Com.NoWhilesR c₁) (h₂ : Com.NoWhilesR c₂) :
-      Com.NoWhilesR (imp { if (~b) { ~c₁ } else { ~c₂ } })
+      Com.NoWhilesR (imp { if (b) { c₁ } else { c₂ } })
   -- END SOLUTION
 
 theorem no_whiles_eqv (c : Com) : c.no_whiles = true ↔ Com.NoWhilesR c := by
@@ -2232,7 +2232,8 @@ We don't make the notation with `c:imp_com` since it would need the custom `macr
 Now prove the following properties of your definition:
 
 ```lean
-theorem break_ignore {c : Com} (st st' : State) {s : Result} (h : st =[ imp { brk ; ~c } ]=> st' // s) :
+theorem break_ignore {c : Com} (st st' : State) {s : Result}
+  (h : st =[ imp { brk ; c } ]=> st' // s) :
   st = st' := by
   solution!
     inversion h with
@@ -2244,7 +2245,7 @@ theorem break_ignore {c : Com} (st st' : State) {s : Result} (h : st =[ imp { br
 
 ```lean
 theorem while_continue {b : Bexp} {c : Com} {st st' : State} {s : Result}
-  (h : st =[ imp { while (~b) {~c} } ]=> st' // s) :
+  (h : st =[ imp { while (b) {c} } ]=> st' // s) :
   s = sContinue := by
   solution!
     inversion h <;> rfl
@@ -2261,17 +2262,17 @@ theorem while_stops_on_break {b : Bexp} {c : Com} {st st' : State}
 
 ```lean
 theorem seq_continue {c₁ c₂ : Com} {st st' st'' : State}
-  (h₁ : st =[ imp { ~c₁ } ]=> st' // sContinue)
-  (h₂ : st' =[ imp { ~c₂ } ]=> st'' // sContinue) :
-  st =[ imp { ~c₁ ; ~c₂ } ]=> st'' // sContinue := by
+  (h₁ : st =[ imp { c₁ } ]=> st' // sContinue)
+  (h₂ : st' =[ imp { c₂ } ]=> st'' // sContinue) :
+  st =[ imp { c₁ ; c₂ } ]=> st'' // sContinue := by
   solution!
     apply Com.EvalR.seqContinue (st' := st') <;> assumption
 ```
 
 ```lean
 theorem seq_stops_on_break {c₁ c₂ : Com} {st st' : State}
-  (h : st =[ imp { ~c₁ } ]=> st' // sBreak) :
-  st =[ imp { ~c₁ ; ~c₂ } ]=> st' // sBreak := by
+  (h : st =[ imp { c₁ } ]=> st' // sBreak) :
+  st =[ imp { c₁ ; c₂ } ]=> st' // sBreak := by
   solution!
     apply Com.EvalR.seqBreak <;> assumption
 ```
@@ -2280,7 +2281,7 @@ theorem seq_stops_on_break {c₁ c₂ : Com} {st st' : State}
 ::::exercise (rating := 3) (name := "while_break_true") (optional := true)
 ```lean
 theorem while_break_true {b : Bexp} {c : Com} {st st' : State}
-  (h₁ : st =[ imp { while (~b) {~c} } ]=> st' // sContinue)
+  (h₁ : st =[ imp { while (b) {c} } ]=> st' // sContinue)
   (h₂ : b.eval st' = true) :
   ∃ st'', st'' =[ imp { c } ]=> st' // sBreak := by
   solution!
@@ -2297,8 +2298,8 @@ theorem while_break_true {b : Bexp} {c : Com} {st st' : State}
 ::::exercise (rating := 4) (name := "ceval_deterministic") (optional := true)
 ```lean
 theorem ceval_deterministic {c : Com} {st st₁ st₂ : State} {s₁ s₂ : Result}
-  (h₁ : st =[ imp { ~c } ]=> st₁ // s₁)
-  (h₂ : st =[ imp { ~c } ]=> st₂ // s₂) :
+  (h₁ : st =[ imp { c } ]=> st₁ // s₁)
+  (h₂ : st =[ imp { c } ]=> st₂ // s₂) :
   st₁ = st₂ ∧ s₁ = s₂ := by
   solution!
     induction h₁ generalizing st₂ s₂ with (try (inversion h₂ <;> lia))
