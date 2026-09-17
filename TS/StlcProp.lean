@@ -4,8 +4,6 @@ import LF.CustomTactics
 open Verso.Genre Manual
 open SFLMeta
 
-set_option maxHeartbeats 1000000
-
 #doc (Manual) "StlcProp: Properties of STLC" =>
 %%%
 tag := "StlcProp"
@@ -294,7 +292,6 @@ Show that progress can also be proved by induction on terms
 instead of induction on typing derivations.
 
 ```lean
--- IN PROGRESS
 theorem progress' (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
     t.IsValue ∨ ∃ t', t ⟶ t' := by
   solution!
@@ -302,9 +299,15 @@ theorem progress' (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
     | var x =>
       cases hT with
       | var _ _ _ h => rw [PartialMap.getElem_empty] at h; cases h
-    | abs x T₂ t₁ _ => exact .inl (.abs ..)
-    | tru => exact .inl .tru
-    | fls => exact .inl .fls
+    | abs x T₂ t₁ _ =>
+      left
+      constructor
+    | tru =>
+      left
+      constructor
+    | fls =>
+      left
+      constructor
     | app t₁ t₂ ih₁ ih₂ =>
       right
       cases hT with
@@ -313,9 +316,18 @@ theorem progress' (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
         | inl hv₁ =>
           obtain ⟨x, u, rfl⟩ := canonical_forms_fun t₁ _ _ h₁ hv₁
           cases ih₂ _ h₂ with
-          | inl hv₂ => exact ⟨<{ [~x := ~t₂] ~u }>, .appAbs x T₂ u t₂ hv₂⟩
-          | inr hs₂ => obtain ⟨t₂', h⟩ := hs₂; exact ⟨_, .app2 _ t₂ t₂' hv₁ h⟩
-        | inr hs₁ => obtain ⟨t₁', h⟩ := hs₁; exact ⟨_, .app1 t₁ t₁' t₂ h⟩
+          | inl hv₂ =>
+            exists <{ [~x := ~t₂] ~u }>
+            constructor <;> assumption
+          | inr hs₂ =>
+            obtain ⟨t₂', h⟩ := hs₂
+            exists <{ (λ ~x : ~T₂ . ~u) ~t₂' }>
+            apply Step.app2 <;> assumption
+        | inr hs₁ =>
+          obtain ⟨t₁', h⟩ := hs₁
+          exists <{ ~t₁' ~t₂ }>
+          apply Step.app1
+          assumption
     | ite t₁ t₂ t₃ ih₁ ih₂ ih₃ =>
       right
       cases hT with
@@ -323,9 +335,19 @@ theorem progress' (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
         cases ih₁ _ h₁ with
         | inl hv₁ =>
           cases canonical_forms_bool t₁ h₁ hv₁ with
-          | inl he => subst he; exact ⟨t₂, .ifTrue t₂ t₃⟩
-          | inr he => subst he; exact ⟨t₃, .ifFalse t₂ t₃⟩
-        | inr hs₁ => obtain ⟨t₁', h⟩ := hs₁; exact ⟨_, .ifStep t₁ t₁' t₂ t₃ h⟩
+          | inl he =>
+            subst he
+            exists t₂
+            apply Step.ifTrue
+          | inr he =>
+            subst he
+            exists t₃
+            apply Step.ifFalse
+        | inr hs₁ =>
+          obtain ⟨t₁', h⟩ := hs₁
+          exists <{ if ~t₁' then ~t₂ else ~t₃ }>
+          apply Step.ifStep
+          assumption
 ```
 :::::
 :::autogradedHole progress'
@@ -427,16 +449,33 @@ First, we show that typing is preserved under "extensions" to the
 context `Γ`.  (Recall map inclusion, `Γ ⊆ Γ'`, from the `Typeclasses` chapter.)
 
 ```lean
--- IN PROGRESS
 theorem weakening (Γ Γ' : Context) (t : Tm) (T : Ty)
     (hi : Γ ⊆ Γ') (hT : <{ ~Γ ⊢ ~t ⦂ ~T }>) : <{ ~Γ' ⊢ ~t ⦂ ~T }> := by
   induction hT generalizing Γ' with
-  | var _ x _ h => exact .var _ x _ (hi h)
-  | abs _ x _ _ _ _ ih => exact .abs _ x _ _ _ (ih _ (PartialMap.update_subset _ _ _ _ hi))
-  | app _ _ _ _ _ _ _ ih₁ ih₂ => exact .app _ _ _ _ _ (ih₁ _ hi) (ih₂ _ hi)
-  | tru => exact .tru _
-  | fls => exact .fls _
-  | ite _ _ _ _ _ _ _ _ ih₁ ih₂ ih₃ => exact .ite _ _ _ _ _ (ih₁ _ hi) (ih₂ _ hi) (ih₃ _ hi)
+  | var _ x _ h =>
+    constructor
+    exact hi h
+  | abs _ x _ _ _ _ ih =>
+    constructor
+    apply ih
+    apply PartialMap.update_subset
+    assumption
+  | app _ _ _ _ _ _ _ ih₁ ih₂ =>
+    constructor
+    · apply ih₁
+      exact hi
+    · apply ih₂
+      exact hi
+  | tru => constructor
+  | fls => constructor
+  | ite _ _ _ _ _ _ _ _ ih₁ ih₂ ih₃ =>
+    constructor
+    · apply ih₁
+      exact hi
+    · apply ih₂
+      exact hi
+    · apply ih₃
+      exact hi
 ```
 
 :::slidebreak
@@ -446,11 +485,13 @@ The following simple corollary is what we actually need below.
 
 ```lean
 theorem weakening_empty (Γ : Context) (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
-    <{ ~Γ ⊢ ~t ⦂ ~T }> :=
-  weakening _ _ _ _
-    (fun h => by
-      rw [PartialMap.getElem_empty] at h
-      cases h) hT
+    <{ ~Γ ⊢ ~t ⦂ ~T }> := by
+    apply weakening ∅
+    -- this is the "manual" way to show that the empty context is a subset of any context:
+    -- show that a 'lookup' in it is impossible.
+    · intros x b contra
+      contradiction
+    · assumption
 ```
 
 ## The Substitution Lemma
@@ -488,7 +529,6 @@ The _substitution lemma_ says:
 :::
 
 ```lean
--- IN PROGRESS
 theorem substitution_preserves_typing (Γ : Context) (x : String) (U : Ty)
     (t v : Tm) (T : Ty)
     (hT : <{ ~x ↦ ~U ; ~Γ ⊢ ~t ⦂ ~T }>) (hv : <{ ∅ ⊢ ~v ⦂ ~U }>) :
@@ -504,13 +544,21 @@ theorem substitution_preserves_typing (Γ : Context) (x : String) (U : Ty)
         rw [subst_var_eq]
         have hUT : U = T := Option.some.inj h
         subst hUT
-        exact weakening_empty _ _ _ hv
+        apply weakening_empty
+        exact hv
       · rw [PartialMap.update_neq hxy] at h
         rw [subst_var_ne _ _ _ hxy]
-        exact .var _ y _ h
+        constructor
+        exact h
   | app t₁ t₂ ih₁ ih₂ =>
     cases hT with
-    | app _ _ _ _ _ h₁ h₂ => rw [subst_app]; exact .app _ _ _ _ _ (ih₁ _ _ h₁) (ih₂ _ _ h₂)
+    | app _ _ _ _ _ h₁ h₂ =>
+      rw [subst_app]
+      constructor
+      · apply ih₁
+        exact h₁
+      · apply ih₂
+        exact h₂
   | abs y S t₁ ih =>
     cases hT with
     | abs _ _ _ _ _ h =>
@@ -518,17 +566,34 @@ theorem substitution_preserves_typing (Γ : Context) (x : String) (U : Ty)
       · subst hxy
         rw [subst_abs_eq]
         rw [PartialMap.update_shadow] at h
-        exact .abs _ _ _ _ _ h
+        constructor
+        exact h
       · rw [subst_abs_ne _ _ _ _ _ hxy]
         rw [PartialMap.update_permute (Ne.symm hxy)] at h
-        exact .abs _ _ _ _ _ (ih _ _ h)
-  | tru => cases hT with | tru => rw [subst_tru]; exact .tru _
-  | fls => cases hT with | fls => rw [subst_fls]; exact .fls _
+        constructor
+        apply ih
+        exact h
+  | tru =>
+    cases hT with
+    | tru =>
+      rw [subst_tru]
+      constructor
+  | fls =>
+    cases hT with
+    | fls =>
+      rw [subst_fls]
+      constructor
   | ite c t e ihc iht ihe =>
     cases hT with
     | ite _ _ _ _ _ h₁ h₂ h₃ =>
       rw [subst_ite]
-      exact .ite _ _ _ _ _ (ihc _ _ h₁) (iht _ _ h₂) (ihe _ _ h₃)
+      constructor
+      · apply ihc
+        exact h₁
+      · apply iht
+        exact h₂
+      · apply ihe
+        exact h₃
 ```
 
 ::::full
@@ -598,7 +663,6 @@ proved by induction on typing derivations instead
 of induction on terms.
 
 ```lean
--- IN PROGRESS
 theorem substitution_preserves_typing_from_typing_ind (Γ : Context) (x : String) (U : Ty)
     (t v : Tm) (T : Ty)
     (hT : <{ ~x ↦ ~U ; ~Γ ⊢ ~t ⦂ ~T }>) (hv : <{ ∅ ⊢ ~v ⦂ ~U }>) :
@@ -614,23 +678,38 @@ theorem substitution_preserves_typing_from_typing_ind (Γ : Context) (x : String
         rw [subst_var_eq]
         have hUT : U = T₁ := Option.some.inj h
         subst hUT
-        exact weakening_empty _ _ _ hv
+        apply weakening_empty
+        exact hv
       · rw [PartialMap.update_neq hxy] at h
         rw [subst_var_ne _ _ _ hxy]
-        exact .var _ y _ h
+        constructor
+        exact h
     | abs _ y _ _ _ hb ih =>
       subst hΓ
       by_cases hxy : x = y
       · subst hxy
         rw [subst_abs_eq]
         rw [PartialMap.update_shadow] at hb
-        exact .abs _ _ _ _ _ hb
+        constructor
+        exact hb
       · rw [subst_abs_ne _ _ _ _ _ hxy]
-        exact .abs _ _ _ _ _ (ih _ (PartialMap.update_permute hxy))
+        constructor
+        apply ih
+        apply PartialMap.update_permute
+        exact hxy
     | app _ _ _ _ _ _ _ ih₁ ih₂ =>
-      rw [subst_app]; exact .app _ _ _ _ _ (ih₁ _ hΓ) (ih₂ _ hΓ)
-    | tru => rw [subst_tru]; exact .tru _
-    | fls => rw [subst_fls]; exact .fls _
+      rw [subst_app]
+      constructor
+      · apply ih₁
+        exact hΓ
+      · apply ih₂
+        exact hΓ
+    | tru =>
+      rw [subst_tru]
+      constructor
+    | fls =>
+      rw [subst_fls]
+      constructor
     | ite _ _ _ _ _ _ _ _ ih₁ ih₂ ih₃ =>
       rw [subst_ite];
       constructor <;> simp_all
@@ -653,7 +732,6 @@ then `t'` is also a closed term with type `T`.  In other words,
 the small-step reduction relation preserves types.
 
 ```lean
--- IN PROGRESS
 theorem preservation (t t' : Tm) (T : Ty)
     (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) (hs : t ⟶ t') : <{ ∅ ⊢ ~t' ⦂ ~T }> := by
   generalize hΓ : (∅ : Context) = Γ at hT
@@ -668,15 +746,34 @@ theorem preservation (t t' : Tm) (T : Ty)
     | appAbs _ _ _ _ _ =>
       -- The one interesting case: the desired result is the substitution lemma.
       cases h₁ with
-      | abs _ _ _ _ _ hb => exact substitution_preserves_typing _ _ _ _ _ _ hb h₂
-    | app1 _ t₁' _ h => exact .app _ _ _ _ _ (ih₁ t₁' h rfl) h₂
-    | app2 _ _ t₂' _ h => exact .app _ _ _ _ _ h₁ (ih₂ t₂' h rfl)
+      | abs _ _ _ _ _ hb =>
+        apply substitution_preserves_typing
+        · exact hb
+        · exact h₂
+    | app1 _ t₁' _ h =>
+      constructor
+      · apply ih₁
+        · exact h
+        · rfl
+      · exact h₂
+    | app2 _ _ t₂' _ h =>
+      constructor
+      · exact h₁
+      · apply ih₂
+        · exact h
+        · rfl
   | ite Γ t₁ t₂ t₃ T₁ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
     subst hΓ
     cases hs with
     | ifTrue => exact h₂
     | ifFalse => exact h₃
-    | ifStep _ t₁' _ _ h => exact .ite _ _ _ _ _ (ih₁ t₁' h rfl) h₂ h₃
+    | ifStep _ t₁' _ _ h =>
+      constructor
+      · apply ih₁
+        · exact h
+        · rfl
+      · exact h₂
+      · exact h₃
 ```
 
 ::::full
@@ -804,7 +901,13 @@ theorem type_soundness (t t' : Tm) (T : Ty)
       cases progress u T hT with
       | inl hv => exact hnv hv
       | inr hs => exact hnf hs
-    | step u w z h₁ _ ih => exact ih (preservation u w T hT h₁) hnf hnv
+    | step u w z h₁ _ ih =>
+      apply ih
+      · apply preservation
+        · exact hT
+        · exact h₁
+      · exact hnf
+      · exact hnv
 ```
 :::::
 
@@ -826,14 +929,26 @@ theorem unique_types (Γ : Context) (e : Tm) (T T' : Ty)
     (h : <{ ~Γ ⊢ ~e ⦂ ~T }>) (h' : <{ ~Γ ⊢ ~e ⦂ ~T' }>) : T = T' := by
   solution!
     induction h generalizing T' with
-    | var _ _ _ hx => cases h' with | var _ _ _ hx' => exact Option.some.inj (hx.symm.trans hx')
-    | abs _ _ _ _ _ _ ih => cases h' with | abs _ _ _ _ _ hb' => rw [ih _ hb']
+    | var _ _ _ hx =>
+      cases h' with
+      | var _ _ _ hx' =>
+        rw [hx] at hx'
+        injection hx'
+    | abs _ _ _ _ _ _ ih =>
+      cases h' with
+      | abs _ _ _ _ _ hb' => rw [ih _ hb']
     | app _ _ _ _ _ _ _ ih₁ _ =>
       cases h' with
-      | app _ _ _ _ _ hf' _ => exact (Ty.arrow.inj (ih₁ _ hf')).2
+      | app _ _ _ _ _ hf' _ =>
+        have harrow := ih₁ _ hf'
+        injection harrow
     | tru => cases h' with | tru => rfl
     | fls => cases h' with | fls => rfl
-    | ite _ _ _ _ _ _ _ _ _ ih₂ _ => cases h' with | ite _ _ _ _ _ _ h₂' _ => exact ih₂ _ h₂'
+    | ite _ _ _ _ _ _ _ _ _ ih₂ _ =>
+      cases h' with
+      | ite _ _ _ _ _ _ h₂' _ =>
+        apply ih₂
+        exact h₂'
 ```
 :::::
 
@@ -932,23 +1047,46 @@ and if we know `t` is well typed in context `Γ`, then it
 must be the case that `Γ` assigns a type to `x`.
 
 ```lean
--- IN PROGRESS
 theorem free_in_context (x : String) (t : Tm) (T : Ty) (Γ : Context)
     (ha : x ∈ᶠ t) (hT : <{ ~Γ ⊢ ~t ⦂ ~T }>) : ∃ T', Γ[x] = some T' := by
   solution!
     induction ha generalizing Γ T with
-    | var => cases hT with | var _ _ _ h => exact ⟨_, h⟩
-    | app1 _ _ _ ih => cases hT with | app _ _ _ _ _ h₁ _ => exact ih _ _ h₁
-    | app2 _ _ _ ih => cases hT with | app _ _ _ _ _ _ h₂ => exact ih _ _ h₂
+    | var =>
+      cases hT with
+      | var _ _ _ h =>
+        constructor
+        exact h
+    | app1 _ _ _ ih =>
+      cases hT with
+      | app _ _ _ _ _ h₁ _ =>
+        apply ih
+        exact h₁
+    | app2 _ _ _ ih =>
+      cases hT with
+      | app _ _ _ _ _ _ h₂ =>
+        apply ih
+        exact h₂
     | abs y _ _ hne _ ih =>
       cases hT with
       | abs _ _ _ _ _ hb =>
         obtain ⟨T', h⟩ := ih _ _ hb
         rw [PartialMap.update_neq hne] at h
-        exact ⟨T', h⟩
-    | ite1 _ _ _ _ ih => cases hT with | ite _ _ _ _ _ h₁ _ _ => exact ih _ _ h₁
-    | ite2 _ _ _ _ ih => cases hT with | ite _ _ _ _ _ _ h₂ _ => exact ih _ _ h₂
-    | ite3 _ _ _ _ ih => cases hT with | ite _ _ _ _ _ _ _ h₃ => exact ih _ _ h₃
+        exists T'
+    | ite1 _ _ _ _ ih =>
+      cases hT with
+      | ite _ _ _ _ _ h₁ _ _ =>
+        apply ih
+        exact h₁
+    | ite2 _ _ _ _ ih =>
+      cases hT with
+      | ite _ _ _ _ _ _ h₂ _ =>
+        apply ih
+        exact h₂
+    | ite3 _ _ _ _ ih =>
+      cases hT with
+      | ite _ _ _ _ _ _ _ h₃ =>
+        apply ih
+        exact h₃
 ```
 
 _Proof_: We show, by induction on the proof that `x` appears free
@@ -1008,30 +1146,58 @@ variables that appear free in `t`. In fact, this is the only
 condition that is needed.
 
 ```lean
--- IN PROGRESS
 theorem context_invariance (Γ Γ' : Context) (t : Tm) (T : Ty)
     (hT : <{ ~Γ ⊢ ~t ⦂ ~T }>) (hf : ∀ x, x ∈ᶠ t → Γ[x] = Γ'[x]) :
     <{ ~Γ' ⊢ ~t ⦂ ~T }> := by
   solution!
     induction hT generalizing Γ' with
-    | var _ x _ h => exact .var _ x _ ((hf x .var) ▸ h)
+    | var _ x _ h =>
+      constructor
+      rw [← h]
+      symm
+      apply hf
+      constructor
     | abs _ y _ _ _ _ ih =>
-      refine .abs _ _ _ _ _ (ih _ ?_)
+      constructor
+      apply ih
       intro z hz
       by_cases hyz : y = z
       · subst hyz; rw [PartialMap.update_eq, PartialMap.update_eq]
       -- The only tricky step.
       · rw [PartialMap.update_neq hyz, PartialMap.update_neq hyz]
-        exact hf z (.abs y _ _ hyz hz)
+        apply hf
+        apply AppearsFreeIn.abs <;> assumption
     | app _ _ _ t₁ t₂ _ _ ih₁ ih₂ =>
-      exact .app _ _ _ _ _ (ih₁ _ (fun z hz => hf z (.app1 t₁ t₂ hz)))
-                           (ih₂ _ (fun z hz => hf z (.app2 t₁ t₂ hz)))
-    | tru => exact .tru _
-    | fls => exact .fls _
+      constructor
+      · apply ih₁
+        intro z hz
+        apply hf
+        apply AppearsFreeIn.app1
+        exact hz
+      · apply ih₂
+        intro z hz
+        apply hf
+        apply AppearsFreeIn.app2
+        exact hz
+    | tru => constructor
+    | fls => constructor
     | ite _ t₁ t₂ t₃ _ _ _ _ ih₁ ih₂ ih₃ =>
-      exact .ite _ _ _ _ _ (ih₁ _ (fun z hz => hf z (.ite1 t₁ t₂ t₃ hz)))
-                           (ih₂ _ (fun z hz => hf z (.ite2 t₁ t₂ t₃ hz)))
-                           (ih₃ _ (fun z hz => hf z (.ite3 t₁ t₂ t₃ hz)))
+      constructor
+      · apply ih₁
+        intro z hz
+        apply hf
+        apply AppearsFreeIn.ite1
+        exact hz
+      · apply ih₂
+        intro z hz
+        apply hf
+        apply AppearsFreeIn.ite2
+        exact hz
+      · apply ih₃
+        intro z hz
+        apply hf
+        apply AppearsFreeIn.ite3
+        exact hz
 ```
 
 _Proof_: By induction on the derivation of `Γ ⊢ t ⦂ T`.
@@ -1924,13 +2090,16 @@ An example:
 -- AI
 theorem Nat_step_example : ∃ t, <{ (λ x : Nat . λ y : Nat . x * y) 3 2 }> ⟶* t := by
   solution!
-    refine ⟨<{ 6 }>, ?_⟩
+    exists <{ 6 }>
     apply Multi.step (y := <{ (λ y : Nat . 3 * y) 2 }>)
-    · exact .app1 _ _ _ (.appAbs "x" _ _ _ (.const 3))
+    · apply Step.app1
+      apply Step.appAbs
+      constructor
     apply Multi.step (y := <{ 3 * 2 }>)
-    · exact .appAbs "y" _ _ _ (.const 2)
+    · apply Step.appAbs
+      constructor
     apply Multi.step (y := <{ 6 }>)
-    · exact .multConst 3 2
+    · apply Step.multConst
     · rfl
 ```
 
@@ -2088,15 +2257,43 @@ theorem weakening (Γ Γ' : Context) (t : Tm) (T : Ty)
     (hi : Γ ⊆ Γ') (hT : <{ ~Γ ⊢ ~t ⦂ ~T }>) : <{ ~Γ' ⊢ ~t ⦂ ~T }> := by
   solution!
     induction hT generalizing Γ' with
-    | var _ x _ h => exact .var _ x _ (hi h)
-    | abs _ x _ _ _ _ ih => exact .abs _ x _ _ _ (ih _ (PartialMap.update_subset _ _ _ _ hi))
-    | app _ _ _ _ _ _ _ ih₁ ih₂ => exact .app _ _ _ _ _ (ih₁ _ hi) (ih₂ _ hi)
-    | const _ n => exact .const _ n
-    | succ _ _ _ ih => exact .succ _ _ (ih _ hi)
-    | pred _ _ _ ih => exact .pred _ _ (ih _ hi)
-    | mult _ _ _ _ _ ih₁ ih₂ => exact .mult _ _ _ (ih₁ _ hi) (ih₂ _ hi)
+    | var _ x _ h =>
+      constructor
+      exact hi h
+    | abs _ x _ _ _ _ ih =>
+      constructor
+      apply ih
+      apply PartialMap.update_subset
+      assumption
+    | app _ _ _ _ _ _ _ ih₁ ih₂ =>
+      constructor
+      · apply ih₁
+        exact hi
+      · apply ih₂
+        exact hi
+    | const _ n => constructor
+    | succ _ _ _ ih =>
+      constructor
+      apply ih
+      exact hi
+    | pred _ _ _ ih =>
+      constructor
+      apply ih
+      exact hi
+    | mult _ _ _ _ _ ih₁ ih₂ =>
+      constructor
+      · apply ih₁
+        exact hi
+      · apply ih₂
+        exact hi
     | ite0 _ _ _ _ _ _ _ _ ih₁ ih₂ ih₃ =>
-      exact .ite0 _ _ _ _ _ (ih₁ _ hi) (ih₂ _ hi) (ih₃ _ hi)
+      constructor
+      · apply ih₁
+        exact hi
+      · apply ih₂
+        exact hi
+      · apply ih₃
+        exact hi
 ```
 
 :::autogradedHole StlcArith.weakening
@@ -2131,14 +2328,21 @@ theorem substitution_preserves_typing (Γ : Context) (x : String) (U : Ty)
           rw [subst_var_eq]
           have hUT : U = T := Option.some.inj h
           subst hUT
-          exact weakening_empty _ _ _ hv
+          apply weakening_empty
+          exact hv
         · rw [PartialMap.update_neq hxy] at h
           rw [subst_var_ne _ _ _ hxy]
-          exact .var _ y _ h
+          constructor
+          exact h
     | app t₁ t₂ ih₁ ih₂ =>
       cases hT with
       | app _ _ _ _ _ h₁ h₂ =>
-        rw [subst_app]; exact .app _ _ _ _ _ (ih₁ _ _ h₁) (ih₂ _ _ h₂)
+        rw [subst_app]
+        constructor
+        · apply ih₁
+          exact h₁
+        · apply ih₂
+          exact h₂
     | abs y S t₁ ih =>
       cases hT with
       | abs _ _ _ _ _ h =>
@@ -2146,21 +2350,52 @@ theorem substitution_preserves_typing (Γ : Context) (x : String) (U : Ty)
         · subst hxy
           rw [subst_abs_eq]
           rw [PartialMap.update_shadow] at h
-          exact .abs _ _ _ _ _ h
+          constructor
+          exact h
         · rw [subst_abs_ne _ _ _ _ _ hxy]
           rw [PartialMap.update_permute (Ne.symm hxy)] at h
-          exact .abs _ _ _ _ _ (ih _ _ h)
-    | const n => cases hT with | const => rw [subst_const]; exact .const _ n
-    | succ t₁ ih => cases hT with | succ _ _ h => rw [subst_succ]; exact .succ _ _ (ih _ _ h)
-    | pred t₁ ih => cases hT with | pred _ _ h => rw [subst_pred]; exact .pred _ _ (ih _ _ h)
+          constructor
+          apply ih
+          exact h
+    | const n =>
+      cases hT with
+      | const =>
+        rw [subst_const]
+        constructor
+    | succ t₁ ih =>
+      cases hT with
+      | succ _ _ h =>
+        rw [subst_succ]
+        constructor
+        apply ih
+        exact h
+    | pred t₁ ih =>
+      cases hT with
+      | pred _ _ h =>
+        rw [subst_pred]
+        constructor
+        apply ih
+        exact h
     | mult t₁ t₂ ih₁ ih₂ =>
       cases hT with
-      | mult _ _ _ h₁ h₂ => rw [subst_mult]; exact .mult _ _ _ (ih₁ _ _ h₁) (ih₂ _ _ h₂)
+      | mult _ _ _ h₁ h₂ =>
+        rw [subst_mult]
+        constructor
+        · apply ih₁
+          exact h₁
+        · apply ih₂
+          exact h₂
     | ite0 t₁ t₂ t₃ ih₁ ih₂ ih₃ =>
       cases hT with
       | ite0 _ _ _ _ _ h₁ h₂ h₃ =>
         rw [subst_ite0]
-        exact .ite0 _ _ _ _ _ (ih₁ _ _ h₁) (ih₂ _ _ h₂) (ih₃ _ _ h₃)
+        constructor
+        · apply ih₁
+          exact h₁
+        · apply ih₂
+          exact h₂
+        · apply ih₃
+          exact h₃
 ```
 :::::
 
@@ -2192,29 +2427,66 @@ theorem preservation (t t' : Tm) (T : Ty)
       | appAbs _ _ _ _ _ =>
         -- The one interesting case: the desired result is the substitution lemma.
         cases h₁ with
-        | abs _ _ _ _ _ hb => exact substitution_preserves_typing _ _ _ _ _ _ hb h₂
-      | app1 _ t₁' _ h => exact .app _ _ _ _ _ (ih₁ t₁' h rfl) h₂
-      | app2 _ _ t₂' _ h => exact .app _ _ _ _ _ h₁ (ih₂ t₂' h rfl)
+        | abs _ _ _ _ _ hb =>
+          apply substitution_preserves_typing
+          · exact hb
+          · exact h₂
+      | app1 _ t₁' _ h =>
+        constructor
+        · apply ih₁
+          · exact h
+          · rfl
+        · exact h₂
+      | app2 _ _ t₂' _ h =>
+        constructor
+        · exact h₁
+        · apply ih₂
+          · exact h
+          · rfl
     | succ Γ t₁ h ih =>
       subst hΓ
       cases hs with
-      | succ _ t₁' hst => exact .succ _ _ (ih t₁' hst rfl)
-      | succConst n => exact .const _ _
+      | succ _ t₁' hst =>
+        constructor
+        apply ih
+        · exact hst
+        · rfl
+      | succConst n => constructor
     | pred Γ t₁ h ih =>
       subst hΓ
       cases hs with
-      | pred _ t₁' hst => exact .pred _ _ (ih t₁' hst rfl)
-      | predConst n => exact .const _ _
+      | pred _ t₁' hst =>
+        constructor
+        apply ih
+        · exact hst
+        · rfl
+      | predConst n => constructor
     | mult Γ t₁ t₂ h₁ h₂ ih₁ ih₂ =>
       subst hΓ
       cases hs with
-      | multConst _ _ => exact .const _ _
-      | mult1 _ t₁' _ hst => exact .mult _ _ _ (ih₁ t₁' hst rfl) h₂
-      | mult2 _ _ t₂' _ hst => exact .mult _ _ _ h₁ (ih₂ t₂' hst rfl)
+      | multConst _ _ => constructor
+      | mult1 _ t₁' _ hst =>
+        constructor
+        · apply ih₁
+          · exact hst
+          · rfl
+        · exact h₂
+      | mult2 _ _ t₂' _ hst =>
+        constructor
+        · exact h₁
+        · apply ih₂
+          · exact hst
+          · rfl
     | ite0 Γ t₁ t₂ t₃ T₀ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
       subst hΓ
       cases hs with
-      | if0Step _ t₁' _ _ hst => exact .ite0 _ _ _ _ _ (ih₁ t₁' hst rfl) h₂ h₃
+      | if0Step _ t₁' _ _ hst =>
+        constructor
+        · apply ih₁
+          · exact hst
+          · rfl
+        · exact h₂
+        · exact h₃
       | if0Zero => exact h₂
       | if0Nonzero => exact h₃
 ```
@@ -2247,8 +2519,12 @@ theorem progress (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
       -- Contradictory: variables cannot be typed in an empty context.
       rw [PartialMap.getElem_empty] at h
       cases h
-    | abs => exact .inl (.abs ..)
-    | const _ n => exact .inl (.const n)
+    | abs =>
+      left
+      constructor
+    | const _ n =>
+      left
+      constructor
     | app Γ T₁ T₂ t₁ t₂ h₁ h₂ ih₁ ih₂ =>
       right
       subst hΓ
@@ -2258,12 +2534,20 @@ theorem progress (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
         | inl hv₂ =>
           -- `t₁` is a value of arrow type, so it is an abstraction, not a number.
           cases hv₁ with
-          | abs x T u => exact ⟨<{ [~x := ~t₂] ~u }>, .appAbs x T u t₂ hv₂⟩
+          | abs x T u =>
+            exists <{ [~x := ~t₂] ~u }>
+            apply Step.appAbs
+            assumption
           | const n => cases h₁
         | inr hs₂ =>
-          obtain ⟨t₂', h⟩ := hs₂; exact ⟨<{ ~t₁ ~t₂' }>, .app2 t₁ t₂ t₂' hv₁ h⟩
+          obtain ⟨t₂', h⟩ := hs₂
+          exists <{ ~t₁ ~t₂' }>
+          apply Step.app2 <;> assumption
       | inr hs₁ =>
-        obtain ⟨t₁', h⟩ := hs₁; exact ⟨<{ ~t₁' ~t₂ }>, .app1 t₁ t₁' t₂ h⟩
+        obtain ⟨t₁', h⟩ := hs₁
+        exists <{ ~t₁' ~t₂ }>
+        apply Step.app1
+        assumption
     | succ Γ t₁ h ih =>
       right
       subst hΓ
@@ -2271,8 +2555,14 @@ theorem progress (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
       | inl hv =>
         cases hv with
         | abs => cases h
-        | const n => exact ⟨.const (1 + n), .succConst n⟩
-      | inr hs => obtain ⟨t₁', hst⟩ := hs; exact ⟨<{ succ ~t₁' }>, .succ t₁ t₁' hst⟩
+        | const n =>
+          exists .const (1 + n)
+          apply Step.succConst
+      | inr hs =>
+        obtain ⟨t₁', hst⟩ := hs
+        exists <{ succ ~t₁' }>
+        apply Step.succ
+        assumption
     | pred Γ t₁ h ih =>
       right
       subst hΓ
@@ -2280,8 +2570,14 @@ theorem progress (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
       | inl hv =>
         cases hv with
         | abs => cases h
-        | const n => exact ⟨.const (n - 1), .predConst n⟩
-      | inr hs => obtain ⟨t₁', hst⟩ := hs; exact ⟨<{ pred ~t₁' }>, .pred t₁ t₁' hst⟩
+        | const n =>
+          exists .const (n - 1)
+          apply Step.predConst
+      | inr hs =>
+        obtain ⟨t₁', hst⟩ := hs
+        exists <{ pred ~t₁' }>
+        apply Step.pred
+        assumption
     | mult Γ t₁ t₂ h₁ h₂ ih₁ ih₂ =>
       right
       subst hΓ
@@ -2294,12 +2590,18 @@ theorem progress (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
           | const n₁ =>
             cases hv₂ with
             | abs => cases h₂
-            | const n₂ => exact ⟨.const (n₁ * n₂), .multConst n₁ n₂⟩
+            | const n₂ =>
+              exists .const (n₁ * n₂)
+              apply Step.multConst
         | inr hs₂ =>
           obtain ⟨t₂', hst⟩ := hs₂
-          exact ⟨<{ ~t₁ * ~t₂' }>, .mult2 t₁ t₂ t₂' hv₁ hst⟩
+          exists <{ ~t₁ * ~t₂' }>
+          apply Step.mult2 <;> assumption
       | inr hs₁ =>
-        obtain ⟨t₁', hst⟩ := hs₁; exact ⟨<{ ~t₁' * ~t₂ }>, .mult1 t₁ t₁' t₂ hst⟩
+        obtain ⟨t₁', hst⟩ := hs₁
+        exists <{ ~t₁' * ~t₂ }>
+        apply Step.mult1
+        assumption
     | ite0 Γ t₁ t₂ t₃ T₀ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
       right
       subst hΓ
@@ -2309,11 +2611,17 @@ theorem progress (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
         | abs => cases h₁
         | const n =>
           cases n with
-          | zero => exact ⟨t₂, .if0Zero t₂ t₃⟩
-          | succ n' => exact ⟨t₃, .if0Nonzero n' t₂ t₃⟩
+          | zero =>
+            exists t₂
+            apply Step.if0Zero
+          | succ n' =>
+            exists t₃
+            apply Step.if0Nonzero
       | inr hs₁ =>
         obtain ⟨t₁', hst⟩ := hs₁
-        exact ⟨<{ if0 ~t₁' then ~t₂ else ~t₃ }>, .if0Step t₁ t₁' t₂ t₃ hst⟩
+        exists <{ if0 ~t₁' then ~t₂ else ~t₃ }>
+        apply Step.if0Step
+        assumption
 ```
 :::autogradedHole StlcArith.progress
 :::

@@ -1970,6 +1970,7 @@ def size (t: BinTree): Nat :=
   | .fork l r => 1 + size l + size r
 
 theorem mirror_size t : size t = size (mirror t) := by
+  induction mirror 
   induction t with
   | leaf => rw [size, mirror]
   | fork l r ihl ihr =>
