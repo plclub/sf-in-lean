@@ -1716,7 +1716,14 @@ theorem pumping {α : Type} {re : RegExp α} {s : List α}
         simp only [List.length_append, pumpingConstant] at hlen
         have h' : s₁.length = 0
                       ∨ (s₁.length ≠ 0 ∧ s₁.length < re.pumpingConstant)
-                      ∨ re.pumpingConstant ≤ s₁.length := by sorry
+                      ∨ re.pumpingConstant ≤ s₁.length := by
+          induction s₁ with
+          | nil => simp
+          | cons hd tl ih =>
+              right
+              have hcases : (hd :: tl).length < re.pumpingConstant
+                        ∨ re.pumpingConstant ≤ (hd :: tl).length := by lia
+              simp_all
         obtain h' | ⟨hneq', hlen'⟩ | h' := h'
         · have heq : s₁ = [] := by
             cases s₁ <;> trivial
