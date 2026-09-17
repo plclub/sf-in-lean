@@ -15,12 +15,6 @@ file := some "IndProp"
 
 :::instructors
 ```
-In one 80-minute lecture, I (BCP) was able to get
-_to_, but not _through_, the proof of in_re_match in the regexp
-case study.  I covered the rest in an hour, going pretty slowly and
-working lots of examples in real time.  That left 20 minutes to
-show them just the first half of the ProofObjects chapter.
-
 Making time for at least a bit of discussion of ProofObjects is
 pretty important, even if you don't go into it in detail.  Entirely
 skipping this material leads to needless confusion and beating
@@ -466,7 +460,7 @@ HIDE: CH: A simple exercise could be nice here?
 
 ::::full
 Computing the transitive closure can be undecidable even for
-a relation `r` that is decidable (e.g., the `CollatzStepMulti` relation below), so in
+a relation `r` that is decidable (e.g., the `CollatzStep` relation below, whose closure is `CollatzStepMulti`), so in
 general we can't expect to define transitive closure as a boolean
 function. Fortunately, Lean allows us to define transitive closure
 as an inductive relation.
@@ -1052,6 +1046,10 @@ example (n : Nat) (hEven : Even n) (h : n = 1) : true = false := by
 :::
 ::::
 
+:::dev "Claude"
+None of this quiz's options matches its solution. In the `succ_succ` case the hypothesis is `n + 2 = 1`, and `contradiction` alone does not close it (checked); `injection` is needed first, as the solution shows. So (C) is not sufficient as stated and (D) is the literally correct answer, which is presumably not intended. Options: add `injection` to option (C) or as a new option, or change the hypothesis to one that `cases` and `contradiction` refute directly.
+:::
+
 We can use the inversion lemma that we proved above to help
 structure proofs:
 
@@ -1373,7 +1371,7 @@ Hint: Is `(n + m) + (n + k)` even?
 ```lean
 theorem Even.add_of_add_left (n m k : Nat)
     (hₙₘ : Even (n + m))
-    (hₙₚ : Even (n + k)) :
+    (hₙₖ : Even (n + k)) :
     Even (m + k) := by
   solution!
     apply of_add_left (n + n)
@@ -1503,8 +1501,8 @@ two recursive components, `hxy`, relating `x` to `y`, and `hyz`,
 relating `y` to `z`. Hence we may want (and will actually need)
 an induction hypothesis for `hxy` and one for `hyz` — they are
 called `ihxy` and `ihyz` here. In general, Lean will always
-generate one induction hypothesis per recursive constructor of
-the type being inducted over.
+generate one induction hypothesis per recursive premise of each
+constructor of the type being inducted over.
 
 :::dev
 HIDE: NDS comparing the previous proof to the pen-and-paper version
@@ -1864,7 +1862,7 @@ theorem le_add_right_of_le (n m p : Nat) (h : n ≤ m) : n ≤ m + p := by
 
 ::::::full
 The "strictly less than" relation `n < m` can now be defined
-in terms of {lean}`Nat.le`.
+in terms of {name}`Le`.
 
 ```lean
 def Lt (n m : Nat) : Prop := Le (n + 1) m
@@ -1872,8 +1870,8 @@ def Lt (n m : Nat) : Prop := Le (n + 1) m
 scoped infix:50 (priority := high) " < " => Lt
 ```
 
-The `≥` operation is defined in terms of `≤`.
-Lean provides a theorem {name}`ge_iff_le` allowing us to rewrite between them.
+The `≥` relation is defined in terms of `≤`, so unfolding its
+definition with {tactic}`rw` lets us move between them.
 
 ```lean
 def Ge (m n : Nat) : Prop := Le n m
@@ -2084,9 +2082,9 @@ example : ¬ R 2 2 6 := by
 3. Dropping `c4` would not change the set of provable
   propositions. This constructor just "undoes" one application
   of `c2` and one application of `c3`. More precisely, the
-  only way we can construct evidence for `R (S m) (S n) (S (S o))`
+  only way we can construct evidence for `R (m + 1) (n + 1) (k + 2)`
   is by applying `c2` and `c3` (in either order) to evidence for
-  `R m n o`, so the latter must already hold. (This can be proved
+  `R m n k`, so the latter must already hold. (This can be proved
   by induction, although the proof is surprisingly tedious.)
 
 We can prove `c4` and `c5` are redundant by redefining `R'` with only `c1`, `c2`, and `c3`,
@@ -3193,7 +3191,6 @@ Definition repeats {α} (xs: List α) : Prop :=
 Should check to see how much harder this makes things.
 ```
 :::
-:::::
 
 :::solution
 
@@ -3247,4 +3244,5 @@ theorem pigeonhole_principle' {α : Type} {l₁ l₂ : List α}
   pigeonhole_aux l₁ [] l₂ hin hlen
 ```
 :::
+:::::
 ::::::
