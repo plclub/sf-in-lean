@@ -1,0 +1,78 @@
+{
+ "file": "LF/IndProp.lean",
+ "chapter": "IndProp",
+ "round": 3,
+ "proposals": [
+  {
+   "id": "indprop-r03-001",
+   "cat": "devnote/stale-instructors-note",
+   "old": "around the bush in later discussions.\n```\n:::\n\n:::dev BeforeNextRelease",
+   "new": "around the bush in later discussions.\n```\n:::\n\n:::dev \"Claude\"\nThe instructors note above refers to \"the proof of in_re_match in the regexp case study\", which is not in this chapter; no regular-expression material survives here. Options: trim the note to the timing advice that still applies, or move it to whichever chapter now holds that case study.\n:::\n\n:::dev BeforeNextRelease",
+   "why": "Flagging a stale instructors note that needs an author decision rather than a fix."
+  },
+  {
+   "id": "indprop-r03-002",
+   "cat": "content/example-mismatch",
+   "old": "a relation `r` that is decidable (e.g., the `CollatzStepMulti` relation below), so in",
+   "new": "a relation `r` that is decidable (e.g., the `CollatzStep` relation below, whose closure is `CollatzStepMulti`), so in",
+   "why": "The decidable relation is `CollatzStep`; `CollatzStepMulti` is its closure, the thing the sentence says we cannot compute."
+  },
+  {
+   "id": "indprop-r03-003",
+   "cat": "content/wrong-claim",
+   "old": "generate one induction hypothesis per recursive constructor of\nthe type being inducted over.",
+   "new": "generate one induction hypothesis per recursive premise of each\nconstructor of the type being inducted over.",
+   "why": "It is one hypothesis per recursive premise, not per constructor: `trans` is a single constructor and yields two, as the paragraph has just shown."
+  },
+  {
+   "id": "indprop-r03-004",
+   "cat": "devnote/quiz-options",
+   "old": "  | succ_succ => injection h; contradiction\n```\n:::\n::::\n\nWe can use the inversion lemma",
+   "new": "  | succ_succ => injection h; contradiction\n```\n:::\n::::\n\n:::dev \"Claude\"\nNone of this quiz's options matches its solution. In the `succ_succ` case the hypothesis is `n + 2 = 1`, and `contradiction` alone does not close it (checked); `injection` is needed first, as the solution shows. So (C) is not sufficient as stated and (D) is the literally correct answer, which is presumably not intended. Options: add `injection` to option (C) or as a new option, or change the hypothesis to one that `cases` and `contradiction` refute directly.\n:::\n\nWe can use the inversion lemma",
+   "why": "Flagging a quiz whose options and solution disagree; needs an author decision."
+  },
+  {
+   "id": "indprop-r03-005",
+   "cat": "consistency/hypothesis-name",
+   "old": "    (hₙₚ : Even (n + k)) :",
+   "new": "    (hₙₖ : Even (n + k)) :",
+   "why": "The hypothesis is about `n + k`; its sibling `hₙₘ` is named after `n + m`."
+  },
+  {
+   "id": "indprop-r03-006",
+   "cat": "content/wrong-name",
+   "old": "in terms of {lean}`Nat.le`.",
+   "new": "in terms of {name}`Le`.",
+   "why": "The definition that follows is `Le (n + 1) m`, using the playground's `Le`, not the core library's `Nat.le`."
+  },
+  {
+   "id": "indprop-r03-007",
+   "cat": "content/stale-remark",
+   "old": "The `≥` operation is defined in terms of `≤`.\nLean provides a theorem {name}`ge_iff_le` allowing us to rewrite between them.",
+   "new": "The `≥` relation is defined in terms of `≤`, so unfolding its\ndefinition with {tactic}`rw` lets us move between them.",
+   "why": "The example rewrites with `rw [Ge] at h` on the playground's own `Ge`; `ge_iff_le` is about the core library's `≥` and is not what the code does."
+  },
+  {
+   "id": "indprop-r03-008",
+   "cat": "content/notation",
+   "old": "  only way we can construct evidence for `R (S m) (S n) (S (S o))`\n  is by applying `c2` and `c3` (in either order) to evidence for\n  `R m n o`, so the latter",
+   "new": "  only way we can construct evidence for `R (m + 1) (n + 1) (k + 2)`\n  is by applying `c2` and `c3` (in either order) to evidence for\n  `R m n k`, so the latter",
+   "why": "Rocq successor notation and a variable `o` that the definition of `R` does not use; written in the form of constructor `c4` above."
+  },
+  {
+   "id": "indprop-r03-009",
+   "cat": "structure/orphan-solution",
+   "old": "Should check to see how much harder this makes things.\n```\n:::\n:::::\n\n:::solution\n\nHere is a different way to prove the pigeonhole principle",
+   "new": "Should check to see how much harder this makes things.\n```\n:::\n\n:::solution\n\nHere is a different way to prove the pigeonhole principle",
+   "why": "The alternative pigeonhole proof is a `solution` block placed after the exercise's closing fence, so it belongs to no exercise. This edit and the next move the fence below it; they are one change, in two anchors."
+  },
+  {
+   "id": "indprop-r03-010",
+   "cat": "structure/orphan-solution",
+   "old": "  pigeonhole_aux l₁ [] l₂ hin hlen\n```\n:::\n::::::",
+   "new": "  pigeonhole_aux l₁ [] l₂ hin hlen\n```\n:::\n:::::\n::::::",
+   "why": "Second half of moving the `pigeonhole_principle` exercise's closing fence below its alternative solution."
+  }
+ ],
+ "completed": true
+}
