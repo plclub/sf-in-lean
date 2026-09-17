@@ -548,6 +548,16 @@ proofs it packages together. In Lean, this is done with
 conjunction: it takes the conjunction apart to expose the proofs
 inside.
 
+You've already seen the related terms _construct_ and _destruct_ (or
+_destructure_), used for building or taking apart a value via its
+constructors — e.g., destructuring a pair in {ref "Lists"}[Lists].
+Building a proof with a constructor like {name}`And.intro` is one way
+to introduce a proposition; taking a proof apart via its constructors,
+as {tactic}`obtain` does, is one way to eliminate a hypothesis. We'll
+use whichever pair of terms fits the context — "introduce"/"eliminate"
+when talking about a connective's proof rules, "construct"/"destruct"
+when talking about the underlying constructors.
+
 ```lean
 example (n m : Nat) : n = 0 ∧ m = 0 → n + m = 0 := by
   workinclass!
