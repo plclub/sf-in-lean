@@ -2750,8 +2750,7 @@ that their implementation does the right thing on a few unit
 tests!
 :::
 
-Here is one such test: the assignment after `throw` is skipped, and the
-handler runs in the state the exception was raised in.
+Your definition should allow you to prove this example:
 
 ```lean
 example :
