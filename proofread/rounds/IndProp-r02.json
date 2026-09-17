@@ -1,0 +1,295 @@
+{
+ "file": "LF/IndProp.lean",
+ "chapter": "IndProp",
+ "round": 2,
+ "proposals": [
+  {
+   "id": "indprop-r02-001",
+   "cat": "comma/introductory",
+   "old": "(2) if Collatz holds for\n`div2 n` and `n` is even then Collatz holds for\n`n`, and (3) if Collatz holds for `(3 * n) + 1` and\n`n` is odd then Collatz holds for `n`.",
+   "new": "(2) if Collatz holds for\n`div2 n` and `n` is even, then Collatz holds for\n`n`, and (3) if Collatz holds for `(3 * n) + 1` and\n`n` is odd, then Collatz holds for `n`.",
+   "why": "Comma after each introductory if-clause, as in the bulleted restatements of the `Perm3` and `Even` rules later in the chapter."
+  },
+  {
+   "id": "indprop-r02-002",
+   "cat": "punctuation/dash",
+   "old": "too long on it ─\nit's been [open since 1937]",
+   "new": "too long on it —\nit's been [open since 1937]",
+   "why": "Sentence dash set as the box-drawing character U+2500 (the one used to rule the inference lines), not an em dash; the chapter's real em dashes are at \"Gen\" is short for and \"built — i.e.\"."
+  },
+  {
+   "id": "indprop-r02-003",
+   "cat": "punctuation/dash",
+   "old": "of `α` ─ i.e., a proposition",
+   "new": "of `α` — i.e., a proposition",
+   "why": "Sentence dash set as the box-drawing character U+2500 (the one used to rule the inference lines), not an em dash; the chapter's real em dashes are at \"Gen\" is short for and \"built — i.e.\"."
+  },
+  {
+   "id": "indprop-r02-004",
+   "cat": "punctuation/dash",
+   "old": "to {lean}`Prop` ─ that is, a property",
+   "new": "to {lean}`Prop` — that is, a property",
+   "why": "Sentence dash set as the box-drawing character U+2500 (the one used to rule the inference lines), not an em dash; the chapter's real em dashes are at \"Gen\" is short for and \"built — i.e.\"."
+  },
+  {
+   "id": "indprop-r02-005",
+   "cat": "punctuation/dash",
+   "old": "across many areas ─ in particular",
+   "new": "across many areas — in particular",
+   "why": "Sentence dash set as the box-drawing character U+2500 (the one used to rule the inference lines), not an em dash; the chapter's real em dashes are at \"Gen\" is short for and \"built — i.e.\"."
+  },
+  {
+   "id": "indprop-r02-006",
+   "cat": "punctuation/dash",
+   "old": "identity relation ─ i.e., if `r x y`",
+   "new": "identity relation — i.e., if `r x y`",
+   "why": "Sentence dash set as the box-drawing character U+2500 (the one used to rule the inference lines), not an em dash; the chapter's real em dashes are at \"Gen\" is short for and \"built — i.e.\"."
+  },
+  {
+   "id": "indprop-r02-007",
+   "cat": "punctuation/dash",
+   "old": "one for `hyz` ─ they are",
+   "new": "one for `hyz` — they are",
+   "why": "Sentence dash set as the box-drawing character U+2500 (the one used to rule the inference lines), not an em dash; the chapter's real em dashes are at \"Gen\" is short for and \"built — i.e.\"."
+  },
+  {
+   "id": "indprop-r02-008",
+   "cat": "punctuation/dash",
+   "old": "subsequence is transitive ─\n  that is, if",
+   "new": "subsequence is transitive —\n  that is, if",
+   "why": "Sentence dash set as the box-drawing character U+2500 (the one used to rule the inference lines), not an em dash; the chapter's real em dashes are at \"Gen\" is short for and \"built — i.e.\"."
+  },
+  {
+   "id": "indprop-r02-009",
+   "cat": "punctuation/dash",
+   "old": "must have the same\nlabel -- i.e., list `l₁`",
+   "new": "must have the same\nlabel — i.e., list `l₁`",
+   "why": "ASCII `--` in exercise prose; house style reserves `--` for note bodies and uses a real em dash in prose."
+  },
+  {
+   "id": "indprop-r02-010",
+   "cat": "punctuation/dash",
+   "old": "subsequence is reflexive, that is,\n  any list is a subsequence of itself.",
+   "new": "subsequence is reflexive — that is,\n  any list is a subsequence of itself.",
+   "why": "A comma cannot carry \"that is\" plus a full clause; the sibling bullet for `Subseq.trans` uses a dash for the same construction."
+  },
+  {
+   "id": "indprop-r02-011",
+   "cat": "markup/name-consistency",
+   "old": "showing that {name}`Person.sage` is an ancestor of {name}`moss`:",
+   "new": "showing that {name}`sage` is an ancestor of {name}`moss`:",
+   "why": "Same sentence names one person qualified and the other bare; the paragraph above writes both bare (`open Person` is in effect)."
+  },
+  {
+   "id": "indprop-r02-012",
+   "cat": "comma/compound-predicate",
+   "old": "much\nmore powerful, and can easily define such inductive relations.",
+   "new": "much\nmore powerful and can easily define such inductive relations.",
+   "why": "No comma before `and` joining two predicates of one subject."
+  },
+  {
+   "id": "indprop-r02-013",
+   "cat": "hyphenation/ly-adverb",
+   "old": "linear ones of the directly-defined {name}`CollatzHoldsFor` relation",
+   "new": "linear ones of the directly defined {name}`CollatzHoldsFor` relation",
+   "why": "CMOS 7.86: no hyphen after an -ly adverb."
+  },
+  {
+   "id": "indprop-r02-014",
+   "cat": "comma/introductory",
+   "old": "For instance we can derive `Perm3 [1, 2, 3] [3, 2, 1]` as follows:",
+   "new": "For instance, we can derive `Perm3 [1, 2, 3] [3, 2, 1]` as follows:",
+   "why": "Comma after the introductory phrase, as with every other \"For instance,\" in the chapter."
+  },
+  {
+   "id": "indprop-r02-015",
+   "cat": "usage/house-style",
+   "old": "Boolean function {name}`Nat.ble` we defined",
+   "new": "boolean function {name}`Nat.ble` we defined",
+   "why": "House style is lowercase \"boolean\" (STYLE-WRITING.md); the chapter writes it lowercase everywhere else, including \"the boolean function `Nat.ble`\" later."
+  },
+  {
+   "id": "indprop-r02-016",
+   "cat": "quotes/american-style",
+   "old": "is called a \"parameter\", whereas an",
+   "new": "is called a \"parameter,\" whereas an",
+   "why": "CMOS 6.9: comma inside the closing quotation mark, as the next line already does with \"annotation.\""
+  },
+  {
+   "id": "indprop-r02-017",
+   "cat": "quotes/american-style",
+   "old": "\"primitive evidence\nof evenness\", and they",
+   "new": "\"primitive evidence\nof evenness,\" and they",
+   "why": "CMOS 6.9: comma inside the closing quotation mark."
+  },
+  {
+   "id": "indprop-r02-018",
+   "cat": "comma/introductory",
+   "old": "Similarly we can apply the evidence constructors",
+   "new": "Similarly, we can apply the evidence constructors",
+   "why": "Comma after the introductory adverb."
+  },
+  {
+   "id": "indprop-r02-019",
+   "cat": "formatting/code-spacing",
+   "old": "  apply trans (l₂:= [2, 3, 1])",
+   "new": "  apply trans (l₂ := [2, 3, 1])",
+   "why": "Missing space before `:=`; the next line writes `(l₂ := [2, 1, 3])`."
+  },
+  {
+   "id": "indprop-r02-020",
+   "cat": "comma/introductory",
+   "old": "happening formally. Formally we're using the evidence",
+   "new": "happening formally. Formally, we're using the evidence",
+   "why": "Comma after the introductory adverb."
+  },
+  {
+   "id": "indprop-r02-021",
+   "cat": "naming/stale-identifier",
+   "old": "Let's prove a similar inversion lemma for `le`.",
+   "new": "Let's prove a similar inversion lemma for `Le`.",
+   "why": "The relation defined above is `Le`; lowercase `le` is the Rocq name."
+  },
+  {
+   "id": "indprop-r02-022",
+   "cat": "formatting/code-spacing",
+   "old": "apply inversion at h\n  obtain ⟨⟨⟩⟩ | ⟨n', ⟨h₁,  h₂⟩⟩ := h",
+   "new": "apply inversion at h\n  obtain ⟨⟨⟩⟩ | ⟨n', ⟨h₁, h₂⟩⟩ := h",
+   "why": "Doubled space inside the anonymous constructor."
+  },
+  {
+   "id": "indprop-r02-023",
+   "cat": "formatting/code-spacing",
+   "old": "apply Even.inversion at h\n  obtain ⟨⟨⟩⟩ | ⟨n', ⟨h₁,  h₂⟩⟩ := h",
+   "new": "apply Even.inversion at h\n  obtain ⟨⟨⟩⟩ | ⟨n', ⟨h₁, h₂⟩⟩ := h",
+   "why": "Doubled space inside the anonymous constructor."
+  },
+  {
+   "id": "indprop-r02-024",
+   "cat": "usage/house-style",
+   "old": "In this case, the inductive hypothesis\nsays that",
+   "new": "In this case, the induction hypothesis\nsays that",
+   "why": "House style is \"induction hypothesis\" (STYLE-WRITING.md); the chapter says \"induction hypothesis\" everywhere else."
+  },
+  {
+   "id": "indprop-r02-025",
+   "cat": "comma/unnecessary",
+   "old": "But, you will need a clever `have` and some tedious rewriting.",
+   "new": "But you will need a clever `have` and some tedious rewriting.",
+   "why": "No comma after a sentence-initial conjunction."
+  },
+  {
+   "id": "indprop-r02-026",
+   "cat": "comma/stray",
+   "old": "Recall the definition of the reflexive, transitive, closure of a relation:",
+   "new": "Recall the definition of the reflexive, transitive closure of a relation:",
+   "why": "Stray comma between the modifier and its noun; the section heading and the earlier introduction say \"reflexive and transitive closure\"."
+  },
+  {
+   "id": "indprop-r02-027",
+   "cat": "comma/appositive",
+   "old": "two recursive components, `hxy`, relating `x` to `y` and `hyz`,\nrelating `y` to `z`.",
+   "new": "two recursive components, `hxy`, relating `x` to `y`, and `hyz`,\nrelating `y` to `z`.",
+   "why": "The participial phrase after `hxy` needs its closing comma before `and hyz`."
+  },
+  {
+   "id": "indprop-r02-028",
+   "cat": "markup/emphasis",
+   "old": "Proving that something is NOT a permutation is quite tricky. Some\nof the lemmas above, like {name}`Perm3.In` can be useful for this.",
+   "new": "Proving that something is _not_ a permutation is quite tricky. Some\nof the lemmas above, like {name}`Perm3.In`, can be useful for this.",
+   "why": "Emphasis is italics, not capitals (STYLE-WRITING.md); and the \"like\" parenthetical needs its closing comma. Adjacent lines, so one edit."
+  },
+  {
+   "id": "indprop-r02-029",
+   "cat": "style/spell-out-number",
+   "old": "`c5` from the definition of `R`,\nwould the set of provable propositions change?  Briefly (1\nsentence) explain your answer.",
+   "new": "`c5` from the definition of `R`,\nwould the set of provable propositions change?  Briefly (one\nsentence) explain your answer.",
+   "why": "Small round numbers are spelled out in prose."
+  },
+  {
+   "id": "indprop-r02-030",
+   "cat": "style/spell-out-number",
+   "old": "`c4` from the definition of `R`,\nwould the set of provable propositions change?  Briefly (1\nsentence) explain your answer.",
+   "new": "`c4` from the definition of `R`,\nwould the set of provable propositions change?  Briefly (one\nsentence) explain your answer.",
+   "why": "Small round numbers are spelled out in prose."
+  },
+  {
+   "id": "indprop-r02-031",
+   "cat": "typo/stray-word",
+   "old": "We can prove this invariant as the follows:",
+   "new": "We can prove this invariant as follows:",
+   "why": "Stray \"the\"."
+  },
+  {
+   "id": "indprop-r02-032",
+   "cat": "parallelism/gerund",
+   "old": "are redundant by re-defining `R'` with only `c1`, `c2`, and `c3`,\nand prove `R'` is equivalent to {name}`R`.",
+   "new": "are redundant by redefining `R'` with only `c1`, `c2`, and `c3`,\nand proving `R'` is equivalent to {name}`R`.",
+   "why": "Both objects of \"by\" should be gerunds; and `re-` is closed (\"redefining\"), as elsewhere in the book."
+  },
+  {
+   "id": "indprop-r02-033",
+   "cat": "naming/stale-identifier",
+   "old": "Define an inductive binary relation `total_relation` that holds",
+   "new": "Define an inductive binary relation `TotalRelation` that holds",
+   "why": "The exercise's code names it `TotalRelation`; the snake-case name is the Rocq one."
+  },
+  {
+   "id": "indprop-r02-034",
+   "cat": "naming/stale-identifier",
+   "old": "Define an inductive binary relation `empty_relation` (on numbers)",
+   "new": "Define an inductive binary relation `EmptyRelation` (on numbers)",
+   "why": "The exercise's code names it `EmptyRelation`; the snake-case name is the Rocq one."
+  },
+  {
+   "id": "indprop-r02-035",
+   "cat": "hyphenation/as-is",
+   "old": "just uncomment and use them as-is, but",
+   "new": "just uncomment and use them as is, but",
+   "why": "Merriam-Webster and CMOS write \"as is\" open."
+  },
+  {
+   "id": "indprop-r02-036",
+   "cat": "markup/code-font",
+   "old": "and no item in `l₂` satisfies test.  Then",
+   "new": "and no item in `l₂` satisfies `test`.  Then",
+   "why": "`test` is the function named in code font three words earlier."
+  },
+  {
+   "id": "indprop-r02-037",
+   "cat": "comma/serial",
+   "old": "relating\n`Disjoint`, `NoDup` and `++` (list append).",
+   "new": "relating\n`Disjoint`, `NoDup`, and `++` (list append).",
+   "why": "Serial comma, as everywhere else in the chapter."
+  },
+  {
+   "id": "indprop-r02-038",
+   "cat": "formatting/blank-lines",
+   "old": "```lean\n\ntheorem NoDup.append",
+   "new": "```lean\ntheorem NoDup.append",
+   "why": "Stray blank line after the opening fence; no other code block in the chapter starts with one."
+  },
+  {
+   "id": "indprop-r02-039",
+   "cat": "hyphenation/non-prefix",
+   "old": "requires non-trivial\nmachinery",
+   "new": "requires nontrivial\nmachinery",
+   "why": "CMOS 7.89: `non-` is closed."
+  },
+  {
+   "id": "indprop-r02-040",
+   "cat": "markup/solution-marker",
+   "old": "-- /SOLUTION\n```\n\n:::grade",
+   "new": "  -- END SOLUTION\n```\n\n:::grade",
+   "why": "The closing marker is `-- END SOLUTION` everywhere else (and in STYLE-CODE.md); `-- /SOLUTION` is not the recognized form, so the `Repeats` solution would not be elided in the student build. Indented to match its `-- SOLUTION`."
+  },
+  {
+   "id": "indprop-r02-041",
+   "cat": "formatting/blank-lines",
+   "old": "```lean\n\nopen LePlayground in\n\ntheorem pigeonhole_principle",
+   "new": "```lean\nopen LePlayground in\ntheorem pigeonhole_principle",
+   "why": "Stray blank line after the opening fence, and one between `open ... in` and the declaration it scopes."
+  }
+ ],
+ "completed": true
+}

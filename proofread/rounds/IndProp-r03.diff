@@ -1,0 +1,80 @@
+--- LF/IndProp.lean (before this round)
++++ LF/IndProp.lean
+@@ -29,4 +29,8 @@
+ :::
+ 
++:::dev "Claude"
++The instructors note above refers to "the proof of in_re_match in the regexp case study", which is not in this chapter; no regular-expression material survives here. Options: trim the note to the timing advice that still applies, or move it to whichever chapter now holds that case study.
++:::
++
+ :::dev BeforeNextRelease
+ This chapter needs more (and better!) quizzes
+@@ -467,5 +471,5 @@
+ ::::full
+ Computing the transitive closure can be undecidable even for
+-a relation `r` that is decidable (e.g., the `CollatzStepMulti` relation below), so in
++a relation `r` that is decidable (e.g., the `CollatzStep` relation below, whose closure is `CollatzStepMulti`), so in
+ general we can't expect to define transitive closure as a boolean
+ function. Fortunately, Lean allows us to define transitive closure
+@@ -1053,4 +1057,8 @@
+ ::::
+ 
++:::dev "Claude"
++None of this quiz's options matches its solution. In the `succ_succ` case the hypothesis is `n + 2 = 1`, and `contradiction` alone does not close it (checked); `injection` is needed first, as the solution shows. So (C) is not sufficient as stated and (D) is the literally correct answer, which is presumably not intended. Options: add `injection` to option (C) or as a new option, or change the hypothesis to one that `cases` and `contradiction` refute directly.
++:::
++
+ We can use the inversion lemma that we proved above to help
+ structure proofs:
+@@ -1374,5 +1382,5 @@
+ theorem Even.add_of_add_left (n m k : Nat)
+     (hₙₘ : Even (n + m))
+-    (hₙₚ : Even (n + k)) :
++    (hₙₖ : Even (n + k)) :
+     Even (m + k) := by
+   solution!
+@@ -1504,6 +1512,6 @@
+ an induction hypothesis for `hxy` and one for `hyz` — they are
+ called `ihxy` and `ihyz` here. In general, Lean will always
+-generate one induction hypothesis per recursive constructor of
+-the type being inducted over.
++generate one induction hypothesis per recursive premise of each
++constructor of the type being inducted over.
+ 
+ :::dev
+@@ -1865,5 +1873,5 @@
+ ::::::full
+ The "strictly less than" relation `n < m` can now be defined
+-in terms of {lean}`Nat.le`.
++in terms of {name}`Le`.
+ 
+ ```lean
+@@ -1873,6 +1881,6 @@
+ ```
+ 
+-The `≥` operation is defined in terms of `≤`.
+-Lean provides a theorem {name}`ge_iff_le` allowing us to rewrite between them.
++The `≥` relation is defined in terms of `≤`, so unfolding its
++definition with {tactic}`rw` lets us move between them.
+ 
+ ```lean
+@@ -2085,7 +2093,7 @@
+   propositions. This constructor just "undoes" one application
+   of `c2` and one application of `c3`. More precisely, the
+-  only way we can construct evidence for `R (S m) (S n) (S (S o))`
++  only way we can construct evidence for `R (m + 1) (n + 1) (k + 2)`
+   is by applying `c2` and `c3` (in either order) to evidence for
+-  `R m n o`, so the latter must already hold. (This can be proved
++  `R m n k`, so the latter must already hold. (This can be proved
+   by induction, although the proof is surprisingly tedious.)
+ 
+@@ -3194,5 +3202,4 @@
+ ```
+ :::
+-:::::
+ 
+ :::solution
+@@ -3248,3 +3255,4 @@
+ ```
+ :::
++:::::
+ ::::::
