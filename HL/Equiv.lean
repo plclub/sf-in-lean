@@ -788,7 +788,7 @@ theorem Com.congruence_while {b b' : Bexp} {c c' : Com} (hb : b ≃ b') (hc : c 
       | skip | asgn | seq | ifTrue | ifFalse =>
         contradiction
     · intro h
-      generalize heq : (imp {while (~b') {~c'}}) = com at h
+      generalize heq : (imp {while (b') {c'}}) = com at h
       induction h with
       | whileFalse hb' =>
         injection heq with hbeq hceq
@@ -812,7 +812,7 @@ theorem Com.congruence_while {b b' : Bexp} {c c' : Com} (hb : b ≃ b') (hc : c 
 ::::exercise (rating := 3) (name := "Com.congruence_seq") (optional := true)
 ```lean
 theorem Com.congruence_seq {c₁ c₁' c₂ c₂' : Com} (hc₁ : c₁ ≃ c₁') (hc₂ : c₂ ≃ c₂') :
-    imp {c₁ ; ~c₂} ≃ imp {c₁' ; c₂'} := by
+    imp {c₁ ; c₂} ≃ imp {c₁' ; c₂'} := by
   solution!(
     intro st st'
     constructor
@@ -1017,31 +1017,31 @@ def Bexp.foldConstants (b : Bexp) : Bexp :=
   | bexp { ~a₁ = ~a₂ } =>
     match a₁.foldConstants, a₂.foldConstants with
     | .num n₁, .num n₂ => if n₁ = n₂ then bexp { true } else bexp {false}
-    | a₁', a₂' => bexp { ~a₁' = ~a₂' }
+    | a₁', a₂' => bexp { a₁' = a₂' }
   | bexp { ~a₁ ≠ ~a₂ } =>
     match a₁.foldConstants, a₂.foldConstants with
     | .num n₁, .num n₂ => if n₁ ≠ n₂ then bexp { true } else bexp {false}
-    | a₁', a₂' => bexp { ~a₁' ≠ ~a₂' }
+    | a₁', a₂' => bexp { a₁' ≠ a₂' }
   | bexp { ~a₁ ≤ ~a₂ } =>
     match a₁.foldConstants, a₂.foldConstants with
     | .num n₁, .num n₂ => if n₁ ≤ n₂ then bexp { true } else bexp {false}
-    | a₁', a₂' => bexp { ~a₁' ≤ ~a₂' }
+    | a₁', a₂' => bexp { a₁' ≤ a₂' }
   | bexp { ~a₁ > ~a₂ } =>
     match a₁.foldConstants, a₂.foldConstants with
     | .num n₁, .num n₂ => if n₁ > n₂ then bexp { true } else bexp {false}
-    | a₁', a₂' => bexp { ~a₁' > ~a₂' }
+    | a₁', a₂' => bexp { a₁' > a₂' }
   | bexp { ¬ ~b₁ } =>
     match b₁.foldConstants with
     | bexp { true } => bexp { false }
     | bexp { false } => bexp { true }
-    | b₁' => bexp { ¬ ~b₁' }
+    | b₁' => bexp { ¬ b₁' }
   | bexp { ~b₁ ∧ ~b₂ } =>
     match b₁.foldConstants, b₂.foldConstants with
     | bexp { true }, bexp { true } => bexp { true }
     | bexp { true }, bexp { false } => bexp { false }
     | bexp { false }, bexp { true } => bexp { false }
     | bexp { false }, bexp { false } => bexp { false }
-    | b₁', b₂' => bexp { ~b₁' ∧ ~b₂' }
+    | b₁', b₂' => bexp { b₁' ∧ b₂' }
 
 @[simp]
 theorem Bexp.foldConstants_true : (bexp { true }).foldConstants = (bexp { true }) := rfl
@@ -1066,7 +1066,7 @@ theorem Bexp.foldConstants_comp (a₁ a₂ : Aexp) :
 
 theorem Bexp.foldConstants_unary (b : Bexp) :
     (b.foldConstants = (bexp { true }) ∨ b.foldConstants = (bexp { false })) ∨
-    (bexp { ¬~b }).foldConstants = (bexp { ¬(~b.foldConstants)}) := by
+    (bexp { ¬b }).foldConstants = (bexp { ¬(b.foldConstants)}) := by
   cases hb : b.foldConstants with
   | bool b' =>
     simp_all
@@ -1076,7 +1076,7 @@ theorem Bexp.foldConstants_unary (b : Bexp) :
 theorem Bexp.foldConstants_binary (b₁ : Bexp) (b₂ : Bexp) :
     ((b₁.foldConstants = (bexp { true }) ∨ b₁.foldConstants = (bexp { false })) ∧
      (b₂.foldConstants = (bexp { true }) ∨ b₂.foldConstants = (bexp { false }))) ∨
-    (bexp {~b₁ ∧ ~b₂}).foldConstants = (bexp {~b₁.foldConstants ∧ ~b₂.foldConstants}) := by
+    (bexp {b₁ ∧ b₂}).foldConstants = (bexp {b₁.foldConstants ∧ b₂.foldConstants}) := by
   cases hb₁ : b₁.foldConstants with
   | bool b₁' =>
     cases hb₂ : b₂.foldConstants with
@@ -1430,14 +1430,14 @@ def Bexp.optimize0plus (b : Bexp) : Bexp := solution!(
 )
 
 def Com.optimize0plus (c : Com) : Com := solution!(
-match c with
+  match c with
 | (imp { skip })                     => (imp { skip })
 | (imp { x := ~a })                   => (imp { x := ~(Aexp.optimize0plus a) })
 | (imp { c₁ ; c₂ })                  => imp { ~(Com.optimize0plus c₁) ; ~(Com.optimize0plus c₂) }
-| (imp { if (b) {c₁} else {c₂} }) =>
-    imp { if (~(Bexp.optimize0plus b)) {~(Com.optimize0plus c₁)} else {~(Com.optimize0plus c₂)} }
-| (imp { while (b) {c₁} })         => imp { while (~(Bexp.optimize0plus b))
-                                        {~(Com.optimize0plus c₁)} }
+  | (imp { if (b) {c₁} else {c₂} }) =>
+      imp { if (~(Bexp.optimize0plus b)) {~(Com.optimize0plus c₁)} else {~(Com.optimize0plus c₂)} }
+  | (imp { while (b) {c₁} })         => imp { while (~(Bexp.optimize0plus b))
+                                          {~(Com.optimize0plus c₁)} }
 )
 ```
 
@@ -1647,15 +1647,15 @@ inductive VarNotUsedInAexp (x : String) : Aexp → Prop where
   | plus {a₁ a₂ : Aexp}
       (h₁ : VarNotUsedInAexp x a₁)
       (h₂ : VarNotUsedInAexp x a₂) :
-      VarNotUsedInAexp x ((aexp { ~a₁ + ~a₂ }))
+      VarNotUsedInAexp x ((aexp { a₁ + a₂ }))
   | minus {a₁ a₂ : Aexp}
       (h₁ : VarNotUsedInAexp x a₁)
       (h₂ : VarNotUsedInAexp x a₂) :
-      VarNotUsedInAexp x ((aexp { ~a₁ - ~a₂ }))
+      VarNotUsedInAexp x ((aexp { a₁ - a₂ }))
   | mult {a₁ a₂ : Aexp}
       (h₁ : VarNotUsedInAexp x a₁)
       (h₂ : VarNotUsedInAexp x a₂) :
-      VarNotUsedInAexp x ((aexp { ~a₁ * ~a₂ }))
+      VarNotUsedInAexp x ((aexp { a₁ * a₂ }))
 ```
 
 ```lean
