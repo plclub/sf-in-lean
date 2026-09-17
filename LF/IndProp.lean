@@ -1046,10 +1046,6 @@ example (n : Nat) (hEven : Even n) (h : n = 1) : true = false := by
 :::
 ::::
 
-:::dev "Claude"
-None of this quiz's options matches its solution. In the `succ_succ` case the hypothesis is `n + 2 = 1`, and `contradiction` alone does not close it (checked); `injection` is needed first, as the solution shows. So (C) is not sufficient as stated and (D) is the literally correct answer, which is presumably not intended. Options: add `injection` to option (C) or as a new option, or change the hypothesis to one that `cases` and `contradiction` refute directly.
-:::
-
 We can use the inversion lemma that we proved above to help
 structure proofs:
 
