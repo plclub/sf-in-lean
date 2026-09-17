@@ -55,15 +55,15 @@ theorem Perm3_In_old (α : Type) (x : α) (l₁ l₂ : List α)
 ```
 
 In this chapter, we will introduce tactics that will shrink this proof from
-around eighteen lines to two.
+around eighteen lines to one.
 
 # The {tactic}`lia` Tactic
 
 ::::full
-The {tactic}`lia` tactic implements a decision procedure for integer linear
-arithmetic, a subset of propositional logic and arithmetic. {tactic}`lia`
-is also a decision procedure for first-order logic.
-:::dev "@rogerburtonpatel"
+The {tactic}`lia` tactic implements a decision procedure for _linear integer
+arithmetic_: propositional formulas whose atoms are linear
+constraints over the natural numbers and integers.
+:::dev "Roger Burtonpatel (rogerburtonpatel)"
 Should we explain first-order logic? do they know what this is?
 :::
 
@@ -80,7 +80,7 @@ then invoking {tactic}`lia` will either solve the goal or fail, meaning
 that the goal is actually false.  If the goal is _not_ of this
 form, {tactic}`lia` will fail. Note that, when failing, {tactic}`lia` may mention
 another tactic, called {tactic}`grind`. This is another, more powerful tactic
-that implements {tactic}`lia`, but we will not use it here.
+that subsumes {tactic}`lia`, but we will not use it here.
 ::::
 
 ```lean
@@ -229,12 +229,12 @@ these, but it is very useful together with the {tactic}`<;>` combinator.
 ::::
 
 ```lean
-inductive silly : Nat → Prop where
-| mk1 n (h : n > 1) : silly n
-| mk2 n (h : 1 ∈ []) : silly n
-| mk3 n (h : ∃ m, n = m + 2) : silly n
+inductive Silly : Nat → Prop where
+| mk1 n (h : n > 1) : Silly n
+| mk2 n (h : 1 ∈ []) : Silly n
+| mk3 n (h : ∃ m, n = m + 2) : Silly n
 
-example {n} (h : silly n) : n ≠ 1 := by
+example {n} (h : Silly n) : n ≠ 1 := by
   inversion h with
   | mk1 => lia
   | mk2 => contradiction
@@ -252,7 +252,7 @@ but not all, goals...
 ::::
 
 ```lean
-example {n} (h : silly n) : n ≠ 1 := by
+example {n} (h : Silly n) : n ≠ 1 := by
   cases h <;> try lia
   -- `lia` doesn't know that `1 ∈ []` is impossible, but we can use `contradiction`
   contradiction
@@ -600,7 +600,7 @@ this example uses {tactic}`simp` in a nonterminal position and is considered poo
 
 ::::terse
 Don't use {tactic}`simp` without `only` unless you're closing a goal or following with a flexible
-tactic, like in this example below:
+tactic. The example below breaks this rule:
 ::::
 
 ```lean
@@ -689,7 +689,7 @@ example (a b : Prop) : ¬ a → a → b := by intro h₁ h₂; trivial
 # Case Study: Regular Expressions
 
 ::::full
-As a culminating exercise for this book and as practice using the automation techniques we
+As a culminating exercise for this chapter and as practice using the automation techniques we
 discussed above on a real proof,
 we examine the theory of regular expressions,
 eventually working up to a proof of the pumping lemma.
@@ -754,7 +754,7 @@ Informally, this looks as follows:
 
   - {lean}`EmptyStr` matches the empty string {lean}`[]`.
 
-  - {lean}`Char x` matches the one-character string {lean}`x`.
+  - {lean}`Char x` matches the one-character string {lean}`[x]`.
 
   - If {lean}`re₁` matches {lean}`s₁`, and {lean}`re₂` matches {lean}`s₂`,
     then {lean}`App re₁ re₂` matches {lean}`s₁ ++ s₂`.
@@ -988,9 +988,9 @@ theorem MUnion' α (s : List α) (re₁ re₂ : RegExp α) :
 :::
 ::::
 
-The next lemma is stated in terms of the `fold` function on lists:
+The next lemma is stated in terms of the {name}`List.foldr` function on lists:
 if `ss : List (List α)` represents a sequence of
-strings `s₁, ..., sₙ`, then {lean}`List.foldr (· ++ ·) ss []` is the result of
+strings `s₁, ..., sₙ`, then {lean}`List.foldr (· ++ ·) [] ss` is the result of
 concatenating them all together.
 
 ::::exercise (rating := 2) (name := "MStar'")
@@ -1220,7 +1220,7 @@ example α (s₁ s₂ : List α) (re re' : RegExp α) :
 
 The tactic `generalize h : e = x` causes Lean to (1) replace all
 occurrences of the expression `e` by the variable `x`, and (2) add
-an equation `h : x = e` to the context.  Here's how we can use it
+an equation `h : e = x` to the context.  Here's how we can use it
 to show the above result:
 
 ```lean
