@@ -1756,21 +1756,21 @@ Recall the factorial program (broken up into smaller pieces this
 time, for convenience of proving things about it).
 
 ```lean
-def fact_body : Com := imp {
+def factBody : Com := imp {
   Y := Y * Z;
   Z := Z - 1
 }
 
-def fact_loop : Com := imp {
+def factLoop : Com := imp {
   while (Z ≠ 0) {
-    ~fact_body
+    ~factBody
   }
 }
 
-def fact_com : Com := imp {
+def factCom : Com := imp {
   Z := X;
   Y := 1;
-  ~fact_loop
+  ~factLoop
 }
 ```
 
@@ -1784,7 +1784,7 @@ def realFact (n : Nat) : Nat :=
   | n' + 1 => (n' + 1) * realFact n'
 ```
 
-We would like to show that they agree -- if we start `fact_com` in
+We would like to show that they agree -- if we start `factCom` in
 a state where variable `X` contains some number `n`, then it will
 terminate in a state where variable `Y` contains the factorial of
 `n`.
@@ -1793,7 +1793,7 @@ To show this, we rely on the critical idea of a _loop
 invariant_.
 
 ```lean
-def factInvariant (n : Nat) (st : State) : Prop :=
+def FactInvariant (n : Nat) (st : State) : Prop :=
   st[Y] * realFact st[Z] = realFact n
 ```
 
@@ -1804,12 +1804,12 @@ Needs an informal proof!
 :::
 
 ```lean
-theorem fact_body_preserves_invariant {st st' : State} {n : Nat}
-    (hinv : factInvariant n st) (hz : st[Z] ≠ 0)
-    (heval : st =[ ~fact_body ]=> st') :
-    factInvariant n st' := by
-  rw [factInvariant] at hinv ⊢
-  rw [fact_body] at heval
+theorem factBody_preserves_invariant {st st' : State} {n : Nat}
+    (hinv : FactInvariant n st) (hz : st[Z] ≠ 0)
+    (heval : st =[ ~factBody ]=> st') :
+    FactInvariant n st' := by
+  rw [FactInvariant] at hinv ⊢
+  rw [factBody] at heval
   inversion heval with
   | seq _ h₁ h₂ =>
     inversion h₁ with
@@ -1817,38 +1817,41 @@ theorem fact_body_preserves_invariant {st st' : State} {n : Nat}
       inversion h₂ with
       | asgn hz' =>
         subst hy hz'
-        simp +decide
+        have hyz : Y ≠ Z := by decide
+        have hzy : Z ≠ Y := by decide
+        simp [hyz, hzy]
         -- Show that `st[Z] = z + 1` for some `z`
-        obtain ⟨z, hzz⟩ := Nat.exists_eq_succ_of_ne_zero hz
-        rw [hzz] at hinv ⊢
-        simp [realFact] at hinv ⊢
-        rw [Nat.mul_assoc]
-        exact hinv
+        cases hzz : st[Z] with
+        | zero => contradiction
+        | succ z =>
+          rw [hzz, realFact] at hinv
+          rw [Nat.add_sub_cancel, Nat.mul_assoc]
+          exact hinv
 ```
 
 From this, we can show that the whole loop also preserves the
 invariant:
 
 ```lean
-theorem fact_loop_preserves_invariant {st st' : State} {n : Nat}
-    (hinv : factInvariant n st) (heval : st =[ ~fact_loop ]=> st') :
-    factInvariant n st' := by
-  generalize heq : fact_loop = c at heval
+theorem factLoop_preserves_invariant {st st' : State} {n : Nat}
+    (hinv : FactInvariant n st) (heval : st =[ ~factLoop ]=> st') :
+    FactInvariant n st' := by
+  generalize heq : factLoop = c at heval
   induction heval with
   | whileFalse hb =>
     -- trivial when the loop doesn't run...
     exact hinv
-  | whileTrue hb hc hloop ih₁ ih₂ =>
-    -- if the loop does run, we know that `fact_body` preserves
-    -- `factInvariant` -- we just need to assemble the pieces
-    rw [fact_loop] at heq
+  | @whileTrue st st' st'' b c hb hc hloop ih₁ ih₂ =>
+    -- if the loop does run, we know that `factBody` preserves
+    -- `FactInvariant` -- we just need to assemble the pieces
+    rw [factLoop] at heq
     injection heq with hb' hc'
     subst hb' hc'
-    apply ih₂ ?_ rfl
-    apply fact_body_preserves_invariant hinv ?_ hc
-    intro hz
-    simp [hz] at hb
-  | skip | asgn | seq | ifTrue | ifFalse => simp [fact_loop] at heq
+    have hz : st[Z] ≠ 0 := by
+      intro hz
+      simp [hz] at hb
+    exact ih₂ (factBody_preserves_invariant hinv hz hc) rfl
+  | skip | asgn | seq | ifTrue | ifFalse => simp [factLoop] at heq
 ```
 
 Next, we show that, for any loop, if the loop terminates, then the
@@ -1871,10 +1874,10 @@ theorem guard_false_after_loop {b : Bexp} {c : Com} {st st' : State}
 Finally, we can patch it all together...
 
 ```lean
-theorem fact_com_correct {st st' : State} {n : Nat}
-    (hx : st[X] = n) (heval : st =[ ~fact_com ]=> st') :
+theorem factCom_correct {st st' : State} {n : Nat}
+    (hx : st[X] = n) (heval : st =[ ~factCom ]=> st') :
     st'[Y] = realFact n := by
-  rw [fact_com] at heval
+  rw [factCom] at heval
   inversion heval with
   | seq _ h₁ h₂ =>
     inversion h₁ with
@@ -1885,17 +1888,19 @@ theorem fact_com_correct {st st' : State} {n : Nat}
         | asgn hy =>
           subst hz hy
           -- The invariant is true before the loop runs...
-          have hinv : factInvariant n (Y →ₜ 1 ; Z →ₜ st[X] ; st) := by
-            simp +decide [factInvariant, hx]
+          have hinv : FactInvariant n (Y →ₜ 1 ; Z →ₜ st[X] ; st) := by
+            have hyz : Y ≠ Z := by decide
+            simp [FactInvariant, hyz, hx]
           -- ...so when the loop is done running, the invariant
           -- is maintained
-          have hinv' := fact_loop_preserves_invariant hinv h₄
+          have hinv' := factLoop_preserves_invariant hinv h₄
           -- Finally, if the loop terminated, then `Z` is `0`; so `Y` must be
           -- factorial of `X`
-          rw [fact_loop] at h₄
+          rw [factLoop] at h₄
           have hz := guard_false_after_loop h₄
           simp at hz
-          simpa [factInvariant, hz, realFact] using hinv'
+          rw [FactInvariant, hz, realFact, Nat.mul_one] at hinv'
+          exact hinv'
 ```
 
 One might wonder whether all this work with poking at states and
@@ -1910,19 +1915,19 @@ TERSE version of the Smallstep chapter.
 
 ::::exercise (rating := 4) (name := "subtract_slowly_spec") (optional := true)
 Prove a specification for `subtract_slowly`, using the above
-specification of `fact_com` and the invariant below as
+specification of `factCom` and the invariant below as
 guides.
 
 ```lean
-def ssInvariant (n z : Nat) (st : State) : Prop :=
+def SsInvariant (n z : Nat) (st : State) : Prop :=
   st[Z] - st[X] = z - n
 
 -- SOLUTION
 theorem ss_body_preserves_invariant {st st' : State} {n z : Nat}
-    (hinv : ssInvariant n z st) (hx : st[X] ≠ 0)
+    (hinv : SsInvariant n z st) (hx : st[X] ≠ 0)
     (heval : st =[ ~subtract_slowly_body ]=> st') :
-    ssInvariant n z st' := by
-  rw [ssInvariant] at hinv ⊢
+    SsInvariant n z st' := by
+  rw [SsInvariant] at hinv ⊢
   rw [subtract_slowly_body] at heval
   inversion heval with
   | seq _ h₁ h₂ =>
@@ -1931,35 +1936,39 @@ theorem ss_body_preserves_invariant {st st' : State} {n z : Nat}
       inversion h₂ with
       | asgn hx' =>
         subst hz hx'
-        simp +decide
+        have hzx : Z ≠ X := by decide
+        have hxz : X ≠ Z := by decide
+        simp [hzx, hxz]
         lia -- Interestingly, this is all we need here!
 
 theorem ss_preserves_invariant {st st' : State} {n z : Nat}
-    (hinv : ssInvariant n z st) (heval : st =[ ~subtract_slowly ]=> st') :
-    ssInvariant n z st' := by
+    (hinv : SsInvariant n z st) (heval : st =[ ~subtract_slowly ]=> st') :
+    SsInvariant n z st' := by
   generalize heq : subtract_slowly = c at heval
   induction heval with
   | whileFalse hb => exact hinv
-  | whileTrue hb hc hloop ih₁ ih₂ =>
+  | @whileTrue st st' st'' b c hb hc hloop ih₁ ih₂ =>
     rw [subtract_slowly] at heq
     injection heq with hb' hc'
     subst hb' hc'
-    apply ih₂ ?_ rfl
-    apply ss_body_preserves_invariant hinv ?_ hc
-    intro hx
-    simp [hx] at hb
+    have hx : st[X] ≠ 0 := by
+      intro hx
+      simp [hx] at hb
+    exact ih₂ (ss_body_preserves_invariant hinv hx hc) rfl
   | skip | asgn | seq | ifTrue | ifFalse => simp [subtract_slowly] at heq
 
 theorem ss_correct {st st' : State} {n z : Nat}
     (hx : st[X] = n) (hz : st[Z] = z) (heval : st =[ ~subtract_slowly ]=> st') :
     st'[Z] = z - n := by
-  have hinv : ssInvariant n z st := by
-    simp [ssInvariant, hx, hz]
+  have hinv : SsInvariant n z st := by
+    simp [SsInvariant, hx, hz]
   have hinv' := ss_preserves_invariant hinv heval
   rw [subtract_slowly] at heval
   have hx' := guard_false_after_loop heval
   simp at hx'
-  simpa [ssInvariant, hx'] using hinv'
+  rw [SsInvariant] at hinv'
+  simp [hx'] at hinv'
+  exact hinv'
 -- END SOLUTION
 ```
 ::::
@@ -2129,10 +2138,16 @@ that fact.
 theorem execute_app (st : State) (p₁ p₂ : List Sinstr) (stack : List Nat) :
     sExecute st stack (p₁ ++ p₂) = sExecute st (sExecute st stack p₁) p₂ := by
   solution!
-    induction p₁ generalizing stack with
+    induction p₁ generalizing p₂ stack with
     | nil => rfl
     | cons a p' ih =>
-      cases a <;> rcases stack with _ | ⟨_, _ | ⟨_, _⟩⟩ <;> simp [ih]
+      cases a with
+      | sPush | sLoad => simp_all
+      | sPlus | sMinus | sMult =>
+        if hs : stack.length < 2 then
+          simp [hs, ih]
+        else
+          rcases stack with _ | ⟨_, _ | ⟨_, _⟩⟩ <;> simp_all
 ```
 ::::
 
@@ -2740,7 +2755,8 @@ handler runs in the state the exception was raised in.
 
 ```lean
 example :
-    ∅ =[ imp { try {X := 1; throw; X := 2} catch {Y := X} } ]=> {Y ↦ 1, X ↦ 1} // sNormal := by
+    ∅ =[ imp { try {X := 1; throw; X := 2} catch {Y := X} } ]=>
+      {Y ↦ 1, X ↦ 1} // sNormal := by
   solution!
     apply Com.EvalR.tryThrow
     · apply Com.EvalR.seqNormal (Com.EvalR.asgn rfl)
@@ -2773,14 +2789,14 @@ theorem ceval_deterministic_throw {c : Com} {st st₁ st₂ : State} {s₁ s₂ 
         specialize ih₁ h
         lia
       | tryThrow h₁' h₂' =>
-        obtain ⟨eq₁, _⟩ := ih₁ h₁'
-        subst eq₁
+        obtain ⟨hst, _⟩ := ih₁ h₁'
+        subst hst
         exact ih₂ h₂'
     | seqNormal _ _ ih₁ ih₂ =>
       inversion h₂ with
       | seqNormal h₁' h₂' =>
-        obtain ⟨eq₁, _⟩ := ih₁ h₁'
-        subst eq₁
+        obtain ⟨hst, _⟩ := ih₁ h₁'
+        subst hst
         exact ih₂ h₂'
       | seqThrow h =>
         specialize ih₁ h
@@ -2803,8 +2819,8 @@ theorem ceval_deterministic_throw {c : Com} {st st₁ st₂ : State} {s₁ s₂ 
       inversion h₂ with
       | whileFalse => lia
       | whileNormal hb' hc' hloop' =>
-        obtain ⟨eq₁, _⟩ := ihc hc'
-        subst eq₁
+        obtain ⟨hst, _⟩ := ihc hc'
+        subst hst
         exact ihloop hloop'
       | whileThrow hb' hc' =>
         specialize ihc hc'
@@ -2816,8 +2832,8 @@ theorem ceval_deterministic_throw {c : Com} {st st₁ st₂ : State} {s₁ s₂ 
         specialize ih hc'
         lia
       | whileThrow hb' hc' =>
-        obtain ⟨eq₁, _⟩ := ih hc'
-        subst eq₁
+        obtain ⟨hst, _⟩ := ih hc'
+        subst hst
         exact ⟨rfl, rfl⟩
 ```
 
