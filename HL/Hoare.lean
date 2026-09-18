@@ -3101,7 +3101,7 @@ instance : HasEval Com State State where
   Eval := Com.EvalR
 
 @[simp]
-theorem Com.evalR_eq {c : Com} {st st' : State} : EvalR c st st' ↔ st =[ ~c ]=> st' := by rfl
+theorem Com.evalR_eq {c : Com} {st st' : State} : EvalR c st st' ↔ st =[ c ]=> st' := by rfl
 ```
 
 :::autogradedHole Com.EvalR
@@ -4020,7 +4020,7 @@ instance : HasEval Com State State where
 
 @[simp]
 theorem Com.evalR_eq {c : Com} {st st' : State} :
-    EvalR c st st' ↔ st =[ ~c ]=> st' := by rfl
+    EvalR c st st' ↔ st =[ c ]=> st' := by rfl
 ```
 
 :::autogradedHole Com.EvalR
@@ -4487,7 +4487,7 @@ instance : HasEval Com State State where
 
 @[simp]
 theorem Com.evalR_eq {c : Com} {st st' : State} :
-    EvalR c st st' ↔ st =[ ~c ]=> st' := by rfl
+    EvalR c st st' ↔ st =[ c ]=> st' := by rfl
 ```
 
 The definition of Hoare triples is exactly as before.
@@ -4739,7 +4739,7 @@ instance : HasEval Com State Result where
 
 @[simp]
 theorem Com.evalR_eq {c : Com} {st : State} {res : Result} :
-    EvalR c st res ↔ st =[ ~c ]=> res := by rfl
+    EvalR c st res ↔ st =[ c ]=> res := by rfl
 ```
 
 We redefine hoare triples: Now, `{{ P }} c {{ Q }}` means that,
@@ -5094,7 +5094,7 @@ Proof.
 
 Lemma hoare_while : ∀ P S (b:bexp) c,
   {{ P ∧ b}} c {{P}} {{S}} ->
-  {{P}} while b do c end {{ P ∧ ~ b}} {{S}}.
+  {{P}} while b do c end {{ P ∧ b}} {{S}}.
 Proof.
   solution!
     intros P S b c Hhoare st st' s He Hp. split; intros; subst.
