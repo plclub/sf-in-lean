@@ -1551,6 +1551,10 @@ Fundamental connectives we've been using since the beginning:
 - implication (`a → b`)
 - universal quantification (`∀ x, a`)
 
+Together, these connectives and quantifiers are exactly the vocabulary of
+what's usually called _first-order logic_. Later in this chapter, we'll say
+more about what that means, and about how Lean's own logic goes beyond it.
+
 # Programming with Propositions
 
 ::::full
@@ -3056,6 +3060,25 @@ is proven by providing a particular value of `x`.
 
 Logical systems in which excluded middle does hold,
 such as ZFC set theory, are referred to as _classical_.
+
+Both variants, classical and constructive, are examples of
+_first-order logic_: propositions are built from a fixed stock of
+connectives (`∧`, `∨`, `¬`, `→`, `↔`) and quantifiers (`∀`, `∃`) that range
+over the individual elements of some domain (natural numbers, lists, and
+so on), but never over propositions or predicates themselves. Classical
+first-order logic — first-order logic together with excluded middle — is
+the logic usually taught in an introductory logic course, and it
+underlies foundations like ZFC.
+
+Lean's own logic goes further than this, because propositions are
+themselves Lean terms of type {lean}`Prop`, so we can quantify over them
+directly. {lean}`ExcludedMiddle` above, `∀ a : Prop, a ∨ ¬ a`, does exactly
+that: it quantifies over _all_ propositions, not over the elements of
+some fixed domain. Logics that allow quantifying over propositions or
+predicates, rather than only over individuals, are called
+_higher-order_; Lean's logic is a higher-order one, of which first-order
+logic is a fragment.
+
 Lean provides classical reasoning principles in the `Classical` library,
 including excluded middle.
 
