@@ -1,0 +1,78 @@
+{
+ "file": "LF/Automation.lean",
+ "chapter": "Automation",
+ "round": 2,
+ "proposals": [
+  {
+   "id": "automation-r02-001",
+   "cat": "content/wrong-claim",
+   "old": "The {tactic}`lia` tactic implements a decision procedure for integer linear\narithmetic, a subset of propositional logic and arithmetic. {tactic}`lia`\nis also a decision procedure for first-order logic.",
+   "new": "The {tactic}`lia` tactic implements a decision procedure for _linear integer\narithmetic_: propositional formulas whose atoms are linear\nconstraints over the natural numbers and integers.",
+   "why": "First-order logic is undecidable, so `lia` cannot be a decision procedure for it; and linear arithmetic is not \"a subset of propositional logic\". The rewrite says what the bulleted grammar below actually describes. Roger's dev note about explaining first-order logic then no longer applies."
+  },
+  {
+   "id": "automation-r02-002",
+   "cat": "content/wrong-claim",
+   "old": "another tactic, called {tactic}`grind`. This is another, more powerful tactic\nthat implements {tactic}`lia`, but we will not use it here.",
+   "new": "another tactic, called {tactic}`grind`. This is another, more powerful tactic\nthat subsumes {tactic}`lia`, but we will not use it here.",
+   "why": "`grind` does not implement `lia`; it is a separate, broader tactic that can do what `lia` does and more."
+  },
+  {
+   "id": "automation-r02-003",
+   "cat": "consistency/type-name",
+   "old": "inductive silly : Nat → Prop where\n| mk1 n (h : n > 1) : silly n\n| mk2 n (h : 1 ∈ []) : silly n\n| mk3 n (h : ∃ m, n = m + 2) : silly n\n\nexample {n} (h : silly n) : n ≠ 1 := by\n  inversion h with",
+   "new": "inductive Silly : Nat → Prop where\n| mk1 n (h : n > 1) : Silly n\n| mk2 n (h : 1 ∈ []) : Silly n\n| mk3 n (h : ∃ m, n = m + 2) : Silly n\n\nexample {n} (h : Silly n) : n ≠ 1 := by\n  inversion h with",
+   "why": "Type and proposition names are UpperCamelCase everywhere else in the book (`Even`, `Perm3`, `RegExp`); this is the only lowercase one. Paired with the next edit."
+  },
+  {
+   "id": "automation-r02-004",
+   "cat": "consistency/type-name",
+   "old": "example {n} (h : silly n) : n ≠ 1 := by\n  cases h <;> try lia",
+   "new": "example {n} (h : Silly n) : n ≠ 1 := by\n  cases h <;> try lia",
+   "why": "Second use of the renamed `Silly`."
+  },
+  {
+   "id": "automation-r02-005",
+   "cat": "content/example-mismatch",
+   "old": "Don't use {tactic}`simp` without `only` unless you're closing a goal or following with a flexible\ntactic, like in this example below:",
+   "new": "Don't use {tactic}`simp` without `only` unless you're closing a goal or following with a flexible\ntactic. The example below breaks this rule:",
+   "why": "In the terse build this sentence is followed by the non-terminal example, i.e. the one that violates the advice, so \"like in this example\" points at the wrong thing."
+  },
+  {
+   "id": "automation-r02-006",
+   "cat": "content/notation",
+   "old": "  - {lean}`Char x` matches the one-character string {lean}`x`.",
+   "new": "  - {lean}`Char x` matches the one-character string {lean}`[x]`.",
+   "why": "The string is `[x]`, as the `mChar` rule and constructor say; `x` is a character."
+  },
+  {
+   "id": "automation-r02-007",
+   "cat": "content/notation",
+   "old": "The next lemma is stated in terms of the `fold` function on lists:\nif `ss : List (List α)` represents a sequence of\nstrings `s₁, ..., sₙ`, then {lean}`List.foldr (· ++ ·) ss []` is the result of",
+   "new": "The next lemma is stated in terms of the {name}`List.foldr` function on lists:\nif `ss : List (List α)` represents a sequence of\nstrings `s₁, ..., sₙ`, then {lean}`List.foldr (· ++ ·) [] ss` is the result of",
+   "why": "The arguments were swapped: `foldr` takes the initial value before the list, as the theorem's `ss.foldr (· ++ ·) []` and the `MStar''` statement have it. Also names the actual function, `foldr`, rather than `fold`."
+  },
+  {
+   "id": "automation-r02-008",
+   "cat": "content/wrong-claim",
+   "old": "occurrences of the expression `e` by the variable `x`, and (2) add\nan equation `h : x = e` to the context.",
+   "new": "occurrences of the expression `e` by the variable `x`, and (2) add\nan equation `h : e = x` to the context.",
+   "why": "Lean's `generalize h : e = x` adds `h : e = x`, as the comment in `star_app` below shows (`heq : Star re = re'`)."
+  },
+  {
+   "id": "automation-r02-009",
+   "cat": "content/count",
+   "old": "around eighteen lines to two.",
+   "new": "around eighteen lines to one.",
+   "why": "The final version, `Perm3_In_shortest`, has a one-line proof (`induction hPerm <;> simp_all <;> lia`)."
+  },
+  {
+   "id": "automation-r02-010",
+   "cat": "content/scope",
+   "old": "As a culminating exercise for this book and as practice using the automation techniques we",
+   "new": "As a culminating exercise for this chapter and as practice using the automation techniques we",
+   "why": "Typeclasses and the Postscript follow this chapter, so the case study concludes the chapter, not the book."
+  }
+ ],
+ "completed": true
+}
