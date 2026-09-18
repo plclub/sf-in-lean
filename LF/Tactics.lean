@@ -643,6 +643,15 @@ let ⟨a, b⟩ := v
 Recall the {name}`unzip` function from chapter {ref "Poly"}[Poly];
 copy your implementation from that chapter and paste it below:
 
+:::dev "Daniel Sainati" BeforeNextRelease
+Asking students to copy and paste their definition of `unzip` from
+the previous chapter is unfortunate, especially because it's very easy
+to accidentally forget to change the recursive call from `unzip` to `unzip'`.
+AFAIK we do it this way to make the chapters easier to autograde, but
+let's figure out a way to allow grading across chapters so that we
+don't need to do this repetition.
+:::
+
 ```lean
 def unzip' {α β : Type} (l : List (α × β)) : List α × List β := solution!(
   match l with
