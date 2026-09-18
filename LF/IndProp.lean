@@ -15,12 +15,6 @@ file := some "IndProp"
 
 :::instructors
 ```
-In one 80-minute lecture, I (BCP) was able to get
-_to_, but not _through_, the proof of in_re_match in the regexp
-case study.  I covered the rest in an hour, going pretty slowly and
-working lots of examples in real time.  That left 20 minutes to
-show them just the first half of the ProofObjects chapter.
-
 Making time for at least a bit of discussion of ProofObjects is
 pretty important, even if you don't go into it in detail.  Entirely
 skipping this material leads to needless confusion and beating
@@ -37,13 +31,24 @@ import LF.Logic
 import LF.CustomTactics
 ```
 
-:::ignore
-```lean -show
-variable
-  (n n' m m' k : Nat)
-  (α : Type)
-  (x y : α)
-  (l l₁ l₂ l₃ : List α)
+:::dev "Mike Hicks (mwhicks1)"
+It would be convenient to declare the variables below so that inline
+prose throughout this chapter can use `n`, `n'`, `m`, `m'`, `k`, `α`,
+`x`, `y`, `l`, `l₁`, `l₂`, and `l₃` without repeating their type
+annotations, but the same problem described in {ref "Logic"}[Logic]
+applies: an unused `variable` is silently added to the local context
+in basically every proof from here on, even when the theorem never
+mentions it, which makes theorem hover-overs in the HTML book
+unusable. Until we have a way to declare variables visible only for
+inline prose (rather than for every `lean` block), we leave this
+commented out:
+
+```
+-- variable
+--   (n n' m m' k : Nat)
+--   (α : Type)
+--   (x y : α)
+--   (l l₁ l₂ l₃ : List α)
 ```
 :::
 
@@ -98,7 +103,7 @@ recursive _function_ that calculates the total number of steps
 that it takes for such a sequence to reach `1`.  You can write
 this definition in a standard programming language, but it is
 rejected by Lean's termination checker, since the argument to
-the recursive call, {lean}`collatzStep n`, is not "obviously smaller" than {lean}`n`.
+the recursive call, `collatzStep n`, is not "obviously smaller" than `n`.
 
 ```lean -keep +error (name := reaches1In)
 def reaches1In (n : Nat) : Nat :=
@@ -138,9 +143,9 @@ Another idea could be to express the concept "eventually reaches
 {lean}`1` in the Collatz sequence" as a _recursively defined property_
 of numbers `CollatzHoldsFor : Nat → Prop`. This is also rejected
 by the termination checker. In principle, we could convince Lean
-that {lean}`div2 n` is smaller than {lean}`n` by supplying an
+that `div2 n` is smaller than `n` by supplying an
 appropriate proof. However, we still can't convince it that
-{lean}`(3 * n) + 1` is smaller than {lean}`n`!
+`(3 * n) + 1` is smaller than `n`!
 
 ```lean -keep +error (name := CollatzHoldsFor)
 def CollatzHoldsFor (n : Nat) : Prop :=
@@ -172,7 +177,7 @@ n x✝ : Nat
 :::slidebreak
 :::
 
-Fortunately, there is another way to do it: We can express the
+Fortunately, there is another way to do it: we can express the
 concept "reaches {lean}`1` eventually in the Collatz sequence" as an
 _inductively defined property_ of numbers. Intuitively, this
 property is defined by a set of rules:
@@ -190,11 +195,11 @@ n.even = false    CollatzHoldsFor ((3 * n) + 1)
                CollatzHoldsFor n
 ```
 
-So there are three ways to prove that a number {lean}`n` eventually
+So there are three ways to prove that a number `n` eventually
 reaches {lean}`1` in the Collatz sequence:
-- {lean}`n` is {lean}`1`;
-- {lean}`n` is even and {lean}`div2 n` eventually reaches {lean}`1`;
-- {lean}`n` is odd and {lean}`(3 * n) + 1` eventually reaches {lean}`1`.
+- `n` is {lean}`1`;
+- `n` is even and `div2 n` eventually reaches {lean}`1`;
+- `n` is odd and `(3 * n) + 1` eventually reaches {lean}`1`.
 
 :::slidebreak
 :::
@@ -247,9 +252,9 @@ What we've done here is to use Lean's `inductive`
 definition mechanism to characterize the property "Collatz holds
 for..." by stating three different ways in which it can hold:
 (1) Collatz holds for {lean}`1`, (2) if Collatz holds for
-{lean}`div2 n` and {lean}`n` is even then Collatz holds for
-{lean}`n`, and (3) if Collatz holds for {lean}`(3 * n) + 1` and
-{lean}`n` is odd then Collatz holds for {lean}`n`.
+`div2 n` and `n` is even, then Collatz holds for
+`n`, and (3) if Collatz holds for `(3 * n) + 1` and
+`n` is odd, then Collatz holds for `n`.
 This Lean definition directly corresponds to the three rules we
 wrote informally above.
 ::::
@@ -289,8 +294,8 @@ def Collatz := ∀ n : Nat, n ≠ 0 → CollatzHoldsFor n
 ```
 
 If you succeed in proving this conjecture, you've got a bright
-future as a number theorist! But don't spend too long on it ─
-it's been open since 1937.
+future as a number theorist! But don't spend too long on it —
+it's been [open since 1937](https://en.wikipedia.org/wiki/Collatz_conjecture).
 
 :::dev "Chris Henson (@chenson2018)"
 We may want to add an exercise later proving false if one assumes
@@ -311,10 +316,13 @@ theorem Collatz0 : ¬ (∀ n, CollatzHoldsFor n) := by
 :::
 
 ## Example: Binary Relation for Comparing Numbers
+%%%
+tag := "le-example"
+%%%
 
-A binary _relation_ on a set {lean}`α` has Lean type {lean}`α → α → Prop`.
+A binary _relation_ on a set `α` has Lean type `α → α → Prop`.
 This is a family of propositions parameterized by two elements
-of {lean}`α` ─ i.e., a proposition about pairs of elements of {lean}`α`.
+of `α` — i.e., a proposition about pairs of elements of `α`.
 
 For example, one familiar binary relation on {name}`Nat` is
 `Le : Nat → Nat → Prop`, the less-than-or-equal-to relation,
@@ -333,8 +341,8 @@ Le n (m + 1)
 These rules say that there are two ways to show that a
 number is less than or equal to another: either observe that
 they are the same number, or, if the second has the form
-{lean}`m + 1`, give evidence that the first is less than or
-equal to {lean}`m`.
+`m + 1`, give evidence that the first is less than or
+equal to `m`.
 ::::
 
 ```lean
@@ -349,7 +357,7 @@ scoped infix:50 (priority := high) " ≤ " => Le
 
 ::::full
 This definition is a bit simpler and more elegant than the
-Boolean function {name}`Nat.ble` we defined in {ref "Basics"}[Basics].
+boolean function {name}`Nat.ble` we defined in {ref "Basics"}[Basics].
 As usual, {name}`Le` and {name}`Nat.ble` are equivalent, and there is
 an exercise about that later.
 ::::
@@ -363,7 +371,7 @@ end LePlayground
 
 ## Example: Transitive Closure
 
-Another example: The _transitive closure_ of a relation `r` is the
+Another example: the _transitive closure_ of a relation `r` is the
 smallest relation that contains `r` and that is transitive. This can
 be defined by the following two rules:
 
@@ -388,7 +396,7 @@ inductive TransGen {α : Type} (r : α → α → Prop) : α → α → Prop whe
     TransGen r x z
 ```
 
-"Gen" is short for generated by — `TransGen r` means
+"Gen" is short for "generated by" — `TransGen r` means
 the smallest transitive relation generated by `r`.
 
 :::slidebreak
@@ -428,7 +436,7 @@ an "ancestor of" relation as its transitive closure:
 def AncestorOf : Person → Person → Prop := TransGen ParentOf
 ```
 
-Here is a derivation showing that {name}`Person.sage` is an ancestor of {name}`moss`:
+Here is a derivation showing that {name}`sage` is an ancestor of {name}`moss`:
 
 ```display
  ——————————————————— (sage_cleo) ——————————————————— (cleo_moss)
@@ -452,14 +460,17 @@ HIDE: CH: A simple exercise could be nice here?
 
 ::::full
 Computing the transitive closure can be undecidable even for
-a relation `r` that is decidable (e.g., the `CollatzStepMulti` relation below), so in
+a relation `r` that is decidable (e.g., the `CollatzStep` relation below, whose closure is `CollatzStepMulti`), so in
 general we can't expect to define transitive closure as a boolean
 function. Fortunately, Lean allows us to define transitive closure
 as an inductive relation.
 
 The transitive closure of a binary relation cannot, in general, be
-expressed in first-order logic. The logic of Lean is, however, much
-more powerful, and can easily define such inductive relations.
+expressed in first-order logic (see the {ref "Logic"}[Logic] chapter),
+since doing so would require quantifying over relations themselves.
+The logic of Lean is, however, much
+more powerful — being higher-order, as we saw there — and can easily
+define such inductive relations.
 ::::
 
 ## Example: Reflexive and Transitive Closure
@@ -505,8 +516,8 @@ def CollatzStep (n m : Nat) : Prop := collatzStep n = m
 
 This Collatz step relation can be used in conjunction with the
 reflexive and transitive closure operation to define a _Collatz
-multi-step_ relation, expressing that a number {lean}`n`
-reaches another number {lean}`m` in zero or more Collatz steps:
+multi-step_ relation, expressing that a number `n`
+reaches another number `m` in zero or more Collatz steps:
 
 ```lean
 def CollatzStepMulti (n m : Nat) : Prop := ReflTransGen CollatzStep n m
@@ -516,7 +527,7 @@ def Collatz' : Prop := ∀ (n : Nat), n ≠ 0 → CollatzStepMulti n 1
 ::::full
 This {name}`CollatzStepMulti` relation defined in terms of
 {name}`ReflTransGen` allows for more interesting derivations than the
-linear ones of the directly-defined {name}`CollatzHoldsFor` relation:
+linear ones of the directly defined {name}`CollatzHoldsFor` relation:
 
 ```display
 collatzStep 16 = 8          collatzStep 8 = 4          collatzStep 4 = 2          collatzStep 2 = 1
@@ -576,7 +587,7 @@ Perm3 l₁ l₂       Perm3 l₂ l₃
          Perm3 l₁ l₃
 ```
 
-For instance we can derive `Perm3 [1, 2, 3] [3, 2, 1]` as follows:
+For instance, we can derive `Perm3 [1, 2, 3] [3, 2, 1]` as follows:
 
 ```display
 ───────────────────────── (swap12)  ─────────────────────── (swap23)
@@ -589,12 +600,12 @@ Perm3 [1, 2, 3] [3, 2, 1]
 
 ::::full
 This definition says:
-- If {lean}`l₂` can be obtained from {lean}`l₁` by swapping the first and
-  second elements, then {lean}`l₂` is a permutation of {lean}`l₁`.
-- If {lean}`l₂` can be obtained from {lean}`l₁` by swapping the second and
-  third elements, then {lean}`l₂` is a permutation of {lean}`l₁`.
-- If {lean}`l₂` is a permutation of {lean}`l₁` and {lean}`l₃` is a permutation
-  of{lean}`l₂`, then {lean}`l₃` is a permutation of {lean}`l₁`.
+- If `l₂` can be obtained from `l₁` by swapping the first and
+  second elements, then `l₂` is a permutation of `l₁`.
+- If `l₂` can be obtained from `l₁` by swapping the second and
+  third elements, then `l₂` is a permutation of `l₁`.
+- If `l₂` is a permutation of `l₁` and `l₃` is a permutation
+  of `l₂`, then `l₃` is a permutation of `l₁`.
 ::::
 
 :::slidebreak
@@ -627,11 +638,11 @@ Yes! Just apply {lean}`Perm3.swap12` twice (or {name}`Perm3.swap23` twice).
 ## Example: Evenness (yet again)
 
 We've already seen two ways of stating a proposition that a number
-{lean}`n` is even: We can say
+`n` is even: We can say
 
-  (1) {lean}`Nat.even n = true` (using the recursive boolean function {name}`Nat.even`), or
+  (1) `Nat.even n = true` (using the recursive boolean function {name}`Nat.even`), or
 
-  (2) {lean}`∃ k, n = Nat.double k` (using an existential quantifier).
+  (2) `∃ k, n = Nat.double k` (using an existential quantifier).
 
 :::slidebreak
 :::
@@ -652,7 +663,7 @@ _establish_ its evenness from the following two rules:
 ::::full
 Intuitively these rules say that:
 - The number {lean}`0` is even.
-- If {lean}`n` is even, then {lean}`n + 2` is even.
+- If `n` is even, then `n + 2` is even.
 
 (Defining evenness in this way may seem a bit confusing,
 since we have already seen two perfectly good ways of doing
@@ -706,8 +717,8 @@ inductive List (α : Type) : Type where
 
 The most important difference is that the constructors of {name}`Even`,
 {name}`Even.zero` and {name}`Even.succ_succ`, yield different types
-({lean}`Even 0` and {lean}`Even (n + 2)`), whereas the {name}`List`
-constructors both build {lean}`List α` values.
+({lean}`Even 0` and `Even (n + 2)`), whereas the {name}`List`
+constructors both build `List α` values.
 ::::
 
 ::::full
@@ -715,15 +726,15 @@ Such definitions are interestingly different from previous uses of
 `inductive` for defining inductive datatypes like {name}`Nat` or {name}`List`.
 For one thing, we are defining not a {lean}`Type` (like {name}`Nat`) or a
 function yielding a {lean}`Type` (like {name}`List`), but rather a function
-from {name}`Nat` to {lean}`Prop` ─ that is, a property of numbers. But what
+from {name}`Nat` to {lean}`Prop` — that is, a property of numbers. But what
 is really new is that, because the {name}`Nat` argument of {name}`Even` appears
 to the _right_ of the colon on the first line, it is allowed to
 take _different_ values in the types of different constructors:
-{lean}`0` in the type of {lean}`Even.zero` and {lean}`(n + 2)`
+{lean}`0` in the type of {lean}`Even.zero` and `(n + 2)`
 in the type of {lean}`Even.succ_succ`.
 Accordingly, the type of each constructor must be specified
 explicitly (after a colon), and each constructor's type must have
-the form {lean}`Even n` for some natural number {lean}`n`.
+the form `Even n` for some natural number `n`.
 
 In contrast, recall the definition of {name}`List`:
 
@@ -741,9 +752,9 @@ inductive List (α : Type) : Type where
   | cons (x : α) (l : List α) : List α
 ```
 
-This definition introduces the {lean}`α` parameter _globally_, to the
+This definition introduces the `α` parameter _globally_, to the
 _left_ of the colon, forcing the result of {lean}`List.nil` and
-{lean}`List.cons` to be the same type (i.e., {lean}`List α`).
+{lean}`List.cons` to be the same type (i.e., `List α`).
 But if we had tried to bring {name}`Nat` to the left of the colon in
 defining {name}`Even`, we would have seen an error:
 
@@ -765,7 +776,7 @@ Note: The value of parameter `n` must be fixed throughout the inductive declarat
 ```
 
 In an `inductive` definition, an argument to the type constructor
-on the left of the colon is called a "parameter", whereas an
+on the left of the colon is called a "parameter," whereas an
 argument on the right is called an "index" or "annotation."
 
 For example, in `inductive List (α : Type) ...`, the `α` is a
@@ -802,7 +813,7 @@ Even.succ_succ {n : Nat} (h : Even n) : Even (n + 2)
 :::
 
 These evidence constructors can be thought of as "primitive evidence
-of evenness", and they can be used later on just like proven theorems.
+of evenness," and they can be used later on just like proven theorems.
 In particular, we can use Lean's {tactic}`apply` and {tactic}`exact`
 tactics with the constructor names to obtain evidence for {name}`Even` of
 particular numbers...
@@ -863,14 +874,14 @@ end Even
 
 ## Constructing Evidence for Permutations
 
-Similarly we can apply the evidence constructors to obtain
+Similarly, we can apply the evidence constructors to obtain
 evidence of {lean}`Perm3 [1, 2, 3] [3, 2, 1]`:
 
 ```lean
 namespace Perm3
 
 theorem rev : Perm3 [1, 2, 3] [3, 2, 1] := by
-  apply trans (l₂:= [2, 3, 1])
+  apply trans (l₂ := [2, 3, 1])
   · apply trans (l₂ := [2, 1, 3])
     · apply swap12
     · apply swap23
@@ -891,7 +902,7 @@ theorem rev' : Perm3 [1, 2, 3] [3, 2, 1] := by
 ```
 
 So the informal derivation trees we drew above are not too far
-from what's happening formally. Formally we're using the evidence
+from what's happening formally. Formally, we're using the evidence
 constructors to build _evidence trees_, similar to the finite trees we
 built using the constructors of data types such as {name}`Nat`,
 {name}`List`, binary trees, etc.
@@ -926,7 +937,8 @@ end Perm3
 
 Besides _constructing_ evidence that numbers are even, we can also
 _destruct_ such evidence, reasoning about how it could have been
-built.
+built — i.e., we can _introduce_ and _eliminate_ {name}`Even`
+evidence, in the sense of {ref "Logic"}[Logic].
 
 Defining {name}`Even` with an `inductive` declaration tells Lean not
 only that the constructors {name}`Even.zero` and {name}`Even.succ_succ`
@@ -938,7 +950,7 @@ evidence that numbers are {name}`Even`.
 :::
 
 In other words, if someone gives us evidence `e` for the proposition
-{lean}`Even n`, then we know that `e` must be one of two things:
+`Even n`, then we know that `e` must be one of two things:
 
   - `e = Even.zero` and `n = 0`, or
   - `e = Even.succ_succ n' e'` and `n = n' + 2`, where `e'` is
@@ -946,7 +958,7 @@ In other words, if someone gives us evidence `e` for the proposition
 
 ::::full
 This suggests that it should be possible to analyze a
-hypothesis of the form {lean}`Even n` much as we do inductively defined
+hypothesis of the form `Even n` much as we do inductively defined
 data structures; in particular, it should be possible to argue either by
 _case analysis_ or by _induction_ on such evidence.  Let's look at a
 few examples to see what this means in practice.
@@ -960,21 +972,21 @@ analysis_ and even _induction_ on evidence of evenness...
 ## Destructing and Inverting Evidence
 
 ::::full
-Suppose we are proving some fact involving a number {lean}`n`, and
-we are given {lean}`Even n` as a hypothesis.  We already know how to
-perform case analysis on {lean}`n` using {tactic}`cases` or
+Suppose we are proving some fact involving a number `n`, and
+we are given `Even n` as a hypothesis.  We already know how to
+perform case analysis on `n` using {tactic}`cases` or
 {tactic}`induction`, generating separate subgoals for the case where
-{lean}`n = 0` and the case where {lean}`n = n' + 1` for some {lean}`n'`.
+`n = 0` and the case where `n = n' + 1` for some `n'`.
 But for some proofs we may instead want to analyze the evidence for
-{lean}`Even n` _directly_.
+`Even n` _directly_.
 
 As a tool for such proofs, we can formalize the intuitive
-characterization that we gave above for evidence of {lean}`Even n`,
+characterization that we gave above for evidence of `Even n`,
 using {tactic}`cases`.
 ::::
 
 ::::terse
-We can prove our characterization of evidence for {lean}`Even n`,
+We can prove our characterization of evidence for `Even n`,
 using {tactic}`cases`.
 ::::
 
@@ -990,14 +1002,9 @@ Facts like this are often called "inversion lemmas" because they
 allow us to "invert" some given information to reason about all
 the different ways it could have been derived.
 
-::::full
-Here there are two ways to prove {lean}`Even n`, and the inversion
-lemma makes this explicit.
-::::
-
 ::::::full
 :::::exercise (rating := 1) (name := "le_inversion")
-Let's prove a similar inversion lemma for `le`.
+Let's prove a similar inversion lemma for `Le`.
 
 ```lean
 namespace LePlayground
@@ -1023,13 +1030,13 @@ end LePlayground
 Which tactics are needed to prove this goal?
 
 ```display
-∀ (n : Nat), Ev n → n = 1 → true = false
+∀ (n : Nat), Even n → n = 1 → true = false
 ```
 
 (A) {tactic}`cases`
 (B) {tactic}`contradiction`
 (C) Both {tactic}`cases` and {tactic}`contradiction`
-(D) these tactics are not sufficient to solve the goal.
+(D) These tactics are not sufficient to solve the goal.
 
 :::quizSolution
 ```lean
@@ -1047,7 +1054,7 @@ structure proofs:
 ```lean
 theorem Even.of_succ_succ (n : Nat) (h : Even (n + 2)) : Even n := by
   apply inversion at h
-  obtain ⟨⟨⟩⟩ | ⟨n', ⟨h₁,  h₂⟩⟩ := h
+  obtain ⟨⟨⟩⟩ | ⟨n', ⟨h₁, h₂⟩⟩ := h
   injections h₁ heq
   subst heq
   exact h₂
@@ -1065,16 +1072,16 @@ that equation from the context.
 We've defined a handy tactic called {tactic}`inversion` that factors out
 this common pattern, saving us the trouble of explicitly stating
 and proving an inversion lemma for every `inductive` definition we
-make.
+make. (The details of how {tactic}`inversion` is implemented are beyond the scope
+of this course. [Lean provides _metaprogramming_ facilities](https://leanprover-community.github.io/lean4-metaprogramming-book/main/01_intro.html) that its
+users can employ to write their own tactics, and these capabilities
+are powerful enough that just about any algorithmic reasoning steps
+can be implemented.)
 
 Here, the {tactic}`inversion` tactic can detect (1) that the first case,
-where {lean}`n = 0`, does not apply and (2) that the {lean}`n'` that appears
-in the {name}`Even.succ_succ` case must be the same as {lean}`n`.
+where `n = 0`, does not apply and (2) that the `n'` that appears
+in the {name}`Even.succ_succ` case must be the same as `n`.
 
-The details of how {tactic}`inversion` is implemented are beyond the scope
-of this course, but suffice to say Lean's metaprogramming capabilities
-are such that almost any sequence of reasoning steps can be implemented
-as a new tactic.
 ::::
 
 :::slidebreak
@@ -1099,7 +1106,7 @@ inversion lemma. Compare:
 ```lean
 example : ¬ Even 1 := by
   intro h; apply Even.inversion at h
-  obtain ⟨⟨⟩⟩ | ⟨n', ⟨h₁,  h₂⟩⟩ := h
+  obtain ⟨⟨⟩⟩ | ⟨n', ⟨h₁, h₂⟩⟩ := h
   injections
 
 example : ¬ Even 1 := by
@@ -1144,14 +1151,9 @@ theorem Even.even5_nonsense (h : Even 5) : 2 + 2 = 9 := by
 
 ::::::
 
-:::dev "Yipeng Liu (berberman)" NOW
-Explain how `cases` works on equalities in Tactics or Logic!
-
-(The following text assums we've alrady done that.)
-:::
-
-Recall that equality ({name}`Eq`) is itself an inductively defined proposition,
-so {tactic}`inversion` can also be used on equality propositions.
+Recall from the {ref "Logic"}[Logic] chapter that equality ({name}`Eq`) is itself an
+inductively defined proposition, so {tactic}`inversion` can also be used on equality
+propositions.
 
 We can use {tactic}`inversion` to re-prove some theorems from
 {ref "Tactics"}[Tactics].
@@ -1196,13 +1198,13 @@ example (n : Nat) (h : Even (n * n)) :
 ```
 
 :::full
-Here is useful way to think about {tactic}`inversion`.
+Here is a useful way to think about {tactic}`inversion`.
 For an inductively defined hypothesis `h`, `inversion h`
 starts with one case for each constructor, then uses the indices of the type of `h`
 to eliminate impossible cases, and simplifies the remaining ones.
-In the remaining cases, it solves these equations to foce some expressions or substeitue some variables.
+In the remaining cases, it solves these equations to force some expressions or substitute some variables.
 If an equation cannot be solved, {tactic}`inversion` leaves it in the context and we can
-use tie in the rest of the proof.
+use it in the rest of the proof.
 :::
 
 ::::quiz
@@ -1245,7 +1247,7 @@ our earlier notion (the one based on {name}`Nat.double`).
 ::::
 
 :::full
-We could try to proceed by case analysis or induction on `n`.  But
+We could try to proceed by {tactic}`cases` or {tactic}`induction` on `n`.  But
 since {name}`Even` is mentioned in a premise, this strategy seems
 unpromising, because (as we've noted before) the induction
 hypothesis will talk about `n - 1` (which is _not_ even!).  Thus, it
@@ -1255,7 +1257,7 @@ seems better to first try {tactic}`inversion` on the evidence for {name}`Even`.
 ```lean +error
 example (n : Nat) (h : Even n) : Nat.Even n := by
   inversion h with
-  | zero => exists 0 -- The first case can be solved triviall.
+  | zero => exists 0 -- The first case can be solved trivially.
   | succ_succ n' h' =>
 ```
 
@@ -1267,28 +1269,28 @@ are trying to prove, but applied to the smaller evidence `h'`.
 
 ## Induction on Evidence
 
-If this story feels familiar, it is no coincidence: We
+If this story feels familiar, it is no coincidence: we
 encountered similar problems in the {ref "Induction"}[Induction] chapter,
 when trying to use case analysis to prove results that required
 induction.  And once again the solution is... induction!
 
 ::::full
 The behavior of {tactic}`induction` on evidence is the same as its
-behavior on data: It causes Lean to generate one subgoal for each
+behavior on data: it causes Lean to generate one subgoal for each
 constructor that could have been used to build that evidence, while
 providing an induction hypothesis for each recursive occurrence of
 the property in question.
 
-To prove that a property of {lean}`n` holds for all even numbers
-(i.e., those for which {lean}`Even n` holds), we can use induction on
-{lean}`Even n`. This requires us to prove two things, corresponding to
-the two ways in which {lean}`Even n` could have been constructed. If it
-was constructed by {lean}`Even.zero`, then {lean}`n = 0` and the
+To prove that a property of `n` holds for all even numbers
+(i.e., those for which `Even n` holds), we can use induction on
+`Even n`. This requires us to prove two things, corresponding to
+the two ways in which `Even n` could have been constructed. If it
+was constructed by {lean}`Even.zero`, then `n = 0` and the
 property must hold of {lean}`0`. If it was constructed by
-{lean}`Even.succ_succ`, then the evidence of {lean}`Even n`
-is of the form `Even.succ_succ n' h'`, where {lean}`n = n' + 2` and
-`h'` is evidence for {lean}`Even n'`. In this case, the inductive hypothesis
-says that the property we are trying to prove holds for {lean}`n'`.
+{lean}`Even.succ_succ`, then the evidence of `Even n`
+is of the form `Even.succ_succ n' h'`, where `n = n' + 2` and
+`h'` is evidence for `Even n'`. In this case, the induction hypothesis
+says that the property we are trying to prove holds for `n'`.
 ::::
 
 Let's try proving that lemma again:
@@ -1305,8 +1307,8 @@ theorem Even.nat_even (n : Nat) (h : Even n) : Nat.Even n := by
 ::::full
 Here, we can see that Lean produced an `ih` that corresponds
 to `h`, the single recursive occurrence of {name}`Even` in its own
-definition.  Since `h'` mentions {lean}`n'`, the induction hypothesis
-talks about {lean}`n'`, as opposed to {lean}`n` or some other number.
+definition.  Since `h'` mentions `n'`, the induction hypothesis
+talks about `n'`, as opposed to `n` or some other number.
 ::::
 
 ::::::full
@@ -1321,7 +1323,7 @@ theorem Even.iff_nat_even (n : Nat) : Even n ↔ Nat.Even n := by
 ```
 
 As we will see in later chapters, induction on evidence is a
-recurring technique across many areas ─ in particular for
+recurring technique across many areas — in particular for
 formalizing the semantics of programming languages.
 
 The following exercises provide simpler examples of this
@@ -1361,13 +1363,13 @@ theorem Even.of_add_left (n m : Nat) (h : Even (n + m)) (hn : Even n) : Even m :
 
 :::::exercise (rating := 3) (name := "add_of_add_left") (optional := true)
 This exercise can be completed without induction or case analysis.
-But, you will need a clever `have` and some tedious rewriting.
-Hint: Is {lean}`(n + m) + (n + k)` even?
+But you will need a clever `have` and some tedious rewriting.
+Hint: Is `(n + m) + (n + k)` even?
 
 ```lean
 theorem Even.add_of_add_left (n m k : Nat)
     (hₙₘ : Even (n + m))
-    (hₙₚ : Even (n + k)) :
+    (hₙₖ : Even (n + k)) :
     Even (m + k) := by
   solution!
     apply of_add_left (n + n)
@@ -1412,8 +1414,8 @@ inductive List.In' {α : Type} (x : α) : List α → Prop
 ```
 
 In fact, this is exactly how Lean defines this proposition,
-which it calls {name}`Membership.mem` and which is written {lean}`x ∈ l`.
-Its negation {lean}`¬ x ∈ l` is also written as {lean}`x ∉ l`.
+which it calls {name}`Membership.mem` and which is written `x ∈ l`.
+Its negation `¬ x ∈ l` is also written as `x ∉ l`.
 
 :::::full
 A good exercise to test your understanding of induction on
@@ -1450,7 +1452,7 @@ The characterizing lemmas for `∈` are called
 :::
 
 ::::full
-Recall the definition of the reflexive, transitive, closure of a relation:
+Recall the definition of the reflexive, transitive closure of a relation:
 
 ```recall
 inductive ReflTransGen {α : Type} (r : α → α → Prop) : α → α → Prop where
@@ -1462,13 +1464,13 @@ inductive ReflTransGen {α : Type} (r : α → α → Prop) : α → α → Prop
     ReflTransGen r x z
 ```
 
-Let's say that a relation on a type {lean}`α` is _diagonal_ if it
-refines the identity relation ─ i.e., if `r x y` implies {lean}`x = y`.
+Let's say that a relation on a type `α` is _diagonal_ if it
+refines the identity relation — i.e., if `r x y` implies `x = y`.
 
 :::dev
 NDS 25: I originally wanted to do this with the empty
 relation, defined inductively, but this requires introducing the
-surprising behavior of unhabitated types, which I don't think have
+surprising behavior of uninhabited types, which I don't think have
 been covered (yet?). Maybe they should be?
 BCP 25: This one seems good.
 :::
@@ -1493,12 +1495,12 @@ theorem closure_of_diagonal_is_diagonal {α : Type} (r : α → α → Prop)
 Something interesting happens here: there are two
 induction hypotheses, `ihxy` and `ihyz`! If you think about it, it
 is not that weird: we are in the case `trans`, which has
-two recursive components, `hxy`, relating `x` to `y` and `hyz`,
+two recursive components, `hxy`, relating `x` to `y`, and `hyz`,
 relating `y` to `z`. Hence we may want (and will actually need)
-an induction hypothesis for `hxy` and one for `hyz` ─ they are
+an induction hypothesis for `hxy` and one for `hyz` — they are
 called `ihxy` and `ihyz` here. In general, Lean will always
-generate one induction hypothesis per recursive constructor of
-the type being inducted over.
+generate one induction hypothesis per recursive premise of each
+constructor of the type being inducted over.
 
 :::dev
 HIDE: NDS comparing the previous proof to the pen-and-paper version
@@ -1620,8 +1622,8 @@ theorem NotIn {α} (x : α) (l₁ l₂ : List α)
 :::::
 
 :::::exercise (rating := 2) (name := "NotPerm3") (optional := true)
-Proving that something is NOT a permutation is quite tricky. Some
-of the lemmas above, like {name}`Perm3.In` can be useful for this.
+Proving that something is _not_ a permutation is quite tricky. Some
+of the lemmas above, like {name}`Perm3.In`, can be useful for this.
 
 ```lean
 theorem Not : ¬ Perm3 [1, 2, 3] [1, 2, 4] := by
@@ -1655,110 +1657,37 @@ sure that you can prove the following...
 :::
 ::::::
 
-# Exercising with Inductive Relations
+# Exercises with Inductive Relations
 
 :::suppressPreviousHeaderWhenTerse
-:::
-
-:::dev "Chris Henson (chenson2018)" BeforeNextRelease
-Bad flow + duplication needs fixing.
-Could move some of this to the top.
-In the terse version this whole section is useless,
-it only has a (mostly) duplicated definition.
-For now FULLED the whole thing, but better fix seems needed.
 :::
 
 ::::::full
 ```lean
 namespace LePlayground
 ```
+::::::
 
-Recall the "less than or equal to" relation on numbers that we briefly saw above.
+## More Facts about `Le`
 
-```recall
-inductive Le : Nat → Nat → Prop where
-  | refl {n : Nat}                : Le n n
-  | step {n m : Nat} (h : Le n m) : Le n (m + 1)
-```
-
-Proofs of facts about `≤` using the constructors {name}`Le.refl` and
-{name}`Le.step` follow the same patterns as proofs about properties, like
-{name}`Even` above. We can {tactic}`apply` the constructors to prove `≤`
-goals (e.g., to show that {lean}`3 ≤ 3` or {lean}`3 ≤ 6`), and we can use
-tactics like {tactic}`inversion` to extract information from `≤`
-hypotheses in the context (e.g., to prove that {lean}`(2 ≤ 1) → 2 + 2 = 5`.)
-
-:::slidebreak
+:::suppressPreviousHeaderWhenTerse
 :::
 
-Here are some sanity checks on the definition.  (Notice that,
-although these are the same kind of simple "unit tests" as we gave
-for the testing functions we wrote in the first few lectures, we
-must construct their proofs explicitly ─ {tactic}`rw` and {tactic}`rfl` don't do the job,
-because the proofs aren't just a matter of simplifying computations.)
+::::::full
+Recall the {ref "le-example"}[`Le` relation] from earlier in this
+chapter. Here are a number of facts about the `≤`, `<`, and `≥`
+relations, and about `Le`'s relationship to the boolean function
+{name}`Nat.ble`, that we are going to need later in the course; the
+proofs make good practice for the case-analysis and induction
+techniques from the last few sections.
+::::::
 
-Some sanity checks...
+### Facts about `≤`
 
-```lean
-example : 3 ≤ 3 := by
-  workinclass!
-    apply Le.refl
-
-example : 3 ≤ 6 := by
-  workinclass!
-    apply Le.step; apply Le.step
-    apply Le.step; apply Le.refl
-
-example (h : 2 ≤ 1) : 2 + 2 = 5 := by
-  workinclass!
-    inversion h with
-    | step h' => inversion h'
-```
-
-:::slidebreak
+:::suppressPreviousHeaderWhenTerse
 :::
 
-The "strictly less than" relation {lean}`n < m` can now be defined
-in terms of {lean}`Nat.le`.
-
-```lean
-def Lt (n m : Nat) : Prop := Le (n + 1) m
-
-scoped infix:50 (priority := high) " < " => Lt
-```
-
-:::slidebreak
-:::
-
-The `≥` operation is defined in terms of `≤`.
-Lean provides a theorem {name}`ge_iff_le` allowing us to rewrite between them.
-
-```lean
-def Ge (m n : Nat) : Prop := Le n m
-
-scoped infix:50 (priority := high) " ≥ " => Ge
-
-example (m n : Nat) (h : m ≥ n) : n ≤ m := by
-  rw [Ge] at h
-  assumption
-```
-
-From the definition of {name}`Le`, we can sketch the behaviors of
-{tactic}`cases` and {tactic}`induction` on a hypothesis `h`
-providing evidence of the form {lean}`n ≤ m`.  Doing `cases h`
-will generate two cases. In the first case, {lean}`n = m`, and it
-will replace instances of {lean}`m` with {lean}`n` in the goal and context.
-In the second case, {lean}`n = m' + 1` for some {lean}`m'` for which {lean}`n ≤ m'`
-holds, and it will replace instances of {lean}`m` with {lean}`m' + 1`.
-Doing `inversion h` will remove impossible cases and add generated
-equalities to the context for further use. Doing `induction h`
-will, in the second case, add the induction hypothesis that the
-goal holds when {lean}`m` is replaced with {lean}`m'`.
-
-Here are a number of facts about the `≤` and `<` relations that
-we are going to need later in the course.  The proofs make good
-practice exercises.
-
+::::::full
 :::::exercise (rating := 3) (name := "le_facts")
 ```lean
 theorem le_trans (m n k : Nat) (h₁ : m ≤ n) (h₂ : n ≤ k) : m ≤ k := by
@@ -1922,9 +1851,37 @@ theorem le_add_right_of_le (n m p : Nat) (h : n ≤ m) : n ≤ m + p := by
 :::gradeTheorem 1 le_add_right_of_le
 :::
 :::::
+::::::
+
+### Facts about `<` and `≥`
+
+:::suppressPreviousHeaderWhenTerse
+:::
+
+::::::full
+The "strictly less than" relation `n < m` can now be defined
+in terms of {name}`Le`.
+
+```lean
+def Lt (n m : Nat) : Prop := Le (n + 1) m
+
+scoped infix:50 (priority := high) " < " => Lt
+```
+
+The `≥` relation is defined in terms of `≤`, so unfolding its
+definition with {tactic}`rw` lets us move between them.
+
+```lean
+def Ge (m n : Nat) : Prop := Le n m
+
+scoped infix:50 (priority := high) " ≥ " => Ge
+
+example (m n : Nat) (h : m ≥ n) : n ≤ m := by
+  rw [Ge] at h
+  assumption
+```
 
 :::::exercise (rating := 3) (name := "lt_facts") (optional := true)
-
 
 ```lean
 theorem lt_not_lt_zero (n : Nat) : ¬ n < 0 := by
@@ -1982,6 +1939,16 @@ theorem lt_and_lt_of_add_lt (n₁ n₂ m : Nat) (h : n₁ + n₂ < m) : n₁ < m
 ```
 
 :::::
+::::::
+
+### Relating `Le` and `Nat.ble`
+
+:::suppressPreviousHeaderWhenTerse
+:::
+
+::::::full
+Recall that `Le` and {name}`Nat.ble` are equivalent (as promised
+{ref "le-example"}[earlier]).
 
 :::::exercise (rating := 4) (name := "ble") (optional := true)
 ```lean
@@ -2067,11 +2034,11 @@ inductive R : Nat → Nat → Nat → Prop where
 - `R 2 2 6`
 
 2. If we dropped constructor `c5` from the definition of `R`,
-would the set of provable propositions change?  Briefly (1
+would the set of provable propositions change?  Briefly (one
 sentence) explain your answer.
 
 3. If we dropped constructor `c4` from the definition of `R`,
-would the set of provable propositions change?  Briefly (1
+would the set of provable propositions change?  Briefly (one
 sentence) explain your answer.
 
 ::::solution
@@ -2086,7 +2053,7 @@ example : R 1 1 2 := by
 ```
 
 The key invariant here is that whenever `R m n k` holds, we must have `k = m + n`.
-We can prove this invariant as the follows:
+We can prove this invariant as follows:
 
 ```lean
 theorem R.eq_add {m n k : Nat} (h : R m n k) : k = m + n := by
@@ -2113,13 +2080,13 @@ example : ¬ R 2 2 6 := by
 3. Dropping `c4` would not change the set of provable
   propositions. This constructor just "undoes" one application
   of `c2` and one application of `c3`. More precisely, the
-  only way we can construct evidence for `R (S m) (S n) (S (S o))`
+  only way we can construct evidence for `R (m + 1) (n + 1) (k + 2)`
   is by applying `c2` and `c3` (in either order) to evidence for
-  `R m n o`, so the latter must already hold. (This can be proved
+  `R m n k`, so the latter must already hold. (This can be proved
   by induction, although the proof is surprisingly tedious.)
 
-We can prove `c4` and `c5` are redundant by re-defining `R'` with only `c1`, `c2`, and `c3`,
-and prove `R'` is equivalent to {name}`R`.
+We can prove `c4` and `c5` are redundant by redefining `R'` with only `c1`, `c2`, and `c3`,
+and proving `R'` is equivalent to {name}`R`.
 
 Another useful fact is that the converse of the above invariant, {name}`R.eq_add`, is also true:
 
@@ -2244,16 +2211,16 @@ but it is _not_ a subsequence of any of the lists
   definition behaves correctly on all the positive and negative
   examples above, but you do not need to prove this formally.
 
-- Prove `Subseq.refl` that subsequence is reflexive, that is,
+- Prove `Subseq.refl` that subsequence is reflexive — that is,
   any list is a subsequence of itself.
 
-- Prove `Subseq.append` that for any lists {lean}`l₁`, {lean}`l₂`, and {lean}`l₃`,
-  if {lean}`l₁` is a subsequence of {lean}`l₂`, then {lean}`l₁` is also a subsequence
-  of {lean}`l₂ ++ l₃`.
+- Prove `Subseq.append` that for any lists `l₁`, `l₂`, and `l₃`,
+  if `l₁` is a subsequence of `l₂`, then `l₁` is also a subsequence
+  of `l₂ ++ l₃`.
 
-- (Harder) Prove `Subseq.trans` that subsequence is transitive ─
-  that is, if {lean}`l₁` is a subsequence of {lean}`l₂` and {lean}`l₂` is a
-  subsequence of {lean}`l₃`, then {lean}`l₁` is a subsequence of {lean}`l₃`.
+- (Harder) Prove `Subseq.trans` that subsequence is transitive —
+  that is, if `l₁` is a subsequence of `l₂` and `l₂` is a
+  subsequence of `l₃`, then `l₁` is a subsequence of `l₃`.
 
 ::::hide
 ```lean
@@ -2266,7 +2233,7 @@ inductive Subseq' : List Nat → List Nat → Prop where
   | subseq'_inductive1 {l l₁ l₂ lx ly lz: List Nat}
     (h : Subseq' l (l₁ ++ l₂)) :
     Subseq' l (lx ++ l₁ ++ ly ++ l₂ ++ lz)
-  | subseq'_inductive2 {l₁ l₂ l₃ : List Nat}}
+  | subseq'_inductive2 {l₁ l₂ l₃ : List Nat}
     (h₁ : Subseq' l₁ l₂)
     (h₂ : Subseq' l₂ l₃) :
     Subseq' l₁ l₃
@@ -2432,7 +2399,6 @@ If you do a few more of these yourself, you should see the pattern
 emerging.
 :::
 
-
 ```lean
 end RProvability2
 ```
@@ -2443,7 +2409,7 @@ end RProvability2
 
 ::::::full
 :::::exercise (rating := 2) (name := "total_relation") (optional := true)
-Define an inductive binary relation `total_relation` that holds
+Define an inductive binary relation `TotalRelation` that holds
 between every pair of natural numbers.
 
 ```lean
@@ -2460,7 +2426,7 @@ theorem total_relation_is_total (n m : Nat) : TotalRelation n m := by
 :::::
 
 :::::exercise (rating := 2) (name := "empty_relation") (optional := true)
-Define an inductive binary relation `empty_relation` (on numbers)
+Define an inductive binary relation `EmptyRelation` (on numbers)
 that never holds.
 
 :::dev "Michael Clarkson (clarksmr)" PotentialImprovement (year := 2020)
@@ -2558,7 +2524,7 @@ be correct, in which case the examples might need a different
 proof.  (You'll notice that the suggested proofs use a number of
 tactics we haven't talked about, to make them more robust to
 different possible ways of defining {name}`NoStutter`.  You can probably
-just uncomment and use them as-is, but you can also prove each
+just uncomment and use them as is, but you can also prove each
 example with more basic tactics.)
 
 ```lean
@@ -2595,7 +2561,6 @@ example : ¬ (NoStutter [3, 1, 1, 4]) := by
 :::
 :::::
 
-
 :::dev "Yipeng Liu (berberman)" PotentialImprovement
 The proofs in the following exercises are a bit awkward to me,
 because they require some "internal" `Bool` lemmas in core Lean to simplify the hypotheses.
@@ -2630,7 +2595,7 @@ and
 Now, suppose we have a type `α`, a function `test : α → Bool`, and a
 list `l` of type `List α`.  Suppose further that `l` is an
 in-order merge of two lists, `l₁` and `l₂`, such that every item
-in `l₁` satisfies `test` and no item in `l₂` satisfies test.  Then
+in `l₁` satisfies `test` and no item in `l₂` satisfies `test`.  Then
 `filter test l = l₁`.
 
 First define what it means for one list to be a merge of two
@@ -2675,7 +2640,6 @@ theorem merge_filter (α : Type) (test : α → Bool) (l l₁ l₂ : List α)
 
 :::autogradedHole Merge
 :::
-
 
 :::gradeTheorem 6 merge_filter
 :::
@@ -3013,14 +2977,13 @@ inductive NoDup {α : Type} : List α → Prop where
 ```
 
 Finally, state and prove one or more interesting theorems relating
-`Disjoint`, `NoDup` and `++` (list append).
+`Disjoint`, `NoDup`, and `++` (list append).
 
 :::solution
 
 Here are some possible answers:
 
 ```lean
-
 theorem NoDup.append {α : Type} {l₁ l₂: List α}
     (h₁ : NoDup l₁) (h₂ : NoDup l₂) (hdis : Disjoint l₁ l₂) :
     NoDup (l₁ ++ l₂) := by
@@ -3108,7 +3071,7 @@ GRADE_MANUAL 6: NoDup
 The _pigeonhole principle_ states a basic fact about counting: if
 we distribute more than `n` items into `n` pigeonholes, some
 pigeonhole must contain at least two items.  As often happens, this
-apparently trivial fact about numbers requires non-trivial
+apparently trivial fact about numbers requires nontrivial
 machinery to prove, but we now have enough...
 
 First prove an easy and useful lemma.
@@ -3142,9 +3105,8 @@ inductive Repeats {α : Type} : List α → Prop where
   -- SOLUTION
   | head {x : α} {l : List α} (h : x ∈ l)     : Repeats (x :: l)
   | tail {x : α} {l : List α} (h : Repeats l) : Repeats (x :: l)
--- /SOLUTION
+  -- END SOLUTION
 ```
-
 
 :::grade
 ```
@@ -3156,7 +3118,7 @@ Now, here's a way to formalize the pigeonhole principle.  Suppose
 list `l₂` represents a list of pigeonhole labels, and list `l₁`
 represents the labels assigned to a list of items.  If there are
 more items than labels, at least two items must have the same
-label -- i.e., list `l₁` must contain repeats.
+label — i.e., list `l₁` must contain repeats.
 
 This proof is much easier if you use the excluded middle
 to show that `∈` is decidable, i.e., `∀ x l, (x ∈ l) ∨ ¬ (x ∈ l)`.
@@ -3173,9 +3135,7 @@ Maybe move to the Automation chapter for `simp`.
 :::
 
 ```lean
-
 open LePlayground in
-
 theorem pigeonhole_principle {α : Type} {l₁ l₂ : List α}
     (hin : ∀ x, x ∈ l₁ → x ∈ l₂)
     (hlen : l₂.length < l₁.length) :
@@ -3229,430 +3189,58 @@ Definition repeats {α} (xs: List α) : Prop :=
 Should check to see how much harder this makes things.
 ```
 :::
-:::::
 
 :::solution
-```
-/- Here's a clever alternative proof, based heavily on one by Daniel
-    Schepler (<dschepler@gmail.com> Coq club mailing list on Wed, 02 Oct
-    2013 02:02:12 -0700), that doesn't use decidability of [In], and hence
-    doesn't need [excluded_middle]. -/
 
-/- First, some more auxiliary lemmas, some of which are a bit ad hoc. -/
+Here is a different way to prove the pigeonhole principle, adapted from
+proofs by Daniel Schepler and N. Raghavendra. Unlike the proof above, it
+never needs to decide whether an element belongs to a list, so it does not
+rely on the law of excluded middle.
 
-theorem in_repeats: forall {α:Type} (l₁ l₂:List α) (x:α),
-  In x (l₁++l₂) →
-  repeats (l₁++x::l₂).
-Proof.
-  intros α l₁. induction l₁ as [|y l1' IHl1'].
-  - /- l₁ = [] -/
-    intros l₂ x AI. simpl in AI. simpl. apply rep_here. apply AI.
-  - /- l₁ = y::l1' -/
-    intros l₂ x AI. simpl in AI. simpl. destruct AI as [AI | AI].
-    + apply rep_here. apply In_app_iff. right. left.
-      rewrite AI. reflexivity.
-    + apply rep_later. apply IHl1'. apply AI.
-Qed.
+```lean
+-- Claude-generated solution
+theorem repeats_insert {α : Type} (l₁ l₂ : List α) (x : α)
+    (h : x ∈ l₁ ++ l₂) : Repeats (l₁ ++ x :: l₂) := by
+  induction l₁ generalizing l₂ with
+  | nil => exact Repeats.head h
+  | cons y ys ih =>
+    simp only [List.cons_append, List.mem_cons] at h ⊢
+    obtain rfl | h := h
+    · exact Repeats.head (List.mem_append.mpr (Or.inr List.mem_cons_self))
+    · exact Repeats.tail (ih l₂ h)
 
-theorem rep_insert: forall {α:Type} (l₁ l₂:List α) (x: α),
-  repeats (l₁ ++ l₂) → repeats (l₁ ++ x::l₂).
-Proof.
-  intros α l₁. induction l₁ as [| y l1' IHl1'].
-  - /- l₁ = [] -/
-    intros l₂ x H. simpl. simpl in H. apply rep_later.  apply H.
-  - /- l₁ = y::l1' -/
-    intros l₂ x H. simpl. simpl in H. inversion H.
-    + /- rep_here -/
-      apply rep_here. apply In_app_iff. apply In_app_iff in h₁.
-      destruct h₁ as [h₁ | h₁].
-      * left. apply h₁.
-      * right. right. apply h₁.
-    + /- rep_later -/
-      apply rep_later. apply IHl1'. apply h₁.
-Qed.
+theorem pigeonhole_aux {α : Type} (l₁ : List α) :
+    ∀ (u l₂ : List α),
+      (∀ x, x ∈ l₁ → x ∈ u ++ l₂) →
+      l₂.length < l₁.length →
+      Repeats (u ++ l₁) := by
+  induction l₁ with
+  | nil => intro u l₂ _ hlen; simp at hlen
+  | cons x t ih =>
+    intro u l₂ hin hlen
+    have hx : x ∈ u ++ l₂ := hin x List.mem_cons_self
+    rcases List.mem_append.mp hx with hxu | hxl₂
+    · exact repeats_insert u t x (List.mem_append.mpr (Or.inl hxu))
+    · obtain ⟨l₂a, l₂b, rfl⟩ := List.mem_split hxl₂
+      have heq : u ++ x :: t = (u ++ [x]) ++ t := by rw [List.append_assoc]; rfl
+      rw [heq]
+      apply ih (u ++ [x]) (l₂a ++ l₂b)
+      · intro y hy
+        have hy' : y ∈ u ++ (l₂a ++ x :: l₂b) := hin y (List.mem_cons_of_mem x hy)
+        simp only [List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at hy' ⊢
+        rcases hy' with hyu | hyl | hyx | hyb
+        · exact Or.inl (Or.inl hyu)
+        · exact Or.inr (Or.inl hyl)
+        · exact Or.inl (Or.inr hyx)
+        · exact Or.inr (Or.inr hyb)
+      · simp only [List.length_append, List.length_cons] at hlen ⊢
+        omega
 
-theorem repeats_app_comm : forall {α:Type} (l₁ l₂:List α),
-  repeats (l₁++l₂) → repeats(l₂++l₁).
-Proof.
-  intros α l₁. induction l₁ as [|x l1'].
-  - /- l₁ = [] -/
-    intros l₂ H.  rewrite app_nil_r. simpl in H. apply H.
-  - /- l₁ = x::l1' -/
-    intros l₂ H. simpl in H. inversion H.
-    + /- rep_here -/
-      apply in_repeats. apply In_app_iff.
-      apply In_app_iff in h₁.
-      destruct h₁ as [h₁ | h₁].
-      * right. apply h₁.
-      * left. apply h₁.
-    + /- rep_later -/
-      apply IHl1' in h₁. apply rep_insert. apply h₁.
-Qed.
-
-/- Now the main lemma: -/
-
-theorem pigeonhole_principle_aux: forall {α:Type} (l₁ l₂ ls: List α),
-  (forall x:α, In x l₁ → In x (ls++l₂)) →
-  length l₂ < length l₁ → repeats (ls++l₁).
-Proof.
-  intros α l₁. induction l₁ as [|x l1' IHl1'].
-  - /- l₁ = [] -/
-    intros l₂ ls AI LT. inversion LT.
-  - /- l₁ = x::l1' -/
-    intros l₂ ls AI LT.
-    assert (In x (ls++l₂)).
-    { /- Proof of assertion -/
-      apply AI. left. reflexivity. }
-    assert (In x ls \/ In x l₂).
-    { /- Proof of assertion -/
-      apply In_app_iff. apply H. }
-    destruct H0.
-    + /- In x ls -/
-      apply repeats_app_comm. simpl. apply rep_here.
-      apply In_app_iff. right. apply H0.
-    + /- In x l₂ -/
-      apply in_split in H0.
-      destruct H0 as [l2a [l2b P]]. rewrite P in *.
-      assert (repeats ((x::ls) ++ l1')).
-      * /- Proof of assertion -/
-        apply (IHl1' (l2a++l2b) (x::ls)).
-        { /- re-establish inclusion relation -/
-          intros x0 AI'.
-          assert (In x0 (ls ++ l2a ++ x::l2b)).
-          { /- Proof of assertion -/
-            apply AI. right. apply AI'. }
-          apply In_app_iff in H0. inversion H0.
-            apply In_app_iff.  left. right. apply h₁.
-            apply In_app_iff in h₁. inversion h₁.
-              apply In_app_iff. right.
-                apply In_app_iff. left. apply h₂.
-              inversion h₂.
-                simpl. left. apply h₃.
-                apply In_app_iff. right.
-                  apply In_app_iff. right. apply h₃. }
-        rewrite app_length in LT.  rewrite app_length.
-        simpl in LT. rewrite <- plus_n_Sm in LT.
-        unfold lt. unfold lt in LT. apply le_S_n. apply LT.
-      * simpl in H0. apply repeats_app_comm. simpl. inversion H0.
-        { apply rep_here. apply In_app_iff.
-          apply In_app_iff in h₂. inversion h₂.
-          - right. apply H4.
-          - left. apply H4. }
-        apply rep_later. apply repeats_app_comm. apply h₂.
-Qed.
-
-theorem stronger_pigeonhole_principle: forall {α:Type} (l₁ l₂ : List α),
-  (forall x : α, In x l₁ → In x l₂) →
-  length l₂ < length l₁ →
-  repeats l₁.
-Proof.
-  intros α l₁ l₂ AI LT.
-  assert (H: l₁ = nil ++ l₁). { reflexivity. }
-  rewrite H. apply (pigeonhole_principle_aux l₁ l₂ nil).
-  simpl. apply AI. apply LT.
-Qed.
-
-/- One key to how this proof works is that at the inductive step,
-    when we re-establish the inclusion relation, the contents on the
-    list on the right-hand side of the inclusion have not changed at
-    all---they are merely re-arranged, so validity of the inclusion is
-    trivial (modulo some messy book-keeping). Compare this to the
-    equivalent step in the original proof, where we remove [x] from the
-    list on the right-hand side of the inclusion; this is only valid when
-    we know that [x] is not in the left-hand list [l1'] either---exactly
-    the knowledge that we get from decidability of [In], and cannot get
-    any other way. -/
-
-/- ------------------------ -/
-
-/- Finally, here is a much more elegant proof due to N. Raghavendra
-    <raghu@hri.res.in>, based on Daniel's.  It uses the following
-    sequence of observations:
-
-      theorem app_ass :
-      forall (α : Type) (l₁ l₂ l₃ : List α),
-        (l₁ ++ l₂) ++ l₃ = l₁ ++ l₂ ++ l₃.
-
-      theorem app_length :
-      forall (α : Type) (l₁ l₂ : List α),
-        length (l₁ ++ l₂) = length l₁ + length l₂.
-
-      theorem In_app_iff_split :
-      forall (α : Type) (x : α) (l : List α),
-        In x l →
-        exists (l₁ l₂ : List α), l = l₁ ++ x :: l₂.
-
-      theorem In_both_impl_repeats_app :
-      forall (α : Type) (x : α) (l₁ l₂ : List α),
-        In x l₁ → In x l₂ → repeats (l₁ ++ l₂).
-
-      theorem In_app_iff_midswap :
-      forall (α : Type) (x : α) (l₁ l₂ l₃ l4 : List α),
-        In x (l₁ ++ l₂ ++ l₃ ++ l4) →
-        In x (l₁ ++ l₃ ++ l₂ ++ l4).
-
-      theorem pigeonhole_principle_aux :
-      forall (α : Type) (l₁ l₂ u : List α),
-        (forall x : α, In x l₁ → In x (u ++ l₂)) →
-        length l₂ < length l₁ → repeats (u ++ l₁).
-
-      theorem pigeonhole_principle :
-      forall (α : Type) (l₁ l₂ : List α),
-        (forall x : α, In x l₁ → In x l₂) →
-        length l₂ < length l₁ → repeats l₁.
--/
-
-/- HIDE: Some of these are already proved elsewhere. Also, this
-  vertical style is hard to read. -/
-
-Module Pigeon.
-
-inductive repeats {α : Type} : List α → Prop :=
-  | repeats_1 (x : α) (l : List α)
-              (H : In x l) : repeats (x :: l)
-  | repeats_2 (x : α) (l : List α)
-              (H : repeats l) : repeats (x :: l).
-
-Definition pigeonhole_principle_prop (α : Type) : Prop :=
-  forall l₁ l₂ : List α,
-    (forall x : α, In x l₁ → In x l₂) →
-    length l₂ < length l₁ → repeats l₁.
-
-theorem app_ass :
-  forall (α : Type) (l₁ l₂ l₃ : List α),
-    (l₁ ++ l₂) ++ l₃ = l₁ ++ l₂ ++ l₃.
-
-Proof.
-  intros α l₁ l₂ l₃.
-  induction l₁ as [ | h t IH].
-  {
-    - /- l₁ = nil -/
-    reflexivity.
-  }
-  {
-    - /- l₁ = h :: t -/
-    simpl.
-    rewrite → IH.
-    reflexivity.
-  }
-Qed.
-
-theorem app_length :
-  forall (α : Type) (l₁ l₂ : List α),
-    length (l₁ ++ l₂) = length l₁ + length l₂.
-
-Proof.
-  intros α l₁ l₂.
-  induction l₁ as [ | h t IH].
-  {
-    - /- l₁ = nil -/
-    reflexivity.
-  }
-  {
-    - /- l₁ = h :: t -/
-    simpl.
-    rewrite → IH.
-    reflexivity.
-  }
-Qed.
-
-theorem In_both_impl_repeats_app :
-  forall (α : Type) (x : α) (l₁ l₂ : List α),
-    In x l₁ → In x l₂ → repeats (l₁ ++ l₂).
-
-Proof.
-  intros α x l₁.
-  induction l₁ as [ | h₁ t1 IH].
-  {
-    - /- l₁ = nil -/
-    intros l₂ h₁ h₂.
-    inversion h₁.
-  }
-  {
-    - /- l₁ = h₁ :: t1 -/
-    intros l₂ h₁ h₂. simpl in h₁.
-    destruct h₁ as [h₃ | h₃].
-    {
-      +
-      simpl.
-      apply repeats_1.
-      apply In_app_iff.
-      right.
-      rewrite h₃.
-      apply h₂.
-    }
-    {
-      + /- h₁ = ai_later z u h₃ -/
-      simpl.
-      apply repeats_2.
-      apply IH.
-      {
-        apply h₃.
-      }
-      {
-        apply h₂.
-      }
-    }
-  }
-Qed.
-
-theorem In_app_iff_midswap :
-  forall (α : Type) (x : α) (l₁ l₂ l₃ l4 : List α),
-    In x (l₁ ++ l₂ ++ l₃ ++ l4) → In x (l₁ ++ l₃ ++ l₂ ++ l4).
-
-Proof.
-  intros α x l₁ l₂ l₃ l4 H.
-  apply In_app_iff in H.
-  destruct H as [h₁ | h₁r].
-  {
-    - /- In x l₁ -/
-    apply In_app_iff.
-    left.
-    apply h₁.
-  }
-  {
-    - /- In x (l₂ ++ l₃ ++ l4) -/
-    apply In_app_iff in h₁r.
-    destruct h₁r as [h₂ | h₂r].
-    {
-      + /- In x l₁ -/
-      apply In_app_iff.
-      right.
-      apply In_app_iff.
-      right.
-      apply In_app_iff.
-      left.
-      apply h₂.
-    }
-    {
-      + /- In x (l₃ ++ l4) -/
-      apply In_app_iff in h₂r.
-      destruct h₂r as [h₃ | h₃r].
-      {
-        * /- In x l₃ -/
-        apply In_app_iff.
-        right.
-        apply In_app_iff.
-        left.
-        apply h₃.
-      }
-      {
-        * /- In x l4 -/
-        apply In_app_iff.
-        right.
-        apply In_app_iff.
-        right.
-        apply In_app_iff.
-        right.
-        apply h₃r.
-      }
-    }
-  }
-Qed.
-
-theorem pigeonhole_principle_aux :
-  forall (α : Type) (l₁ l₂ u : List α),
-    (forall x : α, In x l₁ → In x (u ++ l₂)) →
-    length l₂ < length l₁ → repeats (u ++ l₁).
-
-Proof.
-  intros α l₁.
-  induction l₁ as [ | h₁ t1 IH].
-  {
-    - /- l₁ = nil -/
-    intros l₂ u h₁ h₂.
-    inversion h₂.
-  }
-  {
-    - /- l₁ = h₁ :: t1 -/
-    intros l₂ u h₁ h₂.
-    assert (h₃ : In h₁ (u ++ l₂)).
-    {
-      + /- Proof of h₃ -/
-      apply h₁.
-      left. reflexivity.
-    }
-    apply In_app_iff in h₃.
-    destruct h₃ as [h₃l | h₃r].
-    {
-      + /- In h₁ u -/
-      apply (In_both_impl_repeats_app _ h₁).
-      {
-        apply h₃l.
-      }
-      {
-        left. reflexivity.
-      }
-    }
-    {
-      + /- In h₁ l₂ -/
-      apply in_split in h₃r.
-      destruct h₃r as [v2 H4].
-      destruct H4 as [w2 H5].
-      assert (H6 : u ++ h₁ :: t1 = (u ++ [h₁]) ++ t1).
-      {
-        * /- Proof of H6 -/
-        rewrite → app_ass.
-        reflexivity.
-      }
-      rewrite → H6.
-      apply (IH (v2 ++ w2)).
-      {
-        * /- Proof of first condition of IH -/
-        intros x H7.
-        rewrite → app_ass.
-        apply In_app_iff_midswap.
-        simpl.
-        rewrite <- H5.
-        apply h₁.
-        right.
-        apply H7.
-      }
-      {
-        * /- Proof of second condition of IH -/
-        unfold lt.
-        assert (H8 : length l₂ = S (length (v2 ++ w2))).
-        {
-          rewrite → H5.
-          rewrite → app_length.
-          rewrite → app_length.
-          simpl.
-          rewrite <- plus_n_Sm.
-          reflexivity.
-        }
-        rewrite <- H8.
-        apply Sn_le_Sm__n_le_m.
-        unfold lt in h₂.
-        simpl in h₂.
-        apply h₂.
-      }
-    }
-  }
-Qed.
-
-theorem pigeonhole_principle :
-  forall α : Type,
-    pigeonhole_principle_prop α.
-
-Proof.
-  intros α.
-  unfold pigeonhole_principle_prop.
-  intros l₁ l₂ h₁ h₂.
-  assert (H: l₁ = nil ++ l₁). { reflexivity. }
-  rewrite H.
-  apply (pigeonhole_principle_aux _ _ l₂).
-  {
-    intros x h₃.
-    simpl.
-    apply h₁.
-    apply h₃.
-  }
-  {
-    apply h₂.
-  }
-Qed.
-
-End Pigeon.
+theorem pigeonhole_principle' {α : Type} {l₁ l₂ : List α}
+    (hin : ∀ x, x ∈ l₁ → x ∈ l₂) (hlen : l₂.length < l₁.length) :
+    Repeats l₁ :=
+  pigeonhole_aux l₁ [] l₂ hin hlen
 ```
 :::
+:::::
 ::::::
