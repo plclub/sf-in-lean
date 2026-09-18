@@ -62,10 +62,10 @@ around eighteen lines to one.
 ::::full
 The {tactic}`lia` tactic implements a decision procedure for _linear integer
 arithmetic_: propositional formulas whose atoms are linear
-constraints over the natural numbers and integers.
-:::dev "Roger Burtonpatel (rogerburtonpatel)"
-Should we explain first-order logic? do they know what this is?
-:::
+constraints over the natural numbers and integers. This is exactly the
+fragment of first-order logic (see the {ref "Logic"}[Logic] chapter)
+obtained by restricting connectives and quantifiers to arithmetic
+building blocks.
 
 If the goal is a universally quantified formula made out of
 
