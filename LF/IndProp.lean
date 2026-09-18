@@ -466,9 +466,11 @@ function. Fortunately, Lean allows us to define transitive closure
 as an inductive relation.
 
 The transitive closure of a binary relation cannot, in general, be
-[expressed in first-order logic](https://en.wikipedia.org/wiki/Transitive_closure#In_logic_and_computational_complexity).
+expressed in first-order logic (see the {ref "Logic"}[Logic] chapter),
+since doing so would require quantifying over relations themselves.
 The logic of Lean is, however, much
-more powerful and can easily define such inductive relations.
+more powerful — being higher-order, as we saw there — and can easily
+define such inductive relations.
 ::::
 
 ## Example: Reflexive and Transitive Closure
