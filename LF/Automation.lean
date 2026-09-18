@@ -54,22 +54,22 @@ theorem Perm3_In_old (α : Type) (x : α) (l₁ l₂ : List α)
     apply ih₂₃; apply ih₁₂; apply hIn
 ```
 
-In this file, we will introduce tactics that will shrink this proof from
-around eighteen lines to two.
+In this chapter, we will introduce tactics that will shrink this proof from
+around eighteen lines to one.
 
 # The {tactic}`lia` Tactic
 
 ::::full
-The {tactic}`lia` tactic implements a decision procedure for integer linear
-arithmetic, a subset of propositional logic and arithmetic. {tactic}`lia`
-is also a decision procedure for first-order logic.
-:::dev "@rogerburtonpatel"
+The {tactic}`lia` tactic implements a decision procedure for _linear integer
+arithmetic_: propositional formulas whose atoms are linear
+constraints over the natural numbers and integers.
+:::dev "Roger Burtonpatel (rogerburtonpatel)"
 Should we explain first-order logic? do they know what this is?
 :::
 
 If the goal is a universally quantified formula made out of
 
-  - numeric constants, addition (`+` and `succ`), subtraction (`-` and `pred`)
+  - numeric constants, addition (`+` and `succ`), subtraction (`-` and `pred`),
     and multiplication by constants,
 
   - equality (`=` and `≠`) and ordering (`≤` and `<`), and
@@ -78,9 +78,9 @@ If the goal is a universally quantified formula made out of
 
 then invoking {tactic}`lia` will either solve the goal or fail, meaning
 that the goal is actually false.  If the goal is _not_ of this
-form, {tactic}`lia` will fail. Note that when failing, {tactic}`lia`, may mention
+form, {tactic}`lia` will fail. Note that, when failing, {tactic}`lia` may mention
 another tactic, called {tactic}`grind`. This is another, more powerful tactic
-that implements {tactic}`lia`, but we will not use it here.
+that subsumes {tactic}`lia`, but we will not use it here.
 ::::
 
 ```lean
@@ -118,7 +118,7 @@ theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α)
     . lia -- was right; right; left; assumption
     . lia -- was contradiction
   | swap23 =>
-  /- Here, we solve _all_ goals ─ and eschew the `obtain` ─ with
+  /- Here, we solve _all_ goals — and skip the `obtain` — with
     the <;> tactic combinator, which we saw in the `Induction` chapter. -/
     rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
   | trans _ _ ih₁₂ ih₂₃ =>
@@ -229,12 +229,12 @@ these, but it is very useful together with the {tactic}`<;>` combinator.
 ::::
 
 ```lean
-inductive silly : Nat → Prop where
-| mk1 n (h : n > 1) : silly n
-| mk2 n (h : 1 ∈ []) : silly n
-| mk3 n (h : ∃ m, n = m + 2) : silly n
+inductive Silly : Nat → Prop where
+| mk1 n (h : n > 1) : Silly n
+| mk2 n (h : 1 ∈ []) : Silly n
+| mk3 n (h : ∃ m, n = m + 2) : Silly n
 
-example {n} (h : silly n) : n ≠ 1 := by
+example {n} (h : Silly n) : n ≠ 1 := by
   inversion h with
   | mk1 => lia
   | mk2 => contradiction
@@ -247,12 +247,12 @@ a more compact way to write this proof would be:
 ::::
 
 ::::terse
-The {tactic}`try` and {tactic}`<;>` combinators used together allow you to use a tactic to some,
+The {tactic}`try` and {tactic}`<;>` combinators used together allow you to apply a tactic to some,
 but not all, goals...
 ::::
 
 ```lean
-example {n} (h : silly n) : n ≠ 1 := by
+example {n} (h : Silly n) : n ≠ 1 := by
   cases h <;> try lia
   -- `lia` doesn't know that `1 ∈ []` is impossible, but we can use `contradiction`
   contradiction
@@ -316,7 +316,7 @@ example : 10 ∈ [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] := by
 
 ::::full
 The tactic `repeat t` never fails: if the tactic `t` doesn't apply
-to the original goal, then repeat _succeeds_ without changing the
+to the original goal, then `repeat t` _succeeds_ without changing the
 goal at all (i.e., it repeats zero times).
 
 ```lean
@@ -344,7 +344,7 @@ forever.
 ```lean +error
 example (m n : Nat) : m + n = n + m := by
   /- Uncomment the next line to see the infinite loop occur.  You will
-     then need to recomment it make Lean listen to you again. -/
+     then need to recomment it to make Lean listen to you again. -/
   -- repeat rewrite [Nat.add_comm]
 ```
 
@@ -379,7 +379,7 @@ example (n m : Nat) : n * (m + 1) = n * m + n := by
 ```
 
 ::::full
-Neither {tactic}`rfl` nor {tactic}`left` succeed on this goal,
+Neither {tactic}`rfl` nor {tactic}`left` succeeds on this goal,
 but {tactic}`lia` does, so {tactic}`first` stops after {tactic}`lia`
 and never tries {tactic}`induction`. As with {tactic}`try`,
 {tactic}`first` is most useful in combination with other combinators.
@@ -435,7 +435,7 @@ Our {name}`Perm3.In` example is getting quite short! But can we do better?
 
 ::::full
 The {tactic}`simp` tactic is Lean's _simplifier_, and it is one of the most powerful
-tools in the language. Given a set of lemmas ─ some built-in, some user-provided ─
+tools in the language. Given a set of lemmas — some built-in, some user-provided —
 {tactic}`simp` attempts to reduce a goal or hypothesis by rewriting with those lemmas
 as much as possible.
 
@@ -462,7 +462,7 @@ namespace simp_lemmas_example
 theorem add_zero (n : Nat) : n + 0 = n := by rfl
 
 @[simp]
-theorem add_succ (n m : Nat) : n + (m + 1) = (n + m) + 1:= by rfl
+theorem add_succ (n m : Nat) : n + (m + 1) = (n + m) + 1 := by rfl
 ```
 
 Instead of manually rewriting by the characterizing lemmas in the example below,
@@ -470,14 +470,14 @@ Instead of manually rewriting by the characterizing lemmas in the example below,
 
 ```lean
 theorem add_succ_nested (n m : Nat) :
-    n + (m + 1 + 1) = (n + m + 1)  + 1 := by
+    n + (m + 1 + 1) = (n + m + 1) + 1 := by
   simp
 ```
 
 ::::full
-If you know what theorems you want {tactic}`simp` to use for your goal proof, you can write
+If you know what theorems you want {tactic}`simp` to use to prove your goal, you can write
 `simp [<theorems>]`. If you want {tactic}`simp` to _only_ use those,
-you can use `simp only [<theorems>]`. Like with {tactic}`rw`, you can also supply a
+you can use `simp only [<theorems>]`. As with {tactic}`rw`, you can also supply a
 definition to {tactic}`simp` to simplify using that definition.
 ::::
 
@@ -487,7 +487,7 @@ definition to {tactic}`simp` to simplify using that definition.
 
 ```lean
 theorem add_succ_nested_2 (n m : Nat) :
-    n + (m + 1 + 1) = (n + m + 1)  + 1 := by
+    n + (m + 1 + 1) = (n + m + 1) + 1 := by
   simp only [add_succ, add_zero]
 ```
 
@@ -508,7 +508,7 @@ the suggested replacement. You should always do this
 for your final proof scripts: {tactic}`simp?` is helpful for writing
 a proof, but it should not show up in the final script.
 
-{tactic}`simp` is quite a powerful automated tactic, and is used
+{tactic}`simp` is quite a powerful automated tactic, and it is used
 heavily in real Lean developments. We can use {tactic}`simp` to further simplify our
 {name}`Perm3.In` proof.
 ::::
@@ -527,9 +527,9 @@ theorem Perm3_In_almost_shortest (α : Type) (x : α) (l₁ l₂ : List α)
 ```
 
 ::::full
-Like {tactic}`apply` and {tactic}`rw`, there's also a version of {tactic}`simp` that can simplify in
+As with {tactic}`apply` and {tactic}`rw`, there's also a version of {tactic}`simp` that can simplify in
 hypotheses, rather than the goal. Invoking {tactic}`simp` as `simp [<lemmas>] at h`
-runs the simplifier with at hypothesis `h`.
+runs the simplifier at hypothesis `h`.
 ::::
 
 ::::terse
@@ -540,7 +540,7 @@ The `simp ... at ...` tactic simplifies in a hypothesis.
 example α x (l₁ l₂ l₃ : List α)
     (h₁ : x ∈ l₁ ++ l₂)
     (h₂ : x ∈ l₂ ++ l₃) :
-    x ∈ l₁ ++  l₃ ∨ x ∈ l₂ := by
+    x ∈ l₁ ++ l₃ ∨ x ∈ l₂ := by
   simp at h₁; simp at h₂; simp; lia
 ```
 
@@ -558,7 +558,7 @@ The {tactic}`simp_all` tactic simplifies in all hypotheses and the goal.
 example α x (l₁ l₂ l₃ : List α)
     (h₁ : x ∈ l₁ ++ l₂)
     (h₂ : x ∈ l₂ ++ l₃) :
-    x ∈ l₁ ++  l₃ ∨ x ∈ l₂ := by
+    x ∈ l₁ ++ l₃ ∨ x ∈ l₂ := by
   simp_all; lia
 ```
 
@@ -579,7 +579,7 @@ _terminal_ {tactic}`simp` usage.
 
 A call to {tactic}`simp` is considered terminal either when it is the last tactic used to close a
 goal or when it is followed only by other automatic (also called "flexible") tactics like
-{tactic}`simp` or {tactic}`lia`. In idiomatic Lean, all non-terminal uses of {tactic}`simp` should
+{tactic}`simp` or {tactic}`lia`. In idiomatic Lean, all nonterminal uses of {tactic}`simp` should
 use the `only` qualifier and specify exactly which lemmas are being used to simplify.
 Use of {tactic}`simp` without `only` should only occur in terminal positions.
 
@@ -590,24 +590,24 @@ because it is followed only by other {tactic}`simp`s and {tactic}`lia`:
 example α x (l₁ l₂ l₃ : List α)
     (h₁ : x ∈ l₁ ++ l₂)
     (h₂ : x ∈ l₂ ++ l₃) :
-    x ∈ l₁ ++  l₃ ∨ x ∈ l₂ := by
+    x ∈ l₁ ++ l₃ ∨ x ∈ l₂ := by
   simp at h₁; simp at h₂; simp; lia
 ```
 
 On the other hand, if we instead decline to use {tactic}`lia` and solve the goal manually,
-this example uses {tactic}`simp` in a non-terminal position, and is considered poor style:
+this example uses {tactic}`simp` in a nonterminal position and is considered poor style:
 ::::
 
 ::::terse
 Don't use {tactic}`simp` without `only` unless you're closing a goal or following with a flexible
-tactic, like in this example below:
+tactic. The example below breaks this rule:
 ::::
 
 ```lean
 example α x (l₁ l₂ l₃ : List α)
     (h₁ : x ∈ l₁ ++ l₂)
     (h₂ : x ∈ l₂ ++ l₃) :
-    x ∈ l₁ ++  l₃ ∨ x ∈ l₂ := by
+    x ∈ l₁ ++ l₃ ∨ x ∈ l₂ := by
   simp at h₁; simp at h₂; simp
   cases h₁ with
   | inl h => left; left; exact h
@@ -632,7 +632,7 @@ they are using to simplify:
 example α x (l₁ l₂ l₃ : List α)
     (h₁ : x ∈ l₁ ++ l₂)
     (h₂ : x ∈ l₂ ++ l₃) :
-    x ∈ l₁ ++  l₃ ∨ x ∈ l₂ := by
+    x ∈ l₁ ++ l₃ ∨ x ∈ l₂ := by
   -- the * here targets all hypotheses and the goal
   simp only [List.mem_append] at *
   cases h₁ with
@@ -678,18 +678,18 @@ Appropriately defined {tactic}`simp` lemmas simplify left to right.
 A final automated tactic to have in your toolkit is {tactic}`trivial`,
 which tries a number of different simple tactics
 (such as {tactic}`rfl` or {tactic}`contradiction`)
-to try to close the current goal. Some examples:
+to close the current goal. Some examples:
 
 ```lean
 example : 1 = 1 := by trivial
 example : (1, 2).fst = 1 := by trivial
-example (a b : Prop) : ¬ a -> a -> b := by intro h₁ h₂; trivial
+example (a b : Prop) : ¬ a → a → b := by intro h₁ h₂; trivial
 ```
 
 # Case Study: Regular Expressions
 
 ::::full
-As a culminating exercise for this book and as practice using the automation techniques we
+As a culminating exercise for this chapter and as practice using the automation techniques we
 discussed above on a real proof,
 we examine the theory of regular expressions,
 eventually working up to a proof of the pumping lemma.
@@ -717,19 +717,19 @@ attribute [pp_nodot] RegExp.Char RegExp.App RegExp.Union RegExp.Star
 namespace RegExp
 ```
 
-Note that this definition is _polymorphic_: Regular
+Note that this definition is _polymorphic_: regular
 expressions in `RegExp α` describe strings with characters drawn
-from `α` ─ which in this exercise we represent as _lists_ with
+from `α` — which in this exercise we represent as _lists_ with
 elements from `α`.
 
 ::::full
-(Technical aside: We depart slightly from standard practice in
+(Technical aside: we depart slightly from standard practice in
 that we do not require the type `α` to be finite.  This results in
 a somewhat different theory of regular expressions, but the
 difference is not significant for present purposes.)
 ::::
 
-::::dev "Daniel Sainati (@dsainati1)"
+::::dev "Daniel Sainati (dsainati1)"
 CH: Do you mean here that this is different because the inductive type doesn't specify α is finite? In Lean the convention is for inductives not to carry Prop-valued typeclass assumptions, enforcing this only at the theorems that use them. So this could give off a slightly wrong impression.
 DHS: @bcpierce00 What was the purpose of this aside in the original Rocq text? Does it make sense to keep here?
 ::::
@@ -748,13 +748,13 @@ variable
 ```
 :::
 
-Informally this looks as follows:
+Informally, this looks as follows:
 
   - The regular expression {lean}`EmptySet` does not match any string.
 
   - {lean}`EmptyStr` matches the empty string {lean}`[]`.
 
-  - {lean}`Char x` matches the one-character string {lean}`x`.
+  - {lean}`Char x` matches the one-character string {lean}`[x]`.
 
   - If {lean}`re₁` matches {lean}`s₁`, and {lean}`re₂` matches {lean}`s₂`,
     then {lean}`App re₁ re₂` matches {lean}`s₁ ++ s₂`.
@@ -857,7 +857,7 @@ doesn't even _allow_ us to give such a "negative rule." We just
 don't happen to include any rule that would have the effect of
 {name}`EmptySet` matching some string.
 
-Second, the intuition we gave for {name}`Union` and {name}`Star` correspond
+Second, the intuition we gave for {name}`Union` and {name}`Star` corresponds
 to two constructors each: {name}`mUnionL` / {name}`mUnionR`, and {name}`mStar0` /
 {name}`mStarApp`.  The result is logically equivalent to the original
 intuition but more convenient to use in Lean, since the recursive
@@ -866,7 +866,7 @@ constructors, making it easier to perform induction on evidence.
 (The exercises below ask you
 to prove that the constructors given in the inductive declaration
 and the ones that would arise from a more literal transcription of
-the intuition is indeed equivalent.)
+the intuition are indeed equivalent.)
 
 Let's illustrate these rules with a few examples.
 ::::
@@ -877,7 +877,7 @@ Let's illustrate these rules with a few examples.
 example : [1] =~ Char 1 := by
   apply mChar
 
-example : [1, 2] =~ App (Char 1) (Char 2):= by
+example : [1, 2] =~ App (Char 1) (Char 2) := by
   apply mApp [1] <;> constructor
 ```
 
@@ -988,9 +988,9 @@ theorem MUnion' α (s : List α) (re₁ re₂ : RegExp α) :
 :::
 ::::
 
-The next lemma is stated in terms of the `fold` function on Lists:
-If `ss : List (List α)` represents a sequence of
-strings `s₁, ..., sₙ`, then {lean}`List.foldr (· ++ ·) ss []` is the result of
+The next lemma is stated in terms of the {name}`List.foldr` function on lists:
+if `ss : List (List α)` represents a sequence of
+strings `s₁, ..., sₙ`, then {lean}`List.foldr (· ++ ·) [] ss` is the result of
 concatenating them all together.
 
 ::::exercise (rating := 2) (name := "MStar'")
@@ -1049,11 +1049,11 @@ Naturally, proofs about {name}`ExpMatch` often require induction (on evidence!).
 ::::
 
 For example, suppose we want to prove the following intuitive
-fact: If a string {lean}`s` is matched by a regular expression {lean}`re`,
+fact: if a string {lean}`s` is matched by a regular expression {lean}`re`,
 then all elements of {lean}`s` must occur as character literals
 somewhere in {lean}`re`.
 
-To state this as a theorem, we first define a function `re_chars`
+To state this as a theorem, we first define a function `reChars`
 that lists all characters that occur in a regular expression:
 
 ```lean
@@ -1078,7 +1078,7 @@ theorem in_re_match {α : Type} {s : List α} {re : RegExp α} {x : α}
   | mApp _ _ _ _ ih₁ ih₂ =>
 
   /- Something interesting happens in the `mApp` case.  We obtain
-    _two_ induction hypotheses: One that applies when `x` occurs in
+    _two_ induction hypotheses: one that applies when `x` occurs in
     `s₁` (which is matched by `re₁`), and a second one that applies when `x`
     occurs in `s₂` (matched by `re₂`). -/
     workinclass!
@@ -1095,16 +1095,15 @@ theorem in_re_match {α : Type} {s : List α} {re : RegExp α} {x : α}
 
   /- Here again we get two induction hypotheses, and they illustrate
     why we need induction on evidence for `ExpMatch`, rather than
-    induction on the regular expression `re`: The latter would only
+    induction on the regular expression `re`: the latter would only
     provide an induction hypothesis for strings that match `re`, which
-    would not allow us to reason about the case `In x ∈ s₂`. -/
+    would not allow us to reason about the case `x ∈ s₂`. -/
     workinclass!
       simp only [List.mem_append] at hin
       cases hin with
       | inl hin₁ => exact ih₁ hin₁
       | inr hin₂ => exact ih₂ hin₂
 ```
-
 
 ::::exercise (rating := 1) (name := "reNotEmpty") (manual := true)
 Write a recursive function `reNotEmpty` that tests whether a
@@ -1184,7 +1183,7 @@ example α (s₁ s₂ : List α) (re : RegExp α) :
     s₁ ++ s₂ =~ Star re := by
   intro h₁
   /- Now, just doing an `inversion` on `h₁` won't get us very far in
-    the recursive cases. (Try it!). So we need induction (on
+    the recursive cases. (Try it!) So we need induction (on
     evidence). We might try this, but Lean won't let us: -/
   induction h₁
 ```
@@ -1221,7 +1220,7 @@ example α (s₁ s₂ : List α) (re re' : RegExp α) :
 
 The tactic `generalize h : e = x` causes Lean to (1) replace all
 occurrences of the expression `e` by the variable `x`, and (2) add
-an equation `h : x = e` to the context.  Here's how we can use it
+an equation `h : e = x` to the context.  Here's how we can use it
 to show the above result:
 
 ```lean
@@ -1231,8 +1230,8 @@ theorem star_app α (s₁ s₂ : List α) (re : RegExp α) :
     s₁ ++ s₂ =~ Star re := by
   intro h₁
   generalize heq : Star re = re' at h₁
-  /- We now have `heq : Star re = re'`.
-    heq` is contradictory in most cases, allowing us to conclude immediately via `contradiction`. -/
+  /- We now have `heq : Star re = re'`;
+    `heq` is contradictory in most cases, allowing us to conclude immediately via `contradiction`. -/
   induction h₁ <;> try contradiction
   -- The interesting cases are those that correspond to `Star`.
   case mStar0 _ => intro h₂; simp only [List.nil_append]; exact h₂
@@ -1243,13 +1242,13 @@ theorem star_app α (s₁ s₂ : List α) (re : RegExp α) :
     . assumption
     . apply ih₂ <;> trivial
   /- Note that the induction hypothesis `ih₂` on the `mStarApp` case
-    mentions an additional premise [Star re'' = Star re], which
+    mentions an additional premise `Star re'' = Star re`, which
     results from the equality generated by `generalize`. -/
 ```
 
 ::::exercise (rating := 1) (name := "exp_match_ex2") (optional := true)
 The `MStar''` lemma below (combined with its converse, the
-`MStar'` exercise above), shows that our definition of {name}`ExpMatch`
+`MStar'` exercise above) shows that our definition of {name}`ExpMatch`
 for {name}`Star` is equivalent to the informal one given previously.
 
 ```lean
@@ -1284,7 +1283,7 @@ a regular expression {lean}`re` can be "pumped" by repeating some middle
 section of {lean}`s` an arbitrary number of times to produce a new
 string also matching {lean}`re`.  For the sake of simplicity, this
 exercise considers a slightly weaker theorem than is usually
-stated in courses on automata theory ─ hence the name
+stated in courses on automata theory — hence the name
 `weak_pumping`.  The stronger one can be found below.
 
 To get started, we need to define "sufficiently long."  Since we
@@ -1373,7 +1372,7 @@ a (constructive!) way to generate strings matching {lean}`re` that are
 as long as we like.
 
 This proof is quite long, so to make it more tractable we've
-broken it up into a number of sub-proofs, which we then assemble
+broken it up into a number of subproofs, which we then assemble
 to prove the main lemma.
 
 Your job is to complete the proofs of the helper lemmas; the main
@@ -1505,7 +1504,7 @@ theorem weak_pumping_union_r {α : Type} (s₂ : List α) (re₁ re₂ : RegExp 
     (∀ m : Nat, s₁ ++ napp m s₀ ++ s₃ =~ Union re₁ re₂) := by
   -- symmetric to the previous
   have h : pumpingConstant re₂ ≤ s₂.length := by
-   solution!
+    solution!
       simp only [pumpingConstant] at hLen; lia
   solution!
     specialize ih h
@@ -1552,18 +1551,18 @@ theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α)
     (ih₁ : pumpingConstant re ≤ List.length s₁ →
       ∃ s₂ s₃ s₄ : List α,
         s₁ = s₂ ++ s₃ ++ s₄
-        ∧ s₃  ≠ [ ] ∧
+        ∧ s₃ ≠ [ ] ∧
         (∀ m : Nat, s₂ ++ napp m s₃ ++ s₄ =~ re))
     (ih₂ : pumpingConstant (Star re) ≤ s₂.length →
       ∃ s₁ s₃ s₄ : List α,
         s₂ = s₁ ++ s₃ ++ s₄ ∧
-        s₃  ≠ [ ] ∧
+        s₃ ≠ [ ] ∧
         (∀ m : Nat, s₁ ++ napp m s₃ ++ s₄ =~ Star re))
     (hLen : pumpingConstant (Star re) ≤ (s₁ ++ s₂).length) :
     ∃ s₀ s₃ s₄ : List α,
       s₁ ++ s₂ = s₀ ++ s₃ ++ s₄ ∧
-      s₃  ≠ [ ] ∧
-      (∀ m : Nat, s₀ ++ napp m s₃ ++ s₄ =~ .Star re)  := by
+      s₃ ≠ [ ] ∧
+      (∀ m : Nat, s₀ ++ napp m s₃ ++ s₄ =~ .Star re) := by
   rw [List.length_append] at *
   obtain hs₁len0 | ⟨s₁len, hs₁re₁⟩ | hs₁re₁ :
     (s₁.length = 0
@@ -1640,7 +1639,7 @@ theorem weak_pumping {α : Type} {re : RegExp α} {s : List α}
 
 ## The (Strong) Pumping Lemma
 
-:::dev "Daniel Sainati (@dsainati1)"
+:::dev "Daniel Sainati (dsainati1)"
 If this exercise is going to be optional we should still fill in the
 solution but it's lower priority.
 :::
@@ -1672,7 +1671,7 @@ end Pumping
 end RegExp
 ```
 
-## Palindrome Revisit
+## Palindromes Revisited
 
 :::::exercise (rating := 5) (name := "palindrome_converse") (optional := true)
 
@@ -1778,7 +1777,6 @@ theorem reverse_pal {α : Type} {n : Nat} {l : List α}
           simp_lemmas_example.add_succ, Nat.add_zero] at hlen
           lia
         · exact heq.2.symm
-
 
 theorem palindrome_converse {α : Type} {l : List α} (h : l = l.reverse) : Pal l := by
   exact reverse_pal rfl h
