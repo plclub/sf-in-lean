@@ -640,8 +640,8 @@ let ⟨a, b⟩ := v
 
 ::::::full
 :::::exercise (rating := 3) (name := "zip_unzip'")
-Here is an implementation of the {name}`unzip` function from
-chapter {ref "Poly"}[Poly]:
+Recall the {name}`unzip` function from chapter {ref "Poly"}[Poly];
+copy your implementation from that chapter and paste it below:
 
 ```lean
 def unzip' {α β : Type} (l : List (α × β)) : List α × List β := solution!(
