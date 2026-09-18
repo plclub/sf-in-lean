@@ -1,0 +1,365 @@
+{
+ "file": "LF/Automation.lean",
+ "chapter": "Automation",
+ "round": 1,
+ "proposals": [
+  {
+   "id": "automation-r01-001",
+   "cat": "usage/chapter-not-file",
+   "old": "In this file, we will introduce tactics that will shrink this proof from",
+   "new": "In this chapter, we will introduce tactics that will shrink this proof from",
+   "why": "The book calls its units chapters everywhere else (\"In this chapter, we'll learn\" three paragraphs up)."
+  },
+  {
+   "id": "automation-r01-002",
+   "cat": "comma/serial",
+   "old": "subtraction (`-` and `pred`)\n    and multiplication by constants,",
+   "new": "subtraction (`-` and `pred`),\n    and multiplication by constants,",
+   "why": "Serial comma before the last item of the three-item list, as in the sibling bullets."
+  },
+  {
+   "id": "automation-r01-003",
+   "cat": "comma/stray",
+   "old": "Note that when failing, {tactic}`lia`, may mention",
+   "new": "Note that when failing, {tactic}`lia` may mention",
+   "why": "Stray comma between subject and verb."
+  },
+  {
+   "id": "automation-r01-004",
+   "cat": "punctuation/dash",
+   "old": "  /- Here, we solve _all_ goals ─ and eschew the `obtain` ─ with",
+   "new": "  /- Here, we solve _all_ goals — and eschew the `obtain` — with",
+   "why": "Sentence dash set as the box-drawing character U+2500 (the one used to rule the inference lines), not an em dash; the chapter's real em dash is at \"Wait — did we just write\". This one is in a student-visible code comment."
+  },
+  {
+   "id": "automation-r01-005",
+   "cat": "usage/verb",
+   "old": "allow you to use a tactic to some,\nbut not all, goals...",
+   "new": "allow you to apply a tactic to some,\nbut not all, goals...",
+   "why": "\"Use a tactic to some goals\" does not parse; \"apply ... to\" does."
+  },
+  {
+   "id": "automation-r01-006",
+   "cat": "markup/code-font",
+   "old": "to the original goal, then repeat _succeeds_ without changing the",
+   "new": "to the original goal, then `repeat t` _succeeds_ without changing the",
+   "why": "The subject is the tactic `repeat t` named in code font at the start of the sentence."
+  },
+  {
+   "id": "automation-r01-007",
+   "cat": "typo/missing-word",
+   "old": "then need to recomment it make Lean listen to you again. -/",
+   "new": "then need to recomment it to make Lean listen to you again. -/",
+   "why": "Missing \"to\"."
+  },
+  {
+   "id": "automation-r01-008",
+   "cat": "agreement/neither-nor",
+   "old": "Neither {tactic}`rfl` nor {tactic}`left` succeed on this goal,",
+   "new": "Neither {tactic}`rfl` nor {tactic}`left` succeeds on this goal,",
+   "why": "\"Neither X nor Y\" with singular X and Y takes a singular verb (CMOS 5.143)."
+  },
+  {
+   "id": "automation-r01-009",
+   "cat": "punctuation/dash",
+   "old": "Given a set of lemmas ─ some built-in, some user-provided ─",
+   "new": "Given a set of lemmas — some built-in, some user-provided —",
+   "why": "Sentence dash set as the box-drawing character U+2500 (the one used to rule the inference lines), not an em dash; the chapter's real em dash is at \"Wait — did we just write\"."
+  },
+  {
+   "id": "automation-r01-010",
+   "cat": "formatting/code-spacing",
+   "old": "theorem add_succ (n m : Nat) : n + (m + 1) = (n + m) + 1:= by rfl",
+   "new": "theorem add_succ (n m : Nat) : n + (m + 1) = (n + m) + 1 := by rfl",
+   "why": "Missing space before `:=`; every other declaration in the chapter has one."
+  },
+  {
+   "id": "automation-r01-011",
+   "cat": "formatting/code-spacing",
+   "old": "    n + (m + 1 + 1) = (n + m + 1)  + 1 := by\n  simp\n",
+   "new": "    n + (m + 1 + 1) = (n + m + 1) + 1 := by\n  simp\n",
+   "why": "Doubled space before `+ 1`; the third copy of this statement (`add_succ_nested_3`) has one."
+  },
+  {
+   "id": "automation-r01-012",
+   "cat": "formatting/code-spacing",
+   "old": "    n + (m + 1 + 1) = (n + m + 1)  + 1 := by\n  simp only",
+   "new": "    n + (m + 1 + 1) = (n + m + 1) + 1 := by\n  simp only",
+   "why": "Doubled space before `+ 1`; the third copy of this statement (`add_succ_nested_3`) has one."
+  },
+  {
+   "id": "automation-r01-013",
+   "cat": "wording/awkward",
+   "old": "If you know what theorems you want {tactic}`simp` to use for your goal proof, you can write",
+   "new": "If you know what theorems you want {tactic}`simp` to use to prove your goal, you can write",
+   "why": "\"For your goal proof\" is not idiomatic; \"to prove your goal\" says the same thing."
+  },
+  {
+   "id": "automation-r01-014",
+   "cat": "usage/like-with",
+   "old": "you can use `simp only [<theorems>]`. Like with {tactic}`rw`, you can also supply a",
+   "new": "you can use `simp only [<theorems>]`. As with {tactic}`rw`, you can also supply a",
+   "why": "\"Like with\" is colloquial; \"as with\" is the standard form."
+  },
+  {
+   "id": "automation-r01-015",
+   "cat": "comma/compound-predicate",
+   "old": "{tactic}`simp` is quite a powerful automated tactic, and is used\nheavily in real Lean developments.",
+   "new": "{tactic}`simp` is quite a powerful automated tactic and is used\nheavily in real Lean developments.",
+   "why": "No comma before `and` joining two predicates of one subject."
+  },
+  {
+   "id": "automation-r01-016",
+   "cat": "typo/stray-word",
+   "old": "Like {tactic}`apply` and {tactic}`rw`, there's also a version of {tactic}`simp` that can simplify in\nhypotheses, rather than the goal. Invoking {tactic}`simp` as `simp [<lemmas>] at h`\nruns the simplifier with at hypothesis `h`.",
+   "new": "As with {tactic}`apply` and {tactic}`rw`, there's also a version of {tactic}`simp` that can simplify in\nhypotheses, rather than the goal. Invoking {tactic}`simp` as `simp [<lemmas>] at h`\nruns the simplifier at hypothesis `h`.",
+   "why": "Stray \"with\" in \"with at hypothesis\"; and the opening \"Like apply and rw, there's\" compares the tactics to a clause (\"as with\" fixes it). Adjacent lines, so one edit."
+  },
+  {
+   "id": "automation-r01-017",
+   "cat": "formatting/code-spacing",
+   "old": "The `simp ... at ...` tactic simplifies in a hypothesis.\n::::\n\n```lean\nexample α x (l₁ l₂ l₃ : List α)\n    (h₁ : x ∈ l₁ ++ l₂)\n    (h₂ : x ∈ l₂ ++ l₃) :\n    x ∈ l₁ ++  l₃ ∨ x ∈ l₂ := by",
+   "new": "The `simp ... at ...` tactic simplifies in a hypothesis.\n::::\n\n```lean\nexample α x (l₁ l₂ l₃ : List α)\n    (h₁ : x ∈ l₁ ++ l₂)\n    (h₂ : x ∈ l₂ ++ l₃) :\n    x ∈ l₁ ++ l₃ ∨ x ∈ l₂ := by",
+   "why": "Doubled space in `l₁ ++  l₃`, in each of the five copies of this example (the anchor is the sentence that introduces this copy)."
+  },
+  {
+   "id": "automation-r01-018",
+   "cat": "formatting/code-spacing",
+   "old": "The {tactic}`simp_all` tactic simplifies in all hypotheses and the goal.\n::::\n\n```lean\nexample α x (l₁ l₂ l₃ : List α)\n    (h₁ : x ∈ l₁ ++ l₂)\n    (h₂ : x ∈ l₂ ++ l₃) :\n    x ∈ l₁ ++  l₃ ∨ x ∈ l₂ := by",
+   "new": "The {tactic}`simp_all` tactic simplifies in all hypotheses and the goal.\n::::\n\n```lean\nexample α x (l₁ l₂ l₃ : List α)\n    (h₁ : x ∈ l₁ ++ l₂)\n    (h₂ : x ∈ l₂ ++ l₃) :\n    x ∈ l₁ ++ l₃ ∨ x ∈ l₂ := by",
+   "why": "Doubled space in `l₁ ++  l₃`, in each of the five copies of this example (the anchor is the sentence that introduces this copy)."
+  },
+  {
+   "id": "automation-r01-019",
+   "cat": "formatting/code-spacing",
+   "old": "because it is followed only by other {tactic}`simp`s and {tactic}`lia`:\n\n```lean\nexample α x (l₁ l₂ l₃ : List α)\n    (h₁ : x ∈ l₁ ++ l₂)\n    (h₂ : x ∈ l₂ ++ l₃) :\n    x ∈ l₁ ++  l₃ ∨ x ∈ l₂ := by",
+   "new": "because it is followed only by other {tactic}`simp`s and {tactic}`lia`:\n\n```lean\nexample α x (l₁ l₂ l₃ : List α)\n    (h₁ : x ∈ l₁ ++ l₂)\n    (h₂ : x ∈ l₂ ++ l₃) :\n    x ∈ l₁ ++ l₃ ∨ x ∈ l₂ := by",
+   "why": "Doubled space in `l₁ ++  l₃`, in each of the five copies of this example (the anchor is the sentence that introduces this copy)."
+  },
+  {
+   "id": "automation-r01-020",
+   "cat": "formatting/code-spacing",
+   "old": "tactic, like in this example below:\n::::\n\n```lean\nexample α x (l₁ l₂ l₃ : List α)\n    (h₁ : x ∈ l₁ ++ l₂)\n    (h₂ : x ∈ l₂ ++ l₃) :\n    x ∈ l₁ ++  l₃ ∨ x ∈ l₂ := by",
+   "new": "tactic, like in this example below:\n::::\n\n```lean\nexample α x (l₁ l₂ l₃ : List α)\n    (h₁ : x ∈ l₁ ++ l₂)\n    (h₂ : x ∈ l₂ ++ l₃) :\n    x ∈ l₁ ++ l₃ ∨ x ∈ l₂ := by",
+   "why": "Doubled space in `l₁ ++  l₃`, in each of the five copies of this example (the anchor is the sentence that introduces this copy)."
+  },
+  {
+   "id": "automation-r01-021",
+   "cat": "formatting/code-spacing",
+   "old": "they are using to simplify:\n\n```lean\nexample α x (l₁ l₂ l₃ : List α)\n    (h₁ : x ∈ l₁ ++ l₂)\n    (h₂ : x ∈ l₂ ++ l₃) :\n    x ∈ l₁ ++  l₃ ∨ x ∈ l₂ := by",
+   "new": "they are using to simplify:\n\n```lean\nexample α x (l₁ l₂ l₃ : List α)\n    (h₁ : x ∈ l₁ ++ l₂)\n    (h₂ : x ∈ l₂ ++ l₃) :\n    x ∈ l₁ ++ l₃ ∨ x ∈ l₂ := by",
+   "why": "Doubled space in `l₁ ++  l₃`, in each of the five copies of this example (the anchor is the sentence that introduces this copy)."
+  },
+  {
+   "id": "automation-r01-022",
+   "cat": "hyphenation/non-prefix",
+   "old": "In idiomatic Lean, all non-terminal uses of {tactic}`simp` should",
+   "new": "In idiomatic Lean, all nonterminal uses of {tactic}`simp` should",
+   "why": "CMOS 7.89: `non-` is closed."
+  },
+  {
+   "id": "automation-r01-023",
+   "cat": "comma/compound-predicate",
+   "old": "this example uses {tactic}`simp` in a non-terminal position, and is considered poor style:",
+   "new": "this example uses {tactic}`simp` in a nonterminal position and is considered poor style:",
+   "why": "No comma before `and` joining two predicates of one subject; also closes `non-` as in the previous edit (same line)."
+  },
+  {
+   "id": "automation-r01-024",
+   "cat": "usage/redundancy",
+   "old": "which tries a number of different simple tactics\n(such as {tactic}`rfl` or {tactic}`contradiction`)\nto try to close the current goal.",
+   "new": "which tries a number of different simple tactics\n(such as {tactic}`rfl` or {tactic}`contradiction`)\nto close the current goal.",
+   "why": "\"Tries ... to try to close\" doubles the verb."
+  },
+  {
+   "id": "automation-r01-025",
+   "cat": "markup/ascii-arrow",
+   "old": "example (a b : Prop) : ¬ a -> a -> b := by intro h₁ h₂; trivial",
+   "new": "example (a b : Prop) : ¬ a → a → b := by intro h₁ h₂; trivial",
+   "why": "ASCII arrows; every other statement in the chapter uses `→`."
+  },
+  {
+   "id": "automation-r01-026",
+   "cat": "punctuation/dash",
+   "old": "Note that this definition is _polymorphic_: Regular\nexpressions in `RegExp α` describe strings with characters drawn\nfrom `α` ─ which in this exercise we represent as _lists_ with",
+   "new": "Note that this definition is _polymorphic_: regular\nexpressions in `RegExp α` describe strings with characters drawn\nfrom `α` — which in this exercise we represent as _lists_ with",
+   "why": "Sentence dash set as the box-drawing character U+2500 (the one used to rule the inference lines), not an em dash; the chapter's real em dash is at \"Wait — did we just write\". Also lowercases \"regular\" after the colon (CMOS 6.61, single sentence follows); same sentence, so one edit."
+  },
+  {
+   "id": "automation-r01-027",
+   "cat": "colon/capitalization",
+   "old": "(Technical aside: We depart slightly from standard practice in",
+   "new": "(Technical aside: we depart slightly from standard practice in",
+   "why": "CMOS 6.61: lowercase after a colon introducing a single sentence."
+  },
+  {
+   "id": "automation-r01-028",
+   "cat": "markup/dev-author",
+   "old": "::::dev \"Daniel Sainati (@dsainati1)\"\nCH:",
+   "new": "::::dev \"Daniel Sainati (dsainati1)\"\nCH:",
+   "why": "Author strings are \"Full Name (github-handle)\" without the `@`, as in the other chapters' notes."
+  },
+  {
+   "id": "automation-r01-029",
+   "cat": "markup/dev-author",
+   "old": ":::dev \"Daniel Sainati (@dsainati1)\"\nIf this exercise",
+   "new": ":::dev \"Daniel Sainati (dsainati1)\"\nIf this exercise",
+   "why": "Author strings are \"Full Name (github-handle)\" without the `@`."
+  },
+  {
+   "id": "automation-r01-030",
+   "cat": "comma/introductory",
+   "old": "Informally this looks as follows:",
+   "new": "Informally, this looks as follows:",
+   "why": "Comma after the introductory adverb."
+  },
+  {
+   "id": "automation-r01-031",
+   "cat": "agreement/subject-verb",
+   "old": "Second, the intuition we gave for {name}`Union` and {name}`Star` correspond\nto two constructors each:",
+   "new": "Second, the intuition we gave for {name}`Union` and {name}`Star` corresponds\nto two constructors each:",
+   "why": "The subject is \"the intuition\", singular."
+  },
+  {
+   "id": "automation-r01-032",
+   "cat": "agreement/subject-verb",
+   "old": "the intuition is indeed equivalent.)",
+   "new": "the intuition are indeed equivalent.)",
+   "why": "The subject is \"the constructors ... and the ones ...\", plural."
+  },
+  {
+   "id": "automation-r01-033",
+   "cat": "formatting/code-spacing",
+   "old": "example : [1, 2] =~ App (Char 1) (Char 2):= by",
+   "new": "example : [1, 2] =~ App (Char 1) (Char 2) := by",
+   "why": "Missing space before `:=`."
+  },
+  {
+   "id": "automation-r01-034",
+   "cat": "colon/capitalization",
+   "old": "The next lemma is stated in terms of the `fold` function on Lists:\nIf `ss : List (List α)`",
+   "new": "The next lemma is stated in terms of the `fold` function on lists:\nif `ss : List (List α)`",
+   "why": "CMOS 6.61: lowercase after a colon introducing a single sentence; and \"lists\" is the common noun here, not the type name."
+  },
+  {
+   "id": "automation-r01-035",
+   "cat": "colon/capitalization",
+   "old": "fact: If a string {lean}`s` is matched by a regular expression {lean}`re`,",
+   "new": "fact: if a string {lean}`s` is matched by a regular expression {lean}`re`,",
+   "why": "CMOS 6.61: lowercase after a colon introducing a single sentence."
+  },
+  {
+   "id": "automation-r01-036",
+   "cat": "naming/stale-identifier",
+   "old": "we first define a function `re_chars`\nthat lists all characters",
+   "new": "we first define a function `reChars`\nthat lists all characters",
+   "why": "The code below defines `reChars`; the snake-case name is the Rocq one."
+  },
+  {
+   "id": "automation-r01-037",
+   "cat": "colon/capitalization",
+   "old": "_two_ induction hypotheses: One that applies when `x` occurs in",
+   "new": "_two_ induction hypotheses: one that applies when `x` occurs in",
+   "why": "CMOS 6.61: lowercase after a colon introducing a single sentence (student-visible code comment)."
+  },
+  {
+   "id": "automation-r01-038",
+   "cat": "naming/stale-identifier",
+   "old": "induction on the regular expression `re`: The latter would only\n    provide an induction hypothesis for strings that match `re`, which\n    would not allow us to reason about the case `In x ∈ s₂`. -/",
+   "new": "induction on the regular expression `re`: the latter would only\n    provide an induction hypothesis for strings that match `re`, which\n    would not allow us to reason about the case `x ∈ s₂`. -/",
+   "why": "`In x ∈ s₂` mixes the Rocq `In` with the Lean `∈`; also lowercases \"the latter\" after the colon. Same comment, so one edit."
+  },
+  {
+   "id": "automation-r01-039",
+   "cat": "formatting/blank-lines",
+   "old": "      | inr hin₂ => exact ih₂ hin₂\n```\n\n\n::::exercise (rating := 1) (name := \"reNotEmpty\")",
+   "new": "      | inr hin₂ => exact ih₂ hin₂\n```\n\n::::exercise (rating := 1) (name := \"reNotEmpty\")",
+   "why": "Two blank lines in a row; the source uses at most one."
+  },
+  {
+   "id": "automation-r01-040",
+   "cat": "punctuation/parenthesis",
+   "old": "the recursive cases. (Try it!). So we need induction",
+   "new": "the recursive cases. (Try it!) So we need induction",
+   "why": "A parenthetical sentence with its own terminal punctuation takes no period after the closing parenthesis (CMOS 6.13)."
+  },
+  {
+   "id": "automation-r01-041",
+   "cat": "markup/backtick",
+   "old": "  /- We now have `heq : Star re = re'`.\n    heq` is contradictory",
+   "new": "  /- We now have `heq : Star re = re'`.\n    `heq` is contradictory",
+   "why": "Missing opening backtick; the span renders as a stray backtick."
+  },
+  {
+   "id": "automation-r01-042",
+   "cat": "markup/code-font",
+   "old": "mentions an additional premise [Star re'' = Star re], which",
+   "new": "mentions an additional premise `Star re'' = Star re`, which",
+   "why": "Rocq-style square-bracket code quoting; Lean comments in this book use backticks."
+  },
+  {
+   "id": "automation-r01-043",
+   "cat": "comma/stray",
+   "old": "`MStar'` exercise above), shows that our definition of {name}`ExpMatch`",
+   "new": "`MStar'` exercise above) shows that our definition of {name}`ExpMatch`",
+   "why": "Stray comma between subject and verb after the closing parenthesis."
+  },
+  {
+   "id": "automation-r01-044",
+   "cat": "punctuation/dash",
+   "old": "stated in courses on automata theory ─ hence the name",
+   "new": "stated in courses on automata theory — hence the name",
+   "why": "Sentence dash set as the box-drawing character U+2500 (the one used to rule the inference lines), not an em dash; the chapter's real em dash is at \"Wait — did we just write\"."
+  },
+  {
+   "id": "automation-r01-045",
+   "cat": "hyphenation/sub-prefix",
+   "old": "broken it up into a number of sub-proofs, which we then assemble",
+   "new": "broken it up into a number of subproofs, which we then assemble",
+   "why": "CMOS 7.89: `sub-` is closed."
+  },
+  {
+   "id": "automation-r01-046",
+   "cat": "formatting/indentation",
+   "old": "  have h : pumpingConstant re₂ ≤ s₂.length := by\n   solution!\n      simp only [pumpingConstant] at hLen; lia",
+   "new": "  have h : pumpingConstant re₂ ≤ s₂.length := by\n    solution!\n      simp only [pumpingConstant] at hLen; lia",
+   "why": "`solution!` is indented three spaces here and four in the symmetric `weak_pumping_union_l` just above."
+  },
+  {
+   "id": "automation-r01-047",
+   "cat": "formatting/code-spacing",
+   "old": "        s₁ = s₂ ++ s₃ ++ s₄\n        ∧ s₃  ≠ [ ] ∧",
+   "new": "        s₁ = s₂ ++ s₃ ++ s₄\n        ∧ s₃ ≠ [ ] ∧",
+   "why": "Doubled space before `≠`; the same conjunct is single-spaced in the earlier pumping lemmas."
+  },
+  {
+   "id": "automation-r01-048",
+   "cat": "formatting/code-spacing",
+   "old": "    (ih₂ : pumpingConstant (Star re) ≤ s₂.length →\n      ∃ s₁ s₃ s₄ : List α,\n        s₂ = s₁ ++ s₃ ++ s₄ ∧\n        s₃  ≠ [ ] ∧",
+   "new": "    (ih₂ : pumpingConstant (Star re) ≤ s₂.length →\n      ∃ s₁ s₃ s₄ : List α,\n        s₂ = s₁ ++ s₃ ++ s₄ ∧\n        s₃ ≠ [ ] ∧",
+   "why": "Doubled space before `≠`."
+  },
+  {
+   "id": "automation-r01-049",
+   "cat": "formatting/code-spacing",
+   "old": "      s₁ ++ s₂ = s₀ ++ s₃ ++ s₄ ∧\n      s₃  ≠ [ ] ∧\n      (∀ m : Nat, s₀ ++ napp m s₃ ++ s₄ =~ .Star re)  := by",
+   "new": "      s₁ ++ s₂ = s₀ ++ s₃ ++ s₄ ∧\n      s₃ ≠ [ ] ∧\n      (∀ m : Nat, s₀ ++ napp m s₃ ++ s₄ =~ .Star re) := by",
+   "why": "Doubled space before `≠` and before `:=`; adjacent lines, so one edit."
+  },
+  {
+   "id": "automation-r01-050",
+   "cat": "wording/heading",
+   "old": "## Palindrome Revisit",
+   "new": "## Palindromes Revisited",
+   "why": "\"Revisit\" is not a noun modifier in this position; the usual heading form is \"X Revisited\"."
+  },
+  {
+   "id": "automation-r01-051",
+   "cat": "formatting/blank-lines",
+   "old": "        · exact heq.2.symm\n\n\ntheorem palindrome_converse",
+   "new": "        · exact heq.2.symm\n\ntheorem palindrome_converse",
+   "why": "Two blank lines in a row; the source uses at most one."
+  }
+ ],
+ "completed": true
+}
