@@ -178,7 +178,9 @@ to solve the following example, which requires simplifying the `++` and {lean}`L
 ```lean
 example (n m o : Nat)
     (h : [n] ++ [m] = List.reverse ([o] ++ [o])) :
-    n = m := by sorry
+    n = m := by
+  injections h₁ _ h₃
+  rw [h₁, h₃]
 ```
 
 :::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement
