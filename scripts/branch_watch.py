@@ -497,16 +497,15 @@ def fetch_prs(slug, token):
                     "body": first["body"] or "",
                 })
             # A requested reviewer the token cannot read (a team request, say)
-            # comes back as a null node with a FORBIDDEN error; count the
-            # requests separately from the names we could resolve, so the
-            # "waiting for …" line can still say approval is what's missing.
+            # comes back as a null node with a FORBIDDEN error; keep the names
+            # we could resolve, and the "waiting for …" line falls back to
+            # plain "approval" when there are none.
             requested = []
             for rq in pr["reviewRequests"]["nodes"]:
                 rr = rq["requestedReviewer"] or {}
                 who = rr.get("login") or rr.get("name")
                 if who:
                     requested.append(who)
-            requested_n = len(pr["reviewRequests"]["nodes"])
             reviews = [{"login": (rv["author"] or {}).get("login"),
                         "state": rv["state"],
                         "at": parse_ts(rv["submittedAt"])}
@@ -529,7 +528,6 @@ def fetch_prs(slug, token):
                 "author": (pr.get("author") or {}).get("login"),
                 "ci": roll["state"] if roll else None,
                 "requested": requested,
-                "requested_n": requested_n,
                 "reviews": reviews,
                 "threads": open_threads,
                 "external": pr["isCrossRepository"],
@@ -782,9 +780,11 @@ def next_action(pr, b):
       * changes requested — on the author to address them, *unless* every
         change-requesting review predates the branch's last commit, in which
         case the ball is back with those reviewers for a re-review;
-      * nobody has reviewed it yet — on the requested reviewers by name
-        (just "approval" when no request is readable to the token, e.g. a team
-        request), or on "a reviewer" when nobody has been asked;
+      * nobody has reviewed it yet — on the requested reviewers by name, or
+        just on "approval" when no reviewer is nameable: the request went to
+        a team the token cannot read (CODEOWNERS sends every PR here to one),
+        or there is no request outstanding — either way what is missing is
+        the same approval, so the line does not distinguish the two;
       * approved but threads still open — on the author to resolve them;
       * approved and clean but conflicting with `main` — on the author to
         rebase/merge.
@@ -812,10 +812,7 @@ def next_action(pr, b):
         req = pr.get("requested") or []
         if req:
             return f"{_people_links(req, 'a reviewer')} to review"
-        if pr.get("requested_n"):
-            # Requests exist but none were readable (a team request, say).
-            return "approval"
-        return "a reviewer to pick it up — nobody asked yet"
+        return "approval"
     if pr["unresolved"]:
         n = pr["unresolved"]
         return f"{author} to resolve {n} open thread{'' if n == 1 else 's'}"

@@ -121,27 +121,27 @@ Use informal mathematical notations everywhere we can!
 Here's a very nice problem that Arthur proposed but that we
 haven't found the time to write out in detail.
 
-      {{ X = n /\ n > 1 }}
-    P := 1;
+      {{ X = n ∧ n > 1 }}
+    p := 1;
     D := 2;
-    while D < X AND P = 1 do
+    while D < X AND p = 1 do
       Y := X;
       while Y >= D do
         Y := Y - D
       end;
       {{ exists q, X = q * D + Y }}
       if Y = 0 then
-        P := 0
+        p := 0
       else
         skip
       end;
       D := D + 1
     end
-      {{ I /\ (D >= X \/ P <> 1) }} ->>
-      {{ P = 1 -> (forall d, (exists q, n = d * q) -> d = 1 \/ d = n) }}
+      {{ I ∧ (D >= X ∨ p ≠ 1) }} ->>
+      {{ p = 1 -> (∀ d, (exists q, n = d * q) -> d = 1 ∨ d = n) }}
 
-    I = (P = 1 -> (forall d, d <= D -> (exists q, X = d * q) -> d = 1 \/ d = n))
-       /\ X = n /\ n > 1
+    I = (p = 1 -> (∀ d, d ≤ D -> (exists q, X = d * q) -> d = 1 ∨ d = n))
+       ∧ X = n ∧ n > 1
 ```
 
 ```
@@ -152,7 +152,7 @@ exercise -- nice because it has nested loops...
    Z := 0;
    {{ I }}
    while Y > 0 do
-     {{ I /\ Y>0 }}
+     {{ I ∧ Y>0 }}
      X := Y;
      while X > 0 do
        Z := Z + 1;
@@ -161,7 +161,7 @@ exercise -- nice because it has nested loops...
      Y := Y - 1
      {{ I }}
    end
-   {{ I /\ ~(Y > 0) }}
+   {{ I ∧ ~(Y > 0) }}
    {{ Z = n*(n-1)/2 }}
 
    where I = Z + Y*(Y+1)/2 = n*(n+1)/2
@@ -196,8 +196,8 @@ X := X + 1; Y := X + 1
 
 :::instructors
 ```
-forall m, {{ X=m }} c {{ X = m+1 /\ Y = m+2 }}
-vs {{ TRUE }} c {{ Y > X }}
+∀ m, {{ X=m }} c {{ X = m+1 ∧ Y = m+2 }}
+vs {{ True }} c {{ Y > X }}
 ```
 :::
 ::::
@@ -206,7 +206,7 @@ vs {{ TRUE }} c {{ Y > X }}
 :::instructors
 ```
 Much more interesting: one obvious spec is
-{{True}}c{{X<=Y}}, but this loses the fact that the final values
+{{True}} c {{X≤Y}}, but this loses the fact that the final values
 are either the same as the initial or else swapped, so then a spec
 with parameters seems preferable.  There's also a potential
 confusion about whether to say something about Z in the
@@ -217,7 +217,7 @@ postcondition.
 Write down a (useful) specification for the following program:
 
 ```display
-if X <= Y then
+if X ≤ Y then
   skip
 else
   Z := X;
@@ -246,7 +246,7 @@ Write down a (useful) specification for the following program:
 ```display
 X := m;
 Z := 0;
-while X <> 0 do
+while X ≠ 0 do
   X := X - 2;
   Z := Z + 1
 end
@@ -277,7 +277,7 @@ For example, consider the program:
 ```display
 X := m;
 Z := p;
-while X <> 0 do
+while X ≠ 0 do
   Z := Z - 1;
   X := X - 1
 end
@@ -293,7 +293,7 @@ form of a Hoare triple:
 {{ True }}
 X := m;
 Z := p;
-while X <> 0 do
+while X ≠ 0 do
   Z := Z - 1;
   X := X - 1
 end
@@ -317,19 +317,19 @@ proof of this specification:
 {{ m = m }}
   X := m
                      {{ X = m }} ->>
-                     {{ X = m /\ p = p }};
+                     {{ X = m ∧ p = p }};
   Z := p;
-                     {{ X = m /\ Z = p }} ->>
+                     {{ X = m ∧ Z = p }} ->>
                      {{ Z - X = p - m }}
-  while X <> 0 do
-                     {{ Z - X = p - m /\ X <> 0 }} ->>
+  while X ≠ 0 do
+                     {{ Z - X = p - m ∧ X ≠ 0 }} ->>
                      {{ (Z - 1) - (X - 1) = p - m }}
     Z := Z - 1
                      {{ Z - (X - 1) = p - m }};
     X := X - 1
                      {{ Z - X = p - m }}
   end
-{{ Z - X = p - m /\ ~ (X <> 0) }} ->>
+{{ Z - X = p - m ∧ ¬ (X ≠ 0) }} ->>
 {{ Z = p - m }}
 ```
 
@@ -339,22 +339,22 @@ HIDE: MRC'20: It bothers me a little in the proof above (and
 similarly throughout the whole file really when it comes to guards)
 that when we get to this part:
 [[
- while X <> 0 do {{ Z - X = p - m /\ X <> 0 }} ->>
+ while X ≠ 0 do {{ Z - X = p - m ∧ X ≠ 0 }} ->>
 ]]
-we are inconsistent about [X <> 0] vs. [~(X=0)].  I admit they
+we are inconsistent about [X ≠ 0] vs. [~(X=0)].  I admit they
 evaluate the same (er, sort of---the former is a [bexp] whereas the
 latter is an assertion), but they aren't syntactically the same.
 Since what we're teaching here (mechanized Hoare logic) is fussy
 about syntax, it strikes me as something we ought to be precise
 about. But it's an annoying change to propagate through the file,
 so I haven't done it. Is it worth a comment, or do others not get
-bothered by this?  Another way to fix this would be to add the [<>]
+bothered by this?  Another way to fix this would be to add the [≠]
 operator to Imp, so that we can write the guard in the nicer way.
 
 BCP 20: I think adding in a few more boolean operators at the
 outside is the way to go...
 
-BCP 21: ... and I've now done this: <> is available in formal
+BCP 21: ... and I've now done this: ≠ is available in formal
 bexps (also >).
 ```
 :::
@@ -406,14 +406,14 @@ WORK IN CLASS
 
 ::::full
 ```display
-(1)    {{ X = m /\ Y = n }} ->>
-(2)    {{ (X + Y) - ((X + Y) - Y) = n /\ (X + Y) - Y = m }}
+(1)    {{ X = m ∧ Y = n }} ->>
+(2)    {{ (X + Y) - ((X + Y) - Y) = n ∧ (X + Y) - Y = m }}
          X := X + Y
-(3)                     {{ X - (X - Y) = n /\ X - Y = m }};
+(3)                     {{ X - (X - Y) = n ∧ X - Y = m }};
          Y := X - Y
-(4)                     {{ X - Y = n /\ Y = m }};
+(4)                     {{ X - Y = n ∧ Y = m }};
          X := X - Y
-(5)    {{ X = n /\ Y = m }}
+(5)    {{ X = n ∧ Y = m }}
 ```
 
 The decorations can be constructed as follows:
@@ -461,12 +461,12 @@ with a possible specification:
 
 ```display
 {{ True }}
-  if X <= Y then
+  if X ≤ Y then
     Z := Y - X
   else
     Z := X - Y
   end
-{{ Z + X = Y \/ Z + Y = X }}
+{{ Z + X = Y ∨ Z + Y = X }}
 ```
 
 Let's turn it into a decorated program...
@@ -481,18 +481,18 @@ Here is a simple decorated program using conditionals:
 
 ```display
 (1)   {{ True }}
-        if X <= Y then
-(2)                    {{ True /\ X <= Y }} ->>
-(3)                    {{ (Y - X) + X = Y \/ (Y - X) + Y = X }}
+        if X ≤ Y then
+(2)                    {{ True ∧ X ≤ Y }} ->>
+(3)                    {{ (Y - X) + X = Y ∨ (Y - X) + Y = X }}
           Z := Y - X
-(4)                    {{ Z + X = Y \/ Z + Y = X }}
+(4)                    {{ Z + X = Y ∨ Z + Y = X }}
         else
-(5)                    {{ True /\ ~(X <= Y) }} ->>
-(6)                    {{ (X - Y) + X = Y \/ (X - Y) + Y = X }}
+(5)                    {{ True ∧ ¬(X ≤ Y) }} ->>
+(6)                    {{ (X - Y) + X = Y ∨ (X - Y) + Y = X }}
           Z := X - Y
-(7)                    {{ Z + X = Y \/ Z + Y = X }}
+(7)                    {{ Z + X = Y ∨ Z + Y = X }}
         end
-(8)   {{ Z + X = Y \/ Z + Y = X }}
+(8)   {{ Z + X = Y ∨ Z + Y = X }}
 ```
 
 These decorations can be constructed as follows:
@@ -510,10 +510,10 @@ These decorations can be constructed as follows:
 
   - Finally, we verify that (2) implies (3) and (5) implies (6). Both
     of these implications crucially depend on the ordering of `X` and
-    `Y` obtained from the guard. For instance, knowing that `X <= Y`
+    `Y` obtained from the guard. For instance, knowing that `X ≤ Y`
     ensures that subtracting `X` from `Y` and then adding back `X`
     produces `Y`, as required by the first disjunct of (3). Similarly,
-    knowing that `~ (X <= Y)` ensures that subtracting `Y` from `X`
+    knowing that `¬ (X ≤ Y)` ensures that subtracting `Y` from `X`
     and then adding back `Y` produces `X`, as needed by the second
     disjunct of (6). Note that `n - m + m = n` does _not_ hold for
     arbitrary natural numbers `n` and `m` (for example, \[3 - 5 + 5 =
@@ -536,7 +536,7 @@ Fill in valid decorations for the following program:
 
 ```display
 {{ True }}
-  if X <= Y then
+  if X ≤ Y then
             {{                         }} ->>
             {{                         }}
     Z := Y - X
@@ -555,13 +555,13 @@ Briefly justify each use of `->>`.
 :::solution
 ```display
 {{ True }}
-  if X <= Y then
-       {{ True /\ X <= Y }} ->>
+  if X ≤ Y then
+       {{ True ∧ X ≤ Y }} ->>
        {{ Y = X + (Y - X) }}
     Z := Y - X
        {{ Y = X + Z }}
   else
-       {{ True /\ ~(X <= Y) }} ->>
+       {{ True ∧ ¬(X ≤ Y) }} ->>
        {{ X + Z = X + Z }}
     Y := X + Z
        {{ Y = X + Z }}
@@ -570,7 +570,7 @@ Briefly justify each use of `->>`.
 ```
 
 The second use of consequence is trivial, while the first
-crucially depends on the `X <= Y` condition, which ensures that
+crucially depends on the `X ≤ Y` condition, which ensures that
 subtracting `X` from `Y` and then adding back `X` produces `Y`.
 :::
 :::::
@@ -585,7 +585,7 @@ specification:
 
 ```display
 {{ True }}
-  while (X <> 0) do
+  while (X ≠ 0) do
     X := X - 1
   end
 {{ X = 0 }}
@@ -602,13 +602,13 @@ as a loop invariant.
 
 ```display
 (1)    {{ True }}
-         while X <> 0 do
-(2)                  {{ True /\ X <> 0 }} ->>
+         while X ≠ 0 do
+(2)                  {{ True ∧ X ≠ 0 }} ->>
 (3)                  {{ True }}
            X := X - 1
 (4)                  {{ True }}
          end
-(5)    {{ True /\ ~(X <> 0) }} ->>
+(5)    {{ True ∧ ¬(X ≠ 0) }} ->>
 (6)    {{ X = 0 }}
 ```
 
@@ -651,7 +651,7 @@ remainder of parameters `m` and `n`.
 ```display
 X := m;
 Y := 0;
-while n <= X do
+while n ≤ X do
   X := X - n;
   Y := Y + 1
 end;
@@ -671,11 +671,11 @@ Here's a possible specification:
 {{ True }}
   X := m;
   Y := 0;
-  while n <= X do
+  while n ≤ X do
     X := X - n;
     Y := Y + 1
   end
-{{ n * Y + X = m /\ X < n }}
+{{ n * Y + X = m ∧ X < n }}
 ```
 ::::
 
@@ -686,7 +686,7 @@ WORK IN CLASS
 ::::full
 In order to give a specification to this program we need to
 remember that dividing `m` by `n` produces a remainder `X` and a
-quotient `Y` such that `n * Y + X = m /\ X < n`.
+quotient `Y` such that `n * Y + X = m ∧ X < n`.
 
 It turns out that we get lucky with this program and don't have to
 think very hard about the loop invariant: the loop invariant is just
@@ -700,16 +700,16 @@ decorate the program.
  (3)                     {{ n * 0 + X = m }}
         Y := 0;
  (4)                     {{ n * Y + X = m }}
-        while n <= X do
- (5)                     {{ n * Y + X = m /\ n <= X }} ->>
+        while n ≤ X do
+ (5)                     {{ n * Y + X = m ∧ n ≤ X }} ->>
  (6)                     {{ n * (Y + 1) + (X - n) = m }}
           X := X - n;
  (7)                     {{ n * (Y + 1) + X = m }}
           Y := Y + 1
  (8)                     {{ n * Y + X = m }}
         end
- (9)  {{ n * Y + X = m /\ ~ (n <= X) }} ->>
-(10)  {{ n * Y + X = m /\ X < n }}
+ (9)  {{ n * Y + X = m ∧ ¬ (n ≤ X) }} ->>
+(10)  {{ n * Y + X = m ∧ X < n }}
 ```
 
 Assertions (4), (5), (8), and (9) are derived mechanically from
@@ -723,11 +723,11 @@ the uses of the consequence rule are correct — i.e., that (1)
 implies (2), that (5) implies (6), and that (9) implies (10). This
 is indeed the case:
   - (1) ->> (2):  trivial, by algebra.
-  - (5) ->> (6):  because `n <= X`, we are guaranteed that the
+  - (5) ->> (6):  because `n ≤ X`, we are guaranteed that the
     subtraction in (6) does not get zero-truncated.  We can
     therefore rewrite (6) as `n * Y + n + X - n` and cancel the
     `n`s, which results in the left conjunct of (5).
-  - (9) ->> (10):  if `~ (n <= X)` then `X < n`.  That's
+  - (9) ->> (10):  if `¬ (n ≤ X)` then `X < n`.  That's
     straightforward from high-school algebra.
 So, we have a valid decorated program.
 ::::
@@ -892,7 +892,7 @@ lot of repeated annotations: a simple program like
 `skip;skip` would be decorated like this,
 
 ```display
-{{P}} ({{P}} skip {{P}}) ; ({{P}} skip {{P}}) {{P}}
+{{p}} ({{p}} skip {{p}}) ; ({{p}} skip {{p}}) {{p}}
 ```
 
 with pre- and post-conditions around each `skip`, plus identical
@@ -916,7 +916,7 @@ preconditions whenever possible and embed just postconditions.
 postcondition
 
 ```display
-skip {{ Q }}
+skip {{ q }}
 ```
 
 on the assumption that the precondition will be provided by
@@ -930,15 +930,15 @@ which it is used.
 :::slidebreak
 :::
 
-- Sequences `d1 ; d2` need no additional decorations.
+- Sequences `d₁ ; d₂` need no additional decorations.
 
 Why?
 
-Because inside `d2` there will be a postcondition, which also
-serves as the postcondition of `d1;d2`.
+Because inside `d₂` there will be a postcondition, which also
+serves as the postcondition of `d₁;d₂`.
 
-Similarly, inside `d1` there will also be a postcondition, which
-additionally serves as the _precondition_ for `d2`.
+Similarly, inside `d₁` there will also be a postcondition, which
+additionally serves as the _precondition_ for `d₂`.
 
 :::slidebreak
 :::
@@ -946,23 +946,23 @@ additionally serves as the _precondition_ for `d2`.
 - An assignment `X := a` is decorated only with its postcondition:
 
 ```display
-X := a {{ Q }}
+X := a {{ q }}
 ```
 
 :::slidebreak
 :::
 
-- A conditional `if b then d1 else d2` is decorated with a
+- A conditional `if b then d₁ else d₂` is decorated with a
 postcondition for the entire statement, as well as preconditions
 for each branch:
 
 ```display
-if b then {{ P1 }} d1 else {{ P2 }} d2 end {{ Q }}
+if b then {{ p₁ }} d₁ else {{ p₂ }} d₂ end {{ q }}
 ```
 
 :::dev "Benjamin Pierce (bcpierce00)" BeforeNextRelease (year := 2025)
 Maybe we need a note here about why we don't just
-calculate P1 and P2 later, once we know the precondition of the
+calculate p₁ and p₂ later, once we know the precondition of the
 whole loop. Indeed, we could (and perhaps should, as discussed
 elsewhere), but we are doing something simpler for the moment.
 :::
@@ -970,11 +970,11 @@ elsewhere), but we are doing something simpler for the moment.
 :::slidebreak
 :::
 
-- A loop `while b do d end` is decorated with its final
+- A loop `while (b) {d}` is decorated with its final
 postcondition plus a precondition for the body:
 
 ```display
-while b do {{ P }} d end {{ Q }}
+while (b) {{ p }} { d } {{ q }}
 ```
 
 The postcondition embedded in `d` serves as the loop invariant.
@@ -986,13 +986,13 @@ The postcondition embedded in `d` serves as the loop invariant.
 precondition...
 
 ```display
-->> {{ P }} d
+->> {{ p }} d
 ```
 
 ...or for a postcondition:
 
 ```display
-d ->> {{ Q }}
+d ->> {{ q }}
 ```
 
 The former is waiting for another precondition to be supplied by
@@ -1051,20 +1051,20 @@ macro_rules
       | `(dcom| skip {{ $q }}) => `(DCom.skip ({{ $q }}))
       | `(dcom| $x:ident := $a:imp_aexp {{ $q }}) =>
         `(DCom.asgn $x (aexp { $a }) ({{ $q }}))
-      | `(dcom| $d1:dcom; $d2:dcom) =>
-        `(DCom.seq (dcom { $d1 }) (dcom { $d2 }))
+      | `(dcom| $d₁:dcom; $d₂:dcom) =>
+        `(DCom.seq (dcom { $d₁ }) (dcom { $d₂ }))
       | `(dcom|
           if ($b:imp_bexp) then
-            {{ $p1 }}
-            $d1:dcom
+            {{ $p₁ }}
+            $d₁:dcom
           else
-            {{ $p2 }}
-            $d2:dcom
+            {{ $p₂ }}
+            $d₂:dcom
           end
             {{ $q }}) =>
         `(DCom.cond (bexp { $b })
-          ({{ $p1 }}) (dcom { $d1 })
-          ({{ $p2 }}) (dcom { $d2 })
+          ({{ $p₁ }}) (dcom { $d₁ })
+          ({{ $p₂ }}) (dcom { $d₂ })
           ({{ $q }}))
       | `(dcom|
           while ($b:imp_bexp) do
@@ -1099,7 +1099,7 @@ where
 def getAssnBody (stx : Term) : Term :=
   withSourceInfoOf (canonical := false) stx <| Unhygienic.run do
     match stx with
-    | `({{ $P }}) => return P
+    | `({{ $p }}) => return p
     | _ => return stx
 
 private def getDCom? (stx : Term) : Option (TSyntax `dcom) :=
@@ -1321,9 +1321,9 @@ annotations.
 def DCom.erase (d : DCom) : Com :=
   match d with
   | .skip _ => .skip
-  | .seq d1 d2 => .seq d1.erase d2.erase
+  | .seq d₁ d₂ => .seq d₁.erase d₂.erase
   | .asgn x a _ => .asgn x a
-  | .cond b _ d1 _ d2 _ => .cond b d1.erase d2.erase
+  | .cond b _ d₁ _ d₂ _ => .cond b d₁.erase d₂.erase
   | .whileDo b _ body _ => .whileDo b body.erase
   | .pre _ body => body.erase
   | .post body _ => body.erase
@@ -1365,9 +1365,9 @@ def Decorated.precondition (dec : Decorated) : Assertion :=
 ```
 It would be nice to use <{ ... }> notations
 in this definition and the ones below...
-     | <{ skip {{P}} }>        => P
-     | <{ _; d2 }>             => post d2
-     | <{ _ := _ {{Q}} }>      => Q
+     | <{ skip {{p}} }>        => p
+     | <{ _; d₂ }>             => post d₂
+     | <{ _ := _ {{q}} }>      => q
 ```
 :::
 
@@ -1375,7 +1375,7 @@ in this definition and the ones below...
 def DCom.postcondition (d : DCom) : Assertion :=
   match d with
   | .skip q => q
-  | .seq _ d2 => d2.postcondition
+  | .seq _ d₂ => d₂.postcondition
   | .asgn _ _ q => q
   | .cond _ _ _ _ _ q => q
   | .whileDo _ _ _ q => q
@@ -1441,11 +1441,11 @@ validity of the outer triple.
 ## Extracting Verification Conditions
 
 The function `DCom.VerificationConditions` takes a decorated command
-`d` together with a precondition `P` and returns a _proposition_
+`d` together with a precondition `p` and returns a _proposition_
 that, if it can be proved, implies that the triple
 
 ```display
-{{P}} d.erase {{d.postcondition}}
+{{p}} d.erase {{d.postcondition}}
 ```
 
 is valid.
@@ -1468,19 +1468,19 @@ _Local consistency_ is defined as follows...
 - The decorated command
 
 ```display
-skip {{Q}}
+skip {{q}}
 ```
 
-is locally consistent with respect to a precondition `P` if
-`P ->> Q`.
+is locally consistent with respect to a precondition `p` if
+`p ->> q`.
 
 :::slidebreak
 :::
 
-- The sequential composition of `d1` and `d2` is locally
-consistent with respect to `P` if `d1` is locally consistent with
-respect to `P` and `d2` is locally consistent with respect to
-the postcondition of `d1`.
+- The sequential composition of `d₁` and `d₂` is locally
+consistent with respect to `p` if `d₁` is locally consistent with
+respect to `p` and `d₂` is locally consistent with respect to
+the postcondition of `d₁`.
 
 :::slidebreak
 :::
@@ -1488,13 +1488,13 @@ the postcondition of `d1`.
 - An assignment
 
 ```display
-X := a {{Q}}
+X := a {{q}}
 ```
 
-is locally consistent with respect to a precondition `P` if:
+is locally consistent with respect to a precondition `p` if:
 
 ```display
-P ->> Q [X |-> a]
+p ->> q [X ↦ a]
 ```
 
 :::slidebreak
@@ -1503,22 +1503,22 @@ P ->> Q [X |-> a]
 - A conditional
 
 ```display
-if b then {{P1}} d1 else {{P2}} d2 end {{Q}}
+if b then {{p₁}} d₁ else {{p₂}} d₂ end {{q}}
 ```
 
-is locally consistent with respect to precondition `P` if
+is locally consistent with respect to precondition `p` if
 
-   (1) `P /\ b ->> P1`
+   (1) `p ∧ b ->> p₁`
 
-   (2) `P /\ b ->> P2`
+   (2) `p ∧ b ->> p₂`
 
-   (3) `d1` is locally consistent with respect to `P1`
+   (3) `d₁` is locally consistent with respect to `p₁`
 
-   (4) `d2` is locally consistent with respect to `P2`
+   (4) `d₂` is locally consistent with respect to `p₂`
 
-   (5) `d1.postcondition ->> Q`
+   (5) `d₁.postcondition ->> q`
 
-   (6) `d2.postcondition ->> Q`
+   (6) `d₂.postcondition ->> q`
 
 :::slidebreak
 :::
@@ -1526,18 +1526,18 @@ is locally consistent with respect to precondition `P` if
 - A loop
 
 ```display
-while b do {{Q}} d end {{R}}
+while (b) {{{q}} d} {{r}}
 ```
 
-is locally consistent with respect to precondition `P` if:
+is locally consistent with respect to precondition `p` if:
 
-   (1) `P ->> d.postcondition`
+   (1) `p ->> d.postcondition`
 
-   (2) `d.postcondition /\ b ->> Q`
+   (2) `d.postcondition ∧ b ->> q`
 
-   (3) `d.postcondition /\ b ->> R`
+   (3) `d.postcondition ∧ b ->> r`
 
-   (4) `d` is locally consistent with respect to `Q`
+   (4) `d` is locally consistent with respect to `q`
 
 :::slidebreak
 :::
@@ -1545,14 +1545,14 @@ is locally consistent with respect to precondition `P` if:
 - A command with an extra assertion at the beginning
 
 ```display
-->> {{Q}} d
+->> {{q}} d
 ```
 
-is locally consistent with respect to a precondition `P` if:
+is locally consistent with respect to a precondition `p` if:
 
-  (1) `P ->> Q`
+  (1) `p ->> q`
 
-  (2) `d` is locally consistent with respect to `Q`
+  (2) `d` is locally consistent with respect to `q`
 
 :::slidebreak
 :::
@@ -1560,14 +1560,14 @@ is locally consistent with respect to a precondition `P` if:
 - A command with an extra assertion at the end
 
 ```display
-d ->> {{Q}}
+d ->> {{q}}
 ```
 
-is locally consistent with respect to a precondition `P` if:
+is locally consistent with respect to a precondition `p` if:
 
-  (1) `d` is locally consistent with respect to `P`
+  (1) `d` is locally consistent with respect to `p`
 
-  (2) `d.postcondition ->> Q`
+  (2) `d.postcondition ->> q`
 
 :::slidebreak
 :::
@@ -1594,34 +1594,34 @@ just above...)
 
 ```lean
 def DCom.VerificationConditions
-    (P : Assertion) (d : DCom) : Prop :=
+    (p : Assertion) (d : DCom) : Prop :=
   match d with
-  | .skip Q =>
-      P ->> Q
-  | .seq d1 d2 =>
-      d1.VerificationConditions P ∧
-      d2.VerificationConditions d1.postcondition
-  | .asgn x a Q =>
-      P ->> {{ Q [x ↦ a] }}
-  | .cond b P1 d1 P2 d2 Q =>
-      ({{ P ∧ b }} ->> P1) ∧
-      ({{ P ∧ ¬ b }} ->> P2) ∧
-      (d1.postcondition ->> Q) ∧
-      (d2.postcondition ->> Q) ∧
-      d1.VerificationConditions P1 ∧
-      d2.VerificationConditions P2
+  | .skip q =>
+      p ->> q
+  | .seq d₁ d₂ =>
+      d₁.VerificationConditions p ∧
+      d₂.VerificationConditions d₁.postcondition
+  | .asgn x a q =>
+      p ->> {{ q [x ↦ a] }}
+  | .cond b p₁ d₁ p₂ d₂ q =>
+      ({{ p ∧ b }} ->> p₁) ∧
+      ({{ p ∧ ¬ b }} ->> p₂) ∧
+      (d₁.postcondition ->> q) ∧
+      (d₂.postcondition ->> q) ∧
+      d₁.VerificationConditions p₁ ∧
+      d₂.VerificationConditions p₂
   | .whileDo b bodyPre body q =>
       -- The body's postcondition is both the loop invariant
       -- and the precondition for the first iteration.
-      (P ->> body.postcondition) ∧
+      (p ->> body.postcondition) ∧
       ({{ body.postcondition ∧ b }} ->> bodyPre) ∧
       ({{ body.postcondition ∧ ¬ b }} ->> q) ∧
       body.VerificationConditions bodyPre
-  | .pre P' body =>
-      (P ->> P') ∧ body.VerificationConditions P'
-  | .post body Q =>
-      body.VerificationConditions P ∧
-      (body.postcondition ->> Q)
+  | .pre p' body =>
+      (p ->> p') ∧ body.VerificationConditions p'
+  | .post body q =>
+      body.VerificationConditions p ∧
+      (body.postcondition ->> q)
 ```
 
 :::slidebreak
@@ -1632,9 +1632,9 @@ does its job correctly.  Not surprisingly, each of the Hoare Logic
 rules plays a critical role at some point in the proof.
 
 ```lean
-theorem verification_correct (d : DCom) (P : Assertion)
-    (hvc : d.VerificationConditions P) :
-    ValidHoareTriple P d.erase d.postcondition := by
+theorem verification_correct (d : DCom) (p : Assertion)
+    (hvc : d.VerificationConditions p) :
+    ValidHoareTriple p d.erase d.postcondition := by
   sorry
 ```
 
@@ -1877,8 +1877,8 @@ The following program subtracts the value of `X` from the value of
 correctness with respect to the pre- and postconditions shown:
 
 ```display
-{{ X = m /\ Y = n }}
-  while X <> 0 do
+{{ X = m ∧ Y = n }}
+  while X ≠ 0 do
     Y := Y - 1;
     X := X - 1
   end
@@ -1900,17 +1900,17 @@ as usual, and without doing any thinking at all yet.
 This leads to the following skeleton:
 
 ```display
-(1)    {{ X = m /\ Y = n }}  ->>                   (a)
+(1)    {{ X = m ∧ Y = n }}  ->>                   (a)
 (2)    {{ Inv }}
-         while X <> 0 do
-(3)              {{ Inv /\ X <> 0 }}  ->>          (c)
-(4)              {{ Inv [X |-> X-1] [Y |-> Y-1] }}
+         while X ≠ 0 do
+(3)              {{ Inv ∧ X ≠ 0 }}  ->>          (c)
+(4)              {{ Inv [X ↦ X-1] [Y ↦ Y-1] }}
            Y := Y - 1;
-(5)              {{ Inv [X |-> X-1] }}
+(5)              {{ Inv [X ↦ X-1] }}
            X := X - 1
 (6)              {{ Inv }}
          end
-(7)    {{ Inv /\ ~ (X <> 0) }}  ->>                (b)
+(7)    {{ Inv ∧ ¬ (X ≠ 0) }}  ->>                (b)
 (8)    {{ Y = n - m }}
 ```
 
@@ -1956,22 +1956,22 @@ instantiating `Inv` with `True` in the skeleton above and
 see what we get...
 
 ```display
-(1)    {{ X = m /\ Y = n }} ->>                    (a - OK)
+(1)    {{ X = m ∧ Y = n }} ->>                    (a - OK)
 (2)    {{ True }}
-         while X <> 0 do
-(3)                   {{ True /\ X <> 0 }} ->>     (c - OK)
+         while X ≠ 0 do
+(3)                   {{ True ∧ X ≠ 0 }} ->>     (c - OK)
 (4)                   {{ True }}
            Y := Y - 1;
 (5)                   {{ True }}
            X := X - 1
 (6)                   {{ True }}
          end
-(7)    {{ True /\ ~(X <> 0) }} ->>                 (b - WRONG!)
+(7)    {{ True ∧ ¬(X ≠ 0) }} ->>                 (b - WRONG!)
 (8)    {{ Y = n - m }}
 ```
 
 While conditions (a) and (c) are trivially satisfied,
-(b) is wrong: it is not the case that `True /\ X = 0` (7)
+(b) is wrong: it is not the case that `True ∧ X = 0` (7)
 implies `Y = n - m` (8).  In fact, the two assertions are
 completely unrelated, so it is very easy to find a counterexample
 to the implication (say, `Y = X = m = 0` and `n = 1`).
@@ -1983,22 +1983,22 @@ return to our skeleton, instantiate `Inv` with `Y = n - m`, and
 try checking conditions (a) to (c) again.
 
 ```display
-(1)    {{ X = m /\ Y = n }} ->>                        (a - WRONG!)
+(1)    {{ X = m ∧ Y = n }} ->>                        (a - WRONG!)
 (2)    {{ Y = n - m }}
-         while X <> 0 do
-(3)                     {{ Y = n - m /\ X <> 0 }} ->>  (c - WRONG!)
+         while X ≠ 0 do
+(3)                     {{ Y = n - m ∧ X ≠ 0 }} ->>  (c - WRONG!)
 (4)                     {{ Y - 1 = n - m }}
            Y := Y - 1;
 (5)                     {{ Y = n - m }}
            X := X - 1
 (6)                     {{ Y = n - m }}
          end
-(7)    {{ Y = n - m /\ ~(X <> 0) }} ->>                (b - OK)
+(7)    {{ Y = n - m ∧ ¬(X ≠ 0) }} ->>                (b - OK)
 (8)    {{ Y = n - m }}
 ```
 
 This time, condition (b) holds trivially, but (a) and (c) are
-broken. Condition (a) requires that (1) `X = m /\ Y = n`
+broken. Condition (a) requires that (1) `X = m ∧ Y = n`
 implies (2) `Y = n - m`.  If we substitute `Y` by `n` we have to
 show that `n = n - m` for arbitrary `m` and `n`, which is not
 the case (for instance, when `m = n = 1`).  Condition (c) requires
@@ -2025,23 +2025,23 @@ difference is always `n - m`.  So let's try instantiating `Inv` in
 the skeleton above with `Y - X = n - m`.
 
 ```display
-(1)    {{ X = m /\ Y = n }} ->>                            (a - OK)
+(1)    {{ X = m ∧ Y = n }} ->>                            (a - OK)
 (2)    {{ Y - X = n - m }}
-         while X <> 0 do
-(3)                    {{ Y - X = n - m /\ X <> 0 }} ->>   (c - OK)
+         while X ≠ 0 do
+(3)                    {{ Y - X = n - m ∧ X ≠ 0 }} ->>   (c - OK)
 (4)                    {{ (Y - 1) - (X - 1) = n - m }}
            Y := Y - 1;
 (5)                    {{ Y - (X - 1) = n - m }}
            X := X - 1
 (6)                    {{ Y - X = n - m }}
          end
-(7)    {{ Y - X = n - m /\ ~(X <> 0) }} ->>                (b - OK)
+(7)    {{ Y - X = n - m ∧ ¬(X ≠ 0) }} ->>                (b - OK)
 (8)    {{ Y = n - m }}
 ```
 
 Success!  Conditions (a), (b) and (c) all hold now.  (To
 verify (c), we need to check that, under the assumption that
-`X <> 0`, we have `Y - X = (Y - 1) - (X - 1)`; this holds for all
+`X ≠ 0`, we have `Y - X = (Y - 1) - (X - 1)`; this holds for all
 natural numbers `X` and `Y`.)
 
 Here is the final version of the decorated program:
@@ -2122,7 +2122,7 @@ stored in `X`, due to Daniel Cristofani.
 
 ```display
 {{ X = m }}
-  while 2 <= X do
+  while 2 ≤ X do
     X := X - 2
   end
 {{ X = parity m }}
@@ -2154,20 +2154,20 @@ obtain the following decorated program:
 ```display
 {{ X = m }} ->>                                         (a - OK)
 {{ parity X = parity m }}
-  while 2 <= X do
-               {{ parity X = parity m /\ 2 <= X }} ->>  (c - OK)
+  while 2 ≤ X do
+               {{ parity X = parity m ∧ 2 ≤ X }} ->>  (c - OK)
                {{ parity (X-2) = parity m }}
     X := X - 2
                {{ parity X = parity m }}
   end
-{{ parity X = parity m /\ ~(2 <= X) }} ->>              (b - OK)
+{{ parity X = parity m ∧ ¬(2 ≤ X) }} ->>              (b - OK)
 {{ X = parity m }}
 ```
 
 With this loop invariant, conditions (a), (b), and (c) are all
 satisfied. For verifying (b), we observe that, when `X < 2`, we
 have `parity X = X` (we can easily see this in the definition of
-`parity`).  For verifying (c), we observe that, when `2 <= X`, we
+`parity`).  For verifying (c), we observe that, when `2 ≤ X`, we
 have `parity X = parity (X-2)`.
 
 :::dev
@@ -2176,13 +2176,13 @@ HIDE: A more complexly phrased loop invariant for the same program
 [[
         {{ X = m }}  ->>                        (a - OK)
         {{ ev X <-> ev m }}
-      while 2 <= X do
-          {{ ev X <-> ev m /\ 2 <= X }}  ->>    (c - OK)
+      while 2 ≤ X do
+          {{ ev X <-> ev m ∧ 2 ≤ X }}  ->>    (c - OK)
           {{ ev (X-2) <-> ev m }}
         X := X - 2
           {{ ev X <-> ev m }}
       end
-        {{ (ev X <-> ev m) /\ ~(2 <= X) }}  ->>     (b - OK)
+        {{ (ev X <-> ev m) ∧ ~(2 ≤ X) }}  ->>     (b - OK)
         {{ X=0 <-> ev m }}
 ]]
 ```
@@ -2191,17 +2191,17 @@ HIDE: A more complexly phrased loop invariant for the same program
 HIDE: find_parity'_dec; more complicated phrasing of invariant
 there is very little resemblance between the invariant and the
 postcondition -- the implication is also non-obvious, and the
-X <= m condition makes the invariant more complicated
+X ≤ m condition makes the invariant more complicated
 [[
  {{ X = m }} ->>
- {{ X <= m /\ ev (m - X) }}
-while 2 <= X do
-   {{ X <= m /\ ev (m - X) /\ 2 <= X }} ->>
-   {{ X - 2 <= m /\ ev (m - (X - 2)) }}
+ {{ X ≤ m ∧ ev (m - X) }}
+while 2 ≤ X do
+   {{ X ≤ m ∧ ev (m - X) ∧ 2 ≤ X }} ->>
+   {{ X - 2 ≤ m ∧ ev (m - (X - 2)) }}
  X := X - 2
-   {{ X <= m /\ ev (m - X) }}
+   {{ X ≤ m ∧ ev (m - X) }}
 end
- {{ X <= m /\ ev (m - X) /\ ~(2 <= X) }} ->>
+ {{ X ≤ m ∧ ev (m - X) ∧ ~(2 ≤ X) }} ->>
  {{ X=0 <-> ev m }}
 ]]
 ```
@@ -2220,7 +2220,7 @@ as `{{ parity X = parity m }}`.
 :::dev "Benjamin Pierce (bcpierce00)" BeforeNextRelease (year := 2023)
 ```
 Maya: In the parity exercise, I was getting annoyed
-by the verify_assertion tactic unfolding the assumption [(2 <=?  st
+by the verify_assertion tactic unfolding the assumption [(2 ≤?  st
 X) = true] into a match on the first two layers of [st X]. I ended
 up digging out the following incantation from the depths of the Rocq
 manual:
@@ -2384,10 +2384,10 @@ by naive iteration:
 ```display
 {{ X=m }}
   Z := 0;
-  while (Z+1)*(Z+1) <= X do
+  while (Z+1)*(Z+1) ≤ X do
     Z := Z+1
   end
-{{ Z*Z<=m /\ m<(Z+1)*(Z+1) }}
+{{ Z*Z≤m ∧ m<(Z+1)*(Z+1) }}
 ```
 
 WORK IN CLASS
@@ -2397,18 +2397,18 @@ candidate loop invariant, obtaining the following decorated program:
 
 ```display
 (1)  {{ X=m }} ->>                  (a - second conjunct of (2) WRONG!)
-(2)  {{ 0*0 <= m /\ m<(0+1)*(0+1) }}
+(2)  {{ 0*0 ≤ m ∧ m<(0+1)*(0+1) }}
         Z := 0
-(3)            {{ Z*Z <= m /\ m<(Z+1)*(Z+1) }};
-        while (Z+1)*(Z+1) <= X do
-(4)            {{ Z*Z<=m /\ m<(Z+1)*(Z+1)
-                         /\ (Z+1)*(Z+1)<=X }} ->>          (c - WRONG!)
-(5)            {{ (Z+1)*(Z+1)<=m /\ m<((Z+1)+1)*((Z+1)+1) }}
+(3)            {{ Z*Z ≤ m ∧ m<(Z+1)*(Z+1) }};
+        while (Z+1)*(Z+1) ≤ X do
+(4)            {{ Z*Z≤m ∧ m<(Z+1)*(Z+1)
+                         ∧ (Z+1)*(Z+1)≤X }} ->>          (c - WRONG!)
+(5)            {{ (Z+1)*(Z+1)≤m ∧ m<((Z+1)+1)*((Z+1)+1) }}
           Z := Z+1
-(6)            {{ Z*Z<=m /\ m<(Z+1)*(Z+1) }}
+(6)            {{ Z*Z≤m ∧ m<(Z+1)*(Z+1) }}
         end
-(7)  {{ Z*Z<=m /\ m<(Z+1)*(Z+1) /\ ~((Z+1)*(Z+1)<=X) }} ->>    (b - OK)
-(8)  {{ Z*Z<=m /\ m<(Z+1)*(Z+1) }}
+(7)  {{ Z*Z≤m ∧ m<(Z+1)*(Z+1) ∧ ¬((Z+1)*(Z+1)≤X) }} ->>    (b - OK)
+(8)  {{ Z*Z≤m ∧ m<(Z+1)*(Z+1) }}
 ```
 
 This didn't work very well: conditions (a) and (c) both failed.
@@ -2424,21 +2424,21 @@ obtain it from the negation of the guard — the third conjunct
 in (7) — again under the assumption that `X=m`.  This allows
 us to simplify a bit.
 
-So we now try `X=m /\ Z*Z <= m` as the loop invariant:
+So we now try `X=m ∧ Z*Z ≤ m` as the loop invariant:
 
 ```display
 {{ X=m }} ->>                                           (a - OK)
-{{ X=m /\ 0*0 <= m }}
+{{ X=m ∧ 0*0 ≤ m }}
   Z := 0
-             {{ X=m /\ Z*Z <= m }};
-  while (Z+1)*(Z+1) <= X do
-             {{ X=m /\ Z*Z<=m /\ (Z+1)*(Z+1)<=X }} ->>  (c - OK)
-             {{ X=m /\ (Z+1)*(Z+1)<=m }}
+             {{ X=m ∧ Z*Z ≤ m }};
+  while (Z+1)*(Z+1) ≤ X do
+             {{ X=m ∧ Z*Z≤m ∧ (Z+1)*(Z+1)≤X }} ->>  (c - OK)
+             {{ X=m ∧ (Z+1)*(Z+1)≤m }}
     Z := Z + 1
-             {{ X=m /\ Z*Z<=m }}
+             {{ X=m ∧ Z*Z≤m }}
   end
-{{ X=m /\ Z*Z<=m /\ ~((Z+1)*(Z+1)<=X) }} ->>            (b - OK)
-{{ Z*Z<=m /\ m<(Z+1)*(Z+1) }}
+{{ X=m ∧ Z*Z≤m ∧ ¬((Z+1)*(Z+1)≤X) }} ->>            (b - OK)
+{{ Z*Z≤m ∧ m<(Z+1)*(Z+1) }}
 ```
 
 This works, since conditions (a), (b), and (c) are now all
@@ -2511,7 +2511,7 @@ Here is a program that squares `X` by repeated addition:
 {{ X = m }}
   Y := 0;
   Z := 0;
-  while Y <> X  do
+  while Y ≠ X  do
     Z := Z + X;
     Y := Y + 1
   end
@@ -2525,24 +2525,24 @@ change its value. As we saw in the previous example, it can be a good idea
 in such cases to add `X = m` to the loop invariant.  The other thing
 that we know is often useful in the loop invariant is the postcondition,
 so let's add that too, leading to the candidate loop invariant
-`Z = m * m /\ X = m`.
+`Z = m * m ∧ X = m`.
 
 ```display
 {{ X = m }} ->>                                       (a - WRONG)
-{{ 0 = m*m /\ X = m }}
+{{ 0 = m*m ∧ X = m }}
   Y := 0
-               {{ 0 = m*m /\ X = m }};
+               {{ 0 = m*m ∧ X = m }};
   Z := 0
-               {{ Z = m*m /\ X = m }};
-  while Y <> X do
-               {{ Z = m*m /\ X = m /\ Y <> X }} ->>   (c - WRONG)
-               {{ Z+X = m*m /\ X = m }}
+               {{ Z = m*m ∧ X = m }};
+  while Y ≠ X do
+               {{ Z = m*m ∧ X = m ∧ Y ≠ X }} ->>   (c - WRONG)
+               {{ Z+X = m*m ∧ X = m }}
     Z := Z + X
-               {{ Z = m*m /\ X = m }};
+               {{ Z = m*m ∧ X = m }};
     Y := Y + 1
-               {{ Z = m*m /\ X = m }}
+               {{ Z = m*m ∧ X = m }}
   end
-{{ Z = m*m /\ X = m /\ ~(Y <> X) }} ->>               (b - OK)
+{{ Z = m*m ∧ X = m ∧ ¬(Y ≠ X) }} ->>               (b - OK)
 {{ Z = m*m }}
 ```
 
@@ -2552,24 +2552,24 @@ Conditions (a) and (c) fail because of the `Z = m*m` part.  While
 in the loop, after the 1st iteration `Z = m`, after the 2nd
 iteration `Z = 2*m`, and at the end `Z = m*m`.  Since the variable
 `Y` tracks how many times we go through the loop, this leads us to
-derive a new loop invariant candidate: `Z = Y*m /\ X = m`.
+derive a new loop invariant candidate: `Z = Y*m ∧ X = m`.
 
 ```display
 {{ X = m }} ->>                                        (a - OK)
-{{ 0 = 0*m /\ X = m }}
+{{ 0 = 0*m ∧ X = m }}
   Y := 0
-                {{ 0 = Y*m /\ X = m }};
+                {{ 0 = Y*m ∧ X = m }};
   Z := 0
-                {{ Z = Y*m /\ X = m }};
-  while Y <> X do
-                {{ Z = Y*m /\ X = m /\ Y <> X }} ->>   (c - OK)
-                {{ Z+X = (Y+1)*m /\ X = m }}
+                {{ Z = Y*m ∧ X = m }};
+  while Y ≠ X do
+                {{ Z = Y*m ∧ X = m ∧ Y ≠ X }} ->>   (c - OK)
+                {{ Z+X = (Y+1)*m ∧ X = m }}
     Z := Z + X
-                {{ Z = (Y+1)*m /\ X = m }};
+                {{ Z = (Y+1)*m ∧ X = m }};
     Y := Y + 1
-                {{ Z = Y*m /\ X = m }}
+                {{ Z = Y*m ∧ X = m }}
   end
-{{ Z = Y*m /\ X = m /\ ~(Y <> X) }} ->>                (b - OK)
+{{ Z = Y*m ∧ X = m ∧ ¬(Y ≠ X) }} ->>                (b - OK)
 {{ Z = m*m }}
 ```
 
@@ -2591,7 +2591,7 @@ Here is a program that squares X by repeated addition:
   X := n;
   Y := X;
   Z := 0;
-  while Y <> 0 do
+  while Y ≠ 0 do
     Z := Z + X;
     Y := Y - 1
   end
@@ -2605,19 +2605,19 @@ Here is a program that squares X by repeated addition:
   X := n;
   {{ X = n }}
   Y := X;
-  {{ X = n /\ Y = n }}
+  {{ X = n ∧ Y = n }}
   Z := 0;
-  {{ X = n /\ Y = n /\ Z = 0}} ->>
+  {{ X = n ∧ Y = n ∧ Z = 0}} ->>
   {{ Z + X * Y = n * n }}
-  while Y <> 0 do
-    {{ Z + X * Y = n * n /\ (Y <> 0)}} ->>
+  while Y ≠ 0 do
+    {{ Z + X * Y = n * n ∧ (Y ≠ 0)}} ->>
     {{ Z + X + X * (Y - 1) = n * n }}
     Z := Z + X;
     {{ Z + X * (Y - 1) = n * n }}
     Y := Y - 1
     {{ Z + X * Y = n * n }}
   end
-  {{ Z + X * Y = n * n /\ ~(Y <> 0)}} ->>
+  {{ Z + X * Y = n * n ∧ ~(Y ≠ 0)}} ->>
   {{ Z = n * n }}
 ]]
 
@@ -2627,19 +2627,19 @@ The other loop invariant [square_dec']:
   X := n;
   {{ X = n }}
   Y := X;
-  {{ X = n /\ Y = n }}
+  {{ X = n ∧ Y = n }}
   Z := 0;
-  {{ X = n /\ Y = n /\ Z = 0}} ->>
-  {{ Z = X * (X - Y) /\ X = n /\ Y <= X }}
-  while Y <> 0 do
-    {{ Z = X * (X - Y) /\ X = n /\ Y <= X /\ (Y <> 0)}} ->>
-    {{ Z + X = X * (X - (Y - 1)) /\ X = n /\ (Y - 1) <= X }}
+  {{ X = n ∧ Y = n ∧ Z = 0}} ->>
+  {{ Z = X * (X - Y) ∧ X = n ∧ Y ≤ X }}
+  while Y ≠ 0 do
+    {{ Z = X * (X - Y) ∧ X = n ∧ Y ≤ X ∧ (Y ≠ 0)}} ->>
+    {{ Z + X = X * (X - (Y - 1)) ∧ X = n ∧ (Y - 1) ≤ X }}
     Z := Z + X;
-    {{ Z = X * (X - (Y - 1)) /\ X = n /\ (Y - 1) <= X }}
+    {{ Z = X * (X - (Y - 1)) ∧ X = n ∧ (Y - 1) ≤ X }}
     Y := Y - 1
-    {{ Z = X * (X - Y) /\ X = n /\ Y <= X }}
+    {{ Z = X * (X - Y) ∧ X = n ∧ Y ≤ X }}
   end
-  {{ Z = X * (X - Y) /\ X = n /\ Y <= X /\ ~(Y <> 0)}} ->>
+  {{ Z = X * (X - Y) ∧ X = n ∧ Y ≤ X ∧ ~(Y ≠ 0)}} ->>
   {{ Z = n * n }}
 ]]
 ```
@@ -2661,22 +2661,22 @@ squaring program.  The simplest variant we've found,
           <{
           {{ X = m }}
             Y := X
-            {{ X = m /\ Y = m }};
+            {{ X = m ∧ Y = m }};
             Z := 0
-            {{ X = m /\ Y = m /\ Z = 0}} ->>
+            {{ X = m ∧ Y = m ∧ Z = 0}} ->>
             {{ Z + X * Y = m * m }};
-            while Y <> 0 do
-              {{ Z + X * Y = m * m /\ Y <> 0 }} ->>
+            while Y ≠ 0 do
+              {{ Z + X * Y = m * m ∧ Y ≠ 0 }} ->>
               {{ (Z + X) + X * (Y - 1) = m * m }}
               Z := Z + X
               {{ Z + X * (Y - 1) = m * m }};
               Y := Y - 1
               {{ Z + X * Y = m * m }}
             end
-          {{ Z + X * Y = m * m /\ Y = 0 }} ->>
+          {{ Z + X * Y = m * m ∧ Y = 0 }} ->>
           {{ Z = m * m }} }>.
 
-        Theorem square_outer_triple_valid : forall m,
+        Theorem square_outer_triple_valid : ∀ m,
           outer_triple_valid (square_dec m).
         Proof.
           verify.
@@ -2684,7 +2684,7 @@ squaring program.  The simplest variant we've found,
             destruct (st Y) as [| y'].
             + exfalso. auto.
             + simpl. rewrite sub_0_r.
-            assert (G : forall n m, n * S m = n + n * m). {
+            assert (G : ∀ n m, n * S m = n + n * m). {
               clear. intros. induction n.
               - reflexivity.
               - simpl. rewrite IHn. lia. }
@@ -2697,28 +2697,28 @@ squaring program.  The simplest variant we've found,
           X := n
           {{ X = n }};
           Y := X
-          {{ X = n /\ Y = n }};
+          {{ X = n ∧ Y = n }};
           Z := 0
-          {{ X = n /\ Y = n /\ Z = 0 }} ->>
+          {{ X = n ∧ Y = n ∧ Z = 0 }} ->>
           {{ Z = X * (X - Y)
-                       /\ X = n /\ Y <= X }};
-          while Y <> 0 do
+                       ∧ X = n ∧ Y ≤ X }};
+          while Y ≠ 0 do
             {{ (Z = X * (X - Y)
-                        /\ X = n /\ Y <= X)
-                        /\  Y <> 0 }}
+                        ∧ X = n ∧ Y ≤ X)
+                        ∧  Y ≠ 0 }}
             Z := Z + X
             {{ Z = X * (X - (Y - 1))
-                         /\ X = n /\ Y <= X }};
+                         ∧ X = n ∧ Y ≤ X }};
             Y := Y - 1
             {{ Z = X * (X - Y)
-                         /\ X = n /\ Y <= X }}
+                         ∧ X = n ∧ Y ≤ X }}
           end
           {{ (Z = X * (X - Y)
-                      /\ X = n /\ Y <= X)
-                       /\ Y = 0 }} ->>
+                      ∧ X = n ∧ Y ≤ X)
+                       ∧ Y = 0 }} ->>
           {{ Z = n * n }} }>.
 
-        Theorem square_dec'_correct : forall (n:nat),
+        Theorem square_dec'_correct : ∀ (n:nat),
           outer_triple_valid (square_dec' n).
         Proof.
           verify.
@@ -2726,8 +2726,8 @@ squaring program.  The simplest variant we've found,
           (* loop invariant preserved *) subst.
           rewrite mul_sub_distr_l.
           repeat rewrite mul_sub_distr_l. rewrite mul_1_r.
-          assert (G : forall n m p,
-                     m <= n -> p <= m -> n - (m - p) = n - m + p).
+          assert (G : ∀ n m p,
+                     m ≤ n -> p ≤ m -> n - (m - p) = n - m + p).
           { intros. lia. }
           rewrite G.
           - reflexivity.
@@ -2743,24 +2743,24 @@ squaring program.  The simplest variant we've found,
     Definition square_simpler_dec (m : nat) : decorated :=
       <{
         {{ X = m }} ->>
-        {{ (* SOL *) 0 = 0*m /\ X = m (* /SOL *)}}
+        {{ (* SOL *) 0 = 0*m ∧ X = m (* /SOL *)}}
           Y := 0
-                       {{ 0 = Y*m /\ X = m }};
+                       {{ 0 = Y*m ∧ X = m }};
           Z := 0
-                       {{ Z = Y*m /\ X = m }};
-          while Y <> X do
-                       {{ (* SOL *) (Z = Y*m /\ X = m) /\ Y <> X (* /SOL *) }} ->>
-                       {{ (* SOL *) Z + X = (Y + 1)*m /\ X = m (* /SOL *) }}
+                       {{ Z = Y*m ∧ X = m }};
+          while Y ≠ X do
+                       {{ (* SOL *) (Z = Y*m ∧ X = m) ∧ Y ≠ X (* /SOL *) }} ->>
+                       {{ (* SOL *) Z + X = (Y + 1)*m ∧ X = m (* /SOL *) }}
             Z := Z + X
-                       {{ (* SOL *) Z = (Y + 1)*m /\ X = m (* /SOL *) }};
+                       {{ (* SOL *) Z = (Y + 1)*m ∧ X = m (* /SOL *) }};
             Y := Y + 1
-                       {{ Z = Y*m /\ X = m }}
+                       {{ Z = Y*m ∧ X = m }}
           end
-        {{ (* SOL *) (Z = Y*m /\ X = m) /\ Y = X (* /SOL *) }} ->>
+        {{ (* SOL *) (Z = Y*m ∧ X = m) ∧ Y = X (* /SOL *) }} ->>
         {{ Z = m*m }}
       }>.
 
-    Theorem square_simpler_outer_triple_valid : forall m,
+    Theorem square_simpler_outer_triple_valid : ∀ m,
       outer_triple_valid (square_simpler_dec m).
     Proof.
       solution!
@@ -2784,7 +2784,7 @@ Move this later?  Might be harder than some of the others.
 HIDE: LY: Many are tempted to use division in their propositions here,
 with the loop invariant [Y = m!/X!].
 Informally, such a decorated program can be correct if we assume
-they use real division (in Q or R). The issue is that formally in Rocq,
+they use real division (in q or r). The issue is that formally in Rocq,
 the notation / is also in scope and means integer division, so a pedantic
 interpretation would mark those answers wrong, even though that is most
 likely *not* what students intended (thus making the grading unfair).
@@ -2872,21 +2872,21 @@ because it nicely illustrates the point that the way you write the
 program often determines how hard it is to verify...
 
  {{ True }} ->>
- {{ m! = 1 * m!/0! /\ 0 <= m }}
+ {{ m! = 1 * m!/0! ∧ 0 ≤ m }}
 Y := 1;
- {{ m! = Y * m!/0! /\ 0 <= m }}
+ {{ m! = Y * m!/0! ∧ 0 ≤ m }}
 X := 0;
- {{ m! = Y * m!/X! /\ X <= m }}
+ {{ m! = Y * m!/X! ∧ X ≤ m }}
 while X .< m do
-   {{ m! = Y * m!/X! /\ X <= m /\ X < m }} ->>
+   {{ m! = Y * m!/X! ∧ X ≤ m ∧ X < m }} ->>
    {{ ... needs work here! ... }} ->>
-   {{ m! = (Y*(X+1)) * m!/(X+1)! /\ (X+1) <= m }} ->>
+   {{ m! = (Y*(X+1)) * m!/(X+1)! ∧ (X+1) ≤ m }} ->>
  X := X + 1;
-   {{ m! = (Y*X) * m!/X! /\ X <= m }} ->>
+   {{ m! = (Y*X) * m!/X! ∧ X ≤ m }} ->>
  Y := Y * X
-   {{ m! = Y * m!/X! /\ X <= m }}
+   {{ m! = Y * m!/X! ∧ X ≤ m }}
 end
- {{ m! = Y * m!/X! /\ X <= m /\ ~(X < m) }} ->>
+ {{ m! = Y * m!/X! ∧ X ≤ m ∧ ~(X < m) }} ->>
  {{ Y = m! }}
 ```
 :::
@@ -2922,45 +2922,45 @@ factorial in the same way two_loops_dec "implements" the sum (a + b
 Definition DONE : string := "DONE".
 
 Definition LI m n (st:state) : Prop :=
-  (~(st DONE = 0) /\ (st X) = min m n /\ (st Y) = max m n)
-  \/
-  ((st DONE = 0) /\ ((st X = m /\ st Y = n) \/ (m > n /\ st X = n /\ st Y = m)))
+  (¬(st DONE = 0) ∧ (st X) = min m n ∧ (st Y) = max m n)
+  ∨
+  ((st DONE = 0) ∧ ((st X = m ∧ st Y = n) ∨ (m > n ∧ st X = n ∧ st Y = m)))
   .
 
 Definition min_exam_question (m n : nat) : decorated :=
   <{
-      {{ X = m /\ Y = n }}
+      {{ X = m ∧ Y = n }}
         DONE := 0
-                  {{ DONE = 0 /\ X = m /\ Y = n }} ;
+                  {{ DONE = 0 ∧ X = m ∧ Y = n }} ;
         while DONE = 0 do
-                  {{ DONE = 0 /\ $(LI m n)}}
+                  {{ DONE = 0 ∧ $(LI m n)}}
                         if X > Y then
-                          {{ X > Y /\ (DONE = 0 /\ ((Y = m /\ X = n) \/ (m > n /\ Y = n /\ X = m)) ) }} ->>
-                          {{ (~(DONE = 0) /\ Y = #min m n /\ X = #max m n) \/
-                                      (DONE = 0 /\ ((Y = m /\ X = n) \/ (m > n /\ Y = n /\ X = m))) }}
+                          {{ X > Y ∧ (DONE = 0 ∧ ((Y = m ∧ X = n) ∨ (m > n ∧ Y = n ∧ X = m)) ) }} ->>
+                          {{ (~(DONE = 0) ∧ Y = #min m n ∧ X = #max m n) ∨
+                                      (DONE = 0 ∧ ((Y = m ∧ X = n) ∨ (m > n ∧ Y = n ∧ X = m))) }}
                           Z := Y
-                                 {{ (~(DONE = 0) /\ Z = #min m n /\ X = #max m n) \/
-                                      (DONE = 0 /\ ((Z = m /\ X = n) \/ (m > n /\ Z = n /\ X = m)))
+                                 {{ (~(DONE = 0) ∧ Z = #min m n ∧ X = #max m n) ∨
+                                      (DONE = 0 ∧ ((Z = m ∧ X = n) ∨ (m > n ∧ Z = n ∧ X = m)))
                                  }} ;
                           Y := X
-                                 {{ (~(DONE = 0) /\ Z = #min m n /\ Y = #max m n) \/
-                                    (DONE = 0 /\ ((Z = m /\ Y = n) \/ (m > n /\ Z = n /\ Y = m)))
+                                 {{ (~(DONE = 0) ∧ Z = #min m n ∧ Y = #max m n) ∨
+                                    (DONE = 0 ∧ ((Z = m ∧ Y = n) ∨ (m > n ∧ Z = n ∧ Y = m)))
                                  }} ;
                           X := Z
                                  {{ $(LI m n) }}
                         else
-                          {{ ~(X > Y) /\ X = #min m n /\ Y = #max m n }} ->>
-                          {{ (~(1 = 0) /\ X = #min m n /\ Y = #max m n) }}
+                          {{ ~(X > Y) ∧ X = #min m n ∧ Y = #max m n }} ->>
+                          {{ (~(1 = 0) ∧ X = #min m n ∧ Y = #max m n) }}
                           DONE := 1
                           {{ $(LI m n) }}
                   end
                   {{ $(LI m n) }}
                   end
-     {{ ~(DONE = 0) /\ $(LI m n) }} ->>
-      {{ X = #min m n /\ Y = #max m n }}
+     {{ ~(DONE = 0) ∧ $(LI m n) }} ->>
+      {{ X = #min m n ∧ Y = #max m n }}
     }>.
 
-Theorem min_exam_question_v1_correct : forall m n,
+Theorem min_exam_question_v1_correct : ∀ m n,
   outer_triple_valid (min_exam_question m n).
 Proof.
   solution!
@@ -2970,45 +2970,45 @@ Proof.
   Qed.
 
   Definition LI2 m n (st:state) : Prop :=
-    (~(st DONE = 0) /\ (st X) = min m n /\ (st Y) = max m n)
-    \/
-    ((st DONE = 0) /\ ((st X = m /\ st Y = n) \/ (st X = n /\ st Y = m)))
+    (~(st DONE = 0) ∧ (st X) = min m n ∧ (st Y) = max m n)
+    ∨
+    ((st DONE = 0) ∧ ((st X = m ∧ st Y = n) ∨ (st X = n ∧ st Y = m)))
     .
 
   Definition min_exam_question2 (m n : nat) : decorated :=
     <{
-        {{ X = m /\ Y = n }}
+        {{ X = m ∧ Y = n }}
           DONE := 0
-                    {{ DONE = 0 /\ X = m /\ Y = n }} ;
+                    {{ DONE = 0 ∧ X = m ∧ Y = n }} ;
           while DONE = 0 do
-                    {{ DONE = 0 /\ $(LI2 m n)}}
+                    {{ DONE = 0 ∧ $(LI2 m n)}}
                           if X > Y then
-                            {{ X > Y /\ (DONE = 0 /\ ((Y = m /\ X = n) \/ (Y = n /\ X = m)) ) }} ->>
-                            {{ (~(DONE = 0) /\ Y = #min m n /\ X = #max m n) \/
-                                        (DONE = 0 /\ ((Y = m /\ X = n) \/ (Y = n /\ X = m))) }}
+                            {{ X > Y ∧ (DONE = 0 ∧ ((Y = m ∧ X = n) ∨ (Y = n ∧ X = m)) ) }} ->>
+                            {{ (~(DONE = 0) ∧ Y = #min m n ∧ X = #max m n) ∨
+                                        (DONE = 0 ∧ ((Y = m ∧ X = n) ∨ (Y = n ∧ X = m))) }}
                             Z := Y
-                                   {{ (~(DONE = 0) /\ Z = #min m n /\ X = #max m n) \/
-                                        (DONE = 0 /\ ((Z = m /\ X = n) \/ (Z = n /\ X = m)))
+                                   {{ (~(DONE = 0) ∧ Z = #min m n ∧ X = #max m n) ∨
+                                        (DONE = 0 ∧ ((Z = m ∧ X = n) ∨ (Z = n ∧ X = m)))
                                    }} ;
                             Y := X
-                                   {{ (~(DONE = 0) /\ Z = #min m n /\ Y = #max m n) \/
-                                      (DONE = 0 /\ ((Z = m /\ Y = n) \/ (Z = n /\ Y = m)))
+                                   {{ (~(DONE = 0) ∧ Z = #min m n ∧ Y = #max m n) ∨
+                                      (DONE = 0 ∧ ((Z = m ∧ Y = n) ∨ (Z = n ∧ Y = m)))
                                    }} ;
                             X := Z
                                    {{ $(LI2 m n) }}
                           else
-                            {{ ~(X > Y) /\ X = #min m n /\ Y = #max m n }} ->>
-                            {{ (~(1 = 0) /\ X = #min m n /\ Y = #max m n) }}
+                            {{ ~(X > Y) ∧ X = #min m n ∧ Y = #max m n }} ->>
+                            {{ (~(1 = 0) ∧ X = #min m n ∧ Y = #max m n) }}
                             DONE := 1
                             {{ $(LI2 m n) }}
                     end
                     {{ $(LI2 m n) }}
                     end
-       {{ ~(DONE = 0) /\ $(LI2 m n) }} ->>
-        {{ X = #min m n /\ Y = #max m n }}
+       {{ ~(DONE = 0) ∧ $(LI2 m n) }} ->>
+        {{ X = #min m n ∧ Y = #max m n }}
       }>.
 
-  Theorem min_exam_question_v2_correct : forall m n,
+  Theorem min_exam_question_v2_correct : ∀ m n,
     outer_triple_valid (min_exam_question2 m n).
   Proof.
   -- ADMITTED
@@ -3030,13 +3030,13 @@ example, the minimum of `a` and `b` can be written `Nat.min a b`.
 
 :::dev
 HIDE: MRC'20: It bothers me a bit that the `&&` in the guard below
-becomes a `/\` in the assertion.  We've never explained that it's okay
+becomes a `∧` in the assertion.  We've never explained that it's okay
 to do a translation like that.
 :::
 
 :::dev "Benjamin Pierce (bcpierce00)" BeforeNextRelease (year := 2025)
 ```
-Maybe we should write /\ in assertions??
+Maybe we should write ∧ in assertions??
 ```
 :::
 
@@ -3111,13 +3111,13 @@ theorem minimum_correct (a b : Nat) :
 HIDE: LY: in this exercise, many end up writing the following implication
 after the while line:
 
-  {{ Z = min a b - min X Y /\ ... }} ->>
-  {{ Z+1 = min a b - min (X-1) (Y-1) /\ ... }}
+  {{ Z = min a b - min X Y ∧ ... }} ->>
+  {{ Z+1 = min a b - min (X-1) (Y-1) ∧ ... }}
 
 that is invalid if you interpret [-] pedantically as [sub : nat ->
 nat -> nat], which takes nonnegative values only. But if we are
 more generous and interpret these informal proofs in more intuitive
-domains (Z, Q, or R), then these proofs look fine. I made the
+domains (Z, q, or r), then these proofs look fine. I made the
 former choice in my grading because I assume at this point they
 should know to be careful around [-] with [nat].  BCP 21: Should be
 fixed now that the proofs are formal! :-)
@@ -3144,11 +3144,11 @@ Here is a pretty inefficient way of adding 3 numbers:
 X := 0;
 Y := 0;
 Z := c;
-while X <> a do
+while X ≠ a do
   X := X + 1;
   Z := Z + 1
 end;
-while Y <> b do
+while Y ≠ b do
   Y := Y + 1;
   Z := Z + 1
 end
@@ -3198,14 +3198,14 @@ theorem two_loops (a b c : Nat) :
 Again, the above isn't an IMP program, but a program
 schema.  What about using the following instead?
 [[
-    {{ X = a /\ Y = b /\ Z = c }}
+    {{ X = a ∧ Y = b ∧ Z = c }}
   I := 0;
-  while I <> X do
+  while I ≠ X do
     I := I + 1;
     Z := Z + 1
   end;
   I := 0;
-  while I <> Y do
+  while I ≠ Y do
     I := I + 1;
     Z := Z + 1
   end
@@ -3222,32 +3222,32 @@ program, but if the latter makes you happier I don't object.
 Solution:
 [[
     {{ True }} ->>
-    {{ c = 0 + c /\ 0 = 0 }}
+    {{ c = 0 + c ∧ 0 = 0 }}
   X := 0;
-    {{ c = X + c /\ 0 = 0 }}
+    {{ c = X + c ∧ 0 = 0 }}
   Y := 0;
-    {{ c = X + c /\ Y = 0 }}
+    {{ c = X + c ∧ Y = 0 }}
   Z := c;
-    {{ Z = X + c /\ Y = 0 }}
-  while X <> a do
-      {{ Z = X + c /\ Y = 0 /\ X <> a }} ->>
-      {{ Z + 1 = X + 1 + c /\ Y = 0 }}
+    {{ Z = X + c ∧ Y = 0 }}
+  while X ≠ a do
+      {{ Z = X + c ∧ Y = 0 ∧ X ≠ a }} ->>
+      {{ Z + 1 = X + 1 + c ∧ Y = 0 }}
     X := X + 1;
-      {{ Z + 1 = X + c /\ Y = 0 }}
+      {{ Z + 1 = X + c ∧ Y = 0 }}
     Z := Z + 1
-      {{ Z = X + c /\ Y = 0 }}
+      {{ Z = X + c ∧ Y = 0 }}
   end;
-    {{ Z = X + c /\ Y = 0 /\ ~(X <> a) }} ->>
+    {{ Z = X + c ∧ Y = 0 ∧ ¬(X ≠ a) }} ->>
     {{ Z = a + Y + c }}
-  while Y <> b do
-      {{ Z = a + Y + c /\ Y <> b }} ->>
+  while Y ≠ b do
+      {{ Z = a + Y + c ∧ Y ≠ b }} ->>
       {{ Z + 1 = a + Y + 1 + c }}
     Y := Y + 1;
       {{ Z + 1 = a + Y + c }}
     Z := Z + 1
       {{ Z = a + Y + c }}
   end
-    {{ Z = a + Y + c /\ ~(Y <> b) }} ->>
+    {{ Z = a + Y + c ∧ ~(Y ≠ b) }} ->>
     {{ Z = a + b + c }}
 ]]
 
@@ -3264,25 +3264,25 @@ additional [ + Y] term through it.
         {{ c = X + Y + c }}
     Z := c;
         {{ Z = X + Y + c }}
-    while X <> a do
-        {{ Z = X + Y + c /\ X <> a }} ->>
+    while X ≠ a do
+        {{ Z = X + Y + c ∧ X ≠ a }} ->>
         {{ Z + 1 = (X + 1) + Y + c }}
       X := X + 1;
         {{ Z + 1 = X + Y + c }}
       Z := Z + 1
         {{ Z = X + Y + c }}
     end;
-      {{ Z = X + Y + c /\ ~(X <> a) }} ->>
+      {{ Z = X + Y + c ∧ ¬(X ≠ a) }} ->>
       {{ Z = a + Y + c }}
-    while Y <> b do
-        {{ Z = a + Y + c /\ (Y <> b) }} ->>
+    while Y ≠ b do
+        {{ Z = a + Y + c ∧ (Y ≠ b) }} ->>
         {{ Z + 1 = a + (Y + 1) + c }}
       Y := Y + 1;
         {{ Z + 1 = a + Y + c }}
       Z := Z + 1
         {{ Z = a + Y + c }}
     end
-      {{ Z = a + Y + c /\ ~(Y <> b) }} ->>
+      {{ Z = a + Y + c ∧ ¬(Y ≠ b) }} ->>
       {{ Z = a + b + c }}
 ]]
 ```
@@ -3304,7 +3304,7 @@ This is again a program schema rather than a program.  Why not...
     X := 0;
     Y := 1;
     Z := 1;
-    while X <> W do
+    while X ≠ W do
       Z := 2 * Z;
       Y := Y + Z;
       X := X + 1
@@ -3326,7 +3326,7 @@ Here is a program that computes the series:
 X := 0;
 Y := 1;
 Z := 1;
-while X <> m do
+while X ≠ m do
   Z := 2 * Z;
   Y := Y + Z;
   X := X + 1
@@ -3444,28 +3444,28 @@ Answer: Z = min(x,y) - min(X,Y)
 
 :::dev
 ```
-HIDE: Another (very) good exercise from 09-mid2 -- just needs typeset
+HIDE: Another (very) good exercise from 09-mid₂ -- just needs typeset
 
 The notion of weakest precondition has a natural dual : given a
 precondition and a command, we can ask what is the strongest
 postcondition of the command with respect to the
 precondition. Formally, we can define it like this:
 
-Q is the strongest postcondition of c for P if:
+q is the strongest postcondition of c for p if:
 
-(a) {{P}} c {{Q}}, and
+(a) {{p}} c {{q}}, and
 
-(b) if Q′ is an assertion such that {{P}}c{{Q′}},
-    then Q st implies Q′ st, for all states st.
+(b) if Q′ is an assertion such that {{p}}c{{Q′}},
+    then q st implies Q′ st, for all states st.
 
-Q is the strongest (most difficult to satisfy) assertion that is
-guaranteed to hold after c if P holds before. For example, the
+q is the strongest (most difficult to satisfy) assertion that is
+guaranteed to hold after c if p holds before. For example, the
 strongest postcondition of the command skip with respect to the
 precondition Y = 1 is Y = 1. Similarly, the postcondition in...
 
          {{ Y = y }}
            if !Y === A0 then X := A0 else Y := !Y *** A2
-         {{ (Y = y = X = 0) ∨ (Y = 2*y ∧ y <> 0) }}
+         {{ (Y = y = X = 0) ∨ (Y = 2*y ∧ y ≠ 0) }}
 
 ...is the strongest one.
 
@@ -3522,7 +3522,7 @@ variable `Y` when it terminates:
 X := 1;
 Y := 1;
 Z := 1;
-while X <> 1 + n do
+while X ≠ 1 + n do
   T := Z;
   Z := Z + Y;
   Y := T;
@@ -3635,9 +3635,9 @@ since they have nothing to do with Hoare logics -/
 
     Euclid's algorithm for calculating GCDs:
 [[
-    {{ X = m /\ Y = n }}
-  while X <> Y do
-    if Y <= X
+    {{ X = m ∧ Y = n }}
+  while X ≠ Y do
+    if Y ≤ X
       then
          X := X - Y
       else
@@ -3649,25 +3649,25 @@ since they have nothing to do with Hoare logics -/
 
     Informal decorated program:
 [[
-    {{ X = m /\ Y = n }} ->>
+    {{ X = m ∧ Y = n }} ->>
     {{ gcd m n = gcd X Y }}
-  while X <> Y do
-      {{ gcd m n = gcd X Y /\ X<>Y }}
-    if Y <= X
+  while X ≠ Y do
+      {{ gcd m n = gcd X Y ∧ X≠Y }}
+    if Y ≤ X
       then
-          {{ gcd m n = gcd X Y /\ X<>Y /\ Y<=X }} ->>
+          {{ gcd m n = gcd X Y ∧ X≠Y ∧ Y≤X }} ->>
           {{ gcd m n = gcd (X-Y) Y }}
         X := X - Y
           {{ gcd m n = gcd X Y }}
       else
-          {{ gcd m n = gcd X Y /\ X<>Y /\ ~(Y<=X) }} ->>
+          {{ gcd m n = gcd X Y ∧ X≠Y ∧ ~(Y≤X) }} ->>
           {{ gcd m n = gcd X (Y-X) }}
         Y := Y - X
           {{ gcd m n = gcd X Y }}
     end
   end
-    {{ gcd m n = gcd X Y /\ ~(X<>Y) }} ->>
-    {{ gcd m n = gcd X Y /\ X=Y }} ->>
+    {{ gcd m n = gcd X Y ∧ ~(X≠Y) }} ->>
+    {{ gcd m n = gcd X Y ∧ X=Y }} ->>
     {{ gcd m n = X }}
 ]]
 
@@ -3679,37 +3679,37 @@ Print gcd. (* this actually uses Euclid's algorithm internally;
 
 Definition gcd_dec (m n:nat) : decorated :=
   <{
-    {{ X = m /\ Y = n }} ->>
+    {{ X = m ∧ Y = n }} ->>
     {{ #gcd m n = #gcd X Y }}
   while BNot (BEq (AId X) (AId Y)) do
-      {{ #gcd m n = #gcd X Y /\ X <> Y }}
-    if (Y <= X)
+      {{ #gcd m n = #gcd X Y ∧ X ≠ Y }}
+    if (Y ≤ X)
       then
           {{ #gcd m n = #gcd X Y
-                       /\ X <> Y /\  Y <= X }} ->>
+                       ∧ X ≠ Y ∧  Y ≤ X }} ->>
           {{ #gcd m n = #gcd (X - Y) Y }}
         X := AMinus (AId X) (AId Y)
           {{ #gcd m n = #gcd X Y }}
       else
 
-      {{ #gcd m n = #gcd X Y /\
-                        X<> Y /\ ~(Y<=X) }} ->>
+      {{ #gcd m n = #gcd X Y ∧
+                        X≠ Y ∧ ¬(Y≤X) }} ->>
           {{ #gcd m n = #gcd X (Y - X) }}
         Y := AMinus (AId Y) (AId X)
           {{ #gcd m n = #gcd X Y }}
     end
       {{ #gcd m n = #gcd X Y }}
   end
-    {{ #gcd m n = #gcd X Y /\ ~(X <> Y) }} ->>
-    {{ #gcd m n = #gcd X Y /\ X =  Y }} ->>
+    {{ #gcd m n = #gcd X Y ∧ ~(X ≠ Y) }} ->>
+    {{ #gcd m n = #gcd X Y ∧ X =  Y }} ->>
     {{ #gcd m n =  X }} }>.
 
-Lemma gcd_eq : forall n, gcd n n = n.
+Lemma gcd_eq : ∀ n, gcd n n = n.
 Proof.
   apply Nat.gcd_diag.
 Qed.
 
-Lemma gcd_gt1 : forall y1 y2,
+Lemma gcd_gt1 : ∀ y1 y2,
   y1 > y2 ->
   gcd y1 y2 = gcd (y1 - y2) y2.
 Proof.
@@ -3720,7 +3720,7 @@ Proof.
   - lia.
 Qed.
 
-Lemma gcd_gt2 : forall y1 y2,
+Lemma gcd_gt2 : ∀ y1 y2,
   y1 < y2 ->
   gcd y1 y2 = gcd y1 (y2 - y1).
 Proof.
@@ -3729,7 +3729,7 @@ Proof.
   lia.
 Qed.
 
-Theorem gcd_correct : forall m n,
+Theorem gcd_correct : ∀ m n,
   outer_triple_valid (gcd_dec m n).
 Proof. verify.
   - (* 1 *) rewrite H. apply gcd_gt1. lia.
@@ -3744,9 +3744,9 @@ Qed.
 
   { X = m } ->>
 Z := 0;
-while X <> 0 do
+while X ≠ 0 do
   W := n;
-  while W <> 0 do
+  while W ≠ 0 do
     Z := Z + 1;
     W := W - 1
   end;
@@ -3757,32 +3757,32 @@ end
 DECORATED PROGRAM:
 
   { X = m } ->>
-  { 0 = (m-X) * n /\ X<=m }
+  { 0 = (m-X) * n ∧ X≤m }
 Z := 0;
-  { Z = (m-X) * n /\ X<=m }
-while X <> 0 do
-    { Z = (m-X) * n /\ X<=m /\ X<>0 } ->>
-    { Z = (m-X) * n + (n-n) /\ X<=m }
+  { Z = (m-X) * n ∧ X≤m }
+while X ≠ 0 do
+    { Z = (m-X) * n ∧ X≤m ∧ X≠0 } ->>
+    { Z = (m-X) * n + (n-n) ∧ X≤m }
   W := n;
-    { Z = (m-X) * n + (n-W) /\ X<=m /\ W<=n }
-  while W <> 0 do
-      { Z = (m-X) * n + (n-W) /\ X<=m /\ W<=n /\ W<>0 } ->>
-      { Z + 1 = (m-X) * n + (n-W) + 1 /\ X<=m /\ W-1<=n /\ W<>0 } ->>
-      { Z + 1 = (m-X) * n + (n-(W-1)) /\ X<=m /\ W-1<=n }
+    { Z = (m-X) * n + (n-W) ∧ X≤m ∧ W≤n }
+  while W ≠ 0 do
+      { Z = (m-X) * n + (n-W) ∧ X≤m ∧ W≤n ∧ W≠0 } ->>
+      { Z + 1 = (m-X) * n + (n-W) + 1 ∧ X≤m ∧ W-1≤n ∧ W≠0 } ->>
+      { Z + 1 = (m-X) * n + (n-(W-1)) ∧ X≤m ∧ W-1≤n }
     Z := Z + 1;
-      { Z = (m-X) * n + (n-(W-1)) /\ X<=m /\ W-1<=n }
+      { Z = (m-X) * n + (n-(W-1)) ∧ X≤m ∧ W-1≤n }
     W := W - 1
-      { Z = (m-X) * n + (n-W) /\ X<=m /\ W<=n }
+      { Z = (m-X) * n + (n-W) ∧ X≤m ∧ W≤n }
   end;
-    { Z = (m-X) * n + (n-W) /\ X<=m /\ W<=n /\ ~(W<>0) } ->>
-    { Z = (m-X) * n + n /\ X<=m } ->>
-    { Z = ((m-X)+1) * n /\ X<=m } ->>
-    { Z = (m-(X-1)) * n /\ X<=m }
+    { Z = (m-X) * n + (n-W) ∧ X≤m ∧ W≤n ∧ ~(W≠0) } ->>
+    { Z = (m-X) * n + n ∧ X≤m } ->>
+    { Z = ((m-X)+1) * n ∧ X≤m } ->>
+    { Z = (m-(X-1)) * n ∧ X≤m }
   X := X - 1
-    { Z = (m-X) * n /\ X<=m }
+    { Z = (m-X) * n ∧ X≤m }
 end
-  { Z = (m-X) * n /\ X<=m /\ ~(X<>0) } ->>
-  { Z = (m-X) * n /\ X=0 } ->>
+  { Z = (m-X) * n ∧ X≤m ∧ ~(X≠0) } ->>
+  { Z = (m-X) * n ∧ X=0 } ->>
   { Z = m * n } -/
 
 /- LATER: From 2009 final
@@ -3796,12 +3796,12 @@ Answer: False
 testif (BLe (AId X) (AId Y))
 then skip
 else Z := (AId Y); Y := (AId X); X := (AId Z)
-{{ X <= Y }}
+{{ X ≤ Y }}
 Answer: True
 (c) {{ ? }} while BNot (BEq (AId Y) (ANum 5)) do Y := APlus (AId Y) (ANum 1) {{ Y = 5 }}
 Answer: True
 (d) {{ ? }} while BEq (AId X) (ANum 0) do Y := (ANum 1) {{ Y = 5 }}
-Answer: X=0 \/ Y=5
+Answer: X=0 ∨ Y=5
 
 --------------------
 
@@ -3906,16 +3906,16 @@ macro_rules
       | `(sparse_dcom| skip) => `(DCom.skip)
       | `(sparse_dcom| $x:ident := $a:imp_aexp) =>
         `(DCom.asgn $x (aexp { $a }))
-      | `(sparse_dcom| $d1:sparse_dcom; $d2:sparse_dcom) =>
-        `(DCom.seq (sdcom { $d1 }) (sdcom { $d2 }))
+      | `(sparse_dcom| $d₁:sparse_dcom; $d₂:sparse_dcom) =>
+        `(DCom.seq (sdcom { $d₁ }) (sdcom { $d₂ }))
       | `(sparse_dcom|
           if ($b:imp_bexp) then
-            $d1:sparse_dcom
+            $d₁:sparse_dcom
           else
-            $d2:sparse_dcom
+            $d₂:sparse_dcom
           end) =>
         `(DCom.cond (bexp { $b })
-          (sdcom { $d1 }) (sdcom { $d2 }))
+          (sdcom { $d₁ }) (sdcom { $d₂ }))
       | `(sparse_dcom|
           while ($b:imp_bexp) do
             {{ $inv }}
@@ -4016,9 +4016,9 @@ annotations. -/
 def DCom.erase (d : DCom) : Com :=
   match d with
   | .skip => .skip
-  | .seq d1 d2 => .seq d1.erase d2.erase
+  | .seq d₁ d₂ => .seq d₁.erase d₂.erase
   | .asgn x a => .asgn x a
-  | .cond b d1 d2 => .cond b d1.erase d2.erase
+  | .cond b d₁ d₂ => .cond b d₁.erase d₂.erase
   | .whileDo b _ body => .whileDo b body.erase
   | .assert _ => .skip
 
@@ -4035,24 +4035,24 @@ https://www.cl.cam.ac.uk/archive/mjcg/HL/Notes/Notes.pdf -/
 def DCom.awp (post : Assertion) (d : DCom) : Assertion :=
   match d with
   | .skip => post
-  | .seq d1 d2 => d1.awp (d2.awp post)
+  | .seq d₁ d₂ => d₁.awp (d₂.awp post)
   | .asgn x a => {{ post [x ↦ a] }}
-  | .cond b d1 d2 =>
+  | .cond b d₁ d₂ =>
       fun st =>
-        (b.eval st = true ∧ d1.awp post st) ∨
-        (b.eval st = false ∧ d2.awp post st)
+        (b.eval st = true ∧ d₁.awp post st) ∨
+        (b.eval st = false ∧ d₂.awp post st)
   | .whileDo _ invariant _ => invariant
   | .assert assertion => fun st => assertion st ∧ post st
 
 def DCom.VerificationConditions
     (post : Assertion) (d : DCom) : Prop :=
   match d with
-  | .seq d1 d2 =>
-      d1.VerificationConditions (d2.awp post) ∧
-      d2.VerificationConditions post
-  | .cond _ d1 d2 =>
-      d1.VerificationConditions post ∧
-      d2.VerificationConditions post
+  | .seq d₁ d₂ =>
+      d₁.VerificationConditions (d₂.awp post) ∧
+      d₂.VerificationConditions post
+  | .cond _ d₁ d₂ =>
+      d₁.VerificationConditions post ∧
+      d₂.VerificationConditions post
   | .whileDo b invariant body =>
       (∀ st, invariant st ∧ b.eval st ≠ true → post st) ∧
       (∀ st, invariant st ∧ b.eval st = true →
@@ -4397,84 +4397,84 @@ Some preconditions are more interesting than others.
 For example, the Hoare triple
 
 ```display
-{{ False }}  X := Y + 1  {{ X <= 5 }}
+{{ False }}  X := Y + 1  {{ X ≤ 5 }}
 ```
 
 is _not_ very interesting: although it is perfectly valid, it
 tells us nothing useful.  Since the precondition isn't
 satisfied by any state, it doesn't describe any situations where
 we can use the command `X := Y + 1` to achieve the postcondition
-`X <= 5`.
+`X ≤ 5`.
 
 By contrast,
 
 ```display
-{{ Y <= 4 /\ Z = 0 }}  X := Y + 1 {{ X <= 5 }}
+{{ Y ≤ 4 ∧ Z = 0 }}  X := Y + 1 {{ X ≤ 5 }}
 ```
 
 has a useful precondition: it tells us that, if we can somehow
-create a situation in which we know that `Y <= 4 /\ Z = 0`, then
+create a situation in which we know that `Y ≤ 4 ∧ Z = 0`, then
 running this command will produce a state satisfying the
 postcondition.  However, this precondition is not as useful as it
 could be, because the `Z = 0` clause in the precondition actually
-has nothing to do with the postcondition `X <= 5`.
+has nothing to do with the postcondition `X ≤ 5`.
 
 The _most_ useful precondition for this command is this one:
 
 ```display
-{{ Y <= 4 }}  X := Y + 1  {{ X <= 5 }}
+{{ Y ≤ 4 }}  X := Y + 1  {{ X ≤ 5 }}
 ```
 
-The assertion `Y <= 4` is called the _weakest precondition_ of
-`X := Y + 1` with respect to the postcondition `X <= 5`.
+The assertion `Y ≤ 4` is called the _weakest precondition_ of
+`X := Y + 1` with respect to the postcondition `X ≤ 5`.
 ::::
 
 :::terse
 A useless (though valid) Hoare triple:
 
 ```display
-{{ False }}  X := Y + 1  {{ X <= 5 }}
+{{ False }}  X := Y + 1  {{ X ≤ 5 }}
 ```
 
 A better precondition:
 
 ```display
-{{ Y <= 4 /\ Z = 0 }}  X := Y + 1 {{ X <= 5 }}
+{{ Y ≤ 4 ∧ Z = 0 }}  X := Y + 1 {{ X ≤ 5 }}
 ```
 
 The _best_ precondition:
 
 ```display
-{{ Y <= 4 }}  X := Y + 1  {{ X <= 5 }}
+{{ Y ≤ 4 }}  X := Y + 1  {{ X ≤ 5 }}
 ```
 :::
 
-Assertion `Y <= 4` is a _weakest precondition_ of command
-`X := Y + 1` with respect to postcondition `X <= 5`.  Think of _weakest_
+Assertion `Y ≤ 4` is a _weakest precondition_ of command
+`X := Y + 1` with respect to postcondition `X ≤ 5`.  Think of _weakest_
 here as meaning "easiest to satisfy": a weakest precondition is
 one that as many states as possible can satisfy.
 
 :::slidebreak
 :::
 
-`P` is a weakest precondition of command `c` for postcondition `Q`
+`p` is a weakest precondition of command `c` for postcondition `q`
 if
 
-  - `P` is a precondition, that is, `{{P}} c {{Q}}`; and
-  - `P` is at least as weak as all other preconditions, that is,
-    if `{{P'}} c {{Q}}` then `P' ->> P`.
+  - `p` is a precondition, that is, `{{p}} c {{q}}`; and
+  - `p` is at least as weak as all other preconditions, that is,
+    if `{{p'}} c {{q}}` then `p' ->> p`.
 
 Note that weakest preconditions need not be unique.  For
-example, `Y <= 4` was a weakest precondition above, but so are the
-logically equivalent assertions `Y < 5`, `Y <= 2 * 2`, etc.
-It is easy to show that any two weakest preconditions `P` and `P'`
-of a command `c` with respect to postcondition `Q` are logically
-equivalent; that is, `P <<->> P'`.
+example, `Y ≤ 4` was a weakest precondition above, but so are the
+logically equivalent assertions `Y < 5`, `Y ≤ 2 * 2`, etc.
+It is easy to show that any two weakest preconditions `p` and `p'`
+of a command `c` with respect to postcondition `q` are logically
+equivalent; that is, `p <<->> p'`.
 
 ```lean
-def IsWp (P : Assertion) (c : Com) (Q : Assertion) : Prop :=
-  ValidHoareTriple P c Q ∧
-  ∀ P' : Assertion, {{ P' }} c {{ Q }} → P' ->> P
+def IsWp (p : Assertion) (c : Com) (q : Assertion) : Prop :=
+  ValidHoareTriple p c q ∧
+  ∀ p' : Assertion, {{ p' }} c {{ q }} → p' ->> p
 ```
 
 :::slidebreak
@@ -4504,7 +4504,7 @@ for the following postconditions?
  {{ X = 0 }}
 
 6) {{ ? }}
- while true do X := 0 end
+ while (true) {X := 0}
  {{ X = 0 }}
 ```
 
@@ -4513,7 +4513,7 @@ for the following postconditions?
 1) X = 5
 2) Y + Z = 5
 3) True
-4) (X = 0 /\ Z = 4) \/ (X <> 0 /\ W = 3)
+4) (X = 0 ∧ Z = 4) ∨ (X ≠ 0 ∧ W = 3)
 5) False
 6) True
 ```
@@ -4528,7 +4528,7 @@ For each of the following Hoare triples, give a weakest precondition
 that makes the triple valid.
 (a)
     {{ ? }}
-while Y <= X do
+while Y ≤ X do
 X := X - 1 end
 {{ Y > X }}
     {{ ? }}
@@ -4550,7 +4550,7 @@ that would allow us to annotate the rest of the program.
 X := n
 Y := X
 Z := 0
-while Y <> 0 do
+while Y ≠ 0 do
     Z := Z + X;
 Y := Y - 1 end
 { True }
@@ -4561,9 +4561,9 @@ Y := Y - 1 end
 
 ::::::full
 :::::exercise (rating := 3) (name := "is_wp") (level := Advanced) (optional := true)
-Prove formally, using the definition of `ValidHoareTriple`, that `Y <= 4`
+Prove formally, using the definition of `ValidHoareTriple`, that `Y ≤ 4`
 is indeed a weakest precondition of `X := Y + 1` with respect to
-postcondition `X <= 5`.
+postcondition `X ≤ 5`.
 
 :::dev PotentialImprovement
 Rocq requires parentheses around the three arguments to `is_wp` here
@@ -4587,11 +4587,11 @@ weakest precondition.
 
 ```lean
 theorem hoare_asgn_weakest
-    (Q : Assertion) (x : Ident) (a : Aexp) :
-    IsWp ({{ Q [x ↦ a] }}) (imp {x := a}) Q := by
+    (q : Assertion) (x : Ident) (a : Aexp) :
+    IsWp ({{ q [x ↦ a] }}) (imp {x := a}) q := by
   solution!
     refine ⟨hoare_asgn, ?_⟩
-    intro P hP
+    intro p hP
     rw [validHoareTriple_def] at hP
     intro st hst
     rw [Assertion.subst_apply]
@@ -4610,9 +4610,9 @@ in the {ref "Hoare"}[Hoare] chapter returns a weakest precondition.
 namespace HimpHoare2
 open HimpHoare
 
-theorem hoare_havoc_weakest (P Q : Assertion) (x : Ident)
-    (h : ValidHoareTriple P (Com.havoc x) Q) :
-    P ->> havoc_pre x Q := by
+theorem hoare_havoc_weakest (p q : Assertion) (x : Ident)
+    (h : ValidHoareTriple p (Com.havoc x) q) :
+    p ->> havoc_pre x q := by
   solution!
     sorry
 
