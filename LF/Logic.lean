@@ -1551,6 +1551,10 @@ Fundamental connectives we've been using since the beginning:
 - implication (`a → b`)
 - universal quantification (`∀ x, a`)
 
+Together, these connectives and quantifiers are exactly the vocabulary of
+what's usually called _first-order logic_. Later in this chapter, we'll say
+more about what that means, and about how Lean's own logic goes beyond it.
+
 # Programming with Propositions
 
 ::::full
@@ -2600,7 +2604,7 @@ are equal to each other:
 ::::
 
 ::::terse
-A first instance has to do with equality of propositions.
+A first instance has to do with equality of propositions. For example:
 ::::
 
 ```lean
@@ -2608,7 +2612,10 @@ A first instance has to do with equality of propositions.
 ```
 
 This is an equality between two conjunctions, which itself is also
-a proposition. It states that commuted conjunctions are equal propositions.
+a proposition. It states that commuted conjunctions are _equal_ propositions,
+meaning that they hold, and do not hold, in exactly the same circumstances.
+
+::::full
 However, we cannot prove this equality by reflexivity, as the two sides
 don't compute to the same term, and we cannot proceed by cases on
 `a` or `b`, as they are not inductive.
@@ -2642,7 +2649,10 @@ Consider using the 'by_cases' tactic, which does true/false reasoning for propos
 a b : Prop
 ⊢ a ∧ b = b ∧ a
 ```
-
+::::
+::::terse
+Unfortunately, we cannot _prove_ this equality directly.
+::::
 However, we _can_ prove that `a ∧ b` implies `b ∧ a`, and vice versa — this is
 the commutativity of conjunction that we have seen earlier.
 
@@ -2654,8 +2664,10 @@ the commutativity of conjunction that we have seen earlier.
 and_comm {a b : Prop} : a ∧ b ↔ b ∧ a
 ```
 
-Since it would be convenient to be able to rewrite propositions from
-one side of `↔` to the other, Lean provides an axiom to turn `↔` into `=`,
+If we think about it, this is what we mean when we say two propositions are equal —
+that one holds if and only if the other holds. It would be convenient to apply this
+meaning of equality to proofs so that we can _rewrite_ propositions from
+one side of `↔` to the other. To allow this, Lean provides an axiom to turn `↔` into `=`,
 which is called _propositional extensionality_ ({lean}`propext`).
 
 ```lean (name := propext)
@@ -2710,12 +2722,14 @@ theorem and_assoc_eq (a b c : Prop) : ((a ∧ b) ∧ c) = (a ∧ (b ∧ c)) := b
 Here is an example of where using `=` instead of `↔` is more convenient:
 we show that it's possible to "flip" three conjoined propositions.
 
+::::full
 One way to prove this is to construct the `↔`, destruct the `↔`s provided by
 {lean}`and_comm` and {lean}`and_assoc`, and apply the resulting implications a few times.
 But this is a lot of hassle when the proof is conceptually simple:
 we flip `b` and `c`, then we flip that conjunction with `a`, and we
 finish by associativity. By using {lean}`and_comm_eq`, this is easily done
 by rewriting equal propositions.
+::::
 
 ```lean
 theorem and_comm_flip (a b c : Prop) : (a ∧ b ∧ c) ↔ (c ∧ b ∧ a) := by
@@ -2808,16 +2822,21 @@ equal by reflexivity when both reduce to the same expression:
 example : (fun x => x + 2) = (fun x => x + (Nat.pred 3)) := by rfl
 ```
 
-In general, functions can be equal for more interesting reasons.
-In common mathematical practice, two functions `f` and `g` are considered
-equal if they produce the same output on every input:
+But this doesn't always work the way we'd like:
+
+```lean +error
+example : (fun x => x + 2) = (fun x => 2 + x) := by rfl
+```
+
+In common mathematical practice, two functions `f` and `g` are
+considered equal if they produce the same output on every input, regardless
+of how they happen to compute that output:
 
 ```display
 (∀ x, f x = g x) → f = g
 ```
 
-This is known as _functional extensionality_,
-which Lean provides as {lean}`funext`.
+This is known as _functional extensionality_, which Lean provides as {lean}`funext`.
 
 ```lean
 #check (fun f g => funext (f := f) (g := g) :
@@ -3041,6 +3060,25 @@ is proven by providing a particular value of `x`.
 
 Logical systems in which excluded middle does hold,
 such as ZFC set theory, are referred to as _classical_.
+
+Both variants, classical and constructive, are examples of
+_first-order logic_: propositions are built from a fixed stock of
+connectives (`∧`, `∨`, `¬`, `→`, `↔`) and quantifiers (`∀`, `∃`) that range
+over the individual elements of some domain (natural numbers, lists, and
+so on), but never over propositions or predicates themselves. Classical
+first-order logic — first-order logic together with excluded middle — is
+the logic usually taught in an introductory logic course, and it
+underlies foundations like ZFC.
+
+Lean's own logic goes further than this, because propositions are
+themselves Lean terms of type {lean}`Prop`, so we can quantify over them
+directly. {lean}`ExcludedMiddle` above, `∀ a : Prop, a ∨ ¬ a`, does exactly
+that: it quantifies over _all_ propositions, not over the elements of
+some fixed domain. Logics that allow quantifying over propositions or
+predicates, rather than only over individuals, are called
+_higher-order_; Lean's logic is a higher-order one, of which first-order
+logic is a fragment.
+
 Lean provides classical reasoning principles in the `Classical` library,
 including excluded middle.
 

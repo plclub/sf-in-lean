@@ -178,7 +178,9 @@ to solve the following example, which requires simplifying the `++` and {lean}`L
 ```lean
 example (n m o : Nat)
     (h : [n] ++ [m] = List.reverse ([o] ++ [o])) :
-    n = m := by sorry
+    n = m := by
+  injections h₁ _ h₃
+  rw [h₁, h₃]
 ```
 
 :::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement
@@ -640,8 +642,17 @@ let ⟨a, b⟩ := v
 
 ::::::full
 :::::exercise (rating := 3) (name := "zip_unzip'")
-Here is an implementation of the {name}`unzip` function from
-chapter {ref "Poly"}[Poly]:
+Recall the {name}`unzip` function from chapter {ref "Poly"}[Poly];
+copy your implementation from that chapter and paste it below:
+
+:::dev "Daniel Sainati" BeforeNextRelease
+Asking students to copy and paste their definition of `unzip` from
+the previous chapter is unfortunate, especially because it's very easy
+to accidentally forget to change the recursive call from `unzip` to `unzip'`.
+AFAIK we do it this way to make the chapters easier to autograde, but
+let's figure out a way to allow grading across chapters so that we
+don't need to do this repetition.
+:::
 
 ```lean
 def unzip' {α β : Type} (l : List (α × β)) : List α × List β := solution!(
