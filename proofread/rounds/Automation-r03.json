@@ -1,0 +1,78 @@
+{
+ "file": "LF/Automation.lean",
+ "chapter": "Automation",
+ "round": 3,
+ "proposals": [
+  {
+   "id": "1",
+   "cat": "capitalization/sentence-start",
+   "old": "{tactic}`lia` can solve many of the cases of our old {name}`Perm3.In` example.",
+   "new": "The {tactic}`lia` tactic can solve many of the cases of our old {name}`Perm3.In` example.",
+   "why": "Sentence opens with the lowercase tactic name lia; per house rule, rephrase so the sentence starts with a capitalized word."
+  },
+  {
+   "id": "2",
+   "cat": "capitalization/sentence-start",
+   "old": "{tactic}`repeat` can loop forever.",
+   "new": "The {tactic}`repeat` combinator can loop forever.",
+   "why": "Sentence opens with the lowercase tactic name repeat; per house rule, rephrase so the sentence starts with a capitalized word. Matches the section's own description of repeat as a combinator."
+  },
+  {
+   "id": "3",
+   "cat": "capitalization/sentence-start",
+   "old": "{tactic}`simp`'s available set of lemmas begins with a default set and can be extended\nto include theorems labeled `@[simp]`.\nIndeed, the characterizing lemmas we've been writing for",
+   "new": "The {tactic}`simp` tactic's available set of lemmas begins with a default set and can be extended\nto include theorems labeled `@[simp]`.\nIndeed, the characterizing lemmas we've been writing for",
+   "why": "Sentence opens with the lowercase tactic name simp (possessive); per house rule, rephrase so the sentence starts with a capitalized word."
+  },
+  {
+   "id": "4",
+   "cat": "capitalization/sentence-start",
+   "old": "{tactic}`simp`'s available set of lemmas begins with a default set and can be extended\nto include theorems labeled `@[simp]`.\nIndeed, the characterizing lemmas we've been using for rewriting are",
+   "new": "The {tactic}`simp` tactic's available set of lemmas begins with a default set and can be extended\nto include theorems labeled `@[simp]`.\nIndeed, the characterizing lemmas we've been using for rewriting are",
+   "why": "Terse-block duplicate of proposal 3: sentence opens with the lowercase tactic name simp; per house rule, rephrase so the sentence starts with a capitalized word."
+  },
+  {
+   "id": "5",
+   "cat": "capitalization/sentence-start",
+   "old": "`simp only` uses only the provided theorems:",
+   "new": "The tactic `simp only` only uses the provided theorems:",
+   "why": "Sentence opens with the lowercase code span simp only; per house rule, rephrase so the sentence starts with a capitalized word."
+  },
+  {
+   "id": "6",
+   "cat": "capitalization/sentence-start",
+   "old": "`double_injective` from `Tactics` doesn't actually work here",
+   "new": "The `double_injective` lemma from `Tactics` doesn't actually work here",
+   "why": "Sentence opens with the lowercase identifier double_injective; per house rule, rephrase so the sentence starts with a capitalized word."
+  },
+  {
+   "id": "7",
+   "cat": "typo/stray-punctuation",
+   "old": "doubt, since it's not named)/",
+   "new": "doubt, since it's not named).",
+   "why": "Stray trailing slash after the closing parenthesis; the sentence should end with a period."
+  },
+  {
+   "id": "8",
+   "cat": "agreement/every-lemma",
+   "old": "At each step it tries every lemmas in its available set the way",
+   "new": "At each step it tries every lemma in its available set the way",
+   "why": "\"every\" takes a singular noun."
+  },
+  {
+   "id": "9",
+   "cat": "grammar/missing-article",
+   "old": "Tactic {tactic}`simp_all`\nis not the same as `simp at *`.",
+   "new": "The tactic {tactic}`simp_all`\nis not the same as `simp at *`.",
+   "why": "Missing article before \"tactic\"; every other such reference in the chapter reads \"the tactic X\"."
+  },
+  {
+   "id": "10",
+   "cat": "comma/nonrestrictive",
+   "old": "Interestingly, we can see for this example that {tactic}`simp` used the {lean}`Nat` version\nof `add_zero`, not our own added above, and also pulled in {lean}`Nat.add_left_cancel_iff`\nwhich is not strictly needed. But the combination works, even if it is not minimal.",
+   "new": "Interestingly, we can see for this example that {tactic}`simp` used the {lean}`Nat` version\nof `add_zero`, not our own, added above, and also pulled in {lean}`Nat.add_left_cancel_iff`,\nwhich is not strictly needed. But the combination works, even if it is not minimal.",
+   "why": "Two missing commas: \"added above\" is a nonrestrictive participial phrase modifying \"our own\" and needs a comma on both sides; \"which is not strictly needed\" is a nonrestrictive clause and needs a comma before \"which\"."
+  }
+ ],
+ "completed": true
+}

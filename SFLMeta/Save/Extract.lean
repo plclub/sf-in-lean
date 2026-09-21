@@ -294,7 +294,8 @@ for any other block.  `display` stores its source string directly;
 def displaySource? (b : Verso.Doc.Block Manual) : Option String :=
   match b with
   | .other which contents =>
-    if which.name == ``Block.display || which.name == ``Block.displaymath then
+    if which.name == ``Block.display || which.name == ``Block.displayCentered ||
+        which.name == ``Block.displaymath then
       some <|
         match which.data with
         | .str s => s
@@ -548,7 +549,8 @@ partial def walkBlock (width : Nat) (isTerse : Bool) (file : String) (b : Verso.
     if name == ``Block.bnf then
       if let some src := decodeBnfSource? which.data then
         return buf.appendAll file (asModuleDoc src.trimAscii.toString)
-    if name == ``Block.display || name == ``Block.displaymath then
+    if name == ``Block.display || name == ``Block.displayCentered ||
+        name == ``Block.displaymath then
       -- A display is normally batched into the surrounding comment by
       -- `walkBlocks` (so its lead-in prose and the text that follows it stay in
       -- the same comment block); this case is only reached for a display

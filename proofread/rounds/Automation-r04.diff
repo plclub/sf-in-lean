@@ -1,0 +1,64 @@
+--- LF/Automation.lean (before this round)
++++ LF/Automation.lean
+@@ -219,5 +219,5 @@
+ 
+ ::::terse
+-The {tactic}`try` combinator allows tactics to fail.
++The {tactic}`try` combinator swallows a tactic's failure.
+ ::::
+ 
+@@ -583,6 +583,6 @@
+ 
+ ```lean +error (name := simp_at_star_fail)
+-  example (a b : Nat) (h1 : a = 0) (h2 : a + b = 5) : b = 5 := by
+-    simp at *
++example (a b : Nat) (h1 : a = 0) (h2 : a + b = 5) : b = 5 := by
++  simp at *
+ ```
+ 
+@@ -596,6 +596,6 @@
+ 
+ ```lean
+-  example (a b : Nat) (h1 : a = 0) (h2 : a + b = 5) : b = 5 := by
+-    simp_all
++example (a b : Nat) (h1 : a = 0) (h2 : a + b = 5) : b = 5 := by
++  simp_all
+ ```
+ 
+@@ -868,4 +868,15 @@
+ :::dev "Benjamin Pierce (bcpierce00)"
+ Check typesetting here (rules should be centered, I think):
++:::
++
++:::dev "Claude"
++Per `STYLE-CODE.md`, a fenced `display` block always renders as a plain,
++left-aligned code block in the HTML (and as an indented comment in the
++extracted Lean) -- there is no built-in centering. So these inference rules
++render left-justified as written, not centered. Two ways to resolve this:
++leave them left-aligned (the layout already lines up each rule's name at the
++right margin, which reads reasonably unindented), or extend the
++`display`/inference-rule rendering to actually center each block, if that
++machinery is worth adding for the handful of rule blocks in the book.
+ :::
+ 
+@@ -1719,5 +1730,5 @@
+ ::::
+ 
+-## The (Strong) Pumping Lemma
++## The "Strong" Pumping Lemma
+ 
+ ::::exercise (rating := 5) (name := "strong_pumping") (optional := true)
+@@ -1726,4 +1737,13 @@
+ include the claim that {lean}`s₁.length + s₂.length ≤ re.pumpingConstant`.
+ 
++:::dev "Claude"
++This exercise is rated `5`, but its `:::gradeTheorem` below awards `10`
++points -- every other exercise in this chapter has grade points equal to its
++rating. Worth a decision: bump the points down to `5` to match the rating
++like everywhere else, or keep the extra weight as a deliberate call that this
++proof -- by far the longest in the chapter -- deserves more credit than its
++difficulty rating alone suggests.
++:::
++
+ ```lean
+ theorem pumping {α : Type} {re : RegExp α} {s : List α}

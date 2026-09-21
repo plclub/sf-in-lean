@@ -76,11 +76,26 @@ If the goal is a universally quantified formula made out of
 
   - the logical connectives `∧`, `∨`, `¬`, and `→`,
 
-then invoking {tactic}`lia` will either solve the goal or fail, meaning
-that the goal is actually false.  If the goal is _not_ of this
-form, {tactic}`lia` will fail. Note that, when failing, {tactic}`lia` may mention
-another tactic, called {tactic}`grind`. This is another, more powerful tactic
-that subsumes {tactic}`lia`, but we will not use it here.
+then invoking {tactic}`lia` will either solve the goal, or fail because the
+goal is actually false: within this fragment, {tactic}`lia` is a complete
+decision procedure. {tactic}`lia` reasons about
+the goal together with any hypotheses already in the local context: each
+hypothesis is used exactly as if it had been written into the goal as an
+antecedent with `→`.
+
+Outside this fragment, {tactic}`lia` can fail even when the goal is true —
+for example, on `n * n ≥ n`, which multiplies two variables together rather
+than a constant and a variable. Such a failure only means {tactic}`lia`
+couldn't decide the goal, not that the goal is false. Note that, when
+failing, {tactic}`lia` may mention another tactic, called {tactic}`grind`.
+This is another, more powerful tactic that subsumes {tactic}`lia`, but we
+will not use it here.
+
+Anything in the goal or hypotheses that isn't built from these arithmetic
+pieces — including an arbitrary proposition like `x ∈ l` — {tactic}`lia`
+simply treats as an opaque atom. So {tactic}`lia` can also solve goals that
+are purely propositional, with no arithmetic in them at all, as long as the
+only way such atoms are combined is with `∧`, `∨`, `¬`, and `→`.
 ::::
 
 ```lean
@@ -100,9 +115,13 @@ example (m n p : Nat) :
 example (a b c d : Prop) :
     (a → b) → (b → c) → (c → d) → (a → d) := by
   lia
+
+example (α : Type) (x : α) (l₁ l₂ l₃ : List α)
+  (h₁ : x ∈ l₁ → x ∈ l₂) (h₂ : x ∈ l₂ → x ∈ l₃) : x ∈ l₁ → x ∈ l₃ := by
+  lia
 ```
 
-{tactic}`lia` can solve many of the cases of our old {name}`Perm3.In` example.
+The {tactic}`lia` tactic can solve many of the cases of our old {name}`Perm3.In` example.
 
 ```lean
 theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α)
@@ -126,6 +145,13 @@ theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α)
 ```
 
 # Tactic Combinators
+
+:::dev "Mike Hicks (mwhicks1)"
+This is a bit weird: We _just_ saw `<;>` with no explanation in the example proof above.
+We should either remind people before that proof, or perhaps just after it, or not bother
+to do it at all. Probably we don't need the example (unless it's referenced later, which I
+doubt, since it's not named).
+:::
 
 ::::full
 In {ref "Induction"}[Induction], we saw how to use the {tactic}`<;>` combinator in order to apply
@@ -211,7 +237,7 @@ except that, if `t` fails, `try t` _successfully_ does nothing at all
 ::::
 
 ::::terse
-The {tactic}`try` combinator allows tactics to fail.
+The {tactic}`try` combinator swallows a tactic's failure.
 ::::
 
 ```lean
@@ -338,7 +364,7 @@ forever.
 ::::
 
 ::::terse
-{tactic}`repeat` can loop forever.
+The {tactic}`repeat` combinator can loop forever.
 ::::
 
 ```lean +error
@@ -433,26 +459,41 @@ Our {name}`Perm3.In` example is getting quite short! But can we do better?
 
 # The {tactic}`simp` Tactic
 
-::::full
-The {tactic}`simp` tactic is Lean's _simplifier_, and it is one of the most powerful
-tools in the language. Given a set of lemmas — some built-in, some user-provided —
-{tactic}`simp` attempts to reduce a goal or hypothesis by rewriting with those lemmas
-as much as possible.
+The {tactic}`simp` tactic is Lean's _simplifier_. It is one of the most powerful
+tools in the language, and it is used heavily in real Lean developments.
 
-Indeed, the characterizing lemmas we've been writing for
-our definitions all throughout this book are examples
-of these _simplification lemmas_, or
-_{tactic}`simp` lemmas_ as they're called by Lean programmers.
+::::full
+The tactic simplifies the target (the goal and/or one or more hypotheses)
+by repeatedly rewriting it using a set of lemmas.
+At each step it tries every lemma in its available set the way
+{tactic}`first` would, applies whichever one matches
+via {tactic}`rw`, and {tactic}`repeat`s until no lemma applies anywhere.
+Like {tactic}`repeat`, it fails outright if it never manages to apply a rewrite
+("simp made no progress"), rather than succeeding as a
+no-op the way {tactic}`try` {tactic}`simp` would.
 ::::
 
 ::::terse
-The lemmas we've been using for rewriting are
-the same ones we'll give to {tactic}`simp` for it to automatically
-solve goals involving those theorems.
+The tactic simplifies the target (the goal and/or one or more hypotheses)
+by repeatedly rewriting it using a set of lemmas.
 ::::
 
-We tag theorems with `@[simp]` to add them to the set of rules {tactic}`simp` considers when
-simplifying a term.
+::::full
+The {tactic}`simp` tactic's available set of lemmas begins with a default set and can be extended
+to include theorems labeled `@[simp]`.
+Indeed, the characterizing lemmas we've been writing for
+our definitions all throughout this book are examples
+of these _simplification lemmas_, or
+_{tactic}`simp` lemmas_ as they're called by Lean programmers, only
+we have refrained from annotating them as such (until now!).
+::::
+
+::::terse
+The {tactic}`simp` tactic's available set of lemmas begins with a default set and can be extended
+to include theorems labeled `@[simp]`.
+Indeed, the characterizing lemmas we've been using for rewriting are
+good ones to give to {tactic}`simp`, which is why they are also called _simplification lemmas_.
+::::
 
 ```lean
 namespace simp_lemmas_example
@@ -475,14 +516,14 @@ theorem add_succ_nested (n m : Nat) :
 ```
 
 ::::full
-If you know what theorems you want {tactic}`simp` to use to prove your goal, you can write
-`simp [<theorems>]`. If you want {tactic}`simp` to _only_ use those,
+The other way to extend {tactic}`simp`'s set of available lemmas is to list them
+explicitly, by writing `simp [<theorems>]`. If you want {tactic}`simp` to _only_ use those,
 you can use `simp only [<theorems>]`. As with {tactic}`rw`, you can also supply a
 definition to {tactic}`simp` to simplify using that definition.
 ::::
 
 ::::terse
-`simp only` uses only the provided theorems:
+Writing `simp only` applies {tactic}`simp` with only the provided theorems:
 ::::
 
 ```lean
@@ -493,7 +534,7 @@ theorem add_succ_nested_2 (n m : Nat) :
 
 If you want to know what {tactic}`simp` is doing, you can run {tactic}`simp?`.
 
-```lean
+```lean (name := simp_output)
 theorem add_succ_nested_3 (n m : Nat) :
     n + (m + 1 + 1) = (n + m + 1) + 1 := by
   simp?
@@ -501,34 +542,24 @@ theorem add_succ_nested_3 (n m : Nat) :
 end simp_lemmas_example
 ```
 
-::::full
-In the InfoView, Lean will show you what {tactic}`simp` is doing.
-You can click the `[apply]` button to replace {tactic}`simp?` with
-the suggested replacement. You should always do this
-for your final proof scripts: {tactic}`simp?` is helpful for writing
-a proof, but it should not show up in the final script.
-
-{tactic}`simp` is quite a powerful automated tactic, and it is used
-heavily in real Lean developments. We can use {tactic}`simp` to further simplify our
-{name}`Perm3.In` proof.
-::::
-
-::::terse
-{tactic}`simp` makes our example _much_ shorter.
-::::
-
-```lean
-theorem Perm3_In_almost_shortest (α : Type) (x : α) (l₁ l₂ : List α)
-    (hPerm : Perm3 l₁ l₂) (hIn : x ∈ l₁) : x ∈ l₂ := by
-  induction hPerm <;>
-    first
-    | simp at * <;> lia
-    | lia
+In the InfoView, you will see
+```leanOutput simp_output
+Try this:
+  [apply] simp only [add_succ, Nat.add_zero, Nat.add_left_cancel_iff]
 ```
 
 ::::full
-As with {tactic}`apply` and {tactic}`rw`, there's also a version of {tactic}`simp` that can simplify in
-hypotheses, rather than the goal. Invoking {tactic}`simp` as `simp [<lemmas>] at h`
+Click the `[apply]` button to replace {tactic}`simp?` with
+the suggested replacement. You should always do this for your final proof scripts, just
+as was recommended for {tactic}`rw?` and {tactic}`exact?` in the
+{ref "UsingLean"}[UsingLean] chapter.
+
+Interestingly, we can see for this example that {tactic}`simp` used the {lean}`Nat` version
+of `add_zero`, not our own, added above, and also pulled in {lean}`Nat.add_left_cancel_iff`,
+which is not strictly needed. But the combination works, even if it is not minimal.
+
+As with {tactic}`apply` and {tactic}`rw`, {tactic}`simp` can also simplify
+hypotheses — invoking {tactic}`simp` as `simp [<lemmas>] at h`
 runs the simplifier at hypothesis `h`.
 ::::
 
@@ -544,25 +575,50 @@ example α x (l₁ l₂ l₃ : List α)
   simp at h₁; simp at h₂; simp; lia
 ```
 
-::::full
-If we just want to simplify everywhere, we can use {tactic}`simp_all`, which
-simplifies in all hypotheses and in the goal at the same time. Rewriting the
-example above:
-::::
-
-::::terse
-The {tactic}`simp_all` tactic simplifies in all hypotheses and the goal.
-::::
-
+We could equally well have written
 ```lean
 example α x (l₁ l₂ l₃ : List α)
     (h₁ : x ∈ l₁ ++ l₂)
     (h₂ : x ∈ l₂ ++ l₃) :
     x ∈ l₁ ++ l₃ ∨ x ∈ l₂ := by
-  simp_all; lia
+  simp at *; lia
 ```
 
-The simplest version of our theorem uses {tactic}`simp_all`:
+::::terse
+If we want to _mutually_ simplify everywhere, we can use {tactic}`simp_all`, which
+simplifies in all hypotheses and in the goal at the same time.
+::::
+
+::::full
+If we want to _mutually_ simplify everywhere, we can use {tactic}`simp_all`, which
+simplifies in all hypotheses and in the goal at the same time. The tactic {tactic}`simp_all`
+is not the same as `simp at *`. The latter
+simplifies each target _independently_, whereas {tactic}`simp_all`
+additionally lets the (simplified) hypotheses simplify each other and the goal,
+iterating to a joint fixpoint.
+::::
+
+Here's an example that illustrates the difference:
+
+```lean +error (name := simp_at_star_fail)
+example (a b : Nat) (h1 : a = 0) (h2 : a + b = 5) : b = 5 := by
+  simp at *
+```
+
+This fails with:
+
+```leanOutput simp_at_star_fail
+`simp` made no progress
+```
+
+But {tactic}`simp_all` closes the goal:
+
+```lean
+example (a b : Nat) (h1 : a = 0) (h2 : a + b = 5) : b = 5 := by
+  simp_all
+```
+
+We can dramatically simplify our `Perm3_In_shortest` theorem using {tactic}`simp_all`:
 
 ```lean
 theorem Perm3_In_shortest (α : Type) (x : α) (l₁ l₂ : List α)
@@ -570,7 +626,61 @@ theorem Perm3_In_shortest (α : Type) (x : α) (l₁ l₂ : List α)
   induction hPerm <;> simp_all <;> lia
 ```
 
+:::dev "Mike Hicks (mwhicks1)"
+Should we add something like the following, to explain conditional rewrites?
+
+Recall from {ref "Tactics"}[Tactics] that rewriting with a theorem `h₁ -> h₂ -> a = b` uses
+`a = b` and leaves `h₁` and `h₂` as new subgoals. We can include such theorems
+in {tactic}`simp`'s available set, too, but it handles the premises differently:
+it tries to discharge `h₁`, `h₂` too, recursively, using {tactic}`simp` again (by default),
+and only fires the rewrite if it succeeds.
+If it can't discharge a premise, it just doesn't use that lemma.
+
+Claude tested three variants of this against the real toolchain (`lake env lean`).
+The `double_injective` lemma from `Tactics` doesn't actually work here: its conclusion is the
+bare variable `n = m`, which isn't a usable rewrite pattern (simp lemmas need a real
+compound term on the left), so `simp [double_injective]` fails outright with "simp made
+no progress" before it ever gets anywhere near the `n.double = m.double` premise.
+
+A conditional lemma that does have a proper compound left-hand side, like
+`Nat.sub_add_cancel : n ≤ m -> m - n + n = m`, tells a cleaner three-part story. With
+`hle : n ≤ m` in context:
+
+```
+example (n m : Nat) (hle : n ≤ m) : m - n + n = m := by
+  simp [Nat.sub_add_cancel]        -- fails: "simp made no progress"
+
+example (n m : Nat) (hle : n ≤ m) : m - n + n = m := by
+  simp [Nat.sub_add_cancel, hle]   -- succeeds
+
+example (n m : Nat) (hle : n ≤ m) : m - n + n = m := by
+  simp_all [Nat.sub_add_cancel]    -- succeeds, without naming hle
+```
+
+The first case shows the discharge step only consults the active simp set (default set
+plus whatever's explicitly listed) -- not arbitrary context hypotheses -- so `hle`
+sitting right there doesn't help; simp just skips the lemma, exactly the "no error, no
+leftover subgoal" behavior claimed above. The second shows discharge working once `hle`
+is added to the set. The third previews `simp_all` (introduced a bit further down this
+chapter): it folds every hypothesis into the active set automatically, so it discharges
+the premise without `hle` being named at all. That third point makes this example worth
+placing right here rather than after `simp_all` -- it's a preview, and it ties the two
+sections together.
+:::
+
 ## Idiomatic {tactic}`simp` Usage
+
+:::dev "Claude"
+Worth tying this convention explicitly back to the fixpoint framing suggested near the
+top of this section: a terminal `simp` is safe precisely because nothing downstream
+depends on its exact resulting term -- only on whether it helped close the goal. A
+nonterminal `simp` is risky because whatever manual tactic comes next (`cases h1 with |
+inl h => ...` in the example below) depends on the specific shape `simp` leaves behind,
+and that shape isn't a stable contract -- it can change as the simp set grows, since
+`simp` just runs to whatever fixpoint the current lemma set produces. Saying that
+explicitly might make the "why" land harder than jumping straight to the
+terminal/nonterminal rule.
+:::
 
 ::::full
 Because {tactic}`simp` is such a powerful tactic, the Lean community has developed a number of
@@ -774,35 +884,31 @@ Informally, this looks as follows:
 We can easily translate this intuition into a set of rules,
 where we write `s =~ re` to say that {lean}`re` matches {lean}`s`:
 
-:::dev "Benjamin Pierce (bcpierce00)"
-Check typesetting here (rules should be centered, I think):
-:::
+```display +centered
+        ─────────────── (mEmpty)
+        [] =~ EmptyStr
 
-```display
-─────────────── (mEmpty)
-[] =~ EmptyStr
+        ─────────────── (mChar)
+        [x] =~ (Char x)
 
-─────────────── (mChar)
-[x] =~ (Char x)
+    s₁ =~ re₁     s₂ =~ re₂
+  ─────────────────────────── (mApp)
+  (s₁ ++ s₂) =~ (App re₁ re₂)
 
-s₁ =~ re₁     s₂ =~ re₂
-─────────────────────────── (mApp)
-(s₁ ++ s₂) =~ (App re₁ re₂)
+           s₁ =~ re₁
+    ───────────────────── (mUnionL)
+    s₁ =~ (Union re₁ re₂)
 
-s₁ =~ re₁
-───────────────────── (mUnionL)
-s₁ =~ (Union re₁ re₂)
+           s₂ =~ re₂
+    ───────────────────── (mUnionR)
+    s₂ =~ (Union re₁ re₂)
 
-s₂ =~ re₂
-───────────────────── (mUnionR)
-s₂ =~ (Union re₁ re₂)
-
-──────────────── (mStar0)
-[] =~ (Star re)
+      ──────────────── (mStar0)
+      [] =~ (Star re)
 
 s₁ =~ re     s₂ =~ (Star re)
 ──────────────────────────── (mStarApp)
-(s₁ ++ s₂) =~ (Star re)
+  (s₁ ++ s₂) =~ (Star re)
 ```
 
 This directly corresponds to the following inductive definition:
@@ -835,10 +941,11 @@ Notice that this clause in our informal definition...
 ... is not explicitly reflected in the above definition.  Do we
 need to add something?
 
-   (A) Yes, we should add a rule for this.
-   (B) No, one of the other rules already covers this case.
-   (C) No, the _lack_ of a rule actually gives us the behavior we
-       want.
+(A) Yes, we should add a rule for this.
+
+(B) No, one of the other rules already covers this case.
+
+(C) No, the _lack_ of a rule actually gives us the behavior we want.
 
 :::quizSolution
 ```lean
@@ -1076,11 +1183,10 @@ theorem in_re_match {α : Type} {s : List α} {re : RegExp α} {x : α}
   | mEmpty => simp at hin
   | mChar c => simp only [reChars]; assumption
   | mApp _ _ _ _ ih₁ ih₂ =>
-
   /- Something interesting happens in the `mApp` case.  We obtain
     _two_ induction hypotheses: one that applies when `x` occurs in
-    `s₁` (which is matched by `re₁`), and a second one that applies when `x`
-    occurs in `s₂` (matched by `re₂`). -/
+    `s₁` (which is matched by `re₁`), and a second one that applies
+    when `x` occurs in `s₂` (matched by `re₂`). -/
     workinclass!
       simp only [reChars, List.mem_append] at *
       cases hin with
@@ -1092,7 +1198,6 @@ theorem in_re_match {α : Type} {s : List α} {re : RegExp α} {x : α}
     simp only [reChars, List.mem_append]; right; exact ih hin
   | mStar0 => simp at hin
   | mStarApp _ _ _ _ ih₁ ih₂ =>
-
   /- Here again we get two induction hypotheses, and they illustrate
     why we need induction on evidence for `ExpMatch`, rather than
     induction on the regular expression `re`: the latter would only
@@ -1177,7 +1282,7 @@ that it won't let you perform an induction over a term that
 isn't sufficiently general. Here's an example:
 
 ```lean +error (name := induction_generalize)
-example α (s₁ s₂ : List α) (re : RegExp α) :
+example (α : Type) (s₁ s₂ : List α) (re : RegExp α) :
     s₁ =~ Star re →
     s₂ =~ Star re →
     s₁ ++ s₂ =~ Star re := by
@@ -1245,6 +1350,12 @@ theorem star_app α (s₁ s₂ : List α) (re : RegExp α) :
     mentions an additional premise `Star re'' = Star re`, which
     results from the equality generated by `generalize`. -/
 ```
+
+Do not confuse {tactic}`generalize` with the `generalizing` clause on
+{tactic}`induction` introduced in the {ref "Tactics"}[Tactics] chapter.
+The `generalizing` clause would not help us here — {tactic}`induction` on
+`s₁ =~ Star re` would still fail because `Star re` is a compound expression,
+not a bare variable.
 
 ::::exercise (rating := 1) (name := "exp_match_ex2") (optional := true)
 The `MStar''` lemma below (combined with its converse, the
@@ -1627,7 +1738,7 @@ theorem weak_pumping {α : Type} {re : RegExp α} {s : List α}
 :::
 ::::
 
-## The (Strong) Pumping Lemma
+## The "Strong" Pumping Lemma
 
 ::::exercise (rating := 5) (name := "strong_pumping") (optional := true)
 Now here is the usual version of the pumping lemma. In addition to
@@ -1748,7 +1859,7 @@ theorem pumping {α : Type} {re : RegExp α} {s : List α}
             apply mStarApp <;> simp_all
 
 ```
-:::gradeTheorem 10 pumping
+:::gradeTheorem 5 pumping
 :::
 ::::
 

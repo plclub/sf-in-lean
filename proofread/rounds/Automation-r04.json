@@ -1,0 +1,50 @@
+{
+ "file": "LF/Automation.lean",
+ "chapter": "Automation",
+ "round": 4,
+ "proposals": [
+  {
+   "id": "1",
+   "cat": "devnote/open-question",
+   "old": ":::dev \"Benjamin Pierce (bcpierce00)\"\nCheck typesetting here (rules should be centered, I think):\n:::\n\n```display",
+   "new": ":::dev \"Benjamin Pierce (bcpierce00)\"\nCheck typesetting here (rules should be centered, I think):\n:::\n\n:::dev \"Claude\"\nPer `STYLE-CODE.md`, a fenced `display` block always renders as a plain,\nleft-aligned code block in the HTML (and as an indented comment in the\nextracted Lean) -- there is no built-in centering. So these inference rules\nrender left-justified as written, not centered. Two ways to resolve this:\nleave them left-aligned (the layout already lines up each rule's name at the\nright margin, which reads reasonably unindented), or extend the\n`display`/inference-rule rendering to actually center each block, if that\nmachinery is worth adding for the handful of rule blocks in the book.\n:::\n\n```display",
+   "why": "Answers Pierce's open question with what the build actually does today, and leaves the resolution (leave as-is vs. add centering support) to the author, per the round-2 convention for findings that need a decision."
+  },
+  {
+   "id": "2",
+   "cat": "heading/consistency",
+   "old": "## The (Strong) Pumping Lemma",
+   "new": "## The \"Strong\" Pumping Lemma",
+   "why": "Matches the sibling heading \"## The \\\"Weak\\\" Pumping Lemma\" just above -- both headings informally label a variant of the pumping lemma, so both should use the same quoting convention rather than one using quotes and the other parentheses."
+  },
+  {
+   "id": "3",
+   "cat": "code/formatting",
+   "old": "```lean +error (name := simp_at_star_fail)\n  example (a b : Nat) (h1 : a = 0) (h2 : a + b = 5) : b = 5 := by\n    simp at *\n```",
+   "new": "```lean +error (name := simp_at_star_fail)\nexample (a b : Nat) (h1 : a = 0) (h2 : a + b = 5) : b = 5 := by\n  simp at *\n```",
+   "why": "This example is indented two spaces from the margin, unlike every other top-level example/theorem block in the chapter; looks like a leftover copy-paste indent."
+  },
+  {
+   "id": "4",
+   "cat": "code/formatting",
+   "old": "```lean\n  example (a b : Nat) (h1 : a = 0) (h2 : a + b = 5) : b = 5 := by\n    simp_all\n```",
+   "new": "```lean\nexample (a b : Nat) (h1 : a = 0) (h2 : a + b = 5) : b = 5 := by\n  simp_all\n```",
+   "why": "Same stray indentation as the preceding simp_at_star_fail example; dedented to match the chapter's normal style."
+  },
+  {
+   "id": "5",
+   "cat": "devnote/open-question",
+   "old": "Now here is the usual version of the pumping lemma. In addition to\nrequiring that {lean}`s₂ ≠ []`, it also strengthens the result to\ninclude the claim that {lean}`s₁.length + s₂.length ≤ re.pumpingConstant`.\n\n```lean\ntheorem pumping {α : Type} {re : RegExp α} {s : List α}",
+   "new": "Now here is the usual version of the pumping lemma. In addition to\nrequiring that {lean}`s₂ ≠ []`, it also strengthens the result to\ninclude the claim that {lean}`s₁.length + s₂.length ≤ re.pumpingConstant`.\n\n:::dev \"Claude\"\nThis exercise is rated `5`, but its `:::gradeTheorem` below awards `10`\npoints -- every other exercise in this chapter has grade points equal to its\nrating. Worth a decision: bump the points down to `5` to match the rating\nlike everywhere else, or keep the extra weight as a deliberate call that this\nproof -- by far the longest in the chapter -- deserves more credit than its\ndifficulty rating alone suggests.\n:::\n\n```lean\ntheorem pumping {α : Type} {re : RegExp α} {s : List α}",
+   "why": "Flags a grading-policy inconsistency (rating 5 vs. 10 grade points) that needs an author decision rather than a guessed fix."
+  },
+  {
+   "id": "6",
+   "cat": "clarity/terse-summary",
+   "old": "The {tactic}`try` combinator allows tactics to fail.",
+   "new": "The {tactic}`try` combinator swallows a tactic's failure.",
+   "why": "\"Allows tactics to fail\" is loose -- try doesn't make failure acceptable in general, it turns one failing tactic into a no-op so the enclosing proof can continue. \"Swallows the failure\" also matches the wording already used in the code comment right below this blurb."
+  }
+ ],
+ "completed": true
+}
