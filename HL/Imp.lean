@@ -17,7 +17,7 @@ file := some "Imp"
 %%%
 
 :::instructors
-This chapter plus `Maps` takes a little more than one
+This chapter plus `Typeclasses` takes a little more than one
    80-minute lecture.  It could be streamlined a bit further without
    losing much, by removing (for example) the inference rules and BNF
    notations from the terse version.
@@ -44,16 +44,6 @@ SOONER: BCP 25: Maybe we should write /\ instead of && in assertions,
    complicate the nice simple presentation here when it's used as the
    basis for applications like Xavier's static analysis lectures.
    Also, we now have a whole volume on real separation logic...
-
-MWH (port note): The Rocq chapter's "Rocq Automation" tour has been
-retooled here for Lean.  The tactic combinators `try` and `repeat` (and the
-custom-tactic `macro`) are introduced in this chapter; `<;>` and `simp` were
-already introduced in Logical Foundations (`<;>` in `Induction`)
-so we use them freely and the `<;>` section
-below is a recap.  For linear arithmetic we use `lia`;
-NOTE that LF currently
-introduces `omega`, not `lia`, so this needs to be reconciled volume-wide
-(either introduce `lia` in LF, or keep `omega`).
 :::
 
 ::::full
@@ -114,7 +104,7 @@ LATER: (Note copied from Equiv right before the `assign_aequiv`
 :::
 
 Since we'll want to look variables up to find out their current values,
-we'll use total maps from the `Maps` chapter. A _machine state_ (or
+we'll use total maps from the `Typeclasses` chapter. A _machine state_ (or
 just _state_) represents the current values of all variables at some
 point in the execution of a program.
 
@@ -151,7 +141,6 @@ inductive Aexp where
   | mult (a₁ a₂ : Aexp)
 ```
 
-<<<<<<< HEAD
 :::dev "Chris Henson (chenson2018)" PotentialImprovement
 Rather than define identifiers as Ident, a more general approach is
 to use a *type variable* with `DecidableEq` (as the
@@ -172,9 +161,6 @@ inductive Aexp (V : Type) where
 :::
 
 The `Bexp` definition is unchanged, except that it now refers to the new {name}`Aexp`.
-=======
-The `Bexp` definition is unchanged, except that it now refers to the new `Aexp`.
->>>>>>> 90ba887100aa05a137f9792c5a46c0a0147c6074
 
 ```lean
 inductive Bexp where
@@ -572,7 +558,7 @@ they are redundant, which the parenthesizer knows.
 The arithmetic and boolean evaluators must now be extended to handle
 variables, taking a state `st` as an extra argument.  A variable is
 looked up in the state with the map-indexing notation `st[x]` from the
-Typeclasses chapter in the Logical Foundations book.
+`Typeclasses` chapter in the Logical Foundations book.
 For the notation to work, we used `open scoped MyGetElem` earlier,
 which opens only the scoped items like notation from the module.
 ::::
@@ -874,7 +860,7 @@ imp {Z := X; Y := 1; while (Z ≠ 0) {Y := Y * Z; Z := Z - 1}}
 Even though the notations are useful for getting the high-level picture,
 it's sometimes helpful to turn off the notation to see the parsed structure as a plain term.
 This can be done with `set_option pp.notation false`
-(which we briefly mentioned in the Typeclasses chapter) as follows:
+(which we briefly mentioned in the `Typeclasses` chapter) as follows:
 
 ```lean (name := imp1)
 #check imp { X := X + 1 }
@@ -1270,9 +1256,10 @@ example : ∅ =[ X := 2; Y := 3 ]=> {Y ↦ 3, X ↦ 2} := by
     simp
 ```
 
+::::::full
 :::::exercise (rating := 2) (name := "ceval_example₂")
 ```lean
-example :
+theorem ceval_example₂ :
     ∅ =[
       X := 0;
       Y := 1;
@@ -1285,7 +1272,11 @@ example :
       · exact EvalR.asgn rfl
       · exact EvalR.asgn rfl
 ```
+
+:::gradeTheorem 2 ceval_example₂
+:::
 :::::
+::::::
 
 :::terse
 What sorts of things might we want to prove using these definitions?  Here are
@@ -1437,7 +1428,7 @@ is a good move because it frees us from the artificial requirement that
 evaluation be a total function. But it raises a question: is the
 relational definition really a partial _function_? Could the same
 command, from the same state, evaluate to two different final states?
-In fact this cannot happen: `ceval` _is_ a partial function.
+In fact this cannot happen: `Com.EvalR` _is_ a partial function.
 ::::
 
 :::terse
@@ -1498,6 +1489,7 @@ theorem quiz2_answer (c₁ c₂ : Com) (st st' : State)
 ```
 ::::
 
+::::::full
 :::::exercise (rating := 3) (name := "pupToN") (optional := true)
 Write an Imp program that sums the numbers from {lean}`1` to {lean}`X` (inclusive)
 in the variable {lean}`Y`.  Your program should update the state as shown in
@@ -1539,6 +1531,7 @@ theorem pup_to_2_ceval :
         · apply Com.EvalR.whileFalse; rfl
 ```
 :::::
+::::::
 
 :::dev PotentialImprovement
 Comment from reader: Another good place to mention lack of
@@ -1574,7 +1567,7 @@ working with the bare definitions. This section explores some examples.
 theorem plus2_spec {st : State} {n : Nat} {st' : State}
     (hx : st[X] = n) (heval : st =[ plus2 ]=> st') :
     st'[X] = n + 2 := by
-  -- Inverting `heval` forces one step of the `ceval` computation: since
+  -- Inverting `heval` forces one step of the evaluation relation: since
   -- `plus2` is an assignment, `st'` must be `st` extended at `X`.
   rw [plus2] at heval
   inversion heval with
@@ -1587,6 +1580,7 @@ theorem plus2_spec {st : State} {n : Nat} {st' : State}
 This used to be recommended.  Should it be reinstated?
 :::
 
+::::::full
 :::::exercise (rating := 3) (name := "XtimesYinZ_spec") (optional := true) (manual := true)
 State and prove a specification of {name}`XtimesYinZ`.
 
@@ -1621,12 +1615,20 @@ GRADE_MANUAL 3: XtimesYinZ_spec
 ```
 :::
 :::::
+::::::
 
 :::dev "Niklas Halonen (xhalo32)"
 We need to explain the `generalize` tactic.
 I've changed some Hoare proofs from `have key` to `generalize` but the tactic hasn't been explained yet.
 :::
 
+:::dev "One An (meluge)"
+At least currently, it looks like `generalize` is introduced in `Automation.lean`.
+Are we doing anything different here with `generalize` that is
+unexplained there?
+:::
+
+::::::full
 :::::exercise (rating := 3) (name := "loop_never_stops")
 Hint: proceed by induction on the assumed derivation showing that {name}`loop`
 terminates.  Most of the cases are immediately contradictory and so can be
@@ -1646,7 +1648,11 @@ theorem loop_never_stops (st st' : State) : ¬ (st =[ loop ]=> st') := by
           subst e₁; simp at hb
     exact key loop st st' contra rfl
 ```
+
+:::gradeTheorem 3 loop_never_stops
+:::
 :::::
+::::::
 
 :::dev PotentialImprovement
 Marc Bezem 2022:
@@ -1669,6 +1675,7 @@ Marc Bezem 2022:
    is not very pretty...
 :::
 
+::::::full
 :::::exercise (rating := 3) (name := "no_whiles_eqv")
 The following function yields {name}`true` just on programs with no while
 loops. Using `inductive`, write a property `Com.NoWhilesR` that holds
@@ -1701,16 +1708,24 @@ theorem no_whiles_eqv (c : Com) : c.no_whiles = true ↔ Com.NoWhilesR c := by
     · intro h
       induction h with simp_all [Com.no_whiles]
 ```
-:::::
 
+:::autogradedHole Com.NoWhilesR
+:::
+
+:::gradeTheorem 3 no_whiles_eqv
+:::
+:::::
+::::::
+
+::::::full
 :::::exercise (rating := 4) (name := "no_whiles_terminating")
 Imp programs that don't involve while loops always terminate.  State and
 prove a theorem `no_whiles_terminating` that says this.  Use either
 {name}`Com.no_whiles` or {name}`Com.NoWhilesR`, as you prefer.
 
 ```lean
-theorem no_whiles_terminating (c : Com) (st : State) (h : Com.NoWhilesR c) :
-    ∃ st', st =[ c ]=> st' := by
+theorem no_whiles_terminating {c : Com} (st : State) (h : Com.NoWhilesR c) :
+    ∃ st', st =[ ~c ]=> st' := by
   solution!
     induction h generalizing st with
     | skip => exists st; constructor
@@ -1756,11 +1771,238 @@ theorem no_whiles_terminating' (c : Com) (st1 : State)
   | whileDo b c ih => simp [Com.no_whiles] at hb
 ```
 :::
+
+:::grade
+```
+GRADE_MANUAL 6: no_whiles_terminating
+```
+:::
+:::::
+::::::
+
+# Case Study (Optional)
+
+Recall the factorial program (broken up into smaller pieces this
+time, for convenience of proving things about it).
+
+```lean
+def factBody : Com := imp {
+  Y := Y * Z;
+  Z := Z - 1
+}
+
+def factLoop : Com := imp {
+  while (Z ≠ 0) {
+    ~factBody
+  }
+}
+
+def factCom : Com := imp {
+  Z := X;
+  Y := 1;
+  ~factLoop
+}
+```
+
+Here is an alternative "mathematical" definition of the factorial
+function:
+
+```lean
+def realFact (n : Nat) : Nat :=
+  match n with
+  | 0 => 1
+  | n' + 1 => (n' + 1) * realFact n'
+```
+
+We would like to show that they agree -- if we start `factCom` in
+a state where variable `X` contains some number `n`, then it will
+terminate in a state where variable `Y` contains the factorial of
+`n`.
+
+To show this, we rely on the critical idea of a _loop
+invariant_.
+
+```lean
+def FactInvariant (n : Nat) (st : State) : Prop :=
+  st[Y] * realFact st[Z] = realFact n
+```
+
+We show that the body of the factorial loop preserves the invariant:
+
+:::dev PotentialImprovement
+Needs an informal proof!
+:::
+
+```lean
+theorem factBody_preserves_invariant {st st' : State} {n : Nat}
+    (hinv : FactInvariant n st) (hz : st[Z] ≠ 0)
+    (heval : st =[ ~factBody ]=> st') :
+    FactInvariant n st' := by
+  rw [FactInvariant] at hinv ⊢
+  rw [factBody] at heval
+  inversion heval with
+  | seq _ h₁ h₂ =>
+    inversion h₁ with
+    | asgn hy =>
+      inversion h₂ with
+      | asgn hz' =>
+        subst hy hz'
+        have hyz : Y ≠ Z := by decide
+        have hzy : Z ≠ Y := by decide
+        simp [hyz, hzy]
+        -- Show that `st[Z] = z + 1` for some `z`
+        cases hzz : st[Z] with
+        | zero => contradiction
+        | succ z =>
+          rw [hzz, realFact] at hinv
+          rw [Nat.add_sub_cancel, Nat.mul_assoc]
+          exact hinv
+```
+
+From this, we can show that the whole loop also preserves the
+invariant:
+
+```lean
+theorem factLoop_preserves_invariant {st st' : State} {n : Nat}
+    (hinv : FactInvariant n st) (heval : st =[ ~factLoop ]=> st') :
+    FactInvariant n st' := by
+  generalize heq : factLoop = c at heval
+  induction heval with
+  | whileFalse hb =>
+    -- trivial when the loop doesn't run...
+    exact hinv
+  | @whileTrue st st' st'' b c hb hc hloop ih₁ ih₂ =>
+    -- if the loop does run, we know that `factBody` preserves
+    -- `FactInvariant` -- we just need to assemble the pieces
+    rw [factLoop] at heq
+    injection heq with hb' hc'
+    subst hb' hc'
+    have hz : st[Z] ≠ 0 := by
+      intro hz
+      simp [hz] at hb
+    exact ih₂ (factBody_preserves_invariant hinv hz hc) rfl
+  | skip | asgn | seq | ifTrue | ifFalse => simp [factLoop] at heq
+```
+
+Next, we show that, for any loop, if the loop terminates, then the
+condition guarding the loop must be false at the end:
+
+```lean
+theorem guard_false_after_loop {b : Bexp} {c : Com} {st st' : State}
+    (heval : st =[ while (~b) {~c} ]=> st') :
+    b.eval st' = false := by
+  generalize heq : (imp { while (~b) {~c} }) = cmd at heval
+  induction heval with
+  | whileFalse hb =>
+    injection heq with hb' _
+    subst hb'
+    exact hb
+  | whileTrue _ _ _ _ ih₂ => exact ih₂ heq
+  | skip | asgn | seq | ifTrue | ifFalse => simp at heq
+```
+
+Finally, we can patch it all together...
+
+```lean
+theorem factCom_correct {st st' : State} {n : Nat}
+    (hx : st[X] = n) (heval : st =[ ~factCom ]=> st') :
+    st'[Y] = realFact n := by
+  rw [factCom] at heval
+  inversion heval with
+  | seq _ h₁ h₂ =>
+    inversion h₁ with
+    | asgn hz =>
+      inversion h₂ with
+      | seq _ h₃ h₄ =>
+        inversion h₃ with
+        | asgn hy =>
+          subst hz hy
+          -- The invariant is true before the loop runs...
+          have hinv : FactInvariant n (Y →ₜ 1 ; Z →ₜ st[X] ; st) := by
+            have hyz : Y ≠ Z := by decide
+            simp [FactInvariant, hyz, hx]
+          -- ...so when the loop is done running, the invariant
+          -- is maintained
+          have hinv' := factLoop_preserves_invariant hinv h₄
+          -- Finally, if the loop terminated, then `Z` is `0`; so `Y` must be
+          -- factorial of `X`
+          rw [factLoop] at h₄
+          have hz := guard_false_after_loop h₄
+          simp at hz
+          rw [FactInvariant, hz, realFact, Nat.mul_one] at hinv'
+          exact hinv'
+```
+
+One might wonder whether all this work with poking at states and
+unfolding definitions could be ameliorated with some more powerful
+lemmas and/or more uniform reasoning principles... Indeed, this is
+exactly the point of the {ref "Hoare"}[Hoare] chapters!
+
+:::::full
+::::exercise (rating := 4) (name := "subtract_slowly_spec") (optional := true)
+Prove a specification for `subtract_slowly`, using the above
+specification of `factCom` and the invariant below as
+guides.
+
+```lean
+def SsInvariant (n z : Nat) (st : State) : Prop :=
+  st[Z] - st[X] = z - n
+
+-- SOLUTION
+theorem ss_body_preserves_invariant {st st' : State} {n z : Nat}
+    (hinv : SsInvariant n z st) (hx : st[X] ≠ 0)
+    (heval : st =[ ~subtract_slowly_body ]=> st') :
+    SsInvariant n z st' := by
+  rw [SsInvariant] at hinv ⊢
+  rw [subtract_slowly_body] at heval
+  inversion heval with
+  | seq _ h₁ h₂ =>
+    inversion h₁ with
+    | asgn hz =>
+      inversion h₂ with
+      | asgn hx' =>
+        subst hz hx'
+        have hzx : Z ≠ X := by decide
+        have hxz : X ≠ Z := by decide
+        simp [hzx, hxz]
+        lia -- Interestingly, this is all we need here!
+
+theorem ss_preserves_invariant {st st' : State} {n z : Nat}
+    (hinv : SsInvariant n z st) (heval : st =[ ~subtract_slowly ]=> st') :
+    SsInvariant n z st' := by
+  generalize heq : subtract_slowly = c at heval
+  induction heval with
+  | whileFalse hb => exact hinv
+  | @whileTrue st st' st'' b c hb hc hloop ih₁ ih₂ =>
+    rw [subtract_slowly] at heq
+    injection heq with hb' hc'
+    subst hb' hc'
+    have hx : st[X] ≠ 0 := by
+      intro hx
+      simp [hx] at hb
+    exact ih₂ (ss_body_preserves_invariant hinv hx hc) rfl
+  | skip | asgn | seq | ifTrue | ifFalse => simp [subtract_slowly] at heq
+
+theorem ss_correct {st st' : State} {n z : Nat}
+    (hx : st[X] = n) (hz : st[Z] = z) (heval : st =[ ~subtract_slowly ]=> st') :
+    st'[Z] = z - n := by
+  have hinv : SsInvariant n z st := by
+    simp [SsInvariant, hx, hz]
+  have hinv' := ss_preserves_invariant hinv heval
+  rw [subtract_slowly] at heval
+  have hx' := guard_false_after_loop heval
+  simp at hx'
+  rw [SsInvariant] at hinv'
+  simp [hx'] at hinv'
+  exact hinv'
+-- END SOLUTION
+```
+::::
 :::::
 
 ## Additional Exercises
 
-::::exercise  (rating := 3) (name := "stack_compiler")
+::::exercise (rating := 3) (name := "stack_compiler") (checkVisibility := false)
 Old HP Calculators, programming languages like Forth and Postscript,
 and abstract machines like the Java Virtual Machine all evaluate
 arithmetic expressions using a _stack_. For instance, the expression
@@ -1808,11 +2050,11 @@ following instructions:
 namespace StackCompiler
 
 inductive Sinstr : Type where
-| sPush (n : Nat)
-| sLoad (x : String)
-| sPlus
-| sMinus
-| sMult
+  | sPush (n : Nat)
+  | sLoad (x : String)
+  | sPlus
+  | sMinus
+  | sMult
 
 open Sinstr
 ```
@@ -1834,53 +2076,59 @@ offending instruction and continue with the next one.
 ```lean
 def sExecute (st : State) (stack : List Nat) (prog : List Sinstr) : List Nat :=
   solution!(match prog, stack with
-    | [],                _           => stack
-    | sPush n :: prog',  _            => sExecute st (n       :: stack)  prog'
-    | sLoad x :: prog',  _            => sExecute st (st[x]   :: stack)  prog'
-    | sPlus   :: prog',  n::m::stack' => sExecute st ((m + n) :: stack') prog'
-    | sMinus  :: prog',  n::m::stack' => sExecute st ((m - n) :: stack') prog'
-    | sMult   :: prog',  n::m::stack' => sExecute st ((m * n) :: stack') prog'
-    | _       :: prog',  _            => sExecute st stack prog')
-                                        -- Bad state: skip
+    | [],               _                => stack
+    | sPush n :: prog', _                => sExecute st (n :: stack) prog'
+    | sLoad x :: prog', _                => sExecute st (st[x] :: stack) prog'
+    | sPlus   :: prog', n :: m :: stack' => sExecute st ((m + n) :: stack') prog'
+    | sMinus  :: prog', n :: m :: stack' => sExecute st ((m - n) :: stack') prog'
+    | sMult   :: prog', n :: m :: stack' => sExecute st ((m * n) :: stack') prog'
+    -- Bad state: skip the instruction
+    | _       :: prog', _                => sExecute st stack prog')
 
 -- SOLUTION
-@[simp] theorem sExecute_nil {st : State} {stack : List Nat}
-  : sExecute st stack [] = stack := rfl
-@[simp] theorem sExecute_push {n : Nat} {st : State} {stack : List Nat} {prog' : List Sinstr} :
-  sExecute st stack (sPush n :: prog') = sExecute st (n :: stack) prog' := rfl
-@[simp] theorem sExecute_load {x : String} {st : State} {stack : List Nat} {prog' : List Sinstr} :
-  sExecute st stack (sLoad x :: prog') = sExecute st (st[x] :: stack) prog' := rfl
-@[simp] theorem sExecute_plus {n m : Nat} {st : State} {stack' : List Nat}
-  {prog' : List Sinstr} :
-  sExecute st (n :: m :: stack') (sPlus :: prog') = sExecute st ((m + n) :: stack') prog' := rfl
-@[simp] theorem sExecute_minus {n m : Nat} {st : State} {stack' : List Nat}
-  {prog' : List Sinstr} :
-  sExecute st (n :: m :: stack') (sMinus :: prog') = sExecute st ((m - n) :: stack') prog' := rfl
-@[simp] theorem sExecute_mult {n m : Nat}  {st : State} {stack' : List Nat}
-  {prog' : List Sinstr} :
-   sExecute st (n :: m :: stack') (sMult :: prog') = sExecute st ((m * n) :: stack') prog' := rfl
-@[simp] theorem sExecute_plus_bad {st : State} {stack : List Nat} {prog' : List Sinstr}
-  (hs : stack.length < 2) :
-  sExecute st stack (sPlus :: prog') = sExecute st stack prog' := by
+@[simp] theorem sExecute_nil (st : State) (stack : List Nat) :
+    sExecute st stack [] = stack := rfl
+@[simp] theorem sExecute_push (st : State) (stack : List Nat) (n : Nat) (prog' : List Sinstr) :
+    sExecute st stack (sPush n :: prog') = sExecute st (n :: stack) prog' := rfl
+@[simp] theorem sExecute_load (st : State) (stack : List Nat) (x : String) (prog' : List Sinstr) :
+    sExecute st stack (sLoad x :: prog') = sExecute st (st[x] :: stack) prog' := rfl
+@[simp] theorem sExecute_plus (st : State) (n m : Nat) (stack' : List Nat) (prog' : List Sinstr) :
+    sExecute st (n :: m :: stack') (sPlus :: prog') = sExecute st ((m + n) :: stack') prog' := rfl
+@[simp] theorem sExecute_minus (st : State) (n m : Nat) (stack' : List Nat) (prog' : List Sinstr) :
+    sExecute st (n :: m :: stack') (sMinus :: prog') = sExecute st ((m - n) :: stack') prog' := rfl
+@[simp] theorem sExecute_mult (st : State) (n m : Nat) (stack' : List Nat) (prog' : List Sinstr) :
+    sExecute st (n :: m :: stack') (sMult :: prog') = sExecute st ((m * n) :: stack') prog' := rfl
+@[simp] theorem sExecute_plus_bad (st : State) (stack : List Nat) (prog' : List Sinstr)
+    (hs : stack.length < 2) :
+    sExecute st stack (sPlus :: prog') = sExecute st stack prog' := by
   rcases stack with _ | ⟨_, _ | ⟨_, _⟩⟩ <;> trivial
-@[simp] theorem sExecute_minus_bad {st : State} {stack : List Nat} {prog' : List Sinstr}
-  (hs : stack.length < 2)  :
-  sExecute st stack (sMinus :: prog') = sExecute st stack prog' := by
+@[simp] theorem sExecute_minus_bad (st : State) (stack : List Nat) (prog' : List Sinstr)
+    (hs : stack.length < 2) :
+    sExecute st stack (sMinus :: prog') = sExecute st stack prog' := by
   rcases stack with _ | ⟨_, _ | ⟨_, _⟩⟩ <;> trivial
-@[simp] theorem sExecute_mult_bad {st : State} {stack : List Nat} {prog' : List Sinstr}
-  (hs : stack.length < 2)  :
-  sExecute st stack (sMult :: prog') = sExecute st stack prog' := by
+@[simp] theorem sExecute_mult_bad (st : State) (stack : List Nat) (prog' : List Sinstr)
+    (hs : stack.length < 2) :
+    sExecute st stack (sMult :: prog') = sExecute st stack prog' := by
   rcases stack with _ | ⟨_, _ | ⟨_, _⟩⟩ <;> trivial
 -- END SOLUTION
 
-example : sExecute ∅ [] [sPush 5, sPush 3, sPush 1, sMinus] = [2, 5] := by
+theorem sExecute1 : sExecute ∅ [] [sPush 5, sPush 3, sPush 1, sMinus] = [2, 5] := by
   solution!
     rfl
 
-example : sExecute {X ↦ 3} [3, 4] [sPush 4, sLoad X, sMult, sPlus] = [15, 4] := by
+theorem sExecute2 : sExecute {X ↦ 3} [3, 4] [sPush 4, sLoad X, sMult, sPlus] = [15, 4] := by
   solution!
     rfl
 ```
+
+:::autogradedHole sExecute
+:::
+
+:::gradeTheorem 1 sExecute1
+:::
+
+:::gradeTheorem "0.5" sExecute2
+:::
 
 Next, write a function that compiles an {name}`Aexp` into a stack
 machine program. The effect of running the program should be the
@@ -1896,33 +2144,33 @@ def sCompile (a : Aexp) : List Sinstr :=
   | .mult a₁ a₂   => sCompile a₁ ++ sCompile a₂ ++ [sMult])
 
 -- SOLUTION
-@[simp]
-theorem sCompile_num (n : Nat) : sCompile (Aexp.num n) = [sPush n] := rfl
-@[simp]
-theorem sCompile_id (x : String) : sCompile (Aexp.id x) = [sLoad x] := rfl
-@[simp]
-theorem sCompile_plus (a₁ a₂ : Aexp) :
-  sCompile (Aexp.plus a₁ a₂) = sCompile a₁ ++ sCompile a₂ ++ [sPlus] := rfl
-@[simp]
-theorem sCompile_minus (a₁ a₂ : Aexp) :
-  sCompile (Aexp.minus a₁ a₂) = sCompile a₁ ++ sCompile a₂ ++ [sMinus] := rfl
-@[simp]
-theorem sCompile_mult (a₁ a₂ : Aexp) :
-  sCompile (Aexp.mult a₁ a₂) = sCompile a₁ ++ sCompile a₂ ++ [sMult] := rfl
+@[simp] theorem sCompile_num (n : Nat) : sCompile (.num n) = [sPush n] := rfl
+@[simp] theorem sCompile_id (x : String) : sCompile (.id x) = [sLoad x] := rfl
+@[simp] theorem sCompile_plus (a₁ a₂ : Aexp) :
+    sCompile (.plus a₁ a₂) = sCompile a₁ ++ sCompile a₂ ++ [sPlus] := rfl
+@[simp] theorem sCompile_minus (a₁ a₂ : Aexp) :
+    sCompile (.minus a₁ a₂) = sCompile a₁ ++ sCompile a₂ ++ [sMinus] := rfl
+@[simp] theorem sCompile_mult (a₁ a₂ : Aexp) :
+    sCompile (.mult a₁ a₂) = sCompile a₁ ++ sCompile a₂ ++ [sMult] := rfl
 -- END SOLUTION
 ```
-
 
 After you've defined `sCompile`, prove the following to test that it works.
 
 ```lean
-example : sCompile (aexp { X - (2 * Y) }) = [sLoad X, sPush 2, sLoad Y, sMult, sMinus] := by
+theorem sCompile1 : sCompile (aexp { X - (2 * Y) }) = [sLoad X, sPush 2, sLoad Y, sMult, sMinus] := by
   solution!
     rfl
 ```
+
+:::autogradedHole sCompile
+:::
+
+:::gradeTheorem "1.5" sCompile1
+:::
 ::::
 
-::::exercise  (rating := 3) (name := "execute_app")
+::::exercise (rating := 3) (name := "execute_app") (checkVisibility := false)
 Execution can be decomposed in the following sense: executing
 stack program `p₁ ++ p₂` is the same as executing `p₁`, taking
 the resulting stack, and executing `p₂` from that stack. Prove
@@ -1943,9 +2191,12 @@ theorem execute_app (st : State) (p₁ p₂ : List Sinstr) (stack : List Nat) :
         else
           rcases stack with _ | ⟨_, _ | ⟨_, _⟩⟩ <;> simp_all
 ```
+
+:::gradeTheorem 3 execute_app
+:::
 ::::
 
-::::exercise  (rating := 3) (name := "compiler_correct")
+::::exercise (rating := 3) (name := "compiler_correct") (checkVisibility := false)
 Now we'll prove the correctness of the compiler implemented in the
 previous exercise.  Begin by proving the following lemma. If it
 becomes difficult, consider whether your implementation of
@@ -1953,35 +2204,41 @@ becomes difficult, consider whether your implementation of
 
 ```lean
 theorem sCompile_correct_aux (st : State) (a : Aexp) (stack : List Nat) :
-  sExecute st stack (sCompile a) = Aexp.eval st a :: stack := by
+    sExecute st stack (sCompile a) = Aexp.eval st a :: stack := by
   solution!
     induction a generalizing st stack with (simp_all [List.append_assoc, execute_app] <;> rfl)
-
 ```
 
 The main theorem should be a very easy corollary of that lemma.
 
 ```lean
 theorem sCompile_correct (st : State) (a : Aexp) :
-  sExecute st [] (sCompile a) = [ Aexp.eval st a ] := by
+    sExecute st [] (sCompile a) = [Aexp.eval st a] := by
   solution!
-    apply sCompile_correct_aux
+    exact sCompile_correct_aux st a []
 
 end StackCompiler
 ```
+
+:::gradeTheorem "2.5" StackCompiler.sCompile_correct_aux
+:::
+
+:::gradeTheorem "0.5" StackCompiler.sCompile_correct
+:::
 ::::
 
-::::exercise  (rating := 3) (name := "short_circuit") (optional := true)
+:::::full
+::::exercise (rating := 3) (name := "short_circuit") (optional := true)
 Most modern programming languages use a "short-circuit" evaluation
-rule for boolean `and`: to evaluate `BExp.and b₁ b₂`, first evaluate
+rule for boolean `and`: to evaluate `Bexp.and b₁ b₂`, first evaluate
 `b₁`.  If it evaluates to {name}`false`, then the entire `and`
 expression evaluates to {name}`false` immediately, without evaluating
 `b₂`.  Otherwise, `b₂` is evaluated to determine the result of the
 `and` expression.
 
-Write an alternate version of `BExp.eval` that performs short-circuit
-evaluation of `BAnd` in this manner, and prove that it is
-equivalent to `BExp.eval`.  (N.b. This is only true because expression
+Write an alternate version of {name}`Bexp.eval` that performs short-circuit
+evaluation of `Bexp.and` in this manner, and prove that it is
+equivalent to {name}`Bexp.eval`.  (N.b. This is only true because expression
 evaluation in Imp is rather simple.  In a bigger language where
 evaluating an expression might diverge, the short-circuiting `and`
 would _not_ be equivalent to the original, since it would make more
@@ -2005,38 +2262,34 @@ def Bexp.evalSC (st : State) (b : Bexp) : Bool := solution!(
                     | true => b₂.evalSC st)
 
 -- SOLUTION
-@[simp]
-theorem Bexp.evalSC_bool (st : State) (b : Bool) : (Bexp.bool b).evalSC st = b := rfl
-@[simp]
-theorem Bexp.evalSC_eq (st : State) (a₁ a₂ : Aexp) :
-  (Bexp.eq a₁ a₂).evalSC st = (a₁.eval st == a₂.eval st) := rfl
-@[simp]
-theorem Bexp.evalSC_neq (st : State) (a₁ a₂ : Aexp) :
-  (Bexp.neq a₁ a₂).evalSC st = (a₁.eval st != a₂.eval st) := rfl
-@[simp]
-theorem Bexp.evalSC_le (st : State) (a₁ a₂ : Aexp) :
-  (Bexp.le a₁ a₂).evalSC st = decide (a₁.eval st ≤  a₂.eval st) := rfl
-@[simp]
-theorem Bexp.evalSC_gt (st : State) (a₁ a₂ : Aexp) :
-  (Bexp.gt a₁ a₂).evalSC st = decide (a₁.eval st >  a₂.eval st) := rfl
-@[simp]
-theorem Bexp.evalSC_not (st : State) (b : Bexp) :
-  (Bexp.not b).evalSC st = !b.evalSC st := rfl
-@[simp]
-theorem Bexp.evalSC_and (st : State) (b₁ b₂ : Bexp) :
-  (Bexp.and  b₁ b₂).evalSC st = match (b₁.evalSC st) with
-                                | false => false
-                                | true => b₂.evalSC st := rfl
+@[simp] theorem Bexp.evalSC_bool (st : State) (b : Bool) : (bool b).evalSC st = b := rfl
+@[simp] theorem Bexp.evalSC_eq (st : State) (a₁ a₂ : Aexp) :
+    (eq a₁ a₂).evalSC st = (a₁.eval st == a₂.eval st) := rfl
+@[simp] theorem Bexp.evalSC_neq (st : State) (a₁ a₂ : Aexp) :
+    (neq a₁ a₂).evalSC st = (a₁.eval st != a₂.eval st) := rfl
+@[simp] theorem Bexp.evalSC_le (st : State) (a₁ a₂ : Aexp) :
+    (le a₁ a₂).evalSC st = decide (a₁.eval st ≤ a₂.eval st) := rfl
+@[simp] theorem Bexp.evalSC_gt (st : State) (a₁ a₂ : Aexp) :
+    (gt a₁ a₂).evalSC st = decide (a₁.eval st > a₂.eval st) := rfl
+@[simp] theorem Bexp.evalSC_not (st : State) (b : Bexp) :
+    (not b).evalSC st = !b.evalSC st := rfl
+@[simp] theorem Bexp.evalSC_and (st : State) (b₁ b₂ : Bexp) :
+    (and b₁ b₂).evalSC st =
+      match b₁.evalSC st with
+      | false => false
+      | true => b₂.evalSC st := rfl
 -- END SOLUTION
 
-theorem Bexp.eval_eq_evalSc (st : State) (b : Bexp) :
-  b.eval st = b.evalSC st := by
+theorem Bexp.eval_eq_evalSC (st : State) (b : Bexp) :
+    b.eval st = b.evalSC st := by
   solution!
     induction b <;> simp_all <;> lia
 ```
 ::::
+:::::
 
-::::exercise  (rating := 3) (name := "break_imp") (optional := true)
+:::::full
+::::exercise (rating := 3) (name := "break_imp") (optional := true)
 Imperative languages like C and Java often include a `break` or
 similar statement for interrupting the execution of loops. In this
 exercise we consider how to add `break` to Imp.  First, we need to
@@ -2166,7 +2419,7 @@ termination signals appropriately:
   that variable in the state accordingly and signal that execution
   can continue normally.
 
-- If the command is of the form `if (b) {c₁} {c₂}`, then
+- If the command is of the form `if (b) {c₁} else {c₂}`, then
   the state is updated as in the original semantics of Imp, except
   that we also propagate the signal from the execution of
   whichever branch was taken.
@@ -2225,6 +2478,9 @@ inductive Com.EvalR : Com → State → State → Result → Prop where
 scoped notation:40 st0:41 " =[ " c " ]=> " st1:41 " // " s:41 => Com.EvalR c st0 st1 s
 ```
 
+:::autogradedHole Com.EvalR
+:::
+
 :::instructors
 We don't make the notation with `c:imp_com` since it would need the custom `macro_rules` and elaborators which for a one-off thing are not worth the noise.
 :::
@@ -2238,9 +2494,10 @@ theorem break_ignore {c : Com} (st st' : State) {s : Result}
   solution!
     inversion h with
     | seqContinue st'' h₁ h₂ =>
-        inversion h₁
+      inversion h₁
     | seqBreak h =>
-        inversion h; rfl
+      inversion h
+      rfl
 ```
 
 ```lean
@@ -2253,11 +2510,11 @@ theorem while_continue {b : Bexp} {c : Com} {st st' : State} {s : Result}
 
 ```lean
 theorem while_stops_on_break {b : Bexp} {c : Com} {st st' : State}
-  (h₁ : b.eval st = true)
-  (h₂ : st =[ imp { c } ]=> st' // sBreak) :
-  st =[ imp { while (b) {c} } ]=> st' // sContinue := by
+    (h₁ : b.eval st = true)
+    (h₂ : st =[ imp { ~c } ]=> st' // sBreak) :
+    st =[ imp { while (~b) {~c} } ]=> st' // sContinue := by
   solution!
-    apply Com.EvalR.whileBreak <;> assumption
+    exact .whileBreak h₁ h₂
 ```
 
 ```lean
@@ -2266,7 +2523,7 @@ theorem seq_continue {c₁ c₂ : Com} {st st' st'' : State}
   (h₂ : st' =[ imp { c₂ } ]=> st'' // sContinue) :
   st =[ imp { c₁ ; c₂ } ]=> st'' // sContinue := by
   solution!
-    apply Com.EvalR.seqContinue (st' := st') <;> assumption
+    exact .seqContinue h₁ h₂
 ```
 
 ```lean
@@ -2274,10 +2531,27 @@ theorem seq_stops_on_break {c₁ c₂ : Com} {st st' : State}
   (h : st =[ imp { c₁ } ]=> st' // sBreak) :
   st =[ imp { c₁ ; c₂ } ]=> st' // sBreak := by
   solution!
-    apply Com.EvalR.seqBreak <;> assumption
+    exact .seqBreak h
 ```
-::::
 
+:::gradeTheorem "1.5" break_ignore
+:::
+
+:::gradeTheorem "1.5" while_continue
+:::
+
+:::gradeTheorem 1 while_stops_on_break
+:::
+
+:::gradeTheorem 1 seq_continue
+:::
+
+:::gradeTheorem 1 seq_stops_on_break
+:::
+::::
+:::::
+
+:::::full
 ::::exercise (rating := 3) (name := "while_break_true") (optional := true)
 ```lean
 theorem while_break_true {b : Bexp} {c : Com} {st st' : State}
@@ -2289,12 +2563,14 @@ theorem while_break_true {b : Bexp} {c : Com} {st st' : State}
     generalize hr : sContinue = s at h₁ ⊢
     induction h₁ with (inversion heq; try lia)
     | whileContinue _ _ _ _ ih₂ =>
-        apply ih₂ <;> try lia
+      apply ih₂ <;> try lia
     | @whileBreak st =>
-        exists st
+      exists st
 ```
 ::::
+:::::
 
+:::::full
 ::::exercise (rating := 4) (name := "ceval_deterministic") (optional := true)
 ```lean
 theorem ceval_deterministic {c : Com} {st st₁ st₂ : State} {s₁ s₂ : Result}
@@ -2322,13 +2598,13 @@ theorem ceval_deterministic {c : Com} {st st₁ st₂ : State} {s₁ s₂ : Resu
         apply ih
         assumption
     | ifTrue _ _ ih =>
-      inversion h₂
-      . apply ih; assumption
-      . lia
+      inversion h₂ with
+      | ifTrue _ hc' => exact ih hc'
+      | ifFalse => lia
     | ifFalse _ _ ih =>
-      inversion h₂
-      . lia
-      . apply ih; assumption
+      inversion h₂ with
+      | ifTrue => lia
+      | ifFalse _ hc' => exact ih hc'
     | whileContinue hb hc hloop ihc ihloop =>
       inversion h₂ with
       | whileFalse => lia
@@ -2352,16 +2628,286 @@ theorem ceval_deterministic {c : Com} {st st₁ st₂ : State} {s₁ s₂ : Resu
         lia
 ```
 ::::
+:::::
 
+:::::full
 ```lean
 end Imp.Break
 ```
+:::::
 
+:::dev PotentialImprovement
+Should this exercise be un-hidden?  It needs a tiny bit more
+material to be really interesting, though it also leads to a
+very interesting exercise in Hoare2.
+:::
+
+:::ignore
+```lean -show
+/- Many programming languages include mechanisms for raising and
+handling exceptions.  In this problem (a variant of the above
+exercises on `brk`), we'll experiment with a very simple
+version, with just a single exception called `throw`.  First, we
+need to enrich the language of commands with an additional case
+for raising the `throw` exception and a case for catching it. -/
+
+namespace Imp.Throw
+
+inductive Com where
+  | skip
+  | throw                        -- <--- NEW
+  | tryCatch (c₁ c₂ : Com)       -- <--- NEW
+  | asgn (x : Ident) (a : Aexp)
+  | seq (c₁ c₂ : Com)
+  | cond (b : Bexp) (c₁ c₂ : Com)
+  | whileDo (b : Bexp) (c : Com)
+
+/-- Exception handling: `try {c₁} catch {c₂}` -/
+syntax:max "try " "{" imp_com "}" ppHardSpace "catch" ppHardSpace "{" imp_com "}" : imp_com
+
+-- INSTRUCTORS: Copy of template com
+
+namespace Com
+
+open Lean
+
+scoped macro_rules
+  | `(imp { $s }) => do
+    let stx ← match s with
+      | `(imp_com| skip) => ``(Com.skip)
+      | `(imp_com| throw) => ``(Com.throw)
+      | `(imp_com| try {$c₁} catch {$c₂}) =>
+        ``(Com.tryCatch (imp {$c₁}) (imp {$c₂}))
+      | `(imp_com| $x:ident) => ``(($x : Com))
+      | `(imp_com| $c₁ ; $c₂) =>
+        ``(Com.seq (imp {$c₁}) (imp {$c₂}))
+      | `(imp_com| $x:ident := $a) =>
+        ``(Com.asgn $x (aexp {$a}))
+      | `(imp_com| if ($b) {$c₁} else {$c₂}) =>
+        ``(Com.cond (bexp {$b}) (imp {$c₁}) (imp {$c₂}))
+      | `(imp_com| while ($b) {$c}) =>
+        ``(Com.whileDo (bexp {$b}) (imp {$c}))
+      | `(imp_com| ~$c) => `(($c : Com))
+      | _ => Macro.throwUnsupported
+    return Imp.Elab.withSourceInfoOf s stx
+
+end Com
+
+open scoped Com
+
+namespace Delab
+open Lean PrettyPrinter Imp.Delab
+
+@[app_unexpander Com.throw]
+private def unexpandComThrow : Unexpander
+  | _ => `(imp { $(mkIdent `throw):ident })
+
+@[app_unexpander Com.tryCatch]
+private def unexpandComTryCatch : Unexpander
+  | `($_ $c₁ $c₂) => `(imp { try { $(getImp c₁) } catch { $(getImp c₂) } })
+  | _ => throw ()
+
+attribute [app_unexpander Com.skip] unexpandComSkip
+attribute [app_unexpander Com.asgn] unexpandComAsgn
+attribute [app_unexpander Com.seq] unexpandComSeq
+attribute [app_unexpander Com.cond] unexpandComCond
+attribute [app_unexpander Com.whileDo] unexpandComWhileDo
+
+end Delab
+
+/-- info: imp {try {X := 1; throw} catch {Y := 2}} : Com -/
+#guard_msgs in
+#check imp {try {X := 1; throw} catch {Y := 2}}
+
+/- Next, we need to define the behavior of `throw`.  Informally,
+whenever `throw` is executed, we immediately stop executing this
+command and start executing the `catch` clause of the closest
+enclosing `try`.
+
+A simple way of achieving this effect is to add another parameter
+to the evaluation relation that specifies whether evaluation of a
+command executes a `throw` statement: -/
+
+inductive Status : Type where
+  | sNormal
+  | sThrow
+
+open Status
+
+/- Intuitively, `st =[ c ]=> st' // s` means that, if `c` is started in
+state `st`, then it terminates in state `st'` and either signals
+that an exception has been raised (`s = sThrow`) or that execution
+can continue normally (`s = sNormal`).
+
+- If the command is `skip`, then the state doesn't change and
+  execution of any enclosing loop can continue normally.
+
+- If the command is `throw`, the state stays unchanged but we
+  signal a `sThrow`.
+
+- If the command is `try`, we begin by executing the first
+  subcommand; if it terminates normally, then the whole `try`
+  terminates in the same state; if it terminates with an
+  exception, we execute the second subcommand instead.
+
+- If the command is an assignment, then we update the binding for
+  that variable in the state accordingly and signal that execution
+  can continue normally.
+
+- If the command is of the form `if (b) {c₁} else {c₂}`, then
+  the state is updated as in the original semantics of Imp, except
+  that we also propagate the signal from the execution of
+  whichever branch was taken.
+
+- If the command is a sequence `c₁ ; c₂`, we first execute `c₁`.
+  If this yields a `sThrow`, we skip the execution of `c₂` and
+  propagate the `sThrow` signal to the surrounding context; the
+  resulting state is the same as the one obtained by executing
+  `c₁` alone. Otherwise, we execute `c₂` on the state obtained
+  after executing `c₁`, and propagate the signal generated there.
+
+- Finally, for a loop of the form `while (b) {c}`, when `b`
+  evaluates to `true`, we execute `c` and check the signal that it
+  raises.  If that signal is `sNormal`, the execution proceeds
+  as in the original semantics. Otherwise, we stop the execution
+  of the loop and signal `sThrow`.
+
+Based on the above description, complete the definition of the
+`Com.EvalR` relation: -/
+
+-- INSTRUCTORS: Copy of template eval
+
+inductive Com.EvalR : Com → State → State → Status → Prop where
+  | skip {st : State} : EvalR (imp {skip}) st st sNormal
+  -- SOLUTION
+  | throw {st : State} : EvalR (imp {throw}) st st sThrow
+  | tryNormal {c₁ c₂ : Com} {st st' : State} (h : EvalR c₁ st st' sNormal) :
+      EvalR (imp {try {~c₁} catch {~c₂}}) st st' sNormal
+  | tryThrow {c₁ c₂ : Com} {st st' st'' : State} {s : Status}
+      (h₁ : EvalR c₁ st st' sThrow)
+      (h₂ : EvalR c₂ st' st'' s) :
+      EvalR (imp {try {~c₁} catch {~c₂}}) st st'' s
+  | asgn {st : State} {a : Aexp} {n : Nat} {x : Ident} (h : a.eval st = n) :
+      EvalR (imp {x := ~a}) st (x →ₜ n ; st) sNormal
+  | seqNormal {c₁ c₂ : Com} {st st' st'' : State} {s : Status}
+      (h₁ : EvalR c₁ st st' sNormal)
+      (h₂ : EvalR c₂ st' st'' s) :
+      EvalR (imp {~c₁; ~c₂}) st st'' s
+  | seqThrow {c₁ c₂ : Com} {st st' : State} (h : EvalR c₁ st st' sThrow) :
+      EvalR (imp {~c₁; ~c₂}) st st' sThrow
+  | ifTrue {st st' : State} {b : Bexp} {c₁ c₂ : Com} {s : Status} (hb : b.eval st = true)
+      (hc : EvalR c₁ st st' s) :
+      EvalR (imp {if (~b) {~c₁} else {~c₂}}) st st' s
+  | ifFalse {st st' : State} {b : Bexp} {c₁ c₂ : Com} {s : Status} (hb : b.eval st = false)
+      (hc : EvalR c₂ st st' s) :
+      EvalR (imp {if (~b) {~c₁} else {~c₂}}) st st' s
+  | whileFalse {b : Bexp} {st : State} {c : Com} (hb : b.eval st = false) :
+      EvalR (imp {while (~b) {~c}}) st st sNormal
+  | whileNormal {st st' st'' : State} {b : Bexp} {c : Com} {s : Status} (hb : b.eval st = true)
+      (hc : EvalR c st st' sNormal)
+      (hloop : EvalR (imp {while (~b) {~c}}) st' st'' s) :
+      EvalR (imp {while (~b) {~c}}) st st'' s
+  | whileThrow {st st' : State} {b : Bexp} {c : Com} (hb : b.eval st = true)
+      (hc : EvalR c st st' sThrow) :
+      EvalR (imp {while (~b) {~c}}) st st' sThrow
+  -- END SOLUTION
+
+scoped notation:40 st0:41 " =[ " c " ]=> " st1:41 " // " s:41 => Com.EvalR c st0 st1 s
+
+-- LATER: It would be good to have some examples that verify
+-- that their implementation does the right thing on a few unit
+-- tests!
+
+/- Your definition should allow you to prove this example: -/
+
+example :
+    ∅ =[ imp { try {X := 1; throw; X := 2} catch {Y := X} } ]=>
+      {Y ↦ 1, X ↦ 1} // sNormal := by
+  solution!
+    apply Com.EvalR.tryThrow
+    · apply Com.EvalR.seqNormal (Com.EvalR.asgn rfl)
+      exact Com.EvalR.seqThrow Com.EvalR.throw
+    · exact Com.EvalR.asgn rfl
+
+/- Now prove the following properties of your definition of `Com.EvalR`: -/
+
+-- LATER: see comments in the break exercise
+
+theorem ceval_deterministic_throw {c : Com} {st st₁ st₂ : State} {s₁ s₂ : Status}
+    (h₁ : st =[ imp { ~c } ]=> st₁ // s₁)
+    (h₂ : st =[ imp { ~c } ]=> st₂ // s₂) :
+    st₁ = st₂ ∧ s₁ = s₂ := by
+  solution!
+    induction h₁ generalizing st₂ s₂ with (try (inversion h₂ <;> lia))
+    | tryNormal _ ih =>
+      inversion h₂ with
+      | tryNormal h => exact ih h
+      | tryThrow h _ =>
+        specialize ih h
+        lia
+    | tryThrow _ _ ih₁ ih₂ =>
+      inversion h₂ with
+      | tryNormal h =>
+        specialize ih₁ h
+        lia
+      | tryThrow h₁' h₂' =>
+        obtain ⟨hst, _⟩ := ih₁ h₁'
+        subst hst
+        exact ih₂ h₂'
+    | seqNormal _ _ ih₁ ih₂ =>
+      inversion h₂ with
+      | seqNormal h₁' h₂' =>
+        obtain ⟨hst, _⟩ := ih₁ h₁'
+        subst hst
+        exact ih₂ h₂'
+      | seqThrow h =>
+        specialize ih₁ h
+        lia
+    | seqThrow _ ih =>
+      inversion h₂ with
+      | seqNormal h _ =>
+        specialize ih h
+        lia
+      | seqThrow h => exact ih h
+    | ifTrue _ _ ih =>
+      inversion h₂ with
+      | ifTrue _ hc' => exact ih hc'
+      | ifFalse => lia
+    | ifFalse _ _ ih =>
+      inversion h₂ with
+      | ifTrue => lia
+      | ifFalse _ hc' => exact ih hc'
+    | whileNormal hb hc hloop ihc ihloop =>
+      inversion h₂ with
+      | whileFalse => lia
+      | whileNormal hb' hc' hloop' =>
+        obtain ⟨hst, _⟩ := ihc hc'
+        subst hst
+        exact ihloop hloop'
+      | whileThrow hb' hc' =>
+        specialize ihc hc'
+        lia
+    | whileThrow hb hc ih =>
+      inversion h₂ with
+      | whileFalse => lia
+      | whileNormal hb' hc' _ =>
+        specialize ih hc'
+        lia
+      | whileThrow hb' hc' =>
+        obtain ⟨hst, _⟩ := ih hc'
+        subst hst
+        exact ⟨rfl, rfl⟩
+
+end Imp.Throw
+```
+:::
+
+:::::full
 ::::exercise (rating := 4) (name := "add_for_loop") (optional := true)
 Add C-style `for` loops to the language of commands, update the
-`ceval` definition to define the semantics of `for` loops, and add
+`Com.EvalR` definition to define the semantics of `for` loops, and add
 cases for `for` loops as needed so that all the proofs in this
-file are accepted by Rocq.
+file are accepted by Lean.
 
 A `for` loop should be parameterized by (a) a statement executed
 initially, (b) a test that is run on each iteration of the loop to
@@ -2371,17 +2917,7 @@ that makes up the body of the loop.  (You don't need to worry
 about making up a concrete Notation for `for` loops, but feel free
 to play with this too if you like.)
 ::::
-
-:::dev "Michael Hicks (mwhicks1)"
-```
-NOT PORTED YET — remaining sections of sfdev/lf/Imp.v to port:
-  - Case Study (Optional), Imp.v:2774
-      * subtract_slowly_spec (EX4?, Imp.v:2919): loop-invariant style proof
-        about `subtract_slowly`.
-  - Additional Exercises, Imp.v:2986
-      * exn_imp (EX4A?, Imp.v:3524): exceptions variant. Large.
-```
-:::
+:::::
 
 :::dev
 ```
