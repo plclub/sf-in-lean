@@ -218,7 +218,7 @@ except that, if `t` fails, `try t` _successfully_ does nothing at all
 ::::
 
 ::::terse
-The {tactic}`try` combinator allows tactics to fail.
+The {tactic}`try` combinator swallows a tactic's failure.
 ::::
 
 ```lean
@@ -582,8 +582,8 @@ iterating to a joint fixpoint.
 Here's an example that illustrates the difference:
 
 ```lean +error (name := simp_at_star_fail)
-  example (a b : Nat) (h1 : a = 0) (h2 : a + b = 5) : b = 5 := by
-    simp at *
+example (a b : Nat) (h1 : a = 0) (h2 : a + b = 5) : b = 5 := by
+  simp at *
 ```
 
 This fails with:
@@ -595,8 +595,8 @@ This fails with:
 But {tactic}`simp_all` closes the goal:
 
 ```lean
-  example (a b : Nat) (h1 : a = 0) (h2 : a + b = 5) : b = 5 := by
-    simp_all
+example (a b : Nat) (h1 : a = 0) (h2 : a + b = 5) : b = 5 := by
+  simp_all
 ```
 
 We can dramatically simplify our `Perm3_In_shortest` theorem using {tactic}`simp_all`:
@@ -865,11 +865,7 @@ Informally, this looks as follows:
 We can easily translate this intuition into a set of rules,
 where we write `s =~ re` to say that {lean}`re` matches {lean}`s`:
 
-:::dev "Benjamin Pierce (bcpierce00)"
-Check typesetting here (rules should be centered, I think):
-:::
-
-```display
+```display +centered
 ─────────────── (mEmpty)
 [] =~ EmptyStr
 
@@ -1718,7 +1714,7 @@ theorem weak_pumping {α : Type} {re : RegExp α} {s : List α}
 :::
 ::::
 
-## The (Strong) Pumping Lemma
+## The "Strong" Pumping Lemma
 
 ::::exercise (rating := 5) (name := "strong_pumping") (optional := true)
 Now here is the usual version of the pumping lemma. In addition to
@@ -1839,7 +1835,7 @@ theorem pumping {α : Type} {re : RegExp α} {s : List α}
             apply mStarApp <;> simp_all
 
 ```
-:::gradeTheorem 10 pumping
+:::gradeTheorem 5 pumping
 :::
 ::::
 
