@@ -363,8 +363,8 @@ interesting proofs), the story goes like this:
     form of `t` and requires looking at all the different cases in
     the definition of substitution.  This time, for the variables
     case, we discover that we need to deduce from the fact that a
-    term `s` has type S in the empty context the fact that `s` has
-    type S in every context. For this we prove a...
+    term `s` has type `σ` in the empty context the fact that `s` has
+    type `σ` in every context. For this we prove a...
 
   - _weakening_ lemma, showing that typing is preserved under
     "extensions" to the context `Γ`.
@@ -402,7 +402,7 @@ substitution.
 Tricky case: variables.
 
 In this case, we need to deduce from the fact that a term `s`
-has type S in the empty context the fact that `s` has type S
+has type `σ` in the empty context the fact that `s` has type `σ`
 in every context.
 
 For this we prove a...
@@ -554,7 +554,7 @@ theorem substitution_preserves_typing (Γ : Context) (x : String) (τ' : Ty)
         exact h₁
       · apply ih₂
         exact h₂
-  | abs y S t₁ ih =>
+  | abs y σ t₁ ih =>
     cases hτ with
     | abs _ _ _ _ _ h =>
       by_cases hxy : x = y
@@ -614,25 +614,25 @@ _Proof_: We show, by induction on `t`, that for all `τ` and
       - If `t` is some variable `y` that is not equal to `x`, then
         we need only note that `y` has the same type under `x ↦ τ' ; Γ` as under `Γ`.
 
-  - If `t` is an abstraction `λy:S. t₀`, then `τ = S → τ₁` and
+  - If `t` is an abstraction `λy:σ. t₀`, then `τ = σ → τ₁` and
     the IH tells us, for all `Γ'` and `τ₀`, that if `x ↦ τ' ; Γ' ⊢ t₀ ⦂ τ₀`, then `Γ' ⊢ [x:=v]t₀ ⦂ τ₀`.
     Moreover, by inspecting the typing rules we see it must be
-    the case that `y ↦ S ; x ↦ τ' ; Γ ⊢ t₀ ⦂ τ₁`.
+    the case that `y ↦ σ ; x ↦ τ' ; Γ ⊢ t₀ ⦂ τ₁`.
 
     The substitution in the conclusion behaves differently
     depending on whether `x` and `y` are the same variable.
 
     First, suppose `x = y`.  Then, by the definition of
-    substitution, `[x:=v]t = t`, so we just need to show `Γ ⊢ t ⦂ τ`.  Using `HasType.abs`, we need to show that `y ↦ S ; Γ ⊢ t₀ ⦂ τ₁`. But we know `y ↦ S ; x ↦ τ' ; Γ ⊢ t₀ ⦂ τ₁`,
+    substitution, `[x:=v]t = t`, so we just need to show `Γ ⊢ t ⦂ τ`.  Using `HasType.abs`, we need to show that `y ↦ σ ; Γ ⊢ t₀ ⦂ τ₁`. But we know `y ↦ σ ; x ↦ τ' ; Γ ⊢ t₀ ⦂ τ₁`,
     and the claim follows since `x = y`.
 
     Second, suppose `x ≠ y`. Again, using `HasType.abs`,
-    we need to show that `y ↦ S ; Γ ⊢ [x:=v]t₀ ⦂ τ₁`.
+    we need to show that `y ↦ σ ; Γ ⊢ [x:=v]t₀ ⦂ τ₁`.
     Since `x ≠ y`, we have
-    `y ↦ S ; x ↦ τ' ; Γ = x ↦ τ' ; y ↦ S ; Γ`. So
-    we have `x ↦ τ' ; y ↦ S ; Γ ⊢ t₀ ⦂ τ₁`. Then, the
-    IH applies (taking `Γ' = y ↦ S ; Γ`), giving us
-    `y ↦ S ; Γ ⊢ [x:=v]t₀ ⦂ τ₁`, as required.
+    `y ↦ σ ; x ↦ τ' ; Γ = x ↦ τ' ; y ↦ σ ; Γ`. So
+    we have `x ↦ τ' ; y ↦ σ ; Γ ⊢ t₀ ⦂ τ₁`. Then, the
+    IH applies (taking `Γ' = y ↦ σ ; Γ`), giving us
+    `y ↦ σ ; Γ ⊢ [x:=v]t₀ ⦂ τ₁`, as required.
 
   - If `t` is an application `t₁ t₂`, the result follows
     straightforwardly from the definition of substitution and the
@@ -1353,7 +1353,7 @@ reduction rules:
 
 ```
                        -----------------                (foo1)
-                        (λx:A. x) ⟶ foo
+                        (λx:τ. x) ⟶ foo
 
                          ------------                   (foo2)
                           foo ⟶ true
@@ -2130,19 +2130,19 @@ declared, then again for real.
 ```lean
 open Lean in
 /-- The `Context` denoted by a context expression. -/
-partial def ctxTerm (G : TSyntax `stlcCtx) : MacroM Term :=
-  match G with
+partial def ctxTerm (Γ : TSyntax `stlcCtx) : MacroM Term :=
+  match Γ with
   | `(stlcCtx| ∅)   => `((∅ : Context))
   | `(stlcCtx| ~$e) => pure e
-  | `(stlcCtx| $x:stlcVar ↦ $τ:stlcTy ; $G:stlcCtx) => do
-      `(PartialMap.update $(← ctxTerm G) $(← Stlc.varStr x) <{ $τ:stlcTy }>)
+  | `(stlcCtx| $x:stlcVar ↦ $τ:stlcTy ; $Γ:stlcCtx) => do
+      `(PartialMap.update $(← ctxTerm Γ) $(← Stlc.varStr x) <{ $τ:stlcTy }>)
   | _ => Macro.throwUnsupported
 
 section StlcArith
 set_option hygiene false in
 local macro_rules (kind := Stlc.judgeBracket)
-  | `(<{ $G:stlcCtx ⊢ $t:stlcTm ⦂ $τ:stlcTy }>) => do
-      `(HasType $(← ctxTerm G) <{ $t:stlcTm }> <{ $τ:stlcTy }>)
+  | `(<{ $Γ:stlcCtx ⊢ $t:stlcTm ⦂ $τ:stlcTy }>) => do
+      `(HasType $(← ctxTerm Γ) <{ $t:stlcTm }> <{ $τ:stlcTy }>)
 ```
 ::::
 
@@ -2189,8 +2189,8 @@ prints judgments back in their own notation.
 end StlcArith
 
 scoped macro_rules (kind := Stlc.judgeBracket)
-  | `(<{ $G:stlcCtx ⊢ $t:stlcTm ⦂ $τ:stlcTy }>) => do
-      `(HasType $(← ctxTerm G) <{ $t:stlcTm }> <{ $τ:stlcTy }>)
+  | `(<{ $Γ:stlcCtx ⊢ $t:stlcTm ⦂ $τ:stlcTy }>) => do
+      `(HasType $(← ctxTerm Γ) <{ $t:stlcTm }> <{ $τ:stlcTy }>)
 
 open Lean PrettyPrinter in
 /-- Rebuild `stlcCtx` syntax from the term syntax of a `Context`, so that a
@@ -2199,28 +2199,28 @@ partial def unexpandCtx : Term → UnexpandM (TSyntax `stlcCtx)
   | `(∅) => `(stlcCtx| ∅)
   | `($x:str →ₚ $τ) => do
       unexpandCtx (← `($x →ₚ $τ ; ∅))
-  | `($x:str →ₚ $τ ; $G) => do
-      let G' ← unexpandCtx G
+  | `($x:str →ₚ $τ ; $Γ) => do
+      let Γ' ← unexpandCtx Γ
       let x' : TSyntax `stlcVar ←
         if Stlc.isPlainName x.getString then
           `(stlcVar| $(mkIdent (Name.mkSimple x.getString)):ident)
         else `(stlcVar| ~$x)
       match τ with
-      | `(<{ $τ':stlcTy }>) => `(stlcCtx| $x':stlcVar ↦ $τ' ; $G')
-      | _                   => `(stlcCtx| $x':stlcVar ↦ ~($τ) ; $G')
-  | G => `(stlcCtx| ~($G))
+      | `(<{ $τ':stlcTy }>) => `(stlcCtx| $x':stlcVar ↦ $τ' ; $Γ')
+      | _                   => `(stlcCtx| $x':stlcVar ↦ ~($τ) ; $Γ')
+  | Γ => `(stlcCtx| ~($Γ))
 
 open Lean PrettyPrinter in
 @[app_unexpander StlcArith.HasType]
 def HasType.unexpand : Unexpander
-  | `($_ $G <{ $t:stlcTm }> <{ $τ:stlcTy }>) =>
-      do `(<{ $(← unexpandCtx G) ⊢ $t ⦂ $τ }>)
-  | `($_ $G <{ $t:stlcTm }> $τ) =>
-      do `(<{ $(← unexpandCtx G) ⊢ $t ⦂ ~($τ) }>)
-  | `($_ $G $t <{ $τ:stlcTy }>) =>
-      do `(<{ $(← unexpandCtx G) ⊢ ~($t) ⦂ $τ }>)
-  | `($_ $G $t $τ) =>
-      do `(<{ $(← unexpandCtx G) ⊢ ~($t) ⦂ ~($τ) }>)
+  | `($_ $Γ <{ $t:stlcTm }> <{ $τ:stlcTy }>) =>
+      do `(<{ $(← unexpandCtx Γ) ⊢ $t ⦂ $τ }>)
+  | `($_ $Γ <{ $t:stlcTm }> $τ) =>
+      do `(<{ $(← unexpandCtx Γ) ⊢ $t ⦂ ~($τ) }>)
+  | `($_ $Γ $t <{ $τ:stlcTy }>) =>
+      do `(<{ $(← unexpandCtx Γ) ⊢ ~($t) ⦂ $τ }>)
+  | `($_ $Γ $t $τ) =>
+      do `(<{ $(← unexpandCtx Γ) ⊢ ~($t) ⦂ ~($τ) }>)
   | _ => throw ()
 ```
 ::::
@@ -2348,7 +2348,7 @@ theorem substitution_preserves_typing (Γ : Context) (x : String) (τ' : Ty)
         exact h₁
       · apply ih₂
         exact h₂
-  | abs y S t₁ ih =>
+  | abs y σ t₁ ih =>
     cases hτ with
     | abs _ _ _ _ _ h =>
       by_cases hxy : x = y
@@ -2640,20 +2640,20 @@ end StlcArith
 x ↦ τ ; ∅ ⊢ if0 ((λx:Nat. pred x) x.fst) then x.snd else (x.fst, x.fst) ⦂ Nat * Nat
 provable? If so, what is it?
 Answer: Yes: τ = Nat * (Nat * Nat).
-(b) Are there types S and τ that make
-∅ ⊢ λx:τ. λy:τ. x y ⦂ S
+(b) Are there types σ and τ that make
+∅ ⊢ λx:τ. λy:τ. x y ⦂ σ
 provable? If so, what are they?
-Answer: No; it would have to be the case that τ = τ → S, but there can be no such
+Answer: No; it would have to be the case that τ = τ → σ, but there can be no such
 (finite) type τ.
 
 -----------------------
 
 (a) Suppose we add a term foo with the following evaluation rules:
-(λx:A. x) ⟶ foo    (foo1)
+(λx:τ. x) ⟶ foo    (foo1)
 foo ⟶ 0            (foo2)
 Do progress and preservation continue to hold after this change, or does one (or do both) fail?
 Why?
-Answer: Preservation fails, since we have no typing rules for foo but λx:A. x has type A → A.
+Answer: Preservation fails, since we have no typing rules for foo but λx:τ. x has type τ → τ.
 Progress still holds: we are only adding to the step relation, and this can never damage progress.
 (b) Suppose we add a term zap, with the following evaluation rule
 t ⟶ zap            (zap)
