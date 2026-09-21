@@ -1088,6 +1088,9 @@ in the {name}`Even.succ_succ` case must be the same as `n`.
 :::
 
 ::::terse
+Note: the {tactic}`subst` `h` rewrites both the hypotheses and the goal using
+equation `h : x = t` from the context, and then drops `h`.
+
 We've provided a handy tactic called {tactic}`inversion` that does
 the work of our inversion lemma and more besides.
 ::::
@@ -1230,8 +1233,7 @@ example (n : Nat) (h : Even (2 + n)) : Even n := by
 :::
 ::::
 
-:::slidebreak
-:::
+## Induction on Evidence
 
 ::::full
 The {name}`Even.double` exercise above allows us to easily show that
@@ -1266,8 +1268,6 @@ Unfortunately, the second case is harder.  We need to show
 `h'`, which states that `Even n'` holds.
 In other words, what we need here is precisely the result we
 are trying to prove, but applied to the smaller evidence `h'`.
-
-## Induction on Evidence
 
 If this story feels familiar, it is no coincidence: we
 encountered similar problems in the {ref "Induction"}[Induction] chapter,
