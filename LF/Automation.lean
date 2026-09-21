@@ -102,7 +102,7 @@ example (a b c d : Prop) :
   lia
 ```
 
-{tactic}`lia` can solve many of the cases of our old {name}`Perm3.In` example.
+The {tactic}`lia` tactic can solve many of the cases of our old {name}`Perm3.In` example.
 
 ```lean
 theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α)
@@ -131,7 +131,7 @@ theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α)
 This is a bit weird: We _just_ saw `<;>` with no explanation in the example proof above.
 We should either remind people before that proof, or perhaps just after it, or not bother
 to do it at all. Probably we don't need the example (unless it's referenced later, which I
-doubt, since it's not named)/
+doubt, since it's not named).
 :::
 
 ::::full
@@ -345,7 +345,7 @@ forever.
 ::::
 
 ::::terse
-{tactic}`repeat` can loop forever.
+The {tactic}`repeat` combinator can loop forever.
 ::::
 
 ```lean +error
@@ -446,7 +446,7 @@ tools in the language, and it is used heavily in real Lean developments.
 ::::full
 The tactic simplifies the target (the goal and/or one or more hypotheses)
 by repeatedly rewriting it using a set of lemmas.
-At each step it tries every lemmas in its available set the way
+At each step it tries every lemma in its available set the way
 {tactic}`first` would, applies whichever one matches
 via {tactic}`rw`, and {tactic}`repeat`s until no lemma applies anywhere.
 Like {tactic}`repeat`, it fails outright if it never manages to apply a rewrite
@@ -460,7 +460,7 @@ by repeatedly rewriting it using a set of lemmas.
 ::::
 
 ::::full
-{tactic}`simp`'s available set of lemmas begins with a default set and can be extended
+The {tactic}`simp` tactic's available set of lemmas begins with a default set and can be extended
 to include theorems labeled `@[simp]`.
 Indeed, the characterizing lemmas we've been writing for
 our definitions all throughout this book are examples
@@ -470,7 +470,7 @@ we have refrained from annotating them as such (until now!).
 ::::
 
 ::::terse
-{tactic}`simp`'s available set of lemmas begins with a default set and can be extended
+The {tactic}`simp` tactic's available set of lemmas begins with a default set and can be extended
 to include theorems labeled `@[simp]`.
 Indeed, the characterizing lemmas we've been using for rewriting are
 good ones to give to {tactic}`simp`, which is why they are also called _simplification lemmas_.
@@ -504,7 +504,7 @@ definition to {tactic}`simp` to simplify using that definition.
 ::::
 
 ::::terse
-`simp only` uses only the provided theorems:
+Writing `simp only` applies {tactic}`simp` with only the provided theorems:
 ::::
 
 ```lean
@@ -536,7 +536,7 @@ as was recommended for {tactic}`rw?` and {tactic}`exact?` in the
 {ref "UsingLean"}[UsingLean] chapter.
 
 Interestingly, we can see for this example that {tactic}`simp` used the {lean}`Nat` version
-of `add_zero`, not our own added above, and also pulled in {lean}`Nat.add_left_cancel_iff`
+of `add_zero`, not our own, added above, and also pulled in {lean}`Nat.add_left_cancel_iff`,
 which is not strictly needed. But the combination works, even if it is not minimal.
 
 As with {tactic}`apply` and {tactic}`rw`, {tactic}`simp` can also simplify
@@ -572,7 +572,7 @@ simplifies in all hypotheses and in the goal at the same time.
 
 ::::full
 If we want to _mutually_ simplify everywhere, we can use {tactic}`simp_all`, which
-simplifies in all hypotheses and in the goal at the same time. Tactic {tactic}`simp_all`
+simplifies in all hypotheses and in the goal at the same time. The tactic {tactic}`simp_all`
 is not the same as `simp at *`. The latter
 simplifies each target _independently_, whereas {tactic}`simp_all`
 additionally lets the (simplified) hypotheses simplify each other and the goal,
@@ -618,7 +618,7 @@ and only fires the rewrite if it succeeds.
 If it can't discharge a premise, it just doesn't use that lemma.
 
 Claude tested three variants of this against the real toolchain (`lake env lean`).
-`double_injective` from `Tactics` doesn't actually work here: its conclusion is the
+The `double_injective` lemma from `Tactics` doesn't actually work here: its conclusion is the
 bare variable `n = m`, which isn't a usable rewrite pattern (simp lemmas need a real
 compound term on the left), so `simp [double_injective]` fails outright with "simp made
 no progress" before it ever gets anywhere near the `n.double = m.double` premise.
