@@ -25,7 +25,29 @@ typesetting.
     ```display
     n + (m + p) = (n + m) + p.
     ```
+
+With `+centered`, the whole block is centered as a rigid unit instead of
+being indented from the left margin — each line keeps its own relative
+alignment, so a naive `text-align: center` (which would center each line
+independently) is not used. This is for ASCII-art inference rules, where the
+premises, bar, and conclusion must stay aligned relative to each other:
+
+    ```display +centered
+    s₁ =~ re₁     s₂ =~ re₂
+    ─────────────────────────── (mApp)
+    (s₁ ++ s₂) =~ (App re₁ re₂)
+    ```
 -/
+structure DisplayBlockConfig where
+  centered : Bool := false
+
+def DisplayBlockConfig.parse [Monad m] [MonadInfoTree m] [MonadLiftT CoreM m] [MonadEnv m]
+    [MonadError m] : ArgParse m DisplayBlockConfig :=
+  DisplayBlockConfig.mk <$> .flag `centered false
+
+instance [Monad m] [MonadInfoTree m] [MonadLiftT CoreM m] [MonadEnv m] [MonadError m] :
+    FromArgs DisplayBlockConfig m := ⟨DisplayBlockConfig.parse⟩
+
 block_extension Block.display (source : String) where
   data := Json.str source
   traverse _ _ _ := pure none
@@ -63,16 +85,69 @@ r##"
 "##
   ]
 
+/-!
+`Block.displayCentered` is `` ```display ``'s `+centered` variant: the
+whole block is centered as a rigid unit — its lines keep their own relative
+alignment — rather than left-indented. Used for ASCII-art inference rules,
+where naive `text-align: center` would center each line independently and
+misalign the premises, bar, and conclusion.
+-/
+block_extension Block.displayCentered (source : String) where
+  data := Json.str source
+  traverse _ _ _ := pure none
+  toHtml :=
+    open Verso.Output.Html in
+    some fun _ _ _ data _ => do
+      match data with
+      | .str s => pure {{ <div class="sf-display-centered"><pre><code>{{s}}</code></pre></div> }}
+      | _ =>
+        Verso.reportError "display: malformed data"
+        pure .empty
+  toTeX :=
+    open Verso.Output.TeX in
+    some fun _ _ _ data _ => do
+      match data with
+      | .str s =>
+        pure <| .seq #[.raw "\\begin{center}\n\\begin{verbatim}\n", .raw s,
+          .raw "\n\\end{verbatim}\n\\end{center}\n"]
+      | _ => pure .empty
+  extraCss := [
+r##"
+/* +centered display: center the whole block as a rigid unit, so multi-line
+   ASCII art (e.g. inference rules) keeps its internal alignment -- unlike
+   text-align: center, which would center each line independently and
+   misalign the premises/bar/conclusion. */
+.sf-display-centered {
+  margin: 1em 0;
+  display: flex;
+  justify-content: center;
+}
+.sf-display-centered pre {
+  margin: 0;
+  overflow-x: auto;
+  width: fit-content;
+}
+.sf-display-centered pre code {
+  font-family: var(--verso-code-font-family, monospace);
+  white-space: pre;
+}
+"##
+  ]
+
 /-- A ` ```display ` code block: shows its body verbatim as (non-elaborated,
 non-highlighted) Lean code, set off as a display.  The body is stored as-is and
 never elaborated, so any text — including deliberately ill-formed code — is
-safe. -/
+safe. With `+centered`, see `Block.displayCentered` above. -/
 @[code_block]
-def display : CodeBlockExpanderOf Unit
-  | (), str => do
+def display : CodeBlockExpanderOf DisplayBlockConfig
+  | config, str => do
     let src := str.getString
-    `(Verso.Doc.Block.other (SFLMeta.Block.display $(quote src))
-        #[Verso.Doc.Block.code $(quote src)])
+    if config.centered then
+      `(Verso.Doc.Block.other (SFLMeta.Block.displayCentered $(quote src))
+          #[Verso.Doc.Block.code $(quote src)])
+    else
+      `(Verso.Doc.Block.other (SFLMeta.Block.display $(quote src))
+          #[Verso.Doc.Block.code $(quote src)])
 
 /-!
 ## Displayed math
