@@ -32,6 +32,29 @@ simplify this proof in several stages.
 Consider the proof below. Notice all the repetition and near-repetition...
 ::::
 
+:::dev "Claude"
+The `at *` wildcard (goal and every hypothesis, as opposed to a single named
+hypothesis) is never actually taught -- it's just used, starting right here in the very
+first code block of the chapter, well before `try`/`repeat`/`lia`/`simp` exist to
+explain anything about it. `Basics` ("New Tactics: `rewrite ... at` and `exact`")
+teaches `rewrite [...] at h` for a single named hypothesis, but nothing generalizes
+that to `*`. The only place in the whole book that ever says what `*` means is a bare
+inline code comment much later in this chapter, on a `simp only [...] at *` line ("the
+* here targets all hypotheses and the goal") -- by which point the wildcard has already
+been used silently eight times, including right below in `Perm3_In_old`, and again two
+sections later where a nearby note already explains `<;>` on the same line without
+mentioning the `*` sitting right next to it.
+
+A short explanation belongs somewhere before this first use -- either as a sentence
+here generalizing from `Basics`'s `rewrite ... at h`, or (if it's meant to land earlier
+than `Automation`) added back in `Basics` itself, next to where `at h` is introduced.
+Also worth checking: several `solution!`/`-- SOLUTION` blocks in `Induction`, `Poly`,
+`Tactics`, `Logic`, and `IndProp` use `at *` even earlier than this chapter -- those are
+hidden from the student build, but a solutions-reader would hit the same unexplained
+syntax there too, so wherever the explanation ends up, it should land before all of
+these, not just before `Automation`.
+:::
+
 ```lean
 theorem Perm3_In_old (α : Type) (x : α) (l₁ l₂ : List α)
     (hPerm : Perm3 l₁ l₂) (hIn : x ∈ l₁) : x ∈ l₂ := by
@@ -126,6 +149,13 @@ theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α)
 ```
 
 # Tactic Combinators
+
+:::dev "Mike Hicks (mwhicks1)"
+This is a bit weird: We _just_ saw `<;>` with no explanation in the example proof above.
+We should either remind people before that proof, or perhaps just after it, or not bother
+to do it at all. Probably we don't need the example (unless it's referenced later, which I
+doubt, since it's not named)/
+:::
 
 ::::full
 In {ref "Induction"}[Induction], we saw how to use the {tactic}`<;>` combinator in order to apply
@@ -433,6 +463,40 @@ Our {name}`Perm3.In` example is getting quite short! But can we do better?
 
 # The {tactic}`simp` Tactic
 
+:::dev "Claude"
+The framing below says simp "rewrites with lemmas," but doesn't say how it picks a
+lemma, when it stops, or what happens when nothing applies. Since the reader already
+has `rw`, `<;>`, `try`, `repeat`, and `first` in hand from earlier in this chapter, it
+may help to say explicitly that `simp` behaves like a fixpoint search built from those
+pieces: at each step it tries every lemma in its available set (the default set, plus
+anything added via `simp [...]`) the way `first` would, applies whichever one matches
+via `rw`, and `repeat`s until no lemma applies anywhere -- including inside binders
+(`∀`, `∃`, `→`, `fun`), which plain `rw` cannot reach. Like `repeat`, it fails outright
+if it never fires even once ("simp made no progress"), rather than succeeding as a
+no-op the way `try simp` would.
+
+It may also help to say, right where `@[simp]` is first shown below, that the simp set
+it grows is global and ambient: it is every `@[simp]`-tagged theorem anywhere in scope
+-- most of them from the standard library, not just the two defined in the example --
+which is exactly why `simp [...]` means "the default set plus these" and `simp only
+[...]` means "just these," rather than there being some separate notion of "this
+proof's simp set."
+
+Deliberately not using `apply` in this framing: `simp` lemmas are equations or `Iff`s
+used to rewrite, not arbitrary implications chased backward the way `apply` chases a
+goal's conclusion against a theorem's. There is a real backward-reasoning flavor when a
+simp lemma has hypotheses of its own, but it works differently from both `rw` and
+`apply` -- see the note near where `simp ... at h` is introduced below, which ties back
+to Tactics's "Rewriting with Conditional Statements."
+
+Worth a sentence somewhere near here or near `simp only`: each rewrite step also
+performs the same "free" definitional simplification that `dsimp` (introduced in
+UsingLean) does on its own -- beta/eta/iota reduction, unfolding reducible definitions
+-- before consulting the much larger, extensible set of proved lemmas. `simp only
+[...]` still performs that definitional layer; it only restricts which proved lemmas
+can additionally fire.
+:::
+
 ::::full
 The {tactic}`simp` tactic is Lean's _simplifier_, and it is one of the most powerful
 tools in the language. Given a set of lemmas — some built-in, some user-provided —
@@ -465,6 +529,17 @@ theorem add_zero (n : Nat) : n + 0 = n := by rfl
 theorem add_succ (n m : Nat) : n + (m + 1) = (n + m) + 1 := by rfl
 ```
 
+:::dev "Claude"
+Resolved by testing directly: with the `add_zero`/`add_succ` tags above removed, `simp`
+fails on `add_succ_nested`'s goal with "simp made no progress." Lean's own default simp
+set already includes `Nat.add_zero`, but nothing shaped like `add_succ` (`n + (m + 1) =
+(n + m) + 1`), so the demonstration is legitimate as written -- readers really are
+seeing the effect of the two `@[simp]` tags just above, not a default library fact that
+would have fired anyway. No need to switch to `NatPlayground.Nat`. (One harmless
+overlap: the local `add_zero` duplicates the content of the already-default
+`Nat.add_zero`; it doesn't change behavior, just worth knowing if this gets revisited.)
+:::
+
 Instead of manually rewriting by the characterizing lemmas in the example below,
 {tactic}`simp` does it automatically.
 
@@ -473,6 +548,20 @@ theorem add_succ_nested (n m : Nat) :
     n + (m + 1 + 1) = (n + m + 1) + 1 := by
   simp
 ```
+
+:::dev "Claude"
+A step-by-step trace here would cash out the fixpoint framing suggested above with a
+concrete run, rather than just asserting "simp does it automatically." Checked against
+the real `simp?` output for the (near-identical) `add_succ_nested_3` example below:
+starting from `n + (m + 1 + 1) = (n + m + 1) + 1`, `add_succ` rewrites the inner
+`m + 1 + 1` shape first, turning it into `(n + (m + 1)) + 1`; `add_succ` fires again on
+`n + (m + 1)`, giving `((n + m) + 1) + 1`; both sides are now syntactically
+`(n + m + 1) + 1`, so simp closes the goal the way `rfl` would, with no lemma left to
+fire. I'd double check this trace against `set_option trace.Meta.Tactic.simp true` or
+similar before committing to the exact wording, since I reconstructed it rather than
+reading a verified step trace -- the outcome (which final lemma set works) I did
+verify, the step order I did not.
+:::
 
 ::::full
 If you know what theorems you want {tactic}`simp` to use to prove your goal, you can write
@@ -493,7 +582,7 @@ theorem add_succ_nested_2 (n m : Nat) :
 
 If you want to know what {tactic}`simp` is doing, you can run {tactic}`simp?`.
 
-```lean
+```lean (name := simp_output)
 theorem add_succ_nested_3 (n m : Nat) :
     n + (m + 1 + 1) = (n + m + 1) + 1 := by
   simp?
@@ -501,12 +590,21 @@ theorem add_succ_nested_3 (n m : Nat) :
 end simp_lemmas_example
 ```
 
+In the InfoView, you will see
+```leanOutput simp_output
+Try this:
+  [apply] simp only [add_succ, Nat.add_zero, Nat.add_left_cancel_iff]
+```
+
 ::::full
-In the InfoView, Lean will show you what {tactic}`simp` is doing.
-You can click the `[apply]` button to replace {tactic}`simp?` with
-the suggested replacement. You should always do this
-for your final proof scripts: {tactic}`simp?` is helpful for writing
-a proof, but it should not show up in the final script.
+Click the `[apply]` button to replace {tactic}`simp?` with
+the suggested replacement. You should always do this for your final proof scripts, just
+as was recommended for {tactic}`rw?` and {tactic}`exact?` in the
+{ref "UsingLean"}[UsingLean] chapter.
+
+Interestingly, we can see for this example that {tactic}`simp` used the {lean}`Nat` version
+of `add_zero`, not our own added above, and also pulled in {lean}`Nat.add_left_cancel_iff`
+which is not strictly needed. But the combination works, even if it is not minimal.
 
 {tactic}`simp` is quite a powerful automated tactic, and it is used
 heavily in real Lean developments. We can use {tactic}`simp` to further simplify our
@@ -526,9 +624,35 @@ theorem Perm3_In_almost_shortest (α : Type) (x : α) (l₁ l₂ : List α)
     | lia
 ```
 
+:::dev "Claude"
+Two things not yet said explicitly that would fit well right before or after this `simp
+[<lemmas>] at h` sentence:
+
+First, unqualified `simp`/`simp only` only ever touches the goal -- nothing in the
+context changes unless you write `at h` (one hypothesis), `at h1 h2` (several), or `at
+*` (goal and every hypothesis). Worth a sentence before introducing `at h`, parallel to
+how `rw ... at *` already works for the reader.
+
+Second, conditional simp lemmas. Tactics's "Rewriting with Conditional Statements" (the
+`double_injective` example) already taught the reader that rewriting with a theorem `P
+-> a = b` uses `a = b` and leaves `P` as a new subgoal, "similar in spirit to backward
+reasoning with `apply`." `simp` lemmas can have the same shape (`h1 -> h2 -> a = b`),
+but `simp` handles the premises differently: it tries to discharge `h1`, `h2` itself,
+recursively, using `simp` again (by default), and only fires the rewrite if it
+succeeds. If it can't discharge a premise, it just doesn't use that lemma -- no error,
+no leftover subgoal -- rather than always firing and handing the reader the debt the
+way `rw` does. That's the same shape of lemma the reader already knows from
+`double_injective`, with the side condition resolved automatically instead of
+surfaced. A short example paired with the `double_injective` callback would probably
+land better than describing this only in the abstract; I'd suggest reusing an existing
+conditional-shaped lemma already in scope rather than inventing a new one, per the
+style guide's "reuse examples" advice, but didn't want to pick one without checking
+what reads best in context.
+:::
+
 ::::full
-As with {tactic}`apply` and {tactic}`rw`, there's also a version of {tactic}`simp` that can simplify in
-hypotheses, rather than the goal. Invoking {tactic}`simp` as `simp [<lemmas>] at h`
+As with {tactic}`apply` and {tactic}`rw`, {tactic}`simp` can also simplify
+hypotheses — invoking {tactic}`simp` as `simp [<lemmas>] at h`
 runs the simplifier at hypothesis `h`.
 ::::
 
@@ -543,6 +667,20 @@ example α x (l₁ l₂ l₃ : List α)
     x ∈ l₁ ++ l₃ ∨ x ∈ l₂ := by
   simp at h₁; simp at h₂; simp; lia
 ```
+
+:::dev "Claude"
+This is a good spot to say why `simp_all` is more than a shorthand for the three-line
+version above, not just shorter. `simp at h1; simp at h2; simp` simplifies the goal and
+each hypothesis independently against the ambient simp set -- none of them gets to use
+what the others learned. `simp_all` additionally lets the (simplified) hypotheses
+simplify each other and the goal, iterating to a joint fixpoint, which is why it can
+close goals the three-line version can't. Whether that extra power is actually
+exercised by this particular example is worth checking before claiming it as the
+motivation -- if `simp at h1; simp at h2; simp; lia` and `simp_all; lia` are equally
+strong here, the honest framing is "here's the shorter idiomatic spelling," and the
+"more powerful" point should get its own example where it matters, rather than being
+asserted at an example that doesn't need it.
+:::
 
 ::::full
 If we just want to simplify everywhere, we can use {tactic}`simp_all`, which
@@ -562,7 +700,7 @@ example α x (l₁ l₂ l₃ : List α)
   simp_all; lia
 ```
 
-The simplest version of our theorem uses {tactic}`simp_all`:
+The simplest proof of our theorem uses {tactic}`simp_all`:
 
 ```lean
 theorem Perm3_In_shortest (α : Type) (x : α) (l₁ l₂ : List α)
@@ -571,6 +709,18 @@ theorem Perm3_In_shortest (α : Type) (x : α) (l₁ l₂ : List α)
 ```
 
 ## Idiomatic {tactic}`simp` Usage
+
+:::dev "Claude"
+Worth tying this convention explicitly back to the fixpoint framing suggested near the
+top of this section: a terminal `simp` is safe precisely because nothing downstream
+depends on its exact resulting term -- only on whether it helped close the goal. A
+nonterminal `simp` is risky because whatever manual tactic comes next (`cases h1 with |
+inl h => ...` in the example below) depends on the specific shape `simp` leaves behind,
+and that shape isn't a stable contract -- it can change as the simp set grows, since
+`simp` just runs to whatever fixpoint the current lemma set produces. Saying that
+explicitly might make the "why" land harder than jumping straight to the
+terminal/nonterminal rule.
+:::
 
 ::::full
 Because {tactic}`simp` is such a powerful tactic, the Lean community has developed a number of
