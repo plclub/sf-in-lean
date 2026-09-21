@@ -2630,9 +2630,11 @@ theorem ceval_deterministic {c : Com} {st st₁ st₂ : State} {s₁ s₂ : Resu
 ::::
 :::::
 
+:::::full
 ```lean
 end Imp.Break
 ```
+:::::
 
 :::dev PotentialImprovement
 Should this exercise be un-hidden?  It needs a tiny bit more
