@@ -1,0 +1,207 @@
+--- LF/Basics.lean (before this round)
++++ LF/Basics.lean
+@@ -281,7 +281,7 @@
+ define the standard type `Bool` of booleans by enumerating its members `true`
+ and `false`.
+ We define our own `MyBool` to teach the concept of building booleans from
+-scratch. Our definition `MyBool` is equivalent to Lean's built-in {name}`Bool`,
++scratch. Our definition of `MyBool` is equivalent to Lean's built-in {name}`Bool`,
+ which we'll switch to later.
+ We call it `MyBool` to avoid clashing with the built-in name.
+ Later in the chapter, we will show a different way of avoiding such clashes: we will place our custom natural numbers in a fresh `NatPlayground` namespace,
+@@ -291,8 +291,6 @@
+ This still doesn't explain WHY we are doing things two different ways.  And I don't understand why myself, so I can't explain it. :-)
+ :::
+ 
+-
+-
+ ::::terse
+ Another familiar enumerated type; we'll switch to Lean's built-in `Bool` later:
+ ::::
+@@ -491,7 +489,7 @@
+ 
+ You'll notice that this proposition looks a lot like the informal one we began with,
+ with some additional symbols in front.
+-The `∀` symbol, pronounced "forall",
++The `∀` symbol, pronounced "forall,"
+ is a _universal quantifier_: it "quantifies" the variable {lean}`b` that appears
+ in the proposition. Quantifying a variable with a `∀` means that the proposition
+ applies to all possible values of its type; we annotate {lean}`b`
+@@ -553,7 +551,7 @@
+ 
+     The `intro` tactic is used to name variables quantified by a `∀`.
+     Since we are trying to prove a property of all `MyBool`s, we
+-    proceed by introducing an unknown `MyBool` `b` and prove
++    proceed by introducing an unknown `MyBool` `b` and proving
+     the property holds for this particular `b`.  Informally,
+     this move can be read, "We want to prove <some property> for all
+     `MyBool`s `b`. So suppose `b` is some arbitrary `MyBool`...
+@@ -569,7 +567,7 @@
+     one another according to the principle of reflexivity. Now,
+     inspecting our goal will show that it is `(MyBool.true && b) = b`,
+     which may not appear to be "true by reflexivity", since the two
+-    sides of the equality are not textually indentical. However, the tactic
++    sides of the equality are not textually identical. However, the tactic
+     _evaluates_ both sides of the equality before comparing them. In
+     this case, if we look at the definition of `and`, we can see that,
+     when its first argument is `MyBool.true`, the result is its second
+@@ -661,6 +659,7 @@
+ ```
+ 
+ ## Aside: Unicode in Lean
++
+ :::suppressPreviousHeaderWhenTerse
+ :::
+ 
+@@ -852,6 +851,7 @@
+ 
+ This {name}`isRed'` function produces the same result as
+ {name}`isRed`. It also illustrates the _use_ of a pattern variable in the corresponding branch.
++
+ :::::full
+ The {lean}`Color.primary r` pattern stores the {name}`RGB` argument into variable {lean}`r`,
+ and then pattern matches on that argument to produce the final
+@@ -1004,7 +1004,7 @@
+ which opens the namespace temporarily for the body of the definition.
+ 
+ ```lean (name := rgb_1)
+---- The following works because the definition is qualified by `RGB.`
++-- The following works because the definition is qualified by `RGB.`
+ def RGB.myOtherBlue : RGB := myBlue
+ 
+ #check RGB.myBlue
+@@ -1123,7 +1123,6 @@
+ Bool.true : Bool
+ ```
+ 
+-
+ ::::full
+ Finally, Lean can often automatically figure out which namespace a qualified name lives in,
+ saving us the need to explicitly specify it every time we use the name. Instead of
+@@ -1243,7 +1242,7 @@
+ ::::
+ 
+ :::terse
+-A Nibble is half a byte — four bits.
++A `Nibble` is half a byte — four bits.
+ :::
+ 
+ ```lean (name := nb1)
+@@ -1271,14 +1270,14 @@
+ 
+ The `bits` constructor acts as a wrapper for its contents.
+ Unwrapping happens during pattern matching, as in the `allZero` function
+-below, which tests a Nibble to see if all its bits are `b0`.
++below, which tests a `Nibble` to see if all its bits are `b0`.
+ ::::
+ 
+ :::slidebreak
+ :::
+ 
+ :::terse
+-We can deconstruct a Nibble by pattern-matching.
++We can deconstruct a Nibble by pattern matching.
+ :::
+ 
+ ```lean
+@@ -1511,6 +1510,7 @@
+ These are all things that can be applied to a number to yield a
+ number.
+ But there is a difference between {name}`succ` and the other two.
++
+ ::::full
+ Functions like {name}`pred` and
+ {name}`minusTwo` are defined by giving _computation rules_ — e.g.,
+@@ -1575,7 +1575,7 @@
+   | succ m' => succ (add n m')
+ ```
+ 
+-```lean (name :=  three_1)
++```lean (name := three_1)
+ #eval add one two -- succ (succ (succ zero)) -- aka, three!
+ ```
+ 
+@@ -1599,7 +1599,7 @@
+ 
+ # Proof by Rewriting
+ 
+-## Proving properties about functions in Lean
++## Proving Properties about Functions in Lean
+ 
+ ::::full
+ Being recursive on a {name}`Nat` and returning a {name}`Nat` as well,
+@@ -1647,7 +1647,7 @@
+ We'll walk through this proof in the next section.
+ ::::
+ 
+-## Proof state and tactics
++## Proof State and Tactics
+ 
+ :::suppressPreviousHeaderWhenTerse
+ :::
+@@ -1665,7 +1665,7 @@
+ ::::
+ 
+ ```lean
+-theorem add_zero_zero_explained : ∀  n : Nat, n + zero + zero = n := by
++theorem add_zero_zero_explained : ∀ n : Nat, n + zero + zero = n := by
+   intro n
+   /- After introducing `n`, our goal is `n + zero + zero = n`.
+      What can we do to simplify this expression? If you hover
+@@ -2100,7 +2100,6 @@
+ example : ble two two = true  := by rfl
+ example : ble two four = true := by rfl
+ example : ble four two = false := by rfl
+-
+ ```
+ 
+ :::::full
+@@ -2189,7 +2188,6 @@
+ A (slightly) more interesting theorem:
+ :::
+ 
+-
+ ::::full
+ We now begin to make claims about _general_ natural numbers.
+ 
+@@ -2260,7 +2258,6 @@
+ NatPlayground.Nat.mul_succ (n m : Nat) : n * succ m = n * m + n
+ ```
+ 
+-
+ ::::full
+ Note that you may see a slight discrepancy in the output:
+ `#check` shows the theorem differently from the way it was introduced earlier.
+@@ -2304,7 +2301,6 @@
+ Sometimes simple calculation and rewriting are not enough...
+ :::
+ 
+-
+ ```lean +error
+ example (n : Nat) : (succ zero + n == zero) = false := by
+   /-
+@@ -2478,7 +2474,7 @@
+ Tip: the rewrite rule to simplify `(b || false)` is called {name}`Bool.or_false`.
+ 
+ ```lean
+-theorem or_false_true (b : Bool) (h: (b || false) = true) :
++theorem or_false_true (b : Bool) (h : (b || false) = true) :
+   b = true := by
+   solution!
+     rewrite [Bool.or_false] at h
+@@ -2751,6 +2747,7 @@
+ :::::
+ 
+ ## Airport Exercise
++
+ :::suppressPreviousHeaderWhenTerse
+ :::
+ 
+@@ -2772,7 +2769,6 @@
+ properties of the database's
+ behavior, and prove that the implementation satisfies them.
+ 
+-
+ ```lean
+ namespace Airport
+ ```

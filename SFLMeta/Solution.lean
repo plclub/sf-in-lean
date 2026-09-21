@@ -14,7 +14,7 @@ block_extension Block.solution where
   data := Json.null
   traverse _ _ _ := do
     let variant ← getCurrVariant
-    if variant.isSolution ∨ variant.isGrading then
+    if variant.isSolution then
       -- keep solution blocks in solution variant
       return none
     else

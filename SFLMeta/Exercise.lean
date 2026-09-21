@@ -1,5 +1,7 @@
 import VersoManual
 
+import SFLMeta.Variant
+
 open Lean Elab
 open Verso ArgParse Doc Elab Genre.Manual
 open Verso.Output Verso.Output.Html
@@ -10,7 +12,7 @@ namespace SFLMeta
 /-! ## Exercise directive -/
 
 /-- Author-facing configuration for `:::exercise`. -/
-structure ExerciseConfig where
+structure ExerciseData where
   /-- Difficulty rating, a star count from 1 to `maxExerciseRating`. -/
   rating : Nat
   /-- A short identifier for the exercise, used in headings and cross-references. -/
@@ -24,7 +26,9 @@ structure ExerciseConfig where
   /-- Whether the exercise is graded manually rather than automatically (SF's
   `M` flag).  Written `(manual := true)`. -/
   manual : Bool
-deriving Repr
+  /-- Whether to require this exercise to be nested inside `:::full` or `:::terse`. -/
+  checkVisibility : Bool
+deriving Repr, ToJson, FromJson, Quote, TypeName
 
 section
 variable [Monad m] [MonadInfoTree m] [MonadLiftT CoreM m] [MonadEnv m] [MonadError m]
@@ -61,15 +65,16 @@ def ValDesc.exerciseRating : ValDesc m Nat where
 required; the `level` (`Advanced`), `optional` (`true`/`false`), and `manual`
 (`true`/`false`) designations are optional, the two flags defaulting to
 `false`. -/
-def ExerciseConfig.parse : ArgParse m ExerciseConfig :=
-  ExerciseConfig.mk
+def ExerciseData.parse : ArgParse m ExerciseData :=
+  ExerciseData.mk
     <$> .named `rating ValDesc.exerciseRating false
     <*> .named `name .string false
     <*> .named `level ValDesc.identText true
     <*> namedD `optional .bool false
     <*> namedD `manual .bool false
+    <*> namedD `checkVisibility .bool true
 
-instance : FromArgs ExerciseConfig m := ⟨ExerciseConfig.parse⟩
+instance : FromArgs ExerciseData m := ⟨ExerciseData.parse⟩
 
 end
 
@@ -81,7 +86,7 @@ identically. -/
 def exerciseDesignation (level : Option String) (optional manual : Bool) : String :=
   let parts := (if level == some "Advanced" then ["Advanced"] else []) ++
                (if optional then ["Optional"] else []) ++
-               (if manual then ["manually graded"] else [])
+               (if manual then ["Manually graded"] else [])
   match parts with
   | [] => ""
   | _  => " (" ++ String.intercalate ", " parts ++ ")"
@@ -90,37 +95,21 @@ def exerciseDesignation (level : Option String) (optional manual : Bool) : Strin
 contents in a styled box; TeX output emits a paragraph header; the saver emits
 a `### Exercise (rating⭐): name` module-doc heading before the contents. -/
 
-/-- Decode a `Block.exercise` payload `(rating, name, level, optional, manual)`,
-tolerating the older 4-element `(rating, name, level, manual)` and 2-element
-`(rating, name)` forms.  The two flags are both booleans, so it is the array's
-arity — not its element types — that tells the current form from the older
-one. -/
-def decodeExerciseData (data : Json) : Nat × String × Option String × Bool × Bool :=
-  let level? (j : Json) : Option String := match j with | .str s => some s | _ => none
-  match data with
-  | .arr #[.num jr, .str n, lvl, .bool opt, .bool man] =>
-    (jr.toFloat.toUInt32.toNat, n, level? lvl, opt, man)
-  | .arr #[.num jr, .str n, lvl, .bool man] =>
-    (jr.toFloat.toUInt32.toNat, n, level? lvl, false, man)
-  | .arr #[.num jr, .str n] => (jr.toFloat.toUInt32.toNat, n, none, false, false)
-  | _ => (0, "", none, false, false)
-
-block_extension Block.exercise (rating : Nat) (name : String)
-    (level : Option String) (optional : Bool) (manual : Bool) where
-  data := Json.arr #[.num (.fromNat rating), .str name, toJson level, .bool optional,
-                     .bool manual]
+block_extension Block.exercise (exercise : ExerciseData) where
+  data := toJson exercise
   traverse _ _ _ := pure none
   toHtml :=
     open Verso.Output.Html in
     some fun _ goB _ data contents => do
-      let (rating, name, level, optional, manual) := decodeExerciseData data
+      let body ← contents.foldlM (init := .empty) fun acc b =>
+        return acc ++ (← goB b)
+      let .ok ({rating, name, level, optional, manual, ..} : ExerciseData) := fromJson? data
+        | return body
       let stars := String.ofList (List.replicate rating '★')
       let desig := exerciseDesignation level optional manual
       let levelHtml : Verso.Output.Html :=
         if desig.isEmpty then .empty
         else {{ <span class="exercise-level">{{desig}}</span> }}
-      let body : Verso.Output.Html ← contents.foldlM (init := .empty) fun acc b =>
-        return acc ++ (← goB b)
       return {{
         <div class={{s!"exercise stars-{rating}"}}>
           <div class="exercise-header">
@@ -135,10 +124,11 @@ block_extension Block.exercise (rating : Nat) (name : String)
   toTeX :=
     open Verso.Output.TeX in
     some fun _ goB _ data contents => do
-      let (rating, name, level, optional, manual) := decodeExerciseData data
-      let desig := exerciseDesignation level optional manual
-      let body : Verso.Output.TeX ← contents.foldlM (init := .empty) fun acc b =>
+      let body ← contents.foldlM (init := .empty) fun acc b =>
         return acc ++ (← goB b)
+      let .ok ({rating, name, level, optional, manual, ..} : ExerciseData) := fromJson? data
+        | return body
+      let desig := exerciseDesignation level optional manual
       pure <| .seq #[
         .raw s!"\\paragraph\{Exercise ({rating} stars): {name}{desig}.}",
         body
@@ -179,12 +169,12 @@ r##"
 /-- A `:::exercise(rating := N, name := "foo")` directive wraps content as an
 exercise with the given metadata. -/
 @[directive]
-def exercise : DirectiveExpanderOf ExerciseConfig
+def exercise : DirectiveExpanderOf ExerciseData
   | cfg, contents => do
+    pushInfoLeaf <| .ofCustomInfo {stx := ← getRef, value := .mk cfg}
     let blocks ← contents.mapM elabBlock
     ``(Verso.Doc.Block.other
-        (SFLMeta.Block.exercise $(quote cfg.rating) $(quote cfg.name)
-          $(quote cfg.level) $(quote cfg.optional) $(quote cfg.manual))
+        (SFLMeta.Block.exercise $(quote cfg))
         #[$blocks,*])
 
 /-! ## `solution!` marker macros and source-range registry
@@ -207,55 +197,38 @@ structure Replacement where
   replacement : String
 deriving Repr, Inhabited
 
-structure SolutionEditRaw where
-  /-- The ranges that represent the tokens of the `solution!` form. -/
-  edits : Array Replacement
-  nonempty : edits.size > 0
-deriving Repr
-
-instance : Inhabited SolutionEditRaw where
-  default.edits := #[default]
-  default.nonempty := by simp
-
-initialize studentEditRef : IO.Ref (Array SolutionEditRaw) ← IO.mkRef #[]
-initialize teacherEditRef : IO.Ref (Array SolutionEditRaw) ← IO.mkRef #[]
+initialize studentEditRef : IO.Ref (Array Replacement) ← IO.mkRef #[]
+initialize teacherEditRef : IO.Ref (Array Replacement) ← IO.mkRef #[]
 /-- Edits producing the *terse* (lecture) source variant.  `solution!` records
 the same span-to-`sorry` edit here as for the student variant (exercises are
 stubbed on slides too); `workinclass!` records its edit *only* here (the proof
 is shown in the student and solutions builds but worked live in lecture). -/
-initialize terseEditRef : IO.Ref (Array SolutionEditRaw) ← IO.mkRef #[]
+initialize terseEditRef : IO.Ref (Array Replacement) ← IO.mkRef #[]
 
 private def recordStudentEdit (edits : Array (Syntax × String)) : IO Unit := do
     let ranges := edits.filterMap fun (stx, replacement) => do
       let range ← stx.getRange?
-      pure { range, replacement}
-    if h : ranges.size > 0 then
-      studentEditRef.modify
-        (·.push ⟨ranges, h⟩)
+      pure ({range, replacement} : Replacement)
+    studentEditRef.modify (· ++ ranges)
 
 private def recordTeacherEdit (edits : Array (Syntax × String)) : IO Unit := do
     let ranges := edits.filterMap fun (stx, replacement) => do
       let range ← stx.getRange?
-      pure { range, replacement}
-    if h : ranges.size > 0 then
-      teacherEditRef.modify
-        (·.push ⟨ranges, h⟩)
+      pure ({range, replacement} : Replacement)
+    teacherEditRef.modify (· ++ ranges)
 
 private def recordTerseEdit (edits : Array (Syntax × String)) : IO Unit := do
     let ranges := edits.filterMap fun (stx, replacement) => do
       let range ← stx.getRange?
-      pure { range, replacement}
-    if h : ranges.size > 0 then
-      terseEditRef.modify
-        (·.push ⟨ranges, h⟩)
+      pure ({range, replacement} : Replacement)
+    terseEditRef.modify (· ++ ranges)
 
 /-- Record student-variant edits given `Replacement`s directly (rather than
 deriving their ranges from syntax).  Needed by `suggested!`, whose student edit
 includes a zero-width insertion — a comment closer spliced at the body's end
 position — for which there is no corresponding syntax node. -/
-private def recordStudentRepls (repls : Array Replacement) : IO Unit := do
-    if h : repls.size > 0 then
-      studentEditRef.modify (·.push ⟨repls, h⟩)
+private def recordStudentRepls (repls : Array Replacement) : IO Unit :=
+  studentEditRef.modify (· ++ repls)
 
 /-- Drop up to `n` leading space characters from a list of characters. -/
 private def dropLeadingSpaces : Nat → List Char → List Char

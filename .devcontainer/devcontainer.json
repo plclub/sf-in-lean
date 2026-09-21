@@ -1,0 +1,19 @@
+{
+  "name": "SF-in-Lean dev container",
+
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+
+  "onCreateCommand": "lake build",
+
+  "hostRequirements": {
+     "cpus": 4
+  },
+
+  "customizations": {
+    "vscode" : {
+      "extensions" : [ "leanprover.lean4" ]
+    }
+  }
+}

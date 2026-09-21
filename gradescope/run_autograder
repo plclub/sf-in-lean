@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Claude-generated (see CLAUDE.md, "Marking AI-generated material").
+#
+# Gradescope entrypoint, once per submission. Gradescope reads only results.json,
+# so we would like to make sure that the file exists however grade.py exits,
+# because without it the student sees an opaque platform error.
+set -uo pipefail
+
+# setup.sh installed Lean under /opt/elan; this runs in a fresh shell.
+export ELAN_HOME=/opt/elan
+export PATH=/opt/elan/bin:${PATH}
+. /autograder/source/config.env
+export SFL_VOLUME="${VOLUME}" SFL_CHAPTER="${CHAPTER}" SFL_MANUAL="${MANUAL:-}"
+[ -n "${SFL_LANDRUN:-}" ] && export SFL_LANDRUN
+
+RESULTS=/autograder/results/results.json
+mkdir -p /autograder/results
+
+# Undo the previous submission, so one cannot influence the next.
+cp -R /opt/grader/pristine/. /opt/grader/workspace/Solution/
+
+python3 /opt/grader/grade.py || true
+
+if [ ! -s "$RESULTS" ]; then
+  printf '%s\n' '{"score": 0.0, "output_format": "md", "output": "**The autograder failed before it could grade your submission.** This is not something you did wrong - please notify the course staff."}' > "$RESULTS"
+fi
+exit 0

@@ -36,12 +36,12 @@ rev = "17c820e9726faeea24cbe6e6532b6b6e8452cc52"
 [[require]]
 name = "batteries"
 git = "https://github.com/leanprover-community/batteries"
-rev = "v4.33.0"
+rev = "v4.34.0-rc2"
 
 [[require]]
 name = "comparator-autograder"
 git = "https://github.com/plclub/comparator-autograder"
-rev = "main"
+rev = "v4.34.0-rc2"
 
 [[lean_lib]]
 name = "Bib"
