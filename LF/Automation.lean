@@ -76,11 +76,26 @@ If the goal is a universally quantified formula made out of
 
   - the logical connectives `∧`, `∨`, `¬`, and `→`,
 
-then invoking {tactic}`lia` will either solve the goal or fail, meaning
-that the goal is actually false.  If the goal is _not_ of this
-form, {tactic}`lia` will fail. Note that, when failing, {tactic}`lia` may mention
-another tactic, called {tactic}`grind`. This is another, more powerful tactic
-that subsumes {tactic}`lia`, but we will not use it here.
+then invoking {tactic}`lia` will either solve the goal, or fail because the
+goal is actually false: within this fragment, {tactic}`lia` is a complete
+decision procedure. {tactic}`lia` reasons about
+the goal together with any hypotheses already in the local context: each
+hypothesis is used exactly as if it had been written into the goal as an
+antecedent with `→`.
+
+Outside this fragment, {tactic}`lia` can fail even when the goal is true —
+for example, on `n * n ≥ n`, which multiplies two variables together rather
+than a constant and a variable. Such a failure only means {tactic}`lia`
+couldn't decide the goal, not that the goal is false. Note that, when
+failing, {tactic}`lia` may mention another tactic, called {tactic}`grind`.
+This is another, more powerful tactic that subsumes {tactic}`lia`, but we
+will not use it here.
+
+Anything in the goal or hypotheses that isn't built from these arithmetic
+pieces — including an arbitrary proposition like `x ∈ l` — {tactic}`lia`
+simply treats as an opaque atom. So {tactic}`lia` can also solve goals that
+are purely propositional, with no arithmetic in them at all, as long as the
+only way such atoms are combined is with `∧`, `∨`, `¬`, and `→`.
 ::::
 
 ```lean
@@ -99,6 +114,10 @@ example (m n p : Nat) :
 
 example (a b c d : Prop) :
     (a → b) → (b → c) → (c → d) → (a → d) := by
+  lia
+
+example (α : Type) (x : α) (l₁ l₂ l₃ : List α)
+  (h₁ : x ∈ l₁ → x ∈ l₂) (h₂ : x ∈ l₂ → x ∈ l₃) : x ∈ l₁ → x ∈ l₃ := by
   lia
 ```
 
