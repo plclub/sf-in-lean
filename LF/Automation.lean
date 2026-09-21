@@ -866,30 +866,30 @@ We can easily translate this intuition into a set of rules,
 where we write `s =~ re` to say that {lean}`re` matches {lean}`s`:
 
 ```display +centered
-─────────────── (mEmpty)
-[] =~ EmptyStr
+        ─────────────── (mEmpty)
+        [] =~ EmptyStr
 
-─────────────── (mChar)
-[x] =~ (Char x)
+        ─────────────── (mChar)
+        [x] =~ (Char x)
 
-s₁ =~ re₁     s₂ =~ re₂
-─────────────────────────── (mApp)
-(s₁ ++ s₂) =~ (App re₁ re₂)
+    s₁ =~ re₁     s₂ =~ re₂
+  ─────────────────────────── (mApp)
+  (s₁ ++ s₂) =~ (App re₁ re₂)
 
-s₁ =~ re₁
-───────────────────── (mUnionL)
-s₁ =~ (Union re₁ re₂)
+           s₁ =~ re₁
+    ───────────────────── (mUnionL)
+    s₁ =~ (Union re₁ re₂)
 
-s₂ =~ re₂
-───────────────────── (mUnionR)
-s₂ =~ (Union re₁ re₂)
+           s₂ =~ re₂
+    ───────────────────── (mUnionR)
+    s₂ =~ (Union re₁ re₂)
 
-──────────────── (mStar0)
-[] =~ (Star re)
+      ──────────────── (mStar0)
+      [] =~ (Star re)
 
 s₁ =~ re     s₂ =~ (Star re)
 ──────────────────────────── (mStarApp)
-(s₁ ++ s₂) =~ (Star re)
+  (s₁ ++ s₂) =~ (Star re)
 ```
 
 This directly corresponds to the following inductive definition:
