@@ -434,9 +434,9 @@ First, we show that typing is preserved under "extensions" to the
 context `Γ`.  (Recall map inclusion, `Γ ⊆ Γ'`, from the `Typeclasses` chapter.)
 
 ```lean
-theorem weakening (Γ Γ' : Context) (t : Tm) (T : Ty)
-    (hi : Γ ⊆ Γ') (hT : <{ ~Γ ⊢ ~t ⦂ ~T }>) : <{ ~Γ' ⊢ ~t ⦂ ~T }> := by
-  induction hT generalizing Γ' with
+theorem weakening {Γ Γ' : Context} {t : Tm} {τ : Ty}
+    (hi : Γ ⊆ Γ') (ht : <{ ~Γ ⊢ ~t ⦂ ~τ }>) : <{ ~Γ' ⊢ ~t ⦂ ~τ }> := by
+  induction ht generalizing Γ' with
   | var _ x _ h =>
     constructor
     exact hi h
@@ -463,15 +463,27 @@ theorem weakening (Γ Γ' : Context) (t : Tm) (T : Ty)
       exact hi
 ```
 
+Through judicious use of `apply_rules`, we can heavily automate this proof.
+The tactic after `with` is applied to every case of the {tactic}`induction`
+and handles all the cases using {tactic}`apply_rules`'s automation.
+We must give the tactic access to all the `HasType` constructors and the
+{name}`PartialMap.update_subset` lemma for this to work:
+
+```lean
+theorem weakening' {Γ Γ' : Context} {t : Tm} {τ : Ty}
+    (hi : Γ ⊆ Γ') (ht : <{ ~Γ ⊢ ~t ⦂ ~τ }>) : <{ ~Γ' ⊢ ~t ⦂ ~τ }> := by
+  induction ht generalizing Γ' with (apply_rules [PartialMap.update_subset] using StlcTyping)
+```
+
 :::slidebreak
 :::
 
 The following simple corollary is what we actually need below.
 
 ```lean
-theorem weakening_empty (Γ : Context) (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
-    <{ ~Γ ⊢ ~t ⦂ ~T }> := by
-    apply weakening ∅
+theorem weakening_empty {Γ : Context} {t : Tm} {τ : Ty} (ht : <{ ∅ ⊢ ~t ⦂ ~τ }>) :
+    <{ ~Γ ⊢ ~t ⦂ ~τ }> := by
+    apply weakening (Γ := ∅)
     -- this is the "manual" way to show that the empty context is a subset of any context:
     -- show that a 'lookup' in it is impossible.
     · intros x b contra
@@ -1015,7 +1027,7 @@ variables.  (I.e., every term is an open term; the closed terms
 are a subset of the open ones.  "Open" precisely means "possibly
 containing free variables.")
 
-:::::exercise (rating := 1) (name := "afi")
+:::::exercise (rating := 1) (name := "afi") (manual := true)
 (Officially optional, but strongly recommended!) In the space
 below, write out the rules of the `∈ᶠ` relation in
 informal inference-rule notation.  (Use whatever notational
@@ -1244,7 +1256,7 @@ earlier.
 :::
 
 ::::::full
-:::::exercise (rating := 1) (name := "progress_preservation_statement")
+:::::exercise (rating := 1) (name := "progress_preservation_statement") (manual := true)
 (Officially optional, but strongly recommended!) Without peeking
 at their statements above, write down the progress and
 preservation theorems for the simply typed lambda-calculus (as Lean
@@ -1958,6 +1970,9 @@ macro_rules (kind := Stlc.tmBracket)
       `(subst $(← Stlc.varStr x) <{ $s:stlcTm }> <{ $t:stlcTm }>)
 ```
 
+:::autogradedHole subst
+:::
+
 ::::details "Notation encoding: substitution"
 One more line registers substitutions with the printer, so that a goal
 mentioning one reads as `[x := s] t` rather than as a `subst` application.
@@ -2028,6 +2043,9 @@ inductive Tm.IsValue : Tm → Prop where
 -- END SOLUTION
 ```
 
+:::autogradedHole Tm.IsValue
+:::
+
 Now the reduction relation.  The three rules for application are the STLC's;
 the rest say how the arithmetic operators evaluate their arguments and what
 they compute once those arguments are numbers.
@@ -2071,6 +2089,9 @@ end
 scoped notation:40 t:41 " ⟶ " t':41 => Step t t'
 scoped notation:40 t:41 " ⟶* " t':41 => Multi Step t t'
 ```
+
+:::autogradedHole Step
+:::
 
 An example:
 
@@ -2163,6 +2184,9 @@ inductive HasType : Context → Tm → Ty → Prop where
 -- END SOLUTION
 ```
 
+:::autogradedHole HasType
+:::
+
 ::::details "Notation encoding: the judgment, for real"
 Closing the section retires the hygiene-free rule; the same rule is then
 declared again, hygienically, for every later use, and a pair of unexpanders
@@ -2212,13 +2236,19 @@ An example:
 
 ```lean
 -- AI
-theorem Nat_typing_example : <{ ∅ ⊢ (λ x : Nat . λ y : Nat . x * y) 3 2 ⦂ Nat }> :=
-  solution!(
-    .app _ _ Ty.nat _ _
-      (.app _ _ Ty.nat _ _
-        (.abs _ _ _ _ _ (.abs _ _ _ _ _ (.mult _ _ _ (.var _ "x" _ rfl) (.var _ "y" _ rfl))))
-        (.const _ 3))
-      (.const _ 2))
+theorem Nat_typing_example : <{ ∅ ⊢ (λ x : Nat . λ y : Nat . x * y) 3 2 ⦂ Nat }> := by
+  solution!
+    apply HasType.app (T₂ := Ty.nat)
+    · apply HasType.app (T₂ := Ty.nat)
+      · apply HasType.abs
+        apply HasType.abs
+        apply HasType.mult
+        · apply HasType.var
+          rfl
+        · apply HasType.var
+          rfl
+      · apply HasType.const
+    · apply HasType.const
 ```
 
 :::autogradedHole StlcArith.Nat_typing_example
@@ -2296,10 +2326,12 @@ for the STLC.
 ```lean
 -- AI
 theorem weakening_empty (Γ : Context) (t : Tm) (T : Ty) (hT : <{ ∅ ⊢ ~t ⦂ ~T }>) :
-    <{ ~Γ ⊢ ~t ⦂ ~T }> :=
-  solution!(
-    weakening _ _ _ _
-      (fun h => by rw [PartialMap.getElem_empty] at h; cases h) hT)
+    <{ ~Γ ⊢ ~t ⦂ ~T }> := by
+  solution!
+    apply weakening ∅
+    · intros x b contra
+      contradiction
+    · assumption
 -- AI
 theorem substitution_preserves_typing (Γ : Context) (x : String) (U : Ty)
     (t v : Tm) (T : Ty)
