@@ -2087,7 +2087,7 @@ We've seen two different ways of expressing logical claims in Lean:
 with _booleans_ (of type {lean}`Bool`), and with _propositions_ (of type {lean}`Prop`).
 Here are the key differences between {lean}`Bool` and {lean}`Prop`:
 
-```display
+```display +centered
 |                     | `Bool` | `Prop` |
 | ------------------- | ------ | ------ |
 | decidable?          | yes    | no     |

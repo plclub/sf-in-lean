@@ -1276,7 +1276,7 @@ didn't prove its correctness. Now we'll do so.
   then converting it to a (standard, unary) natural number yields the same result as first converting
   it to a natural number and then incrementing:
 
-```display
+```display +centered
                       incr
           Bin ------------------------> Bin
            |                             |
