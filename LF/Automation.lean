@@ -137,21 +137,17 @@ theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α)
     . lia -- was right; right; left; assumption
     . lia -- was contradiction
   | swap23 =>
-  /- Here, we solve _all_ goals — and skip the `obtain` — with
-    the <;> tactic combinator, which we saw in the `Induction` chapter. -/
-    rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
+    rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
+    obtain h | h | h | h := hIn
+    . lia -- was left; assumption
+    . lia -- was right; right; left; assumption
+    . lia -- was right; right; assumption
+    . lia -- was contradiction
   | trans _ _ ih₁₂ ih₂₃ =>
     lia -- was apply ih₂₃; apply ih₁₂; apply hIn
 ```
 
 # Tactic Combinators
-
-:::dev "Mike Hicks (mwhicks1)"
-This is a bit weird: We _just_ saw `<;>` with no explanation in the example proof above.
-We should either remind people before that proof, or perhaps just after it, or not bother
-to do it at all. Probably we don't need the example (unless it's referenced later, which I
-doubt, since it's not named).
-:::
 
 ::::full
 In {ref "Induction"}[Induction], we saw how to use the {tactic}`<;>` combinator in order to apply
@@ -168,12 +164,25 @@ example (b c : Bool) : (b && c) = (c && b) := by
   cases b <;> cases c <;> rfl
 ```
 
+We can use this combinator to further simplify our `Perm3` proof:
+
+```lean
+theorem Perm3_In_better_with_lia_semi (α : Type) (x : α) (l₁ l₂ : List α)
+    (hPerm : Perm3 l₁ l₂) (hIn : x ∈ l₁) : x ∈ l₂ := by
+  induction hPerm with
+  | swap12 =>
+    rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
+  | swap23 =>
+    rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
+  | trans _ _ ih₁₂ ih₂₃ => lia
+```
+
 ::::full
-This `<;>` is not the only such combinator that Lean has to offer, however.
-In general, combinators allow us to build tactics out of smaller ones, letting us
-discharge many similar subgoals at once. Getting used to them takes a
-little energy, but it lets us scale up to more complex definitions and
-more interesting properties without drowning in boring, repetitive detail.
+The `<;>` is not the only combinator that Lean has to offer.
+In general, combinators allow us to build tactics out of smaller ones.
+Getting used to them takes a little energy, but it lets us scale up to
+more complex definitions and more interesting properties without
+drowning in boring, repetitive detail.
 ::::
 
 :::dev "Benjamin Pierce (bcpierce00)"
@@ -242,7 +251,7 @@ The {tactic}`try` combinator swallows a tactic's failure.
 
 ```lean
 example {a : Prop} (h : a) : a := by
-  try rfl -- `rfl` would fail here, but `try` swallows the failure...
+  try rfl -- `rfl` would fail here, but `try` swallows it...
   exact h -- ...so we can still finish some other way.
 
 example : 1 = 1 := by
@@ -280,7 +289,8 @@ but not all, goals...
 ```lean
 example {n} (h : Silly n) : n ≠ 1 := by
   cases h <;> try lia
-  -- `lia` doesn't know that `1 ∈ []` is impossible, but we can use `contradiction`
+  -- `lia` doesn't know that `1 ∈ []` is impossible,
+  -- but we can use `contradiction`
   contradiction
 ```
 
@@ -424,6 +434,12 @@ example : 10 ∈ [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] := by
     | apply List.mem_cons_of_mem
 ```
 
+::::dev "Mike Hicks (mwhicks1)"
+It occurs to me having gotten this far that we could really use some
+quizzes to test understanding of these various combinators to this
+point.
+::::
+
 ::::full
 The {tactic}`first` tactic here will attempt to close the goal with an application of
 {name}`List.mem_cons_self`, if it can, and otherwise `apply List.mem_cons_of_mem` to proceed to
@@ -455,7 +471,7 @@ theorem Perm3_In_better_with_first (α : Type) (x : α) (l₁ l₂ : List α)
     | lia
 ```
 
-Our {name}`Perm3.In` example is getting quite short! But can we do better?
+Our {name}`Perm3.In` example is now quite short! Can we still do better?
 
 # The {tactic}`simp` Tactic
 
