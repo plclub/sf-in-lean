@@ -49,15 +49,19 @@ that the author's accept/decline is what the ledger records.
 python3 scripts/proofread.py apply
 ```
 
-This makes the edits and opens a side-by-side diff in VS Code — a snapshot of
-the chapter before the round on the left, the live chapter on the right.
-Anchor errors mean nothing was applied: fix the round file and run it again.
+This makes the edits and opens a side-by-side diff in the author's editor — a
+snapshot of the chapter before the round on one side, the live chapter on the
+other (`code --diff`, or Ediff in a running Emacs; `PROOFREAD_EDITOR` picks,
+and it follows the session otherwise). The command prints which one it used and
+how to revert there; relay that rather than assuming VS Code. Anchor errors
+mean nothing was applied: fix the round file and run it again.
 
 Then **end your turn**. Tell the author what is in the round (the category
 counts the command printed, and any pair of edits it flagged as sharing one
-change block), and ask them to revert what they don't want — the arrow in the
-gutter between the panes, or editing the right-hand side directly — and to say
-when they're done. Before ending the turn, do the **high-level read** (next
+change block), and ask them to revert what they don't want — the way the
+command's own output describes for their editor — and to say when they're done.
+Under Emacs, remind them to **save** the chapter buffer: `record` reads the
+chapter back off disk. Before ending the turn, do the **high-level read** (next
 section) and include its findings in the same handover message — it touches no
 files, so the author can weigh it while reverting low-level edits. Do not
 poll, do not watch the file, do not run `record` on their behalf. They may
