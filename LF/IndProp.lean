@@ -182,7 +182,7 @@ concept "reaches {lean}`1` eventually in the Collatz sequence" as an
 _inductively defined property_ of numbers. Intuitively, this
 property is defined by a set of rules:
 
-```display
+```display +centered
               ─────────────────── (one)
                CollatzHoldsFor 1
 
@@ -209,7 +209,7 @@ derivation using these rules. For instance, here is the
 derivation proving that {lean}`12` reaches {lean}`1`
 (where we leave out the evenness/oddness premises):
 
-```display
+```display +centered
 ─────────────────────── (one)
   CollatzHoldsFor 1
 ─────────────────────── (even)
@@ -328,7 +328,7 @@ For example, one familiar binary relation on {name}`Nat` is
 `Le : Nat → Nat → Prop`, the less-than-or-equal-to relation,
 which can be inductively defined by the following two rules:
 
-```display
+```display +centered
   ─────── (le_refl)
   Le n n
 
@@ -375,7 +375,7 @@ Another example: the _transitive closure_ of a relation `r` is the
 smallest relation that contains `r` and that is transitive. This can
 be defined by the following two rules:
 
-```display
+```display +centered
               r x y
          ─────────────── (t_step)
          TransGen r x y
@@ -438,7 +438,7 @@ def AncestorOf : Person → Person → Prop := TransGen ParentOf
 
 Here is a derivation showing that {name}`sage` is an ancestor of {name}`moss`:
 
-```display
+```display +centered
  ——————————————————— (sage_cleo) ——————————————————— (cleo_moss)
  ParentOf .sage .cleo            ParentOf .cleo .moss
 ————————————————————— (step)    ————————————————————— (step)
@@ -480,7 +480,7 @@ relation `r` is the smallest relation that contains `r` and that is
 reflexive and transitive. This can be defined by the following three
 rules (where we added a reflexivity rule to {name}`TransGen`):
 
-```display
+```display +centered
                    r x y
          ——————————————————————— (step)
            ReflTransGen r x y
@@ -529,7 +529,7 @@ This {name}`CollatzStepMulti` relation defined in terms of
 {name}`ReflTransGen` allows for more interesting derivations than the
 linear ones of the directly defined {name}`CollatzHoldsFor` relation:
 
-```display
+```display +centered
 collatzStep 16 = 8          collatzStep 8 = 4          collatzStep 4 = 2          collatzStep 2 = 1
 ────────────────── (step)   ───────────────── (step)   ───────────────── (step)   ───────────────── (step)
 CollatzStepMulti 16 8       CollatzStepMulti 8 4       CollatzStepMulti 4 2       CollatzStepMulti 2 1
@@ -575,7 +575,7 @@ elements.
 
 We can define such permutations by the following rules:
 
-```display
+```display +centered
    ───────────────────────── (swap12)
    Perm3 [a, b, c] [b, a, c]
 
@@ -589,7 +589,7 @@ Perm3 l₁ l₂       Perm3 l₂ l₃
 
 For instance, we can derive `Perm3 [1, 2, 3] [3, 2, 1]` as follows:
 
-```display
+```display +centered
 ───────────────────────── (swap12)  ─────────────────────── (swap23)
 Perm3 [1, 2, 3] [2, 1, 3]            Perm3 [2, 1, 3] [2, 3, 1]
 ─────────────────────────────────────────────────────────────────(trans)    ───────────────────── (swap12)
@@ -651,7 +651,7 @@ A third possibility, which we'll use as a simple running example
 in this chapter, is to say that a number is even if we can
 _establish_ its evenness from the following two rules:
 
-```display
+```display +centered
   ────────── (zero)
     Even 0
 
@@ -675,7 +675,7 @@ examples above.)
 To illustrate how this new definition of evenness works, let's
 imagine using it to show that {lean}`4` is even:
 
-```display
+```display +centered
                  ──────── (zero)
                   Even 0
           ─────────────────────── (succ_succ)
