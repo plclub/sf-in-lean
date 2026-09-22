@@ -6,6 +6,7 @@ import VersoManual
 -- with "No block traversal implementation found".  (This module is deliberately
 -- *not* part of the `SFLMeta` aggregate, so importing it back is not a cycle.)
 import SFLMeta
+import SFLMeta.CrossVolume
 
 open Verso Genre Manual
 
@@ -46,7 +47,8 @@ declarations.
 volume's chapters `import` (e.g. `HL.Imp` imports `LF.Typeclasses`).  They must
 go through the same Verso → Lean transformation as the volume's own chapters when
 their standalone `.lean` is extracted, so they are handed to the saver as
-`(volume-prefix, chapter-part)` pairs rather than bundled verbatim. -/
+`(volume-prefix, chapter-part)` pairs rather than bundled verbatim. They also
+provide destinations for `{ref ... (remote := "lf")}[...]` links to those chapters. -/
 def runVolume (vol : String) (doc : Verso.Doc.Part Manual)
     (crossVol : List (String × Verso.Doc.Part Manual) := []) (args : List String) : IO UInt32 := do
   match args with
@@ -65,7 +67,12 @@ def runVolume (vol : String) (doc : Verso.Doc.Part Manual)
       | .terse => Save.emitSavedTerse vol.toUpper stamp crossVol
       | .grading => Save.emitSavedGrading vol.toUpper stamp crossVol
     let config := mkConfig vol mode stamp
-    let rc ← manualMain doc (options := rest) (config := config) (extraSteps := [extraStep])
+    let layout ← match (← IO.getEnv "SFL_HTML_LAYOUT").getD "build" with
+      | "build" => pure HtmlLayout.build
+      | "release" => pure HtmlLayout.release
+      | value => throw <| IO.userError s!"invalid SFL_HTML_LAYOUT: {value}"
+    let rc ← crossVolumeMain doc crossVol mode layout rest config
+      (extensionImpls := by exact extension_impls%) (extraSteps := [extraStep])
     if rc == 0 then
       renameHtmlDir config.destination
     return rc

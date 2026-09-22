@@ -42,6 +42,7 @@ Usage:
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -124,7 +125,10 @@ def git_path_is_clean(path):
 def build_student(vol):
     subprocess.run(["scripts/relocate-lake-build.sh"], cwd=REPO_ROOT, check=True)
     subprocess.run(["lake", "build", f"sfl-{vol}"], cwd=REPO_ROOT, check=True)
-    subprocess.run(["lake", "exe", f"sfl-{vol}", "student"], cwd=REPO_ROOT, check=True)
+    subprocess.run(
+        ["lake", "exe", f"sfl-{vol}", "student"], cwd=REPO_ROOT, check=True,
+        env={**os.environ, "SFL_HTML_LAYOUT": "release"},
+    )
     copy_devcontainer(REPO_ROOT / f"_out/{vol}/student/lean")
 
 
