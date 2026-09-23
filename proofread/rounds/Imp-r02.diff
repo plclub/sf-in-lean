@@ -1,0 +1,257 @@
+--- HL/Imp.lean (before this round)
++++ HL/Imp.lean
+@@ -99,12 +99,12 @@
+ 
+ LATER: (Note copied from Equiv right before the `assign_aequiv`
+    exercise): Some or all of this discussion should really happen when
+-   states are introduced in Imp.v, and the whole idea of treating states as
++   states are introduced in this chapter, and the whole idea of treating states as
+    an ADT should be raised there.
+ :::
+ 
+ Since we'll want to look variables up to find out their current values,
+-we'll use total maps from the `Typeclasses` chapter. A _machine state_ (or
++we'll use total maps from the `Typeclasses` chapter of _Logical Foundations_. A _machine state_ (or
+ just _state_) represents the current values of all variables at some
+ point in the execution of a program.
+ 
+@@ -211,10 +211,16 @@
+ 
+ - The `declare_syntax_cat` directive adds a new non-terminal to Lean's grammar, called
+   `imp_aexp`. We'll add additional non-terminals further below.
+-- Each `syntax` directive defines a grammar production, of which there are eight in
+-  total. The first two define literals, `num` and `ident`, as `imp_aexp`s. The next
+-  several directives define productions for building larger expressions, with
+-  some annotations to define precedence, etc.
++- Each `syntax` directive defines a grammar production. Seven of them build the
++  `imp_aexp` category itself: the first two make a numeric literal and an
++  identifier into an `imp_aexp`, the next three build larger expressions (with
++  annotations that fix precedence and associativity), and the last two are
++  parentheses for grouping and `~`, the escape back to Lean. The eighth,
++  `aexp { … }`, is a production of Lean's own `term` category — it is what lets
++  an Imp expression appear in ordinary Lean code.
++- `~e` splices an already-elaborated Lean term `e` into Imp syntax. We use it
++  throughout the chapter to drop a previously-defined expression or command into
++  a larger program, as in `imp { while (X ≠ 0) { ~subtract_slowly_body } }`.
+ - Finally, `macro_rules` is used to translate each production of the `imp_aexp` non-terminal
+   into a Lean expression.
+ 
+@@ -629,8 +635,8 @@
+ c ::= "skip"
+     | x ":=" a
+     | c ";" c
+-    | "if" b "then" c "else" c "end"
+-    | "while" b "do" c "end" ;
++    | "if" "(" b ")" "{" c "}" "else" "{" c "}"
++    | "while" "(" b ")" "{" c "}" ;
+ ```
+ 
+ Here is the formal definition of the abstract syntax of commands.
+@@ -1052,6 +1058,8 @@
+ in Lean? CSLib precedent maybe?
+ :::
+ 
++## Operational Semantics
++
+ We'll use the notation `st =[ c ]=> st'` for the `Com.EvalR` relation:
+ `st =[ c ]=> st'` means that executing program `c` in a starting state
+ `st` results in an ending state `st'`.  This can be pronounced "`c` takes
+@@ -1060,8 +1068,6 @@
+ :::slidebreak
+ :::
+ 
+-## Operational Semantics
+-
+ :::dev PotentialImprovement
+ BCP 21: I wonder if `seq` would be easier to work with if st' and
+    st'' were swapped...
+@@ -1085,23 +1091,23 @@
+ 
+                      b.eval st = true
+                       st =[ c₁ ]=> st'
+-           --------------------------------------        (ifTrue)
+-           st =[ if b then c₁ else c₂ end ]=> st'
++           ---------------------------------------       (ifTrue)
++           st =[ if (b) { c₁ } else { c₂ } ]=> st'
+ 
+                     b.eval st = false
+                       st =[ c₂ ]=> st'
+-           --------------------------------------        (ifFalse)
+-           st =[ if b then c₁ else c₂ end ]=> st'
++           ---------------------------------------       (ifFalse)
++           st =[ if (b) { c₁ } else { c₂ } ]=> st'
+ 
+                     b.eval st = false
+-               -----------------------------             (whileFalse)
+-               st =[ while b do c end ]=> st
++               ----------------------------              (whileFalse)
++               st =[ while (b) { c } ]=> st
+ 
+                      b.eval st = true
+                       st =[ c ]=> st'
+-             st' =[ while b do c end ]=> st''
+-             --------------------------------            (whileTrue)
+-             st  =[ while b do c end ]=> st''
++             st' =[ while (b) { c } ]=> st''
++             -------------------------------             (whileTrue)
++             st  =[ while (b) { c } ]=> st''
+ ```
+ 
+ Here is the formal definition.  Make sure you understand how it
+@@ -1326,6 +1332,19 @@
+ :::instructors
+ Yes, but answer is given later (`quiz2_answer`) as it depends on `ceval_deterministic`.
+ :::
++
++:::dev "Claude"
++This is the only one of the five quizzes with no `:::quizSolution`, so it is
++the only one with no click-to-reveal answer in the HTML book. The answer it
++defers to, `quiz2_answer`, sits in a `::::hide` block after
++`ceval_deterministic` — and hide bodies are dropped from every build and never
++elaborated, so that proof reaches no reader and is not checked by `lake build`
++either. Options: (a) give this quiz a `:::quizSolution` that states the answer
++is yes and points forward to the determinism section; (b) additionally promote
++`quiz2_answer` out of `::::hide` into a live block there, so it is at least
++compiled; (c) move the whole quiz to after `ceval_deterministic` and give it an
++ordinary `:::quizSolution`.
++:::
+ ::::
+ 
+ ::::quiz
+@@ -1676,7 +1695,7 @@
+ :::::exercise (rating := 3) (name := "no_whiles_eqv")
+ The following function yields {name}`true` just on programs with no while
+ loops. Using `inductive`, write a property `Com.NoWhilesR` that holds
+-exactly when `c` is while-free, then prove it equivalent to `Com.no_whiles`.
++of exactly the while-free commands, then prove it equivalent to `Com.no_whiles`.
+ 
+ ```lean
+ def Com.no_whiles (c : Com) : Bool :=
+@@ -1774,6 +1793,15 @@
+ GRADE_MANUAL 6: no_whiles_terminating
+ ```
+ :::
++
++:::dev "Claude"
++The exercise is `(rating := 4)` but worth 6 points. Everywhere else in the
++chapter the points track the rating (`rating := 2` → `gradeTheorem 2`,
++`rating := 3` → `gradeTheorem 3`, `XtimesYinZ_spec`'s `rating := 3` →
++`GRADE_MANUAL 3`). If 6 is deliberate — the exercise asks for both a statement
++and a proof — this is fine as it stands; otherwise one of the two numbers
++wants changing.
++:::
+ :::::
+ ::::::
+ 
+@@ -1997,10 +2025,10 @@
+ ::::
+ :::::
+ 
+-## Additional Exercises
++# Additional Exercises
+ 
+ ::::exercise (rating := 3) (name := "stack_compiler") (checkVisibility := false)
+-Old HP Calculators, programming languages like Forth and Postscript,
++Old HP calculators, programming languages like Forth and Postscript,
+ and abstract machines like the Java Virtual Machine all evaluate
+ arithmetic expressions using a _stack_. For instance, the expression
+ 
+@@ -2035,13 +2063,13 @@
+ 
+ The instruction set for our stack language will consist of the
+ following instructions:
+-    - `sPush n`: Push the number `n` on the stack.
+-    - `sLoad x`: Load the identifier `x` from the store and push it
+-                on the stack.
+-    - `sPlus`:   Pop the two top numbers from the stack, add them, and
+-                push the result onto the stack.
+-    - `sMinus`:  Similar, but subtract the first number from the second.
+-    - `sMult`:   Similar, but multiply.
++
++- `sPush n`: Push the number `n` on the stack.
++- `sLoad x`: Load the identifier `x` from the store and push it on the stack.
++- `sPlus`: Pop the two top numbers from the stack, add them, and push the
++  result onto the stack.
++- `sMinus`: Similar, but subtract the first number from the second.
++- `sMult`: Similar, but multiply.
+ 
+ ```lean
+ namespace StackCompiler
+@@ -2372,9 +2400,9 @@
+ ```display
+     X := 0;
+     Y := 1;
+-    while (0 <> Y) {
++    while (0 ≠ Y) {
+       while (true) {
+-        break
++        brk
+       };
+       X := 1;
+       Y := Y - 1
+@@ -2399,7 +2427,9 @@
+ state `st`, then it terminates in state `st'` and either signals
+ that the innermost surrounding loop (or the whole program) should
+ exit immediately (`s = sBreak`) or that execution should continue
+-normally (`s = sContinue`).
++normally (`s = sContinue`).  Unlike the chapter's `=[ ]=>`, this notation
++takes an ordinary Lean term for the command, so the theorems below write the
++program out as `imp { … }`: `st =[ imp { brk ; c } ]=> st' // s`.
+ 
+ The definition of the `st =[ c ]=> st' // s` relation is very
+ similar to the one we gave above for the regular evaluation
+@@ -2436,7 +2466,7 @@
+   execution proceeds as in the original semantics. Otherwise, we
+   stop the execution of the loop, and the resulting state is the
+   same as the one resulting from the execution of the current
+-  iteration.  In either case, since `break` only terminates the
++  iteration.  In either case, since `brk` only terminates the
+   innermost loop, `while` signals {name}`sContinue`.
+ 
+ Based on the above description, complete the definition of the
+@@ -2548,6 +2578,17 @@
+ ::::
+ :::::
+ 
++:::dev "Claude"
++This exercise and the `ceval_deterministic` one that follows are the only two
++in the chapter with no prose at all — no statement of the task — and the only
++two with no `:::gradeTheorem`. Both look truncated rather than deliberate.
++Options: (a) write a one-line task statement for each and add grading specs
++matching their ratings (3 and 4); (b) fold them into the preceding `break_imp`
++exercise as two more theorems to prove, since that is where the rest of the
++`brk` properties live; (c) leave them ungraded on purpose, in which case a word
++saying so would help.
++:::
++
+ :::::full
+ ::::exercise (rating := 3) (name := "while_break_true") (optional := true)
+ ```lean
+@@ -2901,7 +2942,7 @@
+ 
+ :::::full
+ ::::exercise (rating := 4) (name := "add_for_loop") (optional := true)
+-Add C-style `for` loops to the language of commands, update the
++Add C-style `for` loops to the language of commands, update the chapter's
+ `Com.EvalR` definition to define the semantics of `for` loops, and add
+ cases for `for` loops as needed so that all the proofs in this
+ file are accepted by Lean.
+@@ -2916,7 +2957,7 @@
+ ::::
+ :::::
+ 
+-:::dev
++:::dev PotentialImprovement
+ ```
+ HTML polish — deferred Verso-markup opportunities for a later pass (see
+ CONTRIBUTING.md, "Verso markup for nicer HTML"):
+@@ -2933,7 +2974,7 @@
+   {deftech} (abstract syntax, state, big-step, relation, partial function, …)
+   and link later uses with {tech}.
+ * {lean}`expr` — inline elaborated expressions/types where a whole expression,
+-  not just a single name, reads better with hover types (e.g. the
+-  `Coe Ident Aexp` / `OfNat Aexp n` bullets in the Notations section).
++  not just a single name, reads better with hover types (e.g. the bullets
++  describing the productions in the Notations section).
+ ```
+ :::

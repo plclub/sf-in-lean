@@ -1,0 +1,141 @@
+{
+ "file": "HL/Imp.lean",
+ "chapter": "Imp",
+ "round": 2,
+ "proposals": [
+  {
+   "id": "h01",
+   "cat": "reference/volume-name",
+   "old": "we'll use total maps from the `Typeclasses` chapter. A _machine state_ (or",
+   "new": "we'll use total maps from the `Typeclasses` chapter of _Logical Foundations_. A _machine state_ (or",
+   "why": "First mention of the chapter doesn't say which book it is in; the Evaluation section, much later, does. Name the volume where the reader first needs it."
+  },
+  {
+   "id": "h02",
+   "cat": "reference/stale-rocq",
+   "old": "states are introduced in Imp.v, and the whole idea of treating states as",
+   "new": "states are introduced in this chapter, and the whole idea of treating states as",
+   "why": "The note points at the Rocq source file; the chapter should stand on its own."
+  },
+  {
+   "id": "h03",
+   "cat": "exposition/missing-explanation",
+   "old": "- Each `syntax` directive defines a grammar production, of which there are eight in\n  total. The first two define literals, `num` and `ident`, as `imp_aexp`s. The next\n  several directives define productions for building larger expressions, with\n  some annotations to define precedence, etc.\n- Finally, `macro_rules` is used to translate each production of the `imp_aexp` non-terminal\n  into a Lean expression.",
+   "new": "- Each `syntax` directive defines a grammar production. Seven of them build the\n  `imp_aexp` category itself: the first two make a numeric literal and an\n  identifier into an `imp_aexp`, the next three build larger expressions (with\n  annotations that fix precedence and associativity), and the last two are\n  parentheses for grouping and `~`, the escape back to Lean. The eighth,\n  `aexp { … }`, is a production of Lean's own `term` category — it is what lets\n  an Imp expression appear in ordinary Lean code.\n- `~e` splices an already-elaborated Lean term `e` into Imp syntax. We use it\n  throughout the chapter to drop a previously-defined expression or command into\n  a larger program, as in `imp { while (X ≠ 0) { ~subtract_slowly_body } }`.\n- Finally, `macro_rules` is used to translate each production of the `imp_aexp` non-terminal\n  into a Lean expression.",
+   "why": "The `~` antiquotation is load-bearing from `More Examples` onward (`~subtract_slowly_body`, `st =[ ~factCom ]=> st'`, `imp { ~c }`) but is explained only in an instructors note and an inline code comment. Also, the eighth production is a `term` production, not an `imp_aexp` one, which the old bullet blurred."
+  },
+  {
+   "id": "h04",
+   "cat": "consistency/surface-syntax",
+   "old": "    | \"if\" b \"then\" c \"else\" c \"end\"\n    | \"while\" b \"do\" c \"end\" ;",
+   "new": "    | \"if\" \"(\" b \")\" \"{\" c \"}\" \"else\" \"{\" c \"}\"\n    | \"while\" \"(\" b \")\" \"{\" c \"}\" ;",
+   "why": "The BNF used Rocq's `if…then…else…end` / `while…do…end`, but Imp's concrete syntax everywhere else in the chapter (and in `Com.EvalR`) is the braced form."
+  },
+  {
+   "id": "h05",
+   "cat": "consistency/surface-syntax",
+   "old": "                     b.eval st = true\n                      st =[ c₁ ]=> st'\n           --------------------------------------        (ifTrue)\n           st =[ if b then c₁ else c₂ end ]=> st'\n\n                    b.eval st = false\n                      st =[ c₂ ]=> st'\n           --------------------------------------        (ifFalse)\n           st =[ if b then c₁ else c₂ end ]=> st'\n\n                    b.eval st = false\n               -----------------------------             (whileFalse)\n               st =[ while b do c end ]=> st\n\n                     b.eval st = true\n                      st =[ c ]=> st'\n             st' =[ while b do c end ]=> st''\n             --------------------------------            (whileTrue)\n             st  =[ while b do c end ]=> st''",
+   "new": "                     b.eval st = true\n                      st =[ c₁ ]=> st'\n           ---------------------------------------       (ifTrue)\n           st =[ if (b) { c₁ } else { c₂ } ]=> st'\n\n                    b.eval st = false\n                      st =[ c₂ ]=> st'\n           ---------------------------------------       (ifFalse)\n           st =[ if (b) { c₁ } else { c₂ } ]=> st'\n\n                    b.eval st = false\n               ----------------------------              (whileFalse)\n               st =[ while (b) { c } ]=> st\n\n                     b.eval st = true\n                      st =[ c ]=> st'\n             st' =[ while (b) { c } ]=> st''\n             -------------------------------             (whileTrue)\n             st  =[ while (b) { c } ]=> st''",
+   "why": "Same mismatch as the BNF, and it bites harder here: the very next sentence asks the reader to check how `Com.EvalR` corresponds to these rules, and `Com.EvalR` is stated in the braced syntax. Rule lines re-aligned so the labels stay in column 57."
+  },
+  {
+   "id": "h06",
+   "cat": "structure/heading-placement",
+   "old": "We'll use the notation `st =[ c ]=> st'` for the `Com.EvalR` relation:\n`st =[ c ]=> st'` means that executing program `c` in a starting state\n`st` results in an ending state `st'`.  This can be pronounced \"`c` takes\nstate `st` to `st'`\".\n\n:::slidebreak\n:::\n\n## Operational Semantics\n\n:::dev PotentialImprovement\nBCP 21:",
+   "new": "## Operational Semantics\n\nWe'll use the notation `st =[ c ]=> st'` for the `Com.EvalR` relation:\n`st =[ c ]=> st'` means that executing program `c` in a starting state\n`st` results in an ending state `st'`.  This can be pronounced \"`c` takes\nstate `st` to `st'`\".\n\n:::slidebreak\n:::\n\n:::dev PotentialImprovement\nBCP 21:",
+   "why": "The paragraph introducing the `=[ ]=>` notation is the opening of the operational-semantics discussion, not the tail of `Evaluation as a Relation`; as it stood, the heading separated the notation from the inference rules that use it."
+  },
+  {
+   "id": "h07",
+   "cat": "devnote/quiz-answer-unreachable",
+   "old": ":::instructors\nYes, but answer is given later (`quiz2_answer`) as it depends on `ceval_deterministic`.\n:::\n::::",
+   "new": ":::instructors\nYes, but answer is given later (`quiz2_answer`) as it depends on `ceval_deterministic`.\n:::\n\n:::dev \"Claude\"\nThis is the only one of the five quizzes with no `:::quizSolution`, so it is\nthe only one with no click-to-reveal answer in the HTML book. The answer it\ndefers to, `quiz2_answer`, sits in a `::::hide` block after\n`ceval_deterministic` — and hide bodies are dropped from every build and never\nelaborated, so that proof reaches no reader and is not checked by `lake build`\neither. Options: (a) give this quiz a `:::quizSolution` that states the answer\nis yes and points forward to the determinism section; (b) additionally promote\n`quiz2_answer` out of `::::hide` into a live block there, so it is at least\ncompiled; (c) move the whole quiz to after `ceval_deterministic` and give it an\nordinary `:::quizSolution`.\n:::\n::::",
+   "why": "Needs an author decision: quiz 2 is the only quiz without a reader-visible answer, and the proof it defers to is in a `::::hide` block, so it is neither shown nor compiled."
+  },
+  {
+   "id": "h08",
+   "cat": "grammar/unbound-variable",
+   "old": "exactly when `c` is while-free, then prove it equivalent to `Com.no_whiles`.",
+   "new": "of exactly the while-free commands, then prove it equivalent to `Com.no_whiles`.",
+   "why": "`c` is never introduced in the exercise prose."
+  },
+  {
+   "id": "h09",
+   "cat": "devnote/grading-mismatch",
+   "old": ":::grade\n```\nGRADE_MANUAL 6: no_whiles_terminating\n```\n:::\n:::::\n::::::\n\n# Case Study (Optional)",
+   "new": ":::grade\n```\nGRADE_MANUAL 6: no_whiles_terminating\n```\n:::\n\n:::dev \"Claude\"\nThe exercise is `(rating := 4)` but worth 6 points. Everywhere else in the\nchapter the points track the rating (`rating := 2` → `gradeTheorem 2`,\n`rating := 3` → `gradeTheorem 3`, `XtimesYinZ_spec`'s `rating := 3` →\n`GRADE_MANUAL 3`). If 6 is deliberate — the exercise asks for both a statement\nand a proof — this is fine as it stands; otherwise one of the two numbers\nwants changing.\n:::\n:::::\n::::::\n\n# Case Study (Optional)",
+   "why": "Needs an author decision: the only exercise in the chapter whose points and rating disagree."
+  },
+  {
+   "id": "h10",
+   "cat": "structure/heading-level",
+   "old": "-- END SOLUTION\n```\n::::\n:::::\n\n## Additional Exercises",
+   "new": "-- END SOLUTION\n```\n::::\n:::::\n\n# Additional Exercises",
+   "why": "As an `##` it nests under `# Case Study (Optional)`, so the stack compiler, `execute_app`, `compiler_correct`, `short_circuit`, `break_imp`, and `add_for_loop` all read as part of an optional case study."
+  },
+  {
+   "id": "h11",
+   "cat": "capitalization/common-noun",
+   "old": "Old HP Calculators, programming languages like Forth and Postscript,",
+   "new": "Old HP calculators, programming languages like Forth and Postscript,",
+   "why": "`calculators` is a common noun here, not part of a product name."
+  },
+  {
+   "id": "h12",
+   "cat": "markup/list-indentation",
+   "old": "following instructions:\n    - `sPush n`: Push the number `n` on the stack.\n    - `sLoad x`: Load the identifier `x` from the store and push it\n                on the stack.\n    - `sPlus`:   Pop the two top numbers from the stack, add them, and\n                push the result onto the stack.\n    - `sMinus`:  Similar, but subtract the first number from the second.\n    - `sMult`:   Similar, but multiply.",
+   "new": "following instructions:\n\n- `sPush n`: Push the number `n` on the stack.\n- `sLoad x`: Load the identifier `x` from the store and push it on the stack.\n- `sPlus`: Pop the two top numbers from the stack, add them, and push the\n  result onto the stack.\n- `sMinus`: Similar, but subtract the first number from the second.\n- `sMult`: Similar, but multiply.",
+   "why": "A four-space indent makes this a code block rather than a list; every other bullet list in the chapter starts at column 0."
+  },
+  {
+   "id": "h13",
+   "cat": "consistency/surface-syntax",
+   "old": "    while (0 <> Y) {\n      while (true) {\n        break\n      };",
+   "new": "    while (0 ≠ Y) {\n      while (true) {\n        brk\n      };",
+   "why": "`<>` is Rocq's disequality — Imp writes `≠`; and the paragraph two above has just said \"Because `break` is a reserved keyword in Lean, we will abbreviate it as `brk`\", so the display breaks the convention in the act of illustrating it."
+  },
+  {
+   "id": "h14",
+   "cat": "exposition/unflagged-change",
+   "old": "normally (`s = sContinue`).\n\nThe definition of the `st =[ c ]=> st' // s` relation is very",
+   "new": "normally (`s = sContinue`).  Unlike the chapter's `=[ ]=>`, this notation\ntakes an ordinary Lean term for the command, so the theorems below write the\nprogram out as `imp { … }`: `st =[ imp { brk ; c } ]=> st' // s`.\n\nThe definition of the `st =[ c ]=> st' // s` relation is very",
+   "why": "The main chapter writes `∅ =[ X := 2; Y := 3 ]=> …` with bare Imp syntax; every theorem in this exercise writes `imp { … }` instead, and the reader is never told why."
+  },
+  {
+   "id": "h15",
+   "cat": "consistency/terminology",
+   "old": "iteration.  In either case, since `break` only terminates the\n  innermost loop, `while` signals {name}`sContinue`.",
+   "new": "iteration.  In either case, since `brk` only terminates the\n  innermost loop, `while` signals {name}`sContinue`.",
+   "why": "Every other bullet in this list says `brk`; `break` here re-breaks the renaming convention announced at the top of the exercise."
+  },
+  {
+   "id": "h16",
+   "cat": "devnote/exercise-framing",
+   "old": "::::\n:::::\n\n:::::full\n::::exercise (rating := 3) (name := \"while_break_true\") (optional := true)",
+   "new": "::::\n:::::\n\n:::dev \"Claude\"\nThis exercise and the `ceval_deterministic` one that follows are the only two\nin the chapter with no prose at all — no statement of the task — and the only\ntwo with no `:::gradeTheorem`. Both look truncated rather than deliberate.\nOptions: (a) write a one-line task statement for each and add grading specs\nmatching their ratings (3 and 4); (b) fold them into the preceding `break_imp`\nexercise as two more theorems to prove, since that is where the rest of the\n`brk` properties live; (c) leave them ungraded on purpose, in which case a word\nsaying so would help.\n:::\n\n:::::full\n::::exercise (rating := 3) (name := \"while_break_true\") (optional := true)",
+   "why": "Needs an author decision: two exercises with neither prose nor grading metadata."
+  },
+  {
+   "id": "h17",
+   "cat": "reference/ambiguous",
+   "old": "Add C-style `for` loops to the language of commands, update the\n`Com.EvalR` definition to define the semantics of `for` loops, and add",
+   "new": "Add C-style `for` loops to the language of commands, update the chapter's\n`Com.EvalR` definition to define the semantics of `for` loops, and add",
+   "why": "The exercise sits after `end Imp.Break`, where `Com.EvalR` could name either the chapter's relation or the `brk` exercise's; it means the chapter's."
+  },
+  {
+   "id": "h18",
+   "cat": "devnote/urgency",
+   "old": ":::dev\n```\nHTML polish — deferred Verso-markup opportunities for a later pass (see",
+   "new": ":::dev PotentialImprovement\n```\nHTML polish — deferred Verso-markup opportunities for a later pass (see",
+   "why": "With no urgency keyword this note is *shown*: highlighted in the HTML build and emitted as a labelled comment in the generated `.lean`. It is a deferred to-do list, so `PotentialImprovement` (dropped from every build) is what it wants."
+  },
+  {
+   "id": "h19",
+   "cat": "reference/stale",
+   "old": "  not just a single name, reads better with hover types (e.g. the\n  `Coe Ident Aexp` / `OfNat Aexp n` bullets in the Notations section).",
+   "new": "  not just a single name, reads better with hover types (e.g. the bullets\n  describing the productions in the Notations section).",
+   "why": "The Notations section has no `Coe Ident Aexp` or `OfNat Aexp n` bullets — the reference is stale."
+  }
+ ],
+ "completed": true
+}
