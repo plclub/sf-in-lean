@@ -1,0 +1,207 @@
+--- HL/Imp.lean (before this round)
++++ HL/Imp.lean
+@@ -215,12 +215,12 @@
+   total. The first two define literals, `num` and `ident`, as `imp_aexp`s. The next
+   several directives define productions for building larger expressions, with
+   some annotations to define precedence, etc.
+-- Finally, `macro_rules` is used to translate each production of the `imp_aexp` nonterminal
++- Finally, `macro_rules` is used to translate each production of the `imp_aexp` non-terminal
+   into a Lean expression.
+ 
+ Boolean expressions and, later, commands follow this same pattern exactly, so
+ their declarations are collapsed where they appear: open one if you want to see
+-the pattern repeated, and skip them otherwise.
++the pattern repeated, and skip it otherwise.
+ ::::
+ 
+ ::::details "Notation encoding: arithmetic expressions"
+@@ -252,8 +252,8 @@
+ An {name}`Ident` such as {name}`X` becomes {name}`Aexp.id`,
+ while an {name}`Aexp` is inserted directly.
+ A consequence is that object-language variables must
+-be a declared {name}`Ident` constants — as {name}`W`/{name}`X`/{name}`Y`/{name}`Z` are,
+-but Lean variables of type {name}`Aexp` can be referred without antiquotation.
++be declared {name}`Ident` constants — as {name}`W`/{name}`X`/{name}`Y`/{name}`Z` are,
++but Lean variables of type {name}`Aexp` can be referred to without antiquotation.
+ :::
+ 
+ ```lean
+@@ -369,7 +369,7 @@
+ 
+ ::::full
+ Next, we write a suite of _delaborators_ for {name}`Aexp` and {name}`Bexp`.
+-Delaborators are like the opposite of `macro_rules` -- they are used to pretty print _elaborated_ terms back to the user.
++Delaborators are like the opposite of `macro_rules` — they are used to pretty-print _elaborated_ terms back to the user.
+ ::::
+ 
+ ::::details "Notation encoding: printing expressions back"
+@@ -462,7 +462,6 @@
+   | false => `(bexp { $(mkIdent `false):ident })
+   | _ => failure
+ 
+-
+ @[app_unexpander Bexp.eq]
+ private def Bexp.unexpandEq : Unexpander
+   | `($_ $a $b) => `(bexp { $(getAexp a):imp_aexp = $(getAexp b):imp_aexp })
+@@ -539,7 +538,7 @@
+ The pretty-printed version of an expression might not exactly
+ match its original form.
+ For example, the parentheses around `X * 2` in `aexp { 3 + (X * 2) }` are not printed because
+-they are redundant, which the parenthesizer knows.
++they are redundant, as the parenthesizer knows.
+ ::::
+ 
+ ```lean
+@@ -756,7 +755,6 @@
+ #guard_msgs in
+ #check imp { skip; if (true) {X := 1} else {X:=2} }
+ 
+-
+ variable (x : Ident) (a : Aexp)
+ /-- info: imp {x := ~a} : Com -/
+ #guard_msgs in
+@@ -797,7 +795,6 @@
+     | imp { skip; c' } => c' -- no need to write `~c'`
+     | _ => imp { skip }) = c := rfl
+ 
+-
+ example : (
+   match imp { X := X + 1 } with
+     | imp { x := ~a } => (x, a) -- still need `~`, because `a` itself is a valid aexp.
+@@ -843,7 +840,7 @@
+ 
+ ::::full
+ Because we registered a delaborator, we can inspect a defined program with
+-`#print`, which pretty prints (i.e. delaborates) the stored definition using the same syntax:
++`#print`, which pretty-prints (i.e., delaborates) the stored definition using the same syntax:
+ ::::
+ 
+ ```lean (name := fact_in_lean)
+@@ -960,7 +957,7 @@
+    way.)
+ :::
+ 
+-In a more conventional functional language like OCaml or Haskell we could define
++In a more conventional functional language like OCaml or Haskell, we could define
+ the evaluation function as follows:
+ 
+ ```lean -keep +error (name := eval_fail)
+@@ -1021,7 +1018,7 @@
+ would be a proof of {name}`False`), a disaster for logical consistency.
+ 
+ Thus, because it doesn't terminate on all inputs, the full `Com.eval`
+-cannot be written in Lean -- at least not without additional tricks and
++cannot be written in Lean — at least not without additional tricks and
+ workarounds.
+ ::::
+ 
+@@ -1039,14 +1036,14 @@
+ ## Evaluation as a Relation
+ 
+ Here's a better way: define `Com.eval` as a _relation_ rather than a
+-_function_ -- i.e., make its result a {lean}`Prop` rather than a {name}`State`,
++_function_ — i.e., make its result a {lean}`Prop` rather than a {name}`State`,
+ similar to what we did for `Aexp.EvalR` in the {ref "Slang"}[Slang] chapter.
+ 
+ ::::full
+ This is an important change. Besides freeing us from awkward workarounds,
+ it gives us more flexibility in the definition. For example, if we
+ add nondeterministic features like `any` to the language, we want the
+-definition of evaluation to be nondeterministic -- i.e., not only will it
++definition of evaluation to be nondeterministic — i.e., not only will it
+ not be total, it will not even be a function!
+ ::::
+ 
+@@ -1213,9 +1210,9 @@
+ It would be silly to use `apply EvalR.seq (st' := {X ↦ 2}) <;> try simp only [evalR_eq] at *`.
+ :::
+ 
+-Since the total map update notation (`→ₜ`) is difficult to type, we prefer to use the `{}`-notation with `KVPair`s.
++Since the total-map update notation (`→ₜ`) is difficult to type, we prefer to use the `{}`-notation with `KVPair`s.
+ 
+-In the above proof, using `EvalR.asgn rfl` is convenient because it computes the value of the right hand side and can use it to determine `st'`.
++In the above proof, using `EvalR.asgn rfl` is convenient because it computes the value of the right-hand side and can use it to determine `st'`.
+ 
+ ```lean
+ example {x : Nat} : ∅ =[ X := ~(.num x) ]=> {X ↦ x} := by
+@@ -1235,7 +1232,7 @@
+ ```
+ 
+ This is a case where `rfl` is more powerful than `simp`, because it can assign the `?st'` metavariable.
+-To demonstrate, here's a version with `simp`
++To demonstrate, here's a version with `simp`:
+ 
+ ```lean +error -keep
+ example : ∅ =[ X := 2; Y := 3 ]=> {Y ↦ 3, X ↦ 2} := by
+@@ -1402,7 +1399,7 @@
+ (A) Yes    (B) No    (C) Not sure
+ 
+ :::quizSolution
+-This claim is *false*, so it cannot be proved -- the proof gets
++This claim is _false_, so it cannot be proved — the proof gets
+ stuck immediately:
+ 
+ ```lean +error
+@@ -1428,7 +1425,7 @@
+ evaluation be a total function. But it raises a question: is the
+ relational definition really a partial _function_? Could the same
+ command, from the same state, evaluate to two different final states?
+-In fact this cannot happen: `Com.EvalR` _is_ a partial function.
++In fact, this cannot happen: `Com.EvalR` _is_ a partial function.
+ ::::
+ 
+ :::terse
+@@ -2034,13 +2031,13 @@
+ ```
+ 
+ The goal of this exercise is to write a small compiler that
+-translates `aexp`s into stack machine instructions.
++translates `Aexp`s into stack machine instructions.
+ 
+ The instruction set for our stack language will consist of the
+ following instructions:
+     - `sPush n`: Push the number `n` on the stack.
+     - `sLoad x`: Load the identifier `x` from the store and push it
+-                on the stack
++                on the stack.
+     - `sPlus`:   Pop the two top numbers from the stack, add them, and
+                 push the result onto the stack.
+     - `sMinus`:  Similar, but subtract the first number from the second.
+@@ -2070,7 +2067,7 @@
+ {name}`sPlus`, {name}`sMinus`, or {name}`sMult` instruction if the stack contains
+ fewer than two elements.  In a sense, it is immaterial what we do,
+ since a correct compiler will never emit such a malformed program.
+-But for sake of later exercises, it would be best to skip the
++But for the sake of later exercises, it would be best to skip the
+ offending instruction and continue with the next one.
+ 
+ ```lean
+@@ -2406,7 +2403,7 @@
+ 
+ The definition of the `st =[ c ]=> st' // s` relation is very
+ similar to the one we gave above for the regular evaluation
+-relation (`st =[ c ]=> st'`) -- we just need to handle the
++relation (`st =[ c ]=> st'`) — we just need to handle the
+ termination signals appropriately:
+ 
+ - If the command is `skip`, then the state doesn't change and
+@@ -2425,8 +2422,8 @@
+   whichever branch was taken.
+ 
+ - If the command is a sequence `c₁ ; c₂`, we first execute
+-  `c₁`.  If this yields a  {name}`sBreak`, we skip the execution of `c₂`
+-  and propagate the  {name}`sBreak` signal to the surrounding context;
++  `c₁`.  If this yields a {name}`sBreak`, we skip the execution of `c₂`
++  and propagate the {name}`sBreak` signal to the surrounding context;
+   the resulting state is the same as the one obtained by
+   executing `c₁` alone. Otherwise, we execute `c₂` on the state
+   obtained after executing `c₁`, and propagate the signal
+@@ -2440,7 +2437,7 @@
+   stop the execution of the loop, and the resulting state is the
+   same as the one resulting from the execution of the current
+   iteration.  In either case, since `break` only terminates the
+-  innermost loop, `while` signals  {name}`sContinue`.
++  innermost loop, `while` signals {name}`sContinue`.
+ 
+ Based on the above description, complete the definition of the
+ `Com.EvalR` relation:
