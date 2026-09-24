@@ -1424,6 +1424,19 @@ theorem MStar'' α (s : List α) (re : RegExp α) (h : s =~ Star re) :
 
 ## The "Weak" Pumping Lemma
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
+::::terse
+The remainder of this section in the full version of the chapter develops an extended
+exercise on regular expressions, leading up to a proof of the
+so-called _pumping lemma_, which states, informally, that any sufficiently
+long string `s` matching a regular expression `re` can be "pumped" by
+repeating some middle section of `s` an arbitrary number of times to produce a new
+string also matching `re`.
+::::
+
+:::::full
 One of the first really interesting theorems in the theory of
 regular expressions is the so-called _pumping lemma_, which
 states, informally, that any sufficiently long string `s` matching
@@ -1517,7 +1530,6 @@ to prove the main lemma.
 Your job is to complete the proofs of the helper lemmas; the main
 lemma relies on these.
 
-:::::full
 ::::exercise (rating := 2) (name := "weak_pumping_char")
 ```lean
 theorem weak_pumping_char {α : Type} (x : α)
@@ -1532,9 +1544,6 @@ theorem weak_pumping_char {α : Type} (x : α)
 :::
 ::::
 
-:::::
-
-:::::full
 ::::exercise (rating := 4) (name := "weak_pumping_app")
 ```lean
 theorem weak_pumping_app {α : Type} (s₁ s₂ : List α) (re₁ re₂ : RegExp α)
@@ -1596,9 +1605,6 @@ theorem weak_pumping_app {α : Type} (s₁ s₂ : List α) (re₁ re₂ : RegExp
 :::
 ::::
 
-:::::
-
-:::::full
 ::::exercise (rating := 3) (name := "weak_pumping_union_l")
 ```lean
 theorem weak_pumping_union_l  {α : Type} (s₁ : List α) (re₁ re₂ : RegExp α)
@@ -1634,9 +1640,6 @@ theorem weak_pumping_union_l  {α : Type} (s₁ : List α) (re₁ re₂ : RegExp
 :::
 ::::
 
-:::::
-
-:::::full
 ::::exercise (rating := 3) (name := "weak_pumping_union_r")
 ```lean
 theorem weak_pumping_union_r {α : Type} (s₂ : List α) (re₁ re₂ : RegExp α)
@@ -1673,9 +1676,6 @@ theorem weak_pumping_union_r {α : Type} (s₂ : List α) (re₁ re₂ : RegExp 
 :::
 ::::
 
-:::::
-
-:::::full
 ::::exercise (rating := 2) (name := "weak_pumping_star_zero")
 ```lean
 theorem weak_pumping_star_zero {α : Type} (re : RegExp α)
@@ -1695,9 +1695,6 @@ theorem weak_pumping_star_zero {α : Type} (re : RegExp α)
 :::
 ::::
 
-:::::
-
-:::::full
 ::::exercise (rating := 5) (name := "weak_pumping_star_app")
 ```lean
 theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α)
@@ -1771,9 +1768,6 @@ theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α)
 :::
 ::::
 
-:::::
-
-:::::full
 ::::exercise (rating := 3) (name := "weak_pumping")
 ```lean
 theorem weak_pumping {α : Type} {re : RegExp α} {s : List α}
@@ -1798,6 +1792,9 @@ theorem weak_pumping {α : Type} {re : RegExp α} {s : List α}
 :::::
 
 ## The "Strong" Pumping Lemma
+
+::::suppressPreviousHeaderWhenTerse
+::::
 
 :::::full
 ::::exercise (rating := 5) (name := "strong_pumping") (level := Advanced) (optional := true)
@@ -1928,6 +1925,9 @@ end RegExp
 ```
 
 ## Palindromes Revisited
+
+::::suppressPreviousHeaderWhenTerse
+::::
 
 ::::::full
 :::::exercise (rating := 5) (name := "palindrome_converse") (optional := true)
