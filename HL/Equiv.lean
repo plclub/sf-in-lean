@@ -2583,9 +2583,12 @@ theorem swap_noninterfering_assignments (l₁ l₂ : Ident) (a₁ a₂ : Aexp)
 ```
 ::::
 :::::
-
+:::dev "Sati"
+This exercise does not have any associated lean theorem, what should be done?
+I have marked it as manual for now.
+:::
 :::::full
-::::exercise (rating := 4) (name := "for_while_equiv") (optional := true)
+::::exercise (rating := 4) (name := "for_while_equiv") (manual := true) (optional := true)
 This exercise extends the optional `add_for_loop` exercise from
 the {ref "Imp"}[Imp] chapter, where you were asked to extend the language
 of commands with C-style `for` loops.  Prove that the command:
@@ -2605,13 +2608,6 @@ while (b) {
   c₂
 }
 ```
-
-:::dev "Claude"
-This exercise has no Lean statement: it depends on the reader's own
-`for` extension from the optional `add_for_loop` exercise in Imp, so
-there is nothing to check or grade.  Either mark it `(manual := true)`,
-or state it formally here over a `Com` extended with `for`.
-:::
 ::::
 :::::
 
