@@ -11,7 +11,8 @@ issues these three commands in turn:
   record [ROUND]       record what the author kept, after the review
 
 Between `apply` and `record` the author reverts the edits they don't want, in
-the chapter itself — one click per hunk in the Source Control gutter. That
+the chapter itself — one gesture per hunk in whatever diff view their editor
+gives them (VS Code's side-by-side diff, or Ediff in Emacs). That
 review is a human gesture nothing can observe, which is why the phases are
 separate commands. proofread/state.json remembers which round is in flight, so
 `record` can come minutes or days later, from a different session.
@@ -32,6 +33,13 @@ hash of the (old, new) pair. A later round that proposes the same edit again —
 in this chapter or any other — is silently dropped before you ever see it.
 
 The round file is never something the author has to open. See PROOFREADING.md.
+
+ENVIRONMENT
+  PROOFREAD_EDITOR     which editor shows the review: `code`, `emacs`, or
+                       `none` to only print the command. Unset, it follows the
+                       session: Emacs when run inside one (INSIDE_EMACS), else
+                       VS Code. The Emacs route talks to a running server, so
+                       that Emacs needs (server-start).
 """
 
 import argparse
@@ -392,14 +400,85 @@ def discard_before(round_path, round_):
         os.remove(path)
 
 
-def open_in_editor(*args):
-    """Run `code` in the surrounding window; report whether it worked."""
+# --------------------------------------------------------------------------
+# the review editor
+# --------------------------------------------------------------------------
+EDITOR_NAME = {"code": "VS Code", "emacs": "Emacs"}
+
+
+def detect_editor():
+    """The editor this author is plainly using: Emacs when we are running
+    inside one, else VS Code if its CLI is there, else whatever is."""
+    if os.environ.get("INSIDE_EMACS") and shutil.which("emacsclient"):
+        return "emacs"
+    if shutil.which("code"):
+        return "code"
+    return "emacs" if shutil.which("emacsclient") else "code"
+
+
+def editor_backend():
+    """Which editor the review is handed to.
+
+    `PROOFREAD_EDITOR` decides it outright — `code`, `emacs`, or `none` to
+    open nothing and only print the command; otherwise `detect_editor`."""
+    choice = os.environ.get("PROOFREAD_EDITOR", "").strip().lower()
+    if choice in ("code", "vscode", "vs-code"):
+        return "code"
+    if choice in ("emacs", "emacsclient"):
+        return "emacs"
+    if choice in ("none", "off", "manual"):
+        return "none"
+    if choice:
+        print(f"{C_YEL}warning{C_OFF}: PROOFREAD_EDITOR={choice!r} is not one "
+              f"of code, emacs, none — ignoring it")
+    return detect_editor()
+
+
+def run_editor(argv):
+    """Hand the review to the editor; report whether it took it."""
     try:
-        r = subprocess.run(["code", "--reuse-window", *args],
-                           capture_output=True, text=True, timeout=20)
+        r = subprocess.run(argv, capture_output=True, text=True, timeout=20)
         return r.returncode == 0
     except (FileNotFoundError, subprocess.SubprocessError):
         return False
+
+
+def elisp_str(s):
+    return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def ediff_argv(before, chapter):
+    """Ediff in the Emacs that is already running — `-n` so we do not sit and
+    wait for the review to finish, which is the whole point of phase 2."""
+    return ["emacsclient", "-n", "--eval",
+            f"(ediff-files {elisp_str(before)} {elisp_str(chapter)})"]
+
+
+def open_diff(backend, before, chapter):
+    if backend == "code":
+        return run_editor(["code", "--reuse-window", "--diff", before, chapter])
+    if backend == "emacs":
+        return run_editor(ediff_argv(before, chapter))
+    return False
+
+
+def open_files(backend, *paths):
+    if backend == "code":
+        return run_editor(["code", "--reuse-window", *paths])
+    if backend == "emacs":
+        return run_editor(["emacsclient", "-n", *paths])
+    return False
+
+
+def review_command(backend, before, chapter):
+    """The command to type when we could not open the review ourselves."""
+    if backend == "emacs":
+        # Absolute, because the server's default directory is not this repo.
+        elisp = "(ediff-files %s %s)" % (elisp_str(os.path.abspath(before)),
+                                         elisp_str(os.path.join(ROOT, chapter)))
+        # repr() gives the single-quoted shell form, quotes and all.
+        return "emacsclient -n --eval " + repr(elisp)
+    return f"code --diff {rel(before)} {chapter}"
 
 
 def do_apply(round_path, round_):
@@ -458,36 +537,60 @@ def do_apply(round_path, round_):
 def announce_review(round_path, round_, mode="diff"):
     """Put the review in front of the author and say what to do with it.
 
-    Default is a real side-by-side diff editor — `code --diff` against the
-    snapshot — because that lands on the two versions in one step, with no
-    dependence on which source-control extension the author uses. `files`
-    opens the chapter and the unified diff as plain tabs instead."""
+    Default is a real side-by-side diff editor — `code --diff`, or Ediff in a
+    running Emacs — against the snapshot, because that lands on the two
+    versions in one step, with no dependence on which source-control front end
+    the author uses. `files` opens the chapter and the unified diff as plain
+    tabs/buffers instead. See `editor_backend` for how the editor is chosen."""
     chapter = os.path.join(ROOT, round_["file"])
     before, dest = before_path(round_path, round_), diff_path(round_path)
+    backend = editor_backend()
+    # `none` opens nothing, but the advice still has to name a real editor.
+    guide = backend if backend != "none" else detect_editor()
     opened = False
     if mode == "diff":
-        opened = open_in_editor("--diff", before, chapter)
+        opened = open_diff(backend, before, chapter)
     elif mode == "files":
-        opened = open_in_editor(chapter, dest)
+        opened = open_files(backend, chapter, dest)
 
     print()
-    if opened and mode == "diff":
+    if opened and mode == "diff" and guide == "emacs":
+        print(f"Opened an Ediff session in Emacs: "
+              f"{C_BLD}{os.path.basename(before)}{C_OFF} as buffer A — the "
+              f"chapter as it\nwas before the round — and the live "
+              f"{C_BLD}{round_['file']}{C_OFF} as buffer B.")
+    elif opened and mode == "diff":
         print(f"Opened a side-by-side diff in VS Code: "
               f"{C_BLD}{os.path.basename(before)}{C_OFF} on the left — the "
               f"chapter as it\nwas before the round — and the live "
               f"{C_BLD}{round_['file']}{C_OFF} on the right.")
     elif opened:
-        print(f"Opened {C_BLD}{round_['file']}{C_OFF} and {rel(dest)} in VS Code.")
+        print(f"Opened {C_BLD}{round_['file']}{C_OFF} and {rel(dest)} in "
+              f"{EDITOR_NAME.get(guide, 'your editor')}.")
     else:
         print(f"Open the review with:\n"
-              f"  {C_DIM}code --diff {rel(before)} {round_['file']}{C_OFF}")
-    print(f"\nRevert what you don't want in the {C_BLD}right-hand pane{C_OFF} — "
-          f"hover a change and click\nthe arrow in the gutter between the panes, "
-          f"or just edit the text. The left pane\nis a read-only snapshot; "
-          f"whatever you leave standing on the right is accepted.")
-    print(f"{C_DIM}Other ways in: the Source Control view — the tree was clean "
-          f"before the round, so\neverything it lists is this round — or "
-          f"{rel(dest)} for the proposals as a list.{C_OFF}")
+              f"  {C_DIM}{review_command(guide, before, round_['file'])}{C_OFF}")
+        if guide == "emacs":
+            print(f"  {C_DIM}(that needs a server in your Emacs: "
+                  f"M-x server-start, or (server-start) in your init){C_OFF}")
+
+    if guide == "emacs":
+        print(f"\nReject what you don't want from the {C_BLD}Ediff control "
+              f"window{C_OFF}: {C_BLD}n{C_OFF}/{C_BLD}p{C_OFF} to step through\n"
+              f"the changes, {C_BLD}a{C_OFF} to copy the original wording back "
+              f"into the chapter, {C_BLD}q{C_OFF} to finish.\nBuffer A is a "
+              f"read-only snapshot; whatever stands in buffer B is accepted — "
+              f"so\n{C_BLD}save {round_['file']}{C_OFF} (C-x C-s, or say yes "
+              f"when Ediff offers) before you call it done.")
+    else:
+        print(f"\nRevert what you don't want in the {C_BLD}right-hand pane"
+              f"{C_OFF} — hover a change and click\nthe arrow in the gutter "
+              f"between the panes, or just edit the text. The left pane\nis a "
+              f"read-only snapshot; whatever you leave standing on the right "
+              f"is accepted.")
+    print(f"{C_DIM}Other ways in: your git front end — the tree was clean "
+          f"before the round, so\neverything it shows as changed is this round "
+          f"— or {rel(dest)} for the\nproposals as a list.{C_OFF}")
 
 
 def wait_for_review(round_path, round_, mode="diff"):
@@ -811,8 +914,8 @@ def main():
     opener.add_argument("--open", choices=("diff", "files", "none"),
                         default=argparse.SUPPRESS,
                         help="how to show the review: a side-by-side diff "
-                             "editor (default), the chapter and the unified "
-                             "diff as plain tabs, or nothing")
+                             "(default), the chapter and the unified diff as "
+                             "plain tabs/buffers, or nothing")
     ap.add_argument("--open", choices=("diff", "files", "none"),
                     default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     sub = ap.add_subparsers(dest="cmd")
