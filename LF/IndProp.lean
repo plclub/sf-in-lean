@@ -454,8 +454,8 @@ example : AncestorOf .sage .moss := by
   · apply TransGen.step; apply ParentOf.cleo_moss
 ```
 
-:::dev
-HIDE: CH: A simple exercise could be nice here?
+:::dev "Chris Henson"
+A simple exercise could be nice here?
 :::
 
 ::::full
