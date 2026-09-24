@@ -50,30 +50,30 @@ def main (args : List String) : IO UInt32 := do
   let some variant := Variant.fromString? mode
     | throw <| IO.userError s!"invalid mode: {mode}"
   setCurrVariant variant
-  let layout := if layout == "release" then HtmlLayout.release else .build
   let chapters := [("LF", typeclasses), ("LF", poly), ("TS", types)]
   let config := { mkConfig "hl" mode "test" with
     destination := s!"{out}/hl/{mode}", extraCss := {}, extraContents := #[] }
-  for vol in ["lf", "ts"] do
-    let parts := chapters.filterMap fun (v, p) => if v.toLower == vol then some p else none
-    let title := if vol == "lf" then "Logical Foundations" else "Type Systems"
-    let doc : Part Manual := .mk #[.text title] title none #[] parts.toArray
-    let targetConfig := { config with destination := s!"{out}/{vol}/{mode}" }
-    let rc ← manualMain doc (options := options) (config := targetConfig)
-    if rc != 0 then return rc
-    renameHtmlDir targetConfig.destination
-  let chapters := if testCase == "fallback" || testCase == "fallback-missing" then
-      chapters.filter (fun (_, p) => p.titleString != "Poly")
-    else chapters
+  if testCase == "targets" then
+    for vol in ["lf", "ts"] do
+      let parts := chapters.filterMap fun (v, p) => if v.toLower == vol then some p else none
+      let title := if vol == "lf" then "Logical Foundations" else "Type Systems"
+      let doc : Part Manual := .mk #[.text title] title none #[] parts.toArray
+      let targetConfig := { config with destination := s!"{out}/{vol}/{mode}" }
+      let rc ← manualMain doc (options := options) (config := targetConfig)
+      if rc != 0 then return rc
+      renameHtmlDir targetConfig.destination
+    return 0
   let mut doc := source
   if testCase == "draft" || testCase == "hidden-draft" then
     doc := { doc with content := doc.content.push (reference "cross-draft" "Draft" "lf") }
-  if ["unknown", "missing", "fallback-missing"].contains testCase then
+  if ["unknown", "missing"].contains testCase then
     let remote := if testCase == "unknown" then "unknown" else "lf"
     let tag := if testCase == "unknown" then "Typeclasses" else "Missing"
-    let ref := .other (Manual.Inline.ref tag none (some remote)) #[.text "invalid"]
-    doc := { doc with content := doc.content.push (.para #[ref]) }
-  let rc ← crossVolumeMain doc chapters mode layout options config
-    (extensionImpls := by exact extension_impls%)
+    doc := { doc with content := doc.content.push (reference "invalid" tag remote) }
+  let release := if layout == "release" then some (System.FilePath.mk s!"{out}/../release")
+    else none
+  let remotes ← writeReferenceConfig "hl" mode ["LF", "TS"] out release
+  let rc ← manualMain doc (options := options)
+    (config := { config with remoteConfigFile := remotes })
   if rc == 0 then renameHtmlDir config.destination
   return rc

@@ -8,6 +8,7 @@ Run from the repository root: python3 scripts/test_cross_volume.py
 from html.parser import HTMLParser
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -57,17 +58,27 @@ class CrossVolumeTests(unittest.TestCase):
     def setUpClass(cls):
         subprocess.run(["lake", "build", "SFLMeta.Run"], cwd=REPO_ROOT, check=True)
 
-    def render(self, out, mode="student", layout="build", test_case="valid", options=()):
+    def render(self, out, mode="student", layout="build", test_case="valid", options=(),
+               target_options=None):
+        self.render_source(out, mode, layout, "targets",
+                           options if target_options is None else target_options)
+        if layout == "release":
+            for vol in ("lf", "ts"):
+                shutil.copytree(out / vol / mode / "html",
+                                out.parent / "release" / vol / "html", dirs_exist_ok=True)
+        return self.render_source(out, mode, layout, test_case, options)
+
+    def render_source(self, out, mode="student", layout="build", test_case="valid", options=()):
         result = subprocess.run(
             ["lake", "env", "lean", "--run", "scripts/TestCrossVolume.lean",
              str(out), mode, layout, test_case, *options],
             cwd=REPO_ROOT, text=True, capture_output=True,
         )
-        if test_case in ("valid", "fallback", "draft"):
+        if test_case in ("valid", "targets", "draft"):
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         return result
 
-    def check_links(self, site, mode, release=False, depth=2, draft=False):
+    def check_links(self, site, mode, release=False, depth=2, draft=False, target_depth=None):
         # Simulate hosting below a branch/release prefix, not at the domain root.
         prefix = "https://example.invalid/course/previews/branch/"
 
@@ -102,11 +113,12 @@ class CrossVolumeTests(unittest.TestCase):
                     if target.is_dir():
                         target /= "index.html"
                     vol, chapter, anchor = expected[label]
-                    target_dir = html_dir(vol) / chapter if depth else html_dir(vol)
+                    dest_depth = depth if vol == "hl" or target_depth is None else target_depth
+                    target_dir = html_dir(vol) / chapter if dest_depth else html_dir(vol)
                     self.assertEqual(target, target_dir / "index.html")
                     self.assertEqual(unquote(resolved.fragment), anchor)
                     destination = Links(target)
-                    if not depth or label in ("cross-nested", "cross-auto", "cross-draft"):
+                    if not dest_depth or label in ("cross-nested", "cross-auto", "cross-draft"):
                         self.assertIn(anchor, destination.ids)
                     else:
                         # Verso omits an id on page titles; their first permalink
@@ -144,7 +156,16 @@ class CrossVolumeTests(unittest.TestCase):
                     self.render(site, options=("--depth", "3", "--depth", str(depth)))
                     self.check_links(site, "student", depth=depth)
 
-    def test_remote_fallback(self):
+    def test_destination_depth_and_index_refresh(self):
+        with tempfile.TemporaryDirectory(prefix="sfl-cross-volume-") as tmp:
+            site = Path(tmp)
+            self.render(site)
+            # Replace an existing index; neither the old cache nor the source's
+            # own depth should determine where links to the other book land.
+            self.render(site, target_options=("--depth", "0"))
+            self.check_links(site, "student", target_depth=0)
+
+    def test_remote_override(self):
         with tempfile.TemporaryDirectory(prefix="sfl-cross-volume-") as tmp:
             root = Path(tmp)
             indexes = root / "indexes"
@@ -154,27 +175,30 @@ class CrossVolumeTests(unittest.TestCase):
                 "version": 0,
                 "output": str(root / "remote-cache"),
                 "sources": {
-                    "lf": {
-                        "root": "https://example.invalid/lf/",
-                        "shortName": "LF",
-                        "longName": "Logical Foundations",
+                    vol: {
+                        "root": f"https://example.invalid/{vol}/",
+                        "shortName": vol.upper(),
+                        "longName": vol.upper(),
                         "updateFrequency": "always",
-                        "sources": [{"local": str(indexes / "lf/student/html/xref.json")}],
-                    },
+                        "sources": [{"local": str(indexes / vol / "student/html/xref.json")}],
+                    } for vol in ("lf", "ts")
                 },
             }))
             options = ("--remote-config", str(remote_config))
-            site = root / "fallback"
-            self.render(site, test_case="fallback", options=options)
+            site = root / "override"
+            # No local destination builds are needed with an explicit config.
+            self.render_source(site, options=options)
             links = Links(site / "hl/student/html/index.html").links
             self.assertEqual(
                 links["cross-poly"], "https://example.invalid/lf/poly-file/#Poly",
             )
-            self.assertFalse(links["cross-root"].startswith("https:"), links["cross-root"])
-            result = self.render(root / "missing", test_case="fallback-missing", options=options)
+            self.assertEqual(
+                links["cross-root"], "https://example.invalid/lf/typeclasses-file/#Typeclasses",
+            )
+            self.assertFalse(links["local-root"].startswith("https:"), links["local-root"])
+            result = self.render_source(root / "missing", test_case="missing", options=options)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("Missing", result.stdout + result.stderr)
-            self.assertNotIn("Cross-volume reference", result.stdout + result.stderr)
 
     def test_draft_targets(self):
         with tempfile.TemporaryDirectory(prefix="sfl-cross-volume-") as tmp:
@@ -183,21 +207,33 @@ class CrossVolumeTests(unittest.TestCase):
             self.check_links(root / "draft", "student", draft=True)
             result = self.render(root / "hidden", test_case="hidden-draft")
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("Remote 'lf' not found for tag 'Draft'", result.stdout + result.stderr)
+            self.assertIn("Draft", result.stdout + result.stderr)
 
-    def test_release_build_selects_layout(self):
+    def test_release_build_selects_packaged_indexes(self):
         with patch.object(package_release.subprocess, "run") as run, \
                 patch.object(package_release, "copy_devcontainer"):
-            package_release.build_student("hl")
+            package_release.build_student("hl", Path("/tmp/sfl-release"))
         render_call = run.call_args_list[2]
         self.assertEqual(render_call.args[0], ["lake", "exe", "sfl-hl", "student"])
-        self.assertEqual(render_call.kwargs["env"]["SFL_HTML_LAYOUT"], "release")
+        self.assertEqual(render_call.kwargs["env"]["SFL_RELEASE_DIR"], "/tmp/sfl-release")
+
+    def test_missing_index_fails(self):
+        with tempfile.TemporaryDirectory(prefix="sfl-cross-volume-") as tmp:
+            site = Path(tmp) / "_out"
+            result = self.render_source(site, test_case="missing-index")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("No source found", result.stdout + result.stderr)
+            self.render(site)
+            # Preview indexes cannot satisfy a release's references if the
+            # destination volume was omitted or failed to package.
+            result = self.render_source(site, layout="release", test_case="missing-index")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("No source found", result.stdout + result.stderr)
 
     def test_missing_target_fails(self):
         with tempfile.TemporaryDirectory(prefix="sfl-cross-volume-") as tmp:
             result = self.render(Path(tmp), test_case="missing")
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("Remote 'lf' not found", result.stdout + result.stderr)
             self.assertIn("Missing", result.stdout + result.stderr)
 
     def test_unknown_remote_fails(self):

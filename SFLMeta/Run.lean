@@ -6,7 +6,6 @@ import VersoManual
 -- with "No block traversal implementation found".  (This module is deliberately
 -- *not* part of the `SFLMeta` aggregate, so importing it back is not a cycle.)
 import SFLMeta
-import SFLMeta.CrossVolume
 
 open Verso Genre Manual
 
@@ -37,6 +36,36 @@ def renameHtmlDir (dest : System.FilePath) : IO Unit := do
       IO.FS.removeDirAll html
     IO.FS.rename multi html
 
+open Lean in
+/-- Configure Verso references to previously built volumes. The indexes describe
+the actual destination pages, including their depth and draft settings.
+
+Builds use `_out/<volume>/<mode>/html`; releases read the already packaged
+`<release>/<volume>/html`. Each source volume has its own remote cache.
+Verso's `--remote-config` option can override this generated configuration. -/
+def writeReferenceConfig (vol mode : String) (targets : List String)
+    (out : System.FilePath := "_out") (release : Option System.FilePath := none) :
+    IO (Option System.FilePath) := do
+  if targets.isEmpty then return none
+  let dest := out / vol / mode
+  let sources := (targets.map String.toLower).eraseDups.map fun target =>
+    let (root, index) := match release with
+      | none => (s!"../../../{target}/{mode}/html/", out / target / mode / "html/xref.json")
+      | some dir => (s!"../../{target}/html/", dir / target / "html/xref.json")
+    let remote : Multi.Remote := {
+      root, shortName := target.toUpper
+      longName := (volumeBySlug? target).map (·.name) |>.getD target
+      sources := [.localOverride index], updateFrequency := .always
+    }
+    (target, remote.toJson)
+  let data := json%{
+    "version": 0, "output": $((dest / "references").toString), "sources": $(Json.mkObj sources)
+  }
+  IO.FS.createDirAll dest
+  let path := dest / "verso-sources.json"
+  IO.FS.writeFile path data.pretty
+  return some path
+
 /-- Build one volume in one mode.  Each per-volume executable (`sfl-lf`,
 `sfl-hl`, `sfl-ts`) calls this with its own `%doc` so that no single module ever
 imports two volume roots — that keeps chapters shared across volumes (a symlinked
@@ -48,7 +77,8 @@ volume's chapters `import` (e.g. `HL.Imp` imports `LF.Typeclasses`).  They must
 go through the same Verso → Lean transformation as the volume's own chapters when
 their standalone `.lean` is extracted, so they are handed to the saver as
 `(volume-prefix, chapter-part)` pairs rather than bundled verbatim. They also
-provide destinations for `{ref ... (remote := "lf")}[...]` links to those chapters. -/
+identify volumes whose HTML indexes supply `{ref ... (remote := "lf")}[...]`
+links. Build those volumes first; the Makefile handles this ordering. -/
 def runVolume (vol : String) (doc : Verso.Doc.Part Manual)
     (crossVol : List (String × Verso.Doc.Part Manual) := []) (args : List String) : IO UInt32 := do
   match args with
@@ -66,13 +96,10 @@ def runVolume (vol : String) (doc : Verso.Doc.Part Manual)
       | .solutions => Save.emitSavedSolutions vol.toUpper stamp crossVol
       | .terse => Save.emitSavedTerse vol.toUpper stamp crossVol
       | .grading => Save.emitSavedGrading vol.toUpper stamp crossVol
-    let config := mkConfig vol mode stamp
-    let layout ← match (← IO.getEnv "SFL_HTML_LAYOUT").getD "build" with
-      | "build" => pure HtmlLayout.build
-      | "release" => pure HtmlLayout.release
-      | value => throw <| IO.userError s!"invalid SFL_HTML_LAYOUT: {value}"
-    let rc ← crossVolumeMain doc crossVol mode layout rest config
-      (extensionImpls := by exact extension_impls%) (extraSteps := [extraStep])
+    let release := (← IO.getEnv "SFL_RELEASE_DIR").map System.FilePath.mk
+    let remotes ← writeReferenceConfig vol mode (crossVol.map (·.1)) (release := release)
+    let config := { mkConfig vol mode stamp with remoteConfigFile := remotes }
+    let rc ← manualMain doc (options := rest) (config := config) (extraSteps := [extraStep])
     if rc == 0 then
       renameHtmlDir config.destination
     return rc
