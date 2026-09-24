@@ -9,6 +9,9 @@ register_label_attr SimpleArith
 register_label_attr StlcEval
 register_label_attr StlcTyping
 
+-- StlcProp.lean
+register_label_attr StlcArithEval
+
 
 -- Sub.lean
 register_label_attr StlcSubEval
