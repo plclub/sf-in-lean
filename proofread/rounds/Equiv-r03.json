@@ -1,0 +1,85 @@
+{
+ "file": "HL/Equiv.lean",
+ "chapter": "Equiv",
+ "round": 3,
+ "proposals": [
+  {
+   "id": "r01",
+   "cat": "exposition/missing-explanation",
+   "old": "theorem Aexp.foldConstants_id (x : Ident) : (Aexp.id x).foldConstants = .id x := rfl\n\ntheorem Aexp.foldConstants_cases",
+   "new": "theorem Aexp.foldConstants_id (x : Ident) : (Aexp.id x).foldConstants = .id x := rfl\n```\n\n::::full\nEach of the three operator cases of {name}`Aexp.foldConstants` has the same\nshape: fold both operands, and if both come out as numerals, compute the\nresult; otherwise, rebuild the expression from the folded operands.  The\nlemma `Aexp.foldConstants_cases` states this once for all three operators:\neither both operands fold to numerals, or folding just rebuilds the\nexpression.  The soundness proof below can then do a single case analysis\nper operator, instead of analyzing what each operand folds to.\n::::\n\n```lean\ntheorem Aexp.foldConstants_cases",
+   "why": "The case-analysis lemma had no prose; the soundness proof below depends on it, and the Bexp lemmas now follow the same pattern."
+  },
+  {
+   "id": "r02",
+   "cat": "exposition/missing-explanation",
+   "old": "theorem Bexp.foldConstants_false : (bexp { false }).foldConstants = (bexp { false }) := rfl\n\ntheorem Bexp.foldConstants_comp",
+   "new": "theorem Bexp.foldConstants_false : (bexp { false }).foldConstants = (bexp { false }) := rfl\n```\n\n::::full\nThe same idea gives three case-analysis lemmas for {name}`Bexp.foldConstants`,\none for each shape of case in its definition:\n- `Bexp.foldConstants_comp`, for the four comparisons: either both\n  operands fold to numerals, or the comparison is rebuilt from the folded\n  operands;\n- `Bexp.foldConstants_unary`, for `¬`: either the operand folds to a\n  constant, or the negation is rebuilt;\n- `Bexp.foldConstants_binary`, for `∧`: either both operands fold to\n  constants, or the conjunction is rebuilt.\n\nWe use them in the soundness proof for boolean expressions below.\n::::\n\n```lean\ntheorem Bexp.foldConstants_comp",
+   "why": "The three Bexp case-analysis lemmas had no prose; they now drive `Bexp.foldConstants_sound`."
+  },
+  {
+   "id": "r03",
+   "cat": "devnote/resolved",
+   "old": "  | _ => simp [foldConstants, hb₁]\n```\n\n:::dev \"Claude\"\n`Bexp.foldConstants_comp`, `Bexp.foldConstants_unary`, and\n`Bexp.foldConstants_binary` come with no prose, and nothing in the chapter\nuses them: `Bexp.foldConstants_sound` does its own case analysis.  Either\nuse them in that proof (the way `Aexp.foldConstants_cases` is used in\n`Aexp.foldConstants_sound`) and say a word about them, or delete them.\n:::\n\n```lean\nexample : (bexp { true ∧",
+   "new": "  | _ => simp [foldConstants, hb₁]\n```\n\n```lean\nexample : (bexp { true ∧",
+   "why": "The note asked for the helper lemmas to be used or deleted; `Bexp.foldConstants_sound` now uses them."
+  },
+  {
+   "id": "r04",
+   "cat": "exposition/proof-alignment",
+   "old": "There are two cases to consider.",
+   "new": "The lemma `Bexp.foldConstants_comp` tells us that there are two cases\nto consider.",
+   "why": "Ties the informal case split to the lemma the formal proof now splits on."
+  },
+  {
+   "id": "r05",
+   "cat": "proof/restructure",
+   "old": "theorem Bexp.foldConstants_sound : Bexp.TransSound Bexp.foldConstants := by\n    intro b st\n    induction b with\n    | bool b => cases b <;> simp\n    | eq a₁ a₂ =>\n        simp only [Bexp.eval_eq, Bexp.foldConstants]\n        have h₁ : a₁.eval st = a₁.foldConstants.eval st := by\n          rw [Aexp.foldConstants_sound]\n        have h₂ : a₂.eval st = a₂.foldConstants.eval st := by\n          rw [Aexp.foldConstants_sound]\n        rw [h₁, h₂]\n        cases a₁.foldConstants <;> cases a₂.foldConstants <;> (try simp_all; done)\n        · case num.num n₁ n₂ =>\n          -- The only interesting case is when both a₁ and a₂ become constants after folding\n          by_cases n₁ = n₂ <;> simp_all\n    | neq a₁ a₂ =>\n        simp only [Bexp.eval_neq, Bexp.foldConstants]\n        have h₁ : a₁.eval st = a₁.foldConstants.eval st := by\n          rw [Aexp.foldConstants_sound]\n        have h₂ : a₂.eval st = a₂.foldConstants.eval st := by\n          rw [Aexp.foldConstants_sound]\n        rw [h₁, h₂]\n        cases a₁.foldConstants <;> cases a₂.foldConstants <;> (try simp_all; done)\n        · case num.num n₁ n₂ =>\n          by_cases n₁ = n₂ <;> simp_all\n    | le a₁ a₂ =>\n      solution!\n        simp only [Bexp.eval_le, Bexp.foldConstants]\n        have h₁ : a₁.eval st = a₁.foldConstants.eval st := by\n          rw [Aexp.foldConstants_sound]\n        have h₂ : a₂.eval st = a₂.foldConstants.eval st := by\n          rw [Aexp.foldConstants_sound]\n        rw [h₁, h₂]\n        cases a₁.foldConstants <;> cases a₂.foldConstants <;> (try simp_all; done)\n        · case num.num n₁ n₂ =>\n          simp only [Aexp.eval]\n          by_cases (n₁ ≤ n₂) <;> simp_all [Nat.not_le_of_gt]\n    | gt a₁ a₂ =>\n      solution!\n        simp only [Bexp.eval_gt, Bexp.foldConstants]\n        have h₁ : a₁.eval st = a₁.foldConstants.eval st := by\n          rw [Aexp.foldConstants_sound]\n        have h₂ : a₂.eval st = a₂.foldConstants.eval st := by\n          rw [Aexp.foldConstants_sound]\n        rw [h₁, h₂]\n        cases a₁.foldConstants <;> cases a₂.foldConstants <;> (try simp_all; done)\n        · case num.num n₁ n₂ =>\n          by_cases n₂ < n₁ <;> simp_all [Nat.not_lt_of_le]\n    | not b ih =>\n        simp only [Bexp.eval_not, Bexp.foldConstants]\n        rw [ih]\n        cases b.foldConstants <;> (try simp_all; done)\n        · case not.bool b => cases b <;> simp_all\n    | and b₁ b₂ ih₁ ih₂ =>\n        simp only [Bexp.eval_and, Bexp.foldConstants]\n        rw [ih₁, ih₂]\n        cases b₁.foldConstants <;> cases b₂.foldConstants <;> (try simp_all; done)\n        · case and.bool.bool b₁ b₂ =>\n          cases b₁ <;> cases b₂ <;> simp_all\n```",
+   "new": "theorem Bexp.foldConstants_sound : Bexp.TransSound Bexp.foldConstants := by\n  intro b st\n  induction b with\n  | bool b => cases b <;> rfl\n  | eq a₁ a₂ =>\n    have h₁ := Aexp.foldConstants_sound a₁ st\n    have h₂ := Aexp.foldConstants_sound a₂ st\n    cases Bexp.foldConstants_comp a₁ a₂ with\n    | inl h =>\n      -- The only interesting case: both `a₁` and `a₂` fold to constants\n      obtain ⟨n₁, n₂, hn₁, hn₂⟩ := h\n      by_cases n₁ = n₂ <;> simp_all [foldConstants]\n    | inr h =>\n      simp_all\n  | neq a₁ a₂ =>\n    have h₁ := Aexp.foldConstants_sound a₁ st\n    have h₂ := Aexp.foldConstants_sound a₂ st\n    cases Bexp.foldConstants_comp a₁ a₂ with\n    | inl h =>\n      obtain ⟨n₁, n₂, hn₁, hn₂⟩ := h\n      by_cases n₁ = n₂ <;> simp_all [foldConstants]\n    | inr h =>\n      simp_all\n  | le a₁ a₂ =>\n    solution!\n      have h₁ := Aexp.foldConstants_sound a₁ st\n      have h₂ := Aexp.foldConstants_sound a₂ st\n      cases Bexp.foldConstants_comp a₁ a₂ with\n      | inl h =>\n        obtain ⟨n₁, n₂, hn₁, hn₂⟩ := h\n        by_cases n₁ ≤ n₂ <;> simp_all [foldConstants, Nat.not_le_of_gt]\n      | inr h =>\n        simp_all\n  | gt a₁ a₂ =>\n    solution!\n      have h₁ := Aexp.foldConstants_sound a₁ st\n      have h₂ := Aexp.foldConstants_sound a₂ st\n      cases Bexp.foldConstants_comp a₁ a₂ with\n      | inl h =>\n        obtain ⟨n₁, n₂, hn₁, hn₂⟩ := h\n        by_cases n₁ > n₂ <;> simp_all [foldConstants, Nat.not_lt_of_le]\n      | inr h =>\n        simp_all\n  | not b ih =>\n    cases Bexp.foldConstants_unary b with\n    | inl h =>\n      rcases h with h | h <;> simp_all [foldConstants]\n    | inr h =>\n      simp_all\n  | and b₁ b₂ ih₁ ih₂ =>\n    cases Bexp.foldConstants_binary b₁ b₂ with\n    | inl h =>\n      obtain ⟨h₁ | h₁, h₂ | h₂⟩ := h <;> simp_all [foldConstants]\n    | inr h =>\n      simp_all\n```",
+   "why": "Rewritten on the pattern of `Aexp.foldConstants_sound`: each case does one split on a case-analysis lemma (`_comp`, `_unary`, `_binary`) instead of fanning out over what the operands fold to. The `eq` and `neq` cases stay visible and `le`/`gt` stay `solution!` holes."
+  },
+  {
+   "id": "r06",
+   "cat": "grading/optional-graded",
+   "old": ":::::full\n\n::::exercise (rating := 4) (name := \"optimize0plus_var\") (optional := true)\n:::dev \"Claude\"\nEquiv.v grades five parts of this optional exercise\n(`test_optimize_0plus` 1, `optimize_0plus_aexp_sound` 0.5,\n`optimize_0plus_bexp_sound` 0.5, `optimize_0plus_com_sound` 2,\n`optimizer_sound` 2).  The `linter.sf.optionalAutograding` linter forbids\nautograding inside an optional exercise, so none is carried here.  Either\nmake the exercise non-optional and add the five `:::gradeTheorem` blocks\n(the test is an `example` and would need a name), or keep it optional and\nungraded and delete this note.\n:::\n\nRecall",
+   "new": ":::::full\n::::exercise (rating := 4) (name := \"optimize0plus_var\") (optional := true)\nRecall",
+   "why": "Grading is now added as in Imp.lean (optional exercises graded anyway), so the note is resolved; also drops the stray blank line after `:::::full`."
+  },
+  {
+   "id": "r07",
+   "cat": "grading/optional-graded",
+   "old": "```lean\nexample :\n    Com.optimize0plus\n       (imp { while (X ≠ 0) { X := 0 + X - 1 } }) =\n    (imp { while (X ≠ 0) { X := X - 1 } }) := by\n  solution!\n    rfl\n```\n",
+   "new": "```lean\ntheorem test_optimize0plus :\n    Com.optimize0plus\n       (imp { while (X ≠ 0) { X := 0 + X - 1 } }) =\n    (imp { while (X ≠ 0) { X := X - 1 } }) := by\n  solution!\n    rfl\n```\n\n:::gradeTheorem 1 test_optimize0plus\n:::\n",
+   "why": "Equiv.v: `GRADE_THEOREM 1: test_optimize_0plus`; the `example` gets a name so it can be graded."
+  },
+  {
+   "id": "r08",
+   "cat": "grading/optional-graded",
+   "old": "        apply Bexp.optimize0plus_sound\n```\n\nFinally, let's define",
+   "new": "        apply Bexp.optimize0plus_sound\n```\n\n:::gradeTheorem \"0.5\" Aexp.optimize0plus_sound\n:::\n\n:::gradeTheorem \"0.5\" Bexp.optimize0plus_sound\n:::\n\n:::gradeTheorem 2 Com.optimize0plus_sound\n:::\n\nFinally, let's define",
+   "why": "Equiv.v: `GRADE_THEOREM 0.5` for the aexp and bexp soundness proofs, `2` for the com one."
+  },
+  {
+   "id": "r09",
+   "cat": "grading/optional-graded",
+   "old": "    · apply Com.optimize0plus_sound\n```\n::::\n:::::\n\n# Proving Inequivalence",
+   "new": "    · apply Com.optimize0plus_sound\n```\n\n:::gradeTheorem 2 optimizer_sound\n:::\n::::\n:::::\n\n# Proving Inequivalence",
+   "why": "Equiv.v: `GRADE_THEOREM 2: optimizer_sound`."
+  },
+  {
+   "id": "r10",
+   "cat": "grading/optional-graded",
+   "old": "(name := \"havoc_copy\") (optional := true)\n:::dev \"Claude\"\nEquiv.v grades this optional exercise (`GRADE_THEOREM 6:\nHimp.ptwice_cequiv_pcopy`), which the `linter.sf.optionalAutograding`\nlinter forbids.  Either make it non-optional and add\n`:::gradeTheorem 6 ptwice_equiv_pcopy`, or keep it optional and ungraded\nand delete this note.\n:::\n\nAre the following",
+   "new": "(name := \"havoc_copy\") (optional := true)\nAre the following",
+   "why": "Grading is now added as in Imp.lean, so the note is resolved."
+  },
+  {
+   "id": "r11",
+   "cat": "grading/optional-graded",
+   "old": "          contradiction\n```\n::::\n:::::\n\n:::::full\nThe definition of program equivalence",
+   "new": "          contradiction\n```\n\n:::gradeTheorem 6 ptwice_equiv_pcopy\n:::\n::::\n:::::\n\n:::::full\nThe definition of program equivalence",
+   "why": "Equiv.v: `GRADE_THEOREM 6: Himp.ptwice_cequiv_pcopy`."
+  }
+ ],
+ "completed": true
+}
