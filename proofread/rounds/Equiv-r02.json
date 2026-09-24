@@ -1,0 +1,386 @@
+{
+ "file": "HL/Equiv.lean",
+ "chapter": "Equiv",
+ "round": 2,
+ "proposals": [
+  {
+   "id": "h01",
+   "cat": "porting/dropped-prose",
+   "old": "file := some \"Equiv\"\n%%%\n\n```lean\nopen scoped HasEval MyGetElem Com\n```\n\n# Behavioral Equivalence",
+   "new": "file := some \"Equiv\"\n%%%\n\n```lean\nopen scoped HasEval MyGetElem Com\n```\n\n::::full\nAdvice for Working on Exercises:\n\n- Most of the Lean proofs we ask you to do in this chapter are\n  similar to proofs that we've provided.  Before starting to work\n  on exercises, take the time to work through our proofs (both\n  informally and in Lean) and make sure you understand them in\n  detail.  This will save you a lot of effort.\n\n- The Lean proofs we're doing now are sufficiently complicated that\n  it is more or less impossible to complete them by random\n  experimentation or following your nose.  You need to start with\n  an idea about why the property is true and how the proof is\n  going to go.  The best way to do this is to write out at least a\n  sketch of an informal proof on paper -- one that intuitively\n  convinces you of the truth of the theorem -- before starting to\n  work on the formal one.  Alternately, grab a friend and try to\n  convince them that the theorem is true; then try to formalize\n  your explanation.\n\n- Use automation to save work!  The proofs in this chapter can get\n  pretty long if you try to write out all the cases explicitly.\n::::\n\n# Behavioral Equivalence",
+   "why": "Equiv.v opens with \"Advice for Working on Exercises\" -- book pedagogy that the port dropped; restored with Rocq → Lean."
+  },
+  {
+   "id": "h02",
+   "cat": "exposition/missing-explanation",
+   "old": "We'll also define a notation for `Equiv`:",
+   "new": "We'll also define a type class `Equiv`, so that these relations (and\nthe one for commands, below) can all be written with the notation\n`≃`.  The `@[simp]` lemmas let {tactic}`simp` unfold the notation back to the\ndefinitions:",
+   "why": "The sentence promised \"a notation\" but the block introduces a type class, instances, and simp lemmas without saying so."
+  },
+  {
+   "id": "h03",
+   "cat": "content/wrong-claim",
+   "old": "-- you can type `≃` as \\equiv",
+   "new": "-- you can type `≃` as \\simeq",
+   "why": "In Lean's input method `\\equiv` produces `≡`; `≃` is `\\simeq`."
+  },
+  {
+   "id": "h04",
+   "cat": "porting/dropped-quizzes",
+   "old": "    ∀ {st st' : State}, (st =[ c₁ ]=> st') ↔ (st =[ c₂ ]=> st') := by rfl\n```\n\n## Simple Examples",
+   "new": "    ∀ {st st' : State}, (st =[ c₁ ]=> st') ↔ (st =[ c₂ ]=> st') := by rfl\n```\n\n::::quiz\nAre these two programs equivalent?\n\n```display\nX := 1;\nY := 2\n```\n\nand\n\n```display\nY := 2;\nX := 1\n```\n\n(A) Yes    (B) No    (C) Not sure\n::::\n\n::::quiz\nWhat about these?\n\n```display\nX := 1;\nY := 2\n```\n\nand\n\n```display\nX := 2;\nY := 1\n```\n\n(A) Yes    (B) No    (C) Not sure\n::::\n\n::::quiz\nWhat about these?\n\n```display\nwhile (1 ≤ X) {\n  X := X + 1\n}\n```\n\nand\n\n```display\nwhile (2 ≤ X) {\n  X := X + 1\n}\n```\n\n(A) Yes    (B) No    (C) Not sure\n\n:::instructors\nNo. (When started in a state where variable `X` has value `1`,\nthe first program diverges while the second one halts.)\n:::\n::::\n\n::::quiz\nThese?\n\n```display\nwhile (true) {\n  while (false) { X := X + 1 }\n}\n```\n\nand\n\n```display\nwhile (false) {\n  while (true) { X := X + 1 }\n}\n```\n\n(A) Yes    (B) No    (C) Not sure\n\n:::instructors\nNo. (The first program always diverges; the second\nalways halts.)\n:::\n::::\n\n## Simple Examples",
+   "why": "Equiv.v has four quizzes here (two with instructor answers), dropped in the port. Restored, with the programs in the Lean `imp` syntax."
+  },
+  {
+   "id": "h05",
+   "cat": "structure/exercise-visibility",
+   "old": "```\n\n:::::exercise (rating := 2) (name := \"skip_right\")",
+   "new": "```\n\n::::::full\n:::::exercise (rating := 2) (name := \"skip_right\")",
+   "why": "Every other exercise sits inside a `full` block; the build warns (`exercise is not inside a full or terse`). Opening half."
+  },
+  {
+   "id": "h06",
+   "cat": "grading/missing-spec",
+   "old": "      exact EvalR.seq h EvalR.skip\n```\n:::::\n",
+   "new": "      exact EvalR.seq h EvalR.skip\n```\n\n:::gradeTheorem 2 skip_right\n:::\n:::::\n::::::\n",
+   "why": "Equiv.v grades this exercise (`GRADE_THEOREM 2: skip_right`); also closes the `full` block opened above."
+  },
+  {
+   "id": "h07",
+   "cat": "grading/missing-spec",
+   "old": "      apply EvalR.ifFalse _ h\n      simp_all\n```\n::::",
+   "new": "      apply EvalR.ifFalse _ h\n      simp_all\n```\n\n:::gradeTheorem 2 if_false\n:::\n::::",
+   "why": "Equiv.v: `GRADE_THEOREM 2: if_false`."
+  },
+  {
+   "id": "h08",
+   "cat": "grading/missing-spec",
+   "old": "        apply EvalR.ifTrue _ hc\n        simp_all\n```\n::::",
+   "new": "        apply EvalR.ifTrue _ hc\n        simp_all\n```\n\n:::gradeTheorem 3 swap_if_branches\n:::\n::::",
+   "why": "Equiv.v: `GRADE_THEOREM 3: swap_if_branches`."
+  },
+  {
+   "id": "h09",
+   "cat": "porting/dropped-solution",
+   "old": "(name := \"while_false_informal\") (level := Advanced) (manual := true)\nWrite an informal proof of `while_false`.\n",
+   "new": "(name := \"while_false_informal\") (level := Advanced) (manual := true) (optional := true)\nWrite an informal proof of `while_false`.\n\n:::solution\n_Theorem_: For all `b` and `c`, if `b` is equivalent to `false`,\nthen `while (b) {c}` is equivalent to `skip`.\n\n_Proof_:\n- (`→`) We know that `b` is equivalent to `false`.  We must\n  show, for all `st` and `st'`, that if\n  `st =[ while (b) {c} ]=> st'` then `st =[ skip ]=> st'`.\n\n  There are only two ways we can have `st =[ while (b) {c} ]=> st'`:\n  using `Com.EvalR.whileFalse` and `Com.EvalR.whileTrue`.\n\n  - Suppose the final rule used to show `st =[ while (b) {c} ]=> st'`\n    was `Com.EvalR.whileFalse`.  We then know that `st = st'`;\n    by `Com.EvalR.skip`, we know that `st =[ skip ]=> st`.\n\n  - Suppose the final rule used to show `st =[ while (b) {c} ]=> st'`\n    was `Com.EvalR.whileTrue`.  But this rule only applies when\n    `b.eval st = true`.  However, we are assuming that\n    `b` is equivalent to `false`, i.e., for all\n    `st`, `b.eval st = (bexp {false}).eval st = false`.  So we have\n    a contradiction, and the final rule could not have been\n    `Com.EvalR.whileTrue` after all.\n\n- (`←`) We know that `b` is equivalent to `false`.  We must\n  show, for all `st` and `st'`, that if `st =[ skip ]=> st'`\n  then `st =[ while (b) {c} ]=> st'`.\n\n  `Com.EvalR.skip` is the only rule that could have proven\n  `st =[ skip ]=> st'`, so we know that `st' = st`.  We must show\n  that `st =[ while (b) {c} ]=> st`.\n\n  Since `b` is equivalent to `false`, we know that\n  `b.eval st = false`.  By `Com.EvalR.whileFalse`, then, we can derive\n  that `st =[ while (b) {c} ]=> st`, and we are done.\n:::\n",
+   "why": "Equiv.v marks this exercise optional (`EX2A?`) and gives a worked solution; both dropped in the port. Restored, with the solution in Lean notation."
+  },
+  {
+   "id": "h10",
+   "cat": "porting/dropped-solution",
+   "old": "(name := \"while_true_nonterm_informal\") (manual := true)\nExplain what the lemma `while_true_nonterm` means in English.\n",
+   "new": "(name := \"while_true_nonterm_informal\") (manual := true) (optional := true)\nExplain what the lemma `while_true_nonterm` means in English.\n\n:::solution\nThe lemma `while_true_nonterm` claims that if a `Bexp` `b` is\nequivalent to `true` (i.e., if `∀ st, b.eval st = true`),\nthen it is not possible to construct a derivation\n`st =[ while (b) {c} ]=> st'` for any `st`, `st'`, or `c`.\n\nWe can understand this lack of a derivation as nontermination: the\nreason a derivation can't be constructed is because the\n`Com.EvalR.whileTrue` rule would need to be applied infinitely many times,\nbut derivations are finite.\n:::\n",
+   "why": "Equiv.v marks this exercise optional (`EX2?`) and gives a worked solution; both dropped in the port."
+  },
+  {
+   "id": "h11",
+   "cat": "grading/missing-spec",
+   "old": "      intro\n      rfl\n```\n::::\n:::::",
+   "new": "      intro\n      rfl\n```\n\n:::gradeTheorem 2 while_true\n:::\n::::\n:::::",
+   "why": "Equiv.v: `GRADE_THEOREM 2: while_true`."
+  },
+  {
+   "id": "h12",
+   "cat": "grading/missing-spec",
+   "old": "        exact Com.EvalR.skip\n```\n::::\n:::::\n\n:::::full\n::::exercise (rating := 2) (name := \"equiv_classes\") (manual := true) (optional := true)\n",
+   "new": "        exact Com.EvalR.skip\n```\n\n:::gradeTheorem 2 assign_equiv\n:::\n::::\n:::::\n\n:::::full\n::::exercise (rating := 2) (name := \"equiv_classes\") (manual := true) (optional := true)\n",
+   "why": "Equiv.v: `GRADE_THEOREM 2: assign_aequiv`."
+  },
+  {
+   "id": "h13",
+   "cat": "grading/missing-spec",
+   "old": "    [progI] ]\n)\n```\n::::\n:::::",
+   "new": "    [progI] ]\n)\n```\n\n:::grade\n```\nGRADE_MANUAL 2: equiv_classes\n```\n:::\n::::\n:::::",
+   "why": "Equiv.v: `GRADE_MANUAL 2: equiv_classes`."
+  },
+  {
+   "id": "h14",
+   "cat": "formatting/blank-lines",
+   "old": "## Behavioral Equivalence is a Congruence\n\n::::full\n\nLess obviously",
+   "new": "## Behavioral Equivalence is a Congruence\n\n::::full\nLess obviously",
+   "why": "A stray blank line right after the directive opener."
+  },
+  {
+   "id": "h15",
+   "cat": "markup/unfenced-display",
+   "old": "embedded:\n\n              a ≃ a'\n     -------------------------\n        (x := a) ≃ (x := a')\n\n            c₁ ≃ c₁'\n            c₂ ≃ c₂'\n     --------------------------\n      (c₁ ; c₂) ≃ (c₁' ; c₂')\n",
+   "new": "embedded:\n\n```\n       a ≃ a'\n----------------------\n(x := a) ≃ (x := a')\n\n      c₁ ≃ c₁'\n      c₂ ≃ c₂'\n----------------------\n(c₁; c₂) ≃ (c₁'; c₂')\n```\n",
+   "why": "The inference rules were bare indented text, which Markdown reads as an indented code block at best and run-together prose at worst; fence them like the chapter's other displays."
+  },
+  {
+   "id": "h16",
+   "cat": "naming/stale-identifier",
+   "old": "(in the proof of\n`fold_constants_com_sound`)",
+   "new": "(in the proof of\n`Com.foldConstants_sound`)",
+   "why": "`fold_constants_com_sound` is the Rocq name; the Lean theorem is `Com.foldConstants_sound`."
+  },
+  {
+   "id": "h17",
+   "cat": "consistency/notation",
+   "old": "    (imp {if (b) {c₁} else {c₂}}).Equiv\n    (imp {if (b') {c₁'} else {c₂'}}) := by",
+   "new": "    imp {if (b) {c₁} else {c₂}} ≃\n    imp {if (b') {c₁'} else {c₂'}} := by",
+   "why": "Every sibling congruence theorem states its conclusion with `≃`; this one alone used `.Equiv`."
+  },
+  {
+   "id": "h18",
+   "cat": "grading/missing-spec",
+   "old": "          exact (hc₂.mpr hc₂')\n  )\n```\n::::\n:::::",
+   "new": "          exact (hc₂.mpr hc₂')\n  )\n```\n\n:::gradeTheorem 3 Com.congruence_if\n:::\n::::\n:::::",
+   "why": "Equiv.v: `GRADE_THEOREM 3: CIf_congruence`."
+  },
+  {
+   "id": "h19",
+   "cat": "wording/wrong-referent",
+   "old": "a proof of their equivalence using their congruence theorems.",
+   "new": "a proof of their equivalence using the congruence theorems.",
+   "why": "The congruence theorems belong to the language's constructs, not to the two programs."
+  },
+  {
+   "id": "h20",
+   "cat": "porting/dropped-solution",
+   "old": "congruence.\n:::::\n::::::",
+   "new": "congruence.\n\n:::solution\nHere's a simple one:\n\n```lean\ninductive WeirdRel : Com → Com → Prop where\n  | refl {c : Com} : WeirdRel c c\n  | symm {c₁ c₂ : Com} : WeirdRel c₁ c₂ → WeirdRel c₂ c₁\n  | trans {c₁ c₂ c₃ : Com} : WeirdRel c₁ c₂ → WeirdRel c₂ c₃ → WeirdRel c₁ c₃\n  | weird : WeirdRel (imp { skip }) (imp { X := X })\n```\n\nSome less contrived examples:\n- `c₁` and `c₂` are related if either both terminate from an arbitrary\n  starting state or both do not terminate from some starting state.\n- `c₁` and `c₂` are related if `c₂` can be obtained from `c₁` by\n  permuting the names of variables (e.g., renaming `X` to `Y` and `Y`\n  to `X`).\n:::\n\n:::grade\n```\nGRADE_MANUAL 3: not_congr\n```\n:::\n:::::\n::::::",
+   "why": "Equiv.v gives a solution (the `weirdrel` relation plus two less contrived examples) and a `GRADE_MANUAL 3` spec; both dropped in the port. `WeirdRel` is translated and elaborates (a `:::solution` body is checked)."
+  },
+  {
+   "id": "h21",
+   "cat": "porting/dropped-prose",
+   "old": "optimizations such as constant folding are canonical examples,\nbut there are many others.\n::::",
+   "new": "optimizations such as constant folding are canonical examples,\nbut there are many others.\n\nA program transformation is _sound_ if it preserves the\nbehavior of the original program.\n::::",
+   "why": "Equiv.v defines soundness in words before the `TransSound` definitions; the sentence was dropped, leaving the definitions unexplained."
+  },
+  {
+   "id": "h22",
+   "cat": "content/incomplete-list",
+   "old": "{name}`Bexp.neq`, and {name}`Bexp.le` cases",
+   "new": "{name}`Bexp.neq`, {name}`Bexp.le`, and {name}`Bexp.gt` cases",
+   "why": "`Bexp.foldConstants` lifts constant folding in the `gt` case as well."
+  },
+  {
+   "id": "h23",
+   "cat": "devnote/unused-lemmas",
+   "old": "  | _ => simp [foldConstants, hb₁]\n```\n\n```lean\nexample : (bexp { true ∧",
+   "new": "  | _ => simp [foldConstants, hb₁]\n```\n\n:::dev \"Claude\"\n`Bexp.foldConstants_comp`, `Bexp.foldConstants_unary`, and\n`Bexp.foldConstants_binary` come with no prose, and nothing in the chapter\nuses them: `Bexp.foldConstants_sound` does its own case analysis.  Either\nuse them in that proof (the way `Aexp.foldConstants_cases` is used in\n`Aexp.foldConstants_sound`) and say a word about them, or delete them.\n:::\n\n```lean\nexample : (bexp { true ∧",
+   "why": "Needs an author decision: three helper lemmas are stated without explanation and never used."
+  },
+  {
+   "id": "h24",
+   "cat": "porting/dropped-comment",
+   "old": "  | _ a₁ a₂ _ _ =>\n    cases Aexp.foldConstants_cases a₁ a₂ with",
+   "new": "  | _ a₁ a₂ _ _ =>\n    -- `plus`, `minus`, and `mult` follow from the IH and the observation that\n    -- `(aexp {~a₁ + ~a₂}).eval st = a₁.eval st + a₂.eval st\n    --   = (Aexp.num (a₁.eval st + a₂.eval st)).eval st`\n    -- (and similarly for `minus`/`-` and `mult`/`*`).\n    cases Aexp.foldConstants_cases a₁ a₂ with",
+   "why": "The Rocq proof's explanatory comment for the operator cases, dropped in the port; translated."
+  },
+  {
+   "id": "h25",
+   "cat": "content/exercise-prompt",
+   "old": "fill in the `le` case of the formal proof (without looking at the\n`eq` case, if possible).",
+   "new": "fill in the `le` and `gt` cases of the formal proof (without looking\nat the `eq` case, if possible).",
+   "why": "Both the `le` and the `gt` cases of the formal proof are `solution!` holes."
+  },
+  {
+   "id": "h26",
+   "cat": "markup/list-indentation",
+   "old": "There are two cases to consider:\n\n- First, suppose `a₁.foldConstants = aexp { n₁ }` and\n  `a₂.foldConstants = aexp { n₂ }` for some `n₁` and `n₂`.\n\n  In this case, we have\n\n```\n  (bexp { a₁ = a₂ }).foldConstants = if (n₁ = n₂) then bexp { true } else bexp { false }\n```\n\n  and\n\n```\n  (bexp {a₁ = a₂}).eval st = a₁.eval st = a₂.eval st.\n```\n\n  By the soundness of constant folding for arithmetic\n  expressions (`Aexp.foldConstants_sound`), we know\n\n```\n           a₁.eval st\n         = (a₁.foldConstants).eval st\n         = (aexp { n₁ }).eval st\n         = n₁\n```\n\n  and\n\n```\n           a₂.eval st\n         = (a₂.foldConstants).eval st\n         = (aexp { n₂ }).eval st\n         = n₂\n```\n\n  so\n\n```\n          (bexp { a₁ = a₂ }).eval st\n         = a₁.eval st = a₂.eval st\n         = n₁ = n₂\n```\n\n      Also, it is easy to see (by considering the cases `n₁ = n₂` and\n      `n₁ ≠ n₂` separately) that\n```\n          (if n₁ = n₂ then (bexp { true }) else (bexp { false }) ).eval st\n         = if n₁ = n₂ then bexp { true }.eval st else bexp { false }.eval st\n         = if n₁ = n₂ then true else false\n         = n₁ = n₂\n```\n      So\n```\n          (bexp { a₁ = a₂ }).eval st\n         = n₁ = n₂\n         = (if n₁ = n₂ then (bexp { true }) else (bexp { false }) ).eval st,\n```\n       as required.\n\n     - Otherwise, one of `a₁.foldConstants` and\n       `a₂.foldConstants` is not a constant.  In this case, we\n       must show\n```\n           (bexp { a₁ = a₂ }).eval st\n         = (bexp { (a₁.foldConstants = a₂.foldConstants) }).eval st,\n```\n       which, by the definition of {name}`Bexp.eval`, is the same as showing\n```\n           a₁.eval st = a₂.eval st\n        = (a₁.foldConstants).eval st = (a₂.foldConstants).eval st\n```\n       But the soundness of constant folding for arithmetic\n       expressions (`Aexp.foldConstants_sound`) gives us\n```\n         a₁.eval st = (a₁.foldConstants).eval st\n         a₂.eval st = (a₂.foldConstants).eval st\n```\n       completing the case.\n",
+   "new": "There are two cases to consider.\n\nFirst, suppose `a₁.foldConstants = aexp { n₁ }` and\n`a₂.foldConstants = aexp { n₂ }` for some `n₁` and `n₂`.\nIn this case, we have\n\n```\n  (bexp { a₁ = a₂ }).foldConstants = if (n₁ = n₂) then bexp { true } else bexp { false }\n```\n\nand\n\n```\n  (bexp {a₁ = a₂}).eval st = a₁.eval st = a₂.eval st.\n```\n\nBy the soundness of constant folding for arithmetic\nexpressions (`Aexp.foldConstants_sound`), we know\n\n```\n           a₁.eval st\n         = (a₁.foldConstants).eval st\n         = (aexp { n₁ }).eval st\n         = n₁\n```\n\nand\n\n```\n           a₂.eval st\n         = (a₂.foldConstants).eval st\n         = (aexp { n₂ }).eval st\n         = n₂\n```\n\nso\n\n```\n          (bexp { a₁ = a₂ }).eval st\n         = a₁.eval st = a₂.eval st\n         = n₁ = n₂\n```\n\nAlso, it is easy to see (by considering the cases `n₁ = n₂` and\n`n₁ ≠ n₂` separately) that\n\n```\n          (if n₁ = n₂ then (bexp { true }) else (bexp { false }) ).eval st\n         = if n₁ = n₂ then bexp { true }.eval st else bexp { false }.eval st\n         = if n₁ = n₂ then true else false\n         = n₁ = n₂\n```\n\nSo\n\n```\n          (bexp { a₁ = a₂ }).eval st\n         = n₁ = n₂\n         = (if n₁ = n₂ then (bexp { true }) else (bexp { false }) ).eval st,\n```\n\nas required.\n\nOtherwise, one of `a₁.foldConstants` and `a₂.foldConstants` is not a\nconstant.  In this case, we must show\n\n```\n           (bexp { a₁ = a₂ }).eval st\n         = (bexp { (a₁.foldConstants = a₂.foldConstants) }).eval st,\n```\n\nwhich, by the definition of {name}`Bexp.eval`, is the same as showing\n\n```\n           a₁.eval st = a₂.eval st\n        = (a₁.foldConstants).eval st = (a₂.foldConstants).eval st\n```\n\nBut the soundness of constant folding for arithmetic\nexpressions (`Aexp.foldConstants_sound`) gives us\n\n```\n         a₁.eval st = (a₁.foldConstants).eval st\n         a₂.eval st = (a₂.foldConstants).eval st\n```\n\ncompleting the case.\n",
+   "why": "From \"Also, it is easy to see\" on, the case analysis is indented 5–7 spaces after column-0 fences, so Markdown reads those paragraphs as indented code blocks; and the list items it was meant to form are broken by the fences anyway. Laid out as plain paragraphs (\"First, suppose …\" / \"Otherwise, …\"), wording unchanged."
+  },
+  {
+   "id": "h27",
+   "cat": "grading/metadata-mismatch",
+   "old": "(name := \"Com.foldConstants_sound\") (manual := true) (optional := true)\nComplete",
+   "new": "(name := \"Com.foldConstants_sound\")\nComplete",
+   "why": "Equiv.v marks this an ordinary graded exercise (`EX3`, `GRADE_THEOREM 3`); it is a formal proof, so `manual` does not fit, and nothing made it optional."
+  },
+  {
+   "id": "h28",
+   "cat": "porting/dropped-comment",
+   "old": "          apply Bexp.foldConstants_sound\n        cases heq : b.foldConstants <;> try (apply Com.congruence_while",
+   "new": "          apply Bexp.foldConstants_sound\n        -- Again, the cases where `Com.foldConstants` doesn't change the test\n        -- or don't change the loop body follow from the `ih` and\n        -- `Bexp.foldConstants_sound`\n        cases heq : b.foldConstants <;> try (apply Com.congruence_while",
+   "why": "The Rocq solution's comment for the `while` case (the companion of the `if` case's comment above), dropped in the port."
+  },
+  {
+   "id": "h29",
+   "cat": "grading/missing-spec",
+   "old": "              apply Com.while_true; simp_all\n```\n::::\n:::::\n\n# Soundness of (0 + n) Elimination, Redux",
+   "new": "              apply Com.while_true; simp_all\n```\n\n:::gradeTheorem 3 Com.foldConstants_sound\n:::\n::::\n:::::\n\n## Soundness of (0 + n) Elimination, Redux",
+   "why": "Equiv.v: `GRADE_THEOREM 3: fold_constants_com_sound`. The same edit demotes the next heading to `##`: this section is part of \"Program Transformation\" (in Equiv.v it is a subsection beside \"Soundness of Constant Folding\"), and as a top-level heading it splits the transformation material in two."
+  },
+  {
+   "id": "h30",
+   "cat": "devnote/grading-mismatch",
+   "old": "::::exercise (rating := 4) (name := \"optimize0plus_var\") (optional := true)\nRecall",
+   "new": "::::exercise (rating := 4) (name := \"optimize0plus_var\") (optional := true)\n:::dev \"Claude\"\nEquiv.v grades five parts of this optional exercise\n(`test_optimize_0plus` 1, `optimize_0plus_aexp_sound` 0.5,\n`optimize_0plus_bexp_sound` 0.5, `optimize_0plus_com_sound` 2,\n`optimizer_sound` 2).  The `linter.sf.optionalAutograding` linter forbids\nautograding inside an optional exercise, so none is carried here.  Either\nmake the exercise non-optional and add the five `:::gradeTheorem` blocks\n(the test is an `example` and would need a name), or keep it optional and\nungraded and delete this note.\n:::\n\nRecall",
+   "why": "Needs an author decision: the source's grading spec conflicts with the book's rule that optional exercises are not autograded."
+  },
+  {
+   "id": "h31",
+   "cat": "structure/unhidden-solution",
+   "old": "theorem optimizer_sound : Com.TransSound optimizer := by\n  intro c\n  apply Com.equiv_trans\n  · apply Com.foldConstants_sound\n  · apply Com.optimize0plus_sound",
+   "new": "theorem optimizer_sound : Com.TransSound optimizer := by\n  solution!\n    intro c\n    apply Com.equiv_trans\n    · apply Com.foldConstants_sound\n    · apply Com.optimize0plus_sound",
+   "why": "\"Prove that this optimizer is sound\" is an exercise step (graded in Equiv.v), but the proof was in the clear; every other step of the exercise is `solution!`."
+  },
+  {
+   "id": "h32",
+   "cat": "consistency/type-name",
+   "old": "def Aexp.subst (x : String)",
+   "new": "def Aexp.subst (x : Ident)",
+   "why": "`Ident` is the chapter's name for variable names (an abbreviation for `String`); these declarations spelled it `String`."
+  },
+  {
+   "id": "h33",
+   "cat": "consistency/type-name",
+   "old": "def SubstEquivProperty : Prop := ∀ (x₁ x₂ : String)",
+   "new": "def SubstEquivProperty : Prop := ∀ (x₁ x₂ : Ident)",
+   "why": "`Ident` is the chapter's name for variable names (an abbreviation for `String`); these declarations spelled it `String`."
+  },
+  {
+   "id": "h34",
+   "cat": "consistency/type-name",
+   "old": "inductive VarNotUsedInAexp (x : String) : Aexp → Prop where\n  | num {n : Nat} : VarNotUsedInAexp x (Aexp.num n)\n  | id {y : String}",
+   "new": "inductive VarNotUsedInAexp (x : Ident) : Aexp → Prop where\n  | num {n : Nat} : VarNotUsedInAexp x (Aexp.num n)\n  | id {y : Ident}",
+   "why": "`Ident` is the chapter's name for variable names (an abbreviation for `String`); these declarations spelled it `String`."
+  },
+  {
+   "id": "h35",
+   "cat": "consistency/type-name",
+   "old": "theorem Aexp.eval_weakening {x : String}",
+   "new": "theorem Aexp.eval_weakening {x : Ident}",
+   "why": "`Ident` is the chapter's name for variable names (an abbreviation for `String`); these declarations spelled it `String`."
+  },
+  {
+   "id": "h36",
+   "cat": "naming/rocq-style",
+   "old": "theorem aeval_subst {x : String}",
+   "new": "theorem Aexp.eval_subst {x : Ident}",
+   "why": "`aeval_subst` keeps the Rocq naming; its sibling is `Aexp.eval_weakening`. (Also `String` → `Ident`.)"
+  },
+  {
+   "id": "h37",
+   "cat": "naming/rocq-style",
+   "old": "      inversion h₁ <;> subst_vars; symm\n      apply aeval_subst h",
+   "new": "      inversion h₁ <;> subst_vars; symm\n      apply Aexp.eval_subst h",
+   "why": "Follows the rename of `aeval_subst`."
+  },
+  {
+   "id": "h38",
+   "cat": "naming/rocq-style",
+   "old": "      inversion h₁ <;> subst_vars\n      apply aeval_subst h",
+   "new": "      inversion h₁ <;> subst_vars\n      apply Aexp.eval_subst h",
+   "why": "Follows the rename of `aeval_subst`."
+  },
+  {
+   "id": "h39",
+   "cat": "consistency/type-name",
+   "old": "theorem subst_equiv {x₁ x₂ : String}",
+   "new": "theorem subst_equiv {x₁ x₂ : Ident}",
+   "why": "`Ident` is the chapter's name for variable names (an abbreviation for `String`); these declarations spelled it `String`."
+  },
+  {
+   "id": "h40",
+   "cat": "grading/metadata-mismatch",
+   "old": "(name := \"inequiv_exercise\") (optional := true)\nProve that an infinite loop is not equivalent to `skip`.\n",
+   "new": "(name := \"inequiv_exercise\")\nProve that an infinite loop is not equivalent to `skip`.\n",
+   "why": "Equiv.v marks this an ordinary exercise (`EX3`), not an optional one."
+  },
+  {
+   "id": "h41",
+   "cat": "consistency/type-name",
+   "old": "  | asgn : String → Aexp → Com\n",
+   "new": "  | asgn : Ident → Aexp → Com\n",
+   "why": "`Ident` is the chapter's name for variable names (an abbreviation for `String`); these declarations spelled it `String`."
+  },
+  {
+   "id": "h42",
+   "cat": "consistency/type-name",
+   "old": "  | havoc : String → Com  --  <--- NEW\n```\n",
+   "new": "  | havoc : Ident → Com  --  <--- NEW\n```\n",
+   "why": "`Ident` is the chapter's name for variable names (an abbreviation for `String`); these declarations spelled it `String`."
+  },
+  {
+   "id": "h43",
+   "cat": "grading/metadata-mismatch",
+   "old": "(name := \"himp_eval\") (manual := true) (optional := true)\nNow, we must extend the operational semantics. We have provided\na template for the `Com.EvalR` relation below, specifying the big-step\nsemantics. What rule(s) must be added to the definition of `Com.EvalR`\nto formalize the behavior of the `havoc` command?\n",
+   "new": "(name := \"himp_eval\")\nNow, we must extend the operational semantics. We have provided\na template for the `Com.EvalR` relation below, specifying the big-step\nsemantics. What rule(s) must be added to the definition of `Com.EvalR`\nto formalize the behavior of the `havoc` command?\n",
+   "why": "Equiv.v makes this an ordinary exercise (`EX2`), and the build warns that an optional exercise autogrades `Himp.Com.EvalR` via its `:::autogradedHole`; the hole replaces the manual check, so `manual` goes too."
+  },
+  {
+   "id": "h44",
+   "cat": "consistency/type-name",
+   "old": "  | havoc {st : State} {x : String} (n : Nat) :",
+   "new": "  | havoc {st : State} {x : Ident} (n : Nat) :",
+   "why": "`Ident` is the chapter's name for variable names (an abbreviation for `String`); these declarations spelled it `String`."
+  },
+  {
+   "id": "h45",
+   "cat": "consistency/definition",
+   "old": "from above:\n\n```lean\ndef Com.Equiv (c₁ c₂ : Com) : Prop := ∀ (st st' : State),\n  (st =[ c₁ ]=> st') ↔ (st =[ c₂ ]=> st')",
+   "new": "from above:\n\n```lean\ndef Com.Equiv (c₁ c₂ : Com) : Prop :=\n    ∀ {st st' : State},\n      (st =[ c₁ ]=> st') ↔ (st =[ c₂ ]=> st')",
+   "why": "The prose says \"we repeat the definition of command equivalence from above\", but the earlier definition binds the states implicitly (and `Com.equiv_def` just below states it that way)."
+  },
+  {
+   "id": "h46",
+   "cat": "grading/metadata-mismatch",
+   "old": "(name := \"havoc_swap\") (manual := true) (optional := true)\nAre the following two programs equivalent?\n",
+   "new": "(name := \"havoc_swap\")\nAre the following two programs equivalent?\n",
+   "why": "Equiv.v makes this an ordinary graded exercise (`EX3`, `GRADE_THEOREM 3: pXY_cequiv_pYX`); it ends in a formal theorem, so `manual` does not fit."
+  },
+  {
+   "id": "h47",
+   "cat": "consistency/type-name",
+   "old": "theorem pXY_approx_pYX {x y : String}",
+   "new": "theorem pXY_approx_pYX {x y : Ident}",
+   "why": "`Ident` is the chapter's name for variable names (an abbreviation for `String`); these declarations spelled it `String`."
+  },
+  {
+   "id": "h48",
+   "cat": "naming/qualified",
+   "old": "/- Hint: You may want to use `update_permute` at some point,",
+   "new": "/- Hint: You may want to use `TotalMap.update_permute` at some point,",
+   "why": "The lemma is `TotalMap.update_permute`, as the solution uses it."
+  },
+  {
+   "id": "h49",
+   "cat": "grading/missing-spec",
+   "old": "    constructor <;> apply pXY_approx_pYX\n```\n::::",
+   "new": "    constructor <;> apply pXY_approx_pYX\n```\n\n:::gradeTheorem 3 pXY_cequiv_pYX\n:::\n::::",
+   "why": "Equiv.v: `GRADE_THEOREM 3: Himp.pXY_cequiv_pYX`."
+  },
+  {
+   "id": "h50",
+   "cat": "devnote/grading-mismatch",
+   "old": "::::exercise (rating := 4) (name := \"havoc_copy\") (optional := true)\nAre the following two programs equivalent?\n",
+   "new": "::::exercise (rating := 4) (name := \"havoc_copy\") (optional := true)\n:::dev \"Claude\"\nEquiv.v grades this optional exercise (`GRADE_THEOREM 6:\nHimp.ptwice_cequiv_pcopy`), which the `linter.sf.optionalAutograding`\nlinter forbids.  Either make it non-optional and add\n`:::gradeTheorem 6 ptwice_equiv_pcopy`, or keep it optional and ungraded\nand delete this note.\n:::\n\nAre the following two programs equivalent?\n",
+   "why": "Needs an author decision, as for `optimize0plus_var`."
+  },
+  {
+   "id": "h51",
+   "cat": "reference/stale",
+   "old": "The final part of the following exercise illustrates this\nphenomenon.",
+   "new": "The last of the following exercises, `p₅_p₆_equiv`, illustrates\nthis phenomenon.",
+   "why": "\"The following exercise\" is now four exercises (`p₁_p₂_term`, `p₁_p₂_equiv`, `p₃_p₄_inequiv`, `p₅_p₆_equiv`); the phenomenon is the subject of the last one."
+  },
+  {
+   "id": "h52",
+   "cat": "consistency/type-name",
+   "old": "to use `ext` explicitly for this one.)\n\n```lean\ntheorem swap_noninterfering_assignments (l₁ l₂ : String)",
+   "new": "to use `ext` explicitly for this one.)\n\n```lean\ntheorem swap_noninterfering_assignments (l₁ l₂ : Ident)",
+   "why": "`Ident` is the chapter's name for variable names (an abbreviation for `String`); these declarations spelled it `String`."
+  },
+  {
+   "id": "h53",
+   "cat": "consistency/type-name",
+   "old": "      have hs : ∀ {l₁ l₂ : String}",
+   "new": "      have hs : ∀ {l₁ l₂ : Ident}",
+   "why": "`Ident` is the chapter's name for variable names (an abbreviation for `String`); these declarations spelled it `String`."
+  },
+  {
+   "id": "h54",
+   "cat": "devnote/grading-mismatch",
+   "old": "  c₂\n}\n```\n::::\n:::::\n\n:::::full\n::::exercise (rating := 4) (name := \"cApprox\") (level := Advanced) (optional := true)\n",
+   "new": "  c₂\n}\n```\n\n:::dev \"Claude\"\nThis exercise has no Lean statement: it depends on the reader's own\n`for` extension from the optional `add_for_loop` exercise in Imp, so\nthere is nothing to check or grade.  Either mark it `(manual := true)`,\nor state it formally here over a `Com` extended with `for`.\n:::\n::::\n:::::\n\n:::::full\n::::exercise (rating := 4) (name := \"cApprox\") (level := Advanced) (optional := true)\n",
+   "why": "Needs an author decision: the exercise has no Lean statement, so there is nothing to check or grade."
+  }
+ ],
+ "completed": true
+}

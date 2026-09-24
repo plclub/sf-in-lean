@@ -1,0 +1,463 @@
+{
+ "file": "HL/Equiv.lean",
+ "chapter": "Equiv",
+ "round": 1,
+ "proposals": [
+  {
+   "id": "p01",
+   "cat": "formatting/blank-lines",
+   "old": "import HL.Imp\n\n\nopen Verso.Genre Manual",
+   "new": "import HL.Imp\n\nopen Verso.Genre Manual",
+   "why": "A run of two or more blank lines; the source uses at most one anywhere."
+  },
+  {
+   "id": "p02",
+   "cat": "punctuation/dash",
+   "old": "arithmetic expressions - with no variables - so",
+   "new": "arithmetic expressions -- with no variables -- so",
+   "why": "A spaced single hyphen used as a dash; the book's dash is ASCII `--` (used elsewhere in this chapter)."
+  },
+  {
+   "id": "p03",
+   "cat": "punctuation/dash",
+   "old": "full Imp language - in particular, assignment - we need",
+   "new": "full Imp language -- in particular, assignment -- we need",
+   "why": "A spaced single hyphen used as a dash; the book's dash is ASCII `--` (used elsewhere in this chapter)."
+  },
+  {
+   "id": "p04",
+   "cat": "colon/capitalization",
+   "old": "clear: Two `Aexp`s or `Bexp`s",
+   "new": "clear: two `Aexp`s or `Bexp`s",
+   "why": "Chicago lowercases a complete sentence after a colon; the chapter itself writes \"is this: two commands\" a few paragraphs later."
+  },
+  {
+   "id": "p05",
+   "cat": "formatting/blank-lines",
+   "old": "example : aexp { X - X } ≃ aexp { 0 } := by simp\n```\n\n\n```lean",
+   "new": "example : aexp { X - X } ≃ aexp { 0 } := by simp\n```\n\n```lean",
+   "why": "A run of two or more blank lines; the source uses at most one anywhere."
+  },
+  {
+   "id": "p06",
+   "cat": "formatting/code-spacing",
+   "old": "(rating := 2) (name:= \"skip_right\")",
+   "new": "(rating := 2) (name := \"skip_right\")",
+   "why": "`name := value` is spaced everywhere else in the chapter's directive arguments."
+  },
+  {
+   "id": "p07",
+   "cat": "spelling/american",
+   "old": "here is a simple equivalence that optimises `if`",
+   "new": "here is a simple equivalence that optimizes `if`",
+   "why": "The book uses American spelling (\"optimize\", \"optimization\" elsewhere in this chapter)."
+  },
+  {
+   "id": "p08",
+   "cat": "punctuation/dash",
+   "old": "no human programmer - compilers",
+   "new": "no human programmer -- compilers",
+   "why": "A spaced single hyphen used as a dash; the book's dash is ASCII `--` (used elsewhere in this chapter)."
+  },
+  {
+   "id": "p09",
+   "cat": "markup/code-font",
+   "old": "whose condition is _equivalent_ to\ntrue:",
+   "new": "whose condition is _equivalent_ to\n`true`:",
+   "why": "The Boolean constant is code-font everywhere else in this passage (\"literally `true`\")."
+  },
+  {
+   "id": "p10",
+   "cat": "markup/ascii-arrow",
+   "old": " - (`<-`) We must show",
+   "new": " - (`←`) We must show",
+   "why": "The other direction is marked with the Unicode `→`, and the later congruence proof uses `←`."
+  },
+  {
+   "id": "p11",
+   "cat": "markup/name-role",
+   "old": "of `st =[ imp {if (b) {c₁} else {c₂}} ]=> st'` was `Com.EvalR.ifFalse`.",
+   "new": "of `st =[ imp {if (b) {c₁} else {c₂}} ]=> st'` was {name}`Com.EvalR.ifFalse`.",
+   "why": "Every other mention of this constructor in the proof uses the `{name}` role; this one alone is plain code."
+  },
+  {
+   "id": "p12",
+   "cat": "content/notation",
+   "old": "i.e., forall `st`,\n     `b.eval st = (Bexp {true}).eval st`.  In particular, this means\n     that `b.eval st = true`, since `(Bexp {true}).eval st = true`.",
+   "new": "i.e., for all `st`,\n     `b.eval st = (bexp {true}).eval st`.  In particular, this means\n     that `b.eval st = true`, since `(bexp {true}).eval st = true`.",
+   "why": "\"forall\" is a Rocq keyword, not English; and the chapter's Boolean-expression notation is lowercase `bexp { … }` (`Bexp {true}` is not valid syntax)."
+  },
+  {
+   "id": "p13",
+   "cat": "content/notation",
+   "old": "we know that `b.eval st` =\n   `(Bexp {true}).eval st = true` = `true`.",
+   "new": "we know that\n   `b.eval st = (bexp {true}).eval st = true`.",
+   "why": "The chain was split across three code spans with a garbled `= true = true`; the notation is lowercase `bexp { … }`."
+  },
+  {
+   "id": "p14",
+   "cat": "consistency/surface-syntax",
+   "old": "`while (true) {skip} end` (or any other",
+   "new": "`while (true) {skip}` (or any other",
+   "why": "`end` is left over from the Rocq surface syntax; the Lean `imp` syntax has no `end` (compare `while_true` below)."
+  },
+  {
+   "id": "p15",
+   "cat": "formatting/code-spacing",
+   "old": "(name := \"while_false_informal\") (level:= Advanced) (manual:= true)",
+   "new": "(name := \"while_false_informal\") (level := Advanced) (manual := true)",
+   "why": "`name := value` is spaced everywhere else in the chapter's directive arguments."
+  },
+  {
+   "id": "p16",
+   "cat": "markup/code-spacing",
+   "old": "`st =[ c ] => st₀`",
+   "new": "`st =[ c ]=> st₀`",
+   "why": "`]=>` is a single token of the evaluation notation; the stray space breaks it."
+  },
+  {
+   "id": "p17",
+   "cat": "punctuation/list",
+   "old": "leads to a contradiction,\n\n  We obtain",
+   "new": "leads to a contradiction.\n\n  We obtain",
+   "why": "The last item of the numbered list ends with a comma; the preceding item ends with a period."
+  },
+  {
+   "id": "p18",
+   "cat": "formatting/code-spacing",
+   "old": "(name := \"while_true_nonterm_informal\") (manual:= true)",
+   "new": "(name := \"while_true_nonterm_informal\") (manual := true)",
+   "why": "`name := value` is spaced everywhere else in the chapter's directive arguments."
+  },
+  {
+   "id": "p19",
+   "cat": "formatting/code-spacing",
+   "old": "(name := \"seq_assoc\") (optional:= true)",
+   "new": "(name := \"seq_assoc\") (optional := true)",
+   "why": "`name := value` is spaced everywhere else in the chapter's directive arguments."
+  },
+  {
+   "id": "p20",
+   "cat": "formatting/code-spacing",
+   "old": "(name := \"equiv_classes\") (manual:= true)",
+   "new": "(name := \"equiv_classes\") (manual := true)",
+   "why": "`name := value` is spaced everywhere else in the chapter's directive arguments."
+  },
+  {
+   "id": "p21",
+   "cat": "punctuation/missing-period",
+   "old": "in the definition of  `equiv_classes`\n\n```lean",
+   "new": "in the definition of `equiv_classes`.\n\n```lean",
+   "why": "The sentence has no final period (and a double space before the code span)."
+  },
+  {
+   "id": "p22",
+   "cat": "typo/word-form",
+   "old": "# Properties of Behavior Equivalence",
+   "new": "# Properties of Behavioral Equivalence",
+   "why": "The chapter's term is \"behavioral equivalence\" (first section heading and both subsections below)."
+  },
+  {
+   "id": "p23",
+   "cat": "punctuation/ie-comma",
+   "old": "_equivalences_ - ie, that they",
+   "new": "_equivalences_ -- i.e., that they",
+   "why": "\"ie\" is written \"i.e.,\" everywhere else in the chapter; and the spaced hyphen is the book's `--` dash."
+  },
+  {
+   "id": "p24",
+   "cat": "grammar/idiom",
+   "old": "one needs only supply proofs",
+   "new": "one need only supply proofs",
+   "why": "The idiom takes the bare modal \"need\" (\"one need only …\"); \"needs only supply\" mixes the two constructions."
+  },
+  {
+   "id": "p25",
+   "cat": "punctuation/dash",
+   "old": "change - i.e., the \"proof burden\"",
+   "new": "change -- i.e., the \"proof burden\"",
+   "why": "A spaced single hyphen used as a dash; the book's dash is ASCII `--` (used elsewhere in this chapter)."
+  },
+  {
+   "id": "p26",
+   "cat": "formatting/blank-lines",
+   "old": "program!\n::::\n\n\n```lean",
+   "new": "program!\n::::\n\n```lean",
+   "why": "A run of two or more blank lines; the source uses at most one anywhere."
+  },
+  {
+   "id": "p27",
+   "cat": "typo/notation",
+   "old": "`st =[ while (b) {c} ]=> st'` iff `st = while (b') {c'}]=> st'`.",
+   "new": "`st =[ while (b) {c} ]=> st'` iff `st =[ while (b') {c'} ]=> st'`.",
+   "why": "The second evaluation judgment is missing its `[` (and the space before `]=>`)."
+  },
+  {
+   "id": "p28",
+   "cat": "typo/notation",
+   "old": "`st'₀ =[ while {b} {c} ]=> st'`",
+   "new": "`st'₀ =[ while (b) {c} ]=> st'`",
+   "why": "The guard of a `while` takes parentheses, not braces."
+  },
+  {
+   "id": "p29",
+   "cat": "typo/notation",
+   "old": "we know that `st =[ c']=> st'0`.",
+   "new": "we know that `st =[ c' ]=> st'₀`.",
+   "why": "`st'0` should be the subscripted `st'₀` used throughout the case; also restores the space before `]=>`."
+  },
+  {
+   "id": "p30",
+   "cat": "formatting/blank-lines",
+   "old": "by rfl\n```\n\n\n## The Constant-Folding Transformation",
+   "new": "by rfl\n```\n\n## The Constant-Folding Transformation",
+   "why": "A run of two or more blank lines; the source uses at most one anywhere."
+  },
+  {
+   "id": "p31",
+   "cat": "agreement/subject-verb",
+   "old": "what named cases hypotheses does",
+   "new": "what named `cases` hypotheses do",
+   "why": "Plural subject \"hypotheses\" takes \"do\"; `cases` is the tactic name."
+  },
+  {
+   "id": "p32",
+   "cat": "punctuation/stray",
+   "old": "rewriting `0 + X` to just  `X`).: we are focusing",
+   "new": "rewriting `0 + X` to just `X`): we are focusing",
+   "why": "The stray period before the colon (and the double space before `X`)."
+  },
+  {
+   "id": "p33",
+   "cat": "formatting/blank-lines",
+   "old": "  | _ => simp [foldConstants, hb₁]\n\n\n```\n```lean",
+   "new": "  | _ => simp [foldConstants, hb₁]\n```\n\n```lean",
+   "why": "Two blank lines inside the code block before its closing fence, and none between it and the next block."
+  },
+  {
+   "id": "p34",
+   "cat": "formatting/code-spacing",
+   "old": "  | imp { c₁ ; c₂ } =>  imp { c₁.foldConstants",
+   "new": "  | imp { c₁ ; c₂ } => imp { c₁.foldConstants",
+   "why": "Double space after `=>`; the other match arms use one."
+  },
+  {
+   "id": "p35",
+   "cat": "naming/stale-identifier",
+   "old": "`Bexp.fold_constants`, is sound.\n\n_Proof_: We must show that `b` is equivalent to `Bexp.fold_constants b`,",
+   "new": "{name}`Bexp.foldConstants`, is sound.\n\n_Proof_: We must show that `b` is equivalent to `b.foldConstants`,",
+   "why": "The function is `Bexp.foldConstants` in this chapter; `fold_constants` is the Rocq name."
+  },
+  {
+   "id": "p36",
+   "cat": "naming/stale-identifier",
+   "old": "  Bexp.fold_constants (bexp { a₁ = a₂ }) = if",
+   "new": "  (bexp { a₁ = a₂ }).foldConstants = if",
+   "why": "The function is `Bexp.foldConstants`; written in the dot form used by every other display in this proof."
+  },
+  {
+   "id": "p37",
+   "cat": "typo/notation",
+   "old": "          bexp { a₁ = a₂ }.eval st\n         = a₁.eval st = a₂.aeval st",
+   "new": "          (bexp { a₁ = a₂ }).eval st\n         = a₁.eval st = a₂.eval st",
+   "why": "`aeval` is the Rocq name (it is `eval` everywhere else), and the `bexp { … }` needs parentheses before `.eval`, as in the other displays."
+  },
+  {
+   "id": "p38",
+   "cat": "punctuation/stray",
+   "old": "         = n₁ = n₂.\n         = (if",
+   "new": "         = n₁ = n₂\n         = (if",
+   "why": "A period in the middle of an equational chain."
+  },
+  {
+   "id": "p39",
+   "cat": "typo/notation",
+   "old": "           bexp { a₁ = a₂ }.eval st\n         = (bexp { (a₁.foldConstants",
+   "new": "           (bexp { a₁ = a₂ }).eval st\n         = (bexp { (a₁.foldConstants",
+   "why": "The `bexp { … }` needs parentheses before `.eval`, as in the other displays."
+  },
+  {
+   "id": "p40",
+   "cat": "content/notation",
+   "old": "         a₁ = (a₁.foldConstants).eval st\n         a₂ = (a₂.foldConstants).eval st",
+   "new": "         a₁.eval st = (a₁.foldConstants).eval st\n         a₂.eval st = (a₂.foldConstants).eval st",
+   "why": "The soundness lemma equates the *values* `a₁.eval st` and `(a₁.foldConstants).eval st`, not `a₁` itself."
+  },
+  {
+   "id": "p41",
+   "cat": "formatting/code-spacing",
+   "old": "        cases b.foldConstants  <;> (try simp_all; done)",
+   "new": "        cases b.foldConstants <;> (try simp_all; done)",
+   "why": "Double space before `<;>`; every sibling case has one."
+  },
+  {
+   "id": "p42",
+   "cat": "punctuation/dash",
+   "old": "{name}`Com.optimize0plus` - otherwise it will be _long_!",
+   "new": "{name}`Com.optimize0plus` -- otherwise it will be _long_!",
+   "why": "A spaced single hyphen used as a dash; the book's dash is ASCII `--` (used elsewhere in this chapter)."
+  },
+  {
+   "id": "p43",
+   "cat": "formatting/code-spacing",
+   "old": "theorem Aexp.optimize0plus_sound: Aexp.TransSound",
+   "new": "theorem Aexp.optimize0plus_sound : Aexp.TransSound",
+   "why": "Missing space before the type-ascription colon."
+  },
+  {
+   "id": "p44",
+   "cat": "formatting/code-spacing",
+   "old": "theorem Bexp.optimize0plus_sound: Bexp.TransSound",
+   "new": "theorem Bexp.optimize0plus_sound : Bexp.TransSound",
+   "why": "Missing space before the type-ascription colon."
+  },
+  {
+   "id": "p45",
+   "cat": "formatting/code-spacing",
+   "old": "theorem Com.optimize0plus_sound: Com.TransSound",
+   "new": "theorem Com.optimize0plus_sound : Com.TransSound",
+   "why": "Missing space before the type-ascription colon."
+  },
+  {
+   "id": "p46",
+   "cat": "formatting/spacing",
+   "old": "(using{name}`Com.optimize0plus`)",
+   "new": "(using {name}`Com.optimize0plus`)",
+   "why": "Missing space between \"using\" and the name."
+  },
+  {
+   "id": "p47",
+   "cat": "agreement/number",
+   "old": "Clearly, this _particular_ `c₁` and `c₂` are equivalent.",
+   "new": "Clearly, these _particular_ `c₁` and `c₂` are equivalent.",
+   "why": "Two commands: \"these\", matching the plural \"are\"."
+  },
+  {
+   "id": "p48",
+   "cat": "hyphenation/consistency",
+   "old": "if you can find a counter-example on your",
+   "new": "if you can find a counterexample on your",
+   "why": "The chapter spells it \"counterexample\" everywhere else (\"Here is a counterexample\")."
+  },
+  {
+   "id": "p49",
+   "cat": "formatting/code-spacing",
+   "old": "  Aexp.subst X (aexp { 42 + 53 })  (aexp { Y + X })\n  = (aexp {  Y + (42 + 53) })",
+   "new": "  Aexp.subst X (aexp { 42 + 53 }) (aexp { Y + X })\n  = (aexp { Y + (42 + 53) })",
+   "why": "Stray double spaces in the example."
+  },
+  {
+   "id": "p50",
+   "cat": "formatting/blank-lines",
+   "old": "(imp { x₁ := a₁; x₂ := ~(Aexp.subst x₁ a₁ a₂) })\n```\n\n\nSadly",
+   "new": "(imp { x₁ := a₁; x₂ := ~(Aexp.subst x₁ a₁ a₂) })\n```\n\nSadly",
+   "why": "A run of two or more blank lines; the source uses at most one anywhere."
+  },
+  {
+   "id": "p51",
+   "cat": "formatting/code-spacing",
+   "old": "theorem inequiv_exercise:\n",
+   "new": "theorem inequiv_exercise :\n",
+   "why": "Missing space before the type-ascription colon."
+  },
+  {
+   "id": "p52",
+   "cat": "typo/missing-word",
+   "old": "depending how\nthe compiler chooses",
+   "new": "depending on how\nthe compiler chooses",
+   "why": "\"depending on how\"."
+  },
+  {
+   "id": "p53",
+   "cat": "content/docstring",
+   "old": "/-- Assignment -/\nsyntax:max \"havoc\"",
+   "new": "/-- Havoc -/\nsyntax:max \"havoc\"",
+   "why": "The docstring was copied from the assignment production; this is the `havoc` command."
+  },
+  {
+   "id": "p54",
+   "cat": "formatting/blank-lines",
+   "old": ":::\n\n\nAs a sanity check",
+   "new": ":::\n\nAs a sanity check",
+   "why": "A run of two or more blank lines; the source uses at most one anywhere."
+  },
+  {
+   "id": "p55",
+   "cat": "formatting/code-spacing",
+   "old": "def pXY := imp { havoc X ; havoc Y }",
+   "new": "def pXY := imp { havoc X; havoc Y }",
+   "why": "Matches `pYX` on the next line and the chapter's `c₁; c₂` spacing."
+  },
+  {
+   "id": "p56",
+   "cat": "markup/code-font",
+   "old": "arbitrary\nx and y, not just the (distinct) string constants X and Y; this is",
+   "new": "arbitrary\n`x` and `y`, not just the (distinct) string constants `X` and `Y`; this is",
+   "why": "Variable and identifier names are code-font elsewhere in the chapter."
+  },
+  {
+   "id": "p57",
+   "cat": "markup/backtick",
+   "old": "You can use `contradiction to discharge this.",
+   "new": "You can use `contradiction` to discharge this.",
+   "why": "Unclosed code span."
+  },
+  {
+   "id": "p58",
+   "cat": "usage/preposition",
+   "old": "has some\nsubtle consequences on programs",
+   "new": "has some\nsubtle consequences for programs",
+   "why": "\"consequences for\" is the idiom."
+  },
+  {
+   "id": "p59",
+   "cat": "formatting/code-spacing",
+   "old": "def p₂ : Com :=\n  imp{",
+   "new": "def p₂ : Com :=\n  imp {",
+   "why": "Missing space before `{`; every other `imp { … }` has one."
+  },
+  {
+   "id": "p60",
+   "cat": "formatting/blank-lines",
+   "old": "::::\n:::::\n\n\n\n:::::full\n::::exercise (rating := 5)",
+   "new": "::::\n:::::\n\n:::::full\n::::exercise (rating := 5)",
+   "why": "A run of two or more blank lines; the source uses at most one anywhere."
+  },
+  {
+   "id": "p61",
+   "cat": "typo/article",
+   "old": "when given a same starting state",
+   "new": "when given the same starting state",
+   "why": "\"the same\", not \"a same\"."
+  },
+  {
+   "id": "p62",
+   "cat": "punctuation/colon",
+   "old": "on the basis that: if `p₅` terminates it\nproduces",
+   "new": "on the basis that if `p₅` terminates, it\nproduces",
+   "why": "A colon cannot separate \"that\" from its clause; the comma marks the end of the conditional."
+  },
+  {
+   "id": "p63",
+   "cat": "formatting/double-space",
+   "old": "\"Does `st =[ p₆ ]=> st'`?\"  is \"Yes\".",
+   "new": "\"Does `st =[ p₆ ]=> st'`?\" is \"Yes\".",
+   "why": "Double space in mid-sentence (the question mark belongs to the quotation, not the sentence)."
+  },
+  {
+   "id": "p64",
+   "cat": "punctuation/dash",
+   "old": "(Hint: You may or may not - depending how you approach it - need",
+   "new": "(Hint: You may or may not -- depending on how you approach it -- need",
+   "why": "Spaced hyphens used as dashes (the book's dash is `--`), and \"depending on how\"."
+  },
+  {
+   "id": "p65",
+   "cat": "comma/introductory",
+   "old": "In this exercise we define an asymmetric",
+   "new": "In this exercise, we define an asymmetric",
+   "why": "Introductory phrase; the chapter uses the comma elsewhere (\"In this exercise, we will extend Imp\")."
+  }
+ ],
+ "completed": true
+}

@@ -4,7 +4,6 @@ import LF.CustomTactics
 import LF.Typeclasses
 import HL.Imp
 
-
 open Verso.Genre Manual
 open SFLMeta
 
@@ -19,19 +18,43 @@ file := some "Equiv"
 open scoped HasEval MyGetElem Com
 ```
 
+::::full
+Advice for Working on Exercises:
+
+- Most of the Lean proofs we ask you to do in this chapter are
+  similar to proofs that we've provided.  Before starting to work
+  on exercises, take the time to work through our proofs (both
+  informally and in Lean) and make sure you understand them in
+  detail.  This will save you a lot of effort.
+
+- The Lean proofs we're doing now are sufficiently complicated that
+  it is more or less impossible to complete them by random
+  experimentation or following your nose.  You need to start with
+  an idea about why the property is true and how the proof is
+  going to go.  The best way to do this is to write out at least a
+  sketch of an informal proof on paper -- one that intuitively
+  convinces you of the truth of the theorem -- before starting to
+  work on the formal one.  Alternately, grab a friend and try to
+  convince them that the theorem is true; then try to formalize
+  your explanation.
+
+- Use automation to save work!  The proofs in this chapter can get
+  pretty long if you try to write out all the cases explicitly.
+::::
+
 # Behavioral Equivalence
 
 ::::full
 In {ref "Slang"}[an earlier chapter], we investigated the correctness of a very
 simple program transformation: the `optimize0plus` function.  The
 programming language we were considering was the first version of
-the language of arithmetic expressions - with no variables - so
+the language of arithmetic expressions -- with no variables -- so
 in that setting it was very easy to define what it means for a
 program transformation to be correct: it should always yield a
 program that evaluates to the same number as the original.
 
 To talk about the correctness of program transformations for the
-full Imp language - in particular, assignment - we need to
+full Imp language -- in particular, assignment -- we need to
 consider the role of mutable state and develop a more
 sophisticated notion of correctness, which we'll call _behavioral
 equivalence_.
@@ -48,7 +71,7 @@ For example:
 
 ::::full
 For `Aexp`s and `Bexp`s with variables, the definition we want is
-clear: Two `Aexp`s or `Bexp`s are "behaviorally equivalent" if
+clear: two `Aexp`s or `Bexp`s are "behaviorally equivalent" if
 they evaluate to the same result in every state.
 ::::
 
@@ -62,13 +85,16 @@ def Bexp.Equiv (b₁ b₂ : Bexp) : Prop :=
     b₁.eval st = b₂.eval st
 ```
 
-We'll also define a notation for `Equiv`:
+We'll also define a type class `Equiv`, so that these relations (and
+the one for commands, below) can all be written with the notation
+`≃`.  The `@[simp]` lemmas let {tactic}`simp` unfold the notation back to the
+definitions:
 
 ```lean
 class Equiv (α : Type) where
   equiv : α → α → Prop
 
-infix:70 " ≃ " => Equiv.equiv -- you can type `≃` as \equiv
+infix:70 " ≃ " => Equiv.equiv -- you can type `≃` as \simeq
 
 instance : Equiv Aexp where
   equiv := Aexp.Equiv
@@ -97,7 +123,6 @@ and boolean expressions.
 ```lean
 example : aexp { X - X } ≃ aexp { 0 } := by simp
 ```
-
 
 ```lean
 example : bexp { X - X = 0 } ≃ bexp { true } := by simp
@@ -132,6 +157,92 @@ theorem Com.equiv_def {c₁ c₂ : Com} : c₁ ≃ c₂ ↔
     ∀ {st st' : State}, (st =[ c₁ ]=> st') ↔ (st =[ c₂ ]=> st') := by rfl
 ```
 
+::::quiz
+Are these two programs equivalent?
+
+```display
+X := 1;
+Y := 2
+```
+
+and
+
+```display
+Y := 2;
+X := 1
+```
+
+(A) Yes    (B) No    (C) Not sure
+::::
+
+::::quiz
+What about these?
+
+```display
+X := 1;
+Y := 2
+```
+
+and
+
+```display
+X := 2;
+Y := 1
+```
+
+(A) Yes    (B) No    (C) Not sure
+::::
+
+::::quiz
+What about these?
+
+```display
+while (1 ≤ X) {
+  X := X + 1
+}
+```
+
+and
+
+```display
+while (2 ≤ X) {
+  X := X + 1
+}
+```
+
+(A) Yes    (B) No    (C) Not sure
+
+:::instructors
+No. (When started in a state where variable `X` has value `1`,
+the first program diverges while the second one halts.)
+:::
+::::
+
+::::quiz
+These?
+
+```display
+while (true) {
+  while (false) { X := X + 1 }
+}
+```
+
+and
+
+```display
+while (false) {
+  while (true) { X := X + 1 }
+}
+```
+
+(A) Yes    (B) No    (C) Not sure
+
+:::instructors
+No. (The first program always diverges; the second
+always halts.)
+:::
+::::
+
 ## Simple Examples
 
 ```lean
@@ -158,7 +269,8 @@ theorem skip_left {c : Com} : imp { skip; c } ≃ c := by
       exact EvalR.seq EvalR.skip h
 ```
 
-:::::exercise (rating := 2) (name:= "skip_right")
+::::::full
+:::::exercise (rating := 2) (name := "skip_right")
 Prove that adding a {name}`skip` _after_ a command also results in an
 equivalent program.
 
@@ -176,10 +288,14 @@ theorem skip_right {c : Com} : imp { c; skip } ≃ c := by
     · intro h
       exact EvalR.seq h EvalR.skip
 ```
+
+:::gradeTheorem 2 skip_right
+:::
 :::::
+::::::
 
 ::::full
-Similarly, here is a simple equivalence that optimises `if`
+Similarly, here is a simple equivalence that optimizes `if`
 commands.
 ::::
 
@@ -199,10 +315,10 @@ theorem if_true_simple {c₁ c₂ : Com} : imp {if (true) {c₁} else {c₂}} �
 
 ::::full
 Of course, no programmer would write a conditional whose condition
-is literally `true`.  (At least, no human programmer - compilers
+is literally `true`.  (At least, no human programmer -- compilers
 and macro preprocessors do this sort of thing internally all the
 time!) But they might write one whose condition is _equivalent_ to
-true:
+`true`:
 ::::
 
 ::::full
@@ -222,22 +338,22 @@ _Proof_:
      `st =[ c₁ ]=> st'`. This is exactly what we set out to prove.
 
    - On the other hand, suppose the final rule in the derivation
-     of `st =[ imp {if (b) {c₁} else {c₂}} ]=> st'` was `Com.EvalR.ifFalse`.
+     of `st =[ imp {if (b) {c₁} else {c₂}} ]=> st'` was {name}`Com.EvalR.ifFalse`.
      We then know that `b.eval st = false` and `st =[ c₂ ]=> st'`.
 
-     Recall that `b` is equivalent to `true`, i.e., forall `st`,
-     `b.eval st = (Bexp {true}).eval st`.  In particular, this means
-     that `b.eval st = true`, since `(Bexp {true}).eval st = true`.  But
+     Recall that `b` is equivalent to `true`, i.e., for all `st`,
+     `b.eval st = (bexp {true}).eval st`.  In particular, this means
+     that `b.eval st = true`, since `(bexp {true}).eval st = true`.  But
      this is a contradiction, since {name}`Com.EvalR.ifFalse` requires that
      `b.eval st = false`.  Thus, the final rule could not have
      been {name}`Com.EvalR.ifFalse`.
 
- - (`<-`) We must show, for all `st` and `st'`, that if
+ - (`←`) We must show, for all `st` and `st'`, that if
    `st =[ c₁ ]=> st'` then
    `st =[ imp {if (b) {c₁} else {c₂}} ]=> st'`.
 
-   Since `b` is equivalent to `true`, we know that `b.eval st` =
-   `(Bexp {true}).eval st = true` = `true`.  Together with the assumption that
+   Since `b` is equivalent to `true`, we know that
+   `b.eval st = (bexp {true}).eval st = true`.  Together with the assumption that
    `st =[ c₁ ]=> st'`, we can apply {name}`Com.EvalR.ifTrue` to derive
    `st =[ imp {if (b) {c₁} else {c₂}} ]=> st'`.
 ::::
@@ -247,7 +363,7 @@ Here is the formal version of this proof:
 ::::
 
 ```lean
-theorem if_true {b : Bexp} {c₁ c₂ : Com} (hb : b ≃ bexp {true}) :
+theorem if_true {b : Bexp} {c₁ c₂ : Com} (hb : bexp {true} ≃ b ) :
     imp {if (b) {c₁} else {c₂}} ≃ c₁ := by
   rw [equiv_def]
   intro st st'
@@ -262,7 +378,7 @@ theorem if_true {b : Bexp} {c₁ c₂ : Com} (hb : b ≃ bexp {true}) :
 :::::full
 ::::exercise (rating := 2) (name := "if_false_equiv")
 ```lean
-theorem if_false {b : Bexp} {c₁ c₂ : Com} (hb : b ≃ bexp {false}) :
+theorem if_false {b : Bexp} {c₁ c₂ : Com} (hb : bexp {false} ≃ b) :
     imp {if (b) {c₁} else {c₂}} ≃ c₂ := by
   solution!
     rw [equiv_def]
@@ -274,6 +390,9 @@ theorem if_false {b : Bexp} {c₁ c₂ : Com} (hb : b ≃ bexp {false}) :
       apply EvalR.ifFalse _ h
       simp_all
 ```
+
+:::gradeTheorem 2 if_false
+:::
 ::::
 :::::
 
@@ -307,6 +426,9 @@ theorem swap_if_branches {b : Bexp} {c₁ c₂ : Com} :
         apply EvalR.ifTrue _ hc
         simp_all
 ```
+
+:::gradeTheorem 3 swap_if_branches
+:::
 ::::
 :::::
 
@@ -314,7 +436,7 @@ theorem swap_if_branches {b : Bexp} {c₁ c₂ : Com} :
 For `while` loops, we can give a similar pair of theorems.  A loop
 whose guard is equivalent to {name}`false` is equivalent to {name}`skip`,
 while a loop whose guard is equivalent to {name}`true` is equivalent to
-`while (true) {skip} end` (or any other non-terminating program).
+`while (true) {skip}` (or any other non-terminating program).
 ::::
 
 ::::full
@@ -339,8 +461,45 @@ theorem while_false {b : Bexp} {c : Com} (hb : b ≃ bexp {false}) :
 ```
 
 :::::full
-::::exercise (rating := 2) (name := "while_false_informal") (level:= Advanced) (manual:= true)
+::::exercise (rating := 2) (name := "while_false_informal") (level := Advanced) (manual := true) (optional := true)
 Write an informal proof of `while_false`.
+
+:::solution
+_Theorem_: For all `b` and `c`, if `b` is equivalent to `false`,
+then `while (b) {c}` is equivalent to `skip`.
+
+_Proof_:
+- (`→`) We know that `b` is equivalent to `false`.  We must
+  show, for all `st` and `st'`, that if
+  `st =[ while (b) {c} ]=> st'` then `st =[ skip ]=> st'`.
+
+  There are only two ways we can have `st =[ while (b) {c} ]=> st'`:
+  using `Com.EvalR.whileFalse` and `Com.EvalR.whileTrue`.
+
+  - Suppose the final rule used to show `st =[ while (b) {c} ]=> st'`
+    was `Com.EvalR.whileFalse`.  We then know that `st = st'`;
+    by `Com.EvalR.skip`, we know that `st =[ skip ]=> st`.
+
+  - Suppose the final rule used to show `st =[ while (b) {c} ]=> st'`
+    was `Com.EvalR.whileTrue`.  But this rule only applies when
+    `b.eval st = true`.  However, we are assuming that
+    `b` is equivalent to `false`, i.e., for all
+    `st`, `b.eval st = (bexp {false}).eval st = false`.  So we have
+    a contradiction, and the final rule could not have been
+    `Com.EvalR.whileTrue` after all.
+
+- (`←`) We know that `b` is equivalent to `false`.  We must
+  show, for all `st` and `st'`, that if `st =[ skip ]=> st'`
+  then `st =[ while (b) {c} ]=> st'`.
+
+  `Com.EvalR.skip` is the only rule that could have proven
+  `st =[ skip ]=> st'`, so we know that `st' = st`.  We must show
+  that `st =[ while (b) {c} ]=> st`.
+
+  Since `b` is equivalent to `false`, we know that
+  `b.eval st = false`.  By `Com.EvalR.whileFalse`, then, we can derive
+  that `st =[ while (b) {c} ]=> st`, and we are done.
+:::
 ::::
 :::::
 
@@ -369,10 +528,10 @@ are contradictory.
   {name}`Com.EvalR.whileTrue`.  We must have:
 
   1. `b.eval st = true`, and
-  2. there is some `st₀` such that `st =[ c ] => st₀` and
+  2. there is some `st₀` such that `st =[ c ]=> st₀` and
      `st₀ =[ while (b) {c} ]=> st'`.
   3. Also, we are given an induction hypothesis saying that
-     `st₀ =[ while (b) {c} ]=> st'` leads to a contradiction,
+     `st₀ =[ while (b) {c} ]=> st'` leads to a contradiction.
 
   We obtain a contradiction by 2 and 3.
 ::::
@@ -395,8 +554,20 @@ theorem while_true_nonterm {b : Bexp} {c : Com} {st st' : State} (hb : b ≃ bex
 ```
 
 :::::full
-::::exercise (rating := 2) (name := "while_true_nonterm_informal") (manual:= true)
+::::exercise (rating := 2) (name := "while_true_nonterm_informal") (manual := true) (optional := true)
 Explain what the lemma `while_true_nonterm` means in English.
+
+:::solution
+The lemma `while_true_nonterm` claims that if a `Bexp` `b` is
+equivalent to `true` (i.e., if `∀ st, b.eval st = true`),
+then it is not possible to construct a derivation
+`st =[ while (b) {c} ]=> st'` for any `st`, `st'`, or `c`.
+
+We can understand this lack of a derivation as nontermination: the
+reason a derivation can't be constructed is because the
+`Com.EvalR.whileTrue` rule would need to be applied infinitely many times,
+but derivations are finite.
+:::
 ::::
 
 ::::exercise (rating := 2) (name := "while_true")
@@ -420,6 +591,9 @@ theorem while_true {b : Bexp} {c : Com} (hb : b ≃ bexp {true}) :
       intro
       rfl
 ```
+
+:::gradeTheorem 2 while_true
+:::
 ::::
 :::::
 
@@ -464,7 +638,7 @@ theorem loop_unrolling {b : Bexp} {c : Com} :
 ```
 
 :::::full
-::::exercise (rating := 2) (name := "seq_assoc") (optional:= true)
+::::exercise (rating := 2) (name := "seq_assoc") (optional := true)
 ```lean
 theorem seq_assoc {c₁ c₂ c₃ : Com} :
   imp {~(imp {c₁; c₂}); c₃} ≃ imp {c₁; c₂; c₃} := by
@@ -535,11 +709,14 @@ theorem assign_equiv {X : Ident} {a : Aexp} (ha : aexp { X } ≃ a) :
         simp only [← ha, Aexp.eval_id, TotalMap.update_same]
         exact Com.EvalR.skip
 ```
+
+:::gradeTheorem 2 assign_equiv
+:::
 ::::
 :::::
 
 :::::full
-::::exercise (rating := 2) (name := "equiv_classes") (manual:= true) (optional := true)
+::::exercise (rating := 2) (name := "equiv_classes") (manual := true) (optional := true)
 Given the following programs, group together those that are
 equivalent in Imp. Your answer should be given as a list of lists,
 where each sub-list represents a group of equivalent programs. For
@@ -550,7 +727,7 @@ to each other, but not to (i), your answer should look like this:
 [ [progA, progB, progC, progD, progE, progF, progG, progH], [progI] ]
 ```
 
-Write down your answer below in the definition of  `equiv_classes`
+Write down your answer below in the definition of `equiv_classes`.
 
 ```lean
 def progA : Com :=
@@ -624,10 +801,16 @@ def equiv_classes : List (List Com) := solution!(
     [progI] ]
 )
 ```
+
+:::grade
+```
+GRADE_MANUAL 2: equiv_classes
+```
+:::
 ::::
 :::::
 
-# Properties of Behavior Equivalence
+# Properties of Behavioral Equivalence
 
 ::::full
 We next consider some fundamental properties of program equivalence.
@@ -637,22 +820,31 @@ We next consider some fundamental properties of program equivalence.
 
 ::::full
 First, let's verify that the equivalences on {name}`Aexp`s, {name}`Bexp`s, and
-{name}`Com`s really are _equivalences_ - ie, that they are reflexive,
-symmetric, and transitive. These proofs are all easy.
+{name}`Com`s really are _equivalences_ -- i.e., that they are reflexive,
+symmetric, and transitive. These proofs are all easy. We also register
+the reflexivity lemmas with the `@[refl]` tag to the {tactic}`rfl` to
+prove goals about them and the symmetry lemmas with the `@[symm]` tag
+to swap sides of goals about equivalence using the {tactic}`symm`.
 ::::
 
 ```lean
 end Com
 
+@[refl]
 theorem Aexp.equiv_refl (a : Aexp) : a ≃ a := by simp_all
+@[symm]
 theorem Aexp.equiv_symm {a₁ a₂ : Aexp} (h : a₁ ≃ a₂) : a₂ ≃ a₁ := by simp_all
 theorem Aexp.equiv_trans {a₁ a₂ a₃ : Aexp} (h₁ : a₁ ≃ a₂) (h₂ : a₂ ≃ a₃) : a₁ ≃ a₃ := by simp_all
 
+@[refl]
 theorem Bexp.equiv_refl {b : Bexp} : b ≃ b := by simp_all
+@[symm]
 theorem Bexp.equiv_symm {b₁ b₂ : Bexp} (h : b₁ ≃ b₂) : b₂ ≃ b₁ := by simp_all
 theorem Bexp.equiv_trans {b₁ b₂ b₃ : Bexp} (h₁ : b₁ ≃ b₂) (h₂ : b₂ ≃ b₃) : b₁ ≃ b₃ := by simp_all
 
+@[refl]
 theorem Com.equiv_refl {c : Com} : c ≃ c := by simp_all
+@[symm]
 theorem Com.equiv_symm {c₁ c₂ : Com} (h : c₁ ≃ c₂) : c₂ ≃ c₁ := by simp_all
 theorem Com.equiv_trans {c₁ c₂ c₃ : Com} (h₁ : c₁ ≃ c₂) (h₂ : c₂ ≃ c₃) : c₁ ≃ c₃ := by simp_all
 ```
@@ -660,7 +852,7 @@ theorem Com.equiv_trans {c₁ c₂ c₃ : Com} (h₁ : c₁ ≃ c₂) (h₂ : c�
 ::::full
 Lean has a standard library definition for relations that are equivalences, unsurprisingly called
 {name}`Equivalence`. To show that a relation is an {name}`Equivalence`,
-one needs only supply proofs of the three properties above:
+one need only supply proofs of the three properties above:
 
 ```lean
 theorem Com.equiv_equivalence : Equivalence Com.Equiv where
@@ -673,19 +865,20 @@ theorem Com.equiv_equivalence : Equivalence Com.Equiv where
 ## Behavioral Equivalence is a Congruence
 
 ::::full
-
 Less obviously, behavioral equivalence is also a _congruence_.
 That is, the equivalence of two subprograms implies the
 equivalence of the larger programs in which they are embedded:
 
-              a ≃ a'
-     -------------------------
-        (x := a) ≃ (x := a')
+```
+       a ≃ a'
+----------------------
+(x := a) ≃ (x := a')
 
-            c₁ ≃ c₁'
-            c₂ ≃ c₂'
-     --------------------------
-      (c₁ ; c₂) ≃ (c₁' ; c₂')
+      c₁ ≃ c₁'
+      c₂ ≃ c₂'
+----------------------
+(c₁; c₂) ≃ (c₁'; c₂')
+```
 
 ... and so on for the other forms of commands.
 
@@ -698,15 +891,14 @@ implications below.)
 ::::full
 We will see a concrete example of why these congruence
 properties are important in the following section (in the proof of
-`fold_constants_com_sound`), but the main idea is that they allow
+`Com.foldConstants_sound`), but the main idea is that they allow
 us to replace a small part of a large program with an equivalent
 small part and know that the whole large programs are equivalent
 _without_ doing an explicit proof about the parts that didn't
-change - i.e., the "proof burden" of a small change to a large
+change -- i.e., the "proof burden" of a small change to a large
 program is proportional to the size of the change, not the
 program!
 ::::
-
 
 ```lean
 theorem Com.congruence_asgn {x : Ident} {a a' : Aexp} (ha : a ≃ a') :
@@ -732,7 +924,7 @@ _Theorem_: Equivalence is a congruence for `while` -- that is, if
 
 _Proof_: Suppose `b` is equivalent to `b'` and `c` is
 equivalent to `c'`.  We must show, for every `st` and `st'`, that
-`st =[ while (b) {c} ]=> st'` iff `st = while (b') {c'}]=> st'`.
+`st =[ while (b) {c} ]=> st'` iff `st =[ while (b') {c'} ]=> st'`.
 We consider the two directions separately.
 
   - (`→`) We show that `st =[ while (b) {c} ]=> st'` implies
@@ -748,11 +940,11 @@ We consider the two directions separately.
         `st =[ while (b') {c'} ]=> st'`, as required.
 
       - {name}`Com.EvalR.whileTrue`: The form of the rule now gives us `b.eval st = true`,
-        with `st =[ c ]=> st'₀` and `st'₀ =[ while {b} {c} ]=> st'`
+        with `st =[ c ]=> st'₀` and `st'₀ =[ while (b) {c} ]=> st'`
         for some state `st'₀`, with the
         induction hypothesis `st'₀ =[ while (b') {c'} ]=> st'`.
 
-        Since `c` and `c'` are equivalent, we know that `st =[ c']=> st'0`.
+        Since `c` and `c'` are equivalent, we know that `st =[ c' ]=> st'₀`.
         And since `b` and `b'` are equivalent,
         we have `b'.eval st = true`.  Now {name}`Com.EvalR.whileTrue` applies,
         giving us `st =[ while (b') {c'} ]=> st'`, as
@@ -836,8 +1028,8 @@ theorem Com.congruence_seq {c₁ c₁' c₂ c₂' : Com} (hc₁ : c₁ ≃ c₁'
 ```lean
 theorem Com.congruence_if {b b' : Bexp} {c₁ c₁' c₂ c₂' : Com}
    (hb : b ≃ b') (hc₁ : c₁ ≃ c₁') (hc₂ : c₂ ≃ c₂') :
-    (imp {if (b) {c₁} else {c₂}}).Equiv
-    (imp {if (b') {c₁'} else {c₂'}}) := by
+    imp {if (b) {c₁} else {c₂}} ≃
+    imp {if (b') {c₁'} else {c₂'}} := by
   solution!(
     intro st st'
     constructor
@@ -867,11 +1059,14 @@ theorem Com.congruence_if {b b' : Bexp} {c₁ c₁' c₂ c₂' : Com}
           exact (hc₂.mpr hc₂')
   )
 ```
+
+:::gradeTheorem 3 Com.congruence_if
+:::
 ::::
 :::::
 
 ::::full
-For example, here are two programs and a proof of their equivalence using their congruence theorems.
+For example, here are two programs and a proof of their equivalence using the congruence theorems.
 
 ```lean
 example :
@@ -895,6 +1090,31 @@ that is an equivalence but _not_ a congruence?  Write down the
 relation (formally), together with an informal sketch of a proof
 that it is an equivalence and a counterexample showing it is not a
 congruence.
+
+:::solution
+Here's a simple one:
+
+```lean
+inductive WeirdRel : Com → Com → Prop where
+  | refl {c : Com} : WeirdRel c c
+  | symm {c₁ c₂ : Com} : WeirdRel c₁ c₂ → WeirdRel c₂ c₁
+  | trans {c₁ c₂ c₃ : Com} : WeirdRel c₁ c₂ → WeirdRel c₂ c₃ → WeirdRel c₁ c₃
+  | weird : WeirdRel (imp { skip }) (imp { X := X })
+```
+
+Some less contrived examples:
+- `c₁` and `c₂` are related if either both terminate from an arbitrary
+  starting state or both do not terminate from some starting state.
+- `c₁` and `c₂` are related if `c₂` can be obtained from `c₁` by
+  permuting the names of variables (e.g., renaming `X` to `Y` and `Y`
+  to `X`).
+:::
+
+:::grade
+```
+GRADE_MANUAL 3: not_congr
+```
+:::
 :::::
 ::::::
 
@@ -905,31 +1125,33 @@ A _program transformation_ is a function that takes a program as input
 and produces a modified program as output.  Compiler
 optimizations such as constant folding are canonical examples,
 but there are many others.
+
+A program transformation is _sound_ if it preserves the
+behavior of the original program.
 ::::
 
 ```lean
 def Aexp.TransSound (trans : Aexp → Aexp) : Prop :=
-  ∀ (a : Aexp), a ≃ (trans a)
+  ∀ (a : Aexp), (trans a) ≃ a
 
 @[simp]
 theorem Aexp.transSound_def {trans : Aexp → Aexp} :
-    TransSound trans ↔ ∀ (a : Aexp), a ≃ (trans a) := by rfl
+    TransSound trans ↔ ∀ (a : Aexp), (trans a) ≃ a := by rfl
 
 def Bexp.TransSound (trans : Bexp → Bexp) : Prop :=
-  ∀ (b : Bexp), b ≃ (trans b)
+  ∀ (b : Bexp), (trans b) ≃ b
 
 @[simp]
 theorem Bexp.transSound_def {trans : Bexp → Bexp} :
-    TransSound trans ↔ ∀ (b : Bexp), b ≃ (trans b) := by rfl
+    TransSound trans ↔ ∀ (b : Bexp), (trans b) ≃ b := by rfl
 
 def Com.TransSound (trans : Com → Com) : Prop :=
-  ∀ (c : Com), c ≃ (trans c)
+  ∀ (c : Com), (trans c) ≃ c
 
 @[simp]
 theorem Com.transSound_def {trans : Com → Com} :
-    TransSound trans ↔ ∀ (c : Com), c ≃ (trans c) := by rfl
+    TransSound trans ↔ ∀ (c : Com), (trans c) ≃ c := by rfl
 ```
-
 
 ## The Constant-Folding Transformation
 
@@ -981,7 +1203,7 @@ theorem Aexp.foldConstants_cases (a₁ a₂ : Aexp) :
 ```
 
 :::dev "Niklas Halonen (xhalo32)"
-Make sure we have explained what named cases hypotheses does (`cases ha₁ : a₁.foldConstants` in the above proof).
+Make sure we have explained what named `cases` hypotheses do (`cases ha₁ : a₁.foldConstants` in the above proof).
 :::
 
 ```lean
@@ -991,7 +1213,7 @@ example : (aexp { (1 + 2) * X }).foldConstants = (aexp { 3 * X }) := by rfl
 ::::full
  Note that this version of constant folding doesn't do other
 "obvious" things like eliminating trivial additions (e.g.,
-rewriting `0 + X` to just  `X`).: we are focusing on a single
+rewriting `0 + X` to just `X`): we are focusing on a single
 optimization for the sake of simplicity.
 
 It is not hard to incorporate other ways of simplifying
@@ -1005,7 +1227,7 @@ example : (aexp { X - ((0 * 6) + Y) }).foldConstants = (aexp { X - (0 + Y) }) :=
 
 ::::full
 Not only can we lift {name}`Aexp.foldConstants` to {name}`Bexp` in the {name}`Bexp.eq`,
-{name}`Bexp.neq`, and {name}`Bexp.le` cases, we can also look for constant
+{name}`Bexp.neq`, {name}`Bexp.le`, and {name}`Bexp.gt` cases, we can also look for constant
 _boolean_ expressions and evaluate them in place as well.
 ::::
 
@@ -1083,9 +1305,8 @@ theorem Bexp.foldConstants_binary (b₁ : Bexp) (b₂ : Bexp) :
     | bool b₂' => simp_all
     | _ => simp [foldConstants, hb₁, hb₂]
   | _ => simp [foldConstants, hb₁]
-
-
 ```
+
 ```lean
 example : (bexp { true ∧ ¬( false ∧ true) }).foldConstants = (bexp { true }) := by
   rfl
@@ -1103,7 +1324,7 @@ def Com.foldConstants (c : Com) : Com :=
   match c with
   | imp { skip } => imp { skip }
   | imp { x := ~a } => imp { x := ~a.foldConstants }
-  | imp { c₁ ; c₂ } =>  imp { c₁.foldConstants ; c₂.foldConstants }
+  | imp { c₁ ; c₂ } => imp { c₁.foldConstants ; c₂.foldConstants }
   | imp { if (b) { c₁ } else { c₂ }} =>
     match b.foldConstants with
     | bexp { true } => c₁.foldConstants
@@ -1148,6 +1369,10 @@ theorem Aexp.foldConstants_sound : TransSound Aexp.foldConstants := by
   induction a with
   | num n | id x => rfl
   | _ a₁ a₂ _ _ =>
+    -- `plus`, `minus`, and `mult` follow from the IH and the observation that
+    -- `(aexp {~a₁ + ~a₂}).eval st = a₁.eval st + a₂.eval st
+    --   = (Aexp.num (a₁.eval st + a₂.eval st)).eval st`
+    -- (and similarly for `minus`/`-` and `mult`/`*`).
     cases Aexp.foldConstants_cases a₁ a₂ with
     | inl h =>
       obtain ⟨n₁, n₂, h₁, h₂⟩ := h
@@ -1168,13 +1393,13 @@ theorem Aexp.foldConstants_sound' : TransSound Aexp.foldConstants := by
 Here is an informal proof of the `eq` case of the soundness
 argument for boolean expression constant folding.  Read it
 carefully and compare it to the formal proof that follows.  Then
-fill in the `le` case of the formal proof (without looking at the
-`eq` case, if possible).
+fill in the `le` and `gt` cases of the formal proof (without looking
+at the `eq` case, if possible).
 
 _Theorem_: The constant folding function for booleans,
-`Bexp.fold_constants`, is sound.
+{name}`Bexp.foldConstants`, is sound.
 
-_Proof_: We must show that `b` is equivalent to `Bexp.fold_constants b`,
+_Proof_: We must show that `b` is equivalent to `b.foldConstants`,
 for all boolean expressions `b`.  Proceed by induction on `b`.  We
 show just the case where `b` has the form `a₁ = a₂`.
 
@@ -1183,25 +1408,24 @@ In this case, we must show
   (bexp { a₁ = a₂ }).eval st = (bexp { a₁ = a₂ }).foldConstants.eval st
 ```
 
-There are two cases to consider:
+There are two cases to consider.
 
-- First, suppose `a₁.foldConstants = aexp { n₁ }` and
-  `a₂.foldConstants = aexp { n₂ }` for some `n₁` and `n₂`.
-
-  In this case, we have
+First, suppose `a₁.foldConstants = aexp { n₁ }` and
+`a₂.foldConstants = aexp { n₂ }` for some `n₁` and `n₂`.
+In this case, we have
 
 ```
-  Bexp.fold_constants (bexp { a₁ = a₂ }) = if (n₁ = n₂) then bexp { true } else bexp { false }
+  (bexp { a₁ = a₂ }).foldConstants = if (n₁ = n₂) then bexp { true } else bexp { false }
 ```
 
-  and
+and
 
 ```
   (bexp {a₁ = a₂}).eval st = a₁.eval st = a₂.eval st.
 ```
 
-  By the soundness of constant folding for arithmetic
-  expressions (`Aexp.foldConstants_sound`), we know
+By the soundness of constant folding for arithmetic
+expressions (`Aexp.foldConstants_sound`), we know
 
 ```
            a₁.eval st
@@ -1210,7 +1434,7 @@ There are two cases to consider:
          = n₁
 ```
 
-  and
+and
 
 ```
            a₂.eval st
@@ -1219,116 +1443,121 @@ There are two cases to consider:
          = n₂
 ```
 
-  so
+so
 
 ```
-          bexp { a₁ = a₂ }.eval st
-         = a₁.eval st = a₂.aeval st
+          (bexp { a₁ = a₂ }).eval st
+         = a₁.eval st = a₂.eval st
          = n₁ = n₂
 ```
 
-      Also, it is easy to see (by considering the cases `n₁ = n₂` and
-      `n₁ ≠ n₂` separately) that
+Also, it is easy to see (by considering the cases `n₁ = n₂` and
+`n₁ ≠ n₂` separately) that
+
 ```
           (if n₁ = n₂ then (bexp { true }) else (bexp { false }) ).eval st
          = if n₁ = n₂ then bexp { true }.eval st else bexp { false }.eval st
          = if n₁ = n₂ then true else false
          = n₁ = n₂
 ```
-      So
+
+So
+
 ```
           (bexp { a₁ = a₂ }).eval st
-         = n₁ = n₂.
+         = n₁ = n₂
          = (if n₁ = n₂ then (bexp { true }) else (bexp { false }) ).eval st,
 ```
-       as required.
 
-     - Otherwise, one of `a₁.foldConstants` and
-       `a₂.foldConstants` is not a constant.  In this case, we
-       must show
+as required.
+
+Otherwise, one of `a₁.foldConstants` and `a₂.foldConstants` is not a
+constant.  In this case, we must show
+
 ```
-           bexp { a₁ = a₂ }.eval st
+           (bexp { a₁ = a₂ }).eval st
          = (bexp { (a₁.foldConstants = a₂.foldConstants) }).eval st,
 ```
-       which, by the definition of {name}`Bexp.eval`, is the same as showing
+
+which, by the definition of {name}`Bexp.eval`, is the same as showing
+
 ```
            a₁.eval st = a₂.eval st
         = (a₁.foldConstants).eval st = (a₂.foldConstants).eval st
 ```
-       But the soundness of constant folding for arithmetic
-       expressions (`Aexp.foldConstants_sound`) gives us
+
+But the soundness of constant folding for arithmetic
+expressions (`Aexp.foldConstants_sound`) gives us
+
 ```
-         a₁ = (a₁.foldConstants).eval st
-         a₂ = (a₂.foldConstants).eval st
+         a₁.eval st = (a₁.foldConstants).eval st
+         a₂.eval st = (a₂.foldConstants).eval st
 ```
-       completing the case.
+
+completing the case.
 
 ```lean
 theorem Bexp.foldConstants_sound : Bexp.TransSound Bexp.foldConstants := by
-    intro b st
-    induction b with
-    | bool b => cases b <;> simp
-    | eq a₁ a₂ =>
-        simp only [Bexp.eval_eq, Bexp.foldConstants]
-        have h₁ : a₁.eval st = a₁.foldConstants.eval st := by
-          rw [Aexp.foldConstants_sound]
-        have h₂ : a₂.eval st = a₂.foldConstants.eval st := by
-          rw [Aexp.foldConstants_sound]
-        rw [h₁, h₂]
-        cases a₁.foldConstants <;> cases a₂.foldConstants <;> (try simp_all; done)
-        · case num.num n₁ n₂ =>
-          -- The only interesting case is when both a₁ and a₂ become constants after folding
-          by_cases n₁ = n₂ <;> simp_all
-    | neq a₁ a₂ =>
-        simp only [Bexp.eval_neq, Bexp.foldConstants]
-        have h₁ : a₁.eval st = a₁.foldConstants.eval st := by
-          rw [Aexp.foldConstants_sound]
-        have h₂ : a₂.eval st = a₂.foldConstants.eval st := by
-          rw [Aexp.foldConstants_sound]
-        rw [h₁, h₂]
-        cases a₁.foldConstants <;> cases a₂.foldConstants <;> (try simp_all; done)
-        · case num.num n₁ n₂ =>
-          by_cases n₁ = n₂ <;> simp_all
-    | le a₁ a₂ =>
-      solution!
-        simp only [Bexp.eval_le, Bexp.foldConstants]
-        have h₁ : a₁.eval st = a₁.foldConstants.eval st := by
-          rw [Aexp.foldConstants_sound]
-        have h₂ : a₂.eval st = a₂.foldConstants.eval st := by
-          rw [Aexp.foldConstants_sound]
-        rw [h₁, h₂]
-        cases a₁.foldConstants <;> cases a₂.foldConstants <;> (try simp_all; done)
-        · case num.num n₁ n₂ =>
-          simp only [Aexp.eval]
-          by_cases (n₁ ≤ n₂) <;> simp_all [Nat.not_le_of_gt]
-    | gt a₁ a₂ =>
-      solution!
-        simp only [Bexp.eval_gt, Bexp.foldConstants]
-        have h₁ : a₁.eval st = a₁.foldConstants.eval st := by
-          rw [Aexp.foldConstants_sound]
-        have h₂ : a₂.eval st = a₂.foldConstants.eval st := by
-          rw [Aexp.foldConstants_sound]
-        rw [h₁, h₂]
-        cases a₁.foldConstants <;> cases a₂.foldConstants <;> (try simp_all; done)
-        · case num.num n₁ n₂ =>
-          by_cases n₂ < n₁ <;> simp_all [Nat.not_lt_of_le]
-    | not b ih =>
-        simp only [Bexp.eval_not, Bexp.foldConstants]
-        rw [ih]
-        cases b.foldConstants  <;> (try simp_all; done)
-        · case not.bool b => cases b <;> simp_all
-    | and b₁ b₂ ih₁ ih₂ =>
-        simp only [Bexp.eval_and, Bexp.foldConstants]
-        rw [ih₁, ih₂]
-        cases b₁.foldConstants <;> cases b₂.foldConstants <;> (try simp_all; done)
-        · case and.bool.bool b₁ b₂ =>
-          cases b₁ <;> cases b₂ <;> simp_all
+  intro b st
+  induction b with
+  | bool b => cases b <;> rfl
+  | eq a₁ a₂ =>
+    have h₁ := Aexp.foldConstants_sound a₁ st
+    have h₂ := Aexp.foldConstants_sound a₂ st
+    cases Bexp.foldConstants_comp a₁ a₂ with
+    | inl h =>
+      -- The only interesting case: both `a₁` and `a₂` fold to constants
+      obtain ⟨n₁, n₂, hn₁, hn₂⟩ := h
+      by_cases n₁ = n₂ <;> simp_all [foldConstants]
+    | inr h =>
+      simp_all
+  | neq a₁ a₂ =>
+    have h₁ := Aexp.foldConstants_sound a₁ st
+    have h₂ := Aexp.foldConstants_sound a₂ st
+    cases Bexp.foldConstants_comp a₁ a₂ with
+    | inl h =>
+      obtain ⟨n₁, n₂, hn₁, hn₂⟩ := h
+      by_cases n₁ = n₂ <;> simp_all [foldConstants]
+    | inr h =>
+      simp_all
+  | le a₁ a₂ =>
+    solution!
+      have h₁ := Aexp.foldConstants_sound a₁ st
+      have h₂ := Aexp.foldConstants_sound a₂ st
+      cases Bexp.foldConstants_comp a₁ a₂ with
+      | inl h =>
+        obtain ⟨n₁, n₂, hn₁, hn₂⟩ := h
+        by_cases n₁ ≤ n₂ <;> simp_all [foldConstants, Nat.not_le_of_gt]
+      | inr h =>
+        simp_all
+  | gt a₁ a₂ =>
+    solution!
+      have h₁ := Aexp.foldConstants_sound a₁ st
+      have h₂ := Aexp.foldConstants_sound a₂ st
+      cases Bexp.foldConstants_comp a₁ a₂ with
+      | inl h =>
+        obtain ⟨n₁, n₂, hn₁, hn₂⟩ := h
+        by_cases n₁ > n₂ <;> simp_all [foldConstants, Nat.not_lt_of_le]
+      | inr h =>
+        simp_all
+  | not b ih =>
+    cases Bexp.foldConstants_unary b with
+    | inl h =>
+      rcases h with h | h <;> simp_all [foldConstants]
+    | inr h =>
+      simp_all
+  | and b₁ b₂ ih₁ ih₂ =>
+    cases Bexp.foldConstants_binary b₁ b₂ with
+    | inl h =>
+      obtain ⟨h₁ | h₁, h₂ | h₂⟩ := h <;> simp_all [foldConstants]
+    | inr h =>
+      simp_all
 ```
 ::::
 :::::
 
 :::::full
-::::exercise (rating := 3) (name := "Com.foldConstants_sound") (manual := true) (optional := true)
+::::exercise (rating := 3) (name := "Com.foldConstants_sound")
 Complete the `while` case of the following proof.
 
 ```lean
@@ -1344,7 +1573,7 @@ theorem Com.foldConstants_sound : Com.TransSound Com.foldConstants := by
       apply Com.congruence_seq <;> assumption
   | cond b c₁ c₂ ih₁ ih₂ =>
       simp only [Com.foldConstants]
-      have hb : b ≃ b.foldConstants := by
+      have hb : b.foldConstants ≃ b := by
         apply Bexp.foldConstants_sound
       -- If the optimization doesn't eliminate the `if`, then the
       -- result is easy to prove from the `ih` and
@@ -1354,33 +1583,38 @@ theorem Com.foldConstants_sound : Com.TransSound Com.foldConstants := by
           cases b with
           | false =>
               apply Com.equiv_trans <;> try assumption
-              apply Com.if_false; simp_all
+              symm; apply Com.if_false; simp_all
           | true =>
               apply Com.equiv_trans <;> try assumption
-              apply Com.if_true; simp_all
+              symm; apply Com.if_true; simp_all
   | whileDo b c ih =>
       solution!
         simp only [Com.foldConstants]
-        have hb : b ≃ b.foldConstants := by
+        have hb : b.foldConstants ≃ b := by
           apply Bexp.foldConstants_sound
+        -- Again, the cases where `Com.foldConstants` doesn't change the test
+        -- or don't change the loop body follow from the `ih` and
+        -- `Bexp.foldConstants_sound`
         cases heq : b.foldConstants <;> try (apply Com.congruence_while <;> simp_all)
         · case whileDo.bool b =>
           cases b with
           | false =>
-              apply Com.while_false; simp_all
+              symm; apply Com.while_false; simp_all
           | true =>
-              apply Com.while_true; simp_all
+              symm; apply Com.while_true; simp_all
 ```
+
+:::gradeTheorem 3 Com.foldConstants_sound
+:::
 ::::
 :::::
 
-# Soundness of (0 + n) Elimination, Redux
+## Soundness of (0 + n) Elimination, Redux
 
 :::suppressPreviousHeaderWhenTerse
 :::
 
 :::::full
-
 ::::exercise (rating := 4) (name := "optimize0plus_var") (optional := true)
 Recall the definition `optimize0plus` from the {ref "Slang"}[Slang] chapter:
 
@@ -1431,9 +1665,9 @@ def Bexp.optimize0plus (b : Bexp) : Bexp := solution!(
 
 def Com.optimize0plus (c : Com) : Com := solution!(
   match c with
-| (imp { skip })                     => (imp { skip })
-| (imp { x := ~a })                   => (imp { x := ~(Aexp.optimize0plus a) })
-| (imp { c₁ ; c₂ })                  => imp { ~(Com.optimize0plus c₁) ; ~(Com.optimize0plus c₂) }
+  | (imp { skip })                     => (imp { skip })
+  | (imp { x := ~a })                  => (imp { x := ~(Aexp.optimize0plus a) })
+  | (imp { c₁ ; c₂ })                  => imp { ~(Com.optimize0plus c₁) ; ~(Com.optimize0plus c₂) }
   | (imp { if (b) {c₁} else {c₂} }) =>
       imp { if (~(Bexp.optimize0plus b)) {~(Com.optimize0plus c₁)} else {~(Com.optimize0plus c₂)} }
   | (imp { while (b) {c₁} })         => imp { while (~(Bexp.optimize0plus b))
@@ -1442,7 +1676,7 @@ def Com.optimize0plus (c : Com) : Com := solution!(
 ```
 
 ```lean
-example :
+theorem test_optimize0plus :
     Com.optimize0plus
        (imp { while (X ≠ 0) { X := 0 + X - 1 } }) =
     (imp { while (X ≠ 0) { X := X - 1 } }) := by
@@ -1450,39 +1684,33 @@ example :
     rfl
 ```
 
+:::gradeTheorem 1 test_optimize0plus
+:::
+
 Prove that these three functions are sound, as we did for
 `foldConstants`.  Make sure you use the congruence lemmas in the
-proof for {name}`Com.optimize0plus` - otherwise it will be _long_!
+proof for {name}`Com.optimize0plus` -- otherwise it will be _long_!
+As with the proofs for `foldConstants`,
+you may find the {tactic}`fun_induction` tactic helpful here.
 
 ```lean
-theorem Aexp.optimize0plus_sound: Aexp.TransSound Aexp.optimize0plus := by
+theorem Aexp.optimize0plus_sound : Aexp.TransSound Aexp.optimize0plus := by
   solution!
     intro a st
-    induction a with (simp only [Aexp.eval, Aexp.optimize0plus]; try rfl )
-    | plus a₁ a₂ ih₁ ih₂ =>
-      cases a₁ with (simp only [Aexp.eval, Aexp.optimize0plus] at *; try rw [←ih₁, ←ih₂])
-      | num n =>
-        cases n <;> simp only [Aexp.eval, Aexp.optimize0plus] <;> lia
-      | id _ => rw [ih₂]
-    | mult a₁ a₂ ih₁ ih₂
-    | minus a₁ a₂ ih₁ ih₂ => rw [←ih₁, ←ih₂]
+    fun_induction Aexp.optimize0plus a <;> simp_all
 
-theorem Bexp.optimize0plus_sound: Bexp.TransSound Bexp.optimize0plus := by
+theorem Bexp.optimize0plus_sound : Bexp.TransSound Bexp.optimize0plus := by
   solution!
     intro b st
-    induction b with (
-      simp only [Bexp.eval, Bexp.optimize0plus];
-      try rw [←Aexp.optimize0plus_sound, ←Aexp.optimize0plus_sound]
-    )
-    | bool b => cases b <;> simp [Bexp.optimize0plus]
-    | not b ih => rw [ih]
-    | and b₁ b₂ ih₁ ih₂ => rw [ih₁, ih₂]
+    fun_induction Bexp.optimize0plus b <;>
+      simp_all only [Bexp.eval] <;>
+      rw [Aexp.optimize0plus_sound, Aexp.optimize0plus_sound]
 
-theorem Com.optimize0plus_sound: Com.TransSound Com.optimize0plus := by
+theorem Com.optimize0plus_sound : Com.TransSound Com.optimize0plus := by
   solution!
     intro c
     induction c with
-    | skip => apply Com.equiv_refl
+    | skip => rfl
     | asgn x a => apply Com.congruence_asgn; apply Aexp.optimize0plus_sound
     | seq c₁ c₂ ih₁ ih₂ => apply Com.congruence_seq <;> assumption
     | cond b c₁ c₂ ih₁ ih₂ =>
@@ -1493,9 +1721,18 @@ theorem Com.optimize0plus_sound: Com.TransSound Com.optimize0plus := by
         apply Bexp.optimize0plus_sound
 ```
 
+:::gradeTheorem "0.5" Aexp.optimize0plus_sound
+:::
+
+:::gradeTheorem "0.5" Bexp.optimize0plus_sound
+:::
+
+:::gradeTheorem 2 Com.optimize0plus_sound
+:::
+
 Finally, let's define a compound optimizer on commands that first
 folds constants (using {name}`Com.foldConstants`) and then eliminates
-`0 + n` terms (using{name}`Com.optimize0plus`).
+`0 + n` terms (using {name}`Com.optimize0plus`).
 
 ```lean
 def optimizer (c : Com) := Com.optimize0plus (Com.foldConstants c)
@@ -1505,11 +1742,15 @@ Prove that this optimizer is sound.
 
 ```lean
 theorem optimizer_sound : Com.TransSound optimizer := by
-  intro c
-  apply Com.equiv_trans
-  · apply Com.foldConstants_sound
-  · apply Com.optimize0plus_sound
+  solution!
+    intro c
+    apply Com.equiv_trans
+    · apply Com.optimize0plus_sound
+    · apply Com.foldConstants_sound
 ```
+
+:::gradeTheorem 2 optimizer_sound
+:::
 ::::
 :::::
 
@@ -1541,12 +1782,12 @@ For example, `c₁` and `c₂` might be:
                Y := Y + (42 + 53))
 ```
 
-Clearly, this _particular_ `c₁` and `c₂` are equivalent.  Is this
+Clearly, these _particular_ `c₁` and `c₂` are equivalent.  Is this
 true in general?
 
 :::full
 We will see in a moment that it is not, but it is worthwhile
-to pause, now, and see if you can find a counter-example on your
+to pause, now, and see if you can find a counterexample on your
 own.
 :::
 
@@ -1555,7 +1796,7 @@ expression `u` for each occurrence of a given variable `x` in
 another expression `a`:
 
 ```lean
-def Aexp.subst (x : String) (u : Aexp) (a : Aexp) : Aexp :=
+def Aexp.subst (x : Ident) (u : Aexp) (a : Aexp) : Aexp :=
   match a with
   | Aexp.num n       =>
       Aexp.num n
@@ -1569,8 +1810,8 @@ def Aexp.subst (x : String) (u : Aexp) (a : Aexp) : Aexp :=
       (aexp { ~(Aexp.subst x u a₁) * ~(Aexp.subst x u a₂) })
 
 example :
-  Aexp.subst X (aexp { 42 + 53 })  (aexp { Y + X })
-  = (aexp {  Y + (42 + 53) }) := by rfl
+  Aexp.subst X (aexp { 42 + 53 }) (aexp { Y + X })
+  = (aexp { Y + (42 + 53) }) := by rfl
 ```
 
 And here is the property we are interested in, expressing the
@@ -1578,11 +1819,10 @@ claim that commands `c₁` and `c₂` as described above are
 always equivalent.
 
 ```lean
-def SubstEquivProperty : Prop := ∀ (x₁ x₂ : String) (a₁ a₂ : Aexp),
+def SubstEquivProperty : Prop := ∀ (x₁ x₂ : Ident) (a₁ a₂ : Aexp),
   (imp { x₁ := a₁; x₂ := a₂ }) ≃
   (imp { x₁ := a₁; x₂ := ~(Aexp.subst x₁ a₁ a₂) })
 ```
-
 
 Sadly, the property does _not_ always hold.
 
@@ -1641,9 +1881,9 @@ just need to exclude the case where the variable `X` occurs in the
 right-hand side of the first assignment statement.
 
 ```lean
-inductive VarNotUsedInAexp (x : String) : Aexp → Prop where
+inductive VarNotUsedInAexp (x : Ident) : Aexp → Prop where
   | num {n : Nat} : VarNotUsedInAexp x (Aexp.num n)
-  | id {y : String} (h : x ≠ y) : VarNotUsedInAexp x (Aexp.id y)
+  | id {y : Ident} (h : x ≠ y) : VarNotUsedInAexp x (Aexp.id y)
   | plus {a₁ a₂ : Aexp}
       (h₁ : VarNotUsedInAexp x a₁)
       (h₂ : VarNotUsedInAexp x a₂) :
@@ -1659,7 +1899,7 @@ inductive VarNotUsedInAexp (x : String) : Aexp → Prop where
 ```
 
 ```lean
-theorem Aexp.eval_weakening {x : String} {st : State} {a : Aexp} {ni : Nat}
+theorem Aexp.eval_weakening {x : Ident} {st : State} {a : Aexp} {ni : Nat}
   (h : VarNotUsedInAexp x a) :
   a.eval (x →ₜ ni ; st) = a.eval st := by
 
@@ -1680,7 +1920,7 @@ of `SubstEquivProperty`.
 
 :::solution
 ```lean
-theorem aeval_subst {x : String} {st : State} {a₁ a₂ : Aexp}
+theorem Aexp.eval_subst {x : Ident} {st : State} {a₁ a₂ : Aexp}
   (h : VarNotUsedInAexp x a₁) :
   a₂.eval (x →ₜ a₁.eval st ; st) = (Aexp.subst x a₁ a₂).eval (x →ₜ a₁.eval st ; st) := by
 
@@ -1699,7 +1939,7 @@ theorem aeval_subst {x : String} {st : State} {a₁ a₂ : Aexp}
       simp only [Aexp.eval, Aexp.subst]
       rw [ih₁, ih₂] <;> assumption
 
-theorem subst_equiv {x₁ x₂ : String} {a₁ a₂ : Aexp}
+theorem subst_equiv {x₁ x₂ : Ident} {a₁ a₂ : Aexp}
   (h : VarNotUsedInAexp x₁ a₁) :
   imp { x₁ := a₁; x₂ := a₂ } ≃
   imp { x₁ := a₁; x₂ := ~(Aexp.subst x₁ a₁ a₂)} := by
@@ -1710,24 +1950,24 @@ theorem subst_equiv {x₁ x₂ : String} {a₁ a₂ : Aexp}
       constructor; assumption
       inversion h₂ <;> subst_vars; constructor
       inversion h₁ <;> subst_vars; symm
-      apply aeval_subst h
+      apply Aexp.eval_subst h
   · inversion heval with
     | seq h₁ h₂ =>
       constructor; assumption
       inversion h₂ <;> subst_vars; constructor
       inversion h₁ <;> subst_vars
-      apply aeval_subst h
+      apply Aexp.eval_subst h
 ```
 :::
 ::::
 :::::
 
 :::::full
-::::exercise (rating := 3) (name := "inequiv_exercise") (optional := true)
+::::exercise (rating := 3) (name := "inequiv_exercise")
 Prove that an infinite loop is not equivalent to `skip`.
 
 ```lean
-theorem inequiv_exercise:
+theorem inequiv_exercise :
   ¬ (imp { while (true) {skip} } ≃ imp { skip }) := by
 
   solution!
@@ -1747,8 +1987,8 @@ theorem inequiv_exercise:
 :::
 
 :::::full
-As we have seen (in theorem `ceval_deterministic` in the `Imp`
-chapter), Imp's evaluation relation is deterministic.  However,
+As we have seen (in theorem `ceval_deterministic` in the {ref "Imp"}[Imp] chapter),
+Imp's evaluation relation is deterministic.  However,
 _non_-determinism is an important part of the definition of many
 real programming languages. For example, in many imperative
 languages (such as C and its relatives), the order in which
@@ -1760,7 +2000,7 @@ fragment
   f(++x, x)
 ```
 
-might call `f` with arguments `(1, 0)` or `(1, 1)`, depending how
+might call `f` with arguments `(1, 0)` or `(1, 1)`, depending on how
 the compiler chooses to order things.  This can be a little
 confusing for programmers, but it gives compiler writers useful
 freedom.
@@ -1803,17 +2043,17 @@ commands.
 ```lean
 inductive Com : Type where
   | skip : Com
-  | asgn : String → Aexp → Com
+  | asgn : Ident → Aexp → Com
   | seq : Com → Com → Com
   | cond : Bexp → Com → Com → Com
   | whileDo : Bexp → Com → Com
-  | havoc : String → Com  --  <--- NEW
+  | havoc : Ident → Com  --  <--- NEW
 ```
 :::details "Notation encoding: commands, macro rules"
 ```lean
 namespace Com
 
-/-- Assignment -/
+/-- Havoc -/
 syntax:max "havoc" ppHardSpace ident : imp_com
 
 open Lean
@@ -1864,7 +2104,7 @@ end Delab
 ```
 :::
 
-::::exercise (rating := 2) (name := "himp_eval") (manual := true) (optional := true)
+::::exercise (rating := 2) (name := "himp_eval")
 Now, we must extend the operational semantics. We have provided
 a template for the `Com.EvalR` relation below, specifying the big-step
 semantics. What rule(s) must be added to the definition of `Com.EvalR`
@@ -1889,7 +2129,7 @@ inductive Com.EvalR : Com → State → State → Prop where
       (hc : EvalR c st st') (hloop : Com.EvalR (imp {while (b) {c}}) st' st'') :
       EvalR (imp {while (b) {c}}) st st''
 -- SOLUTION
-  | havoc {st : State} {x : String} (n : Nat) :
+  | havoc {st : State} {x : Ident} (n : Nat) :
       EvalR (imp {havoc x}) st (x →ₜ n ; st)
 -- END SOLUTION
 ```
@@ -1910,7 +2150,6 @@ theorem Com.evalR_eq {c : Com} {st st' : State} :
 ```
 :::
 
-
 As a sanity check, the following claims should be provable for
 your definition:
 
@@ -1929,8 +2168,9 @@ example : ∅ =[ skip; havoc Z ]=> (Z →ₜ 42) := by
 Finally, we repeat the definition of command equivalence from above:
 
 ```lean
-def Com.Equiv (c₁ c₂ : Com) : Prop := ∀ (st st' : State),
-  (st =[ c₁ ]=> st') ↔ (st =[ c₂ ]=> st')
+def Com.Equiv (c₁ c₂ : Com) : Prop :=
+    ∀ {st st' : State},
+      (st =[ c₁ ]=> st') ↔ (st =[ c₂ ]=> st')
 
 instance : Equiv Com where
   equiv := Com.Equiv
@@ -1948,11 +2188,11 @@ programs equivalent / inequivalent.
 :::::
 
 :::::full
-::::exercise (rating := 3) (name := "havoc_swap") (manual := true) (optional := true)
+::::exercise (rating := 3) (name := "havoc_swap")
 Are the following two programs equivalent?
 
 ```lean
-def pXY := imp { havoc X ; havoc Y }
+def pXY := imp { havoc X; havoc Y }
 
 def pYX := imp { havoc Y; havoc X }
 ```
@@ -1962,11 +2202,11 @@ not, prove that.
 
 :::solution
 Note that this is proving something general, considering arbitrary
-x and y, not just the (distinct) string constants X and Y; this is
+`x` and `y`, not just the (distinct) string constants `X` and `Y`; this is
 why the case distinction is needed.
 
 ```lean
-theorem pXY_approx_pYX {x y : String} {st st' : State}
+theorem pXY_approx_pYX {x y : Ident} {st st' : State}
   (h : st =[ havoc x; havoc y ]=> st') :
   st =[ havoc y; havoc x ]=> st' := by
 
@@ -1984,13 +2224,16 @@ theorem pXY_approx_pYX {x y : String} {st st' : State}
 ```lean
 theorem pXY_cequiv_pYX :
   (pXY ≃ pYX) ∨ ¬ (pXY ≃ pYX) := by
-/- Hint: You may want to use `update_permute` at some point,
+/- Hint: You may want to use `TotalMap.update_permute` at some point,
      in which case you'll probably be left with `X ≠ Y` as a
-     hypothesis. You can use `contradiction to discharge this. -/
+     hypothesis. You can use `contradiction` to discharge this. -/
   solution!
     left; intro st st'
     constructor <;> apply pXY_approx_pYX
 ```
+
+:::gradeTheorem 3 pXY_cequiv_pYX
+:::
 ::::
 :::::
 
@@ -2030,19 +2273,22 @@ theorem ptwice_equiv_pcopy :
           simp only [TotalMap.update_eq, ite_self] at hx; rw [←hy] at hx
           contradiction
 ```
+
+:::gradeTheorem 6 ptwice_equiv_pcopy
+:::
 ::::
 :::::
 
 :::::full
 The definition of program equivalence we are using here has some
-subtle consequences on programs that may loop forever.  What
+subtle consequences for programs that may loop forever.  What
 `Equiv` says is that the set of possible _terminating_ outcomes
 of two equivalent programs is the same. However, in a language
 with nondeterminism, like Himp, some programs always terminate,
 some programs always diverge, and some programs can
 nondeterministically terminate in some runs and diverge in
-others. The final part of the following exercise illustrates this
-phenomenon.
+others. The last of the following exercises, `p₅_p₆_equiv`, illustrates
+this phenomenon.
 :::::
 
 :::::full
@@ -2059,7 +2305,7 @@ def p₁ : Com :=
   }
 
 def p₂ : Com :=
-  imp{
+  imp {
     while (¬ (X = 0)) {
        skip
     }
@@ -2210,15 +2456,13 @@ theorem p₃_p₄_inequiv : ¬ (p₃ ≃ p₄) := by
 ::::
 :::::
 
-
-
 :::::full
 ::::exercise (rating := 5) (name := "p₅_p₆_equiv") (level := Advanced) (optional := true)
 Prove that the following commands are equivalent.  (Hint: As
 mentioned above, our definition of `Equiv` for Himp only takes
 into account the sets of possible terminating configurations: two
 programs are equivalent if and only if the set of possible terminating
-states is the same for both programs when given a same starting state
+states is the same for both programs when given the same starting state
 `st`.  If `p₅` terminates, what should the final state be? Conversely,
 is it always possible to make `p₅` terminate?)
 
@@ -2237,7 +2481,7 @@ def p₆ : Com := imp { X := 1 }
 Programs `p₅` and `p₆` are equivalent although `p₅` may diverge,
 while `p₆` always terminates. The definition we took for `Equiv`
 cannot distinguish between these two scenarios. It accepts the two
-programs as equivalent on the basis that: if `p₅` terminates it
+programs as equivalent on the basis that if `p₅` terminates, it
 produces the same final state as `p₆`, and there exists an
 execution in which `p₅` terminates and does exactly as `p₆`.
 
@@ -2247,7 +2491,7 @@ There are two directions to the proof:
 set to `1`, and no other variable changed. But this is exactly the
 behavior of `p₆`. Thus given a pair of states `st` and `st'` and
 that `st =[ p₅ ]=> st'`, the answer to the question
-"Does `st =[ p₆ ]=> st'`?"  is "Yes".
+"Does `st =[ p₆ ]=> st'`?" is "Yes".
 
 `←` (and more controversially): Given that `st =[ p₆ ]=> st'` for
 some `st` and `st'`, can we show that `st =[ p₅ ]=> st'`? Observe
@@ -2304,18 +2548,18 @@ end Himp
 
 :::::full
 ::::exercise (rating := 3) (name := "swap_noninterfering_assignments") (optional := true)
-(Hint: You may or may not - depending how you approach it - need
+(Hint: You may or may not -- depending on how you approach it -- need
 to use `ext` explicitly for this one.)
 
 ```lean
-theorem swap_noninterfering_assignments (l₁ l₂ : String) (a₁ a₂ : Aexp)
+theorem swap_noninterfering_assignments (l₁ l₂ : Ident) (a₁ a₂ : Aexp)
   (hl : l₁ ≠ l₂)
   (h₁ : VarNotUsedInAexp l₁ a₂)
   (h₂ : VarNotUsedInAexp l₂ a₁) :
   imp { l₁ := a₁; l₂ := a₂ } ≃ imp { l₂ := a₂; l₁ := a₁ } := by
     solution!
 
-      have hs : ∀ {l₁ l₂ : String} {a₁ a₂ : Aexp},
+      have hs : ∀ {l₁ l₂ : Ident} {a₁ a₂ : Aexp},
           l₁ ≠ l₂ →
           VarNotUsedInAexp l₁ a₂ →
           VarNotUsedInAexp l₂ a₁ →
@@ -2339,9 +2583,12 @@ theorem swap_noninterfering_assignments (l₁ l₂ : String) (a₁ a₂ : Aexp)
 ```
 ::::
 :::::
-
+:::dev "Sati"
+This exercise does not have any associated lean theorem, what should be done?
+I have marked it as manual for now.
+:::
 :::::full
-::::exercise (rating := 4) (name := "for_while_equiv") (optional := true)
+::::exercise (rating := 4) (name := "for_while_equiv") (manual := true) (optional := true)
 This exercise extends the optional `add_for_loop` exercise from
 the {ref "Imp"}[Imp] chapter, where you were asked to extend the language
 of commands with C-style `for` loops.  Prove that the command:
@@ -2366,7 +2613,7 @@ while (b) {
 
 :::::full
 ::::exercise (rating := 4) (name := "cApprox") (level := Advanced) (optional := true)
-In this exercise we define an asymmetric variant of program
+In this exercise, we define an asymmetric variant of program
 equivalence we call _program approximation_. We say that a
 program `c₁` _approximates_ a program `c₂` when, for each of
 the initial states for which `c₁` terminates, `c₂` also terminates
