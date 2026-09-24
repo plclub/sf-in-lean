@@ -363,7 +363,7 @@ Here is the formal version of this proof:
 ::::
 
 ```lean
-theorem if_true {b : Bexp} {c₁ c₂ : Com} (hb : b ≃ bexp {true}) :
+theorem if_true {b : Bexp} {c₁ c₂ : Com} (hb : bexp {true} ≃ b ) :
     imp {if (b) {c₁} else {c₂}} ≃ c₁ := by
   rw [equiv_def]
   intro st st'
@@ -378,7 +378,7 @@ theorem if_true {b : Bexp} {c₁ c₂ : Com} (hb : b ≃ bexp {true}) :
 :::::full
 ::::exercise (rating := 2) (name := "if_false_equiv")
 ```lean
-theorem if_false {b : Bexp} {c₁ c₂ : Com} (hb : b ≃ bexp {false}) :
+theorem if_false {b : Bexp} {c₁ c₂ : Com} (hb : bexp {false} ≃ b) :
     imp {if (b) {c₁} else {c₂}} ≃ c₂ := by
   solution!
     rw [equiv_def]
@@ -821,21 +821,30 @@ We next consider some fundamental properties of program equivalence.
 ::::full
 First, let's verify that the equivalences on {name}`Aexp`s, {name}`Bexp`s, and
 {name}`Com`s really are _equivalences_ -- i.e., that they are reflexive,
-symmetric, and transitive. These proofs are all easy.
+symmetric, and transitive. These proofs are all easy. We also register
+the reflexivity lemmas with the `@[refl]` tag to the {tactic}`rfl` to
+prove goals about them and the symmetry lemmas with the `@[symm]` tag
+to swap sides of goals about equivalence using the {tactic}`symm`.
 ::::
 
 ```lean
 end Com
 
+@[refl]
 theorem Aexp.equiv_refl (a : Aexp) : a ≃ a := by simp_all
+@[symm]
 theorem Aexp.equiv_symm {a₁ a₂ : Aexp} (h : a₁ ≃ a₂) : a₂ ≃ a₁ := by simp_all
 theorem Aexp.equiv_trans {a₁ a₂ a₃ : Aexp} (h₁ : a₁ ≃ a₂) (h₂ : a₂ ≃ a₃) : a₁ ≃ a₃ := by simp_all
 
+@[refl]
 theorem Bexp.equiv_refl {b : Bexp} : b ≃ b := by simp_all
+@[symm]
 theorem Bexp.equiv_symm {b₁ b₂ : Bexp} (h : b₁ ≃ b₂) : b₂ ≃ b₁ := by simp_all
 theorem Bexp.equiv_trans {b₁ b₂ b₃ : Bexp} (h₁ : b₁ ≃ b₂) (h₂ : b₂ ≃ b₃) : b₁ ≃ b₃ := by simp_all
 
+@[refl]
 theorem Com.equiv_refl {c : Com} : c ≃ c := by simp_all
+@[symm]
 theorem Com.equiv_symm {c₁ c₂ : Com} (h : c₁ ≃ c₂) : c₂ ≃ c₁ := by simp_all
 theorem Com.equiv_trans {c₁ c₂ c₃ : Com} (h₁ : c₁ ≃ c₂) (h₂ : c₂ ≃ c₃) : c₁ ≃ c₃ := by simp_all
 ```
@@ -1123,25 +1132,25 @@ behavior of the original program.
 
 ```lean
 def Aexp.TransSound (trans : Aexp → Aexp) : Prop :=
-  ∀ (a : Aexp), a ≃ (trans a)
+  ∀ (a : Aexp), (trans a) ≃ a
 
 @[simp]
 theorem Aexp.transSound_def {trans : Aexp → Aexp} :
-    TransSound trans ↔ ∀ (a : Aexp), a ≃ (trans a) := by rfl
+    TransSound trans ↔ ∀ (a : Aexp), (trans a) ≃ a := by rfl
 
 def Bexp.TransSound (trans : Bexp → Bexp) : Prop :=
-  ∀ (b : Bexp), b ≃ (trans b)
+  ∀ (b : Bexp), (trans b) ≃ b
 
 @[simp]
 theorem Bexp.transSound_def {trans : Bexp → Bexp} :
-    TransSound trans ↔ ∀ (b : Bexp), b ≃ (trans b) := by rfl
+    TransSound trans ↔ ∀ (b : Bexp), (trans b) ≃ b := by rfl
 
 def Com.TransSound (trans : Com → Com) : Prop :=
-  ∀ (c : Com), c ≃ (trans c)
+  ∀ (c : Com), (trans c) ≃ c
 
 @[simp]
 theorem Com.transSound_def {trans : Com → Com} :
-    TransSound trans ↔ ∀ (c : Com), c ≃ (trans c) := by rfl
+    TransSound trans ↔ ∀ (c : Com), (trans c) ≃ c := by rfl
 ```
 
 ## The Constant-Folding Transformation
@@ -1564,7 +1573,7 @@ theorem Com.foldConstants_sound : Com.TransSound Com.foldConstants := by
       apply Com.congruence_seq <;> assumption
   | cond b c₁ c₂ ih₁ ih₂ =>
       simp only [Com.foldConstants]
-      have hb : b ≃ b.foldConstants := by
+      have hb : b.foldConstants ≃ b := by
         apply Bexp.foldConstants_sound
       -- If the optimization doesn't eliminate the `if`, then the
       -- result is easy to prove from the `ih` and
@@ -1574,14 +1583,14 @@ theorem Com.foldConstants_sound : Com.TransSound Com.foldConstants := by
           cases b with
           | false =>
               apply Com.equiv_trans <;> try assumption
-              apply Com.if_false; simp_all
+              symm; apply Com.if_false; simp_all
           | true =>
               apply Com.equiv_trans <;> try assumption
-              apply Com.if_true; simp_all
+              symm; apply Com.if_true; simp_all
   | whileDo b c ih =>
       solution!
         simp only [Com.foldConstants]
-        have hb : b ≃ b.foldConstants := by
+        have hb : b.foldConstants ≃ b := by
           apply Bexp.foldConstants_sound
         -- Again, the cases where `Com.foldConstants` doesn't change the test
         -- or don't change the loop body follow from the `ih` and
@@ -1590,9 +1599,9 @@ theorem Com.foldConstants_sound : Com.TransSound Com.foldConstants := by
         · case whileDo.bool b =>
           cases b with
           | false =>
-              apply Com.while_false; simp_all
+              symm; apply Com.while_false; simp_all
           | true =>
-              apply Com.while_true; simp_all
+              symm; apply Com.while_true; simp_all
 ```
 
 :::gradeTheorem 3 Com.foldConstants_sound
@@ -1656,9 +1665,9 @@ def Bexp.optimize0plus (b : Bexp) : Bexp := solution!(
 
 def Com.optimize0plus (c : Com) : Com := solution!(
   match c with
-| (imp { skip })                     => (imp { skip })
-| (imp { x := ~a })                   => (imp { x := ~(Aexp.optimize0plus a) })
-| (imp { c₁ ; c₂ })                  => imp { ~(Com.optimize0plus c₁) ; ~(Com.optimize0plus c₂) }
+  | (imp { skip })                     => (imp { skip })
+  | (imp { x := ~a })                  => (imp { x := ~(Aexp.optimize0plus a) })
+  | (imp { c₁ ; c₂ })                  => imp { ~(Com.optimize0plus c₁) ; ~(Com.optimize0plus c₂) }
   | (imp { if (b) {c₁} else {c₂} }) =>
       imp { if (~(Bexp.optimize0plus b)) {~(Com.optimize0plus c₁)} else {~(Com.optimize0plus c₂)} }
   | (imp { while (b) {c₁} })         => imp { while (~(Bexp.optimize0plus b))
@@ -1681,36 +1690,27 @@ theorem test_optimize0plus :
 Prove that these three functions are sound, as we did for
 `foldConstants`.  Make sure you use the congruence lemmas in the
 proof for {name}`Com.optimize0plus` -- otherwise it will be _long_!
+As with the proofs for `foldConstants`,
+you may find the {tactic}`fun_induction` tactic helpful here.
 
 ```lean
 theorem Aexp.optimize0plus_sound : Aexp.TransSound Aexp.optimize0plus := by
   solution!
     intro a st
-    induction a with (simp only [Aexp.eval, Aexp.optimize0plus]; try rfl )
-    | plus a₁ a₂ ih₁ ih₂ =>
-      cases a₁ with (simp only [Aexp.eval, Aexp.optimize0plus] at *; try rw [←ih₁, ←ih₂])
-      | num n =>
-        cases n <;> simp only [Aexp.eval, Aexp.optimize0plus] <;> lia
-      | id _ => rw [ih₂]
-    | mult a₁ a₂ ih₁ ih₂
-    | minus a₁ a₂ ih₁ ih₂ => rw [←ih₁, ←ih₂]
+    fun_induction Aexp.optimize0plus a <;> simp_all
 
 theorem Bexp.optimize0plus_sound : Bexp.TransSound Bexp.optimize0plus := by
   solution!
     intro b st
-    induction b with (
-      simp only [Bexp.eval, Bexp.optimize0plus];
-      try rw [←Aexp.optimize0plus_sound, ←Aexp.optimize0plus_sound]
-    )
-    | bool b => cases b <;> simp [Bexp.optimize0plus]
-    | not b ih => rw [ih]
-    | and b₁ b₂ ih₁ ih₂ => rw [ih₁, ih₂]
+    fun_induction Bexp.optimize0plus b <;>
+      simp_all only [Bexp.eval] <;>
+      rw [Aexp.optimize0plus_sound, Aexp.optimize0plus_sound]
 
 theorem Com.optimize0plus_sound : Com.TransSound Com.optimize0plus := by
   solution!
     intro c
     induction c with
-    | skip => apply Com.equiv_refl
+    | skip => rfl
     | asgn x a => apply Com.congruence_asgn; apply Aexp.optimize0plus_sound
     | seq c₁ c₂ ih₁ ih₂ => apply Com.congruence_seq <;> assumption
     | cond b c₁ c₂ ih₁ ih₂ =>
@@ -1745,8 +1745,8 @@ theorem optimizer_sound : Com.TransSound optimizer := by
   solution!
     intro c
     apply Com.equiv_trans
-    · apply Com.foldConstants_sound
     · apply Com.optimize0plus_sound
+    · apply Com.foldConstants_sound
 ```
 
 :::gradeTheorem 2 optimizer_sound
@@ -1987,8 +1987,8 @@ theorem inequiv_exercise :
 :::
 
 :::::full
-As we have seen (in theorem `ceval_deterministic` in the `Imp`
-chapter), Imp's evaluation relation is deterministic.  However,
+As we have seen (in theorem `ceval_deterministic` in the {ref "Imp"}[Imp] chapter),
+Imp's evaluation relation is deterministic.  However,
 _non_-determinism is an important part of the definition of many
 real programming languages. For example, in many imperative
 languages (such as C and its relatives), the order in which
