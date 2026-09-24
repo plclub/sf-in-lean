@@ -299,7 +299,8 @@ We can further simplify our {name}`Perm3.In` example with {tactic}`try`.
 ```lean
 theorem Perm3_In_better_with_try (α : Type) (x : α) (l₁ l₂ : List α)
     (hPerm : Perm3 l₁ l₂) (hIn : x ∈ l₁) : x ∈ l₂ := by
-  induction hPerm with (try rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia)
+  induction hPerm with
+    (try rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia)
   | trans => lia
 ```
 
@@ -1370,7 +1371,8 @@ theorem star_app α (s₁ s₂ : List α) (re : RegExp α) :
   intro h₁
   generalize heq : Star re = re' at h₁
   /- We now have `heq : Star re = re'`;
-    `heq` is contradictory in most cases, allowing us to conclude immediately via `contradiction`. -/
+    `heq` is contradictory in most cases, allowing us to conclude
+    immediately via `contradiction`. -/
   induction h₁ <;> try contradiction
   -- The interesting cases are those that correspond to `Star`.
   case mStar0 _ => intro h₂; simp only [List.nil_append]; exact h₂
@@ -1475,7 +1477,8 @@ def napp {α : Type} (n : Nat) (l : List α) : List α :=
 theorem napp_zero {α : Type} (l : List α) : napp 0 l = [] := by rfl
 
 @[simp]
-theorem napp_succ {α : Type} (n : Nat) (l : List α) : napp (n + 1) l = l ++ napp n l := by rfl
+theorem napp_succ {α : Type} (n : Nat) (l : List α) :
+  napp (n + 1) l = l ++ napp n l := by rfl
 ```
 
 These auxiliary lemmas might also be useful in your proof of the
