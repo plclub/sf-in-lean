@@ -17,10 +17,11 @@ the whole category at the source.
 Say `/proofread <Chapter>` in a Claude session — that is the whole interface.
 Claude reads this file and the ledger, writes a *round* (a JSON file of
 anchored edits, under `proofread/rounds/`), applies it, and opens a side-by-side
-diff in VS Code: the chapter as it was before the round on the left, the live
-chapter on the right. Revert the edits you don't want — hover a change and
-click the arrow in the gutter between the panes, or just edit the right-hand
-side — and tell Claude you're done; it records your rejections in
+diff in your editor: the chapter as it was before the round on one side, the
+live chapter on the other. Revert the edits you don't want — in VS Code, hover
+a change and click the arrow in the gutter between the panes; in Emacs, press
+`a` on a difference in the Ediff control window — or just edit the live
+chapter, then tell Claude you're done; it records your rejections in
 `proofread/ledger.jsonl` and reports any category that has earned a house rule.
 Then `lake build <Vol>.<Ch>` and commit the chapter and the ledger together.
 
@@ -67,21 +68,34 @@ reads as the complete list once you have begun reverting.
 
 ### The review view
 
-`apply` runs `code --diff` on two real files: a snapshot of the chapter taken
-before the round, and the chapter itself. That is one step to the two versions
-side by side, and it depends on no source-control extension — the left pane is
-a plain file, not a git revision. It is also read-only (mode 444), so an edit
-made in the wrong pane cannot quietly look like a revert; the right pane *is*
-the chapter, and what you leave standing there is what you have accepted.
+`apply` diffs two real files: a snapshot of the chapter taken before the round,
+and the chapter itself. That is one step to the two versions side by side, and
+it depends on no source-control extension — the snapshot is a plain file, not a
+git revision. It is also read-only (mode 444), so an edit made on the wrong
+side cannot quietly look like a revert; the other side *is* the chapter, and
+what you leave standing there is what you have accepted.
+
+Which editor gets it is chosen by `PROOFREAD_EDITOR` — `code`, `emacs`, or
+`none` to only print the command. Unset, it follows the session: Emacs when
+Claude (or your shell) is running inside one, VS Code otherwise.
+
+* **VS Code** — `code --diff <snapshot> <chapter>`: the snapshot on the left,
+  the chapter on the right, reverted per change from the gutter.
+* **Emacs** — `emacsclient -n --eval '(ediff-files "<snapshot>" "<chapter>")'`:
+  the snapshot as buffer A, the chapter as buffer B, `n`/`p` to step and `a` to
+  copy the original wording back into the chapter. It talks to a *running*
+  Emacs, so that Emacs needs a server — `M-x server-start`, or `(server-start)`
+  in your init — and buffer B must be **saved** before you say you're done:
+  `record` reads the chapter back off disk.
 
 The snapshot lives at `proofread/rounds/<Ch>-rNN.before.lean` for the life of
 the round and is deleted by `record` or `undo`. It is gitignored.
 
 Because a pass starts from a clean branch, the git UI shows exactly the same
-thing, if you prefer it: the Source Control view (or any extension's
-equivalent) lists just this round, and its per-change revert works as well as
-the diff editor's. `apply --open files` opens the chapter and the unified diff
-as plain tabs instead, and `--open none` opens nothing.
+thing, if you prefer it: VS Code's Source Control view, `magit-status`, or
+plain `git diff` lists just this round, and its per-change revert works as well
+as the diff editor's. `apply --open files` opens the chapter and the unified
+diff as plain tabs/buffers instead, and `--open none` opens nothing.
 
 ### Edits that share a hunk
 
@@ -120,7 +134,7 @@ Each was learned from a run of rejections; do not propose against them.
 | Rule | Established |
 | ---- | ----------- |
 | Double spaces after a sentence-ending period are fine; never propose collapsing them. | initial |
-| ASCII `--` inside `:::dev` and `:::instructors` note bodies is an author's own shorthand — leave it. Chapter prose uses a real em dash. | initial |
+| ASCII `--` as a dash is the book's own convention and stands in chapter prose as well as in `:::dev` and `:::instructors` note bodies; never propose converting it to an em dash. | Imp r01 |
 
 ## Known non-issues
 

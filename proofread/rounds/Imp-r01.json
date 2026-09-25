@@ -1,0 +1,169 @@
+{
+ "file": "HL/Imp.lean",
+ "chapter": "Imp",
+ "round": 1,
+ "proposals": [
+  {
+   "id": "p01",
+   "cat": "formatting/blank-lines",
+   "old": "  | _ => failure\n\n\n@[app_unexpander Bexp.eq]",
+   "new": "  | _ => failure\n\n@[app_unexpander Bexp.eq]",
+   "why": "A run of two blank lines; the source uses at most one anywhere."
+  },
+  {
+   "id": "p02",
+   "cat": "formatting/blank-lines",
+   "old": "#check imp { skip; if (true) {X := 1} else {X:=2} }\n\n\nvariable (x : Ident) (a : Aexp)",
+   "new": "#check imp { skip; if (true) {X := 1} else {X:=2} }\n\nvariable (x : Ident) (a : Aexp)",
+   "why": "A run of two blank lines; the source uses at most one anywhere."
+  },
+  {
+   "id": "p03",
+   "cat": "formatting/blank-lines",
+   "old": "    | _ => imp { skip }) = c := rfl\n\n\nexample : (",
+   "new": "    | _ => imp { skip }) = c := rfl\n\nexample : (",
+   "why": "A run of two blank lines; the source uses at most one anywhere."
+  },
+  {
+   "id": "p04",
+   "cat": "agreement/pronoun-number",
+   "old": "the pattern repeated, and skip them otherwise.",
+   "new": "the pattern repeated, and skip it otherwise.",
+   "why": "The sentence has already switched to the singular (\"open one if you want\"); \"them\" breaks the agreement."
+  },
+  {
+   "id": "p05",
+   "cat": "hyphenation/consistency",
+   "old": "translate each production of the `imp_aexp` nonterminal",
+   "new": "translate each production of the `imp_aexp` non-terminal",
+   "why": "The two preceding bullets spell it \"non-terminal\"; this one drops the hyphen."
+  },
+  {
+   "id": "p06",
+   "cat": "grammar/agreement",
+   "old": "be a declared {name}`Ident` constants — as {name}`W`/{name}`X`/{name}`Y`/{name}`Z` are,\nbut Lean variables of type {name}`Aexp` can be referred without antiquotation.",
+   "new": "be declared {name}`Ident` constants — as {name}`W`/{name}`X`/{name}`Y`/{name}`Z` are,\nbut Lean variables of type {name}`Aexp` can be referred to without antiquotation.",
+   "why": "\"a ... constants\" mixes singular and plural; and \"referred\" needs its preposition (\"referred to\")."
+  },
+  {
+   "id": "p07",
+   "cat": "punctuation/em-dash",
+   "old": "Delaborators are like the opposite of `macro_rules` -- they are used to pretty print _elaborated_ terms back to the user.",
+   "new": "Delaborators are like the opposite of `macro_rules` — they are used to pretty-print _elaborated_ terms back to the user.",
+   "why": "Chapter prose uses a real em dash (cf. the opening \"three layers\" paragraph); and the verb is hyphenated as \"pretty-print\" a few paragraphs later (\"Lean pretty-prints Imp expressions\")."
+  },
+  {
+   "id": "p08",
+   "cat": "grammar/broad-which",
+   "old": "they are redundant, which the parenthesizer knows.",
+   "new": "they are redundant, as the parenthesizer knows.",
+   "why": "Broad-reference \"which\" with no noun antecedent — what the parenthesizer knows is the whole preceding clause."
+  },
+  {
+   "id": "p09",
+   "cat": "punctuation/ie-comma",
+   "old": "`#print`, which pretty prints (i.e. delaborates) the stored definition using the same syntax:",
+   "new": "`#print`, which pretty-prints (i.e., delaborates) the stored definition using the same syntax:",
+   "why": "\"i.e.\" takes a following comma, as it does everywhere else in the chapter; and \"pretty-prints\" is hyphenated in the Delaborators section."
+  },
+  {
+   "id": "p10",
+   "cat": "comma/introductory",
+   "old": "In a more conventional functional language like OCaml or Haskell we could define",
+   "new": "In a more conventional functional language like OCaml or Haskell, we could define",
+   "why": "A long introductory prepositional phrase takes a comma before the main clause."
+  },
+  {
+   "id": "p11",
+   "cat": "punctuation/em-dash",
+   "old": "cannot be written in Lean -- at least not without additional tricks and",
+   "new": "cannot be written in Lean — at least not without additional tricks and",
+   "why": "Chapter prose uses a real em dash, not ASCII `--`."
+  },
+  {
+   "id": "p12",
+   "cat": "punctuation/em-dash",
+   "old": "_function_ -- i.e., make its result a {lean}`Prop` rather than a {name}`State`,",
+   "new": "_function_ — i.e., make its result a {lean}`Prop` rather than a {name}`State`,",
+   "why": "Chapter prose uses a real em dash, not ASCII `--`."
+  },
+  {
+   "id": "p13",
+   "cat": "punctuation/em-dash",
+   "old": "definition of evaluation to be nondeterministic -- i.e., not only will it",
+   "new": "definition of evaluation to be nondeterministic — i.e., not only will it",
+   "why": "Chapter prose uses a real em dash, not ASCII `--`."
+  },
+  {
+   "id": "p14",
+   "cat": "hyphenation/compound-modifier",
+   "old": "Since the total map update notation (`→ₜ`) is difficult to type, we prefer to use the `{}`-notation with `KVPair`s.\n\nIn the above proof, using `EvalR.asgn rfl` is convenient because it computes the value of the right hand side and can use it to determine `st'`.",
+   "new": "Since the total-map update notation (`→ₜ`) is difficult to type, we prefer to use the `{}`-notation with `KVPair`s.\n\nIn the above proof, using `EvalR.asgn rfl` is convenient because it computes the value of the right-hand side and can use it to determine `st'`.",
+   "why": "Compound modifiers before a noun take a hyphen; the chapter already writes \"the total-map notation\" in the Evaluation section, and \"right-hand side\" is standard."
+  },
+  {
+   "id": "p15",
+   "cat": "punctuation/missing-colon",
+   "old": "To demonstrate, here's a version with `simp`\n\n```lean +error -keep",
+   "new": "To demonstrate, here's a version with `simp`:\n\n```lean +error -keep",
+   "why": "The sentence introduces the code block that follows and is left unpunctuated."
+  },
+  {
+   "id": "p16",
+   "cat": "markup/emphasis",
+   "old": "This claim is *false*, so it cannot be proved -- the proof gets",
+   "new": "This claim is _false_, so it cannot be proved — the proof gets",
+   "why": "Chapter prose marks emphasis with underscores, and uses a real em dash rather than ASCII `--`."
+  },
+  {
+   "id": "p17",
+   "cat": "comma/introductory",
+   "old": "In fact this cannot happen:",
+   "new": "In fact, this cannot happen:",
+   "why": "Introductory \"In fact\" takes a comma."
+  },
+  {
+   "id": "p18",
+   "cat": "markup/identifier-name",
+   "old": "translates `aexp`s into stack machine instructions.",
+   "new": "translates `Aexp`s into stack machine instructions.",
+   "why": "The type is `Aexp`; the exercise's own later prose says \"compiles an {name}`Aexp` into a stack machine program\"."
+  },
+  {
+   "id": "p19",
+   "cat": "punctuation/list-period",
+   "old": "push it\n                on the stack\n    - `sPlus`:",
+   "new": "push it\n                on the stack.\n    - `sPlus`:",
+   "why": "The only bullet in the list without a closing period."
+  },
+  {
+   "id": "p20",
+   "cat": "typo/missing-article",
+   "old": "But for sake of later exercises,",
+   "new": "But for the sake of later exercises,",
+   "why": "The idiom is \"for the sake of\"."
+  },
+  {
+   "id": "p21",
+   "cat": "punctuation/em-dash",
+   "old": "relation (`st =[ c ]=> st'`) -- we just need to handle the",
+   "new": "relation (`st =[ c ]=> st'`) — we just need to handle the",
+   "why": "Chapter prose uses a real em dash, not ASCII `--`."
+  },
+  {
+   "id": "p22",
+   "cat": "formatting/double-space",
+   "old": "  `c₁`.  If this yields a  {name}`sBreak`, we skip the execution of `c₂`\n  and propagate the  {name}`sBreak` signal to the surrounding context;",
+   "new": "  `c₁`.  If this yields a {name}`sBreak`, we skip the execution of `c₂`\n  and propagate the {name}`sBreak` signal to the surrounding context;",
+   "why": "Stray double space in mid-sentence (not after a sentence-ending period)."
+  },
+  {
+   "id": "p23",
+   "cat": "formatting/double-space",
+   "old": "innermost loop, `while` signals  {name}`sContinue`.",
+   "new": "innermost loop, `while` signals {name}`sContinue`.",
+   "why": "Stray double space in mid-sentence (not after a sentence-ending period)."
+  }
+ ],
+ "completed": true
+}

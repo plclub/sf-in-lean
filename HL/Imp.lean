@@ -99,13 +99,13 @@ Maybe this section needs a little preface talking about "what is
 
 LATER: (Note copied from Equiv right before the `assign_aequiv`
    exercise): Some or all of this discussion should really happen when
-   states are introduced in Imp.v, and the whole idea of treating states as
+   states are introduced in this chapter, and the whole idea of treating states as
    an ADT should be raised there.
 :::
 
 Since we'll want to look variables up to find out their current values,
 we'll use total maps from the
-{ref "Typeclasses" (remote := "lf")}`Typeclasses` chapter. A _machine state_ (or
+{ref "Typeclasses" (remote := "lf")}`Typeclasses` chapter of _Logical Foundations_. A _machine state_ (or
 just _state_) represents the current values of all variables at some
 point in the execution of a program.
 
@@ -212,16 +212,22 @@ here is how the two blocks below fit together:
 
 - The `declare_syntax_cat` directive adds a new non-terminal to Lean's grammar, called
   `imp_aexp`. We'll add additional non-terminals further below.
-- Each `syntax` directive defines a grammar production, of which there are eight in
-  total. The first two define literals, `num` and `ident`, as `imp_aexp`s. The next
-  several directives define productions for building larger expressions, with
-  some annotations to define precedence, etc.
-- Finally, `macro_rules` is used to translate each production of the `imp_aexp` nonterminal
+- Each `syntax` directive defines a grammar production. Seven of them build the
+  `imp_aexp` category itself: the first two make a numeric literal and an
+  identifier into an `imp_aexp`, the next three build larger expressions (with
+  annotations that fix precedence and associativity), and the last two are
+  parentheses for grouping and `~`, the escape back to Lean. The eighth,
+  `aexp { … }`, is a production of Lean's own `term` category — it is what lets
+  an Imp expression appear in ordinary Lean code.
+- `~e` splices an already-elaborated Lean term `e` into Imp syntax. We use it
+  throughout the chapter to drop a previously-defined expression or command into
+  a larger program, as in `imp { while (X ≠ 0) { ~subtract_slowly_body } }`.
+- Finally, `macro_rules` is used to translate each production of the `imp_aexp` non-terminal
   into a Lean expression.
 
 Boolean expressions and, later, commands follow this same pattern exactly, so
 their declarations are collapsed where they appear: open one if you want to see
-the pattern repeated, and skip them otherwise.
+the pattern repeated, and skip it otherwise.
 ::::
 
 ::::details "Notation encoding: arithmetic expressions"
@@ -253,8 +259,8 @@ A bare identifier is resolved by its type.
 An {name}`Ident` such as {name}`X` becomes {name}`Aexp.id`,
 while an {name}`Aexp` is inserted directly.
 A consequence is that object-language variables must
-be a declared {name}`Ident` constants — as {name}`W`/{name}`X`/{name}`Y`/{name}`Z` are,
-but Lean variables of type {name}`Aexp` can be referred without antiquotation.
+be declared {name}`Ident` constants — as {name}`W`/{name}`X`/{name}`Y`/{name}`Z` are,
+but Lean variables of type {name}`Aexp` can be referred to without antiquotation.
 :::
 
 ```lean
@@ -463,7 +469,6 @@ private def BExp.delabBool : Delab := whenPPOption getPPNotation do
   | false => `(bexp { $(mkIdent `false):ident })
   | _ => failure
 
-
 @[app_unexpander Bexp.eq]
 private def Bexp.unexpandEq : Unexpander
   | `($_ $a $b) => `(bexp { $(getAexp a):imp_aexp = $(getAexp b):imp_aexp })
@@ -631,8 +636,8 @@ following BNF grammar:
 c ::= "skip"
     | x ":=" a
     | c ";" c
-    | "if" b "then" c "else" c "end"
-    | "while" b "do" c "end" ;
+    | "if" "(" b ")" "{" c "}" "else" "{" c "}"
+    | "while" "(" b ")" "{" c "}" ;
 ```
 
 Here is the formal definition of the abstract syntax of commands.
@@ -757,7 +762,6 @@ section
 #guard_msgs in
 #check imp { skip; if (true) {X := 1} else {X:=2} }
 
-
 variable (x : Ident) (a : Aexp)
 /-- info: imp {x := ~a} : Com -/
 #guard_msgs in
@@ -797,7 +801,6 @@ example : (
   match imp { skip; c } with
     | imp { skip; c' } => c' -- no need to write `~c'`
     | _ => imp { skip }) = c := rfl
-
 
 example : (
   match imp { X := X + 1 } with
@@ -844,7 +847,7 @@ def fact_in_lean : Com := imp {
 
 ::::full
 Because we registered a delaborator, we can inspect a defined program with
-`#print`, which pretty prints (i.e. delaborates) the stored definition using the same syntax:
+`#print`, which pretty-prints (i.e., delaborates) the stored definition using the same syntax:
 ::::
 
 ```lean (name := fact_in_lean)
@@ -961,7 +964,7 @@ In SmallStep we need to package the state and command into a pair,
    way.)
 :::
 
-In a more conventional functional language like OCaml or Haskell we could define
+In a more conventional functional language like OCaml or Haskell, we could define
 the evaluation function as follows:
 
 ```lean -keep +error (name := eval_fail)
@@ -1056,6 +1059,8 @@ I kind of hate this notation. Is there something more standard
 in Lean? CSLib precedent maybe?
 :::
 
+## Operational Semantics
+
 We'll use the notation `st =[ c ]=> st'` for the `Com.EvalR` relation:
 `st =[ c ]=> st'` means that executing program `c` in a starting state
 `st` results in an ending state `st'`.  This can be pronounced "`c` takes
@@ -1063,8 +1068,6 @@ state `st` to `st'`".
 
 :::slidebreak
 :::
-
-## Operational Semantics
 
 :::dev PotentialImprovement
 BCP 21: I wonder if `seq` would be easier to work with if st' and
@@ -1089,23 +1092,23 @@ for readability:
 
                      b.eval st = true
                       st =[ c₁ ]=> st'
-           --------------------------------------        (ifTrue)
-           st =[ if b then c₁ else c₂ end ]=> st'
+           ---------------------------------------       (ifTrue)
+           st =[ if (b) { c₁ } else { c₂ } ]=> st'
 
                     b.eval st = false
                       st =[ c₂ ]=> st'
-           --------------------------------------        (ifFalse)
-           st =[ if b then c₁ else c₂ end ]=> st'
+           ---------------------------------------       (ifFalse)
+           st =[ if (b) { c₁ } else { c₂ } ]=> st'
 
                     b.eval st = false
-               -----------------------------             (whileFalse)
-               st =[ while b do c end ]=> st
+               ----------------------------              (whileFalse)
+               st =[ while (b) { c } ]=> st
 
                      b.eval st = true
                       st =[ c ]=> st'
-             st' =[ while b do c end ]=> st''
-             --------------------------------            (whileTrue)
-             st  =[ while b do c end ]=> st''
+             st' =[ while (b) { c } ]=> st''
+             -------------------------------             (whileTrue)
+             st  =[ while (b) { c } ]=> st''
 ```
 
 Here is the formal definition.  Make sure you understand how it
@@ -1214,9 +1217,9 @@ After `apply EvalR.seq (st' := {X ↦ 2})`, the infoview shows `imp {X := 2}.Eva
 It would be silly to use `apply EvalR.seq (st' := {X ↦ 2}) <;> try simp only [evalR_eq] at *`.
 :::
 
-Since the total map update notation (`→ₜ`) is difficult to type, we prefer to use the `{}`-notation with `KVPair`s.
+Since the total-map update notation (`→ₜ`) is difficult to type, we prefer to use the `{}`-notation with `KVPair`s.
 
-In the above proof, using `EvalR.asgn rfl` is convenient because it computes the value of the right hand side and can use it to determine `st'`.
+In the above proof, using `EvalR.asgn rfl` is convenient because it computes the value of the right-hand side and can use it to determine `st'`.
 
 ```lean
 example {x : Nat} : ∅ =[ X := ~(.num x) ]=> {X ↦ x} := by
@@ -1236,7 +1239,7 @@ example : ∅ =[ X := 2; Y := 3 ]=> {Y ↦ 3, X ↦ 2} := by
 ```
 
 This is a case where `rfl` is more powerful than `simp`, because it can assign the `?st'` metavariable.
-To demonstrate, here's a version with `simp`
+To demonstrate, here's a version with `simp`:
 
 ```lean +error -keep
 example : ∅ =[ X := 2; Y := 3 ]=> {Y ↦ 3, X ↦ 2} := by
@@ -1403,7 +1406,7 @@ Is the following proposition provable?
 (A) Yes    (B) No    (C) Not sure
 
 :::quizSolution
-This claim is *false*, so it cannot be proved -- the proof gets
+This claim is _false_, so it cannot be proved -- the proof gets
 stuck immediately:
 
 ```lean +error
@@ -1429,7 +1432,7 @@ is a good move because it frees us from the artificial requirement that
 evaluation be a total function. But it raises a question: is the
 relational definition really a partial _function_? Could the same
 command, from the same state, evaluate to two different final states?
-In fact this cannot happen: `Com.EvalR` _is_ a partial function.
+In fact, this cannot happen: `Com.EvalR` _is_ a partial function.
 ::::
 
 :::terse
@@ -2001,10 +2004,10 @@ theorem ss_correct {st st' : State} {n z : Nat}
 ::::
 :::::
 
-## Additional Exercises
+# Additional Exercises
 
 ::::exercise (rating := 3) (name := "stack_compiler") (checkVisibility := false)
-Old HP Calculators, programming languages like Forth and Postscript,
+Old HP calculators, programming languages like Forth and Postscript,
 and abstract machines like the Java Virtual Machine all evaluate
 arithmetic expressions using a _stack_. For instance, the expression
 
@@ -2035,13 +2038,13 @@ on the right and the contents of the stack on the left):
 ```
 
 The goal of this exercise is to write a small compiler that
-translates `aexp`s into stack machine instructions.
+translates `Aexp`s into stack machine instructions.
 
 The instruction set for our stack language will consist of the
 following instructions:
     - `sPush n`: Push the number `n` on the stack.
     - `sLoad x`: Load the identifier `x` from the store and push it
-                on the stack
+                on the stack.
     - `sPlus`:   Pop the two top numbers from the stack, add them, and
                 push the result onto the stack.
     - `sMinus`:  Similar, but subtract the first number from the second.
@@ -2071,7 +2074,7 @@ Note that it is unspecified what to do when encountering an
 {name}`sPlus`, {name}`sMinus`, or {name}`sMult` instruction if the stack contains
 fewer than two elements.  In a sense, it is immaterial what we do,
 since a correct compiler will never emit such a malformed program.
-But for sake of later exercises, it would be best to skip the
+But for the sake of later exercises, it would be best to skip the
 offending instruction and continue with the next one.
 
 ```lean
@@ -2376,9 +2379,9 @@ following...
 ```display
     X := 0;
     Y := 1;
-    while (0 <> Y) {
+    while (0 ≠ Y) {
       while (true) {
-        break
+        brk
       };
       X := 1;
       Y := Y - 1
@@ -2426,8 +2429,8 @@ termination signals appropriately:
   whichever branch was taken.
 
 - If the command is a sequence `c₁ ; c₂`, we first execute
-  `c₁`.  If this yields a  {name}`sBreak`, we skip the execution of `c₂`
-  and propagate the  {name}`sBreak` signal to the surrounding context;
+  `c₁`.  If this yields a {name}`sBreak`, we skip the execution of `c₂`
+  and propagate the {name}`sBreak` signal to the surrounding context;
   the resulting state is the same as the one obtained by
   executing `c₁` alone. Otherwise, we execute `c₂` on the state
   obtained after executing `c₁`, and propagate the signal
@@ -2440,8 +2443,8 @@ termination signals appropriately:
   execution proceeds as in the original semantics. Otherwise, we
   stop the execution of the loop, and the resulting state is the
   same as the one resulting from the execution of the current
-  iteration.  In either case, since `break` only terminates the
-  innermost loop, `while` signals  {name}`sContinue`.
+  iteration.  In either case, since `brk` only terminates the
+  innermost loop, `while` signals {name}`sContinue`.
 
 Based on the above description, complete the definition of the
 `Com.EvalR` relation:
@@ -2554,6 +2557,8 @@ theorem seq_stops_on_break {c₁ c₂ : Com} {st st' : State}
 
 :::::full
 ::::exercise (rating := 3) (name := "while_break_true") (optional := true)
+Prove that if the condition of a while loop is true after it terminates,
+then the inner command must have breaked.
 ```lean
 theorem while_break_true {b : Bexp} {c : Com} {st st' : State}
   (h₁ : st =[ imp { while (b) {c} } ]=> st' // sContinue)
@@ -2568,11 +2573,14 @@ theorem while_break_true {b : Bexp} {c : Com} {st st' : State}
     | @whileBreak st =>
       exists st
 ```
+:::gradeTheorem 3 while_break_true
+:::
 ::::
 :::::
 
 :::::full
 ::::exercise (rating := 4) (name := "ceval_deterministic") (optional := true)
+Prove that your defined relation is deterministic.
 ```lean
 theorem ceval_deterministic {c : Com} {st st₁ st₂ : State} {s₁ s₂ : Result}
   (h₁ : st =[ imp { c } ]=> st₁ // s₁)
@@ -2628,6 +2636,8 @@ theorem ceval_deterministic {c : Com} {st st₁ st₂ : State} {s₁ s₂ : Resu
         specialize ih hc'
         lia
 ```
+:::gradeTheorem 4 ceval_deterministic
+:::
 ::::
 :::::
 
@@ -2920,7 +2930,7 @@ to play with this too if you like.)
 ::::
 :::::
 
-:::dev
+:::dev PotentialImprovement
 ```
 HTML polish — deferred Verso-markup opportunities for a later pass (see
 CONTRIBUTING.md, "Verso markup for nicer HTML"):

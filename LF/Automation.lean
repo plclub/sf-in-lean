@@ -137,21 +137,17 @@ theorem Perm3_In_better_with_lia (α : Type) (x : α) (l₁ l₂ : List α)
     . lia -- was right; right; left; assumption
     . lia -- was contradiction
   | swap23 =>
-  /- Here, we solve _all_ goals — and skip the `obtain` — with
-    the <;> tactic combinator, which we saw in the `Induction` chapter. -/
-    rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
+    rw [List.mem_cons, List.mem_cons, List.mem_cons] at *
+    obtain h | h | h | h := hIn
+    . lia -- was left; assumption
+    . lia -- was right; right; left; assumption
+    . lia -- was right; right; assumption
+    . lia -- was contradiction
   | trans _ _ ih₁₂ ih₂₃ =>
     lia -- was apply ih₂₃; apply ih₁₂; apply hIn
 ```
 
 # Tactic Combinators
-
-:::dev "Mike Hicks (mwhicks1)"
-This is a bit weird: We _just_ saw `<;>` with no explanation in the example proof above.
-We should either remind people before that proof, or perhaps just after it, or not bother
-to do it at all. Probably we don't need the example (unless it's referenced later, which I
-doubt, since it's not named).
-:::
 
 ::::full
 In {ref "Induction"}[Induction], we saw how to use the {tactic}`<;>` combinator in order to apply
@@ -168,12 +164,25 @@ example (b c : Bool) : (b && c) = (c && b) := by
   cases b <;> cases c <;> rfl
 ```
 
+We can use this combinator to further simplify our `Perm3` proof:
+
+```lean
+theorem Perm3_In_better_with_lia_semi (α : Type) (x : α) (l₁ l₂ : List α)
+    (hPerm : Perm3 l₁ l₂) (hIn : x ∈ l₁) : x ∈ l₂ := by
+  induction hPerm with
+  | swap12 =>
+    rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
+  | swap23 =>
+    rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia
+  | trans _ _ ih₁₂ ih₂₃ => lia
+```
+
 ::::full
-This `<;>` is not the only such combinator that Lean has to offer, however.
-In general, combinators allow us to build tactics out of smaller ones, letting us
-discharge many similar subgoals at once. Getting used to them takes a
-little energy, but it lets us scale up to more complex definitions and
-more interesting properties without drowning in boring, repetitive detail.
+The `<;>` is not the only combinator that Lean has to offer.
+In general, combinators allow us to build tactics out of smaller ones.
+Getting used to them takes a little energy, but it lets us scale up to
+more complex definitions and more interesting properties without
+drowning in boring, repetitive detail.
 ::::
 
 :::dev "Benjamin Pierce (bcpierce00)"
@@ -242,7 +251,7 @@ The {tactic}`try` combinator swallows a tactic's failure.
 
 ```lean
 example {a : Prop} (h : a) : a := by
-  try rfl -- `rfl` would fail here, but `try` swallows the failure...
+  try rfl -- `rfl` would fail here, but `try` swallows it...
   exact h -- ...so we can still finish some other way.
 
 example : 1 = 1 := by
@@ -256,11 +265,11 @@ these, but it is very useful together with the {tactic}`<;>` combinator.
 
 ```lean
 inductive Silly : Nat → Prop where
-| mk1 n (h : n > 1) : Silly n
-| mk2 n (h : 1 ∈ []) : Silly n
-| mk3 n (h : ∃ m, n = m + 2) : Silly n
+| mk1 {n : Nat} (h : n > 1) : Silly n
+| mk2 {n : Nat} (h : 1 ∈ []) : Silly n
+| mk3 {n : Nat} (h : ∃ m, n = m + 2) : Silly n
 
-example {n} (h : Silly n) : n ≠ 1 := by
+example {n : Nat} (h : Silly n) : n ≠ 1 := by
   inversion h with
   | mk1 => lia
   | mk2 => contradiction
@@ -280,7 +289,8 @@ but not all, goals...
 ```lean
 example {n} (h : Silly n) : n ≠ 1 := by
   cases h <;> try lia
-  -- `lia` doesn't know that `1 ∈ []` is impossible, but we can use `contradiction`
+  -- `lia` doesn't know that `1 ∈ []` is impossible,
+  -- but we can use `contradiction`
   contradiction
 ```
 
@@ -289,13 +299,16 @@ We can further simplify our {name}`Perm3.In` example with {tactic}`try`.
 ```lean
 theorem Perm3_In_better_with_try (α : Type) (x : α) (l₁ l₂ : List α)
     (hPerm : Perm3 l₁ l₂) (hIn : x ∈ l₁) : x ∈ l₂ := by
-  induction hPerm with (try rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia)
+  induction hPerm with
+    (try rw [List.mem_cons, List.mem_cons, List.mem_cons] at * <;> lia)
   | trans => lia
 ```
 
-Note that `try lia <;> try rw [...] <;> lia` _doesn't_ work, because
-the first time that {tactic}`try` catches a failure in a {tactic}`<;>` sequence, the whole
-sequence will stop executing.
+Note that `try lia <;> try rw [...] <;> lia` _doesn't_ work because `<;>` short circuits.
+A failure in the first `lia` prevents the rest of the sequence from
+executing, meaning the `try rw [...]` never fires. (`try lia <;> ...` is parsed
+`try (lia <;> (...))`, and it's the outermost `try` that catches the failure in this case.)
+We'll see a solution to this problem further below.
 
 ```lean +error (name := Perm3_try)
 example (α : Type) (x : α) (l₁ l₂ : List α)
@@ -424,6 +437,12 @@ example : 10 ∈ [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] := by
     | apply List.mem_cons_of_mem
 ```
 
+::::dev "Mike Hicks (mwhicks1)"
+It occurs to me having gotten this far that we could really use some
+quizzes to test understanding of these various combinators to this
+point.
+::::
+
 ::::full
 The {tactic}`first` tactic here will attempt to close the goal with an application of
 {name}`List.mem_cons_self`, if it can, and otherwise `apply List.mem_cons_of_mem` to proceed to
@@ -455,7 +474,7 @@ theorem Perm3_In_better_with_first (α : Type) (x : α) (l₁ l₂ : List α)
     | lia
 ```
 
-Our {name}`Perm3.In` example is getting quite short! But can we do better?
+Our {name}`Perm3.In` example is now quite short! Can we still do better?
 
 # The {tactic}`simp` Tactic
 
@@ -822,6 +841,7 @@ inductive RegExp (α : Type) : Type where
   | Star (r : RegExp α)
 deriving BEq, DecidableEq, Repr
 
+-- prevents printing dot-chained, method-call-style like r1.App r2
 attribute [pp_nodot] RegExp.Char RegExp.App RegExp.Union RegExp.Star
 
 namespace RegExp
@@ -847,14 +867,24 @@ DHS: @bcpierce00 What was the purpose of this aside in the original Rocq text? D
 We connect regular expressions and strings by defining when a
 regular expression _matches_ some string.
 
-:::ignore
-```lean -show
-variable
-  (α : Type)
-  (x : α)
-  (s s₁ s₂ s₃ : List α)
-  (ss : List (List α))
-  (re re₁ re₂ : RegExp α)
+:::dev "Mike Hicks (mwhicks1)"
+It would be convenient to declare the variables below so that inline prose
+throughout the rest of this section can use `α`, `x`, `s`, `s₁`, `s₂`, `s₃`,
+`ss`, `re`, `re₁`, and `re₂` without repeating their type annotations, but the
+same problem described in {ref "Logic"}[Logic] applies: an unused `variable`
+is silently added to the local context in basically every proof from here on,
+even when the theorem never mentions it, which makes theorem hover-overs in
+the HTML book unusable. Until we have a way to declare variables visible only
+for inline prose (rather than for every `lean` block), we leave this
+commented out:
+
+```
+-- variable
+--   (α : Type)
+--   (x : α)
+--   (s s₁ s₂ s₃ : List α)
+--   (ss : List (List α))
+--   (re re₁ re₂ : RegExp α)
 ```
 :::
 
@@ -864,25 +894,25 @@ Informally, this looks as follows:
 
   - {lean}`EmptyStr` matches the empty string {lean}`[]`.
 
-  - {lean}`Char x` matches the one-character string {lean}`[x]`.
+  - `Char x` matches the one-character string `[x]`.
 
-  - If {lean}`re₁` matches {lean}`s₁`, and {lean}`re₂` matches {lean}`s₂`,
-    then {lean}`App re₁ re₂` matches {lean}`s₁ ++ s₂`.
+  - If `re₁` matches `s₁`, and `re₂` matches `s₂`,
+    then `App re₁ re₂` matches `s₁ ++ s₂`.
 
-  - If at least one of {lean}`re₁` and {lean}`re₂` matches {lean}`s`,
-    then {lean}`Union re₁ re₂` matches {lean}`s`.
+  - If at least one of `re₁` and `re₂` matches `s`,
+    then `Union re₁ re₂` matches `s`.
 
-  - Finally, if we can write some string {lean}`s` as the concatenation
+  - Finally, if we can write some string `s` as the concatenation
     of a sequence of strings `s = s₁ ++ ... ++ sₖ`, and the
-    expression {lean}`re` matches each one of the strings `sᵢ`,
-    then {lean}`Star re` matches {lean}`s`.
+    expression `re` matches each one of the strings `sᵢ`,
+    then `Star re` matches `s`.
 
     In particular, the sequence of strings may be empty, so
-    {lean}`Star re` always matches the empty string {lean}`[]` no matter what
-    {lean}`re` is.
+    `Star re` always matches the empty string {lean}`[]` no matter what
+    `re` is.
 
 We can easily translate this intuition into a set of rules,
-where we write `s =~ re` to say that {lean}`re` matches {lean}`s`:
+where we write `s =~ re` to say that `re` matches `s`:
 
 ```display +centered
         ─────────────── (mEmpty)
@@ -1021,6 +1051,7 @@ example : [1, 2, 3] =~ reg_exp_of_list [1, 2, 3] := by
   constructor
 ```
 
+:::::full
 ::::exercise (rating := 1) (name := "regexp_match_of_list")
 As a quick exercise, prove that every list matches `reg_exp_of_list` of itself:
 
@@ -1039,10 +1070,12 @@ theorem regexp_match_of_list α (l : List α) : l =~ reg_exp_of_list l := by
 :::
 ::::
 
+:::::
+
 ::::full
 We can also prove general facts about {name}`ExpMatch`. For instance,
-the following lemma shows that every string {lean}`s` matched by {lean}`re`
-is also matched by {lean}`Star re`.
+the following lemma shows that every string `s` matched by `re`
+is also matched by `Star re`.
 ::::
 
 ::::terse
@@ -1058,10 +1091,9 @@ theorem MStar1 α s (re : RegExp α) (h : s =~ re) : s =~ Star re := by
     . constructor
 ```
 
-::::full
+:::::full
 (Note the use of {name}`List.append_nil` to change the goal of the theorem to
 exactly the shape expected by {name}`mStarApp`.)
-::::
 
 The following lemmas show that the intuition about matching given
 at the beginning of the section can be obtained from the formal
@@ -1097,7 +1129,7 @@ theorem MUnion' α (s : List α) (re₁ re₂ : RegExp α) :
 
 The next lemma is stated in terms of the {name}`List.foldr` function on lists:
 if `ss : List (List α)` represents a sequence of
-strings `s₁, ..., sₙ`, then {lean}`List.foldr (· ++ ·) [] ss` is the result of
+strings `s₁, ..., sₙ`, then `List.foldr (· ++ ·) [] ss` is the result of
 concatenating them all together.
 
 ::::exercise (rating := 2) (name := "MStar'")
@@ -1145,20 +1177,20 @@ theorem empty_equiv {α : Type} (s : List α) :
 :::
 ::::
 
-::::full
+
 Since the definition of {name}`ExpMatch` has a recursive
 structure, we might expect that proofs involving regular
 expressions will often require induction on evidence.
-::::
+:::::
 
 ::::terse
 Naturally, proofs about {name}`ExpMatch` often require induction (on evidence!).
 ::::
 
 For example, suppose we want to prove the following intuitive
-fact: if a string {lean}`s` is matched by a regular expression {lean}`re`,
-then all elements of {lean}`s` must occur as character literals
-somewhere in {lean}`re`.
+fact: if a string `s` is matched by a regular expression `re`,
+then all elements of `s` must occur as character literals
+somewhere in `re`.
 
 To state this as a theorem, we first define a function `reChars`
 that lists all characters that occur in a regular expression:
@@ -1180,7 +1212,7 @@ Now, the main theorem:
 theorem in_re_match {α : Type} {s : List α} {re : RegExp α} {x : α}
     (hmatch : s =~ re) (hin : x ∈ s) : x ∈ reChars re := by
   induction hmatch with
-  | mEmpty => simp at hin
+  | mEmpty => contradiction
   | mChar c => simp only [reChars]; assumption
   | mApp _ _ _ _ ih₁ ih₂ =>
   /- Something interesting happens in the `mApp` case.  We obtain
@@ -1210,6 +1242,7 @@ theorem in_re_match {α : Type} {s : List α} {re : RegExp α} {x : α}
       | inr hin₂ => exact ih₂ hin₂
 ```
 
+:::::full
 ::::exercise (rating := 1) (name := "reNotEmpty") (manual := true)
 Write a recursive function `reNotEmpty` that tests whether a
 regular expression matches some string. Prove that your function
@@ -1275,6 +1308,8 @@ GRADE_MANUAL 1: reNotEmpty
 :::
 ::::
 
+:::::
+
 ## The {tactic}`generalize` Tactic
 
 One potentially confusing feature of the {tactic}`induction` tactic is
@@ -1301,7 +1336,7 @@ Invalid target: Index in target's type is not a variable (consider using the `ca
 The problem here is that {tactic}`induction` over a {lean}`Prop` hypothesis only
 works properly with hypotheses that are "fully general," i.e.,
 ones in which all the arguments are just variables, as opposed to more
-specific expressions like {lean}`Star re`.
+specific expressions like `Star re`.
 
 A possible, but awkward, way to solve this problem is "manually
 generalizing" over the problematic expressions by adding
@@ -1336,7 +1371,8 @@ theorem star_app α (s₁ s₂ : List α) (re : RegExp α) :
   intro h₁
   generalize heq : Star re = re' at h₁
   /- We now have `heq : Star re = re'`;
-    `heq` is contradictory in most cases, allowing us to conclude immediately via `contradiction`. -/
+    `heq` is contradictory in most cases, allowing us to conclude
+    immediately via `contradiction`. -/
   induction h₁ <;> try contradiction
   -- The interesting cases are those that correspond to `Star`.
   case mStar0 _ => intro h₂; simp only [List.nil_append]; exact h₂
@@ -1357,6 +1393,7 @@ The `generalizing` clause would not help us here — {tactic}`induction` on
 `s₁ =~ Star re` would still fail because `Star re` is a compound expression,
 not a bare variable.
 
+:::::full
 ::::exercise (rating := 1) (name := "exp_match_ex2") (optional := true)
 The `MStar''` lemma below (combined with its converse, the
 `MStar'` exercise above) shows that our definition of {name}`ExpMatch`
@@ -1381,26 +1418,39 @@ theorem MStar'' α (s : List α) (re : RegExp α) (h : s =~ Star re) :
         trivial
       intro s h; apply hall; trivial
 ```
-:::gradeTheorem 1 MStar''
-:::
 ::::
+
+:::::
 
 ## The "Weak" Pumping Lemma
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
+::::terse
+The remainder of this section in the full version of the chapter develops an extended
+exercise on regular expressions, leading up to a proof of the
+so-called _pumping lemma_, which states, informally, that any sufficiently
+long string `s` matching a regular expression `re` can be "pumped" by
+repeating some middle section of `s` an arbitrary number of times to produce a new
+string also matching `re`.
+::::
+
+:::::full
 One of the first really interesting theorems in the theory of
 regular expressions is the so-called _pumping lemma_, which
-states, informally, that any sufficiently long string {lean}`s` matching
-a regular expression {lean}`re` can be "pumped" by repeating some middle
-section of {lean}`s` an arbitrary number of times to produce a new
-string also matching {lean}`re`.  For the sake of simplicity, this
+states, informally, that any sufficiently long string `s` matching
+a regular expression `re` can be "pumped" by repeating some middle
+section of `s` an arbitrary number of times to produce a new
+string also matching `re`.  For the sake of simplicity, this
 exercise considers a slightly weaker theorem than is usually
 stated in courses on automata theory — hence the name
 `weak_pumping`.  The stronger one can be found below.
 
 To get started, we need to define "sufficiently long."  Since we
 are working in a constructive logic, we actually need to be able
-to _calculate_, for each regular expression {lean}`re`, a minimum length
-for strings {lean}`s` to guarantee "pumpability."
+to _calculate_, for each regular expression `re`, a minimum length
+for strings `s` to guarantee "pumpability."
 
 ```lean
 def pumpingConstant {α : Type} (re : RegExp α) : Nat :=
@@ -1440,7 +1490,8 @@ def napp {α : Type} (n : Nat) (l : List α) : List α :=
 theorem napp_zero {α : Type} (l : List α) : napp 0 l = [] := by rfl
 
 @[simp]
-theorem napp_succ {α : Type} (n : Nat) (l : List α) : napp (n + 1) l = l ++ napp n l := by rfl
+theorem napp_succ {α : Type} (n : Nat) (l : List α) :
+  napp (n + 1) l = l ++ napp n l := by rfl
 ```
 
 These auxiliary lemmas might also be useful in your proof of the
@@ -1463,13 +1514,13 @@ theorem napp_star {α : Type} (m : Nat) (s₁ s₂ : List α) (re : RegExp α)
     apply mStarApp <;> trivial
 ```
 
-The (weak) pumping lemma itself says that, if {lean}`s =~ re` and if the
-length of {lean}`s` is at least the pumping constant of {lean}`re`, then {lean}`s`
-can be split into three substrings {lean}`s₁ ++ s₂ ++ s₃` in such a way
-that {lean}`s₂` can be repeated any number of times and the result, when
-combined with {lean}`s₁` and {lean}`s₃`, will still match {lean}`re`.
-Since {lean}`s₂` is also guaranteed not to be the empty string, this gives us
-a (constructive!) way to generate strings matching {lean}`re` that are
+The (weak) pumping lemma itself says that, if `s =~ re` and if the
+length of `s` is at least the pumping constant of `re`, then `s`
+can be split into three substrings `s₁ ++ s₂ ++ s₃` in such a way
+that `s₂` can be repeated any number of times and the result, when
+combined with `s₁` and `s₃`, will still match `re`.
+Since `s₂` is also guaranteed not to be the empty string, this gives us
+a (constructive!) way to generate strings matching `re` that are
 as long as we like.
 
 This proof is quite long, so to make it more tractable we've
@@ -1625,7 +1676,7 @@ theorem weak_pumping_union_r {α : Type} (s₂ : List α) (re₁ re₂ : RegExp 
 :::
 ::::
 
-::::exercise (rating := 2) (name := "weak_pumping_star_zero") (optional := true)
+::::exercise (rating := 2) (name := "weak_pumping_star_zero")
 ```lean
 theorem weak_pumping_star_zero {α : Type} (re : RegExp α)
     (h : (Star re).pumpingConstant ≤ @List.length α []) :
@@ -1644,7 +1695,7 @@ theorem weak_pumping_star_zero {α : Type} (re : RegExp α)
 :::
 ::::
 
-::::exercise (rating := 5) (name := "weak_pumping_star_app") (optional := true)
+::::exercise (rating := 5) (name := "weak_pumping_star_app")
 ```lean
 theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α)
     (h₁ : s₁ =~ re)
@@ -1738,12 +1789,18 @@ theorem weak_pumping {α : Type} {re : RegExp α} {s : List α}
 :::
 ::::
 
+:::::
+
 ## The "Strong" Pumping Lemma
 
-::::exercise (rating := 5) (name := "strong_pumping") (optional := true)
+::::suppressPreviousHeaderWhenTerse
+::::
+
+:::::full
+::::exercise (rating := 5) (name := "strong_pumping") (level := Advanced) (optional := true)
 Now here is the usual version of the pumping lemma. In addition to
-requiring that {lean}`s₂ ≠ []`, it also strengthens the result to
-include the claim that {lean}`s₁.length + s₂.length ≤ re.pumpingConstant`.
+requiring that `s₂ ≠ []`, it also strengthens the result to
+include the claim that `s₁.length + s₂.length ≤ re.pumpingConstant`.
 
 ```lean
 theorem pumping {α : Type} {re : RegExp α} {s : List α}
@@ -1859,9 +1916,9 @@ theorem pumping {α : Type} {re : RegExp α} {s : List α}
             apply mStarApp <;> simp_all
 
 ```
-:::gradeTheorem 5 pumping
-:::
 ::::
+
+:::::
 
 ```lean
 end RegExp
@@ -1869,6 +1926,10 @@ end RegExp
 
 ## Palindromes Revisited
 
+::::suppressPreviousHeaderWhenTerse
+::::
+
+::::::full
 :::::exercise (rating := 5) (name := "palindrome_converse") (optional := true)
 
 Here is one possible definition of the palindrome inductive predicate, {name}`Pal`,
@@ -1982,3 +2043,5 @@ end PalConv
 :::
 
 :::::
+
+::::::
