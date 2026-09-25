@@ -104,7 +104,8 @@ LATER: (Note copied from Equiv right before the `assign_aequiv`
 :::
 
 Since we'll want to look variables up to find out their current values,
-we'll use total maps from the `Typeclasses` chapter of _Logical Foundations_. A _machine state_ (or
+we'll use total maps from the
+{ref "Typeclasses" (remote := "lf")}`Typeclasses` chapter of _Logical Foundations_. A _machine state_ (or
 just _state_) represents the current values of all variables at some
 point in the execution of a program.
 
@@ -563,7 +564,7 @@ they are redundant, which the parenthesizer knows.
 The arithmetic and boolean evaluators must now be extended to handle
 variables, taking a state `st` as an extra argument.  A variable is
 looked up in the state with the map-indexing notation `st[x]` from the
-`Typeclasses` chapter in the Logical Foundations book.
+{ref "Typeclasses" (remote := "lf")}`Typeclasses` chapter in the Logical Foundations book.
 For the notation to work, we used `open scoped MyGetElem` earlier,
 which opens only the scoped items like notation from the module.
 ::::
@@ -863,7 +864,7 @@ imp {Z := X; Y := 1; while (Z ≠ 0) {Y := Y * Z; Z := Z - 1}}
 Even though the notations are useful for getting the high-level picture,
 it's sometimes helpful to turn off the notation to see the parsed structure as a plain term.
 This can be done with `set_option pp.notation false`
-(which we briefly mentioned in the `Typeclasses` chapter) as follows:
+(which we briefly mentioned in the {ref "Typeclasses" (remote := "lf")}`Typeclasses` chapter) as follows:
 
 ```lean (name := imp1)
 #check imp { X := X + 1 }
