@@ -1675,6 +1675,9 @@ def Com.optimize0plus (c : Com) : Com := solution!(
 )
 ```
 
+:::autogradedHole Aexp.optimize0plus Bexp.optimize0plus Com.optimize0plus
+:::
+
 ```lean
 theorem test_optimize0plus :
     Com.optimize0plus
