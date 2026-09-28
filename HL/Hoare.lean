@@ -1762,18 +1762,6 @@ theorem subst_apply {x : Ident} {a : Aexp} {P : Assertion} {st : State} :
 end Assertion
 ```
 
-This notation allows us to write this operation as:
-
-```display
-P [ X ↦ a ]
-```
-
-```lean
-#check (fun st => Assertion.subst X (aexp { 2 * X }) ({{ X ≤ 10 }}) st)
-#check {{ (X ≤ 10) [X ↦ 2 * X] }}
-#check (∀ st, ({{ (X ≤ 10) [X ↦ 2 * X] }}) st)
-```
-
 ::::details "Notation encoding: printing substitutions back"
 ```lean
 namespace Assertion.Delab
@@ -1806,6 +1794,18 @@ end Assertion.Delab
 #check (Assertion.subst X (aexp { 2 * X }) ({{ X ≤ 10 }}))
 ```
 :::
+
+This notation allows us to write this operation as:
+
+```display
+P [ X ↦ a ]
+```
+
+```lean
+#check (fun st => Assertion.subst X (aexp { 2 * X }) ({{ X ≤ 10 }}) st)
+#check {{ (X ≤ 10) [X ↦ 2 * X] }}
+#check (∀ st, ({{ (X ≤ 10) [X ↦ 2 * X] }}) st)
+```
 
 That is, `P [X ↦ a]` stands for an assertion -- let's call it
 `P'` -- that behaves just like `P` except that, wherever `P` looks up
@@ -4715,7 +4715,7 @@ commands. If you find that it can't be completed, your definition of
 `havoc_pre` is probably too strong. Find a way to relax it so that
 `havoc_post` can be proved.
 
-Hint: the {tactic}`assertion_auto` tactics we've built won't help you here.
+Hint: the {tactic}`assertion_auto` tactic we've built won't help you here.
 You need to proceed manually.
 
 :::instructors
