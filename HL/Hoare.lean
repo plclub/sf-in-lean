@@ -122,33 +122,6 @@ c
 when we print them?
 ```
 
-```
-HIDE: At some point we should try one more time to see if it's
-possible to use single curly braces for Hoare triples.  The Rocq
-manual says "For the sake of factorization with Rocq predefined
-rules, simple rules have to be observed for notations starting with
-a symbol: e.g., rules starting with { or ( should be put at level
-0."  Maybe this suggests a way forward...?
-BCP 10/18: Nope.  Writing
-   Notation "'{' P '}' c '{' Q '}'" :=
-     (ValidHoareTriple P c Q) (at level 0, c at next level)
-     : hoare_spec_scope.
-yields
-    Error: A notation must include at least one symbol.
-```
-
-HIDE: This file and all later ones should make a habit of always
-presenting both syntax and semantics of new language constructs in
-informal style as well as formal.  See MoreStlc.v for a
-template.
-:::
-
-:::dev PotentialImprovement
-```
-in the HTML, consider changing the sizes of some symbols,
-e.g. make ∀ bigger and make <<->> and ->> and ↦ smaller.
-Check that both full and terse look good.
-```
 :::
 
 ::::full
@@ -282,6 +255,10 @@ MRC'20: this is the former terse intro.
    - examples
 ```
 :::
+:::dev "Roger Burtonpatel (rogerburtonpatel)" NOW
+It would be great for @mwhicks to look at this intro
+and decide what needs to be in a terse block. I suspect it should be _very_ short an high-level.
+:::
 
 # Assertions
 
@@ -294,12 +271,6 @@ open Com
 
 abbrev Assertion := State → Prop
 ```
-
-:::dev
-HIDE: MRC'20: pulled up these examples from the quiz/optional
-exercise so that there would be some modeling of the kinds of
-answers we expect.
-:::
 
 For example,
 
@@ -405,96 +376,8 @@ informal to formal, we replace `X` with `st[X]` but leave `m`
 alone.
 ::::
 
-:::dev PotentialImprovement
-Say more about that??
-:::
-
-:::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement (year := 2018)
-```
-The following is a really good attempt (by
-Li-Yao) to lighten the notation for assertions.  It hasn't quite
-converged (e.g., we're not happy about [ap]), and there is an
-uncomfortable amount of magic to it, but we should think about it
-some more...
-
-One thing to consider adding is turning bassertion into a coercion.
-APT: I've tried that and it helps.
-
-APT: Overall, I really like this new notation a LOT and I would
-favor switching to it. Remainder of this chapter and Hoare2 are
-converted to use it.
-
-MRC'20: The notation is great in the Rocq source code!  Thanks for
-all the hard work.  It makes almost everything much more pleasant
-to read.  There are a couple further improvements that I wonder
-about.  (I'm not qualified to do them!)
-
-  1. It would help to have a bit of explanation of what's going on,
-     even if it were just hidden for instructors.  I do confess I
-     don't understand some of this implicit coercion magic, nor
-     does the Rocq manual chapter on it read very easily for me.
-
-  2. It's mysterious to me why sometimes I need to write
-     [%assertion] or [: Assertion] to get parsing to work right.
-     Some more explanation of that, with some examples to play
-     with, would be nice.
-
-  3. Though the notations look great in the Rocq source code, they
-     work somewhat less well in the middle of a proof.  Rocq almost
-     immediately starts expanding them in the proof state, and that
-     gets confusing (to me and my students) rather quickly.  I
-     wonder whether there's a way to make Rocq less aggressive about
-     this?
-
-APT'21: I fully agree that the expanded notations are not easy to
-read. I think the coercions are the biggest reason for that, and
-things would be a bit better if the coercions are used only for
-input, i.e. we should add
-
-  Add Printing Coercion Aexp_of_nat Aexp_of_aexp assert_of_Prop.
-
-[BCP 21: Added!]
-
-This would be even better if we chose shorter names for the
-coercions, e.g.  'lift_Prop', etc.
-
-[BCP 21: Didn't do this yet -- had trouble deciding on nice short
-names.  (E.g., 'lift_nat' is not so clear.)]
-```
-:::
-
-:::dev BeforeNextRelease
-RRand 2022: The coercion printing in recent updates is
-making the Hoare logic statements we're aiming to prove essentially
-unreadable. If the implicit coercions are too hard to deal with (I
-don't see why they would be, given the number of coercion happening
-here and in Imp) I would roll back to a previous version.  I cannot
-read what's happening in my Rocq buffer.
-:::
-
-:::dev
-```
-HIDE: SAZ  2024: I'm confused by the above discussion.  Doesn't
-[Add Printing Coercion Aexp_of_nat Aexp_of_aexp assert_of_Prop]
-request Rocq to _show_ those coercions?  I've removed it.
-```
-
-```
-HIDE: SAZ 2024:
-From what I can tell, the reason the notations expand during
-the proofs is that they're writen in such a way that they
-inlude type annotations [(a : Aexp)] and explicit lambdas
-[(fun st => a st + b st)], neither of which is stable under
-simplification.  For example:
-
- [(fun st =>
-    (fun st => (X:Aexp) st + (Y:Aexp) st) st +
-    (fun st => (Z:Aexp) st) st)]
-
-Will print as [X + Y + Z] until simplification, at which point
-we have [(fun st => st X + st Y + st Z)] but there is no notation
-that covers this case.
-```
+:::dev "Roger Burtonpatel (rogerburtonpatel)" PotentialImprovement
+Once Yipeng rewrites the notation for Lean, we will go over _all_ of this text again.
 :::
 
 ::::full
@@ -520,58 +403,6 @@ is no counterpart here: the `{{ }}` elaborator below inlines `st[x]`,
 `a.eval st`, and `b.eval st` directly, so no wrapper functions exist for
 `simp` to unfold.  The one wrapper we do introduce, `Assertion.subst`,
 comes with the `@[simp]` lemma `Assertion.subst_apply`.
-:::
-
-:::dev PotentialImprovement
-Rocq-side notes on the `Arguments /.` commands, kept for reference:
-
-```
-HIDE: Make things easily unfoldable.
-
-HIDE: MRC'20: Recording this here because it took a merry chase through
-the Rocq manual to find it:  this version of the [Arguments] command is
-documented under [simpl].
-
-INSTRUCTORS: These [Arguments] commands tell Rocq that these
-functions should always be unfolded during simplification (by
-[simpl]).
-
-INSTRUCTORS: SAZ 2024 - Why do we want these functions to simplify?
-Ans: If [a : aexp] then in the assertion_scope [(X !-> a st; st)] and
-[(X !-> aeval st a; st)] look different but are actually identical
-thanks to the coercion [Aexp_of_aexp].
-```
-:::
-
-:::dev PotentialImprovement
-NOTATION: BCP 20: It probably makes sense now to put all these in a
-custom grammar, so that we can really control how it looks and get
-rid of things like ap.
-
-```
-NOTATION: SAZ 2024: I have tried to implement the suggestion above.
-
-There is now a custom entry [assn] for defining the syntax of
-assertions.  Like the delimiters <{ }> used for Imp programs,
-we now also have {{ }} delimiters for use with Assertions.
-
-Inside that scope, the meaning of variables, nat literals,
-propositions, etc. is "lifted" to take a state parameter.
-
-The notation {{ #f x1 .. xn }} now "lifts" a normal function
-that should be of type [nat -> .. -> nat -> T] so that each of
-the inputs is treated as an [Aexp] and the state is threaded through.
-(This replaces the need for [ap], [ap2], etc. throughout.)
-
-The notation {{ $rocq_term }} now "quotes" a rocq term literally
-without lifting.  Parentheses can be used as in {{ $(foo bar) }}.
-```
-:::
-
-:::instructors
-The `{{ }}` syntax has `lead` precedence since otherwise it leads to some
-conflicts with triples.  This has the downside that assertions need to be
-wrapped in `()` parentheses when passed as arguments.
 :::
 
 ::::details "Notation: Assertions"
@@ -942,6 +773,10 @@ throughout this chapter.)
 
 We'll also want the "iff" variant of implication between
 assertions:
+
+:::dev "Roger Burtonpatel (rogerburtonpatel)"
+This should change. As it is now, `rw [assertIff_def]` does nothing visible to the proof goal.
+:::
 
 ```lean
 namespace Assertion
@@ -1355,8 +1190,10 @@ It has to do something with `apply` and `refine` looking inside the
 implication in `∀ {st st'}, ...`
 :::
 
-We make {name}`ValidHoareTriple` irreducible for "technical reasons", and
-use it only via `validHoareTriple_def` in proofs.
+
+We make {name}`ValidHoareTriple` irreducible for technical reasons.
+In your proofs, if you need to prove the validity of a Hoare triple,
+you should use `validHoareTriple_def` with {tactic}`rw` or {tactic}`simp`.
 
 ```lean
 open scoped HasTriple
@@ -1522,8 +1359,15 @@ theorem hoare_seq {P Q R : Assertion} {c₁ c₂ : Com}
   inversion heval with
   | seq _ hc₁ hc₂ =>
     rw [validHoareTriple_def] at h₁ h₂
+    -- We now "string together" each piece of information to conclude.
     exact h₁ hc₂ (h₂ hc₁ hpre)
 ```
+
+:::dev "Roger Burtonpatel (rogerburtonpatel)" PotentialImprovement (year := 2026)
+  This is a good explanation of something that doesn't have justification.
+  I would like another sentence or two that says _why_ going back-to-front
+  is "natural."
+:::
 
 ::::full
 Note that, in the formal rule `hoare_seq`, the premises are
@@ -1801,12 +1645,6 @@ This notation allows us to write this operation as:
 P [ X ↦ a ]
 ```
 
-```lean
-#check (fun st => Assertion.subst X (aexp { 2 * X }) ({{ X ≤ 10 }}) st)
-#check {{ (X ≤ 10) [X ↦ 2 * X] }}
-#check (∀ st, ({{ (X ≤ 10) [X ↦ 2 * X] }}) st)
-```
-
 That is, `P [X ↦ a]` stands for an assertion -- let's call it
 `P'` -- that behaves just like `P` except that, wherever `P` looks up
 the variable `X` in the current state, `P'` instead uses the value
@@ -1873,12 +1711,26 @@ fun st =>
 
 That is, `P'` is the assertion that `X + 1` is at most `5`.
 ::::
+Some examples of using substitution:
+```lean
+#check {{ (X ≤ 10) [X ↦ 2 * X] }}
+#check (∀ st, ({{ (X ≤ 10) [X ↦ 2 * X] }}) st)
+-- Written explicitly:
+#check (fun st => Assertion.subst X (aexp { 2 * X }) ({{ X ≤ 10 }}) st)
+```
 
 :::slidebreak
 :::
 
 We can demonstrate formally that we have captured the intuitive meaning of
 "assertion substitution" by proving some example logical equivalences:
+
+:::dev "Roger Burtonpatel (rogerburtonpatel)" NOW
+It seems that `rw [assertIff_def]` is doing something invisible here.
+Does this change with the new notation and antiquotation changes?
+`constructor` by itself actually works here but is surely performing a coercion,
+which is confusing. This feels like a notation bug.
+:::
 
 ```lean
 namespace ExampleAssertionSub
@@ -2393,13 +2245,6 @@ We can also use it to prove the example mentioned earlier.
 
 Or, formally ...
 
-:::instructors
-This proof uses a non-terminal {tactic}`simp_all` followed by {tactic}`lia`.
-Since {tactic}`lia` is robust to the exact form of the goal that
-{tactic}`simp_all` leaves behind, the {tactic}`simp_all` can be treated as
-if it were terminal.
-:::
-
 ```lean
 theorem assertion_sub_example2 :
     {{X < 4}}
@@ -2410,12 +2255,11 @@ theorem assertion_sub_example2 :
     · exact hoare_asgn
     · rw [assertImplies_def]
       intro st h
-      simp_all
-      lia
+      simp <;> lia
 ```
 
 :::dev "Niklas Halonen (xhalo32)"
-The above proof uses `simp_all` purely because `lia` can't see that `X` and
+The above proof uses `simp <;> lia` purely because `lia` can't see that `X` and
 `"X"` are the same (they are currently marked as `@[simp]` in Imp).
 :::
 
@@ -2463,14 +2307,6 @@ as an equation.  Passing these lemmas to {tactic}`simp` replaces the defined
 notions by their meanings wherever they appear.  We'll do that
 explicitly below (and shortly package the recipe up as a tactic of
 our own).
-
-:::instructors
-The source registers `Hint Unfold assert_implies assertion_sub t_update :
-core` for `auto` at this point.  That only widens `auto`'s search (unlike
-the `Arguments /.` commands, it does not affect `simpl`), so its Lean
-counterpart is the simp list of the `assertion_auto` tactic below, not
-global `@[simp]` lemmas.
-:::
 
 ::::full
 The proof of {name}`hoare_consequence_pre`, repeated below, looks
@@ -2550,12 +2386,6 @@ theorem hoare_consequence_post' {P Q Q' : Assertion} {c : Com}
   apply_rules
 ```
 
-:::dev "One An (meluge)" PotentialImprovement
-I'm not sure if `apply_rules` is the right replacement for the
-`eapply`/`eassumption` that was used in Rocq. Maybe this whole section
-should be removed?
-:::
-
 :::slidebreak
 :::
 
@@ -2615,7 +2445,7 @@ theorem assertion_sub_example2' :
     {{X < 5}} := by
   apply hoare_consequence_pre
   · exact hoare_asgn
-  · simp [assertImplies_def] -- an arithmetic goal remains
+  · simp [assertImplies_def] <;> -- an arithmetic goal remains
     lia
 ```
 
@@ -2915,6 +2745,10 @@ Having chosen your `a` and `n`, proceed as follows:
    to each other. But we chose them to be different, so this is a
    contradiction, which finishes the proof.
 
+:::dev "Roger Burtonpatel (rogerburtonpatel)" NOW
+The subcases of this proof are printing very badly. Notation here needs to be fixed.
+:::
+
 ```lean
 theorem invalid_triple : ¬ ∀ (a : Aexp) (n : Nat),
     {{ a = n }}
@@ -3019,16 +2853,6 @@ boolean expression `b` evaluates to {name}`true`."
 :::dev "Niklas Halonen (xhalo32)"
 I have removed `bassertion` as it's an unnecessary abstraction and only
 adds overhead for the reader.
-:::
-
-:::dev BeforeNextRelease
-Robert Rand: This isn't an identity but that's because
-we're using `~(bassertion b st)` in our triples, instead of a more
-direct/intuitive predicate.
-
-Some alternatives: 1) P_True b and P_False b (defined directly as
-desired) 1) bassertion b false (adds relevant argument to bassertion)
-2) ((bassertion (!b)) st) (clearer, but less direct).
 :::
 
 :::slidebreak
@@ -3292,12 +3116,14 @@ theorem if1true_test :
   solution!
     apply Com.EvalR.if1True
     · rfl
-    · exact Com.EvalR.asgn rfl
+    · apply Com.EvalR.asgn
+      · rfl
 
 theorem if1false_test :
     {X ↦ 2} =[ if1 (X = 0) { X := 1 } ]=> {X ↦ 2} := by
   solution!
-    exact Com.EvalR.if1False rfl
+    apply Com.EvalR.if1False
+    · rfl
 ```
 
 :::gradeTheorem 1 if1true_test if1false_test
