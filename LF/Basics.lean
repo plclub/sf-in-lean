@@ -2107,8 +2107,8 @@ Define a less-than function in terms of {name}`ble`.
 ```lean
 def blt (n m : Nat) : Bool := solution!(ble (succ n) m)
 
-example : blt two two = false := solution!(by rfl)
-example : blt two four = true  := solution!(by rfl)
+theorem blt_test1 : blt two two = false := solution!(by rfl)
+theorem blt_test2 : blt two four = true  := solution!(by rfl)
 theorem blt_test3 : blt four two = false := solution!(by rfl)
 
 attribute [irreducible] blt ble
@@ -2117,7 +2117,7 @@ attribute [irreducible] blt ble
 :::autogradedHole blt
 :::
 
-:::gradeTheorem 1 blt_test3
+:::gradeTheorem "1/3" blt_test1 blt_test2 blt_test3
 :::
 ::::
 :::::
