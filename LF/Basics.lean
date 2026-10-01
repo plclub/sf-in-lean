@@ -304,7 +304,7 @@ inductive MyBool : Type where
 We next invoke a couple of Lean directives to help control formatting.  Exactly what these directives mean is not important for present purposes — you can understand everything in the rest of the book without knowing — so we will mark these commands — and similar bits later on — with `THE FOLLOWING DETAILS CAN BE SKIPPED` comments in `.lean` files, and with folded-up segments in the HTML presentation. Feel free to have a peek if you want (click on the triangle in the HTML to unfold it), or just jump down to the following material and keep going.
 :::
 :::details
-```lean -show
+```lean
 variable (b : MyBool) (n m : Nat)
 set_option pp.fieldNotation false
 ```
