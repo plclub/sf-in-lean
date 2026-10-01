@@ -639,8 +639,16 @@ partial def delabBody (stId : FVarId) : DelabM Term := do
           guard <| fty.isArrow && fty.bindingBody!.isProp
           guard <| ← Meta.isDefEq fty.bindingDomain! (mkConst ``_root_.State)
           if f.isLambda then
-            withAppFn <| withOptions (pp.notation.set · false) delab
+            -- an applied escape lambda `(fun st' => …) st`, which is what
+            -- substituting a concrete assertion for a variable leaves behind:
+            -- print its body with `st` in place of `st'`
+            descend (f.bindingBody!.instantiate1 v) 0 (delabBody stId)
           else
+            -- only a name or a substitution reads back the same inside the
+            -- braces: any other applied term (say `havoc_pre x Q st`) would
+            -- have the state threaded through its arguments, so it keeps the
+            -- escape form
+            guard <| f.isFVar || f.isConst || f.isMVar || f.isAppOf `Assertion.subst
             withAppFn delab
         else
           `($(← withAppFn (delabBody stId)) $(← withAppArg (delabBody stId)))
@@ -649,11 +657,16 @@ partial def delabBody (stId : FVarId) : DelabM Term := do
 
 /-- Print an `Assertion`-valued term as it appears inside `{{ … }}`: a
 state lambda is un-threaded; a term the printer cannot rebuild falls back
-to the raw lambda, which is exactly this notation's escape form. -/
+to the lambda itself, which is exactly this notation's escape form.  An
+applied lambda at the head of the body, `fun st => (fun st' => …) st`, is
+reduced first so that the escape form stays a single lambda. -/
 partial def delabAssn : DelabM Term := do
-  if (← getExpr).isLambda then
-    (withBindingBody' `st (pure ·.fvarId!) fun stId => delabBody stId)
-      <|> withOptions (pp.notation.set · false) Delaborator.delab
+  let e ← getExpr
+  if e.isLambda then
+    let e := e.updateLambdaE! e.bindingDomain! e.bindingBody!.headBeta
+    descend e 0 do
+      (withBindingBody' `st (pure ·.fvarId!) fun stId => delabBody stId)
+        <|> Delaborator.delab
   else
     delab
 
@@ -1196,6 +1209,22 @@ def delabTriple : Delab := whenPPOption getPPNotation do
   | c => ``({{ $P }} ~$c {{ $Q }})
 
 end HasTriple.Delab
+
+namespace HasEval.Delab
+open Lean PrettyPrinter Delaborator SubExpr Imp.Delab
+
+def delabEvalR : Delab := whenPPOption getPPNotation do
+  guard <| (← getExpr).getAppNumArgs == 3
+  let c ← withNaryArg 0 delab
+  let st ← withNaryArg 1 delab
+  let st' ← withNaryArg 2 delab
+  match c with
+  | `(imp { $c:imp_com }) => ``($st =[ $c ]=> $st')
+  | c => ``($st =[ ~$c ]=> $st')
+
+attribute [app_delab Com.EvalR] delabEvalR
+
+end HasEval.Delab
 ```
 ::::
 
@@ -2696,10 +2725,6 @@ Having chosen your `a` and `n`, proceed as follows:
    to each other. But we chose them to be different, so this is a
    contradiction, which finishes the proof.
 
-:::dev "Roger Burtonpatel (rogerburtonpatel)" NOW
-The subcases of this proof are printing very badly. Notation here needs to be fixed.
-:::
-
 ```lean
 theorem invalid_triple : ¬ ∀ (a : Aexp) (n : Nat),
     {{ a = n }}
@@ -3052,6 +3077,8 @@ instance : HasEval Com State State where
 @[simp]
 theorem Com.evalR_eq {c : Com} {st st' : State} :
     EvalR c st st' ↔ st =[ c ]=> st' := by rfl
+
+attribute [app_delab Com.EvalR] HasEval.Delab.delabEvalR
 ```
 
 :::autogradedHole Com.EvalR
@@ -3917,6 +3944,27 @@ scoped macro_rules
     pure c
 ```
 
+::::details "Notation encoding: printing the extended commands back"
+```lean
+namespace Delab
+
+open Lean PrettyPrinter Imp.Delab
+
+@[app_unexpander Com.repeatUntil]
+private def Com.unexpandRepeatUntil : Unexpander
+  | `($_ $c $b) => `(imp { repeat { $(getImp c) } until ($(getBexp b)) })
+  | _ => throw ()
+
+attribute [app_unexpander Com.skip] unexpandComSkip
+attribute [app_unexpander Com.asgn] unexpandComAsgn
+attribute [app_unexpander Com.seq] unexpandComSeq
+attribute [app_unexpander Com.cond] unexpandComCond
+attribute [app_unexpander Com.whileDo] unexpandComWhileDo
+
+end Delab
+```
+::::
+
 Add new rules for `repeat` to {name}`Com.EvalR` below.  You can use the rules
 for `while` as a guide, but remember that the body of a `repeat`
 should always execute at least once, and that the loop ends when
@@ -3956,6 +4004,8 @@ instance : HasEval Com State State where
 @[simp]
 theorem Com.evalR_eq {c : Com} {st st' : State} :
     EvalR c st st' ↔ st =[ c ]=> st' := by rfl
+
+attribute [app_delab Com.EvalR] HasEval.Delab.delabEvalR
 ```
 
 A couple of definitions from above, copied here so they use the
@@ -4371,6 +4421,23 @@ scoped macro_rules
   | `(imp { ~$c }) =>
     pure c
 
+namespace Delab
+
+open Lean PrettyPrinter Imp.Delab
+
+@[app_unexpander Com.havoc]
+private def Com.unexpandHavoc : Unexpander
+  | `($_ $x:ident) => `(imp { $(mkIdent `havoc):ident $x:ident })
+  | _ => throw ()
+
+attribute [app_unexpander Com.skip] unexpandComSkip
+attribute [app_unexpander Com.asgn] unexpandComAsgn
+attribute [app_unexpander Com.seq] unexpandComSeq
+attribute [app_unexpander Com.cond] unexpandComCond
+attribute [app_unexpander Com.whileDo] unexpandComWhileDo
+
+end Delab
+
 inductive Com.EvalR : Com → State → State → Prop where
   | skip {st : State} : EvalR (imp {skip}) st st
   | asgn {st : State} {a : Aexp} {n : Nat} {x : Ident} (h : a.eval st = n) :
@@ -4397,6 +4464,8 @@ instance : HasEval Com State State where
 @[simp]
 theorem Com.evalR_eq {c : Com} {st st' : State} :
     EvalR c st st' ↔ st =[ c ]=> st' := by rfl
+
+attribute [app_delab Com.EvalR] HasEval.Delab.delabEvalR
 ```
 
 The definition of Hoare triples is exactly as before.
@@ -4584,6 +4653,32 @@ scoped macro_rules
     pure c
 ```
 
+::::details "Notation encoding: printing the extended commands back"
+```lean
+namespace Delab
+
+open Lean PrettyPrinter Imp.Delab
+
+@[app_unexpander Com.assert]
+private def Com.unexpandAssert : Unexpander
+  | `($_ $b) => `(imp { $(mkIdent `assert):ident ($(getBexp b)) })
+  | _ => throw ()
+
+@[app_unexpander Com.assume]
+private def Com.unexpandAssume : Unexpander
+  | `($_ $b) => `(imp { $(mkIdent `assume):ident ($(getBexp b)) })
+  | _ => throw ()
+
+attribute [app_unexpander Com.skip] unexpandComSkip
+attribute [app_unexpander Com.asgn] unexpandComAsgn
+attribute [app_unexpander Com.seq] unexpandComSeq
+attribute [app_unexpander Com.cond] unexpandComCond
+attribute [app_unexpander Com.whileDo] unexpandComWhileDo
+
+end Delab
+```
+::::
+
 To define the behavior of `assert` and `assume`, we need to add
 notation for an error, which indicates that an assertion has
 failed. We modify the {name}`Com.EvalR` relation, therefore, so that
@@ -4641,6 +4736,8 @@ instance : HasEval Com State Result where
 @[simp]
 theorem Com.evalR_eq {c : Com} {st : State} {res : Result} :
     EvalR c st res ↔ st =[ c ]=> res := by rfl
+
+attribute [app_delab Com.EvalR] HasEval.Delab.delabEvalR
 ```
 
 We redefine Hoare triples: Now, `{{ P }} c {{ Q }}` means that,
