@@ -32,48 +32,17 @@ for the 2025 CIS 5000 final exam at Penn. We should turn it into an
 exercise in this chapter!
 :::
 
-:::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement (year := 2025)
-````
-The concrete syntax in this chapter has been a long
-and evolving project! The latest development in this saga is a big
-round of improvements by Steve Zdancewic in 2024, with further
-polishing in 2025 by Noé de Santo and others. I've tried to prune
-back most of the notes-to-selves in this file, just leaving a few
-for further exploration at some point...
-
- - BCP 23: I *think* Assertions should either just be boolean
-   expressions or else they should be their own things with
-   math-looking syntax.  But in any case it would be good to get
-   rid of all the coercion stuff.
-
- - BCP 21: An interesting concrete syntax idea: maybe we could
-    write triples as ```<{ {P} c {Q} }>``` instead of ```{{P}} c
-    {{Q}}```.  Maybe this would be better, both in terms of keeping
-    the standard notation, and in terms of keeping the "<{...}>
-    around object-language syntax" convention. And it's the same
-    number of characters. :-) (Fewer, in many circumstances,
-    because when writing in comments or on the board we can leave
-    off the outer brackets.)  We should try it.  BCP 23: Tried it.
-    Was not able to push it all the way through, but this part
-    seems promising.
-
- - BCP 21: We should try either dropping the rule of consequence
-  completely or at least using it very seldom; instead, we should
-  just include uses of implication in each rule.  This would (a) make
-  the assignment rule, especially, MUCH easier to explain, and (b)
-  better align with the next chapter.  (One reason this chapter is
-  hard to explain is that the assignment rule is so rigid -- this
-  forces us to state the first several of examples in a silly, rigid,
-  confusing way.) BCP 23: I think this change is quite important.
-  Should be given high priority.
-  BCP 25: The SparseAnnotations material from Hoare2 is relevant!
-````
-:::
-
-:::dev "Niklas Halonen (xhalo32)"
-Reply to Benjamin's note above:
-The way we do it now in Lean is to have a custom elaborator which avoids
-all the coercions plus doesn't need the syntax category for assertions.
+:::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement (year := 2021)
+We should try either dropping the rule of consequence
+completely or at least using it very seldom; instead, we should
+just include uses of implication in each rule.  This would (a) make
+the assignment rule, especially, MUCH easier to explain, and (b)
+better align with the next chapter.  (One reason this chapter is
+hard to explain is that the assignment rule is so rigid -- this
+forces us to state the first several of examples in a silly, rigid,
+confusing way.) BCP 23: I think this change is quite important.
+Should be given high priority.
+BCP 25: The SparseAnnotations material from Hoare2 is relevant!
 :::
 
 :::dev "Benjamin Pierce (bcpierce00)" BeforeNextRelease (year := 2021)
@@ -397,12 +366,10 @@ assertion notation.
 ::::
 
 :::instructors
-The source issues `Arguments assert_of_Prop /.` (and likewise for its other
-two lifting functions) so that `simpl` always unfolds the coercions.  There
-is no counterpart here: the `{{ }}` elaborator below inlines `st[x]`,
-`a.eval st`, and `b.eval st` directly, so no wrapper functions exist for
-`simp` to unfold.  The one wrapper we do introduce, `Assertion.subst`,
-comes with the `@[simp]` lemma `Assertion.subst_apply`.
+The `{{ }}` elaborator below inlines `st[x]`, `a.eval st`, and `b.eval st`
+directly, so there are no lifting functions for `simp` to unfold.  The one
+wrapper we do introduce, `Assertion.subst`, comes with the `@[simp]` lemma
+`Assertion.subst_apply`.
 :::
 
 ::::details "Notation: Assertions"
@@ -774,17 +741,16 @@ throughout this chapter.)
 We'll also want the "iff" variant of implication between
 assertions:
 
-:::dev "Roger Burtonpatel (rogerburtonpatel)"
-This should change. As it is now, `rw [assertIff_def]` does nothing visible to the proof goal.
-:::
-
 ```lean
+def AssertIff (P Q : Assertion) : Prop :=
+  (P ->> Q) ∧ (Q ->> P)
+
 namespace Assertion
-scoped notation:26 P:27 " <<->> " Q:27 => AssertImplies P Q ∧ AssertImplies Q P
+scoped notation:26 P:27 " <<->> " Q:27 => AssertIff P Q
 end Assertion
 
 theorem assertIff_def {P Q : Assertion} :
-    P <<->> Q ↔ AssertImplies P Q ∧ AssertImplies Q P := by rfl
+    P <<->> Q ↔ (P ->> Q) ∧ (Q ->> P) := by rfl
 ```
 
 ::::full
@@ -802,18 +768,10 @@ def delabAssertImplies : Delab := whenPPOption getPPNotation do
   guard <| (← getExpr).isAppOfArity ``AssertImplies 2
   `($(← delabAssnArg 0) ->> $(← delabAssnArg 1))
 
-/-- `<<->>` abbreviates a conjunction of two `AssertImplies`, so its
-delaborator is keyed on `∧` and bails out unless the two conjuncts mirror
-each other. -/
-@[delab app.And]
+@[delab app.AssertIff]
 def delabAssertIff : Delab := whenPPOption getPPNotation do
-  let e ← getExpr
-  guard <| e.isAppOfArity ``And 2
-  let l := e.appFn!.appArg!
-  let r := e.appArg!
-  guard <| l.isAppOfArity ``AssertImplies 2 && r.isAppOfArity ``AssertImplies 2
-  guard <| l.appFn!.appArg! == r.appArg! && l.appArg! == r.appFn!.appArg!
-  `($(← withNaryArg 0 <| delabAssnArg 0) <<->> $(← withNaryArg 0 <| delabAssnArg 1))
+  guard <| (← getExpr).isAppOfArity ``AssertIff 2
+  `($(← delabAssnArg 0) <<->> $(← delabAssnArg 1))
 
 end Assertion.Delab
 ```
@@ -1724,13 +1682,6 @@ Some examples of using substitution:
 
 We can demonstrate formally that we have captured the intuitive meaning of
 "assertion substitution" by proving some example logical equivalences:
-
-:::dev "Roger Burtonpatel (rogerburtonpatel)" NOW
-It seems that `rw [assertIff_def]` is doing something invisible here.
-Does this change with the new notation and antiquotation changes?
-`constructor` by itself actually works here but is surely performing a coercion,
-which is confusing. This feels like a notation bug.
-:::
 
 ```lean
 namespace ExampleAssertionSub
@@ -3249,11 +3200,6 @@ you are using a definition or theorem (e.g., {name}`hoare_skip`) from
 above this exercise without re-proving it for the new version of
 Imp with `if1`.
 
-:::dev "Benjamin Pierce (bcpierce00)" BeforeNextRelease (year := 2021)
-Not quite fair to give them a 2-point exercise
-where our solution uses a custom Ltac...
-:::
-
 ```lean
 theorem hoare_if1_good :
     {{ X + Y = Z }}
@@ -3352,11 +3298,6 @@ aspects of `skip` and conditionals:
 - Like a conditional, we can assume guard `b` holds on entry to
   the subcommand.
 ::::
-
-:::dev
-HIDE: The big comment will not display nicely.  But I guess it's
-folded...
-:::
 
 ```lean
 theorem hoare_while {P : Assertion} {b : Bexp} {c : Com}
@@ -4172,12 +4113,6 @@ theorem hoare_seq {P Q R : Assertion} {c₁ c₂ : Com}
 -- END SOLUTION
 ```
 
-:::dev
-NOTATION: IY -- I've noticed this oddity in previous lemmas, but
-it's especially noticable here that an explicit state is given to
-the conditional statements.
-:::
-
 ```lean
 -- SOLUTION
 /- Now we are ready to show `ex2Repeat` correct using `hoare_repeat`. -/
@@ -4201,11 +4136,6 @@ theorem ex2Repeat_hoare_repeat :
 like this: -/
 -- END SOLUTION
 ```
-
-:::dev
-NOTATION: Here, too, the printing isn't as we write the notation.
-(As soon as we start the proof context). Is this intended?
-:::
 
 ```lean
 -- SOLUTION
@@ -4622,10 +4552,6 @@ inductive Com : Type where
   | assert : Bexp → Com
   | assume : Bexp → Com
 ```
-
-:::dev PotentialImprovement
-NOTATION: Reconsider these precedences
-:::
 
 :::instructors
 Copy of the template `imp` macro from Imp, plus one case.
