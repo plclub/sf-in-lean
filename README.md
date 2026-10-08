@@ -39,6 +39,12 @@ The HTML for a given volume and variant lands in
 `_out/<vol>/<variant>/html/`, one page per chapter.  (There is no
 per-chapter build target: a whole volume is the smallest unit.)
 
+HL and TS use LF's generated reference index for links to LF chapters. Their
+make targets build the matching LF variant first. When invoking an executable
+directly, build LF beforehand (for example, `make lf-student` before
+`lake exe sfl-hl student`). A release containing HL or TS also needs LF packaged
+first. Verso's `--remote-config` option can select a different reference index.
+
 The first build compiles the whole Lean toolchain's dependencies and
 takes a while; later builds are incremental.
 
