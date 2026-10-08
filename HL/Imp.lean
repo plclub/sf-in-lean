@@ -182,16 +182,33 @@ abbrev Y : Ident := "Y"
 abbrev Z : Ident := "Z"
 ```
 
-## Notations
+## Notation
 %%%
 tag := "imp-notations"
 %%%
 
-::::full
-To make Imp programs easier to read and write, we introduce some notations.
+To make Imp programs easier to read and write, we introduce some notation.
 
-You do not need to understand exactly what these declarations do. Briefly, though,
-here is how the two blocks below fit together:
+::::full
+By convention, our notation always treats
+identifiers starting with capital Latin letters as being literal names in Imp.
+Thus `X`, `Y`, and `Z` are Imp variables. Meanwhile, names beginning with
+lowercase Latin letters (like `a` or `c`) are treated as Lean variables, with
+the exception `true`/`false`, which are {name}`Bexp` literals. Allowing
+Lean variables in Imp programs will be useful later when we need to write theorems
+about Imp programs.
+For Lean terms `e` that are not variables, `~e` splices `e` into Imp syntax.
+We will rarely need to use this in this book; we'll point out examples of this when they occur.
+::::
+
+::::terse
+By convention, `X`, `Y`, and `Z` are Imp variables, and  `a`, `b`, and `c` are Lean
+variables, with the exception of `true`/`false`. Syntax `~e` splices `e` into Imp syntax.
+::::
+
+::::details "Notation encoding: arithmetic expressions"
+:::full
+Briefly, here is how the blocks below fit together:
 
 - The `declare_syntax_cat` directive adds a new non-terminal to Lean's grammar, called
   `imp_aexp`. We'll add additional non-terminals further below.
@@ -202,23 +219,10 @@ here is how the two blocks below fit together:
   parentheses for grouping and `~`, the escape back to Lean. The eighth,
   `aexp { … }`, is a production of Lean's own `term` category — it is what lets
   an Imp expression appear in ordinary Lean code.
-- `~e` splices an already-elaborated Lean term `e` into Imp syntax. We will rarely need
-  to use this in this book, however. By convention, our notation always treats
-  identifiers starting with capital Latin letters as being literal names in Imp.
-  Thus `X`, `Y`, and `Z` are Imp variables. Meanwhile, names beginning with
-  lowercase Latin letters (like `a` or `c`) are treated as Lean variables. This will
-  be useful later when we need to write theorems about Imp programs. We only need to use
-  the `~` when we want to insert a larger Lean expression into an `Imp` term. We'll
-  point out examples of this when they occur.
 - Finally, `macro_rules` is used to translate each production of the `imp_aexp` non-terminal
   into a Lean expression.
+:::
 
-Boolean expressions and, later, commands follow this same pattern exactly, so
-their declarations are collapsed where they appear: open one if you want to see
-the pattern repeated, and skip it otherwise.
-::::
-
-::::details "Notation encoding: arithmetic expressions"
 ```lean
 /-- Arithmetic expressions of Imp -/
 declare_syntax_cat imp_aexp
@@ -384,19 +388,17 @@ end Imp.Elab
 ```lean
 #check aexp { 3 + (X * 2) }
 #check bexp { true ∧ ¬(X ≤ 4) }
+#check fun x:Aexp => aexp { 3 + x }
+#check fun x:Aexp => aexp { 3 + ~(Aexp.mult x x) }
 ```
 
-## Delaborators
-%%%
-tag := "imp-delaborators"
-%%%
-
-::::full
-Next, we write a suite of _delaborators_ for {name}`Aexp` and {name}`Bexp`.
-Delaborators are like the opposite of `macro_rules` — they are used to pretty print _elaborated_ terms back to the user.
-::::
-
 ::::details "Notation encoding: printing expressions back"
+:::full
+Here, we write a suite of _delaborators_ for {name}`Aexp` and {name}`Bexp`.
+Delaborators are like the opposite of `macro_rules` — they are used to pretty
+print _elaborated_ terms back to the user.
+:::
+
 ```lean
 namespace Imp.Delab
 
@@ -423,11 +425,6 @@ where
     let stx := stx.setInfo .none
     let pstx ← `(imp_bexp| ($(⟨stx⟩)))
     return pstx.raw.setInfo stxInfo
-```
-::::
-
-::::details "Notation encoding: registering the delaborators"
-```lean
 
 /--
 Recognizes a term as being an `aexp { ... }` expression.
@@ -568,11 +565,7 @@ def b₂ := bexp { b₁ ∧ (¬ (X ≤ (4 + 2))) }
 :::
 
 ::::full
-With these delaborators in place, Lean pretty-prints Imp expressions with the higher-level
-notations rather than their raw constructors.
-
-The pretty-printed version of an expression might not exactly
-match its original form.
+The pretty-printed version of an expression might not exactly match its original form.
 For example, the parentheses around `X * 2` in `aexp { 3 + (X * 2) }` are not printed because
 they are redundant, which the parenthesizer knows.
 ::::
@@ -686,7 +679,8 @@ inductive Com where
 ```
 
 :::instructors
-We don't make `skip` a reserved keyword on purpose because otherwise `skip` couldn't be used as a name and {name}`Com.skip` would not work.
+We don't make `skip` a reserved keyword on purpose because otherwise `skip` couldn't be used
+as a name and {name}`Com.skip` would not work.
 :::
 
 ::::details "Notation encoding: commands, macro rules"
@@ -1124,17 +1118,17 @@ Here is an informal definition of evaluation, presented as inference rules
 for readability:
 
 ```display +centered
-───────────────── (skip)
-st =[ skip ]=> st
+          ───────────────── (skip)
+          st =[ skip ]=> st
 
-        a.eval st = n
-────────────────────────────── (asgn)
-st =[ x := a ]=> (x →ₜ n ; st)
+            a.eval st = n
+     ────────────────────────────── (asgn)
+     st =[ x := a ]=> (x →ₜ n ; st)
 
- st  =[ c₁ ]=> st'
- st' =[ c₂ ]=> st''
-──────────────────── (seq)
-st =[ c₁;c₂ ]=> st''
+           st  =[ c₁ ]=> st'
+           st' =[ c₂ ]=> st''
+          ──────────────────── (seq)
+          st =[ c₁;c₂ ]=> st''
 
            b.eval st = true
            st =[ c₁ ]=> st'
@@ -1146,15 +1140,15 @@ st =[ if (b) { c₁ } else { c₂ } ]=> st'
 ─────────────────────────────────────── (ifFalse)
 st =[ if (b) { c₁ } else { c₂ } ]=> st'
 
-     b.eval st = false
-──────────────────────────── (whileFalse)
-st =[ while (b) { c } ]=> st
+           b.eval st = false
+      ──────────────────────────── (whileFalse)
+      st =[ while (b) { c } ]=> st
 
-       b.eval st = true
-        st =[ c ]=> st'
-st' =[ while (b) { c } ]=> st''
-─────────────────────────────── (whileTrue)
-st  =[ while (b) { c } ]=> st''
+           b.eval st = true
+            st =[ c ]=> st'
+    st' =[ while (b) { c } ]=> st''
+    ─────────────────────────────── (whileTrue)
+    st  =[ while (b) { c } ]=> st''
 ```
 
 Here is the formal definition.  Make sure you understand how it
@@ -1252,7 +1246,7 @@ example :
       }
     ]=> {Z ↦ 4, X ↦ 2} := by
   -- To supply the intermediate state to the `seq` rule, which is
-  -- sometimes necessary, we can write `Com.EvalR.seq (st' := ...)`.
+  -- sometimes necessary, we can write `EvalR.seq (st' := ...)`.
   apply EvalR.seq (st' := {X ↦ 2})
   · exact EvalR.asgn rfl
   · apply EvalR.ifFalse
@@ -1261,13 +1255,16 @@ example :
 ```
 
 :::dev "Niklas Halonen (xhalo32)"
-After `apply EvalR.seq (st' := {X ↦ 2})`, the infoview shows `imp {X := 2}.EvalR ∅ {X ↦ 2}` instead of `∅ =[ X := 2 ]=> {X ↦ 2}`.
+After `apply EvalR.seq (st' := {X ↦ 2})`, the infoview shows `imp {X := 2}.EvalR ∅ {X ↦ 2}`
+instead of `∅ =[ X := 2 ]=> {X ↦ 2}`.
 It would be silly to use `apply EvalR.seq (st' := {X ↦ 2}) <;> try simp only [evalR_eq] at *`.
 :::
 
-Since the total-map update notation (`→ₜ`) is difficult to type, we prefer to use the `{}`-notation with `KVPair`s.
+Since the total-map update notation (`→ₜ`) is difficult to type, we prefer to use the `{}`-notation
+with `KVPair`s.
 
-In the above proof, using `EvalR.asgn rfl` is convenient because it computes the value of the right-hand side and can use it to determine `st'`.
+In the above proof, using `EvalR.asgn rfl` is convenient because it computes the value of the
+right-hand side and can use it to determine `st'`.
 
 Note the use of `~` here, since `.num x` is a Lean term that we want to splice into Imp.
 
@@ -1290,8 +1287,8 @@ example : ∅ =[ X := 2; Y := 3 ]=> {Y ↦ 3, X ↦ 2} := by
     exact EvalR.asgn rfl
 ```
 
-This is a case where `rfl` is more powerful than `simp`, because it can assign the `?st'` metavariable.
-To demonstrate, here's a version with `simp`:
+This is a case where `rfl` is more powerful than `simp`, because it can assign the `?st'`
+metavariable. To demonstrate, here's a version with `simp`:
 
 ```lean +error -keep
 example : ∅ =[ X := 2; Y := 3 ]=> {Y ↦ 3, X ↦ 2} := by
@@ -1477,11 +1474,6 @@ theorem quiz5_answer (b : Bexp) (c : Com) (st : State)
 
 ## Determinism of Evaluation
 
-:::dev PotentialImprovement
-Maybe this should go at the end of the file in a section marked
-   optional? Not everybody will want to spend time on it.
-:::
-
 ::::full
 Changing from a computational to a relational definition of evaluation
 is a good move because it frees us from the artificial requirement that
@@ -1610,19 +1602,6 @@ Comment from reader: Another good place to mention lack of
 
 # Reasoning About Imp Programs
 
-:::dev PotentialImprovement
-This section doesn't seem very useful — to anybody! It takes too
-   much time to go through it in class, and even for advanced students it's
-   too low-level and grubby to be a very convincing motivation for what
-   follows — i.e., to feel motivated by its grubbiness, you have to
-   understand it, but this takes more time than it's worth. Better to cut
-   the whole rest of the file (except the further exercises at the very end),
-   or at least make it optional.
-   (BCP 10/18: However, this removes quite a few exercises. Is the homework
-   assignment still meaty enough? I'm going to leave it as-is for now, but
-   we should reconsider this later.)
-:::
-
 ::::full
 We'll get into more systematic and powerful techniques for reasoning
 about Imp programs in the next chapter, but we can
@@ -1685,17 +1664,6 @@ GRADE_MANUAL 3: multXandYinZ_spec
 :::
 :::::
 ::::::
-
-:::dev "Niklas Halonen (xhalo32)"
-We need to explain the `generalize` tactic.
-I've changed some Hoare proofs from `have key` to `generalize` but the tactic hasn't been explained yet.
-:::
-
-:::dev "One An (meluge)"
-At least currently, it looks like `generalize` is introduced in `Automation.lean`.
-Are we doing anything different here with `generalize` that is
-unexplained there?
-:::
 
 ::::::full
 :::::exercise (rating := 3) (name := "loop_never_stops")
@@ -2348,10 +2316,6 @@ evaluating an expression might diverge, the short-circuiting `and`
 would _not_ be equivalent to the original, since it would make more
 programs terminate.)
 
-:::dev PotentialImprovement
-This exercise turned out to be easier than we intended!
-:::
-
 ```lean
 def Bexp.evalSC (st : State) (b : Bexp) : Bool := solution!(
   match b with
@@ -2596,7 +2560,8 @@ scoped notation:40 st0:41 " =[ " c " ]=> " st1:41 " // " s:41 =>
 :::
 
 :::instructors
-We don't make the notation with `c:imp_com` since it would need the custom `macro_rules` and elaborators which for a one-off thing are not worth the noise.
+We don't make the notation with `c:imp_com` since it would need the custom `macro_rules`
+and elaborators which for a one-off thing are not worth the noise.
 :::
 
 Now prove the following properties of your definition:
@@ -3048,25 +3013,3 @@ about making up a concrete Notation for `for` loops, but feel free
 to play with this too if you like.)
 ::::
 :::::
-
-:::dev PotentialImprovement
-```
-HTML polish — deferred Verso-markup opportunities for a later pass (see
-CONTRIBUTING.md, "Verso markup for nicer HTML"):
-* {name} was applied to resolvable declaration references in visible prose.
-  More could be added, but bare type names were linked only selectively (avoid
-  over-linking; mind forward references and namespace scope — a name must
-  already be defined and in scope at that point in the document, or {name} fails
-  to build).
-* {ref "tag"} cross-references link "see the X section" phrasings; add a
-  `%%% tag := "…" %%%` block under a heading to make it a target. Done for the
-  Notations and Delaborators sections; more internal "above/below" phrasings
-  could get the same treatment.
-* {deftech}/{tech} — a small glossary: define Imp's core terms once with
-  {deftech} (abstract syntax, state, big-step, relation, partial function, …)
-  and link later uses with {tech}.
-* {lean}`expr` — inline elaborated expressions/types where a whole expression,
-  not just a single name, reads better with hover types (e.g. the
-  `Coe Ident Aexp` / `OfNat Aexp n` bullets in the Notations section).
-```
-:::

@@ -735,7 +735,7 @@ tag := "assn-delaborators"
 %%%
 
 ::::full
-As in the {ref "imp-delaborators"}[Imp chapter], the assertion notation
+As in the {ref "imp-notations"}[Imp chapter], the assertion notation
 above is _input_ only: Lean reads `{{ X ≤ 5 }}` but still prints the
 underlying function, as `#print assertion8` just showed.  The delaborators
 below close the loop for plain assertions: a state lambda whose body Lean

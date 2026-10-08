@@ -521,11 +521,11 @@ collection of rules defines `⇓` as the smallest relation closed under
 them:
 
 ```display +centered
-───────── (num)
-num n ⇓ n
+      ───────── (num)
+      num n ⇓ n
 
-      a₁ ⇓ n₁
-      a₂ ⇓ n₂
+       a₁ ⇓ n₁
+       a₂ ⇓ n₂
 ──────────────────── (plus)
 plus a₁ a₂ ⇓ n₁ + n₂
 
@@ -534,10 +534,10 @@ plus a₁ a₂ ⇓ n₁ + n₂
 ───────────────────── (minus)
 minus a₁ a₂ ⇓ n₁ - n₂
 
-     a₁ ⇓ n₁
-     a₂ ⇓ n₂
-────────────────── (mult)
-mult a₁ a₂ ⇓ n₁*n₂
+       a₁ ⇓ n₁
+       a₂ ⇓ n₂
+ ────────────────── (mult)
+ mult a₁ a₂ ⇓ n₁*n₂
 ```
 ::::
 
