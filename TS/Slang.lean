@@ -536,8 +536,8 @@ minus a₁ a₂ ⇓ n₁ - n₂
 
        a₁ ⇓ n₁
        a₂ ⇓ n₂
- ────────────────── (mult)
- mult a₁ a₂ ⇓ n₁*n₂
+ ──────────────────── (mult)
+ mult a₁ a₂ ⇓ n₁ * n₂
 ```
 ::::
 
@@ -750,7 +750,7 @@ end Bexp
 end Slang
 ```
 
-## Computational vs. Relational Definitions
+## Functional vs. Relational Definitions
 
 ::::full
 For the definitions of evaluation for arithmetic and boolean
