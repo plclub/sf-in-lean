@@ -145,7 +145,7 @@ def eval (a : Aexp) : Nat :=
 @[simp] theorem eval_mult (a₁ a₂ : Aexp) :
     (mult a₁ a₂).eval = a₁.eval * a₂.eval := by rfl
 
-example : eval (.plus (.num 2) (.num 2)) = 4 := by simp
+example : eval (.plus (.num 2) (.num 2)) = 4 := by rfl
 end Aexp
 ```
 
@@ -200,9 +200,11 @@ Aexp.eval (.plus (.num 3) (.minus (.num 4) (.num 1)))
 As a technical note: We are specifying the semantics of Slang in what is
 called the "big step" style: each `eval` function take an expression (the input)
 in one "big step" to its meaning (the output, as a number or boolean).
+::::full
 This is in contrast to the "small step" style, which breaks a single evaluation into
 multiple, smaller steps. The small-step style is introduced in the Type Systems
 volume; we stick with big-step throughout the Hoare Logic volume.
+::::
 
 ## Optimization
 
@@ -288,14 +290,17 @@ theorem optimize0plus_sound (a : Aexp) :
 We can do much better. The case analysis we performed by hand — peeling
 `plus` apart to reach the `plus (num 0) e` branch — is exactly the case
 analysis that {name}`Aexp.optimize0plus` itself performs.
+::::
 
 The {tactic}`fun_induction` tactic
-inducts along a function's *own* recursion structure: `fun_induction
-Aexp.optimize0plus a` hands us one goal per branch of `optimize0plus` — the
+inducts along a function's *own* recursion structure:
+`fun_induction Aexp.optimize0plus a` hands us one goal per branch of `optimize0plus` — the
 special `plus (num 0) e` branch included — so the nested {tactic}`cases` disappear.
 
+::::full
 Before applying `fun_induction` to a function as complex as {name}`Aexp.optimize0plus`,
 let's see how it works on something simpler. Recall the definition of `Nat.even` and `Nat.odd`:
+::::
 
 ```lean
 def Nat.even (n : Nat) :=
@@ -306,21 +311,23 @@ def Nat.even (n : Nat) :=
 
 def Nat.odd (n : Nat) := Nat.even (n + 1)
 ```
-
+::::full
 Normally, if we perform induction on `n`, we get two cases — `0` and `n' + 1` —
 one for each of the cases in the inductive definition of natural numbers.
 Functional induction on {name}`Nat.even`, however, gives us three cases — `0`, `1`, and `n' + 2` —
 corresponding to each of the cases of its definition.
-
+::::
 ```lean
 example (n : Nat) (h : Nat.even n = true) : Nat.odd n = false := by
-  fun_induction Nat.even n
-  . rfl
-  . contradiction
-  . simp [Nat.odd, Nat.even] at *
-    lia
+  workinclass!
+    fun_induction Nat.even n
+    . rfl
+    . contradiction
+    . simp [Nat.odd, Nat.even] at *
+      lia
 ```
 
+::::full
 Now let's try using {tactic}`fun_induction` on {name}`Aexp.optimize0plus`. When we do this,
 every goal has the same shape, so we can attack them uniformly
 with the {tactic}`<;>` combinator and a single tactic, {tactic}`simp_all`, which rewrites
@@ -513,7 +520,9 @@ In informal prose, this is sometimes
 indicated by saying something like "Let {name}`Aexp.EvalR` be the smallest relation
 closed under the following rules...".
 
-To summarize: a group of inference rules corresponds to a single inductive
+To summarize:
+::::
+A group of inference rules corresponds to a single inductive
 definition; each rule's name corresponds to a constructor name; above the
 line are the premises, below the line the conclusion; metavariables
 like `a₁` and `n₁` are implicitly universally quantified. The whole
@@ -539,7 +548,6 @@ minus a₁ a₂ ⇓ n₁ - n₂
  ──────────────────── (mult)
  mult a₁ a₂ ⇓ n₁ * n₂
 ```
-::::
 
 :::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement
 The first two quizzes here seem kind of boring.
@@ -695,12 +703,12 @@ theorem evalR_iff_eval' (a : Aexp) (n : Nat) :
 end Aexp
 ```
 
+::::::full
 ```lean
 namespace Bexp
 open scoped Aexp -- opens the ⇓ notation for Aexp.EvalR
 ```
 
-::::::full
 :::::exercise (rating := 3) (name := "bevalR")
 Write a relation `Bexp.EvalR` in the same style as {name}`Aexp.EvalR`, and prove that
 it is equivalent to {name}`Bexp.eval`.
@@ -743,10 +751,12 @@ theorem evalR_iff_eval (b : Bexp) (bv : Bool) :
 :::
 :::::
 
+```lean
+end Bexp
+```
 ::::::
 
 ```lean
-end Bexp
 end Slang
 ```
 
@@ -829,17 +839,15 @@ Here are some tests to demonstrate that this matches the relational definition.
 ```
 :::
 
-This definition is a lot wordier than the earlier version. There are tools
+This definition is a lot wordier than the earlier version.
+::::full
+There are tools
 to reduce this overhead, namely monads, but we will not discuss these in
 Software Foundations in Lean. Curious readers can learn more about them
 from [Functional Programming in Lean](https://lean-lang.org/functional_programming_in_lean/Monads/).
-
+::::
 By contrast, partiality is no problem for the relational
 version of the definition.
-
-:::terse
-What should `Aexp.eval` return for `.div (.num 1) (.num 0)`??
-:::
 
 ```lean
 inductive Aexp.EvalR : Aexp → Nat → Prop where
@@ -872,10 +880,12 @@ namespace Slang.AevalRExtended
 Another example: a _nondeterministic_ number generator:
 :::
 
+::::full
 As another example, suppose that we want to extend the arithmetic operations by a
 nondeterministic number generator `any` that, when evaluated, may
 yield any number. (This is not the same as making a _probabilistic_
 choice among all numbers — we only say which results are _possible_.)
+::::
 
 ```lean
 inductive Aexp where
@@ -886,9 +896,11 @@ inductive Aexp where
   | mult (a₁ a₂ : Aexp)
 ```
 
+::::full
 Again, extending `Aexp.eval` would be tricky, since evaluation is now _not_
 a deterministic function from expressions to numbers; but extending the
 relation is no problem.
+::::
 
 :::terse
 What should `Aexp.eval` do with nondeterminism??
