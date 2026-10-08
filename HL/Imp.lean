@@ -128,9 +128,11 @@ abbrev State := TotalMap Ident Nat
 
 ## Syntax
 
+::::full
 We can add variables to the arithmetic expressions we had before simply
 by including one more constructor.  (This is a fresh `Aexp`, replacing
 the variable-free one from the {ref "Slang"}[Slang] chapter.)
+::::
 
 ```lean
 inductive Aexp where
@@ -1004,8 +1006,7 @@ In SmallStep we need to package the state and command into a pair,
    way.)
 :::
 
-In a more conventional functional language like OCaml or Haskell, we could define
-the evaluation function as follows:
+In a more conventional language we could define the evaluation function as follows:
 
 ```lean -keep +error (name := eval_fail)
 def Com.eval (st : State) (c : Com) : State :=
@@ -1266,7 +1267,8 @@ with `KVPair`s.
 In the above proof, using `EvalR.asgn rfl` is convenient because it computes the value of the
 right-hand side and can use it to determine `st'`.
 
-Note the use of `~` here, since `.num x` is a Lean term that we want to splice into Imp.
+Here are some more examples.
+Note the use of `~` in the first, since `.num x` is a Lean term that we want to splice into Imp.
 
 ```lean
 example {x : Nat} : ∅ =[ X := ~(.num x) ]=> {X ↦ x} := by
