@@ -933,3 +933,9 @@ in {name}`Slang.Aexp.evalR_iff_eval` and {name}`Slang.Bexp.evalR_iff_eval`.
 :::terse
 Functional: computation. Relational: expressive. Best: both, proved equivalent.
 :::
+
+::::dev "Mike Hicks (mwhicks1)" PotentialImprovement
+Should we relate these two definitions using the {name}`Decidable`
+type class, to be able to use the computational one more easily in
+proofs?
+::::
