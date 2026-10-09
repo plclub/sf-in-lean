@@ -1401,8 +1401,6 @@ theorem MStar'' α (s : List α) (re : RegExp α) (h : s =~ Star re) :
         trivial
       intro s h; apply hall; trivial
 ```
-:::gradeTheorem 1 MStar''
-:::
 ::::
 :::::
 
@@ -1670,8 +1668,6 @@ theorem weak_pumping_star_zero {α : Type} (re : RegExp α)
       have h₂ := pumping_constant_ge_1 re
       rw [← h₁] at h₂; inversion h₂
 ```
-:::gradeTheorem 2 weak_pumping_star_zero
-:::
 ::::
 :::::
 
@@ -1745,8 +1741,6 @@ theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α)
           rw [← List.append_assoc]
           apply mStarApp <;> assumption
 ```
-:::gradeTheorem 5 weak_pumping_star_app
-:::
 ::::
 :::::
 
@@ -1895,8 +1889,6 @@ theorem pumping {α : Type} {re : RegExp α} {s : List α}
             apply mStarApp <;> simp_all
 
 ```
-:::gradeTheorem 5 pumping
-:::
 ::::
 :::::
 
