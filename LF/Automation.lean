@@ -1021,6 +1021,7 @@ example : [1, 2, 3] =~ reg_exp_of_list [1, 2, 3] := by
   constructor
 ```
 
+:::::full
 ::::exercise (rating := 1) (name := "regexp_match_of_list")
 As a quick exercise, prove that every list matches `reg_exp_of_list` of itself:
 
@@ -1038,6 +1039,7 @@ theorem regexp_match_of_list α (l : List α) : l =~ reg_exp_of_list l := by
 :::gradeTheorem 1 regexp_match_of_list
 :::
 ::::
+:::::
 
 ::::full
 We can also prove general facts about {name}`ExpMatch`. For instance,
@@ -1067,6 +1069,7 @@ The following lemmas show that the intuition about matching given
 at the beginning of the section can be obtained from the formal
 inductive definition.
 
+:::::full
 ::::exercise (rating := 1) (name := "EmptySet_is_empty")
 
 ```lean
@@ -1078,7 +1081,9 @@ theorem EmptySet_is_empty α (s : List α) : ¬(s =~ EmptySet) := by
 :::gradeTheorem 1 EmptySet_is_empty
 :::
 ::::
+:::::
 
+:::::full
 ::::exercise (rating := 1) (name := "MUnion'")
 
 ```lean
@@ -1094,12 +1099,14 @@ theorem MUnion' α (s : List α) (re₁ re₂ : RegExp α) :
 :::gradeTheorem 1 MUnion'
 :::
 ::::
+:::::
 
 The next lemma is stated in terms of the {name}`List.foldr` function on lists:
 if `ss : List (List α)` represents a sequence of
 strings `s₁, ..., sₙ`, then {lean}`List.foldr (· ++ ·) [] ss` is the result of
 concatenating them all together.
 
+:::::full
 ::::exercise (rating := 2) (name := "MStar'")
 
 ```lean
@@ -1119,7 +1126,9 @@ theorem MStar' α (ss : List (List α)) (re : RegExp α)
 :::gradeTheorem 2 MStar'
 :::
 ::::
+:::::
 
+:::::full
 ::::exercise (rating := 1) (name := "EmptyStr_not_needed") (optional := true) (manual := true)
 It turns out that the {name}`EmptyStr` constructor is actually not
 needed, since the regular expression matching the empty string can
@@ -1144,6 +1153,7 @@ theorem empty_equiv {α : Type} (s : List α) :
 ```
 :::
 ::::
+:::::
 
 ::::full
 Since the definition of {name}`ExpMatch` has a recursive
@@ -1209,24 +1219,33 @@ theorem in_re_match {α : Type} {s : List α} {re : RegExp α} {x : α}
       | inl hin₁ => exact ih₁ hin₁
       | inr hin₂ => exact ih₂ hin₂
 ```
+::::full
 
-::::exercise (rating := 1) (name := "reNotEmpty") (manual := true)
+:::exercise (rating := 3) (name := "reNotEmpty") (manual := true)
 Write a recursive function `reNotEmpty` that tests whether a
-regular expression matches some string. Prove that your function
-is correct.
+regular expression matches some string.
 
-:::solution
+Note that this is _not_ asking you to implement full regular expression
+matching (which is a neat algorithm, but hard)!
+Rather, you should write `reNotEmpty` to return `true` when
+`re` there can _possibly exist_ a string that it matches.
+(Hint: when can that not be true?)
+
+Prove that your function is correct.
+
 ```lean
 def reNotEmpty {α : Type} (re : RegExp α) : Bool :=
-  match re with
+  solution!
+  (match re with
   | EmptySet => false
   | EmptyStr => true
   | Char _ => true
   | App re₁ re₂ => reNotEmpty re₁ && reNotEmpty re₂
   | Union re₁ re₂ => reNotEmpty re₁ || reNotEmpty re₂
-  | Star _ => true
+  | Star _ => true)
 
 theorem reNotEmpty_correct {α : Type} (re : RegExp α) :
+  solution!
     (∃ s, s =~ re) ↔ reNotEmpty re = true := by
   induction re with (simp only [reNotEmpty])
   | EmptySet =>
@@ -1266,11 +1285,11 @@ theorem reNotEmpty_correct {α : Type} (re : RegExp α) :
   | Star re _ =>
     simp only [iff_true]; exists []; constructor
 ```
-:::
 
-:::grade
+
+::grade
 ```
-GRADE_MANUAL 1: reNotEmpty
+GRADE_MANUAL 3: reNotEmpty
 ```
 :::
 ::::
@@ -1357,6 +1376,7 @@ The `generalizing` clause would not help us here — {tactic}`induction` on
 `s₁ =~ Star re` would still fail because `Star re` is a compound expression,
 not a bare variable.
 
+:::::full
 ::::exercise (rating := 1) (name := "exp_match_ex2") (optional := true)
 The `MStar''` lemma below (combined with its converse, the
 `MStar'` exercise above) shows that our definition of {name}`ExpMatch`
@@ -1384,6 +1404,7 @@ theorem MStar'' α (s : List α) (re : RegExp α) (h : s =~ Star re) :
 :::gradeTheorem 1 MStar''
 :::
 ::::
+:::::
 
 ## The "Weak" Pumping Lemma
 
@@ -1479,6 +1500,7 @@ to prove the main lemma.
 Your job is to complete the proofs of the helper lemmas; the main
 lemma relies on these.
 
+:::::full
 ::::exercise (rating := 2) (name := "weak_pumping_char")
 ```lean
 theorem weak_pumping_char {α : Type} (x : α)
@@ -1492,7 +1514,9 @@ theorem weak_pumping_char {α : Type} (x : α)
 :::gradeTheorem 2 weak_pumping_char
 :::
 ::::
+:::::
 
+:::::full
 ::::exercise (rating := 4) (name := "weak_pumping_app")
 ```lean
 theorem weak_pumping_app {α : Type} (s₁ s₂ : List α) (re₁ re₂ : RegExp α)
@@ -1553,7 +1577,9 @@ theorem weak_pumping_app {α : Type} (s₁ s₂ : List α) (re₁ re₂ : RegExp
 :::gradeTheorem 4 weak_pumping_app
 :::
 ::::
+:::::
 
+:::::full
 ::::exercise (rating := 3) (name := "weak_pumping_union_l")
 ```lean
 theorem weak_pumping_union_l  {α : Type} (s₁ : List α) (re₁ re₂ : RegExp α)
@@ -1588,7 +1614,9 @@ theorem weak_pumping_union_l  {α : Type} (s₁ : List α) (re₁ re₂ : RegExp
 :::gradeTheorem 3 weak_pumping_union_l
 :::
 ::::
+:::::
 
+:::::full
 ::::exercise (rating := 3) (name := "weak_pumping_union_r")
 ```lean
 theorem weak_pumping_union_r {α : Type} (s₂ : List α) (re₁ re₂ : RegExp α)
@@ -1624,7 +1652,9 @@ theorem weak_pumping_union_r {α : Type} (s₂ : List α) (re₁ re₂ : RegExp 
 :::gradeTheorem 3 weak_pumping_union_r
 :::
 ::::
+:::::
 
+:::::full
 ::::exercise (rating := 2) (name := "weak_pumping_star_zero") (optional := true)
 ```lean
 theorem weak_pumping_star_zero {α : Type} (re : RegExp α)
@@ -1643,7 +1673,9 @@ theorem weak_pumping_star_zero {α : Type} (re : RegExp α)
 :::gradeTheorem 2 weak_pumping_star_zero
 :::
 ::::
+:::::
 
+:::::full
 ::::exercise (rating := 5) (name := "weak_pumping_star_app") (optional := true)
 ```lean
 theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α)
@@ -1716,7 +1748,9 @@ theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α)
 :::gradeTheorem 5 weak_pumping_star_app
 :::
 ::::
+:::::
 
+:::::full
 ::::exercise (rating := 3) (name := "weak_pumping")
 ```lean
 theorem weak_pumping {α : Type} {re : RegExp α} {s : List α}
@@ -1737,9 +1771,11 @@ theorem weak_pumping {α : Type} {re : RegExp α} {s : List α}
 :::gradeTheorem 3 weak_pumping
 :::
 ::::
+:::::
 
 ## The "Strong" Pumping Lemma
 
+:::::full
 ::::exercise (rating := 5) (name := "strong_pumping") (optional := true)
 Now here is the usual version of the pumping lemma. In addition to
 requiring that {lean}`s₂ ≠ []`, it also strengthens the result to
@@ -1862,6 +1898,7 @@ theorem pumping {α : Type} {re : RegExp α} {s : List α}
 :::gradeTheorem 5 pumping
 :::
 ::::
+:::::
 
 ```lean
 end RegExp
@@ -1869,6 +1906,7 @@ end RegExp
 
 ## Palindromes Revisited
 
+::::::full
 :::::exercise (rating := 5) (name := "palindrome_converse") (optional := true)
 
 Here is one possible definition of the palindrome inductive predicate, {name}`Pal`,
@@ -1982,3 +2020,4 @@ end PalConv
 :::
 
 :::::
+::::::
