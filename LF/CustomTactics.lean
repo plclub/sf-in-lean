@@ -219,11 +219,24 @@ def evalInvAlt (goals : List MVarId) (alt : TSyntax `invAlt) : TacticM (List MVa
 where
   matchTag tag name : Bool :=
     tag == name || tag.isPrefixOf name || tag.isSuffixOf name
+  -- The span of `alt` up to (and including) `=>`, excluding the tactic
+  -- sequence: `alt`'s syntax rule is `" | " caseArg " => " tacticSeq`, so the
+  -- tactic sequence is always the last argument.
+  altHeaderSpan : Syntax := mkNullNode alt.raw.getArgs.pop
   trySolveGoal vars tactics goal : TacticM MVarId := do
-    let goals ← renameInaccessibles goal vars >>= evalTacticAt tactics
-    unless goals.isEmpty do
-      reportUnsolvedGoals goals
-    return goal
+    let renamedGoal ← renameInaccessibles goal vars
+    let savedGoals ← getGoals
+    try
+      setGoals [renamedGoal]
+      let goals ← withTacticInfoContext altHeaderSpan do
+        evalTactic tactics
+        pruneSolvedGoals
+        getGoals
+      unless goals.isEmpty do
+        reportUnsolvedGoals goals
+      return goal
+    finally
+      setGoals savedGoals
   errorMsg : TacticM MessageData := do
     let goalMsgs ← goals.mapM (.ofName <$> ·.getUserName)
     return if goals.isEmpty
