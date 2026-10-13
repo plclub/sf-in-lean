@@ -766,9 +766,16 @@ def reduceToZero : Com :=
 ```lean
 theorem reduce_to_zero_correct' :
     {{ True }} reduceToZero {{ X = 0 }} := by
-  -- First put the postcondition into the form expected by
-  -- the while rule.
-  sorry
+  rw [reduceToZero]
+  apply hoare_consequence_post
+  · apply hoare_while
+    apply hoare_consequence_pre
+    · exact hoare_asgn
+    · intro st _
+      simp
+  · intro st ⟨_, hguard⟩
+    simp at hguard
+    exact hguard
 ```
 
 :::slidebreak
@@ -811,7 +818,13 @@ This makes it pretty easy to verify `reduce_to_zero`:
 ```lean
 theorem reduce_to_zero_correct''' :
     {{ True }} reduceToZero {{ X = 0 }} := by
-  sorry
+  rw [reduceToZero]
+  apply hoare_consequence_post
+  · apply hoare_while
+    apply hoare_consequence_pre
+    · exact hoare_asgn
+    · verify_assertion
+  · verify_assertion
 ```
 
 :::slidebreak
@@ -1635,7 +1648,30 @@ rules plays a critical role at some point in the proof.
 theorem verification_correct (d : DCom) (p : Assertion)
     (hvc : d.VerificationConditions p) :
     ValidHoareTriple p d.erase d.postcondition := by
-  sorry
+  induction d generalizing p with
+  | «skip» q =>
+    exact hoare_consequence_pre hoare_skip hvc
+  | seq d₁ d₂ ih₁ ih₂ =>
+    obtain ⟨h₁, h₂⟩ := hvc
+    exact hoare_seq (ih₂ _ h₂) (ih₁ _ h₁)
+  | asgn x a q =>
+    exact hoare_consequence_pre hoare_asgn hvc
+  | cond b p₁ d₁ p₂ d₂ q ih₁ ih₂ =>
+    obtain ⟨hpre₁, hpre₂, hpost₁, hpost₂, hd₁, hd₂⟩ := hvc
+    apply hoare_if
+    · exact hoare_consequence (ih₁ _ hd₁) hpre₁ hpost₁
+    · exact hoare_consequence (ih₂ _ hd₂) hpre₂ hpost₂
+  | whileDo b bodyPre body q ih =>
+    obtain ⟨hpre, hbody, hpost, hd⟩ := hvc
+    apply hoare_consequence _ hpre hpost
+    apply hoare_while
+    exact hoare_consequence_pre (ih _ hd) hbody
+  | pre p' body ih =>
+    obtain ⟨hp, hd⟩ := hvc
+    exact hoare_consequence_pre (ih _ hd) hp
+  | post body q ih =>
+    obtain ⟨hd, hq⟩ := hvc
+    exact hoare_consequence_post (ih _ hd) hq
 ```
 
 :::instructors
@@ -1685,18 +1721,44 @@ example : decWhile.VerificationConditions := by
   rw [Decorated.VerificationConditions, decWhile]
   simp only [DCom.VerificationConditions,
     DCom.postcondition]
-  sorry
+  verify_assertion
 ```
 
 :::slidebreak
 :::
 
 Fortunately, our `verify_assertion` tactic can generally take care of
-most (or sometimes all) of them.
+most (or sometimes all) of them, once we teach it to unfold decorated
+programs and their verification conditions:
 
 ```lean
+open Lean Elab Tactic Meta in
+/-- Unfold every defined constant in the goal whose type ends in
+`Decorated`, so that the verification conditions of a named decorated
+program become visible to `simp`. -/
+elab "unfold_decorated" : tactic => do
+  let tgt ← instantiateMVars (← getMainTarget)
+  for c in tgt.getUsedConstants do
+    let info ← getConstInfo c
+    let isDecorated ← forallTelescopeReducing info.type fun _ ty =>
+      pure (ty.isConstOf ``Decorated)
+    if isDecorated && info.hasValue then
+      evalTactic (← `(tactic| unfold $(mkIdent c):ident))
+
+macro_rules
+  | `(tactic| verify_assertion) =>
+    `(tactic|
+      (unfold_decorated
+       (try simp +decide [Decorated.VerificationConditions,
+          DCom.VerificationConditions, DCom.postcondition,
+          assertImplies_def, assertIff_def, validHoareTriple_def,
+          Assertion.subst_def] at *)
+       all_goals and_intros
+       all_goals (try simp +decide at *)
+       all_goals (try lia)))
+
 example : decWhile.VerificationConditions := by
-  sorry
+  verify_assertion
 ```
 
 :::slidebreak
@@ -1722,7 +1784,7 @@ Here's the final, formal proof that `decWhile` is correct.
 ```lean
 theorem dec_while_correct :
     decWhile.OuterTripleValid := by
-  sorry
+  verify
 ```
 
 ::::::full
@@ -1741,7 +1803,7 @@ def swapDec (m n : Nat) : Decorated where
 
 theorem swap_correct (m n : Nat) :
     (swapDec m n).OuterTripleValid := by
-  sorry
+  verify
 ```
 
 And here is the formal decorated version of the "positive
@@ -1765,7 +1827,7 @@ def positiveDifferenceDec : Decorated where
 
 theorem positive_difference_correct :
     positiveDifferenceDec.OuterTripleValid := by
-  sorry
+  verify
 ```
 
 :::::exercise (rating := 2) (name := "if_minus_plus_correct")
@@ -1794,7 +1856,7 @@ def ifMinusPlusDec : Decorated where
 theorem if_minus_plus_correct :
     ifMinusPlusDec.OuterTripleValid := by
   solution!
-    sorry
+    verify
 ```
 :::::
 
@@ -1821,7 +1883,7 @@ def divModDec (a b : Nat) : Decorated where
 theorem div_mod_outer_triple_valid (a b : Nat) :
     (divModDec a b).OuterTripleValid := by
   solution!
-    sorry
+    verify
 ```
 :::::
 
@@ -2063,7 +2125,7 @@ def subtractSlowlyDec (m n : Nat) : Decorated where
 
 theorem subtract_slowly_outer_triple_valid (m n : Nat) :
     (subtractSlowlyDec m n).OuterTripleValid := by
-  sorry
+  verify
 ```
 ::::
 
@@ -2100,7 +2162,7 @@ def slowAssignmentDec (m : Nat) : Decorated where
 theorem slow_assignment (m : Nat) :
     (slowAssignmentDec m).OuterTripleValid := by
   solution!
-    sorry
+    verify
 ```
 :::::
 
@@ -2270,18 +2332,26 @@ two lemmas helpful.
 ```lean
 theorem parity_ge_2 (x : Nat) (h : 2 ≤ x) :
     parity (x - 2) = parity x := by
-  sorry
+  match x, h with
+  | n + 2, _ => rfl
 
 theorem parity_lt_2 (x : Nat) (h : ¬ 2 ≤ x) :
     parity x = x := by
-  sorry
+  match x with
+  | 0 => rfl
+  | 1 => rfl
+  | n + 2 => lia
 
 theorem parity_outer_triple_valid (m : Nat) :
     (parityDec m).OuterTripleValid := by
   solution!
-    -- Simplification is too aggressive here; recover the
-    -- folded guard before proving preservation and exit.
-    sorry
+    verify
+    · intro st h h2
+      rw [← h]
+      exact parity_ge_2 st[X] h2
+    · intro st h hlt
+      rw [← h]
+      exact (parity_lt_2 st[X] (by lia)).symm
 
 -- SOLUTION
 /- Here is another loop invariant — arguably a more natural
@@ -2316,10 +2386,7 @@ def findParityDec (m : Nat) : Decorated where
 
 theorem find_parity_correct (m : Nat) :
     (findParityDec m).OuterTripleValid := by
-  -- Simplification is too aggressive here; recover the
-  -- folded guard before proving preservation and exit.
-  -- At loop exit, X can only be 0 or 1.
-  sorry
+  verify
 
 /- Here is a more intuitive way of writing the loop
 invariant. -/
@@ -2347,10 +2414,7 @@ def findParityDec' (m : Nat) : Decorated where
 
 theorem find_parity_correct' (m : Nat) :
     (findParityDec' m).OuterTripleValid := by
-  -- Simplification is too aggressive here; recover the
-  -- folded guard before proving preservation and exit.
-  -- At loop exit, X can only be 0 or 1.
-  sorry
+  verify
 
 /- Finally, just for fun, here is an old-style
 non-decorated-program proof. -/
@@ -2360,7 +2424,13 @@ theorem parity_correct (m : Nat) :
           X := X - 2
         }
     {{ fun st => st[X] = parity m }} := by
-  sorry
+  apply hoare_consequence (P' := {{ parity X = parity m }})
+  · apply hoare_while
+    apply hoare_consequence_pre
+    · exact hoare_asgn
+    · verify_assertion
+  · verify_assertion
+  · verify_assertion
 -- END SOLUTION
 ```
 :::::
