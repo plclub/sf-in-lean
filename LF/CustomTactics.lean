@@ -12,12 +12,12 @@ open Tactic
 
 /-- Internal syntactic representation of a single inversion alternative. -/
 declare_syntax_cat invAlt
-syntax " | " caseArg " => " tacticSeq : invAlt
+syntax " | " "@"? caseArg " => " tacticSeq : invAlt
 
 /-- An inversion alternative matching one or more goal tags,
   expanding to multiple single [invAlt]s. -/
 declare_syntax_cat invAlts
-syntax (" | " caseArg)+ " => " tacticSeq : invAlts
+syntax (" | " "@"? caseArg)+ " => " tacticSeq : invAlts
 
 /--
   `inversion h` behaves like `cases h` except that where `cases` would fail with
@@ -38,6 +38,12 @@ syntax (" | " caseArg)+ " => " tacticSeq : invAlts
     This is the usual behavior of `cases`.
   * The form `inversion t with (tac ...) | tag₁ x ... => tac ... | ... | tagₙ z ... => tac ...`
     is supported, similar to that of `cases` and `induction`.
+    The names `x ...` rename the *last* inaccessible hypotheses of the goal,
+    which may include the equations left behind by inversion.
+  * As with `cases`, the form `| @tag x ...` names *all* of the constructor's fields,
+    including implicit ones, from left to right.
+    Any names beyond the number of fields rename the remaining inaccessible hypotheses
+    (e.g. the equations left behind by inversion) as above.
 -/
 syntax (name := inversion)
   "inversion " optConfig ident (" with " (tacticSeq)? (colGe invAlts)*)? : tactic
@@ -202,24 +208,42 @@ def _root_.Lean.MVarId.inversion (mvarId : MVarId) (h : FVarId) (config : Invers
         else pure subgoals
       return subgoals
 
+/-- Whether the alternative tag or goal name `tag` refers to the constructor `ctor`:
+  either `tag` is a suffix of the constructor's name (`step`, `le.step`),
+  or `tag` starts with the constructor's short name (`nostutter2.zero`). -/
+def tagMatchesCtor (tag ctor : Name) : Bool :=
+  tag.isSuffixOf ctor || ctor.getSuffix == tag.getRoot
+
+/-- Find the constructor, with its number of fields, that `tag` refers to. -/
+def findCtor? (ctors : Array (Name × Nat)) (tag : Name) : Option (Name × Nat) :=
+  ctors.find? (tagMatchesCtor tag ·.1)
+
 /-- Given an inversion alternative and a list of goals,
   solve the tagged goal with the provided tactics,
   throwing an error if the goal cannot be found or solved. -/
-def evalInvAlt (goals : List MVarId) (alt : TSyntax `invAlt) : TacticM (List MVarId) :=
+def evalInvAlt (ctors : Array (Name × Nat)) (goals : List MVarId) (alt : TSyntax `invAlt) :
+    TacticM (List MVarId) :=
   match alt with
-  | `(invAlt| | $tag:ident $vars:binderIdent* => $tactics:tacticSeq) => do
+  | `(invAlt| | $[@%$at?]? $tag:ident $vars:binderIdent* => $tactics:tacticSeq) => do
     if let some goal ← goals.findM? (matchTag tag.getId <$> ·.getUserName) then
-      return [← trySolveGoal vars tactics goal]
+      return [← trySolveGoal at?.isSome vars tactics goal]
     else throwError m!"Invalid alternative name `{tag.getId}`: {← errorMsg}"
-  | `(invAlt| | _ $vars:binderIdent* => $tactics:tacticSeq) => do
+  | `(invAlt| | $[@%$at?]? _ $vars:binderIdent* => $tactics:tacticSeq) => do
     if !goals.isEmpty then
-      goals.mapM (trySolveGoal vars tactics)
+      goals.mapM (trySolveGoal at?.isSome vars tactics)
     else throwErrorAt alt m!"Invalid wildcard alternative: {← errorMsg}"
   | _ => throwErrorAt alt "Could not parse inversion alternative"
 where
   matchTag tag name : Bool :=
     tag == name || tag.isPrefixOf name || tag.isSuffixOf name
-  trySolveGoal vars tactics goal : TacticM MVarId := do
+  /-- With `@`, the first names were already given to the fields by [MVarId.inversion];
+    record them for hovering, and rename inaccessible hypotheses with the rest. -/
+  trySolveGoal explicit (vars : TSyntaxArray ``binderIdent) tactics goal : TacticM MVarId := do
+    let vars ← if explicit then do
+        let numFields := (findCtor? ctors (← goal.getUserName)).map (·.2) |>.getD 0
+        saveFieldsInfo goal (vars.extract 0 numFields)
+        pure (vars.extract numFields vars.size)
+      else pure vars
     let goals ← renameInaccessibles goal vars >>= evalTacticAt tactics
     unless goals.isEmpty do
       reportUnsolvedGoals goals
@@ -229,19 +253,28 @@ where
     return if goals.isEmpty
       then m!"There are no unhandled alternatives"
       else m!"Expected {.orList goalMsgs}"
+  saveFieldsInfo goal (vars : TSyntaxArray ``binderIdent) : TacticM Unit :=
+    withSaveInfoContext <| goal.withContext do
+      for var in vars do
+        if let `(binderIdent| $x:ident) := var then
+          if let some decl := (← getLCtx).findFromUserName? x.getId then
+            addLocalVarInfo x decl.toExpr
 
 @[tactic Lean.Parser.inversion, inherit_doc Lean.Parser.inversion]
 public meta def evalInversion : Tactic
   | `(tactic| inversion $config $h:ident $[with $[$tactics?:tacticSeq]? $[$alts?:invAlts]*]?) => do
-    let casesSubgoals ← (← getMainGoal).inversion (← getFVarId h) (← elabInversionConfig config)
+    let h ← getFVarId h
+    let expandedAlts ← Array.flatten <$> (alts?.getD #[]).mapM expandInvAlts
+    let ctors ← withMainContext <| getCtors h
+    let givenNames := ctors.map (givenNamesFor expandedAlts ·.1)
+    let casesSubgoals ← (← getMainGoal).inversion h (← elabInversionConfig config) givenNames
     let mut goals ← casesSubgoals.toList.mapM setUserName
     if let some tactics := tactics?.join then
       let subgoals ← goals.mapM (evalTacticAt tactics)
       goals ← subgoals.flatten.filterM (not <$> ·.isAssignedOrDelayedAssigned)
-    if let some alts := alts? then
-      let expandedAlts ← Array.flatten <$> alts.mapM expandInvAlts
+    if alts?.isSome then
       for alt in expandedAlts do
-        let solvedGoals ← evalInvAlt goals alt
+        let solvedGoals ← evalInvAlt ctors goals alt
         goals := goals.removeAll solvedGoals
       unless goals.isEmpty do
         reportUnsolvedGoals goals
@@ -253,9 +286,25 @@ where
       subgoal.mvarId.setUserName name.getSuffix
     return subgoal.mvarId
   expandInvAlts
-    | `(invAlts| $[| $args:caseArg]* => $tactics:tacticSeq) =>
-      args.mapM (`(invAlt| | $(·) => $tactics))
+    | `(invAlts| $[| $[@%$ats?]? $args:caseArg]* => $tactics:tacticSeq) =>
+      (ats?.zip args).mapM fun (at?, arg) => `(invAlt| | $[@%$at?]? $arg => $tactics)
     | stx => throwErrorAt stx "Could not parse inversion alternatives"
+  /-- The constructors of the inductive type of `h`, with their numbers of fields. -/
+  getCtors h : TacticM (Array (Name × Nat)) := do
+    let .const n _ := (← whnfD (← h.getType)).getAppFn | return #[]
+    let some (.inductInfo val) := (← getEnv).find? n | return #[]
+    val.ctors.toArray.mapM fun ctor => return (ctor, (← getConstInfoCtor ctor).numFields)
+  /-- If the first alternative matching `ctor` (by name or by wildcard) has the form `| @tag x ...`,
+    the names `x ...` that it gives to the constructor's fields. -/
+  givenNamesFor (alts : Array (TSyntax `invAlt)) ctor : AltVarNames :=
+    let alt? := alts.findSome? fun
+      | `(invAlt| | $[@%$at?]? $tag:ident $vars:binderIdent* => $_) =>
+        if tagMatchesCtor tag.getId ctor then some (at?.isSome, vars) else none
+      | `(invAlt| | $[@%$at?]? _ $vars:binderIdent* => $_) => some (at?.isSome, vars)
+      | _ => none
+    match alt? with
+    | some (true, vars) => { explicit := true, varNames := vars.toList.map (getNameOfIdent' ·.raw[0]) }
+    | _ => {}
 
 end Lean.Elab.Tactic
 
@@ -419,6 +468,84 @@ example (n : Nat) : Nat := by
   inversion n with
   | zero => exact zero
   | succ n' => exact n'
+
+/-! ## `@` alternatives -/
+
+/-- As with `cases`, `@` names all of a constructor's fields, including implicit ones -/
+example (x y : Nat) (h : x ≤ y) : x ≤ y + 1 := by
+  inversion h with
+  | refl => exact le.step le.refl
+  | @step m h' =>
+    guard_hyp m : Nat
+    guard_hyp h' : Nat.le x m
+    exact le.step (le.step h')
+
+/-- ...exactly as `cases` does -/
+example (x y : Nat) (h : x ≤ y) : x ≤ y + 1 := by
+  cases h with
+  | refl => exact le.step le.refl
+  | @step m h' =>
+    guard_hyp m : Nat
+    guard_hyp h' : Nat.le x m
+    exact le.step (le.step h')
+
+/-- Names beyond the fields go to the equations left behind by inversion, in context order -/
+example (f : Nat → Nat) (n m : Nat) (leq : n ≤ f m) : True := by
+  inversion leq with
+  | refl => trivial
+  | @step k h' eq heq =>
+    guard_hyp k : Nat
+    guard_hyp h' : Nat.le n k
+    guard_hyp eq : f m = succ k
+    guard_hyp heq : leq ≍ le.step h'
+    trivial
+
+/-- Fields may be skipped with `_`, and alternatives may share a tactic -/
+example (f : Nat → Nat) (n m : Nat) (leq : n ≤ f m) : True := by
+  inversion +clear leq with
+  | @refl | @step _ _ =>
+    trivial
+
+/-- Fields that are unified away still consume their names, as with `cases` -/
+example : ¬ (NoStutter [3, 1, 1, 4]) := by
+  intro contra
+  inversion +clear contra with
+  | @nostutter2 x y l _ h =>
+  guard_hyp h : NoStutter [1, 1, 4]
+  inversion +clear h with
+  | @_ x y l hneq _ =>
+  guard_hyp hneq : 1 ≠ 1
+  apply hneq
+  rfl
+
+/-- `@` names survive the optional sequence of tactics on all goals -/
+example {α} {l : List α} (h : NoStutter l) (hl : l ≠ []) : l.length > 0 := by
+  inversion h with
+    try contradiction
+  | @nostutter1 a => guard_hyp a : α; simp
+  | @nostutter2 a b l' hab h' =>
+    guard_hyp hab : a ≠ b
+    guard_hyp h' : NoStutter (b :: l')
+    simp
+
+/-- Inversion on nonindexed `Type`s with `@` -/
+example (n : Nat) : Nat := by
+  inversion n with
+  | @zero => exact zero
+  | @succ n' => exact n'
+
+/-- error: too many variable names provided -/
+#guard_msgs(error) in
+example (x y : Nat) (h : x ≤ y) : True := by
+  inversion h with
+  | refl => trivial
+  | @step m h' e => trivial
+
+/-- error: Invalid alternative name `stop`: Expected refl or step -/
+#guard_msgs(error) in
+example (x y : Nat) (h : x ≤ y) : True := by
+  inversion h with
+  | @stop m h' => trivial
 
 /-! # `lemma` tests -/
 
