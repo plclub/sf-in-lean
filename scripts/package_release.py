@@ -22,7 +22,10 @@ For each requested volume (lf / hl / ts):
   3. Delete the placeholder chapters' generated `.lean` files (and their
      `import` lines from the generated project's own <VOL>.lean) from that
      output — an excluded chapter gets an "under construction" page in html/,
-     but no file at all in lean/.
+     but no file at all in lean/. Also drop any cross-volume chapter (config:
+     CROSS_VOL_DEPS, mirroring a volume's hardcoded `crossVol` list in its
+     Targets<VOL>.lean) that only the now-excluded chapter(s) needed, so it
+     isn't bundled as unreferenced dead code.
   4. Scan the surviving output for leaked developer-facing material: a
      `:::dev` note only ever reaches the student build at all if it's marked
      `NOW`-urgency (see SFLMeta/Comment.lean), rendered as
@@ -38,6 +41,7 @@ For each requested volume (lf / hl / ts):
 Usage:
   python3 scripts/package_release.py [--out release]
       [--config scripts/release_chapters.json] [--allow-dev-notes] [--keep-lake]
+      [--allow-dirty]
 """
 
 import argparse
@@ -57,6 +61,16 @@ RAW_LEAK_MARKERS = [":::dev", ":::instructors"]
 
 PLACEHOLDER_MESSAGE = "This chapter is under construction and not yet available in this release."
 CHAPTER_TITLE_RE = re.compile(r'#doc \(Manual\) "([^"]*)" =>')
+
+# Cross-volume chapter dependencies, as hardcoded in each volume's Targets<VOL>.lean
+# (see CONTRIBUTING.md, "Extractor maintenance"): {volume: {chapter: [(other_vol, other_chapter), ...]}}.
+# A volume's `crossVol` list is unconditional — passed to the saver regardless of
+# which of the volume's own chapters are kept — so a trimmed release that excludes
+# every chapter needing a cross-volume chapter still gets it bundled as dead code.
+# Entries here let the packager prune it back out.
+CROSS_VOL_DEPS = {
+    "hl": {"Imp": [("LF", "Typeclasses")]},
+}
 
 
 def chapter_import_re(vol_upper):
@@ -155,6 +169,26 @@ def strip_excluded_from_lean_output(vol, excluded):
     root.write_text(pat.sub("", root.read_text()))
 
 
+def strip_unneeded_crossvol(vol, excluded):
+    """Remove a cross-volume chapter (see CROSS_VOL_DEPS) from the generated
+    project when every chapter that needed it was excluded, so it doesn't sit
+    in the release as unreferenced dead code (and doesn't trip scan_for_leaks
+    over notes in a chapter nothing in this release actually draws on)."""
+    excluded_set = set(excluded)
+    lean_dir = REPO_ROOT / f"_out/{vol}/student/lean"
+    for needer, deps in CROSS_VOL_DEPS.get(vol, {}).items():
+        if needer not in excluded_set:
+            continue
+        for other_vol, other_chapter in deps:
+            f = lean_dir / other_vol / f"{other_chapter}.lean"
+            f.unlink(missing_ok=True)
+            lakefile = lean_dir / "lakefile.toml"
+            pat = re.compile(
+                rf'\[\[lean_lib\]\]\nname = "{re.escape(other_vol)}"\n\n?'
+            )
+            lakefile.write_text(pat.sub("", lakefile.read_text()))
+
+
 def scan_for_leaks(vol):
     """Return a list of (relpath, lineno, snippet) for any developer-facing
     material found in the built student output."""
@@ -202,6 +236,10 @@ def main():
                      help="copy the release even if leaked dev notes are found (still prints them)")
     ap.add_argument("--keep-lake", action="store_true",
                      help="keep the .lake build cache in the packaged lean/ directory")
+    ap.add_argument("--allow-dirty", action="store_true",
+                     help="build even if <VOL>/ has uncommitted changes (for previewing a "
+                          "release before committing); unsafe if an *excluded* chapter's "
+                          "uncommitted edits would be lost on a mid-run crash")
     args = ap.parse_args()
 
     config_path = REPO_ROOT / args.config
@@ -224,12 +262,15 @@ def main():
         print(f"\n=== {vol_upper}: chapters = {chapters_desc} ===")
 
         if not git_path_is_clean(vol_dir):
-            results.append((vol, chapters_desc, "SKIPPED",
-                             f"{vol_upper}/ has uncommitted changes; commit or stash before "
-                             "packaging (the packager may rewrite excluded chapters' files "
-                             "temporarily and restores them from the working tree afterward)"))
-            print(results[-1][3])
-            continue
+            if not args.allow_dirty:
+                results.append((vol, chapters_desc, "SKIPPED",
+                                 f"{vol_upper}/ has uncommitted changes; commit or stash before "
+                                 "packaging (the packager may rewrite excluded chapters' files "
+                                 "temporarily and restores them from the working tree afterward), "
+                                 "or pass --allow-dirty to preview anyway"))
+                print(results[-1][3])
+                continue
+            print(f"--allow-dirty set: {vol_upper}/ has uncommitted changes; proceeding anyway")
 
         all_chapters = list_chapters(vol)
         unknown = [c for c in (keep or []) if c not in all_chapters]
@@ -253,6 +294,7 @@ def main():
 
             build_student(vol)
             strip_excluded_from_lean_output(vol, excluded)
+            strip_unneeded_crossvol(vol, excluded)
 
             leaks = scan_for_leaks(vol)
             if leaks:

@@ -194,6 +194,25 @@ theorem map_cons {α β : Type} {f : α → β}
   rfl
 ```
 
+#### Proof bodies
+
+Always prove a theorem or example with a tactic block (`:= by ...`), even when a single tactic or
+an existing lemma applied directly would suffice as a term-mode proof. Don't write:
+
+```lean
+theorem two_eq_one_add_one : 2 = 1 + 1 := rfl
+```
+
+Write this instead:
+
+```lean
+theorem two_eq_one_add_one : 2 = 1 + 1 := by rfl
+```
+
+This keeps every proof body syntactically uniform (`by` followed by tactics), rather than mixing
+tactic-mode and term-mode proofs, and makes it a smaller, more local change to extend a proof
+with more tactics later.
+
 #### Type annotations
 
 Always give binders explicit type annotations, even when Lean can infer them.
@@ -423,8 +442,8 @@ def Bag := List Nat
 deriving Append
 
 def Bag.empty : Bag := []
-theorem Bag.empty_def : Bag.empty = [] := rfl
-theorem Bag.append_nil (s : Bag) : s ++ empty = s := List.append_nil s
+theorem Bag.empty_def : Bag.empty = [] := by rfl
+theorem Bag.append_nil (s : Bag) : s ++ empty = s := by exact List.append_nil s
 theorem Bag.foo : empty ++ empty = empty := by
   rw [Bag.append_nil]
 
@@ -617,7 +636,7 @@ Prove that {lean}`1 = 1`.
 
 :::solution
 ```lean
-theorem one_equals_one : 1 = 1 := rfl
+theorem one_equals_one : 1 = 1 := by rfl
 ```
 :::
 ::::

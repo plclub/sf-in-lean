@@ -1,0 +1,365 @@
+{
+ "file": "HL/Imp.lean",
+ "chapter": "Imp",
+ "round": 3,
+ "proposals": [
+  {
+   "id": "p01",
+   "cat": "grammar/misplaced-parenthesis",
+   "old": "  lowercase Latin letters like (`a` or `c`) are treated as Lean variables. This will",
+   "new": "  lowercase Latin letters (like `a` or `c`) are treated as Lean variables. This will",
+   "why": "The parenthesis opens right after “like”, splitting the phrase oddly; wrapping the whole example in parens reads naturally."
+  },
+  {
+   "id": "p02",
+   "cat": "punctuation/em-dash",
+   "old": "Delaborators are like the opposite of `macro_rules` -- they are used to pretty print _elaborated_ terms back to the user.",
+   "new": "Delaborators are like the opposite of `macro_rules` — they are used to pretty print _elaborated_ terms back to the user.",
+   "why": "A parenthetical dash in prose is a real em dash (—) per STYLE-WRITING.md, not the ASCII typewriter `--`."
+  },
+  {
+   "id": "p03",
+   "cat": "style/proof-by",
+   "old": "    (num n).eval st = n := rfl",
+   "new": "    (num n).eval st = n := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p04",
+   "cat": "style/proof-by",
+   "old": "    (Aexp.id x).eval st = st[x] := rfl",
+   "new": "    (Aexp.id x).eval st = st[x] := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p05",
+   "cat": "style/proof-by",
+   "old": "    (plus a₁ a₂).eval st = a₁.eval st + a₂.eval st := rfl",
+   "new": "    (plus a₁ a₂).eval st = a₁.eval st + a₂.eval st := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p06",
+   "cat": "style/proof-by",
+   "old": "    (minus a₁ a₂).eval st = a₁.eval st - a₂.eval st := rfl",
+   "new": "    (minus a₁ a₂).eval st = a₁.eval st - a₂.eval st := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p07",
+   "cat": "style/proof-by",
+   "old": "    (mult a₁ a₂).eval st = a₁.eval st * a₂.eval st := rfl",
+   "new": "    (mult a₁ a₂).eval st = a₁.eval st * a₂.eval st := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p08",
+   "cat": "style/proof-by",
+   "old": "    (bool b).eval st = b := rfl",
+   "new": "    (bool b).eval st = b := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p09",
+   "cat": "style/proof-by",
+   "old": "    (eq a₁ a₂).eval st = (a₁.eval st == a₂.eval st) := rfl",
+   "new": "    (eq a₁ a₂).eval st = (a₁.eval st == a₂.eval st) := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p10",
+   "cat": "style/proof-by",
+   "old": "    (neq a₁ a₂).eval st = (a₁.eval st != a₂.eval st) := rfl",
+   "new": "    (neq a₁ a₂).eval st = (a₁.eval st != a₂.eval st) := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p11",
+   "cat": "style/proof-by",
+   "old": "    (le a₁ a₂).eval st = (a₁.eval st ≤ a₂.eval st : Bool) := rfl",
+   "new": "    (le a₁ a₂).eval st = (a₁.eval st ≤ a₂.eval st : Bool) := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p12",
+   "cat": "style/proof-by",
+   "old": "    (gt a₁ a₂).eval st = (a₁.eval st > a₂.eval st : Bool) := rfl",
+   "new": "    (gt a₁ a₂).eval st = (a₁.eval st > a₂.eval st : Bool) := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p13",
+   "cat": "style/proof-by",
+   "old": "    (not b).eval st = !b.eval st := rfl",
+   "new": "    (not b).eval st = !b.eval st := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p14",
+   "cat": "style/proof-by",
+   "old": "    (and b₁ b₂).eval st = (b₁.eval st && b₂.eval st) := rfl",
+   "new": "    (and b₁ b₂).eval st = (b₁.eval st && b₂.eval st) := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p15",
+   "cat": "punctuation/stray-period",
+   "old": "/-- Sequencing: one command after another (right associative. min + 1 = 11) -/",
+   "new": "/-- Sequencing: one command after another (right associative; min + 1 = 11) -/",
+   "why": "The period mid-parenthetical reads as two unrelated sentences; a semicolon correctly joins the two clarifying notes."
+  },
+  {
+   "id": "p16",
+   "cat": "style/proof-by",
+   "old": "    | _ => imp { skip }) = c := rfl",
+   "new": "    | _ => imp { skip }) = c := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p17",
+   "cat": "style/proof-by",
+   "old": "    | _ => (X, aexp {0})) = (X, aexp {X + 1}) := rfl",
+   "new": "    | _ => (X, aexp {0})) = (X, aexp {X + 1}) := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p18",
+   "cat": "punctuation/em-dash",
+   "old": "cannot be written in Lean -- at least not without additional tricks and",
+   "new": "cannot be written in Lean — at least not without additional tricks and",
+   "why": "A parenthetical dash in prose is a real em dash (—) per STYLE-WRITING.md, not the ASCII typewriter `--`."
+  },
+  {
+   "id": "p19",
+   "cat": "punctuation/em-dash",
+   "old": "   Perhaps that discussion should be moved to -- or previewed in --",
+   "new": "   Perhaps that discussion should be moved to — or previewed in —",
+   "why": "A parenthetical dash in prose is a real em dash (—) per STYLE-WRITING.md, not the ASCII typewriter `--`."
+  },
+  {
+   "id": "p20",
+   "cat": "hyphenation/non-terminating",
+   "old": "A nonterminating `theorem loop_false (n : Nat) : False := loop_false n` would make `False`",
+   "new": "A non-terminating `theorem loop_false (n : Nat) : False := loop_false n` would make `False`",
+   "why": "Matches the hyphenated “non-terminating” used twice just above for the same concept."
+  },
+  {
+   "id": "p21",
+   "cat": "punctuation/em-dash",
+   "old": "_function_ -- i.e., make its result a {lean}`Prop` rather than a {name}`State`,",
+   "new": "_function_ — i.e., make its result a {lean}`Prop` rather than a {name}`State`,",
+   "why": "A parenthetical dash in prose is a real em dash (—) per STYLE-WRITING.md, not the ASCII typewriter `--`."
+  },
+  {
+   "id": "p22",
+   "cat": "punctuation/em-dash",
+   "old": "definition of evaluation to be nondeterministic -- i.e., not only will it",
+   "new": "definition of evaluation to be nondeterministic — i.e., not only will it",
+   "why": "A parenthetical dash in prose is a real em dash (—) per STYLE-WRITING.md, not the ASCII typewriter `--`."
+  },
+  {
+   "id": "p23",
+   "cat": "formatting/line-width",
+   "old": "theorem quiz3_answer (b : Bexp) (c : Com) (st st' : State)\n    (h : st =[ if (b) { c } else { c } ]=> st') : st =[ c ]=> st' := by",
+   "new": "theorem quiz3_answer (b : Bexp) (c : Com) (st st' : State)\n    (h : st =[ if (b) { c } else { c } ]=> st') :\n    st =[ c ]=> st' := by",
+   "why": "Line exceeds 70 columns; split the conclusion onto its own line, as `map_cons` in STYLE-CODE.md illustrates."
+  },
+  {
+   "id": "p24",
+   "cat": "formatting/line-width",
+   "old": "theorem quiz4_answer (b : Bexp) (hbtrue : ∀ st, b.eval st = true)\n    (c : Com) (st : State) : ¬ ∃ st', st =[ while (b) { c } ]=> st' := by",
+   "new": "theorem quiz4_answer (b : Bexp) (hbtrue : ∀ st, b.eval st = true)\n    (c : Com) (st : State) :\n    ¬ ∃ st', st =[ while (b) { c } ]=> st' := by",
+   "why": "Line exceeds 70 columns; split the conclusion onto its own line, matching the declaration-overflow convention."
+  },
+  {
+   "id": "p25",
+   "cat": "punctuation/em-dash",
+   "old": "This claim is _false_, so it cannot be proved -- the proof gets",
+   "new": "This claim is _false_, so it cannot be proved — the proof gets",
+   "why": "A parenthetical dash in prose is a real em dash (—) per STYLE-WRITING.md, not the ASCII typewriter `--`."
+  },
+  {
+   "id": "p26",
+   "cat": "punctuation/em-dash",
+   "old": "This section doesn't seem very useful -- to anybody! It takes too",
+   "new": "This section doesn't seem very useful — to anybody! It takes too",
+   "why": "A parenthetical dash in prose is a real em dash (—) per STYLE-WRITING.md, not the ASCII typewriter `--`."
+  },
+  {
+   "id": "p27",
+   "cat": "punctuation/em-dash",
+   "old": "   follows -- i.e., to feel motivated by its grubbiness, you have to",
+   "new": "   follows — i.e., to feel motivated by its grubbiness, you have to",
+   "why": "A parenthetical dash in prose is a real em dash (—) per STYLE-WRITING.md, not the ASCII typewriter `--`."
+  },
+  {
+   "id": "p28",
+   "cat": "formatting/line-width",
+   "old": "theorem loop_never_stops (st st' : State) : ¬ (st =[ loop ]=> st') := by",
+   "new": "theorem loop_never_stops (st st' : State) :\n    ¬ (st =[ loop ]=> st') := by",
+   "why": "Line exceeds 70 columns; split the conclusion onto its own line, as `map_cons` in STYLE-CODE.md illustrates."
+  },
+  {
+   "id": "p29",
+   "cat": "formatting/line-width",
+   "old": "  | seq {c₁ c₂ : Com} (h₁ : Com.NoWhilesR c₁) (h₂ : Com.NoWhilesR c₂) :\n      Com.NoWhilesR (imp { c₁; c₂ })",
+   "new": "  | seq {c₁ c₂ : Com}\n      (h₁ : Com.NoWhilesR c₁) (h₂ : Com.NoWhilesR c₂) :\n      Com.NoWhilesR (imp { c₁; c₂ })",
+   "why": "Line exceeds 70 columns; wrap the binders onto their own line the way the sibling `cond` case right below already does."
+  },
+  {
+   "id": "p30",
+   "cat": "punctuation/em-dash",
+   "old": "We would like to show that they agree -- if we start `factCom` in",
+   "new": "We would like to show that they agree — if we start `factCom` in",
+   "why": "A parenthetical dash in prose is a real em dash (—) per STYLE-WRITING.md, not the ASCII typewriter `--`."
+  },
+  {
+   "id": "p31",
+   "cat": "formatting/line-width",
+   "old": "theorem ss_preserves_invariant {st st' : State} {n z : Nat}\n    (hinv : SsInvariant n z st) (heval : st =[ subtract_slowly ]=> st') :\n    SsInvariant n z st' := by",
+   "new": "theorem ss_preserves_invariant {st st' : State} {n z : Nat}\n    (hinv : SsInvariant n z st)\n    (heval : st =[ subtract_slowly ]=> st') :\n    SsInvariant n z st' := by",
+   "why": "Line exceeds 70 columns; split the two hypothesis binders onto separate lines, as the book's multi-line binder convention allows."
+  },
+  {
+   "id": "p32",
+   "cat": "style/proof-by",
+   "old": "    sExecute st stack [] = stack := rfl",
+   "new": "    sExecute st stack [] = stack := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p33",
+   "cat": "style/proof-by",
+   "old": "      sExecute st (n :: stack) prog' := rfl",
+   "new": "      sExecute st (n :: stack) prog' := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p34",
+   "cat": "style/proof-by",
+   "old": "      sExecute st (st[x] :: stack) prog' := rfl",
+   "new": "      sExecute st (st[x] :: stack) prog' := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p35",
+   "cat": "style/proof-by",
+   "old": "      sExecute st ((m + n) :: stack') prog' := rfl",
+   "new": "      sExecute st ((m + n) :: stack') prog' := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p36",
+   "cat": "style/proof-by",
+   "old": "      sExecute st ((m - n) :: stack') prog' := rfl",
+   "new": "      sExecute st ((m - n) :: stack') prog' := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p37",
+   "cat": "style/proof-by",
+   "old": "      sExecute st ((m * n) :: stack') prog' := rfl",
+   "new": "      sExecute st ((m * n) :: stack') prog' := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p38",
+   "cat": "style/proof-by",
+   "old": "    sCompile (.num n) = [sPush n] := rfl",
+   "new": "    sCompile (.num n) = [sPush n] := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p39",
+   "cat": "style/proof-by",
+   "old": "    sCompile (.id x) = [sLoad x] := rfl",
+   "new": "    sCompile (.id x) = [sLoad x] := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p40",
+   "cat": "style/proof-by",
+   "old": "    sCompile (.plus a₁ a₂) = sCompile a₁ ++ sCompile a₂ ++ [sPlus] := rfl",
+   "new": "    sCompile (.plus a₁ a₂) = sCompile a₁ ++ sCompile a₂ ++ [sPlus] := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p41",
+   "cat": "style/proof-by",
+   "old": "    sCompile (.minus a₁ a₂) = sCompile a₁ ++ sCompile a₂ ++ [sMinus] := rfl",
+   "new": "    sCompile (.minus a₁ a₂) = sCompile a₁ ++ sCompile a₂ ++ [sMinus] := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p42",
+   "cat": "style/proof-by",
+   "old": "    sCompile (.mult a₁ a₂) = sCompile a₁ ++ sCompile a₂ ++ [sMult] := rfl",
+   "new": "    sCompile (.mult a₁ a₂) = sCompile a₁ ++ sCompile a₂ ++ [sMult] := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p43",
+   "cat": "typo/abbreviation",
+   "old": "equivalent to {name}`Bexp.eval`.  (N.b. This is only true because expression",
+   "new": "equivalent to {name}`Bexp.eval`.  (N.B. This is only true because expression",
+   "why": "The Latin abbreviation “nota bene” is conventionally capitalized “N.B.”, not “N.b.”"
+  },
+  {
+   "id": "p44",
+   "cat": "style/proof-by",
+   "old": "    (bool b).evalSC st = b := rfl",
+   "new": "    (bool b).evalSC st = b := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p45",
+   "cat": "style/proof-by",
+   "old": "    (eq a₁ a₂).evalSC st = (a₁.eval st == a₂.eval st) := rfl",
+   "new": "    (eq a₁ a₂).evalSC st = (a₁.eval st == a₂.eval st) := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p46",
+   "cat": "style/proof-by",
+   "old": "    (neq a₁ a₂).evalSC st = (a₁.eval st != a₂.eval st) := rfl",
+   "new": "    (neq a₁ a₂).evalSC st = (a₁.eval st != a₂.eval st) := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p47",
+   "cat": "style/proof-by",
+   "old": "    (le a₁ a₂).evalSC st = decide (a₁.eval st ≤ a₂.eval st) := rfl",
+   "new": "    (le a₁ a₂).evalSC st = decide (a₁.eval st ≤ a₂.eval st) := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p48",
+   "cat": "style/proof-by",
+   "old": "    (gt a₁ a₂).evalSC st = decide (a₁.eval st > a₂.eval st) := rfl",
+   "new": "    (gt a₁ a₂).evalSC st = decide (a₁.eval st > a₂.eval st) := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p49",
+   "cat": "style/proof-by",
+   "old": "    (not b).evalSC st = !b.evalSC st := rfl",
+   "new": "    (not b).evalSC st = !b.evalSC st := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p50",
+   "cat": "style/proof-by",
+   "old": "      | true => b₂.evalSC st := rfl",
+   "new": "      | true => b₂.evalSC st := by rfl",
+   "why": "A proof always opens with `by`, even for a single `rfl`; keeps every proof body syntactically uniform rather than mixing tactic- and term-mode (STYLE-CODE.md, \"Proof bodies\")."
+  },
+  {
+   "id": "p51",
+   "cat": "punctuation/em-dash",
+   "old": "relation (`st =[ c ]=> st'`) -- we just need to handle the",
+   "new": "relation (`st =[ c ]=> st'`) — we just need to handle the",
+   "why": "A parenthetical dash in prose is a real em dash (—) per STYLE-WRITING.md, not the ASCII typewriter `--`."
+  }
+ ],
+ "completed": true
+}

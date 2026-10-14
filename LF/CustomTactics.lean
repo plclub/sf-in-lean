@@ -2,7 +2,7 @@ module
 
 public meta import Lean.Elab.ConfigEval
 public meta import Lean.Elab.Tactic.RenameInaccessibles
-public meta import Lean.Elab.Tactic.Induction
+public meta import Lean.Elab.Tactic.ElabTerm
 meta import all Lean.Meta.Tactic.Cases
 
 meta section
@@ -174,33 +174,31 @@ open Cases in
   except instead of calling [Lean.Meta.Cases.unifyEqs], which may fail
   if the generalizing equations can't all be destructed and substituted away,
   it calls our [unifyCasesEqs] above, which keeps unsolvable equations in the context. -/
-def _root_.Lean.MVarId.inversion (mvarId : MVarId) (h : FVarId) (config : InversionConfig)
+def _root_.Lean.MVarId.inversion (goal : MVarId) (h : FVarId) (config : InversionConfig)
     (givenNames : Array AltVarNames := #[]) (interestingCtors? : Option (Array Name) := none) :
-    TacticM (Array CasesSubgoal) := mvarId.withContext do
-  let goal ← getMainGoal
-  goal.withContext do
-    let some ctx ← mkCasesContext? h
-    | throwTacticEx `inversion goal "Target {Expr.fvar h} does not belong to an inductive type"
-    -- If the target's type isn't a predicate with indices, behave like `cases`
-    if ← hasIndepIndices ctx then
-      let subgoals ← inductionCasesOn goal h givenNames ctx (interestingCtors? := interestingCtors?)
-      let subgoals ← if config.clear
-        then casesClearMany subgoals #[h]
-        else pure subgoals
-      return subgoals
-    -- Otherwise, use custom [unifyEqs] to not fail on unifying HEqs
-    else
-      let gis@⟨newGoal, _, newTarget, numEqs⟩ ← generalizeIndices goal h
-      let (newEqs, newGoal) ← newGoal.introN numEqs
-      let some targetEq := newEqs.back?
-      | throwTacticEx `inversion newGoal "Failed to generalize target"
-      let subgoals ← inductionCasesOn newGoal newTarget givenNames ctx (interestingCtors? := interestingCtors?)
-      let subgoals ← elimAuxIndices gis subgoals
-      let subgoals ← unifyCasesEqs newEqs.toList subgoals
-      let subgoals ← if config.clear
-        then casesClearMany subgoals #[h, targetEq]
-        else pure subgoals
-      return subgoals
+    TacticM (Array CasesSubgoal) := goal.withContext do
+  let some ctx ← mkCasesContext? h
+  | throwTacticEx `inversion goal "Target {Expr.fvar h} does not belong to an inductive type"
+  -- If the target's type isn't a predicate with indices, behave like `cases`
+  if ← hasIndepIndices ctx then
+    let subgoals ← inductionCasesOn goal h givenNames ctx (interestingCtors? := interestingCtors?)
+    let subgoals ← if config.clear
+      then casesClearMany subgoals #[h]
+      else pure subgoals
+    return subgoals
+  -- Otherwise, use custom [unifyEqs] to not fail on unifying HEqs
+  else
+    let gis@⟨newGoal, _, newTarget, numEqs⟩ ← generalizeIndices goal h
+    let (newEqs, newGoal) ← newGoal.introN numEqs
+    let some targetEq := newEqs.back?
+    | throwTacticEx `inversion newGoal "Failed to generalize target"
+    let subgoals ← inductionCasesOn newGoal newTarget givenNames ctx (interestingCtors? := interestingCtors?)
+    let subgoals ← elimAuxIndices gis subgoals
+    let subgoals ← unifyCasesEqs newEqs.toList subgoals
+    let subgoals ← if config.clear
+      then casesClearMany subgoals #[h, targetEq]
+      else pure subgoals
+    return subgoals
 
 /-- Given an inversion alternative and a list of goals,
   solve the tagged goal with the provided tactics,
@@ -209,18 +207,19 @@ def evalInvAlt (goals : List MVarId) (alt : TSyntax `invAlt) : TacticM (List MVa
   match alt with
   | `(invAlt| | $tag:ident $vars:binderIdent* => $tactics:tacticSeq) => do
     if let some goal ← goals.findM? (matchTag tag.getId <$> ·.getUserName) then
-      return [← trySolveGoal vars tactics goal]
+      return [← trySolveGoal alt.raw[2] vars tactics goal]
     else throwError m!"Invalid alternative name `{tag.getId}`: {← errorMsg}"
   | `(invAlt| | _ $vars:binderIdent* => $tactics:tacticSeq) => do
     if !goals.isEmpty then
-      goals.mapM (trySolveGoal vars tactics)
+      goals.mapM (trySolveGoal alt.raw[2] vars tactics)
     else throwErrorAt alt m!"Invalid wildcard alternative: {← errorMsg}"
   | _ => throwErrorAt alt "Could not parse inversion alternative"
 where
   matchTag tag name : Bool :=
     tag == name || tag.isPrefixOf name || tag.isSuffixOf name
-  trySolveGoal vars tactics goal : TacticM MVarId := do
-    let goals ← renameInaccessibles goal vars >>= evalTacticAt tactics
+  trySolveGoal stx vars tactics goal : TacticM MVarId := do
+    let renamedGoal ← withRef stx $ renameInaccessibles goal vars
+    let goals ← evalTacticAt tactics renamedGoal
     unless goals.isEmpty do
       reportUnsolvedGoals goals
     return goal
@@ -253,8 +252,8 @@ where
       subgoal.mvarId.setUserName name.getSuffix
     return subgoal.mvarId
   expandInvAlts
-    | `(invAlts| $[| $args:caseArg]* => $tactics:tacticSeq) =>
-      args.mapM (`(invAlt| | $(·) => $tactics))
+    | alts@`(invAlts| $[| $args:caseArg]* => $tactics:tacticSeq) =>
+      args.mapM $ (withRef alts `(invAlt| | $(·) => $tactics))
     | stx => throwErrorAt stx "Could not parse inversion alternatives"
 
 end Lean.Elab.Tactic
@@ -267,6 +266,7 @@ open Nat
 set_option autoImplicit false
 set_option pp.proofs true
 set_option pp.fieldNotation false
+set_option trace.debug false
 
 /-! # `inversion` tests -/
 
@@ -382,6 +382,13 @@ inductive Vec α : Nat → Type where
 example {α} (n : Nat) (v : Vec α (n + 1)) : ∃ hd tl, v = Vec.cons hd tl := by
   inversion v with
   | cons hd tl => exists hd, tl
+
+/-- error: too many variable names provided -/
+#guard_msgs(error) in
+example {α} (n : Nat) (v : Vec α (n + 1)) : ∃ hd tl, v = Vec.cons hd tl := by
+  inversion v with
+  -- The error should highlight the following line
+  | cons m hd tl => exists hd, tl
 
 inductive Wec α : Nat → Type where
   | nil : Wec α 0

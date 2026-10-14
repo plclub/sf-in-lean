@@ -1,0 +1,204 @@
+{
+ "file": "LF/Typeclasses.lean",
+ "chapter": "Typeclasses",
+ "round": 1,
+ "proposals": [
+  {
+   "id": 1,
+   "cat": "formatting/blank-lines",
+   "old": "`m₁ ⊆ m₂` — which we get by supplying a {name}`HasSubset` instance.\n\n\n```lean\ndef Subset {α β : Type} (m₁ m₂ : PartialMap α β) : Prop :=",
+   "new": "`m₁ ⊆ m₂` — which we get by supplying a {name}`HasSubset` instance.\n\n```lean\ndef Subset {α β : Type} (m₁ m₂ : PartialMap α β) : Prop :=",
+   "why": "Two blank lines in a row; the chapter uses at most one."
+  },
+  {
+   "id": 2,
+   "cat": "formatting/blank-lines",
+   "old": "Here are the key differences between {name}`Bool` and {lean}`Prop`:\n\n\n:::dev \"@ionathanch\" PotentialImprovement",
+   "new": "Here are the key differences between {name}`Bool` and {lean}`Prop`:\n\n:::dev \"@ionathanch\" PotentialImprovement",
+   "why": "Two blank lines in a row; the chapter uses at most one."
+  },
+  {
+   "id": 3,
+   "cat": "typo/missing-article",
+   "old": "Second, whereas {name}`List.elemPolyEq` invokes parameter `eq` to test equality,",
+   "new": "Second, whereas {name}`List.elemPolyEq` invokes the parameter `eq` to test equality,",
+   "why": "Missing article before the named parameter."
+  },
+  {
+   "id": 4,
+   "cat": "comma/introductory",
+   "old": "In most languages that support typeclasses (or traits) it is not possible to formally enforce",
+   "new": "In most languages that support typeclasses (or traits), it is not possible to formally enforce",
+   "why": "Comma needed after the introductory clause."
+  },
+  {
+   "id": 5,
+   "cat": "punctuation/quote-comma",
+   "old": "a particular element `id` of type `α`, which we call the \"identity element\", and",
+   "new": "a particular element `id` of type `α`, which we call the \"identity element,\" and",
+   "why": "American convention (Chicago) puts the comma inside the closing quotation mark."
+  },
+  {
+   "id": 6,
+   "cat": "grammar/comma-splice",
+   "old": "Note that we don't have to define {name}`Nat`'s {name}`OpSet` instance separately, we can define a",
+   "new": "Note that we don't have to define {name}`Nat`'s {name}`OpSet` instance separately; we can define a",
+   "why": "Comma splice joining two independent clauses."
+  },
+  {
+   "id": 7,
+   "cat": "typo/line-break",
+   "old": "there are additive and m\nultiplicative variants of the classes, e.g. Monoid versus AddMonoid.",
+   "new": "there are additive and multiplicative variants of the classes, e.g. Monoid versus AddMonoid.",
+   "why": "Word was accidentally split by a line break."
+  },
+  {
+   "id": 8,
+   "cat": "comma/parenthetical",
+   "old": "we saw in the {ref \"Logic\"}[Logic] chapter. When we do so however, because these are",
+   "new": "we saw in the {ref \"Logic\"}[Logic] chapter. When we do so, however, because these are",
+   "why": "Parenthetical \"however\" needs commas on both sides."
+  },
+  {
+   "id": 9,
+   "cat": "usage/preposition",
+   "old": "class instances instead of normal structures, we prepend our tuple by the `@` symbol.",
+   "new": "class instances instead of normal structures, we prepend the `@` symbol to our tuple.",
+   "why": "\"Prepend\" takes \"to\", not \"by\"."
+  },
+  {
+   "id": 10,
+   "cat": "typo/duplicate-word",
+   "old": "If an element of a monoid satisfies just one of the the identity laws",
+   "new": "If an element of a monoid satisfies just one of the identity laws",
+   "why": "Duplicated word \"the\"."
+  },
+  {
+   "id": 11,
+   "cat": "markup/stray-parens",
+   "old": "These classes refine {name}`BEq`, specifying that (`==`) is reflexive and coincides with\nproposition equality `=`.",
+   "new": "These classes refine {name}`BEq`, specifying that `==` is reflexive and coincides with\npropositional equality `=`.",
+   "why": "Stray parentheses around the operator, and \"proposition equality\" should be \"propositional equality\" as used everywhere else in the chapter."
+  },
+  {
+   "id": 12,
+   "cat": "grammar/agreement",
+   "old": "While `TotalMap`s happen to be implemented as functions under the hood, we would prefer not to expose this fact in its public interface.",
+   "new": "While `TotalMap`s happen to be implemented as functions under the hood, we would prefer not to expose this fact in their public interface.",
+   "why": "\"its\" doesn't agree with the plural subject \"TotalMaps\"; STYLE-WRITING.md's own quoted example of this sentence uses \"their\"."
+  },
+  {
+   "id": 13,
+   "cat": "comma/nonrestrictive",
+   "old": "{name}`get` is the public API counterpart to {name}`inner` which is an implementation-specific detail of {name}`TotalMap`.",
+   "new": "{name}`get` is the public API counterpart to {name}`inner`, which is an implementation-specific detail of {name}`TotalMap`.",
+   "why": "Nonrestrictive clause needs a comma."
+  },
+  {
+   "id": 14,
+   "cat": "grammar/agreement",
+   "old": "if you do wish to learn more, Chapter 5 and 6 of",
+   "new": "if you do wish to learn more, Chapters 5 and 6 of",
+   "why": "Plural noun needed for two chapters."
+  },
+  {
+   "id": 15,
+   "cat": "usage/informal",
+   "old": "outside concrete examples\n  (which are typically solvable with {tactic}`rfl` anyways).",
+   "new": "outside concrete examples\n  (which are typically solvable with {tactic}`rfl` anyway).",
+   "why": "\"Anyways\" is nonstandard; \"anyway\" is the standard form."
+  },
+  {
+   "id": 16,
+   "cat": "typo/casing",
+   "old": "The `examplemap` above can now be defined as follows:",
+   "new": "The `exampleMap` above can now be defined as follows:",
+   "why": "Should match the actual identifier `exampleMap`."
+  },
+  {
+   "id": 17,
+   "cat": "comma/introductory",
+   "old": "Notice that in the example `exampleMap'[\"quux\"] = false` the last rewrite is effectively just {name}`getElem_empty`.",
+   "new": "Notice that in the example `exampleMap'[\"quux\"] = false`, the last rewrite is effectively just {name}`getElem_empty`.",
+   "why": "Comma needed after the introductory phrase."
+  },
+  {
+   "id": 18,
+   "cat": "comma/nonrestrictive",
+   "old": "We need to use injectivity of its constructor {name}`mk` which Lean automatically provides for us as {name}`mk.injEq`.",
+   "new": "We need to use injectivity of its constructor {name}`mk`, which Lean automatically provides for us as {name}`mk.injEq`.",
+   "why": "Nonrestrictive clause needs a comma."
+  },
+  {
+   "id": 19,
+   "cat": "comma/introductory",
+   "old": "To accomplish this we define a simple structure that consists of a key and a value along with `↦` notation for it.",
+   "new": "To accomplish this, we define a simple structure that consists of a key and a value, along with `↦` notation for it.",
+   "why": "Comma after introductory phrase; second comma clarifies that \"along with notation\" attaches to \"we define\", not to \"consists of\"."
+  },
+  {
+   "id": 20,
+   "cat": "comma/introductory",
+   "old": "To do this we should first prove an extensionality lemma about partial maps.",
+   "new": "To do this, we should first prove an extensionality lemma about partial maps.",
+   "why": "Comma needed after the introductory phrase."
+  },
+  {
+   "id": 21,
+   "cat": "punctuation/abbreviation",
+   "old": "by wrapping it in angle brackets, i.e. using the anonymous constructor syntax.",
+   "new": "by wrapping it in angle brackets, i.e., using the anonymous constructor syntax.",
+   "why": "Missing comma after \"i.e.\"; the chapter's other uses of \"i.e.\" have one."
+  },
+  {
+   "id": 22,
+   "cat": "formatting/stray-indent",
+   "old": " Similarly, to state that two numbers n and m are equal, we can say either\n * that {lean}`n == m` returns {name}`true`, or\n * that {lean}`n = m`\n\n Again, these two notions are equivalent:",
+   "new": "Similarly, to state that two numbers n and m are equal, we can say either\n* that {lean}`n == m` returns {name}`true`, or\n* that {lean}`n = m`\n\nAgain, these two notions are equivalent:",
+   "why": "Stray leading space on every line of this paragraph and list, unlike the rest of the chapter."
+  },
+  {
+   "id": 23,
+   "cat": "formatting/stray-indent",
+   "old": " ```lean\n example (n₁ n₂ : Nat) : n₁ == n₂ ↔ n₁ = n₂ := beq_iff_eq\n ```",
+   "new": "```lean\nexample (n₁ n₂ : Nat) : n₁ == n₂ ↔ n₁ = n₂ := beq_iff_eq\n```",
+   "why": "Stray leading space on the code fence and its contents, unlike every other code block in the chapter."
+  },
+  {
+   "id": 24,
+   "cat": "markup/code-font",
+   "old": "cannot be used directly to justify rewriting with the rewrite tactic;",
+   "new": "cannot be used directly to justify rewriting with the {tactic}`rewrite` tactic;",
+   "why": "The chapter otherwise marks up tactic names referenced in prose with {tactic}."
+  },
+  {
+   "id": 25,
+   "cat": "capitalization/sentence-start",
+   "old": "which proves that this equality is decidable.",
+   "new": "This proves that this equality is decidable.",
+   "why": "Sentence fragment starting with a lowercase \"which\"; rephrased as a standalone sentence."
+  },
+  {
+   "id": 26,
+   "cat": "comma/parenthetical",
+   "old": "This is only half the story however: while Lean's core theory enables this computation, Lean is",
+   "new": "This is only half the story, however: while Lean's core theory enables this computation, Lean is",
+   "why": "Parenthetical \"however\" needs a comma before it."
+  },
+  {
+   "id": 27,
+   "cat": "parallelism/repeated-word",
+   "old": "For instance, while our example `eq` failed above while trying to use propositional equality `=`",
+   "new": "For instance, while our example `eq` failed above when trying to use propositional equality `=`",
+   "why": "\"while ... while\" repeats awkwardly in one sentence; the second should be \"when\"."
+  },
+  {
+   "id": 28,
+   "cat": "typo/garbled",
+   "old": "I list some theorems below but you should Loogle and see if that's what you want. Some the the\nproofs can be a bit advanced if you follow core, or otherwise a bit circular. — CGH",
+   "new": "I list some theorems below but you should Loogle and see if that's what you want. Some of the\nproofs can be a bit advanced if you follow core, or otherwise a bit circular. — CGH",
+   "why": "\"Some the the\" is garbled; \"Some of the\" was clearly intended."
+  }
+ ],
+ "completed": true
+}

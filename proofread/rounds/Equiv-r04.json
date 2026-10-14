@@ -1,0 +1,414 @@
+{
+ "file": "HL/Equiv.lean",
+ "chapter": "Equiv",
+ "round": 4,
+ "proposals": [
+  {
+   "id": "w01",
+   "cat": "formatting/line-width",
+   "old": "theorem Aexp.equiv_notation {a₁ a₂ : Aexp} : a₁.Equiv a₂ ↔ a₁ ≃ a₂ := by rfl",
+   "new": "theorem Aexp.equiv_notation {a₁ a₂ : Aexp} :\n    a₁.Equiv a₂ ↔ a₁ ≃ a₂ := by rfl",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w02",
+   "cat": "formatting/line-width",
+   "old": "theorem Bexp.equiv_notation {b₁ b₂ : Bexp} : b₁.Equiv b₂ ↔ b₁ ≃ b₂ := by rfl",
+   "new": "theorem Bexp.equiv_notation {b₁ b₂ : Bexp} :\n    b₁.Equiv b₂ ↔ b₁ ≃ b₂ := by rfl",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w03",
+   "cat": "formatting/line-width",
+   "old": "@[simp]\ntheorem Com.equiv_notation {c₁ c₂ : Com} : c₁.Equiv c₂ ↔ c₁ ≃ c₂ := by rfl\n@[simp]\ntheorem Com.equiv_def {c₁ c₂ : Com} : c₁ ≃ c₂ ↔\n    ∀ {st st' : State}, (st =[ c₁ ]=> st') ↔ (st =[ c₂ ]=> st') := by rfl\n```\n\n::::quiz\nAre these two programs equivalent?",
+   "new": "@[simp]\ntheorem Com.equiv_notation {c₁ c₂ : Com} :\n    c₁.Equiv c₂ ↔ c₁ ≃ c₂ := by rfl\n@[simp]\ntheorem Com.equiv_def {c₁ c₂ : Com} : c₁ ≃ c₂ ↔\n    ∀ {st st' : State},\n      (st =[ c₁ ]=> st') ↔ (st =[ c₂ ]=> st') := by rfl\n```\n\n::::quiz\nAre these two programs equivalent?",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w04",
+   "cat": "formatting/line-width",
+   "old": "theorem if_true_simple {c₁ c₂ : Com} : imp {if (true) {c₁} else {c₂}} ≃ c₁ := by",
+   "new": "theorem if_true_simple {c₁ c₂ : Com} :\n    imp {if (true) {c₁} else {c₂}} ≃ c₁ := by",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w05",
+   "cat": "formatting/line-width",
+   "old": "theorem while_true_nonterm {b : Bexp} {c : Com} {st st' : State} (hb : b ≃ bexp {true}) :",
+   "new": "theorem while_true_nonterm {b : Bexp} {c : Com} {st st' : State}\n    (hb : b ≃ bexp {true}) :",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w06",
+   "cat": "formatting/line-width",
+   "old": "theorem Aexp.equiv_symm {a₁ a₂ : Aexp} (h : a₁ ≃ a₂) : a₂ ≃ a₁ := by simp_all\ntheorem Aexp.equiv_trans {a₁ a₂ a₃ : Aexp} (h₁ : a₁ ≃ a₂) (h₂ : a₂ ≃ a₃) : a₁ ≃ a₃ := by simp_all",
+   "new": "theorem Aexp.equiv_symm {a₁ a₂ : Aexp} (h : a₁ ≃ a₂) :\n    a₂ ≃ a₁ := by simp_all\ntheorem Aexp.equiv_trans {a₁ a₂ a₃ : Aexp} (h₁ : a₁ ≃ a₂)\n    (h₂ : a₂ ≃ a₃) : a₁ ≃ a₃ := by simp_all",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w07",
+   "cat": "formatting/line-width",
+   "old": "theorem Bexp.equiv_symm {b₁ b₂ : Bexp} (h : b₁ ≃ b₂) : b₂ ≃ b₁ := by simp_all\ntheorem Bexp.equiv_trans {b₁ b₂ b₃ : Bexp} (h₁ : b₁ ≃ b₂) (h₂ : b₂ ≃ b₃) : b₁ ≃ b₃ := by simp_all",
+   "new": "theorem Bexp.equiv_symm {b₁ b₂ : Bexp} (h : b₁ ≃ b₂) :\n    b₂ ≃ b₁ := by simp_all\ntheorem Bexp.equiv_trans {b₁ b₂ b₃ : Bexp} (h₁ : b₁ ≃ b₂)\n    (h₂ : b₂ ≃ b₃) : b₁ ≃ b₃ := by simp_all",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w08",
+   "cat": "formatting/line-width",
+   "old": "theorem Com.equiv_symm {c₁ c₂ : Com} (h : c₁ ≃ c₂) : c₂ ≃ c₁ := by simp_all\ntheorem Com.equiv_trans {c₁ c₂ c₃ : Com} (h₁ : c₁ ≃ c₂) (h₂ : c₂ ≃ c₃) : c₁ ≃ c₃ := by simp_all",
+   "new": "theorem Com.equiv_symm {c₁ c₂ : Com} (h : c₁ ≃ c₂) :\n    c₂ ≃ c₁ := by simp_all\ntheorem Com.equiv_trans {c₁ c₂ c₃ : Com} (h₁ : c₁ ≃ c₂)\n    (h₂ : c₂ ≃ c₃) : c₁ ≃ c₃ := by simp_all",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w09",
+   "cat": "formatting/line-width",
+   "old": "theorem Com.congruence_while {b b' : Bexp} {c c' : Com} (hb : b ≃ b') (hc : c ≃ c') :",
+   "new": "theorem Com.congruence_while {b b' : Bexp} {c c' : Com}\n    (hb : b ≃ b') (hc : c ≃ c') :",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w10",
+   "cat": "formatting/line-width",
+   "old": "theorem Com.congruence_seq {c₁ c₁' c₂ c₂' : Com} (hc₁ : c₁ ≃ c₁') (hc₂ : c₂ ≃ c₂') :",
+   "new": "theorem Com.congruence_seq {c₁ c₁' c₂ c₂' : Com}\n    (hc₁ : c₁ ≃ c₁') (hc₂ : c₂ ≃ c₂') :",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w11",
+   "cat": "formatting/line-width",
+   "old": "  | trans {c₁ c₂ c₃ : Com} : WeirdRel c₁ c₂ → WeirdRel c₂ c₃ → WeirdRel c₁ c₃",
+   "new": "  | trans {c₁ c₂ c₃ : Com} :\n      WeirdRel c₁ c₂ → WeirdRel c₂ c₃ → WeirdRel c₁ c₃",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "pb01",
+   "cat": "style/proof-by",
+   "old": "@[simp]\ntheorem Aexp.foldConstants_num (n : Nat) : (Aexp.num n).foldConstants = .num n := rfl\n@[simp]\ntheorem Aexp.foldConstants_id (x : Ident) : (Aexp.id x).foldConstants = .id x := rfl",
+   "new": "@[simp]\ntheorem Aexp.foldConstants_num (n : Nat) :\n    (Aexp.num n).foldConstants = .num n := by rfl\n@[simp]\ntheorem Aexp.foldConstants_id (x : Ident) :\n    (Aexp.id x).foldConstants = .id x := by rfl",
+   "why": "A proof always opens with `by`; bare `:= rfl` must be `:= by rfl` (also needed reflow to fit 70 columns)."
+  },
+  {
+   "id": "w12",
+   "cat": "formatting/line-width",
+   "old": "theorem Aexp.foldConstants_cases (a₁ a₂ : Aexp) :\n    (∃ n₁ n₂, a₁.foldConstants = .num n₁ ∧ a₂.foldConstants = .num n₂) ∨\n    (aexp {a₁ + a₂}).foldConstants = (aexp {~a₁.foldConstants + ~a₂.foldConstants}) ∧\n    (aexp {a₁ - a₂}).foldConstants = (aexp {~a₁.foldConstants - ~a₂.foldConstants}) ∧\n    (aexp {a₁ * a₂}).foldConstants = (aexp {~a₁.foldConstants * ~a₂.foldConstants}) := by\n  cases ha₁ : a₁.foldConstants with\n  | num n₁ =>\n    cases ha₂ : a₂.foldConstants with\n    | num n₂ =>\n      left\n      exists n₁, n₂\n    | _ =>\n      simp [foldConstants, ha₁, ha₂]\n  | _ =>\n    simp [foldConstants, ha₁]\n```",
+   "new": "theorem Aexp.foldConstants_cases (a₁ a₂ : Aexp) :\n    (∃ n₁ n₂, a₁.foldConstants = .num n₁ ∧\n      a₂.foldConstants = .num n₂) ∨\n    (aexp {a₁ + a₂}).foldConstants =\n      (aexp {~a₁.foldConstants + ~a₂.foldConstants}) ∧\n    (aexp {a₁ - a₂}).foldConstants =\n      (aexp {~a₁.foldConstants - ~a₂.foldConstants}) ∧\n    (aexp {a₁ * a₂}).foldConstants =\n      (aexp {~a₁.foldConstants * ~a₂.foldConstants}) := by\n  cases ha₁ : a₁.foldConstants with\n  | num n₁ =>\n    cases ha₂ : a₂.foldConstants with\n    | num n₂ =>\n      left\n      exists n₁, n₂\n    | _ =>\n      simp [foldConstants, ha₁, ha₂]\n  | _ =>\n    simp [foldConstants, ha₁]\n```",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w13",
+   "cat": "formatting/line-width",
+   "old": "example : (aexp { (1 + 2) * X }).foldConstants = (aexp { 3 * X }) := by rfl",
+   "new": "example :\n    (aexp { (1 + 2) * X }).foldConstants = (aexp { 3 * X }) := by rfl",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w14",
+   "cat": "formatting/line-width",
+   "old": "example : (aexp { X - ((0 * 6) + Y) }).foldConstants = (aexp { X - (0 + Y) }) := by rfl",
+   "new": "example :\n    (aexp { X - ((0 * 6) + Y) }).foldConstants =\n      (aexp { X - (0 + Y) }) := by rfl",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w15",
+   "cat": "formatting/line-width",
+   "old": "```lean\ndef Bexp.foldConstants (b : Bexp) : Bexp :=\n  match b with\n  | bexp { true } => bexp { true }\n  | bexp { false } => bexp { false }\n  | bexp { a₁ = a₂ } =>\n    match a₁.foldConstants, a₂.foldConstants with\n    | .num n₁, .num n₂ => if n₁ = n₂ then bexp { true } else bexp {false}\n    | a₁', a₂' => bexp { a₁' = a₂' }\n  | bexp { a₁ ≠ a₂ } =>\n    match a₁.foldConstants, a₂.foldConstants with\n    | .num n₁, .num n₂ => if n₁ ≠ n₂ then bexp { true } else bexp {false}\n    | a₁', a₂' => bexp { a₁' ≠ a₂' }\n  | bexp { a₁ ≤ a₂ } =>\n    match a₁.foldConstants, a₂.foldConstants with\n    | .num n₁, .num n₂ => if n₁ ≤ n₂ then bexp { true } else bexp {false}\n    | a₁', a₂' => bexp { a₁' ≤ a₂' }\n  | bexp { a₁ > a₂ } =>\n    match a₁.foldConstants, a₂.foldConstants with\n    | .num n₁, .num n₂ => if n₁ > n₂ then bexp { true } else bexp {false}\n    | a₁', a₂' => bexp { a₁' > a₂' }\n  | bexp { ¬ b₁ } =>\n    match b₁.foldConstants with\n    | bexp { true } => bexp { false }\n    | bexp { false } => bexp { true }\n    | b₁' => bexp { ¬ b₁' }\n  | bexp { b₁ ∧ b₂ } =>\n    match b₁.foldConstants, b₂.foldConstants with\n    | bexp { true }, bexp { true } => bexp { true }\n    | bexp { true }, bexp { false } => bexp { false }\n    | bexp { false }, bexp { true } => bexp { false }\n    | bexp { false }, bexp { false } => bexp { false }\n    | b₁', b₂' => bexp { b₁' ∧ b₂' }\n",
+   "new": "```lean\ndef Bexp.foldConstants (b : Bexp) : Bexp :=\n  match b with\n  | bexp { true } => bexp { true }\n  | bexp { false } => bexp { false }\n  | bexp { a₁ = a₂ } =>\n    match a₁.foldConstants, a₂.foldConstants with\n    | .num n₁, .num n₂ =>\n      if n₁ = n₂ then bexp { true } else bexp {false}\n    | a₁', a₂' => bexp { a₁' = a₂' }\n  | bexp { a₁ ≠ a₂ } =>\n    match a₁.foldConstants, a₂.foldConstants with\n    | .num n₁, .num n₂ =>\n      if n₁ ≠ n₂ then bexp { true } else bexp {false}\n    | a₁', a₂' => bexp { a₁' ≠ a₂' }\n  | bexp { a₁ ≤ a₂ } =>\n    match a₁.foldConstants, a₂.foldConstants with\n    | .num n₁, .num n₂ =>\n      if n₁ ≤ n₂ then bexp { true } else bexp {false}\n    | a₁', a₂' => bexp { a₁' ≤ a₂' }\n  | bexp { a₁ > a₂ } =>\n    match a₁.foldConstants, a₂.foldConstants with\n    | .num n₁, .num n₂ =>\n      if n₁ > n₂ then bexp { true } else bexp {false}\n    | a₁', a₂' => bexp { a₁' > a₂' }\n  | bexp { ¬ b₁ } =>\n    match b₁.foldConstants with\n    | bexp { true } => bexp { false }\n    | bexp { false } => bexp { true }\n    | b₁' => bexp { ¬ b₁' }\n  | bexp { b₁ ∧ b₂ } =>\n    match b₁.foldConstants, b₂.foldConstants with\n    | bexp { true }, bexp { true } => bexp { true }\n    | bexp { true }, bexp { false } => bexp { false }\n    | bexp { false }, bexp { true } => bexp { false }\n    | bexp { false }, bexp { false } => bexp { false }\n    | b₁', b₂' => bexp { b₁' ∧ b₂' }\n",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "pb02",
+   "cat": "style/proof-by",
+   "old": "@[simp]\ntheorem Bexp.foldConstants_true : (bexp { true }).foldConstants = (bexp { true }) := rfl\n@[simp]\ntheorem Bexp.foldConstants_false : (bexp { false }).foldConstants = (bexp { false }) := rfl",
+   "new": "@[simp]\ntheorem Bexp.foldConstants_true :\n    (bexp { true }).foldConstants = (bexp { true }) := by rfl\n@[simp]\ntheorem Bexp.foldConstants_false :\n    (bexp { false }).foldConstants = (bexp { false }) := by rfl",
+   "why": "A proof always opens with `by`; bare `:= rfl` must be `:= by rfl` (also needed reflow to fit 70 columns)."
+  },
+  {
+   "id": "w16",
+   "cat": "formatting/line-width",
+   "old": "theorem Bexp.foldConstants_comp (a₁ a₂ : Aexp) :\n    (∃ n₁ n₂, a₁.foldConstants = .num n₁ ∧ a₂.foldConstants = .num n₂) ∨\n    (bexp {a₁ = a₂}).foldConstants = (bexp {~a₁.foldConstants = ~a₂.foldConstants}) ∧\n    (bexp {a₁ ≠ a₂}).foldConstants = (bexp {~a₁.foldConstants ≠ ~a₂.foldConstants}) ∧\n    (bexp {a₁ ≤ a₂}).foldConstants = (bexp {~a₁.foldConstants ≤ ~a₂.foldConstants}) ∧\n    (bexp {a₁ > a₂}).foldConstants = (bexp {~a₁.foldConstants > ~a₂.foldConstants}) := by\n  cases ha₁ : a₁.foldConstants with\n  | num n₁ =>\n    cases ha₂ : a₂.foldConstants with\n    | num n₂ =>\n      left\n      exists n₁, n₂\n    | _ =>\n      simp [foldConstants, ha₁, ha₂]\n  | _ => simp [foldConstants, ha₁]",
+   "new": "theorem Bexp.foldConstants_comp (a₁ a₂ : Aexp) :\n    (∃ n₁ n₂, a₁.foldConstants = .num n₁ ∧\n      a₂.foldConstants = .num n₂) ∨\n    (bexp {a₁ = a₂}).foldConstants =\n      (bexp {~a₁.foldConstants = ~a₂.foldConstants}) ∧\n    (bexp {a₁ ≠ a₂}).foldConstants =\n      (bexp {~a₁.foldConstants ≠ ~a₂.foldConstants}) ∧\n    (bexp {a₁ ≤ a₂}).foldConstants =\n      (bexp {~a₁.foldConstants ≤ ~a₂.foldConstants}) ∧\n    (bexp {a₁ > a₂}).foldConstants =\n      (bexp {~a₁.foldConstants > ~a₂.foldConstants}) := by\n  cases ha₁ : a₁.foldConstants with\n  | num n₁ =>\n    cases ha₂ : a₂.foldConstants with\n    | num n₂ =>\n      left\n      exists n₁, n₂\n    | _ =>\n      simp [foldConstants, ha₁, ha₂]\n  | _ => simp [foldConstants, ha₁]",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w17",
+   "cat": "formatting/line-width",
+   "old": "theorem Bexp.foldConstants_unary (b : Bexp) :\n    (b.foldConstants = (bexp { true }) ∨ b.foldConstants = (bexp { false })) ∨\n    (bexp { ¬b }).foldConstants = (bexp { ¬~(b.foldConstants)}) := by\n  cases hb : b.foldConstants with\n  | bool b' =>\n    simp_all\n  | _ =>\n    simp [foldConstants, hb]",
+   "new": "theorem Bexp.foldConstants_unary (b : Bexp) :\n    (b.foldConstants = (bexp { true }) ∨\n      b.foldConstants = (bexp { false })) ∨\n    (bexp { ¬b }).foldConstants =\n      (bexp { ¬~(b.foldConstants)}) := by\n  cases hb : b.foldConstants with\n  | bool b' =>\n    simp_all\n  | _ =>\n    simp [foldConstants, hb]",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w18",
+   "cat": "formatting/line-width",
+   "old": "theorem Bexp.foldConstants_binary (b₁ : Bexp) (b₂ : Bexp) :\n    ((b₁.foldConstants = (bexp { true }) ∨ b₁.foldConstants = (bexp { false })) ∧\n     (b₂.foldConstants = (bexp { true }) ∨ b₂.foldConstants = (bexp { false }))) ∨\n    (bexp {b₁ ∧ b₂}).foldConstants = (bexp {~b₁.foldConstants ∧ ~b₂.foldConstants}) := by\n  cases hb₁ : b₁.foldConstants with\n  | bool b₁' =>\n    cases hb₂ : b₂.foldConstants with\n    | bool b₂' => simp_all\n    | _ => simp [foldConstants, hb₁, hb₂]\n  | _ => simp [foldConstants, hb₁]",
+   "new": "theorem Bexp.foldConstants_binary (b₁ : Bexp) (b₂ : Bexp) :\n    ((b₁.foldConstants = (bexp { true }) ∨\n        b₁.foldConstants = (bexp { false })) ∧\n      (b₂.foldConstants = (bexp { true }) ∨\n        b₂.foldConstants = (bexp { false }))) ∨\n    (bexp {b₁ ∧ b₂}).foldConstants =\n      (bexp {~b₁.foldConstants ∧ ~b₂.foldConstants}) := by\n  cases hb₁ : b₁.foldConstants with\n  | bool b₁' =>\n    cases hb₂ : b₂.foldConstants with\n    | bool b₂' => simp_all\n    | _ => simp [foldConstants, hb₁, hb₂]\n  | _ => simp [foldConstants, hb₁]",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w19",
+   "cat": "formatting/line-width",
+   "old": "example : (bexp { true ∧ ¬( false ∧ true) }).foldConstants = (bexp { true }) := by",
+   "new": "example :\n    (bexp { true ∧ ¬( false ∧ true) }).foldConstants =\n      (bexp { true }) := by",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w20",
+   "cat": "formatting/line-width",
+   "old": "example : (bexp { (X = Y) ∧ ( 0 = (2 - (1 + 1))) }).foldConstants = (bexp { (X = Y) ∧ true }) := by",
+   "new": "example :\n    (bexp { (X = Y) ∧ ( 0 = (2 - (1 + 1))) }).foldConstants =\n      (bexp { (X = Y) ∧ true }) := by",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w21",
+   "cat": "formatting/line-width",
+   "old": "    | b' => imp { if (b') {~c₁.foldConstants} else { ~c₂.foldConstants}}",
+   "new": "    | b' =>\n      imp { if (b') {~c₁.foldConstants} else { ~c₂.foldConstants}}",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w22",
+   "cat": "formatting/line-width",
+   "old": "    -- `plus`, `minus`, and `mult` follow from the IH and the observation that",
+   "new": "    -- `plus`, `minus`, and `mult` follow from the IH and the\n    -- observation that",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w23",
+   "cat": "formatting/line-width",
+   "old": "theorem Aexp.foldConstants_sound' : TransSound Aexp.foldConstants := by",
+   "new": "theorem Aexp.foldConstants_sound' :\n    TransSound Aexp.foldConstants := by",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w24",
+   "cat": "formatting/line-width",
+   "old": "theorem Bexp.foldConstants_sound : Bexp.TransSound Bexp.foldConstants := by",
+   "new": "theorem Bexp.foldConstants_sound :\n    Bexp.TransSound Bexp.foldConstants := by",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w25",
+   "cat": "formatting/line-width",
+   "old": "      -- The only interesting case: both `a₁` and `a₂` fold to constants",
+   "new": "      -- The only interesting case: both `a₁` and `a₂` fold to\n      -- constants",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w26",
+   "cat": "formatting/line-width",
+   "old": "        by_cases n₁ ≤ n₂ <;> simp_all [foldConstants, Nat.not_le_of_gt]",
+   "new": "        by_cases n₁ ≤ n₂ <;>\n          simp_all [foldConstants, Nat.not_le_of_gt]",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w27",
+   "cat": "formatting/line-width",
+   "old": "        by_cases n₁ > n₂ <;> simp_all [foldConstants, Nat.not_lt_of_le]",
+   "new": "        by_cases n₁ > n₂ <;>\n          simp_all [foldConstants, Nat.not_lt_of_le]",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w28",
+   "cat": "formatting/line-width",
+   "old": "theorem Com.foldConstants_sound : Com.TransSound Com.foldConstants := by",
+   "new": "theorem Com.foldConstants_sound :\n    Com.TransSound Com.foldConstants := by",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w29",
+   "cat": "formatting/line-width",
+   "old": "      cases heq : b.foldConstants <;> try (apply Com.congruence_if <;> simp_all)",
+   "new": "      cases heq : b.foldConstants <;>\n        try (apply Com.congruence_if <;> simp_all)",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w30",
+   "cat": "formatting/line-width",
+   "old": "        -- Again, the cases where `Com.foldConstants` doesn't change the test",
+   "new": "        -- Again, the cases where `Com.foldConstants` doesn't\n        -- change the test",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w31",
+   "cat": "formatting/line-width",
+   "old": "        cases heq : b.foldConstants <;> try (apply Com.congruence_while <;> simp_all)",
+   "new": "        cases heq : b.foldConstants <;>\n          try (apply Com.congruence_while <;> simp_all)",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w32",
+   "cat": "formatting/line-width",
+   "old": "def Aexp.optimize0plus (a : Aexp) : Aexp := solution!(\n  match a with\n  | Aexp.num n => Aexp.num n\n  | Aexp.id x => Aexp.id x\n  | (aexp { 0 + a₂ }) => Aexp.optimize0plus a₂\n  | (aexp { a₁ + a₂ }) => (aexp { ~(Aexp.optimize0plus a₁) + ~(Aexp.optimize0plus a₂) })\n  | (aexp { a₁ - a₂ }) => (aexp { ~(Aexp.optimize0plus a₁) - ~(Aexp.optimize0plus a₂) })\n  | (aexp { a₁ * a₂ }) => (aexp { ~(Aexp.optimize0plus a₁) * ~(Aexp.optimize0plus a₂) })\n)",
+   "new": "def Aexp.optimize0plus (a : Aexp) : Aexp := solution!(\n  match a with\n  | Aexp.num n => Aexp.num n\n  | Aexp.id x => Aexp.id x\n  | (aexp { 0 + a₂ }) => Aexp.optimize0plus a₂\n  | (aexp { a₁ + a₂ }) =>\n    (aexp { ~(Aexp.optimize0plus a₁) + ~(Aexp.optimize0plus a₂) })\n  | (aexp { a₁ - a₂ }) =>\n    (aexp { ~(Aexp.optimize0plus a₁) - ~(Aexp.optimize0plus a₂) })\n  | (aexp { a₁ * a₂ }) =>\n    (aexp { ~(Aexp.optimize0plus a₁) * ~(Aexp.optimize0plus a₂) })\n)",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w33",
+   "cat": "formatting/line-width",
+   "old": "def Bexp.optimize0plus (b : Bexp) : Bexp := solution!(\n  match b with\n  | (bexp { true })        => (bexp { true })\n  | (bexp { false })       => (bexp { false })\n  | (bexp { a₁ = a₂ })  => (bexp { ~(Aexp.optimize0plus a₁) =  ~(Aexp.optimize0plus a₂) })\n  | (bexp { a₁ ≠ a₂ })  => (bexp { ~(Aexp.optimize0plus a₁) ≠ ~(Aexp.optimize0plus a₂) })\n  | (bexp { a₁ ≤ a₂ }) => (bexp { ~(Aexp.optimize0plus a₁) ≤ ~(Aexp.optimize0plus a₂) })\n  | (bexp { a₁ > a₂ })  => (bexp { ~(Aexp.optimize0plus a₁) >  ~(Aexp.optimize0plus a₂) })\n  | (bexp { ¬ b₁ })     => (bexp { ¬ ~(Bexp.optimize0plus b₁) })\n  | (bexp { b₁ ∧ b₂ }) => (bexp { ~(Bexp.optimize0plus b₁) ∧ ~(Bexp.optimize0plus b₂) })\n)",
+   "new": "def Bexp.optimize0plus (b : Bexp) : Bexp := solution!(\n  match b with\n  | (bexp { true }) => (bexp { true })\n  | (bexp { false }) => (bexp { false })\n  | (bexp { a₁ = a₂ }) =>\n    (bexp { ~(Aexp.optimize0plus a₁) = ~(Aexp.optimize0plus a₂) })\n  | (bexp { a₁ ≠ a₂ }) =>\n    (bexp { ~(Aexp.optimize0plus a₁) ≠ ~(Aexp.optimize0plus a₂) })\n  | (bexp { a₁ ≤ a₂ }) =>\n    (bexp { ~(Aexp.optimize0plus a₁) ≤ ~(Aexp.optimize0plus a₂) })\n  | (bexp { a₁ > a₂ }) =>\n    (bexp { ~(Aexp.optimize0plus a₁) > ~(Aexp.optimize0plus a₂) })\n  | (bexp { ¬ b₁ }) => (bexp { ¬ ~(Bexp.optimize0plus b₁) })\n  | (bexp { b₁ ∧ b₂ }) =>\n    (bexp { ~(Bexp.optimize0plus b₁) ∧ ~(Bexp.optimize0plus b₂) })\n)",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w34",
+   "cat": "formatting/line-width",
+   "old": "def Com.optimize0plus (c : Com) : Com := solution!(\n  match c with\n  | (imp { skip })                     => (imp { skip })\n  | (imp { x := a })                  => (imp { x := ~(Aexp.optimize0plus a) })\n  | (imp { c₁ ; c₂ })                  => imp { ~(Com.optimize0plus c₁) ; ~(Com.optimize0plus c₂) }\n  | (imp { if (b) {c₁} else {c₂} }) =>\n      imp { if (~(Bexp.optimize0plus b)) {~(Com.optimize0plus c₁)} else {~(Com.optimize0plus c₂)} }\n  | (imp { while (b) {c₁} })         => imp { while (~(Bexp.optimize0plus b))\n                                          {~(Com.optimize0plus c₁)} }\n)",
+   "new": "def Com.optimize0plus (c : Com) : Com := solution!(\n  match c with\n  | (imp { skip }) => (imp { skip })\n  | (imp { x := a }) => (imp { x := ~(Aexp.optimize0plus a) })\n  | (imp { c₁ ; c₂ }) =>\n    imp { ~(Com.optimize0plus c₁) ; ~(Com.optimize0plus c₂) }\n  | (imp { if (b) {c₁} else {c₂} }) =>\n      imp { if (~(Bexp.optimize0plus b)) {~(Com.optimize0plus c₁)}\n            else {~(Com.optimize0plus c₂)} }\n  | (imp { while (b) {c₁} }) =>\n      imp { while (~(Bexp.optimize0plus b))\n              {~(Com.optimize0plus c₁)} }\n)",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w35",
+   "cat": "formatting/line-width",
+   "old": "theorem Aexp.optimize0plus_sound : Aexp.TransSound Aexp.optimize0plus := by",
+   "new": "theorem Aexp.optimize0plus_sound :\n    Aexp.TransSound Aexp.optimize0plus := by",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w36",
+   "cat": "formatting/line-width",
+   "old": "theorem Bexp.optimize0plus_sound : Bexp.TransSound Bexp.optimize0plus := by",
+   "new": "theorem Bexp.optimize0plus_sound :\n    Bexp.TransSound Bexp.optimize0plus := by",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w37",
+   "cat": "formatting/line-width",
+   "old": "theorem Com.optimize0plus_sound : Com.TransSound Com.optimize0plus := by",
+   "new": "theorem Com.optimize0plus_sound :\n    Com.TransSound Com.optimize0plus := by",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w38",
+   "cat": "formatting/line-width",
+   "old": "    | asgn x a => apply Com.congruence_asgn; apply Aexp.optimize0plus_sound",
+   "new": "    | asgn x a =>\n        apply Com.congruence_asgn; apply Aexp.optimize0plus_sound",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w39",
+   "cat": "formatting/line-width",
+   "old": "  -- Finally, we use the fact that evaluation is deterministic to obtain a contradiction.",
+   "new": "  -- Finally, we use the fact that evaluation is deterministic to\n  -- obtain a contradiction.",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w40",
+   "cat": "formatting/line-width",
+   "old": "theorem Aexp.eval_weakening {x : Ident} {st : State} {a : Aexp} {ni : Nat}",
+   "new": "theorem Aexp.eval_weakening {x : Ident} {st : State} {a : Aexp}\n  {ni : Nat}",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w41",
+   "cat": "formatting/line-width",
+   "old": "  a₂.eval (x →ₜ a₁.eval st ; st) = (Aexp.subst x a₁ a₂).eval (x →ₜ a₁.eval st ; st) := by",
+   "new": "  a₂.eval (x →ₜ a₁.eval st ; st) =\n    (Aexp.subst x a₁ a₂).eval (x →ₜ a₁.eval st ; st) := by",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w42",
+   "cat": "formatting/line-width",
+   "old": "inductive Com.EvalR : Com → State → State → Prop where\n  | skip {st : State} : EvalR (imp {skip}) st st\n  | asgn {st : State} {a : Aexp} {n : Nat} {x : Ident} (h : a.eval st = n) :\n      EvalR (imp {x := a}) st (x →ₜ n ; st)\n  | seq {c₁ c₂ : Com} {st st' st'' : State} (h₁ : EvalR c₁ st st') (h₂ : EvalR c₂ st' st'') :\n      EvalR (imp {c₁; c₂}) st st''\n  | ifTrue {st st' : State} {b : Bexp} {c₁ c₂ : Com} (hb : b.eval st = true)\n      (hc : EvalR c₁ st st') :\n      EvalR (imp {if (b) {c₁} else {c₂}}) st st'\n  | ifFalse {st st' : State} {b : Bexp} {c₁ c₂ : Com} (hb : b.eval st = false)\n      (hc : EvalR c₂ st st') :\n      EvalR (imp {if (b) {c₁} else {c₂}}) st st'\n  | whileFalse {b : Bexp} {st : State} {c : Com} (hb : b.eval st = false) :\n      EvalR (imp {while (b) {c}}) st st\n  | whileTrue {st st' st'' : State} {b : Bexp} {c : Com} (hb : b.eval st = true)\n      (hc : EvalR c st st') (hloop : Com.EvalR (imp {while (b) {c}}) st' st'') :\n      EvalR (imp {while (b) {c}}) st st''\n-- SOLUTION\n  | havoc {st : State} {x : Ident} (n : Nat) :\n      EvalR (imp {havoc x}) st (x →ₜ n ; st)\n-- END SOLUTION",
+   "new": "inductive Com.EvalR : Com → State → State → Prop where\n  | skip {st : State} : EvalR (imp {skip}) st st\n  | asgn {st : State} {a : Aexp} {n : Nat} {x : Ident}\n      (h : a.eval st = n) :\n      EvalR (imp {x := a}) st (x →ₜ n ; st)\n  | seq {c₁ c₂ : Com} {st st' st'' : State}\n      (h₁ : EvalR c₁ st st') (h₂ : EvalR c₂ st' st'') :\n      EvalR (imp {c₁; c₂}) st st''\n  | ifTrue {st st' : State} {b : Bexp} {c₁ c₂ : Com}\n      (hb : b.eval st = true) (hc : EvalR c₁ st st') :\n      EvalR (imp {if (b) {c₁} else {c₂}}) st st'\n  | ifFalse {st st' : State} {b : Bexp} {c₁ c₂ : Com}\n      (hb : b.eval st = false) (hc : EvalR c₂ st st') :\n      EvalR (imp {if (b) {c₁} else {c₂}}) st st'\n  | whileFalse {b : Bexp} {st : State} {c : Com}\n      (hb : b.eval st = false) :\n      EvalR (imp {while (b) {c}}) st st\n  | whileTrue {st st' st'' : State} {b : Bexp} {c : Com}\n      (hb : b.eval st = true) (hc : EvalR c st st')\n      (hloop : Com.EvalR (imp {while (b) {c}}) st' st'') :\n      EvalR (imp {while (b) {c}}) st st''\n-- SOLUTION\n  | havoc {st : State} {x : Ident} (n : Nat) :\n      EvalR (imp {havoc x}) st (x →ₜ n ; st)\n-- END SOLUTION",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w43",
+   "cat": "formatting/line-width",
+   "old": "@[simp]\ntheorem Com.equiv_notation {c₁ c₂ : Com} : c₁.Equiv c₂ ↔ c₁ ≃ c₂ := by rfl\n@[simp]\ntheorem Com.equiv_def {c₁ c₂ : Com} : c₁ ≃ c₂ ↔\n    ∀ {st st' : State}, (st =[ c₁ ]=> st') ↔ (st =[ c₂ ]=> st') := by rfl\n```\n\nLet's apply this definition to prove some nondeterministic\nprograms equivalent / inequivalent.",
+   "new": "@[simp]\ntheorem Com.equiv_notation {c₁ c₂ : Com} :\n    c₁.Equiv c₂ ↔ c₁ ≃ c₂ := by rfl\n@[simp]\ntheorem Com.equiv_def {c₁ c₂ : Com} : c₁ ≃ c₂ ↔\n    ∀ {st st' : State},\n      (st =[ c₁ ]=> st') ↔ (st =[ c₂ ]=> st') := by rfl\n```\n\nLet's apply this definition to prove some nondeterministic\nprograms equivalent / inequivalent.",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w44",
+   "cat": "formatting/line-width",
+   "old": "          subst_vars; simp only [cond_eq_ite, beq_iff_eq, Aexp.eval_id, TotalMap.update_eq] at h",
+   "new": "          subst_vars\n          simp only [cond_eq_ite, beq_iff_eq, Aexp.eval_id,\n            TotalMap.update_eq] at h",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w45",
+   "cat": "formatting/line-width",
+   "old": "          simp only [TotalMap.update_eq, ite_self] at hx; rw [←hy] at hx",
+   "new": "          simp only [TotalMap.update_eq, ite_self] at hx\n          rw [←hy] at hx",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w46",
+   "cat": "formatting/line-width",
+   "old": "          simp only [Bexp.eval, Aexp.eval,\n            Bool.not_eq_eq_eq_not, Bool.not_true, beq_eq_false_iff_ne, ne_eq] at hb",
+   "new": "          simp only [Bexp.eval, Aexp.eval, Bool.not_eq_eq_eq_not,\n            Bool.not_true, beq_eq_false_iff_ne, ne_eq] at hb",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w47",
+   "cat": "formatting/line-width",
+   "old": "            simp only [Bexp.eval, Aexp.eval,\n              Bool.not_eq_eq_eq_not, Bool.not_true, beq_eq_false_iff_ne, ne_eq] at hb",
+   "new": "            simp only [Bexp.eval, Aexp.eval, Bool.not_eq_eq_eq_not,\n              Bool.not_true, beq_eq_false_iff_ne, ne_eq] at hb",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w48",
+   "cat": "formatting/line-width",
+   "old": "        · simp only [Bexp.eval_neq, Aexp.eval_id, Aexp.eval_num, bne_iff_ne, ne_eq]",
+   "new": "        · simp only [Bexp.eval_neq, Aexp.eval_id, Aexp.eval_num,\n            bne_iff_ne, ne_eq]",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w49",
+   "cat": "formatting/line-width",
+   "old": "          · simp only [Bexp.eval_neq, Aexp.eval_id, Aexp.eval_num, bne_eq_false_iff_eq]",
+   "new": "          · simp only [Bexp.eval_neq, Aexp.eval_id, Aexp.eval_num,\n              bne_eq_false_iff_eq]",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w50",
+   "cat": "formatting/line-width",
+   "old": "        inversion h₁; simp_all only [Aexp.eval_num, Com.evalR_eq]; subst_vars\n        rw [TotalMap.update_shadow, TotalMap.update_permute,\n            TotalMap.update_shadow, TotalMap.update_permute] at h₂ <;> try trivial",
+   "new": "        inversion h₁\n        simp_all only [Aexp.eval_num, Com.evalR_eq]; subst_vars\n        rw [TotalMap.update_shadow, TotalMap.update_permute,\n            TotalMap.update_shadow, TotalMap.update_permute] at h₂ <;>\n          try trivial",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w51",
+   "cat": "formatting/line-width",
+   "old": "theorem p₅_summary (st st' : State) (h : st =[ p₅ ]=> st') : st' = (X →ₜ 1 ; st) := by",
+   "new": "theorem p₅_summary (st st' : State) (h : st =[ p₅ ]=> st') :\n    st' = (X →ₜ 1 ; st) := by",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w52",
+   "cat": "formatting/line-width",
+   "old": "    simp only [Bexp.eval_neq, Aexp.eval_id, Aexp.eval_num, bne_eq_false_iff_eq] at h'",
+   "new": "    simp only [Bexp.eval_neq, Aexp.eval_id, Aexp.eval_num,\n      bne_eq_false_iff_eq] at h'",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w53",
+   "cat": "formatting/line-width",
+   "old": "          have heq : a₂.eval (l₁ →ₜ Aexp.eval st a₁ ; st) = a₂.eval st := by",
+   "new": "          have heq :\n              a₂.eval (l₁ →ₜ Aexp.eval st a₁ ; st) = a₂.eval st := by",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w54",
+   "cat": "formatting/line-width",
+   "old": "          rw [heq]; constructor; apply Aexp.eval_weakening; assumption; lia",
+   "new": "          rw [heq]; constructor; apply Aexp.eval_weakening\n          assumption; lia",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w55",
+   "cat": "formatting/line-width",
+   "old": "def zprop (c : Com) : Prop := solution!(forall st, exists st', (st =[ c ]=> st'))",
+   "new": "def zprop (c : Com) : Prop :=\n  solution!(forall st, exists st', (st =[ c ]=> st'))",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  },
+  {
+   "id": "w56",
+   "cat": "formatting/line-width",
+   "old": "theorem zprop_preserving (c c' : Com) (hc : zprop c) (ha : Approx c c') : zprop c' := by",
+   "new": "theorem zprop_preserving (c c' : Com) (hc : zprop c)\n    (ha : Approx c c') : zprop c' := by",
+   "why": "Code inside a `lean` block must fit within 70 columns; reflowed with the existing continuation-line convention."
+  }
+ ],
+ "completed": true
+}

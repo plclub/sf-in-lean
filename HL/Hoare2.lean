@@ -3317,7 +3317,7 @@ Solution:
     Z := Z + 1
       {{ Z = a + Y + c }}
   end
-    {{ Z = a + Y + c ∧ ~(Y ≠ b) }} ->>
+    {{ Z = a + Y + c ∧ (Y ≠ b) }} ->>
     {{ Z = a + b + c }}
 ]]
 
@@ -3770,7 +3770,7 @@ Definition gcd_dec (m n:nat) : decorated :=
     end
       {{ #gcd m n = #gcd X Y }}
   end
-    {{ #gcd m n = #gcd X Y ∧ ~(X ≠ Y) }} ->>
+    {{ #gcd m n = #gcd X Y ∧ (X ≠ Y) }} ->>
     {{ #gcd m n = #gcd X Y ∧ X =  Y }} ->>
     {{ #gcd m n =  X }} }>.
 

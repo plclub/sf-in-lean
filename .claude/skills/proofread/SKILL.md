@@ -79,6 +79,12 @@ structure, redundant or missing transitions, dangling references ("this" with
 no displayed statement), and exercises whose grading or difficulty metadata
 seems off or missing.
 
+Also run `lake build <Vol>.<Ch>` and read every `linter.sf.*` warning it
+emits — succeeding is not enough. `PROOFREADING.md`'s "Linter warnings"
+section (under "The high-level round") has the triage rules, especially for
+`exerciseVisibility`: it requires a deliberate `full`-vs-`terse` visibility
+call per exercise, not just silencing the warning.
+
 **Never** fold these findings into round 1 and never edit the chapter while
 that round is in flight — the author is editing the same file. Report the
 findings in prose with the phase-2 handover, ordered by position in the

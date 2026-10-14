@@ -244,21 +244,25 @@ private def leadingSpaceCount (line : String) : Nat :=
 
 /-- The literal source text of tactic block `t`, for splicing in place of the
 `solution!`/`workinclass!`/`suggested!` keyword at `tk` in a build where the
-wrapped proof should be shown verbatim rather than stubbed. `t` is usually an
-indented block starting on the line after `tk` (required by
-`tacticSeqIndentGt`), one indent level deeper — in which case every line but
-the first is dedented by that level, so the spliced text parses as a sibling
-of whatever precedes/follows the marker in its enclosing tactic sequence
-rather than staying orphaned at `t`'s original, deeper column. But `t` can
-also be a single parenthesized tactic group starting right after `tk` on the
-same line (the `solution!( … )` idiom borrowed from the term form); there the
-column gap from `tk` reflects nothing about the body's own indentation, so
-dedenting by it would flatten the group's internal structure. To cover both,
-the dedent amount is derived from the body's own minimum indentation among
-its continuation lines relative to `tk`'s column, not from `t`'s start
-column — which comes out to the same "one indent level" in the first case,
-and to zero (no rewrite) in the second, since a parenthesized group's own
-lines are already indented well past `tk`. -/
+wrapped proof should be shown verbatim rather than stubbed. Two shapes occur:
+
+* `t` starts on its own line, one indent level deeper than `tk` (the usual
+  multi-line block, required by `tacticSeqIndentGt`). Every line is then
+  shifted left by that same single amount — `t`'s own starting column minus
+  `tk`'s — so the spliced text parses as a sibling of whatever precedes/
+  follows the marker in its enclosing tactic sequence, while any indentation
+  *internal* to the body is preserved (e.g. a tactic combinator like
+  `induction … with` whose default case sits one level deeper than the
+  `induction` line itself: that extra level survives the splice instead of
+  collapsing onto it, which a per-line scan of the body would do).
+* `t` starts right after `tk` on `tk`'s own line — a single parenthesized
+  tactic group (the `solution!( … )` idiom borrowed from the term form).
+  There `t`'s starting column is just wherever the paren happened to land
+  after `tk`, not the body's own indentation, so it would be the wrong thing
+  to shift by; instead the shift is derived from the minimum indentation
+  among the body's continuation lines (its closing paren is normally back at
+  `tk`'s column, making that minimum equal to `tk`'s own column and the shift
+  zero — i.e. the group is spliced verbatim). -/
 private def dedentSpliceText (tk t : Syntax) : CoreM String := do
   let fileMap ← getFileMap
   match tk.getRange?, t.getRange? with
@@ -268,12 +272,18 @@ private def dedentSpliceText (tk t : Syntax) : CoreM String := do
       match text.splitOn "\n" with
       | [] => pure text
       | first :: rest =>
-        let tkCol := (fileMap.toPosition tkR.start).column
-        let nonBlank := rest.filter fun l => !l.trimAscii.toString.isEmpty
-        let delta := match nonBlank with
-          | [] => 0
-          | l :: ls =>
-            (ls.foldl (fun acc l => min acc (leadingSpaceCount l)) (leadingSpaceCount l)) - tkCol
+        let tkPos := fileMap.toPosition tkR.start
+        let bodyPos := fileMap.toPosition tR.start
+        let delta :=
+          if bodyPos.line == tkPos.line then
+            let nonBlank := rest.filter fun l => !l.trimAscii.toString.isEmpty
+            match nonBlank with
+            | [] => 0
+            | l :: ls =>
+              (ls.foldl (fun acc l => min acc (leadingSpaceCount l)) (leadingSpaceCount l))
+                - tkPos.column
+          else
+            bodyPos.column - tkPos.column
         pure <| "\n".intercalate (first :: rest.map (dedentLine delta))
     else
       throwError "dedentSpliceText: invalid source range"

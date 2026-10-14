@@ -1098,7 +1098,8 @@ exactly the shape expected by {name}`mStarApp`.)
 The following lemmas show that the intuition about matching given
 at the beginning of the section can be obtained from the formal
 inductive definition.
-
+:::::
+:::::full
 ::::exercise (rating := 1) (name := "EmptySet_is_empty")
 
 ```lean
@@ -1110,7 +1111,9 @@ theorem EmptySet_is_empty α (s : List α) : ¬(s =~ EmptySet) := by
 :::gradeTheorem 1 EmptySet_is_empty
 :::
 ::::
+:::::
 
+:::::full
 ::::exercise (rating := 1) (name := "MUnion'")
 
 ```lean
@@ -1126,12 +1129,14 @@ theorem MUnion' α (s : List α) (re₁ re₂ : RegExp α) :
 :::gradeTheorem 1 MUnion'
 :::
 ::::
+:::::
 
 The next lemma is stated in terms of the {name}`List.foldr` function on lists:
 if `ss : List (List α)` represents a sequence of
 strings `s₁, ..., sₙ`, then `List.foldr (· ++ ·) [] ss` is the result of
 concatenating them all together.
 
+:::::full
 ::::exercise (rating := 2) (name := "MStar'")
 
 ```lean
@@ -1151,7 +1156,9 @@ theorem MStar' α (ss : List (List α)) (re : RegExp α)
 :::gradeTheorem 2 MStar'
 :::
 ::::
+:::::
 
+:::::full
 ::::exercise (rating := 1) (name := "EmptyStr_not_needed") (optional := true) (manual := true)
 It turns out that the {name}`EmptyStr` constructor is actually not
 needed, since the regular expression matching the empty string can
@@ -1176,12 +1183,13 @@ theorem empty_equiv {α : Type} (s : List α) :
 ```
 :::
 ::::
+:::::
 
 
 Since the definition of {name}`ExpMatch` has a recursive
 structure, we might expect that proofs involving regular
 expressions will often require induction on evidence.
-:::::
+
 
 ::::terse
 Naturally, proofs about {name}`ExpMatch` often require induction (on evidence!).
@@ -1243,69 +1251,71 @@ theorem in_re_match {α : Type} {s : List α} {re : RegExp α} {x : α}
 ```
 
 :::::full
-::::exercise (rating := 1) (name := "reNotEmpty") (manual := true)
+::::exercise (rating := 3) (name := "reNotEmpty") (manual := true)
 Write a recursive function `reNotEmpty` that tests whether a
-regular expression matches some string. Prove that your function
-is correct.
+regular expression matches some string.
 
-:::solution
+Note that this is _not_ asking you to implement full regular expression
+matching (which is a neat algorithm, but hard)!
+Rather, you should write `reNotEmpty` to return `true` when
+`re` there can _possibly exist_ a string that it matches.
+(Hint: when can that not be true?)
+
+Prove that your function is correct.
+
 ```lean
 def reNotEmpty {α : Type} (re : RegExp α) : Bool :=
-  match re with
+  solution!
+  (match re with
   | EmptySet => false
   | EmptyStr => true
   | Char _ => true
   | App re₁ re₂ => reNotEmpty re₁ && reNotEmpty re₂
   | Union re₁ re₂ => reNotEmpty re₁ || reNotEmpty re₂
-  | Star _ => true
+  | Star _ => true)
 
 theorem reNotEmpty_correct {α : Type} (re : RegExp α) :
-    (∃ s, s =~ re) ↔ reNotEmpty re = true := by
-  induction re with (simp only [reNotEmpty])
-  | EmptySet =>
-    simp only [Bool.false_eq_true, iff_false, not_exists]
-    intro s h; inversion h
-  | EmptyStr =>
-    simp only [iff_true]; exists []; constructor
-  | Char x =>
-    simp only [iff_true]; exists [x]; constructor
-  | App re₁ re₂ ih₁ ih₂ =>
-    simp only [Bool.and_eq_true]
-    constructor
-    · intro h
-      obtain ⟨s, h⟩ := h
-      inversion h with
-      | mApp s₁ s₂ h₁ h₂ =>
-        constructor
-        case left  => apply ih₁.mp; exists s₁
-        case right => apply ih₂.mp; exists s₂
-    · intro h
-      obtain ⟨h₁, h₂⟩ := h
-      obtain ⟨s₁, hs₁⟩ := ih₁.mpr h₁
-      obtain ⟨s₂, hs₂⟩ := ih₂.mpr h₂
-      exists (s₁ ++ s₂); constructor <;> assumption
-  | Union re₁ re₂ ih₁ ih₂ =>
-    simp only [Bool.or_eq_true]
-    constructor
-    · intro h
-      obtain ⟨s, h⟩ := h
-      inversion h with
-      | mUnionL h₁ => left; apply ih₁.mp; exists s
-      | mUnionR h₂ => right; apply ih₂.mp; exists s
-    · intro h
-      obtain h₁ | h₂ := h
-      case inl => obtain ⟨s, hs⟩ := ih₁.mpr h₁; exists s; constructor; assumption
-      case inr => obtain ⟨s, hs⟩ := ih₂.mpr h₂; exists s; apply mUnionR; assumption
-  | Star re _ =>
-    simp only [iff_true]; exists []; constructor
+  (∃ s, s =~ re) ↔ reNotEmpty re = true := by
+  solution!
+    (induction re with (simp only [reNotEmpty])
+    | EmptySet =>
+      simp only [Bool.false_eq_true, iff_false, not_exists]
+      intro s h; inversion h
+    | EmptyStr =>
+      simp only [iff_true]; exists []; constructor
+    | Char x =>
+      simp only [iff_true]; exists [x]; constructor
+    | App re₁ re₂ ih₁ ih₂ =>
+      simp only [Bool.and_eq_true]
+      constructor
+      · intro h
+        obtain ⟨s, h⟩ := h
+        inversion h with
+        | mApp s₁ s₂ h₁ h₂ =>
+          constructor
+          case left  => apply ih₁.mp; exists s₁
+          case right => apply ih₂.mp; exists s₂
+      · intro h
+        obtain ⟨h₁, h₂⟩ := h
+        obtain ⟨s₁, hs₁⟩ := ih₁.mpr h₁
+        obtain ⟨s₂, hs₂⟩ := ih₂.mpr h₂
+        exists (s₁ ++ s₂); constructor <;> assumption
+    | Union re₁ re₂ ih₁ ih₂ =>
+      simp only [Bool.or_eq_true]
+      constructor
+      · intro h
+        obtain ⟨s, h⟩ := h
+        inversion h with
+        | mUnionL h₁ => left; apply ih₁.mp; exists s
+        | mUnionR h₂ => right; apply ih₂.mp; exists s
+      · intro h
+        obtain h₁ | h₂ := h
+        case inl => obtain ⟨s, hs⟩ := ih₁.mpr h₁; exists s; constructor; assumption
+        case inr => obtain ⟨s, hs⟩ := ih₂.mpr h₂; exists s; apply mUnionR; assumption
+    | Star re _ =>
+      simp only [iff_true]; exists []; constructor)
 ```
-:::
 
-:::grade
-```
-GRADE_MANUAL 1: reNotEmpty
-```
-:::
 ::::
 
 :::::
@@ -1451,7 +1461,7 @@ To get started, we need to define "sufficiently long."  Since we
 are working in a constructive logic, we actually need to be able
 to _calculate_, for each regular expression `re`, a minimum length
 for strings `s` to guarantee "pumpability."
-
+:::::
 ```lean
 def pumpingConstant {α : Type} (re : RegExp α) : Nat :=
   match re with
@@ -1530,6 +1540,7 @@ to prove the main lemma.
 Your job is to complete the proofs of the helper lemmas; the main
 lemma relies on these.
 
+:::::full
 ::::exercise (rating := 2) (name := "weak_pumping_char")
 ```lean
 theorem weak_pumping_char {α : Type} (x : α)
@@ -1543,7 +1554,9 @@ theorem weak_pumping_char {α : Type} (x : α)
 :::gradeTheorem 2 weak_pumping_char
 :::
 ::::
+:::::
 
+:::::full
 ::::exercise (rating := 4) (name := "weak_pumping_app")
 ```lean
 theorem weak_pumping_app {α : Type} (s₁ s₂ : List α) (re₁ re₂ : RegExp α)
@@ -1604,7 +1617,9 @@ theorem weak_pumping_app {α : Type} (s₁ s₂ : List α) (re₁ re₂ : RegExp
 :::gradeTheorem 4 weak_pumping_app
 :::
 ::::
+:::::
 
+:::::full
 ::::exercise (rating := 3) (name := "weak_pumping_union_l")
 ```lean
 theorem weak_pumping_union_l  {α : Type} (s₁ : List α) (re₁ re₂ : RegExp α)
@@ -1639,7 +1654,9 @@ theorem weak_pumping_union_l  {α : Type} (s₁ : List α) (re₁ re₂ : RegExp
 :::gradeTheorem 3 weak_pumping_union_l
 :::
 ::::
+:::::
 
+:::::full
 ::::exercise (rating := 3) (name := "weak_pumping_union_r")
 ```lean
 theorem weak_pumping_union_r {α : Type} (s₂ : List α) (re₁ re₂ : RegExp α)
@@ -1675,8 +1692,9 @@ theorem weak_pumping_union_r {α : Type} (s₂ : List α) (re₁ re₂ : RegExp 
 :::gradeTheorem 3 weak_pumping_union_r
 :::
 ::::
+:::::
 
-::::exercise (rating := 2) (name := "weak_pumping_star_zero")
+::::exercise (rating := 1) (name := "weak_pumping_star_zero")
 ```lean
 theorem weak_pumping_star_zero {α : Type} (re : RegExp α)
     (h : (Star re).pumpingConstant ≤ @List.length α []) :
@@ -1685,15 +1703,14 @@ theorem weak_pumping_star_zero {α : Type} (re : RegExp α)
       s₂ ≠ [ ] ∧
       (∀ m : Nat, s₁ ++ napp m s₂ ++ s₃ =~ Star re) := by
   solution!
-    simp only [List.length_nil] at h
-    inversion h with
-    | refl h h₁ =>
-      have h₂ := pumping_constant_ge_1 re
-      rw [← h₁] at h₂; inversion h₂
+    simp only [List.length_nil, Nat.le_zero] at h
+    apply pumping_constant_0_false at h
+    contradiction
 ```
-:::gradeTheorem 2 weak_pumping_star_zero
+:::gradeTheorem 1 weak_pumping_star_zero
 :::
 ::::
+
 
 ::::exercise (rating := 5) (name := "weak_pumping_star_app")
 ```lean
@@ -1764,10 +1781,10 @@ theorem weak_pumping_star_app {α : Type} (s₁ s₂ : List α) (re : RegExp α)
           rw [← List.append_assoc]
           apply mStarApp <;> assumption
 ```
-:::gradeTheorem 5 weak_pumping_star_app
-:::
 ::::
 
+
+:::::full
 ::::exercise (rating := 3) (name := "weak_pumping")
 ```lean
 theorem weak_pumping {α : Type} {re : RegExp α} {s : List α}

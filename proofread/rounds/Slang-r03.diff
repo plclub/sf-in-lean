@@ -1,0 +1,50 @@
+--- TS/Slang.lean (before this round)
++++ TS/Slang.lean
+@@ -340,4 +340,5 @@
+ ```
+ 
++::::::full
+ :::::exercise (rating := 3) (name := "optimize0plus_sound")
+ Since the {name}`Aexp.optimize0plus` transformation doesn't change the value of an
+@@ -391,5 +392,8 @@
+ :::
+ :::::
++
++::::::
+ 
++::::::full
+ :::::exercise (rating := 4) (name := "optimize") (optional := true)
+ The optimization implemented by our {name}`Aexp.optimize0plus` is only one of
+@@ -399,4 +403,6 @@
+ and build up incrementally to something more interesting.)
+ :::::
++
++::::::
+ 
+ # Evaluation as a Relation
+@@ -576,4 +582,5 @@
+ :::
+ 
++::::::full
+ :::::exercise (rating := 1) (name := "beval_rules") (manual := true) (optional := true)
+ Here, again, is the definition of the {name}`Bexp.eval` function:
+@@ -638,4 +645,6 @@
+ :::
+ :::::
++
++::::::
+ 
+ ## Equivalence of the Definitions
+@@ -678,4 +687,5 @@
+ ```
+ 
++::::::full
+ :::::exercise (rating := 3) (name := "bevalR")
+ Write a relation `Bexp.EvalR` in the same style as {name}`Aexp.EvalR`, and prove that
+@@ -718,4 +728,6 @@
+ :::::
+ 
++::::::
++
+ ```lean
+ end Bexp

@@ -3,6 +3,7 @@ import Bib
 import SFLMeta.Bnf
 import SFLMeta.BuildStamp
 import SFLMeta.Comment
+import SFLMeta.Diagrams
 import SFLMeta.Details
 import SFLMeta.DisplayMath
 import SFLMeta.Epigraph

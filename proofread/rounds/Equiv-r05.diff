@@ -1,0 +1,20 @@
+--- HL/Equiv.lean (before this round)
++++ HL/Equiv.lean
+@@ -2625,12 +2625,9 @@
+     solution!
+ 
+-      have hs : ∀ {l₁ l₂ : Ident} {a₁ a₂ : Aexp},
+-          l₁ ≠ l₂ →
+-          VarNotUsedInAexp l₁ a₂ →
+-          VarNotUsedInAexp l₂ a₁ →
+-          ∀ {st st' : State},
+-            (st =[ l₁ := a₁; l₂ := a₂ ]=> st') →
+-            st =[ l₂ := a₂; l₁ := a₁ ]=> st' := by
+-        intro l₁ l₂ a₁ a₂ hneq hne₁ hne₂ st st' h
++      have hs {l₁ l₂ : Ident} {a₁ a₂ : Aexp} (hneq : l₁ ≠ l₂)
++          (hne₁ : VarNotUsedInAexp l₁ a₂)
++          (hne₂ : VarNotUsedInAexp l₂ a₁) {st st' : State}
++          (h : st =[ l₁ := a₁; l₂ := a₂ ]=> st') :
++          st =[ l₂ := a₂; l₁ := a₁ ]=> st' := by
+         inversion h with
+         | seq h₁ h₂ =>

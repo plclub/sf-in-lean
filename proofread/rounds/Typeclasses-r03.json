@@ -1,0 +1,36 @@
+{
+ "file": "LF/Typeclasses.lean",
+ "chapter": "Typeclasses",
+ "round": 3,
+ "proposals": [
+  {
+   "id": 1,
+   "cat": "markup/code-font",
+   "old": "an operator (which we'll write `⊗`, typed \\otimes) that combines two elements of type `α` into one,",
+   "new": "an operator (which we'll write `⊗`, typed `\\otimes`) that combines two elements of type `α` into one,",
+   "why": "The literal input sequence \\otimes is left unmarked while the symbol it produces is in code font right next to it; wrap it in backticks to match."
+  },
+  {
+   "id": 2,
+   "cat": "typo/missing-word",
+   "old": "to agree with `=`, but nothing tells Lean that automatically: proving that hand-written instance\n{name}`LawfulBEq` would take its own separate induction on `Nat.beq`'s recursive definition.",
+   "new": "to agree with `=`, but nothing tells Lean that automatically: proving that hand-written instance\nis {name}`LawfulBEq` would take its own separate induction on `Nat.beq`'s recursive definition.",
+   "why": "\"proving that hand-written instance LawfulBEq\" is missing the verb \"is\" that the clause needs."
+  },
+  {
+   "id": 3,
+   "cat": "comma/introductory",
+   "old": "But if we slightly generalize this function it will fail.",
+   "new": "But if we slightly generalize this function, it will fail.",
+   "why": "Comma needed after the introductory \"if\" clause."
+  },
+  {
+   "id": 4,
+   "cat": "formatting/stray-indent",
+   "old": "This design minimizes the need to use {name}`getElem_def` outside concrete examples\n  (which are typically solvable with {tactic}`rfl` anyway).",
+   "new": "This design minimizes the need to use {name}`getElem_def` outside concrete examples\n(which are typically solvable with {tactic}`rfl` anyway).",
+   "why": "Stray two-space indent on the continuation line; the chapter's prose is flush left (same slip fixed twice already in round 1)."
+  }
+ ],
+ "completed": true
+}

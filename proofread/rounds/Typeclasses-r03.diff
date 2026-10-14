@@ -1,0 +1,30 @@
+--- LF/Typeclasses.lean (before this round)
++++ LF/Typeclasses.lean
+@@ -465,5 +465,5 @@
+ 
+ * an underlying set of data, represented by a type `α`,
+-* an operator (which we'll write `⊗`, typed \otimes) that combines two elements of type `α` into one,
++* an operator (which we'll write `⊗`, typed `\otimes`) that combines two elements of type `α` into one,
+ * a particular element `id` of type `α`, which we call the "identity element," and
+ * some laws about the interaction of `⊗` and `id`, namely that:
+@@ -918,5 +918,5 @@
+ 
+ This design minimizes the need to use {name}`getElem_def` outside concrete examples
+-  (which are typically solvable with {tactic}`rfl` anyway).
++(which are typically solvable with {tactic}`rfl` anyway).
+ 
+ ### Updating Elements
+@@ -1552,5 +1552,5 @@
+ directly from {name}`Nat.beq` — is a worse choice, not just a redundant one. `Nat.beq` does happen
+ to agree with `=`, but nothing tells Lean that automatically: proving that hand-written instance
+-{name}`LawfulBEq` would take its own separate induction on `Nat.beq`'s recursive definition.
++is {name}`LawfulBEq` would take its own separate induction on `Nat.beq`'s recursive definition.
+ Deriving `BEq Nat` from `DecidableEq Nat` sidesteps that work entirely — the proof of
+ agreement is already carried by the `Decidable` instance, as we saw above — which is exactly why
+@@ -1617,5 +1617,5 @@
+ ```
+ 
+-But if we slightly generalize this function it will fail.
++But if we slightly generalize this function, it will fail.
+ 
+ ```lean -keep +error (name := generalEqError)

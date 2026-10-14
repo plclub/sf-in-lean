@@ -1,0 +1,58 @@
+--- LF/Typeclasses.lean (before this round)
++++ LF/Typeclasses.lean
+@@ -307,5 +307,5 @@
+ ```
+ 
+-For a typeclass like {name}`DefaultValue` that carries data — a term, such as the {lean}`1` above,
++For a typeclass like {name}`DefaultValue` that carries data — a term, such as the {lean}`0` above,
+ rather than only proofs (which we will see below) — we expect at most one instance per type,
+ so this search has a unique answer.
+@@ -350,5 +350,5 @@
+ This is the instance Lean supplies for `[BEq α]` when {name}`List.elemPoly` is called on a
+ {lean}`List Nat` — no different from Lean choosing {name}`instDefaultValueNat` for
+-{name}`DefaultValue.value` earlier when it was equated with {lean}`(1 : Nat)`.
++{name}`DefaultValue.value` earlier when it was equated with {lean}`(0 : Nat)`.
+ 
+ ::::exercise (rating := 1) (name := "List.elem_poly_eq_elem_nat")
+@@ -688,4 +688,8 @@
+   rw [← h₂]
+ ```
++:::
++
++:::dev "Claude"
++This section is still only the outline above; there is no reader-facing prose yet. It is also not free-standing: the bullets name exactly the vocabulary the Maps section below uses without ever defining it — `get` as the "public API counterpart" to `inner`, `toTotal` playing the same role for `PartialMap`, and the recurring pattern of `*_def` lemmas marked "exposes implementation-specific details ... avoid using outside the X namespace." Revisit alongside the Maps section to decide whether to write this section now, using `get`/`inner` and `toTotal`/`inner` as the worked examples, or leave it as a stub.
+ :::
+ 
+@@ -740,5 +744,5 @@
+ 
+ In order to declare a default value of {lean}`β` we will use the {name}`Inhabited` typeclass,
+-which is the standard library's implementation of our {name}`DefaultValue` example from above:
++which is the standard library's implementation of our {name}`DefaultValue` example from above.
+ 
+ The function `TotalMap.empty` yields an empty total map, given a default element;
+@@ -1665,8 +1669,4 @@
+ Again, these two notions are equivalent:
+ 
+-:::dev
+-This proof is from the typeclass version, which makes more sense if maps are included — CGH
+-:::
+-
+ ```lean
+ example (n₁ n₂ : Nat) : n₁ == n₂ ↔ n₁ = n₂ := beq_iff_eq
+@@ -1708,5 +1708,5 @@
+ :::
+ 
+-Lean will complain here that it cannot find an instance of {name}`Decidable`. This typeclass
++Lean will complain here that it cannot find an instance of {name}`Decidable`. Writing `if x = y then ... else ...` forces Lean to pick a branch, which means it needs either a proof of `x = y` or a proof of `¬ (x = y)` — exactly what this typeclass demands:
+ 
+ ```recall
+@@ -1718,8 +1718,5 @@
+ ```
+ 
+-is the way that we express in Lean that a given proposition is decidable. This is the generalization
+-of our observation that {name}`Nat.even_iff_Even` was reflecting a proof between boolean and
+-propositional equality. In fact, we can use this theorem to directly construct a {name}`Decidable`
+-instance.
++`Decidable p` is how we express in Lean that a proposition `p` can be settled one way or the other, computationally. It generalizes what we already saw with {name}`Nat.even_iff_Even`: that theorem showed {lean}`Nat.even n = true ↔ Nat.Even n`, converting a boolean computation into a proposition. Deciding {lean}`Nat.even n = true` is automatic, since equality of {name}`Bool`s is always decidable, and the standard library function {name}`decidable_of_decidable_of_iff` lets us carry a `Decidable` instance across any `p ↔ q` — from `Decidable p` to `Decidable q`. Applying it to {name}`Nat.even_iff_Even` is exactly what we need to construct an instance for {name}`Nat.Even`:
+ 
+ ```lean

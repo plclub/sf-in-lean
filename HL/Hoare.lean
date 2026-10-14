@@ -553,7 +553,7 @@ tag := "assn-delaborators"
 %%%
 
 ::::full
-As in the {ref "imp-delaborators"}[Imp chapter], the assertion notation
+As in the {ref "imp-notations"}[Imp chapter], the assertion notation
 above is _input_ only: Lean reads `{{ X ≤ 5 }}` but still prints the
 underlying function, as `#print assertion8` just showed.  The delaborators
 below close the loop for plain assertions: a state lambda whose body Lean
@@ -1771,7 +1771,7 @@ theorem hoare_asgn {Q : Assertion} {x : Ident} {a : Aexp} :
 :::ignore
 ```lean -show
 /--
-info: @hoare_asgn : ∀ {Q : Assertion} {x : Ident} {a : Aexp}, {{Q [x ↦ ~a]}} x := ~a {{Q}}
+info: @hoare_asgn : ∀ {Q : Assertion} {x : Ident} {a : Aexp}, {{Q [x ↦ a]}} x := a {{Q}}
 -/
 #guard_msgs in
 #check @hoare_asgn
@@ -3579,7 +3579,7 @@ where loop invariants are first used. -/
     But why are they helpful? We now know that they hold after any finite
     number of iterations of the loop. In particular, they hold when
     (and if) the loop terminates. What happens then? Since the loop has
-    terminated, we know that [i ~< n], and so [i = n]. Substituting n
+    terminated, we know that [i < n], and so [i = n]. Substituting n
     for i, we get that A[1...n] are a permutation of a[1...n], and in
     sorted order. And thus, (if insertion sort terminates), it is correct.
 

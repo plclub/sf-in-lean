@@ -1,0 +1,201 @@
+--- LF/Typeclasses.lean (before this round)
++++ LF/Typeclasses.lean
+@@ -122,5 +122,5 @@
+ indicates that an instance of {name}`BEq` must be provided at
+ call sites for the particular type `α` that is used.
+-Second, whereas {name}`List.elemPolyEq` invokes parameter `eq` to test equality,
++Second, whereas {name}`List.elemPolyEq` invokes the parameter `eq` to test equality,
+ {name}`List.elemPoly` uses `==` instead. As {ref "Lists"}[Lists] noted when we first used it,
+ `==` on {name}`Nat` comes from the {name}`BEq` typeclass.
+@@ -403,5 +403,5 @@
+ ```
+ 
+-In most languages that support typeclasses (or traits) it is not possible to formally enforce
++In most languages that support typeclasses (or traits), it is not possible to formally enforce
+ laws such as `one_neq_two`. Thus it falls to the author to check, informally, that any required invariants are
+ satisfied, which can lead to bugs.
+@@ -449,5 +449,5 @@
+ * an underlying set of data, represented by a type {lean}`α`,
+ * an operator (which we'll write `⊗`, typed \otimes) that combines two elements of type {lean}`α` into one,
+-* a particular element `id` of type `α`, which we call the "identity element", and
++* a particular element `id` of type `α`, which we call the "identity element," and
+ * some laws about the interaction of `⊗` and `id`, namely that:
+     * `∀ x, id ⊗ x = x = x ⊗ id`, and
+@@ -475,5 +475,5 @@
+ 
+ As one might expect, the `+` operator over {name}`Nat`s forms a monoid, where `0` is the identity element.
+-Note that we don't have to define {name}`Nat`'s {name}`OpSet` instance separately, we can define a
++Note that we don't have to define {name}`Nat`'s {name}`OpSet` instance separately; we can define a
+ single instance that implements both classes.
+ 
+@@ -490,6 +490,5 @@
+ 
+ Chris notes on GH: we're breaking a rule here about having diamonds on data carrying typeclasses,
+-something we do explain above. The way this works in Mathlib is that there are additive and m
+-ultiplicative variants of the classes, e.g. Monoid versus AddMonoid.
++something we do explain above. The way this works in Mathlib is that there are additive and multiplicative variants of the classes, e.g. Monoid versus AddMonoid.
+ 
+ This is an isolated problem for now, not sure if/how we want to talk about this.
+@@ -550,6 +549,6 @@
+ 
+ In the above proof, we can destructure the monoid instances `m₁` and `m₂` with the `obtain` tactic
+-we saw in the {ref "Logic"}[Logic] chapter. When we do so however, because these are
+-class instances instead of normal structures, we prepend our tuple by the `@` symbol.
++we saw in the {ref "Logic"}[Logic] chapter. When we do so, however, because these are
++class instances instead of normal structures, we prepend the `@` symbol to our tuple.
+ When stepping through the above proof, if the notation is confusing to you,
+ remember that you can set `set_option pp.all true` or `set_option pp.explicit true`
+@@ -613,5 +612,5 @@
+ 
+ ::::exercise (rating := 1) (name := "IdentityUnique")
+-If an element of a monoid satisfies just one of the the identity laws
++If an element of a monoid satisfies just one of the identity laws
+ (here, we take the left), then it must be equal to the monoid's identity element.
+ 
+@@ -715,6 +714,6 @@
+ ```
+ 
+-These classes refine {name}`BEq`, specifying that (`==`) is reflexive and coincides with
+-proposition equality `=`.
++These classes refine {name}`BEq`, specifying that `==` is reflexive and coincides with
++propositional equality `=`.
+ 
+ In general, we place no constraints on the value type {lean}`β`.
+@@ -778,5 +777,5 @@
+ :::
+ 
+-While `TotalMap`s happen to be implemented as functions under the hood, we would prefer not to expose this fact in its public interface.
++While `TotalMap`s happen to be implemented as functions under the hood, we would prefer not to expose this fact in their public interface.
+ Accordingly, we define new operations for querying and updating mappings.
+ We define a function `get` for getting the value associated with a key playing the role that `find` played for the {ref "Lists"}[Lists] chapter's list-based maps,
+@@ -806,5 +805,5 @@
+ is definitionally equal to `x`.
+ 
+-{name}`get` is the public API counterpart to {name}`inner` which is an implementation-specific detail of {name}`TotalMap`.
++{name}`get` is the public API counterpart to {name}`inner`, which is an implementation-specific detail of {name}`TotalMap`.
+ Because {name}`get_def` "peeks" through the abstraction, it should be used sparingly, and only inside the `TotalMap` namespace.
+ 
+@@ -861,5 +860,5 @@
+ Don't worry about following the mechanism in detail — the
+ `macro_rules` and the `app_unexpander` below are minor technicalities. However,
+-if you do wish to learn more, Chapter 5 and 6 of
++if you do wish to learn more, Chapters 5 and 6 of
+ [Metaprogramming in Lean 4](https://leanprover-community.github.io/lean4-metaprogramming-book/)
+ contain more detail.
+@@ -915,5 +914,5 @@
+ 
+ This design minimizes the need to use {name}`getElem_def` outside concrete examples
+-  (which are typically solvable with {tactic}`rfl` anyways).
++  (which are typically solvable with {tactic}`rfl` anyway).
+ 
+ ### Updating Elements
+@@ -969,5 +968,5 @@
+ ```
+ 
+-The `examplemap` above can now be defined as follows:
++The `exampleMap` above can now be defined as follows:
+ 
+ ```lean
+@@ -1016,5 +1015,5 @@
+ ```
+ 
+-Notice that in the example `exampleMap'["quux"] = false` the last rewrite is effectively just {name}`getElem_empty`.
++Notice that in the example `exampleMap'["quux"] = false`, the last rewrite is effectively just {name}`getElem_empty`.
+ 
+ Next, if we update a map `m` at a key `a` with a new value `b` and then look up `a` in the map resulting from the {name}`update`, we get back `b`:
+@@ -1052,5 +1051,5 @@
+ 
+ The fact that {name}`TotalMap` is a structure complicates things slightly.
+-We need to use injectivity of its constructor {name}`mk` which Lean automatically provides for us as {name}`mk.injEq`.
++We need to use injectivity of its constructor {name}`mk`, which Lean automatically provides for us as {name}`mk.injEq`.
+ It lets us prove `m₁ = m₂` from `m₁.inner = m₂.inner` or vice versa.
+ 
+@@ -1195,5 +1194,5 @@
+ 
+ Wouldn't it be nice if we could use a more natural notation for concrete maps like `{ "bar" ↦ true, "foo" ↦ true }`?
+-To accomplish this we define a simple structure that consists of a key and a value along with `↦` notation for it.
++To accomplish this, we define a simple structure that consists of a key and a value, along with `↦` notation for it.
+ 
+ ```lean
+@@ -1325,5 +1324,5 @@
+ Updating a partial map at a key means storing a {name}`some` value there.
+ To update, we create a new partial map from `a →ₜ some b ; m.toTotal`
+-by wrapping it in angle brackets, i.e. using the anonymous constructor syntax.
++by wrapping it in angle brackets, i.e., using the anonymous constructor syntax.
+ This is equivalent to writing `{ inner := a →ₜ some b ; m.toTotal }`.
+ We also introduce a similar notation for it as for total maps.
+@@ -1366,5 +1365,5 @@
+ 
+ Next, we lift all of the basic lemmas about total maps to partial maps.
+-To do this we should first prove an extensionality lemma about partial maps.
++To do this, we should first prove an extensionality lemma about partial maps.
+ To prove extensionality, we employ injectivity of {name}`PartialMap`'s constructor {name}`mk` using {name}`mk.injEq`.
+ 
+@@ -1446,5 +1445,4 @@
+ `m₁ ⊆ m₂` — which we get by supplying a {name}`HasSubset` instance.
+ 
+-
+ ```lean
+ def Subset {α β : Type} (m₁ m₂ : PartialMap α β) : Prop :=
+@@ -1526,5 +1524,4 @@
+ Here are the key differences between {name}`Bool` and {lean}`Prop`:
+ 
+-
+ :::dev "@ionathanch" PotentialImprovement
+ The table directive gets extracted to Lean as a flat list,
+@@ -1582,5 +1579,5 @@
+ 
+ The third row highlights an important practical difference: equality functions like {name}`Nat.beq`
+-that return a boolean cannot be used directly to justify rewriting with the rewrite tactic;
++that return a boolean cannot be used directly to justify rewriting with the {tactic}`rewrite` tactic;
+ propositional equality is required for this. Since {lean}`Prop` includes both decidable and undecidable
+ properties, we have two options when we want to formalize a property that happens to be decidable:
+@@ -1662,9 +1659,9 @@
+ in the truth of the proposition {lean}`∃ (k : Nat), n = Nat.double k`.
+ 
+- Similarly, to state that two numbers n and m are equal, we can say either
+- * that {lean}`n == m` returns {name}`true`, or
+- * that {lean}`n = m`
++Similarly, to state that two numbers n and m are equal, we can say either
++* that {lean}`n == m` returns {name}`true`, or
++* that {lean}`n = m`
+ 
+- Again, these two notions are equivalent:
++Again, these two notions are equivalent:
+ 
+ :::dev
+@@ -1672,7 +1669,7 @@
+ :::
+ 
+- ```lean
+- example (n₁ n₂ : Nat) : n₁ == n₂ ↔ n₁ = n₂ := beq_iff_eq
+- ```
++```lean
++example (n₁ n₂ : Nat) : n₁ == n₂ ↔ n₁ = n₂ := beq_iff_eq
++```
+ 
+ So what should we do in situations where some claim could be formalized as either a proposition or a boolean computation? Which should we choose?
+@@ -1745,5 +1742,5 @@
+ In general, Lean will try to use typeclass synthesis with {name}`Decidable` in order to determine
+ when it is appropriate to use {lean}`Prop` and {name}`Bool` interchangeably.
+-For instance, while our example `eq` failed above while trying to use propositional equality `=`
++For instance, while our example `eq` failed above when trying to use propositional equality `=`
+ in the condition of an `if` statement, we are allowed to write
+ 
+@@ -1761,7 +1758,7 @@
+ ```
+ 
+-which proves that this equality is decidable.
++This proves that this equality is decidable.
+ 
+-This is only half the story however: while Lean's core theory enables this computation, Lean is
++This is only half the story, however: while Lean's core theory enables this computation, Lean is
+ also often used in applications where we don't care about computability, such as pure mathematics.
+ In particular, it is possible to write a function for arbitrary equality:
+@@ -1792,5 +1789,5 @@
+ Below are some stray examples from IndProp. {name}`Decidable` only carries the proposition and not the
+ boolean, so one direction of `reflect_iff` is easily translated, but the other is a bit different.
+-I list some theorems below but you should Loogle and see if that's what you want. Some the the
++I list some theorems below but you should Loogle and see if that's what you want. Some of the
+ proofs can be a bit advanced if you follow core, or otherwise a bit circular. — CGH
+ :::
