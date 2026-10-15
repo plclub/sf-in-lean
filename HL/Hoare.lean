@@ -589,9 +589,12 @@ partial def delabBody (stId : FVarId) : DelabM Term := do
     delab
   else
     match_expr e with
-    | MyGetElem.getElem _ _ _ _ st _ =>
+    | MyGetElem.getElem _ _ _ _ st k =>
       guard (st == .fvar stId)
-      withAppArg delab
+      if let .lit (.strVal s) := k then
+        `($(mkIdent (Name.mkSimple s)):ident)
+      else
+        withAppArg delab
     | Aexp.eval st _ =>
       guard (st == .fvar stId)
       withAppArg delab
@@ -719,7 +722,7 @@ end Assertion.Delab
 ## Assertion Implication
 
 Given two assertions `P` and `Q`, we say that `P` _implies_ `Q`,
-written `P ->> Q`, if, whenever `P` holds in some state `st`, `Q`
+written `P ↠ Q`, if, whenever `P` holds in some state `st`, `Q`
 also holds.
 
 ```lean
@@ -738,11 +741,11 @@ to the "usual" Lean implication `→`.
 
 ```lean
 namespace Assertion
-scoped notation:26 P:27 " ->> " Q:27 => AssertImplies P Q
+scoped notation:26 P:27 " ↠ " Q:27 => AssertImplies P Q
 end Assertion
 
 theorem assertImplies_def {P Q : Assertion} :
-    P ->> Q ↔ ∀ st : State, P st → Q st := by rfl
+    P ↠ Q ↔ ∀ st : State, P st → Q st := by rfl
 ```
 
 ::::full
@@ -756,19 +759,19 @@ assertions:
 
 ```lean
 def AssertIff (P Q : Assertion) : Prop :=
-  (P ->> Q) ∧ (Q ->> P)
+  (P ↠ Q) ∧ (Q ↠ P)
 
 namespace Assertion
-scoped notation:26 P:27 " <<->> " Q:27 => AssertIff P Q
+scoped notation:26 P:27 " ↞↠ " Q:27 => AssertIff P Q
 end Assertion
 
 theorem assertIff_def {P Q : Assertion} :
-    P <<->> Q ↔ (P ->> Q) ∧ (Q ->> P) := by rfl
+    P ↞↠ Q ↔ (P ↠ Q) ∧ (Q ↠ P) := by rfl
 ```
 
 ::::full
 The matching delaborators print implications and equivalences between
-assertions back in `->>` and `<<->>` notation.
+assertions back in `↠` and `↞↠` notation.
 ::::
 
 ::::details "Notation encoding: printing implications back"
@@ -779,12 +782,12 @@ open Lean PrettyPrinter Delaborator SubExpr
 @[delab app.AssertImplies]
 def delabAssertImplies : Delab := whenPPOption getPPNotation do
   guard <| (← getExpr).isAppOfArity ``AssertImplies 2
-  `($(← delabAssnArg 0) ->> $(← delabAssnArg 1))
+  `($(← delabAssnArg 0) ↠ $(← delabAssnArg 1))
 
 @[delab app.AssertIff]
 def delabAssertIff : Delab := whenPPOption getPPNotation do
   guard <| (← getExpr).isAppOfArity ``AssertIff 2
-  `($(← delabAssnArg 0) <<->> $(← delabAssnArg 1))
+  `($(← delabAssnArg 0) ↞↠ $(← delabAssnArg 1))
 
 end Assertion.Delab
 ```
@@ -792,13 +795,13 @@ end Assertion.Delab
 
 :::ignore
 ```lean -show
-/-- info: {{X < 4}} ->> {{X < 5}} : Prop -/
+/-- info: {{X < 4}} ↠ {{X < 5}} : Prop -/
 #guard_msgs in
-#check ({{ X < 4 }} ->> {{ X < 5 }})
+#check ({{ X < 4 }} ↠ {{ X < 5 }})
 
-/-- info: {{X < 4}} <<->> {{X < 5}} : Prop -/
+/-- info: {{X < 4}} ↞↠ {{X < 5}} : Prop -/
 #guard_msgs in
-#check ({{ X < 4 }} <<->> {{ X < 5 }})
+#check ({{ X < 4 }} ↞↠ {{ X < 5 }})
 ```
 :::
 
@@ -1596,7 +1599,7 @@ end Assertion
 ::::details "Notation encoding: printing substitutions back"
 ```lean
 namespace Assertion.Delab
-open Lean PrettyPrinter Delaborator SubExpr Imp.Delab
+open Lean PrettyPrinter Delaborator SubExpr Imp.Elab Imp.Delab
 
 /-- Print an `Assertion.subst` back in `P [x ↦ a]` notation.  Emits the
 bare inside-the-braces form: the generic application case of `delabBody`
@@ -1604,7 +1607,11 @@ picks it up inside an assertion body, and the enclosing printer supplies
 the single pair of braces. -/
 @[app_unexpander Assertion.subst]
 def unexpandSubst : Unexpander
-  | `($_ $x:ident $a $P) =>
+  | `($_ $x $a $P) => do
+    let x ← match x with
+      | `($x:ident) => pure x
+      | `($s:str) => pure (mkObjectIdentFrom s.raw s.getString)
+      | _ => throw ()
     match getAssn P with
     | `($P:ident) => `($P:ident [$x:ident ↦ $(getAexp a):imp_aexp])
     | P => `(($P) [$x:ident ↦ $(getAexp a):imp_aexp])
@@ -1715,7 +1722,7 @@ We can demonstrate formally that we have captured the intuitive meaning of
 ```lean
 namespace ExampleAssertionSub
 example :
-    {{ (X ≤ 5) [X ↦ 3] }} <<->> {{ 3 ≤ 5 }} := by
+    {{ (X ≤ 5) [X ↦ 3] }} ↞↠ {{ 3 ≤ 5 }} := by
   rw [assertIff_def]
   constructor
   · rw [assertImplies_def]
@@ -1726,7 +1733,7 @@ example :
     simp
 
 example :
-    {{ (X ≤ 5) [X ↦ X + 1] }} <<->> {{ (X + 1) ≤ 5 }} := by
+    {{ (X ≤ 5) [X ↦ X + 1] }} ↞↠ {{ (X + 1) ≤ 5 }} := by
   rw [assertIff_def]
   constructor
   · rw [assertImplies_def]
@@ -2131,7 +2138,7 @@ this observation with the following rule:
 
 ```display
    {{P'}} c {{Q}}
-     P <<->> P'
+     P ↞↠ P'
 ---------------------
    {{P}} c {{Q}}
 ```
@@ -2146,12 +2153,12 @@ observation is captured by two _Rules of Consequence_.
 
 ```display
        {{P'}} c {{Q}}
-          P ->> P'
+          P ↠ P'
 -----------------------------   (hoare_consequence_pre)
        {{P}} c {{Q}}
 
        {{P}} c {{Q'}}
-         Q' ->> Q
+         Q' ↠ Q
 -----------------------------    (hoare_consequence_post)
        {{P}} c {{Q}}
 ```
@@ -2163,7 +2170,7 @@ Here are the formal versions:
 
 ```lean
 theorem hoare_consequence_pre {P P' Q : Assertion} {c : Com}
-    (hhoare : {{ P' }} c {{ Q }}) (himp : P ->> P') :
+    (hhoare : {{ P' }} c {{ Q }}) (himp : P ↠ P') :
     {{ P }} c {{ Q }} := by
   rw [validHoareTriple_def] at hhoare ⊢
   intro st st' heval hpre
@@ -2172,7 +2179,7 @@ theorem hoare_consequence_pre {P P' Q : Assertion} {c : Com}
   exact himp _ hpre
 
 theorem hoare_consequence_post {P Q Q' : Assertion} {c : Com}
-    (hhoare : {{ P }} c {{ Q' }}) (himp : Q' ->> Q) :
+    (hhoare : {{ P }} c {{ Q' }}) (himp : Q' ↠ Q) :
     {{ P }} c {{ Q }} := by
   rw [validHoareTriple_def] at hhoare ⊢
   intro st st' heval hpre
@@ -2187,7 +2194,7 @@ theorem hoare_consequence_post {P Q Q' : Assertion} {c : Com}
 For example, we can use the first consequence rule like this:
 
 ```display
-{{ True }} ->>
+{{ True }} ↠
 {{ (X = 1) [X ↦ 1] }}
   X := 1
 {{ X = 1 }}
@@ -2217,7 +2224,7 @@ theorem hoare_asgn_example1 :
 We can also use it to prove the example mentioned earlier.
 
 ```display
-{{ X < 4 }} ->>
+{{ X < 4 }} ↠
 {{ (X < 5)[X ↦ X + 1] }}
   X := X + 1
 {{ X < 5 }}
@@ -2251,8 +2258,8 @@ vary both the precondition and the postcondition.
 
 ```display
        {{P'}} c {{Q'}}
-          P ->> P'
-          Q' ->> Q
+          P ↠ P'
+          Q' ↠ Q
 -----------------------------   (hoare_consequence)
        {{P}} c {{Q}}
 ```
@@ -2265,7 +2272,7 @@ having a metavariable in the first goal.  Another option is to just write
 
 ```lean
 theorem hoare_consequence {P P' Q Q' : Assertion} {c : Com}
-    (htriple : {{ P' }} c {{ Q' }}) (hpre : P ->> P') (hpost : Q' ->> Q) :
+    (htriple : {{ P' }} c {{ Q' }}) (hpre : P ↠ P') (hpost : Q' ↠ Q) :
     {{ P }} c {{ Q }} := by
   apply hoare_consequence_pre (P' := P')
   · exact hoare_consequence_post htriple hpost
@@ -2305,7 +2312,7 @@ Here's a good candidate for automation:
 
 ```display
 theorem hoare_consequence_pre {P P' Q : Assertion} {c : Com}
-    (hhoare : {{ P' }} c {{ Q }}) (himp : P ->> P') :
+    (hhoare : {{ P' }} c {{ Q }}) (himp : P ↠ P') :
     {{ P }} c {{ Q }} := by
   rw [validHoareTriple_def] at hhoare ⊢
   intro st st' heval hpre
@@ -2319,7 +2326,7 @@ theorem hoare_consequence_pre {P P' Q : Assertion} {c : Com}
 
 Since {name}`AssertImplies` is not marked `irreducible`, and
 {name}`assertImplies_def` is a proof by definitional equality, we can skip
-the `rw [assertImplies_def] at himp` and use `P ->> P'` like an implication
+the `rw [assertImplies_def] at himp` and use `P ↠ P'` like an implication
 directly.
 
 :::dev "Niklas Halonen (xhalo32)"
@@ -2329,7 +2336,7 @@ without using their characterizing lemmas.
 
 ```lean
 theorem hoare_consequence_pre' {P P' Q : Assertion} {c : Com}
-    (hhoare : {{ P' }} c {{ Q }}) (himp : P ->> P') :
+    (hhoare : {{ P' }} c {{ Q }}) (himp : P ↠ P') :
     {{ P }} c {{ Q }} := by
   rw [validHoareTriple_def] at hhoare ⊢
   intro st st' heval hpre
@@ -2345,7 +2352,7 @@ compressed into a single tactic: {tactic}`apply_rules`.
 
 ```lean
 theorem hoare_consequence_pre'' {P P' Q : Assertion} {c : Com}
-    (hhoare : {{ P' }} c {{ Q }}) (himp : P ->> P') :
+    (hhoare : {{ P' }} c {{ Q }}) (himp : P ↠ P') :
     {{ P }} c {{ Q }} := by
   rw [validHoareTriple_def] at hhoare ⊢
   intro st st' heval hpre
@@ -2359,7 +2366,7 @@ The same trick works for {name}`hoare_consequence_post`.
 
 ```lean
 theorem hoare_consequence_post' {P Q Q' : Assertion} {c : Com}
-    (hhoare : {{ P }} c {{ Q' }}) (himp : Q' ->> Q) :
+    (hhoare : {{ P }} c {{ Q' }}) (himp : Q' ↠ Q) :
     {{ P }} c {{ Q }} := by
   rw [validHoareTriple_def] at hhoare ⊢
   intro st st' heval hpre
@@ -2378,7 +2385,7 @@ theorem hoare_asgn_example1' :
   apply hoare_consequence_pre -- leaves a "hole" `?P'` for the precondition
   · -- The goal is `{{?P'}} X := 1 {{X = 1}}`
     exact hoare_asgn -- assigns `{{ (X = 1) [X ↦ 1] }}` to `?P'`, closing `case P'`
-  · intro st _ -- Since `->>` is an implication, we can just use `intro` directly.
+  · intro st _ -- Since `↠` is an implication, we can just use `intro` directly.
     simp
 ```
 
@@ -2576,16 +2583,16 @@ detail in the next chapter.
 Translate this "decorated program" into a formal proof:
 
 ```display
-               {{ True }} ->>
+               {{ True }} ↠
                {{ 1 = 1 }}
 X := 1
-               {{ X = 1 }} ->>
+               {{ X = 1 }} ↠
                {{ X = 1 ∧ 2 = 2 }};
 Y := 2
                {{ X = 1 ∧ Y = 2 }}
 ```
 
-Note the use of "`->>`" decorations, each marking a use of
+Note the use of "`↠`" decorations, each marking a use of
 {name}`hoare_consequence_pre`.
 
 We've started you off by providing a use of {name}`hoare_seq` that
@@ -3152,7 +3159,7 @@ in the conclusion.
 
 Hint: if you encounter difficulty getting Lean to parse part of
 your rule as an assertion, try wrapping it in the `{{ … }}` brackets
-(and in parentheses, when it is an argument of `->>`).  For example, if
+(and in parentheses, when it is an argument of `↠`).  For example, if
 you want `P ∧ ¬ b` to be read as an assertion, write it as
 `({{ P ∧ ¬ b }})`.
 
@@ -3160,7 +3167,7 @@ you want `P ∧ ¬ b` to be read as an assertion, write it as
 -- SOLUTION
 theorem hoare_if1 {b : Bexp} {c : Com} {P Q : Assertion}
     (htrue : {{ P ∧ b }} c {{ Q }})
-    (hfalse : ({{ P ∧ ¬ b }}) ->> Q) :
+    (hfalse : ({{ P ∧ ¬ b }}) ↠ Q) :
     {{ P }} if1 (b) { c } {{ Q }} := by
   rw [validHoareTriple_def] at htrue ⊢
   intro st st' heval hpre
@@ -3197,7 +3204,7 @@ type.
 
 ```lean
 theorem hoare_consequence_pre {P P' Q : Assertion} {c : Com}
-    (hhoare : {{ P' }} c {{ Q }}) (himp : P ->> P') :
+    (hhoare : {{ P' }} c {{ Q }}) (himp : P ↠ P') :
     {{ P }} c {{ Q }} := by
   rw [validHoareTriple_def] at hhoare ⊢
   intro st st' heval hpre
@@ -4138,14 +4145,14 @@ theorem hoare_asgn {Q : Assertion} {x : Ident} {a : Aexp} :
     exact hQ
 
 theorem hoare_consequence {P P' Q Q' : Assertion} {c : Com}
-    (hht : {{ P' }} c {{ Q' }}) (hPP' : P ->> P') (hQ'Q : Q' ->> Q) :
+    (hht : {{ P' }} c {{ Q' }}) (hPP' : P ↠ P') (hQ'Q : Q' ↠ Q) :
     {{ P }} c {{ Q }} := by
   rw [validHoareTriple_def] at hht ⊢
   intro st st' hc hP
   apply_rules
 
 theorem hoare_consequence_pre {P P' Q : Assertion} {c : Com}
-    (hhoare : {{ P' }} c {{ Q }}) (himp : P ->> P') :
+    (hhoare : {{ P' }} c {{ Q }}) (himp : P ↠ P') :
     {{ P }} c {{ Q }} := by
   rw [validHoareTriple_def] at hhoare ⊢
   intro st st' hc hP
@@ -4319,8 +4326,8 @@ The rules of Hoare Logic are:
   {{P}} while b do c end {{P ∧ ¬ b}}
 
           {{P'}} c {{Q'}}
-             P ->> P'
-             Q' ->> Q
+             P ↠ P'
+             Q' ↠ Q
    -----------------------------   (hoare_consequence)
           {{P}} c {{Q}}
 ```
@@ -4494,7 +4501,7 @@ And the precondition consequence rule is exactly as before.
 
 ```lean
 theorem hoare_consequence_pre {P P' Q : Assertion} {c : Com}
-    (hhoare : {{ P' }} c {{ Q }}) (himp : P ->> P') :
+    (hhoare : {{ P' }} c {{ Q }}) (himp : P ↠ P') :
     {{ P }} c {{ Q }} := by
   rw [validHoareTriple_def] at hhoare ⊢
   intro st st' heval hpre
@@ -4834,7 +4841,7 @@ theorem hoare_asgn {Q : Assertion} {x : Ident} {a : Aexp} :
     exact ⟨rfl, hQ⟩
 
 theorem hoare_consequence_pre {P P' Q : Assertion} {c : Com}
-    (hhoare : {{ P' }} c {{ Q }}) (himp : P ->> P') :
+    (hhoare : {{ P' }} c {{ Q }}) (himp : P ↠ P') :
     {{ P }} c {{ Q }} := by
   rw [validHoareTriple_def] at hhoare ⊢
   intro st r hc hpre
@@ -4847,7 +4854,7 @@ These proofs are a bit messy. Can it be made shorter?
 
 ```lean
 theorem hoare_consequence_post {P Q Q' : Assertion} {c : Com}
-    (hhoare : {{ P }} c {{ Q' }}) (himp : Q' ->> Q) :
+    (hhoare : {{ P }} c {{ Q' }}) (himp : Q' ↠ Q) :
     {{ P }} c {{ Q }} := by
   rw [validHoareTriple_def] at hhoare ⊢
   intro st r hc hpre
@@ -5191,7 +5198,7 @@ Notation "{{ P }} c {{ Q }}" :=
 
 Theorem hoare_consequence_pre : ∀ (P P' Q : Assertion) c,
   {{P'}} c {{Q}} ->
-  P ->> P' ->
+  P ↠ P' ->
   {{P}} c {{Q}}.
 Proof. eauto. Qed.
 

@@ -51,9 +51,22 @@ defmethod Highlighted.filterBySource (hls : Highlighted) (src : String) : Highli
   return if nextExpected == expected.size then out else .unparsed src
 
 
+/-- `true` when `src` holds nothing but whitespace and `--` line comments, as
+when a whole block was a `-- SOLUTION` region and the student variant is just
+its `--  FILL IN HERE` placeholder.  There is no command to parse; running the
+parser anyway yields an `unexpected end of input` error node whose leading
+trivia repeats the comment, so the block rendered the comment twice with an
+error marker. -/
+def isCommentOnly (src : String) : Bool :=
+  (src.splitOn "\n").all fun line =>
+    let t := line.trimAscii.toString
+    t.isEmpty || t.startsWith "--"
+
 def elabAndHighlightStudent
     (initEnv : Environment) (initScopes : List Command.Scope) (src : String) :
     DocElabM Highlighted := do
+  if isCommentOnly src then
+    return .unparsed src
   let fileName ← getFileName
   let fileMap := FileMap.ofString src
   let ictx := Parser.mkInputContext src fileName
