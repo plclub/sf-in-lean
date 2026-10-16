@@ -36,6 +36,9 @@ jobs:
       # caching) and run `lake build`, which builds the book.
       - uses: leanprover/lean-action@v1
 
+      - name: Check cross-volume links
+        run: python3 scripts/test_cross_volume.py
+
       # Restore only generated-project dependencies. Generated sources and build
       # outputs remain fresh for every CI run.
       - name: Restore generated project dependencies
