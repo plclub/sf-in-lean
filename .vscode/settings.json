@@ -10,7 +10,8 @@
     // Exported to every generated student project (see `studentSettingKeys`
     // in SFLMeta/Save/Project.lean); this file is the source of truth.
     "lean4.input.customTranslations": {
-        "tc": "⦂"
+        "tc": "⦂",
+        "llrr": "↞↠"
     },
     // Tint Lean comments brown. This file is the source: generated
     // student projects are given these rules verbatim (see

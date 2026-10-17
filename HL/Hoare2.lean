@@ -1741,7 +1741,7 @@ elab "unfold_decorated" : tactic => do
   for c in tgt.getUsedConstants do
     let info ← getConstInfo c
     let isDecorated ← forallTelescopeReducing info.type fun _ ty =>
-      pure (ty.isConstOf ``Decorated)
+      pure (ty.isConst && ty.constName!.getString! == "Decorated")
     if isDecorated && info.hasValue then
       evalTactic (← `(tactic| unfold $(mkIdent c):ident))
 
@@ -3000,12 +3000,20 @@ def factorialDec (m : Nat) : Decorated := solution!({
 theorem fact_sub_one (m : Nat) (h : m ≠ 0) :
     m * fact (m - 1) = fact m := by
   solution!
-    sorry
+    match m, h with
+    | n + 1, _ => rfl
 
 theorem factorial_correct (m : Nat) :
     (factorialDec m).OuterTripleValid := by
   solution!
     verify
+    · intro st h hx
+      rw [Nat.mul_assoc, fact_sub_one st[X] hx]
+      exact h
+    · intro st h hx
+      rw [hx] at h
+      simp [fact] at h
+      exact h
 ```
 
 :::dev PotentialImprovement
@@ -3535,10 +3543,15 @@ Some lemmas that you may find useful...
 ```lean
 theorem pow2_add_one (n : Nat) :
     pow2 (n + 1) = pow2 n + pow2 n := by
-  sorry
+  simp only [pow2]
+  lia
 
 theorem one_le_pow2 (n : Nat) : 1 ≤ pow2 n := by
-  sorry
+  induction n with
+  | zero => exact Nat.le_refl 1
+  | succ n ih =>
+    simp only [pow2]
+    lia
 ```
 
 The main correctness theorem:
@@ -3548,6 +3561,9 @@ theorem dpow2_down_correct (n : Nat) :
     (dpow2Dec n).OuterTripleValid := by
   solution!
     verify
+    intro st hy hz _
+    simp only [show st[X] + 2 = st[X] + 1 + 1 from rfl, pow2_add_one] at hy hz ⊢
+    lia
 ```
 :::::
 
@@ -3654,7 +3670,10 @@ as a lemma in the next exercise.
 theorem fib_eqn (n : Nat) (h : n > 0) :
     fib n + fib (Nat.pred n) = fib (1 + n) := by
   solution!
-    sorry
+    match n, h with
+    | k + 1, _ =>
+      rw [Nat.add_comm 1]
+      rfl
 ```
 :::::
 
@@ -3685,7 +3704,7 @@ Ordinary Lean function application can be used in the assertions.
 If all goes well, your proof will be very brief.
 
 ```lean
-def T : Ident := "T"
+abbrev T : Ident := "T"
 
 def dfib (n : Nat) : Decorated where
   pre := ({{ True }})
@@ -3750,6 +3769,12 @@ theorem dfib_correct (n : Nat) :
     (dfib n).OuterTripleValid := by
   solution!
     verify
+    · intro st hz hy hx _
+      refine ⟨?_, hz, by lia⟩
+      rw [hz, hy]
+      exact fib_eqn st[X] hx
+    · intro st _ hy _ hx
+      rw [hy, hx, Nat.add_sub_cancel_left]
 ```
 :::::
 
@@ -4207,7 +4232,40 @@ def DCom.VerificationConditions
 theorem vc_correct (d : DCom) (post : Assertion)
     (hvc : d.VerificationConditions post) :
     ValidHoareTriple (d.awp post) d.erase post := by
-  sorry
+  induction d generalizing post with
+  | «skip» => exact hoare_skip
+  | seq d₁ d₂ ih₁ ih₂ =>
+    obtain ⟨h₁, h₂⟩ := hvc
+    exact hoare_seq (ih₂ _ h₂) (ih₁ _ h₁)
+  | asgn x a => exact hoare_asgn
+  | cond b d₁ d₂ ih₁ ih₂ =>
+    obtain ⟨h₁, h₂⟩ := hvc
+    apply hoare_if
+    · apply hoare_consequence_pre (ih₁ _ h₁)
+      intro st ⟨hawp, hb⟩
+      rcases hawp with ⟨_, h⟩ | ⟨hf, _⟩
+      · exact h
+      · rw [hf] at hb
+        cases hb
+    · apply hoare_consequence_pre (ih₂ _ h₂)
+      intro st ⟨hawp, hnb⟩
+      rcases hawp with ⟨ht, _⟩ | ⟨_, h⟩
+      · exact absurd ht hnb
+      · exact h
+  | whileDo b inv body ih =>
+    obtain ⟨hexit, hbody, hvc⟩ := hvc
+    apply hoare_consequence_post
+    · apply hoare_while
+      apply hoare_consequence_pre (ih _ hvc)
+      intro st hst
+      exact hbody st hst
+    · intro st hst
+      exact hexit st hst
+  | «assert» a =>
+    refine validHoareTriple_def.mpr ?_
+    intro st st' heval ⟨_, hpost⟩
+    inversion heval
+    exact hpost
 
 def Decorated.VerificationConditions
     (dec : Decorated) : Prop :=
@@ -4217,13 +4275,31 @@ def Decorated.VerificationConditions
 theorem verification_correct (dec : Decorated)
     (hvc : dec.VerificationConditions) :
     dec.OuterTripleValid := by
-  sorry
+  obtain ⟨hpre, hvc⟩ := hvc
+  exact hoare_consequence_pre (vc_correct _ _ hvc) hpre
+
+scoped macro_rules
+  | `(tactic| verify) =>
+    `(tactic|
+      (apply verification_correct
+       unfold_decorated
+       (try simp +decide [-Bexp.eval_le, -Bexp.eval_gt,
+          Bexp.eval_le_true, Bexp.eval_le_false,
+          Bexp.eval_gt_true, Bexp.eval_gt_false,
+          Decorated.VerificationConditions,
+          DCom.VerificationConditions, DCom.awp,
+          assertImplies_def, Assertion.subst_def] at *)
+       all_goals and_intros
+       all_goals (try simp +decide [-Bexp.eval_le, -Bexp.eval_gt,
+          Bexp.eval_le_true, Bexp.eval_le_false,
+          Bexp.eval_gt_true, Bexp.eval_gt_false] at *)
+       all_goals (try lia)))
 
 /- Let's redo all the examples to date. -/
 /- LATER: Fix indentation. -/
 theorem dec_while_correct :
     decWhile.OuterTripleValid := by
-  sorry
+  verify
 
 def swapDec (m n : Nat) : Decorated where
   pre := ({{ X = m ∧ Y = n }})
@@ -4236,7 +4312,7 @@ def swapDec (m n : Nat) : Decorated where
 
 theorem swap_correct (m n : Nat) :
     (swapDec m n).OuterTripleValid := by
-  sorry
+  verify
 
 def ifMinusDec : Decorated where
   pre := ({{ True }})
@@ -4251,7 +4327,7 @@ def ifMinusDec : Decorated where
 
 theorem if_minus_correct :
     ifMinusDec.OuterTripleValid := by
-  sorry
+  verify
 
 def ifMinusPlusDec : Decorated where
   pre := ({{ True }})
@@ -4266,7 +4342,7 @@ def ifMinusPlusDec : Decorated where
 
 theorem if_minus_plus_correct :
     ifMinusPlusDec.OuterTripleValid := by
-  sorry
+  verify
 
 def divModDec (a b : Nat) : Decorated where
   pre := ({{ True }})
@@ -4283,7 +4359,7 @@ def divModDec (a b : Nat) : Decorated where
 
 theorem div_mod_outer_triple_valid (a b : Nat) :
     (divModDec a b).OuterTripleValid := by
-  sorry
+  verify
 
 def parityDec (m : Nat) : Decorated where
   pre := ({{ X = m }})
@@ -4297,7 +4373,13 @@ def parityDec (m : Nat) : Decorated where
 
 theorem parity_outer_triple_valid (m : Nat) :
     (parityDec m).OuterTripleValid := by
-  sorry
+  verify
+  · intro st h hlt
+    rw [← h]
+    exact (parity_lt_2 st[X] (by lia)).symm
+  · intro st h h2
+    rw [← h]
+    exact parity_ge_2 st[X] h2
 
 def sqrtDec (m : Nat) : Decorated where
   pre := ({{ X = m }})
@@ -4312,7 +4394,7 @@ def sqrtDec (m : Nat) : Decorated where
 
 theorem sqrt_correct (m : Nat) :
     (sqrtDec m).OuterTripleValid := by
-  sorry
+  verify
 
 def squareDec (m : Nat) : Decorated where
   pre := ({{ X = m }})
@@ -4329,7 +4411,12 @@ def squareDec (m : Nat) : Decorated where
 
 theorem square_outer_triple_valid (m : Nat) :
     (squareDec m).OuterTripleValid := by
-  sorry
+  verify
+  intro st h hy
+  rw [← h]
+  obtain ⟨y, hy'⟩ : ∃ y, st[Y] = y + 1 := ⟨st[Y] - 1, by lia⟩
+  rw [hy', Nat.add_sub_cancel, Nat.mul_succ]
+  lia
 
 def squareDec' (n : Nat) : Decorated where
   pre := ({{ True }})
@@ -4347,7 +4434,14 @@ def squareDec' (n : Nat) : Decorated where
 
 theorem square_dec'_correct (n : Nat) :
     (squareDec' n).OuterTripleValid := by
-  sorry
+  verify
+  · intro st hz hx _ hy
+    rw [hz, hx, hy, Nat.sub_zero]
+  · intro st hz hx hle hy
+    refine ⟨?_, hx, by lia⟩
+    obtain ⟨y, hy'⟩ : ∃ y, st[Y] = y + 1 := ⟨st[Y] - 1, by lia⟩
+    rw [hz, hy', Nat.add_sub_cancel,
+      show st[X] - y = st[X] - (y + 1) + 1 by lia, Nat.mul_succ]
 
 def squareSimplerDec (m : Nat) : Decorated where
   pre := ({{ X = m }})
@@ -4364,7 +4458,7 @@ def squareSimplerDec (m : Nat) : Decorated where
 
 theorem square_simpler_outer_triple_valid (m : Nat) :
     (squareSimplerDec m).OuterTripleValid := by
-  sorry
+  verify
 
 def twoLoopsDec (a b c : Nat) : Decorated where
   pre := ({{ True }})
@@ -4387,7 +4481,7 @@ def twoLoopsDec (a b c : Nat) : Decorated where
 
 theorem two_loops_correct (a b c : Nat) :
     (twoLoopsDec a b c).OuterTripleValid := by
-  sorry
+  verify
 
 def subtractSlowlyDec (m p : Nat) : Decorated where
   pre := ({{ X = m ∧ Z = p }})
@@ -4402,7 +4496,7 @@ def subtractSlowlyDec (m p : Nat) : Decorated where
 
 theorem subtract_slowly_correct (m p : Nat) :
     (subtractSlowlyDec m p).OuterTripleValid := by
-  sorry
+  verify
 
 def dpow2Down (n : Nat) : Decorated where
   pre := ({{ True }})
@@ -4421,7 +4515,10 @@ def dpow2Down (n : Nat) : Decorated where
 
 theorem dpow2_down_correct (n : Nat) :
     (dpow2Down n).OuterTripleValid := by
-  sorry
+  verify
+  intro st hy hz _
+  simp only [pow2_add_one] at hy ⊢
+  lia
 
 def factorialDec (m : Nat) : Decorated where
   pre := ({{ X = m }})
@@ -4437,9 +4534,16 @@ def factorialDec (m : Nat) : Decorated where
 
 theorem factorial_outer_triple_valid (m : Nat) :
     (factorialDec m).OuterTripleValid := by
-  sorry
+  verify
+  · intro st h hx
+    rw [hx] at h
+    simp [fact] at h
+    exact h
+  · intro st h hx
+    rw [Nat.mul_assoc, fact_sub_one st["X"] hx]
+    exact h
 
-def T : Ident := "T"
+abbrev T : Ident := "T"
 
 def dfib (n : Nat) : Decorated where
   pre := ({{ True }})
@@ -4459,7 +4563,13 @@ def dfib (n : Nat) : Decorated where
 
 theorem dfib_correct (n : Nat) :
     (dfib n).OuterTripleValid := by
-  sorry
+  verify
+  · intro st _ hy _ hx
+    rw [hy, hx, Nat.add_sub_cancel_left]
+  · intro st hz hy hx _
+    refine ⟨?_, hz, by lia⟩
+    rw [hz, hy]
+    exact fib_eqn st[X] hx
 
 -- END SOLUTION
 
@@ -4721,7 +4831,16 @@ theorem is_wp_example :
     IsWp ({{ Y ≤ 4 }}) (imp {X := Y + 1})
       ({{ X ≤ 5 }}) := by
   solution!
-    sorry
+    refine ⟨?_, ?_⟩
+    · apply hoare_consequence_pre
+      · exact hoare_asgn
+      · verify_assertion
+    · intro p' hp'
+      rw [validHoareTriple_def] at hp'
+      intro st hst
+      have h := hp' (Com.EvalR.asgn rfl) hst
+      simp at h
+      lia
 ```
 :::::
 
@@ -4758,7 +4877,13 @@ theorem hoare_havoc_weakest (p q : Assertion) (x : Ident)
     (h : ValidHoareTriple p (Com.havoc x) q) :
     p ↠ havoc_pre x q := by
   solution!
-    sorry
+    have h' : {{ p }} havoc x {{ q }} := h
+    rw [HimpHoare.validHoareTriple_def] at h'
+    intro st hp
+    rw [havoc_pre]
+    intro n
+    simp only [Assertion.subst_apply, Aexp.eval_num]
+    exact h' Com.EvalR.havoc hp
 
 end HimpHoare2
 ```

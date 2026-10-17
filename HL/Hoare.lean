@@ -752,6 +752,8 @@ theorem assertImplies_def {P Q : Assertion} :
 (The `scoped` keyword tells Lean that this notation is not global but is
 available only where the `Assertion` namespace is open, as it is
 throughout this chapter.)
+
+To type `↠` in VS Code, we can write `\rr-`.
 ::::
 
 We'll also want the "iff" variant of implication between
@@ -770,6 +772,8 @@ theorem assertIff_def {P Q : Assertion} :
 ```
 
 ::::full
+To type `↞↠` in VS Code, we can write `\llrr` or `\ll-\rr-`.
+
 The matching delaborators print implications and equivalences between
 assertions back in `↠` and `↞↠` notation.
 ::::
