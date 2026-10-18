@@ -1264,7 +1264,7 @@ the already-folded operands. This theorem is meant to be consumed with {tactic}`
 to split a proof into those two scenarios; we will see its use when proving
 `Aexp.foldConstants_sound` below.
 
-Note we could also show the following as a proof
+Note we could also show the following as a proof.
 ```lean
 theorem Aexp.foldConstants_add_other_left (h : ¬∃ n₁, a₁.foldConstants = .num n₁) :
     aexp{ a₁ + a₂ }.foldConstants = aexp { ~a₁.foldConstants + ~a₂.foldConstants} := by

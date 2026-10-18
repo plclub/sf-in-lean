@@ -168,13 +168,28 @@ exercise -- nice because it has nested loops...
 ```
 :::
 
+::::full
+In {ref "Hoare"}[Hoare], we defined Hoare Logic's proof rules and
+proved them sound. In this chapter, we put those rules to work:
+verifying Imp programs by formalizing the informal proof sketches we
+call _decorated programs_.
+
+Such proofs require _specifications_, i.e., the pre- and post-conditions
+that explain what programs are supposed to do. Let's play with
+writing specifications.
+::::
+
+::::terse
+In this chapter, we put Hoare Logic's rules to work, verifying Imp
+programs via formal _decorated programs_.
+::::
+
 ::::quiz
 :::instructors
 Pretty trivial, but still not without interest
 :::
 
-On a piece of paper (or whatever), write down a Hoare-triple
-specification for the following program:
+Write down a Hoare-triple specification for the following program:
 
 ```display
 X := 2;
@@ -191,7 +206,8 @@ opportunity to talk about parameters (m).
 Write down a (useful) specification for the following program:
 
 ```display
-X := X + 1; Y := X + 1
+X := X + 1;
+Y := X + 1
 ```
 
 :::instructors
@@ -1096,7 +1112,8 @@ macro_rules
 
 namespace DCom.Delab
 
-open Lean PrettyPrinter Delaborator SubExpr Parenthesizer Imp.Elab Imp.Delab
+open Lean PrettyPrinter Delaborator SubExpr Parenthesizer
+  Imp.Elab Imp.Delab
 
 @[category_parenthesizer «dcom»]
 def dcom.parenthesizer : CategoryParenthesizer := fun prec => do
@@ -1117,7 +1134,8 @@ def getAssnBody (stx : Term) : Term :=
 
 private def getDCom? (stx : Term) : Option (TSyntax `dcom) :=
   match stx with
-  | `(dcom { $d:dcom }) => some <| withSourceInfoOf (canonical := false) stx d
+  | `(dcom { $d:dcom }) =>
+      some <| withSourceInfoOf (canonical := false) stx d
   | _ => none
 
 @[app_unexpander DCom.skip]
@@ -1253,13 +1271,25 @@ end DCom.Delab
 ```
 :::
 
-::::terse
-(We then need to redefine all our Notations to get nice
-concrete syntax for `dcom`.)
-::::
-
 :::slidebreak
 :::
+
+```lean
+example : DCom :=
+  dcom { skip {{ True }} }
+
+example : DCom :=
+  dcom {
+    while (true) do
+      {{ True }}
+      skip {{ True }}
+    end
+      {{ True }}
+  }
+```
+
+To inspect the fully elaborated term behind this notation, put
+`set_option pp.all true in` before a `#check` or `#print` command.
 
 To provide the initial precondition that goes at the very top of a
 decorated program, we introduce a new type `decorated`:
@@ -1271,34 +1301,6 @@ structure Decorated where
 ```
 
 :::slidebreak
-:::
-
-:::dev
-HIDE: Add FOLD here
-:::
-
-:::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement (year := 2021)
-The above FOLD seems not to work, at least in the
-terse version. :-(
-:::
-
-```lean
-example : DCom :=
-  .skip ({{ True }})
-
-example : DCom :=
-  .whileDo (bexp {true}) ({{ True }})
-    (.skip ({{ True }})) ({{ True }})
-```
-
-To inspect the fully elaborated term behind this notation, put
-`set_option pp.all true in` before a `#check` or `#print` command.
-
-The formal definitions can use either constructors directly or the
-decorated-command notation introduced above.
-
-:::dev
-HIDE: Add /FOLD here
 :::
 
 An example `decorated` program that decrements `X` to `0`:
@@ -1327,8 +1329,7 @@ Print dec_while.
 :::slidebreak
 :::
 
-It is easy to go from a `dcom` to a `com` by erasing all
-annotations.
+It is easy to go from a `dcom` to a `com` by erasing all annotations.
 
 ```lean
 def DCom.erase (d : DCom) : Com :=
@@ -1345,11 +1346,6 @@ def Decorated.erase (dec : Decorated) : Com :=
   dec.body.erase
 ```
 
-:::instructors
-the `unfold` isn't needed, but it lets us recall
-what `dec_while` is without having to print it.
-:::
-
 ::::full
 ```lean
 example :
@@ -1363,6 +1359,18 @@ example :
 ```
 ::::
 
+::::terse
+We cannot use `dcom { ... }` syntax in pattern matches.
+::::
+
+::::full
+Aside: In the {name}`DCom.erase` function we do not use `dcom { ... }` syntax in the
+pattern match. This is because `dcom` syntax is implemented with `elab_rules`, which
+provides no way to extend patterns, but provides more helpful error messages than
+does `macro_rules`, which we used to implement the `imp` syntax. In a definition,
+you can use either constructors directly or the decorated-command notation.
+::::
+
 :::slidebreak
 :::
 
@@ -1370,21 +1378,31 @@ It is also straightforward to extract the precondition and
 postcondition from a decorated program.
 
 ```lean
+@[simp]
 def Decorated.precondition (dec : Decorated) : Assertion :=
   dec.pre
 ```
 
-:::dev "Benjamin Pierce (bcpierce00)" BeforeNextRelease (year := 2025)
+Notice the `@[simp]` annotation we added here.
+This directs Lean to generate an equational lemma of the same form as the
+characterizing lemmas we've been writing by hand, such as
+{name}`validHoareTriple_def` and {name}`Assertion.subst_apply` in the
+{ref "Hoare"}[Hoare] chapter, and add it to the `simp` set. We can
+see the added equation by printing it.
+
+```lean (name := Decorated_precondition_eq)
+#print equations Decorated.precondition
 ```
-It would be nice to use <{ ... }> notations
-in this definition and the ones below...
-     | <{ skip {{p}} }>        => p
-     | <{ _; d₂ }>             => post d₂
-     | <{ _ := _ {{q}} }>      => q
+
+```leanOutput Decorated_precondition_eq
+equations:
+@[backward_defeq] theorem Decorated.precondition.eq_1 : ∀ (dec : Decorated), dec.precondition = dec.pre
 ```
-:::
+
+We'll add `@[simp]` annotations on the following definitions, too.
 
 ```lean
+@[simp]
 def DCom.postcondition (d : DCom) : Assertion :=
   match d with
   | .skip q => q
@@ -1395,6 +1413,7 @@ def DCom.postcondition (d : DCom) : Assertion :=
   | .pre _ body => body.postcondition
   | .post _ q => q
 
+@[simp]
 def Decorated.postcondition (dec : Decorated) : Assertion :=
   dec.body.postcondition
 ```
@@ -1423,16 +1442,15 @@ def Decorated.OuterTripleValid (dec : Decorated) : Prop :=
     dec.postcondition
 ```
 
-For example:
+For example, here is this definition unfolded for {name}`decWhile`:
 
 ```lean
-example :
-    decWhile.OuterTripleValid =
-      {{ True }}
-        while (X ≠ 0) {
-          X := X - 1
-        }
-      {{ X = 0 }} := by
+example : decWhile.OuterTripleValid =
+    {{ True }}
+      while (X ≠ 0) {
+        X := X - 1
+      }
+    {{ X = 0 }} := by
   rfl
 ```
 
@@ -1606,6 +1624,7 @@ just above...)
 :::
 
 ```lean
+@[simp]
 def DCom.VerificationConditions
     (p : Assertion) (d : DCom) : Prop :=
   match d with
@@ -1686,6 +1705,7 @@ Now that all the pieces are in place, we can define what it means
 to verify an entire program.
 
 ```lean
+@[simp]
 def Decorated.VerificationConditions
     (dec : Decorated) : Prop :=
   dec.body.VerificationConditions dec.pre
@@ -1704,17 +1724,6 @@ theorem verification_conditions_correct (dec : Decorated)
 
 The propositions generated by `DCom.VerificationConditions` are fairly
 big and contain many conjuncts that are essentially trivial.
-
-:::dev
-```
-HIDE: MRC'20: The conditions here used to be just [Eval]ed instead
-of being duplicated in a comment.  They were actually incorrect
-because of changes to notation.  Putting them in as an [Example]
-will force us to keep them up-to-date. APT20: Yes, but but stating
-this an equality completely misses the point about verify_assertion! So I
-changed things back.
-```
-:::
 
 ```lean
 example : decWhile.VerificationConditions := by
@@ -1782,6 +1791,7 @@ macro_rules
        all_goals (try lia)))
 
 example : decWhile.VerificationConditions := by
+  simp only [decWhile]
   verify_assertion
 ```
 
@@ -1789,7 +1799,7 @@ example : decWhile.VerificationConditions := by
 :::
 
 To automate the overall process of verification, we can use
-`verification_correct` to extract the verification conditions, use
+`verification_conditions_correct` to extract the verification conditions, use
 `verify_assertion` to verify them as much as it can, and finally tidy
 up any remaining bits by hand.
 
@@ -1806,8 +1816,8 @@ macro "verify" : tactic =>
 Here's the final, formal proof that `decWhile` is correct.
 
 ```lean
-theorem dec_while_correct :
-    decWhile.OuterTripleValid := by
+theorem dec_while_correct : decWhile.OuterTripleValid := by
+  simp only [decWhile]
   verify
 ```
 
@@ -1827,6 +1837,7 @@ def swapDec (m n : Nat) : Decorated where
 
 theorem swap_correct (m n : Nat) :
     (swapDec m n).OuterTripleValid := by
+  simp only [swapDec]
   verify
 ```
 
@@ -1851,6 +1862,7 @@ def positiveDifferenceDec : Decorated where
 
 theorem positive_difference_correct :
     positiveDifferenceDec.OuterTripleValid := by
+  simp only [positiveDifferenceDec]
   verify
 ```
 
@@ -2149,6 +2161,7 @@ def subtractSlowlyDec (m n : Nat) : Decorated where
 
 theorem subtract_slowly_outer_triple_valid (m n : Nat) :
     (subtractSlowlyDec m n).OuterTripleValid := by
+  simp only [subtractSlowlyDec]
   verify
 ```
 ::::
@@ -2517,11 +2530,10 @@ theorem parity_correct (m : Nat) :
 :::
 
 :::instructors
-the main idea introduced here is preserving equalities for
+The main idea introduced here is preserving equalities for
 variables that don't change, and it appears in its purest form here.
 :::
 
-::::::full
 The following program computes the integer square root of `X`
 by naive iteration:
 
@@ -2534,8 +2546,11 @@ by naive iteration:
 {{ Z*Z≤m ∧ m<(Z+1)*(Z+1) }}
 ```
 
+::::terse
 WORK IN CLASS
+::::
 
+::::::full
 As we did before, we can try to use the postcondition as a
 candidate loop invariant, obtaining the following decorated program:
 
@@ -2638,7 +2653,7 @@ theorem sqrt_correct (m : Nat) :
 :::
 
 :::instructors
-using easier version of this: counting up, instead of
+Using an easier version of this: counting up, instead of
 counting down...
 :::
 
@@ -2648,7 +2663,6 @@ for future exercise builders, together with some hints on how to
 write programs that are easier to verify
 :::
 
-::::full
 Here is a program that squares `X` by repeated addition:
 
 ```display
@@ -2662,8 +2676,11 @@ Here is a program that squares `X` by repeated addition:
 {{ Z = m*m }}
 ```
 
+::::terse
 WORK IN CLASS
+::::
 
+::::full
 The first thing to note is that the loop reads `X` but doesn't
 change its value. As we saw in the previous example, it can be a good idea
 in such cases to add `X = m` to the loop invariant.  The other thing
@@ -4098,10 +4115,12 @@ macro_rules
 
 namespace DCom.Delab
 
-open Lean PrettyPrinter Delaborator SubExpr Parenthesizer Imp.Elab Imp.Delab
+open Lean PrettyPrinter Delaborator SubExpr Parenthesizer
+  Imp.Elab Imp.Delab
 
 @[category_parenthesizer «sparse_dcom»]
-def sparse_dcom.parenthesizer : CategoryParenthesizer := fun prec => do
+def sparse_dcom.parenthesizer : CategoryParenthesizer :=
+  fun prec => do
   maybeParenthesize `sparse_dcom false wrapParens prec <|
     parenthesizeCategoryCore `sparse_dcom prec
 where
@@ -4113,7 +4132,8 @@ where
 
 private def getDCom? (stx : Term) : Option (TSyntax `sparse_dcom) :=
   match stx with
-  | `(sdcom { $d:sparse_dcom }) => some <| withSourceInfoOf (canonical := false) stx d
+  | `(sdcom { $d:sparse_dcom }) =>
+      some <| withSourceInfoOf (canonical := false) stx d
   | _ => none
 
 @[app_delab SparseAnnotations.DCom.skip]
@@ -4162,7 +4182,9 @@ def unexpandWhileDo : Unexpander
 @[app_unexpander SparseAnnotations.DCom.assert]
 def unexpandAssert : Unexpander
   | `($_ $assertion) =>
-      `(sdcom { assert {{ $(_root_.DCom.Delab.getAssnBody assertion) }} })
+      `(sdcom {
+        assert {{ $(_root_.DCom.Delab.getAssnBody assertion) }}
+      })
   | _ => throw ()
 
 end DCom.Delab
@@ -4201,6 +4223,7 @@ def Decorated.OuterTripleValid (dec : Decorated) : Prop :=
 "Background reading on Hoare Logic,"
 https://www.cl.cam.ac.uk/archive/mjcg/HL/Notes/Notes.pdf -/
 
+@[simp]
 def DCom.awp (post : Assertion) (d : DCom) : Assertion :=
   match d with
   | .skip => post
@@ -4213,6 +4236,7 @@ def DCom.awp (post : Assertion) (d : DCom) : Assertion :=
   | .whileDo _ invariant _ => invariant
   | .assert assertion => fun st => assertion st ∧ post st
 
+@[simp]
 def DCom.VerificationConditions
     (post : Assertion) (d : DCom) : Prop :=
   match d with
@@ -4267,6 +4291,7 @@ theorem vc_correct (d : DCom) (post : Assertion)
     inversion heval
     exact hpost
 
+@[simp]
 def Decorated.VerificationConditions
     (dec : Decorated) : Prop :=
   (dec.pre ↠ dec.body.awp dec.post) ∧
@@ -4299,7 +4324,8 @@ scoped macro_rules
 /- LATER: Fix indentation. -/
 theorem dec_while_correct :
     decWhile.OuterTripleValid := by
-  verify
+  simp only [decWhile]
+  apply verification_correct <;> verify_assertion
 
 def swapDec (m n : Nat) : Decorated where
   pre := ({{ X = m ∧ Y = n }})
@@ -4312,7 +4338,8 @@ def swapDec (m n : Nat) : Decorated where
 
 theorem swap_correct (m n : Nat) :
     (swapDec m n).OuterTripleValid := by
-  verify
+  simp only [swapDec]
+  apply verification_correct <;> verify_assertion
 
 def ifMinusDec : Decorated where
   pre := ({{ True }})
@@ -4327,7 +4354,8 @@ def ifMinusDec : Decorated where
 
 theorem if_minus_correct :
     ifMinusDec.OuterTripleValid := by
-  verify
+  simp only [ifMinusDec]
+  apply verification_correct <;> verify_assertion
 
 def ifMinusPlusDec : Decorated where
   pre := ({{ True }})
@@ -4342,7 +4370,8 @@ def ifMinusPlusDec : Decorated where
 
 theorem if_minus_plus_correct :
     ifMinusPlusDec.OuterTripleValid := by
-  verify
+  simp only [ifMinusPlusDec]
+  apply verification_correct <;> verify_assertion
 
 def divModDec (a b : Nat) : Decorated where
   pre := ({{ True }})
@@ -4359,7 +4388,8 @@ def divModDec (a b : Nat) : Decorated where
 
 theorem div_mod_outer_triple_valid (a b : Nat) :
     (divModDec a b).OuterTripleValid := by
-  verify
+  simp only [divModDec]
+  apply verification_correct <;> verify_assertion
 
 def parityDec (m : Nat) : Decorated where
   pre := ({{ X = m }})
@@ -4394,7 +4424,8 @@ def sqrtDec (m : Nat) : Decorated where
 
 theorem sqrt_correct (m : Nat) :
     (sqrtDec m).OuterTripleValid := by
-  verify
+  simp only [sqrtDec]
+  apply verification_correct <;> verify_assertion
 
 def squareDec (m : Nat) : Decorated where
   pre := ({{ X = m }})
@@ -4458,7 +4489,8 @@ def squareSimplerDec (m : Nat) : Decorated where
 
 theorem square_simpler_outer_triple_valid (m : Nat) :
     (squareSimplerDec m).OuterTripleValid := by
-  verify
+  simp only [squareSimplerDec]
+  apply verification_correct <;> verify_assertion
 
 def twoLoopsDec (a b c : Nat) : Decorated where
   pre := ({{ True }})
@@ -4481,7 +4513,8 @@ def twoLoopsDec (a b c : Nat) : Decorated where
 
 theorem two_loops_correct (a b c : Nat) :
     (twoLoopsDec a b c).OuterTripleValid := by
-  verify
+  simp only [twoLoopsDec]
+  apply verification_correct <;> verify_assertion
 
 def subtractSlowlyDec (m p : Nat) : Decorated where
   pre := ({{ X = m ∧ Z = p }})
@@ -4496,7 +4529,8 @@ def subtractSlowlyDec (m p : Nat) : Decorated where
 
 theorem subtract_slowly_correct (m p : Nat) :
     (subtractSlowlyDec m p).OuterTripleValid := by
-  verify
+  simp only [subtractSlowlyDec]
+  apply verification_correct <;> verify_assertion
 
 def dpow2Down (n : Nat) : Decorated where
   pre := ({{ True }})
@@ -4738,7 +4772,7 @@ def IsWp (p : Assertion) (c : Com) (q : Assertion) : Prop :=
 Make a quiz based on this!
 :::
 
-:::::exercise (rating := 1) (name := "wp") (optional := true)
+:::::exercise (rating := 1) (name := "wp") (optional := true) (checkVisibility := false)
 What are weakest preconditions of the following commands
 for the following postconditions?
 
@@ -4861,8 +4895,6 @@ theorem hoare_asgn_weakest
     apply hP _ hst
     exact Com.EvalR.asgn rfl
 ```
-:::gradeTheorem 2 hoare_asgn_weakest
-:::
 :::::
 
 :::::exercise (rating := 2) (name := "hoare_havoc_weakest") (level := Advanced) (optional := true)
