@@ -1831,7 +1831,7 @@ theorem length_append_self {α : Type} {n : Nat} {l : List α}
       rw [← h]
     | cons x xs ih =>
       rw [List.cons_append, List.length_cons] at *
-      rw [← length_append_cons (n := (xs ++ x::xs).length) (by rfl)]
+      rw [← length_append_cons (n := (xs ++ x::xs).length) (h := by rfl)]
       rw [ih (by rfl), ← h]
       rw [Nat.add_add_add_comm]
 ```
