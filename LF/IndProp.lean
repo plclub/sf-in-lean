@@ -2868,13 +2868,13 @@ theorem filter_spec2 {α : Type} (l lsub : List α) (test : α → Bool) :
           | take l hsub =>
             rw [List.length_cons]
             apply succ_le_succ
-            apply ih _ rfl _ hsub
+            apply ih _ (by rfl) _ hsub
             rw [List.allb_cons, Bool.and_eq_true] at hall
             obtain ⟨_, h⟩ := hall
             exact h
           | skip hsub =>
             apply Le.step
-            exact ih _ rfl _ hsub hall
+            apply ih _ (by rfl) _ hsub hall
 
 end FilterChallenge
 ```

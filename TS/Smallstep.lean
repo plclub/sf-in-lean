@@ -1361,7 +1361,12 @@ theorem eval_of_multistep (t t' : Tm) (h : IsNormalFormOf Step t t') :
       induction hst with
       | refl b => intro heq; subst heq; exact .const n
       | step b c d h₁ h₂ ih => intro heq; exact eval_of_step b c n h₁ (ih heq)
-    exact ⟨n, rfl, H t (.c n) hs rfl⟩
+    exists n
+    constructor
+    · rfl
+    · apply H
+      · exact hs
+      · rfl
 ```
 
 :::gradeTheorem 3 eval_of_multistep
