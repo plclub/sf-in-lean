@@ -1865,9 +1865,9 @@ Similarly, for each of the three branches of the definition of {name}`even`,
 we need one simplification rule:
 
 ```lean
-theorem even_zero : even zero = true := rfl
-theorem even_one : even (succ zero) = false := rfl
-theorem even_succ_succ (n : Nat) : even (succ (succ n)) = even n := rfl
+theorem even_zero : even zero = true := by rfl
+theorem even_one : even (succ zero) = false := by rfl
+theorem even_succ_succ (n : Nat) : even (succ (succ n)) = even n := by rfl
 
 attribute [irreducible] even odd
 ```

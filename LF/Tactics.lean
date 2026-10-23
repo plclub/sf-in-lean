@@ -1810,7 +1810,7 @@ theorem length_append_cons {α : Type} {l₁ l₂ : List α} {x : α} {n : Nat}
       /- A trick here: by using `rfl` to close `(ys ++ x :: l₂).length = n`
          we effectively choose `n` to be `(ys ++ x :: l₂).length`
       -/
-      rw [ih rfl]
+      rw [ih (by rfl)]
       assumption
 ```
 :::::
@@ -1831,8 +1831,8 @@ theorem length_append_self {α : Type} {n : Nat} {l : List α}
       rw [← h]
     | cons x xs ih =>
       rw [List.cons_append, List.length_cons] at *
-      rw [← length_append_cons rfl]
-      rw [ih rfl, ← h]
+      rw [← length_append_cons (n := (xs ++ x::xs).length) (by rfl)]
+      rw [ih (by rfl), ← h]
       rw [Nat.add_add_add_comm]
 ```
 :::::

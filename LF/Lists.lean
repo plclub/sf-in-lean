@@ -795,7 +795,7 @@ theorem count_cons_diff (n₁ n₂ : Nat) (t : NatList)
     rw [count_cons_def, h, cond_false]
 
 example : count 1 [1] = 1 := by
-  rw [count_cons_same _ _ _ rfl]
+  rw [count_cons_same _ _ _ (by rfl)]
   rw [count_nil]
 
 example : count 2 [2, 2] = 2 := solution!(by rfl)
@@ -846,7 +846,7 @@ theorem member_cons_diff (n₁ n₂ : Nat) (t : NatList)
     rw [member, h, cond_false]
 
 example : member 1 [1] = true := by
-  rw [member_cons_same _ _ _ rfl]
+  rw [member_cons_same _ _ _ (by rfl)]
 
 example : member 2 [1] = false := solution!(by rfl)
 ```
@@ -903,8 +903,8 @@ theorem removeOne_cons_diff (n₁ n₂ : Nat) (t : NatList)
 
 ```lean
 example : removeOne 5 [1, 5, 4] = [1, 4] := by
-  rw [removeOne_cons_diff _ _ _ rfl]
-  rw [removeOne_cons_same _ _ _ rfl]
+  rw [removeOne_cons_diff _ _ _ (by rfl)]
+  rw [removeOne_cons_same _ _ _ (by rfl)]
 
 example : count 5 (removeOne 5 [1, 5, 4]) = 0 := solution!(by rfl)
 
@@ -944,10 +944,10 @@ theorem removeAll_cons_diff (n₁ n₂ : Nat) (t : NatList)
 
 ```lean
 example : count 5 (removeAll 5 [5, 1]) = 0 := by
-  rw [removeAll_cons_same _ _ _ rfl]
-  rw [removeAll_cons_diff _ _ _ rfl]
+  rw [removeAll_cons_same _ _ _ (by rfl)]
+  rw [removeAll_cons_diff _ _ _ (by rfl)]
   rw [removeAll_nil]
-  rw [count_cons_diff _ _ _ rfl]
+  rw [count_cons_diff _ _ _ (by rfl)]
   rw [count_nil]
 
 example : count 5 (removeAll 5 [5, 5]) = 0 := solution!(by rfl)
@@ -1008,8 +1008,8 @@ theorem included_cons_nonmember (n : Nat) (l₁ l₂ : NatList)
 example : included [1] [2, 1] = true := by
   rw [included_cons_member]
   · exact included_nil _
-  · rw [member_cons_diff _ _ _ rfl]
-    rw [member_cons_same _ _ _ rfl]
+  · rw [member_cons_diff _ _ _ (by rfl)]
+    rw [member_cons_same _ _ _ (by rfl)]
 
 example : included [1, 1] [2, 1, 4, 1] = true := solution!(by rfl)
 ```
@@ -1632,9 +1632,9 @@ example : beq [] [] = true := solution!(by rfl)
 example : beq [1, 2, 3] [1, 2, 3] = true := solution!(by rfl)
 example : beq [1, 2, 3] [1, 2, 4] = false := by
   solution!
-    rw [beq_cons_same _ _ _ _ rfl]
-    rw [beq_cons_same _ _ _ _ rfl]
-    rw [beq_cons_diff _ _ _ _ rfl]
+    rw [beq_cons_same _ _ _ _ (by rfl)]
+    rw [beq_cons_same _ _ _ _ (by rfl)]
+    rw [beq_cons_diff _ _ _ _ (by rfl)]
 
 theorem beq_refl (l : NatList) :
     beq l l = true := by
@@ -1676,7 +1676,7 @@ theorem _root_.Nat.ble_succ_succ (m n : Nat) (h : Nat.ble m n = true) :
 theorem count_member_nonzero (l : NatList) :
     Nat.ble 1 (count 1 (1 :: l)) = true := by
   solution!
-    rw [count_cons_same rfl]
+    rw [count_cons_same (by rfl)]
     rw [Nat.ble_succ_succ]
     rw [Nat.ble_zero]
 theorem ble_n_Sn (n : Nat) :
@@ -1757,9 +1757,9 @@ theorem remove_does_not_increase_count (l : NatList) :
     | cons n s' ih =>
       cases n with
       | zero =>
-        rw [removeOne_cons_same _ _ _ rfl, count_cons_same _ _ _ rfl, ble_self_succ]
+        rw [removeOne_cons_same _ _ _ (by rfl), count_cons_same _ _ _ (by rfl), ble_self_succ]
       | succ n' =>
-        rw [removeOne_cons_diff _ _ _ rfl, count_cons_diff _ _ _ rfl, count_cons_diff _ _ _ rfl]
+        rw [removeOne_cons_diff _ _ _ (by rfl), count_cons_diff _ _ _ (by rfl), count_cons_diff _ _ _ (by rfl)]
         exact ih
 ```
 :::gradeTheorem 3 remove_does_not_increase_count
