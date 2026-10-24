@@ -14,18 +14,18 @@ private def reference (label tag : String) (remote : Option String := none)
 
 private def typeclasses : Part Manual :=
   part "Typeclasses" {
-    tag := some (.provided "Typeclasses"), file := "typeclasses-file", htmlSplit := .never
+    tag := some "Typeclasses", file := "typeclasses-file", htmlSplit := .never
   } #[] #[
-    part "Lookup" { tag := some (.provided "MapLookup") },
+    part "Lookup" { tag := some "MapLookup" },
     part "Automatic" {},
-    part "Draft" { tag := some (.provided "Draft"), draft := true }
+    part "Draft" { tag := some "Draft", draft := true }
   ]
 
 private def poly : Part Manual :=
-  part "Poly" { tag := some (.provided "Poly"), file := "poly-file", htmlSplit := .never }
+  part "Poly" { tag := some "Poly", file := "poly-file", htmlSplit := .never }
 
 private def types : Part Manual :=
-  part "Types" { tag := some (.provided "Types"), file := "types-file", htmlSplit := .never }
+  part "Types" { tag := some "Types", file := "types-file", htmlSplit := .never }
 
 private def source : Part Manual :=
   part "Source" {} #[
@@ -34,7 +34,7 @@ private def source : Part Manual :=
     reference "cross-types" "Types" "ts",
     reference "local-root" "Typeclasses"
   ] #[
-    part "Local Typeclasses" { tag := some (.provided "Typeclasses"), file := "local-file" }
+    part "Local Typeclasses" { tag := some "Typeclasses", file := "local-file" }
       #[reference "cross-chapter" "Typeclasses" "lf"] #[
         part "Nested" { file := "nested-file" } #[
           reference "cross-nested" "MapLookup" "lf" (some sectionDomain),

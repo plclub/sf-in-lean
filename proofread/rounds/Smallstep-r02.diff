@@ -1,0 +1,135 @@
+--- TS/Smallstep.lean (before this round)
++++ TS/Smallstep.lean
+@@ -233,15 +233,15 @@
+ Now, here is the corresponding _small-step_ relation, written `t ⟶ t'`:
+ 
+-```
+-                -------------------------------      (plus)
+-                p (c n₁) (c n₂) ⟶ c (n₁ + n₂)
++```display +centered
++-----------------------------   (plus)
++p (c n₁) (c n₂) ⟶ c (n₁ + n₂)
+ 
+-                         t₁ ⟶ t₁'
+-                    --------------------             (plusLeft)
+-                    p t₁ t₂ ⟶ p t₁' t₂
++             t₁ ⟶ t₁'
++        ------------------      (plusLeft)
++        p t₁ t₂ ⟶ p t₁' t₂
+ 
+-                         t₂ ⟶ t₂'
+-                 ----------------------------        (plusRight)
+-                 p (c n₁) t₂ ⟶ p (c n₁) t₂'
++             t₂ ⟶ t₂'
++    --------------------------  (plusRight)
++    p (c n₁) t₂ ⟶ p (c n₁) t₂'
+ ```
+ ::::
+@@ -491,16 +491,16 @@
+ the `⟶` relation to write the `plusRight` rule in a slightly more elegant way.
+ 
+-```
+-                ------------------------------      (plus)
+-                p (c n₁) (c n₂) ⟶ c (n₁ + n₂)
++```display +centered
++-----------------------------  (plus)
++p (c n₁) (c n₂) ⟶ c (n₁ + n₂)
+ 
+-                         t₁ ⟶ t₁'
+-                    -------------------             (plusLeft)
+-                    p t₁ t₂ ⟶ p t₁' t₂
++             t₁ ⟶ t₁'
++        ------------------     (plusLeft)
++        p t₁ t₂ ⟶ p t₁' t₂
+ 
+-                         IsValue v₁
+-                         t₂ ⟶ t₂'
+-                    -------------------             (plusRight)
+-                    p v₁ t₂ ⟶ p v₁ t₂'
++            IsValue v₁
++             t₂ ⟶ t₂'
++        ------------------     (plusRight)
++        p v₁ t₂ ⟶ p v₁ t₂'
+ ```
+ 
+@@ -1126,6 +1126,7 @@
+ 
+ :::terse
+-The `Step` relation is _normalizing_ it is deterministic and always reaches a normal form
+-in a finite number of steps.
++The `Step` relation is _normalizing_: every term reaches a normal form in
++a finite number of steps. Combined with determinism, that normal form is
++unique.
+ :::
+ 
+@@ -1420,15 +1421,16 @@
+ shape.)
+ 
+-```
+-                        a₁ ⟶a a₁'
+-                   --------------------             (plusLeft)
+-                   a₁ + a₂ ⟶a a₁' + a₂
+-
+-                 IsAValue v₁      a₂ ⟶a a₂'
+-                 ---------------------------        (plusRight)
+-                   v₁ + a₂ ⟶a v₁ + a₂'
++```display +centered
++     a₁ ⟶a a₁'
++-------------------       (plusLeft)
++a₁ + a₂ ⟶a a₁' + a₂
+ 
+-                 -------------------------          (plus)
+-                 n₁ + n₂ ⟶a num (n₁ + n₂)
++    IsAValue v₁
++     a₂ ⟶a a₂'
++-------------------       (plusRight)
++v₁ + a₂ ⟶a v₁ + a₂'
++
++------------------------  (plus)
++n₁ + n₂ ⟶a num (n₁ + n₂)
+ ```
+ ::::
+@@ -1546,25 +1548,26 @@
+ representative sample; `neq`, `le`, and `gt` follow the same pattern as `eq`.
+ 
+-```
+-                        a₁ ⟶a a₁'
+-                  --------------------             (eqLeft)
+-                  a₁ = a₂ ⟶b a₁' = a₂
++```display +centered
++        a₁ ⟶a a₁'
++   -------------------   (eqLeft)
++   a₁ = a₂ ⟶b a₁' = a₂
+ 
+-                IsAValue v₁      a₂ ⟶a a₂'
+-                ---------------------------        (eqRight)
+-                  v₁ = a₂ ⟶b v₁ = a₂'
+-
+-                  ---------------------            (eq)
+-                  n₁ = n₂ ⟶b (n₁ = n₂)
++       IsAValue v₁
++        a₂ ⟶a a₂'
++   -------------------   (eqRight)
++   v₁ = a₂ ⟶b v₁ = a₂'
+ 
+-                        b₁ ⟶b b₁'
+-                      --------------               (notStep)
+-                      ¬ b₁ ⟶b ¬ b₁'
++   --------------------  (eq)
++   n₁ = n₂ ⟶b (n₁ = n₂)
+ 
+-                    ----------------               (notTrue)
+-                    ¬ true ⟶b false
++        b₁ ⟶b b₁'
++      -------------      (notStep)
++      ¬ b₁ ⟶b ¬ b₁'
+ 
+-                  ---------------------            (andFalse)
+-                  false ∧ b₂ ⟶b false
++    ---------------      (notTrue)
++    ¬ true ⟶b false
++
++-------------------      (andFalse)
++false ∧ b₂ ⟶b false
+ ```
+ 

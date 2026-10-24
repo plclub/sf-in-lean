@@ -1,0 +1,15 @@
+{
+ "file": "HL/Equiv.lean",
+ "chapter": "Equiv",
+ "round": 5,
+ "proposals": [
+  {
+   "id": "dh01",
+   "cat": "style/declaration-header",
+   "old": "      have hs : ∀ {l₁ l₂ : Ident} {a₁ a₂ : Aexp},\n          l₁ ≠ l₂ →\n          VarNotUsedInAexp l₁ a₂ →\n          VarNotUsedInAexp l₂ a₁ →\n          ∀ {st st' : State},\n            (st =[ l₁ := a₁; l₂ := a₂ ]=> st') →\n            st =[ l₂ := a₂; l₁ := a₁ ]=> st' := by\n        intro l₁ l₂ a₁ a₂ hneq hne₁ hne₂ st st' h\n        inversion h with",
+   "new": "      have hs {l₁ l₂ : Ident} {a₁ a₂ : Aexp} (hneq : l₁ ≠ l₂)\n          (hne₁ : VarNotUsedInAexp l₁ a₂)\n          (hne₂ : VarNotUsedInAexp l₂ a₁) {st st' : State}\n          (h : st =[ l₁ := a₁; l₂ := a₂ ]=> st') :\n          st =[ l₂ := a₂; l₁ := a₁ ]=> st' := by\n        inversion h with",
+   "why": "LF/Basics.lean's \"Displaying Theorem Statements\" section establishes declaration-header style (named binders before the colon) as the book's convention; this internal `have` instead quantified its hypotheses with `∀`/`→` and then `intro`'d them by hand, exactly the pattern the convention replaces."
+  }
+ ],
+ "completed": true
+}

@@ -1,0 +1,43 @@
+{
+ "file": "TS/Slang.lean",
+ "chapter": "Slang",
+ "round": 1,
+ "proposals": [
+  {
+   "id": "typo-somthing",
+   "cat": "typo/misspelling",
+   "old": "let's see how it works on somthing simpler.",
+   "new": "let's see how it works on something simpler.",
+   "why": "Misspelling of \"something\"."
+  },
+  {
+   "id": "dash-two-cases",
+   "cat": "punctuation/dash-consistency",
+   "old": "Normally, if we perform induction on `n`, we get two cases - `0` and `n' + 1` -\none for each of the cases in the inductive definition of natural numbers.",
+   "new": "Normally, if we perform induction on `n`, we get two cases -- `0` and `n' + 1` --\none for each of the cases in the inductive definition of natural numbers.",
+   "why": "The book's convention is ASCII `--` for a parenthetical dash; a bare single hyphen here is inconsistent with that convention and with the double dash used throughout the rest of the chapter."
+  },
+  {
+   "id": "dash-three-cases",
+   "cat": "punctuation/dash-consistency",
+   "old": "Functional induction on {name}`Nat.even`, however, gives us three cases - `0`, `1`, and `n' + 2` -\ncorresponding to each of the cases of its definition.",
+   "new": "Functional induction on {name}`Nat.even`, however, gives us three cases -- `0`, `1`, and `n' + 2` --\ncorresponding to each of the cases of its definition.",
+   "why": "Same single-hyphen inconsistency as the parallel sentence just above, which uses the book's `--` convention."
+  },
+  {
+   "id": "double-period",
+   "cat": "punctuation/double-period",
+   "old": "assuming there are no namespace issues..\n:::",
+   "new": "assuming there are no namespace issues.\n:::",
+   "why": "Stray extra period at the end of the sentence."
+  },
+  {
+   "id": "missing-word-relational",
+   "cat": "typo/missing-word",
+   "old": "Where the thing being defined is not easy to express as a function,\ndefinitions are often simpler. When both",
+   "new": "Where the thing being defined is not easy to express as a function,\nrelational definitions are often simpler. When both",
+   "why": "Without \"relational\", the sentence doesn't say which kind of definitions are simpler, even though the surrounding paragraph is explicitly contrasting relational vs. functional definitions."
+  }
+ ],
+ "completed": true
+}

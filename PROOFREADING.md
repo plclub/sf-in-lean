@@ -134,7 +134,7 @@ Each was learned from a run of rejections; do not propose against them.
 | Rule | Established |
 | ---- | ----------- |
 | Double spaces after a sentence-ending period are fine; never propose collapsing them. | initial |
-| ASCII `--` as a dash is the book's own convention and stands in chapter prose as well as in `:::dev` and `:::instructors` note bodies; never propose converting it to an em dash. | Imp r01 |
+| A short, self-explanatory equational lemma proved by `rfl` (e.g. a `foldConstants_id`-style simp lemma) doesn't need an accompanying prose explanation; only add one when the result isn't obvious from the statement. | 2026-10-07 |
 
 ## Known non-issues
 
@@ -167,6 +167,35 @@ For whoever (or whatever) does the proposing:
   for every run of two or more and propose collapsing it to one, under the
   category `formatting/blank-lines`. The exception is a fenced block quoting
   literal output, where the spacing is content; leave those runs alone.
+* **A proof always opens with `by`.** Never leave a theorem or example proved
+  by a bare term like `:= rfl`; write `:= by rfl` instead (and likewise for any
+  other term-mode proof — `:= by exact foo` rather than `:= foo`). This is
+  about how a *proof* is introduced, not term-mode definitions generally: an
+  ordinary `def`'s body is untouched. Propose the fix under `style/proof-by`.
+* **Code inside a `lean` block (or similar fenced code) fits within 70
+  columns.** Scan every such block for lines over 70 columns and reflow them
+  with the book's existing continuation-line convention rather than
+  truncating or renaming anything: split a theorem's binders from its
+  conclusion onto an indented line (4 spaces for a theorem statement; for an
+  inductive constructor whose binders alone don't fit, put the remaining
+  binders on their own 6-space-indented line above the conclusion — see
+  `Aexp.EvalR` in `TS/Slang.lean` or `Com.EvalR` in `HL/Imp.lean` for
+  precedent). Propose under `formatting/line-width`. When reflowing changes no
+  actual token, only where the line breaks fall, anchor with enough
+  surrounding text that `old`/`new` stay distinguishable after whitespace
+  normalization (see "Anchor precisely" below) — pulling in a neighboring
+  unchanged line, or the full enclosing declaration, if the wrapped fragment
+  alone collapses to the same normalized form both ways.
+* **Inference-rule figures use `display +centered`, with rule labels and the
+  relation symbol vertically aligned.** A hand-drawn inference-rule block
+  (premises over a bar, over a conclusion, with a rule name) must be a
+  ```` ```display +centered ```` block, not a bare ```` ``` ```` block, sitting
+  at a minimal left margin — see "Inference-rule figures" in `STYLE-CODE.md`
+  for the full alignment algorithm (one premise per line; align the chapter's
+  step/eval symbol at one shared column; each rule's bar spans its own widest
+  line; rule labels share one column). Propose under `formatting/rule-figure`.
+  This applies to figures in chapters as they come up for proofreading, not as
+  a mandate to retrofit every existing figure in the book.
 * **Anchor precisely.** Each proposal is `{id, cat, old, new, why}`; `old` must
   occur exactly once in the file, and `old` and `new` must not contain one
   another. Both are enforced, and nothing is applied otherwise, because
@@ -205,6 +234,38 @@ review, ledger), with two differences from round 1:
 
 Because this round can touch code, headings, and `{lean}` roles, `lake build`
 runs right after `apply`, not just at record time.
+
+### Linter warnings
+
+`lake build <Vol>.<Ch>` succeeding is not the bar — the high-level round also
+clears every `linter.sf.*` warning the build emits for the chapter. Four such
+linters exist (`SFLMeta/Linter.lean`): `exerciseVisibility`, `variantNesting`,
+`optionalAutograding`, `autogradingScope`.
+
+`exerciseVisibility` — every `:::::exercise` needs an explicit, deliberate
+visibility decision, not a silent default. The book's default is **`::::full`
+only**: wrap the whole exercise (`::::::full` / `:::::exercise ... ` / `:::::`
+/ `::::::` — six colons outside five, per the nesting rule above; see
+`LF/IndProp.lean`'s `EqvGen` exercise for the pattern). Give a piece of it
+`:::terse` visibility instead only when something later genuinely needs it in
+the terse build too. To decide which, check:
+
+* **Later prose or proofs in the same chapter** — does anything after the
+  exercise reference what it defines?
+* **Downstream chapters** — grep the repo for `import <Vol>.<Chapter>` to find
+  chapters that import this one, then grep those for the exercise's
+  identifiers. A chapter that doesn't import this one at all cannot depend on
+  it.
+* **The original Rocq source**, `old/orig-lf-files/<Ch>.v` — the corresponding
+  exercise there is very often already wrapped in a `FULL` or `TERSE` region
+  (or both, split by piece), which settles the question directly rather than
+  requiring it to be re-derived.
+
+The other three linters flag structural mistakes, not visibility judgment
+calls (`full`/`terse` nesting inside each other, an optional exercise wired to
+autograde, a grading directive that targets a declaration outside its own
+exercise) — fix them directly; fall back to a `:::dev "Claude"` note only when
+the right fix is genuinely unclear.
 
 The driving loop around these rules — which command to run when, and where to
 stop and wait for the author — is `.claude/skills/proofread/SKILL.md`.

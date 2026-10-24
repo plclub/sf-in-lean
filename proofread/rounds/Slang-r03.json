@@ -1,0 +1,57 @@
+{
+ "file": "TS/Slang.lean",
+ "chapter": "Slang",
+ "round": 3,
+ "proposals": [
+  {
+   "id": "vis-open-optimize0plus_sound",
+   "cat": "markup/exercise-visibility",
+   "old": "end Aexp\n```\n\n:::::exercise (rating := 3) (name := \"optimize0plus_sound\")",
+   "new": "end Aexp\n```\n\n::::::full\n:::::exercise (rating := 3) (name := \"optimize0plus_sound\")",
+   "why": "The `linter.sf.exerciseVisibility` build warning flags this exercise as not nested in a `full`/`terse` directive. The original Rocq source (`old/orig-lf-files/Imp.v`) wraps the corresponding exercise entirely in a `FULL` region, and no later prose or downstream chapter (checked `TS/Smallstep.lean`, the only chapter that imports `TS.Slang`) depends on anything this exercise defines, so full-only visibility (the default policy) is the right call here, with no `:::terse` carve-out needed."
+  },
+  {
+   "id": "vis-close-optimize0plus_sound-open-optimize",
+   "cat": "markup/exercise-visibility",
+   "old": ":::gradeTheorem 2 Bexp.optimize0plus_sound\n:::\n:::::\n\n:::::exercise (rating := 4) (name := \"optimize\") (optional := true)",
+   "new": ":::gradeTheorem 2 Bexp.optimize0plus_sound\n:::\n:::::\n\n::::::\n\n::::::full\n:::::exercise (rating := 4) (name := \"optimize\") (optional := true)",
+   "why": "The `linter.sf.exerciseVisibility` build warning flags this exercise as not nested in a `full`/`terse` directive. The original Rocq source (`old/orig-lf-files/Imp.v`) wraps the corresponding exercise entirely in a `FULL` region, and no later prose or downstream chapter (checked `TS/Smallstep.lean`, the only chapter that imports `TS.Slang`) depends on anything this exercise defines, so full-only visibility (the default policy) is the right call here, with no `:::terse` carve-out needed."
+  },
+  {
+   "id": "vis-close-optimize",
+   "cat": "markup/exercise-visibility",
+   "old": "and build up incrementally to something more interesting.)\n:::::\n\n# Evaluation as a Relation",
+   "new": "and build up incrementally to something more interesting.)\n:::::\n\n::::::\n\n# Evaluation as a Relation",
+   "why": "The `linter.sf.exerciseVisibility` build warning flags this exercise as not nested in a `full`/`terse` directive. The original Rocq source (`old/orig-lf-files/Imp.v`) wraps the corresponding exercise entirely in a `FULL` region, and no later prose or downstream chapter (checked `TS/Smallstep.lean`, the only chapter that imports `TS.Slang`) depends on anything this exercise defines, so full-only visibility (the default policy) is the right call here, with no `:::terse` carve-out needed."
+  },
+  {
+   "id": "vis-open-beval_rules",
+   "cat": "markup/exercise-visibility",
+   "old": "alternative, assuming there are no namespace issues.\n:::\n\n:::::exercise (rating := 1) (name := \"beval_rules\") (manual := true) (optional := true)",
+   "new": "alternative, assuming there are no namespace issues.\n:::\n\n::::::full\n:::::exercise (rating := 1) (name := \"beval_rules\") (manual := true) (optional := true)",
+   "why": "The `linter.sf.exerciseVisibility` build warning flags this exercise as not nested in a `full`/`terse` directive. The original Rocq source (`old/orig-lf-files/Imp.v`) wraps the corresponding exercise entirely in a `FULL` region, and no later prose or downstream chapter (checked `TS/Smallstep.lean`, the only chapter that imports `TS.Slang`) depends on anything this exercise defines, so full-only visibility (the default policy) is the right call here, with no `:::terse` carve-out needed."
+  },
+  {
+   "id": "vis-close-beval_rules",
+   "cat": "markup/exercise-visibility",
+   "old": ":::\n:::::\n\n## Equivalence of the Definitions",
+   "new": ":::\n:::::\n\n::::::\n\n## Equivalence of the Definitions",
+   "why": "The `linter.sf.exerciseVisibility` build warning flags this exercise as not nested in a `full`/`terse` directive. The original Rocq source (`old/orig-lf-files/Imp.v`) wraps the corresponding exercise entirely in a `FULL` region, and no later prose or downstream chapter (checked `TS/Smallstep.lean`, the only chapter that imports `TS.Slang`) depends on anything this exercise defines, so full-only visibility (the default policy) is the right call here, with no `:::terse` carve-out needed."
+  },
+  {
+   "id": "vis-open-bevalR",
+   "cat": "markup/exercise-visibility",
+   "old": "end Aexp\n```\n\n:::::exercise (rating := 3) (name := \"bevalR\")",
+   "new": "end Aexp\n```\n\n::::::full\n:::::exercise (rating := 3) (name := \"bevalR\")",
+   "why": "The `linter.sf.exerciseVisibility` build warning flags this exercise as not nested in a `full`/`terse` directive. The original Rocq source (`old/orig-lf-files/Imp.v`) wraps the corresponding exercise entirely in a `FULL` region, and no later prose or downstream chapter (checked `TS/Smallstep.lean`, the only chapter that imports `TS.Slang`) depends on anything this exercise defines, so full-only visibility (the default policy) is the right call here, with no `:::terse` carve-out needed."
+  },
+  {
+   "id": "vis-close-bevalR",
+   "cat": "markup/exercise-visibility",
+   "old": ":::gradeTheorem 3 evalR_iff_eval\n:::\n:::::\n\n```lean\nend Bexp\nend Slang\n```",
+   "new": ":::gradeTheorem 3 evalR_iff_eval\n:::\n:::::\n\n::::::\n\n```lean\nend Bexp\nend Slang\n```",
+   "why": "The `linter.sf.exerciseVisibility` build warning flags this exercise as not nested in a `full`/`terse` directive. The original Rocq source (`old/orig-lf-files/Imp.v`) wraps the corresponding exercise entirely in a `FULL` region, and no later prose or downstream chapter (checked `TS/Smallstep.lean`, the only chapter that imports `TS.Slang`) depends on anything this exercise defines, so full-only visibility (the default policy) is the right call here, with no `:::terse` carve-out needed."
+  }
+ ],
+ "completed": true
+}

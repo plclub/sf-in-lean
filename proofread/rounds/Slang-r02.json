@@ -1,0 +1,15 @@
+{
+ "file": "TS/Slang.lean",
+ "chapter": "Slang",
+ "round": 2,
+ "proposals": [
+  {
+   "id": "stale-state-reference",
+   "cat": "exposition/stale-reference",
+   "old": "It's worth noting that `≤` and `>` are {lean}`Prop`-valued, i.e. `a₁.eval st ≤ a₂.eval st` is a proposition,",
+   "new": "It's worth noting that `≤` and `>` are {lean}`Prop`-valued, i.e. `a₁.eval ≤ a₂.eval` is a proposition,",
+   "why": "Stale reference to a state argument `st` that `Aexp.eval`/`Bexp.eval` don't take in this chapter (Slang has no variables yet; `eval` is `Aexp → Nat`). The only occurrence of `st`/`State` anywhere in the chapter — looks like leftover prose carried over from the Imp chapter, where `eval` does take a state."
+  }
+ ],
+ "completed": true
+}

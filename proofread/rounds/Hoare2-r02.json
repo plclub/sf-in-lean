@@ -1,0 +1,36 @@
+{
+ "file": "HL/Hoare2.lean",
+ "chapter": "Hoare2",
+ "round": 2,
+ "proposals": [
+  {
+   "id": "p1",
+   "cat": "structure/work-in-class",
+   "old": "::::::full\nThe following program computes the integer square root of `X`\nby naive iteration:\n\n```display\n{{ X=m }}\n  Z := 0;\n  while (Z+1)*(Z+1) ≤ X do\n    Z := Z+1\n  end\n{{ Z*Z≤m ∧ m<(Z+1)*(Z+1) }}\n```\n\nWORK IN CLASS\n\nAs we did before, we can try to use the postcondition as a\ncandidate loop invariant, obtaining the following decorated program:",
+   "new": "The following program computes the integer square root of `X`\nby naive iteration:\n\n```display\n{{ X=m }}\n  Z := 0;\n  while (Z+1)*(Z+1) ≤ X do\n    Z := Z+1\n  end\n{{ Z*Z≤m ∧ m<(Z+1)*(Z+1) }}\n```\n\n::::terse\nWORK IN CLASS\n::::\n\n::::::full\nAs we did before, we can try to use the postcondition as a\ncandidate loop invariant, obtaining the following decorated program:",
+   "why": "The Rocq original (old/orig-plf-files/Hoare2.v:2088-2101) leaves this intro paragraph and display plain (shown in every build) and only marks the continuation after `(* TERSE: WORK IN CLASS *)` as FULL. The current Lean wraps the intro in ::::::full too, which both hides it from terse (unlike the source) and strands WORK IN CLASS inside a full-only block where the terse reader never sees it. Move the ::::::full open to start at the continuation and add the missing ::::terse WORK IN CLASS :::: in between, matching the Swapping example's identical idiom just above (lines 400-407)."
+  },
+  {
+   "id": "p2",
+   "cat": "structure/work-in-class",
+   "old": "::::full\nHere is a program that squares `X` by repeated addition:\n\n```display\n{{ X = m }}\n  Y := 0;\n  Z := 0;\n  while Y ≠ X  do\n    Z := Z + X;\n    Y := Y + 1\n  end\n{{ Z = m*m }}\n```\n\nWORK IN CLASS\n\nThe first thing to note is that the loop reads `X` but doesn't",
+   "new": "Here is a program that squares `X` by repeated addition:\n\n```display\n{{ X = m }}\n  Y := 0;\n  Z := 0;\n  while Y ≠ X  do\n    Z := Z + X;\n    Y := Y + 1\n  end\n{{ Z = m*m }}\n```\n\n::::terse\nWORK IN CLASS\n::::\n\n::::full\nThe first thing to note is that the loop reads `X` but doesn't",
+   "why": "Same issue as Finding Square Roots just above: the Rocq original (old/orig-plf-files/Hoare2.v:2195-2209) leaves this intro and display plain and only marks the continuation FULL; move the ::::full open to the continuation and add the missing ::::terse WORK IN CLASS :::: block."
+  },
+  {
+   "id": "p3",
+   "cat": "structure/exercise-visibility",
+   "old": ":::::exercise (rating := 1) (name := \"wp\") (optional := true)\nWhat are weakest preconditions of the following commands",
+   "new": ":::::exercise (rating := 1) (name := \"wp\") (optional := true) (checkVisibility := false)\nWhat are weakest preconditions of the following commands",
+   "why": "Author decision: keep `wp` visible in every build (matching the Rocq original, which isn't inside any FULL/TERSE region either) rather than wrapping it in ::::full/::::terse; `(checkVisibility := false)` is ExerciseData's own flag for exactly this (SFLMeta/Exercise.lean), so it silences linter.sf.exerciseVisibility without a dev note."
+  },
+  {
+   "id": "p4",
+   "cat": "structure/optional-autograding",
+   "old": "    exact Com.EvalR.asgn rfl\n```\n:::gradeTheorem 2 hoare_asgn_weakest\n:::\n:::::",
+   "new": "    exact Com.EvalR.asgn rfl\n```\n:::::",
+   "why": "Author decision: drop the grading directive and leave hoare_asgn_weakest as a plain optional exercise, rather than the book's only optional-and-graded exercise; resolves linter.sf.optionalAutograding directly."
+  }
+ ],
+ "completed": true
+}

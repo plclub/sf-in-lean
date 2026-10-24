@@ -81,6 +81,10 @@ r##"
 .sf-display pre code {
   font-family: var(--verso-code-font-family, monospace);
   white-space: pre;
+  /* Undo the theme's inline-code padding/background: on an inline <code>,
+     left padding only shifts the first line. */
+  padding: 0;
+  background: none;
 }
 "##
   ]
@@ -130,6 +134,10 @@ r##"
 .sf-display-centered pre code {
   font-family: var(--verso-code-font-family, monospace);
   white-space: pre;
+  /* Undo the theme's inline-code padding/background: on an inline <code>,
+     left padding only shifts the first line. */
+  padding: 0;
+  background: none;
 }
 "##
   ]

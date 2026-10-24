@@ -1,0 +1,183 @@
+{
+ "file": "TS/Types.lean",
+ "chapter": "Types",
+ "round": 1,
+ "proposals": [
+  {
+   "id": "width1",
+   "cat": "formatting/line-width",
+   "old": "  | succStep (t₁ t₁' : Tm) (h : t₁ ⟶ t₁') : <{ succ t₁ }> ⟶ <{ succ t₁' }>",
+   "new": "  | succStep (t₁ t₁' : Tm) (h : t₁ ⟶ t₁') :\n      <{ succ t₁ }> ⟶ <{ succ t₁' }>",
+   "why": "Reflow to fit 70 columns, matching the `ifStep` constructor above."
+  },
+  {
+   "id": "width2",
+   "cat": "formatting/line-width",
+   "old": "  | predStep (t₁ t₁' : Tm) (h : t₁ ⟶ t₁') : <{ pred t₁ }> ⟶ <{ pred t₁' }>",
+   "new": "  | predStep (t₁ t₁' : Tm) (h : t₁ ⟶ t₁') :\n      <{ pred t₁ }> ⟶ <{ pred t₁' }>",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width3",
+   "cat": "formatting/line-width",
+   "old": "  | isZeroSucc (v : Tm) (hv : Tm.IsNValue v) : <{ iszero (succ v) }> ⟶ <{ false }>",
+   "new": "  | isZeroSucc (v : Tm) (hv : Tm.IsNValue v) :\n      <{ iszero (succ v) }> ⟶ <{ false }>",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width4",
+   "cat": "formatting/line-width",
+   "old": "  | isZeroStep (t₁ t₁' : Tm) (h : t₁ ⟶ t₁') : <{ iszero t₁ }> ⟶ <{ iszero t₁' }>",
+   "new": "  | isZeroStep (t₁ t₁' : Tm) (h : t₁ ⟶ t₁') :\n      <{ iszero t₁ }> ⟶ <{ iszero t₁' }>",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width5",
+   "cat": "formatting/line-width",
+   "old": "  | isZeroStep (t₁ t₁' : Tm) : t₁ ⇢ t₁' → <{ iszero t₁ }> ⇢ <{ iszero t₁' }>",
+   "new": "  | isZeroStep (t₁ t₁' : Tm) : t₁ ⇢ t₁' →\n      <{ iszero t₁ }> ⇢ <{ iszero t₁' }>",
+   "why": "Reflow to fit 70 columns, matching the `ifStep` constructor above."
+  },
+  {
+   "id": "width6",
+   "cat": "formatting/line-width",
+   "old": "  | ite (t₁ t₂ t₃ : Tm) (τ : Ty)\n      (h₁ : <{ ⊢ t₁ ⦂ Bool }>) (h₂ : <{ ⊢ t₂ ⦂ τ }>) (h₃ : <{ ⊢ t₃ ⦂ τ }>) :\n      <{ ⊢ if t₁ then t₂ else t₃ ⦂ τ }>",
+   "new": "  | ite (t₁ t₂ t₃ : Tm) (τ : Ty)\n      (h₁ : <{ ⊢ t₁ ⦂ Bool }>) (h₂ : <{ ⊢ t₂ ⦂ τ }>)\n      (h₃ : <{ ⊢ t₃ ⦂ τ }>) :\n      <{ ⊢ if t₁ then t₂ else t₃ ⦂ τ }>",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width7",
+   "cat": "formatting/line-width",
+   "old": "@[delab app.TM.Tm.tru, delab app.TM.Tm.fls, delab app.TM.Tm.zero, delab app.TM.Tm.succ,\n  delab app.TM.Tm.pred, delab app.TM.Tm.isZero, delab app.TM.Tm.ite]",
+   "new": "@[delab app.TM.Tm.tru, delab app.TM.Tm.fls, delab app.TM.Tm.zero,\n  delab app.TM.Tm.succ, delab app.TM.Tm.pred, delab app.TM.Tm.isZero,\n  delab app.TM.Tm.ite]",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width8",
+   "cat": "formatting/line-width",
+   "old": "theorem nvalue_is_nf (t : Tm) (h : Tm.IsNValue t) : Tm.IsNormalForm t := by",
+   "new": "theorem nvalue_is_nf (t : Tm)\n    (h : Tm.IsNValue t) : Tm.IsNormalForm t := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width9",
+   "cat": "formatting/line-width",
+   "old": "theorem value_is_nf (t : Tm) (h : Tm.IsValue t) : Tm.IsNormalForm t := by",
+   "new": "theorem value_is_nf (t : Tm)\n    (h : Tm.IsValue t) : Tm.IsNormalForm t := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width10",
+   "cat": "formatting/line-width",
+   "old": "theorem value_is_nf' (t : Tm) (h : Tm.IsValue t) : Tm.IsNormalForm t := by",
+   "new": "theorem value_is_nf' (t : Tm)\n    (h : Tm.IsValue t) : Tm.IsNormalForm t := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width11",
+   "cat": "formatting/line-width",
+   "old": "theorem bool_canonical (t : Tm) (hT : <{ ⊢ t ⦂ Bool }>) (hv : Tm.IsValue t) : Tm.IsBValue t := by",
+   "new": "theorem bool_canonical (t : Tm) (hT : <{ ⊢ t ⦂ Bool }>)\n    (hv : Tm.IsValue t) : Tm.IsBValue t := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width12",
+   "cat": "formatting/line-width",
+   "old": "theorem nat_canonical (t : Tm) (hT : <{ ⊢ t ⦂ Nat }>) (hv : Tm.IsValue t) : Tm.IsNValue t := by",
+   "new": "theorem nat_canonical (t : Tm) (hT : <{ ⊢ t ⦂ Nat }>)\n    (hv : Tm.IsValue t) : Tm.IsNValue t := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width13",
+   "cat": "formatting/line-width",
+   "old": "theorem progress (t : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>) : Tm.IsValue t ∨ ∃ t', t ⟶ t' := by",
+   "new": "theorem progress (t : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>) :\n    Tm.IsValue t ∨ ∃ t', t ⟶ t' := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width14",
+   "cat": "formatting/line-width",
+   "old": "theorem preservation (t t' : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>) (he : t ⟶ t') : <{ ⊢ t' ⦂ τ }> := by",
+   "new": "theorem preservation (t t' : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>)\n    (he : t ⟶ t') : <{ ⊢ t' ⦂ τ }> := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width15",
+   "cat": "formatting/line-width",
+   "old": "theorem preservation' (t t' : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>) (he : t ⟶ t') : <{ ⊢ t' ⦂ τ }> := by",
+   "new": "theorem preservation' (t t' : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>)\n    (he : t ⟶ t') : <{ ⊢ t' ⦂ τ }> := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width16",
+   "cat": "formatting/line-width",
+   "old": "theorem soundness (t t' : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>) (hm : t ⟶* t') : ¬ Tm.IsStuck t' := by",
+   "new": "theorem soundness (t t' : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>)\n    (hm : t ⟶* t') : ¬ Tm.IsStuck t' := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width17",
+   "cat": "formatting/line-width",
+   "old": "theorem subject_expansion :\n    (∀ (t t' : Tm) (τ : Ty), t ⟶ t' ∧ <{ ⊢ t' ⦂ τ }> → <{ ⊢ t ⦂ τ }>)\n    ∨ ¬ (∀ (t t' : Tm) (τ : Ty), t ⟶ t' ∧ <{ ⊢ t' ⦂ τ }> → <{ ⊢ t ⦂ τ }>) := by",
+   "new": "theorem subject_expansion :\n    (∀ (t t' : Tm) (τ : Ty), t ⟶ t' ∧ <{ ⊢ t' ⦂ τ }> → <{ ⊢ t ⦂ τ }>)\n    ∨ ¬ (∀ (t t' : Tm) (τ : Ty),\n          t ⟶ t' ∧ <{ ⊢ t' ⦂ τ }> → <{ ⊢ t ⦂ τ }>) := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "proofby1",
+   "cat": "style/proof-by",
+   "old": "example : alt_simplify_step <{ pred (succ true) }> = some <{ true }> := rfl",
+   "new": "example :\n    alt_simplify_step <{ pred (succ true) }> = some <{ true }> := by\n  rfl",
+   "why": "Open with `by`/`rfl` rather than a bare term-mode proof; reflow to fit 70 columns."
+  },
+  {
+   "id": "proofby2",
+   "cat": "style/proof-by",
+   "old": "example : alt_simplify_step <{ if true then 0 else succ 0 }> = some <{ 0 }> := rfl",
+   "new": "example :\n    alt_simplify_step <{ if true then 0 else succ 0 }> =\n      some <{ 0 }> := by\n  rfl",
+   "why": "Open with `by`/`rfl` rather than a bare term-mode proof; reflow to fit 70 columns."
+  },
+  {
+   "id": "proofby3",
+   "cat": "style/proof-by",
+   "old": "example : alt_simplify_step <{ 0 }> = none := rfl",
+   "new": "example : alt_simplify_step <{ 0 }> = none := by rfl",
+   "why": "Open with `by`/`rfl` rather than a bare term-mode proof."
+  },
+  {
+   "id": "proofby4",
+   "cat": "style/proof-by",
+   "old": "example : <{ ⊢ if false then 0 else succ 0 ⦂ Nat }> :=\n  .ite _ _ _ _ .fls .zero (.succ _ .zero)",
+   "new": "example : <{ ⊢ if false then 0 else succ 0 ⦂ Nat }> := by\n  exact .ite _ _ _ _ .fls .zero (.succ _ .zero)",
+   "why": "Open with `by`/`exact` rather than a bare term-mode proof."
+  },
+  {
+   "id": "format_space1",
+   "cat": "formatting/stray-space",
+   "old": "  | `(<{ ~$e }>)  => pure e",
+   "new": "  | `(<{ ~$e }>) => pure e",
+   "why": "Stray double space before `=>` (not part of the surrounding arms' alignment)."
+  },
+  {
+   "id": "format_space2",
+   "cat": "formatting/stray-space",
+   "old": "constructors. We achieve this by defining  `Tm.Step` within a `section`,",
+   "new": "constructors. We achieve this by defining `Tm.Step` within a `section`,",
+   "why": "Stray double space mid-sentence."
+  },
+  {
+   "id": "rulefig1",
+   "cat": "formatting/rule-figure",
+   "old": "```\n                   -----------------------------                 (ifTrue)\n                   if true then t₁ else t₂ ⟶ t₁\n\n                   ------------------------------                (ifFalse)\n                   if false then t₁ else t₂ ⟶ t₂\n\n                              t₁ ⟶ t₁'\n            -----------------------------------------------      (ifStep)\n            if t₁ then t₂ else t₃ ⟶ if t₁' then t₂ else t₃\n\n                              t₁ ⟶ t₁'\n                         -------------------                     (succStep)\n                         succ t₁ ⟶ succ t₁'\n\n                           -----------                           (predZero)\n                           pred 0 ⟶ 0\n\n                            IsNValue v\n                        ------------------                       (predSucc)\n                        pred (succ v) ⟶ v\n\n                              t₁ ⟶ t₁'\n                         -------------------                     (predStep)\n                         pred t₁ ⟶ pred t₁'\n\n                          ----------------                       (isZeroZero)\n                          iszero 0 ⟶ true\n\n                             IsNValue v\n                      ------------------------                   (isZeroSucc)\n                      iszero (succ v) ⟶ false\n\n                              t₁ ⟶ t₁'\n                       -----------------------                   (isZeroStep)\n                       iszero t₁ ⟶ iszero t₁'\n```",
+   "new": "```display +centered\n         ----------------------------           (ifTrue)\n         if true then t₁ else t₂ ⟶ t₁\n\n        -----------------------------           (ifFalse)\n        if false then t₁ else t₂ ⟶ t₂\n\n                   t₁ ⟶ t₁'\n----------------------------------------------  (ifStep)\nif t₁ then t₂ else t₃ ⟶ if t₁' then t₂ else t₃\n\n                   t₁ ⟶ t₁'\n              ------------------                (succStep)\n              succ t₁ ⟶ succ t₁'\n\n                  ----------                    (predZero)\n                  pred 0 ⟶ 0\n\n                 IsNValue v\n              -----------------                 (predSucc)\n              pred (succ v) ⟶ v\n\n                   t₁ ⟶ t₁'\n              ------------------                (predStep)\n              pred t₁ ⟶ pred t₁'\n\n               ---------------                  (isZeroZero)\n               iszero 0 ⟶ true\n\n                 IsNValue v\n           -----------------------              (isZeroSucc)\n           iszero (succ v) ⟶ false\n\n                   t₁ ⟶ t₁'\n            ----------------------              (isZeroStep)\n            iszero t₁ ⟶ iszero t₁'\n```",
+   "why": "Use `display +centered` (not a bare fence), move the figure to a minimal left margin. `ifTrue`/`ifFalse`/`predZero`/`predSucc` are too unbalanced around `⟶` to symbol-align, so per STYLE-CODE.md the whole block is centered instead (every rule, including the balanced ones)."
+  },
+  {
+   "id": "rulefig2",
+   "cat": "formatting/rule-figure",
+   "old": "```\n                     -------------                (tru)\n                     ⊢ true ⦂ Bool\n\n                     --------------               (fls)\n                     ⊢ false ⦂ Bool\n\n          ⊢ t₁ ⦂ Bool    ⊢ t₂ ⦂ τ    ⊢ t₃ ⦂ τ\n          -----------------------------------     (ite)\n              ⊢ if t₁ then t₂ else t₃ ⦂ τ\n\n                       ---------                  (zero)\n                       ⊢ 0 ⦂ Nat\n\n                      ⊢ t₁ ⦂ Nat\n                    ---------------               (succ)\n                    ⊢ succ t₁ ⦂ Nat\n\n                      ⊢ t₁ ⦂ Nat\n                    ---------------               (pred)\n                    ⊢ pred t₁ ⦂ Nat\n\n                      ⊢ t₁ ⦂ Nat\n                   ------------------             (isZero)\n                   ⊢ iszero t₁ ⦂ Bool\n```",
+   "new": "```display +centered\n       -------------         (tru)\n       ⊢ true ⦂ Bool\n\n      --------------         (fls)\n      ⊢ false ⦂ Bool\n\n        ⊢ t₁ ⦂ Bool\n         ⊢ t₂ ⦂ τ\n         ⊢ t₃ ⦂ τ\n---------------------------  (ite)\n⊢ if t₁ then t₂ else t₃ ⦂ τ\n\n         ---------           (zero)\n         ⊢ 0 ⦂ Nat\n\n        ⊢ t₁ ⦂ Nat\n      ---------------        (succ)\n      ⊢ succ t₁ ⦂ Nat\n\n        ⊢ t₁ ⦂ Nat\n      ---------------        (pred)\n      ⊢ pred t₁ ⦂ Nat\n\n        ⊢ t₁ ⦂ Nat\n    ------------------       (isZero)\n    ⊢ iszero t₁ ⦂ Bool\n```",
+   "why": "Use `display +centered`, move left, split the `ite` rule's three premises (packed on one source line) onto separate lines. `ite` is too unbalanced around `⦂` to symbol-align, so per STYLE-CODE.md the whole block is centered instead (every rule)."
+  }
+ ],
+ "completed": true
+}

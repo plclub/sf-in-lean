@@ -1,0 +1,393 @@
+{
+ "file": "HL/Hoare.lean",
+ "chapter": "Hoare",
+ "round": 1,
+ "proposals": [
+  {
+   "id": "p01",
+   "cat": "markup/stray-directive",
+   "old": "Hoare logic and give some pointers to good books (Esp. JCR's).\n:::\n\n\n:::\n\n# Assertions",
+   "new": "Hoare logic and give some pointers to good books (Esp. JCR's).\n:::\n\n# Assertions",
+   "why": "This `:::` has no matching open directive (the preceding `:::dev` block already closed on the line above), so Verso reads it as the start of an unnamed directive that swallows everything up to the next `:::` — breaking the parse of the rest of the chapter (cascading `Wrong header nesting` / `Unknown identifier` errors from here on, confirmed by `lake build`). Deleting the orphaned marker and the extra blank line restores a clean build."
+  },
+  {
+   "id": "p02",
+   "cat": "formatting/line-width",
+   "old": "theorem validHoareTriple_def {P : Assertion} {c : Com} {Q : Assertion} :\n    {{ P }} c {{ Q }} ↔ ∀ {st st' : State},\n      (st =[ c ]=> st') →\n      P st →\n      Q st' := by rfl\n\nattribute [irreducible] ValidHoareTriple\n```\n\n::::details \"Notation encoding: printing triples back\"",
+   "new": "theorem validHoareTriple_def {P : Assertion} {c : Com}\n    {Q : Assertion} :\n    {{ P }} c {{ Q }} ↔ ∀ {st st' : State},\n      (st =[ c ]=> st') →\n      P st →\n      Q st' := by rfl\n\nattribute [irreducible] ValidHoareTriple\n```\n\n::::details \"Notation encoding: printing triples back\"",
+   "why": "Line exceeds 70 columns; split the last binder group onto its own indented line, as `map_cons` in STYLE-CODE.md illustrates."
+  },
+  {
+   "id": "p03",
+   "cat": "formatting/line-width",
+   "old": "theorem validHoareTriple_def {P : Assertion} {c : Com} {Q : Assertion} :\n    {{ P }} c {{ Q }} ↔ ∀ {st st' : State},\n      (st =[ c ]=> st') →\n      P st →\n      Q st' := by rfl\n\nattribute [irreducible] ValidHoareTriple\n```\n\n:::ignore\n```lean -show\n/-- info: {{True}} if1 (X = 0)",
+   "new": "theorem validHoareTriple_def {P : Assertion} {c : Com}\n    {Q : Assertion} :\n    {{ P }} c {{ Q }} ↔ ∀ {st st' : State},\n      (st =[ c ]=> st') →\n      P st →\n      Q st' := by rfl\n\nattribute [irreducible] ValidHoareTriple\n```\n\n:::ignore\n```lean -show\n/-- info: {{True}} if1 (X = 0)",
+   "why": "Line exceeds 70 columns; split the last binder group onto its own indented line, as `map_cons` in STYLE-CODE.md illustrates."
+  },
+  {
+   "id": "p04",
+   "cat": "formatting/line-width",
+   "old": "theorem validHoareTriple_def {P : Assertion} {c : Com} {Q : Assertion} :\n    {{ P }} c {{ Q }} ↔ ∀ {st st' : State},\n      (st =[ c ]=> st') →\n      P st →\n      Q st' := by rfl\n\nattribute [irreducible] ValidHoareTriple\n```\n\nTo make sure you've got the evaluation rules for `repeat` right,",
+   "new": "theorem validHoareTriple_def {P : Assertion} {c : Com}\n    {Q : Assertion} :\n    {{ P }} c {{ Q }} ↔ ∀ {st st' : State},\n      (st =[ c ]=> st') →\n      P st →\n      Q st' := by rfl\n\nattribute [irreducible] ValidHoareTriple\n```\n\nTo make sure you've got the evaluation rules for `repeat` right,",
+   "why": "Line exceeds 70 columns; split the last binder group onto its own indented line, as `map_cons` in STYLE-CODE.md illustrates."
+  },
+  {
+   "id": "p05",
+   "cat": "formatting/line-width",
+   "old": "theorem validHoareTriple_def {P : Assertion} {c : Com} {Q : Assertion} :\n    {{ P }} c {{ Q }} ↔ ∀ {st st' : State},\n      (st =[ c ]=> st') →\n      P st →\n      Q st' := by rfl\n\nattribute [irreducible] ValidHoareTriple\n```\n\nAnd the precondition consequence rule is exactly as before.",
+   "new": "theorem validHoareTriple_def {P : Assertion} {c : Com}\n    {Q : Assertion} :\n    {{ P }} c {{ Q }} ↔ ∀ {st st' : State},\n      (st =[ c ]=> st') →\n      P st →\n      Q st' := by rfl\n\nattribute [irreducible] ValidHoareTriple\n```\n\nAnd the precondition consequence rule is exactly as before.",
+   "why": "Line exceeds 70 columns; split the last binder group onto its own indented line, as `map_cons` in STYLE-CODE.md illustrates."
+  },
+  {
+   "id": "p06",
+   "cat": "formatting/line-width",
+   "old": "theorem validHoareTriple_def {P : Assertion} {c : Com} {Q : Assertion} :\n    {{ P }} c {{ Q }} ↔ ∀ {st : State} {r : Result},",
+   "new": "theorem validHoareTriple_def {P : Assertion} {c : Com}\n    {Q : Assertion} :\n    {{ P }} c {{ Q }} ↔ ∀ {st : State} {r : Result},",
+   "why": "Line exceeds 70 columns; split the last binder group onto its own indented line, matching the sibling `validHoareTriple_def` declarations earlier in the chapter."
+  },
+  {
+   "id": "p07",
+   "cat": "formatting/line-width",
+   "old": "      subst h hx\n      rw [TotalMap.update_eq, TotalMap.update_shadow, TotalMap.update_same]",
+   "new": "      subst h hx\n      rw [TotalMap.update_eq, TotalMap.update_shadow,\n        TotalMap.update_same]",
+   "why": "Line exceeds 70 columns; split the lemma list across two lines."
+  },
+  {
+   "id": "p08",
+   "cat": "formatting/line-width",
+   "old": "      exists st[X]\n      rw [TotalMap.update_eq, TotalMap.update_shadow, TotalMap.update_same]",
+   "new": "      exists st[X]\n      rw [TotalMap.update_eq, TotalMap.update_shadow,\n        TotalMap.update_same]",
+   "why": "Line exceeds 70 columns; split the lemma list across two lines."
+  },
+  {
+   "id": "p09",
+   "cat": "formatting/line-width",
+   "old": "    {{X ≤ Y}} := by\n  apply hoare_if <;> apply hoare_consequence_pre hoare_asgn (by assertion_auto)",
+   "new": "    {{X ≤ Y}} := by\n  apply hoare_if <;>\n    apply hoare_consequence_pre hoare_asgn (by assertion_auto)",
+   "why": "Line exceeds 70 columns; split after `<;>` onto an indented continuation line."
+  },
+  {
+   "id": "p10",
+   "cat": "formatting/line-width",
+   "old": "    {{Y = X + Z}} := by\n  solution!\n    apply hoare_if <;> apply hoare_consequence_pre hoare_asgn (by assertion_auto)",
+   "new": "    {{Y = X + Z}} := by\n  solution!\n    apply hoare_if <;>\n      apply hoare_consequence_pre hoare_asgn (by assertion_auto)",
+   "why": "Line exceeds 70 columns; split after `<;>` onto an indented continuation line."
+  },
+  {
+   "id": "p11",
+   "cat": "formatting/line-width",
+   "old": "  | asgn {st : State} {a : Aexp} {n : Nat} {x : Ident} (h : a.eval st = n) :\n      EvalR (imp {x := a}) st (x →ₜ n ; st)\n  | seq {c₁ c₂ : Com} {st st' st'' : State} (h₁ : EvalR c₁ st st') (h₂ : EvalR c₂ st' st'') :\n      EvalR (imp {c₁; c₂}) st st''\n  | ifTrue {st st' : State} {b : Bexp} {c₁ c₂ : Com} (hb : b.eval st = true)\n      (hc : EvalR c₁ st st') :\n      EvalR (imp {if (b) {c₁} else {c₂} }) st st'\n  | ifFalse {st st' : State} {b : Bexp} {c₁ c₂ : Com} (hb : b.eval st = false)\n      (hc : EvalR c₂ st st') :\n      EvalR (imp {if (b) {c₁} else {c₂} }) st st'\n  | whileFalse {b : Bexp} {st : State} {c : Com} (hb : b.eval st = false) :\n      EvalR (imp {while (b) {c} }) st st\n  | whileTrue {st st' st'' : State} {b : Bexp} {c : Com} (hb : b.eval st = true)\n      (hc : EvalR c st st') (hloop : Com.EvalR (imp {while (b) {c} }) st' st'') :\n      EvalR (imp {while (b) {c} }) st st''\n-- SOLUTION\n  | if1True {st st' : State} {b : Bexp} {c : Com} (hb : b.eval st = true)\n      (hc : EvalR c st st') :\n      EvalR (imp {if1 (b) {c} }) st st'\n  | if1False {st : State} {b : Bexp} {c : Com} (hb : b.eval st = false) :\n      EvalR (imp {if1 (b) {c} }) st st",
+   "new": "  | asgn {st : State} {a : Aexp} {n : Nat} {x : Ident}\n      (h : a.eval st = n) :\n      EvalR (imp {x := a}) st (x →ₜ n ; st)\n  | seq {c₁ c₂ : Com} {st st' st'' : State}\n      (h₁ : EvalR c₁ st st') (h₂ : EvalR c₂ st' st'') :\n      EvalR (imp {c₁; c₂}) st st''\n  | ifTrue {st st' : State} {b : Bexp} {c₁ c₂ : Com}\n      (hb : b.eval st = true) (hc : EvalR c₁ st st') :\n      EvalR (imp {if (b) {c₁} else {c₂} }) st st'\n  | ifFalse {st st' : State} {b : Bexp} {c₁ c₂ : Com}\n      (hb : b.eval st = false) (hc : EvalR c₂ st st') :\n      EvalR (imp {if (b) {c₁} else {c₂} }) st st'\n  | whileFalse {b : Bexp} {st : State} {c : Com}\n      (hb : b.eval st = false) :\n      EvalR (imp {while (b) {c} }) st st\n  | whileTrue {st st' st'' : State} {b : Bexp} {c : Com}\n      (hb : b.eval st = true) (hc : EvalR c st st')\n      (hloop : Com.EvalR (imp {while (b) {c} }) st' st'') :\n      EvalR (imp {while (b) {c} }) st st''\n-- SOLUTION\n  | if1True {st st' : State} {b : Bexp} {c : Com}\n      (hb : b.eval st = true) (hc : EvalR c st st') :\n      EvalR (imp {if1 (b) {c} }) st st'\n  | if1False {st : State} {b : Bexp} {c : Com}\n      (hb : b.eval st = false) :\n      EvalR (imp {if1 (b) {c} }) st st",
+   "why": "Line exceeds 70 columns; reflowed to match the binder-splitting convention PROOFREADING.md points to (`Com.EvalR` in `HL/Imp.lean`): implicit binders on the constructor's own line, explicit hypotheses and the conclusion on indented continuation lines."
+  },
+  {
+   "id": "p12",
+   "cat": "formatting/line-width",
+   "old": "  | asgn {st : State} {a : Aexp} {n : Nat} {x : Ident} (h : a.eval st = n) :\n      EvalR (imp {x := a}) st (x →ₜ n ; st)\n  | seq {c₁ c₂ : Com} {st st' st'' : State} (h₁ : EvalR c₁ st st') (h₂ : EvalR c₂ st' st'') :\n      EvalR (imp {c₁; c₂}) st st''\n  | ifTrue {st st' : State} {b : Bexp} {c₁ c₂ : Com} (hb : b.eval st = true)\n      (hc : EvalR c₁ st st') :\n      EvalR (imp {if (b) {c₁} else {c₂} }) st st'\n  | ifFalse {st st' : State} {b : Bexp} {c₁ c₂ : Com} (hb : b.eval st = false)\n      (hc : EvalR c₂ st st') :\n      EvalR (imp {if (b) {c₁} else {c₂} }) st st'\n  | whileFalse {b : Bexp} {st : State} {c : Com} (hb : b.eval st = false) :\n      EvalR (imp {while (b) {c} }) st st\n  | whileTrue {st st' st'' : State} {b : Bexp} {c : Com} (hb : b.eval st = true)\n      (hc : EvalR c st st') (hloop : Com.EvalR (imp {while (b) {c} }) st' st'') :\n      EvalR (imp {while (b) {c} }) st st''\n-- SOLUTION\n  | repeatEnd {st st' : State} {b : Bexp} {c : Com} (hc : EvalR c st st')\n      (hb : b.eval st' = true) :\n      EvalR (imp {repeat {c} until (b) }) st st'",
+   "new": "  | asgn {st : State} {a : Aexp} {n : Nat} {x : Ident}\n      (h : a.eval st = n) :\n      EvalR (imp {x := a}) st (x →ₜ n ; st)\n  | seq {c₁ c₂ : Com} {st st' st'' : State}\n      (h₁ : EvalR c₁ st st') (h₂ : EvalR c₂ st' st'') :\n      EvalR (imp {c₁; c₂}) st st''\n  | ifTrue {st st' : State} {b : Bexp} {c₁ c₂ : Com}\n      (hb : b.eval st = true) (hc : EvalR c₁ st st') :\n      EvalR (imp {if (b) {c₁} else {c₂} }) st st'\n  | ifFalse {st st' : State} {b : Bexp} {c₁ c₂ : Com}\n      (hb : b.eval st = false) (hc : EvalR c₂ st st') :\n      EvalR (imp {if (b) {c₁} else {c₂} }) st st'\n  | whileFalse {b : Bexp} {st : State} {c : Com}\n      (hb : b.eval st = false) :\n      EvalR (imp {while (b) {c} }) st st\n  | whileTrue {st st' st'' : State} {b : Bexp} {c : Com}\n      (hb : b.eval st = true) (hc : EvalR c st st')\n      (hloop : Com.EvalR (imp {while (b) {c} }) st' st'') :\n      EvalR (imp {while (b) {c} }) st st''\n-- SOLUTION\n  | repeatEnd {st st' : State} {b : Bexp} {c : Com}\n      (hc : EvalR c st st') (hb : b.eval st' = true) :\n      EvalR (imp {repeat {c} until (b) }) st st'",
+   "why": "Line exceeds 70 columns; reflowed to match the binder-splitting convention PROOFREADING.md points to (`Com.EvalR` in `HL/Imp.lean`): implicit binders on the constructor's own line, explicit hypotheses and the conclusion on indented continuation lines."
+  },
+  {
+   "id": "p13",
+   "cat": "formatting/line-width",
+   "old": "  | asgn {st : State} {a : Aexp} {n : Nat} {x : Ident} (h : a.eval st = n) :\n      EvalR (imp {x := a}) st (x →ₜ n ; st)\n  | seq {c₁ c₂ : Com} {st st' st'' : State} (h₁ : EvalR c₁ st st') (h₂ : EvalR c₂ st' st'') :\n      EvalR (imp {c₁; c₂}) st st''\n  | ifTrue {st st' : State} {b : Bexp} {c₁ c₂ : Com} (hb : b.eval st = true)\n      (hc : EvalR c₁ st st') :\n      EvalR (imp {if (b) {c₁} else {c₂} }) st st'\n  | ifFalse {st st' : State} {b : Bexp} {c₁ c₂ : Com} (hb : b.eval st = false)\n      (hc : EvalR c₂ st st') :\n      EvalR (imp {if (b) {c₁} else {c₂} }) st st'\n  | whileFalse {b : Bexp} {st : State} {c : Com} (hb : b.eval st = false) :\n      EvalR (imp {while (b) {c} }) st st\n  | whileTrue {st st' st'' : State} {b : Bexp} {c : Com} (hb : b.eval st = true)\n      (hc : EvalR c st st') (hloop : Com.EvalR (imp {while (b) {c} }) st' st'') :\n      EvalR (imp {while (b) {c} }) st st''\n  | havoc {st : State} {x : Ident} {n : Nat} :\n      EvalR (imp {havoc x}) st (x →ₜ n ; st)",
+   "new": "  | asgn {st : State} {a : Aexp} {n : Nat} {x : Ident}\n      (h : a.eval st = n) :\n      EvalR (imp {x := a}) st (x →ₜ n ; st)\n  | seq {c₁ c₂ : Com} {st st' st'' : State}\n      (h₁ : EvalR c₁ st st') (h₂ : EvalR c₂ st' st'') :\n      EvalR (imp {c₁; c₂}) st st''\n  | ifTrue {st st' : State} {b : Bexp} {c₁ c₂ : Com}\n      (hb : b.eval st = true) (hc : EvalR c₁ st st') :\n      EvalR (imp {if (b) {c₁} else {c₂} }) st st'\n  | ifFalse {st st' : State} {b : Bexp} {c₁ c₂ : Com}\n      (hb : b.eval st = false) (hc : EvalR c₂ st st') :\n      EvalR (imp {if (b) {c₁} else {c₂} }) st st'\n  | whileFalse {b : Bexp} {st : State} {c : Com}\n      (hb : b.eval st = false) :\n      EvalR (imp {while (b) {c} }) st st\n  | whileTrue {st st' st'' : State} {b : Bexp} {c : Com}\n      (hb : b.eval st = true) (hc : EvalR c st st')\n      (hloop : Com.EvalR (imp {while (b) {c} }) st' st'') :\n      EvalR (imp {while (b) {c} }) st st''\n  | havoc {st : State} {x : Ident} {n : Nat} :\n      EvalR (imp {havoc x}) st (x →ₜ n ; st)",
+   "why": "Line exceeds 70 columns; reflowed to match the binder-splitting convention PROOFREADING.md points to (`Com.EvalR` in `HL/Imp.lean`): implicit binders on the constructor's own line, explicit hypotheses and the conclusion on indented continuation lines."
+  },
+  {
+   "id": "p14",
+   "cat": "formatting/line-width",
+   "old": "  | asgn {st : State} {a : Aexp} {n : Nat} {x : Ident} (h : a.eval st = n) :\n      EvalR (imp {x := a}) st (.normal (x →ₜ n ; st))",
+   "new": "  | asgn {st : State} {a : Aexp} {n : Nat} {x : Ident}\n      (h : a.eval st = n) :\n      EvalR (imp {x := a}) st (.normal (x →ₜ n ; st))",
+   "why": "Line exceeds 70 columns; reflowed to match the binder-splitting convention PROOFREADING.md points to (`Com.EvalR` in `HL/Imp.lean`): implicit binders on the constructor's own line, explicit hypotheses and the conclusion on indented continuation lines."
+  },
+  {
+   "id": "p15",
+   "cat": "formatting/line-width",
+   "old": "  | whileFalse {b : Bexp} {st : State} {c : Com} (hb : b.eval st = false) :\n      EvalR (imp {while (b) {c} }) st (.normal st)",
+   "new": "  | whileFalse {b : Bexp} {st : State} {c : Com}\n      (hb : b.eval st = false) :\n      EvalR (imp {while (b) {c} }) st (.normal st)",
+   "why": "Line exceeds 70 columns; reflowed to match the binder-splitting convention PROOFREADING.md points to (`Com.EvalR` in `HL/Imp.lean`): implicit binders on the constructor's own line, explicit hypotheses and the conclusion on indented continuation lines."
+  },
+  {
+   "id": "p16",
+   "cat": "formatting/line-width",
+   "old": "  | `({{ $t }}) => `((fun st : _root_.State => assn(st; $t) : Assertion))\n",
+   "new": "  | `({{ $t }}) =>\n      `((fun st : _root_.State => assn(st; $t) : Assertion))\n",
+   "why": "Line exceeds 70 columns; split the macro-rule arm's pattern and body across two lines."
+  },
+  {
+   "id": "p17",
+   "cat": "formatting/line-width",
+   "old": "        if body.isProp && (← isDefEq domain (mkConst ``_root_.State)) then\n",
+   "new": "        if body.isProp &&\n            (← isDefEq domain (mkConst ``_root_.State)) then\n",
+   "why": "Line exceeds 70 columns; wrapped onto a continuation line without changing any token."
+  },
+  {
+   "id": "p18",
+   "cat": "formatting/line-width",
+   "old": "      `($(← withAppFn <| withAppArg (delabBody stId)) + $(← withAppArg (delabBody stId)))\n    | HSub.hSub _ _ _ _ _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) - $(← withAppArg (delabBody stId)))\n    | HMul.hMul _ _ _ _ _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) * $(← withAppArg (delabBody stId)))\n    | Eq _ l r =>\n      -- `Bexp.eval st b = true` is the threaded form of a bare boolean `b`\n",
+   "new": "      `($(← withAppFn <| withAppArg (delabBody stId)) +\n        $(← withAppArg (delabBody stId)))\n    | HSub.hSub _ _ _ _ _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) -\n        $(← withAppArg (delabBody stId)))\n    | HMul.hMul _ _ _ _ _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) *\n        $(← withAppArg (delabBody stId)))\n    | Eq _ l r =>\n      -- `Bexp.eval st b = true` is the threaded form of a bare\n      -- boolean `b`\n",
+   "why": "Line exceeds 70 columns; wrapped onto a continuation line without changing any token."
+  },
+  {
+   "id": "p19",
+   "cat": "formatting/line-width",
+   "old": "        `($(← withAppFn <| withAppArg (delabBody stId)) = $(← withAppArg (delabBody stId)))\n    | Ne _ _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) ≠ $(← withAppArg (delabBody stId)))\n    | LE.le _ _ _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) ≤ $(← withAppArg (delabBody stId)))\n    | LT.lt _ _ _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) < $(← withAppArg (delabBody stId)))\n    | GE.ge _ _ _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) ≥ $(← withAppArg (delabBody stId)))\n    | GT.gt _ _ _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) > $(← withAppArg (delabBody stId)))\n    | And _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) ∧ $(← withAppArg (delabBody stId)))\n    | Or _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) ∨ $(← withAppArg (delabBody stId)))\n    | Iff _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) ↔ $(← withAppArg (delabBody stId)))\n",
+   "new": "        `($(← withAppFn <| withAppArg (delabBody stId)) =\n          $(← withAppArg (delabBody stId)))\n    | Ne _ _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) ≠\n        $(← withAppArg (delabBody stId)))\n    | LE.le _ _ _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) ≤\n        $(← withAppArg (delabBody stId)))\n    | LT.lt _ _ _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) <\n        $(← withAppArg (delabBody stId)))\n    | GE.ge _ _ _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) ≥\n        $(← withAppArg (delabBody stId)))\n    | GT.gt _ _ _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) >\n        $(← withAppArg (delabBody stId)))\n    | And _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) ∧\n        $(← withAppArg (delabBody stId)))\n    | Or _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) ∨\n        $(← withAppArg (delabBody stId)))\n    | Iff _ _ =>\n      `($(← withAppFn <| withAppArg (delabBody stId)) ↔\n        $(← withAppArg (delabBody stId)))\n",
+   "why": "Line exceeds 70 columns; wrapped onto a continuation line without changing any token."
+  },
+  {
+   "id": "p20",
+   "cat": "formatting/line-width",
+   "old": "          -- an applied assertion `P st` (or an applied escape lambda); the\n          -- state applied to anything else (say `Result.normal st`) is not an\n          -- assertion, so the whole lambda falls back to raw printing\n",
+   "new": "          -- an applied assertion `P st` (or an applied escape\n          -- lambda); the state applied to anything else (say\n          -- `Result.normal st`) is not an assertion, so the whole\n          -- lambda falls back to raw printing\n",
+   "why": "Line exceeds 70 columns; rewrapped the comment, preserving a double space after any sentence-ending period."
+  },
+  {
+   "id": "p21",
+   "cat": "formatting/line-width",
+   "old": "          guard <| ← Meta.isDefEq fty.bindingDomain! (mkConst ``_root_.State)\n          if f.isLambda then\n            -- an applied escape lambda `(fun st' => …) st`, which is what\n            -- substituting a concrete assertion for a variable leaves behind:\n            -- print its body with `st` in place of `st'`\n",
+   "new": "          guard <|\n            ← Meta.isDefEq fty.bindingDomain! (mkConst ``_root_.State)\n          if f.isLambda then\n            -- an applied escape lambda `(fun st' => …) st`, which is\n            -- what substituting a concrete assertion for a variable\n            -- leaves behind: print its body with `st` in place of\n            -- `st'`\n",
+   "why": "Line exceeds 70 columns; wrapped onto a continuation line without changing any token."
+  },
+  {
+   "id": "p22",
+   "cat": "formatting/line-width",
+   "old": "            -- only a name or a substitution reads back the same inside the\n            -- braces: any other applied term (say `havoc_pre x Q st`) would\n            -- have the state threaded through its arguments, so it keeps the\n            -- escape form\n            guard <| f.isFVar || f.isConst || f.isMVar || f.isAppOf `Assertion.subst\n",
+   "new": "            -- only a name or a substitution reads back the same\n            -- inside the braces: any other applied term (say\n            -- `havoc_pre x Q st`) would have the state threaded\n            -- through its arguments, so it keeps the escape form\n            guard <| f.isFVar || f.isConst || f.isMVar ||\n              f.isAppOf `Assertion.subst\n",
+   "why": "Line exceeds 70 columns; rewrapped the comment, preserving a double space after any sentence-ending period."
+  },
+  {
+   "id": "p23",
+   "cat": "formatting/line-width",
+   "old": "          `($(← withAppFn (delabBody stId)) $(← withAppArg (delabBody stId)))\n",
+   "new": "          `($(← withAppFn (delabBody stId))\n            $(← withAppArg (delabBody stId)))\n",
+   "why": "Line exceeds 70 columns; wrapped onto a continuation line without changing any token."
+  },
+  {
+   "id": "p24",
+   "cat": "formatting/line-width",
+   "old": "state lambda is un-threaded; a term the printer cannot rebuild falls back\nto the lambda itself, which is exactly this notation's escape form.  An\napplied lambda at the head of the body, `fun st => (fun st' => …) st`, is\nreduced first so that the escape form stays a single lambda. -/\n",
+   "new": "state lambda is un-threaded; a term the printer cannot rebuild falls\nback to the lambda itself, which is exactly this notation's escape\nform.  An applied lambda at the head of the body, `fun st => (fun\nst' => …) st`, is reduced first so that the escape form stays a\nsingle lambda. -/\n",
+   "why": "Line exceeds 70 columns; wrapped onto a continuation line without changing any token."
+  },
+  {
+   "id": "p25",
+   "cat": "formatting/line-width",
+   "old": "      (withBindingBody' `st (pure ·.fvarId!) fun stId => delabBody stId)\n",
+   "new": "      (withBindingBody' `st (pure ·.fvarId!) fun stId =>\n          delabBody stId)\n",
+   "why": "Line exceeds 70 columns; wrapped onto a continuation line without changing any token."
+  },
+  {
+   "id": "p26",
+   "cat": "formatting/line-width",
+   "old": "/-- Print a bare assertion lambda in `{{ … }}` notation.  Keyed on lambdas\nat large, so the guards bail out cheaply unless the binder is a `State`\nand the body is a proposition the printer can rebuild. -/\n",
+   "new": "/-- Print a bare assertion lambda in `{{ … }}` notation.  Keyed on\nlambdas at large, so the guards bail out cheaply unless the binder\nis a `State` and the body is a proposition the printer can rebuild. -/\n",
+   "why": "Line exceeds 70 columns; rewrapped the comment, preserving a double space after any sentence-ending period."
+  },
+  {
+   "id": "p27",
+   "cat": "formatting/line-width",
+   "old": "/-- An existential over states, `∃ st, …`, is printed as a binder rather\nthan as `Exists {{ … }}`: its body is a state lambda, but not an assertion. -/\n",
+   "new": "/-- An existential over states, `∃ st, …`, is printed as a binder\nrather than as `Exists {{ … }}`: its body is a state lambda, but not\nan assertion. -/\n",
+   "why": "Line exceeds 70 columns; rewrapped the comment, preserving a double space after any sentence-ending period."
+  },
+  {
+   "id": "p28",
+   "cat": "formatting/line-width",
+   "old": "theorem hoare_post_true {P Q : Assertion} {c : Com} (h : ∀ st : State, Q st) :\n",
+   "new": "theorem hoare_post_true {P Q : Assertion} {c : Com}\n    (h : ∀ st : State, Q st) :\n",
+   "why": "Line exceeds 70 columns; split the binders from the conclusion onto an indented line, as `map_cons` in STYLE-CODE.md illustrates."
+  },
+  {
+   "id": "p29",
+   "cat": "formatting/line-width",
+   "old": "theorem hoare_pre_false {P Q : Assertion} {c : Com} (h : ∀ st : State, ¬ (P st)) :\n",
+   "new": "theorem hoare_pre_false {P Q : Assertion} {c : Com}\n    (h : ∀ st : State, ¬ (P st)) :\n",
+   "why": "Line exceeds 70 columns; split the binders from the conclusion onto an indented line, as `map_cons` in STYLE-CODE.md illustrates."
+  },
+  {
+   "id": "p30",
+   "cat": "formatting/line-width",
+   "old": "def Assertion.subst (x : Ident) (a : Aexp) (P : Assertion) : Assertion :=\n",
+   "new": "def Assertion.subst (x : Ident) (a : Aexp) (P : Assertion) :\n    Assertion :=\n",
+   "why": "Line exceeds 70 columns; split the binders from the conclusion onto an indented line, as `map_cons` in STYLE-CODE.md illustrates."
+  },
+  {
+   "id": "p31",
+   "cat": "formatting/line-width",
+   "old": "/-- Assertion substitution, written inside the braces: `{{ (P) [X ↦ a] }}`.\nThe substituted assertion is re-read with the same notation, so Imp\nvariables in it mean state lookups as usual; a named assertion is passed\nthrough directly.  The high priority keeps `P [X ↦ a]` from being read as\n`P` applied to a one-element list of `KVPair`s (the `{X ↦ 1}` state\nnotation is open chapter-wide). -/\nscoped syntax:max (priority := high) term:arg \" [\" ident \" ↦ \" imp_aexp \"]\" : term\n",
+   "new": "/-- Assertion substitution, written inside the braces: `{{ (P) [X ↦ a]\n}}`. The substituted assertion is re-read with the same notation, so\nImp variables in it mean state lookups as usual; a named assertion is\npassed through directly.  The high priority keeps `P [X ↦ a]` from\nbeing read as `P` applied to a one-element list of `KVPair`s (the `{X\n↦ 1}` state notation is open chapter-wide). -/\nscoped syntax:max (priority := high) term:arg \" [\" ident \" ↦ \"\n  imp_aexp \"]\" : term\n",
+   "why": "Line exceeds 70 columns; rewrapped the comment, preserving a double space after any sentence-ending period."
+  },
+  {
+   "id": "p32",
+   "cat": "formatting/line-width",
+   "old": "/-- Print an `Assertion.subst` back in `P [x ↦ a]` notation.  Emits the\nbare inside-the-braces form: the generic application case of `delabBody`\npicks it up inside an assertion body, and the enclosing printer supplies\nthe single pair of braces. -/\n",
+   "new": "/-- Print an `Assertion.subst` back in `P [x ↦ a]` notation.  Emits\nthe bare inside-the-braces form: the generic application case of\n`delabBody` picks it up inside an assertion body, and the enclosing\nprinter supplies the single pair of braces. -/\n",
+   "why": "Line exceeds 70 columns; rewrapped the comment, preserving a double space after any sentence-ending period."
+  },
+  {
+   "id": "p33",
+   "cat": "formatting/line-width",
+   "old": "    Assertion.subst x a P = fun (st : State) => P (x →ₜ a.eval st ; st) := by rfl\n",
+   "new": "    Assertion.subst x a P =\n      fun (st : State) => P (x →ₜ a.eval st ; st) := by\n  rfl\n",
+   "why": "Line exceeds 70 columns; wrapped onto a continuation line without changing any token."
+  },
+  {
+   "id": "p34",
+   "cat": "formatting/line-width",
+   "old": "theorem subst_apply {x : Ident} {a : Aexp} {P : Assertion} {st : State} :\n",
+   "new": "theorem subst_apply {x : Ident} {a : Aexp} {P : Assertion}\n    {st : State} :\n",
+   "why": "Line exceeds 70 columns; split the binders from the conclusion onto an indented line, as `map_cons` in STYLE-CODE.md illustrates."
+  },
+  {
+   "id": "p35",
+   "cat": "formatting/line-width",
+   "old": "#check (fun st => Assertion.subst X (aexp { 2 * X }) ({{ X ≤ 10 }}) st)\n",
+   "new": "#check (fun st =>\n  Assertion.subst X (aexp { 2 * X }) ({{ X ≤ 10 }}) st)\n",
+   "why": "Line exceeds 70 columns; wrapped the tactic/term onto a continuation line without changing any token."
+  },
+  {
+   "id": "p36",
+   "cat": "formatting/line-width",
+   "old": "    have h := hc (st := ∅) (st' := {X ↦ 1}) (EvalR.asgn rfl) True.intro\n",
+   "new": "    have h := hc (st := ∅) (st' := {X ↦ 1}) (EvalR.asgn rfl)\n      True.intro\n",
+   "why": "Line exceeds 70 columns; wrapped the tactic/term onto a continuation line without changing any token."
+  },
+  {
+   "id": "p37",
+   "cat": "formatting/line-width",
+   "old": "  apply hoare_consequence_pre -- leaves a \"hole\" `?P'` for the precondition\n  · -- The goal is `{{?P'}} X := 1 {{X = 1}}`\n    exact hoare_asgn -- assigns `{{ (X = 1) [X ↦ 1] }}` to `?P'`, closing `case P'`\n  · intro st _ -- Since `↠` is an implication, we can just use `intro` directly.\n",
+   "new": "  apply hoare_consequence_pre\n  -- leaves a \"hole\" `?P'` for the precondition\n  · -- The goal is `{{?P'}} X := 1 {{X = 1}}`\n    exact hoare_asgn\n    -- assigns `{{ (X = 1) [X ↦ 1] }}` to `?P'`, closing `case P'`\n  · intro st _\n    -- Since `↠` is an implication, we can just use `intro` directly.\n",
+   "why": "Line exceeds 70 columns; wrapped the tactic/term onto a continuation line without changing any token."
+  },
+  {
+   "id": "p38",
+   "cat": "formatting/line-width",
+   "old": "  `(tactic| focus (simp +decide [assertImplies_def, assertIff_def, validHoareTriple_def,\n                                Assertion.subst_def] at *\n                  <;> lia))\n",
+   "new": "  `(tactic| focus\n      (simp +decide\n          [assertImplies_def, assertIff_def, validHoareTriple_def,\n            Assertion.subst_def] at *\n        <;> lia))\n",
+   "why": "Line exceeds 70 columns; wrapped onto a continuation line without changing any token."
+  },
+  {
+   "id": "p39",
+   "cat": "formatting/line-width",
+   "old": "    specialize h (aexp { X }) 2 (st := {X ↦ 2}) (st' := {Y ↦ 3, X ↦ 3, X ↦ 2}) ?_\n",
+   "new": "    specialize h (aexp { X }) 2 (st := {X ↦ 2})\n      (st' := {Y ↦ 3, X ↦ 3, X ↦ 2}) ?_\n",
+   "why": "Line exceeds 70 columns; wrapped the tactic/term onto a continuation line without changing any token."
+  },
+  {
+   "id": "p40",
+   "cat": "formatting/line-width",
+   "old": "    (htrue : {{ P ∧ b }} c₁ {{ Q }}) (hfalse : {{ P ∧ ¬ b }} c₂ {{ Q }}) :\n",
+   "new": "    (htrue : {{ P ∧ b }} c₁ {{ Q }})\n    (hfalse : {{ P ∧ ¬ b }} c₂ {{ Q }}) :\n",
+   "why": "Line exceeds 70 columns; wrapped onto a continuation line without changing any token."
+  },
+  {
+   "id": "p41",
+   "cat": "formatting/line-width",
+   "old": "scoped syntax \"if1 \" \"(\" imp_bexp \")\" ppHardSpace \"{\" imp_com \"}\" : imp_com\n",
+   "new": "scoped syntax \"if1 \" \"(\" imp_bexp \")\" ppHardSpace \"{\" imp_com \"}\" :\n  imp_com\n",
+   "why": "Line exceeds 70 columns; wrapped the declaration onto a continuation line without changing any token."
+  },
+  {
+   "id": "p42",
+   "cat": "formatting/line-width",
+   "old": "-- And, of course, there is also the low-level way to do it, without using\n-- Hoare logic...\n",
+   "new": "-- And, of course, there is also the low-level way to do it, without\n-- using Hoare logic...\n",
+   "why": "Line exceeds 70 columns; rewrapped the comment, preserving a double space after any sentence-ending period."
+  },
+  {
+   "id": "p43",
+   "cat": "formatting/line-width",
+   "old": "scoped syntax \"repeat\" ppHardSpace \"{\" ppLine imp_com ppDedent(ppLine \"}\")\n  \" until \" \"(\" imp_bexp \")\" : imp_com\n",
+   "new": "scoped syntax \"repeat\" ppHardSpace \"{\" ppLine imp_com\n  ppDedent(ppLine \"}\") \" until \" \"(\" imp_bexp \")\" : imp_com\n",
+   "why": "Line exceeds 70 columns; wrapped the declaration onto a continuation line without changing any token."
+  },
+  {
+   "id": "p44",
+   "cat": "formatting/line-width",
+   "old": "  | `($_ $c $b) => `(imp { repeat { $(getImp c) } until ($(getBexp b)) })\n",
+   "new": "  | `($_ $c $b) =>\n      `(imp { repeat { $(getImp c) } until ($(getBexp b)) })\n",
+   "why": "Line exceeds 70 columns; split the macro-rule arm's pattern and body across two lines."
+  },
+  {
+   "id": "p45",
+   "cat": "formatting/line-width",
+   "old": "/- Now we are ready to show `ex2Repeat` correct using `hoare_repeat`. -/\n",
+   "new": "/- Now we are ready to show `ex2Repeat` correct using\n   `hoare_repeat`. -/\n",
+   "why": "Line exceeds 70 columns; rewrapped the comment, preserving a double space after any sentence-ending period."
+  },
+  {
+   "id": "p46",
+   "cat": "formatting/line-width",
+   "old": "/- First, let's show that `hoare_repeat'` is implied by `hoare_repeat`. -/\n",
+   "new": "/- First, let's show that `hoare_repeat'` is implied by\n   `hoare_repeat`. -/\n",
+   "why": "Line exceeds 70 columns; rewrapped the comment, preserving a double space after any sentence-ending period."
+  },
+  {
+   "id": "p47",
+   "cat": "formatting/line-width",
+   "old": "      simp only [Assertion.subst_apply, Aexp.eval_num, TotalMap.update_shadow]\n",
+   "new": "      simp only [Assertion.subst_apply, Aexp.eval_num,\n        TotalMap.update_shadow]\n",
+   "why": "Line exceeds 70 columns; wrapped the tactic/term onto a continuation line without changing any token."
+  },
+  {
+   "id": "p48",
+   "cat": "formatting/line-width",
+   "old": "/-- Assert / assume (`assert (b);`, `assume (b);`).  As with `skip`, the\nwords `assert` and `assume` are not reserved: the production accepts any\nidentifier and the macro below rejects everything else. -/\n",
+   "new": "/-- Assert / assume (`assert (b);`, `assume (b);`).  As with `skip`,\nthe words `assert` and `assume` are not reserved: the production\naccepts any identifier and the macro below rejects everything else. -/\n",
+   "why": "Line exceeds 70 columns; rewrapped the comment, preserving a double space after any sentence-ending period."
+  },
+  {
+   "id": "p49",
+   "cat": "formatting/line-width",
+   "old": "    else Macro.throwErrorAt h s!\"expected 'assert' or 'assume', got '{h.getId}'\"\n",
+   "new": "    else\n      Macro.throwErrorAt h\n        s!\"expected 'assert' or 'assume', got '{h.getId}'\"\n",
+   "why": "Line exceeds 70 columns; wrapped onto a continuation line without changing any token."
+  },
+  {
+   "id": "p50",
+   "cat": "formatting/line-width",
+   "old": "theorem assert_assume_differ : ∃ (P : Assertion) (b : Bexp) (Q : Assertion),\n",
+   "new": "theorem assert_assume_differ :\n    ∃ (P : Assertion) (b : Bexp) (Q : Assertion),\n",
+   "why": "Line exceeds 70 columns; split the binders from the conclusion onto an indented line, as `map_cons` in STYLE-CODE.md illustrates."
+  },
+  {
+   "id": "p51",
+   "cat": "formatting/line-width",
+   "old": "      have h : ∅ =[ assert (false) ]=> Result.error := Com.EvalR.assertFalse rfl\n",
+   "new": "      have h : ∅ =[ assert (false) ]=> Result.error :=\n        Com.EvalR.assertFalse rfl\n",
+   "why": "Line exceeds 70 columns; wrapped the tactic/term onto a continuation line without changing any token."
+  },
+  {
+   "id": "p52",
+   "cat": "formatting/line-width",
+   "old": "theorem assert_implies_assume {P : Assertion} {b : Bexp} {Q : Assertion}\n",
+   "new": "theorem assert_implies_assume {P : Assertion} {b : Bexp}\n    {Q : Assertion}\n",
+   "why": "Line exceeds 70 columns; split the binders from the conclusion onto an indented line, as `map_cons` in STYLE-CODE.md illustrates."
+  },
+  {
+   "id": "p53",
+   "cat": "formatting/line-width",
+   "old": "      have h : st =[ assert (b) ]=> Result.normal st := Com.EvalR.assertTrue hb\n",
+   "new": "      have h : st =[ assert (b) ]=> Result.normal st :=\n        Com.EvalR.assertTrue hb\n",
+   "why": "Line exceeds 70 columns; wrapped the tactic/term onto a continuation line without changing any token."
+  },
+  {
+   "id": "p54",
+   "cat": "formatting/line-width",
+   "old": "    (htrue : {{ P ∧ b}} c₁ {{ Q }}) (hfalse : {{ P ∧ ¬ b}} c₂ {{ Q }}) :\n",
+   "new": "    (htrue : {{ P ∧ b}} c₁ {{ Q }})\n    (hfalse : {{ P ∧ ¬ b}} c₂ {{ Q }}) :\n",
+   "why": "Line exceeds 70 columns; wrapped onto a continuation line without changing any token."
+  },
+  {
+   "id": "p55",
+   "cat": "formatting/line-width",
+   "old": "  | skip | asgn | seqNormal | seqError | ifTrue | ifFalse | assertTrue | assertFalse | assume =>\n",
+   "new": "  | skip | asgn | seqNormal | seqError | ifTrue | ifFalse | assertTrue\n      | assertFalse | assume =>\n",
+   "why": "Line exceeds 70 columns; split the macro-rule arm's pattern and body across two lines."
+  }
+ ],
+ "completed": true
+}

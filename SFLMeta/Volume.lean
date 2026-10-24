@@ -25,8 +25,8 @@ source of truth for volume numbers and titles: prose gets at it through the
 means no chapter ever spells a volume number or title out by hand. -/
 def volumes : List Volume :=
   [ { slug := "lf", number := 1, name := "Logical Foundations" },
-    { slug := "ts", number := 2, name := "Type Systems" },
-    { slug := "hl", number := 3, name := "Hoare Logic" } ]
+    { slug := "hl", number := 2, name := "Hoare Logic" },
+    { slug := "ts", number := 3, name := "Type Systems" } ]
 
 /-- Look a volume up by its slug (`"lf"`, `"ts"`, `"hl"`), case-insensitively. -/
 def volumeBySlug? (slug : String) : Option Volume :=

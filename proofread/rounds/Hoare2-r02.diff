@@ -1,0 +1,48 @@
+--- HL/Hoare2.lean (before this round)
++++ HL/Hoare2.lean
+@@ -2380,5 +2380,4 @@
+ :::
+ 
+-::::::full
+ The following program computes the integer square root of `X`
+ by naive iteration:
+@@ -2393,6 +2392,9 @@
+ ```
+ 
++::::terse
+ WORK IN CLASS
++::::
+ 
++::::::full
+ As we did before, we can try to use the postcondition as a
+ candidate loop invariant, obtaining the following decorated program:
+@@ -2507,5 +2509,4 @@
+ :::
+ 
+-::::full
+ Here is a program that squares `X` by repeated addition:
+ 
+@@ -2521,6 +2522,9 @@
+ ```
+ 
++::::terse
+ WORK IN CLASS
++::::
+ 
++::::full
+ The first thing to note is that the loop reads `X` but doesn't
+ change its value. As we saw in the previous example, it can be a good idea
+@@ -4492,5 +4496,5 @@
+ :::
+ 
+-:::::exercise (rating := 1) (name := "wp") (optional := true)
++:::::exercise (rating := 1) (name := "wp") (optional := true) (checkVisibility := false)
+ What are weakest preconditions of the following commands
+ for the following postconditions?
+@@ -4606,6 +4610,4 @@
+     exact Com.EvalR.asgn rfl
+ ```
+-:::gradeTheorem 2 hoare_asgn_weakest
+-:::
+ :::::
+ 

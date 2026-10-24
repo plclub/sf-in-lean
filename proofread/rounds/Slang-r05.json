@@ -1,0 +1,141 @@
+{
+ "file": "TS/Slang.lean",
+ "chapter": "Slang",
+ "round": 5,
+ "proposals": [
+  {
+   "id": "by-eval-num",
+   "cat": "style/proof-by",
+   "old": "@[simp] theorem eval_num (n : Nat) : (num n).eval = n := rfl",
+   "new": "@[simp] theorem eval_num (n : Nat) : (num n).eval = n := by rfl",
+   "why": "House style: a proof always opens with `by`, even a one-tactic proof like `rfl` — never a bare term-mode `:= rfl`."
+  },
+  {
+   "id": "by-width-eval-plus",
+   "cat": "style/proof-by",
+   "old": "@[simp] theorem eval_plus (a₁ a₂ : Aexp) : (plus a₁ a₂).eval = a₁.eval + a₂.eval := rfl",
+   "new": "@[simp] theorem eval_plus (a₁ a₂ : Aexp) :\n    (plus a₁ a₂).eval = a₁.eval + a₂.eval := by rfl",
+   "why": "House style: a proof always opens with `by`, even a one-tactic proof like `rfl` — never a bare term-mode `:= rfl`."
+  },
+  {
+   "id": "by-width-eval-minus",
+   "cat": "style/proof-by",
+   "old": "@[simp] theorem eval_minus (a₁ a₂ : Aexp) : (minus a₁ a₂).eval = a₁.eval - a₂.eval := rfl",
+   "new": "@[simp] theorem eval_minus (a₁ a₂ : Aexp) :\n    (minus a₁ a₂).eval = a₁.eval - a₂.eval := by rfl",
+   "why": "House style: a proof always opens with `by`, even a one-tactic proof like `rfl` — never a bare term-mode `:= rfl`."
+  },
+  {
+   "id": "by-width-eval-mult",
+   "cat": "style/proof-by",
+   "old": "@[simp] theorem eval_mult (a₁ a₂ : Aexp) : (mult a₁ a₂).eval = a₁.eval * a₂.eval := rfl",
+   "new": "@[simp] theorem eval_mult (a₁ a₂ : Aexp) :\n    (mult a₁ a₂).eval = a₁.eval * a₂.eval := by rfl",
+   "why": "House style: a proof always opens with `by`, even a one-tactic proof like `rfl` — never a bare term-mode `:= rfl`."
+  },
+  {
+   "id": "by-eval-bool",
+   "cat": "style/proof-by",
+   "old": "@[simp] theorem eval_bool (b : Bool) : (bool b).eval = b := rfl",
+   "new": "@[simp] theorem eval_bool (b : Bool) : (bool b).eval = b := by rfl",
+   "why": "House style: a proof always opens with `by`, even a one-tactic proof like `rfl` — never a bare term-mode `:= rfl`."
+  },
+  {
+   "id": "by-width-eval-eq",
+   "cat": "style/proof-by",
+   "old": "@[simp] theorem eval_eq (a₁ a₂ : Aexp) : (eq a₁ a₂).eval = (a₁.eval == a₂.eval) := rfl",
+   "new": "@[simp] theorem eval_eq (a₁ a₂ : Aexp) :\n    (eq a₁ a₂).eval = (a₁.eval == a₂.eval) := by rfl",
+   "why": "House style: a proof always opens with `by`, even a one-tactic proof like `rfl` — never a bare term-mode `:= rfl`."
+  },
+  {
+   "id": "by-width-eval-neq",
+   "cat": "style/proof-by",
+   "old": "@[simp] theorem eval_neq (a₁ a₂ : Aexp) : (neq a₁ a₂).eval = (a₁.eval != a₂.eval) := rfl",
+   "new": "@[simp] theorem eval_neq (a₁ a₂ : Aexp) :\n    (neq a₁ a₂).eval = (a₁.eval != a₂.eval) := by rfl",
+   "why": "House style: a proof always opens with `by`, even a one-tactic proof like `rfl` — never a bare term-mode `:= rfl`."
+  },
+  {
+   "id": "by-width-eval-le",
+   "cat": "style/proof-by",
+   "old": "@[simp] theorem eval_le (a₁ a₂ : Aexp) : (le a₁ a₂).eval = (a₁.eval ≤ a₂.eval : Bool) := rfl",
+   "new": "@[simp] theorem eval_le (a₁ a₂ : Aexp) :\n    (le a₁ a₂).eval = (a₁.eval ≤ a₂.eval : Bool) := by rfl",
+   "why": "House style: a proof always opens with `by`, even a one-tactic proof like `rfl` — never a bare term-mode `:= rfl`."
+  },
+  {
+   "id": "by-width-eval-gt",
+   "cat": "style/proof-by",
+   "old": "@[simp] theorem eval_gt (a₁ a₂ : Aexp) : (gt a₁ a₂).eval = (a₁.eval > a₂.eval : Bool) := rfl",
+   "new": "@[simp] theorem eval_gt (a₁ a₂ : Aexp) :\n    (gt a₁ a₂).eval = (a₁.eval > a₂.eval : Bool) := by rfl",
+   "why": "House style: a proof always opens with `by`, even a one-tactic proof like `rfl` — never a bare term-mode `:= rfl`."
+  },
+  {
+   "id": "by-eval-not",
+   "cat": "style/proof-by",
+   "old": "@[simp] theorem eval_not (b : Bexp) : (not b).eval = !b.eval := rfl",
+   "new": "@[simp] theorem eval_not (b : Bexp) : (not b).eval = !b.eval := by rfl",
+   "why": "House style: a proof always opens with `by`, even a one-tactic proof like `rfl` — never a bare term-mode `:= rfl`."
+  },
+  {
+   "id": "by-width-eval-and",
+   "cat": "style/proof-by",
+   "old": "@[simp] theorem eval_and (b₁ b₂ : Bexp) : (and b₁ b₂).eval = (b₁.eval && b₂.eval) := rfl",
+   "new": "@[simp] theorem eval_and (b₁ b₂ : Bexp) :\n    (and b₁ b₂).eval = (b₁.eval && b₂.eval) := by rfl",
+   "why": "House style: a proof always opens with `by`, even a one-tactic proof like `rfl` — never a bare term-mode `:= rfl`."
+  },
+  {
+   "id": "width-optimize0plus-test2",
+   "cat": "formatting/line-width",
+   "old": "theorem Bexp.optimize0plus_test2 :\n    Bexp.optimize0plus\n        (.and (.le (.plus (.num 0) (.num 4)) (.num 5)) (.bool true))\n      = (.and (.le (.num 4) (.num 5)) (.bool true)) := solution!(by rfl)",
+   "new": "theorem Bexp.optimize0plus_test2 :\n    Bexp.optimize0plus\n        (.and (.le (.plus (.num 0) (.num 4)) (.num 5)) (.bool true))\n      = (.and (.le (.num 4) (.num 5)) (.bool true)) :=\n    solution!(by rfl)",
+   "why": "House style: code in a `lean` (or similar) block stays within 70 columns; wrapped with the book's existing continuation-line convention (binders/conclusion split onto indented lines, as in the chapter's own earlier `Aexp.EvalR` and in `HL/Imp.lean`'s `Com.EvalR`)."
+  },
+  {
+   "id": "width-optimize0plus-sound",
+   "cat": "formatting/line-width",
+   "old": "theorem Bexp.optimize0plus_sound (b : Bexp) :\n    b.optimize0plus.eval = b.eval := by\n  solution!\n    fun_induction Bexp.optimize0plus b <;> simp_all [Aexp.optimize0plus_sound]",
+   "new": "theorem Bexp.optimize0plus_sound (b : Bexp) :\n    b.optimize0plus.eval = b.eval := by\n  solution!\n    fun_induction Bexp.optimize0plus b <;>\n      simp_all [Aexp.optimize0plus_sound]",
+   "why": "House style: code in a `lean` (or similar) block stays within 70 columns; wrapped with the book's existing continuation-line convention (binders/conclusion split onto indented lines, as in the chapter's own earlier `Aexp.EvalR` and in `HL/Imp.lean`'s `Com.EvalR`)."
+  },
+  {
+   "id": "width-aexp-evalr-main",
+   "cat": "formatting/line-width",
+   "old": "inductive Aexp.EvalR : Aexp → Nat → Prop where\n  | num (n : Nat) : EvalR (.num n) n\n  | plus {a₁ a₂ : Aexp} {n₁ n₂ : Nat} (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :\n      EvalR (.plus a₁ a₂) (n₁ + n₂)\n  | minus {a₁ a₂ : Aexp} {n₁ n₂ : Nat} (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :\n      EvalR (.minus a₁ a₂) (n₁ - n₂)\n  | mult {a₁ a₂ : Aexp} {n₁ n₂ : Nat} (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :\n      EvalR (.mult a₁ a₂) (n₁ * n₂)",
+   "new": "inductive Aexp.EvalR : Aexp → Nat → Prop where\n  | num (n : Nat) : EvalR (.num n) n\n  | plus {a₁ a₂ : Aexp} {n₁ n₂ : Nat}\n      (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :\n      EvalR (.plus a₁ a₂) (n₁ + n₂)\n  | minus {a₁ a₂ : Aexp} {n₁ n₂ : Nat}\n      (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :\n      EvalR (.minus a₁ a₂) (n₁ - n₂)\n  | mult {a₁ a₂ : Aexp} {n₁ n₂ : Nat}\n      (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :\n      EvalR (.mult a₁ a₂) (n₁ * n₂)",
+   "why": "House style: code in a `lean` (or similar) block stays within 70 columns; wrapped with the book's existing continuation-line convention (binders/conclusion split onto indented lines, as in the chapter's own earlier `Aexp.EvalR` and in `HL/Imp.lean`'s `Com.EvalR`)."
+  },
+  {
+   "id": "width-aexp-evalr-unnamed",
+   "cat": "formatting/line-width",
+   "old": "inductive Aexp.EvalR : Aexp → Nat → Prop where\n  | num (n : Nat) : EvalR (.num n) n\n  | plus {a₁ a₂ : Aexp} {n₁ n₂ : Nat} : EvalR a₁ n₁ → EvalR a₂ n₂ → EvalR (.plus a₁ a₂) (n₁ + n₂)\n  | minus {a₁ a₂ : Aexp} {n₁ n₂ : Nat} : EvalR a₁ n₁ → EvalR a₂ n₂ → EvalR (.minus a₁ a₂) (n₁ - n₂)\n  | mult {a₁ a₂ : Aexp} {n₁ n₂ : Nat} : EvalR a₁ n₁ → EvalR a₂ n₂ → EvalR (.mult a₁ a₂) (n₁ * n₂)",
+   "new": "inductive Aexp.EvalR : Aexp → Nat → Prop where\n  | num (n : Nat) : EvalR (.num n) n\n  | plus {a₁ a₂ : Aexp} {n₁ n₂ : Nat} :\n      EvalR a₁ n₁ → EvalR a₂ n₂ → EvalR (.plus a₁ a₂) (n₁ + n₂)\n  | minus {a₁ a₂ : Aexp} {n₁ n₂ : Nat} :\n      EvalR a₁ n₁ → EvalR a₂ n₂ → EvalR (.minus a₁ a₂) (n₁ - n₂)\n  | mult {a₁ a₂ : Aexp} {n₁ n₂ : Nat} :\n      EvalR a₁ n₁ → EvalR a₂ n₂ → EvalR (.mult a₁ a₂) (n₁ * n₂)",
+   "why": "House style: code in a `lean` (or similar) block stays within 70 columns; wrapped with the book's existing continuation-line convention (binders/conclusion split onto indented lines, as in the chapter's own earlier `Aexp.EvalR` and in `HL/Imp.lean`'s `Com.EvalR`)."
+  },
+  {
+   "id": "width-bexp-evalr-exercise",
+   "cat": "formatting/line-width",
+   "old": "inductive EvalR : Bexp → Bool → Prop where\n  -- SOLUTION\n  | bool (b : Bool) : EvalR (.bool b) b\n  | eq {a₁ a₂ : Aexp} {n₁ n₂ : Nat} (h₁ : a₁ ⇓ n₁) (h₂ : a₂ ⇓ n₂) : EvalR (.eq a₁ a₂) (n₁ == n₂)\n  | neq {a₁ a₂ : Aexp} {n₁ n₂ : Nat} (h₁ : a₁ ⇓ n₁) (h₂ : a₂ ⇓ n₂) : EvalR (.neq a₁ a₂) (n₁ != n₂)\n  | le {a₁ a₂ : Aexp} {n₁ n₂ : Nat} (h₁ : a₁ ⇓ n₁) (h₂ : a₂ ⇓ n₂) : EvalR (.le a₁ a₂) (n₁ ≤ n₂)\n  | gt {a₁ a₂ : Aexp} {n₁ n₂ : Nat} (h₁ : a₁ ⇓ n₁) (h₂ : a₂ ⇓ n₂) : EvalR (.gt a₁ a₂) (n₁ > n₂)\n  | not {b : Bexp} {bv : Bool} (h : EvalR b bv) : EvalR (.not b) (!bv)\n  | and {b₁ b₂ : Bexp} {bv₁ bv₂ : Bool} (h₁ : EvalR b₁ bv₁) (h₂ : EvalR b₂ bv₂) :\n      EvalR (.and b₁ b₂) (bv₁ && bv₂)\n  -- END SOLUTION\n\nscoped notation:55 e:56 \" ⇓ \" b:56 => EvalR e b",
+   "new": "inductive EvalR : Bexp → Bool → Prop where\n  -- SOLUTION\n  | bool (b : Bool) : EvalR (.bool b) b\n  | eq {a₁ a₂ : Aexp} {n₁ n₂ : Nat} (h₁ : a₁ ⇓ n₁) (h₂ : a₂ ⇓ n₂) :\n      EvalR (.eq a₁ a₂) (n₁ == n₂)\n  | neq {a₁ a₂ : Aexp} {n₁ n₂ : Nat} (h₁ : a₁ ⇓ n₁) (h₂ : a₂ ⇓ n₂) :\n      EvalR (.neq a₁ a₂) (n₁ != n₂)\n  | le {a₁ a₂ : Aexp} {n₁ n₂ : Nat} (h₁ : a₁ ⇓ n₁) (h₂ : a₂ ⇓ n₂) :\n      EvalR (.le a₁ a₂) (n₁ ≤ n₂)\n  | gt {a₁ a₂ : Aexp} {n₁ n₂ : Nat} (h₁ : a₁ ⇓ n₁) (h₂ : a₂ ⇓ n₂) :\n      EvalR (.gt a₁ a₂) (n₁ > n₂)\n  | not {b : Bexp} {bv : Bool} (h : EvalR b bv) : EvalR (.not b) (!bv)\n  | and {b₁ b₂ : Bexp} {bv₁ bv₂ : Bool}\n      (h₁ : EvalR b₁ bv₁) (h₂ : EvalR b₂ bv₂) :\n      EvalR (.and b₁ b₂) (bv₁ && bv₂)\n  -- END SOLUTION\n\nscoped notation:55 e:56 \" ⇓ \" b:56 => EvalR e b",
+   "why": "House style: code in a `lean` (or similar) block stays within 70 columns; wrapped with the book's existing continuation-line convention (binders/conclusion split onto indented lines, as in the chapter's own earlier `Aexp.EvalR` and in `HL/Imp.lean`'s `Com.EvalR`)."
+  },
+  {
+   "id": "width-aevalr-division",
+   "cat": "formatting/line-width",
+   "old": "```lean\ninductive Aexp.EvalR : Aexp → Nat → Prop where\n  | num (n : Nat) : EvalR (.num n) n\n  | plus (a₁ a₂ : Aexp) (n₁ n₂ : Nat) (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :\n      EvalR (.plus a₁ a₂) (n₁ + n₂)\n  | minus (a₁ a₂ : Aexp) (n₁ n₂ : Nat) (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :\n      EvalR (.minus a₁ a₂) (n₁ - n₂)\n  | mult (a₁ a₂ : Aexp) (n₁ n₂ : Nat) (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :\n      EvalR (.mult a₁ a₂) (n₁ * n₂)\n  | div (a₁ a₂ : Aexp) (n₁ n₂ n₃ : Nat)             -- NEW\n      (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) (hpos : n₂ > 0) (hdiv : n₂ * n₃ = n₁) :\n      EvalR (.div a₁ a₂) n₃",
+   "new": "```lean\ninductive Aexp.EvalR : Aexp → Nat → Prop where\n  | num (n : Nat) : EvalR (.num n) n\n  | plus (a₁ a₂ : Aexp) (n₁ n₂ : Nat)\n      (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :\n      EvalR (.plus a₁ a₂) (n₁ + n₂)\n  | minus (a₁ a₂ : Aexp) (n₁ n₂ : Nat)\n      (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :\n      EvalR (.minus a₁ a₂) (n₁ - n₂)\n  | mult (a₁ a₂ : Aexp) (n₁ n₂ : Nat)\n      (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :\n      EvalR (.mult a₁ a₂) (n₁ * n₂)\n  | div (a₁ a₂ : Aexp) (n₁ n₂ n₃ : Nat)             -- NEW\n      (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂)\n      (hpos : n₂ > 0) (hdiv : n₂ * n₃ = n₁) :\n      EvalR (.div a₁ a₂) n₃",
+   "why": "House style: code in a `lean` (or similar) block stays within 70 columns; wrapped with the book's existing continuation-line convention (binders/conclusion split onto indented lines, as in the chapter's own earlier `Aexp.EvalR` and in `HL/Imp.lean`'s `Com.EvalR`)."
+  },
+  {
+   "id": "width-aevalr-extended",
+   "cat": "formatting/line-width",
+   "old": "inductive Aexp.EvalR : Aexp → Nat → Prop where\n  | any (n : Nat) : EvalR .any n                   -- NEW\n  | num (n : Nat) : EvalR (.num n) n\n  | plus (a₁ a₂ : Aexp) (n₁ n₂ : Nat) (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :\n      EvalR (.plus a₁ a₂) (n₁ + n₂)\n  | minus (a₁ a₂ : Aexp) (n₁ n₂ : Nat) (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :\n      EvalR (.minus a₁ a₂) (n₁ - n₂)\n  | mult (a₁ a₂ : Aexp) (n₁ n₂ : Nat) (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :\n      EvalR (.mult a₁ a₂) (n₁ * n₂)",
+   "new": "inductive Aexp.EvalR : Aexp → Nat → Prop where\n  | any (n : Nat) : EvalR .any n                   -- NEW\n  | num (n : Nat) : EvalR (.num n) n\n  | plus (a₁ a₂ : Aexp) (n₁ n₂ : Nat)\n      (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :\n      EvalR (.plus a₁ a₂) (n₁ + n₂)\n  | minus (a₁ a₂ : Aexp) (n₁ n₂ : Nat)\n      (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :\n      EvalR (.minus a₁ a₂) (n₁ - n₂)\n  | mult (a₁ a₂ : Aexp) (n₁ n₂ : Nat)\n      (h₁ : EvalR a₁ n₁) (h₂ : EvalR a₂ n₂) :\n      EvalR (.mult a₁ a₂) (n₁ * n₂)",
+   "why": "House style: code in a `lean` (or similar) block stays within 70 columns; wrapped with the book's existing continuation-line convention (binders/conclusion split onto indented lines, as in the chapter's own earlier `Aexp.EvalR` and in `HL/Imp.lean`'s `Com.EvalR`)."
+  },
+  {
+   "id": "width-div-option-eval",
+   "cat": "formatting/line-width",
+   "old": "  | div   a₁ a₂ =>  match a₁.eval, a₂.eval with\n                    | _, some 0 => none\n                    | some n₁, some n₂ => if n₂ ∣ n₁ then some (n₁ / n₂) else none\n                    | _, _ => none",
+   "new": "  | div   a₁ a₂ =>  match a₁.eval, a₂.eval with\n                    | _, some 0 => none\n                    | some n₁, some n₂ =>\n                      if n₂ ∣ n₁ then some (n₁ / n₂) else none\n                    | _, _ => none",
+   "why": "House style: code in a `lean` (or similar) block stays within 70 columns; wrapped with the book's existing continuation-line convention (binders/conclusion split onto indented lines, as in the chapter's own earlier `Aexp.EvalR` and in `HL/Imp.lean`'s `Com.EvalR`)."
+  }
+ ],
+ "completed": true
+}

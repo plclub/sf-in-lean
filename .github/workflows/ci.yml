@@ -36,6 +36,9 @@ jobs:
       # caching) and run `lake build`, which builds the book.
       - uses: leanprover/lean-action@v1
 
+      - name: Check inversion proof-state rendering
+        run: lake env lean tests/inversion_highlighting.lean
+
       - name: Check cross-volume links
         run: python3 scripts/test_cross_volume.py
 

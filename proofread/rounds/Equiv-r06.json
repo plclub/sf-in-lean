@@ -1,0 +1,15 @@
+{
+ "file": "HL/Equiv.lean",
+ "chapter": "Equiv",
+ "round": 6,
+ "proposals": [
+  {
+   "id": "hl01",
+   "cat": "devnote/missing-header-notes",
+   "old": "```lean\nopen scoped HasEval MyGetElem Com\n```\n\n::::full\nAdvice for Working on Exercises:",
+   "new": "```lean\nopen scoped HasEval MyGetElem Com\n```\n\n:::dev \"Claude\"\n`old/orig-plf-files/Equiv.v` opens with six author dev-notes before the\nchapter text begins, and none of them appear here: an `INSTRUCTORS` note\non optionally skipping the chapter for time, a longer `INSTRUCTORS`\nanecdote about using classroom clickers and PollEverywhere for\ninteractive proof demos, two `SOONER`/`LATER` notes about confusing\nterminology and old exam questions, a `LATER` note about `Inductive`\nformatting style (with an aside from \"LX\"), and a `LATER` note from\nSampsa about a module-naming conflict in the `for_while_equiv` exercise.\n\nOptions: (1) restore all six verbatim as `:::dev`/`:::instructors`\nblocks here, (2) restore only the ones still relevant to teaching this\nchapter today (the clicker/PollEverywhere anecdote reads as dated\ncourse logistics), or (3) leave them out as superseded. Let me know\nwhich you'd like.\n:::\n\n::::full\nAdvice for Working on Exercises:",
+   "why": "Per CLAUDE.md's porting comment-fidelity rule, author dev-notes must be carried over verbatim; these six from the chapter's .v header never made it into the Lean port. Whether/how much to restore is an author call, so this inserts a `:::dev \"Claude\"` note rather than silently restoring them."
+  }
+ ],
+ "completed": true
+}

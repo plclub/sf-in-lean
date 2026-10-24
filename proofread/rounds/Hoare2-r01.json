@@ -1,0 +1,71 @@
+{
+ "file": "HL/Hoare2.lean",
+ "chapter": "Hoare2",
+ "round": 1,
+ "proposals": [
+  {
+   "id": "p1",
+   "cat": "formatting/line-width",
+   "old": "open Lean PrettyPrinter Delaborator SubExpr Parenthesizer Imp.Elab Imp.Delab\n\n@[category_parenthesizer «dcom»]",
+   "new": "open Lean PrettyPrinter Delaborator SubExpr Parenthesizer\n  Imp.Elab Imp.Delab\n\n@[category_parenthesizer «dcom»]",
+   "why": "76 columns; split the open command's identifier list onto a continuation line, matching the book's existing hanging-indent convention for overlong declarations."
+  },
+  {
+   "id": "p2",
+   "cat": "formatting/line-width",
+   "old": "open Lean PrettyPrinter Delaborator SubExpr Parenthesizer Imp.Elab Imp.Delab\n\n@[category_parenthesizer «sparse_dcom»]",
+   "new": "open Lean PrettyPrinter Delaborator SubExpr Parenthesizer\n  Imp.Elab Imp.Delab\n\n@[category_parenthesizer «sparse_dcom»]",
+   "why": "Same 76-column open line recurs in the SparseAnnotations namespace; same fix."
+  },
+  {
+   "id": "p3",
+   "cat": "formatting/line-width",
+   "old": "private def getDCom? (stx : Term) : Option (TSyntax `dcom) :=\n  match stx with\n  | `(dcom { $d:dcom }) => some <| withSourceInfoOf (canonical := false) stx d\n  | _ => none",
+   "new": "private def getDCom? (stx : Term) : Option (TSyntax `dcom) :=\n  match stx with\n  | `(dcom { $d:dcom }) =>\n      some <| withSourceInfoOf (canonical := false) stx d\n  | _ => none",
+   "why": "78 columns; move the match arm's body onto its own indented line, as the longer arms elsewhere in this same `macro_rules`/unexpander block already do."
+  },
+  {
+   "id": "p4",
+   "cat": "formatting/line-width",
+   "old": "private def getDCom? (stx : Term) : Option (TSyntax `sparse_dcom) :=\n  match stx with\n  | `(sdcom { $d:sparse_dcom }) => some <| withSourceInfoOf (canonical := false) stx d\n  | _ => none",
+   "new": "private def getDCom? (stx : Term) : Option (TSyntax `sparse_dcom) :=\n  match stx with\n  | `(sdcom { $d:sparse_dcom }) =>\n      some <| withSourceInfoOf (canonical := false) stx d\n  | _ => none",
+   "why": "86 columns; same fix as the `dcom` version of this declaration."
+  },
+  {
+   "id": "p5",
+   "cat": "formatting/line-width",
+   "old": "def sparse_dcom.parenthesizer : CategoryParenthesizer := fun prec => do\n  maybeParenthesize `sparse_dcom false wrapParens prec <|",
+   "new": "def sparse_dcom.parenthesizer : CategoryParenthesizer :=\n  fun prec => do\n  maybeParenthesize `sparse_dcom false wrapParens prec <|",
+   "why": "71 columns; break the definition's body onto its own line, as the longer `sparse_dcom` identifier pushes this past where the `dcom` sibling definition fits."
+  },
+  {
+   "id": "p6",
+   "cat": "formatting/line-width",
+   "old": "@[app_unexpander SparseAnnotations.DCom.assert]\ndef unexpandAssert : Unexpander\n  | `($_ $assertion) =>\n      `(sdcom { assert {{ $(_root_.DCom.Delab.getAssnBody assertion) }} })\n  | _ => throw ()",
+   "new": "@[app_unexpander SparseAnnotations.DCom.assert]\ndef unexpandAssert : Unexpander\n  | `($_ $assertion) =>\n      `(sdcom {\n        assert {{ $(_root_.DCom.Delab.getAssnBody assertion) }}\n      })\n  | _ => throw ()",
+   "why": "74 columns; reflow the quoted `sdcom` block across lines, matching the multi-line brace style already used by the neighboring `unexpandCond`/`unexpandWhileDo` unexpanders."
+  },
+  {
+   "id": "p7",
+   "cat": "capitalization/sentence-start",
+   "old": ":::instructors\nthe `unfold` isn't needed, but it lets us recall\nwhat `dec_while` is without having to print it.\n:::",
+   "new": ":::instructors\nThe `unfold` isn't needed, but it lets us recall\nwhat `dec_while` is without having to print it.\n:::",
+   "why": "Sentence opens lowercase; capitalize the leading word."
+  },
+  {
+   "id": "p8",
+   "cat": "capitalization/sentence-start",
+   "old": ":::instructors\nthe main idea introduced here is preserving equalities for\nvariables that don't change, and it appears in its purest form here.\n:::",
+   "new": ":::instructors\nThe main idea introduced here is preserving equalities for\nvariables that don't change, and it appears in its purest form here.\n:::",
+   "why": "Sentence opens lowercase; capitalize the leading word."
+  },
+  {
+   "id": "p9",
+   "cat": "capitalization/sentence-start",
+   "old": ":::instructors\nusing easier version of this: counting up, instead of\ncounting down...\n:::",
+   "new": ":::instructors\nUsing an easier version of this: counting up, instead of\ncounting down...\n:::",
+   "why": "Sentence opens lowercase; capitalize the leading word, and add the missing article it's also missing (\"an easier version\")."
+  }
+ ],
+ "completed": true
+}

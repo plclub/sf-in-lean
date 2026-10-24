@@ -195,6 +195,11 @@ the [Chicago Manual of Style](https://www.chicagomanualofstyle.org/).
 `PROOFREADING.md` describes the repeatable per-chapter proofreading pass and
 records the house rules that override Chicago.
 
+A parenthetical dash in prose is a real em dash (`—`), per Chicago, not the
+ASCII typewriter convention `--`. This applies in chapter prose and in
+`:::dev`/`:::instructors` note bodies alike; `--` surviving in either is a slip
+to fix, not a style choice to preserve.
+
 Every sentence must start with a capital letter. If the first thing in the
 sentence is a Lean expression, that expression must itself begin with a
 capital letter (so `Nat.add` may open a sentence, but `omega` may not —

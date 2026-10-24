@@ -1,0 +1,24 @@
+--- HL/Equiv.lean (before this round)
++++ HL/Equiv.lean
+@@ -19,4 +19,21 @@
+ ```
+ 
++:::dev "Claude"
++`old/orig-plf-files/Equiv.v` opens with six author dev-notes before the
++chapter text begins, and none of them appear here: an `INSTRUCTORS` note
++on optionally skipping the chapter for time, a longer `INSTRUCTORS`
++anecdote about using classroom clickers and PollEverywhere for
++interactive proof demos, two `SOONER`/`LATER` notes about confusing
++terminology and old exam questions, a `LATER` note about `Inductive`
++formatting style (with an aside from "LX"), and a `LATER` note from
++Sampsa about a module-naming conflict in the `for_while_equiv` exercise.
++
++Options: (1) restore all six verbatim as `:::dev`/`:::instructors`
++blocks here, (2) restore only the ones still relevant to teaching this
++chapter today (the clicker/PollEverywhere anecdote reads as dated
++course logistics), or (3) leave them out as superseded. Let me know
++which you'd like.
++:::
++
+ ::::full
+ Advice for Working on Exercises:

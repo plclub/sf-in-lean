@@ -1,0 +1,69 @@
+--- HL/Hoare2.lean (before this round)
++++ HL/Hoare2.lean
+@@ -1084,5 +1084,6 @@
+ namespace DCom.Delab
+ 
+-open Lean PrettyPrinter Delaborator SubExpr Parenthesizer Imp.Elab Imp.Delab
++open Lean PrettyPrinter Delaborator SubExpr Parenthesizer
++  Imp.Elab Imp.Delab
+ 
+ @[category_parenthesizer «dcom»]
+@@ -1105,5 +1106,6 @@
+ private def getDCom? (stx : Term) : Option (TSyntax `dcom) :=
+   match stx with
+-  | `(dcom { $d:dcom }) => some <| withSourceInfoOf (canonical := false) stx d
++  | `(dcom { $d:dcom }) =>
++      some <| withSourceInfoOf (canonical := false) stx d
+   | _ => none
+ 
+@@ -1334,5 +1336,5 @@
+ 
+ :::instructors
+-the `unfold` isn't needed, but it lets us recall
++The `unfold` isn't needed, but it lets us recall
+ what `dec_while` is without having to print it.
+ :::
+@@ -2374,5 +2376,5 @@
+ 
+ :::instructors
+-the main idea introduced here is preserving equalities for
++The main idea introduced here is preserving equalities for
+ variables that don't change, and it appears in its purest form here.
+ :::
+@@ -2495,5 +2497,5 @@
+ 
+ :::instructors
+-using easier version of this: counting up, instead of
++Using an easier version of this: counting up, instead of
+ counting down...
+ :::
+@@ -3930,8 +3932,10 @@
+ namespace DCom.Delab
+ 
+-open Lean PrettyPrinter Delaborator SubExpr Parenthesizer Imp.Elab Imp.Delab
++open Lean PrettyPrinter Delaborator SubExpr Parenthesizer
++  Imp.Elab Imp.Delab
+ 
+ @[category_parenthesizer «sparse_dcom»]
+-def sparse_dcom.parenthesizer : CategoryParenthesizer := fun prec => do
++def sparse_dcom.parenthesizer : CategoryParenthesizer :=
++  fun prec => do
+   maybeParenthesize `sparse_dcom false wrapParens prec <|
+     parenthesizeCategoryCore `sparse_dcom prec
+@@ -3945,5 +3949,6 @@
+ private def getDCom? (stx : Term) : Option (TSyntax `sparse_dcom) :=
+   match stx with
+-  | `(sdcom { $d:sparse_dcom }) => some <| withSourceInfoOf (canonical := false) stx d
++  | `(sdcom { $d:sparse_dcom }) =>
++      some <| withSourceInfoOf (canonical := false) stx d
+   | _ => none
+ 
+@@ -3994,5 +3999,7 @@
+ def unexpandAssert : Unexpander
+   | `($_ $assertion) =>
+-      `(sdcom { assert {{ $(_root_.DCom.Delab.getAssnBody assertion) }} })
++      `(sdcom {
++        assert {{ $(_root_.DCom.Delab.getAssnBody assertion) }}
++      })
+   | _ => throw ()
+ 

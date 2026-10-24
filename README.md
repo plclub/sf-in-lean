@@ -4,19 +4,13 @@ This repository contains the sources for the _Software Foundations in Lean_ text
 
 ## Status and how to contribute
 
-SF-in-Lean is ready for adventurous alpha-testers!  See
-[ALPHA-TESTERS.md](ALPHA-TESTERS.md) for instructions on how to get started.
+SF-in-Lean now comprises two complete volumes, _Logical Foundations_ and _Hoare Logic_. These are ready for use. The third volume, _Type Systems_, is drafted and should be tidied up by the end of 2026.
 
-The SF-in-Lean team is also looking for contributors who have time and
-interest to make a bigger commitment to the project.  
-If you are interested in joining us, please email Benjamin Pierce.
+Translations of further volumes of the [original _Software Foundations_](https://softwarefoundations.cis.upenn.edu/) from Rocq to Lean will follow in due course.
 
-SF-in-Lean is _not_ ready for ordinary readers quite yet. We aim to
-have a complete and polished draft of the opening chapters of _Logical
-Foundations_ in time for the start of Fall 2026 courses and to finish all of _Logical Foundations_, _Type Systems_, and _Hoare Logic_ by
-the end of the semester. 
-
-Translations of further volumes of the original _Software Foundations_ from Rocq to Lean will follow in due course.
+If you would like to help: Please send PRs or suggestions for improvement! 
+Or, if you have time and interest to make a bigger commitment to the
+project, please email Mike Hicks and/or Benjamin Pierce.
 
 ## Quick start: Building and viewing the book
 

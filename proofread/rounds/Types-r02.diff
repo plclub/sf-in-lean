@@ -1,0 +1,150 @@
+--- TS/Types.lean (before this round)
++++ TS/Types.lean
+@@ -412,4 +412,5 @@
+ ```
+ 
++::::::full
+ :::::exercise (rating := 2) (name := "some_term_is_stuck")
+ ```lean
+@@ -425,5 +426,10 @@
+       | inr hn => cases hn with | succ _ h => cases h
+ ```
++
++:::gradeTheorem 2 some_term_is_stuck
++:::
+ :::::
++
++::::::
+ 
+ :::slidebreak
+@@ -452,5 +458,5 @@
+ ```
+ 
+-:::::exercise (rating := 3) (name := "value_is_nf")
++:::::exercise (rating := 3) (name := "value_is_nf") (checkVisibility := false)
+ (Hint: You will reach a point in this proof where you need to use an
+ induction to reason about a term that is known to be a numeric value.
+@@ -508,6 +514,10 @@
+         | inr hn => cases hn
+ ```
++
++:::gradeTheorem 3 value_is_nf
++:::
+ :::::
+ 
++::::::full
+ :::::exercise (rating := 3) (name := "step_deterministic") (optional := true)
+ Use `value_is_nf` (here, `nvalue_is_nf`) to show that the `Tm.Step` relation
+@@ -564,4 +574,6 @@
+ :::::
+ 
++::::::
++
+ ::::quiz
+ Is the following term stuck?
+@@ -908,4 +920,5 @@
+ ```
+ 
++::::::full
+ :::::exercise (rating := 1) (name := "succ_hastype_nat__hastype_nat") (optional := true)
+ ```lean
+@@ -916,4 +929,6 @@
+ :::::
+ 
++::::::
++
+ ## Canonical forms
+ 
+@@ -947,5 +962,5 @@
+ least one step.  We call this _progress_.
+ 
+-:::::exercise (rating := 3) (name := "finish_progress")
++:::::exercise (rating := 3) (name := "finish_progress") (checkVisibility := false)
+ Complete the formal proof of the `progress` property.  (Make sure you
+ understand the parts we've given of the informal proof in the following
+@@ -1014,5 +1029,6 @@
+ :::
+ 
+-:::::exercise (rating := 3) (name := "finish_progress_informal") (optional := true) (manual := true)
++::::::full
++:::::exercise (rating := 3) (name := "finish_progress_informal") (level := Advanced) (optional := true) (manual := true)
+ Complete the corresponding informal proof.
+ 
+@@ -1092,4 +1108,6 @@
+ :::
+ :::::
++
++::::::
+ 
+ ::::full
+@@ -1153,5 +1171,5 @@
+ takes a step, the result is a well-typed term (of the same type).
+ 
+-:::::exercise (rating := 2) (name := "finish_preservation")
++:::::exercise (rating := 2) (name := "finish_preservation") (checkVisibility := false)
+ Complete the formal proof of the `preservation` property.  (Again, make
+ sure you understand the informal proof fragment in the following exercise
+@@ -1190,5 +1208,6 @@
+ :::::
+ 
+-:::::exercise (rating := 3) (name := "finish_preservation_informal") (optional := true) (manual := true)
++::::::full
++:::::exercise (rating := 3) (name := "finish_preservation_informal") (level := Advanced) (optional := true) (manual := true)
+ Complete the following informal proof.
+ 
+@@ -1267,4 +1286,7 @@
+ :::::
+ 
++::::::
++
++::::::full
+ :::::exercise (rating := 3) (name := "preservation_alternate_proof")
+ Now prove the same property again by induction on the _evaluation_
+@@ -1296,4 +1318,6 @@
+ :::::
+ 
++::::::
++
+ ::::full
+ The preservation theorem is often called _subject reduction_, because it
+@@ -1361,4 +1385,5 @@
+ # Additional Exercises
+ 
++::::::full
+ :::::exercise (rating := 3) (name := "subject_expansion")
+ Having seen the subject reduction property, one might wonder whether the
+@@ -1389,6 +1414,11 @@
+ end TM
+ ```
++
++:::gradeTheorem 3 TM.subject_expansion
++:::
+ :::::
+ 
++::::::
++
+ The following are _thought exercises_: for each modification, say which
+ of determinism / progress / preservation still hold, with a
+@@ -1412,4 +1442,5 @@
+ :::
+ 
++::::::full
+ :::::exercise (rating := 2) (name := "variation1") (manual := true)
+ Suppose that we add this new rule to the typing relation:
+@@ -1535,8 +1566,11 @@
+ :::::
+ 
++::::::
++
+ :::dev PotentialImprovement
+ How about turning this into variation9?
+ :::
+ 
++::::::full
+ :::::exercise (rating := 1) (name := "remove_pred0") (manual := true)
+ The reduction rule `predZero` is a bit counter-intuitive: we might feel
+@@ -1609,2 +1643,4 @@
+ :::
+ :::::
++
++::::::

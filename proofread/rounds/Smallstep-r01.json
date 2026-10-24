@@ -1,0 +1,232 @@
+{
+ "file": "TS/Smallstep.lean",
+ "chapter": "Smallstep",
+ "round": 1,
+ "proposals": [
+  {
+   "id": "typo1",
+   "cat": "typo/spelling",
+   "old": "I would make some arguments implicit to proivde a cleaner interface (FYI the [mathlib version](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Logic/Relation.html#Relation.ReflTransGen))",
+   "new": "I would make some arguments implicit to provide a cleaner interface (FYI the [mathlib version](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Logic/Relation.html#Relation.ReflTransGen))",
+   "why": "\"proivde\" -> \"provide\"."
+  },
+  {
+   "id": "grammar1",
+   "cat": "grammar/redundant-then",
+   "old": "When `R` is deterministic (as for our language's semantics), then its normal form is _unique_.",
+   "new": "When `R` is deterministic (as for our language's semantics), its normal form is _unique_.",
+   "why": "Drop the redundant \"then\" after a \"when\" clause."
+  },
+  {
+   "id": "width1",
+   "cat": "formatting/line-width",
+   "old": "  | plus (t₁ t₂ : Tm) (n₁ n₂ : Nat) (h₁ : Eval t₁ n₁) (h₂ : Eval t₂ n₂) : Eval (.p t₁ t₂) (n₁ + n₂)",
+   "new": "  | plus (t₁ t₂ : Tm) (n₁ n₂ : Nat)\n      (h₁ : Eval t₁ n₁) (h₂ : Eval t₂ n₂) :\n      Eval (.p t₁ t₂) (n₁ + n₂)",
+   "why": "Reflow to fit 70 columns, splitting binders and conclusion as elsewhere in the chapter."
+  },
+  {
+   "id": "width2",
+   "cat": "formatting/line-width",
+   "old": "theorem value_is_nf (v : Tm) (h : IsValue v) : IsNormalForm Step v := by",
+   "new": "theorem value_is_nf (v : Tm)\n    (h : IsValue v) : IsNormalForm Step v := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width3",
+   "cat": "formatting/line-width",
+   "old": "theorem nf_is_value (t : Tm) (h : IsNormalForm Step t) : IsValue t := by",
+   "new": "theorem nf_is_value (t : Tm)\n    (h : IsNormalForm Step t) : IsValue t := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "proofby1",
+   "cat": "style/proof-by",
+   "old": "theorem nf_same_as_value (t : Tm) : IsNormalForm Step t ↔ IsValue t :=\n  ⟨nf_is_value t, value_is_nf t⟩",
+   "new": "theorem nf_same_as_value (t : Tm) :\n    IsNormalForm Step t ↔ IsValue t := by\n  exact ⟨nf_is_value t, value_is_nf t⟩",
+   "why": "Open with `by`/`exact` rather than a bare term-mode proof; reflow to fit 70 columns."
+  },
+  {
+   "id": "width4",
+   "cat": "formatting/line-width",
+   "old": "inductive Step : Tm → Tm → Prop where\n  | plus (n₁ n₂ : Nat) : Step (.p (.c n₁) (.c n₂)) (.c (n₁ + n₂))\n  | plusLeft (t₁ t₁' t₂ : Tm) (h : Step t₁ t₁') : Step (.p t₁ t₂) (.p t₁' t₂)\n  | plusRight (v₁ t₂ t₂' : Tm) (hv : IsValue v₁) (h : Step t₂ t₂') : Step (.p v₁ t₂) (.p v₁ t₂')",
+   "new": "inductive Step : Tm → Tm → Prop where\n  | plus (n₁ n₂ : Nat) : Step (.p (.c n₁) (.c n₂)) (.c (n₁ + n₂))\n  | plusLeft (t₁ t₁' t₂ : Tm)\n      (h : Step t₁ t₁') :\n      Step (.p t₁ t₂) (.p t₁' t₂)\n  | plusRight (v₁ t₂ t₂' : Tm)\n      (hv : IsValue v₁)\n      (h : Step t₂ t₂') :\n      Step (.p v₁ t₂) (.p v₁ t₂')",
+   "why": "Reflow plusLeft/plusRight to fit 70 columns, matching the identical Step inductive earlier in the chapter."
+  },
+  {
+   "id": "proofby2",
+   "cat": "style/proof-by",
+   "old": "theorem testval1 : IsValue (.p (.p (.c 1) (.c 2)) (.c 3)) := .funny _ 3",
+   "new": "theorem testval1 : IsValue (.p (.p (.c 1) (.c 2)) (.c 3)) := by\n  exact .funny _ 3",
+   "why": "Open with `by`/`exact` rather than a bare term-mode proof; this also brings the line under 70 columns."
+  },
+  {
+   "id": "proofby3",
+   "cat": "style/proof-by",
+   "old": "theorem testval3 : Step (.p (.c 3) (.c 3)) (.c 6) ∧ IsValue (.c 6) :=\n  ⟨.plus 3 3, .const 6⟩",
+   "new": "theorem testval3 :\n    Step (.p (.c 3) (.c 3)) (.c 6) ∧ IsValue (.c 6) := by\n  exact ⟨.plus 3 3, .const 6⟩",
+   "why": "Open with `by`/`exact` rather than a bare term-mode proof; reflow to fit 70 columns."
+  },
+  {
+   "id": "proofby4",
+   "cat": "style/proof-by",
+   "old": "theorem multi_single {X : Type} (R : Relation X) (x y : X) (h : R x y) :\n    Multi R x y :=\n  .step x y y h (.refl y)",
+   "new": "theorem multi_single {X : Type} (R : Relation X) (x y : X)\n    (h : R x y) : Multi R x y := by\n  exact .step x y y h (.refl y)",
+   "why": "Open with `by`/`exact` rather than a bare term-mode proof; reflow to fit 70 columns."
+  },
+  {
+   "id": "width5",
+   "cat": "formatting/line-width",
+   "old": "example :\n    (.p (.p (.c 0) (.c 3)) (.p (.c 2) (.c 4))) ⟶* .c ((0 + 3) + (2 + 4)) := by",
+   "new": "example :\n    (.p (.p (.c 0) (.c 3)) (.p (.c 2) (.c 4)))\n      ⟶* .c ((0 + 3) + (2 + 4)) := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width6",
+   "cat": "formatting/line-width",
+   "old": "theorem normal_forms_unique : Deterministic (IsNormalFormOf Step) := by",
+   "new": "theorem normal_forms_unique :\n    Deterministic (IsNormalFormOf Step) := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width7",
+   "cat": "formatting/line-width",
+   "old": "theorem multistep_congr_1 (t₁ t₁' t₂ : Tm) (h : t₁ ⟶* t₁') : (.p t₁ t₂) ⟶* (.p t₁' t₂) := by",
+   "new": "theorem multistep_congr_1 (t₁ t₁' t₂ : Tm) (h : t₁ ⟶* t₁') :\n    (.p t₁ t₂) ⟶* (.p t₁' t₂) := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width8",
+   "cat": "formatting/line-width",
+   "old": "theorem multistep_congr_2 (v₁ t₂ t₂' : Tm) (hv : IsValue v₁) (h : t₂ ⟶* t₂') :\n    (.p v₁ t₂) ⟶* (.p v₁ t₂') := by",
+   "new": "theorem multistep_congr_2 (v₁ t₂ t₂' : Tm) (hv : IsValue v₁)\n    (h : t₂ ⟶* t₂') :\n    (.p v₁ t₂) ⟶* (.p v₁ t₂') := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width9",
+   "cat": "formatting/line-width",
+   "old": "theorem multistep_of_eval (t : Tm) (n : Nat) (h : t ⇓ n) : t ⟶* .c n := by",
+   "new": "theorem multistep_of_eval (t : Tm) (n : Nat) (h : t ⇓ n) :\n    t ⟶* .c n := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width10",
+   "cat": "formatting/line-width",
+   "old": "theorem eval_of_step (t t' : Tm) (n : Nat) (hs : t ⟶ t') (he : t' ⇓ n) : t ⇓ n := by",
+   "new": "theorem eval_of_step (t t' : Tm) (n : Nat) (hs : t ⟶ t')\n    (he : t' ⇓ n) : t ⇓ n := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width11",
+   "cat": "formatting/line-width",
+   "old": "inductive AStep : Aexp → Aexp → Prop where\n  | plusLeft (a₁ a₁' a₂ : Aexp) (h : AStep a₁ a₁') : AStep (.plus a₁ a₂) (.plus a₁' a₂)\n  | plusRight (v₁ a₂ a₂' : Aexp) (hv : IsAValue v₁) (h : AStep a₂ a₂') :\n      AStep (.plus v₁ a₂) (.plus v₁ a₂')\n  | plus (n₁ n₂ : Nat) :  AStep (.plus (.num n₁) (.num n₂)) (.num (n₁ + n₂))\n  | minusLeft (a₁ a₁' a₂ : Aexp) (h : AStep a₁ a₁') : AStep (.minus a₁ a₂) (.minus a₁' a₂)\n  | minusRight (v₁ a₂ a₂' : Aexp) (hv : IsAValue v₁) (h : AStep a₂ a₂') :\n      AStep (.minus v₁ a₂) (.minus v₁ a₂')\n  | minus (n₁ n₂ : Nat) : AStep (.minus (.num n₁) (.num n₂)) (.num (n₁ - n₂))\n  | multLeft (a₁ a₁' a₂ : Aexp) (h : AStep a₁ a₁') : AStep (.mult a₁ a₂) (.mult a₁' a₂)\n  | multRight (v₁ a₂ a₂' : Aexp) (hv : IsAValue v₁) (h : AStep a₂ a₂') :\n      AStep (.mult v₁ a₂) (.mult v₁ a₂')\n  | mult (n₁ n₂ : Nat) : AStep (.mult (.num n₁) (.num n₂)) (.num (n₁ * n₂))",
+   "new": "inductive AStep : Aexp → Aexp → Prop where\n  | plusLeft (a₁ a₁' a₂ : Aexp)\n      (h : AStep a₁ a₁') :\n      AStep (.plus a₁ a₂) (.plus a₁' a₂)\n  | plusRight (v₁ a₂ a₂' : Aexp)\n      (hv : IsAValue v₁)\n      (h : AStep a₂ a₂') :\n      AStep (.plus v₁ a₂) (.plus v₁ a₂')\n  | plus (n₁ n₂ : Nat) :\n      AStep (.plus (.num n₁) (.num n₂)) (.num (n₁ + n₂))\n  | minusLeft (a₁ a₁' a₂ : Aexp)\n      (h : AStep a₁ a₁') :\n      AStep (.minus a₁ a₂) (.minus a₁' a₂)\n  | minusRight (v₁ a₂ a₂' : Aexp)\n      (hv : IsAValue v₁)\n      (h : AStep a₂ a₂') :\n      AStep (.minus v₁ a₂) (.minus v₁ a₂')\n  | minus (n₁ n₂ : Nat) :\n      AStep (.minus (.num n₁) (.num n₂)) (.num (n₁ - n₂))\n  | multLeft (a₁ a₁' a₂ : Aexp)\n      (h : AStep a₁ a₁') :\n      AStep (.mult a₁ a₂) (.mult a₁' a₂)\n  | multRight (v₁ a₂ a₂' : Aexp)\n      (hv : IsAValue v₁)\n      (h : AStep a₂ a₂') :\n      AStep (.mult v₁ a₂) (.mult v₁ a₂')\n  | mult (n₁ n₂ : Nat) :\n      AStep (.mult (.num n₁) (.num n₂)) (.num (n₁ * n₂))",
+   "why": "Reflow every AStep constructor to fit 70 columns, matching the chapter's own earlier Step-inductive convention; also fixes a stray double space before `AStep` in the `plus` case."
+  },
+  {
+   "id": "width12",
+   "cat": "formatting/line-width",
+   "old": "inductive BStep : Bexp → Bexp → Prop where\n  | eqLeft (a₁ a₁' a₂ : Aexp) (h : AStep a₁ a₁') : BStep (.eq a₁ a₂) (.eq a₁' a₂)\n  | eqRight (v₁ a₂ a₂' : Aexp) (hv : IsAValue v₁) (h : AStep a₂ a₂') :\n      BStep (.eq v₁ a₂) (.eq v₁ a₂')\n  | eq (n₁ n₂ : Nat) : BStep (.eq (.num n₁) (.num n₂)) (.bool (decide (n₁ = n₂)))\n  | neqLeft (a₁ a₁' a₂ : Aexp) (h : AStep a₁ a₁') : BStep (.neq a₁ a₂) (.neq a₁' a₂)\n  | neqRight (v₁ a₂ a₂' : Aexp) (hv : IsAValue v₁) (h : AStep a₂ a₂') :\n      BStep (.neq v₁ a₂) (.neq v₁ a₂')\n  | neq (n₁ n₂ : Nat) : BStep (.neq (.num n₁) (.num n₂)) (.bool (decide (n₁ ≠ n₂)))\n  | leLeft (a₁ a₁' a₂ : Aexp) (h : AStep a₁ a₁') : BStep (.le a₁ a₂) (.le a₁' a₂)\n  | leRight (v₁ a₂ a₂' : Aexp) (hv : IsAValue v₁) (h : AStep a₂ a₂') :\n      BStep (.le v₁ a₂) (.le v₁ a₂')\n  | le (n₁ n₂ : Nat) : BStep (.le (.num n₁) (.num n₂)) (.bool (decide (n₁ ≤ n₂)))\n  | gtLeft (a₁ a₁' a₂ : Aexp) (h : AStep a₁ a₁') : BStep (.gt a₁ a₂) (.gt a₁' a₂)\n  | gtRight (v₁ a₂ a₂' : Aexp) (hv : IsAValue v₁) (h : AStep a₂ a₂') :\n      BStep (.gt v₁ a₂) (.gt v₁ a₂')\n  | gt (n₁ n₂ : Nat) : BStep (.gt (.num n₁) (.num n₂)) (.bool (decide (n₁ > n₂)))\n  | notStep (b₁ b₁' : Bexp) (h : BStep b₁ b₁') : BStep (.not b₁) (.not b₁')\n  | notTrue : BStep (.not (.bool true)) (.bool false)\n  | notFalse : BStep (.not (.bool false)) (.bool true)\n  | andStep (b₁ b₁' b₂ : Bexp) (h : BStep b₁ b₁') : BStep (.and b₁ b₂) (.and b₁' b₂)\n  | andTrueStep (b₂ b₂' : Bexp) (h : BStep b₂ b₂') :\n      BStep (.and (.bool true) b₂) (.and (.bool true) b₂')\n  | andFalse (b₂ : Bexp) : BStep (.and (.bool false) b₂) (.bool false)\n  | andTrueTrue : BStep (.and (.bool true) (.bool true)) (.bool true)\n  | andTrueFalse : BStep (.and (.bool true) (.bool false)) (.bool false)",
+   "new": "inductive BStep : Bexp → Bexp → Prop where\n  | eqLeft (a₁ a₁' a₂ : Aexp)\n      (h : AStep a₁ a₁') :\n      BStep (.eq a₁ a₂) (.eq a₁' a₂)\n  | eqRight (v₁ a₂ a₂' : Aexp)\n      (hv : IsAValue v₁)\n      (h : AStep a₂ a₂') :\n      BStep (.eq v₁ a₂) (.eq v₁ a₂')\n  | eq (n₁ n₂ : Nat) :\n      BStep (.eq (.num n₁) (.num n₂)) (.bool (decide (n₁ = n₂)))\n  | neqLeft (a₁ a₁' a₂ : Aexp)\n      (h : AStep a₁ a₁') :\n      BStep (.neq a₁ a₂) (.neq a₁' a₂)\n  | neqRight (v₁ a₂ a₂' : Aexp)\n      (hv : IsAValue v₁)\n      (h : AStep a₂ a₂') :\n      BStep (.neq v₁ a₂) (.neq v₁ a₂')\n  | neq (n₁ n₂ : Nat) :\n      BStep (.neq (.num n₁) (.num n₂)) (.bool (decide (n₁ ≠ n₂)))\n  | leLeft (a₁ a₁' a₂ : Aexp)\n      (h : AStep a₁ a₁') :\n      BStep (.le a₁ a₂) (.le a₁' a₂)\n  | leRight (v₁ a₂ a₂' : Aexp)\n      (hv : IsAValue v₁)\n      (h : AStep a₂ a₂') :\n      BStep (.le v₁ a₂) (.le v₁ a₂')\n  | le (n₁ n₂ : Nat) :\n      BStep (.le (.num n₁) (.num n₂)) (.bool (decide (n₁ ≤ n₂)))\n  | gtLeft (a₁ a₁' a₂ : Aexp)\n      (h : AStep a₁ a₁') :\n      BStep (.gt a₁ a₂) (.gt a₁' a₂)\n  | gtRight (v₁ a₂ a₂' : Aexp)\n      (hv : IsAValue v₁)\n      (h : AStep a₂ a₂') :\n      BStep (.gt v₁ a₂) (.gt v₁ a₂')\n  | gt (n₁ n₂ : Nat) :\n      BStep (.gt (.num n₁) (.num n₂)) (.bool (decide (n₁ > n₂)))\n  | notStep (b₁ b₁' : Bexp)\n      (h : BStep b₁ b₁') :\n      BStep (.not b₁) (.not b₁')\n  | notTrue : BStep (.not (.bool true)) (.bool false)\n  | notFalse : BStep (.not (.bool false)) (.bool true)\n  | andStep (b₁ b₁' b₂ : Bexp)\n      (h : BStep b₁ b₁') :\n      BStep (.and b₁ b₂) (.and b₁' b₂)\n  | andTrueStep (b₂ b₂' : Bexp) (h : BStep b₂ b₂') :\n      BStep (.and (.bool true) b₂) (.and (.bool true) b₂')\n  | andFalse (b₂ : Bexp) : BStep (.and (.bool false) b₂) (.bool false)\n  | andTrueTrue : BStep (.and (.bool true) (.bool true)) (.bool true)\n  | andTrueFalse :\n      BStep (.and (.bool true) (.bool false)) (.bool false)",
+   "why": "Reflow the overlong BStep constructors to fit 70 columns, matching the chapter's own earlier value-guarded-constructor convention."
+  },
+  {
+   "id": "width13",
+   "cat": "formatting/line-width",
+   "old": "inductive ANStep : Aexp → Aexp → Prop where\n  | plusLeft (a₁ a₁' a₂ : Aexp) (h : ANStep a₁ a₁') :  ANStep (.plus a₁ a₂) (.plus a₁' a₂)\n  | plusRight (a₁ a₂ a₂' : Aexp) (h : ANStep a₂ a₂') : ANStep (.plus a₁ a₂) (.plus a₁ a₂')\n  | plus (n₁ n₂ : Nat) : ANStep (.plus (.num n₁) (.num n₂)) (.num (n₁ + n₂))\n  | minusLeft (a₁ a₁' a₂ : Aexp) (h : ANStep a₁ a₁') : ANStep (.minus a₁ a₂) (.minus a₁' a₂)\n  | minusRight (a₁ a₂ a₂' : Aexp) (h : ANStep a₂ a₂') : ANStep (.minus a₁ a₂) (.minus a₁ a₂')\n  | minus (n₁ n₂ : Nat) : ANStep (.minus (.num n₁) (.num n₂)) (.num (n₁ - n₂))\n  | multLeft (a₁ a₁' a₂ : Aexp) (h : ANStep a₁ a₁') : ANStep (.mult a₁ a₂) (.mult a₁' a₂)\n  | multRight (a₁ a₂ a₂' : Aexp) (h : ANStep a₂ a₂') : ANStep (.mult a₁ a₂) (.mult a₁ a₂')\n  | mult (n₁ n₂ : Nat) : ANStep (.mult (.num n₁) (.num n₂)) (.num (n₁ * n₂))",
+   "new": "inductive ANStep : Aexp → Aexp → Prop where\n  | plusLeft (a₁ a₁' a₂ : Aexp)\n      (h : ANStep a₁ a₁') :\n      ANStep (.plus a₁ a₂) (.plus a₁' a₂)\n  | plusRight (a₁ a₂ a₂' : Aexp)\n      (h : ANStep a₂ a₂') :\n      ANStep (.plus a₁ a₂) (.plus a₁ a₂')\n  | plus (n₁ n₂ : Nat) :\n      ANStep (.plus (.num n₁) (.num n₂)) (.num (n₁ + n₂))\n  | minusLeft (a₁ a₁' a₂ : Aexp)\n      (h : ANStep a₁ a₁') :\n      ANStep (.minus a₁ a₂) (.minus a₁' a₂)\n  | minusRight (a₁ a₂ a₂' : Aexp)\n      (h : ANStep a₂ a₂') :\n      ANStep (.minus a₁ a₂) (.minus a₁ a₂')\n  | minus (n₁ n₂ : Nat) :\n      ANStep (.minus (.num n₁) (.num n₂)) (.num (n₁ - n₂))\n  | multLeft (a₁ a₁' a₂ : Aexp)\n      (h : ANStep a₁ a₁') :\n      ANStep (.mult a₁ a₂) (.mult a₁' a₂)\n  | multRight (a₁ a₂ a₂' : Aexp)\n      (h : ANStep a₂ a₂') :\n      ANStep (.mult a₁ a₂) (.mult a₁ a₂')\n  | mult (n₁ n₂ : Nat) :\n      ANStep (.mult (.num n₁) (.num n₂)) (.num (n₁ * n₂))",
+   "why": "Reflow every ANStep constructor to fit 70 columns; also fixes a stray double space before `ANStep` in the `plusLeft` case."
+  },
+  {
+   "id": "proofby5",
+   "cat": "style/proof-by",
+   "old": "    (Aexp.plus (.num 3) (.plus (.num 2) (.num 1))) ⟶a (.plus (.num 3) (.num 3)) :=\n  .plusRight _ _ _ (.num 3) (.plus 2 1)",
+   "new": "example :\n    (Aexp.plus (.num 3) (.plus (.num 2) (.num 1)))\n      ⟶a (.plus (.num 3) (.num 3)) := by\n  exact .plusRight _ _ _ (.num 3) (.plus 2 1)",
+   "why": "Open with `by`/`exact` rather than a bare term-mode proof; reflow to fit 70 columns."
+  },
+  {
+   "id": "width14",
+   "cat": "formatting/line-width",
+   "old": "theorem strong_progress_arith (a : Aexp) : IsAValue a ∨ ∃ a', a ⟶a a' := by",
+   "new": "theorem strong_progress_arith (a : Aexp) :\n    IsAValue a ∨ ∃ a', a ⟶a a' := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "proofby6",
+   "cat": "style/proof-by",
+   "old": "    (Bexp.le (.plus (.num 1) (.num 1)) (.num 3)) ⟶b (.le (.num 2) (.num 3)) :=\n  .leLeft _ _ _ (.plus 1 1)",
+   "new": "example :\n    (Bexp.le (.plus (.num 1) (.num 1)) (.num 3))\n      ⟶b (.le (.num 2) (.num 3)) := by\n  exact .leLeft _ _ _ (.plus 1 1)",
+   "why": "Open with `by`/`exact` rather than a bare term-mode proof; reflow to fit 70 columns."
+  },
+  {
+   "id": "width15",
+   "cat": "formatting/line-width",
+   "old": "theorem anstep_preserves_eval (a a' : Aexp) (h : a ⟶n a') : a.eval = a'.eval := by",
+   "new": "theorem anstep_preserves_eval (a a' : Aexp) (h : a ⟶n a') :\n    a.eval = a'.eval := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width16",
+   "cat": "formatting/line-width",
+   "old": "theorem multi_anstep_preserves_eval (a a' : Aexp) (h : Multi ANStep a a') : a.eval = a'.eval := by",
+   "new": "theorem multi_anstep_preserves_eval (a a' : Aexp)\n    (h : Multi ANStep a a') : a.eval = a'.eval := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width17",
+   "cat": "formatting/line-width",
+   "old": "theorem multi_astep_imp_anstep (a a' : Aexp) (h : Multi AStep a a') : Multi ANStep a a' := by",
+   "new": "theorem multi_astep_imp_anstep (a a' : Aexp)\n    (h : Multi AStep a a') : Multi ANStep a a' := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width18",
+   "cat": "formatting/line-width",
+   "old": "theorem astep_anstep_agree (a : Aexp) (n₁ n₂ : Nat)\n    (hd : Multi AStep a (.num n₁)) (hn : Multi ANStep a (.num n₂)) : n₁ = n₂ := by",
+   "new": "theorem astep_anstep_agree (a : Aexp) (n₁ n₂ : Nat)\n    (hd : Multi AStep a (.num n₁)) (hn : Multi ANStep a (.num n₂)) :\n    n₁ = n₂ := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width19",
+   "cat": "formatting/line-width",
+   "old": "example : compile (.plus (.num 2) (.num 3)) = [.push 2, .push 3, .plus] := rfl",
+   "new": "example :\n    compile (.plus (.num 2) (.num 3)) =\n      [.push 2, .push 3, .plus] := by\n  rfl",
+   "why": "Open with `by`/`rfl` rather than a bare term-mode proof; reflow to fit 70 columns."
+  },
+  {
+   "id": "width20",
+   "cat": "formatting/line-width",
+   "old": "  | push (p : Prog) (stk : Stack) (n : Nat) : StackStep (.push n :: p, stk) (p, n :: stk)",
+   "new": "  | push (p : Prog) (stk : Stack) (n : Nat) :\n      StackStep (.push n :: p, stk) (p, n :: stk)",
+   "why": "Reflow to fit 70 columns, matching the other StackStep constructors below it."
+  },
+  {
+   "id": "width21",
+   "cat": "formatting/line-width",
+   "old": "attribute [SimpleArith] Step.plusRight Step.plusLeft Step.plus IsValue.const",
+   "new": "attribute [SimpleArith]\n  Step.plusRight Step.plusLeft Step.plus IsValue.const",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width22",
+   "cat": "formatting/line-width",
+   "old": "theorem normalize_ex : exists e', (.p (.c 3) (.p (.c 2) (.c 1))) ⟶* e' ∧ IsValue e' := by",
+   "new": "theorem normalize_ex :\n    exists e', (.p (.c 3) (.p (.c 2) (.c 1))) ⟶* e' ∧ IsValue e' := by",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width23",
+   "cat": "formatting/line-width",
+   "old": "inductive Step : Tm → Tm → Prop where\n  | funny (n : Nat) : Step (.c n) (.p (.c n) (.c 0))     -- <--- NEW\n  | plus (n₁ n₂ : Nat) : Step (.p (.c n₁) (.c n₂)) (.c (n₁ + n₂))\n  | plusLeft (t₁ t₁' t₂ : Tm) (h : Step t₁ t₁') : Step (.p t₁ t₂) (.p t₁' t₂)\n  | plusRight (v₁ t₂ t₂' : Tm) (hv : IsValue v₁) (h : Step t₂ t₂') : Step (.p v₁ t₂) (.p v₁ t₂')",
+   "new": "inductive Step : Tm → Tm → Prop where\n  | funny (n : Nat) : Step (.c n) (.p (.c n) (.c 0))     -- <--- NEW\n  | plus (n₁ n₂ : Nat) : Step (.p (.c n₁) (.c n₂)) (.c (n₁ + n₂))\n  | plusLeft (t₁ t₁' t₂ : Tm)\n      (h : Step t₁ t₁') :\n      Step (.p t₁ t₂) (.p t₁' t₂)\n  | plusRight (v₁ t₂ t₂' : Tm)\n      (hv : IsValue v₁)\n      (h : Step t₂ t₂') :\n      Step (.p v₁ t₂) (.p v₁ t₂')",
+   "why": "Reflow plusLeft/plusRight to fit 70 columns, matching the identical Step inductive earlier in the chapter."
+  },
+  {
+   "id": "width24",
+   "cat": "formatting/line-width",
+   "old": "namespace Temp3\n\ninductive IsValue : Tm → Prop where\n  | const (n : Nat) : IsValue (.c n)\n\ninductive Step : Tm → Tm → Prop where\n  | plus (n₁ n₂ : Nat) : Step (.p (.c n₁) (.c n₂)) (.c (n₁ + n₂))\n  | plusLeft (t₁ t₁' t₂ : Tm) (h : Step t₁ t₁') : Step (.p t₁ t₂) (.p t₁' t₂)",
+   "new": "namespace Temp3\n\ninductive IsValue : Tm → Prop where\n  | const (n : Nat) : IsValue (.c n)\n\ninductive Step : Tm → Tm → Prop where\n  | plus (n₁ n₂ : Nat) : Step (.p (.c n₁) (.c n₂)) (.c (n₁ + n₂))\n  | plusLeft (t₁ t₁' t₂ : Tm)\n      (h : Step t₁ t₁') :\n      Step (.p t₁ t₂) (.p t₁' t₂)",
+   "why": "Reflow plusLeft to fit 70 columns, matching the identical Step inductive earlier in the chapter."
+  }
+ ],
+ "completed": true
+}

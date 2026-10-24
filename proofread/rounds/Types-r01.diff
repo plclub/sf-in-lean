@@ -1,0 +1,288 @@
+--- TS/Types.lean (before this round)
++++ TS/Types.lean
+@@ -192,5 +192,5 @@
+       | _ => Macro.throwErrorAt f s!"unknown operator `{f.getId}`"
+   | `(<{ ($e) }>) => `(<{ $e }>)
+-  | `(<{ ~$e }>)  => pure e
++  | `(<{ ~$e }>) => pure e
+   | `(<{ if $c then $t else $e }>) => `(Tm.ite <{ $c }> <{ $t }> <{ $e }>)
+ ```
+@@ -268,6 +268,7 @@
+ -- The keys are the constants' full names: `Tm` lives in namespace `TM`, and the
+ -- `delab` attribute does not resolve its argument against the current namespace.
+-@[delab app.TM.Tm.tru, delab app.TM.Tm.fls, delab app.TM.Tm.zero, delab app.TM.Tm.succ,
+-  delab app.TM.Tm.pred, delab app.TM.Tm.isZero, delab app.TM.Tm.ite]
++@[delab app.TM.Tm.tru, delab app.TM.Tm.fls, delab app.TM.Tm.zero,
++  delab app.TM.Tm.succ, delab app.TM.Tm.pred, delab app.TM.Tm.isZero,
++  delab app.TM.Tm.ite]
+ partial def delabTm : Delab := whenPPOption getPPNotation do
+   guard <| match_expr ← getExpr with
+@@ -303,40 +304,40 @@
+ ::::
+ 
+-```
+-                   -----------------------------                 (ifTrue)
+-                   if true then t₁ else t₂ ⟶ t₁
+-
+-                   ------------------------------                (ifFalse)
+-                   if false then t₁ else t₂ ⟶ t₂
++```display +centered
++         ----------------------------           (ifTrue)
++         if true then t₁ else t₂ ⟶ t₁
+ 
+-                              t₁ ⟶ t₁'
+-            -----------------------------------------------      (ifStep)
+-            if t₁ then t₂ else t₃ ⟶ if t₁' then t₂ else t₃
++        -----------------------------           (ifFalse)
++        if false then t₁ else t₂ ⟶ t₂
+ 
+-                              t₁ ⟶ t₁'
+-                         -------------------                     (succStep)
+-                         succ t₁ ⟶ succ t₁'
++                   t₁ ⟶ t₁'
++----------------------------------------------  (ifStep)
++if t₁ then t₂ else t₃ ⟶ if t₁' then t₂ else t₃
+ 
+-                           -----------                           (predZero)
+-                           pred 0 ⟶ 0
++                   t₁ ⟶ t₁'
++              ------------------                (succStep)
++              succ t₁ ⟶ succ t₁'
+ 
+-                            IsNValue v
+-                        ------------------                       (predSucc)
+-                        pred (succ v) ⟶ v
++                  ----------                    (predZero)
++                  pred 0 ⟶ 0
+ 
+-                              t₁ ⟶ t₁'
+-                         -------------------                     (predStep)
+-                         pred t₁ ⟶ pred t₁'
++                 IsNValue v
++              -----------------                 (predSucc)
++              pred (succ v) ⟶ v
+ 
+-                          ----------------                       (isZeroZero)
+-                          iszero 0 ⟶ true
++                   t₁ ⟶ t₁'
++              ------------------                (predStep)
++              pred t₁ ⟶ pred t₁'
++
++               ---------------                  (isZeroZero)
++               iszero 0 ⟶ true
+ 
+-                             IsNValue v
+-                      ------------------------                   (isZeroSucc)
+-                      iszero (succ v) ⟶ false
++                 IsNValue v
++           -----------------------              (isZeroSucc)
++           iszero (succ v) ⟶ false
+ 
+-                              t₁ ⟶ t₁'
+-                       -----------------------                   (isZeroStep)
+-                       iszero t₁ ⟶ iszero t₁'
++                   t₁ ⟶ t₁'
++            ----------------------              (isZeroStep)
++            iszero t₁ ⟶ iszero t₁'
+ ```
+ 
+@@ -344,5 +345,5 @@
+ The formal rules are below. We are defining them differently than we have
+ previously: We are using the relation's own notation (`⟶`) inside the
+-constructors. We achieve this by defining  `Tm.Step` within a `section`,
++constructors. We achieve this by defining `Tm.Step` within a `section`,
+ and within that section using `set_option hygiene false` on `⟶` so that
+ the constructors read in this syntax; after the `section`
+@@ -362,11 +363,15 @@
+   | ifStep (c c' t₂ t₃ : Tm) (h : c ⟶ c') :
+       <{ if c then t₂ else t₃ }> ⟶ <{ if c' then t₂ else t₃ }>
+-  | succStep (t₁ t₁' : Tm) (h : t₁ ⟶ t₁') : <{ succ t₁ }> ⟶ <{ succ t₁' }>
++  | succStep (t₁ t₁' : Tm) (h : t₁ ⟶ t₁') :
++      <{ succ t₁ }> ⟶ <{ succ t₁' }>
+   | predZero : <{ pred 0 }> ⟶ <{ 0 }>
+   | predSucc (v : Tm) (hv : Tm.IsNValue v) : <{ pred (succ v) }> ⟶ v
+-  | predStep (t₁ t₁' : Tm) (h : t₁ ⟶ t₁') : <{ pred t₁ }> ⟶ <{ pred t₁' }>
++  | predStep (t₁ t₁' : Tm) (h : t₁ ⟶ t₁') :
++      <{ pred t₁ }> ⟶ <{ pred t₁' }>
+   | isZeroZero : <{ iszero 0 }> ⟶ <{ true }>
+-  | isZeroSucc (v : Tm) (hv : Tm.IsNValue v) : <{ iszero (succ v) }> ⟶ <{ false }>
+-  | isZeroStep (t₁ t₁' : Tm) (h : t₁ ⟶ t₁') : <{ iszero t₁ }> ⟶ <{ iszero t₁' }>
++  | isZeroSucc (v : Tm) (hv : Tm.IsNValue v) :
++      <{ iszero (succ v) }> ⟶ <{ false }>
++  | isZeroStep (t₁ t₁' : Tm) (h : t₁ ⟶ t₁') :
++      <{ iszero t₁ }> ⟶ <{ iszero t₁' }>
+ end
+ 
+@@ -437,5 +442,6 @@
+ 
+ ```lean
+-theorem nvalue_is_nf (t : Tm) (h : Tm.IsNValue t) : Tm.IsNormalForm t := by
++theorem nvalue_is_nf (t : Tm)
++    (h : Tm.IsNValue t) : Tm.IsNormalForm t := by
+   induction h with
+   | zero => intro hc; obtain ⟨t', hstp⟩ := hc; cases hstp
+@@ -456,5 +462,6 @@
+ 
+ ```lean
+-theorem value_is_nf (t : Tm) (h : Tm.IsValue t) : Tm.IsNormalForm t := by
++theorem value_is_nf (t : Tm)
++    (h : Tm.IsValue t) : Tm.IsNormalForm t := by
+   solution!
+     cases h with
+@@ -468,5 +475,6 @@
+ 
+ ```lean
+-theorem value_is_nf' (t : Tm) (h : Tm.IsValue t) : Tm.IsNormalForm t := by
++theorem value_is_nf' (t : Tm)
++    (h : Tm.IsValue t) : Tm.IsNormalForm t := by
+   solution!
+     induction t with
+@@ -644,5 +652,6 @@
+   | isZeroZero : <{ iszero 0 }> ⇢ <{ true }>
+   | isZeroSucc (t₁ : Tm) : <{ iszero (succ t₁) }> ⇢ <{ false }>
+-  | isZeroStep (t₁ t₁' : Tm) : t₁ ⇢ t₁' → <{ iszero t₁ }> ⇢ <{ iszero t₁' }>
++  | isZeroStep (t₁ t₁' : Tm) : t₁ ⇢ t₁' →
++      <{ iszero t₁ }> ⇢ <{ iszero t₁' }>
+ end
+ 
+@@ -708,7 +717,12 @@
+ -- `pred (succ true)` steps under `⇢` (the dropped `IsNValue` premise) even
+ -- though it is stuck under `Tm.Step`:
+-example : alt_simplify_step <{ pred (succ true) }> = some <{ true }> := rfl
+-example : alt_simplify_step <{ if true then 0 else succ 0 }> = some <{ 0 }> := rfl
+-example : alt_simplify_step <{ 0 }> = none := rfl
++example :
++    alt_simplify_step <{ pred (succ true) }> = some <{ true }> := by
++  rfl
++example :
++    alt_simplify_step <{ if true then 0 else succ 0 }> =
++      some <{ 0 }> := by
++  rfl
++example : alt_simplify_step <{ 0 }> = none := by rfl
+ ```
+ 
+@@ -738,29 +752,31 @@
+ For the moment, the context is always empty.
+ 
+-```
+-                     -------------                (tru)
+-                     ⊢ true ⦂ Bool
++```display +centered
++       -------------         (tru)
++       ⊢ true ⦂ Bool
+ 
+-                     --------------               (fls)
+-                     ⊢ false ⦂ Bool
++      --------------         (fls)
++      ⊢ false ⦂ Bool
+ 
+-          ⊢ t₁ ⦂ Bool    ⊢ t₂ ⦂ τ    ⊢ t₃ ⦂ τ
+-          -----------------------------------     (ite)
+-              ⊢ if t₁ then t₂ else t₃ ⦂ τ
++        ⊢ t₁ ⦂ Bool
++         ⊢ t₂ ⦂ τ
++         ⊢ t₃ ⦂ τ
++---------------------------  (ite)
++⊢ if t₁ then t₂ else t₃ ⦂ τ
+ 
+-                       ---------                  (zero)
+-                       ⊢ 0 ⦂ Nat
++         ---------           (zero)
++         ⊢ 0 ⦂ Nat
+ 
+-                      ⊢ t₁ ⦂ Nat
+-                    ---------------               (succ)
+-                    ⊢ succ t₁ ⦂ Nat
+-
+-                      ⊢ t₁ ⦂ Nat
+-                    ---------------               (pred)
+-                    ⊢ pred t₁ ⦂ Nat
++        ⊢ t₁ ⦂ Nat
++      ---------------        (succ)
++      ⊢ succ t₁ ⦂ Nat
+ 
+-                      ⊢ t₁ ⦂ Nat
+-                   ------------------             (isZero)
+-                   ⊢ iszero t₁ ⦂ Bool
++        ⊢ t₁ ⦂ Nat
++      ---------------        (pred)
++      ⊢ pred t₁ ⦂ Nat
++
++        ⊢ t₁ ⦂ Nat
++    ------------------       (isZero)
++    ⊢ iszero t₁ ⦂ Bool
+ ```
+ ::::
+@@ -822,5 +838,6 @@
+   | fls : <{ ⊢ false ⦂ Bool }>
+   | ite (t₁ t₂ t₃ : Tm) (τ : Ty)
+-      (h₁ : <{ ⊢ t₁ ⦂ Bool }>) (h₂ : <{ ⊢ t₂ ⦂ τ }>) (h₃ : <{ ⊢ t₃ ⦂ τ }>) :
++      (h₁ : <{ ⊢ t₁ ⦂ Bool }>) (h₂ : <{ ⊢ t₂ ⦂ τ }>)
++      (h₃ : <{ ⊢ t₃ ⦂ τ }>) :
+       <{ ⊢ if t₁ then t₂ else t₃ ⦂ τ }>
+   | zero : <{ ⊢ 0 ⦂ Nat }>
+@@ -861,6 +878,6 @@
+ 
+ ```lean
+-example : <{ ⊢ if false then 0 else succ 0 ⦂ Nat }> :=
+-  .ite _ _ _ _ .fls .zero (.succ _ .zero)
++example : <{ ⊢ if false then 0 else succ 0 ⦂ Nat }> := by
++  exact .ite _ _ _ _ .fls .zero (.succ _ .zero)
+ ```
+ 
+@@ -907,5 +924,6 @@
+ 
+ ```lean
+-theorem bool_canonical (t : Tm) (hT : <{ ⊢ t ⦂ Bool }>) (hv : Tm.IsValue t) : Tm.IsBValue t := by
++theorem bool_canonical (t : Tm) (hT : <{ ⊢ t ⦂ Bool }>)
++    (hv : Tm.IsValue t) : Tm.IsBValue t := by
+   cases hv with
+   | inl hb => exact hb
+@@ -914,5 +932,6 @@
+     | succ t₀ h => cases hT
+ 
+-theorem nat_canonical (t : Tm) (hT : <{ ⊢ t ⦂ Nat }>) (hv : Tm.IsValue t) : Tm.IsNValue t := by
++theorem nat_canonical (t : Tm) (hT : <{ ⊢ t ⦂ Nat }>)
++    (hv : Tm.IsValue t) : Tm.IsNValue t := by
+   cases hv with
+   | inl hb => cases hb <;> cases hT
+@@ -934,5 +953,6 @@
+ 
+ ```lean
+-theorem progress (t : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>) : Tm.IsValue t ∨ ∃ t', t ⟶ t' := by
++theorem progress (t : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>) :
++    Tm.IsValue t ∨ ∃ t', t ⟶ t' := by
+   solution!
+     induction hT with
+@@ -1139,5 +1159,6 @@
+ 
+ ```lean
+-theorem preservation (t t' : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>) (he : t ⟶ t') : <{ ⊢ t' ⦂ τ }> := by
++theorem preservation (t t' : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>)
++    (he : t ⟶ t') : <{ ⊢ t' ⦂ τ }> := by
+   solution!
+     induction hT generalizing t' with
+@@ -1254,5 +1275,6 @@
+ 
+ ```lean
+-theorem preservation' (t t' : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>) (he : t ⟶ t') : <{ ⊢ t' ⦂ τ }> := by
++theorem preservation' (t t' : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>)
++    (he : t ⟶ t') : <{ ⊢ t' ⦂ τ }> := by
+   solution!
+     induction he generalizing τ with
+@@ -1291,5 +1313,6 @@
+ scoped notation:40 t₁:41 " ⟶* " t₂:41 => Tm.MultiStep t₁ t₂
+ 
+-theorem soundness (t t' : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>) (hm : t ⟶* t') : ¬ Tm.IsStuck t' := by
++theorem soundness (t t' : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>)
++    (hm : t ⟶* t') : ¬ Tm.IsStuck t' := by
+   induction hm generalizing τ with
+   | refl a =>
+@@ -1355,5 +1378,6 @@
+ theorem subject_expansion :
+     (∀ (t t' : Tm) (τ : Ty), t ⟶ t' ∧ <{ ⊢ t' ⦂ τ }> → <{ ⊢ t ⦂ τ }>)
+-    ∨ ¬ (∀ (t t' : Tm) (τ : Ty), t ⟶ t' ∧ <{ ⊢ t' ⦂ τ }> → <{ ⊢ t ⦂ τ }>) := by
++    ∨ ¬ (∀ (t t' : Tm) (τ : Ty),
++          t ⟶ t' ∧ <{ ⊢ t' ⦂ τ }> → <{ ⊢ t ⦂ τ }>) := by
+   solution!
+     right

@@ -1,0 +1,50 @@
+{
+ "file": "LF/Typeclasses.lean",
+ "chapter": "Typeclasses",
+ "round": 2,
+ "proposals": [
+  {
+   "id": 1,
+   "cat": "exposition/proof-alignment",
+   "old": "For a typeclass like {name}`DefaultValue` that carries data — a term, such as the {lean}`1` above,",
+   "new": "For a typeclass like {name}`DefaultValue` that carries data — a term, such as the {lean}`0` above,",
+   "why": "Every DefaultValue Nat example given uses 0, never 1; the author confirmed this should say 0."
+  },
+  {
+   "id": 2,
+   "cat": "exposition/proof-alignment",
+   "old": "{name}`DefaultValue.value` earlier when it was equated with {lean}`(1 : Nat)`.",
+   "new": "{name}`DefaultValue.value` earlier when it was equated with {lean}`(0 : Nat)`.",
+   "why": "Same stale 1/0 reference as the previous edit."
+  },
+  {
+   "id": 3,
+   "cat": "exposition/flow",
+   "old": "In order to declare a default value of {lean}`β` we will use the {name}`Inhabited` typeclass,\nwhich is the standard library's implementation of our {name}`DefaultValue` example from above:\n\nThe function `TotalMap.empty` yields an empty total map, given a default element;",
+   "new": "In order to declare a default value of {lean}`β` we will use the {name}`Inhabited` typeclass,\nwhich is the standard library's implementation of our {name}`DefaultValue` example from above.\n\nThe function `TotalMap.empty` yields an empty total map, given a default element;",
+   "why": "The colon promised code next, but an unrelated sentence about what TotalMap.empty does intervened before the code block; author confirmed the colon should become a period."
+  },
+  {
+   "id": 4,
+   "cat": "devnote/stale-instructors-note",
+   "old": "Again, these two notions are equivalent:\n\n:::dev\nThis proof is from the typeclass version, which makes more sense if maps are included — CGH\n:::\n\n```lean\nexample (n₁ n₂ : Nat) : n₁ == n₂ ↔ n₁ = n₂ := beq_iff_eq\n```",
+   "new": "Again, these two notions are equivalent:\n\n```lean\nexample (n₁ n₂ : Nat) : n₁ == n₂ ↔ n₁ = n₂ := beq_iff_eq\n```",
+   "why": "Author confirmed this note is stale: Maps already precedes Reflection in this chapter, so the note's premise (that the proof would make more sense \"if maps are included\") is already satisfied."
+  },
+  {
+   "id": 5,
+   "cat": "exposition/missing-explanation",
+   "old": "Lean will complain here that it cannot find an instance of {name}`Decidable`. This typeclass\n\n```recall\nclass inductive Decidable (p : Prop) where\n  /-- Proves that `p` is decidable by supplying a proof of `¬ p` -/\n  | isFalse (h : Not p) : Decidable p\n  /-- Proves that `p` is decidable by supplying a proof of `p` -/\n  | isTrue (h : p) : Decidable p\n```\n\nis the way that we express in Lean that a given proposition is decidable. This is the generalization\nof our observation that {name}`Nat.even_iff_Even` was reflecting a proof between boolean and\npropositional equality. In fact, we can use this theorem to directly construct a {name}`Decidable`\ninstance.",
+   "new": "Lean will complain here that it cannot find an instance of {name}`Decidable`. Writing `if x = y then ... else ...` forces Lean to pick a branch, which means it needs either a proof of `x = y` or a proof of `¬ (x = y)` — exactly what this typeclass demands:\n\n```recall\nclass inductive Decidable (p : Prop) where\n  /-- Proves that `p` is decidable by supplying a proof of `¬ p` -/\n  | isFalse (h : Not p) : Decidable p\n  /-- Proves that `p` is decidable by supplying a proof of `p` -/\n  | isTrue (h : p) : Decidable p\n```\n\n`Decidable p` is how we express in Lean that a proposition `p` can be settled one way or the other, computationally. It generalizes what we already saw with {name}`Nat.even_iff_Even`: that theorem showed {lean}`Nat.even n = true ↔ Nat.Even n`, converting a boolean computation into a proposition. Deciding {lean}`Nat.even n = true` is automatic, since equality of {name}`Bool`s is always decidable, and the standard library function {name}`decidable_of_decidable_of_iff` lets us carry a `Decidable` instance across any `p ↔ q` — from `Decidable p` to `Decidable q`. Applying it to {name}`Nat.even_iff_Even` is exactly what we need to construct an instance for {name}`Nat.Even`:",
+   "why": "Author explained the intended connection (if/decide needs a proof of p or ¬p; Decidable generalizes the boolean/propositional link already seen in Nat.even_iff_Even; decidable_of_decidable_of_iff transports decidability across that iff) and asked for it to be written out."
+  },
+  {
+   "id": 6,
+   "cat": "devnote/exercise-framing",
+   "old": "  - One can mostly ignore proof terms due to proof irrelevance\n\nHere is an example where the proof term is blocking a rewrite.\nThe solution is to simplify it away.\n\n```lean +error\n-- set_option pp.proofs true in\nexample {n m : Nat} {a : Fin n} {b : Fin m} (h₁ : n = m) (h₂ : a.val = b.val) :\n    a = ⟨b.val, h₁ ▸ b.isLt⟩ := by\n  -- ext\n  -- dsimp only\n  rw [← h₂]\n```\n:::\n\n# Maps",
+   "new": "  - One can mostly ignore proof terms due to proof irrelevance\n\nHere is an example where the proof term is blocking a rewrite.\nThe solution is to simplify it away.\n\n```lean +error\n-- set_option pp.proofs true in\nexample {n m : Nat} {a : Fin n} {b : Fin m} (h₁ : n = m) (h₂ : a.val = b.val) :\n    a = ⟨b.val, h₁ ▸ b.isLt⟩ := by\n  -- ext\n  -- dsimp only\n  rw [← h₂]\n```\n:::\n\n:::dev \"Claude\"\nThis section is still only the outline above; there is no reader-facing prose yet. It is also not free-standing: the bullets name exactly the vocabulary the Maps section below uses without ever defining it — `get` as the \"public API counterpart\" to `inner`, `toTotal` playing the same role for `PartialMap`, and the recurring pattern of `*_def` lemmas marked \"exposes implementation-specific details ... avoid using outside the X namespace.\" Revisit alongside the Maps section to decide whether to write this section now, using `get`/`inner` and `toTotal`/`inner` as the worked examples, or leave it as a stub.\n:::\n\n# Maps",
+   "why": "Author asked to flag this section (still just an outline) for a later revisit, noting it sets up vocabulary the following Maps section relies on without defining."
+  }
+ ],
+ "completed": true
+}

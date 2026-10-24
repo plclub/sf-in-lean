@@ -1,0 +1,113 @@
+{
+ "file": "TS/Slang.lean",
+ "chapter": "Slang",
+ "round": 4,
+ "proposals": [
+  {
+   "id": "dash-concrete-syntax",
+   "cat": "punctuation/em-dash",
+   "old": "syntax_ that a programmer would actually write to these abstract syntax\ntrees -- the process that, for example, would translate the string\n{lean}`\"1 + 2 * 3\"` to the AST `.plus (.num 1) (.mult (.num 2) (.num 3))`.",
+   "new": "syntax_ that a programmer would actually write to these abstract syntax\ntrees — the process that, for example, would translate the string\n{lean}`\"1 + 2 * 3\"` to the AST `.plus (.num 1) (.mult (.num 2) (.num 3))`.",
+   "why": "Chapter prose uses a real em dash per Chicago (the book's stated default; see STYLE-WRITING.md), not the ASCII typewriter convention `--`."
+  },
+  {
+   "id": "dash-bnf-informal",
+   "cat": "punctuation/em-dash",
+   "old": "  - The BNF is more informal -- for example, it gives some suggestions",
+   "new": "  - The BNF is more informal — for example, it gives some suggestions",
+   "why": "Chapter prose uses a real em dash per Chicago (the book's stated default; see STYLE-WRITING.md), not the ASCII typewriter convention `--`."
+  },
+  {
+   "id": "dash-human-intelligence",
+   "cat": "punctuation/em-dash",
+   "old": "    unspecified.  Some additional information -- and human intelligence --\n    would be required to turn this description into a formal definition,",
+   "new": "    unspecified.  Some additional information — and human intelligence —\n    would be required to turn this description into a formal definition,",
+   "why": "Chapter prose uses a real em dash per Chicago (the book's stated default; see STYLE-WRITING.md), not the ASCII typewriter convention `--`."
+  },
+  {
+   "id": "dash-bnf-switch",
+   "cat": "punctuation/em-dash",
+   "old": "    freely among them -- usually without bothering to say which kind of",
+   "new": "    freely among them — usually without bothering to say which kind of",
+   "why": "Chapter prose uses a real em dash per Chicago (the book's stated default; see STYLE-WRITING.md), not the ASCII typewriter convention `--`."
+  },
+  {
+   "id": "dash-correct-original",
+   "cat": "punctuation/em-dash",
+   "old": "But if we want to be certain the optimization is correct -- that\nevaluating an optimized expression _always_ gives the same result as\nthe original -- we should prove it!",
+   "new": "But if we want to be certain the optimization is correct — that\nevaluating an optimized expression _always_ gives the same result as\nthe original — we should prove it!",
+   "why": "Chapter prose uses a real em dash per Chicago (the book's stated default; see STYLE-WRITING.md), not the ASCII typewriter convention `--`."
+  },
+  {
+   "id": "dash-case-split",
+   "cat": "punctuation/em-dash",
+   "old": "specially, we case-split on the left operand `a₁` -- and, when it is a numeral,\non whether that numeral is `0` -- to line the proof up with the function's own",
+   "new": "specially, we case-split on the left operand `a₁` — and, when it is a numeral,\non whether that numeral is `0` — to line the proof up with the function's own",
+   "why": "Chapter prose uses a real em dash per Chicago (the book's stated default; see STYLE-WRITING.md), not the ASCII typewriter convention `--`."
+  },
+  {
+   "id": "dash-peeling",
+   "cat": "punctuation/em-dash",
+   "old": "We can do much better. The case analysis we performed by hand -- peeling\n`plus` apart to reach the `plus (num 0) e` branch -- is exactly the case",
+   "new": "We can do much better. The case analysis we performed by hand — peeling\n`plus` apart to reach the `plus (num 0) e` branch — is exactly the case",
+   "why": "Chapter prose uses a real em dash per Chicago (the book's stated default; see STYLE-WRITING.md), not the ASCII typewriter convention `--`."
+  },
+  {
+   "id": "dash-branch-included",
+   "cat": "punctuation/em-dash",
+   "old": "Aexp.optimize0plus a` hands us one goal per branch of `optimize0plus` -- the\nspecial `plus (num 0) e` branch included -- so the nested {tactic}`cases` disappear.",
+   "new": "Aexp.optimize0plus a` hands us one goal per branch of `optimize0plus` — the\nspecial `plus (num 0) e` branch included — so the nested {tactic}`cases` disappear.",
+   "why": "Chapter prose uses a real em dash per Chicago (the book's stated default; see STYLE-WRITING.md), not the ASCII typewriter convention `--`."
+  },
+  {
+   "id": "dash-induction-hypotheses",
+   "cat": "punctuation/em-dash",
+   "old": "{name}`Aexp.eval` by the `@[simp]` characterizing lemmas and uses the induction hypotheses\n-- which it picks up from the local context automatically -- to close\neach goal. The whole proof collapses to two lines.",
+   "new": "{name}`Aexp.eval` by the `@[simp]` characterizing lemmas and uses the induction hypotheses\n— which it picks up from the local context automatically — to close\neach goal. The whole proof collapses to two lines.",
+   "why": "Chapter prose uses a real em dash per Chicago (the book's stated default; see STYLE-WRITING.md), not the ASCII typewriter convention `--`."
+  },
+  {
+   "id": "dash-start-small",
+   "cat": "punctuation/em-dash",
+   "old": "to start small -- add just a single, simple optimization and its correctness proof --\nand build up incrementally to something more interesting.)",
+   "new": "to start small — add just a single, simple optimization and its correctness proof —\nand build up incrementally to something more interesting.)",
+   "why": "Chapter prose uses a real em dash per Chicago (the book's stated default; see STYLE-WRITING.md), not the ASCII typewriter convention `--`."
+  },
+  {
+   "id": "dash-another-way",
+   "cat": "punctuation/em-dash",
+   "old": "recursion. Another way to think about evaluation -- one that is often\nmore flexible -- is as a _relation_ between expressions and their",
+   "new": "recursion. Another way to think about evaluation — one that is often\nmore flexible — is as a _relation_ between expressions and their",
+   "why": "Chapter prose uses a real em dash per Chicago (the book's stated default; see STYLE-WRITING.md), not the ASCII typewriter convention `--`."
+  },
+  {
+   "id": "dash-probabilistic",
+   "cat": "punctuation/em-dash",
+   "old": "choice among all numbers -- we only say which results are _possible_.)",
+   "new": "choice among all numbers — we only say which results are _possible_.)",
+   "why": "Chapter prose uses a real em dash per Chicago (the book's stated default; see STYLE-WRITING.md), not the ASCII typewriter convention `--`."
+  },
+  {
+   "id": "dash-deterministic-total",
+   "cat": "punctuation/em-dash",
+   "old": "principles from them. On the other hand, functional definitions are\nautomatically deterministic and total -- whereas, for a relation,\nwe must _prove_ these if we need them --\nand we can use Lean's computation mechanism to simplify them during proofs.",
+   "new": "principles from them. On the other hand, functional definitions are\nautomatically deterministic and total — whereas, for a relation,\nwe must _prove_ these if we need them —\nand we can use Lean's computation mechanism to simplify them during proofs.",
+   "why": "Chapter prose uses a real em dash per Chicago (the book's stated default; see STYLE-WRITING.md), not the ASCII typewriter convention `--`."
+  },
+  {
+   "id": "dash-switch-viewpoint",
+   "cat": "punctuation/em-dash",
+   "old": "switch between points of view at will -- exactly what we did above\nin {name}`Slang.Aexp.evalR_iff_eval` and {name}`Slang.Bexp.evalR_iff_eval`.",
+   "new": "switch between points of view at will — exactly what we did above\nin {name}`Slang.Aexp.evalR_iff_eval` and {name}`Slang.Bexp.evalR_iff_eval`.",
+   "why": "Chapter prose uses a real em dash per Chicago (the book's stated default; see STYLE-WRITING.md), not the ASCII typewriter convention `--`."
+  },
+  {
+   "id": "dash-positional-hypotheses",
+   "cat": "punctuation/em-dash",
+   "old": "We could instead have presented this relation with *positional* hypotheses --\nno names for the premises.",
+   "new": "We could instead have presented this relation with *positional* hypotheses —\nno names for the premises.",
+   "why": "Chapter prose uses a real em dash per Chicago (the book's stated default; see STYLE-WRITING.md), not the ASCII typewriter convention `--`."
+  }
+ ],
+ "completed": true
+}

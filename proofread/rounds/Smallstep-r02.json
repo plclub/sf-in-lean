@@ -1,0 +1,43 @@
+{
+ "file": "TS/Smallstep.lean",
+ "chapter": "Smallstep",
+ "round": 2,
+ "proposals": [
+  {
+   "id": "rulefig1",
+   "cat": "formatting/rule-figure",
+   "old": "```\n                -------------------------------      (plus)\n                p (c n₁) (c n₂) ⟶ c (n₁ + n₂)\n\n                         t₁ ⟶ t₁'\n                    --------------------             (plusLeft)\n                    p t₁ t₂ ⟶ p t₁' t₂\n\n                         t₂ ⟶ t₂'\n                 ----------------------------        (plusRight)\n                 p (c n₁) t₂ ⟶ p (c n₁) t₂'\n```",
+   "new": "```display +centered\n-----------------------------   (plus)\np (c n₁) (c n₂) ⟶ c (n₁ + n₂)\n\n             t₁ ⟶ t₁'\n        ------------------      (plusLeft)\n        p t₁ t₂ ⟶ p t₁' t₂\n\n             t₂ ⟶ t₂'\n    --------------------------  (plusRight)\n    p (c n₁) t₂ ⟶ p (c n₁) t₂'\n```",
+   "why": "Use `display +centered` (not a bare fence), move the figure to a minimal left margin, and align the `⟶` symbol and rule labels per the new STYLE-CODE.md convention."
+  },
+  {
+   "id": "rulefig2",
+   "cat": "formatting/rule-figure",
+   "old": "```\n                ------------------------------      (plus)\n                p (c n₁) (c n₂) ⟶ c (n₁ + n₂)\n\n                         t₁ ⟶ t₁'\n                    -------------------             (plusLeft)\n                    p t₁ t₂ ⟶ p t₁' t₂\n\n                         IsValue v₁\n                         t₂ ⟶ t₂'\n                    -------------------             (plusRight)\n                    p v₁ t₂ ⟶ p v₁ t₂'\n```",
+   "new": "```display +centered\n-----------------------------  (plus)\np (c n₁) (c n₂) ⟶ c (n₁ + n₂)\n\n             t₁ ⟶ t₁'\n        ------------------     (plusLeft)\n        p t₁ t₂ ⟶ p t₁' t₂\n\n            IsValue v₁\n             t₂ ⟶ t₂'\n        ------------------     (plusRight)\n        p v₁ t₂ ⟶ p v₁ t₂'\n```",
+   "why": "Use `display +centered`, move left, align the `⟶` symbol and labels; split the `IsValue v₁` / `t₂ ⟶ t₂'` premises (already on separate lines) are kept as-is."
+  },
+  {
+   "id": "rulefig3",
+   "cat": "formatting/rule-figure",
+   "old": "```\n                        a₁ ⟶a a₁'\n                   --------------------             (plusLeft)\n                   a₁ + a₂ ⟶a a₁' + a₂\n\n                 IsAValue v₁      a₂ ⟶a a₂'\n                 ---------------------------        (plusRight)\n                   v₁ + a₂ ⟶a v₁ + a₂'\n\n                 -------------------------          (plus)\n                 n₁ + n₂ ⟶a num (n₁ + n₂)\n```",
+   "new": "```display +centered\n     a₁ ⟶a a₁'\n-------------------       (plusLeft)\na₁ + a₂ ⟶a a₁' + a₂\n\n    IsAValue v₁\n     a₂ ⟶a a₂'\n-------------------       (plusRight)\nv₁ + a₂ ⟶a v₁ + a₂'\n\n------------------------  (plus)\nn₁ + n₂ ⟶a num (n₁ + n₂)\n```",
+   "why": "Use `display +centered`, move left, split the packed `IsAValue v₁      a₂ ⟶a a₂'` premise onto two lines, and align the `⟶a` symbol and rule labels."
+  },
+  {
+   "id": "rulefig4",
+   "cat": "formatting/rule-figure",
+   "old": "```\n                        a₁ ⟶a a₁'\n                  --------------------             (eqLeft)\n                  a₁ = a₂ ⟶b a₁' = a₂\n\n                IsAValue v₁      a₂ ⟶a a₂'\n                ---------------------------        (eqRight)\n                  v₁ = a₂ ⟶b v₁ = a₂'\n\n                  ---------------------            (eq)\n                  n₁ = n₂ ⟶b (n₁ = n₂)\n\n                        b₁ ⟶b b₁'\n                      --------------               (notStep)\n                      ¬ b₁ ⟶b ¬ b₁'\n\n                    ----------------               (notTrue)\n                    ¬ true ⟶b false\n\n                  ---------------------            (andFalse)\n                  false ∧ b₂ ⟶b false\n```",
+   "new": "```display +centered\n        a₁ ⟶a a₁'\n   -------------------   (eqLeft)\n   a₁ = a₂ ⟶b a₁' = a₂\n\n       IsAValue v₁\n        a₂ ⟶a a₂'\n   -------------------   (eqRight)\n   v₁ = a₂ ⟶b v₁ = a₂'\n\n   --------------------  (eq)\n   n₁ = n₂ ⟶b (n₁ = n₂)\n\n        b₁ ⟶b b₁'\n      -------------      (notStep)\n      ¬ b₁ ⟶b ¬ b₁'\n\n    ---------------      (notTrue)\n    ¬ true ⟶b false\n\n-------------------      (andFalse)\nfalse ∧ b₂ ⟶b false\n```",
+   "why": "Use `display +centered`, move left, split the packed `IsAValue v₁      a₂ ⟶a a₂'` premise onto two lines, and align the `⟶a`/`⟶b` symbols and rule labels."
+  },
+  {
+   "id": "content1",
+   "cat": "exposition/misstatement",
+   "old": ":::terse\nThe `Step` relation is _normalizing_ it is deterministic and always reaches a normal form\nin a finite number of steps.\n:::",
+   "new": ":::terse\nThe `Step` relation is _normalizing_: every term reaches a normal form in\na finite number of steps. Combined with determinism, that normal form is\nunique.\n:::",
+   "why": "`Normalizing` is defined purely as totality (every term reaches a normal form); the previous wording folded determinism into the definition itself, which isn't what `Normalizing` says. State the two facts separately."
+  }
+ ],
+ "completed": true
+}

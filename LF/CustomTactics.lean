@@ -2,22 +2,13 @@ module
 
 public meta import Lean.Elab.ConfigEval
 public meta import Lean.Elab.Tactic.RenameInaccessibles
-public meta import Lean.Elab.Tactic.Induction
+public meta import Lean.Elab.Tactic.ElabTerm
 meta import all Lean.Meta.Tactic.Cases
 
 meta section
 
 namespace Lean.Parser
 open Tactic
-
-/-- Internal syntactic representation of a single inversion alternative. -/
-declare_syntax_cat invAlt
-syntax " | " caseArg " => " tacticSeq : invAlt
-
-/-- An inversion alternative matching one or more goal tags,
-  expanding to multiple single [invAlt]s. -/
-declare_syntax_cat invAlts
-syntax (" | " caseArg)+ " => " tacticSeq : invAlts
 
 /--
   `inversion h` behaves like `cases h` except that where `cases` would fail with
@@ -40,7 +31,7 @@ syntax (" | " caseArg)+ " => " tacticSeq : invAlts
     is supported, similar to that of `cases` and `induction`.
 -/
 syntax (name := inversion)
-  "inversion " optConfig ident (" with " (tacticSeq)? (colGe invAlts)*)? : tactic
+  "inversion " optConfig ident (" with " (tacticSeq)? (colGe inductionAlt)*)? : tactic
 
 end Lean.Parser
 
@@ -133,6 +124,7 @@ def casesClearMany (subgoals : Array CasesSubgoal) (fvarIds : Array FVarId) : Me
 end Lean.Meta
 
 namespace Lean.Elab.Tactic
+open Lean.Parser.Tactic (inductionAlt)
 open Meta Term
 
 -- [https://github.com/leanprover-community/mathlib4/blob/master/Mathlib/Tactic/Lemma.lean]
@@ -174,56 +166,64 @@ open Cases in
   except instead of calling [Lean.Meta.Cases.unifyEqs], which may fail
   if the generalizing equations can't all be destructed and substituted away,
   it calls our [unifyCasesEqs] above, which keeps unsolvable equations in the context. -/
-def _root_.Lean.MVarId.inversion (mvarId : MVarId) (h : FVarId) (config : InversionConfig)
+def _root_.Lean.MVarId.inversion (goal : MVarId) (h : FVarId) (config : InversionConfig)
     (givenNames : Array AltVarNames := #[]) (interestingCtors? : Option (Array Name) := none) :
-    TacticM (Array CasesSubgoal) := mvarId.withContext do
-  let goal ← getMainGoal
-  goal.withContext do
-    let some ctx ← mkCasesContext? h
-    | throwTacticEx `inversion goal "Target {Expr.fvar h} does not belong to an inductive type"
-    -- If the target's type isn't a predicate with indices, behave like `cases`
-    if ← hasIndepIndices ctx then
-      let subgoals ← inductionCasesOn goal h givenNames ctx (interestingCtors? := interestingCtors?)
-      let subgoals ← if config.clear
-        then casesClearMany subgoals #[h]
-        else pure subgoals
-      return subgoals
-    -- Otherwise, use custom [unifyEqs] to not fail on unifying HEqs
-    else
-      let gis@⟨newGoal, _, newTarget, numEqs⟩ ← generalizeIndices goal h
-      let (newEqs, newGoal) ← newGoal.introN numEqs
-      let some targetEq := newEqs.back?
-      | throwTacticEx `inversion newGoal "Failed to generalize target"
-      let subgoals ← inductionCasesOn newGoal newTarget givenNames ctx (interestingCtors? := interestingCtors?)
-      let subgoals ← elimAuxIndices gis subgoals
-      let subgoals ← unifyCasesEqs newEqs.toList subgoals
-      let subgoals ← if config.clear
-        then casesClearMany subgoals #[h, targetEq]
-        else pure subgoals
-      return subgoals
+    TacticM (Array CasesSubgoal) := goal.withContext do
+  let some ctx ← mkCasesContext? h
+  | throwTacticEx `inversion goal "Target {Expr.fvar h} does not belong to an inductive type"
+  -- If the target's type isn't a predicate with indices, behave like `cases`
+  if ← hasIndepIndices ctx then
+    let subgoals ← inductionCasesOn goal h givenNames ctx (interestingCtors? := interestingCtors?)
+    let subgoals ← if config.clear
+      then casesClearMany subgoals #[h]
+      else pure subgoals
+    return subgoals
+  -- Otherwise, use custom [unifyEqs] to not fail on unifying HEqs
+  else
+    let gis@⟨newGoal, _, newTarget, numEqs⟩ ← generalizeIndices goal h
+    let (newEqs, newGoal) ← newGoal.introN numEqs
+    let some targetEq := newEqs.back?
+    | throwTacticEx `inversion newGoal "Failed to generalize target"
+    let subgoals ← inductionCasesOn newGoal newTarget givenNames ctx (interestingCtors? := interestingCtors?)
+    let subgoals ← elimAuxIndices gis subgoals
+    let subgoals ← unifyCasesEqs newEqs.toList subgoals
+    let subgoals ← if config.clear
+      then casesClearMany subgoals #[h, targetEq]
+      else pure subgoals
+    return subgoals
 
 /-- Given an inversion alternative and a list of goals,
   solve the tagged goal with the provided tactics,
   throwing an error if the goal cannot be found or solved. -/
-def evalInvAlt (goals : List MVarId) (alt : TSyntax `invAlt) : TacticM (List MVarId) :=
+def evalInvAlt (goals : List MVarId) (alt : TSyntax ``inductionAlt) : TacticM (List MVarId) :=
   match alt with
-  | `(invAlt| | $tag:ident $vars:binderIdent* => $tactics:tacticSeq) => do
+  | `(inductionAlt| | $tag:ident $vars* => $tactics:tacticSeq) => do
     if let some goal ← goals.findM? (matchTag tag.getId <$> ·.getUserName) then
-      return [← trySolveGoal vars tactics goal]
+      return [← trySolveGoal alt vars tactics goal]
     else throwError m!"Invalid alternative name `{tag.getId}`: {← errorMsg}"
-  | `(invAlt| | _ $vars:binderIdent* => $tactics:tacticSeq) => do
+  | `(inductionAlt| | _ $vars* => $tactics:tacticSeq) => do
     if !goals.isEmpty then
-      goals.mapM (trySolveGoal vars tactics)
+      goals.mapM (trySolveGoal alt vars tactics)
     else throwErrorAt alt m!"Invalid wildcard alternative: {← errorMsg}"
   | _ => throwErrorAt alt "Could not parse inversion alternative"
 where
   matchTag tag name : Bool :=
     tag == name || tag.isPrefixOf name || tag.isSuffixOf name
-  trySolveGoal vars tactics goal : TacticM MVarId := do
-    let goals ← renameInaccessibles goal vars >>= evalTacticAt tactics
-    unless goals.isEmpty do
-      reportUnsolvedGoals goals
-    return goal
+  trySolveGoal alt vars tactics goal : TacticM MVarId := do
+    let vars := vars.map fun var => ⟨mkNode ``binderIdent #[var.raw]⟩
+    let renamedGoal ← withRef alt.raw[1][0] $ renameInaccessibles goal vars
+    let savedGoals ← getGoals
+    try
+      setGoals [renamedGoal]
+      -- Use the same branch information as `cases` for SubVerso's proof states.
+      withTacticInfoContext (mkNullNode #[alt.raw[0], alt.raw[1][0]]) do
+        evalTactic tactics
+        let goals ← getUnsolvedGoals
+        unless goals.isEmpty do
+          reportUnsolvedGoals goals
+      return goal
+    finally
+      setGoals savedGoals
   errorMsg : TacticM MessageData := do
     let goalMsgs ← goals.mapM (.ofName <$> ·.getUserName)
     return if goals.isEmpty
@@ -232,7 +232,7 @@ where
 
 @[tactic Lean.Parser.inversion, inherit_doc Lean.Parser.inversion]
 public meta def evalInversion : Tactic
-  | `(tactic| inversion $config $h:ident $[with $[$tactics?:tacticSeq]? $[$alts?:invAlts]*]?) => do
+  | `(tactic| inversion $config $h:ident $[with $[$tactics?:tacticSeq]? $[$alts?:inductionAlt]*]?) => do
     let casesSubgoals ← (← getMainGoal).inversion (← getFVarId h) (← elabInversionConfig config)
     let mut goals ← casesSubgoals.toList.mapM setUserName
     if let some tactics := tactics?.join then
@@ -252,9 +252,11 @@ where
     if let some name := subgoal.ctorName then
       subgoal.mvarId.setUserName name.getSuffix
     return subgoal.mvarId
-  expandInvAlts
-    | `(invAlts| $[| $args:caseArg]* => $tactics:tacticSeq) =>
-      args.mapM (`(invAlt| | $(·) => $tactics))
+  expandInvAlts (alt : TSyntax ``inductionAlt) : TacticM (Array (TSyntax ``inductionAlt)) :=
+    match alt with
+    | alt@`(inductionAlt| $lhs* => $_:tacticSeq) =>
+      -- Keep the original source nodes when splitting grouped alternatives.
+      pure <| lhs.map fun lhs => ⟨alt.raw.setArg 0 (mkNullNode #[lhs.raw])⟩
     | stx => throwErrorAt stx "Could not parse inversion alternatives"
 
 end Lean.Elab.Tactic
@@ -267,6 +269,7 @@ open Nat
 set_option autoImplicit false
 set_option pp.proofs true
 set_option pp.fieldNotation false
+set_option trace.debug false
 
 /-! # `inversion` tests -/
 
@@ -382,6 +385,13 @@ inductive Vec α : Nat → Type where
 example {α} (n : Nat) (v : Vec α (n + 1)) : ∃ hd tl, v = Vec.cons hd tl := by
   inversion v with
   | cons hd tl => exists hd, tl
+
+/-- error: too many variable names provided -/
+#guard_msgs(error) in
+example {α} (n : Nat) (v : Vec α (n + 1)) : ∃ hd tl, v = Vec.cons hd tl := by
+  inversion v with
+  -- The error should highlight the following line
+  | cons m hd tl => exists hd, tl
 
 inductive Wec α : Nat → Type where
   | nil : Wec α 0

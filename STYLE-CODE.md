@@ -194,6 +194,25 @@ theorem map_cons {α β : Type} {f : α → β}
   rfl
 ```
 
+#### Proof bodies
+
+Always prove a theorem or example with a tactic block (`:= by ...`), even when a single tactic or
+an existing lemma applied directly would suffice as a term-mode proof. Don't write:
+
+```lean
+theorem two_eq_one_add_one : 2 = 1 + 1 := rfl
+```
+
+Write this instead:
+
+```lean
+theorem two_eq_one_add_one : 2 = 1 + 1 := by rfl
+```
+
+This keeps every proof body syntactically uniform (`by` followed by tactics), rather than mixing
+tactic-mode and term-mode proofs, and makes it a smaller, more local change to extend a proof
+with more tactics later.
+
 #### Type annotations
 
 Always give binders explicit type annotations, even when Lean can infer them.
@@ -423,8 +442,8 @@ def Bag := List Nat
 deriving Append
 
 def Bag.empty : Bag := []
-theorem Bag.empty_def : Bag.empty = [] := rfl
-theorem Bag.append_nil (s : Bag) : s ++ empty = s := List.append_nil s
+theorem Bag.empty_def : Bag.empty = [] := by rfl
+theorem Bag.append_nil (s : Bag) : s ++ empty = s := by exact List.append_nil s
 theorem Bag.foo : empty ++ empty = empty := by
   rw [Bag.append_nil]
 
@@ -584,6 +603,79 @@ they are rendered in the HTML as typeset math using KaTeX,
 and in the extracted Lean as verbatim indented comments.
 Each line is a separate equation.
 
+#### Inference-rule figures
+
+A block of hand-drawn inference rules (premises over a bar, over a
+conclusion, with a rule name) is a ```` ```display +centered ```` block, not a
+bare ```` ``` ```` block — `+centered` centers the figure in the rendered HTML,
+so the source itself should sit at a minimal left margin rather than using
+leading spaces to pseudo-center it.
+
+Within such a block:
+
+* **One premise per line.** Don't pack two premises onto one source line
+  (`IsAValue v₁      a₂ ⟶a a₂'`); give each its own line, even if that means a
+  rule has more lines than the minimum.
+* **Align the relation symbol — unless any rule in the block is very
+  unbalanced, in which case center every rule in the block.** For each
+  rule's conclusion, find the chapter's step/typing relation (`⟶`, `⟶a`,
+  `⟶b`, `⟶n`, `⟶*`, `⇓`, `⦂`, …) and compare the lengths of the text before
+  and after it. If every rule's shorter side is at least 30% of its longer
+  side, the whole block is "balanced": indent every premise and conclusion
+  line in the block so the relation symbol sits at one shared column — the
+  column needed by whichever line's symbol sits furthest right. (A side
+  condition with no symbol, like `IsAValue v₁`, is centered under its own
+  rule's bar as usual.) If even one rule's shorter side is under 30% (e.g.
+  `if true then t₁ else t₂ ⟶ t₁`, where the conclusion is almost all
+  left-hand side), symbol-aligning it against the rest would drag that one
+  rule to a cramped indent near the left margin while the others look fine
+  — but fixing only that rule makes the block read as inconsistent, half
+  one convention and half the other. So drop symbol alignment for the
+  *whole* block instead: center every rule's own premises/bar/conclusion
+  independently within the width of the block's widest line, balanced or
+  not. This is a per-block, not a per-chapter, decision — a chapter can
+  have one fully aligned block and one fully centered block.
+* **Each rule's bar spans its own widest line** (after the lines of that rule
+  are positioned by the rule above) — not the whole block's widest line.
+* **Rule labels share one column across the block**: the target column is two
+  spaces past whichever rule's bar ends furthest to the right; every other
+  rule's label is padded out to that same column.
+
+For example:
+
+```display +centered
+     a₁ ⟶a a₁'
+-------------------       (plusLeft)
+a₁ + a₂ ⟶a a₁' + a₂
+
+    IsAValue v₁
+     a₂ ⟶a a₂'
+-------------------       (plusRight)
+v₁ + a₂ ⟶a v₁ + a₂'
+
+------------------------  (plus)
+n₁ + n₂ ⟶a num (n₁ + n₂)
+```
+
+And here `ifTrue`/`ifFalse` are unbalanced (a long condition stepping to a bare
+variable), so the whole block is centered — `ifStep` included, even though its
+own sides are balanced:
+
+```display +centered
+         ----------------------------           (ifTrue)
+         if true then t₁ else t₂ ⟶ t₁
+
+        -----------------------------           (ifFalse)
+        if false then t₁ else t₂ ⟶ t₂
+
+                   t₁ ⟶ t₁'
+----------------------------------------------  (ifStep)
+if t₁ then t₂ else t₃ ⟶ if t₁' then t₂ else t₃
+```
+
+This applies going forward (new material, and chapters as they come up for
+proofreading); it is not a mandate to retrofit every existing rule figure.
+
 ### Inline roles
 
 Inline roles of the form `{<role>}[<text>]` provide intertext linking and
@@ -617,7 +709,7 @@ Prove that {lean}`1 = 1`.
 
 :::solution
 ```lean
-theorem one_equals_one : 1 = 1 := rfl
+theorem one_equals_one : 1 = 1 := by rfl
 ```
 :::
 ::::
