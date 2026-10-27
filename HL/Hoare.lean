@@ -2880,7 +2880,7 @@ theorem if_example :
 ```
 
 ::::full
-We can even shorten it a little bit more. Wherever Lean expects a term of
+We can even shorten it a little bit more. Recall that wherever Lean expects a term of
 some type, we may write `(by <tactics>)` in its place: the tactics run
 immediately, and the proof they produce is spliced in as that term. Here we
 use it to supply {name}`hoare_consequence_pre`'s second argument, the

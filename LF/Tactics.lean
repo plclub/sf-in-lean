@@ -1807,7 +1807,7 @@ theorem length_append_cons {α : Type} {l₁ l₂ : List α} {x : α} {n : Nat}
     | nil => assumption
     | cons y ys ih =>
       rw [List.cons_append, List.length_cons] at *
-      /- A trick here: by using `rfl` to close `(ys ++ x :: l₂).length = n`
+      /- A trick here: by using `(by rfl)` to close `(ys ++ x :: l₂).length = n`
          we effectively choose `n` to be `(ys ++ x :: l₂).length`
       -/
       rw [ih (by rfl)]

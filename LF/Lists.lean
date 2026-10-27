@@ -795,8 +795,9 @@ theorem count_cons_diff (n₁ n₂ : Nat) (t : NatList)
     rw [count_cons_def, h, cond_false]
 
 example : count 1 [1] = 1 := by
-  rw [count_cons_same _ _ _ (by rfl)]
-  rw [count_nil]
+  rw [count_cons_same] -- This generates a subgoal for `h`, which will be closed by `rfl`
+  · rw [count_nil]
+  · rfl
 
 example : count 2 [2, 2] = 2 := solution!(by rfl)
 

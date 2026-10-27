@@ -487,6 +487,12 @@ example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
 
 Rather than applying the constructor, we can explicitly provide
 the arguments to the constructor as an {tactic}`exact` proof.
+In particular, we can write each argument as a _subproof_ using
+the `by` keyword (the same keyword that begins a proof- not a
+coincidence!). For example, since each subproof of
+{name}`And.intro` in the example below is closed by {tactic}`rfl`,
+we can close these proofs by passing `(by rfl)` as an argument
+to {name}`And.intro`.
 
 ```lean
 example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
@@ -499,6 +505,10 @@ does automatically: it applies whatever constructor builds a value of the
 goal's type, leaving one subgoal per argument of that constructor. Since
 {lean}`And` has just one constructor, {tactic}`constructor` always picks it
 here.
+
+The constructor tactic is _very_ useful for proofs involving
+types with many constructors, which we will see in the
+{ref "IndProp"}[IndProp] chapter.
 
 ```lean
 example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
