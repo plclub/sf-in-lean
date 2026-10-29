@@ -163,8 +163,7 @@ async function fetchFiles(libBase, paths, cache) {
   return files;
 }
 
-async function fetchLibrary(runtimeBase, version, q) {
-  const cache = await openCache(version);
+async function fetchLibrary(runtimeBase, q, cache) {
   const packs = typeof DecompressionStream === 'function'
     && await fetch(runtimeBase + 'library-packs.json' + q).catch(() => null);
   if (packs && packs.ok) {
@@ -176,20 +175,32 @@ async function fetchLibrary(runtimeBase, version, q) {
   return fetchFiles(runtimeBase + 'lean-lib/', layerFiles(await list.json()), cache);
 }
 
+// A Blob URL of `name` (lean.js or lean.wasm), from the cache or the network.
+async function fetchBlobUrl(runtimeBase, name, q, cache, type) {
+  const response = await cachedFetch(cache, runtimeBase + name + q);
+  if (!response.ok) throw new Error(name + ': HTTP ' + response.status);
+  return URL.createObjectURL(new Blob([await response.blob()], { type }));
+}
+
 async function boot({ runtimeBase, version, debug: wantDebug }) {
   debug = !!wantDebug;
   const q = version ? '?v=' + encodeURIComponent(version) : '';
-  const files = await fetchLibrary(runtimeBase, version || 'unversioned', q);
+  const cache = await openCache(version || 'unversioned');
+  // lean.wasm, about 100 MB, downloads alongside the library instead of after
+  // it, when Emscripten's loader would ask for it; the loader then reads it
+  // from memory.  Failures surface where they are awaited.
+  const wasm = fetchBlobUrl(runtimeBase, 'lean.wasm', q, cache, 'application/wasm');
+  const glue = fetchBlobUrl(runtimeBase, 'lean.js', q, cache, 'text/javascript');
+  for (const p of [wasm, glue]) p.catch(() => {});
+  const files = await fetchLibrary(runtimeBase, q, cache);
   if (debug) post('log', { text: `library: ${files.length} files` });
   post('importing', {});
-  const glue = await fetch(runtimeBase + 'lean.js' + q);
-  if (!glue.ok) throw new Error('lean.js: HTTP ' + glue.status);
-  const glueUrl = URL.createObjectURL(new Blob([await glue.text()], { type: 'text/javascript' }));
+  const [wasmUrl, glueUrl] = await Promise.all([wasm, glue]);
 
   await new Promise((resolve, reject) => {
     self.Module = {
       ...pickWasmMemory(),
-      locateFile: (path) => runtimeBase + path + q,
+      locateFile: (path) => (path === 'lean.wasm' ? wasmUrl : runtimeBase + path + q),
       mainScriptUrlOrBlob: glueUrl,
       print: onOutput,
       printErr: onOutput,
@@ -223,6 +234,9 @@ async function boot({ runtimeBase, version, debug: wantDebug }) {
           // closes stdout/stderr, and every later compile fails.  Runtimes
           // built before the fork exported this function lack it.
           if (Module._emscripten_runtime_keepalive_push) Module._emscripten_runtime_keepalive_push();
+          // Threads started from here on get the compiled module from this
+          // one, so the downloaded bytes can go.
+          URL.revokeObjectURL(wasmUrl);
           moduleReady = true;
           resolve();
         } catch (e) { reject(e); }
