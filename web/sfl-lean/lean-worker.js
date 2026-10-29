@@ -7,6 +7,9 @@
 // what it needs, starts Lean once, imports those modules once, and then
 // answers `compile` messages with Lean's diagnostics.  Lean keeps the imported
 // environment between compiles, so only the first one pays for the import.
+// `info`, `complete` and `resolve` messages ask what an editor shows at a
+// position (goals, hover text, completions), from what Lean recorded while
+// compiling the code last.
 //
 // The runtime may live on another origin (a CDN).  A worker may not start
 // another worker from a cross-origin script, and Lean's thread pool does just
@@ -132,10 +135,11 @@ async function fetchPacks(runtimeBase, q, index, cache) {
 }
 
 // The library file by file, for runtimes without packs (a local dev runtime,
-// say).  An `.olean` may have `.ir` and `.ir.sig` siblings (the compiled code
-// `#eval` runs); a module without them answers 404, which is fine.
+// say).  An `.olean` may have siblings: `.olean.server` (docstrings, for
+// hovers and completions) and `.ir` and `.ir.sig` (the compiled code `#eval`
+// runs); a module without them answers 404, which is fine.
 async function fetchFiles(libBase, paths, cache) {
-  const wanted = paths.flatMap((p) => [p, p.replace(/\.olean$/, '.ir'), p.replace(/\.olean$/, '.ir.sig')]);
+  const wanted = paths.flatMap((p) => [p, p + '.server', p.replace(/\.olean$/, '.ir'), p.replace(/\.olean$/, '.ir.sig')]);
   const files = [];
   let done = 0;
   let bytes = 0;
@@ -284,6 +288,57 @@ function compile(code, context) {
   }
 }
 
+// The code the runtime compiled last, which its position queries are about,
+// and that compile's result.
+let lastCompiled = null;
+
+function compiledKey(code, context) {
+  return (context == null ? '' : hashText(context)) + '\n' + code;
+}
+
+// Compile `code` unless it is what the runtime compiled last.
+function ensureCompiled(code, context) {
+  const key = compiledKey(code, context);
+  if (lastCompiled && lastCompiled.key === key) return lastCompiled.result;
+  const result = compile(code, context);
+  lastCompiled = { key, result };
+  return result;
+}
+
+// Run a position query and return the one JSON object it prints, or null
+// when the runtime lacks it or it threw.
+function query(name, ...args) {
+  const fn = Module[name];
+  if (typeof fn !== 'function' || !moduleReady) return null;
+  collecting = [];
+  try {
+    const res = fn(...args);
+    if ((Module.getValue(res + 7, 'i8') & 0xff) !== 0) return null;
+    return collecting[collecting.length - 1] || null;
+  } catch (e) {
+    return null;
+  } finally {
+    collecting = null;
+  }
+}
+
+// Positions are Lean's: 1-based lines and codepoint columns, in `code`.
+function answer(msg) {
+  if (msg.type === 'compile') return ensureCompiled(msg.code, msg.context);
+  if (msg.type === 'info') {
+    const result = ensureCompiled(msg.code, msg.context);
+    return { result, info: result.ok ? query('_lean_wasm_info_at', msg.line, msg.column) : null };
+  }
+  if (msg.type === 'complete') {
+    const result = ensureCompiled(msg.code, msg.context);
+    return { result, completions: result.ok ? query('_lean_wasm_complete', msg.line, msg.column) : null };
+  }
+  if (msg.type === 'resolve') {
+    return { item: query('_lean_wasm_resolve_completion', msg.index) };
+  }
+  return {};
+}
+
 self.onmessage = async (event) => {
   const msg = event.data || {};
   if (msg.type === 'boot') {
@@ -293,11 +348,14 @@ self.onmessage = async (event) => {
       // first Run elaborates only the exercise.
       post('importing', {});
       const warm = compile(msg.header);
-      post('ready', { ok: warm.ok, elapsed: warm.elapsed, error: warm.error });
+      post('ready', {
+        ok: warm.ok, elapsed: warm.elapsed, error: warm.error,
+        queries: typeof Module._lean_wasm_info_at === 'function',
+      });
     } catch (e) {
       post('failed', { error: (e && e.message) || String(e) });
     }
-  } else if (msg.type === 'compile') {
-    post('compiled', { id: msg.id, ...compile(msg.code, msg.context) });
+  } else if (msg.id != null) {
+    post('answer', { id: msg.id, ...answer(msg) });
   }
 };

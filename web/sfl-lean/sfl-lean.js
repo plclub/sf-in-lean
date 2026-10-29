@@ -5,7 +5,11 @@
 // Every exercise box gets a small toolbar.  On a desktop browser, "Try it here"
 // opens an editor holding the exercise's code; "Run" checks it with Lean
 // running inside the browser (see lean-worker.js), with everything the
-// exercise depends on supplied as context.  Phones and small devices cannot
+// exercise depends on supplied as context.  As the reader types, the editor
+// works like Lean's own editors, on a smaller scale: Lean's messages are
+// squiggled where they apply and shown on hover with the type and docstring
+// of the name there, the gutter marks errors and accepted theorems, names
+// are completed, and a goal view follows the cursor.  Phones and small devices cannot
 // hold Lean's memory, so they get "Open in the Lean playground" instead, which
 // opens live.lean-lang.org with the same self-contained file.  The "⋮" menu
 // offers the playground, a download of that file, and the exercise's source on
@@ -135,61 +139,7 @@
     return { text: before + code, context: before, codeLine: before.split('\n').length };
   }
 
-  // ── Goals at the cursor ───────────────────────────────────────────────────
-
-  // The code with `trace_state` inserted where it reports the proof state at
-  // the end of `line` (1-based), as an editor's goal view would: after the
-  // tactic on that line, or at the start of the block the line opens.  Blank
-  // and comment lines take the state of the code above them.  `trace_state`
-  // only prints the goals, so the copy proves exactly what the original does.
-  function withProbe(code, line) {
-    const lines = code.split('\n');
-    let i = Math.min(Math.max(line, 1), lines.length) - 1;
-    while (i > 0 && (!lines[i].trim() || lines[i].trim().startsWith('--'))) i--;
-    const text = lines[i];
-    const trimmed = text.trim();
-    const indent = text.length - text.trimStart().length;
-    let at;
-    let column;
-    if (/\bwith$/.test(trimmed) && !trimmed.includes('=>')) {
-      // `cases m with` must be followed by its alternatives; report the state
-      // just before it instead.
-      at = i;
-      column = indent;
-    } else if (/(=>|\bby|^[·.])$/.test(trimmed)) {
-      // The line opens a block: report the state at its start.
-      at = i + 1;
-      const next = lines.slice(i + 1).find((l) => l.trim());
-      const nextIndent = next ? next.length - next.trimStart().length : 0;
-      column = nextIndent > indent ? nextIndent : indent + 2;
-    } else {
-      // After the tactic; inside its bullet or alternative when it has one.
-      at = i + 1;
-      const opener = trimmed.match(/^(?:[·.]\s+|\|.*?=>\s*)/);
-      column = indent + (opener ? opener[0].length : 0);
-    }
-    lines.splice(at, 0, ' '.repeat(column) + 'trace_state');
-    return { code: lines.join('\n'), probeIndex: at };
-  }
-
-  // `trace_state`'s output as goals: each is an optional `case` name, its
-  // hypotheses, and the target after `⊢`.  Goals are separated by blank lines;
-  // a hypothesis or target that wraps continues on indented lines.
-  function parseGoals(text) {
-    if (!text.trim() || /^no goals/i.test(text.trim())) return [];
-    return text.trim().split(/\n\s*\n/).map((block) => {
-      const goal = { name: null, hyps: [], target: '' };
-      let inTarget = false;
-      for (const line of block.split('\n')) {
-        if (!goal.hyps.length && !inTarget && /^case /.test(line)) goal.name = line.slice(5);
-        else if (line.startsWith('⊢')) { inTarget = true; goal.target = line.slice(1).trim(); }
-        else if (inTarget) goal.target += '\n' + line;
-        else if (/^\s/.test(line) && goal.hyps.length) goal.hyps[goal.hyps.length - 1] += '\n' + line;
-        else goal.hyps.push(line);
-      }
-      return goal;
-    });
-  }
+  // ── What Lean reports at a position ───────────────────────────────────────
 
   function highlighted(text) {
     return highlight(text).flatMap((pieces, i) => [
@@ -198,19 +148,60 @@
     ]);
   }
 
-  function goalCards(goals) {
-    return goals.map((g) => el('div', { class: 'sfl-goal' },
-      g.name ? el('div', { class: 'sfl-goal-case' }, 'case ' + g.name) : null,
-      ...g.hyps.map((h) => el('pre', { class: 'sfl-hyp' }, ...highlighted(h))),
-      el('pre', { class: 'sfl-target' }, el('span', { class: 'sfl-turnstile' }, '⊢ '), ...highlighted(g.target))));
+  // A goal as the runtime reports it: an optional case name, hypotheses that
+  // share a type grouped together, and the target.
+  function goalCard(goal, { hyps = true } = {}) {
+    return el('div', { class: 'sfl-goal' },
+      goal.name ? el('div', { class: 'sfl-goal-case' }, 'case ' + goal.name) : null,
+      ...(hyps ? goal.hyps : []).map((h) => el('pre', { class: 'sfl-hyp' },
+        ...highlighted(h.names.join(' ') + ' : ' + h.type + (h.value != null ? ' := ' + h.value : '')))),
+      el('pre', { class: hyps && goal.hyps.length ? 'sfl-target' : '' },
+        el('span', { class: 'sfl-turnstile' }, '⊢ '), ...highlighted(goal.target)));
   }
 
   // Lean's "unsolved goals" error lists the goals left at the end of a proof.
-  // It means the proof is not finished yet, which is shown as goals, not as a
-  // mistake.
-  function unsolvedGoals(message) {
-    const m = /^unsolved goals\n([\s\S]*)$/.exec(message.data);
-    return m ? parseGoals(m[1]) : null;
+  // It means the proof is not finished yet, which the goal view shows as
+  // goals, not as a mistake.
+  function isUnsolvedGoals(m) {
+    return m.severity === 'error' && (m.kind === 'Tactic.unsolvedGoals' || /^unsolved goals\n/.test(m.data));
+  }
+
+  // Hover text and docstrings are Markdown.  Code blocks are highlighted,
+  // inline code and *emphasis* kept, and other markup shown as written.
+  function markdown(text) {
+    const out = [];
+    text.split(/```[a-z]*\n?([\s\S]*?)```/).forEach((part, i) => {
+      if (i % 2) {
+        out.push(el('pre', { class: 'sfl-md-code' }, ...highlighted(part.replace(/\n$/, ''))));
+        return;
+      }
+      part.split(/^\s*\*\*\*\s*$/m).forEach((section, j) => {
+        if (j) out.push(el('hr', {}));
+        for (const para of section.split(/\n\s*\n/)) {
+          if (para.trim()) out.push(el('p', {}, ...inlineMarkdown(para.trim())));
+        }
+      });
+    });
+    return out;
+  }
+
+  function inlineMarkdown(text) {
+    return text.split(/(`[^`\n]+`)/).flatMap((s, i) => (i % 2
+      ? [el('code', {}, s.slice(1, -1))]
+      : s.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').split(/(\*[^*\s][^*\n]*\*)/)
+        .map((t, j) => (j % 2 ? el('em', {}, t.slice(1, -1)) : t))));
+  }
+
+  // Lean counts columns in codepoints, JavaScript strings in UTF-16 units.
+  function leanColumn(lineText, offset) {
+    return Array.from(lineText.slice(0, offset)).length;
+  }
+  function jsOffset(lineText, column) {
+    let offset = 0;
+    for (let n = 0; n < column && offset < lineText.length; n++) {
+      offset += lineText.codePointAt(offset) > 0xffff ? 2 : 1;
+    }
+    return offset;
   }
 
   function playgroundFile(data, exercise) {
@@ -275,10 +266,13 @@
         if (msg.error) return this.fail(msg.error);
         if (!msg.ok) return this.fail('importing the modules the book needs failed');
         this.state = 'ready';
+        // Whether this runtime answers position queries (goals, hover text,
+        // completions); older ones only compile.
+        this.queries = !!msg.queries;
         this.setStatus('Lean is ready.');
       } else if (msg.type === 'failed') {
         this.fail(msg.error);
-      } else if (msg.type === 'compiled') {
+      } else if (msg.type === 'answer') {
         const resolve = this.pending.get(msg.id);
         this.pending.delete(msg.id);
         if (resolve) resolve(msg);
@@ -310,15 +304,36 @@
       });
     },
 
-    // Check `code` as the continuation of `context`.
-    async compile(code, context) {
+    // Send `msg` once Lean is ready; resolves with the worker's answer.
+    async ask(msg) {
       await this.whenReady();
       if (this.state !== 'ready') return { ok: false, error: this.status };
       const id = this.nextId++;
       return new Promise((resolve) => {
         this.pending.set(id, resolve);
-        this.worker.postMessage({ type: 'compile', id, code, context });
+        this.worker.postMessage({ ...msg, id });
       });
+    },
+
+    // Check `code` as the continuation of `context`.
+    compile(code, context) {
+      return this.ask({ type: 'compile', code, context });
+    },
+
+    // Check `code` unless it was checked last, and report what Lean has at
+    // `line` (1-based) and `column` (in codepoints) of it: { result, info }.
+    info(code, context, line, column) {
+      return this.ask({ type: 'info', code, context, line, column });
+    },
+
+    // Likewise, the completions there: { result, completions }.
+    complete(code, context, line, column) {
+      return this.ask({ type: 'complete', code, context, line, column });
+    },
+
+    // The type and docstring of item `index` of the last completions: { item }.
+    resolve(index) {
+      return this.ask({ type: 'resolve', index });
     },
   };
 
@@ -342,20 +357,23 @@
 
   // ── Diagnostics ───────────────────────────────────────────────────────────
 
-  // Lean's messages about the reader's code, renumbered from the editor's
-  // first line; errors from the context before it are kept apart.  A compile
+  // Lean's messages about the reader's code, at the editor's lines and
+  // columns; errors from the context before it are kept apart.  A compile
   // that failed outright has an `error` and is never a success.
-  function describe(result) {
+  function describe(result, code) {
     const codeLine = result.codeLine || 1;
+    const lines = code.split('\n');
+    const at = (pos) => {
+      const line = pos.line - codeLine + 1;
+      return { line, col: jsOffset(lines[line - 1] || '', pos.column) };
+    };
     const own = [];
     const context = [];
     for (const m of result.messages || []) {
       if (!m.context && m.pos.line >= codeLine) {
-        own.push({
-          ...m,
-          line: m.pos.line - codeLine + 1,
-          endLine: (m.endPos ? m.endPos.line : m.pos.line) - codeLine + 1,
-        });
+        const start = at(m.pos);
+        const end = m.endPos ? at(m.endPos) : start;
+        own.push({ ...m, line: start.line, col: start.col, endLine: end.line, endCol: end.col });
       } else if (m.severity === 'error') {
         context.push(m);
       }
@@ -363,8 +381,44 @@
     return { own, context, error: result.ok ? null : (result.error || 'Lean could not check this') };
   }
 
+  // How the editor marks a message: `done` is Lean's silent "Goals
+  // accomplished!" on a declaration it accepted.
+  function category(m) {
+    if (m.kind === 'goalsAccomplished') return 'done';
+    if (isUnsolvedGoals(m)) return 'goals';
+    return m.severity === 'error' ? 'error' : m.severity === 'warning' ? 'warning' : 'info';
+  }
 
-  // ── The editor ────────────────────────────────────────────────────────────
+  // Where squiggles overlap, the stronger one shows.
+  const STRENGTH = { goals: 1, info: 2, warning: 3, error: 4 };
+
+  // A highlighted line's pieces, split where squiggles start and end.
+  function decorate(pieces, ranges) {
+    if (!pieces.length) return [' '];
+    const length = pieces.reduce((n, [, t]) => n + t.length, 0);
+    const marks = new Array(length).fill(null);
+    for (const r of ranges || []) {
+      for (let i = r.from; i < Math.min(r.to, length); i++) {
+        if (!marks[i] || STRENGTH[r.kind] > STRENGTH[marks[i]]) marks[i] = r.kind;
+      }
+    }
+    const out = [];
+    let pos = 0;
+    for (const [cls, t] of pieces) {
+      let start = 0;
+      for (let i = 1; i <= t.length; i++) {
+        if (i < t.length && marks[pos + i] === marks[pos + start]) continue;
+        const mark = marks[pos + start];
+        const classes = [cls && 'sfl-tok-' + cls, mark && 'sfl-sq-' + mark].filter(Boolean).join(' ');
+        out.push(classes ? el('span', { class: classes }, t.slice(start, i)) : t.slice(start, i));
+        start = i;
+      }
+      pos += t.length;
+    }
+    return out;
+  }
+
+  // ── Typing Lean's symbols ──────────────────────────────────────────────────────
 
   // The abbreviations Lean's editors expand after a backslash, for the symbols
   // this book uses (and the book's own, from .vscode/settings.json).
@@ -466,6 +520,57 @@
     return true;
   }
 
+  // ── Completion ────────────────────────────────────────────────────────────
+
+  // The name being typed before `pos`: `token` is the whole dotted name and
+  // `segment` its part after the last dot, which a completion replaces.  A
+  // number, or an abbreviation such as `\to`, is not a name.
+  function nameBefore(text, pos) {
+    const token = /[\w'α-ωΑ-Ωₐ-ₜ₀-₉ᵢ-ᵪ!?.]*$/u.exec(text.slice(0, pos))[0];
+    if (/^\d/.test(token) || text[pos - token.length - 1] === '\\') return null;
+    const segment = token.slice(token.lastIndexOf('.') + 1);
+    return { token, segment, start: pos - segment.length, pos };
+  }
+
+  // How well a completion matches what has been typed, or -1.  Lean already
+  // left out names that do not match at all; this ranks the rest as typing
+  // narrows them: a prefix of the name's last component first, then other
+  // prefixes, inner substrings, and scattered letters, each shorter name and
+  // shallower namespace first.
+  function matchScore(label, typed) {
+    const last = label.slice(label.lastIndexOf('.') + 1);
+    const depth = 3 * (label.split('.').length - 1);
+    if (!typed) return 5000 - last.length - depth;
+    const lower = last.toLowerCase();
+    const want = typed.toLowerCase();
+    if (last.startsWith(typed)) return 4000 - last.length - depth;
+    if (lower.startsWith(want)) return 3000 - last.length - depth;
+    if (label.toLowerCase().startsWith(want)) return 2500 - label.length;
+    const at = lower.indexOf(want);
+    if (at >= 0) return 2000 - 10 * at - last.length - depth;
+    let i = 0;
+    for (const c of lower) if (c === want[i]) i++;
+    return i === want.length ? 1000 - last.length - depth : -1;
+  }
+
+  // `label` with the typed letters in bold, where they appear together.
+  function labelPieces(label, typed) {
+    const lower = label.toLowerCase();
+    const want = typed.toLowerCase();
+    const inLast = lower.indexOf(want, label.lastIndexOf('.') + 1);
+    const at = inLast >= 0 ? inLast : lower.indexOf(want);
+    if (!want || at < 0) return [label];
+    return [label.slice(0, at), el('b', {}, label.slice(at, at + want.length)), label.slice(at + want.length)];
+  }
+
+  // Lean's completion kinds (LSP numbers), as the words a reader knows.
+  const KINDS = {
+    3: 'fun', 4: 'ctor', 5: 'field', 6: 'var', 7: 'class', 9: 'ns', 10: 'option',
+    13: 'type', 14: 'tactic', 21: 'def', 22: 'type', 23: 'thm',
+  };
+
+  // ── The editor ────────────────────────────────────────────────────────────
+
   class ExerciseEditor {
     constructor(data, exercise, box) {
       this.data = data;
@@ -481,34 +586,53 @@
       this.textarea.value = load('draft:' + this.key) ?? exercise.code;
       this.backdrop = el('div', { class: 'sfl-backdrop', 'aria-hidden': 'true' });
       this.gutter = el('div', { class: 'sfl-gutter', 'aria-hidden': 'true' });
+      this.tooltip = el('div', { class: 'sfl-tooltip', role: 'tooltip', hidden: '' });
+      this.completionList = el('div', { class: 'sfl-complete-list' });
+      this.completionDetail = el('div', { class: 'sfl-complete-detail', hidden: '' });
+      this.popup = el('div', { class: 'sfl-complete', role: 'listbox', hidden: '' },
+        this.completionList, this.completionDetail);
+      this.area = el('div', { class: 'sfl-area' }, this.backdrop, this.textarea, this.tooltip, this.popup);
       this.runButton = el('button', { class: 'sfl-run', type: 'button', onclick: () => this.run() }, 'Run');
       this.status = el('span', { class: 'sfl-status', role: 'status' });
       this.messages = el('div', { class: 'sfl-messages' });
       this.goals = el('div', { class: 'sfl-goals', 'aria-live': 'polite' });
       this.root = el('div', { class: 'sfl-editor' },
-        el('div', { class: 'sfl-code' }, this.gutter, el('div', { class: 'sfl-area' }, this.backdrop, this.textarea)),
+        el('div', { class: 'sfl-code' }, this.gutter, this.area),
         this.goals,
         el('div', { class: 'sfl-bar' }, this.runButton,
           el('span', { class: 'sfl-hint' }, navigator.platform.startsWith('Mac') ? '⌘↵' : 'Ctrl+↵'),
           this.status),
         this.messages);
 
-      this.textarea.addEventListener('input', () => {
-        save('draft:' + this.key, this.textarea.value === exercise.code ? null : this.textarea.value);
-        this.marks = new Map();
-        this.render();
-        this.scheduleProbe();
+      // Lean's messages about the code, at editor positions (see describe).
+      this.diagnostics = [];
+      this.squiggles = [];
+      this.completion = null;
+      this.completionSeq = 0;
+
+      this.textarea.addEventListener('input', (e) => this.onInput(e));
+      this.textarea.addEventListener('keydown', (e) => this.onKey(e));
+      // Moving the cursor shows what Lean has at the new place.
+      this.textarea.addEventListener('click', () => this.onCursorMove());
+      this.textarea.addEventListener('keyup', (e) => {
+        if (/^(Arrow|Home|End|Page)/.test(e.key)) this.onCursorMove();
       });
-      // Moving the cursor to another line shows that line's goals.
-      for (const type of ['click', 'keyup']) this.textarea.addEventListener(type, () => this.scheduleProbe());
       // The textarea grows to fit its text, so only long lines scroll.
       this.textarea.addEventListener('scroll', () => {
         this.backdrop.scrollLeft = this.textarea.scrollLeft;
+        this.hideTooltip();
       });
-      this.textarea.addEventListener('keydown', (e) => this.onKey(e));
+      this.textarea.addEventListener('mousemove', (e) => this.onMouseMove(e.clientX, e.clientY));
+      this.textarea.addEventListener('mouseleave', () => this.leaveHover());
+      this.textarea.addEventListener('blur', () => setTimeout(() => {
+        if (document.activeElement !== this.textarea) this.closeCompletion();
+      }, 150));
+      this.tooltip.addEventListener('mouseenter', () => clearTimeout(this.hideTimer));
+      this.tooltip.addEventListener('mouseleave', () => this.leaveHover());
+      // Clicking the list must not take the focus from the code.
+      this.popup.addEventListener('mousedown', (e) => e.preventDefault());
       this.onLean = () => this.showStatus();
       lean.listeners.add(this.onLean);
-      this.marks = new Map();
     }
 
     open() {
@@ -518,11 +642,28 @@
       this.render();
       this.showStatus();
       this.textarea.focus();
-      this.scheduleProbe();
+      // Start where the reader has work to do: at the first `sorry` of the
+      // code, not of a comment.
+      const todo = this.firstSorry();
+      const at = todo >= 0 ? todo : this.textarea.value.trimEnd().length;
+      this.textarea.setSelectionRange(at, at);
+      this.scheduleCheck(0);
+    }
+
+    firstSorry() {
+      let offset = 0;
+      for (const pieces of highlight(this.textarea.value)) {
+        for (const [cls, t] of pieces) {
+          if (cls === 'kw' && t === 'sorry') return offset;
+          offset += t.length;
+        }
+        offset += 1;
+      }
+      return -1;
     }
 
     close() {
-      clearTimeout(this.probeTimer);
+      for (const timer of [this.checkTimer, this.hoverTimer, this.hideTimer, this.completeTimer]) clearTimeout(timer);
       this.closed = true;
       for (const block of this.hidden) block.classList.remove('sfl-replaced');
       this.root.remove();
@@ -533,80 +674,83 @@
       this.textarea.value = this.exercise.code;
       save('draft:' + this.key, null);
       save('solved:' + this.key, null);
-      this.marks = new Map();
+      this.diagnostics = [];
       this.messages.replaceChildren();
+      this.closeCompletion();
+      this.hideTooltip();
       this.render();
-      this.scheduleProbe();
+      this.scheduleCheck(0);
     }
 
-    cursorLine() {
-      return this.textarea.value.slice(0, this.textarea.selectionStart).split('\n').length;
+    context(code) {
+      return compose(this.data, this.exercise, code, { useAnswers: true }).context;
     }
 
-    // The goal view: after the reader pauses, check a copy of the code with
-    // `trace_state` at the cursor's line, one check at a time, and show what
-    // it printed.
-    scheduleProbe() {
-      clearTimeout(this.probeTimer);
-      // Goals shown for other code or another line are dimmed until the new
-      // ones arrive.
-      if (this.cursorLine() + '\n' + this.textarea.value !== this.probed) this.goals.classList.add('sfl-stale');
-      this.probeTimer = setTimeout(() => this.probe(), 600);
+    // `offset` in the text as a 1-based line, the editor's column in it, and
+    // Lean's (codepoint) column.
+    position(offset, text = this.textarea.value) {
+      const lineStart = text.lastIndexOf('\n', offset - 1) + 1;
+      const lineEnd = text.indexOf('\n', offset);
+      const lineText = text.slice(lineStart, lineEnd < 0 ? text.length : lineEnd);
+      const col = offset - lineStart;
+      return { line: text.slice(0, offset).split('\n').length, col, column: leanColumn(lineText, col) };
     }
 
-    async probe() {
-      if (this.closed) return;
-      const code = this.textarea.value;
-      const line = this.cursorLine();
-      const key = line + '\n' + code;
-      if (key === this.probed) return;
-      if (lean.state !== 'ready') {
-        if (lean.state === 'failed') return;
-        this.showGoals(undefined, line);
-        if (!this.waitingForLean) {
-          this.waitingForLean = true;
-          lean.whenReady().then(() => { this.waitingForLean = false; this.probe(); });
-        }
-        return;
+    onInput(e) {
+      save('draft:' + this.key, this.textarea.value === this.exercise.code ? null : this.textarea.value);
+      // A run's verdict and list of messages were about the code before this
+      // edit; the squiggles and the goal view follow the code from here.
+      if (this.reported) {
+        this.reported = false;
+        this.root.classList.remove('sfl-solved');
+        this.messages.replaceChildren();
+        this.showStatus();
       }
-      if (this.probing) { this.probeAgain = true; return; }
-      this.probing = true;
-      this.probed = key;
-      const { code: probed, probeIndex } = withProbe(code, line);
-      const { context } = compose(this.data, this.exercise, probed, { useAnswers: true });
-      const result = await lean.compile(probed, context);
-      this.probing = false;
-      const at = (result.codeLine || 1) + probeIndex;
-      const state = (result.messages || []).find((m) => m.pos.line === at && m.severity === 'information');
-      this.showGoals(state ? parseGoals(state.data) : null, line);
-      if (this.probeAgain) { this.probeAgain = false; this.probe(); }
+      this.hideTooltip();
+      this.goals.classList.add('sfl-stale');
+      this.render();
+      this.scheduleCheck(400);
+      // Typing a name, or a dot after one, asks Lean what could go there;
+      // erasing keeps an open list in step.
+      const typedName = e.inputType === 'insertText' && /[\w'α-ωΑ-Ωₐ-ₜ₀-₉ᵢ-ᵪ!?.]$/u.test(e.data || '');
+      const erased = (e.inputType || '').startsWith('delete') && this.completion;
+      if (typedName || erased) this.updateCompletion(200);
+      else this.closeCompletion();
     }
 
-    // `goals` is the list at `line`; [] when that part of the proof is done,
-    // null when Lean could not report a state there (the line is outside a
-    // proof, or the code is mid-edit and does not parse yet), and undefined
-    // while Lean is still starting.
-    showGoals(goals, line) {
-      const title = (text) => el('div', { class: 'sfl-goals-title' }, text);
-      if (goals === undefined) {
-        this.goals.replaceChildren(title('Goals'), el('p', { class: 'sfl-goals-note' }, 'The goals at the cursor appear here once Lean has started.'));
-      } else if (goals === null) {
-        // Keep the last goals, dimmed, while the code is half typed.
-        if (this.goals.querySelector('.sfl-goal')) this.goals.classList.add('sfl-stale');
-        else this.goals.replaceChildren(title('Goals'), el('p', { class: 'sfl-goals-note' }, `Lean has no proof state at line ${line}.`));
-        return;
-      } else if (!goals.length) {
-        this.goals.replaceChildren(title(`No goals after line ${line}`), el('p', { class: 'sfl-goals-done' }, 'This part of the proof is complete.'));
-      } else {
-        this.goals.replaceChildren(title(`${goals.length} goal${goals.length > 1 ? 's' : ''} after line ${line}`), ...goalCards(goals));
-      }
-      this.goals.classList.remove('sfl-stale');
+    onCursorMove() {
+      this.scheduleCheck(150);
+      if (this.completion) this.showCompletions();
     }
 
     onKey(e) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
         e.preventDefault();
         this.run();
+        return;
+      }
+      if (this.completion && !this.popup.hidden) {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          this.selectCompletion(this.completion.selected + (e.key === 'ArrowDown' ? 1 : -1));
+          return;
+        }
+        if (e.key === 'Enter' || e.key === 'Tab') {
+          e.preventDefault();
+          this.acceptCompletion(this.completion.shown[this.completion.selected]);
+          return;
+        }
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          this.closeCompletion();
+          return;
+        }
+      }
+      if (e.ctrlKey && e.key === ' ') {
+        e.preventDefault();
+        this.updateCompletion(0);
+      } else if (e.key === 'Escape') {
+        this.hideTooltip();
       } else if (e.key === 'Tab' && !e.shiftKey) {
         e.preventDefault();
         if (!expandAbbreviation(this.textarea)) this.textarea.setRangeText('  ', this.textarea.selectionStart, this.textarea.selectionEnd, 'end');
@@ -616,20 +760,381 @@
       }
     }
 
+    // ── Checking as the reader types ──
+
+    scheduleCheck(delay) {
+      clearTimeout(this.checkTimer);
+      this.checkTimer = setTimeout(() => this.check(), delay);
+    }
+
+    // Check the code (the worker skips this when it is unchanged), mark
+    // Lean's messages in it, and show what Lean has at the cursor.  One check
+    // runs at a time; one asked for meanwhile runs after it.
+    async check() {
+      if (this.closed) return;
+      if (lean.state !== 'ready') {
+        if (lean.state === 'failed') return;
+        this.showInfo(undefined);
+        if (!this.waitingForLean) {
+          this.waitingForLean = true;
+          lean.whenReady().then(() => { this.waitingForLean = false; this.check(); });
+        }
+        return;
+      }
+      if (this.checking) { this.checkAgain = true; return; }
+      this.checking = true;
+      const code = this.textarea.value;
+      const cursor = this.position(this.textarea.selectionStart, code);
+      const answer = await lean.info(code, this.context(code), cursor.line, cursor.column);
+      this.checking = false;
+      if (code === this.textarea.value && !this.closed) {
+        if (answer.result) this.setDiagnostics(describe(answer.result, code).own);
+        this.showInfo(answer.info || null, cursor.line);
+      }
+      if (this.checkAgain) { this.checkAgain = false; this.check(); }
+    }
+
+    setDiagnostics(own) {
+      this.diagnostics = own;
+      this.render();
+    }
+
+    // The goal view, after the infoview of Lean's editors: the goals at the
+    // cursor, the type expected there, and Lean's messages about the line.
+    // `info` is undefined while Lean is starting and null when Lean has
+    // nothing to say there.
+    showInfo(info, line) {
+      const title = (text) => el('div', { class: 'sfl-goals-title' }, text);
+      if (info === undefined) {
+        this.goals.replaceChildren(title('Goals'),
+          el('p', { class: 'sfl-goals-note' }, 'The goals at the cursor appear here once Lean has started.'));
+        return;
+      }
+      const sections = [];
+      const goals = info && info.goals;
+      const here = this.diagnostics.filter((m) => m.line === line && !m.isSilent && !isUnsolvedGoals(m));
+      if (goals && goals.length) {
+        sections.push(el('div', {}, title(`${goals.length} goal${goals.length > 1 ? 's' : ''}`), ...goals.map((g) => goalCard(g))));
+      } else if (goals) {
+        // After a failed step Lean gives up on its goal, so there are none
+        // left there, but the proof is not done.
+        const failed = here.some((m) => m.severity === 'error');
+        sections.push(el('div', {}, title('No goals'),
+          failed ? null : el('p', { class: 'sfl-goals-done' }, 'This part of the proof is complete.')));
+      }
+      // Inside a tactic proof the hypotheses are shown above, and often the
+      // expected type is the goal itself.
+      const term = info && info.termGoal;
+      if (term && !(goals && goals.length && goals[0].target === term.target)) {
+        sections.push(el('div', {}, title('Expected type'), goalCard(term, { hyps: !goals })));
+      }
+      if (here.length) {
+        sections.push(el('div', {}, title('Messages'),
+          ...here.map((m) => el('div', { class: 'sfl-message sfl-' + category(m) }, el('pre', {}, m.data)))));
+      }
+      if (!sections.length) {
+        sections.push(el('p', { class: 'sfl-goals-note' }, 'Put the cursor in a proof to see its goals here.'));
+      }
+      this.goals.replaceChildren(...sections);
+      this.goals.classList.remove('sfl-stale');
+    }
+
+    // ── Drawing ──
+
     // Line numbers, and the highlighted code drawn under the textarea (whose
-    // own text is transparent), with a band behind each line Lean commented on.
+    // own text is transparent).  Lean's messages are drawn as Lean's editors
+    // draw them: a squiggle under each message's first line, so a long one
+    // does not paint the whole proof red; in the gutter, an icon where an
+    // error or warning starts, a bracket along an error's full extent, and ✓✓
+    // on each theorem Lean accepted.
     render() {
-      const lines = highlight(this.textarea.value);
-      this.gutter.replaceChildren(...lines.map((_, i) => el('div', {}, String(i + 1))));
+      const text = this.textarea.value;
+      const lines = highlight(text);
+      const raw = text.split('\n');
+      const gutter = new Map();
+      const mark = (line, cls) => {
+        if (!gutter.has(line)) gutter.set(line, []);
+        gutter.get(line).push(cls);
+      };
+      this.squiggles = [];
+      for (const m of this.diagnostics) {
+        const kind = category(m);
+        const lineText = raw[m.line - 1];
+        if (lineText === undefined) continue;
+        if (kind === 'done') { mark(m.line, 'sfl-g-done'); continue; }
+        if (m.isSilent) continue;
+        let from = Math.min(m.col, lineText.length);
+        let to = m.endLine > m.line ? lineText.length : Math.min(m.endCol, lineText.length);
+        // A message about a point (say, the end of the input) still gets a
+        // character to hover.
+        if (to <= from) {
+          if (from < lineText.length) to = from + 1;
+          else if (lineText.length) { from = lineText.length - 1; to = lineText.length; }
+        }
+        if (to > from) this.squiggles.push({ line: m.line, from, to, kind, message: m });
+        if (kind === 'error' || kind === 'warning') mark(m.line, 'sfl-g-' + kind);
+        if (kind === 'error' && m.endLine > m.line) {
+          for (let l = m.line; l <= Math.min(m.endLine, raw.length); l++) {
+            mark(l, l === m.line ? 'sfl-g-span-start' : l === m.endLine ? 'sfl-g-span-end' : 'sfl-g-span');
+          }
+        }
+      }
+      this.gutter.replaceChildren(...lines.map((_, i) =>
+        el('div', { class: ['sfl-gutter-row', ...(gutter.get(i + 1) || [])].join(' ') },
+          el('span', { class: 'sfl-mark' }), String(i + 1))));
       this.backdrop.replaceChildren(...lines.map((pieces, i) =>
-        el('div', { class: 'sfl-line ' + (this.marks.get(i + 1) || '') },
-          ...(pieces.length ? pieces.map(([cls, t]) => (cls ? el('span', { class: 'sfl-tok-' + cls }, t) : t)) : [' ']))));
+        el('div', { class: 'sfl-line' }, ...decorate(pieces, this.squiggles.filter((s) => s.line === i + 1)))));
       this.textarea.style.height = 'auto';
       this.textarea.style.height = Math.max(this.textarea.scrollHeight, 80) + 'px';
     }
 
+    // The box of the character at `col` of `line`, in the highlighted copy.
+    charBox(line, col) {
+      const row = this.backdrop.children[line - 1];
+      if (!row) return null;
+      const walker = document.createTreeWalker(row, NodeFilter.SHOW_TEXT);
+      let left = col;
+      for (let t = walker.nextNode(); t; t = walker.nextNode()) {
+        if (left < t.data.length) {
+          const range = document.createRange();
+          range.setStart(t, left);
+          range.setEnd(t, left + 1);
+          return range.getBoundingClientRect();
+        }
+        left -= t.data.length;
+      }
+      return null;
+    }
+
+    // The character under the mouse, found in the highlighted copy, which is
+    // laid out exactly as the textarea's text: { line, col, box }, or null off
+    // the text.
+    hitTest(x, y) {
+      const { textarea, backdrop } = this;
+      let node = null;
+      let offset = 0;
+      textarea.style.pointerEvents = 'none';
+      backdrop.style.pointerEvents = 'auto';
+      try {
+        if (document.caretPositionFromPoint) {
+          const p = document.caretPositionFromPoint(x, y);
+          if (p) { node = p.offsetNode; offset = p.offset; }
+        } else if (document.caretRangeFromPoint) {
+          const r = document.caretRangeFromPoint(x, y);
+          if (r) { node = r.startContainer; offset = r.startOffset; }
+        }
+      } finally {
+        textarea.style.pointerEvents = '';
+        backdrop.style.pointerEvents = '';
+      }
+      if (!node || node.nodeType !== Node.TEXT_NODE || !backdrop.contains(node)) return null;
+      const row = node.parentElement.closest('.sfl-line');
+      const line = Array.prototype.indexOf.call(backdrop.children, row) + 1;
+      const walker = document.createTreeWalker(row, NodeFilter.SHOW_TEXT);
+      let col = offset;
+      for (let t = walker.nextNode(); t && t !== node; t = walker.nextNode()) col += t.data.length;
+      // The caret falls between characters: on the right half of a character
+      // it is after it.
+      const after = this.charBox(line, col);
+      if (col > 0 && (!after || x < after.left)) col--;
+      const box = this.charBox(line, col);
+      const lineText = this.textarea.value.split('\n')[line - 1] || '';
+      if (!box || col >= lineText.length || x < box.left || x > box.right || y < box.top || y > box.bottom) return null;
+      return { line, col, box };
+    }
+
+    // Place a floating box under `box` (a character's), or above it when there
+    // is no room below, within the window.
+    place(node, box) {
+      node.hidden = false;
+      const area = this.area.getBoundingClientRect();
+      const height = node.offsetHeight;
+      const below = box.bottom + 4 + height <= window.innerHeight || box.top - 4 - height < 0;
+      const top = below ? box.bottom + 4 : box.top - 4 - height;
+      const left = Math.max(8, Math.min(box.left, window.innerWidth - node.offsetWidth - 8));
+      node.style.top = (top - area.top) + 'px';
+      node.style.left = (left - area.left) + 'px';
+    }
+
+    // ── Hover ──
+
+    onMouseMove(x, y) {
+      if (this.hoverFrame) return;
+      this.hoverFrame = requestAnimationFrame(() => {
+        this.hoverFrame = null;
+        const hit = this.hitTest(x, y);
+        const key = hit ? hit.line + ':' + hit.col : null;
+        if (key === this.hoverKey) return;
+        this.hoverKey = key;
+        clearTimeout(this.hoverTimer);
+        if (!hit) { this.leaveHover(); return; }
+        clearTimeout(this.hideTimer);
+        // Still over what the tooltip describes.
+        const r = this.hoverRange;
+        if (r && !this.tooltip.hidden && hit.line === r.line && hit.col >= r.from && hit.col < r.to) return;
+        this.hideTooltip();
+        this.hoverTimer = setTimeout(() => this.showHover(hit), 350);
+      });
+    }
+
+    leaveHover() {
+      clearTimeout(this.hoverTimer);
+      this.hoverKey = null;
+      clearTimeout(this.hideTimer);
+      this.hideTimer = setTimeout(() => this.hideTooltip(), 250);
+    }
+
+    hideTooltip() {
+      this.tooltip.hidden = true;
+      this.hoverRange = null;
+    }
+
+    // The tooltip for the character at `hit`: Lean's messages squiggled
+    // there, then what Lean knows of the name or term there (its type and
+    // docstring), as Lean's editors show on hover.
+    async showHover(hit) {
+      const key = hit.line + ':' + hit.col;
+      const code = this.textarea.value;
+      const lineText = code.split('\n')[hit.line - 1] || '';
+      const messages = this.squiggles
+        .filter((s) => s.line === hit.line && hit.col >= s.from && hit.col < s.to)
+        .sort((a, b) => STRENGTH[b.kind] - STRENGTH[a.kind]);
+      let hover = null;
+      if (lean.state === 'ready' && lean.queries) {
+        const answer = await lean.info(code, this.context(code), hit.line, leanColumn(lineText, hit.col));
+        if (this.hoverKey !== key || code !== this.textarea.value || this.closed) return;
+        hover = answer.info && answer.info.hover;
+      }
+      if (!messages.length && !hover) return;
+      this.tooltip.replaceChildren(
+        ...messages.map((s) => el('div', { class: 'sfl-tip-message sfl-tip-' + s.kind }, el('pre', {}, s.message.data))),
+        ...(hover ? [el('div', { class: 'sfl-tip-hover' }, ...markdown(hover.text))] : []));
+      this.hoverRange = hover && hover.pos.line === hover.endPos.line
+        ? { line: hit.line, from: jsOffset(lineText, hover.pos.column), to: jsOffset(lineText, hover.endPos.column) }
+        : { line: hit.line, from: hit.col, to: hit.col + 1 };
+      this.place(this.tooltip, hit.box);
+    }
+
+    // ── Completion ──
+
+    inComment(pos) {
+      const text = this.textarea.value;
+      const lineStart = text.lastIndexOf('\n', pos - 1) + 1;
+      return text.slice(lineStart, pos).includes('--') ||
+        text.slice(0, pos).lastIndexOf('/-') > text.slice(0, pos).lastIndexOf('-/');
+    }
+
+    // Show the completions Lean gave for the name being typed, narrowed to
+    // what has been typed since, and ask Lean again after `delay` ms.
+    updateCompletion(delay) {
+      const pos = this.textarea.selectionStart;
+      const name = nameBefore(this.textarea.value, pos);
+      if (!name || (!name.segment && !name.token.endsWith('.')) || this.inComment(pos)) {
+        this.closeCompletion();
+        return;
+      }
+      if (this.completion) this.showCompletions();
+      clearTimeout(this.completeTimer);
+      this.completeTimer = setTimeout(() => this.requestCompletions(), delay);
+    }
+
+    async requestCompletions() {
+      if (lean.state !== 'ready' || !lean.queries || this.closed) return;
+      const code = this.textarea.value;
+      const name = nameBefore(code, this.textarea.selectionStart);
+      if (!name) return;
+      const at = this.position(name.pos, code);
+      const seq = ++this.completionSeq;
+      this.completionPending = true;
+      const answer = await lean.complete(code, this.context(code), at.line, at.column);
+      if (seq !== this.completionSeq || this.closed) return;
+      this.completionPending = false;
+      const now = nameBefore(this.textarea.value, this.textarea.selectionStart);
+      if (!now || now.start !== name.start) return;
+      if (answer.result && code === this.textarea.value) this.setDiagnostics(describe(answer.result, code).own);
+      const items = ((answer.completions && answer.completions.items) || []).map((item, index) => ({ ...item, index }));
+      this.completion = { start: name.start, items, shown: [], selected: 0, typed: null };
+      this.showCompletions();
+    }
+
+    showCompletions() {
+      const c = this.completion;
+      const name = nameBefore(this.textarea.value, this.textarea.selectionStart);
+      if (!c || !name || name.start !== c.start) { this.closeCompletion(); return; }
+      const typed = name.segment;
+      const shown = c.items
+        .map((item) => ({ item, score: matchScore(item.label, typed) }))
+        .filter((r) => r.score >= 0)
+        .sort((a, b) => (a.item.deprecated - b.item.deprecated) || (b.score - a.score) ||
+          a.item.label.localeCompare(b.item.label))
+        .slice(0, 100)
+        .map((r) => r.item);
+      if (!shown.length || (shown.length === 1 && shown[0].label === typed)) {
+        this.popup.hidden = true;
+        return;
+      }
+      if (typed !== c.typed) c.selected = 0;
+      c.typed = typed;
+      c.shown = shown;
+      this.completionList.replaceChildren(...shown.map((item) => el('div', {
+        class: 'sfl-complete-item' + (item.deprecated ? ' sfl-deprecated' : ''), role: 'option',
+        onclick: () => this.acceptCompletion(item),
+      },
+      el('span', { class: 'sfl-kind' }, KINDS[item.kind] || ''),
+      el('span', { class: 'sfl-label' }, ...labelPieces(item.label, typed)))));
+      const start = this.position(c.start);
+      const box = this.charBox(start.line, start.col) || this.charBox(start.line, Math.max(0, start.col - 1));
+      if (box) this.place(this.popup, box);
+      this.selectCompletion(c.selected);
+    }
+
+    selectCompletion(i) {
+      const c = this.completion;
+      if (!c || !c.shown.length) return;
+      c.selected = (i + c.shown.length) % c.shown.length;
+      [...this.completionList.children].forEach((row, j) => row.classList.toggle('sfl-selected', j === c.selected));
+      this.completionList.children[c.selected].scrollIntoView({ block: 'nearest' });
+      this.describeSelected();
+    }
+
+    // The selected completion's type and docstring, which Lean works out
+    // only for the items a reader looks at.
+    async describeSelected() {
+      const c = this.completion;
+      const item = c.shown[c.selected];
+      if (item.about === undefined && !this.completionPending) {
+        item.about = null;
+        item.about = (await lean.resolve(item.index)).item || {};
+      }
+      if (this.completion !== c || c.shown[c.selected] !== item) return;
+      const about = item.about || {};
+      const doc = about.documentation && markdown(about.documentation).slice(0, 3);
+      this.completionDetail.replaceChildren(
+        ...(about.detail ? [el('pre', { class: 'sfl-complete-type' }, ...highlighted(item.label + ' : ' + about.detail))] : []),
+        ...(doc || []));
+      this.completionDetail.hidden = !about.detail && !doc;
+    }
+
+    acceptCompletion(item) {
+      const name = nameBefore(this.textarea.value, this.textarea.selectionStart);
+      this.closeCompletion();
+      if (!item || !name) return;
+      this.textarea.setRangeText(item.label, name.start, name.pos, 'end');
+      this.textarea.dispatchEvent(new Event('input'));
+    }
+
+    closeCompletion() {
+      clearTimeout(this.completeTimer);
+      this.completionSeq++;
+      this.completionPending = false;
+      this.completion = null;
+      this.popup.hidden = true;
+    }
+
+    // ── Running ──
+
     showStatus() {
-      // Once a run has reported, its result stays until the next run.
+      // Once a run has reported, its result stays until the code changes.
       if (!this.reported) this.status.textContent = lean.state === 'ready' ? 'Lean is ready.' : lean.status;
       this.runButton.disabled = lean.state === 'failed';
     }
@@ -639,34 +1144,28 @@
       this.running = true;
       this.runButton.disabled = true;
       const code = this.textarea.value;
-      const { context } = compose(this.data, this.exercise, code, { useAnswers: true });
       this.reported = false;
       this.status.textContent = lean.state === 'ready' ? 'Checking…' : (lean.status || 'Starting Lean…');
       const started = performance.now();
-      const result = await lean.compile(code, context);
+      const result = await lean.compile(code, this.context(code));
       this.reported = true;
       this.running = false;
       this.runButton.disabled = false;
-      this.show(describe(result), code, performance.now() - started);
+      this.show(describe(result, code), code, performance.now() - started);
     }
 
     show({ own, context, error }, code, elapsed) {
-      this.marks = new Map();
+      if (code === this.textarea.value) this.setDiagnostics(own);
       const items = [];
-      const left = [];
-      const errors = own.filter((m) => m.severity === 'error' && !unsolvedGoals(m));
-      const sorry = own.some((m) => /declaration uses `?sorry`?/.test(m.data));
+      const errors = own.filter((m) => category(m) === 'error');
+      // Goals left at the end only mean "not finished"; the goal view shows
+      // them, so they are counted, not listed.
+      const left = own.filter(isUnsolvedGoals).reduce((n, m) => n + (m.data.match(/^⊢/gm) || []).length, 0);
+      const sorry = own.some((m) => m.kind === 'hasSorry' || /declaration uses `?sorry`?/.test(m.data));
       for (const m of own) {
-        // Goals left at the end only mean "not finished"; the goal panel
-        // already shows them, so they are counted, not listed again.
-        const goals = m.severity === 'error' ? unsolvedGoals(m) : null;
-        if (goals) { left.push(...goals); continue; }
-        const cls = m.severity === 'error' ? 'sfl-error' : m.severity === 'warning' ? 'sfl-warning' : 'sfl-info';
-        for (let l = m.line; l <= m.endLine; l++) {
-          if (this.marks.get(l) !== 'sfl-error') this.marks.set(l, cls);
-        }
-        items.push(el('div', { class: 'sfl-message ' + cls },
-          el('button', { class: 'sfl-where', type: 'button', onclick: () => this.goTo(m.line, m.pos.column) },
+        if (m.isSilent || isUnsolvedGoals(m)) continue;
+        items.push(el('div', { class: 'sfl-message sfl-' + category(m) },
+          el('button', { class: 'sfl-where', type: 'button', onclick: () => this.goTo(m.line, m.col) },
             `line ${m.line}`),
           el('pre', {}, m.data)));
       }
@@ -683,27 +1182,27 @@
         this.status.textContent = 'Lean could not check this.';
       } else if (errors.length) {
         this.status.textContent = `${errors.length} error${errors.length > 1 ? 's' : ''} (${secs} s)`;
-      } else if (left.length) {
-        this.status.textContent = `Not finished yet: ${left.length} goal${left.length > 1 ? 's' : ''} left (${secs} s)`;
+      } else if (left) {
+        this.status.textContent = `Not finished yet: ${left} goal${left > 1 ? 's' : ''} left (${secs} s)`;
       } else if (sorry) {
         this.status.textContent = `No errors, but the proof still uses sorry (${secs} s)`;
       } else {
         this.status.textContent = `✓ Lean accepts this (${secs} s)`;
       }
       // A checked solution becomes context for the exercises after it.
-      const solved = !errors.length && !left.length && !sorry && !context.length && !error;
+      const solved = !errors.length && !left && !sorry && !context.length && !error;
       save('solved:' + this.key, solved ? code : null);
       this.root.classList.toggle('sfl-solved', solved);
-      this.render();
     }
 
-    goTo(line, column) {
+    goTo(line, col) {
       const lines = this.textarea.value.split('\n');
       let offset = 0;
       for (let i = 0; i < line - 1 && i < lines.length; i++) offset += lines[i].length + 1;
-      offset += column || 0;
+      offset += col || 0;
       this.textarea.focus();
       this.textarea.setSelectionRange(offset, offset);
+      this.onCursorMove();
     }
   }
 
