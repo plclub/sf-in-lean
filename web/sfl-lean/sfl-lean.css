@@ -261,7 +261,7 @@ a.sfl-try:hover { color: white; }
   background: #fbfbf9;
   font-size: 0.85rem;
 }
-.sfl-goals.sfl-stale { opacity: 0.55; }
+.sfl-pending .sfl-goals, .sfl-pending .sfl-status { opacity: 0.55; }
 .sfl-goals-title {
   font-weight: 600;
   color: #55554f;
@@ -367,6 +367,13 @@ a.sfl-try:hover { color: white; }
   font-size: 0.72rem;
   color: #8c8c88;
   text-align: right;
+}
+.sfl-kind.sfl-symbol {
+  width: 1.8em;
+  font-family: var(--verso-code-font-family, ui-monospace, Menlo, Consolas, monospace);
+  font-size: 1.05em;
+  color: var(--sf-text, #1a1208);
+  text-align: center;
 }
 .sfl-label b { color: var(--verso-code-const-color, #416DFF); }
 .sfl-complete-detail {

@@ -389,6 +389,23 @@
     return m.severity === 'error' ? 'error' : m.severity === 'warning' ? 'warning' : 'info';
   }
 
+  // What a check says of the reader's code.  A solution is code Lean accepts
+  // with no goals left and no `sorry`.
+  function verdict({ own, context, error }) {
+    const errors = own.filter((m) => category(m) === 'error').length;
+    // Goals left at the end only mean "not finished"; the goal view shows
+    // them, so they are counted, not listed.
+    const left = own.filter(isUnsolvedGoals).reduce((n, m) => n + (m.data.match(/^⊢/gm) || []).length, 0);
+    const sorry = own.some((m) => m.kind === 'hasSorry' || /declaration uses `?sorry`?/.test(m.data));
+    const solved = !errors && !left && !sorry && !context.length && !error;
+    const text = error ? 'Lean could not check this.'
+      : errors ? `${errors} error${errors > 1 ? 's' : ''}`
+        : left ? `Not finished yet: ${left} goal${left > 1 ? 's' : ''} left`
+          : sorry ? 'No errors, but the proof still uses sorry'
+            : '✓ Lean accepts this; the exercises after it will use your solution';
+    return { solved, text };
+  }
+
   // Where squiggles overlap, the stronger one shows.
   const STRENGTH = { goals: 1, info: 2, warning: 3, error: 4 };
 
@@ -420,19 +437,36 @@
 
   // ── Typing Lean's symbols ──────────────────────────────────────────────────────
 
-  // The abbreviations Lean's editors expand after a backslash, for the symbols
-  // this book uses (and the book's own, from .vscode/settings.json).
-  const ABBREVIATIONS = {
-    to: '→', r: '→', '->': '→', l: '←', '<-': '←', lr: '↔', iff: '↔', '<->': '↔', '=>': '⇒',
-    and: '∧', '&': '∧', or: '∨', not: '¬', neg: '¬', forall: '∀', all: '∀', ex: '∃', exists: '∃',
-    ne: '≠', '=n': '≠', le: '≤', '<=': '≤', ge: '≥', '>=': '≥', x: '×', times: '×', cdot: '·', '.': '·',
-    circ: '∘', o: '∘', lam: 'λ', fun: 'λ', N: 'ℕ', Z: 'ℤ', Q: 'ℚ', R: 'ℝ', in: '∈', notin: '∉',
-    sub: '⊂', subeq: '⊆', ss: '⊆', cup: '∪', cap: '∩', empty: '∅', '<': '⟨', '>': '⟩', langle: '⟨', rangle: '⟩',
-    alpha: 'α', a: 'α', beta: 'β', b: 'β', gamma: 'γ', g: 'γ', delta: 'δ', epsilon: 'ε', lambda: 'λ',
-    sigma: 'σ', tau: 'τ', phi: 'φ', psi: 'ψ', Gamma: 'Γ', Sigma: 'Σ', Pi: 'Π', '|-': '⊢', vdash: '⊢',
-    '0': '₀', '1': '₁', '2': '₂', '3': '₃', '_0': '₀', '_1': '₁', '_2': '₂', '_3': '₃', '_i': 'ᵢ', '_n': 'ₙ',
-    "'": '′', '==': '≍', heq: '≍', tc: '⦂', llrr: '↞↠', top: '⊤', bot: '⊥', '|>': '▸', '<|>': '⟨|⟩',
-  };
+  // The abbreviations Lean's editors expand after a backslash (`\to` is `→`):
+  // Lean's own, from abbreviations.json (copied from @leanprover/unicode-input
+  // 0.1.11, Apache-2.0, the table VS Code uses), fetched when the first editor
+  // opens, and the book's own, from its .vscode/settings.json.
+  const BOOK_ABBREVIATIONS = { tc: '⦂', llrr: '↞↠' };
+  let ABBREVIATIONS = BOOK_ABBREVIATIONS;
+  let abbreviationsLoading = null;
+
+  function loadAbbreviations() {
+    abbreviationsLoading = abbreviationsLoading || fetch(new URL('abbreviations.json', here))
+      .then((response) => (response.ok ? response.json() : {}))
+      .then((table) => { ABBREVIATIONS = { ...table, ...BOOK_ABBREVIATIONS }; })
+      .catch(() => { /* only the book's own abbreviations, then */ });
+    return abbreviationsLoading;
+  }
+
+  // The symbols this book uses most, offered first when only a backslash has
+  // been typed.
+  const COMMON_ABBREVIATIONS = [
+    'to', 'l', 'iff', 'and', 'or', 'not', 'forall', 'exists', 'ne', 'le', 'ge', '.', 'x', 'circ',
+    'fun', 'N', 'in', 'notin', 'sub', 'cup', 'cap', 'empty', '<>', 'a', 'b', 'g', '|-', 'top', 'bot',
+    'heq', 'tc',
+  ];
+
+  // An abbreviation's symbol as text, and where in it the cursor goes: some,
+  // such as `\<>` for `⟨⟩`, put it between a pair.
+  function symbolText(symbol) {
+    const at = symbol.indexOf('$CURSOR');
+    return at < 0 ? { text: symbol, cursor: symbol.length } : { text: symbol.replace('$CURSOR', ''), cursor: at };
+  }
 
   // ── Highlighting ──────────────────────────────────────────────────────────
 
@@ -510,14 +544,12 @@
     return lines;
   }
 
-  function expandAbbreviation(textarea) {
+  // The abbreviation (`\to`, say) just before the cursor: where it starts and
+  // the symbol it stands for.
+  function abbreviationBefore(textarea) {
     const pos = textarea.selectionStart;
-    const before = textarea.value.slice(0, pos);
-    const m = /\\([^\s\\]+)$/.exec(before);
-    if (!m || !(m[1] in ABBREVIATIONS)) return false;
-    const start = pos - m[0].length;
-    textarea.setRangeText(ABBREVIATIONS[m[1]], start, pos, 'end');
-    return true;
+    const m = /\\([^\s\\]+)$/.exec(textarea.value.slice(0, pos));
+    return m && m[1] in ABBREVIATIONS ? { start: pos - m[0].length, symbol: ABBREVIATIONS[m[1]] } : null;
   }
 
   // ── Completion ────────────────────────────────────────────────────────────
@@ -584,6 +616,7 @@
         'aria-label': `Lean code for exercise ${exercise.name}`,
       });
       this.textarea.value = load('draft:' + this.key) ?? exercise.code;
+      this.handledValue = this.textarea.value;
       this.backdrop = el('div', { class: 'sfl-backdrop', 'aria-hidden': 'true' });
       this.gutter = el('div', { class: 'sfl-gutter', 'aria-hidden': 'true' });
       this.tooltip = el('div', { class: 'sfl-tooltip', role: 'tooltip', hidden: '' });
@@ -633,6 +666,7 @@
       this.popup.addEventListener('mousedown', (e) => e.preventDefault());
       this.onLean = () => this.showStatus();
       lean.listeners.add(this.onLean);
+      loadAbbreviations();
     }
 
     open() {
@@ -672,8 +706,12 @@
 
     reset() {
       this.textarea.value = this.exercise.code;
+      this.handledValue = this.textarea.value;
       save('draft:' + this.key, null);
       save('solved:' + this.key, null);
+      this.reported = false;
+      this.root.classList.remove('sfl-solved');
+      this.showStatus();
       this.diagnostics = [];
       this.messages.replaceChildren();
       this.closeCompletion();
@@ -697,30 +735,35 @@
     }
 
     onInput(e) {
+      // Chrome reports a line break and the indentation after it, inserted as
+      // one edit, as two input events.
+      if (this.textarea.value === this.handledValue) return;
+      this.handledValue = this.textarea.value;
       save('draft:' + this.key, this.textarea.value === this.exercise.code ? null : this.textarea.value);
-      // A run's verdict and list of messages were about the code before this
-      // edit; the squiggles and the goal view follow the code from here.
-      if (this.reported) {
-        this.reported = false;
-        this.root.classList.remove('sfl-solved');
-        this.messages.replaceChildren();
-        this.showStatus();
-      }
+      // A run's list of messages was about the code before this edit.  The
+      // verdict and the goal view stay until the next check replaces them,
+      // which comes once typing pauses; they are greyed only if it is slow to
+      // come, so that typing does not make them flicker.
+      this.messages.replaceChildren();
+      clearTimeout(this.pendingTimer);
+      this.pendingTimer = setTimeout(() => this.root.classList.add('sfl-pending'), 1000);
       this.hideTooltip();
-      this.goals.classList.add('sfl-stale');
       this.render();
       this.scheduleCheck(400);
-      // Typing a name, or a dot after one, asks Lean what could go there;
+      // Typing a backslash lists the symbols its abbreviations stand for;
+      // typing a name, or a dot after one, asks Lean what could go there;
       // erasing keeps an open list in step.
-      const typedName = e.inputType === 'insertText' && /[\w'α-ωΑ-Ωₐ-ₜ₀-₉ᵢ-ᵪ!?.]$/u.test(e.data || '');
-      const erased = (e.inputType || '').startsWith('delete') && this.completion;
-      if (typedName || erased) this.updateCompletion(200);
+      const typed = e.inputType === 'insertText' && !this.editing;
+      const erased = (e.inputType || '').startsWith('delete') && !this.editing && this.completion;
+      if ((typed || erased) && this.abbreviationTyped()) this.showSymbols();
+      else if ((typed && /[\w'α-ωΑ-Ωₐ-ₜ₀-₉ᵢ-ᵪ!?.]$/u.test(e.data || '')) || erased) this.updateCompletion(200);
       else this.closeCompletion();
     }
 
     onCursorMove() {
       this.scheduleCheck(150);
-      if (this.completion) this.showCompletions();
+      if (this.completion && this.completion.symbols) this.showSymbols();
+      else if (this.completion) this.showCompletions();
     }
 
     onKey(e) {
@@ -751,13 +794,102 @@
         this.updateCompletion(0);
       } else if (e.key === 'Escape') {
         this.hideTooltip();
-      } else if (e.key === 'Tab' && !e.shiftKey) {
+      } else if (e.key === 'Tab') {
         e.preventDefault();
-        if (!expandAbbreviation(this.textarea)) this.textarea.setRangeText('  ', this.textarea.selectionStart, this.textarea.selectionEnd, 'end');
-        this.textarea.dispatchEvent(new Event('input'));
-      } else if ((e.key === ' ' || e.key === 'Enter') && expandAbbreviation(this.textarea)) {
-        this.textarea.dispatchEvent(new Event('input'));
+        const ta = this.textarea;
+        const lines = ta.value.slice(ta.selectionStart, ta.selectionEnd).includes('\n');
+        if (e.shiftKey || lines) this.shiftLines(e.shiftKey);
+        else if (!this.expandAbbreviation()) this.edit('  ');
+      } else if (e.key === 'Enter' && !e.altKey && !e.isComposing) {
+        e.preventDefault();
+        this.newLine();
+      } else if (e.key === 'Backspace' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.isComposing && this.dedent()) {
+        e.preventDefault();
+      } else if (e.key === ' ') {
+        this.expandAbbreviation();
       }
+    }
+
+    // Put `text` in as typing does, so that the browser's undo takes it back;
+    // `execCommand` is the only way to get that in a textarea.  Where it is
+    // unavailable the edit is made directly.
+    //
+    // The text replaced runs from `from` to `to` (the selection, by default).
+    // Afterwards the cursor is `caret` characters into `text` (at its end, by
+    // default), or `text` is selected.  An edit made here never opens a
+    // completion list.
+    edit(text, { from = this.textarea.selectionStart, to = this.textarea.selectionEnd, caret, select } = {}) {
+      const ta = this.textarea;
+      ta.setSelectionRange(from, to);
+      this.editing = true;
+      try {
+        const done = text ? document.execCommand('insertText', false, text)
+          : from === to || document.execCommand('delete');
+        if (!done) {
+          ta.setRangeText(text, from, to, 'end');
+          ta.dispatchEvent(new Event('input'));
+        }
+      } finally {
+        this.editing = false;
+      }
+      if (select) ta.setSelectionRange(from, from + text.length);
+      else if (caret !== undefined) ta.setSelectionRange(from + caret, from + caret);
+    }
+
+    // Replace the abbreviation before the cursor (`\to`, say) with its symbol.
+    expandAbbreviation() {
+      const abbreviation = abbreviationBefore(this.textarea);
+      if (!abbreviation) return false;
+      const { text, cursor } = symbolText(abbreviation.symbol);
+      this.edit(text, { from: abbreviation.start, to: this.textarea.selectionStart, caret: cursor });
+      return true;
+    }
+
+    // Tab over a selection of lines indents each by a level, and Shift+Tab
+    // unindents the selected lines, or the cursor's, as Lean's editors do.  A
+    // selection that ends at the start of a line leaves that line alone.
+    shiftLines(unindent) {
+      const ta = this.textarea;
+      const value = ta.value;
+      const start = value.lastIndexOf('\n', ta.selectionStart - 1) + 1;
+      let end = ta.selectionEnd;
+      if (end > ta.selectionStart && value[end - 1] === '\n') end--;
+      const lineEnd = value.indexOf('\n', end);
+      const stop = lineEnd < 0 ? value.length : lineEnd;
+      const lines = value.slice(start, stop).split('\n');
+      const shifted = lines.map((l) => (unindent ? l.replace(/^ {1,2}/, '') : l ? '  ' + l : l));
+      const text = shifted.join('\n');
+      if (text === value.slice(start, stop)) return;
+      if (ta.selectionStart === ta.selectionEnd) {
+        const removed = lines[0].length - shifted[0].length;
+        this.edit(text, { from: start, to: stop, caret: Math.max(0, ta.selectionStart - start - removed) });
+      } else {
+        this.edit(text, { from: start, to: stop, select: true });
+      }
+    }
+
+    // Enter starts a line indented like the cursor's, as Lean's editors do.
+    // An abbreviation before the cursor is expanded in the same edit.
+    newLine() {
+      const ta = this.textarea;
+      const lineStart = ta.value.lastIndexOf('\n', ta.selectionStart - 1) + 1;
+      const indent = /^[ \t]*/.exec(ta.value.slice(lineStart, ta.selectionStart))[0];
+      const abbreviation = ta.selectionStart === ta.selectionEnd && abbreviationBefore(ta);
+      if (abbreviation) ta.setSelectionRange(abbreviation.start, ta.selectionEnd);
+      this.edit((abbreviation ? symbolText(abbreviation.symbol).text : '') + '\n' + indent);
+    }
+
+    // Backspace within a line's indentation removes a whole level, the two
+    // spaces Tab inserts, back to the previous multiple of two.
+    dedent() {
+      const ta = this.textarea;
+      const pos = ta.selectionStart;
+      if (pos !== ta.selectionEnd) return false;
+      const before = ta.value.slice(ta.value.lastIndexOf('\n', pos - 1) + 1, pos);
+      if (!before || /[^ ]/.test(before)) return false;
+      ta.setSelectionRange(pos - (before.length % 2 || 2), pos);
+      this.edit('');
+      return true;
     }
 
     // ── Checking as the reader types ──
@@ -788,7 +920,13 @@
       const answer = await lean.info(code, this.context(code), cursor.line, cursor.column);
       this.checking = false;
       if (code === this.textarea.value && !this.closed) {
-        if (answer.result) this.setDiagnostics(describe(answer.result, code).own);
+        clearTimeout(this.pendingTimer);
+        this.root.classList.remove('sfl-pending');
+        if (answer.result) {
+          const described = describe(answer.result, code);
+          this.setDiagnostics(described.own);
+          this.judge(described, code);
+        }
         this.showInfo(answer.info || null, cursor.line);
       }
       if (this.checkAgain) { this.checkAgain = false; this.check(); }
@@ -836,7 +974,6 @@
         sections.push(el('p', { class: 'sfl-goals-note' }, 'Put the cursor in a proof to see its goals here.'));
       }
       this.goals.replaceChildren(...sections);
-      this.goals.classList.remove('sfl-stale');
     }
 
     // ── Drawing ──
@@ -1033,7 +1170,7 @@
         this.closeCompletion();
         return;
       }
-      if (this.completion) this.showCompletions();
+      if (this.completion && !this.completion.symbols) this.showCompletions();
       clearTimeout(this.completeTimer);
       this.completeTimer = setTimeout(() => this.requestCompletions(), delay);
     }
@@ -1102,6 +1239,10 @@
     async describeSelected() {
       const c = this.completion;
       const item = c.shown[c.selected];
+      if (c.symbols) {
+        this.completionDetail.hidden = true;
+        return;
+      }
       if (item.about === undefined && !this.completionPending) {
         item.about = null;
         item.about = (await lean.resolve(item.index)).item || {};
@@ -1116,11 +1257,54 @@
     }
 
     acceptCompletion(item) {
-      const name = nameBefore(this.textarea.value, this.textarea.selectionStart);
+      const c = this.completion;
+      const pos = this.textarea.selectionStart;
+      const name = nameBefore(this.textarea.value, pos);
       this.closeCompletion();
-      if (!item || !name) return;
-      this.textarea.setRangeText(item.label, name.start, name.pos, 'end');
-      this.textarea.dispatchEvent(new Event('input'));
+      if (!item || !c) return;
+      if (c.symbols) {
+        const { text, cursor } = symbolText(item.symbol);
+        this.edit(text, { from: c.start, to: pos, caret: cursor });
+      } else if (name) {
+        this.edit(item.label, { from: name.start, to: name.pos });
+      }
+    }
+
+    abbreviationTyped() {
+      return /\\[^\s\\]*$/.test(this.textarea.value.slice(0, this.textarea.selectionStart));
+    }
+
+    // The symbols that the abbreviation being typed may stand for, listed as
+    // completions are, so a reader need not know the names: `\` alone offers
+    // the book's common symbols, `\le` those whose abbreviation starts so.
+    showSymbols() {
+      const pos = this.textarea.selectionStart;
+      const m = /\\([^\s\\]*)$/.exec(this.textarea.value.slice(0, pos));
+      clearTimeout(this.completeTimer);
+      this.completionSeq++;
+      if (!m) { this.closeCompletion(); return; }
+      const typed = m[1];
+      // What space would put in comes first, then the common symbols in their
+      // order, then the rest, shortest first.
+      const common = (k) => (COMMON_ABBREVIATIONS.includes(k) ? COMMON_ABBREVIATIONS.indexOf(k) : 1000);
+      const rank = (k) => (k === typed ? -1 : common(k));
+      const keys = (typed ? Object.keys(ABBREVIATIONS).filter((k) => k.startsWith(typed))
+        : COMMON_ABBREVIATIONS.filter((k) => k in ABBREVIATIONS))
+        .sort((a, b) => rank(a) - rank(b) || a.length - b.length || a.localeCompare(b))
+        .slice(0, 60);
+      const shown = keys.map((k) => ({ abbreviation: k, symbol: ABBREVIATIONS[k] }));
+      const same = this.completion && this.completion.symbols && this.completion.typed === typed;
+      this.completion = { symbols: true, start: pos - m[0].length, shown, typed, selected: same ? this.completion.selected : 0 };
+      if (!shown.length) { this.popup.hidden = true; return; }
+      this.completionList.replaceChildren(...shown.map((item) => el('div', {
+        class: 'sfl-complete-item', role: 'option', onclick: () => this.acceptCompletion(item),
+      },
+      el('span', { class: 'sfl-kind sfl-symbol' }, symbolText(item.symbol).text),
+      el('span', { class: 'sfl-label' }, '\\', ...labelPieces(item.abbreviation, typed)))));
+      const start = this.position(this.completion.start);
+      const box = this.charBox(start.line, start.col);
+      if (box) this.place(this.popup, box);
+      this.selectCompletion(this.completion.selected);
     }
 
     closeCompletion() {
@@ -1134,7 +1318,7 @@
     // ── Running ──
 
     showStatus() {
-      // Once a run has reported, its result stays until the code changes.
+      // Once a check has reported, its verdict stays until the code changes.
       if (!this.reported) this.status.textContent = lean.state === 'ready' ? 'Lean is ready.' : lean.status;
       this.runButton.disabled = lean.state === 'failed';
     }
@@ -1157,11 +1341,6 @@
     show({ own, context, error }, code, elapsed) {
       if (code === this.textarea.value) this.setDiagnostics(own);
       const items = [];
-      const errors = own.filter((m) => category(m) === 'error');
-      // Goals left at the end only mean "not finished"; the goal view shows
-      // them, so they are counted, not listed.
-      const left = own.filter(isUnsolvedGoals).reduce((n, m) => n + (m.data.match(/^⊢/gm) || []).length, 0);
-      const sorry = own.some((m) => m.kind === 'hasSorry' || /declaration uses `?sorry`?/.test(m.data));
       for (const m of own) {
         if (m.isSilent || isUnsolvedGoals(m)) continue;
         items.push(el('div', { class: 'sfl-message sfl-' + category(m) },
@@ -1176,23 +1355,18 @@
       }
       if (error) items.push(el('div', { class: 'sfl-message sfl-error' }, el('pre', {}, error)));
       this.messages.replaceChildren(...items);
+      if (code === this.textarea.value) this.judge({ own, context, error }, code, ` (${(elapsed / 1000).toFixed(1)} s)`);
+    }
 
-      const secs = (elapsed / 1000).toFixed(1);
-      if (error) {
-        this.status.textContent = 'Lean could not check this.';
-      } else if (errors.length) {
-        this.status.textContent = `${errors.length} error${errors.length > 1 ? 's' : ''} (${secs} s)`;
-      } else if (left) {
-        this.status.textContent = `Not finished yet: ${left} goal${left > 1 ? 's' : ''} left (${secs} s)`;
-      } else if (sorry) {
-        this.status.textContent = `No errors, but the proof still uses sorry (${secs} s)`;
-      } else {
-        this.status.textContent = `✓ Lean accepts this (${secs} s)`;
-      }
-      // A checked solution becomes context for the exercises after it.
-      const solved = !errors.length && !left && !sorry && !context.length && !error;
-      save('solved:' + this.key, solved ? code : null);
+    // Show a check's verdict.  Code Lean accepts is saved at once, so the
+    // exercises after this one build on it whether or not the reader presses
+    // Run.  A later edit that breaks it keeps the saved version, until Reset.
+    judge(described, code, timing = '') {
+      const { solved, text } = verdict(described);
+      this.reported = true;
+      this.status.textContent = text + timing;
       this.root.classList.toggle('sfl-solved', solved);
+      if (solved) save('solved:' + this.key, code);
     }
 
     goTo(line, col) {
