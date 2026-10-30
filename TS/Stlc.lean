@@ -1707,7 +1707,7 @@ optional, so that {name}`none` at a variable means "not bound here".
 
 ::::terse
 Following the usual notation for partial maps, we write
-`(x ↦ T, Γ)` for "update the partial function `Γ` so
+`x ↦ T ; Γ` for "update the partial function `Γ` so
 that it maps `x` to `T`."
 ::::
 

@@ -1,0 +1,15 @@
+{
+ "file": "TS/Stlc.lean",
+ "chapter": "Stlc",
+ "round": 2,
+ "proposals": [
+  {
+   "id": "terse-notation",
+   "cat": "exposition/unflagged-change",
+   "old": "`(x ↦ T, Γ)` for \"update the partial function `Γ` so",
+   "new": "`x ↦ T ; Γ` for \"update the partial function `Γ` so",
+   "why": "The ::::terse note gives a different context-update notation, `(x ↦ T, Γ)` (comma, parens), than the one actually used everywhere else in this chapter (the ::::full note and the real HasType definition both use `x ↦ T ; Γ`, semicolon, no parens). A TERSE-only reader would see a notation that never appears again in the chapter's own code. Align the TERSE wording to the real notation."
+  }
+ ],
+ "completed": true
+}
