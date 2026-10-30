@@ -558,7 +558,7 @@ error: unknown metalanguage name identifier `x`
 #guard_msgs in
 #check (<{ X }> : Tm)
 
-example (x : Tm) : (<{ x }> : Tm) = x := rfl
+example (x : Tm) : (<{ x }> : Tm) = x := by rfl
 
 /--
 warning: Variable name `x` is not explicitly referenced.
@@ -569,21 +569,21 @@ Hint: The binding can be removed (if unused) or named `_` (if used implicitly). 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
 -/
 #guard_msgs in
-example (x : String) : (<{ X }> : Tm) = Tm.var "X" := rfl
+example (x : String) : (<{ X }> : Tm) = Tm.var "X" := by rfl
 
-example : (<{ X }> : Stlc.Tm) = Tm.var "X" := rfl
+example : (<{ X }> : Stlc.Tm) = Tm.var "X" := by rfl
 
-example (x : Tm) : (<{ x }> : Tm) = x := rfl
+example (x : Tm) : (<{ x }> : Tm) = x := by rfl
 
-example (X : Tm) : (<{ ~X }> : Tm) = X := rfl
+example (X : Tm) : (<{ ~X }> : Tm) = X := by rfl
 
 example (x : String) (τ : Ty) :
     <{ λ x : τ . ~(Tm.var x) }> =
-      Tm.abs x τ (Tm.var x) := rfl
+      Tm.abs x τ (Tm.var x) := by rfl
 
 example (τ : Ty) :
     (<{ λ X : τ . X }>) =
-      Tm.abs "X" τ (Tm.var "X") := rfl
+      Tm.abs "X" τ (Tm.var "X") := by rfl
 
 /-- info: <{ X Y }> : Tm -/
 #guard_msgs in
@@ -653,30 +653,30 @@ set_option pp.notation false in
 #reduce let p := Tm.var "ZZ"; <{ λ Z : Bool . p p Z }>
 
 example : (<{ Bool → Bool → Bool }> : Ty) =
-    Ty.arrow Ty.bool (Ty.arrow Ty.bool Ty.bool) := rfl
+    Ty.arrow Ty.bool (Ty.arrow Ty.bool Ty.bool) := by rfl
 
 example : (<{ (Bool → Bool) → Bool }> : Ty) =
-    Ty.arrow (Ty.arrow Ty.bool Ty.bool) Ty.bool := rfl
+    Ty.arrow (Ty.arrow Ty.bool Ty.bool) Ty.bool := by rfl
 
 example : (<{ X Y Z }> : Tm) =
-    Tm.app (Tm.app (Tm.var "X") (Tm.var "Y")) (Tm.var "Z") := rfl
+    Tm.app (Tm.app (Tm.var "X") (Tm.var "Y")) (Tm.var "Z") := by rfl
 
 example : (<{ (if X then Y else Z) X }> : Tm) =
-    Tm.app (Tm.ite (Tm.var "X") (Tm.var "Y") (Tm.var "Z")) (Tm.var "X") := rfl
+    Tm.app (Tm.ite (Tm.var "X") (Tm.var "Y") (Tm.var "Z")) (Tm.var "X") := by rfl
 
-example : (<{ true }> : Tm) = Tm.tru := rfl
+example : (<{ true }> : Tm) = Tm.tru := by rfl
 
-example : (<{ false }> : Tm) = Tm.fls := rfl
+example : (<{ false }> : Tm) = Tm.fls := by rfl
 
 example : (<{ if X then Y else Z }> : Tm) =
-    Tm.ite (Tm.var "X") (Tm.var "Y") (Tm.var "Z") := rfl
+    Tm.ite (Tm.var "X") (Tm.var "Y") (Tm.var "Z") := by rfl
 
-example (t : Tm) : (<{ t }> : Tm) = t := rfl
+example (t : Tm) : (<{ t }> : Tm) = t := by rfl
 
-example (τ : Ty) : (<{ τ }> : Ty) = τ := rfl
+example (τ : Ty) : (<{ τ }> : Ty) = τ := by rfl
 
 example (binder : String) : (<{ λ binder : Bool . ~(Tm.var "binder") }> : Tm) =
-    Tm.abs binder Ty.bool (Tm.var "binder") := rfl
+    Tm.abs binder Ty.bool (Tm.var "binder") := by rfl
 
 /--
 warning: Variable name `X` is not explicitly referenced.
@@ -695,9 +695,9 @@ Note: This linter can be disabled with `set_option linter.unusedVariables false`
 -/
 #guard_msgs in
 example (X : String) (term : Tm) : (<{ λ X : Bool . true }> : Tm) =
-    Tm.abs "X" .bool Tm.tru := rfl
+    Tm.abs "X" .bool Tm.tru := by rfl
 
-example (t u : Tm) : (<{ ~(Tm.app t u) }> : Tm) = Tm.app t u := rfl
+example (t u : Tm) : (<{ ~(Tm.app t u) }> : Tm) = Tm.app t u := by rfl
 
 /-- error: `Bool` is not a valid term. -/
 #guard_msgs in
@@ -1075,15 +1075,15 @@ variable (x y : String) (s t t₁ t₂ t₃ : Tm) (τ : Ty)
   simp [subst, h]
 
 @[simp] theorem subst_app :
-    <{ [x := s] (t₁ t₂) }> = <{ ([x := s] t₁) ([x := s] t₂) }> := rfl
+    <{ [x := s] (t₁ t₂) }> = <{ ([x := s] t₁) ([x := s] t₂) }> := by rfl
 
-@[simp] theorem subst_tru : <{ [x := s] true }> = <{ true }> := rfl
+@[simp] theorem subst_tru : <{ [x := s] true }> = <{ true }> := by rfl
 
-@[simp] theorem subst_fls : <{ [x := s] false }> = <{ false }> := rfl
+@[simp] theorem subst_fls : <{ [x := s] false }> = <{ false }> := by rfl
 
 @[simp] theorem subst_ite :
     <{ [x := s] (if t₁ then t₂ else t₃) }> =
-      <{ if [x := s] t₁ then [x := s] t₂ else [x := s] t₃ }> := rfl
+      <{ if [x := s] t₁ then [x := s] t₂ else [x := s] t₃ }> := by rfl
 ```
 
 :::ignore

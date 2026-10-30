@@ -63,7 +63,7 @@ inductive Palette where
 
 def twice (f : Nat → Nat) (n : Nat) : Nat := f (f n)
 
-theorem twice_id : twice id 3 = 3 := rfl
+theorem twice_id : twice id 3 = 3 := by rfl
 
 sf_recall_source
   inductive Palette where

@@ -487,10 +487,16 @@ example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
 
 Rather than applying the constructor, we can explicitly provide
 the arguments to the constructor as an {tactic}`exact` proof.
+In particular, we can write each argument as a _subproof_ using
+the `by` keyword (the same keyword that begins a proof- not a
+coincidence!). For example, since each subproof of
+{name}`And.intro` in the example below is closed by {tactic}`rfl`,
+we can close these proofs by passing `(by rfl)` as an argument
+to {name}`And.intro`.
 
 ```lean
 example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
-  exact And.intro rfl rfl
+  exact And.intro (by rfl) (by rfl)
 ```
 
 Lean can figure out which constructor to use just from the goal's type, so we
@@ -499,6 +505,10 @@ does automatically: it applies whatever constructor builds a value of the
 goal's type, leaving one subgoal per argument of that constructor. Since
 {lean}`And` has just one constructor, {tactic}`constructor` always picks it
 here.
+
+The constructor tactic is _very_ useful for proofs involving
+types with many constructors, which we will see in the
+{ref "IndProp"}[IndProp] chapter.
 
 ```lean
 example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
@@ -512,7 +522,7 @@ which works on constructors for proofs as well.
 
 ```lean
 example : 3 + 4 = 7 ∧ 2 * 2 = 4 := by
-  exact ⟨rfl, rfl⟩
+  exact ⟨(by rfl), (by rfl)⟩
 ```
 
 :::::exercise (rating := 2) (name := "add_is_zero") (checkVisibility := false)
@@ -1688,7 +1698,7 @@ def List.All {α : Type} (p : α → Prop) (l : List α) : Prop := solution!(
 theorem List.All_nil {α : Type} {a : α → Prop} : List.All a [] := solution!(by constructor)
 
 theorem List.All_cons {α : Type} {p : α → Prop} {x : α} {l : List α} :
-    List.All p (x :: l) = (p x ∧ All p l) := solution!(rfl)
+    List.All p (x :: l) = (p x ∧ All p l) := solution!(by rfl)
 
 theorem List.All_In {α : Type} {p : α → Prop} {l : List α} :
     (∀ x : α, In x l → p x) ↔ All p l := by
@@ -2385,7 +2395,9 @@ theorem andb_true_iff (b1 b2 : Bool) :
     · intro h
       cases b1 with
       | false => rw [and] at h; contradiction
-      | true => rw [and] at h; exact ⟨rfl, h⟩
+      | true =>
+        rw [and] at h
+        exact ⟨by rfl, h⟩
     · intro h
       cases b1 with
       | false => exfalso; cases h.left
@@ -2430,18 +2442,18 @@ def beqList {α : Type} (beq : α → α → Bool) (xs ys : List α) : Bool := s
   | _, _ => false)
 
 theorem beqList_nil_nil {α : Type} {beq : α → α → Bool} :
-    beqList beq [] [] = true := solution!(rfl)
+    beqList beq [] [] = true := solution!(by rfl)
 
 theorem beqList_cons_cons {α : Type} {beq : α → α → Bool}
     {x y : α} {xs ys : List α} :
     beqList beq (x :: xs) (y :: ys) = (beq x y && beqList beq xs ys) :=
-  solution!(rfl)
+  solution!(by rfl)
 
 theorem beqList_nil_cons {α : Type} {beq : α → α → Bool}
-    {x : α} {xs : List α} : beqList beq [] (x :: xs) = false := solution!(rfl)
+    {x : α} {xs : List α} : beqList beq [] (x :: xs) = false := solution!(by rfl)
 
 theorem beqList_cons_nil {α : Type} {beq : α → α → Bool}
-    {x : α} {xs : List α} : beqList beq (x :: xs) [] = false := solution!(rfl)
+    {x : α} {xs : List α} : beqList beq (x :: xs) [] = false := solution!(by rfl)
 
 theorem beqList_true_iff α (beq : α → α → Bool)
     (h : ∀ (x y : α), beq x y = true ↔ x = y) :
@@ -2508,10 +2520,10 @@ def List.allb {α : Type} (test : α → Bool) (l : List α) : Bool := solution!
   | [] => true
   | x :: xs' => test x && allb test xs')
 
-theorem List.allb_nil {α : Type} {test : α → Bool} : allb test [] = true := solution!(rfl)
+theorem List.allb_nil {α : Type} {test : α → Bool} : allb test [] = true := solution!(by rfl)
 
 theorem List.allb_cons {α : Type} {test : α → Bool} {x : α} {l : List α} :
-    allb test (x :: l) = (test x && allb test l) := solution!(rfl)
+    allb test (x :: l) = (test x && allb test l) := solution!(by rfl)
 
 theorem List.allb_true_iff α {test : α → Bool} {l : List α} :
     allb test l = true ↔ All (fun x => test x = true) l := by
