@@ -117,6 +117,15 @@
     return data.isModule && !isModule ? '@[expose] public section' : 'section';
   }
 
+  // A command such as `open Nat in` applies to the command after it, which at
+  // the end of an exercise's context is the exercise itself.  Lean checks the
+  // exercise as a separate continuation of the context, where `open Nat in`
+  // with nothing after it does not parse; as a plain `open Nat`, the context's
+  // last command, it applies to the exercise all the same.
+  function closeTrailingIn(context) {
+    return context.replace(/(^|\n)([ \t]*(?:open|set_option)\b[^\n]*?)[ \t]+in\s*$/, '$1$2\n\n');
+  }
+
   // The whole file, and the line at which the reader's code starts.
   function compose(data, exercise, code, { useAnswers, banner }) {
     const lib = data.library.map((c) => {
@@ -124,9 +133,9 @@
       const sk = useAnswers ? withAnswers(c.skeleton, c.exercises, chapter) : c.skeleton;
       return `-- ${c.module}, with proofs omitted\n${opener(data, c.isModule)}\n\n${sk}end\n\n`;
     }).join('');
-    const ctx = useAnswers
+    const ctx = closeTrailingIn(useAnswers
       ? withAnswers(data.skeleton, data.exercises, data.chapter, exercise.context)
-      : data.skeleton.slice(0, exercise.context);
+      : data.skeleton.slice(0, exercise.context));
     let before = header(data) + '\n' + lib +
       `-- ${data.module}, up to this exercise, with proofs omitted\n${opener(data, false)}\n\n` + ctx +
       `-- Exercise: ${exercise.name}\n\n`;
@@ -381,6 +390,34 @@
     return { own, context, error: result.ok ? null : (result.error || 'Lean could not check this') };
   }
 
+  // The suggestions in a "Try this" message of a search tactic such as `rw?`
+  // or `exact?`: each a replacement for the tactic, with notes such as the
+  // goal it would leave.  Lean writes each as an `[apply] <tactic>` line (the
+  // text of the button Lean's editors show) followed by its notes.
+  function suggestions(m) {
+    if (!/^Try th(is|ese):/.test(m.data)) return null;
+    const out = [];
+    for (const line of m.data.split('\n').slice(1)) {
+      const apply = /^\s*\[apply\]\s?(.*)$/.exec(line);
+      if (apply) out.push({ text: apply[1], notes: [] });
+      else if (out.length && line.trim()) out[out.length - 1].notes.push(line.trim());
+    }
+    return out.length ? out : null;
+  }
+
+  // `rw?` also reports each lemma that matched but whose rewrite failed; they
+  // are folded into one line rather than shown one by one.
+  function isFailedRewrite(m) {
+    return /^found an applicable rewrite lemma, but the corresponding tactic failed/.test(m.data);
+  }
+
+  // How many messages a list shows on their own, the failed rewrites being
+  // folded into one line.
+  function shownCount(messages) {
+    const failed = messages.filter(isFailedRewrite).length;
+    return messages.length - failed + (failed ? 1 : 0);
+  }
+
   // How the editor marks a message: `done` is Lean's silent "Goals
   // accomplished!" on a declaration it accepted.
   function category(m) {
@@ -552,6 +589,67 @@
     return m && m[1] in ABBREVIATIONS ? { start: pos - m[0].length, symbol: ABBREVIATIONS[m[1]] } : null;
   }
 
+  // ── The infoview ──────────────────────────────────────────────────────────
+
+  // Which infoview sections the reader has folded, kept while the page is open.
+  const foldedSections = new Set();
+
+  function infoSection(key, title, children) {
+    const section = el('details', { class: 'sfl-info-section' }, el('summary', {}, title), ...children);
+    section.open = !foldedSections.has(key);
+    section.addEventListener('toggle', () => {
+      if (section.open) foldedSections.delete(key);
+      else foldedSections.add(key);
+    });
+    return section;
+  }
+
+  // Lean's editors show goals and messages in an infoview beside the code.
+  // Where the page leaves room right of the book's text, the focused editor
+  // shows its infoview there, in this panel, which stays in view as the page
+  // scrolls; elsewhere the same view sits under the editor.
+  const INFOVIEW_WIDTH = 300; // the narrowest worth showing, in px
+  const infoview = {
+    node: null,
+    head: null,
+    body: null,
+    owner: null,
+    editors: new Set(),
+
+    ensure() {
+      if (this.node) return;
+      this.head = el('div', { class: 'sfl-infoview-head' });
+      this.body = el('div', { class: 'sfl-infoview-body' });
+      // Focusable, so that clicking in it, to select text say, keeps it open.
+      this.node = el('aside', { class: 'sfl-infoview', tabindex: '-1', 'aria-label': 'Lean infoview', hidden: '' },
+        this.head, this.body);
+      document.body.append(this.node);
+      this.node.addEventListener('focusout', () => setTimeout(() => this.owner && this.owner.updateInfoview()));
+      window.addEventListener('scroll', () => {
+        if (this.frame) return;
+        this.frame = requestAnimationFrame(() => { this.frame = null; this.place(); });
+      }, { passive: true });
+      window.addEventListener('resize', () => { for (const editor of this.editors) editor.updateInfoview(); });
+    },
+
+    // Right of the exercise, level with the editor, and inside the window
+    // below the page's fixed header.
+    place() {
+      const editor = this.owner;
+      if (!editor || this.node.hidden) return;
+      const header = document.querySelector('body > header');
+      const top = Math.max(header ? header.getBoundingClientRect().bottom : 0, 0) + 12;
+      const left = editor.box.getBoundingClientRect().right + 24;
+      const width = Math.min(480, document.documentElement.clientWidth - left - 24);
+      const height = this.node.offsetHeight;
+      this.node.style.left = left + 'px';
+      this.node.style.width = width + 'px';
+      this.node.style.maxHeight = (window.innerHeight - top - 12) + 'px';
+      this.node.style.top = Math.max(top, Math.min(editor.root.getBoundingClientRect().top,
+        window.innerHeight - 12 - height)) + 'px';
+    },
+  };
+
   // ── Completion ────────────────────────────────────────────────────────────
 
   // The name being typed before `pos`: `token` is the whole dotted name and
@@ -664,12 +762,24 @@
       this.tooltip.addEventListener('mouseleave', () => this.leaveHover());
       // Clicking the list must not take the focus from the code.
       this.popup.addEventListener('mousedown', (e) => e.preventDefault());
+      // Clicking a lightbulb must not take the focus from the code either.
+      this.gutter.addEventListener('mousedown', (e) => e.preventDefault());
+      this.gutter.addEventListener('click', (e) => {
+        const row = e.target.closest('.sfl-g-fix');
+        if (!row) return;
+        const line = Array.prototype.indexOf.call(this.gutter.children, row) + 1;
+        this.showSuggestionsAt(line, row.querySelector('.sfl-mark').getBoundingClientRect());
+      });
+      this.root.addEventListener('focusin', () => this.updateInfoview());
+      this.root.addEventListener('focusout', () => setTimeout(() => this.updateInfoview()));
       this.onLean = () => this.showStatus();
       lean.listeners.add(this.onLean);
       loadAbbreviations();
     }
 
     open() {
+      infoview.ensure();
+      infoview.editors.add(this);
       const anchor = this.hidden[this.hidden.length - 1] || this.box.lastElementChild;
       anchor.after(this.root);
       for (const block of this.hidden) block.classList.add('sfl-replaced');
@@ -681,6 +791,7 @@
       const todo = this.firstSorry();
       const at = todo >= 0 ? todo : this.textarea.value.trimEnd().length;
       this.textarea.setSelectionRange(at, at);
+      this.updateInfoview();
       this.scheduleCheck(0);
     }
 
@@ -702,6 +813,11 @@
       for (const block of this.hidden) block.classList.remove('sfl-replaced');
       this.root.remove();
       lean.listeners.delete(this.onLean);
+      infoview.editors.delete(this);
+      if (infoview.owner === this) {
+        infoview.owner = null;
+        infoview.node.hidden = true;
+      }
     }
 
     reset() {
@@ -746,7 +862,7 @@
       // come, so that typing does not make them flicker.
       this.messages.replaceChildren();
       clearTimeout(this.pendingTimer);
-      this.pendingTimer = setTimeout(() => this.root.classList.add('sfl-pending'), 1000);
+      this.pendingTimer = setTimeout(() => this.setPending(true), 1000);
       this.hideTooltip();
       this.render();
       this.scheduleCheck(400);
@@ -767,6 +883,10 @@
     }
 
     onKey(e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === '.' && this.applyFirstSuggestion()) {
+        e.preventDefault();
+        return;
+      }
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
         e.preventDefault();
         this.run();
@@ -921,59 +1041,192 @@
       this.checking = false;
       if (code === this.textarea.value && !this.closed) {
         clearTimeout(this.pendingTimer);
-        this.root.classList.remove('sfl-pending');
+        this.setPending(false);
         if (answer.result) {
           const described = describe(answer.result, code);
-          this.setDiagnostics(described.own);
+          this.setDiagnostics(described.own, code);
           this.judge(described, code);
         }
-        this.showInfo(answer.info || null, cursor.line);
+        this.showInfo(answer.info || null, cursor.line, cursor.column);
       }
       if (this.checkAgain) { this.checkAgain = false; this.check(); }
     }
 
-    setDiagnostics(own) {
+    setPending(pending) {
+      this.root.classList.toggle('sfl-pending', pending);
+      if (infoview.owner === this) infoview.node.classList.toggle('sfl-pending', pending);
+    }
+
+    // Lean's messages about `code`, which suggestions may only be applied to.
+    setDiagnostics(own, code) {
       this.diagnostics = own;
+      this.diagnosticsCode = code;
       this.render();
     }
 
-    // The goal view, after the infoview of Lean's editors: the goals at the
-    // cursor, the type expected there, and Lean's messages about the line.
-    // `info` is undefined while Lean is starting and null when Lean has
-    // nothing to say there.
-    showInfo(info, line) {
-      const title = (text) => el('div', { class: 'sfl-goals-title' }, text);
-      if (info === undefined) {
-        this.goals.replaceChildren(title('Goals'),
-          el('p', { class: 'sfl-goals-note' }, 'The goals at the cursor appear here once Lean has started.'));
+    // The infoview, after Lean's editors': the goals at the cursor, the type
+    // expected there, Lean's messages about the cursor's line and, beside the
+    // text, about the whole exercise.  `info` is undefined while Lean is
+    // starting and null when Lean has nothing to say at the cursor.
+    showInfo(info, line, column) {
+      this.info = { info, line, column };
+      this.renderInfo();
+    }
+
+    // Show the infoview beside the book's text while this editor, or the
+    // infoview, has the focus and the page has room; otherwise under the
+    // editor, or not at all when the room is there but the focus is not.
+    updateInfoview() {
+      if (this.closed) return;
+      const room = document.documentElement.clientWidth - this.box.getBoundingClientRect().right - 48;
+      const beside = room >= INFOVIEW_WIDTH;
+      const moved = beside !== this.root.classList.contains('sfl-beside');
+      this.root.classList.toggle('sfl-beside', beside);
+      const active = document.activeElement;
+      const shown = infoview.owner === this && !infoview.node.hidden;
+      if (beside && (this.root.contains(active) || infoview.node.contains(active))) {
+        if (shown) {
+          infoview.place();
+        } else {
+          infoview.owner = this;
+          infoview.node.hidden = false;
+          this.renderInfo();
+        }
+      } else if (shown) {
+        infoview.owner = null;
+        infoview.node.hidden = true;
+      }
+      if (moved && !beside) this.renderInfo();
+    }
+
+    renderInfo() {
+      if (!this.info) return;
+      const beside = this.root.classList.contains('sfl-beside');
+      if (beside && infoview.owner !== this) return;
+      const { info, line, column } = this.info;
+      const sections = this.infoSections(info, line, beside);
+      if (!beside) {
+        this.goals.replaceChildren(...sections);
         return;
+      }
+      // Replacing what has the focus would drop it to the page, which hides
+      // the infoview; the infoview itself keeps it instead.
+      if (infoview.node.contains(document.activeElement)) infoview.node.focus({ preventScroll: true });
+      infoview.head.textContent = `${this.exercise.name}:${line}:${column}`;
+      infoview.body.replaceChildren(...sections);
+      infoview.node.classList.toggle('sfl-pending', this.root.classList.contains('sfl-pending'));
+      infoview.place();
+    }
+
+    infoSections(info, line, all) {
+      if (info === undefined) {
+        return [el('p', { class: 'sfl-goals-note' }, 'The goals at the cursor appear here once Lean has started.')];
       }
       const sections = [];
       const goals = info && info.goals;
-      const here = this.diagnostics.filter((m) => m.line === line && !m.isSilent && !isUnsolvedGoals(m));
-      if (goals && goals.length) {
-        sections.push(el('div', {}, title(`${goals.length} goal${goals.length > 1 ? 's' : ''}`), ...goals.map((g) => goalCard(g))));
-      } else if (goals) {
+      const here = this.diagnostics.filter((m) =>
+        m.line === line && (!m.isSilent || category(m) === 'done') && !isUnsolvedGoals(m));
+      if (goals) {
         // After a failed step Lean gives up on its goal, so there are none
         // left there, but the proof is not done.
         const failed = here.some((m) => m.severity === 'error');
-        sections.push(el('div', {}, title('No goals'),
-          failed ? null : el('p', { class: 'sfl-goals-done' }, 'This part of the proof is complete.')));
+        sections.push(infoSection('goals', 'Tactic state', goals.length
+          ? [el('div', { class: 'sfl-goals-count' }, `${goals.length} goal${goals.length > 1 ? 's' : ''}`),
+            ...goals.map((g) => goalCard(g))]
+          : [el('p', { class: 'sfl-goals-done' }, failed ? 'No goals' : 'No goals: this part of the proof is complete.')]));
       }
       // Inside a tactic proof the hypotheses are shown above, and often the
       // expected type is the goal itself.
       const term = info && info.termGoal;
       if (term && !(goals && goals.length && goals[0].target === term.target)) {
-        sections.push(el('div', {}, title('Expected type'), goalCard(term, { hyps: !goals })));
+        sections.push(infoSection('expected', 'Expected type', [goalCard(term, { hyps: !goals })]));
       }
       if (here.length) {
-        sections.push(el('div', {}, title('Messages'),
-          ...here.map((m) => el('div', { class: 'sfl-message sfl-' + category(m) }, el('pre', {}, m.data)))));
+        sections.push(infoSection('messages', `Messages (${shownCount(here)})`, this.messageItems(here)));
+      }
+      const every = this.diagnostics.filter((m) => !m.isSilent);
+      if (all && every.length) {
+        sections.push(infoSection('all', `All messages (${shownCount(every)})`, this.messageItems(every, true)));
       }
       if (!sections.length) {
         sections.push(el('p', { class: 'sfl-goals-note' }, 'Put the cursor in a proof to see its goals here.'));
       }
-      this.goals.replaceChildren(...sections);
+      return sections;
+    }
+
+    // A message of Lean's, with a link to its line when it is listed among
+    // others.
+    messageItem(m, link) {
+      return el('div', { class: 'sfl-message sfl-' + category(m) },
+        link ? el('button', { class: 'sfl-where', type: 'button', onclick: () => this.goTo(m.line, m.col) },
+          `line ${m.line}`) : null,
+        this.messageBody(m));
+    }
+
+    // A list of messages, with the failed rewrites of `rw?` folded into one
+    // line at the end.
+    messageItems(messages, link) {
+      const failed = messages.filter(isFailedRewrite);
+      const items = messages.filter((m) => !isFailedRewrite(m)).map((m) => this.messageItem(m, link));
+      if (failed.length) {
+        items.push(el('details', { class: 'sfl-failed-rewrites' },
+          el('summary', {}, `${failed.length} more lemma${failed.length > 1 ? 's' : ''} matched, but rewriting with ${failed.length > 1 ? 'them' : 'it'} failed`),
+          ...failed.map((m) => this.messageItem(m, link))));
+      }
+      return items;
+    }
+
+    // A message's text; a "Try this" message offers its suggestions as links
+    // that put each in place of the search tactic, as Lean's editors do.
+    messageBody(m) {
+      const offered = suggestions(m);
+      if (!offered) return el('pre', {}, m.data);
+      return el('div', { class: 'sfl-suggestions' },
+        el('div', {}, offered.length > 1 ? 'Try these:' : 'Try this:'),
+        ...offered.map((suggestion) => el('div', { class: 'sfl-suggestion' },
+          el('button', {
+            class: 'sfl-apply', type: 'button', title: 'Put this in place of the search',
+            onclick: () => this.applySuggestion(m, suggestion),
+          }, ...highlighted(suggestion.text)),
+          ...suggestion.notes.map((note) => el('pre', { class: 'sfl-suggestion-note' }, ...highlighted(note))))),
+        el('div', { class: 'sfl-suggestions-hint' }, `${navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl+'}. applies the first`));
+    }
+
+    // Replace the search tactic Lean's message is about (`rw? at h`, say) with
+    // `suggestion`.  The message starts at the tactic; the tactic runs to the
+    // end of its line, or to a `;`, `<;>` or `)` after it.
+    applySuggestion(m, suggestion) {
+      const text = this.textarea.value;
+      // A suggestion is about the code Lean checked; after an edit, the next
+      // check brings new ones.
+      if (text !== this.diagnosticsCode) return false;
+      const lines = text.split('\n');
+      const rest = (lines[m.line - 1] || '').slice(m.col);
+      if (!/^[\w.]+\?/.test(rest)) return false;
+      const end = rest.search(/\s*(<;>|;|\))/);
+      let from = m.col;
+      for (let i = 0; i < m.line - 1; i++) from += lines[i].length + 1;
+      this.hideTooltip();
+      this.textarea.focus();
+      this.edit(suggestion.text, { from, to: from + (end < 0 ? rest.trimEnd().length : end) });
+      return true;
+    }
+
+    // ⌘. (Ctrl+.) applies the first suggestion on the cursor's line.
+    applyFirstSuggestion() {
+      const line = this.position(this.textarea.selectionStart).line;
+      const m = this.diagnostics.find((d) => d.line === line && suggestions(d));
+      return !!m && this.applySuggestion(m, suggestions(m)[0]);
+    }
+
+    // The suggestions on `line`, shown as a tooltip by its lightbulb.
+    showSuggestionsAt(line, box) {
+      const messages = this.diagnostics.filter((d) => d.line === line && suggestions(d));
+      if (!messages.length) return;
+      this.tooltip.replaceChildren(...messages.map((m) =>
+        el('div', { class: 'sfl-tip-message sfl-tip-' + category(m) }, this.messageBody(m))));
+      this.hoverRange = null;
+      this.place(this.tooltip, box);
     }
 
     // ── Drawing ──
@@ -999,7 +1252,8 @@
         const lineText = raw[m.line - 1];
         if (lineText === undefined) continue;
         if (kind === 'done') { mark(m.line, 'sfl-g-done'); continue; }
-        if (m.isSilent) continue;
+        if (m.isSilent || isFailedRewrite(m)) continue;
+        if (suggestions(m)) mark(m.line, 'sfl-g-fix');
         let from = Math.min(m.col, lineText.length);
         let to = m.endLine > m.line ? lineText.length : Math.min(m.endCol, lineText.length);
         // A message about a point (say, the end of the input) still gets a
@@ -1144,7 +1398,7 @@
       }
       if (!messages.length && !hover) return;
       this.tooltip.replaceChildren(
-        ...messages.map((s) => el('div', { class: 'sfl-tip-message sfl-tip-' + s.kind }, el('pre', {}, s.message.data))),
+        ...messages.map((s) => el('div', { class: 'sfl-tip-message sfl-tip-' + s.kind }, this.messageBody(s.message))),
         ...(hover ? [el('div', { class: 'sfl-tip-hover' }, ...markdown(hover.text))] : []));
       this.hoverRange = hover && hover.pos.line === hover.endPos.line
         ? { line: hit.line, from: jsOffset(lineText, hover.pos.column), to: jsOffset(lineText, hover.endPos.column) }
@@ -1188,7 +1442,7 @@
       this.completionPending = false;
       const now = nameBefore(this.textarea.value, this.textarea.selectionStart);
       if (!now || now.start !== name.start) return;
-      if (answer.result && code === this.textarea.value) this.setDiagnostics(describe(answer.result, code).own);
+      if (answer.result && code === this.textarea.value) this.setDiagnostics(describe(answer.result, code).own, code);
       const items = ((answer.completions && answer.completions.items) || []).map((item, index) => ({ ...item, index }));
       this.completion = { start: name.start, items, shown: [], selected: 0, typed: null };
       this.showCompletions();
@@ -1339,15 +1593,8 @@
     }
 
     show({ own, context, error }, code, elapsed) {
-      if (code === this.textarea.value) this.setDiagnostics(own);
-      const items = [];
-      for (const m of own) {
-        if (m.isSilent || isUnsolvedGoals(m)) continue;
-        items.push(el('div', { class: 'sfl-message sfl-' + category(m) },
-          el('button', { class: 'sfl-where', type: 'button', onclick: () => this.goTo(m.line, m.col) },
-            `line ${m.line}`),
-          el('pre', {}, m.data)));
-      }
+      if (code === this.textarea.value) this.setDiagnostics(own, code);
+      const items = this.messageItems(own.filter((m) => !m.isSilent && !isUnsolvedGoals(m)), true);
       if (context.length) {
         items.unshift(el('div', { class: 'sfl-message sfl-error' },
           el('pre', {}, 'The book code before this exercise did not check, so this result cannot be trusted. ' +

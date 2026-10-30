@@ -132,6 +132,16 @@ a.sfl-try:hover { color: white; }
 .sfl-g-done .sfl-mark::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 16'%3E%3Cpath d='M1.5 8.8 4.6 11.9 10.8 5.2M7.6 11.2l.7.7 6.3-6.7' fill='none' stroke='%233b73d9' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
+.sfl-g-fix .sfl-mark::before {
+  content: '';
+  left: 0;
+  top: 50%;
+  width: 1.05em;
+  height: 1.05em;
+  transform: translateY(-50%);
+  background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1.6a4.6 4.6 0 0 0-2.7 8.3c.5.4.8 1 .8 1.6v.6h3.8v-.6c0-.6.3-1.2.8-1.6A4.6 4.6 0 0 0 8 1.6Z' fill='%23f2c94c' stroke='%23b8860b' stroke-width='1'/%3E%3Cpath d='M6.3 13.4h3.4M6.8 14.8h2.4' stroke='%23b8860b' stroke-width='1.1' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+.sfl-gutter .sfl-g-fix { cursor: pointer; }
 .sfl-g-error .sfl-mark::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6.1' fill='none' stroke='%23d32f2f' stroke-width='1.4'/%3E%3Cpath d='M5.7 5.7l4.6 4.6M10.3 5.7l-4.6 4.6' stroke='%23d32f2f' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
 }
@@ -262,11 +272,6 @@ a.sfl-try:hover { color: white; }
   font-size: 0.85rem;
 }
 .sfl-pending .sfl-goals, .sfl-pending .sfl-status { opacity: 0.55; }
-.sfl-goals-title {
-  font-weight: 600;
-  color: #55554f;
-  margin-bottom: 0.35em;
-}
 .sfl-goals-note, .sfl-goals-done { margin: 0; color: #6f6f68; }
 .sfl-goals-done { color: #2e7d32; }
 .sfl-goal {
@@ -278,8 +283,50 @@ a.sfl-try:hover { color: white; }
   border-radius: 2px;
 }
 .sfl-goal-case { font-size: 0.8rem; color: #6f6f68; margin-bottom: 0.15em; }
-.sfl-goals > div + div { margin-top: 0.6em; }
-.sfl-goals .sfl-message { padding: 0.25em 0.6em; margin-top: 0.35em; background: white; }
+.sfl-info-section + .sfl-info-section { margin-top: 0.5em; }
+.sfl-info-section > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #55554f;
+  margin-bottom: 0.3em;
+}
+.sfl-info-section .sfl-message { padding: 0.25em 0.6em; margin-top: 0.35em; background: white; }
+.sfl-info-section .sfl-message.sfl-done { border-left-color: #3b73d9; }
+.sfl-goals-count { font-size: 0.8rem; color: #6f6f68; }
+/* Beside the book's text the infoview floats in the margin instead. */
+.sfl-beside .sfl-goals { display: none; }
+.sfl-infoview {
+  position: fixed;
+  z-index: 40;
+  overflow: auto;
+  background: #fbfbf9;
+  border: 1px solid var(--sf-rule, #dcdcda);
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  outline: none;
+}
+.sfl-infoview[hidden] { display: none; }
+.sfl-infoview.sfl-pending .sfl-infoview-body { opacity: 0.55; }
+.sfl-infoview-head {
+  position: sticky;
+  top: 0;
+  padding: 0.35em 0.7em;
+  background: white;
+  border-bottom: 1px solid var(--sf-rule, #dcdcda);
+  font-family: var(--verso-code-font-family, ui-monospace, Menlo, Consolas, monospace);
+  color: #55554f;
+}
+.sfl-infoview-body { padding: 0.5em 0.7em 0.7em; }
+.sfl-infoview .sfl-goal pre, .sfl-infoview .sfl-message pre {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  white-space: pre-wrap;
+  font-family: var(--verso-code-font-family, ui-monospace, Menlo, Consolas, monospace);
+}
 /* The book theme frames every plain <pre> as a code block; inside the editor
    they are lines of a message, a goal or a tooltip. */
 .sfl-editor .sfl-goal pre,
@@ -383,3 +430,25 @@ a.sfl-try:hover { color: white; }
   border-top: 1px solid var(--sf-rule, #dcdcda);
   background: #fbfbf9;
 }
+
+/* A "Try this" message of a search tactic such as `rw?`: each suggestion is a
+   link that puts it in place of the search. */
+.sfl-suggestions { flex: 1; min-width: 0; }
+.sfl-suggestion { margin: 0.25em 0 0 0.8em; }
+.sfl-apply {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--verso-code-font-family, ui-monospace, Menlo, Consolas, monospace);
+  font-size: inherit;
+  text-align: left;
+  text-decoration: underline dotted var(--sf-link, #7a1a1a);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.sfl-apply:hover { background: #e6edfc; }
+.sfl-editor .sfl-suggestion-note, .sfl-infoview .sfl-suggestion-note { margin: 0 0 0 0.2em; color: #6f6f68; }
+.sfl-suggestions-hint { margin-top: 0.3em; font-size: 0.8em; color: #8c8c88; }
+.sfl-failed-rewrites { margin-top: 0.35em; font-size: 0.95em; color: #6f6f68; }
+.sfl-failed-rewrites > summary { cursor: pointer; }
