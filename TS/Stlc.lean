@@ -1668,7 +1668,7 @@ variables in `t` as specified by `Γ`".
 
 We'll also write `x ↦ T ; Γ` for "update the partial map
 `Γ` so that it maps `x` to `T`," following the notation from
-the {ref "Typeclasses"}[Typeclasses] chapter.
+the `Typeclasses` chapter.
 
 With these refinements, we are ready to give informal and formal
 specifications of the typing relation.
@@ -1701,7 +1701,7 @@ abbrev Context := PartialMap String Ty
 
 ::::full
 A context is a {name}`PartialMap` from variable names to types — the partial
-maps of the {ref "Typeclasses"}[Typeclasses] chapter, which are total maps whose values are
+maps of the `Typeclasses` chapter, which are total maps whose values are
 optional, so that {name}`none` at a variable means "not bound here".
 ::::
 
