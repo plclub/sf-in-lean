@@ -393,30 +393,79 @@
   // The suggestions in a "Try this" message of a search tactic such as `rw?`
   // or `exact?`: each a replacement for the tactic, with notes such as the
   // goal it would leave.  Lean writes each as an `[apply] <tactic>` line (the
-  // text of the button Lean's editors show) followed by its notes.
+  // text of the button Lean's editors show), the lines of a long tactic that
+  // continue it indented further, then its notes as `--` comments.
   function suggestions(m) {
     if (!/^Try th(is|ese):/.test(m.data)) return null;
     const out = [];
+    let indent = 0;
     for (const line of m.data.split('\n').slice(1)) {
-      const apply = /^\s*\[apply\]\s?(.*)$/.exec(line);
-      if (apply) out.push({ text: apply[1], notes: [] });
-      else if (out.length && line.trim()) out[out.length - 1].notes.push(line.trim());
+      const apply = /^(\s*)\[apply\]\s?(.*)$/.exec(line);
+      const last = out[out.length - 1];
+      if (apply) {
+        indent = apply[1].length;
+        out.push({ text: apply[2], notes: [] });
+      } else if (!last || !line.trim()) {
+        continue;
+      } else if (line.search(/\S/) > indent && !last.notes.length && !line.trim().startsWith('--')) {
+        last.text += '\n' + line.slice(indent);
+      } else {
+        last.notes.push(line.trim());
+      }
     }
     return out.length ? out : null;
   }
 
-  // `rw?` also reports each lemma that matched but whose rewrite failed; they
-  // are folded into one line rather than shown one by one.
-  function isFailedRewrite(m) {
-    return /^found an applicable rewrite lemma, but the corresponding tactic failed/.test(m.data);
+  // `rw?` also reports each lemma that matched but whose rewrite failed, and
+  // `apply?` each partial proof whose tactic failed: `failure` says which
+  // such report a message is, if any.
+  const FAILURES = {
+    rewrite: {
+      pattern: /^found an applicable rewrite lemma, but the corresponding tactic failed/,
+      summary: (n) => `${n} more lemma${n > 1 ? 's' : ''} matched, but rewriting with ${n > 1 ? 'them' : 'it'} failed`,
+    },
+    partial: {
+      pattern: /^found a partial proof, but the corresponding tactic failed/,
+      summary: (n) => `${n} more partial proof${n > 1 ? 's were' : ' was'} found, but ${n > 1 ? 'their tactics' : 'its tactic'} failed`,
+    },
+  };
+  function failure(m) {
+    return Object.keys(FAILURES).find((kind) => FAILURES[kind].pattern.test(m.data)) || null;
   }
 
-  // How many messages a list shows on their own, the failed rewrites being
-  // folded into one line.
-  function shownCount(messages) {
-    const failed = messages.filter(isFailedRewrite).length;
-    return messages.length - failed + (failed ? 1 : 0);
+  // A list of Lean's messages as the editor shows it.  When `apply?` finds
+  // no whole proof it reports every partial one, a message each, a hundred
+  // or more: the suggestions made at one place are shown as one message, and
+  // the failed attempts are folded into one line per kind, at the end.
+  // Entries are `{ message, offered }`, `offered` being the suggestions, or
+  // `{ failed, messages }`.
+  function grouped(messages) {
+    const entries = [], at = new Map(), failed = new Map();
+    for (const m of messages) {
+      const kind = failure(m);
+      const offered = !kind && suggestions(m);
+      if (kind) {
+        if (!failed.has(kind)) failed.set(kind, []);
+        failed.get(kind).push(m);
+      } else if (offered && at.has(m.line + ':' + m.col)) {
+        at.get(m.line + ':' + m.col).offered.push(...offered);
+      } else {
+        const entry = { message: m, offered: offered || null };
+        if (offered) at.set(m.line + ':' + m.col, entry);
+        entries.push(entry);
+      }
+    }
+    for (const [kind, list] of failed) entries.push({ failed: kind, messages: list });
+    return entries;
   }
+
+  // How many messages a list shows.
+  function shownCount(messages) {
+    return grouped(messages).length;
+  }
+
+  // How many suggestions a message shows before folding the rest.
+  const SHOWN_SUGGESTIONS = 3;
 
   // How the editor marks a message: `done` is Lean's silent "Goals
   // accomplished!" on a declaration it accepted.
@@ -1156,45 +1205,51 @@
 
     // A message of Lean's, with a link to its line when it is listed among
     // others.
-    messageItem(m, link) {
+    messageItem(m, link, offered) {
       return el('div', { class: 'sfl-message sfl-' + category(m) },
         link ? el('button', { class: 'sfl-where', type: 'button', onclick: () => this.goTo(m.line, m.col) },
           `line ${m.line}`) : null,
-        this.messageBody(m));
+        this.messageBody(m, offered));
     }
 
-    // A list of messages, with the failed rewrites of `rw?` folded into one
-    // line at the end.
     messageItems(messages, link) {
-      const failed = messages.filter(isFailedRewrite);
-      const items = messages.filter((m) => !isFailedRewrite(m)).map((m) => this.messageItem(m, link));
-      if (failed.length) {
-        items.push(el('details', { class: 'sfl-failed-rewrites' },
-          el('summary', {}, `${failed.length} more lemma${failed.length > 1 ? 's' : ''} matched, but rewriting with ${failed.length > 1 ? 'them' : 'it'} failed`),
-          ...failed.map((m) => this.messageItem(m, link))));
-      }
-      return items;
+      return this.messageList(messages, (m, offered) => this.messageItem(m, link, offered));
+    }
+
+    // The elements of a list of messages, grouped as `grouped` says, each
+    // drawn by `draw(message, suggestions)`.
+    messageList(messages, draw) {
+      return grouped(messages).map((entry) => entry.failed
+        ? el('details', { class: 'sfl-failed' },
+          el('summary', {}, FAILURES[entry.failed].summary(entry.messages.length)),
+          ...entry.messages.map((m) => draw(m, null)))
+        : draw(entry.message, entry.offered));
     }
 
     // A message's text; a "Try this" message offers its suggestions as links
     // that put each in place of the search tactic, as Lean's editors do.
-    messageBody(m) {
-      const offered = suggestions(m);
+    messageBody(m, offered = suggestions(m)) {
       if (!offered) return el('pre', {}, m.data);
+      const item = (suggestion) => el('div', { class: 'sfl-suggestion' },
+        el('button', {
+          class: 'sfl-apply', type: 'button', title: 'Put this in place of the search',
+          onclick: () => this.applySuggestion(m, suggestion),
+        }, ...highlighted(suggestion.text)),
+        ...suggestion.notes.map((note) => el('pre', { class: 'sfl-suggestion-note' }, ...highlighted(note))));
+      const more = offered.slice(SHOWN_SUGGESTIONS);
       return el('div', { class: 'sfl-suggestions' },
         el('div', {}, offered.length > 1 ? 'Try these:' : 'Try this:'),
-        ...offered.map((suggestion) => el('div', { class: 'sfl-suggestion' },
-          el('button', {
-            class: 'sfl-apply', type: 'button', title: 'Put this in place of the search',
-            onclick: () => this.applySuggestion(m, suggestion),
-          }, ...highlighted(suggestion.text)),
-          ...suggestion.notes.map((note) => el('pre', { class: 'sfl-suggestion-note' }, ...highlighted(note))))),
+        ...offered.slice(0, SHOWN_SUGGESTIONS).map(item),
+        ...(more.length
+          ? [el('details', { class: 'sfl-more-suggestions' }, el('summary', {}, `${more.length} more`), ...more.map(item))]
+          : []),
         el('div', { class: 'sfl-suggestions-hint' }, `${navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl+'}. applies the first`));
     }
 
     // Replace the search tactic Lean's message is about (`rw? at h`, say) with
     // `suggestion`.  The message starts at the tactic; the tactic runs to the
-    // end of its line, or to a `;`, `<;>` or `)` after it.
+    // end of its line, or to a `;`, `<;>` or `)` after it.  A suggestion of
+    // several lines keeps its indentation relative to the tactic.
     applySuggestion(m, suggestion) {
       const text = this.textarea.value;
       // A suggestion is about the code Lean checked; after an edit, the next
@@ -1208,7 +1263,8 @@
       for (let i = 0; i < m.line - 1; i++) from += lines[i].length + 1;
       this.hideTooltip();
       this.textarea.focus();
-      this.edit(suggestion.text, { from, to: from + (end < 0 ? rest.trimEnd().length : end) });
+      this.edit(suggestion.text.replace(/\n/g, '\n' + ' '.repeat(m.col)),
+        { from, to: from + (end < 0 ? rest.trimEnd().length : end) });
       return true;
     }
 
@@ -1223,8 +1279,8 @@
     showSuggestionsAt(line, box) {
       const messages = this.diagnostics.filter((d) => d.line === line && suggestions(d));
       if (!messages.length) return;
-      this.tooltip.replaceChildren(...messages.map((m) =>
-        el('div', { class: 'sfl-tip-message sfl-tip-' + category(m) }, this.messageBody(m))));
+      this.tooltip.replaceChildren(...this.messageList(messages, (m, offered) =>
+        el('div', { class: 'sfl-tip-message sfl-tip-' + category(m) }, this.messageBody(m, offered))));
       this.hoverRange = null;
       this.place(this.tooltip, box);
     }
@@ -1252,7 +1308,7 @@
         const lineText = raw[m.line - 1];
         if (lineText === undefined) continue;
         if (kind === 'done') { mark(m.line, 'sfl-g-done'); continue; }
-        if (m.isSilent || isFailedRewrite(m)) continue;
+        if (m.isSilent || failure(m)) continue;
         if (suggestions(m)) mark(m.line, 'sfl-g-fix');
         let from = Math.min(m.col, lineText.length);
         let to = m.endLine > m.line ? lineText.length : Math.min(m.endCol, lineText.length);
@@ -1398,7 +1454,8 @@
       }
       if (!messages.length && !hover) return;
       this.tooltip.replaceChildren(
-        ...messages.map((s) => el('div', { class: 'sfl-tip-message sfl-tip-' + s.kind }, this.messageBody(s.message))),
+        ...this.messageList(messages.map((s) => s.message), (m, offered) =>
+          el('div', { class: 'sfl-tip-message sfl-tip-' + category(m) }, this.messageBody(m, offered))),
         ...(hover ? [el('div', { class: 'sfl-tip-hover' }, ...markdown(hover.text))] : []));
       this.hoverRange = hover && hover.pos.line === hover.endPos.line
         ? { line: hit.line, from: jsOffset(lineText, hover.pos.column), to: jsOffset(lineText, hover.endPos.column) }

@@ -443,6 +443,7 @@ a.sfl-try:hover { color: white; }
   font-family: var(--verso-code-font-family, ui-monospace, Menlo, Consolas, monospace);
   font-size: inherit;
   text-align: left;
+  white-space: pre-wrap;
   text-decoration: underline dotted var(--sf-link, #7a1a1a);
   text-underline-offset: 3px;
   cursor: pointer;
@@ -450,5 +451,8 @@ a.sfl-try:hover { color: white; }
 .sfl-apply:hover { background: #e6edfc; }
 .sfl-editor .sfl-suggestion-note, .sfl-infoview .sfl-suggestion-note { margin: 0 0 0 0.2em; color: #6f6f68; }
 .sfl-suggestions-hint { margin-top: 0.3em; font-size: 0.8em; color: #8c8c88; }
-.sfl-failed-rewrites { margin-top: 0.35em; font-size: 0.95em; color: #6f6f68; }
-.sfl-failed-rewrites > summary { cursor: pointer; }
+.sfl-more-suggestions { margin: 0.25em 0 0 0.8em; color: #6f6f68; }
+.sfl-more-suggestions > summary { cursor: pointer; }
+.sfl-more-suggestions > .sfl-suggestion { margin-left: 0; }
+.sfl-failed { margin-top: 0.35em; font-size: 0.95em; color: #6f6f68; }
+.sfl-failed > summary { cursor: pointer; }
