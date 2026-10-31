@@ -1831,11 +1831,24 @@ extended context maps `X` to `Bool` — holds by computation, hence `rfl`.
 :::
 
 Much like reduction sequences, long derivations of typing rules can grow
-quite tedious to prove. Luckily, we can have Lean automate proofs of this sort,
-using another tactic: {tactic}`apply_rules`. This tactic works much like
-{tactic}`normalize`, but is more efficient and will make progress even if it cannot
-solve the goal outright. Like {tactic}`normalize`, {tactic}`apply_rules` also
-takes a `using` argument which tells Lean which set of constructors to draw from.
+quite tedious to prove by hand. In the proof we just gave, every step just
+applies one rule of `HasType`, eventually ending with `rfl`.  Lean can
+discover such straight-line derivations using another tactic:
+{tactic}`apply_rules`.  Like {tactic}`normalize`, it takes a `using`
+argument naming the set of constructors to draw from, and repeatedly
+applies whichever of them fits the goal. Unlike {tactic}`normalize`,
+however, it is more efficient and will make progress even if it cannot solve the
+goal outright.
+
+```lean
+example : <{ ∅ ⊢ λ X : Bool . X ⦂ Bool → Bool }> := by
+  apply_rules using StlcTyping
+```
+
+:::slidebreak
+:::
+
+Of course, it scales to much bigger derivations than this example.
 
 ```display
 ∅ ⊢ λX:Bool. λY:Bool → Bool. Y (Y X)
@@ -1920,16 +1933,16 @@ to the term `λX:Bool. λY:Bool. X Y` — i.e.,
 example :
     ¬ ∃ τ, <{ ∅ ⊢ λ X : Bool . λ Y : Bool . X Y ⦂ τ }> := by
   intro ⟨τ, hc⟩
-  -- Each `cases` peels off one rule of the derivation, naming the premise it
-  -- leaves behind; the context stays small because the old hypothesis goes away.
-  cases hc with
-  | abs _ _ _ _ _ h₁ =>
-    cases h₁ with
-    | abs _ _ _ _ _ h₂ =>
-      cases h₂ with
-      | app _ _ _ _ _ hf _ =>
-        cases hf with
-        | var _ _ _ hx =>
+  -- Each `inversion` peels off one rule of the derivation, naming the premise
+  -- it leaves behind; the context stays small because the old hypothesis goes away.
+  inversion hc with
+  | abs h₁ =>
+    inversion h₁ with
+    | abs h₂ =>
+      inversion h₂ with
+      | app _ hf =>
+        inversion hf with
+        | var hx =>
           -- `X` is bound to `Bool` in the context, but the application rule
           -- needs it to have an arrow type.
           exact Ty.noConfusion (Option.some.inj hx)
@@ -1953,14 +1966,14 @@ example : ¬ ∃ τ σ, <{ ∅ ⊢ λ X : τ . X X ⦂ σ }> := by
       | bool => intro τ₂ h; cases h
       | arrow A B ihA _ => intro τ₂ h; injection h with h₁ _; exact ihA B h₁
     intro ⟨τ, σ, hc⟩
-    cases hc with
-    | abs _ _ _ _ _ h₁ =>
-      cases h₁ with
-      | app _ _ _ _ _ hf ha =>
-        cases hf with
-        | var _ _ _ hx =>
-          cases ha with
-          | var _ _ _ hy =>
+    inversion hc with
+    | abs h₁ =>
+      inversion h₁ with
+      | app ha hf =>
+        inversion hf with
+        | var hx =>
+          inversion ha with
+          | var hy =>
             exact arrow_ne _ _ ((Option.some.inj hy).symm.trans (Option.some.inj hx))
 ```
 ::::
