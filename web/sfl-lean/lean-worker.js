@@ -257,21 +257,37 @@ function hashText(text) {
   return (h >>> 0).toString(16) + ':' + text.length;
 }
 
+// Elaborating can recurse deeper than a worker's own stack allows.  Chrome on
+// macOS gives a worker about half the stack of the page itself, and Hoare's
+// `assn` macro, a `match` over fifteen syntax quotations, needs more than
+// that.  A call through `WebAssembly.promising` runs on a stack the engine
+// allocates for the call, where it fits; an engine without it, or a runtime
+// whose exports are wrapped, gets the call on the worker's own stack.
+const onOwnStack = new Map();
+function callLean(name, ...args) {
+  if (!onOwnStack.has(name)) {
+    let fn = Module[name];
+    try { fn = WebAssembly.promising(fn); } catch (e) { /* the worker's stack it is */ }
+    onOwnStack.set(name, fn);
+  }
+  return onOwnStack.get(name)(...args);
+}
+
 // Check `code`, which continues `context` (the material an exercise builds
 // on) when one is given.  A runtime with `lean_wasm_compile_with_context`
 // checks the context once and then only `code`; an older one gets the whole
 // text every time.  `codeLine` is the line of Lean's input on which `code`
 // starts, for renumbering its messages.
-function compile(code, context) {
+async function compile(code, context) {
   if (!moduleReady) return { ok: false, error: 'Lean is not ready' };
   const withContext = context != null && typeof Module._lean_wasm_compile_with_context === 'function';
   const file = mkLeanString('/workspace/Exercise.lean');
   collecting = [];
   const t0 = performance.now();
   try {
-    const res = withContext
-      ? Module._lean_wasm_compile_with_context(mkLeanString(context), mkLeanString(code), file)
-      : Module._lean_wasm_compile(mkLeanString(context == null ? code : context + code), file);
+    const res = await (withContext
+      ? callLean('_lean_wasm_compile_with_context', mkLeanString(context), mkLeanString(code), file)
+      : callLean('_lean_wasm_compile', mkLeanString(context == null ? code : context + code), file));
     // The result is an IO action's: constructor tag 0 (the byte at offset 7)
     // means it returned, whatever the diagnostics say; anything else means it
     // threw, and Lean prints the exception when asked.
@@ -311,10 +327,10 @@ function compiledKey(code, context) {
 }
 
 // Compile `code` unless it is what the runtime compiled last.
-function ensureCompiled(code, context) {
+async function ensureCompiled(code, context) {
   const key = compiledKey(code, context);
   if (lastCompiled && lastCompiled.key === key) return lastCompiled.result;
-  const result = compile(code, context);
+  const result = await compile(code, context);
   lastCompiled = { key, result };
   return result;
 }
@@ -337,14 +353,14 @@ function query(name, ...args) {
 }
 
 // Positions are Lean's: 1-based lines and codepoint columns, in `code`.
-function answer(msg) {
+async function answer(msg) {
   if (msg.type === 'compile') return ensureCompiled(msg.code, msg.context);
   if (msg.type === 'info') {
-    const result = ensureCompiled(msg.code, msg.context);
+    const result = await ensureCompiled(msg.code, msg.context);
     return { result, info: result.ok ? query('_lean_wasm_info_at', msg.line, msg.column) : null };
   }
   if (msg.type === 'complete') {
-    const result = ensureCompiled(msg.code, msg.context);
+    const result = await ensureCompiled(msg.code, msg.context);
     return { result, completions: result.ok ? query('_lean_wasm_complete', msg.line, msg.column) : null };
   }
   if (msg.type === 'resolve') {
@@ -361,7 +377,7 @@ self.onmessage = async (event) => {
       // Import the modules now, while the reader is still reading, so the
       // first Run elaborates only the exercise.
       post('importing', {});
-      const warm = compile(msg.header);
+      const warm = await compile(msg.header);
       post('ready', {
         ok: warm.ok, elapsed: warm.elapsed, error: warm.error,
         queries: typeof Module._lean_wasm_info_at === 'function',
@@ -370,6 +386,6 @@ self.onmessage = async (event) => {
       post('failed', { error: (e && e.message) || String(e) });
     }
   } else if (msg.id != null) {
-    post('answer', { id: msg.id, ...answer(msg) });
+    post('answer', { id: msg.id, ...(await answer(msg)) });
   }
 };
