@@ -50,10 +50,9 @@ a.sfl-try:hover { color: white; }
   cursor: pointer;
 }
 .sfl-menu-button:hover, .sfl-menu-button:focus-visible { border-color: var(--sf-rule, #dcdcda); background: white; }
+/* Placed on the window by sfl-lean.js, under its button. */
 .sfl-menu-list {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 2px);
+  position: fixed;
   z-index: 20;
   min-width: 17em;
   white-space: nowrap;
@@ -78,7 +77,30 @@ a.sfl-try:hover { color: white; }
 }
 .sfl-menu-item:hover, .sfl-menu-item:focus-visible { background: var(--sf-surface, #f4f4f3); }
 
-/* The exercise's static code is hidden while the editor holds it. */
+/* A code block from the text holds its tools in its top right corner, out of
+   sight until the pointer is on the block, a menu is open, or the keyboard
+   reaches them.  Without a pointer to hover with, they stay in sight, faint. */
+.hl.lean.block.sfl-editable { position: relative; }
+.sfl-block-tools {
+  position: absolute;
+  top: 0.3em;
+  right: 0.3em;
+  font-family: var(--verso-text-font-family, system-ui, sans-serif);
+  white-space: normal;
+  user-select: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.hl.lean.block:hover > .sfl-block-tools,
+.sfl-block-tools:focus-within,
+.sfl-block-tools:has(.sfl-menu-list:not([hidden])) { opacity: 1; }
+@media (hover: none) {
+  .sfl-block-tools { opacity: 0.6; }
+}
+/* While the editor is open, the tools are at the right end of its bar. */
+.sfl-bar > .sfl-block-tools { position: static; opacity: 1; }
+
+/* The book's code is hidden while the editor holds it. */
 .sfl-replaced { display: none !important; }
 
 .sfl-editor {

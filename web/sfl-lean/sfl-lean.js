@@ -15,6 +15,12 @@
 // offers the playground, a download of that file, and the exercise's source on
 // GitHub on every device.
 //
+// The book's other code blocks, its examples and the proofs it gives, get
+// "Edit" and the same menu in their corner, so that a reader can change one
+// and see what Lean makes of the change.  The editor checks the block in the
+// context an exercise in its place would get.  A change to a block stays in
+// that block: the code after it is checked against the book's version.
+//
 // The context for an exercise comes from `sfl-lean/data/<Chapter>.json`
 // (written by scripts/web_exercises.py): the chapters it imports and the
 // chapter itself up to the exercise, with theorem proofs replaced by `sorry`.
@@ -84,6 +90,14 @@
     } catch (e) { /* storage unavailable; the editor still works */ }
   }
 
+  // A short name for a text (its 32-bit FNV-1a hash), to key what is saved
+  // about it.
+  function hashCode(text) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193);
+    return (h >>> 0).toString(36);
+  }
+
   function chapterOfPage() {
     const parts = location.pathname.split('/').filter((p) => p && p !== 'index.html');
     return parts[parts.length - 1];
@@ -126,7 +140,8 @@
     return context.replace(/(^|\n)([ \t]*(?:open|set_option)\b[^\n]*?)[ \t]+in\s*$/, '$1$2\n\n');
   }
 
-  // The whole file, and the line at which the reader's code starts.
+  // The whole file, and the line at which the reader's code starts.  A block
+  // from the text comes as an exercise does, with `block` set.
   function compose(data, exercise, code, { useAnswers, banner }) {
     const lib = data.library.map((c) => {
       const chapter = c.module.split('.').slice(1).join('.');
@@ -137,8 +152,9 @@
       ? withAnswers(data.skeleton, data.exercises, data.chapter, exercise.context)
       : data.skeleton.slice(0, exercise.context));
     let before = header(data) + '\n' + lib +
-      `-- ${data.module}, up to this exercise, with proofs omitted\n${opener(data, false)}\n\n` + ctx +
-      `-- Exercise: ${exercise.name}\n\n`;
+      `-- ${data.module}, up to this ${exercise.block ? 'code' : 'exercise'}, with proofs omitted\n` +
+      `${opener(data, false)}\n\n` + ctx +
+      (exercise.block ? `-- From the text: ${exercise.name}\n\n` : `-- Exercise: ${exercise.name}\n\n`);
     if (banner) {
       // Count the banner's own lines too, so the line it names is exact.
       const draft = banner(0) + before;
@@ -217,8 +233,9 @@
     return compose(data, exercise, exercise.code, {
       useAnswers: false,
       banner: (line) =>
-        `-- Software Foundations in Lean: ${data.chapter}, exercise ${exercise.name}.\n` +
-        `-- The exercise is at the end of this file, from line ${line}.  Everything\n` +
+        `-- Software Foundations in Lean: ${data.chapter}, ` +
+        (exercise.block ? `code from the text (${exercise.name}).\n` : `exercise ${exercise.name}.\n`) +
+        `-- The ${exercise.block ? 'code' : 'exercise'} is at the end of this file, from line ${line}.  Everything\n` +
         `-- above it is the book's earlier material, with proofs omitted.\n\n`,
     }).text;
   }
@@ -349,7 +366,7 @@
   // Lean's threads share memory, which browsers allow only on cross-origin
   // isolated pages.  If the server did not send the headers for that, the
   // service worker in sfl-lean-isolation.js adds them, after one reload.
-  async function ensureIsolated(exerciseName) {
+  async function ensureIsolated(reopen) {
     if (self.crossOriginIsolated) return true;
     if (sessionStorage.getItem(STORE + 'isolation-tried')) return false;
     sessionStorage.setItem(STORE + 'isolation-tried', '1');
@@ -359,7 +376,7 @@
     } catch (e) {
       return false;
     }
-    sessionStorage.setItem(STORE + 'reopen', exerciseName);
+    sessionStorage.setItem(STORE + 'reopen', reopen);
     location.reload();
     return new Promise(() => {}); // the page is going away
   }
@@ -477,7 +494,7 @@
 
   // What a check says of the reader's code.  A solution is code Lean accepts
   // with no goals left and no `sorry`.
-  function verdict({ own, context, error }) {
+  function verdict({ own, context, error }, block) {
     const errors = own.filter((m) => category(m) === 'error').length;
     // Goals left at the end only mean "not finished"; the goal view shows
     // them, so they are counted, not listed.
@@ -488,7 +505,8 @@
       : errors ? `${errors} error${errors > 1 ? 's' : ''}`
         : left ? `Not finished yet: ${left} goal${left > 1 ? 's' : ''} left`
           : sorry ? 'No errors, but the proof still uses sorry'
-            : '✓ Lean accepts this; the exercises after it will use your solution';
+            : block ? '✓ Lean accepts this'
+              : '✓ Lean accepts this; the exercises after it will use your solution';
     return { solved, text };
   }
 
@@ -750,17 +768,21 @@
 
   // ── The editor ────────────────────────────────────────────────────────────
 
+  // Edits an exercise, or a block from the text.  `box` is what the editor
+  // sits in, and `hidden` the book's code it stands in for while open.
   class ExerciseEditor {
-    constructor(data, exercise, box) {
+    constructor(data, exercise, box, hidden = [...box.querySelectorAll('code.hl.lean.block')]) {
       this.data = data;
       this.exercise = exercise;
       this.box = box;
-      this.key = data.chapter + ':' + exercise.name;
-      this.hidden = [...box.querySelectorAll('code.hl.lean.block')];
+      // A block's draft is kept under its code, so that it does not come back
+      // on a block whose code has since changed.
+      this.key = data.chapter + ':' + (exercise.block ? 'block:' + hashCode(exercise.code) : exercise.name);
+      this.hidden = hidden;
 
       this.textarea = el('textarea', {
         class: 'sfl-input', spellcheck: 'false', autocapitalize: 'off', autocomplete: 'off',
-        'aria-label': `Lean code for exercise ${exercise.name}`,
+        'aria-label': exercise.block ? `Lean code from the text: ${exercise.name}` : `Lean code for exercise ${exercise.name}`,
       });
       this.textarea.value = load('draft:' + this.key) ?? exercise.code;
       this.handledValue = this.textarea.value;
@@ -776,12 +798,13 @@
       this.status = el('span', { class: 'sfl-status', role: 'status' });
       this.messages = el('div', { class: 'sfl-messages' });
       this.goals = el('div', { class: 'sfl-goals', 'aria-live': 'polite' });
+      this.bar = el('div', { class: 'sfl-bar' }, this.runButton,
+        el('span', { class: 'sfl-hint' }, navigator.platform.startsWith('Mac') ? '⌘↵' : 'Ctrl+↵'),
+        this.status);
       this.root = el('div', { class: 'sfl-editor' },
         el('div', { class: 'sfl-code' }, this.gutter, this.area),
         this.goals,
-        el('div', { class: 'sfl-bar' }, this.runButton,
-          el('span', { class: 'sfl-hint' }, navigator.platform.startsWith('Mac') ? '⌘↵' : 'Ctrl+↵'),
-          this.status),
+        this.bar,
         this.messages);
 
       // Lean's messages about the code, at editor positions (see describe).
@@ -1654,7 +1677,8 @@
       const items = this.messageItems(own.filter((m) => !m.isSilent && !isUnsolvedGoals(m)), true);
       if (context.length) {
         items.unshift(el('div', { class: 'sfl-message sfl-error' },
-          el('pre', {}, 'The book code before this exercise did not check, so this result cannot be trusted. ' +
+          el('pre', {}, `The book code before this ${this.exercise.block ? 'code' : 'exercise'} did not check, ` +
+            'so this result cannot be trusted. ' +
             'Please report it. First problem:\n' + context[0].data)));
       }
       if (error) items.push(el('div', { class: 'sfl-message sfl-error' }, el('pre', {}, error)));
@@ -1662,15 +1686,16 @@
       if (code === this.textarea.value) this.judge({ own, context, error }, code, ` (${(elapsed / 1000).toFixed(1)} s)`);
     }
 
-    // Show a check's verdict.  Code Lean accepts is saved at once, so the
-    // exercises after this one build on it whether or not the reader presses
-    // Run.  A later edit that breaks it keeps the saved version, until Reset.
+    // Show a check's verdict.  An exercise's code that Lean accepts is saved
+    // at once, so the exercises after this one build on it whether or not the
+    // reader presses Run.  A later edit that breaks it keeps the saved version,
+    // until Reset.
     judge(described, code, timing = '') {
-      const { solved, text } = verdict(described);
+      const { solved, text } = verdict(described, this.exercise.block);
       this.reported = true;
       this.status.textContent = text + timing;
       this.root.classList.toggle('sfl-solved', solved);
-      if (solved) save('solved:' + this.key, code);
+      if (solved && !this.exercise.block) save('solved:' + this.key, code);
     }
 
     goTo(line, col) {
@@ -1684,7 +1709,11 @@
     }
   }
 
-  // ── The toolbar on each exercise ──────────────────────────────────────────
+  // ── The toolbar on each exercise and block ────────────────────────────────
+
+  function closeMenus() {
+    for (const list of document.querySelectorAll('.sfl-menu-list')) list.hidden = true;
+  }
 
   function menu(items) {
     const list = el('div', { class: 'sfl-menu-list', role: 'menu', hidden: '' });
@@ -1693,8 +1722,14 @@
       onclick: (e) => {
         e.stopPropagation();
         const wasHidden = list.hidden;
-        for (const other of document.querySelectorAll('.sfl-menu-list')) other.hidden = true;
+        closeMenus();
         list.hidden = !wasHidden;
+        if (list.hidden) return;
+        // The list is placed on the window, under the button: the book clips
+        // its code blocks, and a block's menu would be cut off at its edge.
+        const r = toggle.getBoundingClientRect();
+        list.style.top = r.bottom + 2 + 'px';
+        list.style.right = document.documentElement.clientWidth - r.right + 'px';
       },
     }, '⋮');
     for (const item of items) {
@@ -1718,10 +1753,13 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
-  function attach(data, exercise, box, runsHere) {
-    const head = box.querySelector('.exercise-header');
-    if (!head || head.querySelector('.sfl-toolbar')) return;
+  // An exercise's or a block's tools: a button that opens and closes the
+  // editor, or a link to the playground where Lean cannot run here, and the
+  // "⋮" menu.  `place` opens an editor on the page and returns it; `onClose`
+  // runs once it is closed.
+  function toolbar(data, exercise, runsHere, label, place, onClose = () => {}) {
     let editor = null;
+    const reopen = exercise.block ? 'block:' + exercise.index : exercise.name;
     const openPlayground = (e) => {
       // Built on click: the URL holds the whole file, so it is not worth
       // building for every exercise on page load.
@@ -1734,19 +1772,19 @@
           if (editor) {
             editor.close();
             editor = null;
-            tryButton.textContent = 'Try it here';
+            tryButton.textContent = label;
+            onClose();
             return;
           }
-          if (!(await ensureIsolated(exercise.name))) {
+          if (!(await ensureIsolated(reopen))) {
             tryButton.replaceWith(playgroundLink());
             return;
           }
           lean.start(data);
-          editor = new ExerciseEditor(data, exercise, box);
-          editor.open();
+          editor = place();
           tryButton.textContent = 'Close editor';
         },
-      }, 'Try it here')
+      }, label)
       : null;
     function playgroundLink() {
       const a = el('a', { class: 'sfl-try', href: PLAYGROUND, target: '_blank', rel: 'noopener' },
@@ -1755,20 +1793,65 @@
       return a;
     }
     const source = sourceUrl(data, exercise);
-    head.append(el('span', { class: 'sfl-toolbar' },
-      tryButton || playgroundLink(),
+    // In a block's corner the playground link would cover the code, and the
+    // menu has it.
+    const node = el('span', { class: 'sfl-toolbar' },
+      tryButton || (exercise.block ? null : playgroundLink()),
       menu([
         { label: 'Open in the Lean playground ↗', href: PLAYGROUND, onopen: openPlayground },
         { label: 'Download as a .lean file', action: () => download(`${data.chapter}_${exercise.name}.lean`, playgroundFile(data, exercise)) },
         source && { label: 'View source on GitHub ↗', href: source },
         runsHere && { label: 'Reset to the original code', action: () => editor && editor.reset() },
-      ])));
-    return () => tryButton && tryButton.click();
+      ]));
+    return { node, reopen, open: () => tryButton && tryButton.click() };
+  }
+
+  function attach(data, exercise, box, runsHere) {
+    const head = box.querySelector('.exercise-header');
+    if (!head || head.querySelector('.sfl-toolbar')) return null;
+    const tools = toolbar(data, exercise, runsHere, 'Try it here', () => {
+      const editor = new ExerciseEditor(data, exercise, box);
+      editor.open();
+      return editor;
+    });
+    head.append(tools.node);
+    return tools;
+  }
+
+  // A block's tools sit in its top right corner, shown while the pointer is
+  // on the block or they have the focus.  The block is hidden while the
+  // editor is open, so they move to the editor's bar.  So is the output Verso
+  // shows under the block, which is about the book's code.
+  function attachBlock(data, block, node, runsHere) {
+    const hidden = [node];
+    for (let next = node.nextElementSibling; next && next.matches('.lean-output'); next = next.nextElementSibling) {
+      hidden.push(next);
+    }
+    const tools = toolbar(data, block, runsHere, 'Edit', () => {
+      const editor = new ExerciseEditor(data, block, node.parentElement, hidden);
+      editor.open();
+      editor.bar.append(tools.node);
+      return editor;
+    }, () => node.append(tools.node));
+    tools.node.classList.add('sfl-block-tools');
+    node.classList.add('sfl-editable');
+    node.append(tools.node);
+    return tools;
+  }
+
+  // A code block's text as the reader sees it: Verso keeps hover contents
+  // and the goal after each tactic inside the block.  scripts/web_exercises.py
+  // reads the page the same way to match each block with its data.
+  function blockText(node) {
+    const copy = node.cloneNode(true);
+    for (const inner of copy.querySelectorAll('.hover-container, .tactic-state, .sfl-block-tools')) inner.remove();
+    return copy.textContent.replace(/^\n+|\n+$/g, '');
   }
 
   async function main() {
     const boxes = [...document.querySelectorAll('.exercise')];
-    if (!boxes.length) return;
+    const blocks = document.querySelectorAll('code.hl.lean.block');
+    if (!boxes.length && !blocks.length) return;
     const chapter = chapterOfPage();
     let data;
     try {
@@ -1785,11 +1868,20 @@
       const label = box.querySelector('.exercise-name');
       const name = label && label.textContent.trim().replace(/^\(|\)$/g, '');
       const exercise = byName.get(name);
-      if (exercise) openers.set(name, attach(data, exercise, box, runsHere));
+      const tools = exercise && attach(data, exercise, box, runsHere);
+      if (tools) openers.set(tools.reopen, tools.open);
     }
-    document.addEventListener('click', () => {
-      for (const list of document.querySelectorAll('.sfl-menu-list')) list.hidden = true;
-    });
+    for (const block of data.blocks ?? []) {
+      // The page and its data come from one build, so a block whose text is
+      // not the data's is left as the book shows it.
+      const node = blocks[block.index];
+      if (!node || blockText(node) + '\n' !== block.code) continue;
+      const tools = attachBlock(data, { ...block, block: true }, node, runsHere);
+      openers.set(tools.reopen, tools.open);
+    }
+    document.addEventListener('click', closeMenus);
+    // A menu is placed on the window, so it would stay put as the page moves.
+    document.addEventListener('scroll', closeMenus, { capture: true, passive: true });
     // Back from the one-time reload that turned on cross-origin isolation.
     const reopen = sessionStorage.getItem(STORE + 'reopen');
     if (reopen && openers.has(reopen)) {
