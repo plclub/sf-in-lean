@@ -122,13 +122,7 @@
   }
 
   function header(data) {
-    return (data.isModule ? 'module\n\n' : '') + data.imports.map((l) => l + '\n').join('');
-  }
-
-  // In a module, a chapter written as an ordinary file needs its declarations
-  // public, with definitions unfoldable, as they are in that chapter's own file.
-  function opener(data, isModule) {
-    return data.isModule && !isModule ? '@[expose] public section' : 'section';
+    return data.imports.map((l) => l + '\n').join('');
   }
 
   // A command such as `open Nat in` applies to the command after it, which at
@@ -146,14 +140,14 @@
     const lib = data.library.map((c) => {
       const chapter = c.module.split('.').slice(1).join('.');
       const sk = useAnswers ? withAnswers(c.skeleton, c.exercises, chapter) : c.skeleton;
-      return `-- ${c.module}, with proofs omitted\n${opener(data, c.isModule)}\n\n${sk}end\n\n`;
+      return `-- ${c.module}, with proofs omitted\nsection\n\n${sk}end\n\n`;
     }).join('');
     const ctx = closeTrailingIn(useAnswers
       ? withAnswers(data.skeleton, data.exercises, data.chapter, exercise.context)
       : data.skeleton.slice(0, exercise.context));
     let before = header(data) + '\n' + lib +
       `-- ${data.module}, up to this ${exercise.block ? 'code' : 'exercise'}, with proofs omitted\n` +
-      `${opener(data, false)}\n\n` + ctx +
+      'section\n\n' + ctx +
       (exercise.block ? `-- From the text: ${exercise.name}\n\n` : `-- Exercise: ${exercise.name}\n\n`);
     if (banner) {
       // Count the banner's own lines too, so the line it names is exact.

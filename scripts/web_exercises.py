@@ -83,6 +83,22 @@ def first_word(line):
     return m.group(0) if m else None
 
 
+def attributes_only(line):
+    """Whether a line holds `@[…]` attributes and nothing after them, so that
+    it joins the declaration on the next line.  `@[simp] theorem …` starts a
+    command of its own."""
+    s = line.strip()
+    while s.startswith("@["):
+        depth, k = 0, 0
+        for k, c in enumerate(s):
+            depth += c == "["
+            depth -= c == "]"
+            if depth == 0 and c == "]":
+                break
+        s = s[k + 1:].strip()
+    return s == ""
+
+
 def split_commands(lines):
     """Split a file body into top-level commands.
 
@@ -119,7 +135,7 @@ def split_commands(lines):
         if starts:
             # An attribute or doc comment stays attached to the command below.
             prev_is_prefix = (cur is not None and i > 0 and
-                              all(first_word(l) == "decl-prefix" or l.startswith(" ")
+                              all(l.startswith("/--") or attributes_only(l) or l.startswith(" ")
                                   or l.startswith("-/") or not l.strip()
                                   for l in lines[cur:i]))
             if not prev_is_prefix:
@@ -165,11 +181,16 @@ CLOSE = set(OPEN.values())
 
 
 def statement_of(text):
-    """Cut a theorem command just before its proof: at the first `:=` outside
-    brackets, comments and strings, at the first column-0/indented `|`
-    alternative of an equation-compiler proof, or at a `where` that gives the
-    proof's fields (`where mp h := …`)."""
+    """Cut a theorem command just before its proof: at the `:=` outside
+    brackets, comments and strings that starts it, at the first
+    column-0/indented `|` alternative of an equation-compiler proof, or at a
+    `where` that gives the proof's fields (`where mp h := …`)."""
     depth = 0
+    # An Imp command in a statement assigns with `:=` too
+    # (`{{ Q [x ↦ a] }} x := a {{ Q }}`).  The proof's `:=` starts a tactic
+    # block or ends its line, so a `:=` with more code after it on its line
+    # starts the proof only when no such `:=` comes later.
+    first = None
     i, n = 0, len(text)
     while i < n:
         c = text[i]
@@ -193,14 +214,17 @@ def statement_of(text):
         elif c in CLOSE:
             depth -= 1
         elif depth == 0 and text.startswith(":=", i):
-            return text[:i].rstrip()
+            if re.match(r"[ \t]*(?:by\b|\n|$)", text[i + 2:]):
+                return text[:i].rstrip()
+            if first is None:
+                first = i
         elif depth == 0 and c == "|" and text[:i].rstrip(" \t").endswith("\n"):
-            return text[:i].rstrip()
+            return text[:i if first is None else first].rstrip()
         elif (depth == 0 and text.startswith("where", i) and text[i - 1:i].isspace()
               and (i + 5 == n or text[i + 5].isspace())):
-            return text[:i].rstrip()
+            return text[:i if first is None else first].rstrip()
         i += 1
-    return None
+    return None if first is None else text[:first].rstrip()
 
 
 def skeleton_of_command(lines, start, end):
@@ -223,9 +247,9 @@ def skeleton_of_command(lines, start, end):
 
 
 def chapter_header(lines):
-    """The chapter's imports (module names and verbatim lines), whether it is a
-    `module`, and the index of the first line after its header."""
-    imports, import_lines, is_module, body_start = [], [], False, 0
+    """The chapter's imports (module names and verbatim lines) and the index of
+    the first line after its header, which may start with `module`."""
+    imports, import_lines, body_start = [], [], 0
     for i, line in enumerate(lines):
         m = IMPORT_RE.match(line)
         if m:
@@ -233,11 +257,10 @@ def chapter_header(lines):
             import_lines.append(line.strip())
             body_start = i + 1
         elif line.strip() == "module":
-            is_module = True
             body_start = i + 1
         elif line.strip() and not line.startswith("--"):
             break
-    return imports, import_lines, is_module, body_start
+    return imports, import_lines, body_start
 
 
 def find_exercises(lines):
@@ -406,7 +429,7 @@ def find_blocks(page, lines, offset_at, verso):
     those outside exercises and quizzes whose text stands as whole lines in
     the chapter's code.  Blocks are found in order, so a block whose text
     recurs is matched with its own occurrence."""
-    if not page.exists():
+    if page is None or not page.exists():
         return []
     parser = CodeBlocks()
     parser.feed(page.read_text())
@@ -449,7 +472,7 @@ def find_blocks(page, lines, offset_at, verso):
 
 def build_chapter(path, vol, page):
     lines = path.read_text().splitlines()
-    imports, import_lines, is_module, body_start = chapter_header(lines)
+    imports, import_lines, body_start = chapter_header(lines)
     cmds = [(s + body_start, e + body_start) for s, e in split_commands(lines[body_start:])]
     exercises = find_exercises(lines)
     # Skeleton text, plus the offset at which each source line's command starts.
@@ -487,7 +510,7 @@ def build_chapter(path, vol, page):
             "sourcePath": str(verso),
             "sourceLine": verso_line(verso, name),
         })
-    return {"imports": imports, "importLines": import_lines, "module": is_module,
+    return {"imports": imports, "importLines": import_lines,
             "skeleton": skeleton, "exercises": ex_out,
             "blocks": find_blocks(page, lines, offset_at, verso)}
 
@@ -514,31 +537,58 @@ def main():
     for path in sorted(lean_dir.glob("*.lean")):
         page = root / "html" / path.stem / "index.html"
         chapters[f"{vol.upper()}.{path.stem}"] = build_chapter(path, vol, page)
+    own = list(chapters)
 
-    for module, data in chapters.items():
+    # A volume's generated project carries copies of the chapters it imports
+    # from an earlier volume (HL imports LF.Typeclasses).  They join the
+    # library like the volume's own chapters, but their pages and data files
+    # belong to the other volume.
+    pending = [imp for c in chapters.values() for imp in c["imports"]]
+    while pending:
+        module = pending.pop()
+        path = root / "lean" / Path(*module.split(".")).with_suffix(".lean")
+        if module in chapters or module.split(".")[0] == "SFLCompat" or not path.exists():
+            continue
+        chapters[module] = build_chapter(path, module.split(".")[0].lower(), None)
+        pending += chapters[module]["imports"]
+
+    for module in own:
+        data = chapters[module]
         deps = import_closure(chapters, module)
         library = [{"module": d, "skeleton": chapters[d]["skeleton"],
-                    "isModule": chapters[d]["module"],
                     "exercises": [{"name": e["name"], "context": e["context"],
                                    "contextEnd": e["contextEnd"]}
                                   for e in chapters[d]["exercises"]]}
                    for d in deps]
         # Imports from outside the book's own chapters (and outside SFLCompat,
         # whose commands the skeletons drop) are what the combined file needs.
+        #
+        # The combined file is an ordinary file, like the chapters that import
+        # CustomTactics: joined into one module, their unexpanders and
+        # `macro_rules` would have to be marked `meta`.  An ordinary file
+        # accepts the `meta` and `public` that CustomTactics, a module, writes
+        # on its declarations, but not on its imports, and it rejects
+        # `import all` outright.  A chapter that reaches into another module's
+        # private declarations stops the build here rather than leave the
+        # exercises that include it failing in the reader's browser.
         externals = []
         for d in deps + [module]:
             for imp, line in zip(chapters[d]["imports"], chapters[d]["importLines"]):
-                if imp in chapters or imp.split(".")[0] == "SFLCompat" or line in externals:
+                if imp in chapters or imp.split(".")[0] == "SFLCompat":
                     continue
-                externals.append(line)
+                if re.search(r"\bimport\s+all\b", line):
+                    sys.exit(
+                        f"{d} has `{line}`.  The browser checks an exercise as one "
+                        f"ordinary Lean file that holds every chapter it imports, and an "
+                        f"ordinary file cannot use `import all`.  Copy the private "
+                        f"declarations {d} needs from {imp} into {d} instead.")
+                line = re.sub(r"^(?:public\s+)?(?:meta\s+)?import\b", "import", line)
+                if line not in externals:
+                    externals.append(line)
         chapter = module.split(".", 1)[1]
         payload = {
             "module": module,
             "chapter": chapter,
-            # CustomTactics is a `module` that reaches private parts of Lean
-            # through `meta import all`, which only a module may do, so a file
-            # that includes it must be a module too.
-            "isModule": any(chapters[d]["module"] for d in deps + [module]),
             "imports": externals,
             "library": library,
             "skeleton": data["skeleton"],
