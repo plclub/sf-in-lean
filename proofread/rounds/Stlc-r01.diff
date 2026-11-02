@@ -1,0 +1,398 @@
+--- TS/Stlc.lean (before this round)
++++ TS/Stlc.lean
+@@ -18,5 +18,4 @@
+ :::
+ 
+-
+ :::dev "Benjamin Pierce (bcpierce00)" PotentialImprovement
+ Anthony's comments later in the course:
+@@ -133,5 +132,5 @@
+ booleans, numbers, strings, etc.  The exact choice of base types
+ doesn't matter much — the definition of the language as well as
+-its theoretical properties work out the same no matter what we
++its theoretical properties works out the same no matter what we
+ choose — so for the sake of brevity let's take just `Bool` for
+ the moment.  In the next chapter we'll see how to add more
+@@ -258,5 +257,5 @@
+ The STLC doesn't provide any primitive syntax for defining _named_
+ functions: i.e., all functions are "anonymous."  We'll see in chapter
+-`MoreStlc` that it is easy to add named functions — indeed, the
++{ref "MoreStlc"}[MoreStlc] that it is easy to add named functions — indeed, the
+ fundamental naming and binding mechanisms are exactly the same.
+ ::::
+@@ -284,5 +283,5 @@
+ 
+ We'll see how to add named function declarations as "syntactic
+-sugar" in the `MoreStlc` chapter.
++sugar" in the {ref "MoreStlc"}[MoreStlc] chapter.
+ ::::
+ 
+@@ -369,5 +368,5 @@
+ 
+ ::::full
+-This notation must also support definitions and proofs about *arbitrary* piece of STLC
++This notation must also support definitions and proofs about an _arbitrary_ piece of STLC
+ syntax. For example, a theorem may introduce Lean variables `t : Tm` and
+ `τ : Ty`, representing an arbitrary STLC term and type. Inside the brackets,
+@@ -536,5 +535,4 @@
+ #check <{ λ X : Bool . λ X : Bool . X }>
+ 
+-
+ /--
+ info: Try this:
+@@ -546,5 +544,4 @@
+ #check <{ λ x : Bool . x }>
+ 
+-
+ /-- info: <{ Bool → Bool }> : Ty -/
+ #guard_msgs in
+@@ -559,5 +556,5 @@
+ #check (<{ X }> : Tm)
+ 
+-example (x : Tm) : (<{ x }> : Tm) = x := rfl
++example (x : Tm) : (<{ x }> : Tm) = x := by rfl
+ 
+ /--
+@@ -570,19 +567,19 @@
+ -/
+ #guard_msgs in
+-example (x : String) : (<{ X }> : Tm) = Tm.var "X" := rfl
++example (x : String) : (<{ X }> : Tm) = Tm.var "X" := by rfl
+ 
+-example : (<{ X }> : Stlc.Tm) = Tm.var "X" := rfl
+-
+-example (x : Tm) : (<{ x }> : Tm) = x := rfl
++example : (<{ X }> : Stlc.Tm) = Tm.var "X" := by rfl
+ 
+-example (X : Tm) : (<{ ~X }> : Tm) = X := rfl
++example (x : Tm) : (<{ x }> : Tm) = x := by rfl
+ 
++example (X : Tm) : (<{ ~X }> : Tm) = X := by rfl
++
+ example (x : String) (τ : Ty) :
+     <{ λ x : τ . ~(Tm.var x) }> =
+-      Tm.abs x τ (Tm.var x) := rfl
++      Tm.abs x τ (Tm.var x) := by rfl
+ 
+ example (τ : Ty) :
+     (<{ λ X : τ . X }>) =
+-      Tm.abs "X" τ (Tm.var "X") := rfl
++      Tm.abs "X" τ (Tm.var "X") := by rfl
+ 
+ /-- info: <{ X Y }> : Tm -/
+@@ -654,28 +651,28 @@
+ 
+ example : (<{ Bool → Bool → Bool }> : Ty) =
+-    Ty.arrow Ty.bool (Ty.arrow Ty.bool Ty.bool) := rfl
++    Ty.arrow Ty.bool (Ty.arrow Ty.bool Ty.bool) := by rfl
+ 
+ example : (<{ (Bool → Bool) → Bool }> : Ty) =
+-    Ty.arrow (Ty.arrow Ty.bool Ty.bool) Ty.bool := rfl
++    Ty.arrow (Ty.arrow Ty.bool Ty.bool) Ty.bool := by rfl
+ 
+ example : (<{ X Y Z }> : Tm) =
+-    Tm.app (Tm.app (Tm.var "X") (Tm.var "Y")) (Tm.var "Z") := rfl
++    Tm.app (Tm.app (Tm.var "X") (Tm.var "Y")) (Tm.var "Z") := by rfl
+ 
+ example : (<{ (if X then Y else Z) X }> : Tm) =
+-    Tm.app (Tm.ite (Tm.var "X") (Tm.var "Y") (Tm.var "Z")) (Tm.var "X") := rfl
++    Tm.app (Tm.ite (Tm.var "X") (Tm.var "Y") (Tm.var "Z")) (Tm.var "X") := by rfl
+ 
+-example : (<{ true }> : Tm) = Tm.tru := rfl
++example : (<{ true }> : Tm) = Tm.tru := by rfl
+ 
+-example : (<{ false }> : Tm) = Tm.fls := rfl
++example : (<{ false }> : Tm) = Tm.fls := by rfl
+ 
+ example : (<{ if X then Y else Z }> : Tm) =
+-    Tm.ite (Tm.var "X") (Tm.var "Y") (Tm.var "Z") := rfl
++    Tm.ite (Tm.var "X") (Tm.var "Y") (Tm.var "Z") := by rfl
+ 
+-example (t : Tm) : (<{ t }> : Tm) = t := rfl
++example (t : Tm) : (<{ t }> : Tm) = t := by rfl
+ 
+-example (τ : Ty) : (<{ τ }> : Ty) = τ := rfl
++example (τ : Ty) : (<{ τ }> : Ty) = τ := by rfl
+ 
+ example (binder : String) : (<{ λ binder : Bool . ~(Tm.var "binder") }> : Tm) =
+-    Tm.abs binder Ty.bool (Tm.var "binder") := rfl
++    Tm.abs binder Ty.bool (Tm.var "binder") := by rfl
+ 
+ /--
+@@ -696,7 +693,7 @@
+ #guard_msgs in
+ example (X : String) (term : Tm) : (<{ λ X : Bool . true }> : Tm) =
+-    Tm.abs "X" .bool Tm.tru := rfl
++    Tm.abs "X" .bool Tm.tru := by rfl
+ 
+-example (t u : Tm) : (<{ ~(Tm.app t u) }> : Tm) = Tm.app t u := rfl
++example (t u : Tm) : (<{ ~(Tm.app t u) }> : Tm) = Tm.app t u := by rfl
+ 
+ /-- error: `Bool` is not a valid term. -/
+@@ -889,5 +886,6 @@
+ ```lean
+ inductive Tm.IsValue : Tm → Prop where
+-  | abs (x : String) (τ₂ : Ty) (t₁ : Tm) : IsValue <{ λ x : τ₂ . t₁ }>
++  | abs (x : String) (τ₂ : Ty) (t₁ : Tm) :
++      IsValue <{ λ x : τ₂ . t₁ }>
+   | tru : IsValue <{ true }>
+   | fls : IsValue <{ false }>
+@@ -907,7 +905,7 @@
+ 
+ ```lean
+-theorem idB_value : Tm.IsValue idB := .abs ..
+-theorem idBB_value : Tm.IsValue idBB := .abs ..
+-theorem notB_value : Tm.IsValue notB := .abs ..
++theorem idB_value : Tm.IsValue idB := by exact .abs ..
++theorem idBB_value : Tm.IsValue idBB := by exact .abs ..
++theorem notB_value : Tm.IsValue notB := by exact .abs ..
+ ```
+ 
+@@ -918,5 +916,5 @@
+ Intuitively, a "complete program" must not refer to any undefined
+ variables.  We'll see shortly how to define the _free_ variables
+-in a STLC term.  A complete program, then, is one that is
++in an STLC term.  A complete program, then, is one that is
+ {deftech}_closed_ — that is, that contains no free variables.
+ 
+@@ -926,5 +924,5 @@
+ :::dev "Chris Henson (chenson2018)" BeforeNextRelease
+ Is the "shortly" above setting wrong expectations?
+-Where exactly are we defining the free variables in a STLC term?
++Where exactly are we defining the free variables in an STLC term?
+ BCP 25: Indeed, we need to define "free"!
+ :::
+@@ -1065,8 +1063,10 @@
+   simp [subst]
+ 
+-@[simp] theorem subst_var_ne (h : x ≠ y) : <{ [x := s] ~(Tm.var y) }> = .var y := by
++@[simp] theorem subst_var_ne (h : x ≠ y) :
++    <{ [x := s] ~(Tm.var y) }> = .var y := by
+   simp [subst, h]
+ 
+-@[simp] theorem subst_abs_eq : <{ [x := s] (λ x : τ . t) }> = <{ λ x : τ . t }> := by
++@[simp] theorem subst_abs_eq :
++    <{ [x := s] (λ x : τ . t) }> = <{ λ x : τ . t }> := by
+   simp [subst]
+ 
+@@ -1076,13 +1076,13 @@
+ 
+ @[simp] theorem subst_app :
+-    <{ [x := s] (t₁ t₂) }> = <{ ([x := s] t₁) ([x := s] t₂) }> := rfl
++    <{ [x := s] (t₁ t₂) }> = <{ ([x := s] t₁) ([x := s] t₂) }> := by rfl
+ 
+-@[simp] theorem subst_tru : <{ [x := s] true }> = <{ true }> := rfl
++@[simp] theorem subst_tru : <{ [x := s] true }> = <{ true }> := by rfl
+ 
+-@[simp] theorem subst_fls : <{ [x := s] false }> = <{ false }> := rfl
++@[simp] theorem subst_fls : <{ [x := s] false }> = <{ false }> := by rfl
+ 
+ @[simp] theorem subst_ite :
+     <{ [x := s] (if t₁ then t₂ else t₃) }> =
+-      <{ if [x := s] t₁ then [x := s] t₂ else [x := s] t₃ }> := rfl
++      <{ if [x := s] t₁ then [x := s] t₂ else [x := s] t₃ }> := by rfl
+ ```
+ 
+@@ -1186,5 +1186,5 @@
+ ```
+ 
+-which does not behave the same as the substituting in the original `t`:
++which does not behave the same as the substitution in the original `t`:
+ 
+ ```display
+@@ -1239,6 +1239,9 @@
+       Substi s x <{ false }> <{ false }>
+   | ite (t₁ t₂ t₃ t₁' t₂' t₃' : Tm)
+-      (h₁ : Substi s x t₁ t₁') (h₂ : Substi s x t₂ t₂') (h₃ : Substi s x t₃ t₃') :
+-      Substi s x <{ if t₁ then t₂ else t₃ }> <{ if t₁' then t₂' else t₃' }>
++      (h₁ : Substi s x t₁ t₁')
++      (h₂ : Substi s x t₂ t₂')
++      (h₃ : Substi s x t₃ t₃') :
++      Substi s x <{ if t₁ then t₂ else t₃ }>
++        <{ if t₁' then t₂' else t₃' }>
+ -- END SOLUTION
+ 
+@@ -1290,17 +1293,17 @@
+ ::::
+ 
+-```
+-                              v.IsValue
+-                       -----------------------      (appAbs)
+-                        (λx:T. t) v ⟶ [x:=v]t
++```display +centered
++      v.IsValue
++---------------------  (appAbs)
++(λx:T. t) v ⟶ [x:=v]t
+ 
+-                              t₁ ⟶ t₁'
+-                          ----------------          (app1)
+-                           t₁ t₂ ⟶ t₁' t₂
++         t₁ ⟶ t₁'
++--------------------   (app1)
++      t₁ t₂ ⟶ t₁' t₂
+ 
+-                              v.IsValue
+-                              t₂ ⟶ t₂'
+-                          ----------------          (app2)
+-                           v₁ t₂ ⟶ v₁ t₂'
++     v.IsValue
++         t₂ ⟶ t₂'
++--------------------   (app2)
++      v₁ t₂ ⟶ v₁ t₂'
+ ```
+ 
+@@ -1312,14 +1315,14 @@
+ ... plus the usual rules for conditionals:
+ 
+-```
+-                  --------------------------------                (ifTrue)
+-                   (if true then t₁ else t₂) ⟶ t₁
+-
+-                  ---------------------------------               (ifFalse)
+-                   (if false then t₁ else t₂) ⟶ t₂
++```display +centered
++          ------------------------------            (ifTrue)
++          (if true then t₁ else t₂) ⟶ t₁
+ 
+-                              t₁ ⟶ t₁'
+-        ----------------------------------------------------      (ifStep)
+-         (if t₁ then t₂ else t₃) ⟶ (if t₁' then t₂ else t₃)
++         -------------------------------            (ifFalse)
++         (if false then t₁ else t₂) ⟶ t₂
++
++                     t₁ ⟶ t₁'
++--------------------------------------------------  (ifStep)
++(if t₁ then t₂ else t₃) ⟶ (if t₁' then t₂ else t₃)
+ ```
+ ::::
+@@ -1414,5 +1417,5 @@
+ 
+ ```display
+-(λX:Bool → Bool. X) notB true  ⟶* ???
++(λX:Bool → Bool. X) notB true ⟶* ???
+ ```
+ 
+@@ -1592,5 +1595,5 @@
+ ::::::full
+ :::::exercise (rating := 2) (name := "step_example5")
+-Try to do this one both with and without normalize.
++Try to do this one both with and without `normalize`.
+ 
+ ```lean
+@@ -1657,5 +1660,5 @@
+ To keep track of all this, we add a third element to the relation,
+ a {deftech}_typing context_ `Γ`, which records the types of the
+-variables that may occur free in a term — that is, Γ is a
++variables that may occur free in a term — that is, `Γ` is a
+ partial map from variables to types.
+ 
+@@ -1666,5 +1669,5 @@
+ We'll also write `x ↦ T ; Γ` for "update the partial map
+ `Γ` so that it maps `x` to `T`," following the notation from
+-the `Typeclasses` chapter.
++the {ref "Typeclasses"}[Typeclasses] chapter.
+ 
+ With these refinements, we are ready to give informal and formal
+@@ -1699,5 +1702,5 @@
+ ::::full
+ A context is a {name}`PartialMap` from variable names to types — the partial
+-maps of the `Typeclasses` chapter, which are total maps whose values are
++maps of the {ref "Typeclasses"}[Typeclasses] chapter, which are total maps whose values are
+ optional, so that {name}`none` at a variable means "not bound here".
+ ::::
+@@ -1711,31 +1714,33 @@
+ ## Typing Relation
+ 
+-```
+-                              Γ x = τ₁
+-                            ------------                       (var)
+-                             Γ ⊢ x ⦂ τ₁
++```display +centered
++           Γ x = τ₁
++          ----------            (var)
++          Γ ⊢ x ⦂ τ₁
+ 
+-                        x ↦ τ₂ ; Γ ⊢ t₁ ⦂ τ₁
+-                      -------------------------                (abs)
+-                       Γ ⊢ λx:τ₂. t₁ ⦂ τ₂ → τ₁
++     x ↦ τ₂ ; Γ ⊢ t₁ ⦂ τ₁
++   -----------------------      (abs)
++   Γ ⊢ λx:τ₂. t₁ ⦂ τ₂ → τ₁
+ 
+-                          Γ ⊢ t₁ ⦂ τ₂ → τ₁
+-                            Γ ⊢ t₂ ⦂ τ₂
+-                         ------------------                    (app)
+-                           Γ ⊢ t₁ t₂ ⦂ τ₁
++       Γ ⊢ t₁ ⦂ τ₂ → τ₁
++         Γ ⊢ t₂ ⦂ τ₂
++       ----------------         (app)
++        Γ ⊢ t₁ t₂ ⦂ τ₁
+ 
+-                          -----------------                    (tru)
+-                           Γ ⊢ true ⦂ Bool
++       ---------------          (tru)
++       Γ ⊢ true ⦂ Bool
+ 
+-                         ------------------                    (fls)
+-                          Γ ⊢ false ⦂ Bool
++       ----------------         (fls)
++       Γ ⊢ false ⦂ Bool
+ 
+-             Γ ⊢ t₁ ⦂ Bool    Γ ⊢ t₂ ⦂ τ₁    Γ ⊢ t₃ ⦂ τ₁
+-            ---------------------------------------------      (ite)
+-                   Γ ⊢ if t₁ then t₂ else t₃ ⦂ τ₁
++        Γ ⊢ t₁ ⦂ Bool
++         Γ ⊢ t₂ ⦂ τ₁
++         Γ ⊢ t₃ ⦂ τ₁
++------------------------------  (ite)
++Γ ⊢ if t₁ then t₂ else t₃ ⦂ τ₁
+ ```
+ 
+ We can read the three-place relation `Γ ⊢ t ⦂ T` as:
+-"under the assumptions in Γ, the term `t` has the type `T`."
++"under the assumptions in `Γ`, the term `t` has the type `T`."
+ 
+ ::::full
+@@ -1757,5 +1762,4 @@
+ ::::
+ 
+-
+ ```lean
+ inductive HasType : Context → Tm → Ty → Prop where
+@@ -1782,5 +1786,4 @@
+       <{ Γ ⊢ if t₁ then t₂ else t₃ ⦂ τ₁ }>
+ 
+-
+ attribute [StlcTyping] HasType.var HasType.abs HasType.app HasType.tru HasType.fls HasType.ite
+ ```
+@@ -1847,10 +1850,10 @@
+ ```
+ 
+-It's worth noting that  {tactic}`apply_rules` relies on an important property
+-of our typing rules - namely, that they are _syntax directed_. A syntax directed
++It's worth noting that {tactic}`apply_rules` relies on an important property
++of our typing rules — namely, that they are _syntax directed_. A syntax-directed
+ judgment is one where the syntax of a term completely determines which rule
+ can be applied at any given time; only one rule can be applied to each term.
+ This is important because {tactic}`apply_rules` just applies the first rule in
+-its set of constructors or lemmas that it can - it doesn't backtrack if that rule
++its set of constructors or lemmas that it can — it doesn't backtrack if that rule
+ isn't correct. So, making sure that only one rule can apply to any given term
+ is important to ensure that {tactic}`apply_rules` always discovers a valid
+@@ -1891,5 +1894,7 @@
+ ```lean
+ example :
+-    ∃ τ, <{ ∅ ⊢ λ X : Bool → Bool . λ Y : Bool → Bool . λ Z : Bool . Y (X Z)
++    ∃ τ,
++      <{ ∅ ⊢ λ X : Bool → Bool . λ Y : Bool → Bool . λ Z : Bool .
++              Y (X Z)
+             ⦂ τ }> := by
+   solution!
+@@ -1913,5 +1918,6 @@
+ 
+ ```lean
+-example : ¬ ∃ τ, <{ ∅ ⊢ λ X : Bool . λ Y : Bool . X Y ⦂ τ }> := by
++example :
++    ¬ ∃ τ, <{ ∅ ⊢ λ X : Bool . λ Y : Bool . X Y ⦂ τ }> := by
+   intro ⟨τ, hc⟩
+   -- Each `cases` peels off one rule of the derivation, naming the premise it

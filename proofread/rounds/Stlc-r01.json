@@ -1,0 +1,218 @@
+{
+ "file": "TS/Stlc.lean",
+ "chapter": "Stlc",
+ "round": 1,
+ "proposals": [
+  {
+   "id": "bl1",
+   "cat": "formatting/blank-lines",
+   "old": "makes up maybe half of a good weekly homework assignment.\n:::\n\n\n:::dev \"Benjamin Pierce (bcpierce00)\" PotentialImprovement",
+   "new": "makes up maybe half of a good weekly homework assignment.\n:::\n\n:::dev \"Benjamin Pierce (bcpierce00)\" PotentialImprovement",
+   "why": "Two blank lines in a row; the chapter uses at most one."
+  },
+  {
+   "id": "bl2",
+   "cat": "formatting/blank-lines",
+   "old": "#check <{ λ X : Bool . λ X : Bool . X }>\n\n\n/--\ninfo: Try this:\n  [apply] ~\"x\"\n---\nerror: unknown metalanguage name identifier `x`\n-/\n#guard_msgs in\n#check <{ λ x : Bool . x }>\n\n\n/-- info: <{ Bool → Bool }> : Ty -/",
+   "new": "#check <{ λ X : Bool . λ X : Bool . X }>\n\n/--\ninfo: Try this:\n  [apply] ~\"x\"\n---\nerror: unknown metalanguage name identifier `x`\n-/\n#guard_msgs in\n#check <{ λ x : Bool . x }>\n\n/-- info: <{ Bool → Bool }> : Ty -/",
+   "why": "Two blank lines in a row, twice, inside the notation-check block."
+  },
+  {
+   "id": "bl4",
+   "cat": "formatting/blank-lines",
+   "old": "`<{ Γ ⊢ t ⦂ τ }>`.\n::::\n\n\n```lean\ninductive HasType : Context → Tm → Ty → Prop where",
+   "new": "`<{ Γ ⊢ t ⦂ τ }>`.\n::::\n\n```lean\ninductive HasType : Context → Tm → Ty → Prop where",
+   "why": "Two blank lines in a row before the HasType definition."
+  },
+  {
+   "id": "bl5",
+   "cat": "formatting/blank-lines",
+   "old": "      <{ Γ ⊢ if t₁ then t₂ else t₃ ⦂ τ₁ }>\n\n\nattribute [StlcTyping] HasType.var HasType.abs HasType.app HasType.tru HasType.fls HasType.ite",
+   "new": "      <{ Γ ⊢ if t₁ then t₂ else t₃ ⦂ τ₁ }>\n\nattribute [StlcTyping] HasType.var HasType.abs HasType.app HasType.tru HasType.fls HasType.ite",
+   "why": "Two blank lines in a row after the HasType definition."
+  },
+  {
+   "id": "pb1",
+   "cat": "style/proof-by",
+   "old": "#check (<{ X }> : Tm)\n\nexample (x : Tm) : (<{ x }> : Tm) = x := rfl",
+   "new": "#check (<{ X }> : Tm)\n\nexample (x : Tm) : (<{ x }> : Tm) = x := by rfl",
+   "why": "A proof must open with `by`; bare `:= rfl` should be `:= by rfl`."
+  },
+  {
+   "id": "pb2",
+   "cat": "style/proof-by",
+   "old": "example (x : String) : (<{ X }> : Tm) = Tm.var \"X\" := rfl\n\nexample : (<{ X }> : Stlc.Tm) = Tm.var \"X\" := rfl\n\nexample (x : Tm) : (<{ x }> : Tm) = x := rfl\n\nexample (X : Tm) : (<{ ~X }> : Tm) = X := rfl\n\nexample (x : String) (τ : Ty) :\n    <{ λ x : τ . ~(Tm.var x) }> =\n      Tm.abs x τ (Tm.var x) := rfl\n\nexample (τ : Ty) :\n    (<{ λ X : τ . X }>) =\n      Tm.abs \"X\" τ (Tm.var \"X\") := rfl",
+   "new": "example (x : String) : (<{ X }> : Tm) = Tm.var \"X\" := by rfl\n\nexample : (<{ X }> : Stlc.Tm) = Tm.var \"X\" := by rfl\n\nexample (x : Tm) : (<{ x }> : Tm) = x := by rfl\n\nexample (X : Tm) : (<{ ~X }> : Tm) = X := by rfl\n\nexample (x : String) (τ : Ty) :\n    <{ λ x : τ . ~(Tm.var x) }> =\n      Tm.abs x τ (Tm.var x) := by rfl\n\nexample (τ : Ty) :\n    (<{ λ X : τ . X }>) =\n      Tm.abs \"X\" τ (Tm.var \"X\") := by rfl",
+   "why": "A proof must open with `by`; bare `:= rfl` should be `:= by rfl` (six occurrences in this block)."
+  },
+  {
+   "id": "pb3",
+   "cat": "style/proof-by",
+   "old": "example : (<{ Bool → Bool → Bool }> : Ty) =\n    Ty.arrow Ty.bool (Ty.arrow Ty.bool Ty.bool) := rfl\n\nexample : (<{ (Bool → Bool) → Bool }> : Ty) =\n    Ty.arrow (Ty.arrow Ty.bool Ty.bool) Ty.bool := rfl\n\nexample : (<{ X Y Z }> : Tm) =\n    Tm.app (Tm.app (Tm.var \"X\") (Tm.var \"Y\")) (Tm.var \"Z\") := rfl\n\nexample : (<{ (if X then Y else Z) X }> : Tm) =\n    Tm.app (Tm.ite (Tm.var \"X\") (Tm.var \"Y\") (Tm.var \"Z\")) (Tm.var \"X\") := rfl\n\nexample : (<{ true }> : Tm) = Tm.tru := rfl\n\nexample : (<{ false }> : Tm) = Tm.fls := rfl\n\nexample : (<{ if X then Y else Z }> : Tm) =\n    Tm.ite (Tm.var \"X\") (Tm.var \"Y\") (Tm.var \"Z\") := rfl\n\nexample (t : Tm) : (<{ t }> : Tm) = t := rfl\n\nexample (τ : Ty) : (<{ τ }> : Ty) = τ := rfl\n\nexample (binder : String) : (<{ λ binder : Bool . ~(Tm.var \"binder\") }> : Tm) =\n    Tm.abs binder Ty.bool (Tm.var \"binder\") := rfl",
+   "new": "example : (<{ Bool → Bool → Bool }> : Ty) =\n    Ty.arrow Ty.bool (Ty.arrow Ty.bool Ty.bool) := by rfl\n\nexample : (<{ (Bool → Bool) → Bool }> : Ty) =\n    Ty.arrow (Ty.arrow Ty.bool Ty.bool) Ty.bool := by rfl\n\nexample : (<{ X Y Z }> : Tm) =\n    Tm.app (Tm.app (Tm.var \"X\") (Tm.var \"Y\")) (Tm.var \"Z\") := by rfl\n\nexample : (<{ (if X then Y else Z) X }> : Tm) =\n    Tm.app (Tm.ite (Tm.var \"X\") (Tm.var \"Y\") (Tm.var \"Z\")) (Tm.var \"X\") := by rfl\n\nexample : (<{ true }> : Tm) = Tm.tru := by rfl\n\nexample : (<{ false }> : Tm) = Tm.fls := by rfl\n\nexample : (<{ if X then Y else Z }> : Tm) =\n    Tm.ite (Tm.var \"X\") (Tm.var \"Y\") (Tm.var \"Z\") := by rfl\n\nexample (t : Tm) : (<{ t }> : Tm) = t := by rfl\n\nexample (τ : Ty) : (<{ τ }> : Ty) = τ := by rfl\n\nexample (binder : String) : (<{ λ binder : Bool . ~(Tm.var \"binder\") }> : Tm) =\n    Tm.abs binder Ty.bool (Tm.var \"binder\") := by rfl",
+   "why": "A proof must open with `by`; bare `:= rfl` should be `:= by rfl` (ten occurrences in this block)."
+  },
+  {
+   "id": "pb4",
+   "cat": "style/proof-by",
+   "old": "example (X : String) (term : Tm) : (<{ λ X : Bool . true }> : Tm) =\n    Tm.abs \"X\" .bool Tm.tru := rfl\n\nexample (t u : Tm) : (<{ ~(Tm.app t u) }> : Tm) = Tm.app t u := rfl",
+   "new": "example (X : String) (term : Tm) : (<{ λ X : Bool . true }> : Tm) =\n    Tm.abs \"X\" .bool Tm.tru := by rfl\n\nexample (t u : Tm) : (<{ ~(Tm.app t u) }> : Tm) = Tm.app t u := by rfl",
+   "why": "A proof must open with `by`; bare `:= rfl` should be `:= by rfl`."
+  },
+  {
+   "id": "pb6",
+   "cat": "style/proof-by",
+   "old": "theorem idB_value : Tm.IsValue idB := .abs ..\ntheorem idBB_value : Tm.IsValue idBB := .abs ..\ntheorem notB_value : Tm.IsValue notB := .abs ..",
+   "new": "theorem idB_value : Tm.IsValue idB := by exact .abs ..\ntheorem idBB_value : Tm.IsValue idBB := by exact .abs ..\ntheorem notB_value : Tm.IsValue notB := by exact .abs ..",
+   "why": "A proof must open with `by`; a bare term-mode proof like `:= .abs ..` should be `:= by exact .abs ..`."
+  },
+  {
+   "id": "art1",
+   "cat": "typo/missing-article",
+   "old": "in a STLC term.  A complete program, then, is one that is",
+   "new": "in an STLC term.  A complete program, then, is one that is",
+   "why": "\"STLC\" is read letter by letter (\"ess-tee-ell-see\"), so it takes \"an\", matching the chapter's other use at line 395 (\"an STLC term\")."
+  },
+  {
+   "id": "art2",
+   "cat": "typo/missing-article",
+   "old": "Where exactly are we defining the free variables in a STLC term?",
+   "new": "Where exactly are we defining the free variables in an STLC term?",
+   "why": "Same \"an STLC\" fix as the prose above it."
+  },
+  {
+   "id": "art3",
+   "cat": "typo/missing-article",
+   "old": "This notation must also support definitions and proofs about *arbitrary* piece of STLC",
+   "new": "This notation must also support definitions and proofs about an _arbitrary_ piece of STLC",
+   "why": "Missing article (\"an arbitrary piece\"); also the emphasis uses `*...*` where the chapter's convention (and STYLE-WRITING.md) is `_..._`."
+  },
+  {
+   "id": "ref1",
+   "cat": "markup/cross-reference",
+   "old": "the `Typeclasses` chapter.",
+   "new": "the {ref \"Typeclasses\"}[Typeclasses] chapter.",
+   "why": "Every other chapter mention in this file uses the {ref \"...\"}[...] cross-reference role; this one is a bare code span."
+  },
+  {
+   "id": "ref2",
+   "cat": "markup/cross-reference",
+   "old": "the `Typeclasses` chapter, which are total maps",
+   "new": "the {ref \"Typeclasses\"}[Typeclasses] chapter, which are total maps",
+   "why": "Same cross-reference fix as the other mention of the Typeclasses chapter."
+  },
+  {
+   "id": "code1",
+   "cat": "markup/code-font",
+   "old": "that is, Γ is a\npartial map from variables to types.",
+   "new": "that is, `Γ` is a\npartial map from variables to types.",
+   "why": "Every other mention of the symbol `Γ` in this section is in code font; this one is bare."
+  },
+  {
+   "id": "usage1",
+   "cat": "usage/misused-word",
+   "old": "which does not behave the same as the substituting in the original `t`:",
+   "new": "which does not behave the same as the substitution in the original `t`:",
+   "why": "\"the substituting\" is used as a noun; \"the substitution\" is the intended word."
+  },
+  {
+   "id": "gram1",
+   "cat": "grammar/subject-verb-agreement",
+   "old": "the definition of the language as well as\nits theoretical properties work out the same no matter what we",
+   "new": "the definition of the language as well as\nits theoretical properties works out the same no matter what we",
+   "why": "\"as well as\" introduces a parenthetical, not a compound subject, so the verb agrees with the singular \"the definition\" (Chicago Manual of Style)."
+  },
+  {
+   "id": "dash1",
+   "cat": "punctuation/dash",
+   "old": "It's worth noting that  {tactic}`apply_rules` relies on an important property\nof our typing rules - namely, that they are _syntax directed_. A syntax directed\njudgment is one where the syntax of a term completely determines which rule\ncan be applied at any given time; only one rule can be applied to each term.\nThis is important because {tactic}`apply_rules` just applies the first rule in\nits set of constructors or lemmas that it can - it doesn't backtrack if that rule",
+   "new": "It's worth noting that {tactic}`apply_rules` relies on an important property\nof our typing rules — namely, that they are _syntax directed_. A syntax-directed\njudgment is one where the syntax of a term completely determines which rule\ncan be applied at any given time; only one rule can be applied to each term.\nThis is important because {tactic}`apply_rules` just applies the first rule in\nits set of constructors or lemmas that it can — it doesn't backtrack if that rule",
+   "why": "A parenthetical dash in prose must be a real em dash, not ASCII `-` (STYLE-WRITING.md); also a double space mid-sentence, and \"syntax directed\" needs a hyphen when used attributively before \"judgment\" (it is correctly unhyphenated just before, used predicatively after \"are\")."
+  },
+  {
+   "id": "space1",
+   "cat": "formatting/extra-space",
+   "old": "(λX:Bool → Bool. X) notB true  ⟶* ???",
+   "new": "(λX:Bool → Bool. X) notB true ⟶* ???",
+   "why": "Stray double space; the parallel quiz just below uses a single space in the same construction."
+  },
+  {
+   "id": "tick1",
+   "cat": "typo/missing-backticks",
+   "old": "Try to do this one both with and without normalize.",
+   "new": "Try to do this one both with and without `normalize`.",
+   "why": "The tactic name should be in code font, matching its other mentions in this chapter and the `normalize_ex` exercise prompt in Smallstep."
+  },
+  {
+   "id": "lw1",
+   "cat": "formatting/line-width",
+   "old": "  | abs (x : String) (τ₂ : Ty) (t₁ : Tm) : IsValue <{ λ x : τ₂ . t₁ }>",
+   "new": "  | abs (x : String) (τ₂ : Ty) (t₁ : Tm) :\n      IsValue <{ λ x : τ₂ . t₁ }>",
+   "why": "Line is over 70 columns; split the constructor's binders from its conclusion, matching the Step.appAbs constructor later in this file."
+  },
+  {
+   "id": "lw2",
+   "cat": "formatting/line-width",
+   "old": "@[simp] theorem subst_var_ne (h : x ≠ y) : <{ [x := s] ~(Tm.var y) }> = .var y := by\n  simp [subst, h]\n\n@[simp] theorem subst_abs_eq : <{ [x := s] (λ x : τ . t) }> = <{ λ x : τ . t }> := by\n  simp [subst]\n\n@[simp] theorem subst_abs_ne (h : x ≠ y) :\n    <{ [x := s] (λ y : τ . t) }> = <{ λ y : τ . [x := s] t }> := by\n  simp [subst, h]\n\n@[simp] theorem subst_app :\n    <{ [x := s] (t₁ t₂) }> = <{ ([x := s] t₁) ([x := s] t₂) }> := rfl\n\n@[simp] theorem subst_tru : <{ [x := s] true }> = <{ true }> := rfl\n\n@[simp] theorem subst_fls : <{ [x := s] false }> = <{ false }> := rfl\n\n@[simp] theorem subst_ite :\n    <{ [x := s] (if t₁ then t₂ else t₃) }> =\n      <{ if [x := s] t₁ then [x := s] t₂ else [x := s] t₃ }> := rfl",
+   "new": "@[simp] theorem subst_var_ne (h : x ≠ y) :\n    <{ [x := s] ~(Tm.var y) }> = .var y := by\n  simp [subst, h]\n\n@[simp] theorem subst_abs_eq :\n    <{ [x := s] (λ x : τ . t) }> = <{ λ x : τ . t }> := by\n  simp [subst]\n\n@[simp] theorem subst_abs_ne (h : x ≠ y) :\n    <{ [x := s] (λ y : τ . t) }> = <{ λ y : τ . [x := s] t }> := by\n  simp [subst, h]\n\n@[simp] theorem subst_app :\n    <{ [x := s] (t₁ t₂) }> = <{ ([x := s] t₁) ([x := s] t₂) }> := by rfl\n\n@[simp] theorem subst_tru : <{ [x := s] true }> = <{ true }> := by rfl\n\n@[simp] theorem subst_fls : <{ [x := s] false }> = <{ false }> := by rfl\n\n@[simp] theorem subst_ite :\n    <{ [x := s] (if t₁ then t₂ else t₃) }> =\n      <{ if [x := s] t₁ then [x := s] t₂ else [x := s] t₃ }> := by rfl",
+   "why": "subst_var_ne/subst_abs_eq are over 70 columns (split like the adjacent subst_abs_ne); subst_app/subst_tru/subst_fls/subst_ite end in bare `:= rfl`, which should be `:= by rfl`."
+  },
+  {
+   "id": "lw3",
+   "cat": "formatting/line-width",
+   "old": "  | ite (t₁ t₂ t₃ t₁' t₂' t₃' : Tm)\n      (h₁ : Substi s x t₁ t₁') (h₂ : Substi s x t₂ t₂') (h₃ : Substi s x t₃ t₃') :\n      Substi s x <{ if t₁ then t₂ else t₃ }> <{ if t₁' then t₂' else t₃' }>",
+   "new": "  | ite (t₁ t₂ t₃ t₁' t₂' t₃' : Tm)\n      (h₁ : Substi s x t₁ t₁')\n      (h₂ : Substi s x t₂ t₂')\n      (h₃ : Substi s x t₃ t₃') :\n      Substi s x <{ if t₁ then t₂ else t₃ }>\n        <{ if t₁' then t₂' else t₃' }>",
+   "why": "Both the hypothesis line and the conclusion are over 70 columns; one hypothesis per line (matching HasType.ite below) and the conclusion split across two lines."
+  },
+  {
+   "id": "lw4",
+   "cat": "formatting/line-width",
+   "old": "example :\n    ∃ τ, <{ ∅ ⊢ λ X : Bool → Bool . λ Y : Bool → Bool . λ Z : Bool . Y (X Z)\n            ⦂ τ }> := by\n  solution!\n    exists <{ (Bool → Bool) → (Bool → Bool) → (Bool → Bool) }>\n    apply_rules using StlcTyping",
+   "new": "example :\n    ∃ τ,\n      <{ ∅ ⊢ λ X : Bool → Bool . λ Y : Bool → Bool . λ Z : Bool .\n              Y (X Z)\n            ⦂ τ }> := by\n  solution!\n    exists <{ (Bool → Bool) → (Bool → Bool) → (Bool → Bool) }>\n    apply_rules using StlcTyping",
+   "why": "First line of the statement is over 70 columns; break it the way the display block just above already breaks the same statement."
+  },
+  {
+   "id": "lw5",
+   "cat": "formatting/line-width",
+   "old": "example : ¬ ∃ τ, <{ ∅ ⊢ λ X : Bool . λ Y : Bool . X Y ⦂ τ }> := by\n  intro ⟨τ, hc⟩",
+   "new": "example :\n    ¬ ∃ τ, <{ ∅ ⊢ λ X : Bool . λ Y : Bool . X Y ⦂ τ }> := by\n  intro ⟨τ, hc⟩",
+   "why": "Line is over 70 columns; split the header from the statement."
+  },
+  {
+   "id": "fig1",
+   "cat": "formatting/rule-figure",
+   "old": "```\n                              v.IsValue\n                       -----------------------      (appAbs)\n                        (λx:T. t) v ⟶ [x:=v]t\n\n                              t₁ ⟶ t₁'\n                          ----------------          (app1)\n                           t₁ t₂ ⟶ t₁' t₂\n\n                              v.IsValue\n                              t₂ ⟶ t₂'\n                          ----------------          (app2)\n                           v₁ t₂ ⟶ v₁ t₂'\n```",
+   "new": "```display +centered\n      v.IsValue\n---------------------  (appAbs)\n(λx:T. t) v ⟶ [x:=v]t\n\n         t₁ ⟶ t₁'\n--------------------   (app1)\n      t₁ t₂ ⟶ t₁' t₂\n\n     v.IsValue\n         t₂ ⟶ t₂'\n--------------------   (app2)\n      v₁ t₂ ⟶ v₁ t₂'\n```",
+   "why": "Hand-drawn inference rules must be a `display +centered` block with the relation symbol aligned at a shared column, per STYLE-CODE.md; this was a bare ``` block pseudo-centered with leading spaces."
+  },
+  {
+   "id": "fig2",
+   "cat": "formatting/rule-figure",
+   "old": "```\n                  --------------------------------                (ifTrue)\n                   (if true then t₁ else t₂) ⟶ t₁\n\n                  ---------------------------------               (ifFalse)\n                   (if false then t₁ else t₂) ⟶ t₂\n\n                              t₁ ⟶ t₁'\n        ----------------------------------------------------      (ifStep)\n         (if t₁ then t₂ else t₃) ⟶ (if t₁' then t₂ else t₃)\n```",
+   "new": "```display +centered\n          ------------------------------            (ifTrue)\n          (if true then t₁ else t₂) ⟶ t₁\n\n         -------------------------------            (ifFalse)\n         (if false then t₁ else t₂) ⟶ t₂\n\n                     t₁ ⟶ t₁'\n--------------------------------------------------  (ifStep)\n(if t₁ then t₂ else t₃) ⟶ (if t₁' then t₂ else t₃)\n```",
+   "why": "Same `display +centered` fix; ifTrue/ifFalse are very unbalanced (conclusion mostly left-hand side), so the whole block is centered rather than symbol-aligned, per STYLE-CODE.md's own ifTrue/ifFalse/ifStep example."
+  },
+  {
+   "id": "fig3",
+   "cat": "formatting/rule-figure",
+   "old": "```\n                              Γ x = τ₁\n                            ------------                       (var)\n                             Γ ⊢ x ⦂ τ₁\n\n                        x ↦ τ₂ ; Γ ⊢ t₁ ⦂ τ₁\n                      -------------------------                (abs)\n                       Γ ⊢ λx:τ₂. t₁ ⦂ τ₂ → τ₁\n\n                          Γ ⊢ t₁ ⦂ τ₂ → τ₁\n                            Γ ⊢ t₂ ⦂ τ₂\n                         ------------------                    (app)\n                           Γ ⊢ t₁ t₂ ⦂ τ₁\n\n                          -----------------                    (tru)\n                           Γ ⊢ true ⦂ Bool\n\n                         ------------------                    (fls)\n                          Γ ⊢ false ⦂ Bool\n\n             Γ ⊢ t₁ ⦂ Bool    Γ ⊢ t₂ ⦂ τ₁    Γ ⊢ t₃ ⦂ τ₁\n            ---------------------------------------------      (ite)\n                   Γ ⊢ if t₁ then t₂ else t₃ ⦂ τ₁\n```\n\nWe can read the three-place relation `Γ ⊢ t ⦂ T` as:\n\"under the assumptions in Γ, the term `t` has the type `T`.\"",
+   "new": "```display +centered\n           Γ x = τ₁\n          ----------            (var)\n          Γ ⊢ x ⦂ τ₁\n\n     x ↦ τ₂ ; Γ ⊢ t₁ ⦂ τ₁\n   -----------------------      (abs)\n   Γ ⊢ λx:τ₂. t₁ ⦂ τ₂ → τ₁\n\n       Γ ⊢ t₁ ⦂ τ₂ → τ₁\n         Γ ⊢ t₂ ⦂ τ₂\n       ----------------         (app)\n        Γ ⊢ t₁ t₂ ⦂ τ₁\n\n       ---------------          (tru)\n       Γ ⊢ true ⦂ Bool\n\n       ----------------         (fls)\n       Γ ⊢ false ⦂ Bool\n\n        Γ ⊢ t₁ ⦂ Bool\n         Γ ⊢ t₂ ⦂ τ₁\n         Γ ⊢ t₃ ⦂ τ₁\n------------------------------  (ite)\nΓ ⊢ if t₁ then t₂ else t₃ ⦂ τ₁\n```\n\nWe can read the three-place relation `Γ ⊢ t ⦂ T` as:\n\"under the assumptions in `Γ`, the term `t` has the type `T`.\"",
+   "why": "Same `display +centered` fix; `app` and `ite` are very unbalanced, so the whole block is centered rather than symbol-aligned. This also fixes `ite`'s three premises, which were packed onto a single source line (one premise per line is required). Also fixes a bare `Γ` just below the figure to match the code font used for every other mention of the symbol."
+  },
+  {
+   "id": "ref3",
+   "cat": "markup/cross-reference",
+   "old": "We'll see in chapter\n`MoreStlc` that it is easy to add named functions",
+   "new": "We'll see in chapter\n{ref \"MoreStlc\"}[MoreStlc] that it is easy to add named functions",
+   "why": "Every other chapter mention in this file uses the {ref \"...\"}[...] cross-reference role; this one is a bare code span."
+  },
+  {
+   "id": "ref4",
+   "cat": "markup/cross-reference",
+   "old": "sugar\" in the `MoreStlc` chapter.",
+   "new": "sugar\" in the {ref \"MoreStlc\"}[MoreStlc] chapter.",
+   "why": "Same cross-reference fix as the other mention of the MoreStlc chapter."
+  }
+ ],
+ "completed": true
+}
