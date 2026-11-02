@@ -890,6 +890,7 @@ inductive Tm.IsValue : Tm → Prop where
   | tru : IsValue <{ true }>
   | fls : IsValue <{ false }>
 
+-- for later use with `normalize`
 attribute [StlcEval] Tm.IsValue.abs Tm.IsValue.tru Tm.IsValue.fls
 ```
 
@@ -899,9 +900,9 @@ record that once each, so that the reduction examples can cite the fact by name
 instead of unfolding the definition again at every use.
 ::::
 
-:::dev "Yipeng Liu (berberman)"
-Did we explain the `..` syntax earlier?
-:::
+Here `..` tells Lean to fill in the constructor's remaining explicit
+arguments (the abstraction's parameter name, type, and body) with
+underscores, to be found by unifying against the goal.
 
 ```lean
 theorem idB_value : Tm.IsValue idB := by exact .abs ..
@@ -914,18 +915,12 @@ theorem notB_value : Tm.IsValue notB := by exact .abs ..
 Finally, we must consider what constitutes a _complete_ program.
 
 Intuitively, a "complete program" must not refer to any undefined
-variables.  We'll see shortly how to define the _free_ variables
-in an STLC term.  A complete program, then, is one that is
-{deftech}_closed_ — that is, that contains no free variables.
+variables.  (We'll formally define the _free_ variables of an STLC term in
+the {ref "StlcProp"}[StlcProp] chapter.)  A complete program, then, is one
+that is {deftech}_closed_ — that is, that contains no free variables.
 
 (Conversely, a term that may contain free variables is often
 called an {deftech}_open term_.)
-
-:::dev "Chris Henson (chenson2018)" BeforeNextRelease
-Is the "shortly" above setting wrong expectations?
-Where exactly are we defining the free variables in an STLC term?
-BCP 25: Indeed, we need to define "free"!
-:::
 
 :::slidebreak
 :::
@@ -1016,8 +1011,7 @@ Here is the definition, informally...
 ... and formally:
 
 :::dev PotentialImprovement
-1) explain better about alpha-conversion below.
-2) Fix formatting of subst above to line up more nicely.
+explain better about alpha-conversion below.
 :::
 
 ```lean
@@ -1118,9 +1112,16 @@ variable (x y : String) (s t t₁ t₂ t₃ : Tm) (τ : Ty)
 ```
 :::
 
-:::dev "mwhicks1" PotentialImprovement
-Make one or two of the above `example` to make sure they produce the right term?
-:::
+As a sanity check, here are formal versions of two of the substitution
+examples given above:
+
+```lean
+example : <{ [X := true] (if X then true else false) }> =
+    <{ if true then true else false }> := by rfl
+
+example : <{ [X := true] (λ Y : Bool . if Y then X else false) }> =
+    <{ λ Y : Bool . if Y then true else false }> := by rfl
+```
 
 ::::quiz
 What is the result of the following substitution?
@@ -1365,8 +1366,8 @@ end
 scoped notation:40 t:41 " ⟶ " t':41 => Step t t'
 scoped notation:40 t:41 " ⟶* " t':41 => Multi Step t t'
 
--- for later use with `normalize`
-attribute [StlcEval] Step.appAbs Step.app1 Step.app2 Step.ifTrue Step.ifFalse Step.ifStep
+attribute [StlcEval] Step.appAbs Step.app1 Step.app2
+attribute [StlcEval] Step.ifTrue Step.ifFalse Step.ifStep
 ```
 
 ::::full
@@ -1523,7 +1524,8 @@ example : <{ idBB notB true }> ⟶* <{ false }> := by
   · exact .app1 <{ idBB notB }> notB <{ true }>
       (.appAbs "X" <{ Bool → Bool }> <{ X }> notB notB_value)
   apply Multi.step (y := <{ if true then false else true }>)
-  · exact .appAbs "X" <{ Bool }> <{ if X then false else true }> <{ true }> .tru
+  · exact .appAbs "X" <{ Bool }> <{ if X then false else true }>
+      <{ true }> .tru
   apply Multi.step (y := <{ false }>)
   · exact .ifTrue <{ false }> <{ true }>
   · rfl
@@ -1674,14 +1676,11 @@ With these refinements, we are ready to give informal and formal
 specifications of the typing relation.
 ::::
 
-:::dev "Chris Henson (chenson2018)" BeforeNextRelease
-I find the FULL explanation above much better than the
-TERSE one below, since the question below seems ill-posed without
-extra context. Why would one want to type a term `X Y` if we've
-just said that we will just look at closed terms as our programs?
-:::
-
 ::::terse
+Even though whole programs are closed, typechecking an abstraction
+`λx:T. t` means typechecking its body `t` with the binder `λx` stripped
+off — so `t` itself may be open.
+
 _Question_: What is the type of the term "`X Y`"?
 
 _Answer_: It depends on the types of `X` and `Y`!
@@ -1785,7 +1784,9 @@ inductive HasType : Context → Tm → Ty → Prop where
       (h₃ : <{ Γ ⊢ t₃ ⦂ τ₁ }>) :
       <{ Γ ⊢ if t₁ then t₂ else t₃ ⦂ τ₁ }>
 
-attribute [StlcTyping] HasType.var HasType.abs HasType.app HasType.tru HasType.fls HasType.ite
+-- for later use with apply_rules
+attribute [StlcTyping] HasType.var HasType.abs HasType.app
+attribute [StlcTyping] HasType.tru HasType.fls HasType.ite
 ```
 
 ::::details "Notation encoding"
@@ -1933,8 +1934,9 @@ to the term `λX:Bool. λY:Bool. X Y` — i.e.,
 example :
     ¬ ∃ τ, <{ ∅ ⊢ λ X : Bool . λ Y : Bool . X Y ⦂ τ }> := by
   intro ⟨τ, hc⟩
-  -- Each `inversion` peels off one rule of the derivation, naming the premise
-  -- it leaves behind; the context stays small because the old hypothesis goes away.
+  -- Each `inversion` peels off one rule of the derivation,
+  -- naming the premise it leaves behind; the context stays
+  -- small because the old hypothesis goes away.
   inversion hc with
   | abs h₁ =>
     inversion h₁ with
@@ -1943,8 +1945,8 @@ example :
       | app _ hf =>
         inversion hf with
         | var hx =>
-          -- `X` is bound to `Bool` in the context, but the application rule
-          -- needs it to have an arrow type.
+          -- `X` is bound to `Bool` in the context, but the
+          -- application rule needs it to have an arrow type.
           exact Ty.noConfusion (Option.some.inj hx)
 ```
 
