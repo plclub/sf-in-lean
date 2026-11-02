@@ -587,7 +587,7 @@ def Nat.even (n : Nat) :=
 
 def Nat.odd (n : Nat) := !(even n)
 
-theorem Nat.odd_def (n : Nat) : n.odd = !(n.even) := rfl
+theorem Nat.odd_def (n : Nat) : n.odd = !(n.even) := by rfl
 
 def Nat.minusTwo (n : Nat) : Nat :=
   match n with

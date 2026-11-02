@@ -1840,7 +1840,7 @@ end Delab
 #guard_msgs in
 #check (Tm.const 0 : Tm)
 
-example (x : Tm) : (<{ x }> : Tm) = x := rfl
+example (x : Tm) : (<{ x }> : Tm) = x := by rfl
 
 /-- info: <{ λ X : Nat . X }> : Tm -/
 #guard_msgs in
@@ -1940,7 +1940,7 @@ example :
       Tm.sumCase
         (Tm.var "S")
         "X" (Tm.var "X")
-        "Y" (Tm.var "Y") := rfl
+        "Y" (Tm.var "Y") := by rfl
 
 #guard_msgs in
 example :
@@ -1954,14 +1954,14 @@ example :
         (Tm.var "Z")
         "X"
         "XS"
-        (Tm.var "X") := rfl
+        (Tm.var "X") := by rfl
 
 example :
     (<{ let X = Y in X }> : Tm) =
       Tm.letIn
         "X"
         (Tm.var "Y")
-        (Tm.var "X") := rfl
+        (Tm.var "X") := by rfl
 
 ```
 :::
@@ -2770,10 +2770,10 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
     )
     | var => contradiction
     | app Γ τ₁ τ₂ t₁ t₂ h₁ h₂ ih₁ ih₂ =>
-      right; cases ih₁ rfl
+      right; cases ih₁ (by rfl)
       -- t₁ is a value
       case _ ht₁ =>
-        cases ih₂ rfl
+        cases ih₂ (by rfl)
         -- t₂ is a value
         case _ ht₂ =>
           apply canonical_forms_fun at h₁
@@ -2789,7 +2789,7 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
         obtain ⟨t₁', ht₁⟩ := ht₁
         exists <{t₁' t₂}>; apply_rules using ExtStlcEval
     | succ Γ t₁ h ih =>
-      right; cases ih rfl
+      right; cases ih (by rfl)
       -- t₁ is a value
       case _ ht₁ =>
         apply canonical_forms_nat at h
@@ -2800,7 +2800,7 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
         obtain ⟨t₁', ht₁⟩ := ht₁
         exists <{succ t₁'}>; apply_rules using ExtStlcEval
     | pred Γ t₁ h ih =>
-      right; cases ih rfl
+      right; cases ih (by rfl)
        -- t₁ is a value
       case _ ht₁ =>
         apply canonical_forms_nat at h
@@ -2810,10 +2810,10 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
         obtain ⟨t₁', ht₁⟩ := ht₁
         exists <{pred t₁'}>; apply_rules using ExtStlcEval
     | mult Γ t₁ t₂ h₁ h₂ ih₁ ih₂ =>
-      right; cases ih₁ rfl
+      right; cases ih₁ (by rfl)
       -- t₁ is a value
       case _ ht₁ =>
-        cases ih₂ rfl
+        cases ih₂ (by rfl)
         -- t₂ is a value
         case _ ht₂ =>
           apply canonical_forms_nat at h₁
@@ -2831,7 +2831,7 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
         obtain ⟨t₁', ht₁⟩ := ht₁
         exists <{t₁' * t₂}>; apply_rules using ExtStlcEval
     | ite0 Γ t₁ t₂ t₃ τ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
-      right; cases ih₁ rfl
+      right; cases ih₁ (by rfl)
       -- t₁ is a value
       case _ ht₁ =>
         apply canonical_forms_nat at h₁
@@ -2844,7 +2844,7 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
         obtain ⟨t₁', ht₁⟩ := ht₁
         exists <{if0 t₁' then t₂ else t₃}>; apply_rules using ExtStlcEval
     | sumInl Γ t₁ τ₁ τ₂ h ih =>
-      cases ih rfl
+      cases ih (by rfl)
       -- t₁ is a value
       case _ ht₁ =>
         left; apply_rules using ExtStlcEval
@@ -2853,7 +2853,7 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
         obtain ⟨t₁', ht₁⟩ := ht₁
         right; exists <{inl τ₂ t₁'}>; apply_rules using ExtStlcEval
     | sumInr Γ t₂ τ₁ τ₂ h ih =>
-      cases ih rfl
+      cases ih (by rfl)
       -- t₁ is a value
       case _ ht₁ =>
         left; apply_rules using ExtStlcEval
@@ -2862,7 +2862,7 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
         obtain ⟨t₂', ht₁⟩ := ht₁
         right; exists <{inr τ₁ t₂'}>; apply_rules using ExtStlcEval
     | sumCase Γ x₁ x₂ τ₁ τ₂ τ₃ t t₁ t₂ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
-      right; cases ih₁ rfl
+      right; cases ih₁ (by rfl)
       -- t₁ is a value
       case _ ht =>
         apply canonical_forms_sum at h₁
@@ -2874,10 +2874,10 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
         obtain ⟨t', ht⟩ := ht
         exists <{case t' of inl x₁ => t₁ | inr x₂ => t₂}>; apply_rules using ExtStlcEval
     | listCons Γ t₁ t₂ τ₁ h₁ h₂ ih₁ ih₂ =>
-      cases ih₁ rfl
+      cases ih₁ (by rfl)
       -- t₁ is a value
       case _ ht₁ =>
-        cases ih₂ rfl
+        cases ih₂ (by rfl)
         -- t₂ is a value
         case _ ht₂ =>
           left; apply_rules using ExtStlcEval
@@ -2890,7 +2890,7 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
         obtain ⟨t₁', ht₁⟩ := ht₁
         right; exists <{t₁' :: t₂}>; apply_rules using ExtStlcEval
     | listCase Γ t₁ t₂ t₃ x₁ x₂ τ₁ τ₂ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
-        right; cases ih₁ rfl
+        right; cases ih₁ (by rfl)
         -- t₁ is a value
         case _ ht =>
           apply canonical_forms_list at h₁
@@ -2904,10 +2904,10 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
     -- complete the proof
     -- SOLUTION
     | pair Γ t₁ t₂ τ₁ τ₂ h₁ h₂ ih₁ ih₂ =>
-      cases ih₁ rfl
+      cases ih₁ (by rfl)
       -- t₁ is a value
       case _ ht₁ =>
-        cases ih₂ rfl
+        cases ih₂ (by rfl)
         -- t₂ is a value
         case _ ht₂ =>
           left; apply_rules using ExtStlcEval
@@ -2920,7 +2920,7 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
         obtain ⟨t₁', ht₁⟩ := ht₁
         right; exists <{(t₁', t₂)}>; apply_rules using ExtStlcEval
     | fst Γ t τ₁ τ₂ h ih =>
-      right; cases ih rfl
+      right; cases ih (by rfl)
       -- t₁ is a value
       case _ ht₁ =>
         apply canonical_forms_prod at h
@@ -2931,7 +2931,7 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
         obtain ⟨t₁', ht₁⟩ := ht₁
         exists <{fst t₁'}>; apply_rules using ExtStlcEval
     | snd Γ t τ₁ τ₂ h ih =>
-      right; cases ih rfl
+      right; cases ih (by rfl)
       -- t₁ is a value
       case _ ht₁ =>
         apply canonical_forms_prod at h
@@ -2942,7 +2942,7 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
         obtain ⟨t₁', ht₁⟩ := ht₁
         exists <{snd t₁'}>; apply_rules using ExtStlcEval
     | letIn Γ x t₁ t₂ τ₁ τ₂ h₁ h₂ ih₁ ih₂ =>
-      right; cases ih₁ rfl
+      right; cases ih₁ (by rfl)
       -- t₁ is a value
       case _ ht₁ =>
         exists <{ [x := t₁] t₂ }>; apply_rules using ExtStlcEval
@@ -2951,7 +2951,7 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
         obtain ⟨t₁', ht₁⟩ := ht₁
         exists <{let x = t₁' in t₂}>; apply_rules using ExtStlcEval
     | fix Γ t₁ τ₁ h ih =>
-        right; cases ih rfl
+        right; cases ih (by rfl)
         -- t₁ is a value
         case _ ht₁ =>
           apply canonical_forms_fun at h

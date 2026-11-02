@@ -1420,7 +1420,7 @@ theorem MStar'' α (s : List α) (re : RegExp α) (h : s =~ Star re) :
     case mStar0 ih => exists []; simp
     case mStarApp s₁ s₂ re h₁ h₂ ih₁ ih₂ =>
       injections heq; subst heq
-      obtain ⟨ss, hfold, hall⟩ := ih₂ rfl
+      obtain ⟨ss, hfold, hall⟩ := ih₂ (by rfl)
       exists (s₁ :: ss)
       simp only [List.foldr_cons, List.mem_cons, forall_eq_or_imp]; rw [← hfold]
       repeat
@@ -2053,7 +2053,7 @@ theorem reverse_pal {α : Type} {n : Nat} {l : List α}
         · exact heq.2.symm
 
 theorem palindrome_converse {α : Type} {l : List α} (h : l = l.reverse) : Pal l := by
-  exact reverse_pal rfl h
+  apply reverse_pal (by rfl) h
 
 end PalConv
 ```

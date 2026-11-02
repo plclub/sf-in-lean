@@ -73,7 +73,7 @@ end
 -- TOFIX: prose. ...or registered once with the @[simp] annotation.
 def double' (n : Nat) : Nat := n + n
 
-@[simp] theorem double'_def (n : Nat) : double' n = n + n := rfl
+@[simp] theorem double'_def (n : Nat) : double' n = n + n := by rfl
 
 example (n : Nat) : double' (n + 0) = n + n := by
   simp

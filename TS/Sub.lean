@@ -1958,8 +1958,8 @@ theorem sub_inversion_bool (τ : Ty)
     induction h with (subst_vars; try contradiction)
     | refl => rfl
     | trans h₁ h₂ ih₁ ih₂ =>
-        rw [ih₁]; apply ih₂ rfl
-        symm; apply ih₂ rfl
+        rw [ih₁]; apply ih₂ (by rfl)
+        symm; apply ih₂ (by rfl)
 ```
 ::::
 
@@ -1978,8 +1978,8 @@ theorem sub_inversion_arrow {σ τ₁ τ₂ : Ty}
     | @arrow σ₁ σ₂ _ _ h₁ h₂ ih₁ ih₂ =>
         inversion heq; exists σ₁, σ₂
     | trans h₁ h₂ ih₁ ih₂ =>
-        obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := ih₂ rfl; clear ih₂; subst_vars
-        obtain ⟨σ₁', σ₂', _, hs₁', hs₂'⟩ := ih₁ rfl; subst_vars; clear ih₁
+        obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := ih₂ (by rfl); clear ih₂; subst_vars
+        obtain ⟨σ₁', σ₂', _, hs₁', hs₂'⟩ := ih₁ (by rfl); subst_vars; clear ih₁
         exists σ₁', σ₂'; constructor; rfl; constructor
         · exact Subtype.trans hs₁ hs₁'
         · exact Subtype.trans hs₂' hs₂
@@ -2006,8 +2006,8 @@ theorem sub_inversion_unit {τ : Ty} (h : τ <: <{ Unit }>) : τ = Ty.unit := by
     induction h with (subst_vars; try contradiction)
     | refl => rfl
     | trans h₁ h₂ ih₁ ih₂ =>
-        rw [ih₁]; apply ih₂ rfl
-        symm; apply ih₂ rfl
+        rw [ih₁]; apply ih₂ (by rfl)
+        symm; apply ih₂ (by rfl)
 ```
 ::::
 
@@ -2019,8 +2019,8 @@ theorem sub_inversion_base {τ : Ty} {s : String} (h : τ <: Ty.base s) : τ = T
     induction h with (subst_vars; try contradiction)
     | refl => rfl
     | trans h₁ h₂ ih₁ ih₂ =>
-        rw [ih₁]; apply ih₂ rfl
-        symm; apply ih₂ rfl
+        rw [ih₁]; apply ih₂ (by rfl)
+        symm; apply ih₂ (by rfl)
 ```
 ::::
 
@@ -2033,8 +2033,8 @@ theorem sub_inversion_top {τ : Ty} (h : Ty.top <: τ) : τ = Ty.top := by
     | refl => rfl
     | top => rfl
     | trans h₁ h₂ ih₁ ih₂ =>
-        rw [ih₂]; apply ih₁ rfl
-        symm; apply ih₁ rfl
+        rw [ih₂]; apply ih₁ (by rfl)
+        symm; apply ih₁ (by rfl)
 ```
 ::::
 :::::
@@ -2054,8 +2054,8 @@ theorem sub_inversion_prod {σ τ₁ τ₂ : Ty} (h : σ <: <{ τ₁ × τ₂ }>
     | @prod σ₁ σ₂ _ _ h₁ h₂ ih₁ ih₂ =>
         inversion heq; exists σ₁, σ₂
     | trans h₁ h₂ ih₁ ih₂ =>
-        obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := ih₂ rfl; clear ih₂; subst_vars
-        obtain ⟨σ₁', σ₂', _, hs₁', hs₂'⟩ := ih₁ rfl; subst_vars; clear ih₁
+        obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := ih₂ (by rfl); clear ih₂; subst_vars
+        obtain ⟨σ₁', σ₂', _, hs₁', hs₂'⟩ := ih₁ (by rfl); subst_vars; clear ih₁
         exists σ₁', σ₂'; constructor; rfl; constructor
         · exact Subtype.trans hs₁' hs₁
         · exact Subtype.trans hs₂' hs₂
@@ -2112,7 +2112,8 @@ theorem canonical_forms_of_arrow_types {Γ : Context} {t : Tm} {τ₁ τ₂ : Ty
     | abs Γ x τ₁ τ₂ t₁ h ih => inversion heq; exists x, τ₂, t₁
     | sub Γ t₁ τ₁ τ₂ ht hs ih =>
         obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := sub_inversion_arrow hs; subst_vars
-        exact ih hv rfl
+        apply ih hv
+        rfl
 ```
 ::::
 
@@ -2130,7 +2131,8 @@ theorem canonical_forms_of_bool {Γ : Context} {t : Tm}
   induction ht with (subst_vars; first | trivial | try lia)
   | sub Γ t₁ τ₁ τ₂ ht hs ih =>
     apply sub_inversion_bool at hs; subst_vars
-    exact ih hv rfl
+    apply ih hv
+    rfl
 ```
 
 :::::full
@@ -2147,7 +2149,8 @@ theorem canonical_forms_of_product_types {Γ : Context} {t : Tm} {τ₁ τ₂ : 
     | pair Γ t₁ t₂ τ₁ τ₂ h ih => inversion heq; exists t₁, t₂
     | sub Γ t₁ τ₁ τ₂ ht hs ih =>
         obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := sub_inversion_prod hs; subst_vars
-        exact ih hv rfl
+        apply ih hv
+        rfl
 -- END SOLUTION
 ```
 :::::
@@ -2220,10 +2223,10 @@ theorem progress (t : Tm) (τ : Ty) (h : <{ ∅ ⊢ t ⦂ τ }>) :
     | try (left; constructor; done)
   )
   | app Γ τ₁ τ₂ t₁ t₂ h₁ h₂ ih₁ ih₂ =>
-      right; cases ih₁ rfl with
+      right; cases ih₁ (by rfl) with
       -- t₁ is a value
       | inl ht₁ =>
-        cases ih₂ rfl with
+        cases ih₂ (by rfl) with
         -- t₂ is a value
         | inl ht₂ =>
           apply canonical_forms_of_arrow_types at h₁
@@ -2239,7 +2242,7 @@ theorem progress (t : Tm) (τ : Ty) (h : <{ ∅ ⊢ t ⦂ τ }>) :
         obtain ⟨t₁', ht₁⟩ := ht₁
         exists <{t₁' t₂}>; apply_rules using StlcSubEval
   | ite Γ t₁ t₂ t₃ τ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
-    right; cases ih₁ rfl with
+    right; cases ih₁ (by rfl) with
     -- t₁ is a value
     | inl ht₁ =>
       apply canonical_forms_of_bool at h₁
@@ -2254,10 +2257,10 @@ theorem progress (t : Tm) (τ : Ty) (h : <{ ∅ ⊢ t ⦂ τ }>) :
 -- Fill in products here later
 -- SOLUTION
   | pair Γ t₁ t₂ τ₁ τ₂ h₁ h₂ ih₁ ih₂ =>
-      cases ih₁ rfl with
+      cases ih₁ (by rfl) with
       -- t₁ is a value
       | inl ht₁ =>
-        cases ih₂ rfl with
+        cases ih₂ (by rfl) with
         -- t₂ is a value
         | inl ht₂ =>
           left; apply_rules using StlcSubEval
@@ -2270,7 +2273,7 @@ theorem progress (t : Tm) (τ : Ty) (h : <{ ∅ ⊢ t ⦂ τ }>) :
         obtain ⟨t₁', ht₁⟩ := ht₁
         right; exists <{(t₁', t₂)}>; apply_rules using StlcSubEval
   | fst Γ t τ₁ τ₂ h ih =>
-      right; cases ih rfl with
+      right; cases ih (by rfl) with
       -- t₁ is a value
       | inl ht₁ =>
         apply canonical_forms_of_product_types at h
@@ -2281,7 +2284,7 @@ theorem progress (t : Tm) (τ : Ty) (h : <{ ∅ ⊢ t ⦂ τ }>) :
         obtain ⟨t₁', ht₁⟩ := ht₁
         exists <{fst t₁'}>; apply_rules using StlcSubEval
   | snd Γ t τ₁ τ₂ h ih =>
-      right; cases ih rfl with
+      right; cases ih (by rfl) with
       -- t₁ is a value
       | inl ht₁ =>
         apply canonical_forms_of_product_types at h
@@ -2362,7 +2365,7 @@ theorem typing_inversion_abs {Γ : Context} {x : String} {σ₁ : Ty} {t₂ : Tm
   | abs Γ x τ₁ τ₂ t₁ h i =>
       inversion heq; exists τ₁; solve_by_elim using StlcSubTyping
   | sub Γ t₁ τ₁ τ₂ ht hs ih =>
-      obtain ⟨σ₂, hs', ht'⟩ := ih rfl
+      obtain ⟨σ₂, hs', ht'⟩ := ih (by rfl)
       exists σ₂; solve_by_elim using StlcSubTyping
 ```
 
@@ -2382,7 +2385,7 @@ theorem typing_inversion_var {Γ : Context} {x : String} {τ : Ty}
     induction h with (subst_vars; try contradiction)
     | var Γ y τ₁ h => inversion heq; solve_by_elim using StlcSubTyping
     | sub Γ t₁ τ₁ τ₂ ht hs ih =>
-        obtain ⟨σ₂, hs', ht'⟩ := ih rfl
+        obtain ⟨σ₂, hs', ht'⟩ := ih (by rfl)
         exists σ₂; solve_by_elim using StlcSubTyping
 ```
 ::::
@@ -2399,7 +2402,7 @@ theorem typing_inversion_app {Γ : Context} {t₁ t₂ : Tm} {τ₂ : Ty}
     induction h with (subst_vars; try contradiction)
     | app => inversion heq; solve_by_elim using StlcSubTyping
     | sub Γ t₁ τ₁ τ₂ ht hs ih =>
-        obtain ⟨σ₂, hs', ht'⟩ := ih rfl
+        obtain ⟨σ₂, hs', ht'⟩ := ih (by rfl)
         exists σ₂; constructor <;> try assumption
         apply HasType.sub _ _ _ _ hs'
         solve_by_elim using StlcSubTyping
@@ -2416,7 +2419,7 @@ theorem typing_inversion_unit (Γ : Context) (τ : Ty)
   induction h with (subst_vars; try contradiction)
   | unit => inversion heq; solve_by_elim using StlcSubTyping
   | sub Γ t₁ τ₁ τ₂ ht hs ih =>
-      specialize ih rfl
+      specialize ih (by rfl)
       solve_by_elim using StlcSubTyping
 ```
 
@@ -2433,7 +2436,7 @@ theorem typing_inversion_pair {Γ : Context} {t₁ t₂ : Tm} {τ : Ty}
     | pair Γ t₁ t₂ τ₁ τ₂ h₁ h₂ ih₁ ih₂ =>
         inversion heq; exists τ₁, τ₂; solve_by_elim using StlcSubTyping
     | sub Γ t₁ τ₁ τ₂ ht hs ih =>
-      obtain ⟨σ₁, σ₂, hs', ht₁, ht₂⟩ := ih rfl
+      obtain ⟨σ₁, σ₂, hs', ht₁, ht₂⟩ := ih (by rfl)
       exists σ₁, σ₂; solve_by_elim (maxDepth := 10) using StlcSubTyping
 
 theorem typing_inversion_fst {Γ : Context} {t : Tm} {τ: Ty}
@@ -2446,7 +2449,7 @@ theorem typing_inversion_fst {Γ : Context} {t : Tm} {τ: Ty}
     | fst Γ t τ₁ τ₂ h ih =>
         inversion heq; exists τ₁, τ₂; solve_by_elim using StlcSubTyping
     | sub Γ t₁ τ₁ τ₂ ht hs ih =>
-      obtain ⟨σ₁, σ₂, hs', ht'⟩ := ih rfl
+      obtain ⟨σ₁, σ₂, hs', ht'⟩ := ih (by rfl)
       exists σ₁, σ₂; solve_by_elim using StlcSubTyping
 
 theorem typing_inversion_snd {Γ : Context} {t : Tm} {τ: Ty}
@@ -2459,7 +2462,7 @@ theorem typing_inversion_snd {Γ : Context} {t : Tm} {τ: Ty}
   | snd Γ t τ₁ τ₂ h ih =>
       inversion heq; exists τ₁, τ₂; solve_by_elim using StlcSubTyping
   | sub Γ t₁ τ₁ τ₂ ht hs ih =>
-    obtain ⟨σ₁, σ₂, hs', ht'⟩ := ih rfl
+    obtain ⟨σ₁, σ₂, hs', ht'⟩ := ih (by rfl)
     exists σ₁, σ₂; solve_by_elim using StlcSubTyping
 -- END SOLUTION
 ```
