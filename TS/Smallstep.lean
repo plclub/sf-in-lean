@@ -2397,7 +2397,7 @@ theorem normalize_ex :
     · constructor
 ```
 
-:::gradeTheorem 3 normalize_ex
+:::gradeTheorem 1 normalize_ex
 :::
 
 ::::
