@@ -306,6 +306,10 @@ What is the type of the following term?
 (E) none of the above
 ::::
 
+:::quizSolution
+(B) `(Bool → Bool) → Bool`
+:::
+
 ::::quiz
 How about the type of this one?
 
@@ -323,6 +327,10 @@ How about the type of this one?
 
 (E) none of the above
 ::::
+
+:::quizSolution
+(D) `Bool`
+:::
 
 # Syntax
 
@@ -880,6 +888,18 @@ to an argument.
 
 We also make the second choice here.
 
+:::details "`#reduce` vs. `#eval` -- same but different"
+Both `#reduce` and `#eval` compute the same thing, but `#reduce`
+can be used in some circumstances that `#eval` cannot.
+This is because `#eval` compiles and executes the code that it is
+given, which requires a printable representation of the final result.
+However, the typeclasses `#eval` tries to use to get this representation —
+`ToExpr`, `Repr`, and `ToString` — are not defined for function
+types like `Bool → Nat`. The `#reduce` directive simplifies its
+argument using the Lean kernel, which then prints it like it does any `Expr`,
+so no special typeclasses are needed.
+:::
+
 :::slidebreak
 :::
 
@@ -1051,6 +1071,7 @@ depending on whether it is the name being substituted for.
 ::::
 
 ```lean
+section
 variable (x y : String) (s t t₁ t₂ t₃ : Tm) (τ : Ty)
 
 @[simp] theorem subst_var_eq : <{ [x := s] ~(Tm.var x) }> = s := by
@@ -1078,6 +1099,7 @@ variable (x y : String) (s t t₁ t₂ t₃ : Tm) (τ : Ty)
 @[simp] theorem subst_ite :
     <{ [x := s] (if t₁ then t₂ else t₃) }> =
       <{ if [x := s] t₁ then [x := s] t₂ else [x := s] t₃ }> := by rfl
+end
 ```
 
 :::ignore
@@ -1138,6 +1160,10 @@ What is the result of the following substitution?
 
 (4) none of the above
 ::::
+
+:::quizSolution
+(3) `(λY:T₁. s (λX:T₂. X))`
+:::
 
 _Technical note_: Substitution becomes trickier to define if
 we consider the case where `s`, the term being substituted for a
@@ -1270,6 +1296,9 @@ theorem substi_correct (s : Tm) (x : String) (t t' : Tm) :
       intro h
       induction h <;> simp_all
 ```
+
+:::gradeTheorem "3" substi_correct
+:::
 :::::
 
 ::::::
@@ -1393,13 +1422,16 @@ What does the following term step to?
 (D) none of the above
 ::::
 
+:::quizSolution
+(A) ` λX:Bool. X `
+:::
+
 ::::quiz
 What does the following term step to?
 
 ```display
 (λX:Bool → Bool. X)
-    ((λX:Bool → Bool. X) (λX:Bool. X))
-⟶ ???
+    ((λX:Bool → Bool. X) (λX:Bool. X)) ⟶ ???
 ```
 
 (A) ` λX:Bool. X `
@@ -1412,6 +1444,10 @@ What does the following term step to?
 
 (E) none of the above
 ::::
+
+:::quizSolution
+(C) ` (λX:Bool → Bool. X) (λX:Bool. X) `
+:::
 
 ::::quiz
 What does the following term _normalize_ to?
@@ -1433,6 +1469,10 @@ where `notB` abbreviates `λX:Bool. if X then false else true`
 (E) none of the above
 ::::
 
+:::quizSolution
+(C) ` false `
+:::
+
 ::::quiz
 What does the following term normalize to?
 
@@ -1450,6 +1490,10 @@ What does the following term normalize to?
 
 (E) none of the above
 ::::
+
+:::quizSolution
+(C) ` false `
+:::
 
 ## Examples
 
@@ -1589,9 +1633,8 @@ Do values and normal forms coincide in the language presented so far?
 (B) no
 ::::
 
-:::instructors
-No, because we haven't come to the type system yet.
-E.g., `true true` is a normal form but not a value.
+:::quizSolution
+(B) No. For example, `true true` is a normal form but not a value.
 :::
 
 ::::::full
@@ -1879,7 +1922,7 @@ Prove the same result, applying one rule at a time and
 naming the argument type of each application explicitly.
 
 ```lean
-example :
+theorem typing_example_2_full :
     <{ ∅ ⊢ λ X : Bool . λ Y : Bool → Bool . Y (Y X) ⦂
        Bool → (Bool → Bool) → Bool }> := by
   solution!
@@ -1906,7 +1949,7 @@ Formally prove the following typing derivation holds:
 ```
 
 ```lean
-example :
+theorem typing_example_3 :
     ∃ τ,
       <{ ∅ ⊢ λ X : Bool → Bool . λ Y : Bool → Bool . λ Z : Bool .
               Y (X Z)
@@ -1915,6 +1958,9 @@ example :
     exists <{ (Bool → Bool) → (Bool → Bool) → (Bool → Bool) }>
     apply_rules using StlcTyping
 ```
+
+:::gradeTheorem "2" typing_example_3
+:::
 :::::
 
 ::::::
@@ -1950,15 +1996,16 @@ example :
           exact Ty.noConfusion (Option.some.inj hx)
 ```
 
-Another nonexample:
+::::::full
+:::::exercise (rating := 3) (name := "typing_nonexample_3") (optional := true)
+Another nonexample: formally prove that the following term is not typable.
 
 ```display
 ¬ ∃ σ τ, ∅ ⊢ λX:σ. X X ⦂ τ
 ```
 
-::::full
 ```lean
-example : ¬ ∃ τ σ, <{ ∅ ⊢ λ X : τ . X X ⦂ σ }> := by
+theorem typing_nonexample_3 : ¬ ∃ τ σ, <{ ∅ ⊢ λ X : τ . X X ⦂ σ }> := by
   solution!
     -- The two occurrences of `X` force its type `τ` to satisfy `τ = τ → σ`,
     -- and no (finite) type does.
@@ -1978,7 +2025,9 @@ example : ¬ ∃ τ σ, <{ ∅ ⊢ λ X : τ . X X ⦂ σ }> := by
           | var hy =>
             exact arrow_ne _ _ ((Option.some.inj hy).symm.trans (Option.some.inj hx))
 ```
-::::
+:::::
+
+::::::
 
 ::::quiz
 Which of the following propositions is _not_ provable?
@@ -1992,6 +2041,11 @@ Which of the following propositions is _not_ provable?
 (D) `∃ σ, X ↦ σ ; ∅ ⊢ λY:Bool → Bool. Y X ⦂ (Bool → Bool) → σ`
 ::::
 
+:::quizSolution
+(C) `∃ τ,  ∅ ⊢ λY:Bool → Bool. λX:Bool. X Y ⦂ τ` — `X` has type `Bool`
+here, so it is not a function that can be applied (here, to `Y`).
+:::
+
 ::::quiz
 Which of these is not provable?
 
@@ -2003,6 +2057,11 @@ Which of these is not provable?
 
 (D) `∃ σ τ, X ↦ σ ; ∅ ⊢ λY:Bool. X (X Y) ⦂ τ`
 ::::
+
+:::quizSolution
+(B) `∃ σ τ, X ↦ σ ; ∅ ⊢ X X X ⦂ τ` — applying `X` to itself twice would
+force its type `σ` to satisfy the equation `σ = σ → σ → τ`, and no type does.
+:::
 
 ::::hide
 ```
