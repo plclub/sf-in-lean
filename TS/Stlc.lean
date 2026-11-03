@@ -1993,7 +1993,7 @@ example :
         | var hx =>
           -- `X` is bound to `Bool` in the context, but the
           -- application rule needs it to have an arrow type.
-          exact Ty.noConfusion (Option.some.inj hx)
+          injections
 ```
 
 ::::::full
