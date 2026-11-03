@@ -16,9 +16,10 @@ For each chapter of a built student variant, this writes
   Verso source (for the "view source" link).
 * `blocks`: for each Lean code block in the chapter's text, outside exercises
   and quizzes, its code as the page shows it, its position among the page's
-  code blocks, and the offset into `skeleton` where it begins, so that a reader
-  can change an example or a given proof and check it against the same context
-  an exercise there would get.
+  code blocks, and the span of `skeleton` it stands for, so that a reader can
+  change an example or a given proof, check it against the same context an
+  exercise there would get, and have the code after it checked against the
+  change.
 * `library`: the skeletons of the chapters this one imports, in import order,
   each wrapped in `section … end` so that one chapter's `open`s and `variable`s
   stop at its end, as they would at a file boundary.
@@ -455,18 +456,29 @@ def find_blocks(page, lines, offset_at, verso):
             continue
         pos = at + len(code)
         line = bisect.bisect_right(starts, at) - 1
+        end = line + code.count("\n") + 1
         vat = vtext.find(code, vpos)
         if vat >= 0:
             vpos = vat + len(code)
-        out.append({
+        block = {
             "index": index,
             "name": block_name(code),
             "code": code + "\n",
+            # The block's commands occupy skeleton[context:contextEnd]; a
+            # reader's edit of the block replaces that span when the code
+            # after it is checked.
             "context": offset_at(line),
+            "contextEnd": offset_at(end),
             "studentLine": line + 1,
             "sourcePath": str(verso),
             "sourceLine": vtext.count("\n", 0, vat) + 1 if vat >= 0 else None,
-        })
+        }
+        # The body of an `sf_expect_failure_in` or `sf_experiment` is checked
+        # on its own, and what it declares is gone after it; so is a reader's
+        # edit of it.
+        if lines[line] != shown[line]:
+            block["standalone"] = True
+        out.append(block)
     return out
 
 

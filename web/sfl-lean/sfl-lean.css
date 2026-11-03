@@ -75,11 +75,13 @@ a.sfl-try:hover { color: white; }
   text-decoration: none;
   cursor: pointer;
 }
-.sfl-menu-item:hover, .sfl-menu-item:focus-visible { background: var(--sf-surface, #f4f4f3); }
+.sfl-menu-item:hover:not(:disabled), .sfl-menu-item:focus-visible { background: var(--sf-surface, #f4f4f3); }
+.sfl-menu-item:disabled { color: #a3a39e; cursor: default; }
 
 /* A code block from the text holds its tools in its top right corner, out of
    sight until the pointer is on the block, a menu is open, or the keyboard
-   reaches them.  Without a pointer to hover with, they stay in sight, faint. */
+   reaches them.  Without a pointer to hover with, they stay in sight, faint.
+   The "Edited" tag on a block the reader changed is always in sight. */
 .hl.lean.block.sfl-editable { position: relative; }
 .sfl-block-tools {
   position: absolute;
@@ -88,17 +90,31 @@ a.sfl-try:hover { color: white; }
   font-family: var(--verso-text-font-family, system-ui, sans-serif);
   white-space: normal;
   user-select: none;
-  opacity: 0;
-  transition: opacity 0.15s;
 }
-.hl.lean.block:hover > .sfl-block-tools,
-.sfl-block-tools:focus-within,
-.sfl-block-tools:has(.sfl-menu-list:not([hidden])) { opacity: 1; }
+.sfl-block-tools > :not(.sfl-edited-tag) { opacity: 0; transition: opacity 0.15s; }
+.hl.lean.block:hover > .sfl-block-tools > *,
+.sfl-block-tools:focus-within > *,
+.sfl-block-tools:has(.sfl-menu-list:not([hidden])) > * { opacity: 1; }
 @media (hover: none) {
-  .sfl-block-tools { opacity: 0.6; }
+  .sfl-block-tools > :not(.sfl-edited-tag) { opacity: 0.6; }
 }
-/* While the editor is open, the tools are at the right end of its bar. */
-.sfl-bar > .sfl-block-tools { position: static; opacity: 1; }
+.sfl-edited-tag {
+  font: inherit;
+  font-size: 0.75rem;
+  padding: 0.15em 0.6em;
+  border: 0;
+  border-radius: 999px;
+  background: #f7e6e6;
+  color: var(--sf-accent, #a00);
+  cursor: pointer;
+}
+.sfl-edited-tag:hover { background: #f0d2d2; }
+.sfl-edited-tag[hidden] { display: none; }
+/* While the editor is open, the tools are at the right end of its bar,
+   where the editor itself shows the reader's version. */
+.sfl-bar > .sfl-block-tools { position: static; }
+.sfl-bar > .sfl-block-tools > * { opacity: 1; }
+.sfl-bar .sfl-edited-tag { display: none; }
 
 /* The book's code is hidden while the editor holds it. */
 .sfl-replaced { display: none !important; }
@@ -249,6 +265,33 @@ a.sfl-try:hover { color: white; }
 .sfl-hint { color: #8c8c88; }
 .sfl-status { color: #55554f; }
 .sfl-solved .sfl-status { color: #2e7d32; font-weight: 600; }
+
+/* At the top of the editor: the reader's edits above that the check
+   includes, and errors Lean found in them. */
+.sfl-above[hidden] { display: none; }
+.sfl-above { border-bottom: 1px solid var(--sf-rule, #dcdcda); }
+.sfl-above-text { margin-bottom: 0.3em; }
+.sfl-above-note {
+  padding: 0.35em 0.6em;
+  font-size: 0.85rem;
+  color: #55554f;
+  background: #fbfbf9;
+}
+.sfl-above .sfl-message > div { flex: 1; min-width: 0; }
+.sfl-above-actions { display: flex; flex-wrap: wrap; gap: 1em; margin-top: 0.35em; }
+.sfl-above-actions:empty { display: none; }
+.sfl-above-reset { margin-left: auto; }
+.sfl-above-note .sfl-above-actions { display: inline-flex; margin: 0 0 0 1em; }
+.sfl-link {
+  font: inherit;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--sf-link, #7a1a1a);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.sfl-link code { text-decoration: underline; }
 
 .sfl-messages:empty { display: none; }
 .sfl-messages {
