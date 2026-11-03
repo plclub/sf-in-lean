@@ -1297,7 +1297,10 @@ theorem substi_correct (s : Tm) (x : String) (t t' : Tm) :
       induction h <;> simp_all
 ```
 
-:::gradeTheorem "3" substi_correct
+:::grade
+```
+GRADE_MANUAL 3: substi_correct
+```
 :::
 :::::
 
