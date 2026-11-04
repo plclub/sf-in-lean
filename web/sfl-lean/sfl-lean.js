@@ -26,9 +26,10 @@
 // The reader's own code takes the place of the book's there, as it would in a
 // downloaded .lean file worked from top to bottom: their solution of each
 // earlier exercise once Lean accepts it, and their edit of each earlier block
-// on this page as it stands.  An edited block is tagged "Edited" on the page,
-// and an editor below it says which edits its check includes and which of
-// them Lean found errors in, with buttons that go to an edit or reset it.
+// on this page as it stands.  An edited block shows the reader's version on
+// the page, as a diff against the book's, tagged "Edited", and an editor
+// below it says which edits its check includes and which of them Lean found
+// errors in, with buttons that go to an edit or reset it.
 //
 // Settings come from the attributes of this script's tag:
 //   data-runtime   base URL of lean.js, lean.wasm, lean-lib-files.json and
@@ -2198,34 +2199,138 @@
     return tools;
   }
 
+  // The lines of `before` and `after` as a diff, in the order of the code:
+  // each line kept, removed (`del`) or added (`add`), with the removed lines
+  // of a change ahead of the added ones.
+  function diffLines(before, after) {
+    const n = before.length;
+    const m = after.length;
+    // common[i][j]: how many lines `before` from i and `after` from j share.
+    const common = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+    for (let i = n - 1; i >= 0; i--) {
+      for (let j = m - 1; j >= 0; j--) {
+        common[i][j] = before[i] === after[j] ? common[i + 1][j + 1] + 1 : Math.max(common[i + 1][j], common[i][j + 1]);
+      }
+    }
+    const out = [];
+    let i = 0;
+    let j = 0;
+    while (i < n || j < m) {
+      if (i < n && j < m && before[i] === after[j]) out.push({ op: 'same', i: i++, j: j++ });
+      else if (j >= m || (i < n && common[i + 1][j] >= common[i][j + 1])) out.push({ op: 'del', i: i++ });
+      else out.push({ op: 'add', j: j++ });
+    }
+    return out;
+  }
+
+  // Where a line the reader changed differs from the book's: the span of
+  // each between their common start and end, widened to whole words, so
+  // that `Day.monday` against `Day.friday` marks `monday` and `friday`.
+  function changedSpans(a, b) {
+    let start = 0;
+    while (start < a.length && start < b.length && a[start] === b[start]) start++;
+    let end = 0;
+    while (end < a.length - start && end < b.length - start && a[a.length - 1 - end] === b[b.length - 1 - end]) end++;
+    if (!start && !end) return null;
+    const word = (c) => c !== undefined && /[\p{L}\p{N}_'!?]/u.test(c);
+    while (start > 0 && word(a[start - 1]) && (word(a[start]) || word(b[start]))) start--;
+    while (end > 0 && word(a[a.length - end]) && (word(a[a.length - end - 1]) || word(b[b.length - end - 1]))) end--;
+    return [[start, a.length - end], [start, b.length - end]];
+  }
+
+  // A line's highlighted pieces, with the characters in `span` marked.
+  function diffLineCode(pieces, span) {
+    const [from, to] = span || [0, 0];
+    const out = [];
+    let pos = 0;
+    for (const [cls, t] of pieces) {
+      for (const [lo, hi, changed] of [[0, from, false], [from, to, true], [to, Infinity, false]]) {
+        const part = t.slice(Math.max(lo - pos, 0), Math.max(hi - pos, 0));
+        if (!part) continue;
+        const token = cls ? el('span', { class: 'sfl-tok-' + cls }, part) : part;
+        out.push(changed ? el('span', { class: 'sfl-diff-word' }, token) : token);
+      }
+      pos += t.length;
+    }
+    return out;
+  }
+
+  // The reader's version of a block against the book's, as a diff: a line
+  // they removed in red with "−", one they added in green with "+", and in a
+  // changed line the words that changed in a darker shade.
+  function diffRows(book, edit) {
+    const lines = (text) => text.replace(/\n+$/, '');
+    const before = lines(book).split('\n');
+    const after = lines(edit).split('\n');
+    const beforeCode = highlight(lines(book));
+    const afterCode = highlight(lines(edit));
+    const ops = diffLines(before, after);
+    // A run of removed lines followed by added ones is a change: its lines
+    // are paired in order to mark the words that changed.
+    const spans = new Map();
+    for (let k = 0; k < ops.length;) {
+      const dels = [];
+      const adds = [];
+      while (k < ops.length && ops[k].op === 'del') dels.push(ops[k++]);
+      while (k < ops.length && ops[k].op === 'add') adds.push(ops[k++]);
+      for (let p = 0; p < Math.min(dels.length, adds.length); p++) {
+        const pair = changedSpans(before[dels[p].i], after[adds[p].j]);
+        if (pair) spans.set(dels[p], pair[0]).set(adds[p], pair[1]);
+      }
+      if (!dels.length && !adds.length) k++;
+    }
+    return ops.map((o) => {
+      const [mark, label, code] = o.op === 'same' ? [' ', null, afterCode[o.j]]
+        : o.op === 'del' ? ['−', 'Removed', beforeCode[o.i]] : ['+', 'Added', afterCode[o.j]];
+      return el('div', { class: 'sfl-diff-line sfl-diff-' + o.op },
+        el('span', { class: 'sfl-diff-mark', 'aria-hidden': 'true' }, mark),
+        label && el('span', { class: 'sfl-visually-hidden' }, label + ': '),
+        ...diffLineCode(code, spans.get(o)));
+    });
+  }
+
   // A block's tools sit in its top right corner, shown while the pointer is
   // on the block or they have the focus.  The block is hidden while the
   // editor is open, so they move to the editor's bar.  So is the output Verso
   // shows under the block, which is about the book's code.
+  //
+  // Once the reader has edited the block, the closed block shows their
+  // version as a diff against the book's, and the tools move to it.  Verso's
+  // output stays hidden then, since it is what Lean said about the book's
+  // code; the editor shows what Lean says about the reader's.
   function attachBlock(data, block, node, runsHere) {
-    const hidden = [node];
+    const outputs = [];
     for (let next = node.nextElementSibling; next && next.matches('.lean-output'); next = next.nextElementSibling) {
-      hidden.push(next);
+      outputs.push(next);
     }
+    const diff = el('div', { class: 'hl lean block sfl-editable sfl-diff', hidden: '' });
+    node.before(diff);
     const tools = toolbar(data, block, runsHere, 'Edit', () => {
-      const editor = new ExerciseEditor(data, block, node.parentElement, hidden);
+      const editor = new ExerciseEditor(data, block, node.parentElement, [diff, node, ...outputs]);
       editor.open();
       editor.bar.append(tools.node);
       return editor;
-    }, () => node.append(tools.node));
-    // The page shows the book's code; the tag says the reader's version is
-    // what the code after it is checked with.
+    }, () => tools.update());
+    // The tag says the reader's version is what the code after it is checked
+    // with.
     const tag = el('button', {
       class: 'sfl-edited-tag', type: 'button', onclick: () => tools.show(),
       title: block.standalone ? 'You changed this code.'
         : 'You changed this code. The code after it is checked with your version.',
     }, 'Edited');
-    tools.update = () => { tag.hidden = !isEdited(data, block); };
-    tools.update();
+    tools.update = () => {
+      const draft = blockDraft(data.chapter, block);
+      tag.hidden = draft == null;
+      if (tools.editor()) return;
+      diff.hidden = draft == null;
+      for (const n of [node, ...outputs]) n.classList.toggle('sfl-superseded', draft != null);
+      diff.replaceChildren(...(draft == null ? [] : diffRows(block.code, draft)));
+      (draft == null ? node : diff).append(tools.node);
+    };
     tools.node.prepend(tag);
     tools.node.classList.add('sfl-block-tools');
     node.classList.add('sfl-editable');
-    node.append(tools.node);
+    tools.update();
     return tools;
   }
 

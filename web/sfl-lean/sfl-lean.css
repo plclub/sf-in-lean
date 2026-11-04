@@ -81,7 +81,9 @@ a.sfl-try:hover { color: white; }
 /* A code block from the text holds its tools in its top right corner, out of
    sight until the pointer is on the block, a menu is open, or the keyboard
    reaches them.  Without a pointer to hover with, they stay in sight, faint.
-   The "Edited" tag on a block the reader changed is always in sight. */
+   A block the reader changed, shown as a diff, keeps all of them in sight:
+   its "Edited" tag sits in the corner, and the tools out of sight would
+   still take up their space and leave the tag floating beside them. */
 .hl.lean.block.sfl-editable { position: relative; }
 .sfl-block-tools {
   position: absolute;
@@ -98,6 +100,7 @@ a.sfl-try:hover { color: white; }
 @media (hover: none) {
   .sfl-block-tools > :not(.sfl-edited-tag) { opacity: 0.6; }
 }
+.sfl-diff > .sfl-block-tools > * { opacity: 1; }
 .sfl-edited-tag {
   font: inherit;
   font-size: 0.75rem;
@@ -118,6 +121,40 @@ a.sfl-try:hover { color: white; }
 
 /* The book's code is hidden while the editor holds it. */
 .sfl-replaced { display: none !important; }
+/* So are the book's code and Verso's output for it while the closed block
+   shows the reader's version. */
+.sfl-superseded { display: none !important; }
+
+/* An edited block, closed: the reader's version as a diff against the
+   book's, in GitHub's colors.  The rows share one grid column as wide as
+   the longest line, so each row's color runs the full width of the block,
+   out over its padding, even when the block scrolls sideways.  The book
+   styles `.hl.lean.block` itself, so these rules name it too. */
+.hl.lean.block.sfl-diff {
+  display: grid;
+  grid-template-columns: minmax(max-content, 1fr);
+  font-family: var(--verso-code-font-family);
+  font-variant-ligatures: none;
+  white-space: pre;
+  overflow-x: auto;
+}
+.hl.lean.block.sfl-diff[hidden] { display: none; }
+.sfl-diff-line { margin: 0 -0.9em; padding: 0 0.9em 0 0.3em; }
+.sfl-diff-mark { display: inline-block; width: 2ch; user-select: none; }
+.sfl-diff-del { background: #ffebe9; }
+.sfl-diff-del .sfl-diff-mark { color: #cf222e; }
+.sfl-diff-del .sfl-diff-word { background: #ffcecb; border-radius: 2px; }
+.sfl-diff-add { background: #e6ffec; }
+.sfl-diff-add .sfl-diff-mark { color: #1a7f37; }
+.sfl-diff-add .sfl-diff-word { background: #abf2bc; border-radius: 2px; }
+.sfl-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  user-select: none;
+}
 
 .sfl-editor {
   margin: 0.6em 0;
