@@ -180,19 +180,16 @@
   }
 
   // The whole file, and the line at which the reader's code starts.  A block
-  // from the text comes as an exercise does, with `block` set.  With
-  // `useAnswers`, the reader's code takes the place of the book's above it,
-  // and `spliced` gives the lines of the context where each of this
-  // chapter's pieces is.
-  function compose(data, exercise, code, { useAnswers, banner }) {
+  // from the text comes as an exercise does, with `block` set.  The reader's
+  // code takes the place of the book's above it, and `spliced` gives the
+  // lines of the context where each of this chapter's pieces is.
+  function compose(data, exercise, code, { banner } = {}) {
     const lib = data.library.map((c) => {
       const chapter = c.module.split('.').slice(1).join('.');
-      const sk = useAnswers ? withReaderCode(c.skeleton, readerPieces(chapter, c.exercises)).text : c.skeleton;
+      const sk = withReaderCode(c.skeleton, readerPieces(chapter, c.exercises)).text;
       return `-- ${c.module}, with proofs omitted\nsection\n\n${sk}end\n\n`;
     }).join('');
-    const own = useAnswers
-      ? withReaderCode(data.skeleton, readerPieces(data.chapter, data.exercises, data.blocks), exercise)
-      : { text: data.skeleton.slice(0, exercise.context), spliced: [] };
+    const own = withReaderCode(data.skeleton, readerPieces(data.chapter, data.exercises, data.blocks), exercise);
     let before = header(data) + '\n' + lib +
       `-- ${data.module}, up to this ${exercise.block ? 'code' : 'exercise'}, with proofs omitted\n` +
       'section\n\n';
@@ -282,14 +279,18 @@
     return offset;
   }
 
+  // The file the playground link and the download hold: the reader's code as
+  // they last left it in the editor, which saves it as they type, in the
+  // context the editor checks it in, so that Lean there says what it says here.
   function playgroundFile(data, exercise) {
-    return compose(data, exercise, exercise.code, {
-      useAnswers: false,
+    const code = load('draft:' + keyOf(data.chapter, exercise)) ?? exercise.code;
+    return compose(data, exercise, code, {
       banner: (line) =>
         `-- Software Foundations in Lean: ${data.chapter}, ` +
         (exercise.block ? `code from the text (${exercise.name}).\n` : `exercise ${exercise.name}.\n`) +
         `-- The ${exercise.block ? 'code' : 'exercise'} is at the end of this file, from line ${line}.  Everything\n` +
-        `-- above it is the book's earlier material, with proofs omitted.\n\n`,
+        `-- above it is the book's earlier material, with proofs omitted, and with\n` +
+        `-- your code where you solved an earlier exercise or edited a block above it.\n\n`,
     }).text;
   }
 
@@ -986,7 +987,7 @@
 
     // The file Lean checks this code in; see compose.
     composed(code) {
-      return compose(this.data, this.exercise, code, { useAnswers: true });
+      return compose(this.data, this.exercise, code);
     }
 
     context(code) {
