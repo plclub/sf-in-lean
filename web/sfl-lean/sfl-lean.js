@@ -116,6 +116,19 @@
     return keys.get(item);
   }
 
+  // Code that differs from another only in blank lines or spaces at its end
+  // is the same code: deleting a line the reader added often leaves its line
+  // break behind.
+  function sameCode(a, b) {
+    return a.trimEnd() === b.trimEnd();
+  }
+
+  // The reader's edit of a block, or null where they have none.
+  function blockDraft(chapter, block) {
+    const text = load('draft:' + keyOf(chapter, block));
+    return text != null && !sameCode(text, block.code) ? text : null;
+  }
+
   // What the reader wrote in place of a chapter's code, in the chapter's
   // order: their accepted solutions of exercises and their edits of blocks.
   // The body of an `sf_expect_failure_in` or an `sf_experiment` is checked on
@@ -127,7 +140,7 @@
       if (text != null) out.push({ item: e, text: text.trimEnd() });
     }
     for (const b of blocks) {
-      const text = !b.standalone && load('draft:' + keyOf(chapter, b));
+      const text = !b.standalone && blockDraft(chapter, b);
       if (text) out.push({ item: b, text: text.trimEnd() });
     }
     return out.sort((a, b) => a.item.context - b.item.context || a.item.studentLine - b.item.studentLine);
@@ -335,12 +348,15 @@
         // completions); older ones only compile.
         this.queries = !!msg.queries;
         this.setStatus('Lean is ready.');
+        rechecks.next();
       } else if (msg.type === 'failed') {
         this.fail(msg.error);
       } else if (msg.type === 'answer') {
         const resolve = this.pending.get(msg.id);
         this.pending.delete(msg.id);
         if (resolve) resolve(msg);
+        // After the editor that asked has sent what it asks next, if anything.
+        setTimeout(() => rechecks.next());
       }
     },
 
@@ -855,6 +871,9 @@
       this.squiggles = [];
       this.completion = null;
       this.completionSeq = 0;
+      // How many times the code above changed: a check's answer is dropped if
+      // it changed again while Lean worked.
+      this.aboveChanges = 0;
 
       this.textarea.addEventListener('input', (e) => this.onInput(e));
       this.textarea.addEventListener('keydown', (e) => this.onKey(e));
@@ -887,12 +906,15 @@
       });
       this.root.addEventListener('focusin', () => {
         this.updateInfoview();
-        if (this.stale) {
-          this.stale = false;
-          this.scheduleCheck(0);
-        }
+        if (this.stale || rechecks.waiting.has(this)) this.recheck();
       });
-      this.root.addEventListener('focusout', () => setTimeout(() => this.updateInfoview()));
+      this.root.addEventListener('focusout', () => setTimeout(() => {
+        this.updateInfoview();
+        if (!this.root.contains(document.activeElement)) {
+          rechecks.hold();
+          recheckStale();
+        }
+      }));
       this.onLean = () => this.showStatus();
       lean.listeners.add(this.onLean);
       loadAbbreviations();
@@ -903,6 +925,7 @@
       infoview.editors.add(this);
       const anchor = this.hidden[this.hidden.length - 1] || this.box.lastElementChild;
       anchor.after(this.root);
+      rechecks.watch(this);
       for (const block of this.hidden) block.classList.add('sfl-replaced');
       this.render();
       this.showStatus();
@@ -935,10 +958,12 @@
       this.root.remove();
       lean.listeners.delete(this.onLean);
       infoview.editors.delete(this);
+      rechecks.forget(this);
       if (infoview.owner === this) {
         infoview.owner = null;
         infoview.node.hidden = true;
       }
+      recheckStale();
     }
 
     reset() {
@@ -967,22 +992,38 @@
       return this.composed(code).context;
     }
 
-    // The code above this changed, and with it what this code is checked
-    // in.  Checking again at once would make Lean check the other editor's
-    // context and this one's in turn while the reader types there, so this
-    // waits for the reader to come back.
+    // The reader is changing the code above this, and with it what this code
+    // is checked in.  Checking again at each pause in their typing would make
+    // Lean check the other editor's context and this one's in turn, so this
+    // waits until they leave that editor or come here.
     markStale() {
       this.stale = true;
+      this.aboveChanges++;
+      rechecks.waiting.delete(this);
       this.setPending(true);
-      this.status.textContent = 'The code above changed. Click here to check again.';
-      this.reported = true;
+      this.say('The code above is being edited. This checks again when you leave that editor, or click here.');
     }
 
-    // Check again now, as the code above changed; until the check is back,
-    // its verdict is greyed as it is while the reader types.
+    // Check again, as the code above changed: at once if the reader is here,
+    // and otherwise when Lean gets to it (see rechecks).  Until the check is
+    // back, its verdict is greyed as it is while the reader types.
     recheck() {
+      this.stale = false;
+      this.aboveChanges++;
       this.setPending(true);
-      this.scheduleCheck(0);
+      if (this.root.contains(document.activeElement)) {
+        rechecks.waiting.delete(this);
+        this.say('Checking again with the code above…');
+        this.scheduleCheck(0);
+      } else {
+        rechecks.add(this);
+      }
+    }
+
+    // Put `text` in the status line, where it stays until a check reports.
+    say(text) {
+      this.status.textContent = text;
+      this.reported = true;
     }
 
     // `offset` in the text as a 1-based line, the editor's column in it, and
@@ -1000,7 +1041,8 @@
       // one edit, as two input events.
       if (this.textarea.value === this.handledValue) return;
       this.handledValue = this.textarea.value;
-      save('draft:' + this.key, this.textarea.value === this.exercise.code ? null : this.textarea.value);
+      rechecks.hold();
+      save('draft:' + this.key, sameCode(this.textarea.value, this.exercise.code) ? null : this.textarea.value);
       if (this.exercise.block) readerCodeChanged(this.exercise);
       // A run's list of messages was about the code before this edit.  The
       // verdict and the goal view stay until the next check replaces them,
@@ -1167,7 +1209,9 @@
 
     // Check the code (the worker skips this when it is unchanged), mark
     // Lean's messages in it, and show what Lean has at the cursor.  One check
-    // runs at a time; one asked for meanwhile runs after it.
+    // runs at a time; one asked for meanwhile runs after it.  An answer about
+    // code that has changed since, here or above, is dropped, as the check
+    // that follows the change replaces it.
     async check() {
       if (this.closed) return;
       if (lean.state !== 'ready') {
@@ -1182,11 +1226,12 @@
       if (this.checking) { this.checkAgain = true; return; }
       this.checking = true;
       const code = this.textarea.value;
+      const changes = this.aboveChanges;
       const cursor = this.position(this.textarea.selectionStart, code);
       const composed = this.composed(code);
       const answer = await lean.info(code, composed.context, cursor.line, cursor.column);
       this.checking = false;
-      if (code === this.textarea.value && !this.closed) {
+      if (code === this.textarea.value && changes === this.aboveChanges && !this.closed) {
         clearTimeout(this.pendingTimer);
         this.setPending(false);
         if (answer.result) {
@@ -1842,7 +1887,7 @@
     // until Reset.
     judge(described, code, timing = '') {
       const block = this.exercise.block;
-      const { solved, text } = verdict(described, block, block && !this.exercise.standalone && code !== this.exercise.code);
+      const { solved, text } = verdict(described, block, block && !this.exercise.standalone && !sameCode(code, this.exercise.code));
       this.reported = true;
       this.status.textContent = text + timing;
       this.root.classList.toggle('sfl-solved', solved);
@@ -1873,7 +1918,7 @@
   }
 
   function isEdited(data, block) {
-    return load('draft:' + keyOf(data.chapter, block)) != null;
+    return blockDraft(data.chapter, block) != null;
   }
 
   function editedBlocks(data) {
@@ -1882,18 +1927,112 @@
 
   // The reader's code for `item` changed or was reset: its tag shows whether
   // it is edited now, and the open editors after it, which are checked with
-  // it, check again: at once where the reader is, and elsewhere once the
-  // reader comes back to them.
+  // it, check again.  While the reader types in the editor of `item`, they
+  // wait until the reader leaves it; a change made anywhere else, a reset
+  // from a menu say, has them check again as soon as Lean gets to them.
   function readerCodeChanged(item) {
     const tools = toolsByKey.get(reopenKey(item));
     if (tools) tools.update();
     if (item.standalone) return;
+    const source = tools && tools.editor();
+    const typing = source && source.textarea === document.activeElement;
     for (const editor of infoview.editors) {
       if (editor.exercise.studentLine <= item.studentLine) continue;
-      if (editor.root.contains(document.activeElement)) editor.recheck();
-      else editor.markStale();
+      if (typing) editor.markStale();
+      else editor.recheck();
     }
   }
+
+  // The editors that waited while the reader typed above them check again,
+  // except those below the editor the reader is typing in now.
+  function recheckStale() {
+    const here = [...infoview.editors].find((e) => e.textarea === document.activeElement);
+    for (const editor of infoview.editors) {
+      if (editor.stale && !(here && here.exercise.studentLine < editor.exercise.studentLine)) editor.recheck();
+    }
+  }
+
+  // Editors whose code above changed, waiting for Lean to check them again.
+  // Lean checks one thing at a time and keeps the compiled code above of only
+  // the last two editors it checked, so each of these usually checks the
+  // chapter up to its editor anew: about a second in LF, six in Hoare2.  Sent to the worker all at once, they
+  // would hold up whatever the reader asks next behind all of them, and they
+  // could not be withdrawn when the code above changed again.  So they wait
+  // here and go to Lean one at a time, when it has nothing else to do and the
+  // reader has not typed or left an editor for a moment, the one nearest the
+  // middle of the screen first.  One off screen waits until it is scrolled
+  // into view, as the reader may change the code above again before then.
+  const rechecks = {
+    waiting: new Set(),
+    running: null,
+    quietUntil: 0,
+    timer: null,
+    onScreen: new WeakSet(),
+    observer: null,
+
+    watch(editor) {
+      if (!this.observer) {
+        this.observer = new IntersectionObserver((entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) this.onScreen.add(entry.target);
+            else this.onScreen.delete(entry.target);
+          }
+          this.next();
+        });
+      }
+      this.observer.observe(editor.root);
+    },
+
+    forget(editor) {
+      this.waiting.delete(editor);
+      if (this.observer) this.observer.unobserve(editor.root);
+    },
+
+    add(editor) {
+      this.waiting.add(editor);
+      editor.say('Waiting to check again with the code above. Lean checks one editor at a time.');
+      this.next();
+    },
+
+    // The reader typed, or left an editor and may go back to it: Lean stays
+    // free for them a moment longer before taking on another editor.
+    hold() {
+      this.quietUntil = performance.now() + 1000;
+      if (this.waiting.size) this.next();
+    },
+
+    next() {
+      clearTimeout(this.timer);
+      if (this.running || !this.waiting.size || lean.state !== 'ready' || lean.pending.size) return;
+      const wait = this.quietUntil - performance.now();
+      if (wait > 0) {
+        this.timer = setTimeout(() => this.next(), wait);
+        return;
+      }
+      const middle = innerHeight / 2;
+      let nearest = null;
+      let nearestDistance = Infinity;
+      for (const editor of this.waiting) {
+        if (!this.onScreen.has(editor.root)) continue;
+        const box = editor.root.getBoundingClientRect();
+        const distance = Math.max(box.top - middle, middle - box.bottom, 0);
+        if (distance < nearestDistance) {
+          nearest = editor;
+          nearestDistance = distance;
+        }
+      }
+      if (nearest) this.run(nearest);
+    },
+
+    async run(editor) {
+      this.waiting.delete(editor);
+      this.running = editor;
+      editor.say('Checking again with the code above…');
+      await editor.check();
+      this.running = null;
+      this.next();
+    },
+  };
 
   // Open the editor of an exercise or block, if it is not open, and take the
   // reader there.
