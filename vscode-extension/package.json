@@ -1,0 +1,22 @@
+{
+  "name": "sf-in-lean",
+  "displayName": "[placeholder] Software Foundations in Lean",
+  "description": "[placeholder] Opens the place in your copy of a chapter that you clicked in the HTML book.",
+  "publisher": "plclub",
+  "version": "0.0.1",
+  "private": true,
+  "license": "Apache-2.0",
+  "repository": { "type": "git", "url": "https://github.com/plclub/sf-in-lean" },
+  "engines": { "vscode": "^1.75.0" },
+  "main": "./extension.js",
+  "activationEvents": ["onUri"],
+  "contributes": {
+    "commands": [
+      {
+        "command": "sfInLean.forgetFolders",
+        "title": "[placeholder] Forget where my copies of the volumes are",
+        "category": "SF in Lean"
+      }
+    ]
+  }
+}

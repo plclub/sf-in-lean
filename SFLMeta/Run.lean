@@ -6,6 +6,7 @@ import VersoManual
 -- with "No block traversal implementation found".  (This module is deliberately
 -- *not* part of the `SFLMeta` aggregate, so importing it back is not a cycle.)
 import SFLMeta
+import SFLMeta.EditorLinks
 
 open Verso Genre Manual
 
@@ -15,13 +16,17 @@ namespace SFLMeta
 volume slug (`lf`/`hl`/`ts`); `mode` is
 `student`/`solutions`/`terse`/`grading`; `stamp` is the source-provenance stamp,
 which `extraContents` puts at the foot of every page and the saver repeats as a
-comment at the end of every generated `.lean` file. -/
-def mkConfig (vol mode stamp : String) : RenderConfig where
+comment at the end of every generated `.lean` file.  `editorLinks` is the page
+script for the "open in editor" buttons, which `extraJsFiles` and `extraHead`
+install (`SFLMeta/EditorLinks.lean`). -/
+def mkConfig (vol mode stamp : String) (editorLinks : JsFile) : RenderConfig where
   emitTeX := false
   emitHtmlSingle := .no
   emitHtmlMulti := .immediately
   htmlDepth := 2
   extraCss := {SFLMeta.sfTheme}
+  extraJsFiles := {editorLinks}
+  extraHead := #[volumeMetaHtml vol]
   extraContents := #[buildStampHtml stamp]
   destination := s!"_out/{vol}/{mode}"
 
@@ -64,7 +69,7 @@ def runVolume (vol : String) (doc : Verso.Doc.Part Manual)
       | .solutions => Save.emitSavedSolutions vol.toUpper stamp crossVol
       | .terse => Save.emitSavedTerse vol.toUpper stamp crossVol
       | .grading => Save.emitSavedGrading vol.toUpper stamp crossVol
-    let config := mkConfig vol mode stamp
+    let config := mkConfig vol mode stamp (← editorLinksJs)
     let rc ← manualMain doc (options := rest) (config := config) (extraSteps := [extraStep])
     if rc == 0 then
       renameHtmlDir config.destination
