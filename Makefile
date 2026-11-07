@@ -58,6 +58,12 @@ $(eval $(call VOLUME_template,lf))
 $(eval $(call VOLUME_template,hl))
 $(eval $(call VOLUME_template,ts))
 
+# References in HL and TS use the matching LF build's xref.json.
+hl-student ts-student: lf-student
+hl-solutions ts-solutions: lf-solutions
+hl-terse ts-terse: lf-terse
+hl-grading ts-grading: lf-grading
+
 # ── Top-level targets ─────────────────────────────────────────────────────────
 
 .PHONY: all student solutions terse grading grading-tools grading-check-only grading-check serve clean ensure-build-symlink book-build style style-check style-checklist release
