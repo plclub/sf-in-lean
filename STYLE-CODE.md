@@ -48,6 +48,7 @@ kept in sync.
 | `Poly`    | `{...}` implicit arguments, `_` holes, `@` explicit application |
 | `Tactics` | `let ⟨...⟩ := ...` |
 | `Logic`   | rewriting by `↔` |
+| `TS/Stlc` | `..` (fill remaining explicit arguments with `_`) |
 
 #### Notes
 
