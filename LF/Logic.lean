@@ -1792,9 +1792,8 @@ leaving a deeper exploration for the optional chapter
 `ProofObjects`.
 ::::
 
-:::dev "Daniel Sainati (@dsainati1)" PotentialImprovement
-Add this text back later if and when this chapter actually exists:
- and `IndPrinciples`.
+:::dev "Roger Burtonpatel (@rogerburtonpatel)" PotentialImprovement
+When `IndPrinciples` exists, add a pointer to it here.
 :::
 
 ::::terse
