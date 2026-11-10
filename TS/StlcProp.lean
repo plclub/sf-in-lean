@@ -937,7 +937,7 @@ theorem type_soundness (t t' : Tm) (τ : Ty)
 :::
 
 ::::::full
-:::::exercise (rating := 3) (name := "unique_types")
+:::::exercise (rating := 3) (name := "unique_types") (optional := true)
 Another nice property of the STLC is that types are unique: a
 given term (in a given context) has at most one type.
 
@@ -2271,7 +2271,7 @@ theorem weakening (Γ Γ' : Context) (t : Tm) (τ : Ty)
         exact hi
 ```
 
-:::gradeTheorem "6" StlcArith.weakening
+:::gradeTheorem "4" StlcArith.weakening
 :::
 
 The two helper lemmas that weakening is for are also proved just as they were
@@ -2466,7 +2466,7 @@ theorem preservation (t t' : Tm) (τ : Ty)
       | if0Zero => exact h₂
       | if0Nonzero => exact h₃
 ```
-:::gradeTheorem "6" StlcArith.preservation
+:::gradeTheorem "4" StlcArith.preservation
 :::
 :::::
 
@@ -2596,7 +2596,7 @@ theorem progress (t : Tm) (τ : Ty) (hτ : <{ ∅ ⊢ t ⦂ τ }>) :
         apply Step.if0Step
         assumption
 ```
-:::gradeTheorem "6" StlcArith.progress
+:::gradeTheorem "4" StlcArith.progress
 :::
 :::::
 
