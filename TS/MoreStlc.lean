@@ -77,7 +77,7 @@ often increases readability.
 Syntax:
 
 ```bnf
-t ::= "..."                 ("other forms unchanged")
+t ::= "..."
     | "let" x "=" t "in" t  ("let-binding") ;
 ```
 
@@ -114,15 +114,15 @@ the definition to emphasize the common pattern.
 
 In Lean, there are two ways of extracting the components of a pair:
 _pattern matching_ and the projection operators `fst` and `snd`.
-Just for fun, let's do our pairs the latter way.  For
-example, here's how we'd write a function that takes a pair of
-numbers and returns the pair of their sum and difference:
+We'll do our pairs the latter way.  For example, here's how we'd
+write a function that takes a pair of numbers and returns the pair of
+their sum and difference:
 
-```display
-       λX : Nat × Nat.
-          let Sum = fst X + snd X in
-          let Diff = fst X - snd X in
-          (Sum, Diff)
+```display +centered
+λX : Nat × Nat.
+   let Sum = fst X + snd X in
+   let Diff = fst X - snd X in
+   (Sum, Diff)
 ```
 
 ::::full
@@ -131,20 +131,28 @@ adding two new forms of term — pairing, written `(t₁,t₂)`, and
 projection, written `fst t` for the first projection from `t` and
 `snd t` for the second projection — plus one new type constructor,
 `τ₁ × τ₂`, called the _product_ of `τ₁` and `τ₂`.
+
+We present a grammar with these changes to terms `t` and types `τ` below.
+Along with these, we also present a change to the definition
+of _values_, characterized as a grammar on the metavariable `v`.
+This isn't a real, separate syntactic category — a term is a
+value because the `IsValue` predicate (defined below) accepts it,
+but writing out a `v`-grammar alongside the term grammar
+is a common way to convey which terms `IsValue` accepts.
 ::::
 
 Syntax:
 
 ```bnf
-t ::= "..."            ("other forms unchanged")
+t ::= "..."
     | "(" t "," t ")"  ("pair")
     | "fst" t          ("first projection")
     | "snd" t          ("second projection") ;
 
-v ::= "..."            ("other forms unchanged")
+v ::= "..."
     | "(" v "," v ")"  ("pair value") ;
 
-τ ::= "..."      ("other forms unchanged")
+τ ::= "..."
     | τ "×" τ    ("product type") ;
 ```
 
@@ -244,13 +252,13 @@ the _only_ possible result of reducing an expression of type `Unit`.
 Syntax:
 
 ```bnf
-t ::= "..."   ("other forms unchanged")
+t ::= "..."
     | "unit"  ("unit") ;
 
-v ::= "..."   ("other forms unchanged")
+v ::= "..."
     | "unit"  ("unit value") ;
 
-τ ::= "..."   ("other forms unchanged")
+τ ::= "..."
     | "Unit"  ("unit type") ;
 ```
 
@@ -299,8 +307,8 @@ These are specific examples of a binary _sum type_ (sometimes called
 a _disjoint union_), which describes a set of values drawn from
 one of two given types, e.g.:
 
-```display
-       Nat + Bool
+```display +centered
+Nat + Bool
 ```
 
 ::::terse
@@ -308,9 +316,9 @@ We create elements of these types by tagging elements of the
 component types, telling on which side of the sum we are putting
 them. E.g.,
 
-```display
-   inl 42   ⦂ Nat + Bool
-   inr true ⦂ Nat + Bool
+```display +centered
+inl 42   ⦂ Nat + Bool
+inr true ⦂ Nat + Bool
 ```
 ::::
 
@@ -321,9 +329,9 @@ is an element of `Nat + Bool`; similarly, if `b` is a `Bool` then
 `inr b` is a `Nat + Bool`.  The names of the tags `inl` and `inr`
 arise from thinking of them as functions
 
-```display
-       inl ⦂ Nat  → Nat + Bool
-       inr ⦂ Bool → Nat + Bool
+```display +centered
+inl ⦂ Nat  → Nat + Bool
+inr ⦂ Bool → Nat + Bool
 ```
 
 that "inject" elements of `Nat` or `Bool` into the left and right
@@ -340,14 +348,14 @@ elements of `τ₁` tagged with the token `inl`, plus the elements of
 (As we've seen in Lean programming, one important use of sums is
 signaling errors:
 
-```display
-      Div ⦂ Nat → Nat → (Nat + Unit)
-      Div =
-        λX:Nat. λY:Nat,
-          if iszero Y then
-            inr unit
-          else
-            inl ...
+```display +centered
+Div ⦂ Nat → Nat → (Nat + Unit)
+Div =
+  λX:Nat. λY:Nat,
+    if iszero Y then
+      inr unit
+    else
+      inl ...
 ```
 
 ::::full
@@ -363,13 +371,13 @@ them. For example, the following procedure converts a `Nat + Bool` into a `Nat`:
 Values of sum type are "destructed" by case analysis:
 ::::
 
-```display
-    GetNat ⦂ Nat + Bool → Nat
-    GetNat =
-      λX:Nat + Bool,
-        case X of
-          inl N => N
-        | inr B => if B then 1 else 0
+```display +centered
+GetNat ⦂ Nat + Bool → Nat
+GetNat =
+  λX:Nat + Bool,
+    case X of
+      inl N => N
+    | inr B => if B then 1 else 0
 ```
 
 More formally...
@@ -377,39 +385,42 @@ More formally...
 Syntax:
 
 ```bnf
-t ::= "..."                                           ("other forms unchanged")
+t ::= "..."
     | "inl" τ t                                        ("tagging (left)")
     | "inr" τ t                                        ("tagging (right)")
     | "case" t "of" "inl" x "=>" t "|" "inr" x "=>" t   ("case analysis") ;
 
-v ::= "..."     ("other forms unchanged")
+v ::= "..."
     | "inl" τ v  ("tagged value (left)")
     | "inr" τ v  ("tagged value (right)") ;
 
-τ ::= "..."    ("other forms unchanged")
+τ ::= "..."
     | τ "+" τ  ("sum type") ;
 ```
 
 Reduction:
 
 ```display +centered
-                                   t₁ ⟶ t₁'
-                            ----------------------                              (inl)
-                            inl τ₂ t₁ ⟶ inl τ₂ t₁'
+                    t₁ ⟶ t₁'
+             ----------------------                (inl)
+             inl τ₂ t₁ ⟶ inl τ₂ t₁'
 
-                                   t₂ ⟶ t₂'
-                            ----------------------                              (inr)
-                            inr τ₁ t₂ ⟶ inr τ₁ t₂'
+                    t₂ ⟶ t₂'
+             ----------------------                (inr)
+             inr τ₁ t₂ ⟶ inr τ₁ t₂'
 
-                                    t ⟶ t'
-------------------------------------------------------------------------------  (case)
-case t of inl x₁ => t₁ | inr x₂ => t₂ ⟶ case t' of inl x₁ => t₁ | inr x₂ => t₂
+                     t ⟶ t'
+     ---------------------------------------       (case)
+     case t of inl x₁ => t₁ | inr x₂ => t₂ ⟶
+     case t' of inl x₁ => t₁ | inr x₂ => t₂
 
-        --------------------------------------------------------------          (caseInl)
-        case (inl τ₂ v₁) of inl x₁ => t₁ | inr x₂ => t₂ ⟶ [x₁ := v₁]t₁
+-------------------------------------------------  (caseInl)
+case (inl τ₂ v₁) of inl x₁ => t₁ | inr x₂ => t₂ ⟶
+                  [x₁ := v₁]t₁
 
-        --------------------------------------------------------------          (caseInr)
-        case (inr τ₁ v₂) of inl x₁ => t₁ | inr x₂ => t₂ ⟶ [x₂ := v₂]t₂
+-------------------------------------------------  (caseInr)
+case (inr τ₁ v₂) of inl x₁ => t₁ | inr x₂ => t₂ ⟶
+                  [x₂ := v₂]t₂
 ```
 
 Typing:
@@ -466,7 +477,7 @@ What does the following term step to (in one step)?
       let F = λX : Nat + Bool.
          case X of
            inl N => N + 3
-           | inr B => 0 in
+         | inr B => 0 in
       F (inl Bool 4)
 ```
 
@@ -474,7 +485,7 @@ What does the following term step to (in one step)?
     (A)  (λX : Nat + Bool.
             case X of
               inl N => N + 3
-              | inr B => 0
+            | inr B => 0
          ) (inl Bool 4)
 
     (B) 7
@@ -493,7 +504,7 @@ What about this one?
 ```display
   (λX : Nat + Bool.
      case X of
-     inl N => N + 3
+       inl N => N + 3
      | inr B => 0
   ) (inl Bool 4)
 ```
@@ -514,7 +525,7 @@ What about this one?
 
 ```display
        case inl Bool 4 of
-         inl N => N + 3
+           inl N => N + 3
          | inr B => 0
 
    (A)  4 + 3
@@ -550,52 +561,54 @@ with questions like "what is the `head` of the empty list?"
 For example, here is a function that calculates the sum of
 the first two elements of a list of numbers:
 
-```display
-      λ X:List Nat.
-      case X of
-        nil   => 0
-        | A :: Xs' => case Xs' of
-                     nil    => A
-                     | B :: Xs'' => A + B
+```display +centered
+λ X:List Nat.
+case X of
+  nil   => 0
+  | A :: Xs' => case Xs' of
+               nil    => A
+               | B :: Xs'' => A + B
 ```
 ::::
 
 Syntax:
 
 ```bnf
-t ::= "..."                                       ("other forms unchanged")
+t ::= "..."
     | "nil" τ                                      ("empty list")
     | t "::" t                                     ("cons")
     | "case" t "of" "nil" "=>" t "|" x "::" x "=>" t  ("case analysis") ;
 
-v ::= "..."      ("other forms unchanged")
+v ::= "..."
     | "nil" τ    ("nil value")
     | v "::" v   ("cons value") ;
 
-τ ::= "..."     ("other forms unchanged")
+τ ::= "..."
     | "List" τ  ("list of τs") ;
 ```
 
 Reduction:
 
 ```display +centered
-                                     t₁ ⟶ t₁'
-                               --------------------                                 (cons₁)
-                               t₁ :: t₂ ⟶ t₁' :: t₂
+                    t₁ ⟶ t₁'
+              --------------------                 (cons₁)
+              t₁ :: t₂ ⟶ t₁' :: t₂
 
-                                     t₂ ⟶ t₂'
-                               --------------------                                 (cons₂)
-                               v₁ :: t₂ ⟶ v₁ :: t₂'
+                    t₂ ⟶ t₂'
+              --------------------                 (cons₂)
+              v₁ :: t₂ ⟶ v₁ :: t₂'
 
-                                     t₁ ⟶ t₁'
-----------------------------------------------------------------------------------  (listCase₁)
-(case t₁ of nil => t₂ | xh :: xt => t₃) ⟶ (case t₁' of nil => t₂ | xh :: xt => t₃)
+                    t₁ ⟶ t₁'
+    -----------------------------------------      (listCase₁)
+    (case t₁ of nil => t₂ | xh :: xt => t₃) ⟶
+    (case t₁' of nil => t₂ | xh :: xt => t₃)
 
-                 ------------------------------------------------                   (listCaseNil)
-                 (case nil τ₁ of nil => t₂ | xh :: xt => t₃) ⟶ t₂
+------------------------------------------------   (listCaseNil)
+(case nil τ₁ of nil => t₂ | xh :: xt => t₃) ⟶ t₂
 
-      ---------------------------------------------------------------------         (listCaseCons)
-      (case (vh :: vt) of nil => t₂ | xh :: xt => t₃) ⟶ [xh:=vh][xt:=vt] t₃
+-------------------------------------------------  (listCaseCons)
+(case (vh :: vt) of nil => t₂ | xh :: xt => t₃) ⟶
+               [xh:=vh][xt:=vt] t₃
 ```
 
  Typing:
@@ -623,10 +636,10 @@ is the ability to define recursive functions.  For example,
 we would like to be able to define and use the factorial function
 like this:
 
-```display
-      let Fact = λX:Nat.
-                   if X=0 then 1 else X * (Fact (pred X))) in
-      Fact 3.
+```display +centered
+let Fact = λX:Nat.
+             if X=0 then 1 else X * (Fact (pred X))) in
+Fact 3.
 ```
 
 Note that the right-hand side of this binder mentions `Fact`, the
@@ -665,19 +678,19 @@ of the recursive definition in the right-hand side as needed, during
 reduction.
 
 For example, instead of
-```display
-      Fact = λX:Nat.
-                if X=0 then 1 else X * (Fact (pred X)))
+```display +centered
+Fact = λX:Nat.
+          if X=0 then 1 else X * (Fact (pred X)))
 ```
 
 we will write:
 
-```
-      Fact =
-          fix
-            (λF:Nat → Nat.
-               λX:Nat.
-                  if X=0 then 1 else X * (F (pred X)))
+```display +centered
+Fact =
+    fix
+      (λF:Nat → Nat.
+         λX:Nat.
+            if X=0 then 1 else X * (F (pred X)))
 ```
 
 ::::full
@@ -721,7 +734,7 @@ type `Nat→Nat` such that `F f` behaves the same as `f`.)
 
 Syntax:
 ```bnf
-t ::= "..."     ("other forms unchanged")
+t ::= "..."
     | "fix" t   ("fixed-point operator") ;
 ```
 
@@ -766,13 +779,13 @@ instance.))
 
 Let's see how `fixAbs` works by reducing `Fact 3 = fix F 3`, where
 
-```display
-    F = (λF. λX. if X=0 then 1 else X * (F (pred X)))
+```display +centered
+F = (λF. λX. if X=0 then 1 else X * (F (pred X)))
 ```
 
 (type annotations are omitted for brevity).
 
-```display
+```display +centered
     fix F 3
 
 ⟶ fixAbs + app₁
@@ -896,23 +909,23 @@ Which of the following are (intuitively) true for Stlc + fixpoints.
 ::::exercise (rating := 1) (name := "halve_fix") (optional := true)
 
 Translate this informal recursive definition into one using `fix`:
-```display
-      Halve =
-        λX:Nat.
-           if X=0 then 0
-           else if (pred X)=0 then 0
-           else 1 + (Halve (pred (pred X)))
+```display +centered
+Halve =
+  λX:Nat.
+     if X=0 then 0
+     else if (pred X)=0 then 0
+     else 1 + (Halve (pred (pred X)))
 ```
 
 :::solution
-```display
-      Halve =
-          fix
-            (λF:Nat→Nat.
-               λX:Nat.
-                  if X=0 then 0
-                  else if (pred X)=0 then 0
-                  else 1 + (F (pred (pred X))))
+```display +centered
+Halve =
+    fix
+      (λF:Nat→Nat.
+         λX:Nat.
+            if X=0 then 0
+            else if (pred X)=0 then 0
+            else 1 + (F (pred (pred X))))
 ```
 :::
 ::::
@@ -923,17 +936,17 @@ through to reduce to a normal form (assuming the usual reduction
 rules for arithmetic operations).
 
 :::solution
-```display
-        Fact 1
-      = fix (λF:Nat→Nat. λX:Nat. if X=0 then 1 else X * (F (pred X))) 1
-    ⟶ (λX: Nat, if X = 0 then 1 else X * (Fact (pred X))) 1
-    ⟶ if 1 = 0 then 1 else 1 * (Fact (pred 1))
-    ⟶ 1 * (Fact (pred 1))
-    ⟶ 1 * ((λX:Nat. if X=0 then 1 else X * (Fact (pred X))) (pred 1))
-    ⟶ 1 * ((λX:Nat. if X=0 then 1 else X * (Fact (pred X))) 0)
-    ⟶ 1 * (if 0=0 then 1 else 0 * (Fact (pred 0)))
-    ⟶ 1 * 1
-    ⟶ 1
+```display +centered
+    Fact 1
+  = fix (λF:Nat→Nat. λX:Nat. if X=0 then 1 else X * (F (pred X))) 1
+⟶ (λX: Nat, if X = 0 then 1 else X * (Fact (pred X))) 1
+⟶ if 1 = 0 then 1 else 1 * (Fact (pred 1))
+⟶ 1 * (Fact (pred 1))
+⟶ 1 * ((λX:Nat. if X=0 then 1 else X * (Fact (pred X))) (pred 1))
+⟶ 1 * ((λX:Nat. if X=0 then 1 else X * (Fact (pred X))) 0)
+⟶ 1 * (if 0=0 then 1 else 0 * (Fact (pred 0)))
+⟶ 1 * 1
+⟶ 1
 ```
 Also see the solution to exercise `fact_example` below.
 :::
@@ -944,8 +957,8 @@ for any `τ` has some surprising consequences.  In particular, it
 implies that _every_ type is inhabited by some term.  To see this,
 observe that, for every type `τ`, we can define the term:
 
-```display
-    fix (λx:τ. x)
+```display +centered
+fix (λx:τ. x)
 ```
 
 By `fix` and `abs`, this term has type `τ`.  By `fixAbs`
@@ -954,29 +967,29 @@ _diverging element_ of `τ`.
 
 More usefully, here's an example using `fix` to define a
 two-argument recursive function:
-```display
-    Equal =
-      fix
-        (λEq:Nat→Nat→Bool.
-           λM:Nat. λN:Nat.
-             if M=0 then iszero N
-             else if N=0 then false
-             else Eq (pred M) (pred N))
+```display +centered
+Equal =
+  fix
+    (λEq:Nat→Nat→Bool.
+       λM:Nat. λN:Nat.
+         if M=0 then iszero N
+         else if N=0 then false
+         else Eq (pred M) (pred N))
 ```
 
 And finally, here is an example where `fix` is used to define a
 _pair_ of recursive functions (illustrating the fact that the type
 `τ₁` in the rule `fix` need not be a function type):
 
-```display
-    let EvenOdd =
-         fix
-           (λEo: ((Nat → Nat) * (Nat → Nat)).
-              (λN:Nat. if0 N then 1 else (snd Eo (pred N)),
-               λN:Nat. if0 N then 0 else (fst Eo (pred N)))) in
-    let Even = fst EvenOdd in
-    let Odd  = snd EvenOdd in
-    (Even 3, Even 4)
+```display +centered
+let EvenOdd =
+     fix
+       (λEo: ((Nat → Nat) * (Nat → Nat)).
+          (λN:Nat. if0 N then 1 else (snd Eo (pred N)),
+           λN:Nat. if0 N then 0 else (fst Eo (pred N)))) in
+let Even = fst EvenOdd in
+let Odd  = snd EvenOdd in
+(Even 3, Even 4)
 ```
 
 :::::
@@ -1009,14 +1022,14 @@ Too terse?
 Syntax:
 
 ```bnf
-t ::= "..."                                 ("other forms unchanged")
+t ::= "..."
     | "{" i "=" t "," "..." "," i "=" t "}"  ("record")
     | t "." i                               ("projection") ;
 
-v ::= "..."                                 ("other forms unchanged")
+v ::= "..."
     | "{" i "=" v "," "..." "," i "=" v "}"  ("record value") ;
 
-τ ::= "..."                                 ("other forms unchanged")
+τ ::= "..."
     | "{" i ":" τ "," "..." "," i ":" τ "}"  ("record type") ;
 ```
 
@@ -1041,16 +1054,17 @@ previous ones:
 Reduction:
 
 ```display +centered
-                             ti ⟶ ti'
-------------------------------------------------------------------  (rcd)
-{i₁=v₁, ..., im=vm, in=ti, ...} ⟶ {i₁=v₁, ..., im=vm, in=ti', ...}
+            ti ⟶ ti'
+---------------------------------  (rcd)
+{i₁=v₁, ..., im=vm, in=ti, ...} ⟶
+{i₁=v₁, ..., im=vm, in=ti', ...}
 
-                              t ⟶ t'
-                            ----------                              (proj₁)
-                            t.i ⟶ t'.i
+             t ⟶ t'
+           ----------              (proj₁)
+           t.i ⟶ t'.i
 
-                     -----------------------                        (projRcd)
-                     {..., i=vi, ...}.i ⟶ vi
+     -----------------------       (projRcd)
+     {..., i=vi, ...}.i ⟶ vi
 ```
 
 ::::full
@@ -1134,26 +1148,26 @@ down tuples, so `{}` is the empty tuple, `{5}` is a singleton
 tuple, `{5,6}` is a 2-tuple (morally the same as a pair),
 `{5,6,7}` is a triple, etc.
 
-```display
-      {}                 ⟶  unit
-      {t₁, t₂, ..., tn}  ⟶  (t₁, trest)
-                                where {t₂, ..., tn} ⟶ trest
+```display +centered
+{}                 ⟶  unit
+{t₁, t₂, ..., tn}  ⟶  (t₁, trest)
+                          where {t₂, ..., tn} ⟶ trest
 ```
 
 Similarly, we can encode tuple types using nested product types:
 
-```display
-      {}                 ⟶  Unit
-      {τ₁, τ₂, ..., τₙ}  ⟶  τ₁ × τrest
-                                where {τ₂, ..., τₙ} ⟶ τrest
+```display +centered
+{}                 ⟶  Unit
+{τ₁, τ₂, ..., τₙ}  ⟶  τ₁ × τrest
+                          where {τ₂, ..., τₙ} ⟶ τrest
 ```
 The operation of projecting a field from a tuple can be encoded
 using a sequence of second projections followed by a first
 projection:
 
-```display
-      t.0        ⟶  fst t
-      t.(n+1)    ⟶  (snd t).n
+```display +centered
+t.0        ⟶  fst t
+t.(n+1)    ⟶  (snd t).n
 ```
 
 Next, suppose that there is some total ordering on record labels,
@@ -1161,29 +1175,29 @@ so that we can associate each label with a unique natural number.
 This number is called the _position_ of the label.  For example,
 we might assign positions like this:
 
-```display
-      LABEL   POSITION
-      a       0
-      b       1
-      c       2
-      ...     ...
-      bar     1395
-      ...     ...
-      foo     4460
-      ...     ...
+```display +centered
+LABEL   POSITION
+a       0
+b       1
+c       2
+...     ...
+bar     1395
+...     ...
+foo     4460
+...     ...
 ```
 
 We use these positions to encode record values as tuples (i.e., as
 nested pairs) by sorting the fields according to their positions.
 For example:
 
-```display
-      {a=5,b=6}       ⟶   {5,6}
-      {a=5,c=7}       ⟶   {5,unit,7}
-      {c=7,a=5}       ⟶   {5,unit,7}
-      {c=5,b=3}       ⟶   {unit,3,5}
-      {f=8,c=5,a=7}   ⟶   {7,unit,5,unit,unit,8}
-      {f=8,c=5}       ⟶   {unit,unit,5,unit,unit,8}
+```display +centered
+{a=5,b=6}       ⟶   {5,6}
+{a=5,c=7}       ⟶   {5,unit,7}
+{c=7,a=5}       ⟶   {5,unit,7}
+{c=5,b=3}       ⟶   {unit,3,5}
+{f=8,c=5,a=7}   ⟶   {7,unit,5,unit,unit,8}
+{f=8,c=5}       ⟶   {unit,unit,5,unit,unit,8}
 ```
 
 Note that each field appears in the position associated with its
@@ -1193,17 +1207,17 @@ the highest position, and that we fill in unused positions with
 
 We do exactly the same thing with record types:
 
-```display
-      {a:Nat,b:Nat}       ⟶   {Nat,Nat}
-      {c:Nat,a:Nat}       ⟶   {Nat,Unit,Nat}
-      {f:Nat,c:Nat}       ⟶   {Unit,Unit,Nat,Unit,Unit,Nat}
+```display +centered
+{a:Nat,b:Nat}       ⟶   {Nat,Nat}
+{c:Nat,a:Nat}       ⟶   {Nat,Unit,Nat}
+{f:Nat,c:Nat}       ⟶   {Unit,Unit,Nat,Unit,Unit,Nat}
 ```
 
 Finally, record projection is encoded as a tuple projection from
 the appropriate position:
 
-```display
-      t.l ⟶ t.(position of l)
+```display +centered
+t.l ⟶ t.(position of l)
 ```
 
 It is not hard to check that all the typing rules for the original
@@ -1328,14 +1342,14 @@ Note that, for brevity, we've omitted booleans and instead
 provided a single `if0` form combining a zero test and a
 conditional.  That is, instead of writing
 
-```display
-       if x = 0 then ... else ...
+```display +centered
+if x = 0 then ... else ...
 ```
 
 we'll write this:
 
-```display
-       if0 x then ... else ...
+```display +centered
+if0 x then ... else ...
 ```
 
 As in {ref "Stlc"}[Stlc], terms, types, contexts, and typing judgments use
@@ -1775,6 +1789,50 @@ private def Tm.unexpandFix : Unexpander
 end Delab
 ```
 ::::
+
+Here are a few example terms and types written in this notation:
+
+```lean
+/-- info: <{ unit }> : Tm -/
+#guard_msgs in
+#check <{ unit }>
+
+/-- info: <{ λ X : Nat . X }> : Tm -/
+#guard_msgs in
+#check <{ λ X : Nat . X }>
+
+/-- info: <{ fix (λ X : Nat → Nat . X) }> : Tm -/
+#guard_msgs in
+#check <{ fix (λ X : Nat → Nat . X) }>
+
+/-- info: <{ let X = 1 in ( X , unit ) }> : Tm -/
+#guard_msgs in
+#check <{ let X = 1 in (X, unit) }>
+
+/-- info: <{ ( X , Y ) }> : Tm -/
+#guard_msgs in
+#check <{ (X , Y) }>
+
+/-- info: <{ fst  ( X , Y ) }> : Tm -/
+#guard_msgs in
+#check <{ fst (X , Y) }>
+
+/-- info: <{ inr Nat (λ X : Unit . X) }> : Tm -/
+#guard_msgs in
+#check <{ inr Nat (λ X : Unit . X) }>
+
+/-- info: <{ nil Nat }> : Tm -/
+#guard_msgs in
+#check <{ nil Nat }>
+
+/-- info: <{ 3 :: nil Nat }> : Tm -/
+#guard_msgs in
+#check <{ 3 :: nil Nat }>
+
+/-- info: <{ ( [ Nat ] → Nat × Unit) → Nat + Unit }> : Ty -/
+#guard_msgs in
+#check <{ ([Nat] -> Nat × Unit) -> Nat + Unit }>
+```
 
 :::ignore
 ```lean -show
