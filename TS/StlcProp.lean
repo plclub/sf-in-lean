@@ -157,7 +157,7 @@ theorem canonical_forms_bool (t : Tm)
   | tru => left; rfl
   | fls => right; rfl
 
-theorem canonical_forms_fun (t : Tm) (τ₁ τ₂ : Ty)
+theorem canonical_forms_fun (t : Tm) {τ₁ τ₂ : Ty}
     (hτ : <{ ∅ ⊢ t ⦂ τ₁ → τ₂ }>) (hv : t.IsValue) :
     ∃ x u, t = <{ λ x : τ₁ . u }> := by
   cases hv with
@@ -242,7 +242,7 @@ theorem progress (t : Tm) (τ : Ty) (hτ : <{ ∅ ⊢ t ⦂ τ }>) :
     | inl hv₁ =>
       cases ih₂ rfl with
       | inl hv₂ =>
-        obtain ⟨x, u, rfl⟩ := canonical_forms_fun t₁ _ _ h₁ hv₁
+        obtain ⟨x, u, rfl⟩ := canonical_forms_fun t₁ h₁ hv₁
         exists <{ [x := t₂] u }>
         constructor
         assumption
@@ -304,7 +304,7 @@ theorem progress' (t : Tm) (τ : Ty) (hτ : <{ ∅ ⊢ t ⦂ τ }>) :
       | app _ _ τ₂ _ _ h₁ h₂ =>
         cases ih₁ _ h₁ with
         | inl hv₁ =>
-          obtain ⟨x, u, rfl⟩ := canonical_forms_fun t₁ _ _ h₁ hv₁
+          obtain ⟨x, u, rfl⟩ := canonical_forms_fun t₁ h₁ hv₁
           cases ih₂ _ h₂ with
           | inl hv₂ =>
             exists <{ [x := t₂] u }>
