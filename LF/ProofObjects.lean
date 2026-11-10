@@ -662,55 +662,48 @@ fun n => n.succ.succ
 4
 ```
 
-Notice that we terminated the `Definition` with a `.` rather than
-with `:=` followed by a term.  This tells Rocq to enter _proof
-scripting mode_ to build an object of type `Nat → Nat`.  Also, we
-terminate the proof with `Defined` rather than `Qed`; this makes
-the definition _transparent_ so that it can be used in computation
-like a normally-defined function.  (`Qed`-defined objects are
-opaque during computation.)
+Notice that we followed `def … :=` with `by` rather than
+with a term.  This tells Lean to enter _proof
+scripting mode_ to build an object of type `Nat → Nat`.
 
 This feature is mainly useful for writing functions with dependent
 types, which we won't explore much further in this book.  But it
 does illustrate the uniformity and orthogonality of the basic
-ideas in Rocq.
+ideas in Lean.
+
+Since `def` and `theorem` can both use terms or `by`, is there any difference between the two?
+There is one: a `theorem` must have a `Prop` type.
+
+```lean +error -keep (name := add2_theorem_wrong)
+theorem add2_with_theorem_wrong : Nat → Nat := by
+    apply Nat.succ
+```
+
+```leanOutput add2_theorem_wrong
+type of theorem `EvenProp.add2_with_theorem_wrong` is not a proposition
+  Nat → Nat
+```
 ::::
 
-:::dev "Claude" BeforeNextRelease
-AI-TODO: The paragraph about terminating with `.` and `Defined` vs. `Qed` is wrong
-in Lean:
+# Building Proof Objects Incrementally (Optional)
 
-- You write `def add2 : Nat → Nat := by …`. There is no separate
-  "proof scripting mode" entered by a period.
-- There is no `Defined` vs. `Qed`. A `def` built with tactics is transparent
-  and computable (`#eval add2 2` works).
-- The closest Lean distinction is `def` vs. `theorem`. A `theorem` must have a
-  `Prop` type: `theorem add2 : Nat → Nat := by …` is rejected with "type of
-  theorem `add2` is not a proposition" (verified). `theorem` bodies are also
-  treated as irreducible and are not compiled.
-
-`Compute` becomes `#eval` (or `#reduce`).
-
-Proposed fix: rewrite the paragraph: `:= by` enters tactic mode to build a term of type `Nat → Nat`; a `def` built this way stays computable (`#eval add2 2`); the contrast with Rocq's `Defined`/`Qed` becomes `def` vs. `theorem` (a `theorem` must have a `Prop` type).
+:::suppressPreviousHeaderWhenTerse
 :::
 
-::::::hide
-Building Proof Objects Incrementally (Optional)
+```lean -show
+section IncrementalProofObjects
+set_option warn.sorry false
+```
 
-:::dev PotentialImprovement
-Is the following helpful / necessary? I (Mukund) find myself
-doing exactly this when constructing proof objects...
-:::
-
+::::full
 As you probably noticed while solving the exercises earlier in the
 chapter, constructing proof objects is more involved than
 constructing the corresponding tactic proofs. Fortunately, there's
-a simple trick to help in the construction: we can start with a
-little bit of magic defining a term `admit` that can be used as a
-placeholder of any type we like.
+a simple trick to help in the construction: we can use the _term_
+`sorry` as placeholder of any type we like.
 
 As an example, let's walk through the process of constructing a
-proof object demonstrating the beauty of `16`.
+proof object demonstrating the beauty of `8`.
 
 ```lean
 theorem even_8_atmpt_1 : Even 8 := sorry
@@ -737,7 +730,8 @@ theorem even_8_atmpt_3 : Even 8 :=
   Even.succ_succ 6 (Even.succ_succ 4 sorry)
 
 theorem even_8_atmpt_4 : Even 8 :=
-  Even.succ_succ 6 (Even.succ_succ 4 (Even.succ_succ 2 sorry))
+  Even.succ_succ 6 (Even.succ_succ 4
+    (Even.succ_succ 2 sorry))
 
 theorem even_8_atmpt_5 : Even 8 :=
   Even.succ_succ 6 (Even.succ_succ 4
@@ -746,24 +740,13 @@ theorem even_8_atmpt_5 : Even 8 :=
 
 To recap, we've been guided by an informal proof that we have in
 our minds, and we check the high level details before completing
-the intricacies of the proof. The `admit` term allows us to do
+the intricacies of the proof. The `sorry` term allows us to do
 this.
-::::::
+::::
 
-:::dev "Claude" BeforeNextRelease
-AI-TODO: Please review the hidden "Building Proof Objects Incrementally" section
-above, which I (Claude) ported. Rocq's `Definition admit {T: Type} : T.
-Admitted.` is dropped, and the attempts use Lean's built-in `sorry` instead
-(checked in a scratch file: each attempt typechecks, with "declaration uses
-`sorry`" warnings). The prose still says we _define_ a term `admit`; in Lean
-nothing needs defining. Lean code inside `::::hide` is never elaborated, so
-if this section is un-hidden, its blocks become live and will need the
-`sorry` warnings accepted or shown. Source slip: "the beauty of `16`" should
-be `8`. The heading is plain text because headings can't sit inside a
-directive.
-
-Proposed fix: review the port. If the section stays hidden, nothing else is needed; if it is un-hidden, reword "defining a term `admit`" to refer to Lean's built-in `sorry`, fix "16" to "8", and accept or show the `sorry` warnings.
-:::
+```lean -show
+end IncrementalProofObjects
+```
 
 # Logical Connectives as Inductive Types
 
@@ -774,7 +757,7 @@ Proposed fix: review the port. If the section stays hidden, nothing else is need
 Inductive definitions are powerful enough to express most of the
 logical connectives we have seen so far.  Indeed, only universal
 quantification (with implication as a special case) is built into
-Rocq; all the others are defined inductively.
+Lean; all the others are defined inductively.
 
 Let's see how.
 ::::
