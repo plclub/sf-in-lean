@@ -529,6 +529,48 @@ The _substitution lemma_ says:
 :::slidebreak
 :::
 
+::::full
+_Proof_: We show, by induction on `t`, that for all `τ` and
+`Γ`, if `x ↦ τ' ; Γ ⊢ t ⦂ τ` and `∅ ⊢ v ⦂ τ'`, then
+`Γ ⊢ [x:=v]t ⦂ τ`.
+
+  - If `t` is a variable there are two cases to consider,
+    depending on whether `t` is `x` or some other variable.
+
+      - If `t = x`, then from the fact that `x ↦ τ' ; Γ ⊢ x ⦂ τ` we conclude that `τ' = τ`.  We must show that `[x:=v]x = v` has type `τ` under `Γ`, given the assumption that
+        `v` has type `τ' = τ` under the empty context.  This
+        follows from the weakening lemma.
+
+      - If `t` is some variable `y` that is not equal to `x`, then
+        we need only note that `y` has the same type under `x ↦ τ' ; Γ` as under `Γ`.
+
+  - If `t` is an abstraction `λy:σ. t₀`, then `τ = σ → τ₁` and
+    the IH tells us, for all `Γ'` and `τ₀`, that if `x ↦ τ' ; Γ' ⊢ t₀ ⦂ τ₀`, then `Γ' ⊢ [x:=v]t₀ ⦂ τ₀`.
+    Moreover, by inspecting the typing rules we see it must be
+    the case that `y ↦ σ ; x ↦ τ' ; Γ ⊢ t₀ ⦂ τ₁`.
+
+    The substitution in the conclusion behaves differently
+    depending on whether `x` and `y` are the same variable.
+
+    First, suppose `x = y`.  Then, by the definition of
+    substitution, `[x:=v]t = t`, so we just need to show `Γ ⊢ t ⦂ τ`.  Using `HasType.abs`, we need to show that `y ↦ σ ; Γ ⊢ t₀ ⦂ τ₁`. But we know `y ↦ σ ; x ↦ τ' ; Γ ⊢ t₀ ⦂ τ₁`,
+    and the claim follows since `x = y`.
+
+    Second, suppose `x ≠ y`. Again, using `HasType.abs`,
+    we need to show that `y ↦ σ ; Γ ⊢ [x:=v]t₀ ⦂ τ₁`.
+    Since `x ≠ y`, we have
+    `y ↦ σ ; x ↦ τ' ; Γ = x ↦ τ' ; y ↦ σ ; Γ`. So
+    we have `x ↦ τ' ; y ↦ σ ; Γ ⊢ t₀ ⦂ τ₁`. Then, the
+    IH applies (taking `Γ' = y ↦ σ ; Γ`), giving us
+    `y ↦ σ ; Γ ⊢ [x:=v]t₀ ⦂ τ₁`, as required.
+
+  - If `t` is an application `t₁ t₂`, the result follows
+    straightforwardly from the definition of substitution and the
+    induction hypotheses.
+
+  - The remaining cases are similar to the application case.
+::::
+
 ```lean
 theorem substitution_preserves_typing (Γ : Context) (x : String)
     (τ' : Ty) (t v : Tm) (τ : Ty)
@@ -601,62 +643,20 @@ theorem substitution_preserves_typing (Γ : Context) (x : String)
 ```
 
 ::::full
-The substitution lemma can be viewed as a kind of "commutation
-property."  Intuitively, it says that substitution and typing can
-be done in either order: we can either assign types to the terms
-`t` and `v` separately (under suitable contexts) and then combine
-them using substitution, or we can substitute first and then
-assign a type to `[x:=v] t`; the result is the same either
-way.
-
-_Proof_: We show, by induction on `t`, that for all `τ` and
-`Γ`, if `x ↦ τ' ; Γ ⊢ t ⦂ τ` and `∅ ⊢ v ⦂ τ'`, then
-`Γ ⊢ [x:=v]t ⦂ τ`.
-
-  - If `t` is a variable there are two cases to consider,
-    depending on whether `t` is `x` or some other variable.
-
-      - If `t = x`, then from the fact that `x ↦ τ' ; Γ ⊢ x ⦂ τ` we conclude that `τ' = τ`.  We must show that `[x:=v]x = v` has type `τ` under `Γ`, given the assumption that
-        `v` has type `τ' = τ` under the empty context.  This
-        follows from the weakening lemma.
-
-      - If `t` is some variable `y` that is not equal to `x`, then
-        we need only note that `y` has the same type under `x ↦ τ' ; Γ` as under `Γ`.
-
-  - If `t` is an abstraction `λy:σ. t₀`, then `τ = σ → τ₁` and
-    the IH tells us, for all `Γ'` and `τ₀`, that if `x ↦ τ' ; Γ' ⊢ t₀ ⦂ τ₀`, then `Γ' ⊢ [x:=v]t₀ ⦂ τ₀`.
-    Moreover, by inspecting the typing rules we see it must be
-    the case that `y ↦ σ ; x ↦ τ' ; Γ ⊢ t₀ ⦂ τ₁`.
-
-    The substitution in the conclusion behaves differently
-    depending on whether `x` and `y` are the same variable.
-
-    First, suppose `x = y`.  Then, by the definition of
-    substitution, `[x:=v]t = t`, so we just need to show `Γ ⊢ t ⦂ τ`.  Using `HasType.abs`, we need to show that `y ↦ σ ; Γ ⊢ t₀ ⦂ τ₁`. But we know `y ↦ σ ; x ↦ τ' ; Γ ⊢ t₀ ⦂ τ₁`,
-    and the claim follows since `x = y`.
-
-    Second, suppose `x ≠ y`. Again, using `HasType.abs`,
-    we need to show that `y ↦ σ ; Γ ⊢ [x:=v]t₀ ⦂ τ₁`.
-    Since `x ≠ y`, we have
-    `y ↦ σ ; x ↦ τ' ; Γ = x ↦ τ' ; y ↦ σ ; Γ`. So
-    we have `x ↦ τ' ; y ↦ σ ; Γ ⊢ t₀ ⦂ τ₁`. Then, the
-    IH applies (taking `Γ' = y ↦ σ ; Γ`), giving us
-    `y ↦ σ ; Γ ⊢ [x:=v]t₀ ⦂ τ₁`, as required.
-
-  - If `t` is an application `t₁ t₂`, the result follows
-    straightforwardly from the definition of substitution and the
-    induction hypotheses.
-
-  - The remaining cases are similar to the application case.
-::::
-
-::::full
 One technical subtlety in the statement of the above lemma is that
 we assume `v` has type `τ'` in the _empty_ context — in other
 words, we assume `v` is closed.  (Since we are using a simple
 definition of substitution that is not capture-avoiding, it doesn't
 make sense to substitute non-closed terms into other terms.
 Fortunately, closed terms are all we need!)
+
+The substitution lemma can also be viewed as a kind of "commutation
+property."  Intuitively, it says that substitution and typing can
+be done in either order: we can either assign types to the terms
+`t` and `v` separately (under suitable contexts) and then combine
+them using substitution, or we can substitute first and then
+assign a type to `[x:=v] t`; the result is the same either
+way.
 ::::
 
 ::::::full
@@ -739,6 +739,45 @@ closed, well-typed term `t` has type `τ` and takes a step to `t'`,
 then `t'` is also a closed term with type `τ`.  In other words,
 the small-step reduction relation preserves types.
 
+::::full
+_Proof_: By induction on the derivation of `∅ ⊢ t ⦂ τ`.
+
+- We can immediately rule out `HasType.var`, `HasType.abs`, `HasType.tru`, and
+  `HasType.fls` as final rules in the derivation, since in each of these
+  cases `t` cannot take a step.
+
+- If the last rule in the derivation is `HasType.app`, then `t = t₁ t₂`,
+  and there are subderivations showing that `∅ ⊢ t₁ ⦂ τ₂ → τ` and
+  `∅ ⊢ t₂ ⦂ τ₂` plus two induction hypotheses: (1) `t₁ ⟶ t₁'`
+  implies `∅ ⊢ t₁' ⦂ τ₂ → τ` and (2) `t₂ ⟶ t₂'` implies `∅ ⊢ t₂' ⦂ τ₂`.  There are now three subcases to consider, one for
+  each rule that could be used to show that `t₁ t₂` takes a step
+  to `t'`.
+
+    - If `t₁ t₂` takes a step by `Step.app1`, with `t₁` stepping to
+      `t₁'`, then, by the first IH, `t₁'` has the same type as
+      `t₁` (`∅ ⊢ t₁' ⦂ τ₂ → τ`), and hence by `HasType.app` `t₁' t₂` has
+      type `τ`.
+
+    - The `Step.app2` case is similar, using the second IH.
+
+    - If `t₁ t₂` takes a step by `Step.appAbs`, then `t₁ = λx:τ₀. t₀` and `t₁ t₂` steps to `[x:=t₂]t₀`; the desired
+      result now follows from the substitution lemma.
+
+- If the last rule in the derivation is `HasType.ite`, then `t = if t₁ then t₂ else t₃`, with `∅ ⊢ t₁ ⦂ Bool`, `∅ ⊢ t₂ ⦂ τ₁`, and
+  `∅ ⊢ t₃ ⦂ τ₁`, and with three induction hypotheses: (1) `t₁ ⟶ t₁'` implies `∅ ⊢ t₁' ⦂ Bool`, (2) `t₂ ⟶ t₂'` implies `∅ ⊢ t₂' ⦂ τ₁`, and (3) `t₃ ⟶ t₃'` implies `∅ ⊢ t₃' ⦂ τ₁`.
+
+  There are again three subcases to consider, depending on how `t`
+  steps.
+
+    - If `t` steps to `t₂` or `t₃` by `Step.ifTrue` or
+      `Step.ifFalse`, the result is immediate, since `t₂` and `t₃`
+      have the same type as `t`.
+
+    - Otherwise, `t` steps by `Step.ifStep`, and the desired
+      conclusion follows directly from the first induction
+      hypothesis.
+::::
+
 ```lean
 theorem preservation (t t' : Tm) (τ : Ty)
     (hτ : <{ ∅ ⊢ t ⦂ τ }>) (hs : t ⟶ t') : <{ ∅ ⊢ t' ⦂ τ }> := by
@@ -784,45 +823,6 @@ theorem preservation (t t' : Tm) (τ : Ty)
       · exact h₂
       · exact h₃
 ```
-
-::::full
-_Proof_: By induction on the derivation of `∅ ⊢ t ⦂ τ`.
-
-- We can immediately rule out `HasType.var`, `HasType.abs`, `HasType.tru`, and
-  `HasType.fls` as final rules in the derivation, since in each of these
-  cases `t` cannot take a step.
-
-- If the last rule in the derivation is `HasType.app`, then `t = t₁ t₂`,
-  and there are subderivations showing that `∅ ⊢ t₁ ⦂ τ₂ → τ` and
-  `∅ ⊢ t₂ ⦂ τ₂` plus two induction hypotheses: (1) `t₁ ⟶ t₁'`
-  implies `∅ ⊢ t₁' ⦂ τ₂ → τ` and (2) `t₂ ⟶ t₂'` implies `∅ ⊢ t₂' ⦂ τ₂`.  There are now three subcases to consider, one for
-  each rule that could be used to show that `t₁ t₂` takes a step
-  to `t'`.
-
-    - If `t₁ t₂` takes a step by `Step.app1`, with `t₁` stepping to
-      `t₁'`, then, by the first IH, `t₁'` has the same type as
-      `t₁` (`∅ ⊢ t₁' ⦂ τ₂ → τ`), and hence by `HasType.app` `t₁' t₂` has
-      type `τ`.
-
-    - The `Step.app2` case is similar, using the second IH.
-
-    - If `t₁ t₂` takes a step by `Step.appAbs`, then `t₁ = λx:τ₀. t₀` and `t₁ t₂` steps to `[x:=t₂]t₀`; the desired
-      result now follows from the substitution lemma.
-
-- If the last rule in the derivation is `HasType.ite`, then `t = if t₁ then t₂ else t₃`, with `∅ ⊢ t₁ ⦂ Bool`, `∅ ⊢ t₂ ⦂ τ₁`, and
-  `∅ ⊢ t₃ ⦂ τ₁`, and with three induction hypotheses: (1) `t₁ ⟶ t₁'` implies `∅ ⊢ t₁' ⦂ Bool`, (2) `t₂ ⟶ t₂'` implies `∅ ⊢ t₂' ⦂ τ₁`, and (3) `t₃ ⟶ t₃'` implies `∅ ⊢ t₃' ⦂ τ₁`.
-
-  There are again three subcases to consider, depending on how `t`
-  steps.
-
-    - If `t` steps to `t₂` or `t₃` by `Step.ifTrue` or
-      `Step.ifFalse`, the result is immediate, since `t₂` and `t₃`
-      have the same type as `t`.
-
-    - Otherwise, `t` steps by `Step.ifStep`, and the desired
-      conclusion follows directly from the first induction
-      hypothesis.
-::::
 
 ::::::full
 :::::exercise (rating := 2) (name := "subject_expansion_stlc") (manual := true)
