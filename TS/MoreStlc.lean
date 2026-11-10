@@ -6,7 +6,6 @@ import LF.CustomTactics
 open Verso.Genre Manual
 open SFLMeta
 
-
 #doc (Manual) "MoreStlc: More on the Simply Typed Lambda-Calculus" =>
 %%%
 tag := "MoreStlc"
@@ -33,7 +32,7 @@ treatments at the level of typing.
 ::::full
 As we saw in the `StlcExtended` exercises at the end of the {ref "StlcProp"}[StlcProp]
 chapter, adding types, constants, and primitive operations for
-natural numbers is easy - basically just a matter of combining
+natural numbers is easy — basically just a matter of combining
 the {ref "Types"}[Types] and {ref "Stlc"}[Stlc] chapters.  Adding more realistic
 numeric types like machine integers and floats is also
 straightforward, though of course the specifications of the
@@ -67,7 +66,6 @@ the rules defining this new feature than to wade through a lot of
 English text conveying the same information.  Here they are:
 ::::
 
-
 ::::terse
 A more interesting extension... let-bindings.
 
@@ -78,28 +76,28 @@ often increases readability.
 
 Syntax:
 
-```display
-  t ::=                   Terms
-      | ...                 (other terms same as before)
-      | let x = t₁ in t₂    let-binding
+```bnf
+t ::= "..."                 ("other forms unchanged")
+    | "let" x "=" t "in" t  ("let-binding") ;
 ```
 
 Reduction:
-```display
-                                 t₁ ⟶ t₁'
-                     -------------------------------------        (let₁)
-                     let x = t₁ in t₂ ⟶ let x = t₁' in t₂
+```display +centered
+              t₁ ⟶ t₁'
+------------------------------------  (let₁)
+let x = t₁ in t₂ ⟶ let x = t₁' in t₂
 
-                        ---------------------------------         (letValue)
-                        let x = v₁ in t₂ ⟶ [x := v₁] t₂
+-------------------------------       (letValue)
+let x = v₁ in t₂ ⟶ [x := v₁] t₂
 ```
 
 Typing:
 
-```display
-             Γ ⊢ t₁ ⦂ τ₁      x ↦ τ₁ ; Γ ⊢ t₂ ⦂ τ₂
-             -------------------------------------------      (let)
-                     Γ ⊢ let x = t₁ in t₂ ⦂ τ₂
+```display +centered
+       Γ ⊢ t₁ ⦂ τ₁
+  x ↦ τ₁ ; Γ ⊢ t₂ ⦂ τ₂
+-------------------------  (let)
+Γ ⊢ let x = t₁ in t₂ ⦂ τ₂
 ```
 
 ## Pairs
@@ -129,28 +127,25 @@ numbers and returns the pair of their sum and difference:
 
 ::::full
 Adding pairs to the simply typed lambda-calculus, then, involves
-adding two new forms of term - pairing, written `(t₁,t₂)`, and
+adding two new forms of term — pairing, written `(t₁,t₂)`, and
 projection, written `fst t` for the first projection from `t` and
-`snd t` for the second projection - plus one new type constructor,
+`snd t` for the second projection — plus one new type constructor,
 `τ₁ × τ₂`, called the _product_ of `τ₁` and `τ₂`.
 ::::
 
 Syntax:
 
-```display
-       t ::=                Terms
-           | ...
-           | (t₁, t₂)         pair
-           | fst t            first projection
-           | snd t            second projection
+```bnf
+t ::= "..."            ("other forms unchanged")
+    | "(" t "," t ")"  ("pair")
+    | "fst" t          ("first projection")
+    | "snd" t          ("second projection") ;
 
-       v ::=                Values
-           | ...
-           | (v₁, v₂)         pair value
+v ::= "..."            ("other forms unchanged")
+    | "(" v "," v ")"  ("pair value") ;
 
-       τ ::=                Types
-           | ...
-           | τ₁ × τ₂          product type
+τ ::= "..."      ("other forms unchanged")
+    | τ "×" τ    ("product type") ;
 ```
 
 ::::full
@@ -161,28 +156,28 @@ For reduction, we need several new rules specifying how pairs and projection beh
 Reduction...
 ::::
 
-```display
-                              t₁ ⟶ t₁'
-                         --------------------                        (pair₁)
-                         (t₁,t₂) ⟶ (t₁',t₂)
+```display +centered
+     t₁ ⟶ t₁'
+------------------  (pair₁)
+(t₁,t₂) ⟶ (t₁',t₂)
 
-                              t₂ ⟶ t₂'
-                         --------------------                        (pair₂)
-                         (v₁,t₂) ⟶ (v₁,t₂')
+     t₂ ⟶ t₂'
+------------------  (pair₂)
+(v₁,t₂) ⟶ (v₁,t₂')
 
-                               t ⟶ t'
-                           ------------------                        (fst₁)
-                           fst t ⟶ fst t'
+      t ⟶ t'
+  --------------    (fst₁)
+  fst t ⟶ fst t'
 
-                          ------------------                       (fstPair)
-                           fst (v₁,v₂) ⟶ v₁
+ ----------------   (fstPair)
+ fst (v₁,v₂) ⟶ v₁
 
-                               t ⟶ t'
-                           ------------------                      (snd₁)
-                           snd t ⟶ snd t'
+      t ⟶ t'
+  --------------    (snd₁)
+  snd t ⟶ snd t'
 
-                          ------------------                       (sndPair)
-                          snd (v₁,v₂) ⟶ v₂
+ ----------------   (sndPair)
+ snd (v₁,v₂) ⟶ v₂
 ```
 
 ::::full
@@ -192,7 +187,7 @@ the appropriate component.  The congruence rules `fst₁` and
 `snd₁` allow reduction to proceed under projections, when the
 term being projected from has not yet been fully reduced.
 `pair₁` and `pair₂` reduce the parts of pairs: first the
-left part, and then - when a value appears on the left - the right
+left part, and then — when a value appears on the left — the right
 part.  The ordering arising from the use of the metavariables `v`
 and `t` in these rules enforces a left-to-right evaluation
 strategy for pairs.  (Note the implicit convention that
@@ -212,19 +207,19 @@ The typing rules for pairs and projections are straightforward.
 Typing:
 ::::
 
+```display +centered
+     Γ ⊢ t₁ ⦂ τ₁
+     Γ ⊢ t₂ ⦂ τ₂
+----------------------  (pair)
+Γ ⊢ (t₁, t₂) ⦂ τ₁ × τ₂
 
-```display
-                     Γ ⊢ t₁ ⦂ τ₁     Γ t₂ ⦂ τ₂
-                    ------------------------------              (pair)
-                      Γ ⊢(t₁, t₂) ⦂ τ₁ × τ₂
+   Γ ⊢ t ⦂ τ₁ × τ₂
+   ---------------      (fst)
+   Γ ⊢ fst t ⦂ τ₁
 
-                           Γ ⊢ t ⦂ τ₁ × τ₂
-                        -----------------------                  (fst)
-                            Γ ⊢ fst t ⦂ τ₁
-
-                            Γ ⊢ t ⦂ τ₁ × τ₂
-                        -----------------------                   (snd)
-                             Γ ⊢ snd t ⦂ τ₂
+   Γ ⊢ t ⦂ τ₁ × τ₂
+   ---------------      (snd)
+   Γ ⊢ snd t ⦂ τ₂
 ```
 
 ::::full
@@ -240,45 +235,41 @@ this pair are `τ₁` and `τ₂`.
 Another handy base type is the singleton type `Unit`.
 
 ::::full
-It has a single element - the term constant `unit` (with a small `u`) -
+It has a single element — the term constant `unit` (with a small `u`) —
 and a typing rule making `unit` an element of `Unit`.  We
-also add `unit` to the set of possible values - indeed, `unit` is
+also add `unit` to the set of possible values — indeed, `unit` is
 the _only_ possible result of reducing an expression of type `Unit`.
 ::::
 
-
 Syntax:
 
-```display
-       t ::=                Terms
-           | ...               (other terms same as before)
-           | unit              unit
+```bnf
+t ::= "..."   ("other forms unchanged")
+    | "unit"  ("unit") ;
 
-       v ::=                Values
-           | ...
-           | unit              unit value
+v ::= "..."   ("other forms unchanged")
+    | "unit"  ("unit value") ;
 
-       τ ::=                Types
-           | ...
-           | Unit              unit type
+τ ::= "..."   ("other forms unchanged")
+    | "Unit"  ("unit type") ;
 ```
 
 Typing:
 
-```display
-                         ----------------                       (unit)
-                         Γ ⊢ unit ⦂ Unit
+```display +centered
+---------------  (unit)
+Γ ⊢ unit ⦂ Unit
 ```
 
 ::::full
 It may seem a little strange to bother defining a type that
-has just one element -- after all, wouldn't every computation
+has just one element — after all, wouldn't every computation
 living in such a type be trivial?
 
 This is a fair question, and indeed in the STLC the `Unit` type is
 not especially critical (though we'll see two uses for it below).
 Where `Unit` really comes in handy is in richer languages with
-_side effects_ -- e.g., assignment statements that mutate
+_side effects_ — e.g., assignment statements that mutate
 variables or pointers, exceptions and other sorts of nonlocal
 control structures, etc.  In such languages, it is convenient to
 have a type for the (trivial) result of an expression that is
@@ -297,7 +288,6 @@ Is `unit` the only term of type `Unit`?
 No! For instance `λX:Unit. X` unit is also a _term_ of type `Unit`.
 ::::
 
-
 ## Sums
 
 Many programs need to deal with values that can take two distinct
@@ -314,9 +304,9 @@ one of two given types, e.g.:
 ```
 
 ::::terse
-    We create elements of these types by tagging elements of the
-    component types, telling on which side of the sum we are putting
-    them. E.g.,
+We create elements of these types by tagging elements of the
+component types, telling on which side of the sum we are putting
+them. E.g.,
 
 ```display
    inl 42   ⦂ Nat + Bool
@@ -386,68 +376,58 @@ More formally...
 
 Syntax:
 
-```display
-       t ::=                Terms
-           | ...               (other terms same as before)
-           | inl τ₂ t₁         tagging (left)
-           | inr τ₁ t₂         tagging (right)
-           | case t of         case analysis
-               inl x₁ => t₁
-             | inr x₂ => t₂
+```bnf
+t ::= "..."                                           ("other forms unchanged")
+    | "inl" τ t                                        ("tagging (left)")
+    | "inr" τ t                                        ("tagging (right)")
+    | "case" t "of" "inl" x "=>" t "|" "inr" x "=>" t   ("case analysis") ;
 
-       v ::=                Values
-           | ...
-           | inl τ₂ v₁         tagged value (left)
-           | inr τ₁ v₂         tagged value (right)
+v ::= "..."     ("other forms unchanged")
+    | "inl" τ v  ("tagged value (left)")
+    | "inr" τ v  ("tagged value (right)") ;
 
-       τ ::=                Types
-           | ...
-           | τ₁ + τ₂           sum type
+τ ::= "..."    ("other forms unchanged")
+    | τ "+" τ  ("sum type") ;
 ```
 
 Reduction:
 
-```display
-                               t₁ ⟶ t₁'
-                        ------------------------                       (inl)
-                        inl τ₂ t₁ ⟶ inl τ₂ t₁'
+```display +centered
+                                   t₁ ⟶ t₁'
+                            ----------------------                              (inl)
+                            inl τ₂ t₁ ⟶ inl τ₂ t₁'
 
-                               t₂ ⟶ t₂'
-                        ------------------------                       (inr)
-                        inr τ₁ t₂ ⟶ inr τ₁ t₂'
+                                   t₂ ⟶ t₂'
+                            ----------------------                              (inr)
+                            inr τ₁ t₂ ⟶ inr τ₁ t₂'
 
-                               t ⟶ t'
-               -------------------------------------------            (case)
-                case t of inl x₁ => t₁ | inr x₂ => t₂ ⟶
-               case t' of inl x₁ => t₁ | inr x₂ => t₂
+                                    t ⟶ t'
+------------------------------------------------------------------------------  (case)
+case t of inl x₁ => t₁ | inr x₂ => t₂ ⟶ case t' of inl x₁ => t₁ | inr x₂ => t₂
 
-            -----------------------------------------------        (caseInl)
-            case (inl τ₂ v₁) of inl x₁ => t₁ | inr x₂ => t₂
-                           ⟶  [x₁ := v₁]t₁
+        --------------------------------------------------------------          (caseInl)
+        case (inl τ₂ v₁) of inl x₁ => t₁ | inr x₂ => t₂ ⟶ [x₁ := v₁]t₁
 
-            -----------------------------------------------        (caseInr)
-            case (inr τ₁ v₂) of inl x₁ => t₁ | inr x₂ => t₂
-                           ⟶  [x₂ := v₂]t₂
+        --------------------------------------------------------------          (caseInr)
+        case (inr τ₁ v₂) of inl x₁ => t₁ | inr x₂ => t₂ ⟶ [x₂ := v₂]t₂
 ```
 
 Typing:
 
-```display
-                            Γ ⊢ t₁ ⦂ τ₁
-                   ----------------------------                      (inl)
-                       Γ ⊢ inl τ₂ t₁ ⦂ τ₁ + τ₂
+```display +centered
+                 Γ ⊢ t₁ ⦂ τ₁
+           -----------------------              (inl)
+           Γ ⊢ inl τ₂ t₁ ⦂ τ₁ + τ₂
 
+                 Γ ⊢ t₂ ⦂ τ₂
+           -----------------------              (inr)
+           Γ ⊢ inr τ₁ t₂ ⦂ τ₁ + τ₂
 
-                          Γ ⊢ t₂ ⦂ τ₂
-                   ---------------------------                       (inr)
-                     Γ ⊢ inr τ₁ t₂ ⦂ τ₁ + τ₂
-
-
-                        Γ ⊢ t ⦂ τ₁ + τ₂
-                     x₁ ↦ τ₁; Γ ⊢ t₁ ⦂ τ₃
-                     x₂ ↦ τ₂; Γ ⊢ t₂ ⦂ τ₃
-         ----------------------------------------------------        (case)
-             Γ ⊢ case t of inl x₁ => t₁ | inr x₂ => t₂ ⦂ τ₃
+               Γ ⊢ t ⦂ τ₁ + τ₂
+             x₁ ↦ τ₁; Γ ⊢ t₁ ⦂ τ₃
+             x₂ ↦ τ₂; Γ ⊢ t₂ ⦂ τ₃
+----------------------------------------------  (case)
+Γ ⊢ case t of inl x₁ => t₁ | inr x₂ => t₂ ⦂ τ₃
 ```
 
 We use the type annotations on `inl` and `inr` to make the typing
@@ -459,13 +439,13 @@ Without this extra information, the typing rule `inl`, for
 example, would have to say that, once we have shown that `t₁` is
 an element of type `τ₁`, we can derive that `inl t₁` is an element
 of `τ₁ + τ₂` for _any_ type `τ₂`.  For example, we could derive both
-`inl 5 : Nat + Nat`and `inl 5 : Nat + Bool` (and infinitely many other types).
-This peculiarity (technically, a failure of uniqueness of types) would mean t
-hat we cannot build a typechecking algorithm simply by "reading the rules from bottom to
+`inl 5 : Nat + Nat` and `inl 5 : Nat + Bool` (and infinitely many other types).
+This peculiarity (technically, a failure of uniqueness of types) would mean
+that we cannot build a typechecking algorithm simply by "reading the rules from bottom to
 top" as we could for all the other features seen so far.
 
 There are various ways to deal with this difficulty.  One simple
-one -- which we've adopted here -- forces the programmer to
+one — which we've adopted here — forces the programmer to
 explicitly annotate the "other side" of a sum type when performing
 an injection.  This is a bit heavy for programmers (so real
 languages adopt other solutions), but it is easy to understand and formalize.
@@ -507,7 +487,6 @@ What does the following term step to (in one step)?
 ```
 ::::
 
-
 ::::quiz
 What about this one?
 
@@ -547,7 +526,6 @@ What about this one?
 
 ::::
 
-
 ## Lists
 
 ::::full
@@ -567,83 +545,76 @@ Except for the fact that explicit type annotations are mandatory
 on `nil` and cannot appear on `cons`, these lists are essentially
 identical to those we built in Rocq.  We use `case`, rather than
 `head` and `tail` operators, to destruct lists, to avoid dealing
-with questions like "what is the `head` of the ∅ list?"
+with questions like "what is the `head` of the empty list?"
 
 For example, here is a function that calculates the sum of
 the first two elements of a list of numbers:
 
+```display
       λ X:List Nat.
       case X of
         nil   => 0
         | A :: Xs' => case Xs' of
                      nil    => A
                      | B :: Xs'' => A + B
+```
 ::::
-
 
 Syntax:
 
-```display
-       t ::=                Terms
-           | ...
-           | nil τ             ∅ list
-           | t₁ :: t₂          cons
-           | case t₁ of        case analysis
-               nil      => t₂
-               | xh::xt => t₃
+```bnf
+t ::= "..."                                       ("other forms unchanged")
+    | "nil" τ                                      ("empty list")
+    | t "::" t                                     ("cons")
+    | "case" t "of" "nil" "=>" t "|" x "::" x "=>" t  ("case analysis") ;
 
-       v ::=                Values
-           | ...
-           | nil τ             nil value
-           | v₁ :: v₂          cons value
+v ::= "..."      ("other forms unchanged")
+    | "nil" τ    ("nil value")
+    | v "::" v   ("cons value") ;
 
-       τ ::=                Types
-           | ...
-           | List τ            list of τs
+τ ::= "..."     ("other forms unchanged")
+    | "List" τ  ("list of τs") ;
 ```
 
 Reduction:
 
-```display
-                                t₁ ⟶ t₁'
-                       --------------------------                    (cons₁)
-                         t₁ :: t₂ ⟶ t₁' :: t₂
+```display +centered
+                                     t₁ ⟶ t₁'
+                               --------------------                                 (cons₁)
+                               t₁ :: t₂ ⟶ t₁' :: t₂
 
-                                t₂ ⟶ t₂'
-                       --------------------------                    (cons₂)
-                         v₁ :: t₂ ⟶ v₁ :: t₂'
+                                     t₂ ⟶ t₂'
+                               --------------------                                 (cons₂)
+                               v₁ :: t₂ ⟶ v₁ :: t₂'
 
-                              t₁ ⟶ t₁'
-                -------------------------------------------         (listCase₁)
-                 (case t₁ of nil => t₂ | xh :: xt => t₃) ⟶
-                (case t₁' of nil => t₂ | xh :: xt => t₃)
+                                     t₁ ⟶ t₁'
+----------------------------------------------------------------------------------  (listCase₁)
+(case t₁ of nil => t₂ | xh :: xt => t₃) ⟶ (case t₁' of nil => t₂ | xh :: xt => t₃)
 
-               ------------------------------------------          (listCaseNil)
-               (case nil τ₁ of nil => t₂ | xh :: xt => t₃)
-                                ⟶ t₂
+                 ------------------------------------------------                   (listCaseNil)
+                 (case nil τ₁ of nil => t₂ | xh :: xt => t₃) ⟶ t₂
 
-              -------------------------------------------         (listCaseCons)
-              (case (vh :: vt) of nil => t₂ | xh :: xt => t₃)
-                          ⟶ [xh:=vh][xt:=vt] t₃
+      ---------------------------------------------------------------------         (listCaseCons)
+      (case (vh :: vt) of nil => t₂ | xh :: xt => t₃) ⟶ [xh:=vh][xt:=vt] t₃
 ```
 
  Typing:
 
-```display
-                        ----------------------------                    (nil)
-                        Γ ⊢ nil τ₁ ⦂ List τ₁
+```display +centered
+              --------------------                (nil)
+              Γ ⊢ nil τ₁ ⦂ List τ₁
 
-                     Γ ⊢ t₁ ⦂ τ₁      Γ ⊢ t₂ ⦂ List τ₁
-            -------------------------------------------------           (cons)
-                         Γ ⊢ t₁ :: t₂ ⦂ List τ₁
+                  Γ ⊢ t₁ ⦂ τ₁
+                Γ ⊢ t₂ ⦂ List τ₁
+             ----------------------               (cons)
+             Γ ⊢ t₁ :: t₂ ⦂ List τ₁
 
-                        Γ ⊢ t₁ ⦂ List τ₁
-                        Γ ⊢ t₂ ⦂ τ₂
-                  (xh ↦ τ₁; xt ↦ List τ₁; Γ) ⊢ t₃ ⦂ τ₂
-          ----------------------------------------------------         (listCase)
-             Γ ⊢ (case t₁ of nil => t₂ | xh :: xt => t₃) ⦂ τ₂
+                Γ ⊢ t₁ ⦂ List τ₁
+                  Γ ⊢ t₂ ⦂ τ₂
+      (xh ↦ τ₁; xt ↦ List τ₁; Γ) ⊢ t₃ ⦂ τ₂
+------------------------------------------------  (listCase)
+Γ ⊢ (case t₁ of nil => t₂ | xh :: xt => t₃) ⦂ τ₂
 ```
-
 
 ## General Recursion
 
@@ -659,7 +630,7 @@ like this:
 ```
 
 Note that the right-hand side of this binder mentions `Fact`, the
-variable being bound - something that is not allowed according
+variable being bound — something that is not allowed according
 to the way we defined `let` above.
 
 ::::full
@@ -671,7 +642,7 @@ body will not have a type in the context when it is looked up by the
 
 ::::full
 Changing the `let` rule to handle "recursive definitions"
-like this is possible, but it requires some extra effort -- e.g.,
+like this is possible, but it requires some extra effort — e.g.,
 passing around an extra "environment" of recursive function
 definitions in the definition of the `step` relation.  We're going
 to take a simpler path here.
@@ -681,7 +652,6 @@ to take a simpler path here.
 Extending our formalization of `let`s to handle "recursive definitions"
 would require non-trivial effort.
 ::::
-
 
 ::::dev PotentialImprovement
 The explanations in this section are not clear enough!
@@ -737,7 +707,7 @@ is applied to a function that "approximates" the desired behavior
 of `Fact` up to some number `n` (that is, a function that returns
 correct results on inputs less than or equal to `n` but we don't
 care what it does on inputs greater than `n`), then `F` returns a
-slightly better approximation to `Fact` -- a function that returns
+slightly better approximation to `Fact` — a function that returns
 correct results for inputs up to `n+1`.  Applying `fix` to this
 generator returns its _fixed point_, which is a function that
 gives the desired behavior for all inputs `n`.
@@ -750,28 +720,27 @@ type `Nat→Nat` such that `F f` behaves the same as `f`.)
 ::::
 
 Syntax:
-```display
-       t ::=                Terms
-           | ...
-           | fix t₁            fixed-point operator
+```bnf
+t ::= "..."     ("other forms unchanged")
+    | "fix" t   ("fixed-point operator") ;
 ```
 
 Reduction:
-```display
-                                t₁ ⟶ t₁'
-                            ------------------                   (fix₁)
-                            fix t₁ ⟶ fix t₁'
+```display +centered
+             t₁ ⟶ t₁'
+-------------------------                   (fix₁)
+         fix t₁ ⟶ fix t₁'
 
-               --------------------------------------------      (fixAbs)
-               fix (λxf:τ₁.t₁) ⟶ [xf:=fix (λxf:τ₁.t₁)] t₁
+------------------------------------------  (fixAbs)
+fix (λxf:τ₁.t₁) ⟶ [xf:=fix (λxf:τ₁.t₁)] t₁
 ```
 
 Typing:
 
-```display
-                           Γ ⊢ t₁ ⦂ τ₁ → τ₁
-                           ------------------                    (fix)
-                           Γ ⊢ fix t₁ ⦂ τ₁
+```display +centered
+Γ ⊢ t₁ ⦂ τ₁ → τ₁
+----------------  (fix)
+Γ ⊢ fix t₁ ⦂ τ₁
 ```
 
 ::::dev PotentialImprovement
@@ -791,7 +760,7 @@ removing the explicit annotations on the step relation might make this
 more readible. (Also, doesn't fit on a slide.)  BCP 23: Yes, this is a
 bit drinking from the firehose / lecturing with a firehose. Not sure
 what to replace it with, though. (And breaking it across slides in the
-terse version seems worse than scrolling in this -- rare --
+terse version seems worse than scrolling in this — rare —
 instance.))
 ::::
 
@@ -879,7 +848,6 @@ Let's see how `fixAbs` works by reducing `Fact 3 = fix F 3`, where
     6
 ```
 
-
 The simply typed lambda-calculus with fixed points is a famous and
 extensively studied system. It is often called _PCF_ because it is a
 simple language of "partial computable functions".
@@ -952,7 +920,7 @@ Translate this informal recursive definition into one using `fix`:
 ::::exercise (rating := 1) (name := "fact_steps") (optional := true)
 Write down the sequence of steps that the term `Fact 1` goes
 through to reduce to a normal form (assuming the usual reduction
-rules for arithmetic operations.
+rules for arithmetic operations).
 
 :::solution
 ```display
@@ -980,7 +948,7 @@ observe that, for every type `τ`, we can define the term:
     fix (λx:τ. x)
 ```
 
-By `fix`  and `abs`, this term has type `τ`.  By `fixAbs`
+By `fix` and `abs`, this term has type `τ`.  By `fixAbs`
 it reduces to itself, over and over again.  Thus it is a
 _diverging element_ of `τ`.
 
@@ -1008,7 +976,7 @@ _pair_ of recursive functions (illustrating the fact that the type
                λN:Nat. if0 N then 0 else (fst Eo (pred N)))) in
     let Even = fst EvenOdd in
     let Odd  = snd EvenOdd in
-    (Even 3, Even 4)}
+    (Even 3, Even 4)
 ```
 
 :::::
@@ -1030,8 +998,9 @@ their fields are accessed by _label_ (rather than position).
 ::::terse
 As a final example, records can be presented as a
 generalization of pairs:
-    - they are n-ary (rather than binary);
-    - they are accessed by _label_ (rather than position).
+
+- they are n-ary (rather than binary);
+- they are accessed by _label_ (rather than position).
 ::::
 :::dev PotentialImprovement
 Too terse?
@@ -1039,19 +1008,16 @@ Too terse?
 
 Syntax:
 
-```display
-       t ::=                          Terms
-           | ...
-           | {i₁=t₁, ..., iₙ=tₙ}        record
-           | t.i                        projection
+```bnf
+t ::= "..."                                 ("other forms unchanged")
+    | "{" i "=" t "," "..." "," i "=" t "}"  ("record")
+    | t "." i                               ("projection") ;
 
-       v ::=                          Values
-           | ...
-           | {i₁=v₁, ..., iₙ=vₙ}        record value
+v ::= "..."                                 ("other forms unchanged")
+    | "{" i "=" v "," "..." "," i "=" v "}"  ("record value") ;
 
-       τ ::=                          Types
-           | ...
-           | {i₁:τ₁, ..., iₙ:τₙ}        record type
+τ ::= "..."                                 ("other forms unchanged")
+    | "{" i ":" τ "," "..." "," i ":" τ "}"  ("record type") ;
 ```
 
 ::::full
@@ -1074,20 +1040,18 @@ previous ones:
 
 Reduction:
 
-```display
-                              ti ⟶ ti'
-                 ------------------------------------                  (rcd)
-                     {i₁=v₁, ..., im=vm, in=ti , ...}
-                 ⟶ {i₁=v₁, ..., im=vm, in=ti', ...}
+```display +centered
+                             ti ⟶ ti'
+------------------------------------------------------------------  (rcd)
+{i₁=v₁, ..., im=vm, in=ti, ...} ⟶ {i₁=v₁, ..., im=vm, in=ti', ...}
 
                               t ⟶ t'
-                            --------------                           (proj₁)
+                            ----------                              (proj₁)
                             t.i ⟶ t'.i
 
-                      -------------------------                    (projRcd)
-                      {..., i=vi, ...}.i ⟶ vi
+                     -----------------------                        (projRcd)
+                     {..., i=vi, ...}.i ⟶ vi
 ```
-
 
 ::::full
 Again, these rules are a bit informal.  For example, the first rule
@@ -1103,18 +1067,16 @@ field called `i`, and that all the other fields must contain values.
   and all the other fields must contain values.
 ::::
 
-
 The typing rules are also simple:
 
-```display
-               Γ ⊢ t₁ ⦂ τ₁     ...     Γ ⊢ tₙ ⦂ τₙ
-          -----------------------------------------------------        (rcd)
-          Γ ⊢ {i₁=t₁, ..., iₙ=tₙ} ⦂ {i₁:τ₁, ..., iₙ:τₙ}
+```display +centered
+     Γ ⊢ t₁ ⦂ τ₁     ...     Γ ⊢ tₙ ⦂ τₙ
+---------------------------------------------  (rcd)
+Γ ⊢ {i₁=t₁, ..., iₙ=tₙ} ⦂ {i₁:τ₁, ..., iₙ:τₙ}
 
-
-                      Γ ⊢ t ⦂ {..., i:τᵢ, ...}
-                    ---------------------------------                  (proj)
-                          Γ ⊢ t.i ⦂ τᵢ
+          Γ ⊢ t ⦂ {..., i:τᵢ, ...}
+          ------------------------             (proj)
+                Γ ⊢ t.i ⦂ τᵢ
 ```
 
 ::::full
@@ -1136,8 +1098,8 @@ There are several ways to approach formalizing the above definitions.
   when we get to the Sub chapter.)
 
 - Alternatively, we could look for a smoother way of presenting
-  records -- for example, a binary presentation with one
-  constructor for the ∅ record and another constructor for
+  records — for example, a binary presentation with one
+  constructor for the empty record and another constructor for
   adding a single field to an existing record, instead of a
   single monolithic constructor that builds a whole record at
   once.  This is the right way to go if we are primarily
@@ -1168,8 +1130,8 @@ also extends to systems with subtyping, is due to Luca Cardelli.)
 First, observe that we can encode arbitrary-size _tuples_ using
 nested pairs and the `unit` value.  To avoid overloading the pair
 notation `(t₁,t₂)`, we'll use curly braces without labels to write
-down tuples, so `{}` is the ∅ tuple, `{5}` is a singleton
-tuple, `{5,6}]`is a 2-tuple (morally the same as a pair),
+down tuples, so `{}` is the empty tuple, `{5}` is a singleton
+tuple, `{5,6}` is a 2-tuple (morally the same as a pair),
 `{5,6,7}` is a triple, etc.
 
 ```display
@@ -1246,7 +1208,7 @@ the appropriate position:
 
 It is not hard to check that all the typing rules for the original
 "direct" presentation of records are validated by this
-encoding.  (The reduction rules are "almost validated" -- not
+encoding.  (The reduction rules are "almost validated" — not
 quite, because the encoding reorders fields.)
 
 :::dev PotentialImprovement
@@ -1274,12 +1236,11 @@ instances and as case arm labels.
 
 These n-ary variants give us almost enough mechanism to build
 arbitrary inductive data types like lists and trees from
-scratch -- the only thing missing is a way to allow _recursion_ in
+scratch — the only thing missing is a way to allow _recursion_ in
 type definitions.  We won't cover this here, but detailed
-treatments can be found in many textbooks -- e.g., Types and
+treatments can be found in many textbooks — e.g., Types and
 Programming Languages {citep Bib.pierce2002}[].
 ::::
-
 
 ## Exercise: Formalizing the Extensions
 
@@ -1390,12 +1351,13 @@ scoped syntax:51 " [ " stlcTy:50  " ] " : stlcTy
 
 scoped syntax:max num : stlcTm
 scoped syntax:60 stlcTm:60 " * " stlcTm:61 : stlcTm
-scoped syntax:50 "if0 " stlcTm:51 " then " stlcTm:50 " else " stlcTm:50 : stlcTm
+scoped syntax:50 "if0 " stlcTm:51 " then " stlcTm:50
+  " else " stlcTm:50 : stlcTm
 
 scoped syntax:60 " inr " stlcTy:60 ppSpace stlcTm:60 : stlcTm
 scoped syntax:60 " inl " stlcTy:60 ppSpace stlcTm:60 : stlcTm
-scoped syntax:50 "case " stlcTm:50 " of " "inl" stlcVar " => " stlcTm:50 " | "
-  "inr" stlcVar " => " stlcTm:50 : stlcTm
+scoped syntax:50 "case " stlcTm:50 " of " "inl" stlcVar
+  " => " stlcTm:50 " | " "inr" stlcVar " => " stlcTm:50 : stlcTm
 
 scoped syntax:60 " nil " stlcTy:60 : stlcTm
 scoped syntax:60 stlcTm:61 " :: " stlcTm:60 : stlcTm
@@ -1404,7 +1366,8 @@ scoped syntax:50 "case " stlcTm:50 " of " "nil" " => " stlcTm:50 " | "
 
 scoped syntax:max " ( " stlcTm:60 " , " stlcTm:60 " ) " : stlcTm
 
-scoped syntax:50 "let " stlcVar " = " stlcTm:50 " in " stlcTm:50 : stlcTm
+scoped syntax:50 "let " stlcVar " = " stlcTm:50
+  " in " stlcTm:50 : stlcTm
 
 namespace Elab
 
@@ -1501,7 +1464,8 @@ def extendedTmHandler : TmElabHandler :=
         let (x₂, Γ₂) ← elabStlcBinder language Γ x₂
         let (t₂, free) ← recur Γ₂ free t₂
 
-        return (mkAppN (mkConst ``Tm.sumCase) #[t, x₁, t₁, x₂, t₂], free)
+        return (mkAppN (mkConst ``Tm.sumCase)
+          #[t, x₁, t₁, x₂, t₂], free)
 
     | `(stlcTm| nil $T:stlcTy) => do
         let T ← elabTy T
@@ -1528,7 +1492,8 @@ def extendedTmHandler : TmElabHandler :=
 
         let (t₃, free) ← recur Γ free t₃
 
-        return (mkAppN (mkConst ``Tm.listCase) #[t₁, t₂, x, xs, t₃], free)
+        return (mkAppN (mkConst ``Tm.listCase)
+          #[t₁, t₂, x, xs, t₃], free)
 
     | `(stlcTm| Unit) => do
         throwError "`Unit` is not a valid term."
@@ -1571,7 +1536,6 @@ def extendedTmHandler : TmElabHandler :=
 
 def tmHandlers : TmElabHandler :=
   extendedTmHandler.orElse (commonTmHandler language elabTy)
-
 
 partial def elabTm : TmElab :=
   tmHandlers elabTm unsupportedTm
@@ -1619,7 +1583,6 @@ private def Ty.unexpandSum : Unexpander
       `(<{ $T₁':stlcTy + $T₂':stlcTy }>)
   | _ => throw ()
 
-
 @[app_unexpander Ty.list]
 private def Ty.unexpandList : Unexpander
   | `($_ $T) => do
@@ -1643,16 +1606,14 @@ private def reservedNames : String → Bool
   | _ => false
 
 @[app_unexpander Tm.var]
-private def Tm.unexpandVar : Unexpander := Delab.unexpandVar reservedNames ``Tm.var
-
+private def Tm.unexpandVar : Unexpander :=
+  Delab.unexpandVar reservedNames ``Tm.var
 
 @[app_delab Tm.var]
 private def Tm.delabVar : Delab := Delab.delabVar ``Tm.var
 
-
 @[app_unexpander Tm.app]
 private def Tm.unexpandApp : Unexpander := Delab.unexpandApp
-
 
 @[app_unexpander Tm.abs]
 private def Tm.unexpandAbs : Unexpander := Delab.unexpandAbs
@@ -1727,7 +1688,6 @@ private def Tm.unexpandSumCase : Unexpander
       }>)
   | _ => throw ()
 
-
 @[app_unexpander Tm.listNil]
 private def Tm.unexpandListNil : Unexpander
   | `($_ $T) => do
@@ -1781,7 +1741,6 @@ private def Tm.unexpandFst : Unexpander
       `(<{ $fst:ident $t':stlcTm }>)
   | _ => throw ()
 
-
 @[app_unexpander Tm.snd]
 private def Tm.unexpandSnd : Unexpander
   | stx@`($_ $t) => do
@@ -1804,7 +1763,6 @@ private def Tm.unexpandLetIn : Unexpander
           $t₂':stlcTm
       }>)
   | _ => throw ()
-
 
 @[app_unexpander Tm.fix]
 private def Tm.unexpandFix : Unexpander
@@ -1840,7 +1798,7 @@ end Delab
 #guard_msgs in
 #check (Tm.const 0 : Tm)
 
-example (x : Tm) : (<{ x }> : Tm) = x := rfl
+example (x : Tm) : (<{ x }> : Tm) = x := by rfl
 
 /-- info: <{ λ X : Nat . X }> : Tm -/
 #guard_msgs in
@@ -1940,7 +1898,7 @@ example :
       Tm.sumCase
         (Tm.var "S")
         "X" (Tm.var "X")
-        "Y" (Tm.var "Y") := rfl
+        "Y" (Tm.var "Y") := by rfl
 
 #guard_msgs in
 example :
@@ -1954,14 +1912,14 @@ example :
         (Tm.var "Z")
         "X"
         "XS"
-        (Tm.var "X") := rfl
+        (Tm.var "X") := by rfl
 
 example :
     (<{ let X = Y in X }> : Tm) =
       Tm.letIn
         "X"
         (Tm.var "Y")
-        (Tm.var "X") := rfl
+        (Tm.var "X") := by rfl
 
 ```
 :::
@@ -2078,7 +2036,8 @@ example : <{ [Z := 0] (let W = Z in W) }> = <{ let W = 0 in W }> := by
   solution!
     rfl
 
-example : <{ [Z := 0] (let Y = succ 0 in Z) }> = <{ let Y = succ 0 in 0 }> := by
+example : <{ [Z := 0] (let Y = succ 0 in Z) }> =
+    <{ let Y = succ 0 in 0 }> := by
   solution!
     rfl
 ```
@@ -2114,8 +2073,9 @@ inductive Tm.IsValue : Tm → Prop where
       IsValue v₂ →
       IsValue <{(v₁, v₂)}>
 
-attribute [ExtStlcEval] Tm.IsValue.abs Tm.IsValue.nat Tm.IsValue.sumInl Tm.IsValue.sumInr
-    Tm.IsValue.listNil Tm.IsValue.listCons Tm.IsValue.unit Tm.IsValue.pair
+attribute [ExtStlcEval] Tm.IsValue.abs Tm.IsValue.nat Tm.IsValue.sumInl
+    Tm.IsValue.sumInr Tm.IsValue.listNil Tm.IsValue.listCons
+    Tm.IsValue.unit Tm.IsValue.pair
 ```
 
 :::::full
@@ -2166,16 +2126,21 @@ inductive Step : Tm → Tm → Prop where
   | sumInr (t₂ t₂' : Tm) (τ₁ : Ty) :
       t₂ ⟶ t₂' →
       <{inr τ₁ t₂}> ⟶ <{inr τ₁ t₂'}>
-  | sumCase (t t' : Tm) (x₁ : String) (t₁ : Tm) (x₂ : String) (t₂ : Tm) :
+  | sumCase (t t' : Tm) (x₁ : String) (t₁ : Tm) (x₂ : String)
+      (t₂ : Tm) :
       t ⟶ t' →
       <{case t of inl x₁ => t₁ | inr x₂ => t₂}> ⟶
       <{case t' of inl x₁ => t₁ | inr x₂ => t₂}>
-  | sumCaseInl (v : Tm) (x₁:String) (t₁ : Tm) (x₂ : String) (t₂ : Tm) (τ₂ : Ty) :
+  | sumCaseInl (v : Tm) (x₁ : String) (t₁ : Tm) (x₂ : String)
+      (t₂ : Tm) (τ₂ : Ty) :
       v.IsValue →
-      <{case inl τ₂ v of inl x₁ => t₁ | inr x₂ => t₂}> ⟶ <{ [x₁ := v] t₁ }>
-  | sumCaseInr (v : Tm) (x₁:String) (t₁ : Tm) (x₂ : String) (t₂ : Tm) (τ₁ : Ty) :
+      <{case inl τ₂ v of inl x₁ => t₁ | inr x₂ => t₂}> ⟶
+      <{ [x₁ := v] t₁ }>
+  | sumCaseInr (v : Tm) (x₁ : String) (t₁ : Tm) (x₂ : String)
+      (t₂ : Tm) (τ₁ : Ty) :
       v.IsValue →
-      <{case inr τ₁ v of inl x₁ => t₁ | inr x₂ => t₂}> ⟶ <{ [x₂ := v] t₂ }>
+      <{case inr τ₁ v of inl x₁ => t₁ | inr x₂ => t₂}> ⟶
+      <{ [x₂ := v] t₂ }>
   -- lists
   | cons₁ (t₁ t₁' t₂ : Tm) :
       t₁ ⟶ t₁' →
@@ -2236,7 +2201,7 @@ inductive Step : Tm → Tm → Prop where
   | fix₁ (t₁ t₁' : Tm) :
       t₁ ⟶ t₁' →
       <{ fix t₁ }> ⟶ <{ fix t₁' }>
-   | fixAbs (x : String) (τ₁ : Ty) (t₁ : Tm) :
+  | fixAbs (x : String) (τ₁ : Ty) (t₁ : Tm) :
       <{ fix (λ x : τ₁ . t₁) }> ⟶
       <{ [x := fix (λ x : τ₁ . t₁) ] t₁ }>
   -- END SOLUTION
@@ -2250,7 +2215,8 @@ attribute [ExtStlcEval] Step.appAbs Step.app₁ Step.app₂
     Step.succ Step.succNat Step.pred Step.predConst
     Step.multConst Step.mult₁ Step.mult₂
     Step.if0Step Step.if0Zero Step.if0Nonzero
-    Step.sumInl Step.sumInr Step.sumCase Step.sumCaseInl Step.sumCaseInr
+    Step.sumInl Step.sumInr Step.sumCase Step.sumCaseInl
+    Step.sumCaseInr
     Step.cons₁ Step.cons₂ Step.listCase₁ Step.listCaseNil
     Step.listCaseCons
 -- SOLUTION
@@ -2305,7 +2271,8 @@ inductive HasType : Context → Tm → Ty → Prop where
   | sumInr (Γ : Context) (t₂ : Tm) (τ₁ τ₂ : Ty) :
       <{ Γ ⊢ t₂ ⦂ τ₂ }> →
       <{ Γ ⊢ (inr τ₁ t₂) ⦂ τ₁ + τ₂ }>
-  | sumCase (Γ : Context) (x₁ x₂ : String) (τ₁ τ₂ τ₃: Ty) (t t₁ t₂ : Tm) :
+  | sumCase (Γ : Context) (x₁ x₂ : String) (τ₁ τ₂ τ₃ : Ty)
+      (t t₁ t₂ : Tm) :
       <{ Γ ⊢ t ⦂ τ₁ + τ₂ }> →
       <{ x₁ ↦ τ₁ ; Γ ⊢ t₁ ⦂ τ₃ }> →
       <{ x₂ ↦ τ₂ ; Γ ⊢ t₂ ⦂ τ₃ }> →
@@ -2317,7 +2284,8 @@ inductive HasType : Context → Tm → Ty → Prop where
       <{ Γ ⊢ t₁ ⦂ τ₁ }> →
       <{ Γ ⊢ t₂ ⦂ [τ₁] }> →
       <{ Γ ⊢ t₁ :: t₂ ⦂ [τ₁] }>
-  | listCase (Γ : Context) (t₁ t₂ t₃ : Tm) (x₁ x₂ : String) (τ₁ τ₂ : Ty) :
+  | listCase (Γ : Context) (t₁ t₂ t₃ : Tm) (x₁ x₂ : String)
+      (τ₁ τ₂ : Ty) :
       <{ Γ ⊢ t₁ ⦂ [τ₁] }> →
       <{ Γ ⊢ t₂ ⦂ τ₂ }> →
       <{ x₁ ↦ τ₁ ; x₂ ↦ [τ₁] ; Γ ⊢ t₃ ⦂ τ₂ }> →
@@ -2376,10 +2344,8 @@ def HasType.unexpand : Unexpander := StlcCommon.Delab.unexpandHasType
 ```
 :::
 
-
 ::::
 :::::
-
 
 :::::full
 ::::exercise (rating := 5) (name := "STLCExtended.examples") (optional := true)
@@ -2458,12 +2424,11 @@ theorem typechecks : <{ ∅ ⊢ tm_test ⦂ Nat }> := by
     apply_rules using ExtStlcTyping
 ```
 
-
 ```lean
 theorem reduces :
   tm_test ⟶* Tm.const 6 := by
-    solution!
-        normalize using ExtStlcEval
+  solution!
+    normalize using ExtStlcEval
 ```
 
 ```lean
@@ -2483,15 +2448,12 @@ theorem typechecks :
     apply_rules using ExtStlcTyping
 ```
 
-
 ```lean
 theorem reduces :
   tm_test ⟶* Tm.const 6 := by
-    solution!
-        normalize using ExtStlcEval
+  solution!
+    normalize using ExtStlcEval
 ```
-
-
 
 ```lean
 end Let1
@@ -2514,8 +2476,8 @@ theorem typechecks :
 ```lean
 theorem reduces :
   tm_test ⟶* Tm.const 5 := by
-    solution!
-        normalize using ExtStlcEval
+  solution!
+    normalize using ExtStlcEval
 ```
 
 ```lean
@@ -2540,8 +2502,8 @@ theorem typechecks :
 ```lean
 theorem reduces :
   tm_test ⟶* <{ (5, ~(Tm.const 0)) }> := by
-    solution!
-        normalize using ExtStlcEval
+  solution!
+    normalize using ExtStlcEval
 ```
 
 ```lean
@@ -2566,10 +2528,9 @@ theorem typechecks :
 ```lean
 theorem reduces :
   tm_test ⟶* Tm.const 25 := by
-    solution!
-        normalize using ExtStlcEval
+  solution!
+    normalize using ExtStlcEval
 ```
-
 
 ```lean
 end Lists
@@ -2584,7 +2545,8 @@ def fact :=
         λ A : Nat .
          if0 A then 1 else (A * (F (pred A)))) }>
 
--- (Warning: you may be able to typecheck `fact` but still have some rules wrong!) *)
+-- (Warning: you may be able to typecheck `fact` but still have some
+-- rules wrong!)
 
 theorem typechecks :
   <{ ∅ ⊢ fact ⦂ Nat → Nat }> := by
@@ -2595,8 +2557,8 @@ theorem typechecks :
 ```lean
 theorem reduces :
   <{ fact 4 }> ⟶* Tm.const 24 := by
-    solution!
-        normalize using ExtStlcEval
+  solution!
+    normalize using ExtStlcEval
 ```
 
 ```lean
@@ -2620,15 +2582,13 @@ theorem typechecks :
     apply_rules using ExtStlcTyping
 ```
 
-
 ```lean
 theorem reduces :
   <{ map (λ A : Nat . succ A) (1 :: 2 :: (nil Nat)) }>
   ⟶* <{ 2 :: 3 :: (nil Nat) }> := by
-    solution!
-        normalize using ExtStlcEval
+  solution!
+    normalize using ExtStlcEval
 ```
-
 
 ```lean
 end Fix2
@@ -2650,7 +2610,6 @@ theorem typechecks :
     apply_rules using ExtStlcTyping
 ```
 
-
 ```lean
 theorem reduces :
   <{ equal 4 4 }> ⟶* Tm.const 1 := by
@@ -2664,7 +2623,6 @@ theorem reduces2 :
   solution!
     normalize using ExtStlcEval
 ```
-
 
 ```lean
 end Fix3
@@ -2744,7 +2702,8 @@ theorem canonical_forms_sum {t : Tm} {τ₁ τ₂ : Ty}
 
 theorem canonical_forms_list {t : Tm} {τ : Ty}
     (ht : <{ ∅ ⊢ t ⦂ [τ] }>) (hv : t.IsValue) :
-    t = <{ nil τ }> ∨ ∃ v₁ v₂, (v₁.IsValue ∧ v₂.IsValue ∧ t = <{v₁ :: v₂}>) := by
+    t = <{ nil τ }> ∨
+      ∃ v₁ v₂, (v₁.IsValue ∧ v₂.IsValue ∧ t = <{v₁ :: v₂}>) := by
   inversion ht with (inversion hv)
   | listNil _ => left; rfl
   | listCons v₁ v₂ _ _ _ _ => right; exists v₁, v₂
@@ -2760,8 +2719,8 @@ theorem canonical_forms_prod {t : Tm} {τ₁ τ₂ : Ty}
 
 -- END SOLUTION
 
-theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
-    t.IsValue ∨ exists t', t ⟶ t' := by
+theorem progress (t : Tm) (τ : Ty) (ht : <{ ∅ ⊢ t ⦂ τ }>) :
+    t.IsValue ∨ ∃ t', t ⟶ t' := by
 
     generalize heq : (∅ : Context) = Γ at ht
     induction ht with (subst_vars; first
@@ -2842,7 +2801,8 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
       -- t₁ is not a value
       case _ ht₁ =>
         obtain ⟨t₁', ht₁⟩ := ht₁
-        exists <{if0 t₁' then t₂ else t₃}>; apply_rules using ExtStlcEval
+        exists <{if0 t₁' then t₂ else t₃}>
+        apply_rules using ExtStlcEval
     | sumInl Γ t₁ τ₁ τ₂ h ih =>
       cases ih rfl
       -- t₁ is a value
@@ -2867,12 +2827,15 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
       case _ ht =>
         apply canonical_forms_sum at h₁
         obtain ⟨v, hv, hl | hr⟩ := h₁ ht
-        · rw [hl]; exists <{ [x₁ := v] t₁ }>; apply_rules using ExtStlcEval
-        · rw [hr]; exists <{ [x₂ := v] t₂ }>; apply_rules using ExtStlcEval
+        · rw [hl]; exists <{ [x₁ := v] t₁ }>
+          apply_rules using ExtStlcEval
+        · rw [hr]; exists <{ [x₂ := v] t₂ }>
+          apply_rules using ExtStlcEval
       -- t₁ is not a value
       case _ ht =>
         obtain ⟨t', ht⟩ := ht
-        exists <{case t' of inl x₁ => t₁ | inr x₂ => t₂}>; apply_rules using ExtStlcEval
+        exists <{case t' of inl x₁ => t₁ | inr x₂ => t₂}>
+        apply_rules using ExtStlcEval
     | listCons Γ t₁ t₂ τ₁ h₁ h₂ ih₁ ih₂ =>
       cases ih₁ rfl
       -- t₁ is a value
@@ -2890,17 +2853,19 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
         obtain ⟨t₁', ht₁⟩ := ht₁
         right; exists <{t₁' :: t₂}>; apply_rules using ExtStlcEval
     | listCase Γ t₁ t₂ t₃ x₁ x₂ τ₁ τ₂ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
-        right; cases ih₁ rfl
-        -- t₁ is a value
-        case _ ht =>
-          apply canonical_forms_list at h₁
-          obtain hnil | ⟨v₁, v₂, hv₁, hv₂, h⟩ := h₁ ht
-          · rw [hnil]; exists t₂; apply_rules using ExtStlcEval
-          · rw [h]; exists <{ [x₂ := v₂] [x₁ := v₁] t₃ }>; apply_rules using ExtStlcEval
-        -- t₁ is not a value
-        case _ ht =>
-          obtain ⟨t', ht⟩ := ht
-          exists <{case t' of nil => t₂ | x₁ :: x₂ => t₃}>; apply_rules using ExtStlcEval
+      right; cases ih₁ rfl
+      -- t₁ is a value
+      case _ ht =>
+        apply canonical_forms_list at h₁
+        obtain hnil | ⟨v₁, v₂, hv₁, hv₂, h⟩ := h₁ ht
+        · rw [hnil]; exists t₂; apply_rules using ExtStlcEval
+        · rw [h]; exists <{ [x₂ := v₂] [x₁ := v₁] t₃ }>
+          apply_rules using ExtStlcEval
+      -- t₁ is not a value
+      case _ ht =>
+        obtain ⟨t', ht⟩ := ht
+        exists <{case t' of nil => t₂ | x₁ :: x₂ => t₃}>
+        apply_rules using ExtStlcEval
     -- complete the proof
     -- SOLUTION
     | pair Γ t₁ t₂ τ₁ τ₂ h₁ h₂ ih₁ ih₂ =>
@@ -2951,16 +2916,17 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
         obtain ⟨t₁', ht₁⟩ := ht₁
         exists <{let x = t₁' in t₂}>; apply_rules using ExtStlcEval
     | fix Γ t₁ τ₁ h ih =>
-        right; cases ih rfl
-        -- t₁ is a value
-        case _ ht₁ =>
-          apply canonical_forms_fun at h
-          obtain ⟨x, v, ht⟩ := h ht₁; rw [ht]
-          exists <{ [x := fix (λ x : τ₁ . v) ] v }>; apply_rules using ExtStlcEval
-        -- t₁ is not a value
-        case _ ht₁ =>
-          obtain ⟨t₁', ht₁⟩ := ht₁
-          exists <{fix t₁'}>; apply_rules using ExtStlcEval
+      right; cases ih rfl
+      -- t₁ is a value
+      case _ ht₁ =>
+        apply canonical_forms_fun at h
+        obtain ⟨x, v, ht⟩ := h ht₁; rw [ht]
+        exists <{ [x := fix (λ x : τ₁ . v) ] v }>
+        apply_rules using ExtStlcEval
+      -- t₁ is not a value
+      case _ ht₁ =>
+        obtain ⟨t₁', ht₁⟩ := ht₁
+        exists <{fix t₁'}>; apply_rules using ExtStlcEval
     -- END SOLUTION
 ```
 
@@ -2977,16 +2943,17 @@ theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :
 Through the power of automation, the weakening proof is exactly the same as for the original STLC.
 
 ```lean
-theorem weakening {Γ Γ' : Context} {t : Tm} {τ: Ty}
+theorem weakening {Γ Γ' : Context} {t : Tm} {τ : Ty}
     (hi : Γ ⊆ Γ')
     (ht : <{ Γ ⊢ t ⦂ τ }>) :
-     <{ Γ' ⊢ t ⦂ τ }> := by
-  induction ht generalizing Γ' with (apply_rules [PartialMap.update_subset] using ExtStlcTyping)
+    <{ Γ' ⊢ t ⦂ τ }> := by
+  induction ht generalizing Γ' with
+    (apply_rules [PartialMap.update_subset] using ExtStlcTyping)
 ```
 
 ```lean
-theorem weakening_empty {Γ : Context} {t : Tm} {τ: Ty}
-    (ht :<{ ∅ ⊢ t ⦂ τ }>) :
+theorem weakening_empty {Γ : Context} {t : Tm} {τ : Ty}
+    (ht : <{ ∅ ⊢ t ⦂ τ }>) :
     <{ Γ ⊢ t ⦂ τ }> := by
   apply weakening _ ht
   intro _ _ h
@@ -3000,13 +2967,15 @@ theorem weakening_empty {Γ : Context} {t : Tm} {τ: Ty}
 Complete the proof of `substitution_preserves_typing`
 
 ```lean
-theorem substitution_preserves_typing (Γ : Context) (x : String) (τ₁ : Ty) (t v : Tm) (τ : Ty)
+theorem substitution_preserves_typing (Γ : Context) (x : String)
+    (τ₁ : Ty) (t v : Tm) (τ : Ty)
     (ht : <{ x ↦ τ₁ ; Γ ⊢ t ⦂ τ }>)
     (hv : <{ ∅ ⊢ v ⦂ τ₁ }>) :
     <{ Γ ⊢ [x := v] t ⦂ τ }> := by
   solution!
     induction t generalizing Γ τ with (
-        rw [subst]; try (inversion ht; apply_rules using ExtStlcTyping; done))
+        rw [subst];
+        try (inversion ht; apply_rules using ExtStlcTyping; done))
     | var y =>
         inversion ht with | _ h =>
         by_cases h₁ : x = y
@@ -3018,7 +2987,8 @@ theorem substitution_preserves_typing (Γ : Context) (x : String) (τ₁ : Ty) (
     | abs y _ _ ih =>
         inversion ht with | _ h =>
         by_cases h₁ : x = y
-        · simp_all [PartialMap.update_shadow]; apply_rules using ExtStlcTyping
+        · simp_all [PartialMap.update_shadow]
+          apply_rules using ExtStlcTyping
         · rw [PartialMap.update_permute] at h
           · simp_all; apply_rules using ExtStlcTyping
           · lia
@@ -3026,18 +2996,21 @@ theorem substitution_preserves_typing (Γ : Context) (x : String) (τ₁ : Ty) (
         inversion ht with | _ h₁ h₂ h₃ =>
         by_cases x = y₁ <;> by_cases x = y₂ <;> constructor <;> first
             | apply ih; assumption
-            | simp_all [PartialMap.update_shadow, PartialMap.update_permute]
+            | simp_all [PartialMap.update_shadow,
+                PartialMap.update_permute]
         apply ih₁; rw [PartialMap.update_permute]; assumption; lia
     | listCase _ _ y₁ y₂ _ ih ih₁ ih₂ =>
         inversion ht with | _ h₁ h₂ h₃ =>
         by_cases x = y₁ <;> by_cases x = y₂ <;> constructor <;> first
             | apply ih; assumption
-            | simp_all [PartialMap.update_shadow, PartialMap.update_permute]
+            | simp_all [PartialMap.update_shadow,
+                PartialMap.update_permute]
     | letIn y _ _ ih ih₁ =>
         inversion ht with | _ h₁ h₂ =>
         by_cases x = y <;> constructor <;> first
             | apply ih; assumption
-            | simp_all [PartialMap.update_shadow, PartialMap.update_permute]
+            | simp_all [PartialMap.update_shadow,
+                PartialMap.update_permute]
 ```
 
 :::autogradedHole substitution_preserves_typing
