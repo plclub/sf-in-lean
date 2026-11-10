@@ -229,8 +229,7 @@ theorem progress (t : Tm) (τ : Ty) (hτ : <{ ∅ ⊢ t ⦂ τ }>) :
   | var Γ x τ₁ h =>
     subst hΓ
     -- Contradictory: variables cannot be typed in an empty context.
-    rw [PartialMap.getElem_empty] at h
-    cases h
+    inversion h
   | abs => left; constructor
   | tru => left; constructor
   | fls => left; constructor
@@ -584,12 +583,9 @@ theorem substitution_preserves_typing (Γ : Context) (x : String)
     | var _ _ _ h =>
       by_cases hxy : x = y
       · subst hxy
-        rw [PartialMap.update_eq] at h
+        rw [PartialMap.update_eq, Option.some.injEq] at h
+        subst h
         rw [subst_var_eq]
-        have hτ'τ : τ' = τ := by
-          apply Option.some.inj
-          exact h
-        subst hτ'τ
         apply weakening_empty
         exact hv
       · rw [PartialMap.update_neq hxy] at h
