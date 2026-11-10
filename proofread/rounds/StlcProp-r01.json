@@ -1,0 +1,295 @@
+{
+ "file": "TS/StlcProp.lean",
+ "chapter": "StlcProp",
+ "round": 1,
+ "proposals": [
+  {
+   "id": "w01",
+   "cat": "formatting/line-width",
+   "old": "theorem canonical_forms_bool (t : Tm) (hτ : <{ ∅ ⊢ t ⦂ Bool }>) (hv : t.IsValue) :\n    t = <{ true }> ∨ t = <{ false }> := by",
+   "new": "theorem canonical_forms_bool (t : Tm)\n    (hτ : <{ ∅ ⊢ t ⦂ Bool }>) (hv : t.IsValue) :\n    t = <{ true }> ∨ t = <{ false }> := by",
+   "why": "Line is over 70 columns; split the binders across two lines, matching canonical_forms_fun just below."
+  },
+  {
+   "id": "w02",
+   "cat": "formatting/line-width",
+   "old": "    -- `t = t₁ t₂`.  Proceed by cases on whether `t₁` is a value or steps.",
+   "new": "    -- `t = t₁ t₂`.  Proceed by cases on whether `t₁` is a value or\n    -- steps.",
+   "why": "Comment is over 70 columns; wrap onto a second `--` line."
+  },
+  {
+   "id": "w03",
+   "cat": "formatting/line-width",
+   "old": "  induction ht generalizing Γ' with (apply_rules [PartialMap.update_subset] using StlcTyping)",
+   "new": "  induction ht generalizing Γ' with\n    (apply_rules [PartialMap.update_subset] using StlcTyping)",
+   "why": "Line is over 70 columns; break after `with`, indenting the combinator tactic."
+  },
+  {
+   "id": "w04",
+   "cat": "formatting/line-width",
+   "old": "theorem weakening_empty {Γ : Context} {t : Tm} {τ : Ty} (ht : <{ ∅ ⊢ t ⦂ τ }>) :\n    <{ Γ ⊢ t ⦂ τ }> := by",
+   "new": "theorem weakening_empty {Γ : Context} {t : Tm} {τ : Ty}\n    (ht : <{ ∅ ⊢ t ⦂ τ }>) :\n    <{ Γ ⊢ t ⦂ τ }> := by",
+   "why": "Line is over 70 columns; split the binders across two lines."
+  },
+  {
+   "id": "w05",
+   "cat": "formatting/line-width",
+   "old": "  -- this is the \"manual\" way to show that the empty context is a subset of any context:",
+   "new": "  -- this is the \"manual\" way to show that the empty context is a\n  -- subset of any context:",
+   "why": "Comment is over 70 columns; wrap onto a second `--` line."
+  },
+  {
+   "id": "w06",
+   "cat": "formatting/line-width",
+   "old": "theorem substitution_preserves_typing (Γ : Context) (x : String) (τ' : Ty)\n    (t v : Tm) (τ : Ty)\n    (hτ : <{ x ↦ τ' ; Γ ⊢ t ⦂ τ }>) (hv : <{ ∅ ⊢ v ⦂ τ' }>) :\n    <{ Γ ⊢ [x := v] t ⦂ τ }> := by\n  -- By induction on `t`; in each case we get at the derivation of `hτ`.",
+   "new": "theorem substitution_preserves_typing (Γ : Context) (x : String)\n    (τ' : Ty) (t v : Tm) (τ : Ty)\n    (hτ : <{ x ↦ τ' ; Γ ⊢ t ⦂ τ }>) (hv : <{ ∅ ⊢ v ⦂ τ' }>) :\n    <{ Γ ⊢ [x := v] t ⦂ τ }> := by\n  -- By induction on `t`; in each case we get at the derivation of\n  -- `hτ`.",
+   "why": "Signature and comment are over 70 columns; reflow both (anchored together since the signature text recurs verbatim in the StlcArith exercise below)."
+  },
+  {
+   "id": "w07",
+   "cat": "formatting/line-width",
+   "old": "theorem substitution_preserves_typing (Γ : Context) (x : String) (τ' : Ty)\n    (t v : Tm) (τ : Ty)\n    (hτ : <{ x ↦ τ' ; Γ ⊢ t ⦂ τ }>) (hv : <{ ∅ ⊢ v ⦂ τ' }>) :\n    <{ Γ ⊢ [x := v] t ⦂ τ }> := by\n  induction t generalizing Γ τ with",
+   "new": "theorem substitution_preserves_typing (Γ : Context) (x : String)\n    (τ' : Ty) (t v : Tm) (τ : Ty)\n    (hτ : <{ x ↦ τ' ; Γ ⊢ t ⦂ τ }>) (hv : <{ ∅ ⊢ v ⦂ τ' }>) :\n    <{ Γ ⊢ [x := v] t ⦂ τ }> := by\n  induction t generalizing Γ τ with",
+   "why": "Signature is over 70 columns; reflow the binders (same signature text as the Stlc-section theorem of the same name, anchored here via the differing proof that follows)."
+  },
+  {
+   "id": "w08",
+   "cat": "formatting/line-width",
+   "old": "theorem substitution_preserves_typing_from_typing_ind (Γ : Context) (x : String) (τ' : Ty)\n    (t v : Tm) (τ : Ty)",
+   "new": "theorem substitution_preserves_typing_from_typing_ind (Γ : Context)\n    (x : String) (τ' : Ty) (t v : Tm) (τ : Ty)",
+   "why": "Line is over 70 columns; split the binders across two lines."
+  },
+  {
+   "id": "w09a",
+   "cat": "formatting/line-width",
+   "old": "  | fls => cases hs\n  | app Γ τ₁ τ₂ t₁ t₂ h₁ h₂ ih₁ ih₂ =>\n    subst hΓ\n    cases hs with\n    | appAbs _ _ _ _ _ =>\n      -- The one interesting case: the desired result is the substitution lemma.",
+   "new": "  | fls => cases hs\n  | app Γ τ₁ τ₂ t₁ t₂ h₁ h₂ ih₁ ih₂ =>\n    subst hΓ\n    cases hs with\n    | appAbs _ _ _ _ _ =>\n      -- The one interesting case: the desired result is the\n      -- substitution lemma.",
+   "why": "Comment is over 70 columns; wrap onto a second `--` line (anchored with the preceding `fls` case, since this comment's text is otherwise a literal substring of its StlcArith counterpart below)."
+  },
+  {
+   "id": "w09b",
+   "cat": "formatting/line-width",
+   "old": "    | const => cases hs\n    | app Γ τ₁ τ₂ t₁ t₂ h₁ h₂ ih₁ ih₂ =>\n      subst hΓ\n      cases hs with\n      | appAbs _ _ _ _ _ =>\n        -- The one interesting case: the desired result is the substitution lemma.",
+   "new": "    | const => cases hs\n    | app Γ τ₁ τ₂ t₁ t₂ h₁ h₂ ih₁ ih₂ =>\n      subst hΓ\n      cases hs with\n      | appAbs _ _ _ _ _ =>\n        -- The one interesting case: the desired result is the\n        -- substitution lemma.",
+   "why": "Comment is over 70 columns; wrap onto a second `--` line (StlcArith's copy of the preservation proof, anchored with the preceding `const` case)."
+  },
+  {
+   "id": "w10",
+   "cat": "formatting/line-width",
+   "old": "theorem not_subject_expansion :\n    ∃ (t t' : Tm) (τ : Ty), t ⟶ t' ∧ <{ ∅ ⊢ t' ⦂ τ }> ∧ ¬ <{ ∅ ⊢ t ⦂ τ }> := by",
+   "new": "theorem not_subject_expansion :\n    ∃ (t t' : Tm) (τ : Ty),\n      t ⟶ t' ∧ <{ ∅ ⊢ t' ⦂ τ }> ∧ ¬ <{ ∅ ⊢ t ⦂ τ }> := by",
+   "why": "Line is over 70 columns; split the existential's body onto its own line."
+  },
+  {
+   "id": "w11",
+   "cat": "formatting/line-width",
+   "old": "    ¬ (∀ (t t' : Tm) (τ : Ty), t ⟶ t' ∧ <{ ∅ ⊢ t' ⦂ τ }> → <{ ∅ ⊢ t ⦂ τ }>) := by",
+   "new": "    ¬ (∀ (t t' : Tm) (τ : Ty),\n        t ⟶ t' ∧ <{ ∅ ⊢ t' ⦂ τ }> → <{ ∅ ⊢ t ⦂ τ }>) := by",
+   "why": "Line is over 70 columns; split the universal's body onto its own line."
+  },
+  {
+   "id": "w12",
+   "cat": "formatting/line-width",
+   "old": "  have hτ : <{ ∅ ⊢ (λ X : Bool → Bool . λ Y : Bool . Y) true ⦂ Bool → Bool }> := by",
+   "new": "  have hτ : <{ ∅ ⊢ (λ X : Bool → Bool . λ Y : Bool . Y) true\n      ⦂ Bool → Bool }> := by",
+   "why": "Line is over 70 columns; split the term just before the typing judgment's `⦂`."
+  },
+  {
+   "id": "w13",
+   "cat": "formatting/line-width",
+   "old": "  | ite1 (t₁ t₂ t₃ : Tm) (h : x ∈ᶠ t₁) : x ∈ᶠ <{ if t₁ then t₂ else t₃ }>\n  | ite2 (t₁ t₂ t₃ : Tm) (h : x ∈ᶠ t₂) : x ∈ᶠ <{ if t₁ then t₂ else t₃ }>\n  | ite3 (t₁ t₂ t₃ : Tm) (h : x ∈ᶠ t₃) : x ∈ᶠ <{ if t₁ then t₂ else t₃ }>",
+   "new": "  | ite1 (t₁ t₂ t₃ : Tm) (h : x ∈ᶠ t₁) :\n      x ∈ᶠ <{ if t₁ then t₂ else t₃ }>\n  | ite2 (t₁ t₂ t₃ : Tm) (h : x ∈ᶠ t₂) :\n      x ∈ᶠ <{ if t₁ then t₂ else t₃ }>\n  | ite3 (t₁ t₂ t₃ : Tm) (h : x ∈ᶠ t₃) :\n      x ∈ᶠ <{ if t₁ then t₂ else t₃ }>",
+   "why": "Each line is over 70 columns; split the constructor's binders from its conclusion, matching the `abs` constructor just above."
+  },
+  {
+   "id": "w14",
+   "cat": "formatting/line-width",
+   "old": "theorem typable_empty_closed (t : Tm) (τ : Ty) (hτ : <{ ∅ ⊢ t ⦂ τ }>) : t.Closed := by",
+   "new": "theorem typable_empty_closed (t : Tm) (τ : Ty)\n    (hτ : <{ ∅ ⊢ t ⦂ τ }>) : t.Closed := by",
+   "why": "Line is over 70 columns; split the binders across two lines."
+  },
+  {
+   "id": "w15",
+   "cat": "formatting/line-width",
+   "old": "  | ite (Γ : Context) (t₁ t₂ t₃ : Tm) (τ₁ : Ty)\n      (h₁ : HasType Γ t₁ <{ Bool }>) (h₂ : HasType Γ t₂ τ₁) (h₃ : HasType Γ t₃ τ₁) :\n      HasType Γ <{ if t₁ then t₂ else t₃ }> τ₁",
+   "new": "  | ite (Γ : Context) (t₁ t₂ t₃ : Tm) (τ₁ : Ty)\n      (h₁ : HasType Γ t₁ <{ Bool }>) (h₂ : HasType Γ t₂ τ₁)\n      (h₃ : HasType Γ t₃ τ₁) :\n      HasType Γ <{ if t₁ then t₂ else t₃ }> τ₁",
+   "why": "Second line is over 70 columns; split the remaining binder onto its own 6-space-indented line, per the inductive-constructor convention."
+  },
+  {
+   "id": "w16",
+   "cat": "formatting/line-width",
+   "old": "  exists <{ if (λ X : Bool . false) then false else false }>, <{ Bool }>",
+   "new": "  exists <{ if (λ X : Bool . false) then false else false }>,\n    <{ Bool }>",
+   "why": "Line is over 70 columns; split the witness list after the comma."
+  },
+  {
+   "id": "w17",
+   "cat": "formatting/line-width",
+   "old": "private def Tm.unexpandVar : Unexpander := Delab.unexpandVar reservedNames ``Tm.var",
+   "new": "private def Tm.unexpandVar : Unexpander :=\n  Delab.unexpandVar reservedNames ``Tm.var",
+   "why": "Line is over 70 columns; split the body onto its own line, matching the identical definition in TS/Sub.lean."
+  },
+  {
+   "id": "w18",
+   "cat": "formatting/line-width",
+   "old": "theorem weakening_empty (Γ : Context) (t : Tm) (τ : Ty) (hτ : <{ ∅ ⊢ t ⦂ τ }>) :\n    <{ Γ ⊢ t ⦂ τ }> := by",
+   "new": "theorem weakening_empty (Γ : Context) (t : Tm) (τ : Ty)\n    (hτ : <{ ∅ ⊢ t ⦂ τ }>) :\n    <{ Γ ⊢ t ⦂ τ }> := by",
+   "why": "Line is over 70 columns; split the binders across two lines."
+  },
+  {
+   "id": "w19_subst",
+   "cat": "formatting/line-width",
+   "old": "@[simp] theorem subst_var_ne (h : x ≠ y) : <{ [x := s] ~(Tm.var y) }> = .var y := by\n  simp [subst, h]\n\n@[simp] theorem subst_abs_eq : <{ [x := s] (λ x : τ . t) }> = <{ λ x : τ . t }> := by\n  simp [subst]\n\n@[simp] theorem subst_abs_ne (h : x ≠ y) :\n    <{ [x := s] (λ y : τ . t) }> = <{ λ y : τ . [x := s] t }> := by\n  simp [subst, h]\n\n@[simp] theorem subst_app :\n    <{ [x := s] (t₁ t₂) }> = <{ ([x := s] t₁) ([x := s] t₂) }> := rfl\n\n@[simp] theorem subst_const : <{ [x := s] ~(Tm.const n) }> = .const n := rfl\n\n@[simp] theorem subst_succ :\n    <{ [x := s] (succ t₁) }> = <{ succ ([x := s] t₁) }> := rfl\n\n@[simp] theorem subst_pred :\n    <{ [x := s] (pred t₁) }> = <{ pred ([x := s] t₁) }> := rfl\n\n@[simp] theorem subst_mult :\n    <{ [x := s] (t₁ * t₂) }> = <{ ([x := s] t₁) * ([x := s] t₂) }> := rfl\n\n@[simp] theorem subst_ite0 :\n    <{ [x := s] (if0 t₁ then t₂ else t₃) }> =\n      <{ if0 [x := s] t₁ then [x := s] t₂ else [x := s] t₃ }> := rfl",
+   "new": "@[simp] theorem subst_var_ne (h : x ≠ y) :\n    <{ [x := s] ~(Tm.var y) }> = .var y := by\n  simp [subst, h]\n\n@[simp] theorem subst_abs_eq :\n    <{ [x := s] (λ x : τ . t) }> = <{ λ x : τ . t }> := by\n  simp [subst]\n\n@[simp] theorem subst_abs_ne (h : x ≠ y) :\n    <{ [x := s] (λ y : τ . t) }> = <{ λ y : τ . [x := s] t }> := by\n  simp [subst, h]\n\n@[simp] theorem subst_app :\n    <{ [x := s] (t₁ t₂) }> =\n      <{ ([x := s] t₁) ([x := s] t₂) }> := by rfl\n\n@[simp] theorem subst_const :\n    <{ [x := s] ~(Tm.const n) }> = .const n := by rfl\n\n@[simp] theorem subst_succ :\n    <{ [x := s] (succ t₁) }> = <{ succ ([x := s] t₁) }> := by rfl\n\n@[simp] theorem subst_pred :\n    <{ [x := s] (pred t₁) }> = <{ pred ([x := s] t₁) }> := by rfl\n\n@[simp] theorem subst_mult :\n    <{ [x := s] (t₁ * t₂) }> =\n      <{ ([x := s] t₁) * ([x := s] t₂) }> := by rfl\n\n@[simp] theorem subst_ite0 :\n    <{ [x := s] (if0 t₁ then t₂ else t₃) }> =\n      <{ if0 [x := s] t₁ then [x := s] t₂ else [x := s] t₃ }> :=\n    by rfl",
+   "why": "subst_var_ne/subst_abs_eq are over 70 columns (split like the adjacent subst_abs_ne); subst_app/subst_const/subst_succ/subst_pred/subst_mult/subst_ite0 end in bare `:= rfl`, which should be `:= by rfl` (a proof always opens with `by`), matching the identical fix already made to TS/Stlc.lean's subst lemmas."
+  },
+  {
+   "id": "w20",
+   "cat": "formatting/line-width",
+   "old": "  | abs (x : String) (τ₂ : Ty) (t₁ : Tm) : Tm.IsValue <{ λ x : τ₂ . t₁ }>",
+   "new": "  | abs (x : String) (τ₂ : Ty) (t₁ : Tm) :\n      Tm.IsValue <{ λ x : τ₂ . t₁ }>",
+   "why": "Line is over 70 columns; split the constructor's binders from its conclusion, matching the Step.appAbs-style constructors elsewhere in the book."
+  },
+  {
+   "id": "w21",
+   "cat": "formatting/line-width",
+   "old": "  -- the rest say how the arithmetic operators evaluate their arguments and\n  -- what they compute once those arguments are numbers.",
+   "new": "  -- the rest say how the arithmetic operators evaluate their\n  -- arguments and what they compute once those arguments are numbers.",
+   "why": "First line is over 70 columns; rewrap across the two `--` lines."
+  },
+  {
+   "id": "w22",
+   "cat": "formatting/line-width",
+   "old": "-- Our solution uses [normalize]. It is fine if the student either follows this\n-- strategy or proceeds by hand.",
+   "new": "-- Our solution uses [normalize]. It is fine if the student either\n-- follows this strategy or proceeds by hand.",
+   "why": "First line is over 70 columns; rewrap across the two `--` lines."
+  },
+  {
+   "id": "w23",
+   "cat": "formatting/line-width",
+   "old": "attribute [StlcArithEval] Step.appAbs Step.app1 Step.app2 Step.succ Step.succConst\n  Step.pred Step.predConst Step.multConst Step.mult1 Step.mult2 Step.if0Step\n  Step.if0Zero Step.if0Nonzero",
+   "new": "attribute [StlcArithEval] Step.appAbs Step.app1 Step.app2 Step.succ\n  Step.succConst Step.pred Step.predConst Step.multConst Step.mult1\n  Step.mult2 Step.if0Step Step.if0Zero Step.if0Nonzero",
+   "why": "First line is over 70 columns; redistribute the constructor list across its continuation lines."
+  },
+  {
+   "id": "w24",
+   "cat": "formatting/line-width",
+   "old": "theorem Nat_step_example : ∃ t, <{ (λ X : Nat . λ Y : Nat . X * Y) 3 2 }> ⟶* t := by",
+   "new": "theorem Nat_step_example :\n    ∃ t, <{ (λ X : Nat . λ Y : Nat . X * Y) 3 2 }> ⟶* t := by",
+   "why": "Line is over 70 columns; split the statement onto its own line."
+  },
+  {
+   "id": "w25",
+   "cat": "formatting/line-width",
+   "old": "  -- The typing rules for variables, abstraction, and application are from STLC.",
+   "new": "  -- The typing rules for variables, abstraction, and application\n  -- are from STLC.",
+   "why": "Comment is over 70 columns; wrap onto a second `--` line."
+  },
+  {
+   "id": "w26",
+   "cat": "formatting/line-width",
+   "old": "  -- The remaining five are the typing rules for arithmetic expressions.",
+   "new": "  -- The remaining five are the typing rules for arithmetic\n  -- expressions.",
+   "why": "Comment is over 70 columns; wrap onto a second `--` line."
+  },
+  {
+   "id": "w27",
+   "cat": "formatting/line-width",
+   "old": "theorem Nat_typing_example : <{ ∅ ⊢ (λ X : Nat . λ Y : Nat . X * Y) 3 2 ⦂ Nat }> := by",
+   "new": "theorem Nat_typing_example :\n    <{ ∅ ⊢ (λ X : Nat . λ Y : Nat . X * Y) 3 2 ⦂ Nat }> := by",
+   "why": "Line is over 70 columns; split the statement onto its own line."
+  },
+  {
+   "id": "w28",
+   "cat": "formatting/line-width",
+   "old": "          -- `t₁` is a value of arrow type, so it is an abstraction, not a number.",
+   "new": "          -- `t₁` is a value of arrow type, so it is an\n          -- abstraction, not a number.",
+   "why": "Comment is over 70 columns; wrap onto a second `--` line."
+  },
+  {
+   "id": "b01",
+   "cat": "formatting/blank-lines",
+   "old": "open scoped Elab\n\n\nnamespace Delab",
+   "new": "open scoped Elab\n\nnamespace Delab",
+   "why": "Two blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b02",
+   "cat": "formatting/blank-lines",
+   "old": "#check Tm.var \"succ\"\n\n\n/-- info: StlcArith.Tm.var \"x-y\" : Tm -/",
+   "new": "#check Tm.var \"succ\"\n\n/-- info: StlcArith.Tm.var \"x-y\" : Tm -/",
+   "why": "Two blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b03",
+   "cat": "formatting/blank-lines",
+   "old": ":::autogradedHole HasType\n:::\n\n\n::::details \"Notation encoding\"",
+   "new": ":::autogradedHole HasType\n:::\n\n::::details \"Notation encoding\"",
+   "why": "Two blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "fig1",
+   "cat": "formatting/rule-figure",
+   "old": "```\n                              v.IsValue\n                       -----------------------                    (appAbs)\n                        (λx:τ. t) v ⟶ [x:=v]t\n\n                              t₁ ⟶ t₁'\n                          ----------------                        (app1)\n                           t₁ t₂ ⟶ t₁' t₂\n\n                             v₁.IsValue\n                              t₂ ⟶ t₂'\n                          ----------------                        (app2)\n                           v₁ t₂ ⟶ v₁ t₂'\n\n                  --------------------------------                (ifTrue)\n                   (if true then t₁ else t₂) ⟶ t₁\n\n                  ---------------------------------               (ifFalse)\n                   (if false then t₁ else t₂) ⟶ t₂\n\n                              t₁ ⟶ t₁'\n        ----------------------------------------------------      (ifStep)\n         (if t₁ then t₂ else t₃) ⟶ (if t₁' then t₂ else t₃)\n```",
+   "new": "```display +centered\n                    v.IsValue\n              ---------------------                 (appAbs)\n              (λx:τ. t) v ⟶ [x:=v]t\n\n                     t₁ ⟶ t₁'\n                  --------------                    (app1)\n                  t₁ t₂ ⟶ t₁' t₂\n\n                    v₁.IsValue\n                     t₂ ⟶ t₂'\n                  --------------                    (app2)\n                  v₁ t₂ ⟶ v₁ t₂'\n\n          ------------------------------            (ifTrue)\n          (if true then t₁ else t₂) ⟶ t₁\n\n         -------------------------------            (ifFalse)\n         (if false then t₁ else t₂) ⟶ t₂\n\n                     t₁ ⟶ t₁'\n--------------------------------------------------  (ifStep)\n(if t₁ then t₂ else t₃) ⟶ (if t₁' then t₂ else t₃)\n```",
+   "why": "Hand-drawn inference rules must be a `display +centered` block, per STYLE-CODE.md; this was a bare ``` block pseudo-centered with leading spaces. ifTrue/ifFalse are very unbalanced (conclusion mostly left-hand side), so the whole block is centered rather than symbol-aligned."
+  },
+  {
+   "id": "fig2",
+   "cat": "formatting/rule-figure",
+   "old": "```\n                              Γ x = τ₁\n                            ------------                       (var)\n                             Γ ⊢ x ⦂ τ₁\n\n                        x ↦ τ₂ ; Γ ⊢ t₁ ⦂ τ₁\n                      -------------------------                (abs)\n                       Γ ⊢ λx:τ₂. t₁ ⦂ τ₂ → τ₁\n\n                          Γ ⊢ t₁ ⦂ τ₂ → τ₁\n                            Γ ⊢ t₂ ⦂ τ₂\n                         ------------------                    (app)\n                           Γ ⊢ t₁ t₂ ⦂ τ₁\n\n                          -----------------                    (tru)\n                           Γ ⊢ true ⦂ Bool\n\n                         ------------------                    (fls)\n                          Γ ⊢ false ⦂ Bool\n\n             Γ ⊢ t₁ ⦂ Bool    Γ ⊢ t₂ ⦂ τ₁    Γ ⊢ t₃ ⦂ τ₁\n            ---------------------------------------------      (ite)\n                   Γ ⊢ if t₁ then t₂ else t₃ ⦂ τ₁\n```",
+   "new": "```display +centered\n           Γ x = τ₁\n          ----------            (var)\n          Γ ⊢ x ⦂ τ₁\n\n    x ↦ τ₂ ; Γ ⊢ t₁ ⦂ τ₁\n   -----------------------      (abs)\n   Γ ⊢ λx:τ₂. t₁ ⦂ τ₂ → τ₁\n\n       Γ ⊢ t₁ ⦂ τ₂ → τ₁\n         Γ ⊢ t₂ ⦂ τ₂\n       ----------------         (app)\n        Γ ⊢ t₁ t₂ ⦂ τ₁\n\n       ---------------          (tru)\n       Γ ⊢ true ⦂ Bool\n\n       ----------------         (fls)\n       Γ ⊢ false ⦂ Bool\n\n        Γ ⊢ t₁ ⦂ Bool\n         Γ ⊢ t₂ ⦂ τ₁\n         Γ ⊢ t₃ ⦂ τ₁\n------------------------------  (ite)\nΓ ⊢ if t₁ then t₂ else t₃ ⦂ τ₁\n```",
+   "why": "Hand-drawn inference rules must be a `display +centered` block, per STYLE-CODE.md. The `ite` rule packed all three premises onto one source line, also against the one-premise-per-line rule; ite is also very unbalanced, so the whole block is centered rather than symbol-aligned."
+  },
+  {
+   "id": "fig3",
+   "cat": "formatting/rule-figure",
+   "old": "```\n                         ---------                  (zap)\n                         t ⟶ zap\n```",
+   "new": "```display +centered\n-------  (zap)\nt ⟶ zap\n```",
+   "why": "Hand-drawn inference rule must be a `display +centered` block at a minimal left margin, per STYLE-CODE.md."
+  },
+  {
+   "id": "fig4",
+   "cat": "formatting/rule-figure",
+   "old": "```\n                        -----------                 (zap)\n                        Γ ⊢ zap ⦂ τ\n```",
+   "new": "```display +centered\n-----------  (zap)\nΓ ⊢ zap ⦂ τ\n```",
+   "why": "Hand-drawn inference rule must be a `display +centered` block at a minimal left margin, per STYLE-CODE.md."
+  },
+  {
+   "id": "fig5",
+   "cat": "formatting/rule-figure",
+   "old": "```\n                       -----------------                (foo1)\n                        (λx:τ. x) ⟶ foo\n\n                         ------------                   (foo2)\n                          foo ⟶ true\n```",
+   "new": "```display +centered\n---------------   (foo1)\n(λx:τ. x) ⟶ foo\n\n----------------  (foo2)\n      foo ⟶ true\n```",
+   "why": "Hand-drawn inference rules must be a `display +centered` block with the relation symbol aligned, per STYLE-CODE.md; both foo1 and foo2 are balanced, so the symbol-aligned (not centered) layout applies."
+  },
+  {
+   "id": "fig6",
+   "cat": "formatting/rule-figure",
+   "old": "```\n            ----------------------------------        (funnyIfTrue)\n             (if true then t₁ else t₂) ⟶ true\n```",
+   "new": "```display +centered\n--------------------------------  (funnyIfTrue)\n(if true then t₁ else t₂) ⟶ true\n```",
+   "why": "Hand-drawn inference rule must be a `display +centered` block at a minimal left margin, per STYLE-CODE.md."
+  },
+  {
+   "id": "fig7",
+   "cat": "formatting/rule-figure",
+   "old": "```\n                 Γ ⊢ t₁ ⦂ Bool → Bool → Bool\n                        Γ ⊢ t₂ ⦂ Bool\n                ------------------------------       (funnyApp)\n                       Γ ⊢ t₁ t₂ ⦂ Bool\n```",
+   "new": "```display +centered\nΓ ⊢ t₁ ⦂ Bool → Bool → Bool\n       Γ ⊢ t₂ ⦂ Bool\n---------------------------  (funnyApp)\n     Γ ⊢ t₁ t₂ ⦂ Bool\n```",
+   "why": "Hand-drawn inference rule must be a `display +centered` block, with premises centered under the bar, per STYLE-CODE.md."
+  },
+  {
+   "id": "fig8",
+   "cat": "formatting/rule-figure",
+   "old": "```\n                        Γ ⊢ t₁ ⦂ Bool\n                        Γ ⊢ t₂ ⦂ Bool\n                      ------------------            (funnyApp')\n                      Γ ⊢ t₁ t₂ ⦂ Bool\n```",
+   "new": "```display +centered\n Γ ⊢ t₁ ⦂ Bool\n Γ ⊢ t₂ ⦂ Bool\n----------------  (funnyApp')\nΓ ⊢ t₁ t₂ ⦂ Bool\n```",
+   "why": "Hand-drawn inference rule must be a `display +centered` block, with premises centered under the bar, per STYLE-CODE.md."
+  },
+  {
+   "id": "fig9",
+   "cat": "formatting/rule-figure",
+   "old": "```\n                       ------------------------     (funnyAbs)\n                        ∅ ⊢ λx:Bool. t ⦂ Bool\n```",
+   "new": "```display +centered\n---------------------  (funnyAbs)\n∅ ⊢ λx:Bool. t ⦂ Bool\n```",
+   "why": "Hand-drawn inference rule must be a `display +centered` block at a minimal left margin, per STYLE-CODE.md."
+  }
+ ],
+ "completed": true
+}
