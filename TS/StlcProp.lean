@@ -54,55 +54,57 @@ Substitution:
 ```
 
 Small-step operational semantics:
-```
-                              v.IsValue
-                       -----------------------                    (appAbs)
-                        (λx:τ. t) v ⟶ [x:=v]t
+```display +centered
+                    v.IsValue
+              ---------------------                 (appAbs)
+              (λx:τ. t) v ⟶ [x:=v]t
 
-                              t₁ ⟶ t₁'
-                          ----------------                        (app1)
-                           t₁ t₂ ⟶ t₁' t₂
+                     t₁ ⟶ t₁'
+                  --------------                    (app1)
+                  t₁ t₂ ⟶ t₁' t₂
 
-                             v₁.IsValue
-                              t₂ ⟶ t₂'
-                          ----------------                        (app2)
-                           v₁ t₂ ⟶ v₁ t₂'
+                    v₁.IsValue
+                     t₂ ⟶ t₂'
+                  --------------                    (app2)
+                  v₁ t₂ ⟶ v₁ t₂'
 
-                  --------------------------------                (ifTrue)
-                   (if true then t₁ else t₂) ⟶ t₁
+          ------------------------------            (ifTrue)
+          (if true then t₁ else t₂) ⟶ t₁
 
-                  ---------------------------------               (ifFalse)
-                   (if false then t₁ else t₂) ⟶ t₂
+         -------------------------------            (ifFalse)
+         (if false then t₁ else t₂) ⟶ t₂
 
-                              t₁ ⟶ t₁'
-        ----------------------------------------------------      (ifStep)
-         (if t₁ then t₂ else t₃) ⟶ (if t₁' then t₂ else t₃)
+                     t₁ ⟶ t₁'
+--------------------------------------------------  (ifStep)
+(if t₁ then t₂ else t₃) ⟶ (if t₁' then t₂ else t₃)
 ```
 
 Typing:
-```
-                              Γ x = τ₁
-                            ------------                       (var)
-                             Γ ⊢ x ⦂ τ₁
+```display +centered
+           Γ x = τ₁
+          ----------            (var)
+          Γ ⊢ x ⦂ τ₁
 
-                        x ↦ τ₂ ; Γ ⊢ t₁ ⦂ τ₁
-                      -------------------------                (abs)
-                       Γ ⊢ λx:τ₂. t₁ ⦂ τ₂ → τ₁
+    x ↦ τ₂ ; Γ ⊢ t₁ ⦂ τ₁
+   -----------------------      (abs)
+   Γ ⊢ λx:τ₂. t₁ ⦂ τ₂ → τ₁
 
-                          Γ ⊢ t₁ ⦂ τ₂ → τ₁
-                            Γ ⊢ t₂ ⦂ τ₂
-                         ------------------                    (app)
-                           Γ ⊢ t₁ t₂ ⦂ τ₁
+       Γ ⊢ t₁ ⦂ τ₂ → τ₁
+         Γ ⊢ t₂ ⦂ τ₂
+       ----------------         (app)
+        Γ ⊢ t₁ t₂ ⦂ τ₁
 
-                          -----------------                    (tru)
-                           Γ ⊢ true ⦂ Bool
+       ---------------          (tru)
+       Γ ⊢ true ⦂ Bool
 
-                         ------------------                    (fls)
-                          Γ ⊢ false ⦂ Bool
+       ----------------         (fls)
+       Γ ⊢ false ⦂ Bool
 
-             Γ ⊢ t₁ ⦂ Bool    Γ ⊢ t₂ ⦂ τ₁    Γ ⊢ t₃ ⦂ τ₁
-            ---------------------------------------------      (ite)
-                   Γ ⊢ if t₁ then t₂ else t₃ ⦂ τ₁
+        Γ ⊢ t₁ ⦂ Bool
+         Γ ⊢ t₂ ⦂ τ₁
+         Γ ⊢ t₃ ⦂ τ₁
+------------------------------  (ite)
+Γ ⊢ if t₁ then t₂ else t₃ ⦂ τ₁
 ```
 ::::
 
@@ -147,7 +149,8 @@ only well typed but _closed_ — i.e., well typed in the empty
 context.
 
 ```lean
-theorem canonical_forms_bool (t : Tm) (hτ : <{ ∅ ⊢ t ⦂ Bool }>) (hv : t.IsValue) :
+theorem canonical_forms_bool (t : Tm)
+    (hτ : <{ ∅ ⊢ t ⦂ Bool }>) (hv : t.IsValue) :
     t = <{ true }> ∨ t = <{ false }> := by
   cases hv with
   | abs x τ t₁ => cases hτ
@@ -232,7 +235,7 @@ theorem progress (t : Tm) (τ : Ty) (hτ : <{ ∅ ⊢ t ⦂ τ }>) :
   | tru => left; constructor
   | fls => left; constructor
   | app Γ τ₁ τ₂ t₁ t₂ h₁ h₂ ih₁ ih₂ =>
-    -- `t = t₁ t₂`.  Proceed by cases on whether `t₁` is a value or steps.
+    -- `t = t₁ t₂`. Proceed on whether `t₁` is a value or steps.
     subst hΓ
     right
     cases ih₁ rfl with
@@ -471,7 +474,8 @@ We must give the tactic access to all the `HasType` constructors and the
 ```lean
 theorem weakening' {Γ Γ' : Context} {t : Tm} {τ : Ty}
     (hi : Γ ⊆ Γ') (ht : <{ Γ ⊢ t ⦂ τ }>) : <{ Γ' ⊢ t ⦂ τ }> := by
-  induction ht generalizing Γ' with (apply_rules [PartialMap.update_subset] using StlcTyping)
+  induction ht generalizing Γ' with
+    (apply_rules [PartialMap.update_subset] using StlcTyping)
 ```
 
 :::slidebreak
@@ -480,11 +484,12 @@ theorem weakening' {Γ Γ' : Context} {t : Tm} {τ : Ty}
 The following simple corollary is what we actually need below.
 
 ```lean
-theorem weakening_empty {Γ : Context} {t : Tm} {τ : Ty} (ht : <{ ∅ ⊢ t ⦂ τ }>) :
+theorem weakening_empty {Γ : Context} {t : Tm} {τ : Ty}
+    (ht : <{ ∅ ⊢ t ⦂ τ }>) :
     <{ Γ ⊢ t ⦂ τ }> := by
   apply weakening (Γ := ∅)
-  -- this is the "manual" way to show that the empty context is a subset of any context:
-  -- show that a 'lookup' in it is impossible.
+  -- this is the "manual" way to show that the empty context is a
+  -- subset of any context: show that a 'lookup' in it is impossible.
   · intros x b contra
     contradiction
   · assumption
@@ -525,11 +530,12 @@ The _substitution lemma_ says:
 :::
 
 ```lean
-theorem substitution_preserves_typing (Γ : Context) (x : String) (τ' : Ty)
-    (t v : Tm) (τ : Ty)
+theorem substitution_preserves_typing (Γ : Context) (x : String)
+    (τ' : Ty) (t v : Tm) (τ : Ty)
     (hτ : <{ x ↦ τ' ; Γ ⊢ t ⦂ τ }>) (hv : <{ ∅ ⊢ v ⦂ τ' }>) :
     <{ Γ ⊢ [x := v] t ⦂ τ }> := by
-  -- By induction on `t`; in each case we get at the derivation of `hτ`.
+  -- By induction on `t`;
+  -- in each case we get at the derivation of `hτ`.
   induction t generalizing Γ τ with
   | var y =>
     cases hτ with
@@ -661,8 +667,8 @@ proved by induction on typing derivations instead
 of induction on terms.
 
 ```lean
-theorem substitution_preserves_typing_from_typing_ind (Γ : Context) (x : String) (τ' : Ty)
-    (t v : Tm) (τ : Ty)
+theorem substitution_preserves_typing_from_typing_ind (Γ : Context)
+    (x : String) (τ' : Ty) (t v : Tm) (τ : Ty)
     (hτ : <{ x ↦ τ' ; Γ ⊢ t ⦂ τ }>) (hv : <{ ∅ ⊢ v ⦂ τ' }>) :
     <{ Γ ⊢ [x := v] t ⦂ τ }> := by
   solution!
@@ -746,7 +752,8 @@ theorem preservation (t t' : Tm) (τ : Ty)
     subst hΓ
     cases hs with
     | appAbs _ _ _ _ _ =>
-      -- The one interesting case: the desired result is the substitution lemma.
+      -- The one interesting case: the desired result is the
+      -- substitution lemma.
       cases h₁ with
       | abs _ _ _ _ _ hb =>
         apply substitution_preserves_typing
@@ -837,7 +844,8 @@ This solution has to be rewritten; it is unreadable.
 :::
 ```lean
 theorem not_subject_expansion :
-    ∃ (t t' : Tm) (τ : Ty), t ⟶ t' ∧ <{ ∅ ⊢ t' ⦂ τ }> ∧ ¬ <{ ∅ ⊢ t ⦂ τ }> := by
+    ∃ (t t' : Tm) (τ : Ty),
+      t ⟶ t' ∧ <{ ∅ ⊢ t' ⦂ τ }> ∧ ¬ <{ ∅ ⊢ t ⦂ τ }> := by
     -- Hint: for giving counterexamples in STLC, give each witness
     -- with `exists <{ … }>`.  This works for both terms and types, as
     -- in `<{true}>` and `<{ Bool }>`.
@@ -860,9 +868,11 @@ Alternative formulation.
 
 ```lean -show
 theorem not_subject_expansion_alt :
-    ¬ (∀ (t t' : Tm) (τ : Ty), t ⟶ t' ∧ <{ ∅ ⊢ t' ⦂ τ }> → <{ ∅ ⊢ t ⦂ τ }>) := by
+    ¬ (∀ (t t' : Tm) (τ : Ty),
+        t ⟶ t' ∧ <{ ∅ ⊢ t' ⦂ τ }> → <{ ∅ ⊢ t ⦂ τ }>) := by
   intro hse
-  have hτ : <{ ∅ ⊢ (λ X : Bool → Bool . λ Y : Bool . Y) true ⦂ Bool → Bool }> := by
+  have hτ : <{ ∅ ⊢ (λ X : Bool → Bool . λ Y : Bool . Y) true
+      ⦂ Bool → Bool }> := by
     apply hse _ <{ λ Y : Bool . Y }>
     constructor
     · apply Step.appAbs
@@ -1010,9 +1020,12 @@ inductive AppearsFreeIn (x : String) : Tm → Prop where
   | app2 (t₁ t₂ : Tm) (h : x ∈ᶠ t₂) : x ∈ᶠ <{ t₁ t₂ }>
   | abs (y : String) (τ₁ : Ty) (t₁ : Tm) (hne : y ≠ x) (h : x ∈ᶠ t₁) :
       x ∈ᶠ <{ λ y : τ₁ . t₁ }>
-  | ite1 (t₁ t₂ t₃ : Tm) (h : x ∈ᶠ t₁) : x ∈ᶠ <{ if t₁ then t₂ else t₃ }>
-  | ite2 (t₁ t₂ t₃ : Tm) (h : x ∈ᶠ t₂) : x ∈ᶠ <{ if t₁ then t₂ else t₃ }>
-  | ite3 (t₁ t₂ t₃ : Tm) (h : x ∈ᶠ t₃) : x ∈ᶠ <{ if t₁ then t₂ else t₃ }>
+  | ite1 (t₁ t₂ t₃ : Tm) (h : x ∈ᶠ t₁) :
+      x ∈ᶠ <{ if t₁ then t₂ else t₃ }>
+  | ite2 (t₁ t₂ t₃ : Tm) (h : x ∈ᶠ t₂) :
+      x ∈ᶠ <{ if t₁ then t₂ else t₃ }>
+  | ite3 (t₁ t₂ t₃ : Tm) (h : x ∈ᶠ t₃) :
+      x ∈ᶠ <{ if t₁ then t₂ else t₃ }>
 end
 
 scoped infix:50 " ∈ᶠ " => AppearsFreeIn
@@ -1138,7 +1151,8 @@ no free variables).
 
 :::::exercise (rating := 2) (name := "typable_empty_closed") (optional := true)
 ```lean
-theorem typable_empty_closed (t : Tm) (τ : Ty) (hτ : <{ ∅ ⊢ t ⦂ τ }>) : t.Closed := by
+theorem typable_empty_closed (t : Tm) (τ : Ty)
+    (hτ : <{ ∅ ⊢ t ⦂ τ }>) : t.Closed := by
   solution!
     intro x ha
     obtain ⟨τ', hc⟩ := free_in_context x t τ ∅ ha hτ
@@ -1309,16 +1323,16 @@ theorem preservation_statement (t t' : Tm) (τ : Ty)
 :::::exercise (rating := 2) (name := "stlc_variation1") (manual := true)
 Suppose we add a new term `zap` with the following reduction rule
 
-```
-                         ---------                  (zap)
-                         t ⟶ zap
+```display +centered
+-------  (zap)
+t ⟶ zap
 ```
 
 and the following typing rule:
 
-```
-                        -----------                 (zap)
-                        Γ ⊢ zap ⦂ τ
+```display +centered
+-----------  (zap)
+Γ ⊢ zap ⦂ τ
 ```
 
 Which of the following properties of the STLC remain true in
@@ -1354,12 +1368,12 @@ Remains true. `zap` can have any type.
 Suppose instead that we add a new term `foo` with the following
 reduction rules:
 
-```
-                       -----------------                (foo1)
-                        (λx:τ. x) ⟶ foo
+```display +centered
+---------------   (foo1)
+(λx:τ. x) ⟶ foo
 
-                         ------------                   (foo2)
-                          foo ⟶ true
+----------------  (foo2)
+      foo ⟶ true
 ```
 
 Which of the following properties of the STLC remain true in
@@ -1433,9 +1447,9 @@ Remains true. Removing reduction rules can't break preservation.
 Suppose instead that we add the following new rule to the
 reduction relation:
 
-```
-            ----------------------------------        (funnyIfTrue)
-             (if true then t₁ else t₂) ⟶ true
+```display +centered
+--------------------------------  (funnyIfTrue)
+(if true then t₁ else t₂) ⟶ true
 ```
 
 Which of the following properties of the STLC remain true in
@@ -1472,11 +1486,11 @@ but it's not the case that `∅ ⊢ true ⦂ Bool → Bool`.
 Suppose instead that we add the following new rule to the typing
 relation:
 
-```
-                 Γ ⊢ t₁ ⦂ Bool → Bool → Bool
-                        Γ ⊢ t₂ ⦂ Bool
-                ------------------------------       (funnyApp)
-                       Γ ⊢ t₁ t₂ ⦂ Bool
+```display +centered
+Γ ⊢ t₁ ⦂ Bool → Bool → Bool
+       Γ ⊢ t₂ ⦂ Bool
+---------------------------  (funnyApp)
+     Γ ⊢ t₁ t₂ ⦂ Bool
 ```
 
 Which of the following properties of the STLC remain true in
@@ -1512,11 +1526,11 @@ but it's not the case that `∅ ⊢ λY:Bool. true ⦂ Bool`
 Suppose instead that we add the following new rule to the typing
 relation:
 
-```
-                        Γ ⊢ t₁ ⦂ Bool
-                        Γ ⊢ t₂ ⦂ Bool
-                      ------------------            (funnyApp')
-                      Γ ⊢ t₁ t₂ ⦂ Bool
+```display +centered
+ Γ ⊢ t₁ ⦂ Bool
+ Γ ⊢ t₂ ⦂ Bool
+----------------  (funnyApp')
+Γ ⊢ t₁ t₂ ⦂ Bool
 ```
 
 Which of the following properties of the STLC remain true in
@@ -1552,9 +1566,9 @@ type `Bool`.
 Suppose we add the following new rule to the typing relation
 of the STLC:
 
-```
-                       ------------------------     (funnyAbs)
-                        ∅ ⊢ λx:Bool. t ⦂ Bool
+```display +centered
+---------------------  (funnyAbs)
+∅ ⊢ λx:Bool. t ⦂ Bool
 ```
 
 Which of the following properties of the STLC remain true in
@@ -1603,14 +1617,16 @@ inductive HasType : Context → Tm → Ty → Prop where
   | tru (Γ : Context) : HasType Γ <{ true }> <{ Bool }>
   | fls (Γ : Context) : HasType Γ <{ false }> <{ Bool }>
   | ite (Γ : Context) (t₁ t₂ t₃ : Tm) (τ₁ : Ty)
-      (h₁ : HasType Γ t₁ <{ Bool }>) (h₂ : HasType Γ t₂ τ₁) (h₃ : HasType Γ t₃ τ₁) :
+      (h₁ : HasType Γ t₁ <{ Bool }>) (h₂ : HasType Γ t₂ τ₁)
+      (h₃ : HasType Γ t₃ τ₁) :
       HasType Γ <{ if t₁ then t₂ else t₃ }> τ₁
   | funnyAbs (x : String) (t₁ : Tm) :
       HasType ∅ <{ λ x : Bool . t₁ }> <{ Bool }>
 
 theorem no_progress :
     ∃ t τ, HasType ∅ t τ ∧ ¬ t.IsValue ∧ ¬ ∃ t', t ⟶ t' := by
-  exists <{ if (λ X : Bool . false) then false else false }>, <{ Bool }>
+  exists <{ if (λ X : Bool . false) then false else false }>,
+    <{ Bool }>
   constructor
   · apply HasType.ite
     · apply HasType.funnyAbs
@@ -1775,7 +1791,6 @@ end Elab
 
 open scoped Elab
 
-
 namespace Delab
 
 open StlcCommon Elab Delab
@@ -1795,7 +1810,8 @@ private def reservedNames : String → Bool
   | _ => false
 
 @[app_unexpander Tm.var]
-private def Tm.unexpandVar : Unexpander := Delab.unexpandVar reservedNames ``Tm.var
+private def Tm.unexpandVar : Unexpander :=
+  Delab.unexpandVar reservedNames ``Tm.var
 
 @[app_delab Tm.var]
 private def Tm.delabVar : Delab := Delab.delabVar ``Tm.var
@@ -1909,7 +1925,6 @@ end Delab
 #guard_msgs in
 #check Tm.var "succ"
 
-
 /-- info: StlcArith.Tm.var "x-y" : Tm -/
 #guard_msgs in
 #check Tm.var "x-y"
@@ -1983,10 +1998,12 @@ variable (x y : String) (s t t₁ t₂ t₃ : Tm) (τ : Ty) (n : Nat)
 @[simp] theorem subst_var_eq : <{ [x := s] ~(Tm.var x) }> = s := by
   simp [subst]
 
-@[simp] theorem subst_var_ne (h : x ≠ y) : <{ [x := s] ~(Tm.var y) }> = .var y := by
+@[simp] theorem subst_var_ne (h : x ≠ y) :
+    <{ [x := s] ~(Tm.var y) }> = .var y := by
   simp [subst, h]
 
-@[simp] theorem subst_abs_eq : <{ [x := s] (λ x : τ . t) }> = <{ λ x : τ . t }> := by
+@[simp] theorem subst_abs_eq :
+    <{ [x := s] (λ x : τ . t) }> = <{ λ x : τ . t }> := by
   simp [subst]
 
 @[simp] theorem subst_abs_ne (h : x ≠ y) :
@@ -1994,22 +2011,26 @@ variable (x y : String) (s t t₁ t₂ t₃ : Tm) (τ : Ty) (n : Nat)
   simp [subst, h]
 
 @[simp] theorem subst_app :
-    <{ [x := s] (t₁ t₂) }> = <{ ([x := s] t₁) ([x := s] t₂) }> := rfl
+    <{ [x := s] (t₁ t₂) }> =
+      <{ ([x := s] t₁) ([x := s] t₂) }> := by rfl
 
-@[simp] theorem subst_const : <{ [x := s] ~(Tm.const n) }> = .const n := rfl
+@[simp] theorem subst_const :
+    <{ [x := s] ~(Tm.const n) }> = .const n := by rfl
 
 @[simp] theorem subst_succ :
-    <{ [x := s] (succ t₁) }> = <{ succ ([x := s] t₁) }> := rfl
+    <{ [x := s] (succ t₁) }> = <{ succ ([x := s] t₁) }> := by rfl
 
 @[simp] theorem subst_pred :
-    <{ [x := s] (pred t₁) }> = <{ pred ([x := s] t₁) }> := rfl
+    <{ [x := s] (pred t₁) }> = <{ pred ([x := s] t₁) }> := by rfl
 
 @[simp] theorem subst_mult :
-    <{ [x := s] (t₁ * t₂) }> = <{ ([x := s] t₁) * ([x := s] t₂) }> := rfl
+    <{ [x := s] (t₁ * t₂) }> =
+      <{ ([x := s] t₁) * ([x := s] t₂) }> := by rfl
 
 @[simp] theorem subst_ite0 :
     <{ [x := s] (if0 t₁ then t₂ else t₃) }> =
-      <{ if0 [x := s] t₁ then [x := s] t₂ else [x := s] t₃ }> := rfl
+      <{ if0 [x := s] t₁ then [x := s] t₂ else [x := s] t₃ }> :=
+    by rfl
 -- END SOLUTION
 end
 ```
@@ -2020,7 +2041,8 @@ Next, the values.
 inductive Tm.IsValue : Tm → Prop where
 -- SOLUTION
   -- In the pure STLC, function abstractions were the only values:
-  | abs (x : String) (τ₂ : Ty) (t₁ : Tm) : Tm.IsValue <{ λ x : τ₂ . t₁ }>
+  | abs (x : String) (τ₂ : Ty) (t₁ : Tm) :
+      Tm.IsValue <{ λ x : τ₂ . t₁ }>
   -- now the numbers are values too.
   | const (n : Nat) : Tm.IsValue (.const n)
 -- END SOLUTION
@@ -2045,8 +2067,8 @@ inductive Step : Tm → Tm → Prop where
       <{ t₁ t₂ }> ⟶ <{ t₁' t₂ }>
   | app2 (v₁ t₂ t₂' : Tm) (hv : v₁.IsValue) (h : t₂ ⟶ t₂') :
       <{ v₁ t₂ }> ⟶ <{ v₁ t₂' }>
-  -- the rest say how the arithmetic operators evaluate their arguments and
-  -- what they compute once those arguments are numbers.
+  -- the rest say how the arithmetic operators evaluate their
+  -- arguments and what they compute once those arguments are numbers.
   | succ (t₁ t₁' : Tm) (h : t₁ ⟶ t₁') :
       <{ succ t₁ }> ⟶ <{ succ t₁' }>
   | succConst (n : Nat) :
@@ -2081,15 +2103,16 @@ An example:
 
 ```lean
 -- SOLUTION
--- Our solution uses [normalize]. It is fine if the student either follows this
--- strategy or proceeds by hand.
+-- Our solution uses [normalize]. It is fine if the student either
+-- follows this strategy or proceeds by hand.
 attribute [StlcArithEval] Tm.IsValue.abs Tm.IsValue.const
-attribute [StlcArithEval] Step.appAbs Step.app1 Step.app2 Step.succ Step.succConst
-  Step.pred Step.predConst Step.multConst Step.mult1 Step.mult2 Step.if0Step
-  Step.if0Zero Step.if0Nonzero
+attribute [StlcArithEval] Step.appAbs Step.app1 Step.app2 Step.succ
+  Step.succConst Step.pred Step.predConst Step.multConst Step.mult1
+  Step.mult2 Step.if0Step Step.if0Zero Step.if0Nonzero
 -- END SOLUTION
 
-theorem Nat_step_example : ∃ t, <{ (λ X : Nat . λ Y : Nat . X * Y) 3 2 }> ⟶* t := by
+theorem Nat_step_example :
+    ∃ t, <{ (λ X : Nat . λ Y : Nat . X * Y) 3 2 }> ⟶* t := by
   solution!
     exists <{ 6 }>
     normalize using StlcArithEval
@@ -2114,7 +2137,8 @@ Now the typing relation.
 ```lean
 inductive HasType : Context → Tm → Ty → Prop where
 -- SOLUTION
-  -- The typing rules for variables, abstraction, and application are from STLC.
+  -- The typing rules for variables, abstraction, and application
+  -- are from STLC.
   | var (Γ : Context) (x : String) (τ₁ : Ty)
       (h : Γ[x] = some τ₁) :
       <{ Γ ⊢ ~(Tm.var x) ⦂ τ₁ }>
@@ -2130,7 +2154,8 @@ inductive HasType : Context → Tm → Ty → Prop where
       (h₂ : <{ Γ ⊢ t₂ ⦂ τ₂ }>) :
       <{ Γ ⊢ t₁ t₂ ⦂ τ₁ }>
 
-  -- The remaining five are the typing rules for arithmetic expressions.
+  -- The remaining five are the typing rules for
+  -- arithmetic expressions.
 
   | const (Γ : Context) (n : Nat) :
       <{ Γ ⊢ ~(Tm.const n) ⦂ Nat }>
@@ -2160,7 +2185,6 @@ inductive HasType : Context → Tm → Ty → Prop where
 :::autogradedHole HasType
 :::
 
-
 ::::details "Notation encoding"
 ```lean
 open Lean PrettyPrinter in
@@ -2172,7 +2196,8 @@ def HasType.unexpand : Unexpander := StlcCommon.Delab.unexpandHasType
 An example:
 
 ```lean
-theorem Nat_typing_example : <{ ∅ ⊢ (λ X : Nat . λ Y : Nat . X * Y) 3 2 ⦂ Nat }> := by
+theorem Nat_typing_example :
+    <{ ∅ ⊢ (λ X : Nat . λ Y : Nat . X * Y) 3 2 ⦂ Nat }> := by
   solution!
     apply HasType.app (τ₂ := Ty.nat)
     · apply HasType.app (τ₂ := Ty.nat)
@@ -2254,15 +2279,16 @@ for the STLC.
 
 ```lean
 -- SOLUTION
-theorem weakening_empty (Γ : Context) (t : Tm) (τ : Ty) (hτ : <{ ∅ ⊢ t ⦂ τ }>) :
+theorem weakening_empty (Γ : Context) (t : Tm) (τ : Ty)
+    (hτ : <{ ∅ ⊢ t ⦂ τ }>) :
     <{ Γ ⊢ t ⦂ τ }> := by
   apply weakening ∅
   · intros x b contra
     contradiction
   · assumption
 
-theorem substitution_preserves_typing (Γ : Context) (x : String) (τ' : Ty)
-    (t v : Tm) (τ : Ty)
+theorem substitution_preserves_typing (Γ : Context) (x : String)
+    (τ' : Ty) (t v : Tm) (τ : Ty)
     (hτ : <{ x ↦ τ' ; Γ ⊢ t ⦂ τ }>) (hv : <{ ∅ ⊢ v ⦂ τ' }>) :
     <{ Γ ⊢ [x := v] t ⦂ τ }> := by
   induction t generalizing Γ τ with
@@ -2374,7 +2400,8 @@ theorem preservation (t t' : Tm) (τ : Ty)
       subst hΓ
       cases hs with
       | appAbs _ _ _ _ _ =>
-        -- The one interesting case: the desired result is the substitution lemma.
+        -- The one interesting case: the desired result is the
+        -- substitution lemma.
         cases h₁ with
         | abs _ _ _ _ _ hb =>
           apply substitution_preserves_typing
@@ -2477,7 +2504,8 @@ theorem progress (t : Tm) (τ : Ty) (hτ : <{ ∅ ⊢ t ⦂ τ }>) :
       | inl hv₁ =>
         cases ih₂ rfl with
         | inl hv₂ =>
-          -- `t₁` is a value of arrow type, so it is an abstraction, not a number.
+          -- `t₁` is a value of arrow type, so it is an
+          -- abstraction, not a number.
           cases hv₁ with
           | abs x τ u =>
             exists <{ [x := t₂] u }>
