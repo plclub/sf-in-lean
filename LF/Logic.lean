@@ -1788,8 +1788,8 @@ theorem combineOddEven_elim_even
 Lean treats _proofs_ as first-class objects.
 There is a great deal to be said about this, but it is not necessary
 to understand it all to use Lean. This section gives just a taste,
-leaving a deeper exploration for the optional chapter
-`ProofObjects`.
+leaving a deeper exploration for the chapter
+{ref "ProofObjects"}[ProofObjects].
 ::::
 
 :::dev "Roger Burtonpatel (@rogerburtonpatel)" PotentialImprovement

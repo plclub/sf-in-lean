@@ -17,23 +17,6 @@ This setting is enabled to make some tricky mistakes harder to make.
 set_option autoImplicit false
 ```
 
-:::dev "Claude" BeforeNextRelease
-AI-TODO: Chapter-wide items before a final version.
-
-- Review the code conventions chosen during the port: lowercase hypothesis
-  names (`hpq`, `h`), `theorem … := term` for proof objects, the
-  `AndPlayground`/`OrPlayground`/`ExistsPlayground` namespaces, and `='`.
-- Replace the remaining `--` dashes in prose with em dashes (STYLE-WRITING).
-- Register the chapter in `LF.lean` (after IndProp) and the lakefile, then
-  run `lake build` plus the student/solutions/terse variant builds (they
-  catch `{ref}` and variant errors that `lake build` misses).
-- Mark AI-written material per the CONTRIBUTING AI policy (this file was
-  ported with Claude's help; the `show_proof` tactic is Claude-written), and
-  run `/proofread ProofObjects`.
-
-Proposed fix: work through the list; delete this note when done.
-:::
-
 :::epigraph
 "Algorithms are the computational content of proofs."
 (Robert Harper)
@@ -104,7 +87,7 @@ and `:` as "is a proof of" or "is evidence for" — is called the
 _Curry-Howard correspondence_.  It proposes a deep connection
 between the world of logic and the world of computation:
 
-```display
+```display +centered
 propositions  ~  types
 proofs        ~  programs
 ```
@@ -182,7 +165,7 @@ primitive "evidence constructor" that, when applied to a
 particular number, wants to be further applied to evidence that
 this number is even; its type,
 
-```display
+```display +centered
 ∀ (n : Nat), Even n → Even (n + 2)
 ```
 
@@ -225,15 +208,13 @@ happening internally is that it is gradually constructing a proof
 object — a term whose type is the proposition being proved. All the
 tactics following `by` tell it how to build up a term
 of the required type.  To see this process in action, we provide
-the `show_proof` command to display the current state of the proof
+a `show_proof` command to display the current state of the proof
 tree at various points in the following tactic proof.
 
-`show_proof` wraps a tactic script and prints the partial proof term—
-a term with _holes_ where the remaining proof obligations are—
+`show_proof` wraps a tactic script and prints the partial proof term —
+a term with _holes_ where the remaining proof obligations are —
 before and after each step. A term's holes are shown as `?_`.
 
-The implementation of `show_proof` need not be understood. Its details are
-tucked away in the block below.
 ::::
 
 ::::terse
@@ -319,7 +300,8 @@ type of evidence is needed to fill this hole.
 
 Each hole corresponds to a subgoal, and the proof is
 finished when there are no more subgoals.  At this point, the
-evidence we've built is stored in the global context under the name
+evidence we've built is stored in the global context (i.e. Lean's
+environment that it uses for type-checking) under the name
 given in the `theorem` command.
 ::::
 
@@ -465,6 +447,9 @@ programming languages, they can be quite useful in programming
 too, as the flurry of activity in the functional programming
 community over the past couple of decades
 (and recently, most notably Lean!) demonstrates.
+Dependent types sit at the "highest corner" of the Lambda Cube
+(see the `Stlc` chapter of _Type Systems_): types can depend on _values_
+in addition to other types.
 
 :::slidebreak
 :::
@@ -475,7 +460,7 @@ same thing: `→` is just a shorthand for a degenerate use of
 `∀` where there is no dependency, i.e., no need to give a
 name to the type on the left-hand side of the arrow:
 
-```display
+```display +centered
    ∀ (x : Nat), Nat
 =  ∀ (_ : Nat), Nat
 =  Nat        → Nat
@@ -530,7 +515,7 @@ theorem even_plus2_thm' (n : Nat) (heven : Even n) :
 ```
 
 _All_ of these theorem statements are equivalent! When we write `def`,
-we are just writing down the statement— the type. When we write
+we are just writing down the statement — the type. When we write
 `theorem`, we are stating the type and then providing a witness after
 the `:=` (either with `by` and tactics or directly with a term). We
 can even show the two definitions are equivalent in Lean itself:
@@ -542,8 +527,8 @@ theorem even_plus2_defs_same :
 Remember that theorem statements are just types, so `rfl` here is just
 comparing two types.
 
-What about the two theorems? Here, we are asking if two _proofs_— AKA,
-two _functions_— are equal. Then, do we need to use {tactic}`funext`?
+What about the two theorems? Here, we are asking if two _proofs_ — which we now know
+are both _functions_ — are equal. Then, do we need to use {tactic}`funext`?
 
 ```lean
 theorem even_plus2_theorems_same :
@@ -571,7 +556,7 @@ theorem even_plus2_theorems_still_same :
 :::::quiz
 Recall the definition of {name}`Even`:
 
-```display
+```display +centered
 inductive Even : Nat → Prop where
   | zero : Even 0
   | succ_succ (n : Nat) (h : Even n) : Even (n + 2)
@@ -579,7 +564,7 @@ inductive Even : Nat → Prop where
 
 What is the type of this expression?
 
-```display
+```display +centered
 fun (n : Nat) =>
   fun (h : Even n) =>
      Even.succ_succ (n + 2) (Even.succ_succ n h)
@@ -703,7 +688,7 @@ a simple trick to help in the construction: we can use the _term_
 `sorry` as placeholder of any type we like.
 
 As an example, let's walk through the process of constructing a
-proof object demonstrating the beauty of `8`.
+proof object demonstrating the evenness of `8`.
 
 ```lean
 theorem even_8_atmpt_1 : Even 8 := sorry
@@ -712,7 +697,7 @@ theorem even_8_atmpt_1 : Even 8 := sorry
 Maybe we can use {name}`Even.succ_succ` to construct a term of type {lean}`Even 8`?
 Recall that {name}`Even.succ_succ` is of type
 
-```display
+```display +centered
 ∀ (n : Nat), Even n → Even (n + 2)
 ```
 
@@ -752,8 +737,10 @@ end IncrementalProofObjects
 
 In the `Even` examples, we show how to build proofs using terms to
 illustrate that they are one and they same. But in this particular
-example, doing so is very impractical— tactics are present (and
-powerful) for a reason! So the question naturally arises- would we
+example, doing so is impractical: the proof terms above are
+verbose and arguably harder to write and follow than a tactic proof,
+which is more aligned with most people's style of reasoning. 
+So the question naturally arises- would we
 ever use terms in _real_ Lean proofs? The answer is yes, and we show
 some examples where such use is both helpful and actively encouraged
 in real Lean developments.
@@ -806,7 +793,7 @@ def three : PosNat where
   pos := Nat.succ_pos 2
 ```
 
-The main takeaway of this section is that using terms in proofs can be
+Using terms in proofs can be
 more succinct and more useful than writing out tactics.
 Try out using terms like `rfl` directly in your proofs in this book and see what you discover.
 
@@ -969,7 +956,7 @@ theorem conj_fact : ∀ (P Q R : Prop),
 ::::full
 What is the type of this expression?
 
-```display
+```display +centered
 fun P Q R (h1 : And P Q) (h2 : And Q R) =>
   match h1, h2 with
   | And.intro hp _, And.intro _ hr => And.intro hp hr
@@ -1091,7 +1078,7 @@ theorem or_commut' : ∀ (P Q : Prop), P ∨ Q → Q ∨ P :=
 ::::full
 What is the type of this expression?
 
-```display
+```display +centered
 fun P Q h =>
   match h with
   | Or.inl hp => @Or.inr Q P hp
@@ -1356,13 +1343,13 @@ end Props
 :::suppressPreviousHeaderWhenTerse
 :::
 
-::::::full
-Even Lean's equality relation is not built in.  We can define
-it ourselves:
-
 ```lean -show
 namespace EqualityPlayground
 ```
+
+::::::full
+Even Lean's equality relation is not built in.  We can define
+it ourselves:
 
 ```lean
 inductive Eq {α : Type} : α → α → Prop where
@@ -1570,7 +1557,7 @@ theorem leibniz_equality__equality : ∀ (α : Type) (x y : α),
 ::::full
 Which of the following is a correct proof object for the proposition
 
-```display
+```display +centered
 ∃ x, x + 3 =' 4
 ```
 
