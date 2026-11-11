@@ -594,6 +594,18 @@ is rendered as comments in the extracted Lean
 
 and as a similar table in the HTML.
 
+A quoted `"..."` is special-cased to an elision marker rather than a literal
+terminal (no object language actually has `...` as a token), and renders
+distinctly from a real terminal in every backend — neither italic
+(nonterminal) nor bold (keyword). Use it two ways: heading an alternative on
+its own, for "other productions as before" when a chapter extends an
+already-established grammar (`t ::= "..." ("other forms unchanged") | …`); or
+inside a longer alternative, as an informal repetition marker (`"{" i "="
+t "," "..." "," i "=" t "}"` for an n-ary record literal). When extending a
+grammar this way, restate only the *new* productions for each nonterminal,
+not the ones already given earlier in the chapter — see `TS/References.lean`'s
+`t`/`τ` grammars for the pattern.
+
 ### Display blocks
 
 Fenced `display` blocks are not type checked, and are rendered verbatim in the
@@ -617,25 +629,30 @@ Within such a block:
 * **One premise per line.** Don't pack two premises onto one source line
   (`IsAValue v₁      a₂ ⟶a a₂'`); give each its own line, even if that means a
   rule has more lines than the minimum.
-* **Align the relation symbol — unless any rule in the block is very
-  unbalanced, in which case center every rule in the block.** For each
-  rule's conclusion, find the chapter's step/typing relation (`⟶`, `⟶a`,
-  `⟶b`, `⟶n`, `⟶*`, `⇓`, `⦂`, …) and compare the lengths of the text before
-  and after it. If every rule's shorter side is at least 30% of its longer
-  side, the whole block is "balanced": indent every premise and conclusion
-  line in the block so the relation symbol sits at one shared column — the
-  column needed by whichever line's symbol sits furthest right. (A side
-  condition with no symbol, like `IsAValue v₁`, is centered under its own
-  rule's bar as usual.) If even one rule's shorter side is under 30% (e.g.
-  `if true then t₁ else t₂ ⟶ t₁`, where the conclusion is almost all
-  left-hand side), symbol-aligning it against the rest would drag that one
-  rule to a cramped indent near the left margin while the others look fine
-  — but fixing only that rule makes the block read as inconsistent, half
-  one convention and half the other. So drop symbol alignment for the
-  *whole* block instead: center every rule's own premises/bar/conclusion
-  independently within the width of the block's widest line, balanced or
-  not. This is a per-block, not a per-chapter, decision — a chapter can
-  have one fully aligned block and one fully centered block.
+* **Symbol-alignment is only for step/evaluation rules, and even then only
+  when balanced; a typing-judgment figure is always centered.** For a block
+  of step rules (whose conclusions share a reduction relation — `⟶`, `⟶a`,
+  `⟶b`, `⟶n`, `⟶*`, `⇓`, …), find that relation in each rule's conclusion and
+  compare the lengths of the text before and after it. If every rule's
+  shorter side is at least 30% of its longer side, the whole block is
+  "balanced": indent every premise and conclusion line in the block so the
+  relation symbol sits at one shared column — the column needed by whichever
+  line's symbol sits furthest right. (A side condition with no symbol, like
+  `IsAValue v₁`, is centered under its own rule's bar as usual.) If even one
+  rule's shorter side is under 30% (e.g. `if true then t₁ else t₂ ⟶ t₁`,
+  where the conclusion is almost all left-hand side), symbol-aligning it
+  against the rest would drag that one rule to a cramped indent near the
+  left margin while the others look fine — but fixing only that rule makes
+  the block read as inconsistent, half one convention and half the other.
+  So drop symbol alignment for the *whole* block instead: center every
+  rule's own premises/bar/conclusion independently within the width of the
+  block's widest line, balanced or not. This is a per-block, not a
+  per-chapter, decision — a chapter can have one fully aligned step-rule
+  block and one fully centered one. A block of **typing rules** (conclusions
+  sharing a judgment like `⦂`) skips the balance test entirely and is always
+  centered — aligning a colon-like judgment symbol reads as though it were
+  itself a step relation, which it isn't; centering is what distinguishes a
+  typing figure from a reduction figure at a glance.
 * **Each rule's bar spans its own widest line** (after the lines of that rule
   are positioned by the rule above) — not the whole block's widest line.
 * **Rule labels share one column across the block**: the target column is two
