@@ -661,7 +661,7 @@ This statement is a bit mysterious. Why are dependent types special?
 I think the answer is that they allow for more explicit specifications --
 normal types are just not strong enough to say much about a function you might
 ask tactics to synthesize. There are lots of Nat -> Nat functions,
-but far fewer that ... [insert dependent type here].
+but far fewer that ... insert dependent type here.
 :::
 
 Since `def` and `theorem` can both use terms or `by`, is there any difference between the two?
