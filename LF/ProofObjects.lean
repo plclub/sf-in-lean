@@ -656,6 +656,14 @@ types, which we won't explore much further in this book.  But it
 does illustrate the uniformity and orthogonality of the basic
 ideas in Lean.
 
+:::dev "Michael Hicks (mwhicks1)"
+This statement is a bit mysterious. Why are dependent types special?
+I think the answer is that they allow for more explicit specifications --
+normal types are just not strong enough to say much about a function you might
+ask tactics to synthesize. There are lots of Nat -> Nat functions,
+but far fewer that ... [insert dependent type here].
+:::
+
 Since `def` and `theorem` can both use terms or `by`, is there any difference between the two?
 There is one: a `theorem` must have a `Prop` type.
 
@@ -739,7 +747,7 @@ In the `Even` examples, we show how to build proofs using terms to
 illustrate that they are one and they same. But in this particular
 example, doing so is impractical: the proof terms above are
 verbose and arguably harder to write and follow than a tactic proof,
-which is more aligned with most people's style of reasoning. 
+which is more aligned with most people's style of reasoning.
 So the question naturally arises- would we
 ever use terms in _real_ Lean proofs? The answer is yes, and we show
 some examples where such use is both helpful and actively encouraged
