@@ -10,9 +10,12 @@ Two things differ from `python3 -m http.server`:
 * A Lean WebAssembly runtime directory is mounted at `/sfl-lean/runtime/`,
   which is where `sfl-lean.js` looks when the book was built without
   `SFL_LEAN_RUNTIME`, and at `/lean/`, where the Cloudflare deployment
-  (web/cloudflare/) puts it.  The directory holds `lean.js`, `lean.wasm`,
-  `lean-lib-files.json` and `lean-lib/`, as in the `public/lean-wasm/`
-  directory of the lean4-wasm-in-browser project.
+  (web/cloudflare/) puts it.  The directory holds `lean.js` and `lean.wasm`,
+  and Lean's library in either of the two layouts `lean-worker.js` reads:
+  `library-packs.json` and `library/`, packed by web/cloudflare/pack_library.py
+  as the Cloudflare deployment serves it, or `lean-lib-files.json` and
+  `lean-lib/`, as in the `public/lean-wasm/` directory of the
+  lean4-wasm-in-browser project.
 
 Usage: python3 scripts/serve_web.py <html dir> <runtime dir> [port]
 """
@@ -58,9 +61,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 def main():
     html, runtime = Path(sys.argv[1]), Path(os.path.expanduser(sys.argv[2])).resolve()
     port = int(sys.argv[3]) if len(sys.argv) > 3 else 8000
-    for needed in ["lean.js", "lean.wasm", "lean-lib-files.json", "lean-lib"]:
+    for needed in ["lean.js", "lean.wasm"]:
         if not (runtime / needed).exists():
             sys.exit(f"{runtime} has no {needed}")
+    layouts = [("library-packs.json", "library"), ("lean-lib-files.json", "lean-lib")]
+    if not any((runtime / index).exists() and (runtime / files).is_dir() for index, files in layouts):
+        sys.exit(f"{runtime} has neither library-packs.json and library/ nor lean-lib-files.json and lean-lib/")
     Handler.runtime = runtime
     handler = functools.partial(Handler, directory=str(html))
     with http.server.ThreadingHTTPServer(("127.0.0.1", port), handler) as server:
