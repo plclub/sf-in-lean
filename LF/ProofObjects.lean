@@ -1422,6 +1422,12 @@ invisibly: whenever Lean checks two terms for definitional equality
 — as {tactic}`rfl` does when closing a goal `x = y`, or as `exact`
 and `apply` do when unifying a term against an expected type — it
 reduces both sides by these computation rules before comparing them.
+You can see what's going on by enabling a Lean option, `isDefEq`:
+
+```lean
+set_option trace.Meta.isDefEq true in
+example : 1 + 1 = 2 := rfl
+```
 
 In explicit proofs of equality, the conversion rules still operate
 invisibly, but their _result_ is made manifest as an argument to
