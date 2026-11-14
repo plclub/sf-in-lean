@@ -954,6 +954,9 @@ theorem conj_fact : ∀ (P Q R : Prop),
     match hpq, hqr with
     | And.intro hp _, And.intro _ hr => And.intro hp hr)
 ```
+
+:::gradeTheorem 2 conj_fact
+:::
 :::::
 
 ::::::
@@ -1083,6 +1086,9 @@ theorem or_commut' : ∀ (P Q : Prop), P ∨ Q → Q ∨ P :=
     | Or.inl hp => Or.inr hp
     | Or.inr hq => Or.inl hq)
 ```
+
+:::gradeTheorem 2 or_commut'
+:::
 :::::
 
 ::::::
@@ -1241,6 +1247,9 @@ Construct a proof object for the following proposition.
 theorem ex_even_Sn : Exists (fun n => Even (n + 1)) :=
   solution!(Exists.intro 1 (Even.succ_succ 0 Even.zero))
 ```
+
+:::gradeTheorem 2 ex_even_Sn
+:::
 :::::
 ::::::
 
@@ -1271,6 +1280,9 @@ theorem ex_match : ∀ (A : Type) (P Q : A → Prop),
     match hp with
     | Exists.intro x hpx => Exists.intro x (hpq x hpx))
 ```
+
+:::gradeTheorem 2 ex_match
+:::
 :::::
 ::::::
 
@@ -1297,6 +1309,9 @@ Construct a proof object for the following proposition.
 theorem p_implies_true : ∀ (P : Prop), P → True :=
   solution!(fun _ _ => True.intro)
 ```
+
+:::gradeTheorem 1 p_implies_true
+:::
 :::::
 
 :::slidebreak
@@ -1343,6 +1358,9 @@ Construct a proof object for the following proposition.
 theorem ex_falso_quodlibet' : ∀ (P : Prop), False → P :=
   solution!(fun _ contra => nomatch contra)
 ```
+
+:::gradeTheorem 1 ex_falso_quodlibet'
+:::
 :::::
 ::::::
 
@@ -1476,6 +1494,9 @@ theorem eq_cons : ∀ (α : Type) (h1 h2 : α) (t1 t2 : List α),
     match heq, teq with
     | Eq.refl _, Eq.refl _ => Eq.refl (h1 :: t1))
 ```
+
+:::gradeTheorem 2 eq_cons
+:::
 :::::
 
 :::dev PotentialImprovement
@@ -1522,6 +1543,9 @@ theorem equality__leibniz_equality : ∀ (α : Type) (x y : α),
     cases heq
     exact hpx
 ```
+
+:::gradeTheorem 2 equality__leibniz_equality
+:::
 :::::
 
 :::::exercise (rating := 2) (name := "equality__leibniz_equality_term")
@@ -1538,6 +1562,9 @@ theorem equality__leibniz_equality_term :
     match heq with
     | Eq.refl _ => fun _ hp => hp)
 ```
+
+:::gradeTheorem 2 equality__leibniz_equality_term
+:::
 :::::
 
 :::::exercise (rating := 2) (name := "leibniz_equality__equality") (optional := true)
@@ -1730,6 +1757,9 @@ theorem and_assoc : ∀ (P Q R : Prop),
     | And.intro hp (And.intro hq hr) =>
       And.intro (And.intro hp hq) hr)
 ```
+
+:::gradeTheorem 2 and_assoc
+:::
 :::::
 
 :::::exercise (rating := 3) (name := "or_distributes_over_and")
@@ -1751,6 +1781,9 @@ theorem or_distributes_over_and : ∀ (P Q R : Prop),
           | Or.inr hq, Or.inr hr =>
             Or.inr (And.intro hq hr)))
 ```
+
+:::gradeTheorem 3 or_distributes_over_and
+:::
 :::::
 
 :::::exercise (rating := 3) (name := "negations")
@@ -1854,6 +1887,9 @@ theorem pe_implies_or_eq :
     apply PE (P ∨ Q) (Q ∨ P)
     apply Or.comm
 ```
+
+:::gradeTheorem 1 pe_implies_or_eq
+:::
 :::::
 
 :::::exercise (rating := 1) (name := "pe_implies_true_eq") (level := Advanced)
@@ -1874,6 +1910,9 @@ theorem pe_implies_true_eq :
     · intro _
       apply True.intro
 ```
+
+:::gradeTheorem 1 pe_implies_true_eq
+:::
 :::::
 
 Propositional extensionality is about equating two different
