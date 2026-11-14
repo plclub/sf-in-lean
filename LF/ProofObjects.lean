@@ -1,7 +1,6 @@
 import SFLMeta
 import LF.IndProp
 
-
 open Verso.Genre Manual
 open SFLMeta
 
@@ -78,7 +77,6 @@ declares that {lean}`(Even.zero : Even 0)`.  Instead of
 "{name}`Even.zero` has type {lean}`Even 0`," we can say that
 "{name}`Even.zero` is a proof of {lean}`Even 0`."
 
-
 :::slidebreak
 :::
 
@@ -115,7 +113,6 @@ Even.succ_succ : ∀ (n : Nat), Even n → Even (n + 2)
 
 This can be read "{name}`Even.succ_succ` is a constructor that takes two
 arguments — a number `n` and evidence for the proposition `Even n` — and yields evidence for the proposition `Even (n + 2)`."
-
 
 :::slidebreak
 :::
@@ -174,14 +171,13 @@ type {lean}`{α : Type} → List α` expresses the fact that the constructor
 {name}`List.nil` can be thought of as a function from types to empty lists
 with elements of that type.
 
-The fact that the some arguments are implicit, like `{α}` of {lean}`List`
+The fact that some arguments are implicit, like `{α}` of {lean}`List`
 and `{n}` of the real {name}`Even.succ_succ`, actually doesn't make a difference at all:
 {name}`List` is still taking one argument, and {name}`Even.succ_succ` is still taking two.
 Implicit arguments are just a usability feature that tells Lean to figure some arguments
 out when we apply a definition (like {name}`Even.succ_succ`) to an explicit argument
 (like a proof of `Even n`). In this case, since `Even n` contains `n`, we don't need to pass `n` in to
 begin with, and can mark it as implicit with the curly braces as `{n}`.
-
 
 We saw in the {ref "Logic"}[Logic] chapter that we can use function
 application syntax to instantiate universally quantified variables
@@ -541,8 +537,8 @@ theorem even_plus2_theorems_same :
 Surprisingly, we don't. This is because Lean has a special feature
 called _definitional proof irrelevance_. It says that any two proofs
 of the same proposition are definitionally equal. So we could write
-the same proof again however we wanted— with different tactics, using
-terms instead of tactics, etc.— and we would still have "the same
+the same proof again however we wanted — with different tactics, using
+terms instead of tactics, etc. — and we would still have "the same
 theorem."
 
 ```lean
@@ -697,7 +693,7 @@ As you probably noticed while solving the exercises earlier in the
 chapter, constructing proof objects is more involved than
 constructing the corresponding tactic proofs. Fortunately, there's
 a simple trick to help in the construction: we can use the _term_
-`sorry` as placeholder of any type we like.
+`sorry` as a placeholder of any type we like.
 
 As an example, let's walk through the process of constructing a
 proof object demonstrating the evenness of `8`.
@@ -719,7 +715,7 @@ If we can demonstrate that `6` is even, we should be done.
 theorem even_8_atmpt_2 : Even 8 := Even.succ_succ 6 sorry
 ```
 
-In the attempt above, we've omitted the proofs that `6` is even,
+In the attempt above, we've omitted the proof that `6` is even,
 but it can easily be constructed following the same procedure:
 
 ```lean
@@ -736,7 +732,7 @@ theorem even_8_atmpt_5 : Even 8 :=
 ```
 
 To recap, we've been guided by an informal proof that we have in
-our minds, and we check the high level details before completing
+our minds, and we check the high-level details before completing
 the intricacies of the proof. The `sorry` term allows us to do
 this.
 ::::
@@ -815,7 +811,7 @@ Try out using terms like `rfl` directly in your proofs in this book and see what
 ::::full
 We have now seen that tactics are not "special" in Lean: they are just
 manipulators of terms.
-Recall that Lean's logical connectives are also not "special:" only universal
+Recall that Lean's logical connectives are also not "special": only universal
 quantification (with implication as a special case) is built into
 Lean; all the other connectives are defined inductively.
 Now that we know more about the relationship between terms and tactics,
@@ -857,7 +853,7 @@ using `<name> ::`, as in the example.
 We can also see that this definition of {name}`And` matches core
 {lean}`And` exactly: a `structure` with constructor `intro`
 and fields `left`/`right`
-(except that core uses `a` and `b` instead of `P` `Q`).
+(except that core uses `a` and `b` instead of `P` and `Q`).
 ```lean (name := print_core_and)
 #print _root_.And
 ```
@@ -945,7 +941,7 @@ theorem and_comm' (P Q : Prop) : P ∧ Q ↔ Q ∧ P :=
   Iff.intro (and_comm'_aux P Q) (and_comm'_aux Q P)
 ```
 
-Here, {lean}`Iff.intro` is doing the same thing as `And.intro`:
+Here, {lean}`Iff.intro` is doing the same thing as {name}`And.intro`:
 it builds the `Iff` `structure` with its two arguments.
 
 :::::exercise (rating := 2) (name := "conj_fact")
@@ -1251,7 +1247,7 @@ theorem ex_even_Sn : Exists (fun n => Even (n + 1)) :=
 :::slidebreak
 :::
 
-To destruct existentials in a proof term we simply use `match`:
+To destruct existentials in a proof term, we simply use `match`:
 
 ```lean
 theorem dist_exists_or_term (α : Type) (P Q : α → Prop) :
@@ -1375,7 +1371,7 @@ scoped infix:50 " =' " => Eq
 ```
 
 The `Eq` definition relates pairs of elements of type `α`. The only way to
-prove `Eq a b` for about pair of elements `a` and `b` is via the `Eq.refl` constructor,
+prove `Eq a b` for a pair of elements `a` and `b` is via the `Eq.refl` constructor,
 which by requiring `Eq x x` for all `x` forces `a` and `b` to be _the same_.
 
 :::slidebreak
@@ -1405,8 +1401,8 @@ essentially just shorthand for `apply Eq.refl`.
 
 In tactic-based proofs of equality, the conversion rules operate
 invisibly: whenever Lean checks two terms for definitional equality
--- as {tactic}`rfl` does when closing a goal `x = y`, or as `exact`
-and `apply` do when unifying a term against an expected type -- it
+— as {tactic}`rfl` does when closing a goal `x = y`, or as `exact`
+and `apply` do when unifying a term against an expected type — it
 reduces both sides by these computation rules before comparing them.
 
 In explicit proofs of equality, the conversion rules still operate
@@ -1515,7 +1511,7 @@ stands on its own here, now.
 :::::exercise (rating := 2) (name := "equality__leibniz_equality")
 The inductive definition of equality implies _Leibniz equality_:
 what we mean when we say "`x` and `y` are equal" is that every
-property on `P` that is true of `x` is also true of `y`. Prove
+property `P` that is true of `x` is also true of `y`. Prove
 that.
 
 ```lean
