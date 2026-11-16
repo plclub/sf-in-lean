@@ -1,0 +1,120 @@
+{
+ "file": "LF/ProofObjects.lean",
+ "chapter": "ProofObjects",
+ "round": 1,
+ "proposals": [
+  {
+   "id": "1",
+   "cat": "formatting/blank-lines",
+   "old": "import LF.IndProp\n\n\nopen Verso.Genre Manual",
+   "new": "import LF.IndProp\n\nopen Verso.Genre Manual",
+   "why": "Two blank lines between the last import and the open statements; the book uses at most one blank line anywhere."
+  },
+  {
+   "id": "2",
+   "cat": "formatting/blank-lines",
+   "old": "\"{name}`Even.zero` is a proof of {lean}`Even 0`.\"\n\n\n:::slidebreak",
+   "new": "\"{name}`Even.zero` is a proof of {lean}`Even 0`.\"\n\n:::slidebreak",
+   "why": "Every other `:::slidebreak` in this chapter is preceded by a single blank line; this one has two."
+  },
+  {
+   "id": "3",
+   "cat": "formatting/blank-lines",
+   "old": "arguments — a number `n` and evidence for the proposition `Even n` — and yields evidence for the proposition `Even (n + 2)`.\"\n\n\n:::slidebreak",
+   "new": "arguments — a number `n` and evidence for the proposition `Even n` — and yields evidence for the proposition `Even (n + 2)`.\"\n\n:::slidebreak",
+   "why": "Same slip as the other `:::slidebreak` instances: two blank lines where the book's convention is one."
+  },
+  {
+   "id": "4",
+   "cat": "formatting/blank-lines",
+   "old": "begin with, and can mark it as implicit with the curly braces as `{n}`.\n\n\nWe saw in the {ref \"Logic\"}[Logic] chapter",
+   "new": "begin with, and can mark it as implicit with the curly braces as `{n}`.\n\nWe saw in the {ref \"Logic\"}[Logic] chapter",
+   "why": "Two blank lines in a row mid-paragraph-block; the book uses at most one blank line anywhere."
+  },
+  {
+   "id": "5",
+   "cat": "typo/extra-article",
+   "old": "The fact that the some arguments are implicit, like `{α}` of {lean}`List`",
+   "new": "The fact that some arguments are implicit, like `{α}` of {lean}`List`",
+   "why": "\"the some arguments\" has a stray \"the\"; the sentence means \"some arguments,\" not a specific set of them."
+  },
+  {
+   "id": "6",
+   "cat": "typo/missing-article",
+   "old": "a simple trick to help in the construction: we can use the _term_\n`sorry` as placeholder of any type we like.",
+   "new": "a simple trick to help in the construction: we can use the _term_\n`sorry` as a placeholder of any type we like.",
+   "why": "\"as placeholder\" is missing its article; should be \"as a placeholder,\" as with every other singular-countable-noun use in this chapter."
+  },
+  {
+   "id": "7",
+   "cat": "grammar/number-agreement",
+   "old": "In the attempt above, we've omitted the proofs that `6` is even,\nbut it can easily be constructed following the same procedure:",
+   "new": "In the attempt above, we've omitted the proof that `6` is even,\nbut it can easily be constructed following the same procedure:",
+   "why": "\"proofs\" (plural) is picked up by the singular pronoun \"it\" in the next clause, and there is only one `sorry` (one missing proof) at this step; \"proof\" (singular) matches."
+  },
+  {
+   "id": "8",
+   "cat": "hyphenation/compound-modifier",
+   "old": "our minds, and we check the high level details before completing",
+   "new": "our minds, and we check the high-level details before completing",
+   "why": "\"high-level\" is hyphenated as a compound modifier before a noun everywhere else in the book (e.g. LF/Preface.lean, HL/Imp.lean, HL/Slang.lean, TS/StlcProp.lean)."
+  },
+  {
+   "id": "9",
+   "cat": "typo/missing-word",
+   "old": "and fields `left`/`right`\n(except that core uses `a` and `b` instead of `P` `Q`).",
+   "new": "and fields `left`/`right`\n(except that core uses `a` and `b` instead of `P` and `Q`).",
+   "why": "Missing \"and\" between the two names; the parallel phrase \"`a` and `b`\" earlier in the same sentence has it."
+  },
+  {
+   "id": "10",
+   "cat": "markup/name-role",
+   "old": "Here, {lean}`Iff.intro` is doing the same thing as `And.intro`:",
+   "new": "Here, {lean}`Iff.intro` is doing the same thing as {name}`And.intro`:",
+   "why": "Every other prose mention of `And.intro` as the subject of discussion (e.g. line 900) uses the {name} role for hover/navigation; this one is a bare code span."
+  },
+  {
+   "id": "11",
+   "cat": "comma/introductory",
+   "old": "To destruct existentials in a proof term we simply use `match`:",
+   "new": "To destruct existentials in a proof term, we simply use `match`:",
+   "why": "Every other \"To X, we Y\" sentence in this chapter has the comma after the introductory infinitive phrase; this one is missing it."
+  },
+  {
+   "id": "12",
+   "cat": "typo/stray-word",
+   "old": "prove `Eq a b` for about pair of elements `a` and `b` is via the `Eq.refl` constructor,",
+   "new": "prove `Eq a b` for a pair of elements `a` and `b` is via the `Eq.refl` constructor,",
+   "why": "\"for about pair\" is not a sentence; the intended phrase is \"for a pair of elements.\""
+  },
+  {
+   "id": "13",
+   "cat": "markup/em-dash-spacing",
+   "old": "In tactic-based proofs of equality, the conversion rules operate\ninvisibly: whenever Lean checks two terms for definitional equality\n-- as {tactic}`rfl` does when closing a goal `x = y`, or as `exact`\nand `apply` do when unifying a term against an expected type -- it\nreduces both sides by these computation rules before comparing them.",
+   "new": "In tactic-based proofs of equality, the conversion rules operate\ninvisibly: whenever Lean checks two terms for definitional equality\n— as {tactic}`rfl` does when closing a goal `x = y`, or as `exact`\nand `apply` do when unifying a term against an expected type — it\nreduces both sides by these computation rules before comparing them.",
+   "why": "This parenthetical uses a typed \"--\" where every other parenthetical dash in the chapter uses a spaced em dash \"—\"."
+  },
+  {
+   "id": "14",
+   "cat": "grammar/extraneous-preposition",
+   "old": "what we mean when we say \"`x` and `y` are equal\" is that every\nproperty on `P` that is true of `x` is also true of `y`. Prove",
+   "new": "what we mean when we say \"`x` and `y` are equal\" is that every\nproperty `P` that is true of `x` is also true of `y`. Prove",
+   "why": "\"property on `P`\" doesn't parse: `P` names the property itself (per the theorem statement `∀ (P : α → Prop), ...`), it isn't something the property is \"on.\""
+  },
+  {
+   "id": "15",
+   "cat": "markup/em-dash-spacing",
+   "old": "of the same proposition are definitionally equal. So we could write\nthe same proof again however we wanted— with different tactics, using\nterms instead of tactics, etc.— and we would still have \"the same\ntheorem.\"",
+   "new": "of the same proposition are definitionally equal. So we could write\nthe same proof again however we wanted — with different tactics, using\nterms instead of tactics, etc. — and we would still have \"the same\ntheorem.\"",
+   "why": "Both dashes in this parenthetical are missing the leading space; every other em dash in the chapter is spaced on both sides."
+  },
+  {
+   "id": "16",
+   "cat": "punctuation/quote-colon",
+   "old": "Recall that Lean's logical connectives are also not \"special:\" only universal",
+   "new": "Recall that Lean's logical connectives are also not \"special\": only universal",
+   "why": "The colon introduces the explanatory clause and belongs outside the quotation marks, as in the parallel sentence just above (\"not 'special' in Lean: they are...\")."
+  }
+ ],
+ "completed": true
+}

@@ -1,0 +1,106 @@
+--- LF/ProofObjects.lean (before this round)
++++ LF/ProofObjects.lean
+@@ -955,4 +955,7 @@
+     | And.intro hp _, And.intro _ hr => And.intro hp hr)
+ ```
++
++:::gradeTheorem 2 conj_fact
++:::
+ :::::
+ 
+@@ -1084,4 +1087,7 @@
+     | Or.inr hq => Or.inl hq)
+ ```
++
++:::gradeTheorem 2 or_commut'
++:::
+ :::::
+ 
+@@ -1242,4 +1248,7 @@
+   solution!(Exists.intro 1 (Even.succ_succ 0 Even.zero))
+ ```
++
++:::gradeTheorem 2 ex_even_Sn
++:::
+ :::::
+ ::::::
+@@ -1272,4 +1281,7 @@
+     | Exists.intro x hpx => Exists.intro x (hpq x hpx))
+ ```
++
++:::gradeTheorem 2 ex_match
++:::
+ :::::
+ ::::::
+@@ -1298,4 +1310,7 @@
+   solution!(fun _ _ => True.intro)
+ ```
++
++:::gradeTheorem 1 p_implies_true
++:::
+ :::::
+ 
+@@ -1344,4 +1359,7 @@
+   solution!(fun _ contra => nomatch contra)
+ ```
++
++:::gradeTheorem 1 ex_falso_quodlibet'
++:::
+ :::::
+ ::::::
+@@ -1477,4 +1495,7 @@
+     | Eq.refl _, Eq.refl _ => Eq.refl (h1 :: t1))
+ ```
++
++:::gradeTheorem 2 eq_cons
++:::
+ :::::
+ 
+@@ -1523,4 +1544,7 @@
+     exact hpx
+ ```
++
++:::gradeTheorem 2 equality__leibniz_equality
++:::
+ :::::
+ 
+@@ -1539,4 +1563,7 @@
+     | Eq.refl _ => fun _ hp => hp)
+ ```
++
++:::gradeTheorem 2 equality__leibniz_equality_term
++:::
+ :::::
+ 
+@@ -1731,4 +1758,7 @@
+       And.intro (And.intro hp hq) hr)
+ ```
++
++:::gradeTheorem 2 and_assoc
++:::
+ :::::
+ 
+@@ -1752,4 +1782,7 @@
+             Or.inr (And.intro hq hr)))
+ ```
++
++:::gradeTheorem 3 or_distributes_over_and
++:::
+ :::::
+ 
+@@ -1855,4 +1888,7 @@
+     apply Or.comm
+ ```
++
++:::gradeTheorem 1 pe_implies_or_eq
++:::
+ :::::
+ 
+@@ -1875,4 +1911,7 @@
+       apply True.intro
+ ```
++
++:::gradeTheorem 1 pe_implies_true_eq
++:::
+ :::::
+ 

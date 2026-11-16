@@ -1,0 +1,99 @@
+{
+ "file": "LF/ProofObjects.lean",
+ "chapter": "ProofObjects",
+ "round": 2,
+ "proposals": [
+  {
+   "id": "1",
+   "cat": "grading/missing-directive",
+   "old": "    | And.intro hp _, And.intro _ hr => And.intro hp hr)\n```\n:::::",
+   "new": "    | And.intro hp _, And.intro _ hr => And.intro hp hr)\n```\n\n:::gradeTheorem 2 conj_fact\n:::\n:::::",
+   "why": "Single-theorem exercise `conj_fact` (rating 2) had no `:::gradeTheorem` directive, unlike its siblings in this chapter; points match the rating."
+  },
+  {
+   "id": "2",
+   "cat": "grading/missing-directive",
+   "old": "    | Or.inr hq => Or.inl hq)\n```\n:::::",
+   "new": "    | Or.inr hq => Or.inl hq)\n```\n\n:::gradeTheorem 2 or_commut'\n:::\n:::::",
+   "why": "Single-theorem exercise `or_commut'` (rating 2) had no `:::gradeTheorem` directive."
+  },
+  {
+   "id": "3",
+   "cat": "grading/missing-directive",
+   "old": "  solution!(Exists.intro 1 (Even.succ_succ 0 Even.zero))\n```\n:::::",
+   "new": "  solution!(Exists.intro 1 (Even.succ_succ 0 Even.zero))\n```\n\n:::gradeTheorem 2 ex_even_Sn\n:::\n:::::",
+   "why": "Single-theorem exercise `ex_even_Sn` (rating 2) had no `:::gradeTheorem` directive."
+  },
+  {
+   "id": "4",
+   "cat": "grading/missing-directive",
+   "old": "    | Exists.intro x hpx => Exists.intro x (hpq x hpx))\n```\n:::::",
+   "new": "    | Exists.intro x hpx => Exists.intro x (hpq x hpx))\n```\n\n:::gradeTheorem 2 ex_match\n:::\n:::::",
+   "why": "Single-theorem exercise `ex_match` (rating 2) had no `:::gradeTheorem` directive."
+  },
+  {
+   "id": "5",
+   "cat": "grading/missing-directive",
+   "old": "  solution!(fun _ _ => True.intro)\n```\n:::::",
+   "new": "  solution!(fun _ _ => True.intro)\n```\n\n:::gradeTheorem 1 p_implies_true\n:::\n:::::",
+   "why": "Single-theorem exercise `p_implies_true` (rating 1) had no `:::gradeTheorem` directive."
+  },
+  {
+   "id": "6",
+   "cat": "grading/missing-directive",
+   "old": "  solution!(fun _ contra => nomatch contra)\n```\n:::::",
+   "new": "  solution!(fun _ contra => nomatch contra)\n```\n\n:::gradeTheorem 1 ex_falso_quodlibet'\n:::\n:::::",
+   "why": "Single-theorem exercise `ex_falso_quodlibet'` (rating 1) had no `:::gradeTheorem` directive."
+  },
+  {
+   "id": "7",
+   "cat": "grading/missing-directive",
+   "old": "    | Eq.refl _, Eq.refl _ => Eq.refl (h1 :: t1))\n```\n:::::",
+   "new": "    | Eq.refl _, Eq.refl _ => Eq.refl (h1 :: t1))\n```\n\n:::gradeTheorem 2 eq_cons\n:::\n:::::",
+   "why": "Single-theorem exercise `eq_cons` (rating 2) had no `:::gradeTheorem` directive."
+  },
+  {
+   "id": "8",
+   "cat": "grading/missing-directive",
+   "old": "    intro α x y heq P hpx\n    cases heq\n    exact hpx\n```\n:::::",
+   "new": "    intro α x y heq P hpx\n    cases heq\n    exact hpx\n```\n\n:::gradeTheorem 2 equality__leibniz_equality\n:::\n:::::",
+   "why": "Single-theorem exercise `equality__leibniz_equality` (rating 2) had no `:::gradeTheorem` directive."
+  },
+  {
+   "id": "9",
+   "cat": "grading/missing-directive",
+   "old": "    | Eq.refl _ => fun _ hp => hp)\n```\n:::::",
+   "new": "    | Eq.refl _ => fun _ hp => hp)\n```\n\n:::gradeTheorem 2 equality__leibniz_equality_term\n:::\n:::::",
+   "why": "Single-theorem exercise `equality__leibniz_equality_term` (rating 2) had no `:::gradeTheorem` directive. (Its sibling `leibniz_equality__equality` is `(optional := true)` and deliberately left ungraded, per the `optionalAutograding` linter.)"
+  },
+  {
+   "id": "10",
+   "cat": "grading/missing-directive",
+   "old": "      And.intro (And.intro hp hq) hr)\n```\n:::::",
+   "new": "      And.intro (And.intro hp hq) hr)\n```\n\n:::gradeTheorem 2 and_assoc\n:::\n:::::",
+   "why": "Single-theorem exercise `and_assoc` (rating 2) had no `:::gradeTheorem` directive."
+  },
+  {
+   "id": "11",
+   "cat": "grading/missing-directive",
+   "old": "            Or.inr (And.intro hq hr)))\n```\n:::::",
+   "new": "            Or.inr (And.intro hq hr)))\n```\n\n:::gradeTheorem 3 or_distributes_over_and\n:::\n:::::",
+   "why": "Single-theorem exercise `or_distributes_over_and` (rating 3) had no `:::gradeTheorem` directive."
+  },
+  {
+   "id": "12",
+   "cat": "grading/missing-directive",
+   "old": "    apply PE (P ∨ Q) (Q ∨ P)\n    apply Or.comm\n```\n:::::",
+   "new": "    apply PE (P ∨ Q) (Q ∨ P)\n    apply Or.comm\n```\n\n:::gradeTheorem 1 pe_implies_or_eq\n:::\n:::::",
+   "why": "Single-theorem exercise `pe_implies_or_eq` (rating 1) had no `:::gradeTheorem` directive."
+  },
+  {
+   "id": "13",
+   "cat": "grading/missing-directive",
+   "old": "    · intro _\n      apply True.intro\n```\n:::::",
+   "new": "    · intro _\n      apply True.intro\n```\n\n:::gradeTheorem 1 pe_implies_true_eq\n:::\n:::::",
+   "why": "Single-theorem exercise `pe_implies_true_eq` (rating 1) had no `:::gradeTheorem` directive."
+  }
+ ],
+ "completed": true
+}

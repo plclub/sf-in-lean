@@ -1,0 +1,114 @@
+--- LF/ProofObjects.lean (before this round)
++++ LF/ProofObjects.lean
+@@ -2,5 +2,4 @@
+ import LF.IndProp
+ 
+-
+ open Verso.Genre Manual
+ open SFLMeta
+@@ -79,5 +78,4 @@
+ "{name}`Even.zero` is a proof of {lean}`Even 0`."
+ 
+-
+ :::slidebreak
+ :::
+@@ -117,5 +115,4 @@
+ arguments — a number `n` and evidence for the proposition `Even n` — and yields evidence for the proposition `Even (n + 2)`."
+ 
+-
+ :::slidebreak
+ :::
+@@ -175,5 +172,5 @@
+ with elements of that type.
+ 
+-The fact that the some arguments are implicit, like `{α}` of {lean}`List`
++The fact that some arguments are implicit, like `{α}` of {lean}`List`
+ and `{n}` of the real {name}`Even.succ_succ`, actually doesn't make a difference at all:
+ {name}`List` is still taking one argument, and {name}`Even.succ_succ` is still taking two.
+@@ -183,5 +180,4 @@
+ begin with, and can mark it as implicit with the curly braces as `{n}`.
+ 
+-
+ We saw in the {ref "Logic"}[Logic] chapter that we can use function
+ application syntax to instantiate universally quantified variables
+@@ -542,6 +538,6 @@
+ called _definitional proof irrelevance_. It says that any two proofs
+ of the same proposition are definitionally equal. So we could write
+-the same proof again however we wanted— with different tactics, using
+-terms instead of tactics, etc.— and we would still have "the same
++the same proof again however we wanted — with different tactics, using
++terms instead of tactics, etc. — and we would still have "the same
+ theorem."
+ 
+@@ -698,5 +694,5 @@
+ constructing the corresponding tactic proofs. Fortunately, there's
+ a simple trick to help in the construction: we can use the _term_
+-`sorry` as placeholder of any type we like.
++`sorry` as a placeholder of any type we like.
+ 
+ As an example, let's walk through the process of constructing a
+@@ -720,5 +716,5 @@
+ ```
+ 
+-In the attempt above, we've omitted the proofs that `6` is even,
++In the attempt above, we've omitted the proof that `6` is even,
+ but it can easily be constructed following the same procedure:
+ 
+@@ -737,5 +733,5 @@
+ 
+ To recap, we've been guided by an informal proof that we have in
+-our minds, and we check the high level details before completing
++our minds, and we check the high-level details before completing
+ the intricacies of the proof. The `sorry` term allows us to do
+ this.
+@@ -816,5 +812,5 @@
+ We have now seen that tactics are not "special" in Lean: they are just
+ manipulators of terms.
+-Recall that Lean's logical connectives are also not "special:" only universal
++Recall that Lean's logical connectives are also not "special": only universal
+ quantification (with implication as a special case) is built into
+ Lean; all the other connectives are defined inductively.
+@@ -858,5 +854,5 @@
+ {lean}`And` exactly: a `structure` with constructor `intro`
+ and fields `left`/`right`
+-(except that core uses `a` and `b` instead of `P` `Q`).
++(except that core uses `a` and `b` instead of `P` and `Q`).
+ ```lean (name := print_core_and)
+ #print _root_.And
+@@ -946,5 +942,5 @@
+ ```
+ 
+-Here, {lean}`Iff.intro` is doing the same thing as `And.intro`:
++Here, {lean}`Iff.intro` is doing the same thing as {name}`And.intro`:
+ it builds the `Iff` `structure` with its two arguments.
+ 
+@@ -1252,5 +1248,5 @@
+ :::
+ 
+-To destruct existentials in a proof term we simply use `match`:
++To destruct existentials in a proof term, we simply use `match`:
+ 
+ ```lean
+@@ -1376,5 +1372,5 @@
+ 
+ The `Eq` definition relates pairs of elements of type `α`. The only way to
+-prove `Eq a b` for about pair of elements `a` and `b` is via the `Eq.refl` constructor,
++prove `Eq a b` for a pair of elements `a` and `b` is via the `Eq.refl` constructor,
+ which by requiring `Eq x x` for all `x` forces `a` and `b` to be _the same_.
+ 
+@@ -1406,6 +1402,6 @@
+ In tactic-based proofs of equality, the conversion rules operate
+ invisibly: whenever Lean checks two terms for definitional equality
+--- as {tactic}`rfl` does when closing a goal `x = y`, or as `exact`
+-and `apply` do when unifying a term against an expected type -- it
++— as {tactic}`rfl` does when closing a goal `x = y`, or as `exact`
++and `apply` do when unifying a term against an expected type — it
+ reduces both sides by these computation rules before comparing them.
+ 
+@@ -1516,5 +1512,5 @@
+ The inductive definition of equality implies _Leibniz equality_:
+ what we mean when we say "`x` and `y` are equal" is that every
+-property on `P` that is true of `x` is also true of `y`. Prove
++property `P` that is true of `x` is also true of `y`. Prove
+ that.
+ 
