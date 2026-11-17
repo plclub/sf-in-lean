@@ -293,7 +293,7 @@ Is `unit` the only term of type `Unit`?
 ::::
 
 ::::quizSolution
-No! For instance `λX:Unit. X` unit is also a _term_ of type `Unit`.
+No! For instance `(λX:Unit. X) unit` is also a _term_ of type `Unit`.
 ::::
 
 ## Sums
