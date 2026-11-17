@@ -18,7 +18,7 @@ file := some "Sub"
 # Concepts
 
 :::full
-We now turn to _subtyping_, a key feature of - in particular -
+We now turn to _subtyping_, a key feature of — in particular —
 object-oriented programming languages.
 :::
 
@@ -33,7 +33,7 @@ defined as follows:
 ```
 
 ::::full
-In the simply typed lamdba-calculus with records, the term
+In the simply typed lambda-calculus with records, the term
 
 ```display
     (λ R:Person. (R.age)+1) {name="Pat", age=21, gpa=1}
@@ -63,7 +63,7 @@ The principle at work here is called _subtyping_.  We say that "`σ`
 is a subtype of `τ`", written `σ <: τ`, if a value of type `σ` can
 safely be used in any context where a value of type `τ` is
 expected.  The idea of subtyping applies not only to records, but
-to all of the type constructors in the language -- functions,
+to all of the type constructors in the language — functions,
 pairs, etc.
 ::::
 
@@ -91,7 +91,7 @@ Safe substitution principle:
 
 ::::full
 Subtyping plays a fundamental role in many programming
-languages -- in particular, it is central to the design of
+languages — in particular, it is central to the design of
 object-oriented languages and their libraries.
 
 An _object_ in Java, C#, etc. can be thought of as a record,
@@ -101,7 +101,7 @@ Invoking a method `m` of an object `o` on some arguments `a₁..an`
 roughly consists of projecting out the `m` field of `o` and
 applying it to `a₁..an`.
 
-The type of an object is called a _class_ -- or, in some
+The type of an object is called a _class_ — or, in some
 languages, an _interface_.  It describes which methods and which
 data fields the object offers.  Classes and interfaces are related
 by the _subclass_ and _subinterface_ relations.  An object
@@ -129,7 +129,7 @@ _inheritance_.  Classes can have static methods and fields.  Etc.,
 etc.
 
 To keep things simple here, we won't deal with any of these
-issues -- in fact, we won't even talk any more about objects or
+issues — in fact, we won't even talk any more about objects or
 classes.  (There is a lot of discussion in {citet Bib.pierce2002}[], if
 you are interested.)  Instead, we'll study the core concepts
 behind the subclass / subinterface relation in the simplified
@@ -175,7 +175,6 @@ We'll ignore all these and focus on core mechanisms.
 
 ## The Subsumption Rule
 
-τ₂
 Our goal for this chapter is to add subtyping to the simply typed
 lambda-calculus (with some basic extensions). This involves two steps:
 
@@ -186,10 +185,11 @@ lambda-calculus (with some basic extensions). This involves two steps:
 The second step is actually very simple.  We add just a single rule
 to the typing relation: the so-called _rule of subsumption_:
 
-```display
-                         Γ ⊢ t₁ ⦂ τ₁     τ₁ <: τ₂
-                         --------------------------           (sub)
-                               Γ ⊢ t₁ ⦂ τ₂
+```display +centered
+Γ ⊢ t₁ ⦂ τ₁
+ τ₁ <: τ₂
+-----------  (sub)
+Γ ⊢ t₁ ⦂ τ₂
 ```
 
 This rule says, intuitively, that it is OK to "forget" some of
@@ -204,7 +204,7 @@ function that requires just a single-field record.
 
 ## The Subtype Relation
 
-The first step -- the definition of the relation `σ <: τ` -- is
+The first step — the definition of the relation `σ <: τ` — is
 where all the action is.  Let's look at each of the clauses of its
 definition.
 
@@ -216,18 +216,18 @@ _transitivity_, which says intuitively that, if `σ` is
 better (richer, safer) than `υ` and `υ` is better than `τ`,
 then `σ` is better than `τ`...
 
-```display
-                              σ <: υ    υ <: τ
-                              ----------------                        (trans)
-                                   σ <: τ
+```display +centered
+σ <: υ
+υ <: τ
+------  (trans)
+σ <: τ
 ```
 ... and a rule of _reflexivity_, since certainly any type `τ` is
 as good as itself:
-```display
-                                   ------                              (refl)
-                                   τ <: τ
+```display +centered
+------  (refl)
+τ <: τ
 ```
-
 
 ### Products
 
@@ -235,12 +235,12 @@ Now we consider the individual type constructors, one by one,
 beginning with product types.  We consider one pair to be a subtype
 of another if each of its components is.
 
-```display
-                            σ₁ <: τ₁    σ₂ <: τ₂
-                            --------------------                        (prod)
-                             σ₁ × σ₂ <: τ₁ × τ₂
+```display +centered
+     σ₁ <: τ₁
+     σ₂ <: τ₂
+------------------  (prod)
+σ₁ × σ₂ <: τ₁ × τ₂
 ```
-
 
 ::::full
 The subtyping rule for arrows is a little less intuitive.
@@ -267,19 +267,20 @@ This example suggests that the subtyping rule for arrow types
 should say that two arrow types are in the subtype relation if
 their results are:
 
-```display
-                                  σ₂ <: τ₂
-                              ----------------                     (arrow_co)
-                            σ₁ → σ₂ <: σ₁ → τ₂
+```display +centered
+     σ₂ <: τ₂
+------------------  (arrow_co)
+σ₁ → σ₂ <: σ₁ → τ₂
 ```
 
 We can generalize this to allow the arguments of the two arrow
 types to be in the subtype relation as well:
 
-```display
-                            τ₁ <: σ₁    σ₂ <: τ₂
-                            --------------------                      (arrow)
-                              σ₁ → σ₂ <: τ₁ → τ₂
+```display +centered
+     τ₁ <: σ₁
+     σ₂ <: τ₂
+------------------  (arrow)
+σ₁ → σ₂ <: τ₁ → τ₂
 ```
 
 But notice that the argument types are subtypes "the other way round":
@@ -351,10 +352,11 @@ I.e., arrow is _contravariant_ in its left-hand argument.
 
 Putting these together...
 
-```display
-                            τ₁ <: σ₁    σ₂ <: τ₂
-                            --------------------                      (arrow)
-                            σ₁ → σ₂ <: τ₁ → τ₂
+```display +centered
+     τ₁ <: σ₁
+     σ₂ <: τ₂
+------------------  (arrow)
+σ₁ → σ₂ <: τ₁ → τ₂
 ```
 ::::
 
@@ -392,7 +394,6 @@ following is incorrect?
 
 What about subtyping for record types?
 
-
 The basic intuition is that it is always safe to use a "bigger"
 record in place of a "smaller" one.  That is, given a record type,
 adding extra fields will always result in a subtype.  If some code
@@ -408,7 +409,6 @@ field will simply be ignored.  For example,
 
 This is known as "width subtyping" for records.
 
-
 We can also create a subtype of a record type by replacing the type
 of one of its fields with a subtype.  If some code is expecting a
 record with a field `x` of type `τ`, it will be happy with a record
@@ -421,7 +421,6 @@ having a field `x` of type `σ` as long as `σ` is a subtype of
 
 This is known as "depth subtyping".
 
-
 Finally, although the fields of a record type are written in a
 particular order, the order does not really matter. For example,
 
@@ -430,16 +429,15 @@ particular order, the order does not really matter. For example,
 ```
 This is known as "permutation subtyping".
 
-
 We _could_ formalize these requirements in a single subtyping rule
 for records as follows:
 
-```display
-                        ∀ jₖ in j₁..jₙ,
-                    ∃ iₚ in i₁..iₘ, such that
-                        jₖ=iₚ and σₚ <: τₖ
-                  ----------------------------------                    (rcd)
-                  {i₁:σ₁...iₘ:σₘ} <: {j₁:τ₁...jₙ:τₙ}
+```display +centered
+         ∀ jₖ in j₁..jₙ,
+    ∃ iₚ in i₁..iₘ, such that
+        jₖ=iₚ and σₚ <: τₖ
+----------------------------------  (rcd)
+{i₁:σ₁...iₘ:σₘ} <: {j₁:τ₁...jₙ:τₙ}
 ```
 
 That is, the record on the left should have all the field labels of
@@ -450,27 +448,25 @@ However, this rule is rather heavy and hard to read, so it is often
 decomposed into three simpler rules, which can be combined using
 `trans` to achieve all the same effects.
 
-
 First, adding fields to the end of a record type gives a subtype:
 
-```display
-                               n > m
-                 ---------------------------------                 (rcdWidth)
-                 {i₁:τ₁...iₙ:τₙ} <: {i₁:τ₁...iₘ:τₘ}
+```display +centered
+              n > m
+----------------------------------  (rcdWidth)
+{i₁:τ₁...iₙ:τₙ} <: {i₁:τ₁...iₘ:τₘ}
 ```
 
 We can use `rcdWidth` to drop later fields of a multi-field
 record while keeping earlier fields, showing for example that
 `{age:Nat,name:String} <: {age:Nat}`.
 
-
 Second, subtyping can be applied inside the components of a compound
 record type:
 
-```display
-                       σ₁ <: τ₁  ...  σₙ <: τₙ
-                  ----------------------------------               (rcdDepth)
-                  {i₁:σ₁...iₙ:σₙ} <: {i₁:τ₁...iₙ:τₙ}
+```display +centered
+     σ₁ <: τ₁  ...  σₙ <: τₙ
+----------------------------------  (rcdDepth)
+{i₁:σ₁...iₙ:σₙ} <: {i₁:τ₁...iₙ:τₙ}
 ```
 
 For example, we can use `rcdDepth` and `rcdWidth` together to
@@ -482,13 +478,11 @@ haven't quite achieved this yet: using just `rcdDepth` and
 `rcdWidth` we can only drop fields from the _end_ of a record
 type.  So we add:
 
-```display
-         {i₁:σ₁...iₙ:σₙ} is a permutation of {j₁:τ₁...jₙ:τₙ}
-         ---------------------------------------------------        (rcdPerm)
-                  {i₁:σ₁...iₙ:σₙ} <: {j₁:τ₁...jₙ:τₙ}
+```display +centered
+{i₁:σ₁...iₙ:σₙ} is a permutation of {j₁:τ₁...jₙ:τₙ}
+---------------------------------------------------  (rcdPerm)
+        {i₁:σ₁...iₙ:σₙ} <: {j₁:τ₁...jₙ:τₙ}
 ```
-
-
 
 It is worth noting that full-blown language designs may choose not
 to adopt all of these subtyping rules. For example, in Java:
@@ -497,7 +491,7 @@ to adopt all of these subtyping rules. For example, in Java:
   index, adding new indices "on the right" as more members are
   added in subclasses (i.e., no permutation for classes).
 
-- A class may implement multiple interfaces -- so-called "multiple
+- A class may implement multiple interfaces — so-called "multiple
   inheritance" of interfaces (i.e., permutation is allowed for
   interfaces).
 
@@ -506,7 +500,6 @@ to adopt all of these subtyping rules. For example, in Java:
   depth subtyping or no arrow subtyping, depending how you look at
   it).
 
-
 :::::full
 
 ::::exercise (rating := 2) (name := "arrow_sub_wrong") (manual := true)
@@ -514,10 +507,11 @@ to adopt all of these subtyping rules. For example, in Java:
 Suppose we had incorrectly defined subtyping as covariant on both
 the right and the left of arrow types:
 
-```display
-                            σ₁ <: τ₁    σ₂ <: τ₂
-                            --------------------                (arrowWrong)
-                            σ₁ → σ₂ <: τ₁ → τ₂
+```display +centered
+     σ₁ <: τ₁
+     σ₂ <: τ₂
+------------------  (arrowWrong)
+σ₁ → σ₂ <: τ₁ → τ₂
 ```
 
 Give a concrete example of functions `F` and `G` with the following
@@ -550,19 +544,18 @@ Answer:
 ### ⊤
 
 Finally, it is convenient to give the subtype relation a maximum
-element -- a type that lies above every other type and is
+element — a type that lies above every other type and is
 inhabited by all (well-typed) values.  We do this by adding to the
 language one new type constant, called `⊤` (pronounced "⊤" and written \⊤),
 together with a subtyping rule that places it above every other type in the
 subtype relation:
 
-```display
-                                   --------                             (⊤)
-                                   σ <: ⊤
+```display +centered
+------  (⊤)
+σ <: ⊤
 ```
 
 The `⊤` type is an analog of the `Object` type in Java and C#.
-
 
 ### Summary
 
@@ -573,45 +566,49 @@ pure STLC (over some set of base types) and then...
 
   - adding the rule of subsumption
 
-```display
-                         Γ ⊢ t₁ ⦂ τ₁     τ₁ <: τ₂
-                         --------------------------------            (sub)
-                               Γ ⊢ t₁ ⦂ τ₂
+```display +centered
+Γ ⊢ t₁ ⦂ τ₁
+ τ₁ <: τ₂
+-----------  (sub)
+Γ ⊢ t₁ ⦂ τ₂
 ```
   to the typing relation, and
 
   - defining a subtype relation as follows:
 
-```display
-                              σ <: υ    υ <: τ
-                              ----------------                        (trans)
-                                   σ <: τ
+```display +centered
+                      σ <: υ
+                      υ <: τ
+                      ------                         (trans)
+                      σ <: τ
 
-                                   ------                              (refl)
-                                   τ <: τ
+                      ------                         (refl)
+                      τ <: τ
 
-                                   --------                             (⊤)
-                                   σ <: ⊤
+                      ------                         (⊤)
+                      σ <: ⊤
 
-                            σ₁ <: τ₁    σ₂ <: τ₂
-                            --------------------                       (prod)
-                             σ₁ × σ₂ <: τ₁ × τ₂
+                     σ₁ <: τ₁
+                     σ₂ <: τ₂
+                ------------------                   (prod)
+                σ₁ × σ₂ <: τ₁ × τ₂
 
-                            τ₁ <: σ₁    σ₂ <: τ₂
-                            --------------------                      (arrow)
-                            σ₁ → σ₂ <: τ₁ → τ₂
+                     τ₁ <: σ₁
+                     σ₂ <: τ₂
+                ------------------                   (arrow)
+                σ₁ → σ₂ <: τ₁ → τ₂
 
-                               n > m
-                 ---------------------------------                 (rcdWidth)
-                 {i₁:τ₁...iₙ:τₙ} <: {i₁:τ₁...iₘ:τₘ}
+                      n > m
+        ----------------------------------           (rcdWidth)
+        {i₁:τ₁...iₙ:τₙ} <: {i₁:τ₁...iₘ:τₘ}
 
-                       σ₁ <: τ₁  ...  σₙ <: τₙ
-                  ----------------------------------               (rcdDepth)
-                  {i₁:σ₁...iₙ:σₙ} <: {i₁:τ₁...iₙ:τₙ}
+             σ₁ <: τ₁  ...  σₙ <: τₙ
+        ----------------------------------           (rcdDepth)
+        {i₁:σ₁...iₙ:σₙ} <: {i₁:τ₁...iₙ:τₙ}
 
-         {i₁:σ₁...iₙ:σₙ} is a permutation of {j₁:τ₁...jₙ:τₙ}
-         ---------------------------------------------------        (rcdPerm)
-                  {i₁:σ₁...iₙ:σₙ} <: {j₁:τ₁...jₙ:τₙ}
+{i₁:σ₁...iₙ:σₙ} is a permutation of {j₁:τ₁...jₙ:τₙ}
+---------------------------------------------------  (rcdPerm)
+        {i₁:σ₁...iₙ:σₙ} <: {j₁:τ₁...jₙ:τₙ}
 ```
 
 ::::quiz
@@ -808,14 +805,14 @@ Which of the following statements are true, and which are false?
       False
 :::
   - There is an infinite descending chain of distinct types in the
-    subtype relation---that is, an infinite sequence of types
+    subtype relation — that is, an infinite sequence of types
     `σ₀`, `σ₁`, etc., such that all the `σi`'s are different and
     each `σ(i+1)` is a subtype of `σi`.
 :::solution
       True
 :::
   - There is an infinite _ascending_ chain of distinct types in
-    the subtype relation---that is, an infinite sequence of types
+    the subtype relation — that is, an infinite sequence of types
     `σ₀`, `σ₁`, etc., such that all the `σi`'s are different and
     each `σ(i+1)` is a supertype of `σi`.
 :::solution
@@ -1003,8 +1000,8 @@ type smaller than `Bool` is `Bool` itself.)
 ::::quiz
 
 "Suppose `σ`, `τ₁`, and `τ₂` are types with `σ <: τ₁ → τ₂`.  Then
-`σ` itself is an arrow type -- i.e., `σ = σ₁ → σ₂` for some `σ₁`
-and `σ₂` -- with `τ₁` <: `σ₁` and `σ₂ <: τ₂`."
+`σ` itself is an arrow type — i.e., `σ = σ₁ → σ₂` for some `σ₁`
+and `σ₂` — with `τ₁` <: `σ₁` and `σ₂ <: τ₂`."
 
 (A) True
 
@@ -1022,7 +1019,7 @@ and `σ₂` -- with `τ₁` <: `σ₁` and `σ₂ <: τ₂`."
          ∅ ⊢ (λP:(A×τ). (P.snd) (P.fst)) ⦂ σ
 ```
 :::solution
-     There is no smallest such type -- any type of the form `A → σ` for some
+     There is no smallest such type — any type of the form `A → σ` for some
      type `σ` will make the assertion true, but there is no smallest one of
      these (there are infinitely many and they are incomparable).
 :::
@@ -1104,16 +1101,17 @@ Answer: Nineteen!
 
 ::::exercise (rating := 2) (name := "pair_permutation") (manual := true)
 The subtyping rule for product types
-```display
-                            σ₁ <: τ₁    σ₂ <: τ₂
-                            --------------------                        (prod)
-                               σ₁*σ₂ <: τ₁*τ₂
+```display +centered
+   σ₁ <: τ₁
+   σ₂ <: τ₂
+--------------  (prod)
+σ₁*σ₂ <: τ₁*τ₂
 ```
 intuitively corresponds to the "depth" subtyping rule for records.
 Extending the analogy, we might consider adding a "permutation" rule
-```display
-                                   --------------
-                                   τ₁*τ₂ <: τ₂*τ₁
+```display +centered
+--------------
+τ₁*τ₂ <: τ₂*τ₁
 ```
 for products.  Is this a good idea? Briefly explain why or why not.
 
@@ -1122,7 +1120,6 @@ for products.  Is this a good idea? Briefly explain why or why not.
   type `Unit` according to this rule, but reduces to `tru`, which
   does not have type `Unit`.
 :::
-
 
 :::grade
 `GRADE_MANUAL 2: pair_permutation`
@@ -1139,8 +1136,8 @@ open scoped MyGetElem
 ```
 
 Most of the definitions needed to formalize what we've discussed
-above -- in particular, the syntax and operational semantics of
-the language -- are identical to what we saw in the last chapter.
+above — in particular, the syntax and operational semantics of
+the language — are identical to what we saw in the last chapter.
 We just need to extend the typing relation with the subsumption
 rule and add a new `inductive` definition for the subtyping
 relation.  Let's first do the identical bits.
@@ -1205,14 +1202,14 @@ antiquotation.
 ```lean
 scoped syntax:50 stlcTy:51 " × " stlcTy:50 : stlcTy
 scoped syntax:max " ⊤ " : stlcTy
-scoped syntax:50 "if " stlcTm:51 " then " stlcTm:50 " else " stlcTm:50 : stlcTm
+scoped syntax:50 "if " stlcTm:51 " then " stlcTm:50
+  " else " stlcTm:50 : stlcTm
 scoped syntax:max " ( " stlcTm:60 " , " stlcTm:60 " ) " : stlcTm
 
 namespace Elab
 
 open StlcCommon
 open Lean Meta Elab Term
-
 
 def language : Language where
   tyType := ``Ty
@@ -1257,9 +1254,11 @@ def baseTyHandler : TyElabHandler :=
     | _ => k T
 
 def tyHandlers : TyElabHandler :=
-  subTyHandler.orElse ((commonTyHandler language).orElse baseTyHandler)
+  subTyHandler.orElse
+    ((commonTyHandler language).orElse baseTyHandler)
 
-partial def elabTy : TyElab := tyHandlers elabTy  <| unsupportedTy language
+partial def elabTy : TyElab :=
+  tyHandlers elabTy <| unsupportedTy language
 
 def subTmHandler : TmElabHandler :=
   fun recur k Γ free t => do
@@ -1291,7 +1290,8 @@ def subTmHandler : TmElabHandler :=
         return (mkApp (mkConst ``Tm.snd) t, free)
     | _ => k Γ free t
 
-def tmHandlers : TmElabHandler := subTmHandler.orElse (commonTmHandler language elabTy)
+def tmHandlers : TmElabHandler :=
+  subTmHandler.orElse (commonTmHandler language elabTy)
 
 partial def elabTm : TmElab := tmHandlers elabTm unsupportedTm
 
@@ -1313,7 +1313,6 @@ namespace Delab
 
 open StlcCommon Elab Delab
 open Lean PrettyPrinter Delaborator
-
 
 @[app_unexpander Ty.top]
 private def Ty.unexpandTop : Unexpander
@@ -1366,7 +1365,6 @@ private def reservedTmNames : String → Bool
   | "snd" => true
   | _ => false
 
-
 @[app_unexpander Tm.var]
 private def Tm.unexpandVar : Unexpander :=
   Delab.unexpandVar reservedTmNames ``Tm.var
@@ -1403,7 +1401,6 @@ private def Tm.unexpandIte : Unexpander
       `(<{if $c':stlcTm then $t':stlcTm else $e':stlcTm }>)
   | _ => throw ()
 
-
 @[app_unexpander Tm.unit]
 private def Tm.unexpandUnit : Unexpander
   | stx => do
@@ -1418,7 +1415,6 @@ private def Tm.unexpandPair : Unexpander
       let t₂' := getTm t₂
       `(<{ ($t₁':stlcTm, $t₂':stlcTm) }>)
   | _ => throw ()
-
 
 @[app_unexpander Tm.fst]
 private def Tm.unexpandFst : Unexpander
@@ -1503,7 +1499,6 @@ Checks that the extended grammar parses the way it should.
 ```
 :::
 
-
 ## Substitution
 
 The definition of substitution remains exactly the same as for the
@@ -1527,7 +1522,8 @@ def subst (x : String) (s : Tm) (t : Tm) : Tm :=
   | .ite t₁ t₂ t₃ =>
       <{ if [x := s] t₁ then [x := s] t₂ else [x := s] t₃ }>
 
-  -- Complete the following cases when you do the `products` exercise later
+  -- Complete the following cases when you do the `products` exercise
+  -- later
   | .pair t₁ t₂ =>
       solution!(<{ ([x := s] t₁, [x := s] t₂) }>)
   | .fst t =>
@@ -1569,7 +1565,8 @@ inductive Tm.IsValue : Tm → Prop where
 attribute [StlcSubEval] Tm.IsValue.pair
 -- END SOLUTION
 
-attribute [StlcSubEval] Tm.IsValue.abs Tm.IsValue.tru Tm.IsValue.fls Tm.IsValue.unit
+attribute [StlcSubEval] Tm.IsValue.abs Tm.IsValue.tru Tm.IsValue.fls
+    Tm.IsValue.unit
 ```
 
 ```lean
@@ -1676,7 +1673,8 @@ end
 
 scoped notation:40 τ:41 " <: " τ':41 => Subtype τ τ'
 
-attribute [StlcSubTyping] Subtype.refl Subtype.trans Subtype.top Subtype.arrow
+attribute [StlcSubTyping] Subtype.refl Subtype.trans Subtype.top
+    Subtype.arrow
 -- SOLUTION
 Subtype.prod
 -- END SOLUTION
@@ -1709,7 +1707,7 @@ here as a fix for this.
 
 ::::exercise (rating := 2) (name := "subtyping_judgements") (optional := true)
 Leave this exercise until after you have finished adding product
-types to the language - see exercise `products` - at least up to
+types to the language — see exercise `products` — at least up to
 this point in the file.
 
 Recall that, in chapter {ref "MoreStlc"}[MoreStlc], the optional section
@@ -1776,7 +1774,6 @@ of subsumption, `sub`.
 ```lean
 abbrev Context := PartialMap String Ty
 ```
-
 
 ```lean
 inductive HasType : Context → Tm → Ty → Prop where
@@ -1859,7 +1856,8 @@ formal statement in Lean and prove it.
 
 :::solution
 ```lean
-example : <{ ∅ ⊢ ((λ Z : A . Z), (λ Z : B . Z)) ⦂ ((A → A) × (B → B)) }> := by
+example :
+  <{ ∅ ⊢ ((λ Z : A . Z), (λ Z : B . Z)) ⦂ ((A → A) × (B → B)) }> := by
   solution!
     apply_rules using StlcSubTyping
 ```
@@ -1874,7 +1872,9 @@ example : <{ ∅ ⊢ ((λ Z : A . Z), (λ Z : B . Z)) ⦂ ((A → A) × (B → B
 
 :::solution
 ```lean
-example : <{ ∅ ⊢ (λ X : (⊤ × (B → B)) . snd X) ((λ Z : A . Z), (λ Z : B . Z)) ⦂ (B → B) }> := by
+example :
+  <{ ∅ ⊢ (λ X : (⊤ × (B → B)) . snd X)
+          ((λ Z : A . Z), (λ Z : B . Z)) ⦂ (B → B) }> := by
   solution!
     apply_rules using StlcSubTyping
     apply HasType.sub
@@ -1893,7 +1893,8 @@ example : <{ ∅ ⊢ (λ X : (⊤ × (B → B)) . snd X) ((λ Z : A . Z), (λ Z 
 ```lean
 example :
   <{ ∅ ⊢ (λ Z : (C → C) → (⊤ × B → B) . snd (Z (λ X : C . X)))
-          (λ Z : C → C . ((λ Z : A . Z), (λ Z : B . Z))) ⦂ (B → B) }> := by
+          (λ Z : C → C . ((λ Z : A . Z), (λ Z : B . Z)))
+          ⦂ (B → B) }> := by
   solution!
     apply_rules using StlcSubTyping
     apply HasType.sub
@@ -1971,7 +1972,8 @@ theorem sub_inversion_arrow {σ τ₁ τ₂ : Ty}
      σ = <{ σ₁ → σ₂ }> ∧ τ₁ <: σ₁ ∧ σ₂ <: τ₂ := by
   solution!
     generalize heq : <{ τ₁ → τ₂ }> = τ at h
-    induction h generalizing τ₁ τ₂ with (subst_vars; try contradiction)
+    induction h generalizing τ₁ τ₂ with
+      (subst_vars; try contradiction)
     | refl =>
         exists τ₁, τ₂; constructor; rfl
         constructor <;> constructor
@@ -2000,7 +2002,9 @@ There are additional _inversion lemmas_ for the other types:
 :::::full
 ::::exercise (rating := 2) (name := "sub_inversion_unit") (optional := true)
 ```lean
-theorem sub_inversion_unit {τ : Ty} (h : τ <: <{ Unit }>) : τ = Ty.unit := by
+theorem sub_inversion_unit {τ : Ty}
+    (h : τ <: <{ Unit }>) :
+    τ = Ty.unit := by
   solution!
     generalize heq : Ty.unit = σ at h
     induction h with (subst_vars; try contradiction)
@@ -2013,7 +2017,9 @@ theorem sub_inversion_unit {τ : Ty} (h : τ <: <{ Unit }>) : τ = Ty.unit := by
 
 ::::exercise (rating := 2) (name := "sub_inversion_base") (optional := true)
 ```lean
-theorem sub_inversion_base {τ : Ty} {s : String} (h : τ <: Ty.base s) : τ = Ty.base s := by
+theorem sub_inversion_base {τ : Ty} {s : String}
+    (h : τ <: Ty.base s) :
+    τ = Ty.base s := by
   solution!
     generalize heq : Ty.base s = σ at h
     induction h with (subst_vars; try contradiction)
@@ -2026,7 +2032,9 @@ theorem sub_inversion_base {τ : Ty} {s : String} (h : τ <: Ty.base s) : τ = T
 
 ::::exercise (rating := 2) (name := "sub_inversion_top") (optional := true)
 ```lean
-theorem sub_inversion_top {τ : Ty} (h : Ty.top <: τ) : τ = Ty.top := by
+theorem sub_inversion_top {τ : Ty}
+    (h : Ty.top <: τ) :
+    τ = Ty.top := by
   solution!
     generalize heq : Ty.top = σ at h
     induction h with (subst_vars; try contradiction)
@@ -2047,7 +2055,8 @@ theorem sub_inversion_prod {σ τ₁ τ₂ : Ty} (h : σ <: <{ τ₁ × τ₂ }>
      ∃ σ₁ σ₂, σ = <{ σ₁ × σ₂ }> ∧ σ₁ <: τ₁ ∧ σ₂ <: τ₂ := by
   solution!
     generalize heq : <{ τ₁ × τ₂ }> = υ at h
-    induction h generalizing τ₁ τ₂ with (subst_vars; try contradiction)
+    induction h generalizing τ₁ τ₂ with
+      (subst_vars; try contradiction)
     | refl =>
         exists τ₁, τ₂; constructor; rfl
         constructor <;> constructor
@@ -2066,8 +2075,8 @@ theorem sub_inversion_prod {σ τ₁ τ₂ : Ty} (h : σ <: <{ τ₁ × τ₂ }>
 ## Canonical Forms
 
 :::full
-The proof of the progress theorem -- that a well-typed
-non-value can always take a step -- doesn't need to change too
+The proof of the progress theorem — that a well-typed
+non-value can always take a step — doesn't need to change too
 much: we just need one small refinement.  When we're considering
 the case where the term in question is an application `t₁ t₂`
 where both `t₁` and `t₂` are values, we need to know that `t₁` has
@@ -2075,7 +2084,7 @@ the _form_ of a lambda-abstraction, so that we can apply the
 `abs` reduction rule.  In the ordinary STLC, this is
 obvious: we know that `t₁` has a function type `τ₁₁→τ₁₂`, and
 there is only one rule that can be used to give a function type to
-a value - rule `abs` - and the form of the conclusion of this
+a value — rule `abs` — and the form of the conclusion of this
 rule forces `t₁` to be an abstraction.
 
 In the STLC with subtyping, this reasoning doesn't quite work
@@ -2102,20 +2111,22 @@ With subtyping, they require real proofs by induction...
 
 ::::exercise (rating := 3) (name := "canonical_forms_of_arrow_types") (optional := true)
 ```lean
-theorem canonical_forms_of_arrow_types {Γ : Context} {t : Tm} {τ₁ τ₂ : Ty}
+theorem canonical_forms_of_arrow_types {Γ : Context} {t : Tm}
+  {τ₁ τ₂ : Ty}
   (ht : <{ Γ ⊢ t ⦂ τ₁ → τ₂ }>)
   (hv : t.IsValue) :
   ∃ x σ₁ t₂, t = <{λ x : σ₁ . t₂}> := by
   solution!
     generalize heq : <{ τ₁ → τ₂ }> = τ at ht
-    induction ht generalizing τ₁ τ₂ with (subst_vars; try contradiction)
+    induction ht generalizing τ₁ τ₂ with
+      (subst_vars; try contradiction)
     | abs Γ x τ₁ τ₂ t₁ h ih => inversion heq; exists x, τ₂, t₁
     | sub Γ t₁ τ₁ τ₂ ht hs ih =>
-        obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := sub_inversion_arrow hs; subst_vars
+        obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := sub_inversion_arrow hs
+        subst_vars
         exact ih hv rfl
 ```
 ::::
-
 
 Similarly, the canonical forms of type `Bool` are the constants
 `tru` and `fls`
@@ -2138,15 +2149,18 @@ When you do the `products` exercise, add your canonical forms lemma for products
 
 ```lean
 -- SOLUTION
-theorem canonical_forms_of_product_types {Γ : Context} {t : Tm} {τ₁ τ₂ : Ty}
+theorem canonical_forms_of_product_types {Γ : Context} {t : Tm}
+  {τ₁ τ₂ : Ty}
   (ht : <{ Γ ⊢ t ⦂ τ₁ × τ₂ }>)
   (hv : t.IsValue) :
   ∃ t₁ t₂, t = <{ (t₁, t₂) }> := by
     generalize heq : <{ τ₁ × τ₂ }> = τ at ht
-    induction ht generalizing τ₁ τ₂ with (subst_vars; try contradiction)
+    induction ht generalizing τ₁ τ₂ with
+      (subst_vars; try contradiction)
     | pair Γ t₁ t₂ τ₁ τ₂ h ih => inversion heq; exists t₁, t₂
     | sub Γ t₁ τ₁ τ₂ ht hs ih =>
-        obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := sub_inversion_prod hs; subst_vars
+        obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := sub_inversion_prod hs
+        subst_vars
         exact ih hv rfl
 -- END SOLUTION
 ```
@@ -2323,7 +2337,7 @@ _Lemma_: If `Γ ⊢ λ x : σ₁ . t₂ ⦂ τ`, then there is a type `σ₂`
   such that `x ↦ σ₁ ;  Γ ⊢ t₂ ⦂ σ₂` and `σ₁ → σ₂ <: τ`.
 
   Notice that the lemma does _not_ say, "then `τ` itself is an arrow
-  type" -- this is tempting, but false!  (Why?)
+  type" — this is tempting, but false!  (Why?)
 ::::
 
 ::::terse
@@ -2342,18 +2356,17 @@ _Proof_: Let `Γ`, `x`, `σ₁`, `t₂` and `τ` be given as
     Picking `τ₁₂` for `σ₂` gives us what we
     need, since `σ₁ → τ₁₂ <: σ₁ → τ₁₂` follows from {tactic}`rfl`.
 
-
   - If the last step of the derivation is a use of `sub` then
     there is a type `σ` such that `σ <: τ` and `Γ ⊢ λx : σ₁, t₂ ⦂ σ`.
     The IH for the typing subderivation tells us that there
     is some type `σ₂` with `σ₁ → σ₂ <: σ` and `x↦σ₁; Γ ⊢ t₂ ⦂ σ₂`.
     Picking type `σ₂` gives us what we need, since `σ₁ → σ₂ <: τ` then follows by `trans`.
 
-
 Formally:
 
 ```lean
-theorem typing_inversion_abs {Γ : Context} {x : String} {σ₁ : Ty} {t₂ : Tm} {τ : Ty}
+theorem typing_inversion_abs {Γ : Context} {x : String} {σ₁ : Ty}
+  {t₂ : Tm} {τ : Ty}
   (h : <{ Γ ⊢ λ x : σ₁ . t₂ ⦂ τ }>) :
     ∃ σ₂, <{ σ₁ → σ₂ }> <: τ ∧ <{ x ↦ σ₁ ; Γ ⊢ t₂ ⦂ σ₂ }> := by
 
@@ -2426,15 +2439,18 @@ theorem typing_inversion_unit (Γ : Context) (τ : Ty)
 -- SOLUTION
 theorem typing_inversion_pair {Γ : Context} {t₁ t₂ : Tm} {τ : Ty}
   (h : <{ Γ ⊢ (t₁, t₂) ⦂ τ }>) :
-  ∃ τ₁ τ₂, <{ τ₁ × τ₂ }> <: τ ∧ <{ Γ ⊢ t₁ ⦂ τ₁ }> ∧ <{ Γ ⊢ t₂ ⦂ τ₂ }> := by
+  ∃ τ₁ τ₂, <{ τ₁ × τ₂ }> <: τ ∧ <{ Γ ⊢ t₁ ⦂ τ₁ }> ∧
+    <{ Γ ⊢ t₂ ⦂ τ₂ }> := by
 
     generalize heq : <{ (t₁, t₂) }> = t at h
     induction h generalizing t₁ t₂ with (subst_vars; try contradiction)
     | pair Γ t₁ t₂ τ₁ τ₂ h₁ h₂ ih₁ ih₂ =>
-        inversion heq; exists τ₁, τ₂; solve_by_elim using StlcSubTyping
+        inversion heq; exists τ₁, τ₂
+        solve_by_elim using StlcSubTyping
     | sub Γ t₁ τ₁ τ₂ ht hs ih =>
       obtain ⟨σ₁, σ₂, hs', ht₁, ht₂⟩ := ih rfl
-      exists σ₁, σ₂; solve_by_elim (maxDepth := 10) using StlcSubTyping
+      exists σ₁, σ₂
+      solve_by_elim (maxDepth := 10) using StlcSubTyping
 
 theorem typing_inversion_fst {Γ : Context} {t : Tm} {τ: Ty}
   (h : <{ Γ ⊢ fst t ⦂ τ }>) :
@@ -2444,7 +2460,8 @@ theorem typing_inversion_fst {Γ : Context} {t : Tm} {τ: Ty}
   generalize heq : <{ fst t }> = t' at h
   induction h generalizing t with (subst_vars; try contradiction)
     | fst Γ t τ₁ τ₂ h ih =>
-        inversion heq; exists τ₁, τ₂; solve_by_elim using StlcSubTyping
+        inversion heq; exists τ₁, τ₂
+        solve_by_elim using StlcSubTyping
     | sub Γ t₁ τ₁ τ₂ ht hs ih =>
       obtain ⟨σ₁, σ₂, hs', ht'⟩ := ih rfl
       exists σ₁, σ₂; solve_by_elim using StlcSubTyping
@@ -2489,7 +2506,8 @@ theorem weakening {Γ Γ' : Context} {t : Tm} {τ: Ty}
     (hi : Γ ⊆ Γ')
     (ht : <{ Γ ⊢ t ⦂ τ }>) :
      <{ Γ' ⊢ t ⦂ τ }> := by
-  induction ht generalizing Γ' with (try apply_rules [PartialMap.update_subset] using StlcSubTyping)
+  induction ht generalizing Γ' with
+    (try apply_rules [PartialMap.update_subset] using StlcSubTyping)
   | sub Γ t₁ τ₁ τ₂ ht hs ih =>
     apply HasType.sub <;> solve_by_elim using StlcSubTyping
 
@@ -2512,7 +2530,6 @@ induction on the typing derivation this time (see Exercise
 `substitution_preserves_typing_from_typing_ind` in {ref "StlcProp"}[StlcProp]).
 :::
 
-
 :::terse
 The _substitution lemma_ is stated exactly as in pure STLC.
 
@@ -2521,14 +2538,16 @@ induction on typing derivations rather than on terms.
 :::
 
 ```lean
-theorem substitution_preserves_typing {Γ : Context} {x : String} {τ₁ : Ty} {t v : Tm} {τ : Ty}
+theorem substitution_preserves_typing {Γ : Context} {x : String}
+    {τ₁ : Ty} {t v : Tm} {τ : Ty}
     (ht : <{ x ↦ τ₁ ; Γ ⊢ t ⦂ τ }>)
     (hv : <{ ∅ ⊢ v ⦂ τ₁ }>) :
     <{ Γ ⊢ [x := v] t ⦂ τ }> := by
 
   generalize heq : x →ₚ τ₁ ; Γ = Γ' at ht
   induction ht generalizing x Γ with (
-    subst_vars; try rw [subst]; try (apply_rules using StlcSubTyping; done))
+    subst_vars; try rw [subst];
+    try (apply_rules using StlcSubTyping; done))
   | var Γ y σ h =>
       by_cases h₁ : x = y
       · subst h₁; simp at h; subst h;
@@ -2538,8 +2557,10 @@ theorem substitution_preserves_typing {Γ : Context} {x : String} {τ₁ : Ty} {
         apply_rules using StlcSubTyping
   | abs _ y _ _ _ h ih =>
       by_cases h₁ : x = y
-      · simp_all [PartialMap.update_shadow]; apply_rules using StlcSubTyping
-      · simp_all; constructor; apply ih; rw [PartialMap.update_permute]; lia
+      · simp_all [PartialMap.update_shadow]
+        apply_rules using StlcSubTyping
+      · simp_all; constructor; apply ih
+        rw [PartialMap.update_permute]; lia
   | sub Γ t₁ τ₁ τ₂ ht hs ih =>
       apply HasType.sub <;> solve_by_elim using StlcSubTyping
 ```
@@ -2619,7 +2640,8 @@ theorem preservation {t t' : Tm} {τ : Ty}
         · assumption
         · apply HasType.sub <;> apply_rules using StlcSubTyping
   | ite Γ t₁ t₂ t₃ τ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>
-    inversion hs with (try (constructor <;> solve_by_elim using StlcSubEval))
+    inversion hs with
+      (try (constructor <;> solve_by_elim using StlcSubEval))
   | sub Γ t₁ τ₁ τ₂ ht hs ih =>
       apply HasType.sub <;> solve_by_elim using StlcSubTyping
 -- SOLUTION
@@ -2639,7 +2661,6 @@ theorem preservation {t t' : Tm} {τ : Ty}
       inversion hs with solve_by_elim using StlcSubTyping
 -- END SOLUTION
 ```
-
 
 ::::full
 This formalization of the STLC with subtyping omits record
@@ -2685,20 +2706,22 @@ counterexample.
 
 - Suppose we add the following typing rule:
 
-```display
-                           <{ Γ ⊢ t ⦂ σ₁→σ₂ }>
-                    σ₁ <: τ₁     τ₁ <: σ₁      σ₂ <: τ₂
-                    -----------------------------------     (funny₁)
-                           <{ Γ ⊢ t ⦂ τ₁→τ₂ }>
+```display +centered
+<{ Γ ⊢ t ⦂ σ₁→σ₂ }>
+     σ₁ <: τ₁
+     τ₁ <: σ₁
+     σ₂ <: τ₂
+-------------------  (funny₁)
+<{ Γ ⊢ t ⦂ τ₁→τ₂ }>
 ```
 :::solution
 Answer: NONE
 :::
 
 - Suppose we add the following reduction rule:
-```display
-                             --------------------          (funny₂)
-                             unit ⟶ (λX:⊤. X)
+```display +centered
+----------------  (funny₂)
+unit ⟶ (λX:⊤. X)
 ```
 :::solution
 Answer: Preservation fails.  For example, `unit`
@@ -2708,9 +2731,9 @@ type `Unit`.
 
 - Suppose we add the following subtyping rule:
 
-```display
-                              ----------------            (funny₃)
-                               Unit <: ⊤→⊤
+```display +centered
+-----------  (funny₃)
+Unit <: ⊤→⊤
 ```
 
 :::solution
@@ -2720,9 +2743,9 @@ Answer: Progress fails.  For example,
 
 - Suppose we add the following subtyping rule:
 
-```display
-                               ----------------            (funny₄)
-                               ⊤→⊤ <: Unit
+```display +centered
+-----------  (funny₄)
+⊤→⊤ <: Unit
 ```
 
 :::solution
@@ -2731,9 +2754,9 @@ Answer: NONE
 
 - Suppose we add the following reduction rule:
 
-```display
-                             ---------------------        (funny₅)
-                             (unit t) ⟶ (t unit)
+```display +centered
+-------------------  (funny₅)
+(unit t) ⟶ (t unit)
 ```
 :::solution
 Answer: NONE
@@ -2741,12 +2764,12 @@ Answer: NONE
 
 - Suppose we add the same reduction rule _and_ a new typing rule:
 
-```display
-                             ---------------------        (funny₅)
-                             (unit t) ⟶ (t unit)
+```display +centered
+-------------------  (funny₅)
+(unit t) ⟶ (t unit)
 
-                           ---------------------------     (funny₆)
-                           ∅ ⊢ unit ⦂ ⊤→⊤
+  --------------     (funny₆)
+  ∅ ⊢ unit ⦂ ⊤→⊤
 ```
 
 :::solution
@@ -2756,10 +2779,11 @@ which is ill typed.
 :::
 
 - Suppose we _change_ the arrow subtyping rule to:
-```display
-                          σ₁ <: τ₁   σ₂ <: τ₂
-                          -------------------              (arrow')
-                          σ₁→σ₂ <: τ₁→τ₂
+```display +centered
+   σ₁ <: τ₁
+   σ₂ <: τ₂
+--------------  (arrow')
+σ₁→σ₂ <: τ₁→τ₂
 ```
 
 :::solution
@@ -2770,7 +2794,6 @@ Answer: Preservation fails.  For example,
 `unit` the type `⊤`, and once to give `λX:Unit × Unit. fst X`
 the type `⊤ → Unit` using `arrow'`.)
 :::
-
 
 :::grade
 `GRADE_MANUAL 2: variations`
@@ -2800,10 +2823,11 @@ extended.
 - typing relation
 
 - Extend the subtyping relation with this rule:
-```display
-                        σ₁ <: τ₁    σ₂ <: τ₂
-                        --------------------   (prod)
-                         σ₁ × σ₂ <: τ₁ × τ₂
+```display +centered
+     σ₁ <: τ₁
+     σ₂ <: τ₂
+------------------  (prod)
+σ₁ × σ₂ <: τ₁ × τ₂
 ```
 
 - Extend the proofs of progress, preservation, and all their
@@ -2826,7 +2850,6 @@ Summary of things to check:
 - `preservation` should check. Also look for inversion lemmas for the
   new constructs.
 :::
-
 
 :::solution
 The solution can be found in-line earlier in this chapter.
@@ -2885,7 +2908,6 @@ theorem formal_subtype_instances_tf_1a:
 ```
 ::::
 
-
 ::::exercise (rating := 1) (name := "formal_subtype_instances_tf_1b") (optional := true)
 ```lean
 theorem formal_subtype_instances_tf_1b:
@@ -2894,7 +2916,6 @@ theorem formal_subtype_instances_tf_1b:
     left; intro σ τ υ δ h₁ h₂; solve_by_elim using StlcSubTyping
 ```
 ::::
-
 
 ::::exercise (rating := 1) (name := "formal_subtype_instances_tf_1c") (optional := true)
 ```lean
@@ -2911,7 +2932,8 @@ theorem formal_subtype_instances_tf_1c:
 ::::exercise (rating := 1) (name := "formal_subtype_instances_tf_1d") (optional := true)
 ```lean
 theorem formal_subtype_instances_tf_1d:
-  tf (∀ σ τ υ δ, σ <: τ → υ <: δ → <{ τ → (τ → υ) }> <: <{ σ → (σ → δ) }>) := by
+  tf (∀ σ τ υ δ, σ <: τ → υ <: δ →
+    <{ τ → (τ → υ) }> <: <{ σ → (σ → δ) }>) := by
   solution!
     left; intro σ τ υ δ h₁ h₂; solve_by_elim using StlcSubTyping
 ```
@@ -2920,7 +2942,8 @@ theorem formal_subtype_instances_tf_1d:
 ::::exercise (rating := 1) (name := "formal_subtype_instances_tf_1e") (optional := true)
 ```lean
 theorem formal_subtype_instances_tf_1e:
-  tf (∀ σ τ υ δ, σ <: τ → υ <: δ → <{ (τ → τ) → υ }> <: <{ (σ → σ)→ δ }>) := by
+  tf (∀ σ τ υ δ, σ <: τ → υ <: δ →
+    <{ (τ → τ) → υ }> <: <{ (σ → σ)→ δ }>) := by
   solution!
     right; intro contra
     have h : <{ (⊤ → ⊤) → Bool }> <: <{ (Bool → Bool) → ⊤ }> := by
@@ -2933,13 +2956,14 @@ theorem formal_subtype_instances_tf_1e:
 ```
 ::::
 
-
 ::::exercise (rating := 1) (name := "formal_subtype_instances_tf_1f") (optional := true)
 ```lean
 theorem formal_subtype_instances_tf_1f:
-  tf (∀ σ τ υ δ, σ <: τ → υ <: δ → <{ ((τ → σ) → τ)→ υ }> <: <{ ((σ → τ)→ σ) → δ }>) := by
+  tf (∀ σ τ υ δ, σ <: τ → υ <: δ →
+    <{ ((τ → σ) → τ)→ υ }> <: <{ ((σ → τ)→ σ) → δ }>) := by
   solution!
-    left; intro σ τ υ δ h₁ h₂; solve_by_elim (maxDepth:=10) using StlcSubTyping
+    left; intro σ τ υ δ h₁ h₂
+    solve_by_elim (maxDepth:=10) using StlcSubTyping
 ```
 ::::
 :::::
@@ -2952,13 +2976,12 @@ theorem formal_subtype_instances_tf_1g:
 
   solution!
     right; intro contra
-    have h : <{ Bool × ⊤ }> <: <{ ⊤ × Bool }> := by solve_by_elim using StlcSubTyping
+    have h : <{ Bool × ⊤ }> <: <{ ⊤ × Bool }> := by
+      solve_by_elim using StlcSubTyping
     obtain ⟨_, _, h₁, _, h₃⟩ := sub_inversion_prod h
     inversion h₁; apply sub_inversion_bool at h₃; contradiction
 ```
 ::::
-
-
 
 ::::exercise (rating := 2) (name := "formal_subtype_instances_tf_2a") (optional := true)
 ```lean
@@ -2967,7 +2990,8 @@ theorem formal_subtype_instances_tf_2a:
 
   solution!
     right; intro contra
-    have h : <{ Bool→Bool }> <: <{ ⊤→⊤ }> := by solve_by_elim using StlcSubTyping
+    have h : <{ Bool→Bool }> <: <{ ⊤→⊤ }> := by
+      solve_by_elim using StlcSubTyping
     obtain ⟨_, _, h₁, h₂, h₃⟩ := sub_inversion_arrow h
     inversion h₁; apply sub_inversion_bool at h₂; contradiction
 ```
@@ -2980,7 +3004,8 @@ theorem formal_subtype_instances_tf_2b {A : Ty}:
 
   solution!
     right; intros contra
-    obtain ⟨τ, h₁, h₂⟩ := contra <{ ⊤→ A }> (by solve_by_elim using StlcSubTyping)
+    obtain ⟨τ, h₁, h₂⟩ := contra <{ ⊤→ A }>
+      (by solve_by_elim using StlcSubTyping)
     inversion h₁
 ```
 ::::
@@ -2992,13 +3017,15 @@ Hint: Assert a generalization of the statement to be proved and
 use induction on a type (rather than on a subtyping derviation).
 
 ```lean
-theorem formal_subtype_instances_tf_2d: tf (∃ σ, σ <: <{ σ → σ }>) := by
+theorem formal_subtype_instances_tf_2d:
+  tf (∃ σ, σ <: <{ σ → σ }>) := by
 
   solution!
     have h : ∀ σ τ, ¬ σ <: <{ τ → σ }> := by
       intro σ τ contra
       induction σ generalizing τ with (
-          obtain ⟨σ₁, σ₁, h₁, h₂, h₃⟩ := sub_inversion_arrow contra; try contradiction)
+          obtain ⟨σ₁, σ₁, h₁, h₂, h₃⟩ := sub_inversion_arrow contra
+          try contradiction)
       | arrow τ₁ τ₂ ih₁ ih₂ =>
         inversion h₁; apply ih₂; apply h₃
     right; intro contra
@@ -3011,12 +3038,12 @@ theorem formal_subtype_instances_tf_2d: tf (∃ σ, σ <: <{ σ → σ }>) := by
 :::::full
 ::::exercise (rating := 2) (name := "formal_subtype_instances_tf_2e") (optional := true)
 ```lean
-theorem formal_subtype_instances_tf_2e: tf (∃ σ, <{ σ → σ }> <: σ) := by
+theorem formal_subtype_instances_tf_2e:
+  tf (∃ σ, <{ σ → σ }> <: σ) := by
   solution!
     left; exists Ty.top; solve_by_elim using StlcSubTyping
 ```
 ::::
-
 
 ::::exercise (rating := 2) (name := "formal_subtype_concepts_tfa") (optional := true)
 ```lean
@@ -3058,9 +3085,11 @@ theorem formal_subtype_concepts_tfd:
   solution!
     right; intro contra
     obtain ⟨τ₁, τ₂, h⟩ := contra
-    obtain ⟨_, _, h₁, h₂, _⟩ := sub_inversion_prod (h <{ Bool }> <{ Bool }>)
+    obtain ⟨_, _, h₁, h₂, _⟩ :=
+      sub_inversion_prod (h <{ Bool }> <{ Bool }>)
     inversion h₁
-    obtain ⟨_, _, h₃, h₄, _⟩ := sub_inversion_prod (h <{ Unit }> <{ Unit }>)
+    obtain ⟨_, _, h₃, h₄, _⟩ :=
+      sub_inversion_prod (h <{ Unit }> <{ Unit }>)
     inversion h₃
     apply sub_inversion_bool at h₂; apply sub_inversion_unit at h₄
     subst_vars; contradiction
@@ -3075,9 +3104,11 @@ theorem formal_subtype_concepts_tfe:
   solution!
     right; intro contra
     obtain ⟨τ₁, τ₂, h⟩ := contra
-    obtain ⟨_, _, h₁, h₂, _⟩ := sub_inversion_arrow (h <{ Bool }> <{ Bool }>)
+    obtain ⟨_, _, h₁, h₂, _⟩ :=
+      sub_inversion_arrow (h <{ Bool }> <{ Bool }>)
     inversion h₁
-    obtain ⟨_, _, h₃, h₄, _⟩ := sub_inversion_arrow (h <{ Unit }> <{ Unit }>)
+    obtain ⟨_, _, h₃, h₄, _⟩ :=
+      sub_inversion_arrow (h <{ Unit }> <{ Unit }>)
     inversion h₃
     apply sub_inversion_bool at h₂; apply sub_inversion_unit at h₄
     subst_vars; contradiction
@@ -3094,9 +3125,11 @@ theorem formal_subtype_concepts_tff :
   solution!
     right; intro contra
     obtain ⟨τ₁, τ₂, h⟩ := contra
-    obtain ⟨_, _, h₁, h₂, h₃⟩ := sub_inversion_arrow (h <{ Bool }> <{ Bool }>)
+    obtain ⟨_, _, h₁, h₂, h₃⟩ :=
+      sub_inversion_arrow (h <{ Bool }> <{ Bool }>)
     inversion h₁
-    obtain ⟨_, _, h₄, h₅, h₆⟩ := sub_inversion_arrow (h <{ Unit }> <{ Unit }>)
+    obtain ⟨_, _, h₄, h₅, h₆⟩ :=
+      sub_inversion_arrow (h <{ Unit }> <{ Unit }>)
     inversion h₄
     apply sub_inversion_bool at h₃; apply sub_inversion_unit at h₆
     subst_vars; contradiction
@@ -3141,7 +3174,8 @@ theorem formal_subtype_concepts_tfg:
 ::::exercise (rating := 2) (name := "formal_subtype_concepts_tfh") (optional := true)
 ```lean
 theorem formal_subtype_concepts_tfh:
-  tf (∃ f : Nat → Ty, (∀ i j, i ≠ j → f i ≠ f j) ∧ (∀ i, f i <: f (i + 1))) := by
+  tf (∃ f : Nat → Ty, (∀ i j, i ≠ j → f i ≠ f j) ∧
+    (∀ i, f i <: f (i + 1))) := by
   solution!
     left; exists (fun n => <{ ~(inf_desc_chain n) → ⊤ }>); constructor
     · intro i j h; induction i generalizing j with (intro contra)
@@ -3150,7 +3184,9 @@ theorem formal_subtype_concepts_tfh:
           simp only [inf_desc_chain] at contra; inversion contra
       | succ i' ih =>
           cases j with
-          | zero => simp only [inf_desc_chain] at contra; inversion contra
+          | zero =>
+              simp only [inf_desc_chain] at contra
+              inversion contra
           | succ j' =>
               have h' : i' ≠ j' := by lia
               apply ih at h'
