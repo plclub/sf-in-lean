@@ -1561,7 +1561,7 @@ What is {name}`decide`? Let's see:
 ```
 
 ```leanOutput decide_type
-decide : (p : Prop) → [h : Decidable p] → Bool
+decide : (p : Prop) → [self : Decidable p] → Bool
 ```
 We can see that {name}`decide` takes a proposition (like `a = b`) and a proof that that
 proposition is decidable (i.e., `Decidable (a = b)`), and returns a `Bool` corresponding
@@ -1569,19 +1569,44 @@ to the truth or falsehood of that proposition. What does it mean for a propositi
 be {name}`Decidable`? Here is its definition:
 
 ```recall
-class inductive Decidable (p : Prop) where
-  /-- Proves that `p` is decidable by supplying a proof of `¬ p` -/
-  | isFalse (h : Not p) : Decidable p
-  /-- Proves that `p` is decidable by supplying a proof of `p` -/
-  | isTrue (h : p) : Decidable p
+class Decidable (p : Prop) where
+  intro ::
+  decide : Bool
+  reflects_decide (p) : decide.Reflects p
 ```
+
+A `Decidable p` value is a {name}`Bool` — its field `decide`, which is exactly what the function
+{name}`decide` returns — packaged together with a proof that this boolean _reflects_ `p`. The
+helper {name}`Bool.Reflects` spells out what that means:
+
+```recall
+abbrev Bool.Reflects : Bool → Prop → Prop
+  | false, p => Not p
+  | true, p => p
+```
+
+That is, a `Decidable p` value whose boolean is `true` carries a proof of `p`, and one whose
+boolean is `false` carries a proof of `¬p`. The standard library provides two abbreviations for
+building such values from a proof: {name}`Decidable.isTrue` packages a proof of `p` with `true`,
+and {name}`Decidable.isFalse` packages a proof of `¬p` with `false`. Lean lets us pattern-match
+on these two as if they were constructors.
+
+:::dev "Claude" BeforeNextRelease
+Lean v4.36.0 redefined `Decidable` in core: it used to be a `class inductive` with
+constructors `isFalse`/`isTrue`, and is now a structure with a `decide : Bool` field and a
+`reflects_decide` proof, with `isTrue`/`isFalse` kept as `@[match_pattern]` abbreviations. The
+`recall`s, the outputs, and the sentences describing `Decidable`'s "constructors" in this section
+were minimally updated to match. A reader of the old text might want the section reworked more
+thoroughly around the new presentation (which is arguably closer to this chapter's own story of
+a boolean paired with a proof).
+:::
 
 In other words, `Decidable p` expresses that a single proposition `p` can be settled one way or the
 other, computationally. (But "computationally" is caveated: later we'll see that classical
 axioms can manufacture a `Decidable p` instance that doesn't compute, and explain what that means.)
 Like {name}`HasTwo`'s `one_neq_two` field earlier in this chapter,
-{name}`Decidable.isTrue`/{name}`Decidable.isFalse` are proof-carrying: each one packages a
-proof — of `p` or of `¬p` — alongside which case holds. {name}`instBEqOfDecidableEq` references
+`Decidable`'s `reflects_decide` field is proof-carrying: it packages a proof — of `p` or of
+`¬p` — alongside the boolean saying which case holds. {name}`instBEqOfDecidableEq` references
 `DecidableEq α`, which means `∀ a b : α, Decidable (a = b)`, i.e., it's a shorthand for
 having one of these proof-carrying values for every equality proposition `a = b` in `α`.
 
@@ -1589,8 +1614,8 @@ Because `decide (a = b)` genuinely computes whether `a = b` holds, deriving `BEq
 `DecidableEq` this way also guarantees the result is {name}`LawfulBEq`: the `beq` it
 produces is certain to agree with `=`. That guarantee is a fact about _this_ instance, though, not
 something {name}`BEq` demands of every instance — as the Maps section noted, `beq`'s only
-obligation is to return _some_ `Bool`, with no proof attached, unlike `Decidable`'s constructors,
-whose whole point is to carry one. {name}`List.elemPoly`'s `[BEq α]` constraint is therefore the
+obligation is to return _some_ `Bool`, with no proof attached, unlike `Decidable`'s
+`reflects_decide` field, whose whole point is to carry one. {name}`List.elemPoly`'s `[BEq α]` constraint is therefore the
 weakest assumption sufficient for a purely computational membership test: it doesn't require the
 caller to have decidable equality, or even a comparison that agrees with `=`, at all.
 
@@ -1651,14 +1676,12 @@ Going one layer deeper ...
 
 ```leanOutput decidable_eq_nat_print
 @[reducible] protected def Nat.decEq : (n m : Nat) → Decidable (n = m) :=
-fun n m =>
-  match h : n.beq m with
-  | true => isTrue ⋯
-  | false => isFalse ⋯
+fun n m => { decide := n.beq m, reflects_decide := ⋯ }
 ```
 
-So we have landed back at {name}`Nat.beq`! It computes the result as a {name}`Bool` and then
-{name}`Nat.decEq` returns a proof of that computation's result in a {name}`Decidable` instance.
+So we have landed back at {name}`Nat.beq`! It computes the result as a {name}`Bool`, and
+{name}`Nat.decEq` uses that boolean as its instance's `decide` field, pairing it with a proof that
+the boolean reflects `n = m`.
 Above, our synthesized {name}`Decidable` instance was for a particular equality, but
 it was just an application of {lean}`instDecidableEqNat` to a particular pair of {name}`Nat`s,
 so {lean}`instDecidableEqNat` will get used in the general case, too.
@@ -1806,7 +1829,7 @@ Its type shows exactly what it needs and produces:
 ```
 
 ```leanOutput checkDdi
-@decidable_of_decidable_of_iff : {p q : Prop} → [Decidable p] → (p ↔ q) → Decidable q
+@decidable_of_decidable_of_iff : {p q : Prop} → [dp : Decidable p] → (p ↔ q) → Decidable q
 ```
 
 Given a `Decidable p` instance and a proof `p ↔ q`, it produces a `Decidable q`. Here, `p` is

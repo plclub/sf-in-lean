@@ -293,7 +293,7 @@ def lean : CodeBlockExpanderOf LeanSaved.Config
       let studentEdits ← studentEditRef.get
       let teacherEdits ← teacherEditRef.get
       let terseEdits ← terseEditRef.get
-      let src := str.getString
+      let src := str.getVersoCodeBlock
 
       -- `strLitInputContext` parses starting at `str.getPos?`, so the byte
       -- indices recorded by the elaborator are absolute file offsets. The

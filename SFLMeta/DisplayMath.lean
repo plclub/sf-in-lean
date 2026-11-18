@@ -149,7 +149,7 @@ safe. With `+centered`, see `Block.displayCentered` above. -/
 @[code_block]
 def display : CodeBlockExpanderOf DisplayBlockConfig
   | config, str => do
-    let src := str.getString
+    let src := str.getVersoCodeBlock
     if config.centered then
       `(Verso.Doc.Block.other (SFLMeta.Block.displayCentered $(quote src))
           #[Verso.Doc.Block.code $(quote src)])
@@ -231,7 +231,7 @@ group related lines visually in the source. -/
 @[code_block]
 def displaymath : CodeBlockExpanderOf Unit
   | (), str => do
-    let src := str.getString
+    let src := str.getVersoCodeBlock
     let lines : Array String :=
       (src.splitOn "\n").toArray.filterMap fun l =>
         let t := l.trimAscii.toString

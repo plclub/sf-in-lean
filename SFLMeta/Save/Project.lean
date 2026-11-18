@@ -34,7 +34,7 @@ private def manifestRequire (manifest : Lake.Manifest) (name : String) : IO Lake
             |>.insert `git url
             |>.insert `rev rev
             |>.insertSome `subDir subDir?
-      | .path _ =>
+      | .path .. =>
           throw <| IO.userError s!"package '{name}' is not a Git dependency"
   throw <| IO.userError s!"package '{name}' is missing from lake-manifest.json"
 

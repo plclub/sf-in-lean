@@ -7,7 +7,6 @@ import SFLMeta.Terse
 
 open Lean Elab Command Linter
 open Verso Doc Elab
-open Lean.Doc.Syntax
 
 /-- Checks that exercises specify their visibility through `:::full` or `:::terse`. -/
 register_option linter.sf.exerciseVisibility : Bool := {
@@ -52,12 +51,16 @@ private structure InfoIndex where
   /-- Custom info nodes, in traversal order, with their source ranges. -/
   customs : Array (Syntax × Syntax.Range × Dynamic) := #[]
 
+/-- The name and contents of `stx`, if it is a directive. -/
+private def directive? (stx : Syntax) : Option (Ident × TSyntaxArray ``Lean.Doc.Parser.block) :=
+  (Lean.Doc.DirectiveView.of ⟨stx⟩).map fun v => (v.name, v.content)
+
 /-- The positions of the directive names in `stx`. -/
 private partial def directiveNamePositions (stx : Syntax) (acc : Std.HashSet String.Pos.Raw := {}) :
     Std.HashSet String.Pos.Raw :=
-  match stx with
-  | `(block|:::%$_ $name $_args* { $blocks* }%$_) =>
-    let acc := if let some pos := name.raw.getPos? then acc.insert pos else acc
+  match directive? stx with
+  | some (dirName, blocks) =>
+    let acc := if let some pos := dirName.raw.getPos? then acc.insert pos else acc
     blocks.foldl (fun acc block => directiveNamePositions block acc) acc
   | _ => stx.getArgs.foldl (fun acc child => directiveNamePositions child acc) acc
 
@@ -143,7 +146,9 @@ private def occurrence (name : Ident) (resolvedName : Name) : CommandElabM (Opti
 
 private partial def checkExerciseVisibility (index : InfoIndex)
     (mode : Option Occurrence) : Syntax → CommandElabM Unit
-  | `(block|:::%$_ $name $_args* { $blocks* }%$_) => do
+  | stx => match directive? stx with
+  | some (dirName, blocks) => do
+    let name := dirName
     let mut mode := mode
     if let some n := index.directiveName name then
       if n == ``SFLMeta.full || n == ``SFLMeta.terse then
@@ -156,7 +161,7 @@ private partial def checkExerciseVisibility (index : InfoIndex)
               `{.ofConstName ``SFLMeta.full}` or `{.ofConstName ``SFLMeta.terse}`"
     for block in blocks do
       checkExerciseVisibility index mode block
-  | stx =>
+  | none =>
     for child in stx.getArgs do
       checkExerciseVisibility index mode child
 
@@ -171,7 +176,9 @@ initialize addLinter exerciseVisibility
 
 private partial def checkVariantNesting (index : InfoIndex)
     (mode : Option Occurrence) : Syntax → CommandElabM Unit
-  | `(block|:::%$_ $name $_args* { $blocks* }%$_) => do
+  | stx => match directive? stx with
+  | some (dirName, blocks) => do
+    let name := dirName
     let mut mode := mode
     if let some n := index.directiveName name then
       if n == ``SFLMeta.full || n == ``SFLMeta.terse then
@@ -183,7 +190,7 @@ private partial def checkVariantNesting (index : InfoIndex)
         mode := ← occurrence name n
     for block in blocks do
       checkVariantNesting index mode block
-  | stx =>
+  | none =>
     for child in stx.getArgs do
       checkVariantNesting index mode child
 
@@ -212,7 +219,9 @@ private def InfoIndex.autogradingTargets? (index : InfoIndex) (directive : Name)
 
 private partial def checkOptionalAutograding (index : InfoIndex)
     (optionalExercise : Option (Occurrence × Syntax.Range)) : Syntax → CommandElabM Unit
-  | `(block|:::%$_ $name $_args* { $blocks* }%$_) => do
+  | stx => match directive? stx with
+  | some (dirName, blocks) => do
+    let name := dirName
     let mut optionalExercise := optionalExercise
     if let some n := index.directiveName name then
       if n == ``SFLMeta.exercise then
@@ -229,7 +238,7 @@ private partial def checkOptionalAutograding (index : InfoIndex)
                   declaration `{.ofConstName targetName}` from its body"
     for block in blocks do
       checkOptionalAutograding index optionalExercise block
-  | stx =>
+  | none =>
     for child in stx.getArgs do
       checkOptionalAutograding index optionalExercise child
 
@@ -245,7 +254,9 @@ initialize addLinter optionalAutograding
 /-- Checks that autograder directives and their targets belong to an exercise. -/
 private partial def checkAutogradingScope (index : InfoIndex)
     (exercise : Option (Occurrence × Syntax.Range)) : Syntax → CommandElabM Unit
-  | `(block|:::%$_ $name $_args* { $blocks* }%$_) => do
+  | stx => match directive? stx with
+  | some (dirName, blocks) => do
+    let name := dirName
     let mut exercise := exercise
     if let some n := index.directiveName name then
       if n == ``SFLMeta.exercise then
@@ -266,7 +277,7 @@ private partial def checkAutogradingScope (index : InfoIndex)
                   inside `{← directiveAt exerciseOcc}`"
     for block in blocks do
       checkAutogradingScope index exercise block
-  | stx =>
+  | none =>
     for child in stx.getArgs do
       checkAutogradingScope index exercise child
 

@@ -69,6 +69,6 @@ module header). -/
 @[code_block]
 def importBlock : CodeBlockExpanderOf Unit
   | (), str => do
-    let src := str.getString
+    let src := str.getVersoCodeBlock
     ``(Verso.Doc.Block.other (SFLMeta.Block.importBlock $(quote src))
         #[Verso.Doc.Block.code $(quote src)])

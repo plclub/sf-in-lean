@@ -361,7 +361,7 @@ parsed structure (for HTML/TeX rendering) and the original source. -/
 @[code_block]
 def bnf : CodeBlockExpanderOf Unit
   | (), str => do
-    let src := str.getString
+    let src := str.getVersoCodeBlock
     let bnfVal ← Bnf.parseString src
     let json := (toJson bnfVal).compress
     ``(Verso.Doc.Block.other

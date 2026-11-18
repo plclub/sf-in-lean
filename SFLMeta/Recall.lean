@@ -33,7 +33,7 @@ structure Data where
 
 def decode? (data : Json) : Option Data :=
   match fromJson? data with
-  | .ok recall => some recall
+  | .ok r => some r
   | .error _ => none
 
 end Recall
@@ -86,7 +86,7 @@ private partial def disableUnusedVarLinter : InfoTree → InfoTree
 Elaborate a recall block synchronously in the document environment, render its
 plain contents, and preserve explicit recall metadata for later extraction.
 -/
-def recallBlock (config : RecallBlockConfig) (str : StrLit) (kind : Recall.Kind)
+def recallBlock (config : RecallBlockConfig) (str : VersoCodeBlock) (kind : Recall.Kind)
     (cmdKind : SyntaxNodeKind) (highlighted : Bool := true) :
     DocElabM Term := withoutAsync do
   if config.strictUniverse then
@@ -129,18 +129,18 @@ def recallBlock (config : RecallBlockConfig) (str : StrLit) (kind : Recall.Kind)
       let msg ← highlightMessage msg
       pure { msg with contents := .append #[.text head, msg.contents] }
     saveOutputs name outMsgs
-  reportMessages (if config.error then some true else none) str st.messages
+  reportMessages config.error str st.messages
   let saved : Recall.Data := {
       kind
       statement := config.statement
       expectedError := config.error
       strictUniverse := config.strictUniverse
-      source := str.getString
+      source := str.getVersoCodeBlock
       outputName := config.name
     }
   if !highlighted then
     return ← ``(Verso.Doc.Block.other (SFLMeta.Block.recall $(quote saved))
-      #[Verso.Doc.Block.code $(quote str.getString)])
+      #[Verso.Doc.Block.code $(quote str.getVersoCodeBlock)])
   let hls ← highlight cmdStx (st.messages.toArray.filter (!·.isSilent)) st.infoState.trees
   let hls := match col? with
     | none => hls
@@ -149,7 +149,7 @@ def recallBlock (config : RecallBlockConfig) (str : StrLit) (kind : Recall.Kind)
   let child ← ``(Verso.Doc.Block.other
     (Verso.Genre.Manual.InlineLean.Block.lean $(quote hls)
       (some $(quote (← getFileName))) $(quote range))
-    #[Verso.Doc.Block.code $(quote str.getString)])
+    #[Verso.Doc.Block.code $(quote str.getVersoCodeBlock)])
   ``(Verso.Doc.Block.other (SFLMeta.Block.recall $(quote saved)) #[$child])
 
 /--
@@ -157,7 +157,7 @@ A `recall` code block checks a declaration up to definitional equality. With
 `+statement`, it checks only a theorem statement.
 -/
 @[code_block]
-def recall : CodeBlockExpanderOf RecallBlockConfig
+def «recall» : CodeBlockExpanderOf RecallBlockConfig
   | config, str =>
     recallBlock config str .semantic ``SFLCompat.Recall.Check.recallChk
 

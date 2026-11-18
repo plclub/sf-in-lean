@@ -1178,6 +1178,7 @@ Hint: Using one of these would be unambiguous:
   [apply] `Lean.LBool.true`
   [apply] `Std.Do.ExceptConds.true`
   [apply] `Lean.Meta.Grind.Filter.true`
+  [apply] `Std.Tactic.BVDecide.LRAT.Internal.AssignValue.true`
 ```
 
 But in the following example, because {name}`Bool.not` takes a {name}`Bool` argument, Lean knows that
