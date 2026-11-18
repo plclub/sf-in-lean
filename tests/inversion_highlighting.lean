@@ -1,5 +1,5 @@
 -- AI-generated regression test for inversion's proof-state buttons.
--- Run with: lake env lean tests/inversion_highlighting.lean
+-- Run with: lake lean tests/inversion_highlighting.lean
 import LF.CustomTactics
 import SubVerso.Highlighting
 import Verso.Code.Highlighted
@@ -37,7 +37,7 @@ private def renderHtml (hl : Highlighted) : String :=
   let ctx : HighlightHtmlM.Context Verso.Doc.Genre.none :=
     { linkTargets := {}, traverseContext := (), definitionIds := {}, options := {} }
   let (html, _) := (hl.blockHtml "inversion-test").run ctx |>.run {}
-  html.asString
+  html.render
 
 run_cmd do
   let tests := #[
