@@ -1438,7 +1438,7 @@ end Delab
 ```
 ::::
 
-:::ignore
+:::hide
 Checks that the extended grammar parses the way it should.
 
 ```lean -show
@@ -1525,7 +1525,6 @@ def subst (x : String) (s : Tm) (t : Tm) : Tm :=
       <{ if [x := s] t₁ then [x := s] t₂ else [x := s] t₃ }>
 
   -- Complete the following cases when you do the `products` exercise
-  -- later
   | .pair t₁ t₂ =>
       solution!(<{ ([x := s] t₁, [x := s] t₂) }>)
   | .fst t =>
@@ -1557,7 +1556,7 @@ inductive Tm.IsValue : Tm → Prop where
   | unit :
       IsValue <{unit}>
 
--- Fill in more rules when you do the `products` exercise later
+-- Fill in more rules when you do the `products` exercise
 -- SOLUTION
   | pair (v₁ v₂ : Tm) :
       IsValue v₁ →
@@ -1625,7 +1624,7 @@ end
 scoped notation:40 t:41 " ⟶ " t':41 => Step t t'
 scoped notation:40 t:41 " ⟶* " t':41 => Multi Step t t'
 
--- Be sure to add your constructors for pairs to this list later
+-- Be sure to add your constructors for pairs to this list
 attribute [StlcSubEval] Step.appAbs Step.app₁ Step.app₂
     Step.ifStep Step.ifTrue Step.ifFalse
 -- SOLUTION
@@ -1664,7 +1663,7 @@ inductive Subtype : Ty → Ty → Prop where
       (h₂ : σ₂ <: τ₂) :
       <{ σ₁ → σ₂ }> <: <{ τ₁ → τ₂ }>
 
--- Fill in more rules when you do the `products` exercise later
+-- Fill in more rules when you do the `products` exercise
 -- SOLUTION
   | prod { σ₁ σ₂ τ₁ τ₂ : Ty}
       (h₁ : σ₁ <: τ₁)
@@ -2108,8 +2107,7 @@ definition" (formally, they follow directly by {tactic}`inversion`).
 With subtyping, they require real proofs by induction...
 :::
 
-:::::full
-::::exercise (rating := 3) (name := "canonical_forms_of_arrow_types") (optional := true)
+::::exercise (rating := 3) (name := "canonical_forms_of_arrow_types") (optional := true) (checkVisibility := false)
 ```lean
 theorem canonical_forms_of_arrow_types {Γ : Context} {t : Tm}
   {τ₁ τ₂ : Ty}
@@ -2127,7 +2125,6 @@ theorem canonical_forms_of_arrow_types {Γ : Context} {t : Tm}
         exact ih hv rfl
 ```
 ::::
-:::::
 
 Similarly, the canonical forms of type `Bool` are the constants
 `tru` and `fls`
@@ -2718,12 +2715,12 @@ counterexample.
 - Suppose we add the following typing rule:
 
 ```display +centered
-<{ Γ ⊢ t ⦂ σ₁→σ₂ }>
-     σ₁ <: τ₁
-     τ₁ <: σ₁
-     σ₂ <: τ₂
--------------------  (funny₁)
-<{ Γ ⊢ t ⦂ τ₁→τ₂ }>
+Γ ⊢ t ⦂ σ₁→σ₂
+   σ₁ <: τ₁
+   τ₁ <: σ₁
+   σ₂ <: τ₂
+-------------  (funny₁)
+Γ ⊢ t ⦂ τ₁→τ₂
 ```
 :::solution
 Answer: NONE
