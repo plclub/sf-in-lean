@@ -242,6 +242,8 @@ of another if each of its components is.
 σ₁ × σ₂ <: τ₁ × τ₂
 ```
 
+### Arrows
+
 ::::full
 The subtyping rule for arrows is a little less intuitive.
 Suppose we have functions `F` and `G` with these types:
@@ -546,7 +548,7 @@ Answer:
 Finally, it is convenient to give the subtype relation a maximum
 element — a type that lies above every other type and is
 inhabited by all (well-typed) values.  We do this by adding to the
-language one new type constant, called `⊤` (pronounced "⊤" and written \⊤),
+language one new type constant, called `⊤` (pronounced "top" and written \⊤),
 together with a subtyping rule that places it above every other type in the
 subtype relation:
 
@@ -1499,7 +1501,7 @@ Checks that the extended grammar parses the way it should.
 ```
 :::
 
-## Substitution
+### Substitution
 
 The definition of substitution remains exactly the same as for the
 pure STLC.
@@ -1540,7 +1542,7 @@ def unexpandSubst : Unexpander := StlcCommon.Delab.unexpandSubst
 ```
 :::
 
-## Reduction
+### Reduction
 
 Likewise the definitions of `IsValue` and `Step`.
 
@@ -1679,9 +1681,6 @@ attribute [StlcSubTyping] Subtype.refl Subtype.trans Subtype.top
 Subtype.prod
 -- END SOLUTION
 ```
-
-:::autogradedHole Subtype
-:::
 
 Note that we don't need any special rules for base types (`Bool`
 and `Base`): they are automatically subtypes of themselves (by
@@ -1949,7 +1948,7 @@ look like to tell us something further about the shapes of `σ` and
 Formally:
 :::
 
-::::exercise (rating := 2) (name := "sub_inversion_bool") (optional := true)
+::::exercise (rating := 2) (name := "sub_inversion_bool") (optional := true) (checkVisibility := false)
 ```lean
 theorem sub_inversion_bool (τ : Ty)
     (h : τ <: <{ Bool }>) :
@@ -1964,7 +1963,7 @@ theorem sub_inversion_bool (τ : Ty)
 ```
 ::::
 
-::::exercise (rating := 3) (name := "sub_inversion_arrow")
+::::exercise (rating := 3) (name := "sub_inversion_arrow") (checkVisibility := false)
 ```lean
 theorem sub_inversion_arrow {σ τ₁ τ₂ : Ty}
      (h : σ <: <{ τ₁ → τ₂ }>) :
@@ -2109,6 +2108,7 @@ definition" (formally, they follow directly by {tactic}`inversion`).
 With subtyping, they require real proofs by induction...
 :::
 
+:::::full
 ::::exercise (rating := 3) (name := "canonical_forms_of_arrow_types") (optional := true)
 ```lean
 theorem canonical_forms_of_arrow_types {Γ : Context} {t : Tm}
@@ -2127,6 +2127,7 @@ theorem canonical_forms_of_arrow_types {Γ : Context} {t : Tm}
         exact ih hv rfl
 ```
 ::::
+:::::
 
 Similarly, the canonical forms of type `Bool` are the constants
 `tru` and `fls`
@@ -2662,6 +2663,11 @@ theorem preservation {t t' : Tm} {τ : Ty}
 -- END SOLUTION
 ```
 
+## Records, via Products and Top
+
+:::suppressPreviousHeaderWhenTerse
+:::
+
 ::::full
 This formalization of the STLC with subtyping omits record
 types for brevity.  If we want to deal with them more seriously,
@@ -2694,6 +2700,11 @@ for other constructors, like lists, pairs, etc.  More ambitious
 would be to say something about references, arrays, etc.
 :::
 ::::
+
+## Exercises
+
+:::suppressPreviousHeaderWhenTerse
+:::
 
 :::::full
 ::::exercise (rating := 2) (name := "variations") (manual := true)
