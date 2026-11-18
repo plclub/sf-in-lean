@@ -161,7 +161,7 @@ For reduction, we need several new rules specifying how pairs and projection beh
 ::::
 
 ::::terse
-Reduction...
+Reduction:
 ::::
 
 ```display +centered
