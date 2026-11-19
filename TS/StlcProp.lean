@@ -1139,6 +1139,9 @@ theorem free_in_context (x : String) (t : Tm) (τ : Ty) (Γ : Context)
       apply ih
       exact h₃
 ```
+
+:::gradeTheorem 2 free_in_context
+:::
 :::::
 
 From the `free_in_context` lemma, it immediately follows that any
