@@ -2132,7 +2132,7 @@ Similarly, the canonical forms of type `Bool` are the constants
 ```lean
 theorem canonical_forms_of_bool {Γ : Context} {t : Tm}
     (ht : <{ Γ ⊢ t ⦂ Bool }>) (hv : t.IsValue) :
-    t = Tm.tru ∨ t = Tm.fls := by
+    t = <{ true }> ∨ t = <{ false }> := by
 
   generalize heq : Ty.bool = τ at ht
   induction ht with (subst_vars; first | trivial | try lia)

@@ -2776,7 +2776,17 @@ theorem canonical_forms_prod {t : Tm} {τ₁ τ₂ : Ty}
   | pair v₁ v₂ _ _ _ _ => exists v₁, v₂
 
 -- END SOLUTION
+```
 
+:::dev "Claude" PotentialImprovement
+The `done` tactic used just below (in `progress`'s `induction ... with`) isn't
+introduced anywhere before this point — it isn't in the `Automation` tactics
+table in `STYLE-CODE.md`, and this is its first use in the book. We should add
+it to `Automation` and list it in that table, rather than using it here for
+the first time with no explanation.
+:::
+
+```lean
 theorem progress (t : Tm) (τ : Ty) (ht : <{ ∅ ⊢ t ⦂ τ }>) :
     t.IsValue ∨ ∃ t', t ⟶ t' := by
 
