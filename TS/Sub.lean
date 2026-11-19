@@ -28,15 +28,15 @@ Suppose we are writing a program involving two record types
 defined as follows:
 
 ```display
-      Person  = {name:String, age:Nat}
-      Student = {name:String, age:Nat, gpa:Nat}
+Person  = {name:String, age:Nat}
+Student = {name:String, age:Nat, gpa:Nat}
 ```
 
 ::::full
 In the simply typed lambda-calculus with records, the term
 
 ```display
-    (λ R:Person. (R.age)+1) {name="Pat", age=21, gpa=1}
+(λ R:Person. (R.age)+1) {name="Pat", age=21, gpa=1}
 ```
 is not typable, since it applies a function that wants a two-field
 record to an argument that actually provides three fields, while the
@@ -72,7 +72,7 @@ _Problem_: In the pure STLC with records, the following term is not
 typable:
 
 ```display
-    (λR:Person. (R.age)+1) {name="Pat",age=21,gpa=1}
+(λR:Person. (R.age)+1) {name="Pat",age=21,gpa=1}
 ```
 This is a shame.
 ::::
@@ -249,8 +249,8 @@ The subtyping rule for arrows is a little less intuitive.
 Suppose we have functions `F` and `G` with these types:
 
 ```display
-       F : C → Student
-       G : (C→Person) → D
+F : C → Student
+G : (C→Person) → D
 ```
 
 That is, `F` is a function that yields a record of type `Student`,
@@ -293,8 +293,8 @@ and _covariant_ in its second.
 
 Here is an example that illustrates this:
 ```display
-       F : Person → C
-       G : (Student → C) → D
+F : Person → C
+G : (Student → C) → D
 ```
 
 The application `G F` is safe, because the only thing the body of
@@ -317,8 +317,8 @@ viewed as having type `τ₁→τ₂`.
 Suppose we have functions `F` and `G` with these types:
 
 ```display
-    F : C → Student
-    G : (C→Person) → D
+F : C → Student
+G : (C→Person) → D
 ```
 
 Is it safe to allow the application `G F`?
@@ -328,7 +328,7 @@ Yes.
 So we want:
 
 ```display
-      C→Student  <:  C→Person
+C→Student  <:  C→Person
 ```
 
 I.e., arrow is _covariant_ in its right-hand argument.
@@ -336,8 +336,8 @@ I.e., arrow is _covariant_ in its right-hand argument.
 Now suppose we have:
 
 ```display
-       F : Person → C
-       G : (Student→C) → D
+F : Person → C
+G : (Student→C) → D
 ```
 
 Is it safe to allow the application `G F`?
@@ -347,7 +347,7 @@ Again yes.
 So we want:
 
 ```display
-      Person → C  <:  Student → C
+Person → C  <:  Student → C
 ```
 
 I.e., arrow is _contravariant_ in its left-hand argument.
@@ -403,10 +403,10 @@ is expecting a record with fields `x` and `y`, it is perfectly safe
 for it to receive a record with fields `x`, `y`, and `z`; the `z`
 field will simply be ignored.  For example,
 
-```display
-    {name:String, age:Nat, gpa:Nat} <: {name:String, age:Nat}
-    {name:String, age:Nat} <: {name:String}
-    {name:String} <: {}
+```display +centered
+{name:String, age:Nat, gpa:Nat} <: {name:String, age:Nat}
+         {name:String, age:Nat} <: {name:String}
+                  {name:String} <: {}
 ```
 
 This is known as "width subtyping" for records.
@@ -418,7 +418,7 @@ having a field `x` of type `σ` as long as `σ` is a subtype of
 `τ`. For example,
 
 ```display
-    {x:Student} <: {x:Person}
+{x:Student} <: {x:Person}
 ```
 
 This is known as "depth subtyping".
@@ -427,7 +427,7 @@ Finally, although the fields of a record type are written in a
 particular order, the order does not really matter. For example,
 
 ```display
-    {name:String,age:Nat} <: {age:Nat,name:String}
+{name:String,age:Nat} <: {age:Nat,name:String}
 ```
 This is known as "permutation subtyping".
 
@@ -520,8 +520,8 @@ Give a concrete example of functions `F` and `G` with the following
 types...
 
 ```display
-       F : Student → Nat
-       G : (Person → Nat) → Nat
+F : Student → Nat
+G : (Person → Nat) → Nat
 ```
 
 ... such that the application `G F` will get stuck during
@@ -531,8 +531,8 @@ the application gets stuck.)
 :::solution
 Answer:
 ```display
-       F = λR:Student. R.gpa
-       G = λF:Person→Nat. F {name="Alex",age=20}
+F = λR:Student. R.gpa
+G = λF:Person→Nat. F {name="Alex",age=20}
 ```
 :::
 
@@ -719,28 +719,28 @@ Answer: It is less than `Student→⊤` (and `⊤`) and unrelated to the others.
 Which of the following statements are true?  Write _true_ or
 _false_ after each one. ∀
 ```display
-      ∀ σ τ,
-          σ <: τ  →
-          σ→σ   <:  τ→τ
+∀ σ τ,
+    σ <: τ  →
+    σ→σ   <:  τ→τ
+```
 :::solution
       Answer: False
 :::
-```
 ```display
-      ∀ σ,
-           σ <: υ→υ →
-           ∃ τ,
-              σ = τ→τ  ∧  τ <: υ
+∀ σ,
+     σ <: υ→υ →
+     ∃ τ,
+        σ = τ→τ  ∧  τ <: υ
 ```
 :::solution
       Answer: False
 :::
 
 ```display
-      ∀ σ τ₁ τ₂,
-           (σ <: τ₁ → τ₂) →
-           ∃ σ₁ σ₂,
-              σ = σ₁ → σ₂  ∧  τ₁ <: σ₁  ∧  σ₂ <: τ₂
+∀ σ τ₁ τ₂,
+     (σ <: τ₁ → τ₂) →
+     ∃ σ₁ σ₂,
+        σ = σ₁ → σ₂  ∧  τ₁ <: σ₁  ∧  σ₂ <: τ₂
 ```
 
 :::solution
@@ -748,23 +748,25 @@ _false_ after each one. ∀
 :::
 
 ```display
-      ∃ σ, σ <: σ → σ
+∃ σ, σ <: σ → σ
 ```
 :::solution
       Answer: False
 :::
 
-      ∃ σ,
-           σ→σ <: σ
+```display
+∃ σ, σ→σ <: σ
+```
+
 :::solution
       Answer: True
 :::
 
 ```display
-      ∀ σ τ₁ τ₂,
-           σ <: τ₁×τ₂ →
-           ∃ σ₁ σ₂,
-              σ = σ₁×σ₂  ∧  σ₁ <: τ₁  ∧  σ₂ <: τ₂
+∀ σ τ₁ τ₂,
+     σ <: τ₁×τ₂ →
+     ∃ σ₁ σ₂,
+        σ = σ₁×σ₂  ∧  σ₁ <: τ₁  ∧  σ₂ <: τ₂
 ```
 :::solution
       Answer: True
@@ -834,10 +836,10 @@ Is the following statement true or false?  Briefly explain your
 answer. (`A` here and below represents an arbitrary base type.)
 
 ```display
-    ∀ τ,
-         ~(τ = Bool ∨ ∃ n, τ = A) →
-         ∃ σ,
-            σ <: τ  ∧  σ <> τ
+∀ τ,
+     ~(τ = Bool ∨ ∃ n, τ = A) →
+     ∃ σ,
+        σ <: τ  ∧  σ <> τ
 ```
 
 :::solution
@@ -856,19 +858,19 @@ Answer: False. `τ = ⊤→Bool` is a counterexample.
   type. )
 
 ```display
-  ∅ ⊢ (λP:τ×⊤. P.fst) ((λZ:A. Z), unit) ⦂ A→A
+∅ ⊢ (λP:τ×⊤. P.fst) ((λZ:A. Z), unit) ⦂ A→A
 ```
 
 :::solution
 ```display
-  τ = A → A
+τ = A → A
 ```
 :::
 
 - What is the _largest_ type `τ` that makes the same assertion true?
 :::solution
 ```display
-  τ = A → A
+τ = A → A
 ```
 :::
 
@@ -882,19 +884,19 @@ Answer: False. `τ = ⊤→Bool` is a counterexample.
   assertion true?
 
 ```display
-       ∅ ⊢ (λP:(A→A × B→B). P) ((λZ:A. Z), (λZ:B. Z)) ⦂ τ
+∅ ⊢ (λP:(A→A × B→B). P) ((λZ:A. Z), (λZ:B. Z)) ⦂ τ
 ```
 
 :::solution
 ```display
-       τ  =  (A→A × B→B)
+τ  =  (A→A × B→B)
 ```
 
 :::
    - What is the _largest_ type `τ` that makes the same assertion true?
 :::solution
 ```display
-       τ  =  ⊤
+τ  =  ⊤
 ```
 :::
 
@@ -907,11 +909,11 @@ Answer: False. `τ = ⊤→Bool` is a counterexample.
 - What is the _smallest_ type `τ` that makes the following
   assertion true?
 ```display
-       X:A ⊢ (λP:(A×τ). (P.snd) (P.fst)) (X, λZ:A. Z) ⦂ A
+X:A ⊢ (λP:(A×τ). (P.snd) (P.fst)) (X, λZ:A. Z) ⦂ A
 ```
 :::solution
 ```display
-       τ = A→A
+τ = A→A
 ```
 :::
 - What is the _largest_ type `τ` that makes the same assertion true?
@@ -930,16 +932,16 @@ Answer: False. `τ = ⊤→Bool` is a counterexample.
 
      Inverting the last constraint tells us
 ```display
-       A→A  <:  τ₁→τ₂
+A→A  <:  τ₁→τ₂
 ```
      and hence
 ```display
-         τ₁ <: A
-         A <: τ₂.
+τ₁ <: A
+A <: τ₂.
 ```
      So
 ```display
-         τ = A→A
+τ = A→A
 ```
      is both the largest and the smallest type that makes
      the whole typing statement true.
@@ -952,7 +954,7 @@ What is the _smallest_ type `τ` that makes the following
 assertion true?
 
 ```display
-    X:A ⊢ (λP:(A×τ). (P.snd) (P.fst)) (X, λZ:A. Z) ⦂ A
+X:A ⊢ (λP:(A×τ). (P.snd) (P.fst)) (X, λZ:A. Z) ⦂ A
 ```
 
    (A) `⊤`
@@ -973,7 +975,7 @@ What is the _largest_ type `τ` that makes the following
 assertion true?
 
 ```display
-       X:A ⊢ (λP:(A×τ). (P.snd) (P.fst)) (X, λZ:A. Z) ⦂ A
+X:A ⊢ (λP:(A×τ). (P.snd) (P.fst)) (X, λZ:A. Z) ⦂ A
 ```
 
    (A) `⊤`
@@ -1017,8 +1019,8 @@ and `σ₂` — with `τ₁` <: `σ₁` and `σ₂ <: τ₂`."
 - What is the _smallest_ type `τ` (if one exists) that makes the
   following assertion true?
 ```display
-       ∃ σ,
-         ∅ ⊢ (λP:(A×τ). (P.snd) (P.fst)) ⦂ σ
+∃ σ,
+  ∅ ⊢ (λP:(A×τ). (P.snd) (P.fst)) ⦂ σ
 ```
 :::solution
      There is no smallest such type — any type of the form `A → σ` for some
@@ -1029,7 +1031,7 @@ and `σ₂` — with `τ₁` <: `σ₁` and `σ₂ <: τ₂`."
      assertion true?
 :::solution
 ```display
-       τ  =  A → ⊤
+τ  =  A → ⊤
 ```
 :::
 
@@ -1042,8 +1044,8 @@ and `σ₂` — with `τ₁` <: `σ₁` and `σ₂ <: τ₂`."
 What is the _smallest_ type `τ` (if one exists) that makes
 the following assertion true?
 ```display
-      ∃ σ t,
-        ∅ ⊢ (λX:τ. X X) t ⦂ σ
+∃ σ t,
+  ∅ ⊢ (λX:τ. X X) t ⦂ σ
 ```
 
 :::grade
@@ -1062,7 +1064,7 @@ subtype.
 What is the _smallest_ type `τ` that makes the following
 assertion true?
 ```display
-      ∅ ⊢ (λX:⊤. X) ((λZ:A. Z), (λZ:B. Z)) ⦂ τ
+∅ ⊢ (λX:⊤. X) ((λZ:A. Z), (λZ:B. Z)) ⦂ τ
 ```
 
 :::grade
@@ -1070,7 +1072,7 @@ assertion true?
 :::
 :::solution
 ```display
-      τ  =  ⊤
+τ  =  ⊤
 ```
 :::
 ::::
@@ -1087,16 +1089,16 @@ assertion true?
 :::solution
 Answer: Nineteen!
 ```display
-   { x:A, y:C→C }                 { y:⊤, x:A }
-   { x:⊤, y:C→C }               { y:⊤, x:⊤ }
-   { x:A, y:C→⊤ }               { x:A }
-   { x:⊤, y:C→⊤ }             { x:⊤ }
-   { x:A, y:⊤ }                  { y:C→C }
-   { x:⊤, y:⊤ }                { y:C→⊤ }
-   { y:C→C, x:A }                 { y:⊤ }
-   { y:C→C, x:⊤ }               { }
-   { y:C→⊤, x:A }               ⊤
-   { y:C→⊤, x:⊤ }
+{ x:A, y:C→C }             { y:⊤, x:A }
+{ x:⊤, y:C→C }             { y:⊤, x:⊤ }
+{ x:A, y:C→⊤ }             { x:A }
+{ x:⊤, y:C→⊤ }             { x:⊤ }
+{ x:A, y:⊤ }               { y:C→C }
+{ x:⊤, y:⊤ }               { y:C→⊤ }
+{ y:C→C, x:A }             { y:⊤ }
+{ y:C→C, x:⊤ }             { }
+{ y:C→⊤, x:A }             ⊤
+{ y:C→⊤, x:⊤ }
 ```
 :::
 ::::
@@ -1681,6 +1683,9 @@ Subtype.prod
 -- END SOLUTION
 ```
 
+:::autogradedHole Subtype
+:::
+
 Note that we don't need any special rules for base types (`Bool`
 and `Base`): they are automatically subtypes of themselves (by
 `refl`) and `⊤` (by `top`), and that's all we want.
@@ -1714,9 +1719,9 @@ Using this encoding, define pair types representing the following
 record types:
 
 ```display
-    Person := { name : String }
-    Student := { name : String ; gpa : Float }
-    Employee := { name : String ; ssn : Integer }
+Person := { name : String }
+Student := { name : String ; gpa : Float }
+Employee := { name : String ; ssn : Integer }
 ```
 
 ```lean
@@ -1833,9 +1838,12 @@ def HasType.unexpand : Unexpander := StlcCommon.Delab.unexpandHasType
 :::
 
 We deliberately exclude `HasType.sub` from the list of constructors with the
-`StlcSubTyping`. `apply_rules using StlcSubTyping` will search for derivations
-without using the subtyping rule; if you want to make use of it in a derivation you will
-need to do so yourself.
+`StlcSubTyping`. Like the `Subtype` rules above, `HasType.sub` is not
+syntax-directed — it applies to a term `t₁` regardless of that term's shape,
+and asks us to invent an intermediate type `τ₁` — so including it would make
+`apply_rules`'s search loop. `apply_rules using StlcSubTyping` will search for
+derivations without using the subtyping rule; if you want to make use of it
+in a derivation you will need to do so yourself.
 
 :::::full
 
@@ -1950,8 +1958,7 @@ Formally:
 ::::exercise (rating := 2) (name := "sub_inversion_bool") (optional := true) (checkVisibility := false)
 ```lean
 theorem sub_inversion_bool (τ : Ty)
-    (h : τ <: <{ Bool }>) :
-    τ = Ty.bool := by
+    (h : τ <: <{ Bool }>) : τ = Ty.bool := by
   solution!
     generalize heq : Ty.bool = σ at h
     induction h with (subst_vars; try contradiction)
@@ -1964,10 +1971,8 @@ theorem sub_inversion_bool (τ : Ty)
 
 ::::exercise (rating := 3) (name := "sub_inversion_arrow") (checkVisibility := false)
 ```lean
-theorem sub_inversion_arrow {σ τ₁ τ₂ : Ty}
-     (h : σ <: <{ τ₁ → τ₂ }>) :
-     ∃ σ₁ σ₂,
-     σ = <{ σ₁ → σ₂ }> ∧ τ₁ <: σ₁ ∧ σ₂ <: τ₂ := by
+theorem sub_inversion_arrow {σ τ₁ τ₂ : Ty} (h : σ <: <{ τ₁ → τ₂ }>) :
+    ∃ σ₁ σ₂, σ = <{ σ₁ → σ₂ }> ∧ τ₁ <: σ₁ ∧ σ₂ <: τ₂ := by
   solution!
     generalize heq : <{ τ₁ → τ₂ }> = τ at h
     induction h generalizing τ₁ τ₂ with
@@ -2001,8 +2006,7 @@ There are additional _inversion lemmas_ for the other types:
 ::::exercise (rating := 2) (name := "sub_inversion_unit") (optional := true)
 ```lean
 theorem sub_inversion_unit {τ : Ty}
-    (h : τ <: <{ Unit }>) :
-    τ = Ty.unit := by
+    (h : τ <: <{ Unit }>) : τ = Ty.unit := by
   solution!
     generalize heq : Ty.unit = σ at h
     induction h with (subst_vars; try contradiction)
@@ -2016,8 +2020,7 @@ theorem sub_inversion_unit {τ : Ty}
 ::::exercise (rating := 2) (name := "sub_inversion_base") (optional := true)
 ```lean
 theorem sub_inversion_base {τ : Ty} {s : String}
-    (h : τ <: Ty.base s) :
-    τ = Ty.base s := by
+    (h : τ <: Ty.base s) : τ = Ty.base s := by
   solution!
     generalize heq : Ty.base s = σ at h
     induction h with (subst_vars; try contradiction)
@@ -2031,8 +2034,7 @@ theorem sub_inversion_base {τ : Ty} {s : String}
 ::::exercise (rating := 2) (name := "sub_inversion_top") (optional := true)
 ```lean
 theorem sub_inversion_top {τ : Ty}
-    (h : Ty.top <: τ) :
-    τ = Ty.top := by
+    (h : Ty.top <: τ) : τ = Ty.top := by
   solution!
     generalize heq : Ty.top = σ at h
     induction h with (subst_vars; try contradiction)
@@ -2050,7 +2052,7 @@ When you do the `products` exercise, add your inversion lemma for products here:
 ```lean
 -- SOLUTION
 theorem sub_inversion_prod {σ τ₁ τ₂ : Ty} (h : σ <: <{ τ₁ × τ₂ }>) :
-     ∃ σ₁ σ₂, σ = <{ σ₁ × σ₂ }> ∧ σ₁ <: τ₁ ∧ σ₂ <: τ₂ := by
+    ∃ σ₁ σ₂, σ = <{ σ₁ × σ₂ }> ∧ σ₁ <: τ₁ ∧ σ₂ <: τ₂ := by
   solution!
     generalize heq : <{ τ₁ × τ₂ }> = υ at h
     induction h generalizing τ₁ τ₂ with
@@ -2110,10 +2112,8 @@ With subtyping, they require real proofs by induction...
 ::::exercise (rating := 3) (name := "canonical_forms_of_arrow_types") (optional := true) (checkVisibility := false)
 ```lean
 theorem canonical_forms_of_arrow_types {Γ : Context} {t : Tm}
-  {τ₁ τ₂ : Ty}
-  (ht : <{ Γ ⊢ t ⦂ τ₁ → τ₂ }>)
-  (hv : t.IsValue) :
-  ∃ x σ₁ t₂, t = <{λ x : σ₁ . t₂}> := by
+    {τ₁ τ₂ : Ty} (ht : <{ Γ ⊢ t ⦂ τ₁ → τ₂ }>) (hv : t.IsValue) :
+    ∃ x σ₁ t₂, t = <{λ x : σ₁ . t₂}> := by
   solution!
     generalize heq : <{ τ₁ → τ₂ }> = τ at ht
     induction ht generalizing τ₁ τ₂ with
@@ -2131,9 +2131,8 @@ Similarly, the canonical forms of type `Bool` are the constants
 
 ```lean
 theorem canonical_forms_of_bool {Γ : Context} {t : Tm}
-  (ht : <{ Γ ⊢ t ⦂ Bool }>)
-  (hv : t.IsValue) :
-  t = Tm.tru ∨ t = Tm.fls := by
+    (ht : <{ Γ ⊢ t ⦂ Bool }>) (hv : t.IsValue) :
+    t = Tm.tru ∨ t = Tm.fls := by
 
   generalize heq : Ty.bool = τ at ht
   induction ht with (subst_vars; first | trivial | try lia)
@@ -2148,18 +2147,16 @@ When you do the `products` exercise, add your canonical forms lemma for products
 ```lean
 -- SOLUTION
 theorem canonical_forms_of_product_types {Γ : Context} {t : Tm}
-  {τ₁ τ₂ : Ty}
-  (ht : <{ Γ ⊢ t ⦂ τ₁ × τ₂ }>)
-  (hv : t.IsValue) :
-  ∃ t₁ t₂, t = <{ (t₁, t₂) }> := by
-    generalize heq : <{ τ₁ × τ₂ }> = τ at ht
-    induction ht generalizing τ₁ τ₂ with
-      (subst_vars; try contradiction)
-    | pair Γ t₁ t₂ τ₁ τ₂ h ih => inversion heq; exists t₁, t₂
-    | sub Γ t₁ τ₁ τ₂ ht hs ih =>
-        obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := sub_inversion_prod hs
-        subst_vars
-        exact ih hv rfl
+    {τ₁ τ₂ : Ty} (ht : <{ Γ ⊢ t ⦂ τ₁ × τ₂ }>) (hv : t.IsValue) :
+    ∃ t₁ t₂, t = <{ (t₁, t₂) }> := by
+  generalize heq : <{ τ₁ × τ₂ }> = τ at ht
+  induction ht generalizing τ₁ τ₂ with
+    (subst_vars; try contradiction)
+  | pair Γ t₁ t₂ τ₁ τ₂ h ih => inversion heq; exists t₁, t₂
+  | sub Γ t₁ τ₁ τ₂ ht hs ih =>
+      obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := sub_inversion_prod hs
+      subst_vars
+      exact ih hv rfl
 -- END SOLUTION
 ```
 :::::
@@ -2512,10 +2509,10 @@ theorem weakening {Γ Γ' : Context} {t : Tm} {τ: Ty}
 theorem weakening_empty {Γ : Context} {t : Tm} {τ: Ty}
     (ht :<{ ∅ ⊢ t ⦂ τ }>) :
     <{ Γ ⊢ t ⦂ τ }> := by
-  apply weakening _ ht
-  intro _ _ h
-  rw [PartialMap.getElem_empty] at h
-  contradiction
+  apply weakening (Γ := ∅)
+  · intros x b contra
+    contradiction
+  · assumption
 ```
 
 ## Substitution
@@ -2683,8 +2680,8 @@ small change to the encoding described earlier: instead of using
 care" placeholder in the encoding of records, we use `⊤`.  So:
 
 ```display
-    {a:Nat, b:Nat} --⟶ {Nat,Nat}       i.e., (Nat,(Nat,⊤))
-    {c:Nat, a:Nat} --⟶ {Nat,⊤,Nat}   i.e., (Nat,(⊤,(Nat,⊤)))
+{a:Nat, b:Nat} --⟶ {Nat,Nat}       i.e., (Nat,(Nat,⊤))
+{c:Nat, a:Nat} --⟶ {Nat,⊤,Nat}   i.e., (Nat,(⊤,(Nat,⊤)))
 ```
 
 The encoding of record values doesn't change at all.  It is
