@@ -377,6 +377,12 @@ subtyping assertions is _false_?
     (E) `σ→υ <: σ→δ`
 ::::
 
+:::quizSolution
+(C). Applying the `arrow` rule to the outer arrows reduces this to
+`σ×δ <: τ×υ`, which by the `prod` rule needs `δ <: υ` — the reverse
+of the given `υ <: δ`.
+:::
+
 ::::quiz
 Suppose again that we have `σ <: τ` and `υ <: δ`.  Which of the
 following is incorrect?
@@ -391,6 +397,12 @@ following is incorrect?
 
     (E) `σ → (δ→υ) <: σ → (υ→υ)`
 ::::
+
+:::quizSolution
+(C). Applying the `arrow` rule to the outer arrows requires
+`σ→δ <: τ→δ`, which by the `arrow` rule again needs `τ <: σ` — the
+reverse of the given `σ <: τ`.
+:::
 
 ### Records
 
@@ -628,6 +640,12 @@ subtyping assertions is false?
   (E) `σ → {i₁:υ,i₂:δ} <: σ → {i₂:δ,i₁:υ}`
 ::::
 
+:::quizSolution
+(D). Applying the `arrow` rule requires `⊤ <: ⊤→⊤`, but the only
+rule with `⊤` on the left is `refl`, and `⊤→⊤ ≠ ⊤`, so there is no
+way to derive it.
+:::
+
 ::::quiz
 How about these?
 
@@ -641,6 +659,13 @@ How about these?
 
   (E) `⊤ → {i₁:υ,i₂:δ} <: {i₁:σ} → {i₂:δ,i₁:δ}`
 ::::
+
+:::quizSolution
+(D). The left-hand side is a record type and the right-hand side is
+a product type; there is no rule relating the two type formers, so
+no record type can ever be a subtype of a product type, no matter
+how its field types line up.
+:::
 
 ## Exercises
 
@@ -970,6 +995,15 @@ X:A ⊢ (λP:(A×τ). (P.snd) (P.fst)) (X, λZ:A. Z) ⦂ A
    (F) `A→⊤`
 ::::
 
+:::quizSolution
+(E) `A→A`. `τ` must be an arrow type `τ₁→τ₂`; reading off the
+constraints from the program gives `A <: τ₁` (from applying
+`P.snd` to `P.fst`), `τ₂ <: A` (from the result type), and
+`A→A <: τ₁→τ₂` (from the outer application, after inverting
+`(A × A→A) <: (A × τ)`), which together force `τ₁ = A` and
+`τ₂ = A`.
+:::
+
 ::::quiz
 What is the _largest_ type `τ` that makes the following
 assertion true?
@@ -991,6 +1025,12 @@ X:A ⊢ (λP:(A×τ). (P.snd) (P.fst)) (X, λZ:A. Z) ⦂ A
    (F) `A→⊤`
 ::::
 
+:::quizSolution
+(E) `A→A`. As in the previous quiz, the constraints force
+`τ₁ = A` and `τ₂ = A` exactly, so `A→A` is both the smallest and
+the largest type that works.
+:::
+
 ::::quiz
 
 "The type `Bool` has no proper subtypes."  (I.e., the only
@@ -1000,6 +1040,12 @@ type smaller than `Bool` is `Bool` itself.)
 
 (B) False
 ::::
+
+:::quizSolution
+(A) True. `Bool` is a base type, and none of `trans`, `⊤`,
+`prod`, `arrow`, or the `rcd` rules can conclude `σ <: Bool` for
+any `σ`, so `refl` is the only rule that applies.
+:::
 
 ::::quiz
 
@@ -1012,6 +1058,11 @@ and `σ₂` — with `τ₁` <: `σ₁` and `σ₂ <: τ₂`."
 (B) False
 
 ::::
+
+:::quizSolution
+(A) True. This is the inversion lemma for arrow subtyping, proved
+later in this chapter as `sub_inversion_arrow`.
+:::
 
 :::::full
 ::::exercise (rating := 2) (name := "small_large_4") (manual := true)
