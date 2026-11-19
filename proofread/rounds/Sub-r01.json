@@ -1,0 +1,855 @@
+{
+ "file": "TS/Sub.lean",
+ "chapter": "Sub",
+ "round": 1,
+ "proposals": [
+  {
+   "id": "fig01",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                         Γ ⊢ t₁ ⦂ τ₁     τ₁ <: τ₂\n                         --------------------------           (sub)\n                               Γ ⊢ t₁ ⦂ τ₂\n```",
+   "new": "```display +centered\nΓ ⊢ t₁ ⦂ τ₁\n τ₁ <: τ₂\n-----------  (sub)\nΓ ⊢ t₁ ⦂ τ₂\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig02",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                              σ <: υ    υ <: τ\n                              ----------------                        (trans)\n                                   σ <: τ\n```",
+   "new": "```display +centered\nσ <: υ\nυ <: τ\n------  (trans)\nσ <: τ\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig03",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                                   ------                              (refl)\n                                   τ <: τ\n```\n\n\n### Products",
+   "new": "```display +centered\n------  (refl)\nτ <: τ\n```\n\n### Products",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line. Also collapses the double-blank-line slip right after."
+  },
+  {
+   "id": "fig04",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                            σ₁ <: τ₁    σ₂ <: τ₂\n                            --------------------                        (prod)\n                             σ₁ × σ₂ <: τ₁ × τ₂\n```\n\n\n::::full\nThe subtyping rule for arrows is a little less intuitive.",
+   "new": "```display +centered\n     σ₁ <: τ₁\n     σ₂ <: τ₂\n------------------  (prod)\nσ₁ × σ₂ <: τ₁ × τ₂\n```\n\n::::full\nThe subtyping rule for arrows is a little less intuitive.",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line. Also collapses the double-blank-line slip right after."
+  },
+  {
+   "id": "fig05",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                                  σ₂ <: τ₂\n                              ----------------                     (arrow_co)\n                            σ₁ → σ₂ <: σ₁ → τ₂\n```",
+   "new": "```display +centered\n     σ₂ <: τ₂\n------------------  (arrow_co)\nσ₁ → σ₂ <: σ₁ → τ₂\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig06",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                            τ₁ <: σ₁    σ₂ <: τ₂\n                            --------------------                      (arrow)\n                              σ₁ → σ₂ <: τ₁ → τ₂\n```",
+   "new": "```display +centered\n     τ₁ <: σ₁\n     σ₂ <: τ₂\n------------------  (arrow)\nσ₁ → σ₂ <: τ₁ → τ₂\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig07",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                            τ₁ <: σ₁    σ₂ <: τ₂\n                            --------------------                      (arrow)\n                            σ₁ → σ₂ <: τ₁ → τ₂\n```",
+   "new": "```display +centered\n     τ₁ <: σ₁\n     σ₂ <: τ₂\n------------------  (arrow)\nσ₁ → σ₂ <: τ₁ → τ₂\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig08",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                        ∀ jₖ in j₁..jₙ,\n                    ∃ iₚ in i₁..iₘ, such that\n                        jₖ=iₚ and σₚ <: τₖ\n                  ----------------------------------                    (rcd)\n                  {i₁:σ₁...iₘ:σₘ} <: {j₁:τ₁...jₙ:τₙ}\n```",
+   "new": "```display +centered\n         ∀ jₖ in j₁..jₙ,\n    ∃ iₚ in i₁..iₘ, such that\n        jₖ=iₚ and σₚ <: τₖ\n----------------------------------  (rcd)\n{i₁:σ₁...iₘ:σₘ} <: {j₁:τ₁...jₙ:τₙ}\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig09",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                               n > m\n                 ---------------------------------                 (rcdWidth)\n                 {i₁:τ₁...iₙ:τₙ} <: {i₁:τ₁...iₘ:τₘ}\n```",
+   "new": "```display +centered\n              n > m\n----------------------------------  (rcdWidth)\n{i₁:τ₁...iₙ:τₙ} <: {i₁:τ₁...iₘ:τₘ}\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig10",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                       σ₁ <: τ₁  ...  σₙ <: τₙ\n                  ----------------------------------               (rcdDepth)\n                  {i₁:σ₁...iₙ:σₙ} <: {i₁:τ₁...iₙ:τₙ}\n```",
+   "new": "```display +centered\n     σ₁ <: τ₁  ...  σₙ <: τₙ\n----------------------------------  (rcdDepth)\n{i₁:σ₁...iₙ:σₙ} <: {i₁:τ₁...iₙ:τₙ}\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig11",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n         {i₁:σ₁...iₙ:σₙ} is a permutation of {j₁:τ₁...jₙ:τₙ}\n         ---------------------------------------------------        (rcdPerm)\n                  {i₁:σ₁...iₙ:σₙ} <: {j₁:τ₁...jₙ:τₙ}\n```\n\n\n\nIt is worth noting that full-blown language designs may choose not",
+   "new": "```display +centered\n{i₁:σ₁...iₙ:σₙ} is a permutation of {j₁:τ₁...jₙ:τₙ}\n---------------------------------------------------  (rcdPerm)\n        {i₁:σ₁...iₙ:σₙ} <: {j₁:τ₁...jₙ:τₙ}\n```\n\nIt is worth noting that full-blown language designs may choose not",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line. Also collapses the triple-blank-line slip right after."
+  },
+  {
+   "id": "fig12",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                            σ₁ <: τ₁    σ₂ <: τ₂\n                            --------------------                (arrowWrong)\n                            σ₁ → σ₂ <: τ₁ → τ₂\n```",
+   "new": "```display +centered\n     σ₁ <: τ₁\n     σ₂ <: τ₂\n------------------  (arrowWrong)\nσ₁ → σ₂ <: τ₁ → τ₂\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig13",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                                   --------                             (⊤)\n                                   σ <: ⊤\n```",
+   "new": "```display +centered\n------  (⊤)\nσ <: ⊤\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig14",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                         Γ ⊢ t₁ ⦂ τ₁     τ₁ <: τ₂\n                         --------------------------------            (sub)\n                               Γ ⊢ t₁ ⦂ τ₂\n```",
+   "new": "```display +centered\nΓ ⊢ t₁ ⦂ τ₁\n τ₁ <: τ₂\n-----------  (sub)\nΓ ⊢ t₁ ⦂ τ₂\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig15",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                              σ <: υ    υ <: τ\n                              ----------------                        (trans)\n                                   σ <: τ\n\n                                   ------                              (refl)\n                                   τ <: τ\n\n                                   --------                             (⊤)\n                                   σ <: ⊤\n\n                            σ₁ <: τ₁    σ₂ <: τ₂\n                            --------------------                       (prod)\n                             σ₁ × σ₂ <: τ₁ × τ₂\n\n                            τ₁ <: σ₁    σ₂ <: τ₂\n                            --------------------                      (arrow)\n                            σ₁ → σ₂ <: τ₁ → τ₂\n\n                               n > m\n                 ---------------------------------                 (rcdWidth)\n                 {i₁:τ₁...iₙ:τₙ} <: {i₁:τ₁...iₘ:τₘ}\n\n                       σ₁ <: τ₁  ...  σₙ <: τₙ\n                  ----------------------------------               (rcdDepth)\n                  {i₁:σ₁...iₙ:σₙ} <: {i₁:τ₁...iₙ:τₙ}\n\n         {i₁:σ₁...iₙ:σₙ} is a permutation of {j₁:τ₁...jₙ:τₙ}\n         ---------------------------------------------------        (rcdPerm)\n                  {i₁:σ₁...iₙ:σₙ} <: {j₁:τ₁...jₙ:τₙ}\n```",
+   "new": "```display +centered\n                      σ <: υ\n                      υ <: τ\n                      ------                         (trans)\n                      σ <: τ\n\n                      ------                         (refl)\n                      τ <: τ\n\n                      ------                         (⊤)\n                      σ <: ⊤\n\n                     σ₁ <: τ₁\n                     σ₂ <: τ₂\n                ------------------                   (prod)\n                σ₁ × σ₂ <: τ₁ × τ₂\n\n                     τ₁ <: σ₁\n                     σ₂ <: τ₂\n                ------------------                   (arrow)\n                σ₁ → σ₂ <: τ₁ → τ₂\n\n                      n > m\n        ----------------------------------           (rcdWidth)\n        {i₁:τ₁...iₙ:τₙ} <: {i₁:τ₁...iₘ:τₘ}\n\n             σ₁ <: τ₁  ...  σₙ <: τₙ\n        ----------------------------------           (rcdDepth)\n        {i₁:σ₁...iₙ:σₙ} <: {i₁:τ₁...iₙ:τₙ}\n\n{i₁:σ₁...iₙ:σₙ} is a permutation of {j₁:τ₁...jₙ:τₙ}\n---------------------------------------------------  (rcdPerm)\n        {i₁:σ₁...iₙ:σₙ} <: {j₁:τ₁...jₙ:τₙ}\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line. This block combines all eight rules, so all share one label column, sized by the widest rule (rcdPerm)."
+  },
+  {
+   "id": "fig16",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                            σ₁ <: τ₁    σ₂ <: τ₂\n                            --------------------                        (prod)\n                               σ₁*σ₂ <: τ₁*τ₂\n```",
+   "new": "```display +centered\n   σ₁ <: τ₁\n   σ₂ <: τ₂\n--------------  (prod)\nσ₁*σ₂ <: τ₁*τ₂\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig17",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                                   --------------\n                                   τ₁*τ₂ <: τ₂*τ₁\n```",
+   "new": "```display +centered\n--------------\nτ₁*τ₂ <: τ₂*τ₁\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig18",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                           <{ Γ ⊢ t ⦂ σ₁→σ₂ }>\n                    σ₁ <: τ₁     τ₁ <: σ₁      σ₂ <: τ₂\n                    -----------------------------------     (funny₁)\n                           <{ Γ ⊢ t ⦂ τ₁→τ₂ }>\n```",
+   "new": "```display +centered\n<{ Γ ⊢ t ⦂ σ₁→σ₂ }>\n     σ₁ <: τ₁\n     τ₁ <: σ₁\n     σ₂ <: τ₂\n-------------------  (funny₁)\n<{ Γ ⊢ t ⦂ τ₁→τ₂ }>\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig19",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                             --------------------          (funny₂)\n                             unit ⟶ (λX:⊤. X)\n```",
+   "new": "```display +centered\n----------------  (funny₂)\nunit ⟶ (λX:⊤. X)\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig20",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                              ----------------            (funny₃)\n                               Unit <: ⊤→⊤\n```",
+   "new": "```display +centered\n-----------  (funny₃)\nUnit <: ⊤→⊤\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig21",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                               ----------------            (funny₄)\n                               ⊤→⊤ <: Unit\n```",
+   "new": "```display +centered\n-----------  (funny₄)\n⊤→⊤ <: Unit\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig22",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                             ---------------------        (funny₅)\n                             (unit t) ⟶ (t unit)\n```",
+   "new": "```display +centered\n-------------------  (funny₅)\n(unit t) ⟶ (t unit)\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig23",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                             ---------------------        (funny₅)\n                             (unit t) ⟶ (t unit)\n\n                           ---------------------------     (funny₆)\n                           ∅ ⊢ unit ⦂ ⊤→⊤\n```",
+   "new": "```display +centered\n-------------------  (funny₅)\n(unit t) ⟶ (t unit)\n\n  --------------     (funny₆)\n  ∅ ⊢ unit ⦂ ⊤→⊤\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig24",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                          σ₁ <: τ₁   σ₂ <: τ₂\n                          -------------------              (arrow')\n                          σ₁→σ₂ <: τ₁→τ₂\n```",
+   "new": "```display +centered\n   σ₁ <: τ₁\n   σ₂ <: τ₂\n--------------  (arrow')\nσ₁→σ₂ <: τ₁→τ₂\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "fig25",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                        σ₁ <: τ₁    σ₂ <: τ₂\n                        --------------------   (prod)\n                         σ₁ × σ₂ <: τ₁ × τ₂\n```",
+   "new": "```display +centered\n     σ₁ <: τ₁\n     σ₂ <: τ₂\n------------------  (prod)\nσ₁ × σ₂ <: τ₁ × τ₂\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. Subtyping/typing-judgment rules are always centered (not symbol-aligned), and multi-premise lines sharing one source line are split one premise per line."
+  },
+  {
+   "id": "typo01",
+   "cat": "typo/misspelling",
+   "old": "In the simply typed lamdba-calculus with records, the term",
+   "new": "In the simply typed lambda-calculus with records, the term",
+   "why": "Misspelled \"lambda\"."
+  },
+  {
+   "id": "typo02",
+   "cat": "typo/stray-text",
+   "old": "## The Subsumption Rule\n\nτ₂\nOur goal for this chapter",
+   "new": "## The Subsumption Rule\n\nOur goal for this chapter",
+   "why": "Orphaned leftover \"τ₂\" with no role in the sentence that follows."
+  },
+  {
+   "id": "b01",
+   "cat": "formatting/blank-lines",
+   "old": "\nWhat about subtyping for record types?\n\n\nThe basic intuition is that it is always safe to use a \"bigger\"\n",
+   "new": "\nWhat about subtyping for record types?\n\nThe basic intuition is that it is always safe to use a \"bigger\"\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b02",
+   "cat": "formatting/blank-lines",
+   "old": "\nThis is known as \"width subtyping\" for records.\n\n\nWe can also create a subtype of a record type by replacing the type\n",
+   "new": "\nThis is known as \"width subtyping\" for records.\n\nWe can also create a subtype of a record type by replacing the type\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b03",
+   "cat": "formatting/blank-lines",
+   "old": "\nThis is known as \"depth subtyping\".\n\n\nFinally, although the fields of a record type are written in a\n",
+   "new": "\nThis is known as \"depth subtyping\".\n\nFinally, although the fields of a record type are written in a\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b04",
+   "cat": "formatting/blank-lines",
+   "old": "```\nThis is known as \"permutation subtyping\".\n\n\nWe _could_ formalize these requirements in a single subtyping rule\n",
+   "new": "```\nThis is known as \"permutation subtyping\".\n\nWe _could_ formalize these requirements in a single subtyping rule\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b05",
+   "cat": "formatting/blank-lines",
+   "old": "decomposed into three simpler rules, which can be combined using\n`trans` to achieve all the same effects.\n\n\nFirst, adding fields to the end of a record type gives a subtype:\n",
+   "new": "decomposed into three simpler rules, which can be combined using\n`trans` to achieve all the same effects.\n\nFirst, adding fields to the end of a record type gives a subtype:\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b06",
+   "cat": "formatting/blank-lines",
+   "old": "record while keeping earlier fields, showing for example that\n`{age:Nat,name:String} <: {age:Nat}`.\n\n\nSecond, subtyping can be applied inside the components of a compound\n",
+   "new": "record while keeping earlier fields, showing for example that\n`{age:Nat,name:String} <: {age:Nat}`.\n\nSecond, subtyping can be applied inside the components of a compound\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b07",
+   "cat": "formatting/blank-lines",
+   "old": "  depth subtyping or no arrow subtyping, depending how you look at\n  it).\n\n\n:::::full\n",
+   "new": "  depth subtyping or no arrow subtyping, depending how you look at\n  it).\n\n:::::full\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b08",
+   "cat": "formatting/blank-lines",
+   "old": "\nThe `⊤` type is an analog of the `Object` type in Java and C#.\n\n\n### Summary\n",
+   "new": "\nThe `⊤` type is an analog of the `Object` type in Java and C#.\n\n### Summary\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b09",
+   "cat": "formatting/blank-lines",
+   "old": "  does not have type `Unit`.\n:::\n\n\n:::grade\n",
+   "new": "  does not have type `Unit`.\n:::\n\n:::grade\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b10",
+   "cat": "formatting/blank-lines",
+   "old": "open StlcCommon\nopen Lean Meta Elab Term\n\n\ndef language : Language where\n",
+   "new": "open StlcCommon\nopen Lean Meta Elab Term\n\ndef language : Language where\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b11",
+   "cat": "formatting/blank-lines",
+   "old": "open StlcCommon Elab Delab\nopen Lean PrettyPrinter Delaborator\n\n\n@[app_unexpander Ty.top]\n",
+   "new": "open StlcCommon Elab Delab\nopen Lean PrettyPrinter Delaborator\n\n@[app_unexpander Ty.top]\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b12",
+   "cat": "formatting/blank-lines",
+   "old": "  | \"snd\" => true\n  | _ => false\n\n\n@[app_unexpander Tm.var]\n",
+   "new": "  | \"snd\" => true\n  | _ => false\n\n@[app_unexpander Tm.var]\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b13",
+   "cat": "formatting/blank-lines",
+   "old": "      `(<{if $c':stlcTm then $t':stlcTm else $e':stlcTm }>)\n  | _ => throw ()\n\n\n@[app_unexpander Tm.unit]\n",
+   "new": "      `(<{if $c':stlcTm then $t':stlcTm else $e':stlcTm }>)\n  | _ => throw ()\n\n@[app_unexpander Tm.unit]\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b14",
+   "cat": "formatting/blank-lines",
+   "old": "      `(<{ ($t₁':stlcTm, $t₂':stlcTm) }>)\n  | _ => throw ()\n\n\n@[app_unexpander Tm.fst]\n",
+   "new": "      `(<{ ($t₁':stlcTm, $t₂':stlcTm) }>)\n  | _ => throw ()\n\n@[app_unexpander Tm.fst]\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b15",
+   "cat": "formatting/blank-lines",
+   "old": "```\n:::\n\n\n## Substitution\n",
+   "new": "```\n:::\n\n## Substitution\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b16",
+   "cat": "formatting/blank-lines",
+   "old": "abbrev Context := PartialMap String Ty\n```\n\n\n```lean\n",
+   "new": "abbrev Context := PartialMap String Ty\n```\n\n```lean\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b17",
+   "cat": "formatting/blank-lines",
+   "old": "```\n::::\n\n\nSimilarly, the canonical forms of type `Bool` are the constants\n",
+   "new": "```\n::::\n\nSimilarly, the canonical forms of type `Bool` are the constants\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b18",
+   "cat": "formatting/blank-lines",
+   "old": "    Picking `τ₁₂` for `σ₂` gives us what we\n    need, since `σ₁ → τ₁₂ <: σ₁ → τ₁₂` follows from {tactic}`rfl`.\n\n\n  - If the last step of the derivation is a use of `sub` then\n",
+   "new": "    Picking `τ₁₂` for `σ₂` gives us what we\n    need, since `σ₁ → τ₁₂ <: σ₁ → τ₁₂` follows from {tactic}`rfl`.\n\n  - If the last step of the derivation is a use of `sub` then\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b19",
+   "cat": "formatting/blank-lines",
+   "old": "    is some type `σ₂` with `σ₁ → σ₂ <: σ` and `x↦σ₁; Γ ⊢ t₂ ⦂ σ₂`.\n    Picking type `σ₂` gives us what we need, since `σ₁ → σ₂ <: τ` then follows by `trans`.\n\n\nFormally:\n",
+   "new": "    is some type `σ₂` with `σ₁ → σ₂ <: σ` and `x↦σ₁; Γ ⊢ t₂ ⦂ σ₂`.\n    Picking type `σ₂` gives us what we need, since `σ₁ → σ₂ <: τ` then follows by `trans`.\n\nFormally:\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b20",
+   "cat": "formatting/blank-lines",
+   "old": "`substitution_preserves_typing_from_typing_ind` in {ref \"StlcProp\"}[StlcProp]).\n:::\n\n\n:::terse\n",
+   "new": "`substitution_preserves_typing_from_typing_ind` in {ref \"StlcProp\"}[StlcProp]).\n:::\n\n:::terse\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b21",
+   "cat": "formatting/blank-lines",
+   "old": "-- END SOLUTION\n```\n\n\n::::full\n",
+   "new": "-- END SOLUTION\n```\n\n::::full\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b22",
+   "cat": "formatting/blank-lines",
+   "old": "the type `⊤ → Unit` using `arrow'`.)\n:::\n\n\n:::grade\n",
+   "new": "the type `⊤ → Unit` using `arrow'`.)\n:::\n\n:::grade\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b23",
+   "cat": "formatting/blank-lines",
+   "old": "  new constructs.\n:::\n\n\n:::solution\n",
+   "new": "  new constructs.\n:::\n\n:::solution\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b24",
+   "cat": "formatting/blank-lines",
+   "old": "```\n::::\n\n\n::::exercise (rating := 1) (name := \"formal_subtype_instances_tf_1b\") (optional := true)\n",
+   "new": "```\n::::\n\n::::exercise (rating := 1) (name := \"formal_subtype_instances_tf_1b\") (optional := true)\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b25",
+   "cat": "formatting/blank-lines",
+   "old": "```\n::::\n\n\n::::exercise (rating := 1) (name := \"formal_subtype_instances_tf_1c\") (optional := true)\n",
+   "new": "```\n::::\n\n::::exercise (rating := 1) (name := \"formal_subtype_instances_tf_1c\") (optional := true)\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b26",
+   "cat": "formatting/blank-lines",
+   "old": "```\n::::\n\n\n::::exercise (rating := 1) (name := \"formal_subtype_instances_tf_1f\") (optional := true)\n",
+   "new": "```\n::::\n\n::::exercise (rating := 1) (name := \"formal_subtype_instances_tf_1f\") (optional := true)\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b27",
+   "cat": "formatting/blank-lines",
+   "old": "```\n::::\n\n\n\n::::exercise (rating := 2) (name := \"formal_subtype_instances_tf_2a\") (optional := true)\n",
+   "new": "```\n::::\n\n::::exercise (rating := 2) (name := \"formal_subtype_instances_tf_2a\") (optional := true)\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b28",
+   "cat": "formatting/blank-lines",
+   "old": "```\n::::\n\n\n::::exercise (rating := 2) (name := \"formal_subtype_concepts_tfa\") (optional := true)\n",
+   "new": "```\n::::\n\n::::exercise (rating := 2) (name := \"formal_subtype_concepts_tfa\") (optional := true)\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "dash01",
+   "cat": "punctuation/em-dash",
+   "old": "We now turn to _subtyping_, a key feature of - in particular -\nobject-oriented programming languages.",
+   "new": "We now turn to _subtyping_, a key feature of — in particular —\nobject-oriented programming languages.",
+   "why": "A parenthetical dash in prose is a real em dash, per STYLE-WRITING.md, not the ASCII typewriter convention; this one survived as a slip."
+  },
+  {
+   "id": "dash02",
+   "cat": "punctuation/em-dash",
+   "old": "to all of the type constructors in the language -- functions,",
+   "new": "to all of the type constructors in the language — functions,",
+   "why": "A parenthetical dash in prose is a real em dash, per STYLE-WRITING.md, not the ASCII typewriter convention; this one survived as a slip."
+  },
+  {
+   "id": "dash03",
+   "cat": "punctuation/em-dash",
+   "old": "languages -- in particular, it is central to the design of",
+   "new": "languages — in particular, it is central to the design of",
+   "why": "A parenthetical dash in prose is a real em dash, per STYLE-WRITING.md, not the ASCII typewriter convention; this one survived as a slip."
+  },
+  {
+   "id": "dash04",
+   "cat": "punctuation/em-dash",
+   "old": "The type of an object is called a _class_ -- or, in some",
+   "new": "The type of an object is called a _class_ — or, in some",
+   "why": "A parenthetical dash in prose is a real em dash, per STYLE-WRITING.md, not the ASCII typewriter convention; this one survived as a slip."
+  },
+  {
+   "id": "dash05",
+   "cat": "punctuation/em-dash",
+   "old": "issues -- in fact, we won't even talk any more about objects or",
+   "new": "issues — in fact, we won't even talk any more about objects or",
+   "why": "A parenthetical dash in prose is a real em dash, per STYLE-WRITING.md, not the ASCII typewriter convention; this one survived as a slip."
+  },
+  {
+   "id": "dash06",
+   "cat": "punctuation/em-dash",
+   "old": "The first step -- the definition of the relation `σ <: τ` -- is",
+   "new": "The first step — the definition of the relation `σ <: τ` — is",
+   "why": "A parenthetical dash in prose is a real em dash, per STYLE-WRITING.md, not the ASCII typewriter convention; this one survived as a slip."
+  },
+  {
+   "id": "dash07",
+   "cat": "punctuation/em-dash",
+   "old": "- A class may implement multiple interfaces -- so-called \"multiple",
+   "new": "- A class may implement multiple interfaces — so-called \"multiple",
+   "why": "A parenthetical dash in prose is a real em dash, per STYLE-WRITING.md, not the ASCII typewriter convention; this one survived as a slip."
+  },
+  {
+   "id": "dash08",
+   "cat": "punctuation/em-dash",
+   "old": "element -- a type that lies above every other type and is",
+   "new": "element — a type that lies above every other type and is",
+   "why": "A parenthetical dash in prose is a real em dash, per STYLE-WRITING.md, not the ASCII typewriter convention; this one survived as a slip."
+  },
+  {
+   "id": "dash09",
+   "cat": "punctuation/em-dash",
+   "old": "  - There is an infinite descending chain of distinct types in the\n    subtype relation---that is, an infinite sequence of types",
+   "new": "  - There is an infinite descending chain of distinct types in the\n    subtype relation—that is, an infinite sequence of types",
+   "why": "A parenthetical dash in prose is a real em dash, per STYLE-WRITING.md, not the ASCII typewriter convention; this one survived as a slip."
+  },
+  {
+   "id": "dash10",
+   "cat": "punctuation/em-dash",
+   "old": "  - There is an infinite _ascending_ chain of distinct types in\n    the subtype relation---that is, an infinite sequence of types",
+   "new": "  - There is an infinite _ascending_ chain of distinct types in\n    the subtype relation—that is, an infinite sequence of types",
+   "why": "A parenthetical dash in prose is a real em dash, per STYLE-WRITING.md, not the ASCII typewriter convention; this one survived as a slip."
+  },
+  {
+   "id": "dash11",
+   "cat": "punctuation/em-dash",
+   "old": "`σ` itself is an arrow type -- i.e., `σ = σ₁ → σ₂` for some `σ₁`\nand `σ₂` -- with `τ₁` <: `σ₁` and `σ₂ <: τ₂`.\"",
+   "new": "`σ` itself is an arrow type — i.e., `σ = σ₁ → σ₂` for some `σ₁`\nand `σ₂` — with `τ₁` <: `σ₁` and `σ₂ <: τ₂`.\"",
+   "why": "A parenthetical dash in prose is a real em dash, per STYLE-WRITING.md, not the ASCII typewriter convention; this one survived as a slip."
+  },
+  {
+   "id": "dash12",
+   "cat": "punctuation/em-dash",
+   "old": "     There is no smallest such type -- any type of the form `A → σ` for some",
+   "new": "     There is no smallest such type — any type of the form `A → σ` for some",
+   "why": "A parenthetical dash in prose is a real em dash, per STYLE-WRITING.md, not the ASCII typewriter convention; this one survived as a slip."
+  },
+  {
+   "id": "dash13",
+   "cat": "punctuation/em-dash",
+   "old": "above -- in particular, the syntax and operational semantics of\nthe language -- are identical to what we saw in the last chapter.",
+   "new": "above — in particular, the syntax and operational semantics of\nthe language — are identical to what we saw in the last chapter.",
+   "why": "A parenthetical dash in prose is a real em dash, per STYLE-WRITING.md, not the ASCII typewriter convention; this one survived as a slip."
+  },
+  {
+   "id": "dash14",
+   "cat": "punctuation/em-dash",
+   "old": "types to the language - see exercise `products` - at least up to",
+   "new": "types to the language — see exercise `products` — at least up to",
+   "why": "A parenthetical dash in prose is a real em dash, per STYLE-WRITING.md, not the ASCII typewriter convention; this one survived as a slip."
+  },
+  {
+   "id": "dash15",
+   "cat": "punctuation/em-dash",
+   "old": "The proof of the progress theorem -- that a well-typed\nnon-value can always take a step -- doesn't need to change too",
+   "new": "The proof of the progress theorem — that a well-typed\nnon-value can always take a step — doesn't need to change too",
+   "why": "A parenthetical dash in prose is a real em dash, per STYLE-WRITING.md, not the ASCII typewriter convention; this one survived as a slip."
+  },
+  {
+   "id": "dash16",
+   "cat": "punctuation/em-dash",
+   "old": "a value - rule `abs` - and the form of the conclusion of this",
+   "new": "a value — rule `abs` — and the form of the conclusion of this",
+   "why": "A parenthetical dash in prose is a real em dash, per STYLE-WRITING.md, not the ASCII typewriter convention; this one survived as a slip."
+  },
+  {
+   "id": "dash17",
+   "cat": "punctuation/em-dash",
+   "old": "  type\" -- this is tempting, but false!  (Why?)",
+   "new": "  type\" — this is tempting, but false!  (Why?)",
+   "why": "A parenthetical dash in prose is a real em dash, per STYLE-WRITING.md, not the ASCII typewriter convention; this one survived as a slip."
+  },
+  {
+   "id": "w01",
+   "cat": "formatting/line-width",
+   "old": "def tyHandlers : TyElabHandler :=\n  subTyHandler.orElse ((commonTyHandler language).orElse baseTyHandler)\n\npartial def elabTy : TyElab := tyHandlers elabTy  <| unsupportedTy language",
+   "new": "def tyHandlers : TyElabHandler :=\n  subTyHandler.orElse\n    ((commonTyHandler language).orElse baseTyHandler)\n\npartial def elabTy : TyElab :=\n  tyHandlers elabTy <| unsupportedTy language",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w02",
+   "cat": "formatting/line-width",
+   "old": "def tmHandlers : TmElabHandler := subTmHandler.orElse (commonTmHandler language elabTy)",
+   "new": "def tmHandlers : TmElabHandler :=\n  subTmHandler.orElse (commonTmHandler language elabTy)",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w03",
+   "cat": "formatting/line-width",
+   "old": "scoped syntax:50 \"if \" stlcTm:51 \" then \" stlcTm:50 \" else \" stlcTm:50 : stlcTm",
+   "new": "scoped syntax:50 \"if \" stlcTm:51 \" then \" stlcTm:50\n  \" else \" stlcTm:50 : stlcTm",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w04",
+   "cat": "formatting/line-width",
+   "old": "  -- Complete the following cases when you do the `products` exercise later",
+   "new": "  -- Complete the following cases when you do the `products` exercise\n  -- later",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w05",
+   "cat": "formatting/line-width",
+   "old": "attribute [StlcSubEval] Tm.IsValue.abs Tm.IsValue.tru Tm.IsValue.fls Tm.IsValue.unit",
+   "new": "attribute [StlcSubEval] Tm.IsValue.abs Tm.IsValue.tru Tm.IsValue.fls\n    Tm.IsValue.unit",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w06",
+   "cat": "formatting/line-width",
+   "old": "attribute [StlcSubTyping] Subtype.refl Subtype.trans Subtype.top Subtype.arrow",
+   "new": "attribute [StlcSubTyping] Subtype.refl Subtype.trans Subtype.top\n    Subtype.arrow",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w07",
+   "cat": "formatting/line-width",
+   "old": "example : <{ ∅ ⊢ ((λ Z : A . Z), (λ Z : B . Z)) ⦂ ((A → A) × (B → B)) }> := by",
+   "new": "example :\n  <{ ∅ ⊢ ((λ Z : A . Z), (λ Z : B . Z)) ⦂ ((A → A) × (B → B)) }> := by",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w08",
+   "cat": "formatting/line-width",
+   "old": "example : <{ ∅ ⊢ (λ X : (⊤ × (B → B)) . snd X) ((λ Z : A . Z), (λ Z : B . Z)) ⦂ (B → B) }> := by",
+   "new": "example :\n  <{ ∅ ⊢ (λ X : (⊤ × (B → B)) . snd X)\n          ((λ Z : A . Z), (λ Z : B . Z)) ⦂ (B → B) }> := by",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w09",
+   "cat": "formatting/line-width",
+   "old": "example :\n  <{ ∅ ⊢ (λ Z : (C → C) → (⊤ × B → B) . snd (Z (λ X : C . X)))\n          (λ Z : C → C . ((λ Z : A . Z), (λ Z : B . Z))) ⦂ (B → B) }> := by",
+   "new": "example :\n  <{ ∅ ⊢ (λ Z : (C → C) → (⊤ × B → B) . snd (Z (λ X : C . X)))\n          (λ Z : C → C . ((λ Z : A . Z), (λ Z : B . Z)))\n          ⦂ (B → B) }> := by",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w10",
+   "cat": "formatting/line-width",
+   "old": "    generalize heq : <{ τ₁ → τ₂ }> = τ at h\n    induction h generalizing τ₁ τ₂ with (subst_vars; try contradiction)",
+   "new": "    generalize heq : <{ τ₁ → τ₂ }> = τ at h\n    induction h generalizing τ₁ τ₂ with\n      (subst_vars; try contradiction)",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w11",
+   "cat": "formatting/line-width",
+   "old": "    generalize heq : <{ τ₁ × τ₂ }> = υ at h\n    induction h generalizing τ₁ τ₂ with (subst_vars; try contradiction)",
+   "new": "    generalize heq : <{ τ₁ × τ₂ }> = υ at h\n    induction h generalizing τ₁ τ₂ with\n      (subst_vars; try contradiction)",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w12",
+   "cat": "formatting/line-width",
+   "old": "  solution!\n    generalize heq : <{ τ₁ → τ₂ }> = τ at ht\n    induction ht generalizing τ₁ τ₂ with (subst_vars; try contradiction)",
+   "new": "  solution!\n    generalize heq : <{ τ₁ → τ₂ }> = τ at ht\n    induction ht generalizing τ₁ τ₂ with\n      (subst_vars; try contradiction)",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w13",
+   "cat": "formatting/line-width",
+   "old": "        obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := sub_inversion_arrow hs; subst_vars",
+   "new": "        obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := sub_inversion_arrow hs\n        subst_vars",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w14",
+   "cat": "formatting/line-width",
+   "old": "  ∃ t₁ t₂, t = <{ (t₁, t₂) }> := by\n    generalize heq : <{ τ₁ × τ₂ }> = τ at ht\n    induction ht generalizing τ₁ τ₂ with (subst_vars; try contradiction)",
+   "new": "  ∃ t₁ t₂, t = <{ (t₁, t₂) }> := by\n    generalize heq : <{ τ₁ × τ₂ }> = τ at ht\n    induction ht generalizing τ₁ τ₂ with\n      (subst_vars; try contradiction)",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w15",
+   "cat": "formatting/line-width",
+   "old": "        obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := sub_inversion_prod hs; subst_vars",
+   "new": "        obtain ⟨σ₁, σ₂, _, hs₁, hs₂⟩ := sub_inversion_prod hs\n        subst_vars",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w16",
+   "cat": "formatting/line-width",
+   "old": "theorem canonical_forms_of_arrow_types {Γ : Context} {t : Tm} {τ₁ τ₂ : Ty}",
+   "new": "theorem canonical_forms_of_arrow_types {Γ : Context} {t : Tm}\n  {τ₁ τ₂ : Ty}",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w17",
+   "cat": "formatting/line-width",
+   "old": "theorem canonical_forms_of_product_types {Γ : Context} {t : Tm} {τ₁ τ₂ : Ty}",
+   "new": "theorem canonical_forms_of_product_types {Γ : Context} {t : Tm}\n  {τ₁ τ₂ : Ty}",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w18",
+   "cat": "formatting/line-width",
+   "old": "theorem sub_inversion_unit {τ : Ty} (h : τ <: <{ Unit }>) : τ = Ty.unit := by",
+   "new": "theorem sub_inversion_unit {τ : Ty}\n    (h : τ <: <{ Unit }>) :\n    τ = Ty.unit := by",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w19",
+   "cat": "formatting/line-width",
+   "old": "theorem sub_inversion_base {τ : Ty} {s : String} (h : τ <: Ty.base s) : τ = Ty.base s := by",
+   "new": "theorem sub_inversion_base {τ : Ty} {s : String}\n    (h : τ <: Ty.base s) :\n    τ = Ty.base s := by",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w20",
+   "cat": "formatting/line-width",
+   "old": "theorem sub_inversion_top {τ : Ty} (h : Ty.top <: τ) : τ = Ty.top := by",
+   "new": "theorem sub_inversion_top {τ : Ty}\n    (h : Ty.top <: τ) :\n    τ = Ty.top := by",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w21",
+   "cat": "formatting/line-width",
+   "old": "theorem typing_inversion_abs {Γ : Context} {x : String} {σ₁ : Ty} {t₂ : Tm} {τ : Ty}",
+   "new": "theorem typing_inversion_abs {Γ : Context} {x : String} {σ₁ : Ty}\n  {t₂ : Tm} {τ : Ty}",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w22",
+   "cat": "formatting/line-width",
+   "old": "  ∃ τ₁ τ₂, <{ τ₁ × τ₂ }> <: τ ∧ <{ Γ ⊢ t₁ ⦂ τ₁ }> ∧ <{ Γ ⊢ t₂ ⦂ τ₂ }> := by",
+   "new": "  ∃ τ₁ τ₂, <{ τ₁ × τ₂ }> <: τ ∧ <{ Γ ⊢ t₁ ⦂ τ₁ }> ∧\n    <{ Γ ⊢ t₂ ⦂ τ₂ }> := by",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w23",
+   "cat": "formatting/line-width",
+   "old": "    | pair Γ t₁ t₂ τ₁ τ₂ h₁ h₂ ih₁ ih₂ =>\n        inversion heq; exists τ₁, τ₂; solve_by_elim using StlcSubTyping",
+   "new": "    | pair Γ t₁ t₂ τ₁ τ₂ h₁ h₂ ih₁ ih₂ =>\n        inversion heq; exists τ₁, τ₂\n        solve_by_elim using StlcSubTyping",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w24",
+   "cat": "formatting/line-width",
+   "old": "      obtain ⟨σ₁, σ₂, hs', ht₁, ht₂⟩ := ih rfl\n      exists σ₁, σ₂; solve_by_elim (maxDepth := 10) using StlcSubTyping",
+   "new": "      obtain ⟨σ₁, σ₂, hs', ht₁, ht₂⟩ := ih rfl\n      exists σ₁, σ₂\n      solve_by_elim (maxDepth := 10) using StlcSubTyping",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w25",
+   "cat": "formatting/line-width",
+   "old": "    | fst Γ t τ₁ τ₂ h ih =>\n        inversion heq; exists τ₁, τ₂; solve_by_elim using StlcSubTyping",
+   "new": "    | fst Γ t τ₁ τ₂ h ih =>\n        inversion heq; exists τ₁, τ₂\n        solve_by_elim using StlcSubTyping",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w26",
+   "cat": "formatting/line-width",
+   "old": "  induction ht generalizing Γ' with (try apply_rules [PartialMap.update_subset] using StlcSubTyping)",
+   "new": "  induction ht generalizing Γ' with\n    (try apply_rules [PartialMap.update_subset] using StlcSubTyping)",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w27",
+   "cat": "formatting/line-width",
+   "old": "theorem substitution_preserves_typing {Γ : Context} {x : String} {τ₁ : Ty} {t v : Tm} {τ : Ty}",
+   "new": "theorem substitution_preserves_typing {Γ : Context} {x : String}\n    {τ₁ : Ty} {t v : Tm} {τ : Ty}",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w28",
+   "cat": "formatting/line-width",
+   "old": "  induction ht generalizing x Γ with (\n    subst_vars; try rw [subst]; try (apply_rules using StlcSubTyping; done))",
+   "new": "  induction ht generalizing x Γ with (\n    subst_vars; try rw [subst];\n    try (apply_rules using StlcSubTyping; done))",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w29",
+   "cat": "formatting/line-width",
+   "old": "      · simp_all [PartialMap.update_shadow]; apply_rules using StlcSubTyping",
+   "new": "      · simp_all [PartialMap.update_shadow]\n        apply_rules using StlcSubTyping",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w30",
+   "cat": "formatting/line-width",
+   "old": "      · simp_all; constructor; apply ih; rw [PartialMap.update_permute]; lia",
+   "new": "      · simp_all; constructor; apply ih\n        rw [PartialMap.update_permute]; lia",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w31",
+   "cat": "formatting/line-width",
+   "old": "    inversion hs with (try (constructor <;> solve_by_elim using StlcSubEval))",
+   "new": "    inversion hs with\n      (try (constructor <;> solve_by_elim using StlcSubEval))",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w32",
+   "cat": "formatting/line-width",
+   "old": "  tf (∀ σ τ υ δ, σ <: τ → υ <: δ → <{ τ → (τ → υ) }> <: <{ σ → (σ → δ) }>) := by",
+   "new": "  tf (∀ σ τ υ δ, σ <: τ → υ <: δ →\n    <{ τ → (τ → υ) }> <: <{ σ → (σ → δ) }>) := by",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w33",
+   "cat": "formatting/line-width",
+   "old": "  tf (∀ σ τ υ δ, σ <: τ → υ <: δ → <{ (τ → τ) → υ }> <: <{ (σ → σ)→ δ }>) := by",
+   "new": "  tf (∀ σ τ υ δ, σ <: τ → υ <: δ →\n    <{ (τ → τ) → υ }> <: <{ (σ → σ)→ δ }>) := by",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w34",
+   "cat": "formatting/line-width",
+   "old": "  tf (∀ σ τ υ δ, σ <: τ → υ <: δ → <{ ((τ → σ) → τ)→ υ }> <: <{ ((σ → τ)→ σ) → δ }>) := by",
+   "new": "  tf (∀ σ τ υ δ, σ <: τ → υ <: δ →\n    <{ ((τ → σ) → τ)→ υ }> <: <{ ((σ → τ)→ σ) → δ }>) := by",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w35",
+   "cat": "formatting/line-width",
+   "old": "    left; intro σ τ υ δ h₁ h₂; solve_by_elim (maxDepth:=10) using StlcSubTyping",
+   "new": "    left; intro σ τ υ δ h₁ h₂\n    solve_by_elim (maxDepth:=10) using StlcSubTyping",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w36",
+   "cat": "formatting/line-width",
+   "old": "    have h : <{ Bool × ⊤ }> <: <{ ⊤ × Bool }> := by solve_by_elim using StlcSubTyping",
+   "new": "    have h : <{ Bool × ⊤ }> <: <{ ⊤ × Bool }> := by\n      solve_by_elim using StlcSubTyping",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w37",
+   "cat": "formatting/line-width",
+   "old": "    have h : <{ Bool→Bool }> <: <{ ⊤→⊤ }> := by solve_by_elim using StlcSubTyping",
+   "new": "    have h : <{ Bool→Bool }> <: <{ ⊤→⊤ }> := by\n      solve_by_elim using StlcSubTyping",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w38",
+   "cat": "formatting/line-width",
+   "old": "    obtain ⟨τ, h₁, h₂⟩ := contra <{ ⊤→ A }> (by solve_by_elim using StlcSubTyping)",
+   "new": "    obtain ⟨τ, h₁, h₂⟩ := contra <{ ⊤→ A }>\n      (by solve_by_elim using StlcSubTyping)",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w39",
+   "cat": "formatting/line-width",
+   "old": "theorem formal_subtype_instances_tf_2d: tf (∃ σ, σ <: <{ σ → σ }>) := by",
+   "new": "theorem formal_subtype_instances_tf_2d:\n  tf (∃ σ, σ <: <{ σ → σ }>) := by",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w40",
+   "cat": "formatting/line-width",
+   "old": "      induction σ generalizing τ with (\n          obtain ⟨σ₁, σ₁, h₁, h₂, h₃⟩ := sub_inversion_arrow contra; try contradiction)",
+   "new": "      induction σ generalizing τ with (\n          obtain ⟨σ₁, σ₁, h₁, h₂, h₃⟩ := sub_inversion_arrow contra\n          try contradiction)",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w41",
+   "cat": "formatting/line-width",
+   "old": "theorem formal_subtype_instances_tf_2e: tf (∃ σ, <{ σ → σ }> <: σ) := by",
+   "new": "theorem formal_subtype_instances_tf_2e:\n  tf (∃ σ, <{ σ → σ }> <: σ) := by",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w42",
+   "cat": "formatting/line-width",
+   "old": "    obtain ⟨_, _, h₁, h₂, _⟩ := sub_inversion_prod (h <{ Bool }> <{ Bool }>)",
+   "new": "    obtain ⟨_, _, h₁, h₂, _⟩ :=\n      sub_inversion_prod (h <{ Bool }> <{ Bool }>)",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w43",
+   "cat": "formatting/line-width",
+   "old": "    obtain ⟨_, _, h₃, h₄, _⟩ := sub_inversion_prod (h <{ Unit }> <{ Unit }>)",
+   "new": "    obtain ⟨_, _, h₃, h₄, _⟩ :=\n      sub_inversion_prod (h <{ Unit }> <{ Unit }>)",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w44",
+   "cat": "formatting/line-width",
+   "old": "    obtain ⟨_, _, h₁, h₂, _⟩ := sub_inversion_arrow (h <{ Bool }> <{ Bool }>)",
+   "new": "    obtain ⟨_, _, h₁, h₂, _⟩ :=\n      sub_inversion_arrow (h <{ Bool }> <{ Bool }>)",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w45",
+   "cat": "formatting/line-width",
+   "old": "    obtain ⟨_, _, h₃, h₄, _⟩ := sub_inversion_arrow (h <{ Unit }> <{ Unit }>)",
+   "new": "    obtain ⟨_, _, h₃, h₄, _⟩ :=\n      sub_inversion_arrow (h <{ Unit }> <{ Unit }>)",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w46",
+   "cat": "formatting/line-width",
+   "old": "    obtain ⟨_, _, h₁, h₂, h₃⟩ := sub_inversion_arrow (h <{ Bool }> <{ Bool }>)",
+   "new": "    obtain ⟨_, _, h₁, h₂, h₃⟩ :=\n      sub_inversion_arrow (h <{ Bool }> <{ Bool }>)",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w47",
+   "cat": "formatting/line-width",
+   "old": "    obtain ⟨_, _, h₄, h₅, h₆⟩ := sub_inversion_arrow (h <{ Unit }> <{ Unit }>)",
+   "new": "    obtain ⟨_, _, h₄, h₅, h₆⟩ :=\n      sub_inversion_arrow (h <{ Unit }> <{ Unit }>)",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w48",
+   "cat": "formatting/line-width",
+   "old": "  tf (∃ f : Nat → Ty, (∀ i j, i ≠ j → f i ≠ f j) ∧ (∀ i, f i <: f (i + 1))) := by",
+   "new": "  tf (∃ f : Nat → Ty, (∀ i j, i ≠ j → f i ≠ f j) ∧\n    (∀ i, f i <: f (i + 1))) := by",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  },
+  {
+   "id": "w49",
+   "cat": "formatting/line-width",
+   "old": "          cases j with\n          | zero => simp only [inf_desc_chain] at contra; inversion contra",
+   "new": "          cases j with\n          | zero =>\n              simp only [inf_desc_chain] at contra\n              inversion contra",
+   "why": "Over 70 columns in a `lean` block; reflow at a natural break, per PROOFREADING.md."
+  }
+ ],
+ "completed": true
+}

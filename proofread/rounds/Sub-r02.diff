@@ -1,0 +1,97 @@
+--- TS/Sub.lean (before this round)
++++ TS/Sub.lean
+@@ -242,4 +242,6 @@
+ σ₁ × σ₂ <: τ₁ × τ₂
+ ```
++
++### Arrows
+ 
+ ::::full
+@@ -547,5 +549,5 @@
+ element — a type that lies above every other type and is
+ inhabited by all (well-typed) values.  We do this by adding to the
+-language one new type constant, called `⊤` (pronounced "⊤" and written \⊤),
++language one new type constant, called `⊤` (pronounced "top" and written \⊤),
+ together with a subtyping rule that places it above every other type in the
+ subtype relation:
+@@ -1500,5 +1502,5 @@
+ :::
+ 
+-## Substitution
++### Substitution
+ 
+ The definition of substitution remains exactly the same as for the
+@@ -1541,5 +1543,5 @@
+ :::
+ 
+-## Reduction
++### Reduction
+ 
+ Likewise the definitions of `IsValue` and `Step`.
+@@ -1681,7 +1683,4 @@
+ ```
+ 
+-:::autogradedHole Subtype
+-:::
+-
+ Note that we don't need any special rules for base types (`Bool`
+ and `Base`): they are automatically subtypes of themselves (by
+@@ -1950,4 +1949,5 @@
+ :::
+ 
++:::::full
+ ::::exercise (rating := 2) (name := "sub_inversion_bool") (optional := true)
+ ```lean
+@@ -1964,5 +1964,7 @@
+ ```
+ ::::
++:::::
+ 
++:::::full
+ ::::exercise (rating := 3) (name := "sub_inversion_arrow")
+ ```lean
+@@ -1992,4 +1994,5 @@
+ 
+ ::::
++:::::
+ 
+ ::::full
+@@ -2110,4 +2113,5 @@
+ :::
+ 
++:::::full
+ ::::exercise (rating := 3) (name := "canonical_forms_of_arrow_types") (optional := true)
+ ```lean
+@@ -2128,4 +2132,5 @@
+ ```
+ ::::
++:::::
+ 
+ Similarly, the canonical forms of type `Bool` are the constants
+@@ -2662,4 +2667,9 @@
+ -- END SOLUTION
+ ```
++
++## Records, via Products and Top
++
++:::suppressPreviousHeaderWhenTerse
++:::
+ 
+ ::::full
+@@ -2696,4 +2706,9 @@
+ ::::
+ 
++## Exercises
++
++:::suppressPreviousHeaderWhenTerse
++:::
++
+ :::::full
+ ::::exercise (rating := 2) (name := "variations") (manual := true)
+@@ -2802,5 +2817,5 @@
+ :::::
+ 
+-### Exercise: Adding Products
++# Exercise: Adding Products
+ 
+ :::suppressPreviousHeaderWhenTerse

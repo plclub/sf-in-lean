@@ -161,7 +161,7 @@ For reduction, we need several new rules specifying how pairs and projection beh
 ::::
 
 ::::terse
-Reduction...
+Reduction:
 ::::
 
 ```display +centered
@@ -3013,10 +3013,10 @@ theorem weakening {Γ Γ' : Context} {t : Tm} {τ : Ty}
 theorem weakening_empty {Γ : Context} {t : Tm} {τ : Ty}
     (ht : <{ ∅ ⊢ t ⦂ τ }>) :
     <{ Γ ⊢ t ⦂ τ }> := by
-  apply weakening _ ht
-  intro _ _ h
-  rw [PartialMap.getElem_empty] at h
-  contradiction
+  apply weakening (Γ := ∅)
+  · intros x b contra
+    contradiction
+  · assumption
 ```
 :::::
 
