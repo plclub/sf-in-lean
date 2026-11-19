@@ -403,7 +403,7 @@ is expecting a record with fields `x` and `y`, it is perfectly safe
 for it to receive a record with fields `x`, `y`, and `z`; the `z`
 field will simply be ignored.  For example,
 
-```display +centered
+```display
 {name:String, age:Nat, gpa:Nat} <: {name:String, age:Nat}
          {name:String, age:Nat} <: {name:String}
                   {name:String} <: {}
