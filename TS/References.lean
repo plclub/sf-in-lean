@@ -1884,8 +1884,9 @@ properties continue to hold for the STLC with references.  The
 progress theorem ("well-typed terms are not stuck") can be stated
 and proved almost as for the STLC; we just need to add a few
 straightforward cases to the proof to deal with the new
-constructs.  The preservation theorem is a bit more interesting,
-so let's look at it first.
+constructs, so let's get it out of the way first.  The
+preservation theorem is a bit more interesting, and takes some
+more work to state correctly.
 ::::
 
 ::::terse
@@ -1899,35 +1900,36 @@ Standard theorems...
 ::::full
 Since we have extended both the reduction relation (with
 initial and final stores) and the typing relation (with a store
-typing), we need to change the statement of preservation to
-include these parameters.  But clearly we cannot just add stores
-and store typings without saying anything about how they are
-related — i.e., this is wrong:
+typing), we need some way of relating the two.  Consider trying
+to state progress using only the two relations as they stand,
+with no connection between `ρ` and `δ`: this is wrong:
 ::::
 
 ::::terse
 The evaluation and typing relations take more parameters
-now, so at a minimum we have to add these to the statement of
-preservation...
+now, but nothing yet relates them...
 ::::
 
 ```lean +error
-theorem preservation_wrong (δ : StoreTy) (τ : Ty) (t t' : Tm) (ρ ρ' : Store) :
-    <{ ∅ / δ ⊢ t ⦂ τ }> →
-    t / ρ ⟶ t' / ρ' →
-    <{ ∅ / δ ⊢ t' ⦂ τ }> := by
+theorem progress_wrong (δ : StoreTy) (t : Tm) (τ : Ty) (ρ : Store)
+    (hTy : <{ ∅ / δ ⊢ t ⦂ τ }>) :
+    (t.IsValue ∨ ∃ t' ρ', t / ρ ⟶ t' / ρ') := by
 ```
 
 ::::full
-If we typecheck with respect to some set of assumptions
-about the types of the values in the store and then reduce with
-respect to a store that violates these assumptions, the result
-will be disaster.  We say that a store `ρ` is _well typed_ with
-respect to a store typing `δ` if the term at each location `l` in
-`ρ` has the type at location `l` in `δ`.  Since only closed
-terms ever get stored in locations (why?), it suffices to type
-them in the empty context. The following definition of
-`StoreWellTyped` formalizes this:
+The trouble is that `hTy` says nothing about the actual store
+`ρ` we're reducing against.  For example, take `δ[0] = Nat`, so
+that `!(loc 0)` is well typed at type `Nat`; but take `ρ` to be
+the empty store, so that `ρ[0]` is undefined.  Then `!(loc 0)`
+is stuck: it isn't a value, and it can't take a step either,
+since there's no location `0` in `ρ` to look up.  We need to
+rule this out by requiring that `ρ` actually satisfies the
+assumptions `δ` makes about it.  We say that a store `ρ` is
+_well typed_ with respect to a store typing `δ` if the term at
+each location `l` in `ρ` has the type at location `l` in `δ`.
+Since only closed terms ever get stored in locations (why?), it
+suffices to type them in the empty context. The following
+definition of `StoreWellTyped` formalizes this:
 ::::
 
 ::::terse
@@ -2000,10 +2002,192 @@ theorem store_not_unique:
 :::
 :::::
 
-We can now state something closer to the desired preservation property:
+## Progress
+
+The Progress proof is very similar to the one for the STLC,
+with a few new cases for the new syntactic constructs.  The
+`deref` and `assign` cases are where `hStoreTy` comes in.
+
+```lean
+theorem progress (δ : StoreTy) (t : Tm) (τ : Ty) (ρ : Store)
+  (hTy : <{ ∅ / δ ⊢ t ⦂ τ }>)
+  (hStoreTy : δ ⊢ ρ) :
+  (t.IsValue ∨ ∃ t' ρ', t / ρ ⟶ t' / ρ') := by
+    have ⟨hLen, _⟩ := hStoreTy
+    generalize heq : (∅ : Context) = Γ at hTy
+    induction hTy with (subst_vars; first
+      | contradiction
+      -- discharge cases where `t` is obviously a value
+      | try (left; constructor; done))
+    | app h₁ _ ih₁ ih₂ =>
+      right; cases ih₁ (by rfl) with
+      -- t₁ is a value
+      | inl hv₁ =>
+        cases ih₂ (by rfl) with
+        -- t₂ is a value
+        | inl hv₂ =>
+          cases hv₁ <;> try contradiction
+          apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
+        -- t₂ steps
+        | inr hs₂ =>
+          have ⟨t₂', ρ', hs₂⟩ := hs₂
+          apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
+      -- t₁ steps
+      | inr hs₁ =>
+        have ⟨t₁', ρ', hs₁⟩ := hs₁
+        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
+    | succ h ih
+    | pred h ih =>
+      -- these two cases are the same
+      right; cases ih (by rfl) with
+      -- t₁ is a value
+      | inl hv =>
+        cases hv <;> try contradiction
+        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
+      -- t₁ steps
+      | inr hs =>
+        have ⟨t₁', ρ', hs⟩ := hs
+        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
+    | mult h₁ h₂ ih₁ ih₂ =>
+      right; cases ih₁ (by rfl) with
+      -- t₁ is a value
+      | inl hv₁ =>
+        cases ih₂ (by rfl) with
+        -- t₂ is a value
+        | inl hv₂ =>
+          cases hv₁ <;> try contradiction
+          cases hv₂ <;> try contradiction
+          apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
+        -- t₂ steps
+        | inr hs₂ =>
+          have ⟨t₂', ρ', hs₂⟩ := hs₂
+          apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
+      -- t₁ steps
+      | inr hs₁ =>
+        have ⟨t₁', ρ', hs₁⟩ := hs₁
+        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
+    | ite0 h₁ _ _ ih₁ _ _ =>
+      right; cases ih₁ (by rfl) with
+      -- t₁ is a value
+      | inl hv₁ =>
+        cases hv₁ with (try contradiction)
+        | nat n =>
+          cases n <;> (apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval)
+      -- t₁ steps
+      | inr hs₁ =>
+        have ⟨t₁', ρ', hs₁⟩ := hs₁
+        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
+    | ref_ _ ih =>
+      right; cases ih (by rfl) with
+      -- t₁ is a value
+      | inl hv =>
+        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
+      -- t₁ steps
+      | inr hs =>
+        have ⟨t₁', ρ', hs⟩ := hs
+        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
+    | deref h ih =>
+      right; cases ih (by rfl) with
+      -- t₁ is a value; its typing tells us `l < δ.length`, and
+      -- `hLen` turns this into `l < ρ.length`, so `ρ[l]` is
+      -- actually defined and we can step to it
+      | inl hv =>
+        cases hv with (inversion h)
+        | loc_ l => exists ρ[l], ρ; apply Step.derefLoc; lia
+      -- t₁ steps
+      | inr hs =>
+        have ⟨t₁', ρ', hs⟩ := hs
+        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
+    | @assign _ _ t₂ _ h₁ _ ih₁ ih₂ =>
+      right; cases ih₁ (by rfl) with
+      -- t₁ is a value
+      | inl hv₁ =>
+        cases ih₂ (by rfl) with
+        -- t₂ is a value
+        | inl hv₂ =>
+          -- as in `deref`, `hLen` turns `l < δ.length` into
+          -- `l < ρ.length`, so `ρ.set l t₂` is well defined
+          cases hv₁ with (inversion h₁)
+          | loc_ l => exists <{ unit }>, ρ.set l t₂; apply Step.assign hv₂; lia
+        -- t₂ steps
+        | inr hs₂ =>
+          have ⟨_, _, _⟩ := hs₂
+          apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
+      -- t₁ steps
+      | inr hs₁ =>
+        have ⟨t₁', ρ', hs₁⟩ := hs₁
+        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
+```
+
+::::full
+This proof is pretty long, and many of the cases are repetitive.
+With judicious use of automation, we can make it much shorter:
+
+```lean
+theorem progress_shorter (δ : StoreTy) (t : Tm) (τ : Ty) (ρ : Store)
+  (hTy : <{ ∅ / δ ⊢ t ⦂ τ }>)
+  (hStoreTy : δ ⊢ ρ) :
+  (t.IsValue ∨ ∃ t' ρ', t / ρ ⟶ t' / ρ') := by
+    have ⟨hLen, _⟩ := hStoreTy
+    generalize heq : (∅ : Context) = Γ at hTy
+    induction hTy with (
+      subst_vars; first
+      | contradiction
+      -- discharge cases where `t` is obviously a value
+      | (left; constructor; done)
+      -- otherwise, `t` steps
+      | (right
+         -- we want to apply our inductive hypothesis, but we can't
+         -- name it in our automation. Instead we restate the result
+         -- we want and use `solve_by_elim` to figure out how to
+         -- prove it using the unnamed `ih`
+         (obtain hv | ⟨t', ρ', hs⟩ : Tm.IsValue _ ∨ ∃ t' ρ', _ / ρ ⟶ t' / ρ' := by
+           solve_by_elim) <;>
+         -- handle simple cases where `t`'s type gives us
+         -- one possible value
+         try
+           (try (cases hv <;> try contradiction)) <;>
+           (apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval)))
+    | app h₁ _ _ ih₂ =>
+      cases hv <;> inversion h₁
+      obtain hv₂ | ⟨t₂', ρ', hs₂⟩ := ih₂ (by rfl) <;>
+      (apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval)
+    | mult h₁ h₂ _ ih₂ =>
+      cases hv <;> try contradiction
+      cases ih₂ (by rfl) with
+      | inl hv₂ =>
+        cases hv₂ <;> try contradiction
+        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
+      | inr hs₂ =>
+        have ⟨t₂', ρ', hs₂⟩ := hs₂
+        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
+    | ite0 h₁ =>
+      cases hv with (inversion h₁)
+      | nat n =>
+        cases n <;>
+        (apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval)
+    | deref h =>
+      cases hv <;> inversion h
+      apply Exists.intro; apply Exists.intro; apply Step.derefLoc; lia
+    | assign h₁ _ _ ih₂ =>
+      cases hv <;> inversion h₁
+      cases ih₂ (by rfl) with
+      | inl hv₂ =>
+        apply Exists.intro; apply Exists.intro; apply Step.assign hv₂; lia
+      | inr hs₂ =>
+        have ⟨t₂', ρ', hs₂⟩ := hs₂
+        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
+```
+::::
+
+## Extending Store Typings
+
+Having proved progress, let's turn our attention to preservation.
+Here is a first attempt at stating it, using the `StoreWellTyped`
+relation we just defined:
 
 ```lean +error
-theorem preservation_less_wrong (δ : StoreTy) (τ : Ty) (t t' : Tm) (ρ ρ' : Store) :
+theorem preservation_wrong (δ : StoreTy) (τ : Ty) (t t' : Tm) (ρ ρ' : Store) :
   <{ ∅ / δ ⊢ t ⦂ τ }> →
   t / ρ ⟶ t' / ρ' →
   δ ⊢ ρ →
@@ -2039,8 +2223,6 @@ For example, the term `ref 5` is typeable in the ∅ context and
 ∅ store typing, but it steps to `loc 0`, which is not typeable
 with an ∅ store typing.
 ::::
-
-## Extending Store Typings
 
 ::::full
 Evidently, since the store can increase in size during
@@ -2120,10 +2302,9 @@ theorem extends_refl (δ : StoreTy) : Extends δ δ := by
   induction δ <;> apply_rules using StlcRefTyping
 ```
 
-## Preservation, Finally
+## Preservation
 
-We can now give the final, correct statement of the type
-preservation property:
+We can now give the correct statement of the type preservation property:
 
 ```lean
 def preservation_theorem {δ : StoreTy} {t t' : Tm} {τ : Ty} {ρ ρ' : Store} :=
@@ -2288,10 +2469,13 @@ theorem store_well_typed_app {δ : StoreTy} {ρ : Store} {t₁ : Tm} {τ₁ : Ty
             simp_all [MyGetElem.getElem, List.getElem?_append_left]
 ```
 
-### Preservation!
+### The Proof!
 
 Now that we've got everything set up right, the proof of
-preservation is actually quite straightforward:
+preservation is actually quite straightforward.  Where progress's
+`deref` and `assign` cases only needed a location to _exist_ in
+the store, these cases of preservation need to know that its
+_contents_ actually have the type `δ` claims for it.
 
 ```lean
 theorem preservation {δ : StoreTy} {t t' : Tm} {τ : Ty} {ρ ρ' : Store}
@@ -2406,6 +2590,8 @@ theorem preservation {δ : StoreTy} {t t' : Tm} {τ : Ty} {ρ ρ' : Store}
         inversion h
         exists δ; constructor
         apply extends_refl; constructor
+        -- `h₂` is exactly the fact that `ρ[l]` has the type
+        -- `δ` claims for it
         have ⟨h₁, h₂⟩ := hStoreTy
         apply h₂ <;> assumption
         assumption
@@ -2422,6 +2608,8 @@ theorem preservation {δ : StoreTy} {t t' : Tm} {τ : Ty} {ρ ρ' : Store}
         exists δ; constructor
         apply extends_refl; constructor
         constructor
+        -- `assign_pres_store_typing` needs the new value's type
+        -- to match `δ[l]`
         apply assign_pres_store_typing <;> assumption
       | assign₁ hs =>
         have ⟨δ', hExt, hTy', hStoreTy'⟩ := ih₁ hs rfl
@@ -2438,7 +2626,7 @@ theorem preservation {δ : StoreTy} {t t' : Tm} {τ : Ty} {ρ ρ' : Store}
 ```
 
 ::::full
-This proof is pretty long, and many of the cases repeat themselves. With judicious
+This proof is pretty long, and once again, with judicious
 use of automation, we can make it much shorter:
 
 ```lean
@@ -2456,10 +2644,8 @@ theorem preservation_shorter {δ : StoreTy} {t t' : Tm} {τ : Ty} {ρ ρ' : Stor
         -- handle the congruence cases where the store typing grows,
         -- but in an uninteresting way
         (try
-          -- we want to apply our inductive hypotheses, but we can't name
-          -- them in our automation. Instead, we restate the result that
-          -- we want and use `solve_by_elim` to figure out how to prove
-          -- this result using the unnamed `ih`
+          -- same trick as in the progress proof above, to get
+          -- around our unnamed `ih`
           obtain ⟨δ', hExt, hTy', hStoreTy'⟩ : ∃ δ', Extends δ' δ ∧ _ ∧ (δ' ⊢ ρ') := by
             solve_by_elim
           exists δ'; constructor
@@ -2614,178 +2800,6 @@ _QED_.
 
 ::::
 :::::
-
-## Progress
-
-As we've said, progress for this system is pretty easy to prove;
-the proof is very similar to the proof of progress for the STLC,
-with a few new cases for the new syntactic constructs.
-
-```lean
-theorem progress (δ : StoreTy) (t : Tm) (τ : Ty) (ρ : Store)
-  (hTy : <{ ∅ / δ ⊢ t ⦂ τ }>)
-  (hStoreTy : δ ⊢ ρ) :
-  (t.IsValue ∨ ∃ t' ρ', t / ρ ⟶ t' / ρ') := by
-    have ⟨hLen, _⟩ := hStoreTy
-    generalize heq : (∅ : Context) = Γ at hTy
-    induction hTy with (subst_vars; first
-      | contradiction
-      -- discharge cases where `t` is obviously a value
-      | try (left; constructor; done))
-    | app h₁ _ ih₁ ih₂ =>
-      right; cases ih₁ (by rfl) with
-      -- t₁ is a value
-      | inl hv₁ =>
-        cases ih₂ (by rfl) with
-        -- t₂ is a value
-        | inl hv₂ =>
-          cases hv₁ <;> try contradiction
-          apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
-        -- t₂ steps
-        | inr hs₂ =>
-          have ⟨t₂', ρ', hs₂⟩ := hs₂
-          apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
-      -- t₁ steps
-      | inr hs₁ =>
-        have ⟨t₁', ρ', hs₁⟩ := hs₁
-        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
-    | succ h ih
-    | pred h ih =>
-      -- these two cases are the same
-      right; cases ih (by rfl) with
-      -- t₁ is a value
-      | inl hv =>
-        cases hv <;> try contradiction
-        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
-      -- t₁ steps
-      | inr hs =>
-        have ⟨t₁', ρ', hs⟩ := hs
-        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
-    | mult h₁ h₂ ih₁ ih₂ =>
-      right; cases ih₁ (by rfl) with
-      -- t₁ is a value
-      | inl hv₁ =>
-        cases ih₂ (by rfl) with
-        -- t₂ is a value
-        | inl hv₂ =>
-          cases hv₁ <;> try contradiction
-          cases hv₂ <;> try contradiction
-          apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
-        -- t₂ steps
-        | inr hs₂ =>
-          have ⟨t₂', ρ', hs₂⟩ := hs₂
-          apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
-      -- t₁ steps
-      | inr hs₁ =>
-        have ⟨t₁', ρ', hs₁⟩ := hs₁
-        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
-    | ite0 h₁ _ _ ih₁ _ _ =>
-      right; cases ih₁ (by rfl) with
-      -- t₁ is a value
-      | inl hv₁ =>
-        cases hv₁ with (try contradiction)
-        | nat n =>
-          cases n <;> (apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval)
-      -- t₁ steps
-      | inr hs₁ =>
-        have ⟨t₁', ρ', hs₁⟩ := hs₁
-        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
-    | ref_ _ ih =>
-      right; cases ih (by rfl) with
-      -- t₁ is a value
-      | inl hv =>
-        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
-      -- t₁ steps
-      | inr hs =>
-        have ⟨t₁', ρ', hs⟩ := hs
-        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
-    | deref h ih =>
-      right; cases ih (by rfl) with
-      -- t₁ is a value; its typing tells us `l < δ.length`
-      | inl hv =>
-        cases hv with (inversion h)
-        | loc_ l => exists ρ[l], ρ; apply Step.derefLoc; lia
-      -- t₁ steps
-      | inr hs =>
-        have ⟨t₁', ρ', hs⟩ := hs
-        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
-    | @assign _ _ t₂ _ h₁ _ ih₁ ih₂ =>
-      right; cases ih₁ (by rfl) with
-      -- t₁ is a value
-      | inl hv₁ =>
-        cases ih₂ (by rfl) with
-        -- t₂ is a value
-        | inl hv₂ =>
-          cases hv₁ with (inversion h₁)
-          | loc_ l => exists <{ unit }>, ρ.set l t₂; apply Step.assign hv₂; lia
-        -- t₂ steps
-        | inr hs₂ =>
-          have ⟨_, _, _⟩ := hs₂
-          apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
-      -- t₁ steps
-      | inr hs₁ =>
-        have ⟨t₁', ρ', hs₁⟩ := hs₁
-        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
-```
-
-::::full
-Like the earlier preservation proof, many of these cases are repetitive.
-Once again we can make the proof more concise using automation:
-
-```lean
-theorem progress_shorter (δ : StoreTy) (t : Tm) (τ : Ty) (ρ : Store)
-  (hTy : <{ ∅ / δ ⊢ t ⦂ τ }>)
-  (hStoreTy : δ ⊢ ρ) :
-  (t.IsValue ∨ ∃ t' ρ', t / ρ ⟶ t' / ρ') := by
-    have ⟨hLen, _⟩ := hStoreTy
-    generalize heq : (∅ : Context) = Γ at hTy
-    induction hTy with (
-      subst_vars; first
-      | contradiction
-      -- discharge cases where `t` is obviously a value
-      | (left; constructor; done)
-      -- otherwise, `t` steps
-      | (right
-         -- we use the same trick as in the preservation proof
-         -- to get around our unnamed `ih`
-         (obtain hv | ⟨t', ρ', hs⟩ : Tm.IsValue _ ∨ ∃ t' ρ', _ / ρ ⟶ t' / ρ' := by
-           solve_by_elim) <;>
-         -- handle simple cases where `t`'s type gives us
-         -- one possible value
-         try
-           (try (cases hv <;> try contradiction)) <;>
-           (apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval)))
-    | app h₁ _ _ ih₂ =>
-      cases hv <;> inversion h₁
-      obtain hv₂ | ⟨t₂', ρ', hs₂⟩ := ih₂ (by rfl) <;>
-      (apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval)
-    | mult h₁ h₂ _ ih₂ =>
-      cases hv <;> try contradiction
-      cases ih₂ (by rfl) with
-      | inl hv₂ =>
-        cases hv₂ <;> try contradiction
-        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
-      | inr hs₂ =>
-        have ⟨t₂', ρ', hs₂⟩ := hs₂
-        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
-    | ite0 h₁ =>
-      cases hv with (inversion h₁)
-      | nat n =>
-        cases n <;>
-        (apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval)
-    | deref h =>
-      cases hv <;> inversion h
-      apply Exists.intro; apply Exists.intro; apply Step.derefLoc; lia
-    | assign h₁ _ _ ih₂ =>
-      cases hv <;> inversion h₁
-      cases ih₂ (by rfl) with
-      | inl hv₂ =>
-        apply Exists.intro; apply Exists.intro; apply Step.assign hv₂; lia
-      | inr hs₂ =>
-        have ⟨t₂', ρ', hs₂⟩ := hs₂
-        apply Exists.intro; apply Exists.intro; solve_by_elim using StlcRefEval
-```
-::::
 
 # References and Nontermination
 
