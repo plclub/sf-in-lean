@@ -25,3 +25,7 @@ gradescope/context/
 
 # The pre-round snapshot a proofreading review diffs against (scripts/proofread.py).
 proofread/rounds/*.before.*
+
+# Cloudflare Pages build output and local state (web/cloudflare/build.sh).
+web/cloudflare/dist/
+web/cloudflare/.wrangler/
