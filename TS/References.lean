@@ -746,10 +746,19 @@ Formally, we introduce sequencing as a _derived form_
 `tseq` that expands into an abstraction and an application.
 ::::
 
+```recall
+abbrev Tm.tseq (t₁ t₂ : Tm) : Tm :=
+  Tm.app (.abs "X" .unit t₂) t₁
+```
+
+::::full
+We also give it its own sequencing notation, using semi-colon.
+::::
+
 ```lean
 /-- info: <{ R := succ (!R) ; !R }> : Tm -/
 #guard_msgs in
-#check <{R := succ (!R); !R}>
+#check Tm.tseq <{R := succ (!R)}> <{!R}>
 ```
 
 ## References and Aliasing
@@ -1013,9 +1022,11 @@ reached by the program.
 
 This is _not_ just a question of taste in language design: it is
 extremely difficult to achieve type safety in the presence of an
-explicit deallocation operation.
+explicit deallocation operation; only the Rust language has
+made this practical, at the cost of significantly constraining the
+creation and use of aliases.
 
-One reason for this is the familiar _dangling reference_ problem:
+One reason for this difficulty is the familiar _dangling reference_ problem:
 we allocate a cell holding a number, save a reference to it in
 some data structure, use it for a while, then deallocate it and
 allocate a new cell holding a boolean, possibly reusing the same
@@ -1389,13 +1400,17 @@ contents have become garbage.
 Here are the rules again, formally:
 ::::
 
+::::details "Notation"
 ```lean
 section
 set_option hygiene false in
 local notation:40
   t:71 " / " ρ:41 " ⟶ " t':71 " / " ρ':41 =>
   Step (t, ρ) (t', ρ')
+```
+::::
 
+```lean
 inductive Step : Tm × Store → Tm × Store → Prop where
   -- pure STLC
   | appAbs {x : String} {τ₂ : Ty} {t₁ v₂ : Tm} {ρ : Store}
@@ -1465,13 +1480,6 @@ inductive Step : Tm × Store → Tm × Store → Prop where
       <{ v₁ := t₂ }> / ρ ⟶ <{ v₁ := t₂' }> / ρ'
 end
 
-scoped notation:40
-  t:71 " / " ρ:41 " ⟶ " t':71 " / " ρ':41 =>
-  Step (t, ρ) (t', ρ')
-scoped notation:40
-  t:71 " / " ρ:41 " ⟶* " t':71 " / " ρ':41 =>
-  Multi Step (t, ρ) (t', ρ')
-
 attribute [StlcRefEval] Step.appAbs Step.app₁ Step.app₂
     Step.succ Step.succNat Step.pred Step.predConst
     Step.multConst Step.mult₁ Step.mult₂
@@ -1479,6 +1487,17 @@ attribute [StlcRefEval] Step.appAbs Step.app₁ Step.app₂
     Step.refValue Step.ref_ Step.derefLoc Step.deref Step.assign
     Step.assign₁ Step.assign₂
 ```
+
+::::details "Notation"
+```lean
+scoped notation:40
+  t:71 " / " ρ:41 " ⟶ " t':71 " / " ρ':41 =>
+  Step (t, ρ) (t', ρ')
+scoped notation:40
+  t:71 " / " ρ:41 " ⟶* " t':71 " / " ρ':41 =>
+  Multi Step (t, ρ) (t', ρ')
+```
+::::
 
 # Typing
 
@@ -1680,6 +1699,7 @@ instance : MyGetElem StoreTy Nat Ty where
 @[simp]
 theorem StoreTy_get_succ_tl (hd : Ty) (tl : StoreTy) (n : Nat) :
   (hd :: tl)[n + 1] = tl[n] := by rfl
+
 @[simp]
 theorem StoreTy_get_zero_hd (hd : Ty) (tl : StoreTy) :
   (hd :: tl)[0] = hd := by rfl
@@ -2165,10 +2185,10 @@ theorem weakening {Γ Γ' : Context} {δ : StoreTy} {t : Tm} {τ: Ty}
 theorem weakening_empty {Γ : Context} {δ : StoreTy} {t : Tm} {τ: Ty}
     (ht :<{ ∅ / δ ⊢ t ⦂ τ }>) :
     <{ Γ / δ ⊢ t ⦂ τ }> := by
-  apply weakening _ ht
-  intro _ _ h
-  rw [PartialMap.getElem_empty] at h
-  contradiction
+  apply weakening (Γ := ∅)
+  · intros x b contra
+    contradiction
+  · assumption
 ```
 
 ```lean
@@ -2784,9 +2804,9 @@ another function stored in a reference cell; the trick is that we
 then smuggle in a reference to itself!
 
 ```display
-   (λR: Ref (Unit → Unit),
-        R := (λx:Unit,(!R) unit); (!R) unit)
-(ref (λX:Unit.unit))
+(λR : Ref (Unit → Unit).
+    R := (λX:Unit. (!R) unit); (!R) unit)
+(ref (λX:Unit. unit))
 ```
 
 ::::full
