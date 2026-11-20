@@ -11,18 +11,52 @@ open Verso Genre Manual
 
 namespace SFLMeta
 
+/-- Where the in-browser exercise editor (`web/sfl-lean/sfl-lean.js`) finds Lean,
+read from the environment at build time so one book build can point at any
+host.  Each value becomes a `data-` attribute of the editor's script tag; an
+unset value is left out and the script's default applies. -/
+structure WebLeanSettings where
+  /-- Base URL of `lean.js`, `lean.wasm`, `lean-lib-files.json` and `lean-lib/`;
+  by default `sfl-lean/runtime/`, next to the script. -/
+  runtime : Option String
+  /-- The runtime's build id, appended to its URLs as `?v=`. -/
+  version : Option String
+  /-- URL prefix for each exercise's "View source" link. -/
+  source : String
+
+def WebLeanSettings.fromEnv : IO WebLeanSettings := do
+  let get name := return (← IO.getEnv name).filter (!·.isEmpty)
+  return {
+    runtime := ← get "SFL_LEAN_RUNTIME"
+    version := ← get "SFL_LEAN_VERSION"
+    source := (← get "SFL_SOURCE_URL").getD "https://github.com/plclub/sf-in-lean/blob/main/"
+  }
+
+/-- The `<head>` elements that load the exercise editor on every page. -/
+def webLeanHead (s : WebLeanSettings) : Array Verso.Output.Html :=
+  let data := [("data-runtime", s.runtime), ("data-version", s.version), ("data-source", some s.source)].filterMap
+    fun (k, v) => v.map (k, ·)
+  #[.tag "link" #[("rel", "stylesheet"), ("href", "sfl-lean/sfl-lean.css")] .empty,
+    .tag "script" #[("src", "sfl-lean/lz-string.min.js"), ("defer", "defer")] .empty,
+    .tag "script" (#[("src", "sfl-lean/sfl-lean.js"), ("defer", "defer")] ++ data.toArray) .empty]
+
 /-- Render configuration for a single volume/mode build.  `vol` is the lowercase
 volume slug (`lf`/`hl`/`ts`); `mode` is
 `student`/`solutions`/`terse`/`grading`; `stamp` is the source-provenance stamp,
 which `extraContents` puts at the foot of every page and the saver repeats as a
 comment at the end of every generated `.lean` file. -/
-def mkConfig (vol mode stamp : String) : RenderConfig where
+def mkConfig (vol mode stamp : String) (web : WebLeanSettings) : RenderConfig where
   emitTeX := false
   emitHtmlSingle := .no
   emitHtmlMulti := .immediately
   htmlDepth := 2
   extraCss := {SFLMeta.sfTheme}
   extraContents := #[buildStampHtml stamp]
+  extraHead := webLeanHead web
+  -- The isolation service worker must sit at the root of the HTML output for
+  -- its scope to cover every chapter page.
+  extraFilesHtml := [("web/sfl-lean", "sfl-lean"),
+    ("web/sfl-lean-isolation.js", "sfl-lean-isolation.js")]
   destination := s!"_out/{vol}/{mode}"
 
 /-- Verso hardwires the multi-page HTML output directory to `html-multi/`.  SFL
@@ -64,7 +98,7 @@ def runVolume (vol : String) (doc : Verso.Doc.Part Manual)
       | .solutions => Save.emitSavedSolutions vol.toUpper stamp crossVol
       | .terse => Save.emitSavedTerse vol.toUpper stamp crossVol
       | .grading => Save.emitSavedGrading vol.toUpper stamp crossVol
-    let config := mkConfig vol mode stamp
+    let config := mkConfig vol mode stamp (← WebLeanSettings.fromEnv)
     let rc ← manualMain doc (options := rest) (config := config) (extraSteps := [extraStep])
     if rc == 0 then
       renameHtmlDir config.destination
