@@ -460,7 +460,7 @@ inductive Palette where
 
 def twice (f : Nat → Nat) (n : Nat) : Nat := f (f n)
 
-theorem twice_id : twice id 3 = 3 := rfl
+theorem twice_id : twice id 3 = 3 := by rfl
 
 sf_recall
   inductive Palette where
@@ -490,7 +490,7 @@ sf_recall statement Nat.add_comm : ∀ (n m : Nat), n + m = m + n
 
 -- The statement form counts universe parameters: a placeholder universe
 -- becomes a parameter and matches, and a fixed universe is rejected.
-theorem poly_refl.{u} : ∀ {α : Sort u} (a : α), a = a := fun _ => rfl
+theorem poly_refl.{u} : ∀ {α : Sort u} (a : α), a = a := fun _ => by rfl
 
 sf_recall statement poly_refl : ∀ {α : Sort _} (a : α), a = a
 

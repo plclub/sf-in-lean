@@ -240,10 +240,10 @@ Some simple facts about {name}`replicate`:
 
 ```lean
 theorem replicate_zero (α : Type) (a : α) :
-    replicate α a 0 = MyList.nil := rfl
+    replicate α a 0 = MyList.nil := by rfl
 
 theorem replicate_succ (α : Type) (a : α) (count : Nat) :
-    replicate α a (count + 1) = MyList.cons a (replicate α a count) := rfl
+    replicate α a (count + 1) = MyList.cons a (replicate α a count) := by rfl
 ```
 
 ::::full

@@ -1854,7 +1854,7 @@ theorem hoare_asgn_wrong : ∃ a : Aexp,
     exists aexp { X + 1 }
     intro hc
     rw [validHoareTriple_def] at hc
-    have h := hc (st := ∅) (st' := {X ↦ 1}) (EvalR.asgn rfl) True.intro
+    have h := hc (st := ∅) (st' := {X ↦ 1}) (EvalR.asgn (by rfl)) True.intro
     simp at h
 ```
 
@@ -1933,7 +1933,9 @@ theorem hoare_asgn_fwd {m : Nat} {a : Aexp} {P : Assertion} :
       subst h hx
       rw [TotalMap.update_eq, TotalMap.update_shadow,
         TotalMap.update_same]
-      exact ⟨hp, rfl⟩
+      constructor
+      · exact hp
+      · rfl
 ```
 :::::
 
@@ -1973,7 +1975,9 @@ theorem hoare_asgn_fwd_exists {a : Aexp} {P : Assertion} :
       exists st[X]
       rw [TotalMap.update_eq, TotalMap.update_shadow,
         TotalMap.update_same]
-      exact ⟨hpre, rfl⟩
+      constructor
+      · exact hpre
+      · rfl
 ```
 :::::
 
@@ -2731,9 +2735,9 @@ theorem invalid_triple : ¬ ∀ (a : Aexp) (n : Nat),
     specialize h (aexp { X }) 2 (st := {X ↦ 2})
       (st' := {Y ↦ 3, X ↦ 3, X ↦ 2}) ?_
     · apply EvalR.seq
-      · exact EvalR.asgn rfl
-      · exact EvalR.asgn rfl
-    simp +decide at h
+      · apply EvalR.asgn (by rfl)
+      · apply EvalR.asgn (by rfl)
+    assertion_auto
 ```
 
 :::gradeTheorem 4 invalid_triple
@@ -2876,7 +2880,7 @@ theorem if_example :
 ```
 
 ::::full
-We can even shorten it a little bit more. Wherever Lean expects a term of
+We can even shorten it a little bit more. Recall that wherever Lean expects a term of
 some type, we may write `(by <tactics>)` in its place: the tactics run
 immediately, and the proof they produce is spliced in as that term. Here we
 use it to supply {name}`hoare_consequence_pre`'s second argument, the
@@ -3349,7 +3353,7 @@ theorem hoare_while {P : Assertion} {b : Bexp} {c : Com}
   | whileTrue hb hc hloop ih₁ ih₂ =>
     injection heq with hbeq hceq
     subst hbeq hceq
-    exact ih₂ (hhoare hc ⟨hpre, hb⟩) rfl
+    apply ih₂ (hhoare hc ⟨hpre, hb⟩) (by rfl)
   | skip | asgn | seq | ifTrue | ifFalse =>
     contradiction
 ```
@@ -4057,8 +4061,8 @@ theorem ex1Repeat_works :
   solution!
     apply Com.EvalR.repeatEnd
     · apply Com.EvalR.seq
-      · exact Com.EvalR.asgn rfl
-      · exact Com.EvalR.asgn rfl
+      · apply Com.EvalR.asgn (by rfl)
+      · apply Com.EvalR.asgn (by rfl)
     · rfl
 ```
 
@@ -4091,7 +4095,7 @@ theorem hoare_repeat {P Q : Assertion} {b : Bexp} {c : Com}
   | repeatLoop hc hb hloop ih₁ ih₂ =>
     injection heq with hceq hbeq
     subst hceq hbeq
-    apply ih₂ h₂ _ rfl
+    apply ih₂ h₂ _ (by rfl)
     constructor
     · exact h₁ hc hpre
     · simp [hb]
@@ -4213,7 +4217,8 @@ theorem hoare_repeat' {P : Assertion} {b : Bexp} {c : Com}
   | repeatLoop hc hb hloop ih₁ ih₂ =>
     injection heq with hceq hbeq
     subst hceq hbeq
-    exact ih₂ (h hc hpre) rfl
+    apply ih₂ (h hc hpre)
+    rfl
   | skip | asgn | seq | ifTrue | ifFalse | whileFalse | whileTrue =>
     contradiction
 
@@ -4821,7 +4826,7 @@ theorem assert_assume_differ :
     · intro hC
       rw [validHoareTriple_def] at hC
       have h : ∅ =[ assert (false) ]=> Result.error :=
-        Com.EvalR.assertFalse rfl
+        Com.EvalR.assertFalse (by rfl)
       obtain ⟨st', h₁, h₂⟩ := hC h True.intro
       contradiction
 ```
@@ -4848,7 +4853,9 @@ theorem assert_implies_assume {P : Assertion} {b : Bexp}
       obtain ⟨st', h₁, h₂⟩ := hhoare h hpre
       injection h₁ with hsteq
       subst hsteq
-      exact ⟨rfl, h₂⟩
+      constructor
+      · rfl
+      · exact h₂
 ```
 
 :::gradeTheorem 1 assert_implies_assume
@@ -4867,7 +4874,7 @@ theorem hoare_asgn {Q : Assertion} {x : Ident} {a : Aexp} :
   | asgn n h =>
     exists (x →ₜ n ; st)
     subst h
-    exact ⟨rfl, hQ⟩
+    exact ⟨by rfl, hQ⟩
 
 theorem hoare_consequence_pre {P P' Q : Assertion} {c : Com}
     (hhoare : {{ P' }} c {{ Q }}) (himp : P ↠ P') :
@@ -4919,7 +4926,7 @@ theorem hoare_skip {P : Assertion} :
   rw [validHoareTriple_def]
   intro st r h hpre
   inversion h
-  exact ⟨st, rfl, hpre⟩
+  exists st
 
 theorem hoare_if {P Q : Assertion} {b : Bexp} {c₁ c₂ : Com}
     (htrue : {{ P ∧ b}} c₁ {{ Q }})
@@ -4945,14 +4952,15 @@ theorem hoare_while {P : Assertion} {b : Bexp} {c : Com}
   intro st r heval hpre
   generalize heq : (imp { while (b) { c } }) = cmd at heval
   induction heval generalizing P with
-  | whileFalse hb =>
+  | @whileFalse _ st _ hb =>
     injection heq with hbeq hceq
     subst hbeq hceq
-    exact ⟨_, rfl, hpre, by simp [hb]⟩
+    exists st
+    simp_all
   | whileTrueNormal hb hc hloop ih₁ ih₂ =>
     injection heq with hbeq hceq
     subst hbeq hceq
-    apply ih₂ hhoare _ rfl
+    apply ih₂ hhoare _ (by rfl)
     obtain ⟨s₁, heq₁, hs₁⟩ := hhoare hc ⟨hpre, hb⟩
     injection heq₁ with he
     subst he
@@ -4986,7 +4994,8 @@ theorem hoare_assert {Q : Assertion} {b : Bexp} :
   obtain ⟨hst, hb⟩ := hpre
   exists st
   inversion heval with
-  | assertTrue hb' => exact ⟨rfl, hst⟩
+  | assertTrue hb' =>
+    exact ⟨by rfl, hst⟩
   | assertFalse hb' => simp [hb'] at hb
 
 /- Stating this in a backwards-direction friendly way. -/
@@ -4996,7 +5005,8 @@ theorem hoare_assume {Q : Assertion} {b : Bexp} :
   intro st r heval hpre
   exists st
   inversion heval with
-  | assume hb => exact ⟨rfl, hpre hb⟩
+  | assume hb =>
+    exact ⟨by rfl, hpre hb⟩
 -- END SOLUTION
 ```
 

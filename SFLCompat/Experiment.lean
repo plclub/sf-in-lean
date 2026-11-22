@@ -146,7 +146,7 @@ Diagnostics from the expected failure are suppressed.
 Example:
 ```lean
 sf_expect_failure_in
-  example : 1 = 2 := rfl
+  example : 1 = 2 := by rfl
 ```
 -/
 def expectFailureTk := leading_parser

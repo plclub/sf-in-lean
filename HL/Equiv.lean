@@ -974,7 +974,7 @@ theorem Com.congruence_while {b b' : Bexp} {c c' : Com}
         injection heq with beq ceq
         subst beq ceq
         rw [hb] at hb'
-        specialize ih2 rfl
+        specialize ih2 (by rfl)
         apply Com.EvalR.whileTrue hb' _ ih2
         · rw [equiv_def] at hc
           exact hc.mp hc'
@@ -993,7 +993,7 @@ theorem Com.congruence_while {b b' : Bexp} {c c' : Com}
         injection heq with beq ceq
         subst beq ceq
         rw [← hb] at hb'
-        specialize ih2 rfl
+        specialize ih2 (by rfl)
         apply Com.EvalR.whileTrue hb' _ ih2
         · rw [equiv_def] at hc
           exact hc.mpr hc'
@@ -2638,7 +2638,7 @@ theorem p₅_summary (st st' : State) (h : st =[ p₅ ]=> st') :
       bne_eq_false_iff_eq] at h'
     rw [←h', TotalMap.update_same]
   | whileTrue hb hc hloop ihc ihloop =>
-      specialize ihloop rfl; subst_vars
+      specialize ihloop (by rfl); subst_vars
       inversion hc
       apply TotalMap.update_shadow
 ```
