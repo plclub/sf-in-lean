@@ -519,7 +519,7 @@ There is a tactic named {tactic}`congr` that can
 prove such goals directly.  Given a goal of the form
 `f a₁ ... aₙ = g b₁ ... bₙ`, writing {tactic}`congr` will produce subgoals
 of the form `f = g`, `a₁ = b₁`, ..., `aₙ = bₙ`.
-If any of these subgoals that are simple enough to be discharged automatically (e.g., immediately
+If any of these subgoals are simple enough to be discharged automatically (e.g., immediately
 provable by {tactic}`rfl`), they will disappear.
 ::::
 

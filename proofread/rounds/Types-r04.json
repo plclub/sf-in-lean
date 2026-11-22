@@ -1,0 +1,64 @@
+{
+ "file": "TS/Types.lean",
+ "chapter": "Types",
+ "round": 4,
+ "proposals": [
+  {
+   "id": "heading1",
+   "cat": "heading/case",
+   "old": "## Canonical forms",
+   "new": "## Canonical Forms",
+   "why": "Every other level-2 heading in the chapter is title case (Operational Semantics, Normal Forms and Values, Typing, Progress, Type Preservation, Type Soundness); this one was left lowercase."
+  },
+  {
+   "id": "nvalue1",
+   "cat": "exposition/stale-identifier",
+   "old": "  - If `t₁` is a value, then by the canonical forms lemma `t₁` is an\n    `nvalue`, and hence `t` is also an `nvalue` (and hence a value) by\n    `succ`.",
+   "new": "  - If `t₁` is a value, then by the canonical forms lemma `t₁` is a\n    numeric value (`Tm.IsNValue`), and hence `t` is also a numeric\n    value (and hence a value) by `succ`.",
+   "why": "`nvalue` is the Rocq-source judgment name; this chapter's identifier is `Tm.IsNValue`, as already used for the parallel boolean case two paragraphs above (`Tm.IsBValue`)."
+  },
+  {
+   "id": "nvalue2",
+   "cat": "exposition/stale-identifier",
+   "old": "  - If `t₁` is a value, then (by the same argument as in the previous\n    case) it must be an `nvalue`.  By case analysis on the `nvalue`\n    judgement, there are two cases:",
+   "new": "  - If `t₁` is a value, then (by the same argument as in the previous\n    case) it must be a numeric value (`Tm.IsNValue`).  By case\n    analysis on the `Tm.IsNValue` judgment, there are two cases:",
+   "why": "Same `nvalue` -> `Tm.IsNValue` fix as above; also \"judgement\" is the British spelling, while the chapter otherwise uses American \"judgment\" (lines 846, 855, 874, 876)."
+  },
+  {
+   "id": "nvalue3",
+   "cat": "exposition/stale-identifier",
+   "old": "    - Otherwise, `t₁ = succ t₁'`, with `t₁'` an `nvalue`.  Hence `t` can\n      again take a step, this time by `predSucc`.",
+   "new": "    - Otherwise, `t₁ = succ t₁'`, with `t₁'` a numeric value\n      (`Tm.IsNValue`).  Hence `t` can again take a step, this time by\n      `predSucc`.",
+   "why": "Same `nvalue` -> `Tm.IsNValue` fix as above."
+  },
+  {
+   "id": "nvalue4",
+   "cat": "exposition/stale-identifier",
+   "old": "  - If `t₁` is a value, it must be an `nvalue`, and there are two cases to\n    consider:",
+   "new": "  - If `t₁` is a value, it must be a numeric value (`Tm.IsNValue`), and\n    there are two cases to consider:",
+   "why": "Same `nvalue` -> `Tm.IsNValue` fix as above."
+  },
+  {
+   "id": "nvalue5",
+   "cat": "exposition/stale-identifier",
+   "old": "    - Otherwise, `t₁ = succ t₁'` where `t₁'` is an `nvalue`.  Hence `t` can\n      take a step by `isZeroSucc`.",
+   "new": "    - Otherwise, `t₁ = succ t₁'` where `t₁'` is a numeric value\n      (`Tm.IsNValue`).  Hence `t` can take a step by `isZeroSucc`.",
+   "why": "Same `nvalue` -> `Tm.IsNValue` fix as above."
+  },
+  {
+   "id": "devnote1",
+   "cat": "devnote/stale-question",
+   "old": "reason that language theorists generally prefer the small-step style.\n```\n:::\n\n:::dev \"Benjamin Pierce (bcpierce00)\"\nThis next is not using the new conventions for `grade` blocks, which I thought\n`to_verso.py` was now enforcing.  Is that because this file was converted a while back,\nbefore these improvements?  (I suspect yes because the indentation is also\nwonky and I improved that too.) Anyway, the `grade` block headers should be fixed, throughout (and maybe in Smallstep and Imp?)... `dev` block headers too, if we want\nto be really consistent.\n:::\n:::grade\n```\nGRADE_MANUAL 6: prog_pres_bigstep",
+   "new": "reason that language theorists generally prefer the small-step style.\n```\n:::\n\n:::grade\n```\nGRADE_MANUAL 6: prog_pres_bigstep",
+   "why": "The question is answered by CLAUDE.md's documented policy: a `GRADE_MANUAL` spec (unlike `GRADE_THEOREM`) intentionally keeps the older `:::grade` body form. Every `:::grade` block in this chapter already uses that form consistently, with no indentation irregularity, so the note is stale."
+  },
+  {
+   "id": "fence1",
+   "cat": "markup/dev-note-fence",
+   "old": ":::dev \"mwhicks1\"\n```\nIn the Rocq source these were a hidden, never-uncommented draft\n(with `eval` still to be renamed to `step`).  Here they are activated as\nlive Lean. Not sure if we want to keep this.\n```\n:::",
+   "new": ":::dev \"mwhicks1\"\nIn the Rocq source these were a hidden, never-uncommented draft\n(with `eval` still to be renamed to `step`).  Here they are activated as\nlive Lean. Not sure if we want to keep this.\n:::",
+   "why": "The body is plain prose with balanced backticks and no markdown-hazard characters, so per CONTRIBUTING's convention it should be inlined rather than wrapped in a verbatim fence (the fence form is reserved for code-dense bodies)."
+  }
+ ],
+ "completed": true
+}

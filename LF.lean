@@ -11,6 +11,7 @@ import LF.Poly
 import LF.Tactics
 import LF.Logic
 import LF.IndProp
+import LF.ProofObjects
 import LF.Automation
 import LF.Typeclasses
 import LF.Postscript
@@ -32,6 +33,7 @@ open Verso Genre Manual
 {include LF.Tactics}
 {include LF.Logic}
 {include LF.IndProp}
+{include LF.ProofObjects}
 {include LF.Automation}
 {include LF.Typeclasses}
 {include LF.Postscript}

@@ -17,6 +17,14 @@ inductive BnfToken where
   | «meta» (name : String)
   /-- A literal terminal of the object language, written as a string in the source. -/
   | lit (literal : String)
+  /-- An elision: "other productions as before" when heading an alternative on its own
+  (as in `t ::= "..." ("other forms unchanged") | …`), or an informal repetition marker
+  inside a longer alternative (as in `"{" i "=" t "," "..." "," i "=" t "}"`). Written as
+  the literal string `"..."` in the source — a quoted terminal whose content is exactly
+  three dots is always parsed as this token rather than as `lit "..."`, since a real
+  object language is never going to have `...` as one of its actual terminals. Rendered
+  distinctly from a real terminal (not keyword-styled) in every backend. -/
+  | ellipsis
 deriving Repr, Inhabited, BEq, ToJson, FromJson
 
 /-- One alternative of a production: a sequence of tokens, plus an optional gloss
@@ -97,7 +105,10 @@ def tokToTerm (stx : TSyntax `bnfTok) : MacroM (TSyntax `term) :=
       let s := Syntax.mkStrLit name
       `(SFLMeta.BnfToken.nonterm $s)
   | `(bnfTok| $s:str) =>
-    `(SFLMeta.BnfToken.lit $s)
+    if s.getString == "..." then
+      `(SFLMeta.BnfToken.ellipsis)
+    else
+      `(SFLMeta.BnfToken.lit $s)
   | _ => Macro.throwUnsupported
 
 /-- Translate a parsed `bnfAlt` to term syntax producing a `BnfAlt`. -/
@@ -135,7 +146,8 @@ def tokOfSyntax (stx : TSyntax `bnfTok) : Except String BnfToken :=
     let name := i.getId.toString
     if name.startsWith "_" then .ok (.meta (name.drop 1).toString)
     else .ok (.nonterm name)
-  | `(bnfTok| $s:str)   => .ok (.lit s.getString)
+  | `(bnfTok| $s:str)   =>
+    .ok (if s.getString == "..." then .ellipsis else .lit s.getString)
   | _ => .error s!"unrecognized bnfTok"
 
 /-- Translate a parsed `bnfAlt` to a `BnfAlt`. -/
@@ -177,6 +189,7 @@ def tokToHtml : BnfToken → Html
   | .nonterm s => {{ <span class="bnf-nt">{{s}}</span> }}
   | .meta    s => {{ <span class="bnf-mv">{{s}}</span> }}
   | .lit     s => {{ <span class="bnf-kw">{{s}}</span> }}
+  | .ellipsis  => {{ <span class="bnf-ellipsis">{{"…"}}</span> }}
 
 /-- Render a single alternative (sequence of tokens) as inline HTML.  The gloss, if
 any, is rendered separately by `toHtmlImpl` into its own column. -/
@@ -220,6 +233,7 @@ def tokToText : BnfToken → String
   | .nonterm s => s
   | .meta    s => s
   | .lit     s => s
+  | .ellipsis  => "..."
 
 /-- Render an alternative as plain text: its tokens, space-separated. -/
 def altToText (alt : BnfAlt) : String :=
@@ -246,6 +260,7 @@ def tokToTeX : BnfToken → Verso.Output.TeX
   | .nonterm s => .raw s!"\\mathit\{{s}}"
   | .meta    s => .raw s!"\\mathit\{{s}}"
   | .lit     s => .raw s!"\\textsf\{{s}}"
+  | .ellipsis  => .raw "\\ldots"
 
 /-- Render an alternative as a TeX fragment, with `~` separators between tokens.  The
 gloss, if any, is rendered separately by `toTeXImpl` into its own column. -/
@@ -326,6 +341,9 @@ table.bnf .bnf-mv  {
   text-underline-offset: 0.18em;
 }
 table.bnf .bnf-kw  { font-weight: 600; font-family: var(--verso-code-font-family, monospace); }
+/* Neither italic (nonterminal) nor bold (terminal): an elision reads as punctuation,
+   not as a piece of the grammar proper. */
+table.bnf .bnf-ellipsis { opacity: 0.65; }
 /* The gloss column: set in the body font, muted, and pushed away from the
    grammar so it reads as an annotation rather than as part of the syntax. */
 table.bnf td.bnf-note {

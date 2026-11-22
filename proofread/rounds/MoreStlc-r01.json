@@ -1,0 +1,743 @@
+{
+ "file": "TS/MoreStlc.lean",
+ "chapter": "MoreStlc",
+ "round": 1,
+ "proposals": [
+  {
+   "id": "b01",
+   "cat": "formatting/blank-lines",
+   "old": "open SFLMeta\n\n\n#doc (Manual) \"MoreStlc: More on the Simply Typed Lambda-Calculus\" =>",
+   "new": "open SFLMeta\n\n#doc (Manual) \"MoreStlc: More on the Simply Typed Lambda-Calculus\" =>",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b04",
+   "cat": "formatting/blank-lines",
+   "old": "the _only_ possible result of reducing an expression of type `Unit`.\n::::\n\n\nSyntax:\n",
+   "new": "the _only_ possible result of reducing an expression of type `Unit`.\n::::\n\nSyntax:\n",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b05",
+   "cat": "formatting/blank-lines",
+   "old": "::::\n\n\n## Sums",
+   "new": "::::\n\n## Sums",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b09",
+   "cat": "formatting/blank-lines",
+   "old": "::::\n\n\n## Lists",
+   "new": "::::\n\n## Lists",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b13",
+   "cat": "formatting/blank-lines",
+   "old": "```\n\n\nThe simply typed lambda-calculus with fixed points is a famous and",
+   "new": "```\n\nThe simply typed lambda-calculus with fixed points is a famous and",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b15",
+   "cat": "formatting/blank-lines",
+   "old": "::::\n\n\nThe typing rules are also simple:",
+   "new": "::::\n\nThe typing rules are also simple:",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b17",
+   "cat": "formatting/blank-lines",
+   "old": "::::\n\n\n## Exercise: Formalizing the Extensions",
+   "new": "::::\n\n## Exercise: Formalizing the Extensions",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b18",
+   "cat": "formatting/blank-lines",
+   "old": "  extendedTmHandler.orElse (commonTmHandler language elabTy)\n\n\npartial def elabTm : TmElab :=",
+   "new": "  extendedTmHandler.orElse (commonTmHandler language elabTy)\n\npartial def elabTm : TmElab :=",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b19",
+   "cat": "formatting/blank-lines",
+   "old": "  | _ => throw ()\n\n\n@[app_unexpander Ty.list]",
+   "new": "  | _ => throw ()\n\n@[app_unexpander Ty.list]",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b21",
+   "cat": "formatting/blank-lines",
+   "old": "private def Tm.delabVar : Delab := Delab.delabVar ``Tm.var\n\n\n@[app_unexpander Tm.app]",
+   "new": "private def Tm.delabVar : Delab := Delab.delabVar ``Tm.var\n\n@[app_unexpander Tm.app]",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b22",
+   "cat": "formatting/blank-lines",
+   "old": "private def Tm.unexpandApp : Unexpander := Delab.unexpandApp\n\n\n@[app_unexpander Tm.abs]",
+   "new": "private def Tm.unexpandApp : Unexpander := Delab.unexpandApp\n\n@[app_unexpander Tm.abs]",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b23",
+   "cat": "formatting/blank-lines",
+   "old": "  | _ => throw ()\n\n\n@[app_unexpander Tm.listNil]",
+   "new": "  | _ => throw ()\n\n@[app_unexpander Tm.listNil]",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b24",
+   "cat": "formatting/blank-lines",
+   "old": "  | _ => throw ()\n\n\n@[app_unexpander Tm.snd]",
+   "new": "  | _ => throw ()\n\n@[app_unexpander Tm.snd]",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b25",
+   "cat": "formatting/blank-lines",
+   "old": "  | _ => throw ()\n\n\n@[app_unexpander Tm.fix]",
+   "new": "  | _ => throw ()\n\n@[app_unexpander Tm.fix]",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b34",
+   "cat": "formatting/blank-lines",
+   "old": "  solution!\n    apply_rules using ExtStlcTyping\n```\n\n\n```lean\ntheorem reduces :\n  <{ equal 4 4 }> ⟶* Tm.const 1 := by",
+   "new": "  solution!\n    apply_rules using ExtStlcTyping\n```\n\n```lean\ntheorem reduces :\n  <{ equal 4 4 }> ⟶* Tm.const 1 := by",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b35",
+   "cat": "formatting/blank-lines",
+   "old": "    normalize using ExtStlcEval\n```\n\n\n```lean\nend Fix3",
+   "new": "    normalize using ExtStlcEval\n```\n\n```lean\nend Fix3",
+   "why": "Two or more blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "rfl1",
+   "cat": "style/proof-by",
+   "old": "example (x : Tm) : (<{ x }> : Tm) = x := rfl",
+   "new": "example (x : Tm) : (<{ x }> : Tm) = x := by rfl",
+   "why": "A proof always opens with `by`; bare `:= rfl` should be `:= by rfl`."
+  },
+  {
+   "id": "rfl2",
+   "cat": "style/proof-by",
+   "old": "        \"Y\" (Tm.var \"Y\") := rfl",
+   "new": "        \"Y\" (Tm.var \"Y\") := by rfl",
+   "why": "A proof always opens with `by`; bare `:= rfl` should be `:= by rfl`."
+  },
+  {
+   "id": "rfl3",
+   "cat": "style/proof-by",
+   "old": "        \"XS\"\n        (Tm.var \"X\") := rfl",
+   "new": "        \"XS\"\n        (Tm.var \"X\") := by rfl",
+   "why": "A proof always opens with `by`; bare `:= rfl` should be `:= by rfl` (anchored with the preceding `\"XS\"` line since this `(Tm.var \"X\") := rfl` text recurs a few lines below)."
+  },
+  {
+   "id": "rfl4",
+   "cat": "style/proof-by",
+   "old": "example :\n    (<{ let X = Y in X }> : Tm) =\n      Tm.letIn\n        \"X\"\n        (Tm.var \"Y\")\n        (Tm.var \"X\") := rfl",
+   "new": "example :\n    (<{ let X = Y in X }> : Tm) =\n      Tm.letIn\n        \"X\"\n        (Tm.var \"Y\")\n        (Tm.var \"X\") := by rfl",
+   "why": "A proof always opens with `by`; bare `:= rfl` should be `:= by rfl`."
+  },
+  {
+   "id": "dash01",
+   "cat": "punctuation/em-dash",
+   "old": "natural numbers is easy - basically just a matter of combining",
+   "new": "natural numbers is easy — basically just a matter of combining",
+   "why": "A parenthetical dash in prose is a real em dash (—), per Chicago, not the ASCII typewriter convention, per STYLE-WRITING.md."
+  },
+  {
+   "id": "dash02",
+   "cat": "punctuation/em-dash",
+   "old": "adding two new forms of term - pairing, written `(t₁,t₂)`, and",
+   "new": "adding two new forms of term — pairing, written `(t₁,t₂)`, and",
+   "why": "A parenthetical dash in prose is a real em dash (—), per Chicago, not the ASCII typewriter convention, per STYLE-WRITING.md."
+  },
+  {
+   "id": "dash03",
+   "cat": "punctuation/em-dash",
+   "old": "`snd t` for the second projection - plus one new type constructor,",
+   "new": "`snd t` for the second projection — plus one new type constructor,",
+   "why": "A parenthetical dash in prose is a real em dash (—), per Chicago, not the ASCII typewriter convention, per STYLE-WRITING.md."
+  },
+  {
+   "id": "dash04",
+   "cat": "punctuation/em-dash",
+   "old": "left part, and then - when a value appears on the left - the right",
+   "new": "left part, and then — when a value appears on the left — the right",
+   "why": "A parenthetical dash in prose is a real em dash (—), per Chicago, not the ASCII typewriter convention, per STYLE-WRITING.md."
+  },
+  {
+   "id": "dash05",
+   "cat": "punctuation/em-dash",
+   "old": "It has a single element - the term constant `unit` (with a small `u`) -",
+   "new": "It has a single element — the term constant `unit` (with a small `u`) —",
+   "why": "A parenthetical dash in prose is a real em dash (—), per Chicago, not the ASCII typewriter convention, per STYLE-WRITING.md."
+  },
+  {
+   "id": "dash06",
+   "cat": "punctuation/em-dash",
+   "old": "also add `unit` to the set of possible values - indeed, `unit` is",
+   "new": "also add `unit` to the set of possible values — indeed, `unit` is",
+   "why": "A parenthetical dash in prose is a real em dash (—), per Chicago, not the ASCII typewriter convention, per STYLE-WRITING.md."
+  },
+  {
+   "id": "dash07",
+   "cat": "punctuation/em-dash",
+   "old": "has just one element -- after all, wouldn't every computation",
+   "new": "has just one element — after all, wouldn't every computation",
+   "why": "A parenthetical dash in prose is a real em dash (—), per Chicago, not the ASCII typewriter convention, per STYLE-WRITING.md."
+  },
+  {
+   "id": "dash08",
+   "cat": "punctuation/em-dash",
+   "old": "_side effects_ -- e.g., assignment statements that mutate",
+   "new": "_side effects_ — e.g., assignment statements that mutate",
+   "why": "A parenthetical dash in prose is a real em dash (—), per Chicago, not the ASCII typewriter convention, per STYLE-WRITING.md."
+  },
+  {
+   "id": "dash09",
+   "cat": "punctuation/em-dash",
+   "old": "one -- which we've adopted here -- forces the programmer to",
+   "new": "one — which we've adopted here — forces the programmer to",
+   "why": "A parenthetical dash in prose is a real em dash (—), per Chicago, not the ASCII typewriter convention, per STYLE-WRITING.md."
+  },
+  {
+   "id": "dash10",
+   "cat": "punctuation/em-dash",
+   "old": "variable being bound - something that is not allowed according",
+   "new": "variable being bound — something that is not allowed according",
+   "why": "A parenthetical dash in prose is a real em dash (—), per Chicago, not the ASCII typewriter convention, per STYLE-WRITING.md."
+  },
+  {
+   "id": "dash11",
+   "cat": "punctuation/em-dash",
+   "old": "like this is possible, but it requires some extra effort -- e.g.,",
+   "new": "like this is possible, but it requires some extra effort — e.g.,",
+   "why": "A parenthetical dash in prose is a real em dash (—), per Chicago, not the ASCII typewriter convention, per STYLE-WRITING.md."
+  },
+  {
+   "id": "dash12",
+   "cat": "punctuation/em-dash",
+   "old": "slightly better approximation to `Fact` -- a function that returns",
+   "new": "slightly better approximation to `Fact` — a function that returns",
+   "why": "A parenthetical dash in prose is a real em dash (—), per Chicago, not the ASCII typewriter convention, per STYLE-WRITING.md."
+  },
+  {
+   "id": "dash13",
+   "cat": "punctuation/em-dash",
+   "old": "terse version seems worse than scrolling in this -- rare --",
+   "new": "terse version seems worse than scrolling in this — rare —",
+   "why": "A parenthetical dash in prose is a real em dash (—), per Chicago, not the ASCII typewriter convention, per STYLE-WRITING.md."
+  },
+  {
+   "id": "dash14",
+   "cat": "punctuation/em-dash",
+   "old": "  records -- for example, a binary presentation with one",
+   "new": "  records — for example, a binary presentation with one",
+   "why": "A parenthetical dash in prose is a real em dash (—), per Chicago, not the ASCII typewriter convention, per STYLE-WRITING.md."
+  },
+  {
+   "id": "dash15",
+   "cat": "punctuation/em-dash",
+   "old": "encoding.  (The reduction rules are \"almost validated\" -- not",
+   "new": "encoding.  (The reduction rules are \"almost validated\" — not",
+   "why": "A parenthetical dash in prose is a real em dash (—), per Chicago, not the ASCII typewriter convention, per STYLE-WRITING.md."
+  },
+  {
+   "id": "dash16",
+   "cat": "punctuation/em-dash",
+   "old": "scratch -- the only thing missing is a way to allow _recursion_ in",
+   "new": "scratch — the only thing missing is a way to allow _recursion_ in",
+   "why": "A parenthetical dash in prose is a real em dash (—), per Chicago, not the ASCII typewriter convention, per STYLE-WRITING.md."
+  },
+  {
+   "id": "dash17",
+   "cat": "punctuation/em-dash",
+   "old": "treatments can be found in many textbooks -- e.g., Types and",
+   "new": "treatments can be found in many textbooks — e.g., Types and",
+   "why": "A parenthetical dash in prose is a real em dash (—), per Chicago, not the ASCII typewriter convention, per STYLE-WRITING.md."
+  },
+  {
+   "id": "typo01",
+   "cat": "typo/missing-space",
+   "old": "`inl 5 : Nat + Nat`and `inl 5 : Nat + Bool` (and infinitely many other types).",
+   "new": "`inl 5 : Nat + Nat` and `inl 5 : Nat + Bool` (and infinitely many other types).",
+   "why": "Missing space between the backtick and \"and\"."
+  },
+  {
+   "id": "typo02",
+   "cat": "typo/corrupted-word",
+   "old": "This peculiarity (technically, a failure of uniqueness of types) would mean t\nhat we cannot build a typechecking algorithm simply by \"reading the rules from bottom to",
+   "new": "This peculiarity (technically, a failure of uniqueness of types) would mean\nthat we cannot build a typechecking algorithm simply by \"reading the rules from bottom to",
+   "why": "The word \"that\" is corrupted into \"t\" + newline + \"hat\"; move the word break."
+  },
+  {
+   "id": "typo03",
+   "cat": "typo/missing-paren",
+   "old": "through to reduce to a normal form (assuming the usual reduction\nrules for arithmetic operations.",
+   "new": "through to reduce to a normal form (assuming the usual reduction\nrules for arithmetic operations).",
+   "why": "The parenthetical \"(assuming ...)\" is never closed; the original source has the closing paren."
+  },
+  {
+   "id": "typo04",
+   "cat": "typo/stray-character",
+   "old": "`{}` is the ∅ tuple, `{5}` is a singleton\ntuple, `{5,6}]`is a 2-tuple (morally the same as a pair),",
+   "new": "`{}` is the ∅ tuple, `{5}` is a singleton\ntuple, `{5,6}` is a 2-tuple (morally the same as a pair),",
+   "why": "Stray `]` and a missing space; should read \"`{5,6}` is a 2-tuple\"."
+  },
+  {
+   "id": "typo05",
+   "cat": "typo/stray-character",
+   "old": "    let Odd  = snd EvenOdd in\n    (Even 3, Even 4)}\n```",
+   "new": "    let Odd  = snd EvenOdd in\n    (Even 3, Even 4)\n```",
+   "why": "Stray trailing `}` with no matching `{` anywhere in the expression."
+  },
+  {
+   "id": "typo06",
+   "cat": "markup/leftover-coq-syntax",
+   "old": "-- (Warning: you may be able to typecheck `fact` but still have some rules wrong!) *)\n\ntheorem typechecks :\n  <{ ∅ ⊢ fact ⦂ Nat → Nat }> := by",
+   "new": "-- (Warning: you may be able to typecheck `fact` but still have some\n-- rules wrong!)\n\ntheorem typechecks :\n  <{ ∅ ⊢ fact ⦂ Nat → Nat }> := by",
+   "why": "Leftover Coq comment-closer `*)` glued onto the end of a Lean `--` comment (the original source's `*)` closed its own `(**` doc-comment and was never part of the English sentence); also over 70 columns once the artifact is removed, so rewrap."
+  },
+  {
+   "id": "typo07",
+   "cat": "typo/extra-space",
+   "old": "By `fix`  and `abs`, this term has type `τ`.  By `fixAbs`",
+   "new": "By `fix` and `abs`, this term has type `τ`.  By `fixAbs`",
+   "why": "Double space mid-sentence (not after a period, so the house rule doesn't cover it)."
+  },
+  {
+   "id": "typo08",
+   "cat": "typo/missing-space",
+   "old": "theorem progress (t : Tm) (τ : Ty) (ht :<{ ∅ ⊢ t ⦂ τ }>) :",
+   "new": "theorem progress (t : Tm) (τ : Ty) (ht : <{ ∅ ⊢ t ⦂ τ }>) :",
+   "why": "Missing space after the colon."
+  },
+  {
+   "id": "typo09",
+   "cat": "typo/missing-space",
+   "old": "    (ht :<{ ∅ ⊢ t ⦂ τ }>) :",
+   "new": "    (ht : <{ ∅ ⊢ t ⦂ τ }>) :",
+   "why": "Missing space after the colon."
+  },
+  {
+   "id": "style01",
+   "cat": "style/notation-consistency",
+   "old": "    t.IsValue ∨ exists t', t ⟶ t' := by",
+   "new": "    t.IsValue ∨ ∃ t', t ⟶ t' := by",
+   "why": "Uses the ASCII `exists` binder where every other theorem statement in the chapter uses `∃`."
+  },
+  {
+   "id": "markup01",
+   "cat": "markup/accidental-indent",
+   "old": "::::terse\n    We create elements of these types by tagging elements of the\n    component types, telling on which side of the sum we are putting\n    them. E.g.,",
+   "new": "::::terse\nWe create elements of these types by tagging elements of the\ncomponent types, telling on which side of the sum we are putting\nthem. E.g.,",
+   "why": "This `::::terse` paragraph is indented 4 spaces, which Markdown reads as a literal block rather than prose; every sibling `::::terse`/`::::full` paragraph sits flush left."
+  },
+  {
+   "id": "markup02",
+   "cat": "markup/accidental-indent",
+   "old": "::::terse\nAs a final example, records can be presented as a\ngeneralization of pairs:\n    - they are n-ary (rather than binary);\n    - they are accessed by _label_ (rather than position).\n::::",
+   "new": "::::terse\nAs a final example, records can be presented as a\ngeneralization of pairs:\n\n- they are n-ary (rather than binary);\n- they are accessed by _label_ (rather than position).\n::::",
+   "why": "This list is indented 4 spaces, which Markdown reads as a literal block rather than a list; dedent it to a normal Markdown list (with the blank line Markdown requires before a list)."
+  },
+  {
+   "id": "markup03",
+   "cat": "markup/missing-fence",
+   "old": "For example, here is a function that calculates the sum of\nthe first two elements of a list of numbers:\n\n      λ X:List Nat.\n      case X of\n        nil   => 0\n        | A :: Xs' => case Xs' of\n                     nil    => A\n                     | B :: Xs'' => A + B\n::::\n\n\nSyntax:",
+   "new": "For example, here is a function that calculates the sum of\nthe first two elements of a list of numbers:\n\n```display\n      λ X:List Nat.\n      case X of\n        nil   => 0\n        | A :: Xs' => case Xs' of\n                     nil    => A\n                     | B :: Xs'' => A + B\n```\n::::\n\nSyntax:",
+   "why": "Every other inline example in the chapter is wrapped in a ```display``` fence; this one was left bare. Also collapses the double-blank-line slip right after."
+  },
+  {
+   "id": "indent01",
+   "cat": "markup/indentation",
+   "old": "  | fix₁ (t₁ t₁' : Tm) :\n      t₁ ⟶ t₁' →\n      <{ fix t₁ }> ⟶ <{ fix t₁' }>\n   | fixAbs (x : String) (τ₁ : Ty) (t₁ : Tm) :\n      <{ fix (λ x : τ₁ . t₁) }> ⟶\n      <{ [x := fix (λ x : τ₁ . t₁) ] t₁ }>",
+   "new": "  | fix₁ (t₁ t₁' : Tm) :\n      t₁ ⟶ t₁' →\n      <{ fix t₁ }> ⟶ <{ fix t₁' }>\n  | fixAbs (x : String) (τ₁ : Ty) (t₁ : Tm) :\n      <{ fix (λ x : τ₁ . t₁) }> ⟶\n      <{ [x := fix (λ x : τ₁ . t₁) ] t₁ }>",
+   "why": "3-space indent vs. the 2-space indent on every sibling constructor (e.g. `fix₁` just above)."
+  },
+  {
+   "id": "indent02",
+   "cat": "markup/indentation",
+   "old": "    | listCase Γ t₁ t₂ t₃ x₁ x₂ τ₁ τ₂ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>\n        right; cases ih₁ rfl\n        -- t₁ is a value\n        case _ ht =>\n          apply canonical_forms_list at h₁\n          obtain hnil | ⟨v₁, v₂, hv₁, hv₂, h⟩ := h₁ ht\n          · rw [hnil]; exists t₂; apply_rules using ExtStlcEval\n          · rw [h]; exists <{ [x₂ := v₂] [x₁ := v₁] t₃ }>; apply_rules using ExtStlcEval\n        -- t₁ is not a value\n        case _ ht =>\n          obtain ⟨t', ht⟩ := ht\n          exists <{case t' of nil => t₂ | x₁ :: x₂ => t₃}>; apply_rules using ExtStlcEval",
+   "new": "    | listCase Γ t₁ t₂ t₃ x₁ x₂ τ₁ τ₂ h₁ h₂ h₃ ih₁ ih₂ ih₃ =>\n      right; cases ih₁ rfl\n      -- t₁ is a value\n      case _ ht =>\n        apply canonical_forms_list at h₁\n        obtain hnil | ⟨v₁, v₂, hv₁, hv₂, h⟩ := h₁ ht\n        · rw [hnil]; exists t₂; apply_rules using ExtStlcEval\n        · rw [h]; exists <{ [x₂ := v₂] [x₁ := v₁] t₃ }>\n          apply_rules using ExtStlcEval\n      -- t₁ is not a value\n      case _ ht =>\n        obtain ⟨t', ht⟩ := ht\n        exists <{case t' of nil => t₂ | x₁ :: x₂ => t₃}>\n        apply_rules using ExtStlcEval",
+   "why": "This `listCase` case is indented 2 columns deeper than every sibling case in the same `induction ... with` (e.g. `listCons` just above); dedent to match. Also splits two lines that are over 70 columns once dedented is still not enough on their own."
+  },
+  {
+   "id": "indent03",
+   "cat": "markup/indentation",
+   "old": "    | fix Γ t₁ τ₁ h ih =>\n        right; cases ih rfl\n        -- t₁ is a value\n        case _ ht₁ =>\n          apply canonical_forms_fun at h\n          obtain ⟨x, v, ht⟩ := h ht₁; rw [ht]\n          exists <{ [x := fix (λ x : τ₁ . v) ] v }>; apply_rules using ExtStlcEval\n        -- t₁ is not a value\n        case _ ht₁ =>\n          obtain ⟨t₁', ht₁⟩ := ht₁\n          exists <{fix t₁'}>; apply_rules using ExtStlcEval\n    -- END SOLUTION",
+   "new": "    | fix Γ t₁ τ₁ h ih =>\n      right; cases ih rfl\n      -- t₁ is a value\n      case _ ht₁ =>\n        apply canonical_forms_fun at h\n        obtain ⟨x, v, ht⟩ := h ht₁; rw [ht]\n        exists <{ [x := fix (λ x : τ₁ . v) ] v }>\n        apply_rules using ExtStlcEval\n      -- t₁ is not a value\n      case _ ht₁ =>\n        obtain ⟨t₁', ht₁⟩ := ht₁\n        exists <{fix t₁'}>; apply_rules using ExtStlcEval\n    -- END SOLUTION",
+   "why": "This `fix` case is indented 2 columns deeper than every sibling case in the same `induction ... with`; dedent to match. Also splits a line that is over 70 columns even after dedenting."
+  },
+  {
+   "id": "indentR1",
+   "cat": "formatting/indent-consistency",
+   "old": "theorem typechecks : <{ ∅ ⊢ tm_test ⦂ Nat }> := by\n  solution!\n    apply_rules using ExtStlcTyping\n```\n\n\n```lean\ntheorem reduces :\n  tm_test ⟶* Tm.const 6 := by\n    solution!\n        normalize using ExtStlcEval\n```\n\n```lean\nend Let\n```",
+   "new": "theorem typechecks : <{ ∅ ⊢ tm_test ⦂ Nat }> := by\n  solution!\n    apply_rules using ExtStlcTyping\n```\n\n```lean\ntheorem reduces :\n  tm_test ⟶* Tm.const 6 := by\n  solution!\n    normalize using ExtStlcEval\n```\n\n```lean\nend Let\n```",
+   "why": "The `solution!` body is indented 8 columns (solution! itself at 4) here, unlike the `typechecks` theorem just above (and the other `reduces` theorems in this exercise), which use the chapter's normal 2/4 indent. Also collapses the double-blank-line slip before the `reduces` theorem."
+  },
+  {
+   "id": "indentR2",
+   "cat": "formatting/indent-consistency",
+   "old": "theorem typechecks :\n  <{ ∅ ⊢ tm_test ⦂ Nat }> := by\n  solution!\n    apply_rules using ExtStlcTyping\n```\n\n\n```lean\ntheorem reduces :\n  tm_test ⟶* Tm.const 6 := by\n    solution!\n        normalize using ExtStlcEval\n```\n\n\n\n```lean\nend Let1\n```",
+   "new": "theorem typechecks :\n  <{ ∅ ⊢ tm_test ⦂ Nat }> := by\n  solution!\n    apply_rules using ExtStlcTyping\n```\n\n```lean\ntheorem reduces :\n  tm_test ⟶* Tm.const 6 := by\n  solution!\n    normalize using ExtStlcEval\n```\n\n```lean\nend Let1\n```",
+   "why": "The `solution!` body is indented 8 columns (solution! itself at 4) here, unlike the `typechecks` theorem just above (and the other `reduces` theorems in this exercise), which use the chapter's normal 2/4 indent. Also collapses the double- and triple-blank-line slips before and after the `reduces` theorem."
+  },
+  {
+   "id": "indentR3",
+   "cat": "formatting/indent-consistency",
+   "old": "theorem reduces :\n  tm_test ⟶* Tm.const 5 := by\n    solution!\n        normalize using ExtStlcEval\n```",
+   "new": "theorem reduces :\n  tm_test ⟶* Tm.const 5 := by\n  solution!\n    normalize using ExtStlcEval\n```",
+   "why": "The `solution!` body is indented 8 columns (solution! itself at 4) here, unlike the `typechecks` theorem just above (and the other `reduces` theorems in this exercise), which use the chapter's normal 2/4 indent."
+  },
+  {
+   "id": "indentR4",
+   "cat": "formatting/indent-consistency",
+   "old": "theorem reduces :\n  tm_test ⟶* <{ (5, ~(Tm.const 0)) }> := by\n    solution!\n        normalize using ExtStlcEval\n```",
+   "new": "theorem reduces :\n  tm_test ⟶* <{ (5, ~(Tm.const 0)) }> := by\n  solution!\n    normalize using ExtStlcEval\n```",
+   "why": "The `solution!` body is indented 8 columns (solution! itself at 4) here, unlike the `typechecks` theorem just above (and the other `reduces` theorems in this exercise), which use the chapter's normal 2/4 indent."
+  },
+  {
+   "id": "indentR5",
+   "cat": "formatting/indent-consistency",
+   "old": "theorem reduces :\n  tm_test ⟶* Tm.const 25 := by\n    solution!\n        normalize using ExtStlcEval\n```\n\n\n```lean\nend Lists\n```",
+   "new": "theorem reduces :\n  tm_test ⟶* Tm.const 25 := by\n  solution!\n    normalize using ExtStlcEval\n```\n\n```lean\nend Lists\n```",
+   "why": "The `solution!` body is indented 8 columns (solution! itself at 4) here, unlike the `typechecks` theorem just above (and the other `reduces` theorems in this exercise), which use the chapter's normal 2/4 indent. Also collapses the double-blank-line slip after the `reduces` theorem."
+  },
+  {
+   "id": "indentR6",
+   "cat": "formatting/indent-consistency",
+   "old": "theorem reduces :\n  <{ fact 4 }> ⟶* Tm.const 24 := by\n    solution!\n        normalize using ExtStlcEval\n```",
+   "new": "theorem reduces :\n  <{ fact 4 }> ⟶* Tm.const 24 := by\n  solution!\n    normalize using ExtStlcEval\n```",
+   "why": "The `solution!` body is indented 8 columns (solution! itself at 4) here, unlike the `typechecks` theorem just above (and the other `reduces` theorems in this exercise), which use the chapter's normal 2/4 indent."
+  },
+  {
+   "id": "indentR7",
+   "cat": "formatting/indent-consistency",
+   "old": "theorem typechecks :\n  <{ ∅ ⊢ map ⦂\n     (Nat → Nat) → [Nat] → [Nat] }> := by\n  solution!\n    apply_rules using ExtStlcTyping\n```\n\n\n```lean\ntheorem reduces :\n  <{ map (λ A : Nat . succ A) (1 :: 2 :: (nil Nat)) }>\n  ⟶* <{ 2 :: 3 :: (nil Nat) }> := by\n    solution!\n        normalize using ExtStlcEval\n```\n\n\n```lean\nend Fix2",
+   "new": "theorem typechecks :\n  <{ ∅ ⊢ map ⦂\n     (Nat → Nat) → [Nat] → [Nat] }> := by\n  solution!\n    apply_rules using ExtStlcTyping\n```\n\n```lean\ntheorem reduces :\n  <{ map (λ A : Nat . succ A) (1 :: 2 :: (nil Nat)) }>\n  ⟶* <{ 2 :: 3 :: (nil Nat) }> := by\n  solution!\n    normalize using ExtStlcEval\n```\n\n```lean\nend Fix2",
+   "why": "The `solution!` body is indented 8 columns (solution! itself at 4) here, unlike the `typechecks` theorem just above (and the other `reduces` theorems in this exercise), which use the chapter's normal 2/4 indent. Also collapses the double-blank-line slips before and after the `reduces` theorem."
+  },
+  {
+   "id": "w_syn1",
+   "cat": "formatting/line-width",
+   "old": "scoped syntax:50 \"if0 \" stlcTm:51 \" then \" stlcTm:50 \" else \" stlcTm:50 : stlcTm",
+   "new": "scoped syntax:50 \"if0 \" stlcTm:51 \" then \" stlcTm:50\n  \" else \" stlcTm:50 : stlcTm",
+   "why": "Line is over 70 columns; split across lines as the sibling `case ... of nil` and `let` syntax declarations below already do."
+  },
+  {
+   "id": "w_syn2",
+   "cat": "formatting/line-width",
+   "old": "scoped syntax:50 \"case \" stlcTm:50 \" of \" \"inl\" stlcVar \" => \" stlcTm:50 \" | \"\n  \"inr\" stlcVar \" => \" stlcTm:50 : stlcTm",
+   "new": "scoped syntax:50 \"case \" stlcTm:50 \" of \" \"inl\" stlcVar\n  \" => \" stlcTm:50 \" | \" \"inr\" stlcVar \" => \" stlcTm:50 : stlcTm",
+   "why": "First line is still over 70 columns even after the existing split; move the break earlier."
+  },
+  {
+   "id": "w_syn3",
+   "cat": "formatting/line-width",
+   "old": "scoped syntax:50 \"let \" stlcVar \" = \" stlcTm:50 \" in \" stlcTm:50 : stlcTm",
+   "new": "scoped syntax:50 \"let \" stlcVar \" = \" stlcTm:50\n  \" in \" stlcTm:50 : stlcTm",
+   "why": "Line is over 70 columns; split across lines as the sibling `case` syntax declarations above already do."
+  },
+  {
+   "id": "w01",
+   "cat": "formatting/line-width",
+   "old": "        return (mkAppN (mkConst ``Tm.sumCase) #[t, x₁, t₁, x₂, t₂], free)",
+   "new": "        return (mkAppN (mkConst ``Tm.sumCase)\n          #[t, x₁, t₁, x₂, t₂], free)",
+   "why": "Line is over 70 columns; split before the argument array."
+  },
+  {
+   "id": "w02",
+   "cat": "formatting/line-width",
+   "old": "        return (mkAppN (mkConst ``Tm.listCase) #[t₁, t₂, x, xs, t₃], free)",
+   "new": "        return (mkAppN (mkConst ``Tm.listCase)\n          #[t₁, t₂, x, xs, t₃], free)",
+   "why": "Line is over 70 columns; split before the argument array."
+  },
+  {
+   "id": "w03",
+   "cat": "formatting/line-width",
+   "old": "attribute [ExtStlcEval] Tm.IsValue.abs Tm.IsValue.nat Tm.IsValue.sumInl Tm.IsValue.sumInr\n    Tm.IsValue.listNil Tm.IsValue.listCons Tm.IsValue.unit Tm.IsValue.pair",
+   "new": "attribute [ExtStlcEval] Tm.IsValue.abs Tm.IsValue.nat Tm.IsValue.sumInl\n    Tm.IsValue.sumInr Tm.IsValue.listNil Tm.IsValue.listCons\n    Tm.IsValue.unit Tm.IsValue.pair",
+   "why": "First line is over 70 columns; redistribute the attribute list across its continuation lines."
+  },
+  {
+   "id": "w04",
+   "cat": "formatting/line-width",
+   "old": "    Step.sumInl Step.sumInr Step.sumCase Step.sumCaseInl Step.sumCaseInr",
+   "new": "    Step.sumInl Step.sumInr Step.sumCase Step.sumCaseInl\n    Step.sumCaseInr",
+   "why": "Line is over 70 columns; split the attribute list."
+  },
+  {
+   "id": "w05",
+   "cat": "formatting/line-width",
+   "old": "  | sumCase (t t' : Tm) (x₁ : String) (t₁ : Tm) (x₂ : String) (t₂ : Tm) :\n      t ⟶ t' →\n      <{case t of inl x₁ => t₁ | inr x₂ => t₂}> ⟶\n      <{case t' of inl x₁ => t₁ | inr x₂ => t₂}>",
+   "new": "  | sumCase (t t' : Tm) (x₁ : String) (t₁ : Tm) (x₂ : String)\n      (t₂ : Tm) :\n      t ⟶ t' →\n      <{case t of inl x₁ => t₁ | inr x₂ => t₂}> ⟶\n      <{case t' of inl x₁ => t₁ | inr x₂ => t₂}>",
+   "why": "Line is over 70 columns; split the constructor's binders across two lines."
+  },
+  {
+   "id": "w06",
+   "cat": "formatting/line-width",
+   "old": "  | sumCaseInl (v : Tm) (x₁:String) (t₁ : Tm) (x₂ : String) (t₂ : Tm) (τ₂ : Ty) :\n      v.IsValue →\n      <{case inl τ₂ v of inl x₁ => t₁ | inr x₂ => t₂}> ⟶ <{ [x₁ := v] t₁ }>",
+   "new": "  | sumCaseInl (v : Tm) (x₁ : String) (t₁ : Tm) (x₂ : String)\n      (t₂ : Tm) (τ₂ : Ty) :\n      v.IsValue →\n      <{case inl τ₂ v of inl x₁ => t₁ | inr x₂ => t₂}> ⟶\n      <{ [x₁ := v] t₁ }>",
+   "why": "Both lines are over 70 columns; also missing space in `(x₁:String)`. Split the constructor's binders and conclusion across more lines."
+  },
+  {
+   "id": "w07",
+   "cat": "formatting/line-width",
+   "old": "  | sumCaseInr (v : Tm) (x₁:String) (t₁ : Tm) (x₂ : String) (t₂ : Tm) (τ₁ : Ty) :\n      v.IsValue →\n      <{case inr τ₁ v of inl x₁ => t₁ | inr x₂ => t₂}> ⟶ <{ [x₂ := v] t₂ }>",
+   "new": "  | sumCaseInr (v : Tm) (x₁ : String) (t₁ : Tm) (x₂ : String)\n      (t₂ : Tm) (τ₁ : Ty) :\n      v.IsValue →\n      <{case inr τ₁ v of inl x₁ => t₁ | inr x₂ => t₂}> ⟶\n      <{ [x₂ := v] t₂ }>",
+   "why": "Both lines are over 70 columns; also missing space in `(x₁:String)`. Split the constructor's binders and conclusion across more lines."
+  },
+  {
+   "id": "w08",
+   "cat": "formatting/line-width",
+   "old": "  | sumCase (Γ : Context) (x₁ x₂ : String) (τ₁ τ₂ τ₃: Ty) (t t₁ t₂ : Tm) :",
+   "new": "  | sumCase (Γ : Context) (x₁ x₂ : String) (τ₁ τ₂ τ₃ : Ty)\n      (t t₁ t₂ : Tm) :",
+   "why": "Line is over 70 columns; also missing space in `τ₃: Ty`. Split the constructor's binders across two lines."
+  },
+  {
+   "id": "w09",
+   "cat": "formatting/line-width",
+   "old": "  | listCase (Γ : Context) (t₁ t₂ t₃ : Tm) (x₁ x₂ : String) (τ₁ τ₂ : Ty) :",
+   "new": "  | listCase (Γ : Context) (t₁ t₂ t₃ : Tm) (x₁ x₂ : String)\n      (τ₁ τ₂ : Ty) :",
+   "why": "Line is over 70 columns; split the constructor's binders across two lines."
+  },
+  {
+   "id": "w10",
+   "cat": "formatting/line-width",
+   "old": "    t = <{ nil τ }> ∨ ∃ v₁ v₂, (v₁.IsValue ∧ v₂.IsValue ∧ t = <{v₁ :: v₂}>) := by",
+   "new": "    t = <{ nil τ }> ∨\n      ∃ v₁ v₂, (v₁.IsValue ∧ v₂.IsValue ∧ t = <{v₁ :: v₂}>) := by",
+   "why": "Line is over 70 columns; split the disjunction's second disjunct onto its own line."
+  },
+  {
+   "id": "w11",
+   "cat": "formatting/line-width",
+   "old": "        exists <{if0 t₁' then t₂ else t₃}>; apply_rules using ExtStlcEval",
+   "new": "        exists <{if0 t₁' then t₂ else t₃}>\n        apply_rules using ExtStlcEval",
+   "why": "Line is over 70 columns; split the trailing tactic onto its own line, matching the `exists ...; simp [hv]` / `apply_rules ...` split a few lines above."
+  },
+  {
+   "id": "w12",
+   "cat": "formatting/line-width",
+   "old": "        · rw [hl]; exists <{ [x₁ := v] t₁ }>; apply_rules using ExtStlcEval",
+   "new": "        · rw [hl]; exists <{ [x₁ := v] t₁ }>\n          apply_rules using ExtStlcEval",
+   "why": "Line is over 70 columns; split the trailing tactic onto its own line."
+  },
+  {
+   "id": "w13",
+   "cat": "formatting/line-width",
+   "old": "        · rw [hr]; exists <{ [x₂ := v] t₂ }>; apply_rules using ExtStlcEval",
+   "new": "        · rw [hr]; exists <{ [x₂ := v] t₂ }>\n          apply_rules using ExtStlcEval",
+   "why": "Line is over 70 columns; split the trailing tactic onto its own line."
+  },
+  {
+   "id": "w14",
+   "cat": "formatting/line-width",
+   "old": "        exists <{case t' of inl x₁ => t₁ | inr x₂ => t₂}>; apply_rules using ExtStlcEval",
+   "new": "        exists <{case t' of inl x₁ => t₁ | inr x₂ => t₂}>\n        apply_rules using ExtStlcEval",
+   "why": "Line is over 70 columns; split the trailing tactic onto its own line."
+  },
+  {
+   "id": "w18",
+   "cat": "formatting/line-width",
+   "old": "  induction ht generalizing Γ' with (apply_rules [PartialMap.update_subset] using ExtStlcTyping)",
+   "new": "  induction ht generalizing Γ' with\n    (apply_rules [PartialMap.update_subset] using ExtStlcTyping)",
+   "why": "Line is over 70 columns; break after `with`, indenting the combinator tactic (matching the identical fix in TS/StlcProp.lean)."
+  },
+  {
+   "id": "w19",
+   "cat": "formatting/line-width",
+   "old": "theorem substitution_preserves_typing (Γ : Context) (x : String) (τ₁ : Ty) (t v : Tm) (τ : Ty)\n    (ht : <{ x ↦ τ₁ ; Γ ⊢ t ⦂ τ }>)",
+   "new": "theorem substitution_preserves_typing (Γ : Context) (x : String)\n    (τ₁ : Ty) (t v : Tm) (τ : Ty)\n    (ht : <{ x ↦ τ₁ ; Γ ⊢ t ⦂ τ }>)",
+   "why": "Line is over 70 columns; split the binders across two lines."
+  },
+  {
+   "id": "w20",
+   "cat": "formatting/line-width",
+   "old": "    induction t generalizing Γ τ with (\n        rw [subst]; try (inversion ht; apply_rules using ExtStlcTyping; done))",
+   "new": "    induction t generalizing Γ τ with (\n        rw [subst];\n        try (inversion ht; apply_rules using ExtStlcTyping; done))",
+   "why": "Line is over 70 columns; split the combinator tactic's two steps onto separate lines."
+  },
+  {
+   "id": "w21",
+   "cat": "formatting/line-width",
+   "old": "        · simp_all [PartialMap.update_shadow]; apply_rules using ExtStlcTyping",
+   "new": "        · simp_all [PartialMap.update_shadow]\n          apply_rules using ExtStlcTyping",
+   "why": "Line is over 70 columns; split the trailing tactic onto its own line."
+  },
+  {
+   "id": "w22",
+   "cat": "formatting/line-width",
+   "old": "    | sumCase _ y₁ _ y₂ _ ih ih₁ ih₂ =>\n        inversion ht with | _ h₁ h₂ h₃ =>\n        by_cases x = y₁ <;> by_cases x = y₂ <;> constructor <;> first\n            | apply ih; assumption\n            | simp_all [PartialMap.update_shadow, PartialMap.update_permute]\n        apply ih₁; rw [PartialMap.update_permute]; assumption; lia",
+   "new": "    | sumCase _ y₁ _ y₂ _ ih ih₁ ih₂ =>\n        inversion ht with | _ h₁ h₂ h₃ =>\n        by_cases x = y₁ <;> by_cases x = y₂ <;> constructor <;> first\n            | apply ih; assumption\n            | simp_all [PartialMap.update_shadow,\n                PartialMap.update_permute]\n        apply ih₁; rw [PartialMap.update_permute]; assumption; lia",
+   "why": "Line is over 70 columns; split the simp set across two lines (anchored with the surrounding `sumCase` case since this line recurs verbatim in the `listCase`/`letIn` cases below)."
+  },
+  {
+   "id": "w23",
+   "cat": "formatting/line-width",
+   "old": "    | listCase _ _ y₁ y₂ _ ih ih₁ ih₂ =>\n        inversion ht with | _ h₁ h₂ h₃ =>\n        by_cases x = y₁ <;> by_cases x = y₂ <;> constructor <;> first\n            | apply ih; assumption\n            | simp_all [PartialMap.update_shadow, PartialMap.update_permute]",
+   "new": "    | listCase _ _ y₁ y₂ _ ih ih₁ ih₂ =>\n        inversion ht with | _ h₁ h₂ h₃ =>\n        by_cases x = y₁ <;> by_cases x = y₂ <;> constructor <;> first\n            | apply ih; assumption\n            | simp_all [PartialMap.update_shadow,\n                PartialMap.update_permute]",
+   "why": "Line is over 70 columns; split the simp set across two lines (anchored with the `listCase` case, since this line recurs verbatim elsewhere)."
+  },
+  {
+   "id": "w24",
+   "cat": "formatting/line-width",
+   "old": "    | letIn y _ _ ih ih₁ =>\n        inversion ht with | _ h₁ h₂ =>\n        by_cases x = y <;> constructor <;> first\n            | apply ih; assumption\n            | simp_all [PartialMap.update_shadow, PartialMap.update_permute]\n```",
+   "new": "    | letIn y _ _ ih ih₁ =>\n        inversion ht with | _ h₁ h₂ =>\n        by_cases x = y <;> constructor <;> first\n            | apply ih; assumption\n            | simp_all [PartialMap.update_shadow,\n                PartialMap.update_permute]\n```",
+   "why": "Line is over 70 columns; split the simp set across two lines (anchored with the closing fence, since this line recurs verbatim elsewhere)."
+  },
+  {
+   "id": "indent04",
+   "cat": "markup/indentation",
+   "old": "theorem weakening {Γ Γ' : Context} {t : Tm} {τ: Ty}\n    (hi : Γ ⊆ Γ')\n    (ht : <{ Γ ⊢ t ⦂ τ }>) :\n     <{ Γ' ⊢ t ⦂ τ }> := by",
+   "new": "theorem weakening {Γ Γ' : Context} {t : Tm} {τ : Ty}\n    (hi : Γ ⊆ Γ')\n    (ht : <{ Γ ⊢ t ⦂ τ }>) :\n    <{ Γ' ⊢ t ⦂ τ }> := by",
+   "why": "Missing space in `{τ: Ty}`, and the conclusion line is indented 5 columns instead of the usual 4."
+  },
+  {
+   "id": "typo10",
+   "cat": "typo/missing-space",
+   "old": "theorem weakening_empty {Γ : Context} {t : Tm} {τ: Ty}",
+   "new": "theorem weakening_empty {Γ : Context} {t : Tm} {τ : Ty}",
+   "why": "Missing space in `{τ: Ty}`."
+  },
+  {
+   "id": "fig01",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                                 t₁ ⟶ t₁'\n                     -------------------------------------        (let₁)\n                     let x = t₁ in t₂ ⟶ let x = t₁' in t₂\n\n                        ---------------------------------         (letValue)\n                        let x = v₁ in t₂ ⟶ [x := v₁] t₂\n```",
+   "new": "```display +centered\n              t₁ ⟶ t₁'\n------------------------------------  (let₁)\nlet x = t₁ in t₂ ⟶ let x = t₁' in t₂\n\n-------------------------------       (letValue)\nlet x = v₁ in t₂ ⟶ [x := v₁] t₂\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. let₁/letValue are both balanced, so symbol-aligned."
+  },
+  {
+   "id": "fig02",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n             Γ ⊢ t₁ ⦂ τ₁      x ↦ τ₁ ; Γ ⊢ t₂ ⦂ τ₂\n             -------------------------------------------      (let)\n                     Γ ⊢ let x = t₁ in t₂ ⦂ τ₂\n```",
+   "new": "```display +centered\n       Γ ⊢ t₁ ⦂ τ₁\n  x ↦ τ₁ ; Γ ⊢ t₂ ⦂ τ₂\n-------------------------  (let)\nΓ ⊢ let x = t₁ in t₂ ⦂ τ₂\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. The two premises were packed onto one source line, against the one-premise-per-line rule; put each on its own line."
+  },
+  {
+   "id": "fig03",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                              t₁ ⟶ t₁'\n                         --------------------                        (pair₁)\n                         (t₁,t₂) ⟶ (t₁',t₂)\n\n                              t₂ ⟶ t₂'\n                         --------------------                        (pair₂)\n                         (v₁,t₂) ⟶ (v₁,t₂')\n\n                               t ⟶ t'\n                           ------------------                        (fst₁)\n                           fst t ⟶ fst t'\n\n                          ------------------                       (fstPair)\n                           fst (v₁,v₂) ⟶ v₁\n\n                               t ⟶ t'\n                           ------------------                      (snd₁)\n                           snd t ⟶ snd t'\n\n                          ------------------                       (sndPair)\n                          snd (v₁,v₂) ⟶ v₂\n```",
+   "new": "```display +centered\n     t₁ ⟶ t₁'\n------------------  (pair₁)\n(t₁,t₂) ⟶ (t₁',t₂)\n\n     t₂ ⟶ t₂'\n------------------  (pair₂)\n(v₁,t₂) ⟶ (v₁,t₂')\n\n      t ⟶ t'\n  --------------    (fst₁)\n  fst t ⟶ fst t'\n\n ----------------   (fstPair)\n fst (v₁,v₂) ⟶ v₁\n\n      t ⟶ t'\n  --------------    (snd₁)\n  snd t ⟶ snd t'\n\n ----------------   (sndPair)\n snd (v₁,v₂) ⟶ v₂\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. fstPair/sndPair are very unbalanced (conclusion mostly left-hand side), so the whole block is centered rather than symbol-aligned."
+  },
+  {
+   "id": "fig04",
+   "cat": "formatting/rule-figure",
+   "old": "::::terse\nTyping:\n::::\n\n\n```display\n                     Γ ⊢ t₁ ⦂ τ₁     Γ t₂ ⦂ τ₂\n                    ------------------------------              (pair)\n                      Γ ⊢(t₁, t₂) ⦂ τ₁ × τ₂\n\n                           Γ ⊢ t ⦂ τ₁ × τ₂\n                        -----------------------                  (fst)\n                            Γ ⊢ fst t ⦂ τ₁\n\n                            Γ ⊢ t ⦂ τ₁ × τ₂\n                        -----------------------                   (snd)\n                             Γ ⊢ snd t ⦂ τ₂\n```",
+   "new": "::::terse\nTyping:\n::::\n\n```display +centered\n      Γ ⊢ t₁ ⦂ τ₁\n      Γ ⊢ t₂ ⦂ τ₂\n----------------------  (pair)\nΓ ⊢ (t₁, t₂) ⦂ τ₁ × τ₂\n\n       Γ ⊢ t ⦂ τ₁ × τ₂\n----------------------  (fst)\n   Γ ⊢ fst t ⦂ τ₁\n\n       Γ ⊢ t ⦂ τ₁ × τ₂\n----------------------  (snd)\n   Γ ⊢ snd t ⦂ τ₂\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. pair/fst/snd are all balanced, so symbol-aligned. Also restores the missing `⊢` before the second premise and the missing space after `⊢` in the conclusion (confirmed against old/orig-plf-files/MoreStlc.v:241, which has `Gamma |-- t1 \\in T1     Gamma |-- t2 \\in T2`); also collapses the double-blank-line slip right before the figure."
+  },
+  {
+   "id": "fig05",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                         ----------------                       (unit)\n                         Γ ⊢ unit ⦂ Unit\n```",
+   "new": "```display +centered\n---------------  (unit)\nΓ ⊢ unit ⦂ Unit\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. "
+  },
+  {
+   "id": "fig06",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                               t₁ ⟶ t₁'\n                        ------------------------                       (inl)\n                        inl τ₂ t₁ ⟶ inl τ₂ t₁'\n\n                               t₂ ⟶ t₂'\n                        ------------------------                       (inr)\n                        inr τ₁ t₂ ⟶ inr τ₁ t₂'\n\n                               t ⟶ t'\n               -------------------------------------------            (case)\n                case t of inl x₁ => t₁ | inr x₂ => t₂ ⟶\n               case t' of inl x₁ => t₁ | inr x₂ => t₂\n\n            -----------------------------------------------        (caseInl)\n            case (inl τ₂ v₁) of inl x₁ => t₁ | inr x₂ => t₂\n                           ⟶  [x₁ := v₁]t₁\n\n            -----------------------------------------------        (caseInr)\n            case (inr τ₁ v₂) of inl x₁ => t₁ | inr x₂ => t₂\n                           ⟶  [x₂ := v₂]t₂\n```",
+   "new": "```display +centered\n                                   t₁ ⟶ t₁'\n                            ----------------------                              (inl)\n                            inl τ₂ t₁ ⟶ inl τ₂ t₁'\n\n                                   t₂ ⟶ t₂'\n                            ----------------------                              (inr)\n                            inr τ₁ t₂ ⟶ inr τ₁ t₂'\n\n                                    t ⟶ t'\n------------------------------------------------------------------------------  (case)\ncase t of inl x₁ => t₁ | inr x₂ => t₂ ⟶ case t' of inl x₁ => t₁ | inr x₂ => t₂\n\n        --------------------------------------------------------------          (caseInl)\n        case (inl τ₂ v₁) of inl x₁ => t₁ | inr x₂ => t₂ ⟶ [x₁ := v₁]t₁\n\n        --------------------------------------------------------------          (caseInr)\n        case (inr τ₁ v₂) of inl x₁ => t₁ | inr x₂ => t₂ ⟶ [x₂ := v₂]t₂\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. caseInl/caseInr are very unbalanced (conclusion mostly left-hand side), so the whole block is centered rather than symbol-aligned."
+  },
+  {
+   "id": "fig07",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                            Γ ⊢ t₁ ⦂ τ₁\n                   ----------------------------                      (inl)\n                       Γ ⊢ inl τ₂ t₁ ⦂ τ₁ + τ₂\n\n\n                          Γ ⊢ t₂ ⦂ τ₂\n                   ---------------------------                       (inr)\n                     Γ ⊢ inr τ₁ t₂ ⦂ τ₁ + τ₂\n\n\n                        Γ ⊢ t ⦂ τ₁ + τ₂\n                     x₁ ↦ τ₁; Γ ⊢ t₁ ⦂ τ₃\n                     x₂ ↦ τ₂; Γ ⊢ t₂ ⦂ τ₃\n         ----------------------------------------------------        (case)\n             Γ ⊢ case t of inl x₁ => t₁ | inr x₂ => t₂ ⦂ τ₃\n```",
+   "new": "```display +centered\n                 Γ ⊢ t₁ ⦂ τ₁\n           -----------------------              (inl)\n           Γ ⊢ inl τ₂ t₁ ⦂ τ₁ + τ₂\n\n                 Γ ⊢ t₂ ⦂ τ₂\n           -----------------------              (inr)\n           Γ ⊢ inr τ₁ t₂ ⦂ τ₁ + τ₂\n\n               Γ ⊢ t ⦂ τ₁ + τ₂\n             x₁ ↦ τ₁; Γ ⊢ t₁ ⦂ τ₃\n             x₂ ↦ τ₂; Γ ⊢ t₂ ⦂ τ₃\n----------------------------------------------  (case)\nΓ ⊢ case t of inl x₁ => t₁ | inr x₂ => t₂ ⦂ τ₃\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. `case` is very unbalanced (conclusion mostly left-hand side), so the whole block is centered rather than symbol-aligned; this also fixes the double-blank-line slips between rules."
+  },
+  {
+   "id": "fig08",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                                t₁ ⟶ t₁'\n                       --------------------------                    (cons₁)\n                         t₁ :: t₂ ⟶ t₁' :: t₂\n\n                                t₂ ⟶ t₂'\n                       --------------------------                    (cons₂)\n                         v₁ :: t₂ ⟶ v₁ :: t₂'\n\n                              t₁ ⟶ t₁'\n                -------------------------------------------         (listCase₁)\n                 (case t₁ of nil => t₂ | xh :: xt => t₃) ⟶\n                (case t₁' of nil => t₂ | xh :: xt => t₃)\n\n               ------------------------------------------          (listCaseNil)\n               (case nil τ₁ of nil => t₂ | xh :: xt => t₃)\n                                ⟶ t₂\n\n              -------------------------------------------         (listCaseCons)\n              (case (vh :: vt) of nil => t₂ | xh :: xt => t₃)\n                          ⟶ [xh:=vh][xt:=vt] t₃\n```",
+   "new": "```display +centered\n                                     t₁ ⟶ t₁'\n                               --------------------                                 (cons₁)\n                               t₁ :: t₂ ⟶ t₁' :: t₂\n\n                                     t₂ ⟶ t₂'\n                               --------------------                                 (cons₂)\n                               v₁ :: t₂ ⟶ v₁ :: t₂'\n\n                                     t₁ ⟶ t₁'\n----------------------------------------------------------------------------------  (listCase₁)\n(case t₁ of nil => t₂ | xh :: xt => t₃) ⟶ (case t₁' of nil => t₂ | xh :: xt => t₃)\n\n                 ------------------------------------------------                   (listCaseNil)\n                 (case nil τ₁ of nil => t₂ | xh :: xt => t₃) ⟶ t₂\n\n      ---------------------------------------------------------------------         (listCaseCons)\n      (case (vh :: vt) of nil => t₂ | xh :: xt => t₃) ⟶ [xh:=vh][xt:=vt] t₃\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. listCaseNil/listCaseCons are very unbalanced (conclusion mostly left-hand side), so the whole block is centered rather than symbol-aligned."
+  },
+  {
+   "id": "fig09",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                        ----------------------------                    (nil)\n                        Γ ⊢ nil τ₁ ⦂ List τ₁\n\n                     Γ ⊢ t₁ ⦂ τ₁      Γ ⊢ t₂ ⦂ List τ₁\n            -------------------------------------------------           (cons)\n                         Γ ⊢ t₁ :: t₂ ⦂ List τ₁\n\n                        Γ ⊢ t₁ ⦂ List τ₁\n                        Γ ⊢ t₂ ⦂ τ₂\n                  (xh ↦ τ₁; xt ↦ List τ₁; Γ) ⊢ t₃ ⦂ τ₂\n          ----------------------------------------------------         (listCase)\n             Γ ⊢ (case t₁ of nil => t₂ | xh :: xt => t₃) ⦂ τ₂\n```\n\n\n## General Recursion",
+   "new": "```display +centered\n              --------------------                (nil)\n              Γ ⊢ nil τ₁ ⦂ List τ₁\n\n                  Γ ⊢ t₁ ⦂ τ₁\n                Γ ⊢ t₂ ⦂ List τ₁\n             ----------------------               (cons)\n             Γ ⊢ t₁ :: t₂ ⦂ List τ₁\n\n                Γ ⊢ t₁ ⦂ List τ₁\n                  Γ ⊢ t₂ ⦂ τ₂\n      (xh ↦ τ₁; xt ↦ List τ₁; Γ) ⊢ t₃ ⦂ τ₂\n------------------------------------------------  (listCase)\nΓ ⊢ (case t₁ of nil => t₂ | xh :: xt => t₃) ⦂ τ₂\n```\n\n## General Recursion",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. `listCase` is very unbalanced (conclusion mostly left-hand side), so the whole block is centered rather than symbol-aligned; also collapses the double-blank-line slip right after the figure."
+  },
+  {
+   "id": "fig10",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                                t₁ ⟶ t₁'\n                            ------------------                   (fix₁)\n                            fix t₁ ⟶ fix t₁'\n\n               --------------------------------------------      (fixAbs)\n               fix (λxf:τ₁.t₁) ⟶ [xf:=fix (λxf:τ₁.t₁)] t₁\n```",
+   "new": "```display +centered\n             t₁ ⟶ t₁'\n-------------------------                   (fix₁)\n         fix t₁ ⟶ fix t₁'\n\n------------------------------------------  (fixAbs)\nfix (λxf:τ₁.t₁) ⟶ [xf:=fix (λxf:τ₁.t₁)] t₁\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with the relation symbol aligned at a shared column, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. fix₁/fixAbs are both balanced, so symbol-aligned."
+  },
+  {
+   "id": "fig11",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                           Γ ⊢ t₁ ⦂ τ₁ → τ₁\n                           ------------------                    (fix)\n                           Γ ⊢ fix t₁ ⦂ τ₁\n```",
+   "new": "```display +centered\nΓ ⊢ t₁ ⦂ τ₁ → τ₁\n----------------  (fix)\nΓ ⊢ fix t₁ ⦂ τ₁\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. "
+  },
+  {
+   "id": "fig12",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n                              ti ⟶ ti'\n                 ------------------------------------                  (rcd)\n                     {i₁=v₁, ..., im=vm, in=ti , ...}\n                 ⟶ {i₁=v₁, ..., im=vm, in=ti', ...}\n\n                              t ⟶ t'\n                            --------------                           (proj₁)\n                            t.i ⟶ t'.i\n\n                      -------------------------                    (projRcd)\n                      {..., i=vi, ...}.i ⟶ vi\n```\n\n\n::::full",
+   "new": "```display +centered\n                             ti ⟶ ti'\n------------------------------------------------------------------  (rcd)\n{i₁=v₁, ..., im=vm, in=ti, ...} ⟶ {i₁=v₁, ..., im=vm, in=ti', ...}\n\n                              t ⟶ t'\n                            ----------                              (proj₁)\n                            t.i ⟶ t'.i\n\n                     -----------------------                        (projRcd)\n                     {..., i=vi, ...}.i ⟶ vi\n```\n\n::::full",
+   "why": "Hand-drawn inference rules must be `display +centered` with a minimal left margin, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. projRcd is very unbalanced (conclusion mostly left-hand side), so the whole block is centered rather than symbol-aligned. Also fixes a stray space before the comma in `in=ti , ...`, and collapses the double-blank-line slip right after the figure."
+  },
+  {
+   "id": "fig13",
+   "cat": "formatting/rule-figure",
+   "old": "```display\n               Γ ⊢ t₁ ⦂ τ₁     ...     Γ ⊢ tₙ ⦂ τₙ\n          -----------------------------------------------------        (rcd)\n          Γ ⊢ {i₁=t₁, ..., iₙ=tₙ} ⦂ {i₁:τ₁, ..., iₙ:τₙ}\n\n\n                      Γ ⊢ t ⦂ {..., i:τᵢ, ...}\n                    ---------------------------------                  (proj)\n                          Γ ⊢ t.i ⦂ τᵢ\n```",
+   "new": "```display +centered\n                 Γ ⊢ t₁ ⦂ τ₁     ...     Γ ⊢ tₙ ⦂ τₙ\n----------------------------------------------------  (rcd)\nΓ ⊢ {i₁=t₁, ..., iₙ=tₙ} ⦂ {i₁:τ₁, ..., iₙ:τₙ}\n\n                  Γ ⊢ t ⦂ {..., i:τᵢ, ...}\n------------------------------------------            (proj)\n                Γ ⊢ t.i ⦂ τᵢ\n```",
+   "why": "Hand-drawn inference rules must be `display +centered` with the relation symbol aligned at a shared column, per STYLE-CODE.md; this was pseudo-centered by hand with leading spaces. rcd/proj are both balanced, so symbol-aligned; this also fixes the double-blank-line slip between the two rules."
+  },
+  {
+   "id": "w25",
+   "cat": "formatting/line-width",
+   "old": "private def Tm.unexpandVar : Unexpander := Delab.unexpandVar reservedNames ``Tm.var\n\n\n@[app_delab Tm.var]",
+   "new": "private def Tm.unexpandVar : Unexpander :=\n  Delab.unexpandVar reservedNames ``Tm.var\n\n@[app_delab Tm.var]",
+   "why": "Line is over 70 columns; split the body onto its own line, matching the identical definition in TS/Sub.lean and TS/StlcProp.lean. Also collapses the double-blank-line slip right after."
+  },
+  {
+   "id": "w26",
+   "cat": "formatting/line-width",
+   "old": "example : <{ [Z := 0] (let Y = succ 0 in Z) }> = <{ let Y = succ 0 in 0 }> := by\n  solution!\n    rfl\n```",
+   "new": "example : <{ [Z := 0] (let Y = succ 0 in Z) }> =\n    <{ let Y = succ 0 in 0 }> := by\n  solution!\n    rfl\n```",
+   "why": "Line is over 70 columns; split the equation onto two lines."
+  },
+  {
+   "id": "b02",
+   "cat": "formatting/blank-lines",
+   "old": "English text conveying the same information.  Here they are:\n::::\n\n\n::::terse\nA more interesting extension... let-bindings.",
+   "new": "English text conveying the same information.  Here they are:\n::::\n\n::::terse\nA more interesting extension... let-bindings.",
+   "why": "Two blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b08",
+   "cat": "formatting/blank-lines",
+   "old": "    (D) F (inl Bool 4)\n```\n::::\n\n\n::::quiz\nWhat about this one?",
+   "new": "    (D) F (inl Bool 4)\n```\n::::\n\n::::quiz\nWhat about this one?",
+   "why": "Two blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b12",
+   "cat": "formatting/blank-lines",
+   "old": "Extending our formalization of `let`s to handle \"recursive definitions\"\nwould require non-trivial effort.\n::::\n\n\n::::dev PotentialImprovement\nThe explanations in this section are not clear enough!",
+   "new": "Extending our formalization of `let`s to handle \"recursive definitions\"\nwould require non-trivial effort.\n::::\n\n::::dev PotentialImprovement\nThe explanations in this section are not clear enough!",
+   "why": "Two blank lines in a row is a slip; collapse to one."
+  },
+  {
+   "id": "b26",
+   "cat": "formatting/blank-lines",
+   "old": "```\n:::\n\n\n::::\n:::::\n\n\n:::::full",
+   "new": "```\n:::\n\n::::\n:::::\n\n:::::full",
+   "why": "Two separate double-blank-line slips a few lines apart; collapsed together since they sit too close for independent anchors."
+  }
+ ],
+ "completed": true
+}

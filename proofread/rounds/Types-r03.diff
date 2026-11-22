@@ -1,0 +1,288 @@
+--- TS/Types.lean (before this round)
++++ TS/Types.lean
+@@ -22,5 +22,4 @@
+ open SFLMeta
+ 
+-
+ #doc (Manual) "Types: Type Systems" =>
+ %%%
+@@ -163,8 +162,9 @@
+ ```lean
+ declare_syntax_cat tm
+--- The keyword atoms (`true`/`false`/`succ`/`pred`/`iszero`) are parsed as bare
+--- identifiers and dispatched in the macro below, rather than declared as
+--- reserved symbols.  Reserving them would break ordinary Lean uses of
+--- `true`/`false` and clash with the constructor/case names `succ`, `pred`.
++-- The keyword atoms (`true`/`false`/`succ`/`pred`/`iszero`) are
++-- parsed as bare identifiers and dispatched in the macro below,
++-- rather than declared as reserved symbols.  Reserving them would
++-- break ordinary Lean uses of `true`/`false` and clash with the
++-- constructor/case names `succ`, `pred`.
+ syntax:max num : tm
+ syntax:max ident : tm
+@@ -179,10 +179,12 @@
+   | `(<{ $n:num }>) =>
+       if n.getNat == 0 then `(Tm.zero)
+-      else Macro.throwErrorAt n "the only numeric literal in this language is 0"
++      else Macro.throwErrorAt n
++        "the only numeric literal in this language is 0"
+   | `(<{ $x:ident }>) =>
+       match x.getId.toString with
+       | "true"  => `(Tm.tru)
+       | "false" => `(Tm.fls)
+-      | _ => `($x)   -- a bare identifier is a spliced Lean term (usually a variable)
++      -- a bare identifier is a spliced Lean term (usually a variable)
++      | _ => `($x)
+   | `(<{ $f:ident $e:tm }>) =>
+       match f.getId.toString with
+@@ -193,5 +195,6 @@
+   | `(<{ ($e) }>) => `(<{ $e }>)
+   | `(<{ ~$e }>) => pure e
+-  | `(<{ if $c then $t else $e }>) => `(Tm.ite <{ $c }> <{ $t }> <{ $e }>)
++  | `(<{ if $c then $t else $e }>) =>
++      `(Tm.ite <{ $c }> <{ $t }> <{ $e }>)
+ ```
+ 
+@@ -232,5 +235,6 @@
+ ```lean
+ open Lean PrettyPrinter Delaborator SubExpr Parenthesizer in
+-/-- Re-inserts parentheses in `tm` output according to the grammar's precedences. -/
++/-- Re-inserts parentheses in `tm` output according to the grammar's
++precedences. -/
+ @[category_parenthesizer tm]
+ def tm.parenthesizer : CategoryParenthesizer | prec => do
+@@ -250,7 +254,10 @@
+     | Tm.fls => `(tm| $(mkIdent `false):ident)
+     | Tm.zero => `(tm| 0)
+-    | Tm.succ _ => do `(tm| $(mkIdent `succ):ident $(← withAppArg delabTmInner))
+-    | Tm.pred _ => do `(tm| $(mkIdent `pred):ident $(← withAppArg delabTmInner))
+-    | Tm.isZero _ => do `(tm| $(mkIdent `iszero):ident $(← withAppArg delabTmInner))
++    | Tm.succ _ => do
++        `(tm| $(mkIdent `succ):ident $(← withAppArg delabTmInner))
++    | Tm.pred _ => do
++        `(tm| $(mkIdent `pred):ident $(← withAppArg delabTmInner))
++    | Tm.isZero _ => do
++        `(tm| $(mkIdent `iszero):ident $(← withAppArg delabTmInner))
+     | Tm.ite _ _ _ => do
+         let c ← withAppFn <| withAppFn <| withAppArg delabTmInner
+@@ -259,5 +266,6 @@
+         `(tm| if $c then $t else $e)
+     | _ => do
+-        -- A bare variable prints without the `~` escape; anything else keeps it.
++        -- A bare variable prints without the `~` escape; anything
++        -- else keeps it.
+         match ← delab with
+         | `($i:ident) => `(tm| $i:ident)
+@@ -266,6 +274,7 @@
+ 
+ open Lean PrettyPrinter Delaborator SubExpr in
+--- The keys are the constants' full names: `Tm` lives in namespace `TM`, and the
+--- `delab` attribute does not resolve its argument against the current namespace.
++-- The keys are the constants' full names: `Tm` lives in namespace
++-- `TM`, and the `delab` attribute does not resolve its argument
++-- against the current namespace.
+ @[delab app.TM.Tm.tru, delab app.TM.Tm.fls, delab app.TM.Tm.zero,
+   delab app.TM.Tm.succ, delab app.TM.Tm.pred, delab app.TM.Tm.isZero,
+@@ -475,5 +484,6 @@
+   solution!
+     inversion h with
+-    | inl hb => intro hc; obtain ⟨t', hstp⟩ := hc; inversion hb <;> inversion hstp
++    | inl hb => intro hc; obtain ⟨t', hstp⟩ := hc
++                inversion hb <;> inversion hstp
+     | inr hn => exact nvalue_is_nf t hn
+ ```
+@@ -496,8 +506,8 @@
+     | zero => intro hc; obtain ⟨t', hstp⟩ := hc; inversion hstp
+     | succ t₀ ih =>
+-        -- The `succ` case is the only one that doesn't immediately present a
+-        -- contradiction.  Considering how a `succ` term can be a value, it is
+-        -- syntactically not a boolean value, but the numeric value case
+-        -- requires a bit more work.
++        -- The `succ` case is the only one that doesn't immediately
++        -- present a contradiction.  Considering how a `succ` term can
++        -- be a value, it is syntactically not a boolean value, but
++        -- the numeric value case requires a bit more work.
+         intro hc; obtain ⟨t', hstp⟩ := hc
+         cases hstp with
+@@ -505,5 +515,6 @@
+             inversion h with
+             | inl hb => inversion hb
+-            -- By the IH, if `t₀` is a numeric value, then it can not step.
++            -- By the IH, if `t₀` is a numeric value, then it can not
++            -- step.
+             | inr hn => cases hn with
+               | succ _ hn₀ => exact ih (.inr hn₀) ⟨_, hstp'⟩
+@@ -761,6 +772,6 @@
+   | _ => none
+ 
+--- `pred (succ true)` steps under `⇢` (the dropped `IsNValue` premise) even
+--- though it is stuck under `Tm.Step`:
++-- `pred (succ true)` steps under `⇢` (the dropped `IsNValue` premise)
++-- even though it is stuck under `Tm.Step`:
+ example :
+     alt_simplify_step <{ pred (succ true) }> = some <{ true }> := by
+@@ -844,5 +855,5 @@
+ The typing judgment is written `<{ ⊢ t ⦂ T }>`: the whole judgment is wrapped
+ in `<{ … }>`, the term is in the object grammar (bare variables, no inner
+-`<{ }>`) and the type as `Bool`/`Nat` (a type variable is spliced, `~T` escapes
++`<{ }>`) and the type written as `Bool`/`Nat` (a type variable is spliced, `~T` escapes
+ to a Lean `Ty`).  As with `Tm.Step`, we define the relation using its own
+ notation. The detailed definition of the notation is folded into the box below.
+@@ -896,5 +907,6 @@
+ ::::details "Notation encoding: typing relation"
+ ```lean
+--- The same rules repeated with hygiene enabled, for use after the section.
++-- The same rules repeated with hygiene enabled, for use after the
++-- section.
+ macro_rules
+   | `(<{ ⊢ $t ⦂ $T:ident }>) =>
+@@ -905,5 +917,6 @@
+   | `(<{ ⊢ $t ⦂ ~$T }>) => `(Tm.HasType <{ $t }> $T)
+ 
+--- Print `Tm.HasType`/`Ty` values back as `<{ ⊢ … ⦂ … }>` notation: `delabTy`
++-- Print `Tm.HasType`/`Ty` values back as `<{ ⊢ … ⦂ … }>` notation:
++-- `delabTy`
+ open Lean PrettyPrinter Delaborator SubExpr in
+ @[delab app.TM.Ty.bool, delab app.TM.Ty.nat]
+@@ -951,6 +964,6 @@
+ 
+ example :
+-    ¬ <{ ⊢ if iszero (succ 0) then succ false else true ⦂ Bool }> := by
+-  intro hc; inversion hc with | ite h₁ h₂ h₃ => inversion h₂
++    ¬ <{ ⊢ if iszero (succ 0) then succ false else true ⦂ Bool }> :=
++  by intro hc; inversion hc with | ite h₁ h₂ h₃ => inversion h₂
+ ```
+ 
+@@ -1021,9 +1034,13 @@
+             | fls => exists t₃; exact .ifFalse
+         | inr hs₁ => obtain ⟨t₁', h⟩ := hs₁
+-                     exists <{ if t₁' then t₂ else t₃ }>; exact .ifStep h
++                     exists <{ if t₁' then t₂ else t₃ }>
++                     exact .ifStep h
+     | @succ t₁ h ih =>
+         inversion ih with
+-        | inl hv => exact .inl (.inr (.succ t₁ (nat_canonical t₁ h hv)))
+-        | inr hs => obtain ⟨t', h'⟩ := hs; exact .inr ⟨<{ succ t' }>, .succStep h'⟩
++        | inl hv =>
++            exact .inl (.inr (.succ t₁ (nat_canonical t₁ h hv)))
++        | inr hs =>
++            obtain ⟨t', h'⟩ := hs
++            exact .inr ⟨<{ succ t' }>, .succStep h'⟩
+     | @pred t₁ h ih =>
+         right
+@@ -1033,5 +1050,8 @@
+             | zero => exists <{ 0 }>; exact .predZero
+             | succ t₀ hn₀ => exact ⟨t₀, .predSucc hn₀⟩
+-        | inr hs => obtain ⟨t', h'⟩ := hs; exists <{ pred t' }>; exact .predStep h'
++        | inr hs =>
++            obtain ⟨t', h'⟩ := hs
++            exists <{ pred t' }>
++            exact .predStep h'
+     | @isZero t₁ h ih =>
+         right
+@@ -1041,5 +1061,8 @@
+             | zero => exists <{ true }>; exact .isZeroZero
+             | succ t₀ hn₀ => exists <{ false }>; exact .isZeroSucc hn₀
+-        | inr hs => obtain ⟨t', h'⟩ := hs; exists <{ iszero t' }>; exact .isZeroStep h'
++        | inr hs =>
++            obtain ⟨t', h'⟩ := hs
++            exists <{ iszero t' }>
++            exact .isZeroStep h'
+ ```
+ 
+@@ -1346,11 +1369,15 @@
+     | ifStep hc ih =>
+         cases hT with | ite h₁ h₂ h₃ => exact .ite (ih .bool h₁) h₂ h₃
+-    | succStep hs ih => cases hT with | succ h => exact .succ (ih .nat h)
++    | succStep hs ih =>
++        cases hT with | succ h => exact .succ (ih .nat h)
+     | predZero => cases hT with | pred h => exact .zero
+-    | predSucc hv => cases hT with | pred h => cases h with | succ hh => exact hh
+-    | predStep hs ih => cases hT with | pred h => exact .pred (ih .nat h)
++    | predSucc hv =>
++        cases hT with | pred h => cases h with | succ hh => exact hh
++    | predStep hs ih =>
++        cases hT with | pred h => exact .pred (ih .nat h)
+     | isZeroZero => cases hT with | isZero h => exact .tru
+     | isZeroSucc hv => cases hT with | isZero h => exact .fls
+-    | isZeroStep hs ih => cases hT with | isZero h => exact .isZero (ih .nat h)
++    | isZeroStep hs ih =>
++        cases hT with | isZero h => exact .isZero (ih .nat h)
+ ```
+ 
+@@ -1434,5 +1461,5 @@
+ opposite property — subject _expansion_ — also holds.  That is, is it
+ always the case that, if `t ⟶ t'` and `⊢ t' ⦂ T`, then `⊢ t ⦂ T`?  If so,
+-prove it.  If not, give a counter-example.
++prove it.  If not, give a counterexample.
+ 
+ :::solution
+@@ -1453,5 +1480,6 @@
+     intro hse
+     have hT : <{ ⊢ if false then true else 0 ⦂ Nat }> :=
+-      hse <{ if false then true else 0 }> <{ 0 }> .nat ⟨.ifFalse, .zero⟩
++      hse <{ if false then true else 0 }> <{ 0 }> .nat
++        ⟨.ifFalse, .zero⟩
+     inversion hT with | ite h₁ h₂ h₃ => inversion h₂
+ 
+@@ -1505,5 +1533,5 @@
+ ```
+ - Determinism: remains true (the `step` relation is unchanged).
+-- Progress: becomes false -- `succ true` is now well typed (`⊢ succ true ⦂
++- Progress: becomes false — `succ true` is now well typed (`⊢ succ true ⦂
+   Bool`) but is stuck.
+ - Preservation: remains true.
+@@ -1524,9 +1552,9 @@
+ ```
+ Which of the above properties become false in the presence of this rule?
+-For each one that does, give a counter-example.
++For each one that does, give a counterexample.
+ 
+ :::solution
+ ```
+-- Determinism: becomes false -- `if true then 0 else (succ 0)` can now step
++- Determinism: becomes false — `if true then 0 else (succ 0)` can now step
+   to either `0` (ifTrue) or `succ 0` (funny1).
+ - Progress and preservation: remain true.
+@@ -1547,5 +1575,5 @@
+ ```
+ Which of the above properties become false in the presence of this rule?
+-For each one that does, give a counter-example.
++For each one that does, give a counterexample.
+ 
+ :::solution
+@@ -1564,5 +1592,5 @@
+ ```
+ Which of the above properties become false in the presence of this rule?
+-For each one that does, give a counter-example.
++For each one that does, give a counterexample.
+ 
+ :::solution
+@@ -1579,5 +1607,5 @@
+ ```
+ Which of the above properties become false in the presence of this rule?
+-For each one that does, give a counter-example.
++For each one that does, give a counterexample.
+ 
+ :::solution
+@@ -1595,5 +1623,5 @@
+ ```
+ Which of the above properties become false in the presence of this rule?
+-For each one that does, give a counter-example.
++For each one that does, give a counterexample.
+ 
+ :::solution
+@@ -1657,5 +1685,5 @@
+ original term.  The proof is similar to the one we gave.  However,
+ preservation for small-step semantics implies that all intermediate states
+-(i.e., all states reachable in multi-step) are well-typed, whereas big-step
++(i.e., all states reachable in multi-step) are well typed, whereas big-step
+ semantics only relates a term to its final evaluation result, with no
+ notion of "intermediate state" about which preservation can make
+@@ -1665,5 +1693,5 @@
+ analog (if a term is well typed then it evaluates to some other term)
+ makes a much stronger claim than the progress theorem we have given: it
+-says that every well-typed term can be evaluated to some final value---that
++says that every well-typed term can be evaluated to some final value — that
+ is, that evaluation always terminates on well-typed terms.  For arithmetic
+ expressions, this happens to be the case, but for more interesting

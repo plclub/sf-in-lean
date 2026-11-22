@@ -135,6 +135,7 @@ Each was learned from a run of rejections; do not propose against them.
 | ---- | ----------- |
 | Double spaces after a sentence-ending period are fine; never propose collapsing them. | initial |
 | A short, self-explanatory equational lemma proved by `rfl` (e.g. a `foldConstants_id`-style simp lemma) doesn't need an accompanying prose explanation; only add one when the result isn't obvious from the statement. | 2026-10-07 |
+| For `exerciseVisibility` warnings, default to wrapping the exercise in `:::::full`/`:::::`; use `(checkVisibility := false)` on the exercise directive instead when its content/lemmas are relied on throughout both full and terse portions of the chapter. | 2026-11-17 |
 
 ## Known non-issues
 

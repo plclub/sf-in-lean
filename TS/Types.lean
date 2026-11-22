@@ -21,7 +21,6 @@ import TS.Smallstep
 open Verso.Genre Manual
 open SFLMeta
 
-
 #doc (Manual) "Types: Type Systems" =>
 %%%
 tag := "Types"
@@ -147,9 +146,11 @@ mirroring the informal grammar above.  A bare identifier is spliced as a Lean
 term (so a variable `t` is written just `t`); `~e` escapes an arbitrary Lean
 expression, and `( … )` groups.
 
-You do not need to understand exactly how the declarations below work; every
-object language in this book is given its syntax the same way, so it is worth
-seeing the pattern once:
+You do not need to understand exactly how the declarations below work.
+::::
+
+::::details "Notation encoding"
+Every object language in this volume is given its syntax the same way; here is the pattern:
 
 - `declare_syntax_cat` adds a new non-terminal to Lean's grammar — here `tm`,
   the terms of this chapter's language.
@@ -158,14 +159,14 @@ seeing the pattern once:
   brackets that let a `tm` appear where Lean expects a term.
 - `macro_rules` then translates the resulting syntax forms into the
   corresponding constructors of {name}`Tm`.
-::::
 
 ```lean
 declare_syntax_cat tm
--- The keyword atoms (`true`/`false`/`succ`/`pred`/`iszero`) are parsed as bare
--- identifiers and dispatched in the macro below, rather than declared as
--- reserved symbols.  Reserving them would break ordinary Lean uses of
--- `true`/`false` and clash with the constructor/case names `succ`, `pred`.
+-- The keyword atoms (`true`/`false`/`succ`/`pred`/`iszero`) are
+-- parsed as bare identifiers and dispatched in the macro below,
+-- rather than declared as reserved symbols.  Reserving them would
+-- break ordinary Lean uses of `true`/`false` and clash with the
+-- constructor/case names `succ`, `pred`.
 syntax:max num : tm
 syntax:max ident : tm
 syntax:75 ident ppHardSpace tm:76 : tm
@@ -178,12 +179,14 @@ open Lean in
 macro_rules
   | `(<{ $n:num }>) =>
       if n.getNat == 0 then `(Tm.zero)
-      else Macro.throwErrorAt n "the only numeric literal in this language is 0"
+      else Macro.throwErrorAt n
+        "the only numeric literal in this language is 0"
   | `(<{ $x:ident }>) =>
       match x.getId.toString with
       | "true"  => `(Tm.tru)
       | "false" => `(Tm.fls)
-      | _ => `($x)   -- a bare identifier is a spliced Lean term (usually a variable)
+      -- a bare identifier is a spliced Lean term (usually a variable)
+      | _ => `($x)
   | `(<{ $f:ident $e:tm }>) =>
       match f.getId.toString with
       | "succ"   => `(Tm.succ <{ $e }>)
@@ -192,7 +195,8 @@ macro_rules
       | _ => Macro.throwErrorAt f s!"unknown operator `{f.getId}`"
   | `(<{ ($e) }>) => `(<{ $e }>)
   | `(<{ ~$e }>) => pure e
-  | `(<{ if $c then $t else $e }>) => `(Tm.ite <{ $c }> <{ $t }> <{ $e }>)
+  | `(<{ if $c then $t else $e }>) =>
+      `(Tm.ite <{ $c }> <{ $t }> <{ $e }>)
 ```
 
 :::dev "mwhicks1" PotentialImprovement
@@ -220,18 +224,16 @@ current output (`iszero (pred (succ 0))`) while letting `else if` chains print
 flat.
 :::
 
-::::full
 A _delaborator_ closes the loop: it walks a `Tm` value and rebuilds the
 concrete syntax, so that terms appearing in goals, `#check`, and `#eval`
 output print as `<{ … }>` rather than as a pile of constructors.  (Setting
 `pp.notation false` turns it off, revealing the raw constructors.)  A `Ty`
 prints as `Bool` or `Nat`.
-::::
 
-::::details "Notation encoding: printing terms back"
 ```lean
 open Lean PrettyPrinter Delaborator SubExpr Parenthesizer in
-/-- Re-inserts parentheses in `tm` output according to the grammar's precedences. -/
+/-- Re-inserts parentheses in `tm` output according to the grammar's
+precedences. -/
 @[category_parenthesizer tm]
 def tm.parenthesizer : CategoryParenthesizer | prec => do
   maybeParenthesize `tm true wrapParens prec <|
@@ -249,24 +251,29 @@ partial def delabTmInner : DelabM (TSyntax `tm) := do
     | Tm.tru => `(tm| $(mkIdent `true):ident)
     | Tm.fls => `(tm| $(mkIdent `false):ident)
     | Tm.zero => `(tm| 0)
-    | Tm.succ _ => do `(tm| $(mkIdent `succ):ident $(← withAppArg delabTmInner))
-    | Tm.pred _ => do `(tm| $(mkIdent `pred):ident $(← withAppArg delabTmInner))
-    | Tm.isZero _ => do `(tm| $(mkIdent `iszero):ident $(← withAppArg delabTmInner))
+    | Tm.succ _ => do
+        `(tm| $(mkIdent `succ):ident $(← withAppArg delabTmInner))
+    | Tm.pred _ => do
+        `(tm| $(mkIdent `pred):ident $(← withAppArg delabTmInner))
+    | Tm.isZero _ => do
+        `(tm| $(mkIdent `iszero):ident $(← withAppArg delabTmInner))
     | Tm.ite _ _ _ => do
         let c ← withAppFn <| withAppFn <| withAppArg delabTmInner
         let t ← withAppFn <| withAppArg delabTmInner
         let e ← withAppArg delabTmInner
         `(tm| if $c then $t else $e)
     | _ => do
-        -- A bare variable prints without the `~` escape; anything else keeps it.
+        -- A bare variable prints without the `~` escape; anything
+        -- else keeps it.
         match ← delab with
         | `($i:ident) => `(tm| $i:ident)
         | e => `(tm| ~$e)
   (⟨·⟩) <$> annotateTermInfo ⟨stx.raw⟩
 
 open Lean PrettyPrinter Delaborator SubExpr in
--- The keys are the constants' full names: `Tm` lives in namespace `TM`, and the
--- `delab` attribute does not resolve its argument against the current namespace.
+-- The keys are the constants' full names: `Tm` lives in namespace
+-- `TM`, and the `delab` attribute does not resolve its argument
+-- against the current namespace.
 @[delab app.TM.Tm.tru, delab app.TM.Tm.fls, delab app.TM.Tm.zero,
   delab app.TM.Tm.succ, delab app.TM.Tm.pred, delab app.TM.Tm.isZero,
   delab app.TM.Tm.ite]
@@ -456,9 +463,10 @@ theorem nvalue_is_nf (t : Tm)
   | succ t₀ hn₀ ih =>
       intro hc; obtain ⟨t', hstp⟩ := hc
       inversion hstp with
-      | succStep t₁' h => exact ih ⟨t₁', h⟩
+      | succStep t₁' h => apply ih; exists t₁'
 ```
 
+::::::full
 :::::exercise (rating := 3) (name := "value_is_nf") (checkVisibility := false)
 (Hint: You will reach a point in this proof where you need to use an
 induction to reason about a term that is known to be a numeric value.
@@ -473,7 +481,8 @@ theorem value_is_nf (t : Tm)
     (h : Tm.IsValue t) : Tm.IsNormalForm t := by
   solution!
     inversion h with
-    | inl hb => intro hc; obtain ⟨t', hstp⟩ := hc; inversion hb <;> inversion hstp
+    | inl hb => intro hc; obtain ⟨t', hstp⟩ := hc
+                inversion hb <;> inversion hstp
     | inr hn => exact nvalue_is_nf t hn
 ```
 
@@ -494,16 +503,17 @@ theorem value_is_nf' (t : Tm)
         | inr hn => inversion hn
     | zero => intro hc; obtain ⟨t', hstp⟩ := hc; inversion hstp
     | succ t₀ ih =>
-        -- The `succ` case is the only one that doesn't immediately present a
-        -- contradiction.  Considering how a `succ` term can be a value, it is
-        -- syntactically not a boolean value, but the numeric value case
-        -- requires a bit more work.
+        -- The `succ` case is the only one that doesn't immediately
+        -- present a contradiction.  Considering how a `succ` term can
+        -- be a value, it is syntactically not a boolean value, but
+        -- the numeric value case requires a bit more work.
         intro hc; obtain ⟨t', hstp⟩ := hc
         cases hstp with
         | succStep hstp' =>
             inversion h with
             | inl hb => inversion hb
-            -- By the IH, if `t₀` is a numeric value, then it can not step.
+            -- By the IH, if `t₀` is a numeric value, then it can not
+            -- step.
             | inr hn => cases hn with
               | succ _ hn₀ => exact ih (.inr hn₀) ⟨_, hstp'⟩
     | pred t₀ _ =>
@@ -519,6 +529,7 @@ theorem value_is_nf' (t : Tm)
 :::gradeTheorem 3 value_is_nf
 :::
 :::::
+::::::
 
 ::::::full
 :::::exercise (rating := 3) (name := "step_deterministic") (optional := true)
@@ -657,11 +668,9 @@ _function_ for it.
 ::::
 
 :::dev "mwhicks1"
-```
 In the Rocq source these were a hidden, never-uncommented draft
 (with `eval` still to be renamed to `step`).  Here they are activated as
 live Lean. Not sure if we want to keep this.
-```
 :::
 
 Suppose we define an alternate single-step relation, written `t ⇢ t'`,
@@ -694,21 +703,31 @@ scoped notation:40 t:41 " ⇢ " t':41 => Tm.AltStep t t'
 
 Some questions about this relation (answers inline):
 
-  - Is `⇢` deterministic (`∀ t t' t'', t ⇢ t' → t ⇢ t'' → t' = t''`)?  No:
+  - Is `⇢` deterministic (`∀ t t' t'', t ⇢ t' → t ⇢ t'' → t' = t''`)?
+
+    No:
     `pred (succ (pred 0))` steps to both `pred 0` (by `predSucc`) and
     `pred (succ 0)` (by `predStep`, since `pred 0 ⇢ 0`).
 
-  - Is every `Tm.Step` normal form also a `⇢` normal form?  No:
+  - Is every `Tm.Step` normal form also a `⇢` normal form?
+
+    No:
     `pred (succ true)` is stuck for `Tm.Step` but steps under `⇢` (to
     `true`, by `predSucc`, now that the `Tm.IsNValue` premise is gone).
 
-  - Is every `⇢` normal form also a `Tm.Step` normal form?  Yes — `Tm.Step`
+  - Is every `⇢` normal form also a `Tm.Step` normal form?
+
+    Yes — `Tm.Step`
     is a subrelation of `⇢`, so anything stuck for `⇢` is stuck for `Tm.Step`.
 
   - Is every value reachable by `Tm.Step` (in many steps) also reachable by
-    `⇢` (in many steps)?  Yes, for the same subrelation reason.
+    `⇢` (in many steps)?
 
-  - Conversely?  No: `iszero (succ true)` reaches the value `false` under
+    Yes, for the same subrelation reason.
+
+  - Conversely?
+
+    No: `iszero (succ true)` reaches the value `false` under
     `⇢` but is stuck under `Tm.Step`.
 
 A _functional_ version computes a single `⇢` step of a term, returning
@@ -748,8 +767,8 @@ def alt_simplify_step (t : Tm) : Option Tm :=
         | _             => none
   | _ => none
 
--- `pred (succ true)` steps under `⇢` (the dropped `IsNValue` premise) even
--- though it is stuck under `Tm.Step`:
+-- `pred (succ true)` steps under `⇢` (the dropped `IsNValue` premise)
+-- even though it is stuck under `Tm.Step`:
 example :
     alt_simplify_step <{ pred (succ true) }> = some <{ true }> := by
   rfl
@@ -831,7 +850,7 @@ Here are the formal rules.
 ::::full
 The typing judgment is written `<{ ⊢ t ⦂ T }>`: the whole judgment is wrapped
 in `<{ … }>`, the term is in the object grammar (bare variables, no inner
-`<{ }>`) and the type as `Bool`/`Nat` (a type variable is spliced, `~T` escapes
+`<{ }>`) and the type written as `Bool`/`Nat` (a type variable is spliced, `~T` escapes
 to a Lean `Ty`).  As with `Tm.Step`, we define the relation using its own
 notation. The detailed definition of the notation is folded into the box below.
 ::::
@@ -871,7 +890,8 @@ inductive Tm.HasType : Tm → Ty → Prop where
   | tru : <{ ⊢ true ⦂ Bool }>
   | fls : <{ ⊢ false ⦂ Bool }>
   | ite {t₁ t₂ t₃ : Tm} {τ : Ty}
-      (h₁ : <{ ⊢ t₁ ⦂ Bool }>) (h₂ : <{ ⊢ t₂ ⦂ τ }>)
+      (h₁ : <{ ⊢ t₁ ⦂ Bool }>)
+      (h₂ : <{ ⊢ t₂ ⦂ τ }>)
       (h₃ : <{ ⊢ t₃ ⦂ τ }>) :
       <{ ⊢ if t₁ then t₂ else t₃ ⦂ τ }>
   | zero : <{ ⊢ 0 ⦂ Nat }>
@@ -882,7 +902,8 @@ inductive Tm.HasType : Tm → Ty → Prop where
 
 ::::details "Notation encoding: typing relation"
 ```lean
--- The same rules repeated with hygiene enabled, for use after the section.
+-- The same rules repeated with hygiene enabled, for use after the
+-- section.
 macro_rules
   | `(<{ ⊢ $t ⦂ $T:ident }>) =>
       match T.getId.toString with
@@ -891,7 +912,8 @@ macro_rules
       | _      => `(Tm.HasType <{ $t }> $T)
   | `(<{ ⊢ $t ⦂ ~$T }>) => `(Tm.HasType <{ $t }> $T)
 
--- Print `Tm.HasType`/`Ty` values back as `<{ ⊢ … ⦂ … }>` notation: `delabTy`
+-- Print `Tm.HasType`/`Ty` values back as `<{ ⊢ … ⦂ … }>` notation:
+-- `delabTy`
 open Lean PrettyPrinter Delaborator SubExpr in
 @[delab app.TM.Ty.bool, delab app.TM.Ty.nat]
 def delabTy : Delab := whenPPOption getPPNotation do
@@ -937,8 +959,8 @@ example : ¬ <{ ⊢ if false then 0 else true ⦂ Bool }> := by
   intro hc; inversion hc with | ite h₁ h₂ h₃ => inversion h₂
 
 example :
-    ¬ <{ ⊢ if iszero (succ 0) then succ false else true ⦂ Bool }> := by
-  intro hc; inversion hc with | ite h₁ h₂ h₃ => inversion h₂
+    ¬ <{ ⊢ if iszero (succ 0) then succ false else true ⦂ Bool }> :=
+  by intro hc; inversion hc with | ite h₁ h₂ h₃ => inversion h₂
 ```
 
 ::::::full
@@ -952,7 +974,7 @@ example (t : Tm) (h : <{ ⊢ succ t ⦂ Nat }>) : <{ ⊢ t ⦂ Nat }> := by
 
 ::::::
 
-## Canonical forms
+## Canonical Forms
 
 The following two lemmas capture the fundamental fact that the
 definitions of boolean and numeric values agree with the typing relation:
@@ -984,9 +1006,12 @@ if a term is well typed, then either it is a value or it can take at
 least one step.  We call this _progress_.
 
 :::::exercise (rating := 3) (name := "finish_progress") (checkVisibility := false)
+
+:::full
 Complete the formal proof of the `progress` property.  (Make sure you
 understand the parts we've given of the informal proof in the following
 exercise before starting — this will save you a lot of time.)
+:::
 
 ```lean
 theorem progress (t : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>) :
@@ -1004,11 +1029,15 @@ theorem progress (t : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>) :
             | tru => exists t₂; exact .ifTrue
             | fls => exists t₃; exact .ifFalse
         | inr hs₁ => obtain ⟨t₁', h⟩ := hs₁
-                     exists <{ if t₁' then t₂ else t₃ }>; exact .ifStep h
+                     exists <{ if t₁' then t₂ else t₃ }>
+                     exact .ifStep h
     | @succ t₁ h ih =>
         inversion ih with
-        | inl hv => exact .inl (.inr (.succ t₁ (nat_canonical t₁ h hv)))
-        | inr hs => obtain ⟨t', h'⟩ := hs; exact .inr ⟨<{ succ t' }>, .succStep h'⟩
+        | inl hv =>
+            exact .inl (.inr (.succ t₁ (nat_canonical t₁ h hv)))
+        | inr hs =>
+            obtain ⟨t', h'⟩ := hs
+            exact .inr ⟨<{ succ t' }>, .succStep h'⟩
     | @pred t₁ h ih =>
         right
         inversion ih with
@@ -1016,7 +1045,10 @@ theorem progress (t : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>) :
             cases nat_canonical t₁ h hv with
             | zero => exists <{ 0 }>; exact .predZero
             | succ t₀ hn₀ => exact ⟨t₀, .predSucc hn₀⟩
-        | inr hs => obtain ⟨t', h'⟩ := hs; exists <{ pred t' }>; exact .predStep h'
+        | inr hs =>
+            obtain ⟨t', h'⟩ := hs
+            exists <{ pred t' }>
+            exact .predStep h'
     | @isZero t₁ h ih =>
         right
         inversion ih with
@@ -1024,7 +1056,10 @@ theorem progress (t : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>) :
             cases nat_canonical t₁ h hv with
             | zero => exists <{ true }>; exact .isZeroZero
             | succ t₀ hn₀ => exists <{ false }>; exact .isZeroSucc hn₀
-        | inr hs => obtain ⟨t', h'⟩ := hs; exists <{ iszero t' }>; exact .isZeroStep h'
+        | inr hs =>
+            obtain ⟨t', h'⟩ := hs
+            exists <{ iszero t' }>
+            exact .isZeroStep h'
 ```
 
 :::gradeTheorem 3 progress
@@ -1086,9 +1121,9 @@ _Proof_: By induction on a derivation of `⊢ t ⦂ T`.
   `⊢ t₁ ⦂ Nat`.  By the IH, either `t₁` is a value or else `t₁` can step
   to some `t₁'`.
 
-  - If `t₁` is a value, then by the canonical forms lemma `t₁` is an
-    `nvalue`, and hence `t` is also an `nvalue` (and hence a value) by
-    `succ`.
+  - If `t₁` is a value, then by the canonical forms lemma `t₁` is a
+    numeric value (`Tm.IsNValue`), and hence `t` is also a numeric
+    value (and hence a value) by `succ`.
 
   - If `t₁` can take a step, then by `succStep`, so can `t`.
 
@@ -1097,13 +1132,14 @@ _Proof_: By induction on a derivation of `⊢ t ⦂ T`.
   to some `t₁'`.
 
   - If `t₁` is a value, then (by the same argument as in the previous
-    case) it must be an `nvalue`.  By case analysis on the `nvalue`
-    judgement, there are two cases:
+    case) it must be a numeric value (`Tm.IsNValue`).  By case
+    analysis on the `Tm.IsNValue` judgment, there are two cases:
 
     - If `t₁ = 0`, then `t` can take a step by `predZero`.
 
-    - Otherwise, `t₁ = succ t₁'`, with `t₁'` an `nvalue`.  Hence `t` can
-      again take a step, this time by `predSucc`.
+    - Otherwise, `t₁ = succ t₁'`, with `t₁'` a numeric value
+      (`Tm.IsNValue`).  Hence `t` can again take a step, this time by
+      `predSucc`.
 
   - Finally, if `t₁` can take a step, then by `predStep`, so can `t`.
 
@@ -1111,13 +1147,13 @@ _Proof_: By induction on a derivation of `⊢ t ⦂ T`.
   with `⊢ t₁ ⦂ Nat`.  By the IH, either `t₁` is a value or else `t₁` steps
   to some `t₁'`.
 
-  - If `t₁` is a value, it must be an `nvalue`, and there are two cases to
-    consider:
+  - If `t₁` is a value, it must be a numeric value (`Tm.IsNValue`), and
+    there are two cases to consider:
 
     - If `t₁ = 0`, then `t` can take a step by `isZeroZero`.
 
-    - Otherwise, `t₁ = succ t₁'` where `t₁'` is an `nvalue`.  Hence `t` can
-      take a step by `isZeroSucc`.
+    - Otherwise, `t₁ = succ t₁'` where `t₁'` is a numeric value
+      (`Tm.IsNValue`).  Hence `t` can take a step by `isZeroSucc`.
 
   - If `t₁` can take a step, then so can `t`, by `isZeroStep`.
 ```
@@ -1193,9 +1229,12 @@ The second critical property of typing is that, when a well-typed term
 takes a step, the result is a well-typed term (of the same type).
 
 :::::exercise (rating := 2) (name := "finish_preservation") (checkVisibility := false)
+
+:::full
 Complete the formal proof of the `preservation` property.  (Again, make
 sure you understand the informal proof fragment in the following exercise
 first.)
+:::
 
 ```lean
 theorem preservation (t t' : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>)
@@ -1326,13 +1365,17 @@ theorem preservation' (t t' : Tm) (τ : Ty) (hT : <{ ⊢ t ⦂ τ }>)
     | ifFalse => cases hT with | ite h₁ h₂ h₃ => exact h₃
     | ifStep hc ih =>
         cases hT with | ite h₁ h₂ h₃ => exact .ite (ih .bool h₁) h₂ h₃
-    | succStep hs ih => cases hT with | succ h => exact .succ (ih .nat h)
+    | succStep hs ih =>
+        cases hT with | succ h => exact .succ (ih .nat h)
     | predZero => cases hT with | pred h => exact .zero
-    | predSucc hv => cases hT with | pred h => cases h with | succ hh => exact hh
-    | predStep hs ih => cases hT with | pred h => exact .pred (ih .nat h)
+    | predSucc hv =>
+        cases hT with | pred h => cases h with | succ hh => exact hh
+    | predStep hs ih =>
+        cases hT with | pred h => exact .pred (ih .nat h)
     | isZeroZero => cases hT with | isZero h => exact .tru
     | isZeroSucc hv => cases hT with | isZero h => exact .fls
-    | isZeroStep hs ih => cases hT with | isZero h => exact .isZero (ih .nat h)
+    | isZeroStep hs ih =>
+        cases hT with | isZero h => exact .isZero (ih .nat h)
 ```
 
 :::gradeTheorem 3 preservation'
@@ -1406,12 +1449,15 @@ All three remain true.
 
 # Additional Exercises
 
+:::suppressPreviousHeaderWhenTerse
+:::
+
 ::::::full
 :::::exercise (rating := 3) (name := "subject_expansion")
 Having seen the subject reduction property, one might wonder whether the
 opposite property — subject _expansion_ — also holds.  That is, is it
 always the case that, if `t ⟶ t'` and `⊢ t' ⦂ T`, then `⊢ t ⦂ T`?  If so,
-prove it.  If not, give a counter-example.
+prove it.  If not, give a counterexample.
 
 :::solution
 ```
@@ -1430,7 +1476,8 @@ theorem subject_expansion :
     right
     intro hse
     have hT : <{ ⊢ if false then true else 0 ⦂ Nat }> :=
-      hse <{ if false then true else 0 }> <{ 0 }> .nat ⟨.ifFalse, .zero⟩
+      hse <{ if false then true else 0 }> <{ 0 }> .nat
+        ⟨.ifFalse, .zero⟩
     inversion hT with | ite h₁ h₂ h₃ => inversion h₂
 
 end TM
@@ -1442,10 +1489,12 @@ end TM
 
 ::::::
 
+::::full
 The following are _thought exercises_: for each modification, say which
 of determinism / progress / preservation still hold, with a
 counterexample if one breaks.  (These are graded manually; there is no
 Lean code to complete.)
+::::
 
 :::dev
 ```
@@ -1480,7 +1529,7 @@ If a property becomes false, give a counterexample.
 :::solution
 ```
 - Determinism: remains true (the `step` relation is unchanged).
-- Progress: becomes false -- `succ true` is now well typed (`⊢ succ true ⦂
+- Progress: becomes false — `succ true` is now well typed (`⊢ succ true ⦂
   Bool`) but is stuck.
 - Preservation: remains true.
 ```
@@ -1499,11 +1548,11 @@ Suppose, instead, that we add this new rule to the `Tm.Step` relation:
 funny1 : if true then t₂ else t₃ ⟶ t₃
 ```
 Which of the above properties become false in the presence of this rule?
-For each one that does, give a counter-example.
+For each one that does, give a counterexample.
 
 :::solution
 ```
-- Determinism: becomes false -- `if true then 0 else (succ 0)` can now step
+- Determinism: becomes false — `if true then 0 else (succ 0)` can now step
   to either `0` (ifTrue) or `succ 0` (funny1).
 - Progress and preservation: remain true.
 ```
@@ -1522,7 +1571,7 @@ Suppose instead that we add this rule:
 funny2 : t₂ ⟶ t₂' → if t₁ then t₂ else t₃ ⟶ if t₁ then t₂' else t₃
 ```
 Which of the above properties become false in the presence of this rule?
-For each one that does, give a counter-example.
+For each one that does, give a counterexample.
 
 :::solution
 ```
@@ -1539,7 +1588,7 @@ Suppose instead that we add this rule:
 funny3 : pred false ⟶ pred (pred false)
 ```
 Which of the above properties become false in the presence of this rule?
-For each one that does, give a counter-example.
+For each one that does, give a counterexample.
 
 :::solution
 ```
@@ -1554,7 +1603,7 @@ Suppose instead that we add this rule:
 funny4 : ⊢ 0 ⦂ Bool
 ```
 Which of the above properties become false in the presence of this rule?
-For each one that does, give a counter-example.
+For each one that does, give a counterexample.
 
 :::solution
 ```
@@ -1570,7 +1619,7 @@ Suppose instead that we add this rule:
 funny5 : ⊢ pred 0 ⦂ Bool
 ```
 Which of the above properties become false in the presence of this rule?
-For each one that does, give a counter-example.
+For each one that does, give a counterexample.
 
 :::solution
 ```
@@ -1632,7 +1681,7 @@ the one we gave for the small-step semantics: if a well-typed term
 evaluates to some final value, then this value has the same type as the
 original term.  The proof is similar to the one we gave.  However,
 preservation for small-step semantics implies that all intermediate states
-(i.e., all states reachable in multi-step) are well-typed, whereas big-step
+(i.e., all states reachable in multi-step) are well typed, whereas big-step
 semantics only relates a term to its final evaluation result, with no
 notion of "intermediate state" about which preservation can make
 guarantees.
@@ -1640,7 +1689,7 @@ guarantees.
 The situation with the progress property is more interesting.  A direct
 analog (if a term is well typed then it evaluates to some other term)
 makes a much stronger claim than the progress theorem we have given: it
-says that every well-typed term can be evaluated to some final value---that
+says that every well-typed term can be evaluated to some final value — that
 is, that evaluation always terminates on well-typed terms.  For arithmetic
 expressions, this happens to be the case, but for more interesting
 languages (languages involving general recursion, for example) it will
@@ -1651,13 +1700,6 @@ reason that language theorists generally prefer the small-step style.
 ```
 :::
 
-:::dev "Benjamin Pierce (bcpierce00)"
-This next is not using the new conventions for `grade` blocks, which I thought
-`to_verso.py` was now enforcing.  Is that because this file was converted a while back,
-before these improvements?  (I suspect yes because the indentation is also
-wonky and I improved that too.) Anyway, the `grade` block headers should be fixed, throughout (and maybe in Smallstep and Imp?)... `dev` block headers too, if we want
-to be really consistent.
-:::
 :::grade
 ```
 GRADE_MANUAL 6: prog_pres_bigstep

@@ -1,6 +1,6 @@
 # Software Foundations in Lean
 
-This repository contains the sources for the _Software Foundations in Lean_ textbook series.
+This repository contains the sources for the _Software Foundations in Lean_ textbook series. Browsable, HTML-rendered versions of this series are hosted at [Penn's CIS 5000 course](https://www.engineering.upenn.edu/~cis5000/current/textbooks.html).
 
 ## Status and how to contribute
 

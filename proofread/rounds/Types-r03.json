@@ -1,0 +1,267 @@
+{
+ "file": "TS/Types.lean",
+ "chapter": "Types",
+ "round": 3,
+ "proposals": [
+  {
+   "id": "blank1",
+   "cat": "formatting/blank-lines",
+   "old": "open SFLMeta\n\n\n#doc (Manual) \"Types: Type Systems\" =>",
+   "new": "open SFLMeta\n\n#doc (Manual) \"Types: Type Systems\" =>",
+   "why": "Collapse to the single blank line used before `#doc` in every other chapter (Smallstep, Imp, Stlc, Equiv)."
+  },
+  {
+   "id": "width1",
+   "cat": "formatting/line-width",
+   "old": "-- The keyword atoms (`true`/`false`/`succ`/`pred`/`iszero`) are parsed as bare\n-- identifiers and dispatched in the macro below, rather than declared as\n-- reserved symbols.  Reserving them would break ordinary Lean uses of\n-- `true`/`false` and clash with the constructor/case names `succ`, `pred`.",
+   "new": "-- The keyword atoms (`true`/`false`/`succ`/`pred`/`iszero`) are\n-- parsed as bare identifiers and dispatched in the macro below,\n-- rather than declared as reserved symbols.  Reserving them would\n-- break ordinary Lean uses of `true`/`false` and clash with the\n-- constructor/case names `succ`, `pred`.",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width2",
+   "cat": "formatting/line-width",
+   "old": "      else Macro.throwErrorAt n \"the only numeric literal in this language is 0\"",
+   "new": "      else Macro.throwErrorAt n\n        \"the only numeric literal in this language is 0\"",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width3",
+   "cat": "formatting/line-width",
+   "old": "      | _ => `($x)   -- a bare identifier is a spliced Lean term (usually a variable)",
+   "new": "      -- a bare identifier is a spliced Lean term (usually a variable)\n      | _ => `($x)",
+   "why": "Reflow to fit 70 columns; move the trailing comment to its own line, matching the comment style used for the other macro_rules cases."
+  },
+  {
+   "id": "width4",
+   "cat": "formatting/line-width",
+   "old": "  | `(<{ if $c then $t else $e }>) => `(Tm.ite <{ $c }> <{ $t }> <{ $e }>)",
+   "new": "  | `(<{ if $c then $t else $e }>) =>\n      `(Tm.ite <{ $c }> <{ $t }> <{ $e }>)",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width5",
+   "cat": "formatting/line-width",
+   "old": "/-- Re-inserts parentheses in `tm` output according to the grammar's precedences. -/",
+   "new": "/-- Re-inserts parentheses in `tm` output according to the grammar's\nprecedences. -/",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width6",
+   "cat": "formatting/line-width",
+   "old": "    | Tm.succ _ => do `(tm| $(mkIdent `succ):ident $(← withAppArg delabTmInner))\n    | Tm.pred _ => do `(tm| $(mkIdent `pred):ident $(← withAppArg delabTmInner))\n    | Tm.isZero _ => do `(tm| $(mkIdent `iszero):ident $(← withAppArg delabTmInner))",
+   "new": "    | Tm.succ _ => do\n        `(tm| $(mkIdent `succ):ident $(← withAppArg delabTmInner))\n    | Tm.pred _ => do\n        `(tm| $(mkIdent `pred):ident $(← withAppArg delabTmInner))\n    | Tm.isZero _ => do\n        `(tm| $(mkIdent `iszero):ident $(← withAppArg delabTmInner))",
+   "why": "Reflow all three match arms to fit 70 columns."
+  },
+  {
+   "id": "width7",
+   "cat": "formatting/line-width",
+   "old": "        -- A bare variable prints without the `~` escape; anything else keeps it.",
+   "new": "        -- A bare variable prints without the `~` escape; anything\n        -- else keeps it.",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width8",
+   "cat": "formatting/line-width",
+   "old": "-- The keys are the constants' full names: `Tm` lives in namespace `TM`, and the\n-- `delab` attribute does not resolve its argument against the current namespace.",
+   "new": "-- The keys are the constants' full names: `Tm` lives in namespace\n-- `TM`, and the `delab` attribute does not resolve its argument\n-- against the current namespace.",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width9",
+   "cat": "formatting/line-width",
+   "old": "    | inl hb => intro hc; obtain ⟨t', hstp⟩ := hc; inversion hb <;> inversion hstp",
+   "new": "    | inl hb => intro hc; obtain ⟨t', hstp⟩ := hc\n                inversion hb <;> inversion hstp",
+   "why": "Reflow to fit 70 columns, aligning the continued tactic under the first tactic word, matching the `inr hs₁` case in `progress` below."
+  },
+  {
+   "id": "width10",
+   "cat": "formatting/line-width",
+   "old": "        -- The `succ` case is the only one that doesn't immediately present a\n        -- contradiction.  Considering how a `succ` term can be a value, it is\n        -- syntactically not a boolean value, but the numeric value case\n        -- requires a bit more work.",
+   "new": "        -- The `succ` case is the only one that doesn't immediately\n        -- present a contradiction.  Considering how a `succ` term can\n        -- be a value, it is syntactically not a boolean value, but\n        -- the numeric value case requires a bit more work.",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width11",
+   "cat": "formatting/line-width",
+   "old": "            -- By the IH, if `t₀` is a numeric value, then it can not step.",
+   "new": "            -- By the IH, if `t₀` is a numeric value, then it can not\n            -- step.",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width12",
+   "cat": "formatting/line-width",
+   "old": "-- `pred (succ true)` steps under `⇢` (the dropped `IsNValue` premise) even\n-- though it is stuck under `Tm.Step`:",
+   "new": "-- `pred (succ true)` steps under `⇢` (the dropped `IsNValue` premise)\n-- even though it is stuck under `Tm.Step`:",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width13",
+   "cat": "formatting/line-width",
+   "old": "-- The same rules repeated with hygiene enabled, for use after the section.",
+   "new": "-- The same rules repeated with hygiene enabled, for use after the\n-- section.",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width14",
+   "cat": "formatting/line-width",
+   "old": "-- Print `Tm.HasType`/`Ty` values back as `<{ ⊢ … ⦂ … }>` notation: `delabTy`",
+   "new": "-- Print `Tm.HasType`/`Ty` values back as `<{ ⊢ … ⦂ … }>` notation:\n-- `delabTy`",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width15",
+   "cat": "formatting/line-width",
+   "old": "example :\n    ¬ <{ ⊢ if iszero (succ 0) then succ false else true ⦂ Bool }> := by\n  intro hc; inversion hc with | ite h₁ h₂ h₃ => inversion h₂",
+   "new": "example :\n    ¬ <{ ⊢ if iszero (succ 0) then succ false else true ⦂ Bool }> :=\n  by intro hc; inversion hc with | ite h₁ h₂ h₃ => inversion h₂",
+   "why": "Reflow to fit 70 columns by moving `by` to the tactic line."
+  },
+  {
+   "id": "width16",
+   "cat": "formatting/line-width",
+   "old": "                     exists <{ if t₁' then t₂ else t₃ }>; exact .ifStep h",
+   "new": "                     exists <{ if t₁' then t₂ else t₃ }>\n                     exact .ifStep h",
+   "why": "Reflow to fit 70 columns, keeping the aligned continuation."
+  },
+  {
+   "id": "width17",
+   "cat": "formatting/line-width",
+   "old": "        | inl hv => exact .inl (.inr (.succ t₁ (nat_canonical t₁ h hv)))",
+   "new": "        | inl hv =>\n            exact .inl (.inr (.succ t₁ (nat_canonical t₁ h hv)))",
+   "why": "Reflow to fit 70 columns, matching the `| inl hv₁ =>` style used above in the same proof."
+  },
+  {
+   "id": "width18",
+   "cat": "formatting/line-width",
+   "old": "        | inr hs => obtain ⟨t', h'⟩ := hs; exact .inr ⟨<{ succ t' }>, .succStep h'⟩",
+   "new": "        | inr hs =>\n            obtain ⟨t', h'⟩ := hs\n            exact .inr ⟨<{ succ t' }>, .succStep h'⟩",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width19",
+   "cat": "formatting/line-width",
+   "old": "        | inr hs => obtain ⟨t', h'⟩ := hs; exists <{ pred t' }>; exact .predStep h'",
+   "new": "        | inr hs =>\n            obtain ⟨t', h'⟩ := hs\n            exists <{ pred t' }>\n            exact .predStep h'",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width20",
+   "cat": "formatting/line-width",
+   "old": "        | inr hs => obtain ⟨t', h'⟩ := hs; exists <{ iszero t' }>; exact .isZeroStep h'",
+   "new": "        | inr hs =>\n            obtain ⟨t', h'⟩ := hs\n            exists <{ iszero t' }>\n            exact .isZeroStep h'",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width21",
+   "cat": "formatting/line-width",
+   "old": "    | succStep hs ih => cases hT with | succ h => exact .succ (ih .nat h)",
+   "new": "    | succStep hs ih =>\n        cases hT with | succ h => exact .succ (ih .nat h)",
+   "why": "Reflow to fit 70 columns, matching the `ifStep hc ih` case above in the same proof."
+  },
+  {
+   "id": "width22",
+   "cat": "formatting/line-width",
+   "old": "    | predSucc hv => cases hT with | pred h => cases h with | succ hh => exact hh",
+   "new": "    | predSucc hv =>\n        cases hT with | pred h => cases h with | succ hh => exact hh",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width23",
+   "cat": "formatting/line-width",
+   "old": "    | predStep hs ih => cases hT with | pred h => exact .pred (ih .nat h)",
+   "new": "    | predStep hs ih =>\n        cases hT with | pred h => exact .pred (ih .nat h)",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width24",
+   "cat": "formatting/line-width",
+   "old": "    | isZeroStep hs ih => cases hT with | isZero h => exact .isZero (ih .nat h)",
+   "new": "    | isZeroStep hs ih =>\n        cases hT with | isZero h => exact .isZero (ih .nat h)",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "width25",
+   "cat": "formatting/line-width",
+   "old": "      hse <{ if false then true else 0 }> <{ 0 }> .nat ⟨.ifFalse, .zero⟩",
+   "new": "      hse <{ if false then true else 0 }> <{ 0 }> .nat\n        ⟨.ifFalse, .zero⟩",
+   "why": "Reflow to fit 70 columns."
+  },
+  {
+   "id": "dash1",
+   "cat": "markup/em-dash",
+   "old": "- Progress: becomes false -- `succ true` is now well typed (`⊢ succ true ⦂",
+   "new": "- Progress: becomes false — `succ true` is now well typed (`⊢ succ true ⦂",
+   "why": "A parenthetical dash in prose is a real em dash, not `--` (STYLE-WRITING.md)."
+  },
+  {
+   "id": "dash2",
+   "cat": "markup/em-dash",
+   "old": "- Determinism: becomes false -- `if true then 0 else (succ 0)` can now step",
+   "new": "- Determinism: becomes false — `if true then 0 else (succ 0)` can now step",
+   "why": "A parenthetical dash in prose is a real em dash, not `--` (STYLE-WRITING.md)."
+  },
+  {
+   "id": "dash3",
+   "cat": "markup/em-dash",
+   "old": "says that every well-typed term can be evaluated to some final value---that",
+   "new": "says that every well-typed term can be evaluated to some final value — that",
+   "why": "A parenthetical dash in prose is a real em dash, not `---` (STYLE-WRITING.md)."
+  },
+  {
+   "id": "hyph1",
+   "cat": "hyphenation/predicative-compound",
+   "old": "(i.e., all states reachable in multi-step) are well-typed, whereas big-step",
+   "new": "(i.e., all states reachable in multi-step) are well typed, whereas big-step",
+   "why": "`well typed` is predicative here (after `are`), not attributive; the chapter consistently drops the hyphen in predicative position elsewhere (e.g. \"if a term is well typed\", \"is now well typed\")."
+  },
+  {
+   "id": "verb1",
+   "cat": "grammar/missing-verb",
+   "old": "no inner\n`<{ }>`) and the type as `Bool`/`Nat`",
+   "new": "no inner\n`<{ }>`) and the type written as `Bool`/`Nat`",
+   "why": "The third clause of the list is missing a verb (\"the type as Bool/Nat\" doesn't parse); \"written as\" matches \"is written\" earlier in the same sentence."
+  },
+  {
+   "id": "ctr1",
+   "cat": "hyphenation/counterexample",
+   "old": "always the case that, if `t ⟶ t'` and `⊢ t' ⦂ T`, then `⊢ t ⦂ T`?  If so,\nprove it.  If not, give a counter-example.",
+   "new": "always the case that, if `t ⟶ t'` and `⊢ t' ⦂ T`, then `⊢ t ⦂ T`?  If so,\nprove it.  If not, give a counterexample.",
+   "why": "`counterexample` is one word everywhere else in the book (HL/Hoare, HL/Equiv, LF/Logic, TS/StlcProp, TS/Sub) and twice already in this chapter (lines 1470, 1498); `counter-example` here is the outlier."
+  },
+  {
+   "id": "ctr2",
+   "cat": "hyphenation/counterexample",
+   "old": "funny1 : if true then t₂ else t₃ ⟶ t₃\n```\nWhich of the above properties become false in the presence of this rule?\nFor each one that does, give a counter-example.",
+   "new": "funny1 : if true then t₂ else t₃ ⟶ t₃\n```\nWhich of the above properties become false in the presence of this rule?\nFor each one that does, give a counterexample.",
+   "why": "`counterexample` is one word everywhere else in the book; see the `subject_expansion` exercise above."
+  },
+  {
+   "id": "ctr3",
+   "cat": "hyphenation/counterexample",
+   "old": "funny2 : t₂ ⟶ t₂' → if t₁ then t₂ else t₃ ⟶ if t₁ then t₂' else t₃\n```\nWhich of the above properties become false in the presence of this rule?\nFor each one that does, give a counter-example.",
+   "new": "funny2 : t₂ ⟶ t₂' → if t₁ then t₂ else t₃ ⟶ if t₁ then t₂' else t₃\n```\nWhich of the above properties become false in the presence of this rule?\nFor each one that does, give a counterexample.",
+   "why": "`counterexample` is one word everywhere else in the book; see the `subject_expansion` exercise above."
+  },
+  {
+   "id": "ctr4",
+   "cat": "hyphenation/counterexample",
+   "old": "funny3 : pred false ⟶ pred (pred false)\n```\nWhich of the above properties become false in the presence of this rule?\nFor each one that does, give a counter-example.",
+   "new": "funny3 : pred false ⟶ pred (pred false)\n```\nWhich of the above properties become false in the presence of this rule?\nFor each one that does, give a counterexample.",
+   "why": "`counterexample` is one word everywhere else in the book; see the `subject_expansion` exercise above."
+  },
+  {
+   "id": "ctr5",
+   "cat": "hyphenation/counterexample",
+   "old": "funny4 : ⊢ 0 ⦂ Bool\n```\nWhich of the above properties become false in the presence of this rule?\nFor each one that does, give a counter-example.",
+   "new": "funny4 : ⊢ 0 ⦂ Bool\n```\nWhich of the above properties become false in the presence of this rule?\nFor each one that does, give a counterexample.",
+   "why": "`counterexample` is one word everywhere else in the book; see the `subject_expansion` exercise above."
+  },
+  {
+   "id": "ctr6",
+   "cat": "hyphenation/counterexample",
+   "old": "funny5 : ⊢ pred 0 ⦂ Bool\n```\nWhich of the above properties become false in the presence of this rule?\nFor each one that does, give a counter-example.",
+   "new": "funny5 : ⊢ pred 0 ⦂ Bool\n```\nWhich of the above properties become false in the presence of this rule?\nFor each one that does, give a counterexample.",
+   "why": "`counterexample` is one word everywhere else in the book; see the `subject_expansion` exercise above."
+  }
+ ],
+ "completed": true
+}

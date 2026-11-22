@@ -1,0 +1,99 @@
+{
+ "file": "TS/Sub.lean",
+ "chapter": "Sub",
+ "round": 2,
+ "proposals": [
+  {
+   "id": 1,
+   "cat": "structure/missing-heading",
+   "old": "```\n\n::::full\nThe subtyping rule for arrows is a little less intuitive.",
+   "new": "```\n\n### Arrows\n\n::::full\nThe subtyping rule for arrows is a little less intuitive.",
+   "why": "The original has a top-level \"Arrows\" subsection heading (sibling of Products/Records) that was dropped during porting; restoring it per old/orig-plf-files/Sub.v."
+  },
+  {
+   "id": 2,
+   "cat": "structure/missing-heading",
+   "old": "```\n\n::::full\nThis formalization of the STLC with subtyping omits record",
+   "new": "```\n\n## Records, via Products and Top\n\n:::suppressPreviousHeaderWhenTerse\n:::\n\n::::full\nThis formalization of the STLC with subtyping omits record",
+   "why": "The original's \"Records, via Products and Top\" heading was dropped during porting; restoring it (and the terse-suppress marker, matching the convention used for the adjacent FULL-only headings in this chapter) per old/orig-plf-files/Sub.v."
+  },
+  {
+   "id": 3,
+   "cat": "structure/missing-heading",
+   "old": "::::\n\n:::::full\n::::exercise (rating := 2) (name := \"variations\") (manual := true)",
+   "new": "::::\n\n## Exercises\n\n:::suppressPreviousHeaderWhenTerse\n:::\n\n:::::full\n::::exercise (rating := 2) (name := \"variations\") (manual := true)",
+   "why": "The original has an \"Exercises\" heading before the variations exercise that was dropped during porting; restoring it per old/orig-plf-files/Sub.v."
+  },
+  {
+   "id": 4,
+   "cat": "linter/autograding-scope",
+   "old": "```\n\n:::autogradedHole Subtype\n:::\n\nNote that we don't need any special rules",
+   "new": "```\n\nNote that we don't need any special rules",
+   "why": "linter.sf.autogradingScope flags this autogradedHole for sitting outside any ::::exercise; grading for the `prod` case it marks is already covered by the manually-graded `products_subtype_has_type` directive at the end of the chapter, so the hole is redundant."
+  },
+  {
+   "id": 5,
+   "cat": "linter/exercise-visibility",
+   "old": ":::terse\nFormally:\n:::\n\n::::exercise (rating := 2) (name := \"sub_inversion_bool\") (optional := true)",
+   "new": ":::terse\nFormally:\n:::\n\n:::::full\n::::exercise (rating := 2) (name := \"sub_inversion_bool\") (optional := true)",
+   "why": "linter.sf.exerciseVisibility: this exercise has no explicit full/terse visibility call. old/orig-plf-files/Sub.v line 1764 marks it FULL (EX2?); wrapping it in :::::full matches the sibling sub_inversion_unit exercise just below."
+  },
+  {
+   "id": 6,
+   "cat": "linter/exercise-visibility",
+   "old": "```\n::::\n\n::::exercise (rating := 3) (name := \"sub_inversion_arrow\")",
+   "new": "```\n::::\n:::::\n\n:::::full\n::::exercise (rating := 3) (name := \"sub_inversion_arrow\")",
+   "why": "Closes sub_inversion_bool's new :::::full wrap and opens one for sub_inversion_arrow (linter.sf.exerciseVisibility; old/orig-plf-files/Sub.v line 1782 marks it FULL/EX3)."
+  },
+  {
+   "id": 7,
+   "cat": "linter/exercise-visibility",
+   "old": ":::gradeTheorem 3 sub_inversion_arrow\n:::\n\n::::\n\n::::full\nThere are additional _inversion lemmas_ for the other types:",
+   "new": ":::gradeTheorem 3 sub_inversion_arrow\n:::\n\n::::\n:::::\n\n::::full\nThere are additional _inversion lemmas_ for the other types:",
+   "why": "Closes sub_inversion_arrow's new :::::full wrap."
+  },
+  {
+   "id": 8,
+   "cat": "linter/exercise-visibility",
+   "old": "With subtyping, they require real proofs by induction...\n:::\n\n::::exercise (rating := 3) (name := \"canonical_forms_of_arrow_types\") (optional := true)",
+   "new": "With subtyping, they require real proofs by induction...\n:::\n\n:::::full\n::::exercise (rating := 3) (name := \"canonical_forms_of_arrow_types\") (optional := true)",
+   "why": "linter.sf.exerciseVisibility: this exercise has no explicit full/terse visibility call. old/orig-plf-files/Sub.v line 1918 marks it FULL (EX3?); wrapping it in :::::full matches the sibling sub_inversion_unit exercise above."
+  },
+  {
+   "id": 9,
+   "cat": "linter/exercise-visibility",
+   "old": "```\n::::\n\nSimilarly, the canonical forms of type `Bool` are the constants",
+   "new": "```\n::::\n:::::\n\nSimilarly, the canonical forms of type `Bool` are the constants",
+   "why": "Closes canonical_forms_of_arrow_types's new :::::full wrap."
+  },
+  {
+   "id": 10,
+   "cat": "structure/heading-level",
+   "old": ":::\n\n## Substitution\n\nThe definition of substitution remains exactly the same as for the\npure STLC.",
+   "new": ":::\n\n### Substitution\n\nThe definition of substitution remains exactly the same as for the\npure STLC.",
+   "why": "This heading and the following \"Reduction\" heading are siblings of \"Syntax\" under \"Core Definitions\" (an umbrella introduced during the Lean port with no Rocq analogue) and should be demoted one level to nest under it, matching \"### Syntax\"."
+  },
+  {
+   "id": 11,
+   "cat": "structure/heading-level",
+   "old": ":::\n\n## Reduction\n\nLikewise the definitions of `IsValue` and `Step`.",
+   "new": ":::\n\n### Reduction\n\nLikewise the definitions of `IsValue` and `Step`.",
+   "why": "Sibling of \"### Syntax\" and \"### Substitution\" under \"## Core Definitions\"; see proposal 10."
+  },
+  {
+   "id": 12,
+   "cat": "structure/heading-level",
+   "old": ":::::\n\n### Exercise: Adding Products",
+   "new": ":::::\n\n# Exercise: Adding Products",
+   "why": "old/orig-plf-files/Sub.v has this heading at top level (`* Exercise: Adding Products`, not demoted), matching the sibling \"# Formal Definitions\"/\"# Properties\" headings and the undemoted convention used throughout StlcProp.lean for Rocq `*` headings."
+  },
+  {
+   "id": 13,
+   "cat": "content/garbled-text",
+   "old": "language one new type constant, called `⊤` (pronounced \"⊤\" and written \\⊤),",
+   "new": "language one new type constant, called `⊤` (pronounced \"top\" and written \\⊤),",
+   "why": "Garbled during porting (self-referential \"pronounced ⊤\"); fixed per author instruction to read \"pronounced 'top'\"."
+  }
+ ],
+ "completed": true
+}
