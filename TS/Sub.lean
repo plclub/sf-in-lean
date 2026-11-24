@@ -712,7 +712,7 @@ are then true?  Write _true_ or _false_ after each one.
 :::
 ::::
 
-::::exercise (rating := 1) (name := "subtype_order") (manual := true)
+::::exercise (rating := 2) (name := "subtype_order") (manual := true)
 The following types happen to form a linear order with respect to subtyping:
   - `⊤`
   - `⊤ → Student`
@@ -798,7 +798,7 @@ _false_ after each one. ∀
 :::
 
 :::grade
-`GRADE_MANUAL 2: subtype_instances_tf_2`
+`GRADE_MANUAL 1: subtype_instances_tf_2`
 :::
 ::::
 
@@ -855,7 +855,7 @@ Which of the following statements are true, and which are false?
 :::::
 
 :::::full
-::::exercise (rating := 1) (name := "proper_subtypes") (manual := true)
+::::exercise (rating := 2) (name := "proper_subtypes") (manual := true)
 
 Is the following statement true or false?  Briefly explain your
 answer. (`A` here and below represents an arbitrary base type.)
@@ -872,7 +872,7 @@ Answer: False. `τ = ⊤→Bool` is a counterexample.
 :::
 
 :::grade
-`GRADE_MANUAL 1: proper_subtypes`
+`GRADE_MANUAL 2: proper_subtypes`
 :::
 ::::
 
