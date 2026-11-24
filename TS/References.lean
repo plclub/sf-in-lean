@@ -2943,7 +2943,7 @@ theorem factorial_type : <{ ∅ / [] ⊢ factorial ⦂ (Nat → Nat) }> := by
 :::autogradedHole factorial
 :::
 
-:::gradeTheorem "2" factorial_type
+:::gradeTheorem "3" factorial_type
 :::
 
 If your definition is correct, you should be able to finish
@@ -2957,7 +2957,7 @@ theorem factorial_4 : ∃ (ρ : Store), <{ factorial 4 }> / [] ⟶* .const 24 / 
     reduce using StlcRefEval
 ```
 
-:::gradeTheorem "2" factorial_4
+:::gradeTheorem "1" factorial_4
 :::
 ::::
 :::::
