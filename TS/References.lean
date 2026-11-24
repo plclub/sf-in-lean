@@ -1233,6 +1233,7 @@ First, we augment existing reduction rules with stores:
 Now we can give the rules for the new constructs:
 
 ```display +centered
+             v.IsValue
 ------------------------------------    (refValue)
      ref v / ρ ⟶ loc ρ.length / ρ,v
 
@@ -1248,6 +1249,7 @@ Now we can give the rules for the new constructs:
 ---------------------------             (deref)
        !t₁ / ρ ⟶ !t₁' / ρ'
 
+               v.IsValue
              l < ρ.length
 --------------------------------------- (assign)
 loc l := v / ρ ⟶ unit / List.set ρ l v
@@ -1256,6 +1258,7 @@ loc l := v / ρ ⟶ unit / List.set ρ l v
 --------------------------------        (assign₁)
   t₁ := t₂ / ρ ⟶ t₁' := t₂ / ρ'
 
+           v₁.IsValue
         t₂ / ρ ⟶ t₂' / ρ'
 --------------------------------        (assign₂)
   v₁ := t₂ / ρ ⟶ v₁ := t₂' / ρ'
@@ -1279,7 +1282,7 @@ To carry through this change, we first need to augment all of our
 existing reduction rules with stores:
 
 ```display +centered
-            value v₂
+            v₂.IsValue
 ---------------------------------- (appAbs)
 (λx:τ₂,t₁) v₂ / ρ ⟶ [x:=v₂]t₁ / ρ
 
@@ -1287,7 +1290,7 @@ existing reduction rules with stores:
 --------------------------------   (app₁)
         t₁ t₂ / ρ ⟶ t₁' t₂ / ρ'
 
-           value v₁
+           v₁.IsValue
            t₂ / ρ ⟶ t₂' / ρ'
 --------------------------------   (app₂)
         v₁ t₂ / ρ ⟶ v₁ t₂' / ρ'
@@ -1344,6 +1347,7 @@ reduce `t₂` until it becomes a value (of any sort):
 ------------------------------ (assign₁)
 t₁ := t₂ / ρ ⟶ t₁' := t₂ / ρ'
 
+         v₁.IsValue
       t₂ / ρ ⟶ t₂' / ρ'
 ------------------------------ (assign₂)
 v₁ := t₂ / ρ ⟶ v₁ := t₂' / ρ'
@@ -1354,6 +1358,7 @@ the form `l:=v`, which we execute by updating the store to make
 location `l` contain `v`:
 
 ```display +centered
+           v.IsValue
          l < ρ.length
 -------------------------------- (assign)
 loc l := v / ρ ⟶ unit / [l:=v]ρ
@@ -1378,6 +1383,7 @@ the end of the current store — i.e., location `ρ.length` — and yield
 a new store that extends `ρ` with the new value `v`.
 
 ```display +centered
+           v.IsValue
 -------------------------------- (refValue)
 ref v / ρ ⟶ loc ρ.length / ρ, v
 ```
@@ -1618,7 +1624,7 @@ For example, what is the type of location `0` in the following store?
 ```
 
 :::::full
-::::exercise (rating := 3) (name := "cyclic_store")
+::::exercise (rating := 3) (name := "cyclic_store") (manual := true)
 Can you find a term whose reduction will create this particular
 cyclic store?
 
@@ -1995,11 +2001,10 @@ theorem store_not_unique:
         simp
       · simp
 ```
-::::
 
-:::grade
-`GRADE_MANUAL 3: store_not_unique`
+:::gradeTheorem 3 store_not_unique
 :::
+::::
 :::::
 
 ## Progress
@@ -2211,8 +2216,9 @@ This works... for all but _one_ of the reduction rules! (Which?)
 ::::terse
 The `refValue` rule is the problem
 ```display +centered
--------------------------- (refValue)
-ref v / ρ ⟶ loc |ρ| / ρ,v
+           v.IsValue
+------------------------------- (refValue)
+ref v / ρ ⟶ loc ρ.length / ρ,v
 ```
 
 It allocates a fresh location `l` and adds it to the store, but
@@ -2937,7 +2943,7 @@ theorem factorial_type : <{ ∅ / [] ⊢ factorial ⦂ (Nat → Nat) }> := by
 :::autogradedHole factorial
 :::
 
-:::gradeTheorem "3" factorial_type
+:::gradeTheorem "2" factorial_type
 :::
 
 If your definition is correct, you should be able to finish
@@ -2950,6 +2956,9 @@ theorem factorial_4 : ∃ (ρ : Store), <{ factorial 4 }> / [] ⟶* .const 24 / 
     exists [<{ λX : Nat. if0 X then 1 else (X * ((!(loc 0)) (pred X))) }>]
     reduce using StlcRefEval
 ```
+
+:::gradeTheorem "2" factorial_4
+:::
 ::::
 :::::
 
