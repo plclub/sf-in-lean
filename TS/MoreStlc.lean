@@ -351,7 +351,7 @@ signaling errors:
 ```display +centered
 Div ⦂ Nat → Nat → (Nat + Unit)
 Div =
-  λX:Nat. λY:Nat,
+  λX:Nat. λY:Nat.
     if iszero Y then
       inr unit
     else
@@ -374,7 +374,7 @@ Values of sum type are "destructed" by case analysis:
 ```display +centered
 GetNat ⦂ Nat + Bool → Nat
 GetNat =
-  λX:Nat + Bool,
+  λX:Nat + Bool.
     case X of
       inl N => N
     | inr B => if B then 1 else 0
@@ -939,7 +939,7 @@ rules for arithmetic operations).
 ```display +centered
     Fact 1
   = fix (λF:Nat→Nat. λX:Nat. if X=0 then 1 else X * (F (pred X))) 1
-⟶ (λX: Nat, if X = 0 then 1 else X * (Fact (pred X))) 1
+⟶ (λX: Nat. if X = 0 then 1 else X * (Fact (pred X))) 1
 ⟶ if 1 = 0 then 1 else 1 * (Fact (pred 1))
 ⟶ 1 * (Fact (pred 1))
 ⟶ 1 * ((λX:Nat. if X=0 then 1 else X * (Fact (pred X))) (pred 1))

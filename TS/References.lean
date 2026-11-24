@@ -708,7 +708,7 @@ R:=succ(!R); !R
 as an abbreviation for
 
 ```
-(λX:Unit, !R) (R:=succ(!R))
+(λX:Unit. !R) (R:=succ(!R))
 ```
 
 This has the effect of reducing two expressions in order and
@@ -920,7 +920,7 @@ Newarray = λ_:Unit. ref (λN:Nat.0)
 To look up an element of an array, we apply the function
 to the desired index.
 ```display
-Lookup = λA:NatArray, λN:Nat. (!A) N
+Lookup = λA:NatArray. λN:Nat. (!A) N
 ```
 
 The interesting part of the encoding is the `Update` function.  It
@@ -930,7 +930,7 @@ that, when it is asked for the value at this very index, returns the new
 value that was given to `Update`, while on all other indices it passes the
 lookup to the function that was previously stored in the reference.
 ```
-Update = \A:NatArray, \M:Nat, \V:Nat,
+Update = λA:NatArray. λM:Nat. λV:Nat.
   let Oldf = !A in
   A := (λN:Nat. if Equal M N then V else Oldf N);
 ```
@@ -944,7 +944,7 @@ lists and trees.
 
 If we defined `Update` more compactly like this
 ```display
-Update = \A:NatArray, \M:Nat, \V:Nat,
+Update = λA:NatArray. λM:Nat. λV:Nat.
     A := (λN:Nat. if Equal M N then V else (!A) N);
 ```
 would it behave the same?
@@ -1284,7 +1284,7 @@ existing reduction rules with stores:
 ```display +centered
             v₂.IsValue
 ---------------------------------- (appAbs)
-(λx:τ₂,t₁) v₂ / ρ ⟶ [x:=v₂]t₁ / ρ
+(λx:τ₂.t₁) v₂ / ρ ⟶ [x:=v₂]t₁ / ρ
 
            t₁ / ρ ⟶ t₁' / ρ'
 --------------------------------   (app₁)
