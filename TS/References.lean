@@ -2924,7 +2924,7 @@ theorem loop_fun_step_self :
 ::::exercise (rating := 4) (name := "factorial_ref")
 Use the above ideas to implement a factorial function in STLC with
 references.  (There is no need to prove formally that it really
-behaves like the factorial.  Just uncomment the example below to make
+behaves like the factorial.  Just finish the example below to make
 sure it gives the correct result when applied to the argument
 `4`.)
 
