@@ -646,6 +646,12 @@ inductive Tm.IsValue : Tm → Prop :=
 
 attribute [StlcRefEval] Tm.IsValue.abs Tm.IsValue.nat Tm.IsValue.unit Tm.IsValue.loc_
 ```
+
+We write `loc_` rather than `loc` because `loc` is a keyword
+introduced by the `<{ ... }>` notation for references; the trailing
+underscore avoids a clash when naming this case in `induction`/
+`cases`. The same applies to `ref_` below.
+
 Extending substitution to handle the new syntax of terms is
 straightforward: substituting into a pointer leaves it
 unchanged.
@@ -774,7 +780,7 @@ not the contents of the cell itself.
 For example, after reducing
 
 ```display
-let R = ref 5 in
+let R = ref 4 in
 let S = R in
 S := 82;
 (!R)+1
@@ -788,10 +794,10 @@ The possibility of aliasing can make programs with references
 quite tricky to reason about.  For example, the expression
 
 ```display
-R := 5; R := !S
+R := 4; R := !S
 ```
 
-assigns `5` to `R` and then immediately overwrites it with `S`'s
+assigns `4` to `R` and then immediately overwrites it with `S`'s
 current value; this has exactly the same effect as the single
 assignment
 
@@ -804,7 +810,7 @@ aliases for the same cell!
 ```display
 let R = ref 0 in
 let S = R in
-R := 5; R := !S
+R := 4; R := !S
 ```
 
 ## Shared State
