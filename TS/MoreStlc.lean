@@ -87,6 +87,7 @@ Reduction:
 ------------------------------------  (let₁)
 let x = t₁ in t₂ ⟶ let x = t₁' in t₂
 
+           v₁.IsValue
 -------------------------------       (letValue)
 let x = v₁ in t₂ ⟶ [x := v₁] t₂
 ```
@@ -135,10 +136,9 @@ projection, written `fst t` for the first projection from `t` and
 We present a grammar with these changes to terms `t` and types `τ` below.
 Along with these, we also present a change to the definition
 of _values_, characterized as a grammar on the metavariable `v`.
-This isn't a real, separate syntactic category — a term is a
-value because the `IsValue` predicate (defined below) accepts it,
-but writing out a `v`-grammar alongside the term grammar
-is a common way to convey which terms `IsValue` accepts.
+Think of this not as a real, separate syntactic category from terms `t`,
+but rather as a grammar-based presentation of `IsValue`, which makes
+the rules a bit more intuitive. We say more about this below.
 ::::
 
 Syntax:
@@ -169,6 +169,7 @@ Reduction:
 ------------------  (pair₁)
 (t₁,t₂) ⟶ (t₁',t₂)
 
+     v₁.IsValue
      t₂ ⟶ t₂'
 ------------------  (pair₂)
 (v₁,t₂) ⟶ (v₁,t₂')
@@ -177,6 +178,8 @@ Reduction:
   --------------    (fst₁)
   fst t ⟶ fst t'
 
+    v₁.IsValue
+    v₂.IsValue
  ----------------   (fstPair)
  fst (v₁,v₂) ⟶ v₁
 
@@ -184,6 +187,8 @@ Reduction:
   --------------    (snd₁)
   snd t ⟶ snd t'
 
+    v₁.IsValue
+    v₂.IsValue
  ----------------   (sndPair)
  snd (v₁,v₂) ⟶ v₂
 ```
@@ -198,13 +203,27 @@ term being projected from has not yet been fully reduced.
 left part, and then — when a value appears on the left — the right
 part.  The ordering arising from the use of the metavariables `v`
 and `t` in these rules enforces a left-to-right evaluation
-strategy for pairs.  (Note the implicit convention that
-metavariables like `v` and `v₁` can only denote values.)  We've
+strategy for pairs.  We've
 also added a clause to the definition of values, above, specifying
 that `(v₁,v₂)` is a value.  The fact that the components of a pair
 value must themselves be values ensures that a pair passed as an
 argument to a function will be fully reduced before the function
 body starts executing.
+
+About values `v`: As noted above, `v` is written as its own set of
+BNF productions, but the convention is that any occurrence of `v` in
+an inference rule stands for a term `t` such that `t.IsValue` holds.
+Many presentations, such as those in other textbooks and scientific
+papers, rely on this convention alone, leaving the `v.IsValue`
+premises out of the rules entirely; we include them anyway, for
+clarity. A reader who misunderstands our grammar
+convention would be confused about statements such as
+`snd (v₁,v₂) ⟶ v₂` (in the conclusion of rule `sndPair`) since the `⟶`
+relation applies to terms `t` and not (syntactic) values `v`.
+Since readers of this text are learning semantics for the first time,
+to avoid this confusion we use the grammar `v` to be suggestive, but specify `v.IsValue`
+directly to emphasize that `v` is indeed a term. This approach also makes the
+informal rules map more closely to their Lean formalization below.
 ::::
 
 ::::full
@@ -414,10 +433,12 @@ Reduction:
      case t of inl x₁ => t₁ | inr x₂ => t₂ ⟶
      case t' of inl x₁ => t₁ | inr x₂ => t₂
 
+                 v₁.IsValue
 -------------------------------------------------  (caseInl)
 case (inl τ₂ v₁) of inl x₁ => t₁ | inr x₂ => t₂ ⟶
                   [x₁ := v₁]t₁
 
+                 v₂.IsValue
 -------------------------------------------------  (caseInr)
 case (inr τ₁ v₂) of inl x₁ => t₁ | inr x₂ => t₂ ⟶
                   [x₂ := v₂]t₂
@@ -594,6 +615,7 @@ Reduction:
               --------------------                 (cons₁)
               t₁ :: t₂ ⟶ t₁' :: t₂
 
+                    v₁.IsValue
                     t₂ ⟶ t₂'
               --------------------                 (cons₂)
               v₁ :: t₂ ⟶ v₁ :: t₂'
@@ -606,6 +628,8 @@ Reduction:
 ------------------------------------------------   (listCaseNil)
 (case nil τ₁ of nil => t₂ | xh :: xt => t₃) ⟶ t₂
 
+                  vh.IsValue
+                  vt.IsValue
 -------------------------------------------------  (listCaseCons)
 (case (vh :: vt) of nil => t₂ | xh :: xt => t₃) ⟶
                [xh:=vh][xt:=vt] t₃
