@@ -646,6 +646,12 @@ inductive Tm.IsValue : Tm → Prop :=
 
 attribute [StlcRefEval] Tm.IsValue.abs Tm.IsValue.nat Tm.IsValue.unit Tm.IsValue.loc_
 ```
+
+We write `loc_` rather than `loc` because `loc` is a keyword
+introduced by the `<{ ... }>` notation for references; the trailing
+underscore avoids a clash when naming this case in `induction`/
+`cases`. The same applies to `ref_` below.
+
 Extending substitution to handle the new syntax of terms is
 straightforward: substituting into a pointer leaves it
 unchanged.
@@ -708,7 +714,7 @@ R:=succ(!R); !R
 as an abbreviation for
 
 ```
-(λX:Unit, !R) (R:=succ(!R))
+(λX:Unit. !R) (R:=succ(!R))
 ```
 
 This has the effect of reducing two expressions in order and
@@ -774,7 +780,7 @@ not the contents of the cell itself.
 For example, after reducing
 
 ```display
-let R = ref 5 in
+let R = ref 4 in
 let S = R in
 S := 82;
 (!R)+1
@@ -788,10 +794,10 @@ The possibility of aliasing can make programs with references
 quite tricky to reason about.  For example, the expression
 
 ```display
-R := 5; R := !S
+R := 4; R := !S
 ```
 
-assigns `5` to `R` and then immediately overwrites it with `S`'s
+assigns `4` to `R` and then immediately overwrites it with `S`'s
 current value; this has exactly the same effect as the single
 assignment
 
@@ -804,7 +810,7 @@ aliases for the same cell!
 ```display
 let R = ref 0 in
 let S = R in
-R := 5; R := !S
+R := 4; R := !S
 ```
 
 ## Shared State
@@ -920,7 +926,7 @@ Newarray = λ_:Unit. ref (λN:Nat.0)
 To look up an element of an array, we apply the function
 to the desired index.
 ```display
-Lookup = λA:NatArray, λN:Nat. (!A) N
+Lookup = λA:NatArray. λN:Nat. (!A) N
 ```
 
 The interesting part of the encoding is the `Update` function.  It
@@ -930,7 +936,7 @@ that, when it is asked for the value at this very index, returns the new
 value that was given to `Update`, while on all other indices it passes the
 lookup to the function that was previously stored in the reference.
 ```
-Update = \A:NatArray, \M:Nat, \V:Nat,
+Update = λA:NatArray. λM:Nat. λV:Nat.
   let Oldf = !A in
   A := (λN:Nat. if Equal M N then V else Oldf N);
 ```
@@ -944,7 +950,7 @@ lists and trees.
 
 If we defined `Update` more compactly like this
 ```display
-Update = \A:NatArray, \M:Nat, \V:Nat,
+Update = λA:NatArray. λM:Nat. λV:Nat.
     A := (λN:Nat. if Equal M N then V else (!A) N);
 ```
 would it behave the same?
@@ -1233,6 +1239,7 @@ First, we augment existing reduction rules with stores:
 Now we can give the rules for the new constructs:
 
 ```display +centered
+             v.IsValue
 ------------------------------------    (refValue)
      ref v / ρ ⟶ loc ρ.length / ρ,v
 
@@ -1248,6 +1255,7 @@ Now we can give the rules for the new constructs:
 ---------------------------             (deref)
        !t₁ / ρ ⟶ !t₁' / ρ'
 
+               v.IsValue
              l < ρ.length
 --------------------------------------- (assign)
 loc l := v / ρ ⟶ unit / List.set ρ l v
@@ -1256,6 +1264,7 @@ loc l := v / ρ ⟶ unit / List.set ρ l v
 --------------------------------        (assign₁)
   t₁ := t₂ / ρ ⟶ t₁' := t₂ / ρ'
 
+           v₁.IsValue
         t₂ / ρ ⟶ t₂' / ρ'
 --------------------------------        (assign₂)
   v₁ := t₂ / ρ ⟶ v₁ := t₂' / ρ'
@@ -1279,15 +1288,15 @@ To carry through this change, we first need to augment all of our
 existing reduction rules with stores:
 
 ```display +centered
-            value v₂
+            v₂.IsValue
 ---------------------------------- (appAbs)
-(λx:τ₂,t₁) v₂ / ρ ⟶ [x:=v₂]t₁ / ρ
+(λx:τ₂.t₁) v₂ / ρ ⟶ [x:=v₂]t₁ / ρ
 
            t₁ / ρ ⟶ t₁' / ρ'
 --------------------------------   (app₁)
         t₁ t₂ / ρ ⟶ t₁' t₂ / ρ'
 
-           value v₁
+           v₁.IsValue
            t₂ / ρ ⟶ t₂' / ρ'
 --------------------------------   (app₂)
         v₁ t₂ / ρ ⟶ v₁ t₂' / ρ'
@@ -1344,6 +1353,7 @@ reduce `t₂` until it becomes a value (of any sort):
 ------------------------------ (assign₁)
 t₁ := t₂ / ρ ⟶ t₁' := t₂ / ρ'
 
+         v₁.IsValue
       t₂ / ρ ⟶ t₂' / ρ'
 ------------------------------ (assign₂)
 v₁ := t₂ / ρ ⟶ v₁ := t₂' / ρ'
@@ -1354,6 +1364,7 @@ the form `l:=v`, which we execute by updating the store to make
 location `l` contain `v`:
 
 ```display +centered
+           v.IsValue
          l < ρ.length
 -------------------------------- (assign)
 loc l := v / ρ ⟶ unit / [l:=v]ρ
@@ -1378,6 +1389,7 @@ the end of the current store — i.e., location `ρ.length` — and yield
 a new store that extends `ρ` with the new value `v`.
 
 ```display +centered
+           v.IsValue
 -------------------------------- (refValue)
 ref v / ρ ⟶ loc ρ.length / ρ, v
 ```
@@ -1618,7 +1630,7 @@ For example, what is the type of location `0` in the following store?
 ```
 
 :::::full
-::::exercise (rating := 3) (name := "cyclic_store")
+::::exercise (rating := 3) (name := "cyclic_store") (manual := true)
 Can you find a term whose reduction will create this particular
 cyclic store?
 
@@ -1995,11 +2007,10 @@ theorem store_not_unique:
         simp
       · simp
 ```
-::::
 
-:::grade
-`GRADE_MANUAL 3: store_not_unique`
+:::gradeTheorem 3 store_not_unique
 :::
+::::
 :::::
 
 ## Progress
@@ -2211,8 +2222,9 @@ This works... for all but _one_ of the reduction rules! (Which?)
 ::::terse
 The `refValue` rule is the problem
 ```display +centered
--------------------------- (refValue)
-ref v / ρ ⟶ loc |ρ| / ρ,v
+           v.IsValue
+------------------------------- (refValue)
+ref v / ρ ⟶ loc ρ.length / ρ,v
 ```
 
 It allocates a fresh location `l` and adds it to the store, but
@@ -2918,7 +2930,7 @@ theorem loop_fun_step_self :
 ::::exercise (rating := 4) (name := "factorial_ref")
 Use the above ideas to implement a factorial function in STLC with
 references.  (There is no need to prove formally that it really
-behaves like the factorial.  Just uncomment the example below to make
+behaves like the factorial.  Just finish the example below to make
 sure it gives the correct result when applied to the argument
 `4`.)
 
@@ -2950,6 +2962,9 @@ theorem factorial_4 : ∃ (ρ : Store), <{ factorial 4 }> / [] ⟶* .const 24 / 
     exists [<{ λX : Nat. if0 X then 1 else (X * ((!(loc 0)) (pred X))) }>]
     reduce using StlcRefEval
 ```
+
+:::gradeTheorem "1" factorial_4
+:::
 ::::
 :::::
 

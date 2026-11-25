@@ -2404,7 +2404,7 @@ _Proof_: Let `Γ`, `x`, `σ₁`, `t₂` and `τ` be given as
     need, since `σ₁ → τ₁₂ <: σ₁ → τ₁₂` follows from {tactic}`rfl`.
 
   - If the last step of the derivation is a use of `sub` then
-    there is a type `σ` such that `σ <: τ` and `Γ ⊢ λx : σ₁, t₂ ⦂ σ`.
+    there is a type `σ` such that `σ <: τ` and `Γ ⊢ λx : σ₁. t₂ ⦂ σ`.
     The IH for the typing subderivation tells us that there
     is some type `σ₂` with `σ₁ → σ₂ <: σ` and `x↦σ₁; Γ ⊢ t₂ ⦂ σ₂`.
     Picking type `σ₂` gives us what we need, since `σ₁ → σ₂ <: τ` then follows by `trans`.
