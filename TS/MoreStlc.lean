@@ -2099,6 +2099,11 @@ example : <{ [Z := 0] (let Y = succ 0 in Z) }> =
   solution!
     rfl
 ```
+
+:::grade
+`GRADE_MANUAL 3: STLCExtended.subst`
+:::
+
 ::::
 :::::
 
@@ -2287,6 +2292,10 @@ attribute [ExtStlcEval] Step.appAbs Step.app₁ Step.app₂
 :::autogradedHole Step
 :::
 
+:::grade
+`GRADE_MANUAL 3: STLCExtended.step`
+:::
+
 ::::
 :::::
 
@@ -2400,6 +2409,10 @@ open Lean PrettyPrinter in
 @[app_unexpander HasType]
 def HasType.unexpand : Unexpander := StlcCommon.Delab.unexpandHasType
 ```
+:::
+
+:::grade
+`GRADE_MANUAL 3: STLCExtended.HasType`
 :::
 
 ::::
