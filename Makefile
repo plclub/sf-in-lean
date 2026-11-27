@@ -26,18 +26,22 @@ define VOLUME_template
 
 $(1)-student: book-build
 	SFL_BUILD_STAMP="$$(BUILD_STAMP)" lake env .lake/build/bin/sfl-$(1) student
+	python3 scripts/web_exercises.py $(1) student
 	$$(call copy-devcontainer,_out/$(1)/student/lean)
 
 $(1)-solutions: book-build
 	SFL_BUILD_STAMP="$$(BUILD_STAMP)" lake env .lake/build/bin/sfl-$(1) solutions
+	python3 scripts/web_exercises.py $(1) solutions
 	$$(call copy-devcontainer,_out/$(1)/solutions/lean)
 
 $(1)-terse: book-build
 	SFL_BUILD_STAMP="$$(BUILD_STAMP)" lake env .lake/build/bin/sfl-$(1) terse
+	python3 scripts/web_exercises.py $(1) terse
 	$$(call copy-devcontainer,_out/$(1)/terse/lean)
 
 $(1)-grading: book-build
 	SFL_BUILD_STAMP="$$(BUILD_STAMP)" lake env .lake/build/bin/sfl-$(1) grading
+	python3 scripts/web_exercises.py $(1) grading
 	$$(call copy-devcontainer,_out/$(1)/grading/lean)
 
 $(1): $(1)-student $(1)-solutions $(1)-terse $(1)-grading
@@ -60,7 +64,7 @@ $(eval $(call VOLUME_template,ts))
 
 # ── Top-level targets ─────────────────────────────────────────────────────────
 
-.PHONY: all student solutions terse grading grading-tools grading-check-only grading-check serve clean ensure-build-symlink book-build style style-check style-checklist release
+.PHONY: all student solutions terse grading grading-tools grading-check-only grading-check serve serve-web clean ensure-build-symlink book-build style style-check style-checklist release
 
 # Compile all volume executables once before any generator starts.  A single
 # Lake frontend avoids races on the shared `.lake/build` directory.
@@ -116,6 +120,13 @@ ensure-build-symlink:
 
 serve: all
 	python3 -m http.server 8000 -d _out/
+
+# Serve one built variant with the headers in-browser Lean needs, and with a
+# local Lean WebAssembly runtime mounted at sfl-lean/runtime/ (see
+# scripts/serve_web.py), e.g.
+#   make serve-web VARIANT=lf/student LEAN_RUNTIME=~/lean4-wasm/public/lean-wasm
+serve-web:
+	python3 scripts/serve_web.py _out/$(VARIANT)/html $(LEAN_RUNTIME)
 
 # Package a local release (student html/ + lean/ per volume) for the course
 # webpage. scripts/release_chapters.json controls everything: which volumes
