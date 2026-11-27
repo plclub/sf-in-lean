@@ -1005,9 +1005,9 @@ will make your proof easier to read.
 
 # More Exercises
 
-::::exercise (rating := 1) (name := "mul_one")
+::::exercise (rating := 1) (name := "one_mul")
 ```lean
-theorem mul_one (p : Nat) :
+theorem one_mul (p : Nat) :
     one * p = p := by
   solution!
     induction p with
@@ -1015,7 +1015,7 @@ theorem mul_one (p : Nat) :
     | succ p' ih => rw [mul_succ, ih, succ_eq_add_one]
 ```
 
-:::gradeTheorem 1 mul_one
+:::gradeTheorem 1 one_mul
 :::
 ::::
 
@@ -1026,9 +1026,9 @@ right to left, use `rewrite [← h]` or `rw [← h]`, where `←` is entered
 as `\l` or `\<-`.
 
 :::::full
-::::exercise (rating := 2) (name := "mul_two")
+::::exercise (rating := 2) (name := "two_mul")
 ```lean
-theorem mul_two (p : Nat) :
+theorem two_mul (p : Nat) :
     two * p = p + p := by
   solution!
     induction p with
@@ -1039,7 +1039,7 @@ theorem mul_two (p : Nat) :
       rw [add_comm p' one, add_comm p']
 ```
 
-:::gradeTheorem 1 mul_two
+:::gradeTheorem 1 two_mul
 :::
 ::::
 :::::
@@ -1302,7 +1302,7 @@ theorem bin_to_nat_pres_incr (b : Bin) :
       rw [incr_b0, binToNat_b0, binToNat_b1]
     | b1 b' ih =>
       rw [incr_b1, binToNat_b1, binToNat_b0, ih]
-      rw [mul_comm, mul_two, mul_comm, mul_two, add_assoc]
+      rw [mul_comm, two_mul, mul_comm, two_mul, add_assoc]
       rw [add_shuffle3 _ one]
 ```
 
@@ -1557,7 +1557,7 @@ theorem natToBin_two_mul n :
       RHS: doubleBin (natToBin (n' + 1)) = doubleBin (incr (natToBin n')).
       By double_incr_bin: = incr (incr (doubleBin (natToBin n'))). ✓
     -/
-    rw [mul_comm, mul_two] at *
+    rw [mul_comm, two_mul] at *
     rw [add_succ, succ_add]
     rw [natToBin_succ, natToBin_succ, natToBin_succ]
     rw [ih, ← double_incr_bin]
