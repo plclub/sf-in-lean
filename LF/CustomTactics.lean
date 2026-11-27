@@ -3,7 +3,9 @@ module
 public meta import Lean.Elab.ConfigEval
 public meta import Lean.Elab.Tactic.RenameInaccessibles
 public meta import Lean.Elab.Tactic.ElabTerm
-meta import all Lean.Meta.Tactic.Cases
+public meta import Lean.Meta.Tactic.Cases
+public meta import Lean.Meta.Constructions.CtorIdx
+public meta import Lean.Meta.Constructions.SparseCasesOn
 
 meta section
 
@@ -120,6 +122,94 @@ def casesClearMany (subgoals : Array CasesSubgoal) (fvarIds : Array FVarId) : Me
     let fvarIds := fvarIds.filterMap (Expr.fvarId? ∘ s.subst.get)
     let mvarId ← s.mvarId.tryClearMany fvarIds
     return { s with mvarId }
+
+namespace Cases
+
+/-! The helpers below are private in [Lean.Meta.Tactic.Cases].  `inversion`
+  needs them, and keeping a copy here means this file uses only that module's
+  public declarations, which is also all that Lean running in a web browser can
+  load. -/
+
+/-- Lifted from [Lean.Meta.Cases.mkCasesContext?]. -/
+private def mkCasesContext? (majorFVarId : FVarId) : MetaM (Option Context) := do
+  let env ← getEnv
+  if !env.contains `Eq || !env.contains `HEq then
+    pure none
+  else
+    let majorDecl ← majorFVarId.getDecl
+    let majorType ← whnf majorDecl.type
+    majorType.withApp fun f args => matchConstInduct f (fun _ => pure none) fun ival _ =>
+      if args.size != ival.numIndices + ival.numParams then pure none
+      else if !env.contains (Name.mkStr ival.name "casesOn") then pure none
+      else return some {
+        inductiveVal  := ival,
+        majorDecl     := majorDecl,
+        majorTypeFn   := f,
+        majorTypeArgs := args
+      }
+
+/-- Lifted from [Lean.Meta.Cases.hasIndepIndices]. -/
+private def hasIndepIndices (ctx : Context) : MetaM Bool := do
+  if ctx.majorTypeIndices.isEmpty then
+    return true
+  else if ctx.majorTypeIndices.any fun idx => !idx.isFVar then
+    return false
+  else if ctx.majorTypeIndices.size.any fun i _ => i.any fun j _ => ctx.majorTypeIndices[i] == ctx.majorTypeIndices[j] then
+    return false
+  else
+    (← getLCtx).allM fun decl =>
+      pure (decl.fvarId == ctx.majorDecl.fvarId) <||>
+      pure (ctx.majorTypeIndices.any (fun index => decl.fvarId == index.fvarId!)) <||>
+      findLocalDeclDependsOn decl (fun fvarId => ctx.majorTypeIndices.all fun idx => idx.fvarId! != fvarId)
+
+/-- Lifted from [Lean.Meta.Cases.elimAuxIndices]. -/
+private def elimAuxIndices (s₁ : GeneralizeIndicesSubgoal) (s₂ : Array CasesSubgoal) : MetaM (Array CasesSubgoal) :=
+  let indicesFVarIds := s₁.indicesFVarIds
+  s₂.mapM fun s => do
+    indicesFVarIds.foldlM (init := s) fun s indexFVarId =>
+      match s.subst.get indexFVarId with
+      | Expr.fvar indexFVarId' =>
+        (do let mvarId ← s.mvarId.clear indexFVarId'; pure { s with mvarId := mvarId, subst := s.subst.erase indexFVarId })
+        <|>
+        (pure s)
+      | _ => pure s
+
+/-- Lifted from [Lean.Meta.Cases.toCasesSubgoals]. -/
+private def toCasesSubgoals (s : Array InductionSubgoal) (ctorNames : Array Name) (majorFVarId : FVarId) (us : List Level) (params : Array Expr)
+    : Array CasesSubgoal :=
+  s.mapIdx fun i s =>
+    if _ : i < ctorNames.size then
+      let ctorName := ctorNames[i]
+      let ctorApp  := mkAppN (mkAppN (mkConst ctorName us) params) s.fields
+      let subst := s.subst.erase majorFVarId |>.insert majorFVarId ctorApp
+      { s with ctorName := ctorName, subst}
+    else
+      { s with ctorName := none }
+
+/-- Lifted from [Lean.Meta.Cases.inductionCasesOn]. -/
+private def inductionCasesOn (mvarId : MVarId) (majorFVarId : FVarId) (givenNames : Array AltVarNames) (ctx : Context)
+    (useNatCasesAuxOn : Bool := false) (interestingCtors? : Option (Array Name) := none) :
+    MetaM (Array CasesSubgoal) := mvarId.withContext do
+  let majorType ← inferType (mkFVar majorFVarId)
+  let (us, params) ← getInductiveUniverseAndParams majorType
+  if let some interestingCtors := interestingCtors? then
+    let hasNE := (← getEnv).contains ``Nat.hasNotBit
+    let hasCtorIdx := (← getEnv).contains (mkCtorIdxName ctx.inductiveVal.name)
+    if hasNE && hasCtorIdx && !interestingCtors.isEmpty &&
+      interestingCtors.size < ctx.inductiveVal.ctors.length then
+      let casesOn ← Lean.Meta.mkSparseCasesOn ctx.inductiveVal.name interestingCtors
+      let s ← mvarId.induction majorFVarId casesOn givenNames
+      return toCasesSubgoals s interestingCtors majorFVarId us params
+  let casesOn :=
+    if useNatCasesAuxOn && ctx.inductiveVal.name == ``Nat && (← getEnv).contains ``Nat.casesAuxOn then
+      ``Nat.casesAuxOn
+    else
+      mkCasesOnName ctx.inductiveVal.name
+  let ctors   := ctx.inductiveVal.ctors.toArray
+  let s ← mvarId.induction majorFVarId casesOn givenNames
+  return toCasesSubgoals s ctors majorFVarId us params
+
+end Cases
 
 end Lean.Meta
 
