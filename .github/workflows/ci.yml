@@ -39,6 +39,9 @@ jobs:
       - name: Check inversion proof-state rendering
         run: lake env lean tests/inversion_highlighting.lean
 
+      - name: Check cross-volume links
+        run: python3 scripts/test_cross_volume.py
+
       # Restore only generated-project dependencies. Generated sources and build
       # outputs remain fresh for every CI run.
       - name: Restore generated project dependencies
